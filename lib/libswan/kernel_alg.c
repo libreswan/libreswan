@@ -515,12 +515,11 @@ int kernel_alg_ah_auth_keylen(int auth)
 	return a_keylen;
 }
 
-/* returns pointer to static buffer -- NOT RE-ENTRANT */
-struct esp_info *kernel_alg_esp_info(u_int8_t transid, u_int16_t keylen,
-				u_int16_t auth)
+bool kernel_alg_info(u_int8_t transid, u_int16_t keylen, u_int16_t auth,
+		     struct kernel_alg_info *ki)
 {
 	int sadb_aalg, sadb_ealg;
-	static struct esp_info ei_buf; /* static ??? fixme */
+	zero(ki);
 
 	DBG(DBG_PARSING,
 		DBG_log("kernel_alg_esp_info(): transid=%d, keylen=%d,auth=%d, ",
@@ -532,11 +531,10 @@ struct esp_info *kernel_alg_esp_info(u_int8_t transid, u_int16_t keylen,
 		!ESP_AALG_PRESENT(sadb_aalg)) {
 		DBG(DBG_PARSING,
 			DBG_log("kernel_alg_esp_info(): transid or auth not registered with kernel"));
-		return NULL;
+		return FALSE;
 	}
-	zero(&ei_buf);
-	ei_buf.transid = transid;
-	ei_buf.auth = auth;
+	ki->transid = transid;
+	ki->auth = auth;
 
 	/*
 	 * don't return "default" keylen because this value is used from
@@ -546,11 +544,11 @@ struct esp_info *kernel_alg_esp_info(u_int8_t transid, u_int16_t keylen,
 
 	/* if no key length is given, return default */
 	if (keylen == 0) {
-		ei_buf.enckeylen = esp_ealg[sadb_ealg].sadb_alg_minbits /
+		ki->enckeylen = esp_ealg[sadb_ealg].sadb_alg_minbits /
 			BITS_PER_BYTE;
 	} else if (esp_ealg[sadb_ealg].sadb_alg_minbits <= keylen &&
 		keylen <= esp_ealg[sadb_ealg].sadb_alg_maxbits) {
-		ei_buf.enckeylen = keylen / BITS_PER_BYTE;
+		ki->enckeylen = keylen / BITS_PER_BYTE;
 	} else {
 		DBG(DBG_PARSING,
 			DBG_log("kernel_alg_esp_info(): transid=%d, proposed keylen=%u is invalid, not %u<=X<=%u",
@@ -559,16 +557,135 @@ struct esp_info *kernel_alg_esp_info(u_int8_t transid, u_int16_t keylen,
 				esp_ealg[sadb_ealg].sadb_alg_maxbits);
 			);
 		/* proposed key length is invalid! */
-		return NULL;
+		return FALSE;
 	}
 
-	ei_buf.encryptalg = sadb_ealg;
-	ei_buf.authalg = sadb_aalg;
+	ki->encryptalg = sadb_ealg;
+	ki->authalg = sadb_aalg;
 	DBG(DBG_PARSING,
-		DBG_log("kernel_alg_esp_info(): transid=%d, auth=%d, ei=%p, enckeylen=%d, encryptalg=%d, authalg=%d",
-			transid, auth, &ei_buf, (int)ei_buf.enckeylen,
-			ei_buf.encryptalg,
-			ei_buf.authalg);
+		DBG_log("kernel_alg_esp_info(): transid=%d, auth=%d, enckeylen=%d, encryptalg=%d, authalg=%d",
+			transid, auth, (int)ki->enckeylen,
+			ki->encryptalg,
+			ki->authalg);
 		);
-	return &ei_buf;
+	return TRUE;
+}
+
+/*
+ * sadb/ESP aa attrib converters - conflicting for v1 and v2
+ */
+enum ipsec_authentication_algo alg_info_esp_aa2sadb(
+	enum ikev1_auth_attribute auth)
+{
+	/* ??? this switch looks a lot like one in parse_ipsec_sa_body */
+	switch (auth) {
+	case AUTH_ALGORITHM_HMAC_MD5: /* 2 */
+		return AH_MD5;
+
+	case AUTH_ALGORITHM_HMAC_SHA1:
+		return AH_SHA;
+
+	case AUTH_ALGORITHM_HMAC_SHA2_256: /* 5 */
+		return AH_SHA2_256;
+
+	case AUTH_ALGORITHM_HMAC_SHA2_384:
+		return AH_SHA2_384;
+
+	case AUTH_ALGORITHM_HMAC_SHA2_512:
+		return AH_SHA2_512;
+
+	case AUTH_ALGORITHM_HMAC_RIPEMD:
+		return AH_RIPEMD;
+
+	case AUTH_ALGORITHM_AES_XCBC: /* 9 */
+		return AH_AES_XCBC_MAC;
+
+	/* AH_RSA not supported */
+	case AUTH_ALGORITHM_SIG_RSA:
+		return AH_RSA;
+
+	case AUTH_ALGORITHM_AES_128_GMAC:
+		return AH_AES_128_GMAC;
+
+	case AUTH_ALGORITHM_AES_192_GMAC:
+		return AH_AES_192_GMAC;
+
+	case AUTH_ALGORITHM_AES_256_GMAC:
+		return AH_AES_256_GMAC;
+
+	case AUTH_ALGORITHM_AES_CMAC_96: /* private use 250 */
+		return AH_AES_CMAC_96;
+
+	case AUTH_ALGORITHM_NULL_KAME:
+	case AUTH_ALGORITHM_NONE: /* private use 251 */
+		return AH_NONE;
+
+	default:
+		bad_case(auth);
+	}
+}
+
+/*
+ * XXX This maps IPSEC AH Transform Identifiers to IKE Integrity Algorithm
+ * Transform IDs. But IKEv1 and IKEv2 tables don't match fully! See:
+ *
+ * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-7
+ * http://www.iana.org/assignments/isakmp-registry/isakmp-registry.xhtml#isakmp-registry-7
+ * http://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-6
+ *
+ * Callers of this function should get fixed
+ */
+int alg_info_esp_sadb2aa(int sadb_aalg)
+{
+	int auth = 0;
+
+	/* md5 and sha1 entries are "off by one" */
+	switch (sadb_aalg) {
+	/* 0-1 RESERVED */
+	case SADB_AALG_MD5HMAC: /* 2 */
+		auth = AUTH_ALGORITHM_HMAC_MD5; /* 1 */
+		break;
+	case SADB_AALG_SHA1HMAC: /* 3 */
+		auth = AUTH_ALGORITHM_HMAC_SHA1; /* 2 */
+		break;
+	/* 4 - SADB_AALG_DES */
+	case SADB_X_AALG_SHA2_256HMAC:
+		auth = AUTH_ALGORITHM_HMAC_SHA2_256;
+		break;
+	case SADB_X_AALG_SHA2_384HMAC:
+		auth = AUTH_ALGORITHM_HMAC_SHA2_384;
+		break;
+	case SADB_X_AALG_SHA2_512HMAC:
+		auth = AUTH_ALGORITHM_HMAC_SHA2_512;
+		break;
+	case SADB_X_AALG_RIPEMD160HMAC:
+		auth = AUTH_ALGORITHM_HMAC_RIPEMD;
+		break;
+	case SADB_X_AALG_AES_XCBC_MAC:
+		auth = AUTH_ALGORITHM_AES_XCBC;
+		break;
+	case SADB_X_AALG_RSA: /* unsupported by us */
+		auth = AUTH_ALGORITHM_SIG_RSA;
+		break;
+	case SADB_X_AALG_AH_AES_128_GMAC:
+		auth = AUTH_ALGORITHM_AES_128_GMAC;
+		break;
+	case SADB_X_AALG_AH_AES_192_GMAC:
+		auth = AUTH_ALGORITHM_AES_192_GMAC;
+		break;
+	case SADB_X_AALG_AH_AES_256_GMAC:
+		auth = AUTH_ALGORITHM_AES_256_GMAC;
+		break;
+	/* private use numbers */
+	case SADB_X_AALG_AES_CMAC_96:
+		auth = AUTH_ALGORITHM_AES_CMAC_96;
+		break;
+	case SADB_X_AALG_NULL:
+		auth = AUTH_ALGORITHM_NULL_KAME;
+		break;
+	default:
+		/* which would hopefully be true  */
+		auth = sadb_aalg;
+	}
+	return auth;
 }

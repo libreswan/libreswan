@@ -48,7 +48,7 @@ BuildRequires: nss-devel >= 3.16.1, nspr-devel
 BuildRequires: pam-devel
 BuildRequires: libevent2-devel
 %if %{USE_DNSSEC}
-BuildRequires: unbound-devel
+BuildRequires: unbound-devel >= 1.5.4 ldns-devel
 %endif
 %if %{USE_SECCOMP}
 BuildRequires: libseccomp-devel
@@ -187,12 +187,6 @@ install -m644 packaging/fedora/libreswan-prelink.conf %{buildroot}%{_sysconfdir}
 %endif
 
 %if %{cavstests}
-# cavs testing
-cp -a OBJ.linux.*/programs/pluto/cavp %{buildroot}%{_libexecdir}/ipsec
-
-%endif
-
-%if %{cavstests}
 %check
 # There is an elaborate upstream testing infrastructure which we do not
 # run here.
@@ -204,13 +198,13 @@ bunzip2 *.fax.bz2
 export NSS_DISABLE_HW_GCM=1
 
 : starting CAVS test for IKEv2
-OBJ.linux.*/programs/pluto/cavp -v2 ikev2.fax | \
+OBJ.linux.%{_arch}/testing/cavp/cavp -v2 ikev2.fax | \
     diff -u ikev2.fax - > /dev/null
 : starting CAVS test for IKEv1 RSASIG
-OBJ.linux.*/programs/pluto/cavp -v1sig ikev1_dsa.fax | \
+OBJ.linux.%{_arch}/testing/cavp/cavp -v1sig ikev1_dsa.fax | \
     diff -u ikev1_dsa.fax - > /dev/null
 : starting CAVS test for IKEv1 PSK
-OBJ.linux.*/programs/pluto/cavp -v1psk ikev1_psk.fax | \
+OBJ.linux.%{_arch}/testing/cavp/cavp -v1psk ikev1_psk.fax | \
     diff -u ikev1_psk.fax - > /dev/null
 : CAVS tests passed
 %endif

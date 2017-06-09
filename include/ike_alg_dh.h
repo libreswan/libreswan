@@ -14,18 +14,18 @@
  * for more details.
  */
 
-extern struct oakley_group_desc oakley_group_modp1024;
-extern struct oakley_group_desc oakley_group_modp1536;
-extern struct oakley_group_desc oakley_group_modp2048;
-extern struct oakley_group_desc oakley_group_modp3072;
-extern struct oakley_group_desc oakley_group_modp4096;
-extern struct oakley_group_desc oakley_group_modp6144;
-extern struct oakley_group_desc oakley_group_modp8192;
-extern struct oakley_group_desc oakley_group_dh19;
-extern struct oakley_group_desc oakley_group_dh20;
-extern struct oakley_group_desc oakley_group_dh21;
+extern const struct oakley_group_desc oakley_group_modp1024;
+extern const struct oakley_group_desc oakley_group_modp1536;
+extern const struct oakley_group_desc oakley_group_modp2048;
+extern const struct oakley_group_desc oakley_group_modp3072;
+extern const struct oakley_group_desc oakley_group_modp4096;
+extern const struct oakley_group_desc oakley_group_modp6144;
+extern const struct oakley_group_desc oakley_group_modp8192;
+extern const struct oakley_group_desc oakley_group_dh19;
+extern const struct oakley_group_desc oakley_group_dh20;
+extern const struct oakley_group_desc oakley_group_dh21;
 #ifdef USE_DH22
-extern struct oakley_group_desc oakley_group_dh22;
+extern const struct oakley_group_desc oakley_group_dh22;
 #endif
-extern struct oakley_group_desc oakley_group_dh23;
-extern struct oakley_group_desc oakley_group_dh24;
+extern const struct oakley_group_desc oakley_group_dh23;
+extern const struct oakley_group_desc oakley_group_dh24;

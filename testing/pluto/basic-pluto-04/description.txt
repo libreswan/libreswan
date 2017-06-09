@@ -1,6 +1,0 @@
-Same as netkey-pluto-02, but now, some administrator (eg Tuomo) has
-decided to blackhole unused address space using:
-
-ip route add unreachable 192.0.0.0/16 at east or west.
-
-Apparently, netkey would "need the routing hack" to keep working.

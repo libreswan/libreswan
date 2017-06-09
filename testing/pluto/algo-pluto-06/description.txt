@@ -1,6 +1,0 @@
-This is a test of having the initiator offer AES + 3des, and the responder
-having 3des + AES (note the change of order of algs)
-This is to test bug #789
-
-Same as algo-pluto-05 but now with aes_cbc,3des_cbc vs aes,3des.
-(not sure if this test should fail or pass)

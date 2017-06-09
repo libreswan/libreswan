@@ -33,8 +33,7 @@ SUBDIRS+=readwriteconf
 SUBDIRS+=_import_crl
 
 ifeq ($(USE_KLIPS),true)
-SUBDIRS+= _updown.klips
-SUBDIRS+=spi eroute spigrp tncfg klipsdebug pf_key
+SUBDIRS+= _updown.klips eroute klipsdebug pf_key spi spigrp tncfg
 endif
 ifeq ($(USE_MAST),true)
 SUBDIRS+= _updown.mast

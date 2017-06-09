@@ -37,7 +37,7 @@
 #include "ike_alg_nss_hash_ops.h"
 #include "ike_alg_hmac_prf_ops.h"
 
-struct hash_desc ike_alg_hash_md5 = {
+const struct hash_desc ike_alg_hash_md5 = {
 	.common = {
 		.name = "md5",
 		.names = { "md5", },
@@ -56,7 +56,7 @@ struct hash_desc ike_alg_hash_md5 = {
 };
 
 
-struct prf_desc ike_alg_prf_md5 = {
+const struct prf_desc ike_alg_prf_md5 = {
 	.common = {
 		.name = "md5",
 		.names = { "md5", "hmac_md5", },
@@ -73,7 +73,7 @@ struct prf_desc ike_alg_prf_md5 = {
 	.prf_ops = &ike_alg_hmac_prf_ops,
 };
 
-struct integ_desc ike_alg_integ_md5 = {
+const struct integ_desc ike_alg_integ_md5 = {
 	.common = {
 		.name = "md5",
 		.names = { "md5", "hmac_md5", "hmac_md5_96", },

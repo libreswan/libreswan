@@ -12,30 +12,6 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-# Implement log-level inversion.
-#
-# Ref: https://docs.python.org/2/howto/logging.html#logging-flow
-#
-# By default, a parent (root) logger, regardless of its log-level,
-# will log all the records logged by a child.  For instance, if a
-# child logger is logging at DEBUG-level, then the parent will log
-# (display on the console) those DEBUG-level records even when it has
-# been configured to log only INFO-level records.  This is because the
-# default log-level ("Logger enabled for level of call?") check is
-# only applied once at record-creation.
-#
-# This code allows DEBUG-level logging to a file, while simultaneously
-# (the inversion) restricting console log records to just INFO-level
-# say.
-
-# Add '"%(name)s %(runtime)s: ' prefix to all messages.
-#
-# Ref: https://docs.python.org/3.6/howto/logging-cookbook.html#using-loggeradapters-to-impart-contextual-information
-#
-# It uses the msg edit hack as that seems simple and straight forward.
-# The timer used to generate "runtime" can also nest/stack times
-# making it easy to track sub-processes.
-
 import json
 from datetime import datetime
 

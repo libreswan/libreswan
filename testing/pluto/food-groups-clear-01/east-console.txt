@@ -15,7 +15,7 @@ east NOW
 0.0.0.0/0          -> 0.0.0.0/0          => %trap
 ipsec0->eth1 mtu=16260(9999)->1500
 ROUTING TABLE
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23 
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23 
 192.1.2.0/24 dev ipsec0  proto kernel  scope link  src 192.1.2.23 
 0.0.0.0/1 via 192.1.2.45 dev ipsec0 
 128.0.0.0/1 via 192.1.2.45 dev ipsec0 
@@ -73,7 +73,7 @@ ROUTING TABLE
 192.1.2.129 dev ipsec0  scope link 
 192.1.2.130 dev ipsec0  scope link 
 192.1.2.254 dev ipsec0  scope link 
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23 
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23 
 192.1.2.0/24 dev ipsec0  proto kernel  scope link  src 192.1.2.23 
 192.0.1.0/24 dev ipsec0  scope link 
 0.0.0.0/1 via 192.1.2.45 dev ipsec0 

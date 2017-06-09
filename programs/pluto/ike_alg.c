@@ -40,6 +40,8 @@
 #include "ike_alg_nss_prf_ops.h"
 #include "ike_alg_nss_hash_ops.h"
 #include "ike_alg_dh.h"
+#include "ike_alg_nss_modp.h"
+#include "ike_alg_nss_ecp.h"
 
 #include "ike_alg_null.h"
 #ifdef USE_TWOFISH
@@ -241,40 +243,6 @@ bool ike_alg_is_aead(const struct encrypt_desc *enc_desc)
 }
 
 /*
- * Casts
- */
-
-const struct hash_desc *hash_desc(const struct ike_alg *alg)
-{
-	passert(alg == NULL || alg->algo_type == IKE_ALG_HASH);
-	return (const struct hash_desc *)alg;
-}
-
-const struct prf_desc *prf_desc(const struct ike_alg *alg)
-{
-	passert(alg == NULL || alg->algo_type == IKE_ALG_PRF);
-	return (const struct prf_desc *)alg;
-}
-
-const struct integ_desc *integ_desc(const struct ike_alg *alg)
-{
-	passert(alg == NULL || alg->algo_type == IKE_ALG_INTEG);
-	return (const struct integ_desc *)alg;
-}
-
-const struct encrypt_desc *encrypt_desc(const struct ike_alg *alg)
-{
-	passert(alg == NULL || alg->algo_type == IKE_ALG_ENCRYPT);
-	return (const struct encrypt_desc *)alg;
-}
-
-const struct oakley_group_desc *oakley_group_desc(const struct ike_alg *alg)
-{
-	passert(alg == NULL || alg->algo_type == IKE_ALG_DH);
-	return (const struct oakley_group_desc *)alg;
-}
-
-/*
  * return ike_alg object by {type, key, id}
  */
 
@@ -408,7 +376,7 @@ static void check_names_in_names(const char *adjective,
  * Simple hash functions.
  */
 
-static struct hash_desc *hash_descriptors[] = {
+static const struct hash_desc *hash_descriptors[] = {
 	&ike_alg_hash_md5,
 	&ike_alg_hash_sha1,
 	&ike_alg_hash_sha2_256,
@@ -459,7 +427,7 @@ static const struct type_algorithms ike_alg_hash = {
  * construct.
  */
 
-static struct prf_desc *prf_descriptors[] = {
+static const struct prf_desc *prf_descriptors[] = {
 #ifdef USE_MD5
 	&ike_alg_prf_md5,
 #endif
@@ -530,7 +498,7 @@ static const struct type_algorithms ike_alg_prf = {
  * Integrity.
  */
 
-static struct integ_desc *integ_descriptors[] = {
+static const struct integ_desc *integ_descriptors[] = {
 #ifdef USE_MD5
 	&ike_alg_integ_md5,
 #endif
@@ -590,7 +558,7 @@ static const struct type_algorithms ike_alg_integ = {
  * Encryption
  */
 
-static struct encrypt_desc *encrypt_descriptors[] = {
+static const struct encrypt_desc *encrypt_descriptors[] = {
 #ifdef USE_AES
 	&ike_alg_encrypt_aes_ccm_16,
 	&ike_alg_encrypt_aes_ccm_12,
@@ -722,7 +690,7 @@ static const struct type_algorithms ike_alg_encrypt = {
  * DH group
  */
 
-static struct oakley_group_desc *dhmke_descriptors[] = {
+static const struct oakley_group_desc *dhmke_descriptors[] = {
 	&oakley_group_modp1024,
 	&oakley_group_modp1536,
 	&oakley_group_modp2048,
@@ -747,6 +715,12 @@ static void dhmke_desc_check(const struct ike_alg *alg)
 	passert_ike_alg(alg, dhmke->bytes > 0);
 	passert_ike_alg(alg, dhmke->common.id[IKEv2_ALG_ID] == dhmke->group);
 	passert_ike_alg(alg, dhmke->common.id[IKEv1_OAKLEY_ID] == dhmke->group);
+	/* IKEv1 supports MODP groups but not ECC. */
+	passert_ike_alg(alg, (dhmke->dhmke_ops == &ike_alg_nss_modp_dhmke_ops
+			      ? dhmke->common.id[IKEv1_ESP_ID] == dhmke->group
+			      : dhmke->dhmke_ops == &ike_alg_nss_ecp_dhmke_ops
+			      ? dhmke->common.id[IKEv1_ESP_ID] == 0
+			      : FALSE));
 	/* always implemented */
 	passert_ike_alg(alg, dhmke->dhmke_ops != NULL);
 	passert_ike_alg(alg, dhmke->dhmke_ops->check != NULL);
@@ -771,7 +745,7 @@ static const struct type_algorithms ike_alg_dh = {
 	.type = IKE_ALG_DH,
 	.enum_names = {
 		[IKEv1_OAKLEY_ID] = &oakley_group_names,
-		[IKEv1_ESP_ID] = NULL,
+		[IKEv1_ESP_ID] = &oakley_group_names,
 		[IKEv2_ALG_ID] = &oakley_group_names,
 	},
 	.desc_check = dhmke_desc_check,
@@ -951,7 +925,6 @@ void ike_alg_snprint(char *buf, size_t sizeof_buf,
 	bool v2_ah;
 	switch (alg->algo_type) {
 	case IKE_ALG_PRF:
-	case IKE_ALG_DH:
 	case IKE_ALG_HASH:
 		v1_esp = v2_esp = v1_ah = v2_ah = FALSE;
 		break;
@@ -962,6 +935,7 @@ void ike_alg_snprint(char *buf, size_t sizeof_buf,
 		v2_ah = FALSE;
 		break;
 	case IKE_ALG_INTEG:
+	case IKE_ALG_DH:
 		v1_esp = v1_ah = alg->id[IKEv1_ESP_ID] > 0;
 		v2_esp = v2_ah = alg->id[IKEv2_ALG_ID] > 0;
 		break;

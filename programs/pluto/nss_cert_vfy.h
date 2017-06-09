@@ -24,6 +24,8 @@ extern int verify_and_cache_chain(chunk_t *ders, int num_ders,
 						 CERTCertificate **ee_out,
 						 bool *rev_opts);
 
+extern bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *name);
+
 /* rev_opts index */
 #define RO_OCSP 0
 #define RO_OCSP_S 1

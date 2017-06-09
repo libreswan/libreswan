@@ -63,6 +63,8 @@ OBJS += addrtoa.o addrtot.o addrtypeof.o alg_info.o esp_info.o anyaddr.o \
 # XXX: More is comming as it gets cleaned up and made more library
 # like.
 
+OBJS += ike_alg_desc.o
+
 CFLAGS += -I$(top_srcdir)/lib/libcrypto
 ifeq ($(USE_3DES),true)
 OBJS += ike_alg_3des.o
@@ -84,6 +86,10 @@ ifeq ($(NSS_REQ_AVA_COPY),true)
 OBJS += nss_copies.o
 endif
 
+ifeq ($(USE_UNBOUND_EVENT_H_COPY),true)
+CFLAGS+=-I${LIBRESWANSRCDIR}/include/unbound
+endif
+
 ifeq ($(USE_DNSSEC),true)
 OBJS += unbound.o
 endif
@@ -103,8 +109,6 @@ endif
 CFLAGS+=-I${LIBRESWANSRCDIR}/lib/libcrypto/libsha2
 CFLAGS+=-I${LIBRESWANSRCDIR}/lib/libcrypto/libaes_xcbc
 
-OBJS += version.o
-
 KLIPSSRCDIR?=${LIBRESWANSRCDIR}/linux/net/ipsec
 
 VPATH+= ${KLIPSSRCDIR}
@@ -122,11 +126,18 @@ ifeq ($(NSS_REQ_AVA_COPY),true)
 CFLAGS+=-DNSS_REQ_AVA_COPY
 endif
 
+OBJS += $(abs_builddir)/version.o
+
 include $(top_srcdir)/mk/library.mk
 
 # build version.c using version number from Makefile.ver
-version.c:	version.in.c ${LIBRESWANSRCDIR}/Makefile.ver
-	sed -e '/"/s/@IPSECVERSION@/$(IPSECVERSION)/' -e '/"/s/@IPSECVIDVERSION@/$(IPSECVIDVERSION)/' ${KLIPSSRCDIR}/version.in.c >$@
+$(abs_builddir)/version.c: ${KLIPSSRCDIR}/version.in.c $(top_srcdir)/Makefile.ver
+	rm -f $@.tmp
+	sed -e '/"/s/@IPSECVERSION@/$(IPSECVERSION)/' \
+	    -e '/"/s/@IPSECVIDVERSION@/$(IPSECVIDVERSION)/' \
+	    ${KLIPSSRCDIR}/version.in.c \
+	    > $@.tmp
+	mv $@.tmp $@
 
 # developer-only stuff
 

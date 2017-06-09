@@ -109,9 +109,9 @@ NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
 192.0.1.0/24 via 192.1.2.45 dev eth1 
-192.0.2.0/24 dev eth0  proto kernel  scope link  src 192.0.2.254 
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23 
-192.9.2.0/24 dev eth2  proto kernel  scope link  src 192.9.2.23 
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254 
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23 
+192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23 
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
@@ -135,6 +135,7 @@ east #
 east #
  grep IKEv2_AUTH_ /tmp/pluto.log
 |    auth method: IKEv2_AUTH_NULL (0xd)
+| clear-or-private#192.1.3.0/24 #1 not fetching ipseckey that end rsasigkey != %dnsondemand  can only query DNS for IPSECKEY for ID that is a FQDN, IPV4_ADDR, or IPV6_ADDR id type=ID_NULL IKEv2_AUTH_NULL remote=192.1.3.209 thatid=ID_NULL
 |    auth method: IKEv2_AUTH_RSA (0x1)
 east #
 east #

@@ -1,0 +1,3 @@
+Test CREATE_CHILD_SA initiate IPsec SA section RFC 7296 1.3.1 with pfs=yes
+
+West has two connections to east. Both will share one IKE SA.

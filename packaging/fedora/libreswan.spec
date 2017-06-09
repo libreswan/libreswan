@@ -50,7 +50,7 @@ BuildRequires: nss-devel >= 3.16.1, nspr-devel
 BuildRequires: pam-devel
 BuildRequires: libevent-devel
 %if %{USE_DNSSEC}
-BuildRequires: unbound-devel
+BuildRequires: unbound-devel >= 1.6.0-6 ldns-devel
 %endif
 %if %{USE_SECCOMP}
 BuildRequires: libseccomp-devel
@@ -202,11 +202,6 @@ echo "include %{_sysconfdir}/ipsec.d/*.secrets" \
 rm -fr %{buildroot}%{_sysconfdir}/rc.d/rc*
 
 %if %{cavstests}
-# we should add a new makefile target for this
-cp -a OBJ.linux.*/programs/pluto/cavp %{buildroot}%{_libexecdir}/ipsec
-%endif
-
-%if %{cavstests}
 %check
 # There is an elaborate upstream testing infrastructure which we do not
 # run here - it takes hours and uses kvm
@@ -218,13 +213,13 @@ bunzip2 *.fax.bz2
 export NSS_DISABLE_HW_GCM=1
 
 : starting CAVS test for IKEv2
-OBJ.linux.*/programs/pluto/cavp -v2 ikev2.fax | \
+OBJ.linux.%{_arch}/testing/cavp/cavp -v2 ikev2.fax | \
     diff -u ikev2.fax - > /dev/null
 : starting CAVS test for IKEv1 RSASIG
-OBJ.linux.*/programs/pluto/cavp -v1sig ikev1_dsa.fax | \
+OBJ.linux.%{_arch}/testing/cavp/cavp -v1sig ikev1_dsa.fax | \
     diff -u ikev1_dsa.fax - > /dev/null
 : starting CAVS test for IKEv1 PSK
-OBJ.linux.*/programs/pluto/cavp -v1psk ikev1_psk.fax | \
+OBJ.linux.%{_arch}/testing/cavp/cavp -v1psk ikev1_psk.fax | \
     diff -u ikev1_psk.fax - > /dev/null
 : CAVS tests passed
 %endif

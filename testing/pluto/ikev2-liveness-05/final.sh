@@ -1,3 +1,5 @@
+ipsec whack --trafficstatus
+ipsec whack --shuntstatus
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

@@ -1,14 +1,18 @@
 #start ocsp server here
 nic #
- cp -r /testing/x509/keys/nic.key /etc/ocspd/private/nic_key.pem
+ cp /testing/x509/keys/nic.key /etc/ocspd/private/nic_key.pem
 nic #
- cp -r /testing/x509/certs/nic.crt /etc/ocspd/certs/nic.pem
+ cp /testing/x509/certs/nic.crt /etc/ocspd/certs/nic.pem
 nic #
- cp -r /testing/x509/cacerts/mainca.crt /etc/ocspd/certs/mainca.pem
+ cp /testing/x509/cacerts/mainca.crt /etc/ocspd/certs/mainca.pem
+nic #
+ cp /testing/x509/ocspd.conf /etc/ocspd/
 nic #
  openssl crl -inform DER -in /testing/x509/crls/cacrlvalid.crl -outform PEM -out /etc/ocspd/crls/revoked_crl.pem
 nic #
  #stock ocspd.conf, used separate ones for different configs
+nic #
+ restorecon -R /etc/ocspd
 nic #
  ocspd -v -d -c /etc/ocspd/ocspd.conf
 nic #

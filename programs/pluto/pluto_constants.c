@@ -258,7 +258,7 @@ static const char *const state_story[] = {
 	"received v2I1, sent v2R1",		/* STATE_PARENT_R1 */
 	"received v2I2, PARENT SA established",	/* STATE_PARENT_R2 */
 	"STATE_V2_CREATE_I0",
-	"sent IPSec Child req wait response",
+	"sent IPsec Child req wait response",
 	"STATE_V2_REKEY_IKE_I0",
 	"STATE_V2_REKEY_IKE_I",
 	"STATE_V2_REKEY_CHILD_I0",
@@ -365,9 +365,9 @@ enum_names stfstatus_name = {
  * Note: we drop the POLICY_ prefix so that logs are more concise.
  */
 const char *const sa_policy_bit_names[] = {
-	"AUTH_NEVER",
 	"PSK",
 	"RSASIG",
+	"AUTH_NEVER",
 	"AUTHNULL",
 	"ENCRYPT",
 	"AUTHENTICATE",
@@ -432,6 +432,22 @@ static const char *const policy_fail_names[4] = {
 	"PASS",
 	"DROP",
 	"REJECT",
+};
+
+static const char *const dns_auth_level_name[] = {
+	"DNSSEC_UNKNOWN",
+	"DNSSEC_BOGUS",
+	"DNSSEC_INSECURE",
+	"PUBKEY_LOCAL",
+	"DNSSEC_SECURE",
+	"DNSSEC_ROOF",
+};
+
+enum_names dns_auth_level_names = {
+	DNSSEC_UNKNOWN, DNSSEC_ROOF,
+	ARRAY_REF(dns_auth_level_name),
+	NULL, /* prefix */
+	NULL
 };
 
 /* print a policy: like bitnamesof, but it also does the non-bitfields.

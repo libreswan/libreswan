@@ -15,7 +15,7 @@
  */
 
 #ifdef NOT_YET
-extern struct hash_desc ike_alg_hash_ripemd_160;
-extern struct prf_desc ike_alg_prf_hmac_ripemd_160;
+extern const struct hash_desc ike_alg_hash_ripemd_160;
+extern const struct prf_desc ike_alg_prf_hmac_ripemd_160;
 #endif
-extern struct integ_desc ike_alg_integ_hmac_ripemd_160_96;
+extern const struct integ_desc ike_alg_integ_hmac_ripemd_160_96;

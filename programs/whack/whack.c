@@ -558,7 +558,9 @@ static const struct option long_opts[] = {
 	{ "nexthop", required_argument, NULL, END_NEXTHOP + OO },
 	{ "client", required_argument, NULL, END_CLIENT + OO },
 	{ "clientprotoport", required_argument, NULL, END_CLIENTPROTOPORT + OO },
+#ifdef USE_DNSSEC
 	{ "dnskeyondemand", no_argument, NULL, END_DNSKEYONDEMAND + OO },
+#endif
 	{ "srcip",  required_argument, NULL, END_SRCIP + OO },
 	{ "vtiip",  required_argument, NULL, END_VTIIP + OO },
 	{ "authby",  required_argument, NULL, END_AUTHBY + OO },
@@ -570,9 +572,9 @@ static const struct option long_opts[] = {
 	{ "to", no_argument, NULL, CD_TO + OO },
 
 #define PS(o, p)	{ o, no_argument, NULL, CDP_SINGLETON + POLICY_##p##_IX + OO }
-	PS("auth-never", AUTH_NEVER),
 	PS("psk", PSK),
 	PS("rsasig", RSASIG),
+	PS("auth-never", AUTH_NEVER),
 	PS("auth-null", AUTH_NULL),
 
 	PS("encrypt", ENCRYPT),
@@ -1549,9 +1551,9 @@ int main(int argc, char **argv)
 			end_seen = LEMPTY;
 			continue;
 
-		case CDP_SINGLETON + POLICY_AUTH_NEVER_IX:	/* --auth-never */
 		case CDP_SINGLETON + POLICY_PSK_IX:	/* --psk */
 		case CDP_SINGLETON + POLICY_RSASIG_IX:	/* --rsasig */
+		case CDP_SINGLETON + POLICY_AUTH_NEVER_IX:	/* --auth-never */
 		case CDP_SINGLETON + POLICY_AUTH_NULL_IX:	/* --null */
 
 		case CDP_SINGLETON + POLICY_ENCRYPT_IX:	/* --encrypt */
@@ -2354,10 +2356,12 @@ int main(int argc, char **argv)
 							strtoul(ls, NULL, 10);
 
 						switch (s) {
+						/* these logs are informational only */
 						case RC_COMMENT:
 						case RC_INFORMATIONAL:
 						case RC_INFORMATIONAL_TRAFFIC:
 						case RC_LOG:
+						/* RC_LOG_SERIOUS is supposed to be here according to lswlog.h, but seems oudated? */
 							/* ignore */
 							break;
 						case RC_SUCCESS:
@@ -2389,7 +2393,6 @@ int main(int argc, char **argv)
 								   usernamelen);
 							break;
 
-						/* case RC_LOG_SERIOUS: */
 						default:
 							if (msg.whack_async)
 								exit_status =

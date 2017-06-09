@@ -1,42 +1,33 @@
 /testing/guestbin/swan-prep --userland strongswan
 road #
- strongswan starter --debug-all
-Starting strongSwan 5.4.0 IPsec [starter]...
-Loading config setup
-Loading conn 'client'
-  authby=secret
-  auto=add
-  ike=aes256-sha2_512-modp2048
-  keyexchange=ikev2
-  leftsourceip=%config
-  right=192.1.2.23
-  rightsubnet=192.0.2.0/24
-found netkey IPsec stack
+ service strongswan start
+Redirecting to /bin/systemctl start  strongswan.service
 road #
  echo "initdone"
 initdone
 road #
  strongswan up client
 initiating IKE_SA client[1] to 192.1.2.23
-generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(HASH_ALG) N(REDIR_SUP) ]
-sending packet: from 192.1.3.209[500] to 192.1.2.23[500] (1404 bytes)
-received packet: from 192.1.2.23[500] to 192.1.3.209[500] (432 bytes)
+generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
+sending packet: from 192.1.3.209[500] to 192.1.2.23[500] (XXX bytes)
+received packet: from 192.1.2.23[500] to 192.1.3.209[500] (XXX bytes)
 parsed IKE_SA_INIT response 0 [ SA KE No N(FRAG_SUP) N(NATD_S_IP) N(NATD_D_IP) ]
 local host is behind NAT, sending keep alives
 no IDi configured, fall back on IP address
 authentication of '192.1.3.209' (myself) with pre-shared key
 establishing CHILD_SA client
-generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH CPRQ(ADDR DNS) SA TSi TSr N(MOBIKE_SUP) N(NO_ADD_ADDR) N(EAP_ONLY) ]
-sending packet: from 192.1.3.209[4500] to 192.1.2.23[4500] (417 bytes)
-received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (265 bytes)
+generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH CPRQ(ADDR DNS) SA TSi TSr N(MOBIKE_SUP) N(NO_ADD_ADDR) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
+sending packet: from 192.1.3.209[4500] to 192.1.2.23[4500] (XXX bytes)
+received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
 parsed IKE_AUTH response 1 [ IDr AUTH CPRP(ADDR DNS DNS) SA TSi TSr ]
 authentication of '192.1.2.23' with pre-shared key successful
 IKE_SA client[1] established between 192.1.3.209[192.1.3.209]...192.1.2.23[192.1.2.23]
-scheduling reauthentication in 10195s
-maximum IKE_SA lifetime 10735s
+scheduling reauthentication in XXXs
+maximum IKE_SA lifetime XXXs
 installing DNS server 1.2.3.4 to /etc/strongswan/resolv.conf
-installing DNS server 1.2.3.4 to /etc/strongswan/resolv.conf
+DNS server 1.2.3.4 already installed, increasing refcount
 installing new virtual IP 192.0.1.254
+CHILD_SA client{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.254/32 === 192.0.2.0/24
 connection 'client' established successfully
 road #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
@@ -56,8 +47,8 @@ road #
 road #
  if [ -f /var/run/charon.pid ]; then strongswan status ; fi
 Security Associations (1 up, 0 connecting):
-      client[1]: ESTABLISHED 3 seconds ago, 192.1.3.209[192.1.3.209]...192.1.2.23[192.1.2.23]
-      client{1}:  INSTALLED, TUNNEL, reqid 1, ESP in UDP SPIs: c81cb955_i ee8b7d87_o
+      client[1]: ESTABLISHED XXX second ago, 192.1.3.209[192.1.3.209]...192.1.2.23[192.1.2.23]
+      client{1}:  INSTALLED, TUNNEL, reqid 1, ESP in UDP SPIs: SPISPI_i SPISPI_o
       client{1}:   192.0.1.254/32 === 192.0.2.0/24
 road #
 road #

@@ -12,4 +12,4 @@
  * for more details.
  */
 
-extern struct dhmke_ops ike_alg_nss_ecp_dhmke_ops;
+extern const struct dhmke_ops ike_alg_nss_ecp_dhmke_ops;

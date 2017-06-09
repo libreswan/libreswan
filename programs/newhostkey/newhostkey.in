@@ -26,7 +26,7 @@ bits=
 verbose=
 host=
 seeddev="--seeddev /dev/random"
-output=""
+output=
 nssdir="@IPSEC_NSSDIR@"
 password=
 for dummy; do
@@ -50,11 +50,11 @@ for dummy; do
 	    verbose="--verbose"
 	    ;;
 	--version)
-	    echo "$me $IPSEC_VERSION"
+	    echo "${me} $IPSEC_VERSION"
 	    exit 0
 	    ;;
 	--random)
-	    echo "$me warning: --random is obsoleted, using --seeddev" >&2
+	    echo "${me} warning: --random is obsoleted, using --seeddev" >&2
 	    seeddev="--seeddev ${2}"
 	    shift
 	    ;;
@@ -63,7 +63,7 @@ for dummy; do
 	    shift
 	    ;;
 	--configdir)
-	    echo "$me warning: --configdir is obsoleted, use --nssdir" >&2
+	    echo "${me} warning: --configdir is obsoleted, use --nssdir" >&2
 	    nssdir="${2}"
 	    shift
 	    ;;
@@ -84,7 +84,7 @@ for dummy; do
 	    break
 	    ;;
 	-*)
-	    echo "$me: unknown option \`$1'" >&2
+	    echo "${me}: unknown option \`$1'" >&2
 	    exit 2
 	    ;;
 	*)
@@ -135,7 +135,12 @@ out()
 
 if [ -n "${output}" ]; then
     umask 077
-    TEMPFILE=$(/bin/mktemp ${output}.XXXXXXX)
+    TEMPFILE=$(mktemp ${output}.XXXXXXX)
+    RETVAL=$?
+    if [ ${RETVAL} -gt 0 ]; then
+	echo "${me}: error creating temporary file, aborting" >&2
+	exit ${RETVAL}
+    fi
     if [ -f ${output} ]; then
        cat ${output} >> ${TEMPFILE}
     fi

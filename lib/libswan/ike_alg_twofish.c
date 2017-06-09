@@ -82,7 +82,7 @@ static const struct encrypt_ops twofish_encrypt_ops = {
 	.do_crypt = do_twofish,
 };
 
-struct encrypt_desc ike_alg_encrypt_twofish_cbc =
+const struct encrypt_desc ike_alg_encrypt_twofish_cbc =
 {
 	.common = {
 		.name = "twofish",
@@ -103,7 +103,7 @@ struct encrypt_desc ike_alg_encrypt_twofish_cbc =
 	.encrypt_ops = &twofish_encrypt_ops,
 };
 
-struct encrypt_desc ike_alg_encrypt_twofish_ssh =
+const struct encrypt_desc ike_alg_encrypt_twofish_ssh =
 {
 	.common = {
 		.name = "twofish_ssh", /* We don't know if this is right */

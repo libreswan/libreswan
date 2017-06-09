@@ -54,12 +54,12 @@
 			(conn)->options[KBF_AUTO] = STARTUP_POLICY; \
 	}
 
-#ifdef DNSSEC
+#ifdef USE_DNSSEC
 # include <unbound.h>
 # include <errno.h>
 # include <arpa/inet.h> /* for inet_ntop */
 # include "dnssec.h"
-#endif /* DNSSEC */
+#endif /* USE_DNSSEC */
 
 /**
  * Set up hardcoded defaults, from data in programs/pluto/constants.h
@@ -80,6 +80,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->setup.options[KBF_PLUTOSTDERRLOGTIME] = TRUE;
 	cfg->setup.options[KBF_PLUTOSTDERRLOGAPPEND] = TRUE;
 	cfg->setup.options[KBF_UNIQUEIDS] = TRUE;
+	cfg->setup.options[KBF_DO_DNSSEC] = TRUE;
 	cfg->setup.options[KBF_PERPEERLOG] = FALSE;
 	cfg->setup.options[KBF_IKEPORT] = IKE_UDP_PORT;
 	cfg->setup.options[KBF_NFLOG_ALL] = 0; /* disabled per default */
@@ -94,6 +95,8 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	/* Don't inflict BSI requirements on everyone */
 	cfg->setup.options[KBF_SEEDBITS] = 0;
 	cfg->setup.options[KBF_DROP_OPPO_NULL] = FALSE;
+
+	cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE] = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "dnssec rootkey file");
 
 #ifdef HAVE_LABELED_IPSEC
 	cfg->setup.options[KBF_SECCTX] = SECCTX;
@@ -394,11 +397,7 @@ static bool load_setup(struct starter_config *cfg,
  * @return bool TRUE if failed
  */
 
-static bool validate_end(
-#ifdef DNSSEC
-			struct ub_ctx *dnsctx,
-#endif
-			struct starter_conn *conn_st,
+static bool validate_end(struct starter_conn *conn_st,
 			struct starter_end *end,
 			const char *leftright,
 			bool resolvip UNUSED,
@@ -546,14 +545,14 @@ static bool validate_end(
 		} else {
 			if (tnatoaddr(value, strlen(value), AF_UNSPEC,
 				      &end->nexthop) != NULL) {
-#ifdef DNSSEC
+#ifdef USE_DNSSEC
 				starter_log(LOG_LEVEL_DEBUG,
 					    "Calling unbound_resolve() for %snexthop value",
 					    leftright);
-				if (!unbound_resolve(dnsctx, value,
+				if (!unbound_resolve(value,
 						strlen(value), AF_INET,
 						&end->nexthop) &&
-				    !unbound_resolve(dnsctx, value,
+				    !unbound_resolve(value,
 						strlen(value), AF_INET6,
 						&end->nexthop))
 					ERR_FOUND("bad value for %snexthop=%s\n",
@@ -624,14 +623,14 @@ static bool validate_end(
 
 		if (tnatoaddr(value, strlen(value), AF_UNSPEC,
 			      &end->sourceip) != NULL) {
-#ifdef DNSSEC
+#ifdef USE_DNSSEC
 			starter_log(LOG_LEVEL_DEBUG,
 				    "Calling unbound_resolve() for %ssourceip value",
 				    leftright);
-			if (!unbound_resolve(dnsctx, value,
+			if (!unbound_resolve(value,
 					strlen(value), AF_INET,
 					&end->sourceip) &&
-			    !unbound_resolve(dnsctx, value,
+			    !unbound_resolve(value,
 					strlen(value), AF_INET6,
 					&end->sourceip))
 				ERR_FOUND("bad value for %ssourceip=%s\n",
@@ -649,9 +648,6 @@ static bool validate_end(
 					leftright, value, er);
 		}
 		if (!end->has_client) {
-			starter_log(LOG_LEVEL_INFO,
-				    "%ssourceip= used but not %ssubnet= defined, defaulting %ssubnet to %s",
-				    leftright, leftright, leftright, value);
 			er = addrtosubnet(&end->sourceip, &end->subnet);
 			if (er != NULL) {
 				ERR_FOUND("attempt to default %ssubnet from %s failed: %s",
@@ -965,9 +961,6 @@ static void move_comment_list(struct starter_comments_list *to,
 }
 
 static bool load_conn(
-#ifdef DNSSEC
-		     struct ub_ctx *dnsctx,
-#endif
 		     struct starter_conn *conn,
 		     const struct config_parsed *cfgp,
 		     struct section_list *sl,
@@ -1369,17 +1362,9 @@ static bool load_conn(
 			POLICY_IKE_FRAG_FORCE);
 	}
 
+	err |= validate_end(conn, &conn->left, "left", resolvip, perr);
+	err |= validate_end(conn, &conn->right, "right", resolvip, perr);
 
-	err |= validate_end(
-#ifdef DNSSEC
-		dnsctx,
-#endif
-		conn, &conn->left, "left", resolvip, perr);
-	err |= validate_end(
-#ifdef DNSSEC
-		dnsctx,
-#endif
-		conn, &conn->right, "right", resolvip, perr);
 	/*
 	 * TODO:
 	 * verify both ends are using the same inet family, if one end
@@ -1462,11 +1447,7 @@ struct starter_conn *alloc_add_conn(struct starter_config *cfg, const char *name
 	return conn;
 }
 
-static bool init_load_conn(
-#ifdef DNSSEC
-		   struct ub_ctx *dnsctx,
-#endif
-		   struct starter_config *cfg,
+static bool init_load_conn(struct starter_config *cfg,
 		   const struct config_parsed *cfgp,
 		   struct section_list *sconn,
 		   bool defaultconn,
@@ -1477,11 +1458,7 @@ static bool init_load_conn(
 
 	struct starter_conn *conn = alloc_add_conn(cfg, sconn->name);
 
-	bool connerr = load_conn(
-#ifdef DNSSEC
-				dnsctx,
-#endif
-				conn, cfgp, sconn, TRUE,
+	bool connerr = load_conn(conn, cfgp, sconn, TRUE,
 				defaultconn, resolvip, perr);
 
 	if (connerr) {
@@ -1532,13 +1509,6 @@ struct starter_config *confread_load(const char *file,
 		return NULL;
 	}
 
-#ifdef DNSSEC
-	struct ub_ctx *dnsctx = unbound_init();
-
-	if (dnsctx == NULL)
-		return NULL;
-#endif
-
 	if (!setuponly) {
 		/**
 		 * Find %default
@@ -1546,16 +1516,18 @@ struct starter_config *confread_load(const char *file,
 		 */
 		struct section_list *sconn;
 
+#ifdef USE_DNSSEC
+		unbound_sync_init(cfg->setup.options[KBF_DO_DNSSEC],
+				cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE],
+				cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS]);
+#endif
+
 		for (sconn = cfgp->sections.tqh_first; (!err) && sconn != NULL;
 		     sconn = sconn->link.tqe_next) {
 			if (streq(sconn->name, "%default")) {
 				starter_log(LOG_LEVEL_DEBUG,
 					    "Loading default conn");
-				err |= load_conn(
-#ifdef DNSSEC
-						dnsctx,
-#endif
-						 &cfg->conn_default,
+				err |= load_conn(&cfg->conn_default,
 						 cfgp, sconn, FALSE,
 						/*default conn*/ TRUE,
 						 resolvip, perr);
@@ -1569,19 +1541,15 @@ struct starter_config *confread_load(const char *file,
 		     sconn = sconn->link.tqe_next) {
 			if (streq(sconn->name, "%default"))
 				continue;
-			err |= init_load_conn(
-#ifdef DNSSEC
-						 dnsctx,
-#endif
-						 cfg, cfgp, sconn,
+			err |= init_load_conn(cfg, cfgp, sconn,
 						 FALSE,
 						 resolvip, perr);
 		}
 	}
 
 	parser_free_conf(cfgp);
-#ifdef DNSSEC
-	ub_ctx_delete(dnsctx);
+#ifdef USE_DNSSEC
+	unbound_ctx_free();
 #endif
 	return cfg;
 }

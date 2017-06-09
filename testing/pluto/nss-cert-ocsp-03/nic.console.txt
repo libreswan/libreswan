@@ -8,6 +8,8 @@ nic #
 nic #
  openssl crl -inform DER -in /testing/x509/crls/cacrlvalid.crl -outform PEM -out /etc/ocspd/crls/revoked_crl.pem
 nic #
+ restorecon -R /etc/ocspd
+nic #
  ocspd -v -d -c /etc/ocspd/ocspd.conf
 nic #
  echo "done."

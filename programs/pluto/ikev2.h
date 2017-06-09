@@ -33,8 +33,8 @@ extern stf_status process_encrypted_informational_ikev2(struct msg_digest *md);
 extern stf_status ikev2_parent_outI1_tail(struct pluto_crypto_req_cont *ke,
 						struct pluto_crypto_req *r);
 extern stf_status ikev2_child_ike_inIoutR(struct msg_digest *md);
-extern stf_status ikev2_child_ipsec_inR(struct msg_digest *md);
-extern stf_status ikev2_child_ipsec_inIoutR(struct msg_digest *md);
+extern stf_status ikev2_child_inR(struct msg_digest *md);
+extern stf_status ikev2_child_inIoutR(struct msg_digest *md);
 
 extern stf_status ikev2parent_inI1outR1(struct msg_digest *md);
 extern stf_status ikev2parent_inR1(struct msg_digest *md);
@@ -44,6 +44,8 @@ extern stf_status ikev2parent_inI2outR2(struct msg_digest *md);
 extern stf_status ikev2parent_inR2(struct msg_digest *md);
 extern stf_status ikev2_child_out_cont(struct pluto_crypto_req_cont *qke,
 						struct pluto_crypto_req *r);
+extern stf_status ikev2_child_inR_tail(struct pluto_crypto_req_cont *qke,
+					struct pluto_crypto_req *r);
 extern void ikev2_add_ipsec_child(int whack_sock, struct state *isakmp_sa,
 		struct connection *c, lset_t policy, unsigned long try,
 		so_serial_t replacing
@@ -64,6 +66,8 @@ extern const struct state_v2_microcode ikev2_create_child_initiator_final_microc
 extern v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
 		const char *name);
 
+extern stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest * md);
+
 /* MAGIC: perform f, a function that returns notification_t
  * and return from the ENCLOSING stf_status returning function if it fails.
  */
@@ -74,6 +78,14 @@ extern v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
 	notification_t res = (f); \
 	if (res != NOTHING_WRONG) { \
 		  return STF_FAIL + res; \
+	} \
+}
+
+/* macro that returns STF_STATUS on failure */
+#define RETURN_STF_FAILURE_STATUS(f) { \
+	stf_status res = (f); \
+	if (res != STF_OK) { \
+		return res; \
 	} \
 }
 
@@ -91,7 +103,10 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 				       struct ikev2_proposals **proposals);
 
 void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
-				       struct alg_info_esp *alg_info_esp, lset_t policy,
+				       struct alg_info_esp *alg_info_esp,
+				       lset_t policy,
+				       const struct oakley_group_desc
+						*pfs_group,
 				       struct ikev2_proposals **proposals);
 
 bool ikev2_emit_sa_proposal(pb_stream *pbs,
@@ -306,6 +321,19 @@ void ikev2_isakamp_established(struct state *st,
 				const struct state_v2_microcode
 				*svm, enum state_kind new_state,
 				enum original_role role);
+struct ikev2_ipseckey_dns;
+
+extern stf_status ikev2_rekey_child_copy_ts(const struct msg_digest *md);
+extern stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
+		                bool expect_accepted);
+
+extern bool justship_v2KE(chunk_t *g, const struct oakley_group_desc *group,
+		pb_stream *outs, u_int8_t np);
+
+extern bool is_msg_response(struct msg_digest *md);
+extern bool is_msg_request(struct msg_digest *md);
+
+extern bool need_this_intiator(struct state *st);
 
 #define SEND_V2_NOTIFICATION(t) { \
 	if (st != NULL) \

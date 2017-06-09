@@ -89,12 +89,12 @@ returns.</para>
 <para> The output format looks like this (with long numbers trimmed down for clarity):
 <literallayout remap='.nf'>
 
-	# RSA 2048 bits   xy.example.com   Sat Apr 15 13:53:22 2000
+	# RSA 3744 bits   road.toad.com   Mon Apr 17 22:20:35 2017
 	# for signatures only, UNSAFE FOR ENCRYPTION
-	#pubkey=0sAQOF8tZ2NZt...Y1P+buFuFn/
-	#ckaid=7ddad7f1d5842e...043c499babf0a
-	Modulus: 0xcc2a86fcf440...cf1011abb82d1
-	PublicExponent: 0x03
+	#ckaid=a953473e6014dd4e08eb051e4679dc39be160fea
+	#pubkey=0sBAEAA...sKbTzwE=
+	Modulus: 0xb84ae7d...b0a6d3cf01
+	PublicExponent: 0x010001
 
 </literallayout> <!-- .fi -->
 The first (comment) line, indicating the nature and date of the key, and

@@ -15,6 +15,7 @@
  */
 
 #include <pk11pub.h>
+#include <blapit.h>
 
 #include "lswalloc.h"
 #include "ike_alg.h"
@@ -140,7 +141,7 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_15 = {
 	.encrypt_ops = &ike_alg_nss_gcm_encrypt_ops,
 };
 
-static struct encrypt_desc *encrypts[] = {
+static const struct encrypt_desc *encrypts[] = {
 	&ike_alg_encrypt_aes_gcm_4,
 	&ike_alg_encrypt_aes_gcm_8,
 	&ike_alg_encrypt_aes_gcm_12,
@@ -151,8 +152,8 @@ static struct encrypt_desc *encrypts[] = {
 	NULL,
 };
 
-static struct encrypt_desc *lookup_by_taglen(void) {
-	for (struct encrypt_desc **ep = encrypts; *ep != NULL; ep++) {
+static const struct encrypt_desc *lookup_by_taglen(void) {
+	for (const struct encrypt_desc **ep = encrypts; *ep != NULL; ep++) {
 		if ((*ep)->aead_tag_size * BITS_PER_BYTE == taglen) {
 			return *ep;
 		}
@@ -175,7 +176,7 @@ static void decrypt(void)
 	print_chunk("AAD", aad, 0);
 	print_chunk("Tag", tag, 0);
 
-	struct encrypt_desc *gcm_alg = lookup_by_taglen();
+	const struct encrypt_desc *gcm_alg = lookup_by_taglen();
 	if (gcm_alg == NULL) {
 		fprintf(stderr, "taglen %lu not supported\n",
 			taglen);

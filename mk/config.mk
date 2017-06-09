@@ -244,6 +244,11 @@ NSS_LDFLAGS ?= -lnss3 -lnspr4
 # See https://bugzilla.mozilla.org/show_bug.cgi?id=1336487
 NSS_REQ_AVA_COPY?=true
 
+# When compiling on a system where unbound is missing the required unbound-event.h
+# include file, enable this workaround option that will enable an included copy of
+# this file as shipped with libreswan. The copy is taken from unbound 1.6.0.
+USE_UNBOUND_EVENT_H_COPY?=true
+
 # To build with clang, use: scan-build make programs
 #GCC=clang
 GCC?=gcc
@@ -397,7 +402,7 @@ ifeq ($(OSDEP),linux)
 USE_LINUX_AUDIT?=false
 endif
 
-# Enable Labeled IPSec Functionality (requires SElinux)
+# Enable Labeled IPsec Functionality (requires SElinux)
 USE_LABELED_IPSEC?=false
 
 # Enable seccomp support (whitelist allows syscalls)

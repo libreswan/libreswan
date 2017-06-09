@@ -409,11 +409,9 @@
 #define SHA2_384_DIGEST_SIZE BYTES_FOR_BITS(384)
 #define SHA2_512_DIGEST_SIZE BYTES_FOR_BITS(512)
 
+/* not in blapit.h */
 #define DES_CBC_BLOCK_SIZE BYTES_FOR_BITS(64)
 #define AES_CBC_BLOCK_SIZE BYTES_FOR_BITS(128)
-#define AES_BLOCK_SIZE BYTES_FOR_BITS(128)
-
-#define CAMELLIA_BLOCK_SIZE BYTES_FOR_BITS(128)
 
 #define TWOFISH_CBC_BLOCK_SIZE BYTES_FOR_BITS(128)
 /* SERPENT_CBC_BLOCK_SIZE: BYTES_FOR_BITS(128) */
@@ -1214,6 +1212,7 @@ enum ikev2_cp_type {
  */
 
 enum ikev2_auth_method {
+	IKEv2_AUTH_RESERVED = 0,
 	IKEv2_AUTH_RSA = 1,
 	IKEv2_AUTH_PSK = 2,
 	IKEv2_AUTH_DSA = 3,
@@ -1465,15 +1464,10 @@ typedef enum {
 	/* 40960 - 65535 Private Use */
 } v2_notification_t;
 
-/* Public key algorithm number
- * Same numbering as used in DNSSEC
- * See RFC 2535 DNSSEC 3.2 The KEY Algorithm Number Specification.
- * Also found in BIND 8.2.2 include/isc/dst.h as DST algorithm codes.
- */
-
+/* Public key algorithm number in IPSECKEY DNS RR. See RFC 4025 2.4 */
 enum pubkey_alg {
-	PUBKEY_ALG_RSA = 1,
-	PUBKEY_ALG_DSA = 3,
+	PUBKEY_ALG_DSA = 1,
+	PUBKEY_ALG_RSA = 2,
 };
 
 /*
@@ -1644,26 +1638,6 @@ enum ipsec_comp_algo {
 	/* 64-255 Unassigned */
 };
 
-/* a SIG record in ASCII */
-struct ipsec_dns_sig {
-	char fqdn[256];
-	char dns_sig[768]; /* empty string if not signed */
-};
-
-struct ipsec_raw_key {
-	char id_name[256];
-	char fs_keyid[8];
-};
-
-struct ipsec_identity {
-	enum ike_id_type ii_type;
-	enum ike_cert_type ii_format;
-	union {
-		struct ipsec_dns_sig ipsec_dns_signed;
-		/* some thing for PKIX */
-		struct ipsec_raw_key ipsec_raw_key;
-	} ii_credential;
-};
 
 /* Limits on size of RSA moduli.
  * The upper bound matches that of DNSSEC (see RFC 2537).

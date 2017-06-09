@@ -384,8 +384,8 @@ static int decode_esp(char *algname)
 				"%s: alg_info: cnt=%d ealg[0]=%d aalg[0]=%d\n",
 				progname,
 				alg_info->ai.alg_info_cnt,
-				esp_info->encryptalg,
-				esp_info->authalg);
+				esp_info->transid,
+				esp_info->auth);
 		}
 		esp_ealg_id = esp_info->transid;
 		esp_aalg_id = esp_info->auth;
@@ -1113,9 +1113,15 @@ int main(int argc, char *argv[])
 		if (proc_read_ok) {
 			const struct sadb_alg *alg_p;
 			size_t keylen, minbits, maxbits;
+			/*
+			 * XXX: According to "alg_info.h", TRANSID is
+			 * an "enum ipsec_cipher_algo".  This code
+			 * seems to assume that those values 1:1 map
+			 * onto the corresponding kernel SADB value?
+			 */
 			alg_p = kernel_alg_sadb_alg_get(SADB_SATYPE_ESP,
 							SADB_EXT_SUPPORTED_ENCRYPT,
-							esp_info->encryptalg);
+							esp_info->transid);
 			assert(alg_p != NULL);
 			keylen = enckeylen * 8;
 
@@ -1149,7 +1155,7 @@ int main(int argc, char *argv[])
 			}
 			alg_p = kernel_alg_sadb_alg_get(SADB_SATYPE_ESP,
 							SADB_EXT_SUPPORTED_AUTH,
-							esp_info->authalg);
+							alg_info_esp_aa2sadb(esp_info->auth));
 			assert(alg_p);
 			keylen = authkeylen * 8;
 			minbits = alg_p->sadb_alg_minbits;
@@ -1271,7 +1277,7 @@ int main(int argc, char *argv[])
 
 	switch (alg) {
 	case XF_OTHER_ALG:
-		authalg = esp_info->authalg;
+		authalg = alg_info_esp_aa2sadb(esp_info->auth);
 		if (debug) {
 			fprintf(stdout, "%s: debug: authalg=%d\n",
 				progname, authalg);
@@ -1288,7 +1294,7 @@ int main(int argc, char *argv[])
 		encryptalg = SADB_X_CALG_LZS;
 		break;
 	case XF_OTHER_ALG:
-		encryptalg = esp_info->encryptalg;
+		encryptalg = esp_info->transid;
 		if (debug) {
 			fprintf(stdout, "%s: debug: encryptalg=%d\n",
 				progname, encryptalg);

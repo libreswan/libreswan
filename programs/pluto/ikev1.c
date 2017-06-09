@@ -696,7 +696,7 @@ static stf_status informational(struct msg_digest *md)
 
 				/* to find and store the connection associated with tmp_name */
 				/* ??? how do we know that tmp_name hasn't been freed? */
-				struct connection *tmp_c = con_by_name(tmp_name, FALSE);
+				struct connection *tmp_c = conn_by_name(tmp_name, FALSE, FALSE);
 
 				DBG_cond_dump(DBG_PARSING,
 					      "redirected remote end info:", n_pbs->cur + pbs_left(
@@ -1679,8 +1679,12 @@ void process_packet_tail(struct msg_digest **mdp)
 				}
 			}
 
-			crypto_cbc_encrypt(e, FALSE, md->message_pbs.cur,
-					   pbs_left(&md->message_pbs), st);
+			passert(st->st_new_iv_len >= e->enc_blocksize);
+			st->st_new_iv_len = e->enc_blocksize;   /* truncate */
+			e->encrypt_ops->do_crypt(e, md->message_pbs.cur,
+						 pbs_left(&md->message_pbs),
+						 st->st_enc_key_nss,
+						 st->st_new_iv, FALSE);
 
 		}
 
@@ -2742,24 +2746,31 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		char buf[IDTOA_BUF];
 
 		idtoa(&peer, buf, sizeof(buf));
-		libreswan_log("%s mode peer ID is %s: '%s'",
-			      aggrmode ? "Aggressive" : "Main",
+		libreswan_log("Peer ID is %s: '%s'",
 			      enum_show(&ike_idtype_names, id->isaid_idtype), buf);
 	}
 
-	/* check for certificates */
-	if (!ikev1_decode_cert(md))
-		return FALSE;
+	if (!aggrmode) {
+		/* check for certificates */
+		if (!ikev1_decode_cert(md))
+			return FALSE;
+	}
 
 	/* Now that we've decoded the ID payload, let's see if we
 	 * need to switch connections.
+	 * Aggressive mode cannot switch connections
 	 * We must not switch horses if we initiated:
 	 * - if the initiation was explicit, we'd be ignoring user's intent
 	 * - if opportunistic, we'll lose our HOLD info
 	 */
+	if (aggrmode)
+		return TRUE;
+
 	if (initiator) {
-		if (!same_id(&st->st_connection->spd.that.id, &peer) &&
-		     id_kind(&st->st_connection->spd.that.id) != ID_FROMCERT) {
+		if (!st->st_peer_alt_id &&
+			!same_id(&st->st_connection->spd.that.id, &peer) &&
+			id_kind(&st->st_connection->spd.that.id) != ID_FROMCERT) {
+
 			char expect[IDTOA_BUF],
 			     found[IDTOA_BUF];
 
@@ -2811,20 +2822,28 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 
 		struct connection *r = NULL;
 
-		if ((auth_policy & ~POLICY_AGGRESSIVE) != LEMPTY) {
-			r = refine_host_connection(st, &peer, initiator,
+		/* aggresive mode already pinned ID in first packet */
+		if (!aggrmode) {
+			r = refine_host_connection(st, &peer, FALSE /* initiator */,
 				auth_policy, AUTH_UNSET /* ikev2 only */, &fromcert);
-			pexpect(r != NULL);
 		}
 
 		if (r == NULL) {
 			char buf[IDTOA_BUF];
 
 			idtoa(&peer, buf, sizeof(buf));
-			loglog(RC_LOG_SERIOUS,
-			       "no suitable connection for peer '%s'",
-			       buf);
-			return FALSE;
+			DBG(DBG_CONTROL, DBG_log(
+			       "no more suitable connection for peer '%s'", buf));
+			/* can we continue with what we had? */
+			if (!md->st->st_peer_alt_id &&
+				!same_id(&c->spd.that.id, &peer) &&
+				id_kind(&c->spd.that.id) != ID_FROMCERT) {
+					libreswan_log("Peer mismatch on first found connection and no better connection found");
+					return FALSE;
+			} else {
+				DBG(DBG_CONTROL, DBG_log("Peer ID matches and no better connection found - continuing with existing connection"));
+				r = c;
+			}
 		}
 
 		DBG(DBG_CONTROL, {

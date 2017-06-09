@@ -52,6 +52,7 @@
 #include "ike_alg.h"
 #include "db_ops.h"
 #include "lswfips.h" /* for libreswan_fipsmode */
+#include "crypt_prf.h"
 
 #include "nat_traversal.h"
 
@@ -859,8 +860,10 @@ static bool ike_alg_ok_final(int ealg, unsigned key_len,
 		libreswan_log(
 			"Oakley Transform [%s (%d), %s, %s] refused%s",
 			enum_name(&oakley_enc_names, ealg), key_len,
-			enum_name(&oakley_hash_names,
-				  prf->common.ikev1_oakley_id),
+			(prf != NULL) ?
+				enum_name(&oakley_hash_names,
+					prf->common.ikev1_oakley_id)
+				: "invalid prf",
 			enum_name(&oakley_group_names, group),
 			ealg_insecure ?
 				" due to insecure key_len and enc. alg. not listed in \"ike\" string" :
@@ -901,6 +904,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 	bool xauth_init = FALSE,
 		xauth_resp = FALSE;
 	const char *const role = selection ? "initiator" : "responder";
+	const chunk_t *pss = &empty_chunk;
 
 	passert(c != NULL);
 
@@ -1190,9 +1194,10 @@ psk_common:
 					if ((iap & POLICY_PSK) == LEMPTY) {
 						ugh = "policy does not allow OAKLEY_PRESHARED_KEY authentication";
 					} else {
-						/* check that we can find a preshared secret */
-						if (get_preshared_secret(c)
-						    == NULL)
+						/* check that we can find a proper preshared secret */
+						pss = get_preshared_secret(c);
+
+						if (pss == NULL)
 						{
 							char mid[IDTOA_BUF],
 							     hid[IDTOA_BUF];
@@ -1212,6 +1217,8 @@ psk_common:
 							ugh = builddiag(
 								"Can't authenticate: no preshared key found for `%s' and `%s'",
 								mid, hid);
+						} else {
+							DBG(DBG_PRIVATE, DBG_dump_chunk("User PSK:", *pss));
 						}
 						ta.auth = OAKLEY_PRESHARED_KEY;
 					}
@@ -1398,6 +1405,28 @@ rsasig_common:
 			}
 		}
 
+		if ((st->st_policy & POLICY_PSK) && pss != &empty_chunk && pss != NULL && ta.prf != NULL) {
+			const size_t key_size_min = crypt_prf_fips_key_size_min(ta.prf);
+
+			if (pss->len < key_size_min) {
+				if (libreswan_fipsmode()) {
+					ugh = builddiag("FIPS Error: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
+						st->st_connection->name,
+						pss->len,
+						ta.prf->common.name,
+						key_size_min);
+					loglog(RC_LOG_SERIOUS, "%s", ugh);
+				} else {
+					libreswan_log("WARNING: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
+						st->st_connection->name,
+						pss->len,
+						ta.prf->common.name,
+						key_size_min);
+				}
+			}
+
+		}
+
 		/*
 		 * ML: at last check for allowed transforms in alg_info_ike
 		 */
@@ -1406,8 +1435,10 @@ rsasig_common:
 					      ta.prf,
 					      ta.group != NULL ?
 						ta.group->group : 65535,
-					      c->alg_info_ike))
-				ugh = "OAKLEY proposal refused";
+					      c->alg_info_ike)) {
+					ugh = "OAKLEY proposal refused";
+					loglog(RC_LOG_SERIOUS, "%s", ugh);
+			}
 		}
 
 		if (ugh == NULL) {

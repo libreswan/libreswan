@@ -1,3 +1,3 @@
 /testing/guestbin/swan-prep --userland strongswan --x509
-strongswan starter --debug-all
+service strongswan start
 echo "initdone"

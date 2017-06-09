@@ -32,6 +32,7 @@
 #include <pk11pub.h>
 #include <prmem.h>
 #include <prerror.h>
+#include <blapit.h>
 
 #include "ike_alg_nss_cbc.h"
 #include "ike_alg_nss_gcm.h"
@@ -93,7 +94,7 @@ static const struct cbc_test_vector aes_cbc_test_vectors[] = {
 };
 const struct cbc_test_vector *const aes_cbc_tests = aes_cbc_test_vectors;
 
-struct encrypt_desc ike_alg_encrypt_aes_cbc = {
+const struct encrypt_desc ike_alg_encrypt_aes_cbc = {
 	.common = {
 		.name = "aes",
 		.names = { "aes", "aes_cbc", },
@@ -316,7 +317,7 @@ static const struct encrypt_ops aes_ctr_encrypt_ops = {
 	.do_crypt = do_aes_ctr,
 };
 
-struct encrypt_desc ike_alg_encrypt_aes_ctr =
+const struct encrypt_desc ike_alg_encrypt_aes_ctr =
 {
 	.common = {
 		.name = "aes_ctr",
@@ -384,7 +385,7 @@ static const struct gcm_test_vector aes_gcm_test_vectors[] = {
 };
 const struct gcm_test_vector *const aes_gcm_tests = aes_gcm_test_vectors;
 
-struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
+const struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
 {
 	.common = {
 		.name = "aes_gcm_8",
@@ -410,7 +411,7 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
 	.encrypt_ops = &ike_alg_nss_gcm_encrypt_ops,
 };
 
-struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
+const struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
 {
 	.common = {
 		.name = "aes_gcm_12",
@@ -435,7 +436,7 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
 	.encrypt_ops = &ike_alg_nss_gcm_encrypt_ops,
 };
 
-struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
+const struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
 {
 	.common = {
 		.name = "aes_gcm_16",
@@ -468,7 +469,7 @@ struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
  * https://tools.ietf.org/html/rfc4309#section-7.1
  */
 
-struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =
+const struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =
 {
 	.common = {
 		.name = "aes_ccm_8",
@@ -483,6 +484,7 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =
 		.fips =         TRUE,
 	},
 	.enc_blocksize =  AES_BLOCK_SIZE,
+	.salt_size = 3,
 	.wire_iv_size =  8,
 	.pad_to_blocksize = FALSE,
 	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
@@ -491,7 +493,7 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =
 	.aead_tag_size = 8,
 };
 
-struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
+const struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
 {
 	.common = {
 		.name = "aes_ccm_12",
@@ -506,6 +508,7 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
 		.fips =         TRUE,
 	},
 	.enc_blocksize =  AES_BLOCK_SIZE,
+	.salt_size = 3,
 	.wire_iv_size =  8,
 	.pad_to_blocksize = FALSE,
 	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
@@ -514,7 +517,7 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
 	.aead_tag_size = 12,
 };
 
-struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
+const struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 {
 	.common = {
 		.name = "aes_ccm_16",
@@ -529,6 +532,7 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 		.fips =         TRUE,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
+	.salt_size = 3,
 	.wire_iv_size = 8,
 	.pad_to_blocksize = FALSE,
 	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
@@ -537,7 +541,7 @@ struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 	.aead_tag_size = 16,
 };
 
-struct integ_desc ike_alg_integ_aes_xcbc = {
+const struct integ_desc ike_alg_integ_aes_xcbc = {
 	.common = {
 		.name = "aes_xcbc",
 		.names = { "aes_xcbc", "aes_xcbc_96", },
@@ -553,7 +557,7 @@ struct integ_desc ike_alg_integ_aes_xcbc = {
 	.integ_output_size = AES_XCBC_DIGEST_SIZE_TRUNC, /* XXX 96 */
 };
 
-struct integ_desc ike_alg_integ_aes_cmac = {
+const struct integ_desc ike_alg_integ_aes_cmac = {
 	.common = {
 		.name = "aes_cmac",
 		.names = { "aes_cmac", "aes_cmac_96", },

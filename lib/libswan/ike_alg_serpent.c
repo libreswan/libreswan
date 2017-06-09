@@ -80,7 +80,7 @@ static const struct encrypt_ops serpent_encrypt_ops = {
 	.do_crypt = do_serpent,
 };
 
-struct encrypt_desc ike_alg_encrypt_serpent_cbc =
+const struct encrypt_desc ike_alg_encrypt_serpent_cbc =
 {
 	.common = {
 		.name = "serpent",

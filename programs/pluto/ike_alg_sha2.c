@@ -29,7 +29,7 @@
 #include "ike_alg_nss_hash_ops.h"
 #include "ike_alg_nss_prf_ops.h"
 
-struct hash_desc ike_alg_hash_sha2_256 = {
+const struct hash_desc ike_alg_hash_sha2_256 = {
 	.common = {
 		.name = "sha2_256",
 		.names = { "sha2", "sha256", "sha2_256", },
@@ -48,7 +48,7 @@ struct hash_desc ike_alg_hash_sha2_256 = {
 	.hash_ops = &ike_alg_nss_hash_ops,
 };
 
-struct prf_desc ike_alg_prf_sha2_256 = {
+const struct prf_desc ike_alg_prf_sha2_256 = {
 	.common = {
 		.name = "sha2_256",
 		.names = { "sha2", "sha256", "sha2_256", "hmac_sha2_256", },
@@ -67,7 +67,7 @@ struct prf_desc ike_alg_prf_sha2_256 = {
 	.prf_ops = &ike_alg_nss_prf_ops,
 };
 
-struct integ_desc ike_alg_integ_sha2_256 = {
+const struct integ_desc ike_alg_integ_sha2_256 = {
 	.common = {
 		.name = "sha2_256",
 		.names = { "sha2", "sha256", "sha2_256", "hmac_sha2_256", "hmac_sha2_256_128", },
@@ -85,7 +85,7 @@ struct integ_desc ike_alg_integ_sha2_256 = {
 	.prf = &ike_alg_prf_sha2_256,
 };
 
-struct hash_desc ike_alg_hash_sha2_384 = {
+const struct hash_desc ike_alg_hash_sha2_384 = {
 	.common = {
 		.name = "sha2_384",
 		.names = { "sha384", "sha2_384", },
@@ -104,7 +104,7 @@ struct hash_desc ike_alg_hash_sha2_384 = {
 	.hash_ops = &ike_alg_nss_hash_ops,
 };
 
-struct prf_desc ike_alg_prf_sha2_384 = {
+const struct prf_desc ike_alg_prf_sha2_384 = {
 
 	.common = {
 		.name = "sha2_384",
@@ -124,7 +124,7 @@ struct prf_desc ike_alg_prf_sha2_384 = {
 	.prf_ops = &ike_alg_nss_prf_ops,
 };
 
-struct integ_desc ike_alg_integ_sha2_384 = {
+const struct integ_desc ike_alg_integ_sha2_384 = {
 	.common = {
 		.name = "sha2_384",
 		.names = { "sha384", "sha2_384", "hmac_sha2_384", "hmac_sha2_384_192", },
@@ -142,7 +142,7 @@ struct integ_desc ike_alg_integ_sha2_384 = {
 	.prf = &ike_alg_prf_sha2_384,
 };
 
-struct hash_desc ike_alg_hash_sha2_512 = {
+const struct hash_desc ike_alg_hash_sha2_512 = {
 	.common = {
 		.name = "sha2_512",
 		.names = { "sha512", "sha2_512", },
@@ -161,7 +161,7 @@ struct hash_desc ike_alg_hash_sha2_512 = {
 	.hash_ops = &ike_alg_nss_hash_ops,
 };
 
-struct prf_desc ike_alg_prf_sha2_512 = {
+const struct prf_desc ike_alg_prf_sha2_512 = {
 	.common = {
 		.name = "sha2_512",
 		.names = { "sha512", "sha2_512", "hmac_sha2_512", },
@@ -180,7 +180,7 @@ struct prf_desc ike_alg_prf_sha2_512 = {
 	.prf_ops = &ike_alg_nss_prf_ops,
 };
 
-struct integ_desc ike_alg_integ_sha2_512 = {
+const struct integ_desc ike_alg_integ_sha2_512 = {
 	.common = {
 		.name = "sha2_512",
 		.names = { "sha512", "sha2_512", "hmac_sha2_512", "hmac_sha2_512_256", },

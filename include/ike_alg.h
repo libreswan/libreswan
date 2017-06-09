@@ -216,21 +216,42 @@ struct ike_alg {
 };
 
 struct encrypt_desc {
-	struct ike_alg common;	/* MUST BE FIRST and writable */
+	struct ike_alg common;	/* MUST BE FIRST */
+	/*
+	 * The block size of the encryption algorithm in bytes.
+	 */
 	const size_t enc_blocksize;
 	/*
 	 * Does this algorithm require padding to the above
 	 * ENC_BLOCKSIZE bytes?
 	 *
-	 * This shouldn't be confused with the need to pad things to
+	 * This shouldn't be confused with the need to pad payloads to
 	 * 4-bytes (ESP) or not at all (IKE).
 	 */
 	const bool pad_to_blocksize;
+
 	/*
-	 * Number of additional bytes that should be extracted from
-	 * the initial shared-secret.
+	 * For stream and AEAD ciphers, bytes in addition to the KEY,
+	 * that need to be extracted from initial shared-secret
+	 * (PRF+).  It is concatenated to other material to form an
+	 * ENC_BLOCKSIZE sized "starting variable".
 	 *
-	 * CTR calls this nonce; CCM calls it salt.
+	 * Note: the term "starting variable" comes from Wikipedia.
+	 * The more common term Initialization Vector (IV) has
+	 * conflicting definitions - the RFCs seem to use it to
+	 * describe the chunk of starting variable sent over the wire.
+	 * Another common term is "counter block".
+	 *
+	 * For CTR mode this is called the "nuance value in the
+	 * counter block" (AES-CTR - RFC 3686).  It, the [wire] IV,
+	 * and block counter are concatenated to form the "starting
+	 * variable".
+	 *
+	 * For AEAD, this is called the "salt" (RFC 5282, RFC-4309 -
+	 * AES-CCM-ESP, RFC-4106 - AES-GCM-ESP).  It, and the [wire]
+	 * IV are concatenated to form the "nunce"; the block counter
+	 * and the "nunce" are then concatenated to form the "starting
+	 * variable".
 	 */
 	const size_t salt_size;
 	/*
@@ -263,9 +284,11 @@ struct encrypt_desc {
 	 * If a key-length is required (!keylen_omitted) but omitted
 	 * from the {ike,esp}= line, then both KEYDEFLEN and (if
 	 * different) key_bit_lengths[0] are used in proposals.
+	 *
+	 * The selected keylen bits of keying material are extracted
+	 * from the initial shared-secret (PRF+).
 	 */
 	const unsigned key_bit_lengths[4];
-
 	/*
 	 * The default key length.
 	 *
@@ -419,7 +442,7 @@ struct prf_desc {
 	 *
 	 * If non-NULL its values must be consistent with the above.
 	 */
-	struct hash_desc *hasher;
+	const struct hash_desc *hasher;
 	/*
 	 * FIPS controlled native implementation.
 	 */
@@ -484,7 +507,7 @@ struct integ_desc {
 	 *
 	 * Non-NULL IFF there is a native implementation.
 	 */
-	struct prf_desc *prf;
+	const struct prf_desc *prf;
 };
 
 /*

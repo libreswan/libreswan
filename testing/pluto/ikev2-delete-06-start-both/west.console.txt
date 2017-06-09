@@ -1,0 +1,67 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec auto --add west-east-auto
+002 added connection description "west-east-auto"
+west #
+ echo "initdone"
+initdone
+west #
+ # wait for east to initiate to us
+west #
+ sleep 10
+west #
+ ping -n -c 4 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
+64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.1.2.23 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ipsec whack --trafficstatus
+006 #2: "west-east-auto", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+west #
+ # sending delete/notify should cause east to re-initiate
+west #
+ ipsec auto --down west-east-auto
+002 "west-east-auto": terminating SAs using this connection
+002 "west-east-auto" #2: deleting state (STATE_V2_IPSEC_R) and sending notification
+005 "west-east-auto" #2: ESP traffic information: in=336B out=336B
+002 "west-east-auto" #1: deleting state (STATE_PARENT_R2) and sending notification
+west #
+ sleep 5
+west #
+ # A new IPsec SA should be established (without patch takes 30 seconds)
+west #
+ ipsec whack --trafficstatus
+006 #4: "west-east-auto", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+west #
+ # traffic flow should still work
+west #
+ ping -n -c 4 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
+64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.1.2.23 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ sleep 20
+west #
+ ipsec whack --trafficstatus
+006 #4: "west-east-auto", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

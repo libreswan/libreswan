@@ -1,8 +1,0 @@
-Basic pluto with IKEv2 using X.509 on the responder (west), and Racoon2 on
-the initiator (east).
-
-This is the reverse test of interop-ikev2-racoon-04
-
-NOTE: racoon2 seems to be broken for real X.509 support, so this
-test fails.
-

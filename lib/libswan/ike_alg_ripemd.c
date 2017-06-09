@@ -35,7 +35,7 @@
  * While NSS seemingly supports RIPEMD160, lets not go there.
  */
 
-struct integ_desc ike_alg_integ_hmac_ripemd_160_96 = {
+const struct integ_desc ike_alg_integ_hmac_ripemd_160_96 = {
 	.common = {
 		.name = "ripemd",
 		.names = { "ripemd", "hmac_ripemd", "hmac_ripemd_160_96", },

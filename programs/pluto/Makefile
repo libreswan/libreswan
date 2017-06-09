@@ -123,6 +123,10 @@ LDFLAGS += $(SYSTEMD_WATCHDOG_LDFLAGS)
 
 LDFLAGS += $(CURL_LDFLAGS)
 
+ifeq ($(USE_UNBOUND_EVENT_H_COPY),true)
+CFLAGS+=-I${LIBRESWANSRCDIR}/include/unbound
+endif
+
 # XXX: hack until ike_alg gets a library
 OBJS += ike_info.o
 
@@ -205,6 +209,9 @@ OBJS += foodgroups.o log.o state.o plutomain.o plutoalg.o server.o
 OBJS += state_entry.o
 OBJS += timer.o hmac.o hostpair.o
 OBJS += myid.o ipsec_doi.o
+ifeq ($(USE_DNSSEC),true)
+OBJS += ikev2_ipseckey.o
+endif
 OBJS += ikev1.o ikev1_main.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_struct.o ikev1_msgid.o
 OBJS += ikev2.o ikev2_parent.o ikev2_child.o ikev2_spdb_struct.o
 OBJS += ikev2_rsa.o ikev2_psk.o ikev2_crypto.o

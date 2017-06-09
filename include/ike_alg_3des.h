@@ -14,4 +14,4 @@
  *
  */
 
-extern struct encrypt_desc ike_alg_encrypt_3des_cbc;
+extern const struct encrypt_desc ike_alg_encrypt_3des_cbc;

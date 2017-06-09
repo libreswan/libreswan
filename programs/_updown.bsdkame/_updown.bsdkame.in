@@ -63,7 +63,7 @@ LC_ALL=C export LC_ALL
 #       PLUTO_MY_CLIENT
 #              is the IP address / count of our client subnet.  If
 #              the  client  is  just  the  host,  this will be the
-#              host's own IP address / max (where max  is  32  for
+#              host's own IP address / mask (where max is  32  for
 #              IPv4 and 128 for IPv6).
 #
 #       PLUTO_MY_CLIENT_NET
@@ -92,7 +92,7 @@ LC_ALL=C export LC_ALL
 #       PLUTO_PEER_CLIENT
 #              is the IP address / count of the peer's client sub-
 #              net.   If the client is just the peer, this will be
-#              the peer's own IP address / max (where  max  is  32
+#              the peer's own IP address / mask (where  max is  32
 #              for IPv4 and 128 for IPv6).
 #
 #       PLUTO_PEER_CLIENT_NET
@@ -159,14 +159,7 @@ downrule() {
 addsource() {
 	st=0
 	## add an alias to the loopback interface if not already there
-	cidr=${PLUTO_PEER_CLIENT##*/}
-	snet=${PLUTO_MY_SOURCEIP%/*}/32
-
-	if test "${PLUTO_PEER_CLIENT}" != "${cidr}"
-	then
-		snet=${PLUTO_MY_SOURCEIP%/*}/${cidr}
-	fi
-
+	snet=${PLUTO_MY_SOURCEIP}/32
 	st=1
 	return $st
 }

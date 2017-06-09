@@ -56,7 +56,7 @@
 #include "ipsecconf/keywords.h"
 #include "ipsecconf/parser-controls.h"
 
-#ifdef DNSSEC
+#ifdef USE_DNSSEC
 # include "dnssec.h"
 #endif
 
@@ -67,9 +67,6 @@
 
 char *progname;
 static int verbose = 0;
-#ifdef DNSSEC
-struct ub_ctx *dnsctx = NULL;
-#endif
 
 /* Buffer size for netlink query (~100 bytes) and replies.
  * If DST is specified, reply will be ~100 bytes.
@@ -333,14 +330,14 @@ static int resolve_defaultroute_one(struct starter_end *host,
 		 * and gateway IP to get there.
 		 */
 		if (peer->addrtype == KH_IPHOSTNAME) {
-#ifdef DNSSEC
+#ifdef USE_DNSSEC
 			err_t er = ttoaddr_num(peer->strings[KSCF_IP], 0,
 				AF_UNSPEC, &peer->addr);
 			if (er != NULL) {
 				/* not numeric, so resolve it */
-				if (!unbound_resolve(dnsctx, peer->strings[KSCF_IP],
+				if (!unbound_resolve(peer->strings[KSCF_IP],
 					0, AF_INET, &peer->addr)) {
-						if (!unbound_resolve(dnsctx, peer->strings[KSCF_IP],
+						if (!unbound_resolve(peer->strings[KSCF_IP],
 							0, AF_INET6, &peer->addr)) {
 								return -1;
 						}
@@ -543,10 +540,6 @@ static int resolve_defaultroute_one(struct starter_end *host,
 static
 void resolve_defaultroute(struct starter_conn *conn)
 {
-#ifdef DNSSEC
-	dnsctx = unbound_init();
-#endif
-
 	if (resolve_defaultroute_one(&conn->left, &conn->right) == 1)
 		resolve_defaultroute_one(&conn->left, &conn->right);
 	if (resolve_defaultroute_one(&conn->right, &conn->left) == 1)
@@ -844,6 +837,12 @@ int main(int argc, char *argv[])
 	}
 #endif
 
+#ifdef USE_DNSSEC
+	unbound_sync_init(cfg->setup.options[KBF_DO_DNSSEC],
+		cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE],
+		cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS]);
+#endif
+
 	if (autoall) {
 		if (verbose)
 			printf("loading all conns according to their auto= settings\n");
@@ -1135,8 +1134,8 @@ int main(int argc, char *argv[])
 	}
 
 	confread_free(cfg);
-#ifdef DNSSEC
-	ub_ctx_delete(dnsctx);
+#ifdef USE_DNSSEC
+	unbound_ctx_free();
 #endif
 	exit(exit_status);
 }

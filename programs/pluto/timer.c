@@ -132,6 +132,8 @@ static void retransmit_v1_msg(struct state *st)
 	unsigned long try = st->st_try;
 	unsigned long try_limit = c->sa_keying_tries;
 
+	set_cur_state(st);
+
 	/* Paul: this line can stay attempt 3 of 2 because the cleanup happens when over the maximum */
 	DBG(DBG_CONTROL, {
 		ipstr_buf b;
@@ -232,6 +234,7 @@ static void retransmit_v1_msg(struct state *st)
 			}
 			ipsecdoi_replace(st, LEMPTY, LEMPTY, try);
 		}
+		set_cur_state(st);  /* ipsecdoi_replace would reset cur_state, set it again */
 		delete_state(st);
 		/* note: no md->st to clear */
 	}
@@ -247,6 +250,7 @@ static void retransmit_v2_msg(struct state *st)
 	struct state *pst = state_with_serialno(st->st_clonedfrom);
 
 	passert(st != NULL);
+	set_cur_state(st);
 	c = st->st_connection;
 	try_limit = c->sa_keying_tries;
 	try = st->st_try + 1;
@@ -273,6 +277,11 @@ static void retransmit_v2_msg(struct state *st)
 		try = 0;
 	} else {
 		delay_ms = c->r_interval;
+	}
+
+	if (need_this_intiator(st)) {
+		delete_state(st);
+		return;
 	}
 
 	if (delay_ms != 0) {
@@ -350,6 +359,9 @@ static void retransmit_v2_msg(struct state *st)
 	} else {
 		DBG(DBG_CONTROL, DBG_log("maximum number of keyingtries reached - deleting state"));
 	}
+
+	set_cur_state(st);  /* ipsecdoi_replace would reset cur_state, set it again */
+
 	/*
 	 * XXX There should not have been a child sa unless this was a timeout of
 	 * our CREATE_CHILD_SA request. But our code has moved from parent to child
@@ -363,28 +375,65 @@ static void retransmit_v2_msg(struct state *st)
 	/* note: no md->st to clear */
 }
 
+static bool parent_vanished(struct state *st)
+{
+	struct connection *c = st->st_connection;
+	struct state *pst = state_with_serialno(st->st_clonedfrom);
+
+	if (pst != NULL) {
+
+		if (c != pst->st_connection) {
+			char cib1[CONN_INST_BUF];
+			char cib2[CONN_INST_BUF];
+
+			fmt_conn_instance(c, cib1);
+			fmt_conn_instance(pst->st_connection, cib2);
+
+			DBG(DBG_CONTROLMORE, DBG_log("\"%s\"%s #%lu parent connection of this state is diffeent"
+						" \"%s\"%s #%lu",
+						c->name, cib1, st->st_serialno,
+						pst->st_connection->name, cib2,
+						pst->st_serialno));
+		}
+		return FALSE;
+	}
+
+	loglog(RC_LOG_SERIOUS, "liveness_check error, no IKEv2 parent state #%lu to take %s",
+			st->st_clonedfrom,
+			enum_name(&dpd_action_names, c->dpd_action));
+
+	return TRUE;
+}
+
 /* note: this mutates *st by calling get_sa_info */
 static void liveness_check(struct state *st)
 {
-	struct state *pst;
+	struct state *pst = NULL;
 	deltatime_t last_msg_age;
 
 	struct connection *c = st->st_connection;
+	ipstr_buf this_ip;
+	ipstr_buf that_ip;
 
 	passert(st->st_ikev2);
 
+	set_cur_state(st);
+
 	/* this should be called on a child sa */
 	if (IS_CHILD_SA(st)) {
-		pst = state_with_serialno(st->st_clonedfrom);
-		if (pst == NULL) {
-			DBG(DBG_DPD,
-				DBG_log("liveness_check error, no parent state take dpd action"));
-			liveness_action_hold(c);
+		if (parent_vanished(st)) {
+			liveness_action(c);
 			return;
+		} else {
+			pst = state_with_serialno(st->st_clonedfrom);
 		}
 	} else {
+		pexpect (pst == NULL); /* no more dpd in IKE state */
 		pst = st;
 	}
+
+	ipstr(&st->st_remoteaddr, &that_ip);
+	ipstr(&st->st_localaddr, &this_ip);
 
 	/*
 	 * don't bother sending the check and reset
@@ -402,13 +451,16 @@ static void liveness_check(struct state *st)
 		/* ensure that the very first liveness_check works out */
 		if (last_liveness.mono_secs == UNDEFINED_TIME) {
 			pst->st_last_liveness = last_liveness = tm;
-			DBG(DBG_DPD, DBG_log("liveness initial timestamp set"));
+			DBG(DBG_DPD, DBG_log("#%lu liveness initial timestamp set %ld",
+						st->st_serialno,
+						(long)tm.mono_secs));
 		}
 
 		DBG(DBG_DPD,
-			DBG_log("liveness_check - last_liveness: %ld, tm: %ld",
+			DBG_log("#%lu liveness_check - last_liveness: %ld, tm: %ld "
+				"parent #%lu", st->st_serialno,
 				(long)last_liveness.mono_secs,
-				(long)tm.mono_secs));
+				(long)tm.mono_secs, pst->st_serialno));
 
 		/* ??? MAX the hard way */
 		if (deltaless(c->dpd_timeout, deltatimescale(3, 1, c->dpd_delay)))
@@ -417,35 +469,43 @@ static void liveness_check(struct state *st)
 			timeout = deltasecs(c->dpd_timeout);
 
 		if (pst->st_pend_liveness &&
-		    deltasecs(monotimediff(tm, last_liveness)) >= timeout) {
-			DBG(DBG_DPD,
-				DBG_log("liveness_check - peer has not responded in %ld seconds, with a timeout of %ld, taking action",
+				deltasecs(monotimediff(tm, last_liveness)) >= timeout) {
+			libreswan_log("#%lu liveness_check - peer %s "
+					"has not responded in %ld seconds, with a timeout of "
+					"%ld, taking %s",
+					st->st_serialno, that_ip.buf,
 					(long)deltasecs(monotimediff(tm, last_liveness)),
-					(long)timeout));
-			if(!liveness_action_hold(c))
-				return;
+					(long)timeout,
+					enum_name(&dpd_action_names,
+						c->dpd_action));
+			liveness_action(c);
 
+			return;
 		} else {
 			stf_status ret = ikev2_send_informational(st);
 
 			DBG(DBG_DPD,
-				DBG_log("liveness_check - peer is missing - giving them some time to come back"));
+				DBG_log("#%lu liveness_check - peer %s is missing - giving them some time to come back",
+					st->st_serialno, that_ip.buf));
 
 			if (ret != STF_OK) {
-				DBG(DBG_DPD,
-					DBG_log("failed to send informational"));
+				DBG(DBG_DPD, DBG_log("#%lu failed to send liveness informational from "
+							"%s to %s using parent "
+							" #%lu",
+							st->st_serialno,
+							this_ip.buf,
+							that_ip.buf,
+							pst->st_serialno));
 				return; /* this prevents any new scheduling ??? */
 			}
 		}
 	}
 
-	DBG(DBG_DPD,
-		DBG_log("liveness_check - peer is ok"));
-	delete_liveness_event(st);
+	DBG(DBG_DPD, DBG_log("#%lu liveness_check - peer %s is ok schedule new",
+				st->st_serialno, that_ip.buf));
 	event_schedule(EVENT_v2_LIVENESS,
-		deltasecs(c->dpd_delay) >= MIN_LIVENESS ?
-			deltasecs(c->dpd_delay) : MIN_LIVENESS,
-		st);
+			deltasecs(c->dpd_delay) >= MIN_LIVENESS ?
+			deltasecs(c->dpd_delay) : MIN_LIVENESS, st);
 }
 
 static void ikev2_log_v2_sa_expired(struct state *st, enum event_type type)
@@ -490,27 +550,6 @@ static void ikev2_expire_parent(struct state *st, deltatime_t last_used_age)
 
 	delete_event(pst);
 	event_schedule(EVENT_SA_EXPIRE, 0, pst);
-}
-
-static void delete_pluto_event(struct pluto_event **evp)
-{
-        struct pluto_event *e = *evp;
-
-        if (e == NULL) {
-                DBG(DBG_CONTROLMORE, DBG_log("%s cannot delete NULL event", __func__));
-                return;
-        }
-        /* ??? when would e->ev be NULL? */
-        if (e->ev != NULL) {
-                event_free(e->ev);
-                e->ev = NULL;
-        }
-
-	DBG(DBG_LIFECYCLE,
-	    const char *en = enum_name(&timer_event_names, e->ev_type);
-	    DBG_log("%s: release %s-pe@%p", __func__, en, e));
-        pfree(e);
-        *evp = NULL;
 }
 
 /*
@@ -886,50 +925,6 @@ void delete_event(struct state *st)
 }
 
 /*
- * dump list of events to whacklog
- */
-void timer_list(void)
-{
-#if 0
-/* AA_2015 not yet ported to libevent */
-
-	monotime_t nw;
-	struct p_event *ev = evlist;
-
-	if (ev == (struct p_event *) NULL) {
-		/* Just paranoid */
-		whack_log(RC_LOG, "no events are queued");
-		return;
-	}
-
-	nw = mononow();
-
-	whack_log(RC_LOG, "It is now: %ld seconds since monotonic epoch",
-		(unsigned long)nw.mono_secs);
-
-	while (ev != NULL) {
-		int type = ev->ev_type;
-		struct state *st = ev->ev_state;
-
-		whack_log(RC_LOG, "event %s is schd: %jd (in %jds) #%lu",
-			enum_show(&timer_event_names, type),
-			(intmax_t)ev->ev_time.mono_secs,
-			(intmax_t)deltasecs(monotimediff(ev->ev_time, nw)),
-			st == NULL ? SOS_NOBODY : st->st_serialno);
-
-		if (st != NULL && st->st_connection != NULL) {
-			char cib[CONN_INST_BUF];
-			whack_log(RC_LOG, "    connection: \"%s\"",
-				st->st_connection->name,
-				fmt_conn_instance(st->st_connection, cib));
-		}
-
-		ev = ev->ev_next;
-	}
-#endif
-}
-
-/*
  * This routine places an event in the event list.
  * Delay should really be a deltatime_t but this is easier
  */
@@ -949,12 +944,14 @@ static void event_schedule_tv(enum event_type type, const struct timeval delay, 
 	pexpect(delay.tv_sec < 3600 * 24 * 31);
 
 	ev->ev_type = type;
+	ev->ev_name = enum_name(&timer_event_names, type);
 
 	/* ??? ev_time lacks required precision */
 	ev->ev_time = monotimesum(mononow(), deltatime(delay.tv_sec));
 
 	ev->ev_state = st;
 	ev->ev = pluto_event_new(NULL_FD, EV_TIMEOUT, timer_event_cb, ev, &delay);
+	link_pluto_event_list(ev); /* add to global ist to track */
 
 	/*
 	 * If the event is associated with a state, put a backpointer to the

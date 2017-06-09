@@ -1626,6 +1626,9 @@ IETF registry enum_names:
          match IKEv2_SEC_FC_CT_AUTHENTICATION: OK
 
   ikev2_auth_names:
+    0 -> IKEv2_AUTH_RESERVED
+         search IKEv2_AUTH_RESERVED: OK
+         match IKEv2_AUTH_RESERVED: OK
     1 -> IKEv2_AUTH_RSA
          search IKEv2_AUTH_RSA: OK
          match IKEv2_AUTH_RSA: OK
@@ -2069,6 +2072,9 @@ IETF registry enum_names:
    12 -> ID_FC_NAME
          search ID_FC_NAME: OK
          match ID_FC_NAME: OK
+   13 -> ID_NULL
+         search ID_NULL: OK
+         match ID_NULL: OK
 
   ikev2_idtype_names:
     1 -> ID_IPV4_ADDR

@@ -26,6 +26,7 @@ from fab import stats
 from fab import skip
 from fab import ignore
 from fab import timing
+from fab import publish
 
 def main():
     parser = argparse.ArgumentParser(description="Run tests")
@@ -39,6 +40,7 @@ def main():
     logutil.add_arguments(parser)
     skip.add_arguments(parser)
     ignore.add_arguments(parser)
+    publish.add_arguments(parser)
 
     # These three calls go together
     args = parser.parse_args()
@@ -53,6 +55,7 @@ def main():
     logutil.log_arguments(logger, args)
     skip.log_arguments(logger, args)
     ignore.log_arguments(logger, args)
+    publish.log_arguments(logger, args)
 
     tests = testsuite.load_testsuite_or_tests(logger, args.directories, args,
                                               log_level=logutil.INFO)

@@ -1,1 +1,7 @@
 reference test for strongswan-strongswan interop with EAP
+
+This currently fails on timeout of crl/ocsp fetching. And throws
+some non-utf8 to the console. Disabling of crl/ocsp which is not
+used in this test can only be done by changing strongswan.conf
+to explicitely load all default modules except "revocation". This
+would break things when new modules are added :/

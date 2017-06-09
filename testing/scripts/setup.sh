@@ -1,17 +1,17 @@
+# this script gets invoked in arbitrary sub-directories in testing.
+# Figure out which one it is.
 
 if [ -z "${LIBRESWANSRCDIR}" ]; then
-    if [ -f ../../kvmsetup.sh ]; then
-	LIBRESWANSRCDIR=$(cd ../.. && pwd)
-    else
-	if [ -f ../../../kvmsetup.sh ]; then
-	    LIBRESWANSRCDIR=$(cd ../../.. && pwd)
+    for d in ../.. ../../.. ; do
+	if test -f $d/testing/scripts/setup.sh ; then
+	    LIBRESWANSRCDIR=$d
+	    break
 	fi
-    fi
+    done
 fi
 
-if [ ! -f ${LIBRESWANSRCDIR}/kvmsetup.sh ]; then
-    echo "kvmsetup not found at LIBRESWANSRCDIR=${LIBRESWANSRCDIR}."
-    echo "Is LIBRESWANSRCDIR set correctly?"
+if [ ! -f ${LIBRESWANSRCDIR}/testing/scripts/setup.sh ]; then
+    echo "invalid LIBRESWANSRCDIR=${LIBRESWANSRCDIR}."
     exit 5
 fi
 

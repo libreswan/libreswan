@@ -46,40 +46,25 @@ services --disabled=sm-client,sendmail,network,smartd,crond,atd
 
 @core
 
-# To help avoid duplicates THIS LIST IS SORTED.
+# Install the kernel stuff from the CD so it is somewhat stable.
 
-bind-utils
-gdb
-glibc-devel
 kernel-core
 kernel-devel
 kernel-headers
 kernel-modules
 kernel-modules-extra
-lsof
-make
-mtr
-nc
-net-tools
-nmap
-nss-tools
-psmisc
-pyOpenSSL
-redhat-rpm-config
-rpm-build
-screen
-tcpdump
-telnet
-unbound
-unbound-libs
-wget
-xl2tpd
 
 # for now, let's not try and mix openswan rpm and /usr/local install of openswan
 # later on, we will add an option to switch between "stock" and /usr/local openswan
 -openswan
 -sendmail
 -libreswan
+
+# workaround for vim fedora22 packaging bug. we want vim-enhanced and
+# that clashes with vim-minimal.  Apparently this doesn't work so also
+# try with "rpm -e" below.
+
+-vim-minimal
 
 # nm causes problems and steals our interfaces desipte NM_CONTROLLED="no"
 -NetworkManager
@@ -99,116 +84,10 @@ xl2tpd
 # Tuomo switched to this alternative work-around for pmtu issues
 sysctl -w net.ipv4.tcp_mtu_probing=1
 
-# Install anything missing from the CD, but found in the "Everything"
-# repo here.
-
-# There is also extra stuff, not in a repo, being installed at the
-# very end of this file.
-
-# Capture a before "yum install" log.  If something (such as a 4.x
-# kernel) is inadvertently installed, check this and yum-install.log
-# for what triggered it.
-
-rpm -qa > /var/tmp/rpm-qa.log
-
 # workaround for vim fedora22 packaging bug. we want vim-enhanced and
 # that clashes with vim-minimal.
 
 rpm -e vim-minimal --nodeps
-
-# TODO: if rhel/centos, we should install epel-release too
-
-# To help avoid duplicates THIS LIST IS SORTED.
-
-dnf install -y 2>&1 \
-    ElectricFence \
-    audit-libs-devel \
-    bison \
-    conntrack-tools \
-    curl-devel \
-    fipscheck-devel \
-    flex \
-    gcc \
-    gdb \
-    git \
-    glibc-devel \
-    hping3 \
-    hping3 \
-    ipsec-tools \
-    ldns \
-    ldns-devel \
-    libcap-ng-devel \
-    libfaketime \
-    libevent-devel \
-    libselinux-devel \
-    lsof \
-    nc \
-    nc6 \
-    nsd \
-    nss-devel \
-    nss-tools \
-    nspr-devel \
-    ocspd \
-    openldap-devel \
-    pam-devel \
-    pexpect \
-    python3-pexpect \
-    python3-setproctitle \
-    racoon2 \
-    strace \
-    strongswan \
-    systemd-devel \
-    tar \
-    unbound \
-    unbound-devel \
-    unbound-libs \
-    valgrind \
-    vim-enhanced \
-    xl2tpd \
-    xmlto \
-    | tee /var/tmp/yum-install.log
-
-# Try to avoid wandering version numbers by only upgrading the bare
-# minimum
-
-dnf upgrade -y 2>&1 \
-    pyOpenSSL \
-    | tee /var/tmp/yum-upgrade.log
-
-kvm_debuginfo=true
-$kvm_debuginfo && dnf debuginfo-install -y \
-    ElectricFence \
-    audit-libs \
-    cyrus-sasl \
-    glibc \
-    keyutils \
-    krb5-libs \
-    ldns \
-    libcap-ng \
-    libcom_err \
-    libcurl \
-    libevent \
-    libevent-devel \
-    libgcc \
-    libidn \
-    libselinux \
-    libssh2 \
-    nspr \
-    nss \
-    nss-softokn \
-    nss-softokn-freebl \
-    nss-util \
-    ocspd \
-    openldap \
-    openssl-libs \
-    pam \
-    pcre \
-    python-libs \
-    sqlite \
-    unbound-libs \
-    xz-libs \
-    zlib \
-    | tee /var/tmp/yum-debug-info-install.log
 
 mkdir /testing /source
 

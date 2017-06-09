@@ -71,6 +71,14 @@ void alg_info_snprint_ike_info(char *buf, size_t buflen,
 void alg_info_snprint_ike(char *buf, size_t buflen,
 			  struct alg_info_ike *alg_info)
 {
+	if (alg_info == NULL) {
+		PEXPECT_LOG("%s", "parameter alg_info unexpectedly NULL");
+		/* return some bogus output */
+		snprintf(buf, buflen,
+			 "OOPS, parameter alg_info unexpectedly NULL");
+		return;
+	}
+
 	char *ptr = buf;
 	const char *sep = "";
 
@@ -102,6 +110,14 @@ void alg_info_snprint_ike(char *buf, size_t buflen,
 void alg_info_ike_snprint(char *buf, size_t buflen,
 			  const struct alg_info_ike *alg_info_ike)
 {
+	if (alg_info_ike == NULL) {
+		PEXPECT_LOG("%s", "parameter alg_info_ike unexpectedly NULL");
+		/* return some bogus output */
+		snprintf(buf, buflen,
+			 "OOPS, parameter alg_info unexpectedly NULL");
+		return;
+	}
+
 	char *ptr = buf;
 	char *be = buf + buflen;
 
@@ -125,47 +141,6 @@ void alg_info_ike_snprint(char *buf, size_t buflen,
 		ptr += strlen(ptr);
 		sep = ", ";
 	}
-}
-
-/**
- *      Search oakley_enc_names for a match, eg:
- *              "3des_cbc" <=> "OAKLEY_3DES_CBC"
- *
- * @param str String containing ALG name (eg: AES, 3DES)
- * @return int Registered # of ALG if loaded or -1 on failure.
- */
-static int ealg_getbyname_ike(const char *const str)
-{
-	if (str == NULL || *str == '\0')
-		return -1;
-	int ret = alg_enum_search(&oakley_enc_names, "OAKLEY_", "", str);
-	if (ret < 0)
-		ret = alg_enum_search(&oakley_enc_names, "OAKLEY_", "_CBC", str);
-	return ret;
-}
-
-/**
- *      Search  oakley_hash_names for a match, eg:
- *              "md5" <=> "OAKLEY_MD5"
- * @param str String containing Hash name (eg: MD5, SHA1)
- * @param len Length of str (note: not NUL-terminated)
- * @return int Registered # of Hash ALG if loaded.
- */
-static int aalg_getbyname_ike(const char *str)
-{
-	DBG(DBG_CONTROL, DBG_log("entering aalg_getbyname_ike()"));
-	if (str == NULL || str == '\0')
-		return -1;
-
-	int ret = alg_enum_search(&oakley_hash_names, "OAKLEY_", "",  str);
-	if (ret >= 0)
-		return ret;
-
-	/* Special value for no authentication since zero is already used. */
-	if (strcaseeq(str, "null"))
-		return INT_MAX;
-
-	return -1;
 }
 
 /*
@@ -583,32 +558,6 @@ static const char *ike_add(const struct parser_policy *const policy,
 
 struct alg_info_ike *ikev1_default_ike_info(void)
 {
-	static const struct ike_alg *default_ikev1_groups[] = {
-		&oakley_group_modp2048.common,
-		&oakley_group_modp1536.common,
-		NULL,
-	};
-	static const struct ike_alg *default_ikev1_ealgs[] = {
-		&ike_alg_encrypt_aes_cbc.common,
-		&ike_alg_encrypt_3des_cbc.common,
-		NULL,
-	};
-	static const struct ike_alg *default_ikev1_aalgs[] = {
-		&ike_alg_prf_sha1.common,
-		NULL,
-	};
-	static const struct ike_defaults spdb_defaults = {
-		.groups = {
-			.ikev1 = default_ikev1_groups,
-		},
-		.ealgs = {
-			.ikev1 = default_ikev1_ealgs,
-		},
-		.aalgs = {
-			.ikev1 = default_ikev1_aalgs,
-		},
-	};
-
 	static const struct parser_policy policy = {
 		.ikev1 = TRUE,
 	};
@@ -616,7 +565,7 @@ struct alg_info_ike *ikev1_default_ike_info(void)
 	struct alg_info_ike *default_info = alloc_thing(struct alg_info_ike, "ike_info");
 
 	char err_buf[100] = "";
-	if (ike_add(&policy, &spdb_defaults, &default_info->ai,
+	if (ike_add(&policy, &ike_defaults, &default_info->ai,
 		    NULL, 0, NULL, NULL, NULL,
 		    err_buf, sizeof(err_buf)) != NULL) {
 		PEXPECT_LOG("invalid IKEv1 default algorithms: %s", err_buf);
@@ -627,79 +576,16 @@ struct alg_info_ike *ikev1_default_ike_info(void)
 
 static const char *alg_info_ike_add(const struct parser_policy *const policy,
 				    struct alg_info *alg_info,
-				    int ealg_id, int ek_bits,
-				    int aalg_id,
+				    const struct encrypt_desc *encrypt,
+				    int ealg_id UNUSED, int ek_bits,
+				    int aalg_id UNUSED,
+				    const struct prf_desc *prf,
+				    const struct integ_desc *integ,
 				    const struct oakley_group_desc *dh_group,
 				    char *err_buf, size_t err_buf_len)
 {
-	/*
-	 * Check that the ALG_INFO spec is implemented as IKE_ALG.
-	 *
-	 * XXX: Should this also be filtering out IKEv1 and IKEv2 only
-	 * algorithms?
-	 *
-	 * For the case of alg=0 / "null", should this have a real
-	 * object?
-	 *
-	 * XXX: work-in-progress
-	 */
-	const struct encrypt_desc *ealg = NULL;
-	if (ealg_id > 0) {
-		for (const struct encrypt_desc **algp = next_encrypt_desc(NULL);
-		     algp != NULL; algp = next_encrypt_desc(algp)) {
-			const struct encrypt_desc *alg = *algp;
-			/*
-			 * keylen==0 implies use default or defaults.
-			 */
-			if (ike_alg_is_ike(&(alg)->common)
-			    && alg->common.ikev1_oakley_id == ealg_id) {
-				ealg = alg;
-				break;
-			}
-		}
-		if (ealg == NULL) {
-			struct esb_buf buf;
-			snprintf(err_buf, err_buf_len,
-				 "ENCRYPT algorithm %s=%d is not supported",
-				 enum_showb(&oakley_enc_names, ealg_id, &buf),
-				 ealg_id);
-			return err_buf;
-		}
-		if (ek_bits != 0) {
-			if (!encrypt_has_key_bit_length(ealg, ek_bits)) {
-				struct esb_buf buf;
-				snprintf(err_buf, err_buf_len,
-					 "ENCRYPT algorithm %s with key length %u is not supported",
-					 enum_showb(&oakley_enc_names, ealg_id, &buf),
-					 ek_bits);
-				return err_buf;
-			}
-		}
-	}
-
-	const struct prf_desc *aalg = NULL;
-	if (aalg_id > 0) {
-		for (const struct prf_desc **algp = next_prf_desc(NULL);
-		     algp != NULL; algp = next_prf_desc(algp)) {
-			const struct prf_desc *alg = *algp;
-			if (ike_alg_is_ike(&(alg)->common)
-			    && alg->common.ikev1_oakley_id == aalg_id) {
-				aalg = alg;
-				break;
-			}
-		}
-		if (aalg == NULL) {
-			struct esb_buf buf;
-			snprintf(err_buf, err_buf_len,
-				 "PRF algorithm %s=%d is not supported",
-				 enum_show_shortb(&oakley_hash_names, aalg_id, &buf),
-				 aalg_id);
-			return err_buf;
-		}
-	}
-
 	return ike_add(policy, &ike_defaults, alg_info,
-		       ealg, ek_bits, aalg, NULL, dh_group,
+		       encrypt, ek_bits, prf, integ, dh_group,
 		       err_buf, err_buf_len);
 }
 
@@ -708,9 +594,9 @@ const struct parser_param ike_parser_param = {
 	.ikev1_alg_id = IKEv1_OAKLEY_ID,
 	.protoid = PROTO_ISAKMP,
 	.alg_info_add = alg_info_ike_add,
-	.ealg_getbyname = ealg_getbyname_ike,
-	.aalg_getbyname = aalg_getbyname_ike,
-	.group_byname = dh_alg_byname,
+	.encrypt_alg_byname = encrypt_alg_byname,
+	.prf_alg_byname = prf_alg_byname,
+	.dh_alg_byname = dh_alg_byname,
 };
 
 struct alg_info_ike *alg_info_ike_create_from_str(lset_t policy,

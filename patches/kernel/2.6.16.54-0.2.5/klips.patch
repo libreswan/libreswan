@@ -127,7 +127,7 @@ diff -Naur linux-2.6.16.54-0.2.5/arch/x86_64/defconfig linux-2.6.16.54-0.2.5.osw
 +#
 +
 +#
-+# Libreswan IPSec implementation, KLIPS kernel config defaults
++# Libreswan IPsec implementation, KLIPS kernel config defaults
 +#
 +
 +#
@@ -152,7 +152,7 @@ diff -Naur linux-2.6.16.54-0.2.5/arch/x86_64/defconfig linux-2.6.16.54-0.2.5.osw
 +# To config as static (preferred), 'y'.  To config as module, 'm'.
 +CONFIG_KLIPS=m
 +
-+# To do tunnel mode IPSec, this must be enabled.
++# To do tunnel mode IPsec, this must be enabled.
 +CONFIG_KLIPS_IPIP=y
 +
 +# To enable authentication, say 'y'.   (Highly recommended)
@@ -14255,7 +14255,7 @@ diff -Naur linux-2.6.16.54-0.2.5/net/ipsec/defconfig linux-2.6.16.54-0.2.5.osw2.
 +#
 +
 +#
-+# Libreswan IPSec implementation, KLIPS kernel config defaults
++# Libreswan IPsec implementation, KLIPS kernel config defaults
 +#
 +
 +#
@@ -14280,7 +14280,7 @@ diff -Naur linux-2.6.16.54-0.2.5/net/ipsec/defconfig linux-2.6.16.54-0.2.5.osw2.
 +# To config as static (preferred), 'y'.  To config as module, 'm'.
 +CONFIG_KLIPS=m
 +
-+# To do tunnel mode IPSec, this must be enabled.
++# To do tunnel mode IPsec, this must be enabled.
 +CONFIG_KLIPS_IPIP=y
 +
 +# To enable authentication, say 'y'.   (Highly recommended)

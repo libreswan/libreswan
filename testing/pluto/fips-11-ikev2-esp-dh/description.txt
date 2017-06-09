@@ -1,0 +1,3 @@
+In FIPS mode create an IKEv2 child with strong DH
+
+Was dumping core.

@@ -81,8 +81,11 @@ struct parser_param {
 	 */
 	const char *(*alg_info_add)(const struct parser_policy *const policy,
 				    struct alg_info *alg_info,
+				    const struct encrypt_desc *encrypt,
 				    int ealg_id, int ek_bits,
 				    int aalg_id,
+				    const struct prf_desc *prf,
+				    const struct integ_desc *integ,
 				    const struct oakley_group_desc *dh_group,
 				    char *err_buf, size_t err_buf_len);
 	int (*ealg_getbyname)(const char *const str);
@@ -92,10 +95,22 @@ struct parser_param {
 	 * This lookup functions must set err and return null if NAME
 	 * isn't valid.
 	 */
-	const struct oakley_group_desc *(*group_byname)(const struct parser_param *param,
-							const struct parser_policy *const policy,
-							char *err_buf, size_t err_buf_len,
-							const char *name);
+	const struct ike_alg *(*encrypt_alg_byname)(const struct parser_param *param,
+						    const struct parser_policy *const policy,
+						    char *err_buf, size_t err_buf_len,
+						    const char *name, size_t bit_length);
+	const struct ike_alg *(*prf_alg_byname)(const struct parser_param *param,
+						const struct parser_policy *const policy,
+						char *err_buf, size_t err_buf_len,
+						const char *name, size_t key_bit_length);
+	const struct ike_alg *(*integ_alg_byname)(const struct parser_param *param,
+						  const struct parser_policy *const policy,
+						  char *err_buf, size_t err_buf_len,
+						  const char *name, size_t key_bit_length);
+	const struct ike_alg *(*dh_alg_byname)(const struct parser_param *param,
+					       const struct parser_policy *const policy,
+					       char *err_buf, size_t err_buf_len,
+					       const char *name, size_t key_bit_length);
 };
 
 struct esp_info {
@@ -115,14 +130,14 @@ struct esp_info {
 	const struct integ_desc *esp_integ;
 	u_int16_t auth;         /* enum ikev1_auth_attribute: AUTH */
 	/*
-	 * The above mapped onto SADB/KLIPS/PFKEYv2 equivalent and
-	 * used by the kernel backends.
+	 * PFS/DH negotiation.
+	 *
+	 * XXX: It is called "dh" and not "esp_dh" because "struct
+	 * esp_info" and "struct ike_info", which are pretty much
+	 * identical, are heading for a merge - one less field to
+	 * rename.
 	 */
-	u_int8_t encryptalg;    /* enum sadb_ealg: normally  encryptalg=transid */
-	u_int16_t authalg;	/* enum sadb_aalg: normally  authalg=auth+1
-				 * Paul: apparently related to magic at
-				 * lib/libswan/alg_info.c alg_info_esp_aa2sadb()
-				 */
+	const struct oakley_group_desc *dh;
 };
 
 struct ike_info {
@@ -155,17 +170,13 @@ struct alg_info {
 struct alg_info_esp {
 	struct alg_info ai;	/* common prefix */
 	struct esp_info esp[128];
-	enum ike_trans_type_dh esp_pfsgroup;
+	const struct oakley_group_desc *esp_pfsgroup;
 };
 
 struct alg_info_ike {
 	struct alg_info ai;	/* common prefix */
 	struct ike_info ike[128];
 };
-
-extern enum ipsec_authentication_algo alg_info_esp_aa2sadb(
-	enum ikev1_auth_attribute auth);
-extern int alg_info_esp_sadb2aa(int sadb_aalg);
 
 extern void alg_info_free(struct alg_info *alg_info);
 extern void alg_info_addref(struct alg_info *alg_info);
@@ -218,8 +229,6 @@ void alg_info_snprint_phase2(char *buf, size_t buflen,
 
 extern int alg_enum_search(enum_names *ed, const char *prefix,
 			   const char *postfix, const char *name);
-
-struct oakley_group_desc;	/* so it isn't local to the function prototype */
 
 /*
  * on success: returns alg_info

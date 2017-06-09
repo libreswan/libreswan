@@ -80,6 +80,7 @@
 #include <keyhi.h>
 
 #include "pluto_stats.h"
+#include "ikev2_ipseckey.h"
 
 static void update_state_stats(struct state *st, enum state_kind old_state,
 			       enum state_kind new_state);
@@ -640,12 +641,12 @@ void insert_state(struct state *st)
 
 /*
  * unlink a state object from the hash table, update its RCOOKIE and
- * then, and hash it into the right place.
+ * optionally ICOOKIE, and then hash it into the right place.
  *
- * This doesn't update ICOOKIE_HASH_TABLE since the ICOOKIE didn't
- * change.
+ * ICOOKIE is only updated if icookie != NULL
  */
-void rehash_state(struct state *st, const u_char *rcookie)
+void rehash_state(struct state *st, const u_char *icookie,
+		const u_char *rcookie)
 {
 	DBG(DBG_CONTROL,
 	    DBG_log("rehashing state object #%lu",
@@ -655,6 +656,8 @@ void rehash_state(struct state *st, const u_char *rcookie)
 	remove_state_entry(&st->st_hash_entry);
 	/* update the cookie */
 	memcpy(st->st_rcookie, rcookie, COOKIE_SIZE);
+	if (icookie != NULL)
+		memcpy(st->st_icookie, icookie, COOKIE_SIZE);
 	/* now, re-insert */
 	insert_by_state_cookies(&statetable, &st->st_hash_entry,
 				st->st_icookie, st->st_rcookie);
@@ -787,6 +790,73 @@ static void flush_pending_children(struct state *pst)
 			});
 }
 
+static bool send_delete_check(const struct state *st)
+{
+
+	if (st->st_ikev2_no_del)
+		return FALSE;
+
+	if (IS_IPSEC_SA_ESTABLISHED(st->st_state) ||
+			IS_ISAKMP_SA_ESTABLISHED(st->st_state))
+	{
+		if (st->st_ikev2 &&
+				IS_CHILD_SA(st) &&
+				state_with_serialno(st->st_clonedfrom) == NULL) {
+			/* ??? in v2, there must be a parent */
+			DBG(DBG_CONTROL, DBG_log("deleting state but IKE SA does not exist for this child SA so Informational Exchange cannot be sent"));
+
+			return FALSE;
+		}
+		return TRUE;
+	}
+	return FALSE;
+}
+
+static void delete_state_log(struct state *st)
+{
+	struct connection *const c = st->st_connection;
+	char *send_inf = send_delete_check(st) ? " and sending notification" : "";
+
+	if ((c->policy & POLICY_OPPORTUNISTIC) && !IS_IKE_SA_ESTABLISHED(st)) {
+		/* reduced logging of OE failures */
+		DBG(DBG_LIFECYCLE, {
+				char cib[CONN_INST_BUF];
+				DBG_log("deleting state #%lu (%s) \"%s\"%s%s",
+					st->st_serialno,
+					enum_name(&state_names, st->st_state),
+					c->name,
+					fmt_conn_instance(c, cib), send_inf);
+		});
+	} else if (cur_state != NULL && cur_state == st) {
+		/*
+		 * Don't log state and connection if it is the same as
+		 * the message prefix.
+		 */
+		libreswan_log("deleting state (%s)%s",
+				enum_name(&state_names, st->st_state), send_inf);
+	} else if (cur_state != NULL && cur_state->st_connection ==  st->st_connection) {
+		libreswan_log("deleting other state #%lu (%s)%s",
+				st->st_serialno,
+				enum_name(&state_names, st->st_state),
+				send_inf);
+
+	} else {
+		char cib[CONN_INST_BUF];
+		libreswan_log("deleting other state #%lu connection (%s) \"%s\"%s%s",
+				st->st_serialno,
+				enum_name(&state_names, st->st_state),
+				c->name,
+				fmt_conn_instance(c, cib), send_inf);
+	}
+
+	DBG(DBG_CONTROLMORE,
+	    struct state_category *category = categorize_state(st, st->st_state);
+	    DBG_log("%s state #%lu: %s(%s) => delete",
+		    IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
+		    enum_name(&state_names, st->st_state), category->description));
+
+}
+
 /* delete a state object */
 void delete_state(struct state *st)
 {
@@ -806,37 +876,7 @@ void delete_state(struct state *st)
 		}
 	}
 
-	if ((c->policy & POLICY_OPPORTUNISTIC) && !IS_IKE_SA_ESTABLISHED(st)) {
-		/* reduced logging of OE failures */
-		DBG(DBG_LIFECYCLE, {
-			char cib[CONN_INST_BUF];
-			DBG_log("deleting state #%lu (%s) \"%s\"%s",
-				st->st_serialno,
-				enum_name(&state_names, st->st_state),
-				c->name,
-				fmt_conn_instance(c, cib));
-		});
-	} else if (cur_state == st) {
-		/*
-		 * Don't log state and connection if it is the same as
-		 * the message prefix.
-		 */
-		libreswan_log("deleting state (%s)",
-			enum_name(&state_names, st->st_state));
-	} else {
-		char cib[CONN_INST_BUF];
-		libreswan_log("deleting other state #%lu (%s) \"%s\"%s",
-			st->st_serialno,
-			enum_name(&state_names, st->st_state),
-			c->name,
-			fmt_conn_instance(c, cib));
-	}
-
-	DBG(DBG_CONTROLMORE,
-	    struct state_category *category = categorize_state(st, st->st_state);
-	    DBG_log("%s state #%lu: %s(%s) => delete",
-		    IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
-		    enum_name(&state_names, st->st_state), category->description));
+	delete_state_log(st);
 
 #ifdef USE_LINUX_AUDIT
 	/*
@@ -950,23 +990,18 @@ void delete_state(struct state *st)
 		st->st_suspended_md->st = NULL;
 	}
 
-	/* tell the other side of any IPSEC SAs that are going down */
-	if (!st->st_ikev2_no_del && (IS_IPSEC_SA_ESTABLISHED(st->st_state) ||
-			IS_ISAKMP_SA_ESTABLISHED(st->st_state))) {
-		if (st->st_ikev2 && IS_CHILD_SA(st) &&
-		    state_with_serialno(st->st_clonedfrom) == NULL) {
-			/* ??? in v2, there must be a parent */
-			DBG(DBG_CONTROL, DBG_log("deleting state but IKE SA does not exist for this child SA so Informational Exchange cannot be sent"));
-			change_state(st, STATE_CHILDSA_DEL);
-		} else  {
-			/*
-			 * ??? in IKEv2, we should not immediately delete:
-			 * we should use an Informational Exchange to
-			 * co-ordinate deletion.
-			 * ikev2_delete_out doesn't really accomplish this.
-			 */
-			send_delete(st);
-		}
+	if (send_delete_check(st)) {
+		/*
+		 * tell the other side of any IPSEC SAs that are going down
+		 *
+		 * ??? in IKEv2, we should not immediately delete:
+		 * we should use an Informational Exchange to
+		 * co-ordinate deletion.
+		 * ikev2_delete_out doesn't really accomplish this.
+		 */
+		send_delete(st);
+	} else if (IS_CHILD_SA(st)) {
+		change_state(st, STATE_CHILDSA_DEL);
 	}
 
 	delete_event(st); /* delete any pending timer event */
@@ -1388,6 +1423,7 @@ struct state *duplicate_state(struct state *st, sa_t sa_type)
 	if (sa_type == IPSEC_SA) {
 		memcpy(nst->st_icookie, st->st_icookie, COOKIE_SIZE);
 		memcpy(nst->st_rcookie, st->st_rcookie, COOKIE_SIZE);
+		nst->st_oakley = st->st_oakley;
 	}
 
 	nst->quirks = st->quirks;
@@ -1441,7 +1477,6 @@ struct state *duplicate_state(struct state *st, sa_t sa_type)
 		clone_chunk(st_nr, "st_nr in duplicate_state");
 #   undef clone_chunk
 
-		nst->st_oakley = st->st_oakley;
 	}
 
 	jam_str(nst->st_username, sizeof(nst->st_username),
@@ -2151,6 +2186,29 @@ void fmt_state(struct state *st, const monotime_t n,
 
 /*
  * sorting logic is:
+ *  name
+ *  state serial no#
+ */
+
+static int state_compare_serial(const void *a, const void *b)
+{
+	const struct state *sap = *(const struct state *const *)a;
+	const struct state *sbp = *(const struct state *const *)b;
+	const so_serial_t a_sn = sap->st_serialno;
+	const so_serial_t b_sn = sbp->st_serialno;
+	struct connection *ca = sap->st_connection;
+	struct connection *cb = sbp->st_connection;
+	int ret;
+
+	ret = strcmp(ca->name, cb->name);
+	if (ret != 0)
+		return ret;
+
+	return a_sn < b_sn ? -1 : a_sn > b_sn ? 1 : 0;
+}
+
+/*
+ * sorting logic is:
  *
  *  name
  *  type
@@ -2158,7 +2216,7 @@ void fmt_state(struct state *st, const monotime_t n,
  *  isakmp_sa (XXX probably wrong)
  *
  */
-static int state_compare(const void *a, const void *b)
+static int state_compare_c(const void *a, const void *b)
 {
 	const struct state *sap = *(const struct state *const *)a;
 	struct connection *ca = sap->st_connection;
@@ -2173,7 +2231,7 @@ static int state_compare(const void *a, const void *b)
 /*
  * NULL terminated array of state pointers.
  */
-static struct state **sort_states(void)
+static struct state **sort_states(int (*sort_fn)(const void *, const void *))
 {
 	/* COUNT the number of states. */
 	int count = 0;
@@ -2210,7 +2268,7 @@ static struct state **sort_states(void)
 	}
 
 	/* sort it!  */
-	qsort(array, count, sizeof(struct state *), state_compare);
+	qsort(array, count, sizeof(struct state *), sort_fn);
 
 	return array;
 }
@@ -2218,7 +2276,7 @@ static struct state **sort_states(void)
 void show_traffic_status(void)
 {
 
-	struct state **array = sort_states();
+	struct state **array = sort_states(state_compare_serial);
 
 	/* now print sorted results */
 	if (array != NULL) {
@@ -2254,7 +2312,7 @@ void show_states_status(void)
 		  category.authenticated_ipsec.count, category.anonymous_ipsec.count);
 	whack_log(RC_COMMENT, " ");             /* spacer */
 
-	struct state **array = sort_states();
+	struct state **array = sort_states(state_compare_c);
 
 	if (array != NULL) {
 		monotime_t n = mononow();
@@ -2459,7 +2517,8 @@ void ikev2_repl_est_ipsec(struct state *st, void *data)
 	}
 }
 
-void ikev2_inherit_ipsec_sa(so_serial_t osn, so_serial_t nsn)
+void ikev2_inherit_ipsec_sa(so_serial_t osn, so_serial_t nsn,
+		const u_char *icookie, const u_char *rcookie)
 {
 	/* new sn, IKE parent, Inherit IPSEC SA from previous IKE with osn. */
 
@@ -2472,6 +2531,7 @@ void ikev2_inherit_ipsec_sa(so_serial_t osn, so_serial_t nsn)
 		FOR_EACH_ENTRY(st, i, {
 				if (st->st_clonedfrom == osn) {
 					set_st_clonedfrom(st, nsn);
+					rehash_state(st, icookie, rcookie);
 				}});
 	}
 	return;

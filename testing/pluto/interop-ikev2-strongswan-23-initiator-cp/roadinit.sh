@@ -1,3 +1,4 @@
 /testing/guestbin/swan-prep --userland strongswan
-strongswan starter --debug-all
+service strongswan start
+sleep 3
 echo "initdone"

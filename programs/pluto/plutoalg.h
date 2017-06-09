@@ -1,4 +1,5 @@
 struct connection;
+struct esp_info;
 
 /* status info */
 extern void kernel_alg_show_status(void);
