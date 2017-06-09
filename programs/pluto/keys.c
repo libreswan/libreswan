@@ -552,7 +552,12 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		/* Must free MY_PUBLIC_KEY */
 		struct pubkey *my_public_key = allocate_RSA_public_key_nss(
 			c->spd.this.cert.u.nss_cert);
-		passert(my_public_key != NULL);
+
+		if (my_public_key == NULL) {
+			loglog(RC_LOG_SERIOUS, "Private key not found (missing or token locked?");
+			free_public_key(my_public_key);
+			return NULL;
+		}
 
 		best = lsw_find_secret_by_public_key(pluto_secrets,
 						     my_public_key, kind);
