@@ -14,6 +14,7 @@ v3.21 (Not released)
 * pluto: Cleanup listed events on shutdown to please leak-detective [Antony]
 * pluto: Perform stricter SubjectAltName checks on configured ID's [Paul]
 * pluto: Handle *subnets in --route and --unroute via whack [Mika/Tuomo]
+* NSS: Try harder finding private keys that reside on hardware tokens [Andrew]
 * IKEv2: Opportunistic IPsec support for IPSECKEY records [Antony]
 * IKEv2: New dnssec-enable=yes|no, dnssec-rootkey-file=, dnssec-anchors= [Paul]
 * IKEv2: If CREATE_CHILD_SA superseded retransmit, drop it [Antony]
