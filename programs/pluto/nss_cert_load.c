@@ -73,6 +73,17 @@ static SECStatus ckaid_match(CERTCertificate *cert, SECItem *ignore1 UNUSED, voi
 	return SECSuccess;
 }
 
+CERTCertificate *get_cert_by_ckaid_t_from_nss(ckaid_t ckaid)
+{
+	struct ckaid_match_arg ckaid_match_arg = {
+		.cert = NULL,
+		.ckaid = *ckaid.nss,
+	};
+	PK11_TraverseSlotCerts(ckaid_match, &ckaid_match_arg,
+			       lsw_return_nss_password_file_info());
+	return ckaid_match_arg.cert;
+}
+
 CERTCertificate *get_cert_by_ckaid_from_nss(const char *ckaid)
 {
 	if (ckaid == NULL) {
@@ -88,16 +99,15 @@ CERTCertificate *get_cert_by_ckaid_from_nss(const char *ckaid)
 		return NULL;
 	}
 
-	struct ckaid_match_arg ckaid_match_arg = {
-		.cert = NULL,
-		.ckaid = {
-			.type = siBuffer,
-			.data = (void*) buf,
-			.len = buflen,
-		},
+	SECItem ckaid_nss = {
+		.type = siBuffer,
+		.data = (void*) buf,
+		.len = buflen,
 	};
-	PK11_TraverseSlotCerts(ckaid_match, &ckaid_match_arg,
-			       lsw_return_nss_password_file_info());
+	ckaid_t ckaid_buf = {
+		.nss = &ckaid_nss,
+	};
+	CERTCertificate *cert = get_cert_by_ckaid_t_from_nss(ckaid_buf);
 	pfree(buf);
-	return ckaid_match_arg.cert;
+	return cert;
 }
