@@ -1757,13 +1757,19 @@ int main(int argc, char *argv[])
 							K_SADB_LIFETIME_CURRENT];
 
 					if (s != NULL) {
-						printf("%s: lifetime_current=%d(allocations)/%d(bytes)/%d(addtime)/%d(usetime)/%d(packets)\n",
+						printf("%s: lifetime_current=%d(allocations)/%d(bytes)/%d(addtime)/%d(usetime)"
+#ifdef NOT_YET
+						       "/%d(packets)"
+#endif /* NOT_YET */
+						       "\n",
 						       progname,
 						       s->sadb_lifetime_allocations,
 						       s->sadb_lifetime_bytes,
 						       s->sadb_lifetime_addtime,
 						       s->sadb_lifetime_usetime,
+#ifdef NOT_YET
 						       s->sadb_x_lifetime_packets);
+#endif /* NOT_YET */
 					}
 				}
 				break;
