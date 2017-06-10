@@ -124,7 +124,8 @@ pfkey_ext_track extensions_bitmaps
 			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_ADDRESS_SRC |
-				1ULL << SADB_EXT_ADDRESS_DST
+				1ULL << SADB_EXT_ADDRESS_DST |
+				1ULL << SADB_EXT_LIFETIME_CURRENT
 				,
 /* SADB_ACQUIRE */
 			1ULL << SADB_EXT_RESERVED |

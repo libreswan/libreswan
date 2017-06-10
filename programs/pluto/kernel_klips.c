@@ -2,6 +2,7 @@
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2002  D. Hugh Redelmeier.
  * Copyright (C) 2003 Herbert Xu.
+ * Copyright (C) 2017 Richard Guy Briggs <rgb@tricolour.ca>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -351,6 +352,7 @@ const struct kernel_ops klips_kernel_ops = {
 	.add_sa = pfkey_add_sa,
 	.grp_sa = pfkey_grp_sa,
 	.del_sa = pfkey_del_sa,
+	.get_sa = pfkey_get_sa,
 	.get_spi = NULL,
 	.eroute_idle = pfkey_was_eroute_idle,
 	.inbound_eroute = FALSE,

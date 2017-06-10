@@ -20,6 +20,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Richard Guy Briggs <rgb@tricolour.ca>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -2256,6 +2257,8 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
  * netlink_get_sa - Get SA information from the kernel
  *
  * @param sa Kernel SA to be queried
+ * @param bytes octets processed by IPsec SA
+ * @param add_time timestamp when IPsec SA added
  * @return bool True if successful
  */
 static bool netlink_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
