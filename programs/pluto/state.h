@@ -433,9 +433,9 @@ struct state {
 	/* In a Phase 1 state, preserve peer's public key after authentication */
 	struct pubkey *st_peer_pubkey;
 
-	enum state_kind st_state;               /* State of exchange */
+	enum state_kind st_state;       /* State of exchange */
 
-	u_int8_t st_retransmit;		/* Number of retransmits */
+	u_int32_t st_retransmit;	/* Number of retransmits */
 	unsigned long st_try;		/* Number of times rekeying attempted.
 					 * 0 means the only time.
 					 */

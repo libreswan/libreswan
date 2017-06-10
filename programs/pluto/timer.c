@@ -63,11 +63,12 @@
 
 #include "pluto_sd.h"
 
-static unsigned long retrans_delay(struct state *st, unsigned long delay_ms)
+static unsigned long retrans_delay(struct state *st)
 {
 	struct connection *c = st->st_connection;
+	unsigned long delay_ms = c->r_interval;
 	unsigned long delay_cap = deltamillisecs(c->r_timeout); /* ms */
-	u_int8_t x = st->st_retransmit++;	/* ??? odd type */
+	u_int32_t x = st->st_retransmit++;
 
 	/*
 	 * Very carefully calculate capped exponential backoff.
@@ -154,7 +155,7 @@ static void retransmit_v1_msg(struct state *st)
 	}
 
 	if (delay_ms != 0)
-		delay_ms = retrans_delay(st, delay_ms);
+		delay_ms = retrans_delay(st);
 
 	if (delay_ms != 0) {
 		resend_ike_v1_msg(st, "EVENT_v1_RETRANSMIT");
@@ -265,12 +266,11 @@ static void retransmit_v2_msg(struct state *st)
 			ipstr(&c->spd.that.host_addr, &b),
 			c->name, fmt_conn_instance(c, cib),
 			st->st_serialno, try, try_limit);
-		if (pst != NULL)
-			DBG_log("and parent for %s \"%s\"%s #%lu attempt %lu of %lu",
-				ipstr(&c->spd.that.host_addr, &b),
-				c->name, fmt_conn_instance(c, cib),
-				pst->st_serialno, pst->st_try, try_limit);
-	});
+		DBG_log("and parent for %s \"%s\"%s #%lu attempt %lu of %lu",
+			ipstr(&c->spd.that.host_addr, &b),
+			c->name, fmt_conn_instance(c, cib),
+			pst->st_serialno, pst->st_try, try_limit);
+		});
 
 	if (DBGP(IMPAIR_RETRANSMITS)) {
 		libreswan_log(
@@ -287,7 +287,7 @@ static void retransmit_v2_msg(struct state *st)
 	}
 
 	if (delay_ms != 0) {
-		delay_ms = retrans_delay(st, delay_ms);
+		delay_ms = retrans_delay(st);
 
 		if (delay_ms != 0) {
 			send_ike_msg(pst, "EVENT_v2_RETRANSMIT");
