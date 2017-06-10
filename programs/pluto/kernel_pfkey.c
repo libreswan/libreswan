@@ -1230,8 +1230,10 @@ bool pfkey_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
 				   extensions)
 
 	       && finish_pfkey_msg(extensions, "Get SA", sa->text_said,
-				   &pfb) );
+				   &pfb) ))
+	{
 		return FALSE;
+	}
 
 	// get reply
 

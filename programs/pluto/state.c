@@ -2060,8 +2060,6 @@ void fmt_state(struct state *st, const monotime_t n,
 		if (st->st_ah.present) {
 			add_said(&c->spd.that.host_addr, st->st_ah.attrs.spi,
 				 SA_AH);
-/* needs proper fix, via kernel_ops? */
-#if (defined(linux) && defined(NETKEY_SUPPORT)) || defined(KLIPS) || defined(KLIPS_MAST)
 			if (get_sa_info(st, FALSE, NULL)) {
 				mbcp = humanize_number(st->st_ah.peer_bytes,
 						       mbcp,
@@ -2069,10 +2067,8 @@ void fmt_state(struct state *st, const monotime_t n,
 							  sizeof(traffic_buf),
 						       " AHout=");
 			}
-#endif
 			add_said(&c->spd.this.host_addr, st->st_ah.our_spi,
 				 SA_AH);
-#if defined(linux) && defined(NETKEY_SUPPORT)) || defined(KLIPS) || defined(KLIPS_MAST)
 			if (get_sa_info(st, TRUE, NULL)) {
 				mbcp = humanize_number(st->st_ah.our_bytes,
 						       mbcp,
@@ -2080,20 +2076,16 @@ void fmt_state(struct state *st, const monotime_t n,
 							 sizeof(traffic_buf),
 						       " AHin=");
 			}
-#endif
 			mbcp = humanize_number(
 					(u_long)st->st_ah.attrs.life_kilobytes,
 					mbcp,
 					traffic_buf +
 					  sizeof(traffic_buf),
 					"! AHmax=");
-/* ??? needs proper fix, via kernel_ops? */
 		}
 		if (st->st_esp.present) {
 			add_said(&c->spd.that.host_addr, st->st_esp.attrs.spi,
 				 SA_ESP);
-/* ??? needs proper fix, via kernel_ops? */
-#if defined(linux) && defined(NETKEY_SUPPORT)) || defined(KLIPS) || defined(KLIPS_MAST)
 			if (get_sa_info(st, TRUE, NULL)) {
 				mbcp = humanize_number(st->st_esp.our_bytes,
 						       mbcp,
@@ -2101,10 +2093,8 @@ void fmt_state(struct state *st, const monotime_t n,
 							 sizeof(traffic_buf),
 						       " ESPin=");
 			}
-#endif
 			add_said(&c->spd.this.host_addr, st->st_esp.our_spi,
 				 SA_ESP);
-#if defined(linux) && defined(NETKEY_SUPPORT)) || defined(KLIPS) || defined(KLIPS_MAST)
 			if (get_sa_info(st, FALSE, NULL)) {
 				mbcp = humanize_number(st->st_esp.peer_bytes,
 						       mbcp,
@@ -2112,7 +2102,6 @@ void fmt_state(struct state *st, const monotime_t n,
 							 sizeof(traffic_buf),
 						       " ESPout=");
 			}
-#endif
 
 			mbcp = humanize_number(
 					(u_long)st->st_esp.attrs.life_kilobytes,
@@ -2124,7 +2113,6 @@ void fmt_state(struct state *st, const monotime_t n,
 		if (st->st_ipcomp.present) {
 			add_said(&c->spd.that.host_addr,
 				 st->st_ipcomp.attrs.spi, SA_COMP);
-#if defined(linux) && defined(NETKEY_SUPPORT)) || defined(KLIPS) || defined(KLIPS_MAST)
 			if (get_sa_info(st, FALSE, NULL)) {
 				mbcp = humanize_number(
 						st->st_ipcomp.peer_bytes,
@@ -2133,10 +2121,8 @@ void fmt_state(struct state *st, const monotime_t n,
 						  sizeof(traffic_buf),
 						" IPCOMPout=");
 			}
-#endif
 			add_said(&c->spd.this.host_addr, st->st_ipcomp.our_spi,
 				 SA_COMP);
-#if defined(linux) && defined(NETKEY_SUPPORT)) || defined(KLIPS) || defined(KLIPS_MAST)
 			if (get_sa_info(st, TRUE, NULL)) {
 				mbcp = humanize_number(
 						st->st_ipcomp.our_bytes,
@@ -2145,7 +2131,6 @@ void fmt_state(struct state *st, const monotime_t n,
 						  sizeof(traffic_buf),
 						" IPCOMPin=");
 			}
-#endif
 
 			/* mbcp not subsequently used */
 			mbcp = humanize_number(
