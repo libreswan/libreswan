@@ -36,6 +36,7 @@ v3.21 (Not released)
 * IKEv1: Aggressive Mode fixes for sending CERT / CERTREQ payloads [Paul]
 * XFRM: Use proper alignment for IPv4 AH as per RFC4302 Section 3.3.3.2.1 [Paul]
 * KLIPS: cryptoapi: switch from hash to ahash [Richard]
+* KLIPS: Add traffic accounting support [Richard/Paul]
 * lib: Move the alg_info lookup-by-name code to libswan [Andrew]
 * lib: Move all conditionally compiled ike_alg*.c files to libswan.a [Andrew]
 * addconn: Replace ttoaddr() with calls supporting DNSSEC [Paul/Antony]
