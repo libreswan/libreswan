@@ -1707,18 +1707,19 @@ void ikev2_update_msgid_counters(struct msg_digest *md)
 
 	msgid_t st_msgid_nextuse = ikesa->st_msgid_nextuse;
 
-	if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) &&
+	/* update when sending a request */
+	if (is_msg_request(md) &&
 			(st->st_state == STATE_PARENT_I1 ||
-			st->st_state == STATE_V2_CREATE_I)) {
+			 st->st_state == STATE_V2_CREATE_I)) {
 		ikesa->st_msgid_nextuse += 1;
 		/* an informational exchange does its own increment */
 	} else if (st->st_state == STATE_PARENT_I2) {
 		ikesa->st_msgid_nextuse += 1;
 	}
 
-	if (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) {
+	if (is_msg_response(md)) {
 		/* we were initiator for this message exchange */
-		if (md->msgid_received  ==  v2_INITIAL_MSGID &&
+		if (md->msgid_received == v2_INITIAL_MSGID &&
 				ikesa->st_msgid_lastack == v2_INVALID_MSGID) {
 			ikesa->st_msgid_lastack = md->msgid_received;
 		} else if (md->msgid_received > ikesa->st_msgid_lastack) {
@@ -1732,9 +1733,10 @@ void ikev2_update_msgid_counters(struct msg_digest *md)
 		/* first request from the other side */
 		if (md->msgid_received == v2_INITIAL_MSGID &&
 				ikesa->st_msgid_lastrecv == v2_INVALID_MSGID) {
-			ikesa->st_msgid_lastrecv =v2_INITIAL_MSGID;
+			ikesa->st_msgid_lastrecv = v2_INITIAL_MSGID;
 		}
 	}
+
 	{
 		msgid_t unack = ikesa->st_msgid_nextuse -
 			ikesa->st_msgid_lastack - 1;
@@ -1746,12 +1748,13 @@ void ikev2_update_msgid_counters(struct msg_digest *md)
 
 	DBG(DBG_CONTROLMORE, DBG_log("message ID #%lu %s %s pst #%lu "
 			"st_msgid_nextuse(before=%u) %u "
-			"st_msgid_lastack %u st_msgid_lastrecv %u",
+			"st_msgid_lastack %u st_msgid_lastrecv %u md is a %s",
 			st->st_serialno, enum_name(&state_names, st->st_state),
 			st->st_connection->name, ikesa->st_serialno,
 			st_msgid_nextuse,
 			ikesa->st_msgid_nextuse, ikesa->st_msgid_lastack,
-			ikesa->st_msgid_lastrecv ));
+			ikesa->st_msgid_lastrecv,
+			is_msg_response(md) ? "resonse" : "request"));
 
 }
 
@@ -1900,12 +1903,14 @@ static void success_v2_state_transition(struct msg_digest *md)
 			      enum_name(&state_names, svm->next_state)));
 	}
 
+
 	if (from_state == STATE_V2_REKEY_IKE_R) {
+		ikev2_update_msgid_counters(md);
 		ikev2_child_emancipate(md);
 	} else  {
 		change_state(st, svm->next_state);
+		ikev2_update_msgid_counters(md);
 	}
-	ikev2_update_msgid_counters(md);
 
 	w = RC_NEW_STATE + st->st_state;
 
