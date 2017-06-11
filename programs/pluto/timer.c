@@ -362,17 +362,9 @@ static void retransmit_v2_msg(struct state *st)
 		DBG(DBG_CONTROL, DBG_log("maximum number of keyingtries reached - deleting state"));
 	}
 
-	set_cur_state(st);  /* ipsecdoi_replace would reset cur_state, set it again */
-
-	/*
-	 * XXX There should not have been a child sa unless this was a timeout of
-	 * our CREATE_CHILD_SA request. But our code has moved from parent to child
-	 */
-
-
-	delete_state(st);
 
 	if (pst != st) { 
+		set_cur_state(pst);  /* now we are on pst */
 		if (pst->st_state == STATE_PARENT_I2) {
 			delete_state(pst);
 		} else {
@@ -380,6 +372,15 @@ static void retransmit_v2_msg(struct state *st)
 			freeanychunk(st->st_tpacket);
 		}
 	}
+
+	set_cur_state(st);  /* ipsecdoi_replace would reset cur_state, set it again */
+
+	/*
+	 * XXX There should not have been a child sa unless this was a timeout of
+	 * our CREATE_CHILD_SA request. But our code has moved from parent to child
+	 */
+
+	delete_state(st);
 
 	/* note: no md->st to clear */
 }
