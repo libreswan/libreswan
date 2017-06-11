@@ -337,6 +337,7 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		fake_md = alloc_md("msg_digest by ikev2_crypto_start()");
 		fake_md->st = st;
 		fake_md->from_state = STATE_IKEv2_BASE;
+		fake_md->msgid_received = v2_INVALID_MSGID;
 		md = fake_md;
 	}
 

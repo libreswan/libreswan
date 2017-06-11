@@ -1726,8 +1726,14 @@ void ikev2_update_msgid_counters(struct msg_digest *md)
 		} /* else { lowever message id ignore it? } */
 	} else {
 		/* we were responder for this message exchange */
-		if (md->msgid_received > ikesa->st_msgid_lastrecv)
+		if (md->msgid_received > ikesa->st_msgid_lastrecv) {
 			ikesa->st_msgid_lastrecv = md->msgid_received;
+		}
+		/* first request from the other side */
+		if (md->msgid_received == v2_INITIAL_MSGID &&
+				ikesa->st_msgid_lastrecv == v2_INVALID_MSGID) {
+			ikesa->st_msgid_lastrecv =v2_INITIAL_MSGID;
+		}
 	}
 	{
 		msgid_t unack = ikesa->st_msgid_nextuse -
