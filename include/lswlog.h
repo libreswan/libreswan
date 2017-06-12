@@ -36,8 +36,7 @@ extern int libreswan_log(const char *message, ...) PRINTF_LIKE(1);
  */
 extern void libreswan_loglog(int mess_no, const char *message,
 			     ...) PRINTF_LIKE(2);
-extern void libreswan_log_abort(const char *file_str,
-				int line_no) NEVER_RETURNS;
+
 #include "constants.h"
 
 extern lset_t base_debugging;	/* bits selecting what to report */
