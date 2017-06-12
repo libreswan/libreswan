@@ -13,10 +13,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.4.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 2 packets transmitted, 0 received, 100% packet loss, time XXXX
 road #
- service strongswan start
-Redirecting to /bin/systemctl start  strongswan.service
-road #
- sleep 3
+ ../../pluto/bin/strongswan-start.sh
 road #
  echo "initdone"
 initdone

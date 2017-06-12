@@ -1,9 +1,6 @@
 /testing/guestbin/swan-prep --userland strongswan
 west #
- service strongswan start
-Redirecting to /bin/systemctl start  strongswan.service
-west #
- sleep 3
+ ../../pluto/bin/strongswan-start.sh
 west #
  echo "initdone"
 initdone

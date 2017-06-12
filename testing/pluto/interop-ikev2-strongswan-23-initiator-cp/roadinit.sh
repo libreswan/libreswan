@@ -1,4 +1,3 @@
 /testing/guestbin/swan-prep --userland strongswan
-service strongswan start
-sleep 3
+../../pluto/bin/strongswan-start.sh
 echo "initdone"
