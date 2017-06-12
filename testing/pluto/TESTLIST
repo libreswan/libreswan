@@ -747,8 +747,9 @@ kvmplutotest	ah-pluto-09		good
 kvmplutotest	ah-pluto-10		good
 kvmplutotest	interop-ikev1-strongswan-09-dh22-initiator	good
 kvmplutotest	interop-ikev2-strongswan-09-dh22-initiator	good
-kvmplutotest	interop-ikev1-strongswan-10-ah-initiator-sha256	good
-kvmplutotest	interop-ikev1-strongswan-11-ah-initiator-sha512	good
+# requires strongswan > 5.5.3 see https://wiki.strongswan.org/issues/2347
+kvmplutotest	interop-ikev1-strongswan-10-ah-initiator-sha256	wip
+kvmplutotest	interop-ikev1-strongswan-11-ah-initiator-sha512	wip
 kvmplutotest	interop-ikev1-strongswan-12-esp-sha2_256 good
 kvmplutotest	interop-ikev1-strongswan-13-esp-sha2_512 good
 kvmplutotest	interop-ikev1-strongswan-14-camellia	good
