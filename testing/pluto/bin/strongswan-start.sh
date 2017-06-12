@@ -1,6 +1,10 @@
 #!/bin/sh
 
-service strongswan start
+# Provided nothing goes wrong, this script should have no output.
+# That way, the sanitizers and the reference output don't have to deal
+# with moving targets.
+
+/bin/systemctl start strongswan.service
 
 seconds=0
 while test ${seconds} -lt 10 ; do
@@ -9,8 +13,6 @@ while test ${seconds} -lt 10 ; do
 	*"Security Associations"* )
 	    # should this display the output from "strongswan
 	    # status[all]"
-	    echo "${status}"
-	    echo strongSwan started
 	    exit 0
 	    ;;
     esac
