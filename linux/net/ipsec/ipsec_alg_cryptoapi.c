@@ -6,6 +6,7 @@
  *      JuanJo Ciarlante <jjo-ipsec@mendoza.gov.ar>
  *      Luciano Ruete <docemeses@softhome.net>
  *      (C) 2017 Richard Guy Briggs <rgb@tricolour.ca>
+ *      (C) 2017 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -51,7 +52,9 @@
 #include <linux/types.h>        /* size_t */
 #include <linux/string.h>
 
-#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 6, 0)
+#include "libreswan/ipsec_kversion.h"
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27)
 # include <crypto/hash.h>
 #endif
 
@@ -167,15 +170,18 @@ struct hash_desc {
 	struct crypto_tfm *tfm;
 };
 	#define hmac(X)                                                 #X
-	#define crypto_has_ahash(X, Y, Z)                crypto_alg_available(X, \
-									     0)
+#ifdef HAS_AHASH
+	#define crypto_has_ahash(X, Y, Z) 		crypto_alg_available(X,0)
+
+	#define crypto_alloc_ahash(X, Y, Z)              crypto_alloc_tfm(X, 0)
+	#define crypto_ahash_digest(W, X, Y, Z)  crypto_digest_digest((W)->tfm, X, sg_num, Z)
+#else
+	#define crypto_alloc_hash(X, Y, Z)              crypto_alloc_tfm(X, 0)
+	#define crypto_hash_digestsize(X) crypto_tfm_alg_digestsize(X)
+	#define crypto_hash_digest(W, X, Y, Z) crypto_digest_digest((W)->tfm, X, sg_num, Z)
+#endif
 	#define crypto_hash_cast(X)                             X
 	#define crypto_hash_tfm(X)                              X
-	#define crypto_alloc_ahash(X, Y, Z)              crypto_alloc_tfm(X, 0)
-	#define crypto_ahash_digestsize(X) \
-	crypto_tfm_alg_digestsize(X)
-	#define crypto_ahash_digest(W, X, Y, Z)  \
-	crypto_digest_digest((W)->tfm, X, sg_num, Z)
 
 /* Asymmetric Cipher */
 	#define crypto_has_cipher(X, Y, Z)              crypto_alg_available(X, \
@@ -566,7 +572,11 @@ static int test_cipher_list(struct ipsec_alg_capi_cipher *clist)
  */
 int setup_digest(const char *digestname)
 {
+#ifdef HAS_AHASH
     return crypto_has_ahash(digestname, 0, 0);
+#else
+    return crypto_has_hash(digestname, 0, 0);
+#endif
 }
 /*
  *      setups ipsec_alg_capi_dgest "hyper" struct components, calling
@@ -642,7 +652,11 @@ static __u8 *
 _capi_hmac_new_key(struct ipsec_alg_auth *alg, const __u8 *key, int keylen)
 {
 	struct ipsec_alg_capi_digest *dptr;
+#ifdef HAS_AHASH
 	struct crypto_ahash *tfm  = NULL;
+#else
+	struct crypto_hash *tfm  = NULL;
+#endif
 	int ret = 0;
 
 	dptr = alg->ixt_common.ixt_data;
@@ -656,20 +670,31 @@ _capi_hmac_new_key(struct ipsec_alg_auth *alg, const __u8 *key, int keylen)
 		printk(KERN_DEBUG "klips_debug:_capi_hmac_new_key_auth:"
 				"name=%s dptr=%p key=%p keysize=%d\n",
 				alg->ixt_common.ixt_name, dptr, key, keylen);
-
+#ifdef HAS_AHASH
 	tfm = crypto_alloc_ahash(dptr->digestname, 0, CRYPTO_ALG_ASYNC);
+#else
+	tfm = crypto_alloc_hash(dptr->digestname, 0, CRYPTO_ALG_ASYNC);
+#endif
 	if (IS_ERR(tfm)) {
 		printk(KERN_ERR "_capi_hmac_new_key_auth(): "
 				"NULL hmac for \"%s\" cryptoapi (\"%s\") algo\n"
 				, alg->ixt_common.ixt_name, dptr->digestname);
 		goto err;
 	}
+#ifdef HAS_AHASH
 	if (crypto_ahash_setkey(tfm, key, keylen)<0)
+#else
+	if (crypto_hash_setkey(tfm, key, keylen)<0)
+#endif
 	{
 		printk(KERN_ERR "_capi_hmac_new_key_auth(): "
 				"failed set_key() for \"%s\" cryptoapi algo (key=%p, keylen=%d, err=%d)\n"
 				, alg->ixt_common.ixt_name, key, keylen, ret);
+#ifdef HAS_AHASH
 		crypto_free_ahash(tfm);
+#else
+		crypto_free_hash(tfm);
+#endif
 		tfm=NULL;
 		goto err;
 	}
@@ -687,9 +712,14 @@ err:
 static int
 _capi_hmac_hash(struct ipsec_alg_auth *alg, __u8 *key_a, const __u8 *dat, int len, __u8 *hash, int hashlen)
 {
+#ifdef HAS_AHASH
 	struct crypto_ahash *tfm = (struct crypto_ahash*)key_a;
-	struct scatterlist sg;
 	struct ahash_request *req;
+#else
+	struct crypto_hash *tfm = (struct crypto_hash*)key_a;
+	struct hash_desc desc;
+#endif
+	struct scatterlist sg;
 	int ret = 0;
 	char hash_buf[512];
 
@@ -708,6 +738,7 @@ _capi_hmac_hash(struct ipsec_alg_auth *alg, __u8 *key_a, const __u8 *dat, int le
 	sg_init_table(&sg, 1);
 	sg_set_buf(&sg, dat, len);
 
+#ifdef HAS_AHASH
 	req = ahash_request_alloc(tfm, GFP_ATOMIC);
 	if (!req)
 		return -1;
@@ -715,9 +746,17 @@ _capi_hmac_hash(struct ipsec_alg_auth *alg, __u8 *key_a, const __u8 *dat, int le
 	ahash_request_set_callback(req, 0, NULL, NULL);
 	ahash_request_set_crypt(req, &sg, hash_buf, 2);
 	ret = crypto_ahash_digest(req);
-	memcpy(hash, hash_buf, hashlen);
+#else
+	memset(&desc, 0, sizeof(desc));
+	desc.tfm = tfm;
+	desc.flags = 0;
 
+	ret = crypto_hash_digest(&desc, &sg, len, hash_buf);
+#endif
+	memcpy(hash, hash_buf, hashlen);
+#ifdef HAS_AHASH
 	ahash_request_free(req);
+#endif
 	return ret;
 }
  /*
