@@ -8,5 +8,5 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 ping -n -c 4 -I 192.0.1.254 192.0.2.254
 cp /testing/x509/certs/east.crt /etc/strongswan/ipsec.d/certs/
 cp /testing/x509/cacerts/mainca.crt /etc/strongswan/ipsec.d/cacerts/
-service strongswan start
+../../pluto/bin/strongswan-start.sh
 echo "initdone"

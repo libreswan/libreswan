@@ -28,8 +28,7 @@ west #
 west #
  modprobe cast_common
 west #
- service strongswan start
-Redirecting to /bin/systemctl start  strongswan.service
+ ../../pluto/bin/strongswan-start.sh
 west #
  echo "initdone"
 initdone
