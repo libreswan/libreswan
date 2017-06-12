@@ -90,31 +90,11 @@ static void fmt_log(char *buf, size_t buf_len,
 		sanitize_string(buf, buf_len);
 }
 
-int libreswan_log(const char *message, ...)
+void libreswan_vloglog(int mess_no UNUSED, const char *fmt, va_list ap)
 {
-	va_list args;
 	char m[LOG_WIDTH];	/* longer messages will be truncated */
 
-	va_start(args, message);
-	fmt_log(m, sizeof(m), message, args);
-	va_end(args);
-
-	if (log_to_stderr)
-		fprintf(stderr, "%s\n", m);
-	if (log_to_syslog)
-		syslog(LOG_WARNING, "%s", m);
-
-	return 0;
-}
-
-void libreswan_loglog(int mess_no UNUSED, const char *message, ...)
-{
-	va_list args;
-	char m[LOG_WIDTH];	/* longer messages will be truncated */
-
-	va_start(args, message);
-	fmt_log(m, sizeof(m), message, args);
-	va_end(args);
+	fmt_log(m, sizeof(m), fmt, ap);
 
 	if (log_to_stderr)
 		fprintf(stderr, "%s\n", m);

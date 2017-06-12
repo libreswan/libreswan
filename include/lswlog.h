@@ -28,15 +28,25 @@
 /* moved common code to library file */
 #include "libreswan/passert.h"
 
-#define loglog	libreswan_loglog
-#define plog	libreswan_log
-extern int libreswan_log(const char *message, ...) PRINTF_LIKE(1);
-
-/* Log to both main log and whack log
- * Much like log, actually, except for specifying mess_no.
+/*
+ * Everything goes through here.
+ *
+ * Like vprintf() this modifies AP; to preserve AP use C99's
+ * va_copy().
  */
-extern void libreswan_loglog(int mess_no, const char *message,
-			     ...) PRINTF_LIKE(2);
+extern void libreswan_vloglog(int mess_no, const char *fmt, va_list ap);
+
+/*
+ * Log to both main log and whack log with MESS_NO.
+ */
+#define loglog	libreswan_loglog
+extern void libreswan_loglog(int mess_no, const char *fmt, ...) PRINTF_LIKE(2);
+
+/*
+ * Log to both main log and whack log at level RC_LOG.
+ */
+#define plog	libreswan_log
+extern int libreswan_log(const char *fmt, ...) PRINTF_LIKE(1);
 
 #include "constants.h"
 

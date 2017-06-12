@@ -56,6 +56,8 @@ OBJS += addrtoa.o addrtot.o addrtypeof.o alg_info.o esp_info.o anyaddr.o \
 	lswnss.o \
 	lsw_pexpect_log.o \
 	lsw_passert_fail.o \
+	libreswan_log.o \
+	libreswan_loglog.o \
 	alg_byname.o
 
 OBJS += lswlog.o

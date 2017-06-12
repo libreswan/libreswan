@@ -419,44 +419,12 @@ static void peerlog(const char *prefix, const char *m)
 }
 
 /* thread locks added until all non re-entrant functions it uses have been fixed */
-int libreswan_log(const char *message, ...)
+void libreswan_vloglog(int mess_no, const char *message, va_list args)
 {
-	va_list args;
 	char m[LOG_WIDTH]; /* longer messages will be truncated */
 
 	pthread_mutex_lock(&log_mutex);
-	va_start(args, message);
 	fmt_log(m, sizeof(m), message, args);
-	va_end(args);
-
-	if (log_to_stderr || pluto_log_fp != NULL) {
-		char buf[34] = "";
-
-		if (log_with_timestamp)
-			prettynow(buf, sizeof(buf), "%b %e %T: ");
-		fprintf(log_to_stderr ? stderr : pluto_log_fp,
-			"%s%s\n", buf, m);
-	}
-	if (log_to_syslog)
-		syslog(LOG_WARNING, "%s", m);
-	if (log_to_perpeer)
-		peerlog("", m);
-
-	pthread_mutex_unlock(&log_mutex);
-	whack_log(RC_LOG, "~%s", m);
-	return 0;
-}
-
-/* thread locks added until all non re-entrant functions it uses have been fixed */
-void libreswan_loglog(int mess_no, const char *message, ...)
-{
-	va_list args;
-	char m[LOG_WIDTH]; /* longer messages will be truncated */
-
-	pthread_mutex_lock(&log_mutex);
-	va_start(args, message);
-	fmt_log(m, sizeof(m), message, args);
-	va_end(args);
 
 	if (log_to_stderr || pluto_log_fp != NULL) {
 		char buf[34] = "";
