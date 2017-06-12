@@ -448,7 +448,7 @@ int libreswan_log(const char *message, ...)
 }
 
 /* thread locks added until all non re-entrant functions it uses have been fixed */
-void loglog(int mess_no, const char *message, ...)
+void libreswan_loglog(int mess_no, const char *message, ...)
 {
 	va_list args;
 	char m[LOG_WIDTH]; /* longer messages will be truncated */
