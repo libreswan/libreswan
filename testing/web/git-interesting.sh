@@ -26,6 +26,11 @@ Examine <gitrev> in <repodir> and determine if it is sufficiently
 EOF
 }
 
+if test $# -lt 1; then
+    usage
+    exit 1
+fi
+
 set -eu
 
 webdir=$(cd $(dirname $0) && pwd)
@@ -81,6 +86,7 @@ if git show "${gitrev}^{commit}" \
        mk \
        programs \
        include \
+       linux \
        testing/pluto \
        testing/sanitizers \
        testing/baseconfigs \
