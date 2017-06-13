@@ -73,6 +73,7 @@ function lsw_summary_table(table_id, summary) {
 	    // no longer used and just waste space.
 	    if (status == "bad") return
 	    if (status == "skiptest") return
+	    if (status == "goos") return
 
 	    var results_seen = statuses_seen[status]
 	    var results_columns = []
