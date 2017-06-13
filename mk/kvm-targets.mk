@@ -497,6 +497,8 @@ install-kvm-domain-$(KVM_BASE_DOMAIN): $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
 kvm-upgrade-base-domain:
 	$(if $(KVM_PACKAGES), $(KVMSH) --shutdown $(KVM_BASE_DOMAIN) \
 		$(KVM_PACKAGE_INSTALL) $(KVM_PACKAGES))
+	$(if $(KVM_INSTALLE_RPM_LIST), $(KVMSH) --shutdown $(KVM_BASE_DOMAIN)\
+		$(KVM_INSTALLE_RPM_LIST))
 	$(if $(KVM_DEBUGINFO), $(KVMSH) --shutdown $(KVM_BASE_DOMAIN) \
 		$(KVM_DEBUGINFO_INSTALL) $(KVM_DEBUGINFO))
 
