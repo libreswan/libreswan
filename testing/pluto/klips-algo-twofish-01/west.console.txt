@@ -138,8 +138,8 @@ west #
 000 "westnet-eastnet-twofish":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id:@east
 000 "westnet-eastnet-twofish":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-twofish":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 "westnet-eastnet-twofish":   IKE algorithms wanted: AES_CBC(7)_256-SHA2_256(4)-MODP2048(14), AES_CBC(7)_256-SHA2_512(6)-MODP2048(14), AES_CBC(7)_256-SHA1(2)-MODP2048(14), AES_CBC(7)_256-MD5(1)-MODP2048(14), AES_CBC(7)_256-SHA2_256(4)-MODP1536(5), AES_CBC(7)_256-SHA2_512(6)-MODP1536(5), AES_CBC(7)_256-SHA1(2)-MODP1536(5), AES_CBC(7)_256-MD5(1)-MODP1536(5)
-000 "westnet-eastnet-twofish":   IKE algorithms found:  AES_CBC(7)_256-SHA2_256(4)-MODP2048(14), AES_CBC(7)_256-SHA2_512(6)-MODP2048(14), AES_CBC(7)_256-SHA1(2)-MODP2048(14), AES_CBC(7)_256-MD5(1)-MODP2048(14), AES_CBC(7)_256-SHA2_256(4)-MODP1536(5), AES_CBC(7)_256-SHA2_512(6)-MODP1536(5), AES_CBC(7)_256-SHA1(2)-MODP1536(5), AES_CBC(7)_256-MD5(1)-MODP1536(5)
+000 "westnet-eastnet-twofish":   IKE algorithms wanted: AES_CBC(7)_256-SHA2_256(4)-MODP2048(14), AES_CBC(7)_256-SHA2_512(6)-MODP2048(14), AES_CBC(7)_256-SHA1(2)-MODP2048(14), AES_CBC(7)_256-SHA2_256(4)-MODP1536(5), AES_CBC(7)_256-SHA2_512(6)-MODP1536(5), AES_CBC(7)_256-SHA1(2)-MODP1536(5)
+000 "westnet-eastnet-twofish":   IKE algorithms found:  AES_CBC(7)_256-SHA2_256(4)-MODP2048(14), AES_CBC(7)_256-SHA2_512(6)-MODP2048(14), AES_CBC(7)_256-SHA1(2)-MODP2048(14), AES_CBC(7)_256-SHA2_256(4)-MODP1536(5), AES_CBC(7)_256-SHA2_512(6)-MODP1536(5), AES_CBC(7)_256-SHA1(2)-MODP1536(5)
 000 "westnet-eastnet-twofish":   ESP algorithms wanted: TWOFISH(253)_000-SHA1(2)
 000 "westnet-eastnet-twofish":   ESP algorithms loaded: TWOFISH(253)_000-SHA1(2)
 000  
