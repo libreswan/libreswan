@@ -88,8 +88,10 @@ rpm -qa > /var/tmp/rpm-qa-fedora.log
 
 rpm -e vim-minimal --nodeps
 
-# echo "exclude=kernel*" >> /etc/dnf/dnf.conf
-# dnf -y update 2>&1 | tee /var/tmp/dnf-update.log
+dnf -y --disablerepo=updates update | tee /var/tmp/dnf-update-fedora.log
+dnf -y --disablerepo=updates install kernel-devel
+sed -i '/exclude=kernel/d' /etc/dnf/dnf.conf
+echo "exclude=kernel*" >> /etc/dnf/dnf.conf
 
 mkdir /testing /source
 
