@@ -3,6 +3,7 @@ KVM_KICKSTART_FILE = testing/libvirt/fedora25.ks
 
 KVM_PACKAGE_INSTALL = dnf install -y
 KVM_DEBUGINFO_INSTALL = dnf  debuginfo-install -y
+KVM_INSTALLE_RPM_LIST = rpm -aq > /var/tmp/rpm-qa-fedora-updates.log
 
 # fedora 25 hack. run swan-transmogrify to initialze Network
 # interscace It does not seems to run the first time when called from
@@ -60,6 +61,7 @@ KVM_PACKAGES = \
     unbound-libs \
     valgrind \
     vim-enhanced \
+    wget \
     xl2tpd \
     xmlto
 

@@ -81,13 +81,17 @@ sed  -i 's/ens.*/eth0/' /etc/sysconfig/network-scripts/ifcfg-eth0
 # sometimes it need another ifup
 ifup ens2 >> /var/tmp/network.log
 
+rpm -qa > /var/tmp/rpm-qa-fedora.log
+
 # workaround for vim fedora25 packaging bug. we want vim-enhanced and
 # that clashes with vim-minimal.
 
 rpm -e vim-minimal --nodeps
 
+dnf -y --disablerepo=updates update | tee /var/tmp/dnf-update-fedora.log
+dnf -y --disablerepo=updates install kernel-devel
+sed -i '/exclude=kernel/d' /etc/dnf/dnf.conf
 echo "exclude=kernel*" >> /etc/dnf/dnf.conf
-dnf -y update 2>&1 | tee /var/tmp/dnf-update.log
 
 mkdir /testing /source
 
