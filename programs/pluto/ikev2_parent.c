@@ -2072,6 +2072,10 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 {
 	struct state *pst = st;
 
+	/*
+	 * If this is a child (esp/ah) then set PST to the parent so
+	 * the parent's crypto-suite is used.
+	 */
 	if (IS_CHILD_SA(st))
 		pst = state_with_serialno(st->st_clonedfrom);
 
@@ -2104,7 +2108,7 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 
 		/* now, encrypt */
 		pst->st_oakley.encrypter->encrypt_ops
-			->do_crypt(st->st_oakley.encrypter,
+			->do_crypt(pst->st_oakley.encrypter,
 				   enc_start, enc_size,
 				   cipherkey,
 				   enc_iv, TRUE);
@@ -2147,8 +2151,8 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 			     enc_start, enc_size);
 		    DBG_dump("integ before authenticated encryption:",
 			     integ_start, integ_size));
-		if (!st->st_oakley.encrypter->encrypt_ops
-		    ->do_aead(st->st_oakley.encrypter,
+		if (!pst->st_oakley.encrypter->encrypt_ops
+		    ->do_aead(pst->st_oakley.encrypter,
 			      salt.ptr, salt.len,
 			      wire_iv_start, wire_iv_size,
 			      aad_start, aad_size,
@@ -2326,8 +2330,8 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 			     enc_start, enc_size);
 		    DBG_dump("integ before authenticated decryption:",
 			     integ_start, integ_size));
-		if (!st->st_oakley.encrypter->encrypt_ops
-		    ->do_aead(st->st_oakley.encrypter,
+		if (!pst->st_oakley.encrypter->encrypt_ops
+		    ->do_aead(pst->st_oakley.encrypter,
 			      salt.ptr, salt.len,
 			      wire_iv_start, wire_iv_size,
 			      aad_start, aad_size,
