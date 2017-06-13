@@ -61,6 +61,7 @@ KVM_PACKAGES = \
     unbound-libs \
     valgrind \
     vim-enhanced \
+    wget \
     xl2tpd \
     xmlto
 

@@ -92,5 +92,6 @@ KVM_DEBUGINFO = \
     python-libs \
     sqlite \
     unbound-libs \
+    wget \
     xz-libs \
     zlib
