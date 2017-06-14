@@ -922,7 +922,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 
 	 /* SAHANA: Notify payload of type SIGNATURE_HASH_ALGORITHMS
          * RFC 7427 Signature Authentication in the Internet Key Exchange Version 2 (IKEv2)*/
-        /* 
+         
         {
                 int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
                 unsigned char buffer_hash_types[16] ={0};
@@ -936,7 +936,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
                                 return STF_INTERNAL_ERROR;
 
         }
-*/
+
 	/* From here on, only payloads left are Vendor IDs */
 	if (c->send_vendorid) {
 		vids--;
