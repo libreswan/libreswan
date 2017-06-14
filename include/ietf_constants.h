@@ -1644,7 +1644,7 @@ enum ipsec_comp_algo {
  * Private Use among mutually consenting parties.
  */
 /*SAHANA*/
-enum notify_payload_hash_algorithms {
+/*enum notify_payload_hash_algorithms {
 
         RESERVED=0,
         SHA1 =1,
@@ -1652,7 +1652,7 @@ enum notify_payload_hash_algorithms {
         SHA2_384 = 3,
         SHA2_512 = 4,
 };
-
+*/
 
 /* Limits on size of RSA moduli.
  * The upper bound matches that of DNSSEC (see RFC 2537).
