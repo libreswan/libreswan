@@ -927,7 +927,10 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
                 int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
                 unsigned char buffer_hash_types[16] ={0};
 //		snprintf(buffer_hash_types,sizeof(buffer_hash_types),"%d%d%d%d",SHA1,SHA2_256,SHA2_384,SHA2_512);
-		snprintf(buffer_hash_types,sizeof(buffer_hash_types),"%d",1);
+		buffer_hash_types[0]=1;
+		buffer_hash_types[1]=2;
+		buffer_hash_types[2]=3;
+		buffer_hash_types[3]=4;
 		chunk_t supported_hash_types = {buffer_hash_types,sizeof(buffer_hash_types)};
 
                 if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
