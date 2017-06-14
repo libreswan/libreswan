@@ -210,7 +210,7 @@ bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md)
 		  &st->st_remoteaddr, st->st_remoteport);
 
 	/* In v2, for parent, protoid must be 0 and SPI must be empty */
-	if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
+	if (!ship_v2N(ISAKMP_NEXT_v2N, ISAKMP_PAYLOAD_NONCRITICAL,
 		PROTO_v2_RESERVED, &empty_chunk,
 		v2N_NAT_DETECTION_DESTINATION_IP, &hch, outs))
 		return FALSE;
