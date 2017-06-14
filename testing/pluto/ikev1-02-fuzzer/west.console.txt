@@ -1,0 +1,31 @@
+/testing/guestbin/swan-prep
+west #
+ echo "initdone"
+initdone
+west #
+ echo "Sending known bad packet"
+Sending known bad packet
+west #
+ ike-scan -v  --retry 3 --backoff=1 --interval=10 --trans="(1=7,14=128,2=1,3=1,4=14)" --trans="(3=1,4=14)"   192.1.2.23
+Starting ike-scan 1.9 with 1 hosts (http://www.nta-monitor.com/tools/ike-scan/)
+192.1.2.23	Notify message 14 (NO-PROPOSAL-CHOSEN) HDR=(CKY-R=e19a59b080b8413a)
+Ending ike-scan 1.9: 1 hosts scanned in 0.022 seconds (45.45 hosts/sec).  0 returned handshake; 1 returned notify
+west #
+ echo "Running a 10000 fuzzing scan"
+Running a 10000 fuzzing scan
+west #
+ ./ike-scan.sh > /dev/null
+west #
+ echo done
+done
+west #
+ # shutting down, so output will change if we had already crashed
+west #
+ ipsec whack --shutdown
+whack: Pluto is not running (no "/var/run/pluto/pluto.ctl")
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

@@ -64,6 +64,7 @@ kvmplutotest    basic-pluto-07-sourceip		wip
 kvmplutotest	netkey-audit-01	good
 
 kvmplutotest	ikev1-01-fuzzer	good
+kvmplutotest	ikev1-02-fuzzer	good
 kvmplutotest	ikev1-initial-contact-01	wip
 
 kvmplutotest	basic-pluto-01-wrongkey			wip
