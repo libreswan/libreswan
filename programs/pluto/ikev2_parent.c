@@ -924,7 +924,8 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
          * RFC 7427 Signature Authentication in the Internet Key Exchange Version 2 (IKEv2)*/
          
         {
-                int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
+             //   int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
+		int np = ISAKMP_NEXT_v2N;
                 unsigned char buffer_hash_types[4] ={0};
 //		snprintf(buffer_hash_types,sizeof(buffer_hash_types),"%d%d%d%d",SHA1,SHA2_256,SHA2_384,SHA2_512);
 		buffer_hash_types[0]=SHA1;
@@ -933,6 +934,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		buffer_hash_types[3]=SHA2_512;
 		chunk_t supported_hash_types = {buffer_hash_types,sizeof(buffer_hash_types)};
 
+               // if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
                 if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
                                       PROTO_v2_RESERVED, &empty_chunk,
                                       v2N_SIGNATURE_HASH_ALGORITHMS,&supported_hash_types,
