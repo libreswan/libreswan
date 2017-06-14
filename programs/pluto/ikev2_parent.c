@@ -530,7 +530,7 @@ static bool v2_check_auth(enum ikev2_auth_method atype,
 	}
 
 	//SAHANA
-        case IKEv2_AUTH_DIGSIG:
+       /* case IKEv2_AUTH_DIGSIG:
         {
                 if (that_authby != AUTH_DIGSIG) {
                                         libreswan_log("Peer attempted Digital Signature authentication but we want %s",
@@ -538,7 +538,7 @@ static bool v2_check_auth(enum ikev2_auth_method atype,
                                         return FALSE;
                                 }
         }
-
+*/
 	default:
 	{
 		libreswan_log("authentication method: %s not supported",
@@ -910,7 +910,8 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	/* Send NAT-T Notify payloads */
 	 /*SAHANA: Next payload is changed here from ISAKMP_NEXT_v2V to ISAKMP_NEXT_v2N as the next payload type now is notify */
 	{
-		int np = (vids != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE;
+	//	int np = (vids != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE;
+		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 		struct ikev2_generic in;
 
 		zero(&in);	/* OK: no pointer fields */
@@ -922,7 +923,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 
 	 /* SAHANA: Notify payload of type SIGNATURE_HASH_ALGORITHMS
          * RFC 7427 Signature Authentication in the Internet Key Exchange Version 2 (IKEv2)
-         */
+         
         {
                 int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
                 unsigned char buffer_hash_types[16] ={0};
@@ -936,7 +937,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
                                 return STF_INTERNAL_ERROR;
 
         }
-
+*/
 	/* From here on, only payloads left are Vendor IDs */
 	if (c->send_vendorid) {
 		vids--;
