@@ -32,7 +32,6 @@
 #include "ike_alg.h"
 #include "ike_alg_null.h"
 #include "ike_alg_aes.h"
-#include "ike_alg_md5.h"
 #include "ike_alg_sha1.h"
 
 /*
@@ -183,14 +182,11 @@ static const char *alg_info_esp_add(const struct parser_policy *const policy UNU
 		 * IKE_ALG DB can be used to identify when this is the
 		 * case
 		 */
-		if (!libreswan_fipsmode()) {
+		if (ike_alg_is_valid(&ike_alg_integ_sha1.common)) {
 			raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
 					     encrypt, ek_bits,
-					     &ike_alg_integ_md5, NULL);
+					     &ike_alg_integ_sha1, NULL);
 		}
-		raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
-				     encrypt, ek_bits,
-				     &ike_alg_integ_sha1, NULL);
 	}
 	return NULL;
 }
@@ -236,14 +232,11 @@ static const char *alg_info_ah_add(const struct parser_policy *const policy UNUS
 		 * plutoalg.c:clone_valid() to select the default
 		 * algorithm list.
 		 */
-		if (!libreswan_fipsmode()) {
+		if (ike_alg_is_valid(&ike_alg_integ_sha1.common)) {
 			raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
-					     NULL, 0,
-					     &ike_alg_integ_md5, dh);
+					     encrypt, ek_bits,
+					     &ike_alg_integ_sha1, NULL);
 		}
-		raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
-				     NULL, 0,
-				     &ike_alg_integ_sha1, dh);
 	}
 	return NULL;
 }
