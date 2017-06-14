@@ -96,7 +96,7 @@ enum keyword_authby {
 	AUTH_PSK	= 2,
 	AUTH_RSASIG	= 3,
 	AUTH_NULL	= 4,
-	AUTH_DIGSIG	= 5,
+//	AUTH_DIGSIG	= 5,
 };
 
 enum keyword_xauthby {
