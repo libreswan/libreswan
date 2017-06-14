@@ -529,6 +529,16 @@ static bool v2_check_auth(enum ikev2_auth_method atype,
 		return TRUE;
 	}
 
+	//SAHANA
+        case IKEv2_AUTH_DIGSIG:
+        {
+                if (that_authby != AUTH_DIGSIG) {
+                                        libreswan_log("Peer attempted Digital Signature authentication but we want %s",
+                                                enum_name(&ikev2_asym_auth_name, that_authby));
+                                        return FALSE;
+                                }
+        }
+
 	default:
 	{
 		libreswan_log("authentication method: %s not supported",
@@ -898,8 +908,9 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	}
 
 	/* Send NAT-T Notify payloads */
+	 /*SAHANA: Next payload is changed here from ISAKMP_NEXT_v2V to ISAKMP_NEXT_v2N as the next payload type now is notify */
 	{
-		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
+		int np = (vids != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE;
 		struct ikev2_generic in;
 
 		zero(&in);	/* OK: no pointer fields */
@@ -908,6 +919,23 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		if (!ikev2_out_nat_v2n(np, &md->rbody, md))
 			return STF_INTERNAL_ERROR;
 	}
+
+	 /* SAHANA: Notify payload of type SIGNATURE_HASH_ALGORITHMS
+         * RFC 7427 Signature Authentication in the Internet Key Exchange Version 2 (IKEv2)
+         */
+        {
+                int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
+                unsigned char buffer_hash_types[16] ={0};
+                snprintf(buffer_hash_types,sizeof(buffer_hash_types),"%d%d%d%d",SHA1,SHA2_256,SHA2_384,SHA2_512);
+                chunk_t supported_hash_types = {buffer_hash_types , sizeof(buffer_hash_types)};
+
+                if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
+                                      PROTO_v2_RESERVED, &empty_chunk,
+                                      v2N_SIGNATURE_HASH_ALGORITHMS,&supported_hash_types,
+                                      &md->rbody))
+                                return STF_INTERNAL_ERROR;
+
+        }
 
 	/* From here on, only payloads left are Vendor IDs */
 	if (c->send_vendorid) {

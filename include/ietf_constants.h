@@ -1222,7 +1222,7 @@ enum ikev2_auth_method {
 	IKEv2_AUTH_P521 = 11, /* RFC 4754 */
 	IKEv2_AUTH_GSPM = 12, /* RFC 6467 */
 	IKEv2_AUTH_NULL = 13, /* draft-ietf-ipsecme-ikev2-null-auth */
-	IKEv2_AUTH_SIG = 14, /* RFC 7427 */
+	IKEv2_AUTH_DIGSIG = 14, /* RFC 7427 */
 	/* 15 - 200 unassigned */
 	/* 201 - 255 private use */
 };
@@ -1636,6 +1636,21 @@ enum ipsec_comp_algo {
 	/* 5-47 Reserved for approved algorithms */
 	/* 48-63 Reserved for private use */
 	/* 64-255 Unassigned */
+};
+
+/* RFC 7427 Signature Authentication in the Internet Key Exchange Version 2 (IKEv2)
+ * Section 7 :  IANA Considerations
+ * Values 5-1023 are Unassigned.  Values 1024-65535 are reserved for
+ * Private Use among mutually consenting parties.
+ */
+/*SAHANA*/
+enum notify_payload_hash_algorithms {
+
+        RESERVED=0,
+        SHA1 =1,
+        SHA2_256 = 2,
+        SHA2_384 = 3,
+        SHA2_512 = 4,
 };
 
 
