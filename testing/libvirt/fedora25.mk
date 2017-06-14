@@ -25,6 +25,7 @@ KVM_PACKAGES = \
     git \
     glibc-devel \
     hping3 \
+    ike-scan \
     ipsec-tools \
     ldns \
     ldns-devel \

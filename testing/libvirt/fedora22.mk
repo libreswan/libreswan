@@ -20,6 +20,7 @@ KVM_PACKAGES = \
     glibc-devel \
     hping3 \
     hping3 \
+    ike-scan \
     ipsec-tools \
     ldns \
     ldns-devel \
