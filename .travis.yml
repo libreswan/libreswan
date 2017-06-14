@@ -1,7 +1,6 @@
-language: c
+services: docker
 
-sudo: required
-dist: xenial
+language: c
 
 os:
   - linux
