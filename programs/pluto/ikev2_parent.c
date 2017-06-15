@@ -912,11 +912,11 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	{
                 //int np = (vids != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE;
 		int np = ISAKMP_NEXT_v2N;
-		struct ikev2_generic in;
+		//struct ikev2_generic in;
 
-		zero(&in);	/* OK: no pointer fields */
-		in.isag_np = np;
-		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
+	//	zero(&in);	/* OK: no pointer fields */
+	//	in.isag_np = np;
+	//	in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		if (!ikev2_out_nat_v2n(np, &md->rbody, md))
 			return STF_INTERNAL_ERROR;
 	}
@@ -926,6 +926,12 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
          
         {
                 int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
+
+		struct ikev2_generic in;
+
+		zero(&in);	/* OK: no pointer fields */
+		in.isag_np = np;
+		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
                 unsigned char buffer_hash_types[4] ={0};
 //		snprintf(buffer_hash_types,sizeof(buffer_hash_types),"%d%d%d%d",SHA1,SHA2_256,SHA2_384,SHA2_512);
 		buffer_hash_types[0]=SHA1;
