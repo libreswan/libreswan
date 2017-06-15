@@ -910,8 +910,8 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	/* Send NAT-T Notify payloads */
 	 /*SAHANA: Next payload is changed here from ISAKMP_NEXT_v2V to ISAKMP_NEXT_v2N as the next payload type now is notify */
 	{
-                int np = (vids != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE;
-		//int np = ISAKMP_NEXT_v2N;
+                //int np = (vids != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE;
+		int np = ISAKMP_NEXT_v2N;
 		struct ikev2_generic in;
 
 		zero(&in);	/* OK: no pointer fields */
