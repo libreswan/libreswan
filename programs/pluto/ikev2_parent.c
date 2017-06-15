@@ -910,6 +910,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	/* Send NAT-T Notify payloads */
 	 /*SAHANA: Next payload is changed here from ISAKMP_NEXT_v2V to ISAKMP_NEXT_v2N as the next payload type now is notify */
 	{
+                //int np = (vids != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE;
 		int np = ISAKMP_NEXT_v2N;
 		struct ikev2_generic in;
 
@@ -924,8 +925,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
          * RFC 7427 Signature Authentication in the Internet Key Exchange Version 2 (IKEv2)*/
          
         {
-             //   int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
-		int np = ISAKMP_NEXT_v2N;
+                int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
                 unsigned char buffer_hash_types[4] ={0};
 //		snprintf(buffer_hash_types,sizeof(buffer_hash_types),"%d%d%d%d",SHA1,SHA2_256,SHA2_384,SHA2_512);
 		buffer_hash_types[0]=SHA1;
