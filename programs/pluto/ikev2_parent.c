@@ -910,13 +910,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	/* Send NAT-T Notify payloads */
 	 /*SAHANA: Next payload is changed here from ISAKMP_NEXT_v2V to ISAKMP_NEXT_v2N as the next payload type now is notify */
 	{
-                //int np = (vids != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE;
 		int np = ISAKMP_NEXT_v2N;
-		//struct ikev2_generic in;
-
-	//	zero(&in);	/* OK: no pointer fields */
-	//	in.isag_np = np;
-	//	in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		if (!ikev2_out_nat_v2n(np, &md->rbody, md))
 			return STF_INTERNAL_ERROR;
 	}
@@ -941,12 +935,12 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		chunk_t supported_hash_types = {buffer_hash_types,sizeof(buffer_hash_types)};
 
                // if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
-          /*      if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
+                if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
                                       PROTO_v2_RESERVED, &empty_chunk,
                                       v2N_SIGNATURE_HASH_ALGORITHMS,&supported_hash_types,
                                       &md->rbody))
                                 return STF_INTERNAL_ERROR;
-*/
+
         }
 
 	/* From here on, only payloads left are Vendor IDs */
