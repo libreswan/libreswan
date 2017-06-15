@@ -529,7 +529,7 @@ static bool v2_check_auth(enum ikev2_auth_method atype,
 		return TRUE;
 	}
 
-	//SAHANA
+	//SAHANA SAHANA
         case IKEv2_AUTH_DIGSIG:
         {
                 if (that_authby != AUTH_DIGSIG) {
