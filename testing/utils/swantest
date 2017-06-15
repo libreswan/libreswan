@@ -1178,28 +1178,9 @@ def get_results(r):
         if "result" in x and "testname" in x:
             return x
 
-
-def shut_down_hosts(args, test_hosts, prefix=None):
+def sent_virsh_cmd(args, all_hosts, c="shutdown"):
 
     running = []
-    all_hosts = list(DEFAULTCONFIG['swanhosts'])
-    all_hosts.extend(DEFAULTCONFIG['regualrhosts'])
-
-    if prefix:
-        for i, host in enumerate(all_hosts):
-            all_hosts[i] = prefix + host
-
-    if args.noreboot:
-        logging.debug(
-            "all hosts [%s] shutdown list", ' '.join(map(str, all_hosts)))
-        logging.debug(
-            "remove [%s] from shutdown list", ' '.join(map(str, test_hosts)))
-        for t in test_hosts:
-            for h in all_hosts:
-                if h is t:
-                    all_hosts.remove(t)
-
-    logging.debug("shutdown list [%s]", ' '.join(map(str, all_hosts)))
 
     vmlist = subprocess.getoutput("sudo virsh list")
     for line in vmlist.split("\n")[2:]:
@@ -1208,9 +1189,8 @@ def shut_down_hosts(args, test_hosts, prefix=None):
             for h in all_hosts:
                 if h == host:
                     running.append(host)
-                    cmd = "sudo virsh shutdown %s" % host
-                    logging.debug(
-                        "Found %s %s shutodwn send %s", host, state, cmd)
+                    cmd = "sudo virsh %s %s" % (c, host)
+                    logging.debug("Found %s %s send %s", host, state, cmd)
                     shut = subprocess.getoutput(cmd)
         except:
             pass
@@ -1238,12 +1218,40 @@ def shut_down_hosts(args, test_hosts, prefix=None):
         tries -= 1
         time.sleep(1)
 
-    if len(running):
-        e = "KVMERROR not able to shutdown %s guests: [%s] abort" % (
-            len(running), ' '.join(map(str, running)))
-        logging.error(e)
-        return e
+    return running
 
+def shut_down_hosts(args, test_hosts, prefix=None):
+
+    running = []
+    all_hosts = list(DEFAULTCONFIG['swanhosts'])
+    all_hosts.extend(DEFAULTCONFIG['regualrhosts'])
+
+    if prefix:
+        for i, host in enumerate(all_hosts):
+            all_hosts[i] = prefix + host
+
+    if args.noreboot:
+        logging.debug(
+            "all hosts [%s] shutdown list", ' '.join(map(str, all_hosts)))
+        logging.debug(
+            "remove [%s] from shutdown list", ' '.join(map(str, test_hosts)))
+        for t in test_hosts:
+            for h in all_hosts:
+                if h is t:
+                    all_hosts.remove(t)
+
+    logging.debug("shutdown list [%s]", ' '.join(map(str, all_hosts)))
+
+    running =  sent_virsh_cmd(args, all_hosts, c="shutdown")
+
+    if len(running):
+       # try a bigger hammer to shut down
+        running =  sent_virsh_cmd(args, all_hosts, c="destroy")
+        if len(running):
+            e = "KVMERROR not able to shutdown %s guests: [%s] abort" % (
+                len(running), ' '.join(map(str, running)))
+            logging.error(e)
+            return e
 
 def find_other_hosts(test, test_hosts):
 
