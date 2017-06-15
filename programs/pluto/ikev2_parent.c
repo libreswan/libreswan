@@ -935,12 +935,12 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		chunk_t supported_hash_types = {buffer_hash_types,sizeof(buffer_hash_types)};
 
                // if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
-                if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
+          /*      if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
                                       PROTO_v2_RESERVED, &empty_chunk,
                                       v2N_SIGNATURE_HASH_ALGORITHMS,&supported_hash_types,
                                       &md->rbody))
                                 return STF_INTERNAL_ERROR;
-
+*/
         }
 
 	/* From here on, only payloads left are Vendor IDs */
