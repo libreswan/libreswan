@@ -3,7 +3,7 @@
 # Copyright (C) 1998, 1999  Henry Spencer.
 # Copyright (C) 1999, 2000, 2001  Richard Guy Briggs
 # Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015,2017 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -31,6 +31,7 @@ SUBDIRS+=auto barf verify ipsec look newhostkey
 SUBDIRS+=rsasigkey setup showhostkey
 SUBDIRS+=readwriteconf
 SUBDIRS+=_import_crl
+SUBDIRS+=algparse
 
 ifeq ($(USE_KLIPS),true)
 SUBDIRS+= _updown.klips eroute klipsdebug pf_key spi spigrp tncfg

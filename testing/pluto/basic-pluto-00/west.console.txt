@@ -5,7 +5,7 @@ initdone
 west #
  # diffs should be empty
 west #
- PATH/libexec/ipsec/algparse -v | diff -u - ../../algparse/OUTPUT.algparse.txt
+ PATH/libexec/ipsec/algparse -v | diff -u OUTPUT.algparse.txt -
 PATH/libexec/ipsec/algparse Initializing NSS
 PATH/libexec/ipsec/algparse FIPS Product: NO
 PATH/libexec/ipsec/algparse FIPS Kernel: NO
