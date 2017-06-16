@@ -1,16 +1,67 @@
+algparse Initializing NSS
+algparse Encryption algorithm camellia_ctr disabled; not FIPS compliant
+algparse Encryption algorithm camellia disabled; not FIPS compliant
+algparse Encryption algorithm serpent disabled; not FIPS compliant
+algparse Encryption algorithm twofish disabled; not FIPS compliant
+algparse Encryption algorithm twofish_ssh disabled; not FIPS compliant
+algparse Encryption algorithm cast disabled; not FIPS compliant
+algparse Encryption algorithm null disabled; not FIPS compliant
+algparse Hash algorithm md5 disabled; not FIPS compliant
+algparse PRF algorithm md5 disabled; not FIPS compliant
+algparse Integrity algorithm md5 disabled; not FIPS compliant
+algparse DH algorithm MODP1024 disabled; not FIPS compliant
+algparse DH algorithm MODP1536 disabled; not FIPS compliant
+algparse FIPS Encryption algorithms:
+algparse   aes_ccm_16    IKEv1:     ESP     IKEv2:     ESP     FIPS  {256,192,*128}  (aes_ccm aes_ccm_c)
+algparse   aes_ccm_12    IKEv1:     ESP     IKEv2:     ESP     FIPS  {256,192,*128}  (aes_ccm_b)
+algparse   aes_ccm_8     IKEv1:     ESP     IKEv2:     ESP     FIPS  {256,192,*128}  (aes_ccm_a)
+algparse   3des_cbc      IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  [*192]  (3des)
+algparse   aes_gcm_16    IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aes_gcm aes_gcm_c)
+algparse   aes_gcm_12    IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aes_gcm_b)
+algparse   aes_gcm_8     IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aes_gcm_a)
+algparse   aes_ctr       IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aesctr)
+algparse   aes           IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aes_cbc)
+algparse FIPS Hash algorithms:
+algparse   sha           IKEv1: IKE         IKEv2:             FIPS  (sha1)
+algparse   sha2_256      IKEv1: IKE         IKEv2:             FIPS  (sha2 sha256)
+algparse   sha2_384      IKEv1: IKE         IKEv2:             FIPS  (sha384)
+algparse   sha2_512      IKEv1: IKE         IKEv2:             FIPS  (sha512)
+algparse FIPS PRF algorithms:
+algparse   sha           IKEv1: IKE         IKEv2: IKE         FIPS  (sha1 hmac_sha1)
+algparse   sha2_256      IKEv1: IKE         IKEv2: IKE         FIPS  (sha2 sha256 hmac_sha2_256)
+algparse   sha2_384      IKEv1: IKE         IKEv2: IKE         FIPS  (sha384 hmac_sha2_384)
+algparse   sha2_512      IKEv1: IKE         IKEv2: IKE         FIPS  (sha512 hmac_sha2_512)
+algparse FIPS Integrity algorithms:
+algparse   sha           IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha1 sha1_96 hmac_sha1 hmac_sha1_96)
+algparse   sha2_512      IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha512 hmac_sha2_512 hmac_sha2_512_256)
+algparse   sha2_384      IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha384 hmac_sha2_384 hmac_sha2_384_192)
+algparse   sha2_256      IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha2 sha256 hmac_sha2_256 hmac_sha2_256_128)
+algparse   aes_xcbc      IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_xcbc_96)
+algparse   aes_cmac      IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_cmac_96)
+algparse FIPS DH algorithms:
+algparse   MODP2048      IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (dh14)
+algparse   MODP3072      IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (dh15)
+algparse   MODP4096      IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (dh16)
+algparse   MODP6144      IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (dh17)
+algparse   MODP8192      IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (dh18)
+algparse   DH19          IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  (ecp_256)
+algparse   DH20          IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  (ecp_384)
+algparse   DH21          IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  (ecp_521)
+algparse   DH23          IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS
+algparse   DH24          IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS
 
 ---- ESP tests that should succeed ----
-[                    ]    OK: AES(12)_000-MD5(1), AES(12)_000-SHA1(2)
+[                    ]    OK: AES(12)_000-SHA1(2)
 [  aes_gcm_a-128-null]    OK: AES_GCM_A(18)_128-NONE(0)
-[  3des-sha1;modp1024]    OK: 3DES(3)_000-SHA1(2); pfsgroup=MODP1024(2)
-[  3des-sha1;modp1536]    OK: 3DES(3)_000-SHA1(2); pfsgroup=MODP1536(5)
+[  3des-sha1;modp1024] ERROR: ESP DH algorithm 'modp1024' is not supported, enc_alg="3des"(0), auth_alg="sha1", modp="modp1024"
+[  3des-sha1;modp1536] ERROR: ESP DH algorithm 'modp1536' is not supported, enc_alg="3des"(0), auth_alg="sha1", modp="modp1536"
 [  3des-sha1;modp2048]    OK: 3DES(3)_000-SHA1(2); pfsgroup=MODP2048(14)
 [      3des-sha1;dh23]    OK: 3DES(3)_000-SHA1(2); pfsgroup=DH23(23)
 [      3des-sha1;dh24]    OK: 3DES(3)_000-SHA1(2); pfsgroup=DH24(24)
 [           3des-sha1]    OK: 3DES(3)_000-SHA1(2)
-[           null-sha1]    OK: NULL(11)_000-SHA1(2)
-[                 aes]    OK: AES(12)_000-MD5(1), AES(12)_000-SHA1(2)
-[             aes_cbc]    OK: AES(12)_000-MD5(1), AES(12)_000-SHA1(2)
+[           null-sha1] ERROR: ESP encryption algorithm 'null' is not supported, enc_alg="null"(0), auth_alg="sha1", modp=""
+[                 aes]    OK: AES(12)_000-SHA1(2)
+[             aes_cbc]    OK: AES(12)_000-SHA1(2)
 [             aes-sha]    OK: AES(12)_000-SHA1(2)
 [            aes-sha1]    OK: AES(12)_000-SHA1(2)
 [            aes-sha2]    OK: AES(12)_000-SHA2_256(5)
@@ -26,10 +77,10 @@
 [     aes256-sha2_256]    OK: AES(12)_256-SHA2_256(5)
 [     aes256-sha2_384]    OK: AES(12)_256-SHA2_384(6)
 [     aes256-sha2_512]    OK: AES(12)_256-SHA2_512(7)
-[            camellia]    OK: CAMELLIA(22)_000-MD5(1), CAMELLIA(22)_000-SHA1(2)
-[         camellia128]    OK: CAMELLIA(22)_128-MD5(1), CAMELLIA(22)_128-SHA1(2)
-[         camellia192]    OK: CAMELLIA(22)_192-MD5(1), CAMELLIA(22)_192-SHA1(2)
-[         camellia256]    OK: CAMELLIA(22)_256-MD5(1), CAMELLIA(22)_256-SHA1(2)
+[            camellia] ERROR: ESP encryption algorithm 'camellia' is not supported, enc_alg="camellia"(0), auth_alg="", modp=""
+[         camellia128] ERROR: ESP encryption algorithm 'camellia' is not supported, enc_alg="camellia"(128), auth_alg="", modp=""
+[         camellia192] ERROR: ESP encryption algorithm 'camellia' is not supported, enc_alg="camellia"(192), auth_alg="", modp=""
+[         camellia256] ERROR: ESP encryption algorithm 'camellia' is not supported, enc_alg="camellia"(256), auth_alg="", modp=""
 [  aes_ccm_a-128-null]    OK: AES_CCM_A(14)_128-NONE(0)
 [  aes_ccm_a-192-null]    OK: AES_CCM_A(14)_192-NONE(0)
 [  aes_ccm_a-256-null]    OK: AES_CCM_A(14)_256-NONE(0)
@@ -52,13 +103,13 @@
 [        aes_gcm-null]    OK: AES_GCM_C(20)_000-NONE(0)
 [    aes_ccm-256-null]    OK: AES_CCM_C(16)_256-NONE(0)
 [    aes_gcm-192-null]    OK: AES_GCM_C(20)_192-NONE(0)
-[             aes_ctr]    OK: AES_CTR(13)_000-MD5(1), AES_CTR(13)_000-SHA1(2)
-[              aesctr]    OK: AES_CTR(13)_000-MD5(1), AES_CTR(13)_000-SHA1(2)
-[          aes_ctr128]    OK: AES_CTR(13)_128-MD5(1), AES_CTR(13)_128-SHA1(2)
-[          aes_ctr192]    OK: AES_CTR(13)_192-MD5(1), AES_CTR(13)_192-SHA1(2)
-[          aes_ctr256]    OK: AES_CTR(13)_256-MD5(1), AES_CTR(13)_256-SHA1(2)
-[             serpent]    OK: SERPENT(252)_000-MD5(1), SERPENT(252)_000-SHA1(2)
-[             twofish]    OK: TWOFISH(253)_000-MD5(1), TWOFISH(253)_000-SHA1(2)
+[             aes_ctr]    OK: AES_CTR(13)_000-SHA1(2)
+[              aesctr]    OK: AES_CTR(13)_000-SHA1(2)
+[          aes_ctr128]    OK: AES_CTR(13)_128-SHA1(2)
+[          aes_ctr192]    OK: AES_CTR(13)_192-SHA1(2)
+[          aes_ctr256]    OK: AES_CTR(13)_256-SHA1(2)
+[             serpent] ERROR: ESP encryption algorithm 'serpent' is not supported, enc_alg="serpent"(0), auth_alg="", modp=""
+[             twofish] ERROR: ESP encryption algorithm 'twofish' is not supported, enc_alg="twofish"(0), auth_alg="", modp=""
 
 ---- ESP tests that should fail----
 [        3des168-sha1] ERROR: 3DES does not take variable key lengths, enc_alg="3des"(168), auth_alg="sha1", modp=""
@@ -67,7 +118,7 @@
 [         aes224-sha1] ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes"(224), auth_alg="sha1", modp=""
 [         aes512-sha1] ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes"(512), auth_alg="sha1", modp=""
 [         aes-sha1555] ERROR: ESP integrity algorithm 'sha1555' is not recognized, enc_alg="aes"(0), auth_alg="sha1555", modp=""
-[    camellia666-sha1] ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="camellia"(666), auth_alg="sha1", modp=""
+[    camellia666-sha1] ERROR: ESP encryption algorithm 'camellia' is not supported, enc_alg="camellia"(666), auth_alg="sha1", modp=""
 [            blowfish] ERROR: ESP encryption algorithm 'blowfish' is not supported, enc_alg="blowfish"(0), auth_alg="", modp=""
 [            des-sha1] ERROR: ESP encryption algorithm 'des' is not supported, enc_alg="des"(0), auth_alg="sha1", modp=""
 [          aes_ctr666] ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes_ctr"(666), auth_alg="", modp=""
@@ -79,15 +130,15 @@
 [            aes-sah1] ERROR: ESP integrity algorithm 'sah1' is not recognized, enc_alg="aes"(0), auth_alg="sah1", modp=""
 [                 id3] ERROR: ESP encryption algorithm 'id' is not recognized, enc_alg="id"(3), auth_alg="", modp=""
 [             aes-id3] ERROR: ESP integrity algorithm 'id3' is not recognized, enc_alg="aes"(0), auth_alg="id3", modp=""
-[         aes_gcm-md5] ERROR: AEAD ESP cipher must have null authentication, enc_alg="aes_gcm"(0), auth_alg="md5", modp=""
+[         aes_gcm-md5] ERROR: ESP integrity algorithm 'md5' is not recognized, enc_alg="aes_gcm"(0), auth_alg="md5", modp=""
 [                mars] ERROR: ESP encryption algorithm 'mars' is not supported, enc_alg="mars"(0), auth_alg="", modp=""
 [      3des-sha1;dh22] ERROR: ESP DH algorithm 'dh22' is not supported, enc_alg="3des"(0), auth_alg="sha1", modp="dh22"
 [      3des-sha1-dh21] ERROR: ESP DH algorithm 'DH21' must be separated using a ';'
 [3des-sha1;dh21,3des-sha2] ERROR: ESP DH algorithm 'DH21' must be specified last
 
 ---- AH tests that should succeed ----
-[                    ]    OK: MD5(1), SHA1(2)
-[                 md5]    OK: MD5(1)
+[                    ]    OK: SHA1(2)
+[                 md5] ERROR: AH integrity algorithm 'md5' is not recognized, enc_alg=""(0), auth_alg="md5", modp=""
 [                 sha]    OK: SHA1(2)
 [                sha1]    OK: SHA1(2)
 [                sha2]    OK: SHA2_256(5)
@@ -111,17 +162,13 @@
 [              ripemd] ERROR: AH integrity algorithm 'ripemd' is not recognized, enc_alg=""(0), auth_alg="ripemd", modp=""
 
 ---- IKE tests that should succeed ----
-[                    ]    OK: AES_CBC(7)_000-SHA2_256(4)-MODP2048(14), AES_CBC(7)_000-SHA2_512(6)-MODP2048(14), AES_CBC(7)_000-SHA1(2)-MODP2048(14), AES_CBC(7)_000-MD5(1)-MODP2048(14), 3DES_CBC(5)_000-SHA2_256(4)-MODP2048(14), 3DES_CBC(5)_000-SHA2_512(6)-MODP2048(14), 3DES_CBC(5)_000-SHA1(2)-MODP2048(14), 3DES_CBC(5)_000-MD5(1)-MODP2048(14)
+[                    ]    OK: AES_CBC(7)_000-SHA2_256(4)-MODP2048(14), AES_CBC(7)_000-SHA2_512(6)-MODP2048(14), AES_CBC(7)_000-SHA1(2)-MODP2048(14), 3DES_CBC(5)_000-SHA2_256(4)-MODP2048(14), 3DES_CBC(5)_000-SHA2_512(6)-MODP2048(14), 3DES_CBC(5)_000-SHA1(2)-MODP2048(14)
 [           3des-sha1]    OK: 3DES_CBC(5)_000-SHA1(2)-MODP2048(14)
 [           3des-sha1]    OK: 3DES_CBC(5)_000-SHA1(2)-MODP2048(14)
-[  3des-sha1;modp1536]    OK: 3DES_CBC(5)_000-SHA1(2)-MODP1536(5)
-[             aes_gcm]    OK: AES_GCM_C(20)_000-SHA2_256(4)-MODP2048(14), AES_GCM_C(20)_000-SHA2_512(6)-MODP2048(14), AES_GCM_C(20)_000-SHA1(2)-MODP2048(14), AES_GCM_C(20)_000-MD5(1)-MODP2048(14)
+[  3des-sha1;modp1536] ERROR: IKE DH algorithm 'modp1536' is not supported, enc_alg="3des"(0), auth_alg="sha1", modp="modp1536"
+[             aes_gcm]    OK: AES_GCM_C(20)_000-SHA2_256(4)-MODP2048(14), AES_GCM_C(20)_000-SHA2_512(6)-MODP2048(14), AES_GCM_C(20)_000-SHA1(2)-MODP2048(14)
 
 ---- IKE tests that should fail ----
 [                 id2] ERROR: IKE encryption algorithm 'id' is not recognized, enc_alg="id"(2), auth_alg="", modp=""
 [            3des-id2] ERROR: IKE PRF algorithm 'id2' is not recognized, enc_alg="3des"(0), auth_alg="id2", modp=""
-
----- FIPS defaults ----
-[                    ]    OK: AES_CBC(7)_000-SHA2_256(4)-MODP2048(14), AES_CBC(7)_000-SHA2_512(6)-MODP2048(14), AES_CBC(7)_000-SHA1(2)-MODP2048(14), AES_CBC(7)_000-MD5(1)-MODP2048(14), 3DES_CBC(5)_000-SHA2_256(4)-MODP2048(14), 3DES_CBC(5)_000-SHA2_512(6)-MODP2048(14), 3DES_CBC(5)_000-SHA1(2)-MODP2048(14), 3DES_CBC(5)_000-MD5(1)-MODP2048(14)
-[                    ]    OK: AES(12)_000-SHA1(2)
-[                    ]    OK: SHA1(2)
+algparse leak detective found no leaks

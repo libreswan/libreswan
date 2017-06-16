@@ -214,22 +214,11 @@ static void test(lset_t policy)
 
 	ike(policy, "id2"); /* should be rejected; idXXX removed */
 	ike(policy, "3des-id2"); /* should be rejected; idXXX removed */
-
-	/*
-	 * FIPS
-	 */
-
-	printf("\n---- FIPS defaults ----\n");
-
-	lsw_set_fips_mode(LSW_FIPS_ON);
-	ike(policy, "");
-	esp(policy, "");
-	ah(policy, "");
 }
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: [ -1 ] [ -2 ] [ -fips ] [ -v ] [ <protocol>=<proposals> ...]\n");
+	fprintf(stderr, "Usage: [ -v1 ] [ -v2 ] [ -fips ] [ -v ] [ <protocol>=<proposals> ...]\n");
 }
 
 int main(int argc, char *argv[])
@@ -256,9 +245,9 @@ int main(int argc, char *argv[])
 		if (strcmp(arg, "?") == 0 || strcmp(arg, "h") == 0) {
 			usage();
 			exit(0);
-		} else if (strcmp(arg, "1") == 0) {
+		} else if (strcmp(arg, "v1") == 0) {
 			policy |= POLICY_IKEV1_ALLOW;
-		} else if (strcmp(arg, "2") == 0) {
+		} else if (strcmp(arg, "v2") == 0) {
 			policy |= (POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE);
 		} else if (strcmp(arg, "fips") == 0 || strcmp(arg, "fips=yes") == 0 || strcmp(arg, "fips=on") == 0) {
 			lsw_set_fips_mode(LSW_FIPS_ON);

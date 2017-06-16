@@ -47,4 +47,4 @@ include ../../mk/program.mk
 endif
 
 selfcheck: $(PROGRAM)
-	$(builddir)/$(PROGRAM) -v | diff -u $(top_srcdir)/testing/pluto/basic-pluto-00/OUTPUT.$(PROGRAM).txt -
+	$(top_srcdir)/testing/pluto/basic-pluto-00/algparse.sh $(builddir)/$(PROGRAM)
