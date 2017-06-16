@@ -2147,6 +2147,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 							    "remote subnets policies");
 					ip_address a;
 					char caddr[SUBNETTOT_BUF];
+                                        struct spd_route *sr;
 
 					tmp_spd->this.id.name = empty_chunk;
 					tmp_spd->that.id.name = empty_chunk;
@@ -2197,6 +2198,26 @@ stf_status modecfg_inR1(struct msg_digest *md)
 					loglog(RC_INFORMATIONAL,
 						"Received subnet %s",
 						caddr);
+
+                                        /*
+                                         * Scan any previous spd_route's to see if we already have one
+                                         * with an identical subnet to the one we've just received.
+                                         * If so, ignore the subnet and free tmp_spd we've just cloned.
+                                         * Note that we wipe out the spd before unsharing
+                                         * any of its pointers.
+                                         */
+                                        for (sr = &c->spd; sr; sr = sr->spd_next) {
+                                            if (samesubnet(&tmp_spd->that.client, &sr->that.client))
+                                               break;
+                                        }
+
+                                        if (sr) {
+                                            loglog(RC_INFORMATIONAL,
+                                                    "Subnet %s already has an spd_route - ignoring",
+                                                    caddr);
+                                            pfree(tmp_spd);
+                                            continue;   /* while (len >= 14) */
+                                        }
 
 					tmp_spd->this.cert.ty = CERT_NONE;
 					tmp_spd->that.cert.ty = CERT_NONE;
