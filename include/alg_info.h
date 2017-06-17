@@ -117,14 +117,19 @@ struct esp_info {
 	 * Because struct encrypt_desc still specifies multiple key
 	 * lengths, ENCKEYLEN is still required.
 	 */
-	const struct encrypt_desc *esp_encrypt;
-	u_int8_t transid;       /* enum ipsec_cipher_algo: ESP transform (AES, 3DES, etc.)*/
-	u_int32_t enckeylen;    /* keylength for ESP transform (bytes) */
+	const struct encrypt_desc *encrypt;
+	size_t enckeylen;    /* keylength for ESP transform (bits) */
+	u_int8_t ikev1esp_transid;       /* enum ipsec_cipher_algo: ESP transform (AES, 3DES, etc.)*/
 	/*
-	 * The authentication algorithm; if required by ESP/AH.
+	 * The integrity algorithm; if required by ESP/AH.
+	 *
+	 * XXX: It is called "integ" and not "esp_integ" because
+	 * "struct esp_info" and "struct ike_info", which are pretty
+	 * much identical, are heading for a merge - one less field to
+	 * rename.
 	 */
-	const struct integ_desc *esp_integ;
-	u_int16_t auth;         /* enum ikev1_auth_attribute: AUTH */
+	const struct integ_desc *integ;
+	u_int16_t ikev1esp_auth;         /* enum ikev1_auth_attribute: AUTH */
 	/*
 	 * PFS/DH negotiation.
 	 *

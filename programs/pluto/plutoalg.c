@@ -51,7 +51,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 	int ealg_i = SADB_EALG_NONE;
 
 	if (policy & POLICY_ENCRYPT) {
-		ealg_i = esp_info->transid;
+		ealg_i = esp_info->ikev1esp_transid;
 		if (!ESP_EALG_PRESENT(ealg_i)) {
 			if (logit) {
 				loglog(RC_LOG_SERIOUS,
@@ -65,7 +65,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 		}
 	}
 
-	int aalg_i = alg_info_esp_aa2sadb(esp_info->auth);
+	int aalg_i = alg_info_esp_aa2sadb(esp_info->ikev1esp_auth);
 
 	if (!ESP_AALG_PRESENT(aalg_i)) {
 		DBG_log("kernel_alg_db_add() kernel auth aalg_id=%d not present",
@@ -78,10 +78,10 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 		db_trans_add(db_ctx, ealg_i);
 
 		/* add ESP auth attr (if present) */
-		if (esp_info->auth != AUTH_ALGORITHM_NONE) {
+		if (esp_info->ikev1esp_auth != AUTH_ALGORITHM_NONE) {
 			db_attr_add_values(db_ctx,
 					   AUTH_ALGORITHM,
-					   esp_info->auth);
+					   esp_info->ikev1esp_auth);
 		}
 
 		/* add keylength if specified in esp= string */
@@ -103,10 +103,10 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 				/* add this trans again with max key size */
 				if (def_ks != max_ks) {
 					db_trans_add(db_ctx, ealg_i);
-					if (esp_info->auth != AUTH_ALGORITHM_NONE) {
+					if (esp_info->ikev1esp_auth != AUTH_ALGORITHM_NONE) {
 						db_attr_add_values(db_ctx,
 							AUTH_ALGORITHM,
-							esp_info->auth);
+							esp_info->ikev1esp_auth);
 					}
 					db_attr_add_values(db_ctx,
 						KEY_LENGTH,
@@ -120,7 +120,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 
 		/* add ESP auth attr */
 		db_attr_add_values(db_ctx,
-				   AUTH_ALGORITHM, esp_info->auth);
+				   AUTH_ALGORITHM, esp_info->ikev1esp_auth);
 	}
 
 	return TRUE;
@@ -177,10 +177,10 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 			struct esp_info tmp_esp_info;
 			int aalg_i;
 
-			tmp_esp_info.transid = ealg_i;
+			tmp_esp_info.ikev1esp_transid = ealg_i;
 			tmp_esp_info.enckeylen = 0;
 			ESP_AALG_FOR_EACH(aalg_i) {
-				tmp_esp_info.auth =
+				tmp_esp_info.ikev1esp_auth =
 					alg_info_esp_sadb2aa(aalg_i);
 				kernel_alg_db_add(ctx_new, &tmp_esp_info,
 						  policy, FALSE);
@@ -229,11 +229,11 @@ bool ikev1_verify_esp(int ealg, unsigned int key_len, int aalg,
 		key_len = crypto_req_keysize(CRK_ESPorAH, ealg);
 
 	FOR_EACH_ESP_INFO(alg_info, esp_info) {
-		if (esp_info->transid == ealg &&
+		if (esp_info->ikev1esp_transid == ealg &&
 		    (esp_info->enckeylen == 0 ||
 		     key_len == 0 ||
 		     esp_info->enckeylen == key_len) &&
-		    esp_info->auth == aalg) {
+		    esp_info->ikev1esp_auth == aalg) {
 			return TRUE;
 		}
 	}
@@ -250,7 +250,7 @@ bool ikev1_verify_ah(int aalg, const struct alg_info_esp *alg_info)
 		return TRUE;
 
 	FOR_EACH_ESP_INFO(alg_info, esp_info) {	/* really AH */
-		if (esp_info->auth == aalg)
+		if (esp_info->ikev1esp_auth == aalg)
 			return TRUE;
 	}
 
