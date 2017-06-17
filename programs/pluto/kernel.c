@@ -1993,77 +1993,77 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			{
 				.transid = ESP_NULL,
 				.auth = AUTH_ALGORITHM_HMAC_MD5,
-				.enckeylen = 0,
+				.enckeysize = 0,
 				.encryptalg = SADB_EALG_NULL,
 				.authalg = SADB_AALG_MD5HMAC,
 			},
 			{
 				.transid = ESP_NULL,
 				.auth = AUTH_ALGORITHM_HMAC_SHA1,
-				.enckeylen = 0,
+				.enckeysize = 0,
 				.encryptalg = SADB_EALG_NULL,
 				.authalg = SADB_AALG_SHA1HMAC,
 			},
 			{
 				.transid = ESP_3DES,
 				.auth = AUTH_ALGORITHM_NONE,
-				.enckeylen = DES_CBC_BLOCK_SIZE * 3,
+				.enckeysize = DES_CBC_BLOCK_SIZE * 3,
 				.encryptalg = SADB_EALG_3DESCBC,
 				.authalg = SADB_AALG_NONE,
 			},
 			{
 				.transid = ESP_3DES,
 				.auth = AUTH_ALGORITHM_HMAC_MD5,
-				.enckeylen = DES_CBC_BLOCK_SIZE * 3,
+				.enckeysize = DES_CBC_BLOCK_SIZE * 3,
 				.encryptalg = SADB_EALG_3DESCBC,
 				.authalg = SADB_AALG_MD5HMAC,
 			},
 			{
 				.transid = ESP_3DES,
 				.auth = AUTH_ALGORITHM_HMAC_SHA1,
-				.enckeylen = DES_CBC_BLOCK_SIZE * 3,
+				.enckeysize = DES_CBC_BLOCK_SIZE * 3,
 				.encryptalg = SADB_EALG_3DESCBC,
 				.authalg = SADB_AALG_SHA1HMAC,
 			},
 			{
 				.transid = ESP_AES,
 				.auth = AUTH_ALGORITHM_NONE,
-				.enckeylen = AES_CBC_BLOCK_SIZE,
+				.enckeysize = AES_CBC_BLOCK_SIZE,
 				.encryptalg = SADB_X_EALG_AESCBC,
 				.authalg = SADB_AALG_NONE,
 			},
 			{
 				.transid = ESP_AES,
 				.auth = AUTH_ALGORITHM_HMAC_MD5,
-				.enckeylen = AES_CBC_BLOCK_SIZE,
+				.enckeysize = AES_CBC_BLOCK_SIZE,
 				.encryptalg = SADB_X_EALG_AESCBC,
 				.authalg = SADB_AALG_MD5HMAC,
 			},
 			{
 				.transid = ESP_AES,
 				.auth = AUTH_ALGORITHM_HMAC_SHA1,
-				.enckeylen = AES_CBC_BLOCK_SIZE,
+				.enckeysize = AES_CBC_BLOCK_SIZE,
 				.encryptalg = SADB_X_EALG_AESCBC,
 				.authalg = SADB_AALG_SHA1HMAC,
 			},
 			{
 				.transid = ESP_CAST,
 				.auth = AUTH_ALGORITHM_NONE,
-				.enckeylen = BYTES_FOR_BITS(CAST_KEY_DEF_LEN),
+				.enckeysize = BYTES_FOR_BITS(CAST_KEY_DEF_LEN),
 				.encryptalg = SADB_X_EALG_CASTCBC,
 				.authalg = SADB_AALG_NONE,
 			},
 			{
 				.transid = ESP_CAST,
 				.auth = AUTH_ALGORITHM_HMAC_MD5,
-				.enckeylen = BYTES_FOR_BITS(CAST_KEY_DEF_LEN),
+				.enckeysize = BYTES_FOR_BITS(CAST_KEY_DEF_LEN),
 				.encryptalg = SADB_X_EALG_CASTCBC,
 				.authalg = SADB_AALG_MD5HMAC,
 			},
 			{
 				.transid = ESP_CAST,
 				.auth = AUTH_ALGORITHM_HMAC_SHA1,
-				.enckeylen = BYTES_FOR_BITS(CAST_KEY_DEF_LEN),
+				.enckeysize = BYTES_FOR_BITS(CAST_KEY_DEF_LEN),
 				.encryptalg = SADB_X_EALG_CASTCBC,
 				.authalg = SADB_AALG_SHA1HMAC,
 			},
@@ -2122,13 +2122,13 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			}
 
 			DBG(DBG_CRYPT,
-				DBG_log("checking transid: %d keylen: %d auth: %d",
-					ei->transid, ei->enckeylen, ei->auth));
+				DBG_log("checking transid: %d keysize: %zu auth: %d",
+					ei->transid, ei->enckeysize, ei->auth));
 
 			if (ta->encrypt == ei->transid &&
 				(ta->enckeylen == 0 ||
 					ta->enckeylen ==
-					ei->enckeylen * BITS_PER_BYTE) &&
+					ei->enckeysize * BITS_PER_BYTE) &&
 				ta->integ_hash == ei->auth)
 				break;
 		}
@@ -2137,19 +2137,19 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 		if (enc_key_len != 0) {
 			/* XXX: must change to check valid _range_ enc_key_len */
-			if (enc_key_len > ei->enckeylen) {
+			if (enc_key_len > ei->enckeysize) {
 				loglog(RC_LOG_SERIOUS,
 					"ESP transform %s passed encryption key length %u; we expected %u or less",
 					enum_name(&esp_transformid_names,
 						ta->encrypt),
 					(unsigned)enc_key_len,
-					(unsigned)ei->enckeylen);
+					(unsigned)ei->enckeysize);
 				goto fail;
 			}
 			/* ??? why would we have a different length? */
-			pexpect(enc_key_len == ei->enckeylen);
+			pexpect(enc_key_len == ei->enckeysize);
 		} else {
-			enc_key_len = ei->enckeylen;
+			enc_key_len = ei->enckeysize;
 		}
 
 		/* Fixup key lengths for special cases */
