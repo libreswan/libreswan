@@ -211,53 +211,13 @@ src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128
 	tmpl src :: dst ::
 		proto esp reqid REQID mode transport
 src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
@@ -319,53 +279,13 @@ src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128
 	tmpl src :: dst ::
 		proto esp reqid REQID mode transport
 src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES

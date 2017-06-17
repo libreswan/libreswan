@@ -53,38 +53,6 @@ src 192.0.1.0/24 dst 192.0.2.0/24 proto tcp sport 1234 dport 1234
 	dir in priority 2216 ptype main 
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES

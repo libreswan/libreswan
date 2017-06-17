@@ -74,22 +74,6 @@ src 192.1.2.0/24 dst 192.1.3.209/32
 	dir in priority 1576 ptype main 
 src 192.1.3.209/32 dst 192.1.2.0/24 
 	dir out priority 1576 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
@@ -149,22 +133,6 @@ src 192.1.2.0/24 dst 192.1.3.209/32
 	dir in priority 1576 ptype main 
 src 192.1.3.209/32 dst 192.1.2.0/24 
 	dir out priority 1576 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
