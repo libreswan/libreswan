@@ -1965,15 +1965,15 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 		/*
 		 * Encryption
 		 */
-		const struct encrypt_desc *ealg = ike_info->ike_encrypt;
-		if (!append_encrypt_transform(proposal, ealg, ike_info->ike_eklen)) {
+		const struct encrypt_desc *ealg = ike_info->encrypt;
+		if (!append_encrypt_transform(proposal, ealg, ike_info->enckeylen)) {
 			continue;
 		}
 
 		/*
 		 * PRF
 		 */
-		const struct prf_desc *prf = ike_info->ike_prf;
+		const struct prf_desc *prf = ike_info->prf;
 		if (prf == NULL) {
 			PEXPECT_LOG("%s", "IKEv2 proposal with no PRF should have been dropped");
 			continue;
@@ -1991,7 +1991,7 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 		 * INTEG
 		 */
 		if (ike_alg_enc_requires_integ(ealg)) {
-			const struct integ_desc *integ = ike_info->ike_integ;
+			const struct integ_desc *integ = ike_info->integ;
 			if (integ == NULL) {
 				PEXPECT_LOG("%s", "IKEv2 proposal with no INTEG should have been dropped");
 				continue;
@@ -2019,13 +2019,13 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 		/*
 		 * DH GROUP
 		 */
-		const struct oakley_group_desc *group = ike_info->ike_dh_group;
+		const struct oakley_group_desc *group = ike_info->dh;
 		if (group == NULL) {
 			PEXPECT_LOG("%s", "IKEv2 proposal with no DH_GROUP should have been dropped");
 			continue;
 		} else {
 			append_transform(proposal, IKEv2_TRANS_TYPE_DH,
-					 ike_info->ike_dh_group->group, 0);
+					 ike_info->dh->group, 0);
 		}
 
 		DBG(DBG_CONTROL,

@@ -35,12 +35,12 @@
 static int snprint_ike_info(char *buf, size_t buflen, struct ike_info *ike_info,
 			    bool fix_zero)
 {
-	const struct encrypt_desc *enc_desc = ike_info->ike_encrypt;
+	const struct encrypt_desc *enc_desc = ike_info->encrypt;
 	passert(!fix_zero || enc_desc != NULL);
-	const struct prf_desc *prf_desc = ike_info->ike_prf;
+	const struct prf_desc *prf_desc = ike_info->prf;
 	passert(!fix_zero || prf_desc != NULL);
 
-	int eklen = ike_info->ike_eklen;
+	int eklen = ike_info->enckeylen;
 	if (fix_zero && eklen == 0)
 		eklen = enc_desc->keydeflen;
 
@@ -48,17 +48,17 @@ static int snprint_ike_info(char *buf, size_t buflen, struct ike_info *ike_info,
 	return snprintf(buf, buflen,
 			"%s(%d)_%03d-%s(%d)-%s(%d)",
 			enum_show_shortb(&oakley_enc_names,
-					 ike_info->ike_encrypt->common.ikev1_oakley_id,
+					 ike_info->encrypt->common.ikev1_oakley_id,
 					 &enc_buf),
-			ike_info->ike_encrypt->common.ikev1_oakley_id, eklen,
+			ike_info->encrypt->common.ikev1_oakley_id, eklen,
 			enum_show_shortb(&oakley_hash_names,
-					 ike_info->ike_prf->common.ikev1_oakley_id,
+					 ike_info->prf->common.ikev1_oakley_id,
 					 &hash_buf),
-			ike_info->ike_prf->common.ikev1_oakley_id,
+			ike_info->prf->common.ikev1_oakley_id,
 			enum_show_shortb(&oakley_group_names,
-					 ike_info->ike_dh_group->group,
+					 ike_info->dh->group,
 					 &group_buf),
-			ike_info->ike_dh_group->group);
+			ike_info->dh->group);
 }
 
 void alg_info_snprint_ike_info(char *buf, size_t buflen,
@@ -82,9 +82,9 @@ void alg_info_snprint_ike(char *buf, size_t buflen,
 	const char *sep = "";
 
 	FOR_EACH_IKE_INFO(alg_info, ike_info) {
-		if (ike_info->ike_encrypt != NULL &&
-		    ike_info->ike_prf != NULL &&
-		    ike_info->ike_dh_group != NULL) {
+		if (ike_info->encrypt != NULL &&
+		    ike_info->prf != NULL &&
+		    ike_info->dh != NULL) {
 			if (strlen(sep) >= buflen) {
 				DBG_log("alg_info_snprint_ike: buffer too short for separator");
 				break;
@@ -127,15 +127,15 @@ void alg_info_ike_snprint(char *buf, size_t buflen,
 		snprintf(ptr, be - ptr,
 			 "%s%s(%d)_%03d-%s(%d)-%s(%d)",
 			 sep, enum_short_name(&oakley_enc_names,
-					      ike_info->ike_encrypt->common.ikev1_oakley_id),
-			 ike_info->ike_encrypt->common.ikev1_oakley_id,
-			 (int)ike_info->ike_eklen,
+					      ike_info->encrypt->common.ikev1_oakley_id),
+			 ike_info->encrypt->common.ikev1_oakley_id,
+			 (int)ike_info->enckeylen,
 			 enum_short_name(&oakley_hash_names,
-					 ike_info->ike_prf->common.ikev1_oakley_id),
-			 ike_info->ike_prf->common.ikev1_oakley_id,
+					 ike_info->prf->common.ikev1_oakley_id),
+			 ike_info->prf->common.ikev1_oakley_id,
 			 enum_short_name(&oakley_group_names,
-					 ike_info->ike_dh_group->group),
-			 ike_info->ike_dh_group->group
+					 ike_info->dh->group),
+			 ike_info->dh->group
 			);
 		ptr += strlen(ptr);
 		sep = ", ";
@@ -184,12 +184,12 @@ static const char *raw_alg_info_ike_add(struct alg_info_ike *alg_info,
 	 * XXX: work-in-progress
 	 */
 	FOR_EACH_IKE_INFO(alg_info, ike_info) {
-		if (ike_info->ike_encrypt == encrypt &&
+		if (ike_info->encrypt == encrypt &&
 		    (ek_bits == 0 ||
-		     ike_info->ike_eklen == ek_bits) &&
-		    ike_info->ike_prf == prf &&
-		    ike_info->ike_integ == integ &&
-		    ike_info->ike_dh_group == dh_group) {
+		     ike_info->enckeylen == ek_bits) &&
+		    ike_info->prf == prf &&
+		    ike_info->integ == integ &&
+		    ike_info->dh == dh_group) {
 			DBG(DBG_CRYPT,
 			    DBG_log("discarding duplicate ealg=%s ek_bits=%d aalg=%s modp=%s",
 				    encrypt->common.name, ek_bits,
@@ -216,18 +216,18 @@ static const char *raw_alg_info_ike_add(struct alg_info_ike *alg_info,
 	 */
 	struct ike_info *new_info = alg_info->ike + alg_info->ai.alg_info_cnt;
 	*new_info = (struct ike_info) {
-		.ike_eklen = ek_bits,
-		.ike_encrypt = encrypt,
-		.ike_prf = prf,
-		.ike_integ = (ike_alg_is_aead(encrypt) ? NULL : integ),
-		.ike_dh_group = dh_group,
+		.enckeylen = ek_bits,
+		.encrypt = encrypt,
+		.prf = prf,
+		.integ = (ike_alg_is_aead(encrypt) ? NULL : integ),
+		.dh = dh_group,
 	};
 	alg_info->ai.alg_info_cnt++;
 	DBG(DBG_CRYPT,
 	    DBG_log("adding ealg=%s ek_bits=%d aalg=%s modp=%s, cnt=%d",
-		    new_info->ike_encrypt->common.name, ek_bits,
-		    new_info->ike_prf->common.name,
-		    new_info->ike_dh_group->common.name,
+		    new_info->encrypt->common.name, ek_bits,
+		    new_info->prf->common.name,
+		    new_info->dh->common.name,
 		    alg_info->ai.alg_info_cnt));
 
 	return NULL;

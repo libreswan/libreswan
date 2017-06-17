@@ -148,17 +148,17 @@ struct ike_info {
 	 * Because struct encrypt_desc still specifies multiple key
 	 * lengths, ENCKEYLEN is still required.
 	 */
-	const struct encrypt_desc *ike_encrypt;
-	size_t ike_eklen;               /* how many bits required by encryption algo */
+	const struct encrypt_desc *encrypt;
+	size_t enckeylen;               /* how many bits required by encryption algo */
 	/*
 	 * Integrity and PRF.
 	 */
-	const struct prf_desc *ike_prf;
-	const struct integ_desc *ike_integ;
+	const struct prf_desc *prf;
+	const struct integ_desc *integ;
 	/*
 	 * DH Group
 	 */
-	const struct oakley_group_desc *ike_dh_group;
+	const struct oakley_group_desc *dh;
 };
 
 /* common prefix of struct alg_info_esp and struct alg_info_ike */
