@@ -88,7 +88,7 @@ int alg = 0;
 
 #include <assert.h>
 const char *alg_string = NULL;          /* algorithm string */
-struct esp_info *esp_info = NULL;       /* esp info from 1st (only) element */
+struct proposal_info *esp_info = NULL;       /* esp info from 1st (only) element */
 int proc_read_ok = 0;                   /* /proc/net/pf_key_support read ok */
 
 unsigned long replay_window = 0;

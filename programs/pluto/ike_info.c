@@ -32,7 +32,8 @@
 
 #include "plutoalg.h" /* XXX: for ikev1_default_ike_info() */
 
-static int snprint_ike_info(char *buf, size_t buflen, struct ike_info *ike_info,
+static int snprint_ike_info(char *buf, size_t buflen,
+			    const struct proposal_info *ike_info,
 			    bool fix_zero)
 {
 	const struct encrypt_desc *enc_desc = ike_info->encrypt;
@@ -62,7 +63,7 @@ static int snprint_ike_info(char *buf, size_t buflen, struct ike_info *ike_info,
 }
 
 void alg_info_snprint_ike_info(char *buf, size_t buflen,
-			       struct ike_info *ike_info)
+			       const struct proposal_info *ike_info)
 {
 	snprint_ike_info(buf, buflen, ike_info, FALSE);
 }
@@ -214,8 +215,8 @@ static const char *raw_alg_info_ike_add(struct alg_info_ike *alg_info,
 	/*
 	 * All is good, add it.
 	 */
-	struct ike_info *new_info = alg_info->ike + alg_info->ai.alg_info_cnt;
-	*new_info = (struct ike_info) {
+	struct proposal_info *new_info = alg_info->ike + alg_info->ai.alg_info_cnt;
+	*new_info = (struct proposal_info) {
 		.enckeylen = ek_bits,
 		.encrypt = encrypt,
 		.prf = prf,

@@ -44,9 +44,8 @@
 #include "whack.h"
 
 static bool kernel_alg_db_add(struct db_context *db_ctx,
-			      const struct esp_info *esp_info,
-			      lset_t policy,
-			      bool logit)
+			      const struct proposal_info *esp_info,
+			      lset_t policy, bool logit)
 {
 	int ealg_i = SADB_EALG_NONE;
 
@@ -174,7 +173,7 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 		int ealg_i;
 
 		ESP_EALG_FOR_EACH_DOWN(ealg_i) {
-			struct esp_info tmp_esp_info;
+			struct proposal_info tmp_esp_info;
 			int aalg_i;
 
 			tmp_esp_info.ikev1esp_transid = ealg_i;

@@ -109,10 +109,13 @@ struct parser_param {
 					       const char *name, size_t key_bit_length);
 };
 
-struct esp_info {
+/*
+ * A proposal as decoded by the parser.
+ */
+
+struct proposal_info {
 	/*
-	 * The encryption algorithm and key length; if required by
-	 * ESP.
+	 * The encryption algorithm and key length.
 	 *
 	 * Because struct encrypt_desc still specifies multiple key
 	 * lengths, ENCKEYLEN is still required.
@@ -121,42 +124,13 @@ struct esp_info {
 	size_t enckeylen;    /* keylength for ESP transform (bits) */
 	u_int8_t ikev1esp_transid;       /* enum ipsec_cipher_algo: ESP transform (AES, 3DES, etc.)*/
 	/*
-	 * The integrity algorithm; if required by ESP/AH.
-	 *
-	 * XXX: It is called "integ" and not "esp_integ" because
-	 * "struct esp_info" and "struct ike_info", which are pretty
-	 * much identical, are heading for a merge - one less field to
-	 * rename.
+	 * The integrity and PRF algorithms.
 	 */
+	const struct prf_desc *prf;
 	const struct integ_desc *integ;
 	u_int16_t ikev1esp_auth;         /* enum ikev1_auth_attribute: AUTH */
 	/*
 	 * PFS/DH negotiation.
-	 *
-	 * XXX: It is called "dh" and not "esp_dh" because "struct
-	 * esp_info" and "struct ike_info", which are pretty much
-	 * identical, are heading for a merge - one less field to
-	 * rename.
-	 */
-	const struct oakley_group_desc *dh;
-};
-
-struct ike_info {
-	/*
-	 * Encryption.
-	 *
-	 * Because struct encrypt_desc still specifies multiple key
-	 * lengths, ENCKEYLEN is still required.
-	 */
-	const struct encrypt_desc *encrypt;
-	size_t enckeylen;               /* how many bits required by encryption algo */
-	/*
-	 * Integrity and PRF.
-	 */
-	const struct prf_desc *prf;
-	const struct integ_desc *integ;
-	/*
-	 * DH Group
 	 */
 	const struct oakley_group_desc *dh;
 };
@@ -170,13 +144,13 @@ struct alg_info {
 
 struct alg_info_esp {
 	struct alg_info ai;	/* common prefix */
-	struct esp_info esp[128];
+	struct proposal_info esp[128];
 	const struct oakley_group_desc *esp_pfsgroup;
 };
 
 struct alg_info_ike {
 	struct alg_info ai;	/* common prefix */
-	struct ike_info ike[128];
+	struct proposal_info ike[128];
 };
 
 extern void alg_info_free(struct alg_info *alg_info);
@@ -200,14 +174,13 @@ void alg_info_ike_snprint(char *buf, size_t buflen,
 void alg_info_esp_snprint(char *buf, size_t buflen,
 			  const struct alg_info_esp *alg_info_esp);
 
-extern void alg_info_snprint_ike(char *buf, size_t buflen,
+void alg_info_snprint_ike(char *buf, size_t buflen,
 			  struct alg_info_ike *alg_info);
 
 void alg_info_snprint_ike_info(char *buf, size_t buflen,
-			       struct ike_info *alg_info);
-
+			       const struct proposal_info *ike_info);
 void alg_info_snprint_esp_info(char *buf, size_t buflen,
-			       const struct esp_info *esp_info);
+			       const struct proposal_info *esp_info);
 void alg_info_snprint_phase2(char *buf, size_t buflen,
 			     struct alg_info_esp *alg_info);
 

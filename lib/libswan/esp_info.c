@@ -43,7 +43,7 @@ static void raw_alg_info_esp_add(struct alg_info_esp *alg_info,
 				 const struct integ_desc *integ,
 				 const struct oakley_group_desc *dh)
 {
-	struct esp_info *esp_info = alg_info->esp;
+	struct proposal_info *esp_info = alg_info->esp;
 	int cnt = alg_info->ai.alg_info_cnt;
 
 	/*
@@ -212,7 +212,7 @@ static struct alg_info_esp *alg_info_discover_pfsgroup_hack(struct alg_info_esp 
 	 * Find the last proposal, of present (never know, there could
 	 * be no algorithms).
 	 */
-	struct esp_info *last = NULL;
+	struct proposal_info *last = NULL;
 	FOR_EACH_ESP_INFO(aie, esp_info) {
 		last = esp_info;
 	}
@@ -417,7 +417,7 @@ void alg_info_esp_snprint(char *buf, size_t buflen,
 }
 
 static int snprint_esp_info(char *ptr, size_t buflen, const char *sep,
-			    const struct esp_info *esp_info)
+			    const struct proposal_info *esp_info)
 {
 	unsigned eklen = esp_info->enckeylen;
 
@@ -433,7 +433,7 @@ static int snprint_esp_info(char *ptr, size_t buflen, const char *sep,
 }
 
 void alg_info_snprint_esp_info(char *buf, size_t buflen,
-			       const struct esp_info *esp_info)
+			       const struct proposal_info *esp_info)
 {
 	snprint_esp_info(buf, buflen, "", esp_info);
 }
