@@ -925,7 +925,7 @@ kvmplutotest	nss-cert-08-mismatch		good
 kvmplutotest	nss-cert-chain-01		good
 kvmplutotest	nss-cert-chain-02		good
 kvmplutotest	nss-cert-chain-03		good
-kvmplutotest	nss-cert-chain-04		good
+kvmplutotest	nss-cert-chain-04		wip
 kvmplutotest	nss-cert-chain-01-ikev2		good
 kvmplutotest	nss-cert-chain-02-ikev2		good
 kvmplutotest	nss-cert-chain-03-ikev2		good

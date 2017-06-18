@@ -283,28 +283,28 @@ road #
 road NOW
 XFRM state:
 XFRM policy:
+src 192.1.2.253/32 dst 192.1.3.209/32 
+	dir fwd priority 1568 ptype main 
+src 192.1.2.253/32 dst 192.1.3.209/32 
+	dir in priority 1568 ptype main 
 src 192.1.3.209/32 dst 192.1.2.0/24 
 	dir out priority 2088 ptype main 
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
-src 192.1.3.254/32 dst 192.1.3.209/32 
-	dir fwd priority 1568 ptype main 
-src 192.1.3.254/32 dst 192.1.3.209/32 
-	dir in priority 1568 ptype main 
+src 192.1.3.209/32 dst 192.1.2.253/32 
+	dir out priority 1568 ptype main 
+src 192.1.3.209/32 dst 192.1.3.253/32 
+	dir out priority 1568 ptype main 
 src 192.1.3.209/32 dst 192.1.3.254/32 
 	dir out priority 1568 ptype main 
 src 192.1.3.253/32 dst 192.1.3.209/32 
 	dir fwd priority 1568 ptype main 
 src 192.1.3.253/32 dst 192.1.3.209/32 
 	dir in priority 1568 ptype main 
-src 192.1.3.209/32 dst 192.1.3.253/32 
-	dir out priority 1568 ptype main 
-src 192.1.2.253/32 dst 192.1.3.209/32 
+src 192.1.3.254/32 dst 192.1.3.209/32 
 	dir fwd priority 1568 ptype main 
-src 192.1.2.253/32 dst 192.1.3.209/32 
+src 192.1.3.254/32 dst 192.1.3.209/32 
 	dir in priority 1568 ptype main 
-src 192.1.3.209/32 dst 192.1.2.253/32 
-	dir out priority 1568 ptype main 
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
@@ -354,7 +354,7 @@ PING 10.0.10.1 (10.0.10.1) 56(84) bytes of data.
 road #
  ipsec whack --trafficstatus
 006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=588, outBytes=588, id='ID_NULL', lease=10.0.10.1/32
-006 #4: "private-or-clear#192.1.2.0/24"[2] 10.0.10.1/32=== ...192.1.2.45, type=ESP, add_time=1234567890, inBytes=588, outBytes=588, id='ID_NULL', lease=10.0.10.1/32
+006 #4: "private-or-clear#192.1.2.0/24"[2] 10.0.10.1/32=== ...192.1.2.45, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='ID_NULL', lease=10.0.10.1/32
 road #
  iptables -t nat -L -n
 Chain PREROUTING (policy ACCEPT)
@@ -402,29 +402,13 @@ src 192.1.3.209 dst 192.1.2.23
 	replay-window 0 
 	sel src 192.1.3.209/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth0 
 XFRM policy:
-src 10.0.10.1/32 dst 192.1.2.45/32 
-	dir out priority 2080 ptype main 
-	tmpl src 192.1.3.209 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
-src 192.1.3.209/32 dst 192.1.2.45/32 
-	dir out priority 2080 ptype main 
-	tmpl src 192.1.3.209 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
-src 192.1.2.45/32 dst 10.0.10.1/32 
-	dir fwd priority 2080 ptype main 
-	tmpl src 192.1.2.45 dst 192.1.3.209
-		proto esp reqid REQID mode tunnel
-src 192.1.2.45/32 dst 10.0.10.1/32 
-	dir in priority 2080 ptype main 
-	tmpl src 192.1.2.45 dst 192.1.3.209
-		proto esp reqid REQID mode tunnel
 src 10.0.10.1/32 dst 192.1.2.23/32 
 	dir out priority 2080 ptype main 
 	tmpl src 192.1.3.209 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-src 192.1.3.209/32 dst 192.1.2.23/32 
+src 10.0.10.1/32 dst 192.1.2.45/32 
 	dir out priority 2080 ptype main 
-	tmpl src 192.1.3.209 dst 192.1.2.23
+	tmpl src 192.1.3.209 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
 src 192.1.2.23/32 dst 10.0.10.1/32 
 	dir fwd priority 2080 ptype main 
@@ -433,29 +417,45 @@ src 192.1.2.23/32 dst 10.0.10.1/32
 src 192.1.2.23/32 dst 10.0.10.1/32 
 	dir in priority 2080 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.2.253/32 dst 192.1.3.209/32 
+	dir fwd priority 1568 ptype main 
+src 192.1.2.253/32 dst 192.1.3.209/32 
+	dir in priority 1568 ptype main 
+src 192.1.2.45/32 dst 10.0.10.1/32 
+	dir fwd priority 2080 ptype main 
+	tmpl src 192.1.2.45 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.2.45/32 dst 10.0.10.1/32 
+	dir in priority 2080 ptype main 
+	tmpl src 192.1.2.45 dst 192.1.3.209
 		proto esp reqid REQID mode tunnel
 src 192.1.3.209/32 dst 192.1.2.0/24 
 	dir out priority 2088 ptype main 
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
-src 192.1.3.254/32 dst 192.1.3.209/32 
-	dir fwd priority 1568 ptype main 
-src 192.1.3.254/32 dst 192.1.3.209/32 
-	dir in priority 1568 ptype main 
+src 192.1.3.209/32 dst 192.1.2.23/32 
+	dir out priority 2080 ptype main 
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.253/32 
+	dir out priority 1568 ptype main 
+src 192.1.3.209/32 dst 192.1.2.45/32 
+	dir out priority 2080 ptype main 
+	tmpl src 192.1.3.209 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.3.253/32 
+	dir out priority 1568 ptype main 
 src 192.1.3.209/32 dst 192.1.3.254/32 
 	dir out priority 1568 ptype main 
 src 192.1.3.253/32 dst 192.1.3.209/32 
 	dir fwd priority 1568 ptype main 
 src 192.1.3.253/32 dst 192.1.3.209/32 
 	dir in priority 1568 ptype main 
-src 192.1.3.209/32 dst 192.1.3.253/32 
-	dir out priority 1568 ptype main 
-src 192.1.2.253/32 dst 192.1.3.209/32 
+src 192.1.3.254/32 dst 192.1.3.209/32 
 	dir fwd priority 1568 ptype main 
-src 192.1.2.253/32 dst 192.1.3.209/32 
+src 192.1.3.254/32 dst 192.1.3.209/32 
 	dir in priority 1568 ptype main 
-src 192.1.3.209/32 dst 192.1.2.253/32 
-	dir out priority 1568 ptype main 
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
