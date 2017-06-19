@@ -173,11 +173,21 @@ automate the below.
 - examine (and perhaps delete) any test runs where tests have
   'missing-output':
 
-      $ ( test -z "${WEBDIR}" && cd "${WEBDIR}" && grep '"output-missing"' *-g*-*/results.json | cut -d/ -f1 | sort -u )
+      $ grep '"output-missing"' "${WEBDIR}"/*-g*-*/results.json | cut -d/ -f1 | sort -u
 
 - examine (and perhaps delete) test runs with no results.json:
 
-      $ ( test -z "${WEBDIR}" && cd "${WEBDIR}" && ls -d *-g*-*/ | while read d ; do test -r $d/results.json || echo $d ; done )
+      $ ls -d "${WEBDIR}"/*-g*-*/ | while read d ; do test -r $d/results.json || echo $d ; done
+
+- examine (and perhaps delete) a random selection of test runs:
+
+      # form a list of non-branch et.al. test runs
+      $ ./libreswan-web-master/testing/web/gime-work.sh "${WEBDIR}" libreswan-web-slave 2>&1 | grep -e '^tested:[^:]*$' | tee tested.tmp
+      # ignoring the first, select a random subset
+      $ tail -n +2 tested.tmp | shuf | tail -n +100 | tee /dev/stderr | while read a h b ; do echo "${WEBDIR}"/*$h* ; done
+
+  (gime-work.sh lists each test result, and how "interesting" it was,
+  on stderror)
 
 - restart <tt>tester.sh</tt>:
 
