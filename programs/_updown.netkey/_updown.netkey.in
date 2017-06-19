@@ -402,6 +402,12 @@ delsource() {
 		oops=""
 		st=0
 		;;
+	    'RTNETLINK answers: Cannot assign'*)
+		# Address is not there to remove. We are removing
+		# address and removing removed is not a failure.
+		oops=""
+		st=0
+		;;
 	esac
 	if [ -n "${oops}" -o ${st} -ne 0 ]; then
 	    echo "$0: delsource \"${it}\" failed (${oops})" >&2
