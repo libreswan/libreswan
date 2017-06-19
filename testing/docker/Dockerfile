@@ -61,4 +61,6 @@ RUN printf '#!/bin/bash\n/home/build/libreswan/testing/guestbin/swan-transmogrif
 RUN chmod a+x /etc/rc.d/rc.local;
 RUN systemctl enable rc-local.service
 RUN printf 'export TERM=xterm\nexport EDITOR=vim\n' > /etc/profile.d/docker_exec_hack.sh
+RUN printf "alias rebuild='D=`pwd`; cd /home/build/libreswan; ipsec stop; make install-base; cd $D'\n" >> /root/.bash_profile
+RUN printf "alias gdbp='gdp -p `pidof pluto`'\n" >>  /root/.bash_profile
 RUN dnf -y update; dnf clean all
