@@ -159,14 +159,6 @@ src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128
 	dir in priority 17536 ptype main 
 	tmpl src :: dst ::
 		proto esp reqid REQID mode transport
-src ::/0 dst ::/0 
-src ::/0 dst ::/0 
-src ::/0 dst ::/0 
-src ::/0 dst ::/0 
-src ::/0 dst ::/0 
-src ::/0 dst ::/0 
-src ::/0 dst ::/0 
-src ::/0 dst ::/0 
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES

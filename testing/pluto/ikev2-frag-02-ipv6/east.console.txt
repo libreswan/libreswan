@@ -28,10 +28,6 @@ src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 XFRM policy:
-src 2001:2222:222:2200::/56 dst 2001:111:1111::/48 
-	dir out priority 26832 ptype main 
-	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:2::45
-		proto esp reqid REQID mode tunnel
 src 2001:111:1111::/48 dst 2001:2222:222:2200::/56 
 	dir fwd priority 26832 ptype main 
 	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
@@ -40,14 +36,10 @@ src 2001:111:1111::/48 dst 2001:2222:222:2200::/56
 	dir in priority 26832 ptype main 
 	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 		proto esp reqid REQID mode tunnel
-src ::/0 dst ::/0 
-src ::/0 dst ::/0 
-src ::/0 dst ::/0 
-src ::/0 dst ::/0 
-src ::/0 dst ::/0 
-src ::/0 dst ::/0 
-src ::/0 dst ::/0 
-src ::/0 dst ::/0 
+src 2001:2222:222:2200::/56 dst 2001:111:1111::/48 
+	dir out priority 26832 ptype main 
+	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+		proto esp reqid REQID mode tunnel
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
