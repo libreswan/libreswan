@@ -1369,6 +1369,7 @@ enum ipsec_xmit_value ipsec_xmit_ipcomp(struct ipsec_xmit_state *ixs)
  */
 enum ipsec_xmit_value ipsec_xmit_cont(struct ipsec_xmit_state *ixs)
 {
+	__u8 padlen;
 	skb_set_network_header(ixs->skb,
 			       ipsec_skb_offset(ixs->skb, ixs->skb->data));
 
@@ -1390,8 +1391,9 @@ enum ipsec_xmit_value ipsec_xmit_cont(struct ipsec_xmit_state *ixs)
 		    ixs->sa_len ? ixs->sa_txt : " (error)");
 	KLIPS_IP_PRINT(debug_tunnel & DB_TN_XMIT, ixs->iph);
 
-	ixs->ipsp->ips_life.ipl_bytes.ipl_count += ixs->len;
-	ixs->ipsp->ips_life.ipl_bytes.ipl_last = ixs->len;
+	padlen = ixs->tailroom - ixs->authlen;
+	ixs->ipsp->ips_life.ipl_bytes.ipl_count += ixs->ilen - padlen;
+	ixs->ipsp->ips_life.ipl_bytes.ipl_last = ixs->ilen - padlen;
 
 	if (!ixs->ipsp->ips_life.ipl_usetime.ipl_count)
 		ixs->ipsp->ips_life.ipl_usetime.ipl_count = jiffies / HZ;
