@@ -1527,15 +1527,22 @@ bool record_and_send_ike_msg(struct state *st, pb_stream *pbs, const char *what)
 	return send_ike_msg(st, what);
 }
 
-/* hack!  Leaves st->st_tpacket as it was found. */
+/* hack! Leaves st->st_tpacket and st->st_tfrags as it was found */
 bool send_ike_msg_without_recording(struct state *st, pb_stream *pbs, const char *where)
 {
 	chunk_t saved_tpacket = st->st_tpacket;
+	struct ikev2_frag *saved_tfrags  = st->st_tfrags;
 	bool r;
+
+	st->st_tfrags = NULL; /* assume notification and no fragments */
 
 	setchunk(st->st_tpacket, pbs->start, pbs_offset(pbs));
 	r = send_ike_msg(st, where);
+
+	/* restore the previous transmitted packet to st */
 	st->st_tpacket = saved_tpacket;
+	st->st_tfrags = saved_tfrags;
+
 	return r;
 }
 

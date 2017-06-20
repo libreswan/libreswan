@@ -336,6 +336,7 @@ struct state {
 	msgid_t st_msgid_nextuse;               /* next one to use - host order */
 	/* message ID sequence for things we receive (as responder) */
 	msgid_t st_msgid_lastrecv;             /* last one peer sent - Host order v2 only */
+	msgid_t st_msgid_lastreplied;         /* to decide retransmit CREATE_CHILD_SA */
 
 	chunk_t st_firstpacket_me;              /* copy of my message 1 (for hashing) */
 	chunk_t st_firstpacket_him;             /* copy of his message 1 (for hashing) */
@@ -432,9 +433,9 @@ struct state {
 	/* In a Phase 1 state, preserve peer's public key after authentication */
 	struct pubkey *st_peer_pubkey;
 
-	enum state_kind st_state;               /* State of exchange */
+	enum state_kind st_state;       /* State of exchange */
 
-	u_int8_t st_retransmit;		/* Number of retransmits */
+	u_int32_t st_retransmit;	/* Number of retransmits */
 	unsigned long st_try;		/* Number of times rekeying attempted.
 					 * 0 means the only time.
 					 */

@@ -337,6 +337,7 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		fake_md = alloc_md("msg_digest by ikev2_crypto_start()");
 		fake_md->st = st;
 		fake_md->from_state = STATE_IKEv2_BASE;
+		fake_md->msgid_received = v2_INVALID_MSGID;
 		md = fake_md;
 	}
 
@@ -2674,7 +2675,8 @@ static stf_status ikev2_record_fragment(struct msg_digest *md,
 				      unsigned int count, unsigned int total,
 				      const char *desc)
 {
-	struct state *st = md->st;
+	struct state *st = IS_CHILD_SA(md->st) ?
+		state_with_serialno(md->st->st_clonedfrom) : md->st;
 	struct ikev2_skf e;
 	unsigned char *encstart;
 	pb_stream e_pbs, e_pbs_cipher;
@@ -2766,8 +2768,12 @@ static stf_status ikev2_record_fragments(struct msg_digest *md,
 				       chunk_t *payload, /* read-only */
 				       const char *desc)
 {
-	struct state *const st = md->st;
+	struct state *const st = IS_CHILD_SA(md->st) ?
+		state_with_serialno(md->st->st_clonedfrom) : md->st;
 	unsigned int len;
+
+	release_fragments(st);
+	freeanychunk(st->st_tpacket);
 
 	len = (st->st_connection->addr_family == AF_INET) ?
 	      ISAKMP_V2_FRAG_MAXLEN_IPv4 : ISAKMP_V2_FRAG_MAXLEN_IPv6;
@@ -3153,12 +3159,12 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		return ikev2_record_fragments(md, &hdr, &e, &payload,
 					   "reply fragment for ikev2_parent_outR1_I2");
 	} else {
-		stf_status ret = ikev2_encrypt_msg(cst, authstart,
+		stf_status ret = ikev2_encrypt_msg(pst, authstart,
 					iv, encstart, authloc,
 					&e_pbs_cipher);
 
 		if (ret == STF_OK)
-			record_outbound_ike_msg(cst, &reply_stream,
+			record_outbound_ike_msg(pst, &reply_stream,
 				"reply packet for ikev2_parent_inR1outI2_tail");
 		return ret;
 	}
@@ -3844,13 +3850,15 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 			return ikev2_record_fragments(md, &hdr, &e, &payload,
 						   "reply fragment for ikev2_parent_inI2outR2_tail");
 		} else {
-			stf_status ret = ikev2_encrypt_msg(cst, authstart,
+			stf_status ret = ikev2_encrypt_msg(st, authstart,
 						iv, encstart, authloc,
 						&e_pbs_cipher);
 
-			if (ret == STF_OK)
-				record_outbound_ike_msg(cst, &reply_stream,
+			if (ret == STF_OK) {
+				record_outbound_ike_msg(st, &reply_stream,
 					"reply packet for ikev2_parent_inI2outR2_auth_tail");
+				st->st_msgid_lastreplied = md->msgid_received;
+			}
 
 			return ret;
 		}
@@ -4975,8 +4983,10 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 	 * CREATE_CHILD_SA request and response are small 300 - 750 bytes.
 	 * should we support fragmenting? may be one day.
 	 */
-	record_outbound_ike_msg(st, &reply_stream,
+	record_outbound_ike_msg(pst, &reply_stream,
 				"packet from ikev2_child_out_cont");
+
+	pst->st_msgid_lastreplied = md->msgid_received;
 
 	if (st->st_state == STATE_V2_CREATE_R ||
 			st->st_state == STATE_V2_REKEY_CHILD_R) {
@@ -5450,6 +5460,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 
 		record_and_send_ike_msg(st, &reply_stream,
 			"reply packet for process_encrypted_informational_ikev2");
+		st->st_msgid_lastreplied = md->msgid_received;
 
 		/* Now we can delete the IKE SA if we want to */
 		if (del_ike) {
