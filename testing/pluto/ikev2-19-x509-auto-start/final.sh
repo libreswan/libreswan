@@ -1,5 +1,6 @@
-ipsec look
+ipsec whack --trafficstatus
 : ==== cut ====
+ipsec look
 ipsec auto --status
 : ==== tuc ====
 ../bin/check-for-core.sh
