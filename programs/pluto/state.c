@@ -1801,6 +1801,44 @@ struct state *find_phase2_state_to_delete(const struct state *p1st,
 	return bogusst;
 }
 
+bool find_pending_phas2(const so_serial_t psn,
+		const struct connection *c, lset_t ok_states)
+{
+	struct state *best = NULL;
+	int i;
+	int n = 0;
+
+	passert (psn >= SOS_FIRST);
+
+	for (i = 0; i < STATE_TABLE_SIZE; i++) {
+		struct state *st;
+
+		FOR_EACH_ENTRY(st, i, {
+			if (LHAS(ok_states, st->st_state) &&
+				IS_CHILD_SA(st) &&
+				st->st_clonedfrom == psn &&
+				streq(st->st_connection->name, c->name) /* not instances */
+			   ) {
+				n++;
+				if (best == NULL ||
+					best->st_serialno < st->st_serialno) {
+					best = st;
+				}
+			}});
+	}
+
+	if (n > 0) {
+		DBG(DBG_CONTROL, {
+				DBG_log("connection %s has %d pending IPsec "
+					"negotiations ike #%lu last child state"
+					" #%lu",
+					c->name, n, psn, best->st_serialno);
+				});
+	}
+
+	return best != NULL;
+}
+
 /*
  * Find newest Phase 1 negotiation state object for suitable for connection c
  */

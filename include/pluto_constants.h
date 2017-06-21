@@ -591,6 +591,11 @@ enum original_role {
 
 #define IS_ISAKMP_SA_ESTABLISHED(s) ((LELEM(s) & ISAKMP_SA_ESTABLISHED_STATES) != LEMPTY)
 
+#define IPSECSA_PENDING_STATES (LELEM(STATE_V2_CREATE_I) | \
+				LELEM(STATE_V2_CREATE_I0) | \
+	/* due to a quirk in initiator duplication next one is also needed */ \
+				LELEM(STATE_PARENT_I2))
+
 /* IKEv1 or IKEv2 */
 #define IS_IPSEC_SA_ESTABLISHED(s) ((s) == STATE_QUICK_I2 || \
 				    (s) == STATE_QUICK_R1 || \

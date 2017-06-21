@@ -5824,12 +5824,18 @@ void ikev2_add_ipsec_child(int whack_sock, struct state *isakmp_sa,
 #endif
                        )
 {
-	struct state *st = duplicate_state(isakmp_sa, IPSEC_SA);
+	struct state *st;
 	char replacestr[32];
 	const char *pfsgroupname = "no-pfs";
 
+	if (find_pending_phas2(isakmp_sa->st_serialno,
+				c, IPSECSA_PENDING_STATES)) {
+		return;
+	}
+
 	passert(c != NULL);
 
+	st = duplicate_state(isakmp_sa, IPSEC_SA);
 	st->st_whack_sock = whack_sock;
 	st->st_connection = c;	/* safe: from duplicate_state */
 	passert(c != NULL);
