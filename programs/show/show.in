@@ -28,8 +28,16 @@ def main():
     if args.debug:
         print("checking destination %s"% dest)
 
+    if args.source and not dest:
+        sys.exit("if specifying a source, specifying a destination is required")
+
     source = None
     if dest:
+        try:
+            ipdst = ipaddress.ip_address(unicode(dest))
+        except:
+            sys.exit("%s is not a valid destination IP address"%dest)
+
         if args.source:
             source = args.source
         else:
@@ -44,8 +52,14 @@ def main():
         print "Need to find matching IPsec policy for %s/32 <=> %s/32"%(source,dest)
 
     if dest:
-        ipsrc = ipaddress.ip_address(unicode(source))
-        ipdst = ipaddress.ip_address(unicode(dest))
+        if "/" in source:
+            source = source.split("/")[0]
+        if "/" in dest:
+            dest = dest.split("/")[0]
+        try:
+            ipsrc = ipaddress.ip_address(unicode(source))
+        except:
+            sys.exit("%s is not a valid sourc IP address"%source)
         if ipsrc.version != ipdst.version:
             print("woah IP familty mismatch between %s and %s"%(source,dest))
             sys.exit(1)
@@ -85,7 +99,7 @@ def main():
                     print("%s <=> %s using reqid %s"%(src,dst,reqid))
 
     if dest:
-        print("Packet with source address %s to destination %s would not be encrypted (try -s sourceip ?)"%(source,dest))
+        print("Packet with source address %s to destination %s would not be encrypted"%(source,dest))
         sys.exit(1)
 
 if __name__ == "__main__":
