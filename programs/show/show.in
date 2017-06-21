@@ -54,10 +54,10 @@ def main():
     status, output = commands.getstatusoutput(ipxfrmcmd)
     polsrc = ""
     poldst = ""
-    reqid = ""
     for line in output.split("\n"):
         src = ""
         dst = ""
+        reqid = "0"
         line = line.replace("\\"," ")
         data = line.split()
         for i, word in enumerate(data):
