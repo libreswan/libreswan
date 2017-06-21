@@ -1412,12 +1412,13 @@ struct state *duplicate_state(struct state *st, sa_t sa_type)
 
 	nst = new_state();
 
-	DBG(DBG_CONTROL, DBG_log("duplicating state object #%lu as #%lu for %s "
-				"\"%s\"%s",
-				 st->st_serialno, nst->st_serialno,
-				sa_type == IPSEC_SA ? "IPSEC SA" : "IKE SA",
-				st->st_connection->name,
-				fmt_conn_instance(st->st_connection, cib)));
+	DBG(DBG_CONTROL, DBG_log("duplicating state object #%lu \"%s\"%s as "
+				 "#%lu for %s",
+				 st->st_serialno,
+				 st->st_connection->name,
+				 fmt_conn_instance(st->st_connection, cib),
+				 nst->st_serialno,
+				 sa_type == IPSEC_SA ? "IPSEC SA" : "IKE SA"));
 
 	nst->st_connection = st->st_connection;
 	if (sa_type == IPSEC_SA) {
