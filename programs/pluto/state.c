@@ -1814,7 +1814,7 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 			if (LHAS(ok_states, st->st_state) &&
 				c->host_pair == st->st_connection->host_pair &&
 				same_peer_ids(c, st->st_connection, NULL) &&
-				IS_PARENT_SA(st) && /* AA_2016 why find child */
+				IS_PARENT_SA(st) &&
 				(best == NULL ||
 					best->st_serialno < st->st_serialno))
 				best = st;
