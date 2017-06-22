@@ -670,7 +670,7 @@ int ikev2_evaluate_connection_fit(const struct connection *d,
 /*
  * find the best connection and, if it is AUTH exchange, create the child state
  */
-static stf_status ikev2_create_responder_child_state(
+stf_status ikev2_resp_accept_child_ts(
 	const struct msg_digest *md,
 	struct state **ret_cst,	/* where to return child state */
 	enum original_role role, enum isakmp_xchg_types isa_xchg)
@@ -978,8 +978,10 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	} else if (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) {
 		RETURN_STF_FAILURE_STATUS(ikev2_cp_reply_state(md, &cst,
 					isa_xchg));
+	} else if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
+		cst = md->st;
 	} else {
-		ret = ikev2_create_responder_child_state(md, &cst, role,
+		ret = ikev2_resp_accept_child_ts(md, &cst, role,
 				isa_xchg);
 	}
 

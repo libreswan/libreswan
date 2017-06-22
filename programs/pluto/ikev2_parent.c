@@ -289,6 +289,7 @@ static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
 		break;
 
 	case STATE_V2_CREATE_R:
+	case STATE_V2_REKEY_CHILD_R:
 		only_shared = TRUE;
 		/* FALL THROUGH*/
 	case STATE_V2_REKEY_IKE_R:
@@ -361,7 +362,16 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 
 	case STATE_V2_CREATE_R:
 		ci = pcim_known_crypto;
-		what = "Child Responder nonce nr";
+		what = md->chain[ISAKMP_NEXT_v2KE] == NULL ?
+			"Child Responder nonce nr" :
+			"Child Responder KE and nonce nr";
+		break;
+
+	case STATE_V2_REKEY_CHILD_R:
+		ci = pcim_known_crypto;
+		what = md->chain[ISAKMP_NEXT_v2KE] == NULL ?
+			"Child Rekey Responder nonce nr" :
+			"Child Rekey Responder KE and nonce nr";
 		break;
 
 	case STATE_V2_CREATE_I0:
@@ -399,6 +409,7 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		break;
 
 	case STATE_V2_CREATE_R:
+	case STATE_V2_REKEY_CHILD_R:
 		if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
 			e = build_ke_and_nonce(ke, st->st_oakley.group, ci);
 		} else {
@@ -4616,15 +4627,15 @@ static stf_status ikev2_rekey_child(const struct msg_digest *md)
 				ret = STF_FAIL + v2N_CHILD_SA_NOT_FOUND;
 			} else {
 
-				st->st_ipsec_pred = rst->st_ipsec_pred;
+				st->st_ipsec_pred = rst->st_serialno;
 
 				DBG(DBG_CONTROLMORE, DBG_log("#%lu rekey request for \"%s\"%s #%lu TSi TSr",
 							st->st_serialno,
 							rst->st_connection->name,
 							fmt_conn_instance(rst->st_connection, cib),
 							rst->st_serialno));
-				ikev2_print_ts(&st->st_ts_this);
-				ikev2_print_ts(&st->st_ts_that);
+				ikev2_print_ts(&rst->st_ts_this);
+				ikev2_print_ts(&rst->st_ts_that);
 
 				ret = STF_OK;
 			}
@@ -4682,7 +4693,6 @@ static stf_status ikev2_rekey_child_copy_ts(const struct msg_digest *md)
 	st->st_ts_that = ikev2_end_to_ts(&spd->that);
 	ikev2_print_ts(&st->st_ts_this);
 	ikev2_print_ts(&st->st_ts_that);
-	st->st_ipsec_pred = rst->st_serialno;
 
 	return ret;
 }
@@ -4985,6 +4995,12 @@ stf_status ikev2_child_inIoutR(struct msg_digest *md)
 
 	/* check N_REKEY_SA in the negotation */
 	RETURN_STF_FAILURE_STATUS(ikev2_rekey_child(md));
+
+	if (st->st_ipsec_pred == SOS_NOBODY) {
+		RETURN_STF_FAILURE_STATUS(ikev2_resp_accept_child_ts(md, &st,
+					ORIGINAL_RESPONDER,
+					ISAKMP_v2_CREATE_CHILD_SA));
+	}
 
 	stf_status e = ikev2_crypto_start(md, st);
 	return e;
