@@ -645,7 +645,8 @@ enum original_role {
 
 #define IS_CHILD_SA_RESPONDER(st) \
 	((st)->st_state == STATE_V2_REKEY_IKE_R || \
-	  (st)->st_state == STATE_V2_CREATE_R)
+	  (st)->st_state == STATE_V2_CREATE_R || \
+	  (st)->st_state == STATE_V2_REKEY_CHILD_R)
 
 #define IS_CHILD_IPSECSA_RESPONSE(st) \
 	((st)->st_state == STATE_V2_REKEY_IKE_I || \

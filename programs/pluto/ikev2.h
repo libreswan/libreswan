@@ -323,7 +323,6 @@ void ikev2_isakamp_established(struct state *st,
 				enum original_role role);
 struct ikev2_ipseckey_dns;
 
-extern stf_status ikev2_rekey_child_copy_ts(const struct msg_digest *md);
 extern stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 		                bool expect_accepted);
 
