@@ -1079,7 +1079,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA &&
 			md->st->st_ipsec_pred != SOS_NOBODY) {
-		/* this is Child SA rekey we already have child sa */
+		/* this is Child SA rekey we already have child state object */
 		cst = md->st;
 	} else if (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) {
 		RETURN_STF_FAILURE_STATUS(ikev2_cp_reply_state(md, &cst,

@@ -4829,14 +4829,14 @@ stf_status ikev2_child_inIoutR(struct msg_digest *md)
 
 	RETURN_STF_FAILURE_STATUS(ikev2_process_child_sa_pl(md, FALSE));
 
-	/* KE in with old (pst) accepted_oakley */
+	/* KE in with old(pst) and matching accepted_oakley from proposals */
 	RETURN_STF_FAILURE(accept_child_sa_KE(md, st, st->st_oakley));
 
 	stf_status e = ikev2_crypto_start(md, st);
 	return e;
 }
 
-/* processsing a new Rekeying IKE SAs with the CREATE_CHILD_SA RFC 7296 1.3.2 */
+/* processsing a new Rekey IKE SA (RFC 7296 1.3.2) request */
 stf_status ikev2_child_ike_inIoutR(struct msg_digest *md)
 {
 	struct state *st = md->st; /* child state */
