@@ -287,15 +287,12 @@ static err_t parser_machine(struct parser_context *p_ctx)
 			return "No alphanum. char initially found";
 
 		case ST_EA:
-			if (isalpha(ch) || ch == '_') {
+			if (isalnum(ch) || ch == '_') {
+				/*
+				 * accept all of <ealg>[_<eklen>]
+				 */
 				*(p_ctx->ealg_str++) = ch;
 				break;
-			}
-			if (isdigit(ch)) {
-				/* bravely switch to enc keylen */
-				*(p_ctx->ealg_str) = 0;
-				parser_set_state(p_ctx, ST_EK);
-				continue;
 			}
 			if (ch == '-') {
 				*(p_ctx->ealg_str) = 0;
@@ -306,7 +303,11 @@ static err_t parser_machine(struct parser_context *p_ctx)
 
 		case ST_EA_END:
 			if (isdigit(ch)) {
-				/* bravely switch to enc keylen */
+				/*
+				 * convert legacy <ealg>-<ekeylen>
+				 * into <ealg>_<eklen>
+				 */
+				*(p_ctx->ealg_str++) = '_';
 				parser_set_state(p_ctx, ST_EK);
 				continue;
 			}
@@ -317,14 +318,13 @@ static err_t parser_machine(struct parser_context *p_ctx)
 			return "No alphanum char found after enc alg separator";
 
 		case ST_EK:
-			if (ch == '-') {
-				parser_set_state(p_ctx, ST_EK_END);
+			if (isdigit(ch)) {
+				*(p_ctx->ealg_str++) = ch;
 				break;
 			}
-			if (isdigit(ch)) {
-				if (p_ctx->eklen >= INT_MAX / 10)
-					return "enc keylen WAY too big";
-				p_ctx->eklen = p_ctx->eklen * 10 + (ch - '0');
+			if (ch == '-') {
+				*(p_ctx->ealg_str) = 0;
+				parser_set_state(p_ctx, ST_EK_END);
 				break;
 			}
 			return "Non digit or valid separator found while reading enc keylen";
@@ -422,13 +422,55 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 		    p_ctx->aalg_buf,
 		    p_ctx->modp_buf));
 
+	/*
+	 * Try the EALG string; two possibilities it matches
+	 * unmodified (for instance, <aes_gcm_16>), or it contains a
+	 * trailing eklen and matches with that stripped off (for
+	 * instance, <aes_gcm_16>_<256>).
+	 */
 	const struct encrypt_desc *encrypt =
 		encrypt_desc(lookup_byname(p_ctx, err_buf, err_buf_len,
 					   p_ctx->param->encrypt_alg_byname,
 					   p_ctx->ealg_buf, p_ctx->eklen,
 					   "encryption"));
 	if (err_buf[0] != '\0') {
-		return err_buf;
+		char *end = &p_ctx->ealg_buf[strlen(p_ctx->ealg_buf) > 0 ?  strlen(p_ctx->ealg_buf) - 1 : 0];
+		if (!isdigit(*end)) {
+			return err_buf;
+		}
+		/*
+		 * perhaps the trailing number is an keylen, strip it
+		 * off
+		 */
+		do {
+			if (end == p_ctx->ealg_buf) {
+				/* no space for the name */
+				return err_buf;
+			}
+			end--;
+		} while (isdigit(*end));
+		/* can only contains digits */
+		long eklen = strtol(end + 1, NULL, 10);
+		if (eklen >= INT_MAX) {
+			snprintf(err_buf, err_buf_len,
+				 "enc keylen WAY too big");
+			return err_buf;
+		}
+		p_ctx->eklen = eklen;
+		/* strip "_" in <ealg>_<eklen>? */
+		if (end > p_ctx->ealg_buf && *end == '_') {
+			end--;
+		}
+		/* truncate and try again */
+		end[1] = '\0';
+		err_buf[0] = '\0';
+		encrypt = encrypt_desc(lookup_byname(p_ctx, err_buf, err_buf_len,
+						     p_ctx->param->encrypt_alg_byname,
+						     p_ctx->ealg_buf, p_ctx->eklen,
+						     "encryption"));
+		if (err_buf[0] != '\0') {
+			return err_buf;
+		}
 	}
 
 #	define COMMON_KEY_LENGTH(x) ((x) == 0 || (x) == 128 || (x) == 192 || (x) == 256)
