@@ -11,7 +11,10 @@
 
 
 #define CHECK(TYPE,PARSE) {						\
-		printf("[%*s] ", 20, algstr);				\
+		printf("%*s[%s=%s]%*s ",				\
+		       3 - (int)strlen(#PARSE), "",			\
+		       #PARSE, algstr,					\
+		       max(0, 20 - (int)strlen(algstr)), "");		\
 		fflush(NULL);						\
 		char err_buf[512] = "";	/* ??? big enough? */		\
 		struct alg_info_##TYPE *e =				\
