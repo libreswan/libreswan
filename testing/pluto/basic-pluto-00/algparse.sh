@@ -2,7 +2,13 @@
 
 if test $# -lt 1; then
     cat <<EOF >/dev/stderr
-Usage: $0 <path-to-alg-parse>
+
+Usage:
+
+    $0 <path-to-alg-parse> [ | patch -p1 ]
+
+Piping to patch will apply the reported differences.
+
 EOF
     exit 1
 fi
@@ -12,13 +18,22 @@ dir=$(dirname $0)
 
 set -e
 
+rc=0
 while read file flags ; do
     if test -r ${dir}/${file} ; then
-	${algparse} ${flags} 2>&1 | sed -e "s;^${algparse};algparse;" | diff -u ${dir}/${file} -
+	if ${algparse} ${flags} 2>&1 \
+	       | sed -e "s;^${algparse};algparse;" \
+	       | diff -u ${dir}/${file} - ; then
+	    :
+	else
+	    rc=1
+	fi
     else
-	${algparse} ${flags} 2>&1 | sed -e "s;${algparse};algparse;" | tee ${dir}/${file}.tmp
+	${algparse} ${flags} 2>&1 \
+	    | sed -e "s;${algparse};algparse;" \
+	    | tee ${dir}/${file}.tmp
 	echo created ${dir}/${file}.tmp 1>&2
-	exit 1
+	rc=1
     fi
 done <<EOF
 algparse.v.txt -v
@@ -28,3 +43,5 @@ algparse.fips.v.txt -fips -v
 algparse.fips.v1.txt -fips -v1
 algparse.fips.v2.txt -fips -v2
 EOF
+
+exit ${rc}
