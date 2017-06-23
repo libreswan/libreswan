@@ -50,6 +50,17 @@ static void ike(lset_t policy, const char *algstr)
 	CHECK(ike, ike);
 }
 
+static void all(lset_t policy, const char *algstr)
+{
+	typedef void (protocol_t)(lset_t policy, const char *);
+	protocol_t *const protocols[] = { ike, ah, esp, NULL, };
+	for (protocol_t *const *protocol = protocols;
+	     *protocol != NULL;
+	     protocol++) {
+		(*protocol)(policy, algstr);
+	}
+}
+
 static void test(lset_t policy)
 {
 	/*
@@ -221,7 +232,7 @@ static void test(lset_t policy)
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: [ -v1 ] [ -v2 ] [ -fips ] [ -v ] [ <protocol>=<proposals> ...]\n");
+	fprintf(stderr, "Usage: [ -v1 ] [ -v2 ] [ -fips ] [ -v ] [ [<protocol>=]<proposals> ...]\n");
 }
 
 int main(int argc, char *argv[])
@@ -282,31 +293,18 @@ int main(int argc, char *argv[])
 		for (; *argp != NULL; argp++) {
 			const char *arg = *argp;
 			/*
-			 * parse ...=<proposals> first so missing '='
-			 * is reported explicitly.
-			 */
-			const char *proposals = strchr(arg, '=');
-			if (proposals == NULL) {
-				fprintf(stderr, "'=' not found in '%s'\n", arg);
-				exit(1);
-			}
-			proposals += 1;
-			/*
-			 * now parse PROTOCOL=...
+			 * now parse [PROTOCOL=]...
 			 */
 #define starts_with(ARG,STRING) strncmp(ARG,STRING,strlen(STRING))
-			void (*protocol)(lset_t policy, const char *);
 			if (starts_with(arg, "ike=") == 0) {
-				protocol = ike;
+				ike(policy, arg + 4);
 			} else if (starts_with(arg, "esp=") == 0) {
-				protocol = esp;
+				esp(policy, arg + 4);
 			} else if (starts_with(arg, "ah=") == 0) {
-				protocol = ah;
+				ah(policy, arg + 3);
 			} else {
-				fprintf(stderr, "unknown <protocol> in '%s'\n", arg);
-				exit(1);
+				all(policy, arg);
 			}
-			protocol(policy, proposals);
 		}
 	} else {
 		test(policy);
