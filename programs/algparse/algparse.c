@@ -74,6 +74,8 @@ static void test(lset_t policy)
 	esp(policy, "3des-sha1;modp1024");
 	esp(policy, "3des-sha1;modp1536");
 	esp(policy, "3des-sha1;modp2048");
+	esp(policy, "3des-sha1;dh21");
+	esp(policy, "3des-sha1;ecp_521");
 	esp(policy, "3des-sha1;dh23");
 	esp(policy, "3des-sha1;dh24");
 	esp(policy, "3des-sha1");
@@ -222,6 +224,8 @@ static void test(lset_t policy)
 	ike(policy, "3des-sha1");
 	ike(policy, "3des-sha1");
 	ike(policy, "3des-sha1;modp1536");
+	ike(policy, "3des-sha1;dh21");
+	ike(policy, "3des-sha1-ecp_521");
 	ike(policy, "aes_gcm");
 
 	printf("\n---- IKE tests that should fail ----\n");
