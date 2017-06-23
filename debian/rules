@@ -33,7 +33,8 @@ override_dh_auto_build:
 		$(ENABLE_LIBCAP_NG) \
 		$(ENABLE_SELINUX) \
 		USE_KLIPS=false \
-		USE_DNSSEC=true
+		USE_DNSSEC=true \
+		DEFAULT_DNSSEC_ROOTKEY_FILE=/usr/share/dns/root.key
 
 override_dh_auto_install-arch:
 	# Add here commands to install the package into debian/libreswan
