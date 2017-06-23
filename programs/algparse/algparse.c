@@ -197,6 +197,9 @@ static void test(lset_t policy)
 	esp(policy, "3des-sha1;dh22"); /* support for dh22 removed */
 	esp(policy, "3des-sha1-dh21"); /* ';' vs '-' */
 	esp(policy, "3des-sha1;dh21,3des-sha2"); /* DH must be last */
+	esp(policy, "aes_gcm-16"); /* don't parse as aes_gcm_16 */
+	esp(policy, "aes_gcm-0"); /* invalid keylen */
+	esp(policy, "aes_gcm-123456789012345"); /* huge keylen */
 
 	/*
 	 * ah=

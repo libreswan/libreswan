@@ -112,6 +112,9 @@
 [esp=3des-sha1;dh22]       ERROR: ESP DH algorithm 'dh22' is not supported, enc_alg="3des"(0), auth_alg="sha1", modp="dh22"
 [esp=3des-sha1-dh21]       ERROR: ESP DH algorithm 'dh21' is not supported by IKEv1, enc_alg="3des"(0), auth_alg="sha1", modp="dh21"
 [esp=3des-sha1;dh21,3des-sha2] ERROR: ESP DH algorithm 'dh21' is not supported by IKEv1, enc_alg="3des"(0), auth_alg="sha1", modp="dh21"
+[esp=aes_gcm-16]           ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes_gcm"(16), auth_alg="", modp=""
+[esp=aes_gcm-0]            ERROR: encryption key length is zero, enc_alg="aes_gcm"(0), auth_alg="", modp=""
+[esp=aes_gcm-123456789012345] ERROR: encryption key length WAY too big, enc_alg="aes_gcm"(0), auth_alg="", modp=""
 
 ---- AH tests that should succeed ----
  [ah=]                        OK: MD5(1), SHA1(2)
