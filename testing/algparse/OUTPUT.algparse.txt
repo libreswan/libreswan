@@ -5,6 +5,8 @@
 [  3des-sha1;modp1024]    OK: 3DES(3)_000-SHA1(2); pfsgroup=MODP1024(2)
 [  3des-sha1;modp1536]    OK: 3DES(3)_000-SHA1(2); pfsgroup=MODP1536(5)
 [  3des-sha1;modp2048]    OK: 3DES(3)_000-SHA1(2); pfsgroup=MODP2048(14)
+[      3des-sha1;dh21]    OK: 3DES(3)_000-SHA1(2); pfsgroup=ECP_521(21)
+[   3des-sha1;ecp_521]    OK: 3DES(3)_000-SHA1(2); pfsgroup=ECP_521(21)
 [      3des-sha1;dh23]    OK: 3DES(3)_000-SHA1(2); pfsgroup=DH23(23)
 [      3des-sha1;dh24]    OK: 3DES(3)_000-SHA1(2); pfsgroup=DH24(24)
 [           3des-sha1]    OK: 3DES(3)_000-SHA1(2)
@@ -115,6 +117,8 @@
 [           3des-sha1]    OK: 3DES_CBC(5)_000-SHA1(2)-MODP2048(14)
 [           3des-sha1]    OK: 3DES_CBC(5)_000-SHA1(2)-MODP2048(14)
 [  3des-sha1;modp1536]    OK: 3DES_CBC(5)_000-SHA1(2)-MODP1536(5)
+[      3des-sha1;dh21]    OK: 3DES_CBC(5)_000-SHA1(2)-ECP_521(21)
+[   3des-sha1-ecp_521]    OK: 3DES_CBC(5)_000-SHA1(2)-ECP_521(21)
 [             aes_gcm]    OK: AES_GCM_C(20)_000-SHA2_256(4)-MODP2048(14), AES_GCM_C(20)_000-SHA2_512(6)-MODP2048(14), AES_GCM_C(20)_000-SHA1(2)-MODP2048(14)
 
 ---- IKE tests that should fail ----

@@ -73,6 +73,8 @@ int main(int argc UNUSED, char *argv[])
 	esp("3des-sha1;modp1024");
 	esp("3des-sha1;modp1536");
 	esp("3des-sha1;modp2048");
+	esp("3des-sha1;dh21");
+	esp("3des-sha1;ecp_521");
 	esp("3des-sha1;dh23");
 	esp("3des-sha1;dh24");
 	esp("3des-sha1");
@@ -221,6 +223,8 @@ int main(int argc UNUSED, char *argv[])
 	ike("3des-sha1");
 	ike("3des-sha1");
 	ike("3des-sha1;modp1536");
+	ike("3des-sha1;dh21");
+	ike("3des-sha1-ecp_521");
 	ike("aes_gcm");
 
 	printf("\n---- IKE tests that should fail ----\n");
