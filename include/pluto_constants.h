@@ -197,7 +197,9 @@ enum event_type {
 #define EVENT_v1_SEND_XAUTH_DELAY	80 /* milliseconds */
 
 #define RETRANSMIT_TIMEOUT_DEFAULT	60  /* seconds */
-//#define RETRANSMIT_INTERVAL_DEFAULT	500 /* wait time doubled each retransmit - in milliseconds */
+#ifndef RETRANSMIT_INTERVAL_DEFAULT
+# define RETRANSMIT_INTERVAL_DEFAULT	500 /* wait time doubled each retransmit - in milliseconds */
+#endif
 #define DELETE_SA_DELAY			RETRANSMIT_TIMEOUT_DEFAULT /* wait until the other side giveup on us */
 #define EVENT_CRYPTO_FAILED_DELAY	RETRANSMIT_TIMEOUT_DEFAULT /* wait till the other side give up on us */
 
