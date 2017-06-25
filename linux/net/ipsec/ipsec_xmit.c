@@ -2739,7 +2739,7 @@ static int ipsec_set_dst(struct ipsec_xmit_state *ixs)
 
 # ifdef CONFIG_KLIPS_IPV6
 	if (lsw_ip_hdr_version(ixs) == 6) {
-		/* saddr must not be set with ipv6, otherwise you can't 
+		/* saddr must not be set with ipv6, otherwise you can't
 		 * force the output device with linux kernels >= 4.3.
 		 * (kernel commit d46a9d678e4c9fac1e968d0593e4dba683389324)
 		 */

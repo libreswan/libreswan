@@ -215,7 +215,7 @@ static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
 					st->st_clonedfrom);
 			return STF_FAIL;
 		}
-		passert (st->st_sec_in_use == TRUE); /* child has its own KE */
+		passert(st->st_sec_in_use == TRUE); /* child has its own KE */
 
 		/* initiate calculation of g^xy */
 		e = start_dh_v2(md, "DHv2 for child sa", role,
@@ -3181,8 +3181,8 @@ static void *ikev2_pam_autherize_thread (void *x)
 	size_t sz;
 
 	/* threads will go quietly if the master cancel it */
-	pthread_setcanceltype  (PTHREAD_CANCEL_ASYNCHRONOUS,  NULL);
-	pthread_setcancelstate (PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,  NULL);
+	pthread_setcancelstate(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 
 	p->pam_status = do_pam_authentication(&p->pam);
 	gettimeofday(&p->done_time, NULL);

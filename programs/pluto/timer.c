@@ -363,7 +363,7 @@ static void retransmit_v2_msg(struct state *st)
 	}
 
 
-	if (pst != st) { 
+	if (pst != st) {
 		set_cur_state(pst);  /* now we are on pst */
 		if (pst->st_state == STATE_PARENT_I2) {
 			delete_state(pst);
@@ -438,7 +438,7 @@ static void liveness_check(struct state *st)
 			pst = state_with_serialno(st->st_clonedfrom);
 		}
 	} else {
-		pexpect (pst == NULL); /* no more dpd in IKE state */
+		pexpect(pst == NULL); /* no more dpd in IKE state */
 		pst = st;
 	}
 

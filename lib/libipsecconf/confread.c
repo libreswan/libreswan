@@ -193,7 +193,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
  *
  * Currently only used within validate_end().
  * ??? the messages are not separated by anything (eg. SP or NL): unreadable?
- * ??? Leak?  Where is the *perr freed?  
+ * ??? Leak?  Where is the *perr freed?
  */
 static void error_append(char **perr, const char *fmt, ...)
 {

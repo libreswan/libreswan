@@ -100,7 +100,7 @@ struct private_key_stuff {
 	enum PrivateKeyKind kind;
 	/*
 	 * Was this allocated on the heap and hence, should it be
-	 * freeed (along with all members)?
+	 * freed (along with all members)?
 	 *
 	 * The old secrets file stuff passes around a pointer to a
 	 * cached structure so it shouldn't be freed.

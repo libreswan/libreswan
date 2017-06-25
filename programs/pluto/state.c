@@ -570,7 +570,7 @@ struct state *state_with_parent_msgid_expect(so_serial_t psn, msgid_t st_msgid,
 {
 	int i;
 
-	passert (psn >= SOS_FIRST);
+	passert(psn >= SOS_FIRST);
 
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
 		struct state *st;
@@ -784,7 +784,7 @@ static void flush_pending_children(struct state *pst)
 {
 	struct state *st;
 	/* AA_2016 check is it st or pst ? */
-	FOR_EACH_HASH_ENTRY(st, pst->st_icookie, pst->st_rcookie, { 
+	FOR_EACH_HASH_ENTRY(st, pst->st_icookie, pst->st_rcookie, {
 			flush_pending_ipsec(pst, st);
 			delete_cryptographic_continuation(st);
 			});
