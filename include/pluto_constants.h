@@ -593,6 +593,12 @@ enum original_role {
 
 #define IS_ISAKMP_SA_ESTABLISHED(s) ((LELEM(s) & ISAKMP_SA_ESTABLISHED_STATES) != LEMPTY)
 
+#define IPSECSA_PENDING_STATES (LELEM(STATE_V2_CREATE_I) | \
+				LELEM(STATE_V2_CREATE_I0) | \
+				LELEM(STATE_V2_CREATE_R) | \
+	/* due to a quirk in initiator duplication next one is also needed */ \
+				LELEM(STATE_PARENT_I2))
+
 /* IKEv1 or IKEv2 */
 #define IS_IPSEC_SA_ESTABLISHED(s) ((s) == STATE_QUICK_I2 || \
 				    (s) == STATE_QUICK_R1 || \
@@ -642,7 +648,8 @@ enum original_role {
 
 #define IS_CHILD_SA_RESPONDER(st) \
 	((st)->st_state == STATE_V2_REKEY_IKE_R || \
-	  (st)->st_state == STATE_V2_CREATE_R)
+	  (st)->st_state == STATE_V2_CREATE_R || \
+	  (st)->st_state == STATE_V2_REKEY_CHILD_R)
 
 #define IS_CHILD_IPSECSA_RESPONSE(st) \
 	((st)->st_state == STATE_V2_REKEY_IKE_I || \

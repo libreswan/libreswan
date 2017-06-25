@@ -559,6 +559,10 @@ extern struct state
 	*find_phase1_state(const struct connection *c, lset_t ok_states),
 	*find_likely_sender(size_t packet_len, u_char * packet);
 
+extern bool find_pending_phas2(const so_serial_t psn,
+					const struct connection *c,
+					lset_t ok_states);
+
 struct state *state_with_parent_msgid_expect(so_serial_t psn, msgid_t st_msgid,
 		                enum state_kind expected_state);
 

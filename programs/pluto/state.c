@@ -1412,12 +1412,13 @@ struct state *duplicate_state(struct state *st, sa_t sa_type)
 
 	nst = new_state();
 
-	DBG(DBG_CONTROL, DBG_log("duplicating state object #%lu as #%lu for %s "
-				"\"%s\"%s",
-				 st->st_serialno, nst->st_serialno,
-				sa_type == IPSEC_SA ? "IPSEC SA" : "IKE SA",
-				st->st_connection->name,
-				fmt_conn_instance(st->st_connection, cib)));
+	DBG(DBG_CONTROL, DBG_log("duplicating state object #%lu \"%s\"%s as "
+				 "#%lu for %s",
+				 st->st_serialno,
+				 st->st_connection->name,
+				 fmt_conn_instance(st->st_connection, cib),
+				 nst->st_serialno,
+				 sa_type == IPSEC_SA ? "IPSEC SA" : "IKE SA"));
 
 	nst->st_connection = st->st_connection;
 	if (sa_type == IPSEC_SA) {
@@ -1800,6 +1801,44 @@ struct state *find_phase2_state_to_delete(const struct state *p1st,
 	return bogusst;
 }
 
+bool find_pending_phas2(const so_serial_t psn,
+		const struct connection *c, lset_t ok_states)
+{
+	struct state *best = NULL;
+	int i;
+	int n = 0;
+
+	passert (psn >= SOS_FIRST);
+
+	for (i = 0; i < STATE_TABLE_SIZE; i++) {
+		struct state *st;
+
+		FOR_EACH_ENTRY(st, i, {
+			if (LHAS(ok_states, st->st_state) &&
+				IS_CHILD_SA(st) &&
+				st->st_clonedfrom == psn &&
+				streq(st->st_connection->name, c->name) /* not instances */
+			   ) {
+				n++;
+				if (best == NULL ||
+					best->st_serialno < st->st_serialno) {
+					best = st;
+				}
+			}});
+	}
+
+	if (n > 0) {
+		DBG(DBG_CONTROL, {
+				DBG_log("connection %s has %d pending IPsec "
+					"negotiations ike #%lu last child state"
+					" #%lu",
+					c->name, n, psn, best->st_serialno);
+				});
+	}
+
+	return best != NULL;
+}
+
 /*
  * Find newest Phase 1 negotiation state object for suitable for connection c
  */
@@ -1814,7 +1853,7 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 			if (LHAS(ok_states, st->st_state) &&
 				c->host_pair == st->st_connection->host_pair &&
 				same_peer_ids(c, st->st_connection, NULL) &&
-				IS_PARENT_SA(st) && /* AA_2016 why find child */
+				IS_PARENT_SA(st) &&
 				(best == NULL ||
 					best->st_serialno < st->st_serialno))
 				best = st;
