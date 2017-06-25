@@ -19,14 +19,6 @@
 struct state;	/* so state.h is not a prerequisite */
 struct msg_digest;	/* so demux.h is not a prerequisite */
 
-/**
- * Addresses assigned (usually via MODE_CONFIG) to the Initiator
- */
-struct internal_addr {
-	ip_address ipaddr;
-	ip_address dns[2];
-};
-
 extern stf_status xauth_send_request(struct state *st);
 
 extern stf_status modecfg_start_set(struct state *st);
