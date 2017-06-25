@@ -2300,8 +2300,6 @@ static stf_status xauth_client_resp(struct state *st,
 		attr_type = XAUTH_TYPE;
 
 		while (xauth_resp != LEMPTY) {
-			bool dont_advance = FALSE;
-
 			if (xauth_resp & 1) {
 				/* ISAKMP attr out */
 				bool password_read_from_prompt = FALSE;
@@ -2476,10 +2474,8 @@ static stf_status xauth_client_resp(struct state *st,
 				}
 			}
 
-			if (!dont_advance) {
-				attr_type++;
-				xauth_resp >>= 1;
-			}
+			attr_type++;
+			xauth_resp >>= 1;
 		}
 
 		/* do not PAD here, */
