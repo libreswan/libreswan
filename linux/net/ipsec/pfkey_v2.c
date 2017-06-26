@@ -36,7 +36,10 @@
 
 #include <linux/major.h>
 #include <linux/signal.h>
-#include <linux/sched.h>
+#include <linux/sched.h> /* old location of  send_sig() ? */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
+# include <linux/sched/signal.h> /* new location of send_sig() */
+#endif
 #include <linux/errno.h>
 #include <linux/string.h>
 #include <linux/stat.h>

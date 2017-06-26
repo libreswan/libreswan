@@ -1,0 +1,8 @@
+as netkey-vti-01 but now the IPsec SA is a host-to-host tunnel
+
+This test sets up a "routed vpn" with east's network being a single IP address
+
+It is to confirm VTI works with host routes (reference with net-to-net)
+
+Road ends up sending its ping's into the vti0 device, but they never come
+out encrypted and nothing is seen on the wire.

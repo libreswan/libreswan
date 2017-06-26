@@ -150,17 +150,21 @@ automate the below.
 
 - (optional, but a good idea) upgrade and reboot the test machine:
 
-      $ sudo dnf upgrade -y ; sudo reboot
+      $ sudo dnf upgrade -y
+      $ sudo reboot
 
-- shutdown (or crash, see next step) the current test run
-
-- delete the existing domains:
+- delete the existing test domains domains (leaving the base domain,
+  this should crash the current test run):
 
       $ ( cd libreswan-web-slave && make kvm-uninstall )
 
 - update the slave repository:
 
       $ ( cd libreswan-web-slave && git pull --ff-only )
+
+- update the base domain:
+
+      $ ( cd libreswan-web-slave && make kvm-upgrade-base-domain )
 
 - update the master repository:
 
@@ -169,16 +173,25 @@ automate the below.
 - examine (and perhaps delete) any test runs where tests have
   'missing-output':
 
-      $ ( cd $WEBDIR && grep '"output-missing"' *-g*-*/results.json | cut -d/  -f1 | sort -u )
+      $ grep '"output-missing"' "${WEBDIR}"/*-g*-*/results.json | cut -d/ -f1 | sort -u
 
-- examine (and perhaps delete) result directories with incomplete
-  output:
+- examine (and perhaps delete) test runs with no results.json:
 
-      $ ( cd $WEBDIR && ls *-g*-*/ | while read d ; do test -r $d/results.json || echo $d ; done )
+      $ ls -d "${WEBDIR}"/*-g*-*/ | while read d ; do test -r $d/results.json || echo $d ; done
+
+- examine (and perhaps delete) a random selection of test runs:
+
+      # form a list of non-branch et.al. test runs
+      $ ./libreswan-web-master/testing/web/gime-work.sh "${WEBDIR}" libreswan-web-slave 2>&1 | grep -e '^tested:[^:]*$' | tee tested.tmp
+      # ignoring the first, select a random subset
+      $ tail -n +2 tested.tmp | shuf | tail -n +100 | tee /dev/stderr | while read a h b ; do echo "${WEBDIR}"/*$h* ; done
+
+  (gime-work.sh lists each test result, and how "interesting" it was,
+  on stderror)
 
 - restart <tt>tester.sh</tt>:
 
-      $ nohub ./libreswan-web-master/testing/web/tester.sh libreswan-web-slave $WEBDIR
+      $ nohup ./libreswan-web-master/testing/web/tester.sh libreswan-web-slave "${WEBDIR}" &
 
 
 ## Rebuilding

@@ -143,7 +143,7 @@ DEBUG_NO_STATIC int pfkey_sa_parse(struct sadb_ext *pfkey_ext)
 	    pfkey_sa->sadb_sa_len != sizeof(struct sadb_sa) /
 	    IPSEC_PFKEYv2_ALIGN) {
 		ERROR("pfkey_sa_parse: "
-			"length wrong pfkey_sa->sadb_sa_len=%d sizeof(struct sadb_sa)=%d.\n",
+			"size wrong pfkey_sa->sadb_sa_len=%d sizeof(struct sadb_sa)=%d.\n",
 			pfkey_sa->sadb_sa_len,
 			(int)sizeof(struct k_sadb_sa));
 		SENDERR(EINVAL);
@@ -259,8 +259,9 @@ DEBUG_NO_STATIC int pfkey_lifetime_parse(struct sadb_ext  *pfkey_ext)
 	    sizeof(struct sadb_lifetime) / IPSEC_PFKEYv2_ALIGN) {
 		DEBUGGING(PF_KEY_DEBUG_PARSE_PROBLEM,
 			  "pfkey_lifetime_parse: "
-			  "length wrong pfkey_lifetime->sadb_lifetime_len=%d sizeof(struct sadb_lifetime)=%d.\n",
+			  "size wrong pfkey_lifetime->sadb_lifetime_len=%d (*sizeof(u64)=%zu) sizeof(struct sadb_lifetime)=%d.\n",
 			  pfkey_lifetime->sadb_lifetime_len,
+			  pfkey_lifetime->sadb_lifetime_len * IPSEC_PFKEYv2_ALIGN,
 			  (int)sizeof(struct sadb_lifetime));
 		SENDERR(EINVAL);
 	}

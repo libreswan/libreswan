@@ -1,0 +1,5 @@
+Try to create a child-sa with weak DH
+
+Should be rejected.
+
+Pluto was instead silently switching DH to that agreed to with IKE.

@@ -73,7 +73,8 @@ int main(int argc UNUSED, char *argv[])
 	esp("3des-sha1;modp1024");
 	esp("3des-sha1;modp1536");
 	esp("3des-sha1;modp2048");
-	esp("3des-sha1;dh22");
+	esp("3des-sha1;dh21");
+	esp("3des-sha1;ecp_521");
 	esp("3des-sha1;dh23");
 	esp("3des-sha1;dh24");
 	esp("3des-sha1");
@@ -150,7 +151,6 @@ int main(int argc UNUSED, char *argv[])
 	esp("aes_ctr256");
 	esp("serpent");
 	esp("twofish");
-	esp("mars");
 	/*
 	 * should this be supported - for now man page says not
 	 * esp("modp1536");
@@ -177,6 +177,10 @@ int main(int argc UNUSED, char *argv[])
 	esp("id3"); /* should be rejected; idXXX removed */
 	esp("aes-id3"); /* should be rejected; idXXX removed */
 	esp("aes_gcm-md5"); /* AEAD must have auth null */
+	esp("mars"); /* support removed */
+	esp("3des-sha1;dh22"); /* support for dh22 removed */
+	esp("3des-sha1-dh21"); /* ';' vs '-' */
+	esp("3des-sha1;dh21,3des-sha2"); /* DH must be last */
 
 	/*
 	 * ah=
@@ -196,7 +200,6 @@ int main(int argc UNUSED, char *argv[])
 	ah("sha2_384");
 	ah("sha2_512");
 	ah("aes_xcbc");
-	ah("ripemd");
 
 	printf("\n---- AH tests that should fail ----\n");
 
@@ -208,6 +211,7 @@ int main(int argc UNUSED, char *argv[])
 	ah("null");
 	ah("aes_gcm");
 	ah("aes_ccm");
+	ah("ripemd"); /* support removed */
 
 	/*
 	 * ike=
@@ -219,6 +223,8 @@ int main(int argc UNUSED, char *argv[])
 	ike("3des-sha1");
 	ike("3des-sha1");
 	ike("3des-sha1;modp1536");
+	ike("3des-sha1;dh21");
+	ike("3des-sha1-ecp_521");
 	ike("aes_gcm");
 
 	printf("\n---- IKE tests that should fail ----\n");

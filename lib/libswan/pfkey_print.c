@@ -148,12 +148,18 @@ void pfkey_print(struct sadb_msg *msg, FILE *out)
 					"allocations=%u bytes=%" PRIu64
 					" addtime=%" PRIu64
 					" usetime=%" PRIu64
-					" packets=%u",
+#ifdef NOT_YET
+					" packets=%u"
+#endif /* NOT_YET */
+					,
 					life->sadb_lifetime_allocations,
 					life->sadb_lifetime_bytes,
 					life->sadb_lifetime_addtime,
-					life->sadb_lifetime_usetime,
-					life->sadb_x_lifetime_packets);
+					life->sadb_lifetime_usetime
+#ifdef NOT_YET
+					, life->sadb_x_lifetime_packets
+#endif /* NOT_YET */
+					);
 				fprintf(out, " } ");
 			}
 			break;

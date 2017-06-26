@@ -32,7 +32,6 @@
 #include "ike_alg.h"
 #include "ike_alg_null.h"
 #include "ike_alg_aes.h"
-#include "ike_alg_md5.h"
 #include "ike_alg_sha1.h"
 
 /*
@@ -77,34 +76,31 @@ static int aalg_getbyname_esp(const char *str)
 	return ret;
 }
 
-static int modp_getbyname_esp(const char *const str)
-{
-	int ret = alg_enum_search(&oakley_group_names, "OAKLEY_GROUP_", "", str);
-
-	if (ret < 0)
-		ret = alg_enum_search(&oakley_group_names, "OAKLEY_GROUP_",
-				      " (extension)", str);
-	return ret;
-}
-
 /*
  * Raw add routine: only checks for no duplicates
  */
 /* ??? much of this code is the same as raw_alg_info_ike_add (same bugs!) */
 static void raw_alg_info_esp_add(struct alg_info_esp *alg_info,
 				 const struct encrypt_desc *encrypt, unsigned ek_bits,
-				 const struct integ_desc *integ)
+				 const struct integ_desc *integ,
+				 const struct oakley_group_desc *dh)
 {
 	struct esp_info *esp_info = alg_info->esp;
 	int cnt = alg_info->ai.alg_info_cnt;
-	int i;
 
-	/* don't add duplicates */
-	/* ??? why is 0 wildcard for ek_bits and ak_bits? */
-	for (i = 0; i < cnt; i++) {
-		if (esp_info[i].esp_encrypt == encrypt &&
-		    (ek_bits == 0 || esp_info[i].enckeylen == ek_bits) &&
-		    esp_info[i].esp_integ == integ)
+	/*
+	 * don't add duplicates
+	 *
+	 * ??? why is 0 wildcard for ek_bits? XXX: EK_BITS==0 means
+	 * use both the default and strongest key lengths.  I guess
+	 * checking if ek_bits matches either of those is two
+	 * hard/messy, so a wild card is easier.
+	 */
+	FOR_EACH_ESP_INFO(alg_info, esp_info) {
+		if (esp_info->esp_encrypt == encrypt &&
+		    (ek_bits == 0 || esp_info->enckeylen == ek_bits) &&
+		    esp_info->esp_integ == integ &&
+		    esp_info->dh == dh)
 			return;
 	}
 
@@ -117,6 +113,7 @@ static void raw_alg_info_esp_add(struct alg_info_esp *alg_info,
 	esp_info[cnt].auth = (integ == &alg_info_integ_null) ? 0 : integ->common.id[IKEv1_ESP_ID];
 	esp_info[cnt].esp_encrypt = encrypt;
 	esp_info[cnt].esp_integ = (integ == &alg_info_integ_null) ? NULL : integ;
+	esp_info[cnt].dh = dh;
 
 	alg_info->ai.alg_info_cnt++;
 }
@@ -135,7 +132,6 @@ static const char *alg_info_esp_add(const struct parser_policy *const policy UNU
 				    char *err_buf, size_t err_buf_len)
 {
 	pexpect(prf == NULL);
-	pexpect(dh == NULL);
 
 	/*
 	 * XXX: Cross check encryption lookups.
@@ -164,7 +160,7 @@ static const char *alg_info_esp_add(const struct parser_policy *const policy UNU
 		}
 		raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
 				     encrypt, ek_bits,
-				     &alg_info_integ_null);
+				     &alg_info_integ_null, dh);
 	} else if (integ == &alg_info_integ_null) {
 		snprintf(err_buf, err_buf_len,
 			 "non-AEAD ESP encryption algorithm '%s' cannot have a 'null' integrity algorithm",
@@ -173,7 +169,7 @@ static const char *alg_info_esp_add(const struct parser_policy *const policy UNU
 	} else if (integ != NULL) {
 		raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
 				     encrypt, ek_bits,
-				     integ);
+				     integ, dh);
 	} else {
 		/*
 		 * Policy: default to MD5 and SHA1
@@ -186,14 +182,11 @@ static const char *alg_info_esp_add(const struct parser_policy *const policy UNU
 		 * IKE_ALG DB can be used to identify when this is the
 		 * case
 		 */
-		if (!libreswan_fipsmode()) {
+		if (ike_alg_is_valid(&ike_alg_integ_sha1.common)) {
 			raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
 					     encrypt, ek_bits,
-					     &ike_alg_integ_md5);
+					     &ike_alg_integ_sha1, NULL);
 		}
-		raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
-				     encrypt, ek_bits,
-				     &ike_alg_integ_sha1);
 	}
 	return NULL;
 }
@@ -215,7 +208,6 @@ static const char *alg_info_ah_add(const struct parser_policy *const policy UNUS
 	pexpect(ek_bits == 0);
 	pexpect(encrypt == NULL);
 	pexpect(prf == NULL);
-	pexpect(dh == NULL);
 
 	/*
 	 * XXX: Cross check integrity lookups.
@@ -231,7 +223,7 @@ static const char *alg_info_ah_add(const struct parser_policy *const policy UNUS
 		return err_buf;
 	} else if (integ != NULL) {
 		raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
-				     NULL, 0, integ);
+				     NULL, 0, integ, dh);
 	} else {
 		/*
 		 * Policy: default to MD5 and SHA1
@@ -240,14 +232,11 @@ static const char *alg_info_ah_add(const struct parser_policy *const policy UNUS
 		 * plutoalg.c:clone_valid() to select the default
 		 * algorithm list.
 		 */
-		if (!libreswan_fipsmode()) {
+		if (ike_alg_is_valid(&ike_alg_integ_sha1.common)) {
 			raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
-					     NULL, 0,
-					     &ike_alg_integ_md5);
+					     encrypt, ek_bits,
+					     &ike_alg_integ_sha1, NULL);
 		}
-		raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
-				     NULL, 0,
-				     &ike_alg_integ_sha1);
 	}
 	return NULL;
 }
@@ -261,6 +250,7 @@ const struct parser_param esp_parser_param = {
 	.aalg_getbyname = aalg_getbyname_esp,
 	.encrypt_alg_byname = encrypt_alg_byname,
 	.integ_alg_byname = integ_alg_byname,
+	.dh_alg_byname = dh_alg_byname,
 };
 
 const struct parser_param ah_parser_param = {
@@ -270,38 +260,111 @@ const struct parser_param ah_parser_param = {
 	.alg_info_add = alg_info_ah_add,
 	.aalg_getbyname = aalg_getbyname_esp,
 	.integ_alg_byname = integ_alg_byname,
+	.dh_alg_byname = dh_alg_byname,
 };
 
-static bool alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,
-					char *esp_buf,
-					char *err_buf, size_t err_buf_len)
+/*
+ * Pluto only accepts one ESP/AH DH algorithm and it must come at the
+ * end and be separated with a ';'.  Enforce this (even though the
+ * parer is far more forgiving).
+ */
+
+static struct alg_info_esp *alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,
+							    const char *alg_str,
+							    char *err_buf, size_t err_buf_len,
+							    const struct parser_param *parser_param)
 {
-	char *pfs_name = index(esp_buf, ';');
+	if (aie == NULL) {
+		return NULL;
+	}
 
-	err_buf[0] = '\0';
-	aie->esp_pfsgroup = OAKLEY_GROUP_invalid;	/* default */
-	if (pfs_name != NULL) {
-		*pfs_name++ = '\0';
+	/*
+	 * Find the last proposal, of present (never know, there could
+	 * be no algorithms).
+	 */
+	struct esp_info *last = NULL;
+	FOR_EACH_ESP_INFO(aie, esp_info) {
+		last = esp_info;
+	}
+	if (last == NULL) {
+		/* let caller deal with this. */
+		return aie;
+	}
 
-		/* if pfs string not null AND first char is not '0' */
-		if (*pfs_name != '\0' && pfs_name[0] != '0') {
-			int ret = modp_getbyname_esp(pfs_name);
+	/*
+	 * Restrict DH to just the last proposal.
+	 *
+	 * For instance, the first "modp1024" in
+	 * "aes;modp1024,aes;modp2048" isn't allowed.
+	 *
+	 * Why? Because pluto only understands one DH and having it
+	 * last should help have it stand out?
+	 */
+	FOR_EACH_ESP_INFO(aie, esp_info) {
+		if (esp_info == last) {
+			continue;
+		}
+		if (esp_info->dh == NULL) {
+			continue;
+		}
+		snprintf(err_buf, err_buf_len,
+			 "%s DH algorithm '%s' must be specified last",
+			 parser_param->protocol,
+			 esp_info->dh->common.name);
+		alg_info_free(&aie->ai);
+		return NULL;
+	}
 
-			if (ret < 0) {
-				/* Bomb if pfsgroup not found */
-				snprintf(err_buf, err_buf_len,
-					"pfsgroup \"%s\" not found",
-					pfs_name);
-				return FALSE;
-			}
-			aie->esp_pfsgroup = ret;
+	/*
+	 * Restrict the DH separator character to ';'.
+	 *
+	 * While the parser allows both "...;modp1024" and
+	 * "...-modp1024", pluto only admits to the former - so that
+	 * it stands out as something not part of the individual
+	 * proposals.
+	 *
+	 * Why? Because this is how it worked in the past.  Presumably
+	 * ';' makes it clear that it applies to all algorithms?
+	 */
+	if (last->dh != NULL) {
+		char *last_dash = strrchr(alg_str, '-');
+		char *last_semi = strrchr(alg_str, ';');
+		if (last_semi == NULL || last_semi < last_dash) {
+			snprintf(err_buf, err_buf_len,
+				 "%s DH algorithm '%s' must be separated using a ';'",
+				 parser_param->protocol,
+				 last->dh->common.name);
+			alg_info_free(&aie->ai);
+			return NULL;
 		}
 	}
 
-	return TRUE;
+	/*
+	 * Use last's DH for PFS.  Could be NULL but that is ok.
+	 *
+	 * XXX: Instead blat all proposals with the DH so that the
+	 * IKEv2 code can make use of this?
+	 */
+	aie->esp_pfsgroup = last->dh;
+	return aie;
 }
 
-/* This function is tested in testing/lib/libswan/algparse.c */
+/*
+ * ??? why is this called _ah_ when almost everything refers to esp?
+ * XXX: Because it is parsing an "ah" line which requires a different
+ * parser configuration - encryption isn't allowed.
+ *
+ * ??? the only difference between this and alg_info_esp is in two
+ * parameters to alg_info_parse_str.  XXX: Things are down to just the
+ * last parameter being different - but that is critical as it
+ * determines what is allowed.
+ *
+ * XXX: On the other hand, since "struct ike_info" and "struct
+ * esp_info" are effectively the same, they can be merged.  Doing
+ * that, would eliminate the AH using ESP confusion.
+ */
+
+/* This function is tested in testing/algparse/algparse.c */
 struct alg_info_esp *alg_info_esp_create_from_str(lset_t policy,
 						  const char *alg_str,
 						  char *err_buf, size_t err_buf_len)
@@ -313,27 +376,22 @@ struct alg_info_esp *alg_info_esp_create_from_str(lset_t policy,
 	 */
 	struct alg_info_esp *alg_info_esp = alloc_thing(struct alg_info_esp,
 							"alg_info_esp");
-	char esp_buf[256];	/* XXX should be changed to match parser max */
-
-	jam_str(esp_buf, sizeof(esp_buf), alg_str);
-
-	if (!alg_info_discover_pfsgroup_hack(alg_info_esp, esp_buf,
-					err_buf, err_buf_len)) {
-		pfree(alg_info_esp);
-		return NULL;
-	}
-
-	return (struct alg_info_esp *)
+	/*
+	 * These calls can free alg_info_esp!
+	 */
+	alg_info_esp = (struct alg_info_esp *)
 		alg_info_parse_str(policy,
 				   &alg_info_esp->ai,
-				   esp_buf,
+				   alg_str,
 				   err_buf, err_buf_len,
 				   &esp_parser_param);
+	alg_info_esp = alg_info_discover_pfsgroup_hack(alg_info_esp, alg_str,
+						       err_buf, err_buf_len,
+						       &esp_parser_param);
+	return alg_info_esp;
 }
 
-/* This function is tested in testing/lib/libswan/algparse.c */
-/* ??? why is this called _ah_ when almost everything refers to esp? */
-/* ??? the only difference between this and alg_info_esp is in two parameters to alg_info_parse_str */
+/* This function is tested in testing/algparse/algparse.c */
 struct alg_info_esp *alg_info_ah_create_from_str(lset_t policy,
 						 const char *alg_str,
 						 char *err_buf, size_t err_buf_len)
@@ -343,22 +401,21 @@ struct alg_info_esp *alg_info_ah_create_from_str(lset_t policy,
 	 * but this may require two passes to know
 	 * transform count in advance.
 	 */
-	struct alg_info_esp *alg_info_esp = alloc_thing(struct alg_info_esp, "alg_info_esp");
-	char esp_buf[256];	/* ??? big enough? */
+	struct alg_info_esp *alg_info_ah = alloc_thing(struct alg_info_esp, "alg_info_ah");
 
-	jam_str(esp_buf, sizeof(esp_buf), alg_str);
-
-	if (!alg_info_discover_pfsgroup_hack(alg_info_esp, esp_buf, err_buf, err_buf_len)) {
-		pfree(alg_info_esp);
-		return NULL;
-	}
-
-	return (struct alg_info_esp *)
+	/*
+	 * These calls can free ALG_INFO_AH.
+	 */
+	alg_info_ah = (struct alg_info_esp *)
 		alg_info_parse_str(policy,
-				   &alg_info_esp->ai,
-				   esp_buf,
+				   &alg_info_ah->ai,
+				   alg_str,
 				   err_buf, err_buf_len,
 				   &ah_parser_param);
+	alg_info_ah = alg_info_discover_pfsgroup_hack(alg_info_ah, alg_str,
+						      err_buf, err_buf_len,
+						      &ah_parser_param);
+	return alg_info_ah;
 }
 
 /* snprint already parsed transform list (alg_info) */
@@ -388,11 +445,11 @@ void alg_info_esp_snprint(char *buf, size_t buflen,
 			ptr += strlen(ptr);
 			sep = ", ";
 		}
-		if (alg_info_esp->esp_pfsgroup != OAKLEY_GROUP_invalid) {
+		if (alg_info_esp->esp_pfsgroup != NULL) {
 			snprintf(ptr, be - ptr, "; pfsgroup=%s(%d)",
 				enum_short_name(&oakley_group_names,
-						alg_info_esp->esp_pfsgroup),
-				alg_info_esp->esp_pfsgroup);
+						alg_info_esp->esp_pfsgroup->group),
+				alg_info_esp->esp_pfsgroup->group);
 			ptr += strlen(ptr);	/* ptr not subsequently used */
 		}
 		break;
@@ -411,10 +468,11 @@ void alg_info_esp_snprint(char *buf, size_t buflen,
 			ptr += strlen(ptr);
 			sep = ", ";
 		}
-		if (alg_info_esp->esp_pfsgroup != OAKLEY_GROUP_invalid) {
+		if (alg_info_esp->esp_pfsgroup != NULL) {
 			snprintf(ptr, be - ptr, "; pfsgroup=%s(%d)",
-				enum_short_name(&oakley_group_names, alg_info_esp->esp_pfsgroup),
-				alg_info_esp->esp_pfsgroup);
+				enum_short_name(&oakley_group_names,
+						alg_info_esp->esp_pfsgroup->group),
+				alg_info_esp->esp_pfsgroup->group);
 			ptr += strlen(ptr);	/* ptr not subsequently used */
 		}
 		break;

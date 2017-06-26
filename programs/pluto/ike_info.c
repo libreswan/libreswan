@@ -28,7 +28,6 @@
 #include "ike_alg_3des.h"
 #include "ike_alg_sha1.h"
 #include "ike_alg_sha2.h"
-#include "ike_alg_md5.h"
 #include "alg_info.h"
 
 #include "plutoalg.h" /* XXX: for ikev1_default_ike_info() */
@@ -262,7 +261,6 @@ static const struct ike_alg *default_ike_aalgs[] = {
 	&ike_alg_prf_sha2_256.common,
 	&ike_alg_prf_sha2_512.common,
 	&ike_alg_prf_sha1.common,
-	&ike_alg_prf_md5.common,
 	NULL,
 };
 

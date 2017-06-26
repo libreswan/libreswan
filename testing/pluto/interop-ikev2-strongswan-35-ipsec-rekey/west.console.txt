@@ -4,8 +4,7 @@ west #
 west #
  #../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
 west #
- service strongswan start
-Redirecting to /bin/systemctl start  strongswan.service
+ ../../pluto/bin/strongswan-start.sh
 west #
  echo "initdone"
 initdone
@@ -30,6 +29,7 @@ authentication of 'east' with pre-shared key successful
 IKE_SA westnet-eastnet-ikev2[1] established between 192.1.2.45[west]...192.1.2.23[east]
 scheduling rekeying in 10790s
 maximum IKE_SA lifetime XXXs
+CHILD_SA westnet-eastnet-ikev2{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
 connection 'westnet-eastnet-ikev2' established successfully
 west #
  strongswan status

@@ -22,8 +22,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 0 received, 100% packet loss, time XXXX
 west #
- service strongswan start
-Redirecting to /bin/systemctl start  strongswan.service
+ ../../pluto/bin/strongswan-start.sh
 west #
  echo "initdone"
 initdone
@@ -90,22 +89,10 @@ src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority 375423 ptype main 
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto ah reqid 1 mode tunnel
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
 west #
  echo done
 done

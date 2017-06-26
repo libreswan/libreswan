@@ -130,7 +130,8 @@ static bool ikev2_calculate_psk_sighash(bool verify, struct state *st,
 		if (st->st_state == STATE_PARENT_I2 && !verify) {
 			/* we are initiator sending PSK */
 			pss = &st->st_skey_chunk_SK_pi;
-		} else if (st->st_state == STATE_PARENT_I2 && verify) {
+		} else if ((st->st_state == STATE_PARENT_I2 ||
+				st->st_state == STATE_PARENT_I3) && verify) {
 			/* we are initiator verifying PSK */
 			pss = &st->st_skey_chunk_SK_pr;
 		} else if (st->st_state == STATE_PARENT_R2 && !verify) {
@@ -180,7 +181,8 @@ static bool ikev2_calculate_psk_sighash(bool verify, struct state *st,
 		/* we are initiator sending PSK */
 		nonce = &st->st_nr;
 		nonce_name = "create: initiator inputs to hash2 (responder nonce)";
-	} else if (st->st_state == STATE_PARENT_I2 && verify) {
+	} else if ((st->st_state == STATE_PARENT_I2 ||
+			st->st_state == STATE_PARENT_I3) && verify) {
 		/* we are initiator verifying PSK */
 		nonce = &st->st_ni;
 		nonce_name = "verify: initiator inputs to hash2 (initiator nonce)";

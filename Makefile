@@ -3,6 +3,7 @@
 # Copyright (C) 1998-2002  Henry Spencer.
 # Copyright (C) 2003-2004  Xelerance Corporation
 # Copyright (C) 2015-2017, Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2017, Richard Guy Briggs <rgb@tricolour.ca>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -59,7 +60,7 @@ KVSHORTUTIL=${MAKEUTILS}/kernelversion-short
 
 SUBDIRS?=lib programs initsystems testing
 
-TAGSFILES=$(wildcard include/*.h lib/lib*/*.c programs/*/*.c linux/include/*.h linux/include/openswan/*.h linux/net/ipsec/*.[ch])
+TAGSFILES=$(wildcard include/*.h lib/lib*/*.c programs/*/*.c linux/include/*.h linux/include/libreswan/*.h linux/net/ipsec/*.[ch])
 
 tags:	$(TAGSFILES)
 	@LC_ALL=C ctags $(CTAGSFLAGS) ${TAGSFILES}

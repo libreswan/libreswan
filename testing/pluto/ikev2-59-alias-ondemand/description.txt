@@ -1,0 +1,8 @@
+This is an IKEv2 test with alias/subnets auto=ondemand on east and crypto delay on west
+
+The CREATE_CHILD_SA retransmit cause the respondert to create multiple Child SA
+with same initiator SPI and different responder SPI.
+
+It seems as long as there is only one set(in, out, fwd) policy per tunnel
+everything works. Even if there are two tunnels. One initiated by each end.
+The corner case seems when there are two sets of policies. Then the traffic flow breaks.

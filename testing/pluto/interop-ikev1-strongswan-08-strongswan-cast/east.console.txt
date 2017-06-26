@@ -6,8 +6,7 @@ east #
 east #
  modprobe cast_common
 east #
- service strongswan start
-Redirecting to /bin/systemctl start  strongswan.service
+ ../../pluto/bin/strongswan-start.sh
 east #
  echo "initdone"
 initdone

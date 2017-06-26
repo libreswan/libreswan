@@ -52,6 +52,8 @@ except ImportError as e:
     module = str(e)[16:]
     sys.exit("we require the python module %s" % module)
 
+STOP_TESTS_NOW = 'stop-tests-now'
+
 # hosts = ['east', 'west', 'road', 'nic', 'north']
 r_init = threading.Event()
 i_ran = threading.Event()
@@ -1176,28 +1178,9 @@ def get_results(r):
         if "result" in x and "testname" in x:
             return x
 
-
-def shut_down_hosts(args, test_hosts, prefix=None):
+def sent_virsh_cmd(args, all_hosts, c="shutdown"):
 
     running = []
-    all_hosts = list(DEFAULTCONFIG['swanhosts'])
-    all_hosts.extend(DEFAULTCONFIG['regualrhosts'])
-
-    if prefix:
-        for i, host in enumerate(all_hosts):
-            all_hosts[i] = prefix + host
-
-    if args.noreboot:
-        logging.debug(
-            "all hosts [%s] shutdown list", ' '.join(map(str, all_hosts)))
-        logging.debug(
-            "remove [%s] from shutdown list", ' '.join(map(str, test_hosts)))
-        for t in test_hosts:
-            for h in all_hosts:
-                if h is t:
-                    all_hosts.remove(t)
-
-    logging.debug("shutdown list [%s]", ' '.join(map(str, all_hosts)))
 
     vmlist = subprocess.getoutput("sudo virsh list")
     for line in vmlist.split("\n")[2:]:
@@ -1206,9 +1189,8 @@ def shut_down_hosts(args, test_hosts, prefix=None):
             for h in all_hosts:
                 if h == host:
                     running.append(host)
-                    cmd = "sudo virsh shutdown %s" % host
-                    logging.debug(
-                        "Found %s %s shutodwn send %s", host, state, cmd)
+                    cmd = "sudo virsh %s %s" % (c, host)
+                    logging.debug("Found %s %s send %s", host, state, cmd)
                     shut = subprocess.getoutput(cmd)
         except:
             pass
@@ -1236,12 +1218,40 @@ def shut_down_hosts(args, test_hosts, prefix=None):
         tries -= 1
         time.sleep(1)
 
-    if len(running):
-        e = "KVMERROR not able to shutdown %s guests: [%s] abort" % (
-            len(running), ' '.join(map(str, running)))
-        logging.error(e)
-        return e
+    return running
 
+def shut_down_hosts(args, test_hosts, prefix=None):
+
+    running = []
+    all_hosts = list(DEFAULTCONFIG['swanhosts'])
+    all_hosts.extend(DEFAULTCONFIG['regualrhosts'])
+
+    if prefix:
+        for i, host in enumerate(all_hosts):
+            all_hosts[i] = prefix + host
+
+    if args.noreboot:
+        logging.debug(
+            "all hosts [%s] shutdown list", ' '.join(map(str, all_hosts)))
+        logging.debug(
+            "remove [%s] from shutdown list", ' '.join(map(str, test_hosts)))
+        for t in test_hosts:
+            for h in all_hosts:
+                if h is t:
+                    all_hosts.remove(t)
+
+    logging.debug("shutdown list [%s]", ' '.join(map(str, all_hosts)))
+
+    running =  sent_virsh_cmd(args, all_hosts, c="shutdown")
+
+    if len(running):
+       # try a bigger hammer to shut down
+        running =  sent_virsh_cmd(args, all_hosts, c="destroy")
+        if len(running):
+            e = "KVMERROR not able to shutdown %s guests: [%s] abort" % (
+                len(running), ' '.join(map(str, running)))
+            logging.error(e)
+            return e
 
 def find_other_hosts(test, test_hosts):
 
@@ -1301,7 +1311,7 @@ def orient(args, test, prefix=None):
         tcpdump_dev_192_1_3 = "-w OUTPUT/%s -i %s" % (
             "swan13.pcap", prefix + "192_1_3")
     else:
-        tcpdump_devs = ["-w OUTPUT/%s -i %s" % ("swan12.pcap", "sawn12")]
+        tcpdump_devs = ["-w OUTPUT/%s -i %s" % ("swan12.pcap", "swan12")]
         tcpdump_dev_192_1_3 = "-w OUTPUT/%s -i %s" % ("swan13.pcap", "swan13")
 
     if os.path.exists("westrun.sh"):
@@ -1403,9 +1413,13 @@ def read_exec_shell_cmd(ex, filename, prompt, timer, hostname=""):
             logging.debug("%s %s", hostname, err)
             return err
 
-# kill any lingering tcpdumps for KVM runs.
+# kill tcpdump from this run only
+def kill_tcpdump(test, signal=1):
+    if "tpids" in test:
+        for tpid in test["tpids"]:
+            gentle_kill(tpid, "tcpdump", signal)
 
-
+# kill any lingering tcpdumps for the entire KVM runs.
 def kill_zombie_tcpdump(signal=1):
     pids = subprocess.getoutput("pidof tcpdump")
     for pid in (pids.split()):
@@ -1543,7 +1557,7 @@ def write_result(args, start, testname, sanity, result='FAILED', e=None, testexp
     logging.debug("wrote result to %s/%s", testname, output_file)
 
 DEFAULTCONFIG = {
-    'bootwait': 109,
+    'bootwait': 59,
     'docker': False,
     'dockerimage': "swanbase",
     'kvm': True,
@@ -1697,31 +1711,37 @@ def cmdline():
     return args
 
 
-def kvm_error(r_file, failed=False):
+def kvm_error(odir, failed=False):
+
+    r_file = odir + '/' + 'RESULT'
+    s_file = odir + '/' + STOP_TESTS_NOW
+
+    if os.path.exists(s_file):
+        return "found " + STOP_TESTS_NOW
+
     if not os.path.exists(r_file):
         return False
-    f = open(r_file, 'r')
-    for line in f:
-        x = json.loads(line)
-        try:
-            re_e = re.search(r'KVMERROR', x['error'], re.I)
-            if re_e:
+
+    with open(r_file, 'r') as f:
+        for line in f:
+            x = json.loads(line)
+
+            # re-run the aborted, KVMERROR tests
+            if "msg" in x and re.search(r'KVMERROR', x['msg'], re.I):
                 logging.info(line)
-                f.close
-                return line
-        except:
-            pass
-        if "msg" in x:
-            if re.search(r'aborting', x['msg'], re.I):
-                logging.info(line)
-                f.close
                 return line
 
-        if failed and "result" in x and "expect" in x:
-            if x['result'] == "failed" and x['expect'] == "good":
-                return line
+            if "msg" in x:
+                if re.search(r'aborting', x['msg'], re.I):
+                    logging.info(line)
+                    f.close
+                    return line
 
-    f.close
+            # re-run the failed tests
+            if failed and "result" in x and "expect" in x:
+                if x['result'] == "failed" and x['expect'] == "good":
+                    return line
+
     return False
 
 
@@ -1834,13 +1854,13 @@ def docker_containers_start_stop(args, test, st, stop):
 
     logging.info("%s in docker_containers_start_stop ", test["name"])
 
-    if "is_testlist" in st and not stop:
+    if "is_testlist" in st and dqstart and not stop:
         logging.info(
             "%s stop boot q is enabled wait for the turn", test["name"])
         prefix = dqstart.get()
         logging.info("%s got a boot q slot %s %.2f" %
                      (test["name"], prefix, time.time() - start))
-    elif  "is_testlist" in st and stop:
+    elif "is_testlist" in st and dqstop and stop:
         logging.info(
             "%s stop boot q is enabled wait for the turn", test["name"])
         prefix = dqstop.get()
@@ -1867,7 +1887,7 @@ def docker_containers_start_stop(args, test, st, stop):
         dname = host + "-" + test["name"]
         docker_start_container(host, dname, args.dockerimage)
 
-    if "is_testlist" in st:
+    if "is_testlist" in st and dqstart:
         logging.debug("%s put boot q slot %s back %.2f" %
                       (test["name"], prefix, time.time() - start))
         dqstart.put(prefix)
@@ -2221,7 +2241,7 @@ def do_kvmplutotest(args, start, test, st, prefix=None):
         for host in test["others"]:
             others[host].join(timeout=args.initshwait)
 
-    kill_zombie_tcpdump()
+    kill_tcpdump(test)
 
     if "is_testlist" in st:
         e = shut_down_hosts(args, test_hosts, prefix=prefix)
@@ -2404,13 +2424,12 @@ def run_docker_q(args, tests, st):
     if check_host_netkey_stack():
         return True
 
-    if "is_testlist" in st:
-        bootp = [1, 2]
-        logging.debug("add %d boot workers to dq" % (len(bootp)))
-        for i in bootp:
-            logging.debug("add %d to the dq" % (i))
-            dqstart.put(i)
-            dqstop.put(i)
+    bootp = [1, 2, 3]
+    logging.debug("add %d boot workers to dq" % (len(bootp)))
+    for i in bootp:
+        logging.debug("add %d to the dq" % (i))
+        dqstart.put(i)
+        dqstop.put(i)
 
     for name, test in tests.items():
         logging.debug("queue up %s type %s", test["name"], test["type"])
@@ -2553,10 +2572,12 @@ def do_test_list(args, start, tried, output_dir):
             return (odir, True, ran)
 
         r_file = odir + '/' + testdir + '/OUTPUT/RESULT'
+        test_odir = odir + '/' + testdir + '/OUTPUT'
+
         if os.path.exists(r_file):
 
             if args.failed or tried:
-                if kvm_error(r_file, failed=args.failed):
+                if kvm_error(test_odir, failed=args.failed):
                     logging.info(
                         "result [%s] KVMERROR. deleting previous run, retrying %s/%s", r_file, tried, args.retry)
                     o = odir + '/' + testdir
@@ -2774,6 +2795,7 @@ def main():
             logging.info("ran %s retry %s %s/%s",
                          ran_tests, args.testlist, tried, args.retry)
             tried = 1 + tried
+            time.sleep(60)
 
     else:
         # no TESTLIST. Let's try a single test

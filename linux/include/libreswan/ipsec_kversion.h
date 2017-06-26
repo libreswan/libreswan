@@ -6,7 +6,7 @@
  * Copyright (C) 2003 - 2011 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008 - 2011 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2012-2014 David McCullough <david_mccullough@mcafee.com>
- * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2015 Greg Ungerer <gerg@uclinux.org>
  *
@@ -463,10 +463,12 @@
 #define __ipsec_dev_put(x) __dev_put(x)
 #define ipsec_dev_hold(x) dev_hold(x)
 
-#ifndef late_initcall
-# include <linux/init.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
 # ifndef late_initcall
-#  define       late_initcall(x)        module_init(x)
+#  include <linux/init.h>
+#  ifndef late_initcall
+#   define       late_initcall(x)        module_init(x)
+#  endif
 # endif
 #endif
 
@@ -576,6 +578,10 @@ typedef struct ctl_table ctl_table;
 # if defined(CONFIG_USER_NS)
 #  define HAVE_USER_NS
 # endif
+#endif
+
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 6, 0)
+# define HAS_AHASH
 #endif
 
 #endif /* _LIBRESWAN_KVERSIONS_H */

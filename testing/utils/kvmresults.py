@@ -206,6 +206,8 @@ def results(logger, tests, baseline, args, result_stats):
 
             b = args.json and printer.JsonBuilder(sys.stdout) or printer.TextBuilder(sys.stdout)
             printer.build_result(logger, result, baseline, args, args.print, b)
+            publish.test_files(logger, args, result)
+            publish.test_output_files(logger, args, result)
             publish.json_result(logger, args, result)
 
     publish.json_status(logger, args, "finished")

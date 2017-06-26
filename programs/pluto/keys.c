@@ -168,8 +168,7 @@ int sign_hash(const struct RSA_private_key *k,
 
 	/* XXX: is there no way to detect if we _need_ to authenticate ?? */
 	if (PK11_Authenticate(slot, PR_FALSE,
-			       lsw_return_nss_password_file_info()) ==
-	     SECSuccess) {
+			       lsw_return_nss_password_file_info()) == SECSuccess) {
 		DBG(DBG_CRYPT,
 		    DBG_log("NSS: Authentication to NSS successful"));
 	} else {
@@ -180,8 +179,19 @@ int sign_hash(const struct RSA_private_key *k,
 	privateKey = PK11_FindKeyByKeyID(slot, k->pub.ckaid.nss,
 					 lsw_return_nss_password_file_info());
 	if (privateKey == NULL) {
-		loglog(RC_LOG_SERIOUS, "Can't find the private key from the NSS CKA_ID");
-		return 0;
+		DBG(DBG_CRYPT,
+		    DBG_log("NSS: Can't find the private key from the NSS CKA_ID"));
+		CERTCertificate *cert = get_cert_by_ckaid_t_from_nss(k->pub.ckaid);
+		if (cert == NULL) {
+			loglog(RC_LOG_SERIOUS, "Can't find the certificate or private key from the NSS CKA_ID");
+			return 0;
+		}
+		privateKey = PK11_FindKeyByAnyCert(cert, lsw_return_nss_password_file_info());
+		CERT_DestroyCertificate(cert);
+		if (privateKey == NULL) {
+			loglog(RC_LOG_SERIOUS, "Can't find the private key from the certificate (found using NSS CKA_ID");
+			return 0;
+		}
 	}
 
 	/*
@@ -542,7 +552,12 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		/* Must free MY_PUBLIC_KEY */
 		struct pubkey *my_public_key = allocate_RSA_public_key_nss(
 			c->spd.this.cert.u.nss_cert);
-		passert(my_public_key != NULL);
+
+		if (my_public_key == NULL) {
+			loglog(RC_LOG_SERIOUS, "Private key not found (missing or token locked?");
+			free_public_key(my_public_key);
+			return NULL;
+		}
 
 		best = lsw_find_secret_by_public_key(pluto_secrets,
 						     my_public_key, kind);

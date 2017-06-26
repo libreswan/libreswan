@@ -48,18 +48,18 @@ PATH/libexec/ipsec/algparse   sha2_256      IKEv1: IKE ESP AH  IKEv2: IKE ESP AH
 PATH/libexec/ipsec/algparse   aes_xcbc      IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_xcbc_96)
 PATH/libexec/ipsec/algparse   aes_cmac      IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_cmac_96)
 PATH/libexec/ipsec/algparse DH algorithms:
-PATH/libexec/ipsec/algparse   MODP1024      IKEv1: IKE         IKEv2: IKE               (dh2)
-PATH/libexec/ipsec/algparse   MODP1536      IKEv1: IKE         IKEv2: IKE               (dh5)
-PATH/libexec/ipsec/algparse   MODP2048      IKEv1: IKE         IKEv2: IKE         FIPS  (dh14)
-PATH/libexec/ipsec/algparse   MODP3072      IKEv1: IKE         IKEv2: IKE         FIPS  (dh15)
-PATH/libexec/ipsec/algparse   MODP4096      IKEv1: IKE         IKEv2: IKE         FIPS  (dh16)
-PATH/libexec/ipsec/algparse   MODP6144      IKEv1: IKE         IKEv2: IKE         FIPS  (dh17)
-PATH/libexec/ipsec/algparse   MODP8192      IKEv1: IKE         IKEv2: IKE         FIPS  (dh18)
-PATH/libexec/ipsec/algparse   DH19          IKEv1: IKE         IKEv2: IKE         FIPS  (ecp_256)
-PATH/libexec/ipsec/algparse   DH20          IKEv1: IKE         IKEv2: IKE         FIPS  (ecp_384)
-PATH/libexec/ipsec/algparse   DH21          IKEv1: IKE         IKEv2: IKE         FIPS  (ecp_521)
-PATH/libexec/ipsec/algparse   DH23          IKEv1: IKE         IKEv2: IKE         FIPS
-PATH/libexec/ipsec/algparse   DH24          IKEv1: IKE         IKEv2: IKE         FIPS
+PATH/libexec/ipsec/algparse   MODP1024      IKEv1: IKE ESP AH  IKEv2: IKE ESP AH        (dh2)
+PATH/libexec/ipsec/algparse   MODP1536      IKEv1: IKE ESP AH  IKEv2: IKE ESP AH        (dh5)
+PATH/libexec/ipsec/algparse   MODP2048      IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (dh14)
+PATH/libexec/ipsec/algparse   MODP3072      IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (dh15)
+PATH/libexec/ipsec/algparse   MODP4096      IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (dh16)
+PATH/libexec/ipsec/algparse   MODP6144      IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (dh17)
+PATH/libexec/ipsec/algparse   MODP8192      IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (dh18)
+PATH/libexec/ipsec/algparse   DH19          IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  (ecp_256)
+PATH/libexec/ipsec/algparse   DH20          IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  (ecp_384)
+PATH/libexec/ipsec/algparse   DH21          IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  (ecp_521)
+PATH/libexec/ipsec/algparse   DH23          IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS
+PATH/libexec/ipsec/algparse   DH24          IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS
 PATH/libexec/ipsec/algparse leak detective found no leaks
 west #
  PATH/libexec/ipsec/enumcheck | diff -u - ../../enumcheck/OUTPUT.enumcheck.txt

@@ -40,6 +40,8 @@
 #include "ike_alg_nss_prf_ops.h"
 #include "ike_alg_nss_hash_ops.h"
 #include "ike_alg_dh.h"
+#include "ike_alg_nss_modp.h"
+#include "ike_alg_nss_ecp.h"
 
 #include "ike_alg_null.h"
 #ifdef USE_TWOFISH
@@ -713,6 +715,12 @@ static void dhmke_desc_check(const struct ike_alg *alg)
 	passert_ike_alg(alg, dhmke->bytes > 0);
 	passert_ike_alg(alg, dhmke->common.id[IKEv2_ALG_ID] == dhmke->group);
 	passert_ike_alg(alg, dhmke->common.id[IKEv1_OAKLEY_ID] == dhmke->group);
+	/* IKEv1 supports MODP groups but not ECC. */
+	passert_ike_alg(alg, (dhmke->dhmke_ops == &ike_alg_nss_modp_dhmke_ops
+			      ? dhmke->common.id[IKEv1_ESP_ID] == dhmke->group
+			      : dhmke->dhmke_ops == &ike_alg_nss_ecp_dhmke_ops
+			      ? dhmke->common.id[IKEv1_ESP_ID] == 0
+			      : FALSE));
 	/* always implemented */
 	passert_ike_alg(alg, dhmke->dhmke_ops != NULL);
 	passert_ike_alg(alg, dhmke->dhmke_ops->check != NULL);
@@ -737,7 +745,7 @@ static const struct type_algorithms ike_alg_dh = {
 	.type = IKE_ALG_DH,
 	.enum_names = {
 		[IKEv1_OAKLEY_ID] = &oakley_group_names,
-		[IKEv1_ESP_ID] = NULL,
+		[IKEv1_ESP_ID] = &oakley_group_names,
 		[IKEv2_ALG_ID] = &oakley_group_names,
 	},
 	.desc_check = dhmke_desc_check,
@@ -917,7 +925,6 @@ void ike_alg_snprint(char *buf, size_t sizeof_buf,
 	bool v2_ah;
 	switch (alg->algo_type) {
 	case IKE_ALG_PRF:
-	case IKE_ALG_DH:
 	case IKE_ALG_HASH:
 		v1_esp = v2_esp = v1_ah = v2_ah = FALSE;
 		break;
@@ -928,6 +935,7 @@ void ike_alg_snprint(char *buf, size_t sizeof_buf,
 		v2_ah = FALSE;
 		break;
 	case IKE_ALG_INTEG:
+	case IKE_ALG_DH:
 		v1_esp = v1_ah = alg->id[IKEv1_ESP_ID] > 0;
 		v2_esp = v2_ah = alg->id[IKEv2_ALG_ID] > 0;
 		break;

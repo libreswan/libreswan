@@ -46,35 +46,13 @@ services --disabled=sm-client,sendmail,network,smartd,crond,atd
 
 @core
 
-# To help avoid duplicates THIS LIST IS SORTED.
+# Install the kernel stuff from the CD so it is somewhat stable.
 
-bind-utils
-gdb
-glibc-devel
 kernel-core
 kernel-devel
 kernel-headers
 kernel-modules
 kernel-modules-extra
-lsof
-make
-mtr
-nc
-net-tools
-nmap
-pexpect
-psmisc
-pyOpenSSL
-redhat-rpm-config
-rpm-build
-screen
-strace
-tcpdump
-telnet
-unbound
-unbound-libs
-wget
-xl2tpd
 
 # for now, let's not try and mix openswan rpm and /usr/local install of openswan
 # later on, we will add an option to switch between "stock" and /usr/local openswan
@@ -103,104 +81,17 @@ sed  -i 's/ens.*/eth0/' /etc/sysconfig/network-scripts/ifcfg-eth0
 # sometimes it need another ifup
 ifup ens2 >> /var/tmp/network.log
 
-# Install anything missing from the CD, but found in the "Everything"
-# repo here.
+rpm -qa > /var/tmp/rpm-qa-fedora.log
 
-# There is also extra stuff, not in a repo, being installed at the
-# very end of this file.
+# workaround for vim fedora25 packaging bug. we want vim-enhanced and
+# that clashes with vim-minimal.
 
-# Capture a before "yum install" log.  If something (such as a 4.x
-# kernel) is inadvertently installed, check this and yum-install.log
-# for what triggered it.
+rpm -e vim-minimal --nodeps
 
-rpm -qa > /var/tmp/rpm-qa.log
-
-dnf -y update 2>&1 |  tee /var/tmp/dnf-update.log
-
-# To help avoid duplicates THIS LIST IS SORTED.
-dnf install -y 2>&1 \
-    ElectricFence \
-    audit-libs-devel \
-    bison \
-    conntrack-tools \
-    curl-devel \
-    fipscheck-devel \
-    flex \
-    gcc \
-    gdb \
-    git \
-    glibc-devel \
-    hping3 \
-    ipsec-tools \
-    ldns \
-    ldns-devel \
-    libcap-ng-devel \
-    libfaketime \
-    libevent-devel \
-    libseccomp-devel \
-    libselinux-devel \
-    lsof \
-    nc \
-    nsd \
-    nspr-devel \
-    nss-devel \
-    nss-tools \
-    ocspd\
-    openldap-devel \
-    pam-devel \
-    pexpect \
-    python3-pexpect \
-    python3-setproctitle \
-    racoon2 \
-    strace \
-    strongswan \
-    systemd-devel \
-    tar \
-    unbound \
-    unbound-devel \
-    unbound-libs \
-    valgrind \
-    vim-enhanced \
-    xl2tpd \
-    xmlto \
-    | tee /var/tmp/yum-install.log
-
-kvm_debuginfo=true
-$kvm_debuginfo && dnf debuginfo-install -y \
-    ElectricFence \
-    audit-libs \
-    conntrack-tools \
-    cyrus-sasl \
-    glibc \
-    keyutils \
-    krb5-libs \
-    ldns \
-    libcap-ng \
-    libcom_err \
-    libcurl \
-    libevent \
-    libevent-devel \
-    libgcc \
-    libidn \
-    libseccomp \
-    libselinux \
-    libssh2 \
-    nspr \
-    nss \
-    nss-softokn \
-    nss-softokn-freebl \
-    nss-util \
-    ocspd \
-    openldap \
-    openssl-libs \
-    pam \
-    pcre \
-    python-libs \
-    sqlite \
-    unbound-libs \
-    xz-libs \
-    zlib \
-    | tee /var/tmp/yum-debug-info-install.log
+dnf -y --disablerepo=updates update | tee /var/tmp/dnf-update-fedora.log
+dnf -y --disablerepo=updates install kernel-devel
+sed -i '/exclude=kernel/d' /etc/dnf/dnf.conf
+echo "exclude=kernel*" >> /etc/dnf/dnf.conf
 
 mkdir /testing /source
 

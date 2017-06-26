@@ -187,16 +187,16 @@ static const char compile_time_interop_options[] = ""
 #endif
 
 #if USE_FORK
-	" USE_FORK"
+	" FORK"
 #endif
 #if USE_VFORK
-	" USE_VFORK"
+	" VFORK"
 #endif
 #if USE_DAEMON
-	" USE_DAEMON"
+	" DAEMON"
 #endif
 #if USE_PTHREAD_SETSCHEDPRIO
-	" USE_PTHREAD_SETSCHEDPRIO"
+	" PTHREAD_SETSCHEDPRIO"
 #endif
 #ifdef HAVE_BROKEN_POPEN
 	" BROKEN_POPEN"
@@ -206,7 +206,7 @@ static const char compile_time_interop_options[] = ""
 	" DNSSEC"
 #endif
 #ifdef USE_SYSTEMD_WATCHDOG
-	" USE_SYSTEMD_WATCHDOG"
+	" SYSTEMD_WATCHDOG"
 #endif
 #ifdef FIPS_CHECK
 	" FIPS_CHECK"

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if test $# -lt 2; then
+if test $# -lt 1; then
   cat >> /dev/stderr <<EOF
 
 Usage:
@@ -62,27 +62,35 @@ while read hashes ; do
     count=$(expr ${count} + 1)
     hash=$(set -- ${hashes} ; echo $1)
 
-    # Skip uninteresting commits.
-    interesting=$(${webdir}/git-interesting.sh ${hash})
-    if test -z "${interesting}" ; then
-	continue
-    fi
-
     # already tested?
+
     if test -d $(echo ${summarydir}/*-g${hash}-* | awk '{print $1}'); then
 	tested=true
     else
 	tested=false
     fi
 
-    # Save the first interesting HEAD commit; there must be one.
+    # Always test HEAD (even when it isn't interesting).
+    #
+    # Hopefuly this is less confusing then having tester.sh ignore new
+    # commits.  These results will get pruned early.
+    #
+    # Use count=1 as a flag to indicate that the test wasn't tested.
 
     if test -z "${head_hash}" ; then
 	head_hash=${hash}
-	head_count=${count}
+	test ${count} -eq 1 # always true
+	${tested} || head_count=${count}
 	echo head ${head_hash} at ${head_count} 1>&2
-	# bail early if untested; head always comes first.
-	${tested} || break
+	# XXX: Could bail early if untested; but that means analysis
+	# of all the tests is skipped: ${tested} || break
+    fi
+
+    # Skip uninteresting commits
+
+    interesting=$(${webdir}/git-interesting.sh ${hash})
+    if test -z "${interesting}" ; then
+	continue
     fi
 
     # Update the longest run if, after adjusting for a bias towards
@@ -112,7 +120,16 @@ while read hashes ; do
     esac
 
     # already tested? stop the current run and start again
+    #
+    # This output can be used to select a random set of results to
+    # delete.  For instance, by selecting a random subset of the less
+    # interesting results (interesting results have a colon):
+    #
+    #    gime-work.sh 2>&1 | sed -n -e '/^tested:[^:]*$/p' | shuf | head
+    #
+
     if ${tested}; then
+	echo tested: ${hash} ${interesting} 1>&2
 	run=""
 	continue
     fi
@@ -154,8 +171,7 @@ echo LONGEST ${longest_length} ${longest_count} ${longest_hash} 1>&2
 
 if test ${head_count} -gt 0 \
 	-a \( ${longest_count} -eq 0 -o ${head_count} -lt ${longest_count} \) \
-	-a \( ${point_count} -eq 0 -o ${head_count} -lt ${point_count} \) \
-	-a ! -d ${summarydir}/*-g${head_hash}-* ; then
+	-a \( ${point_count} -eq 0 -o ${head_count} -lt ${point_count} \) ; then
     print_selected "head" ${head_hash}
 elif test ${point_count} -gt 0 \
 	  -a ${point_count} -lt ${longest_count} ; then
