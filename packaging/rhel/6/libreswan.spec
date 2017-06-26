@@ -16,7 +16,7 @@
 # not production ready yet
 %global USE_SECCOMP false
 
-%global prever rc3
+%global prever rc5
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
