@@ -7,7 +7,7 @@ Uploaders:
  Ondřej Surý <ondrej@debian.org>,
 Vcs-Browser: https://anonscm.debian.org/git/collab-maint/libreswan.git
 Vcs-Git: https://anonscm.debian.org/git/collab-maint/libreswan.git
-Standards-Version: 3.9.8
+Standards-Version: 4.0.0
 Build-Depends:
  bison,
  bzip2,
