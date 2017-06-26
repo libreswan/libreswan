@@ -565,13 +565,15 @@ addvtiiface() {
 		fi
 		ip link set ${VTI_IFACE} up
 	    else
-		# check there was no conflict if we are sharing
+		# check there was no conflict if we are sharing - might be sensitive to /sbin/ip differences
 		if [ "${VTI_SHARED}" = yes ]; then
 			#test: ip/ip remote 3.4.5.6 local 1.2.3.4 ttl inherit key 5
-			cur="$(ip tun ${VTI_IFACE})"
-			new="${VTI_IFACE}: ip/ip remote ${vtipeer} local ${PLUTO_ME} ttl inherit key ${CONNMARK_OUT%/*}"
+			cur="$(ip tun show ${VTI_IFACE})"
+			new="${VTI_IFACE}: ip/ip  remote any  local ${PLUTO_ME}  ttl inherit  key ${CONNMARK_OUT%/*}"
 			if [ "${cur}" != "${new}" ]; then
 				echo "vti interface \"${VTI_IFACE}\" already exists with conflicting setting"
+				echo "existing: ${cur}"
+				echo "wanted  : ${new}"
 			else
 				# temp debug
 				echo "vti interface already exists with identical parameters, OK"
