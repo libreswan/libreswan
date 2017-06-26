@@ -301,8 +301,6 @@ kvmplutotest	netkey-vti-03				wip
 kvmplutotest	netkey-vti-04				wip
 kvmplutotest	netkey-vti-05				good
 kvmplutotest	netkey-vti-06				good
-kvmplutotest	netkey-vti-06b				wip
-kvmplutotest	netkey-vti-06c				good
 
 kvmplutotest	netkey-tfc-01				good
 kvmplutotest	netkey-tfc-02				good
