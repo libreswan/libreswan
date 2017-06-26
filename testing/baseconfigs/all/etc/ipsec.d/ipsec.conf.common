@@ -300,6 +300,9 @@ conn westnet-ipv4
 conn northnet-ipv4
         leftsubnet=192.0.3.0/24
 
+conn northnet
+      also=northnet-ipv4
+
 conn east-ipv4-pool-100
 	leftaddresspool=192.0.2.100-192.0.2.199
 
