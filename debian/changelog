@@ -1,3 +1,14 @@
+libreswan (3.21~rc5-1) experimental; urgency=medium
+
+  [ Daniel Kahn Gillmor ]
+  * new upstream release-candidate
+  * bump Standards-Version to 4.0.0 (no changes needed)
+
+  [ Antony Antony ]
+  * add dns-root-data dependency and use root.key from it
+
+ -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>  Mon, 26 Jun 2017 16:56:09 -0400
+
 libreswan (3.21~rc2-1) experimental; urgency=medium
 
   * new upstream release-candidate
