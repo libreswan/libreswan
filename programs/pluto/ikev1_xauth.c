@@ -419,103 +419,108 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 				   const struct internal_addr *ia,
 				   const struct state *st)
 {
-	bool dont_advance;
-	unsigned dns_idx = 0;
+	pb_stream attrval;
+	unsigned char *byte_ptr;
+	unsigned int len;
+	bool ok = TRUE;
 
-	do {
-		pb_stream attrval;
-		unsigned char *byte_ptr;
-		unsigned int len;
-		bool ok = TRUE;
+	/* ISAKMP attr out */
+	const struct isakmp_attribute attr = {
+		.isaat_af_type = attr_type | ISAKMP_ATTR_AF_TLV
+	};
 
-		dont_advance = FALSE;
+	if (!out_struct(&attr,
+			&isakmp_xauth_attribute_desc,
+			strattr,
+			&attrval))
+		return STF_INTERNAL_ERROR;
 
-		/* ISAKMP attr out */
-		{
-			struct isakmp_attribute attr;
+	switch (attr_type) {
+	case INTERNAL_IP4_ADDRESS:
+		len = addrbytesptr(&ia->ipaddr, &byte_ptr);
+		ok = out_raw(byte_ptr, len, &attrval,
+			     "IP4_addr");
+		break;
 
-			attr.isaat_af_type = attr_type |
-					     ISAKMP_ATTR_AF_TLV;
+	case INTERNAL_IP4_SUBNET:
+		len = addrbytesptr(
+			&st->st_connection->spd.this.client.addr, &byte_ptr);
+		if (!out_raw(byte_ptr, len, &attrval, "IP4_subnet"))
+			return STF_INTERNAL_ERROR;
+		/* FALL THROUGH */
+	case INTERNAL_IP4_NETMASK:
+	{
+		int m = st->st_connection->spd.this.client.maskbits;
+		u_int32_t mask = htonl(~(m == 32 ? (u_int32_t)0 : ~(u_int32_t)0 >> m));
+
+		ok = out_raw(&mask, sizeof(mask), &attrval, "IP4_submsk");
+		break;
+	}
+
+	case INTERNAL_IP4_DNS:
+		/*
+		 * Emit one attribute per DNS IP.
+		 * (All other cases emit exactly one attribute.)
+		 * The first's emission is started above
+		 * and the last's is finished at the end
+		 * so our loop structure is odd.
+		 */
+		for (unsigned i = 0; ; ) {
+			/* emit attribute's value */
+			len = addrbytesptr(&ia->dns[i], &byte_ptr);
+			ok = out_raw(byte_ptr, len, &attrval, "IP4_dns");
+
+			/* see if there's another DNS */
+			i++;
+			if (!ok || i >= elemsof(ia->dns) || isanyaddr(&ia->dns[i]))
+				break;
+
+			/* close attribute and start next */
+			close_output_pbs(&attrval);
+
 			if (!out_struct(&attr,
 					&isakmp_xauth_attribute_desc,
 					strattr,
 					&attrval))
 				return STF_INTERNAL_ERROR;
 		}
+		break;
 
-		switch (attr_type) {
-		case INTERNAL_IP4_ADDRESS:
-			len = addrbytesptr(&ia->ipaddr,
-					   &byte_ptr);
-			ok = out_raw(byte_ptr, len, &attrval,
-				     "IP4_addr");
-			break;
+	case MODECFG_DOMAIN:
+		ok = out_raw(st->st_connection->modecfg_domain,
+			     strlen(st->st_connection->modecfg_domain),
+			     &attrval, "");
+		break;
 
-		case INTERNAL_IP4_SUBNET:
-			len = addrbytesptr(
-				&st->st_connection->spd.this.client.addr,
-				&byte_ptr);
-			if (!out_raw(byte_ptr, len, &attrval,
-				     "IP4_subnet"))
-				return STF_INTERNAL_ERROR;
-			/* FALL THROUGH */
-		case INTERNAL_IP4_NETMASK:
-		{
-			int m = st->st_connection->spd.this.client.maskbits;
-			u_int32_t mask = htonl(~(m == 32 ? (u_int32_t)0 : ~(u_int32_t)0 >> m));
+	case MODECFG_BANNER:
+		ok = out_raw(st->st_connection->modecfg_banner,
+			     strlen(st->st_connection->modecfg_banner),
+			     &attrval, "");
+		break;
 
-			ok = out_raw(&mask, sizeof(mask),
-				     &attrval, "IP4_submsk");
-			break;
-		}
+	/* XXX: not sending if our end is 0.0.0.0/0 equals previous previous behaviour */
+	case CISCO_SPLIT_INC:
+	{
+		struct CISCO_split_item i = {
+			st->st_connection->spd.this.client.addr.u.v4.sin_addr,
+			bitstomask(st->st_connection->spd.this.client.maskbits)
+		};
 
-		case INTERNAL_IP4_DNS:
-			len = addrbytesptr(&ia->dns[dns_idx++],
-					   &byte_ptr);
-			ok = out_raw(byte_ptr, len, &attrval,
-				     "IP4_dns");
+		ok = out_struct(&i, &CISCO_split_desc, &attrval, NULL);
+		break;
+	}
+	default:
+		libreswan_log(
+			"attempt to send unsupported mode cfg attribute %s.",
+			enum_show(&modecfg_attr_names,
+				  attr_type));
+		break;
+	}
 
-			if (dns_idx < elemsof(ia->dns) &&
-			    !isanyaddr(&ia->dns[dns_idx]))
-				dont_advance = TRUE;
-			break;
+	if (!ok)
+		return STF_INTERNAL_ERROR;
 
-		case MODECFG_DOMAIN:
-			ok = out_raw(st->st_connection->modecfg_domain,
-				     strlen(st->st_connection->modecfg_domain),
-				     &attrval, "");
-			break;
-
-		case MODECFG_BANNER:
-			ok = out_raw(st->st_connection->modecfg_banner,
-				     strlen(st->st_connection->modecfg_banner),
-				     &attrval, "");
-			break;
-
-		/* XXX: not sending if our end is 0.0.0.0/0 equals previous previous behaviour */
-		case CISCO_SPLIT_INC:
-		{
-			struct CISCO_split_item i = {
-				st->st_connection->spd.this.client.addr.u.v4.sin_addr,
-				bitstomask(st->st_connection->spd.this.client.maskbits)
-			};
-
-			ok = out_struct(&i, &CISCO_split_desc, &attrval, NULL);
-			break;
-		}
-		default:
-			libreswan_log(
-				"attempt to send unsupported mode cfg attribute %s.",
-				enum_show(&modecfg_attr_names,
-					  attr_type));
-			break;
-		}
-
-		if (!ok)
-			return STF_INTERNAL_ERROR;
-
-		close_output_pbs(&attrval);
-	} while (dont_advance);
+	close_output_pbs(&attrval);
 
 	return STF_OK;
 }
@@ -2195,7 +2200,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 							sr->that.id.name = empty_chunk;
 
 							sr->this.host_addr_name = NULL;
-							sr->that.client = subnet;							
+							sr->that.client = subnet;
 							sr->this.cert.ty = CERT_NONE;
 							sr->that.cert.ty = CERT_NONE;
 
