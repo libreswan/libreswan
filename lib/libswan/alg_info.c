@@ -171,8 +171,6 @@ static const char *parser_state_names[] = {
 	"ST_EK_END",
 	"ST_AA",
 	"ST_AA_END",
-	"ST_AK",
-	"ST_AK_END",
 	"ST_MOPD",
 	"ST_END",
 	"ST_EOF",
@@ -362,7 +360,7 @@ static err_t parser_machine(struct parser_context *p_ctx)
 			return "Invalid modulus";
 
 		case ST_MODP:
-			if (isalnum(ch)) {
+			if (isalnum(ch) || ch == '_') {
 				*(p_ctx->modp_str++) = ch;
 				break;
 			}

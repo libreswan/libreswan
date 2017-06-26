@@ -809,7 +809,7 @@ static struct p_dns_req *qry_st_init(struct state *st,
 	return p;
 }
 
-static struct p_dns_req *ipseckey_qry_st_init(struct state *st, 
+static struct p_dns_req *ipseckey_qry_st_init(struct state *st,
 		dnsr_cb_fn dnsr_cb)
 {
 	/* hardcoded RR type to IPSECKEY AA_2017_03 */

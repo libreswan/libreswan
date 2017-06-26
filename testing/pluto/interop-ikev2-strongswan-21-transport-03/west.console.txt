@@ -5,8 +5,7 @@ west #
  ../../pluto/bin/wait-until-alive -I 192.1.2.45 192.1.2.23
 destination -I 192.1.2.45 192.1.2.23 is alive
 west #
- strongswan start
-Starting strongSwan X.X.X IPsec [starter]...
+ ../../pluto/bin/strongswan-start.sh
 west #
  echo "initdone"
 initdone

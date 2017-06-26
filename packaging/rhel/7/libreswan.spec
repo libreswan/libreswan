@@ -17,7 +17,7 @@
 # not production ready yet
 %global USE_SECCOMP false
 
-%global prever rc2
+%global prever rc5
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
@@ -199,11 +199,6 @@ install -m644 packaging/fedora/libreswan-prelink.conf \
 %endif
 
 %if %{cavstests}
-# we should add a new makefile target for this
-cp -a OBJ.linux.*/programs/pluto/cavp %{buildroot}%{_libexecdir}/ipsec
-%endif
-
-%if %{cavstests}
 %check
 # There is an elaborate upstream testing infrastructure which we do not
 # run here.
@@ -215,13 +210,13 @@ bunzip2 *.fax.bz2
 export NSS_DISABLE_HW_GCM=1
 
 : starting CAVS test for IKEv2
-OBJ.linux.*/programs/pluto/cavp -v2 ikev2.fax | \
+OBJ.linux.%{_arch}/testing/cavp/cavp -v2 ikev2.fax | \
     diff -u ikev2.fax - > /dev/null
 : starting CAVS test for IKEv1 RSASIG
-OBJ.linux.*/programs/pluto/cavp -v1sig ikev1_dsa.fax | \
+OBJ.linux.%{_arch}/testing/cavp/cavp -v1sig ikev1_dsa.fax | \
     diff -u ikev1_dsa.fax - > /dev/null
 : starting CAVS test for IKEv1 PSK
-OBJ.linux.*/programs/pluto/cavp -v1psk ikev1_psk.fax | \
+OBJ.linux.%{_arch}/testing/cavp/cavp -v1psk ikev1_psk.fax | \
     diff -u ikev1_psk.fax - > /dev/null
 : CAVS tests passed
 %endif
@@ -265,5 +260,5 @@ prelink -u %{_libexecdir}/ipsec/* 2>/dev/null || :
 %endif
 
 %changelog
-* Tue May 30 2017 Team Libreswan <team@libreswan.org> - 3.21-0.1.rc2
+* Tue May 30 2017 Team Libreswan <team@libreswan.org> - 3.21-0.1.rc3
 - Automated build from release tar ball

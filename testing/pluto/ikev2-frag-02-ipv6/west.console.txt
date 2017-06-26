@@ -57,54 +57,6 @@ src 2001:2222:222:2200::/56 dst 2001:111:1111::/48
 	dir in priority 27848 ptype main 
 	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 		proto esp reqid REQID mode tunnel
-src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
-src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES

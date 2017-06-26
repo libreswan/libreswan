@@ -68,6 +68,7 @@ Runtime requirements (usually already present on the system)
 	       ensure you enable the iproute(2) package for busybox)
 
 	Python is used for "ipsec verify", which helps debugging problems
+	python-ipaddress is used for "ipsec show", which shows tunnels
 
 ## Compiling the userland and IKE daemon
 

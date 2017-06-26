@@ -3055,6 +3055,7 @@ struct connection *refine_host_connection(const struct state *st,
 			/*
 			 * At this point, we've committed to our RSA private
 			 * key: we used it in our previous message.
+			 * Paul: only true for IKEv1
 			 */
 			my_RSA_pri = get_RSA_private_key(c);
 			if (my_RSA_pri == NULL) {

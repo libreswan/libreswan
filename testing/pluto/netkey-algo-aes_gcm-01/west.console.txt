@@ -15,10 +15,10 @@ west #
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=1 
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=2 
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=3 
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=4 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=1 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=2 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=3 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=4 
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 0 received, 100% packet loss, time XXXX
 west #
@@ -141,8 +141,8 @@ west #
 000 "westnet-eastnet-gcm":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id:@east
 000 "westnet-eastnet-gcm":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-gcm":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 "westnet-eastnet-gcm":   IKE algorithms wanted: AES_CBC(7)_256-SHA2_256(4)-MODP2048(14), AES_CBC(7)_256-SHA2_512(6)-MODP2048(14), AES_CBC(7)_256-SHA1(2)-MODP2048(14), AES_CBC(7)_256-MD5(1)-MODP2048(14), AES_CBC(7)_256-SHA2_256(4)-MODP1536(5), AES_CBC(7)_256-SHA2_512(6)-MODP1536(5), AES_CBC(7)_256-SHA1(2)-MODP1536(5), AES_CBC(7)_256-MD5(1)-MODP1536(5)
-000 "westnet-eastnet-gcm":   IKE algorithms found:  AES_CBC(7)_256-SHA2_256(4)-MODP2048(14), AES_CBC(7)_256-SHA2_512(6)-MODP2048(14), AES_CBC(7)_256-SHA1(2)-MODP2048(14), AES_CBC(7)_256-MD5(1)-MODP2048(14), AES_CBC(7)_256-SHA2_256(4)-MODP1536(5), AES_CBC(7)_256-SHA2_512(6)-MODP1536(5), AES_CBC(7)_256-SHA1(2)-MODP1536(5), AES_CBC(7)_256-MD5(1)-MODP1536(5)
+000 "westnet-eastnet-gcm":   IKE algorithms wanted: AES_CBC(7)_256-SHA2_256(4)-MODP2048(14), AES_CBC(7)_256-SHA2_512(6)-MODP2048(14), AES_CBC(7)_256-SHA1(2)-MODP2048(14), AES_CBC(7)_256-SHA2_256(4)-MODP1536(5), AES_CBC(7)_256-SHA2_512(6)-MODP1536(5), AES_CBC(7)_256-SHA1(2)-MODP1536(5)
+000 "westnet-eastnet-gcm":   IKE algorithms found:  AES_CBC(7)_256-SHA2_256(4)-MODP2048(14), AES_CBC(7)_256-SHA2_512(6)-MODP2048(14), AES_CBC(7)_256-SHA1(2)-MODP2048(14), AES_CBC(7)_256-SHA2_256(4)-MODP1536(5), AES_CBC(7)_256-SHA2_512(6)-MODP1536(5), AES_CBC(7)_256-SHA1(2)-MODP1536(5)
 000 "westnet-eastnet-gcm":   ESP algorithms wanted: AES_GCM_C(20)_192-NONE(0)
 000 "westnet-eastnet-gcm":   ESP algorithms loaded: AES_GCM_C(20)_192-NONE(0)
 000  
@@ -203,38 +203,6 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 	dir in priority 2344 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
@@ -275,38 +243,6 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 	dir in priority 2344 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES

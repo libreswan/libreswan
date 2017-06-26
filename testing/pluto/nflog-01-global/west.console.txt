@@ -15,10 +15,10 @@ west #
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=1 
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=2 
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=3 
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=4 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=1 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=2 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=3 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=4 
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 0 received, 100% packet loss, time XXXX
 west #
@@ -73,10 +73,10 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
 64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
 64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=5 ttl=64 time=0.XXX ms
-10 packets captured
-10 packets received by filter
+8 packets captured
+8 packets received by filter
 0 packets dropped by kernel
+64 bytes from 192.0.2.254: icmp_seq=5 ttl=64 time=0.XXX ms
 --- 192.0.2.254 ping statistics ---
 5 packets transmitted, 5 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -94,8 +94,6 @@ IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 3, length 64
 IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id XXXX, seq 3, length 64
 IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 4, length 64
 IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id XXXX, seq 4, length 64
-IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 5, length 64
-IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id XXXX, seq 5, length 64
 west #
  echo done
 done
@@ -108,38 +106,6 @@ src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority 2344 ptype main 
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES

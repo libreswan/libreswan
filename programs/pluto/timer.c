@@ -63,11 +63,12 @@
 
 #include "pluto_sd.h"
 
-static unsigned long retrans_delay(struct state *st, unsigned long delay_ms)
+static unsigned long retrans_delay(struct state *st)
 {
 	struct connection *c = st->st_connection;
+	unsigned long delay_ms = c->r_interval;
 	unsigned long delay_cap = deltamillisecs(c->r_timeout); /* ms */
-	u_int8_t x = st->st_retransmit++;	/* ??? odd type */
+	u_int32_t x = st->st_retransmit++;
 
 	/*
 	 * Very carefully calculate capped exponential backoff.
@@ -154,7 +155,7 @@ static void retransmit_v1_msg(struct state *st)
 	}
 
 	if (delay_ms != 0)
-		delay_ms = retrans_delay(st, delay_ms);
+		delay_ms = retrans_delay(st);
 
 	if (delay_ms != 0) {
 		resend_ike_v1_msg(st, "EVENT_v1_RETRANSMIT");
@@ -247,9 +248,11 @@ static void retransmit_v2_msg(struct state *st)
 	unsigned long try;
 	unsigned long try_limit;
 	const char *details = "";
-	struct state *pst = state_with_serialno(st->st_clonedfrom);
+	struct state *pst = IS_CHILD_SA(st) ? state_with_serialno(st->st_clonedfrom) : st;
 
 	passert(st != NULL);
+	passert(IS_PARENT_SA(pst));
+
 	set_cur_state(st);
 	c = st->st_connection;
 	try_limit = c->sa_keying_tries;
@@ -263,12 +266,11 @@ static void retransmit_v2_msg(struct state *st)
 			ipstr(&c->spd.that.host_addr, &b),
 			c->name, fmt_conn_instance(c, cib),
 			st->st_serialno, try, try_limit);
-		if (pst != NULL)
-			DBG_log("and parent for %s \"%s\"%s #%lu attempt %lu of %lu",
-				ipstr(&c->spd.that.host_addr, &b),
-				c->name, fmt_conn_instance(c, cib),
-				pst->st_serialno, pst->st_try, try_limit);
-	});
+		DBG_log("and parent for %s \"%s\"%s #%lu attempt %lu of %lu",
+			ipstr(&c->spd.that.host_addr, &b),
+			c->name, fmt_conn_instance(c, cib),
+			pst->st_serialno, pst->st_try, try_limit);
+		});
 
 	if (DBGP(IMPAIR_RETRANSMITS)) {
 		libreswan_log(
@@ -285,10 +287,10 @@ static void retransmit_v2_msg(struct state *st)
 	}
 
 	if (delay_ms != 0) {
-		delay_ms = retrans_delay(st, delay_ms);
+		delay_ms = retrans_delay(st);
 
 		if (delay_ms != 0) {
-			send_ike_msg(st, "EVENT_v2_RETRANSMIT");
+			send_ike_msg(pst, "EVENT_v2_RETRANSMIT");
 			event_schedule_ms(EVENT_v2_RETRANSMIT, delay_ms, st);
 			return;
 		}
@@ -360,18 +362,26 @@ static void retransmit_v2_msg(struct state *st)
 		DBG(DBG_CONTROL, DBG_log("maximum number of keyingtries reached - deleting state"));
 	}
 
+
+	if (pst != st) {
+		set_cur_state(pst);  /* now we are on pst */
+		if (pst->st_state == STATE_PARENT_I2) {
+			delete_state(pst);
+		} else {
+			release_fragments(st);
+			freeanychunk(st->st_tpacket);
+		}
+	}
+
 	set_cur_state(st);  /* ipsecdoi_replace would reset cur_state, set it again */
 
 	/*
 	 * XXX There should not have been a child sa unless this was a timeout of
 	 * our CREATE_CHILD_SA request. But our code has moved from parent to child
 	 */
-	// passert(IS_PARENT_SA(st)); in the glorious future
 
 	delete_state(st);
-	if (pst != NULL) {
-		delete_state(pst);
-	}
+
 	/* note: no md->st to clear */
 }
 
@@ -428,7 +438,7 @@ static void liveness_check(struct state *st)
 			pst = state_with_serialno(st->st_clonedfrom);
 		}
 	} else {
-		pexpect (pst == NULL); /* no more dpd in IKE state */
+		pexpect(pst == NULL); /* no more dpd in IKE state */
 		pst = st;
 	}
 

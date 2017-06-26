@@ -1,7 +1,6 @@
 /testing/guestbin/swan-prep --userland strongswan
 road #
- service strongswan start
-Redirecting to /bin/systemctl start  strongswan.service
+ ../../pluto/bin/strongswan-start.sh
 road #
  echo "initdone"
 initdone
@@ -25,7 +24,6 @@ maximum IKE_SA lifetime XXXs
 installing DNS server 1.2.3.4 to /etc/strongswan/resolv.conf
 installing DNS server 8.8.8.8 to /etc/strongswan/resolv.conf
 installing new virtual IP 192.0.2.1
-CHILD_SA roadnet-eastnet-ikev2{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.2.1/32 === 0.0.0.0/0
 connection 'roadnet-eastnet-ikev2' established successfully
 road #
  ping -n -c 4 -I 192.0.2.1 192.1.2.23

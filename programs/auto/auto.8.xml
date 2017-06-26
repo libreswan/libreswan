@@ -61,7 +61,7 @@ connection</replaceable></arg>
 <cmdsynopsis>
   <command>ipsec</command>
     <arg choice='plain'><replaceable>auto</replaceable></arg>
-    <arg choice='plain'>{ --route | --unroute  }</arg>
+    <arg choice='plain'>{ --route | --unroute | --ondemand }</arg>
     <arg choice='plain'><replaceable>connection</replaceable></arg>
 </cmdsynopsis>
 <cmdsynopsis>
@@ -102,8 +102,9 @@ is
 <option>--up</option>,
 <option>--down</option>,
 <option>--route</option>,
+<option>--unroute</option>,
 or
-<option>--unroute</option>.
+<option>--ondemand</option>.
 The
 <option>--ready</option>,
 <option>--rereadsecrets</option>,
@@ -196,6 +197,14 @@ Such a route can be removed using the
 operation
 (and is implicitly removed by
 <option>--delete</option>).</para>
+
+<para>The
+<option>--ondemand</option>
+operation is equivalent to running first with
+<option>--add</option>
+and then with
+<option>--route</option>, causing same effect as connection configuration option
+<option>auto=ondemand</option>.</para>
 
 <para>The
 <option>--ready</option>

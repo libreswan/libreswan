@@ -137,9 +137,9 @@ north #
 000 IKE SAs: total(1), half-open(0), open(0), authenticated(1), anonymous(0)
 000 IPsec SAs: total(1), authenticated(1), anonymous(0)
 000  
-000 #2: "northnet-westnet-ipv4-psk":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE in  00s; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
+000 #2: "northnet-westnet-ipv4-psk":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
 000 #2: "northnet-westnet-ipv4-psk" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.33 tun.0@192.1.2.23 tun.0@192.1.3.33 ref=0 refhim=0 Traffic: ESPin=0B ESPout=0B! ESPmax=4194303B 
-000 #1: "northnet-westnet-ipv4-psk":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in  00s; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle; import:admin initiate
+000 #1: "northnet-westnet-ipv4-psk":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle; import:admin initiate
 000  
 000 Bare Shunt list:
 000  
@@ -164,10 +164,6 @@ src 192.1.3.33 dst 192.1.2.23
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 XFRM policy:
-src 192.0.3.0/24 dst 192.0.1.0/24 
-	dir out priority 2344 ptype main 
-	tmpl src 192.1.3.33 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
 src 192.0.1.0/24 dst 192.0.3.0/24 
 	dir fwd priority 2344 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.3.33
@@ -176,30 +172,10 @@ src 192.0.1.0/24 dst 192.0.3.0/24
 	dir in priority 2344 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.3.33
 		proto esp reqid REQID mode tunnel
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
+src 192.0.3.0/24 dst 192.0.1.0/24 
+	dir out priority 2344 ptype main 
+	tmpl src 192.1.3.33 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES

@@ -93,9 +93,10 @@ static void run_ikev2(void)
 	print_chunk("SPIi", spi_i, 0);
 	print_chunk("SPIr", spi_r, 0);
 
+	/* parser should have rejected an unknown PRF and aborted */
 	if (prf == NULL) {
-		print_line(prf->key);
-		return;
+		print_line("PRF unknown");
+		exit(1);
 	}
 
 	/* SKEYSEED = prf(Ni | Nr, g^ir) */
@@ -103,6 +104,10 @@ static void run_ikev2(void)
 						     ni, nr,
 						     g_ir);
 	print_symkey("SKEYSEED", skeyseed, 0);
+	if (skeyseed == NULL) {
+		print_line("failure in SKEYSEED = prf(Ni | Nr, g^ir)");
+		exit(1);
+	}
 
 	/* prf+(SKEYSEED, Ni | Nr | SPIi | SPIr) */
 	PK11SymKey *dkm =
@@ -122,10 +127,14 @@ static void run_ikev2(void)
 				      child_sa_dkm_length / 8);
 	print_symkey("DKM(Child SA D-H)", child_sa_dkm_dh, child_sa_dkm_length / 8);
 
-	/* prf(SK_d (old), g^ir (new) | Ni | Nr) */
+	/* SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr) */
 	PK11SymKey *skeyseed_rekey =
 		ikev2_ike_sa_rekey_skeyseed(prf->prf, SK_d, g_ir_new, ni, nr);
 	print_symkey("SKEYSEED(Rekey)", skeyseed_rekey, 0);
+	if (skeyseed_rekey == NULL) {
+		print_line("failure in SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr)");
+		exit(1);
+	}
 
 	release_symkey(__func__, "skeyseed", &skeyseed);
 	release_symkey(__func__, "dkm", &dkm);

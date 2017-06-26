@@ -17,6 +17,7 @@
  * Copyright (C) 2015-2017 Andrew Cagney <andrew.cagney@gmail.com>
  * Copyright (C) 2015-2017 Antony Antony <antony@phenome.org>
  * Copyright (C) 2015-2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2017 Richard Guy Briggs <rgb@tricolour.ca>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -569,7 +570,7 @@ struct state *state_with_parent_msgid_expect(so_serial_t psn, msgid_t st_msgid,
 {
 	int i;
 
-	passert (psn >= SOS_FIRST);
+	passert(psn >= SOS_FIRST);
 
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
 		struct state *st;
@@ -783,7 +784,7 @@ static void flush_pending_children(struct state *pst)
 {
 	struct state *st;
 	/* AA_2016 check is it st or pst ? */
-	FOR_EACH_HASH_ENTRY(st, pst->st_icookie, pst->st_rcookie, { 
+	FOR_EACH_HASH_ENTRY(st, pst->st_icookie, pst->st_rcookie, {
 			flush_pending_ipsec(pst, st);
 			delete_cryptographic_continuation(st);
 			});
@@ -1411,12 +1412,13 @@ struct state *duplicate_state(struct state *st, sa_t sa_type)
 
 	nst = new_state();
 
-	DBG(DBG_CONTROL, DBG_log("duplicating state object #%lu as #%lu for %s "
-				"\"%s\"%s",
-				 st->st_serialno, nst->st_serialno,
-				sa_type == IPSEC_SA ? "IPSEC SA" : "IKE SA",
-				st->st_connection->name,
-				fmt_conn_instance(st->st_connection, cib)));
+	DBG(DBG_CONTROL, DBG_log("duplicating state object #%lu \"%s\"%s as "
+				 "#%lu for %s",
+				 st->st_serialno,
+				 st->st_connection->name,
+				 fmt_conn_instance(st->st_connection, cib),
+				 nst->st_serialno,
+				 sa_type == IPSEC_SA ? "IPSEC SA" : "IKE SA"));
 
 	nst->st_connection = st->st_connection;
 	if (sa_type == IPSEC_SA) {
@@ -1799,6 +1801,44 @@ struct state *find_phase2_state_to_delete(const struct state *p1st,
 	return bogusst;
 }
 
+bool find_pending_phas2(const so_serial_t psn,
+		const struct connection *c, lset_t ok_states)
+{
+	struct state *best = NULL;
+	int i;
+	int n = 0;
+
+	passert (psn >= SOS_FIRST);
+
+	for (i = 0; i < STATE_TABLE_SIZE; i++) {
+		struct state *st;
+
+		FOR_EACH_ENTRY(st, i, {
+			if (LHAS(ok_states, st->st_state) &&
+				IS_CHILD_SA(st) &&
+				st->st_clonedfrom == psn &&
+				streq(st->st_connection->name, c->name) /* not instances */
+			   ) {
+				n++;
+				if (best == NULL ||
+					best->st_serialno < st->st_serialno) {
+					best = st;
+				}
+			}});
+	}
+
+	if (n > 0) {
+		DBG(DBG_CONTROL, {
+				DBG_log("connection %s has %d pending IPsec "
+					"negotiations ike #%lu last child state"
+					" #%lu",
+					c->name, n, psn, best->st_serialno);
+				});
+	}
+
+	return best != NULL;
+}
+
 /*
  * Find newest Phase 1 negotiation state object for suitable for connection c
  */
@@ -1813,7 +1853,7 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 			if (LHAS(ok_states, st->st_state) &&
 				c->host_pair == st->st_connection->host_pair &&
 				same_peer_ids(c, st->st_connection, NULL) &&
-				IS_PARENT_SA(st) && /* AA_2016 why find child */
+				IS_PARENT_SA(st) &&
 				(best == NULL ||
 					best->st_serialno < st->st_serialno))
 				best = st;
@@ -2059,8 +2099,6 @@ void fmt_state(struct state *st, const monotime_t n,
 		if (st->st_ah.present) {
 			add_said(&c->spd.that.host_addr, st->st_ah.attrs.spi,
 				 SA_AH);
-/* needs proper fix, via kernel_ops? */
-#if defined(linux) && defined(NETKEY_SUPPORT)
 			if (get_sa_info(st, FALSE, NULL)) {
 				mbcp = humanize_number(st->st_ah.peer_bytes,
 						       mbcp,
@@ -2068,10 +2106,8 @@ void fmt_state(struct state *st, const monotime_t n,
 							  sizeof(traffic_buf),
 						       " AHout=");
 			}
-#endif
 			add_said(&c->spd.this.host_addr, st->st_ah.our_spi,
 				 SA_AH);
-#if defined(linux) && defined(NETKEY_SUPPORT)
 			if (get_sa_info(st, TRUE, NULL)) {
 				mbcp = humanize_number(st->st_ah.our_bytes,
 						       mbcp,
@@ -2079,20 +2115,16 @@ void fmt_state(struct state *st, const monotime_t n,
 							 sizeof(traffic_buf),
 						       " AHin=");
 			}
-#endif
 			mbcp = humanize_number(
 					(u_long)st->st_ah.attrs.life_kilobytes,
 					mbcp,
 					traffic_buf +
 					  sizeof(traffic_buf),
 					"! AHmax=");
-/* ??? needs proper fix, via kernel_ops? */
 		}
 		if (st->st_esp.present) {
 			add_said(&c->spd.that.host_addr, st->st_esp.attrs.spi,
 				 SA_ESP);
-/* ??? needs proper fix, via kernel_ops? */
-#if defined(linux) && defined(NETKEY_SUPPORT)
 			if (get_sa_info(st, TRUE, NULL)) {
 				mbcp = humanize_number(st->st_esp.our_bytes,
 						       mbcp,
@@ -2100,10 +2132,8 @@ void fmt_state(struct state *st, const monotime_t n,
 							 sizeof(traffic_buf),
 						       " ESPin=");
 			}
-#endif
 			add_said(&c->spd.this.host_addr, st->st_esp.our_spi,
 				 SA_ESP);
-#if defined(linux) && defined(NETKEY_SUPPORT)
 			if (get_sa_info(st, FALSE, NULL)) {
 				mbcp = humanize_number(st->st_esp.peer_bytes,
 						       mbcp,
@@ -2111,7 +2141,6 @@ void fmt_state(struct state *st, const monotime_t n,
 							 sizeof(traffic_buf),
 						       " ESPout=");
 			}
-#endif
 
 			mbcp = humanize_number(
 					(u_long)st->st_esp.attrs.life_kilobytes,
@@ -2123,7 +2152,6 @@ void fmt_state(struct state *st, const monotime_t n,
 		if (st->st_ipcomp.present) {
 			add_said(&c->spd.that.host_addr,
 				 st->st_ipcomp.attrs.spi, SA_COMP);
-#if defined(linux) && defined(NETKEY_SUPPORT)
 			if (get_sa_info(st, FALSE, NULL)) {
 				mbcp = humanize_number(
 						st->st_ipcomp.peer_bytes,
@@ -2132,10 +2160,8 @@ void fmt_state(struct state *st, const monotime_t n,
 						  sizeof(traffic_buf),
 						" IPCOMPout=");
 			}
-#endif
 			add_said(&c->spd.this.host_addr, st->st_ipcomp.our_spi,
 				 SA_COMP);
-#if defined(linux) && defined(NETKEY_SUPPORT)
 			if (get_sa_info(st, TRUE, NULL)) {
 				mbcp = humanize_number(
 						st->st_ipcomp.our_bytes,
@@ -2144,7 +2170,6 @@ void fmt_state(struct state *st, const monotime_t n,
 						  sizeof(traffic_buf),
 						" IPCOMPin=");
 			}
-#endif
 
 			/* mbcp not subsequently used */
 			mbcp = humanize_number(

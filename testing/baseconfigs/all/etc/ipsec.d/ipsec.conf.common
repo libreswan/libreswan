@@ -223,7 +223,7 @@ conn northnet-eastnet
 
 conn northnet-eastnet-ipv4
 	also=north-east-base
-	also=north-ipv4
+	also=northnet-ipv4
 	also=eastnet-ipv4
 
 conn rad-eastnet-fqdn-ikev2
@@ -256,6 +256,10 @@ conn westnet-eastnet-ipv6
 	rightsubnet=2001:db8:0:2::/64
 	connaddrfamily=ipv6
 	#auto=start
+
+conn northnet-eastnet-ipv6
+	also=northnet-ipv6
+	also=eastnet-ipv6
 
 conn westnet-eastnet-pass
 	also=west-east-base-id-nss
@@ -293,6 +297,9 @@ conn eastnet-ipv4
 conn westnet-ipv4
 	leftsubnet=192.0.1.0/24
 
+conn northnet-ipv4
+        leftsubnet=192.0.3.0/24
+
 conn east-ipv4-pool-100
 	leftaddresspool=192.0.2.100-192.0.2.199
 
@@ -304,6 +311,21 @@ conn left-defaultroute
 
 conn right-defaultroute
 	rightsubnet=0.0.0.0/0
+
+conn eastnet-ipv6
+	rightsubnet=2001:db8:0:2::0/64
+
+conn westnet-ipv6
+	leftsubnet=2001:db8:0:1::/64
+
+conn northnet-ipv6
+	leftsubnet=2001:db8:0:3::0/64
+
+conn left-defaultroute-ipv6
+	leftsubnet=::/0
+
+conn right-defaultroute-ipv6
+	rightsubnet=::/0
 
 conn north-east-base
 	also=north-east-base-ipv4
@@ -344,6 +366,14 @@ conn road-east-base-ipv6
 	leftnexthop=2001:db8:1:3::254
 	right=2001:db8:1:2::23
 	rightnexthop=2001:db8:1:2::45
+
+conn north-east-base-ipv6
+	connaddrfamily=ipv6
+	left=2001:db8:1:3::33
+	leftnexthop=2001:db8:1:3::254
+	right=2001:db8:1:2::23
+	rightnexthop=2001:db8:1:2::45
+	also=north-east-base-id-nss
 
 conn west-east-base-id-psk
 	leftid=@west
@@ -569,9 +599,6 @@ conn north-east-x509-fail-base
         #
         right=192.1.2.23
         rightrsasigkey=%cert
-
-conn northnet
-        leftsubnet=192.0.3.0/24
 
 conn road-client
 	leftmodecfgclient=yes

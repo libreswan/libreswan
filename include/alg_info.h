@@ -129,6 +129,15 @@ struct esp_info {
 	 */
 	const struct integ_desc *esp_integ;
 	u_int16_t auth;         /* enum ikev1_auth_attribute: AUTH */
+	/*
+	 * PFS/DH negotiation.
+	 *
+	 * XXX: It is called "dh" and not "esp_dh" because "struct
+	 * esp_info" and "struct ike_info", which are pretty much
+	 * identical, are heading for a merge - one less field to
+	 * rename.
+	 */
+	const struct oakley_group_desc *dh;
 };
 
 struct ike_info {
@@ -161,7 +170,7 @@ struct alg_info {
 struct alg_info_esp {
 	struct alg_info ai;	/* common prefix */
 	struct esp_info esp[128];
-	enum ike_trans_type_dh esp_pfsgroup;
+	const struct oakley_group_desc *esp_pfsgroup;
 };
 
 struct alg_info_ike {

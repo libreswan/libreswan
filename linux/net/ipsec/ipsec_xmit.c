@@ -1369,6 +1369,7 @@ enum ipsec_xmit_value ipsec_xmit_ipcomp(struct ipsec_xmit_state *ixs)
  */
 enum ipsec_xmit_value ipsec_xmit_cont(struct ipsec_xmit_state *ixs)
 {
+	__u8 padlen;
 	skb_set_network_header(ixs->skb,
 			       ipsec_skb_offset(ixs->skb, ixs->skb->data));
 
@@ -1390,8 +1391,9 @@ enum ipsec_xmit_value ipsec_xmit_cont(struct ipsec_xmit_state *ixs)
 		    ixs->sa_len ? ixs->sa_txt : " (error)");
 	KLIPS_IP_PRINT(debug_tunnel & DB_TN_XMIT, ixs->iph);
 
-	ixs->ipsp->ips_life.ipl_bytes.ipl_count += ixs->len;
-	ixs->ipsp->ips_life.ipl_bytes.ipl_last = ixs->len;
+	padlen = ixs->tailroom - ixs->authlen;
+	ixs->ipsp->ips_life.ipl_bytes.ipl_count += ixs->ilen - padlen;
+	ixs->ipsp->ips_life.ipl_bytes.ipl_last = ixs->ilen - padlen;
 
 	if (!ixs->ipsp->ips_life.ipl_usetime.ipl_count)
 		ixs->ipsp->ips_life.ipl_usetime.ipl_count = jiffies / HZ;
@@ -2737,7 +2739,7 @@ static int ipsec_set_dst(struct ipsec_xmit_state *ixs)
 
 # ifdef CONFIG_KLIPS_IPV6
 	if (lsw_ip_hdr_version(ixs) == 6) {
-		/* saddr must not be set with ipv6, otherwise you can't 
+		/* saddr must not be set with ipv6, otherwise you can't
 		 * force the output device with linux kernels >= 4.3.
 		 * (kernel commit d46a9d678e4c9fac1e968d0593e4dba683389324)
 		 */

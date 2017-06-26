@@ -159,8 +159,8 @@ src 192.1.2.45 dst 192.1.2.23
 	replay-window 0 
 	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth1 
 XFRM policy:
-src 192.1.2.45/32 dst 192.0.2.0/24 
-	dir out priority 2088 ptype main 
+src 192.0.1.0/24 dst 192.1.2.23/32 
+	dir out priority 2336 ptype main 
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 src 192.0.2.0/24 dst 192.1.2.45/32 
@@ -171,10 +171,6 @@ src 192.0.2.0/24 dst 192.1.2.45/32
 	dir in priority 2088 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
-src 192.0.1.0/24 dst 192.1.2.23/32 
-	dir out priority 2336 ptype main 
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
 src 192.1.2.23/32 dst 192.0.1.0/24 
 	dir fwd priority 2336 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
@@ -182,10 +178,6 @@ src 192.1.2.23/32 dst 192.0.1.0/24
 src 192.1.2.23/32 dst 192.0.1.0/24 
 	dir in priority 2336 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
-src 192.1.2.45/32 dst 192.1.2.23/32 
-	dir out priority 2080 ptype main 
-	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 src 192.1.2.23/32 dst 192.1.2.45/32 
 	dir fwd priority 2080 ptype main 
@@ -195,38 +187,14 @@ src 192.1.2.23/32 dst 192.1.2.45/32
 	dir in priority 2080 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
+src 192.1.2.45/32 dst 192.0.2.0/24 
+	dir out priority 2088 ptype main 
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.1.2.45/32 dst 192.1.2.23/32 
+	dir out priority 2080 ptype main 
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES

@@ -323,7 +323,8 @@ void kernel_alg_show_connection(const struct connection *c, const char *instance
 		/* ??? 0 isn't a legitimate value for esp_pfsgroup */
 		if (c->alg_info_esp != NULL && c->alg_info_esp->esp_pfsgroup != 0) {
 			pfsbuf = enum_show_shortb(&oakley_group_names,
-				c->alg_info_esp->esp_pfsgroup, &esb);
+						  c->alg_info_esp->esp_pfsgroup->group,
+						  &esb);
 		} else {
 			pfsbuf = "<Phase1>";
 		}

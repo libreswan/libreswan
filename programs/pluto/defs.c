@@ -133,7 +133,9 @@ const char *check_expiry(realtime_t expiration_date, time_t warning_interval,
 		return "ok";
 
 	{
-		static char buf[35]; /* temporary storage */
+		/* STATIC!! */
+		/* note: 20 is a guess at the maximum digits in an intmax_t */
+		static char buf[sizeof("warning (expires in %jd minutes)") + 20];
 		const char *unit = "second";
 
 		if (time_left > 2 * secs_per_day) {

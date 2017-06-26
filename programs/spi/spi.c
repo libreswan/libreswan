@@ -1,7 +1,7 @@
 /*
  * All-in-one program to set Security Association parameters
  * Copyright (C) 1996  John Ioannidis.
- * Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002  Richard Guy Briggs.
+ * Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2017  Richard Guy Briggs <rgb@tricolour.ca>
  * Copyright (C) 2005-2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2007-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2013 Paul Wouters <paul@libreswan.org>
@@ -73,6 +73,7 @@ struct encap_msghdr *em;
 
 char *progname;
 bool debug = FALSE;
+bool get = FALSE;
 int dumpsaref = 0;
 int saref_him = 0;
 int saref_me  = 0;
@@ -85,10 +86,6 @@ int address_family = 0;
 unsigned char proto = 0;
 int alg = 0;
 
-/*
- *      Manual connection support for modular algos (ipsec_alg) --Juanjo.
- */
-#define XF_OTHER_ALG (XF_CLR - 1)       /* define magic XF_ symbol for alg_info's */
 #include <assert.h>
 const char *alg_string = NULL;          /* algorithm string */
 struct esp_info *esp_info = NULL;       /* esp info from 1st (only) element */
@@ -140,6 +137,7 @@ static const char *usage_string =
 	"[ --dumpsaref ] show the saref allocated\n"
 	"[ --outif=XXX ] set the outgoing interface to use\n"
 	"[ --debug ] is optional to any spi command.\n"
+	"[ --get ] show the current lifetime stats for the <SA>.\n"
 	"[ --label <label> ] is optional to any spi command.\n"
 	"[ --listenreply ]   is optional, and causes the command to stick\n"
 	"                    around and listen to what the PF_KEY socket says.\n";
@@ -337,6 +335,7 @@ static const struct option longopts[] =
 	{ "saref_him", required_argument, NULL, 'B' },
 	{ "dumpsaref", no_argument,       NULL, 'r' },
 	{ "listenreply", 0, 0, 'R' },
+	{ "get",	no_argument,       NULL, 't' },
 	{ 0, 0, 0, 0 }
 };
 
@@ -535,12 +534,23 @@ int main(int argc, char *argv[])
 	}
 
 	while ((c = getopt_long(argc, argv,
-				"" /*"H:P:Z:46dcA:E:e:s:a:w:i:D:S:hvgl:+:f:"*/,
+				"" /*"H:P:Z:46dcA:E:e:s:a:w:i:D:S:hvgl:+:f:t"*/,
 				longopts, 0)) != EOF) {
 		unsigned long u;
 		err_t ugh;
 
 		switch (c) {
+		case 't':
+			get = TRUE;
+			argcount--;
+			alg = XF_GET;
+			if (debug) {
+				fprintf(stdout, "%s: Algorithm %d selected.\n",
+					progname,
+					alg);
+			}
+			break;
+
 		case 'g':
 			debug = TRUE;
 			pfkey_lib_debug = PF_KEY_DEBUG_PARSE_MAX;
@@ -1171,6 +1181,7 @@ int main(int argc, char *argv[])
 	case XF_DEL:
 	case XF_COMPDEFLATE:
 	case XF_COMPLZS:
+	case XF_GET:
 		if (said_opt == NULL) {
 			if (isanyaddr(&edst)) {
 				fprintf(stderr,
@@ -1225,6 +1236,7 @@ int main(int argc, char *argv[])
 	case XF_COMPDEFLATE:
 	case XF_COMPLZS:
 	case XF_OTHER_ALG:
+	case XF_GET:
 		break;
 	default:
 		fprintf(stderr,
@@ -1249,7 +1261,8 @@ int main(int argc, char *argv[])
 	error = pfkey_msg_hdr_build(&extensions[0],
 				    alg == XF_DEL ? SADB_DELETE :
 					alg == XF_CLR ? SADB_FLUSH :
-					SADB_ADD,
+					    alg == XF_GET ? SADB_GET :
+					    SADB_ADD,
 				    proto2satype(proto),
 				    0,
 				    ++pfkey_seq,
@@ -1660,7 +1673,7 @@ int main(int argc, char *argv[])
 		free(iv);
 	}
 
-	if (listenreply || saref_me || dumpsaref) {
+	if (listenreply || saref_me || dumpsaref || get) {
 		ssize_t readlen;
 		unsigned char pfkey_buf[PFKEYv2_MAX_MSGSIZE];
 
@@ -1735,6 +1748,30 @@ int main(int argc, char *argv[])
 						       progname,
 						       s->sadb_x_saref_me,
 						       s->sadb_x_saref_him);
+					}
+				}
+				if (get) {
+					struct sadb_lifetime *s =
+						(struct sadb_lifetime *)
+						extensions[
+							K_SADB_EXT_LIFETIME_CURRENT];
+
+					if (s != NULL) {
+						printf("%s: lifetime_current=%u(allocations)/%" PRIu64 "(bytes)/%"
+							PRIu64 "(addtime)/%" PRIu64 "(usetime)"
+#ifdef NOT_YET
+						       "/%d(packets)"
+#endif /* NOT_YET */
+						       "\n",
+						       progname,
+						       s->sadb_lifetime_allocations,
+						       s->sadb_lifetime_bytes,
+						       s->sadb_lifetime_addtime,
+						       s->sadb_lifetime_usetime
+#ifdef NOT_YET
+						       , s->sadb_x_lifetime_packets
+#endif /* NOT_YET */
+							);
 					}
 				}
 				break;

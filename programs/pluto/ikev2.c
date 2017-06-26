@@ -821,6 +821,7 @@ static struct state *process_v2_child_ix (struct msg_digest *md,
 	const bool newreq = is_msg_request(md);
 
 	pst = IS_CHILD_SA(pst) ? state_with_serialno(pst->st_clonedfrom) : pst;
+
 	if (newreq) {
 		if (md->from_state == STATE_V2_CREATE_R) {
 			what = "Child SA Request";
@@ -867,6 +868,41 @@ static struct state *process_v2_child_ix (struct msg_digest *md,
 
         }
         return st;
+}
+
+static bool last_reply_retransmit(struct state *st,
+		const enum isakmp_xchg_types ix)
+{
+	if (st->st_msgid_lastreplied == st->st_msgid_lastrecv) {
+		DBG(DBG_CONTROLMORE, DBG_log("retransmit response for "
+					"message ID: %u exchnage %s",
+					st->st_msgid_lastrecv,
+					enum_name(&ikev2_exchange_names, ix)));
+		return TRUE;
+
+
+	} else {
+		DBG(DBG_CONTROLMORE, DBG_log("can not retransmit response for "
+					"message ID: %u exchnage %s lastreplied"
+					" %u", st->st_msgid_lastrecv,
+					enum_name(&ikev2_exchange_names, ix),
+					st->st_msgid_lastreplied));
+
+		return FALSE;
+	}
+}
+
+static void proces_recent_rtransmit(struct state *st,
+		const enum isakmp_xchg_types ix)
+{
+	set_cur_state(st);
+	if (st->st_suspended_md != NULL) {
+		libreswan_log("retransmission ignored: we're still working on the previous one");
+	} else {
+		if (last_reply_retransmit(st, ix)) {
+			send_ike_msg(st, "ikev2-responder-retransmit");
+		}
+	}
 }
 
 static bool match_hdr_flag(lset_t svm_flags, enum smf2_flags smf2_flag,
@@ -1000,12 +1036,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			}
 			if (st->st_msgid_lastrecv == md->msgid_received) {
 				/* this is a recent retransmit. */
-				set_cur_state(st);
-				if (st->st_suspended_md != NULL) {
-					libreswan_log("retransmission ignored: we're still working on the previous one");
-				} else {
-					send_ike_msg(st, "ikev2-responder-retransmit");
-				}
+				proces_recent_rtransmit(st, ix);
 				return;
 			}
 			/* update lastrecv later on */
@@ -1315,6 +1346,9 @@ void process_v2_packet(struct msg_digest **mdp)
 			complete_v2_state_transition(mdp, STF_FAIL);
 			return;
 		}
+		md->st = st;
+		ikev2_update_msgid_counters(md);
+
 		/* switch from parent state to child state */
 		st = cst;
 	}
@@ -1673,18 +1707,19 @@ void ikev2_update_msgid_counters(struct msg_digest *md)
 
 	msgid_t st_msgid_nextuse = ikesa->st_msgid_nextuse;
 
-	if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) &&
+	/* update when sending a request */
+	if (is_msg_request(md) &&
 			(st->st_state == STATE_PARENT_I1 ||
-			st->st_state == STATE_V2_CREATE_I)) {
+			 st->st_state == STATE_V2_CREATE_I)) {
 		ikesa->st_msgid_nextuse += 1;
 		/* an informational exchange does its own increment */
 	} else if (st->st_state == STATE_PARENT_I2) {
 		ikesa->st_msgid_nextuse += 1;
 	}
 
-	if (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) {
+	if (is_msg_response(md)) {
 		/* we were initiator for this message exchange */
-		if (md->msgid_received  ==  v2_INITIAL_MSGID &&
+		if (md->msgid_received == v2_INITIAL_MSGID &&
 				ikesa->st_msgid_lastack == v2_INVALID_MSGID) {
 			ikesa->st_msgid_lastack = md->msgid_received;
 		} else if (md->msgid_received > ikesa->st_msgid_lastack) {
@@ -1692,9 +1727,16 @@ void ikev2_update_msgid_counters(struct msg_digest *md)
 		} /* else { lowever message id ignore it? } */
 	} else {
 		/* we were responder for this message exchange */
-		if (md->msgid_received > ikesa->st_msgid_lastrecv)
+		if (md->msgid_received > ikesa->st_msgid_lastrecv) {
 			ikesa->st_msgid_lastrecv = md->msgid_received;
+		}
+		/* first request from the other side */
+		if (md->msgid_received == v2_INITIAL_MSGID &&
+				ikesa->st_msgid_lastrecv == v2_INVALID_MSGID) {
+			ikesa->st_msgid_lastrecv = v2_INITIAL_MSGID;
+		}
 	}
+
 	{
 		msgid_t unack = ikesa->st_msgid_nextuse -
 			ikesa->st_msgid_lastack - 1;
@@ -1706,12 +1748,13 @@ void ikev2_update_msgid_counters(struct msg_digest *md)
 
 	DBG(DBG_CONTROLMORE, DBG_log("message ID #%lu %s %s pst #%lu "
 			"st_msgid_nextuse(before=%u) %u "
-			"st_msgid_lastack %u st_msgid_lastrecv %u",
+			"st_msgid_lastack %u st_msgid_lastrecv %u md is a %s",
 			st->st_serialno, enum_name(&state_names, st->st_state),
 			st->st_connection->name, ikesa->st_serialno,
 			st_msgid_nextuse,
 			ikesa->st_msgid_nextuse, ikesa->st_msgid_lastack,
-			ikesa->st_msgid_lastrecv ));
+			ikesa->st_msgid_lastrecv,
+			is_msg_response(md) ? "resonse" : "request"));
 
 }
 
@@ -1852,7 +1895,7 @@ static void success_v2_state_transition(struct msg_digest *md)
 	struct state *pst;
 	enum rc_type w;
 
-	pst = IS_CHILD_SA(st) ?  state_with_serialno(st->st_clonedfrom) : st;
+	pst = IS_CHILD_SA(st) ? state_with_serialno(st->st_clonedfrom) : st;
 
 	if (from_state != svm->next_state) {
 		DBG(DBG_CONTROL, DBG_log("transition from state %s to state %s",
@@ -1860,12 +1903,14 @@ static void success_v2_state_transition(struct msg_digest *md)
 			      enum_name(&state_names, svm->next_state)));
 	}
 
+
 	if (from_state == STATE_V2_REKEY_IKE_R) {
+		ikev2_update_msgid_counters(md);
 		ikev2_child_emancipate(md);
 	} else  {
 		change_state(st, svm->next_state);
+		ikev2_update_msgid_counters(md);
 	}
-	ikev2_update_msgid_counters(md);
 
 	w = RC_NEW_STATE + st->st_state;
 
@@ -1922,7 +1967,7 @@ static void success_v2_state_transition(struct msg_digest *md)
 				    st->st_interface->port);
 		    });
 
-		send_ike_msg(st, enum_name(&state_names, from_state));
+		send_ike_msg(pst, enum_name(&state_names, from_state));
 	}
 
 	if (w == RC_SUCCESS) {

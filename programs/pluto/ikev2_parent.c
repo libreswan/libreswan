@@ -215,7 +215,7 @@ static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
 					st->st_clonedfrom);
 			return STF_FAIL;
 		}
-		passert (st->st_sec_in_use == TRUE); /* child has its own KE */
+		passert(st->st_sec_in_use == TRUE); /* child has its own KE */
 
 		/* initiate calculation of g^xy */
 		e = start_dh_v2(md, "DHv2 for child sa", role,
@@ -289,6 +289,7 @@ static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
 		break;
 
 	case STATE_V2_CREATE_R:
+	case STATE_V2_REKEY_CHILD_R:
 		only_shared = TRUE;
 		/* FALL THROUGH*/
 	case STATE_V2_REKEY_IKE_R:
@@ -337,6 +338,7 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		fake_md = alloc_md("msg_digest by ikev2_crypto_start()");
 		fake_md->st = st;
 		fake_md->from_state = STATE_IKEv2_BASE;
+		fake_md->msgid_received = v2_INVALID_MSGID;
 		md = fake_md;
 	}
 
@@ -360,7 +362,16 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 
 	case STATE_V2_CREATE_R:
 		ci = pcim_known_crypto;
-		what = "Child Responder nonce nr";
+		what = md->chain[ISAKMP_NEXT_v2KE] == NULL ?
+			"Child Responder nonce nr" :
+			"Child Responder KE and nonce nr";
+		break;
+
+	case STATE_V2_REKEY_CHILD_R:
+		ci = pcim_known_crypto;
+		what = md->chain[ISAKMP_NEXT_v2KE] == NULL ?
+			"Child Rekey Responder nonce nr" :
+			"Child Rekey Responder KE and nonce nr";
 		break;
 
 	case STATE_V2_CREATE_I0:
@@ -398,6 +409,7 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		break;
 
 	case STATE_V2_CREATE_R:
+	case STATE_V2_REKEY_CHILD_R:
 		if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
 			e = build_ke_and_nonce(ke, st->st_oakley.group, ci);
 		} else {
@@ -2072,6 +2084,10 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 {
 	struct state *pst = st;
 
+	/*
+	 * If this is a child (esp/ah) then set PST to the parent so
+	 * the parent's crypto-suite is used.
+	 */
 	if (IS_CHILD_SA(st))
 		pst = state_with_serialno(st->st_clonedfrom);
 
@@ -2104,7 +2120,7 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 
 		/* now, encrypt */
 		pst->st_oakley.encrypter->encrypt_ops
-			->do_crypt(st->st_oakley.encrypter,
+			->do_crypt(pst->st_oakley.encrypter,
 				   enc_start, enc_size,
 				   cipherkey,
 				   enc_iv, TRUE);
@@ -2147,8 +2163,8 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 			     enc_start, enc_size);
 		    DBG_dump("integ before authenticated encryption:",
 			     integ_start, integ_size));
-		if (!st->st_oakley.encrypter->encrypt_ops
-		    ->do_aead(st->st_oakley.encrypter,
+		if (!pst->st_oakley.encrypter->encrypt_ops
+		    ->do_aead(pst->st_oakley.encrypter,
 			      salt.ptr, salt.len,
 			      wire_iv_start, wire_iv_size,
 			      aad_start, aad_size,
@@ -2326,8 +2342,8 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 			     enc_start, enc_size);
 		    DBG_dump("integ before authenticated decryption:",
 			     integ_start, integ_size));
-		if (!st->st_oakley.encrypter->encrypt_ops
-		    ->do_aead(st->st_oakley.encrypter,
+		if (!pst->st_oakley.encrypter->encrypt_ops
+		    ->do_aead(pst->st_oakley.encrypter,
 			      salt.ptr, salt.len,
 			      wire_iv_start, wire_iv_size,
 			      aad_start, aad_size,
@@ -2670,7 +2686,8 @@ static stf_status ikev2_record_fragment(struct msg_digest *md,
 				      unsigned int count, unsigned int total,
 				      const char *desc)
 {
-	struct state *st = md->st;
+	struct state *st = IS_CHILD_SA(md->st) ?
+		state_with_serialno(md->st->st_clonedfrom) : md->st;
 	struct ikev2_skf e;
 	unsigned char *encstart;
 	pb_stream e_pbs, e_pbs_cipher;
@@ -2762,8 +2779,12 @@ static stf_status ikev2_record_fragments(struct msg_digest *md,
 				       chunk_t *payload, /* read-only */
 				       const char *desc)
 {
-	struct state *const st = md->st;
+	struct state *const st = IS_CHILD_SA(md->st) ?
+		state_with_serialno(md->st->st_clonedfrom) : md->st;
 	unsigned int len;
+
+	release_fragments(st);
+	freeanychunk(st->st_tpacket);
 
 	len = (st->st_connection->addr_family == AF_INET) ?
 	      ISAKMP_V2_FRAG_MAXLEN_IPv4 : ISAKMP_V2_FRAG_MAXLEN_IPv6;
@@ -3149,12 +3170,12 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		return ikev2_record_fragments(md, &hdr, &e, &payload,
 					   "reply fragment for ikev2_parent_outR1_I2");
 	} else {
-		stf_status ret = ikev2_encrypt_msg(cst, authstart,
+		stf_status ret = ikev2_encrypt_msg(pst, authstart,
 					iv, encstart, authloc,
 					&e_pbs_cipher);
 
 		if (ret == STF_OK)
-			record_outbound_ike_msg(cst, &reply_stream,
+			record_outbound_ike_msg(pst, &reply_stream,
 				"reply packet for ikev2_parent_inR1outI2_tail");
 		return ret;
 	}
@@ -3171,8 +3192,8 @@ static void *ikev2_pam_autherize_thread (void *x)
 	size_t sz;
 
 	/* threads will go quietly if the master cancel it */
-	pthread_setcanceltype  (PTHREAD_CANCEL_ASYNCHRONOUS,  NULL);
-	pthread_setcancelstate (PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,  NULL);
+	pthread_setcancelstate(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 
 	p->pam_status = do_pam_authentication(&p->pam);
 	gettimeofday(&p->done_time, NULL);
@@ -3840,13 +3861,15 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 			return ikev2_record_fragments(md, &hdr, &e, &payload,
 						   "reply fragment for ikev2_parent_inI2outR2_tail");
 		} else {
-			stf_status ret = ikev2_encrypt_msg(cst, authstart,
+			stf_status ret = ikev2_encrypt_msg(st, authstart,
 						iv, encstart, authloc,
 						&e_pbs_cipher);
 
-			if (ret == STF_OK)
-				record_outbound_ike_msg(cst, &reply_stream,
+			if (ret == STF_OK) {
+				record_outbound_ike_msg(st, &reply_stream,
 					"reply packet for ikev2_parent_inI2outR2_auth_tail");
+				st->st_msgid_lastreplied = md->msgid_received;
+			}
 
 			return ret;
 		}
@@ -4525,6 +4548,156 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
 	return TRUE;
 }
 
+static struct state *find_state_to_rekey(struct payload_digest *p,
+		struct state *pst)
+{
+	struct state *st;
+	ipsec_spi_t spi;
+	struct ikev2_notify ntfy = p->payload.v2n;
+
+	if (ntfy.isan_protoid == PROTO_IPSEC_ESP ||
+			ntfy.isan_protoid == PROTO_IPSEC_AH) {
+		DBG(DBG_CONTROLMORE, DBG_log("CREATE_CHILD_SA IPsec SA rekey "
+					"Protocol %s",
+					enum_show(&ikev2_protocol_names,
+						ntfy.isan_protoid)));
+
+	} else {
+		libreswan_log("CREATE_CHILD_SA IPsec SA rekey invalid Protocol ID %s",
+				enum_show(&ikev2_protocol_names,
+					ntfy.isan_protoid));
+		return NULL;
+	}
+	if (ntfy.isan_spisize != sizeof(ipsec_spi_t)) {
+		libreswan_log("CREATE_CHILD_SA IPsec SA rekey invalid spi "
+				"size %u", ntfy.isan_spisize);
+		return NULL;
+	}
+
+	if (!in_raw(&spi, sizeof(spi), &p->pbs, "SPI"))
+		return NULL;      /* cannot happen */
+
+	DBG(DBG_CONTROLMORE, DBG_log("CREATE_CHILD_S to rekey IPsec SA(0x%08"
+				PRIx32 ") Protocol %s", ntohl((uint32_t) spi),
+				enum_show(&ikev2_protocol_names,
+					ntfy.isan_protoid)));
+
+	st = find_state_ikev2_child_to_delete(pst->st_icookie, pst->st_rcookie,
+			ntfy.isan_protoid, spi);
+	if (st == NULL) {
+		libreswan_log("CREATE_CHILD_SA no such IPsec SA to rekey SA(0x%08"
+				PRIx32 ") Protocol %s", ntohl((uint32_t) spi),
+				enum_show(&ikev2_protocol_names,
+					ntfy.isan_protoid));
+	}
+
+	return st;
+}
+
+static stf_status ikev2_rekey_child(const struct msg_digest *md)
+{
+        struct state *st = md->st;  /* new child state */
+        struct state *rst = NULL; /* old child state being rekeyed */
+        struct payload_digest *ntfy;
+        struct state *pst = state_with_serialno(st->st_clonedfrom);
+        stf_status ret = STF_OK; /* no v2N_REKEY_SA return OK */
+
+        for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
+		char cib[CONN_INST_BUF];
+
+                switch (ntfy->payload.v2n.isan_type) {
+
+		case v2N_REKEY_SA:
+			DBG(DBG_CONTROL, DBG_log("received v2N_REKEY_SA "));
+			if (rst != NULL) {
+				/* will tollarate multiple */
+				loglog(RC_LOG_SERIOUS, "duplicate v2N_REKEY_SA in excahnge");
+			}
+
+			/*
+			 * incase of a failure the response is
+			 * a v2N_CHILD_SA_NOT_FOUND with  with SPI and type
+			 * {AH|ESP} in the notify  do we support that yet?
+			 * RFC 7296 3.10 return STF_FAIL + v2N_CHILD_SA_NOT_FOUND;
+			 */
+			change_state(st, STATE_V2_REKEY_CHILD_R);
+			rst = find_state_to_rekey(ntfy, pst);
+			if(rst == NULL) {
+				libreswan_log("no valid IPsec SA SPI to rekey");
+				ret = STF_FAIL + v2N_CHILD_SA_NOT_FOUND;
+			} else {
+
+				st->st_ipsec_pred = rst->st_serialno;
+
+				DBG(DBG_CONTROLMORE, DBG_log("#%lu rekey request for \"%s\"%s #%lu TSi TSr",
+							st->st_serialno,
+							rst->st_connection->name,
+							fmt_conn_instance(rst->st_connection, cib),
+							rst->st_serialno));
+				ikev2_print_ts(&rst->st_ts_this);
+				ikev2_print_ts(&rst->st_ts_that);
+
+				ret = STF_OK;
+			}
+
+			break;
+		default:
+			/*
+			 * there is another pass of notify payloads after this
+			 * that will handle all other but REKEY
+			 */
+			break;
+		}
+	}
+
+	return ret;
+}
+
+static stf_status ikev2_rekey_child_copy_ts(const struct msg_digest *md)
+{
+	struct state *st = md->st;  /* new child state */
+	struct state *rst; /* old child state being rekeyed */
+	stf_status ret = STF_OK; /* if no v2N_REKEY_SA return OK */
+	struct spd_route *spd;
+
+	if (st->st_ipsec_pred == SOS_NOBODY) {
+		/* this is not rekey quietly return */
+		return ret;
+	}
+
+	rst = state_with_serialno(st->st_ipsec_pred);
+
+	if (rst == NULL) {
+		/* add SPI and type {AH|ESP} in the notify, RFC 7296 3.10 */
+		return STF_FAIL + v2N_CHILD_SA_NOT_FOUND;
+	}
+
+	/*
+	 * RFC 7296 #2.9.2 the exact or the superset.
+	 * exact is a should. Here libreswan only allow the exact.
+	 * Inherit the TSi TSr from old state, IPsec SA.
+	 */
+
+	DBG(DBG_CONTROLMORE, {
+			char cib[CONN_INST_BUF];
+
+			DBG_log("#%lu inherit spd, TSi TSr, from "
+					"\"%s\"%s #%lu", st->st_serialno,
+					rst->st_connection->name,
+					fmt_conn_instance(rst->st_connection, cib),
+					rst->st_serialno); });
+
+
+	spd = &rst->st_connection->spd;
+	st->st_ts_this = ikev2_end_to_ts(&spd->this);
+	st->st_ts_that = ikev2_end_to_ts(&spd->that);
+	ikev2_print_ts(&st->st_ts_this);
+	ikev2_print_ts(&st->st_ts_that);
+
+	return ret;
+}
+
+
 /* once done use the same function in ikev2_parent_inR1outI2_tail too */
 static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
                                   pb_stream *outpbs,
@@ -4817,14 +4990,23 @@ stf_status ikev2_child_inIoutR(struct msg_digest *md)
 
 	RETURN_STF_FAILURE_STATUS(ikev2_process_child_sa_pl(md, FALSE));
 
-	/* KE in with old (pst) accepted_oakley */
+	/* KE in with old(pst) and matching accepted_oakley from proposals */
 	RETURN_STF_FAILURE(accept_child_sa_KE(md, st, st->st_oakley));
+
+	/* check N_REKEY_SA in the negotation */
+	RETURN_STF_FAILURE_STATUS(ikev2_rekey_child(md));
+
+	if (st->st_ipsec_pred == SOS_NOBODY) {
+		RETURN_STF_FAILURE_STATUS(ikev2_resp_accept_child_ts(md, &st,
+					ORIGINAL_RESPONDER,
+					ISAKMP_v2_CREATE_CHILD_SA));
+	}
 
 	stf_status e = ikev2_crypto_start(md, st);
 	return e;
 }
 
-/* processsing a new Rekeying IKE SAs with the CREATE_CHILD_SA RFC 7296 1.3.2 */
+/* processsing a new Rekey IKE SA (RFC 7296 1.3.2) request */
 stf_status ikev2_child_ike_inIoutR(struct msg_digest *md)
 {
 	struct state *st = md->st; /* child state */
@@ -4971,8 +5153,10 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 	 * CREATE_CHILD_SA request and response are small 300 - 750 bytes.
 	 * should we support fragmenting? may be one day.
 	 */
-	record_outbound_ike_msg(st, &reply_stream,
+	record_outbound_ike_msg(pst, &reply_stream,
 				"packet from ikev2_child_out_cont");
+
+	pst->st_msgid_lastreplied = md->msgid_received;
 
 	if (st->st_state == STATE_V2_CREATE_R ||
 			st->st_state == STATE_V2_REKEY_CHILD_R) {
@@ -5446,6 +5630,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 
 		record_and_send_ike_msg(st, &reply_stream,
 			"reply packet for process_encrypted_informational_ikev2");
+		st->st_msgid_lastreplied = md->msgid_received;
 
 		/* Now we can delete the IKE SA if we want to */
 		if (del_ike) {
@@ -5809,12 +5994,18 @@ void ikev2_add_ipsec_child(int whack_sock, struct state *isakmp_sa,
 #endif
                        )
 {
-	struct state *st = duplicate_state(isakmp_sa, IPSEC_SA);
+	struct state *st;
 	char replacestr[32];
 	const char *pfsgroupname = "no-pfs";
 
+	if (find_pending_phas2(isakmp_sa->st_serialno,
+				c, IPSECSA_PENDING_STATES)) {
+		return;
+	}
+
 	passert(c != NULL);
 
+	st = duplicate_state(isakmp_sa, IPSEC_SA);
 	st->st_whack_sock = whack_sock;
 	st->st_connection = c;	/* safe: from duplicate_state */
 	passert(c != NULL);
