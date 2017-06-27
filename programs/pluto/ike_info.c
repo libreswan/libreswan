@@ -596,7 +596,7 @@ const struct parser_param ike_parser_param = {
 	.dh_alg_byname = dh_alg_byname,
 };
 
-struct alg_info_ike *alg_info_ike_create_from_str(lset_t policy,
+struct alg_info_ike *alg_info_ike_create_from_str(const struct parser_policy *policy,
 						  const char *alg_str,
 						  char *err_buf, size_t err_buf_len)
 {

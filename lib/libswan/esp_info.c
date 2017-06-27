@@ -295,7 +295,7 @@ static struct alg_info_esp *alg_info_discover_pfsgroup_hack(struct alg_info_esp 
  */
 
 /* This function is tested in testing/algparse/algparse.c */
-struct alg_info_esp *alg_info_esp_create_from_str(lset_t policy,
+struct alg_info_esp *alg_info_esp_create_from_str(const struct parser_policy *policy,
 						  const char *alg_str,
 						  char *err_buf, size_t err_buf_len)
 {
@@ -322,7 +322,7 @@ struct alg_info_esp *alg_info_esp_create_from_str(lset_t policy,
 }
 
 /* This function is tested in testing/algparse/algparse.c */
-struct alg_info_esp *alg_info_ah_create_from_str(lset_t policy,
+struct alg_info_esp *alg_info_ah_create_from_str(const struct parser_policy *policy,
 						 const char *alg_str,
 						 char *err_buf, size_t err_buf_len)
 {

@@ -161,15 +161,15 @@ extern void alg_info_free(struct alg_info *alg_info);
 extern void alg_info_addref(struct alg_info *alg_info);
 extern void alg_info_delref(struct alg_info *alg_info);
 
-extern struct alg_info_ike *alg_info_ike_create_from_str(lset_t policy,
+extern struct alg_info_ike *alg_info_ike_create_from_str(const struct parser_policy *policy,
 							 const char *alg_str,
 							 char *err_buf, size_t err_buf_len);
 
-extern struct alg_info_esp *alg_info_esp_create_from_str(lset_t policy,
+extern struct alg_info_esp *alg_info_esp_create_from_str(const struct parser_policy *policy,
 							 const char *alg_str,
 							 char *err_buf, size_t err_buf_len);
 
-extern struct alg_info_esp *alg_info_ah_create_from_str(lset_t policy,
+extern struct alg_info_esp *alg_info_ah_create_from_str(const struct parser_policy *policy,
 							const char *alg_str,
 							char *err_buf, size_t err_buf_len);
 
@@ -221,7 +221,7 @@ void alg_info_snprint_phase2(char *buf, size_t buflen,
  * Parsing with POLICY='0' is allowed. It will accept the algorithms
  * unconditionally (spi.c seems to need this).
  */
-struct alg_info *alg_info_parse_str(lset_t policy,
+struct alg_info *alg_info_parse_str(const struct parser_policy *policy,
 				    struct alg_info *alg_info,
 				    const char *alg_str,
 				    char *err_buf, size_t err_buf_len,

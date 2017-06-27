@@ -54,7 +54,7 @@ enum parser_state {
 struct parser_context {
 	unsigned state;
 	const struct parser_param *param;
-	struct parser_policy policy;
+	const struct parser_policy *policy;
 	char ealg_buf[20];
 	char eklen_buf[20];
 	char aalg_buf[20];
@@ -94,24 +94,12 @@ static inline void parser_set_state(struct parser_context *p_ctx,
 }
 
 static void parser_init(struct parser_context *ctx,
-			lset_t policy,
+			const struct parser_policy *policy,
 			const struct parser_param *param)
 {
 	*ctx = (struct parser_context) {
 		.param = param,
-		.policy = {
-			.ikev1 = LIN(POLICY_IKEV1_ALLOW, policy),
-			/*
-			 * logic needs to match pick_initiator()
-			 *
-			 * XXX: Once pluto is changed to IKEv1 XOR
-			 * IKEv2 it should be possible to move this
-			 * magic into pluto proper and instead pass a
-			 * simple boolean.
-			 */
-			.ikev2 = ((policy & POLICY_IKEV2_PROPOSE)
-				  && (policy & POLICY_IKEV2_ALLOW)),
-		 },
+		.policy = policy,
 		.state = (param->encrypt_alg_byname
 			  ? ST_INI_EA
 			  : ST_INI_AA),
@@ -295,7 +283,7 @@ static const struct ike_alg *lookup_byname(struct parser_context *p_ctx,
 	if (name[0] != '\0') {
 		if (alg_byname != NULL) {
 			const struct ike_alg *alg = alg_byname(p_ctx->param,
-							       &p_ctx->policy,
+							       p_ctx->policy,
 							       err_buf, err_buf_len,
 							       name, key_bit_length);
 			if (alg == NULL) {
@@ -438,7 +426,7 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 		return err_buf;
 	}
 
-	return p_ctx->param->alg_info_add(&p_ctx->policy,
+	return p_ctx->param->alg_info_add(p_ctx->policy,
 					  alg_info,
 					  encrypt, p_ctx->eklen,
 					  prf, integ,
@@ -451,7 +439,7 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
  * on success: returns alg_info
  * on failure: alg_info_free(alg_info) and return NULL;
  */
-struct alg_info *alg_info_parse_str(lset_t policy,
+struct alg_info *alg_info_parse_str(const struct parser_policy *policy,
 				    struct alg_info *alg_info,
 				    const char *alg_str,
 				    char *err_buf, size_t err_buf_len,
@@ -471,7 +459,7 @@ struct alg_info *alg_info_parse_str(lset_t policy,
 
 	/* use default if null string */
 	if (*alg_str == '\0') {
-		param->alg_info_add(&ctx.policy, alg_info,
+		param->alg_info_add(ctx.policy, alg_info,
 				    NULL, 0,
 				    NULL, NULL, NULL,
 				    err_buf, err_buf_len);
