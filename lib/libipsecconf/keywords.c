@@ -610,6 +610,7 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
   { "modecfgwins1",  kv_conn,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
   { "modecfgwins2",  kv_conn,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
 
+  { "nic-offload",  kv_conn,  kt_bool,  KBF_NIC_OFFLOAD,  NOT_ENUM },
   { "encapsulation",  kv_conn,  kt_enum,  KBF_ENCAPS,  &kw_encaps_list },
   { "forceencaps",  kv_conn, kt_obsolete, KBF_WARNIGNORE, NOT_ENUM },
 

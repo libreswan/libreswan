@@ -942,6 +942,7 @@ int main(int argc, char **argv)
 	msg.modecfg_domain = NULL;
 	msg.modecfg_banner = NULL;
 
+	msg.nic_offload = FALSE;
 	msg.sa_ike_life_seconds = deltatime(IKE_SA_LIFETIME_DEFAULT);
 	msg.sa_ipsec_life_seconds = deltatime(IPSEC_SA_LIFETIME_DEFAULT);
 	msg.sa_rekey_margin = deltatime(SA_REPLACEMENT_MARGIN_DEFAULT);

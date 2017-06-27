@@ -117,6 +117,8 @@ struct kernel_sa {
 #ifdef HAVE_LABELED_IPSEC
 	struct xfrm_user_sec_ctx_ike *sec_ctx;
 #endif
+	bool nic_offload;
+	int nic_offload_ifindex;
 
 	deltatime_t sa_lifetime; /* number of seconds until SA expires */
 	/* below two need to enabled and used, instead of getting passed */

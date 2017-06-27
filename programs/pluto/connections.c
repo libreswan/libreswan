@@ -1546,6 +1546,7 @@ void add_connection(const struct whack_message *wm)
 			}
 		}
 
+		c->nic_offload = wm->nic_offload;
 		c->sa_ike_life_seconds = wm->sa_ike_life_seconds;
 		c->sa_ipsec_life_seconds = wm->sa_ipsec_life_seconds;
 		c->sa_rekey_margin = wm->sa_rekey_margin;
