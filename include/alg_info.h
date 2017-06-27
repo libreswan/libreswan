@@ -28,15 +28,6 @@ struct parser_context;
 struct alg_info;
 
 /*
- * Parameters to tune the parser.
- */
-
-struct parser_policy {
-	bool ikev1;
-	bool ikev2;
-};
-
-/*
  * Place holder so that it is possible to clearly differentiate
  * between an unspecified rather than 'null' integrity algorithm.
  *
@@ -66,14 +57,27 @@ struct parser_policy {
  */
 extern const struct integ_desc alg_info_integ_null;
 
-struct parser_param {
-       const char *protocol;
-       enum ike_alg_key ikev1_alg_id;
+/*
+ * Parameters to tune the parser.
+ */
 
-       /*
-        * XXX: Is the proto-id needed?  Parser should be protocol
-        * agnostic.
-        */
+struct parser_policy {
+	bool ikev1;
+	bool ikev2;
+};
+
+/*
+ * Parameters to set the parser's basic behaviour - ESP/AH/IKE.
+ */
+
+struct parser_param {
+	const char *protocol;
+	enum ike_alg_key ikev1_alg_id;
+
+	/*
+	 * XXX: Is the proto-id needed?  Parser should be protocol
+	 * agnostic.
+	 */
 	unsigned protoid;
 	/*
 	 * If things go wrong, return a non-null error string
