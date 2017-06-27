@@ -34,6 +34,17 @@
 #include "ike_alg_aes.h"
 #include "ike_alg_sha1.h"
 
+static bool alg_is_implemented(const struct ike_alg *alg)
+{
+	if (alg->algo_type == &ike_alg_dh) {
+		/* require an in-process/ike implementation of DH */
+		return ike_alg_is_ike(alg);
+	} else {
+		/* ask the kernel? */
+		return TRUE;
+	}
+}
+
 /*
  * Raw add routine: only checks for no duplicates
  */
@@ -178,6 +189,7 @@ const struct parser_param esp_parser_param = {
 	.protocol = "ESP",
 	.ikev1_alg_id = IKEv1_ESP_ID,
 	.protoid = PROTO_IPSEC_ESP,
+	.alg_is_implemented = alg_is_implemented,
 	.alg_info_add = alg_info_esp_add,
 	.encrypt_alg_byname = encrypt_alg_byname,
 	.integ_alg_byname = integ_alg_byname,
@@ -188,6 +200,7 @@ const struct parser_param ah_parser_param = {
 	.protocol = "AH",
 	.ikev1_alg_id = IKEv1_ESP_ID,
 	.protoid = PROTO_IPSEC_AH,
+	.alg_is_implemented = alg_is_implemented,
 	.alg_info_add = alg_info_ah_add,
 	.integ_alg_byname = integ_alg_byname,
 	.dh_alg_byname = dh_alg_byname,

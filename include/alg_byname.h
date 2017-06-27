@@ -16,6 +16,21 @@
 
 struct parser_param;
 struct parser_policy;
+struct ike_alg;
+
+/*
+ * Filter function to accept/reject an algorithm.
+ *
+ * NAME should contain the string used to find ALG.  It, rather than
+ * ALG->NAME, is used when reporting errors into ERR_BUF so that the
+ * messages better align with the input files.
+ */
+
+bool alg_byname_ok(const struct parser_param *param,
+		   const struct parser_policy *const policy,
+		   const struct ike_alg *alg,
+		   const char *name,
+		   char *err_buf, size_t err_buf_len);
 
 /*
  * Helper functions to implement most of the lookup.

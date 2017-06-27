@@ -73,6 +73,7 @@ struct parser_policy {
 struct parser_param {
 	const char *protocol;
 	enum ike_alg_key ikev1_alg_id;
+	bool (*alg_is_implemented)(const struct ike_alg *alg);
 
 	/*
 	 * XXX: Is the proto-id needed?  Parser should be protocol
