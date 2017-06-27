@@ -43,7 +43,7 @@ static void raw_alg_info_esp_add(struct alg_info_esp *alg_info,
 				 const struct integ_desc *integ,
 				 const struct oakley_group_desc *dh)
 {
-	struct proposal_info *esp_info = alg_info->esp;
+	struct proposal_info *esp_info = alg_info->ai.proposals;
 	int cnt = alg_info->ai.alg_info_cnt;
 
 	/*
@@ -64,7 +64,7 @@ static void raw_alg_info_esp_add(struct alg_info_esp *alg_info,
 
 	/* check for overflows */
 	/* ??? passert seems dangerous */
-	passert(cnt < (int)elemsof(alg_info->esp));
+	passert(cnt < (int)elemsof(alg_info->ai.proposals));
 
 	esp_info[cnt].ikev1esp_transid = (encrypt != NULL ? encrypt->common.id[IKEv1_ESP_ID] : 0);
 	esp_info[cnt].enckeylen = ek_bits;

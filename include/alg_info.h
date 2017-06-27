@@ -144,17 +144,16 @@ struct alg_info {
 	int alg_info_cnt;
 	int ref_cnt;
 	unsigned alg_info_protoid;
+	struct proposal_info proposals[128];
 };
 
 struct alg_info_esp {
 	struct alg_info ai;	/* common prefix */
-	struct proposal_info esp[128];
 	const struct oakley_group_desc *esp_pfsgroup;
 };
 
 struct alg_info_ike {
 	struct alg_info ai;	/* common prefix */
-	struct proposal_info ike[128];
 };
 
 extern void alg_info_free(struct alg_info *alg_info);
@@ -193,17 +192,20 @@ void alg_info_snprint_phase2(char *buf, size_t buflen,
  *
  * Use __typeof__ instead of const to get around ALG_INFO some times
  * being const and sometimes not.
+ *
+ * XXX: yes, they are the same!
  */
 
-#define FOR_EACH_ESP_INFO(ALG_INFO, ESP_INFO)				\
-	for (__typeof__((ALG_INFO)->esp[0]) *(ESP_INFO) = (ALG_INFO)->esp; \
-	     (ESP_INFO) < (ALG_INFO)->esp + (ALG_INFO)->ai.alg_info_cnt; \
-	     (ESP_INFO)++)
+#define FOR_EACH_PROPOSAL_INFO(ALG_INFO, PROPOSAL_INFO)			\
+	for (__typeof__((ALG_INFO)->proposals[0]) *(PROPOSAL_INFO) = (ALG_INFO)->proposals; \
+	     (PROPOSAL_INFO) < (ALG_INFO)->proposals + (ALG_INFO)->alg_info_cnt; \
+	     (PROPOSAL_INFO)++)
 
-#define FOR_EACH_IKE_INFO(ALG_INFO, IKE_INFO)				\
-	for (__typeof__((ALG_INFO)->ike[0]) *(IKE_INFO) = (ALG_INFO)->ike; \
-	     (IKE_INFO) < (ALG_INFO)->ike + (ALG_INFO)->ai.alg_info_cnt; \
-	     (IKE_INFO)++)
+#define FOR_EACH_ESP_INFO(ALG_INFO, ESP_INFO)		\
+	FOR_EACH_PROPOSAL_INFO(&((ALG_INFO)->ai), ESP_INFO)
+
+#define FOR_EACH_IKE_INFO(ALG_INFO, IKE_INFO)		\
+	FOR_EACH_PROPOSAL_INFO(&((ALG_INFO)->ai), IKE_INFO)
 
 /*
  * on success: returns alg_info

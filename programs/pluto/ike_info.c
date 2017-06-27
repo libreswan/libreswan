@@ -203,11 +203,11 @@ static const char *raw_alg_info_ike_add(struct alg_info_ike *alg_info,
 	/*
 	 * Finally, check for overflow.
 	 */
-	pexpect((unsigned) alg_info->ai.alg_info_cnt < elemsof(alg_info->ike));
-	if ((unsigned)alg_info->ai.alg_info_cnt >= elemsof(alg_info->ike)) {
+	pexpect((unsigned) alg_info->ai.alg_info_cnt < elemsof(alg_info->ai.proposals));
+	if ((unsigned)alg_info->ai.alg_info_cnt >= elemsof(alg_info->ai.proposals)) {
 		snprintf(err_buf, err_buf_len,
 			 "more than %zu IKE algorithms specified",
-			 elemsof(alg_info->ike));
+			 elemsof(alg_info->ai.proposals));
 		/* drop it like a rock */
 		return err_buf;
 	}
@@ -215,7 +215,7 @@ static const char *raw_alg_info_ike_add(struct alg_info_ike *alg_info,
 	/*
 	 * All is good, add it.
 	 */
-	struct proposal_info *new_info = alg_info->ike + alg_info->ai.alg_info_cnt;
+	struct proposal_info *new_info = alg_info->ai.proposals + alg_info->ai.alg_info_cnt;
 	*new_info = (struct proposal_info) {
 		.enckeylen = ek_bits,
 		.encrypt = encrypt,

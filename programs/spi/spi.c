@@ -378,7 +378,7 @@ static int decode_esp(char *algname)
 			exit(1);
 		}
 		alg_string = algname;
-		esp_info = &alg_info->esp[0];
+		esp_info = &alg_info->ai.proposals[0];
 		if (debug) {
 			fprintf(stdout,
 				"%s: alg_info: cnt=%d ealg[0]=%d aalg[0]=%d\n",
