@@ -35,158 +35,79 @@
 #include "ike_alg_sha1.h"
 
 /*
- * Raw add routine: only checks for no duplicates
- */
-/* ??? much of this code is the same as raw_alg_info_ike_add (same bugs!) */
-static void raw_alg_info_esp_add(struct alg_info_esp *alg_info,
-				 const struct encrypt_desc *encrypt, unsigned ek_bits,
-				 const struct integ_desc *integ,
-				 const struct oakley_group_desc *dh)
-{
-	struct proposal_info *esp_info = alg_info->ai.proposals;
-	int cnt = alg_info->ai.alg_info_cnt;
 
-	/*
-	 * don't add duplicates
-	 *
-	 * ??? why is 0 wildcard for ek_bits? XXX: EK_BITS==0 means
-	 * use both the default and strongest key lengths.  I guess
-	 * checking if ek_bits matches either of those is two
-	 * hard/messy, so a wild card is easier.
-	 */
-	FOR_EACH_ESP_INFO(alg_info, esp_info) {
-		if (esp_info->encrypt == encrypt &&
-		    (ek_bits == 0 || esp_info->enckeylen == ek_bits) &&
-		    esp_info->integ == integ &&
-		    esp_info->dh == dh)
-			return;
-	}
-
-	/* check for overflows */
-	/* ??? passert seems dangerous */
-	passert(cnt < (int)elemsof(alg_info->ai.proposals));
-
-	esp_info[cnt].enckeylen = ek_bits;
-	esp_info[cnt].encrypt = encrypt;
-	esp_info[cnt].integ = integ;
-	esp_info[cnt].dh = dh;
-
-	alg_info->ai.alg_info_cnt++;
-}
-
-/*
  * Add ESP alg info _with_ logic (policy):
  */
-static const char *alg_info_esp_add(const struct parser_policy *const policy UNUSED,
-				    struct alg_info *alg_info,
-				    const struct encrypt_desc *encrypt, int ek_bits,
-				    const struct prf_desc *prf,
-				    const struct integ_desc *integ,
-				    const struct oakley_group_desc *dh,
-				    char *err_buf, size_t err_buf_len)
+static bool esp_proposal_ok(const struct parser_policy *const policy UNUSED,
+			    const struct proposal_info *proposal,
+			    char *err_buf UNUSED, size_t err_buf_len UNUSED)
 {
-	pexpect(prf == NULL);
-
-	/* Policy: default to AES */
-	if (encrypt == NULL) {
-		encrypt = &ike_alg_encrypt_aes_cbc;
-	}
-
-	if (ike_alg_is_aead(encrypt)) {
-		if (integ != NULL && integ != &ike_alg_integ_null) {
-			snprintf(err_buf, err_buf_len,
-				 "AEAD ESP encryption algorithm '%s' must have a 'null' integrity algorithm",
-				 encrypt->common.name);
-			return err_buf;
-		}
-		raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
-				     encrypt, ek_bits,
-				     &ike_alg_integ_null, dh);
-	} else if (integ == &ike_alg_integ_null) {
-		snprintf(err_buf, err_buf_len,
-			 "non-AEAD ESP encryption algorithm '%s' cannot have a 'null' integrity algorithm",
-			 encrypt->common.name);
-		return err_buf;
-	} else if (integ != NULL) {
-		raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
-				     encrypt, ek_bits,
-				     integ, dh);
-	} else {
-		/*
-		 * Policy: default to MD5 and SHA1
-		 *
-		 * XXX: this should use the ike_alg DB and code like
-		 * plutoalg.c:clone_valid() to select the default
-		 * algorithm list.
-		 *
-		 * XXX: this adds INTEG to AEAD algorithms; the
-		 * IKE_ALG DB can be used to identify when this is the
-		 * case
-		 */
-		if (ike_alg_is_valid(&ike_alg_integ_sha1.common)) {
-			raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
-					     encrypt, ek_bits,
-					     &ike_alg_integ_sha1, NULL);
-		}
-	}
-	return NULL;
+	passert(proposal->encrypt != NULL);
+	passert(proposal->prf == NULL);
+	passert(proposal->integ != NULL);
+	return true;
 }
 
-/*
- * Add AH alg info _with_ logic (policy):
- */
-static const char *alg_info_ah_add(const struct parser_policy *const policy UNUSED,
-				   struct alg_info *alg_info,
-				   const struct encrypt_desc *encrypt, int ek_bits,
-				   const struct prf_desc *prf,
-				   const struct integ_desc *integ,
-				   const struct oakley_group_desc *dh,
-				   char *err_buf, size_t err_buf_len)
-{
-	pexpect(ek_bits == 0);
-	pexpect(encrypt == NULL);
-	pexpect(prf == NULL);
+static const struct ike_alg *default_esp_encrypt[] = {
+	&ike_alg_encrypt_aes_cbc.common,
+	NULL,
+};
 
-	/* ah=null is invalid */
-	if (integ == &ike_alg_integ_null) {
-		snprintf(err_buf, err_buf_len,
-			 "AH cannot have a 'null' integrity algorithm");
-		return err_buf;
-	} else if (integ != NULL) {
-		raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
-				     NULL, 0, integ, dh);
-	} else {
-		/*
-		 * Policy: default to MD5 and SHA1
-		 *
-		 * XXX: this should use the IKE_ALG DB and code like
-		 * plutoalg.c:clone_valid() to select the default
-		 * algorithm list.
-		 */
-		if (ike_alg_is_valid(&ike_alg_integ_sha1.common)) {
-			raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
-					     encrypt, ek_bits,
-					     &ike_alg_integ_sha1, NULL);
-		}
-	}
-	return NULL;
-}
+static const struct ike_alg *default_esp_integ[] = {
+	&ike_alg_integ_sha1.common,
+	NULL,
+};
+
+const struct proposal_defaults esp_defaults = {
+	.encrypt = default_esp_encrypt,
+	.integ = default_esp_integ,
+};
 
 const struct parser_param esp_parser_param = {
 	.protocol = "ESP",
 	.ikev1_alg_id = IKEv1_ESP_ID,
 	.protoid = PROTO_IPSEC_ESP,
-	.alg_info_add = alg_info_esp_add,
+	.ikev1_defaults = &esp_defaults,
+	.ikev2_defaults = &esp_defaults,
+	.proposal_ok = esp_proposal_ok,
 	.encrypt_alg_byname = encrypt_alg_byname,
 	.integ_alg_byname = integ_alg_byname,
 	.dh_alg_byname = dh_alg_byname,
+};
+
+static bool ah_proposal_ok(const struct parser_policy *const policy UNUSED,
+			   const struct proposal_info *proposal,
+			   char *err_buf, size_t err_buf_len)
+{
+	passert(proposal->encrypt == NULL);
+	passert(proposal->prf == NULL);
+	passert(proposal->integ != NULL);
+
+	/* ah=null is invalid */
+	if (proposal->integ == &ike_alg_integ_null) {
+		snprintf(err_buf, err_buf_len,
+			 "AH cannot have a 'null' integrity algorithm");
+		return false;
+	}
+	return true;
+}
+
+static const struct ike_alg *default_ah_integ[] = {
+	&ike_alg_integ_sha1.common,
+	NULL,
+};
+
+const struct proposal_defaults ah_defaults = {
+	.integ = default_ah_integ,
 };
 
 const struct parser_param ah_parser_param = {
 	.protocol = "AH",
 	.ikev1_alg_id = IKEv1_ESP_ID,
 	.protoid = PROTO_IPSEC_AH,
-	.alg_info_add = alg_info_ah_add,
+	.ikev1_defaults = &ah_defaults,
+	.ikev2_defaults = &ah_defaults,
+	.proposal_ok = ah_proposal_ok,
 	.integ_alg_byname = integ_alg_byname,
 	.dh_alg_byname = dh_alg_byname,
 };
