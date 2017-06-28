@@ -44,9 +44,10 @@
 
 #include "kameipsec.h"
 #include <rtnetlink.h>
+
+#include "libreswan.h" /* before xfrm.h otherwise break on F22 */
 #include <xfrm.h>
 
-#include <libreswan.h>
 #include <libreswan/pfkeyv2.h>
 #include <libreswan/pfkey.h>
 
