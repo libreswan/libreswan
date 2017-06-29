@@ -1461,6 +1461,9 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 		case IKEv2_AUTH_NULL:
 			authby = AUTH_NULL;
 			break;
+		case IKEv2_AUTH_DIGSIG:
+			authby = AUTH_RSASIG;
+			break;
 		case IKEv2_AUTH_NONE:
 		default:
 			DBG(DBG_CONTROL, DBG_log("ikev2 skipping refine_host_connection due to unknown policy"));

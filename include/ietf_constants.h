@@ -474,6 +474,11 @@
 #define IPSEC_DOI_SPI_OUR_MIN 0x1000
 
 
+
+/* RFC 7427 says that the size of every hash algorithm should be 16-bit. */
+#define HASH_ALGO_OCTET_SIZE 2
+#define SHA1WITHRSAENCRYPTION_OID_BLOB_SIZE 15
+unsigned char sha1WithRSAEncryption_oid_blob[SHA1WITHRSAENCRYPTION_OID_BLOB_SIZE]={0x30,0x0d,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,0x01,0x05,0x05,0x00};
 /*
  * Payload types
  * RFC2408 Internet Security Association and Key Management Protocol (ISAKMP)
@@ -1222,7 +1227,7 @@ enum ikev2_auth_method {
 	IKEv2_AUTH_P521 = 11, /* RFC 4754 */
 	IKEv2_AUTH_GSPM = 12, /* RFC 6467 */
 	IKEv2_AUTH_NULL = 13, /* draft-ietf-ipsecme-ikev2-null-auth */
-	IKEv2_AUTH_SIG = 14, /* RFC 7427 */
+	IKEv2_AUTH_DIGSIG = 14, /* RFC 7427 */
 	/* 15 - 200 unassigned */
 	/* 201 - 255 private use */
 };
@@ -1638,6 +1643,25 @@ enum ipsec_comp_algo {
 	/* 64-255 Unassigned */
 };
 
+/* RFC 7427 Signature Authentication in the Internet Key Exchange Version 2 (IKEv2)
+ * Section 7 :  IANA Considerations
+ * Values 5-1023 are Unassigned.  Values 1024-65535 are reserved for
+ * Private Use among mutually consenting parties.
+ * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#hash-algorithms
+ */
+
+/*SAHANA*/
+
+enum notify_payload_hash_algorithms {
+	IKEv2_HASH_ALGO_RESERVED=0,     
+        IKEv2_HASH_ALGO_SHA1=1,		
+        IKEv2_HASH_ALGO_SHA2_256=2,	
+        IKEv2_HASH_ALGO_SHA2_384=3,	
+        IKEv2_HASH_ALGO_SHA2_512=4, /* RFC 7427 */
+	/* 5-1023 Unassigned */
+ 	/* 1024-65535 Reserved for private use */
+	
+};
 
 /* Limits on size of RSA moduli.
  * The upper bound matches that of DNSSEC (see RFC 2537).
