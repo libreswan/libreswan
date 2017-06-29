@@ -167,6 +167,8 @@ static void test(lset_t policy)
 	esp(policy, "aes_ctr256");
 	esp(policy, "serpent");
 	esp(policy, "twofish");
+	esp(policy, "camellia_cbc_256-hmac_sha2_512_256;modp8192");
+
 	/*
 	 * should this be supported - for now man page says not
 	 * esp(policy, "modp1536");
