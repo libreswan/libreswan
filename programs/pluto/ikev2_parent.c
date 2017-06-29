@@ -4103,10 +4103,10 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 
 			ip_subnet tmp_subnet_i;
 			ip_subnet tmp_subnet_r;
-			rangetosubnet(&st->st_ts_this.low,
-				      &st->st_ts_this.high, &tmp_subnet_i);
-			rangetosubnet(&st->st_ts_that.low,
-				      &st->st_ts_that.high, &tmp_subnet_r);
+			rangetosubnet(&st->st_ts_this.net.start,
+				      &st->st_ts_this.net.end, &tmp_subnet_i);
+			rangetosubnet(&st->st_ts_that.net.start,
+				      &st->st_ts_that.net.end, &tmp_subnet_r);
 
 			c->spd.this.client = tmp_subnet_i;
 			c->spd.this.port = st->st_ts_this.startport;

@@ -1846,22 +1846,25 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 	return delay;
 }
 
-void log_ipsec_sa_established(const char *m, struct state *st)
+void log_ipsec_sa_established(const char *m, const struct state *st)
 {
-	ipstr_buf bul, buh, bhl, bhh;
+	/* log Child SA Traffic Selector details for admin's pleasure */
+	const struct traffic_selector *a = &st->st_ts_this;
+	const struct traffic_selector *b = &st->st_ts_that;
+	char ba[RANGETOT_BUF], bb[RANGETOT_BUF];
 
-	/* document Child SA details for admin's pleasure */
-	libreswan_log( "%s [%s,%s:%d-%d %d] -> [%s,%s:%d-%d %d]", m,
-			ipstr(&st->st_ts_this.low, &bul),
-			ipstr(&st->st_ts_this.high, &buh),
-			st->st_ts_this.startport,
-			st->st_ts_this.endport,
-			st->st_ts_this.ipprotoid,
-			ipstr(&st->st_ts_that.low, &bhl),
-			ipstr(&st->st_ts_that.high, &bhh),
-			st->st_ts_that.startport,
-			st->st_ts_that.endport,
-			st->st_ts_that.ipprotoid);
+	rangetot(&a->net, 0, ba, sizeof(ba));
+	rangetot(&b->net, 0, bb, sizeof(bb));
+	libreswan_log( "%s [%s:%d-%d %d] -> [%s:%d-%d %d]",
+			m,
+			ba,
+			a->startport,
+			a->endport,
+			a->ipprotoid,
+			bb,
+			b->startport,
+			b->endport,
+			b->ipprotoid);
 
 	pstats_ipsec_sa++;
 }

@@ -67,62 +67,62 @@
 
 void ikev2_print_ts(struct traffic_selector *ts)
 {
-	ipstr_buf b;
+	DBG(DBG_CONTROLMORE, {
+		char b[RANGETOT_BUF];
 
-	DBG(DBG_CONTROLMORE,
+		rangetot(&ts->net, 0, b, sizeof(b));
 		DBG_log("printing contents struct traffic_selector");
 		DBG_log("  ts_type: %s", enum_name(&ikev2_ts_type_names, ts->ts_type));
 		DBG_log("  ipprotoid: %d", ts->ipprotoid);
-		DBG_log("  startport: %d", ts->startport);
-		DBG_log("  endport: %d", ts->endport);
-		DBG_log("  ip low: %s", ipstr(&ts->low, &b));
-		DBG_log("  ip high: %s", ipstr(&ts->high, &b));
-	);
+		DBG_log("  port range: %d-%d", ts->startport, ts->endport);
+		DBG_log("  ip range: %s", b);
+	});
 }
 
 /* rewrite me with addrbytesptr() */
 struct traffic_selector ikev2_end_to_ts(const struct end *e)
 {
 	struct traffic_selector ts;
-	struct in6_addr v6mask;
 
 	zero(&ts);	/* OK: no pointer fields */
 
+	/* subnet => range */
+	ts.net.start = e->client.addr;
+	ts.net.end = e->client.addr;
 	switch (e->client.addr.u.v4.sin_family) {
 	case AF_INET:
+	{
+		struct in_addr v4mask = bitstomask(e->client.maskbits);
+
 		ts.ts_type = IKEv2_TS_IPV4_ADDR_RANGE;
-		ts.low = e->client.addr;
-		ts.low.u.v4.sin_addr.s_addr &=
-			bitstomask(e->client.maskbits).s_addr;
-		ts.high = e->client.addr;
-		ts.high.u.v4.sin_addr.s_addr |=
-			~bitstomask(e->client.maskbits).s_addr;
+		ts.net.start.u.v4.sin_addr.s_addr &= v4mask.s_addr;
+		ts.net.end.u.v4.sin_addr.s_addr |= ~v4mask.s_addr;
 		break;
-
-	case AF_INET6:
-		ts.ts_type = IKEv2_TS_IPV6_ADDR_RANGE;
-		v6mask = bitstomask6(e->client.maskbits);
-
-		ts.low = e->client.addr;
-		ts.low.u.v6.sin6_addr.s6_addr32[0] &= v6mask.s6_addr32[0];
-		ts.low.u.v6.sin6_addr.s6_addr32[1] &= v6mask.s6_addr32[1];
-		ts.low.u.v6.sin6_addr.s6_addr32[2] &= v6mask.s6_addr32[2];
-		ts.low.u.v6.sin6_addr.s6_addr32[3] &= v6mask.s6_addr32[3];
-
-		ts.high = e->client.addr;
-		ts.high.u.v6.sin6_addr.s6_addr32[0] |= ~v6mask.s6_addr32[0];
-		ts.high.u.v6.sin6_addr.s6_addr32[1] |= ~v6mask.s6_addr32[1];
-		ts.high.u.v6.sin6_addr.s6_addr32[2] |= ~v6mask.s6_addr32[2];
-		ts.high.u.v6.sin6_addr.s6_addr32[3] |= ~v6mask.s6_addr32[3];
-		break;
-
-		/* Setting ts_type IKEv2_TS_FC_ADDR_RANGE (RFC-4595) not yet supproted */
 	}
+	case AF_INET6:
+	{
+		struct in6_addr v6mask = bitstomask6(e->client.maskbits);
+
+		ts.ts_type = IKEv2_TS_IPV6_ADDR_RANGE;
+		ts.net.start.u.v6.sin6_addr.s6_addr32[0] &= v6mask.s6_addr32[0];
+		ts.net.start.u.v6.sin6_addr.s6_addr32[1] &= v6mask.s6_addr32[1];
+		ts.net.start.u.v6.sin6_addr.s6_addr32[2] &= v6mask.s6_addr32[2];
+		ts.net.start.u.v6.sin6_addr.s6_addr32[3] &= v6mask.s6_addr32[3];
+
+		ts.net.end.u.v6.sin6_addr.s6_addr32[0] |= ~v6mask.s6_addr32[0];
+		ts.net.end.u.v6.sin6_addr.s6_addr32[1] |= ~v6mask.s6_addr32[1];
+		ts.net.end.u.v6.sin6_addr.s6_addr32[2] |= ~v6mask.s6_addr32[2];
+		ts.net.end.u.v6.sin6_addr.s6_addr32[3] |= ~v6mask.s6_addr32[3];
+		break;
+	}
+
+	}
+	/* Setting ts_type IKEv2_TS_FC_ADDR_RANGE (RFC-4595) not yet supported */
 
 	ts.ipprotoid = e->protocol;
 
 	/*
-	 * if port is %any or 0 we mean all ports (or all iccmp/icmpv6
+	 * if port is %any or 0 we mean all ports (or all iccmp/icmpv6)
 	 * See RFC-5996 Section 3.13.1 handling for ICMP(1) and ICMPv6(58)
 	 *   we only support providing Type, not Code, eg protoport=1/1
 	 */
@@ -182,18 +182,18 @@ static stf_status ikev2_emit_ts(struct msg_digest *md UNUSED,
 	/* now do IP addresses */
 	switch (ts->ts_type) {
 	case IKEv2_TS_IPV4_ADDR_RANGE:
-		if (!out_raw(&ts->low.u.v4.sin_addr.s_addr, 4, &ts_pbs2,
-			     "ipv4 low") ||
-		    !out_raw(&ts->high.u.v4.sin_addr.s_addr, 4, &ts_pbs2,
-			     "ipv4 high"))
+		if (!out_raw(&ts->net.start.u.v4.sin_addr.s_addr, 4, &ts_pbs2,
+			     "ipv4 start") ||
+		    !out_raw(&ts->net.end.u.v4.sin_addr.s_addr, 4, &ts_pbs2,
+			     "ipv4 end"))
 			return STF_INTERNAL_ERROR;
 
 		break;
 	case IKEv2_TS_IPV6_ADDR_RANGE:
-		if (!out_raw(&ts->low.u.v6.sin6_addr.s6_addr, 16, &ts_pbs2,
-			     "ipv6 low") ||
-		    !out_raw(&ts->high.u.v6.sin6_addr.s6_addr, 16, &ts_pbs2,
-			     "ipv6 high"))
+		if (!out_raw(&ts->net.start.u.v6.sin6_addr.s6_addr, 16, &ts_pbs2,
+			     "ipv6 start") ||
+		    !out_raw(&ts->net.end.u.v6.sin6_addr.s6_addr, 16, &ts_pbs2,
+			     "ipv6 end"))
 			return STF_INTERNAL_ERROR;
 
 		break;
@@ -269,24 +269,24 @@ int ikev2_parse_ts(struct payload_digest *const ts_pd,
 		switch (ts1.isat1_type) {
 		case IKEv2_TS_IPV4_ADDR_RANGE:
 			array[i].ts_type = IKEv2_TS_IPV4_ADDR_RANGE;
-			array[i].low.u.v4.sin_family = AF_INET;
+			array[i].net.start.u.v4.sin_family = AF_INET;
 #ifdef NEED_SIN_LEN
-			array[i].low.u.v4.sin_len =
+			array[i].net.start.u.v4.sin_len =
 				sizeof(struct sockaddr_in);
 #endif
-			if (!in_raw(&array[i].low.u.v4.sin_addr.s_addr,
-				    sizeof(array[i].low.u.v4.sin_addr.s_addr),
+			if (!in_raw(&array[i].net.start.u.v4.sin_addr.s_addr,
+				    sizeof(array[i].net.start.u.v4.sin_addr.s_addr),
 				    &addr, "ipv4 ts"))
 				return -1;
 
-			array[i].high.u.v4.sin_family = AF_INET;
+			array[i].net.end.u.v4.sin_family = AF_INET;
 #ifdef NEED_SIN_LEN
-			array[i].high.u.v4.sin_len =
+			array[i].net.end.u.v4.sin_len =
 				sizeof(struct sockaddr_in);
 #endif
 
-			if (!in_raw(&array[i].high.u.v4.sin_addr.s_addr,
-				    sizeof(array[i].high.u.v4.sin_addr.s_addr),
+			if (!in_raw(&array[i].net.end.u.v4.sin_addr.s_addr,
+				    sizeof(array[i].net.end.u.v4.sin_addr.s_addr),
 				    &addr, "ipv4 ts"))
 				return -1;
 
@@ -294,25 +294,25 @@ int ikev2_parse_ts(struct payload_digest *const ts_pd,
 
 		case IKEv2_TS_IPV6_ADDR_RANGE:
 			array[i].ts_type = IKEv2_TS_IPV6_ADDR_RANGE;
-			array[i].low.u.v6.sin6_family = AF_INET6;
+			array[i].net.start.u.v6.sin6_family = AF_INET6;
 #ifdef NEED_SIN_LEN
-			array[i].low.u.v6.sin6_len =
+			array[i].net.start.u.v6.sin6_len =
 				sizeof(struct sockaddr_in6);
 #endif
 
-			if (!in_raw(&array[i].low.u.v6.sin6_addr.s6_addr,
-				    sizeof(array[i].low.u.v6.sin6_addr.s6_addr),
+			if (!in_raw(&array[i].net.start.u.v6.sin6_addr.s6_addr,
+				    sizeof(array[i].net.start.u.v6.sin6_addr.s6_addr),
 				    &addr, "ipv6 ts"))
 				return -1;
 
-			array[i].high.u.v6.sin6_family = AF_INET6;
+			array[i].net.end.u.v6.sin6_family = AF_INET6;
 #ifdef NEED_SIN_LEN
-			array[i].high.u.v6.sin6_len =
+			array[i].net.end.u.v6.sin6_len =
 				sizeof(struct sockaddr_in6);
 #endif
 
-			if (!in_raw(&array[i].high.u.v6.sin6_addr.s6_addr,
-				    sizeof(array[i].high.u.v6.sin6_addr.s6_addr),
+			if (!in_raw(&array[i].net.end.u.v6.sin6_addr.s6_addr,
+				    sizeof(array[i].net.end.u.v6.sin6_addr.s6_addr),
 				    &addr, "ipv6 ts"))
 				return -1;
 
@@ -586,20 +586,19 @@ int ikev2_evaluate_connection_fit(const struct connection *d,
 			/* does it fit at all? */
 
 			DBG(DBG_CONTROLMORE, {
-				ipstr_buf bli;
-				ipstr_buf bhi;
-				ipstr_buf blr;
-				ipstr_buf bhr;
-				DBG_log("    tsi[%u]=%s/%s proto=%d portrange %d-%d, tsr[%u]=%s/%s proto=%d portrange %d-%d",
+				char bi[RANGETOT_BUF];
+				char br[RANGETOT_BUF];
+
+				rangetot(&tsi[tsi_ni].net, 0, bi, sizeof(bi));
+				rangetot(&tsr[tsi_ni].net, 0, br, sizeof(br));
+				DBG_log("    tsi[%u]=%s proto=%d portrange %d-%d, tsr[%u]=%s proto=%d portrange %d-%d",
 					tsi_ni,
-					ipstr(&tsi[tsi_ni].low, &bli),
-					ipstr(&tsi[tsi_ni].high, &bhi),
+					bi,
 					tsi[tsi_ni].ipprotoid,
 					tsi[tsi_ni].startport,
 					tsi[tsi_ni].endport,
 					tsr_ni,
-					ipstr(&tsr[tsr_ni].low, &blr),
-					ipstr(&tsr[tsr_ni].high, &bhr),
+					br,
 					tsr[tsr_ni].ipprotoid,
 					tsr[tsr_ni].startport,
 					tsr[tsr_ni].endport);
@@ -610,21 +609,21 @@ int ikev2_evaluate_connection_fit(const struct connection *d,
 			 * NOTE: Our parser/config only allows 1 CIDR, however IKEv2 ranges can be non-CIDR
 			 *       for now we really support/limit ourselves to a single CIDR
 			 */
-			if (addrinsubnet(&tsi[tsi_ni].low, &ei->client) &&
-			    addrinsubnet(&tsi[tsi_ni].high, &ei->client) &&
-			    addrinsubnet(&tsr[tsr_ni].low,  &er->client) &&
-			    addrinsubnet(&tsr[tsr_ni].high, &er->client)) {
+			if (addrinsubnet(&tsi[tsi_ni].net.start, &ei->client) &&
+			    addrinsubnet(&tsi[tsi_ni].net.end, &ei->client) &&
+			    addrinsubnet(&tsr[tsr_ni].net.start,  &er->client) &&
+			    addrinsubnet(&tsr[tsr_ni].net.end, &er->client)) {
 				/*
 				 * now, how good a fit is it? --- sum of bits gives
 				 * how good a fit this is.
 				 */
-				int ts_range1 = ikev2_calc_iprangediff(
-					tsi[tsi_ni].low, tsi[tsi_ni].high);
+				int ts_range1 = iprange_bits(
+					tsi[tsi_ni].net.start, tsi[tsi_ni].net.end);
 				int maskbits1 = ei->client.maskbits;
 				int fitbits1 = maskbits1 + ts_range1;
 
-				int ts_range2 = ikev2_calc_iprangediff(
-					tsr[tsr_ni].low, tsr[tsr_ni].high);
+				int ts_range2 = iprange_bits(
+					tsr[tsr_ni].net.start, tsr[tsr_ni].net.end);
 				int maskbits2 = er->client.maskbits;
 				int fitbits2 = maskbits2 + ts_range2;
 
@@ -1252,7 +1251,7 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st)
 	if (c->spd.this.cat) {
 		DBG(DBG_CONTROL, DBG_log("CAT is set, not setting host source IP address to %s",
 			ipstr(&ip, &ip_str)));
-		if (sameaddr (&c->spd.this.client.addr, &ip)) {
+		if (sameaddr(&c->spd.this.client.addr, &ip)) {
 			/* The address we received is same as this side
 			 * should we also check the host_srcip */
 			DBG(DBG_CONTROL, DBG_log("#%lu %s[%lu] received NTERNAL_IP4_ADDRESS which is same as this.client.addr %s. Will not add CAT iptable rules",

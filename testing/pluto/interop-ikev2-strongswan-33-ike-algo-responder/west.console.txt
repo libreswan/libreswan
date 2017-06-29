@@ -37,7 +37,7 @@ west #
 133 "ikev2-ike=aes128-md5-dh19" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
 134 "ikev2-ike=aes128-md5-dh19" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=md5_96 prf=md5 group=DH19}
 002 "ikev2-ike=aes128-md5-dh19" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
-002 "ikev2-ike=aes128-md5-dh19" #2: negotiated connection [192.0.1.0,192.0.1.255:0-65535 0] -> [192.0.2.0,192.0.2.255:0-65535 0]
+002 "ikev2-ike=aes128-md5-dh19" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "ikev2-ike=aes128-md5-dh19" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA2_256 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ikev2-ike=aes128-md5-dh19": terminating SAs using this connection
@@ -53,7 +53,7 @@ west #
 133 "ikev2-ike=aes128-md5-dh20" #3: STATE_PARENT_I1: sent v2I1, expected v2R1
 134 "ikev2-ike=aes128-md5-dh20" #4: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=md5_96 prf=md5 group=DH20}
 002 "ikev2-ike=aes128-md5-dh20" #4: IKEv2 mode peer ID is ID_FQDN: '@east'
-002 "ikev2-ike=aes128-md5-dh20" #4: negotiated connection [192.0.1.0,192.0.1.255:0-65535 0] -> [192.0.2.0,192.0.2.255:0-65535 0]
+002 "ikev2-ike=aes128-md5-dh20" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "ikev2-ike=aes128-md5-dh20" #4: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA2_256 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ikev2-ike=aes128-md5-dh20": terminating SAs using this connection
@@ -69,7 +69,7 @@ west #
 133 "ikev2-ike=aes128-md5-dh21" #5: STATE_PARENT_I1: sent v2I1, expected v2R1
 134 "ikev2-ike=aes128-md5-dh21" #6: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=md5_96 prf=md5 group=DH21}
 002 "ikev2-ike=aes128-md5-dh21" #6: IKEv2 mode peer ID is ID_FQDN: '@east'
-002 "ikev2-ike=aes128-md5-dh21" #6: negotiated connection [192.0.1.0,192.0.1.255:0-65535 0] -> [192.0.2.0,192.0.2.255:0-65535 0]
+002 "ikev2-ike=aes128-md5-dh21" #6: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "ikev2-ike=aes128-md5-dh21" #6: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA2_256 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ikev2-ike=aes128-md5-dh21": terminating SAs using this connection
@@ -85,7 +85,7 @@ west #
 133 "ikev2-ike=aes128-sha1-dh19" #7: STATE_PARENT_I1: sent v2I1, expected v2R1
 134 "ikev2-ike=aes128-sha1-dh19" #8: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=sha1_96 prf=sha group=DH19}
 002 "ikev2-ike=aes128-sha1-dh19" #8: IKEv2 mode peer ID is ID_FQDN: '@east'
-002 "ikev2-ike=aes128-sha1-dh19" #8: negotiated connection [192.0.1.0,192.0.1.255:0-65535 0] -> [192.0.2.0,192.0.2.255:0-65535 0]
+002 "ikev2-ike=aes128-sha1-dh19" #8: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "ikev2-ike=aes128-sha1-dh19" #8: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA2_256 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ikev2-ike=aes128-sha1-dh19": terminating SAs using this connection
@@ -101,7 +101,7 @@ west #
 133 "ikev2-ike=aes128-sha1-dh20" #9: STATE_PARENT_I1: sent v2I1, expected v2R1
 134 "ikev2-ike=aes128-sha1-dh20" #10: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=sha1_96 prf=sha group=DH20}
 002 "ikev2-ike=aes128-sha1-dh20" #10: IKEv2 mode peer ID is ID_FQDN: '@east'
-002 "ikev2-ike=aes128-sha1-dh20" #10: negotiated connection [192.0.1.0,192.0.1.255:0-65535 0] -> [192.0.2.0,192.0.2.255:0-65535 0]
+002 "ikev2-ike=aes128-sha1-dh20" #10: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "ikev2-ike=aes128-sha1-dh20" #10: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA2_256 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ikev2-ike=aes128-sha1-dh20": terminating SAs using this connection
@@ -117,7 +117,7 @@ west #
 133 "ikev2-ike=aes128-sha1-dh21" #11: STATE_PARENT_I1: sent v2I1, expected v2R1
 134 "ikev2-ike=aes128-sha1-dh21" #12: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=sha1_96 prf=sha group=DH21}
 002 "ikev2-ike=aes128-sha1-dh21" #12: IKEv2 mode peer ID is ID_FQDN: '@east'
-002 "ikev2-ike=aes128-sha1-dh21" #12: negotiated connection [192.0.1.0,192.0.1.255:0-65535 0] -> [192.0.2.0,192.0.2.255:0-65535 0]
+002 "ikev2-ike=aes128-sha1-dh21" #12: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "ikev2-ike=aes128-sha1-dh21" #12: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA2_256 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ikev2-ike=aes128-sha1-dh21": terminating SAs using this connection
@@ -133,7 +133,7 @@ west #
 133 "ikev2-ike=3des-md5-modp2048" #13: STATE_PARENT_I1: sent v2I1, expected v2R1
 134 "ikev2-ike=3des-md5-modp2048" #14: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=3des_cbc_192 integ=md5_96 prf=md5 group=MODP2048}
 002 "ikev2-ike=3des-md5-modp2048" #14: IKEv2 mode peer ID is ID_FQDN: '@east'
-002 "ikev2-ike=3des-md5-modp2048" #14: negotiated connection [192.0.1.0,192.0.1.255:0-65535 0] -> [192.0.2.0,192.0.2.255:0-65535 0]
+002 "ikev2-ike=3des-md5-modp2048" #14: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "ikev2-ike=3des-md5-modp2048" #14: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA2_256 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ikev2-ike=3des-md5-modp2048": terminating SAs using this connection

@@ -22,9 +22,11 @@
  * A range which is a valid subnet will have a network part which is the
  * same in the from value and the to value, followed by a host part which
  * is all 0 in the from value and all 1 in the to value.
+ *
+ * ??? this really should use ip_range rather than a pair of ip_address values
  */
 err_t rangetosubnet(from, to, dst)
-const ip_address * from;
+const ip_address *from;
 const ip_address *to;
 ip_subnet *dst;
 {
