@@ -437,7 +437,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 	ip_address ta;
 
 	nexthop_str[0] = '\0';
-	if (addrbytesptr(&sr->this.host_nexthop, NULL) &&
+	if (addrlenof(&sr->this.host_nexthop) != 0 &&
 		!isanyaddr(&sr->this.host_nexthop)) {
 		char *n = jam_str(nexthop_str, sizeof(nexthop_str),
 				"PLUTO_NEXT_HOP='");
@@ -521,7 +521,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 	}
 
 	srcip_str[0] = '\0';
-	if (addrbytesptr(&sr->this.host_srcip, NULL) != 0 &&
+	if (addrlenof(&sr->this.host_srcip) != 0 &&
 		!isanyaddr(&sr->this.host_srcip)) {
 		char *p = jam_str(srcip_str, sizeof(srcip_str),
 				"PLUTO_MY_SOURCEIP='");

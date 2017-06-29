@@ -420,7 +420,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 				   const struct state *st)
 {
 	pb_stream attrval;
-	unsigned char *byte_ptr;
+	const unsigned char *byte_ptr;
 	unsigned int len;
 	bool ok = TRUE;
 
@@ -437,13 +437,13 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 
 	switch (attr_type) {
 	case INTERNAL_IP4_ADDRESS:
-		len = addrbytesptr(&ia->ipaddr, &byte_ptr);
+		len = addrbytesptr_read(&ia->ipaddr, &byte_ptr);
 		ok = out_raw(byte_ptr, len, &attrval,
 			     "IP4_addr");
 		break;
 
 	case INTERNAL_IP4_SUBNET:
-		len = addrbytesptr(
+		len = addrbytesptr_read(
 			&st->st_connection->spd.this.client.addr, &byte_ptr);
 		if (!out_raw(byte_ptr, len, &attrval, "IP4_subnet"))
 			return STF_INTERNAL_ERROR;
@@ -467,7 +467,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 		 */
 		for (unsigned i = 0; ; ) {
 			/* emit attribute's value */
-			len = addrbytesptr(&ia->dns[i], &byte_ptr);
+			len = addrbytesptr_read(&ia->dns[i], &byte_ptr);
 			ok = out_raw(byte_ptr, len, &attrval, "IP4_dns");
 
 			/* see if there's another DNS */
@@ -1840,7 +1840,7 @@ static stf_status modecfg_inI2(struct msg_digest *md)
 			loglog(RC_LOG,"Received IP address %s",
 				      caddr);
 
-			if (addrbytesptr(&c->spd.this.host_srcip,
+			if (addrbytesptr_read(&c->spd.this.host_srcip,
 					 NULL) == 0 ||
 			    isanyaddr(&c->spd.this.host_srcip)) {
 				libreswan_log(
@@ -2035,7 +2035,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 					"Received IPv4 address: %s",
 					caddr);
 
-				if (addrbytesptr(&c->spd.this.host_srcip,
+				if (addrbytesptr_read(&c->spd.this.host_srcip,
 						 NULL) == 0 ||
 				    isanyaddr(&c->spd.this.host_srcip))
 				{

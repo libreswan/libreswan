@@ -30,13 +30,13 @@ int iprange_bits(ip_address low, ip_address high)
 	if (addrtypeof(&high) != addrtypeof(&low))
 		return -1;
 
-	/*const*/ unsigned char *hp;
-	size_t n = addrbytesptr(&high, &hp);
+	const unsigned char *hp;
+	size_t n = addrbytesptr_read(&high, &hp);
 	if (n == 0)
 		return -1;
 
-	/*const*/ unsigned char *lp;
-	size_t n2 = addrbytesptr(&low, &lp);
+	const unsigned char *lp;
+	size_t n2 = addrbytesptr_read(&low, &lp);
 	if (n != n2)
 		return -1;
 

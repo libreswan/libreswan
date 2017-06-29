@@ -69,12 +69,12 @@ masktocount(src)
 const ip_address * src;
 {
 	int b;
-	unsigned char *bp;
+	const unsigned char *bp;
 	size_t n;
 	const unsigned char *p;
 	const unsigned char *stop;
 
-	n = addrbytesptr(src, &bp);
+	n = addrbytesptr_read(src, &bp);
 	if (n == 0)
 		return -1;
 

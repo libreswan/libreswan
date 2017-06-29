@@ -524,7 +524,7 @@ extern err_t rangetosubnet(const ip_address *from, const ip_address *to,
 extern int addrtypeof(const ip_address *src);
 extern int subnettypeof(const ip_subnet *src);
 extern size_t addrlenof(const ip_address *src);
-extern size_t addrbytesptr(const ip_address *src, unsigned char **dst);
+extern size_t addrbytesptr_read(const ip_address *src, const unsigned char **dst);
 extern size_t addrbytesptr_write(ip_address *src, unsigned char **dst);
 extern size_t addrbytesof(const ip_address *src, unsigned char *dst, size_t dstlen);
 extern int masktocount(const ip_address *src);

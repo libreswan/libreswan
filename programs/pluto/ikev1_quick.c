@@ -125,32 +125,19 @@ static notification_t accept_PFS_KE(struct msg_digest *md, chunk_t *dest,
  * Note: this is not called from demux.c
  */
 
-static bool emit_subnet_id(ip_subnet *net,
+static bool emit_subnet_id(const ip_subnet *net,
 			   u_int8_t np,
 			   u_int8_t protoid,
 			   u_int16_t port,
 			   pb_stream *outs)
 {
+	const struct af_info *ai = aftoinfo(subnettypeof(net));
+	const bool usehost = net->maskbits == ai->mask_cnt;
 	struct isakmp_ipsec_id id;
 	pb_stream id_pbs;
 	ip_address ta;
-	unsigned char *tbp;
+	const unsigned char *tbp;
 	size_t tal;
-	const struct af_info *ai;
-	bool usehost = FALSE;
-	int masklen;
-
-	ai = aftoinfo(subnettypeof(net));
-
-	passert(ai != NULL);
-
-	maskof(net, &ta);
-	masklen = masktocount(&ta);
-#if 1
-	if (masklen == ai->mask_cnt)
-		usehost = TRUE;
-
-#endif
 
 	id.isaiid_np = np;
 	id.isaiid_idtype = (usehost ? ai->id_addr : ai->id_subnet);
@@ -161,13 +148,13 @@ static bool emit_subnet_id(ip_subnet *net,
 		return FALSE;
 
 	networkof(net, &ta);
-	tal = addrbytesptr(&ta, &tbp);
+	tal = addrbytesptr_read(&ta, &tbp);
 	if (!out_raw(tbp, tal, &id_pbs, "client network"))
 		return FALSE;
 
 	if (!usehost) {
 		maskof(net, &ta);
-		tal = addrbytesptr(&ta, &tbp);
+		tal = addrbytesptr_read(&ta, &tbp);
 		if (!out_raw(tbp, tal, &id_pbs, "client mask"))
 			return FALSE;
 	}

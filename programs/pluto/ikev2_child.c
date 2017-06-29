@@ -79,7 +79,7 @@ void ikev2_print_ts(struct traffic_selector *ts)
 	});
 }
 
-/* rewrite me with addrbytesptr() */
+/* rewrite me with addrbytesptr_write() */
 struct traffic_selector ikev2_end_to_ts(const struct end *e)
 {
 	struct traffic_selector ts;
@@ -1267,7 +1267,7 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st)
 		addrtosubnet(&ip, &c->spd.this.client);
 		setportof(0, &c->spd.this.client.addr); /* ??? redundant? */
 		/* ??? the following test seems obscure.  What's it about? */
-		if (addrbytesptr(&c->spd.this.host_srcip, NULL) == 0 ||
+		if (addrlenof(&c->spd.this.host_srcip) == 0 ||
 			isanyaddr(&c->spd.this.host_srcip)) {
 				DBG(DBG_CONTROL, DBG_log("setting host source IP address to %s",
 					ipstr(&ip, &ip_str)));

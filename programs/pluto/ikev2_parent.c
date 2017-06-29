@@ -2536,17 +2536,18 @@ static stf_status ikev2_ship_cp_attr_ip4(u_int16_t type, ip_address *ip4,
 		const char *story, pb_stream *outpbs)
 {
 	struct ikev2_cp_attribute attr;
-	unsigned char *byte_ptr;
 	pb_stream a_pbs;
+
 	attr.type = type;
-	attr.len = ip4 == NULL ? 0 : 4;
+	attr.len = ip4 == NULL ? 0 : 4;	/* ??? is this redundant */
 
 	if (!out_struct(&attr, &ikev2_cp_attribute_desc, outpbs,
 				&a_pbs))
 		return STF_INTERNAL_ERROR;
 
 	if (attr.len > 0) {
-		addrbytesptr(ip4, &byte_ptr);
+		const unsigned char *byte_ptr;
+		addrbytesptr_read(ip4, &byte_ptr);
 		if (!out_raw(byte_ptr, attr.len, &a_pbs, story))
 			return STF_INTERNAL_ERROR;
 	}

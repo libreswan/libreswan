@@ -35,10 +35,10 @@ const ip_address *b;
 	if (at != bt) {
 		return (at < bt) ? -1 : 1;
 	} else {
-		unsigned char *ap;
-		unsigned char *bp;
-		size_t as = addrbytesptr(a, &ap);
-		size_t bs = addrbytesptr(b, &bp);
+		const unsigned char *ap;
+		const unsigned char *bp;
+		size_t as = addrbytesptr_read(a, &ap);
+		size_t bs = addrbytesptr_read(b, &bp);
 
 		size_t n = (as < bs) ? as : bs;	/* min(as, bs) */
 
@@ -171,19 +171,19 @@ const ip_address * a;
 const ip_address *b;
 int nbits;
 {
-	unsigned char *ap;
-	unsigned char *bp;
+	const unsigned char *ap;
+	const unsigned char *bp;
 	size_t n;
 	int m;
 
 	if (addrtypeof(a) != addrtypeof(b))
 		return 0;	/* arbitrary */
 
-	n = addrbytesptr(a, &ap);
+	n = addrbytesptr_read(a, &ap);
 	if (n == 0)
 		return 0;	/* arbitrary */
 
-	(void) addrbytesptr(b, &bp);
+	(void) addrbytesptr_read(b, &bp);
 	if (nbits > (int)n * 8)
 		return 0;	/* "can't happen" */
 
