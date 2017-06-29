@@ -1,0 +1,126 @@
+
+---- ESP tests that should succeed ----
+[esp=]                        OK: AES(12)_000-SHA1(2)
+[esp=aes_gcm_a-128-null]      OK: AES_GCM_A(18)_128-NONE(0)
+[esp=3des-sha1;modp1024]      OK: 3DES(3)_000-SHA1(2); pfsgroup=MODP1024(2)
+[esp=3des-sha1;modp1536]      OK: 3DES(3)_000-SHA1(2); pfsgroup=MODP1536(5)
+[esp=3des-sha1;modp2048]      OK: 3DES(3)_000-SHA1(2); pfsgroup=MODP2048(14)
+[esp=3des-sha1;dh21]       ERROR: ESP DH algorithm 'dh21' is not supported by IKEv1, enc_alg="3des"(0), auth_alg="sha1", modp="dh21"
+[esp=3des-sha1;ecp_521]    ERROR: ESP DH algorithm 'ecp_521' is not supported by IKEv1, enc_alg="3des"(0), auth_alg="sha1", modp="ecp_521"
+[esp=3des-sha1;dh23]          OK: 3DES(3)_000-SHA1(2); pfsgroup=DH23(23)
+[esp=3des-sha1;dh24]          OK: 3DES(3)_000-SHA1(2); pfsgroup=DH24(24)
+[esp=3des-sha1]               OK: 3DES(3)_000-SHA1(2)
+[esp=null-sha1]               OK: NULL(11)_000-SHA1(2)
+[esp=aes]                     OK: AES(12)_000-SHA1(2)
+[esp=aes_cbc]                 OK: AES(12)_000-SHA1(2)
+[esp=aes-sha]                 OK: AES(12)_000-SHA1(2)
+[esp=aes-sha1]                OK: AES(12)_000-SHA1(2)
+[esp=aes-sha2]                OK: AES(12)_000-SHA2_256(5)
+[esp=aes-sha256]              OK: AES(12)_000-SHA2_256(5)
+[esp=aes-sha384]              OK: AES(12)_000-SHA2_384(6)
+[esp=aes-sha512]              OK: AES(12)_000-SHA2_512(7)
+[esp=aes128-sha1]             OK: AES(12)_128-SHA1(2)
+[esp=aes128-aes_xcbc]         OK: AES(12)_128-AES_XCBC(9)
+[esp=aes192-sha1]             OK: AES(12)_192-SHA1(2)
+[esp=aes256-sha1]             OK: AES(12)_256-SHA1(2)
+[esp=aes256-sha]              OK: AES(12)_256-SHA1(2)
+[esp=aes256-sha2]             OK: AES(12)_256-SHA2_256(5)
+[esp=aes256-sha2_256]         OK: AES(12)_256-SHA2_256(5)
+[esp=aes256-sha2_384]         OK: AES(12)_256-SHA2_384(6)
+[esp=aes256-sha2_512]         OK: AES(12)_256-SHA2_512(7)
+[esp=camellia]                OK: CAMELLIA(22)_000-SHA1(2)
+[esp=camellia128]             OK: CAMELLIA(22)_128-SHA1(2)
+[esp=camellia192]             OK: CAMELLIA(22)_192-SHA1(2)
+[esp=camellia256]             OK: CAMELLIA(22)_256-SHA1(2)
+[esp=aes_ccm_a-128-null]      OK: AES_CCM_A(14)_128-NONE(0)
+[esp=aes_ccm_a-192-null]      OK: AES_CCM_A(14)_192-NONE(0)
+[esp=aes_ccm_a-256-null]      OK: AES_CCM_A(14)_256-NONE(0)
+[esp=aes_ccm_b-128-null]      OK: AES_CCM_B(15)_128-NONE(0)
+[esp=aes_ccm_b-192-null]      OK: AES_CCM_B(15)_192-NONE(0)
+[esp=aes_ccm_b-256-null]      OK: AES_CCM_B(15)_256-NONE(0)
+[esp=aes_ccm_c-128-null]      OK: AES_CCM_C(16)_128-NONE(0)
+[esp=aes_ccm_c-192-null]      OK: AES_CCM_C(16)_192-NONE(0)
+[esp=aes_ccm_c-256-null]      OK: AES_CCM_C(16)_256-NONE(0)
+[esp=aes_gcm_a-128-null]      OK: AES_GCM_A(18)_128-NONE(0)
+[esp=aes_gcm_a-192-null]      OK: AES_GCM_A(18)_192-NONE(0)
+[esp=aes_gcm_a-256-null]      OK: AES_GCM_A(18)_256-NONE(0)
+[esp=aes_gcm_b-128-null]      OK: AES_GCM_B(19)_128-NONE(0)
+[esp=aes_gcm_b-192-null]      OK: AES_GCM_B(19)_192-NONE(0)
+[esp=aes_gcm_b-256-null]      OK: AES_GCM_B(19)_256-NONE(0)
+[esp=aes_gcm_c-128-null]      OK: AES_GCM_C(20)_128-NONE(0)
+[esp=aes_gcm_c-192-null]      OK: AES_GCM_C(20)_192-NONE(0)
+[esp=aes_gcm_c-256-null]      OK: AES_GCM_C(20)_256-NONE(0)
+[esp=aes_ccm-null]            OK: AES_CCM_C(16)_000-NONE(0)
+[esp=aes_gcm-null]            OK: AES_GCM_C(20)_000-NONE(0)
+[esp=aes_ccm-256-null]        OK: AES_CCM_C(16)_256-NONE(0)
+[esp=aes_gcm-192-null]        OK: AES_GCM_C(20)_192-NONE(0)
+[esp=aes_ctr]                 OK: AES_CTR(13)_000-SHA1(2)
+[esp=aesctr]                  OK: AES_CTR(13)_000-SHA1(2)
+[esp=aes_ctr128]              OK: AES_CTR(13)_128-SHA1(2)
+[esp=aes_ctr192]              OK: AES_CTR(13)_192-SHA1(2)
+[esp=aes_ctr256]              OK: AES_CTR(13)_256-SHA1(2)
+[esp=serpent]                 OK: SERPENT(252)_000-SHA1(2)
+[esp=twofish]                 OK: TWOFISH(253)_000-SHA1(2)
+
+---- ESP tests that should fail----
+[esp=3des168-sha1]         ERROR: 3DES does not take variable key lengths, enc_alg="3des"(168), auth_alg="sha1", modp=""
+[esp=3des-null]            ERROR: non-AEAD ESP cipher cannot have null authentication, enc_alg="3des"(0), auth_alg="null", modp=""
+[esp=aes128-null]          ERROR: non-AEAD ESP cipher cannot have null authentication, enc_alg="aes"(128), auth_alg="null", modp=""
+[esp=aes224-sha1]          ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes"(224), auth_alg="sha1", modp=""
+[esp=aes512-sha1]          ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes"(512), auth_alg="sha1", modp=""
+[esp=aes-sha1555]          ERROR: ESP integrity algorithm 'sha1555' is not recognized, enc_alg="aes"(0), auth_alg="sha1555", modp=""
+[esp=camellia666-sha1]     ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="camellia"(666), auth_alg="sha1", modp=""
+[esp=blowfish]             ERROR: ESP encryption algorithm 'blowfish' is not supported, enc_alg="blowfish"(0), auth_alg="", modp=""
+[esp=des-sha1]             ERROR: ESP encryption algorithm 'des' is not supported, enc_alg="des"(0), auth_alg="sha1", modp=""
+[esp=aes_ctr666]           ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes_ctr"(666), auth_alg="", modp=""
+[esp=aes128-sha2_128]      ERROR: ESP integrity algorithm 'sha2_128' is not recognized, enc_alg="aes"(128), auth_alg="sha2_128", modp=""
+[esp=aes256-sha2_256-4096] ERROR: Invalid modulus, just after "aes256-sha2_256-" (state=ST_AA_END)
+[esp=aes256-sha2_256-128]  ERROR: Invalid modulus, just after "aes256-sha2_256-" (state=ST_AA_END)
+[esp=vanitycipher]         ERROR: ESP encryption algorithm 'vanitycipher' is not recognized, enc_alg="vanitycipher"(0), auth_alg="", modp=""
+[esp=ase-sah]              ERROR: ESP encryption algorithm 'ase' is not recognized, enc_alg="ase"(0), auth_alg="sah", modp=""
+[esp=aes-sah1]             ERROR: ESP integrity algorithm 'sah1' is not recognized, enc_alg="aes"(0), auth_alg="sah1", modp=""
+[esp=id3]                  ERROR: ESP encryption algorithm 'id' is not recognized, enc_alg="id"(3), auth_alg="", modp=""
+[esp=aes-id3]              ERROR: ESP integrity algorithm 'id3' is not recognized, enc_alg="aes"(0), auth_alg="id3", modp=""
+[esp=aes_gcm-md5]          ERROR: AEAD ESP cipher must have null authentication, enc_alg="aes_gcm"(0), auth_alg="md5", modp=""
+[esp=mars]                 ERROR: ESP encryption algorithm 'mars' is not supported, enc_alg="mars"(0), auth_alg="", modp=""
+[esp=3des-sha1;dh22]       ERROR: ESP DH algorithm 'dh22' is not supported, enc_alg="3des"(0), auth_alg="sha1", modp="dh22"
+[esp=3des-sha1-dh21]       ERROR: ESP DH algorithm 'dh21' is not supported by IKEv1, enc_alg="3des"(0), auth_alg="sha1", modp="dh21"
+[esp=3des-sha1;dh21,3des-sha2] ERROR: ESP DH algorithm 'dh21' is not supported by IKEv1, enc_alg="3des"(0), auth_alg="sha1", modp="dh21"
+
+---- AH tests that should succeed ----
+ [ah=]                        OK: SHA1(2)
+ [ah=md5]                     OK: MD5(1)
+ [ah=sha]                     OK: SHA1(2)
+ [ah=sha1]                    OK: SHA1(2)
+ [ah=sha2]                    OK: SHA2_256(5)
+ [ah=sha256]                  OK: SHA2_256(5)
+ [ah=sha384]                  OK: SHA2_384(6)
+ [ah=sha512]                  OK: SHA2_512(7)
+ [ah=sha2_256]                OK: SHA2_256(5)
+ [ah=sha2_384]                OK: SHA2_384(6)
+ [ah=sha2_512]                OK: SHA2_512(7)
+ [ah=aes_xcbc]                OK: AES_XCBC(9)
+
+---- AH tests that should fail ----
+ [ah=aes-sha1]             ERROR: AH integrity algorithm 'aes' is not recognized, enc_alg=""(0), auth_alg="aes", modp="sha1"
+ [ah=vanityhash1]          ERROR: AH integrity algorithm 'vanityhash1' is not recognized, enc_alg=""(0), auth_alg="vanityhash1", modp=""
+ [ah=aes_gcm_c-256]        ERROR: Invalid modulus, just after "aes_gcm_c-" (state=ST_AA_END)
+ [ah=id3]                  ERROR: AH integrity algorithm 'id3' is not recognized, enc_alg=""(0), auth_alg="id3", modp=""
+ [ah=3des]                 ERROR: AH integrity algorithm '3des' is not recognized, enc_alg=""(0), auth_alg="3des", modp=""
+ [ah=null]                 ERROR: AH cannot have null authentication, enc_alg=""(0), auth_alg="null", modp=""
+ [ah=aes_gcm]              ERROR: AH integrity algorithm 'aes_gcm' is not recognized, enc_alg=""(0), auth_alg="aes_gcm", modp=""
+ [ah=aes_ccm]              ERROR: AH integrity algorithm 'aes_ccm' is not recognized, enc_alg=""(0), auth_alg="aes_ccm", modp=""
+ [ah=ripemd]               ERROR: AH integrity algorithm 'ripemd' is not recognized, enc_alg=""(0), auth_alg="ripemd", modp=""
+
+---- IKE tests that should succeed ----
+[ike=]                        OK: AES_CBC(7)_000-SHA2_256(4)-MODP2048(14), AES_CBC(7)_000-SHA2_512(6)-MODP2048(14), AES_CBC(7)_000-SHA1(2)-MODP2048(14), 3DES_CBC(5)_000-SHA2_256(4)-MODP2048(14), 3DES_CBC(5)_000-SHA2_512(6)-MODP2048(14), 3DES_CBC(5)_000-SHA1(2)-MODP2048(14), AES_CBC(7)_000-SHA2_256(4)-MODP1536(5), AES_CBC(7)_000-SHA2_512(6)-MODP1536(5), AES_CBC(7)_000-SHA1(2)-MODP1536(5), 3DES_CBC(5)_000-SHA2_256(4)-MODP1536(5), 3DES_CBC(5)_000-SHA2_512(6)-MODP1536(5), 3DES_CBC(5)_000-SHA1(2)-MODP1536(5)
+[ike=3des-sha1]               OK: 3DES_CBC(5)_000-SHA1(2)-MODP2048(14), 3DES_CBC(5)_000-SHA1(2)-MODP1536(5)
+[ike=3des-sha1]               OK: 3DES_CBC(5)_000-SHA1(2)-MODP2048(14), 3DES_CBC(5)_000-SHA1(2)-MODP1536(5)
+[ike=3des-sha1;modp1536]      OK: 3DES_CBC(5)_000-SHA1(2)-MODP1536(5)
+[ike=3des-sha1;dh21]          OK: 3DES_CBC(5)_000-SHA1(2)-ECP_521(21)
+[ike=3des-sha1-ecp_521]       OK: 3DES_CBC(5)_000-SHA1(2)-ECP_521(21)
+[ike=aes_gcm]                 OK: AES_GCM_C(20)_000-SHA2_256(4)-MODP2048(14), AES_GCM_C(20)_000-SHA2_512(6)-MODP2048(14), AES_GCM_C(20)_000-SHA1(2)-MODP2048(14), AES_GCM_C(20)_000-SHA2_256(4)-MODP1536(5), AES_GCM_C(20)_000-SHA2_512(6)-MODP1536(5), AES_GCM_C(20)_000-SHA1(2)-MODP1536(5)
+
+---- IKE tests that should fail ----
+[ike=id2]                  ERROR: IKE encryption algorithm 'id' is not recognized, enc_alg="id"(2), auth_alg="", modp=""
+[ike=3des-id2]             ERROR: IKE PRF algorithm 'id2' is not recognized, enc_alg="3des"(0), auth_alg="id2", modp=""
