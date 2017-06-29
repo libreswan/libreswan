@@ -101,6 +101,8 @@ static void test(lset_t policy)
 	esp(policy, "camellia128");
 	esp(policy, "camellia192");
 	esp(policy, "camellia256");
+
+	/* this checks the bit sizes as well */
 	esp(policy, "aes_ccm_a-128-null");
 	esp(policy, "aes_ccm_a-192-null");
 	esp(policy, "aes_ccm_a-256-null");
@@ -119,31 +121,44 @@ static void test(lset_t policy)
 	esp(policy, "aes_gcm_c-128-null");
 	esp(policy, "aes_gcm_c-192-null");
 	esp(policy, "aes_gcm_c-256-null");
+
+	esp(policy, "aes_ccm_a-null");
+	esp(policy, "aes_ccm_b-null");
+	esp(policy, "aes_ccm_c-null");
+	esp(policy, "aes_gcm_a-null");
+	esp(policy, "aes_gcm_b-null");
+	esp(policy, "aes_gcm_c-null");
+
 	esp(policy, "aes_ccm-null");
 	esp(policy, "aes_gcm-null");
+
 	esp(policy, "aes_ccm-256-null");
 	esp(policy, "aes_gcm-192-null");
-#if 0
-	/* these are caught using "aliasing" and rewritten to the above syntax */
+
+	esp(policy, "aes_ccm_256-null");
+	esp(policy, "aes_gcm_192-null");
+
+	esp(policy, "aes_ccm_8-null");
+	esp(policy, "aes_ccm_12-null");
+	esp(policy, "aes_ccm_16-null");
+	esp(policy, "aes_gcm_8-null");
+	esp(policy, "aes_gcm_12-null");
+	esp(policy, "aes_gcm_16-null");
+
 	esp(policy, "aes_ccm_8-128-null");
-	esp(policy, "aes_ccm_8-192-null");
-	esp(policy, "aes_ccm_8-256-null");
-	esp(policy, "aes_ccm_12-128-null");
 	esp(policy, "aes_ccm_12-192-null");
-	esp(policy, "aes_ccm_12-256-null");
-	esp(policy, "aes_ccm_16-128-null");
-	esp(policy, "aes_ccm_16-192-null");
 	esp(policy, "aes_ccm_16-256-null");
 	esp(policy, "aes_gcm_8-128-null");
-	esp(policy, "aes_gcm_8-192-null");
-	esp(policy, "aes_gcm_8-256-null");
-	esp(policy, "aes_gcm_12-128-null");
 	esp(policy, "aes_gcm_12-192-null");
-	esp(policy, "aes_gcm_12-256-null");
-	esp(policy, "aes_gcm_16-128-null");
-	esp(policy, "aes_gcm_16-192-null");
 	esp(policy, "aes_gcm_16-256-null");
-#endif
+
+	esp(policy, "aes_ccm_8_128-null");
+	esp(policy, "aes_ccm_12_192-null");
+	esp(policy, "aes_ccm_16_256-null");
+	esp(policy, "aes_gcm_8_128-null");
+	esp(policy, "aes_gcm_12_192-null");
+	esp(policy, "aes_gcm_16_256-null");
+
 	/* other */
 	esp(policy, "aes_ctr");
 	esp(policy, "aesctr");
@@ -182,6 +197,9 @@ static void test(lset_t policy)
 	esp(policy, "3des-sha1;dh22"); /* support for dh22 removed */
 	esp(policy, "3des-sha1-dh21"); /* ';' vs '-' */
 	esp(policy, "3des-sha1;dh21,3des-sha2"); /* DH must be last */
+	esp(policy, "aes_gcm-16"); /* don't parse as aes_gcm_16 */
+	esp(policy, "aes_gcm-0"); /* invalid keylen */
+	esp(policy, "aes_gcm-123456789012345"); /* huge keylen */
 
 	/*
 	 * ah=

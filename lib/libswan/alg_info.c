@@ -55,10 +55,12 @@ struct parser_context {
 	unsigned state;
 	const struct parser_param *param;
 	struct parser_policy policy;
-	char ealg_buf[16];
-	char aalg_buf[16];
-	char modp_buf[16];
+	char ealg_buf[20];
+	char eklen_buf[20];
+	char aalg_buf[20];
+	char modp_buf[20];
 	char *ealg_str;
+	char *eklen_str;
 	char *aalg_str;
 	char *modp_str;
 	int eklen;
@@ -215,6 +217,7 @@ static void parser_init(struct parser_context *ctx,
 		 * the stack.
 		 */
 		.ealg_str = ctx->ealg_buf,
+		.eklen_str = ctx->eklen_buf,
 		.aalg_str = ctx->aalg_buf,
 		.modp_str = ctx->modp_buf,
 	};
@@ -254,9 +257,10 @@ static err_t parser_machine(struct parser_context *p_ctx)
 
 	for (;;) {
 		DBG(DBG_CONTROLMORE,
-		    DBG_log("state=%s ealg_buf='%s' aalg_buf='%s' modp_buf='%s'",
+		    DBG_log("state=%s ealg_buf='%s' eklen_buf='%s' aalg_buf='%s' modp_buf='%s'",
 			    parser_state_name(p_ctx->state),
 			    p_ctx->ealg_buf,
+			    p_ctx->eklen_buf,
 			    p_ctx->aalg_buf,
 			    p_ctx->modp_buf));
 		/*
@@ -287,18 +291,15 @@ static err_t parser_machine(struct parser_context *p_ctx)
 			return "No alphanum. char initially found";
 
 		case ST_EA:
-			if (isalpha(ch) || ch == '_') {
+			if (isalnum(ch) || ch == '_') {
+				/*
+				 * accept all of <ealg>[_<eklen>]
+				 */
 				*(p_ctx->ealg_str++) = ch;
 				break;
 			}
-			if (isdigit(ch)) {
-				/* bravely switch to enc keylen */
-				*(p_ctx->ealg_str) = 0;
-				parser_set_state(p_ctx, ST_EK);
-				continue;
-			}
 			if (ch == '-') {
-				*(p_ctx->ealg_str) = 0;
+				*(p_ctx->ealg_str++) = '\0';
 				parser_set_state(p_ctx, ST_EA_END);
 				break;
 			}
@@ -306,7 +307,10 @@ static err_t parser_machine(struct parser_context *p_ctx)
 
 		case ST_EA_END:
 			if (isdigit(ch)) {
-				/* bravely switch to enc keylen */
+				/*
+				 * Given legacy <ealg>-<eklen>, save
+				 * <eklen>.
+				 */
 				parser_set_state(p_ctx, ST_EK);
 				continue;
 			}
@@ -317,14 +321,13 @@ static err_t parser_machine(struct parser_context *p_ctx)
 			return "No alphanum char found after enc alg separator";
 
 		case ST_EK:
-			if (ch == '-') {
-				parser_set_state(p_ctx, ST_EK_END);
+			if (isdigit(ch)) {
+				*(p_ctx->eklen_str++) = ch;
 				break;
 			}
-			if (isdigit(ch)) {
-				if (p_ctx->eklen >= INT_MAX / 10)
-					return "enc keylen WAY too big";
-				p_ctx->eklen = p_ctx->eklen * 10 + (ch - '0');
+			if (ch == '-') {
+				*(p_ctx->eklen_str++) = '\0';
+				parser_set_state(p_ctx, ST_EK_END);
 				break;
 			}
 			return "Non digit or valid separator found while reading enc keylen";
@@ -412,23 +415,97 @@ static const struct ike_alg *lookup_byname(struct parser_context *p_ctx,
 	return NULL;
 }
 
+static int parse_eklen(char *err_buf, size_t err_buf_len,
+			const char *eklen_buf)
+{
+	/* convert -<eklen> if present */
+	long eklen = strtol(eklen_buf, NULL, 10);
+	if (eklen >= INT_MAX) {
+		snprintf(err_buf, err_buf_len,
+			 "encryption key length WAY too big");
+		return 0;
+	}
+	if (eklen == 0) {
+		snprintf(err_buf, err_buf_len,
+			 "encryption key length is zero");
+		return 0;
+	}
+	return eklen;
+}
+
 static const char *parser_alg_info_add(struct parser_context *p_ctx,
 				       char *err_buf, size_t err_buf_len,
 				       struct alg_info *alg_info)
 {
 	DBG(DBG_CONTROLMORE,
-	    DBG_log("add ealg_buf='%s' aalg_buf='%s' modp_buf='%s'",
+	    DBG_log("add ealg_buf='%s' eklen_buf='%s' aalg_buf='%s' modp_buf='%s'",
 		    p_ctx->ealg_buf,
+		    p_ctx->eklen_buf,
 		    p_ctx->aalg_buf,
 		    p_ctx->modp_buf));
 
+	/*
+	 * Try the raw EALG string with "-<eklen>" if present.
+	 * Strings like aes_gcm_16 and aes_gcm_16_256 end up in
+	 * <ealg>, while strings like aes_gcm_16-256 end up in
+	 * <ealg>-<eklen>.
+	 */
+	if (p_ctx->eklen_buf[0] != '\0') {
+		/* convert -<eklen> if present */
+		p_ctx->eklen = parse_eklen(err_buf, err_buf_len, p_ctx->eklen_buf);
+		if (p_ctx->eklen <= 0) {
+			passert(err_buf[0] != '\0');
+			return err_buf;
+		}
+	}
 	const struct encrypt_desc *encrypt =
 		encrypt_desc(lookup_byname(p_ctx, err_buf, err_buf_len,
 					   p_ctx->param->encrypt_alg_byname,
 					   p_ctx->ealg_buf, p_ctx->eklen,
 					   "encryption"));
 	if (err_buf[0] != '\0') {
-		return err_buf;
+		if (p_ctx->eklen_buf[0] != '\0') {
+			/* <ealg>-<eklen> was rejected */
+			return err_buf;
+		}
+		char *end = &p_ctx->ealg_buf[strlen(p_ctx->ealg_buf) > 0 ?  strlen(p_ctx->ealg_buf) - 1 : 0];
+		if (!isdigit(*end)) {
+			/* <eklen> was rejected */
+			return err_buf;
+		}
+		/*
+		 * Trailing digit so assume that <ealg> is really
+		 * <ealg>_<eklen> or <ealg><eklen>, strip of the
+		 * <eklen> and try again.
+		 */
+		do {
+			if (end == p_ctx->ealg_buf) {
+				/* <ealg> missing */
+				return err_buf;
+			}
+			end--;
+		} while (isdigit(*end));
+		p_ctx->eklen = parse_eklen(err_buf, err_buf_len, end + 1);
+		if (p_ctx->eklen <= 0) {
+			passert(err_buf[0] != '\0');
+			return err_buf;
+		}
+		/*
+		 * strip optional "_" when "<ealg>_<eklen>"
+		 */
+		if (end > p_ctx->ealg_buf && *end == '_') {
+			end--;
+		}
+		/* truncate and try again */
+		end[1] = '\0';
+		err_buf[0] = '\0';
+		encrypt = encrypt_desc(lookup_byname(p_ctx, err_buf, err_buf_len,
+						     p_ctx->param->encrypt_alg_byname,
+						     p_ctx->ealg_buf, p_ctx->eklen,
+						     "encryption"));
+		if (err_buf[0] != '\0') {
+			return err_buf;
+		}
 	}
 
 #	define COMMON_KEY_LENGTH(x) ((x) == 0 || (x) == 128 || (x) == 192 || (x) == 256)

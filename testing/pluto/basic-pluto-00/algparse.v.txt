@@ -104,10 +104,36 @@ algparse   DH24          IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS
 [esp=aes_gcm_c-128-null]      OK: AES_GCM_C(20)_128-NONE(0)
 [esp=aes_gcm_c-192-null]      OK: AES_GCM_C(20)_192-NONE(0)
 [esp=aes_gcm_c-256-null]      OK: AES_GCM_C(20)_256-NONE(0)
+[esp=aes_ccm_a-null]          OK: AES_CCM_A(14)_000-NONE(0)
+[esp=aes_ccm_b-null]          OK: AES_CCM_B(15)_000-NONE(0)
+[esp=aes_ccm_c-null]          OK: AES_CCM_C(16)_000-NONE(0)
+[esp=aes_gcm_a-null]          OK: AES_GCM_A(18)_000-NONE(0)
+[esp=aes_gcm_b-null]          OK: AES_GCM_B(19)_000-NONE(0)
+[esp=aes_gcm_c-null]          OK: AES_GCM_C(20)_000-NONE(0)
 [esp=aes_ccm-null]            OK: AES_CCM_C(16)_000-NONE(0)
 [esp=aes_gcm-null]            OK: AES_GCM_C(20)_000-NONE(0)
 [esp=aes_ccm-256-null]        OK: AES_CCM_C(16)_256-NONE(0)
 [esp=aes_gcm-192-null]        OK: AES_GCM_C(20)_192-NONE(0)
+[esp=aes_ccm_256-null]        OK: AES_CCM_C(16)_256-NONE(0)
+[esp=aes_gcm_192-null]        OK: AES_GCM_C(20)_192-NONE(0)
+[esp=aes_ccm_8-null]          OK: AES_CCM_A(14)_000-NONE(0)
+[esp=aes_ccm_12-null]         OK: AES_CCM_B(15)_000-NONE(0)
+[esp=aes_ccm_16-null]         OK: AES_CCM_C(16)_000-NONE(0)
+[esp=aes_gcm_8-null]          OK: AES_GCM_A(18)_000-NONE(0)
+[esp=aes_gcm_12-null]         OK: AES_GCM_B(19)_000-NONE(0)
+[esp=aes_gcm_16-null]         OK: AES_GCM_C(20)_000-NONE(0)
+[esp=aes_ccm_8-128-null]      OK: AES_CCM_A(14)_128-NONE(0)
+[esp=aes_ccm_12-192-null]     OK: AES_CCM_B(15)_192-NONE(0)
+[esp=aes_ccm_16-256-null]     OK: AES_CCM_C(16)_256-NONE(0)
+[esp=aes_gcm_8-128-null]      OK: AES_GCM_A(18)_128-NONE(0)
+[esp=aes_gcm_12-192-null]     OK: AES_GCM_B(19)_192-NONE(0)
+[esp=aes_gcm_16-256-null]     OK: AES_GCM_C(20)_256-NONE(0)
+[esp=aes_ccm_8_128-null]      OK: AES_CCM_A(14)_128-NONE(0)
+[esp=aes_ccm_12_192-null]     OK: AES_CCM_B(15)_192-NONE(0)
+[esp=aes_ccm_16_256-null]     OK: AES_CCM_C(16)_256-NONE(0)
+[esp=aes_gcm_8_128-null]      OK: AES_GCM_A(18)_128-NONE(0)
+[esp=aes_gcm_12_192-null]     OK: AES_GCM_B(19)_192-NONE(0)
+[esp=aes_gcm_16_256-null]     OK: AES_GCM_C(20)_256-NONE(0)
 [esp=aes_ctr]                 OK: AES_CTR(13)_000-SHA1(2)
 [esp=aesctr]                  OK: AES_CTR(13)_000-SHA1(2)
 [esp=aes_ctr128]              OK: AES_CTR(13)_128-SHA1(2)
@@ -140,6 +166,9 @@ algparse   DH24          IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS
 [esp=3des-sha1;dh22]       ERROR: ESP DH algorithm 'dh22' is not supported, enc_alg="3des"(0), auth_alg="sha1", modp="dh22"
 [esp=3des-sha1-dh21]       ERROR: ESP DH algorithm 'DH21' must be separated using a ';'
 [esp=3des-sha1;dh21,3des-sha2] ERROR: ESP DH algorithm 'DH21' must be specified last
+[esp=aes_gcm-16]           ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes_gcm"(16), auth_alg="", modp=""
+[esp=aes_gcm-0]            ERROR: encryption key length is zero, enc_alg="aes_gcm"(0), auth_alg="", modp=""
+[esp=aes_gcm-123456789012345] ERROR: encryption key length WAY too big, enc_alg="aes_gcm"(0), auth_alg="", modp=""
 
 ---- AH tests that should succeed ----
  [ah=]                        OK: SHA1(2)
