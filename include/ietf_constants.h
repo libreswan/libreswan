@@ -475,10 +475,6 @@
 
 
 
-/* RFC 7427 says that the size of every hash algorithm should be 16-bit. */
-#define HASH_ALGO_OCTET_SIZE 2
-#define SHA1WITHRSAENCRYPTION_OID_BLOB_SIZE 15
-unsigned char sha1WithRSAEncryption_oid_blob[SHA1WITHRSAENCRYPTION_OID_BLOB_SIZE]={0x30,0x0d,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,0x01,0x05,0x05,0x00};
 /*
  * Payload types
  * RFC2408 Internet Security Association and Key Management Protocol (ISAKMP)
@@ -1661,6 +1657,11 @@ enum notify_payload_hash_algorithms {
  	/* 1024-65535 Reserved for private use */
 	
 };
+
+/* RFC 7427 says that the size of every hash algorithm should be 16-bit. */
+#define HASH_ALGO_OCTET_SIZE 2
+#define SHA1WITHRSAENCRYPTION_OID_BLOB_SIZE 15
+unsigned char sha1WithRSAEncryption_oid_blob[SHA1WITHRSAENCRYPTION_OID_BLOB_SIZE]={0x30,0x0d,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,0x01,0x05,0x05,0x00};
 
 /* Limits on size of RSA moduli.
  * The upper bound matches that of DNSSEC (see RFC 2537).
