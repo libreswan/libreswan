@@ -515,7 +515,6 @@ struct state {
 	bool st_seen_fragvid;                   /* should really use st_seen_vendorid, but no one else is */
 	bool st_seen_hashnotify;		/* did we receive hash algorithm notification in IKE_INIT , if so send the hash algorithm notication in response as well */
 	bool st_seen_fragments;                 /* did we receive ike fragments from peer, if so use them in return as well */
-	bool st_seen_fragments;                 /* did we receive ike fragments from peer, if so use them in return as well */
 	bool st_seen_no_tfc;			/* did we receive ESP_TFC_PADDING_NOT_SUPPORTED */
 	bool st_seen_use_transport;		/* did we receive USE_TRANSPORT_MODE */
 	generalName_t *st_requested_ca;		/* collected certificate requests */

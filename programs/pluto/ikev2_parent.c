@@ -629,17 +629,6 @@ static bool v2_check_auth(enum ikev2_auth_method atype,
 		return TRUE;
         }
 
-
-	//SAHANA SAHANA
-        case IKEv2_AUTH_DIGSIG:
-        {
-                if (that_authby != AUTH_DIGSIG) {
-                                        libreswan_log("Peer attempted Digital Signature authentication but we want %s",
-                                                enum_name(&ikev2_asym_auth_name, that_authby));
-                                        return FALSE;
-                                }
-        }
-
 	default:
 	{
 		libreswan_log("authentication method: %s not supported",
