@@ -1643,14 +1643,13 @@ enum ipsec_comp_algo {
 	/* 64-255 Unassigned */
 };
 
-/* RFC 7427 Signature Authentication in the Internet Key Exchange Version 2 (IKEv2)
+/* 
+ * RFC 7427 Signature Authentication in the Internet Key Exchange Version 2 (IKEv2)
  * Section 7 :  IANA Considerations
  * Values 5-1023 are Unassigned.  Values 1024-65535 are reserved for
  * Private Use among mutually consenting parties.
  * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#hash-algorithms
  */
-
-/*SAHANA*/
 
 enum notify_payload_hash_algorithms {
 	IKEv2_HASH_ALGO_RESERVED=0,     

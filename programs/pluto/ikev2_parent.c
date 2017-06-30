@@ -630,6 +630,16 @@ static bool v2_check_auth(enum ikev2_auth_method atype,
         }
 
 
+	//SAHANA SAHANA
+        case IKEv2_AUTH_DIGSIG:
+        {
+                if (that_authby != AUTH_DIGSIG) {
+                                        libreswan_log("Peer attempted Digital Signature authentication but we want %s",
+                                                enum_name(&ikev2_asym_auth_name, that_authby));
+                                        return FALSE;
+                                }
+        }
+
 	default:
 	{
 		libreswan_log("authentication method: %s not supported",
@@ -1001,14 +1011,10 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	/* Send NAT-T Notify payloads */
 	{
 		int np = ISAKMP_NEXT_v2N;
-		struct ikev2_generic in;
-
-		zero(&in);	/* OK: no pointer fields */
-		in.isag_np = np;
-		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		if (!ikev2_out_nat_v2n(np, &md->rbody, md))
 			return STF_INTERNAL_ERROR;
 	}
+
 
 	 /* 
  	  * Notify payload of type SIGNATURE_HASH_ALGORITHMS
