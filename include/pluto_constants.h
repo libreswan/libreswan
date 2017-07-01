@@ -197,9 +197,7 @@ enum event_type {
 #define EVENT_v1_SEND_XAUTH_DELAY	80 /* milliseconds */
 
 #define RETRANSMIT_TIMEOUT_DEFAULT	60  /* seconds */
-#ifndef RETRANSMIT_INTERVAL_DEFAULT
-# define RETRANSMIT_INTERVAL_DEFAULT	500 /* wait time doubled each retransmit - in milliseconds */
-#endif
+#define RETRANSMIT_INTERVAL_DEFAULT	500 /* wait time doubled each retransmit - in milliseconds */
 #define DELETE_SA_DELAY			RETRANSMIT_TIMEOUT_DEFAULT /* wait until the other side giveup on us */
 #define EVENT_CRYPTO_FAILED_DELAY	RETRANSMIT_TIMEOUT_DEFAULT /* wait till the other side give up on us */
 
@@ -594,10 +592,10 @@ enum original_role {
 #define IS_ISAKMP_SA_ESTABLISHED(s) ((LELEM(s) & ISAKMP_SA_ESTABLISHED_STATES) != LEMPTY)
 
 #define IPSECSA_PENDING_STATES (LELEM(STATE_V2_CREATE_I) | \
-				LELEM(STATE_V2_CREATE_I0) | \
-				LELEM(STATE_V2_CREATE_R) | \
-	/* due to a quirk in initiator duplication next one is also needed */ \
-				LELEM(STATE_PARENT_I2))
+                                LELEM(STATE_V2_CREATE_I0) | \
+                                LELEM(STATE_V2_CREATE_R) | \
+        /* due to a quirk in initiator duplication next one is also needed */ \
+                                LELEM(STATE_PARENT_I2))
 
 /* IKEv1 or IKEv2 */
 #define IS_IPSEC_SA_ESTABLISHED(s) ((s) == STATE_QUICK_I2 || \
@@ -648,8 +646,7 @@ enum original_role {
 
 #define IS_CHILD_SA_RESPONDER(st) \
 	((st)->st_state == STATE_V2_REKEY_IKE_R || \
-	  (st)->st_state == STATE_V2_CREATE_R || \
-	  (st)->st_state == STATE_V2_REKEY_CHILD_R)
+	  (st)->st_state == STATE_V2_CREATE_R)
 
 #define IS_CHILD_IPSECSA_RESPONSE(st) \
 	((st)->st_state == STATE_V2_REKEY_IKE_I || \
@@ -851,6 +848,7 @@ enum sa_policy_bits {
 #define POLICY_IX_LAST	POLICY_ESN_YES_IX
 };
 
+
 #define POLICY_PSK	LELEM(POLICY_PSK_IX)
 #define POLICY_RSASIG	LELEM(POLICY_RSASIG_IX)
 #define POLICY_AUTH_NEVER	LELEM(POLICY_AUTH_NEVER_IX)
@@ -888,6 +886,12 @@ enum sa_policy_bits {
 #define POLICY_NO_IKEPAD	LELEM(POLICY_NO_IKEPAD_IX)	/* pad ike packets to 4 bytes or not */
 #define POLICY_ESN_NO		LELEM(POLICY_ESN_NO_IX)	/* accept or request ESNno */
 #define POLICY_ESN_YES		LELEM(POLICY_ESN_YES_IX)	/* accept or request ESNyes */
+
+
+#define HASH_ALGO_SHA1		LELEM(IKEv2_HASH_ALGO_SHA1)	/* rfc7427 does responder support SHA1? */
+#define HASH_ALGO_SHA2_256		LELEM(IKEv2_HASH_ALGO_SHA2_256)	/* rfc7427 does responder support SHA2-256?  */
+#define HASH_ALGO_SHA2_384		LELEM(IKEv2_HASH_ALGO_SHA2_384)	/* rfc7427 does responder support SHA2-384? */
+#define HASH_ALGO_SHA2_512		LELEM(IKEv2_HASH_ALGO_SHA2_512)	/* rfc7427 does responder support SHA2-512? */
 
 /* Default policy for now is using RSA - this might change to ECC */
 #define POLICY_DEFAULT POLICY_RSASIG

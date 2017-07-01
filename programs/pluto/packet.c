@@ -993,6 +993,13 @@ static field_desc ikev2a_fields[] = {
 struct_desc ikev2_a_desc = { "IKEv2 Authentication Payload",
 			     ikev2a_fields, sizeof(struct ikev2_a) };
 
+static field_desc ikev2_hash_algo_fields[] = {
+	{ ft_len, 8 / BITS_PER_BYTE, "length", NULL },
+	{ ft_end,  0, NULL, NULL }
+};
+
+struct_desc ikev2_hash_algo_desc = { "IKEv2 ASN.1 Object in Authentication Payload",
+			     ikev2_hash_algo_fields, sizeof(struct ikev2_hash_algo) };
 /*
  * 3.9.  Nonce Payload
  *

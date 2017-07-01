@@ -864,6 +864,12 @@ struct ikev2_a {
 };
 extern struct_desc ikev2_a_desc;
 
+/* rfc7427 , section A.1.1 */
+struct ikev2_hash_algo {
+	u_int8_t isah_length;		/* ASN.1 Object length */
+};
+extern struct_desc ikev2_hash_algo_desc;
+
 /* rfc4306 section 3.6 CERT Payload */
 struct ikev2_cert {
 	u_int8_t isac_np;	/* Next payload */
