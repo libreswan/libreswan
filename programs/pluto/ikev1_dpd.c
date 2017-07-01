@@ -370,6 +370,8 @@ void dpd_event(struct state *st)
 {
 	passert(st != NULL);
 
+	set_cur_state(st);
+
 	if (IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state ))
 		p1_dpd_outI1(st);
 	else
@@ -576,41 +578,7 @@ stf_status dpd_inR(struct state *p1st,
  */
 void dpd_timeout(struct state *st)
 {
-	struct connection *c = st->st_connection;
-	enum dpd_action action = c->dpd_action;
+	set_cur_state(st);
 
-	/** delete the state, which is probably in phase 2 */
-	set_cur_connection(c);
-
-	libreswan_log("DPD: No response from peer - declaring peer dead");
-
-	switch (action) {
-	case DPD_ACTION_HOLD:
-		/** dpdaction=hold - Wipe the SA's but %trap the eroute so we don't
-		    leak traffic.  Also, being in %trap means new packets will
-		    force an initiation of the conn again.  */
-		libreswan_log("DPD: Putting connection into %%trap");
-		if (c->kind == CK_INSTANCE) {
-			DBG(DBG_DPD,
-			    DBG_log("DPD: warning dpdaction=hold on instance futile - will be deleted"));
-		}
-		delete_states_by_connection(c, TRUE);
-		break;
-
-	case DPD_ACTION_CLEAR:
-		/** dpdaction=clear - Wipe the SA & eroute - everything */
-		liveness_clear_connection(c, "IKEv1 DPD action");
-		break;
-
-	case DPD_ACTION_RESTART:
-		/* dpdaction=restart - immediately renegotiate connections to the same peer. */
-		libreswan_log(
-			"DPD: Restarting all connections that share this peer");
-		restart_connections_by_peer(c);
-		break;
-
-	default:
-		bad_case(action);
-	}
-	reset_cur_connection();
+	liveness_action(st->st_connection, st->st_ikev2);
 }
