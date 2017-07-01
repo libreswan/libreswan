@@ -15,7 +15,7 @@ fi
 
 algparse=$1 ; shift
 dir=$(dirname $0)
-
+export EF_DISABLE_BANNER=1
 set -e
 
 rc=0
