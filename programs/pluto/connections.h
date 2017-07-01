@@ -537,4 +537,4 @@ extern void unshare_connection_end(struct end *e);
 
 extern void liveness_clear_connection(struct connection *c, char *v);
 
-extern void liveness_action(struct connection *c);
+extern void liveness_action(struct connection *c, const bool ikev2);
