@@ -1457,7 +1457,7 @@ static const char *const ikev2_auth_name[] = {
 	"IKEv2_AUTH_ECDSA_P521",
 	"IKEv2_AUTH_GSPM", /* 12 - RFC 6467 */
 	"IKEv2_AUTH_NULL",
-    "IKEv2_AUTH_DIGSIG", /* 14 */
+    	"IKEv2_AUTH_DIGSIG", /* 14 - RFC 7427 */
 };
 
 enum_names ikev2_auth_names = {
