@@ -1546,6 +1546,7 @@ void add_connection(const struct whack_message *wm)
 			}
 		}
 
+		c->nic_offload = wm->nic_offload;
 		c->sa_ike_life_seconds = wm->sa_ike_life_seconds;
 		c->sa_ipsec_life_seconds = wm->sa_ipsec_life_seconds;
 		c->sa_rekey_margin = wm->sa_rekey_margin;
@@ -4111,11 +4112,12 @@ void show_one_connection(const struct connection *c)
 		strcpy(markstr, "unset");
 
 	whack_log(RC_COMMENT,
-		  "\"%s\"%s:   nflog-group: %s; mark: %s; vti-iface:%s; vti-routing:%s; vti-shared:%s;",
+		  "\"%s\"%s:   nflog-group: %s; mark: %s; vti-iface:%s; vti-routing:%s; vti-shared:%s;%s",
 		  c->name, instance, nflogstr, markstr,
 		  c->vti_iface == NULL ? "unset" : c->vti_iface,
 		  c->vti_routing ? "yes" : "no",
-		  c->vti_shared ? "yes" : "no"
+		  c->vti_shared ? "yes" : "no",
+		  c->nic_offload ? " nic-offload:yes;" : ""
 	);
 
 	{

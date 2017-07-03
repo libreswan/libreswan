@@ -1794,6 +1794,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	said_boilerplate.transport_proto = c->spd.this.protocol;
 	said_boilerplate.sa_lifetime = c->sa_ipsec_life_seconds;
 	said_boilerplate.outif = -1;
+	said_boilerplate.nic_offload = c->nic_offload;
+	if (c->nic_offload && c->interface != NULL)
+		said_boilerplate.nic_offload_ifindex = if_nametoindex(c->interface->ip_dev->id_rname);
+
 #ifdef HAVE_LABELED_IPSEC
 	said_boilerplate.sec_ctx = st->sec_ctx;
 #endif

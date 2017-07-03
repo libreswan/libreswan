@@ -150,6 +150,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 		POLICY_IKE_FRAG_ALLOW |      /* ike_frag=yes */
 		POLICY_ESN_NO;      /* esn=no */
 
+	cfg->conn_default.options[KBF_NIC_OFFLOAD] = FALSE;
 	cfg->conn_default.options[KBF_IKELIFETIME] = IKE_SA_LIFETIME_DEFAULT;
 
 	cfg->conn_default.options[KBF_REPLAY_WINDOW] = IPSEC_SA_DEFAULT_REPLAY_WINDOW;

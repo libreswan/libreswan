@@ -1257,6 +1257,22 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
 
+	if (sa->nic_offload) {
+		struct xfrm_user_offload xuo;
+
+		xuo.flags |= sa->inbound ? XFRM_OFFLOAD_INBOUND : 0;
+		if (sa->src->u.v4.sin_family == AF_INET6)
+			xuo.flags |= XFRM_OFFLOAD_IPV6;
+		xuo.ifindex = sa->nic_offload_ifindex;
+
+		attr->rta_type = XFRMA_OFFLOAD_DEV;
+		attr->rta_len = RTA_LENGTH(sizeof(xuo));
+
+		memcpy(RTA_DATA(attr), &xuo, sizeof(xuo));
+
+		req.n.nlmsg_len += attr->rta_len;
+		attr = (struct rtattr *)((char *)attr + attr->rta_len);
+	}
 
 #ifdef HAVE_LABELED_IPSEC
 	if (sa->sec_ctx != NULL) {
