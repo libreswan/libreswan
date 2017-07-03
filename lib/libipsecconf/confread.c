@@ -374,13 +374,6 @@ static bool load_setup(struct starter_config *cfg,
 		}
 	}
 
-	/* now process some things with specific values */
-
-	/* interfaces has to be chopped up */
-	if (cfg->setup.interfaces != NULL)
-		FREE_LIST(cfg->setup.interfaces);
-	cfg->setup.interfaces = new_list(cfg->setup.strings[KSF_INTERFACES]);
-
 	return err;
 }
 
@@ -1589,7 +1582,6 @@ static void confread_free_conn(struct starter_conn *conn)
 
 void confread_free(struct starter_config *cfg)
 {
-	FREE_LIST(cfg->setup.interfaces);
 	pfree(cfg->ctlbase);
 
 	int i;

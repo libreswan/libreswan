@@ -122,9 +122,6 @@ struct starter_config {
 		knf options;
 		str_set strings_set;
 		int_set options_set;
-
-		/* derived types */
-		char **interfaces;
 	} setup;
 
 	/* conn %default */
