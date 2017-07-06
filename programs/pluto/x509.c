@@ -713,7 +713,10 @@ static bool find_fetch_dn(SECItem *dn, struct connection *c,
 }
 #endif
 
-/* returns FALSE for a REVOKED cert or internal failure. returns
+/*
+ * WARNING: This function's bool return case is not what you expect!
+ *
+ * returns FALSE for a REVOKED cert or internal failure. returns
  * TRUE for a good cert or a failed verify (for continuing with
  * connection refining)
  */
@@ -758,7 +761,7 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 			} else {
 				loglog(RC_LOG_SERIOUS, "certificate does not contain ID_IP subjectAltName=%s",
 						ipstr);
-				return FALSE;
+				return TRUE; /* signal connswitch */
 			}
 			break;
 
@@ -772,7 +775,7 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 			} else {
 				loglog(RC_LOG_SERIOUS, "certificate does not contain subjectAltName=%s",
 					namebuf + 1);
-				return FALSE;
+				return TRUE; /* signal conn switch */
 			}
 			break;
 
@@ -784,7 +787,7 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 			} else {
 				loglog(RC_LOG_SERIOUS, "certificate does not contain ID_USER_FQDN subjectAltName=%s",
 					namebuf);
-				return FALSE;
+				return TRUE; /* signal conn switch */
 			}
 			break;
 
