@@ -2754,7 +2754,11 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		/* check for certificates */
 		if (!ikev1_decode_cert(md))
 			return FALSE;
+
 	}
+
+	/* check for certificate requests */
+	ikev1_decode_cr(md);
 
 	/* Now that we've decoded the ID payload, let's see if we
 	 * need to switch connections.
@@ -2766,6 +2770,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	if (aggrmode)
 		return TRUE;
 
+	/* only Main Mode from here */
 	if (initiator) {
 		if (!st->st_peer_alt_id &&
 			!same_id(&st->st_connection->spd.that.id, &peer) &&
@@ -2814,19 +2819,10 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			// bad_case(auth);
 		}
 
-		if (aggrmode)
-			auth_policy |=  POLICY_AGGRESSIVE;
-
-		/* check for certificate requests */
-		ikev1_decode_cr(md);
-
 		struct connection *r = NULL;
 
-		/* aggresive mode already pinned ID in first packet */
-		if (!aggrmode) {
-			r = refine_host_connection(st, &peer, FALSE /* initiator */,
+		r = refine_host_connection(st, &peer, FALSE /* initiator */,
 				auth_policy, AUTH_UNSET /* ikev2 only */, &fromcert);
-		}
 
 		if (r == NULL) {
 			char buf[IDTOA_BUF];
