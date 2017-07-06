@@ -3032,19 +3032,20 @@ struct connection *refine_host_connection(const struct state *st,
 	const chunk_t *psk = NULL;
 	const struct RSA_private_key *my_RSA_pri = NULL;
 
+	if (initiator)
+	{
+
 	switch(this_authby) {
 	case AUTH_PSK:
-		if (initiator) {
-			psk = get_preshared_secret(c);
-			/*
-			 * It should be virtually impossible to fail to find
-			 * PSK: we just used it to decode the current message!
-			 * Paul: only true for IKEv1
-			 */
-			if (psk == NULL) {
-				loglog(RC_LOG_SERIOUS, "cannot find PSK");
-				return c; /* cannot determine PSK, so not switching */
-			}
+		psk = get_preshared_secret(c);
+		/*
+		 * It should be virtually impossible to fail to find
+		 * PSK: we just used it to decode the current message!
+		 * Paul: only true for IKEv1
+		 */
+		if (psk == NULL) {
+			loglog(RC_LOG_SERIOUS, "cannot find PSK");
+			return c; /* cannot determine PSK, so not switching */
 		}
 		break;
 	case AUTH_NULL:
@@ -3052,18 +3053,16 @@ struct connection *refine_host_connection(const struct state *st,
 		break;
 
 	case AUTH_RSASIG:
-		if (initiator) {
-			/*
-			 * At this point, we've committed to our RSA private
-			 * key: we used it in our previous message.
-			 * Paul: only true for IKEv1
-			 */
-			my_RSA_pri = get_RSA_private_key(c);
-			if (my_RSA_pri == NULL) {
-				loglog(RC_LOG_SERIOUS, "cannot find RSA key");
-				 /* cannot determine my RSA private key! */
-				return c;
-			}
+		/*
+		 * At this point, we've committed to our RSA private
+		 * key: we used it in our previous message.
+		 * Paul: only true for IKEv1
+		 */
+		my_RSA_pri = get_RSA_private_key(c);
+		if (my_RSA_pri == NULL) {
+			loglog(RC_LOG_SERIOUS, "cannot find RSA key");
+			 /* cannot determine my RSA private key! */
+			return c;
 		}
 		break;
 	default:
@@ -3071,6 +3070,7 @@ struct connection *refine_host_connection(const struct state *st,
 		loglog(RC_LOG_SERIOUS, "refine_host_connection: unexpected auth policy (%s): only handling PSK, NULL or RSA",
 			enum_name(&ikev2_asym_auth_name, this_authby));
 		return c;
+	}
 	}
 
 	/*
@@ -3182,14 +3182,12 @@ struct connection *refine_host_connection(const struct state *st,
 					continue;
 			}
 
-			if (d->spd.this.xauth_server !=
-			    c->spd.this.xauth_server) {
+			if (d->spd.this.xauth_server != c->spd.this.xauth_server) {
 				/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
 				continue;
 			}
 
-			if (d->spd.this.xauth_client !=
-			    c->spd.this.xauth_client) {
+			if (d->spd.this.xauth_client != c->spd.this.xauth_client) {
 				/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
 				continue;
 			}
