@@ -2,6 +2,8 @@
 See also https://libreswan.org/
 
 v3.21 (Not released)
+* parser: Numerous algorithm parser fixes, for instance esp=aes_ccm_8_128-null accepted [Andrew]
+* algparse: (Experimental) modified so run the algorithm parser stand-alone [Andrew]
 * FIPS: Don't crash on too weak PSK's in FIPS mode, warn for non-FIPS [Andrew]
 * FIPS: rsasigkey: Use modulus F4, not 3 (FIPS 186-4, section B.3.1) [Paul]
 * pluto: Support for "idXXX" esp/ike transform IDs removed [Andrew,Paul]
@@ -9,7 +11,6 @@ v3.21 (Not released)
 * pluto: Remove IKE policy bits on passthrough conns [Paul]
 * pluto: Minor memory leak fixes [Paul]
 * pluto: Fix memory leak due to addresspool reference count error [Antony]
-* pluto: More algorithms code cleanup [Andrew]
 * pluto: Re-add support for ipsec whack --listevents [Antony]
 * pluto: Cleanup listed events on shutdown to please leak-detective [Antony]
 * pluto: Perform stricter SubjectAltName checks on configured ID's [Paul]
@@ -32,7 +33,7 @@ v3.21 (Not released)
 * IKEv2: During Child SA rekey, abort when ESP proposals mismatch [Antony]
 * IKEv2: OE client check should take responders behind NAT into account [Paul]
 * IKEv2: Improved dpdaction=hold processing [Antony]
-* IKEv1: re-add SHA2_256 (prefered) and SHA2_512 to IKEv1 defaults [Cangey]
+* IKEv1: re-add SHA2_256 (prefered) and SHA2_512 to IKEv1 defaults [Andrew]
 * IKEv1: Aggressive Mode fixes for sending CERT / CERTREQ payloads [Paul]
 * IKEv1: multiple CISCO_SPLIT_INC's cause duplicate spd_routes [Oleg Rosowiecki]
 * XFRM: Use proper alignment for IPv4 AH as per RFC4302 Section 3.3.3.2.1 [Paul]
