@@ -138,6 +138,7 @@ algparse   DH24          IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS
 [esp=aes_ctr256]              OK: AES_CTR(13)_256-SHA1(2)
 [esp=serpent]              ERROR: ESP encryption algorithm 'serpent' is not supported, enc_alg="serpent"(0), auth_alg="", modp=""
 [esp=twofish]              ERROR: ESP encryption algorithm 'twofish' is not supported, enc_alg="twofish"(0), auth_alg="", modp=""
+[esp=camellia_cbc_256-hmac_sha2_512_256;modp8192] ERROR: ESP encryption algorithm 'camellia_cbc' is not supported, enc_alg="camellia_cbc"(256), auth_alg="hmac_sha2_512_256", modp="modp8192"
 
 ---- ESP tests that should fail----
 [esp=3des168-sha1]         ERROR: 3DES does not take variable key lengths, enc_alg="3des"(168), auth_alg="sha1", modp=""

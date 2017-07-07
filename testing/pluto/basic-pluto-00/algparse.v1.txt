@@ -87,6 +87,7 @@
 [esp=aes_ctr256]              OK: AES_CTR(13)_256-SHA1(2)
 [esp=serpent]                 OK: SERPENT(252)_000-SHA1(2)
 [esp=twofish]                 OK: TWOFISH(253)_000-SHA1(2)
+[esp=camellia_cbc_256-hmac_sha2_512_256;modp8192]    OK: CAMELLIA(22)_256-SHA2_512(7); pfsgroup=MODP8192(18)
 
 ---- ESP tests that should fail----
 [esp=3des168-sha1]         ERROR: 3DES does not take variable key lengths, enc_alg="3des"(168), auth_alg="sha1", modp=""
