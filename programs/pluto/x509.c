@@ -808,12 +808,13 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 			struct id certid;
 			int wildcards; /* ignored? */
 			certid.name = same_secitem_as_chunk(end_cert->derSubject);
-			if (!match_id(&certid, &c->spd.that.id, &wildcards)) {
+			if (match_id(&certid, &c->spd.that.id, &wildcards)) {
 				DBG(DBG_X509, DBG_log("ID_DER_ASN1_DN '%s' matched our ID", namebuf));
 				st->st_peer_alt_id = TRUE;
 			} else {
 				loglog(RC_LOG_SERIOUS, "ID_DER_ASN1_DN '%s' does not match expected '%s'",
 					end_cert->subjectName, namebuf);
+				return TRUE; /* signal conn switch */
 			}
 			break;
 		default:
