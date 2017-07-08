@@ -27,9 +27,9 @@ west #
 002 "san" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 003 "san" #1: No matching subjectAltName found
 003 "san" #1: certificate does not contain ID_USER_FQDN subjectAltName=user-east@testing.libreswan.org
-002 "san" #1: Peer public key is not available for this exchange
-218 "san" #1: STATE_AGGR_I1: INVALID_ID_INFORMATION
-002 "san" #1: sending notification INVALID_ID_INFORMATION to 192.1.2.23:500
+003 "san" #1: no RSA public key known for 'user-east@testing.libreswan.org'
+217 "san" #1: STATE_AGGR_I1: INVALID_KEY_INFORMATION
+002 "san" #1: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 002 "san" #1: deleting state (STATE_AGGR_I1)
 west #
  echo "done"
