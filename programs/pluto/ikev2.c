@@ -1105,7 +1105,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		return;
 	}
 
-	if(ix == ISAKMP_v2_CREATE_CHILD_SA && st == NULL) {
+	if (ix == ISAKMP_v2_CREATE_CHILD_SA && st == NULL) {
 		DBG(DBG_CONTROL, DBG_log("dropping message. no IKE state found for this ISAKMP_v2_CREATE_CHILD_SA message"));
 		return;
 	}

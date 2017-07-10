@@ -205,7 +205,7 @@ static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
 	if (md->chain[ISAKMP_NEXT_v2KE] == NULL)
 		return STF_OK;
 
-	if(r->pcr_type == pcr_build_ke_and_nonce) {
+	if (r->pcr_type == pcr_build_ke_and_nonce) {
 		enum original_role  role;
 		role = IS_CHILD_SA_RESPONDER(st) ? ORIGINAL_RESPONDER :
 			ORIGINAL_INITIATOR;
@@ -269,7 +269,7 @@ static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
 
 	case STATE_V2_CREATE_I0:
 		unpack_nonce(&st->st_ni, r);
-		if(r->pcr_type == pcr_build_ke_and_nonce)
+		if (r->pcr_type == pcr_build_ke_and_nonce)
 			unpack_KE_from_helper(st, r, &st->st_gi);
 
 		e = add_st_send_list(st, pst);
@@ -568,7 +568,7 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
 			(id.kind == ID_FQDN ||
 			 id.kind == ID_IPV4_ADDR ||
 			 id.kind == ID_IPV6_ADDR)) {
-		if(atype == IKEv2_AUTH_RESERVED) {
+		if (atype == IKEv2_AUTH_RESERVED) {
 			return FALSE; /* called from the initiator */
 		} else if (atype == IKEv2_AUTH_RSA) {
 			return FALSE; /* success */
@@ -577,7 +577,7 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
 
 	idtoa(&id, thatid, sizeof(thatid));
 
-	if(!c->spd.that.key_from_DNS_on_demand)
+	if (!c->spd.that.key_from_DNS_on_demand)
 	{
 		err1 = "that end rsasigkey != %dnsondemand";
 	}
@@ -587,7 +587,7 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
 		err3 = enum_name(&ikev2_auth_names, atype);
 	}
 
-	if(id.kind != ID_FQDN &&
+	if (id.kind != ID_FQDN &&
 			id.kind != ID_IPV4_ADDR &&
 			id.kind != ID_IPV6_ADDR) {
 		err2 = " can only query DNS for IPSECKEY for ID that is a FQDN, IPV4_ADDR, or IPV6_ADDR id type=";
@@ -3545,7 +3545,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 			return ret;
 	}
 
-	if(ret == STF_OK) {
+	if (ret == STF_OK) {
 		ret = ikev2_parent_inI2outR2_id_tail(md);
 	}
 
@@ -4623,7 +4623,7 @@ static stf_status ikev2_rekey_child(const struct msg_digest *md)
 			 */
 			change_state(st, STATE_V2_REKEY_CHILD_R);
 			rst = find_state_to_rekey(ntfy, pst);
-			if(rst == NULL) {
+			if (rst == NULL) {
 				libreswan_log("no valid IPsec SA SPI to rekey");
 				ret = STF_FAIL + v2N_CHILD_SA_NOT_FOUND;
 			} else {
@@ -4749,7 +4749,7 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 		close_output_pbs(&pb_nr);
 
-		if(in.isag_np == ISAKMP_NEXT_v2KE)  {
+		if (in.isag_np == ISAKMP_NEXT_v2KE)  {
 			if (!justship_v2KE(&cst->st_gi,
 						cst->st_pfs_group, outpbs,
 						ISAKMP_NEXT_v2TSi))
@@ -4822,7 +4822,7 @@ static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
 				&c->ike_proposals);
 
 		/* send v2 IKE SAs*/
-		if(!ikev2_emit_sa_proposals(outpbs,
+		if (!ikev2_emit_sa_proposals(outpbs,
 					st->st_connection->ike_proposals,
 					&local_spi,
 					ISAKMP_NEXT_v2Ni))  {
@@ -4873,7 +4873,7 @@ static notification_t accept_child_sa_KE(struct msg_digest *md,
 				return v2N_INVALID_KE_PAYLOAD;
 			}
 		}
-		if(is_msg_request(md))
+		if (is_msg_request(md))
 			st->st_gi = accepted_g;
 		else
 			st->st_gr = accepted_g;
@@ -4915,7 +4915,7 @@ static notification_t process_ike_rekey_sa_pl(struct msg_digest *md, struct stat
 	/*
 	 * Early return must free: accepted_ike_proposal
 	 */
-	if(!ikev2_proposal_to_trans_attrs(accepted_ike_proposal,
+	if (!ikev2_proposal_to_trans_attrs(accepted_ike_proposal,
 			&accepted_oakley)) {
 		loglog(RC_LOG_SERIOUS, "IKE responder accepted an unsupported algorithm");
 		/* free early return items */
@@ -5059,7 +5059,7 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 		memcpy(hdr.isa_icookie, pst->st_icookie, COOKIE_SIZE);
 		hdr.isa_xchg = ISAKMP_v2_CREATE_CHILD_SA;
 		hdr.isa_np = ISAKMP_NEXT_v2SK;
-		if(IS_CHILD_SA_RESPONDER(st)) {
+		if (IS_CHILD_SA_RESPONDER(st)) {
 			hdr.isa_msgid = htonl(md->msgid_received);
 			hdr.isa_flags = ISAKMP_FLAGS_v2_MSG_R; /* response on */
 		} else {
@@ -5068,14 +5068,14 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 			st->st_msgid = htonl(pst->st_msgid_nextuse);
 		}
 
-		if(pst->st_original_role == ORIGINAL_INITIATOR) {
+		if (pst->st_original_role == ORIGINAL_INITIATOR) {
 			hdr.isa_flags |= ISAKMP_FLAGS_v2_IKE_I;
 		}
 
 		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG))
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 
-		if(!IS_CHILD_SA_RESPONDER(st)) {
+		if (!IS_CHILD_SA_RESPONDER(st)) {
 			md->hdr = hdr; /* fill it with fake header ??? */
 		}
 		if (!out_struct(&hdr, &isakmp_hdr_desc,

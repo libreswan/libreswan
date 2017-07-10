@@ -1053,7 +1053,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 		close_output_pbs(&pb_nr);
 
-		if(in.isag_np == ISAKMP_NEXT_v2KE)  {
+		if (in.isag_np == ISAKMP_NEXT_v2KE)  {
 			if (!justship_v2KE(&cst->st_gr,
 						cst->st_oakley.group, outpbs,
 						ISAKMP_NEXT_v2TSi))

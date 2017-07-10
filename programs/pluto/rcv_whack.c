@@ -615,7 +615,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 		 * With seccomp=tolerant or seccomp=disabled, pluto will
 		 * report the test results.
 		 */
-		if(pluto_seccomp_mode == SECCOMP_ENABLED)
+		if (pluto_seccomp_mode == SECCOMP_ENABLED)
 			loglog(RC_LOG_SERIOUS, "pluto is running with seccomp=enabled! pluto is expected to die!");
 		loglog(RC_LOG_SERIOUS, "Performing seccomp security test using getsid() syscall");
 		pid_t testpid = getsid(0);

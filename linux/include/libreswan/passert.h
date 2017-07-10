@@ -58,7 +58,7 @@ extern void lsw_passert_fail(const char *file_str,
 	}
 
 #define passert(pred) {							\
-		/* Shorter if(!(pred)) suppresses -Wparen */		\
+		/* Shorter if (!(pred)) suppresses -Wparen */		\
 		if (pred) {} else {					\
 			PASSERT_FAIL("%s", #pred);			\
 		}							\
@@ -73,7 +73,7 @@ extern void lsw_passert_fail(const char *file_str,
  * stray comma vis: "pexpect_log(file, line, FMT,)".  Plenty of
  * workarounds.
  *
- * "pexpect()" does use the shorter statement "if(!(pred))" in the
+ * "pexpect()" does use the shorter statement "if (!(pred))" in the
  * below as it will suppresses -Wparen (i.e., assignment in if
  * statement).
  */
