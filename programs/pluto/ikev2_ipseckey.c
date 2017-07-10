@@ -348,7 +348,7 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 		ldns_buffer_printf(output, " ");
 
 		/* lets parse and debug log the usual RR types */
-		switch(atype) {
+		switch (atype) {
 		case LDNS_RR_TYPE_A:
 			ldns_rdf2buffer_str_a(output, rdf);
 			break;
@@ -716,7 +716,7 @@ static void ipseckey_ub_cb(void* mydata, int rcode,
 	dnsr->cb(dnsr);
 }
 
-static err_t build_dns_name (char *name_buf, /* array of len HOST_NAME_MAX */
+static err_t build_dns_name(char *name_buf, /* array of len HOST_NAME_MAX */
 		const struct id *id)
 {
 	/* note: all end in "." to suppress relative searches */

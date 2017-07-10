@@ -2631,7 +2631,7 @@ static stf_status ikev2_send_auth(struct connection *c,
 
 	a.isaa_np = np;
 
-	switch(authby) {
+	switch (authby) {
 	case AUTH_RSASIG:
 		a.isaa_type = IKEv2_AUTH_RSA;
 		break;
@@ -3184,7 +3184,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 #ifdef XAUTH_HAVE_PAM
 /* IN AN AUTHENTICAL THREAD */
-static void *ikev2_pam_autherize_thread (void *x)
+static void *ikev2_pam_autherize_thread(void *x)
 {
 	struct ikev2_pam_helper *p = (struct ikev2_pam_helper *) x;
 	struct timeval done_delta;

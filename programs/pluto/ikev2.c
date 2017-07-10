@@ -811,7 +811,7 @@ static bool ikev2_collect_fragment(struct msg_digest *md, struct state *st)
 	return TRUE;
 }
 
-static struct state *process_v2_child_ix (struct msg_digest *md,
+static struct state *process_v2_child_ix(struct msg_digest *md,
 		struct state *pst)
 {
 	struct state *st = NULL; /* child state */

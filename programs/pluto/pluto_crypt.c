@@ -291,7 +291,7 @@ static void pluto_crypto_helper(int helper_fd, int helpernum)
 	FILE *out = fdopen(helper_fd, "wb");
 	struct pluto_crypto_req req;
 #ifdef HAVE_SECCOMP
-	switch(pluto_seccomp_mode) {
+	switch (pluto_seccomp_mode) {
 	case SECCOMP_ENABLED:
 		init_seccomp_cryptohelper(SCMP_ACT_KILL);
 		break;

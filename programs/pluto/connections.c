@@ -1345,7 +1345,7 @@ void add_connection(const struct whack_message *wm)
 				bool conflict = FALSE;
 				lset_t auth_pol = (wm->policy & POLICY_ID_AUTH_MASK);
 
-				switch(wm->left.authby) {
+				switch (wm->left.authby) {
 				case AUTH_PSK:
 					if (auth_pol != POLICY_PSK && auth_pol != LEMPTY) {
 						loglog(RC_FATAL, "leftauthby=secret but authby= is not secret");
@@ -3020,7 +3020,7 @@ struct connection *refine_host_connection(const struct state *st,
 	if (initiator)
 	{
 
-	switch(this_authby) {
+	switch (this_authby) {
 	case AUTH_PSK:
 		psk = get_preshared_secret(c);
 		/*

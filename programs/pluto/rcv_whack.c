@@ -623,7 +623,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 		/* We did not get shot by the kernel seccomp protection */
 		if (testpid == -1) {
 			loglog(RC_LOG_SERIOUS, "pluto: seccomp test syscall was blocked");
-			switch(pluto_seccomp_mode) {
+			switch (pluto_seccomp_mode) {
 			case SECCOMP_TOLERANT:
 				loglog(RC_LOG_SERIOUS, "OK: seccomp security was tolerant; the rogue syscall was blocked and pluto was not terminated");
 				break;
@@ -638,7 +638,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 			}
 		} else {
 			loglog(RC_LOG_SERIOUS, "pluto: seccomp test syscall was not blocked");
-			switch(pluto_seccomp_mode) {
+			switch (pluto_seccomp_mode) {
 			case SECCOMP_TOLERANT:
 				loglog(RC_LOG_SERIOUS, "ERROR: pluto seccomp was tolerant but the rogue syscall was not blocked!");
 				break;

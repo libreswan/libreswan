@@ -4,7 +4,7 @@
  * continuations used
  */
 
-typedef stf_status initiator_function (int whack_sock,
+typedef stf_status initiator_function(int whack_sock,
 				       struct connection *c,
 				       struct state *predecessor,
 				       lset_t policy,

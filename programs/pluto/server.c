@@ -760,7 +760,7 @@ static void main_loop(void)
 #endif
 
 	r = event_base_loop(pluto_eb, 0);
-	passert (r == 0);
+	passert(r == 0);
 }
 
 /* call_server listens for incoming ISAKMP packets and Whack messages,
@@ -877,7 +877,7 @@ void call_server(void)
 		/* parent continues */
 	}
 #ifdef HAVE_SECCOMP
-	switch(pluto_seccomp_mode) {
+	switch (pluto_seccomp_mode) {
 	case SECCOMP_ENABLED:
 		init_seccomp_main(SCMP_ACT_KILL);
 		break;
