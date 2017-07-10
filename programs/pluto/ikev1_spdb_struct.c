@@ -840,12 +840,12 @@ static bool ike_alg_ok_final(int ealg, unsigned key_len,
 	if (ealg_insecure || alg_info_ike != NULL) {
 		if (alg_info_ike != NULL) {
 			FOR_EACH_IKE_INFO(alg_info_ike, ike_info) {
-				if (ike_info->ike_encrypt->common.ikev1_oakley_id == ealg &&
-				    (ike_info->ike_eklen == 0 ||
+				if (ike_info->encrypt->common.ikev1_oakley_id == ealg &&
+				    (ike_info->enckeylen == 0 ||
 				     key_len == 0 ||
-				     ike_info->ike_eklen == key_len) &&
-				    ike_info->ike_prf == prf &&
-				    ike_info->ike_dh_group->group == group) {
+				     ike_info->enckeylen == key_len) &&
+				    ike_info->prf == prf &&
+				    ike_info->dh->group == group) {
 					if (ealg_insecure) {
 						loglog(RC_LOG_SERIOUS,
 						       "You should NOT use insecure/broken IKE algorithms (%s)!",

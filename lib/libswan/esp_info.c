@@ -43,7 +43,7 @@ static void raw_alg_info_esp_add(struct alg_info_esp *alg_info,
 				 const struct integ_desc *integ,
 				 const struct oakley_group_desc *dh)
 {
-	struct esp_info *esp_info = alg_info->esp;
+	struct proposal_info *esp_info = alg_info->esp;
 	int cnt = alg_info->ai.alg_info_cnt;
 
 	/*
@@ -55,9 +55,9 @@ static void raw_alg_info_esp_add(struct alg_info_esp *alg_info,
 	 * hard/messy, so a wild card is easier.
 	 */
 	FOR_EACH_ESP_INFO(alg_info, esp_info) {
-		if (esp_info->esp_encrypt == encrypt &&
+		if (esp_info->encrypt == encrypt &&
 		    (ek_bits == 0 || esp_info->enckeylen == ek_bits) &&
-		    esp_info->esp_integ == integ &&
+		    esp_info->integ == integ &&
 		    esp_info->dh == dh)
 			return;
 	}
@@ -66,11 +66,11 @@ static void raw_alg_info_esp_add(struct alg_info_esp *alg_info,
 	/* ??? passert seems dangerous */
 	passert(cnt < (int)elemsof(alg_info->esp));
 
-	esp_info[cnt].transid = (encrypt != NULL ? encrypt->common.id[IKEv1_ESP_ID] : 0);
+	esp_info[cnt].ikev1esp_transid = (encrypt != NULL ? encrypt->common.id[IKEv1_ESP_ID] : 0);
 	esp_info[cnt].enckeylen = ek_bits;
-	esp_info[cnt].auth = (integ == &alg_info_integ_null) ? 0 : integ->common.id[IKEv1_ESP_ID];
-	esp_info[cnt].esp_encrypt = encrypt;
-	esp_info[cnt].esp_integ = (integ == &alg_info_integ_null) ? NULL : integ;
+	esp_info[cnt].ikev1esp_auth = (integ == &alg_info_integ_null) ? 0 : integ->common.id[IKEv1_ESP_ID];
+	esp_info[cnt].encrypt = encrypt;
+	esp_info[cnt].integ = (integ == &alg_info_integ_null) ? NULL : integ;
 	esp_info[cnt].dh = dh;
 
 	alg_info->ai.alg_info_cnt++;
@@ -212,7 +212,7 @@ static struct alg_info_esp *alg_info_discover_pfsgroup_hack(struct alg_info_esp 
 	 * Find the last proposal, of present (never know, there could
 	 * be no algorithms).
 	 */
-	struct esp_info *last = NULL;
+	struct proposal_info *last = NULL;
 	FOR_EACH_ESP_INFO(aie, esp_info) {
 		last = esp_info;
 	}
@@ -365,13 +365,13 @@ void alg_info_esp_snprint(char *buf, size_t buflen,
 			snprintf(ptr, be - ptr,
 				 "%s%s(%d)_%03d-%s(%d)", sep,
 				 enum_short_name(&esp_transformid_names,
-						 esp_info->transid),
-				 esp_info->transid,
+						 esp_info->ikev1esp_transid),
+				 esp_info->ikev1esp_transid,
 				 (int)esp_info->enckeylen,
 				 strip_prefix(enum_short_name(&auth_alg_names,
-							      esp_info->auth),
+							      esp_info->ikev1esp_auth),
 					      "HMAC_"),
-				 esp_info->auth);
+				 esp_info->ikev1esp_auth);
 			ptr += strlen(ptr);
 			sep = ", ";
 		}
@@ -392,9 +392,9 @@ void alg_info_esp_snprint(char *buf, size_t buflen,
 			snprintf(ptr, be - ptr,
 				 "%s%s(%d)", sep,
 				 strip_prefix(enum_short_name(&auth_alg_names,
-							      esp_info->auth),
+							      esp_info->ikev1esp_auth),
 					      "HMAC_"),
-				 esp_info->auth);
+				 esp_info->ikev1esp_auth);
 			ptr += strlen(ptr);
 			sep = ", ";
 		}
@@ -417,23 +417,23 @@ void alg_info_esp_snprint(char *buf, size_t buflen,
 }
 
 static int snprint_esp_info(char *ptr, size_t buflen, const char *sep,
-			    const struct esp_info *esp_info)
+			    const struct proposal_info *esp_info)
 {
 	unsigned eklen = esp_info->enckeylen;
 
 	return snprintf(ptr, buflen, "%s%s(%d)_%03d-%s(%d)",
 			sep,
 			enum_short_name(&esp_transformid_names,
-					       esp_info->transid),
-			esp_info->transid, eklen,
+					       esp_info->ikev1esp_transid),
+			esp_info->ikev1esp_transid, eklen,
 			strip_prefix(enum_short_name(&auth_alg_names,
-						esp_info->auth),
+						esp_info->ikev1esp_auth),
 				"HMAC_"),
-			esp_info->auth);
+			esp_info->ikev1esp_auth);
 }
 
 void alg_info_snprint_esp_info(char *buf, size_t buflen,
-			       const struct esp_info *esp_info)
+			       const struct proposal_info *esp_info)
 {
 	snprint_esp_info(buf, buflen, "", esp_info);
 }
@@ -461,17 +461,17 @@ static void alg_info_snprint_esp(char *buf, size_t buflen,
 	jam_str(buf, buflen, "none");
 
 	FOR_EACH_ESP_INFO(alg_info, esp_info) {
-		err_t ugh = check_kernel_encrypt_alg(esp_info->transid, 0);
+		err_t ugh = check_kernel_encrypt_alg(esp_info->ikev1esp_transid, 0);
 
 		if (ugh != NULL) {
 			DBG_log("esp algid=%d not available: %s",
-				esp_info->transid, ugh);
+				esp_info->ikev1esp_transid, ugh);
 			continue;
 		}
 
-		if (!kernel_alg_esp_auth_ok(esp_info->auth, NULL)) {
+		if (!kernel_alg_esp_auth_ok(esp_info->ikev1esp_auth, NULL)) {
 			DBG_log("auth algid=%d not available",
-				esp_info->auth);
+				esp_info->ikev1esp_auth);
 			continue;
 		}
 
@@ -509,18 +509,18 @@ static void alg_info_snprint_ah(char *buf, size_t buflen,
 	jam_str(buf, buflen, "none");
 
 	FOR_EACH_ESP_INFO(alg_info, esp_info) {
-		if (!kernel_alg_esp_auth_ok(esp_info->auth, NULL)) {
+		if (!kernel_alg_esp_auth_ok(esp_info->ikev1esp_auth, NULL)) {
 			DBG_log("auth algid=%d not available",
-				esp_info->auth);
+				esp_info->ikev1esp_auth);
 			continue;
 		}
 
 		int ret = snprintf(ptr, buflen, "%s%s(%d)",
 			       sep,
 			       strip_prefix(enum_name(&auth_alg_names,
-							esp_info->auth),
+							esp_info->ikev1esp_auth),
 					"HMAC_"),
-			       esp_info->auth);
+			       esp_info->ikev1esp_auth);
 
 		if (ret < 0 || (size_t)ret >= buflen) {
 			DBG_log("alg_info_snprint_ah: buffer too short for snprintf");
