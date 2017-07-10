@@ -1264,9 +1264,10 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	/*
 	 * Check the MODP group in the payload matches the accepted proposal.
 	 */
-	if (ikev2_match_ke_group_and_proposal(md, accepted_oakley.group) == STF_FAIL) {
+	ret = ikev2_match_ke_group_and_proposal(md, accepted_oakley.group);
+	if (ret != STF_OK) {
 		free_ikev2_proposal(&accepted_ike_proposal);
-		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+		return ret;
 	}
 
 	/*
@@ -4921,10 +4922,11 @@ static notification_t process_ike_rekey_sa_pl(struct msg_digest *md, struct stat
 		return STF_IGNORE;
 	}
 
-	if (ikev2_match_ke_group_and_proposal(md, accepted_oakley.group) == STF_FAIL) {
+	ret = ikev2_match_ke_group_and_proposal(md, accepted_oakley.group);
+	if (ret != STF_OK) {
 		free_ikev2_proposal(&accepted_ike_proposal);
 		md->st = pst;
-		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+		return ret;
 	}
 
 	/*
