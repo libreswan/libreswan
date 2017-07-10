@@ -2750,11 +2750,9 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			      enum_show(&ike_idtype_names, id->isaid_idtype), buf);
 	}
 
-	if (!aggrmode) {
-		/* check for certificates */
-		if (!ikev1_decode_cert(md))
-			return FALSE;
-
+	/* check for certificates */
+	if (!ikev1_decode_cert(md)) {
+		DBG(DBG_X509, DBG_log("CERT payload bogus or mismatched ID - continuing"));
 	}
 
 	/* check for certificate requests */
