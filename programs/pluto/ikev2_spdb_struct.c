@@ -2105,7 +2105,7 @@ static struct ikev2_proposal default_ikev2_ah_proposal_missing_esn[] = {
 	 * something strongswan might accept; bottom of the preference list
 	 */
 	{
-		.protoid = IKEv2_SEC_PROTO_ESP,
+		.protoid = IKEv2_SEC_PROTO_AH,
 		.transforms = {
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA1_96),
 		},
