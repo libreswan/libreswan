@@ -100,7 +100,7 @@ class Issues:
         values = set()
         for errors in self.issues.values():
             for error in errors:
-                values |= error
+                values.add(error)
         return values.__iter__()
 
     def __contains__(self, item):
@@ -492,7 +492,7 @@ def mortem(test, args, domain_prefix="",
             else:
                 test_result.issues.add("baseline-different", host_name)
             # update the diff to something hopefully closer?
-            test_result.diffs[host_name] = baseline_diff
+            # test_result.diffs[host_name] = baseline_diff
         # else:
         #    test_result.issues.add("baseline-failed", host_name)
 
