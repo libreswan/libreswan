@@ -276,7 +276,7 @@ int ikev2_parse_ts(struct payload_digest *const ts_pd,
 #endif
 			if (!in_raw(&array[i].net.start.u.v4.sin_addr.s_addr,
 				    sizeof(array[i].net.start.u.v4.sin_addr.s_addr),
-				    &addr, "ipv4 ts"))
+				    &addr, "ipv4 ts low"))
 				return -1;
 
 			array[i].net.end.u.v4.sin_family = AF_INET;
@@ -287,7 +287,7 @@ int ikev2_parse_ts(struct payload_digest *const ts_pd,
 
 			if (!in_raw(&array[i].net.end.u.v4.sin_addr.s_addr,
 				    sizeof(array[i].net.end.u.v4.sin_addr.s_addr),
-				    &addr, "ipv4 ts"))
+				    &addr, "ipv4 ts high"))
 				return -1;
 
 			break;
@@ -302,7 +302,7 @@ int ikev2_parse_ts(struct payload_digest *const ts_pd,
 
 			if (!in_raw(&array[i].net.start.u.v6.sin6_addr.s6_addr,
 				    sizeof(array[i].net.start.u.v6.sin6_addr.s6_addr),
-				    &addr, "ipv6 ts"))
+				    &addr, "ipv6 ts low"))
 				return -1;
 
 			array[i].net.end.u.v6.sin6_family = AF_INET6;
@@ -313,7 +313,7 @@ int ikev2_parse_ts(struct payload_digest *const ts_pd,
 
 			if (!in_raw(&array[i].net.end.u.v6.sin6_addr.s6_addr,
 				    sizeof(array[i].net.end.u.v6.sin6_addr.s6_addr),
-				    &addr, "ipv6 ts"))
+				    &addr, "ipv6 ts high"))
 				return -1;
 
 			break;
