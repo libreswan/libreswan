@@ -1154,14 +1154,14 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 		if (c->send_no_esp_tfc) {
 			DBG(DBG_CONTROL, DBG_log("Sending ESP_TFC_PADDING_NOT_SUPPORTED"));
-				if (!ship_v2N(ISAKMP_NEXT_v2NONE,
-				      ISAKMP_PAYLOAD_NONCRITICAL,
-				      PROTO_v2_RESERVED,
-				      &empty_chunk,
-				      v2N_ESP_TFC_PADDING_NOT_SUPPORTED,
-				      &empty_chunk,
-				      outpbs))
-				return STF_INTERNAL_ERROR;
+			if (!ship_v2N(ISAKMP_NEXT_v2NONE,
+			      ISAKMP_PAYLOAD_NONCRITICAL,
+			      PROTO_v2_RESERVED,
+			      &empty_chunk,
+			      v2N_ESP_TFC_PADDING_NOT_SUPPORTED,
+			      &empty_chunk,
+			      outpbs))
+			return STF_INTERNAL_ERROR;
 		}
 	}
 
@@ -1198,8 +1198,9 @@ static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st)
 		return FALSE;
 	}
 
+	(void)ipstr(&ip, &ip_str);
 	libreswan_log("received INTERNAL_IP4_DNS %s",
-			ipstr(&ip, &ip_str));
+			ip_str.buf);
 
 	char *old = c->cisco_dns_info;
 
@@ -1207,7 +1208,7 @@ static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st)
 		c->cisco_dns_info = clone_str(ip_str.buf, "ikev2 cisco_dns_info");
 	} else {
 		/*
-		 * concatenate new IP address  string on end of existing
+		 * concatenate new IP address string on end of existing
 		 * string, separated by ' '.
 		 */
 		size_t sz_old = strlen(old);

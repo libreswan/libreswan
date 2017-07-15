@@ -1655,10 +1655,9 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 			 * Our state should not advance.  Instead
 			 * we should send our I1 packet with the same cookie.
 			 */
-			const pb_stream *dc_pbs;
 
 			/*
-			 * RFC-7296 Sesction 2.6:
+			 * RFC-7296 Section 2.6:
 			 * The data associated with this notification MUST be
 			 * between 1 and 64 octets in length (inclusive)
 			 */
@@ -1667,17 +1666,16 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 				return STF_IGNORE; /* avoid DDOS / reflection attacks */
 			}
 
-			if (ntfy != md->chain[ISAKMP_NEXT_v2N] || ntfy->next != NULL) {
-				DBG(DBG_CONTROL, DBG_log("non-v2N_COOKIE notify payload(s) ignored "));
+			if (ntfy->next != NULL) {
+				DBG(DBG_CONTROL, DBG_log("ignoring Notify payloads after v2N_COOKIE"));
 			}
-			dc_pbs = &ntfy->pbs;
+
 			clonetochunk(st->st_dcookie,
-				dc_pbs->cur,
-				pbs_left(dc_pbs),
+				ntfy->pbs.cur, pbs_left(&ntfy->pbs),
 				"saved received dcookie");
 
 			DBG(DBG_CONTROLMORE,
-			    DBG_dump_chunk("dcookie received (instead of a R1):",
+			    DBG_dump_chunk("dcookie received (instead of an R1):",
 					   st->st_dcookie);
 			    DBG_log("next STATE_PARENT_I1 resend I1 with the dcookie"));
 
@@ -1708,6 +1706,10 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 				return STF_IGNORE;
 			}
 			st->st_retransmit++;
+
+			if (ntfy->next != NULL) {
+				DBG(DBG_CONTROL, DBG_log("ignoring Notify payloads after v2N_INVALID_KE_PAYLOAD"));
+			}
 
 			if (!in_struct(&sg, &suggested_group_desc,
 				&ntfy->pbs, NULL))
@@ -2480,7 +2482,7 @@ struct ikev2_payloads_summary ikev2_decrypt_msg(struct msg_digest *md, bool veri
 	stf_status status;
 	chunk_t chunk;
 
-	if (md->chain[ISAKMP_NEXT_v2SKF]) {
+	if (md->chain[ISAKMP_NEXT_v2SKF] != NULL) {
 		status = ikev2_reassemble_fragments(md, &chunk);
 		/* note: if status is SFT_OK, chunk is set */
 	} else {
