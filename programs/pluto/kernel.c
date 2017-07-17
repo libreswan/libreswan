@@ -778,8 +778,8 @@ bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd)
 
 			if (fgets(resp, sizeof(resp), f) == NULL) {
 				if (ferror(f)) {
-					log_errno((e, "fgets failed on output of %s%s command",
-							verb, verb_suffix));
+					LOG_ERRNO(errno, "fgets failed on output of %s%s command",
+						  verb, verb_suffix);
 					signal(SIGCHLD, savesig);
 					return FALSE;
 				} else {
@@ -802,8 +802,8 @@ bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd)
 			signal(SIGCHLD, savesig);
 
 			if (r == -1) {
-				log_errno((e, "pclose failed for %s%s command",
-						verb, verb_suffix));
+				LOG_ERRNO(errno, "pclose failed for %s%s command",
+					  verb, verb_suffix);
 				return FALSE;
 			} else if (WIFEXITED(r)) {
 				if (WEXITSTATUS(r) != 0) {

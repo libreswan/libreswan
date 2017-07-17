@@ -151,26 +151,28 @@ enum rc_type {
 	RC_NOTIFICATION = 200	/* as per IKE notification messages */
 };
 
-/* the following routines do a dance to capture errno before it is changed
- * A call must doubly parenthesize the argument list (no varargs macros).
- * The first argument must be "e", the local variable that captures errno.
+/*
+ * Wrap <message> in a prefix and suffix where the suffix contains
+ * errno and message.  Since __VA_ARGS__ may alter ERRNO, it needs to
+ * be saved.
  */
-#define log_errno(a) \
-	{ \
-		int e = errno; \
-		libreswan_log_errno_routine a; \
+
+void lswlog_log_errno(int e, const char *prefix,
+		      const char *message, ...) PRINTF_LIKE(3);
+void lswlog_exit(int rc) NEVER_RETURNS;
+
+#define LOG_ERRNO(ERRNO, ...)						\
+	{								\
+		int log_errno = ERRNO; /* save the value */		\
+		lswlog_log_errno(log_errno, "ERROR: ", __VA_ARGS__);	\
 	}
 
-extern void libreswan_log_errno_routine(int e, const char *message,
-					...) PRINTF_LIKE(2);
-#define exit_log_errno(a) \
-	{ \
-		int e = errno; \
-		libreswan_exit_log_errno_routine a; \
+#define EXIT_LOG_ERRNO(ERRNO, ...)					\
+	{								\
+		int exit_log_errno = ERRNO; /* save the value */	\
+		lswlog_log_errno(exit_log_errno, "FATAL ERROR: ", __VA_ARGS__); \
+		lswlog_exit(PLUTO_EXIT_FAIL);				\
 	}
-
-extern void libreswan_exit_log_errno_routine(int e, const char *message,
-					     ...) PRINTF_LIKE(2) NEVER_RETURNS;
 
 /*
  * general utilities

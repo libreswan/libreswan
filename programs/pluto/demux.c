@@ -339,16 +339,15 @@ static bool read_packet(struct msg_digest *md)
 			libreswan_log(
 				"some IKE message we sent has been rejected with ECONNREFUSED (kernel supplied no details)");
 		} else if (from_ugh != NULL) {
-			log_errno((e,
-				   "recvfrom on %s failed; Pluto cannot decode source sockaddr in rejection: %s",
-				   ifp->ip_dev->id_rname, from_ugh));
+			LOG_ERRNO(errno,
+				  "recvfrom on %s failed; Pluto cannot decode source sockaddr in rejection: %s",
+				  ifp->ip_dev->id_rname, from_ugh);
 		} else {
 			ipstr_buf b;
-
-			log_errno((e, "recvfrom on %s from %s:%u failed",
-				   ifp->ip_dev->id_rname,
-				   ipstr(&md->sender, &b),
-				   (unsigned)md->sender_port));
+			LOG_ERRNO(errno, "recvfrom on %s from %s:%u failed",
+				  ifp->ip_dev->id_rname,
+				  ipstr(&md->sender, &b),
+				  (unsigned)md->sender_port);
 		}
 
 		return FALSE;
