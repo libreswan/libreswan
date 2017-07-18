@@ -1258,7 +1258,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	}
 
 	if (sa->nic_offload) {
-		struct xfrm_user_offload xuo;
+		struct xfrm_user_offload xuo = { 0, 0 };
 
 		xuo.flags |= sa->inbound ? XFRM_OFFLOAD_INBOUND : 0;
 		if (sa->src->u.v4.sin_family == AF_INET6)
