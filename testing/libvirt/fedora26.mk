@@ -1,5 +1,5 @@
-KVM_ISO_URL = http://fedora.bhs.mirrors.ovh.net/linux/releases/25/Server/x86_64/iso/Fedora-Server-dvd-x86_64-25-1.3.iso
-KVM_KICKSTART_FILE = testing/libvirt/fedora25.ks
+KVM_ISO_URL = http://fedora.bhs.mirrors.ovh.net/linux/releases/26/Server/x86_64/iso/Fedora-Server-dvd-x86_64-26-1.5.iso
+KVM_KICKSTART_FILE = testing/libvirt/fedora26.ks
 
 KVM_PACKAGE_INSTALL = dnf install -y
 KVM_DEBUGINFO_INSTALL = dnf  debuginfo-install -y
