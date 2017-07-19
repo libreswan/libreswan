@@ -32,6 +32,7 @@ const struct encrypt_desc ike_alg_encrypt_null =
 {
 	.common = {
 		.name = "null",
+		.fqn = "NULL",
 		.names = { "null", },
 		.officname = "null",
 		.algo_type = IKE_ALG_ENCRYPT,

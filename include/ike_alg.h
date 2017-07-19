@@ -14,7 +14,9 @@ enum ike_alg_key;
 		bool __assertion = (ASSERTION);				\
 		if (!__assertion) {					\
 			PASSERT_FAIL("algorithm '%s' fails: %s",	\
-				     (ALG)->name, #ASSERTION);	\
+				     (ALG)->fqn != NULL ? (ALG)->fqn	\
+				     : (ALG)->name != NULL ? (ALG)->name \
+				     : "???", #ASSERTION);		\
 		}							\
 	}
 
@@ -172,9 +174,10 @@ int ike_alg_enum_match(const struct ike_alg_type *type, enum ike_alg_key key,
  */
 struct ike_alg {
 	/*
-	 * Name to print when logging.
+	 * Name to print when logging.  FQN = fully-qualified-name.
 	 */
 	const char *name;
+	const char *fqn;
 	/*
 	 * List of all possible names that might be used to specify
 	 * this algorithm.  Must include NAME and enum names.
