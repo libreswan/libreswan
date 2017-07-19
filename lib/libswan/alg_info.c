@@ -545,3 +545,28 @@ void alg_info_delref(struct alg_info *alg_info)
 	if (alg_info->ref_cnt == 0)
 		alg_info_free(alg_info);
 }
+
+size_t lswlog_proposal_info(struct lswlog *log, struct proposal_info *proposal)
+{
+	size_t size = 0;
+	const char *sep = "";
+	if (proposal->encrypt != NULL) {
+		size += lswlogf(log, "%s%s", sep, proposal->encrypt->common.fqn);
+		sep = "-";
+		if (proposal->enckeylen != 0) {
+			size += lswlogf(log, "_%zd", proposal->enckeylen);
+		}
+	}
+	if (proposal->prf != NULL) {
+		size += lswlogf(log, "%s%s", sep, proposal->prf->common.fqn);
+		sep = "-";
+	} else if (proposal->integ != NULL) {
+		size += lswlogf(log, "%s%s", sep, proposal->integ->common.fqn);
+		sep = "-";
+	}
+	if (proposal->dh != NULL) {
+		size += lswlogf(log, "%s%s", sep, proposal->dh->common.fqn);
+		sep = "-";
+	}
+	return size;
+}

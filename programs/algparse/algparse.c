@@ -11,10 +11,8 @@
 
 
 #define CHECK(TYPE,PARSE) {						\
-		printf("%*s[%s=%s]%*s ",				\
-		       3 - (int)strlen(#PARSE), "",			\
-		       #PARSE, algstr,					\
-		       max(0, 20 - (int)strlen(algstr)), "");		\
+		printf("[%s=%s]\n",					\
+		       #PARSE, algstr);					\
 		fflush(NULL);						\
 		char err_buf[512] = "";	/* ??? big enough? */		\
 		struct alg_info_##TYPE *e =				\
@@ -24,13 +22,15 @@
 							   sizeof(err_buf)); \
 		if (e != NULL) {					\
 			passert(err_buf[0] == '\0');			\
-			char algbuf[512] = "";				\
-			alg_info_##TYPE##_snprint(algbuf, sizeof(algbuf), e); \
-			printf("   OK: %s\n", algbuf);			\
+			FOR_EACH_PROPOSAL_INFO(&e->ai, proposal) {	\
+				struct lswlog log = empty_lswlog;	\
+				lswlog_proposal_info(&log, proposal);	\
+				printf("\t%s\n", log.buf);		\
+			}						\
 			alg_info_free(&e->ai);				\
 		} else {						\
 			passert(err_buf[0]);				\
-			printf("ERROR: %s\n", err_buf);			\
+			printf("\tERROR: %s\n", err_buf);		\
 		}							\
 		fflush(NULL);						\
 	}
