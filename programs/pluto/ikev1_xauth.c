@@ -1431,9 +1431,8 @@ static void *do_authentication(void *varg)
  * @param name Username
  * @param password Password
  * @param connname connnection name, from ipsec.conf
- * @return int Return Code - always 0.
  */
-static int xauth_launch_authent(struct state *st,
+static void xauth_launch_authent(struct state *st,
 			chunk_t *name,
 			chunk_t *password,
 			const char *connname)
@@ -1443,7 +1442,7 @@ static int xauth_launch_authent(struct state *st,
 	struct xauth_thread_arg *arg;
 
 	if (st->xauth_tid)	/* ??? this is not valid in POSIX pthreads */
-		return 0;
+		return;
 
 	/* build arg, the context that a thread gets on creation */
 
@@ -1477,7 +1476,6 @@ static int xauth_launch_authent(struct state *st,
 	pthread_attr_setdetachstate(&pattr, PTHREAD_CREATE_DETACHED);
 	pthread_create(&st->xauth_tid, &pattr, do_authentication, (void*) arg);
 	pthread_attr_destroy(&pattr);
-	return 0;
 }
 
 /* log a nice description of an unsupported attribute */
