@@ -3091,7 +3091,7 @@ static void *ikev2_pam_autherize_thread (void *x)
 
 	/* threads will go quietly if the master cancel it */
 	pthread_setcanceltype  (PTHREAD_CANCEL_ASYNCHRONOUS,  NULL);
-	pthread_setcancelstate (PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+	pthread_setcancelstate (PTHREAD_CANCEL_ENABLE, NULL);
 
 	p->pam_status = do_pam_authentication(&p->pam);
 	gettimeofday(&p->done_time, NULL);
