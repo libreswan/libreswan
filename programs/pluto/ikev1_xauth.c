@@ -222,15 +222,15 @@ static st_jbuf_t *alloc_st_jbuf(void)
 }
 
 /* sigIntHandler.
- * The only expected source of SIGINTs is state_deletion_xauth_cleanup
+ * The only expected source of SIGUSR1s is state_deletion_xauth_cleanup
  * so the meaning is: shut down this thread, the state is disappearing.
- * ??? what if a SIGINT comes from somewhere else?
+ * ??? what if a SIGUSR1 comes from somewhere else?
  * Note: this function locks st_jbuf_mutex
  * The longjump handler must unlock it.
  */
 static void sigIntHandler(int sig)
 {
-	if (sig == SIGINT) {
+	if (sig == SIGUSR1) {
 		st_jbuf_t *ptr;
 
 		pthread_mutex_lock(&st_jbuf_mutex);
@@ -255,7 +255,7 @@ void state_deletion_xauth_cleanup(struct state *st)
 {
 	/* ??? In POSIX pthreads, pthread_t is opaque and the following test is not legitimate */
 	if (st->xauth_tid) {
-		pthread_kill(st->xauth_tid, SIGINT);
+		pthread_kill(st->xauth_tid, SIGUSR1);
 		/* The pthread_mutex_lock ensures that the do_authentication
 		 * thread completes when pthread_kill'ed
 		 */
@@ -1292,17 +1292,17 @@ static void *do_authentication(void *varg)
 
 		/* Still one PAM thread? */
 		/* ??? how do we know that there is no more than one thread? */
-		/* ??? how do we know which thread was supposed to get this SIGINT if the signal handler setting is global? */
+		/* ??? how do we know which thread was supposed to get this SIGUSR1 if the signal handler setting is global? */
 		if (st_jbuf_mem != NULL) {
-			/* Yes, restart the one-shot SIGINT handler */
+			/* Yes, restart the one-shot SIGUSR1 handler */
 			sigprocmask(SIG_BLOCK, NULL, &sa.sa_mask);
 			sa.sa_handler = sigIntHandler;
 			sa.sa_flags = SA_RESETHAND | SA_NODEFER | SA_ONSTACK; /* One-shot handler */
-			sigaddset(&sa.sa_mask, SIGINT);
-			sigaction(SIGINT, &sa, NULL);
+			sigaddset(&sa.sa_mask, SIGUSR1);
+			sigaction(SIGUSR1, &sa, NULL);
 		} else {
 			/* no */
-			sigaction(SIGINT, &oldsa, NULL);
+			sigaction(SIGUSR1, &oldsa, NULL);
 		}
 		pthread_mutex_unlock(&st_jbuf_mutex);
 		pfree(arg->password);
@@ -1320,8 +1320,8 @@ static void *do_authentication(void *varg)
 	pthread_sigmask(SIG_BLOCK, &sa.sa_mask, NULL);
 	sa.sa_handler = sigIntHandler;
 	sa.sa_flags = SA_RESETHAND | SA_NODEFER | SA_ONSTACK; /* One shot handler */
-	sigaddset(&sa.sa_mask, SIGINT);
-	sigaction(SIGINT, &sa, &oldsa);
+	sigaddset(&sa.sa_mask, SIGUSR1);
+	sigaction(SIGUSR1, &sa, &oldsa);
 	libreswan_log("XAUTH: User %s: Attempting to login", arg->name);
 
 	switch (st->st_connection->xauthby) {
@@ -1385,7 +1385,7 @@ static void *do_authentication(void *varg)
 	pthread_mutex_lock(&st_jbuf_mutex);
 	dealloc_st_jbuf(ptr);
 	if (st_jbuf_mem == NULL)
-		sigaction(SIGINT, &oldsa, NULL);
+		sigaction(SIGUSR1, &oldsa, NULL);
 	pthread_mutex_unlock(&st_jbuf_mutex);
 	pthread_mutex_unlock(&st->xauth_mutex);
 	st->xauth_tid = 0;	/* ??? this is not valid in POSIX pthreads */
