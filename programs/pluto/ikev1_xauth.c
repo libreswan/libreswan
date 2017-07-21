@@ -113,7 +113,7 @@ struct xauth_thread_arg {
 	char *password;
 	char *connname;
 	char *ipaddr;
-	st_jbuf_t *ptr;
+	ptrdiff_t stjb_ix;
 };
 
 /*
@@ -163,31 +163,31 @@ static st_jbuf_t *get_ptr_matching_tid(void)
 
 /*
  * Find or create a free slot in the st_jbuf_mem array.
- * Note: after return, caller MUST set the .st field of the result to a
- * non-NULL value or bad things happen. The only caller does this.
+ * Note: even free slots must have non-NULL st components
+ * or bad things happen.
  * The caller must not have locked st_jbuf_mutex: we will.
  */
-static st_jbuf_t *alloc_st_jbuf(void)
+static ptrdiff_t alloc_st_jbuf(struct state *st)
 {
-	st_jbuf_t *ptr;
-
 	pthread_mutex_lock(&st_jbuf_mutex);
-	if (st_jbuf_mem == NULL) {
-		/* no array: allocate one slot plus endmarker */
-		st_jbuf_mem = calloc(2, sizeof(st_jbuf_t));
-		passert(st_jbuf_mem != NULL);
 
+	st_jbuf_t *ptr = st_jbuf_mem;
+
+	if (ptr == NULL) {
+		/* no array: allocate one slot plus endmarker */
+		ptr = calloc(2, sizeof(st_jbuf_t));
+		passert(ptr != NULL);
+		st_jbuf_mem = ptr;
 		/*
 		 * Initialize end marker.
 		 * calloc(3) does not guarantee that pointer .st is
 		 * initialized to NULL but it will set .in_use to FALSE.
 		 */
-		st_jbuf_mem[1].st = NULL;
+		ptr[1].st = NULL;
 
-		ptr = st_jbuf_mem;
 		/* new entry is going in first slot in our new array */
 	} else {
-		for (ptr = st_jbuf_mem; ptr->st != NULL; ptr++) {
+		for (; ; ptr++) {
 			if (ptr->st == NULL) {
 				/* ptr points at endmarker:
 				 * there is no room in the existing array.
@@ -201,9 +201,6 @@ static st_jbuf_t *alloc_st_jbuf(void)
 				passert(st_jbuf_mem != NULL);
 
 				ptr = st_jbuf_mem + n;
-
-				/* caller MUST ensure that ptr->st is non-NULL */
-
 				ptr[1].in_use = FALSE;	/* initialize new endmarker */
 				ptr[1].st = NULL;
 				/* new entry is the former endmarker slot */
@@ -216,9 +213,14 @@ static st_jbuf_t *alloc_st_jbuf(void)
 		}
 	}
 
+	passert(st != NULL);
+	ptr->st = st;
 	ptr->in_use = TRUE;
+
+	ptrdiff_t ix = ptr - st_jbuf_mem;
+
 	pthread_mutex_unlock(&st_jbuf_mutex);
-	return ptr;
+	return ix;
 }
 
 /* sigIntHandler.
@@ -1267,21 +1269,14 @@ static void *do_authentication(void *varg)
 
 	struct sigaction sa;
 	struct sigaction oldsa;
-	st_jbuf_t *ptr = arg->ptr;
 
-	if (ptr == NULL) {
-		pfree(arg->password);
-		pfree(arg->name);
-		pfree(arg->connname);
-		pfree(varg);
-		pthread_mutex_unlock(&st->xauth_mutex);
-		st->xauth_tid = 0;	/* ??? Not well defined for POSIX threads!!! */
-		return NULL;
-	}
 	/* Note: this is the only sigsetjmp.
 	 * The only siglongjmp sets 1 as the return value.
 	 */
 	pthread_mutex_lock(&st_jbuf_mutex);
+
+	st_jbuf_t *ptr = &st_jbuf_mem[arg->stjb_ix];
+
 	if (sigsetjmp(ptr->jbuf, 1) != 0) {
 		/* We got here via siglongjmp in sigIntHandler.
 		 * st_jbuf_mutex is locked.
@@ -1412,7 +1407,6 @@ static int xauth_launch_authent(struct state *st,
 			const char *connname)
 {
 	pthread_attr_t pattr;
-	st_jbuf_t *ptr;
 	struct xauth_thread_arg *arg;
 
 	if (st->xauth_tid)	/* ??? this is not valid in POSIX pthreads */
@@ -1441,9 +1435,7 @@ static int xauth_launch_authent(struct state *st,
 	 * authentication as the /etc/ipsec.d/passwd file may reside on a SAN,
 	 * a NAS or an NFS disk
 	 */
-	ptr = alloc_st_jbuf();
-	ptr->st = st;
-	arg->ptr = ptr;
+	arg->stjb_ix = alloc_st_jbuf(st);
 	pthread_mutex_init(&st->xauth_mutex, NULL);
 	pthread_mutex_lock(&st->xauth_mutex);
 	pthread_attr_init(&pattr);
