@@ -1965,15 +1965,15 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 		/*
 		 * Encryption
 		 */
-		const struct encrypt_desc *ealg = ike_info->ike_encrypt;
-		if (!append_encrypt_transform(proposal, ealg, ike_info->ike_eklen)) {
+		const struct encrypt_desc *ealg = ike_info->encrypt;
+		if (!append_encrypt_transform(proposal, ealg, ike_info->enckeylen)) {
 			continue;
 		}
 
 		/*
 		 * PRF
 		 */
-		const struct prf_desc *prf = ike_info->ike_prf;
+		const struct prf_desc *prf = ike_info->prf;
 		if (prf == NULL) {
 			PEXPECT_LOG("%s", "IKEv2 proposal with no PRF should have been dropped");
 			continue;
@@ -1991,7 +1991,7 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 		 * INTEG
 		 */
 		if (ike_alg_enc_requires_integ(ealg)) {
-			const struct integ_desc *integ = ike_info->ike_integ;
+			const struct integ_desc *integ = ike_info->integ;
 			if (integ == NULL) {
 				PEXPECT_LOG("%s", "IKEv2 proposal with no INTEG should have been dropped");
 				continue;
@@ -2019,13 +2019,13 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 		/*
 		 * DH GROUP
 		 */
-		const struct oakley_group_desc *group = ike_info->ike_dh_group;
+		const struct oakley_group_desc *group = ike_info->dh;
 		if (group == NULL) {
 			PEXPECT_LOG("%s", "IKEv2 proposal with no DH_GROUP should have been dropped");
 			continue;
 		} else {
 			append_transform(proposal, IKEv2_TRANS_TYPE_DH,
-					 ike_info->ike_dh_group->group, 0);
+					 ike_info->dh->group, 0);
 		}
 
 		DBG(DBG_CONTROL,
@@ -2105,7 +2105,7 @@ static struct ikev2_proposal default_ikev2_ah_proposal_missing_esn[] = {
 	 * something strongswan might accept; bottom of the preference list
 	 */
 	{
-		.protoid = IKEv2_SEC_PROTO_ESP,
+		.protoid = IKEv2_SEC_PROTO_AH,
 		.transforms = {
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA1_96),
 		},
@@ -2223,7 +2223,7 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 		case POLICY_ENCRYPT:
 			proposal->protoid = IKEv2_SEC_PROTO_ESP;
 
-			const unsigned ealg = esp_info->transid;
+			const unsigned ealg = esp_info->ikev1esp_transid;
 			if (!ESP_EALG_PRESENT(ealg)) {
 				struct esb_buf buf;
 				loglog(RC_LOG_SERIOUS,
@@ -2236,31 +2236,31 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 			/*
 			 * Encryption.
 			 */
-			const struct encrypt_desc *encrypt = esp_info->esp_encrypt;
+			const struct encrypt_desc *encrypt = esp_info->encrypt;
 			if (!append_encrypt_transform(proposal, encrypt,
 						      esp_info->enckeylen)) {
 				continue;
 			}
 
 			/* add ESP auth attr (if present) */
-			if (esp_info->auth != AUTH_ALGORITHM_NONE) {
-				unsigned aalg = alg_info_esp_aa2sadb(esp_info->auth);
+			if (esp_info->ikev1esp_auth != AUTH_ALGORITHM_NONE) {
+				unsigned aalg = alg_info_esp_aa2sadb(esp_info->ikev1esp_auth);
 				if (!ESP_AALG_PRESENT(aalg)) {
 					struct esb_buf buf;
 					/* XXX: correct enum??? */
 					loglog(RC_LOG_SERIOUS,
 					       "kernel_alg_db_add() kernel auth aalg_id=%s=%d not present",
-					       enum_showb(&auth_alg_names, esp_info->auth, &buf),
-					       esp_info->auth);
+					       enum_showb(&auth_alg_names, esp_info->ikev1esp_auth, &buf),
+					       esp_info->ikev1esp_auth);
 					continue;
 				}
-				const struct integ_desc *integ = esp_info->esp_integ;
+				const struct integ_desc *integ = esp_info->integ;
 				if (integ == NULL) {
 					struct esb_buf buf;
 					loglog(RC_LOG_SERIOUS,
 					       "dropping local ESP proposal containing unsupported INTEG algorithm %s=%d",
-					       enum_showb(&auth_alg_names, esp_info->auth, &buf),
-					       esp_info->auth);
+					       enum_showb(&auth_alg_names, esp_info->ikev1esp_auth, &buf),
+					       esp_info->ikev1esp_auth);
 					continue;
 				}
 				append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
@@ -2271,22 +2271,22 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 
 		case POLICY_AUTHENTICATE:
 			proposal->protoid = IKEv2_SEC_PROTO_AH;
-			int aalg = alg_info_esp_aa2sadb(esp_info->auth);
+			int aalg = alg_info_esp_aa2sadb(esp_info->ikev1esp_auth);
 			if (!ESP_AALG_PRESENT(aalg)) {
 				struct esb_buf buf;
 				loglog(RC_LOG_SERIOUS,
 				       "kernel_alg_db_add() kernel auth aalg_id=%s=%d not present",
-				       enum_showb(&auth_alg_names, esp_info->auth, &buf),
-				       esp_info->auth);
+				       enum_showb(&auth_alg_names, esp_info->ikev1esp_auth, &buf),
+				       esp_info->ikev1esp_auth);
 				continue;
 			}
-			const struct integ_desc *integ = esp_info->esp_integ;
+			const struct integ_desc *integ = esp_info->integ;
 			if (integ == NULL) {
 				struct esb_buf buf;
 				loglog(RC_LOG_SERIOUS,
 				       "dropping local AH proposal containing unsupported INTEG algorithm %s=%d",
-				       enum_showb(&auth_alg_names, esp_info->auth, &buf),
-				       esp_info->auth);
+				       enum_showb(&auth_alg_names, esp_info->ikev1esp_auth, &buf),
+				       esp_info->ikev1esp_auth);
 				continue;
 			}
 			append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,

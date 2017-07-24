@@ -94,7 +94,7 @@ enum key_oppo_step {
 #endif
 };
 
-typedef stf_status (key_tail_fn)(struct msg_digest *md);
+typedef stf_status key_tail_fn(struct msg_digest *md);
 
 extern stf_status oakley_id_and_auth(struct msg_digest *md,
 				     bool initiator,                    /* are we the Initiator? */

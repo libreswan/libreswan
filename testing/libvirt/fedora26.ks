@@ -73,7 +73,7 @@ sysctl -w net.ipv4.tcp_mtu_probing=1
 
 ip addr show scope global >> /var/tmp/network.log
 HWA=`cat /sys/class/net/e[n-t][h-s]?/address`
-#clean up HWADDR line F22 has it F25 not:)
+#clean up HWADDR line F22 has it F26 not:)
 mv /etc/sysconfig/network-scripts/ifcfg-ens? /etc/sysconfig/network-scripts/ifcfg-eth0
 sed -i '/HWADDR=/d' /etc/sysconfig/network-scripts/ifcfg-eth0
 echo "HWADDR=\"$HWA\"" >> /etc/sysconfig/network-scripts/ifcfg-eth0
@@ -83,7 +83,7 @@ ifup ens2 >> /var/tmp/network.log
 
 rpm -qa > /var/tmp/rpm-qa-fedora.log
 
-# workaround for vim fedora25 packaging bug. we want vim-enhanced and
+# workaround for vim fedora26 packaging bug. we want vim-enhanced and
 # that clashes with vim-minimal.
 
 rpm -e vim-minimal --nodeps

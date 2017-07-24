@@ -77,14 +77,14 @@ static void bsdkame_init_pfkey(void)
 	pfkeyfd = socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
 
 	if (pfkeyfd == -1)
-		exit_log_errno((e, "socket() in init_pfkeyfd()"));
+		EXIT_LOG_ERRNO(errno, "socket() in init_pfkeyfd()");
 
 #ifdef NEVER    /* apparently unsupported! */
 	if (fcntl(pfkeyfd, F_SETFL, O_NONBLOCK) != 0)
-		exit_log_errno((e, "fcntl(O_NONBLOCK) in init_pfkeyfd()"));
+		EXIT_LOG_ERRNO(errno, "fcntl(O_NONBLOCK) in init_pfkeyfd()");
 #endif
 	if (fcntl(pfkeyfd, F_SETFD, FD_CLOEXEC) != 0)
-		exit_log_errno((e, "fcntl(FD_CLOEXEC) in init_pfkeyfd()"));
+		EXIT_LOG_ERRNO(errno, "fcntl(FD_CLOEXEC) in init_pfkeyfd()");
 
 	DBG(DBG_KERNEL,
 	    DBG_log("process %u listening for PF_KEY_V2 on file descriptor %d",

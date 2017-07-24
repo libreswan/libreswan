@@ -811,7 +811,7 @@ static bool ikev2_collect_fragment(struct msg_digest *md, struct state *st)
 	return TRUE;
 }
 
-static struct state *process_v2_child_ix (struct msg_digest *md,
+static struct state *process_v2_child_ix(struct msg_digest *md,
 		struct state *pst)
 {
 	struct state *st = NULL; /* child state */
@@ -1105,7 +1105,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		return;
 	}
 
-	if(ix == ISAKMP_v2_CREATE_CHILD_SA && st == NULL) {
+	if (ix == ISAKMP_v2_CREATE_CHILD_SA && st == NULL) {
 		DBG(DBG_CONTROL, DBG_log("dropping message. no IKE state found for this ISAKMP_v2_CREATE_CHILD_SA message"));
 		return;
 	}
@@ -2304,11 +2304,8 @@ v2_notification_t accept_v2_nonce(struct msg_digest *md,
 	 * note ISAKMP_NEXT_v2Ni == ISAKMP_NEXT_v2Nr
 	 * so when we refer to ISAKMP_NEXT_v2Ni, it might be ISAKMP_NEXT_v2Nr
 	 */
-	pb_stream *nonce_pbs;
-	size_t len;
-
-	nonce_pbs = &md->chain[ISAKMP_NEXT_v2Ni]->pbs;
-	len = pbs_left(nonce_pbs);
+	pb_stream *nonce_pbs = &md->chain[ISAKMP_NEXT_v2Ni]->pbs;
+	size_t len = pbs_left(nonce_pbs);
 
 	/*
 	 * RFC 7296 Section 2.10:

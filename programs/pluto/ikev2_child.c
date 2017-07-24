@@ -276,7 +276,7 @@ int ikev2_parse_ts(struct payload_digest *const ts_pd,
 #endif
 			if (!in_raw(&array[i].net.start.u.v4.sin_addr.s_addr,
 				    sizeof(array[i].net.start.u.v4.sin_addr.s_addr),
-				    &addr, "ipv4 ts"))
+				    &addr, "ipv4 ts low"))
 				return -1;
 
 			array[i].net.end.u.v4.sin_family = AF_INET;
@@ -287,7 +287,7 @@ int ikev2_parse_ts(struct payload_digest *const ts_pd,
 
 			if (!in_raw(&array[i].net.end.u.v4.sin_addr.s_addr,
 				    sizeof(array[i].net.end.u.v4.sin_addr.s_addr),
-				    &addr, "ipv4 ts"))
+				    &addr, "ipv4 ts high"))
 				return -1;
 
 			break;
@@ -302,7 +302,7 @@ int ikev2_parse_ts(struct payload_digest *const ts_pd,
 
 			if (!in_raw(&array[i].net.start.u.v6.sin6_addr.s6_addr,
 				    sizeof(array[i].net.start.u.v6.sin6_addr.s6_addr),
-				    &addr, "ipv6 ts"))
+				    &addr, "ipv6 ts low"))
 				return -1;
 
 			array[i].net.end.u.v6.sin6_family = AF_INET6;
@@ -313,7 +313,7 @@ int ikev2_parse_ts(struct payload_digest *const ts_pd,
 
 			if (!in_raw(&array[i].net.end.u.v6.sin6_addr.s6_addr,
 				    sizeof(array[i].net.end.u.v6.sin6_addr.s6_addr),
-				    &addr, "ipv6 ts"))
+				    &addr, "ipv6 ts high"))
 				return -1;
 
 			break;
@@ -1053,7 +1053,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 		close_output_pbs(&pb_nr);
 
-		if(in.isag_np == ISAKMP_NEXT_v2KE)  {
+		if (in.isag_np == ISAKMP_NEXT_v2KE)  {
 			if (!justship_v2KE(&cst->st_gr,
 						cst->st_oakley.group, outpbs,
 						ISAKMP_NEXT_v2TSi))
@@ -1154,14 +1154,14 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 		if (c->send_no_esp_tfc) {
 			DBG(DBG_CONTROL, DBG_log("Sending ESP_TFC_PADDING_NOT_SUPPORTED"));
-				if (!ship_v2N(ISAKMP_NEXT_v2NONE,
-				      ISAKMP_PAYLOAD_NONCRITICAL,
-				      PROTO_v2_RESERVED,
-				      &empty_chunk,
-				      v2N_ESP_TFC_PADDING_NOT_SUPPORTED,
-				      &empty_chunk,
-				      outpbs))
-				return STF_INTERNAL_ERROR;
+			if (!ship_v2N(ISAKMP_NEXT_v2NONE,
+			      ISAKMP_PAYLOAD_NONCRITICAL,
+			      PROTO_v2_RESERVED,
+			      &empty_chunk,
+			      v2N_ESP_TFC_PADDING_NOT_SUPPORTED,
+			      &empty_chunk,
+			      outpbs))
+			return STF_INTERNAL_ERROR;
 		}
 	}
 
@@ -1198,8 +1198,9 @@ static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st)
 		return FALSE;
 	}
 
+	(void)ipstr(&ip, &ip_str);
 	libreswan_log("received INTERNAL_IP4_DNS %s",
-			ipstr(&ip, &ip_str));
+			ip_str.buf);
 
 	char *old = c->cisco_dns_info;
 
@@ -1207,7 +1208,7 @@ static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st)
 		c->cisco_dns_info = clone_str(ip_str.buf, "ikev2 cisco_dns_info");
 	} else {
 		/*
-		 * concatenate new IP address  string on end of existing
+		 * concatenate new IP address string on end of existing
 		 * string, separated by ' '.
 		 */
 		size_t sz_old = strlen(old);

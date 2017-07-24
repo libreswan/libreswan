@@ -551,8 +551,8 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 	case ID_IPV6_ADDR:
 	{
 		ip_address temp_address;
-		err_t ughmsg = initaddr(id_pbs->cur, pbs_left(
-					  id_pbs), afi->af, &temp_address);
+		err_t ughmsg = initaddr(id_pbs->cur, pbs_left(id_pbs),
+					afi->af, &temp_address);
 
 		if (ughmsg != NULL) {
 			loglog(RC_LOG_SERIOUS,

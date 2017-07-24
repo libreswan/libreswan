@@ -475,7 +475,7 @@ void libreswan_loglog(int mess_no, const char *message, ...)
 	whack_log(mess_no, "~%s", m);
 }
 
-void libreswan_log_errno_routine(int e, const char *message, ...)
+void lswlog_log_errno(int e, const char *prefix, const char *message, ...)
 {
 	va_list args;
 	char m[LOG_WIDTH]; /* longer messages will be truncated */
@@ -486,14 +486,16 @@ void libreswan_log_errno_routine(int e, const char *message, ...)
 
 	if (log_to_stderr || pluto_log_fp != NULL)
 		fprintf(log_to_stderr ? stderr : pluto_log_fp,
-			"ERROR: %s. Errno %d: %s\n", m, e, strerror(e));
+			"%s%s. Errno %d: %s\n",
+			prefix, m, e, strerror(e));
 	if (log_to_syslog)
-		syslog(LOG_ERR, "ERROR: %s. Errno %d: %s", m, e, strerror(e));
+		syslog(LOG_ERR, "%s%s. Errno %d: %s",
+		       prefix, m, e, strerror(e));
 	if (log_to_perpeer)
 		peerlog(strerror(e), m);
 
 	whack_log(RC_LOG_SERIOUS,
-		  "~ERROR: %s. Errno %d: %s", m, e, strerror(e));
+		  "~%s%s. Errno %d: %s", prefix, m, e, strerror(e));
 }
 
 void exit_log(const char *message, ...)
@@ -518,28 +520,9 @@ void exit_log(const char *message, ...)
 	exit_pluto(PLUTO_EXIT_FAIL);
 }
 
-void libreswan_exit_log_errno_routine(int e, const char *message, ...)
+void lswlog_exit(int rc)
 {
-	va_list args;
-	char m[LOG_WIDTH]; /* longer messages will be truncated */
-
-	va_start(args, message);
-	fmt_log(m, sizeof(m), message, args);
-	va_end(args);
-
-	if (log_to_stderr || pluto_log_fp != NULL)
-		fprintf(log_to_stderr ? stderr : pluto_log_fp,
-			"FATAL ERROR: %s. Errno %d: %s\n", m, e, strerror(e));
-	if (log_to_syslog)
-		syslog(LOG_ERR, "FATAL ERROR: %s. Errno %d: %s", m, e, strerror(
-			       e));
-	if (log_to_perpeer)
-		peerlog(strerror(e), m);
-
-	whack_log(RC_LOG_SERIOUS,
-		  "~FATAL ERROR: %s. Errno %d: %s", m, e, strerror(e));
-
-	exit_pluto(PLUTO_EXIT_FAIL);
+	exit_pluto(rc);
 }
 
 /* emit message to whack.

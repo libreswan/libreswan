@@ -204,11 +204,22 @@ def results(logger, tests, baseline, args, result_stats):
                     continue
             result_stats.add_result(result)
 
-            b = args.json and printer.JsonBuilder(sys.stdout) or printer.TextBuilder(sys.stdout)
-            printer.build_result(logger, result, baseline, args, args.print, b)
             publish.test_files(logger, args, result)
             publish.test_output_files(logger, args, result)
             publish.json_result(logger, args, result)
+
+            # If there is a baseline; limit what is printed to just
+            # those that differ.
+            if baseline:
+                baseline_issue = False
+                for issue in result.issues:
+                    if "baseline" in issue:
+                        baseline_issue = True
+                        break
+                if not baseline_issue:
+                    continue
+            b = args.json and printer.JsonBuilder(sys.stdout) or printer.TextBuilder(sys.stdout)
+            printer.build_result(logger, result, baseline, args, args.print, b)
 
     publish.json_status(logger, args, "finished")
 

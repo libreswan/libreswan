@@ -318,24 +318,24 @@ static void init_netlink(void)
 	netlinkfd = safe_socket(AF_NETLINK, SOCK_DGRAM, NETLINK_XFRM);
 
 	if (netlinkfd < 0)
-		exit_log_errno((e, "socket() in init_netlink()"));
+		EXIT_LOG_ERRNO(errno, "socket() in init_netlink()");
 
 	if (fcntl(netlinkfd, F_SETFD, FD_CLOEXEC) != 0)
-		exit_log_errno((e, "fcntl(FD_CLOEXEC) in init_netlink()"));
+		EXIT_LOG_ERRNO(errno, "fcntl(FD_CLOEXEC) in init_netlink()");
 
 	netlink_bcast_fd = safe_socket(AF_NETLINK, SOCK_DGRAM, NETLINK_XFRM);
 
 	if (netlink_bcast_fd < 0)
-		exit_log_errno((e, "socket() for bcast in init_netlink()"));
+		EXIT_LOG_ERRNO(errno, "socket() for bcast in init_netlink()");
 
 	if (fcntl(netlink_bcast_fd, F_SETFD, FD_CLOEXEC) != 0)
-		exit_log_errno((e,
-				"fcntl(FD_CLOEXEC) for bcast in init_netlink()"));
+		EXIT_LOG_ERRNO(errno,
+			       "fcntl(FD_CLOEXEC) for bcast in init_netlink()");
 
 
 	if (fcntl(netlink_bcast_fd, F_SETFL, O_NONBLOCK) != 0)
-		exit_log_errno((e,
-				"fcntl(O_NONBLOCK) for bcast in init_netlink()"));
+		EXIT_LOG_ERRNO(errno,
+			       "fcntl(O_NONBLOCK) for bcast in init_netlink()");
 
 
 	addr.nl_family = AF_NETLINK;
@@ -343,7 +343,7 @@ static void init_netlink(void)
 	addr.nl_groups = XFRMGRP_ACQUIRE | XFRMGRP_EXPIRE;
 	if (bind(netlink_bcast_fd, (struct sockaddr *)&addr, sizeof(addr)) !=
 		0)
-		exit_log_errno((e, "Failed to bind bcast socket in init_netlink() - Perhaps kernel was not compiled with CONFIG_XFRM"));
+		EXIT_LOG_ERRNO(errno, "Failed to bind bcast socket in init_netlink() - Perhaps kernel was not compiled with CONFIG_XFRM");
 
 
 	/*
@@ -410,10 +410,10 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 		r = write(netlinkfd, hdr, len);
 	} while (r < 0 && errno == EINTR);
 	if (r < 0) {
-		log_errno((e, "netlink write() of %s message for %s %s failed",
-				sparse_val_show(xfrm_type_names,
-						hdr->nlmsg_type),
-				description, text_said));
+		LOG_ERRNO(errno, "netlink write() of %s message for %s %s failed",
+			  sparse_val_show(xfrm_type_names,
+					  hdr->nlmsg_type),
+			  description, text_said);
 		return FALSE;
 	} else if ((size_t)r != len) {
 		loglog(RC_LOG_SERIOUS,
@@ -432,10 +432,11 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 			if (errno == EINTR)
 				continue;
 			netlink_errno = errno;
-			log_errno((e, "netlink recvfrom() of response to our %s message for %s %s failed",
-					sparse_val_show(xfrm_type_names,
+			LOG_ERRNO(errno,
+				  "netlink recvfrom() of response to our %s message for %s %s failed",
+				  sparse_val_show(xfrm_type_names,
 							hdr->nlmsg_type),
-					description, text_said));
+				  description, text_said);
 			return FALSE;
 		} else if ((size_t) r < sizeof(rsp.n)) {
 			libreswan_log(
@@ -1258,7 +1259,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	}
 
 	if (sa->nic_offload) {
-		struct xfrm_user_offload xuo;
+		struct xfrm_user_offload xuo = { 0, 0 };
 
 		xuo.flags |= sa->inbound ? XFRM_OFFLOAD_INBOUND : 0;
 		if (sa->src->u.v4.sin_family == AF_INET6)
@@ -1654,8 +1655,9 @@ static bool netlink_get(void)
 		if (errno == EAGAIN)
 			return FALSE;
 
-		if (errno != EINTR)
-			log_errno((e, "recvfrom() failed in netlink_get"));
+		if (errno != EINTR) {
+			LOG_ERRNO(errno, "recvfrom() failed in netlink_get");
+		}
 		return TRUE;
 	} else if ((size_t)r < sizeof(rsp.n)) {
 		libreswan_log(

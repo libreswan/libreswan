@@ -126,11 +126,11 @@ struct raw_iface *find_raw_ifaces4(void)
 	/* get list of interfaces with assigned IPv4 addresses from system */
 
 	if (master_sock == -1)
-		exit_log_errno((e, "socket() failed in find_raw_ifaces4()"));
+		EXIT_LOG_ERRNO(errno, "socket() failed in find_raw_ifaces4()");
 
 	if (setsockopt(master_sock, SOL_SOCKET, SO_REUSEADDR,
 		       (const void *)&on, sizeof(on)) < 0)
-		exit_log_errno((e, "setsockopt() in find_raw_ifaces4()"));
+		EXIT_LOG_ERRNO(errno, "setsockopt() in find_raw_ifaces4()");
 
 	/* bind the socket */
 	{
@@ -140,8 +140,8 @@ struct raw_iface *find_raw_ifaces4(void)
 		setportof(htons(pluto_port), &any);
 		if (bind(master_sock, sockaddrof(&any),
 			 sockaddrlenof(&any)) < 0)
-			exit_log_errno((e,
-					"bind() failed in find_raw_ifaces4()"));
+			EXIT_LOG_ERRNO(errno,
+				       "bind() failed in find_raw_ifaces4()");
 	}
 
 	/* a million interfaces is probably the maximum, ever... */
@@ -153,17 +153,17 @@ struct raw_iface *find_raw_ifaces4(void)
 
 		if (tmpbuf == NULL) {
 			free(buf);
-			exit_log_errno((e,
-					"realloc of %d in find_raw_ifaces4()",
-					ifconf.ifc_len));
+			EXIT_LOG_ERRNO(errno,
+				       "realloc of %d in find_raw_ifaces4()",
+				       ifconf.ifc_len);
 		}
 		buf = tmpbuf;
 		memset(buf, 0xDF, ifconf.ifc_len);	/* stomp */
 		ifconf.ifc_buf = (void *) buf;
 
 		if (ioctl(master_sock, SIOCGIFCONF, &ifconf) == -1)
-			exit_log_errno((e,
-					"ioctl(SIOCGIFCONF) in find_raw_ifaces4()"));
+			EXIT_LOG_ERRNO(errno,
+				       "ioctl(SIOCGIFCONF) in find_raw_ifaces4()");
 
 		/* if we got back less than we asked for, we have them all */
 		if (ifconf.ifc_len < (int)(sizeof(struct ifreq) * num))
@@ -220,9 +220,9 @@ struct raw_iface *find_raw_ifaces4(void)
 		zero(&auxinfo); /* paranoia */
 		memcpy(auxinfo.ifr_name, buf[j].ifr_name, IFNAMSIZ);
 		if (ioctl(master_sock, SIOCGIFFLAGS, &auxinfo) == -1) {
-			exit_log_errno((e,
-					"ioctl(SIOCGIFFLAGS) for %s in find_raw_ifaces4()",
-					ri.name));
+			EXIT_LOG_ERRNO(errno,
+				       "ioctl(SIOCGIFFLAGS) for %s in find_raw_ifaces4()",
+				       ri.name);
 		}
 		if (!(auxinfo.ifr_flags & IFF_UP)) {
 			DBG(DBG_CONTROLMORE,

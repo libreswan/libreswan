@@ -1808,7 +1808,7 @@ bool find_pending_phas2(const so_serial_t psn,
 	int i;
 	int n = 0;
 
-	passert (psn >= SOS_FIRST);
+	passert(psn >= SOS_FIRST);
 
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
 		struct state *st;

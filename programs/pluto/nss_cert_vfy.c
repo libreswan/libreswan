@@ -522,7 +522,7 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *name)
 
 	do
 	{
-		switch(current->type) {
+		switch (current->type) {
 		case certDNSName:
 		case certRFC822Name:
 			if (san_ip)

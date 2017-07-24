@@ -1393,7 +1393,7 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 		u_int32_t n = 0;
 
 		switch (fp->field_type) {
-		case ft_zig:
+		case ft_zig:		/* zero (ignore violations) */
 			inp += i;
 			break;
 		case ft_nat:            /* natural number (may be 0) */
@@ -1788,7 +1788,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 				fp->name == NULL ? "<end>" : fp->name);
 #endif
 			switch (fp->field_type) {
-			case ft_zig: /* should be zero, so ensure it is */
+			case ft_zig: /* zero */
 				memset(cur, 0, i);
 				inp += i;
 				cur += i;

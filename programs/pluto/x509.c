@@ -751,7 +751,7 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 		libreswan_log("certificate verified OK: %s", end_cert->subjectName);
 		DBG(DBG_X509, DBG_log("Verifying configured ID matches certificate"));
 
-		switch(c->spd.that.id.kind) {
+		switch (c->spd.that.id.kind) {
 		case ID_IPV4_ADDR:
 		case ID_IPV6_ADDR:
 			idtoa(&c->spd.that.id, ipstr, sizeof(ipstr));

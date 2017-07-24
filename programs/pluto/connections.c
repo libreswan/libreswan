@@ -1276,12 +1276,25 @@ void add_connection(const struct whack_message *wm)
 		}
 	}
 
+	struct parser_policy parser_policy = {
+		.ikev1 = LIN(POLICY_IKEV1_ALLOW, wm->policy),
+		/*
+		 * logic needs to match pick_initiator()
+		 *
+		 * XXX: Once pluto is changed to IKEv1 XOR
+		 * IKEv2 it should be possible to move this
+		 * magic into pluto proper and instead pass a
+		 * simple boolean.
+		 */
+		.ikev2 = ((wm->policy & POLICY_IKEV2_PROPOSE)
+			  && (wm->policy & POLICY_IKEV2_ALLOW)),
+	};
 
 	if (!LIN(POLICY_AUTH_NEVER, wm->policy) && wm->ike != NULL) {
 		char err_buf[256] = "";	/* ??? big enough? */
 
-		alg_info_ike = alg_info_ike_create_from_str(wm->policy, wm->ike,
-			err_buf, sizeof(err_buf));
+		alg_info_ike = alg_info_ike_create_from_str(&parser_policy, wm->ike,
+							    err_buf, sizeof(err_buf));
 
 		if (alg_info_ike == NULL) {
 			pexpect(err_buf[0]); /* something */
@@ -1345,7 +1358,7 @@ void add_connection(const struct whack_message *wm)
 				bool conflict = FALSE;
 				lset_t auth_pol = (wm->policy & POLICY_ID_AUTH_MASK);
 
-				switch(wm->left.authby) {
+				switch (wm->left.authby) {
 				case AUTH_PSK:
 					if (auth_pol != POLICY_PSK && auth_pol != LEMPTY) {
 						loglog(RC_FATAL, "leftauthby=secret but authby= is not secret");
@@ -1471,11 +1484,11 @@ void add_connection(const struct whack_message *wm)
 					wm->esp ? wm->esp : "NULL"));
 
 			if (c->policy & POLICY_ENCRYPT)
-				c->alg_info_esp = alg_info_esp_create_from_str(c->policy,
+				c->alg_info_esp = alg_info_esp_create_from_str(&parser_policy,
 					wm->esp ? wm->esp : "", err_buf, sizeof(err_buf));
 
 			if (c->policy & POLICY_AUTHENTICATE)
-				c->alg_info_esp = alg_info_ah_create_from_str(c->policy,
+				c->alg_info_esp = alg_info_ah_create_from_str(&parser_policy,
 					wm->esp ? wm->esp : "",  err_buf, sizeof(err_buf));
 
 			DBG(DBG_CONTROL, {
@@ -3020,7 +3033,7 @@ struct connection *refine_host_connection(const struct state *st,
 	if (initiator)
 	{
 
-	switch(this_authby) {
+	switch (this_authby) {
 	case AUTH_PSK:
 		psk = get_preshared_secret(c);
 		/*

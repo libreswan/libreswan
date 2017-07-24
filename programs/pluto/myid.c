@@ -124,7 +124,7 @@ void set_myFQDN(void)
 	free_id_content(&myids[MYID_HOSTNAME]);
 	myids[MYID_HOSTNAME] = empty_id;
 	if (r != 0) {
-		log_errno((e, "gethostname() failed in set_myFQDN"));
+		LOG_ERRNO(errno, "gethostname() failed in set_myFQDN");
 	} else {
 		FQDN[sizeof(FQDN) - 1] = '\0'; /* insurance */
 

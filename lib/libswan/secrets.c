@@ -1112,8 +1112,7 @@ static void lsw_process_secret_records(struct secret **psecrets)
 
 static int globugh(const char *epath, int eerrno)
 {
-	libreswan_log_errno_routine(eerrno, "problem with secrets file \"%s\"",
-				epath);
+	LOG_ERRNO(eerrno, "problem with secrets file \"%s\"", epath);
 	return 1;	/* stop glob */
 }
 

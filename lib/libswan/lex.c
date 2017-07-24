@@ -48,7 +48,7 @@ bool lexopen(struct file_lex_position *new_flp, const char *name,
 
 	if (f == NULL) {
 		if (!optional || errno != ENOENT)
-			log_errno((e, "could not open \"%s\"", name));
+			LOG_ERRNO(errno, "could not open \"%s\"", name);
 		return FALSE;
 	} else {
 		new_flp->previous = flp;

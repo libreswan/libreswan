@@ -35,24 +35,24 @@
 		fflush(NULL);						\
 	}
 
-static void esp(lset_t policy, const char *algstr)
+static void esp(const struct parser_policy *policy, const char *algstr)
 {
 	CHECK(esp, esp);
 }
 
-static void ah(lset_t policy, const char *algstr)
+static void ah(const struct parser_policy *policy, const char *algstr)
 {
 	CHECK(esp, ah);
 }
 
-static void ike(lset_t policy, const char *algstr)
+static void ike(const struct parser_policy *policy, const char *algstr)
 {
 	CHECK(ike, ike);
 }
 
-static void all(lset_t policy, const char *algstr)
+static void all(const struct parser_policy *policy, const char *algstr)
 {
-	typedef void (protocol_t)(lset_t policy, const char *);
+	typedef void (protocol_t)(const struct parser_policy *policy, const char *);
 	protocol_t *const protocols[] = { ike, ah, esp, NULL, };
 	for (protocol_t *const *protocol = protocols;
 	     *protocol != NULL;
@@ -61,7 +61,7 @@ static void all(lset_t policy, const char *algstr)
 	}
 }
 
-static void test(lset_t policy)
+static void test(const struct parser_policy *policy)
 {
 	/*
 	 * esp=
@@ -269,7 +269,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	lset_t policy = LEMPTY;
+	struct parser_policy policy = { false, };
 
 	char **argp = argv + 1;
 	for (; *argp != NULL; argp++) {
@@ -284,9 +284,9 @@ int main(int argc, char *argv[])
 			usage();
 			exit(0);
 		} else if (strcmp(arg, "v1") == 0) {
-			policy |= POLICY_IKEV1_ALLOW;
+			policy.ikev1 = true;
 		} else if (strcmp(arg, "v2") == 0) {
-			policy |= (POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE);
+			policy.ikev2 = true;
 		} else if (strcmp(arg, "fips") == 0 || strcmp(arg, "fips=yes") == 0 || strcmp(arg, "fips=on") == 0) {
 			lsw_set_fips_mode(LSW_FIPS_ON);
 		} else if (strcmp(arg, "fips=no") == 0 || strcmp(arg, "fips=off") == 0) {
@@ -321,17 +321,17 @@ int main(int argc, char *argv[])
 			 */
 #define starts_with(ARG,STRING) strncmp(ARG,STRING,strlen(STRING))
 			if (starts_with(arg, "ike=") == 0) {
-				ike(policy, arg + 4);
+				ike(&policy, arg + 4);
 			} else if (starts_with(arg, "esp=") == 0) {
-				esp(policy, arg + 4);
+				esp(&policy, arg + 4);
 			} else if (starts_with(arg, "ah=") == 0) {
-				ah(policy, arg + 3);
+				ah(&policy, arg + 3);
 			} else {
-				all(policy, arg);
+				all(&policy, arg);
 			}
 		}
 	} else {
-		test(policy);
+		test(&policy);
 	}
 
 	report_leaks();

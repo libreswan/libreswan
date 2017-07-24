@@ -21,10 +21,63 @@
 #include "alg_byname.h"
 #include "ike_alg.h"
 
+bool alg_byname_ok(const struct parser_param *param,
+		   const struct parser_policy *const policy,
+		   const struct ike_alg *alg,
+		   const char *name,
+		   char *err_buf, size_t err_buf_len)
+{
+	/*
+	 * If the connection is IKEv1|IKEv2 then this code will
+	 * exclude anything not supported by both protocols.
+	 */
+	if (policy->ikev1 && alg->id[param->ikev1_alg_id] == 0) {
+		snprintf(err_buf, err_buf_len,
+			 "%s %s algorithm '%s' is not supported by IKEv1",
+			 param->protocol, ike_alg_type_name(alg->algo_type),
+			 name);
+		return false;
+	}
+	if (policy->ikev2 && alg->id[IKEv2_ALG_ID] == 0) {
+		snprintf(err_buf, err_buf_len,
+			 "%s %s algorithm '%s' is not supported by IKEv2",
+			 param->protocol, ike_alg_type_name(alg->algo_type),
+			 name);
+		return false;
+	}
+	/*
+	 * Is it backed by an implementation?  For IKE that is
+	 * in-process, for ESP/AH, presumably that is in the kernel
+	 * (well except for DH which is still in-process).
+	 */
+	if (!param->alg_is_implemented(alg)) {
+		snprintf(err_buf, err_buf_len,
+			 "%s %s algorithm '%s' is not implemented",
+			 param->protocol, ike_alg_type_name(alg->algo_type),
+			 name);
+		return false;
+	}
+	/*
+	 * Check that the algorithm is valid.
+	 *
+	 * FIPS, for instance, will invalidate some algorithms during
+	 * startup.
+	 *
+	 * Since it likely involves a lookup, it is left until last.
+	 */
+	if (!ike_alg_is_valid(alg)) {
+		snprintf(err_buf, err_buf_len,
+			 "%s %s algorithm '%s' is not valid",
+			 param->protocol, ike_alg_type_name(alg->algo_type),
+			 name);
+		return false;
+	}
+	return true;
+}
+
 static const struct ike_alg *alg_byname(const struct parser_param *param,
 					const struct parser_policy *const policy,
 					const struct ike_alg_type *type,
-					bool ike,
 					char *err_buf, size_t err_buf_len,
 					const char *name)
 {
@@ -48,30 +101,11 @@ static const struct ike_alg *alg_byname(const struct parser_param *param,
 	}
 
 	/*
-	 * If the connection is IKEv1|IKEv2 then this code will
-	 * exclude anything not supported by both protocols.
+	 * Does it pass muster?
 	 */
-	if (policy->ikev1 && alg->id[param->ikev1_alg_id] == 0) {
-		snprintf(err_buf, err_buf_len,
-			 "%s %s algorithm '%s' is not supported by IKEv1",
-			 param->protocol, ike_alg_type_name(type), name);
-		return NULL;
-	}
-	if (policy->ikev2 && alg->id[IKEv2_ALG_ID] == 0) {
-		snprintf(err_buf, err_buf_len,
-			 "%s %s algorithm '%s' is not supported by IKEv2",
-			 param->protocol, ike_alg_type_name(type), name);
-		return NULL;
-	}
-
-	/*
-	 * Since the IKE calculation is performed in-process, this is
-	 * always required.
-	 */
-	if (ike && !ike_alg_is_ike(alg)) {
-		snprintf(err_buf, err_buf_len,
-			 "%s %s algorithm '%s' is not implemented",
-			 "IKE", ike_alg_type_name(type), name);
+	if (!alg_byname_ok(param, policy, alg, name,
+			   err_buf, err_buf_len)) {
+		passert(err_buf[0] != '\0');
 		return NULL;
 	}
 
@@ -84,7 +118,6 @@ const struct ike_alg *encrypt_alg_byname(const struct parser_param *param,
 					 const char *name, size_t key_bit_length)
 {
 	const struct ike_alg *alg = alg_byname(param, policy, IKE_ALG_ENCRYPT,
-					       param->ikev1_alg_id == IKEv1_OAKLEY_ID,
 					       err_buf, err_buf_len, name);
 	if (alg == NULL) {
 		return NULL;
@@ -119,7 +152,6 @@ const struct ike_alg *prf_alg_byname(const struct parser_param *param,
 				     size_t key_bit_length UNUSED)
 {
 	return alg_byname(param, policy, IKE_ALG_PRF,
-			  param->ikev1_alg_id == IKEv1_OAKLEY_ID,
 			  err_buf, err_buf_len,
 			  name);
 }
@@ -134,7 +166,6 @@ const struct ike_alg *integ_alg_byname(const struct parser_param *param,
 		return &alg_info_integ_null.common;
 	}
 	return alg_byname(param, policy, IKE_ALG_INTEG,
-			  param->ikev1_alg_id == IKEv1_OAKLEY_ID,
 			  err_buf, err_buf_len,
 			  name);
 }
@@ -145,10 +176,7 @@ const struct ike_alg *dh_alg_byname(const struct parser_param *param,
 				    const char *name,
 				    size_t key_bit_length UNUSED)
 {
-	/*
-	 * DH is always requires an in-tree implementation of the algorithm.
-	 */
-	return alg_byname(param, policy, IKE_ALG_DH, TRUE,
+	return alg_byname(param, policy, IKE_ALG_DH,
 			  err_buf, err_buf_len,
 			  name);
 }

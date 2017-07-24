@@ -615,7 +615,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 		 * With seccomp=tolerant or seccomp=disabled, pluto will
 		 * report the test results.
 		 */
-		if(pluto_seccomp_mode == SECCOMP_ENABLED)
+		if (pluto_seccomp_mode == SECCOMP_ENABLED)
 			loglog(RC_LOG_SERIOUS, "pluto is running with seccomp=enabled! pluto is expected to die!");
 		loglog(RC_LOG_SERIOUS, "Performing seccomp security test using getsid() syscall");
 		pid_t testpid = getsid(0);
@@ -623,7 +623,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 		/* We did not get shot by the kernel seccomp protection */
 		if (testpid == -1) {
 			loglog(RC_LOG_SERIOUS, "pluto: seccomp test syscall was blocked");
-			switch(pluto_seccomp_mode) {
+			switch (pluto_seccomp_mode) {
 			case SECCOMP_TOLERANT:
 				loglog(RC_LOG_SERIOUS, "OK: seccomp security was tolerant; the rogue syscall was blocked and pluto was not terminated");
 				break;
@@ -638,7 +638,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 			}
 		} else {
 			loglog(RC_LOG_SERIOUS, "pluto: seccomp test syscall was not blocked");
-			switch(pluto_seccomp_mode) {
+			switch (pluto_seccomp_mode) {
 			case SECCOMP_TOLERANT:
 				loglog(RC_LOG_SERIOUS, "ERROR: pluto seccomp was tolerant but the rogue syscall was not blocked!");
 				break;
@@ -689,11 +689,11 @@ static void whack_handle(int whackctlfd)
 	/* static int msgnum=0; */
 
 	if (whackfd < 0) {
-		log_errno((e, "accept() failed in whack_handle()"));
+		LOG_ERRNO(errno, "accept() failed in whack_handle()");
 		return;
 	}
 	if (fcntl(whackfd, F_SETFD, FD_CLOEXEC) < 0) {
-		log_errno((e, "failed to set CLOEXEC in whack_handle()"));
+		LOG_ERRNO(errno, "failed to set CLOEXEC in whack_handle()");
 		close(whackfd);
 		return;
 	}
@@ -710,7 +710,7 @@ static void whack_handle(int whackctlfd)
 
 	n = read(whackfd, &msg, sizeof(msg));
 	if (n <= 0) {
-		log_errno((e, "read() failed in whack_handle()"));
+		LOG_ERRNO(errno, "read() failed in whack_handle()");
 		close(whackfd);
 		return;
 	}

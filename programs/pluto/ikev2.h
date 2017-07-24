@@ -270,7 +270,7 @@ struct ikev2_payloads_summary ikev2_decode_payloads(struct msg_digest *md,
 struct ikev2_payloads_summary ikev2_decrypt_msg(struct msg_digest *md, bool
 		verify_pl);
 
-typedef stf_status crypto_transition_fn (struct pluto_crypto_req_cont *cn,
+typedef stf_status crypto_transition_fn(struct pluto_crypto_req_cont *cn,
 		                struct pluto_crypto_req *r);
 
 struct ikev2_payload_errors {

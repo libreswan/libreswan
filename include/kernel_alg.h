@@ -28,10 +28,10 @@ struct kernel_alg_info {
 	 * ESP.
 	 *
 	 * Because struct encrypt_desc still specifies multiple key
-	 * lengths, ENCKEYLEN is still required.
+	 * lengths, ENCKEYSIZE is still required.
 	 */
 	u_int8_t transid;       /* enum ipsec_cipher_algo: ESP transform (AES, 3DES, etc.)*/
-	u_int32_t enckeylen;    /* keylength for ESP transform (bytes) */
+	size_t enckeysize;      /* keylength for ESP transform (bytes) */
 	/*
 	 * The authentication algorithm; if required by ESP/AH.
 	 */

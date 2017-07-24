@@ -205,7 +205,7 @@ static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
 	if (md->chain[ISAKMP_NEXT_v2KE] == NULL)
 		return STF_OK;
 
-	if(r->pcr_type == pcr_build_ke_and_nonce) {
+	if (r->pcr_type == pcr_build_ke_and_nonce) {
 		enum original_role  role;
 		role = IS_CHILD_SA_RESPONDER(st) ? ORIGINAL_RESPONDER :
 			ORIGINAL_INITIATOR;
@@ -269,7 +269,7 @@ static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
 
 	case STATE_V2_CREATE_I0:
 		unpack_nonce(&st->st_ni, r);
-		if(r->pcr_type == pcr_build_ke_and_nonce)
+		if (r->pcr_type == pcr_build_ke_and_nonce)
 			unpack_KE_from_helper(st, r, &st->st_gi);
 
 		e = add_st_send_list(st, pst);
@@ -440,30 +440,27 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 	return e;
 }
 
-static stf_status ike2_match_ke_group_and_prop(struct msg_digest *md,
-		struct trans_attrs accepted_oakley)
+/*
+ * Check the MODP (KE) group matches the accepted proposal.
+ *
+ * The caller is responsible for freeing any scratch objects.
+ */
+static stf_status ikev2_match_ke_group_and_proposal(struct msg_digest *md,
+						    const struct oakley_group_desc *accepted_dh)
 {
-
-	/*
-	 * Check the MODP (KE) group matches the accepted proposal.
-	 */
-	{
-		passert(md->chain[ISAKMP_NEXT_v2KE] != NULL);
-		int ke_group = md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_group;
-		if (accepted_oakley.group->group != ke_group) {
-			struct esb_buf ke_esb;
-			libreswan_log("initiator guessed wrong keying material group (%s); responding with INVALID_KE_PAYLOAD requesting %s",
-				      enum_show_shortb(&oakley_group_names,
-						       ke_group, &ke_esb),
-				      accepted_oakley.group->common.name);
-			pstats(invalidke_sent_u, ke_group);
-			pstats(invalidke_sent_s, accepted_oakley.group->group);
-			send_v2_notification_invalid_ke(md, accepted_oakley.group);
-
-			pexpect(md->st == NULL);
-			/* caller free early return items */
-			return STF_FAIL;
-		}
+	passert(md->chain[ISAKMP_NEXT_v2KE] != NULL);
+	int ke_group = md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_group;
+	if (accepted_dh->common.id[IKEv2_ALG_ID] != ke_group) {
+		struct esb_buf ke_esb;
+		libreswan_log("initiator guessed wrong keying material group (%s); responding with INVALID_KE_PAYLOAD requesting %s",
+			      enum_show_shortb(&oakley_group_names,
+					       ke_group, &ke_esb),
+			      accepted_dh->common.name);
+		pstats(invalidke_sent_u, ke_group);
+		pstats(invalidke_sent_s, accepted_dh->common.id[IKEv2_ALG_ID]);
+		send_v2_notification_invalid_ke(md, accepted_dh);
+		pexpect(md->st == NULL);
+		return STF_FAIL;
 	}
 
 	return STF_OK;
@@ -568,7 +565,7 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
 			(id.kind == ID_FQDN ||
 			 id.kind == ID_IPV4_ADDR ||
 			 id.kind == ID_IPV6_ADDR)) {
-		if(atype == IKEv2_AUTH_RESERVED) {
+		if (atype == IKEv2_AUTH_RESERVED) {
 			return FALSE; /* called from the initiator */
 		} else if (atype == IKEv2_AUTH_RSA) {
 			return FALSE; /* success */
@@ -577,7 +574,7 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
 
 	idtoa(&id, thatid, sizeof(thatid));
 
-	if(!c->spd.that.key_from_DNS_on_demand)
+	if (!c->spd.that.key_from_DNS_on_demand)
 	{
 		err1 = "that end rsasigkey != %dnsondemand";
 	}
@@ -587,7 +584,7 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
 		err3 = enum_name(&ikev2_auth_names, atype);
 	}
 
-	if(id.kind != ID_FQDN &&
+	if (id.kind != ID_FQDN &&
 			id.kind != ID_IPV4_ADDR &&
 			id.kind != ID_IPV6_ADDR) {
 		err2 = " can only query DNS for IPSECKEY for ID that is a FQDN, IPV4_ADDR, or IPV6_ADDR id type=";
@@ -1267,9 +1264,10 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	/*
 	 * Check the MODP group in the payload matches the accepted proposal.
 	 */
-	if (ike2_match_ke_group_and_prop(md, accepted_oakley) == STF_FAIL) {
+	ret = ikev2_match_ke_group_and_proposal(md, accepted_oakley.group);
+	if (ret != STF_OK) {
 		free_ikev2_proposal(&accepted_ike_proposal);
-		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+		return ret;
 	}
 
 	/*
@@ -1657,10 +1655,9 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 			 * Our state should not advance.  Instead
 			 * we should send our I1 packet with the same cookie.
 			 */
-			const pb_stream *dc_pbs;
 
 			/*
-			 * RFC-7296 Sesction 2.6:
+			 * RFC-7296 Section 2.6:
 			 * The data associated with this notification MUST be
 			 * between 1 and 64 octets in length (inclusive)
 			 */
@@ -1669,17 +1666,16 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 				return STF_IGNORE; /* avoid DDOS / reflection attacks */
 			}
 
-			if (ntfy != md->chain[ISAKMP_NEXT_v2N] || ntfy->next != NULL) {
-				DBG(DBG_CONTROL, DBG_log("non-v2N_COOKIE notify payload(s) ignored "));
+			if (ntfy->next != NULL) {
+				DBG(DBG_CONTROL, DBG_log("ignoring Notify payloads after v2N_COOKIE"));
 			}
-			dc_pbs = &ntfy->pbs;
+
 			clonetochunk(st->st_dcookie,
-				dc_pbs->cur,
-				pbs_left(dc_pbs),
+				ntfy->pbs.cur, pbs_left(&ntfy->pbs),
 				"saved received dcookie");
 
 			DBG(DBG_CONTROLMORE,
-			    DBG_dump_chunk("dcookie received (instead of a R1):",
+			    DBG_dump_chunk("dcookie received (instead of an R1):",
 					   st->st_dcookie);
 			    DBG_log("next STATE_PARENT_I1 resend I1 with the dcookie"));
 
@@ -1710,6 +1706,10 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 				return STF_IGNORE;
 			}
 			st->st_retransmit++;
+
+			if (ntfy->next != NULL) {
+				DBG(DBG_CONTROL, DBG_log("ignoring Notify payloads after v2N_INVALID_KE_PAYLOAD"));
+			}
 
 			if (!in_struct(&sg, &suggested_group_desc,
 				&ntfy->pbs, NULL))
@@ -2482,7 +2482,7 @@ struct ikev2_payloads_summary ikev2_decrypt_msg(struct msg_digest *md, bool veri
 	stf_status status;
 	chunk_t chunk;
 
-	if (md->chain[ISAKMP_NEXT_v2SKF]) {
+	if (md->chain[ISAKMP_NEXT_v2SKF] != NULL) {
 		status = ikev2_reassemble_fragments(md, &chunk);
 		/* note: if status is SFT_OK, chunk is set */
 	} else {
@@ -2631,7 +2631,7 @@ static stf_status ikev2_send_auth(struct connection *c,
 
 	a.isaa_np = np;
 
-	switch(authby) {
+	switch (authby) {
 	case AUTH_RSASIG:
 		a.isaa_type = IKEv2_AUTH_RSA;
 		break;
@@ -3184,7 +3184,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 #ifdef XAUTH_HAVE_PAM
 /* IN AN AUTHENTICAL THREAD */
-static void *ikev2_pam_autherize_thread (void *x)
+static void *ikev2_pam_autherize_thread(void *x)
 {
 	struct ikev2_pam_helper *p = (struct ikev2_pam_helper *) x;
 	struct timeval done_delta;
@@ -3545,7 +3545,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 			return ret;
 	}
 
-	if(ret == STF_OK) {
+	if (ret == STF_OK) {
 		ret = ikev2_parent_inI2outR2_id_tail(md);
 	}
 
@@ -4623,7 +4623,7 @@ static stf_status ikev2_rekey_child(const struct msg_digest *md)
 			 */
 			change_state(st, STATE_V2_REKEY_CHILD_R);
 			rst = find_state_to_rekey(ntfy, pst);
-			if(rst == NULL) {
+			if (rst == NULL) {
 				libreswan_log("no valid IPsec SA SPI to rekey");
 				ret = STF_FAIL + v2N_CHILD_SA_NOT_FOUND;
 			} else {
@@ -4749,7 +4749,7 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 		close_output_pbs(&pb_nr);
 
-		if(in.isag_np == ISAKMP_NEXT_v2KE)  {
+		if (in.isag_np == ISAKMP_NEXT_v2KE)  {
 			if (!justship_v2KE(&cst->st_gi,
 						cst->st_pfs_group, outpbs,
 						ISAKMP_NEXT_v2TSi))
@@ -4822,7 +4822,7 @@ static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
 				&c->ike_proposals);
 
 		/* send v2 IKE SAs*/
-		if(!ikev2_emit_sa_proposals(outpbs,
+		if (!ikev2_emit_sa_proposals(outpbs,
 					st->st_connection->ike_proposals,
 					&local_spi,
 					ISAKMP_NEXT_v2Ni))  {
@@ -4873,7 +4873,7 @@ static notification_t accept_child_sa_KE(struct msg_digest *md,
 				return v2N_INVALID_KE_PAYLOAD;
 			}
 		}
-		if(is_msg_request(md))
+		if (is_msg_request(md))
 			st->st_gi = accepted_g;
 		else
 			st->st_gr = accepted_g;
@@ -4915,7 +4915,7 @@ static notification_t process_ike_rekey_sa_pl(struct msg_digest *md, struct stat
 	/*
 	 * Early return must free: accepted_ike_proposal
 	 */
-	if(!ikev2_proposal_to_trans_attrs(accepted_ike_proposal,
+	if (!ikev2_proposal_to_trans_attrs(accepted_ike_proposal,
 			&accepted_oakley)) {
 		loglog(RC_LOG_SERIOUS, "IKE responder accepted an unsupported algorithm");
 		/* free early return items */
@@ -4924,10 +4924,11 @@ static notification_t process_ike_rekey_sa_pl(struct msg_digest *md, struct stat
 		return STF_IGNORE;
 	}
 
-	if (ike2_match_ke_group_and_prop(md, accepted_oakley) == STF_FAIL) {
+	ret = ikev2_match_ke_group_and_proposal(md, accepted_oakley.group);
+	if (ret != STF_OK) {
 		free_ikev2_proposal(&accepted_ike_proposal);
 		md->st = pst;
-		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+		return ret;
 	}
 
 	/*
@@ -5059,7 +5060,7 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 		memcpy(hdr.isa_icookie, pst->st_icookie, COOKIE_SIZE);
 		hdr.isa_xchg = ISAKMP_v2_CREATE_CHILD_SA;
 		hdr.isa_np = ISAKMP_NEXT_v2SK;
-		if(IS_CHILD_SA_RESPONDER(st)) {
+		if (IS_CHILD_SA_RESPONDER(st)) {
 			hdr.isa_msgid = htonl(md->msgid_received);
 			hdr.isa_flags = ISAKMP_FLAGS_v2_MSG_R; /* response on */
 		} else {
@@ -5068,14 +5069,14 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 			st->st_msgid = htonl(pst->st_msgid_nextuse);
 		}
 
-		if(pst->st_original_role == ORIGINAL_INITIATOR) {
+		if (pst->st_original_role == ORIGINAL_INITIATOR) {
 			hdr.isa_flags |= ISAKMP_FLAGS_v2_IKE_I;
 		}
 
 		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG))
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 
-		if(!IS_CHILD_SA_RESPONDER(st)) {
+		if (!IS_CHILD_SA_RESPONDER(st)) {
 			md->hdr = hdr; /* fill it with fake header ??? */
 		}
 		if (!out_struct(&hdr, &isakmp_hdr_desc,

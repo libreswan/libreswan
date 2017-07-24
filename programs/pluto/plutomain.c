@@ -1158,7 +1158,7 @@ int main(int argc, char **argv)
 			/* leak */
 			set_cfg_string(&pluto_log_file,
 				cfg->setup.strings[KSF_PLUTOSTDERRLOG]);
-			if(strlen(cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE]) > 0) {
+			if (strlen(cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE]) > 0) {
 				set_cfg_string(&pluto_dnssec_rootfile,
 						cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE]);
 			}
