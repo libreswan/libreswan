@@ -56,10 +56,10 @@
  * @param appdata_ptr Pointer to data struct (as we are using threads)
  * @return int PAM Return Code (possibly fudged)
  */
-int pam_conv(int num_msg,
-		const struct pam_message **msgm,
-		struct pam_response **response,
-		void *appdata_ptr)
+static int pam_conv(int num_msg,
+		    const struct pam_message **msgm,
+		    struct pam_response **response,
+		    void *appdata_ptr)
 {
 	struct pam_thread_arg *const arg = appdata_ptr;
 	int count = 0;
