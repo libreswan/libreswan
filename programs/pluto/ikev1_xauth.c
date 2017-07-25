@@ -38,8 +38,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <limits.h>
-#include <signal.h>
-#include <setjmp.h>
 
 #if defined(linux)
 /* is supposed to be in unistd.h, but it isn't on linux */
@@ -68,7 +66,7 @@
 #include "timer.h"
 #include "keys.h"
 #include "ipsec_doi.h"	/* needs demux.h and state.h */
-
+#include "xauth.h"
 #include "crypto.h"
 #include "ike_alg.h"
 #include "secrets.h"
@@ -82,191 +80,6 @@
 static stf_status xauth_client_ackstatus(struct state *st,
 					 pb_stream *rbody,
 					 u_int16_t ap_id);
-
-/* BEWARE: This code is multi-threaded.
- *
- * Any static object is likely shared and probably has to be protected by
- * a lock.
- * Any other shared object needs to be protected.
- * Beware of calling functions that are not thread-safe.
- *
- * Static or shared objects:
- * - locks (duh)
- * - st_jbuf_mem and the structure it points to
- * - ??? field pamh in struct connection.
- *
- * Non-thread-safe functions:
- * - crypt(3) used by do_file_authentication()
- * - ??? pam_*?
- */
-
-typedef struct {
-	bool in_use;
-	struct state *st;
-	sigjmp_buf jbuf;
-} st_jbuf_t;
-
-struct xauth_thread_arg {
-	struct state *st;
-	/* the memory for these is allocated and freed by our thread management */
-	char *name;
-	char *password;
-	char *connname;
-	char *ipaddr;
-	ptrdiff_t stjb_ix;
-};
-
-/*
- * pointer to an array of st_jbuf_t elements.
- * The last element has .st==NULL (and !.in_use).
- * Unused ones (not the last) have some meaningless non-NULL value in .st.  Yuck!
- * All manipulations must be protected via st_jbuf_mutex.
- * If no entries are in use, the array must be freed:
- * two tests in do_authentication depend on this.
- * Note: managed by calloc/realloc/free
- */
-static st_jbuf_t *st_jbuf_mem = NULL;
-
-static pthread_mutex_t st_jbuf_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-/* Note: caller must have locked st_jbuf_mutex */
-/* IN AN AUTH THREAD */
-static void dealloc_st_jbuf(st_jbuf_t *ptr)
-{
-	st_jbuf_t *p;
-
-	ptr->in_use = FALSE;
-
-	for (p = st_jbuf_mem; p->st != NULL; p++) {
-		if (p->in_use) {
-			/* there is still an entry in use: don't free array */
-			return;
-		}
-	}
-
-	/* no remaining entries in use: free array */
-	free(st_jbuf_mem);	/* was calloc()ed or realloc()ed */
-	st_jbuf_mem = NULL;
-}
-
-/* Note: caller must have locked st_jbuf_mutex */
-static st_jbuf_t *get_ptr_matching_tid(void)
-{
-	st_jbuf_t *p;
-
-	for (p = st_jbuf_mem; p->st != NULL; p++) {
-		if (p->in_use && p->st->xauth_tid == pthread_self())
-			return p;
-	}
-	return NULL;
-}
-
-/*
- * Find or create a free slot in the st_jbuf_mem array.
- * Note: even free slots must have non-NULL st components
- * or bad things happen.
- * The caller must not have locked st_jbuf_mutex: we will.
- */
-static ptrdiff_t alloc_st_jbuf(struct state *st)
-{
-	pthread_mutex_lock(&st_jbuf_mutex);
-
-	st_jbuf_t *ptr = st_jbuf_mem;
-
-	if (ptr == NULL) {
-		/* no array: allocate one slot plus endmarker */
-		ptr = calloc(2, sizeof(st_jbuf_t));
-		passert(ptr != NULL);
-		st_jbuf_mem = ptr;
-		/*
-		 * Initialize end marker.
-		 * calloc(3) does not guarantee that pointer .st is
-		 * initialized to NULL but it will set .in_use to FALSE.
-		 */
-		ptr[1].st = NULL;
-
-		/* new entry is going in first slot in our new array */
-	} else {
-		for (; ; ptr++) {
-			if (ptr->st == NULL) {
-				/* ptr points at endmarker:
-				 * there is no room in the existing array.
-				 * Add another slot.
-				 */
-				ptrdiff_t n = ptr - st_jbuf_mem;	/* number of entries, excluding end marker */
-
-				/* allocate n entries, plus one new entry, plus new endmarker */
-				/* ??? why are we using reealloc instead of Pluto's functions? */
-				st_jbuf_mem = realloc(st_jbuf_mem, sizeof(st_jbuf_t) * (n + 2));
-				passert(st_jbuf_mem != NULL);
-
-				ptr = st_jbuf_mem + n;
-				ptr[1].in_use = FALSE;	/* initialize new endmarker */
-				ptr[1].st = NULL;
-				/* new entry is the former endmarker slot */
-				break;
-			}
-			if (!ptr->in_use) {
-				/* we found a free slot in our existing array */
-				break;
-			}
-		}
-	}
-
-	passert(st != NULL);
-	ptr->st = st;
-	ptr->in_use = TRUE;
-
-	ptrdiff_t ix = ptr - st_jbuf_mem;
-
-	pthread_mutex_unlock(&st_jbuf_mutex);
-	return ix;
-}
-
-/* sigIntHandler.
- * The only expected source of SIGUSR1s is state_deletion_xauth_cleanup
- * so the meaning is: shut down this thread, the state is disappearing.
- * ??? what if a SIGUSR1 comes from somewhere else?
- * Note: this function locks st_jbuf_mutex
- * The longjump handler must unlock it.
- */
-static void sigIntHandler(int sig)
-{
-	if (sig == SIGUSR1) {
-		st_jbuf_t *ptr;
-
-		pthread_mutex_lock(&st_jbuf_mutex);
-		ptr = get_ptr_matching_tid();
-		if (ptr == NULL) {
-			pthread_mutex_unlock(&st_jbuf_mutex);
-			/*
-			 * Why unlock when things will crash anyway?
-			 */
-			passert(ptr != NULL);
-		}
-		/* note: st_jbuf_mutex is locked */
-		siglongjmp(ptr->jbuf, 1);
-	}
-}
-
-/* state_deletion_xauth_cleanup:
- * If there is still an authentication thread alive, kill it.
- * This is called by delete_state() to fix up any dangling xauth thread.
- */
-void state_deletion_xauth_cleanup(struct state *st)
-{
-	/* ??? In POSIX pthreads, pthread_t is opaque and the following test is not legitimate */
-	if (st->xauth_tid) {
-		pthread_kill(st->xauth_tid, SIGUSR1);
-		/* The pthread_mutex_lock ensures that the do_authentication
-		 * thread completes when pthread_kill'ed
-		 */
-		pthread_mutex_lock(&st->xauth_mutex);
-		pthread_mutex_unlock(&st->xauth_mutex);
-	}
-	/* ??? what if the mutex hasn't been created?  Is destroying OK? */
-	pthread_mutex_destroy(&st->xauth_mutex);
-}
 
 oakley_auth_t xauth_calcbaseauth(oakley_auth_t baseauth)
 {
@@ -1060,10 +873,10 @@ static stf_status xauth_send_status(struct state *st, int status)
  *
  * @return bool success
  */
-/* IN AN AUTH THREAD */
-static bool do_file_authentication(void *varg)
+
+static bool do_file_authentication(struct state *st, const char *name,
+				   const char *password, const char *connname)
 {
-	struct xauth_thread_arg *arg = varg;
 	char pwdfile[PATH_MAX];
 	char line[1024]; /* we hope that this is more than enough */
 	int lineno = 0;
@@ -1094,7 +907,7 @@ static bool do_file_authentication(void *varg)
 		char *passwdhash;
 		char *connectionname = NULL;
 		char *addresspool = NULL;
-		struct connection *c = arg->st->st_connection;
+		struct connection *c = st->st_connection;
 		ip_range *pool_range;
 
 		lineno++;
@@ -1142,30 +955,26 @@ static bool do_file_authentication(void *varg)
 		 */
 		DBG(DBG_CONTROL,
 			DBG_log("XAUTH: found user(%s/%s) pass(%s) connid(%s/%s) addresspool(%s)",
-				userid, arg->name,
-				passwdhash,
-				connectionname == NULL? "" : connectionname, arg->connname,
+				userid, name, passwdhash,
+				connectionname == NULL? "" : connectionname, connname,
 				addresspool == NULL? "" : addresspool));
 
-		if (streq(userid, arg->name) &&
-		    (connectionname == NULL || streq(connectionname, arg->connname)))
+		if (streq(userid, name) &&
+		    (connectionname == NULL || streq(connectionname, connname)))
 		{
 			char *cp;
-
-			/* We use crypt_mutex lock because not all systems have crypt_r() */
-			static pthread_mutex_t crypt_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-			pthread_mutex_lock(&crypt_mutex);
 #if defined(__CYGWIN32__)
 			/* password is in the clear! */
-			cp = arg->password;
+			cp = password;
 #else
-			/* keep the passwords using whatever utilities we have */
-			cp = crypt(arg->password, passwdhash);
+			/*
+			 * keep the passwords using whatever utilities
+			 * we have NOTE: crypt() may not be
+			 * thread-safe
+			 */
+			cp = crypt(password, passwdhash);
 #endif
 			win = cp != NULL && streq(cp, passwdhash);
-			pthread_mutex_unlock(&crypt_mutex);
-
 			/* ??? DBG and real-world code mixed */
 			if (DBGP(DBG_CRYPT)) {
 				DBG_log("XAUTH: checking user(%s:%s) pass %s vs %s", userid, connectionname, cp,
@@ -1217,180 +1026,44 @@ static bool do_file_authentication(void *varg)
 	return win;
 }
 
-#ifdef XAUTH_HAVE_PAM
-/* IN AN AUTH THREAD */
-static bool ikev1_do_pam_authentication(const struct xauth_thread_arg *arg)
-{
-	struct state *st = arg->st;
-	libreswan_log("XAUTH: pam authentication being called to authenticate user %s",
-			arg->name);
-	struct pam_thread_arg parg;
-	ipstr_buf ra;
-	struct timeval start_time;
-	struct timeval served_time;
-	struct timeval served_delta;
-	bool results = FALSE;
-
-	parg.name = arg->name;
-	parg.password =  arg->password;
-	parg.c_name = arg->connname;
-	parg.ra = clone_str(ipstr(&st->st_remoteaddr, &ra), "st remote address");
-	parg.st_serialno = st->st_serialno;
-	parg.c_instance_serial = st->st_connection->instance_serial;
-	parg.atype = "XAUTH";
-	gettimeofday(&start_time, NULL);
-	results = do_pam_authentication(&parg);
-	gettimeofday(&served_time, NULL);
-	timersub(&served_time, &start_time, &served_delta);
-	DBG(DBG_CONTROL,
-		DBG_log("XAUTH PAM helper thread call state #%lu, %s[%lu] user=%s %s. elapsed time %lu.%06lu",
-			parg.st_serialno, parg.c_name,
-			parg.c_instance_serial, parg.name,
-			results ? "SUCCESS" : "FAIL",
-			(unsigned long)served_delta.tv_sec,
-			(unsigned long)(served_delta.tv_usec * 1000000)));
-
-	pfreeany(parg.ra);
-	return results;
-}
-#endif
-
 /*
  * Main authentication routine will then call the actual compiled-in
  * method to verify the user/password
  */
 
-/* IN AN AUTH THREAD */
-static void *do_authentication(void *varg)
+static void ikev1_xauth_callback(struct state *st, const char *name,
+				 bool results)
 {
-	struct xauth_thread_arg *arg = varg;
-	struct state *st = arg->st;
-	bool results = FALSE;
-
-	struct sigaction sa;
-	struct sigaction oldsa;
-
-	/* Note: this is the only sigsetjmp.
-	 * The only siglongjmp sets 1 as the return value.
-	 */
-	pthread_mutex_lock(&st_jbuf_mutex);
-
-	st_jbuf_t *ptr = &st_jbuf_mem[arg->stjb_ix];
-
-	if (sigsetjmp(ptr->jbuf, 1) != 0) {
-		/* We got here via siglongjmp in sigIntHandler.
-		 * st_jbuf_mutex is locked.
-		 * The idea is to shut down the PAM dialogue.
-		 */
-
-		dealloc_st_jbuf(ptr);
-
-		/* Still one PAM thread? */
-		/* ??? how do we know that there is no more than one thread? */
-		/* ??? how do we know which thread was supposed to get this SIGUSR1 if the signal handler setting is global? */
-		if (st_jbuf_mem != NULL) {
-			/* Yes, restart the one-shot SIGUSR1 handler */
-			sigprocmask(SIG_BLOCK, NULL, &sa.sa_mask);
-			sa.sa_handler = sigIntHandler;
-			sa.sa_flags = SA_RESETHAND | SA_NODEFER | SA_ONSTACK; /* One-shot handler */
-			sigaddset(&sa.sa_mask, SIGUSR1);
-			sigaction(SIGUSR1, &sa, NULL);
-		} else {
-			/* no */
-			sigaction(SIGUSR1, &oldsa, NULL);
-		}
-		pthread_mutex_unlock(&st_jbuf_mutex);
-		pfree(arg->password);
-		pfree(arg->name);
-		pfree(arg->connname);
-		pfree(varg);
-		pthread_mutex_unlock(&st->xauth_mutex);
-		st->xauth_tid = 0;	/* ??? not valid for POSIX pthreads */
-		return NULL;
-	}
-
-	/* original flow (i.e. not due to siglongjmp) */
-	pthread_mutex_unlock(&st_jbuf_mutex);
-	sigprocmask(SIG_BLOCK, NULL, &sa.sa_mask);
-	pthread_sigmask(SIG_BLOCK, &sa.sa_mask, NULL);
-	sa.sa_handler = sigIntHandler;
-	sa.sa_flags = SA_RESETHAND | SA_NODEFER | SA_ONSTACK; /* One shot handler */
-	sigaddset(&sa.sa_mask, SIGUSR1);
-	sigaction(SIGUSR1, &sa, &oldsa);
-	libreswan_log("XAUTH: User %s: Attempting to login", arg->name);
-
-	switch (st->st_connection->xauthby) {
-#ifdef XAUTH_HAVE_PAM
-	case XAUTHBY_PAM:
-		results = ikev1_do_pam_authentication(arg);
-		break;
-#endif
-	case XAUTHBY_FILE:
-		libreswan_log(
-			"XAUTH: passwd file authentication being called to authenticate user %s",
-			arg->name);
-		results = do_file_authentication(varg);
-		break;
-	case XAUTHBY_ALWAYSOK:
-		libreswan_log(
-			"XAUTH: authentication method 'always ok' requested to authenticate user %s",
-			arg->name);
-		results = TRUE;
-		break;
-	default:
-		libreswan_log(
-			"XAUTH: unknown authentication method requested to authenticate user %s",
-			arg->name);
-		bad_case(st->st_connection->xauthby);
-	}
-
 	/*
 	 * If XAUTH authentication failed, should we soft fail or hard fail?
 	 * The soft fail mode is used to bring up the SA in a walled garden.
 	 * This can be detected in the updown script by the env variable XAUTH_FAILED=1
 	 */
 	if (!results && st->st_connection->xauthfail == XAUTHFAIL_SOFT) {
-		libreswan_log(
-			"XAUTH: authentication for %s failed, but policy is set to soft fail",
-			arg->name);
+		libreswan_log("XAUTH: authentication for %s failed, but policy is set to soft fail",
+			      name);
 		st->st_xauth_soft = TRUE; /* passed to updown for notification */
 		results = TRUE;
 	}
 
 	if (results) {
 		libreswan_log("XAUTH: User %s: Authentication Successful",
-			      arg->name);
+			      name);
 		xauth_send_status(st, XAUTH_STATUS_OK);
 
 		if (st->quirks.xauth_ack_msgid)
 			st->st_msgid_phase15 = v1_MAINMODE_MSGID;
 
-		jam_str(st->st_username, sizeof(st->st_username), arg->name);
+		jam_str(st->st_username, sizeof(st->st_username), name);
 	} else {
 		/*
 		 * Login attempt failed, display error, send XAUTH status to client
 		 * and reset state to XAUTH_R0
 		 */
-		libreswan_log(
-			"XAUTH: User %s: Authentication Failed: Incorrect Username or Password",
-			arg->name);
+		libreswan_log("XAUTH: User %s: Authentication Failed: Incorrect Username or Password",
+			      name);
 		xauth_send_status(st, XAUTH_STATUS_FAIL);
 	}
-
-	pthread_mutex_lock(&st_jbuf_mutex);
-	dealloc_st_jbuf(ptr);
-	if (st_jbuf_mem == NULL)
-		sigaction(SIGUSR1, &oldsa, NULL);
-	pthread_mutex_unlock(&st_jbuf_mutex);
-	pthread_mutex_unlock(&st->xauth_mutex);
-	st->xauth_tid = 0;	/* ??? this is not valid in POSIX pthreads */
-
-	pfree(arg->password);
-	pfree(arg->name);
-	pfree(arg->connname);
-	pfree(varg);
-
-	return NULL;
 }
 
 /** Launch an authentication prompt
@@ -1402,46 +1075,58 @@ static void *do_authentication(void *varg)
  * @return int Return Code - always 0.
  */
 static int xauth_launch_authent(struct state *st,
-			chunk_t *name,
-			chunk_t *password,
-			const char *connname)
+				chunk_t *name,
+				chunk_t *password,
+				const char *connname)
 {
-	pthread_attr_t pattr;
-	struct xauth_thread_arg *arg;
-
-	if (st->xauth_tid)	/* ??? this is not valid in POSIX pthreads */
+	/*
+	 * XAUTH somehow already in progress?
+	 */
+	if (!pthread_equal(st->st_xauth_thread, main_thread))
 		return 0;
 
-	/* build arg, the context that a thread gets on creation */
+	char *arg_name = alloc_bytes(name->len + 1, "XAUTH Name");
+	memcpy(arg_name, name->ptr, name->len);
+	char *arg_password = alloc_bytes(password->len + 1, "XAUTH Name");
+	memcpy(arg_password, password->ptr, password->len);
 
-	arg = alloc_thing(struct xauth_thread_arg, "XAUTH ThreadArg");
-	arg->st = st;
+	switch (st->st_connection->xauthby) {
+#ifdef XAUTH_HAVE_PAM
+	case XAUTHBY_PAM:
+		libreswan_log("XAUTH: pam authentication being called to authenticate user %s",
+			      arg_name);
+		xauth_start_pam_thread(&st->st_xauth_thread,
+				       arg_name, arg_password,
+				       connname,
+				       &st->st_remoteaddr,
+				       st->st_serialno,
+				       st->st_connection->instance_serial,
+				       "XAUTH",
+				       ikev1_xauth_callback);
+		break;
+#endif
+	case XAUTHBY_FILE:
+		libreswan_log("XAUTH: passwd file authentication being called to authenticate user %s",
+			      arg_name);
+		bool success = do_file_authentication(st, arg_name, arg_password, connname);
+		xauth_start_always_thread(&st->st_xauth_thread,
+				       "file", arg_name, st->st_serialno,
+					  success, ikev1_xauth_callback);
+		break;
+	case XAUTHBY_ALWAYSOK:
+		xauth_start_always_thread(&st->st_xauth_thread,
+					  "alwaysok", arg_name, st->st_serialno,
+					  TRUE, ikev1_xauth_callback);
+		break;
+	default:
+		libreswan_log("XAUTH: unknown authentication method requested to authenticate user %s",
+			      arg_name);
+		bad_case(st->st_connection->xauthby);
+	}
 
-	/*
-	 * Clone these so they persist as long as we need them.
-	 * Each chunk contains no NUL; we must add one to terminate a string.
-	 * alloc_bytes zeros the memory it returns (so the NUL is free).
-	 */
-	arg->password = alloc_bytes(password->len + 1, "XAUTH Password");
-	memcpy(arg->password, password->ptr, password->len);
+	pfree(arg_name);
+	pfree(arg_password);
 
-	arg->name = alloc_bytes(name->len + 1, "XAUTH Name");
-	memcpy(arg->name, name->ptr, name->len);
-
-	arg->connname = clone_str(connname, "XAUTH connection name");
-
-	/*
-	 * Start any kind of authentication in a thread. This includes file
-	 * authentication as the /etc/ipsec.d/passwd file may reside on a SAN,
-	 * a NAS or an NFS disk
-	 */
-	arg->stjb_ix = alloc_st_jbuf(st);
-	pthread_mutex_init(&st->xauth_mutex, NULL);
-	pthread_mutex_lock(&st->xauth_mutex);
-	pthread_attr_init(&pattr);
-	pthread_attr_setdetachstate(&pattr, PTHREAD_CREATE_DETACHED);
-	pthread_create(&st->xauth_tid, &pattr, do_authentication, (void*) arg);
-	pthread_attr_destroy(&pattr);
 	return 0;
 }
 

@@ -108,6 +108,7 @@ endif
 
 # pam_conv.c is wrapped in #ifdef XAUTH_HAVE_PAM
 OBJS += ikev1_xauth.o addresspool.o pam_conv.o
+OBJS += xauth.o
 LDFLAGS += $(XAUTHPAM_LDFLAGS)
 ifneq ($(BUILDENV), darwin)
 LDFLAGS += -lcrypt
