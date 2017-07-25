@@ -77,8 +77,6 @@
 
 #include "pluto_stats.h"
 
-extern bool pluto_drop_oppo_null;
-
 #ifdef XAUTH_HAVE_PAM
 struct ikev2_pam_helper {
 	struct pam_thread_arg pam;	/* writable inside thread */

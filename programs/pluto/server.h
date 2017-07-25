@@ -72,6 +72,7 @@ struct iface_port {
 
 extern struct iface_port  *interfaces;   /* public interfaces */
 extern enum pluto_ddos_mode ddos_mode;
+extern bool pluto_drop_oppo_null;
 
 extern bool use_interface(const char *rifn);
 extern void find_ifaces(void);

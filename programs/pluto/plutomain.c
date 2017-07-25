@@ -131,7 +131,6 @@ extern bool ocsp_strict;
 extern bool ocsp_enable;
 extern char *curl_iface;
 extern long curl_timeout;
-extern bool pluto_drop_oppo_null;
 extern int bare_shunt_interval;
 
 static char *ocsp_uri = NULL;
