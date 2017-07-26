@@ -252,7 +252,7 @@ static const struct ike_alg *lookup_by_id(const struct ike_alg_type *type,
 			    DBG_log("%s ike_alg_lookup_by_id id: %s=%u, found %s\n",
 				    type->name,
 				    name ? name : "???",
-				    id, alg->name));
+				    id, alg->fqn));
 			return alg;
 		}
  	}
@@ -337,7 +337,7 @@ static void check_alg_in_table(const struct ike_alg *alg,
 		}
 	}
 	PASSERT_FAIL("%s missing from %s table",
-		     alg->name, type->name);
+		     alg->fqn, type->name);
 }
 
 /*
@@ -353,7 +353,7 @@ static void check_name_in_names(const char *adjective,
 		}
 	}
 	PEXPECT_LOG("%s name %s missing from %s %s names",
-		    adjective, name, alg->algo_type->name, alg->name);
+		    adjective, name, alg->algo_type->name, alg->fqn);
 }
 
 static void check_names_in_names(const char *adjective,
@@ -751,7 +751,7 @@ static void check_enum_name(const char *what,
 		if (enum_names == NULL) {
 			PASSERT_FAIL("%s %s %s has no enum names",
 				     alg->algo_type->name,
-				     alg->name, what);
+				     alg->fqn, what);
 		}
 		const char *enum_name = enum_short_name(enum_names, id);
 		DBG(DBG_CRYPT,
@@ -784,12 +784,19 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 		const struct ike_alg *alg = *algp;
 
 		DBG(DBG_CRYPT, DBG_log("%s algorithm %s; official name: %s, IKEv1 OAKLEY id: %d, IKEv1 ESP_INFO id: %d, IKEv2 id: %d",
-				       type->name, alg->name, alg->officname,
+				       type->name, alg->fqn, alg->officname,
 				       alg->id[IKEv1_OAKLEY_ID],
 				       alg->id[IKEv1_ESP_ID],
 				       alg->id[IKEv2_ALG_ID]));
 
+		/*
+		 * Check FQN first - passert_ike_alg() uses it.
+		 * Require .fqn to be upper case.
+		 */
 		passert_ike_alg(alg, alg->name != NULL);
+		passert_ike_alg(alg, alg->fqn != NULL);
+		passert_ike_alg(alg, (strlen(alg->fqn) ==
+				      strspn(alg->fqn, "ABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789")));
 		passert_ike_alg(alg, alg->officname != NULL);
 		passert_ike_alg(alg, alg->algo_type == type);
 
@@ -820,6 +827,7 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 		 * Requiring this is easier than trying to ensure that
 		 * changes to NAME don't break NAMES.
 		 */
+		check_name_in_names(type->name, alg->fqn, alg);
 		check_name_in_names(type->name, alg->name, alg);
 
 		/*
@@ -886,11 +894,11 @@ void ike_alg_snprint(char *buf, size_t sizeof_buf,
 	 */
 	{
 		char *start = buf;
-		append(&buf, end, alg->name);
+		append(&buf, end, alg->fqn);
 		/*
-		 * magic number from eyeballing the output
+		 * magic number from eyeballing the longest name
 		 */
-		ssize_t pad = 12 - (buf - start);
+		ssize_t pad = strlen(ike_alg_integ_sha2_512.common.fqn) - (buf - start);
 		passert_ike_alg(alg, pad >= 0);
 		for (ssize_t i = 0; i < pad; i++) {
 			append(&buf, end, " ");
@@ -993,7 +1001,7 @@ void ike_alg_snprint(char *buf, size_t sizeof_buf,
 		const char *sep = "  (";
 		FOR_EACH_IKE_ALG_NAMEP(alg, name) {
 			/* filter out NAME */
-			if (!strcaseeq(*name, alg->name)) {
+			if (!strcaseeq(*name, alg->fqn)) {
 				append(&buf, end, sep);
 				append(&buf, end, *name);
 				sep = " ";
@@ -1021,7 +1029,7 @@ static void strip_nonfips(const struct ike_alg_type *type)
 		 */
 		if (!alg->fips) {
 			libreswan_log("%s algorithm %s disabled; not FIPS compliant",
-				      type->Name, alg->name);
+				      type->Name, alg->fqn);
 			continue;
 		}
 		*end++ = alg;

@@ -58,6 +58,8 @@ OBJS += addrtoa.o addrtot.o addrtypeof.o alg_info.o esp_info.o anyaddr.o \
 	lsw_passert_fail.o \
 	alg_byname.o
 
+OBJS += lswlog.o
+
 # Crypto code:
 #
 # XXX: More is comming as it gets cleaned up and made more library

@@ -26,6 +26,7 @@
 
 struct parser_context;
 struct alg_info;
+struct lswlog;
 
 /*
  * Place holder so that it is possible to clearly differentiate
@@ -187,6 +188,8 @@ void alg_info_snprint_esp_info(char *buf, size_t buflen,
 			       const struct proposal_info *esp_info);
 void alg_info_snprint_phase2(char *buf, size_t buflen,
 			     struct alg_info_esp *alg_info);
+
+size_t lswlog_proposal_info(struct lswlog *log, struct proposal_info *proposal);
 
 /*
  * Iterate through the elements of an ESP or IKE table.
