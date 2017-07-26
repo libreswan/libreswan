@@ -63,7 +63,6 @@
 #include "pending.h"
 #include "kernel.h"
 #include "nat_traversal.h"
-#include "pam_conv.h"
 #include "alg_info.h" /* for ike_info / esp_info */
 #include "key.h" /* for SECKEY_DestroyPublicKey */
 #include "vendor.h"
@@ -3098,12 +3097,14 @@ static stf_status ikev2_start_pam_authorize(struct state *st)
 {
 	char thatid[IDTOA_BUF];
 	idtoa(&st->st_connection->spd.that.id, thatid, sizeof(thatid));
+	libreswan_log("IKEv2: [XAUTH]PAM method requested to authorize '%s'",
+		      thatid);
 	xauth_start_pam_thread(&st->st_xauth_thread,
 			       thatid, "password",
 			       st->st_connection->name,
 			       &st->st_remoteaddr,
-			       st->st_connection->instance_serial,
 			       st->st_serialno,
+			       st->st_connection->instance_serial,
 			       "IKEv2",
 			       ikev2_pam_continue);
 	return STF_SUSPEND;
