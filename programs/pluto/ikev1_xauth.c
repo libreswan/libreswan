@@ -74,7 +74,6 @@
 #include "ikev1_xauth.h"
 #include "virtual.h"	/* needs connections.h */
 #include "addresspool.h"
-#include "pam_conv.h"
 
 /* forward declarations */
 static stf_status xauth_client_ackstatus(struct state *st,
@@ -1093,7 +1092,7 @@ static int xauth_launch_authent(struct state *st,
 	switch (st->st_connection->xauthby) {
 #ifdef XAUTH_HAVE_PAM
 	case XAUTHBY_PAM:
-		libreswan_log("XAUTH: pam authentication being called to authenticate user %s",
+		libreswan_log("XAUTH: PAM authentication method requested to authenticate user '%s'",
 			      arg_name);
 		xauth_start_pam_thread(&st->st_xauth_thread,
 				       arg_name, arg_password,
@@ -1106,7 +1105,7 @@ static int xauth_launch_authent(struct state *st,
 		break;
 #endif
 	case XAUTHBY_FILE:
-		libreswan_log("XAUTH: passwd file authentication being called to authenticate user %s",
+		libreswan_log("XAUTH: password file authentication method requested to authenticate user '%s'",
 			      arg_name);
 		bool success = do_file_authentication(st, arg_name, arg_password, connname);
 		xauth_start_always_thread(&st->st_xauth_thread,
@@ -1114,12 +1113,14 @@ static int xauth_launch_authent(struct state *st,
 					  success, ikev1_xauth_callback);
 		break;
 	case XAUTHBY_ALWAYSOK:
+		libreswan_log("XAUTH: authentication method 'always ok' requested to authenticate user '%s'",
+			      arg_name);
 		xauth_start_always_thread(&st->st_xauth_thread,
 					  "alwaysok", arg_name, st->st_serialno,
 					  TRUE, ikev1_xauth_callback);
 		break;
 	default:
-		libreswan_log("XAUTH: unknown authentication method requested to authenticate user %s",
+		libreswan_log("XAUTH: unknown authentication method requested to authenticate user '%s'",
 			      arg_name);
 		bad_case(st->st_connection->xauthby);
 	}
