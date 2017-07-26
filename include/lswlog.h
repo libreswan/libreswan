@@ -191,20 +191,22 @@ struct lswlog {
 	 * BUF contains the accumulated log output.  It is always NUL
 	 * terminated (LEN specifes the location of the NUL).
 	 *
-	 * BUF can contain up to LOG_WIDTH-1 characters (aka BOUND-1)
-	 * of log output (i.e. LEN<LOG_WIDTH).
+	 * BUF can contain up to BOUND-1 characters of log output
+	 * (i.e. LEN<BOUND).
 	 *
-	 * An attempt to accumulate more than that will cause the
-	 * output to be truncated, and last few characters replaced by
-	 * DOTS.
+	 * An attempt to accumulate more than BOUND-1 characters will
+	 * cause the output to be truncated, and last few characters
+	 * replaced by DOTS.
 	 *
 	 * A buffer containing truncated output is identified by LEN
-	 * == LOG_WIDTH (aka BOUND).
+	 * == BOUND.
 	 */
 	signed char parrot;
 	char buf[LOG_WIDTH + 1]; /* extra NUL */
 	signed char canary;
 	size_t len;
+	size_t bound; /* <= LOG_WIDTH */
+	const char *dots;
 };
 
 extern const struct lswlog empty_lswlog;
@@ -217,16 +219,16 @@ extern int (*lswlog_debugf)(const char *format, ...) PRINTF_LIKE(1);
 #define LSWLOG_PARROT -1
 #define LSWLOG_CANARY -2
 
-#define PASSERT_LSWLOG(LOG, BOUND)					\
+#define PASSERT_LSWLOG(LOG)						\
 	do {								\
-		passert((LOG)->parrot == LSWLOG_PARROT);		\
-		/* POS/BOUND well defined */				\
-		passert((LOG)->len <= (BOUND));				\
-		passert((BOUND) < sizeof((LOG)->buf));			\
-		/* always NUL terminated */				\
+		passert((LOG)->dots != NULL);				\
+		/* LEN/BOUND well defined */				\
+		passert((LOG)->len <= (LOG)->bound);			\
+		passert((LOG)->bound < sizeof((LOG)->buf));		\
 		/* passert((LOG)->len < sizeof((LOG)->buf)) */;		\
+		/* always NUL terminated */				\
+		passert((LOG)->parrot == LSWLOG_PARROT);		\
 		passert((LOG)->buf[(LOG)->len] == '\0');		\
-		/* canary intact */					\
 		passert((LOG)->canary == LSWLOG_CANARY);		\
 	} while (false)
 
