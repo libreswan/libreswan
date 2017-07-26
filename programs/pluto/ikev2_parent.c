@@ -3091,10 +3091,16 @@ static void ikev2_pam_continue(struct state *st, const char *name UNUSED,
  * In the middle of IKEv2 AUTH exchange, the AUTH payload is verified succsfully.
  * Now invoke the PAM helper to authorize connection (based on name only, not password)
  * When pam helper is done state will be woken up and continue.
+ *
+ * This routine "suspends" MD/ST; once PAM finishes it will be
+ * unsuspended.
  */
 
-static stf_status ikev2_start_pam_authorize(struct state *st)
+static stf_status ikev2_start_pam_authorize(struct msg_digest *md)
 {
+	struct state *st = md->st;
+	set_suspended(md->st, md);
+
 	char thatid[IDTOA_BUF];
 	idtoa(&st->st_connection->spd.that.id, thatid, sizeof(thatid));
 	libreswan_log("IKEv2: [XAUTH]PAM method requested to authorize '%s'",
@@ -3296,7 +3302,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 
 #ifdef XAUTH_HAVE_PAM
 	if (st->st_connection->policy & POLICY_IKEV2_PAM_AUTHORIZE)
-		return ikev2_start_pam_authorize(st);
+		return ikev2_start_pam_authorize(md);
 #endif
 	return ikev2_parent_inI2outR2_auth_tail(md, TRUE);
 }
