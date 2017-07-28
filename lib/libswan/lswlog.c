@@ -20,13 +20,11 @@
 #include "lswlog.h"
 #include "lswalloc.h"
 
-const struct lswlog empty_lswlog = {
+const struct lswbuf empty_lswbuf = {
 	.parrot = LSWLOG_PARROT,
 	.buf = "",
 	.canary = LSWLOG_CANARY,
 	.len = 0,
-	.bound = LOG_WIDTH,
-	.dots = "...",
 };
 
 static int lswlog_debugf_nop(const char *format UNUSED, ...)
@@ -54,11 +52,11 @@ static struct dest dest(struct lswlog *log)
 	/*
 	 * Where will the next message be written?
 	 */
-	passert(log->bound <= LOG_WIDTH);
-	passert(log->len <= log->bound);
-	char *start = log->buf + log->len;
+	passert(log->bound < sizeof(log->buf->buf));
+	passert(log->buf->len <= log->bound);
+	char *start = log->buf->buf + log->buf->len;
 	lswlog_debugf("\tstart=%p\n", start);
-	passert(start <= log->buf + LOG_WIDTH);
+	passert(start < log->buf->buf + sizeof(log->buf->buf));
 	passert(start[0] == '\0');
 
 	/*
@@ -70,11 +68,11 @@ static struct dest dest(struct lswlog *log)
 	 * If the buffer has overflowed (LEN==BOUND) (output has
 	 * already been truncated) then size=0.
 	 */
-	passert(log->bound <= LOG_WIDTH);
-	passert(log->len <= log->bound);
-	size_t size = log->bound - log->len;
+	passert(log->bound < sizeof(log->buf->buf));
+	passert(log->buf->len <= log->bound);
+	size_t size = log->bound - log->buf->len;
 	lswlog_debugf("\tsize=%zd\n", size);
-	passert(log->len + size < sizeof(log->buf));
+	passert(log->buf->len + size < sizeof(log->buf->buf));
 
 	struct dest d = {
 		.start = start,
@@ -93,7 +91,7 @@ static struct dest dest(struct lswlog *log)
 static void truncate(struct lswlog *log)
 {
 	lswlog_debugf("truncate(.log=%p)\n", log);
-	lswlog_debugf("\tblen=%zu\n", log->len);
+	lswlog_debugf("\tblen=%zu\n", log->buf->len);
 	lswlog_debugf("\tbbound=%zu\n", log->bound);
 	lswlog_debugf("\tbdots=%s\n", log->dots);
 	PASSERT_LSWLOG(log);
@@ -101,15 +99,15 @@ static void truncate(struct lswlog *log)
 	/*
 	 * Transition from "full" to overfull (truncated).
 	 */
-	passert(log->len == log->bound - 1);
-	log->len = log->bound;
+	passert(log->buf->len == log->bound - 1);
+	log->buf->len = log->bound;
 
 	/*
 	 * Backfill with DOTS.
 	 */
-	passert(log->bound < sizeof(log->buf));
+	passert(log->bound < sizeof(log->buf->buf));
 	passert(log->bound >= strlen(log->dots));
-	char *dest = log->buf + log->bound - strlen(log->dots);
+	char *dest = log->buf->buf + log->bound - strlen(log->dots);
 	lswlog_debugf("\tdest=%p\n", dest);
 	memcpy(dest, log->dots, strlen(log->dots) + 1);
 }
@@ -136,7 +134,7 @@ static size_t concat(struct lswlog *log, const char *string)
 		 * NUL, copy everything over.
 		 */
 		memcpy(d.start, string, n + 1);
-		log->len += n;
+		log->buf->len += n;
 	} else if (d.size > 0) {
 		/*
 		 * Not enough space, perform a partial copy of the
@@ -144,8 +142,8 @@ static size_t concat(struct lswlog *log, const char *string)
 		 */
 		memcpy(d.start, string, d.size - 1);
 		d.start[d.size - 1] = '\0';
-		log->len += d.size - 1;
-		passert(log->len == log->bound - 1);
+		log->buf->len += d.size - 1;
+		passert(log->buf->len == log->bound - 1);
 		/*
 		 * ... and then go back and blat the end with DOTS.
 		 */
@@ -181,7 +179,7 @@ static size_t append(struct lswlog *log, const char *format, va_list ap)
 		 * problem? (if it is then hopefully things crash).
 		 */
 		PEXPECT_LOG("vsnprintf() unexpectedly returned the -ve value %d", sn);
-		return LOG_WIDTH;
+		return sizeof(log->buf->buf);
 	}
 	size_t n = sn;
 
@@ -190,14 +188,14 @@ static size_t append(struct lswlog *log, const char *format, va_list ap)
 		 * Everything, including the trailing NUL, fitted.
 		 * Update the length.
 		 */
-		log->len += n;
+		log->buf->len += n;
 	} else if (d.size > 0) {
 		/*
 		 * The message didn't fit so only d.size-1 characters
 		 * of the message were written.  Update things ...
 		 */
-		log->len += d.size - 1;
-		passert(log->len == log->bound - 1);
+		log->buf->len += d.size - 1;
+		passert(log->buf->len == log->bound - 1);
 		/*
 		 * ... and then mark the buffer as truncated.
 		 */
@@ -230,5 +228,5 @@ size_t lswlogs(struct lswlog *log, const char *string)
 
 size_t lswlogl(struct lswlog *log, struct lswlog *buf)
 {
-	return concat(log, buf->buf);
+	return concat(log, buf->buf->buf);
 }
