@@ -33,6 +33,4 @@ extern stf_status xauth_inI1(struct msg_digest *md);
 extern oakley_auth_t xauth_calcbaseauth(oakley_auth_t baseauth);
 extern stf_status modecfg_send_request(struct state *st);
 
-extern void state_deletion_xauth_cleanup(struct state *st);
-
 #endif  /* XAUTH_H */

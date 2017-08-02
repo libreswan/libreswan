@@ -73,6 +73,7 @@
 #include "fetch.h"
 #include "timer.h"
 #include "ipsecconf/confread.h"
+#include "xauth.h"
 
 #include "crypto.h"
 #include "vendor.h"
@@ -684,6 +685,13 @@ static void usage(void)
 
 int main(int argc, char **argv)
 {
+	/*
+	 * Identify the main thread.
+	 *
+	 * Also used as a reserved thread for code wanting to
+	 * determine if it is running on an aux thread.
+	 */
+	main_thread = pthread_self();
 
 	int lockfd;
 

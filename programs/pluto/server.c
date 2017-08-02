@@ -720,10 +720,17 @@ static void childhandler_cb(int unused UNUSED, const short event UNUSED, void *a
 }
 
 void init_event_base(void) {
-	DBG(DBG_CONTROLMORE, DBG_log("Initialize libevent base"));
+	libreswan_log("Initializing libevent in pthreads mode: headers: %s (%" PRIx32 "); library: %s (%" PRIx32 ")",
+		      LIBEVENT_VERSION, (ev_uint32_t)LIBEVENT_VERSION_NUMBER,
+		      event_get_version(), event_get_version_number());
+	/*
+	 * According to section 'setup Library setup', libevent needs
+	 * to be set up in pthreads mode before doing anything else.
+	 */
+	passert(evthread_use_pthreads() >= 0);
+	/* now do anything */
 	pluto_eb = event_base_new();
 	passert(pluto_eb != NULL);
-	passert(evthread_use_pthreads() >= 0);
 	passert(evthread_make_base_notifiable(pluto_eb) >= 0);
 }
 
