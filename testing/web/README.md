@@ -181,10 +181,12 @@ automate the below.
 
 - examine (and perhaps delete) a random selection of test runs:
 
-      # form a list of non-branch et.al. test runs
-      $ ./libreswan-web-master/testing/web/gime-work.sh "${WEBDIR}" libreswan-web-slave 2>&1 | grep -e '^tested:[^:]*$' | tee tested.tmp
-      # ignoring the first, select a random subset
-      $ tail -n +2 tested.tmp | shuf | tail -n +100 | tee /dev/stderr | while read a h b ; do echo "${WEBDIR}"/*$h* ; done
+      # form a list of all the test results but exclude the most recent
+      $ ./libreswan-web-master/testing/web/gime-work.sh results libreswan-web-slave 2>&1 | grep tested: | tail -n +2 | tee tested.txt
+      # create list of uninteresting test runs
+      $ grep -v -e ' true$' -e ':.*:' tested.txt | while read t h b ; do echo results/*-g$h* ; done
+      # create a random list of interesting test runs
+      $ grep -e ' true$' tested.txt | shuf | tail -n +100 | while read t h b ; do echo results/*-g$h* ; done
 
   (gime-work.sh lists each test result, and how "interesting" it was,
   on stderror)
