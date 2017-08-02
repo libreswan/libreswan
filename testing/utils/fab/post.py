@@ -348,9 +348,9 @@ class TestResult:
             if diff is None:
                 # use brute force
                 diff = _diff(self.logger,
-                             "MASTER/" + test.name + "/" + host_name + ".console.txt",
+                             "MASTER/" + test.directory + "/" + host_name + ".console.txt",
                              expected_output,
-                             "OUTPUT/" + test.name + "/" + host_name + ".console.txt",
+                             "OUTPUT/" + test.directory + "/" + host_name + ".console.txt",
                              sanitized_output)
 
             if update:
@@ -480,9 +480,9 @@ def mortem(test, args, domain_prefix="",
             continue
 
         baseline_diff = _diff(logger,
-                              "BASELINE/" + test.name + "/" + host_name + ".console.txt",
+                              "BASELINE/" + test.directory + "/" + host_name + ".console.txt",
                               baseline_result.sanitized_output[host_name],
-                              "OUTPUT/" + test.name + "/" + host_name + ".console.txt",
+                              "OUTPUT/" + test.directory + "/" + host_name + ".console.txt",
                               test_result.sanitized_output[host_name])
         if baseline_diff:
             baseline_whitespace = _whitespace(baseline_result.sanitized_output[host_name],
