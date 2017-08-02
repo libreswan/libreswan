@@ -723,6 +723,12 @@ enum encaps_options {
 	encaps_yes = 3,
 };
 
+enum nic_offload_options {
+	nic_offload_no = 0,
+	nic_offload_yes = 1,
+	nic_offload_auto = 2,
+};
+
 enum ynf_options {
 	ynf_no   = 0,
 	ynf_yes  = 1,
