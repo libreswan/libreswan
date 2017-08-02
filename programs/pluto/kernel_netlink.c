@@ -38,8 +38,11 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <stdint.h>
 #include <linux/pfkeyv2.h>
+#include <linux/ethtool.h>
+#include <linux/sockios.h>
 #include <unistd.h>
 
 #include "kameipsec.h"
@@ -81,6 +84,9 @@
 /* Minimum priority number in SPD used by pluto. */
 #define MIN_SPD_PRIORITY 1024
 
+#define NIC_OFFLOAD_UNKNOWN -2
+#define NIC_OFFLOAD_UNSUPPORTED -1
+
 struct aead_alg {
 	int id;
 	int icvlen;
@@ -89,6 +95,7 @@ struct aead_alg {
 
 static int netlinkfd = NULL_FD;
 static int netlink_bcast_fd = NULL_FD;
+static int netlink_esp_hw_offload = NIC_OFFLOAD_UNKNOWN;
 
 #define NE(x) { x, #x }	/* Name Entry -- shorthand for sparse_names */
 
@@ -891,6 +898,95 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	return ok;
 }
 
+static void netlink_find_offload_feature(const char *ifname)
+{
+	struct ethtool_sset_info *sset_info = NULL;
+	struct ethtool_gstrings *cmd = NULL;
+	struct ifreq ifr;
+	uint32_t sset_len, i;
+	char *str;
+	int err;
+
+	netlink_esp_hw_offload = NIC_OFFLOAD_UNSUPPORTED;
+
+	/* Determine number of device-features */
+	sset_info = alloc_bytes(sizeof(*sset_info) + sizeof(sset_info->data[0]), "ethtool_sset_info");
+	sset_info->cmd = ETHTOOL_GSSET_INFO;
+	sset_info->sset_mask = 1ULL << ETH_SS_FEATURES;
+	strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+	ifr.ifr_data = (void *)sset_info;
+	err = ioctl(netlinkfd, SIOCETHTOOL, &ifr);
+	if (err)
+		goto out;
+
+	if (sset_info->sset_mask != 1ULL << ETH_SS_FEATURES)
+		goto out;
+	sset_len = sset_info->data[0];
+
+	/* Retrieve names of device-features */
+	cmd = alloc_bytes(sizeof(*cmd) + ETH_GSTRING_LEN * sset_len, "ethtool_gstrings");
+	cmd->cmd = ETHTOOL_GSTRINGS;
+	cmd->string_set = ETH_SS_FEATURES;
+	strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+	ifr.ifr_data = (void *)cmd;
+	err = ioctl(netlinkfd, SIOCETHTOOL, &ifr);
+	if (err)
+		goto out;
+
+	/* Look for the ESP_HW feature bit */
+	str = (char *)cmd->data;
+	for (i = 0; i < cmd->len; i++) {
+		if (strncmp(str, "esp-hw-offload", ETH_GSTRING_LEN) == 0)
+			break;
+		str += ETH_GSTRING_LEN;
+	}
+	if (i >= cmd->len)
+		goto out;
+
+	netlink_esp_hw_offload = i;
+
+out:
+	if (sset_info)
+		pfree(sset_info);
+	if (cmd)
+		pfree(cmd);
+}
+
+static enum iface_nic_offload netlink_detect_offload(const char *ifname)
+{
+	enum iface_nic_offload ret = IFNO_UNSUPPORTED;
+	struct ethtool_gfeatures *cmd;
+	uint32_t feature_bit;
+	struct ifreq ifr;
+	int blocks;
+
+	/*
+	 * Kernel requires a real interface in order to query the kernel-wide
+	 * capability, so we do it here on first invocation
+	 */
+	if (netlink_esp_hw_offload == NIC_OFFLOAD_UNKNOWN)
+		netlink_find_offload_feature(ifname);
+
+	if (netlink_esp_hw_offload == NIC_OFFLOAD_UNSUPPORTED)
+		return ret;
+
+	/* Feature is supported by kernel. Query device features */
+	blocks = (netlink_esp_hw_offload + 31) / 32;
+	feature_bit = 1 << (netlink_esp_hw_offload % 31);
+
+	cmd = alloc_bytes(sizeof(*cmd) + sizeof(cmd->features[0]) * blocks, "ethtool_gfeatures");
+	strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+	ifr.ifr_data = (void *)cmd;
+	cmd->cmd = ETHTOOL_GFEATURES;
+	cmd->size = blocks;
+	if ((ioctl(netlinkfd, SIOCETHTOOL, &ifr) == 0) &&
+		(cmd->features[blocks-1].active & feature_bit))
+		ret = IFNO_SUPPORTED;
+
+	pfree(cmd);
+	return ret;
+}
+
 /*
  * netlink_add_sa - Add an SA into the kernel SPDB via netlink
  *
@@ -1258,13 +1354,13 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
 
-	if (sa->nic_offload) {
+	if (sa->nic_offload_dev) {
 		struct xfrm_user_offload xuo = { 0, 0 };
 
 		xuo.flags |= sa->inbound ? XFRM_OFFLOAD_INBOUND : 0;
 		if (sa->src->u.v4.sin_family == AF_INET6)
 			xuo.flags |= XFRM_OFFLOAD_IPV6;
-		xuo.ifindex = sa->nic_offload_ifindex;
+		xuo.ifindex = if_nametoindex(sa->nic_offload_dev);
 
 		attr->rta_type = XFRMA_OFFLOAD_DEV;
 		attr->rta_len = RTA_LENGTH(sizeof(xuo));
@@ -2181,6 +2277,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 				id->id_vname = clone_str(v->name,
 							"virtual device name netlink");
 				id->id_count++;
+				id->id_nic_offload = netlink_detect_offload(ifp->name);
 
 				q->ip_addr = ifp->addr;
 				q->fd = fd;
