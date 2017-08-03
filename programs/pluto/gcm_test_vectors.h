@@ -26,6 +26,7 @@ struct gcm_test_vector {
 	const char *tag;
 };
 
+const struct gcm_test_vector *const aes_gcm_tests;
 
 bool test_gcm_vectors(const struct encrypt_desc *encrypt_desc,
 		      const struct gcm_test_vector *tests);

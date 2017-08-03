@@ -25,7 +25,3 @@ extern const struct encrypt_desc ike_alg_encrypt_aes_ccm_16;
 
 extern const struct integ_desc ike_alg_integ_aes_xcbc;
 extern const struct integ_desc ike_alg_integ_aes_cmac;
-
-const struct gcm_test_vector *const aes_gcm_tests;
-const struct cbc_test_vector *const aes_cbc_tests;
-const struct ctr_test_vector *const aes_ctr_tests;

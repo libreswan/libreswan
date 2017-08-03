@@ -145,9 +145,7 @@ OBJS += ike_alg_null.o
 
 OBJS += ike_alg_sha1.o
 OBJS += ike_alg_md5.o
-OBJS += ike_alg_aes.o
 OBJS += ike_alg_dh.o
-OBJS += ike_alg_camellia.o
 OBJS += ike_alg_sha2.o
 OBJS += ike_alg.o db_ops.o
 
