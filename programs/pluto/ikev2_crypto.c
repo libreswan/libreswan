@@ -75,7 +75,7 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 	 * separate integrity.
 	 */
 	const struct integ_desc *integ = ipi->attrs.transattrs.integ;
-	size_t integ_key_size = (integ != NULL ? integ->integ_key_size : 0);
+	size_t integ_key_size = (integ != NULL ? integ->integ_keymat_size : 0);
 	/*
 	 * If there is encryption, then ENCKEYLEN contains the
 	 * required number of bits.

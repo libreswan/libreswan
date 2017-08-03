@@ -513,10 +513,10 @@ static const struct integ_desc *integ_descriptors[] = {
 static void integ_desc_check(const struct ike_alg *alg)
 {
 	const struct integ_desc *integ = integ_desc(alg);
-	passert_ike_alg(alg, integ->integ_key_size > 0);
+	passert_ike_alg(alg, integ->integ_keymat_size > 0);
 	passert_ike_alg(alg, integ->integ_output_size > 0);
 	if (integ->prf) {
-		passert_ike_alg(alg, integ->integ_key_size == integ->prf->prf_key_size);
+		passert_ike_alg(alg, integ->integ_keymat_size == integ->prf->prf_key_size);
 		passert_ike_alg(alg, integ->integ_output_size <= integ->prf->prf_output_size);
 		passert_ike_alg(alg, prf_desc_is_ike(&integ->prf->common));
 		check_names_in_names("integ prf", &integ->prf->common, alg);

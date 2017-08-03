@@ -495,12 +495,13 @@ struct prf_ops {
 struct integ_desc {
 	struct ike_alg common;	/* MUST BE FIRST */
 	/*
-	 * Number of secret bytes needed to prime the integ algorithm.
+	 * Size, in bytes (octets), of the keying material needed to
+	 * prime the integrity algorithm.
 	 *
 	 * If there's an IKE PRF implementation, then these values
 	 * need to be consistent with the PRF.
 	 */
-	const size_t integ_key_size;
+	const size_t integ_keymat_size;
 	/*
 	 * The size of the output from the integrity algorithm.  This
 	 * is put on the wire as "Integrity Checksum Data".
