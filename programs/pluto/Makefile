@@ -69,7 +69,7 @@ OBJS += kernel_pfkey.o
 endif
 
 ifeq ($(USE_NETKEY),true)
-CFLAGS += -DNETKEY_SUPPORT -DKERNEL26_HAS_KAME_DUPLICATES -DPFKEY
+CFLAGS += -DNETKEY_SUPPORT -DPFKEY
 OBJS += kernel_netlink.o
 endif
 
