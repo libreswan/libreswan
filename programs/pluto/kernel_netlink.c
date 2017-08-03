@@ -472,7 +472,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 	}
 	netlink_errno = -rsp.u.e.error;
 	if (rsp.n.nlmsg_type != expected_resp_type && rsp.n.nlmsg_type == NLMSG_ERROR) {
-		if (rsp.u.e.error != 0 && expected_resp_type != NLMSG_NOOP) {
+		if (rsp.u.e.error != 0) {
 			loglog(RC_LOG_SERIOUS,
 				"ERROR: netlink response for %s %s included errno %d: %s",
 				description, text_said, -rsp.u.e.error,
