@@ -88,6 +88,22 @@ const struct integ_desc ike_alg_integ_sha2_256 = {
 	.prf = &ike_alg_prf_sha2_256,
 };
 
+const struct integ_desc ike_alg_integ_hmac_sha2_256_truncbug = {
+	.common = {
+		.name = "hmac_sha2_256_truncbug",
+		.fqn = "HMAC_SHA2_256_truncbug",
+		.names = { "hmac_sha2_256_truncbug", },
+		.officname = "hmac_sha2_256_truncbug",
+		.algo_type = IKE_ALG_INTEG,
+		.id = {
+			[IKEv1_ESP_ID] = AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG,
+		},
+		.fips = FALSE,
+	},
+	.integ_keymat_size = SHA2_256_DIGEST_SIZE,
+	.integ_output_size = BYTES_FOR_BITS(96),
+};
+
 const struct hash_desc ike_alg_hash_sha2_384 = {
 	.common = {
 		.name = "sha2_384",
