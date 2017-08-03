@@ -44,6 +44,8 @@ v3.21 (Not released)
 * IKEv1: Multiple CISCO_SPLIT_INC's cause duplicate spd_routes [Oleg Rosowiecki]
 * X509: Improve some failure logging [Paul]
 * XFRM: Use proper alignment for IPv4 AH as per RFC4302 Section 3.3.3.2.1 [Paul]
+* XFRM: Update including system or local copy of xfrm.h [Paul/Antony]
+* XFRM: Remove no longer needed {rt}netlink.h copies [Paul]
 * KLIPS: cryptoapi: switch from hash to ahash [Richard]
 * KLIPS: Add traffic accounting support [Richard/Paul]
 * KLIPS: Support for linux 4.11 [Paul]
