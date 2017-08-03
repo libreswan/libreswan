@@ -244,6 +244,12 @@ NSS_LDFLAGS ?= -lnss3 -lnspr4
 # See https://bugzilla.mozilla.org/show_bug.cgi?id=1336487
 NSS_REQ_AVA_COPY?=true
 
+# Use a local copy of xfrm.h. This can be needed on older systems
+# that do not ship linux/xfrm.h, or when the shipped version is too
+# old. Since we ship some not-yet merged ipsec-next offload code, this
+# is currently true for basically all distro's
+USE_XFRM_HEADER_COPY?=true
+
 # When compiling on a system where unbound is missing the required unbound-event.h
 # include file, enable this workaround option that will enable an included copy of
 # this file as shipped with libreswan. The copy is taken from unbound 1.6.0.

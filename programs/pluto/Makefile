@@ -47,9 +47,12 @@ include $(top_srcdir)/mk/config.mk
 
 OBJS =
 
+# local (possibly more up to date) copy of <linux/xfrm.h>
+ifeq ($(USE_XFRM_HEADER_COPY),true)
+CFLAGS+=-I ${LIBRESWANSRCDIR}/programs/pluto/linux-copy
+endif
 # where to find klips headers and Libreswan headers
-# and 2.6 kernel's <rtnetlink.h> and <xfrm.h>
-HDRDIRS = -I${LIBRESWANSRCDIR}/programs/pluto/linux26 -I${LIBRESWANSRCDIR}/include -I$(LIBRESWANSRCDIR)/lib/libcrypto -I$(KLIPSINC)
+HDRDIRS +=-I${LIBRESWANSRCDIR}/include -I$(LIBRESWANSRCDIR)/lib/libcrypto -I$(KLIPSINC)
 
 # -DKLIPS enables interface to Kernel LINUX IPsec code
 # -DNETKEY enables interface to Kernel NETKEY/XFRM IPsec code

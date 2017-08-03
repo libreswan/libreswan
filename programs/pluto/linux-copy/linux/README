@@ -1,0 +1,6 @@
+
+The xfrm.h include file is taken from the kernel source tree, from
+the directory include/uapi/linux/
+
+This assumes that the xfrm.h file always retains backwards compatibility
+

@@ -1,6 +1,0 @@
-
-These include files are taken from the kernel source tree. If they get
-changed breaking backwards compatibility, we might break on older kernels.
-
-Current versions are taken from 2.6.24
-
