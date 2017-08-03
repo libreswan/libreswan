@@ -141,12 +141,6 @@ OBJS += ike_alg_nss_hash_ops.o
 OBJS += ike_alg_hmac_prf_ops.o
 OBJS += ike_alg_nss_prf_ops.o
 OBJS += ike_alg_nss_gcm.o
-OBJS += ike_alg_null.o
-
-OBJS += ike_alg_sha1.o
-OBJS += ike_alg_md5.o
-OBJS += ike_alg_dh.o
-OBJS += ike_alg_sha2.o
 OBJS += ike_alg.o db_ops.o
 
 # libefence is a free memory allocation debugger

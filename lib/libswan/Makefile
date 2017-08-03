@@ -77,12 +77,17 @@ OBJS += ike_alg_camellia.o
 ifeq ($(USE_CAST),true)
 OBJS += ike_alg_cast.o
 endif
+OBJS += ike_alg_dh.o
+OBJS += ike_alg_md5.o
+OBJS += ike_alg_null.o
 ifeq ($(USE_RIPEMD),true)
 OBJS += ike_alg_ripemd.o
 endif
 ifeq ($(USE_SERPENT),true)
 OBJS += ike_alg_serpent.o
 endif
+OBJS += ike_alg_sha1.o
+OBJS += ike_alg_sha2.o
 ifeq ($(USE_TWOFISH),true)
 OBJS += ike_alg_twofish.o
 endif
