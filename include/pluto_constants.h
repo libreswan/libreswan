@@ -724,9 +724,9 @@ enum encaps_options {
 };
 
 enum nic_offload_options {
-	nic_offload_no = 0,
-	nic_offload_yes = 1,
-	nic_offload_auto = 2,
+	nic_offload_no = 1,
+	nic_offload_yes = 2,
+	nic_offload_auto = 3,
 };
 
 enum ynf_options {
