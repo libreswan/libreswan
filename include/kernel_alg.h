@@ -62,8 +62,6 @@ extern int kernel_alg_esp_ivlen(int alg_id);
 /* returns success (NULL) if encrypt alg is present in kernel */
 extern err_t check_kernel_encrypt_alg(int alg_id, unsigned int key_len);
 
-extern bool kernel_alg_esp_ok_final(int ealg, unsigned int key_len, int aalg,
-				    struct alg_info_esp *alg_info);
 /* returns encrypt keylen in BYTES for esp enc alg passed */
 extern int kernel_alg_esp_enc_max_keylen(int alg_id);
 
