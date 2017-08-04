@@ -1705,7 +1705,7 @@ int main(int argc, char **argv)
 			else if (streq(optarg, "auto"))
 				msg.nic_offload = nic_offload_auto;
 			else
-				diag("--nic_offload options are 'no', 'yes' or 'auto'");
+				diag("--nic-offload options are 'no', 'yes' or 'auto'");
 			continue;
 
 		case CD_NO_NAT_KEEPALIVE:	/* --no-nat_keepalive */
