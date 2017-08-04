@@ -49,7 +49,7 @@
 #include <linux/rtnetlink.h>
 
 #include "libreswan.h" /* before xfrm.h otherwise break on F22 */
-#include "linux/xfrm.h" /* system or local copy is picked based on config */
+#include "linux/xfrm.h" /* local (if configured) or system copy */
 
 #include <libreswan/pfkeyv2.h>
 #include <libreswan/pfkey.h>
