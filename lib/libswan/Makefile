@@ -65,21 +65,29 @@ OBJS += lswlog.o
 # XXX: More is comming as it gets cleaned up and made more library
 # like.
 
-OBJS += ike_alg_desc.o
-
+# not much left using this
 CFLAGS += -I$(top_srcdir)/lib/libcrypto
+
+OBJS += ike_alg_desc.o
 ifeq ($(USE_3DES),true)
 OBJS += ike_alg_3des.o
 endif
+OBJS += ike_alg_aes.o
+OBJS += ike_alg_camellia.o
 ifeq ($(USE_CAST),true)
 OBJS += ike_alg_cast.o
 endif
+OBJS += ike_alg_dh.o
+OBJS += ike_alg_md5.o
+OBJS += ike_alg_null.o
 ifeq ($(USE_RIPEMD),true)
 OBJS += ike_alg_ripemd.o
 endif
 ifeq ($(USE_SERPENT),true)
 OBJS += ike_alg_serpent.o
 endif
+OBJS += ike_alg_sha1.o
+OBJS += ike_alg_sha2.o
 ifeq ($(USE_TWOFISH),true)
 OBJS += ike_alg_twofish.o
 endif

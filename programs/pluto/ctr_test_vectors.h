@@ -23,5 +23,7 @@ struct ctr_test_vector {
 	const char *output_cb;
 };
 
+const struct ctr_test_vector *const aes_ctr_tests;
+
 bool test_ctr_vectors(const struct encrypt_desc *encrypt_desc,
 		      const struct ctr_test_vector *tests);
