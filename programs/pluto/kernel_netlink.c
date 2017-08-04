@@ -913,10 +913,10 @@ static void netlink_find_offload_feature(const char *ifname)
 	sset_info = alloc_bytes(sizeof(*sset_info) + sizeof(sset_info->data[0]), "ethtool_sset_info");
 	sset_info->cmd = ETHTOOL_GSSET_INFO;
 	sset_info->sset_mask = 1ULL << ETH_SS_FEATURES;
-	strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+	jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
 	ifr.ifr_data = (void *)sset_info;
 	err = ioctl(netlinkfd, SIOCETHTOOL, &ifr);
-	if (err)
+	if (err != 0)
 		goto out;
 
 	if (sset_info->sset_mask != 1ULL << ETH_SS_FEATURES)
@@ -927,7 +927,7 @@ static void netlink_find_offload_feature(const char *ifname)
 	cmd = alloc_bytes(sizeof(*cmd) + ETH_GSTRING_LEN * sset_len, "ethtool_gstrings");
 	cmd->cmd = ETHTOOL_GSTRINGS;
 	cmd->string_set = ETH_SS_FEATURES;
-	strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+	jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
 	ifr.ifr_data = (void *)cmd;
 	err = ioctl(netlinkfd, SIOCETHTOOL, &ifr);
 	if (err)
@@ -936,7 +936,7 @@ static void netlink_find_offload_feature(const char *ifname)
 	/* Look for the ESP_HW feature bit */
 	str = (char *)cmd->data;
 	for (i = 0; i < cmd->len; i++) {
-		if (strncmp(str, "esp-hw-offload", ETH_GSTRING_LEN) == 0)
+		if (strneq(str, "esp-hw-offload", ETH_GSTRING_LEN) == 0)
 			break;
 		str += ETH_GSTRING_LEN;
 	}
@@ -946,9 +946,10 @@ static void netlink_find_offload_feature(const char *ifname)
 	netlink_esp_hw_offload = i;
 
 out:
-	if (sset_info)
+	if (sset_info != NULL)
 		pfree(sset_info);
-	if (cmd)
+
+	if (cmd != NULL)
 		pfree(cmd);
 }
 
@@ -975,7 +976,7 @@ static enum iface_nic_offload netlink_detect_offload(const char *ifname)
 	feature_bit = 1 << (netlink_esp_hw_offload % 31);
 
 	cmd = alloc_bytes(sizeof(*cmd) + sizeof(cmd->features[0]) * blocks, "ethtool_gfeatures");
-	strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+	jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
 	ifr.ifr_data = (void *)cmd;
 	cmd->cmd = ETHTOOL_GFEATURES;
 	cmd->size = blocks;
@@ -984,6 +985,7 @@ static enum iface_nic_offload netlink_detect_offload(const char *ifname)
 		ret = IFNO_SUPPORTED;
 
 	pfree(cmd);
+
 	return ret;
 }
 

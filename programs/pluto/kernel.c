@@ -1719,8 +1719,8 @@ static void setup_esp_nic_offload(struct kernel_sa *sa, struct connection *c,
 {
 	if (c->nic_offload == nic_offload_no)
 		return;
-	if (!c->interface || !c->interface->ip_dev ||
-		!c->interface->ip_dev->id_rname)
+	if (c->interface == NULL || c->interface->ip_dev == NULL ||
+		c->interface->ip_dev->id_rname == NULL)
 		return;
 
 	if (c->nic_offload == nic_offload_auto) {
@@ -2305,7 +2305,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		setup_esp_nic_offload(said_next, c, &nic_offload_fallback);
 
 		ret = kernel_ops->add_sa(said_next, replace);
-		if (!ret && said_next->nic_offload_dev && nic_offload_fallback) {
+		if (!ret && nic_offload_fallback &&
+			said_next->nic_offload_dev != NULL) {
 			/* Fallback to non-nic-offload crypto */
 			said_next->nic_offload_dev = NULL;
 			ret = kernel_ops->add_sa(said_next, replace);
