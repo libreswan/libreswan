@@ -529,6 +529,14 @@ struct integ_desc {
 	 */
 	const size_t integ_output_size;
 	/*
+	 * IKEv1 IPsec AH transform values
+	 * http://www.iana.org/assignments/isakmp-registry/isakmp-registry.xhtml#isakmp-registry-7
+	 *
+	 * This seems to be closely related to the value fed into the
+	 * KLIPS kernel interface.
+	 */
+	enum ipsec_authentication_algo integ_ikev1_ah_id;
+	/*
 	 * For IKE.  The PRF implementing integrity.  The output is
 	 * truncated down to INTEG_HASH_LEN.
 	 *

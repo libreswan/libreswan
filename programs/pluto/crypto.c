@@ -45,6 +45,8 @@
 #include "cbc_test_vectors.h"
 #include "gcm_test_vectors.h"
 
+#include "kernel_alg.h"
+
 void init_crypto(void)
 {
 	ike_alg_init();
@@ -57,6 +59,20 @@ void init_crypto(void)
 				 aes_ctr_tests));
 	passert(test_cbc_vectors(&ike_alg_encrypt_aes_cbc,
 				 aes_cbc_tests));
+
+	/*
+	 * XXX: once everything uses 'struct integ_desc *' this can go
+	 * away.
+	 */
+	for (const struct integ_desc **integp = next_integ_desc(NULL);
+	     integp != NULL; integp = next_integ_desc(integp)) {
+		const struct integ_desc *integ = *integp;
+		if (integ->integ_ikev1_ah_id != 0) {
+			passert_ike_alg(&integ->common,
+					alg_info_esp_aa2sadb(integ->common.id[IKEv1_ESP_ID])
+					== integ->integ_ikev1_ah_id);
+		}
+	}
 }
 
 /*

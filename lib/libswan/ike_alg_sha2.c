@@ -85,6 +85,7 @@ const struct integ_desc ike_alg_integ_sha2_256 = {
 	},
 	.integ_keymat_size = SHA2_256_DIGEST_SIZE,
 	.integ_output_size = SHA2_256_DIGEST_SIZE / 2,
+	.integ_ikev1_ah_id = AH_SHA2_256,
 	.prf = &ike_alg_prf_sha2_256,
 };
 
@@ -160,6 +161,7 @@ const struct integ_desc ike_alg_integ_sha2_384 = {
 	},
 	.integ_keymat_size = SHA2_384_DIGEST_SIZE,
 	.integ_output_size = SHA2_384_DIGEST_SIZE / 2,
+	.integ_ikev1_ah_id = AH_SHA2_384,
 	.prf = &ike_alg_prf_sha2_384,
 };
 
@@ -219,5 +221,6 @@ const struct integ_desc ike_alg_integ_sha2_512 = {
 	},
 	.integ_keymat_size = SHA2_512_DIGEST_SIZE,
 	.integ_output_size = SHA2_512_DIGEST_SIZE / 2,
+	.integ_ikev1_ah_id = AH_SHA2_512,
 	.prf = &ike_alg_prf_sha2_512,
 };

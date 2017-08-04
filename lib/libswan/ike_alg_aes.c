@@ -340,6 +340,7 @@ const struct integ_desc ike_alg_integ_aes_xcbc = {
 	},
 	.integ_keymat_size = AES_XCBC_DIGEST_SIZE,
 	.integ_output_size = AES_XCBC_DIGEST_SIZE_TRUNC, /* XXX 96 */
+	.integ_ikev1_ah_id = AH_AES_XCBC_MAC,
 };
 
 const struct integ_desc ike_alg_integ_aes_cmac = {
@@ -357,4 +358,5 @@ const struct integ_desc ike_alg_integ_aes_cmac = {
 	},
 	.integ_keymat_size = BYTES_FOR_BITS(128),
 	.integ_output_size = BYTES_FOR_BITS(96), /* truncated */
+	.integ_ikev1_ah_id = AH_AES_CMAC_96,
 };
