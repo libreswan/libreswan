@@ -1160,10 +1160,10 @@ static int xauth_launch_authent(struct state *st,
 /* log a nice description of an unsupported attribute */
 static void log_bad_attr(const char *kind, enum_names *ed, unsigned val)
 {
-	libreswan_log("Unsupported %s %s attribute %s received.",
+	DBG(DBG_CONTROLMORE, DBG_log("Unsupported %s %s attribute %s received.",
 		kind,
 		(val & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
-		enum_show(ed, val & ISAKMP_ATTR_RTYPE_MASK));
+		enum_show(ed, val & ISAKMP_ATTR_RTYPE_MASK)));
 }
 
 /*
@@ -1229,18 +1229,18 @@ stf_status xauth_inR0(struct msg_digest *md)
 		case XAUTH_TYPE | ISAKMP_ATTR_AF_TV:
 			/* since we only accept XAUTH_TYPE_GENERIC we don't need to record this attribute */
 			if (attr.isaat_lv != XAUTH_TYPE_GENERIC) {
-				libreswan_log(
+				DBG(DBG_CONTROLMORE, DBG_log(
 					"unsupported XAUTH_TYPE value %s received",
 					enum_show(&xauth_type_names,
-						  attr.isaat_lv));
+						  attr.isaat_lv)));
 				return STF_FAIL + NO_PROPOSAL_CHOSEN;
 			}
 			break;
 
 		case XAUTH_USER_NAME | ISAKMP_ATTR_AF_TLV:
 			if (gotname) {
-				libreswan_log(
-					"XAUTH: two User Names!  Rejected");
+				DBG(DBG_CONTROLMORE, DBG_log(
+					"XAUTH: two User Names!  Rejected"));
 				return STF_FAIL + NO_PROPOSAL_CHOSEN;
 			}
 			sz = pbs_left(&strattr);
