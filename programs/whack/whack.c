@@ -675,7 +675,7 @@ static const struct option long_opts[] = {
 	{ "pfsgroup", required_argument, NULL, CD_PFSGROUP + OO },
 	{ "esp", required_argument, NULL, CD_ESP + OO },
 	{ "remote_peer_type", required_argument, NULL, CD_REMOTEPEERTYPE + OO },
-	{ "nic-offload", no_argument, NULL, CD_NIC_OFFLOAD + OO},
+	{ "nic-offload", required_argument, NULL, CD_NIC_OFFLOAD + OO},
 
 
 	PS("ikev1-allow", IKEV1_ALLOW),
@@ -945,7 +945,7 @@ int main(int argc, char **argv)
 	msg.modecfg_domain = NULL;
 	msg.modecfg_banner = NULL;
 
-	msg.nic_offload = FALSE;
+	msg.nic_offload = nic_offload_auto;
 	msg.sa_ike_life_seconds = deltatime(IKE_SA_LIFETIME_DEFAULT);
 	msg.sa_ipsec_life_seconds = deltatime(IPSEC_SA_LIFETIME_DEFAULT);
 	msg.sa_rekey_margin = deltatime(SA_REPLACEMENT_MARGIN_DEFAULT);
@@ -1698,7 +1698,14 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_NIC_OFFLOAD:  /* --nic-offload */
-			msg.nic_offload = TRUE;
+			if (streq(optarg, "no"))
+				msg.nic_offload = nic_offload_no;
+			else if (streq(optarg, "yes"))
+				msg.nic_offload = nic_offload_yes;
+			else if (streq(optarg, "auto"))
+				msg.nic_offload = nic_offload_auto;
+			else
+				diag("--nic-offload options are 'no', 'yes' or 'auto'");
 			continue;
 
 		case CD_NO_NAT_KEEPALIVE:	/* --no-nat_keepalive */

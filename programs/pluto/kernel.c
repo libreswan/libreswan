@@ -1714,6 +1714,23 @@ static bool del_spi(ipsec_spi_t spi, int proto,
 	return kernel_ops->del_sa(&sa);
 }
 
+static void setup_esp_nic_offload(struct kernel_sa *sa, struct connection *c,
+		bool *nic_offload_fallback)
+{
+	if (c->nic_offload == nic_offload_no)
+		return;
+	if (c->interface == NULL || c->interface->ip_dev == NULL ||
+		c->interface->ip_dev->id_rname == NULL)
+		return;
+
+	if (c->nic_offload == nic_offload_auto) {
+		if (c->interface->ip_dev->id_nic_offload != IFNO_SUPPORTED)
+			return;
+		*nic_offload_fallback = TRUE;
+	}
+	sa->nic_offload_dev = c->interface->ip_dev->id_rname;
+}
+
 /*
  * Set up one direction of the SA bundle
  */
@@ -1732,6 +1749,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	bool incoming_ref_set = FALSE;
 	IPsecSAref_t refhim = st->st_refhim;
 	IPsecSAref_t new_refhim = IPSEC_SAREF_NULL;
+	bool nic_offload_fallback = FALSE;
+	bool ret;
 
 	/* SPIs, saved for spigrouping or undoing, if necessary */
 	struct kernel_sa said[EM_MAXRELSPIS];
@@ -1794,9 +1813,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	said_boilerplate.transport_proto = c->spd.this.protocol;
 	said_boilerplate.sa_lifetime = c->sa_ipsec_life_seconds;
 	said_boilerplate.outif = -1;
-	said_boilerplate.nic_offload = c->nic_offload;
-	if (c->nic_offload && c->interface != NULL)
-		said_boilerplate.nic_offload_ifindex = if_nametoindex(c->interface->ip_dev->id_rname);
 
 #ifdef HAVE_LABELED_IPSEC
 	said_boilerplate.sec_ctx = st->sec_ctx;
@@ -2286,8 +2302,16 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			said_next->ref = refhim;
 			outgoing_ref_set = TRUE;
 		}
+		setup_esp_nic_offload(said_next, c, &nic_offload_fallback);
 
-		if (!kernel_ops->add_sa(said_next, replace)) {
+		ret = kernel_ops->add_sa(said_next, replace);
+		if (!ret && nic_offload_fallback &&
+			said_next->nic_offload_dev != NULL) {
+			/* Fallback to non-nic-offload crypto */
+			said_next->nic_offload_dev = NULL;
+			ret = kernel_ops->add_sa(said_next, replace);
+		}
+		if (!ret) {
 			/* scrub keys from memory */
 			memset(said_next->enckey, 0, said_next->enckeylen);
 			memset(said_next->authkey, 0, said_next->authkeylen);
