@@ -193,10 +193,12 @@ void build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl, struct end *end)
 		tl->len = addrbytesptr_read(&end->host_addr, &p);
 		tl->ptr = DISCARD_CONST(unsigned char *, p);
 		break;
+	case ID_FROMCERT:
+		hd->isaiid_idtype = ID_DER_ASN1_DN;
+		/* FALLTHROUGH */
 	case ID_FQDN:
 	case ID_USER_FQDN:
 	case ID_DER_ASN1_DN:
-	case ID_FROMCERT:
 	case ID_KEY_ID:
 		*tl = id->name;
 		break;

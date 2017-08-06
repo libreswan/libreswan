@@ -2710,6 +2710,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 {
 	struct state *const st = md->st;
+	struct connection *c = st->st_connection;
 	struct payload_digest *const id_pld = md->chain[ISAKMP_NEXT_ID];
 	const pb_stream *const id_pbs = &id_pld->pbs;
 	struct isakmp_id *const id = &id_pld->payload.id;
@@ -2751,6 +2752,10 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 
 	if (!extract_peer_id(&peer, id_pbs))
 		return FALSE;
+	if (id_kind(&c->spd.that.id) == ID_FROMCERT) {
+		/* breaks API, connection modified by %fromcert */
+		duplicate_id(&c->spd.that.id, &peer);
+	}
 
 	/*
 	 * For interop with SoftRemote/aggressive mode we need to remember some
@@ -2764,12 +2769,30 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 
 		idtoa(&peer, buf, sizeof(buf));
 		libreswan_log("Peer ID is %s: '%s'",
-			      enum_show(&ike_idtype_names, id->isaid_idtype), buf);
+			enum_show(&ike_idtype_names, id->isaid_idtype), buf);
 	}
 
 	/* check for certificates */
-	if (!ikev1_decode_cert(md)) {
-		DBG(DBG_X509, DBG_log("CERT payload bogus or mismatched ID - continuing"));
+	lsw_cert_ret ret = ike_decode_cert(md);
+	switch (ret) {
+	case LSW_CERT_NONE:
+		DBG(DBG_X509, DBG_log("X509: no CERT payloads to process"));
+		break;
+	case LSW_CERT_BAD:
+		libreswan_log("X509: CERT payload bogus or revoked");
+		return FALSE;
+	case LSW_CERT_MISMATCHED_ID:
+		libreswan_log("X509: CERT payload does not match connection ID");
+		if (initiator || aggrmode) {
+			/* cannot switch connection so fail */
+			return FALSE;
+		}
+		break;
+	case LSW_CERT_ID_OK:
+		DBG(DBG_X509, DBG_log("X509: CERT and ID matches current connection"));
+		break;
+	default:
+		bad_case(ret);
 	}
 
 	/* check for certificate requests */
@@ -2782,10 +2805,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	 * - if the initiation was explicit, we'd be ignoring user's intent
 	 * - if opportunistic, we'll lose our HOLD info
 	 */
-	if (aggrmode)
-		return TRUE;
 
-	/* only Main Mode from here */
 	if (initiator) {
 		if (!st->st_peer_alt_id &&
 			!same_id(&st->st_connection->spd.that.id, &peer) &&
@@ -2808,8 +2828,17 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 				return FALSE;
 			}
 			duplicate_id(&st->st_connection->spd.that.id, &peer);
+			return TRUE;
 		}
-	} else {
+	}
+
+	/* responder */
+
+	if (aggrmode)
+		return TRUE;
+
+	/* only Main Mode from here */
+	{
 		struct connection *c = st->st_connection;
 		bool fromcert;
 		uint16_t auth = xauth_calcbaseauth(st->st_oakley.auth);
@@ -2830,7 +2859,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		case OAKLEY_ECDSA_P384:
 		case OAKLEY_ECDSA_P521:
 		default:
-			DBG(DBG_CONTROL, DBG_log("ikev1 ikev1_decode_peer_id bad_case due to not supported policy"));
+			DBG(DBG_CONTROL, DBG_log("ikev1 ike_decode_peer_id bad_case due to not supported policy"));
 			// bad_case(auth);
 		}
 
@@ -2874,6 +2903,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 				fmt_conn_instance(c, b1),
 				r->name,
 				fmt_conn_instance(r, b2));
+
 			if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
 				/* instantiate it, filling in peer's ID */
 				r = rw_instantiate(r, &c->spd.that.host_addr,
@@ -2883,6 +2913,10 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 
 			update_state_connection(st, r);
 			c = r;	/* value not used */
+			/* redo from scratch so we read and check CERT payload */
+			DBG(DBG_CONTROL, DBG_log("retrying ike_decode_peer_id() with new conn"));
+			return ikev1_decode_peer_id(md, FALSE, aggrmode);
+
 		} else if (c->spd.that.has_id_wildcards) {
 			duplicate_id(&c->spd.that.id, &peer);
 			c->spd.that.has_id_wildcards = FALSE;

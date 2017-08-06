@@ -4127,8 +4127,10 @@ void show_one_connection(const struct connection *c)
 	whack_log(RC_COMMENT,
 		"\"%s\"%s:   our idtype: %s; our id=%s; their idtype: %s; their id:%s",
 		c->name, instance,
-		enum_name(&ike_idtype_names, c->spd.this.id.kind), thisid,
-		enum_name(&ike_idtype_names, c->spd.that.id.kind), thatid);
+			c->spd.this.id.kind == -3 ? "%fromcert" :
+				enum_name(&ike_idtype_names, c->spd.this.id.kind), thisid,
+			c->spd.that.id.kind == -3 ? "%fromcert" :
+				enum_name(&ike_idtype_names, c->spd.that.id.kind), thatid);
 	}
 
 	/* slightly complicated stuff to avoid extra crap */
@@ -4264,6 +4266,7 @@ void update_state_connection(struct state *st, struct connection *c)
 
 	if (t != c) {
 		st->st_connection = c;
+		st->st_peer_alt_id = FALSE; /* must be rechecked against new 'that' */
 		if (t != NULL) {
 			if (cur_connection == t)
 				set_cur_connection(c);

@@ -459,6 +459,7 @@ bool extract_peer_id(struct id *peer, const pb_stream *id_pbs)
 	}
 	break;
 
+	/* seems odd to continue as ID_FQDN? */
 	case ID_USER_FQDN:
 		if (memchr(id_pbs->cur, '@', pbs_left(id_pbs)) == NULL) {
 			loglog(RC_LOG_SERIOUS,

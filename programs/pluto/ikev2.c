@@ -1408,9 +1408,29 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 		return FALSE;
 	}
 
-	if (!ikev2_decode_cert(md)) {
-		libreswan_log("ikev2_decode_cert(md) failed in ikev2_decode_peer_id_and_certs()");
-		return FALSE;
+	lsw_cert_ret ret = ike_decode_cert(md);
+	switch (ret) {
+	case LSW_CERT_NONE:
+		DBG(DBG_X509, DBG_log("X509: no CERT payloads to process"));
+		break;
+	case LSW_CERT_BAD:
+		libreswan_log("X509: CERT payload bogus or revoked");
+		if (initiator) {
+			/* cannot switch connection so fail */
+			return FALSE;
+		}
+	case LSW_CERT_MISMATCHED_ID:
+		libreswan_log("X509: CERT payload does not match connection ID");
+		if (initiator) {
+			/* cannot switch connection so fail */
+			return FALSE;
+		}
+		break;
+	case LSW_CERT_ID_OK:
+		DBG(DBG_X509, DBG_log("X509: CERT and ID matches current connection"));
+		break;
+	default:
+		bad_case(ret);
 	}
 
 	/* process any CERTREQ payloads */
@@ -1513,6 +1533,10 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 
 				update_state_connection(md->st, r);
 				c = r;
+				/* redo from scratch so we read and check CERT payload */
+				libreswan_log("PAUL: retrying ikev2_decode_peer_id_and_certs() with new conn");
+				return ikev2_decode_peer_id_and_certs(md);
+
 			} else if (c->spd.that.has_id_wildcards) {
 				duplicate_id(&c->spd.that.id, &peer_id);
 				c->spd.that.has_id_wildcards = FALSE;

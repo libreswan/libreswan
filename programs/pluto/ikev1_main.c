@@ -1681,20 +1681,25 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 	u_char hash_val[MAX_DIGEST_LEN];
 	size_t hash_len;
 	stf_status r = STF_OK;
+	lsw_cert_ret ret = LSW_CERT_NONE;
 
 	/*
 	 * ID Payload in.
 	 * Note: this may switch the connection being used!
 	 */
-	if (!st->st_peer_alt_id  && !ikev1_decode_peer_id(md, initiator, aggrmode))
+	if (!st->st_peer_alt_id  && !ikev1_decode_peer_id(md, initiator, aggrmode)) {
+	DBG(DBG_CONTROLMORE, DBG_log("Peer ID failed to decode"));
 		return STF_FAIL + INVALID_ID_INFORMATION;
+	}
 
 	/*
 	 * process any CERT payloads if aggrmode
 	 */
-	if (!st->st_peer_alt_id && aggrmode && !ikev1_decode_cert(md)) {
+	if (!st->st_peer_alt_id)
+		ret = ike_decode_cert(md);
+
+	if (ret != LSW_CERT_NONE && ret != LSW_CERT_ID_OK)
 		return STF_FAIL + INVALID_ID_INFORMATION;
-	}
 
 	/*
 	 * Hash the ID Payload.
