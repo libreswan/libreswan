@@ -1,3 +1,4 @@
+setenforce 0
 /testing/guestbin/swan-prep --userland strongswan --x509
 # strongswan expects the certs in /etc/strongswan/certs for some reason
 mkdir -p /etc/strongswan/certs
