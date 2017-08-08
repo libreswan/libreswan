@@ -26,7 +26,7 @@
 #include <errno.h>
 #include <arpa/inet.h> /* for inet_ntop */
 #include <arpa/nameser.h>
-#include <ldns/ldns.h>
+#include <ldns/ldns.h>	/* from ldns-devel */
 #include <ldns/rr.h>
 #include "unbound-event.h"
 #include "libreswan.h"
