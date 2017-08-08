@@ -256,7 +256,12 @@ static void test(const struct parser_policy *policy)
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: [ -v1 ] [ -v2 ] [ -fips ] [ -v ] [ [<protocol>=]<proposals> ...]\n");
+	fprintf(stderr, "Usage: <option> ... [ [ike|esp|ah=]<proposals> ...]\n");
+	fprintf(stderr, "  -v1: algorithm requires IKEv1 support\n");
+	fprintf(stderr, "  -v2: algorithm requires IKEv2 support\n");
+	fprintf(stderr, "  -fips: put NSS in FIPS mode\n");
+	fprintf(stderr, "  -v: more verbose\n");
+	fprintf(stderr, "  -t: run test suite\n");
 }
 
 int main(int argc, char *argv[])
@@ -270,6 +275,7 @@ int main(int argc, char *argv[])
 	}
 
 	struct parser_policy policy = { false, };
+	bool run_tests = false;
 
 	char **argp = argv + 1;
 	for (; *argp != NULL; argp++) {
@@ -283,6 +289,8 @@ int main(int argc, char *argv[])
 		if (strcmp(arg, "?") == 0 || strcmp(arg, "h") == 0) {
 			usage();
 			exit(0);
+		} else if (strcmp(arg, "t") == 0) {
+			run_tests = true;
 		} else if (strcmp(arg, "v1") == 0) {
 			policy.ikev1 = true;
 		} else if (strcmp(arg, "v2") == 0) {
@@ -314,6 +322,10 @@ int main(int argc, char *argv[])
 	ike_alg_init();
 
 	if (*argp) {
+		if (run_tests) {
+			fprintf(stderr, "-t conflicts with algorithm list\n");
+			exit(1);
+		}
 		for (; *argp != NULL; argp++) {
 			const char *arg = *argp;
 			/*
@@ -330,7 +342,7 @@ int main(int argc, char *argv[])
 				all(&policy, arg);
 			}
 		}
-	} else {
+	} else if (run_tests) {
 		test(&policy);
 	}
 
