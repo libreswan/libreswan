@@ -130,7 +130,7 @@ road #
 000 "road-east-ipv4":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "road-east-ipv4":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "road-east-ipv4":   conn_prio: 24,24; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "road-east-ipv4":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "road-east-ipv4":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "road-east-ipv4":   dpd: action:restart; delay:60; timeout:240; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "road-east-ipv4":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "road-east-ipv4-ikev2": 192.0.11.0/24===192.1.3.209<192.1.3.209>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===192.0.2.0/24; unrouted; eroute owner: #0
@@ -144,7 +144,7 @@ road #
 000 "road-east-ipv4-ikev2":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "road-east-ipv4-ikev2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "road-east-ipv4-ikev2":   conn_prio: 24,24; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "road-east-ipv4-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "road-east-ipv4-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "road-east-ipv4-ikev2":   dpd: action:restart; delay:60; timeout:240; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "road-east-ipv4-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000  

@@ -50,7 +50,7 @@ north #
 000 "noth-eastnets/0x1":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "noth-eastnets/0x1":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "noth-eastnets/0x1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "noth-eastnets/0x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "noth-eastnets/0x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "noth-eastnets/0x1":   our idtype: ID_FQDN; our id=@north; their idtype: ID_FQDN; their id:@east
 000 "noth-eastnets/0x1":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "noth-eastnets/0x1":   newest ISAKMP SA: #0; newest IPsec SA: #2;
@@ -72,7 +72,7 @@ north #
 000 "noth-eastnets/0x2":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "noth-eastnets/0x2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "noth-eastnets/0x2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "noth-eastnets/0x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "noth-eastnets/0x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "noth-eastnets/0x2":   our idtype: ID_FQDN; our id=@north; their idtype: ID_FQDN; their id:@east
 000 "noth-eastnets/0x2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "noth-eastnets/0x2":   newest ISAKMP SA: #1; newest IPsec SA: #3;
