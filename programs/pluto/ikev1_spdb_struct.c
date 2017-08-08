@@ -2603,9 +2603,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					}
 				}
 
-				if (!kernel_alg_esp_auth_ok(
-						esp_attrs.transattrs.integ_hash,
-						c->alg_info_esp)) {
+				if (!kernel_alg_integ_ok(esp_attrs.transattrs.integ)) {
 					switch (esp_attrs.transattrs.integ_hash)
 					{
 					case AUTH_ALGORITHM_NONE:

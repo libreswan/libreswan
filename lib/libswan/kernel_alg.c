@@ -507,13 +507,6 @@ bool kernel_alg_is_ok(const struct ike_alg *alg)
 	}
 }
 
-/* ??? identical to kernel_alg_ah_auth_ok */
-bool kernel_alg_esp_auth_ok(int auth,
-			struct alg_info_esp *alg_info __attribute__((unused)))
-{
-	return ESP_AALG_PRESENT(alg_info_esp_aa2sadb(auth));
-}
-
 /* ??? pretty similar to kernel_alg_ah_auth_keylen */
 int kernel_alg_esp_auth_keylen(int auth)
 {
@@ -529,13 +522,6 @@ int kernel_alg_esp_auth_keylen(int auth)
 			auth, sadb_aalg, a_keylen);
 		);
 	return a_keylen;
-}
-
-/* ??? identical to kernel_alg_esp_auth_ok */
-bool kernel_alg_ah_auth_ok(int auth,
-			struct alg_info_esp *alg_info __attribute__((unused)))
-{
-	return ESP_AALG_PRESENT(alg_info_esp_aa2sadb(auth));
 }
 
 /* ??? pretty similar to kernel_alg_esp_auth_keylen */

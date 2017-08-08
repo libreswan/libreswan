@@ -357,8 +357,7 @@ static void compute_proto_keymat(struct state *st,
 			needed_len += 0; /* presumably? */
 			break;
 		default:
-			if (kernel_alg_esp_auth_ok(pi->attrs.transattrs.
-						   integ_hash, NULL)) {
+			if (kernel_alg_integ_ok(pi->attrs.transattrs.integ)) {
 				needed_len += kernel_alg_esp_auth_keylen(
 					pi->attrs.transattrs.integ_hash);
 				break;

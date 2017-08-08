@@ -532,9 +532,9 @@ static void alg_info_snprint_esp(char *buf, size_t buflen,
 			continue;
 		}
 
-		if (!kernel_alg_esp_auth_ok(esp_info->ikev1esp_auth, NULL)) {
-			DBG_log("auth algid=%d not available",
-				esp_info->ikev1esp_auth);
+		if (!kernel_alg_integ_ok(esp_info->integ)) {
+			DBG_log("auth alg %s not available",
+				esp_info->integ->common.fqn);
 			continue;
 		}
 
@@ -572,9 +572,10 @@ static void alg_info_snprint_ah(char *buf, size_t buflen,
 	jam_str(buf, buflen, "none");
 
 	FOR_EACH_ESP_INFO(alg_info, esp_info) {
-		if (!kernel_alg_esp_auth_ok(esp_info->ikev1esp_auth, NULL)) {
-			DBG_log("auth algid=%d not available",
-				esp_info->ikev1esp_auth);
+		if (!kernel_alg_integ_ok(esp_info->integ)) {
+			DBG(DBG_PARSING,
+			    DBG_log("ESP integrity algorithm %s not available",
+				    esp_info->integ->common.fqn));
 			continue;
 		}
 

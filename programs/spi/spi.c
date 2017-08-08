@@ -462,7 +462,7 @@ static int decode_esp(char *algname)
 				exit(1);
 			}
 
-			if (!kernel_alg_esp_auth_ok(esp_aalg_id, 0)) {
+			if (!kernel_alg_integ_ok(esp_info->integ)) {
 				/* ??? this message looks badly worded */
 				fprintf(stderr, "%s: ESP authalg=%d (\"%s\") - alg not present\n",
 					progname, esp_aalg_id,
