@@ -223,13 +223,16 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 	CERTCertificate *cacert = NULL;
 	char abuf[ASN1_BUF_LEN], bbuf[ASN1_BUF_LEN];
 
-	dntoa(abuf, ASN1_BUF_LEN, a);
-	dntoa(bbuf, ASN1_BUF_LEN, b);
-
-	DBG(DBG_X509 | DBG_CONTROLMORE,
-	    DBG_log("%s: trustee A = '%s'", __FUNCTION__, abuf));
-	DBG(DBG_X509 | DBG_CONTROLMORE,
-	    DBG_log("%s: trustor B = '%s'", __FUNCTION__, bbuf));
+	if (a.ptr != NULL) {
+		dntoa(abuf, ASN1_BUF_LEN, a);
+		DBG(DBG_X509 | DBG_CONTROLMORE,
+	    		DBG_log("%s: trustee A = '%s'", __FUNCTION__, abuf));
+	}
+	if (b.ptr != NULL) {
+		dntoa(bbuf, ASN1_BUF_LEN, b);
+		DBG(DBG_X509 | DBG_CONTROLMORE,
+	    		DBG_log("%s: trustor B = '%s'", __FUNCTION__, bbuf));
+	}
 
 	/* no CA b specified -> any CA a is accepted */
 	if (b.ptr == NULL) {
