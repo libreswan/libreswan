@@ -4114,8 +4114,8 @@ void show_one_connection(const struct connection *c)
 		  c->vti_iface == NULL ? "unset" : c->vti_iface,
 		  c->vti_routing ? "yes" : "no",
 		  c->vti_shared ? "yes" : "no",
-		  (c->nic_offload == nic_offload_auto) ? "auto" :
-		  (c->nic_offload == nic_offload_yes) ? "yes" : "no"
+		  (c->nic_offload == nic_offload_auto) ? "auto;" :
+		  (c->nic_offload == nic_offload_yes) ? "yes;" : "no;"
 	);
 
 	{
