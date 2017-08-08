@@ -2178,12 +2178,13 @@ struct connection *oppo_instantiate(struct connection *c,
 /* priority formatting */
 void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF])
 {
-	if (pp == BOTTOM_PRIO)
+	if (pp == BOTTOM_PRIO) {
 		snprintf(buf, POLICY_PRIO_BUF, "0");
-	else
-		snprintf(buf, POLICY_PRIO_BUF, "%lu,%lu",
+	} else {
+		snprintf(buf, POLICY_PRIO_BUF, "%" PRIu32 ",%" PRIu32,
 			pp >> 16,
 			(pp & ~(~(policy_prio_t)0 << 16)) >> 8);
+	}
 }
 
 /*
@@ -2324,7 +2325,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 						subnettot(&c->spd.that.client,
 							0, c_pcb,
 							sizeof(c_pcb));
-						DBG_log("find_connection: conn \"%s\"%s has compatible peers: %s -> %s [pri: %ld]",
+						DBG_log("find_connection: conn \"%s\"%s has compatible peers: %s -> %s [pri: %" PRIu32 "]",
 							c->name,
 							fmt_conn_instance(c,
 									cib),
@@ -2334,7 +2335,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 				DBG(DBG_CONTROLMORE,
 					if (best == NULL) {
 						char cib2[CONN_INST_BUF];
-						DBG_log("find_connection: first OK \"%s\"%s [pri:%ld]{%p} (child %s)",
+						DBG_log("find_connection: first OK \"%s\"%s [pri:%" PRIu32 "]{%p} (child %s)",
 							c->name,
 							fmt_conn_instance(c, cib2),
 							prio, c,
@@ -2344,7 +2345,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 					} else {
 						char cib[CONN_INST_BUF];
 						char cib2[CONN_INST_BUF];
-						DBG_log("find_connection: comparing best \"%s\"%s [pri:%ld]{%p} (child %s) to \"%s\"%s [pri:%ld]{%p} (child %s)",
+						DBG_log("find_connection: comparing best \"%s\"%s [pri:%" PRIu32 "]{%p} (child %s) to \"%s\"%s [pri:%" PRIu32 "]{%p} (child %s)",
 							best->name,
 							fmt_conn_instance(best, cib),
 							best_prio,
@@ -2379,7 +2380,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 	DBG(DBG_CONTROL, {
 		if (best != NULL) {
 			char cib[CONN_INST_BUF];
-			DBG_log("find_connection: concluding with \"%s\"%s [pri:%ld]{%p} kind=%s",
+			DBG_log("find_connection: concluding with \"%s\"%s [pri:%" PRIu32 "]{%p} kind=%s",
 				best->name,
 				fmt_conn_instance(best, cib),
 				best_prio,
@@ -3583,7 +3584,7 @@ static struct connection *fc_try(const struct connection *c,
 		best = NULL;
 
 	DBG(DBG_CONTROLMORE,
-		DBG_log("  fc_try concluding with %s [%ld]",
+		DBG_log("  fc_try concluding with %s [%" PRIu32 "]",
 			(best ? best->name : "none"), best_prio));
 
 	if (best == NULL) {
@@ -3696,7 +3697,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 		best = NULL;
 
 	DBG(DBG_CONTROLMORE,
-		DBG_log("  fc_try_oppo concluding with %s [%ld]",
+		DBG_log("  fc_try_oppo concluding with %s [%" PRIu32 "]",
 			(best ? best->name : "none"), best_prio));
 	return best;
 }
