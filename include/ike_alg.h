@@ -655,8 +655,8 @@ const struct integ_desc *ikev2_get_integ_desc(enum ikev2_trans_type_integ);
 const struct oakley_group_desc *ikev2_get_dh_desc(enum ike_trans_type_dh);
 
 /*
- * Find the ENCRYPT / PRF / INTEG / DH algorithm using IKEv1 IKE (aka
- * OAKLEY) wire value.
+ * Find the ENCRYPT / PRF / DH algorithm using IKEv1 IKE (aka OAKLEY)
+ * wire value.
  *
  * Unlike IKEv2, IKEv1 uses different wire-values for IKE, ESP, and
  * AH.  This just deals with IKE (well, ok, in the case of DH, it also
@@ -665,8 +665,15 @@ const struct oakley_group_desc *ikev2_get_dh_desc(enum ike_trans_type_dh);
 
 const struct encrypt_desc *ikev1_get_ike_encrypt_desc(enum ikev1_encr_attribute);
 const struct prf_desc *ikev1_get_ike_prf_desc(enum ikev1_auth_attribute);
-const struct integ_desc *ikev1_get_ike_integ_desc(enum ikev1_auth_attribute);
 const struct oakley_group_desc *ikev1_get_ike_dh_desc(enum ike_trans_type_dh);
+
+/*
+ * Find the IKEv1 ENCRYPT / INTEG algorithm that will be fed into the
+ * kernel to provide an IPSEC tunnel.
+ */
+
+const struct encrypt_desc *ikev1_get_kernel_encrypt_desc(enum ipsec_cipher_algo);
+const struct integ_desc *ikev1_get_kernel_integ_desc(enum ikev1_auth_attribute);
 
 /*
  * Pretty print the algorithm into a buffer as a string.  The string

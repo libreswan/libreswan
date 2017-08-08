@@ -1420,6 +1420,10 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 				 * XXX: Should this check that the key
 				 * length is present when required, or
 				 * assume matching did its job.
+				 *
+				 * XXX: Always assign both .encrypt
+				 * and .encryptor - it makes auditing
+				 * easier.
 				 */
 				ta.encrypt = transform->id;
 				ta.encrypter = encrypter;
@@ -1479,6 +1483,10 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 				 * INTEG_HASH should at least be moved
 				 * to enum ipsec_trans_attrs
 				 * .ipsec_authentication_algo.
+				 *
+				 * XXX: Always assign both .integ_hash
+				 * and .integ - it makes auditing
+				 * easier.
 				 */
 				ta.integ_hash = integ->common.id[IKEv2_ALG_ID];
 				ta.integ = integ;
@@ -1560,12 +1568,17 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 	 * algorithm has a unique IKEv2 number, and that is expected.
 	 *
 	 * XXX: The real fix is to delete INTEG_HASH.
+	 *
+	 * XXX: Always assign both .integ_hash and .integ - it makes
+	 * auditing easier.
 	 */
-	ta.integ_hash = (ta.integ == NULL
+	const struct integ_desc *integ = ta.integ;
+	ta.integ_hash = (integ == NULL
 			 ? AUTH_ALGORITHM_NONE
-			 : ta.integ->common.ikev1_esp_id > 0
-			 ? ta.integ->common.ikev1_esp_id
-			 : ta.integ->common.id[IKEv2_ALG_ID]);
+			 : integ->common.ikev1_esp_id > 0
+			 ? integ->common.ikev1_esp_id
+			 : integ->common.id[IKEv2_ALG_ID]);
+	ta.integ = integ;
 
 	/*
 	 * IKEv2 ESP/AH and IKE all use the same algorithm numbering
@@ -1598,10 +1611,15 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 		 * "fixed".
 		 *
 		 * XXX: the real fix is to delete ENCRYPT.
+		 *
+		 * XXX: Always assign both .encrypt and .encryptor -
+		 * it makes auditing easier.
 		 */
-		ta.encrypt = (ta.encrypter->common.ikev1_esp_id > 0
-			      ? ta.encrypter->common.ikev1_esp_id
-			      : ta.encrypter->common.id[IKEv2_ALG_ID]);
+		const struct encrypt_desc *encrypt = ta.encrypter;
+		ta.encrypt = (encrypt->common.ikev1_esp_id > 0
+			      ? encrypt->common.ikev1_esp_id
+			      : encrypt->common.id[IKEv2_ALG_ID]);
+		ta.encrypter = encrypt;
 		err_t ugh;
 		ugh = check_kernel_encrypt_alg(ta.encrypt, ta.enckeylen);
 		if (ugh != NULL) {

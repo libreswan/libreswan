@@ -285,14 +285,19 @@ const struct prf_desc *ikev1_get_ike_prf_desc(enum ikev1_auth_attribute id)
 	return prf_desc(ikev1_oakley_lookup(&ike_alg_prf, id));
 }
 
-const struct integ_desc *ikev1_get_ike_integ_desc(enum ikev1_auth_attribute id)
-{
-	return integ_desc(ikev1_oakley_lookup(&ike_alg_integ, id));
-}
-
 const struct oakley_group_desc *ikev1_get_ike_dh_desc(enum ike_trans_type_dh id)
 {
 	return dh_desc(ikev1_oakley_lookup(&ike_alg_dh, id));
+}
+
+const struct encrypt_desc *ikev1_get_kernel_encrypt_desc(enum ipsec_cipher_algo id)
+{
+	return encrypt_desc(lookup_by_id(&ike_alg_encrypt, IKEv1_ESP_ID, id, DBG_CRYPT));
+}
+
+const struct integ_desc *ikev1_get_kernel_integ_desc(enum ikev1_auth_attribute id)
+{
+	return integ_desc(lookup_by_id(&ike_alg_integ, IKEv1_ESP_ID, id, DBG_CRYPT));
 }
 
 static const struct ike_alg *ikev2_lookup(const struct ike_alg_type *algorithms, int id)
