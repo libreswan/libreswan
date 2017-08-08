@@ -938,7 +938,7 @@ int ike_decode_cert(struct msg_digest *md)
 			ret = LSW_CERT_MISMATCHED_ID;
 			break;
 		case LSW_CERT_ID_OK:
-			libreswan_log("Peer public key SubjectAltName matches peer ID for this connection");
+			DBG(DBG_X509, DBG_log("Peer public key SubjectAltName matches peer ID for this connection"));
 			ret = LSW_CERT_ID_OK;
 			break;
 		default:
