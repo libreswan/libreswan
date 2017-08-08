@@ -1419,6 +1419,7 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 			/* cannot switch connection so fail */
 			return FALSE;
 		}
+		break;
 	case LSW_CERT_MISMATCHED_ID:
 		libreswan_log("X509: CERT payload does not match connection ID");
 		if (initiator) {
