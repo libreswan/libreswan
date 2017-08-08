@@ -26,13 +26,6 @@
 #include "alg_info.h"
 #include "ike_alg.h"
 
-const struct integ_desc alg_info_integ_null = {
-       .common = {
-               .name = "XXX-NULL-XXX",
-	       .algo_type = IKE_ALG_INTEG,
-       },
-};
-
 /*
  *	Creates a new alg_info by parsing passed string
  */

@@ -20,6 +20,7 @@
 #include "alg_info.h"
 #include "alg_byname.h"
 #include "ike_alg.h"
+#include "ike_alg_null.h"
 
 bool alg_byname_ok(const struct parser_param *param,
 		   const struct parser_policy *const policy,

@@ -28,6 +28,7 @@
 #include "ike_alg_3des.h"
 #include "ike_alg_sha1.h"
 #include "ike_alg_sha2.h"
+#include "ike_alg_null.h"
 #include "alg_info.h"
 
 #include "plutoalg.h" /* XXX: for ikev1_default_ike_info() */

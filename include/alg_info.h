@@ -29,36 +29,6 @@ struct alg_info;
 struct lswlog;
 
 /*
- * Place holder so that it is possible to clearly differentiate
- * between an unspecified rather than 'null' integrity algorithm.
- *
- * NOTE:
- *
- * The callback .alg_info_add() is passed NULL to identify an
- * unspecified algorithm (in keeping with the C tradition of 'no
- * value'), and either 'alg_info_integ_null' or 'ike_alg_encrypt_null'
- * to identify an explicitly specified 'null' algorithm
- *
- * Only when the algorithm is NULL (unspecified or missing) should
- * .alg_info_add() consider adding in defaults.  For instance: in
- * esp=aes, neither the integrity nor DH algorithm were specified so
- * both would be NULL; however in esp=aes_gcm-null, integrity was
- * specified as 'null' so 'ike_alg_integ_null' is used, but DH would
- * still be NULL.
- *
- * 'struct state', on the other hand, uses NULL for 'null' integrity,
- * and 'ike_alg_encrypt_null' for 'null' encryption.  .alg_info_add()
- * must deal with this (for the moment, 'ike_alg_integ_null' should
- * never escape the parser).
- *
- * Why not use NULL for 'null' and something else for unspecifed in
- * the parser?  Several reasons: as noted above, NULL is C's universal
- * identifier of 'no value'; having having lots of ike_alg_XXX_missing
- * structs quickly gets more messy.
- */
-extern const struct integ_desc alg_info_integ_null;
-
-/*
  * Parameters to tune the parser.
  */
 
@@ -82,8 +52,58 @@ struct parser_param {
 	 */
 	unsigned protoid;
 	/*
+	 * Add the algorithm to the alg_info.
+	 *
 	 * If things go wrong, return a non-null error string
 	 * (possibly snprintf'd into ERR_BUF).
+	 *
+	 * NOTE:
+	 *
+	 * The callback .alg_info_add() is passed NULL to identify an
+	 * unspecified algorithm (in keeping with the C tradition of
+	 * 'no value'), and either 'alg_info_integ_null' or
+	 * 'ike_alg_encrypt_null' to identify an explicitly specified
+	 * 'null' algorithm.
+	 *
+	 * Only when the algorithm is NULL (unspecified or missing) should
+	 * .alg_info_add() consider adding in defaults.  For instance: in
+	 * esp=aes, neither the integrity nor DH algorithm were specified so
+	 * both would be NULL; however in esp=aes_gcm-null, integrity was
+	 * specified as 'null' so 'ike_alg_integ_null' is used, but DH would
+	 * still be NULL.
+	 *
+	 * WARNING:
+	 *
+	 * As of 2017-08-08, pluto proper doesn't follow this
+	 * convention.  Instead of 'ike_alg_integ_null', NULL is used
+	 * for 'null' integrity (encryption does use
+	 * 'ike_alg_encrypt_null' it seems).  This affects the
+	 * following fields in pluto:
+	 *
+	 * - struct proposal_info .integ, populated by .alg_info_add()
+	 *   and used by the proposal code
+	 *
+	 * - struct trans_attrs .integ, populated by the proposal code
+	 *   and used by the crypto and kernel code
+	 *
+	 * - struct kernel_alg .integ, populated and used by the
+	 *   kernel code
+	 *
+	 * But if pluto proper uses NULL for 'null' why not make the
+	 * parser consistent instead use 'ike_alg_*_unspecified' for
+	 * unspecified algorithms and NULL for 'null', say?  Several
+	 * reasons come to mind:
+	 *
+	 * - NULL is C's universal identifier of 'no value', not the
+	 *   'null' algorithm
+	 *
+	 * - having having lots of 'ike_alg_*_unspecified' structs
+	 *   quickly gets really messy (it was tried)
+	 *
+	 * - pluto is the one that is, arguably, messed up here, it
+	 *   isn't even consistent w.r.t. 'null' encryption vs
+	 *   integrity, and the result is 'integ==NULL' checks
+	 *   litering the code
 	 */
 	const char *(*alg_info_add)(const struct parser_policy *const policy,
 				    struct alg_info *alg_info,
