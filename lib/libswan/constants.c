@@ -633,25 +633,9 @@ static const char *const esp_transform_name[] = {
 	"ESP_AES_GCM_A",
 	"ESP_AES_GCM_B",
 	"ESP_AES_GCM_C",
-	/*
-	 * From here, IKEv1 and IKEv2 registries for ESP_ algorithms become
-	 * inconsistent.
-	 */
-	"ESP_NULL_AUTH_AES_GMAC", /* IKEv1 ESP_SEED_CBC */
-	/*
-	 * The linux PF_KEY API returns 22 in the IKEv1 registry
-	 * meaning (camellia).
-	 *
-	 * IKEv2 code internally maps its value onto this.
-	 */
+	"ESP_SEED_CBC", /* IKEv2 is NULL_AUTH_AES_GMAC */
 	"ESP_CAMELLIA",
-	/*
-	 * IKEv2 is ESP_CAMELLIA and IKEv1 is ESP_NULL_AUTH_AES-GMAC
-	 *
-	 * Either way, if this value is printed then there is a
-	 * problem.
-	 */
-	"IKEv2:ESP_CAMELLIA or IKEv1:ESP_NULL_AUTH_AES_GMAC",
+	"ESP_NULL_AUTH_AES_GMAC", /* IKEv2 is CAMELLIA_CBC */
 	"ESP_CAMELLIA_CTR", /* not assigned in/for IKEv1 */
 	"ESP_CAMELLIA_CCM_A", /* not assigned in/for IKEv1 */
 	"ESP_CAMELLIA_CCM_B", /* not assigned in/for IKEv1 */
