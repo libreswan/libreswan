@@ -25,9 +25,13 @@ west #
 002 "san" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 003 "san" #1: No matching subjectAltName found
 003 "san" #1: certificate does not contain ID_IP subjectAltName=192.1.2.123
-002 "san" #1: Peer public key is not available for this exchange
+002 "san" #1: Peer public key SubjectAltName does not match peer ID for this connection
+002 "san" #1: X509: CERT payload does not match connection ID
+003 "san" #1: initial Aggressive Mode packet claiming to be from 192.1.2.123 on 192.1.2.23 but no connection has been authorized
 218 "san" #1: STATE_AGGR_I1: INVALID_ID_INFORMATION
 002 "san" #1: sending notification INVALID_ID_INFORMATION to 192.1.2.23:500
+002 "san" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set
+031 "san" #1: max number of retransmissions (0) reached STATE_AGGR_I1.  No response (or no acceptable response) to our first IKEv1 message
 002 "san" #1: deleting state (STATE_AGGR_I1)
 west #
  echo "done"

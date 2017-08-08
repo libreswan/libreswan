@@ -26,6 +26,7 @@ west #
 134 "san" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
 002 "san" #2: suppressing retransmit because IMPAIR_RETRANSMITS is set.
 002 "san" #2: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+002 "san" #2: Peer public key SubjectAltName matches peer ID for this connection
 002 "san" #2: IKEv2 mode peer ID is ID_USER_FQDN: 'east@testing.libreswan.org'
 002 "san" #2: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
 004 "san" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_C_256-NONE NATOA=none NATD=none DPD=passive}
