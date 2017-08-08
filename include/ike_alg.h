@@ -20,6 +20,26 @@ enum ike_alg_key;
 		}							\
 	}
 
+#define pexpect_ike_alg(ALG, ASSERTION) {				\
+		bool __assertion = (ASSERTION);				\
+		if (!__assertion) {					\
+			PEXPECT_LOG("algorithm '%s' fails: %s",		\
+				    (ALG)->fqn != NULL ? (ALG)->fqn	\
+				    : (ALG)->name != NULL ? (ALG)->name \
+				    : "???", #ASSERTION);		\
+		}							\
+	}
+
+#define pdebug_ike_alg(ALG, ASSERTION) {				\
+		bool __assertion = (ASSERTION);				\
+		if (!__assertion) {					\
+			DBG_log("algorithm '%s' fails: %s",		\
+				    (ALG)->fqn != NULL ? (ALG)->fqn	\
+				    : (ALG)->name != NULL ? (ALG)->name \
+				    : "???", #ASSERTION);		\
+		}							\
+	}
+
 /*
  * Different algorithm classes used by IKEv1/IKEv2 protocols.
  */
