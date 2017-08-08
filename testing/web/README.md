@@ -95,9 +95,15 @@ Some things could work better:
 ## Setup
 
 
-Automated testing requires at least two libreswan repositories:
+Automated testing uses the following:
 
-- the repository under test (aka slave) - required
+- the html directory containing the published results
+
+  For instance, to set up results/:
+
+      $ mkdir -p results/
+
+- the repository under test (aka slave)
 
   In addition to regular updates using "git fetch", this repository is
   switched to the commit being tested using "git reset --hard".
@@ -105,8 +111,18 @@ Automated testing requires at least two libreswan repositories:
   Create a top-level Makefile.inc.local file in this directory to
   configure KVM_WORKERS and KVM_PREFIXES as required.
 
-- the repository containing the web sources and scripts (aka master) -
-  required
+  For instance, to set up libreswan-web-slave/:
+
+      $ git clone git@github.com:libreswan/libreswan.git libreswan-web-slave
+      $ echo 'KVM_PREFIXES=w1. w2.' >> libreswan-web-slave/Makefile.inc.local
+      $ echo 'KVM_WORKERS=2' >> libreswan-web-slave/Makefile.inc.local
+
+- the repository containing the web sources and scripts (aka master),
+  for instance libreswan-web-master/
+
+  For instance, to set up libreswan-web-master/:
+
+      $ git clone git@github.com:libreswan/libreswan.git libreswan-web-master
 
 - the repository for rebuilding the web site (aka scratch) - optional
 
@@ -115,20 +131,18 @@ Automated testing requires at least two libreswan repositories:
   repository is "git reset --hard" to the original commit used to
   generate those results.
 
-for instance:
+  For instance, to set up libreswan-web-scratch/:
 
-    $ git clone git@github.com:libreswan/libreswan.git libreswan-web-slave
-    $ git clone git@github.com:libreswan/libreswan.git libreswan-web-master
-    $ git clone git@github.com:libreswan/libreswan.git libreswan-web-scratch
+      $ git clone git@github.com:libreswan/libreswan.git libreswan-web-scratch
 
 
 ## Running
 
 
-Assuming results are to be published in /var/www/html/results, the
-testing script is invoked as:
+Assuming results are to be published in the directory results/ (see
+above), the testing script is invoked as:
 
-    $ nohub ./libreswan-web-master/testing/web/tester.sh libreswan-web-slave /var/www/html/results/ &
+    $ nohub ./libreswan-web-master/testing/web/tester.sh libreswan-web-slave results/ &
     $ tail -f nohup.out
 
 
@@ -148,36 +162,31 @@ the test domains from the base domain at the start of each new test
 run - is even less reliable!  Perhaps tester.sh should be modified to
 automate the below.
 
-- (optional, but a good idea) upgrade and reboot the test machine:
+- crash the existing runner, either:
+
+  - delete the existing test domains domains (leaving the base domain,
+    this should crash the current test run):
+
+      $ ( cd libreswan-web-slave && make kvm-uninstall )
+
+  - or (optional, but a good idea) upgrade and reboot the test
+    machine:
 
       $ sudo dnf upgrade -y
       $ sudo reboot
 
-- delete the existing test domains domains (leaving the base domain,
-  this should crash the current test run):
-
-      $ ( cd libreswan-web-slave && make kvm-uninstall )
-
-- update the slave repository:
-
-      $ ( cd libreswan-web-slave && git pull --ff-only )
-
-- update the base domain:
-
-      $ ( cd libreswan-web-slave && make kvm-upgrade-base-domain )
-
-- update the master repository:
+- (optional) update the master repository:
 
       $ ( cd libreswan-web-master && git pull --ff-only )
 
 - examine (and perhaps delete) any test runs where tests have
   'missing-output':
 
-      $ grep '"output-missing"' "${WEBDIR}"/*-g*-*/results.json | cut -d/ -f1 | sort -u
+      $ grep '"output-missing"' results/*-g*-*/results.json | cut -d/ -f1 | sort -u
 
 - examine (and perhaps delete) test runs with no results.json:
 
-      $ ls -d "${WEBDIR}"/*-g*-*/ | while read d ; do test -r $d/results.json || echo $d ; done
+      $ ls -d results/*-g*-*/ | while read d ; do test -r $d/results.json || echo $d ; done
 
 - examine (and perhaps delete) a random selection of test runs:
 
@@ -193,7 +202,7 @@ automate the below.
 
 - restart <tt>tester.sh</tt>:
 
-      $ nohup ./libreswan-web-master/testing/web/tester.sh libreswan-web-slave "${WEBDIR}" &
+      $ nohup ./libreswan-web-master/testing/web/tester.sh libreswan-web-slave results/ &
 
 
 ## Rebuilding
