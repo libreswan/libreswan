@@ -22,7 +22,7 @@
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
 # version is generated in the release script
-Version: 3.21
+Version: IPSECBASEVERSION
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://libreswan.org/
@@ -258,5 +258,5 @@ OBJ.linux.%{_arch}/testing/cavp/cavp -v1psk ikev1_psk.fax | \
 %endif
 
 %changelog
-* Wed Aug  9 2017 Team Libreswan <team@libreswan.org> - 3.21-1
+* Wed Aug  9 2017 Team Libreswan <team@libreswan.org> - IPSECBASEVERSION-1
 - Automated build from release tar ball
