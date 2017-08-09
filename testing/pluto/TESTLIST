@@ -515,6 +515,7 @@ kvmplutotest	delete-sa-09-rhbz1311360-c32	good
 kvmplutotest	ikev1-27-uniqueid		good
 
 kvmplutotest	ikev1-rekey-connswitch	good
+kvmplutotest	ikev2-rekey-connswitch	good
 
 # oe-fail-without-resp-client-txt-01 - when responding using an OE
 # connection, checks that there is a TXT (and possibly KEY) record
