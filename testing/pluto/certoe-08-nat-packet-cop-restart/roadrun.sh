@@ -22,7 +22,7 @@ ipsec whack --trafficstatus
 ipsec whack --shuntstatus
 ipsec look
 iptables -t nat -L -n
-conntrack -L -n
+conntrack -L -n | sed "s/id=[0-9]*/id=XXXX/g"
 killall ip > /dev/null 2> /dev/null
 cp /tmp/xfrm-monitor.out OUTPUT/road.xfrm-monitor.txt
 # ping should succeed through tunnel

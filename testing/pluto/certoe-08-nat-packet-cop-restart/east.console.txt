@@ -34,8 +34,10 @@ east #
 east #
  grep IKEv2_AUTH_ /tmp/pluto.log
 |    auth method: IKEv2_AUTH_NULL (0xd)
+| clear-or-private#192.1.2.0/24 #1 not fetching ipseckey that end rsasigkey != %dnsondemand  can only query DNS for IPSECKEY for ID that is a FQDN, IPV4_ADDR, or IPV6_ADDR id type=ID_NULL IKEv2_AUTH_NULL remote=192.1.2.254 thatid=ID_NULL
 |    auth method: IKEv2_AUTH_RSA (0x1)
 |    auth method: IKEv2_AUTH_NULL (0xd)
+| clear-or-private#192.1.2.0/24 #3 not fetching ipseckey that end rsasigkey != %dnsondemand  can only query DNS for IPSECKEY for ID that is a FQDN, IPV4_ADDR, or IPV6_ADDR id type=ID_NULL IKEv2_AUTH_NULL remote=192.1.2.254 thatid=ID_NULL
 |    auth method: IKEv2_AUTH_RSA (0x1)
 east #
 east #

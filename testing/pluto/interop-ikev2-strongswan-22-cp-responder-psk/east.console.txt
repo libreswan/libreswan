@@ -1,22 +1,6 @@
 /testing/guestbin/swan-prep --userland strongswan
 east #
- strongswan starter --debug-all
-Starting strongSwan X.X.X IPsec [starter]...
-Loading config setup
-Loading conn 'roadnet-eastnet-ikev2'
-  authby=secret
-  auto=add
-  esp=aes128-sha2_512
-  ike=3des-md5-modp2048
-  keyexchange=ikev2
-  left=%any
-  leftid=%any
-  leftsourceip=192.0.2.0/24
-  mobike=no
-  right=192.1.2.23
-  rightid=@east
-  rightsubnet=0.0.0.0/0
-found netkey IPsec stack
+ ../../pluto/bin/strongswan-start.sh
 east #
  echo "initdone"
 initdone
