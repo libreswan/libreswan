@@ -315,6 +315,7 @@ class TestResult:
                                                     test)
             if sanitized_output is None:
                 self.issues.add("sanitizer-failed", host_name)
+                self.resolution.unresolved()
                 continue
             if update:
                 self.logger.debug("host %s updating sanitized output file: %s",
