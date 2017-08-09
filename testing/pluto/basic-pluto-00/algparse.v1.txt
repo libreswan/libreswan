@@ -176,6 +176,16 @@
 	TWOFISH_CBC-HMAC_SHA1_96
 [esp=camellia_cbc_256-hmac_sha2_512_256;modp8192]
 	CAMELLIA_CBC_256-HMAC_SHA2_512_256-MODP8192
+[esp=3des-sha1;modp8192]
+	3DES_CBC-HMAC_SHA1_96-MODP8192
+[esp=3des-sha1-modp8192]
+	3DES_CBC-HMAC_SHA1_96-MODP8192
+[esp=aes-sha1,3des-sha1;modp8192]
+	AES_CBC-HMAC_SHA1_96-MODP8192
+	3DES_CBC-HMAC_SHA1_96-MODP8192
+[esp=aes-sha1-modp8192,3des-sha1-modp8192]
+	AES_CBC-HMAC_SHA1_96-MODP8192
+	3DES_CBC-HMAC_SHA1_96-MODP8192
 
 ---- ESP tests that should fail----
 [esp=3des168-sha1]
@@ -218,18 +228,18 @@
 	ERROR: AEAD ESP encryption algorithm 'aes_gcm_16' must have a 'null' integrity algorithm, enc_alg="aes_gcm"(0), auth_alg="md5", modp=""
 [esp=mars]
 	ERROR: ESP encryption algorithm 'mars' is not supported, enc_alg="mars"(0), auth_alg="", modp=""
-[esp=3des-sha1;dh22]
-	ERROR: ESP DH algorithm 'dh22' is not supported, enc_alg="3des"(0), auth_alg="sha1", modp="dh22"
-[esp=3des-sha1-dh21]
-	ERROR: ESP DH algorithm 'dh21' is not supported by IKEv1, enc_alg="3des"(0), auth_alg="sha1", modp="dh21"
-[esp=3des-sha1;dh21,3des-sha2]
-	ERROR: ESP DH algorithm 'dh21' is not supported by IKEv1, enc_alg="3des"(0), auth_alg="sha1", modp="dh21"
 [esp=aes_gcm-16]
 	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes_gcm"(16), auth_alg="", modp=""
 [esp=aes_gcm-0]
 	ERROR: encryption key length is zero, enc_alg="aes_gcm"(0), auth_alg="", modp=""
 [esp=aes_gcm-123456789012345]
 	ERROR: encryption key length '123456789012345' WAY too big, enc_alg="aes_gcm"(123456789012345), auth_alg="", modp=""
+[esp=3des-sha1;dh22]
+	ERROR: ESP DH algorithm 'dh22' is not supported, enc_alg="3des"(0), auth_alg="sha1", modp="dh22"
+[esp=3des-sha1;modp8192,3des-sha2]
+	ERROR: ESP DH algorithm 'MODP8192' must be specified last
+[esp=3des-sha1-modp8192,3des-sha2;modp8192]
+	ERROR: ESP DH algorithm must appear once after last proposal
 
 ---- AH tests that should succeed ----
 [ah=]

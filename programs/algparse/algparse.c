@@ -168,6 +168,10 @@ static void test(const struct parser_policy *policy)
 	esp(policy, "serpent");
 	esp(policy, "twofish");
 	esp(policy, "camellia_cbc_256-hmac_sha2_512_256;modp8192");
+	esp(policy, "3des-sha1;modp8192"); /* allow ';' when unambigious */
+	esp(policy, "3des-sha1-modp8192"); /* allow '-' when unambigious */
+	esp(policy, "aes-sha1,3des-sha1;modp8192"); /* set modp8192 on all algs */
+	esp(policy, "aes-sha1-modp8192,3des-sha1-modp8192"); /* silly */
 
 	/*
 	 * should this be supported - for now man page says not
@@ -196,12 +200,12 @@ static void test(const struct parser_policy *policy)
 	esp(policy, "aes-id3"); /* should be rejected; idXXX removed */
 	esp(policy, "aes_gcm-md5"); /* AEAD must have auth null */
 	esp(policy, "mars"); /* support removed */
-	esp(policy, "3des-sha1;dh22"); /* support for dh22 removed */
-	esp(policy, "3des-sha1-dh21"); /* ';' vs '-' */
-	esp(policy, "3des-sha1;dh21,3des-sha2"); /* DH must be last */
 	esp(policy, "aes_gcm-16"); /* don't parse as aes_gcm_16 */
 	esp(policy, "aes_gcm-0"); /* invalid keylen */
 	esp(policy, "aes_gcm-123456789012345"); /* huge keylen */
+	esp(policy, "3des-sha1;dh22"); /* support for dh22 removed */
+	esp(policy, "3des-sha1;modp8192,3des-sha2"); /* ;DH must be last */
+	esp(policy, "3des-sha1-modp8192,3des-sha2;modp8192"); /* ;DH confusion */
 
 	/*
 	 * ah=
