@@ -333,10 +333,23 @@ static struct alg_info_esp *alg_info_discover_pfsgroup_hack(struct alg_info_esp 
 	}
 
 	/*
+	 * Now go through and force all DHs to a consistent value.
+	 *
+	 * This way, something printing an individual proposal will
+	 * include the common DH; and for IKEv2 it can just pick up
+	 * that DH.
+	 */
+	FOR_EACH_ESP_INFO(aie, esp_info) {
+		if (esp_info == last) {
+			continue;
+		}
+		esp_info->dh = last->dh;
+	}
+
+	/*
 	 * Use last's DH for PFS.  Could be NULL but that is ok.
 	 *
-	 * XXX: Instead blat all proposals with the DH so that the
-	 * IKEv2 code can make use of this?
+	 * Since DH is set uniformly, could use first.DH instead.
 	 */
 	aie->esp_pfsgroup = last->dh;
 	return aie;
