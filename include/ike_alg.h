@@ -9,34 +9,29 @@ enum ike_alg_key;
 
 /*
  * More meaningful passert.
+ *
+ * Do not wrap ASSERTION in parenthesis as it will suppress the
+ * warning for 'foo = bar'.
  */
 #define passert_ike_alg(ALG, ASSERTION) {				\
-		bool __assertion = (ASSERTION);				\
-		if (!__assertion) {					\
-			PASSERT_FAIL("algorithm '%s' fails: %s",	\
+		/* wrapping ASSERTION in paren suppresses -Wparen */	\
+		bool assertion__ = ASSERTION; /* no paren */		\
+		if (!assertion__) {					\
+			PASSERT_FAIL("IKE_ALG algorithm '%s' fails: %s", \
 				     (ALG)->fqn != NULL ? (ALG)->fqn	\
 				     : (ALG)->name != NULL ? (ALG)->name \
-				     : "???", #ASSERTION);		\
+				     : "NULL", #ASSERTION);		\
 		}							\
 	}
 
 #define pexpect_ike_alg(ALG, ASSERTION) {				\
-		bool __assertion = (ASSERTION);				\
-		if (!__assertion) {					\
-			PEXPECT_LOG("algorithm '%s' fails: %s",		\
+		/* wrapping ASSERTION in paren suppresses -Wparen */	\
+		bool assertion__ = ASSERTION; /* no paren */		\
+		if (!assertion__) {					\
+			PEXPECT_LOG("IKE_ALG algorithm '%s' fails: %s",	\
 				    (ALG)->fqn != NULL ? (ALG)->fqn	\
 				    : (ALG)->name != NULL ? (ALG)->name \
-				    : "???", #ASSERTION);		\
-		}							\
-	}
-
-#define pdebug_ike_alg(ALG, ASSERTION) {				\
-		bool __assertion = (ASSERTION);				\
-		if (!__assertion) {					\
-			DBG_log("algorithm '%s' fails: %s",		\
-				    (ALG)->fqn != NULL ? (ALG)->fqn	\
-				    : (ALG)->name != NULL ? (ALG)->name \
-				    : "???", #ASSERTION);		\
+				    : "NULL", #ASSERTION);		\
 		}							\
 	}
 

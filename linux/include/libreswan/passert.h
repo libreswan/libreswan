@@ -57,10 +57,11 @@ extern void lsw_passert_fail(const char *file_str,
 			     _n, _n, _n);			\
 	}
 
-#define passert(pred) {							\
-		/* Shorter if (!(pred)) suppresses -Wparen */		\
-		if (pred) {} else {					\
-			PASSERT_FAIL("%s", #pred);			\
+#define passert(ASSERTION) {						\
+		/* wrapping ASSERTION in paren suppresses -Wparen */	\
+		bool assertion__ = ASSERTION; /* no paren */		\
+		if (!assertion__) {					\
+			PASSERT_FAIL("%s", #ASSERTION);			\
 		}							\
 	}
 
@@ -86,9 +87,11 @@ extern void lsw_pexpect_log(const char *file_str, unsigned long line_no,
 	lsw_pexpect_log(PASSERT_BASENAME, __LINE__, __func__,	\
 			FMT,  __VA_ARGS__)
 
-#define pexpect(pred) {							\
-		if (pred) {} else {					\
-			PEXPECT_LOG("%s", #pred);			\
+#define pexpect(ASSERTION) {						\
+		/* wrapping ASSERTION in paren suppresses -Wparen */	\
+		bool assertion__ = ASSERTION; /* no paren */		\
+		if (!assertion__) {					\
+			PEXPECT_LOG("%s", #ASSERTION);			\
 		}							\
 	}
 
