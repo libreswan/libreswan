@@ -1,0 +1,10 @@
+test connection switching. A conn "distraction" is loaded that
+looks like it could match, but it doesn't. east needs to
+figure this out after the SAN does not match and switch to the
+real conn. This looks like:
+
+"distraction"[1] 192.1.2.45 #1: X509: CERT payload does not match connection ID
+"distraction"[1] 192.1.2.45 #1: switched from "distraction"[1] 192.1.2.45 to "westnet-eastnet"
+"westnet-eastnet"[1] 192.1.2.45 #1: deleting connection "distraction"[1] 192.1.2.45 instance with peer 192.1.2.45 {isakmp=#0/ipsec=#0}
+"westnet-eastnet"[1] 192.1.2.45 #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'
+
