@@ -61,9 +61,13 @@ void init_crypto(void)
 				 aes_cbc_tests));
 
 	/*
-	 * XXX: once everything uses 'struct integ_desc *' this can go
-	 * away.
+	 * Cross check IKE_ALG with legacy code.
+	 *
+	 * Showing that IKE_ALG provides equivalent information is the
+	 * first step to deleting the legacy code.
 	 */
+
+	/* alg_info_esp2sadb() */
 	for (const struct integ_desc **integp = next_integ_desc(NULL);
 	     integp != NULL; integp = next_integ_desc(integp)) {
 		const struct integ_desc *integ = *integp;
@@ -73,6 +77,26 @@ void init_crypto(void)
 					== integ->integ_ikev1_ah_id);
 		}
 	}
+
+	/* crypto_req_keysize() */
+	for (const struct encrypt_desc **encryptp = next_encrypt_desc(NULL);
+	     encryptp != NULL; encryptp = next_encrypt_desc(encryptp)) {
+		const struct encrypt_desc *encrypt = *encryptp;
+		if (encrypt->common.id[IKEv1_ESP_ID] > 0) {
+			if (encrypt->keylen_omitted) {
+				pexpect_ike_alg(&encrypt->common,
+						crypto_req_keysize(CRK_ESPorAH,
+								   encrypt->common.id[IKEv1_ESP_ID])
+						== 0);
+			} else {
+				pexpect_ike_alg(&encrypt->common,
+						crypto_req_keysize(CRK_ESPorAH,
+								   encrypt->common.id[IKEv1_ESP_ID])
+						== encrypt->keydeflen);
+			}
+		}
+	}
+
 }
 
 /*
@@ -80,7 +104,7 @@ void init_crypto(void)
  * The first parameter uses 0 for ESP, and anything above that for
  * IKE major version
  */
-int crypto_req_keysize(enum crk_proto ksproto, int algo)
+unsigned crypto_req_keysize(enum crk_proto ksproto, int algo)
 {
 	switch (ksproto) {
 
