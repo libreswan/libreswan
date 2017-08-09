@@ -2865,7 +2865,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 
 		struct connection *r = NULL;
 
-		r = refine_host_connection(st, &peer, FALSE /* initiator */,
+		r = refine_host_connection(st, &peer, FALSE /* we are responder */,
 				auth_policy, AUTH_UNSET /* ikev2 only */, &fromcert);
 
 		if (r == NULL) {
