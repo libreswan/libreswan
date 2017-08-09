@@ -278,7 +278,9 @@ def _reboot_to_login_prompt(domain, console):
         console.expect_exact(pexpect.EOF, timeout=SHUTDOWN_TIMEOUT)
         console = _start(domain, timeout=START_TIMEOUT)
 
-    # Now wait for login prompt.
+    # Now wait for login prompt.  If this second attempt fails then
+    # either a .TIMEOUT or a .EOF exception will be thrown and the
+    # test will be aborted (marked as unresolved).
     _wait_for_login_prompt(domain, console, timeout=LOGIN_PROMPT_TIMEOUT)
     return console
 
