@@ -1535,14 +1535,14 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 				update_state_connection(md->st, r);
 				c = r;
 				/* redo from scratch so we read and check CERT payload */
-				libreswan_log("PAUL: retrying ikev2_decode_peer_id_and_certs() with new conn");
+				DBG(DBG_X509, DBG_log("retrying ikev2_decode_peer_id_and_certs() with new conn"));
 				return ikev2_decode_peer_id_and_certs(md);
 
 			} else if (c->spd.that.has_id_wildcards) {
 				duplicate_id(&c->spd.that.id, &peer_id);
 				c->spd.that.has_id_wildcards = FALSE;
 			} else if (fromcert) {
-				DBG(DBG_CONTROL, DBG_log("copying ID for fromcert"));
+				DBG(DBG_X509, DBG_log("copying ID for fromcert"));
 				duplicate_id(&c->spd.that.id, &peer_id);
 			}
 		}
