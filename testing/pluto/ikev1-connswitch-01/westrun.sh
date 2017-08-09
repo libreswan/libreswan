@@ -1,4 +1,4 @@
 ipsec auto --up  westnet-eastnet-ikev1
-ping -n -c 2 -I 192.0.1.254 192.0.2.254
+ping -n -c 4 192.1.2.23
 ipsec whack --trafficstatus
 echo done

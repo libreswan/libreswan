@@ -1,13 +1,10 @@
-Basic pluto with IKEv2 on the initiator (west), and on the responder.
-It uses certificates, and it includes a configuration that should work
-against racoon2. Note that this test no longer needs to be the model
-for a racoon2 test, as we have interop-ikev2-racoon-* tests now.
+test connection switching. A conn "distraction" is loaded that
+looks like it could match, but it doesn't. east needs to
+figure this out after the SAN does not match and switch to the
+real conn. This looks like:
 
-This also tests having public keys loaded from certificates, but not
-use the DN as the ID.  Pluto also loads the public key in the certificate
-file with the name given.
+"distraction"[1] 192.1.2.45 #1: X509: CERT payload does not match connection ID
+"distraction"[1] 192.1.2.45 #1: switched from "distraction"[1] 192.1.2.45 to "westnet-eastnet"
+"westnet-eastnet"[1] 192.1.2.45 #1: deleting connection "distraction"[1] 192.1.2.45 instance with peer 192.1.2.45 {isakmp=#0/ipsec=#0}
+"westnet-eastnet"[1] 192.1.2.45 #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'
 
-This test does not use or reply on any CA cert.
-
-This is called "out of bound PKIX", as the certificates are not sent
-in-band.
