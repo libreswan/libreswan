@@ -15,11 +15,9 @@ generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
 parsed IKE_SA_INIT response 0 [ SA KE No N(FRAG_SUP) N(NATD_S_IP) N(NATD_D_IP) ]
-sending cert request for "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org"
-sending cert request for "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test EC CA, E=testing@libreswan.org"
 authentication of 'west' (myself) with pre-shared key
 establishing CHILD_SA westnet-eastnet-ikev2
-generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) CERTREQ IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) N(ADD_4_ADDR) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
+generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) N(ADD_4_ADDR) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
 sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
 parsed IKE_AUTH response 1 [ IDr AUTH SA TSi TSr ]

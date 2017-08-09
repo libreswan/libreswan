@@ -53,10 +53,10 @@ west #
 134 "nss-cert-incorrect" #4: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
 002 "nss-cert-incorrect" #4: suppressing retransmit because IMPAIR_RETRANSMITS is set.
 002 "nss-cert-incorrect" #4: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-002 "nss-cert-incorrect" #4: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-003 "nss-cert-incorrect" #4: no RSA public key known for 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
-002 "nss-cert-incorrect" #4: RSA authentication failed
-036 "nss-cert-incorrect" #4: encountered fatal error in state STATE_PARENT_I2
+003 "nss-cert-incorrect" #4: ID_DER_ASN1_DN 'E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA' does not match expected 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
+002 "nss-cert-incorrect" #4: Peer public key SubjectAltName does not match peer ID for this connection
+002 "nss-cert-incorrect" #4: X509: CERT payload does not match connection ID
+224 "nss-cert-incorrect" #4: STATE_PARENT_I2: v2N_AUTHENTICATION_FAILED
 west #
  echo done
 done
