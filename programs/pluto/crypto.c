@@ -84,12 +84,12 @@ void init_crypto(void)
 		const struct encrypt_desc *encrypt = *encryptp;
 		if (encrypt->common.id[IKEv1_ESP_ID] > 0) {
 			if (encrypt->keylen_omitted) {
-				pexpect_ike_alg(&encrypt->common,
+				passert_ike_alg(&encrypt->common,
 						crypto_req_keysize(CRK_ESPorAH,
 								   encrypt->common.id[IKEv1_ESP_ID])
 						== 0);
 			} else {
-				pexpect_ike_alg(&encrypt->common,
+				passert_ike_alg(&encrypt->common,
 						crypto_req_keysize(CRK_ESPorAH,
 								   encrypt->common.id[IKEv1_ESP_ID])
 						== encrypt->keydeflen);
@@ -126,8 +126,13 @@ unsigned crypto_req_keysize(enum crk_proto ksproto, int algo)
 			return AES_GCM_KEY_DEF_LEN;
 		case ESP_CAMELLIAv1:
 			return CAMELLIA_KEY_DEF_LEN;
+		case ESP_CAMELLIA_CTR:
+			return CAMELLIA_CTR_KEY_DEF_LEN;
 		case ESP_NULL_AUTH_AES_GMAC:
 			return AES_GMAC_KEY_DEF_LEN;
+		case ESP_3DES:
+			/* 0 means send no keylen */
+			return 0;
 		/* private use */
 		case ESP_SERPENT:
 			return SERPENT_KEY_DEF_LEN;
