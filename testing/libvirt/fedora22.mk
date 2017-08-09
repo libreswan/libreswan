@@ -7,7 +7,7 @@ KVM_KICKSTART_FILE = testing/libvirt/fedora22.ks
 
 KVM_PACKAGE_INSTALL = dnf install -y
 KVM_DEBUGINFO_INSTALL = dnf  debuginfo-install -y
-KVM_INSTALLE_RPM_LIST = rpm -aq > /var/tmp/rpm-qa-fedora-updates.log
+KVM_INSTALL_RPM_LIST = 'rpm -aq > /var/tmp/rpm-qa-fedora-updates.log'
 
 KVM_PACKAGES = \
     ElectricFence \
