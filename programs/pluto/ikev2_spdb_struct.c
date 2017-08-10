@@ -1377,10 +1377,14 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 	DBG(DBG_CONTROL, DBG_log("converting proposal to internal trans attrs"));
 
 	/*
-	 * blank everything and only update TA_OUT on success.
+	 * blank TA_OUT, and only update it on success.
 	 */
-	struct trans_attrs ta = { .encrypt = 0 };
-	*ta_out = ta;
+	zero(ta_out);
+
+	/*
+	 * Start with an empty TA.
+	 */
+	struct trans_attrs ta = { .encrypt = 0, };
 
 	enum ikev2_trans_type type;
 	struct ikev2_transforms *transforms;
@@ -1451,12 +1455,8 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 				ta.prf = prf;
 				break;
 			}
-			case IKEv2_TRANS_TYPE_INTEG: {
-				if (transform->id == 0) {
-					/*passert(ikev2_encr_aead(proposal->transforms[IKEv2_TRANS_TYPE_ENCR].id);*/
-					DBG(DBG_CONTROL, DBG_log("ignoring NULL integrity"));
-					break;
-				}
+			case IKEv2_TRANS_TYPE_INTEG:
+			{
 				const struct integ_desc *integ = ikev2_get_integ_desc(transform->id);
 				if (integ == NULL) {
 					/*
@@ -1535,6 +1535,16 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 			}
 		}
 	}
+
+	/*
+	 * Patch up integrity.
+	 */
+	if (ike_alg_is_aead(ta.encrypter) && ta.integ == NULL) {
+		DBG(DBG_CONTROL, DBG_log("since AEAD, setting NULL integ to 'null'"));
+		ta.integ = &ike_alg_integ_null;
+		ta.integ_hash = 0;
+	}
+
 	*ta_out = ta;
 	return TRUE;
 }
