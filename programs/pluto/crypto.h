@@ -103,7 +103,7 @@ enum crk_proto {
 	CRK_ESPorAH,
 };
 
-extern int crypto_req_keysize(enum crk_proto ksproto, int algo);
+extern unsigned crypto_req_keysize(enum crk_proto ksproto, int algo);
 
 struct connection;
 
