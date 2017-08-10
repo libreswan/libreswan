@@ -625,7 +625,14 @@ static void encrypt_desc_check(const struct ike_alg *alg)
 		passert_ike_alg(alg, encrypt->encrypt_ops->do_crypt == NULL || encrypt->aead_tag_size == 0);
 	}
 
-	if (encrypt->keydeflen) {
+	if (encrypt == &ike_alg_encrypt_null) {
+		passert_ike_alg(alg, encrypt->keydeflen == 0);
+		passert_ike_alg(alg, encrypt->common.id[IKEv1_ESP_ID] == ESP_NULL);
+		passert_ike_alg(alg, encrypt->common.id[IKEv2_ALG_ID] == IKEv2_ENCR_NULL);
+		passert_ike_alg(alg, encrypt->enc_blocksize == 1);
+		passert_ike_alg(alg, encrypt->wire_iv_size == 0);
+		passert_ike_alg(alg, encrypt->key_bit_lengths[0] == 0);
+	} else {
 		/*
 		 * Acceptable key bit-length checks (assuming the
 		 * algorithm isn't NULL):
@@ -637,6 +644,7 @@ static void encrypt_desc_check(const struct ike_alg *alg)
 		 * - provided there is a KEYDEFLEN (i.e., not the NULL
 		 *   algorithm), there is at least one key length.
 		 */
+		passert_ike_alg(alg, encrypt->keydeflen > 0);
 		passert_ike_alg(alg, encrypt->key_bit_lengths[0] > 0);
 		passert_ike_alg(alg, encrypt->key_bit_lengths[elemsof(encrypt->key_bit_lengths) - 1] == 0);
 		for (const unsigned *keyp = encrypt->key_bit_lengths; *keyp; keyp++) {
@@ -647,15 +655,6 @@ static void encrypt_desc_check(const struct ike_alg *alg)
 		 * the default appears in the list
 		 */
 		passert_ike_alg(alg, encrypt_has_key_bit_length(encrypt, encrypt->keydeflen));
-	} else {
-		/*
-		 * Interpret a zero default key as implying NULL encryption.
-		 */
-		passert_ike_alg(alg, encrypt->common.id[IKEv1_ESP_ID] == ESP_NULL
-			|| encrypt->common.id[IKEv2_ALG_ID] == IKEv2_ENCR_NULL);
-		passert_ike_alg(alg, encrypt->enc_blocksize == 1);
-		passert_ike_alg(alg, encrypt->wire_iv_size == 0);
-		passert_ike_alg(alg, encrypt->key_bit_lengths[0] == 0);
 	}
 }
 
