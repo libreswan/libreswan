@@ -1572,13 +1572,18 @@ enum ipsec_authentication_algo {
 	AH_SHA2_256_TRUNC = 252,	/* our own stolen value */
 };
 
-/* (IKEv2) IPsec ESP transform values
- * IKEv2: https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-5
+/*
+ * IKEv1 IPsec ESP transform values
  * IKEv1: https://www.iana.org/assignments/isakmp-registry/isakmp-registry.xhtml#isakmp-registry-9
+ * IKEv2: https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-5
  *
- * Up to id=20 this table matches IKEv1 and IKEv2. Entries higher up
- * no longer match. IKEv2 values are specified here for those.
- * Note: We basically don't do IKEv1 encryption algo > 20
+ * Up to id=20 IKEv1 and IKEv2 match, after that things get messy.
+ * This is because pluto and the kernel keep trying to use the IKEv1
+ * ESP value when dealing with IKEv2-only algorithms.
+ *
+ * Where there is a conflict between IKEv1 and IKEv2, the IKEv1 value
+ * is included.  If there's no IKEv1 value then the IKEv2 value is
+ * used (should these be droped).
  */
 
 enum ipsec_cipher_algo {
@@ -1603,9 +1608,9 @@ enum ipsec_cipher_algo {
 	ESP_AES_GCM_8 = 18,
 	ESP_AES_GCM_12 = 19,
 	ESP_AES_GCM_16 = 20,
-	ESP_NULL_AUTH_AES_GMAC = 21, /* IKEv1 is ESP_SEED_CBC */
-	ESP_CAMELLIA = 22, /* IKEv2 is ESP_RESERVED_FOR_IEEE_P1619_XTS_AES */
-	/* IKEv1: ESP_NULL_AUTH_AES-GMAC = 23, */
+	ESP_SEED_CBC = 21, /* IKEv1, IKEv2 is NULL_AUTH_AES_GMAC */
+	ESP_CAMELLIA = 22, /* IKEv1, IKEv2 is ESP_RESERVED_FOR_IEEE_P1619_XTS_AES */
+	ESP_NULL_AUTH_AES_GMAC = 23, /* IKEv1, IKEv2 is CAMELLIA_CBC */
 	ESP_CAMELLIA_CTR = 24, /* not assigned in/for IKEv1 */
 	ESP_CAMELLIA_CCM_8 = 25, /* not assigned in/for IKEv1 */
 	ESP_CAMELLIA_CCM_12 = 26, /* not assigned in/for IKEv1 */
