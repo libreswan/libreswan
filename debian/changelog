@@ -1,3 +1,17 @@
+libreswan (3.21-1) experimental; urgency=medium
+
+  * New upstream release
+  * use systemd presets for default-disabled service
+  * ensure that /run/pluto exists
+  * add dependency on iptables
+  * update build-dependencies to match upstream expectations
+  * Standards-Version: bump to 4.0.1 (no changes needed)
+  * Initial attempt at autopkgtest
+  * USE_DNSSEC=false b/c upstream needs libunbound to link to libevent
+    (and it does not, see #871675)
+
+ -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>  Thu, 10 Aug 2017 23:24:56 -0400
+
 libreswan (3.21~rc5-1) experimental; urgency=medium
 
   [ Daniel Kahn Gillmor ]
