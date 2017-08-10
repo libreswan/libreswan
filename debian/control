@@ -43,6 +43,7 @@ Depends:
  dns-root-data,
  host,
  iproute2 | iproute (>= 20071016),
+ iptables,
  libnspr4,
  libnss3 (>= 3.16),
  libnss3-tools,
