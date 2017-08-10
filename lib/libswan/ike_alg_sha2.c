@@ -38,6 +38,8 @@ const struct hash_desc ike_alg_hash_sha2_256 = {
 		.algo_type = IKE_ALG_HASH,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_SHA2_256,
+			[IKEv1_ESP_ID] = -1,
+			[IKEv2_ALG_ID] = -1,
 		},
 		.fips = TRUE,
 		.nss_mechanism = CKM_SHA256,
@@ -58,6 +60,7 @@ const struct prf_desc ike_alg_prf_sha2_256 = {
 		.algo_type = IKE_ALG_PRF,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_SHA2_256,
+			[IKEv1_ESP_ID] = -1,
 			[IKEv2_ALG_ID] = IKEv2_PRF_HMAC_SHA2_256,
 		},
 		.fips = TRUE,
@@ -97,7 +100,9 @@ const struct integ_desc ike_alg_integ_hmac_sha2_256_truncbug = {
 		.officname = "hmac_sha2_256_truncbug",
 		.algo_type = IKE_ALG_INTEG,
 		.id = {
+			[IKEv1_OAKLEY_ID] = -1,
 			[IKEv1_ESP_ID] = AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG,
+			[IKEv2_ALG_ID] = -1,
 		},
 		.fips = FALSE,
 	},
@@ -114,6 +119,8 @@ const struct hash_desc ike_alg_hash_sha2_384 = {
 		.algo_type = IKE_ALG_HASH,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_SHA2_384,
+			[IKEv1_ESP_ID] = -1,
+			[IKEv2_ALG_ID] = -1,
 		},
 		.fips = TRUE,
 		.nss_mechanism = CKM_SHA384,
@@ -134,6 +141,7 @@ const struct prf_desc ike_alg_prf_sha2_384 = {
 		.algo_type = IKE_ALG_PRF,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_SHA2_384,
+			[IKEv1_ESP_ID] = -1,
 			[IKEv2_ALG_ID] = IKEv2_PRF_HMAC_SHA2_384,
 		},
 		.fips = TRUE,
@@ -174,6 +182,8 @@ const struct hash_desc ike_alg_hash_sha2_512 = {
 		.algo_type = IKE_ALG_HASH,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_SHA2_512,
+			[IKEv1_ESP_ID] = -1,
+			[IKEv2_ALG_ID] = -1,
 		},
 		.fips = TRUE,
 		.nss_mechanism = CKM_SHA512,
@@ -194,6 +204,7 @@ const struct prf_desc ike_alg_prf_sha2_512 = {
 		.algo_type = IKE_ALG_PRF,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_SHA2_512,
+			[IKEv1_ESP_ID] = -1,
 			[IKEv2_ALG_ID] = IKEv2_PRF_HMAC_SHA2_512,
 		},
 		.fips = TRUE,

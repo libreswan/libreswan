@@ -37,6 +37,7 @@ const struct encrypt_desc ike_alg_encrypt_null =
 		.officname = "null",
 		.algo_type = IKE_ALG_ENCRYPT,
 		.id = {
+			[IKEv1_OAKLEY_ID] = -1,
 			[IKEv1_ESP_ID] = ESP_NULL,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_NULL,
 		},
@@ -61,6 +62,7 @@ const struct integ_desc ike_alg_integ_null = {
 	       .algo_type = IKE_ALG_INTEG,
 	       .id = {
 			/* [IKEv1_OAKLEY_ID] = AUTH_ALGORITHM_NONE or AUTH_ALGORITHM_NULL_KAME? */
+			[IKEv1_OAKLEY_ID] = -1,
 			[IKEv1_ESP_ID] = ESP_reserved, /* not ESP_KAME_NULL=251 */
 			[IKEv2_ALG_ID] = IKEv2_AUTH_NONE,
 		},

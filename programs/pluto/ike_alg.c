@@ -455,8 +455,8 @@ static void prf_desc_check(const struct ike_alg *alg)
 		 * IKEv1 IKE algorithms must have a hasher - used for
 		 * things like computing IV.
 		 */
-		passert_ike_alg(alg, prf->common.id[IKEv1_OAKLEY_ID] == 0
-				     || prf->hasher != NULL);
+		passert_ike_alg(alg, (prf->common.id[IKEv1_OAKLEY_ID] < 0
+				      || prf->hasher != NULL));
 		prf->prf_ops->check(prf);
 	}
 	if (prf->hasher) {
@@ -712,7 +712,7 @@ static void dh_desc_check(const struct ike_alg *alg)
 	passert_ike_alg(alg, (dh->dhmke_ops == &ike_alg_nss_modp_dhmke_ops
 			      ? dh->common.id[IKEv1_ESP_ID] == dh->group
 			      : dh->dhmke_ops == &ike_alg_nss_ecp_dhmke_ops
-			      ? dh->common.id[IKEv1_ESP_ID] == 0
+			      ? dh->common.id[IKEv1_ESP_ID] < 0
 			      : FALSE));
 	/* always implemented */
 	passert_ike_alg(alg, dh->dhmke_ops != NULL);
@@ -751,7 +751,7 @@ static void check_enum_name(const char *what,
 			    const struct ike_alg *alg,
 			    int id, enum_names *enum_names)
 {
-	if (id > 0) {
+	if (id >= 0) {
 		if (enum_names == NULL) {
 			PASSERT_FAIL("%s %s %s has no enum names",
 				     alg->algo_type->name,
@@ -804,6 +804,19 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 		passert_ike_alg(alg, alg->officname != NULL);
 		passert_ike_alg(alg, alg->algo_type == type);
 
+                /*
+		 * Don't allow 0 as an algorithm ID.
+		 *
+		 * The exception is integrity where the NULL algorithm
+		 * really is 0.
+		 */
+		if (alg != &ike_alg_integ_null.common) {
+			for (enum ike_alg_key key = IKE_ALG_KEY_FLOOR;
+			     key < IKE_ALG_KEY_ROOF; key++) {
+				passert_ike_alg(alg, alg->id[key] != 0);
+			}
+		}
+
 		/*
 		 * Validate an IKE_ALG's IKEv1 and IKEv2 enum_name
 		 * entries.
@@ -816,7 +829,7 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 		for (enum ike_alg_key key = IKE_ALG_KEY_FLOOR;
 		     key < IKE_ALG_KEY_ROOF; key++) {
 			int id = alg->id[key];
-			if (id > 0) {
+			if (id >= 0) {
 				at_least_one_valid_id = TRUE;
 				check_enum_name(ike_alg_key_name(key),
 						alg, id,
@@ -848,9 +861,10 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 		for (enum ike_alg_key key = IKE_ALG_KEY_FLOOR;
 		     key < IKE_ALG_KEY_ROOF; key++) {
 			int id = alg->id[key];
-			passert_ike_alg(alg, id == 0
-				|| (lookup_by_id(&scratch, key, id, LEMPTY)
-				    == NULL));
+			passert_ike_alg(alg,
+					id < 0
+					|| (lookup_by_id(&scratch, key, id, LEMPTY)
+					    == NULL));
 		}
 
 		/*
@@ -914,8 +928,8 @@ void ike_alg_snprint(char *buf, size_t sizeof_buf,
 	bool v1_ike;
 	bool v2_ike;
 	if (ike_alg_is_ike(alg)) {
-		v1_ike = alg->id[IKEv1_OAKLEY_ID] > 0;
-		v2_ike = (alg->id[IKEv2_ALG_ID] > 0);
+		v1_ike = alg->id[IKEv1_OAKLEY_ID] >= 0;
+		v2_ike = (alg->id[IKEv2_ALG_ID] >= 0);
 	} else {
 		v1_ike = FALSE;
 		v2_ike = FALSE;
@@ -928,14 +942,14 @@ void ike_alg_snprint(char *buf, size_t sizeof_buf,
 	    || alg->algo_type == &ike_alg_prf) {
 		v1_esp = v2_esp = v1_ah = v2_ah = FALSE;
 	} else if (alg->algo_type == &ike_alg_encrypt) {
-		v1_esp = alg->id[IKEv1_ESP_ID] > 0;
-		v2_esp = alg->id[IKEv2_ALG_ID] > 0;
+		v1_esp = alg->id[IKEv1_ESP_ID] >= 0;
+		v2_esp = alg->id[IKEv2_ALG_ID] >= 0;
 		v1_ah = FALSE;
 		v2_ah = FALSE;
 	} else if (alg->algo_type == &ike_alg_integ
 		   || alg->algo_type == &ike_alg_dh) {
-		v1_esp = v1_ah = alg->id[IKEv1_ESP_ID] > 0;
-		v2_esp = v2_ah = alg->id[IKEv2_ALG_ID] > 0;
+		v1_esp = v1_ah = alg->id[IKEv1_ESP_ID] >= 0;
+		v2_esp = v2_ah = alg->id[IKEv2_ALG_ID] >= 0;
 	} else {
 		bad_case(0);
 	}

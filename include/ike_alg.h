@@ -215,6 +215,9 @@ struct ike_alg {
 	 * Macros provide short term aliases for the slightly longer
 	 * index references (tacky, unixish, and delay churning the
 	 * code).
+	 *
+	 * -1 indicates not valid (annoyingly 0 is used by IKEv2 for
+	 * NULL integrity).
 	 */
 	const struct ike_alg_type *algo_type;
 #define ikev1_oakley_id id[IKEv1_OAKLEY_ID]

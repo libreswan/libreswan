@@ -114,6 +114,7 @@ const struct encrypt_desc ike_alg_encrypt_twofish_ssh =
 		.algo_type = IKE_ALG_ENCRYPT,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_TWOFISH_CBC_SSH,
+			[IKEv1_ESP_ID] = -1,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_TWOFISH_CBC_SSH,
 		},
 	},

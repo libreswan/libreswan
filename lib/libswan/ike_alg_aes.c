@@ -333,6 +333,7 @@ const struct integ_desc ike_alg_integ_aes_xcbc = {
 		.officname =  "aes_xcbc",
 		.algo_type = IKE_ALG_INTEG,
 		.id = {
+			[IKEv1_OAKLEY_ID] = -1,
 			[IKEv1_ESP_ID] = AUTH_ALGORITHM_AES_XCBC,
 			[IKEv2_ALG_ID] = IKEv2_AUTH_AES_XCBC_96,
 		},
@@ -351,6 +352,7 @@ const struct integ_desc ike_alg_integ_aes_cmac = {
 		.officname =  "aes_cmac",
 		.algo_type = IKE_ALG_INTEG,
 		.id = {
+			[IKEv1_OAKLEY_ID] = -1,
 			[IKEv1_ESP_ID] = AUTH_ALGORITHM_AES_CMAC_96,
 			[IKEv2_ALG_ID] = IKEv2_AUTH_AES_CMAC_96,
 		},

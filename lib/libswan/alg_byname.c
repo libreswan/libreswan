@@ -32,14 +32,14 @@ bool alg_byname_ok(const struct parser_param *param,
 	 * If the connection is IKEv1|IKEv2 then this code will
 	 * exclude anything not supported by both protocols.
 	 */
-	if (policy->ikev1 && alg->id[param->ikev1_alg_id] == 0) {
+	if (policy->ikev1 && alg->id[param->ikev1_alg_id] < 0) {
 		snprintf(err_buf, err_buf_len,
 			 "%s %s algorithm '%s' is not supported by IKEv1",
 			 param->protocol, ike_alg_type_name(alg->algo_type),
 			 name);
 		return false;
 	}
-	if (policy->ikev2 && alg->id[IKEv2_ALG_ID] == 0) {
+	if (policy->ikev2 && alg->id[IKEv2_ALG_ID] < 0) {
 		snprintf(err_buf, err_buf_len,
 			 "%s %s algorithm '%s' is not supported by IKEv2",
 			 param->protocol, ike_alg_type_name(alg->algo_type),

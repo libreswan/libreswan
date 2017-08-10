@@ -43,6 +43,8 @@ const struct hash_desc ike_alg_hash_sha1 = {
 		.algo_type = IKE_ALG_HASH,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_SHA1,
+			[IKEv1_ESP_ID] = -1,
+			[IKEv2_ALG_ID] = -1,
 		},
 		.fips = TRUE,
 		.nss_mechanism = CKM_SHA_1,
@@ -63,6 +65,7 @@ const struct prf_desc ike_alg_prf_sha1 = {
 		.algo_type = IKE_ALG_PRF,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_SHA1,
+			[IKEv1_ESP_ID] = -1,
 			[IKEv2_ALG_ID] = IKEv2_PRF_HMAC_SHA1,
 		},
 		.fips = TRUE,
