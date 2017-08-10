@@ -166,8 +166,8 @@ static const char *raw_alg_info_ike_add(struct alg_info_ike *alg_info,
 	/*
 	 * This is a little loose.
 	 */
-	passert(integ != &alg_info_integ_null || ike_alg_is_aead(encrypt));
-	passert(integ == &alg_info_integ_null || ike_alg_is_ike(&integ->common));
+	passert(integ != &ike_alg_integ_null || ike_alg_is_aead(encrypt));
+	passert(integ == &ike_alg_integ_null || ike_alg_is_ike(&integ->common));
 
 	passert(ike_alg_is_ike(&(dh_group->common)));
 
@@ -507,7 +507,7 @@ static const char *ike_add(const struct parser_policy *const policy,
 		 * Derive the 'default' using the PRF.
 		 */
 		if (ike_alg_is_aead(encrypt)) {
-			integ = &alg_info_integ_null;
+			integ = &ike_alg_integ_null;
 		} else {
 			passert(prf != NULL);
 			passert(ike_alg_is_ike(&prf->common));
@@ -530,7 +530,7 @@ static const char *ike_add(const struct parser_policy *const policy,
 			       encrypt, ek_bits,
 			       prf, integ, dh_group,
 			       err_buf, err_buf_len);
-	} else if (integ == &alg_info_integ_null
+	} else if (integ == &ike_alg_integ_null
 		   && !ike_alg_is_aead(encrypt)) {
 		/*
 		 * For instance, "aes-sha1-null-dh22" is invalid,

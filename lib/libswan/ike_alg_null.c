@@ -52,7 +52,7 @@ const struct encrypt_desc ike_alg_encrypt_null =
 /*
  * This doesn't really exist, yet life is easier if it does.
  */
-const struct integ_desc alg_info_integ_null = {
+const struct integ_desc ike_alg_integ_null = {
        .common = {
                .name = "null",
                .fqn = "NULL",
@@ -61,7 +61,7 @@ const struct integ_desc alg_info_integ_null = {
 	       .algo_type = IKE_ALG_INTEG,
 	       .id = {
 			/* [IKEv1_OAKLEY_ID] = AUTH_ALGORITHM_NONE or AUTH_ALGORITHM_NULL_KAME? */
-			[IKEv1_ESP_ID] = ESP_KAME_NULL, /* = AH_NULL = AUTH_ALGORITHM_NULL_KAME why? */
+			[IKEv1_ESP_ID] = ESP_reserved, /* not ESP_KAME_NULL=251 */
 			[IKEv2_ALG_ID] = IKEv2_AUTH_NONE,
 		},
        },

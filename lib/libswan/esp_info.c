@@ -79,9 +79,9 @@ static void raw_alg_info_esp_add(struct alg_info_esp *alg_info,
 
 	esp_info[cnt].ikev1esp_transid = (encrypt != NULL ? encrypt->common.id[IKEv1_ESP_ID] : 0);
 	esp_info[cnt].enckeylen = ek_bits;
-	esp_info[cnt].ikev1esp_auth = (integ == &alg_info_integ_null) ? 0 : integ->common.id[IKEv1_ESP_ID];
+	esp_info[cnt].ikev1esp_auth = (integ == &ike_alg_integ_null) ? 0 : integ->common.id[IKEv1_ESP_ID];
 	esp_info[cnt].encrypt = encrypt;
-	esp_info[cnt].integ = (integ == &alg_info_integ_null) ? NULL : integ;
+	esp_info[cnt].integ = (integ == &ike_alg_integ_null) ? NULL : integ;
 	esp_info[cnt].dh = dh;
 
 	alg_info->ai.alg_info_cnt++;
@@ -106,7 +106,7 @@ static const char *alg_info_esp_add(const struct parser_policy *const policy UNU
 	}
 
 	if (ike_alg_is_aead(encrypt)) {
-		if (integ != NULL && integ != &alg_info_integ_null) {
+		if (integ != NULL && integ != &ike_alg_integ_null) {
 			snprintf(err_buf, err_buf_len,
 				 "AEAD ESP encryption algorithm '%s' must have a 'null' integrity algorithm",
 				 encrypt->common.name);
@@ -114,8 +114,8 @@ static const char *alg_info_esp_add(const struct parser_policy *const policy UNU
 		}
 		raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
 				     encrypt, ek_bits,
-				     &alg_info_integ_null, dh);
-	} else if (integ == &alg_info_integ_null) {
+				     &ike_alg_integ_null, dh);
+	} else if (integ == &ike_alg_integ_null) {
 		snprintf(err_buf, err_buf_len,
 			 "non-AEAD ESP encryption algorithm '%s' cannot have a 'null' integrity algorithm",
 			 encrypt->common.name);
@@ -161,7 +161,7 @@ static const char *alg_info_ah_add(const struct parser_policy *const policy UNUS
 	pexpect(prf == NULL);
 
 	/* ah=null is invalid */
-	if (integ == &alg_info_integ_null) {
+	if (integ == &ike_alg_integ_null) {
 		snprintf(err_buf, err_buf_len,
 			 "AH cannot have a 'null' integrity algorithm");
 		return err_buf;

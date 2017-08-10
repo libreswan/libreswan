@@ -164,7 +164,7 @@ const struct ike_alg *integ_alg_byname(const struct parser_param *param,
 				       size_t key_bit_length UNUSED)
 {
 	if (strcasecmp(name, "null") == 0) {
-		return &alg_info_integ_null.common;
+		return &ike_alg_integ_null.common;
 	}
 	return alg_byname(param, policy, IKE_ALG_INTEG,
 			  err_buf, err_buf_len,

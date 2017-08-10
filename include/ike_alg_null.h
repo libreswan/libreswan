@@ -15,4 +15,4 @@
  */
 
 extern const struct encrypt_desc ike_alg_encrypt_null;
-extern const struct integ_desc alg_info_integ_null;
+extern const struct integ_desc ike_alg_integ_null;
