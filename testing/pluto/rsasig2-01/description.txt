@@ -1,4 +1,0 @@
-as basic-pluto-01 but now west and east use their 2nd rsasigkey that
-they have configured using rsasigkey2=
-
-The first rsasigkey= entry has been removed from ipsec.secrets

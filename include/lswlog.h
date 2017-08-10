@@ -23,6 +23,7 @@
 #include <libreswan.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stddef.h>
 
 /* moved common code to library file */
 #include "libreswan/passert.h"
@@ -75,7 +76,7 @@ extern void libreswan_DBG_dump(const char *label, const void *p, size_t len);
  * restriction is not checked in any way: violators will produce
  * confusing results (without crashing!).
  */
-#define LOG_WIDTH	1024	/* roof of number of chars in log line */
+#define LOG_WIDTH	((size_t)1024)	/* roof of number of chars in log line */
 
 extern err_t builddiag(const char *fmt, ...) PRINTF_LIKE(1);	/* NOT RE-ENTRANT */
 
@@ -151,26 +152,28 @@ enum rc_type {
 	RC_NOTIFICATION = 200	/* as per IKE notification messages */
 };
 
-/* the following routines do a dance to capture errno before it is changed
- * A call must doubly parenthesize the argument list (no varargs macros).
- * The first argument must be "e", the local variable that captures errno.
+/*
+ * Wrap <message> in a prefix and suffix where the suffix contains
+ * errno and message.  Since __VA_ARGS__ may alter ERRNO, it needs to
+ * be saved.
  */
-#define log_errno(a) \
-	{ \
-		int e = errno; \
-		libreswan_log_errno_routine a; \
+
+void lswlog_log_errno(int e, const char *prefix,
+		      const char *message, ...) PRINTF_LIKE(3);
+void lswlog_exit(int rc) NEVER_RETURNS;
+
+#define LOG_ERRNO(ERRNO, ...)						\
+	{								\
+		int log_errno = ERRNO; /* save the value */		\
+		lswlog_log_errno(log_errno, "ERROR: ", __VA_ARGS__);	\
 	}
 
-extern void libreswan_log_errno_routine(int e, const char *message,
-					...) PRINTF_LIKE(2);
-#define exit_log_errno(a) \
-	{ \
-		int e = errno; \
-		libreswan_exit_log_errno_routine a; \
+#define EXIT_LOG_ERRNO(ERRNO, ...)					\
+	{								\
+		int exit_log_errno = ERRNO; /* save the value */	\
+		lswlog_log_errno(exit_log_errno, "FATAL ERROR: ", __VA_ARGS__); \
+		lswlog_exit(PLUTO_EXIT_FAIL);				\
 	}
-
-extern void libreswan_exit_log_errno_routine(int e, const char *message,
-					     ...) PRINTF_LIKE(2) NEVER_RETURNS;
 
 /*
  * general utilities
@@ -179,5 +182,66 @@ extern void libreswan_exit_log_errno_routine(int e, const char *message,
 /* sanitize a string */
 extern void sanitize_string(char *buf, size_t size);
 
-#endif /* _LSWLOG_H_ */
+/*
+ * A generic buffer for accumulating log output.
+ */
 
+struct lswlog {
+	/*
+	 * BUF contains the accumulated log output.  It is always NUL
+	 * terminated (LEN specifes the location of the NUL).
+	 *
+	 * BUF can contain up to LOG_WIDTH-1 characters (aka BOUND-1)
+	 * of log output (i.e. LEN<LOG_WIDTH).
+	 *
+	 * An attempt to accumulate more than that will cause the
+	 * output to be truncated, and last few characters replaced by
+	 * DOTS.
+	 *
+	 * A buffer containing truncated output is identified by LEN
+	 * == LOG_WIDTH (aka BOUND).
+	 */
+	signed char parrot;
+	char buf[LOG_WIDTH + 1]; /* extra NUL */
+	signed char canary;
+	size_t len;
+};
+
+extern const struct lswlog empty_lswlog;
+
+/*
+ * To debug, set this to printf or similar.
+ */
+extern int (*lswlog_debugf)(const char *format, ...) PRINTF_LIKE(1);
+
+#define LSWLOG_PARROT -1
+#define LSWLOG_CANARY -2
+
+#define PASSERT_LSWLOG(LOG, BOUND)					\
+	do {								\
+		passert((LOG)->parrot == LSWLOG_PARROT);		\
+		/* POS/BOUND well defined */				\
+		passert((LOG)->len <= (BOUND));				\
+		passert((BOUND) < sizeof((LOG)->buf));			\
+		/* always NUL terminated */				\
+		/* passert((LOG)->len < sizeof((LOG)->buf)) */;		\
+		passert((LOG)->buf[(LOG)->len] == '\0');		\
+		/* canary intact */					\
+		passert((LOG)->canary == LSWLOG_CANARY);		\
+	} while (false)
+
+/*
+ * Try to append the message to the end of the log buffer.
+ *
+ * If there is insufficient space, the output is truncated and "..."
+ * is appended.
+ *
+ * Like C99 snprintf() et.al., always return the untruncated message
+ * length.
+ */
+size_t lswlogvf(struct lswlog *log, const char *format, va_list ap);
+size_t lswlogf(struct lswlog *log, const char *format, ...) PRINTF_LIKE(2);
+size_t lswlogs(struct lswlog *log, const char *string);
+size_t lswlogl(struct lswlog *log, struct lswlog *buf);
+
+#endif /* _LSWLOG_H_ */

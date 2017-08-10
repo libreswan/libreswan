@@ -1,4 +1,4 @@
 # diffs should be empty
-/usr/local/libexec/ipsec/algparse | diff -u - ../../algparse/OUTPUT.algparse.txt
+./algparse.sh /usr/local/libexec/ipsec/algparse
 /usr/local/libexec/ipsec/enumcheck | diff -u - ../../enumcheck/OUTPUT.enumcheck.txt
 echo done

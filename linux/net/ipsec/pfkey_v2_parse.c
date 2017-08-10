@@ -1302,6 +1302,7 @@ int pfkey_msg_parse(struct sadb_msg *pfkey_msg,
 				  pfkey_v2_sadb_type_string(pfkey_msg->
 							    sadb_msg_type));
 		}
+	/* FALLTHROUGH */
 	case K_SADB_ACQUIRE:
 	case K_SADB_REGISTER:
 	case K_SADB_EXPIRE:

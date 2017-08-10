@@ -119,7 +119,7 @@ east #
 000 "v6-tunnel":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "v6-tunnel":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "v6-tunnel":   conn_prio: 128,128; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "v6-tunnel":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "v6-tunnel":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "v6-tunnel":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id:@west
 000 "v6-tunnel":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000  

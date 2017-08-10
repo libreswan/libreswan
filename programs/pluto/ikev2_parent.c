@@ -12,7 +12,7 @@
  * Copyright (C) 2013-2016 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
- * Copyright (C) 2015-2017 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2017 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -63,38 +63,19 @@
 #include "pending.h"
 #include "kernel.h"
 #include "nat_traversal.h"
-#include "pam_conv.h"
 #include "alg_info.h" /* for ike_info / esp_info */
 #include "key.h" /* for SECKEY_DestroyPublicKey */
 #include "vendor.h"
 #include "ike_alg_sha2.h"
 #include "crypt_hash.h"
 #include "ikev2_ipseckey.h"
+#include "xauth.h"
 
 #include "ietf_constants.h"
 
 #include "hostpair.h"
 
 #include "pluto_stats.h"
-
-extern bool pluto_drop_oppo_null;
-
-#ifdef XAUTH_HAVE_PAM
-struct ikev2_pam_helper {
-	struct pam_thread_arg pam;	/* writable inside thread */
-	bool pam_status;		/* set inside the thread */
-	pthread_t tid;                  /* set before thread */
-	bool in_use;                    /* set before and inside thread */
-	struct timeval start_time;      /* set before thread */
-	struct timeval done_time;       /* set inside thread */
-	struct ikev2_pam_helper *next;  /* set outside thread */
-	int master_fd;                  /* master's fd (-1 if none) */
-	int helper_fd;                  /* helper's fd */
-	struct pluto_event *ev;         /* callback event on master_fd. */
-};
-
-static struct ikev2_pam_helper *pluto_v2_pam_helpers = NULL;
-#endif
 
 static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md, bool pam_status);
 
@@ -205,7 +186,7 @@ static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
 	if (md->chain[ISAKMP_NEXT_v2KE] == NULL)
 		return STF_OK;
 
-	if(r->pcr_type == pcr_build_ke_and_nonce) {
+	if (r->pcr_type == pcr_build_ke_and_nonce) {
 		enum original_role  role;
 		role = IS_CHILD_SA_RESPONDER(st) ? ORIGINAL_RESPONDER :
 			ORIGINAL_INITIATOR;
@@ -269,7 +250,7 @@ static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
 
 	case STATE_V2_CREATE_I0:
 		unpack_nonce(&st->st_ni, r);
-		if(r->pcr_type == pcr_build_ke_and_nonce)
+		if (r->pcr_type == pcr_build_ke_and_nonce)
 			unpack_KE_from_helper(st, r, &st->st_gi);
 
 		e = add_st_send_list(st, pst);
@@ -440,30 +421,27 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 	return e;
 }
 
-static stf_status ike2_match_ke_group_and_prop(struct msg_digest *md,
-		struct trans_attrs accepted_oakley)
+/*
+ * Check the MODP (KE) group matches the accepted proposal.
+ *
+ * The caller is responsible for freeing any scratch objects.
+ */
+static stf_status ikev2_match_ke_group_and_proposal(struct msg_digest *md,
+						    const struct oakley_group_desc *accepted_dh)
 {
-
-	/*
-	 * Check the MODP (KE) group matches the accepted proposal.
-	 */
-	{
-		passert(md->chain[ISAKMP_NEXT_v2KE] != NULL);
-		int ke_group = md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_group;
-		if (accepted_oakley.group->group != ke_group) {
-			struct esb_buf ke_esb;
-			libreswan_log("initiator guessed wrong keying material group (%s); responding with INVALID_KE_PAYLOAD requesting %s",
-				      enum_show_shortb(&oakley_group_names,
-						       ke_group, &ke_esb),
-				      accepted_oakley.group->common.name);
-			pstats(invalidke_sent_u, ke_group);
-			pstats(invalidke_sent_s, accepted_oakley.group->group);
-			send_v2_notification_invalid_ke(md, accepted_oakley.group);
-
-			pexpect(md->st == NULL);
-			/* caller free early return items */
-			return STF_FAIL;
-		}
+	passert(md->chain[ISAKMP_NEXT_v2KE] != NULL);
+	int ke_group = md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_group;
+	if (accepted_dh->common.id[IKEv2_ALG_ID] != ke_group) {
+		struct esb_buf ke_esb;
+		libreswan_log("initiator guessed wrong keying material group (%s); responding with INVALID_KE_PAYLOAD requesting %s",
+			      enum_show_shortb(&oakley_group_names,
+					       ke_group, &ke_esb),
+			      accepted_dh->common.name);
+		pstats(invalidke_sent_u, ke_group);
+		pstats(invalidke_sent_s, accepted_dh->common.id[IKEv2_ALG_ID]);
+		send_v2_notification_invalid_ke(md, accepted_dh);
+		pexpect(md->st == NULL);
+		return STF_FAIL;
 	}
 
 	return STF_OK;
@@ -568,7 +546,7 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
 			(id.kind == ID_FQDN ||
 			 id.kind == ID_IPV4_ADDR ||
 			 id.kind == ID_IPV6_ADDR)) {
-		if(atype == IKEv2_AUTH_RESERVED) {
+		if (atype == IKEv2_AUTH_RESERVED) {
 			return FALSE; /* called from the initiator */
 		} else if (atype == IKEv2_AUTH_RSA) {
 			return FALSE; /* success */
@@ -577,7 +555,7 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
 
 	idtoa(&id, thatid, sizeof(thatid));
 
-	if(!c->spd.that.key_from_DNS_on_demand)
+	if (!c->spd.that.key_from_DNS_on_demand)
 	{
 		err1 = "that end rsasigkey != %dnsondemand";
 	}
@@ -587,7 +565,7 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
 		err3 = enum_name(&ikev2_auth_names, atype);
 	}
 
-	if(id.kind != ID_FQDN &&
+	if (id.kind != ID_FQDN &&
 			id.kind != ID_IPV4_ADDR &&
 			id.kind != ID_IPV6_ADDR) {
 		err2 = " can only query DNS for IPSECKEY for ID that is a FQDN, IPV4_ADDR, or IPV6_ADDR id type=";
@@ -1267,9 +1245,10 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	/*
 	 * Check the MODP group in the payload matches the accepted proposal.
 	 */
-	if (ike2_match_ke_group_and_prop(md, accepted_oakley) == STF_FAIL) {
+	ret = ikev2_match_ke_group_and_proposal(md, accepted_oakley.group);
+	if (ret != STF_OK) {
 		free_ikev2_proposal(&accepted_ike_proposal);
-		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+		return ret;
 	}
 
 	/*
@@ -1657,10 +1636,9 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 			 * Our state should not advance.  Instead
 			 * we should send our I1 packet with the same cookie.
 			 */
-			const pb_stream *dc_pbs;
 
 			/*
-			 * RFC-7296 Sesction 2.6:
+			 * RFC-7296 Section 2.6:
 			 * The data associated with this notification MUST be
 			 * between 1 and 64 octets in length (inclusive)
 			 */
@@ -1669,17 +1647,16 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 				return STF_IGNORE; /* avoid DDOS / reflection attacks */
 			}
 
-			if (ntfy != md->chain[ISAKMP_NEXT_v2N] || ntfy->next != NULL) {
-				DBG(DBG_CONTROL, DBG_log("non-v2N_COOKIE notify payload(s) ignored "));
+			if (ntfy->next != NULL) {
+				DBG(DBG_CONTROL, DBG_log("ignoring Notify payloads after v2N_COOKIE"));
 			}
-			dc_pbs = &ntfy->pbs;
+
 			clonetochunk(st->st_dcookie,
-				dc_pbs->cur,
-				pbs_left(dc_pbs),
+				ntfy->pbs.cur, pbs_left(&ntfy->pbs),
 				"saved received dcookie");
 
 			DBG(DBG_CONTROLMORE,
-			    DBG_dump_chunk("dcookie received (instead of a R1):",
+			    DBG_dump_chunk("dcookie received (instead of an R1):",
 					   st->st_dcookie);
 			    DBG_log("next STATE_PARENT_I1 resend I1 with the dcookie"));
 
@@ -1711,6 +1688,10 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 			}
 			st->st_retransmit++;
 
+			if (ntfy->next != NULL) {
+				DBG(DBG_CONTROL, DBG_log("ignoring Notify payloads after v2N_INVALID_KE_PAYLOAD"));
+			}
+
 			if (!in_struct(&sg, &suggested_group_desc,
 				&ntfy->pbs, NULL))
 					return STF_IGNORE;
@@ -1732,7 +1713,7 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 				 * local proposal groups, a lookup of
 				 * sg.sg_group must succeed.
 				 */
-				const struct oakley_group_desc *new_group = lookup_group(sg.sg_group);
+				const struct oakley_group_desc *new_group = ikev2_get_dh_desc(sg.sg_group);
 				passert(new_group);
 				DBG(DBG_CONTROLMORE, {
 					DBG_log("Received unauthenticated INVALID_KE rejected our group %s suggesting group %s; resending with updated modp group",
@@ -2482,7 +2463,7 @@ struct ikev2_payloads_summary ikev2_decrypt_msg(struct msg_digest *md, bool veri
 	stf_status status;
 	chunk_t chunk;
 
-	if (md->chain[ISAKMP_NEXT_v2SKF]) {
+	if (md->chain[ISAKMP_NEXT_v2SKF] != NULL) {
 		status = ikev2_reassemble_fragments(md, &chunk);
 		/* note: if status is SFT_OK, chunk is set */
 	} else {
@@ -2536,17 +2517,18 @@ static stf_status ikev2_ship_cp_attr_ip4(u_int16_t type, ip_address *ip4,
 		const char *story, pb_stream *outpbs)
 {
 	struct ikev2_cp_attribute attr;
-	unsigned char *byte_ptr;
 	pb_stream a_pbs;
+
 	attr.type = type;
-	attr.len = ip4 == NULL ? 0 : 4;
+	attr.len = ip4 == NULL ? 0 : 4;	/* ??? is this redundant */
 
 	if (!out_struct(&attr, &ikev2_cp_attribute_desc, outpbs,
 				&a_pbs))
 		return STF_INTERNAL_ERROR;
 
 	if (attr.len > 0) {
-		addrbytesptr(ip4, &byte_ptr);
+		const unsigned char *byte_ptr;
+		addrbytesptr_read(ip4, &byte_ptr);
 		if (!out_raw(byte_ptr, attr.len, &a_pbs, story))
 			return STF_INTERNAL_ERROR;
 	}
@@ -2630,7 +2612,7 @@ static stf_status ikev2_send_auth(struct connection *c,
 
 	a.isaa_np = np;
 
-	switch(authby) {
+	switch (authby) {
 	case AUTH_RSASIG:
 		a.isaa_type = IKEv2_AUTH_RSA;
 		break;
@@ -3182,214 +3164,59 @@ static stf_status ikev2_parent_inR1outI2_tail(
 }
 
 #ifdef XAUTH_HAVE_PAM
-/* IN AN AUTHENTICAL THREAD */
-static void *ikev2_pam_autherize_thread (void *x)
+
+static void ikev2_pam_continue(struct state *st, const char *name UNUSED,
+			       bool success)
 {
-	struct ikev2_pam_helper *p = (struct ikev2_pam_helper *) x;
-	struct timeval done_delta;
-	FILE *in = fdopen(p->helper_fd, "rb");
-	FILE *out = fdopen(p->helper_fd, "wb");
-	size_t sz;
+	struct msg_digest *md = st->st_suspended_md;
 
-	/* threads will go quietly if the master cancel it */
-	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,  NULL);
-	pthread_setcancelstate(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-
-	p->pam_status = do_pam_authentication(&p->pam);
-	gettimeofday(&p->done_time, NULL);
-	timersub(&p->done_time, &p->start_time, &done_delta);
-
-	DBG(DBG_CONTROL, DBG_log("#%lu %s[%lu] IKEv2 PAM helper thread finished work. status %s elapsed time %lu.%06lu '%s'",
-				p->pam.st_serialno, p->pam.c_name,
-				p->pam.c_instance_serial,
-				p->pam_status ? "SUCCESS" : "FAIL",
-				(unsigned long)done_delta.tv_sec,
-				(unsigned long)(done_delta.tv_usec * 1000000),
-				p->pam.name));
-	p->in_use = FALSE;
-	sz = fwrite(p, sizeof(char), sizeof(p), out);
-	fflush(out);
-
-	if (sz != sizeof(p)) {
-		if (ferror(out) != 0) {
-			/* ??? is strerror(ferror(out)) correct? */
-			char errbuf[1024];       /* ??? how big is big enough? */
-
-			strerror_r(errno, errbuf, sizeof(errbuf));
-			loglog(RC_LOG_SERIOUS,
-					"IKEv2 PAM helper failed to write answer: %s", errbuf);
-		} else {
-			/* short write -- fatal */
-			loglog(RC_LOG_SERIOUS,
-					"IKEv2 PAM helper error: write truncated: %zu instead of %zu",
-					sz, sizeof(p));
-		}
-	}
-
-	fclose(in);
-	fclose(out);
-
-	return NULL;
-}
-
-static void free_pam_thread_entry(struct ikev2_pam_helper **pp)
-{
-	struct ikev2_pam_helper *p = *pp;
-
-	*pp = p->next;
-	pfreeany(p->pam.name);
-	pfreeany(p->pam.password);
-	pfreeany(p->pam.c_name);
-	pfreeany(p->pam.ra);
-	pthread_cancel(p->tid);
-	delete_pluto_event(&p->ev);
-	if (p->master_fd != NULL_FD)
-		close(p->master_fd);
-	if (p->helper_fd != NULL_FD)
-		close(p->helper_fd);
-	pfree(p);
-}
-
-static void ikev2_pam_continue(struct ikev2_pam_helper *p)
-{
-	stf_status stf;
-	struct msg_digest *md;
-	struct ikev2_pam_helper *x;
-	struct timeval served_time;
-	struct timeval served_delta;
-	struct timeval done_delta;
-	struct state *st = state_with_serialno(p->pam.st_serialno);
-
-	gettimeofday(&served_time, NULL);
-	timersub(&served_time, &p->start_time, &served_delta);
-	timersub(&p->done_time, &p->start_time, &done_delta);
-
-	if (st == NULL) {
-		DBG(DBG_CONTROL, DBG_log("IKEv2 PAM helper thread calls state #%lu, %s[%lu]. The state is gone. elapsed time %lu.%06lu",
-					p->pam.st_serialno, p->pam.c_name,
-					p->pam.c_instance_serial,
-					(unsigned long)served_delta.tv_sec,
-					(unsigned long)(served_delta.tv_usec * 1000000)));
-		return;
-	}
-	if (read(p->master_fd, (void *)&x, sizeof(p)) == -1) {
-		libreswan_log("IKEv2 PAM helper read failed %d: %s",
-			errno, strerror(errno));
-	}
-
-	DBG(DBG_CONTROL, DBG_log("#%lu %s[%lu] IKEv2 PAM helper thread can continue. PAM status %s. elapsed time %lu.%06lu PAM auth time %lu.%06lu U='%s'",
-				p->pam.st_serialno, p->pam.c_name,
-				p->pam.c_instance_serial,
-				p->pam_status ? "SUCCESS" : "FAIL",
-				(unsigned long)served_delta.tv_sec,
-				(unsigned long)(served_delta.tv_usec * 1000000),
-				(unsigned long)done_delta.tv_sec,
-				(unsigned long)(done_delta.tv_usec * 1000000),
-				p->pam.name));
-
-	md = st->st_suspended_md;
 	unset_suspended(md->st);
-	st->has_pam_thread = FALSE;
 
-	if (p->pam_status) {
-		/* This is a hardcoded continue, convert this to micro state. */
-		stf = ikev2_parent_inI2outR2_auth_tail(md, p->pam_status);
+	stf_status stf;
+	if (success) {
+		/*
+		 * This is a hardcoded continue, convert this to micro
+		 * state.
+		 */
+		stf = ikev2_parent_inI2outR2_auth_tail(md, success);
 	} else {
 		stf = STF_FAIL + v2N_AUTHENTICATION_FAILED;
 	}
-
-	ikev2_free_auth_pam(p->pam.st_serialno);
 
 	complete_v2_state_transition(&md, stf);
 	release_any_md(&md);
 	reset_globals();
 }
 
-static event_callback_routine ikev2_pam_continue_cb;
-static void ikev2_pam_continue_cb(evutil_socket_t fd UNUSED, const short event UNUSED, void *arg)
-{
-	ikev2_pam_continue((struct ikev2_pam_helper *)arg);
-}
-
 /*
  * In the middle of IKEv2 AUTH exchange, the AUTH payload is verified succsfully.
  * Now invoke the PAM helper to authorize connection (based on name only, not password)
  * When pam helper is done state will be woken up and continue.
+ *
+ * This routine "suspends" MD/ST; once PAM finishes it will be
+ * unsuspended.
  */
 
 static stf_status ikev2_start_pam_authorize(struct msg_digest *md)
 {
-	struct ikev2_pam_helper *p = alloc_thing(struct ikev2_pam_helper, "v2 pam helper");
 	struct state *st = md->st;
-	int thread_status;
-	int fds[2];
-	pthread_attr_t pattr;
-	ipstr_buf ra;
-	char thatid[IDTOA_BUF];
-
-	p->master_fd = NULL_FD;
 	set_suspended(md->st, md);
-	messup(p);
-	p->in_use = TRUE;
-	gettimeofday(&p->start_time, NULL);
 
-	if (socketpair(PF_UNIX, SOCK_STREAM, 0, fds) != 0) {
-		loglog(RC_LOG_SERIOUS, "could not create socketpair for ikev2 pam authorize: %s",
-				strerror(errno));
-		pfree(p);
-		return STF_INTERNAL_ERROR;
-	}
-	p->master_fd = fds[0];
-	p->helper_fd = fds[1];
-
+	char thatid[IDTOA_BUF];
 	idtoa(&st->st_connection->spd.that.id, thatid, sizeof(thatid));
-	p->pam.name = clone_str(thatid, "pam name thatid");
-
-	/* ??? if password is always "password" (seems odd) then why is a copy needed? */
-	p->pam.password = clone_str("password", "password");
-	p->pam.c_name = clone_str(st->st_connection->name, "connection name, ikev2 pam");
-	p->pam.ra = clone_str(ipstr(&st->st_remoteaddr, &ra), "st remote address");
-	p->pam.c_instance_serial = st->st_connection->instance_serial;
-	p->pam.st_serialno = st->st_serialno;
-	p->pam.atype = "IKEv2";
-
-	p->next = pluto_v2_pam_helpers;
-	pluto_v2_pam_helpers = p;
-
-	DBG(DBG_CONTROL, DBG_log("#%lu, %s[%lu] start IKEv2 PAM helper thread U='%s' P='%s'",
-				p->pam.st_serialno, p->pam.c_name,
-				p->pam.c_instance_serial, p->pam.name,
-				p->pam.password));
-
-	pthread_attr_init(&pattr);
-	pthread_attr_setdetachstate(&pattr, PTHREAD_CREATE_DETACHED);
-	thread_status = pthread_create(&p->tid, NULL,
-			ikev2_pam_autherize_thread, (void *)p);
-	if (thread_status != 0) {
-		loglog(RC_LOG_SERIOUS,
-			"#%lu  %s[%lu] failed to start IKEv2 PAMhelper thread error = %d '%s'",
-			p->pam.st_serialno, p->pam.c_name,
-			p->pam.c_instance_serial,
-			thread_status, p->pam.name);
-		close(fds[1]);
-		close(fds[0]);
-		p->master_fd = NULL_FD;
-		free_pam_thread_entry(&p);
-		return STF_INTERNAL_ERROR;
-	}
-
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s[%lu] started IKEv2 PAM helper thread '%s'",
-				p->pam.st_serialno, p->pam.c_name,
-				p->pam.c_instance_serial, p->pam.name));
-	st->has_pam_thread = TRUE;
-	pthread_attr_destroy(&pattr);
-
-	DBG(DBG_CONTROL, DBG_log("setup IKEv2 PAM authorize helper callback for master fd %d", p->master_fd));
-	p->ev = pluto_event_add(p->master_fd, EV_READ, ikev2_pam_continue_cb,
-					p, NULL, "PAM_THREAD_FD");
-
+	libreswan_log("IKEv2: [XAUTH]PAM method requested to authorize '%s'",
+		      thatid);
+	xauth_start_pam_thread(&st->st_xauth_thread,
+			       thatid, "password",
+			       st->st_connection->name,
+			       &st->st_remoteaddr,
+			       st->st_serialno,
+			       st->st_connection->instance_serial,
+			       "IKEv2",
+			       ikev2_pam_continue);
 	return STF_SUSPEND;
 }
+
 #endif /* XAUTH_HAVE_PAM */
 
 /*
@@ -3544,7 +3371,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 			return ret;
 	}
 
-	if(ret == STF_OK) {
+	if (ret == STF_OK) {
 		ret = ikev2_parent_inI2outR2_id_tail(md);
 	}
 
@@ -4103,10 +3930,10 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 
 			ip_subnet tmp_subnet_i;
 			ip_subnet tmp_subnet_r;
-			rangetosubnet(&st->st_ts_this.low,
-				      &st->st_ts_this.high, &tmp_subnet_i);
-			rangetosubnet(&st->st_ts_that.low,
-				      &st->st_ts_that.high, &tmp_subnet_r);
+			rangetosubnet(&st->st_ts_this.net.start,
+				      &st->st_ts_this.net.end, &tmp_subnet_i);
+			rangetosubnet(&st->st_ts_that.net.start,
+				      &st->st_ts_that.net.end, &tmp_subnet_r);
 
 			c->spd.this.client = tmp_subnet_i;
 			c->spd.this.port = st->st_ts_this.startport;
@@ -4622,7 +4449,7 @@ static stf_status ikev2_rekey_child(const struct msg_digest *md)
 			 */
 			change_state(st, STATE_V2_REKEY_CHILD_R);
 			rst = find_state_to_rekey(ntfy, pst);
-			if(rst == NULL) {
+			if (rst == NULL) {
 				libreswan_log("no valid IPsec SA SPI to rekey");
 				ret = STF_FAIL + v2N_CHILD_SA_NOT_FOUND;
 			} else {
@@ -4748,7 +4575,7 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 		close_output_pbs(&pb_nr);
 
-		if(in.isag_np == ISAKMP_NEXT_v2KE)  {
+		if (in.isag_np == ISAKMP_NEXT_v2KE)  {
 			if (!justship_v2KE(&cst->st_gi,
 						cst->st_pfs_group, outpbs,
 						ISAKMP_NEXT_v2TSi))
@@ -4821,7 +4648,7 @@ static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
 				&c->ike_proposals);
 
 		/* send v2 IKE SAs*/
-		if(!ikev2_emit_sa_proposals(outpbs,
+		if (!ikev2_emit_sa_proposals(outpbs,
 					st->st_connection->ike_proposals,
 					&local_spi,
 					ISAKMP_NEXT_v2Ni))  {
@@ -4872,7 +4699,7 @@ static notification_t accept_child_sa_KE(struct msg_digest *md,
 				return v2N_INVALID_KE_PAYLOAD;
 			}
 		}
-		if(is_msg_request(md))
+		if (is_msg_request(md))
 			st->st_gi = accepted_g;
 		else
 			st->st_gr = accepted_g;
@@ -4914,7 +4741,7 @@ static notification_t process_ike_rekey_sa_pl(struct msg_digest *md, struct stat
 	/*
 	 * Early return must free: accepted_ike_proposal
 	 */
-	if(!ikev2_proposal_to_trans_attrs(accepted_ike_proposal,
+	if (!ikev2_proposal_to_trans_attrs(accepted_ike_proposal,
 			&accepted_oakley)) {
 		loglog(RC_LOG_SERIOUS, "IKE responder accepted an unsupported algorithm");
 		/* free early return items */
@@ -4923,10 +4750,11 @@ static notification_t process_ike_rekey_sa_pl(struct msg_digest *md, struct stat
 		return STF_IGNORE;
 	}
 
-	if (ike2_match_ke_group_and_prop(md, accepted_oakley) == STF_FAIL) {
+	ret = ikev2_match_ke_group_and_proposal(md, accepted_oakley.group);
+	if (ret != STF_OK) {
 		free_ikev2_proposal(&accepted_ike_proposal);
 		md->st = pst;
-		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+		return ret;
 	}
 
 	/*
@@ -5058,7 +4886,7 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 		memcpy(hdr.isa_icookie, pst->st_icookie, COOKIE_SIZE);
 		hdr.isa_xchg = ISAKMP_v2_CREATE_CHILD_SA;
 		hdr.isa_np = ISAKMP_NEXT_v2SK;
-		if(IS_CHILD_SA_RESPONDER(st)) {
+		if (IS_CHILD_SA_RESPONDER(st)) {
 			hdr.isa_msgid = htonl(md->msgid_received);
 			hdr.isa_flags = ISAKMP_FLAGS_v2_MSG_R; /* response on */
 		} else {
@@ -5067,14 +4895,14 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 			st->st_msgid = htonl(pst->st_msgid_nextuse);
 		}
 
-		if(pst->st_original_role == ORIGINAL_INITIATOR) {
+		if (pst->st_original_role == ORIGINAL_INITIATOR) {
 			hdr.isa_flags |= ISAKMP_FLAGS_v2_IKE_I;
 		}
 
 		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG))
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 
-		if(!IS_CHILD_SA_RESPONDER(st)) {
+		if (!IS_CHILD_SA_RESPONDER(st)) {
 			md->hdr = hdr; /* fill it with fake header ??? */
 		}
 		if (!out_struct(&hdr, &isakmp_hdr_desc,
@@ -5963,28 +5791,6 @@ static int build_ikev2_version(void)
 			<< ISA_MAJ_SHIFT) |
 	       (IKEv2_MINOR_VERSION + (DBGP(IMPAIR_MINOR_VERSION_BUMP) ? 1 : 0));
 }
-
-#ifdef XAUTH_HAVE_PAM
-void ikev2_free_auth_pam(so_serial_t st_serialno)
-{
-	struct ikev2_pam_helper **pp;
-	struct ikev2_pam_helper *p;
-
-	/* search for finished pam threads */
-	for (pp = &pluto_v2_pam_helpers; (p = *pp) != NULL; pp = &p->next) {
-		if (p->pam.st_serialno == st_serialno) {
-			DBG(DBG_CONTROL,
-				DBG_log("Deleting IKEv2 PAM helper thread for #%lu, %s[%lu] status %s '%s'",
-					p->pam.st_serialno, p->pam.c_name,
-					p->pam.c_instance_serial,
-					p->pam_status ? "SUCCESS" : "FAIL",
-					p->pam.name));
-			free_pam_thread_entry(pp);
-			return;
-		}
-	}
-}
-#endif
 
 void ikev2_add_ipsec_child(int whack_sock, struct state *isakmp_sa,
                        struct connection *c, lset_t policy,

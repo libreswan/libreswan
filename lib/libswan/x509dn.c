@@ -359,6 +359,7 @@ int dntoa(char *dst, size_t dstlen, chunk_t dn)
 
 	if (ugh != NULL) {	/* error, print DN as hex string */
 		libreswan_log("error in DN parsing: %s", ugh);
+		DBG_dump_chunk("Bad DN:",dn);
 		str.ptr = (unsigned char *)dst;
 		str.len = dstlen;
 		hex_str(dn, &str);

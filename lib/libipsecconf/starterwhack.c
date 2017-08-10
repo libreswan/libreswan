@@ -531,6 +531,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	if (conn->right.addrtype == KH_IPHOSTNAME)
 		msg.dnshostname = conn->right.strings[KSCF_IP];
 
+	msg.nic_offload = conn->options[KBF_NIC_OFFLOAD];
 	msg.sa_ike_life_seconds = deltatime(conn->options[KBF_IKELIFETIME]);
 	msg.sa_ipsec_life_seconds = deltatime(conn->options[KBF_SALIFETIME]);
 	msg.sa_rekey_margin = deltatime(conn->options[KBF_REKEYMARGIN]);

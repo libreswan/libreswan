@@ -497,8 +497,8 @@ install-kvm-domain-$(KVM_BASE_DOMAIN): $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
 kvm-upgrade-base-domain:
 	$(if $(KVM_PACKAGES), $(KVMSH) --shutdown $(KVM_BASE_DOMAIN) \
 		$(KVM_PACKAGE_INSTALL) $(KVM_PACKAGES))
-	$(if $(KVM_INSTALLE_RPM_LIST), $(KVMSH) --shutdown $(KVM_BASE_DOMAIN)\
-		$(KVM_INSTALLE_RPM_LIST))
+	$(if $(KVM_INSTALL_RPM_LIST), $(KVMSH) --shutdown $(KVM_BASE_DOMAIN)\
+		$(KVM_INSTALL_RPM_LIST))
 	$(if $(KVM_DEBUGINFO), $(KVMSH) --shutdown $(KVM_BASE_DOMAIN) \
 		$(KVM_DEBUGINFO_INSTALL) $(KVM_DEBUGINFO))
 
@@ -530,7 +530,7 @@ $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | 
 		--import \
 		--noautoconsole \
 		--noreboot
-	: Fixing up eth0, must be a better way ...in F25 This works after a reboot.
+	: Fixing up eth0, must be a better way ...in F26 This works after a reboot.
 	$(KVMSH) --shutdown $(KVM_CLONE_DOMAIN) \
 		sed -i -e '"s/HWADDR=.*/HWADDR=\"$$(cat /sys/class/net/e[n-t][h-s]?/address)\"/"' \
 			/etc/sysconfig/network-scripts/ifcfg-eth0 \; \
@@ -583,7 +583,7 @@ define install-kvm-test-domain
 		< 'testing/libvirt/vm/$(2)' \
 		> '$$@.tmp'
 	$(VIRSH) define $$@.tmp
-	$(KVM_F25_HACK)
+	$(KVM_F26_HACK)
 	mv $$@.tmp $$@
 endef
 

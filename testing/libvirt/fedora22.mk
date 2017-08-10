@@ -1,9 +1,13 @@
-KVM_ISO_URL = http://fedora.bhs.mirrors.ovh.net/linux/releases/22/Server/x86_64/iso/Fedora-Server-DVD-x86_64-22.iso
+# The domain download.fedoraproject.org can redirect to a mirror, such
+# as fedora.bhs.mirrors.ovh.net as of 2017-08-09, that doesn't carry
+# F22.
+KVM_ISO_URL = https://muug.ca/mirror/fedora/linux/releases/22/Server/x86_64/iso/Fedora-Server-DVD-x86_64-22.iso
+
 KVM_KICKSTART_FILE = testing/libvirt/fedora22.ks
 
 KVM_PACKAGE_INSTALL = dnf install -y
 KVM_DEBUGINFO_INSTALL = dnf  debuginfo-install -y
-KVM_INSTALLE_RPM_LIST = rpm -aq > /var/tmp/rpm-qa-fedora-updates.log
+KVM_INSTALL_RPM_LIST = 'rpm -aq > /var/tmp/rpm-qa-fedora-updates.log'
 
 KVM_PACKAGES = \
     ElectricFence \

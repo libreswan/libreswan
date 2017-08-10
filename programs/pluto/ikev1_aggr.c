@@ -661,7 +661,7 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 
 	st->st_policy |= POLICY_AGGRESSIVE;	/* ??? surely this should be done elsewhere */
 
-	if (!ikev1_decode_peer_id(md, FALSE, TRUE)) {
+	if (!ikev1_decode_peer_id(md, TRUE, TRUE)) {
 		char buf[IDTOA_BUF];
 		ipstr_buf b;
 

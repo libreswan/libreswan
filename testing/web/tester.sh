@@ -92,6 +92,23 @@ while true ; do
     ( cd ${repodir} && git fetch || true )
     ( cd ${repodir} && git merge --ff-only )
 
+    # if results with output-missing start to show up, that is a good
+    # sign that the VMs have become corrupted and need a rebuild.
+    status "checking KVMs"
+    if grep '"output-missing"' "${summarydir}"/*-g*/results.json > /dev/null ; then
+	status "corrupt domains detected, deleting old"
+	( cd ${repodir} && make kvm-purge )
+	status "corrupt domains detected, upgrading the base domain"
+	( cd ${repodir} && make kvm-upgrade-base-domain )
+	status "corrupt domains detected, deleting bogus results"
+	grep '"output-missing"' "${summarydir}"/*-g*/results.json \
+	    | sed -e 's;/results.json.*;;' \
+	    | sort -u \
+	    | xargs --max-args=1 --verbose --no-run-if-empty rm -rf
+	status "corrupt domains detected, building fresh domains"
+	( cd ${repodir} && make kvm-install-test-domains )
+    fi
+
     # update the summary, if necessary add more commits using
     # ${repodir}
     status "updating summary"

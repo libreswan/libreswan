@@ -486,7 +486,7 @@ int main(int argc, char *argv[])
 	arpr.arp_pa.sa_family = AF_INET;
 	memcpy(arpr.arp_pa.sa_data, (u8 *)&options.gw, 4);
 	strcpy(arpr.arp_dev, options.send_if);
-	if (ioctl (send_s, SIOCGARP, &arpr) < 0) {
+	if (ioctl(send_s, SIOCGARP, &arpr) < 0) {
 		perror("ioctl(SIOCGARP)");
 		exit(1);
 	}

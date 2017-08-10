@@ -40,6 +40,12 @@ extern unsigned int pluto_max_halfopen; /* Max allowed half-open IKE SA's before
 extern unsigned int pluto_ddos_threshold; /* Max incoming IKE before activating DCOOKIES */
 extern deltatime_t pluto_shunt_lifetime; /* lifetime before we cleanup bare shunts (for OE) */
 
+/* device_nic_offload: NIC offload capability of an interface */
+enum iface_nic_offload {
+	IFNO_UNSUPPORTED,
+	IFNO_SUPPORTED,
+};
+
 /* interface: a terminal point for IKE traffic, IPsec transport mode
  * and IPsec tunnels.
  * Essentially:
@@ -57,6 +63,7 @@ struct iface_dev {
 	int id_count;
 	char *id_vname; /* virtual (ipsec) device name */
 	char *id_rname; /* real device name */
+	enum iface_nic_offload id_nic_offload;
 };
 
 struct iface_port {
@@ -72,6 +79,7 @@ struct iface_port {
 
 extern struct iface_port  *interfaces;   /* public interfaces */
 extern enum pluto_ddos_mode ddos_mode;
+extern bool pluto_drop_oppo_null;
 
 extern bool use_interface(const char *rifn);
 extern void find_ifaces(void);

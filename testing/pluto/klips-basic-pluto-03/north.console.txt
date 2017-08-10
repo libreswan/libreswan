@@ -123,7 +123,7 @@ north #
 000 "northnet-eastnet-nonat":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "northnet-eastnet-nonat":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "northnet-eastnet-nonat":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "northnet-eastnet-nonat":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "northnet-eastnet-nonat":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "northnet-eastnet-nonat":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000  
 000 Total IPsec connections: loaded 1, active 0

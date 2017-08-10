@@ -27,8 +27,8 @@ west #
 000 "nss-cert":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "nss-cert":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "nss-cert":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "nss-cert":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
-000 "nss-cert":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=signedbyother.testing.libreswan.org, E=user-signedbyother@testing.libreswan.org; their idtype: (null); their id:%fromcert
+000 "nss-cert":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+000 "nss-cert":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=signedbyother.testing.libreswan.org, E=user-signedbyother@testing.libreswan.org; their idtype: %fromcert; their id:%fromcert
 000 "nss-cert":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "nss-cert":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 west #
@@ -42,7 +42,7 @@ west #
 002 "nss-cert" #1: I am sending my cert
 002 "nss-cert" #1: I am sending a certificate request
 108 "nss-cert" #1: STATE_MAIN_I3: sent MI3, expecting MR3
-003 "nss-cert" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
+003 "nss-cert" #1: ignoring informational payload INVALID_ID_INFORMATION, msgid=00000000, length=12
 003 "nss-cert" #1: received and ignored informational message
 002 "nss-cert" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set
 031 "nss-cert" #1: max number of retransmissions (0) reached STATE_MAIN_I3.  Possible authentication failure: no acceptable response to our first encrypted message

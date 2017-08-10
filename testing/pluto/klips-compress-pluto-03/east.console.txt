@@ -105,7 +105,7 @@ east #
 000 "westnet-eastnet-esp-3des-alg":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet-esp-3des-alg":   policy: RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-esp-3des-alg":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "westnet-eastnet-esp-3des-alg":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "westnet-eastnet-esp-3des-alg":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-esp-3des-alg":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-esp-3des-alg":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "westnet-eastnet-esp-3des-alg":   ESP algorithms wanted: 3DES(3)_000-SHA1(2)

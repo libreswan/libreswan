@@ -137,7 +137,7 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 
 	int skd_bytes = prf->prf_key_size;
 	int skp_bytes = prf->prf_key_size;
-	int integ_size = skq->integ ? skq->integ->integ_key_size : 0;
+	int integ_size = skq->integ ? skq->integ->integ_keymat_size : 0;
 	size_t total_keysize = skd_bytes + 2*skp_bytes + 2*key_size + 2*salt_size + 2*integ_size;
 	PK11SymKey *finalkey = ikev2_ike_sa_keymat(skq->prf, skeyseed_k,
 						   ni, nr, spii, spir,

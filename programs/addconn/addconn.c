@@ -823,7 +823,7 @@ int main(int argc, char *argv[])
 	}
 
 #ifdef HAVE_SECCOMP
-	switch(cfg->setup.options[KBF_SECCOMP]) {
+	switch (cfg->setup.options[KBF_SECCOMP]) {
 		case SECCOMP_ENABLED:
 		init_seccomp_addconn(SCMP_ACT_KILL);
 		break;

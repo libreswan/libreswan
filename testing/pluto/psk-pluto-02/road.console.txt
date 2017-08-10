@@ -23,7 +23,7 @@ road #
 000 "road-eastnet-psk":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "road-eastnet-psk":   policy: PSK+ENCRYPT+TUNNEL+PFS+AGGRESSIVE+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "road-eastnet-psk":   conn_prio: 32,24; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "road-eastnet-psk":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "road-eastnet-psk":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "road-eastnet-psk":   our idtype: ID_FQDN; our id=@roadrandom; their idtype: ID_FQDN; their id:@east
 000 "road-eastnet-psk":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "road-eastnet-psk":   newest ISAKMP SA: #0; newest IPsec SA: #0;

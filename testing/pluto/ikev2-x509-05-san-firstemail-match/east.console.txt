@@ -18,6 +18,7 @@ east #
 east #
  grep "ID type" /tmp/pluto.log
 |    ID type: ID_USER_FQDN (0x3)
+|    ID type: ID_USER_FQDN (0x3)
 east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

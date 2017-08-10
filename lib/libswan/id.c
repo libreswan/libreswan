@@ -248,6 +248,9 @@ int idtoa(const struct id *id, char *dst, size_t dstlen)
 		n = keyidtoa(dst, dstlen, id->name);
 		n += 2;
 		break;
+	case ID_IMPOSSIBLE:
+		n = snprintf(dst, dstlen, "ID_IMPOSSIBLE: %d", id->kind);
+		break;
 	default:
 		n = snprintf(dst, dstlen, "unknown id kind %d", id->kind);
 		break;

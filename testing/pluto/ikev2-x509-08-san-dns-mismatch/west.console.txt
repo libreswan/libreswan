@@ -28,8 +28,8 @@ west #
 002 "san" #2: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 003 "san" #2: No matching subjectAltName found
 003 "san" #2: certificate does not contain subjectAltName=NOTeast.testing.libreswan.org
-002 "san" #2: Peer public key is not available for this exchange
-002 "san" #2: ikev2_decode_cert(md) failed in ikev2_decode_peer_id_and_certs()
+002 "san" #2: Peer public key SubjectAltName does not match peer ID for this connection
+002 "san" #2: X509: CERT payload does not match connection ID
 224 "san" #2: STATE_PARENT_I2: v2N_AUTHENTICATION_FAILED
 west #
  echo "done"

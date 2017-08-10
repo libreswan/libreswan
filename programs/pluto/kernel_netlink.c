@@ -38,15 +38,19 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <stdint.h>
 #include <linux/pfkeyv2.h>
+#include <linux/ethtool.h>
+#include <linux/sockios.h>
 #include <unistd.h>
 
 #include "kameipsec.h"
-#include <rtnetlink.h>
-#include <xfrm.h>
+#include <linux/rtnetlink.h>
 
-#include <libreswan.h>
+#include "libreswan.h" /* before xfrm.h otherwise break on F22 */
+#include "linux/xfrm.h" /* local (if configured) or system copy */
+
 #include <libreswan/pfkeyv2.h>
 #include <libreswan/pfkey.h>
 
@@ -80,6 +84,9 @@
 /* Minimum priority number in SPD used by pluto. */
 #define MIN_SPD_PRIORITY 1024
 
+#define NIC_OFFLOAD_UNKNOWN -2
+#define NIC_OFFLOAD_UNSUPPORTED -1
+
 struct aead_alg {
 	int id;
 	int icvlen;
@@ -88,6 +95,7 @@ struct aead_alg {
 
 static int netlinkfd = NULL_FD;
 static int netlink_bcast_fd = NULL_FD;
+static int netlink_esp_hw_offload = NIC_OFFLOAD_UNKNOWN;
 
 #define NE(x) { x, #x }	/* Name Entry -- shorthand for sparse_names */
 
@@ -317,24 +325,24 @@ static void init_netlink(void)
 	netlinkfd = safe_socket(AF_NETLINK, SOCK_DGRAM, NETLINK_XFRM);
 
 	if (netlinkfd < 0)
-		exit_log_errno((e, "socket() in init_netlink()"));
+		EXIT_LOG_ERRNO(errno, "socket() in init_netlink()");
 
 	if (fcntl(netlinkfd, F_SETFD, FD_CLOEXEC) != 0)
-		exit_log_errno((e, "fcntl(FD_CLOEXEC) in init_netlink()"));
+		EXIT_LOG_ERRNO(errno, "fcntl(FD_CLOEXEC) in init_netlink()");
 
 	netlink_bcast_fd = safe_socket(AF_NETLINK, SOCK_DGRAM, NETLINK_XFRM);
 
 	if (netlink_bcast_fd < 0)
-		exit_log_errno((e, "socket() for bcast in init_netlink()"));
+		EXIT_LOG_ERRNO(errno, "socket() for bcast in init_netlink()");
 
 	if (fcntl(netlink_bcast_fd, F_SETFD, FD_CLOEXEC) != 0)
-		exit_log_errno((e,
-				"fcntl(FD_CLOEXEC) for bcast in init_netlink()"));
+		EXIT_LOG_ERRNO(errno,
+			       "fcntl(FD_CLOEXEC) for bcast in init_netlink()");
 
 
 	if (fcntl(netlink_bcast_fd, F_SETFL, O_NONBLOCK) != 0)
-		exit_log_errno((e,
-				"fcntl(O_NONBLOCK) for bcast in init_netlink()"));
+		EXIT_LOG_ERRNO(errno,
+			       "fcntl(O_NONBLOCK) for bcast in init_netlink()");
 
 
 	addr.nl_family = AF_NETLINK;
@@ -342,7 +350,7 @@ static void init_netlink(void)
 	addr.nl_groups = XFRMGRP_ACQUIRE | XFRMGRP_EXPIRE;
 	if (bind(netlink_bcast_fd, (struct sockaddr *)&addr, sizeof(addr)) !=
 		0)
-		exit_log_errno((e, "Failed to bind bcast socket in init_netlink() - Perhaps kernel was not compiled with CONFIG_XFRM"));
+		EXIT_LOG_ERRNO(errno, "Failed to bind bcast socket in init_netlink() - Perhaps kernel was not compiled with CONFIG_XFRM");
 
 
 	/*
@@ -409,10 +417,10 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 		r = write(netlinkfd, hdr, len);
 	} while (r < 0 && errno == EINTR);
 	if (r < 0) {
-		log_errno((e, "netlink write() of %s message for %s %s failed",
-				sparse_val_show(xfrm_type_names,
-						hdr->nlmsg_type),
-				description, text_said));
+		LOG_ERRNO(errno, "netlink write() of %s message for %s %s failed",
+			  sparse_val_show(xfrm_type_names,
+					  hdr->nlmsg_type),
+			  description, text_said);
 		return FALSE;
 	} else if ((size_t)r != len) {
 		loglog(RC_LOG_SERIOUS,
@@ -431,10 +439,11 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 			if (errno == EINTR)
 				continue;
 			netlink_errno = errno;
-			log_errno((e, "netlink recvfrom() of response to our %s message for %s %s failed",
-					sparse_val_show(xfrm_type_names,
+			LOG_ERRNO(errno,
+				  "netlink recvfrom() of response to our %s message for %s %s failed",
+				  sparse_val_show(xfrm_type_names,
 							hdr->nlmsg_type),
-					description, text_said));
+				  description, text_said);
 			return FALSE;
 		} else if ((size_t) r < sizeof(rsp.n)) {
 			libreswan_log(
@@ -470,7 +479,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 	}
 	netlink_errno = -rsp.u.e.error;
 	if (rsp.n.nlmsg_type != expected_resp_type && rsp.n.nlmsg_type == NLMSG_ERROR) {
-		if (rsp.u.e.error != 0 && expected_resp_type != NLMSG_NOOP) {
+		if (rsp.u.e.error != 0) {
 			loglog(RC_LOG_SERIOUS,
 				"ERROR: netlink response for %s %s included errno %d: %s",
 				description, text_said, -rsp.u.e.error,
@@ -889,6 +898,97 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	return ok;
 }
 
+static void netlink_find_offload_feature(const char *ifname)
+{
+	struct ethtool_sset_info *sset_info = NULL;
+	struct ethtool_gstrings *cmd = NULL;
+	struct ifreq ifr;
+	uint32_t sset_len, i;
+	char *str;
+	int err;
+
+	netlink_esp_hw_offload = NIC_OFFLOAD_UNSUPPORTED;
+
+	/* Determine number of device-features */
+	sset_info = alloc_bytes(sizeof(*sset_info) + sizeof(sset_info->data[0]), "ethtool_sset_info");
+	sset_info->cmd = ETHTOOL_GSSET_INFO;
+	sset_info->sset_mask = 1ULL << ETH_SS_FEATURES;
+	jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
+	ifr.ifr_data = (void *)sset_info;
+	err = ioctl(netlinkfd, SIOCETHTOOL, &ifr);
+	if (err != 0)
+		goto out;
+
+	if (sset_info->sset_mask != 1ULL << ETH_SS_FEATURES)
+		goto out;
+	sset_len = sset_info->data[0];
+
+	/* Retrieve names of device-features */
+	cmd = alloc_bytes(sizeof(*cmd) + ETH_GSTRING_LEN * sset_len, "ethtool_gstrings");
+	cmd->cmd = ETHTOOL_GSTRINGS;
+	cmd->string_set = ETH_SS_FEATURES;
+	jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
+	ifr.ifr_data = (void *)cmd;
+	err = ioctl(netlinkfd, SIOCETHTOOL, &ifr);
+	if (err)
+		goto out;
+
+	/* Look for the ESP_HW feature bit */
+	str = (char *)cmd->data;
+	for (i = 0; i < cmd->len; i++) {
+		if (strneq(str, "esp-hw-offload", ETH_GSTRING_LEN) == 0)
+			break;
+		str += ETH_GSTRING_LEN;
+	}
+	if (i >= cmd->len)
+		goto out;
+
+	netlink_esp_hw_offload = i;
+
+out:
+	if (sset_info != NULL)
+		pfree(sset_info);
+
+	if (cmd != NULL)
+		pfree(cmd);
+}
+
+static enum iface_nic_offload netlink_detect_offload(const char *ifname)
+{
+	enum iface_nic_offload ret = IFNO_UNSUPPORTED;
+	struct ethtool_gfeatures *cmd;
+	uint32_t feature_bit;
+	struct ifreq ifr;
+	int blocks;
+
+	/*
+	 * Kernel requires a real interface in order to query the kernel-wide
+	 * capability, so we do it here on first invocation
+	 */
+	if (netlink_esp_hw_offload == NIC_OFFLOAD_UNKNOWN)
+		netlink_find_offload_feature(ifname);
+
+	if (netlink_esp_hw_offload == NIC_OFFLOAD_UNSUPPORTED)
+		return ret;
+
+	/* Feature is supported by kernel. Query device features */
+	blocks = (netlink_esp_hw_offload + 31) / 32;
+	feature_bit = 1 << (netlink_esp_hw_offload % 31);
+
+	cmd = alloc_bytes(sizeof(*cmd) + sizeof(cmd->features[0]) * blocks, "ethtool_gfeatures");
+	jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
+	ifr.ifr_data = (void *)cmd;
+	cmd->cmd = ETHTOOL_GFEATURES;
+	cmd->size = blocks;
+	if ((ioctl(netlinkfd, SIOCETHTOOL, &ifr) == 0) &&
+		(cmd->features[blocks-1].active & feature_bit))
+		ret = IFNO_SUPPORTED;
+
+	pfree(cmd);
+
+	return ret;
+}
+
 /*
  * netlink_add_sa - Add an SA into the kernel SPDB via netlink
  *
@@ -1256,6 +1356,22 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
 
+	if (sa->nic_offload_dev) {
+		struct xfrm_user_offload xuo = { 0, 0 };
+
+		xuo.flags |= sa->inbound ? XFRM_OFFLOAD_INBOUND : 0;
+		if (sa->src->u.v4.sin_family == AF_INET6)
+			xuo.flags |= XFRM_OFFLOAD_IPV6;
+		xuo.ifindex = if_nametoindex(sa->nic_offload_dev);
+
+		attr->rta_type = XFRMA_OFFLOAD_DEV;
+		attr->rta_len = RTA_LENGTH(sizeof(xuo));
+
+		memcpy(RTA_DATA(attr), &xuo, sizeof(xuo));
+
+		req.n.nlmsg_len += attr->rta_len;
+		attr = (struct rtattr *)((char *)attr + attr->rta_len);
+	}
 
 #ifdef HAVE_LABELED_IPSEC
 	if (sa->sec_ctx != NULL) {
@@ -1637,8 +1753,9 @@ static bool netlink_get(void)
 		if (errno == EAGAIN)
 			return FALSE;
 
-		if (errno != EINTR)
-			log_errno((e, "recvfrom() failed in netlink_get"));
+		if (errno != EINTR) {
+			LOG_ERRNO(errno, "recvfrom() failed in netlink_get");
+		}
 		return TRUE;
 	} else if ((size_t)r < sizeof(rsp.n)) {
 		libreswan_log(
@@ -2162,6 +2279,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 				id->id_vname = clone_str(v->name,
 							"virtual device name netlink");
 				id->id_count++;
+				id->id_nic_offload = netlink_detect_offload(ifp->name);
 
 				q->ip_addr = ifp->addr;
 				q->fd = fd;

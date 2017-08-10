@@ -28,10 +28,10 @@ struct kernel_alg_info {
 	 * ESP.
 	 *
 	 * Because struct encrypt_desc still specifies multiple key
-	 * lengths, ENCKEYLEN is still required.
+	 * lengths, ENCKEYSIZE is still required.
 	 */
 	u_int8_t transid;       /* enum ipsec_cipher_algo: ESP transform (AES, 3DES, etc.)*/
-	u_int32_t enckeylen;    /* keylength for ESP transform (bytes) */
+	size_t enckeysize;      /* keylength for ESP transform (bytes) */
 	/*
 	 * The authentication algorithm; if required by ESP/AH.
 	 */
@@ -62,8 +62,6 @@ extern int kernel_alg_esp_ivlen(int alg_id);
 /* returns success (NULL) if encrypt alg is present in kernel */
 extern err_t check_kernel_encrypt_alg(int alg_id, unsigned int key_len);
 
-extern bool kernel_alg_esp_ok_final(int ealg, unsigned int key_len, int aalg,
-				    struct alg_info_esp *alg_info);
 /* returns encrypt keylen in BYTES for esp enc alg passed */
 extern int kernel_alg_esp_enc_max_keylen(int alg_id);
 

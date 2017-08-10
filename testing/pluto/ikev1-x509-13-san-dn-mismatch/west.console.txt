@@ -27,9 +27,11 @@ west #
 108 "san" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "san" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 002 "san" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
-003 "san" #1: no RSA public key known for 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=NOTeast.testing.libreswan.org, E=user-NOTeast@testing.libreswan.org'
-217 "san" #1: STATE_MAIN_I3: INVALID_KEY_INFORMATION
-002 "san" #1: sending encrypted notification INVALID_KEY_INFORMATION to 192.1.2.23:500
+003 "san" #1: ID_DER_ASN1_DN 'E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA' does not match expected 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=NOTeast.testing.libreswan.org, E=user-NOTeast@testing.libreswan.org'
+002 "san" #1: Peer public key SubjectAltName does not match peer ID for this connection
+002 "san" #1: X509: CERT payload does not match connection ID
+218 "san" #1: STATE_MAIN_I3: INVALID_ID_INFORMATION
+002 "san" #1: sending encrypted notification INVALID_ID_INFORMATION to 192.1.2.23:500
 002 "san" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set
 031 "san" #1: max number of retransmissions (0) reached STATE_MAIN_I3.  Possible authentication failure: no acceptable response to our first encrypted message
 002 "san" #1: deleting state (STATE_MAIN_I3)

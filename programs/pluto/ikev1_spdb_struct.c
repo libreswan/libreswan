@@ -840,12 +840,12 @@ static bool ike_alg_ok_final(int ealg, unsigned key_len,
 	if (ealg_insecure || alg_info_ike != NULL) {
 		if (alg_info_ike != NULL) {
 			FOR_EACH_IKE_INFO(alg_info_ike, ike_info) {
-				if (ike_info->ike_encrypt->common.ikev1_oakley_id == ealg &&
-				    (ike_info->ike_eklen == 0 ||
+				if (ike_info->encrypt->common.ikev1_oakley_id == ealg &&
+				    (ike_info->enckeylen == 0 ||
 				     key_len == 0 ||
-				     ike_info->ike_eklen == key_len) &&
-				    ike_info->ike_prf == prf &&
-				    ike_info->ike_dh_group->group == group) {
+				     ike_info->enckeylen == key_len) &&
+				    ike_info->prf == prf &&
+				    ike_info->dh->group == group) {
 					if (ealg_insecure) {
 						loglog(RC_LOG_SERIOUS,
 						       "You should NOT use insecure/broken IKE algorithms (%s)!",
@@ -1134,8 +1134,13 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 								  val));
 					break;
 				}
-				ta.encrypter = encrypter;
+				/*
+				 * XXX: Always assign both .encrypt
+				 * and .encrypter - it makes auditing
+				 * easier.
+				 */
 				ta.encrypt = val;
+				ta.encrypter = encrypter;
 				ta.enckeylen = ta.encrypter->keydeflen;
 				break;
 			}
@@ -1285,7 +1290,7 @@ rsasig_common:
 			break;
 
 			case OAKLEY_GROUP_DESCRIPTION | ISAKMP_ATTR_AF_TV:
-				ta.group = lookup_group(val);
+				ta.group = ikev1_get_ike_dh_desc(val);
 				if (ta.group == NULL) {
 					ugh = builddiag(
 						"OAKLEY_GROUP %d not supported",
@@ -1617,6 +1622,10 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 		    grp->val));
 
 	passert(enc->type.oakley == OAKLEY_ENCRYPTION_ALGORITHM);
+	/*
+	 * XXX: Always assign both .encrypt and .encrypter - it makes
+	 * auditing easier.
+	 */
 	ta.encrypt = enc->val;         /* OAKLEY_ENCRYPTION_ALGORITHM */
 	ta.encrypter = ikev1_get_ike_encrypt_desc(ta.encrypt);
 	passert(ta.encrypter != NULL);
@@ -1637,7 +1646,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	ta.auth   = auth->val;         /* OAKLEY_AUTHENTICATION_METHOD */
 
 	passert(grp->type.oakley == OAKLEY_GROUP_DESCRIPTION);
-	ta.group = lookup_group(grp->val); /* OAKLEY_GROUP_DESCRIPTION */
+	ta.group = ikev1_get_ike_dh_desc(grp->val); /* OAKLEY_GROUP_DESCRIPTION */
 	passert(ta.group != NULL);
 
 	st->st_oakley = ta;
@@ -1730,7 +1739,12 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	}
 
 	*attrs = null_ipsec_trans_attrs;
+	/*
+	 * XXX: Always assign both .encrypt and .encrypter - it makes
+	 * auditing easier.
+	 */
 	attrs->transattrs.encrypt = trans->isat_transid;
+	attrs->transattrs.encrypter = ikev1_get_kernel_encrypt_desc(trans->isat_transid);
 
 	while (pbs_left(trans_pbs) >= isakmp_ipsec_attribute_desc.size) {
 		struct isakmp_attribute a;
@@ -1871,7 +1885,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				loglog(RC_COMMENT,
 				       "IPCA (IPcomp SA) contains GROUP_DESCRIPTION.  Ignoring inappropriate attribute.");
 			}
-			pfs_group = lookup_group(val);
+			pfs_group = ikev1_get_ike_dh_desc(val);
 			if (pfs_group == NULL) {
 				loglog(RC_LOG_SERIOUS,
 				       "OAKLEY_GROUP %" PRIu32 " not supported for PFS",
@@ -1926,7 +1940,12 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			break;
 
 		case AUTH_ALGORITHM | ISAKMP_ATTR_AF_TV:
+			/*
+			 * XXX: Always assign both .integ_hash and
+			 * .integ - it makes auditing easier.
+			 */
 			attrs->transattrs.integ_hash = val;
+			attrs->transattrs.integ = ikev1_get_kernel_integ_desc(val);
 			break;
 
 		case KEY_LENGTH | ISAKMP_ATTR_AF_TV:

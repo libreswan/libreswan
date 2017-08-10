@@ -22,18 +22,20 @@
  * A range which is a valid subnet will have a network part which is the
  * same in the from value and the to value, followed by a host part which
  * is all 0 in the from value and all 1 in the to value.
+ *
+ * ??? this really should use ip_range rather than a pair of ip_address values
  */
 err_t rangetosubnet(from, to, dst)
-const ip_address * from;
+const ip_address *from;
 const ip_address *to;
 ip_subnet *dst;
 {
-	unsigned char *fp;
-	unsigned char *tp;
+	const unsigned char *fp;
+	const unsigned char *tp;
 	unsigned fb;
 	unsigned tb;
-	unsigned char *f;
-	unsigned char *t;
+	const unsigned char *f;
+	const unsigned char *t;
 	size_t n;
 	size_t n2;
 	int i;
@@ -43,11 +45,11 @@ ip_subnet *dst;
 	if (addrtypeof(from) != addrtypeof(to))
 		return "mismatched address types";
 
-	n = addrbytesptr(from, &fp);
+	n = addrbytesptr_read(from, &fp);
 	if (n == 0)
 		return "unknown address type";
 
-	n2 = addrbytesptr(to, &tp);
+	n2 = addrbytesptr_read(to, &tp);
 	if (n != n2)
 		return "internal size mismatch in rangetosubnet";
 

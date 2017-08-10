@@ -7,16 +7,10 @@ Usage:
 
     $0 <summarydir> [ <repodir> ]
 
-Print an untested commit hash on stdout.  The commit is selected by
-looking for the first:
+Print an untested commit hash on stdout.  If HEAD is already tested,
+then commit to test is selected according to git-interesting.sh.
 
-   - HEAD
-
-   - an untested merge point
-
-   - an untested branch point
-
-   - longest untested run of commits (split)
+In the case of runs of untested commits, the longest is split.
 
 EOF
   exit 1
@@ -86,9 +80,23 @@ while read hashes ; do
 	# of all the tests is skipped: ${tested} || break
     fi
 
-    # Skip uninteresting commits
+    # Find out if the commit is interesting; and why.
 
     interesting=$(${webdir}/git-interesting.sh ${hash})
+
+    # List all the tested commits.
+    #
+    # Among other things, this output can be used to select a random
+    # set of results to delete.  For instance, by selecting a random
+    # subset of the less interesting results (interesting results have
+    # a colon).  See README.txt.
+
+    if ${tested}; then
+	echo tested: ${hash} ${interesting} 1>&2
+    fi
+
+    # Skip uninteresting commits; don't include them in untested runs.
+
     if test -z "${interesting}" ; then
 	continue
     fi
@@ -120,16 +128,8 @@ while read hashes ; do
     esac
 
     # already tested? stop the current run and start again
-    #
-    # This output can be used to select a random set of results to
-    # delete.  For instance, by selecting a random subset of the less
-    # interesting results (interesting results have a colon):
-    #
-    #    gime-work.sh 2>&1 | sed -n -e '/^tested:[^:]*$/p' | shuf | head
-    #
 
     if ${tested}; then
-	echo tested: ${hash} ${interesting} 1>&2
 	run=""
 	continue
     fi

@@ -150,6 +150,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 		POLICY_IKE_FRAG_ALLOW |      /* ike_frag=yes */
 		POLICY_ESN_NO;      /* esn=no */
 
+	cfg->conn_default.options[KBF_NIC_OFFLOAD] = nic_offload_auto;
 	cfg->conn_default.options[KBF_IKELIFETIME] = IKE_SA_LIFETIME_DEFAULT;
 
 	cfg->conn_default.options[KBF_REPLAY_WINDOW] = IPSEC_SA_DEFAULT_REPLAY_WINDOW;
@@ -240,50 +241,58 @@ static void free_list(char **list)
 {
 	char **s;
 
-	for (s = list ; *s; s++)
+	for (s = list ; *s != NULL; s++)
 		pfreeany(*s);
 	pfree(list);
 }
 
 /**
- * Create a new list (array) of pointers to strings, NULL-terminated
+ * Create a NULL-terminated array of tokens from a string of whitespace-separated tokens.
  *
- * @param value string to be broken up at spaces, creating strings for list
- * @return new_list (pointer to NULL-terminated array of pointers to strings)
+ * @param value string to be broken up at blanks, creating strings for list
+ * @param n where to place element count (excluding terminating NULL)
+ * @return tokens_from_string (NULL or pointer to NULL-terminated array of pointers to strings)
  */
-static char **new_list(const char *value)
+static char **tokens_from_string(const char *value, int *n)
 {
-	char *val, *b, *e, *end, **nlist;
-	int count;
+	*n = 0;	/* in case of early exit */
 
 	if (value == NULL)
 		return NULL;
 
 	/* avoid damaging original string */
-	val = clone_str(value, "new_list value");
+	char *const val = clone_str(value, "tokens_from_string value");
 	if (val == NULL)
 		return NULL;	/* cannot happen -- silence a coverity warning */
-	end = val + strlen(val);
 
-	/* count number of items in string */
-	for (b = val, count = 0; b < end; ) {
-		for (e = b; *e != ' ' && *e != '\0'; e++)
+	char *const end = val + strlen(val);
+
+	/* count number of items in string and terminate each with NUL */
+	int count = 0;
+	for (char *b = val; b < end; ) {
+		char *e;
+		for (e = b; *e != '\0' && !isblank(*e); e++)
 			;
 		*e = '\0';
 		if (e != b)
 			count++;
 		b = e + 1;
 	}
+
+	*n = count;
+
 	if (count == 0) {
 		pfree(val);
 		return NULL;
 	}
 
-	nlist = (char **)alloc_bytes((count + 1) * sizeof(char *), "new_list nlist");
-	for (b = val, count = 0; b < end; ) {
-		e = b + strlen(b);
+	char **const nlist = (char **)alloc_bytes((count + 1) * sizeof(char *), "tokens_from_string nlist");
+
+	count = 0;
+	for (char *b = val; b < end; ) {
+		char *e = b + strlen(b);
 		if (e != b)
-			nlist[count++] = clone_str(b, "new_list item");
+			nlist[count++] = clone_str(b, "tokens_from_string item");
 		b = e + 1;
 	}
 	nlist[count] = NULL;
@@ -363,7 +372,7 @@ static bool load_setup(struct starter_config *cfg,
 				    kw->keyword.keydef->keyname);
 			break;
 		case kt_obsolete_quiet:
-			starter_log(LOG_LEVEL_DEBUG,
+			starter_log(LOG_LEVEL_ERR,
 				    "Warning: ignored obsolete keyword '%s'",
 				    kw->keyword.keydef->keyname);
 			break;
@@ -372,13 +381,6 @@ static bool load_setup(struct starter_config *cfg,
 			break;
 		}
 	}
-
-	/* now process some things with specific values */
-
-	/* interfaces has to be chopped up */
-	if (cfg->setup.interfaces != NULL)
-		FREE_LIST(cfg->setup.interfaces);
-	cfg->setup.interfaces = new_list(cfg->setup.strings[KSF_INTERFACES]);
 
 	return err;
 }
@@ -751,7 +753,7 @@ static bool translate_conn(struct starter_conn *conn,
 	bool err = FALSE;
 	const struct kw_list *kw;
 
-	for (kw = sl->kw; kw; kw = kw->next) {
+	for (kw = sl->kw; kw != NULL; kw = kw->next) {
 		ksf *the_strings = &conn->strings;
 		str_set *set_strings = &conn->strings_set;
 		knf *the_options = &conn->options;
@@ -937,7 +939,7 @@ static bool translate_conn(struct starter_conn *conn,
 			break;
 
 		case kt_obsolete_quiet:
-			starter_log(LOG_LEVEL_DEBUG,
+			starter_log(LOG_LEVEL_ERR,
 				    "Warning: obsolete keyword '%s' ignored",
 				    kw->keyword.keydef->keyname);
 			break;
@@ -987,132 +989,119 @@ static bool load_conn(
 		starter_log(LOG_LEVEL_INFO,
 			    "also= is not valid in section '%s'",
 			    sl->name);
-		/* ??? should we not set *perr? */
+		*perr = "unexpected ALSO=";
 		return TRUE;	/* error */
 	}
 
-	/* now, process the also's */
+	/*
+	 * Process the also list
+	 *
+	 * Note: conn->alsos will be NULL until we finish
+	 * and the appropriate list will be in local variable alsos.
+	 */
 	if (conn->alsos != NULL)
 		FREE_LIST(conn->alsos);
-	conn->alsos = new_list(conn->strings[KSCF_ALSO]);
 
-	if (alsoprocessing && conn->alsos != NULL) {
-		struct section_list *sl1;
-		/* note: for the duration of this loop body
-		 * conn->alsos is migrated to local variable alsos.
-		 */
-		char **alsos = conn->alsos;
-		int alsosize;
-		int alsoplace;
+	int alsosize;
+	char **alsos = tokens_from_string(conn->strings[KSCF_ALSO], &alsosize);
 
-		conn->alsos = NULL;
-
+	if (alsoprocessing && alsos != NULL) {
 		/* reset all of the "beenhere" flags */
-		for (sl1 = cfgp->sections.tqh_first; sl1 != NULL;
-		     sl1 = sl1->link.tqe_next)
-			sl1->beenhere = FALSE;
+		for (struct section_list *s = cfgp->sections.tqh_first; s != NULL;
+		     s = s->link.tqe_next)
+			s->beenhere = FALSE;
 		sl->beenhere = TRUE;
 
-		/* count them */
-		for (alsosize = 0; alsos[alsosize] != NULL; alsosize++)
-			;
+		for (int alsoplace = 0; alsoplace < alsosize; alsoplace++) {
+			/*
+			 * Check for too many alsos.
+			 * Inside the loop because of indirect alsos.
+			 */
+			if (alsosize >= ALSO_LIMIT) {
+				starter_log(LOG_LEVEL_INFO,
+					    "while loading conn '%s', too many also= used at section %s. Limit is %d",
+					    conn->name,
+					    alsos[alsosize],
+					    ALSO_LIMIT);
+				*perr = "too many alsos";
+				return TRUE;	/* error */
+			}
 
-		alsoplace = 0;
-		while (alsoplace < alsosize && alsos[alsoplace] != NULL &&
-		       alsoplace < ALSO_LIMIT) {
 			/*
 			 * for each also= listed, go find this section's keyword list, and
 			 * load it as well. This may extend the also= list (and the end),
 			 * which we handle by zeroing the also list, and adding to it after
 			 * checking for duplicates.
 			 */
-			for (sl1 = cfgp->sections.tqh_first;
-			     sl1 != NULL &&
-			     !streq(alsos[alsoplace], sl1->name);
-			     sl1 = sl1->link.tqe_next)
+			struct section_list *addin;
+
+			for (addin = cfgp->sections.tqh_first;
+			     addin != NULL &&
+			     !streq(alsos[alsoplace], addin->name);
+			     addin = addin->link.tqe_next)
 				;
+
+			if (addin == NULL) {
+				starter_log(LOG_LEVEL_ERR,
+					    "cannot find conn '%s' needed by conn '%s'",
+					    alsos[alsoplace], conn->name);
+				*perr = "missing also";
+				err = TRUE;
+				continue;	/* allowing further error detection */
+			}
+
+			if (addin->beenhere)
+				continue;	/* already handled */
 
 			starter_log(LOG_LEVEL_DEBUG,
 				    "\twhile loading conn '%s' also including '%s'",
 				    conn->name, alsos[alsoplace]);
 
-			/*
-			 * if we found something that matches by name,
-			 * and we haven't been there, then process it.
-			 */
-			if (sl1 != NULL && !sl1->beenhere) {
-				conn->strings_set[KSCF_ALSO] = FALSE;
-				pfreeany(conn->strings[KSCF_ALSO]);
-				conn->strings[KSCF_ALSO] = NULL;
-				sl1->beenhere = TRUE;
+			conn->strings_set[KSCF_ALSO] = FALSE;
+			pfreeany(conn->strings[KSCF_ALSO]);
+			conn->strings[KSCF_ALSO] = NULL;
+			addin->beenhere = TRUE;
 
-				/* translate things, but do not replace earlier settings! */
-				err |= translate_conn(conn, sl1, k_set, perr);
+			/* translate things, but do not replace earlier settings! */
+			err |= translate_conn(conn, addin, k_set, perr);
 
-				if (conn->strings[KSCF_ALSO] != NULL) {
-					/* now, check out the KSCF_ALSO, and extend list if we need to */
-					char **newalsos = new_list(
-						conn->strings[KSCF_ALSO]);
+			if (conn->strings[KSCF_ALSO] != NULL) {
+				/* add this guy's alsos too */
+				int newalsosize;
+				char **newalsos = tokens_from_string(
+					conn->strings[KSCF_ALSO], &newalsosize);
 
-					if (newalsos != NULL) {
-						char **ra;
-						int newalsoplace;
+				if (newalsos != NULL) {
+					/*
+					 * Append newalsos onto alsos.
+					 * Requires a re-allocation.
+					 * Copying is shallow: the lists
+					 * are copied and freed but
+					 * the underlaying strings are unchanged.
+					 */
+					char **ra = alloc_bytes((alsosize +
+						newalsosize + 1) *
+						sizeof(char *),
+						"conn->alsos");
+					memcpy(ra, alsos, alsosize * sizeof(char *));
+					pfree(alsos);
+					alsos = ra;
 
-						/* count them */
-						for (newalsoplace = 0;
-						     newalsos[newalsoplace] !=
-						     NULL;
-						     newalsoplace++)
-							;
+					memcpy(ra + alsosize, newalsos,
+						(newalsosize + 1) * sizeof(char *));
+					pfree(newalsos);
 
-						/* extend conn->alss */
-						ra = alloc_bytes((alsosize +
-							newalsoplace + 1) *
-							sizeof(char *),
-							"conn->alsos");
-						memcpy(ra, alsos, alsosize * sizeof(char *));
-						pfree(alsos);
-						alsos = ra;
-						for (newalsoplace = 0;
-						     newalsos[newalsoplace] !=
-						     NULL;
-						     newalsoplace++) {
-							assert(conn != NULL);
-							assert(conn->name !=
-								NULL);
-							starter_log(
-								LOG_LEVEL_DEBUG,
-								"\twhile processing section '%s' added also=%s",
-								sl1->name,
-								newalsos[newalsoplace]);
-
-							alsos[alsosize++] =
-								clone_str(newalsos[newalsoplace],
-									"alsos");
-						}
-						alsos[alsosize] = NULL;
-					}
-
-					FREE_LIST(newalsos);
+					alsosize += newalsosize;
 				}
 			}
-			alsoplace++;
-		}
-
-		/* migrate alsos back to conn->alsos */
-		conn->alsos = alsos;
-
-		if (alsoplace >= ALSO_LIMIT) {
-			starter_log(LOG_LEVEL_INFO,
-				    "while loading conn '%s', too many also= used at section %s. Limit is %d",
-				    conn->name,
-				    alsos[alsoplace],
-				    ALSO_LIMIT);
-			/* ??? should we not set *perr? */
-			return TRUE;	/* error */
 		}
 	}
 
+	/*
+	 * Migrate alsos back to conn->alsos.
+	 * Note that this is the transitive closure.
+	 */
+	conn->alsos = alsos;
 
 	if (conn->options_set[KBF_TYPE]) {
 		switch ((enum keyword_satype)conn->options[KBF_TYPE]) {
@@ -1132,8 +1121,7 @@ static bool load_conn(
 					*perr = "connection type=transport must not specify authby=never";
 					return TRUE;
 			}
-			conn->policy &= ~POLICY_TUNNEL;
-			conn->policy &= ~POLICY_SHUNT_MASK;
+			conn->policy &= ~POLICY_TUNNEL & ~POLICY_SHUNT_MASK;
 			break;
 
 		case KS_PASSTHROUGH:
@@ -1143,8 +1131,8 @@ static bool load_conn(
 			}
 			conn->policy &=
 				~(POLICY_ENCRYPT | POLICY_AUTHENTICATE |
-				  POLICY_TUNNEL | POLICY_RSASIG);
-			conn->policy &= ~POLICY_SHUNT_MASK;
+				  POLICY_TUNNEL | POLICY_RSASIG) &
+				~POLICY_SHUNT_MASK;
 			conn->policy |= POLICY_SHUNT_PASS;
 			break;
 
@@ -1155,8 +1143,8 @@ static bool load_conn(
 			}
 			conn->policy &=
 				~(POLICY_ENCRYPT | POLICY_AUTHENTICATE |
-				  POLICY_TUNNEL | POLICY_RSASIG);
-			conn->policy &= ~POLICY_SHUNT_MASK;
+				  POLICY_TUNNEL | POLICY_RSASIG) &
+				~POLICY_SHUNT_MASK;
 			conn->policy |= POLICY_SHUNT_DROP;
 			break;
 
@@ -1167,8 +1155,8 @@ static bool load_conn(
 			}
 			conn->policy &=
 				~(POLICY_ENCRYPT | POLICY_AUTHENTICATE |
-				  POLICY_TUNNEL | POLICY_RSASIG);
-			conn->policy &= ~POLICY_SHUNT_MASK;
+				  POLICY_TUNNEL | POLICY_RSASIG) &
+				~POLICY_SHUNT_MASK;
 			conn->policy |= POLICY_SHUNT_REJECT;
 			break;
 		}
@@ -1355,9 +1343,9 @@ static bool load_conn(
 		/* remove IPsec related options */
 		conn->policy &= ~(POLICY_PFS | POLICY_COMPRESS | POLICY_ESN_NO |
 			POLICY_ESN_YES | POLICY_SAREF_TRACK |
-			POLICY_SAREF_TRACK_CONNTRACK);
-		/* remove IKE related options */
-		conn->policy &= ~(POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW |
+			POLICY_SAREF_TRACK_CONNTRACK) &
+			/* remove IKE related options */
+			~(POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW |
 			POLICY_IKEV2_PROPOSE | POLICY_IKE_FRAG_ALLOW |
 			POLICY_IKE_FRAG_FORCE);
 	}
@@ -1588,7 +1576,6 @@ static void confread_free_conn(struct starter_conn *conn)
 
 void confread_free(struct starter_config *cfg)
 {
-	FREE_LIST(cfg->setup.interfaces);
 	pfree(cfg->ctlbase);
 
 	int i;

@@ -21,7 +21,7 @@ east #
 000 "road-east-ikev2":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "road-east-ikev2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO; +rKOD;
 000 "road-east-ikev2":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "road-east-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "road-east-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "road-east-ikev2":   our idtype: ID_IPV4_ADDR; our id=192.1.2.23; their idtype: ID_IPV4_ADDR; their id:192.1.3.209
 000 "road-east-ikev2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "road-east-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0;

@@ -124,7 +124,7 @@ void set_myFQDN(void)
 	free_id_content(&myids[MYID_HOSTNAME]);
 	myids[MYID_HOSTNAME] = empty_id;
 	if (r != 0) {
-		log_errno((e, "gethostname() failed in set_myFQDN"));
+		LOG_ERRNO(errno, "gethostname() failed in set_myFQDN");
 	} else {
 		FQDN[sizeof(FQDN) - 1] = '\0'; /* insurance */
 
@@ -160,10 +160,28 @@ void free_myFQDN(void)
  * Note: no memory is allocated for the body of the payload (tl->ptr).
  * We assume it will end up being a pointer into a sufficiently
  * stable datastructure.  It only needs to last a short time.
+ *
+ * const-ness is confusing: we expect the memory pointed to by
+ * the chunk will not be written, but it is awkward to paste const on it.
  */
+
+/* a macro to discard the const portion of a variable to avoid
+ * otherwise unavoidable -Wcast-qual warnings.
+ * USE WITH CAUTION and only when you know it's safe to discard the const
+ */
+
+#ifdef __GNUC__
+#define DISCARD_CONST(vartype, \
+		      varname) (__extension__({ const vartype tmp = (varname); \
+						(vartype)(uintptr_t)tmp; }))
+#else
+#define DISCARD_CONST(vartype, varname) ((vartype)(uintptr_t)(varname))
+#endif
+
 void build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl, struct end *end)
 {
 	const struct id *id = resolve_myid(&end->id);
+	const unsigned char *p;
 
 	zero(hd);	/* OK: no pointer fields */
 	*tl = empty_chunk;
@@ -172,18 +190,22 @@ void build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl, struct end *end)
 	case ID_NONE:
 		hd->isaiid_idtype =
 			aftoinfo(addrtypeof(&end->host_addr))->id_addr;
-		tl->len = addrbytesptr(&end->host_addr, &tl->ptr); /* sets tl->ptr too */
+		tl->len = addrbytesptr_read(&end->host_addr, &p);
+		tl->ptr = DISCARD_CONST(unsigned char *, p);
 		break;
+	case ID_FROMCERT:
+		hd->isaiid_idtype = ID_DER_ASN1_DN;
+		/* FALLTHROUGH */
 	case ID_FQDN:
 	case ID_USER_FQDN:
 	case ID_DER_ASN1_DN:
-	case ID_FROMCERT:
 	case ID_KEY_ID:
 		*tl = id->name;
 		break;
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
-		tl->len = addrbytesptr(&id->ip_addr, &tl->ptr); /* sets tl->ptr too */
+		tl->len = addrbytesptr_read(&id->ip_addr, &p);
+		tl->ptr = DISCARD_CONST(unsigned char *, p);
 		break;
 	case ID_NULL:
 		tl->len = 0;

@@ -1,4 +1,5 @@
 # simple standalone lines
 /==== cut ====/,/==== tuc ====/d
-# embedded but at the end of a line, see runner.py
-s/>>>>>>>>>>cut>>>>>>>>>> [^ ]* <<<<<<<<<<tuc<<<<<<<<<<//
+# embedded and repeated within a line
+s/>>>>>>>>>>cut>>>>>>>>>> [^ ]* <<<<<<<<<<tuc<<<<<<<<<<//g
+

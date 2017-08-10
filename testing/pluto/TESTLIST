@@ -252,12 +252,9 @@ kvmplutotest	ikev1-x509-aggr-05-san-firstemail-match good
 kvmplutotest	ikev1-x509-aggr-06-san-email-mismatch	good
 kvmplutotest	ikev1-x509-aggr-07-san-ip-mismatch	good
 kvmplutotest	ikev1-x509-aggr-08-san-dns-mismatch	good
-
-# unrelated CERT + AGGR mode bug?
 kvmplutotest	ikev1-x509-aggr-09-san-email-match	good
 kvmplutotest	ikev1-x509-aggr-10-san-ip-match		good
 kvmplutotest	ikev1-x509-aggr-11-san-dns-match	good
-
 kvmplutotest	ikev1-x509-aggr-12-san-dn-match		good
 kvmplutotest	ikev1-x509-aggr-13-san-dn-mismatch	good
 kvmplutotest	ikev1-x509-aggr-14-san-dn-fromcert	good
@@ -272,6 +269,10 @@ kvmplutotest	ikev2-x509-11-san-dns-match		good
 kvmplutotest	ikev2-x509-12-san-dn-fromcert		good
 kvmplutotest	ikev2-x509-13-san-dn-match		good
 kvmplutotest	ikev2-x509-14-san-dn-mismatch		good
+kvmplutotest	ikev2-x509-14-san-dn-mismatch-responder	good
+
+kvmplutotest	interop-ikev1-x509-aggr-12-san-dn-match	good
+kvmplutotest	interop-ikev1-x509-aggr-13-san-dn-match-responder good
 
 kvmplutotest	ikev2-no-nhelpers-01			good
 
@@ -313,10 +314,6 @@ kvmplutotest	ikev2-frag-01				good
 kvmplutotest	ikev2-frag-02-ipv6			good
 
 kvmplutotest	dynamic-iface-01			good
-
-# rsasigkey2= related tests
-kvmplutotest	rsasig2-01				good
-kvmplutotest	rsasig2-02				wip
 
 # Opportunstic Encryption using AUTH NULL
 kvmplutotest	newoe-01-whack				good
@@ -518,6 +515,7 @@ kvmplutotest	delete-sa-09-rhbz1311360-c32	good
 kvmplutotest	ikev1-27-uniqueid		good
 
 kvmplutotest	ikev1-rekey-connswitch	good
+kvmplutotest	ikev2-rekey-connswitch	good
 
 # oe-fail-without-resp-client-txt-01 - when responding using an OE
 # connection, checks that there is a TXT (and possibly KEY) record

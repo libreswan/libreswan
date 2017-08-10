@@ -122,7 +122,7 @@ void libreswan_loglog(int mess_no UNUSED, const char *message, ...)
 		syslog(LOG_WARNING, "%s", m);
 }
 
-void libreswan_log_errno_routine(int e, const char *message, ...)
+void lswlog_log_errno(int e, const char *prefix, const char *message, ...)
 {
 	va_list args;
 	char m[LOG_WIDTH];	/* longer messages will be truncated */
@@ -132,29 +132,11 @@ void libreswan_log_errno_routine(int e, const char *message, ...)
 	va_end(args);
 
 	if (log_to_stderr)
-		fprintf(stderr, "ERROR: %s. Errno %d: %s\n", m, e,
-			strerror(e));
+		fprintf(stderr, "%s%s. Errno %d: %s\n",
+			prefix, m, e, strerror(e));
 	if (log_to_syslog)
-		syslog(LOG_ERR, "ERROR: %s. Errno %d: %s", m, e, strerror(e));
-}
-
-void libreswan_exit_log_errno_routine(int e, const char *message, ...)
-{
-	va_list args;
-	char m[LOG_WIDTH];	/* longer messages will be truncated */
-
-	va_start(args, message);
-	fmt_log(m, sizeof(m), message, args);
-	va_end(args);
-
-	if (log_to_stderr)
-		fprintf(stderr, "FATAL ERROR: %s. Errno %d: %s\n",
-			m, e, strerror(e));
-	if (log_to_syslog)
-		syslog(LOG_ERR, "FATAL ERROR: %s. Errno %d: %s",
-			m, e, strerror(e));
-
-	exit(1);
+		syslog(LOG_ERR, "%s%s. Errno %d: %s",
+		       prefix, m, e, strerror(e));
 }
 
 lset_t

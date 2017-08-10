@@ -73,14 +73,14 @@ int format;                     /* character */
 char *dst;                      /* need not be valid if dstlen is 0 */
 size_t dstlen;
 {
-	unsigned char *b;
+	const unsigned char *b;
 	size_t n;
 	char buf[1 + ADDRTOT_BUF + 1];      /* :address: */
 	char *p;
 	int t = addrtypeof(src);
 #       define  TF(t, f)        (((t) << 8) | (f))
 
-	n = addrbytesptr(src, &b);
+	n = addrbytesptr_read(src, &b);
 	if (n == 0) {
 		dst[0] = '\0';
 		strncat(dst, "<invalid>", dstlen - 1); /* we hope possible truncation does not cause problems */

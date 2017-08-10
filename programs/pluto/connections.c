@@ -1276,12 +1276,25 @@ void add_connection(const struct whack_message *wm)
 		}
 	}
 
+	struct parser_policy parser_policy = {
+		.ikev1 = LIN(POLICY_IKEV1_ALLOW, wm->policy),
+		/*
+		 * logic needs to match pick_initiator()
+		 *
+		 * XXX: Once pluto is changed to IKEv1 XOR
+		 * IKEv2 it should be possible to move this
+		 * magic into pluto proper and instead pass a
+		 * simple boolean.
+		 */
+		.ikev2 = ((wm->policy & POLICY_IKEV2_PROPOSE)
+			  && (wm->policy & POLICY_IKEV2_ALLOW)),
+	};
 
 	if (!LIN(POLICY_AUTH_NEVER, wm->policy) && wm->ike != NULL) {
 		char err_buf[256] = "";	/* ??? big enough? */
 
-		alg_info_ike = alg_info_ike_create_from_str(wm->policy, wm->ike,
-			err_buf, sizeof(err_buf));
+		alg_info_ike = alg_info_ike_create_from_str(&parser_policy, wm->ike,
+							    err_buf, sizeof(err_buf));
 
 		if (alg_info_ike == NULL) {
 			pexpect(err_buf[0]); /* something */
@@ -1345,7 +1358,7 @@ void add_connection(const struct whack_message *wm)
 				bool conflict = FALSE;
 				lset_t auth_pol = (wm->policy & POLICY_ID_AUTH_MASK);
 
-				switch(wm->left.authby) {
+				switch (wm->left.authby) {
 				case AUTH_PSK:
 					if (auth_pol != POLICY_PSK && auth_pol != LEMPTY) {
 						loglog(RC_FATAL, "leftauthby=secret but authby= is not secret");
@@ -1471,11 +1484,11 @@ void add_connection(const struct whack_message *wm)
 					wm->esp ? wm->esp : "NULL"));
 
 			if (c->policy & POLICY_ENCRYPT)
-				c->alg_info_esp = alg_info_esp_create_from_str(c->policy,
+				c->alg_info_esp = alg_info_esp_create_from_str(&parser_policy,
 					wm->esp ? wm->esp : "", err_buf, sizeof(err_buf));
 
 			if (c->policy & POLICY_AUTHENTICATE)
-				c->alg_info_esp = alg_info_ah_create_from_str(c->policy,
+				c->alg_info_esp = alg_info_ah_create_from_str(&parser_policy,
 					wm->esp ? wm->esp : "",  err_buf, sizeof(err_buf));
 
 			DBG(DBG_CONTROL, {
@@ -1500,21 +1513,6 @@ void add_connection(const struct whack_message *wm)
 				alg_info_free(&c->alg_info_esp->ai);
 				pfree(c);
 				return;
-			}
-			/*
-			 * XXX: Fill in esp_integ and esp_encrypt.
-			 * The alg_info should be setting those fields
-			 * directly.  For instance like how IKE fills
-			 * in the DH fields.
-			 */
-			FOR_EACH_ESP_INFO(c->alg_info_esp, esp_info) {
-				if (!fill_in_esp_info_ike_algs(esp_info,
-							       "esp", wm->esp)) {
-					/* already loglog()ed */
-					alg_info_free(&c->alg_info_esp->ai);
-					pfree(c);
-					return;
-				}
 			}
 		}
 
@@ -1546,6 +1544,7 @@ void add_connection(const struct whack_message *wm)
 			}
 		}
 
+		c->nic_offload = wm->nic_offload;
 		c->sa_ike_life_seconds = wm->sa_ike_life_seconds;
 		c->sa_ipsec_life_seconds = wm->sa_ipsec_life_seconds;
 		c->sa_rekey_margin = wm->sa_rekey_margin;
@@ -2179,12 +2178,13 @@ struct connection *oppo_instantiate(struct connection *c,
 /* priority formatting */
 void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF])
 {
-	if (pp == BOTTOM_PRIO)
+	if (pp == BOTTOM_PRIO) {
 		snprintf(buf, POLICY_PRIO_BUF, "0");
-	else
-		snprintf(buf, POLICY_PRIO_BUF, "%lu,%lu",
+	} else {
+		snprintf(buf, POLICY_PRIO_BUF, "%" PRIu32 ",%" PRIu32,
 			pp >> 16,
 			(pp & ~(~(policy_prio_t)0 << 16)) >> 8);
+	}
 }
 
 /*
@@ -2325,7 +2325,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 						subnettot(&c->spd.that.client,
 							0, c_pcb,
 							sizeof(c_pcb));
-						DBG_log("find_connection: conn \"%s\"%s has compatible peers: %s -> %s [pri: %ld]",
+						DBG_log("find_connection: conn \"%s\"%s has compatible peers: %s -> %s [pri: %" PRIu32 "]",
 							c->name,
 							fmt_conn_instance(c,
 									cib),
@@ -2335,7 +2335,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 				DBG(DBG_CONTROLMORE,
 					if (best == NULL) {
 						char cib2[CONN_INST_BUF];
-						DBG_log("find_connection: first OK \"%s\"%s [pri:%ld]{%p} (child %s)",
+						DBG_log("find_connection: first OK \"%s\"%s [pri:%" PRIu32 "]{%p} (child %s)",
 							c->name,
 							fmt_conn_instance(c, cib2),
 							prio, c,
@@ -2345,7 +2345,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 					} else {
 						char cib[CONN_INST_BUF];
 						char cib2[CONN_INST_BUF];
-						DBG_log("find_connection: comparing best \"%s\"%s [pri:%ld]{%p} (child %s) to \"%s\"%s [pri:%ld]{%p} (child %s)",
+						DBG_log("find_connection: comparing best \"%s\"%s [pri:%" PRIu32 "]{%p} (child %s) to \"%s\"%s [pri:%" PRIu32 "]{%p} (child %s)",
 							best->name,
 							fmt_conn_instance(best, cib),
 							best_prio,
@@ -2380,7 +2380,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 	DBG(DBG_CONTROL, {
 		if (best != NULL) {
 			char cib[CONN_INST_BUF];
-			DBG_log("find_connection: concluding with \"%s\"%s [pri:%ld]{%p} kind=%s",
+			DBG_log("find_connection: concluding with \"%s\"%s [pri:%" PRIu32 "]{%p} kind=%s",
 				best->name,
 				fmt_conn_instance(best, cib),
 				best_prio,
@@ -3031,19 +3031,20 @@ struct connection *refine_host_connection(const struct state *st,
 	const chunk_t *psk = NULL;
 	const struct RSA_private_key *my_RSA_pri = NULL;
 
-	switch(this_authby) {
+	if (initiator)
+	{
+
+	switch (this_authby) {
 	case AUTH_PSK:
-		if (initiator) {
-			psk = get_preshared_secret(c);
-			/*
-			 * It should be virtually impossible to fail to find
-			 * PSK: we just used it to decode the current message!
-			 * Paul: only true for IKEv1
-			 */
-			if (psk == NULL) {
-				loglog(RC_LOG_SERIOUS, "cannot find PSK");
-				return c; /* cannot determine PSK, so not switching */
-			}
+		psk = get_preshared_secret(c);
+		/*
+		 * It should be virtually impossible to fail to find
+		 * PSK: we just used it to decode the current message!
+		 * Paul: only true for IKEv1
+		 */
+		if (psk == NULL) {
+			loglog(RC_LOG_SERIOUS, "cannot find PSK");
+			return c; /* cannot determine PSK, so not switching */
 		}
 		break;
 	case AUTH_NULL:
@@ -3051,18 +3052,16 @@ struct connection *refine_host_connection(const struct state *st,
 		break;
 
 	case AUTH_RSASIG:
-		if (initiator) {
-			/*
-			 * At this point, we've committed to our RSA private
-			 * key: we used it in our previous message.
-			 * Paul: only true for IKEv1
-			 */
-			my_RSA_pri = get_RSA_private_key(c);
-			if (my_RSA_pri == NULL) {
-				loglog(RC_LOG_SERIOUS, "cannot find RSA key");
-				 /* cannot determine my RSA private key! */
-				return c;
-			}
+		/*
+		 * At this point, we've committed to our RSA private
+		 * key: we used it in our previous message.
+		 * Paul: only true for IKEv1
+		 */
+		my_RSA_pri = get_RSA_private_key(c);
+		if (my_RSA_pri == NULL) {
+			loglog(RC_LOG_SERIOUS, "cannot find RSA key");
+			 /* cannot determine my RSA private key! */
+			return c;
 		}
 		break;
 	default:
@@ -3070,6 +3069,7 @@ struct connection *refine_host_connection(const struct state *st,
 		loglog(RC_LOG_SERIOUS, "refine_host_connection: unexpected auth policy (%s): only handling PSK, NULL or RSA",
 			enum_name(&ikev2_asym_auth_name, this_authby));
 		return c;
+	}
 	}
 
 	/*
@@ -3181,14 +3181,12 @@ struct connection *refine_host_connection(const struct state *st,
 					continue;
 			}
 
-			if (d->spd.this.xauth_server !=
-			    c->spd.this.xauth_server) {
+			if (d->spd.this.xauth_server != c->spd.this.xauth_server) {
 				/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
 				continue;
 			}
 
-			if (d->spd.this.xauth_client !=
-			    c->spd.this.xauth_client) {
+			if (d->spd.this.xauth_client != c->spd.this.xauth_client) {
 				/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
 				continue;
 			}
@@ -3586,7 +3584,7 @@ static struct connection *fc_try(const struct connection *c,
 		best = NULL;
 
 	DBG(DBG_CONTROLMORE,
-		DBG_log("  fc_try concluding with %s [%ld]",
+		DBG_log("  fc_try concluding with %s [%" PRIu32 "]",
 			(best ? best->name : "none"), best_prio));
 
 	if (best == NULL) {
@@ -3699,7 +3697,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 		best = NULL;
 
 	DBG(DBG_CONTROLMORE,
-		DBG_log("  fc_try_oppo concluding with %s [%ld]",
+		DBG_log("  fc_try_oppo concluding with %s [%" PRIu32 "]",
 			(best ? best->name : "none"), best_prio));
 	return best;
 }
@@ -3889,7 +3887,7 @@ static void show_one_sr(const struct connection *c,
 		enum_name(&routing_story, sr->routing),
 		sr->eroute_owner);
 
-#define OPT_HOST(h, ipb)  (addrbytesptr(h, NULL) == 0 || isanyaddr(h) ? \
+#define OPT_HOST(h, ipb)  (addrlenof(h) == 0 || isanyaddr(h) ? \
 			"unset" : ipstr(h, &ipb))
 
 		/* note: this macro generates a pair of arguments */
@@ -4111,11 +4109,13 @@ void show_one_connection(const struct connection *c)
 		strcpy(markstr, "unset");
 
 	whack_log(RC_COMMENT,
-		  "\"%s\"%s:   nflog-group: %s; mark: %s; vti-iface:%s; vti-routing:%s; vti-shared:%s;",
+		  "\"%s\"%s:   nflog-group: %s; mark: %s; vti-iface:%s; vti-routing:%s; vti-shared:%s; nic-offload:%s",
 		  c->name, instance, nflogstr, markstr,
 		  c->vti_iface == NULL ? "unset" : c->vti_iface,
 		  c->vti_routing ? "yes" : "no",
-		  c->vti_shared ? "yes" : "no"
+		  c->vti_shared ? "yes" : "no",
+		  (c->nic_offload == nic_offload_auto) ? "auto;" :
+		  (c->nic_offload == nic_offload_yes) ? "yes;" : "no;"
 	);
 
 	{
@@ -4128,8 +4128,10 @@ void show_one_connection(const struct connection *c)
 	whack_log(RC_COMMENT,
 		"\"%s\"%s:   our idtype: %s; our id=%s; their idtype: %s; their id:%s",
 		c->name, instance,
-		enum_name(&ike_idtype_names, c->spd.this.id.kind), thisid,
-		enum_name(&ike_idtype_names, c->spd.that.id.kind), thatid);
+			c->spd.this.id.kind == -3 ? "%fromcert" :
+				enum_name(&ike_idtype_names, c->spd.this.id.kind), thisid,
+			c->spd.that.id.kind == -3 ? "%fromcert" :
+				enum_name(&ike_idtype_names, c->spd.that.id.kind), thatid);
 	}
 
 	/* slightly complicated stuff to avoid extra crap */
@@ -4265,6 +4267,7 @@ void update_state_connection(struct state *st, struct connection *c)
 
 	if (t != c) {
 		st->st_connection = c;
+		st->st_peer_alt_id = FALSE; /* must be rechecked against new 'that' */
 		if (t != NULL) {
 			if (cur_connection == t)
 				set_cur_connection(c);
@@ -4364,27 +4367,33 @@ void suppress_delete(struct connection *c)
 	}
 }
 
-void liveness_action(struct connection *c)
+void liveness_action(struct connection *c, const bool ikev2)
 {
 	char cib[CONN_INST_BUF];
+	char *ikev = "IKEv1 DPD:";
+
+	if(ikev2)
+		ikev = "IKEv2 liveness:";
 
 	fmt_conn_instance(c, cib);
 
 	switch (c->dpd_action) {
 	case DPD_ACTION_CLEAR:
-		libreswan_log("IKEv2 peer liveness  action - clearing connection");
-		liveness_clear_connection(c, "IKEv2 liveness action clear");
+		libreswan_log("%s action - clearing connection", ikev);
+		liveness_clear_connection(c, "%s action clear");
 		break;
 
 	case DPD_ACTION_RESTART:
-		libreswan_log("IKEv2 peer liveness action - restarting all connections that share this peer");
+		libreswan_log("%s action - restarting all connections that share this peer",
+				ikev);
 		restart_connections_by_peer(c);
 		break;
 
 	case DPD_ACTION_HOLD:
-		libreswan_log("IKEv2 peer liveness action - putting connection into %%hold");
+		libreswan_log("%s action - putting connection into %%hold", ikev);
 		if (c->kind == CK_INSTANCE) {
-			DBG(DBG_DPD, DBG_log("DPD: warning dpdaction=hold on instance futile - will be deleted"));
+			DBG(DBG_DPD, DBG_log("%s warning dpdaction=hold on instance futile - will be deleted",
+						ikev));
 		}
 		delete_states_by_connection(c, TRUE);
 		break;

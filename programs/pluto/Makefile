@@ -47,9 +47,12 @@ include $(top_srcdir)/mk/config.mk
 
 OBJS =
 
+# local (possibly more up to date) copy of <linux/xfrm.h>
+ifeq ($(USE_XFRM_HEADER_COPY),true)
+CFLAGS+=-I ${LIBRESWANSRCDIR}/programs/pluto/linux-copy
+endif
 # where to find klips headers and Libreswan headers
-# and 2.6 kernel's <rtnetlink.h> and <xfrm.h>
-HDRDIRS = -I${LIBRESWANSRCDIR}/programs/pluto/linux26 -I${LIBRESWANSRCDIR}/include -I$(LIBRESWANSRCDIR)/lib/libcrypto -I$(KLIPSINC)
+HDRDIRS +=-I${LIBRESWANSRCDIR}/include -I$(LIBRESWANSRCDIR)/lib/libcrypto -I$(KLIPSINC)
 
 # -DKLIPS enables interface to Kernel LINUX IPsec code
 # -DNETKEY enables interface to Kernel NETKEY/XFRM IPsec code
@@ -66,7 +69,7 @@ OBJS += kernel_pfkey.o
 endif
 
 ifeq ($(USE_NETKEY),true)
-CFLAGS += -DNETKEY_SUPPORT -DKERNEL26_HAS_KAME_DUPLICATES -DPFKEY
+CFLAGS += -DNETKEY_SUPPORT -DPFKEY
 OBJS += kernel_netlink.o
 endif
 
@@ -101,6 +104,7 @@ endif
 
 # pam_conv.c is wrapped in #ifdef XAUTH_HAVE_PAM
 OBJS += ikev1_xauth.o addresspool.o pam_conv.o
+OBJS += xauth.o
 LDFLAGS += $(XAUTHPAM_LDFLAGS)
 ifneq ($(BUILDENV), darwin)
 LDFLAGS += -lcrypt
@@ -137,14 +141,6 @@ OBJS += ike_alg_nss_hash_ops.o
 OBJS += ike_alg_hmac_prf_ops.o
 OBJS += ike_alg_nss_prf_ops.o
 OBJS += ike_alg_nss_gcm.o
-OBJS += ike_alg_null.o
-
-OBJS += ike_alg_sha1.o
-OBJS += ike_alg_md5.o
-OBJS += ike_alg_aes.o
-OBJS += ike_alg_dh.o
-OBJS += ike_alg_camellia.o
-OBJS += ike_alg_sha2.o
 OBJS += ike_alg.o db_ops.o
 
 # libefence is a free memory allocation debugger

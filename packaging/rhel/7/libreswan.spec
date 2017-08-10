@@ -17,7 +17,7 @@
 # not production ready yet
 %global USE_SECCOMP false
 
-%global prever rc5
+#global prever rc1
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
@@ -260,5 +260,5 @@ prelink -u %{_libexecdir}/ipsec/* 2>/dev/null || :
 %endif
 
 %changelog
-* Tue May 30 2017 Team Libreswan <team@libreswan.org> - 3.21-0.1.rc3
+* Wed Aug  9 2017 Team Libreswan <team@libreswan.org> - 3.21-1
 - Automated build from release tar ball

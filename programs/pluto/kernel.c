@@ -417,7 +417,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		vticlient_str[SUBNETTOT_BUF + sizeof("VTI_IP=''")],
 		peerid_str[IDTOA_BUF],
 		metric_str[sizeof("PLUTO_METRIC= ") + 4],
-		connmtu_str[sizeof("PLUTO_MTU= ") + 4],
+		connmtu_str[sizeof("PLUTO_MTU= ") + 5 + 1],
 		peerclient_str[SUBNETTOT_BUF],
 		peerclientnet_str[ADDRTOT_BUF],
 		peerclientmask_str[ADDRTOT_BUF],
@@ -437,7 +437,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 	ip_address ta;
 
 	nexthop_str[0] = '\0';
-	if (addrbytesptr(&sr->this.host_nexthop, NULL) &&
+	if (addrlenof(&sr->this.host_nexthop) != 0 &&
 		!isanyaddr(&sr->this.host_nexthop)) {
 		char *n = jam_str(nexthop_str, sizeof(nexthop_str),
 				"PLUTO_NEXT_HOP='");
@@ -521,7 +521,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 	}
 
 	srcip_str[0] = '\0';
-	if (addrbytesptr(&sr->this.host_srcip, NULL) != 0 &&
+	if (addrlenof(&sr->this.host_srcip) != 0 &&
 		!isanyaddr(&sr->this.host_srcip)) {
 		char *p = jam_str(srcip_str, sizeof(srcip_str),
 				"PLUTO_MY_SOURCEIP='");
@@ -778,8 +778,8 @@ bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd)
 
 			if (fgets(resp, sizeof(resp), f) == NULL) {
 				if (ferror(f)) {
-					log_errno((e, "fgets failed on output of %s%s command",
-							verb, verb_suffix));
+					LOG_ERRNO(errno, "fgets failed on output of %s%s command",
+						  verb, verb_suffix);
 					signal(SIGCHLD, savesig);
 					return FALSE;
 				} else {
@@ -802,8 +802,8 @@ bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd)
 			signal(SIGCHLD, savesig);
 
 			if (r == -1) {
-				log_errno((e, "pclose failed for %s%s command",
-						verb, verb_suffix));
+				LOG_ERRNO(errno, "pclose failed for %s%s command",
+					  verb, verb_suffix);
 				return FALSE;
 			} else if (WIFEXITED(r)) {
 				if (WEXITSTATUS(r) != 0) {
@@ -1714,6 +1714,23 @@ static bool del_spi(ipsec_spi_t spi, int proto,
 	return kernel_ops->del_sa(&sa);
 }
 
+static void setup_esp_nic_offload(struct kernel_sa *sa, struct connection *c,
+		bool *nic_offload_fallback)
+{
+	if (c->nic_offload == nic_offload_no)
+		return;
+	if (c->interface == NULL || c->interface->ip_dev == NULL ||
+		c->interface->ip_dev->id_rname == NULL)
+		return;
+
+	if (c->nic_offload == nic_offload_auto) {
+		if (c->interface->ip_dev->id_nic_offload != IFNO_SUPPORTED)
+			return;
+		*nic_offload_fallback = TRUE;
+	}
+	sa->nic_offload_dev = c->interface->ip_dev->id_rname;
+}
+
 /*
  * Set up one direction of the SA bundle
  */
@@ -1732,6 +1749,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	bool incoming_ref_set = FALSE;
 	IPsecSAref_t refhim = st->st_refhim;
 	IPsecSAref_t new_refhim = IPSEC_SAREF_NULL;
+	bool nic_offload_fallback = FALSE;
+	bool ret;
 
 	/* SPIs, saved for spigrouping or undoing, if necessary */
 	struct kernel_sa said[EM_MAXRELSPIS];
@@ -1794,6 +1813,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	said_boilerplate.transport_proto = c->spd.this.protocol;
 	said_boilerplate.sa_lifetime = c->sa_ipsec_life_seconds;
 	said_boilerplate.outif = -1;
+
 #ifdef HAVE_LABELED_IPSEC
 	said_boilerplate.sec_ctx = st->sec_ctx;
 #endif
@@ -1989,77 +2009,77 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			{
 				.transid = ESP_NULL,
 				.auth = AUTH_ALGORITHM_HMAC_MD5,
-				.enckeylen = 0,
+				.enckeysize = 0,
 				.encryptalg = SADB_EALG_NULL,
 				.authalg = SADB_AALG_MD5HMAC,
 			},
 			{
 				.transid = ESP_NULL,
 				.auth = AUTH_ALGORITHM_HMAC_SHA1,
-				.enckeylen = 0,
+				.enckeysize = 0,
 				.encryptalg = SADB_EALG_NULL,
 				.authalg = SADB_AALG_SHA1HMAC,
 			},
 			{
 				.transid = ESP_3DES,
 				.auth = AUTH_ALGORITHM_NONE,
-				.enckeylen = DES_CBC_BLOCK_SIZE * 3,
+				.enckeysize = DES_CBC_BLOCK_SIZE * 3,
 				.encryptalg = SADB_EALG_3DESCBC,
 				.authalg = SADB_AALG_NONE,
 			},
 			{
 				.transid = ESP_3DES,
 				.auth = AUTH_ALGORITHM_HMAC_MD5,
-				.enckeylen = DES_CBC_BLOCK_SIZE * 3,
+				.enckeysize = DES_CBC_BLOCK_SIZE * 3,
 				.encryptalg = SADB_EALG_3DESCBC,
 				.authalg = SADB_AALG_MD5HMAC,
 			},
 			{
 				.transid = ESP_3DES,
 				.auth = AUTH_ALGORITHM_HMAC_SHA1,
-				.enckeylen = DES_CBC_BLOCK_SIZE * 3,
+				.enckeysize = DES_CBC_BLOCK_SIZE * 3,
 				.encryptalg = SADB_EALG_3DESCBC,
 				.authalg = SADB_AALG_SHA1HMAC,
 			},
 			{
 				.transid = ESP_AES,
 				.auth = AUTH_ALGORITHM_NONE,
-				.enckeylen = AES_CBC_BLOCK_SIZE,
+				.enckeysize = AES_CBC_BLOCK_SIZE,
 				.encryptalg = SADB_X_EALG_AESCBC,
 				.authalg = SADB_AALG_NONE,
 			},
 			{
 				.transid = ESP_AES,
 				.auth = AUTH_ALGORITHM_HMAC_MD5,
-				.enckeylen = AES_CBC_BLOCK_SIZE,
+				.enckeysize = AES_CBC_BLOCK_SIZE,
 				.encryptalg = SADB_X_EALG_AESCBC,
 				.authalg = SADB_AALG_MD5HMAC,
 			},
 			{
 				.transid = ESP_AES,
 				.auth = AUTH_ALGORITHM_HMAC_SHA1,
-				.enckeylen = AES_CBC_BLOCK_SIZE,
+				.enckeysize = AES_CBC_BLOCK_SIZE,
 				.encryptalg = SADB_X_EALG_AESCBC,
 				.authalg = SADB_AALG_SHA1HMAC,
 			},
 			{
 				.transid = ESP_CAST,
 				.auth = AUTH_ALGORITHM_NONE,
-				.enckeylen = BYTES_FOR_BITS(CAST_KEY_DEF_LEN),
+				.enckeysize = BYTES_FOR_BITS(CAST_KEY_DEF_LEN),
 				.encryptalg = SADB_X_EALG_CASTCBC,
 				.authalg = SADB_AALG_NONE,
 			},
 			{
 				.transid = ESP_CAST,
 				.auth = AUTH_ALGORITHM_HMAC_MD5,
-				.enckeylen = BYTES_FOR_BITS(CAST_KEY_DEF_LEN),
+				.enckeysize = BYTES_FOR_BITS(CAST_KEY_DEF_LEN),
 				.encryptalg = SADB_X_EALG_CASTCBC,
 				.authalg = SADB_AALG_MD5HMAC,
 			},
 			{
 				.transid = ESP_CAST,
 				.auth = AUTH_ALGORITHM_HMAC_SHA1,
-				.enckeylen = BYTES_FOR_BITS(CAST_KEY_DEF_LEN),
+				.enckeysize = BYTES_FOR_BITS(CAST_KEY_DEF_LEN),
 				.encryptalg = SADB_X_EALG_CASTCBC,
 				.authalg = SADB_AALG_SHA1HMAC,
 			},
@@ -2118,13 +2138,13 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			}
 
 			DBG(DBG_CRYPT,
-				DBG_log("checking transid: %d keylen: %d auth: %d",
-					ei->transid, ei->enckeylen, ei->auth));
+				DBG_log("checking transid: %d keysize: %zu auth: %d",
+					ei->transid, ei->enckeysize, ei->auth));
 
 			if (ta->encrypt == ei->transid &&
 				(ta->enckeylen == 0 ||
 					ta->enckeylen ==
-					ei->enckeylen * BITS_PER_BYTE) &&
+					ei->enckeysize * BITS_PER_BYTE) &&
 				ta->integ_hash == ei->auth)
 				break;
 		}
@@ -2133,19 +2153,19 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 		if (enc_key_len != 0) {
 			/* XXX: must change to check valid _range_ enc_key_len */
-			if (enc_key_len > ei->enckeylen) {
+			if (enc_key_len > ei->enckeysize) {
 				loglog(RC_LOG_SERIOUS,
 					"ESP transform %s passed encryption key length %u; we expected %u or less",
 					enum_name(&esp_transformid_names,
 						ta->encrypt),
 					(unsigned)enc_key_len,
-					(unsigned)ei->enckeylen);
+					(unsigned)ei->enckeysize);
 				goto fail;
 			}
 			/* ??? why would we have a different length? */
-			pexpect(enc_key_len == ei->enckeylen);
+			pexpect(enc_key_len == ei->enckeysize);
 		} else {
-			enc_key_len = ei->enckeylen;
+			enc_key_len = ei->enckeysize;
 		}
 
 		/* Fixup key lengths for special cases */
@@ -2282,8 +2302,16 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			said_next->ref = refhim;
 			outgoing_ref_set = TRUE;
 		}
+		setup_esp_nic_offload(said_next, c, &nic_offload_fallback);
 
-		if (!kernel_ops->add_sa(said_next, replace)) {
+		ret = kernel_ops->add_sa(said_next, replace);
+		if (!ret && nic_offload_fallback &&
+			said_next->nic_offload_dev != NULL) {
+			/* Fallback to non-nic-offload crypto */
+			said_next->nic_offload_dev = NULL;
+			ret = kernel_ops->add_sa(said_next, replace);
+		}
+		if (!ret) {
 			/* scrub keys from memory */
 			memset(said_next->enckey, 0, said_next->enckeylen);
 			memset(said_next->authkey, 0, said_next->authkeylen);
@@ -3730,7 +3758,7 @@ ikev1_auth_kernel_attrs(enum ikev1_auth_attribute auth, int *alg)
 		if (alg != NULL) {
 			*alg = ki->sadb_aalg;
 		}
-		return ki->integ->integ_key_size; /* bytes */
+		return ki->integ->integ_keymat_size; /* bytes */
 	}
         /*
          * Old way.  Callers should just hang onto the kernel_integ

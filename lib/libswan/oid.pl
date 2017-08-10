@@ -46,7 +46,7 @@ print OID_H "/*\n",
 	    "\n",
             "extern const oid_t oid_names[];\n",
 	    "\n",
-	    "#define OID_UNKNOWN\t\t\t-1\n";
+	    "#define OID_UNKNOWN\t\t\t(-1)\n";
 
 # parse oid.txt
 

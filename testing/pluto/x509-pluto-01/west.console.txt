@@ -19,10 +19,10 @@ west #
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=1 
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=2 
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=3 
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=4 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=1 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=2 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=3 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=4 
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 0 received, 100% packet loss, time XXXX
 west #
@@ -48,7 +48,7 @@ west #
 000 "westnet-eastnet-x509-nosend":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet-x509-nosend":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-x509-nosend":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "westnet-eastnet-x509-nosend":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "westnet-eastnet-x509-nosend":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-x509-nosend":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id:C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 000 "westnet-eastnet-x509-nosend":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-x509-nosend":   newest ISAKMP SA: #0; newest IPsec SA: #0;

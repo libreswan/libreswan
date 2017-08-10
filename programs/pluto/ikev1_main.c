@@ -675,7 +675,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 			/*
 			 * Create a temporary connection that is a copy
 			 * of this one.
-			 * His ID isn't declared yet.
+			 * Their ID isn't declared yet.
 			 */
 			DBG(DBG_CONTROL, {
 				ipstr_buf b;
@@ -771,22 +771,18 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 			return STF_INTERNAL_ERROR;
 	}
 
-	/* Increase VID counter for NAT-T VID */
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
 		DBG(DBG_NATT, DBG_log("NAT-T VID detected, sending NAT-T VID"));
 		numvidtosend++;
 	}
 
-	/* Increase VID counter for VID_CISCO_UNITY */
 	if (c->send_vendorid) {
 		numvidtosend++;
 	}
 
-	/* Increase VID counter for VID_IKE_FRAGMENTATION */
 	if (c->policy & POLICY_IKE_FRAG_ALLOW)
 		numvidtosend++;
 
-	/* Increase VID counter for VID_MISC_XAUTH */
 	if (c->spd.this.xauth_server || c->spd.this.xauth_client)
 		numvidtosend++;
 
@@ -797,12 +793,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 		zero(&r_sa);	/* OK: no pointer fields */
 		r_sa.isasa_doi = ISAKMP_DOI_IPSEC;
 
-		/*
-		 * Almost guaranteed to send a VID, set the NEXT payload
-		 * correctly
-		 */
-		r_sa.isasa_np =
-			numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		r_sa.isasa_np = numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 		if (!out_struct(&r_sa, &isakmp_sa_desc, &md->rbody, &r_sa_pbs))
 			return STF_INTERNAL_ERROR;
 	}
@@ -813,7 +804,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 						&r_sa_pbs, FALSE, st));
 
 	/*
-	 * NOW SEND VENDOR ID payloads
+	 * Send VENDOR ID payloads
 	 */
 
 	if (c->send_vendorid) {
@@ -826,7 +817,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 
 	{
 		/*
-		 * always announce our ability to do RFC 3706
+		 * Always announce our ability to do RFC 3706
 		 * Dead Peer Detection
 		 */
 		int np = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
@@ -862,7 +853,6 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 			return STF_INTERNAL_ERROR;
 	}
 
-	/* Ensure our 'next payload' types sync'ed up */
 	passert(numvidtosend == 0);
 
 	if (!close_message(&md->rbody, st))
@@ -1691,20 +1681,25 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 	u_char hash_val[MAX_DIGEST_LEN];
 	size_t hash_len;
 	stf_status r = STF_OK;
+	lsw_cert_ret ret = LSW_CERT_NONE;
 
 	/*
 	 * ID Payload in.
 	 * Note: this may switch the connection being used!
 	 */
-	if (!st->st_peer_alt_id  && !ikev1_decode_peer_id(md, initiator, aggrmode))
+	if (!st->st_peer_alt_id  && !ikev1_decode_peer_id(md, initiator, aggrmode)) {
+	DBG(DBG_CONTROLMORE, DBG_log("Peer ID failed to decode"));
 		return STF_FAIL + INVALID_ID_INFORMATION;
+	}
 
 	/*
 	 * process any CERT payloads if aggrmode
 	 */
-	if (!st->st_peer_alt_id && aggrmode && !ikev1_decode_cert(md)) {
+	if (!st->st_peer_alt_id)
+		ret = ike_decode_cert(md);
+
+	if (ret != LSW_CERT_NONE && ret != LSW_CERT_ID_OK)
 		return STF_FAIL + INVALID_ID_INFORMATION;
-	}
 
 	/*
 	 * Hash the ID Payload.

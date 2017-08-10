@@ -14,7 +14,7 @@
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
- * Copyright (C) 2015-2017 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2015-2017 Andrew Cagney
  * Copyright (C) 2015-2017 Antony Antony <antony@phenome.org>
  * Copyright (C) 2015-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2017 Richard Guy Briggs <rgb@tricolour.ca>
@@ -50,8 +50,7 @@
 #include "x509.h"
 #include "certs.h"
 #ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#include "ikev1_xauth.h"	/* just for state_deletion_xauth_cleanup() */
+#include "xauth.h"		/* for xauth_cancel() */
 #endif
 #include "connections.h"	/* needs id.h */
 #include "state.h"
@@ -486,6 +485,12 @@ struct state *new_state(void)
 	st->st_serialno = next_so++;
 	passert(next_so > SOS_FIRST);   /* overflow can't happen! */
 	st->st_whack_sock = NULL_FD;
+
+	/*
+	 * PTHREADS has no ways to identify an invalid thread; use the
+	 * main thread.
+	 */
+	st->st_xauth_thread = main_thread;
 
 	/* back-link the hash entry.  */
 	st->st_hash_entry.state = st;
@@ -966,10 +971,7 @@ void delete_state(struct state *st)
 		}
 	}
 
-#ifdef XAUTH_HAVE_PAM
-	state_deletion_xauth_cleanup(st);
-	ikev2_free_auth_pam(st->st_serialno);
-#endif
+	xauth_cancel(st->st_serialno, &st->st_xauth_thread);
 
 	/* If DPD is enabled on this state object, clear any pending events */
 	if (st->st_dpd_event != NULL)
@@ -1808,7 +1810,7 @@ bool find_pending_phas2(const so_serial_t psn,
 	int i;
 	int n = 0;
 
-	passert (psn >= SOS_FIRST);
+	passert(psn >= SOS_FIRST);
 
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
 		struct state *st;

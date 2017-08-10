@@ -30,9 +30,10 @@ west #
 002 "nss-cert" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=notyetvalid.testing.libreswan.org, E=user-notyetvalid@testing.libreswan.org'
 003 "nss-cert" #1: Certificate E=user-notyetvalid@testing.libreswan.org,CN=notyetvalid.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA failed verification
 003 "nss-cert" #1: ERROR: Peer's Certificate has expired.
-003 "nss-cert" #1: no RSA public key known for 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=notyetvalid.testing.libreswan.org, E=user-notyetvalid@testing.libreswan.org'
-217 "nss-cert" #1: STATE_MAIN_I3: INVALID_KEY_INFORMATION
-002 "nss-cert" #1: sending encrypted notification INVALID_KEY_INFORMATION to 192.1.2.23:500
+002 "nss-cert" #1: X509: Certificate rejected for this connection
+002 "nss-cert" #1: X509: CERT payload bogus or revoked
+218 "nss-cert" #1: STATE_MAIN_I3: INVALID_ID_INFORMATION
+002 "nss-cert" #1: sending encrypted notification INVALID_ID_INFORMATION to 192.1.2.23:500
 002 "nss-cert" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set
 031 "nss-cert" #1: max number of retransmissions (0) reached STATE_MAIN_I3.  Possible authentication failure: no acceptable response to our first encrypted message
 002 "nss-cert" #1: deleting state (STATE_MAIN_I3)

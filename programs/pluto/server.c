@@ -309,7 +309,7 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 	int fcntl_flags;
 
 	if (fd < 0) {
-		log_errno((e, "socket() in process_raw_ifaces()"));
+		LOG_ERRNO(errno, "socket() in process_raw_ifaces()");
 		return -1;
 	}
 
@@ -322,15 +322,14 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 	}
 
 	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1) {
-		log_errno((e, "fcntl(,, FD_CLOEXEC) in process_raw_ifaces()"));
+		LOG_ERRNO(errno, "fcntl(,, FD_CLOEXEC) in process_raw_ifaces()");
 		close(fd);
 		return -1;
 	}
 
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
 		       (const void *)&on, sizeof(on)) < 0) {
-		log_errno((e,
-			   "setsockopt SO_REUSEADDR in process_raw_ifaces()"));
+		LOG_ERRNO(errno, "setsockopt SO_REUSEADDR in process_raw_ifaces()");
 		close(fd);
 		return -1;
 	}
@@ -339,8 +338,7 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
 	if (setsockopt(fd, SOL_IP, IP_RECVERR,
 		       (const void *)&on, sizeof(on)) < 0) {
-		log_errno((e,
-			   "setsockopt IP_RECVERR in process_raw_ifaces()"));
+		LOG_ERRNO(errno, "setsockopt IP_RECVERR in process_raw_ifaces()");
 		close(fd);
 		return -1;
 	}
@@ -356,8 +354,7 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 	if (addrtypeof(&ifp->addr) == AF_INET6 &&
 	    setsockopt(fd, SOL_SOCKET, IPV6_USE_MIN_MTU,
 		       (const void *)&on, sizeof(on)) < 0) {
-		log_errno((e,
-			   "setsockopt IPV6_USE_MIN_MTU in process_raw_ifaces()"));
+		LOG_ERRNO(errno, "setsockopt IPV6_USE_MIN_MTU in process_raw_ifaces()");
 		close(fd);
 		return -1;
 	}
@@ -393,8 +390,7 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 
 		if (setsockopt(fd, level, opt,
 			       &policy, sizeof(policy)) < 0) {
-			log_errno((e,
-				   "setsockopt IPSEC_POLICY in process_raw_ifaces()"));
+			LOG_ERRNO(errno, "setsockopt IPSEC_POLICY in process_raw_ifaces()");
 			close(fd);
 			return -1;
 		}
@@ -403,8 +399,7 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 
 		if (setsockopt(fd, level, opt,
 			       &policy, sizeof(policy)) < 0) {
-			log_errno((e,
-				   "setsockopt IPSEC_POLICY in process_raw_ifaces()"));
+			LOG_ERRNO(errno, "setsockopt IPSEC_POLICY in process_raw_ifaces()");
 			close(fd);
 			return -1;
 		}
@@ -415,9 +410,9 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 	if (bind(fd, sockaddrof(&ifp->addr), sockaddrlenof(&ifp->addr)) < 0) {
 		ipstr_buf b;
 
-		log_errno((e, "bind() for %s/%s %s:%u in process_raw_ifaces()",
-			   ifp->name, v_name,
-			   ipstr(&ifp->addr, &b), (unsigned) port));
+		LOG_ERRNO(errno, "bind() for %s/%s %s:%u in process_raw_ifaces()",
+			  ifp->name, v_name,
+			  ipstr(&ifp->addr, &b), (unsigned) port);
 		close(fd);
 		return -1;
 	}
@@ -725,10 +720,17 @@ static void childhandler_cb(int unused UNUSED, const short event UNUSED, void *a
 }
 
 void init_event_base(void) {
-	DBG(DBG_CONTROLMORE, DBG_log("Initialize libevent base"));
+	libreswan_log("Initializing libevent in pthreads mode: headers: %s (%" PRIx32 "); library: %s (%" PRIx32 ")",
+		      LIBEVENT_VERSION, (ev_uint32_t)LIBEVENT_VERSION_NUMBER,
+		      event_get_version(), event_get_version_number());
+	/*
+	 * According to section 'setup Library setup', libevent needs
+	 * to be set up in pthreads mode before doing anything else.
+	 */
+	passert(evthread_use_pthreads() >= 0);
+	/* now do anything */
 	pluto_eb = event_base_new();
 	passert(pluto_eb != NULL);
-	passert(evthread_use_pthreads() >= 0);
 	passert(evthread_make_base_notifiable(pluto_eb) >= 0);
 }
 
@@ -760,7 +762,7 @@ static void main_loop(void)
 #endif
 
 	r = event_base_loop(pluto_eb, 0);
-	passert (r == 0);
+	passert(r == 0);
 }
 
 /* call_server listens for incoming ISAKMP packets and Whack messages,
@@ -822,8 +824,8 @@ void call_server(void)
 				*addconn_path_space = '\0';
 				n = 0;
 # else
-				exit_log_errno((e,
-						"readlink(\"/proc/self/exe\") failed in call_server()"));
+				EXIT_LOG_ERRNO(errno,
+					       "readlink(\"/proc/self/exe\") failed in call_server()");
 # endif
 			}
 		}
@@ -841,8 +843,8 @@ void call_server(void)
 		addconn_path = addconn_path_space;
 
 		if (access(addconn_path, X_OK) < 0)
-			exit_log_errno((e, "%s missing or not executable",
-					addconn_path));
+			EXIT_LOG_ERRNO(errno, "%s missing or not executable",
+				       addconn_path);
 
 		char *newargv[] = { DISCARD_CONST(char *, "addconn"),
 				    DISCARD_CONST(char *, "--ctlbase"),
@@ -877,7 +879,7 @@ void call_server(void)
 		/* parent continues */
 	}
 #ifdef HAVE_SECCOMP
-	switch(pluto_seccomp_mode) {
+	switch (pluto_seccomp_mode) {
 	case SECCOMP_ENABLED:
 		init_seccomp_main(SCMP_ACT_KILL);
 		break;
@@ -990,9 +992,9 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 		packet_len = recvmsg(ifp->fd, &emh, MSG_ERRQUEUE);
 
 		if (packet_len == -1) {
-			log_errno((e,
-				   "recvmsg(,, MSG_ERRQUEUE) on %s failed in comm_handle",
-				   ifp->ip_dev->id_rname));
+			LOG_ERRNO(errno,
+				  "recvmsg(,, MSG_ERRQUEUE) on %s failed in comm_handle",
+				  ifp->ip_dev->id_rname);
 			break;
 		} else if (packet_len == (ssize_t)sizeof(buffer)) {
 			libreswan_log(
@@ -1220,7 +1222,7 @@ static bool send_packet(struct state *st, const char *where,
 		return FALSE;
 	}
 
-	if(isanyaddr(&st->st_remoteaddr)) {
+	if (isanyaddr(&st->st_remoteaddr)) {
 		/* not asserting, who knows what nonsense a user can generate */
 		libreswan_log("Will not send packet to bogus address 0.0.0.0");
 		return FALSE;
@@ -1284,12 +1286,11 @@ static bool send_packet(struct state *st, const char *where,
 	if (wlen != (ssize_t)len) {
 		if (just_a_keepalive) {
 			ipstr_buf b;
-
-			log_errno((e, "sendto on %s to %s:%u failed in %s",
-				   st->st_interface->ip_dev->id_rname,
-				   ipstr(&st->st_remoteaddr, &b),
-				   st->st_remoteport,
-				   where));
+			LOG_ERRNO(errno, "sendto on %s to %s:%u failed in %s",
+				  st->st_interface->ip_dev->id_rname,
+				  ipstr(&st->st_remoteaddr, &b),
+				  st->st_remoteport,
+				  where);
 		}
 		return FALSE;
 	}
@@ -1317,12 +1318,12 @@ static bool send_packet(struct state *st, const char *where,
 			      sockaddrlenof(&st->st_remoteaddr));
 		if (wlen != (ssize_t)len) {
 			if (just_a_keepalive) {
-				log_errno((e,
-					   "sendto on %s to %s:%u failed in %s",
-					   st->st_interface->ip_dev->id_rname,
-					   ipstr(&st->st_remoteaddr, &b),
-					   st->st_remoteport,
-					   where));
+				LOG_ERRNO(errno,
+					  "sendto on %s to %s:%u failed in %s",
+					  st->st_interface->ip_dev->id_rname,
+					  ipstr(&st->st_remoteaddr, &b),
+					  st->st_remoteport,
+					  where);
 			}
 			return FALSE;
 		}

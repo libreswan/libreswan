@@ -14,7 +14,6 @@
 
 SUBDIRS = pluto
 SUBDIRS += enumcheck
-SUBDIRS += algparse
 SUBDIRS += cavp
 
 ifndef top_srcdir

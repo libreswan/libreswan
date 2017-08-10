@@ -190,14 +190,14 @@ void init_pfkey(void)
 	pfkeyfd = safe_socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
 
 	if (pfkeyfd == -1)
-		exit_log_errno((e, "socket() in init_pfkeyfd()"));
+		EXIT_LOG_ERRNO(errno, "socket() in init_pfkeyfd()");
 
 #ifdef NEVER    /* apparently unsupported! */
 	if (fcntl(pfkeyfd, F_SETFL, O_NONBLOCK) != 0)
-		exit_log_errno((e, "fcntl(O_NONBLOCK) in init_pfkeyfd()"));
+		EXIT_LOG_ERRNO(errno, "fcntl(O_NONBLOCK) in init_pfkeyfd()");
 #endif
 	if (fcntl(pfkeyfd, F_SETFD, FD_CLOEXEC) != 0)
-		exit_log_errno((e, "fcntl(FD_CLOEXEC) in init_pfkeyfd()"));
+		EXIT_LOG_ERRNO(errno, "fcntl(FD_CLOEXEC) in init_pfkeyfd()");
 
 	DBG(DBG_KERNEL,
 	    DBG_log("process %u listening for PF_KEY_V2 on file descriptor %d",
@@ -257,7 +257,7 @@ static bool pfkey_input_ready(void)
 	} while (ndes == -1 && errno == EINTR);
 
 	if (ndes < 0) {
-		log_errno((e, "select() failed in pfkey_get()"));
+		LOG_ERRNO(errno, "select() failed in pfkey_get()");
 		return FALSE;
 	}
 
@@ -292,7 +292,7 @@ static bool pfkey_get(pfkey_buf *buf)
 			if (errno == EAGAIN)
 				return FALSE;
 
-			log_errno((e, "read() failed in pfkey_get()"));
+			LOG_ERRNO(errno, "read() failed in pfkey_get()");
 			return FALSE;
 		} else if ((size_t) len < sizeof(buf->msg)) {
 			libreswan_log(
@@ -667,14 +667,14 @@ static bool finish_pfkey_msg(struct sadb_ext *extensions[K_SADB_EXT_MAX + 1],
 					/* FALL THROUGH */
 					default:
 logerr:
-						libreswan_log_errno_routine(e1,
-							"pfkey write() of %s message %u for %s %s failed",
-							sparse_val_show(
-								pfkey_type_names,
-								pfkey_msg->sadb_msg_type),
-							pfkey_msg->sadb_msg_seq,
-							description,
-							text_said);
+						LOG_ERRNO(e1,
+							  "pfkey write() of %s message %u for %s %s failed",
+							  sparse_val_show(
+								  pfkey_type_names,
+								  pfkey_msg->sadb_msg_type),
+							  pfkey_msg->sadb_msg_seq,
+							  description,
+							  text_said);
 						success = FALSE;
 					}
 				} else {

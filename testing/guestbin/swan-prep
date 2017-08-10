@@ -445,27 +445,15 @@ for ipt in ("iptables", "ip6tables"):
     subprocess.getoutput("%s -A LOGDROP -j DROP" % ipt)
 
 # final prep - this kills any running userland
-output = subprocess.getoutput("ipsec stop")
-# python has no pidof :/. getoutput return a string not a list.
-# split the string to make a list. Empty strings will discarded
-
-pids = []
-pluto = subprocess.getoutput("pidof pluto")
-pids.extend(pluto.split())
-charon = subprocess.getoutput("pidof starter")
-pids.extend(charon.split())
-charonstarter = subprocess.getoutput("pidof charon")
-pids.extend(charonstarter.split())
-shrew = subprocess.getoutput("pidof iked")
-pids.extend(shrew.split())
-racoon1 = subprocess.getoutput("pidof racoon2-spmd")
-pids.extend(racoon1.split())
-racoon2 = subprocess.getoutput("pidof racoon2-iked")
-pids.extend(racoon2.split())
-
-for pid in pids:
-    if pid:
-        os.kill(int(pid), 9)
+subprocess.call(["systemctl", "stop", "ipsec"])
+# for some reason this fails to stop strongswan?
+subprocess.call(["systemctl", "stop", "strongswan"])
+# python has no pidof - just outsource to the shell, thanks python!
+for dname in ( "pluto", "charon", "starter", "iked", "racoon2-spmd", "racoon2-iked"):
+    try:
+        subprocess.check_output(["killall", "-9", dname], stderr=subprocess.STDOUT)
+    except:
+        pass
 
 # note shrew and racoon2 share a pid file name
 for pidfile in ("/var/run/pluto/pluto.pid", "/var/run/charon.pid", "/var/run/iked.pid", "/var/run/spmd.pid", "/var/run/starter.charon.pid"):

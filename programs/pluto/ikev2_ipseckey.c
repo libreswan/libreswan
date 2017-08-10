@@ -26,7 +26,7 @@
 #include <errno.h>
 #include <arpa/inet.h> /* for inet_ntop */
 #include <arpa/nameser.h>
-#include <ldns/ldns.h>
+#include <ldns/ldns.h>	/* from ldns-devel */
 #include <ldns/rr.h>
 #include "unbound-event.h"
 #include "libreswan.h"
@@ -206,7 +206,7 @@ static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf,
 	 */
 	ttl_used = max(ttl,  (u_int32_t)RETRANSMIT_TIMEOUT_DEFAULT);
 
-	if(ttl_used == ttl) {
+	if (ttl_used == ttl) {
 		snprintf(ttl_buf, sizeof(ttl_buf), "ttl %u", ttl);
 	} else {
 		snprintf(ttl_buf, sizeof(ttl_buf), "ttl %u ttl used %u", ttl,
@@ -306,7 +306,7 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 		ldns_rdf *rdf;
 		ldns_status  status = LDNS_STATUS_OK;
 
-		if(output != NULL)
+		if (output != NULL)
 			ldns_buffer_free(output);
 
 		output = ldns_buffer_new((dnsr->wire_len * 8/6 + 2 +1) * 2);
@@ -348,7 +348,7 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 		ldns_buffer_printf(output, " ");
 
 		/* lets parse and debug log the usual RR types */
-		switch(atype) {
+		switch (atype) {
 		case LDNS_RR_TYPE_A:
 			ldns_rdf2buffer_str_a(output, rdf);
 			break;
@@ -404,7 +404,7 @@ static err_t process_dns_resp(struct p_dns_req *dnsr)
 	ldns_status status;
 	ldns_pkt *ldnspkt = NULL;
 
-	if(dnsr->rcode != 0 ) {
+	if (dnsr->rcode != 0 ) {
 		return dnsr->rcode_name;
 	}
 
@@ -437,7 +437,7 @@ void  free_ipseckey_dns( struct p_dns_req *d)
 	if (d == NULL)
 		return;
 
-	if(d->ub_async_id !=  0)
+	if (d->ub_async_id !=  0)
 	{
 		ub_cancel(get_unbound_ctx(), d->ub_async_id);
 		d->ub_async_id = 0;
@@ -533,7 +533,7 @@ static void idr_ipseckey_fetch_continue(struct p_dns_req *dnsr)
 	}
 
 	if (dnsr->cache_hit) {
-		if(dnsr->rcode == 0 && parse_err == NULL) {
+		if (dnsr->rcode == 0 && parse_err == NULL) {
 			 dnsr->stf_status = STF_OK;
 		} else {
 			/* is there a better ret status ? */
@@ -557,7 +557,7 @@ static void idi_ipseckey_fetch_tail(struct state *st, bool err)
 
 	unset_suspended(md->st);
 
-	if(err) {
+	if (err) {
 		stf = STF_FAIL + v2N_AUTHENTICATION_FAILED;
 	} else {
 		stf = ikev2_parent_inI2outR2_id_tail(md);
@@ -596,7 +596,7 @@ static void idi_a_fetch_continue(struct p_dns_req *dnsr)
 	if (dnsr->rcode == 0 && dnsr->fwd_addr_valid) {
 		err = FALSE;
 	} else {
-		if(st->ipseckey_dnsr != NULL) {
+		if (st->ipseckey_dnsr != NULL) {
 			free_ipseckey_dns(st->ipseckey_dnsr);
 			st->ipseckey_dnsr = NULL;
 		}
@@ -604,7 +604,7 @@ static void idi_a_fetch_continue(struct p_dns_req *dnsr)
 	}
 
 	if (dnsr->cache_hit) {
-		if(err) {
+		if (err) {
 			/* is there a beeter ret status ? */
 			dnsr->stf_status = STF_FAIL + v2N_AUTHENTICATION_FAILED;
 		} else {
@@ -616,7 +616,7 @@ static void idi_a_fetch_continue(struct p_dns_req *dnsr)
 	dnsr->ub_async_id = 0; /* this query is done no need to cancel it */
 	st->ipseckey_fwd_dnsr = NULL;
 
-	if(st->ipseckey_dnsr != NULL) {
+	if (st->ipseckey_dnsr != NULL) {
 		DBG(DBG_CONTROL, DBG_log("wait for IPSECKEY DNS response %s",
 					dnsr->qname));
 		/* wait for additional A/AAAA dns response */
@@ -658,10 +658,10 @@ static void idi_ipseckey_fetch_continue(struct p_dns_req *dnsr)
 		ikev2_ipseckey_log_dns_err(dnsr, parse_err);
 	}
 
-	if(dnsr->rcode == 0 && parse_err == NULL) {
+	if (dnsr->rcode == 0 && parse_err == NULL) {
 		err = FALSE;
 	} else {
-		if(st->ipseckey_fwd_dnsr != NULL) {
+		if (st->ipseckey_fwd_dnsr != NULL) {
 			free_ipseckey_dns(st->ipseckey_fwd_dnsr);
 			st->ipseckey_fwd_dnsr = NULL;
 		}
@@ -669,7 +669,7 @@ static void idi_ipseckey_fetch_continue(struct p_dns_req *dnsr)
 	}
 
 	if (dnsr->cache_hit) {
-		if(err) {
+		if (err) {
 			/* is there a beeter ret status ? */
 			dnsr->stf_status = STF_FAIL + v2N_AUTHENTICATION_FAILED;
 		} else {
@@ -682,7 +682,7 @@ static void idi_ipseckey_fetch_continue(struct p_dns_req *dnsr)
 
 	st->ipseckey_dnsr = NULL;
 
-	if(st->ipseckey_fwd_dnsr != NULL) {
+	if (st->ipseckey_fwd_dnsr != NULL) {
 		DBG(DBG_CONTROL, DBG_log("wait for additional DNS A/AAAA check %s",
 					dnsr->qname));
 		/* wait for additional A/AAAA dns response */
@@ -716,7 +716,7 @@ static void ipseckey_ub_cb(void* mydata, int rcode,
 	dnsr->cb(dnsr);
 }
 
-static err_t build_dns_name (char *name_buf, /* array of len HOST_NAME_MAX */
+static err_t build_dns_name(char *name_buf, /* array of len HOST_NAME_MAX */
 		const struct id *id)
 {
 	/* note: all end in "." to suppress relative searches */
@@ -776,7 +776,7 @@ static struct p_dns_req *qry_st_init(struct state *st,
 
 
 	err = build_dns_name(qname, &id);
-	if( err !=  NULL) {
+	if ( err !=  NULL) {
 		/* is there qtype to name lookup function  */
 		loglog(RC_LOG_SERIOUS, "could not build dns query name %s %d",
 				err, qtype);
@@ -830,7 +830,7 @@ static stf_status dns_qry_start(struct p_dns_req *dnsr)
 	ub_ret = ub_resolve_event(get_unbound_ctx(), dnsr->qname, dnsr->qtype,
 			dnsr->qclass, dnsr, ipseckey_ub_cb, &dnsr->ub_async_id);
 
-	if( ub_ret !=  0) {
+	if ( ub_ret !=  0) {
 		loglog(RC_LOG_SERIOUS, "unbound resolve call failed for %s",
 				dnsr->log_buf);
 		free_ipseckey_dns(dnsr);
@@ -926,7 +926,7 @@ stf_status idi_ipseckey_fetch(struct msg_digest *md)
 	}
 #endif  /* this is the forward extra check */
 
-	if(ret_a != STF_SUSPEND && ret_a != STF_OK) {
+	if (ret_a != STF_SUSPEND && ret_a != STF_OK) {
 		free_ipseckey_dns(dnsr_idi);
 	} else if (ret_a == STF_SUSPEND || ret_idi == STF_SUSPEND) {
 		/* all success */

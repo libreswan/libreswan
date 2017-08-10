@@ -229,8 +229,7 @@ struct traffic_selector {
 	u_int8_t ipprotoid;
 	u_int16_t startport;
 	u_int16_t endport;
-	ip_address low;
-	ip_address high;
+	ip_range net;	/* for now, always happens to be a CIDR */
 };
 
 /* state object: record the state of a (possibly nascent) SA
@@ -246,9 +245,7 @@ struct state {
 	so_serial_t st_ike_pred; /* IKEv2: replacing established IKE SA */
 	so_serial_t st_ipsec_pred; /* IKEv2: replacing established IPsec SA */
 
-	pthread_mutex_t xauth_mutex;            /* per state xauth_mutex */
-	pthread_t xauth_tid;                 /* per state XAUTH_RO thread id */
-	bool has_pam_thread;                   /* per state PAM thread flag */
+	pthread_t st_xauth_thread;		/* per state xauth/pam thread */
 
 	bool st_ikev2;                          /* is this an IKEv2 state? */
 	bool st_ikev2_no_del;                   /* suppress sending DELETE - eg replaced conn */

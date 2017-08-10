@@ -100,7 +100,7 @@ class Issues:
         values = set()
         for errors in self.issues.values():
             for error in errors:
-                values |= error
+                values.add(error)
         return values.__iter__()
 
     def __contains__(self, item):
@@ -315,6 +315,7 @@ class TestResult:
                                                     test)
             if sanitized_output is None:
                 self.issues.add("sanitizer-failed", host_name)
+                self.resolution.unresolved()
                 continue
             if update:
                 self.logger.debug("host %s updating sanitized output file: %s",
@@ -348,9 +349,9 @@ class TestResult:
             if diff is None:
                 # use brute force
                 diff = _diff(self.logger,
-                             "MASTER/" + test.name + "/" + host_name + ".console.txt",
+                             "MASTER/" + test.directory + "/" + host_name + ".console.txt",
                              expected_output,
-                             "OUTPUT/" + test.name + "/" + host_name + ".console.txt",
+                             "OUTPUT/" + test.directory + "/" + host_name + ".console.txt",
                              sanitized_output)
 
             if update:
@@ -480,9 +481,9 @@ def mortem(test, args, domain_prefix="",
             continue
 
         baseline_diff = _diff(logger,
-                              "BASELINE/" + test.name + "/" + host_name + ".console.txt",
+                              "BASELINE/" + test.directory + "/" + host_name + ".console.txt",
                               baseline_result.sanitized_output[host_name],
-                              "OUTPUT/" + test.name + "/" + host_name + ".console.txt",
+                              "OUTPUT/" + test.directory + "/" + host_name + ".console.txt",
                               test_result.sanitized_output[host_name])
         if baseline_diff:
             baseline_whitespace = _whitespace(baseline_result.sanitized_output[host_name],
@@ -492,7 +493,7 @@ def mortem(test, args, domain_prefix="",
             else:
                 test_result.issues.add("baseline-different", host_name)
             # update the diff to something hopefully closer?
-            test_result.diffs[host_name] = baseline_diff
+            # test_result.diffs[host_name] = baseline_diff
         # else:
         #    test_result.issues.add("baseline-failed", host_name)
 

@@ -117,7 +117,7 @@
  *   as the original policy, even though its subnets might be smaller.
  * - display format: n,m
  */
-typedef unsigned long policy_prio_t;
+typedef uint32_t policy_prio_t;
 #define BOTTOM_PRIO   ((policy_prio_t)0)        /* smaller than any real prio */
 
 #define set_policy_prio(c) { (c)->prio = \
@@ -125,7 +125,7 @@ typedef unsigned long policy_prio_t;
 		| ((policy_prio_t)(c)->spd.that.client.maskbits << 8) \
 		|  (policy_prio_t)1; }
 
-#define POLICY_PRIO_BUF (3 + 1 + 3 + 1)
+#define POLICY_PRIO_BUF (3 + 1 + 3 + 1 + 10)	/* (10 is to silence GCC) */
 extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
 
 #ifdef XAUTH_HAVE_PAM
@@ -242,6 +242,7 @@ struct connection {
 	deltatime_t r_timeout; /* max time (in secs) for one packet exchange attempt */
 	reqid_t sa_reqid;
 	int encapsulation;
+	enum nic_offload_options nic_offload;
 
 	/* RFC 3706 DPD */
 	deltatime_t dpd_delay;		/* time between checks */
@@ -536,4 +537,4 @@ extern void unshare_connection_end(struct end *e);
 
 extern void liveness_clear_connection(struct connection *c, char *v);
 
-extern void liveness_action(struct connection *c);
+extern void liveness_action(struct connection *c, const bool ikev2);

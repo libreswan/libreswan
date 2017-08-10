@@ -111,7 +111,7 @@ extern struct msg_digest *alloc_md(char *mdname);
 extern void release_md(struct msg_digest *md);
 extern void release_any_md(struct msg_digest **mdp);
 
-typedef stf_status state_transition_fn (struct msg_digest *md);
+typedef stf_status state_transition_fn(struct msg_digest *md);
 
 extern void fmt_ipsec_sa_established(struct state *st,
 				     char *sadetails, size_t sad_len);

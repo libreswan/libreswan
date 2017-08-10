@@ -316,14 +316,14 @@ static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
 	}
 
 	if (end_cert == NULL) {
-		DBG(DBG_X509, DBG_log("no end cert in chain!"));
+		libreswan_log("X509: no EE-cert in chain!");
 		return VERIFY_RET_FAIL;
 	}
 
 	CERTCertList *trustcl = get_all_root_certs();
 
 	if (trustcl == NULL) {
-		DBG(DBG_X509, DBG_log("no trust anchor available for verification"));
+		libreswan_log("X509: no trust anchor available for verification");
 		return VERIFY_RET_FAIL;
 	}
 
@@ -406,8 +406,7 @@ static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
 				 * An rv != SECSuccess without CERTVerifyLog results should not
 				 * happen, but catch it anyway
 				 */
-				DBG(DBG_X509,
-				    DBG_log("unspecified NSS verification failure"));
+				libreswan_log("X509: unspecified NSS verification failure");
 				fin = VERIFY_RET_FAIL;
 			}
 		} else {
@@ -452,8 +451,10 @@ static void chunks_to_si(chunk_t *chunks, SECItem *items, int chunk_n,
 int verify_and_cache_chain(chunk_t *ders, int num_ders, CERTCertificate **ee_out,
 							bool *rev_opts)
 {
-	if (VFY_INVALID_USE(ders, num_ders))
+	if (VFY_INVALID_USE(ders, num_ders)) {
+		libreswan_log("X509: Invalid certificate (self-signed EE-cert attempted or MAX_CA_PATH_LEN reached");
 		return -1;
+	}
 
 	SECItem si_ders[MAX_CA_PATH_LEN] = { {siBuffer, NULL, 0} };
 
@@ -474,14 +475,16 @@ int verify_and_cache_chain(chunk_t *ders, int num_ders, CERTCertificate **ee_out
 	CERTCertificate **cert_chain = NULL;
 	int chain_len = crt_tmp_import(handle, &cert_chain, si_ders, num_ders);
 
-	if (chain_len < 1)
+	if (chain_len < 1) {
+		libreswan_log("X509: temporary cert import operation failed");
 		return -1;
+	}
 
 	int ret = 0;
 
 	if (crl_update_check(handle, cert_chain, chain_len)) {
 		if (rev_opts[RO_CRL_S]) {
-			DBG(DBG_X509, DBG_log("missing or expired CRL in strict mode, failing pending update"));
+			libreswan_log("missing or expired CRL in strict mode, failing pending update");
 			return VERIFY_RET_FAIL | VERIFY_RET_CRL_NEED;
 		}
 		DBG(DBG_X509, DBG_log("missing or expired CRL"));
@@ -522,7 +525,7 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *name)
 
 	do
 	{
-		switch(current->type) {
+		switch (current->type) {
 		case certDNSName:
 		case certRFC822Name:
 			if (san_ip)

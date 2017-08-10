@@ -38,8 +38,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <limits.h>
-#include <signal.h>
-#include <setjmp.h>
 
 #if defined(linux)
 /* is supposed to be in unistd.h, but it isn't on linux */
@@ -68,7 +66,7 @@
 #include "timer.h"
 #include "keys.h"
 #include "ipsec_doi.h"	/* needs demux.h and state.h */
-
+#include "xauth.h"
 #include "crypto.h"
 #include "ike_alg.h"
 #include "secrets.h"
@@ -76,45 +74,11 @@
 #include "ikev1_xauth.h"
 #include "virtual.h"	/* needs connections.h */
 #include "addresspool.h"
-#include "pam_conv.h"
 
 /* forward declarations */
 static stf_status xauth_client_ackstatus(struct state *st,
 					 pb_stream *rbody,
 					 u_int16_t ap_id);
-
-/* BEWARE: This code is multi-threaded.
- *
- * Any static object is likely shared and probably has to be protected by
- * a lock.
- * Any other shared object needs to be protected.
- * Beware of calling functions that are not thread-safe.
- *
- * Static or shared objects:
- * - locks (duh)
- * - st_jbuf_mem and the structure it points to
- * - ??? field pamh in struct connection.
- *
- * Non-thread-safe functions:
- * - crypt(3) used by do_file_authentication()
- * - ??? pam_*?
- */
-
-typedef struct {
-	bool in_use;
-	struct state *st;
-	sigjmp_buf jbuf;
-} st_jbuf_t;
-
-struct xauth_thread_arg {
-	struct state *st;
-	/* the memory for these is allocated and freed by our thread management */
-	char *name;
-	char *password;
-	char *connname;
-	char *ipaddr;
-	st_jbuf_t *ptr;
-};
 
 /**
  * Addresses assigned (usually via MODE_CONFIG) to the Initiator
@@ -146,156 +110,6 @@ static field_desc CISCO_split_fields[] = {
 
 static struct_desc CISCO_split_desc =
 	{ "CISCO split item", CISCO_split_fields, 14 };
-
-/*
- * pointer to an array of st_jbuf_t elements.
- * The last element has .st==NULL (and !.in_use).
- * Unused ones (not the last) have some meaningless non-NULL value in .st.  Yuck!
- * All manipulations must be protected via st_jbuf_mutex.
- * If no entries are in use, the array must be freed:
- * two tests in do_authentication depend on this.
- * Note: managed by calloc/realloc/free
- */
-static st_jbuf_t *st_jbuf_mem = NULL;
-
-static pthread_mutex_t st_jbuf_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-/* Note: caller must have locked st_jbuf_mutex */
-/* IN AN AUTH THREAD */
-static void dealloc_st_jbuf(st_jbuf_t *ptr)
-{
-	st_jbuf_t *p;
-
-	ptr->in_use = FALSE;
-
-	for (p = st_jbuf_mem; p->st != NULL; p++) {
-		if (p->in_use) {
-			/* there is still an entry in use: don't free array */
-			return;
-		}
-	}
-
-	/* no remaining entries in use: free array */
-	free(st_jbuf_mem);	/* was calloc()ed or realloc()ed */
-	st_jbuf_mem = NULL;
-}
-
-/* Note: caller must have locked st_jbuf_mutex */
-static st_jbuf_t *get_ptr_matching_tid(void)
-{
-	st_jbuf_t *p;
-
-	for (p = st_jbuf_mem; p->st != NULL; p++) {
-		if (p->in_use && p->st->xauth_tid == pthread_self())
-			return p;
-	}
-	return NULL;
-}
-
-/*
- * Find or create a free slot in the st_jbuf_mem array.
- * Note: after return, caller MUST set the .st field of the result to a
- * non-NULL value or bad things happen. The only caller does this.
- * The caller must not have locked st_jbuf_mutex: we will.
- */
-static st_jbuf_t *alloc_st_jbuf(void)
-{
-	st_jbuf_t *ptr;
-
-	pthread_mutex_lock(&st_jbuf_mutex);
-	if (st_jbuf_mem == NULL) {
-		/* no array: allocate one slot plus endmarker */
-		st_jbuf_mem = calloc(2, sizeof(st_jbuf_t));
-		passert(st_jbuf_mem != NULL);
-
-		/*
-		 * Initialize end marker.
-		 * calloc(3) does not guarantee that pointer .st is
-		 * initialized to NULL but it will set .in_use to FALSE.
-		 */
-		st_jbuf_mem[1].st = NULL;
-
-		ptr = st_jbuf_mem;
-		/* new entry is going in first slot in our new array */
-	} else {
-		for (ptr = st_jbuf_mem; ptr->st != NULL; ptr++) {
-			if (ptr->st == NULL) {
-				/* ptr points at endmarker:
-				 * there is no room in the existing array.
-				 * Add another slot.
-				 */
-				ptrdiff_t n = ptr - st_jbuf_mem;	/* number of entries, excluding end marker */
-
-				/* allocate n entries, plus one new entry, plus new endmarker */
-				/* ??? why are we using reealloc instead of Pluto's functions? */
-				st_jbuf_mem = realloc(st_jbuf_mem, sizeof(st_jbuf_t) * (n + 2));
-				passert(st_jbuf_mem != NULL);
-
-				ptr = st_jbuf_mem + n;
-
-				/* caller MUST ensure that ptr->st is non-NULL */
-
-				ptr[1].in_use = FALSE;	/* initialize new endmarker */
-				ptr[1].st = NULL;
-				/* new entry is the former endmarker slot */
-				break;
-			}
-			if (!ptr->in_use) {
-				/* we found a free slot in our existing array */
-				break;
-			}
-		}
-	}
-
-	ptr->in_use = TRUE;
-	pthread_mutex_unlock(&st_jbuf_mutex);
-	return ptr;
-}
-
-/* sigIntHandler.
- * The only expected source of SIGINTs is state_deletion_xauth_cleanup
- * so the meaning is: shut down this thread, the state is disappearing.
- * ??? what if a SIGINT comes from somewhere else?
- * Note: this function locks st_jbuf_mutex
- * The longjump handler must unlock it.
- */
-static void sigIntHandler(int sig)
-{
-	if (sig == SIGINT) {
-		st_jbuf_t *ptr;
-
-		pthread_mutex_lock(&st_jbuf_mutex);
-		ptr = get_ptr_matching_tid();
-		if (ptr == NULL) {
-			pthread_mutex_unlock(&st_jbuf_mutex);
-			/*
-			 * Why unlock when things will crash anyway?
-			 */
-			passert(ptr != NULL);
-		}
-		/* note: st_jbuf_mutex is locked */
-		siglongjmp(ptr->jbuf, 1);
-	}
-}
-
-/* state_deletion_xauth_cleanup:
- * If there is still an authentication thread alive, kill it.
- * This is called by delete_state() to fix up any dangling xauth thread.
- */
-void state_deletion_xauth_cleanup(struct state *st)
-{
-	/* ??? In POSIX pthreads, pthread_t is opaque and the following test is not legitimate */
-	if (st->xauth_tid) {
-		pthread_kill(st->xauth_tid, SIGINT);
-		/* The pthread_mutex_lock ensures that the do_authentication
-		 * thread completes when pthread_kill'ed
-		 */
-		pthread_mutex_lock(&st->xauth_mutex);
-		pthread_mutex_unlock(&st->xauth_mutex);
-	}
-	/* ??? what if the mutex hasn't been created?  Is destroying OK? */
-	pthread_mutex_destroy(&st->xauth_mutex);
-}
 
 oakley_auth_t xauth_calcbaseauth(oakley_auth_t baseauth)
 {
@@ -419,103 +233,108 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 				   const struct internal_addr *ia,
 				   const struct state *st)
 {
-	bool dont_advance;
-	unsigned dns_idx = 0;
+	pb_stream attrval;
+	const unsigned char *byte_ptr;
+	unsigned int len;
+	bool ok = TRUE;
 
-	do {
-		pb_stream attrval;
-		unsigned char *byte_ptr;
-		unsigned int len;
-		bool ok = TRUE;
+	/* ISAKMP attr out */
+	const struct isakmp_attribute attr = {
+		.isaat_af_type = attr_type | ISAKMP_ATTR_AF_TLV
+	};
 
-		dont_advance = FALSE;
+	if (!out_struct(&attr,
+			&isakmp_xauth_attribute_desc,
+			strattr,
+			&attrval))
+		return STF_INTERNAL_ERROR;
 
-		/* ISAKMP attr out */
-		{
-			struct isakmp_attribute attr;
+	switch (attr_type) {
+	case INTERNAL_IP4_ADDRESS:
+		len = addrbytesptr_read(&ia->ipaddr, &byte_ptr);
+		ok = out_raw(byte_ptr, len, &attrval,
+			     "IP4_addr");
+		break;
 
-			attr.isaat_af_type = attr_type |
-					     ISAKMP_ATTR_AF_TLV;
+	case INTERNAL_IP4_SUBNET:
+		len = addrbytesptr_read(
+			&st->st_connection->spd.this.client.addr, &byte_ptr);
+		if (!out_raw(byte_ptr, len, &attrval, "IP4_subnet"))
+			return STF_INTERNAL_ERROR;
+		/* FALL THROUGH */
+	case INTERNAL_IP4_NETMASK:
+	{
+		int m = st->st_connection->spd.this.client.maskbits;
+		u_int32_t mask = htonl(~(m == 32 ? (u_int32_t)0 : ~(u_int32_t)0 >> m));
+
+		ok = out_raw(&mask, sizeof(mask), &attrval, "IP4_submsk");
+		break;
+	}
+
+	case INTERNAL_IP4_DNS:
+		/*
+		 * Emit one attribute per DNS IP.
+		 * (All other cases emit exactly one attribute.)
+		 * The first's emission is started above
+		 * and the last's is finished at the end
+		 * so our loop structure is odd.
+		 */
+		for (unsigned i = 0; ; ) {
+			/* emit attribute's value */
+			len = addrbytesptr_read(&ia->dns[i], &byte_ptr);
+			ok = out_raw(byte_ptr, len, &attrval, "IP4_dns");
+
+			/* see if there's another DNS */
+			i++;
+			if (!ok || i >= elemsof(ia->dns) || isanyaddr(&ia->dns[i]))
+				break;
+
+			/* close attribute and start next */
+			close_output_pbs(&attrval);
+
 			if (!out_struct(&attr,
 					&isakmp_xauth_attribute_desc,
 					strattr,
 					&attrval))
 				return STF_INTERNAL_ERROR;
 		}
+		break;
 
-		switch (attr_type) {
-		case INTERNAL_IP4_ADDRESS:
-			len = addrbytesptr(&ia->ipaddr,
-					   &byte_ptr);
-			ok = out_raw(byte_ptr, len, &attrval,
-				     "IP4_addr");
-			break;
+	case MODECFG_DOMAIN:
+		ok = out_raw(st->st_connection->modecfg_domain,
+			     strlen(st->st_connection->modecfg_domain),
+			     &attrval, "");
+		break;
 
-		case INTERNAL_IP4_SUBNET:
-			len = addrbytesptr(
-				&st->st_connection->spd.this.client.addr,
-				&byte_ptr);
-			if (!out_raw(byte_ptr, len, &attrval,
-				     "IP4_subnet"))
-				return STF_INTERNAL_ERROR;
-			/* FALL THROUGH */
-		case INTERNAL_IP4_NETMASK:
-		{
-			int m = st->st_connection->spd.this.client.maskbits;
-			u_int32_t mask = htonl(~(m == 32 ? (u_int32_t)0 : ~(u_int32_t)0 >> m));
+	case MODECFG_BANNER:
+		ok = out_raw(st->st_connection->modecfg_banner,
+			     strlen(st->st_connection->modecfg_banner),
+			     &attrval, "");
+		break;
 
-			ok = out_raw(&mask, sizeof(mask),
-				     &attrval, "IP4_submsk");
-			break;
-		}
+	/* XXX: not sending if our end is 0.0.0.0/0 equals previous previous behaviour */
+	case CISCO_SPLIT_INC:
+	{
+		struct CISCO_split_item i = {
+			st->st_connection->spd.this.client.addr.u.v4.sin_addr,
+			bitstomask(st->st_connection->spd.this.client.maskbits)
+		};
 
-		case INTERNAL_IP4_DNS:
-			len = addrbytesptr(&ia->dns[dns_idx++],
-					   &byte_ptr);
-			ok = out_raw(byte_ptr, len, &attrval,
-				     "IP4_dns");
+		ok = out_struct(&i, &CISCO_split_desc, &attrval, NULL);
+		break;
+	}
+	default:
+		libreswan_log(
+			"attempt to send unsupported mode cfg attribute %s.",
+			enum_show(&modecfg_attr_names,
+				  attr_type));
+		break;
+	}
 
-			if (dns_idx < elemsof(ia->dns) &&
-			    !isanyaddr(&ia->dns[dns_idx]))
-				dont_advance = TRUE;
-			break;
+	if (!ok)
+		return STF_INTERNAL_ERROR;
 
-		case MODECFG_DOMAIN:
-			ok = out_raw(st->st_connection->modecfg_domain,
-				     strlen(st->st_connection->modecfg_domain),
-				     &attrval, "");
-			break;
-
-		case MODECFG_BANNER:
-			ok = out_raw(st->st_connection->modecfg_banner,
-				     strlen(st->st_connection->modecfg_banner),
-				     &attrval, "");
-			break;
-
-		/* XXX: not sending if our end is 0.0.0.0/0 equals previous previous behaviour */
-		case CISCO_SPLIT_INC:
-		{
-			struct CISCO_split_item i = {
-				st->st_connection->spd.this.client.addr.u.v4.sin_addr,
-				bitstomask(st->st_connection->spd.this.client.maskbits)
-			};
-
-			ok = out_struct(&i, &CISCO_split_desc, &attrval, NULL);
-			break;
-		}
-		default:
-			libreswan_log(
-				"attempt to send unsupported mode cfg attribute %s.",
-				enum_show(&modecfg_attr_names,
-					  attr_type));
-			break;
-		}
-
-		if (!ok)
-			return STF_INTERNAL_ERROR;
-
-		close_output_pbs(&attrval);
-	} while (dont_advance);
+	close_output_pbs(&attrval);
 
 	return STF_OK;
 }
@@ -1080,10 +899,10 @@ static stf_status xauth_send_status(struct state *st, int status)
  *
  * @return bool success
  */
-/* IN AN AUTH THREAD */
-static bool do_file_authentication(void *varg)
+
+static bool do_file_authentication(struct state *st, const char *name,
+				   const char *password, const char *connname)
 {
-	struct xauth_thread_arg *arg = varg;
 	char pwdfile[PATH_MAX];
 	char line[1024]; /* we hope that this is more than enough */
 	int lineno = 0;
@@ -1114,7 +933,7 @@ static bool do_file_authentication(void *varg)
 		char *passwdhash;
 		char *connectionname = NULL;
 		char *addresspool = NULL;
-		struct connection *c = arg->st->st_connection;
+		struct connection *c = st->st_connection;
 		ip_range *pool_range;
 
 		lineno++;
@@ -1162,30 +981,26 @@ static bool do_file_authentication(void *varg)
 		 */
 		DBG(DBG_CONTROL,
 			DBG_log("XAUTH: found user(%s/%s) pass(%s) connid(%s/%s) addresspool(%s)",
-				userid, arg->name,
-				passwdhash,
-				connectionname == NULL? "" : connectionname, arg->connname,
+				userid, name, passwdhash,
+				connectionname == NULL? "" : connectionname, connname,
 				addresspool == NULL? "" : addresspool));
 
-		if (streq(userid, arg->name) &&
-		    (connectionname == NULL || streq(connectionname, arg->connname)))
+		if (streq(userid, name) &&
+		    (connectionname == NULL || streq(connectionname, connname)))
 		{
 			char *cp;
-
-			/* We use crypt_mutex lock because not all systems have crypt_r() */
-			static pthread_mutex_t crypt_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-			pthread_mutex_lock(&crypt_mutex);
 #if defined(__CYGWIN32__)
 			/* password is in the clear! */
-			cp = arg->password;
+			cp = password;
 #else
-			/* keep the passwords using whatever utilities we have */
-			cp = crypt(arg->password, passwdhash);
+			/*
+			 * keep the passwords using whatever utilities
+			 * we have NOTE: crypt() may not be
+			 * thread-safe
+			 */
+			cp = crypt(password, passwdhash);
 #endif
 			win = cp != NULL && streq(cp, passwdhash);
-			pthread_mutex_unlock(&crypt_mutex);
-
 			/* ??? DBG and real-world code mixed */
 			if (DBGP(DBG_CRYPT)) {
 				DBG_log("XAUTH: checking user(%s:%s) pass %s vs %s", userid, connectionname, cp,
@@ -1237,187 +1052,44 @@ static bool do_file_authentication(void *varg)
 	return win;
 }
 
-#ifdef XAUTH_HAVE_PAM
-/* IN AN AUTH THREAD */
-static bool ikev1_do_pam_authentication(const struct xauth_thread_arg *arg)
-{
-	struct state *st = arg->st;
-	libreswan_log("XAUTH: pam authentication being called to authenticate user %s",
-			arg->name);
-	struct pam_thread_arg parg;
-	ipstr_buf ra;
-	struct timeval start_time;
-	struct timeval served_time;
-	struct timeval served_delta;
-	bool results = FALSE;
-
-	parg.name = arg->name;
-	parg.password =  arg->password;
-	parg.c_name = arg->connname;
-	parg.ra = clone_str(ipstr(&st->st_remoteaddr, &ra), "st remote address");
-	parg.st_serialno = st->st_serialno;
-	parg.c_instance_serial = st->st_connection->instance_serial;
-	parg.atype = "XAUTH";
-	gettimeofday(&start_time, NULL);
-	results = do_pam_authentication(&parg);
-	gettimeofday(&served_time, NULL);
-	timersub(&served_time, &start_time, &served_delta);
-	DBG(DBG_CONTROL,
-		DBG_log("XAUTH PAM helper thread call state #%lu, %s[%lu] user=%s %s. elapsed time %lu.%06lu",
-			parg.st_serialno, parg.c_name,
-			parg.c_instance_serial, parg.name,
-			results ? "SUCCESS" : "FAIL",
-			(unsigned long)served_delta.tv_sec,
-			(unsigned long)(served_delta.tv_usec * 1000000)));
-
-	pfreeany(parg.ra);
-	return results;
-}
-#endif
-
 /*
  * Main authentication routine will then call the actual compiled-in
  * method to verify the user/password
  */
 
-/* IN AN AUTH THREAD */
-static void *do_authentication(void *varg)
+static void ikev1_xauth_callback(struct state *st, const char *name,
+				 bool results)
 {
-	struct xauth_thread_arg *arg = varg;
-	struct state *st = arg->st;
-	bool results = FALSE;
-
-	struct sigaction sa;
-	struct sigaction oldsa;
-	st_jbuf_t *ptr = arg->ptr;
-
-	if (ptr == NULL) {
-		pfree(arg->password);
-		pfree(arg->name);
-		pfree(arg->connname);
-		pfree(varg);
-		pthread_mutex_unlock(&st->xauth_mutex);
-		st->xauth_tid = 0;	/* ??? Not well defined for POSIX threads!!! */
-		return NULL;
-	}
-	/* Note: this is the only sigsetjmp.
-	 * The only siglongjmp sets 1 as the return value.
-	 */
-	pthread_mutex_lock(&st_jbuf_mutex);
-	if (sigsetjmp(ptr->jbuf, 1) != 0) {
-		/* We got here via siglongjmp in sigIntHandler.
-		 * st_jbuf_mutex is locked.
-		 * The idea is to shut down the PAM dialogue.
-		 */
-
-		dealloc_st_jbuf(ptr);
-
-		/* Still one PAM thread? */
-		/* ??? how do we know that there is no more than one thread? */
-		/* ??? how do we know which thread was supposed to get this SIGINT if the signal handler setting is global? */
-		if (st_jbuf_mem != NULL) {
-			/* Yes, restart the one-shot SIGINT handler */
-			sigprocmask(SIG_BLOCK, NULL, &sa.sa_mask);
-			sa.sa_handler = sigIntHandler;
-			sa.sa_flags = SA_RESETHAND | SA_NODEFER | SA_ONSTACK; /* One-shot handler */
-			sigaddset(&sa.sa_mask, SIGINT);
-			sigaction(SIGINT, &sa, NULL);
-		} else {
-			/* no */
-			sigaction(SIGINT, &oldsa, NULL);
-		}
-		pthread_mutex_unlock(&st_jbuf_mutex);
-		pfree(arg->password);
-		pfree(arg->name);
-		pfree(arg->connname);
-		pfree(varg);
-		pthread_mutex_unlock(&st->xauth_mutex);
-		st->xauth_tid = 0;	/* ??? not valid for POSIX pthreads */
-		return NULL;
-	}
-
-	/* original flow (i.e. not due to siglongjmp) */
-	pthread_mutex_unlock(&st_jbuf_mutex);
-	sigprocmask(SIG_BLOCK, NULL, &sa.sa_mask);
-	pthread_sigmask(SIG_BLOCK, &sa.sa_mask, NULL);
-	sa.sa_handler = sigIntHandler;
-	sa.sa_flags = SA_RESETHAND | SA_NODEFER | SA_ONSTACK; /* One shot handler */
-	sigaddset(&sa.sa_mask, SIGINT);
-	sigaction(SIGINT, &sa, &oldsa);
-	libreswan_log("XAUTH: User %s: Attempting to login", arg->name);
-
-	switch (st->st_connection->xauthby) {
-#ifdef XAUTH_HAVE_PAM
-	case XAUTHBY_PAM:
-		results = ikev1_do_pam_authentication(arg);
-		break;
-#endif
-	case XAUTHBY_FILE:
-		libreswan_log(
-			"XAUTH: passwd file authentication being called to authenticate user %s",
-			arg->name);
-		results = do_file_authentication(varg);
-		break;
-	case XAUTHBY_ALWAYSOK:
-		libreswan_log(
-			"XAUTH: authentication method 'always ok' requested to authenticate user %s",
-			arg->name);
-		results = TRUE;
-		break;
-	default:
-		libreswan_log(
-			"XAUTH: unknown authentication method requested to authenticate user %s",
-			arg->name);
-		bad_case(st->st_connection->xauthby);
-	}
-
 	/*
 	 * If XAUTH authentication failed, should we soft fail or hard fail?
 	 * The soft fail mode is used to bring up the SA in a walled garden.
 	 * This can be detected in the updown script by the env variable XAUTH_FAILED=1
 	 */
 	if (!results && st->st_connection->xauthfail == XAUTHFAIL_SOFT) {
-		libreswan_log(
-			"XAUTH: authentication for %s failed, but policy is set to soft fail",
-			arg->name);
+		libreswan_log("XAUTH: authentication for %s failed, but policy is set to soft fail",
+			      name);
 		st->st_xauth_soft = TRUE; /* passed to updown for notification */
 		results = TRUE;
 	}
 
 	if (results) {
 		libreswan_log("XAUTH: User %s: Authentication Successful",
-			      arg->name);
+			      name);
 		xauth_send_status(st, XAUTH_STATUS_OK);
 
 		if (st->quirks.xauth_ack_msgid)
 			st->st_msgid_phase15 = v1_MAINMODE_MSGID;
 
-		jam_str(st->st_username, sizeof(st->st_username), arg->name);
+		jam_str(st->st_username, sizeof(st->st_username), name);
 	} else {
 		/*
 		 * Login attempt failed, display error, send XAUTH status to client
 		 * and reset state to XAUTH_R0
 		 */
-		libreswan_log(
-			"XAUTH: User %s: Authentication Failed: Incorrect Username or Password",
-			arg->name);
+		libreswan_log("XAUTH: User %s: Authentication Failed: Incorrect Username or Password",
+			      name);
 		xauth_send_status(st, XAUTH_STATUS_FAIL);
 	}
-
-	pthread_mutex_lock(&st_jbuf_mutex);
-	dealloc_st_jbuf(ptr);
-	if (st_jbuf_mem == NULL)
-		sigaction(SIGINT, &oldsa, NULL);
-	pthread_mutex_unlock(&st_jbuf_mutex);
-	pthread_mutex_unlock(&st->xauth_mutex);
-	st->xauth_tid = 0;	/* ??? this is not valid in POSIX pthreads */
-
-	pfree(arg->password);
-	pfree(arg->name);
-	pfree(arg->connname);
-	pfree(varg);
-
-	return NULL;
 }
 
 /** Launch an authentication prompt
@@ -1426,62 +1098,72 @@ static void *do_authentication(void *varg)
  * @param name Username
  * @param password Password
  * @param connname connnection name, from ipsec.conf
- * @return int Return Code - always 0.
  */
 static int xauth_launch_authent(struct state *st,
-			chunk_t *name,
-			chunk_t *password,
-			const char *connname)
+				chunk_t *name,
+				chunk_t *password,
+				const char *connname)
 {
-	pthread_attr_t pattr;
-	st_jbuf_t *ptr;
-	struct xauth_thread_arg *arg;
-
-	if (st->xauth_tid)	/* ??? this is not valid in POSIX pthreads */
+	/*
+	 * XAUTH somehow already in progress?
+	 */
+	if (!pthread_equal(st->st_xauth_thread, main_thread))
 		return 0;
 
-	/* build arg, the context that a thread gets on creation */
+	char *arg_name = alloc_bytes(name->len + 1, "XAUTH Name");
+	memcpy(arg_name, name->ptr, name->len);
+	char *arg_password = alloc_bytes(password->len + 1, "XAUTH Name");
+	memcpy(arg_password, password->ptr, password->len);
 
-	arg = alloc_thing(struct xauth_thread_arg, "XAUTH ThreadArg");
-	arg->st = st;
+	switch (st->st_connection->xauthby) {
+#ifdef XAUTH_HAVE_PAM
+	case XAUTHBY_PAM:
+		libreswan_log("XAUTH: PAM authentication method requested to authenticate user '%s'",
+			      arg_name);
+		xauth_start_pam_thread(&st->st_xauth_thread,
+				       arg_name, arg_password,
+				       connname,
+				       &st->st_remoteaddr,
+				       st->st_serialno,
+				       st->st_connection->instance_serial,
+				       "XAUTH",
+				       ikev1_xauth_callback);
+		break;
+#endif
+	case XAUTHBY_FILE:
+		libreswan_log("XAUTH: password file authentication method requested to authenticate user '%s'",
+			      arg_name);
+		bool success = do_file_authentication(st, arg_name, arg_password, connname);
+		xauth_start_always_thread(&st->st_xauth_thread,
+				       "file", arg_name, st->st_serialno,
+					  success, ikev1_xauth_callback);
+		break;
+	case XAUTHBY_ALWAYSOK:
+		libreswan_log("XAUTH: authentication method 'always ok' requested to authenticate user '%s'",
+			      arg_name);
+		xauth_start_always_thread(&st->st_xauth_thread,
+					  "alwaysok", arg_name, st->st_serialno,
+					  TRUE, ikev1_xauth_callback);
+		break;
+	default:
+		libreswan_log("XAUTH: unknown authentication method requested to authenticate user '%s'",
+			      arg_name);
+		bad_case(st->st_connection->xauthby);
+	}
 
-	/*
-	 * Clone these so they persist as long as we need them.
-	 * Each chunk contains no NUL; we must add one to terminate a string.
-	 * alloc_bytes zeros the memory it returns (so the NUL is free).
-	 */
-	arg->password = alloc_bytes(password->len + 1, "XAUTH Password");
-	memcpy(arg->password, password->ptr, password->len);
+	pfree(arg_name);
+	pfree(arg_password);
 
-	arg->name = alloc_bytes(name->len + 1, "XAUTH Name");
-	memcpy(arg->name, name->ptr, name->len);
-
-	arg->connname = clone_str(connname, "XAUTH connection name");
-
-	/*
-	 * Start any kind of authentication in a thread. This includes file
-	 * authentication as the /etc/ipsec.d/passwd file may reside on a SAN,
-	 * a NAS or an NFS disk
-	 */
-	ptr = alloc_st_jbuf();
-	ptr->st = st;
-	arg->ptr = ptr;
-	pthread_mutex_init(&st->xauth_mutex, NULL);
-	pthread_mutex_lock(&st->xauth_mutex);
-	pthread_attr_init(&pattr);
-	pthread_attr_setdetachstate(&pattr, PTHREAD_CREATE_DETACHED);
-	pthread_create(&st->xauth_tid, &pattr, do_authentication, (void*) arg);
-	pthread_attr_destroy(&pattr);
 	return 0;
 }
 
 /* log a nice description of an unsupported attribute */
 static void log_bad_attr(const char *kind, enum_names *ed, unsigned val)
 {
-	libreswan_log("Unsupported %s %s attribute %s received.",
+	DBG(DBG_CONTROLMORE, DBG_log("Unsupported %s %s attribute %s received.",
 		kind,
 		(val & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
-		enum_show(ed, val & ISAKMP_ATTR_RTYPE_MASK));
+		enum_show(ed, val & ISAKMP_ATTR_RTYPE_MASK)));
 }
 
 /*
@@ -1547,18 +1229,18 @@ stf_status xauth_inR0(struct msg_digest *md)
 		case XAUTH_TYPE | ISAKMP_ATTR_AF_TV:
 			/* since we only accept XAUTH_TYPE_GENERIC we don't need to record this attribute */
 			if (attr.isaat_lv != XAUTH_TYPE_GENERIC) {
-				libreswan_log(
+				DBG(DBG_CONTROLMORE, DBG_log(
 					"unsupported XAUTH_TYPE value %s received",
 					enum_show(&xauth_type_names,
-						  attr.isaat_lv));
+						  attr.isaat_lv)));
 				return STF_FAIL + NO_PROPOSAL_CHOSEN;
 			}
 			break;
 
 		case XAUTH_USER_NAME | ISAKMP_ATTR_AF_TLV:
 			if (gotname) {
-				libreswan_log(
-					"XAUTH: two User Names!  Rejected");
+				DBG(DBG_CONTROLMORE, DBG_log(
+					"XAUTH: two User Names!  Rejected"));
 				return STF_FAIL + NO_PROPOSAL_CHOSEN;
 			}
 			sz = pbs_left(&strattr);
@@ -1835,7 +1517,7 @@ static stf_status modecfg_inI2(struct msg_digest *md)
 			loglog(RC_LOG,"Received IP address %s",
 				      caddr);
 
-			if (addrbytesptr(&c->spd.this.host_srcip,
+			if (addrbytesptr_read(&c->spd.this.host_srcip,
 					 NULL) == 0 ||
 			    isanyaddr(&c->spd.this.host_srcip)) {
 				libreswan_log(
@@ -2030,7 +1712,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 					"Received IPv4 address: %s",
 					caddr);
 
-				if (addrbytesptr(&c->spd.this.host_srcip,
+				if (addrbytesptr_read(&c->spd.this.host_srcip,
 						 NULL) == 0 ||
 				    isanyaddr(&c->spd.this.host_srcip))
 				{
@@ -2195,7 +1877,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 							sr->that.id.name = empty_chunk;
 
 							sr->this.host_addr_name = NULL;
-							sr->that.client = subnet;							
+							sr->that.client = subnet;
 							sr->this.cert.ty = CERT_NONE;
 							sr->that.cert.ty = CERT_NONE;
 

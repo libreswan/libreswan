@@ -208,7 +208,7 @@ ipsec status
 000 "block":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "block":   policy: PFS+GROUP+GROUTED+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+REJECT+NEVER_NEGOTIATE+ESN_NO;
 000 "block":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "block":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "block":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "block":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "block":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "block#192.0.2.0/24": 192.1.3.209---192.1.3.254...%any; prospective erouted; eroute owner: #0
@@ -222,7 +222,7 @@ ipsec status
 000 "block#192.0.2.0/24":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "block#192.0.2.0/24":   policy: PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+REJECT+NEVER_NEGOTIATE+ESN_NO;
 000 "block#192.0.2.0/24":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "block#192.0.2.0/24":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "block#192.0.2.0/24":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "block#192.0.2.0/24":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "block#192.0.2.0/24":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "clear": 192.1.3.209---192.1.3.254...%group; unrouted; eroute owner: #0
@@ -236,7 +236,7 @@ ipsec status
 000 "clear":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "clear":   policy: PFS+GROUP+GROUTED+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+PASS+NEVER_NEGOTIATE+ESN_NO;
 000 "clear":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "clear":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "clear":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "clear":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "clear":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "clear#192.1.2.0/24": 192.1.3.209---192.1.3.254...%any; prospective erouted; eroute owner: #0
@@ -250,7 +250,7 @@ ipsec status
 000 "clear#192.1.2.0/24":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "clear#192.1.2.0/24":   policy: PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+PASS+NEVER_NEGOTIATE+ESN_NO;
 000 "clear#192.1.2.0/24":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "clear#192.1.2.0/24":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "clear#192.1.2.0/24":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "clear#192.1.2.0/24":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "clear#192.1.2.0/24":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "clear#192.1.2.129/32": 192.1.3.209---192.1.3.254...%any; prospective erouted; eroute owner: #0
@@ -264,7 +264,7 @@ ipsec status
 000 "clear#192.1.2.129/32":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "clear#192.1.2.129/32":   policy: PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+PASS+NEVER_NEGOTIATE+ESN_NO;
 000 "clear#192.1.2.129/32":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "clear#192.1.2.129/32":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "clear#192.1.2.129/32":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "clear#192.1.2.129/32":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "clear#192.1.2.129/32":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "clear#192.1.2.130/32": 192.1.3.209---192.1.3.254...%any; prospective erouted; eroute owner: #0
@@ -278,7 +278,7 @@ ipsec status
 000 "clear#192.1.2.130/32":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "clear#192.1.2.130/32":   policy: PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+PASS+NEVER_NEGOTIATE+ESN_NO;
 000 "clear#192.1.2.130/32":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "clear#192.1.2.130/32":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "clear#192.1.2.130/32":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "clear#192.1.2.130/32":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "clear#192.1.2.130/32":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "clear#192.1.2.254/32": 192.1.3.209---192.1.3.254...%any; prospective erouted; eroute owner: #0
@@ -292,7 +292,7 @@ ipsec status
 000 "clear#192.1.2.254/32":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "clear#192.1.2.254/32":   policy: PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+PASS+NEVER_NEGOTIATE+ESN_NO;
 000 "clear#192.1.2.254/32":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "clear#192.1.2.254/32":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "clear#192.1.2.254/32":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "clear#192.1.2.254/32":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "clear#192.1.2.254/32":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "clear-or-private": 192.1.3.209[ID_NULL]---192.1.3.254...%opportunisticgroup[ID_NULL]; unrouted; eroute owner: #0
@@ -306,7 +306,7 @@ ipsec status
 000 "clear-or-private":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "clear-or-private":   policy: AUTHNULL+PFS+NEGO_PASS+DONT_REKEY+OPPORTUNISTIC+GROUP+GROUTED+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+PASS+failurePASS+NEVER_NEGOTIATE+ESN_NO;
 000 "clear-or-private":   conn_prio: 32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "clear-or-private":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "clear-or-private":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "clear-or-private":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "clear-or-private":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "packetdefault": 192.1.3.209[ID_NULL]---192.1.3.254...%opportunistic[ID_NULL]; prospective erouted; eroute owner: #0
@@ -320,7 +320,7 @@ ipsec status
 000 "packetdefault":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "packetdefault":   policy: AUTHNULL+ENCRYPT+TUNNEL+PFS+NEGO_PASS+DONT_REKEY+OPPORTUNISTIC+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+failurePASS+ESN_NO;
 000 "packetdefault":   conn_prio: 32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "packetdefault":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "packetdefault":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "packetdefault":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "packetdefault":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "packetdefault"[1]: 192.1.3.209[ID_NULL]---192.1.3.254...192.1.2.23[ID_NULL]; erouted; eroute owner: #2
@@ -334,7 +334,7 @@ ipsec status
 000 "packetdefault"[1]:   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "packetdefault"[1]:   policy: AUTHNULL+ENCRYPT+TUNNEL+PFS+NEGO_PASS+DONT_REKEY+OPPORTUNISTIC+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+failurePASS+ESN_NO;
 000 "packetdefault"[1]:   conn_prio: 32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "packetdefault"[1]:   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "packetdefault"[1]:   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "packetdefault"[1]:   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "packetdefault"[1]:   newest ISAKMP SA: #2; newest IPsec SA: #2;
 000 "packetdefault"[1]:   IKEv2 algorithm newest: AES_GCM_C_256-AUTH_NONE-PRF_HMAC_SHA1-MODP2048
@@ -350,7 +350,7 @@ ipsec status
 000 "private":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "private":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+OPPORTUNISTIC+GROUP+GROUTED+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+failureDROP+ESN_NO;
 000 "private":   conn_prio: 32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "private":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "private":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "private":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "private":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "private-or-clear": 192.1.3.209[ID_NULL]---192.1.3.254...%opportunisticgroup[ID_NULL]; unrouted; eroute owner: #0
@@ -364,7 +364,7 @@ ipsec status
 000 "private-or-clear":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "private-or-clear":   policy: AUTHNULL+ENCRYPT+TUNNEL+PFS+NEGO_PASS+DONT_REKEY+OPPORTUNISTIC+GROUP+GROUTED+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+failurePASS+ESN_NO;
 000 "private-or-clear":   conn_prio: 32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "private-or-clear":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "private-or-clear":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "private-or-clear":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "private-or-clear":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000  

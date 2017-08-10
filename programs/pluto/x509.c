@@ -223,13 +223,16 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 	CERTCertificate *cacert = NULL;
 	char abuf[ASN1_BUF_LEN], bbuf[ASN1_BUF_LEN];
 
-	dntoa(abuf, ASN1_BUF_LEN, a);
-	dntoa(bbuf, ASN1_BUF_LEN, b);
-
-	DBG(DBG_X509 | DBG_CONTROLMORE,
-	    DBG_log("%s: trustee A = '%s'", __FUNCTION__, abuf));
-	DBG(DBG_X509 | DBG_CONTROLMORE,
-	    DBG_log("%s: trustor B = '%s'", __FUNCTION__, bbuf));
+	if (a.ptr != NULL) {
+		dntoa(abuf, ASN1_BUF_LEN, a);
+		DBG(DBG_X509 | DBG_CONTROLMORE,
+	    		DBG_log("%s: trustee A = '%s'", __FUNCTION__, abuf));
+	}
+	if (b.ptr != NULL) {
+		dntoa(bbuf, ASN1_BUF_LEN, b);
+		DBG(DBG_X509 | DBG_CONTROLMORE,
+	    		DBG_log("%s: trustor B = '%s'", __FUNCTION__, bbuf));
+	}
 
 	/* no CA b specified -> any CA a is accepted */
 	if (b.ptr == NULL) {
@@ -713,18 +716,22 @@ static bool find_fetch_dn(SECItem *dn, struct connection *c,
 }
 #endif
 
-/* returns FALSE for a REVOKED cert or internal failure. returns
+/*
+ * WARNING: This function's bool return case is not what you expect!
+ *
+ * returns FALSE for a REVOKED cert or internal failure. returns
  * TRUE for a good cert or a failed verify (for continuing with
  * connection refining)
  */
-static bool pluto_process_certs(struct state *st, chunk_t *certs,
+
+static int pluto_process_certs(struct state *st, chunk_t *certs,
 						  int num_certs)
 {
 	struct connection *c = st->st_connection;
 #if defined(LIBCURL) || defined(LIBLDAP)
 	SECItem fdn = { siBuffer, NULL, 0 };
 #endif
-	bool cont = TRUE;
+	int cont = LSW_CERT_BAD;
 	bool rev_opts[RO_SZ];
 	char namebuf[IDTOA_BUF];
 	char ipstr[IDTOA_BUF];
@@ -736,29 +743,39 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 
 	CERTCertificate *end_cert = NULL;
 
+
 	int ret = verify_and_cache_chain(certs, num_certs, &end_cert,
 						       rev_opts);
 
 	if (ret == -1) {
 		libreswan_log("cert verify failed with internal error");
-		return FALSE;
+		return LSW_CERT_BAD;
 	}
 
 	if ((ret & VERIFY_RET_OK) && end_cert != NULL) {
 		libreswan_log("certificate verified OK: %s", end_cert->subjectName);
+		add_rsa_pubkey_from_cert(&c->spd.that.id, end_cert);
+
+		/* if we already verified ID, no need to do it again */
+		if (st->st_peer_alt_id) {
+			DBG(DBG_X509, DBG_log("Peer ID was already confirmed"));
+			return LSW_CERT_ID_OK;
+		}
+
 		DBG(DBG_X509, DBG_log("Verifying configured ID matches certificate"));
 
-		switch(c->spd.that.id.kind) {
+		switch (c->spd.that.id.kind) {
 		case ID_IPV4_ADDR:
 		case ID_IPV6_ADDR:
 			idtoa(&c->spd.that.id, ipstr, sizeof(ipstr));
 			if (cert_VerifySubjectAltName(end_cert, ipstr)) {
 				st->st_peer_alt_id = TRUE;
+				cont = LSW_CERT_ID_OK;
 				DBG(DBG_X509, DBG_log("ID_IP '%s' matched", ipstr));
 			} else {
 				loglog(RC_LOG_SERIOUS, "certificate does not contain ID_IP subjectAltName=%s",
 						ipstr);
-				return FALSE;
+				return LSW_CERT_MISMATCHED_ID; /* signal connswitch */
 			}
 			break;
 
@@ -768,11 +785,12 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 
 			 if (cert_VerifySubjectAltName(end_cert, namebuf + 1)) {
 				st->st_peer_alt_id = TRUE;
+				cont = LSW_CERT_ID_OK;
 				DBG(DBG_X509, DBG_log("ID_FQDN '%s' matched", namebuf+1));
 			} else {
 				loglog(RC_LOG_SERIOUS, "certificate does not contain subjectAltName=%s",
 					namebuf + 1);
-				return FALSE;
+				return LSW_CERT_MISMATCHED_ID; /* signal conn switch */
 			}
 			break;
 
@@ -780,19 +798,29 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 			idtoa(&c->spd.that.id, namebuf, sizeof(namebuf));
 			if (cert_VerifySubjectAltName(end_cert, namebuf)) {
 				st->st_peer_alt_id = TRUE;
+				cont = LSW_CERT_ID_OK;
 				DBG(DBG_X509, DBG_log("ID_USER_FQDN '%s' matched", namebuf));
 			} else {
 				loglog(RC_LOG_SERIOUS, "certificate does not contain ID_USER_FQDN subjectAltName=%s",
 					namebuf);
-				return FALSE;
+				return LSW_CERT_MISMATCHED_ID; /* signal conn switch */
 			}
 			break;
 
 		case ID_FROMCERT:
-			/* We don't care about ID type DN, since the CA already verified it */
+			/* We are commited to accept any ID as long as the CERT verified */
 			st->st_peer_alt_id = TRUE;
+			cont = LSW_CERT_ID_OK;
 			idtoa(&c->spd.that.id, namebuf, sizeof(namebuf));
 			DBG(DBG_X509, DBG_log("ID_DER_ASN1_DN '%s' does not need further ID verification", namebuf));
+
+			{
+				struct id peer_id;
+				memset(&peer_id, 0x00, sizeof(struct id)); /* rhbz#1392191 */
+				peer_id.kind = ID_DER_ASN1_DN;
+				peer_id.name = same_secitem_as_chunk(end_cert->derSubject);
+				duplicate_id(&c->spd.that.id, &peer_id);
+			}
 			break;
 
 		case ID_DER_ASN1_DN:
@@ -801,35 +829,34 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 			DBG(DBG_X509, DBG_log("ID_DER_ASN1_DN '%s' needs further ID comparison against '%s'",
 				sbuf, namebuf));
 
+			chunk_t certdn = same_secitem_as_chunk(end_cert->derSubject);
 
-			struct id certid;
-			int wildcards; /* ignored? */
-			certid.name = same_secitem_as_chunk(end_cert->derSubject);
-			if (!match_id(&certid, &c->spd.that.id, &wildcards)) {
+			if (same_dn_any_order(c->spd.that.id.name, certdn)) {
 				DBG(DBG_X509, DBG_log("ID_DER_ASN1_DN '%s' matched our ID", namebuf));
 				st->st_peer_alt_id = TRUE;
+				cont = LSW_CERT_ID_OK;
 			} else {
 				loglog(RC_LOG_SERIOUS, "ID_DER_ASN1_DN '%s' does not match expected '%s'",
 					end_cert->subjectName, namebuf);
+				return LSW_CERT_MISMATCHED_ID; /* signal conn switch */
 			}
 			break;
 		default:
 			loglog(RC_LOG_SERIOUS, "Unhandled ID type %d: %s",
 				c->spd.that.id.kind,
 				enum_show(&ike_idtype_names, c->spd.that.id.kind));
-				return FALSE;
+				return LSW_CERT_BAD;
 		}
 
 		if (st->st_peer_alt_id) {
-			DBG(DBG_X509, DBG_log("SAN ID matched, updating that.cert and adding pubkey from cert"));
+			DBG(DBG_X509, DBG_log("SAN ID matched, updating that.cert"));
 			c->spd.that.cert.u.nss_cert = end_cert;
 			c->spd.that.cert.ty = CERT_X509_SIGNATURE;
-			add_rsa_pubkey_from_cert(&c->spd.that.id, end_cert);
-			return TRUE;
+			return LSW_CERT_ID_OK;
 		}
 	} else if (ret & VERIFY_RET_REVOKED) {
 		libreswan_log("certificate revoked!");
-		cont = FALSE;
+		cont = LSW_CERT_BAD;
 	}
 #if defined(LIBCURL) || defined(LIBLDAP)
 	if ((ret & VERIFY_RET_CRL_NEED) && deltasecs(crl_check_interval) > 0) {
@@ -865,34 +892,57 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
  *  contain a single certificate.
  *
  */
-bool ikev1_decode_cert(struct msg_digest *md)
+int ike_decode_cert(struct msg_digest *md)
 {
 	struct state *st = md->st;
 	struct payload_digest *p;
 	chunk_t der_list[32] = { {NULL, 0} };
-	bool ret = TRUE;
+	int ret = LSW_CERT_NONE;
 	int der_num = 0;
+	int np = st->st_ikev2 ? ISAKMP_NEXT_v2CERT : ISAKMP_NEXT_CERT;
 
 	DBG(DBG_X509, DBG_log("checking for CERT payloads"));
-	for (p = md->chain[ISAKMP_NEXT_CERT]; p != NULL; p = p->next) {
-		struct isakmp_cert *const cert = &p->payload.cert;
+	for (p = md->chain[np]; p != NULL; p = p->next) {
+		struct isakmp_cert *cert;
+		struct ikev2_cert *v2cert;
 
-		if (cert->isacert_type == CERT_X509_SIGNATURE) {
+		if (st->st_ikev2)
+			v2cert = &p->payload.v2cert;
+		else
+			cert = &p->payload.cert;
+
+		if ((!st->st_ikev2 && cert->isacert_type == CERT_X509_SIGNATURE) ||
+		    (st->st_ikev2 && v2cert->isac_enc == CERT_X509_SIGNATURE))
+		{
 			chunk_t blob;
 
 			clonetochunk(blob, p->pbs.cur, pbs_left(&p->pbs), "cert chain blob");
 			der_list[der_num++] = blob;
 		} else {
 			loglog(RC_LOG_SERIOUS, "ignoring %s certificate payload",
-			   enum_show(&ike_cert_type_names, cert->isacert_type));
+				!st->st_ikev2 ? enum_show(&ike_cert_type_names, cert->isacert_type)
+					: enum_show(&ikev2_cert_type_names, v2cert->isac_enc)
+				);
 		}
 	}
 
 	if (der_num > 0) {
 		DBG(DBG_X509, DBG_log("found at last one CERT payload, calling pluto_process_certs()"));
-		if (!pluto_process_certs(st, der_list, der_num)) {
-			libreswan_log("Peer public key is not available for this exchange");
-			ret = FALSE;
+		switch (pluto_process_certs(st, der_list, der_num)) {
+		case LSW_CERT_BAD:
+			libreswan_log("X509: Certificate rejected for this connection");
+			ret = LSW_CERT_BAD;
+			break;
+		case LSW_CERT_MISMATCHED_ID:
+			libreswan_log("Peer public key SubjectAltName does not match peer ID for this connection");
+			ret = LSW_CERT_MISMATCHED_ID;
+			break;
+		case LSW_CERT_ID_OK:
+			DBG(DBG_X509, DBG_log("Peer public key SubjectAltName matches peer ID for this connection"));
+			ret = LSW_CERT_ID_OK;
+			break;
+		default:
+			passert(FALSE);
 		}
 
 		while (der_num-- > 0)
@@ -902,43 +952,6 @@ bool ikev1_decode_cert(struct msg_digest *md)
 	return ret;
 }
 
-/* Decode IKEV2 CERT Payload */
-bool ikev2_decode_cert(struct msg_digest *md)
-{
-	struct state *st = md->st;
-	struct payload_digest *p;
-	chunk_t der_list[32] = { {NULL, 0} };
-	bool ret = TRUE;
-	int der_num = 0;
-
-	DBG(DBG_X509, DBG_log("checking for CERT payloads"));
-	for (p = md->chain[ISAKMP_NEXT_v2CERT]; p != NULL; p = p->next) {
-		struct ikev2_cert *const v2cert = &p->payload.v2cert;
-
-		if (v2cert->isac_enc == CERT_X509_SIGNATURE) {
-			chunk_t blob;
-			clonetochunk(blob, p->pbs.cur, pbs_left(&p->pbs), "cert chain blob");
-			der_list[der_num++] = blob;
-		} else {
-			loglog(RC_LOG_SERIOUS, "ignoring %s certificate payload",
-				enum_show(&ikev2_cert_type_names,
-						v2cert->isac_enc));
-		}
-	}
-
-	if (der_num > 0) {
-		DBG(DBG_X509, DBG_log("found at last one CERT payload, calling pluto_process_certs()"));
-		if (!pluto_process_certs(st, der_list, der_num)) {
-			libreswan_log("Peer public key is not available for this exchange");
-			ret = FALSE;
-		}
-
-		while (der_num-- > 0)
-			freeanychunk(der_list[der_num]);
-	}
-
-	return ret;
-}
 
 /*
  * Decode the CR payload of Phase 1.

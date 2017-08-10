@@ -34,7 +34,7 @@ ip_subnet *dst;
 	int die;
 
 	dst->addr = *addr;
-	n = addrbytesptr(&dst->addr, &p);
+	n = addrbytesptr_write(&dst->addr, &p);
 	if (n == 0)
 		return "unknown address family";
 
@@ -86,7 +86,7 @@ ip_subnet *dst;
 	int n;
 
 	dst->addr = *addr;
-	n = addrbytesptr(&dst->addr, (unsigned char **)NULL);
+	n = addrlenof(&dst->addr);
 	if (n == 0)
 		return "unknown address family";
 

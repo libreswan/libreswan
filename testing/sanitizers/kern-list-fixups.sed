@@ -103,7 +103,8 @@ s/none on \/usr\/obj type hostfs (ro,.*)/none on \/usr\/obj type hostfs (ro, PAT
 /^.*random: nonblocking pool is initialized$/d
 /^.* alg: No test for .*$/d
 /^.*bytes leftover after parsing attributes in process.*$/d
-s/TTL=63 ID=[0-9]* PROTO/TTL=63 ID=XXXXX PROTO/
+s/TTL=\([0-9]*\) ID=[0-9]* PROTO/TTL=\1 ID=XXXXX PROTO/
+s/ ID=[0-9]* SEQ=/ ID=XXXX SEQ=/g
 s/ LEN=[0-9]* / LEN=XXXX /g
 /^.*CPU feature 'AVX registers' is not supported.*$/d
 /^.*hrtimer: interrupt took .*$/d

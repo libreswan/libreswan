@@ -224,8 +224,6 @@ def _reboot_to_login_prompt(domain, console):
     domain.logger.debug("draining any existing output")
     console.expect(pexpect.TIMEOUT, timeout=0)
 
-
-    #
     # The reboot pattern needs to match all the output up to the point
     # where the machine is reset.  That way, the next pattern below
     # can detect that the reset did something and the machine is
@@ -239,22 +237,32 @@ def _reboot_to_login_prompt(domain, console):
     timer = timing.Lapsed()
     for timeout in timeouts:
         # pexpect's pattern matcher is buggy and, if there is too much
-        # output, it may not match "reboot".
+        # output, it may not match "reboot".  virsh's behaviour is
+        # also buggy, see further down.
         match = _wait_for_login_prompt(domain, console, timeout=timeout,
-                                       also_expect=["reboot: Power down\r\n", pexpect.TIMEOUT])
+                                       also_expect=["reboot: Power down\r\n",
+                                                    pexpect.EOF,
+                                                    pexpect.TIMEOUT])
         if match == 0:
             return console
         elif match == 1:
             domain.logger.info("domain rebooted after %s", timer)
-        elif console.child.buffer == "":
-            # HACK!
+        elif match == 2:
+            # On F26, in response to the reset(?), virsh will
+            # spontaneously disconnect.
+            domain.logger.error("domain disconnected spontaneously after %s", timer)
+            break
+        elif match == 3 and console.child.buffer == "":
+            # On F23, F24, F25, instead of resetting, the domain will
+            # hang.  The symptoms are a .TIMEOUT and an empty buffer
+            # (HACK!).
             domain.logger.error("domain appears stuck, no output received after waiting %d seconds",
                                 timeout)
             break
 
-    # On some Fedora releases (F23, F24), instead of resetting, the
-    # domain will hang.  Either it spontaneously suspends (PAUSED) or
-    # it just sits there wedged.
+    # Things aren't going well.  Per above Fedora can screw up or the
+    # domain is just really slow.  Try destroying the domain and then
+    # cold booting it.
 
     destroy = True
     if domain.state() == virsh.STATE.PAUSED:
@@ -270,7 +278,9 @@ def _reboot_to_login_prompt(domain, console):
         console.expect_exact(pexpect.EOF, timeout=SHUTDOWN_TIMEOUT)
         console = _start(domain, timeout=START_TIMEOUT)
 
-    # Now wait for login prompt.
+    # Now wait for login prompt.  If this second attempt fails then
+    # either a .TIMEOUT or a .EOF exception will be thrown and the
+    # test will be aborted (marked as unresolved).
     _wait_for_login_prompt(domain, console, timeout=LOGIN_PROMPT_TIMEOUT)
     return console
 

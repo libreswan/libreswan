@@ -19,7 +19,7 @@ Examine <gitrev> in <repodir> and determine if it is sufficiently
 
     - a merge point
 
-    - a branch point
+    [- a branch point (disabled)]
 
     - a commit that changes build and/or source files
 
@@ -64,16 +64,21 @@ fi
 # Determining children is messy for some reason.  Search revisions
 # more recent than GITREV (REV.. seems to be interpreted as that) for
 # a parent matching GITREV.
+#
+# For the moment don't consider them interesting as the branch points
+# tend to be weird.
 
-children=$(git rev-list --parents ${gitrev}.. | \
-    while read commit parents ; do
-	case " ${parents} " in
-	    *" ${gitrev}"* ) echo ${commit} ;;
-	esac
-    done)
-if test $(echo ${children} | wc -w) -gt 1 ; then
-    echo branch: ${children}
-    exit 0
+if false ; then
+    children=$(git rev-list --parents ${gitrev}.. | \
+		   while read commit parents ; do
+		       case " ${parents} " in
+			   *" ${gitrev}"* ) echo ${commit} ;;
+		       esac
+		   done)
+    if test $(echo ${children} | wc -w) -gt 1 ; then
+	echo branch: ${children}
+	exit 0
+    fi
 fi
 
 # grep . exits non-zero when there is no input (i.e., the diff is

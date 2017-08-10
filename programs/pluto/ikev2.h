@@ -21,7 +21,7 @@ extern stf_status ikev2parent_outI1(int whack_sock,
 
 extern bool ikev2_delete_out(struct state *st);
 
-extern void log_ipsec_sa_established(const char *m, struct state *st);
+extern void log_ipsec_sa_established(const char *m, const struct state *st);
 
 extern void complete_v2_state_transition(struct msg_digest **mdp,
 					 stf_status result);
@@ -270,7 +270,7 @@ struct ikev2_payloads_summary ikev2_decode_payloads(struct msg_digest *md,
 struct ikev2_payloads_summary ikev2_decrypt_msg(struct msg_digest *md, bool
 		verify_pl);
 
-typedef stf_status crypto_transition_fn (struct pluto_crypto_req_cont *cn,
+typedef stf_status crypto_transition_fn(struct pluto_crypto_req_cont *cn,
 		                struct pluto_crypto_req *r);
 
 struct ikev2_payload_errors {

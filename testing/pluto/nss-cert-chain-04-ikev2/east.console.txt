@@ -37,7 +37,7 @@ east #
 000 "road-A":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "road-A":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "road-A":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "road-A":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "road-A":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "road-A":   our idtype: ID_FQDN; our id=@east.testing.libreswan.org; their idtype: ID_FQDN; their id:@someone.testing.libreswan.org
 000 "road-A":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "road-A":   newest ISAKMP SA: #0; newest IPsec SA: #0;
@@ -54,7 +54,7 @@ east #
 000 "road-chain-B":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "road-chain-B":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "road-chain-B":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "road-chain-B":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "road-chain-B":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "road-chain-B":   our idtype: ID_FQDN; our id=@east.testing.libreswan.org; their idtype: ID_FQDN; their id:@west_chain_endcert.testing.libreswan.org
 000 "road-chain-B":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "road-chain-B":   newest ISAKMP SA: #0; newest IPsec SA: #0;

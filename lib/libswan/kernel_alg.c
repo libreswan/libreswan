@@ -215,8 +215,8 @@ void kernel_integ_add(enum sadb_aalg sadb_aalg,
 		      const char *netlink_name)
 {
 	struct sadb_alg alg = {
-		.sadb_alg_minbits = integ->integ_key_size * BITS_PER_BYTE,
-		.sadb_alg_maxbits = integ->integ_key_size * BITS_PER_BYTE,
+		.sadb_alg_minbits = integ->integ_keymat_size * BITS_PER_BYTE,
+		.sadb_alg_maxbits = integ->integ_keymat_size * BITS_PER_BYTE,
 		.sadb_alg_id = sadb_aalg,
 	};
 	if (kernel_alg_add(SADB_SATYPE_ESP,  SADB_EXT_SUPPORTED_AUTH, &alg) != 1) {
@@ -544,11 +544,11 @@ bool kernel_alg_info(u_int8_t transid, u_int16_t keylen, u_int16_t auth,
 
 	/* if no key length is given, return default */
 	if (keylen == 0) {
-		ki->enckeylen = esp_ealg[sadb_ealg].sadb_alg_minbits /
+		ki->enckeysize = esp_ealg[sadb_ealg].sadb_alg_minbits /
 			BITS_PER_BYTE;
 	} else if (esp_ealg[sadb_ealg].sadb_alg_minbits <= keylen &&
 		keylen <= esp_ealg[sadb_ealg].sadb_alg_maxbits) {
-		ki->enckeylen = keylen / BITS_PER_BYTE;
+		ki->enckeysize = keylen / BITS_PER_BYTE;
 	} else {
 		DBG(DBG_PARSING,
 			DBG_log("kernel_alg_esp_info(): transid=%d, proposed keylen=%u is invalid, not %u<=X<=%u",
@@ -563,8 +563,8 @@ bool kernel_alg_info(u_int8_t transid, u_int16_t keylen, u_int16_t auth,
 	ki->encryptalg = sadb_ealg;
 	ki->authalg = sadb_aalg;
 	DBG(DBG_PARSING,
-		DBG_log("kernel_alg_esp_info(): transid=%d, auth=%d, enckeylen=%d, encryptalg=%d, authalg=%d",
-			transid, auth, (int)ki->enckeylen,
+		DBG_log("kernel_alg_esp_info(): transid=%d, auth=%d, enckeysize=%d, encryptalg=%d, authalg=%d",
+			transid, auth, (int)ki->enckeysize,
 			ki->encryptalg,
 			ki->authalg);
 		);

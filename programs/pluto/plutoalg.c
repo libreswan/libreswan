@@ -44,14 +44,13 @@
 #include "whack.h"
 
 static bool kernel_alg_db_add(struct db_context *db_ctx,
-			      const struct esp_info *esp_info,
-			      lset_t policy,
-			      bool logit)
+			      const struct proposal_info *esp_info,
+			      lset_t policy, bool logit)
 {
 	int ealg_i = SADB_EALG_NONE;
 
 	if (policy & POLICY_ENCRYPT) {
-		ealg_i = esp_info->transid;
+		ealg_i = esp_info->ikev1esp_transid;
 		if (!ESP_EALG_PRESENT(ealg_i)) {
 			if (logit) {
 				loglog(RC_LOG_SERIOUS,
@@ -65,7 +64,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 		}
 	}
 
-	int aalg_i = alg_info_esp_aa2sadb(esp_info->auth);
+	int aalg_i = alg_info_esp_aa2sadb(esp_info->ikev1esp_auth);
 
 	if (!ESP_AALG_PRESENT(aalg_i)) {
 		DBG_log("kernel_alg_db_add() kernel auth aalg_id=%d not present",
@@ -78,10 +77,10 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 		db_trans_add(db_ctx, ealg_i);
 
 		/* add ESP auth attr (if present) */
-		if (esp_info->auth != AUTH_ALGORITHM_NONE) {
+		if (esp_info->ikev1esp_auth != AUTH_ALGORITHM_NONE) {
 			db_attr_add_values(db_ctx,
 					   AUTH_ALGORITHM,
-					   esp_info->auth);
+					   esp_info->ikev1esp_auth);
 		}
 
 		/* add keylength if specified in esp= string */
@@ -103,10 +102,10 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 				/* add this trans again with max key size */
 				if (def_ks != max_ks) {
 					db_trans_add(db_ctx, ealg_i);
-					if (esp_info->auth != AUTH_ALGORITHM_NONE) {
+					if (esp_info->ikev1esp_auth != AUTH_ALGORITHM_NONE) {
 						db_attr_add_values(db_ctx,
 							AUTH_ALGORITHM,
-							esp_info->auth);
+							esp_info->ikev1esp_auth);
 					}
 					db_attr_add_values(db_ctx,
 						KEY_LENGTH,
@@ -120,7 +119,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 
 		/* add ESP auth attr */
 		db_attr_add_values(db_ctx,
-				   AUTH_ALGORITHM, esp_info->auth);
+				   AUTH_ALGORITHM, esp_info->ikev1esp_auth);
 	}
 
 	return TRUE;
@@ -174,13 +173,13 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 		int ealg_i;
 
 		ESP_EALG_FOR_EACH_DOWN(ealg_i) {
-			struct esp_info tmp_esp_info;
+			struct proposal_info tmp_esp_info;
 			int aalg_i;
 
-			tmp_esp_info.transid = ealg_i;
+			tmp_esp_info.ikev1esp_transid = ealg_i;
 			tmp_esp_info.enckeylen = 0;
 			ESP_AALG_FOR_EACH(aalg_i) {
-				tmp_esp_info.auth =
+				tmp_esp_info.ikev1esp_auth =
 					alg_info_esp_sadb2aa(aalg_i);
 				kernel_alg_db_add(ctx_new, &tmp_esp_info,
 						  policy, FALSE);
@@ -229,11 +228,11 @@ bool ikev1_verify_esp(int ealg, unsigned int key_len, int aalg,
 		key_len = crypto_req_keysize(CRK_ESPorAH, ealg);
 
 	FOR_EACH_ESP_INFO(alg_info, esp_info) {
-		if (esp_info->transid == ealg &&
+		if (esp_info->ikev1esp_transid == ealg &&
 		    (esp_info->enckeylen == 0 ||
 		     key_len == 0 ||
 		     esp_info->enckeylen == key_len) &&
-		    esp_info->auth == aalg) {
+		    esp_info->ikev1esp_auth == aalg) {
 			return TRUE;
 		}
 	}
@@ -250,7 +249,7 @@ bool ikev1_verify_ah(int aalg, const struct alg_info_esp *alg_info)
 		return TRUE;
 
 	FOR_EACH_ESP_INFO(alg_info, esp_info) {	/* really AH */
-		if (esp_info->auth == aalg)
+		if (esp_info->ikev1esp_auth == aalg)
 			return TRUE;
 	}
 
@@ -428,103 +427,4 @@ struct db_sa *kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei,
 	DBG(DBG_CONTROL,
 	    DBG_log("returning new proposal from esp_info"));
 	return n;
-}
-
-bool fill_in_esp_info_ike_algs(struct esp_info *esp_info,
-			       const char *flag,
-			       const char *value)
-{
-	/*
-	 * Check the encryption.
-	 *
-	 * For AH, where the is no encryption, the u_int8_t field
-	 * .TRANSID ends up with the initial value of ealg_id which is
-	 * -1 (hence, ESP_ID255) (see alg_info.c).  Just in case
-	 * someone decides this is silly and changes the AH value to
-	 * ESP_reserved, ignore that also.
-	 */
-	if (esp_info->transid == ESP_ID255
-	    || esp_info->transid == ESP_reserved) {
-		passert(esp_info->esp_encrypt == NULL);
-	} else {
-		for (const struct encrypt_desc **algp = next_encrypt_desc(NULL);
-		     algp != NULL; algp = next_encrypt_desc(algp)) {
-			if (esp_info->transid == (*algp)->common.ikev1_esp_id) {
-				esp_info->esp_encrypt = (*algp);
-			}
-		}
-		if (esp_info->esp_encrypt == NULL) {
-			struct esb_buf buf;
-			loglog(RC_LOG_SERIOUS,
-			       "in %s=%s, ENCRYPT algorithm %s=%d not supported",
-			       flag, value,
-			       enum_showb(&esp_transformid_names,
-					  esp_info->transid, &buf),
-			       esp_info->transid);
-			return FALSE;
-		}
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("ESP encryption algorithm %s",
-			    esp_info->esp_encrypt->common.name));
-	}
-	/*
-	 * Is the key length valid for the given encryption algorithm.
-	 */
-	if (esp_info->esp_encrypt != NULL && esp_info->enckeylen != 0) {
-		if (!encrypt_has_key_bit_length(esp_info->esp_encrypt,
-						esp_info->enckeylen)) {
-			loglog(RC_LOG_SERIOUS,
-			       "in %s=%s, ENCRYPT algorithm %s with key length %u is not supported",
-			       flag, value, esp_info->esp_encrypt->common.name,
-			       (unsigned) esp_info->enckeylen);
-			return FALSE;
-		}
-	}
-	/*
-	 * Did ENCRYPT AEAD and INTEG get mixed up?
-	 *
-	 * With ESP, having separate integrity with an AEAD algorithm
-	 * makes no sense (must be ESP, since AH doesn't have
-	 * encryption).
-	 *
-	 * XXX: Unfortunately esp_info.c, given esp=aes_gcm, has been
-	 * known to add integrity.
-	 */
-	if (esp_info->esp_encrypt != NULL
-	    && ike_alg_is_aead(esp_info->esp_encrypt)) {
-		if (esp_info->auth != AUTH_ALGORITHM_NONE) {
-			loglog(RC_LOG_SERIOUS,
-			       "in %s=%s, AEAD algorithm %s should have null integrity",
-			       flag, value,
-			       esp_info->esp_encrypt->common.name);
-			return FALSE;
-		}
-	}
-	/*
-	 * Verify the integrity, if not NONE.
-	 */
-	if (esp_info->auth == AUTH_ALGORITHM_NONE) {
-		passert(esp_info->esp_integ == NULL);
-	} else {
-		for (const struct integ_desc **algp = next_integ_desc(NULL);
-		     algp != NULL; algp = next_integ_desc(algp)) {
-			if (esp_info->auth == (*algp)->common.ikev1_esp_id) {
-				esp_info->esp_integ = (*algp);
-			}
-		}
-		if (esp_info->esp_integ == NULL) {
-			struct esb_buf buf;
-			loglog(RC_LOG_SERIOUS,
-			       "in %s=%s, INTEG algorithm %s=%d is not supported",
-			       flag, value,
-			       enum_showb(&auth_alg_names,
-					  esp_info->auth, &buf),
-			       esp_info->auth);
-			return FALSE;
-		}
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("ESP/AH integ algorithm %s",
-			    esp_info->esp_integ->common.name));
-	}
-	return TRUE;
 }

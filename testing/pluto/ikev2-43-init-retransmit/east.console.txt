@@ -51,7 +51,8 @@ east #
  grep retransmit /tmp/pluto.log
 | duplicate IKE_INIT_I message received, retransmiting previous packet
 | sending 440 bytes for ikev2-responder-retransmit IKE_INIT_I through eth1:500 to 192.1.2.45:500 (using #1)
-| sending 440 bytes for ikev2-responder-retransmit through eth1:500 to 192.1.2.45:500 (using #1)
+| retransmit response for message ID: 1 exchnage ISAKMP_v2_AUTH
+| sending 233 bytes for ikev2-responder-retransmit through eth1:500 to 192.1.2.45:500 (using #1)
 east #
 east #
  ../bin/check-for-core.sh

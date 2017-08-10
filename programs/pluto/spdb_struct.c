@@ -134,23 +134,23 @@ struct db_sa *oakley_alg_mergedb(struct alg_info_ike *ai,
 	FOR_EACH_IKE_INFO(ai, ike_info) {
 		struct db_sa *emp_sp;
 
-		passert(ike_info->ike_encrypt);
-		passert(ike_info->ike_prf);
-		passert(ike_info->ike_dh_group);
+		passert(ike_info->encrypt);
+		passert(ike_info->prf);
+		passert(ike_info->dh);
 
-		unsigned ealg = ike_info->ike_encrypt->common.ikev1_oakley_id;
-		unsigned halg = ike_info->ike_prf->common.ikev1_oakley_id;
-		unsigned modp = ike_info->ike_dh_group->group;
-		unsigned eklen = ike_info->ike_eklen;
+		unsigned ealg = ike_info->encrypt->common.ikev1_oakley_id;
+		unsigned halg = ike_info->prf->common.ikev1_oakley_id;
+		unsigned modp = ike_info->dh->group;
+		unsigned eklen = ike_info->enckeylen;
 
 		DBG(DBG_CONTROL,
 		    DBG_log("oakley_alg_makedb() processing ealg=%s=%u halg=%s=%u modp=%s=%u eklen=%u",
-			    ike_info->ike_encrypt->common.name, ealg,
-			    ike_info->ike_prf->common.name, halg,
-			    ike_info->ike_dh_group->common.name, modp,
+			    ike_info->encrypt->common.name, ealg,
+			    ike_info->prf->common.name, halg,
+			    ike_info->dh->common.name, modp,
 			    eklen));
 
-		const struct encrypt_desc *enc_desc = ike_info->ike_encrypt;
+		const struct encrypt_desc *enc_desc = ike_info->encrypt;
 		if (eklen != 0 && !encrypt_has_key_bit_length(enc_desc, eklen)) {
 			PEXPECT_LOG("IKEv1 proposal with ENCRYPT%s (specified) keylen:%d, not valid, should have been dropped",
 				    enc_desc->common.name,
@@ -232,7 +232,7 @@ struct db_sa *oakley_alg_mergedb(struct alg_info_ike *ai,
 		 * a different DH group, we try to deal with this.
 		 */
 		if (single_dh && transcnt > 0 &&
-		    ike_info->ike_dh_group->group != last_modp) {
+		    ike_info->dh->group != last_modp) {
 			if (last_modp == OAKLEY_GROUP_MODP1024 ||
 			    last_modp == OAKLEY_GROUP_MODP1536) {
 				/*
@@ -249,11 +249,11 @@ struct db_sa *oakley_alg_mergedb(struct alg_info_ike *ai,
 				loglog(RC_LOG_SERIOUS,
 				       "transform (%s,%s,%s keylen %ld) ignored.",
 				       enum_name(&oakley_enc_names,
-						 ike_info->ike_encrypt->common.ikev1_oakley_id),
+						 ike_info->encrypt->common.ikev1_oakley_id),
 				       enum_name(&oakley_hash_names,
-						 ike_info->ike_prf->common.ikev1_oakley_id),
-				       ike_info->ike_dh_group->common.name,
-				       (long)ike_info->ike_eklen);
+						 ike_info->prf->common.ikev1_oakley_id),
+				       ike_info->dh->common.name,
+				       (long)ike_info->enckeylen);
 				free_sa(&emp_sp);
 			} else {
 				/*
@@ -282,10 +282,10 @@ struct db_sa *oakley_alg_mergedb(struct alg_info_ike *ai,
 			  * Exclude 3des et.al. which do not include
 			  * default key lengths in the proposal.
 			  */
-			 if (ike_info->ike_eklen == 0
-			     && !ike_info->ike_encrypt->keylen_omitted) {
+			 if (ike_info->enckeylen == 0
+			     && !ike_info->encrypt->keylen_omitted) {
 
-				const struct encrypt_desc *enc_desc = ike_info->ike_encrypt;
+				const struct encrypt_desc *enc_desc = ike_info->encrypt;
 				int def_ks = enc_desc->keydeflen;
 				passert(def_ks); /* ike=null not supported */
 				int max_ks = encrypt_max_key_bit_length(enc_desc);
@@ -355,7 +355,7 @@ struct db_sa *oakley_alg_mergedb(struct alg_info_ike *ai,
 					emp_sp = NULL;
 				}
 			}
-			last_modp = ike_info->ike_dh_group->group;
+			last_modp = ike_info->dh->group;
 		}
 
 		transcnt++;

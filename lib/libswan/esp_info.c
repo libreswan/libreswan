@@ -34,46 +34,15 @@
 #include "ike_alg_aes.h"
 #include "ike_alg_sha1.h"
 
-/*
- * Search esp_transformid_names for a match, eg:
- *	"3des" <=> "ESP_3DES"
- */
-static int ealg_getbyname_esp(const char *const str)
+static bool alg_is_implemented(const struct ike_alg *alg)
 {
-	if (str == NULL || *str == '\0')
-		return -1;
-
-	return alg_enum_search(&esp_transformid_names, "ESP_", "", str);
-}
-
-/*
- * Search auth_alg_names for a match, eg:
- *	"md5" <=> "AUTH_ALGORITHM_HMAC_MD5"
- */
-static int aalg_getbyname_esp(const char *str)
-{
-	int ret = -1;
-	static const char null_esp[] = "null";
-
-	if (str == NULL || *str == '\0')
-		return -1;
-
-	ret = alg_enum_search(&auth_alg_names, "AUTH_ALGORITHM_HMAC_", "", str);
-	if (ret >= 0)
-		return ret;
-	ret = alg_enum_search(&auth_alg_names, "AUTH_ALGORITHM_", "", str);
-	if (ret >= 0)
-		return ret;
-
-	/*
-	 * INT_MAX is used as the special value for "no authentication"
-	 * since 0 is already used.
-	 * ??? this is extremely ugly.
-	 */
-	if (strcaseeq(str, null_esp))
-		return INT_MAX;
-
-	return ret;
+	if (alg->algo_type == &ike_alg_dh) {
+		/* require an in-process/ike implementation of DH */
+		return ike_alg_is_ike(alg);
+	} else {
+		/* ask the kernel? */
+		return TRUE;
+	}
 }
 
 /*
@@ -85,7 +54,7 @@ static void raw_alg_info_esp_add(struct alg_info_esp *alg_info,
 				 const struct integ_desc *integ,
 				 const struct oakley_group_desc *dh)
 {
-	struct esp_info *esp_info = alg_info->esp;
+	struct proposal_info *esp_info = alg_info->ai.proposals;
 	int cnt = alg_info->ai.alg_info_cnt;
 
 	/*
@@ -97,22 +66,22 @@ static void raw_alg_info_esp_add(struct alg_info_esp *alg_info,
 	 * hard/messy, so a wild card is easier.
 	 */
 	FOR_EACH_ESP_INFO(alg_info, esp_info) {
-		if (esp_info->esp_encrypt == encrypt &&
+		if (esp_info->encrypt == encrypt &&
 		    (ek_bits == 0 || esp_info->enckeylen == ek_bits) &&
-		    esp_info->esp_integ == integ &&
+		    esp_info->integ == integ &&
 		    esp_info->dh == dh)
 			return;
 	}
 
 	/* check for overflows */
 	/* ??? passert seems dangerous */
-	passert(cnt < (int)elemsof(alg_info->esp));
+	passert(cnt < (int)elemsof(alg_info->ai.proposals));
 
-	esp_info[cnt].transid = (encrypt != NULL ? encrypt->common.id[IKEv1_ESP_ID] : 0);
+	esp_info[cnt].ikev1esp_transid = (encrypt != NULL ? encrypt->common.id[IKEv1_ESP_ID] : 0);
 	esp_info[cnt].enckeylen = ek_bits;
-	esp_info[cnt].auth = (integ == &alg_info_integ_null) ? 0 : integ->common.id[IKEv1_ESP_ID];
-	esp_info[cnt].esp_encrypt = encrypt;
-	esp_info[cnt].esp_integ = (integ == &alg_info_integ_null) ? NULL : integ;
+	esp_info[cnt].ikev1esp_auth = (integ == &alg_info_integ_null) ? 0 : integ->common.id[IKEv1_ESP_ID];
+	esp_info[cnt].encrypt = encrypt;
+	esp_info[cnt].integ = (integ == &alg_info_integ_null) ? NULL : integ;
 	esp_info[cnt].dh = dh;
 
 	alg_info->ai.alg_info_cnt++;
@@ -123,28 +92,13 @@ static void raw_alg_info_esp_add(struct alg_info_esp *alg_info,
  */
 static const char *alg_info_esp_add(const struct parser_policy *const policy UNUSED,
 				    struct alg_info *alg_info,
-				    const struct encrypt_desc *encrypt,
-				    int ealg_id, int ek_bits,
-				    int aalg_id,
+				    const struct encrypt_desc *encrypt, int ek_bits,
 				    const struct prf_desc *prf,
 				    const struct integ_desc *integ,
 				    const struct oakley_group_desc *dh,
 				    char *err_buf, size_t err_buf_len)
 {
 	pexpect(prf == NULL);
-
-	/*
-	 * XXX: Cross check encryption lookups.
-	 */
-	pexpect((ealg_id == 0) == (encrypt == NULL));
-	pexpect(encrypt == NULL || ealg_id == encrypt->common.id[IKEv1_ESP_ID]);
-
-	/*
-	 * XXX: Cross check integrity lookups.
-	 */
-	pexpect((integ == NULL && aalg_id <= 0)
-		|| (integ == &alg_info_integ_null && aalg_id == INT_MAX)
-		|| (integ != NULL && aalg_id == integ->common.id[IKEv1_ESP_ID]));
 
 	/* Policy: default to AES */
 	if (encrypt == NULL) {
@@ -196,25 +150,15 @@ static const char *alg_info_esp_add(const struct parser_policy *const policy UNU
  */
 static const char *alg_info_ah_add(const struct parser_policy *const policy UNUSED,
 				   struct alg_info *alg_info,
-				   const struct encrypt_desc *encrypt,
-				   int ealg_id, int ek_bits,
-				   int aalg_id,
+				   const struct encrypt_desc *encrypt, int ek_bits,
 				   const struct prf_desc *prf,
 				   const struct integ_desc *integ,
 				   const struct oakley_group_desc *dh,
 				   char *err_buf, size_t err_buf_len)
 {
-	pexpect(ealg_id <= 0);
 	pexpect(ek_bits == 0);
 	pexpect(encrypt == NULL);
 	pexpect(prf == NULL);
-
-	/*
-	 * XXX: Cross check integrity lookups.
-	 */
-	pexpect((integ == NULL && aalg_id <= 0)
-		|| (integ == &alg_info_integ_null && aalg_id == INT_MAX)
-		|| (integ != NULL && aalg_id == integ->common.id[IKEv1_ESP_ID]));
 
 	/* ah=null is invalid */
 	if (integ == &alg_info_integ_null) {
@@ -245,9 +189,8 @@ const struct parser_param esp_parser_param = {
 	.protocol = "ESP",
 	.ikev1_alg_id = IKEv1_ESP_ID,
 	.protoid = PROTO_IPSEC_ESP,
+	.alg_is_implemented = alg_is_implemented,
 	.alg_info_add = alg_info_esp_add,
-	.ealg_getbyname = ealg_getbyname_esp,
-	.aalg_getbyname = aalg_getbyname_esp,
 	.encrypt_alg_byname = encrypt_alg_byname,
 	.integ_alg_byname = integ_alg_byname,
 	.dh_alg_byname = dh_alg_byname,
@@ -257,8 +200,8 @@ const struct parser_param ah_parser_param = {
 	.protocol = "AH",
 	.ikev1_alg_id = IKEv1_ESP_ID,
 	.protoid = PROTO_IPSEC_AH,
+	.alg_is_implemented = alg_is_implemented,
 	.alg_info_add = alg_info_ah_add,
-	.aalg_getbyname = aalg_getbyname_esp,
 	.integ_alg_byname = integ_alg_byname,
 	.dh_alg_byname = dh_alg_byname,
 };
@@ -282,7 +225,7 @@ static struct alg_info_esp *alg_info_discover_pfsgroup_hack(struct alg_info_esp 
 	 * Find the last proposal, of present (never know, there could
 	 * be no algorithms).
 	 */
-	struct esp_info *last = NULL;
+	struct proposal_info *last = NULL;
 	FOR_EACH_ESP_INFO(aie, esp_info) {
 		last = esp_info;
 	}
@@ -365,7 +308,7 @@ static struct alg_info_esp *alg_info_discover_pfsgroup_hack(struct alg_info_esp 
  */
 
 /* This function is tested in testing/algparse/algparse.c */
-struct alg_info_esp *alg_info_esp_create_from_str(lset_t policy,
+struct alg_info_esp *alg_info_esp_create_from_str(const struct parser_policy *policy,
 						  const char *alg_str,
 						  char *err_buf, size_t err_buf_len)
 {
@@ -392,7 +335,7 @@ struct alg_info_esp *alg_info_esp_create_from_str(lset_t policy,
 }
 
 /* This function is tested in testing/algparse/algparse.c */
-struct alg_info_esp *alg_info_ah_create_from_str(lset_t policy,
+struct alg_info_esp *alg_info_ah_create_from_str(const struct parser_policy *policy,
 						 const char *alg_str,
 						 char *err_buf, size_t err_buf_len)
 {
@@ -435,13 +378,13 @@ void alg_info_esp_snprint(char *buf, size_t buflen,
 			snprintf(ptr, be - ptr,
 				 "%s%s(%d)_%03d-%s(%d)", sep,
 				 enum_short_name(&esp_transformid_names,
-						 esp_info->transid),
-				 esp_info->transid,
+						 esp_info->ikev1esp_transid),
+				 esp_info->ikev1esp_transid,
 				 (int)esp_info->enckeylen,
 				 strip_prefix(enum_short_name(&auth_alg_names,
-							      esp_info->auth),
+							      esp_info->ikev1esp_auth),
 					      "HMAC_"),
-				 esp_info->auth);
+				 esp_info->ikev1esp_auth);
 			ptr += strlen(ptr);
 			sep = ", ";
 		}
@@ -462,9 +405,9 @@ void alg_info_esp_snprint(char *buf, size_t buflen,
 			snprintf(ptr, be - ptr,
 				 "%s%s(%d)", sep,
 				 strip_prefix(enum_short_name(&auth_alg_names,
-							      esp_info->auth),
+							      esp_info->ikev1esp_auth),
 					      "HMAC_"),
-				 esp_info->auth);
+				 esp_info->ikev1esp_auth);
 			ptr += strlen(ptr);
 			sep = ", ";
 		}
@@ -487,23 +430,23 @@ void alg_info_esp_snprint(char *buf, size_t buflen,
 }
 
 static int snprint_esp_info(char *ptr, size_t buflen, const char *sep,
-			    const struct esp_info *esp_info)
+			    const struct proposal_info *esp_info)
 {
 	unsigned eklen = esp_info->enckeylen;
 
 	return snprintf(ptr, buflen, "%s%s(%d)_%03d-%s(%d)",
 			sep,
 			enum_short_name(&esp_transformid_names,
-					       esp_info->transid),
-			esp_info->transid, eklen,
+					       esp_info->ikev1esp_transid),
+			esp_info->ikev1esp_transid, eklen,
 			strip_prefix(enum_short_name(&auth_alg_names,
-						esp_info->auth),
+						esp_info->ikev1esp_auth),
 				"HMAC_"),
-			esp_info->auth);
+			esp_info->ikev1esp_auth);
 }
 
 void alg_info_snprint_esp_info(char *buf, size_t buflen,
-			       const struct esp_info *esp_info)
+			       const struct proposal_info *esp_info)
 {
 	snprint_esp_info(buf, buflen, "", esp_info);
 }
@@ -531,17 +474,17 @@ static void alg_info_snprint_esp(char *buf, size_t buflen,
 	jam_str(buf, buflen, "none");
 
 	FOR_EACH_ESP_INFO(alg_info, esp_info) {
-		err_t ugh = check_kernel_encrypt_alg(esp_info->transid, 0);
+		err_t ugh = check_kernel_encrypt_alg(esp_info->ikev1esp_transid, 0);
 
 		if (ugh != NULL) {
 			DBG_log("esp algid=%d not available: %s",
-				esp_info->transid, ugh);
+				esp_info->ikev1esp_transid, ugh);
 			continue;
 		}
 
-		if (!kernel_alg_esp_auth_ok(esp_info->auth, NULL)) {
+		if (!kernel_alg_esp_auth_ok(esp_info->ikev1esp_auth, NULL)) {
 			DBG_log("auth algid=%d not available",
-				esp_info->auth);
+				esp_info->ikev1esp_auth);
 			continue;
 		}
 
@@ -579,18 +522,18 @@ static void alg_info_snprint_ah(char *buf, size_t buflen,
 	jam_str(buf, buflen, "none");
 
 	FOR_EACH_ESP_INFO(alg_info, esp_info) {
-		if (!kernel_alg_esp_auth_ok(esp_info->auth, NULL)) {
+		if (!kernel_alg_esp_auth_ok(esp_info->ikev1esp_auth, NULL)) {
 			DBG_log("auth algid=%d not available",
-				esp_info->auth);
+				esp_info->ikev1esp_auth);
 			continue;
 		}
 
 		int ret = snprintf(ptr, buflen, "%s%s(%d)",
 			       sep,
 			       strip_prefix(enum_name(&auth_alg_names,
-							esp_info->auth),
+							esp_info->ikev1esp_auth),
 					"HMAC_"),
-			       esp_info->auth);
+			       esp_info->ikev1esp_auth);
 
 		if (ret < 0 || (size_t)ret >= buflen) {
 			DBG_log("alg_info_snprint_ah: buffer too short for snprintf");

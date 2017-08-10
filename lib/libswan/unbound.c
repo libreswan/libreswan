@@ -144,7 +144,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 	                int r = glob(trusted, GLOB_ERR, NULL, &globbuf);
 
 			if (r != 0) {
-				switch(r) {
+				switch (r) {
 				case GLOB_NOSPACE:
 						loglog(RC_LOG_SERIOUS, "out of space procesing dnssec-trusted= argument:%s",
 							trusted);
