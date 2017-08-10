@@ -222,9 +222,14 @@ static struct alg_info_esp *alg_info_discover_pfsgroup_hack(struct alg_info_esp 
 	}
 
 	/*
-	 * Find the last proposal, of present (never know, there could
-	 * be no algorithms).
+	 * Find the first and last proposal, if present (never know,
+	 * there could be no algorithms).
 	 */
+	struct proposal_info *first = NULL;
+	FOR_EACH_ESP_INFO(aie, esp_info) {
+		first = esp_info;
+		break;
+	}
 	struct proposal_info *last = NULL;
 	FOR_EACH_ESP_INFO(aie, esp_info) {
 		last = esp_info;
@@ -235,31 +240,44 @@ static struct alg_info_esp *alg_info_discover_pfsgroup_hack(struct alg_info_esp 
 	}
 
 	/*
-	 * Restrict DH to just the last proposal.
+	 * Make certain that either all algorithms have the same DH or
+	 * all are NULL (with the exception of the last).
 	 *
-	 * For instance, the first "modp1024" in
-	 * "aes;modp1024,aes;modp2048" isn't allowed.
-	 *
-	 * Why? Because pluto only understands one DH and having it
-	 * last should help have it stand out?
+	 * For instance, aes-modp1024,aes-modp2048 isn't allowed
+	 * because pluto assumes only one PFS group.
 	 */
 	FOR_EACH_ESP_INFO(aie, esp_info) {
 		if (esp_info == last) {
 			continue;
 		}
-		if (esp_info->dh == NULL) {
-			continue;
+		if (first->dh != esp_info->dh) {
+			snprintf(err_buf, err_buf_len,
+				 "%s DH algorithm '%s' must be specified last",
+				 parser_param->protocol,
+				 (first->dh != NULL ? first->dh : esp_info->dh)->common.fqn);
+			alg_info_free(&aie->ai);
+			return NULL;
 		}
-		snprintf(err_buf, err_buf_len,
-			 "%s DH algorithm '%s' must be specified last",
-			 parser_param->protocol,
-			 esp_info->dh->common.name);
-		alg_info_free(&aie->ai);
-		return NULL;
+		if (esp_info->dh != NULL && last->dh == NULL) {
+			snprintf(err_buf, err_buf_len,
+				 "%s DH algorithm '%s' must be specified last",
+				 parser_param->protocol,
+				 esp_info->dh->common.fqn);
+			alg_info_free(&aie->ai);
+			return NULL;
+		}
+		if (esp_info->dh != NULL && esp_info->dh != last->dh) {
+			snprintf(err_buf, err_buf_len,
+				 "%s DH algorithm must be specified once",
+				 parser_param->protocol);
+			alg_info_free(&aie->ai);
+			return NULL;
+		}
 	}
 
 	/*
-	 * Restrict the DH separator character to ';'.
+	 * Restrict the DH separator character to ';' and the last
+	 * proposal.
 	 *
 	 * While the parser allows both "...;modp1024" and
 	 * "...-modp1024", pluto only admits to the former - so that
@@ -268,25 +286,70 @@ static struct alg_info_esp *alg_info_discover_pfsgroup_hack(struct alg_info_esp 
 	 *
 	 * Why? Because this is how it worked in the past.  Presumably
 	 * ';' makes it clear that it applies to all algorithms?
+	 *
+	 * Conversely, if all proposals include DH don't allow any
+	 * ';'.
 	 */
 	if (last->dh != NULL) {
 		char *last_dash = strrchr(alg_str, '-');
 		char *last_semi = strrchr(alg_str, ';');
-		if (last_semi == NULL || last_semi < last_dash) {
-			snprintf(err_buf, err_buf_len,
-				 "%s DH algorithm '%s' must be separated using a ';'",
-				 parser_param->protocol,
-				 last->dh->common.name);
-			alg_info_free(&aie->ai);
-			return NULL;
+		char *last_comma = strrchr(alg_str, ',');
+		if (first != last && first->dh == NULL) {
+			/* reject missing ';'. */
+			if (last_semi == NULL) {
+				snprintf(err_buf, err_buf_len,
+					 "%s DH algorithm '%s' must be separated using a ';'",
+					 parser_param->protocol,
+					 last->dh->common.fqn);
+				alg_info_free(&aie->ai);
+				return NULL;
+			}
+			/* reject xxx;DH,yyy */
+			if (last_comma != NULL && last_semi < last_comma) {
+				snprintf(err_buf, err_buf_len,
+					 "%s DH algorithm must appear after last proposal",
+					 parser_param->protocol);
+				alg_info_free(&aie->ai);
+				return NULL;
+			}
+			/* reject yyy,xxx-DH */
+			if (last_dash != NULL && last_semi < last_dash) {
+				snprintf(err_buf, err_buf_len,
+					 "%s DH algorithm must be at end of proposal",
+					 parser_param->protocol);
+				alg_info_free(&aie->ai);
+				return NULL;
+			}
+		} else if (first != last && first->dh != NULL) {
+			/* reject ...;... */
+			if (last_semi != NULL) {
+				snprintf(err_buf, err_buf_len,
+					 "%s DH algorithm must appear once after last proposal",
+					 parser_param->protocol);
+				alg_info_free(&aie->ai);
+				return NULL;
+			}
 		}
+	}
+
+	/*
+	 * Now go through and force all DHs to a consistent value.
+	 *
+	 * This way, something printing an individual proposal will
+	 * include the common DH; and for IKEv2 it can just pick up
+	 * that DH.
+	 */
+	FOR_EACH_ESP_INFO(aie, esp_info) {
+		if (esp_info == last) {
+			continue;
+		}
+		esp_info->dh = last->dh;
 	}
 
 	/*
 	 * Use last's DH for PFS.  Could be NULL but that is ok.
 	 *
-	 * XXX: Instead blat all proposals with the DH so that the
-	 * IKEv2 code can make use of this?
+	 * Since DH is set uniformly, could use first.DH instead.
 	 */
 	aie->esp_pfsgroup = last->dh;
 	return aie;
