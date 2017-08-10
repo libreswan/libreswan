@@ -17,7 +17,8 @@ enum ike_alg_key;
 		/* wrapping ASSERTION in paren suppresses -Wparen */	\
 		bool assertion__ = ASSERTION; /* no paren */		\
 		if (!assertion__) {					\
-			PASSERT_FAIL("IKE_ALG algorithm '%s' fails: %s", \
+			PASSERT_FAIL("IKE_ALG %s algorithm '%s' fails: %s", \
+				     ike_alg_type_name((ALG)->algo_type), \
 				     (ALG)->fqn != NULL ? (ALG)->fqn	\
 				     : (ALG)->name != NULL ? (ALG)->name \
 				     : "NULL", #ASSERTION);		\
@@ -28,7 +29,8 @@ enum ike_alg_key;
 		/* wrapping ASSERTION in paren suppresses -Wparen */	\
 		bool assertion__ = ASSERTION; /* no paren */		\
 		if (!assertion__) {					\
-			PEXPECT_LOG("IKE_ALG algorithm '%s' fails: %s",	\
+			PEXPECT_LOG("IKE_ALG %s algorithm '%s' fails: %s", \
+				    ike_alg_type_name((ALG)->algo_type), \
 				    (ALG)->fqn != NULL ? (ALG)->fqn	\
 				    : (ALG)->name != NULL ? (ALG)->name \
 				    : "NULL", #ASSERTION);		\
