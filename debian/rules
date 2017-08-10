@@ -49,6 +49,3 @@ override_dh_auto_install-arch:
 
 override_dh_auto_test:
 	 echo "Skip dh_auto_test"
-
-override_dh_systemd_enable:
-	dh_systemd_enable --no-enable
