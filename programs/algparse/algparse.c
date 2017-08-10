@@ -282,7 +282,10 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	struct parser_policy policy = { false, };
+	struct parser_policy policy = {
+		.ikev1 = false,
+		.ikev2 = false,
+	};
 	bool run_tests = false;
 
 	char **argp = argv + 1;

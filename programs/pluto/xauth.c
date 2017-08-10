@@ -102,7 +102,7 @@ static void xauth_thread_cleanup(void *arg)
 	    DBG_log("XAUTH: #%lu: %s-thread queueing cleanup for user '%s' with result %s",
 		    xauth->serialno, xauth->method, xauth->name,
 		    xauth->success ? "SUCCESS" : "FAILURE"));
-	const struct timeval delay = { 0, };
+	const struct timeval delay = { 0, 0 };
 	pluto_event_new(NULL_FD, EV_TIMEOUT, xauth_cleanup_callback, arg, &delay);
 }
 
