@@ -221,7 +221,7 @@ static const char *raw_alg_info_ike_add(struct alg_info_ike *alg_info,
 		.enckeylen = ek_bits,
 		.encrypt = encrypt,
 		.prf = prf,
-		.integ = (ike_alg_is_aead(encrypt) ? NULL : integ),
+		.integ = integ,
 		.dh = dh_group,
 	};
 	alg_info->ai.alg_info_cnt++;

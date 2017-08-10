@@ -74,17 +74,14 @@ struct parser_param {
 	 *
 	 * WARNING:
 	 *
-	 * As of 2017-08-08, pluto proper doesn't follow this
+	 * As of 2017-08-10, pluto proper doesn't always follow this
 	 * convention.  Instead of 'ike_alg_integ_null', NULL is used
 	 * for 'null' integrity (encryption does use
 	 * 'ike_alg_encrypt_null' it seems).  This affects the
 	 * following fields in pluto:
 	 *
-	 * - struct proposal_info .integ, populated by .alg_info_add()
-	 *   and used by the proposal code
-	 *
-	 * - struct trans_attrs .integ, populated by the proposal code
-	 *   and used by the crypto and kernel code
+	 * - struct trans_attrs .integ, which is populated by the
+	 *   proposal code and used by the crypto and kernel code
 	 *
 	 * - struct kernel_alg .integ, populated and used by the
 	 *   kernel code
