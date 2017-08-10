@@ -124,7 +124,7 @@ unsigned crypto_req_keysize(enum crk_proto ksproto, int algo)
 		case ESP_AES_GCM_12:
 		case ESP_AES_GCM_16:
 			return AES_GCM_KEY_DEF_LEN;
-		case ESP_CAMELLIAv1:
+		case ESP_CAMELLIA:
 			return CAMELLIA_KEY_DEF_LEN;
 		case ESP_CAMELLIA_CTR:
 			return CAMELLIA_CTR_KEY_DEF_LEN;

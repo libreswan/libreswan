@@ -60,7 +60,7 @@ struct encrypt_desc ike_alg_encrypt_camellia_cbc =
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_CAMELLIA_CBC,
-			[IKEv1_ESP_ID] = ESP_CAMELLIAv1,
+			[IKEv1_ESP_ID] = ESP_CAMELLIA,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_CAMELLIA_CBC,
 		},
 		.nss_mechanism = CKM_CAMELLIA_CBC,
