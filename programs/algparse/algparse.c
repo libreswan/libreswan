@@ -172,6 +172,7 @@ static void test(const struct parser_policy *policy)
 	esp(policy, "3des-sha1-modp8192"); /* allow '-' when unambigious */
 	esp(policy, "aes-sha1,3des-sha1;modp8192"); /* set modp8192 on all algs */
 	esp(policy, "aes-sha1-modp8192,3des-sha1-modp8192"); /* silly */
+	esp(policy, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192"); /* suppress duplicates */
 
 	/*
 	 * should this be supported - for now man page says not
@@ -225,6 +226,7 @@ static void test(const struct parser_policy *policy)
 	ah(policy, "sha2_384");
 	ah(policy, "sha2_512");
 	ah(policy, "aes_xcbc");
+	ah(policy, "sha1-modp8192,sha1-modp8192,sha1-modp8192"); /* suppress duplicates */
 
 	printf("\n---- AH tests that should fail ----\n");
 
@@ -251,6 +253,7 @@ static void test(const struct parser_policy *policy)
 	ike(policy, "3des-sha1;dh21");
 	ike(policy, "3des-sha1-ecp_521");
 	ike(policy, "aes_gcm");
+	ike(policy, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192"); /* suppress duplicates */
 
 	printf("\n---- IKE tests that should fail ----\n");
 

@@ -186,6 +186,8 @@
 [esp=aes-sha1-modp8192,3des-sha1-modp8192]
 	AES_CBC-HMAC_SHA1_96-MODP8192
 	3DES_CBC-HMAC_SHA1_96-MODP8192
+[esp=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192]
+	AES_CBC-HMAC_SHA1_96-MODP8192
 
 ---- ESP tests that should fail----
 [esp=3des168-sha1]
@@ -266,6 +268,8 @@
 	HMAC_SHA2_512_256
 [ah=aes_xcbc]
 	AES_XCBC_96
+[ah=sha1-modp8192,sha1-modp8192,sha1-modp8192]
+	HMAC_SHA1_96-MODP8192
 
 ---- AH tests that should fail ----
 [ah=aes-sha1]
@@ -309,6 +313,8 @@
 	AES_GCM_16-HMAC_SHA2_256-MODP2048
 	AES_GCM_16-HMAC_SHA2_512-MODP2048
 	AES_GCM_16-HMAC_SHA1-MODP2048
+[ike=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192]
+	AES_CBC-HMAC_SHA1-MODP8192
 
 ---- IKE tests that should fail ----
 [ike=id2]
