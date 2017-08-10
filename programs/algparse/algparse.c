@@ -23,9 +23,10 @@
 		if (e != NULL) {					\
 			passert(err_buf[0] == '\0');			\
 			FOR_EACH_PROPOSAL_INFO(&e->ai, proposal) {	\
-				struct lswlog log = empty_lswlog;	\
-				lswlog_proposal_info(&log, proposal);	\
-				printf("\t%s\n", log.buf);		\
+				LSWLOG(log) {				\
+					lswlog_proposal_info(log, proposal); \
+					printf("\t%s\n", LSWLOG_BUF(log)); \
+				}					\
 			}						\
 			alg_info_free(&e->ai);				\
 		} else {						\

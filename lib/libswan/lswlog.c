@@ -20,9 +20,7 @@
 #include "lswlog.h"
 #include "lswalloc.h"
 
-#define DOTS "..."
-
-const struct lswlog empty_lswlog = {
+const struct lswbuf empty_lswbuf = {
 	.parrot = LSWLOG_PARROT,
 	.buf = "",
 	.canary = LSWLOG_CANARY,
@@ -45,19 +43,20 @@ struct dest {
 	size_t size;
 };
 
-static struct dest dest(struct lswlog *log, const size_t bound)
+static struct dest dest(struct lswlog *log)
 {
-	lswlog_debugf("dest(.log=%p,.bound=%zd)\n", log, bound);
-	PASSERT_LSWLOG(log, bound);
+	lswlog_debugf("dest(.log=%p)\n", log);
+	lswlog_debugf("\tbbound=%zu\n", log->bound);
+	PASSERT_LSWLOG(log);
 
 	/*
 	 * Where will the next message be written?
 	 */
-	passert(bound <= LOG_WIDTH);
-	passert(log->len <= bound);
-	char *start = log->buf + log->len;
+	passert(log->bound < sizeof(log->buf->buf));
+	passert(log->buf->len <= log->bound);
+	char *start = log->buf->buf + log->buf->len;
 	lswlog_debugf("\tstart=%p\n", start);
-	passert(start <= log->buf + LOG_WIDTH);
+	passert(start < log->buf->buf + sizeof(log->buf->buf));
 	passert(start[0] == '\0');
 
 	/*
@@ -69,11 +68,11 @@ static struct dest dest(struct lswlog *log, const size_t bound)
 	 * If the buffer has overflowed (LEN==BOUND) (output has
 	 * already been truncated) then size=0.
 	 */
-	passert(bound <= LOG_WIDTH);
-	passert(log->len <= bound);
-	size_t size = bound - log->len;
+	passert(log->bound < sizeof(log->buf->buf));
+	passert(log->buf->len <= log->bound);
+	size_t size = log->bound - log->buf->len;
 	lswlog_debugf("\tsize=%zd\n", size);
-	passert(log->len + size < sizeof(log->buf));
+	passert(log->buf->len + size < sizeof(log->buf->buf));
 
 	struct dest d = {
 		.start = start,
@@ -89,25 +88,28 @@ static struct dest dest(struct lswlog *log, const size_t bound)
  * The output needs to be truncated, overwrite the end of the buffer
  * with DOTS.
  */
-static void truncate(struct lswlog *log, const size_t bound, const char *dots)
+static void truncate(struct lswlog *log)
 {
-	lswlog_debugf("truncate(.log=%p,.bound=%zd,.dots=%s)\n", log, bound, dots);
-	PASSERT_LSWLOG(log, bound);
+	lswlog_debugf("truncate(.log=%p)\n", log);
+	lswlog_debugf("\tblen=%zu\n", log->buf->len);
+	lswlog_debugf("\tbbound=%zu\n", log->bound);
+	lswlog_debugf("\tbdots=%s\n", log->dots);
+	PASSERT_LSWLOG(log);
 
 	/*
 	 * Transition from "full" to overfull (truncated).
 	 */
-	passert(log->len == bound - 1);
-	log->len = bound;
+	passert(log->buf->len == log->bound - 1);
+	log->buf->len = log->bound;
 
 	/*
 	 * Backfill with DOTS.
 	 */
-	passert(bound < sizeof(log->buf));
-	passert(bound >= strlen(dots));
-	char *dest = log->buf + bound - strlen(dots);
+	passert(log->bound < sizeof(log->buf->buf));
+	passert(log->bound >= strlen(log->dots));
+	char *dest = log->buf->buf + log->bound - strlen(log->dots);
 	lswlog_debugf("\tdest=%p\n", dest);
-	memcpy(dest, dots, strlen(dots) + 1);
+	memcpy(dest, log->dots, strlen(log->dots) + 1);
 }
 
 /*
@@ -115,10 +117,9 @@ static void truncate(struct lswlog *log, const size_t bound, const char *dots)
  * VPRINTF.
  */
 
-static size_t concat(struct lswlog *log, size_t bound,
-		     const char *dots, const char *string)
+static size_t concat(struct lswlog *log, const char *string)
 {
-	struct dest d = dest(log, bound);
+	struct dest d = dest(log);
 
 	/*
 	 * N (the return value) is the number of characters, not
@@ -133,7 +134,7 @@ static size_t concat(struct lswlog *log, size_t bound,
 		 * NUL, copy everything over.
 		 */
 		memcpy(d.start, string, n + 1);
-		log->len += n;
+		log->buf->len += n;
 	} else if (d.size > 0) {
 		/*
 		 * Not enough space, perform a partial copy of the
@@ -141,23 +142,22 @@ static size_t concat(struct lswlog *log, size_t bound,
 		 */
 		memcpy(d.start, string, d.size - 1);
 		d.start[d.size - 1] = '\0';
-		log->len += d.size - 1;
-		passert(log->len == bound - 1);
+		log->buf->len += d.size - 1;
+		passert(log->buf->len == log->bound - 1);
 		/*
 		 * ... and then go back and blat the end with DOTS.
 		 */
-		truncate(log, bound, dots);
+		truncate(log);
 	}
 	/* already overflowed */
 
-	PASSERT_LSWLOG(log, bound);
+	PASSERT_LSWLOG(log);
 	return n;
 }
 
-static size_t append(struct lswlog *log, size_t bound, const char *dots,
-		     const char *format, va_list ap)
+static size_t append(struct lswlog *log, const char *format, va_list ap)
 {
-	struct dest d = dest(log, bound);
+	struct dest d = dest(log);
 
 	/*
 	 * N (the return value) is the number of characters, not not
@@ -179,7 +179,7 @@ static size_t append(struct lswlog *log, size_t bound, const char *dots,
 		 * problem? (if it is then hopefully things crash).
 		 */
 		PEXPECT_LOG("vsnprintf() unexpectedly returned the -ve value %d", sn);
-		return LOG_WIDTH;
+		return sizeof(log->buf->buf);
 	}
 	size_t n = sn;
 
@@ -188,45 +188,45 @@ static size_t append(struct lswlog *log, size_t bound, const char *dots,
 		 * Everything, including the trailing NUL, fitted.
 		 * Update the length.
 		 */
-		log->len += n;
+		log->buf->len += n;
 	} else if (d.size > 0) {
 		/*
 		 * The message didn't fit so only d.size-1 characters
 		 * of the message were written.  Update things ...
 		 */
-		log->len += d.size - 1;
-		passert(log->len == bound - 1);
+		log->buf->len += d.size - 1;
+		passert(log->buf->len == log->bound - 1);
 		/*
 		 * ... and then mark the buffer as truncated.
 		 */
-		truncate(log, bound, dots);
+		truncate(log);
 	}
 	/* already overflowed */
 
-	PASSERT_LSWLOG(log, bound);
+	PASSERT_LSWLOG(log);
 	return n;
 }
 
 size_t lswlogvf(struct lswlog *log, const char *format, va_list ap)
 {
-	return append(log, LOG_WIDTH, DOTS, format, ap);
+	return append(log, format, ap);
 }
 
 size_t lswlogf(struct lswlog *log, const char *format, ...)
 {
 	va_list ap;
 	va_start(ap, format);
-	size_t n = append(log, LOG_WIDTH, DOTS, format, ap);
+	size_t n = append(log, format, ap);
 	va_end(ap);
 	return n;
 }
 
 size_t lswlogs(struct lswlog *log, const char *string)
 {
-	return concat(log, LOG_WIDTH, DOTS, string);
+	return concat(log, string);
 }
 
 size_t lswlogl(struct lswlog *log, struct lswlog *buf)
 {
-	return concat(log, LOG_WIDTH, DOTS, buf->buf);
+	return concat(log, buf->buf->buf);
 }

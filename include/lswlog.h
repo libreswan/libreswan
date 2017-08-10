@@ -186,20 +186,20 @@ extern void sanitize_string(char *buf, size_t size);
  * A generic buffer for accumulating log output.
  */
 
-struct lswlog {
+struct lswbuf {
 	/*
 	 * BUF contains the accumulated log output.  It is always NUL
 	 * terminated (LEN specifes the location of the NUL).
 	 *
-	 * BUF can contain up to LOG_WIDTH-1 characters (aka BOUND-1)
-	 * of log output (i.e. LEN<LOG_WIDTH).
+	 * BUF can contain up to BOUND-1 characters of log output
+	 * (i.e. LEN<BOUND).
 	 *
-	 * An attempt to accumulate more than that will cause the
-	 * output to be truncated, and last few characters replaced by
-	 * DOTS.
+	 * An attempt to accumulate more than BOUND-1 characters will
+	 * cause the output to be truncated, and last few characters
+	 * replaced by DOTS.
 	 *
 	 * A buffer containing truncated output is identified by LEN
-	 * == LOG_WIDTH (aka BOUND).
+	 * == BOUND.
 	 */
 	signed char parrot;
 	char buf[LOG_WIDTH + 1]; /* extra NUL */
@@ -207,7 +207,15 @@ struct lswlog {
 	size_t len;
 };
 
-extern const struct lswlog empty_lswlog;
+extern const struct lswbuf empty_lswbuf;
+
+struct lswlog {
+#define LSWLOG_BUF(LOG) ((LOG)->buf->buf)
+#define LSWLOG_LEN(LOG) ((LOG)->buf->len)
+	struct lswbuf *buf;
+	size_t bound; /* < sizeof(LSWLOG_BUF()) */
+	const char *dots;
+};
 
 /*
  * To debug, set this to printf or similar.
@@ -217,17 +225,17 @@ extern int (*lswlog_debugf)(const char *format, ...) PRINTF_LIKE(1);
 #define LSWLOG_PARROT -1
 #define LSWLOG_CANARY -2
 
-#define PASSERT_LSWLOG(LOG, BOUND)					\
+#define PASSERT_LSWLOG(LOG)						\
 	do {								\
-		passert((LOG)->parrot == LSWLOG_PARROT);		\
-		/* POS/BOUND well defined */				\
-		passert((LOG)->len <= (BOUND));				\
-		passert((BOUND) < sizeof((LOG)->buf));			\
-		/* always NUL terminated */				\
+		passert((LOG)->dots != NULL);				\
+		/* LEN/BOUND well defined */				\
+		passert((LOG)->buf->len <= (LOG)->bound);		\
+		passert((LOG)->bound < sizeof((LOG)->buf->buf));	\
 		/* passert((LOG)->len < sizeof((LOG)->buf)) */;		\
-		passert((LOG)->buf[(LOG)->len] == '\0');		\
-		/* canary intact */					\
-		passert((LOG)->canary == LSWLOG_CANARY);		\
+		/* always NUL terminated */				\
+		passert((LOG)->buf->parrot == LSWLOG_PARROT);		\
+		passert((LOG)->buf->buf[(LOG)->buf->len] == '\0');	\
+		passert((LOG)->buf->canary == LSWLOG_CANARY);		\
 	} while (false)
 
 /*
@@ -243,5 +251,61 @@ size_t lswlogvf(struct lswlog *log, const char *format, va_list ap);
 size_t lswlogf(struct lswlog *log, const char *format, ...) PRINTF_LIKE(2);
 size_t lswlogs(struct lswlog *log, const char *string);
 size_t lswlogl(struct lswlog *log, struct lswlog *buf);
+
+/*
+ * A code wrapper that covers up the details of allocating,
+ * initializing, logging, and de-allocating the 'struct lswbuf' and
+ * 'struct lswlog' objects.  For instance:
+ *
+ *    LSWLOGP(RC_LOG, false, log) { lswlogf(log, "hello world"); }
+ *
+ * LOG, a variable name, is defined as a pointer to the log buffer.
+ *
+ * This implementation stores the 'struct lswlog' on the stack.
+ *
+ * An alternative would be to put it on the heap.
+ *
+ * Apparently chaining void function calls using a comma is valid C?
+ */
+
+#define EMPTY_LSWLOG(BUF) {						\
+		.buf = (BUF),						\
+		.bound = sizeof((BUF)->buf) - 1,			\
+		.dots = "..."						\
+	}
+
+#define LSWLOG(LOG)							\
+	for (bool lswlogp = true; lswlogp; lswlogp = false)		\
+		for (struct lswbuf lswbuf = empty_lswbuf; lswlogp;)	\
+			for (struct lswlog lswlog = EMPTY_LSWLOG(&lswbuf), *LOG = &lswlog; \
+			     lswlogp; lswlogp = false)
+
+/*
+ * Like the above but further restrict the output to SIZE.
+ *
+ * For instance:
+ *
+ *    LSWLOGT(log, 5, "*", logt) {
+ *      n += lswlogtf(t, "abc"); // 3
+ *      n += lswlogtf(t, "def"); // 3
+ *    }
+ *
+ * would would result in: abc++<nul>
+ *
+ * Like C99 snprintf() et.al, always return the untruncated message
+ * length.
+ */
+
+#define LSWLOGT(LOG, WIDTH, DOTS, LOGT)					\
+	for (bool lswlogtp = true;					\
+	     lswlogtp; )						\
+		for (struct lswlog lswlogt = {				\
+				.buf = (LOG)->buf,			\
+				.bound = min((LOG)->buf->len + (WIDTH), (LOG)->bound), \
+				.dots = ((LOG)->buf->len + (WIDTH) >= (LOG)->bound \
+					 ? (LOG)->dots			\
+					 : (DOTS)),			\
+		      }, *LOGT = &lswlogt;				\
+		     lswlogtp; lswlogtp = false)
 
 #endif /* _LSWLOG_H_ */
