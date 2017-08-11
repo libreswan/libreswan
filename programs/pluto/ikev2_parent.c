@@ -2489,7 +2489,7 @@ struct ikev2_payloads_summary ikev2_decrypt_msg(struct msg_digest *md, bool veri
 				md->st->st_serialno,
 				enum_name(&ikev2_exchange_names,
 					md->hdr.isa_xchg),
-				status == STF_OK ? "sucess" : "failed"));
+				status == STF_OK ? "success" : "failed"));
 
 	 enum next_payload_types_ikev2 np = md->chain[ISAKMP_NEXT_v2SK] ?
 		md->chain[ISAKMP_NEXT_v2SK]->payload.generic.isag_np :
@@ -3065,7 +3065,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 		if (cc != cst->st_connection){
 			char cib[CONN_INST_BUF];
-			DBG_log("Switching Child conection for #%lu to \"%s\"%s"
+			DBG_log("Switching Child connection for #%lu to \"%s\"%s"
 					" from \"%s\"%s",
 					cst->st_serialno, cc->name,
 					fmt_conn_instance(cc, cib),
@@ -5883,7 +5883,7 @@ bool need_this_intiator(struct state *st)
 		return FALSE; /* ignore STATE_V2_CREATE_I ??? */
 
 	if (c->newest_ipsec_sa > st->st_serialno) {
-		libreswan_log( "supressing retransmit because superseded by "
+		libreswan_log( "suppressing retransmit because superseded by "
 				"#%lu try=%lu. Drop this negotitation",
 				c->newest_ipsec_sa, st->st_try);
 		return TRUE;

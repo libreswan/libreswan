@@ -1346,7 +1346,7 @@
                 <refentrytitle>ipsec.conf</refentrytitle>
 
                 <manvolnum>5</manvolnum>
-              </citerefentry> on how to extrac this from the PKCS#12
+              </citerefentry> on how to extract this from the PKCS#12
             file.</para>
           </listitem>
         </varlistentry>
