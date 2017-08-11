@@ -354,6 +354,15 @@ static bool pfkey_build(int error,
 	}
 }
 
+/*
+ * This policy disables both IKEv1 and IKEv2 checks so all algorithms
+ * are valid.
+ */
+const struct parser_policy policy = {
+	.ikev1 = false,
+	.ikev2 = false,
+};
+
 static int decode_esp(char *algname)
 {
 	char err_buf[256] = "";	/* ??? big enough? */
@@ -363,7 +372,8 @@ static int decode_esp(char *algname)
 	 * POLICY=0 disables checks that the algorithm will work with
 	 * IKEv1 and/or IKEv2.
 	 */
-	struct alg_info_esp *alg_info = alg_info_esp_create_from_str(0, algname, err_buf, sizeof(err_buf));
+	struct alg_info_esp *alg_info = alg_info_esp_create_from_str(&policy, algname,
+								     err_buf, sizeof(err_buf));
 
 	if (alg_info != NULL) {
 		int esp_ealg_id, esp_aalg_id;
