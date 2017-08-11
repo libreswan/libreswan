@@ -513,14 +513,20 @@ static const struct integ_desc *integ_descriptors[] = {
 #ifdef USE_RIPEMD
 	&ike_alg_integ_hmac_ripemd_160_96,
 #endif
+	&ike_alg_integ_null,
 };
 
 static void integ_desc_check(const struct ike_alg *alg)
 {
 	const struct integ_desc *integ = integ_desc(alg);
-	passert_ike_alg(alg, integ->integ_keymat_size > 0);
-	passert_ike_alg(alg, integ->integ_output_size > 0);
-	if (integ->prf) {
+	if (integ == &ike_alg_integ_null) {
+		passert_ike_alg(alg, integ->integ_keymat_size == 0);
+		passert_ike_alg(alg, integ->integ_output_size == 0);
+	} else {
+		passert_ike_alg(alg, integ->integ_keymat_size > 0);
+		passert_ike_alg(alg, integ->integ_output_size > 0);
+	}
+	if (integ->prf != NULL) {
 		passert_ike_alg(alg, integ->integ_keymat_size == integ->prf->prf_key_size);
 		passert_ike_alg(alg, integ->integ_output_size <= integ->prf->prf_output_size);
 		passert_ike_alg(alg, prf_desc_is_ike(&integ->prf->common));
@@ -818,6 +824,19 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 		}
 
 		/*
+		 * Only NULL integrity is allowed the value 0.
+		 */
+		if (alg != &ike_alg_integ_null.common) {
+			pexpect_ike_alg(alg, alg->id[IKEv1_OAKLEY_ID] != 0);
+			pexpect_ike_alg(alg, alg->id[IKEv1_ESP_ID] != 0);
+			pexpect_ike_alg(alg, alg->id[IKEv2_ALG_ID] != 0);
+			for (enum ike_alg_key key = IKE_ALG_KEY_FLOOR;
+			     key < IKE_ALG_KEY_ROOF; key++) {
+				pexpect_ike_alg(alg, alg->id[key] != 0);
+			}
+		}
+
+		/*
 		 * Validate an IKE_ALG's IKEv1 and IKEv2 enum_name
 		 * entries.
 		 *
@@ -946,8 +965,12 @@ void ike_alg_snprint(char *buf, size_t sizeof_buf,
 		v2_esp = alg->id[IKEv2_ALG_ID] >= 0;
 		v1_ah = FALSE;
 		v2_ah = FALSE;
-	} else if (alg->algo_type == &ike_alg_integ
-		   || alg->algo_type == &ike_alg_dh) {
+	} else if (alg->algo_type == &ike_alg_integ) {
+		v1_esp = alg->id[IKEv1_ESP_ID] >= 0;
+		v2_esp = alg->id[IKEv2_ALG_ID] >= 0;
+		/* NULL not allowed for AH */
+		v1_ah = v2_ah = integ_desc(alg)->integ_ikev1_ah_id > 0;
+	} else if (alg->algo_type == &ike_alg_dh) {
 		v1_esp = v1_ah = alg->id[IKEv1_ESP_ID] >= 0;
 		v2_esp = v2_ah = alg->id[IKEv2_ALG_ID] >= 0;
 	} else {
