@@ -672,17 +672,18 @@ IETF registry enum_names:
          search ESP_AES_GCM_C: OK
          match ESP_AES_GCM_C: OK
          match AES_GCM_C: OK
-   21 -> ESP_NULL_AUTH_AES_GMAC
-         search ESP_NULL_AUTH_AES_GMAC: OK
-         match ESP_NULL_AUTH_AES_GMAC: OK
-         match NULL_AUTH_AES_GMAC: OK
+   21 -> ESP_SEED_CBC
+         search ESP_SEED_CBC: OK
+         match ESP_SEED_CBC: OK
+         match SEED_CBC: OK
    22 -> ESP_CAMELLIA
          search ESP_CAMELLIA: OK
          match ESP_CAMELLIA: OK
          match CAMELLIA: OK
-   23 -> IKEv2:ESP_CAMELLIA or IKEv1:ESP_NULL_AUTH_AES_GMAC
-         search IKEv2:ESP_CAMELLIA or IKEv1:ESP_NULL_AUTH_AES_GMAC: OK
-         match IKEv2:ESP_CAMELLIA or IKEv1:ESP_NULL_AUTH_AES_GMAC: OK
+   23 -> ESP_NULL_AUTH_AES_GMAC
+         search ESP_NULL_AUTH_AES_GMAC: OK
+         match ESP_NULL_AUTH_AES_GMAC: OK
+         match NULL_AUTH_AES_GMAC: OK
    24 -> ESP_CAMELLIA_CTR
          search ESP_CAMELLIA_CTR: OK
          match ESP_CAMELLIA_CTR: OK

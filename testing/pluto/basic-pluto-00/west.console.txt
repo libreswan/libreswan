@@ -9,34 +9,6 @@ west #
 west #
  PATH/libexec/ipsec/enumcheck | diff -u - ../../enumcheck/OUTPUT.enumcheck.txt
 PATH/libexec/ipsec/enumcheck leak detective found no leaks
---- -	2017-08-09 23:15:21.197952352 -0400
-+++ ../../enumcheck/OUTPUT.enumcheck.txt	2017-08-02 20:29:52.364282677 -0400
-@@ -672,18 +672,17 @@
-          search ESP_AES_GCM_C: OK
-          match ESP_AES_GCM_C: OK
-          match AES_GCM_C: OK
--   21 -> ESP_SEED_CBC
--         search ESP_SEED_CBC: OK
--         match ESP_SEED_CBC: OK
--         match SEED_CBC: OK
-+   21 -> ESP_NULL_AUTH_AES_GMAC
-+         search ESP_NULL_AUTH_AES_GMAC: OK
-+         match ESP_NULL_AUTH_AES_GMAC: OK
-+         match NULL_AUTH_AES_GMAC: OK
-    22 -> ESP_CAMELLIA
-          search ESP_CAMELLIA: OK
-          match ESP_CAMELLIA: OK
-          match CAMELLIA: OK
--   23 -> ESP_NULL_AUTH_AES_GMAC
--         search ESP_NULL_AUTH_AES_GMAC: OK
--         match ESP_NULL_AUTH_AES_GMAC: OK
--         match NULL_AUTH_AES_GMAC: OK
-+   23 -> IKEv2:ESP_CAMELLIA or IKEv1:ESP_NULL_AUTH_AES_GMAC
-+         search IKEv2:ESP_CAMELLIA or IKEv1:ESP_NULL_AUTH_AES_GMAC: OK
-+         match IKEv2:ESP_CAMELLIA or IKEv1:ESP_NULL_AUTH_AES_GMAC: OK
-    24 -> ESP_CAMELLIA_CTR
-          search ESP_CAMELLIA_CTR: OK
-          match ESP_CAMELLIA_CTR: OK
 west #
  echo done
 done
