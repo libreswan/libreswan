@@ -33,7 +33,7 @@ override_dh_auto_build:
 		$(ENABLE_LIBCAP_NG) \
 		$(ENABLE_SELINUX) \
 		USE_KLIPS=false \
-		USE_DNSSEC=true \
+		USE_DNSSEC=false \
 		DEFAULT_DNSSEC_ROOTKEY_FILE=/usr/share/dns/root.key
 
 override_dh_auto_install-arch:
@@ -44,6 +44,7 @@ override_dh_auto_install-arch:
 		INC_MANDIR=share/man \
 		FINALNSSDIR=/var/lib/ipsec/nss \
 		PUBDIR=$(CURDIR)/debian/libreswan/usr/sbin \
+		USE_DNSSEC=false \
 		USE_KLIPS=false \
 		DESTDIR=$(CURDIR)/debian/libreswan
 
