@@ -1276,22 +1276,23 @@ void add_connection(const struct whack_message *wm)
 		}
 	}
 
-	struct parser_policy parser_policy = {
-		.ikev1 = LIN(POLICY_IKEV1_ALLOW, wm->policy),
-		/*
-		 * logic needs to match pick_initiator()
-		 *
-		 * XXX: Once pluto is changed to IKEv1 XOR
-		 * IKEv2 it should be possible to move this
-		 * magic into pluto proper and instead pass a
-		 * simple boolean.
-		 */
-		.ikev2 = ((wm->policy & POLICY_IKEV2_PROPOSE)
-			  && (wm->policy & POLICY_IKEV2_ALLOW)),
-	};
-
 	if (!LIN(POLICY_AUTH_NEVER, wm->policy) && wm->ike != NULL) {
 		char err_buf[256] = "";	/* ??? big enough? */
+
+		struct parser_policy parser_policy = {
+			.ikev1 = LIN(POLICY_IKEV1_ALLOW, wm->policy),
+			/*
+			 * logic needs to match pick_initiator()
+			 *
+			 * XXX: Once pluto is changed to IKEv1 XOR
+			 * IKEv2 it should be possible to move this
+			 * magic into pluto proper and instead pass a
+			 * simple boolean.
+			 */
+			.ikev2 = ((wm->policy & POLICY_IKEV2_PROPOSE)
+				  && (wm->policy & POLICY_IKEV2_ALLOW)),
+			.alg_is_ok = ike_alg_is_ike,
+		};
 
 		alg_info_ike = alg_info_ike_create_from_str(&parser_policy, wm->ike,
 							    err_buf, sizeof(err_buf));
@@ -1482,6 +1483,21 @@ void add_connection(const struct whack_message *wm)
 			DBG(DBG_CONTROL,
 				DBG_log("from whack: got --esp=%s",
 					wm->esp ? wm->esp : "NULL"));
+
+			struct parser_policy parser_policy = {
+				.ikev1 = LIN(POLICY_IKEV1_ALLOW, wm->policy),
+				/*
+				 * logic needs to match pick_initiator()
+				 *
+				 * XXX: Once pluto is changed to IKEv1
+				 * XOR IKEv2 it should be possible to
+				 * move this magic into pluto proper
+				 * and instead pass a simple boolean.
+				 */
+				.ikev2 = ((wm->policy & POLICY_IKEV2_PROPOSE)
+					  && (wm->policy & POLICY_IKEV2_ALLOW)),
+				.alg_is_ok = kernel_alg_is_ok,
+			};
 
 			if (c->policy & POLICY_ENCRYPT)
 				c->alg_info_esp = alg_info_esp_create_from_str(&parser_policy,

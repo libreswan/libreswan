@@ -27,6 +27,7 @@
 struct parser_context;
 struct alg_info;
 struct lswlog;
+struct parser_param;
 
 /*
  * Parameters to tune the parser.
@@ -35,6 +36,14 @@ struct lswlog;
 struct parser_policy {
 	bool ikev1;
 	bool ikev2;
+	/*
+	 * According to current policy, is the algorithm ok
+	 * (supported)?  If it isn't return FALSE.
+	 *
+	 * For instance, an IKE algorithm requires in-process support;
+	 * while an ESP/AH algorithm requires kernel support.
+	 */
+	bool (*alg_is_ok)(const struct ike_alg *alg);
 };
 
 /*
@@ -44,7 +53,6 @@ struct parser_policy {
 struct parser_param {
 	const char *protocol;
 	enum ike_alg_key ikev1_alg_id;
-	bool (*alg_is_implemented)(const struct ike_alg *alg);
 
 	/*
 	 * XXX: Is the proto-id needed?  Parser should be protocol

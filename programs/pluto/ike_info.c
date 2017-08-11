@@ -591,7 +591,6 @@ const struct parser_param ike_parser_param = {
 	.protocol = "IKE",
 	.ikev1_alg_id = IKEv1_OAKLEY_ID,
 	.protoid = PROTO_ISAKMP,
-	.alg_is_implemented = ike_alg_is_ike,
 	.alg_info_add = alg_info_ike_add,
 	.encrypt_alg_byname = encrypt_alg_byname,
 	.prf_alg_byname = prf_alg_byname,
