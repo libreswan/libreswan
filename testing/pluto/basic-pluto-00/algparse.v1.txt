@@ -332,3 +332,5 @@
 	ERROR: IKE encryption algorithm 'id' is not recognized, enc_alg="id"(2), auth_alg="", modp=""
 [ike=3des-id2]
 	ERROR: IKE PRF algorithm 'id2' is not recognized, enc_alg="3des"(0), auth_alg="id2", modp=""
+[ike=aes_ccm]
+	ERROR: IKE encryption algorithm 'aes_ccm' is not supported, enc_alg="aes_ccm"(0), auth_alg="", modp=""

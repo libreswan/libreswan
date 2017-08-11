@@ -260,6 +260,7 @@ static void test(const struct parser_policy *policy)
 
 	ike(policy, "id2"); /* should be rejected; idXXX removed */
 	ike(policy, "3des-id2"); /* should be rejected; idXXX removed */
+	ike(policy, "aes_ccm"); /* ESP/AH only */
 }
 
 static void usage(void)

@@ -53,7 +53,7 @@ bool alg_byname_ok(const struct parser_param *param,
 	 */
 	if (!param->alg_is_implemented(alg)) {
 		snprintf(err_buf, err_buf_len,
-			 "%s %s algorithm '%s' is not implemented",
+			 "%s %s algorithm '%s' is not supported",
 			 param->protocol, ike_alg_type_name(alg->algo_type),
 			 name);
 		return false;
