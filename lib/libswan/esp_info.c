@@ -79,9 +79,9 @@ static void raw_alg_info_esp_add(struct alg_info_esp *alg_info,
 
 	esp_info[cnt].ikev1esp_transid = (encrypt != NULL ? encrypt->common.id[IKEv1_ESP_ID] : 0);
 	esp_info[cnt].enckeylen = ek_bits;
-	esp_info[cnt].ikev1esp_auth = (integ == &ike_alg_integ_null) ? 0 : integ->common.id[IKEv1_ESP_ID];
+	esp_info[cnt].ikev1esp_auth = integ->common.id[IKEv1_ESP_ID];
 	esp_info[cnt].encrypt = encrypt;
-	esp_info[cnt].integ = (integ == &ike_alg_integ_null) ? NULL : integ;
+	esp_info[cnt].integ = integ;
 	esp_info[cnt].dh = dh;
 
 	alg_info->ai.alg_info_cnt++;

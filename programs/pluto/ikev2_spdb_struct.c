@@ -54,6 +54,7 @@
 #include "alg_info.h"
 #include "kernel_alg.h"
 #include "ike_alg.h"
+#include "ike_alg_null.h"
 #include "db_ops.h"
 #include "demux.h"
 #include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
@@ -2010,7 +2011,7 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 		 */
 		if (ike_alg_enc_requires_integ(ealg)) {
 			const struct integ_desc *integ = ike_info->integ;
-			if (integ == NULL) {
+			if (integ == &ike_alg_integ_null) {
 				PEXPECT_LOG("%s", "IKEv2 proposal with no INTEG should have been dropped");
 				continue;
 			} else if (integ->common.id[IKEv2_ALG_ID] == 0) {
@@ -2272,8 +2273,14 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 					       esp_info->ikev1esp_auth);
 					continue;
 				}
+				/*
+				 * XXX: Wrong check?
+				 *
+				 * IKEV1ESP_AUTH != 0 IFF integ !=
+				 * &ike_alg_integ_null
+				 */
 				const struct integ_desc *integ = esp_info->integ;
-				if (integ == NULL) {
+				if (integ == &ike_alg_integ_null) {
 					struct esb_buf buf;
 					loglog(RC_LOG_SERIOUS,
 					       "dropping local ESP proposal containing unsupported INTEG algorithm %s=%d",
@@ -2298,8 +2305,14 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 				       esp_info->ikev1esp_auth);
 				continue;
 			}
+			/*
+			 * XXX: Wrong check?
+			 *
+			 * AH doesn't allow, and should have already
+			 * rejected, NULL integrity.
+			 */
 			const struct integ_desc *integ = esp_info->integ;
-			if (integ == NULL) {
+			if (integ == &ike_alg_integ_null) {
 				struct esb_buf buf;
 				loglog(RC_LOG_SERIOUS,
 				       "dropping local AH proposal containing unsupported INTEG algorithm %s=%d",
