@@ -16,7 +16,7 @@
 		fflush(NULL);						\
 		char err_buf[512] = "";	/* ??? big enough? */		\
 		struct alg_info_##TYPE *e =				\
-			alg_info_##PARSE##_create_from_str(policy,	\
+			alg_info_##PARSE##_create_from_str(&policy,	\
 							   algstr,	\
 							   err_buf,	\
 							   sizeof(err_buf)); \
@@ -36,24 +36,41 @@
 		fflush(NULL);						\
 	}
 
-static void esp(const struct parser_policy *policy, const char *algstr)
+/*
+ * Kernel not available so fake it.
+ */
+static bool kernel_alg_is_ok(const struct ike_alg *alg)
 {
+	if (alg->algo_type == &ike_alg_dh) {
+		/* require an in-process/ike implementation of DH */
+		return ike_alg_is_ike(alg);
+	} else {
+		/* no kernel to ask! */
+		return TRUE;
+	}
+}
+
+static void esp(struct parser_policy policy, const char *algstr)
+{
+	policy.alg_is_ok = kernel_alg_is_ok;
 	CHECK(esp, esp);
 }
 
-static void ah(const struct parser_policy *policy, const char *algstr)
+static void ah(struct parser_policy policy, const char *algstr)
 {
+	policy.alg_is_ok = kernel_alg_is_ok;
 	CHECK(esp, ah);
 }
 
-static void ike(const struct parser_policy *policy, const char *algstr)
+static void ike(struct parser_policy policy, const char *algstr)
 {
+	policy.alg_is_ok = ike_alg_is_ike;
 	CHECK(ike, ike);
 }
 
-static void all(const struct parser_policy *policy, const char *algstr)
+static void all(const struct parser_policy policy, const char *algstr)
 {
-	typedef void (protocol_t)(const struct parser_policy *policy, const char *);
+	typedef void (protocol_t)(struct parser_policy policy, const char *);
 	protocol_t *const protocols[] = { ike, ah, esp, NULL, };
 	for (protocol_t *const *protocol = protocols;
 	     *protocol != NULL;
@@ -62,7 +79,7 @@ static void all(const struct parser_policy *policy, const char *algstr)
 	}
 }
 
-static void test(const struct parser_policy *policy)
+static void test(const struct parser_policy policy)
 {
 	/*
 	 * esp=
@@ -345,17 +362,17 @@ int main(int argc, char *argv[])
 			 */
 #define starts_with(ARG,STRING) strncmp(ARG,STRING,strlen(STRING))
 			if (starts_with(arg, "ike=") == 0) {
-				ike(&policy, arg + 4);
+				ike(policy, arg + 4);
 			} else if (starts_with(arg, "esp=") == 0) {
-				esp(&policy, arg + 4);
+				esp(policy, arg + 4);
 			} else if (starts_with(arg, "ah=") == 0) {
-				ah(&policy, arg + 3);
+				ah(policy, arg + 3);
 			} else {
-				all(&policy, arg);
+				all(policy, arg);
 			}
 		}
 	} else if (run_tests) {
-		test(&policy);
+		test(policy);
 	}
 
 	report_leaks();

@@ -358,9 +358,11 @@ static bool pfkey_build(int error,
  * This policy disables both IKEv1 and IKEv2 checks so all algorithms
  * are valid.
  */
+
 const struct parser_policy policy = {
 	.ikev1 = false,
 	.ikev2 = false,
+	.alg_is_ok = kernel_alg_is_ok,
 };
 
 static int decode_esp(char *algname)
@@ -368,10 +370,6 @@ static int decode_esp(char *algname)
 	char err_buf[256] = "";	/* ??? big enough? */
 	int esp_alg;
 
-	/*
-	 * POLICY=0 disables checks that the algorithm will work with
-	 * IKEv1 and/or IKEv2.
-	 */
 	struct alg_info_esp *alg_info = alg_info_esp_create_from_str(&policy, algname,
 								     err_buf, sizeof(err_buf));
 

@@ -20,6 +20,7 @@
 #define _KERNEL_ALG_H
 #include "libreswan/pfkeyv2.h"
 
+struct ike_alg; /* forward declaration */
 struct sadb_msg; /* forward definition */
 
 struct kernel_alg_info {
@@ -54,6 +55,8 @@ struct alg_info;	/* forward declaration */
 struct esp_info;	/* forward declaration */
 struct alg_info_ike;	/* forward declaration */
 struct alg_info_esp;	/* forward declaration */
+
+extern bool kernel_alg_is_ok(const struct ike_alg *alg);
 
 /* ESP interface */
 extern struct sadb_alg *kernel_alg_esp_sadb_alg(int alg_id);

@@ -47,11 +47,15 @@ bool alg_byname_ok(const struct parser_param *param,
 		return false;
 	}
 	/*
-	 * Is it backed by an implementation?  For IKE that is
-	 * in-process, for ESP/AH, presumably that is in the kernel
-	 * (well except for DH which is still in-process).
+	 * According to parser policy, is the algorithm "implemented"?
+	 *
+	 * For IKE, this checks things like an in-process
+	 * implementation being present.  For ESP/AH this checks that
+	 * it is is implemented in the kernel (well except for DH
+	 * which is still requires an in-process implementation).
 	 */
-	if (!param->alg_is_implemented(alg)) {
+	passert(policy->alg_is_ok != NULL);
+	if (!policy->alg_is_ok(alg)) {
 		snprintf(err_buf, err_buf_len,
 			 "%s %s algorithm '%s' is not supported",
 			 param->protocol, ike_alg_type_name(alg->algo_type),

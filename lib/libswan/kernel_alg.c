@@ -467,6 +467,17 @@ struct sadb_alg *kernel_alg_esp_sadb_alg(int alg_id)
 	return sadb_alg;
 }
 
+bool kernel_alg_is_ok(const struct ike_alg *alg)
+{
+	if (alg->algo_type == &ike_alg_dh) {
+		/* require an in-process/ike implementation of DH */
+		return ike_alg_is_ike(alg);
+	} else {
+		/* ask the kernel? */
+		return TRUE;
+	}
+}
+
 /* ??? identical to kernel_alg_ah_auth_ok */
 bool kernel_alg_esp_auth_ok(int auth,
 			struct alg_info_esp *alg_info __attribute__((unused)))
