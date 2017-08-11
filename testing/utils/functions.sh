@@ -371,7 +371,7 @@ recordresults() {
 	    2) success=false; console=false; packet=true;;
 	    99) success="missing 99"; console=false; packet=false;;
 	    true)  success=true;;
-	    false) sucesss=false;;
+	    false) success=false;;
 	    succeed) success=true;;
 	    fail)  success=false;;
 	    yes)   success=true;;
