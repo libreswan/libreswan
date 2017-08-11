@@ -472,9 +472,13 @@ bool kernel_alg_is_ok(const struct ike_alg *alg)
 	if (alg->algo_type == &ike_alg_dh) {
 		/* require an in-process/ike implementation of DH */
 		return ike_alg_is_ike(alg);
+	} else if (alg->algo_type == &ike_alg_encrypt) {
+		return ESP_EALG_PRESENT(alg->id[IKEv1_ESP_ID]);
+	} else if (alg->algo_type == &ike_alg_integ) {
+		return ESP_AALG_PRESENT(integ_desc(alg)->integ_ikev1_ah_id);
 	} else {
-		/* ask the kernel? */
-		return TRUE;
+		PASSERT_FAIL("algorithm %s of type %s is not valid in the kernel",
+			     alg->fqn, ike_alg_type_name(alg->algo_type));
 	}
 }
 
