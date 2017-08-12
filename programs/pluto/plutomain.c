@@ -1747,8 +1747,10 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef USE_DNSSEC
-	unbound_event_init(get_pluto_event_base(), do_dnssec,
-			pluto_dnssec_rootfile, pluto_dnssec_trusted);
+	if (!unbound_event_init(get_pluto_event_base(), do_dnssec,
+		pluto_dnssec_rootfile, pluto_dnssec_trusted)) {
+			exit_pluto(PLUTO_EXIT_UNBOUND_FAIL);
+	}
 #endif
 
 	call_server();

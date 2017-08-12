@@ -964,6 +964,7 @@ enum pluto_exit_code {
 	PLUTO_EXIT_NSS_FAIL = 6,
 	PLUTO_EXIT_AUDIT_FAIL = 7,
 	PLUTO_EXIT_SECCOMP_FAIL = 8,
+	PLUTO_EXIT_UNBOUND_FAIL = 9,
 	PLUTO_EXIT_LOCK_FAIL = 10, /* historic value */
 };
 

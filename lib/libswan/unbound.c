@@ -180,13 +180,17 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
  * initialize a ub_ctx for asynchronous calls using libevent from pluto.
  *  only call once
  */
-void unbound_event_init(struct event_base *eb, bool do_dnssec,
+bool unbound_event_init(struct event_base *eb, bool do_dnssec,
 			const char *rootfile, const char *trusted)
 {
 	passert(dns_ctx == NULL); /* block re-entry to the function */
 	dns_ctx = ub_ctx_create_event(eb);
-	passert(dns_ctx != NULL);
+	if (dns_ctx == NULL) {
+		loglog(RC_LOG_SERIOUS, "Failed to initialize unbound libevent ABI, please recompile libunbound with libevent support or recompile libreswan without USE_DNSSEC");
+		return FALSE;
+	}
 	unbound_ctx_config(do_dnssec, rootfile, trusted);
+	return TRUE;
 }
 
 /*

@@ -9,7 +9,7 @@ extern void unbound_ctx_free(void);
 extern void unbound_sync_init(bool do_dnssec, const char *rootfile,
 			 const char *trusted);
 
-extern void unbound_event_init(struct event_base *eb, bool do_dnssec,
+extern bool unbound_event_init(struct event_base *eb, bool do_dnssec,
 		const char *rootfile, const char *trusted);
 
 extern bool unbound_resolve(char *src, size_t srclen, int af,
