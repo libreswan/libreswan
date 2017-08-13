@@ -24,15 +24,18 @@ IPSEC_CONF="${IPSEC_CONF:-@FINALCONFFILE@}"
 IPSEC_EXECDIR="${IPSEC_EXECDIR:-@IPSEC_EXECDIR@}"
 IPSEC_SBINDIR="${IPSEC_SBINDIR:-@IPSEC_SBINDIR@}"
 IPSEC_CONFDDIR="${IPSEC_CONFDDIR:-@IPSEC_CONFDDIR@}"
+IPSEC_RUNDIR="${IPSEC_RUNDIR:-@IPSEC_RUNDIR@}"
 IPSEC_NSSDIR="${IPSEC_NSSDIR:-@IPSEC_NSSDIR@}"
 IPSEC_NSSDIR_SQL="sql:${IPSEC_NSSDIR}"
 IPSEC_NSSPW="${IPSEC_CONFDDIR}/nsspassword"
 DBPW=""
 CACERTDIR="${IPSEC_CONFDDIR}/cacerts"
 CRLDIR="${IPSEC_CONFDDIR}/crls"
+CTLSOCKET="${IPSEC_RUNDIR}/pluto.ctl"
+ADDSOCKET=""
 
 IPSEC_DIR="${IPSEC_EXECDIR}"
-export IPSEC_DIR IPSEC_EXECDIR IPSEC_CONF
+export IPSEC_DIR IPSEC_EXECDIR IPSEC_CONF IPSEC_RUNDIR CTLSOCKET
 
 # standardize PATH, and export it for everything else's benefit
 PATH="${IPSEC_SBINDIR}":/sbin:/usr/sbin:/usr/local/bin:/bin:/usr/bin
@@ -95,6 +98,22 @@ set_db_trusts() {
 }
 
 case "${1}" in
+    rundir|--rundir)
+	RUNDIR="${2}"
+	CTLSOCKET="${RUNDIR}/pluto.ctl"
+	shift;
+	shift;
+	;;
+esac
+case "${1}" in
+    ctlsocket|--ctlsocket)
+	CTLSOCKET="${2}"
+	shift;
+	shift;
+	;;
+esac
+
+case "${1}" in
     '')
 	echo "Usage: ipsec <command> <argument ...>"
 	echo "Use --help for a list of commands, or see the ipsec(8) manual page"
@@ -105,7 +124,7 @@ case "${1}" in
 	exit 0
 	;;
     status|--status)
-	exec ipsec auto --status
+	exec ${IPSEC_EXECDIR}/whack --ctlsocket ${CTLSOCKET} --status
 	;;
     start|--start)
 	exec ipsec setup start
@@ -165,7 +184,7 @@ case "${1}" in
 	;;
 
     --stopnflog|stopnflog)
-	NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --configsetup | grep -v "#" | grep nflog | sed -e "s/^.*=//" -e "s/'//g");
+	NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --ctlsocket ${CTLSOCKET} --configsetup | grep -v "#" | grep nflog | sed -e "s/^.*=//" -e "s/'//g");
 	if [ -z "${NFGROUP}" ]; then
 	    exit 0
 	fi
@@ -175,7 +194,7 @@ case "${1}" in
 	;;
 
     --checknflog|checknflog|nflog)
-	NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --configsetup | grep -v "#" | grep nflog| sed -e "s/^.*=//" -e "s/'//g");
+	NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --ctlsocket ${CTLSOCKET} --configsetup | grep -v "#" | grep nflog| sed -e "s/^.*=//" -e "s/'//g");
 	if [ -z "${NFGROUP}" ]; then
 	    OLDNFGROUP=$(iptables -L -n |grep "all-ipsec nflog-group" | sed "s/^.* //" | tail -1);
 	    if [ -n "${OLDNFGROUP}" ]; then
@@ -209,7 +228,7 @@ case "${1}" in
 
     sniff|--sniff)
 	if [ -z "${2}" ]; then
-	    NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --configsetup | grep -v "#" | grep nflog | sed -e "s/^.*=//" -e "s/'//g");
+	    NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --ctlsocket ${CTLSOCKET} --configsetup | grep -v "#" | grep nflog | sed -e "s/^.*=//" -e "s/'//g");
 	    tcpdump -n -i nflog:${NFGROUP}
 	else
 	    echo "conn specific coming soon"
@@ -385,7 +404,7 @@ case "${1}" in
 	exit 0
 	;;
     secrets)
-	"${IPSEC_EXECDIR}/whack" --rereadsecrets
+	"${IPSEC_EXECDIR}/whack" --ctlsocket ${CTLSOCKET} --rereadsecrets
 	exit $?
 	;;
     rereadcrls|--rereadcrls)
@@ -393,7 +412,7 @@ case "${1}" in
 	exit 1
 	;;
     crls|fetchcrls)
-	"${IPSEC_EXECDIR}/whack" --fetchcrls
+	"${IPSEC_EXECDIR}/whack" --ctlsocket ${CTLSOCKET} --fetchcrls
 	exit $?
 	;;
     --*)
@@ -403,6 +422,9 @@ case "${1}" in
 esac
 
 cmd="${1}"
+if [ "${cmd}" = "whack" ]; then
+     ADDSOCKET="--ctlsocket ${CTLSOCKET}"
+fi
 shift
 
 path="${IPSEC_EXECDIR}/${cmd}"
@@ -415,4 +437,4 @@ if [ ! -x "${path}" ]; then
     fi
 fi
 
-exec "${path}" "$@"
+exec ${path} ${ADDSOCKET} $@

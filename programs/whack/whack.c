@@ -59,7 +59,7 @@ static void help(void)
 	fprintf(stderr,
 		"Usage:\n"
 		"\n"
-		"all forms: [--ctlbase <path>] [--label <string>]\n"
+		"all forms: [--rundir <path>] [--ctlsocket <file>] [--label <string>]\n"
 		"\n"
 		"help: whack [--help] [--version]\n"
 		"\n"
@@ -252,8 +252,9 @@ static void diagq(err_t ugh, const char *this)
  * - CD_* options (Connection Description options)
  */
 enum option_enums {
-#   define OPT_FIRST1    OPT_CTLBASE	/* first normal option, range 1 */
-	OPT_CTLBASE,
+#   define OPT_FIRST1    OPT_RUNDIR	/* first normal option, range 1 */
+	OPT_RUNDIR,
+	OPT_CTLSOCKET,
 	OPT_NAME,
 	OPT_REMOTE_HOST,
 	OPT_CONNALIAS,
@@ -480,7 +481,9 @@ static const struct option long_opts[] = {
 	{ "version", no_argument, NULL, 'v' },
 	{ "label", required_argument, NULL, 'l' },
 
-	{ "ctlbase", required_argument, NULL, OPT_CTLBASE + OO },
+	{ "rundir", required_argument, NULL, OPT_RUNDIR + OO },
+	{ "ctlbase", required_argument, NULL, OPT_RUNDIR + OO }, /* backwards compat */
+	{ "ctlsocket", required_argument, NULL, OPT_CTLSOCKET + OO },
 	{ "name", required_argument, NULL, OPT_NAME + OO },
 	{ "remote-host", required_argument, NULL, OPT_REMOTE_HOST + OO },
 	{ "connalias", required_argument, NULL, OPT_CONNALIAS + OO },
@@ -775,7 +778,7 @@ static const struct option long_opts[] = {
 
 struct sockaddr_un ctl_addr = {
 	.sun_family = AF_UNIX,
-	.sun_path   = DEFAULT_CTLBASE CTL_SUFFIX,
+	.sun_path   = DEFAULT_CTL_SOCKET,
 #if defined(HAS_SUN_LEN)
 	.sun_len = sizeof(struct sockaddr_un),
 #endif
@@ -1113,11 +1116,19 @@ int main(int argc, char **argv)
 
 		/* the rest of the options combine in complex ways */
 
-		case OPT_CTLBASE:	/* --port <ctlbase> */
+		case OPT_RUNDIR:	/* --rundir <dir> */
 			if (snprintf(ctl_addr.sun_path,
 				     sizeof(ctl_addr.sun_path),
-				     "%s%s", optarg, CTL_SUFFIX) == -1)
-				diag("<ctlbase>" CTL_SUFFIX " must be fit in a sun_addr");
+				     "%s/pluto.ctl", optarg) == -1)
+				diag("Invalid rundir for sun_addr");
+
+			continue;
+
+		case OPT_CTLSOCKET:	/* --ctlsocket <file> */
+			if (snprintf(ctl_addr.sun_path,
+				     sizeof(ctl_addr.sun_path),
+				     "%s", optarg) == -1)
+				diag("Invalid ctlsocket for sun_addr");
 
 			continue;
 

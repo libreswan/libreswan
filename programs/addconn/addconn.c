@@ -605,7 +605,7 @@ void init_seccomp_addconn(uint32_t def_action)
 #endif
 
 static const char *usage_string = ""
-	"Usage: addconn [--config file] [--rootdir dir] [--ctlbase socketfile]\n"
+	"Usage: addconn [--config file] [--rootdir dir] [--ctlsocket socketfile]\n"
 	"               [--varprefix prefix] [--noexport]\n"
 	"               [--verbose]\n"
 	"               [--configsetup]\n"
@@ -636,7 +636,8 @@ static const struct option longopts[] =
 	{ "liststart", no_argument, NULL, 's' },
 	{ "listignore", no_argument, NULL, 'i' },
 	{ "varprefix", required_argument, NULL, 'P' },
-	{ "ctlbase", required_argument, NULL, 'c' },
+	{ "ctlsocket", required_argument, NULL, 'c' },
+	{ "ctlbase", required_argument, NULL, 'c' }, /* backwards compatibility */
 	{ "rootdir", required_argument, NULL, 'R' },
 	{ "configsetup", no_argument, NULL, 'T' },
 	{ "liststack", no_argument, NULL, 'S' },
@@ -669,7 +670,7 @@ int main(int argc, char *argv[])
 	const char *varprefix = "";
 	int exit_status = 0;
 	struct starter_conn *conn = NULL;
-	const char *ctlbase = NULL;
+	const char *ctlsocket = NULL;
 	bool resolvip = TRUE; /* default to looking up names */
 
 #if 0
@@ -718,7 +719,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'c':
-			ctlbase = clone_str(optarg, "control base");
+			ctlsocket = clone_str(optarg, "control socket");
 			break;
 
 		case 'L':
@@ -809,7 +810,7 @@ int main(int argc, char *argv[])
 	{
 		err_t err = NULL;
 
-		cfg = confread_load(configfile, &err, resolvip, ctlbase, configsetup);
+		cfg = confread_load(configfile, &err, resolvip, ctlsocket, configsetup);
 
 		if (cfg == NULL) {
 			fprintf(stderr, "cannot load config '%s': %s\n",

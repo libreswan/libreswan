@@ -109,7 +109,7 @@
 
 static const char *pluto_name;	/* name (path) we were invoked with */
 
-static const char *ctlbase = "/var/run/pluto";
+static char *rundir = NULL;
 char *pluto_listen = NULL;
 static bool fork_desired = USE_FORK || USE_DAEMON;
 
@@ -240,15 +240,9 @@ static const char compile_time_interop_options[] = ""
 #endif
 ;
 
-/*
- * lock file support
- * - provides convenient way for scripts to find Pluto's pid
- * - prevents multiple Plutos competing for the same port
- * - same basename as unix domain control socket
- * NOTE: will not take account of sharing LOCK_DIR with other systems.
- */
 static char pluto_lock[sizeof(ctl_addr.sun_path)] =
-	DEFAULT_CTLBASE LOCK_SUFFIX;
+	DEFAULT_RUNDIR "/pluto.lock";
+
 static bool pluto_lock_created = FALSE;
 
 /* create lockfile, or die in the attempt */
@@ -256,11 +250,11 @@ static int create_lock(void)
 {
 	int fd;
 
-	if (mkdir(ctlbase, 0755) != 0) {
+	if (mkdir(rundir, 0755) != 0) {
 		if (errno != EEXIST) {
 			fprintf(stderr,
 				"pluto: FATAL: unable to create lock dir: \"%s\": %s\n",
-				ctlbase, strerror(errno));
+				rundir, strerror(errno));
 			exit_pluto(PLUTO_EXIT_LOCK_FAIL);
 		}
 	}
@@ -346,7 +340,7 @@ static struct starter_config *read_cfg_file(char *configfile)
 	struct starter_config *cfg = NULL;
 	err_t err = NULL;
 
-	cfg = confread_load(configfile, &err, FALSE, NULL, TRUE);
+	cfg = confread_load(configfile, &err, FALSE, NULL /* ctl_addr.sun_path? */, TRUE);
 	if (cfg == NULL)
 		invocation_fail(err);
 	return cfg;
@@ -543,7 +537,8 @@ static const struct option long_opts[] = {
 	{ "ikeport\0<port-number>", required_argument, NULL, 'p' },
 	{ "nflog-all\0<group-number>", required_argument, NULL, 'G' },
 	{ "natikeport\0<port-number>", required_argument, NULL, 'q' },
-	{ "ctlbase\0<path>", required_argument, NULL, 'b' },
+	{ "rundir\0<path>", required_argument, NULL, 'b' }, /* was ctlbase */
+	{ "ctlbase\0<path>", required_argument, NULL, 'b' }, /* backwords compatibility */
 	{ "secretsfile\0<secrets-file>", required_argument, NULL, 's' },
 	{ "perpeerlogbase\0<path>", required_argument, NULL, 'P' },
 	{ "perpeerlog\0", no_argument, NULL, 'l' },
@@ -717,8 +712,10 @@ int main(int argc, char **argv)
 
 	pluto_name = argv[0];
 
-	coredir = clone_str("/var/run/pluto", "coredir in main()");
+	coredir = clone_str(DEFAULT_RUNDIR, "coredir in main()");
+	rundir = clone_str(DEFAULT_RUNDIR, "rundir");
 	pluto_vendorid = clone_str(ipsec_version_vendorid(), "vendorid in main()");
+	pluto_dnssec_rootfile = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "root.key file");
 
 	unsigned int keep_alive = 0;
 
@@ -860,9 +857,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'a':	/* --dnssec-rootkey-file */
-			if (strlen(optarg) > 0)
+			if (strlen(optarg) > 0) {
+				pfree(pluto_dnssec_rootfile);
 				pluto_dnssec_rootfile = clone_str(optarg,
 						"dnssec_rootkey_file");
+			}
 			continue;
 
 		case 'Q':	/* --dnssec-trusted */
@@ -1077,38 +1076,28 @@ int main(int argc, char **argv)
 			pluto_nat_port = u;
 			continue;
 
-		case 'b':	/* --ctlbase <path> */
+		case 'b':	/* --rundir <path> */
 			/*
 			 * ??? work to be done here:
 			 *
 			 * snprintf returns the required space if there
 			 * isn't enough, not -1.
 			 * -1 indicates another kind of error.
-			 *
-			 * This appears to be the only place where the
-			 * ctlbase value is used yet it is set elsewhere.
-			 * (This isn't clear -- it may be OK.)
 			 */
-			ctlbase = optarg;
 			if (snprintf(ctl_addr.sun_path,
 					sizeof(ctl_addr.sun_path),
-					"%s%s", ctlbase, CTL_SUFFIX) == -1) {
-				ugh = "<path>" CTL_SUFFIX " too long for sun_path";
-				break;
-			}
-
-			if (snprintf(info_addr.sun_path,
-					sizeof(info_addr.sun_path),
-					"%s%s", ctlbase, INFO_SUFFIX) == -1) {
-				ugh = "<path>" INFO_SUFFIX " too long for sun_path";
+					"%s/pluto.ctl", optarg) == -1) {
+				ugh = "--rundir argument is invalid for sun_path socket";
 				break;
 			}
 
 			if (snprintf(pluto_lock, sizeof(pluto_lock),
-					"%s%s", ctlbase, LOCK_SUFFIX) == -1) {
-				ugh = "<path>" LOCK_SUFFIX " must fit";
+					"%s/pluto.lock", optarg) == -1) {
+				ugh = "--rundir ctl_addr.sun_path is invalid for sun_path socket";
 				break;
 			}
+			pfreeany(rundir);
+			rundir = clone_str(optarg, "rundir");
 			continue;
 
 		case 's':	/* --secretsfile <secrets-file> */
@@ -1166,6 +1155,7 @@ int main(int argc, char **argv)
 			set_cfg_string(&pluto_log_file,
 				cfg->setup.strings[KSF_PLUTOSTDERRLOG]);
 			if (strlen(cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE]) > 0) {
+				pfree(pluto_dnssec_rootfile);
 				set_cfg_string(&pluto_dnssec_rootfile,
 						cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE]);
 			}
@@ -1229,7 +1219,7 @@ int main(int argc, char **argv)
 			/* only causes nflog nmber to show in ipsec status */
 			pluto_xfrmlifetime = cfg->setup.options[KBF_XFRMLIFETIME];
 
-			/* no config option: ctlbase */
+			/* no config option: rundir */
 			/* --secrets */
 			if (cfg->setup.strings[KSF_SECRETSFILE] &&
 			    *cfg->setup.strings[KSF_SECRETSFILE]) {

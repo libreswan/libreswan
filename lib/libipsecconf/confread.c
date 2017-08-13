@@ -182,7 +182,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.options[KBF_AUTO] = STARTUP_IGNORE;
 	cfg->conn_default.state = STATE_LOADED;
 
-	cfg->ctlbase = clone_str(DEFAULT_CTLBASE, "default base");
+	cfg->ctlsocket = clone_str(DEFAULT_CTL_SOCKET, "default control socket");
 
 	cfg->conn_default.left.authby = AUTH_UNSET;
 	cfg->conn_default.right.authby = AUTH_UNSET;
@@ -1460,7 +1460,7 @@ static bool init_load_conn(struct starter_config *cfg,
 struct starter_config *confread_load(const char *file,
 				     err_t *perr,
 				     bool resolvip,
-				     const char *ctlbase,
+				     const char *ctlsocket,
 				     bool setuponly)
 {
 	bool err = FALSE;
@@ -1480,9 +1480,9 @@ struct starter_config *confread_load(const char *file,
 	 */
 	ipsecconf_default_values(cfg);
 
-	if (ctlbase != NULL) {
-		pfree(cfg->ctlbase);
-		cfg->ctlbase = clone_str(ctlbase, "control socket");
+	if (ctlsocket != NULL) {
+		pfree(cfg->ctlsocket);
+		cfg->ctlsocket = clone_str(ctlsocket, "default ctlsocket");
 	}
 
 	/**
@@ -1575,7 +1575,7 @@ static void confread_free_conn(struct starter_conn *conn)
 
 void confread_free(struct starter_config *cfg)
 {
-	pfree(cfg->ctlbase);
+	pfree(cfg->ctlsocket);
 
 	int i;
 

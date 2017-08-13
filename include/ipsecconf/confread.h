@@ -127,7 +127,7 @@ struct starter_config {
 	/* conn %default */
 	struct starter_conn conn_default;
 
-	char *ctlbase;  /* location of pluto control socket */
+	char *ctlsocket;  /* location of pluto control socket */
 
 	/* connections list (without %default) */
 	TAILQ_HEAD(, starter_conn) conns;
@@ -136,7 +136,7 @@ struct starter_config {
 extern struct starter_config *confread_load(const char *file,
 					    err_t *perr,
 					    bool resolvip,
-					    const char *ctlbase,
+					    const char *ctlsocket,
 					    bool setuponly);
 extern struct starter_conn *alloc_add_conn(struct starter_config *cfg,
 					   const char *name);

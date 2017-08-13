@@ -218,7 +218,7 @@ static int starter_whack_read_reply(int sock,
 	return ret;
 }
 
-static int send_whack_msg(struct whack_message *msg, char *ctlbase)
+static int send_whack_msg(struct whack_message *msg, char *ctlsocket)
 {
 	struct sockaddr_un ctl_addr = { .sun_family = AF_UNIX };
 	int sock;
@@ -228,7 +228,7 @@ static int send_whack_msg(struct whack_message *msg, char *ctlbase)
 	int ret;
 
 	/* copy socket location */
-	strncpy(ctl_addr.sun_path, ctlbase, sizeof(ctl_addr.sun_path) - 1);
+	strncpy(ctl_addr.sun_path, ctlsocket, sizeof(ctl_addr.sun_path) - 1);
 
 	/*  Pack strings */
 	wp.msg = msg;
@@ -468,7 +468,7 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 					    "\tsending %s %srsasigkey=%s",
 					    connection_name(conn), lr, end->rsakey1);
 				msg.keyval.ptr = (unsigned char *)keyspace;
-				ret = send_whack_msg(&msg, cfg->ctlbase);
+				ret = send_whack_msg(&msg, cfg->ctlsocket);
 			}
 		}
 	}
@@ -505,7 +505,7 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 					    "\tsending %s %srsasigkey2=%s",
 					    connection_name(conn), lr, end->rsakey1);
 				msg.keyval.ptr = (unsigned char *)keyspace;
-				return send_whack_msg(&msg, cfg->ctlbase);
+				return send_whack_msg(&msg, cfg->ctlsocket);
 			}
 		}
 	}
@@ -714,7 +714,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.ike = conn->ike;
 
 
-	r = send_whack_msg(&msg, cfg->ctlbase);
+	r = send_whack_msg(&msg, cfg->ctlsocket);
 	if (r != 0)
 		return r;
 
@@ -918,7 +918,7 @@ static int starter_whack_basic_route_conn(struct starter_config *cfg,
 	init_whack_msg(&msg);
 	msg.whack_route = TRUE;
 	msg.name = connection_name(conn);
-	return send_whack_msg(&msg, cfg->ctlbase);
+	return send_whack_msg(&msg, cfg->ctlsocket);
 }
 
 int starter_whack_route_conn(struct starter_config *cfg,
@@ -942,7 +942,7 @@ int starter_whack_initiate_conn(struct starter_config *cfg,
 	msg.whack_initiate = TRUE;
 	msg.whack_async = TRUE;
 	msg.name = connection_name(conn);
-	return send_whack_msg(&msg, cfg->ctlbase);
+	return send_whack_msg(&msg, cfg->ctlsocket);
 }
 
 int starter_whack_listen(struct starter_config *cfg)
@@ -951,5 +951,5 @@ int starter_whack_listen(struct starter_config *cfg)
 
 	init_whack_msg(&msg);
 	msg.whack_listen = TRUE;
-	return send_whack_msg(&msg, cfg->ctlbase);
+	return send_whack_msg(&msg, cfg->ctlsocket);
 }

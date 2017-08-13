@@ -60,9 +60,6 @@ HDRDIRS +=-I${LIBRESWANSRCDIR}/include -I$(LIBRESWANSRCDIR)/lib/libcrypto -I$(KL
 # The following are best left undefined -- each can be overridden at runtime
 # if need be.
 # -DPORT=n sets the default UDP port for IKE messages (otherwise 500)
-# -DDEFAULT_CTLBASE=string overrides /var/run/pluto as default directory
-#    and basename for pluto's lockfile (.pid) and control socket (.ctl).
-#    Double quoting may be needed.
 
 ifeq ($(USE_PFKEYv2),true)
 OBJS += kernel_pfkey.o

@@ -2,7 +2,7 @@
  *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Philippe Vouters <philippe.vouters@laposte.net>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
@@ -22,20 +22,20 @@
 
 /* Control and lock pathnames */
 
-#ifndef DEFAULT_CTLBASE
-# define DEFAULT_CTLBASE "/var/run/pluto/pluto"
+#ifndef DEFAULT_RUNDIR
+# define DEFAULT_RUNDIR "/run/pluto/"
 #endif
 
-#define CTL_SUFFIX ".ctl"       /* for UNIX domain socket pathname */
-#define LOCK_SUFFIX ".pid"      /* for pluto's lock */
-#define INFO_SUFFIX ".info"     /* for UNIX domain socket for apps */
+#ifndef DEFAULT_CTL_SOCKET
+# define DEFAULT_CTL_SOCKET DEFAULT_RUNDIR "/pluto.ctl"
+#endif
 
 #ifdef USE_DNSSEC
-#ifndef DEFAULT_DNSSEC_ROOTKEY_FILE
+# ifndef DEFAULT_DNSSEC_ROOTKEY_FILE
 #  define DEFAULT_DNSSEC_ROOTKEY_FILE "/var/lib/unbound/root.key"
-#endif
+# endif
 #else
-# define DEFAULT_DNSSEC_ROOTKEY_FILE ""
+# define DEFAULT_DNSSEC_ROOTKEY_FILE "<unused>"
 #endif
 
 

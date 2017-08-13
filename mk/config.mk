@@ -119,6 +119,12 @@ MANTREE?=$(DESTDIR)$(INC_USRLOCAL)/$(INC_MANDIR)
 # where configuration files go
 FINALSYSCONFDIR?=/etc
 
+# run dir - defaults to /run/pluto
+# Some older systems might need to set this to /var/run/pluto
+# DEFAULT_RUNDIR=/run/pluto
+FINALRUNDIR?=/run/pluto
+RUNDIR?=$(DESTDIR)$(FINALRUNDIR)
+
 # final configuration file
 FINALCONFFILE?=$(FINALSYSCONFDIR)/ipsec.conf
 CONFFILE?=$(DESTDIR)$(FINALCONFFILE)
@@ -254,6 +260,9 @@ USE_XFRM_HEADER_COPY?=true
 # include file, enable this workaround option that will enable an included copy of
 # this file as shipped with libreswan. The copy is taken from unbound 1.6.0.
 USE_UNBOUND_EVENT_H_COPY?=true
+
+# The default DNSSEC root key location is set to /var/lib/unbound/root.key
+# DEFAULT_DNSSEC_ROOTKEY_FILE=/var/lib/unbound/root.key
 
 # To build with clang, use: scan-build make programs
 #GCC=clang
@@ -528,6 +537,7 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@FINALVARDIR@:$(FINALVARDIR):g" \
 			-e "s:@IPSEC_CONF@:$(FINALCONFFILE):g" \
 			-e "s:@IPSEC_CONFDDIR@:$(FINALCONFDDIR):g" \
+			-e "s:@IPSEC_RUNDIR@:$(FINALRUNDIR):g" \
 			-e "s:@IPSEC_NSSDIR@:$(FINALNSSDIR):g" \
 			-e "s:@IPSEC_DIR@:$(FINALBINDIR):g" \
 			-e "s:@IPSEC_EXECDIR@:$(FINALLIBEXECDIR):g" \

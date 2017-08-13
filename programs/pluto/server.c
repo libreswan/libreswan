@@ -125,15 +125,7 @@ struct sockaddr_un ctl_addr = {
 #if defined(HAS_SUN_LEN)
 	.sun_len = sizeof(struct sockaddr_un),
 #endif
-	.sun_path  = DEFAULT_CTLBASE CTL_SUFFIX
-};
-
-struct sockaddr_un info_addr = {
-	.sun_family = AF_UNIX,
-#if defined(HAS_SUN_LEN)
-	.sun_len = sizeof(struct sockaddr_un),
-#endif
-	.sun_path  = DEFAULT_CTLBASE INFO_SUFFIX
+	.sun_path  = DEFAULT_CTL_SOCKET
 };
 
 /* Initialize the control socket.
@@ -847,7 +839,7 @@ void call_server(void)
 				       addconn_path);
 
 		char *newargv[] = { DISCARD_CONST(char *, "addconn"),
-				    DISCARD_CONST(char *, "--ctlbase"),
+				    DISCARD_CONST(char *, "--ctlsocket"),
 				    DISCARD_CONST(char *, ctl_addr.sun_path),
 				    DISCARD_CONST(char *, "--autoall"), NULL };
 		char *newenv[] = { NULL };
