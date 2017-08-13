@@ -37,7 +37,6 @@
 
 #include "ipsecconf/starterwhack.h"
 #include "ipsecconf/confread.h"
-#include "ipsecconf/files.h"
 #include "ipsecconf/starterlog.h"
 
 #include "socketwrapper.h"

@@ -50,7 +50,6 @@
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
 #include "ipsecconf/starterlog.h"
-#include "ipsecconf/files.h"
 #include "ipsecconf/starterwhack.h"
 #include "ipsecconf/parser-controls.h"
 

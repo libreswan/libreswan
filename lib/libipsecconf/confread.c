@@ -36,7 +36,6 @@
 
 #include "lswalloc.h"
 
-#include "ipsecconf/files.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/starterlog.h"
 #include "ipsecconf/interfaces.h"
@@ -183,7 +182,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.options[KBF_AUTO] = STARTUP_IGNORE;
 	cfg->conn_default.state = STATE_LOADED;
 
-	cfg->ctlbase = clone_str(CTL_FILE, "default base");
+	cfg->ctlbase = clone_str(DEFAULT_CTLBASE, "default base");
 
 	cfg->conn_default.left.authby = AUTH_UNSET;
 	cfg->conn_default.right.authby = AUTH_UNSET;

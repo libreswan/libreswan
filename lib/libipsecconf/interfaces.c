@@ -31,7 +31,6 @@
 
 #include "ipsecconf/interfaces.h"
 #include "ipsecconf/exec.h"
-#include "ipsecconf/files.h"
 #include "ipsecconf/starterlog.h"
 
 #ifndef MIN
