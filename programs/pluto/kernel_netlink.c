@@ -70,6 +70,7 @@
 #include "log.h"
 #include "whack.h"	/* for RC_LOG_SERIOUS */
 #include "kernel_alg.h"
+#include "ike_alg.h"
 #include "ike_alg_aes.h"
 
 /* required for Linux 2.6.26 kernel and later */
@@ -1198,67 +1199,21 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		 * this.
 		 */
 
-		switch (sa->authalg)
-		{
-		case AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG:
-		case AUTH_ALGORITHM_HMAC_SHA2_256:
-		case AUTH_ALGORITHM_HMAC_SHA2_384:
-		case AUTH_ALGORITHM_HMAC_SHA2_512:
-		{
-			struct xfrm_algo_auth algo;
+		struct xfrm_algo_auth algo = {
+			.alg_key_len = sa->integ->integ_keymat_size * BITS_PER_BYTE,
+			.alg_trunc_len = sa->integ->integ_output_size * BITS_PER_BYTE,
+		};
 
-			algo.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
+		attr->rta_type = XFRMA_ALG_AUTH_TRUNC;
+		attr->rta_len = RTA_LENGTH(sizeof(algo) + sa->authkeylen);
 
-			switch (sa->authalg) {
-			case AUTH_ALGORITHM_HMAC_SHA2_256:
-				algo.alg_trunc_len = 128;
-				break;
+		strncpy(algo.alg_name, name, sizeof(algo.alg_name));
+		memcpy(RTA_DATA(attr), &algo, sizeof(algo));
+		memcpy((char *)RTA_DATA(attr) + sizeof(algo),
+		       sa->authkey, sa->authkeylen);
 
-			case AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG:
-				algo.alg_trunc_len = 96;
-				break;
-
-			case AUTH_ALGORITHM_HMAC_SHA2_384:
-				algo.alg_trunc_len = 192;
-				break;
-
-			case AUTH_ALGORITHM_HMAC_SHA2_512:
-				algo.alg_trunc_len = 256;
-				break;
-			}
-
-			attr->rta_type = XFRMA_ALG_AUTH_TRUNC;
-			attr->rta_len = RTA_LENGTH(
-				sizeof(algo) + sa->authkeylen);
-
-			strncpy(algo.alg_name, name, sizeof(algo.alg_name));
-			memcpy(RTA_DATA(attr), &algo, sizeof(algo));
-			memcpy((char *)RTA_DATA(attr) + sizeof(algo),
-				sa->authkey, sa->authkeylen);
-
-			req.n.nlmsg_len += attr->rta_len;
-			attr = (struct rtattr *)((char *)attr + attr->rta_len);
-			break;
-		}
-		default:
-		{
-			struct xfrm_algo algo_old;
-
-			algo_old.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
-			attr->rta_type = XFRMA_ALG_AUTH;
-			attr->rta_len = RTA_LENGTH(
-				sizeof(algo_old) + sa->authkeylen);
-			strncpy(algo_old.alg_name, name, sizeof(algo_old.alg_name));
-			memcpy(RTA_DATA(attr), &algo_old, sizeof(algo_old));
-			memcpy((char *)RTA_DATA(attr) + sizeof(algo_old),
-				sa->authkey,
-				sa->authkeylen);
-
-			req.n.nlmsg_len += attr->rta_len;
-			attr = (struct rtattr *)((char *)attr + attr->rta_len);
-			break;
-		}
-		}
+		req.n.nlmsg_len += attr->rta_len;
+		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
 
 	/*
