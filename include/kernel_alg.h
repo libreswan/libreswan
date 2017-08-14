@@ -130,7 +130,6 @@ struct kernel_integ {
 void kernel_integ_add(enum sadb_aalg aalg, const struct integ_desc *integ,
 		      const char *netkey);
 
-const struct kernel_integ *kernel_integ_by_sadb_aalg(enum sadb_aalg aalg);
 const struct kernel_integ *kernel_integ_by_ikev1_auth_attribute(enum ikev1_auth_attribute auth);
 
 extern enum ipsec_authentication_algo alg_info_esp_aa2sadb(enum ikev1_auth_attribute auth);

@@ -234,16 +234,6 @@ void kernel_integ_add(enum sadb_aalg sadb_aalg,
 	kernel_integ = new;
 }
 
-const struct kernel_integ *kernel_integ_by_sadb_aalg(enum sadb_aalg sadb_aalg)
-{
-	for (struct kernel_integ *k = kernel_integ; k != NULL; k = k->next) {
-		if (k->sadb_aalg == sadb_aalg) {
-			return k;
-		}
-	}
-	return NULL;
-}
-
 const struct kernel_integ *kernel_integ_by_ikev1_auth_attribute(enum ikev1_auth_attribute id)
 {
 	for (struct kernel_integ *k = kernel_integ; k != NULL; k = k->next) {
