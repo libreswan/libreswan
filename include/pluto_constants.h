@@ -968,4 +968,6 @@ enum pluto_exit_code {
 	PLUTO_EXIT_LOCK_FAIL = 10, /* historic value */
 };
 
+#define SWAN_MAX_DOMAIN_LEN 256 /* includes nul termination */
+
 extern void init_pluto_constants(void);

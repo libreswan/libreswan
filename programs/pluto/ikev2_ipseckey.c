@@ -22,7 +22,6 @@
 #include <string.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <errno.h>
 #include <arpa/inet.h> /* for inet_ntop */
 #include <arpa/nameser.h>
@@ -716,26 +715,26 @@ static void ipseckey_ub_cb(void* mydata, int rcode,
 	dnsr->cb(dnsr);
 }
 
-static err_t build_dns_name(char *name_buf, /* array of len HOST_NAME_MAX */
+static err_t build_dns_name(char *name_buf, /* len SWAN_MAX_DOMAIN_LEN */
 		const struct id *id)
 {
 	/* note: all end in "." to suppress relative searches */
 	id = resolve_myid(id);
 
-	if (id->name.len >= HOST_NAME_MAX)
-		return "ID is too long >= HOST NAME MAX HOST_NAME_MAX";
+	if (id->name.len >= SWAN_MAX_DOMAIN_LEN)
+		return "ID is too long >= SWAN_MAX_DOMAIN_LEN";
 
 	switch (id->kind) {
 
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
-		addrtot(&id->ip_addr, 'r', name_buf, HOST_NAME_MAX);
+		addrtot(&id->ip_addr, 'r', name_buf, SWAN_MAX_DOMAIN_LEN);
 		break;
 
 	case ID_FQDN:
 		{
 			/* expected len of name_buf */
-			size_t buf_len = HOST_NAME_MAX;
+			size_t buf_len = SWAN_MAX_DOMAIN_LEN;
 			size_t il;
 
 			/* idtoa() will have an extra @ as prefix */
@@ -745,7 +744,7 @@ static err_t build_dns_name(char *name_buf, /* array of len HOST_NAME_MAX */
 			while (il > 0 && name_buf[il - 1] == '.')
 				il--;
 
-			if (il > HOST_NAME_MAX)
+			if (il > SWAN_MAX_DOMAIN_LEN)
 				return "FQDN is too long for domain name";
 
 			add_str(name_buf, buf_len, (name_buf + il), ".");
@@ -770,8 +769,8 @@ static struct p_dns_req *qry_st_init(struct state *st,
 	char b[CONN_INST_BUF];
 	char dbg_buf[512] ;  /* Arbitrary length. It is local */
 	struct p_dns_req *p;
-	char log_buf[HOST_NAME_MAX * 2]; /* this is local */
-	char qname[HOST_NAME_MAX];
+	char log_buf[SWAN_MAX_DOMAIN_LEN * 2]; /* this is local */
+	char qname[SWAN_MAX_DOMAIN_LEN];
 	err_t err;
 
 

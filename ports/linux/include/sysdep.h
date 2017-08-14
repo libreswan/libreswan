@@ -5,7 +5,7 @@
 #define TimeZoneOffset timezone
 
 #include <limits.h>
-/* POSIX 1003.1-2001 says <unistd.h> defines this */
+/* POSIX 1003.1-2001 says <limits.h> defines this */
 #ifndef HOST_NAME_MAX
 /* some don't even use _POSIX_HOST_NAME_MAX */
 # ifdef _POSIX_HOST_NAME_MAX

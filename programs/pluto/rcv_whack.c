@@ -28,10 +28,6 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#ifndef HOST_NAME_MAX           /* POSIX 1003.1-2001 says <unistd.h> defines this */
-# define HOST_NAME_MAX  255     /* upper bound, according to SUSv2 */
-#endif
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -47,7 +43,6 @@
 #include <event2/event.h>
 #include <event2/event_struct.h>
 
-#include "sysdep.h"
 #include "lswconf.h"
 #include "constants.h"
 #include "defs.h"
@@ -278,7 +273,7 @@ static bool writewhackrecord(char *buf, size_t buflen)
 static bool openwhackrecordfile(char *file)
 {
 	char when[256];
-	char FQDN[HOST_NAME_MAX + 1];
+	char FQDN[SWAN_MAX_DOMAIN_LEN];
 	const u_int32_t magic = WHACK_BASIC_MAGIC;
 	struct tm tm1, *tm;
 	realtime_t n = realnow();

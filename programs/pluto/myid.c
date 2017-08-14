@@ -118,7 +118,7 @@ void set_myid(enum myid_state s, char *idstr)
 
 void set_myFQDN(void)
 {
-	char FQDN[HOST_NAME_MAX + 1];
+	char FQDN[SWAN_MAX_DOMAIN_LEN];
 	int r = gethostname(FQDN, sizeof(FQDN));
 
 	free_id_content(&myids[MYID_HOSTNAME]);
