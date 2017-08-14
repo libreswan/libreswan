@@ -1994,97 +1994,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			peer_keymat;
 		const struct trans_attrs *ta = &st->st_esp.attrs.transattrs;
 
-		/*
-		 * ??? table of non-registered algorithms?
-		 *
-		 * Looks like a hardwired and limited map from ESP/AH
-		 * to SADB (KLIPS).
-		 *
-		 * Since the allowed combinations are fixed, limited
-		 * and old (anything recent is instead handled by
-		 * kernel_alg_esp_info()) it may well be possible to
-		 * delete this table.
-		 */
-		static const struct kernel_alg_info hardwired_info[] = {
-			{
-				.transid = ESP_NULL,
-				.auth = AUTH_ALGORITHM_HMAC_MD5,
-				.enckeysize = 0,
-				.encryptalg = SADB_EALG_NULL,
-				.authalg = SADB_AALG_MD5HMAC,
-			},
-			{
-				.transid = ESP_NULL,
-				.auth = AUTH_ALGORITHM_HMAC_SHA1,
-				.enckeysize = 0,
-				.encryptalg = SADB_EALG_NULL,
-				.authalg = SADB_AALG_SHA1HMAC,
-			},
-			{
-				.transid = ESP_3DES,
-				.auth = AUTH_ALGORITHM_NONE,
-				.enckeysize = DES_CBC_BLOCK_SIZE * 3,
-				.encryptalg = SADB_EALG_3DESCBC,
-				.authalg = SADB_AALG_NONE,
-			},
-			{
-				.transid = ESP_3DES,
-				.auth = AUTH_ALGORITHM_HMAC_MD5,
-				.enckeysize = DES_CBC_BLOCK_SIZE * 3,
-				.encryptalg = SADB_EALG_3DESCBC,
-				.authalg = SADB_AALG_MD5HMAC,
-			},
-			{
-				.transid = ESP_3DES,
-				.auth = AUTH_ALGORITHM_HMAC_SHA1,
-				.enckeysize = DES_CBC_BLOCK_SIZE * 3,
-				.encryptalg = SADB_EALG_3DESCBC,
-				.authalg = SADB_AALG_SHA1HMAC,
-			},
-			{
-				.transid = ESP_AES,
-				.auth = AUTH_ALGORITHM_NONE,
-				.enckeysize = AES_CBC_BLOCK_SIZE,
-				.encryptalg = SADB_X_EALG_AESCBC,
-				.authalg = SADB_AALG_NONE,
-			},
-			{
-				.transid = ESP_AES,
-				.auth = AUTH_ALGORITHM_HMAC_MD5,
-				.enckeysize = AES_CBC_BLOCK_SIZE,
-				.encryptalg = SADB_X_EALG_AESCBC,
-				.authalg = SADB_AALG_MD5HMAC,
-			},
-			{
-				.transid = ESP_AES,
-				.auth = AUTH_ALGORITHM_HMAC_SHA1,
-				.enckeysize = AES_CBC_BLOCK_SIZE,
-				.encryptalg = SADB_X_EALG_AESCBC,
-				.authalg = SADB_AALG_SHA1HMAC,
-			},
-			{
-				.transid = ESP_CAST,
-				.auth = AUTH_ALGORITHM_NONE,
-				.enckeysize = BYTES_FOR_BITS(CAST_KEY_DEF_LEN),
-				.encryptalg = SADB_X_EALG_CASTCBC,
-				.authalg = SADB_AALG_NONE,
-			},
-			{
-				.transid = ESP_CAST,
-				.auth = AUTH_ALGORITHM_HMAC_MD5,
-				.enckeysize = BYTES_FOR_BITS(CAST_KEY_DEF_LEN),
-				.encryptalg = SADB_X_EALG_CASTCBC,
-				.authalg = SADB_AALG_MD5HMAC,
-			},
-			{
-				.transid = ESP_CAST,
-				.auth = AUTH_ALGORITHM_HMAC_SHA1,
-				.enckeysize = BYTES_FOR_BITS(CAST_KEY_DEF_LEN),
-				.encryptalg = SADB_X_EALG_CASTCBC,
-				.authalg = SADB_AALG_SHA1HMAC,
-			},
-		};
-
 		u_int8_t natt_type = 0;
 		u_int16_t natt_sport = 0, natt_dport = 0;
 		ip_address natt_oa;
@@ -2105,48 +2014,29 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			DBG_log("looking for alg with transid: %d keylen: %d auth: %d",
 				ta->encrypt, ta->enckeylen, ta->integ_hash));
 
-		const struct kernel_alg_info *ei = NULL;
-		struct kernel_alg_info ki = { .transid = 0, }; /* RHEL-6 GCC breakage */
-		for (ei = hardwired_info; ; ei++) {
-
-			/* if it is the last key entry, then ask algo */
-			if (ei == &hardwired_info[elemsof(hardwired_info)]) {
-				/*
-				 * Check for additional kernel alg
-				 * Note: result will be in a static buffer!
-				 */
-				struct esb_buf buftn, bufan;
-
-				if (kernel_alg_info(ta->encrypt,
-						     ta->enckeylen,
-						     ta->integ_hash,
-						     &ki)) {
-					ei = &ki;
-					break;
-				}
-
-				loglog(RC_LOG_SERIOUS,
-					"ESP transform %s(%d) / auth %s not implemented or allowed",
-					enum_showb(&esp_transformid_names,
-						ta->encrypt,
-						&buftn),
-					ta->enckeylen,
-					enum_showb(&auth_alg_names,
-						ta->integ_hash,
-						&bufan));
-				goto fail;
-			}
-
-			DBG(DBG_CRYPT,
-				DBG_log("checking transid: %d keysize: %zu auth: %d",
-					ei->transid, ei->enckeysize, ei->auth));
-
-			if (ta->encrypt == ei->transid &&
-				(ta->enckeylen == 0 ||
-					ta->enckeylen ==
-					ei->enckeysize * BITS_PER_BYTE) &&
-				ta->integ_hash == ei->auth)
-				break;
+		/*
+		 * Query the kernel to see if the algorithm
+		 * combination is valid.
+		 *
+		 * XXX: keep changes small for now by keeping EI as an
+		 * address.
+		 */
+		struct kernel_alg_info ei[1];
+		if (!kernel_alg_info(ta->encrypt,
+				     ta->enckeylen,
+				     ta->integ_hash,
+				     ei)) {
+			struct esb_buf buftn, bufan;
+			loglog(RC_LOG_SERIOUS,
+			       "ESP transform %s(%d) / auth %s not implemented or allowed",
+			       enum_showb(&esp_transformid_names,
+					  ta->encrypt,
+					  &buftn),
+			       ta->enckeylen,
+			       enum_showb(&auth_alg_names,
+					  ta->integ_hash,
+					  &bufan));
+			goto fail;
 		}
 
 		size_t encrypt_keymat_size = ta->enckeylen / BITS_PER_BYTE;
