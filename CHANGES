@@ -2,6 +2,8 @@
 See also https://libreswan.org/
 
 v3.22 (unreleased)
+* pluto: Change default rundir from /var/run/pluto to /run/pluto [Paul]
+* various: phase out --ctlbase for --ctlsocket and --rundir [Paul]
 
 v3.21 (August 9, 2017)
 * FIPS: Don't crash on too weak PSK's in FIPS mode, warn for non-FIPS [Andrew]
