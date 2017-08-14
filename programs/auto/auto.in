@@ -147,19 +147,19 @@ esac
 
 case "${op}" in
     --ready)
-	${showonly} ipsec whack --ctlsocket ${CTLSOCKET} --listen
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack --listen
 	exit
 	;;
     --rereadsecrets)
-	${showonly} ipsec whack --ctlsocket ${CTLSOCKET} --rereadsecrets
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack --rereadsecrets
 	exit
 	;;
     --rereadgroups)
-	${showonly} ipsec whack --ctlsocket ${CTLSOCKET} --listen
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack --listen
 	exit
 	;;
     --rereadcacerts)
-	${showonly} ipsec whack --ctlsocket ${CTLSOCKET} --rereadcacerts
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack --rereadcacerts
 	exit
 	;;
     --rereadcrls)
@@ -167,74 +167,73 @@ case "${op}" in
 	exit 1
 	;;
     --rereadall)
-	${showonly} ipsec whack --ctlsocket ${CTLSOCKET} --rereadall
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack --rereadall
 	exit
 	;;
     --listpubkeys)
-	${showonly} ipsec whack ${utc} --ctlsocket ${CTLSOCKET} --listpubkeys
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack ${utc} --listpubkeys
 	exit
 	;;
     --checkpubkeys)
-	${showonly} ipsec whack ${utc} --ctlsocket ${CTLSOCKET} --checkpubkeys
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack ${utc} --checkpubkeys
 	exit
 	;;
     --listcerts)
-	${showonly} ipsec whack ${utc} --ctlsocket ${CTLSOCKET} --listcerts
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack ${utc} --listcerts
 	exit
 	;;
     --listcacerts)
-	${showonly} ipsec whack ${utc} --ctlsocket ${CTLSOCKET} --listcacerts
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack ${utc} --listcacerts
 	exit
 	;;
     --listgroups)
-	${showonly} ipsec whack ${utc} --ctlsocket ${CTLSOCKET} --listgroups
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack ${utc} --listgroups
 	exit
 	;;
     --listcrls)
-	${showonly} ipsec whack ${utc} --ctlsocket ${CTLSOCKET} --listcrls
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack ${utc} --listcrls
 	exit
 	;;
     --listall)
-	${showonly} ipsec whack ${utc} --ctlsocket ${CTLSOCKET} --listall
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack ${utc} --listall
 	exit
 	;;
     --purgeocsp)
-	${showonly} ipsec whack ${utc} --ctlsocket ${CTLSOCKET} --listall --purgeocsp
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack ${utc} --listall --purgeocsp
 	exit
 	;;
     --up)
-	${showonly} ipsec whack ${async} --ctlsocket ${CTLSOCKET} --name ${names} --initiate ${remote}
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack ${async} --name ${names} --initiate ${remote}
 	exit
 	;;
     --start)
-	${showonly} ipsec addconn --ctlsocket ${CTLSOCKET} ${verbose} ${config} ${names}
-	${showonly} ipsec whack ${async} --ctlsocket ${CTLSOCKET} --name ${names} --initiate ${remote}
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} addconn ${verbose} ${config} ${names}
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack ${async} --name ${names} --initiate ${remote}
 	exit
 	;;
     --down)
-	${showonly} ipsec whack --ctlsocket ${CTLSOCKET} --name ${names} --terminate
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack --name ${names} --terminate
 	exit
 	;;
     --delete)
-	${showonly} ipsec whack --ctlsocket ${CTLSOCKET} --name ${names} --delete
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack --name ${names} --delete
 	exit
 	;;
     --route)
-	${showonly} ipsec whack --ctlsocket ${CTLSOCKET} --name ${names} --route
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack --name ${names} --route
 	exit
 	;;
     --ondemand)
-	${showonly} ipsec addconn --ctlsocket ${CTLSOCKET} ${verbose} ${config} ${names}
-	${showonly} ipsec whack --ctlsocket ${CTLSOCKET} --name ${names} --route
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} addconn ${verbose} ${config} ${names}
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack --name ${names} --route
 	exit
 	;;
     --unroute)
-	${showonly} ipsec whack --ctlsocket ${CTLSOCKET} --name ${names} --unroute
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack --name ${names} --unroute
 	exit
 	;;
     --status)
-	${showonly}
-	ipsec whack --ctlsocket ${CTLSOCKET} --status
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack --status
 	exit
 	;;
 esac
