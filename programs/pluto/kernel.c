@@ -2149,23 +2149,23 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				break;
 		}
 
-		u_int16_t enc_key_len = ta->enckeylen / BITS_PER_BYTE;
+		size_t encrypt_keymat_size = ta->enckeylen / BITS_PER_BYTE;
 
-		if (enc_key_len != 0) {
+		if (encrypt_keymat_size != 0) {
 			/* XXX: must change to check valid _range_ enc_key_len */
-			if (enc_key_len > ei->enckeysize) {
+			if (encrypt_keymat_size > ei->enckeysize) {
 				loglog(RC_LOG_SERIOUS,
-					"ESP transform %s passed encryption key length %u; we expected %u or less",
+					"ESP transform %s passed encryption key size %zu; we expected %u or less",
 					enum_name(&esp_transformid_names,
 						ta->encrypt),
-					(unsigned)enc_key_len,
+					encrypt_keymat_size,
 					(unsigned)ei->enckeysize);
 				goto fail;
 			}
 			/* ??? why would we have a different length? */
-			pexpect(enc_key_len == ei->enckeysize);
+			pexpect(encrypt_keymat_size == ei->enckeysize);
 		} else {
-			enc_key_len = ei->enckeysize;
+			encrypt_keymat_size = ei->enckeysize;
 		}
 
 		/* Fixup key lengths for special cases */
@@ -2173,43 +2173,43 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		case ESP_3DES:
 			/* Grrrrr.... f*cking 7 bits jurassic algos  */
 			/* 168 bits in kernel, need 192 bits for keymat_len */
-			if (enc_key_len == 21)
-				enc_key_len = 24;
+			if (encrypt_keymat_size == 21)
+				encrypt_keymat_size = 24;
 			break;
 		case ESP_DES:
 			/* Grrrrr.... f*cking 7 bits jurassic algos  */
 			/* 56 bits in kernel, need 64 bits for keymat_len */
-			if (enc_key_len == 7)
-				enc_key_len = 8;
+			if (encrypt_keymat_size == 7)
+				encrypt_keymat_size = 8;
 			break;
 
 		case IKEv2_ENCR_AES_CTR:
 			/* keymat contains 4 bytes of salt */
-			enc_key_len += AES_CTR_SALT_BYTES;
+			encrypt_keymat_size += AES_CTR_SALT_BYTES;
 			break;
 
 		case IKEv2_ENCR_AES_GCM_8:
 		case IKEv2_ENCR_AES_GCM_12:
 		case IKEv2_ENCR_AES_GCM_16:
 			/* keymat contains 4 bytes of salt */
-			enc_key_len += AES_GCM_SALT_BYTES;
+			encrypt_keymat_size += AES_GCM_SALT_BYTES;
 			break;
 		case IKEv2_ENCR_AES_CCM_8:
 		case IKEv2_ENCR_AES_CCM_12:
 		case IKEv2_ENCR_AES_CCM_16:
 			/* keymat contains 3 bytes of salt */
-			enc_key_len += AES_CCM_SALT_BYTES;
+			encrypt_keymat_size += AES_CCM_SALT_BYTES;
 			break;
 		}
 
 		/* ??? why authkeylen but enc_key_len?  Spelling seems inconsistent. */
-		unsigned authkeylen = ikev1_auth_kernel_attrs(ei->auth, NULL);
+		size_t integ_keymat_size = ikev1_auth_kernel_attrs(ei->auth, NULL);
 
 		DBG(DBG_KERNEL, DBG_log(
-			"st->st_esp.keymat_len=%" PRIu16 " is key_len=%" PRIu16 " + authkeylen=%u",
-			st->st_esp.keymat_len, enc_key_len, authkeylen));
+			"st->st_esp.keymat_len=%" PRIu16 " is encrypt_keymat_size=%zu + integ_keymat_size=%zu",
+			st->st_esp.keymat_len, encrypt_keymat_size, integ_keymat_size));
 
-		passert(st->st_esp.keymat_len == enc_key_len + authkeylen);
+		passert(st->st_esp.keymat_len == encrypt_keymat_size + integ_keymat_size);
 
 		set_text_said(text_esp, &dst.addr, esp_spi, SA_ESP);
 
