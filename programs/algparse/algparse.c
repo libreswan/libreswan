@@ -315,22 +315,22 @@ int main(int argc, char *argv[])
 		do {
 			arg++;
 		} while (arg[0] == '-');
-		if (strcmp(arg, "?") == 0 || strcmp(arg, "h") == 0) {
+		if (streq(arg, "?") || streq(arg, "h")) {
 			usage();
 			exit(0);
-		} else if (strcmp(arg, "t") == 0) {
+		} else if (streq(arg, "t")) {
 			run_tests = true;
-		} else if (strcmp(arg, "v1") == 0) {
+		} else if (streq(arg, "v1")) {
 			policy.ikev1 = true;
-		} else if (strcmp(arg, "v2") == 0) {
+		} else if (streq(arg, "v2")) {
 			policy.ikev2 = true;
-		} else if (strcmp(arg, "fips") == 0 || strcmp(arg, "fips=yes") == 0 || strcmp(arg, "fips=on") == 0) {
+		} else if (streq(arg, "fips") || streq(arg, "fips=yes") || streq(arg, "fips=on")) {
 			lsw_set_fips_mode(LSW_FIPS_ON);
-		} else if (strcmp(arg, "fips=no") == 0 || strcmp(arg, "fips=off") == 0) {
+		} else if (streq(arg, "fips=no") || streq(arg, "fips=off")) {
 			lsw_set_fips_mode(LSW_FIPS_OFF);
-		} else if (strcmp(arg, "fips=unknown") == 0) {
+		} else if (streq(arg, "fips=unknown")) {
 			lsw_set_fips_mode(LSW_FIPS_UNKNOWN);
-		} else if (strcmp(arg, "v") == 0) {
+		} else if (streq(arg, "v")) {
 			log_to_stderr = true;
 		} else {
 			fprintf(stderr, "unknown option: %s\n", *argp);
