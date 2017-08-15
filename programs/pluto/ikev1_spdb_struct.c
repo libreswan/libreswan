@@ -50,6 +50,7 @@
 #include "alg_info.h"
 #include "kernel_alg.h"
 #include "ike_alg.h"
+#include "ike_alg_null.h"
 #include "db_ops.h"
 #include "lswfips.h" /* for libreswan_fipsmode */
 #include "crypt_prf.h"
@@ -2035,6 +2036,15 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				ugh);
 			return FALSE;
 		}
+
+		/*
+		 * AEAD implies NULL integrity.
+		 */
+		if (ike_alg_is_aead(attrs->transattrs.encrypter)
+		    && attrs->transattrs.integ == NULL) {
+			attrs->transattrs.integ = &ike_alg_integ_null;
+		}
+
 	}
 
 	if (proto == PROTO_IPSEC_AH) {
