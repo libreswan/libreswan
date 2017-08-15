@@ -2015,11 +2015,36 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				ta->encrypt, ta->enckeylen, ta->integ_hash));
 
 		/*
+		 * Check that both integrity and encryption are
+		 * supported by the kernel.
+		 *
+		 * Since the parser uses these exact same checks when
+		 * loading the connection, they should never fail (if
+		 * they do then strange things have been going on
+		 * since the connection was loaded).
+		 */
+		if (!kernel_alg_is_ok(&ta->integ->common)) {
+			loglog(RC_LOG_SERIOUS,
+			       "ESP integrity algorithm %s is not implemented or allowed",
+			       ta->integ->common.fqn);
+			goto fail;
+		}
+		if (!kernel_alg_is_ok(&ta->encrypter->common)) {
+			loglog(RC_LOG_SERIOUS,
+			       "ESP encryption algorithm %s is not implemented or allowed",
+			       ta->encrypter->common.fqn);
+			goto fail;
+		}
+
+		/*
 		 * Query the kernel to see if the algorithm
 		 * combination is valid.
 		 *
 		 * XXX: keep changes small for now by keeping EI as an
 		 * address.
+		 *
+		 * XXX: the checks above make much of this call
+		 * redundant - only the enckeysize is useful.
 		 */
 		struct kernel_alg_info ei[1];
 		if (!kernel_alg_info(ta->encrypt,
