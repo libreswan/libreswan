@@ -2049,7 +2049,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		struct kernel_alg_info ei[1];
 		if (!kernel_alg_info(ta->encrypt,
 				     ta->enckeylen,
-				     ta->integ_hash,
 				     ei)) {
 			struct esb_buf buftn, bufan;
 			loglog(RC_LOG_SERIOUS,
@@ -2117,8 +2116,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			break;
 		}
 
-		/* ??? why authkeylen but enc_key_len?  Spelling seems inconsistent. */
-		size_t integ_keymat_size = ikev1_auth_kernel_attrs(ei->auth, NULL);
+		size_t integ_keymat_size = ta->integ->integ_keymat_size; /* BYTES */
 
 		DBG(DBG_KERNEL, DBG_log(
 			"st->st_esp.keymat_len=%" PRIu16 " is encrypt_keymat_size=%zu + integ_keymat_size=%zu",
@@ -2139,7 +2137,12 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			DBG(DBG_KERNEL, DBG_log("Enabling TFC at %d bytes (up to PMTU)", c->sa_tfcpad));
 			said_next->tfcpad = c->sa_tfcpad;
 		}
-		said_next->authalg = ei->authalg;
+		said_next->authalg = ta->integ->integ_ikev1_ah_id;
+		/*
+		 * XXX: Better would be AH_SHA2_256 (enum is wrong but
+		 * value is the same); best would be
+		 * &ike_alg_integ_sha2_256.
+		 */
 		if (said_next->authalg == AUTH_ALGORITHM_HMAC_SHA2_256 &&
 			st->st_connection->sha2_truncbug) {
 			if (kernel_ops->sha2_truncbug_support) {

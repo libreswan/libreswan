@@ -34,18 +34,10 @@ struct kernel_alg_info {
 	u_int8_t transid;       /* enum ipsec_cipher_algo: ESP transform (AES, 3DES, etc.)*/
 	size_t enckeysize;      /* keylength for ESP transform (bytes) */
 	/*
-	 * The authentication algorithm; if required by ESP/AH.
-	 */
-	u_int16_t auth;         /* enum ikev1_auth_attribute: AUTH */
-	/*
 	 * The above mapped onto SADB/KLIPS/PFKEYv2 equivalent and
 	 * used by the kernel backends.
 	 */
 	u_int8_t encryptalg;    /* enum sadb_ealg: normally  encryptalg=transid */
-	u_int16_t authalg;	/* enum sadb_aalg: normally  authalg=auth+1
-				 * Paul: apparently related to magic at
-				 * lib/libswan/alg_info.c alg_info_esp_aa2sadb()
-				 */
 };
 
 /* Registration messages from pluto */
@@ -87,7 +79,6 @@ extern const struct sadb_alg *kernel_alg_sadb_alg_get(unsigned satype, unsigned 
 
 extern bool kernel_alg_info(u_int8_t transid,
 			    u_int16_t keylen,
-			    u_int16_t auth,
 			    struct kernel_alg_info *ki);
 
 extern struct sadb_alg esp_aalg[];

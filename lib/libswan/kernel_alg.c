@@ -520,26 +520,23 @@ int kernel_alg_ah_auth_keylen(int auth)
 	return a_keylen;
 }
 
-bool kernel_alg_info(u_int8_t transid, u_int16_t keylen, u_int16_t auth,
+bool kernel_alg_info(u_int8_t transid, u_int16_t keylen,
 		     struct kernel_alg_info *ki)
 {
-	int sadb_aalg, sadb_ealg;
+	int sadb_ealg;
 	zero(ki);
 
 	DBG(DBG_PARSING,
-		DBG_log("kernel_alg_esp_info(): transid=%d, keylen=%d,auth=%d, ",
-			transid, keylen, auth));
+		DBG_log("kernel_alg_esp_info(): transid=%d, keylen=%d",
+			transid, keylen));
 	sadb_ealg = transid;
-	sadb_aalg = alg_info_esp_aa2sadb(auth);
 
-	if (!ESP_EALG_PRESENT(sadb_ealg) ||
-		!ESP_AALG_PRESENT(sadb_aalg)) {
+	if (!ESP_EALG_PRESENT(sadb_ealg)) {
 		DBG(DBG_PARSING,
-			DBG_log("kernel_alg_esp_info(): transid or auth not registered with kernel"));
+			DBG_log("kernel_alg_esp_info(): transid not registered with kernel"));
 		return FALSE;
 	}
 	ki->transid = transid;
-	ki->auth = auth;
 
 	/*
 	 * don't return "default" keylen because this value is used from
@@ -566,12 +563,10 @@ bool kernel_alg_info(u_int8_t transid, u_int16_t keylen, u_int16_t auth,
 	}
 
 	ki->encryptalg = sadb_ealg;
-	ki->authalg = sadb_aalg;
 	DBG(DBG_PARSING,
-		DBG_log("kernel_alg_esp_info(): transid=%d, auth=%d, enckeysize=%d, encryptalg=%d, authalg=%d",
-			transid, auth, (int)ki->enckeysize,
-			ki->encryptalg,
-			ki->authalg);
+		DBG_log("kernel_alg_esp_info(): transid=%d, enckeysize=%d, encryptalg=%d",
+			transid, (int)ki->enckeysize,
+			ki->encryptalg);
 		);
 	return TRUE;
 }
