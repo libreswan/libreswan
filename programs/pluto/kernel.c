@@ -2039,49 +2039,15 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		}
 
 		/*
-		 * Query the kernel to see if the algorithm
-		 * combination is valid.
-		 *
-		 * XXX: keep changes small for now by keeping EI as an
-		 * address.
-		 *
-		 * XXX: the checks above make much of this call
-		 * redundant - only the enckeysize is useful.
+		 * Validate the encryption key size.
 		 */
-		struct kernel_alg_info ei[1];
-		if (!kernel_alg_info(ta->encrypt,
-				     ta->enckeylen,
-				     ei)) {
-			struct esb_buf buftn, bufan;
+		size_t encrypt_keymat_size;
+		if (!kernel_alg_encrypt_key_size(ta->encrypter, ta->enckeylen,
+						 &encrypt_keymat_size)) {
 			loglog(RC_LOG_SERIOUS,
-			       "ESP transform %s(%d) / auth %s not implemented or allowed",
-			       enum_showb(&esp_transformid_names,
-					  ta->encrypt,
-					  &buftn),
-			       ta->enckeylen,
-			       enum_showb(&auth_alg_names,
-					  ta->integ_hash,
-					  &bufan));
+			       "ESP encryption algorithm %s with key length %d not implemented or allowed",
+			       ta->encrypter->common.fqn, ta->enckeylen);
 			goto fail;
-		}
-
-		size_t encrypt_keymat_size = ta->enckeylen / BITS_PER_BYTE;
-
-		if (encrypt_keymat_size != 0) {
-			/* XXX: must change to check valid _range_ enc_key_len */
-			if (encrypt_keymat_size > ei->enckeysize) {
-				loglog(RC_LOG_SERIOUS,
-					"ESP transform %s passed encryption key size %zu; we expected %u or less",
-					enum_name(&esp_transformid_names,
-						ta->encrypt),
-					encrypt_keymat_size,
-					(unsigned)ei->enckeysize);
-				goto fail;
-			}
-			/* ??? why would we have a different length? */
-			pexpect(encrypt_keymat_size == ei->enckeysize);
-		} else {
-			encrypt_keymat_size = ei->enckeysize;
 		}
 
 		/* Fixup key lengths for special cases */

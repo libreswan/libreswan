@@ -35,8 +35,10 @@
 #include "kernel_alg.h"
 #include "lswlog.h"
 #include "lswalloc.h"
-#include "ike_alg.h"
 #include "ietf_constants.h"
+
+#include "ike_alg.h"
+#include "ike_alg_null.h"
 
 /* ALG storage */
 struct sadb_alg esp_aalg[K_SADB_AALG_MAX + 1];	/* ??? who fills this table in? */
@@ -520,50 +522,61 @@ int kernel_alg_ah_auth_keylen(int auth)
 	return a_keylen;
 }
 
-bool kernel_alg_info(u_int8_t transid, u_int16_t keylen,
-		     struct kernel_alg_info *ki)
+bool kernel_alg_encrypt_key_size(const struct encrypt_desc *encrypt,
+				 int keylen, size_t *key_size)
 {
-	int sadb_ealg;
-	zero(ki);
-
-	DBG(DBG_PARSING,
-		DBG_log("kernel_alg_esp_info(): transid=%d, keylen=%d",
-			transid, keylen));
-	sadb_ealg = transid;
-
-	if (!ESP_EALG_PRESENT(sadb_ealg)) {
-		DBG(DBG_PARSING,
-			DBG_log("kernel_alg_esp_info(): transid not registered with kernel"));
-		return FALSE;
-	}
-
 	/*
-	 * don't return "default" keylen because this value is used from
-	 * setup_half_ipsec_sa() to "validate" keylen
-	 * In effect,  enckeylen will be used as "max" value
+	 * Assume the two ENUMs are the same!
 	 */
+	enum ipsec_cipher_algo transid = encrypt->common.id[IKEv1_ESP_ID];
+	int sadb_ealg = transid;
 
-	/* if no key length is given, return default */
+	*key_size = keylen / BITS_PER_BYTE;
 	if (keylen == 0) {
-		ki->enckeysize = esp_ealg[sadb_ealg].sadb_alg_minbits /
-			BITS_PER_BYTE;
+		/*
+		 * XXX: Is KEYLEN ever zero for any case other than
+		 * 'null' encryption?  Log it and find out.
+		 */
+		if (encrypt != &ike_alg_encrypt_null) {
+			keylen = esp_ealg[sadb_ealg].sadb_alg_minbits /
+				BITS_PER_BYTE;
+			DBG(DBG_KERNEL, DBG_log("XXX: %s has key length of 0, adjusting to %d",
+						encrypt->common.fqn, keylen));
+		}
 	} else if (esp_ealg[sadb_ealg].sadb_alg_minbits <= keylen &&
-		keylen <= esp_ealg[sadb_ealg].sadb_alg_maxbits) {
-		ki->enckeysize = keylen / BITS_PER_BYTE;
+		   keylen <= esp_ealg[sadb_ealg].sadb_alg_maxbits) {
+		/*
+		 * XXX: is the above check equivalent to
+		 * encrypt_has_key_bit_length()?  If it is then it
+		 * should have been applied already by the parser?
+		 * Find out.
+		 */
+		if (!encrypt_has_key_bit_length(encrypt, keylen)) {
+			DBG(DBG_KERNEL, DBG_log("XXX: IKE_ALG rejects %s key length of %d accepted by SADB",
+						encrypt->common.fqn, keylen));
+
+		}
 	} else {
-		DBG(DBG_PARSING,
-			DBG_log("kernel_alg_esp_info(): transid=%d, proposed keylen=%u is invalid, not %u<=X<=%u",
-				transid, keylen,
-				esp_ealg[sadb_ealg].sadb_alg_minbits,
-				esp_ealg[sadb_ealg].sadb_alg_maxbits);
-			);
+		/*
+		 * XXX: conversely is SADB rejecting something IKE_ALG
+		 * things is ok?
+		 */
+		if (encrypt_has_key_bit_length(encrypt, keylen)) {
+			DBG(DBG_KERNEL, DBG_log("XXX: IKE_ALG accepts %s key length of %d rejected by SADB",
+						encrypt->common.fqn, keylen));
+		}
+		DBG(DBG_KERNEL,
+		    DBG_log("kernel_alg_esp_info(): transid=%d, proposed keylen=%u is invalid, not %u<=X<=%u",
+			    transid, keylen,
+			    esp_ealg[sadb_ealg].sadb_alg_minbits,
+			    esp_ealg[sadb_ealg].sadb_alg_maxbits));
 		/* proposed key length is invalid! */
 		return FALSE;
 	}
 
 	DBG(DBG_PARSING,
-		DBG_log("kernel_alg_esp_info(): transid=%d, enckeysize=%d, encryptalg=%d",
-			transid, (int)ki->enckeysize, sadb_ealg));
+	    DBG_log("encrypt %s keylen=%d transid=%d, key_size=%zu, encryptalg=%d",
+		    encrypt->common.fqn, keylen, transid, *key_size, sadb_ealg));
 	return TRUE;
 }
 

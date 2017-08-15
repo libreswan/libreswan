@@ -23,10 +23,6 @@
 struct ike_alg; /* forward declaration */
 struct sadb_msg; /* forward definition */
 
-struct kernel_alg_info {
-	size_t enckeysize;      /* keylength for ESP transform (bytes) */
-};
-
 /* Registration messages from pluto */
 extern void kernel_alg_register_pfkey(const struct sadb_msg *msg);
 
@@ -64,9 +60,8 @@ extern bool kernel_alg_proc_read(void);
 extern const struct sadb_alg *kernel_alg_sadb_alg_get(unsigned satype, unsigned exttype,
 						       unsigned alg_id);
 
-extern bool kernel_alg_info(u_int8_t transid,
-			    u_int16_t keylen,
-			    struct kernel_alg_info *ki);
+bool kernel_alg_encrypt_key_size(const struct encrypt_desc *encrypt,
+				 int keylen, size_t *key_size);
 
 extern struct sadb_alg esp_aalg[];
 extern struct sadb_alg esp_ealg[];
