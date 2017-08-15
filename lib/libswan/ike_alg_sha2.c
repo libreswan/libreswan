@@ -108,6 +108,7 @@ const struct integ_desc ike_alg_integ_hmac_sha2_256_truncbug = {
 	},
 	.integ_keymat_size = SHA2_256_DIGEST_SIZE,
 	.integ_output_size = BYTES_FOR_BITS(96),
+	.integ_ikev1_ah_id = AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG, /* YES, not AH_... */
 };
 
 const struct hash_desc ike_alg_hash_sha2_384 = {
