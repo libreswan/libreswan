@@ -24,20 +24,7 @@ struct ike_alg; /* forward declaration */
 struct sadb_msg; /* forward definition */
 
 struct kernel_alg_info {
-	/*
-	 * The encryption algorithm and key length; if required by
-	 * ESP.
-	 *
-	 * Because struct encrypt_desc still specifies multiple key
-	 * lengths, ENCKEYSIZE is still required.
-	 */
-	u_int8_t transid;       /* enum ipsec_cipher_algo: ESP transform (AES, 3DES, etc.)*/
 	size_t enckeysize;      /* keylength for ESP transform (bytes) */
-	/*
-	 * The above mapped onto SADB/KLIPS/PFKEYv2 equivalent and
-	 * used by the kernel backends.
-	 */
-	u_int8_t encryptalg;    /* enum sadb_ealg: normally  encryptalg=transid */
 };
 
 /* Registration messages from pluto */

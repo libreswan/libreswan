@@ -536,7 +536,6 @@ bool kernel_alg_info(u_int8_t transid, u_int16_t keylen,
 			DBG_log("kernel_alg_esp_info(): transid not registered with kernel"));
 		return FALSE;
 	}
-	ki->transid = transid;
 
 	/*
 	 * don't return "default" keylen because this value is used from
@@ -562,12 +561,9 @@ bool kernel_alg_info(u_int8_t transid, u_int16_t keylen,
 		return FALSE;
 	}
 
-	ki->encryptalg = sadb_ealg;
 	DBG(DBG_PARSING,
 		DBG_log("kernel_alg_esp_info(): transid=%d, enckeysize=%d, encryptalg=%d",
-			transid, (int)ki->enckeysize,
-			ki->encryptalg);
-		);
+			transid, (int)ki->enckeysize, sadb_ealg));
 	return TRUE;
 }
 

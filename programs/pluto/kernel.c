@@ -11,7 +11,7 @@
  * Copyright (C) 2010,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2012-2015 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Kim B. Heino <b@bbbs.net>
- * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016-2017, Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -70,7 +70,9 @@
 #include "server.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */
 #include "keys.h"
+
 #include "ike_alg.h"
+#include "ike_alg_3des.h"
 
 #include "packet.h"  /* for pb_stream in nat_traversal.h */
 #include "nat_traversal.h"
@@ -2083,37 +2085,22 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		}
 
 		/* Fixup key lengths for special cases */
-		switch (ei->transid) {
-		case ESP_3DES:
+		if (ta->encrypter == &ike_alg_encrypt_3des_cbc) {
 			/* Grrrrr.... f*cking 7 bits jurassic algos  */
 			/* 168 bits in kernel, need 192 bits for keymat_len */
-			if (encrypt_keymat_size == 21)
+			if (encrypt_keymat_size == 21) {
+				DBG(DBG_KERNEL,
+				    DBG_log("%s requires a 7-bit jurassic adjust",
+					    ta->encrypter->common.fqn));
 				encrypt_keymat_size = 24;
-			break;
-		case ESP_DES:
-			/* Grrrrr.... f*cking 7 bits jurassic algos  */
-			/* 56 bits in kernel, need 64 bits for keymat_len */
-			if (encrypt_keymat_size == 7)
-				encrypt_keymat_size = 8;
-			break;
+			}
+		}
 
-		case IKEv2_ENCR_AES_CTR:
-			/* keymat contains 4 bytes of salt */
-			encrypt_keymat_size += AES_CTR_SALT_BYTES;
-			break;
-
-		case IKEv2_ENCR_AES_GCM_8:
-		case IKEv2_ENCR_AES_GCM_12:
-		case IKEv2_ENCR_AES_GCM_16:
-			/* keymat contains 4 bytes of salt */
-			encrypt_keymat_size += AES_GCM_SALT_BYTES;
-			break;
-		case IKEv2_ENCR_AES_CCM_8:
-		case IKEv2_ENCR_AES_CCM_12:
-		case IKEv2_ENCR_AES_CCM_16:
-			/* keymat contains 3 bytes of salt */
-			encrypt_keymat_size += AES_CCM_SALT_BYTES;
-			break;
+		if (ta->encrypter->salt_size > 0) {
+			DBG(DBG_KERNEL,
+			    DBG_log("%s requires %zu salt bytes",
+				    ta->encrypter->common.fqn, ta->encrypter->salt_size));
+			encrypt_keymat_size += ta->encrypter->salt_size;
 		}
 
 		size_t integ_keymat_size = ta->integ->integ_keymat_size; /* BYTES */
@@ -2177,7 +2164,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		/* divide up keying material */
 		said_next->enckey = esp_dst_keymat;
 		said_next->enckeylen = encrypt_keymat_size; /* BYTES */
-		said_next->encalg = ei->encryptalg;
+		/*
+		 * XXX: Assume SADB_ and ESP_ numbers match!
+		 */
+		said_next->encalg = ta->encrypter->common.id[IKEv1_ESP_ID];
 
 		said_next->authkey = esp_dst_keymat + encrypt_keymat_size;
 		said_next->authkeylen = integ_keymat_size; /* BYTES */
