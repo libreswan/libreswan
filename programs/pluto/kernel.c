@@ -2258,11 +2258,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 		/* divide up keying material */
 		said_next->enckey = esp_dst_keymat;
-		said_next->enckeylen = enc_key_len;
+		said_next->enckeylen = encrypt_keymat_size; /* BYTES */
 		said_next->encalg = ei->encryptalg;
 
-		said_next->authkey = esp_dst_keymat + enc_key_len;
-		said_next->authkeylen = authkeylen;
+		said_next->authkey = esp_dst_keymat + encrypt_keymat_size;
+		said_next->authkeylen = integ_keymat_size; /* BYTES */
 		/* said_next->authkey = esp_dst_keymat + ei->enckeylen; */
 		/* said_next->enckeylen = ei->enckeylen; */
 
