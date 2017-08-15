@@ -19,8 +19,8 @@
  * Copyright (C) 2013 Kim B. Heino <b@bbbs.net>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 Richard Guy Briggs <rgb@tricolour.ca>
+ * Copyright (C) 2016-2017 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -70,8 +70,19 @@
 #include "log.h"
 #include "whack.h"	/* for RC_LOG_SERIOUS */
 #include "kernel_alg.h"
+
 #include "ike_alg.h"
 #include "ike_alg_aes.h"
+#include "ike_alg_md5.h"
+#include "ike_alg_null.h"
+#include "ike_alg_sha1.h"
+#include "ike_alg_sha2.h"
+#include "ike_alg_ripemd.h"
+#include "ike_alg_3des.h"
+#include "ike_alg_camellia.h"
+#include "ike_alg_twofish.h"
+#include "ike_alg_serpent.h"
+#include "ike_alg_cast.h"
 
 /* required for Linux 2.6.26 kernel and later */
 #ifndef XFRM_STATE_AF_UNSPEC
@@ -134,47 +145,73 @@ static sparse_names xfrm_type_names = {
 #undef NE
 
 /* Authentication Algs */
-static sparse_names aalg_list = {
-	{ SADB_X_AALG_NULL, "digest_null" },
-	{ SADB_AALG_MD5HMAC, "md5" },
-	{ SADB_AALG_SHA1HMAC, "sha1" },
-	{ SADB_X_AALG_SHA2_256HMAC, "hmac(sha256)" },
-	{ SADB_X_AALG_SHA2_256HMAC_TRUNCBUG, "hmac(sha256)" },
-	{ SADB_X_AALG_SHA2_384HMAC, "hmac(sha384)" },
-	{ SADB_X_AALG_SHA2_512HMAC, "hmac(sha512)" },
-	{ SADB_X_AALG_RIPEMD160HMAC, "hmac(rmd160)" },
-	{ SADB_X_AALG_AES_XCBC_MAC, "xcbc(aes)" },
-	{ SADB_X_AALG_AES_CMAC, "cmac(aes)" },
-	/* { SADB_X_AALG_RSA - not supported by us */
+
+struct netlink_name {
+	const struct ike_alg *alg;
+	const char *name;
+};
+
+static const char *find_netlink_name(const struct netlink_name *table,
+				     const struct ike_alg *alg)
+{
+	for (; table->alg != NULL; table++) {
+		if (table->alg == alg) {
+			return table->name;
+		}
+	}
+	return NULL;
+}
+
+static const struct netlink_name integ_list[] = {
+	{ &ike_alg_integ_null.common, "digest_null" },
+	{ &ike_alg_integ_md5.common, "md5" },
+	{ &ike_alg_integ_sha1.common, "sha1" },
+	{ &ike_alg_integ_sha2_256.common, "hmac(sha256)" },
+	{ &ike_alg_integ_hmac_sha2_256_truncbug.common, "hmac(sha256)" },
+	{ &ike_alg_integ_sha2_384.common, "hmac(sha384)" },
+	{ &ike_alg_integ_sha2_512.common, "hmac(sha512)" },
+#ifdef USE_RIPEMD
+	{ &ike_alg_integ_hmac_ripemd_160_96.common, "hmac(rmd160)" },
+#endif
+	{ &ike_alg_integ_aes_xcbc.common, "xcbc(aes)" },
+	{ &ike_alg_integ_aes_cmac.common, "cmac(aes)" },
+	/* { &ike_alg_integ_RSA - not supported by us */
+#if 0
 	/*
 	 * GMAC's not supported by Linux kernel yet
-	 *
-	{ SADB_X_AALG_AH_AES_128_GMAC, "" },
-	{ SADB_X_AALG_AH_AES_192_GMAC, "" },
-	{ SADB_X_AALG_AH_AES_256_GMAC, "" },
 	 */
-	{ 0, sparse_end }
+	{ &ike_alg_integ_aes_128_gmac.common, NULL },
+	{ &ike_alg_integ_aes_192_gmac.common, NULL },
+	{ &ike_alg_integ_aes_256_gmac.common, NULL },
+#endif
+	{ NULL, NULL, }
 };
 
 /* Encryption algs */
-static sparse_names ealg_list = {
-	{ SADB_EALG_NULL, "cipher_null" },
-	/* { SADB_EALG_DESCBC, "des" }, obsoleted */
-	{ SADB_EALG_3DESCBC, "des3_ede" },
-	{ SADB_X_EALG_CASTCBC, "cast5" },
-	/* { SADB_X_EALG_BLOWFISHCBC, "blowfish" }, obsoleted */
-	{ SADB_X_EALG_AESCBC, "aes" },
-	{ SADB_X_EALG_AESCTR, "rfc3686(ctr(aes))" },
-	/*
-	 * Not yet implemented in Linux kernel xfrm_algo.c
-	{ SADB_X_EALG_SEEDCBC, "cbc(seed)" },
-	 */
-	{ SADB_X_EALG_CAMELLIACBC, "cbc(camellia)" },
-	/* 252 draft-ietf-ipsec-ciph-aes-cbc-00 */
-	{ SADB_X_EALG_SERPENTCBC, "serpent" },
-	/* 253 draft-ietf-ipsec-ciph-aes-cbc-00 */
-	{ SADB_X_EALG_TWOFISHCBC, "twofish" },
-	{ 0, sparse_end }
+static const struct netlink_name encrypt_list[] = {
+	{ &ike_alg_encrypt_null.common, "cipher_null" },
+	/* { &ike_alg_encrypt_DESCBC.common, "des" }, obsoleted */
+	{ &ike_alg_encrypt_3des_cbc.common, "des3_ede" },
+	{ &ike_alg_encrypt_cast_cbc.common, "cast5" },
+	/* { &ike_alg_encrypt_BLOWFISHCBC.common, "blowfish" }, obsoleted */
+	{ &ike_alg_encrypt_aes_cbc.common, "aes" },
+	{ &ike_alg_encrypt_aes_ctr.common, "rfc3686(ctr(aes))" },
+	{ &ike_alg_encrypt_camellia_cbc.common, "cbc(camellia)" },
+	{ &ike_alg_encrypt_serpent_cbc.common, "serpent" },
+	{ &ike_alg_encrypt_twofish_cbc.common, "twofish" },
+	{ &ike_alg_encrypt_aes_ccm_8.common, "rfc4309(ccm(aes))" },
+	{ &ike_alg_encrypt_aes_ccm_12.common, "rfc4309(ccm(aes))" },
+	{ &ike_alg_encrypt_aes_ccm_16.common, "rfc4309(ccm(aes))" },
+	{ &ike_alg_encrypt_aes_gcm_8.common, "rfc4106(gcm(aes))" },
+	{ &ike_alg_encrypt_aes_gcm_12.common, "rfc4106(gcm(aes))" },
+	{ &ike_alg_encrypt_aes_gcm_16.common, "rfc4106(gcm(aes))" },
+#if 0
+	{ &ike_alg_encrypt_chacha20_poly1305.common, "rfc7539esp(chacha20,poly1305)" },
+#endif
+#if 0
+	{ &ike_alg_encrypt_null_integ_aes_gmac.common, "rfc4543(gcm(aes))" },
+#endif
+	{ NULL, NULL, }
 };
 
 /* Compress Algs */
@@ -1170,23 +1207,13 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	}
 
 	if (sa->authkeylen != 0) {
-		const char *name;
-		/*
-		 * SA should just contain a pointer to struct
-		 * kernel_integ
-		 */
-		const struct kernel_integ *ki =
-			kernel_integ_by_ikev1_auth_attribute(sa->authalg);
-		if (ki != NULL) {
-			name = ki->netlink_name;
-		} else {
-			name = sparse_name(aalg_list, sa->authalg);
-		}
 
+		const char *name = find_netlink_name(integ_list,
+						     &sa->integ->common);
 		if (name == NULL) {
 			loglog(RC_LOG_SERIOUS,
-				"NETKEY/XFRM: unknown authentication algorithm: %u",
-				sa->authalg);
+				"NETKEY/XFRM: unknown authentication algorithm: %s",
+				sa->integ->common.fqn);
 			return FALSE;
 		}
 
@@ -1259,16 +1286,17 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		req.n.nlmsg_len += attr->rta_len;
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	} else if (sa->esatype == ET_ESP) {
-		struct xfrm_algo algo;
-		const char *name = sparse_name(ealg_list, sa->compalg);
 
+		const char *name = find_netlink_name(encrypt_list,
+						     &sa->encrypt->common);
 		if (name == NULL) {
 			loglog(RC_LOG_SERIOUS,
-				"unknown encryption algorithm: %u",
-				sa->compalg);
+				"unknown encryption algorithm: %s",
+				sa->encrypt->common.fqn);
 			return FALSE;
 		}
 
+		struct xfrm_algo algo;
 		strncpy(algo.alg_name, name, sizeof(algo.alg_name));
 		algo.alg_key_len = sa->enckeylen * BITS_PER_BYTE;
 
