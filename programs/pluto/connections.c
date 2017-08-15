@@ -4386,10 +4386,7 @@ void suppress_delete(struct connection *c)
 void liveness_action(struct connection *c, const bool ikev2)
 {
 	char cib[CONN_INST_BUF];
-	char *ikev = "IKEv1 DPD:";
-
-	if(ikev2)
-		ikev = "IKEv2 liveness:";
+	char *ikev = ikev2 ? "IKEv2 liveness:" : "IKEv1 DPD:";
 
 	fmt_conn_instance(c, cib);
 
