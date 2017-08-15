@@ -9,9 +9,9 @@ algparse   AES_CCM_8          IKEv1:     ESP     IKEv2:     ESP     FIPS  {256,1
 algparse   3DES_CBC           IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  [*192]  (3des)
 algparse   CAMELLIA_CTR       IKEv1:     ESP     IKEv2:     ESP           {256,192,*128}
 algparse   CAMELLIA_CBC       IKEv1: IKE ESP     IKEv2: IKE ESP           {256,192,*128}  (camellia)
-algparse   AES_GCM_16         IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aes_gcm aes_gcm_c)
-algparse   AES_GCM_12         IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aes_gcm_b)
-algparse   AES_GCM_8          IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aes_gcm_a)
+algparse   AES_GCM_16         IKEv1:     ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aes_gcm aes_gcm_c)
+algparse   AES_GCM_12         IKEv1:     ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aes_gcm_b)
+algparse   AES_GCM_8          IKEv1:     ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aes_gcm_a)
 algparse   AES_CTR            IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aesctr)
 algparse   AES_CBC            IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aes)
 algparse   SERPENT_CBC        IKEv1: IKE ESP     IKEv2: IKE ESP           {256,192,*128}  (serpent)
