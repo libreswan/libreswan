@@ -1583,7 +1583,7 @@ enum ipsec_authentication_algo {
  *
  * Where there is a conflict between IKEv1 and IKEv2, the IKEv1 value
  * is included.  If there's no IKEv1 value then the IKEv2 value is
- * used (should these be droped).
+ * used (should these be dropped).
  */
 
 enum ipsec_cipher_algo {
