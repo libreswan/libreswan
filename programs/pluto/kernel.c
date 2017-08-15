@@ -94,8 +94,6 @@ static void set_text_said(char *text_said,
 			  const ip_address *dst,
 			  ipsec_spi_t spi,
 			  int proto);
-static unsigned ikev1_auth_kernel_attrs(enum ikev1_auth_attribute auth,
-					int *alg);
 
 const struct pfkey_proto_info null_proto_info[2] = {
 	{
@@ -2233,22 +2231,16 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		u_char *ah_dst_keymat =
 			inbound ? st->st_ah.our_keymat : st->st_ah.peer_keymat;
 
-
-	        /*
-		 * INTEG_HASH has type oakley_hash_t (a.k.a., "enum
-		 * ikev1_hash_attribute") yet here it is being treated
-		 * as ae "enum ikev1_auth_attribute".
-		 */
-		int authalg;
-		enum ikev1_auth_attribute auth = st->st_ah.attrs.transattrs.integ_hash;
-		unsigned key_len = ikev1_auth_kernel_attrs(auth, &authalg);
+		const struct integ_desc *integ = st->st_ah.attrs.transattrs.integ;
+		size_t keymat_size = integ->integ_keymat_size;
+		int authalg = integ->integ_ikev1_ah_id;
 		if (authalg <= 0) {
 			loglog(RC_LOG_SERIOUS, "%s not implemented",
-				enum_show(&auth_alg_names, auth));
+			       integ->common.fqn);
 			goto fail;
 		}
 
-		passert(st->st_ah.keymat_len == key_len);
+		passert(st->st_ah.keymat_len == keymat_size);
 
 		set_text_said(text_ah, &dst.addr, ah_spi, SA_AH);
 
@@ -3628,107 +3620,4 @@ void expire_bare_shunts(void)
 	}
 
 	event_schedule(EVENT_SHUNT_SCAN, bare_shunt_interval, NULL);
-}
-
-unsigned
-ikev1_auth_kernel_attrs(enum ikev1_auth_attribute auth, int *alg)
-{
-	/*
-	 * New way.
-	 *
-	 * In truth the lookup should not be needed.  Instead they should
-	 * just hang onto the kernel_integ object.
-	 */
-	const struct kernel_integ *ki =
-		kernel_integ_by_ikev1_auth_attribute(auth);
-	if (ki != NULL) {
-		if (alg != NULL) {
-			*alg = ki->sadb_aalg;
-		}
-		return ki->integ->integ_keymat_size; /* bytes */
-	}
-        /*
-         * Old way.  Callers should just hang onto the kernel_integ
-         * object.
-         */
-	int authalg;
-	unsigned key_len;
-
-	switch (auth) {
-
-	case AUTH_ALGORITHM_NONE:
-		authalg = 0;
-		key_len = 0;
-		break;
-
-	case AUTH_ALGORITHM_HMAC_MD5:
-		authalg = SADB_AALG_MD5HMAC;
-		key_len = HMAC_MD5_KEY_LEN;
-		break;
-
-	case AUTH_ALGORITHM_HMAC_SHA1:
-		authalg = SADB_AALG_SHA1HMAC;
-		key_len = HMAC_SHA1_KEY_LEN;
-		break;
-
-		/* RFC 4868 */
-	case AUTH_ALGORITHM_HMAC_SHA2_256:
-		authalg = SADB_X_AALG_SHA2_256HMAC;
-		key_len = BYTES_FOR_BITS(256);
-		break;
-
-		/* RFC 4868 */
-	case AUTH_ALGORITHM_HMAC_SHA2_384:
-		authalg = SADB_X_AALG_SHA2_384HMAC;
-		key_len = BYTES_FOR_BITS(384);
-		break;
-
-		/* RFC 4868 */
-	case AUTH_ALGORITHM_HMAC_SHA2_512:
-		authalg = SADB_X_AALG_SHA2_512HMAC;
-		key_len = BYTES_FOR_BITS(512);
-		break;
-
-		/* RFC 2857 Section 3 */
-	case AUTH_ALGORITHM_HMAC_RIPEMD:
-		authalg = SADB_X_AALG_RIPEMD160HMAC;
-		key_len = BYTES_FOR_BITS(160);
-		break;
-
-		/* RFC 3566 Section 4.1 */
-	case AUTH_ALGORITHM_AES_XCBC:
-		authalg = SADB_X_AALG_AES_XCBC_MAC;
-		key_len = BYTES_FOR_BITS(128);
-		break;
-
-		/* RFC 4543 Section 5.3 */
-	case AUTH_ALGORITHM_AES_128_GMAC:
-		authalg = SADB_X_AALG_AH_AES_128_GMAC;
-		key_len = BYTES_FOR_BITS(128);
-		break;
-
-		/* RFC 4543 Section 5.3 */
-	case AUTH_ALGORITHM_AES_192_GMAC:
-		authalg = SADB_X_AALG_AH_AES_192_GMAC;
-		key_len = BYTES_FOR_BITS(192);
-		break;
-
-		/* RFC 4543 Section 5.3 */
-	case AUTH_ALGORITHM_AES_256_GMAC:
-		authalg = SADB_X_AALG_AH_AES_256_GMAC;
-		key_len = BYTES_FOR_BITS(256);
-		break;
-
-	case AUTH_ALGORITHM_NULL_KAME: /* Should we support this? */
-	case AUTH_ALGORITHM_SIG_RSA: /* RFC 4359 */
-	case AUTH_ALGORITHM_KPDK:
-	case AUTH_ALGORITHM_DES_MAC:
-	default:
-		key_len = 0;
-		authalg = -1;
-	}
-
-	if (alg != NULL)
-		*alg = authalg;
-	return key_len;
 }
