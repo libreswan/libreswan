@@ -173,7 +173,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
 		.officname = "aes_gcm",
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.id = {
-			[IKEv1_OAKLEY_ID] = OAKLEY_AES_GCM_8,
+			[IKEv1_OAKLEY_ID] = -1,
 			[IKEv1_ESP_ID] = ESP_AES_GCM_8,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_GCM_8,
 		},
@@ -199,7 +199,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
 		.officname = "aes_gcm_12",
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.id = {
-			[IKEv1_OAKLEY_ID] = OAKLEY_AES_GCM_12,
+			[IKEv1_OAKLEY_ID] = -1,
 			[IKEv1_ESP_ID] = ESP_AES_GCM_12,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_GCM_12,
 		},
@@ -226,7 +226,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
 		.officname = "aes_gcm_16",
 		.algo_type =  IKE_ALG_ENCRYPT,
 		.id = {
-			[IKEv1_OAKLEY_ID] = OAKLEY_AES_GCM_16,
+			[IKEv1_OAKLEY_ID] = -1,
 			[IKEv1_ESP_ID] = ESP_AES_GCM_16,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_GCM_16,
 		},
@@ -259,7 +259,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =
 		.officname = "aes_ccm_8",
 		.algo_type =    IKE_ALG_ENCRYPT,
 		.id = {
-			[IKEv1_OAKLEY_ID] = OAKLEY_AES_CCM_8,
+			[IKEv1_OAKLEY_ID] = -1,
 			[IKEv1_ESP_ID] = ESP_AES_CCM_8,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_CCM_8,
 		},
@@ -284,7 +284,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
 		.officname = "aes_ccm_12",
 		.algo_type =    IKE_ALG_ENCRYPT,
 		.id = {
-			[IKEv1_OAKLEY_ID] = OAKLEY_AES_CCM_12,
+			[IKEv1_OAKLEY_ID] = -1,
 			[IKEv1_ESP_ID] = ESP_AES_CCM_12,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_CCM_12,
 		},
@@ -309,7 +309,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 		.officname = "aes_ccm_16",
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.id = {
-			[IKEv1_OAKLEY_ID] = OAKLEY_AES_CCM_16,
+			[IKEv1_OAKLEY_ID] = -1,
 			[IKEv1_ESP_ID] = ESP_AES_CCM_16,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_CCM_16,
 		},

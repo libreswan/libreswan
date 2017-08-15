@@ -1128,12 +1128,6 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 								  val));
 					break;
 				}
-				if (ike_alg_is_aead(encrypter)) {
-					ugh = builddiag("AEAD algorithm %s is not supported",
-							enum_show(&oakley_enc_names,
-								  val));
-					break;
-				}
 				/*
 				 * XXX: Always assign both .encrypt
 				 * and .encrypter - it makes auditing
