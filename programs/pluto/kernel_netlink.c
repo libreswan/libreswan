@@ -84,8 +84,8 @@
 /* Minimum priority number in SPD used by pluto. */
 #define MIN_SPD_PRIORITY 1024
 
-#define NIC_OFFLOAD_UNKNOWN -2
-#define NIC_OFFLOAD_UNSUPPORTED -1
+#define NIC_OFFLOAD_UNKNOWN (-2)
+#define NIC_OFFLOAD_UNSUPPORTED (-1)
 
 struct aead_alg {
 	int id;
