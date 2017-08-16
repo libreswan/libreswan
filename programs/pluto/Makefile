@@ -230,7 +230,6 @@ OBJS += $(LIBRESWANLIB)
 ifeq ($(USE_SERPENT),true)
 OBJS += $(LIBSERPENT)
 endif
-
 ifeq ($(USE_TWOFISH),true)
 OBJS += $(LIBTWOFISH)
 endif

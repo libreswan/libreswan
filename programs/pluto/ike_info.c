@@ -255,7 +255,9 @@ static const struct ike_alg *default_ikev2_groups[] = {
 
 static const struct ike_alg *default_ike_ealgs[] = {
 	&ike_alg_encrypt_aes_cbc.common,
+#ifdef USE_3DES
 	&ike_alg_encrypt_3des_cbc.common,
+#endif
 	NULL,
 };
 

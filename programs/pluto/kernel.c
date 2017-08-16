@@ -2055,6 +2055,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		}
 
 		/* Fixup key lengths for special cases */
+#ifdef USE_3DES
 		if (ta->encrypter == &ike_alg_encrypt_3des_cbc) {
 			/* Grrrrr.... f*cking 7 bits jurassic algos  */
 			/* 168 bits in kernel, need 192 bits for keymat_len */
@@ -2065,6 +2066,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				encrypt_keymat_size = 24;
 			}
 		}
+#endif
 
 		if (ta->encrypter->salt_size > 0) {
 			DBG(DBG_KERNEL,
