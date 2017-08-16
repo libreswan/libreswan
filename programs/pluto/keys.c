@@ -925,7 +925,7 @@ static bool rsa_pubkey_ckaid_matches(struct pubkey *pubkey, char *buf, size_t bu
 
 struct pubkey *get_pubkey_with_matching_ckaid(const char *ckaid)
 {
-	size_t buflen = strlen(ckaid); /* good enough */
+	size_t buflen = strlen(ckaid) + 1; /* good enough */
 	char *buf = alloc_bytes(buflen, "ckaid");
 	const char *ugh = ttodata(ckaid, 0, 16, buf, buflen, &buflen);
 	if (ugh != NULL) {

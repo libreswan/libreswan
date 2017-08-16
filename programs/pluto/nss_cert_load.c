@@ -89,8 +89,8 @@ CERTCertificate *get_cert_by_ckaid_from_nss(const char *ckaid)
 	if (ckaid == NULL) {
 		return NULL;
 	}
-	size_t buflen = strlen(ckaid);
-	char *buf = alloc_bytes(buflen, "ckaid") + 1; /* good enough */
+	size_t buflen = strlen(ckaid) + 1;
+	char *buf = alloc_bytes(buflen, "ckaid");
 	const char *ugh = ttodata(ckaid, 0, 16, buf, buflen, &buflen);
 	if (ugh != NULL) {
 		pfree(buf);
