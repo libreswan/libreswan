@@ -133,7 +133,7 @@ void show_pluto_stats()
 			enum_name(&ikev2_trans_type_encr_names, e), pstats_ikev2_encr[e]);
 	}
 
-	for (unsigned long e = IKEv2_AUTH_HMAC_MD5_96; e <= IKEv2_AUTH_ROOF; e++)
+	for (unsigned long e = IKEv2_AUTH_HMAC_MD5_96; e < IKEv2_AUTH_ROOF; e++)
 	{
 		if (strstr(enum_name(&ikev2_trans_type_integ_names, e), "UNUSED") == NULL)
 			whack_log(RC_COMMENT, "#total.ikev2.integ.%s=%lu",
