@@ -433,7 +433,7 @@ static bool validate_end(struct starter_conn *conn_st,
 
 		if (end->strings[KSCF_IP][0] == '%') {
 			pfree(end->iface);
-			end->iface = clone_str(end->strings[KSCF_IP] + 1, "KH_IPADDR end->iface");
+			end->iface = clone_str(end->strings[KSCF_IP], "KH_IPADDR end->iface");
 			if (!starter_iface_find(end->iface, family,
 					       &end->addr,
 					       &end->nexthop))
