@@ -455,8 +455,8 @@ struct alg_info *alg_info_parse_str(const struct parser_policy *policy,
 
 	parser_init(&ctx, policy, param);
 
-	/* use default if null string */
-	if (*alg_str == '\0') {
+	/* use default if no (NULL) string */
+	if (alg_str == NULL) {
 		param->alg_info_add(ctx.policy, alg_info,
 				    NULL, 0,
 				    NULL, NULL, NULL,
