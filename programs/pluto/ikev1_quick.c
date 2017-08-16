@@ -940,9 +940,7 @@ stf_status quick_outI1(int whack_sock,
 		 * use that group.
 		 * if not, fallback to old use-same-as-P1 behaviour
 		 */
-		if (st->st_connection != NULL)
-			st->st_pfs_group = ike_alg_pfsgroup(st->st_connection,
-							    st->st_policy);
+		st->st_pfs_group = ike_alg_pfsgroup(st->st_connection, st->st_policy);
 
 		/* otherwise, use the same group as during Phase 1:
 		 * since no negotiation is possible, we pick one that is
