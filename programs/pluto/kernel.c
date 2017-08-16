@@ -3613,9 +3613,11 @@ void expire_bare_shunts(void)
 
 		if (age > deltasecs(pluto_shunt_lifetime)) {
 			DBG_bare_shunt("expiring old", bsp);
-			delete_bare_shunt(&bsp->ours.addr, &bsp->his.addr,
+			if (!delete_bare_shunt(&bsp->ours.addr, &bsp->his.addr,
 				bsp->transport_proto, ntohl(bsp->said.spi),
-				"expire_bare_shunt");
+				"expire_bare_shunt")) {
+					loglog(RC_LOG_SERIOUS, "failed to delete bare shunt");
+			}
 			passert(bsp != *bspp);
 		} else {
 			DBG_bare_shunt("keeping recent", bsp);
