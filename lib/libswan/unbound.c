@@ -120,6 +120,8 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 		if (strchr(trusted, '*') == NULL) {
 			struct stat buf;
 			int ugh;
+
+			zero(&buf); /* otherwise coverity will warn */
 			stat(trusted, &buf);
 			if (S_ISREG(buf.st_mode)) {
 				/* the cast is there for unbound < 1.4.12 */
