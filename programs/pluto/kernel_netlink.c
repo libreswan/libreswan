@@ -950,8 +950,7 @@ static void netlink_find_offload_feature(const char *ifname)
 	netlink_esp_hw_offload = i;
 
 out:
-	if (sset_info != NULL)
-		pfree(sset_info);
+	pfree(sset_info);
 
 	if (cmd != NULL)
 		pfree(cmd);
