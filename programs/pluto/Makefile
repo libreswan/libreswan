@@ -227,12 +227,8 @@ OBJS += $(WHACKLIB)
 OBJS += $(IPSECCONFLIB)
 OBJS += $(LIBRESWANLIB)
 
-ifeq ($(USE_SERPENT),true)
 OBJS += $(LIBSERPENT)
-endif
-ifeq ($(USE_TWOFISH),true)
 OBJS += $(LIBTWOFISH)
-endif
 
 # legacy mess, something is still needed
 CFLAGS += $(USERLAND_CFLAGS) ${PORTINCLUDE} $(COPTS) $(HDRDIRS) $(NSSFLAGS) ${CROSSFLAGS}

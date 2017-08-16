@@ -122,9 +122,11 @@ USERLAND_CFLAGS+=-DUSE_CAMELLIA
 endif
 ifeq ($(USE_SERPENT),true)
 USERLAND_CFLAGS+=-DUSE_SERPENT
+LIBSERPENT=${OBJDIRTOP}/lib/libcrypto/libserpent/libserpent.a
 endif
 ifeq ($(USE_TWOFISH),true)
 USERLAND_CFLAGS+=-DUSE_TWOFISH
+LIBTWOFISH=${OBJDIRTOP}/lib/libcrypto/libtwofish/libtwofish.a
 endif
 ifeq ($(USE_CAST),true)
 USERLAND_CFLAGS+=-DUSE_CAST

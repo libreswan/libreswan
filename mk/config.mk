@@ -506,8 +506,6 @@ LSWLOGLIB=${OBJDIRTOP}/lib/liblswlog/liblswlog.a
 LSWLOGLIBS=$(LSWLOGLIB) $(LIBRESWANLIB)
 
 LIBDESSRCDIR=${LIBRESWANSRCDIR}/linux/crypto/ciphers/des
-LIBTWOFISH=${OBJDIRTOP}/lib/libcrypto/libtwofish/libtwofish.a
-LIBSERPENT=${OBJDIRTOP}/lib/libcrypto/libserpent/libserpent.a
 
 WHACKLIB=${OBJDIRTOP}/lib/libwhack/libwhack.a
 IPSECCONFLIB=${OBJDIRTOP}/lib/libipsecconf/libipsecconf.a
