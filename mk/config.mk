@@ -256,6 +256,9 @@ NSS_REQ_AVA_COPY?=true
 # is currently true for basically all distro's
 USE_XFRM_HEADER_COPY?=true
 
+# Enable NIC IPsec hardware offloading API. Introduced in Linux Kernel 4.12
+USE_NIC_OFFLOAD?=true
+
 # When compiling on a system where unbound is missing the required unbound-event.h
 # include file, enable this workaround option that will enable an included copy of
 # this file as shipped with libreswan. The copy is taken from unbound 1.6.0.

@@ -389,12 +389,15 @@ static const struct keyword_enum_value kw_ocsp_method_values[] = {
 };
 static const struct keyword_enum_values kw_ocsp_method_list = VALUES_INITIALIZER(kw_ocsp_method_values);
 
+#ifdef USE_NIC_OFFLOAD
 static const struct keyword_enum_value kw_nic_offload_values[] = {
 	{ "no",   nic_offload_no  },
 	{ "yes",  nic_offload_yes },
 	{ "auto",    nic_offload_auto },
 };
+
 static const struct keyword_enum_values kw_nic_offload_list = VALUES_INITIALIZER(kw_nic_offload_values);
+#endif
 
 /* MASTER KEYWORD LIST
  * Note: this table is terminated by an entry with keyname == NULL.
@@ -616,7 +619,9 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
   { "modecfgwins1",  kv_conn,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
   { "modecfgwins2",  kv_conn,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
 
+#ifdef USE_NIC_OFFLOAD
   { "nic-offload",  kv_conn,  kt_enum,  KBF_NIC_OFFLOAD,  &kw_nic_offload_list },
+#endif
   { "encapsulation",  kv_conn,  kt_enum,  KBF_ENCAPS,  &kw_encaps_list },
   { "forceencaps",  kv_conn, kt_obsolete, KBF_WARNIGNORE, NOT_ENUM },
 

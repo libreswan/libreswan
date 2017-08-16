@@ -51,8 +51,8 @@
 #include "libreswan.h" /* before xfrm.h otherwise break on F22 */
 #include "linux/xfrm.h" /* local (if configured) or system copy */
 
-#include <libreswan/pfkeyv2.h>
-#include <libreswan/pfkey.h>
+#include "libreswan/pfkeyv2.h"
+#include "libreswan/pfkey.h"
 
 #include "sysdep.h"
 #include "socketwrapper.h"
@@ -95,7 +95,10 @@ struct aead_alg {
 
 static int netlinkfd = NULL_FD;
 static int netlink_bcast_fd = NULL_FD;
+
+#ifdef USE_NIC_OFFLOAD
 static int netlink_esp_hw_offload = NIC_OFFLOAD_UNKNOWN;
+#endif
 
 #define NE(x) { x, #x }	/* Name Entry -- shorthand for sparse_names */
 
@@ -898,6 +901,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	return ok;
 }
 
+#ifdef USE_NIC_OFFLOAD
 static void netlink_find_offload_feature(const char *ifname)
 {
 	struct ethtool_sset_info *sset_info = NULL;
@@ -988,6 +992,7 @@ static enum iface_nic_offload netlink_detect_offload(const char *ifname)
 
 	return ret;
 }
+#endif /* USE_NIC_OFFLOAD */
 
 /*
  * netlink_add_sa - Add an SA into the kernel SPDB via netlink
@@ -1356,6 +1361,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
 
+#ifdef USE_NIC_OFFLOAD
 	if (sa->nic_offload_dev) {
 		struct xfrm_user_offload xuo = { 0, 0 };
 
@@ -1372,6 +1378,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		req.n.nlmsg_len += attr->rta_len;
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
+#endif
 
 #ifdef HAVE_LABELED_IPSEC
 	if (sa->sec_ctx != NULL) {
@@ -2279,7 +2286,9 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 				id->id_vname = clone_str(v->name,
 							"virtual device name netlink");
 				id->id_count++;
+#ifdef USE_NIC_OFFLOAD
 				id->id_nic_offload = netlink_detect_offload(ifp->name);
+#endif
 
 				q->ip_addr = ifp->addr;
 				q->fd = fd;
