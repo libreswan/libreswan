@@ -531,20 +531,22 @@ bool kernel_alg_encrypt_key_size(const struct encrypt_desc *encrypt,
 	enum ipsec_cipher_algo transid = encrypt->common.id[IKEv1_ESP_ID];
 	int sadb_ealg = transid;
 
-	*key_size = keylen / BITS_PER_BYTE;
+	/*
+	 * XXX: Is KEYLEN ever zero for any case other than 'null'
+	 * encryption?  If it is, patch it up and then log it to find
+	 * out.
+	 */
 	if (keylen == 0) {
-		/*
-		 * XXX: Is KEYLEN ever zero for any case other than
-		 * 'null' encryption?  Log it and find out.
-		 */
 		if (encrypt != &ike_alg_encrypt_null) {
-			keylen = esp_ealg[sadb_ealg].sadb_alg_minbits /
-				BITS_PER_BYTE;
-			DBG(DBG_KERNEL, DBG_log("XXX: %s has key length of 0, adjusting to %d",
-						encrypt->common.fqn, keylen));
+			keylen = esp_ealg[sadb_ealg].sadb_alg_minbits;
+			DBG(DBG_KERNEL,
+			    DBG_log("XXX: %s has key length of 0, adjusting to %d",
+				    encrypt->common.fqn, keylen));
 		}
-	} else if (esp_ealg[sadb_ealg].sadb_alg_minbits <= keylen &&
-		   keylen <= esp_ealg[sadb_ealg].sadb_alg_maxbits) {
+	}
+
+	if (esp_ealg[sadb_ealg].sadb_alg_minbits <= keylen &&
+	    keylen <= esp_ealg[sadb_ealg].sadb_alg_maxbits) {
 		/*
 		 * XXX: is the above check equivalent to
 		 * encrypt_has_key_bit_length()?  If it is then it
@@ -574,6 +576,11 @@ bool kernel_alg_encrypt_key_size(const struct encrypt_desc *encrypt,
 		return FALSE;
 	}
 
+	/*
+	 * This is all this function should be doing, which isn't
+	 * much.
+	 */
+	*key_size = keylen / BITS_PER_BYTE;
 	DBG(DBG_PARSING,
 	    DBG_log("encrypt %s keylen=%d transid=%d, key_size=%zu, encryptalg=%d",
 		    encrypt->common.fqn, keylen, transid, *key_size, sadb_ealg));
