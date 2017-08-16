@@ -1265,15 +1265,15 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	 * ??? why does IPCOMP trump aead and ESP?
 	 *  Shouldn't all be bundled?
 	 */
-	aead = get_aead_alg(sa->encalg);
+	aead = get_aead_alg(sa->compalg);
 	if (sa->esatype == ET_IPCOMP) {
 		struct xfrm_algo algo;
-		const char *name = sparse_name(calg_list, sa->encalg);
+		const char *name = sparse_name(calg_list, sa->compalg);
 
 		if (name == NULL) {
 			loglog(RC_LOG_SERIOUS,
 				"unknown compression algorithm: %u",
-				sa->encalg);
+				sa->compalg);
 			return FALSE;
 		}
 
@@ -1305,12 +1305,12 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	} else if (sa->esatype == ET_ESP) {
 		struct xfrm_algo algo;
-		const char *name = sparse_name(ealg_list, sa->encalg);
+		const char *name = sparse_name(ealg_list, sa->compalg);
 
 		if (name == NULL) {
 			loglog(RC_LOG_SERIOUS,
 				"unknown encryption algorithm: %u",
-				sa->encalg);
+				sa->compalg);
 			return FALSE;
 		}
 

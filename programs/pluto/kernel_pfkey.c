@@ -974,7 +974,7 @@ bool pfkey_add_sa(const struct kernel_sa *sa, bool replace)
 					     sa->spi,   /* in network order */
 					     sa->replay_window,
 					     K_SADB_SASTATE_MATURE,
-					     sa->authalg, sa->encalg, 0),
+					     sa->authalg, sa->compalg, 0),
 			      "pfkey_sa Add SA", sa->text_said, extensions);
 	if (!success)
 		return FALSE;

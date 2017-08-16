@@ -97,11 +97,22 @@ struct kernel_sa {
 	unsigned replay_window;
 	reqid_t reqid;
 
-	unsigned authalg;
+	unsigned authalg; /* use INTEG */
+
+	const struct integ_desc *integ;
 	unsigned authkeylen;
 	unsigned char *authkey;
 
-	unsigned encalg;
+	/*
+	 * This field contains the compression algorithm ID (or 0).
+	 *
+	 * XXX: For the moment, when ESP, it also contains the
+	 * encryption algorithm's IKEv1 ID.  This is a just-in-case
+	 * some code is still relying on that value.
+	 */
+	unsigned compalg;
+
+	const struct encrypt_desc *encrypt;
 	unsigned enckeylen;
 	unsigned char *enckey;
 

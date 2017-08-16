@@ -73,6 +73,7 @@
 
 #include "ike_alg.h"
 #include "ike_alg_3des.h"
+#include "ike_alg_sha2.h"
 
 #include "packet.h"  /* for pb_stream in nat_traversal.h */
 #include "nat_traversal.h"
@@ -1947,7 +1948,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		*said_next = said_boilerplate;
 		said_next->spi = ipcomp_spi;
 		said_next->esatype = ET_IPCOMP;
-		said_next->encalg = compalg;
+		said_next->compalg = compalg;
 		said_next->encapsulation = encap_oneshot;
 		said_next->reqid = reqid_ipcomp(c->spd.reqid);
 		said_next->text_said = text_ipcomp;
@@ -2094,13 +2095,9 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			DBG(DBG_KERNEL, DBG_log("Enabling TFC at %d bytes (up to PMTU)", c->sa_tfcpad));
 			said_next->tfcpad = c->sa_tfcpad;
 		}
-		said_next->authalg = ta->integ->integ_ikev1_ah_id;
-		/*
-		 * XXX: Better would be AH_SHA2_256 (enum is wrong but
-		 * value is the same); best would be
-		 * &ike_alg_integ_sha2_256.
-		 */
-		if (said_next->authalg == AUTH_ALGORITHM_HMAC_SHA2_256 &&
+
+		said_next->integ = ta->integ;
+		if (said_next->integ == &ike_alg_integ_sha2_256 &&
 			st->st_connection->sha2_truncbug) {
 			if (kernel_ops->sha2_truncbug_support) {
 #ifdef FIPS_CHECK
@@ -2116,8 +2113,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				 * We need to tell the kernel to mangle
 				 * the sha2_256, as instructed by the user
 				 */
-				said_next->authalg =
-					AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG;
+				said_next->integ = &ike_alg_integ_hmac_sha2_256_truncbug;
 			} else {
 				loglog(RC_LOG_SERIOUS,
 					"Error: %s stack does not support sha2_truncbug=yes",
@@ -2125,24 +2121,26 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				goto fail;
 			}
 		}
+		said_next->authalg = said_next->integ->integ_ikev1_ah_id;
 
 		if (st->st_esp.attrs.transattrs.esn_enabled == TRUE) {
 			DBG(DBG_KERNEL, DBG_log("Enabling ESN "));
 			said_next->esn = TRUE;
 		}
 
+		/*
+		 * XXX: Assume SADB_ and ESP_ numbers match!  Clearly
+		 * setting .compalg is wrong, don't yet trust
+		 * lower-level code to be right.
+		 */
+		said_next->encrypt = ta->encrypter;
+		said_next->compalg = said_next->encrypt->common.id[IKEv1_ESP_ID];
+
 		/* divide up keying material */
 		said_next->enckey = esp_dst_keymat;
 		said_next->enckeylen = encrypt_keymat_size; /* BYTES */
-		/*
-		 * XXX: Assume SADB_ and ESP_ numbers match!
-		 */
-		said_next->encalg = ta->encrypter->common.id[IKEv1_ESP_ID];
-
 		said_next->authkey = esp_dst_keymat + encrypt_keymat_size;
 		said_next->authkeylen = integ_keymat_size; /* BYTES */
-		/* said_next->authkey = esp_dst_keymat + ei->enckeylen; */
-		/* said_next->enckeylen = ei->enckeylen; */
 
 		said_next->encapsulation = encap_oneshot;
 		said_next->reqid = reqid_esp(c->spd.reqid);
@@ -2247,6 +2245,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		*said_next = said_boilerplate;
 		said_next->spi = ah_spi;
 		said_next->esatype = ET_AH;
+		said_next->integ = integ;
 		said_next->authalg = authalg;
 		said_next->authkeylen = st->st_ah.keymat_len;
 		said_next->authkey = ah_dst_keymat;
