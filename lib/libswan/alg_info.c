@@ -376,7 +376,7 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 			end--;
 		} while (isdigit(*end));
 		/* save for logging */
-		strcpy(p_ctx->eklen_buf, end + 1);
+		strncpy(p_ctx->eklen_buf, end + 1, sizeof(p_ctx->eklen_buf));
 		int enckeylen = parse_eklen(err_buf, err_buf_len, end + 1);
 		if (enckeylen <= 0) {
 			passert(err_buf[0] != '\0');
