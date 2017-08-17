@@ -15,7 +15,6 @@
 
 #include "internal.h"
 #include "libreswan.h"
-#include "lswlog.h"
 
 /*
  * keyblobtoid - generate a printable key ID from an RFC 2537/3110 key blob
@@ -31,11 +30,6 @@ size_t dstlen;
 	char buf[KEYID_BUF];
 	size_t ret;
 #       define  NDIG    9
-
-	if (srclen > KEYID_BUF) {
-		loglog(RC_LOG_SERIOUS,"keyblobtoid() given too large an exponent length buffer");
-		return 0;
-	}
 
 	if (srclen < (NDIG * 6 + 7) / 8) {
 		strcpy(buf, "?len= ?");
@@ -73,7 +67,7 @@ size_t dstlen;
 	size_t n;
 
 	p = buf;
-	if (elen <= KEYID_BUF) {
+	if (elen <= 255) {
 		*p++ = elen;
 	} else if ((elen & ~0xffff) == 0) {
 		*p++ = 0;
