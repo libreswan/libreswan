@@ -268,6 +268,39 @@ void kernel_integ_add(const struct integ_desc *integ)
 	}
 }
 
+const struct sadb_id encrypt_sadb_ids[] = {
+	{ &ike_alg_encrypt_aes_gcm_8.common, SADB_X_EALG_AES_GCM_ICV8, },
+	{ &ike_alg_encrypt_aes_gcm_12.common, SADB_X_EALG_AES_GCM_ICV12, },
+	{ &ike_alg_encrypt_aes_gcm_16.common, SADB_X_EALG_AES_GCM_ICV16, },
+	{ &ike_alg_encrypt_aes_ccm_8.common, SADB_X_EALG_AES_CCM_ICV8, },
+	{ &ike_alg_encrypt_aes_ccm_12.common, SADB_X_EALG_AES_CCM_ICV12, },
+	{ &ike_alg_encrypt_aes_ccm_16.common, SADB_X_EALG_AES_CCM_ICV16, },
+	{ NULL, },
+};
+
+void kernel_encrypt_add(const struct encrypt_desc *encrypt)
+{
+	int sadb_ealg = find_sadb_id(encrypt_sadb_ids, &encrypt->common);
+	if (sadb_ealg < 0) {
+		PEXPECT_LOG("Integrity algorithm %s has no matching SADB ID",
+			    encrypt->common.fqn);
+		return;
+	}
+
+	struct sadb_alg alg = {
+		.sadb_alg_ivlen = encrypt->wire_iv_size,
+		.sadb_alg_minbits = encrypt_min_key_bit_length(encrypt),
+		.sadb_alg_maxbits = encrypt_max_key_bit_length(encrypt),
+		.sadb_alg_id = sadb_ealg,
+	};
+
+	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1) {
+		PEXPECT_LOG("Warning: failed to register %s for ESP",
+			    encrypt->common.fqn);
+		return;
+	}
+}
+
 err_t check_kernel_encrypt_alg(int alg_id, unsigned int key_len)
 {
 	err_t ugh = NULL;

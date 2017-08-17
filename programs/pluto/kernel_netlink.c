@@ -251,59 +251,6 @@ static void ip2xfrm(const ip_address *addr, xfrm_address_t *xaddr)
 }
 
 /*
- * Wire-in Authenticated Encryption with Associated Data transforms
- * (do both enc and auth in one transform); along with "aes(cmac)".
- */
-
-static void linux_pfkey_add_hard_wired(void)
-{
-	struct sadb_alg alg;
-
-	alg.sadb_alg_reserved = 0;
-	alg.sadb_alg_ivlen = 8;
-	alg.sadb_alg_minbits = 128;
-	alg.sadb_alg_maxbits = 256;
-
-	/* IPsec algos (encryption and authentication combined) */
-	alg.sadb_alg_id = SADB_X_EALG_AES_GCM_ICV8;
-	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register AES_GCM_A(8) for ESP");
-
-	alg.sadb_alg_id = SADB_X_EALG_AES_GCM_ICV12;
-	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register AES_GCM_B(12) for ESP");
-
-	alg.sadb_alg_id = SADB_X_EALG_AES_GCM_ICV16;
-	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register AES_GCM_C(16) for ESP");
-
-	/* keeping aes-ccm behaviour intact as before */
-	alg.sadb_alg_id = SADB_X_EALG_AES_CCM_ICV8;
-	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register AES_CCM_A(8) for ESP");
-
-	alg.sadb_alg_id = SADB_X_EALG_AES_CCM_ICV12;
-	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register AES_CCM_B(12) for ESP");
-
-	alg.sadb_alg_id = SADB_X_EALG_AES_CCM_ICV16;
-	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register AES_CCM_C(16) for ESP");
-
-	DBG(DBG_CONTROLMORE,
-		DBG_log("Registered AEAD AES CCM/GCM algorithms"));
-
-	/*
-	 * IPSEC integrity algorithms.
-	 */
-	kernel_integ_add(&ike_alg_integ_aes_cmac);
-
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("Registered new AUTH algorithms"));
-
-}
-
-/*
  * init_netlink - Initialize the netlink inferface.  Opens the sockets and
  * then binds to the broadcast socket.
  */
@@ -358,7 +305,20 @@ static void init_netlink(void)
 	 * it supports.  OTOH, the query might happen before the
 	 * crypto module gets loaded.
 	 */
-	linux_pfkey_add_hard_wired();
+	DBG(DBG_KERNEL,
+	    DBG_log("Hard-wiring new AEAD algorithms"));
+
+	kernel_encrypt_add(&ike_alg_encrypt_aes_gcm_8);
+	kernel_encrypt_add(&ike_alg_encrypt_aes_gcm_12);
+	kernel_encrypt_add(&ike_alg_encrypt_aes_gcm_16);
+	kernel_encrypt_add(&ike_alg_encrypt_aes_ccm_8);
+	kernel_encrypt_add(&ike_alg_encrypt_aes_ccm_12);
+	kernel_encrypt_add(&ike_alg_encrypt_aes_ccm_16);
+
+	DBG(DBG_KERNEL,
+	    DBG_log("Hard-wiring new INTEG algorithms"));
+
+	kernel_integ_add(&ike_alg_integ_aes_cmac);
 }
 
 struct nlm_resp {

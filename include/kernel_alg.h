@@ -88,6 +88,7 @@ extern int kernel_alg_add(int satype, int exttype,
 			  const struct sadb_alg *sadb_alg);
 
 void kernel_integ_add(const struct integ_desc *integ);
+void kernel_encrypt_add(const struct encrypt_desc *encrypt);
 
 extern enum ipsec_authentication_algo alg_info_esp_aa2sadb(enum ikev1_auth_attribute auth);
 extern int alg_info_esp_sadb2aa(int sadb_aalg);
