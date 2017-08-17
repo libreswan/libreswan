@@ -53,9 +53,6 @@ extern bool kernel_alg_ah_auth_ok(int auth, struct alg_info_esp *alg_info);
 /* returns auth keylen in BYTES for esp auth alg passed */
 extern int kernel_alg_esp_auth_keylen(int auth);
 
-/* returns TRUE if read ok from /proc/net/pf_key_supported */
-extern bool kernel_alg_proc_read(void);
-
 /* get sadb_alg for passed args */
 extern const struct sadb_alg *kernel_alg_sadb_alg_get(unsigned satype, unsigned exttype,
 						       unsigned alg_id);

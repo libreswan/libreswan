@@ -334,54 +334,6 @@ err_t check_kernel_encrypt_alg(int alg_id, unsigned int key_len)
 }
 
 /*
- * Load kernel_alg arrays from /proc
- * Only used in manual mode from programs/spi/spi.c
- */
-bool kernel_alg_proc_read(void)
-{
-	int satype;
-	int supp_exttype;
-	int alg_id, ivlen, minbits, maxbits;
-	char name[20];
-	struct sadb_alg sadb_alg;
-	char buf[128];
-	FILE *fp = fopen("/proc/net/pf_key_supported", "r");
-
-	if (fp == NULL)
-		return FALSE;
-
-	kernel_alg_init();
-	while (fgets(buf, sizeof(buf), fp)) {
-		if (buf[0] != ' ')	/* skip titles */
-			continue;
-		sscanf(buf, "%d %d %d %d %d %d %s",
-			&satype, &supp_exttype,
-			&alg_id, &ivlen,
-			&minbits, &maxbits, name);
-		switch (satype) {
-		case SADB_SATYPE_ESP:
-			switch (supp_exttype) {
-			case SADB_EXT_SUPPORTED_AUTH:
-			case SADB_EXT_SUPPORTED_ENCRYPT:
-				sadb_alg.sadb_alg_id = alg_id;
-				sadb_alg.sadb_alg_ivlen = ivlen;
-				sadb_alg.sadb_alg_minbits = minbits;
-				sadb_alg.sadb_alg_maxbits = maxbits;
-				sadb_alg.sadb_alg_reserved = 0;
-				kernel_alg_add(satype, supp_exttype,
-					       &sadb_alg);
-				break;
-			}
-			break;
-		default:
-			break;
-		}
-	}
-	fclose(fp);
-	return TRUE;
-}
-
-/*
  * Load kernel_alg arrays pluto's SADB_REGISTER
  * Used by programs/pluto/kernel_pfkey.c and programs/pluto/kernel_netlink.c
  */
