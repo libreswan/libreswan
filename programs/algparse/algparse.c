@@ -12,7 +12,7 @@
 
 #define CHECK(TYPE,PARSE) {						\
 		printf("[%s=%s]\n",					\
-		       #PARSE, algstr);					\
+		       #PARSE, algstr == NULL ? "(NULL)" : algstr);	\
 		fflush(NULL);						\
 		char err_buf[512] = "";	/* ??? big enough? */		\
 		struct alg_info_##TYPE *e =				\
@@ -87,6 +87,7 @@ static void test(const struct parser_policy policy)
 
 	printf("\n---- ESP tests that should succeed ----\n");
 
+	esp(policy, NULL);
 	esp(policy, "");
 	esp(policy, "aes_gcm_a-128-null");
 	esp(policy, "3des-sha1;modp1024");
@@ -232,6 +233,7 @@ static void test(const struct parser_policy policy)
 
 	printf("\n---- AH tests that should succeed ----\n");
 
+	ah(policy, NULL);
 	ah(policy, "");
 	ah(policy, "md5");
 	ah(policy, "sha");
@@ -264,6 +266,7 @@ static void test(const struct parser_policy policy)
 
 	printf("\n---- IKE tests that should succeed ----\n");
 
+	ike(policy, NULL);
 	ike(policy, "");
 	ike(policy, "3des-sha1");
 	ike(policy, "3des-sha1");
