@@ -593,8 +593,9 @@ bool ike_alg_is_valid(const struct ike_alg *alg);
 bool encrypt_has_key_bit_length(const struct encrypt_desc *encrypt_desc, unsigned keylen);
 
 /*
- * The largest key size allowed.
+ * The largest and smallest key bit length allowed.
  */
+unsigned encrypt_min_key_bit_length(const struct encrypt_desc *encrypt_desc);
 unsigned encrypt_max_key_bit_length(const struct encrypt_desc *encrypt_desc);
 
 /*

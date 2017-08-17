@@ -606,8 +606,18 @@ bool encrypt_has_key_bit_length(const struct encrypt_desc *encrypt,
 
 unsigned encrypt_max_key_bit_length(const struct encrypt_desc *encrypt)
 {
-	/* by definition */
+	/* by definition: largest is first */
 	return encrypt->key_bit_lengths[0];
+}
+
+unsigned encrypt_min_key_bit_length(const struct encrypt_desc *encrypt)
+{
+	/* by definition: smallest is last */
+	unsigned smallest = 0;
+	for (const unsigned *keyp = encrypt->key_bit_lengths; *keyp; keyp++) {
+		smallest = *keyp;
+	}
+	return smallest;
 }
 
 static void encrypt_desc_check(const struct ike_alg *alg)
