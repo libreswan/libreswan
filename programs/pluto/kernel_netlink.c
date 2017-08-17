@@ -99,12 +99,6 @@
 #define NIC_OFFLOAD_UNKNOWN (-2)
 #define NIC_OFFLOAD_UNSUPPORTED (-1)
 
-struct aead_alg {
-	int id;
-	int icvlen;
-	const char *name;
-};
-
 static int netlinkfd = NULL_FD;
 static int netlink_bcast_fd = NULL_FD;
 
@@ -221,42 +215,6 @@ static sparse_names calg_list = {
 	{ SADB_X_CALG_LZJH, "lzjh" },
 	{ 0, sparse_end }
 };
-
-static const struct aead_alg aead_algs[] =
-{
-	{ .id = SADB_X_EALG_AES_CCM_ICV8, .icvlen = 8,
-		.name = "rfc4309(ccm(aes))" },
-	{ .id = SADB_X_EALG_AES_CCM_ICV12, .icvlen = 12,
-		.name = "rfc4309(ccm(aes))" },
-	{ .id = SADB_X_EALG_AES_CCM_ICV16, .icvlen = 16,
-		.name = "rfc4309(ccm(aes))" },
-	{ .id = SADB_X_EALG_AES_GCM_ICV8, .icvlen = 8,
-		.name = "rfc4106(gcm(aes))" },
-	{ .id = SADB_X_EALG_AES_GCM_ICV12, .icvlen = 12,
-		.name = "rfc4106(gcm(aes))" },
-	{ .id = SADB_X_EALG_AES_GCM_ICV16, .icvlen = 16,
-		.name = "rfc4106(gcm(aes))" },
-	{ .id = SADB_X_EALG_CHACHA20_POLY1305, .icvlen = 0, /* variable icvlen */
-		.name = "rfc7539esp(chacha20,poly1305)" },
-	/*
-	 * The Linux kernel has rfc4494 "cmac(aes)", except there is
-	 * no such AH/ESP transform, only an IKEv2 transform.
-	 * Presumably for AF_KEY use of userland
-	{ .id = SADB_X_EALG_NULL_AUTH_AES_GMAC, .icvlen = 16,
-		.name = "rfc4543(gcm(aes))" },
-	*/
-};
-
-static const struct aead_alg *get_aead_alg(int algid)
-{
-	unsigned int i;
-
-	for (i = 0; i < elemsof(aead_algs); i++)
-		if (aead_algs[i].id == algid)
-			return aead_algs + i;
-
-	return NULL;
-}
 
 /*
  * xfrm2ip - Take an xfrm and convert to an IP address
@@ -1046,7 +1004,6 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		char data[MAX_NETLINK_DATA_SIZE];
 	} req;
 	struct rtattr *attr;
-	const struct aead_alg *aead;
 	int ret;
 
 	zero(&req);
@@ -1247,7 +1204,6 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	 * ??? why does IPCOMP trump aead and ESP?
 	 *  Shouldn't all be bundled?
 	 */
-	aead = get_aead_alg(sa->compalg);
 	if (sa->esatype == ET_IPCOMP) {
 		struct xfrm_algo algo;
 		const char *name = sparse_name(calg_list, sa->compalg);
@@ -1269,24 +1225,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 
 		req.n.nlmsg_len += attr->rta_len;
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
-	} else if (aead != NULL) {
-		struct xfrm_algo_aead algo;
-
-		strncpy(algo.alg_name, aead->name, sizeof(algo.alg_name));
-		algo.alg_key_len = sa->enckeylen * BITS_PER_BYTE;
-		algo.alg_icv_len = aead->icvlen * BITS_PER_BYTE;
-
-		attr->rta_type = XFRMA_ALG_AEAD;
-		attr->rta_len = RTA_LENGTH(sizeof(algo) + sa->enckeylen);
-
-		memcpy(RTA_DATA(attr), &algo, sizeof(algo));
-		memcpy((char *)RTA_DATA(attr) + sizeof(algo), sa->enckey,
-			sa->enckeylen);
-
-		req.n.nlmsg_len += attr->rta_len;
-		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	} else if (sa->esatype == ET_ESP) {
-
 		const char *name = find_netlink_name(encrypt_list,
 						     &sa->encrypt->common);
 		if (name == NULL) {
@@ -1296,32 +1235,52 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 			return FALSE;
 		}
 
-		struct xfrm_algo algo;
-		strncpy(algo.alg_name, name, sizeof(algo.alg_name));
-		algo.alg_key_len = sa->enckeylen * BITS_PER_BYTE;
+		if (ike_alg_is_aead(sa->encrypt)) {
+			struct xfrm_algo_aead algo;
 
-		attr->rta_type = XFRMA_ALG_CRYPT;
-		attr->rta_len = RTA_LENGTH(sizeof(algo) + sa->enckeylen);
+			strncpy(algo.alg_name, name, sizeof(algo.alg_name));
+			algo.alg_key_len = sa->enckeylen * BITS_PER_BYTE;
+			algo.alg_icv_len = sa->encrypt->aead_tag_size * BITS_PER_BYTE;
 
-		memcpy(RTA_DATA(attr), &algo, sizeof(algo));
-		memcpy((char *)RTA_DATA(attr) + sizeof(algo), sa->enckey,
-			sa->enckeylen);
+			attr->rta_type = XFRMA_ALG_AEAD;
+			attr->rta_len = RTA_LENGTH(sizeof(algo) + sa->enckeylen);
 
-		req.n.nlmsg_len += attr->rta_len;
-		attr = (struct rtattr *)((char *)attr + attr->rta_len);
+			memcpy(RTA_DATA(attr), &algo, sizeof(algo));
+			memcpy((char *)RTA_DATA(attr) + sizeof(algo), sa->enckey,
+			       sa->enckeylen);
 
-		/* Traffic Flow Confidentiality is only for ESP tunnel mode */
-		if (sa->tfcpad != 0 &&
-		    sa->encapsulation == ENCAPSULATION_MODE_TUNNEL) {
-			DBG(DBG_KERNEL, DBG_log("netlink: setting TFC to %"PRIu32" (up to PMTU",
-				sa->tfcpad));
-
-			attr->rta_type = XFRMA_TFCPAD;
-			attr->rta_len = RTA_LENGTH(sizeof(sa->tfcpad));
-			memcpy(RTA_DATA(attr), &sa->tfcpad, sizeof(sa->tfcpad));
 			req.n.nlmsg_len += attr->rta_len;
 			attr = (struct rtattr *)((char *)attr + attr->rta_len);
 
+		} else {
+			struct xfrm_algo algo;
+
+			strncpy(algo.alg_name, name, sizeof(algo.alg_name));
+			algo.alg_key_len = sa->enckeylen * BITS_PER_BYTE;
+
+			attr->rta_type = XFRMA_ALG_CRYPT;
+			attr->rta_len = RTA_LENGTH(sizeof(algo) + sa->enckeylen);
+
+			memcpy(RTA_DATA(attr), &algo, sizeof(algo));
+			memcpy((char *)RTA_DATA(attr) + sizeof(algo), sa->enckey,
+			sa->enckeylen);
+
+			req.n.nlmsg_len += attr->rta_len;
+			attr = (struct rtattr *)((char *)attr + attr->rta_len);
+
+			/* Traffic Flow Confidentiality is only for ESP tunnel mode */
+			if (sa->tfcpad != 0 &&
+			    sa->encapsulation == ENCAPSULATION_MODE_TUNNEL) {
+				DBG(DBG_KERNEL, DBG_log("netlink: setting TFC to %"PRIu32" (up to PMTU",
+							sa->tfcpad));
+
+				attr->rta_type = XFRMA_TFCPAD;
+				attr->rta_len = RTA_LENGTH(sizeof(sa->tfcpad));
+				memcpy(RTA_DATA(attr), &sa->tfcpad, sizeof(sa->tfcpad));
+				req.n.nlmsg_len += attr->rta_len;
+				attr = (struct rtattr *)((char *)attr + attr->rta_len);
+
+			}
 		}
 	}
 
