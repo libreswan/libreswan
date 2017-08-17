@@ -35,7 +35,6 @@ extern bool kernel_alg_is_ok(const struct ike_alg *alg);
 
 /* ESP interface */
 extern struct sadb_alg *kernel_alg_esp_sadb_alg(int alg_id);
-extern int kernel_alg_esp_ivlen(int alg_id);
 
 /* returns success (NULL) if encrypt alg is present in kernel */
 extern err_t check_kernel_encrypt_alg(int alg_id, unsigned int key_len);
