@@ -39,6 +39,19 @@
 
 #include "ike_alg.h"
 #include "ike_alg_null.h"
+#include "ike_alg_aes.h"
+
+/*
+ * XXX: The kernel algorithm database is indexed by SADB kernel values
+ * (which date back to the defunct pfkey interface) and assumes there
+ * is a value for every single supported algorithm.
+ *
+ * The assumption isn't valid.  Magic SADB values have been added when
+ * no official value was available.
+ *
+ * The code should instead be rewritten to use 'struct ike_alg*' as a
+ * kernel interface agnostic way of identifying algorithms.  Later.
+ */
 
 /* ALG storage */
 struct sadb_alg esp_aalg[K_SADB_AALG_MAX + 1];	/* ??? who fills this table in? */
@@ -210,44 +223,49 @@ int kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 	return 1;
 }
 
-static struct kernel_integ *kernel_integ;
+/*
+ * The kernel_alg database should work with IKE_ALGs and not SADBs,
+ * this works for the moment.
+ */
+struct sadb_id {
+	const struct ike_alg *alg;
+	int id;
+};
 
-void kernel_integ_add(enum sadb_aalg sadb_aalg,
-		      const struct integ_desc *integ,
-		      const char *netlink_name)
+static int find_sadb_id(const struct sadb_id *table, const struct ike_alg *alg)
 {
+	for (const struct sadb_id *map = table; map->alg != NULL; map++) {
+		if (map->alg == alg) {
+			return map->id;
+		}
+	}
+	return -1;
+}
+
+const struct sadb_id integ_sadb_ids[] = {
+	{ &ike_alg_integ_aes_cmac.common, SADB_X_AALG_AES_CMAC_96, },
+	{ NULL, },
+};
+
+void kernel_integ_add(const struct integ_desc *integ)
+{
+	int sadb_aalg = find_sadb_id(integ_sadb_ids, &integ->common);
+	if (sadb_aalg < 0) {
+		PEXPECT_LOG("Integrity algorithm %s has no matching SADB ID",
+			    integ->common.fqn);
+		return;
+	}
+
 	struct sadb_alg alg = {
 		.sadb_alg_minbits = integ->integ_keymat_size * BITS_PER_BYTE,
 		.sadb_alg_maxbits = integ->integ_keymat_size * BITS_PER_BYTE,
 		.sadb_alg_id = sadb_aalg,
 	};
 	if (kernel_alg_add(SADB_SATYPE_ESP,  SADB_EXT_SUPPORTED_AUTH, &alg) != 1) {
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register %s for ESP",
-		       integ->common.name);
+		PEXPECT_LOG("Warning: failed to register %s for ESP",
+			    integ->common.fqn);
 		return;
 	}
-	struct kernel_integ *new = alloc_thing(struct kernel_integ, "kernel integ");
-	*new = (struct kernel_integ) {
-		.sadb_aalg = sadb_aalg,
-		.integ = integ,
-		.netlink_name = netlink_name,
-		.next = kernel_integ,
-	};
-	kernel_integ = new;
-}
-
-const struct kernel_integ *kernel_integ_by_ikev1_auth_attribute(enum ikev1_auth_attribute id)
-{
-	for (struct kernel_integ *k = kernel_integ; k != NULL; k = k->next) {
-		/*
-		 * For integ, the ESP_ID contains enum
-		 * ikev1_auth_attribute
-		 */
-		if ((enum ikev1_auth_attribute) k->integ->common.ikev1_esp_id == id) {
-			return k;
-		}
-	}
-	return NULL;
 }
 
 err_t check_kernel_encrypt_alg(int alg_id, unsigned int key_len)

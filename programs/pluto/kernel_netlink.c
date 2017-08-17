@@ -305,8 +305,7 @@ static void linux_pfkey_add_hard_wired(void)
 	/*
 	 * IPSEC integrity algorithms.
 	 */
-	kernel_integ_add(SADB_X_AALG_AES_CMAC_96, &ike_alg_integ_aes_cmac,
-			 "cmac(aes)");
+	kernel_integ_add(&ike_alg_integ_aes_cmac);
 
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("Registered new AUTH algorithms"));
