@@ -55,8 +55,10 @@ algparse   DH23               IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS
 algparse   DH24               IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS
 
 ---- ESP tests that should succeed ----
-[esp=]
+[esp=(NULL)]
 	AES_CBC-HMAC_SHA1_96
+[esp=]
+	ERROR: String ended with invalid char, just after "" (state=ST_INI_EA)
 [esp=aes_gcm_a-128-null]
 	AES_GCM_8_128-NULL
 [esp=3des-sha1;modp1024]
@@ -299,8 +301,10 @@ algparse   DH24               IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS
 	ERROR: ESP DH algorithm must appear once after last proposal
 
 ---- AH tests that should succeed ----
-[ah=]
+[ah=(NULL)]
 	HMAC_SHA1_96
+[ah=]
+	ERROR: String ended with invalid char, just after "" (state=ST_INI_AA)
 [ah=md5]
 	HMAC_MD5_96
 [ah=sha]
@@ -347,13 +351,15 @@ algparse   DH24               IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS
 	ERROR: AH integrity algorithm 'ripemd' is not recognized, enc_alg=""(0), auth_alg="ripemd", modp=""
 
 ---- IKE tests that should succeed ----
-[ike=]
+[ike=(NULL)]
 	AES_CBC-HMAC_SHA2_256-MODP2048
 	AES_CBC-HMAC_SHA2_512-MODP2048
 	AES_CBC-HMAC_SHA1-MODP2048
 	3DES_CBC-HMAC_SHA2_256-MODP2048
 	3DES_CBC-HMAC_SHA2_512-MODP2048
 	3DES_CBC-HMAC_SHA1-MODP2048
+[ike=]
+	ERROR: String ended with invalid char, just after "" (state=ST_INI_EA)
 [ike=3des-sha1]
 	3DES_CBC-HMAC_SHA1-MODP2048
 [ike=3des-sha1]
