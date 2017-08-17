@@ -31,8 +31,6 @@
 #include "ike_alg_null.h"
 #include "alg_info.h"
 
-#include "plutoalg.h" /* XXX: for ikev1_default_ike_info() */
-
 static int snprint_ike_info(char *buf, size_t buflen,
 			    const struct proposal_info *ike_info,
 			    bool fix_zero)
@@ -556,24 +554,6 @@ static const char *ike_add(const struct parser_policy *const policy,
 					    prf, integ, dh_group,
 					    err_buf, err_buf_len);
 	}
-}
-
-struct alg_info_ike *ikev1_default_ike_info(void)
-{
-	static const struct parser_policy policy = {
-		.ikev1 = TRUE,
-	};
-
-	struct alg_info_ike *default_info = alloc_thing(struct alg_info_ike, "ike_info");
-
-	char err_buf[100] = "";
-	if (ike_add(&policy, &ike_defaults, &default_info->ai,
-		    NULL, 0, NULL, NULL, NULL,
-		    err_buf, sizeof(err_buf)) != NULL) {
-		PEXPECT_LOG("invalid IKEv1 default algorithms: %s", err_buf);
-	}
-
-	return default_info;
 }
 
 static const char *alg_info_ike_add(const struct parser_policy *const policy,

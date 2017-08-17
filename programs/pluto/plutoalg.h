@@ -12,5 +12,3 @@ extern bool ikev1_verify_esp(int ealg, unsigned int key_len, int aalg,
 				const struct alg_info_esp *alg_info);
 
 extern bool ikev1_verify_ah(int aalg, const struct alg_info_esp *alg_info);
-
-struct alg_info_ike *ikev1_default_ike_info(void);

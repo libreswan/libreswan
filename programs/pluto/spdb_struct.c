@@ -86,6 +86,25 @@ static struct db_sa *oakley_alg_mergedb(struct alg_info_ike *ai,
 					enum ikev1_auth_method auth_method,
 					bool single_dh);
 
+
+static struct alg_info_ike *ikev1_default_ike_info(void)
+{
+	static const struct parser_policy policy = {
+		.ikev1 = TRUE,
+		.alg_is_ok = ike_alg_is_ike,
+	};
+
+	char err[100];
+	struct alg_info_ike *defaults =
+		alg_info_ike_create_from_str(&policy, NULL,
+					     err, sizeof(err));
+	if (defaults == NULL) {
+		PEXPECT_LOG("Invalid IKEv1 default algorithms: %s", err);
+	}
+
+	return defaults;
+}
+
 struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 				enum ikev1_auth_method auth_method,
 				bool single_dh)
