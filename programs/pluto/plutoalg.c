@@ -170,21 +170,7 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 				success = FALSE;	/* ??? should we break? */
 		}
 	} else {
-		int ealg_i;
-
-		ESP_EALG_FOR_EACH_DOWN(ealg_i) {
-			struct proposal_info tmp_esp_info;
-			int aalg_i;
-
-			tmp_esp_info.ikev1esp_transid = ealg_i;
-			tmp_esp_info.enckeylen = 0;
-			ESP_AALG_FOR_EACH(aalg_i) {
-				tmp_esp_info.ikev1esp_auth =
-					alg_info_esp_sadb2aa(aalg_i);
-				kernel_alg_db_add(ctx_new, &tmp_esp_info,
-						  policy, FALSE);
-			}
-		}
+		PEXPECT_LOG("%s", "alg_info should be non-NULL");
 	}
 
 	if (!success) {
