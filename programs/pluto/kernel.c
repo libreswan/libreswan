@@ -1930,7 +1930,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			spi;
 		unsigned compalg;
 
-		switch (st->st_ipcomp.attrs.transattrs.encrypt) {
+		switch (st->st_ipcomp.attrs.transattrs.comp) {
 		case IPCOMP_DEFLATE:
 			compalg = SADB_X_CALG_DEFLATE;
 			break;
