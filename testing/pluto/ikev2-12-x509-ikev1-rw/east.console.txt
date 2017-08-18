@@ -17,8 +17,8 @@ east #
 east #
  grep leak /tmp/pluto.log
 leak-detective enabled
-leak: kernel integ, item size: 32
-leak detective found 1 leaks, total size 32
+leak: rundir, item size: 12
+leak detective found 1 leaks, total size 12
 east #
  ../bin/check-for-core.sh
 east #
