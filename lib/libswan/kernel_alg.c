@@ -466,6 +466,7 @@ bool kernel_alg_dh_ok(const struct oakley_group_desc *dh)
 {
 	if (dh == NULL) {
 		PEXPECT_LOG("%s", "DH needs to be valid (non-NULL)");
+		return false;
 	}
 	/* require an in-process/ike implementation of DH */
 	return ike_alg_is_ike(&dh->common);
@@ -475,6 +476,7 @@ bool kernel_alg_encrypt_ok(const struct encrypt_desc *encrypt)
 {
 	if (encrypt == NULL) {
 		PEXPECT_LOG("%s", "encryption needs to be valid (non-NULL)");
+		return false;
 	}
 	return ESP_EALG_PRESENT(encrypt->common.id[IKEv1_ESP_ID]);
 }
@@ -483,6 +485,7 @@ bool kernel_alg_integ_ok(const struct integ_desc *integ)
 {
 	if (integ == NULL) {
 		PEXPECT_LOG("%s", "integrity needs to be valid (non-NULL)");
+		return false;
 	}
 	return ESP_AALG_PRESENT(integ->integ_ikev1_ah_transform);
 }
