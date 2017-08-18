@@ -590,6 +590,7 @@ static const struct encrypt_desc *encrypt_descriptors[] = {
 #ifdef USE_CAST
 	&ike_alg_encrypt_cast_cbc,
 #endif
+	&ike_alg_encrypt_null_integ_aes_gmac,
 	&ike_alg_encrypt_null,
 };
 
@@ -945,7 +946,7 @@ void ike_alg_snprint(char *buf, size_t sizeof_buf,
 		/*
 		 * magic number from eyeballing the longest name
 		 */
-		ssize_t pad = strlen(ike_alg_integ_sha2_512.common.fqn) - (buf - start);
+		ssize_t pad = strlen(ike_alg_encrypt_null_integ_aes_gmac.common.fqn) - (buf - start);
 		passert_ike_alg(alg, pad >= 0);
 		for (ssize_t i = 0; i < pad; i++) {
 			append(&buf, end, " ");
