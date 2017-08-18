@@ -33,6 +33,10 @@ struct alg_info_esp;	/* forward declaration */
 
 extern bool kernel_alg_is_ok(const struct ike_alg *alg);
 
+extern bool kernel_alg_dh_ok(const struct oakley_group_desc *dh);
+extern bool kernel_alg_encrypt_ok(const struct encrypt_desc *encrypt);
+extern bool kernel_alg_integ_ok(const struct integ_desc *integ);
+
 /* ESP interface */
 extern struct sadb_alg *kernel_alg_esp_sadb_alg(int alg_id);
 

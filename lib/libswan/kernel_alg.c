@@ -462,15 +462,42 @@ struct sadb_alg *kernel_alg_esp_sadb_alg(int alg_id)
 	return sadb_alg;
 }
 
+bool kernel_alg_dh_ok(const struct oakley_group_desc *dh)
+{
+	if (dh == NULL) {
+		PEXPECT_LOG("%s", "DH needs to be valid (non-NULL)");
+	}
+	/* require an in-process/ike implementation of DH */
+	return ike_alg_is_ike(&dh->common);
+}
+
+bool kernel_alg_encrypt_ok(const struct encrypt_desc *encrypt)
+{
+	if (encrypt == NULL) {
+		PEXPECT_LOG("%s", "encryption needs to be valid (non-NULL)");
+	}
+	return ESP_EALG_PRESENT(encrypt->common.id[IKEv1_ESP_ID]);
+}
+
+bool kernel_alg_integ_ok(const struct integ_desc *integ)
+{
+	if (integ == NULL) {
+		PEXPECT_LOG("%s", "integrity needs to be valid (non-NULL)");
+	}
+	return ESP_AALG_PRESENT(integ->integ_ikev1_ah_transform);
+}
+
 bool kernel_alg_is_ok(const struct ike_alg *alg)
 {
-	if (alg->algo_type == &ike_alg_dh) {
-		/* require an in-process/ike implementation of DH */
-		return ike_alg_is_ike(alg);
+	if (alg == NULL) {
+		PEXPECT_LOG("%s", "algorithm needs to be valid (non-NULL)");
+		return false;
+	} else if (alg->algo_type == &ike_alg_dh) {
+		return kernel_alg_dh_ok(dh_desc(alg));
 	} else if (alg->algo_type == &ike_alg_encrypt) {
-		return ESP_EALG_PRESENT(alg->id[IKEv1_ESP_ID]);
+		return kernel_alg_encrypt_ok(encrypt_desc(alg));
 	} else if (alg->algo_type == &ike_alg_integ) {
-		return ESP_AALG_PRESENT(integ_desc(alg)->integ_ikev1_ah_transform);
+		return kernel_alg_integ_ok(integ_desc(alg));
 	} else {
 		PASSERT_FAIL("algorithm %s of type %s is not valid in the kernel",
 			     alg->fqn, ike_alg_type_name(alg->algo_type));
