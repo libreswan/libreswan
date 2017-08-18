@@ -7,7 +7,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2015-2017 Andrew Cagney <andrew.cagney@gnu.org>
+ * Copyright (C) 2015-2017 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -2251,51 +2251,29 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 		switch (policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
 		case POLICY_ENCRYPT:
 			proposal->protoid = IKEv2_SEC_PROTO_ESP;
-
-			const unsigned ealg = esp_info->ikev1esp_transid;
-			if (!ESP_EALG_PRESENT(ealg)) {
-				struct esb_buf buf;
-				loglog(RC_LOG_SERIOUS,
-				       "requested kernel enc ealg_id=%s=%u not present",
-				       enum_showb(&esp_transformid_names, ealg, &buf), ealg);
-				continue;
-			}
-			pexpect(ealg != 0);
-
 			/*
 			 * Encryption.
 			 */
 			const struct encrypt_desc *encrypt = esp_info->encrypt;
+			if (!kernel_alg_encrypt_ok(encrypt)) {
+				loglog(RC_LOG_SERIOUS,
+				       "requested ESP encryption algorithm %s not present; discarding proposal",
+				       encrypt->common.fqn);
+				continue;
+			}
 			if (!append_encrypt_transform(proposal, encrypt,
 						      esp_info->enckeylen)) {
 				continue;
 			}
-
-			/* add ESP auth attr (if present) */
-			if (esp_info->ikev1esp_auth != AUTH_ALGORITHM_NONE) {
-				unsigned aalg = alg_info_esp_aa2sadb(esp_info->ikev1esp_auth);
-				if (!ESP_AALG_PRESENT(aalg)) {
-					struct esb_buf buf;
-					/* XXX: correct enum??? */
-					loglog(RC_LOG_SERIOUS,
-					       "kernel_alg_db_add() kernel auth aalg_id=%s=%d not present",
-					       enum_showb(&auth_alg_names, esp_info->ikev1esp_auth, &buf),
-					       esp_info->ikev1esp_auth);
-					continue;
-				}
-				/*
-				 * XXX: Wrong check?
-				 *
-				 * IKEV1ESP_AUTH != 0 IFF integ !=
-				 * &ike_alg_integ_null
-				 */
+			/*
+			 * Integrity.
+			 */
+			if (esp_info->integ != &ike_alg_integ_null) {
 				const struct integ_desc *integ = esp_info->integ;
-				if (integ == &ike_alg_integ_null) {
-					struct esb_buf buf;
+				if (!kernel_alg_integ_ok(integ)) {
 					loglog(RC_LOG_SERIOUS,
-					       "dropping local ESP proposal containing unsupported INTEG algorithm %s=%d",
-					       enum_showb(&auth_alg_names, esp_info->ikev1esp_auth, &buf),
-					       esp_info->ikev1esp_auth);
+					       "requested ESP integrity algorithm %s not present; discarding proposal",
+					       integ->common.fqn);
 					continue;
 				}
 				append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
@@ -2306,28 +2284,17 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 
 		case POLICY_AUTHENTICATE:
 			proposal->protoid = IKEv2_SEC_PROTO_AH;
-			int aalg = alg_info_esp_aa2sadb(esp_info->ikev1esp_auth);
-			if (!ESP_AALG_PRESENT(aalg)) {
-				struct esb_buf buf;
+			const struct integ_desc *integ = esp_info->integ;
+			if (!kernel_alg_integ_ok(integ)) {
 				loglog(RC_LOG_SERIOUS,
-				       "kernel_alg_db_add() kernel auth aalg_id=%s=%d not present",
-				       enum_showb(&auth_alg_names, esp_info->ikev1esp_auth, &buf),
-				       esp_info->ikev1esp_auth);
+				       "requested AH integrity algorithm %s not present; discarding proposal",
+				       integ->common.fqn);
 				continue;
 			}
-			/*
-			 * XXX: Wrong check?
-			 *
-			 * AH doesn't allow, and should have already
-			 * rejected, NULL integrity.
-			 */
-			const struct integ_desc *integ = esp_info->integ;
 			if (integ == &ike_alg_integ_null) {
-				struct esb_buf buf;
 				loglog(RC_LOG_SERIOUS,
-				       "dropping local AH proposal containing unsupported INTEG algorithm %s=%d",
-				       enum_showb(&auth_alg_names, esp_info->ikev1esp_auth, &buf),
-				       esp_info->ikev1esp_auth);
+				       "requested AH integrity algorithm %s is not permitted; discarding proposal",
+				       integ->common.fqn);
 				continue;
 			}
 			append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
