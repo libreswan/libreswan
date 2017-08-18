@@ -82,6 +82,13 @@ struct state;   /* forward declaration of tag */
  */
 struct trans_attrs {
 	/*
+	 * If IPCOMP, the compession algorithm.
+	 *
+	 * XXX: code likely still relies on .encrypt having the same
+	 * value.  See below.
+	 */
+	enum ipsec_comp_algo comp;
+	/*
 	 * Let me see, the ENCRYPT field, depending on which balls are
 	 * in the air at any one moment, is used for and contains one
 	 * of the following:
@@ -99,12 +106,11 @@ struct trans_attrs {
 	 *
 	 * IKEv1 IPCOMP: enum ipsec_comp_algo; at least that is what
 	 * I've been told; this code, along with the rest of IKEv1
-	 * should go away.
+	 * should go away.  This code should use COMP.
 	 *
 	 * What could possibly go wrong :-)
 	 *
-	 * It is pretty safe to say that the field should minimally be
-	 * moved to more specific structs if not deleted.
+	 * 
 	 */
 	u_int16_t encrypt;
 	u_int16_t enckeylen;		/* encryption key len (bits) */

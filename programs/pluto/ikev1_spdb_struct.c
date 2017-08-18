@@ -1734,12 +1734,28 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	}
 
 	*attrs = null_ipsec_trans_attrs;
+
 	/*
 	 * XXX: Always assign both .encrypt and .encrypter - it makes
 	 * auditing easier.
+	 *
+	 * XXX: See comment in state.h about how .encrypt is abused.
 	 */
-	attrs->transattrs.encrypt = trans->isat_transid;
-	attrs->transattrs.encrypter = ikev1_get_kernel_encrypt_desc(trans->isat_transid);
+	switch (proto) {
+	case PROTO_IPCOMP:
+		attrs->transattrs.encrypt = trans->isat_transid; /* XXX */
+		attrs->transattrs.comp = trans->isat_transid;
+		break;
+	case PROTO_IPSEC_ESP:
+		attrs->transattrs.encrypt = trans->isat_transid;
+		attrs->transattrs.encrypter = ikev1_get_kernel_encrypt_desc(trans->isat_transid);
+		break;
+	case PROTO_IPSEC_AH:
+		attrs->transattrs.encrypt = trans->isat_transid; /* XXX */
+		break;
+	default:
+		bad_case(proto);
+	}
 
 	while (pbs_left(trans_pbs) >= isakmp_ipsec_attribute_desc.size) {
 		struct isakmp_attribute a;
