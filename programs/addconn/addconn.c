@@ -234,6 +234,7 @@ ssize_t netlink_query(char *msgbuf)
 		int e = errno;
 
 		printf("read netlink socket failure: (%d: %s)\n", e, strerror(e));
+		close(sock);
 		return -1;
 	}
 	close(sock);
