@@ -152,14 +152,14 @@ struct proposal_info {
 	 * lengths, ENCKEYLEN is still required.
 	 */
 	const struct encrypt_desc *encrypt;
+#define ikev1esp_transid encrypt->common.id[IKEv1_ESP_ID]
 	size_t enckeylen;    /* keylength for ESP transform (bits) */
-	u_int8_t ikev1esp_transid;       /* enum ipsec_cipher_algo: ESP transform (AES, 3DES, etc.)*/
 	/*
 	 * The integrity and PRF algorithms.
 	 */
 	const struct prf_desc *prf;
 	const struct integ_desc *integ;
-	u_int16_t ikev1esp_auth;         /* enum ikev1_auth_attribute: AUTH */
+#define ikev1esp_auth integ->common.id[IKEv1_ESP_ID]
 	/*
 	 * PFS/DH negotiation.
 	 */
