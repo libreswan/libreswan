@@ -537,10 +537,15 @@ struct integ_desc {
 	 * IKEv1 IPsec AH transform values
 	 * http://www.iana.org/assignments/isakmp-registry/isakmp-registry.xhtml#isakmp-registry-7
 	 *
-	 * This seems to be closely related to the value fed into the
-	 * KLIPS kernel interface.
+	 * An IKEv1 AH proposal is structured as:
+	 *
+	 *     Transform: ikev1_ah_transform
+	 *         Attribute: ikev1_auth_attribute
+	 *
+	 * Where the attrid and transid need to match.  Other than for
+	 * an MD5 edge case, this is entirely redundant.
 	 */
-	enum ipsec_authentication_algo integ_ikev1_ah_id;
+	enum ipsec_authentication_algo integ_ikev1_ah_transform;
 	/*
 	 * For IKE.  The PRF implementing integrity.  The output is
 	 * truncated down to INTEG_HASH_LEN.

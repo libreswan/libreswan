@@ -2121,7 +2121,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				goto fail;
 			}
 		}
-		said_next->authalg = said_next->integ->integ_ikev1_ah_id;
+		said_next->authalg = said_next->integ->integ_ikev1_ah_transform;
 
 		if (st->st_esp.attrs.transattrs.esn_enabled == TRUE) {
 			DBG(DBG_KERNEL, DBG_log("Enabling ESN "));
@@ -2231,7 +2231,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 		const struct integ_desc *integ = st->st_ah.attrs.transattrs.integ;
 		size_t keymat_size = integ->integ_keymat_size;
-		int authalg = integ->integ_ikev1_ah_id;
+		int authalg = integ->integ_ikev1_ah_transform;
 		if (authalg <= 0) {
 			loglog(RC_LOG_SERIOUS, "%s not implemented",
 			       integ->common.fqn);

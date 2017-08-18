@@ -979,7 +979,7 @@ void ike_alg_snprint(char *buf, size_t sizeof_buf,
 		v1_esp = alg->id[IKEv1_ESP_ID] >= 0;
 		v2_esp = alg->id[IKEv2_ALG_ID] >= 0;
 		/* NULL not allowed for AH */
-		v1_ah = v2_ah = integ_desc(alg)->integ_ikev1_ah_id > 0;
+		v1_ah = v2_ah = integ_desc(alg)->integ_ikev1_ah_transform > 0;
 	} else if (alg->algo_type == &ike_alg_dh) {
 		v1_esp = v1_ah = alg->id[IKEv1_ESP_ID] >= 0;
 		v2_esp = v2_ah = alg->id[IKEv2_ALG_ID] >= 0;

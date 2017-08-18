@@ -71,10 +71,10 @@ void init_crypto(void)
 	for (const struct integ_desc **integp = next_integ_desc(NULL);
 	     integp != NULL; integp = next_integ_desc(integp)) {
 		const struct integ_desc *integ = *integp;
-		if (integ->integ_ikev1_ah_id != 0) {
+		if (integ->integ_ikev1_ah_transform != 0) {
 			passert_ike_alg(&integ->common,
 					alg_info_esp_aa2sadb(integ->common.id[IKEv1_ESP_ID])
-					== integ->integ_ikev1_ah_id);
+					== integ->integ_ikev1_ah_transform);
 		}
 	}
 

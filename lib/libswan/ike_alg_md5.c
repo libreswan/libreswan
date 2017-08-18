@@ -93,6 +93,6 @@ const struct integ_desc ike_alg_integ_md5 = {
 	},
 	.integ_keymat_size = MD5_DIGEST_SIZE,
 	.integ_output_size = MD5_DIGEST_SIZE_96,
-	.integ_ikev1_ah_id = AH_MD5,
+	.integ_ikev1_ah_transform = AH_MD5,
 	.prf = &ike_alg_prf_md5,
 };

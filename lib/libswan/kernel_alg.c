@@ -470,7 +470,7 @@ bool kernel_alg_is_ok(const struct ike_alg *alg)
 	} else if (alg->algo_type == &ike_alg_encrypt) {
 		return ESP_EALG_PRESENT(alg->id[IKEv1_ESP_ID]);
 	} else if (alg->algo_type == &ike_alg_integ) {
-		return ESP_AALG_PRESENT(integ_desc(alg)->integ_ikev1_ah_id);
+		return ESP_AALG_PRESENT(integ_desc(alg)->integ_ikev1_ah_transform);
 	} else {
 		PASSERT_FAIL("algorithm %s of type %s is not valid in the kernel",
 			     alg->fqn, ike_alg_type_name(alg->algo_type));
