@@ -275,6 +275,7 @@ const struct sadb_id encrypt_sadb_ids[] = {
 	{ &ike_alg_encrypt_aes_ccm_8.common, SADB_X_EALG_AES_CCM_ICV8, },
 	{ &ike_alg_encrypt_aes_ccm_12.common, SADB_X_EALG_AES_CCM_ICV12, },
 	{ &ike_alg_encrypt_aes_ccm_16.common, SADB_X_EALG_AES_CCM_ICV16, },
+	{ &ike_alg_encrypt_null_integ_aes_gmac.common, SADB_X_EALG_NULL_AUTH_AES_GMAC, },
 	{ NULL, },
 };
 

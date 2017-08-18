@@ -202,9 +202,7 @@ static const struct netlink_name encrypt_list[] = {
 #if 0
 	{ &ike_alg_encrypt_chacha20_poly1305.common, "rfc7539esp(chacha20,poly1305)" },
 #endif
-#if 0
 	{ &ike_alg_encrypt_null_integ_aes_gmac.common, "rfc4543(gcm(aes))" },
-#endif
 	{ NULL, NULL, }
 };
 
@@ -314,6 +312,7 @@ static void init_netlink(void)
 	kernel_encrypt_add(&ike_alg_encrypt_aes_ccm_8);
 	kernel_encrypt_add(&ike_alg_encrypt_aes_ccm_12);
 	kernel_encrypt_add(&ike_alg_encrypt_aes_ccm_16);
+	kernel_encrypt_add(&ike_alg_encrypt_null_integ_aes_gmac);
 
 	DBG(DBG_KERNEL,
 	    DBG_log("Hard-wiring new INTEG algorithms"));
