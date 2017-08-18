@@ -450,8 +450,7 @@ static int decode_esp(char *algname)
 
 			proc_read_ok++;
 
-			ugh = check_kernel_encrypt_alg(esp_ealg_id, 0);
-			if (ugh != NULL) {
+			if (!kernel_alg_encrypt_ok(esp_info->encrypt)) {
 				fprintf(stderr, "%s: ESP encryptalg=%d (\"%s\") "
 					"not present - %s\n",
 					progname,

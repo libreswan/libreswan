@@ -522,11 +522,9 @@ static void alg_info_snprint_esp(char *buf, size_t buflen,
 	jam_str(buf, buflen, "none");
 
 	FOR_EACH_ESP_INFO(alg_info, esp_info) {
-		err_t ugh = check_kernel_encrypt_alg(esp_info->ikev1esp_transid, 0);
-
-		if (ugh != NULL) {
-			DBG_log("esp algid=%d not available: %s",
-				esp_info->ikev1esp_transid, ugh);
+		if (!kernel_alg_encrypt_ok(esp_info->encrypt)) {
+			DBG_log("esp alg %s not available",
+				esp_info->encrypt->common.fqn);
 			continue;
 		}
 
