@@ -452,12 +452,11 @@ static int decode_esp(char *algname)
 
 			if (!kernel_alg_encrypt_ok(esp_info->encrypt)) {
 				fprintf(stderr, "%s: ESP encryptalg=%d (\"%s\") "
-					"not present - %s\n",
+					"not present\n",
 					progname,
 					esp_ealg_id,
 					enum_name(&esp_transformid_names,
-						  esp_ealg_id),
-					ugh);
+						  esp_ealg_id));
 				exit(1);
 			}
 
