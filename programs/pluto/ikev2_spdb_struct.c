@@ -2231,10 +2231,11 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 	proposals->roof = 1;
 
 	FOR_EACH_ESP_INFO(alg_info_esp, esp_info) {
-		DBG(DBG_CONTROL,
-		    char buf[1024];
-		    alg_info_snprint_esp_info(buf, sizeof(buf), esp_info);
-		    DBG_log("converting esp_info %s to ikev2 ...", buf));
+		LSWDBGP(DBG_CONTROL, log) {
+			lswlogf(log, "converting proposal ");
+			lswlog_proposal_info(log, esp_info);
+			lswlogf(log, " to ikev2 ...");
+		}
 
 		/*
 		 * Both initialize and empty this proposal (might

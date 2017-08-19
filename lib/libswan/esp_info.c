@@ -493,12 +493,6 @@ static int snprint_esp_info(char *ptr, size_t buflen, const char *sep,
 			esp_info->ikev1esp_auth);
 }
 
-void alg_info_snprint_esp_info(char *buf, size_t buflen,
-			       const struct proposal_info *esp_info)
-{
-	snprint_esp_info(buf, buflen, "", esp_info);
-}
-
 /*
  * print which ESP algorithm has actually been selected, based upon which
  * ones are actually loaded.

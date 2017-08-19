@@ -318,4 +318,18 @@ size_t lswlogl(struct lswlog *log, struct lswlog *buf);
 		      }, *LOGT = &lswlogt;				\
 		     lswlogtp; lswlogtp = false)
 
+/*
+ * Wrapper macros to deal with the details of conditionally
+ * allocating, logging, and deallocating the buffer.
+ *
+ * For the moment, not very efficient.
+ */
+
+#define LSWDBGP(DEBUG, LOG)						\
+	for (bool lswlogp = DBGP(DEBUG); lswlogp; lswlogp = false)	\
+		LSWLOG(LOG)						\
+			for (; lswlogp;					\
+			     DBG_log("%s", LSWLOG_BUF(LOG)),		\
+				     lswlogp = false)
+
 #endif /* _LSWLOG_H_ */
