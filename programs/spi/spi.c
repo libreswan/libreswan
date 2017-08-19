@@ -446,7 +446,6 @@ static int decode_esp(char *algname)
 		esp_ealg_id = esp_info->ikev1esp_transid;
 		esp_aalg_id = esp_info->ikev1esp_auth;
 		if (kernel_alg_proc_read()) {
-			err_t ugh;
 
 			proc_read_ok++;
 
