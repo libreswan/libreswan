@@ -167,15 +167,14 @@ void ike_alg_show_connection(const struct connection *c, const char *instance)
 	const struct state *st;
 
 	if (c->alg_info_ike != NULL) {
-		char buf[1024];
-
-		alg_info_ike_snprint(buf, sizeof(buf) - 1,
-				     c->alg_info_ike);
-		whack_log(RC_COMMENT,
-			  "\"%s\"%s:   IKE algorithms wanted: %s",
-			  c->name,
-			  instance,
-			  buf);
+		LSWBUF(buf) {
+			lswlog_alg_info(buf, &c->alg_info_ike->ai);
+			whack_log(RC_COMMENT,
+				  "\"%s\"%s:   IKE algorithms wanted: %s",
+				  c->name,
+				  instance,
+				  LSWBUF_BUF(buf));
+		}
 
 		/*
 		 * Now re-list the algorithms with any missing key
