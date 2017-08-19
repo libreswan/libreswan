@@ -21,9 +21,9 @@
 #include "lswalloc.h"
 
 const struct lswbuf empty_lswbuf = {
-	.parrot = LSWLOG_PARROT,
+	.parrot = LSWBUF_PARROT,
 	.buf = "",
-	.canary = LSWLOG_CANARY,
+	.canary = LSWBUF_CANARY,
 	.len = 0,
 };
 
@@ -47,7 +47,7 @@ static struct dest dest(struct lswlog *log)
 {
 	lswlog_debugf("dest(.log=%p)\n", log);
 	lswlog_debugf("\tbbound=%zu\n", log->bound);
-	PASSERT_LSWLOG(log);
+	PASSERT_LSWBUF(log);
 
 	/*
 	 * Where will the next message be written?
@@ -94,7 +94,7 @@ static void truncate(struct lswlog *log)
 	lswlog_debugf("\tblen=%zu\n", log->buf->len);
 	lswlog_debugf("\tbbound=%zu\n", log->bound);
 	lswlog_debugf("\tbdots=%s\n", log->dots);
-	PASSERT_LSWLOG(log);
+	PASSERT_LSWBUF(log);
 
 	/*
 	 * Transition from "full" to overfull (truncated).
@@ -151,7 +151,7 @@ static size_t concat(struct lswlog *log, const char *string)
 	}
 	/* already overflowed */
 
-	PASSERT_LSWLOG(log);
+	PASSERT_LSWBUF(log);
 	return n;
 }
 
@@ -203,7 +203,7 @@ static size_t append(struct lswlog *log, const char *format, va_list ap)
 	}
 	/* already overflowed */
 
-	PASSERT_LSWLOG(log);
+	PASSERT_LSWBUF(log);
 	return n;
 }
 

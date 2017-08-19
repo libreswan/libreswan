@@ -220,10 +220,10 @@ struct lswbuf {
 extern const struct lswbuf empty_lswbuf;
 
 struct lswlog {
-#define LSWLOG_BUF(LOG) ((LOG)->buf->buf)
-#define LSWLOG_LEN(LOG) ((LOG)->buf->len)
+#define LSWBUF_BUF(LOG) ((LOG)->buf->buf)
+#define LSWBUF_LEN(LOG) ((LOG)->buf->len)
 	struct lswbuf *buf;
-	size_t bound; /* < sizeof(LSWLOG_BUF()) */
+	size_t bound; /* < sizeof(LSWBUF_BUF()) */
 	const char *dots;
 };
 
@@ -232,10 +232,10 @@ struct lswlog {
  */
 extern int (*lswlog_debugf)(const char *format, ...) PRINTF_LIKE(1);
 
-#define LSWLOG_PARROT -1
-#define LSWLOG_CANARY -2
+#define LSWBUF_PARROT -1
+#define LSWBUF_CANARY -2
 
-#define PASSERT_LSWLOG(LOG)						\
+#define PASSERT_LSWBUF(LOG)						\
 	do {								\
 		passert((LOG)->dots != NULL);				\
 		/* LEN/BOUND well defined */				\
@@ -243,9 +243,9 @@ extern int (*lswlog_debugf)(const char *format, ...) PRINTF_LIKE(1);
 		passert((LOG)->bound < sizeof((LOG)->buf->buf));	\
 		/* passert((LOG)->len < sizeof((LOG)->buf)) */;		\
 		/* always NUL terminated */				\
-		passert((LOG)->buf->parrot == LSWLOG_PARROT);		\
+		passert((LOG)->buf->parrot == LSWBUF_PARROT);		\
 		passert((LOG)->buf->buf[(LOG)->buf->len] == '\0');	\
-		passert((LOG)->buf->canary == LSWLOG_CANARY);		\
+		passert((LOG)->buf->canary == LSWBUF_CANARY);		\
 	} while (false)
 
 /*
@@ -267,7 +267,7 @@ size_t lswlogl(struct lswlog *log, struct lswlog *buf);
  * initializing, logging, and de-allocating the 'struct lswbuf' and
  * 'struct lswlog' objects.  For instance:
  *
- *    LSWLOGP(RC_LOG, false, log) { lswlogf(log, "hello world"); }
+ *    LSWBUFP(RC_LOG, false, log) { lswlogf(log, "hello world"); }
  *
  * LOG, a variable name, is defined as a pointer to the log buffer.
  *
@@ -278,24 +278,24 @@ size_t lswlogl(struct lswlog *log, struct lswlog *buf);
  * Apparently chaining void function calls using a comma is valid C?
  */
 
-#define EMPTY_LSWLOG(BUF) {						\
+#define EMPTY_LSWBUF(BUF) {						\
 		.buf = (BUF),						\
 		.bound = sizeof((BUF)->buf) - 1,			\
 		.dots = "..."						\
 	}
 
-#define LSWLOG(LOG)							\
-	for (bool lswlogp = true; lswlogp; lswlogp = false)		\
-		for (struct lswbuf lswbuf = empty_lswbuf; lswlogp;)	\
-			for (struct lswlog lswlog = EMPTY_LSWLOG(&lswbuf), *LOG = &lswlog; \
-			     lswlogp; lswlogp = false)
+#define LSWBUF(LOG)							\
+	for (bool lswbuf_p = true; lswbuf_p; lswbuf_p = false)		\
+		for (struct lswbuf lswbuf = empty_lswbuf; lswbuf_p;)	\
+			for (struct lswlog lswlog = EMPTY_LSWBUF(&lswbuf), *LOG = &lswlog; \
+			     lswbuf_p; lswbuf_p = false)
 
 /*
  * Like the above but further restrict the output to SIZE.
  *
  * For instance:
  *
- *    LSWLOGT(log, 5, "*", logt) {
+ *    LSWBUFT(log, 5, "*", logt) {
  *      n += lswlogtf(t, "abc"); // 3
  *      n += lswlogtf(t, "def"); // 3
  *    }
@@ -306,9 +306,8 @@ size_t lswlogl(struct lswlog *log, struct lswlog *buf);
  * length.
  */
 
-#define LSWLOGT(LOG, WIDTH, DOTS, LOGT)					\
-	for (bool lswlogtp = true;					\
-	     lswlogtp; )						\
+#define LSWBUFT(LOG, WIDTH, DOTS, LOGT)					\
+	for (bool lswbuft_p = true; lswbuft_p; )			\
 		for (struct lswlog lswlogt = {				\
 				.buf = (LOG)->buf,			\
 				.bound = min((LOG)->buf->len + (WIDTH), (LOG)->bound), \
@@ -316,7 +315,7 @@ size_t lswlogl(struct lswlog *log, struct lswlog *buf);
 					 ? (LOG)->dots			\
 					 : (DOTS)),			\
 		      }, *LOGT = &lswlogt;				\
-		     lswlogtp; lswlogtp = false)
+		     lswbuft_p; lswbuft_p = false)
 
 /*
  * Wrapper macros to deal with the details of conditionally
@@ -326,10 +325,10 @@ size_t lswlogl(struct lswlog *log, struct lswlog *buf);
  */
 
 #define LSWDBGP(DEBUG, LOG)						\
-	for (bool lswlogp = DBGP(DEBUG); lswlogp; lswlogp = false)	\
-		LSWLOG(LOG)						\
-			for (; lswlogp;					\
-			     DBG_log("%s", LSWLOG_BUF(LOG)),		\
-				     lswlogp = false)
+	for (bool lswdbgp_p = DBGP(DEBUG); lswdbgp_p; lswdbgp_p = false) \
+		LSWBUF(LOG)						\
+			for (; lswdbgp_p;				\
+			     DBG_log("%s", LSWBUF_BUF(LOG)),		\
+				     lswdbgp_p = false)
 
 #endif /* _LSWLOG_H_ */
