@@ -1025,8 +1025,10 @@ static void lsw_process_secret_records(struct secret **psecrets)
 			/*
 			 * The above test checks that there is enough space for strcpy
 			 * but clang 3.4 thinks the destination will overflow.
+			 *	strcpy(p, flp->tok);
+			 * Rewrite as a memcpy in the hope of calming it.
 			 */
-			strcpy(p, flp->tok);
+			memcpy(p, flp->tok, flp->cur - flp->tok + 1);
 			(void) shift();	/* move to Record Boundary, we hope */
 			if (flushline("ignoring malformed INCLUDE -- expected Record Boundary after filename"))
 			{

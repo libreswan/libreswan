@@ -1266,6 +1266,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		memcpy(RTA_DATA(attr), &xuo, sizeof(xuo));
 
 		req.n.nlmsg_len += attr->rta_len;
+		/* attr not subsequently used. ??? why? */
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
 #endif

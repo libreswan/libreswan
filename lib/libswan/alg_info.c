@@ -559,7 +559,7 @@ size_t lswlog_proposal_info(struct lswlog *log, struct proposal_info *proposal)
 	}
 	if (proposal->dh != NULL) {
 		size += lswlogf(log, "%s%s", sep, proposal->dh->common.fqn);
-		sep = "-";
+		sep = "-";	/* sep not subsequently used */
 	}
 	return size;
 }

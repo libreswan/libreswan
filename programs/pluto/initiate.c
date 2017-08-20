@@ -1224,6 +1224,7 @@ void connection_check_phase2(void)
 				is.whackfd = NULL_FD;
 				is.moredebug = 0;
 				is.importance = pcim_local_crypto;
+				is.remote_host = NULL;
 
 				initiate_a_connection(c, &is);
 			}

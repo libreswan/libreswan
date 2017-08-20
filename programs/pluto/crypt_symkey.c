@@ -78,7 +78,7 @@ static struct nss_alg nss_alg(const char *verb, const char *name, lset_t debug,
 		} else if (alg->algo_type == IKE_ALG_HASH) {
 			flags = CKF_DIGEST;
 		} else {
-			flags = 0;
+			flags = 0;	/* flags not subsequently used */
 			/* should never happen - ike_alg checks for this */
 			PASSERT_FAIL("NSS algorithm '%s' type %s unknown",
 				     alg->name, ike_alg_type_name(alg->algo_type));

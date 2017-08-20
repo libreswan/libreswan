@@ -2912,7 +2912,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			}
 
 			update_state_connection(st, r);
-			c = r;	/* value not used */
+			c = r;	/* c not subsequently used */
 			/* redo from scratch so we read and check CERT payload */
 			DBG(DBG_CONTROL, DBG_log("retrying ike_decode_peer_id() with new conn"));
 			return ikev1_decode_peer_id(md, FALSE, aggrmode);
