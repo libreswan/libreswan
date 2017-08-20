@@ -109,8 +109,6 @@ struct trans_attrs {
 	 * should go away.  This code should use COMP.
 	 *
 	 * What could possibly go wrong :-)
-	 *
-	 * 
 	 */
 	u_int16_t encrypt;
 	u_int16_t enckeylen;		/* encryption key len (bits) */

@@ -656,7 +656,7 @@ void ikev2_log_payload_errors(struct ikev2_payload_errors errors, struct state *
 		 * But if there is a state, but no connection,
 		 * we act as if this is NOT opportunistic.
 		 */
-		if (st == NULL || 
+		if (st == NULL ||
 		    (st->st_connection != NULL &&
 		     (st->st_connection->policy & POLICY_OPPORTUNISTIC)))
 		{

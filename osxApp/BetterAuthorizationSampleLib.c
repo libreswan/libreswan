@@ -160,7 +160,7 @@ extern OSStatus BASErrnoToOSStatus(int errNum)
     // See comment in header.
 {
 	OSStatus retval;
-	
+
 	if ( errNum == 0 ) {
 		retval = noErr;
 	} else if ( (errNum >= EPERM) && (errNum <= ELAST) ) {
@@ -180,7 +180,7 @@ static Boolean BASIsBinaryPropertyListData(const void * plistBuffer, size_t plis
     static const char kBASBinaryPlistWatermark[6] = "bplist";
 
     assert(plistBuffer != NULL);
-	
+
 	return (plistSize >= sizeof(kBASBinaryPlistWatermark))
         && (memcmp(plistBuffer, kBASBinaryPlistWatermark, sizeof(kBASBinaryPlistWatermark)) == 0);
 }
@@ -219,7 +219,7 @@ static int BASRead(int fd, void *buf, size_t bufSize, size_t *bytesRead)
     // bufSize may be 0
 	assert(bufSize <= kBASMaxNumberOfKBytes);
     // bytesRead may be NULL
-	
+
 	err = 0;
 	bytesLeft = bufSize;
 	cursor = (char *) buf;
@@ -232,7 +232,7 @@ static int BASRead(int fd, void *buf, size_t bufSize, size_t *bytesRead)
 			err = EPIPE;
 		} else {
 			assert(bytesThisTime == -1);
-			
+
 			err = errno;
 			assert(err != 0);
 			if (err == EINTR) {
@@ -243,7 +243,7 @@ static int BASRead(int fd, void *buf, size_t bufSize, size_t *bytesRead)
 	if (bytesRead != NULL) {
 		*bytesRead = bufSize - bytesLeft;
 	}
-	
+
 	return err;
 }
 
@@ -261,7 +261,7 @@ static int BASWrite(int fd, const void *buf, size_t bufSize, size_t *bytesWritte
 	char *	cursor;
 	size_t	bytesLeft;
 	ssize_t bytesThisTime;
-	
+
     // Pre-conditions
 
 	assert(fd >= 0);
@@ -269,7 +269,7 @@ static int BASWrite(int fd, const void *buf, size_t bufSize, size_t *bytesWritte
     // bufSize may be 0
 	assert(bufSize <= kBASMaxNumberOfKBytes);
 	// bytesWritten may be NULL
-	
+
 	// SIGPIPE occurs when you write to pipe or socket
 	// whose other end has been closed.  The default action
 	// for SIGPIPE is to terminate the process.  That's
@@ -279,7 +279,7 @@ static int BASWrite(int fd, const void *buf, size_t bufSize, size_t *bytesWritte
 	// that needs SIGPIPE to work in some special way, in
 	// which case you should define BAS_WRITE_CHECK_SIGPIPE
 	// to 0 to bypass this check.
-	
+
 	#if !defined(BAS_WRITE_CHECK_SIGPIPE)
 		#define BAS_WRITE_CHECK_SIGPIPE 1
 	#endif
@@ -290,14 +290,14 @@ static int BASWrite(int fd, const void *buf, size_t bufSize, size_t *bytesWritte
 			struct sigaction	currentSignalState;
 			int					val;
 			socklen_t			valLen;
-			
+
 			junk = fstat(fd, &sb);
 			assert(junk == 0);
-			
+
 			if ( S_ISFIFO(sb.st_mode) || S_ISSOCK(sb.st_mode) ) {
 				junk = sigaction(SIGPIPE, NULL, &currentSignalState);
 				assert(junk == 0);
-				
+
 				valLen = sizeof(val);
 				junk = getsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &val, &valLen);
 				assert(junk == 0);
@@ -336,7 +336,7 @@ static int BASWrite(int fd, const void *buf, size_t bufSize, size_t *bytesWritte
 			err = EPIPE;
 		} else {
 			assert(bytesThisTime == -1);
-			
+
 			err = errno;
 			assert(err != 0);
 			if (err == EINTR) {
@@ -347,7 +347,7 @@ static int BASWrite(int fd, const void *buf, size_t bufSize, size_t *bytesWritte
 	if (bytesWritten != NULL) {
 		*bytesWritten = bufSize - bytesLeft;
 	}
-	
+
 	return err;
 }
 
@@ -372,14 +372,14 @@ static int BASReadDictionary(int fdIn, CFDictionaryRef *dictPtr)
 	assert(fdIn >= 0);
 	assert( dictPtr != NULL);
 	assert(*dictPtr == NULL);
-	
+
 	dictBuffer = NULL;
 	dictData   = NULL;
 	dict       = NULL;
 
 	// Read the data size and allocate a buffer.  Always read the length as a big-endian
     // uint32_t, so that the app and the helper tool can be different architectures.
-	
+
 	err = BASRead(fdIn, &dictSize, sizeof(dictSize), NULL);
 	if (err == 0) {
         dictSize = OSSwapBigToHostInt32(dictSize);
@@ -399,9 +399,9 @@ static int BASReadDictionary(int fdIn, CFDictionaryRef *dictPtr)
 			err = ENOMEM;
 		}
 	}
-	
+
 	// Read the data and unflatten.
-	
+
 	if (err == 0) {
 		err = BASRead(fdIn, dictBuffer, dictSize, NULL);
 	}
@@ -424,9 +424,9 @@ static int BASReadDictionary(int fdIn, CFDictionaryRef *dictPtr)
 		err = EINVAL;		// only CFDictionaries need apply
 	}
 	// CFShow(dict);
-	
+
 	// Clean up.
-	
+
 	if (err != 0) {
 		if (dict != NULL) {
 			CFRelease(dict);
@@ -438,9 +438,9 @@ static int BASReadDictionary(int fdIn, CFDictionaryRef *dictPtr)
 	if (dictData != NULL) {
 		CFRelease(dictData);
 	}
-	
+
 	assert( (err == 0) == (*dictPtr != NULL) );
-	
+
 	return err;
 }
 
@@ -460,9 +460,9 @@ static int BASWriteDictionary(CFDictionaryRef dict, int fdOut)
 
 	assert(dict != NULL);
 	assert(fdOut >= 0);
-	
+
 	dictData   = NULL;
-	
+
     // Get the dictionary as XML data.
 
 	dictData = CFPropertyListCreateXMLData(NULL, dict);
@@ -492,7 +492,7 @@ static int BASWriteDictionary(CFDictionaryRef dict, int fdOut)
 	if (dictData != NULL) {
 		CFRelease(dictData);
 	}
-		
+
 	return err;
 }
 
@@ -542,7 +542,7 @@ static int BASReadDescriptor(int fd, int *fdRead)
 
 	iov.iov_base = (char *) &dummyData;
 	iov.iov_len  = sizeof(dummyData);
-	
+
     msg.msg_name       = NULL;
     msg.msg_namelen    = 0;
     msg.msg_iov        = &iov;
@@ -590,7 +590,7 @@ static int BASReadDescriptor(int fd, int *fdRead)
     }
 
 	assert( (err == 0) == (*fdRead >= 0) );
-	
+
 	return err;
 }
 
@@ -621,7 +621,7 @@ static int BASWriteDescriptor(int fd, int fdToWrite)
 
 	iov.iov_base = (char *) &kDummyData;
 	iov.iov_len  = sizeof(kDummyData);
-	
+
     msg.msg_name       = NULL;
     msg.msg_namelen    = 0;
     msg.msg_iov        = &iov;
@@ -658,16 +658,16 @@ extern void BASCloseDescriptorArray(
 	CFArrayRef					descArray
 )
     // See comment in header.
-{	
+{
 	int							junk;
 	CFIndex						descCount;
 	CFIndex						descIndex;
-	
+
 	// I decided to allow descArray to be NULL because it makes it
 	// easier to call this routine using the code.
 	//
 	// BASCloseDescriptorArray((CFArrayRef) CFDictionaryGetValue(response, CFSTR(kBASDescriptorArrayKey)));
-	
+
 	if (descArray != NULL) {
 		if (CFGetTypeID(descArray) == CFArrayGetTypeID()) {
 			descCount = CFArrayGetCount(descArray);
@@ -675,7 +675,7 @@ extern void BASCloseDescriptorArray(
 			for (descIndex = 0; descIndex < descCount; descIndex++) {
 				CFNumberRef thisDescNum;
 				int 		thisDesc;
-		
+
 				thisDescNum = (CFNumberRef) CFArrayGetValueAtIndex(descArray, descIndex);
 				if (   (thisDescNum == NULL)
 					|| (CFGetTypeID(thisDescNum) != CFNumberGetTypeID())
@@ -706,27 +706,27 @@ static int BASReadDictioanaryTranslatingDescriptors(int fd, CFDictionaryRef *dic
 	int 				junk;
 	CFDictionaryRef		dict;
 	CFArrayRef 			incomingDescs;
-	
+
     // Pre-conditions
 
 	assert(fd >= 0);
 	assert( dictPtr != NULL);
 	assert(*dictPtr == NULL);
-	
+
 	dict = NULL;
-	
+
 	// Read the dictionary.
-	
+
 	err = BASReadDictionary(fd, &dict);
-	
+
 	// Now read the descriptors, if any.
-	
+
 	if (err == 0) {
 		incomingDescs = (CFArrayRef) CFDictionaryGetValue(dict, CFSTR(kBASDescriptorArrayKey));
 		if (incomingDescs == NULL) {
 			// No descriptors.  Not much to do.  Just use dict as the response,
             // NULLing it out so that we don't release it at the end.
-			
+
 			*dictPtr = dict;
 			dict = NULL;
 		} else {
@@ -734,24 +734,24 @@ static int BASReadDictioanaryTranslatingDescriptors(int fd, CFDictionaryRef *dic
 			CFMutableDictionaryRef	mutableDict;
 			CFIndex					descCount;
 			CFIndex					descIndex;
-			
+
 			// We have descriptors, so there's lots of stuff to do.  Have to
 			// receive each of the descriptors assemble them into the
 			// translatedDesc array, then create a mutable dictionary based
 			// on response (mutableDict) and replace the
 			// kBASDescriptorArrayKey with translatedDesc.
-			
+
 			translatedDescs  = NULL;
 			mutableDict      = NULL;
 
 			// Start by checking incomingDescs.
-					
+
 			if ( CFGetTypeID(incomingDescs) != CFArrayGetTypeID() ) {
 				err = EINVAL;
 			}
-			
+
 			// Create our output data.
-			
+
 			if (err == 0) {
                 translatedDescs = CFArrayCreateMutable(NULL, 0, &kCFTypeArrayCallBacks);
                 if (translatedDescs == NULL) {
@@ -769,10 +769,10 @@ static int BASReadDictioanaryTranslatingDescriptors(int fd, CFDictionaryRef *dic
 			// to translatedDescs as we go.  By keeping our working results
 			// in translatedDescs, we make sure that we can clean up if
 			// we fail.
-			
+
 			if (err == 0) {
 				descCount = CFArrayGetCount(incomingDescs);
-				
+
 				// We don't actually depend on the descriptor values in the
 				// response (that is, the elements of incomingDescs), because
 				// they only make sense it the context of the sending process.
@@ -785,7 +785,7 @@ static int BASReadDictioanaryTranslatingDescriptors(int fd, CFDictionaryRef *dic
 					for (descIndex = 0; descIndex < descCount; descIndex++) {
 						int 		thisDesc;
 						CFNumberRef thisDescNum;
-						
+
 						thisDescNum = (CFNumberRef) CFArrayGetValueAtIndex(incomingDescs, descIndex);
 						assert(thisDescNum != NULL);
 						assert(CFGetTypeID(thisDescNum) == CFNumberGetTypeID());
@@ -793,19 +793,19 @@ static int BASReadDictioanaryTranslatingDescriptors(int fd, CFDictionaryRef *dic
 						assert(thisDesc >= 0);
 					}
 				#endif
-				
+
 				// Here's the real work.  For descCount times, read a descriptor
 				// from fd, wrap it in a CFNumber, and append it to translatedDescs.
 				// Note that we have to be very careful not to leak a descriptor
 				// if we get an error here.
-				
+
 				for (descIndex = 0; descIndex < descCount; descIndex++) {
 					int 		thisDesc;
 					CFNumberRef thisDescNum;
-					
+
 					thisDesc = -1;
 					thisDescNum = NULL;
-					
+
 					err = BASReadDescriptor(fd, &thisDesc);
 					if (err == 0) {
 						thisDescNum = CFNumberCreate(NULL, kCFNumberIntType, &thisDesc);
@@ -818,9 +818,9 @@ static int BASReadDictioanaryTranslatingDescriptors(int fd, CFDictionaryRef *dic
 						// The descriptor is now stashed in translatedDescs,
 						// so this iteration of the loop is no longer responsible
 						// for closing it.
-						thisDesc = -1;		
+						thisDesc = -1;
 					}
-					
+
                     if (thisDescNum != NULL) {
                         CFRelease(thisDescNum);
                     }
@@ -828,7 +828,7 @@ static int BASReadDictioanaryTranslatingDescriptors(int fd, CFDictionaryRef *dic
 						junk = close(thisDesc);
 						assert(junk == 0);
 					}
-					
+
 					if (err != 0) {
 						break;
 					}
@@ -836,7 +836,7 @@ static int BASReadDictioanaryTranslatingDescriptors(int fd, CFDictionaryRef *dic
 			}
 
 			// Clean up and establish output parameters.
-			
+
 			if (err == 0) {
 				CFDictionarySetValue(mutableDict, CFSTR(kBASDescriptorArrayKey), translatedDescs);
 				*dictPtr = mutableDict;
@@ -851,13 +851,13 @@ static int BASReadDictioanaryTranslatingDescriptors(int fd, CFDictionaryRef *dic
             }
 		}
 	}
-	
+
     if (dict != NULL) {
         CFRelease(dict);
     }
-	
+
 	assert( (err == 0) == (*dictPtr != NULL) );
-	
+
 	return err;
 }
 
@@ -868,43 +868,43 @@ static int BASWriteDictionaryAndDescriptors(CFDictionaryRef dict, int fd)
 	CFArrayRef 		descArray;
 	CFIndex			descCount;
 	CFIndex			descIndex;
-	
+
     // Pre-conditions
 
     assert(dict != NULL);
     assert(fd >= 0);
 
 	// Write the dictionary.
-	
+
 	err = BASWriteDictionary(dict, fd);
-	
+
 	// Process any descriptors.  The descriptors are indicated by
 	// a special key in the dictionary.  If that key is present,
 	// it's a CFArray of CFNumbers that present the descriptors to be
 	// passed.
-	
+
 	if (err == 0) {
 		descArray = (CFArrayRef) CFDictionaryGetValue(dict, CFSTR(kBASDescriptorArrayKey));
-		
+
 		// We only do the following if the special key is present.
-		
+
 		if (descArray != NULL) {
-		
+
 			// If it's not an array, that's bad.
-			
+
 			if ( CFGetTypeID(descArray) != CFArrayGetTypeID() ) {
 				err = EINVAL;
 			}
-			
+
 			// Loop over the array, getting each descriptor and writing it.
-			
+
 			if (err == 0) {
 				descCount = CFArrayGetCount(descArray);
-				
+
 				for (descIndex = 0; descIndex < descCount; descIndex++) {
 					CFNumberRef thisDescNum;
 					int 		thisDesc;
-					
+
 					thisDescNum = (CFNumberRef) CFArrayGetValueAtIndex(descArray, descIndex);
 					if (   (thisDescNum == NULL)
 						|| (CFGetTypeID(thisDescNum) != CFNumberGetTypeID())
@@ -943,9 +943,9 @@ static OSStatus FindCommand(
     char *                      command;
 	UInt32						commandSize = 0;
 	size_t						index = 0;
-	
+
 	// Pre-conditions
-	
+
 	assert(request != NULL);
 	assert(commands != NULL);
 	assert(commands[0].commandName != NULL);        // there must be at least one command
@@ -1289,7 +1289,7 @@ static int CheckInWithLaunchd(aslclient asl, aslmsg aslMsg, const char **errStrP
 		*errStrPtr = "Checkin failed: %m";
 		goto done;
 	}
-	
+
 	// Retrieve the dictionary of sockets entries from the job.  This corresponds to the
     // value of the "Sockets" key in our plist file.
 
@@ -1306,7 +1306,7 @@ static int CheckInWithLaunchd(aslclient asl, aslmsg aslMsg, const char **errStrP
 		err = asl_log(asl, aslMsg, ASL_LEVEL_WARNING, "Some sockets in dictionary will be ignored");
         assert(err == 0);
 	}
-	
+
 	// Get the dictionary value from the key "MasterSocket", as defined in the launchd
 	// property list file.
 
@@ -1323,7 +1323,7 @@ static int CheckInWithLaunchd(aslclient asl, aslmsg aslMsg, const char **errStrP
 		err = asl_log(asl, aslMsg, ASL_LEVEL_WARNING, "Some sockets in array will be ignored");
         assert(err == 0);
 	}
-	
+
 	// Get the socket file descriptor from the array.
 
     fdData = launch_data_array_get_index(fdArray, 0);
@@ -1403,14 +1403,14 @@ extern int BASHelperToolMain(
     int                         listener;
 	int							kq;
 	struct kevent				initEvent;
-	
+
 	// Pre-conditions
-	
+
 	assert(commands != NULL);
 	assert(commands[0].commandName != NULL);        // there must be at least one command
 	assert(commandProcs != NULL);
     assert( CommandArraySizeMatchesCommandProcArraySize(commands, commandProcs) );
-	
+
 	// Create a new ASL client object, and a template message for any messages that
     // we log.  We don't care if these fail because ASL will do the right thing
     // if you pass it NULL (that is, nothing).
@@ -1427,7 +1427,7 @@ extern int BASHelperToolMain(
     #if !defined(NDEBUG)
         WaitForDebugger(asl, aslMsg);
     #endif
-    	
+
 	// Set up the signal handlers we are interested in.
     //
     // o SIGTERM -- launchd sends us this when it wants us to quit.  We don't
@@ -1439,13 +1439,13 @@ extern int BASHelperToolMain(
     //
     // o SIGPIPE -- We don't want to quit when write to a dead socket, so we
     //   ignore this signal.
-	
+
     pipeSet = signal(SIGPIPE, SIG_IGN);
     if (pipeSet == SIG_ERR) {
         errStr = "Could not ignore SIGPIPE: %m";
         goto done;
     }
-	
+
     // Check in with launchd and get our listening socket.
 
     listener = CheckInWithLaunchd(asl, aslMsg, &errStr);
@@ -1468,7 +1468,7 @@ extern int BASHelperToolMain(
         errStr = "Could not add listening socket to kqueue: %m";
         goto done;
     }
-	
+
     // Force the listening socket to non-blocking mode.  Without this, our timeout
     // handling won't work properly.  Specifically, we could get stuck in an accept
     // if a connection request appears and then disappears.  Eventually the watchdog
@@ -1508,7 +1508,7 @@ extern int BASHelperToolMain(
         // stuck anywhere, the watchdog will fire eventually and we'll quit.
 
         EnableWatchdog();
-		
+
         // The accept should never get stuck because this is a non-blocking
         // socket.
 
@@ -1563,7 +1563,7 @@ extern int BASHelperToolMain(
 
         DisableWatchdog();
 	}
-	
+
 done:
     // At this point, errStr is either NULL, in which case we're quitting because
     // of our idle timer, or non-NULL, in which case we're dying with an error.
@@ -1591,13 +1591,13 @@ extern void BASSetDefaultRules(
 	CFStringRef					descriptionStringTableName
 )
     // See comment in header.
-{	
+{
 	OSStatus					err;
     CFBundleRef                 bundle;
 	size_t						commandIndex;
-	
+
 	// Pre-conditions
-	
+
 	assert(auth != NULL);
 	assert(commands != NULL);
 	assert(commands[0].commandName != NULL);        // there must be at least one command
@@ -1606,7 +1606,7 @@ extern void BASSetDefaultRules(
 
     bundle = CFBundleGetBundleWithIdentifier(bundleID);
     assert(bundle != NULL);
-	
+
     // For each command, set up the default authorization right specification, as
     // indicated by the command specification.
 
@@ -1689,7 +1689,7 @@ extern OSStatus BASExecuteRequestInHelperTool(
 	CFDictionaryRef *			response
 )
     // See comment in header.
-{	
+{
 	OSStatus					retval = noErr;
     int                         junk;
     size_t                      commandIndex;
@@ -1697,9 +1697,9 @@ extern OSStatus BASExecuteRequestInHelperTool(
 	int							fd = -1;
 	struct sockaddr_un			addr;
 	AuthorizationExternalForm	extAuth;
-	
+
 	// Pre-conditions
-	
+
 	assert(auth != NULL);
 	assert(commands != NULL);
 	assert(commands[0].commandName != NULL);        // there must be at least one command
@@ -1743,14 +1743,14 @@ extern OSStatus BASExecuteRequestInHelperTool(
 	}
 	if (retval == noErr) {
 		static const int kOne = 1;
-		
+
 		if ( setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &kOne, sizeof(kOne)) < 0 ) {
 			retval = BASErrnoToOSStatus(errno);
 		}
 	}
 
     // Form the socket address, including a path based on the bundle ID.
-	
+
 	if (retval == noErr) {
         if ( ! CFStringGetFileSystemRepresentation(bundleID, bundleIDC, sizeof(bundleIDC)) ) {
             retval = coreFoundationUnknownErr;
@@ -1760,7 +1760,7 @@ extern OSStatus BASExecuteRequestInHelperTool(
         int         pathLen;
 
 		memset(&addr, 0, sizeof(addr));
-	
+
 		addr.sun_family = AF_UNIX;
         pathLen = snprintf(addr.sun_path, sizeof(addr.sun_path), kBASSocketPathFormat, bundleIDC);
         if (pathLen >= sizeof(addr.sun_path)) {
@@ -1777,22 +1777,22 @@ extern OSStatus BASExecuteRequestInHelperTool(
 			retval = BASErrnoToOSStatus(errno);
 		}
 	}
-	
+
     // Send the flattened AuthorizationRef to the tool.
 
     if (retval == noErr) {
         retval = AuthorizationMakeExternalForm(auth, &extAuth);
     }
-	if (retval == noErr) {	
+	if (retval == noErr) {
 		retval = BASErrnoToOSStatus( BASWrite(fd, &extAuth, sizeof(extAuth), NULL) );
 	}
-	
+
     // Write the request.
 
-	if (retval == noErr) {	
+	if (retval == noErr) {
 		retval = BASErrnoToOSStatus( BASWriteDictionary(request, fd) );
 	}
-	
+
     // Read response, including any descriptors.
 
 	if (retval == noErr) {
@@ -1817,9 +1817,9 @@ extern OSStatus BASGetErrorFromResponse(CFDictionaryRef response)
 {
 	OSStatus	err;
 	CFNumberRef num;
-	
+
 	assert(response != NULL);
-	
+
 	num = (CFNumberRef) CFDictionaryGetValue(response, CFSTR(kBASErrorKey));
     err = noErr;
     if ( (num == NULL) || (CFGetTypeID(num) != CFNumberGetTypeID()) ) {
@@ -1830,7 +1830,7 @@ extern OSStatus BASGetErrorFromResponse(CFDictionaryRef response)
             err = coreFoundationUnknownErr;
         }
 	}
-	
+
     NormaliseOSStatusErrorCode(&err);
 	return err;
 }
@@ -1840,25 +1840,25 @@ extern BASFailCode BASDiagnoseFailure(
 	CFStringRef					bundleID
 )
     // See comment in header.
-{	
+{
     BASFailCode                 retval = kBASFailUnknown;
     int                         err;
     int                         pathLen;
     char                        bundleIDC   [ PATH_MAX ];
 	char						toolPath	[ PATH_MAX ];
 	char						plistPath	[ PATH_MAX ];
-		
+
 	struct stat					fileStatus;
 	int							toolErr;
 	int							plistErr;
 	int							fd;
 	struct sockaddr_un			addr;
-	
+
 	// Pre-conditions
-	
+
 	assert(auth != NULL);
 	assert(bundleID != NULL);
-	
+
     // Construct paths to the tool and plist.
 
     if ( CFStringGetFileSystemRepresentation(bundleID, bundleIDC, sizeof(bundleIDC)) ) {
@@ -1902,7 +1902,7 @@ extern BASFailCode BASDiagnoseFailure(
             }
         }
     }
-	
+
 	return retval;
 }
 
@@ -1969,7 +1969,7 @@ static const char * kPlistTemplate =
     "</dict>\n"
     "</plist>\n"
     ;
-	
+
 
 //  Installation
 //  ------------
@@ -2106,13 +2106,13 @@ static OSStatus RunInstallToolAsRoot(
         #if !defined(NDEBUG)
 			if ( ! gBASLogInteractionsInitialised ) {
 				const char *	value;
-				
+
 				value = getenv("BASLogInteractions");
 				gBASLogInteractions = ( ((value != NULL) && (atoi(value) != 0)) );
-				
+
 				gBASLogInteractionsInitialised = true;
 			}
-		
+
             if (gBASLogInteractions) {
                 argIndex = 0;
                 while (args[argIndex] != NULL) {
@@ -2192,7 +2192,7 @@ static OSStatus RunInstallToolAsRoot(
                     fprintf(stderr, ">%s", thisLine);
                 }
             #endif
-			
+
             // Look for the success token and terminate with no error in that case.
 
 			if (strcmp(thisLine, kBASInstallToolSuccess "\n") == 0) {
@@ -2210,23 +2210,23 @@ static OSStatus RunInstallToolAsRoot(
                 }
                 break;
             }
-			
+
 			// If we haven't already found a child process ID, look for a line
             // that contains it (surrounded by special tokens).  For details, see
             // the discussion of zombies above.
-			
+
 			if ( (childPID == -1) && (sscanf(thisLine, kBASAntiZombiePIDToken1 "%ld" kBASAntiZombiePIDToken2 "\n", &tmpLong) == 1) ) {
 				childPID = (pid_t) tmpLong;
 			}
         } while (true);
     }
-	
+
 	// If we successfully managed to determine the PID of our child process, reap
 	// that child.  Note that we ignore any errors from this step.  If an error
 	// occurs, we end up creating a zombie, which isn't too big a deal.  We also
     // junk the status result from the tool, relying exclusively on the presence
     // of the "oK" in the output.
-	
+
 	#if !defined(NDEBUG)
 		if (gBASLogInteractions) {
 			fprintf(stderr, "childPID=%ld\n", (long) childPID);
@@ -2235,7 +2235,7 @@ static OSStatus RunInstallToolAsRoot(
 	if (childPID != -1) {
 		pid_t	waitResult;
 		int		junkStatus;
-		
+
 		do {
 			waitResult = waitpid(childPID, &junkStatus, 0);
 		} while ( (waitResult < 0) && (errno == EINTR) );
@@ -2376,7 +2376,7 @@ extern OSStatus BASFixFailure(
 	BASFailCode					failCode
 )
     // See comment in header.
-{	
+{
 	OSStatus    retval;
     Boolean     success;
     char        bundleIDC[PATH_MAX];

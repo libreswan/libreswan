@@ -29,12 +29,12 @@ LANG=C export LANG
 LC_ALL=C export LC_ALL
 
 
-find nat-t -type f -print | grep -v CVS | egrep -v 'linux/Makefile' | sort | while read file 
-do 
+find nat-t -type f -print | grep -v CVS | egrep -v 'linux/Makefile' | sort | while read file
+do
   base=`basename $file`
   pname=`echo $file | sed -e 's,\.fs._.$,,' -e 's,\.os._.$,,'`
 
-  case $base in 
+  case $base in
     TAGS) ;;
     tags) ;;
     .cvsignore) ;;
@@ -60,4 +60,3 @@ done
 
 exit 0
 
-	

@@ -24,7 +24,7 @@ fakeallpatch() {
     echo '--- /dev/null   Tue Mar 11 13:02:56 2003'
     echo "+++ $target     Mon Feb  9 13:51:03 2004"
     echo "@@ -0,0 +1,$lines @@"
-    sed -e 's/^/+/' $content 
+    sed -e 's/^/+/' $content
 }
 
 doversion() {
@@ -34,7 +34,7 @@ doversion() {
 
     set -- `wc -l $content `
     lines=$1
-    
+
     # get IPSECVERSION
     eval $(cd ${LIBRESWANSRCDIR} && make env | grep IPSECVERSION)
 
@@ -42,6 +42,6 @@ doversion() {
     echo '--- /dev/null   Tue Mar 11 13:02:56 2003'
     echo "+++ $target     Mon Feb  9 13:51:03 2004"
     echo "@@ -0,0 +1,$lines @@"
-    sed -e 's/^/+/' -e '/"/s/@IPSECVERSION@/'${IPSECVERSION}'/' $content 
+    sed -e 's/^/+/' -e '/"/s/@IPSECVERSION@/'${IPSECVERSION}'/' $content
 }
 

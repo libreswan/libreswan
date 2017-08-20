@@ -25,12 +25,12 @@ if  (m/^host/i) {
 if (m/^groupname/i) {
 	s/.*=//;
 	$groupname=$_;
-}	
+}
 
 if (m/^grouppwd/i) {
 	s/.*=//;
 	$grouppassword=$_;
-}	
+}
 
 
 

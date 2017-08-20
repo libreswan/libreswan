@@ -231,7 +231,7 @@ Version 2.30 24/08/93
 	 with the -b flag.
 	Fixed some MSDOS uuen/uudecoding problems, thanks to
 	Added prototypes.
-	
+
 Version 2.22 29/06/93
 	Fixed a bug in des_is_weak_key() which stopped it working :-(
 	thanks to engineering@MorningStar.Com.

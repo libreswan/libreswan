@@ -27,12 +27,12 @@ esac
 LANG=C export LANG
 LC_ALL=C export LC_ALL
 
-find linux -type f -print | grep -v CVS | egrep -v 'linux/Makefile' | sort | while read file 
-do 
+find linux -type f -print | grep -v CVS | egrep -v 'linux/Makefile' | sort | while read file
+do
   base=`basename $file`
   pname=`echo $file | sed -e 's,\.fs._.$,,' -e 's,\.os._.$,,'`
 
-  case $base in 
+  case $base in
     TAGS) ;;
     tags) ;;
     .cvsignore) ;;
@@ -54,7 +54,7 @@ do
 done
 
 #
-# finally, we have to produce a diff for linux/net/linux/Makefile.ver, 
+# finally, we have to produce a diff for linux/net/linux/Makefile.ver,
 # a file which is generated at runtime, so there is nothing in CVS.
 #
 echo '--- /dev/null   Fri May 10 13:59:54 2002'
@@ -65,4 +65,3 @@ echo -n '+'
 
 exit 0
 
-	

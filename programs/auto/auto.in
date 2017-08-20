@@ -21,7 +21,7 @@ me='ipsec auto'
 usage="Usage:
 	${me} [--showonly] [--asynchronous] --up connectionname \\
 		[--remote-host ipaddr]
-	${me} [--showonly] [--asynchronous] --down connectionname 
+	${me} [--showonly] [--asynchronous] --down connectionname
 	${me} [--showonly] --{add|delete|replace|start} connectionname
 	${me} [--showonly] --{route|unroute|ondemand} connectionname
 	${me} [--showonly] --{ready|status|rereadsecrets|rereadgroups}

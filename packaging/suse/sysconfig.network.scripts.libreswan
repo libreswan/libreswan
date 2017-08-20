@@ -54,7 +54,7 @@ stop()
 		[ -z "$up" ] || ipsec auto --down "$conn" || true
 		ipsec auto --delete "$conn"
 	done
-	
+
 	ipsec auto --ready
 }
 
