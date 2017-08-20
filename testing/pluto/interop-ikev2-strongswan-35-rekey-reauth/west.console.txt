@@ -83,7 +83,7 @@ west #
 000 "westnet-eastnet-ikev2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ikev2":   newest ISAKMP SA: #4; newest IPsec SA: #5;
 000 "westnet-eastnet-ikev2":   IKE algorithms wanted: AES_CBC(7)_256-SHA2_256(4)-MODP2048(14)
-000 "westnet-eastnet-ikev2":   IKE algorithms found:  AES_CBC(7)_256-SHA2_256(4)-MODP2048(14)
+000 "westnet-eastnet-ikev2":   IKE algorithms found:  AES_CBC_256-HMAC_SHA2_256-MODP2048
 000 "westnet-eastnet-ikev2":   IKEv2 algorithm newest: AES_CBC_256-AUTH_HMAC_SHA2_256_128-PRF_HMAC_SHA2_256-MODP2048
 000 "westnet-eastnet-ikev2":   ESP algorithms wanted: AES(12)_128-SHA2_512(7); pfsgroup=MODP2048(14)
 000 "westnet-eastnet-ikev2":   ESP algorithms loaded: AES(12)_128-SHA2_512(7)
