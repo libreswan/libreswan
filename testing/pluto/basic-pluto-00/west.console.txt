@@ -7,7 +7,7 @@ west #
 west #
  ./algparse.sh PATH/libexec/ipsec/algparse
 west #
- PATH/libexec/ipsec/enumcheck | diff -u - ../../enumcheck/OUTPUT.enumcheck.txt
+ PATH/libexec/ipsec/enumcheck | diff -u ../../enumcheck/OUTPUT.enumcheck.txt -
 PATH/libexec/ipsec/enumcheck leak detective found no leaks
 west #
  echo done

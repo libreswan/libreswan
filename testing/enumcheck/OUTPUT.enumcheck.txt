@@ -2036,6 +2036,54 @@ IETF registry enum_names:
          search HOME_AGENT_ADDRESS: OK
          match HOME_AGENT_ADDRESS: OK
 
+  ike_idtype_names_extended:
+   -2 -> %fromcert
+   -1 -> %myid
+
+  ike_idtype_names_extended:
+    0 -> %none
+         search %none: OK
+         match %none: OK
+    1 -> ID_IPV4_ADDR
+         search ID_IPV4_ADDR: OK
+         match ID_IPV4_ADDR: OK
+    2 -> ID_FQDN
+         search ID_FQDN: OK
+         match ID_FQDN: OK
+    3 -> ID_USER_FQDN
+         search ID_USER_FQDN: OK
+         match ID_USER_FQDN: OK
+    4 -> ID_IPV4_ADDR_SUBNET
+         search ID_IPV4_ADDR_SUBNET: OK
+         match ID_IPV4_ADDR_SUBNET: OK
+    5 -> ID_IPV6_ADDR
+         search ID_IPV6_ADDR: OK
+         match ID_IPV6_ADDR: OK
+    6 -> ID_IPV6_ADDR_SUBNET
+         search ID_IPV6_ADDR_SUBNET: OK
+         match ID_IPV6_ADDR_SUBNET: OK
+    7 -> ID_IPV4_ADDR_RANGE
+         search ID_IPV4_ADDR_RANGE: OK
+         match ID_IPV4_ADDR_RANGE: OK
+    8 -> ID_IPV6_ADDR_RANGE
+         search ID_IPV6_ADDR_RANGE: OK
+         match ID_IPV6_ADDR_RANGE: OK
+    9 -> ID_DER_ASN1_DN
+         search ID_DER_ASN1_DN: OK
+         match ID_DER_ASN1_DN: OK
+   10 -> ID_DER_ASN1_GN
+         search ID_DER_ASN1_GN: OK
+         match ID_DER_ASN1_GN: OK
+   11 -> ID_KEY_ID
+         search ID_KEY_ID: OK
+         match ID_KEY_ID: OK
+   12 -> ID_FC_NAME
+         search ID_FC_NAME: OK
+         match ID_FC_NAME: OK
+   13 -> ID_NULL
+         search ID_NULL: OK
+         match ID_NULL: OK
+
   ike_idtype_names:
     1 -> ID_IPV4_ADDR
          search ID_IPV4_ADDR: OK

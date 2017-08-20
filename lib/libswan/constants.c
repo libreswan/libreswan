@@ -674,13 +674,14 @@ enum_names ipcomp_transformid_names = {
 };
 
 /* Identification type values */
+
 static const char *const ike_idtype_name[] = {
-	/* ID_FROMCERT = (-3), taken from certificate - private to Pluto */
-	/* ID_IMPOSSIBLE = (-2), private to Pluto */
-	/* ID_MYID = (-1), private to Pluto */
+	/* private to Pluto */
+	"%fromcert",	/* -2, ID_FROMCERT:taken from certificate */
+	"%myid",	/* -1, ID_MYID */
+	"%none",	/* 0, ID_NONE */
 
-	"ID_NONE", /* = 0, private to Pluto */
-
+	/* standardized */
 	"ID_IPV4_ADDR",	/* 1 */
 	"ID_FQDN",
 	"ID_USER_FQDN",
@@ -696,34 +697,37 @@ static const char *const ike_idtype_name[] = {
 	"ID_NULL", /* draft-ietf-ipsecme-ikev2-null-auth */
 };
 
+/*
+ * Local boilerplate macro for idtype name range initializer.
+ * - macro is undef'ed very shortly
+ * - not function-like since it expands to a struct initializer
+ * - first entry in ike_idtype_name corresponds to ID_FROMCERT
+ */
+#define ID_NR(from,to,next) { \
+		(from), (to), \
+		&ike_idtype_name[(from)-ID_FROMCERT], (to)-(from) + 1, \
+		NULL, /* prefix */ \
+		next \
+	}
+
 /* IKEv1 */
-enum_names ike_idtype_names = {
-	ID_IPV4_ADDR, ID_NULL,
-	&ike_idtype_name[ID_IPV4_ADDR], ID_NULL-ID_IPV4_ADDR+1,
-	NULL, /* prefix */
-	NULL
-};
+enum_names ike_idtype_names = ID_NR(ID_IPV4_ADDR, ID_NULL, NULL);
 
-static enum_names ikev2_idtype_names_3 = {
-	ID_DER_ASN1_DN, ID_NULL,
-	&ike_idtype_name[ID_DER_ASN1_DN], elemsof(ike_idtype_name)-ID_DER_ASN1_DN,
-	NULL, /* prefix */
-	NULL
-};
+/*
+ * all names, including private-to-pluto
+ * Tricky: lower bound and uppers bound are treated as unsigned long
+ * so we have to tack two ranges onto ike_idtype_names.
+ */
+enum_names ike_idtype_names_extended0 = ID_NR(ID_NONE, ID_NONE, &ike_idtype_names);
+enum_names ike_idtype_names_extended = ID_NR(ID_FROMCERT, ID_MYID, &ike_idtype_names_extended0);
 
-static enum_names ikev2_idtype_names_2 = {
-	ID_IPV6_ADDR, ID_IPV6_ADDR,
-	&ike_idtype_name[ID_IPV6_ADDR], 1,
-	NULL, /* prefix */
-	&ikev2_idtype_names_3
-};
+/* IKEv2 names exclude ID_IPV4_ADDR_SUBNET, ID_IPV6_ADDR_SUBNET-ID_IPV6_ADDR_RANGE */
 
-enum_names ikev2_idtype_names = {
-	ID_IPV4_ADDR, ID_RFC822_ADDR,
-	&ike_idtype_name[ID_IPV4_ADDR], ID_RFC822_ADDR-ID_IPV4_ADDR+1,
-	NULL, /* prefix */
-	&ikev2_idtype_names_2
-};
+static enum_names ikev2_idtype_names_3 = ID_NR(ID_DER_ASN1_DN, ID_NULL,	NULL);
+static enum_names ikev2_idtype_names_2 = ID_NR(ID_IPV6_ADDR, ID_IPV6_ADDR, &ikev2_idtype_names_3);
+enum_names ikev2_idtype_names = ID_NR(ID_IPV4_ADDR, ID_RFC822_ADDR, &ikev2_idtype_names_2);
+
+#undef ID_NR
 
 /* Certificate type values */
 static const char *const ike_cert_type_name[] = {

@@ -1482,9 +1482,8 @@ enum pubkey_alg {
  */
 
 enum ike_id_type {
-	ID_FROMCERT = (-3),	/* taken from certificate - private to Pluto */
-	ID_IMPOSSIBLE = (-2),	/* private to Pluto */
-	ID_MYID = (-1),		/* private to Pluto */
+	ID_FROMCERT = -2,	/* taken from certificate - private to Pluto */
+	ID_MYID = -1,		/* private to Pluto */
 	ID_NONE = 0,	/* private to Pluto */
 
 	ID_IPV4_ADDR = 1,

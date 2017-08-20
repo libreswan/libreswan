@@ -4150,12 +4150,10 @@ void show_one_connection(const struct connection *c)
 		idtoa(&c->spd.that.id, thatid, sizeof(thatid));
 
 	whack_log(RC_COMMENT,
-		"\"%s\"%s:   our idtype: %s; our id=%s; their idtype: %s; their id:%s",
+		"\"%s\"%s:   our idtype: %s; our id=%s; their idtype: %s; their id=%s",
 		c->name, instance,
-			c->spd.this.id.kind == -3 ? "%fromcert" :
-				enum_name(&ike_idtype_names, c->spd.this.id.kind), thisid,
-			c->spd.that.id.kind == -3 ? "%fromcert" :
-				enum_name(&ike_idtype_names, c->spd.that.id.kind), thatid);
+		enum_name(&ike_idtype_names_extended, c->spd.this.id.kind), thisid,
+		enum_name(&ike_idtype_names_extended, c->spd.that.id.kind), thatid);
 	}
 
 	/* slightly complicated stuff to avoid extra crap */

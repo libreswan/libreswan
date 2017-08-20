@@ -55,6 +55,8 @@ extern enum_names isakmp_transformid_names;
 extern enum_names ah_transformid_names;
 extern enum_names esp_transformid_names;
 extern enum_names ipcomp_transformid_names;
+extern enum_names ike_idtype_names_extended0;
+extern enum_names ike_idtype_names_extended;
 extern enum_names ike_idtype_names;
 extern enum_names ike_cert_type_names;
 extern enum_names oakley_enc_names;
