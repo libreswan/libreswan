@@ -61,12 +61,6 @@ static int snprint_ike_info(char *buf, size_t buflen,
 			ike_info->dh->group);
 }
 
-void alg_info_snprint_ike_info(char *buf, size_t buflen,
-			       const struct proposal_info *ike_info)
-{
-	snprint_ike_info(buf, buflen, ike_info, FALSE);
-}
-
 void alg_info_snprint_ike(char *buf, size_t buflen,
 			  struct alg_info_ike *alg_info)
 {

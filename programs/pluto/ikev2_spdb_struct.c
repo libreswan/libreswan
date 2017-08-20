@@ -1974,10 +1974,11 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 	proposals->roof = 1;
 
 	FOR_EACH_IKE_INFO(alg_info_ike, ike_info) {
-		DBG(DBG_CONTROL,
-		    char buf[1024];
-		    alg_info_snprint_ike_info(buf, sizeof(buf), ike_info);
-		    DBG_log("converting ike_info %s to ikev2 ...", buf));
+		LSWDBGP(DBG_CONTROL, buf) {
+			lswlogs(buf, "converting ike_info ");
+			lswlog_proposal_info(buf, ike_info);
+			lswlogs(buf, " to ikev2 ...");
+		}
 
 		/*
 		 * Both initialize and empty this proposal (might
