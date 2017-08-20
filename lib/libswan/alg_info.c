@@ -565,3 +565,15 @@ size_t lswlog_proposal_info(struct lswlog *log, struct proposal_info *proposal)
 	}
 	return size;
 }
+
+size_t lswlog_alg_info(struct lswlog *log, struct alg_info *alg_info)
+{
+	size_t size = 0;
+	const char *sep = "";
+	FOR_EACH_PROPOSAL_INFO(alg_info, proposal) {
+		size += lswlogs(log, sep);
+		size += lswlog_proposal_info(log, proposal);
+		sep = ", ";
+	}
+	return size;
+}

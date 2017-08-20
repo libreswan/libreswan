@@ -1543,13 +1543,10 @@ void add_connection(const struct whack_message *wm)
 				pfree(c);
 				return;
 			}
-			DBG(DBG_CRYPT | DBG_CONTROL, {
-				char buf[256]; /* XXX: fix magic value */
-				alg_info_ike_snprint(buf, sizeof(buf),
-						     c->alg_info_ike);
-				DBG_log("ike (phase1) algorithm values: %s",
-					buf);
-			});
+			LSWDBGP(DBG_CRYPT | DBG_CONTROL, buf) {
+				lswlogs(buf, "ike (phase1) algorithm values: ");
+				lswlog_alg_info(buf, &c->alg_info_ike->ai);
+			};
 			if (c->alg_info_ike->ai.alg_info_cnt == 0) {
 				loglog(RC_FATAL,
 					"Failed to add connection \"%s\" : got 0 transforms for ike=\"%s\"",
