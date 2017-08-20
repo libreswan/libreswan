@@ -143,7 +143,7 @@ west #
 000 "westnet-eastnet-aes128":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-aes128":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "westnet-eastnet-aes128":   IKE algorithms wanted: AES_CBC(7)_256-SHA2_256(4)-MODP2048(14), AES_CBC(7)_256-SHA2_512(6)-MODP2048(14), AES_CBC(7)_256-SHA1(2)-MODP2048(14), AES_CBC(7)_256-SHA2_256(4)-MODP1536(5), AES_CBC(7)_256-SHA2_512(6)-MODP1536(5), AES_CBC(7)_256-SHA1(2)-MODP1536(5)
-000 "westnet-eastnet-aes128":   IKE algorithms found:  AES_CBC(7)_256-SHA2_256(4)-MODP2048(14), AES_CBC(7)_256-SHA2_512(6)-MODP2048(14), AES_CBC(7)_256-SHA1(2)-MODP2048(14), AES_CBC(7)_256-SHA2_256(4)-MODP1536(5), AES_CBC(7)_256-SHA2_512(6)-MODP1536(5), AES_CBC(7)_256-SHA1(2)-MODP1536(5)
+000 "westnet-eastnet-aes128":   IKE algorithms found:  AES_CBC_256-HMAC_SHA2_256-MODP2048, AES_CBC_256-HMAC_SHA2_512-MODP2048, AES_CBC_256-HMAC_SHA1-MODP2048, AES_CBC_256-HMAC_SHA2_256-MODP1536, AES_CBC_256-HMAC_SHA2_512-MODP1536, AES_CBC_256-HMAC_SHA1-MODP1536
 000 "westnet-eastnet-aes128":   ESP algorithms wanted: AES(12)_128-SHA1(2)
 000 "westnet-eastnet-aes128":   ESP algorithms loaded: AES(12)_128-SHA1(2)
 000  
