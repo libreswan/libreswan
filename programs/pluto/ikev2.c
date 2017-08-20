@@ -649,12 +649,19 @@ struct ikev2_payload_errors ikev2_verify_payloads(struct ikev2_payloads_summary 
 /* report problems - but less so when OE */
 void ikev2_log_payload_errors(struct ikev2_payload_errors errors, struct state *st)
 {
-	if (!st && !DBGP(DBG_OPPO))
-		return;
-
-	else if (st != NULL && st->st_connection != NULL &&
-		(st->st_connection->policy & POLICY_OPPORTUNISTIC) && !DBGP(DBG_OPPO)) {
+	if (!DBGP(DBG_OPPO)) {
+		/*
+		 * ??? this logic is contorted.
+		 * If we have no state, we act as if this is opportunistic.
+		 * But if there is a state, but no connection,
+		 * we act as if this is NOT opportunistic.
+		 */
+		if (st == NULL || 
+		    (st->st_connection != NULL &&
+		     (st->st_connection->policy & POLICY_OPPORTUNISTIC)))
+		{
 			return;
+		}
 	}
 
 	if (errors.missing != LEMPTY) {
