@@ -177,12 +177,31 @@ void ike_alg_show_connection(const struct connection *c, const char *instance)
 			  instance,
 			  buf);
 
-		alg_info_snprint_ike(buf, sizeof(buf), c->alg_info_ike);
-		whack_log(RC_COMMENT,
-			  "\"%s\"%s:   IKE algorithms found:  %s",
-			  c->name,
-			  instance,
-			  buf);
+		/*
+		 * Now re-list the algorithms with any missing key
+		 * information filled in.
+		 *
+		 * This isn't perfect as, given AES, both AES_128 and
+		 * AES_256 will be proposed, and below doesn't
+		 * currently list the latter.
+		 */
+		LSWBUF(buf) {
+			const char *sep = "";
+			FOR_EACH_IKE_INFO(c->alg_info_ike, proposal) {
+				lswlogs(buf, sep);
+				struct proposal_info p = *proposal;
+				if (p.enckeylen == 0) {
+					p.enckeylen = p.encrypt->keydeflen;
+				}
+				lswlog_proposal_info(buf, &p);
+				sep = ", ";
+			}
+			whack_log(RC_COMMENT,
+				  "\"%s\"%s:   IKE algorithms found:  %s",
+				  c->name,
+				  instance,
+				  LSWBUF_BUF(buf));
+		}
 	}
 	st = state_with_serialno(c->newest_isakmp_sa);
 	if (st != NULL) {

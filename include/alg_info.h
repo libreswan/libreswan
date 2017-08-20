@@ -204,9 +204,6 @@ void alg_info_ike_snprint(char *buf, size_t buflen,
 void alg_info_esp_snprint(char *buf, size_t buflen,
 			  const struct alg_info_esp *alg_info_esp);
 
-void alg_info_snprint_ike(char *buf, size_t buflen,
-			  struct alg_info_ike *alg_info);
-
 void alg_info_snprint_phase2(char *buf, size_t buflen,
 			     struct alg_info_esp *alg_info);
 
