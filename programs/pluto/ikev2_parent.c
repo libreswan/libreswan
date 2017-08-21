@@ -668,8 +668,10 @@ stf_status ikev2parent_outI1(int whack_sock,
 
 	if (IS_LIBUNBOUND && !id_ipseckey_allowed(st, IKEv2_AUTH_RESERVED)) {
 		stf_status ret = idr_ipseckey_fetch(st);
-		if (ret != STF_OK)
+		if (ret != STF_OK) {
+			reset_globals();
 			return ret;
+		}
 	}
 
 	/*
