@@ -24,7 +24,7 @@ struct cavp_entry {
 	PK11SymKey **symkey;
 	signed long *signed_long;
 	unsigned long *unsigned_long;
-	struct cavp_entry **pick;
+	struct cavp_entry **entry;
 	/* constant values */
 	int value;
 	const struct encrypt_desc *encrypt;
@@ -44,9 +44,9 @@ struct cavp {
 };
 
 /*
- * Select the given PRF.
+ * Select the given entry
  */
-void op_pick(struct cavp_entry *entry, const char *value);
+void op_entry(struct cavp_entry *entry, const char *value);
 void op_ignore(struct cavp_entry *entry, const char *value);
 void op_chunk(struct cavp_entry *entry, const char *value);
 void op_symkey(struct cavp_entry *entry, const char *value);

@@ -33,14 +33,14 @@ static long int ni_length;
 static long int nr_length;
 static long int psk_length;
 static long int g_xy_length;
-static struct cavp_entry *prf;
+static struct cavp_entry *prf_entry;
 
 static struct cavp_entry config_entries[] = {
-	{ .key = "SHA-1", .op = op_pick, .pick = &prf, .prf = &ike_alg_prf_sha1, },
-	{ .key = "SHA-224", .op = op_pick, .pick = &prf, .prf = NULL, },
-	{ .key = "SHA-256", .op = op_pick, .pick = &prf, .prf = &ike_alg_prf_sha2_256, },
-	{ .key = "SHA-384", .op = op_pick, .pick = &prf, .prf = &ike_alg_prf_sha2_384, },
-	{ .key = "SHA-512", .op = op_pick, .pick = &prf, .prf = &ike_alg_prf_sha2_512, },
+	{ .key = "SHA-1", .op = op_entry, .entry = &prf_entry, .prf = &ike_alg_prf_sha1, },
+	{ .key = "SHA-224", .op = op_entry, .entry = &prf_entry, .prf = NULL, },
+	{ .key = "SHA-256", .op = op_entry, .entry = &prf_entry, .prf = &ike_alg_prf_sha2_256, },
+	{ .key = "SHA-384", .op = op_entry, .entry = &prf_entry, .prf = &ike_alg_prf_sha2_384, },
+	{ .key = "SHA-512", .op = op_entry, .entry = &prf_entry, .prf = &ike_alg_prf_sha2_512, },
 	{ .key = "Ni length", .op = op_signed_long, .signed_long = &ni_length, },
 	{ .key = "Nr length", .op = op_signed_long, .signed_long = &nr_length, },
 	{ .key = "pre-shared-key length", .op = op_signed_long, .signed_long = &psk_length, },
@@ -75,17 +75,17 @@ static struct cavp_entry data_entries[] = {
 static void ikev1_skeyid_alphabet(PK11SymKey *skeyid)
 {
 	PK11SymKey *skeyid_d =
-		ikev1_skeyid_d(prf->prf, skeyid,
+		ikev1_skeyid_d(prf_entry->prf, skeyid,
 			       g_xy, cky_i, cky_r);
 	print_symkey("SKEYID_d", skeyid_d, 0);
 
 	PK11SymKey *skeyid_a =
-		ikev1_skeyid_a(prf->prf, skeyid, skeyid_d,
+		ikev1_skeyid_a(prf_entry->prf, skeyid, skeyid_d,
 			       g_xy, cky_i, cky_r);
 	print_symkey("SKEYID_a", skeyid_a, 0);
 
 	PK11SymKey *skeyid_e =
-		ikev1_skeyid_e(prf->prf, skeyid, skeyid_a,
+		ikev1_skeyid_e(prf_entry->prf, skeyid, skeyid_a,
 			       g_xy, cky_i, cky_r);
 	print_symkey("SKEYID_e", skeyid_e, 0);
 
@@ -97,7 +97,7 @@ static void ikev1_skeyid_alphabet(PK11SymKey *skeyid)
 static void print_sig_config(void)
 {
 	config_number("g^xy length", g_xy_length);
-	config_key(prf->key);
+	config_key(prf_entry->key);
 	config_number("Ni length", ni_length);
 	config_number("Nr length", nr_length);
 }
@@ -111,12 +111,13 @@ static void run_sig(void)
 	print_chunk("Nr", nr, 0);
 	print_symkey("g^xy", g_xy, 0);
 
-	if (prf->prf == NULL) {
-		print_line(prf->key);
+	if (prf_entry->prf == NULL) {
+		/* not supported, ignore */
+		print_line(prf_entry->key);
 		return;
 	}
 
-	PK11SymKey *skeyid = ikev1_signature_skeyid(prf->prf,
+	PK11SymKey *skeyid = ikev1_signature_skeyid(prf_entry->prf,
 						    ni, nr,
 						    g_xy);
 	print_symkey("SKEYID", skeyid, 0);
@@ -140,7 +141,7 @@ struct cavp cavp_ikev1_sig = {
 static void print_psk_config(void)
 {
 	config_number("g^xy length", g_xy_length);
-	config_key(prf->key);
+	config_key(prf_entry->key);
 	config_number("Ni length", ni_length);
 	config_number("Nr length", nr_length);
 	config_number("pre-shared-key length", psk_length);
@@ -156,12 +157,13 @@ static void run_psk(void)
 	print_symkey("g^xy", g_xy, 0);
 	print_chunk("pre-shared-key", psk, 0);
 
-	if (prf == NULL) {
-		print_line(prf->key);
+	if (prf_entry->prf == NULL) {
+		/* not supported, ignore */
+		print_line(prf_entry->key);
 		return;
 	}
 
-	PK11SymKey *skeyid = ikev1_pre_shared_key_skeyid(prf->prf, psk,
+	PK11SymKey *skeyid = ikev1_pre_shared_key_skeyid(prf_entry->prf, psk,
 							 ni, nr);
 	print_symkey("SKEYID", skeyid, 0);
 	ikev1_skeyid_alphabet(skeyid);

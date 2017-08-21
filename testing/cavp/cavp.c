@@ -153,10 +153,10 @@ static void next_state(enum what what)
 const struct prf_desc *prf;
 const char *prf_name;
 
-void op_pick(struct cavp_entry *entry,
-	     const char *value UNUSED)
+void op_entry(struct cavp_entry *entry,
+	      const char *value UNUSED)
 {
-	*(entry->pick) = entry;
+	*(entry->entry) = entry;
 }
 
 void op_chunk(struct cavp_entry *entry,

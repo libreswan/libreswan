@@ -33,15 +33,15 @@ static long int ni_length;
 static long int nr_length;
 static long int dkm_length;
 static long int child_sa_dkm_length;
-static struct cavp_entry *prf;
+static struct cavp_entry *prf_entry;
 
 static struct cavp_entry config_entries[] = {
 	{ .key = "g^ir length", .op = op_signed_long, .signed_long = &g_ir_length },
-	{ .key = "SHA-1", .op = op_pick, .pick = &prf, .prf = &ike_alg_prf_sha1, },
-	{ .key = "SHA-224", .op = op_pick, .pick = &prf, },
-	{ .key = "SHA-256", .op = op_pick, .pick = &prf, .prf = &ike_alg_prf_sha2_256, },
-	{ .key = "SHA-384", .op = op_pick, .pick = &prf, .prf = &ike_alg_prf_sha2_384, },
-	{ .key = "SHA-512", .op = op_pick, .pick = &prf, .prf = &ike_alg_prf_sha2_512, },
+	{ .key = "SHA-1", .op = op_entry, .entry = &prf_entry, .prf = &ike_alg_prf_sha1, },
+	{ .key = "SHA-224", .op = op_entry, .entry = &prf_entry, .prf = NULL, },
+	{ .key = "SHA-256", .op = op_entry, .entry = &prf_entry, .prf = &ike_alg_prf_sha2_256, },
+	{ .key = "SHA-384", .op = op_entry, .entry = &prf_entry, .prf = &ike_alg_prf_sha2_384, },
+	{ .key = "SHA-512", .op = op_entry, .entry = &prf_entry, .prf = &ike_alg_prf_sha2_512, },
 	{ .key = "Ni length", .op = op_signed_long, .signed_long = &ni_length },
 	{ .key = "Nr length", .op = op_signed_long, .signed_long = &nr_length },
 	{ .key = "DKM length", .op = op_signed_long, .signed_long = &dkm_length },
@@ -52,7 +52,7 @@ static struct cavp_entry config_entries[] = {
 static void ikev2_config(void)
 {
 	config_number("g^ir length", g_ir_length);
-	config_key(prf->key);
+	config_key(prf_entry->key);
 	config_number("Ni length",ni_length);
 	config_number("Nr length",nr_length);
 	config_number("DKM length",dkm_length);
@@ -93,14 +93,14 @@ static void run_ikev2(void)
 	print_chunk("SPIi", spi_i, 0);
 	print_chunk("SPIr", spi_r, 0);
 
-	/* parser should have rejected an unknown PRF and aborted */
-	if (prf == NULL) {
-		print_line("PRF unknown");
-		exit(1);
+	if (prf_entry->prf == NULL) {
+		/* not supported, ignore */
+		print_line(prf_entry->key);
+		return;
 	}
 
 	/* SKEYSEED = prf(Ni | Nr, g^ir) */
-	PK11SymKey *skeyseed = ikev2_ike_sa_skeyseed(prf->prf,
+	PK11SymKey *skeyseed = ikev2_ike_sa_skeyseed(prf_entry->prf,
 						     ni, nr,
 						     g_ir);
 	print_symkey("SKEYSEED", skeyseed, 0);
@@ -111,25 +111,25 @@ static void run_ikev2(void)
 
 	/* prf+(SKEYSEED, Ni | Nr | SPIi | SPIr) */
 	PK11SymKey *dkm =
-		ikev2_ike_sa_keymat(prf->prf, skeyseed,
+		ikev2_ike_sa_keymat(prf_entry->prf, skeyseed,
 				    ni, nr, spi_i, spi_r, dkm_length / 8);
 	print_symkey("DKM", dkm, dkm_length / 8);
 
 	/* prf+(SK_d, Ni | Nr) */
-	PK11SymKey *SK_d = key_from_symkey_bytes(dkm, 0, prf->prf->prf_key_size);
+	PK11SymKey *SK_d = key_from_symkey_bytes(dkm, 0, prf_entry->prf->prf_key_size);
 	PK11SymKey *child_sa_dkm =
-		ikev2_child_sa_keymat(prf->prf, SK_d, NULL, ni, nr, child_sa_dkm_length / 8);
+		ikev2_child_sa_keymat(prf_entry->prf, SK_d, NULL, ni, nr, child_sa_dkm_length / 8);
 	print_symkey("DKM(Child SA)", child_sa_dkm, child_sa_dkm_length / 8);
 
 	/* prf+(SK_d, g^ir (new) | Ni | Nr) */
 	PK11SymKey *child_sa_dkm_dh =
-		ikev2_child_sa_keymat(prf->prf, SK_d, g_ir_new, ni, nr,
+		ikev2_child_sa_keymat(prf_entry->prf, SK_d, g_ir_new, ni, nr,
 				      child_sa_dkm_length / 8);
 	print_symkey("DKM(Child SA D-H)", child_sa_dkm_dh, child_sa_dkm_length / 8);
 
 	/* SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr) */
 	PK11SymKey *skeyseed_rekey =
-		ikev2_ike_sa_rekey_skeyseed(prf->prf, SK_d, g_ir_new, ni, nr);
+		ikev2_ike_sa_rekey_skeyseed(prf_entry->prf, SK_d, g_ir_new, ni, nr);
 	print_symkey("SKEYSEED(Rekey)", skeyseed_rekey, 0);
 	if (skeyseed_rekey == NULL) {
 		print_line("failure in SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr)");
