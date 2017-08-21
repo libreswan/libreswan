@@ -81,7 +81,7 @@ static void enum_stats(enum_names *en, unsigned long lwb, unsigned long upb, con
 		const char *nm = enum_short_name(en, e);
 
 		/* not logging "UNUSED" */
-		if (strstr(nm, "UNUSED") == NULL)
+		if (nm != NULL && strstr(nm, "UNUSED") == NULL)
 			whack_log(RC_COMMENT, "#total.%s.%s=%lu",
 				what, nm, count[e]);
 	}
