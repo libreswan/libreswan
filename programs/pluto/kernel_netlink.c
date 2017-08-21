@@ -849,56 +849,43 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 #ifdef USE_NIC_OFFLOAD
 static void netlink_find_offload_feature(const char *ifname)
 {
-	struct ethtool_sset_info *sset_info = NULL;
-	struct ethtool_gstrings *cmd = NULL;
-	struct ifreq ifr;
-	uint32_t sset_len, i;
-	char *str;
-	int err;
-
 	netlink_esp_hw_offload = NIC_OFFLOAD_UNSUPPORTED;
 
 	/* Determine number of device-features */
-	sset_info = alloc_bytes(sizeof(*sset_info) + sizeof(sset_info->data[0]), "ethtool_sset_info");
+	struct ethtool_sset_info *sset_info = 
+		alloc_bytes(sizeof(*sset_info) + sizeof(sset_info->data[0]), "ethtool_sset_info");
 	sset_info->cmd = ETHTOOL_GSSET_INFO;
 	sset_info->sset_mask = 1ULL << ETH_SS_FEATURES;
+
+	struct ifreq ifr;
+
 	jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
 	ifr.ifr_data = (void *)sset_info;
-	err = ioctl(netlinkfd, SIOCETHTOOL, &ifr);
-	if (err != 0)
-		goto out;
+	if (ioctl(netlinkfd, SIOCETHTOOL, &ifr) == 0 &&
+	    sset_info->sset_mask == 1ULL << ETH_SS_FEATURES)
+	{
+		/* Retrieve names of device-features */
+		uint32_t sset_len = sset_info->data[0];
 
-	if (sset_info->sset_mask != 1ULL << ETH_SS_FEATURES)
-		goto out;
-	sset_len = sset_info->data[0];
-
-	/* Retrieve names of device-features */
-	cmd = alloc_bytes(sizeof(*cmd) + ETH_GSTRING_LEN * sset_len, "ethtool_gstrings");
-	cmd->cmd = ETHTOOL_GSTRINGS;
-	cmd->string_set = ETH_SS_FEATURES;
-	jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
-	ifr.ifr_data = (void *)cmd;
-	err = ioctl(netlinkfd, SIOCETHTOOL, &ifr);
-	if (err)
-		goto out;
-
-	/* Look for the ESP_HW feature bit */
-	str = (char *)cmd->data;
-	for (i = 0; i < cmd->len; i++) {
-		if (strneq(str, "esp-hw-offload", ETH_GSTRING_LEN) == 0)
-			break;
-		str += ETH_GSTRING_LEN;
-	}
-	if (i >= cmd->len)
-		goto out;
-
-	netlink_esp_hw_offload = i;
-
-out:
-	pfree(sset_info);
-
-	if (cmd != NULL)
+		struct ethtool_gstrings *cmd  = alloc_bytes(sizeof(*cmd) + ETH_GSTRING_LEN * sset_len, "ethtool_gstrings");
+		cmd->cmd = ETHTOOL_GSTRINGS;
+		cmd->string_set = ETH_SS_FEATURES;
+		jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
+		ifr.ifr_data = (void *)cmd;
+		if (ioctl(netlinkfd, SIOCETHTOOL, &ifr) == 0) {
+			/* Look for the ESP_HW feature bit */
+			char *str = (char *)cmd->data;
+			for (uint32_t i = 0; i < cmd->len; i++) {
+				if (strneq(str, "esp-hw-offload", ETH_GSTRING_LEN) == 0) {
+					netlink_esp_hw_offload = i;
+					break;
+				}
+				str += ETH_GSTRING_LEN;
+			}
+		}
 		pfree(cmd);
+	}
+	pfree(sset_info);
 }
 
 static enum iface_nic_offload netlink_detect_offload(const char *ifname)
