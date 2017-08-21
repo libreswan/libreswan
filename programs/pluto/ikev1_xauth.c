@@ -1017,7 +1017,7 @@ static bool do_file_authentication(struct state *st, const char *name,
 					char *temp;
 					char single_addresspool[128];
 					pool_range = alloc_thing(ip_range, "pool_range");
-					if (pool_range != NULL){
+					if (pool_range != NULL) {
 						temp = strchr(addresspool, '-');
 						if (temp == NULL ) {
 							/* convert single ip address to addresspool */
@@ -1033,7 +1033,7 @@ static bool do_file_authentication(struct state *st, const char *name,
 							ttorange(addresspool, 0, AF_INET, pool_range, TRUE);
 						}
 						/* if valid install new addresspool */
-						if (pool_range->start.u.v4.sin_addr.s_addr){
+						if (pool_range->start.u.v4.sin_addr.s_addr) {
 						    /* delete existing pool if exits */
 							if (c->pool)
 								unreference_addresspool(c);

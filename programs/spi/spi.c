@@ -1810,8 +1810,7 @@ int main(int argc, char *argv[])
 							K_SADB_EXT_LIFETIME_CURRENT];
 
 					if (s != NULL) {
-						printf("%s: lifetime_current=%u(allocations)/%" PRIu64 "(bytes)/%"
-							PRIu64 "(addtime)/%" PRIu64 "(usetime)"
+						printf("%s: lifetime_current=%u(allocations)/%" PRIu64 "(bytes)/%" PRIu64 "(addtime)/%" PRIu64 "(usetime)"
 #ifdef NOT_YET
 						       "/%d(packets)"
 #endif /* NOT_YET */

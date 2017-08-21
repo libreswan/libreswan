@@ -156,7 +156,7 @@ stf_status dpd_init(struct state *st)
 	if (p1st->hidden_variables.st_peer_supports_dpd) {
 		DBG(DBG_DPD, DBG_log("Dead Peer Detection (RFC 3706): enabled"));
 		if (st->st_dpd_event == NULL || ev_before(st->st_dpd_event,
-					st->st_connection->dpd_delay)){
+					st->st_connection->dpd_delay)) {
 			if (st->st_dpd_event != NULL)
 				delete_dpd_event(st);
 			event_schedule(EVENT_DPD,

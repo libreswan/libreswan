@@ -399,11 +399,11 @@ static bool parent_vanished(struct state *st)
 			fmt_conn_instance(c, cib1);
 			fmt_conn_instance(pst->st_connection, cib2);
 
-			DBG(DBG_CONTROLMORE, DBG_log("\"%s\"%s #%lu parent connection of this state is diffeent"
-						" \"%s\"%s #%lu",
-						c->name, cib1, st->st_serialno,
-						pst->st_connection->name, cib2,
-						pst->st_serialno));
+			DBG(DBG_CONTROLMORE,
+				DBG_log("\"%s\"%s #%lu parent connection of this state is diffeent \"%s\"%s #%lu",
+					c->name, cib1, st->st_serialno,
+					pst->st_connection->name, cib2,
+					pst->st_serialno));
 		}
 		return FALSE;
 	}
@@ -467,8 +467,8 @@ static void liveness_check(struct state *st)
 		}
 
 		DBG(DBG_DPD,
-			DBG_log("#%lu liveness_check - last_liveness: %ld, tm: %ld "
-				"parent #%lu", st->st_serialno,
+			DBG_log("#%lu liveness_check - last_liveness: %ld, tm: %ld parent #%lu",
+				st->st_serialno,
 				(long)last_liveness.mono_secs,
 				(long)tm.mono_secs, pst->st_serialno));
 
@@ -480,9 +480,7 @@ static void liveness_check(struct state *st)
 
 		if (pst->st_pend_liveness &&
 				deltasecs(monotimediff(tm, last_liveness)) >= timeout) {
-			libreswan_log("#%lu liveness_check - peer %s "
-					"has not responded in %ld seconds, with a timeout of "
-					"%ld, taking %s",
+			libreswan_log("#%lu liveness_check - peer %s has not responded in %ld seconds, with a timeout of %ld, taking %s",
 					st->st_serialno, that_ip.buf,
 					(long)deltasecs(monotimediff(tm, last_liveness)),
 					(long)timeout,
@@ -499,13 +497,12 @@ static void liveness_check(struct state *st)
 					st->st_serialno, that_ip.buf));
 
 			if (ret != STF_OK) {
-				DBG(DBG_DPD, DBG_log("#%lu failed to send liveness informational from "
-							"%s to %s using parent "
-							" #%lu",
-							st->st_serialno,
-							this_ip.buf,
-							that_ip.buf,
-							pst->st_serialno));
+				DBG(DBG_DPD,
+					DBG_log("#%lu failed to send liveness informational from %s to %s using parent  #%lu",
+						st->st_serialno,
+						this_ip.buf,
+						that_ip.buf,
+						pst->st_serialno));
 				return; /* this prevents any new scheduling ??? */
 			}
 		}
@@ -751,24 +748,24 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 
 		if (IS_IKE_SA(st)) {
 			newest = c->newest_isakmp_sa;
-			DBG(DBG_LIFECYCLE, DBG_log("%s picked newest_isakmp_sa "
-						"#%lu",
-						enum_name(&timer_event_names,
-							type), newest));
+			DBG(DBG_LIFECYCLE,
+				DBG_log("%s picked newest_isakmp_sa #%lu",
+					enum_name(&timer_event_names, type),
+					newest));
 		} else {
 			newest = c->newest_ipsec_sa;
-			DBG(DBG_LIFECYCLE, DBG_log("%s picked newest_ipsec_sa "
-						"#%lu",
-					       enum_name(&timer_event_names,
-							type), newest));
+			DBG(DBG_LIFECYCLE,
+				DBG_log("%s picked newest_ipsec_sa #%lu",
+					enum_name(&timer_event_names, type),
+					newest));
 		}
 
 		if (newest != SOS_NOBODY && newest > st->st_serialno) {
 			/* not very interesting: no need to replace */
-			DBG(DBG_LIFECYCLE, DBG_log(
-					"not replacing stale %s SA: #%lu will do",
-					IS_IKE_SA(st) ?
-					"ISAKMP" : "IPsec", newest));
+			DBG(DBG_LIFECYCLE,
+				DBG_log("not replacing stale %s SA: #%lu will do",
+					IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
+					newest));
 		} else if (type == EVENT_v2_SA_REPLACE_IF_USED &&
 				get_sa_info(st, TRUE, &last_used_age) &&
 				deltaless(c->sa_rekey_margin, last_used_age)) {

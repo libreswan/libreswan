@@ -584,9 +584,10 @@ struct state *state_with_parent_msgid_expect(so_serial_t psn, msgid_t st_msgid,
 							expected_state)) {
 				return st;}});
 	}
-	DBG(DBG_CONTROL, DBG_log("no waiting child state matching pst #%lu "
-				"msg id %u expected state %s", psn, ntohs(st_msgid),
-				 enum_name(&state_names, expected_state)));
+	DBG(DBG_CONTROL,
+		DBG_log("no waiting child state matching pst #%lu msg id %u expected state %s",
+			psn, ntohs(st_msgid),
+			 enum_name(&state_names, expected_state)));
 	return NULL;
 }
 
@@ -1414,13 +1415,13 @@ struct state *duplicate_state(struct state *st, sa_t sa_type)
 
 	nst = new_state();
 
-	DBG(DBG_CONTROL, DBG_log("duplicating state object #%lu \"%s\"%s as "
-				 "#%lu for %s",
-				 st->st_serialno,
-				 st->st_connection->name,
-				 fmt_conn_instance(st->st_connection, cib),
-				 nst->st_serialno,
-				 sa_type == IPSEC_SA ? "IPSEC SA" : "IKE SA"));
+	DBG(DBG_CONTROL,
+		DBG_log("duplicating state object #%lu \"%s\"%s as #%lu for %s",
+			 st->st_serialno,
+			 st->st_connection->name,
+			 fmt_conn_instance(st->st_connection, cib),
+			 nst->st_serialno,
+			 sa_type == IPSEC_SA ? "IPSEC SA" : "IKE SA"));
 
 	nst->st_connection = st->st_connection;
 	if (sa_type == IPSEC_SA) {
@@ -1830,12 +1831,9 @@ bool find_pending_phas2(const so_serial_t psn,
 	}
 
 	if (n > 0) {
-		DBG(DBG_CONTROL, {
-				DBG_log("connection %s has %d pending IPsec "
-					"negotiations ike #%lu last child state"
-					" #%lu",
-					c->name, n, psn, best->st_serialno);
-				});
+		DBG(DBG_CONTROL,
+			DBG_log("connection %s has %d pending IPsec negotiations ike #%lu last child state #%lu",
+				c->name, n, psn, best->st_serialno));
 	}
 
 	return best != NULL;
@@ -2530,9 +2528,10 @@ void ikev2_repl_est_ipsec(struct state *st, void *data)
 		return;
 
 	if (predecessor != st->st_connection->newest_isakmp_sa) {
-		DBG(DBG_CONTROLMORE, DBG_log("#%lu, replacing #%lu. #%lu is not the newest IKE SA of"
-					" %s", predecessor, st->st_serialno,
-					predecessor, st->st_connection->name));
+		DBG(DBG_CONTROLMORE,
+			DBG_log("#%lu, replacing #%lu. #%lu is not the newest IKE SA of %s",
+				predecessor, st->st_serialno,
+				predecessor, st->st_connection->name));
 	}
 
 	{

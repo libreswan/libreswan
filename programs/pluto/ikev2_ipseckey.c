@@ -218,8 +218,9 @@ static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf,
 	idtoa(&st->st_connection->spd.that.id, thatidbuf, sizeof(thatidbuf));
 	/* algorithm is hardcoded RSA -- PUBKEY_ALG_RSA */
 	if (dnsr->delete_exisiting_keys)  {
-		DBG(DBG_DNS, DBG_log("delete RSA public keys(s) from pluto id="
-					"%s", thatidbuf));
+		DBG(DBG_DNS,
+			DBG_log("delete RSA public keys(s) from pluto id=%s",
+				thatidbuf));
 		/* delete only once. then multiple keys could be added */
 		delete_public_keys(&pluto_pubkeys, &keyid, PUBKEY_ALG_RSA);
 		dnsr->delete_exisiting_keys = FALSE;
@@ -236,10 +237,11 @@ static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf,
 					thatidbuf, ttl_buf,
 					enum_name(&dns_auth_level_names, al)));
 	} else {
-		DBG(DBG_DNS, DBG_log("add IPSECKEY pluto as publickey %s"
-					" dns query is %s %s %s", thatidbuf,
-					dnsr->qname, ttl_buf,
-					enum_name(&dns_auth_level_names, al)));
+		DBG(DBG_DNS,
+			DBG_log("add IPSECKEY pluto as publickey %s dns query is %s %s %s",
+				thatidbuf,
+				dnsr->qname, ttl_buf,
+				enum_name(&dns_auth_level_names, al)));
 	}
 
 	ugh = add_ipseckey(&keyid, al, PUBKEY_ALG_RSA, ttl, ttl_used,
@@ -269,11 +271,11 @@ static void validate_address(struct p_dns_req *dnsr, unsigned char *addr)
 		return;
 
 	if (!sameaddr(&ipaddr, &st->st_remoteaddr)) {
-		DBG(DBG_DNS, DBG_log(" forward address of IDi %s "
-					" do not match remote address "
-					"%s != %s", dnsr->qname,
-					ipstr(&st->st_remoteaddr, &ra),
-					ipstr(&ipaddr, &rb)));
+		DBG(DBG_DNS,
+			DBG_log(" forward address of IDi %s do not match remote address %s != %s",
+				dnsr->qname,
+				ipstr(&st->st_remoteaddr, &ra),
+				ipstr(&ipaddr, &rb)));
 		return;
 	}
 
@@ -311,17 +313,18 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 		output = ldns_buffer_new((dnsr->wire_len * 8/6 + 2 +1) * 2);
 
 		if (qclass != dnsr->qclass) {
-			DBG(DBG_DNS, DBG_log("dns answer %zu qclass mismatch expect %s vs %s "
-						"ignore the answer now",
-						i, class_e->name, class->name));
+			DBG(DBG_DNS,
+				DBG_log("dns answer %zu qclass mismatch expect %s vs %s ignore the answer now",
+					i, class_e->name, class->name));
 			/* unexpected qclass. possibly malfuctioning dns */
 			continue;
 		}
 
 		rdf = ldns_rr_rdf(ans, 0);
 		if (rdf == NULL) {
-			DBG(DBG_DNS, DBG_log("dns answer %zu did not convert to rdf "
-						"ignore this answer", i));
+			DBG(DBG_DNS,
+				DBG_log("dns answer %zu did not convert to rdf ignore this answer",
+					i));
 			continue;
 		}
 
@@ -386,9 +389,9 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 
 		if (atype != dnsr->qtype) {
 			/* dns server stuffed extra rr types, ignore */
-			DBG(DBG_DNS, DBG_log("dns answer %zu qtype mismatch expect %d vs %d "
-						"ignore this answer",
-						i,  dnsr->qtype, atype));
+			DBG(DBG_DNS,
+				DBG_log("dns answer %zu qtype mismatch expect %d vs %d ignore this answer",
+					i,  dnsr->qtype, atype));
 
 			continue;
 		}
@@ -490,14 +493,13 @@ static void ipseckey_dbg_dns_resp(struct p_dns_req *dnsr)
 	struct timeval served_delta;
 
 	timersub(&dnsr->done_time, &dnsr->start_time, &served_delta);
-	DBG(DBG_CONTROL, DBG_log("%s returned %s "
-				"cache=%s elapsedtime %lu.%06lu",
-				dnsr->log_buf,
-				dnsr->rcode_name,
-				dnsr->cache_hit ? "yes" : "no",
-				(unsigned long)served_delta.tv_sec,
-				(unsigned long)(served_delta.tv_usec * 1000000)
-				));
+	DBG(DBG_CONTROL,
+		DBG_log("%s returned %s cache=%s elapsedtime %lu.%06lu",
+			dnsr->log_buf,
+			dnsr->rcode_name,
+			dnsr->cache_hit ? "yes" : "no",
+			(unsigned long)served_delta.tv_sec,
+			(unsigned long)(served_delta.tv_usec * 1000000)));
 
 	DBG(DBG_DNS, DBG_log("DNSSEC=%s %s MSG SIZE %d bytes",
 				(dnsr->secure == UB_EVNET_SECURE) ? "SECURE" :

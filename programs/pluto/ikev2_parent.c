@@ -162,12 +162,12 @@ static stf_status add_st_send_list(struct state *st, struct state *pst)
 			p->next = n;
 		}
 	}
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s using parent #%lu "
-				"unacknowledged %u next message id="
-				"%u ike excange window %u", st->st_serialno,
-				what, pst->st_serialno, unack,
-				pst->st_msgid_nextuse,
-				pst->st_connection->ike_window));
+	DBG(DBG_CONTROLMORE,
+		DBG_log("#%lu %s using parent #%lu unacknowledged %u next message id=%u ike excange window %u",
+			st->st_serialno,
+			what, pst->st_serialno, unack,
+			pst->st_msgid_nextuse,
+			pst->st_connection->ike_window));
 	return e;
 }
 
@@ -280,7 +280,7 @@ static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
 		} else {
 			unpack_nonce(&st->st_nr, r);
 			if (md->chain[ISAKMP_NEXT_v2KE] != NULL &&
-					r->pcr_type == pcr_build_ke_and_nonce){
+					r->pcr_type == pcr_build_ke_and_nonce) {
 				unpack_KE_from_helper(st, r, &st->st_gr);
 			}
 			e = ikev2_rekey_dh_start(r,md); /* STF_SUSPEND | OK */
@@ -572,8 +572,8 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
 		err21 = enum_show(&ike_idtype_names, id.kind);
 	}
 
-	DBG(DBG_CONTROLMORE, DBG_log("%s #%lu not fetching ipseckey "
-			"%s %s%s %s%s remote=%s thatid=%s",
+	DBG(DBG_CONTROLMORE,
+		DBG_log("%s #%lu not fetching ipseckey %s %s%s %s%s remote=%s thatid=%s",
 			c->name, st->st_serialno,
 			err1, err2, err21, err3, err31,
 			ipstr(&st->st_remoteaddr, &ra), thatid));
@@ -1104,7 +1104,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	unsigned int i;
 
 	/* XXX in the near future, this loop should find type=passthrough and return STF_DROP */
-	for (i=0; i < elemsof(policies); i++){
+	for (i=0; i < elemsof(policies); i++) {
 		policy = policies[i] | POLICY_IKEV2_ALLOW;
 		e = ikev2_find_host_connection(&c, &md->iface->ip_addr,
 				md->iface->port, &md->sender, md->sender_port,
@@ -3063,10 +3063,10 @@ static stf_status ikev2_parent_inR1outI2_tail(
 				cc->name));
 		}
 
-		if (cc != cst->st_connection){
+		if (cc != cst->st_connection) {
+			/* ??? DBG_long not conditional on some DBG selector */
 			char cib[CONN_INST_BUF];
-			DBG_log("Switching Child connection for #%lu to \"%s\"%s"
-					" from \"%s\"%s",
+			DBG_log("Switching Child connection for #%lu to \"%s\"%s from \"%s\"%s",
 					cst->st_serialno, cc->name,
 					fmt_conn_instance(cc, cib),
 					pc->name, fmt_conn_instance(pc, cib));
@@ -3717,13 +3717,12 @@ static void ikev2_child_set_pfs(struct state *st)
 		struct state *pst = state_with_serialno(st->st_clonedfrom);
 
 		st->st_pfs_group = pst->st_oakley.group;
-		DBG(DBG_CONTROL, DBG_log("#%lu no phase2 MODP group specified "
-					"on this connection %s use seletected "
-					"IKE MODP group %s from #%lu",
-					st->st_serialno,
-					c->name,
-					st->st_pfs_group->common.name,
-					pst->st_serialno));
+		DBG(DBG_CONTROL,
+			DBG_log("#%lu no phase2 MODP group specified on this connection %s use seletected IKE MODP group %s from #%lu",
+				st->st_serialno,
+				c->name,
+				st->st_pfs_group->common.name,
+				pst->st_serialno));
 	}
 }
 
@@ -4384,10 +4383,10 @@ static struct state *find_state_to_rekey(struct payload_digest *p,
 
 	if (ntfy.isan_protoid == PROTO_IPSEC_ESP ||
 			ntfy.isan_protoid == PROTO_IPSEC_AH) {
-		DBG(DBG_CONTROLMORE, DBG_log("CREATE_CHILD_SA IPsec SA rekey "
-					"Protocol %s",
-					enum_show(&ikev2_protocol_names,
-						ntfy.isan_protoid)));
+		DBG(DBG_CONTROLMORE,
+			DBG_log("CREATE_CHILD_SA IPsec SA rekey Protocol %s",
+				enum_show(&ikev2_protocol_names,
+					ntfy.isan_protoid)));
 
 	} else {
 		libreswan_log("CREATE_CHILD_SA IPsec SA rekey invalid Protocol ID %s",
@@ -4396,26 +4395,25 @@ static struct state *find_state_to_rekey(struct payload_digest *p,
 		return NULL;
 	}
 	if (ntfy.isan_spisize != sizeof(ipsec_spi_t)) {
-		libreswan_log("CREATE_CHILD_SA IPsec SA rekey invalid spi "
-				"size %u", ntfy.isan_spisize);
+		libreswan_log("CREATE_CHILD_SA IPsec SA rekey invalid spi size %u",
+			ntfy.isan_spisize);
 		return NULL;
 	}
 
 	if (!in_raw(&spi, sizeof(spi), &p->pbs, "SPI"))
 		return NULL;      /* cannot happen */
 
-	DBG(DBG_CONTROLMORE, DBG_log("CREATE_CHILD_S to rekey IPsec SA(0x%08"
-				PRIx32 ") Protocol %s", ntohl((uint32_t) spi),
-				enum_show(&ikev2_protocol_names,
-					ntfy.isan_protoid)));
+	DBG(DBG_CONTROLMORE,
+		DBG_log("CREATE_CHILD_S to rekey IPsec SA(0x%08" PRIx32 ") Protocol %s",
+			ntohl((uint32_t) spi),
+			enum_show(&ikev2_protocol_names, ntfy.isan_protoid)));
 
 	st = find_state_ikev2_child_to_delete(pst->st_icookie, pst->st_rcookie,
 			ntfy.isan_protoid, spi);
 	if (st == NULL) {
-		libreswan_log("CREATE_CHILD_SA no such IPsec SA to rekey SA(0x%08"
-				PRIx32 ") Protocol %s", ntohl((uint32_t) spi),
-				enum_show(&ikev2_protocol_names,
-					ntfy.isan_protoid));
+		libreswan_log("CREATE_CHILD_SA no such IPsec SA to rekey SA(0x%08" PRIx32 ") Protocol %s",
+			ntohl((uint32_t) spi),
+			enum_show(&ikev2_protocol_names, ntfy.isan_protoid));
 	}
 
 	return st;
@@ -4508,12 +4506,11 @@ static stf_status ikev2_rekey_child_copy_ts(const struct msg_digest *md)
 	DBG(DBG_CONTROLMORE, {
 			char cib[CONN_INST_BUF];
 
-			DBG_log("#%lu inherit spd, TSi TSr, from "
-					"\"%s\"%s #%lu", st->st_serialno,
-					rst->st_connection->name,
-					fmt_conn_instance(rst->st_connection, cib),
-					rst->st_serialno); });
-
+			DBG_log("#%lu inherit spd, TSi TSr, from \"%s\"%s #%lu",
+				st->st_serialno,
+				rst->st_connection->name,
+				fmt_conn_instance(rst->st_connection, cib),
+				rst->st_serialno); });
 
 	spd = &rst->st_connection->spd;
 	st->st_ts_this = ikev2_end_to_ts(&spd->this);
@@ -4523,7 +4520,6 @@ static stf_status ikev2_rekey_child_copy_ts(const struct msg_digest *md)
 
 	return ret;
 }
-
 
 /* once done use the same function in ikev2_parent_inR1outI2_tail too */
 static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
@@ -5850,13 +5846,13 @@ void ikev2_add_ipsec_child(int whack_sock, struct state *isakmp_sa,
 		pfsgroupname = st->st_pfs_group->common.name;
 	}
 
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu schedule event to initiate IPsec SA "
-				"%s%s using IKE#%lu pfs=%s",
-				st->st_serialno,
-				prettypolicy(policy),
-				replacestr,
-				isakmp_sa->st_serialno,
-				pfsgroupname));
+	DBG(DBG_CONTROLMORE,
+		DBG_log("#%lu schedule event to initiate IPsec SA %s%s using IKE#%lu pfs=%s",
+			st->st_serialno,
+			prettypolicy(policy),
+			replacestr,
+			isakmp_sa->st_serialno,
+			pfsgroupname));
 	delete_event(st);
 	event_schedule(EVENT_v2_INITIATE_CHILD, 0, st);
 	reset_globals();

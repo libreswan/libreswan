@@ -860,19 +860,17 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 		ipstr_buf b;
 		char ca[CONN_INST_BUF];
 		char cb[CONN_INST_BUF];
-		DBG(DBG_CONTROLMORE, DBG_log("\"%s\"%s #%lu received %s CREATE_CHILD_SA %s "
-					"from %s:%u Child \"%s\"%s #%lu in %s "
-					"will process it further ",
-					pst->st_connection->name,
-					fmt_conn_instance(pst->st_connection,
-						ca), pst->st_serialno,
-					what, why, ipstr(&md->sender, &b),
-					md->sender_port,
-					st->st_connection->name,
-					fmt_conn_instance(st->st_connection, cb),
-					st->st_serialno,
-					enum_name(&state_names, st->st_state)));
-
+		DBG(DBG_CONTROLMORE,
+			DBG_log("\"%s\"%s #%lu received %s CREATE_CHILD_SA %s from %s:%u Child \"%s\"%s #%lu in %s will process it further",
+				pst->st_connection->name,
+				fmt_conn_instance(pst->st_connection, ca),
+				pst->st_serialno,
+				what, why, ipstr(&md->sender, &b),
+				md->sender_port,
+				st->st_connection->name,
+				fmt_conn_instance(st->st_connection, cb),
+				st->st_serialno,
+				enum_name(&state_names, st->st_state)));
         }
         return st;
 }
@@ -881,20 +879,17 @@ static bool last_reply_retransmit(struct state *st,
 		const enum isakmp_xchg_types ix)
 {
 	if (st->st_msgid_lastreplied == st->st_msgid_lastrecv) {
-		DBG(DBG_CONTROLMORE, DBG_log("retransmit response for "
-					"message ID: %u exchnage %s",
-					st->st_msgid_lastrecv,
-					enum_name(&ikev2_exchange_names, ix)));
+		DBG(DBG_CONTROLMORE,
+			DBG_log("retransmit response for message ID: %u exchange %s",
+				st->st_msgid_lastrecv,
+				enum_name(&ikev2_exchange_names, ix)));
 		return TRUE;
-
-
 	} else {
-		DBG(DBG_CONTROLMORE, DBG_log("can not retransmit response for "
-					"message ID: %u exchnage %s lastreplied"
-					" %u", st->st_msgid_lastrecv,
-					enum_name(&ikev2_exchange_names, ix),
-					st->st_msgid_lastreplied));
-
+		DBG(DBG_CONTROLMORE,
+			DBG_log("cannot retransmit response for message ID: %u exchange %s lastreplied %u",
+				st->st_msgid_lastrecv,
+				enum_name(&ikev2_exchange_names, ix),
+				st->st_msgid_lastreplied));
 		return FALSE;
 	}
 }
@@ -1344,7 +1339,7 @@ void process_v2_packet(struct msg_digest **mdp)
 	md->from_state = svm->state;
 	md->svm = svm;
 
-	/* bit further processing of create CREATE_CHILD_SA exchnage */
+	/* bit further processing of create CREATE_CHILD_SA exchange */
 	if (ix == ISAKMP_v2_CREATE_CHILD_SA) {
 		/* lets get a child state either new or existing to proceed */
 		struct state *cst = process_v2_child_ix(md, st);
@@ -1715,9 +1710,9 @@ static void sechdule_next_send(struct state *st)
 			delete_event(cst);
 			event_schedule(EVENT_v2_SEND_NEXT_IKE, 0, cst);
 			DBG(DBG_CONTROLMORE,
-					DBG_log("#%lu send next using parent #%lu next message id=%u, "
-						"waiting to send %d", cst->st_serialno,
-						st->st_serialno, st->st_msgid_nextuse, i));
+				DBG_log("#%lu send next using parent #%lu next message id=%u, waiting to send %d",
+					cst->st_serialno, st->st_serialno,
+					st->st_msgid_nextuse, i));
 		}
 		st->send_next_ix = st->send_next_ix->next;
 		pfree(p);
@@ -1778,9 +1773,8 @@ void ikev2_update_msgid_counters(struct msg_digest *md)
 		}
 	}
 
-	DBG(DBG_CONTROLMORE, DBG_log("message ID #%lu %s %s pst #%lu "
-			"st_msgid_nextuse(before=%u) %u "
-			"st_msgid_lastack %u st_msgid_lastrecv %u md is a %s",
+	DBG(DBG_CONTROLMORE,
+		DBG_log("message ID #%lu %s %s pst #%lu st_msgid_nextuse(before=%u) %u st_msgid_lastack %u st_msgid_lastrecv %u md is a %s",
 			st->st_serialno, enum_name(&state_names, st->st_state),
 			st->st_connection->name, ikesa->st_serialno,
 			st_msgid_nextuse,
