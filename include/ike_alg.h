@@ -70,9 +70,10 @@ enum ike_alg_key {
 	IKEv1_OAKLEY_ID,
 	IKEv1_ESP_ID,
 	IKEv2_ALG_ID,
+
+	IKE_ALG_KEY_ROOF,
+	IKE_ALG_KEY_FLOOR = IKEv1_OAKLEY_ID
 };
-#define IKE_ALG_KEY_FLOOR (IKEv1_OAKLEY_ID)
-#define IKE_ALG_KEY_ROOF (IKEv2_ALG_ID+1)
 
 /*
  * User friendly string representing the key (protocol family).

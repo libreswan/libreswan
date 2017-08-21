@@ -261,7 +261,7 @@ typedef enum {
 	STF_FAIL,               /* discard everything, something failed.  notification_t added.
 				 * values STF_FAIL + x are notifications.
 				 */
-	STF_ROOF = STF_FAIL + 65536, /* see RFC and above */
+	STF_ROOF = STF_FAIL + 65536 /* see RFC and above */
 } stf_status;
 
 /* Misc. stuff */
@@ -467,7 +467,8 @@ enum state_kind {
 
 	STATE_XAUTH_I0,                 /* client state is awaiting request */
 	STATE_XAUTH_I1,                 /* client state is awaiting result code */
-	STATE_IKE_ROOF, /* rename to STATE_IKEv1_ROOF */
+
+	STATE_IKEv1_ROOF,
 
 	/*
 	 * IKEv2 states.
@@ -510,10 +511,10 @@ enum state_kind {
 	STATE_IKESA_DEL,
 	STATE_CHILDSA_DEL,
 
-	STATE_IKEv2_ROOF,
+	STATE_IKEv2_ROOF
 };
+
 #define STATE_IKE_FLOOR STATE_MAIN_R0
-/* rename to STATE_IKE_ROOF, see above */
 #define MAX_STATES STATE_IKEv2_ROOF
 
 
@@ -934,7 +935,8 @@ enum dns_auth_level {
 	DNSSEC_INSECURE,        /* UB retrured INSECURE */
 	PUBKEY_LOCAL,           /* came from local source, wahck, plugin etc */
 	DNSSEC_SECURE,          /* UB retrurned SECURE */
-	DNSSEC_ROOF,
+
+	DNSSEC_ROOF
 };
 
 /*

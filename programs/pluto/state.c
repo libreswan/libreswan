@@ -211,7 +211,7 @@ static struct state_category *categorize_state(struct state *st,
 	case STATE_IKEv2_BASE:
 	case STATE_IKEv2_ROOF:
 	case STATE_UNDEFINED:
-	case STATE_IKE_ROOF:
+	case STATE_IKEv1_ROOF:
 		return &category.ignore;
 
 		/*

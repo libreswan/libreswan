@@ -229,7 +229,7 @@ static state_transition_fn      /* forward declaration */
  */
 
 static const struct state_microcode
-	*ike_microcode_index[STATE_IKE_ROOF - STATE_IKE_FLOOR];
+	*ike_microcode_index[STATE_IKEv1_ROOF - STATE_IKE_FLOOR];
 
 static const struct state_microcode v1_state_microcode_table[] = {
 
@@ -596,7 +596,7 @@ void init_ikev1(void)
 	for (t = &v1_state_microcode_table[elemsof(v1_state_microcode_table) - 1];;)
 	{
 		passert(STATE_IKE_FLOOR <= t->state &&
-			t->state < STATE_IKE_ROOF);
+			t->state < STATE_IKEv1_ROOF);
 		ike_microcode_index[t->state - STATE_IKE_FLOOR] = t;
 		if (t == v1_state_microcode_table)
 			break;
@@ -1512,7 +1512,7 @@ void process_v1_packet(struct msg_digest **mdp)
 	 * Look up the appropriate microcode based on state and
 	 * possibly Oakley Auth type.
 	 */
-	passert(STATE_IKE_FLOOR <= from_state && from_state <= STATE_IKE_ROOF);
+	passert(STATE_IKE_FLOOR <= from_state && from_state <= STATE_IKEv1_ROOF);
 	smc = ike_microcode_index[from_state - STATE_IKE_FLOOR];
 
 	if (st != NULL) {
@@ -2439,7 +2439,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			enum rc_type w = RC_NEW_STATE + st->st_state;
 			char sadetails[512];
 
-			passert(st->st_state < STATE_IKE_ROOF);
+			passert(st->st_state < STATE_IKEv1_ROOF);
 
 			sadetails[0] = '\0';
 

@@ -514,7 +514,8 @@ enum next_payload_types_ikev1 {
 	ISAKMP_NEXT_NATOA_DRAFTS = 131, /* NAT-Traversal: NAT-OA (drafts) */
 	/* Cisco/Microsoft proprietary IKE fragmentation */
 	ISAKMP_NEXT_IKE_FRAGMENTATION = 132,
-	ISAKMP_NEXT_ROOF, /* roof on payload types */
+
+	ISAKMP_NEXT_ROOF /* roof on payload types */
 };
 
 enum ikev2_last_proposal {
@@ -800,6 +801,7 @@ enum ikev2_sec_proto_id {
 /*
  * IKEv2 proposal
  * See http://www.iana.org/assignments/ikev2-parameters
+ * Assume indexing is [1..IKEv2_TRANS_TYPE_ROOF)
  */
 enum ikev2_trans_type {
 	IKEv2_TRANS_TYPE_ENCR = 1,
@@ -807,12 +809,9 @@ enum ikev2_trans_type {
 	IKEv2_TRANS_TYPE_INTEG = 3,
 	IKEv2_TRANS_TYPE_DH = 4, /* same as in IKEv1 */
 	IKEv2_TRANS_TYPE_ESN = 5,
-};
 
-/*
- * Assume indexing is 1..IKEv2_TRANS_TYPE_ESN.
- */
-#define IKEv2_TRANS_TYPE_ROOF (IKEv2_TRANS_TYPE_ESN + 1)
+	IKEv2_TRANS_TYPE_ROOF
+};
 
 /*
  * IKE and ESP encryption algorithms (note iana lists two table columns for these)
@@ -849,7 +848,9 @@ enum ikev2_trans_type_encr {
 	IKEv2_ENCR_CAMELLIA_CCM_B = 26, /* CAMELLIA_CCM_12 RFC 5529 */
 	IKEv2_ENCR_CAMELLIA_CCM_C = 27, /* CAMELLIA_CCM_16 RFC 5529 */
 	IKEv2_ENCR_CHACHA20_POLY1305 = 28, /* RFC7634 */
+
 	IKEv2_ENCR_ROOF,
+
 	/* 29 - 1023 Reserved to IANA */
 	/* 1024 - 65535 Private Use */
 	IKEv2_ENCR_SERPENT_CBC = 65004,
@@ -889,7 +890,9 @@ enum ikev2_trans_type_integ {
 	IKEv2_AUTH_HMAC_SHA2_256_128 = 12, /* RFC4595 */
 	IKEv2_AUTH_HMAC_SHA2_384_192 = 13, /* RFC4306 */
 	IKEv2_AUTH_HMAC_SHA2_512_256 = 14, /* RFC4306 */
-	IKEv2_AUTH_ROOF = IKEv2_AUTH_HMAC_SHA2_512_256,
+
+	IKEv2_AUTH_ROOF,
+
 	/* 15 - 1023 Reserved to IANA RFC4306 */
 	/* 1024 - 65535 Private Use RFC4306 */
 	IKEv2_AUTH_INVALID = 65536
@@ -1017,7 +1020,9 @@ enum ikev1_auth_attribute {
 	AUTH_ALGORITHM_AES_128_GMAC = 11,	/* RFC 4542 */
 	AUTH_ALGORITHM_AES_192_GMAC = 12,	/* RFC 4542 */
 	AUTH_ALGORITHM_AES_256_GMAC =  13,	/* RFC 4542 */
+
 	AUTH_ALGORITHM_ROOF,
+
 	/* 14-61439 Unassigned */
 	/* 61440-65535 Reserved for private use */
 
@@ -1126,12 +1131,14 @@ enum ikev1_hash_attribute  {
  * Hybrid: https://tools.ietf.org/html/draft-ietf-ipsec-isakmp-hybrid-auth-05
  */
 
-#define OAKLEY_AUTH_ROOF 5 /* We don't support Revised or ECDSA yet */
 enum ikev1_auth_method {
 	OAKLEY_PRESHARED_KEY = 1,
 	OAKLEY_DSS_SIG = 2,
 	OAKLEY_RSA_SIG = 3,
 	OAKLEY_RSA_ENC = 4,
+
+	OAKLEY_AUTH_ROOF,	/* we only support methods above */
+
 	OAKLEY_RSA_REVISED_MODE = 5, /* Not implemented */
 	/* 6 - 8 Reserved */
 	OAKLEY_ECDSA_P256 = 9, /* RFC 4754 */
@@ -1271,7 +1278,9 @@ enum ike_trans_type_dh {
 	OAKLEY_GROUP_BRAINPOOL_P512R1 = 30, /* RFC 6932 */
 	OAKLEY_GROUP_CURVE25519 = 31, /* RFC-ietf-ipsecme-safecurves-05 */
 	OAKLEY_GROUP_CURVE448 = 32, /* RFC-ietf-ipsecme-safecurves-05 */
-	OAKLEY_GROUP_ROOF,
+
+	OAKLEY_GROUP_ROOF
+
 	/* 33 - 32767 Unassigned */
 	/* 32768 - 65535 Reserved for private use */
 };
@@ -1325,7 +1334,9 @@ typedef enum {
 	CERTIFICATE_UNAVAILABLE = 28,
 	UNSUPPORTED_EXCHANGE_TYPE = 29,
 	UNEQUAL_PAYLOAD_LENGTHS = 30,
+
 	v1N_ERROR_ROOF, /* used to cap statistics array */
+
 	/* 31-8191 RESERVED (Future Use) */
 
 	/*
@@ -1406,6 +1417,7 @@ typedef enum {
 	v2N_CHILD_SA_NOT_FOUND = 44, /* RFC 7296 */
 	v2N_INVALID_GROUP_ID = 45, /* draft-yeung-g-ikev2 */
 	v2N_AUTHORIZATION_FAILED = 46, /* draft-yeung-g-ikev2 */
+
 	v2N_ERROR_ROOF, /* used to cap statistics array */
 
 	/* old IKEv1 entries - might be in private use for IKEv2N */

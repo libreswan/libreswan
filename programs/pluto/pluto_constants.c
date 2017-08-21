@@ -177,7 +177,7 @@ static const char *const state_name[] = {
 	"STATE_XAUTH_I0",
 	"STATE_XAUTH_I1",
 
-	"STATE_IKE_ROOF",
+	"STATE_IKEv1_ROOF",
 
 	/* v2 */
 	"STATE_IKEv2_BASE",
