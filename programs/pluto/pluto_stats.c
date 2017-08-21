@@ -122,7 +122,7 @@ void show_pluto_stats()
 		if (strstr(enum_name(&oakley_group_names, e), "UNUSED") == NULL)
 			whack_log(RC_COMMENT, "#total.ikev1.group.%s=%lu",
 				strip_prefix(enum_name(&oakley_group_names, e), "OAKLEY_GROUP_"),
-			pstats_ikev1_groups[e]);
+				pstats_ikev1_groups[e]);
 	}
 
 	for (unsigned long e = IKEv2_ENCR_3DES; e <= IKEv2_ENCR_CHACHA20_POLY1305; e++)
@@ -146,7 +146,7 @@ void show_pluto_stats()
 		if (strstr(enum_name(&oakley_group_names, e), "UNUSED") == NULL)
 			whack_log(RC_COMMENT, "#total.ikev2.group.%s=%lu",
 				strip_prefix(enum_name(&oakley_group_names, e), "OAKLEY_GROUP_"),
-			pstats_ikev2_groups[e]);
+				pstats_ikev2_groups[e]);
 	}
 
 	/* we log the received invalid groups and the suggested valid groups */
@@ -155,28 +155,28 @@ void show_pluto_stats()
 		if (strstr(enum_name(&oakley_group_names, e), "UNUSED") == NULL)
 			whack_log(RC_COMMENT, "#total.ikev2.recv.invalidke.using.%s=%lu",
 				strip_prefix(enum_name(&oakley_group_names, e), "OAKLEY_GROUP_"),
-			pstats_invalidke_recv_u[e]);
+				pstats_invalidke_recv_u[e]);
 	}
 	for (unsigned long e = OAKLEY_GROUP_MODP768; e < OAKLEY_GROUP_ROOF; e++)
 	{
 		if (strstr(enum_name(&oakley_group_names, e), "UNUSED") == NULL)
 			whack_log(RC_COMMENT, "#total.ikev2.recv.invalidke.suggesting.%s=%lu",
 				strip_prefix(enum_name(&oakley_group_names, e), "OAKLEY_GROUP_"),
-			pstats_invalidke_recv_s[e]);
+				pstats_invalidke_recv_s[e]);
 	}
 	for (unsigned long e = OAKLEY_GROUP_MODP768; e < OAKLEY_GROUP_ROOF; e++)
 	{
 		if (strstr(enum_name(&oakley_group_names, e), "UNUSED") == NULL)
 			whack_log(RC_COMMENT, "#total.ikev2.sent.invalidke.using.%s=%lu",
 				strip_prefix(enum_name(&oakley_group_names, e), "OAKLEY_GROUP_"),
-			pstats_invalidke_sent_u[e]);
+				pstats_invalidke_sent_u[e]);
 	}
 	for (unsigned long e = OAKLEY_GROUP_MODP768; e < OAKLEY_GROUP_ROOF; e++)
 	{
 		if (strstr(enum_name(&oakley_group_names, e), "UNUSED") == NULL)
 			whack_log(RC_COMMENT, "#total.ikev2.sent.invalidke.suggesting.%s=%lu",
 				strip_prefix(enum_name(&oakley_group_names, e), "OAKLEY_GROUP_"),
-			pstats_invalidke_sent_s[e]);
+				pstats_invalidke_sent_s[e]);
 	}
 
 	for (unsigned long e = STF_IGNORE; e <= STF_FAIL; e++)
@@ -221,14 +221,14 @@ void show_pluto_stats()
 		if (strstr(enum_name(&ikev2_notify_names, e), "UNUSED") == NULL)
 			whack_log(RC_COMMENT, "#total.ikev2.sent.notifies.error.%s=%lu",
 				strip_prefix(enum_name(&ikev2_notify_names, e), "v2N_"),
-			pstats_ikev2_sent_notifies_e[e]);
+				pstats_ikev2_sent_notifies_e[e]);
 	}
 	for (unsigned long e = 1; e < v2N_ERROR_ROOF; e++)
 	{
 		if (strstr(enum_name(&ikev2_notify_names, e), "UNUSED") == NULL)
 			whack_log(RC_COMMENT, "#total.ikev2.recv.notifies.error.%s=%lu",
 				strip_prefix(enum_name(&ikev2_notify_names, e), "v2N_"),
-			pstats_ikev2_recv_notifies_e[e]);
+				pstats_ikev2_recv_notifies_e[e]);
 	}
 }
 
