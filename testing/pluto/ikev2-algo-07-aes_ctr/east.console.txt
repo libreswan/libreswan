@@ -120,7 +120,7 @@ east #
 000 "westnet-eastnet-ipv4-psk-ikev2":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 000 "westnet-eastnet-ipv4-psk-ikev2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ipv4-psk-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 "westnet-eastnet-ipv4-psk-ikev2":   IKE algorithms wanted: AES_CTR(13)_128-SHA1(2)-MODP2048(14)
+000 "westnet-eastnet-ipv4-psk-ikev2":   IKE algorithms wanted: AES_CTR_128-HMAC_SHA1-MODP2048
 000 "westnet-eastnet-ipv4-psk-ikev2":   IKE algorithms found:  AES_CTR_128-HMAC_SHA1-MODP2048
 000 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithms wanted: AES_CTR(13)_256-SHA1(2)
 000 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithms loaded: AES_CTR(13)_256-SHA1(2)
