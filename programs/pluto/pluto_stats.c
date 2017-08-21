@@ -62,7 +62,7 @@ unsigned long pstats_ikev1_sent_notifies_e[v1N_ERROR_ROOF]; /* types of NOTIFY E
 unsigned long pstats_ikev1_recv_notifies_e[v1N_ERROR_ROOF]; /* types of NOTIFY ERRORS */
 unsigned long pstats_ikev2_sent_notifies_e[v2N_ERROR_ROOF]; /* types of NOTIFY ERRORS */
 unsigned long pstats_ikev2_recv_notifies_e[v2N_ERROR_ROOF]; /* types of NOTIFY ERRORS */
-unsigned long pstats_ike_stf[10];	/* count state transitions */
+unsigned long pstats_ike_stf[10];	/* count state transitions */ /* ??? what is 10? */
 unsigned long pstats_ipsec_esp;
 unsigned long pstats_ipsec_ah;
 unsigned long pstats_ipsec_ipcomp;
@@ -73,6 +73,19 @@ unsigned long pstats_ipsec_tfc;
 unsigned long pstats_ike_dpd_recv;
 unsigned long pstats_ike_dpd_sent;
 unsigned long pstats_ike_dpd_replied;
+
+static void enum_stats(enum_names *en, unsigned long lwb, unsigned long upb, const char *what, unsigned long count[])
+{
+	for (unsigned long e = lwb; e <= upb; e++)
+	{
+		const char *nm = enum_short_name(en, e);
+
+		/* not logging "UNUSED" */
+		if (strstr(nm, "UNUSED") == NULL)
+			whack_log(RC_COMMENT, "#total.%s.%s=%lu",
+				what, nm, count[e]);
+	}
+}
 
 void show_pluto_stats()
 {
@@ -102,134 +115,35 @@ void show_pluto_stats()
 	whack_log(RC_COMMENT, "#total.ike.traffic.in=%lu", pstats_ike_in_bytes);
 	whack_log(RC_COMMENT, "#total.ike.traffic.out=%lu", pstats_ike_out_bytes);
 
-	for (unsigned long e = OAKLEY_3DES_CBC; e <= OAKLEY_CAMELLIA_CCM_C; e++)
-	{
-		/* not logging private use (serpent/twofish) or UNUSED */
-		if (strstr(enum_name(&oakley_enc_names, e), "UNUSED") == NULL)
-			whack_log(RC_COMMENT, "#total.ikev1.encr.%s=%lu",
-				strip_prefix(enum_name(&oakley_enc_names, e), "OAKLEY_"),
-				pstats_ikev1_encr[e]);
-	}
-	for (unsigned long e = OAKLEY_MD5; e <= OAKLEY_SHA2_512; e++)
-	{
-		if (strstr(enum_name(&oakley_hash_names, e), "UNUSED") == NULL)
-			whack_log(RC_COMMENT, "#total.ikev1.integ.%s=%lu",
-				strip_prefix(enum_name(&oakley_hash_names, e), "OAKLEY_"),
-				pstats_ikev1_integ[e]);
-	}
-	for (unsigned long e = OAKLEY_GROUP_MODP768; e < OAKLEY_GROUP_ROOF; e++)
-	{
-		if (strstr(enum_name(&oakley_group_names, e), "UNUSED") == NULL)
-			whack_log(RC_COMMENT, "#total.ikev1.group.%s=%lu",
-				strip_prefix(enum_name(&oakley_group_names, e), "OAKLEY_GROUP_"),
-				pstats_ikev1_groups[e]);
-	}
-
-	for (unsigned long e = IKEv2_ENCR_3DES; e <= IKEv2_ENCR_CHACHA20_POLY1305; e++)
-	{
-		/* not logging private use (serpent/twofish) or UNUSED */
-		if (strstr(enum_name(&ikev2_trans_type_encr_names, e), "UNUSED") == NULL)
-		whack_log(RC_COMMENT, "#total.ikev2.encr.%s=%lu",
-			enum_name(&ikev2_trans_type_encr_names, e), pstats_ikev2_encr[e]);
-	}
-
-	for (unsigned long e = IKEv2_AUTH_HMAC_MD5_96; e < IKEv2_AUTH_ROOF; e++)
-	{
-		if (strstr(enum_name(&ikev2_trans_type_integ_names, e), "UNUSED") == NULL)
-			whack_log(RC_COMMENT, "#total.ikev2.integ.%s=%lu",
-				strip_prefix(enum_name(&ikev2_trans_type_integ_names, e), "OAKLEY_"),
-				pstats_ikev2_integ[e]);
-	}
-
-	for (unsigned long e = OAKLEY_GROUP_MODP768; e < OAKLEY_GROUP_ROOF; e++)
-	{
-		if (strstr(enum_name(&oakley_group_names, e), "UNUSED") == NULL)
-			whack_log(RC_COMMENT, "#total.ikev2.group.%s=%lu",
-				strip_prefix(enum_name(&oakley_group_names, e), "OAKLEY_GROUP_"),
-				pstats_ikev2_groups[e]);
-	}
+	enum_stats(&oakley_enc_names, OAKLEY_3DES_CBC, OAKLEY_CAMELLIA_CCM_C, "ikev1.encr", pstats_ikev1_encr);
+	enum_stats(&oakley_hash_names, OAKLEY_MD5, OAKLEY_SHA2_512, "ikev1.integ", pstats_ikev1_integ);
+	enum_stats(&oakley_group_names, OAKLEY_GROUP_MODP768, OAKLEY_GROUP_ROOF-1, "ikev1.group", pstats_ikev1_groups);
+	enum_stats(&ikev2_trans_type_encr_names, IKEv2_ENCR_3DES, IKEv2_ENCR_CHACHA20_POLY1305, "ikev2.encr", pstats_ikev2_encr);
+	enum_stats(&ikev2_trans_type_integ_names, IKEv2_AUTH_HMAC_MD5_96, IKEv2_AUTH_ROOF-1, "ikev2.integ", pstats_ikev2_integ);
+	enum_stats(&oakley_group_names, OAKLEY_GROUP_MODP768, OAKLEY_GROUP_ROOF-1, "ikev2.group", pstats_ikev2_groups);
 
 	/* we log the received invalid groups and the suggested valid groups */
-	for (unsigned long e = OAKLEY_GROUP_MODP768; e < OAKLEY_GROUP_ROOF; e++)
-	{
-		if (strstr(enum_name(&oakley_group_names, e), "UNUSED") == NULL)
-			whack_log(RC_COMMENT, "#total.ikev2.recv.invalidke.using.%s=%lu",
-				strip_prefix(enum_name(&oakley_group_names, e), "OAKLEY_GROUP_"),
-				pstats_invalidke_recv_u[e]);
-	}
-	for (unsigned long e = OAKLEY_GROUP_MODP768; e < OAKLEY_GROUP_ROOF; e++)
-	{
-		if (strstr(enum_name(&oakley_group_names, e), "UNUSED") == NULL)
-			whack_log(RC_COMMENT, "#total.ikev2.recv.invalidke.suggesting.%s=%lu",
-				strip_prefix(enum_name(&oakley_group_names, e), "OAKLEY_GROUP_"),
-				pstats_invalidke_recv_s[e]);
-	}
-	for (unsigned long e = OAKLEY_GROUP_MODP768; e < OAKLEY_GROUP_ROOF; e++)
-	{
-		if (strstr(enum_name(&oakley_group_names, e), "UNUSED") == NULL)
-			whack_log(RC_COMMENT, "#total.ikev2.sent.invalidke.using.%s=%lu",
-				strip_prefix(enum_name(&oakley_group_names, e), "OAKLEY_GROUP_"),
-				pstats_invalidke_sent_u[e]);
-	}
-	for (unsigned long e = OAKLEY_GROUP_MODP768; e < OAKLEY_GROUP_ROOF; e++)
-	{
-		if (strstr(enum_name(&oakley_group_names, e), "UNUSED") == NULL)
-			whack_log(RC_COMMENT, "#total.ikev2.sent.invalidke.suggesting.%s=%lu",
-				strip_prefix(enum_name(&oakley_group_names, e), "OAKLEY_GROUP_"),
-				pstats_invalidke_sent_s[e]);
-	}
+	enum_stats(&oakley_group_names, OAKLEY_GROUP_MODP768, OAKLEY_GROUP_ROOF-1, "ikev2.recv.invalidke.using", pstats_invalidke_recv_u);
+	enum_stats(&oakley_group_names, OAKLEY_GROUP_MODP768, OAKLEY_GROUP_ROOF-1, "ikev2.recv.invalidke.suggesting", pstats_invalidke_recv_s);
+	enum_stats(&oakley_group_names, OAKLEY_GROUP_MODP768, OAKLEY_GROUP_ROOF-1, "ikev2.sent.invalidke.using", pstats_invalidke_sent_u);
+	enum_stats(&oakley_group_names, OAKLEY_GROUP_MODP768, OAKLEY_GROUP_ROOF-1, "ikev2.sent.invalidke.suggesting", pstats_invalidke_sent_s);
 
+#if 0
+	/* ??? THIS IS BROKEN (hint: array is wrong size (10)) */
 	for (unsigned long e = STF_IGNORE; e <= STF_FAIL; e++)
 	{
 		whack_log(RC_COMMENT, "#total.pluto.stf.%s=%lu",
 			enum_name(&stfstatus_name, e), pstats_ike_stf[e]);
 	}
+#endif
 
 	/* IPsec ENCR maps to IKEv2 ENCR */
-	for (unsigned long e = IKEv2_ENCR_3DES; e < IKEv2_ENCR_ROOF; e++)
-	{
-		/* not logging private use (serpent/twofish) or UNUSED */
-		if (strstr(enum_name(&ikev2_trans_type_encr_names, e), "UNUSED") == NULL)
-			whack_log(RC_COMMENT, "#total.ipsec.encr.%s=%lu",
-				enum_name(&ikev2_trans_type_encr_names, e),
-				pstats_ipsec_encr[e]);
-	}
-	for (unsigned long e = AUTH_ALGORITHM_HMAC_MD5; e < AUTH_ALGORITHM_ROOF; e++)
-	{
-		if (strstr(enum_name(&auth_alg_names, e), "UNUSED") == NULL)
-			whack_log(RC_COMMENT, "#total.ipsec.integ.%s=%lu",
-				strip_prefix(enum_name(&auth_alg_names, e),
-					"AUTH_ALGORITHM_"),
-				pstats_ipsec_integ[e]);
-	}
-
-	for (unsigned long e = 1; e < v1N_ERROR_ROOF; e++)
-	{
-		whack_log(RC_COMMENT, "#total.ikev1.sent.notifies.error.%s=%lu",
-			enum_name(&ikev1_notify_names, e),
-			pstats_ikev1_sent_notifies_e[e]);
-	}
-	for (unsigned long e = 1; e < v1N_ERROR_ROOF; e++)
-	{
-		whack_log(RC_COMMENT, "#total.ikev1.recv.notifies.error.%s=%lu",
-			enum_name(&ikev1_notify_names, e),
-			pstats_ikev1_recv_notifies_e[e]);
-	}
-
-	for (unsigned long e = 1; e < v2N_ERROR_ROOF; e++)
-	{
-		if (strstr(enum_name(&ikev2_notify_names, e), "UNUSED") == NULL)
-			whack_log(RC_COMMENT, "#total.ikev2.sent.notifies.error.%s=%lu",
-				strip_prefix(enum_name(&ikev2_notify_names, e), "v2N_"),
-				pstats_ikev2_sent_notifies_e[e]);
-	}
-	for (unsigned long e = 1; e < v2N_ERROR_ROOF; e++)
-	{
-		if (strstr(enum_name(&ikev2_notify_names, e), "UNUSED") == NULL)
-			whack_log(RC_COMMENT, "#total.ikev2.recv.notifies.error.%s=%lu",
-				strip_prefix(enum_name(&ikev2_notify_names, e), "v2N_"),
-				pstats_ikev2_recv_notifies_e[e]);
-	}
+	enum_stats(&ikev2_trans_type_encr_names, IKEv2_ENCR_3DES, IKEv2_ENCR_ROOF-1, "ipsec.encr", pstats_ipsec_encr);
+	enum_stats(&auth_alg_names, AUTH_ALGORITHM_HMAC_MD5, AUTH_ALGORITHM_ROOF-1, "ipsec.integ", pstats_ipsec_integ);
+	enum_stats(&ikev1_notify_names, 1, v1N_ERROR_ROOF-1, "ikev1.sent.notifies.error", pstats_ikev1_sent_notifies_e);
+	enum_stats(&ikev1_notify_names, 1, v1N_ERROR_ROOF-1, "ikev1.recv.notifies.error", pstats_ikev1_recv_notifies_e);
+	enum_stats(&ikev2_notify_names, 1, v2N_ERROR_ROOF-1, "ikev2.sent.notifies.error", pstats_ikev2_sent_notifies_e);
+	enum_stats(&ikev2_notify_names, 1, v2N_ERROR_ROOF-1, "ikev2.recv.notifies.error", pstats_ikev2_recv_notifies_e);
 }
 
 void clear_pluto_stats()

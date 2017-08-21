@@ -1712,7 +1712,7 @@ static enum_names ikev2_notify_names_16384 = {
 	v2N_INITIAL_CONTACT,
 	v2N_SIGNATURE_HASH_ALGORITHMS,
 	ARRAY_REF(ikev2_notify_name_16384),
-	NULL, /* prefix */
+	"v2N_", /* prefix */
 	NULL
 };
 
@@ -1770,7 +1770,7 @@ enum_names ikev2_notify_names = {
 	v2N_NOTHING_WRONG,
 	v2N_AUTHORIZATION_FAILED,
 	ARRAY_REF(ikev2_notify_name),
-	NULL, /* prefix */
+	"v2N_", /* prefix */
 	&ikev2_notify_names_16384
 };
 
