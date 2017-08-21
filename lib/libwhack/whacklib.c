@@ -260,22 +260,21 @@ int whack_get_value(char *buf, size_t bufsize)
 	return len;
 }
 
-/* ??? bufsize must be PASS_MAX + 1 (documented in getpass(3)) */
+/* Get password from user.  Truncate it to fit in buf. */
+/* ??? the function getpass(3) is obsolete! */
 size_t whack_get_secret(char *buf, size_t bufsize)
 {
-	const char *secret;
-	int len;
-
 	fflush(stdout);
-	/* ??? the function getpass(3) is obsolete! */
-	secret = getpass("Enter passphrase: ");
-	secret = (secret == NULL) ? "" : secret;
+	assert(bufsize > 0);	/* room for terminal NUL */
 
-	strncpy(buf, secret, bufsize-1);
-	buf[bufsize-1] = '\n';	/* ensure NUL termination */
+	char *secret = getpass("Enter passphrase: ");
+	/* jam_str would be good but it requires too much library */
+	size_t len = strlen(secret) + 1;
+	size_t trunc_len = len <= bufsize ? len : bufsize;
 
-	len = strlen(buf) + 1;
-
-	return len;
+	memcpy(buf, secret, trunc_len);
+	buf[trunc_len-1] = '\0';	/* force NUL termination */
+	memset(secret, 0, len);	/* scrub secret from RAM */
+	return trunc_len;
 }
 
