@@ -1507,14 +1507,6 @@ void add_connection(const struct whack_message *wm)
 				c->alg_info_esp = alg_info_ah_create_from_str(&parser_policy,
 					wm->esp ? wm->esp : "",  err_buf, sizeof(err_buf));
 
-			DBG(DBG_CONTROL, {
-				char buf[256] = "<NULL>"; /* XXX: fix magic value */
-
-				if (c->alg_info_esp != NULL)
-					alg_info_esp_snprint(buf, sizeof(buf),
-							     c->alg_info_esp);
-				DBG_log("phase2alg string values: %s", buf);
-			});
 			if (c->alg_info_esp == NULL) {
 				loglog(RC_FATAL,
 				       "Failed to add connection \"%s\", esp=\"%s\" is invalid: %s",
@@ -1530,6 +1522,11 @@ void add_connection(const struct whack_message *wm)
 				pfree(c);
 				return;
 			}
+
+			LSWDBGP(DBG_CONTROL, buf) {
+				lswlogs(buf, "ESP/AH string values: ");
+				lswlog_alg_info(buf, &c->alg_info_esp->ai);
+			};
 		}
 
 		c->alg_info_ike = NULL;
