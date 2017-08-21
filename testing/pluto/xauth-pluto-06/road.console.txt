@@ -32,7 +32,7 @@ road #
 000 "modecfg-road-eastnet-psk":   our idtype: ID_FQDN; our id=@roadrandom; their idtype: ID_FQDN; their id=@east
 000 "modecfg-road-eastnet-psk":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "modecfg-road-eastnet-psk":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 "modecfg-road-eastnet-psk":   IKE algorithms wanted: 3DES_CBC(5)_000-SHA1(2)-MODP2048(14), 3DES_CBC(5)_000-SHA1(2)-MODP1536(5)
+000 "modecfg-road-eastnet-psk":   IKE algorithms wanted: 3DES_CBC-HMAC_SHA1-MODP2048, 3DES_CBC-HMAC_SHA1-MODP1536
 000 "modecfg-road-eastnet-psk":   IKE algorithms found:  3DES_CBC_192-HMAC_SHA1-MODP2048, 3DES_CBC_192-HMAC_SHA1-MODP1536
 road #
  ipsec whack --xauthname 'use3' --xauthpass 'use1pass' --name modecfg-road-eastnet-psk --initiate

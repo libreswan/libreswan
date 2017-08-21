@@ -96,7 +96,7 @@ west #
 000 "westnet-eastnet-ikev2a":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-ikev2a":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ikev2a":   newest ISAKMP SA: #1; newest IPsec SA: #2;
-000 "westnet-eastnet-ikev2a":   IKE algorithms wanted: 3DES_CBC(5)_000-MD5(1)-MODP2048(14)
+000 "westnet-eastnet-ikev2a":   IKE algorithms wanted: 3DES_CBC-HMAC_MD5-MODP2048
 000 "westnet-eastnet-ikev2a":   IKE algorithms found:  3DES_CBC_192-HMAC_MD5-MODP2048
 000 "westnet-eastnet-ikev2a":   IKEv2 algorithm newest: 3DES_192-AUTH_HMAC_MD5_96-PRF_HMAC_MD5-MODP2048
 000 "westnet-eastnet-ikev2a":   ESP algorithms wanted: AES(12)_128-SHA2_512(7)
@@ -118,7 +118,7 @@ west #
 000 "westnet-eastnet-ikev2b":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-ikev2b":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ikev2b":   newest ISAKMP SA: #0; newest IPsec SA: #3;
-000 "westnet-eastnet-ikev2b":   IKE algorithms wanted: 3DES_CBC(5)_000-MD5(1)-MODP2048(14)
+000 "westnet-eastnet-ikev2b":   IKE algorithms wanted: 3DES_CBC-HMAC_MD5-MODP2048
 000 "westnet-eastnet-ikev2b":   IKE algorithms found:  3DES_CBC_192-HMAC_MD5-MODP2048
 000 "westnet-eastnet-ikev2b":   ESP algorithms wanted: AES(12)_128-SHA2_512(7)
 000 "westnet-eastnet-ikev2b":   ESP algorithms loaded: AES(12)_128-SHA2_512(7)
@@ -139,7 +139,7 @@ west #
 000 "westnet-eastnet-ikev2c":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-ikev2c":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ikev2c":   newest ISAKMP SA: #0; newest IPsec SA: #4;
-000 "westnet-eastnet-ikev2c":   IKE algorithms wanted: 3DES_CBC(5)_000-MD5(1)-MODP2048(14)
+000 "westnet-eastnet-ikev2c":   IKE algorithms wanted: 3DES_CBC-HMAC_MD5-MODP2048
 000 "westnet-eastnet-ikev2c":   IKE algorithms found:  3DES_CBC_192-HMAC_MD5-MODP2048
 000 "westnet-eastnet-ikev2c":   ESP algorithms wanted: AES(12)_128-SHA2_512(7)
 000 "westnet-eastnet-ikev2c":   ESP algorithms loaded: AES(12)_128-SHA2_512(7)

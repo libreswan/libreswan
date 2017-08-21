@@ -55,7 +55,7 @@ north #
 000 "noth-eastnets/0x1":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "noth-eastnets/0x1":   newest ISAKMP SA: #0; newest IPsec SA: #2;
 000 "noth-eastnets/0x1":   aliases: noth-eastnets 
-000 "noth-eastnets/0x1":   IKE algorithms wanted: AES_CBC(7)_256-SHA2_256(4)-MODP2048(14)
+000 "noth-eastnets/0x1":   IKE algorithms wanted: AES_CBC_256-HMAC_SHA2_256-MODP2048
 000 "noth-eastnets/0x1":   IKE algorithms found:  AES_CBC_256-HMAC_SHA2_256-MODP2048
 000 "noth-eastnets/0x1":   ESP algorithms wanted: AES(12)_128-SHA2_512(7); pfsgroup=MODP3072(15)
 000 "noth-eastnets/0x1":   ESP algorithms loaded: AES(12)_128-SHA2_512(7)
@@ -77,7 +77,7 @@ north #
 000 "noth-eastnets/0x2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "noth-eastnets/0x2":   newest ISAKMP SA: #1; newest IPsec SA: #3;
 000 "noth-eastnets/0x2":   aliases: noth-eastnets 
-000 "noth-eastnets/0x2":   IKE algorithms wanted: AES_CBC(7)_256-SHA2_256(4)-MODP2048(14)
+000 "noth-eastnets/0x2":   IKE algorithms wanted: AES_CBC_256-HMAC_SHA2_256-MODP2048
 000 "noth-eastnets/0x2":   IKE algorithms found:  AES_CBC_256-HMAC_SHA2_256-MODP2048
 000 "noth-eastnets/0x2":   IKEv2 algorithm newest: AES_CBC_256-AUTH_HMAC_SHA2_256_128-PRF_HMAC_SHA2_256-MODP2048
 000 "noth-eastnets/0x2":   ESP algorithms wanted: AES(12)_128-SHA2_512(7); pfsgroup=MODP3072(15)
