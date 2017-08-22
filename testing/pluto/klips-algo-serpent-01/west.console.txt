@@ -140,8 +140,7 @@ west #
 000 "westnet-eastnet-serpent":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-serpent":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-serpent":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 "westnet-eastnet-serpent":   ESP algorithms wanted: SERPENT(252)_000-SHA1(2)
-000 "westnet-eastnet-serpent":   ESP algorithms loaded: SERPENT(252)_000-SHA1(2)
+000 "westnet-eastnet-serpent":   ESP algorithms: SERPENT(252)_000-SHA1(2)
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
