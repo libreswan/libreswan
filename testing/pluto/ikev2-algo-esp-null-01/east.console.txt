@@ -25,8 +25,7 @@ east #
 000 "westnet-eastnet-esp-null":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 000 "westnet-eastnet-esp-null":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-esp-null":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 "westnet-eastnet-esp-null":   ESP algorithms wanted: NULL(11)_000-MD5(1), NULL(11)_000-SHA1(2)
-000 "westnet-eastnet-esp-null":   ESP algorithms loaded: NULL(11)_000-MD5(1), NULL(11)_000-SHA1(2)
+000 "westnet-eastnet-esp-null":   ESP algorithms: NULL(11)_000-MD5(1), NULL(11)_000-SHA1(2)
 east #
  echo "initdone"
 initdone

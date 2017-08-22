@@ -108,8 +108,7 @@ east #
 000 "westnet-eastnet-esp-3des-alg":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-esp-3des-alg":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-esp-3des-alg":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 "westnet-eastnet-esp-3des-alg":   ESP algorithms wanted: 3DES(3)_000-SHA1(2)
-000 "westnet-eastnet-esp-3des-alg":   ESP algorithms loaded: 3DES(3)_000-SHA1(2)
+000 "westnet-eastnet-esp-3des-alg":   ESP algorithms: 3DES(3)_000-SHA1(2)
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
