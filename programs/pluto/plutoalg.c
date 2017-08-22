@@ -66,7 +66,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 		}
 	}
 
-	int aalg_i = alg_info_esp_aa2sadb(esp_info->ikev1esp_auth);
+	int aalg_i = esp_info->integ->integ_ikev1_ah_transform;
 
 	/* already checked by the parser? */
 	if (!kernel_alg_integ_ok(esp_info->integ)) {

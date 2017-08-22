@@ -1208,7 +1208,7 @@ int main(int argc, char *argv[])
 			}
 			alg_p = kernel_alg_sadb_alg_get(SADB_SATYPE_ESP,
 							SADB_EXT_SUPPORTED_AUTH,
-							alg_info_esp_aa2sadb(esp_info->ikev1esp_auth));
+							esp_info->integ->integ_ikev1_ah_transform);
 			assert(alg_p);
 			keylen = authkeylen * 8;
 			minbits = alg_p->sadb_alg_minbits;
@@ -1330,7 +1330,7 @@ int main(int argc, char *argv[])
 
 	switch (alg) {
 	case XF_OTHER_ALG:
-		authalg = alg_info_esp_aa2sadb(esp_info->ikev1esp_auth);
+		authalg = esp_info->integ->integ_ikev1_ah_transform;
 		if (debug) {
 			fprintf(stdout, "%s: debug: authalg=%d\n",
 				progname, authalg);
