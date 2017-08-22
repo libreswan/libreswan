@@ -199,9 +199,6 @@ extern struct alg_info_esp *alg_info_ah_create_from_str(const struct parser_poli
 							const char *alg_str,
 							char *err_buf, size_t err_buf_len);
 
-void alg_info_esp_snprint(char *buf, size_t buflen,
-			  const struct alg_info_esp *alg_info_esp);
-
 void alg_info_snprint_phase2(char *buf, size_t buflen,
 			     struct alg_info_esp *alg_info);
 
