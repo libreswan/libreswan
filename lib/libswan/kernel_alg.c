@@ -508,23 +508,6 @@ bool kernel_alg_is_ok(const struct ike_alg *alg)
 	}
 }
 
-/* ??? pretty similar to kernel_alg_ah_auth_keylen */
-int kernel_alg_esp_auth_keylen(int auth)
-{
-	int sadb_aalg = alg_info_esp_aa2sadb(auth);
-	int a_keylen = 0;
-
-	if (sadb_aalg != 0)
-		a_keylen = esp_aalg[sadb_aalg].sadb_alg_maxbits /
-			BITS_PER_BYTE;
-
-	DBG(DBG_CONTROL | DBG_CRYPT | DBG_PARSING,
-		DBG_log("kernel_alg_esp_auth_keylen(auth=%d, sadb_aalg=%d): a_keylen=%d",
-			auth, sadb_aalg, a_keylen);
-		);
-	return a_keylen;
-}
-
 bool kernel_alg_encrypt_key_size(const struct encrypt_desc *encrypt,
 				 int keylen, size_t *key_size)
 {

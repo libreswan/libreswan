@@ -46,9 +46,6 @@ extern err_t check_kernel_encrypt_alg(int alg_id, unsigned int key_len);
 /* returns encrypt keylen in BYTES for esp enc alg passed */
 extern int kernel_alg_esp_enc_max_keylen(int alg_id);
 
-/* returns auth keylen in BYTES for esp auth alg passed */
-extern int kernel_alg_esp_auth_keylen(int auth);
-
 /* get sadb_alg for passed args */
 extern const struct sadb_alg *kernel_alg_sadb_alg_get(unsigned satype, unsigned exttype,
 						       unsigned alg_id);
