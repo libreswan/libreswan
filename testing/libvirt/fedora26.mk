@@ -47,6 +47,7 @@ KVM_PACKAGES = \
     pam-devel \
     pexpect \
     psmisc \
+    python2-pyOpenSSL \
     python3-pexpect \
     python-setproctitle \
     racoon2 \
