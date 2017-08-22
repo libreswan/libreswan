@@ -241,7 +241,7 @@ static const char compile_time_interop_options[] = ""
 ;
 
 static char pluto_lock[sizeof(ctl_addr.sun_path)] =
-	DEFAULT_RUNDIR "/pluto.lock";
+	DEFAULT_RUNDIR "/pluto.pid";
 
 static bool pluto_lock_created = FALSE;
 
