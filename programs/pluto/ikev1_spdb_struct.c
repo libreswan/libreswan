@@ -2580,8 +2580,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					case ESP_3DES:
 						break;
 					case ESP_NULL:
-						if (esp_attrs.transattrs.integ_hash ==
-						    AUTH_ALGORITHM_NONE) {
+						if (esp_attrs.transattrs.integ == &ike_alg_integ_null) {
 							loglog(RC_LOG_SERIOUS,
 							       "ESP_NULL requires auth algorithm");
 							return BAD_PROPOSAL_SYNTAX;

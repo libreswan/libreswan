@@ -36,6 +36,7 @@
 #include "kernel_alg.h"
 #include "alg_info.h"
 #include "ike_alg.h"
+#include "ike_alg_null.h"
 #include "plutoalg.h"
 #include "crypto.h"
 #include "spdb.h"
@@ -51,7 +52,8 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 
 	if (policy & POLICY_ENCRYPT) {
 		ealg_i = esp_info->ikev1esp_transid;
-		if (!ESP_EALG_PRESENT(ealg_i)) {
+		/* already checked by the parser? */
+		if (!kernel_alg_encrypt_ok(esp_info->encrypt)) {
 			if (logit) {
 				loglog(RC_LOG_SERIOUS,
 				       "requested kernel enc ealg_id=%d not present",
@@ -66,7 +68,8 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 
 	int aalg_i = alg_info_esp_aa2sadb(esp_info->ikev1esp_auth);
 
-	if (!ESP_AALG_PRESENT(aalg_i)) {
+	/* already checked by the parser? */
+	if (!kernel_alg_integ_ok(esp_info->integ)) {
 		DBG_log("kernel_alg_db_add() kernel auth aalg_id=%d not present",
 			aalg_i);
 		return FALSE;
@@ -77,7 +80,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 		db_trans_add(db_ctx, ealg_i);
 
 		/* add ESP auth attr (if present) */
-		if (esp_info->ikev1esp_auth != AUTH_ALGORITHM_NONE) {
+		if (esp_info->integ != &ike_alg_integ_null) {
 			db_attr_add_values(db_ctx,
 					   AUTH_ALGORITHM,
 					   esp_info->ikev1esp_auth);
@@ -102,7 +105,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 				/* add this trans again with max key size */
 				if (def_ks != max_ks) {
 					db_trans_add(db_ctx, ealg_i);
-					if (esp_info->ikev1esp_auth != AUTH_ALGORITHM_NONE) {
+					if (esp_info->integ != &ike_alg_integ_null) {
 						db_attr_add_values(db_ctx,
 							AUTH_ALGORITHM,
 							esp_info->ikev1esp_auth);

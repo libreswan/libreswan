@@ -2016,8 +2016,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		}
 
 		DBG(DBG_CONTROL,
-			DBG_log("looking for alg with transid: %d keylen: %d auth: %d",
-				ta->encrypt, ta->enckeylen, ta->integ_hash));
+			DBG_log("looking for alg with transid: %d keylen: %d integ: %s",
+				ta->encrypt, ta->enckeylen, ta->integ->common.fqn));
 
 		/*
 		 * Check that both integrity and encryption are

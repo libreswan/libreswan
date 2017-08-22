@@ -217,12 +217,9 @@ stf_status start_dh_v2(struct msg_digest *md,
 
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("calculating skeyseed using prf=%s integ=%s cipherkey=%s",
-		    enum_name(&ikev2_trans_type_prf_names,
-			      st->st_oakley.prf->common.id[IKEv2_ALG_ID]),
-		    enum_name(&ikev2_trans_type_integ_names,
-			      st->st_oakley.integ_hash),
-		    enum_name(&ikev2_trans_type_encr_names,
-			      st->st_oakley.encrypt)));
+		    st->st_oakley.prf->common.fqn,
+		    st->st_oakley.integ->common.fqn,
+		    st->st_oakley.encrypter->common.fqn));
 
 	/* convert appropriate data to dhq */
 	dhq->auth = st->st_oakley.auth;
