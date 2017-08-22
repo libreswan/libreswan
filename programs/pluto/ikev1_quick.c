@@ -315,56 +315,7 @@ static void compute_proto_keymat(struct state *st,
 		}
 		DBG(DBG_PARSING, DBG_log("compute_proto_keymat: needed_len (after ESP enc)=%d",
 					 (int)needed_len));
-
-		switch (pi->attrs.transattrs.integ_hash) {
-		case AUTH_ALGORITHM_NONE:
-			break;
-		case AUTH_ALGORITHM_HMAC_MD5:
-			needed_len += HMAC_MD5_KEY_LEN;
-			break;
-		case AUTH_ALGORITHM_HMAC_SHA1:
-			needed_len += HMAC_SHA1_KEY_LEN;
-			break;
-		/* kernel_alg_ah_auth_ok / kernel_alg_ah_auth_keylen are incomplete */
-		case AUTH_ALGORITHM_HMAC_SHA2_256:
-			needed_len += BYTES_FOR_BITS(256);
-			break;
-		case AUTH_ALGORITHM_HMAC_SHA2_384:
-			needed_len += BYTES_FOR_BITS(384);
-			break;
-		case AUTH_ALGORITHM_HMAC_SHA2_512:
-			needed_len += BYTES_FOR_BITS(512);
-			break;
-		case AUTH_ALGORITHM_HMAC_RIPEMD:
-			needed_len += BYTES_FOR_BITS(160);
-			break;
-		case AUTH_ALGORITHM_AES_XCBC:
-			needed_len += BYTES_FOR_BITS(128);
-			break;
-		case AUTH_ALGORITHM_SIG_RSA:
-			/* ? */
-			break;
-		case AUTH_ALGORITHM_AES_128_GMAC:
-			needed_len += BYTES_FOR_BITS(128);
-			break;
-		case AUTH_ALGORITHM_AES_192_GMAC:
-			needed_len += BYTES_FOR_BITS(192);
-			break;
-		case AUTH_ALGORITHM_AES_256_GMAC:
-			needed_len += BYTES_FOR_BITS(256);
-			break;
-		case AH_NULL:
-			needed_len += 0; /* presumably? */
-			break;
-		default:
-			if (kernel_alg_integ_ok(pi->attrs.transattrs.integ)) {
-				needed_len += kernel_alg_esp_auth_keylen(
-					pi->attrs.transattrs.integ_hash);
-				break;
-			}
-			bad_case(pi->attrs.transattrs.integ_hash);
-		}
-
+		needed_len += pi->attrs.transattrs.integ->integ_keymat_size;
 		DBG(DBG_PARSING, DBG_log("compute_proto_keymat: needed_len (after ESP auth)=%d",
 					 (int)needed_len));
 		break;
