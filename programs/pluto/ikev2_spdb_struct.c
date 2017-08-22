@@ -1162,12 +1162,12 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
  * and returning the "first" local proposal to match.
  *
  * The need to load all the remote proposals into buffers is avoided
- * by processing them in a single.  This is a tradeoff.  Since each
+ * by processing them in a single pass.  This is a tradeoff.  Since each
  * remote proposal in turn is compared against all local proposals
  * (and not each local proposal in turn compared against all remote
  * proposals) a local proposal matching only the last remote proposal
- * takes more comparisons.  Othe other and mallocing an pointer
- * jugging is avoided.
+ * takes more comparisons.  On the other hand, mallocing and pointer
+ * juggling is avoided.
  */
 stf_status ikev2_process_sa_payload(const char *what,
 				    pb_stream *sa_payload,
@@ -1191,7 +1191,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 	/*
 	 * Buffer to accumulate the entire proposal (in ascii form).
 	 *
-	 * Must be freed.
+	 * Must be freed by this function.
 	 */
 	struct print *remote_print_buf = print_buf();
 
