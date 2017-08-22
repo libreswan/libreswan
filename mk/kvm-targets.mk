@@ -474,6 +474,8 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_D
 	$(call check-kvm-entropy)
 	: delete any old disk and let virt-install create the image
 	rm -f '$(basename $@).qcow2'
+	: Confirm that there is a tty - else virt-install fails mysteriously
+	tty
 	: XXX: Passing $(VIRT_SECURITY) to virt-install causes it to panic
 	$(VIRT_INSTALL) \
 		--name=$(KVM_BASE_DOMAIN) \
