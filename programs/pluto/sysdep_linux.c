@@ -179,8 +179,8 @@ struct raw_iface *find_raw_ifaces4(void)
 		struct ifreq auxinfo;
 
 		/* build a NUL-terminated copy of the rname field */
-		memcpy(ri.name, buf[j].ifr_name, IFNAMSIZ);
-		ri.name[IFNAMSIZ] = '\0';
+		memcpy(ri.name, buf[j].ifr_name, IFNAMSIZ-1);
+		ri.name[IFNAMSIZ-1] = '\0';
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("Inspecting interface %s ", ri.name));
 
@@ -218,7 +218,8 @@ struct raw_iface *find_raw_ifaces4(void)
 		}
 		/* Find out stuff about this interface.  See netdevice(7). */
 		zero(&auxinfo); /* paranoia */
-		memcpy(auxinfo.ifr_name, buf[j].ifr_name, IFNAMSIZ);
+		memcpy(auxinfo.ifr_name, buf[j].ifr_name, IFNAMSIZ-1);
+		/* auxinfo.ifr_name[IFNAMSIZ-1] already '\0' */
 		if (ioctl(master_sock, SIOCGIFFLAGS, &auxinfo) == -1) {
 			EXIT_LOG_ERRNO(errno,
 				       "ioctl(SIOCGIFFLAGS) for %s in find_raw_ifaces4()",

@@ -1938,7 +1938,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_VTI_IFACE:      /* --vti-iface */
-			if (optarg != NULL && strlen(optarg) <= IFNAMSIZ)
+			if (optarg != NULL && strlen(optarg) < IFNAMSIZ)
 				msg.vti_iface = strdup(optarg);
 			else
 				fprintf(stderr, "whack: invalid interface name '%s' ignored\n",

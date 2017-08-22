@@ -185,7 +185,11 @@ struct raw_iface *find_raw_ifaces4(void)
 		if (rs->sin_family != AF_INET)
 			continue; /* not interesting */
 
-		/* build a NUL-terminated copy of the rname field */
+		/* build a NUL-terminated copy of the rname field
+		 * Note
+		 * - BSD might have IFNAMSIZ characters in a name
+		 * - struct raw_interface allows more than IFNAMSIZ bytes
+		 */
 		memcpy(ri.name, bp->ifr_name, IFNAMSIZ);
 		ri.name[IFNAMSIZ] = '\0';
 
@@ -203,6 +207,7 @@ struct raw_iface *find_raw_ifaces4(void)
 		/* Find out stuff about this interface.  See netdevice(7). */
 		zero(&auxinfo); /* paranoia */
 		memcpy(auxinfo.ifr_name, bp->ifr_name, IFNAMSIZ);
+		/* auxinfo.ifr_name[IFNAMSIZ] already '\0' */
 		if (ioctl(master_sock, SIOCGIFFLAGS, &auxinfo) == -1) {
 			EXIT_LOG_ERRNO(errno,
 				       "ioctl(SIOCGIFFLAGS) for %s in find_raw_ifaces4()",

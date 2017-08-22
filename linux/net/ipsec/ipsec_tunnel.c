@@ -1580,7 +1580,7 @@ DEBUG_NO_STATIC int ipsec_tunnel_ioctl(struct net_device *dev,
 			    "klips_debug:ipsec_tunnel_ioctl: "
 			    "calling ipsec_tunnel_attatch...\n");
 		/* If this is an IP alias interface, get its real physical name */
-		strncpy(realphysname, cf->cf_name, IFNAMSIZ);
+		strncpy(realphysname, cf->cf_name, IFNAMSIZ-1);
 		realphysname[IFNAMSIZ - 1] = 0;
 		colon = strchr(realphysname, ':');
 		if (colon)
