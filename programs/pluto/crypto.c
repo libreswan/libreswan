@@ -156,17 +156,8 @@ void ike_alg_show_connection(const struct connection *c, const char *instance)
 	const struct state *st;
 
 	if (c->alg_info_ike != NULL) {
-		LSWBUF(buf) {
-			lswlog_alg_info(buf, &c->alg_info_ike->ai);
-			whack_log(RC_COMMENT,
-				  "\"%s\"%s:   IKE algorithms wanted: %s",
-				  c->name,
-				  instance,
-				  LSWBUF_BUF(buf));
-		}
-
 		/*
-		 * Now re-list the algorithms with any missing key
+		 * List the algorithms with any missing key
 		 * information filled in.
 		 *
 		 * This isn't perfect as, given AES, both AES_128 and
@@ -185,7 +176,7 @@ void ike_alg_show_connection(const struct connection *c, const char *instance)
 				sep = ", ";
 			}
 			whack_log(RC_COMMENT,
-				  "\"%s\"%s:   IKE algorithms found:  %s",
+				  "\"%s\"%s:   IKE algorithms: %s",
 				  c->name,
 				  instance,
 				  LSWBUF_BUF(buf));
