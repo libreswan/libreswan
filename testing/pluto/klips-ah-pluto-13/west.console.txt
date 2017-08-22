@@ -128,8 +128,7 @@ west #
 000 "westnet-eastnet-ah-sha1-pfs":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-ah-sha1-pfs":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ah-sha1-pfs":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 "westnet-eastnet-ah-sha1-pfs":   IKE algorithms wanted: AES_CBC_256-HMAC_SHA1-MODP2048
-000 "westnet-eastnet-ah-sha1-pfs":   IKE algorithms found:  AES_CBC_256-HMAC_SHA1-MODP2048
+000 "westnet-eastnet-ah-sha1-pfs":   IKE algorithms: AES_CBC_256-HMAC_SHA1-MODP2048
 000 "westnet-eastnet-ah-sha1-pfs":   AH algorithms wanted: SHA1(2); pfsgroup=MODP1024(2)
 000 "westnet-eastnet-ah-sha1-pfs":   AH algorithms loaded: SHA1(2)
 000  

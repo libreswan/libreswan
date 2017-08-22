@@ -47,8 +47,7 @@ west #
 000 "westnet-eastnet-aggr":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-aggr":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-aggr":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 "westnet-eastnet-aggr":   IKE algorithms wanted: 3DES_CBC-HMAC_SHA1-MODP1536
-000 "westnet-eastnet-aggr":   IKE algorithms found:  3DES_CBC_192-HMAC_SHA1-MODP1536
+000 "westnet-eastnet-aggr":   IKE algorithms: 3DES_CBC_192-HMAC_SHA1-MODP1536
 west #
  echo "initdone"
 initdone
