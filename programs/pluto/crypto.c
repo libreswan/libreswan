@@ -67,17 +67,6 @@ void init_crypto(void)
 	 * first step to deleting the legacy code.
 	 */
 
-	/* alg_info_esp2sadb() */
-	for (const struct integ_desc **integp = next_integ_desc(NULL);
-	     integp != NULL; integp = next_integ_desc(integp)) {
-		const struct integ_desc *integ = *integp;
-		if (integ->integ_ikev1_ah_transform != 0) {
-			passert_ike_alg(&integ->common,
-					alg_info_esp_aa2sadb(integ->common.id[IKEv1_ESP_ID])
-					== integ->integ_ikev1_ah_transform);
-		}
-	}
-
 	/* crypto_req_keysize() */
 	for (const struct encrypt_desc **encryptp = next_encrypt_desc(NULL);
 	     encryptp != NULL; encryptp = next_encrypt_desc(encryptp)) {

@@ -574,60 +574,6 @@ bool kernel_alg_encrypt_key_size(const struct encrypt_desc *encrypt,
 }
 
 /*
- * sadb/ESP aa attrib converters - conflicting for v1 and v2
- */
-enum ipsec_authentication_algo alg_info_esp_aa2sadb(
-	enum ikev1_auth_attribute auth)
-{
-	/* ??? this switch looks a lot like one in parse_ipsec_sa_body */
-	switch (auth) {
-	case AUTH_ALGORITHM_HMAC_MD5: /* 2 */
-		return AH_MD5;
-
-	case AUTH_ALGORITHM_HMAC_SHA1:
-		return AH_SHA;
-
-	case AUTH_ALGORITHM_HMAC_SHA2_256: /* 5 */
-		return AH_SHA2_256;
-
-	case AUTH_ALGORITHM_HMAC_SHA2_384:
-		return AH_SHA2_384;
-
-	case AUTH_ALGORITHM_HMAC_SHA2_512:
-		return AH_SHA2_512;
-
-	case AUTH_ALGORITHM_HMAC_RIPEMD:
-		return AH_RIPEMD;
-
-	case AUTH_ALGORITHM_AES_XCBC: /* 9 */
-		return AH_AES_XCBC_MAC;
-
-	/* AH_RSA not supported */
-	case AUTH_ALGORITHM_SIG_RSA:
-		return AH_RSA;
-
-	case AUTH_ALGORITHM_AES_128_GMAC:
-		return AH_AES_128_GMAC;
-
-	case AUTH_ALGORITHM_AES_192_GMAC:
-		return AH_AES_192_GMAC;
-
-	case AUTH_ALGORITHM_AES_256_GMAC:
-		return AH_AES_256_GMAC;
-
-	case AUTH_ALGORITHM_AES_CMAC_96: /* private use 250 */
-		return AH_AES_CMAC_96;
-
-	case AUTH_ALGORITHM_NULL_KAME:
-	case AUTH_ALGORITHM_NONE: /* private use 251 */
-		return AH_NONE;
-
-	default:
-		bad_case(auth);
-	}
-}
-
-/*
  * XXX This maps IPSEC AH Transform Identifiers to IKE Integrity Algorithm
  * Transform IDs. But IKEv1 and IKEv2 tables don't match fully! See:
  *
