@@ -326,14 +326,7 @@ void kernel_alg_show_connection(const struct connection *c, const char *instance
 		alg_info_esp_snprint(buf, sizeof(buf),
 				     c->alg_info_esp);
 		whack_log(RC_COMMENT,
-			  "\"%s\"%s:   %s algorithms wanted: %s",
-			  c->name,
-			  instance, satype,
-			  buf);
-
-		alg_info_snprint_phase2(buf, sizeof(buf), c->alg_info_esp);
-		whack_log(RC_COMMENT,
-			  "\"%s\"%s:   %s algorithms loaded: %s",
+			  "\"%s\"%s:   %s algorithms: %s",
 			  c->name,
 			  instance, satype,
 			  buf);
