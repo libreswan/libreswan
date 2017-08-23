@@ -322,19 +322,24 @@ void kernel_alg_show_connection(const struct connection *c, const char *instance
 
 	if (c->alg_info_esp != NULL) {
 		LSWBUF(buf) {
-			const char *sep = "";
-			FOR_EACH_ESP_INFO(c->alg_info_esp, proposal) {
-				struct proposal_info p = *proposal;
-				/* suppress DH */
-				p.dh = NULL;
-				lswlogs(buf, sep);
-				lswlog_proposal_info(buf, &p);
-				sep = ", ";
-			}
-			if (c->alg_info_esp->esp_pfsgroup != NULL) {
-				lswlogf(buf, "; pfsgroup=%s",
-					c->alg_info_esp->esp_pfsgroup->common.fqn);
-			}
+			/*
+			 * If DH (PFS) was specified in the esp= or
+			 * ah= line then the below will display it
+			 * in-line for each crypto suite.  For
+			 * instance:
+			 *
+			 *    AES_GCM-NULL-DH22
+			 *
+			 * This output can be fed straight back into
+			 * the parser.  This is not true of the old
+			 * style output:
+			 *
+			 *    AES_GCM-NULL; pfsgroup=DH22
+			 *
+			 * The real PFS is displayed in the 'algorithm
+			 * newest' line further down.
+			 */
+			lswlog_alg_info(buf, &c->alg_info_esp->ai);
 			whack_log(RC_COMMENT,
 				  "\"%s\"%s:   %s algorithms: %s",
 				  c->name,

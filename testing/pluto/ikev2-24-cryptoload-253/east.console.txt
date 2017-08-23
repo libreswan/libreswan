@@ -106,7 +106,7 @@ ipsec auto --status
 000 "road-eastnet-nonat":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "road-eastnet-nonat":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "road-eastnet-nonat":   IKE algorithms: 3DES_CBC_192-HMAC_SHA1-DH24
-000 "road-eastnet-nonat":   ESP algorithms: AES_CBC_256-HMAC_SHA2_512_256; pfsgroup=MODP3072
+000 "road-eastnet-nonat":   ESP algorithms: AES_CBC_256-HMAC_SHA2_512_256-MODP3072
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
