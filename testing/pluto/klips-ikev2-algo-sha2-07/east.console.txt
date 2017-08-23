@@ -41,7 +41,7 @@ east #
 000 "westnet-eastnet-ipv4-psk-ikev2":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 000 "westnet-eastnet-ipv4-psk-ikev2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ipv4-psk-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithms: AES(12)_000-SHA2_512(7)
+000 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithms: AES_CBC-HMAC_SHA2_512_256
 east #
  echo "initdone"
 initdone

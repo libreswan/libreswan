@@ -40,7 +40,7 @@ east #
 000 "westnet-eastnet-aes256":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-aes256":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "westnet-eastnet-aes256":   IKE algorithms: AES_CBC_256-HMAC_SHA1-MODP2048
-000 "westnet-eastnet-aes256":   ESP algorithms: AES(12)_256-SHA1(2)
+000 "westnet-eastnet-aes256":   ESP algorithms: AES_CBC_256-HMAC_SHA1_96
 east #
  echo "initdone"
 initdone

@@ -26,7 +26,7 @@ east #
 000 "westnet-eastnet-dh15":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-dh15":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "westnet-eastnet-dh15":   IKE algorithms: 3DES_CBC_192-HMAC_SHA1-MODP1024
-000 "westnet-eastnet-dh15":   ESP algorithms: 3DES(3)_000-SHA1(2); pfsgroup=MODP3072(15)
+000 "westnet-eastnet-dh15":   ESP algorithms: 3DES_CBC-HMAC_SHA1_96; pfsgroup=MODP3072
 east #
  echo "initdone"
 initdone

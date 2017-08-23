@@ -98,7 +98,7 @@ west #
 000 "westnet-eastnet-ikev2a":   newest ISAKMP SA: #1; newest IPsec SA: #2;
 000 "westnet-eastnet-ikev2a":   IKE algorithms: 3DES_CBC_192-HMAC_MD5-MODP2048
 000 "westnet-eastnet-ikev2a":   IKEv2 algorithm newest: 3DES_192-AUTH_HMAC_MD5_96-PRF_HMAC_MD5-MODP2048
-000 "westnet-eastnet-ikev2a":   ESP algorithms: AES(12)_128-SHA2_512(7)
+000 "westnet-eastnet-ikev2a":   ESP algorithms: AES_CBC_128-HMAC_SHA2_512_256
 000 "westnet-eastnet-ikev2a":   ESP algorithm newest: AES_128-HMAC_SHA2_512; pfsgroup=<N/A>
 000 "westnet-eastnet-ikev2b": 192.0.100.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.200.0/24; erouted; eroute owner: #3
 000 "westnet-eastnet-ikev2b":     oriented; my_ip=unset; their_ip=unset
@@ -117,7 +117,7 @@ west #
 000 "westnet-eastnet-ikev2b":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ikev2b":   newest ISAKMP SA: #0; newest IPsec SA: #3;
 000 "westnet-eastnet-ikev2b":   IKE algorithms: 3DES_CBC_192-HMAC_MD5-MODP2048
-000 "westnet-eastnet-ikev2b":   ESP algorithms: AES(12)_128-SHA2_512(7)
+000 "westnet-eastnet-ikev2b":   ESP algorithms: AES_CBC_128-HMAC_SHA2_512_256
 000 "westnet-eastnet-ikev2b":   ESP algorithm newest: AES_128-HMAC_SHA2_512; pfsgroup=<N/A>
 000 "westnet-eastnet-ikev2c": 192.0.101.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.201.0/24; erouted; eroute owner: #4
 000 "westnet-eastnet-ikev2c":     oriented; my_ip=unset; their_ip=unset
@@ -136,7 +136,7 @@ west #
 000 "westnet-eastnet-ikev2c":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ikev2c":   newest ISAKMP SA: #0; newest IPsec SA: #4;
 000 "westnet-eastnet-ikev2c":   IKE algorithms: 3DES_CBC_192-HMAC_MD5-MODP2048
-000 "westnet-eastnet-ikev2c":   ESP algorithms: AES(12)_128-SHA2_512(7)
+000 "westnet-eastnet-ikev2c":   ESP algorithms: AES_CBC_128-HMAC_SHA2_512_256
 000 "westnet-eastnet-ikev2c":   ESP algorithm newest: AES_128-HMAC_SHA2_512; pfsgroup=<N/A>
 000 #2: "westnet-eastnet-ikev2a":500 STATE_V2_IPSEC_I (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
 000 #2: "westnet-eastnet-ikev2a" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 ref=0 refhim=0 Traffic: ESPin=336B ESPout=336B! ESPmax=0B 

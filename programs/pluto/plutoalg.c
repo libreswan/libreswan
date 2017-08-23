@@ -321,15 +321,26 @@ void kernel_alg_show_connection(const struct connection *c, const char *instance
 	}
 
 	if (c->alg_info_esp != NULL) {
-		char buf[1024];
-
-		alg_info_esp_snprint(buf, sizeof(buf),
-				     c->alg_info_esp);
-		whack_log(RC_COMMENT,
-			  "\"%s\"%s:   %s algorithms: %s",
-			  c->name,
-			  instance, satype,
-			  buf);
+		LSWBUF(buf) {
+			const char *sep = "";
+			FOR_EACH_ESP_INFO(c->alg_info_esp, proposal) {
+				struct proposal_info p = *proposal;
+				/* suppress DH */
+				p.dh = NULL;
+				lswlogs(buf, sep);
+				lswlog_proposal_info(buf, &p);
+				sep = ", ";
+			}
+			if (c->alg_info_esp->esp_pfsgroup != NULL) {
+				lswlogf(buf, "; pfsgroup=%s",
+					c->alg_info_esp->esp_pfsgroup->common.fqn);
+			}
+			whack_log(RC_COMMENT,
+				  "\"%s\"%s:   %s algorithms: %s",
+				  c->name,
+				  instance, satype,
+				  LSWBUF_BUF(buf));
+		}
 	}
 
 	const struct state *st = state_with_serialno(c->newest_ipsec_sa);
