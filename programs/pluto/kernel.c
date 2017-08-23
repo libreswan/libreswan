@@ -2028,13 +2028,13 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 * they do then strange things have been going on
 		 * since the connection was loaded).
 		 */
-		if (!kernel_alg_is_ok(&ta->integ->common)) {
+		if (!kernel_alg_integ_ok(ta->integ)) {
 			loglog(RC_LOG_SERIOUS,
 			       "ESP integrity algorithm %s is not implemented or allowed",
 			       ta->integ->common.fqn);
 			goto fail;
 		}
-		if (!kernel_alg_is_ok(&ta->encrypter->common)) {
+		if (!kernel_alg_encrypt_ok(ta->encrypter)) {
 			loglog(RC_LOG_SERIOUS,
 			       "ESP encryption algorithm %s is not implemented or allowed",
 			       ta->encrypter->common.fqn);
