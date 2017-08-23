@@ -202,8 +202,8 @@ extern struct alg_info_esp *alg_info_ah_create_from_str(const struct parser_poli
 void alg_info_snprint_phase2(char *buf, size_t buflen,
 			     struct alg_info_esp *alg_info);
 
-size_t lswlog_proposal_info(struct lswlog *log, struct proposal_info *proposal);
-size_t lswlog_alg_info(struct lswlog *log, struct alg_info *alg_info);
+size_t lswlog_proposal_info(struct lswlog *log, const struct proposal_info *proposal);
+size_t lswlog_alg_info(struct lswlog *log, const struct alg_info *alg_info);
 
 /*
  * Iterate through the elements of an ESP or IKE table.

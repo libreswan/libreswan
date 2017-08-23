@@ -541,7 +541,8 @@ void alg_info_delref(struct alg_info *alg_info)
 		alg_info_free(alg_info);
 }
 
-size_t lswlog_proposal_info(struct lswlog *log, struct proposal_info *proposal)
+size_t lswlog_proposal_info(struct lswlog *log,
+			    const struct proposal_info *proposal)
 {
 	size_t size = 0;
 	const char *sep = "";
@@ -566,7 +567,7 @@ size_t lswlog_proposal_info(struct lswlog *log, struct proposal_info *proposal)
 	return size;
 }
 
-size_t lswlog_alg_info(struct lswlog *log, struct alg_info *alg_info)
+size_t lswlog_alg_info(struct lswlog *log, const struct alg_info *alg_info)
 {
 	size_t size = 0;
 	const char *sep = "";
