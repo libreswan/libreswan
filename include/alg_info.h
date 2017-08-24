@@ -226,9 +226,6 @@ extern struct alg_info_esp *alg_info_ah_create_from_str(const struct parser_poli
 							const char *alg_str,
 							char *err_buf, size_t err_buf_len);
 
-void alg_info_snprint_phase2(char *buf, size_t buflen,
-			     struct alg_info_esp *alg_info);
-
 size_t lswlog_proposal_info(struct lswlog *log, const struct proposal_info *proposal);
 size_t lswlog_alg_info(struct lswlog *log, const struct alg_info *alg_info);
 
