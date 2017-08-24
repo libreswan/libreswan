@@ -794,7 +794,6 @@ stf_status quick_outI1(int whack_sock,
 		       )
 {
 	struct state *st = duplicate_state(isakmp_sa, TRUE);
-	char p2alg[256];	/* ??? who knows if this size is reasonable */
 
 	st->st_whack_sock = whack_sock;
 	st->st_connection = c;	/* safe: from duplicate_state */
@@ -829,12 +828,6 @@ stf_status quick_outI1(int whack_sock,
 
 	insert_state(st); /* needs cookies, connection, and msgid */
 
-	strcpy(p2alg, "defaults");
-	if (st->st_connection->alg_info_esp != NULL) {
-		alg_info_snprint_phase2(p2alg, sizeof(p2alg),
-					(struct alg_info_esp *)st->st_connection->alg_info_esp);
-	}
-
 	/* figure out PFS group, if any */
 
 	if (policy & POLICY_PFS ) {
@@ -853,26 +846,26 @@ stf_status quick_outI1(int whack_sock,
 			st->st_pfs_group = isakmp_sa->st_oakley.group;
 	}
 
-	{
-		const char *pfsgroupname = "no-pfs";
-		char replacestr[32];
-
-		if ((policy & POLICY_PFS) != LEMPTY)
-			pfsgroupname = st->st_pfs_group->common.name;
-
-		replacestr[0] = '\0';
-		if (replacing != SOS_NOBODY)
-			snprintf(replacestr, sizeof(replacestr), " to replace #%lu",
-				 replacing);
-
-		libreswan_log(
-			"initiating Quick Mode %s%s {using isakmp#%lu msgid:%08" PRIx32 " proposal=%s pfsgroup=%s}",
-			prettypolicy(policy),
-			replacestr,
-			isakmp_sa->st_serialno, st->st_msgid, p2alg,
-			pfsgroupname);
+	LSWLOG(buf) {
+		lswlogf(buf, "initiating Quick Mode %s", prettypolicy(policy));
+		if (replacing != SOS_NOBODY) {
+			lswlogf(buf, " to replace #%lu", replacing);
+		}
+		lswlogf(buf, " {using isakmp#%lu msgid:%08" PRIx32 " proposal=",
+			isakmp_sa->st_serialno, st->st_msgid);
+		if (st->st_connection->alg_info_esp != NULL) {
+			lswlog_alg_info(buf, &st->st_connection->alg_info_esp->ai);
+		} else {
+			lswlogf(buf, "defaults");
+		}
+		lswlogf(buf, " pfsgroup=");
+		if ((policy & POLICY_PFS) != LEMPTY) {
+			lswlogs(buf, st->st_pfs_group->common.fqn);
+		} else {
+			lswlogs(buf, "no-pfs");
+		}
+		lswlogf(buf, "}");
 	}
-
 
 	{
 		struct pluto_crypto_req_cont *qke = new_pcrc_repl(
