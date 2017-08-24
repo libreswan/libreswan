@@ -331,4 +331,11 @@ size_t lswlogl(struct lswlog *log, struct lswlog *buf);
 			     DBG_log("%s", LSWBUF_BUF(LOG)),		\
 				     lswdbgp_p = false)
 
+#define LSWLOG(LOG)							\
+	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
+		LSWBUF(LOG)						\
+			for (; lswlog_p;				\
+			     libreswan_log("%s", LSWBUF_BUF(LOG)),	\
+				     lswlog_p = false)
+
 #endif /* _LSWLOG_H_ */
