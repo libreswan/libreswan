@@ -592,7 +592,9 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 		    p_ctx->aalg_buf,
 		    p_ctx->modp_buf));
 
-	struct proposal_info proposal = { .enckeylen = 0, };
+	struct proposal_info proposal = {
+		.protocol = p_ctx->param,
+	};
 
 	/*
 	 * Try the raw EALG string with "-<eklen>" if present.

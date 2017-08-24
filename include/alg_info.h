@@ -188,6 +188,10 @@ struct proposal_info {
 	 * PFS/DH negotiation.
 	 */
 	const struct oakley_group_desc *dh;
+	/*
+	 * Which protocol is this proposal intended for?
+	 */
+	const struct parser_param *protocol;
 };
 
 /* common prefix of struct alg_info_esp and struct alg_info_ike */
