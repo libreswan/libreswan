@@ -1127,7 +1127,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		attr->rta_type = XFRMA_ALG_AUTH_TRUNC;
 		attr->rta_len = RTA_LENGTH(sizeof(algo) + sa->authkeylen);
 
-		strncpy(algo.alg_name, name, sizeof(algo.alg_name));
+		fill_and_terminate(algo.alg_name, name, sizeof(algo.alg_name));
 		memcpy(RTA_DATA(attr), &algo, sizeof(algo));
 		memcpy((char *)RTA_DATA(attr) + sizeof(algo),
 		       sa->authkey, sa->authkeylen);
@@ -1151,7 +1151,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 			return FALSE;
 		}
 
-		strncpy(algo.alg_name, name, sizeof(algo.alg_name));
+		fill_and_terminate(algo.alg_name, name, sizeof(algo.alg_name));
 		algo.alg_key_len = 0;
 
 		attr->rta_type = XFRMA_ALG_COMP;
@@ -1174,7 +1174,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		if (ike_alg_is_aead(sa->encrypt)) {
 			struct xfrm_algo_aead algo;
 
-			strncpy(algo.alg_name, name, sizeof(algo.alg_name));
+			fill_and_terminate(algo.alg_name, name, sizeof(algo.alg_name));
 			algo.alg_key_len = sa->enckeylen * BITS_PER_BYTE;
 			algo.alg_icv_len = sa->encrypt->aead_tag_size * BITS_PER_BYTE;
 
@@ -1191,7 +1191,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		} else {
 			struct xfrm_algo algo;
 
-			strncpy(algo.alg_name, name, sizeof(algo.alg_name));
+			fill_and_terminate(algo.alg_name, name, sizeof(algo.alg_name));
 			algo.alg_key_len = sa->enckeylen * BITS_PER_BYTE;
 
 			attr->rta_type = XFRMA_ALG_CRYPT;

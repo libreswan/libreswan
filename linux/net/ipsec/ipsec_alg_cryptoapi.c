@@ -328,8 +328,12 @@ static int setup_ipsec_alg_capi_cipher(struct ipsec_alg_capi_cipher *cptr)
 	cptr->alg.ixt_common.ixt_version = IPSEC_ALG_VERSION;
 	cptr->alg.ixt_common.ixt_module  = THIS_MODULE;
 	atomic_set(&cptr->alg.ixt_common.ixt_refcnt, 0);
+	/* fill_and_terminate(cptr->alg.ixt_common.ixt_name, cptr->ciphername,
+	 *	sizeof(cptr->alg.ixt_common.ixt_name));
+	 */
 	strncpy(cptr->alg.ixt_common.ixt_name, cptr->ciphername,
-		sizeof(cptr->alg.ixt_common.ixt_name));
+		sizeof(cptr->alg.ixt_common.ixt_name)-1);
+	cptr->alg.ixt_common.ixt_name[sizeof(cptr->alg.ixt_common.ixt_name)-1] = '\0';
 
 	cptr->alg.ixt_common.ixt_blocksize = cptr->blocksize;
 	cptr->alg.ixt_common.ixt_support.ias_keyminbits = cptr->minbits;
@@ -592,15 +596,18 @@ setup_ipsec_alg_capi_digest(struct ipsec_alg_capi_digest *dptr)
 	int ret;
 	dptr->alg.ixt_common.ixt_version = IPSEC_ALG_VERSION;
 	dptr->alg.ixt_common.ixt_module  = THIS_MODULE;
-	atomic_set (& dptr->alg.ixt_common.ixt_refcnt, 0);
-	strncpy (dptr->alg.ixt_common.ixt_name , dptr->digestname, sizeof (dptr->alg.ixt_common.ixt_name));
+	atomic_set(& dptr->alg.ixt_common.ixt_refcnt, 0);
+	/* fill_and_terminate(dptr->alg.ixt_common.ixt_name, dptr->digestname, sizeof(dptr->alg.ixt_common.ixt_name)); */
+	strncpy(dptr->alg.ixt_common.ixt_name, dptr->digestname, sizeof(dptr->alg.ixt_common.ixt_name)-1);
+	dptr->alg.ixt_common.ixt_name[sizeof(dptr->alg.ixt_common.ixt_name)-1] = '\0';
 
 	dptr->alg.ixt_common.ixt_blocksize=dptr->blocksize;
 	dptr->alg.ixt_common.ixt_support.ias_keyminbits=dptr->minbits;
 	dptr->alg.ixt_common.ixt_support.ias_keymaxbits=dptr->maxbits;
 	dptr->alg.ixt_common.ixt_support.ias_ivlen=0;
 	dptr->alg.ixt_common.ixt_state = 0;
-	if (excl_crypto) dptr->alg.ixt_common.ixt_state |= IPSEC_ALG_ST_EXCL;
+	if (excl_crypto)
+		dptr->alg.ixt_common.ixt_state |= IPSEC_ALG_ST_EXCL;
 	dptr->alg.ixt_a_keylen=dptr->alg.ixt_common.ixt_support.ias_keymaxbits/8;
 	dptr->alg.ixt_a_ctx_size = sizeof(struct crypto_tfm);
 	dptr->alg.ixt_a_authlen = dptr->authlen;

@@ -228,7 +228,7 @@ static int send_whack_msg(struct whack_message *msg, char *ctlsocket)
 	int ret;
 
 	/* copy socket location */
-	strncpy(ctl_addr.sun_path, ctlsocket, sizeof(ctl_addr.sun_path) - 1);
+	fill_and_terminate(ctl_addr.sun_path, ctlsocket, sizeof(ctl_addr.sun_path));
 
 	/*  Pack strings */
 	wp.msg = msg;

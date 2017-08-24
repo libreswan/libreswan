@@ -83,7 +83,10 @@ struct ocf_device {
 	struct ocf_device _device; \
 	device_t
 
-/* ??? softc_device_init's definition sure looks funny. Not used in our code base. */
+/* ??? softc_device_init's definition sure looks funny. Not used in our code base.
+ * - why is wrapper "if...else" rather than converntional "do ... while (0)"?
+ * - why is _device.name neither properly NUL-terminated nor NUL-padded?
+ */
 #define softc_device_init(_sc, _name, _unit, _methods) \
 	if (1) { \
 		strncpy((_sc)->_device.name, _name, \

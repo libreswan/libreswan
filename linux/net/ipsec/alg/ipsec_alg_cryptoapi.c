@@ -203,7 +203,7 @@ static int setup_ipsec_alg_capi_cipher(struct ipsec_alg_capi_cipher *cptr)
 	cptr->alg.ixt_version = IPSEC_ALG_VERSION;
 	cptr->alg.ixt_module = THIS_MODULE;
 	atomic_set(&cptr->alg.ixt_refcnt, 0);
-	strncpy(cptr->alg.ixt_name, cptr->ciphername,
+	fill_and_terminate(cptr->alg.ixt_name, cptr->ciphername,
 		sizeof(cptr->alg.ixt_name));
 
 	cptr->alg.ixt_blocksize = cptr->blocksize;
