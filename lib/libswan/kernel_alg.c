@@ -244,7 +244,7 @@ static int find_sadb_id(const struct sadb_id *table, const struct ike_alg *alg)
 
 const struct sadb_id integ_sadb_ids[] = {
 	{ &ike_alg_integ_aes_cmac.common, SADB_X_AALG_AES_CMAC_96, },
-	{ NULL, },
+	{ NULL, 0 },
 };
 
 void kernel_integ_add(const struct integ_desc *integ)
@@ -276,7 +276,7 @@ const struct sadb_id encrypt_sadb_ids[] = {
 	{ &ike_alg_encrypt_aes_ccm_12.common, SADB_X_EALG_AES_CCM_ICV12, },
 	{ &ike_alg_encrypt_aes_ccm_16.common, SADB_X_EALG_AES_CCM_ICV16, },
 	{ &ike_alg_encrypt_null_integ_aes_gmac.common, SADB_X_EALG_NULL_AUTH_AES_GMAC, },
-	{ NULL, },
+	{ NULL, 0},
 };
 
 void kernel_encrypt_add(const struct encrypt_desc *encrypt)
