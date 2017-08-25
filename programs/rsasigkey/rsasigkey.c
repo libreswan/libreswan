@@ -347,7 +347,7 @@ void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco)
 		char *base64 = NULL;
 		err_t err = rsa_pubkey_to_base64(public_exponent, public_modulus, &base64);
 		if (err) {
-			fprintf(stderr, "%s: unexpected error encoing RSA public key '%s'\n",
+			fprintf(stderr, "%s: unexpected error encoding RSA public key '%s'\n",
 				progname, err);
 			exit(1);
 		}
