@@ -26,7 +26,7 @@ Build-Depends:
  libpam0g-dev,
  libselinux1-dev [linux-any],
  libsystemd-dev,
- libunbound-dev (>= 1.6.0~),
+ libunbound-dev (>= 1.6.5~),
  man2html,
  pkg-config,
  po-debconf,
