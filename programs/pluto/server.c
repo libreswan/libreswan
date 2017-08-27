@@ -996,10 +996,14 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 			sender = find_likely_sender((size_t) packet_len, buffer);
 		}
 
-		DBG_cond_dump(DBG_ALL, "rejected packet:\n", buffer,
+		if (packet_len > 0) {
+			DBG_cond_dump(DBG_ALL, "rejected packet:\n", buffer,
 			      packet_len);
+		}
+
 		DBG_cond_dump(DBG_ALL, "control:\n", emh.msg_control,
 			      emh.msg_controllen);
+
 		/* ??? Andi Kleen <ak@suse.de> and misc documentation
 		 * suggests that name will have the original destination
 		 * of the packet.  We seem to see msg_namelen == 0.
