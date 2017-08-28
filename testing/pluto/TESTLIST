@@ -811,6 +811,7 @@ kvmplutotest	interop-ikev1-strongswan-08-strongswan-cast	good
 kvmplutotest    interop-ikev2-strongswan-02-psk-responder	good
 kvmplutotest    interop-ikev2-strongswan-03-psk-initiator	good
 kvmplutotest    interop-ikev2-strongswan-04-x509-responder	good
+kvmplutotest    interop-ikev2-strongswan-04-responder-impair	good
 kvmplutotest	interop-ikev2-strongswan-05-psk-aes		good
 kvmplutotest	interop-ikev2-strongswan-05-psk-md5		good
 kvmplutotest	interop-ikev2-strongswan-06-aes192		good
@@ -842,6 +843,8 @@ kvmplutotest	interop-ikev2-strongswan-35-rekey-pfs		good
 kvmplutotest	interop-ikev2-strongswan-35-rekey-reauth	good
 kvmplutotest	interop-ikev2-strongswan-35-responder-rekey-pfs good
 kvmplutotest	interop-ikev2-strongswan-36-esp-gmac-responder	good
+kvmplutotest	interop-ikev2-strongswan-37-initiator-digsig	good
+kvmplutotest	interop-ikev2-strongswan-38-digsig-impair	good
 
 #################################################################
 # DNSSEC tests

@@ -129,13 +129,14 @@ road #
  grep "negotiated connection" /tmp/pluto.log
 "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23 #2: negotiated connection [10.0.10.1-10.0.10.1:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
 road #
- # you should see only RSA
+ # you should see only Digital Signatures that currently only supports RSA
 road #
  grep IKEv2_AUTH_ OUTPUT/*pluto.log
-OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
-OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
-OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
-OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
+OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
+OUTPUT/east.pluto.log:| clear-or-private#192.1.2.254/32 #1 not fetching ipseckey that end rsasigkey != %dnsondemand  can only query DNS for IPSECKEY for ID that is a FQDN, IPV4_ADDR, or IPV6_ADDR id type=ID_DER_ASN1_DN IKEv2_AUTH_DIGSIG remote=192.1.2.254 thatid=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org
+OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
+OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
+OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
 road #
 road #
  ../bin/check-for-core.sh

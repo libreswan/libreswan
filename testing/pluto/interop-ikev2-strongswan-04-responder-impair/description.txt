@@ -1,0 +1,11 @@
+RFC 7427 :
+Basic pluto with IKEv2 using X.509 on the initiator (west), and Strongswan on
+the responder (east) with impair.
+
+Impairment is introduced in such a way that , the Signature hash notification is
+not sent. Therefore Authentication method is no longer Digital Signature , but RSA (legacy)
+
+This case is to be sure that libreswan without Digital Signatures(RFC 7427) ie an older version
+can still interop with Strongwan (with Digital Signature implemented)
+
+

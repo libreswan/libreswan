@@ -30,10 +30,11 @@ east #
 initdone
 east #
  grep IKEv2_AUTH_ OUTPUT/*pluto.log
-OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
-OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
-OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
-OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
+OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
+OUTPUT/east.pluto.log:| westnet-eastnet-ikev2 #1 not fetching ipseckey that end rsasigkey != %dnsondemand initiator IKEv2 Auth Method is not IKEv2_AUTH_RSA,  IKEv2_AUTH_DIGSIG remote=192.1.2.45 thatid=@west
+OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
+OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
+OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
 east #
 east #
  ../bin/check-for-core.sh
