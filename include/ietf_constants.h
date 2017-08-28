@@ -9,6 +9,7 @@
  * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1229,7 +1230,7 @@ enum ikev2_auth_method {
 	IKEv2_AUTH_P521 = 11, /* RFC 4754 */
 	IKEv2_AUTH_GSPM = 12, /* RFC 6467 */
 	IKEv2_AUTH_NULL = 13, /* draft-ietf-ipsecme-ikev2-null-auth */
-	IKEv2_AUTH_SIG = 14, /* RFC 7427 */
+	IKEv2_AUTH_DIGSIG = 14, /* RFC 7427 */
 	/* 15 - 200 unassigned */
 	/* 201 - 255 private use */
 };
@@ -1654,6 +1655,47 @@ enum ipsec_comp_algo {
 	/* 64-255 Unassigned */
 };
 
+/*
+ * RFC 7427 Signature Authentication in the Internet Key Exchange Version 2 (IKEv2)
+ * Section 7 :  IANA Considerations
+ * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#hash-algorithms
+ */
+
+enum notify_payload_hash_algorithms {
+	IKEv2_AUTH_HASH_RESERVED = 0,
+	IKEv2_AUTH_HASH_SHA1     = 1,
+	IKEv2_AUTH_HASH_SHA2_256 = 2,
+	IKEv2_AUTH_HASH_SHA2_384 = 3,
+	IKEv2_AUTH_HASH_SHA2_512 = 4,
+	IKEv2_AUTH_HASH_IDENTITY = 5, /* RFC 4307-bis */
+	/* 6-1023 Unassigned */
+	/* 1024-65535 Reserved for private use */
+	IKEv2_AUTH_HASH_ROOF
+};
+
+/*
+ * RFC 7427 Hash Algorithm Identifiers (mentioned in
+ * notify_payload_hash_algorithms) that are sent in the Notify
+ * payload of the hash algorithm notification are 2 bytes each.
+ */
+#define RFC_7427_HASH_ALGORITHM_VALUE 2
+
+/*
+ * RFC 7427 , section 3 describes the Authentication data format for
+ * Digital Signatures.
+ * ASN.1 Length (1 octet) : length of ASN.1-encoded AlgorithmIdentifier object
+ * Algorithm Identifier (variable length) - The AlgorithmIdentifier ASN.1 object.
+ */
+
+/* size of algorithm identifier sha1WithRSAEncryption is 15 bytes */
+#define ASN1_SHA1_RSA_OID_SIZE 15
+/* length of ASN.1 Algorithm Identifier(variable length) is 1 byte */
+#define ASN1_LEN_ALGO_IDENTIFIER 1
+
+/* 15 byte OID of sha1WithRSAEncryption is specified in RFC 7427 in A.1.1 */
+static const unsigned char sha1_rsa_oid_blob[ASN1_SHA1_RSA_OID_SIZE] = {0x30,0x0d,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,0x01,0x05,0x05,0x00};
+
+static const uint8_t len_sha1_rsa_oid_blob[ASN1_LEN_ALGO_IDENTIFIER] = {ASN1_SHA1_RSA_OID_SIZE};
 
 /* Limits on size of RSA moduli.
  * The upper bound matches that of DNSSEC (see RFC 2537).

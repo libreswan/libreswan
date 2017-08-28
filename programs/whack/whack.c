@@ -14,6 +14,7 @@
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013-2017 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -769,6 +770,12 @@ static const struct option long_opts[] = {
 		IMPAIR_SEND_ZERO_GX_IX + DO },
 	{ "impair-send-bogus-dcookie", no_argument, NULL,
 		IMPAIR_SEND_BOGUS_DCOOKIE_IX + DO },
+	{ "impair-omit-hash-notify", no_argument, NULL,
+		IMPAIR_OMIT_HASH_NOTIFY_REQUEST_IX + DO },
+	{ "impair-ignore-hash-notify", no_argument, NULL,
+		IMPAIR_IGNORE_HASH_NOTIFY_REQUEST_IX + DO },
+	{ "impair-ignore-hash-notify-resp", no_argument, NULL,
+		IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE_IX + DO },
 #    undef DO
 	{ "whackrecord",     required_argument, NULL, OPT_WHACKRECORD + OO },
 	{ "whackstoprecord", no_argument, NULL, OPT_WHACKSTOPRECORD + OO },

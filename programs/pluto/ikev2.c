@@ -13,6 +13,7 @@
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2015-2017 Andrew Cagney
  * Copyright (C) 2016-2017 Antony Antony <appu@phenome.org>
+ * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1484,6 +1485,12 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 		case IKEv2_AUTH_NULL:
 			authby = AUTH_NULL;
 			break;
+		case IKEv2_AUTH_DIGSIG:
+			if (c->policy & POLICY_RSASIG) {
+				authby = AUTH_RSASIG;
+				break;
+			}
+			/* FALL THROUGH */
 		case IKEv2_AUTH_NONE:
 		default:
 			DBG(DBG_CONTROL, DBG_log("ikev2 skipping refine_host_connection due to unknown policy"));

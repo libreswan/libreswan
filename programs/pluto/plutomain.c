@@ -619,6 +619,9 @@ static const struct option long_opts[] = {
 	I("force-fips\0", IMPAIR_FORCE_FIPS_IX),
 	I("send-zero-gx\0", IMPAIR_SEND_ZERO_GX_IX),
 	I("send-bogus-dcookie\0", IMPAIR_SEND_BOGUS_DCOOKIE_IX),
+	I("omit-hash-notify\0", IMPAIR_OMIT_HASH_NOTIFY_REQUEST_IX),
+	I("ignore-hash-notify\0", IMPAIR_IGNORE_HASH_NOTIFY_REQUEST_IX),
+	I("ignore-hash-notify-resp\0", IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE_IX),
 #undef I
 	{ 0, 0, 0, 0 }
 };
