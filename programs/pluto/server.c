@@ -983,6 +983,9 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 
 		packet_len = recvmsg(ifp->fd, &emh, MSG_ERRQUEUE);
 
+		if (emh.msg_flags & MSG_TRUNC)
+			libreswan_log("recvmsg: received truncated IKE packet (MSG_TRUNC)");
+
 		if (packet_len == -1) {
 			LOG_ERRNO(errno,
 				  "recvmsg(,, MSG_ERRQUEUE) on %s failed in comm_handle",
