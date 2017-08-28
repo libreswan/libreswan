@@ -185,20 +185,34 @@ static const struct netlink_name integ_list[] = {
 static const struct netlink_name encrypt_list[] = {
 	{ &ike_alg_encrypt_null.common, "cipher_null" },
 	/* { &ike_alg_encrypt_DESCBC.common, "des" }, obsoleted */
+#ifdef USE_3DES
 	{ &ike_alg_encrypt_3des_cbc.common, "des3_ede" },
+#endif
+#ifdef USE_CAST
 	{ &ike_alg_encrypt_cast_cbc.common, "cast5" },
+#endif
 	/* { &ike_alg_encrypt_BLOWFISHCBC.common, "blowfish" }, obsoleted */
+#ifdef USE_AES
 	{ &ike_alg_encrypt_aes_cbc.common, "aes" },
 	{ &ike_alg_encrypt_aes_ctr.common, "rfc3686(ctr(aes))" },
+#endif
+#ifdef USE_CAMELLIA
 	{ &ike_alg_encrypt_camellia_cbc.common, "cbc(camellia)" },
+#endif
+#ifdef USE_SERPENT
 	{ &ike_alg_encrypt_serpent_cbc.common, "serpent" },
+#endif
+#ifdef USE_TWOFISH
 	{ &ike_alg_encrypt_twofish_cbc.common, "twofish" },
+#endif
+#ifdef USE_AES
 	{ &ike_alg_encrypt_aes_ccm_8.common, "rfc4309(ccm(aes))" },
 	{ &ike_alg_encrypt_aes_ccm_12.common, "rfc4309(ccm(aes))" },
 	{ &ike_alg_encrypt_aes_ccm_16.common, "rfc4309(ccm(aes))" },
 	{ &ike_alg_encrypt_aes_gcm_8.common, "rfc4106(gcm(aes))" },
 	{ &ike_alg_encrypt_aes_gcm_12.common, "rfc4106(gcm(aes))" },
 	{ &ike_alg_encrypt_aes_gcm_16.common, "rfc4106(gcm(aes))" },
+#endif
 #if 0
 	{ &ike_alg_encrypt_chacha20_poly1305.common, "rfc7539esp(chacha20,poly1305)" },
 #endif
