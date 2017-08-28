@@ -222,7 +222,7 @@ static void comm_handle(const struct iface_port *ifp)
 	 * This is early enough that teardown isn't required:
 	 * just return on failure.
 	 */
-	if (!check_msg_errqueue(ifp, POLLIN))
+	if (!check_msg_errqueue(ifp, POLLIN, TRUE /* receiving */))
 		return; /* no normal message to read */
 
 #endif /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */

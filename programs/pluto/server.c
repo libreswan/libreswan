@@ -935,7 +935,7 @@ void call_server(void)
  */
 
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
-bool check_msg_errqueue(const struct iface_port *ifp, short interest)
+bool check_msg_errqueue(const struct iface_port *ifp, short interest, bool incoming)
 {
 	struct pollfd pfd;
 
@@ -988,7 +988,8 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 
 		if (packet_len == -1) {
 			LOG_ERRNO(errno,
-				  "recvmsg(,, MSG_ERRQUEUE) on %s failed in comm_handle",
+				  "%s: recvmsg(,, MSG_ERRQUEUE) on %s failed",
+				  incoming ? "RECEIVE" : "SEND",
 				  ifp->ip_dev->id_rname);
 			break;
 		} else if (packet_len == (ssize_t)sizeof(buffer)) {
@@ -1273,7 +1274,7 @@ static bool send_packet(struct state *st, const char *where,
 	setportof(htons(st->st_remoteport), &st->st_remoteaddr);
 
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
-	(void) check_msg_errqueue(st->st_interface, POLLOUT);
+	(void) check_msg_errqueue(st->st_interface, POLLOUT, FALSE /* sending */);
 #endif  /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
 
 	wlen = sendto(st->st_interface->fd,
