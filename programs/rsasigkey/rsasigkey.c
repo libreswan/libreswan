@@ -119,7 +119,7 @@ static char *base64_bundle(int f4, chunk_t modulus)
 	chunk_t exponent;
 	u_int32_t f4_bytes = (u_int32_t)f4;
 
-	clonetochunk(exponent, &f4_bytes, 3, "exponent");
+	clonetochunk(exponent, &f4_bytes, sizeof(u_int32_t), "exponent");
 
 	/*
 	 * Create the resource record.
