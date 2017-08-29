@@ -935,7 +935,7 @@ void call_server(void)
  */
 
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
-bool check_msg_errqueue(const struct iface_port *ifp, short interest, bool incoming)
+bool check_msg_errqueue(const struct iface_port *ifp, short interest, const char *before)
 {
 	struct pollfd pfd;
 
@@ -988,9 +988,8 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest, bool incom
 
 		if (packet_len == -1) {
 			LOG_ERRNO(errno,
-				  "%s: recvmsg(,, MSG_ERRQUEUE) on %s failed",
-				  incoming ? "RECEIVE" : "SEND",
-				  ifp->ip_dev->id_rname);
+				  "recvmsg(,, MSG_ERRQUEUE) on %s failed (noticed before %s)",
+				  ifp->ip_dev->id_rname, before);
 			break;
 		} else if (packet_len == (ssize_t)sizeof(buffer)) {
 			libreswan_log(
@@ -1274,7 +1273,7 @@ static bool send_packet(struct state *st, const char *where,
 	setportof(htons(st->st_remoteport), &st->st_remoteaddr);
 
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
-	(void) check_msg_errqueue(st->st_interface, POLLOUT, FALSE /* sending */);
+	(void) check_msg_errqueue(st->st_interface, POLLOUT, "sending a packet");
 #endif  /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
 
 	wlen = sendto(st->st_interface->fd,
