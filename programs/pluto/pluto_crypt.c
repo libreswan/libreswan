@@ -1070,14 +1070,11 @@ void init_crypto_helpers(int nhelpers)
 		ncpu_online = sysctl(mib, 2, &numcpu, &len, NULL, 0);
 #endif
 
+		/* magic numbers from experience */
 		if (ncpu_online > 2) {
 			nhelpers = ncpu_online - 1;
 		} else {
-			/*
-			 * if we have 2 CPUs or less, then create 1 helper, since
-			 * we still want to deal with head-of-queue problem.
-			 */
-			nhelpers = 1;
+			nhelpers = ncpu_online * 2;
 		}
 	}
 
