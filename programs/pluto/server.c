@@ -935,7 +935,7 @@ void call_server(void)
  */
 
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
-bool check_msg_errqueue(const struct iface_port *ifp, short interest)
+bool check_msg_errqueue(const struct iface_port *ifp, short interest, bool incoming)
 {
 	struct pollfd pfd;
 
@@ -983,9 +983,13 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 
 		packet_len = recvmsg(ifp->fd, &emh, MSG_ERRQUEUE);
 
+		if (emh.msg_flags & MSG_TRUNC)
+			libreswan_log("recvmsg: received truncated IKE packet (MSG_TRUNC)");
+
 		if (packet_len == -1) {
 			LOG_ERRNO(errno,
-				  "recvmsg(,, MSG_ERRQUEUE) on %s failed in comm_handle",
+				  "%s: recvmsg(,, MSG_ERRQUEUE) on %s failed",
+				  incoming ? "RECEIVE" : "SEND",
 				  ifp->ip_dev->id_rname);
 			break;
 		} else if (packet_len == (ssize_t)sizeof(buffer)) {
@@ -996,10 +1000,14 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 			sender = find_likely_sender((size_t) packet_len, buffer);
 		}
 
-		DBG_cond_dump(DBG_ALL, "rejected packet:\n", buffer,
+		if (packet_len > 0) {
+			DBG_cond_dump(DBG_ALL, "rejected packet:\n", buffer,
 			      packet_len);
+		}
+
 		DBG_cond_dump(DBG_ALL, "control:\n", emh.msg_control,
 			      emh.msg_controllen);
+
 		/* ??? Andi Kleen <ak@suse.de> and misc documentation
 		 * suggests that name will have the original destination
 		 * of the packet.  We seem to see msg_namelen == 0.
@@ -1266,7 +1274,7 @@ static bool send_packet(struct state *st, const char *where,
 	setportof(htons(st->st_remoteport), &st->st_remoteaddr);
 
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
-	(void) check_msg_errqueue(st->st_interface, POLLOUT);
+	(void) check_msg_errqueue(st->st_interface, POLLOUT, FALSE /* sending */);
 #endif  /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
 
 	wlen = sendto(st->st_interface->fd,

@@ -121,6 +121,6 @@ extern void fmt_isakmp_sa_established(struct state *st,
 extern void free_md_pool(void);
 
 extern void process_packet(struct msg_digest **mdp);
-extern bool check_msg_errqueue(const struct iface_port *ifp, short interest);
+extern bool check_msg_errqueue(const struct iface_port *ifp, short interest, bool incoming);
 
 #endif /* _DEMUX_H */

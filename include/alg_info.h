@@ -28,6 +28,7 @@ struct parser_context;
 struct alg_info;
 struct lswlog;
 struct parser_param;
+struct proposal_info;
 
 /*
  * Parameters to tune the parser.
@@ -47,12 +48,39 @@ struct parser_policy {
 };
 
 /*
+ * Defaults to fill in.
+ */
+
+struct proposal_defaults {
+	const struct ike_alg **dh;
+	const struct ike_alg **prf;
+	const struct ike_alg **integ;
+	const struct ike_alg **encrypt;
+};
+
+/*
  * Parameters to set the parser's basic behaviour - ESP/AH/IKE.
  */
 
 struct parser_param {
 	const char *protocol;
 	enum ike_alg_key ikev1_alg_id;
+
+	/*
+	 * Lists of defaults.
+	 */
+	const struct proposal_defaults *ikev1_defaults;
+	const struct proposal_defaults *ikev2_defaults;
+
+	/*
+	 * Is the proposal OK?
+	 *
+	 * This is the final check, if this succeeds then the proposal
+	 * is added.
+	 */
+	bool (*proposal_ok)(const struct parser_policy *const policy,
+			    const struct proposal_info *proposal,
+			    char *err_buf, size_t err_buf_len);
 
 	/*
 	 * XXX: Is the proto-id needed?  Parser should be protocol
@@ -111,13 +139,12 @@ struct parser_param {
 	 *   litering the code
 	 */
 	const char *(*alg_info_add)(const struct parser_policy *const policy,
-				    struct alg_info *alg_info,
+                                    struct alg_info *alg_info,
 				    const struct encrypt_desc *encrypt, int ek_bits,
 				    const struct prf_desc *prf,
 				    const struct integ_desc *integ,
 				    const struct oakley_group_desc *dh_group,
-				    char *err_buf, size_t err_buf_len);
-
+                                    char *err_buf, size_t err_buf_len);
 	/*
 	 * This lookup functions must set err and return null if NAME
 	 * isn't valid.
@@ -198,9 +225,6 @@ extern struct alg_info_esp *alg_info_esp_create_from_str(const struct parser_pol
 extern struct alg_info_esp *alg_info_ah_create_from_str(const struct parser_policy *policy,
 							const char *alg_str,
 							char *err_buf, size_t err_buf_len);
-
-void alg_info_snprint_phase2(char *buf, size_t buflen,
-			     struct alg_info_esp *alg_info);
 
 size_t lswlog_proposal_info(struct lswlog *log, const struct proposal_info *proposal);
 size_t lswlog_alg_info(struct lswlog *log, const struct alg_info *alg_info);

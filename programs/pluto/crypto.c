@@ -157,24 +157,35 @@ void ike_alg_show_connection(const struct connection *c, const char *instance)
 
 	if (c->alg_info_ike != NULL) {
 		/*
-		 * List the algorithms with any missing key
-		 * information filled in.
+		 * List the algorithms as found in alg_info_ike and as
+		 * will be fed into the proposal code.
 		 *
-		 * This isn't perfect as, given AES, both AES_128 and
-		 * AES_256 will be proposed, and below doesn't
-		 * currently list the latter.
+		 * XXX:
+		 *
+		 * An earlier variant of this code would append the
+		 * "default" encryption key-length if it wasn't
+		 * specified on the ike= line.  It isn't clear how
+		 * helpful this is so it was removed:
+		 *
+		 * - it becomes hard to differentiate between ike=aes
+		 *   and ike=aes_128
+		 *
+		 * - proposal code will likely generate a single
+		 *   proposal containing TWO keys - max then default -
+		 *   so just displaying default is very misleading.
+		 *   MAX will probably be selected.
+		 *
+		 * - for 3DES_CBC, which has only one default, knowing
+		 *   it is _192 probably isn't useful
+		 *
+		 * What is needed is a way to display all key lengths
+		 * in the order that they will be proposed (remember
+		 * ESP reverses this).  Something like
+		 * AES_CBC_256+AES_CBC_128-... (which is hopefully not
+		 * impossible to parse)?
 		 */
 		LSWBUF(buf) {
-			const char *sep = "";
-			FOR_EACH_IKE_INFO(c->alg_info_ike, proposal) {
-				lswlogs(buf, sep);
-				struct proposal_info p = *proposal;
-				if (p.enckeylen == 0) {
-					p.enckeylen = p.encrypt->keydeflen;
-				}
-				lswlog_proposal_info(buf, &p);
-				sep = ", ";
-			}
+			lswlog_alg_info(buf, &c->alg_info_ike->ai);
 			whack_log(RC_COMMENT,
 				  "\"%s\"%s:   IKE algorithms: %s",
 				  c->name,

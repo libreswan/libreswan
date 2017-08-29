@@ -25,6 +25,8 @@
 #include "constants.h"
 #include "alg_info.h"
 #include "ike_alg.h"
+#include "alg_byname.h"
+#include "ike_alg_null.h"
 
 /*
  *	Creates a new alg_info by parsing passed string
@@ -260,6 +262,259 @@ static err_t parser_machine(struct parser_context *p_ctx)
 	}
 }
 
+/*
+ * Add the proposal defaults for the specific algorithm.
+ */
+
+typedef struct proposal_info merge_alg_default_t(struct proposal_info proposal,
+						 const struct ike_alg *default_alg);
+
+static struct proposal_info merge_dh_default(struct proposal_info proposal,
+					     const struct ike_alg *default_alg)
+{
+	proposal.dh = oakley_group_desc(default_alg);
+	return proposal;
+}
+
+static struct proposal_info merge_encrypt_default(struct proposal_info proposal,
+						  const struct ike_alg *default_alg)
+{
+	proposal.encrypt = encrypt_desc(default_alg);
+	return proposal;
+}
+
+static struct proposal_info merge_prf_default(struct proposal_info proposal,
+					      const struct ike_alg *default_alg)
+{
+	proposal.prf = prf_desc(default_alg);
+	return proposal;
+}
+
+static struct proposal_info merge_integ_default(struct proposal_info proposal,
+						const struct ike_alg *default_alg)
+{
+	proposal.integ = integ_desc(default_alg);
+	return proposal;
+}
+
+static const char *add_proposal_defaults(const struct parser_param *param,
+					 const struct parser_policy *policy,
+					 const struct proposal_defaults *defaults,
+					 struct alg_info *alg_info,
+					 const struct proposal_info *proposal,
+					 char *err_buf, size_t err_buf_len);
+
+
+static const char *add_alg_defaults(const struct parser_param *param,
+				    const struct parser_policy *policy,
+				    const struct proposal_defaults *defaults,
+				    struct alg_info *alg_info,
+				    const struct proposal_info *proposal,
+				    const struct ike_alg_type *type,
+				    const struct ike_alg **default_algs,
+				    merge_alg_default_t *merge_alg_default,
+				    char *err_buf, size_t err_buf_len)
+{
+	/*
+	 * Use VALID_ALG to add the valid algorithms into VALID_ALGS.
+	 */
+	for (const struct ike_alg **default_alg = default_algs;
+	     *default_alg; default_alg++) {
+		const struct ike_alg *alg = *default_alg;
+		char buf[LOG_WIDTH] = "";
+		if (!alg_byname_ok(param, policy, alg,
+				   alg->name, buf, sizeof(buf))) {
+			DBG(DBG_CONTROL|DBG_CRYPT,
+			    DBG_log("skipping default %s", buf));
+			continue;
+		}
+		/* add it */
+		DBG(DBG_CONTROL|DBG_CRYPT,
+		    DBG_log("adding default %s %s",
+			    ike_alg_type_name(type),
+			    alg->name));
+		struct proposal_info merged_proposal = merge_alg_default(*proposal,
+									 *default_alg);
+		const char *error = add_proposal_defaults(param, policy, defaults,
+							  alg_info, &merged_proposal,
+							  err_buf, err_buf_len);
+		if (error != NULL) {
+			return error;
+		}
+	}
+	return NULL;
+}
+
+/*
+ * For all the algorithms, when an algorithm is missing (NULL), and
+ * there are defaults, add them.
+ */
+
+static const char *add_proposal_defaults(const struct parser_param *param,
+					 const struct parser_policy *policy,
+					 const struct proposal_defaults *defaults,
+					 struct alg_info *alg_info,
+					 const struct proposal_info *proposal,
+					 char *err_buf, size_t err_buf_len)
+{
+	/*
+	 * Note that the order in which things are recursively added -
+	 * MODP, ENCR, PRF/HASH - affects test results.  It determines
+	 * things like the order of proposals.
+	 */
+	if (defaults != NULL && proposal->dh == NULL && defaults->dh != NULL) {
+		return add_alg_defaults(param, policy, defaults,
+					alg_info, proposal,
+					&ike_alg_dh, defaults->dh,
+					merge_dh_default,
+					err_buf, err_buf_len);
+	} else if (defaults != NULL && proposal->encrypt == NULL && defaults->encrypt != NULL) {
+		return add_alg_defaults(param, policy, defaults,
+					alg_info, proposal,
+					&ike_alg_encrypt, defaults->encrypt,
+					merge_encrypt_default,
+					err_buf, err_buf_len);
+	} else if (defaults != NULL && proposal->prf == NULL && defaults->prf != NULL) {
+		return add_alg_defaults(param, policy, defaults,
+					alg_info, proposal,
+					&ike_alg_prf, defaults->prf,
+					merge_prf_default,
+					err_buf, err_buf_len);
+	} else if (defaults != NULL && proposal->integ == NULL && defaults->integ != NULL) {
+		return add_alg_defaults(param, policy, defaults,
+					alg_info, proposal,
+					&ike_alg_integ, defaults->integ,
+					merge_integ_default,
+					err_buf, err_buf_len);
+	} else if (proposal->integ == NULL && proposal->prf != NULL && proposal->encrypt != NULL) {
+		/*
+		 * Implement integrity using the PRF (assuming things
+		 * aren't AEAD).
+		 */
+		const struct integ_desc *integ = NULL;
+		if (ike_alg_is_aead(proposal->encrypt)) {
+			integ = &ike_alg_integ_null;
+		} else {
+			passert(ike_alg_is_ike(&proposal->prf->common));
+			for (const struct integ_desc **algp = next_integ_desc(NULL);
+			     algp != NULL; algp = next_integ_desc(algp)) {
+				const struct integ_desc *alg = *algp;
+				if (alg->prf == proposal->prf) {
+					integ = alg;
+					break;
+				}
+			}
+			if (integ == NULL) {
+				snprintf(err_buf, err_buf_len,
+					 "%s integrity derived from PRF '%s' is not supported",
+					 param->protocol,
+					 proposal->prf->common.name);
+				return err_buf;
+			}
+		}
+		struct proposal_info merged_proposal = *proposal;
+		merged_proposal.integ = integ;
+		return add_proposal_defaults(param, policy, defaults,
+					     alg_info, &merged_proposal,
+					     err_buf, err_buf_len);
+	} else if (proposal->encrypt != NULL && !ike_alg_is_aead(proposal->encrypt)
+		   && proposal->integ == &ike_alg_integ_null) {
+		/*
+		 * For instance, esp=aes_gcm-sha1" is invalid.
+		 */
+		snprintf(err_buf, err_buf_len,
+			 "non-AEAD %s encryption algorithm '%s' cannot have a 'null' integrity algorithm",
+			 param->protocol,
+			 proposal->encrypt->common.name);
+		return err_buf;
+	} else if (proposal->encrypt != NULL && ike_alg_is_aead(proposal->encrypt)
+		   && proposal->integ != &ike_alg_integ_null) {
+		/*
+		 * For instance, esp=aes_cbc-null" is invalid.
+		 */
+		snprintf(err_buf, err_buf_len,
+			 "AEAD %s encryption algorithm '%s' must have a 'null' integrity algorithm",
+			 param->protocol,
+			 proposal->encrypt->common.name);
+		return err_buf;
+	} else {
+
+		/* duplicate? */
+		FOR_EACH_PROPOSAL_INFO(alg_info, existing_proposal) {
+			if (existing_proposal->encrypt != proposal->encrypt)
+				continue;
+			if (existing_proposal->prf != proposal->prf)
+				continue;
+			if (existing_proposal->integ != proposal->integ)
+				continue;
+			if (existing_proposal->dh != proposal->dh)
+				continue;
+			/*
+			 * 0 is like a wild-card (it actually means
+			 * propose default and strongest key lengths)
+			 * so if either is zero just treat it as a
+			 * match.
+			 */
+			if (existing_proposal->enckeylen != proposal->enckeylen
+			    && existing_proposal->enckeylen != 0 && proposal->enckeylen != 0)
+				continue;
+			DBG(DBG_CRYPT,
+			    DBG_log("discarding duplicate %s proposal encrypt=%s enckeylen=%zu prf=%s integ=%s dh=%s",
+				    param->protocol,
+				    proposal->encrypt != NULL ? proposal->encrypt->common.name : "n/a",
+				    proposal->enckeylen,
+				    proposal->prf != NULL ? proposal->prf->common.name : "n/a",
+				    proposal->integ != NULL ? proposal->integ->common.name : "n/a",
+				    proposal->dh != NULL ? proposal->dh->common.name : "n/a"));
+			return NULL;
+		}
+
+		/* Overflow? */
+		if ((unsigned)alg_info->alg_info_cnt >= elemsof(alg_info->proposals)) {
+			snprintf(err_buf, err_buf_len,
+				 "more than %zu %s algorithms specified",
+				 elemsof(alg_info->proposals),
+				 param->protocol);
+			/* drop it like a rock */
+			return err_buf;
+		}
+
+		/* back end? */
+		if (!param->proposal_ok(policy, proposal,
+					err_buf, err_buf_len)) {
+			passert(err_buf[0] != '\0');
+			return err_buf;
+		}
+
+		alg_info->proposals[alg_info->alg_info_cnt++] = *proposal;
+		return NULL;
+	}
+}
+
+static const char *merge_default_proposals(const struct parser_param *param,
+					   const struct parser_policy *policy,
+					   struct alg_info *alg_info,
+					   const struct proposal_info *proposal,
+					   char *err_buf, size_t err_buf_len)
+{
+	/*
+	 * If there's a hint of IKEv1 being enabled then prefer its
+	 * larger set of defaults.
+	 *
+	 * This should increase the odds of both ends interoperating.
+	 *
+	 * For instance, the IKEv2 defaults were preferred and one end
+	 * has ikev2=never then, in aggressive mode, things don't
+	 * work.
+	 */
+	const struct proposal_defaults *defaults = (policy->ikev1
+						    ? param->ikev1_defaults
+						    : param->ikev2_defaults);
+	return add_proposal_defaults(param, policy, defaults,
+				     alg_info, proposal,
+				     err_buf, err_buf_len);
+}
+
 static const struct ike_alg *lookup_byname(struct parser_context *p_ctx,
 					   char *err_buf, size_t err_buf_len,
 					   const struct ike_alg *(alg_byname)(const struct parser_param *param,
@@ -427,6 +682,12 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 		return err_buf;
 	}
 
+	if (p_ctx->param->alg_info_add == NULL) {
+		return merge_default_proposals(p_ctx->param, p_ctx->policy,
+					       alg_info, &proposal,
+					       err_buf, err_buf_len);
+	}
+
 	return p_ctx->param->alg_info_add(p_ctx->policy,
 					  alg_info,
 					  proposal.encrypt, proposal.enckeylen,
@@ -459,10 +720,10 @@ struct alg_info *alg_info_parse_str(const struct parser_policy *policy,
 
 	/* use default if no (NULL) string */
 	if (alg_str == NULL) {
-		param->alg_info_add(ctx.policy, alg_info,
-				    NULL, 0,
-				    NULL, NULL, NULL,
-				    err_buf, err_buf_len);
+		struct proposal_info proposal = { .enckeylen = 0, };
+		merge_default_proposals(ctx.param, ctx.policy,
+					alg_info, &proposal,
+					err_buf, err_buf_len);
 		return alg_info;
 	}
 

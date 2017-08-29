@@ -64,7 +64,10 @@ size_t dstlen;
 		showversion = 0;
 		break;
 	default:
-		strncpy(dst, "(error)", dstlen);
+		if (dstlen > 0) {
+			strncpy(dst, "(error)", dstlen-1);
+			dst[dstlen-1] = '\0';
+		}
 		return 0;
 
 		break;

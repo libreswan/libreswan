@@ -108,7 +108,8 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "-> listening on UNIX socket %s ... ",
 			srv_sock_path);
 		srv_sock_addr.sun_family = AF_UNIX;
-		strncpy(srv_sock_addr.sun_path, srv_sock_path, UNIX_PATH_MAX);
+		/* make .sun_path both NUL-padded and NUL-terminated */
+		strncpy(srv_sock_addr.sun_path, srv_sock_path, UNIX_PATH_MAX-1);
 		srv_sock_addr.sun_path[UNIX_PATH_MAX - 1] = '\0';
 		rc = bind(srv_sock, (struct sockaddr *)&srv_sock_addr,
 			  sizeof(srv_sock_addr));

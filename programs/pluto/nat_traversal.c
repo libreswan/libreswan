@@ -771,7 +771,7 @@ int nat_traversal_espinudp_socket(int sk, const char *fam)
 		DBG(DBG_NATT, DBG_log("NAT-Traversal: Trying old ioctl style NAT-T"));
 		zero(&ifr);
 		ifn = "ipsec0"; /* mast must use ipsec0 too */
-		strncpy(ifr.ifr_name, ifn, sizeof(ifr.ifr_name));
+		fill_and_terminate(ifr.ifr_name, ifn, sizeof(ifr.ifr_name));
 		fdp[0] = sk;
 		fdp[1] = ESPINUDP_WITH_NON_ESP; /* no longer support non-ike or non-floating */
 		r = ioctl(sk, IPSEC_UDP_ENCAP_CONVERT, &ifr); /* private to KLIPS only */

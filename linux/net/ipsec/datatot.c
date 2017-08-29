@@ -101,7 +101,9 @@ size_t dstlen;
 	nreal = strlen(prefix);
 	needed = nreal;                 /* for starters */
 	if (dstlen <= nreal) {          /* prefix won't fit */
-		strncpy(dst, prefix, dstlen - 1);
+		/* fill_and_terminate */
+		strncpy(dst, prefix, dstlen-1);
+		dst[dstlen-1] = '\0';
 		dst += dstlen - 1;
 	} else {
 		strcpy(dst, prefix);

@@ -1580,8 +1580,10 @@ DEBUG_NO_STATIC int ipsec_tunnel_ioctl(struct net_device *dev,
 			    "klips_debug:ipsec_tunnel_ioctl: "
 			    "calling ipsec_tunnel_attatch...\n");
 		/* If this is an IP alias interface, get its real physical name */
+		/* fill_and_terminate(realphysname, cf->cf_name, IFNAMSIZ); */
 		strncpy(realphysname, cf->cf_name, IFNAMSIZ-1);
 		realphysname[IFNAMSIZ - 1] = 0;
+
 		colon = strchr(realphysname, ':');
 		if (colon)
 			*colon = 0;
@@ -2154,7 +2156,10 @@ int ipsec_tunnel_createnum(int ifnum)
 	}
 #ifndef ipsec_alloc_netdev
 	memset((caddr_t)dev_ipsec, 0, sizeof(struct net_device));
-	strncpy(dev_ipsec->name, name, sizeof(dev_ipsec->name));
+	/* fill_and_terminate(dev_ipsec->name, name, sizeof(dev_ipsec->name)); */
+	strncpy(dev_ipsec->name, name, sizeof(dev_ipsec->name)-1);
+	dev_ipsec->name[sizeof(dev_ipsec->name)-1] ='\0';
+
 #ifdef PAUL_FIXME
 	dev_ipsec->next = NULL;
 #endif

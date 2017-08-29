@@ -447,25 +447,28 @@ static stf_status modecfg_resp(struct state *st,
 		 * ??? might we be sending them twice?
 		 */
 		if (st->st_connection->modecfg_domain != NULL) {
-			DBG_log("We are sending '%s' as domain",
-				st->st_connection->modecfg_domain);
+			DBG(DBG_CONTROLMORE,
+				DBG_log("We are sending '%s' as domain",
+				st->st_connection->modecfg_domain));
 			isakmp_add_attr(&strattr, MODECFG_DOMAIN, &ia, st);
 		} else {
-			DBG_log("We are not sending a domain");
+			DBG(DBG_CONTROLMORE, DBG_log("We are not sending a domain"));
 		}
 
 		if (st->st_connection->modecfg_banner != NULL) {
-			DBG_log("We are sending '%s' as banner",
-				st->st_connection->modecfg_banner);
+			DBG(DBG_CONTROLMORE, DBG_log("We are sending '%s' as banner",
+				st->st_connection->modecfg_banner));
 			isakmp_add_attr(&strattr, MODECFG_BANNER, &ia, st);
 		} else {
-			DBG_log("We are not sending a banner");
+			DBG(DBG_CONTROLMORE, DBG_log("We are not sending a banner"));
 		}
 
 		if (isanyaddr(&st->st_connection->spd.this.client.addr)) {
-			DBG_log("We are 0.0.0.0/0 so not sending CISCO_SPLIT_INC");
+			DBG(DBG_CONTROLMORE,
+				DBG_log("We are 0.0.0.0/0 so not sending CISCO_SPLIT_INC"));
 		} else {
-			DBG_log("We are sending our subnet as CISCO_SPLIT_INC");
+			DBG(DBG_CONTROLMORE,
+				DBG_log("We are sending our subnet as CISCO_SPLIT_INC"));
 			isakmp_add_attr(&strattr, CISCO_SPLIT_INC, &ia, st);
 		}
 
@@ -2269,7 +2272,7 @@ stf_status xauth_inI0(struct msg_digest *md)
 			size_t len = attr.isaat_lv;
 			char msgbuf[81];
 
-			DBG_log("Received Cisco XAUTH message");
+			DBG(DBG_CONTROLMORE, DBG_log("Received Cisco XAUTH message"));
 			if (len >= sizeof(msgbuf) )
 				len = sizeof(msgbuf) - 1;
 			memcpy(msgbuf, strattr.cur, len);
@@ -2286,38 +2289,38 @@ stf_status xauth_inI0(struct msg_digest *md)
 					attr.isaat_lv);
 				return STF_IGNORE;
 			}
-			DBG_log("Received Cisco XAUTH type: Generic");
+			DBG(DBG_CONTROLMORE, DBG_log("Received Cisco XAUTH type: Generic"));
 			xauth_resp |= XAUTHLELEM(XAUTH_TYPE);
 			break;
 
 		case XAUTH_USER_NAME | ISAKMP_ATTR_AF_TLV:
-			DBG_log("Received Cisco XAUTH username");
+			DBG(DBG_CONTROLMORE, DBG_log("Received Cisco XAUTH username"));
 			xauth_resp |= XAUTHLELEM(XAUTH_USER_NAME);
 			break;
 
 		case XAUTH_USER_PASSWORD | ISAKMP_ATTR_AF_TLV:
-			DBG_log("Received Cisco XAUTH password");
+			DBG(DBG_CONTROLMORE, DBG_log("Received Cisco XAUTH password"));
 			xauth_resp |= XAUTHLELEM(XAUTH_USER_PASSWORD);
 			break;
 
 		case INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
-			DBG_log("Received Cisco Internal IPv4 address");
+			DBG(DBG_CONTROLMORE, DBG_log("Received Cisco Internal IPv4 address"));
 			break;
 
 		case INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
-			DBG_log("Received Cisco Internal IPv4 netmask");
+			DBG(DBG_CONTROLMORE, DBG_log("Received Cisco Internal IPv4 netmask"));
 			break;
 
 		case INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
-			DBG_log("Received Cisco IPv4 DNS info");
+			DBG(DBG_CONTROLMORE, DBG_log("Received Cisco IPv4 DNS info"));
 			break;
 
 		case INTERNAL_IP4_SUBNET | ISAKMP_ATTR_AF_TV:
-			DBG_log("Received Cisco IPv4 Subnet info");
+			DBG(DBG_CONTROLMORE, DBG_log("Received Cisco IPv4 Subnet info"));
 			break;
 
 		case INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TV:
-			DBG_log("Received Cisco NetBEUI NS info");
+			DBG(DBG_CONTROLMORE, DBG_log("Received Cisco NetBEUI NS info"));
 			break;
 
 		default:

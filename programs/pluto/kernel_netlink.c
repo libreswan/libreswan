@@ -185,20 +185,34 @@ static const struct netlink_name integ_list[] = {
 static const struct netlink_name encrypt_list[] = {
 	{ &ike_alg_encrypt_null.common, "cipher_null" },
 	/* { &ike_alg_encrypt_DESCBC.common, "des" }, obsoleted */
+#ifdef USE_3DES
 	{ &ike_alg_encrypt_3des_cbc.common, "des3_ede" },
+#endif
+#ifdef USE_CAST
 	{ &ike_alg_encrypt_cast_cbc.common, "cast5" },
+#endif
 	/* { &ike_alg_encrypt_BLOWFISHCBC.common, "blowfish" }, obsoleted */
+#ifdef USE_AES
 	{ &ike_alg_encrypt_aes_cbc.common, "aes" },
 	{ &ike_alg_encrypt_aes_ctr.common, "rfc3686(ctr(aes))" },
+#endif
+#ifdef USE_CAMELLIA
 	{ &ike_alg_encrypt_camellia_cbc.common, "cbc(camellia)" },
+#endif
+#ifdef USE_SERPENT
 	{ &ike_alg_encrypt_serpent_cbc.common, "serpent" },
+#endif
+#ifdef USE_TWOFISH
 	{ &ike_alg_encrypt_twofish_cbc.common, "twofish" },
+#endif
+#ifdef USE_AES
 	{ &ike_alg_encrypt_aes_ccm_8.common, "rfc4309(ccm(aes))" },
 	{ &ike_alg_encrypt_aes_ccm_12.common, "rfc4309(ccm(aes))" },
 	{ &ike_alg_encrypt_aes_ccm_16.common, "rfc4309(ccm(aes))" },
 	{ &ike_alg_encrypt_aes_gcm_8.common, "rfc4106(gcm(aes))" },
 	{ &ike_alg_encrypt_aes_gcm_12.common, "rfc4106(gcm(aes))" },
 	{ &ike_alg_encrypt_aes_gcm_16.common, "rfc4106(gcm(aes))" },
+#endif
 #if 0
 	{ &ike_alg_encrypt_chacha20_poly1305.common, "rfc7539esp(chacha20,poly1305)" },
 #endif
@@ -1127,7 +1141,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		attr->rta_type = XFRMA_ALG_AUTH_TRUNC;
 		attr->rta_len = RTA_LENGTH(sizeof(algo) + sa->authkeylen);
 
-		strncpy(algo.alg_name, name, sizeof(algo.alg_name));
+		fill_and_terminate(algo.alg_name, name, sizeof(algo.alg_name));
 		memcpy(RTA_DATA(attr), &algo, sizeof(algo));
 		memcpy((char *)RTA_DATA(attr) + sizeof(algo),
 		       sa->authkey, sa->authkeylen);
@@ -1151,7 +1165,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 			return FALSE;
 		}
 
-		strncpy(algo.alg_name, name, sizeof(algo.alg_name));
+		fill_and_terminate(algo.alg_name, name, sizeof(algo.alg_name));
 		algo.alg_key_len = 0;
 
 		attr->rta_type = XFRMA_ALG_COMP;
@@ -1174,7 +1188,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		if (ike_alg_is_aead(sa->encrypt)) {
 			struct xfrm_algo_aead algo;
 
-			strncpy(algo.alg_name, name, sizeof(algo.alg_name));
+			fill_and_terminate(algo.alg_name, name, sizeof(algo.alg_name));
 			algo.alg_key_len = sa->enckeylen * BITS_PER_BYTE;
 			algo.alg_icv_len = sa->encrypt->aead_tag_size * BITS_PER_BYTE;
 
@@ -1191,7 +1205,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		} else {
 			struct xfrm_algo algo;
 
-			strncpy(algo.alg_name, name, sizeof(algo.alg_name));
+			fill_and_terminate(algo.alg_name, name, sizeof(algo.alg_name));
 			algo.alg_key_len = sa->enckeylen * BITS_PER_BYTE;
 
 			attr->rta_type = XFRMA_ALG_CRYPT;
