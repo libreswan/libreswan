@@ -308,6 +308,7 @@ int main(int argc, char *argv[])
 		.ikev2 = false,
 	};
 	bool run_tests = false;
+	bool verbose = false;
 
 	char **argp = argv + 1;
 	for (; *argp != NULL; argp++) {
@@ -334,7 +335,7 @@ int main(int argc, char *argv[])
 		} else if (streq(arg, "fips=unknown")) {
 			lsw_set_fips_mode(LSW_FIPS_UNKNOWN);
 		} else if (streq(arg, "v")) {
-			log_to_stderr = true;
+			verbose = true;
 		} else {
 			fprintf(stderr, "unknown option: %s\n", *argp);
 			exit(1);
@@ -350,6 +351,12 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "unexpected %s\n", err);
 		exit(1);
 	}
+
+	/*
+	 * Only be verbose after NSS has started.  Otherwize fake and
+	 * real FIPS modes give different results.
+	 */
+	log_to_stderr = verbose;
 
 	ike_alg_init();
 
