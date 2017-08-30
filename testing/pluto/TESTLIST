@@ -78,7 +78,8 @@ kvmplutotest	basic-pluto-01-vanishingkey		wip
 kvmplutotest	addconn-01	wip # dumps core
 kvmplutotest	alias-01	wip
 kvmplutotest	readwriteconf-01 wip
-
+kvmplutotest	algparse-01				good
+kvmplutotest	algparse-02-fips			good
 
 #################################################################
 # IKEv2 tests
