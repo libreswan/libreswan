@@ -14,7 +14,6 @@
 
 SUBDIRS = pluto
 SUBDIRS += enumcheck
-SUBDIRS += cavp
 
 ifndef top_srcdir
 include ../mk/dirs.mk

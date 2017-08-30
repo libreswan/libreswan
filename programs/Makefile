@@ -32,6 +32,7 @@ SUBDIRS+=rsasigkey setup showhostkey
 SUBDIRS+=readwriteconf
 SUBDIRS+=_import_crl
 SUBDIRS+=algparse
+SUBDIRS+=cavp
 
 ifeq ($(USE_KLIPS),true)
 SUBDIRS+= _updown.klips eroute klipsdebug pf_key spi spigrp tncfg
