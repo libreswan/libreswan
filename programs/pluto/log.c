@@ -199,8 +199,6 @@ static void fmt_log(char *buf, size_t buf_len, const char *fmt, va_list ap)
 
 	ps = strlen(buf);
 	vsnprintf(buf + ps, buf_len - ps, fmt, ap);
-	if (!reproc)
-		sanitize_string(buf, buf_len);
 }
 
 void close_peerlog(void)
@@ -622,7 +620,7 @@ int DBG_log(const char *message, ...)
 	vsnprintf(m, sizeof(m), message, args);
 	va_end(args);
 
-	/* then sanitize anything else that is left. */
+	/* this is an expensive call, but we're in (slow) debug mode already */
 	sanitize_string(m, sizeof(m));
 
 	if (log_to_stderr || pluto_log_fp != NULL) {
