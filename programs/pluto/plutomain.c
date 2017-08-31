@@ -1608,8 +1608,10 @@ int main(int argc, char **argv)
 	/*
 	 * We need to retain some capabilities for our children (updown):
 	 * CAP_NET_ADMIN to change routes
+	 * (we also need it for some setsockopt() calls in main process)
 	 * CAP_NET_RAW for iptables -t mangle
 	 * CAP_DAC_READ_SEARCH for pam / google authenticator
+	 *
 	 */
 	capng_updatev(CAPNG_ADD, CAPNG_BOUNDING_SET, CAP_NET_ADMIN, CAP_NET_RAW,
 			CAP_DAC_READ_SEARCH, -1);

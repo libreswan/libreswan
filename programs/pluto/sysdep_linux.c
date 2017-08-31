@@ -110,6 +110,7 @@ static int pluto_ifn_roof = 0;
 struct raw_iface *find_raw_ifaces4(void)
 {
 	static const int on = TRUE;	/* by-reference parameter; constant, we hope */
+	static const int prio = 7; /* rumored maximum priority, requires CAP_NET_ADMIN */
 	int j;	/* index into buf */
 	struct ifconf ifconf;
 	struct ifreq *buf = NULL;	/* for list of interfaces -- arbitrary limit */
@@ -130,7 +131,11 @@ struct raw_iface *find_raw_ifaces4(void)
 
 	if (setsockopt(master_sock, SOL_SOCKET, SO_REUSEADDR,
 		       (const void *)&on, sizeof(on)) < 0)
-		EXIT_LOG_ERRNO(errno, "setsockopt() in find_raw_ifaces4()");
+		EXIT_LOG_ERRNO(errno, "setsockopt(SO_REUSEADDR) in find_raw_ifaces4()");
+
+	if (setsockopt(master_sock, SOL_SOCKET, SO_PRIORITY,
+		       (const void *)&prio, sizeof(prio)) < 0)
+		EXIT_LOG_ERRNO(errno, "setsockopt(SO_PRIORITY) in find_raw_ifaces4()");
 
 	/* bind the socket */
 	{
