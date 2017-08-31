@@ -98,7 +98,7 @@ bool lsw_nss_setup(const char *configdir, unsigned setup_flags,
 		PK11_SetPasswordFunc(get_password);
 	}
 
-	if (!(flags & LSW_NSS_SKIP_AUTH)) {
+	if (configdir != NULL) {
 		PK11SlotInfo *slot = lsw_nss_get_authenticated_slot(err);
 		if (slot == NULL) {
 			return FALSE;
