@@ -66,6 +66,8 @@
 	ERROR: ESP encryption algorithm 'camellia' is not supported, enc_alg="camellia"(192), auth_alg="", modp=""
 [esp=camellia256]
 	ERROR: ESP encryption algorithm 'camellia' is not supported, enc_alg="camellia"(256), auth_alg="", modp=""
+[esp=aes_ccm]
+	ERROR: AEAD ESP encryption algorithm 'aes_ccm_16' must have a 'null' integrity algorithm, enc_alg="aes_ccm"(0), auth_alg="", modp=""
 [esp=aes_ccm_a-128-null]
 	AES_CCM_8_128-NULL
 [esp=aes_ccm_a-192-null]
@@ -84,6 +86,8 @@
 	AES_CCM_16_192-NULL
 [esp=aes_ccm_c-256-null]
 	AES_CCM_16_256-NULL
+[esp=aes_gcm]
+	ERROR: AEAD ESP encryption algorithm 'aes_gcm_16' must have a 'null' integrity algorithm, enc_alg="aes_gcm"(0), auth_alg="", modp=""
 [esp=aes_gcm_a-128-null]
 	AES_GCM_8_128-NULL
 [esp=aes_gcm_a-192-null]

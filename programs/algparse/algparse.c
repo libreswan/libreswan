@@ -122,6 +122,7 @@ static void test(const struct parser_policy policy)
 	esp(policy, "camellia256");
 
 	/* this checks the bit sizes as well */
+	esp(policy, "aes_ccm");
 	esp(policy, "aes_ccm_a-128-null");
 	esp(policy, "aes_ccm_a-192-null");
 	esp(policy, "aes_ccm_a-256-null");
@@ -131,6 +132,7 @@ static void test(const struct parser_policy policy)
 	esp(policy, "aes_ccm_c-128-null");
 	esp(policy, "aes_ccm_c-192-null");
 	esp(policy, "aes_ccm_c-256-null");
+	esp(policy, "aes_gcm");
 	esp(policy, "aes_gcm_a-128-null");
 	esp(policy, "aes_gcm_a-192-null");
 	esp(policy, "aes_gcm_a-256-null");

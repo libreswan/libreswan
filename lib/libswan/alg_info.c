@@ -386,39 +386,44 @@ static const char *add_proposal_defaults(const struct parser_param *param,
 					&ike_alg_integ, defaults->integ,
 					merge_integ_default,
 					err_buf, err_buf_len);
-	} else if (proposal->integ == NULL && proposal->prf != NULL && proposal->encrypt != NULL) {
+	} else if (proposal->encrypt != NULL && !ike_alg_is_aead(proposal->encrypt)
+		   && proposal->prf != NULL && proposal->integ == NULL) {
 		/*
-		 * Implement integrity using the PRF (assuming things
-		 * aren't AEAD).
+		 * Since non-AEAD, use an integrity algorithm that is
+		 * implemented using the PRF.
 		 */
-		const struct integ_desc *integ = NULL;
-		if (ike_alg_is_aead(proposal->encrypt)) {
-			integ = &ike_alg_integ_null;
-		} else {
-			passert(ike_alg_is_ike(&proposal->prf->common));
-			for (const struct integ_desc **algp = next_integ_desc(NULL);
-			     algp != NULL; algp = next_integ_desc(algp)) {
-				const struct integ_desc *alg = *algp;
-				if (alg->prf == proposal->prf) {
-					integ = alg;
-					break;
-				}
-			}
-			if (integ == NULL) {
-				snprintf(err_buf, err_buf_len,
-					 "%s integrity derived from PRF '%s' is not supported",
-					 param->protocol,
-					 proposal->prf->common.name);
-				return err_buf;
+
+		struct proposal_info merged_proposal = *proposal;
+		for (const struct integ_desc **algp = next_integ_desc(NULL);
+		     algp != NULL; algp = next_integ_desc(algp)) {
+			const struct integ_desc *alg = *algp;
+			if (alg->prf == proposal->prf) {
+				merged_proposal.integ = alg;
+				break;
 			}
 		}
+		if (merged_proposal.integ == NULL) {
+			snprintf(err_buf, err_buf_len,
+				 "%s integrity derived from PRF '%s' is not supported",
+				 param->protocol,
+				 proposal->prf->common.name);
+			return err_buf;
+		}
+		return add_proposal_defaults(param, policy, defaults,
+					     alg_info, &merged_proposal,
+					     err_buf, err_buf_len);
+	} else if (proposal->encrypt != NULL && ike_alg_is_aead(proposal->encrypt)
+		   && proposal->integ == NULL) {
+		/*
+		 * AEAD requires null integrity.
+		 */
 		struct proposal_info merged_proposal = *proposal;
-		merged_proposal.integ = integ;
+		merged_proposal.integ = &ike_alg_integ_null;
 		return add_proposal_defaults(param, policy, defaults,
 					     alg_info, &merged_proposal,
 					     err_buf, err_buf_len);
 	} else if (proposal->encrypt != NULL && !ike_alg_is_aead(proposal->encrypt)
-		   && proposal->integ == &ike_alg_integ_null) {
+		   && proposal->integ != NULL && proposal->integ == &ike_alg_integ_null) {
 		/*
 		 * For instance, esp=aes_gcm-sha1" is invalid.
 		 */
@@ -428,7 +433,7 @@ static const char *add_proposal_defaults(const struct parser_param *param,
 			 proposal->encrypt->common.name);
 		return err_buf;
 	} else if (proposal->encrypt != NULL && ike_alg_is_aead(proposal->encrypt)
-		   && proposal->integ != &ike_alg_integ_null) {
+		   && proposal->integ != NULL && proposal->integ != &ike_alg_integ_null) {
 		/*
 		 * For instance, esp=aes_cbc-null" is invalid.
 		 */
