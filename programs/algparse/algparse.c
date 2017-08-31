@@ -188,7 +188,8 @@ static void test(const struct parser_policy policy)
 	esp(policy, "aes_ctr256");
 	esp(policy, "serpent");
 	esp(policy, "twofish");
-	esp(policy, "camellia_cbc_256-hmac_sha2_512_256;modp8192");
+	esp(policy, "camellia_cbc_256-hmac_sha2_512_256;modp8192"); /* long */
+	esp(policy, "null_auth_aes_gmac_256-null;modp8192"); /* long */
 	esp(policy, "3des-sha1;modp8192"); /* allow ';' when unambigious */
 	esp(policy, "3des-sha1-modp8192"); /* allow '-' when unambigious */
 	esp(policy, "aes-sha1,3des-sha1;modp8192"); /* set modp8192 on all algs */
