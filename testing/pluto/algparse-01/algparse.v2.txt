@@ -182,6 +182,8 @@
 	TWOFISH_CBC-HMAC_SHA1_96
 [esp=camellia_cbc_256-hmac_sha2_512_256;modp8192]
 	CAMELLIA_CBC_256-HMAC_SHA2_512_256-MODP8192
+[esp=null_auth_aes_gmac_256-null;modp8192]
+	NULL_AUTH_AES_GMAC_256-NULL-MODP8192
 [esp=3des-sha1;modp8192]
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 [esp=3des-sha1-modp8192]

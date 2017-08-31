@@ -182,6 +182,8 @@
 	ERROR: ESP encryption algorithm 'twofish' is not supported, enc_alg="twofish"(0), auth_alg="", modp=""
 [esp=camellia_cbc_256-hmac_sha2_512_256;modp8192]
 	ERROR: ESP encryption algorithm 'camellia_cbc' is not supported, enc_alg="camellia_cbc"(256), auth_alg="hmac_sha2_512_256", modp="modp8192"
+[esp=null_auth_aes_gmac_256-null;modp8192]
+	ERROR: ESP encryption algorithm 'null_auth_aes_gmac' is not supported, enc_alg="null_auth_aes_gmac"(256), auth_alg="null", modp="modp8192"
 [esp=3des-sha1;modp8192]
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 [esp=3des-sha1-modp8192]

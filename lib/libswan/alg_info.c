@@ -46,14 +46,15 @@ enum parser_state {
 };
 
 /* XXX:jjo to implement different parser for ESP and IKE */
+#define ALG_SIZE 30
 struct parser_context {
 	unsigned state;
 	const struct parser_param *param;
 	const struct parser_policy *policy;
-	char ealg_buf[20];
-	char eklen_buf[20];
-	char aalg_buf[20];
-	char modp_buf[20];
+	char ealg_buf[ALG_SIZE];
+	char eklen_buf[ALG_SIZE];
+	char aalg_buf[ALG_SIZE];
+	char modp_buf[ALG_SIZE];
 	char *ealg_str;
 	char *eklen_str;
 	char *aalg_str;
