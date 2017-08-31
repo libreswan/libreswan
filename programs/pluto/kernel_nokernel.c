@@ -4,6 +4,7 @@
  * Copyright (C) 2003-2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2003 Herbert Xu.
  * Copyright (C) 2008 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2017 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -39,33 +40,33 @@
 #include "id.h"
 #include "connections.h"
 #include "kernel.h"
-#include "kernel_noklips.h"
+#include "kernel_nokernel.h"
 #include "log.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */
 
-static void init_noklips(void)
+static void init_nokernel(void)
 {
 }
 
 /* asynchronous messages from our queue */
-static void noklips_dequeue(void)
+static void nokernel_dequeue(void)
 {
 }
 
 /* asynchronous messages directly from PF_KEY socket */
-static void noklips_event(void)
+static void nokernel_event(void)
 {
 }
 
-static void noklips_register_response(const struct sadb_msg *msg UNUSED)
+static void nokernel_register_response(const struct sadb_msg *msg UNUSED)
 {
 }
 
-static void noklips_register(void)
+static void nokernel_register(void)
 {
 }
 
-static bool noklips_raw_eroute(const ip_address *this_host UNUSED,
+static bool nokernel_raw_eroute(const ip_address *this_host UNUSED,
 			       const ip_subnet *this_client UNUSED,
 			       const ip_address *that_host UNUSED,
 			       const ip_subnet *that_client UNUSED,
@@ -88,24 +89,24 @@ static bool noklips_raw_eroute(const ip_address *this_host UNUSED,
 	return TRUE;
 }
 
-static bool noklips_add_sa(const struct kernel_sa *sa UNUSED,
+static bool nokernel_add_sa(const struct kernel_sa *sa UNUSED,
 			   bool replace UNUSED)
 {
 	return TRUE;
 }
 
-static bool noklips_grp_sa(const struct kernel_sa *sa0 UNUSED,
+static bool nokernel_grp_sa(const struct kernel_sa *sa0 UNUSED,
 			   const struct kernel_sa *sa1 UNUSED)
 {
 	return TRUE;
 }
 
-static bool noklips_del_sa(const struct kernel_sa *sa UNUSED)
+static bool nokernel_del_sa(const struct kernel_sa *sa UNUSED)
 {
 	return TRUE;
 }
 
-static bool noklips_sag_eroute(const struct state *st UNUSED,
+static bool nokernel_sag_eroute(const struct state *st UNUSED,
 			       const struct spd_route *sr UNUSED,
 			       enum pluto_sadb_operations op UNUSED,
 			       const char *opname UNUSED)
@@ -113,7 +114,7 @@ static bool noklips_sag_eroute(const struct state *st UNUSED,
 	return TRUE;
 }
 
-static bool noklips_shunt_eroute(const struct connection *c UNUSED,
+static bool nokernel_shunt_eroute(const struct connection *c UNUSED,
 				 const struct spd_route *sr UNUSED,
 				 enum routing_t rt_kind UNUSED,
 				 enum pluto_sadb_operations op UNUSED,
@@ -122,28 +123,28 @@ static bool noklips_shunt_eroute(const struct connection *c UNUSED,
 	return TRUE;
 }
 
-const struct kernel_ops noklips_kernel_ops = {
+const struct kernel_ops nokernel_kernel_ops = {
 	.type = NO_KERNEL,
 	.async_fdp = NULL,
 
-	.init = init_noklips,
-	.pfkey_register = noklips_register,
-	.pfkey_register_response = noklips_register_response,
-	.process_queue = noklips_dequeue,
-	.process_msg = noklips_event,
-	.raw_eroute = noklips_raw_eroute,
-	.add_sa = noklips_add_sa,
-	.grp_sa = noklips_grp_sa,
-	.del_sa = noklips_del_sa,
+	.init = init_nokernel,
+	.pfkey_register = nokernel_register,
+	.pfkey_register_response = nokernel_register_response,
+	.process_queue = nokernel_dequeue,
+	.process_msg = nokernel_event,
+	.raw_eroute = nokernel_raw_eroute,
+	.add_sa = nokernel_add_sa,
+	.grp_sa = nokernel_grp_sa,
+	.del_sa = nokernel_del_sa,
 	.get_sa = NULL,
-	.sag_eroute = noklips_sag_eroute,
-	.shunt_eroute = noklips_shunt_eroute,
+	.sag_eroute = nokernel_sag_eroute,
+	.shunt_eroute = nokernel_shunt_eroute,
 	.get_spi = NULL,
 	.inbound_eroute = FALSE,
 	.policy_lifetime = FALSE,
 	.exceptsocket = NULL,
 	.docommand = NULL,
-	.kern_name = "noklips",
+	.kern_name = "nokernel",
 	.overlap_supported = FALSE,
 	.sha2_truncbug_support = FALSE,
 };

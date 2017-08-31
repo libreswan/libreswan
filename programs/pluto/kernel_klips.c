@@ -64,7 +64,6 @@ static void klips_process_raw_ifaces(struct raw_iface *rifaces)
 	 */
 	for (ifp = rifaces; ifp != NULL; ifp = ifp->next) {
 		struct raw_iface *v = NULL;     /* matching ipsecX interface */
-		struct raw_iface fake_v;
 		bool after = FALSE;             /* has vfp passed ifp on the list? */
 		bool bad = FALSE;
 		struct raw_iface *vfp;
@@ -145,26 +144,13 @@ static void klips_process_raw_ifaces(struct raw_iface *rifaces)
 
 		/* what if we didn't find a virtual interface? */
 		if (v == NULL) {
-			if (kern_interface == NO_KERNEL) {
-				/* kludge for testing: invent a virtual device */
-				static const char fvp[] = "virtual";
-				fake_v = *ifp;
-				passert(sizeof(fake_v.name) > sizeof(fvp));
-				strcpy(fake_v.name, fvp);
-				addrtot(&ifp->addr, 0,
-					fake_v.name + sizeof(fvp) - 1,
-					sizeof(fake_v.name) -
-					(sizeof(fvp) - 1));
-				v = &fake_v;
-			} else {
-				DBG(DBG_CONTROL, {
-					ipstr_buf b;
+			DBG(DBG_CONTROL, {
+				ipstr_buf b;
 
-					DBG_log("IP interface %s %s has no matching ipsec* interface -- ignored",
-						ifp->name, ipstr(&ifp->addr, &b));
-				});
-				continue;
-			}
+				DBG_log("IP interface %s %s has no matching ipsec* interface -- ignored",
+					ifp->name, ipstr(&ifp->addr, &b));
+			});
+			continue;
 		}
 
 		/* ignore if --listen is specified and we do not match */

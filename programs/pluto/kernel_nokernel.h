@@ -13,4 +13,4 @@
  * for more details.
  */
 
-extern const struct kernel_ops noklips_kernel_ops;
+extern const struct kernel_ops nokernel_kernel_ops;

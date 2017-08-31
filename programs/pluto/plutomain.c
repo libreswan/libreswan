@@ -518,6 +518,7 @@ static const struct option long_opts[] = {
 	{ "uniqueids\0", no_argument, NULL, 'u' },
 	{ "no-dnssec\0", no_argument, NULL, 'R' },
 	{ "noklips\0>use-nostack", no_argument, NULL, 'n' },	/* redundant spelling */
+	{ "nokernel\0>use-nostack", no_argument, NULL, 'n' },	/* redundant spelling */
 	{ "use-nostack\0",  no_argument, NULL, 'n' },
 	{ "use-none\0>use-nostack", no_argument, NULL, 'n' },	/* redundant spelling */
 	{ "useklips\0>use-klips",  no_argument, NULL, 'k' },	/* redundant spelling */

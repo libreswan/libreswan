@@ -59,7 +59,7 @@
 #include "kernel.h"
 #include "kernel_netlink.h"
 #include "kernel_pfkey.h"
-#include "kernel_noklips.h"
+#include "kernel_nokernel.h"
 #include "kernel_bsdkame.h"
 #include "packet.h"
 #include "x509.h"
@@ -2643,7 +2643,7 @@ void init_kernel(void)
 	case NO_KERNEL:
 		libreswan_log("Using 'no_kernel' interface code on %s",
 			kversion);
-		kernel_ops = &noklips_kernel_ops;
+		kernel_ops = &nokernel_kernel_ops;
 		break;
 
 	default:
