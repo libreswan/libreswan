@@ -858,7 +858,7 @@ static int starter_permutate_conns(int
 
 		success = (*operation)(cfg, &sc);
 		if (success != 0) {
-			/* fail at first failure? . I think so */
+			/* Fail at first failure?  I think so. */
 			return success;
 		}
 

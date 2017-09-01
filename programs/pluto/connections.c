@@ -1254,7 +1254,7 @@ void add_connection(const struct whack_message *wm)
 	if ((wm->policy & POLICY_SHUNT_MASK) != LEMPTY) {
 		if ((wm->policy & (POLICY_ID_AUTH_MASK & ~POLICY_AUTH_NEVER)) != LEMPTY) {
 			loglog(RC_FATAL,
-				"Failed to add connection \"%s\" : shunt connection cannot have authentication method other then authby=never",
+				"Failed to add connection \"%s\": shunt connection cannot have authentication method other then authby=never",
 				wm->name);
 			return;
 		}
@@ -1263,14 +1263,14 @@ void add_connection(const struct whack_message *wm)
 		case LEMPTY:
 			if (!LIN(POLICY_AUTH_NEVER, wm->policy)) {
 				loglog(RC_FATAL,
-					"Failed to add connection \"%s\" : non-shunt connection must have AH or ESP",
+					"Failed to add connection \"%s\": non-shunt connection must have AH or ESP",
 					wm->name);
 				return;
 			}
 			break;
 		case POLICY_AUTHENTICATE | POLICY_ENCRYPT:
 			loglog(RC_FATAL,
-				"Failed to add connection \"%s\" : non-shunt connection must specify either AH or ESP",
+				"Failed to add connection \"%s\": non-shunt connection must specify either AH or ESP",
 				wm->name);
 			return;
 		}
@@ -1299,27 +1299,27 @@ void add_connection(const struct whack_message *wm)
 
 		if (alg_info_ike == NULL) {
 			pexpect(err_buf[0]); /* something */
-			loglog(RC_FATAL, "Failed to add connection \"%s\" : ike string error: %s",
+			loglog(RC_FATAL, "Failed to add connection \"%s\": ike string error: %s",
 				wm->name, err_buf);
 			return;
 		}
 		if (alg_info_ike->ai.alg_info_cnt == 0) {
 			loglog(RC_FATAL,
-				"Failed to add connection \"%s\" : got 0 transforms for ike=\"%s\"",
+				"Failed to add connection \"%s\": got 0 transforms for ike=\"%s\"",
 				wm->name, wm->ike);
 			return;
 		}
 	}
 
 	if ((wm->policy & POLICY_IKEV2_PROPOSE) && (wm->policy & POLICY_IKEV2_ALLOW) == LEMPTY) {
-			loglog(RC_FATAL, "Failed to add connection \"%s\" : cannot insist on IKEv2 while forbidding it",
+			loglog(RC_FATAL, "Failed to add connection \"%s\": cannot insist on IKEv2 while forbidding it",
 				wm->name);
 			return;
 	}
 
 	if (wm->policy & POLICY_OPPORTUNISTIC) {
 		if ((wm->policy & POLICY_IKEV2_PROPOSE) == LEMPTY) {
-			loglog(RC_FATAL, "Failed to add connection \"%s\" : opportunistic connection MUST have ikev2=insist",
+			loglog(RC_FATAL, "Failed to add connection \"%s\": opportunistic connection MUST have ikev2=insist",
 				wm->name);
 			return;
 		}
@@ -1334,7 +1334,7 @@ void add_connection(const struct whack_message *wm)
 			loglog(RC_INFORMATIONAL, "Ignored esp= option for type=passthrough connection");
 		}
 		if (wm->left.authby != AUTH_UNSET || wm->right.authby != AUTH_UNSET) {
-			loglog(RC_FATAL, "Failed to add connection \"%s\" : leftauth= / rightauth= options are invalid for type=passthrough connection",
+			loglog(RC_FATAL, "Failed to add connection \"%s\": leftauth= / rightauth= options are invalid for type=passthrough connection",
 				wm->name);
 			return;
 		}
@@ -1344,13 +1344,13 @@ void add_connection(const struct whack_message *wm)
 		if (wm->left.authby != AUTH_UNSET || wm->right.authby != AUTH_UNSET) {
 			if ((wm->policy & POLICY_IKEV2_PROPOSE) == LEMPTY) {
 				loglog(RC_FATAL,
-					"Failed to add connection \"%s\" : leftauth= and rightauth= require ikev2=insist",
+					"Failed to add connection \"%s\": leftauth= and rightauth= require ikev2=insist",
 						wm->name);
 				return;
 			}
 			if (wm->left.authby == AUTH_UNSET || wm->right.authby == AUTH_UNSET) {
 				loglog(RC_FATAL,
-					"Failed to add connection \"%s\" : leftauth= and rightauth= must both be set or both be unset",
+					"Failed to add connection \"%s\": leftauth= and rightauth= must both be set or both be unset",
 						wm->name);
 				return;
 			}
@@ -1389,7 +1389,7 @@ void add_connection(const struct whack_message *wm)
 				}
 				if (conflict) {
 					loglog(RC_FATAL,
-						"Failed to add connection \"%s\" : leftauth=%s and rightauth=%s must not conflict with authby=%s",
+						"Failed to add connection \"%s\": leftauth=%s and rightauth=%s must not conflict with authby=%s",
 							wm->name,
 							enum_name(&ikev2_asym_auth_name, wm->left.authby),
 							enum_name(&ikev2_asym_auth_name, wm->right.authby),
@@ -1399,7 +1399,7 @@ void add_connection(const struct whack_message *wm)
 			} else { /* leftauth != rightauth so authby MUST be unset */
 				if ((wm->policy & POLICY_ID_AUTH_MASK) != LEMPTY) {
 					loglog(RC_FATAL,
-						"Failed to add connection \"%s\" : leftauth=%s is unequal to rightauth=%s so authby=%s must not be set",
+						"Failed to add connection \"%s\": leftauth=%s is unequal to rightauth=%s so authby=%s must not be set",
 							wm->name,
 							enum_name(&ikev2_asym_auth_name, wm->left.authby),
 							enum_name(&ikev2_asym_auth_name, wm->right.authby),
@@ -1409,7 +1409,7 @@ void add_connection(const struct whack_message *wm)
 				if ((wm->left.authby == AUTH_PSK && wm->right.authby == AUTH_NULL) ||
 				    (wm->left.authby == AUTH_NULL && wm->right.authby == AUTH_PSK)) {
 					loglog(RC_FATAL,
-						"Failed to add connection \"%s\" : cannot mix PSK and NULL authentication (leftauth=%s and rightauth=%s)",
+						"Failed to add connection \"%s\": cannot mix PSK and NULL authentication (leftauth=%s and rightauth=%s)",
 							wm->name,
 							enum_name(&ikev2_asym_auth_name, wm->left.authby),
 							enum_name(&ikev2_asym_auth_name, wm->right.authby));
@@ -1421,7 +1421,7 @@ void add_connection(const struct whack_message *wm)
 
 	if (wm->right.has_port_wildcard && wm->left.has_port_wildcard) {
 		loglog(RC_FATAL,
-			"Failed to add connection \"%s\" : cannot have protoport with %%any on both sides",
+			"Failed to add connection \"%s\": cannot have protoport with %%any on both sides",
 				wm->name);
 		return;
 	}
@@ -1535,7 +1535,7 @@ void add_connection(const struct whack_message *wm)
 
 			if (c->alg_info_ike == NULL) {
 				loglog(RC_FATAL,
-					"Failed to add connection \"%s\" : ike string error: %s",
+					"Failed to add connection \"%s\": ike string error: %s",
 					wm->name, err_buf);
 				pfree(c);
 				return;
@@ -1546,7 +1546,7 @@ void add_connection(const struct whack_message *wm)
 			};
 			if (c->alg_info_ike->ai.alg_info_cnt == 0) {
 				loglog(RC_FATAL,
-					"Failed to add connection \"%s\" : got 0 transforms for ike=\"%s\"",
+					"Failed to add connection \"%s\": got 0 transforms for ike=\"%s\"",
 					wm->name, wm->ike);
 				alg_info_free(&c->alg_info_ike->ai);
 				pfree(c);
@@ -1895,7 +1895,7 @@ void add_connection(const struct whack_message *wm)
 		/* non configurable */
 		c->ike_window = IKE_V2_OVERLAPPING_WINDOW_SIZE;
 	} else {
-		loglog(RC_FATAL, "Failed to load connection \"%s\" : attempt to load incomplete connection",
+		loglog(RC_FATAL, "Failed to load connection \"%s\": attempt to load incomplete connection",
 			wm->name);
 	}
 

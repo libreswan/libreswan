@@ -914,9 +914,9 @@ u_int satype;
  *	flag:	set promisc off if zero, set promisc on if non-zero.
  * OUT:
  *	positive: success and return length sent.
- *	-1	: error occurred, and set errno.
- *	0     : error occurred, and set errno.
- *	others: a pointer to new allocated buffer in which supported
+ *	-1:	error occurred, and set errno.
+ *	0:	error occurred, and set errno.
+ *	others:	a pointer to new allocated buffer in which supported
  *	        algorithms is.
  */
 int pfkey_send_promisc_toggle(so, flag)

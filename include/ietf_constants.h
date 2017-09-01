@@ -1657,7 +1657,7 @@ enum ipsec_comp_algo {
 
 /*
  * RFC 7427 Signature Authentication in the Internet Key Exchange Version 2 (IKEv2)
- * Section 7 :  IANA Considerations
+ * Section 7: IANA Considerations
  * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#hash-algorithms
  */
 
@@ -1683,8 +1683,8 @@ enum notify_payload_hash_algorithms {
 /*
  * RFC 7427 , section 3 describes the Authentication data format for
  * Digital Signatures.
- * ASN.1 Length (1 octet) : length of ASN.1-encoded AlgorithmIdentifier object
- * Algorithm Identifier (variable length) - The AlgorithmIdentifier ASN.1 object.
+ * ASN.1 Length (1 octet): length of ASN.1-encoded AlgorithmIdentifier object
+ * Algorithm Identifier (variable length): The AlgorithmIdentifier ASN.1 object.
  */
 
 /* size of algorithm identifier sha1WithRSAEncryption is 15 bytes */

@@ -65,51 +65,51 @@ west #
  # whack testing
 west #
  ipsec whack --name failtestmanual1 --ikev2-propose --ikev2-allow --ipv4 --host 1.2.3.5 --authby=null --to --host 2.3.4.6 --authby=rsasig
-036 Failed to add connection "failtestmanual1" : non-shunt connection must have AH or ESP
+036 Failed to add connection "failtestmanual1": non-shunt connection must have AH or ESP
 west #
  ipsec whack --name failtestmanual2 --encrypt --ipv4 --host 1.2.3.5 --authby=null --to --host 2.3.4.6 --authby=rsasig
-036 Failed to add connection "failtestmanual2" : leftauth= and rightauth= require ikev2=insist
+036 Failed to add connection "failtestmanual2": leftauth= and rightauth= require ikev2=insist
 west #
  ipsec whack --name failtestmanual3 --psk --encrypt --ikev2-propose --ikev2-allow --ipv4 --host 1.2.3.4 --authby=null --to --host 2.3.4.5 --authby=rsasig
-036 Failed to add connection "failtestmanual3" : leftauth=null is unequal to rightauth=rsasig so authby=PSK must not be set
+036 Failed to add connection "failtestmanual3": leftauth=null is unequal to rightauth=rsasig so authby=PSK must not be set
 west #
  ipsec whack --name failtestmanual4 --rsasig --encrypt --ikev2-propose --ikev2-allow --ipv4 --host 1.2.3.4 --authby=null --to --host 2.3.4.5 --authby=rsasig
-036 Failed to add connection "failtestmanual4" : leftauth=null is unequal to rightauth=rsasig so authby=RSASIG must not be set
+036 Failed to add connection "failtestmanual4": leftauth=null is unequal to rightauth=rsasig so authby=RSASIG must not be set
 west #
  # parser testing
 west #
  ipsec auto --add failtest0
-036 Failed to add connection "failtest0" : cannot mix PSK and NULL authentication (leftauth=secret and rightauth=null)
+036 Failed to add connection "failtest0": cannot mix PSK and NULL authentication (leftauth=secret and rightauth=null)
 west #
  ipsec auto --add failtest1
-036 Failed to add connection "failtest1" : leftauth= and rightauth= require ikev2=insist
+036 Failed to add connection "failtest1": leftauth= and rightauth= require ikev2=insist
 west #
  ipsec auto --add failtest2
-036 Failed to add connection "failtest2" : leftauth=rsasig is unequal to rightauth=secret so authby=PSK must not be set
+036 Failed to add connection "failtest2": leftauth=rsasig is unequal to rightauth=secret so authby=PSK must not be set
 west #
  ipsec auto --add failtest3
-036 Failed to add connection "failtest3" : leftauth=rsasig is unequal to rightauth=secret so authby=RSASIG must not be set
+036 Failed to add connection "failtest3": leftauth=rsasig is unequal to rightauth=secret so authby=RSASIG must not be set
 west #
  ipsec auto --add failtest4
-036 Failed to add connection "failtest4" : leftauth=rsasig is unequal to rightauth=secret so authby=AUTHNULL must not be set
+036 Failed to add connection "failtest4": leftauth=rsasig is unequal to rightauth=secret so authby=AUTHNULL must not be set
 west #
  ipsec auto --add failtest5
-036 Failed to add connection "failtest5" : leftauth= and rightauth= must both be set or both be unset
+036 Failed to add connection "failtest5": leftauth= and rightauth= must both be set or both be unset
 west #
  ipsec auto --add failtest6
-036 Failed to add connection "failtest6" : leftauth= and rightauth= must both be set or both be unset
+036 Failed to add connection "failtest6": leftauth= and rightauth= must both be set or both be unset
 west #
  ipsec auto --add failtest7
-036 Failed to add connection "failtest7" : leftauth= and rightauth= must both be set or both be unset
+036 Failed to add connection "failtest7": leftauth= and rightauth= must both be set or both be unset
 west #
  ipsec auto --add failtest8
-036 Failed to add connection "failtest8" : shunt connection cannot have authentication method other then authby=never
+036 Failed to add connection "failtest8": shunt connection cannot have authentication method other then authby=never
 west #
  ipsec auto --add failtest9
-036 Failed to add connection "failtest9" : leftauth= / rightauth= options are invalid for type=passthrough connection
+036 Failed to add connection "failtest9": leftauth= / rightauth= options are invalid for type=passthrough connection
 west #
  ipsec auto --add failtest10
-036 Failed to add connection "failtest10" : shunt connection cannot have authentication method other then authby=never
+036 Failed to add connection "failtest10": shunt connection cannot have authentication method other then authby=never
 west #
  echo "Showing policies of all loaded connections"
 Showing policies of all loaded connections
