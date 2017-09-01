@@ -137,6 +137,16 @@ struct raw_iface *find_raw_ifaces4(void)
 		       (const void *)&prio, sizeof(prio)) < 0)
 		EXIT_LOG_ERRNO(errno, "setsockopt(SO_PRIORITY) in find_raw_ifaces4()");
 
+	if (pluto_sock_bufsize != IKE_BUF_AUTO) {
+		if (setsockopt(master_sock, SOL_SOCKET, SO_RCVBUFFORCE,
+			(const void *)&pluto_sock_bufsize, sizeof(pluto_sock_bufsize)) < 0)
+				EXIT_LOG_ERRNO(errno, "setsockopt(SO_RCVBUFFORCE) in find_raw_ifaces4()");
+
+		if (setsockopt(master_sock, SOL_SOCKET, SO_SNDBUFFORCE,
+			(const void *)&pluto_sock_bufsize, sizeof(pluto_sock_bufsize)) < 0)
+				EXIT_LOG_ERRNO(errno, "setsockopt(SO_SNDBUFFORCE) in find_raw_ifaces4()");
+	}
+
 	/* bind the socket */
 	{
 		ip_address any;

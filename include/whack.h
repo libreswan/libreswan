@@ -46,7 +46,7 @@
  */
 
 #define WHACK_BASIC_MAGIC (((((('w' << 8) + 'h') << 8) + 'k') << 8) + 25)
-#define WHACK_MAGIC (((((('o' << 8) + 'h') << 8) + 'k') << 8) + 44)
+#define WHACK_MAGIC (((((('o' << 8) + 'h') << 8) + 'k') << 8) + 45)
 
 /*
  * Where, if any, is the pubkey coming from.
@@ -281,6 +281,7 @@ struct whack_message {
 
 	/* for WHACK_LISTEN: */
 	bool whack_listen, whack_unlisten;
+	long unsigned int ike_buf_size;	/* IKE socket recv/snd buffer size */
 
 	/* for DDOS modes */
 	enum ddos_mode whack_ddos;

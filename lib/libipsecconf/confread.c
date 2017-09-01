@@ -82,6 +82,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->setup.options[KBF_DO_DNSSEC] = TRUE;
 	cfg->setup.options[KBF_PERPEERLOG] = FALSE;
 	cfg->setup.options[KBF_IKEPORT] = IKE_UDP_PORT;
+	cfg->setup.options[KBF_IKEBUF] = IKE_BUF_AUTO;
 	cfg->setup.options[KBF_NFLOG_ALL] = 0; /* disabled per default */
 	cfg->setup.options[KBF_XFRMLIFETIME] = 300; /* not used by pluto itself */
 	cfg->setup.options[KBF_NHELPERS] = -1; /* see also plutomain.c */

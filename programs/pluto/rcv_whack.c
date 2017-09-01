@@ -435,6 +435,12 @@ void whack_process(int whackfd, const struct whack_message *const m)
 	if (m->whack_connection)
 		add_connection(m);
 
+	/* update any socket buffer size before calling listen */
+	if (m->ike_buf_size != 0) {
+		pluto_sock_bufsize = m->ike_buf_size;
+		libreswan_log("Set IKE socket buffer to %d", pluto_sock_bufsize);
+	}
+
 	/* process "listen" before any operation that could require it */
 	if (m->whack_listen)
 		do_whacklisten();

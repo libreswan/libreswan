@@ -168,6 +168,8 @@ static void help(void)
 		"\n"
 		"listen: whack (--listen | --unlisten)\n"
 		"\n"
+		"socket buffers: whack --ike-sock-bufsize <bufsize>\n"
+		"\n"
 		"ddos-protection: whack (--ddos-busy | --ddos-unlimited | \\\n"
 		"	--ddos-auto)\n"
 		"\n"
@@ -279,6 +281,7 @@ enum option_enums {
 	OPT_DELETEUSER,
 	OPT_LISTEN,
 	OPT_UNLISTEN,
+	OPT_IKEBUF,
 
 	OPT_DDOS_BUSY,
 	OPT_DDOS_UNLIMITED,
@@ -508,6 +511,7 @@ static const struct option long_opts[] = {
 	{ "crash", required_argument, NULL, OPT_DELETECRASH + OO },
 	{ "listen", no_argument, NULL, OPT_LISTEN + OO },
 	{ "unlisten", no_argument, NULL, OPT_UNLISTEN + OO },
+	{ "ike-sock-bufsize", required_argument, NULL, OPT_IKEBUF + OO + NUMERIC_ARG},
 
 	{ "ddos-busy", no_argument, NULL, OPT_DDOS_BUSY + OO },
 	{ "ddos-unlimited", no_argument, NULL, OPT_DDOS_UNLIMITED + OO },
@@ -1152,6 +1156,15 @@ int main(int argc, char **argv)
 		case OPT_KEYID:	/* --keyid <identity> */
 			msg.whack_key = TRUE;
 			msg.keyid = optarg;	/* decoded by Pluto */
+			continue;
+
+		case OPT_IKEBUF:	/* --ike-socket-bufsize <bufsize> */
+			if (opt_whole < 1500) {
+				diag("Ignoring extremely unwise IKE buffer size choice");
+			} else {
+				msg.ike_buf_size = opt_whole;
+				msg.whack_listen = TRUE;
+			}
 			continue;
 
 		case OPT_MYID:	/* --myid <identity> */
@@ -2190,7 +2203,7 @@ int main(int argc, char **argv)
 	      msg.whack_initiate || msg.whack_oppo_initiate ||
 	      msg.whack_terminate ||
 	      msg.whack_route || msg.whack_unroute || msg.whack_listen ||
-	      msg.whack_unlisten || msg.whack_list ||
+	      msg.whack_unlisten || msg.whack_list || msg.ike_buf_size ||
 	      msg.whack_ddos != DDOS_undefined ||
 	      msg.whack_reread || msg.whack_crash || msg.whack_shunt_status ||
 	      msg.whack_status || msg.whack_global_status || msg.whack_traffic_status ||

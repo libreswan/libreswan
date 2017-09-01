@@ -478,8 +478,7 @@ u_int16_t secctx_attr_type = SECCTX;
  *
  * The table should be ordered to maximize the clarity of --help.
  *
- * free one letter options as of 2016-12-14
- * '1' 'W'
+ * free one letter options: '1'
  */
 
 #define DBG_OFFSET 256
@@ -536,6 +535,7 @@ static const struct option long_opts[] = {
 	{ "curl-timeout\0<secs>", required_argument, NULL, 'I' }, /* _ */
 	{ "listen\0<ifaddr>", required_argument, NULL, 'L' },
 	{ "ikeport\0<port-number>", required_argument, NULL, 'p' },
+	{ "ike-socket-bufsize\0<buf-size>", required_argument, NULL, 'W' },
 	{ "nflog-all\0<group-number>", required_argument, NULL, 'G' },
 	{ "natikeport\0<port-number>", required_argument, NULL, 'q' },
 	{ "rundir\0<path>", required_argument, NULL, 'b' }, /* was ctlbase */
@@ -1069,6 +1069,17 @@ int main(int argc, char **argv)
 			pluto_port = u;
 			continue;
 
+		case 'W':	/* --ike-socket-bufsize <bufsize> */
+			ugh = ttoulb(optarg, 0, 10, 0xFFFF, &u);
+			if (ugh != NULL)
+				break;
+			if (u == 0) {
+				ugh = "must not be 0";
+				break;
+			}
+			pluto_sock_bufsize = u;
+			continue;
+
 		case 'q':	/* --natikeport <portnumber> */
 			ugh = ttoulb(optarg, 0, 10, 0xFFFF, &u);
 			if (ugh != NULL)
@@ -1215,6 +1226,9 @@ int main(int argc, char **argv)
 
 			/* --ikeport */
 			pluto_port = cfg->setup.options[KBF_IKEPORT];
+
+			/* --ike-socket-bufsize */
+                        pluto_sock_bufsize = cfg->setup.options[KBF_IKEBUF];
 
 			/* --nflog-all */
 			/* only causes nflog nmber to show in ipsec status */
@@ -1854,8 +1868,9 @@ void show_setup_plutomain(void)
 			(pluto_ddos_mode == DDOS_FORCE_BUSY) ? "busy" : "unlimited");
 
 	whack_log(RC_COMMENT,
-		"ikeport=%d, strictcrlpolicy=%s, crlcheckinterval=%jd, listen=%s, nflog-all=%d",
+		"ikeport=%d, ikebuf=%d, strictcrlpolicy=%s, crlcheckinterval=%jd, listen=%s, nflog-all=%d",
 		pluto_port,
+		pluto_sock_bufsize,
 		crl_strict ? "yes" : "no",
                 (intmax_t) deltasecs(crl_check_interval),
 		pluto_listen != NULL ? pluto_listen : "<any>",

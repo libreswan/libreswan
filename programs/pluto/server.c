@@ -207,6 +207,8 @@ unsigned int pluto_max_halfopen = DEFAULT_MAXIMUM_HALFOPEN_IKE_SA;
 unsigned int pluto_ddos_threshold = DEFAULT_IKE_SA_DDOS_THRESHOLD;
 deltatime_t pluto_shunt_lifetime = { PLUTO_SHUNT_LIFE_DURATION_DEFAULT };
 
+unsigned int pluto_sock_bufsize = IKE_BUF_AUTO; /* use system values */
+
 struct iface_port  *interfaces = NULL;  /* public interfaces */
 
 /* Initialize the interface sockets. */

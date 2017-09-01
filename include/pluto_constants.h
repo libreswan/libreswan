@@ -60,6 +60,7 @@
 
 #define SA_LIFE_DURATION_K_DEFAULT 0xFFFFFFFFlu
 
+#define IKE_BUF_AUTO 0 /* use system values for IKE socket buffer size */
 
 enum kernel_interface {
 	NO_KERNEL = 1,
