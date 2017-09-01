@@ -423,8 +423,8 @@ static const char *add_proposal_defaults(const struct parser_param *param,
 		return add_proposal_defaults(param, policy, defaults,
 					     alg_info, &merged_proposal,
 					     err_buf, err_buf_len);
-	} else if (proposal->encrypt != NULL && !ike_alg_is_aead(proposal->encrypt)
-		   && proposal->integ != NULL && proposal->integ == &ike_alg_integ_null) {
+	} else if (!DBGP(IMPAIR_ALLOW_NULL_NULL) && (proposal->encrypt != NULL && !ike_alg_is_aead(proposal->encrypt)
+		   && proposal->integ != NULL && proposal->integ == &ike_alg_integ_null)) {
 		/*
 		 * For instance, esp=aes_gcm-sha1" is invalid.
 		 */

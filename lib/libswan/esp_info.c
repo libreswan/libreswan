@@ -83,6 +83,9 @@ static bool ah_proposal_ok(const struct parser_policy *const policy UNUSED,
 	passert(proposal->prf == NULL);
 	passert(proposal->integ != NULL);
 
+	if (DBGP(IMPAIR_ALLOW_NULL_NULL))
+		return true;
+
 	/* ah=null is invalid */
 	if (proposal->integ == &ike_alg_integ_null) {
 		snprintf(err_buf, err_buf_len,

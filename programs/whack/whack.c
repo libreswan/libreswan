@@ -748,6 +748,8 @@ static const struct option long_opts[] = {
 	{ "impair-die-oninfo", no_argument, NULL, IMPAIR_DIE_ONINFO_IX  + DO },
 	{ "impair-jacob-two-two", no_argument, NULL,
 		IMPAIR_JACOB_TWO_TWO_IX + DO },
+	{ "impair-allow-null-null", no_argument, NULL,
+		IMPAIR_ALLOW_NULL_NULL_IX + DO },
 	{ "impair-major-version-bump", no_argument, NULL,
 		IMPAIR_MAJOR_VERSION_BUMP_IX + DO },
 	{ "impair-minor-version-bump", no_argument, NULL,
