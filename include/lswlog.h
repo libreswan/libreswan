@@ -290,40 +290,6 @@ size_t lswlogl(struct lswlog *log, struct lswlog *buf);
 			for (struct lswlog lswlog = EMPTY_LSWBUF(&lswbuf), *LOG = &lswlog; \
 			     lswbuf_p; lswbuf_p = false)
 
-/*
- * Like the above but further restrict the output to SIZE.
- *
- * For instance:
- *
- *    LSWBUFT(log, 5, "*", logt) {
- *      n += lswlogtf(t, "abc"); // 3
- *      n += lswlogtf(t, "def"); // 3
- *    }
- *
- * would would result in: abc++<nul>
- *
- * Like C99 snprintf() et.al, always return the untruncated message
- * length.
- */
-
-#define LSWBUFT(LOG, WIDTH, DOTS, LOGT)					\
-	for (bool lswbuft_p = true; lswbuft_p; )			\
-		for (struct lswlog lswlogt = {				\
-				.buf = (LOG)->buf,			\
-				.bound = min((LOG)->buf->len + (WIDTH), (LOG)->bound), \
-				.dots = ((LOG)->buf->len + (WIDTH) >= (LOG)->bound \
-					 ? (LOG)->dots			\
-					 : (DOTS)),			\
-		      }, *LOGT = &lswlogt;				\
-		     lswbuft_p; lswbuft_p = false)
-
-/*
- * Wrapper macros to deal with the details of conditionally
- * allocating, logging, and deallocating the buffer.
- *
- * For the moment, not very efficient.
- */
-
 #define LSWDBGP(DEBUG, LOG)						\
 	for (bool lswdbgp_p = DBGP(DEBUG); lswdbgp_p; lswdbgp_p = false) \
 		LSWBUF(LOG)						\
