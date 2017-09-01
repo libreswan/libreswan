@@ -50,7 +50,7 @@ OBJS += $(addprefix $(top_builddir)/programs/pluto/, $(PLUTOOBJS))
 #	$(MAKE) -C $(top_srcdir)/programs/pluto base
 
 OBJS += $(LIBRESWANLIB)
-OBJS += $(LSWLOGLIBS)
+OBJS += $(TOOLLIBS)
 
 OBJS += $(LIBSERPENT)
 OBJS += $(LIBTWOFISH)

@@ -15,7 +15,7 @@
 PROGRAM=_import_crl
 OBJS += $(PROGRAM).o
 OBJS += $(LIBRESWANLIB)
-OBJS += $(LSWLOGLIBS)
+OBJS += $(TOOLLIBS)
 LDFLAGS += $(NSS_LDFLAGS)
 
 ifdef top_srcdir

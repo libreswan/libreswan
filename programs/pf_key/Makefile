@@ -16,7 +16,7 @@
 PROGRAM=pf_key
 OBJS += $(PROGRAM).o
 OBJS += $(LIBRESWANLIB)
-OBJS += $(LSWLOGLIBS)
+OBJS += $(TOOLLIBS)
 MANPAGES += ipsec_$(PROGRAM).5
 
 ifdef top_srcdir

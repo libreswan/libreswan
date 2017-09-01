@@ -501,9 +501,9 @@ KLIPSSRCDIR=${LIBRESWANSRCDIR}/linux/net/ipsec
 
 LIBSWANDIR=${LIBRESWANSRCDIR}/lib/libswan
 LIBRESWANLIB=${OBJDIRTOP}/lib/libswan/libswan.a
-LSWLOGLIB=${OBJDIRTOP}/lib/liblswlog/liblswlog.a
-# XXX: $(LSWLOGLIB) has circular references to $(LIBRESWANLIB).
-LSWLOGLIBS=$(LSWLOGLIB) $(LIBRESWANLIB)
+TOOLLIB=${OBJDIRTOP}/lib/libtool/libtool.a
+# XXX: $(TOOLLIB) has circular references to $(LIBRESWANLIB).
+TOOLLIBS=$(TOOLLIB) $(LIBRESWANLIB)
 
 LIBDESSRCDIR=${LIBRESWANSRCDIR}/linux/crypto/ciphers/des
 
@@ -512,7 +512,7 @@ IPSECCONFLIB=${OBJDIRTOP}/lib/libipsecconf/libipsecconf.a
 
 # export everything so that scripts can use them.
 export LIBSWANDIR LIBRESWANSRCDIR ARCH PORTINCLUDE
-export LIBRESWANLIB LSWLOGLIB
+export LIBRESWANLIB TOOLLIB
 export LIBDESSRCDIR
 export LIBTWOFISH LIBSERPENT
 export WHACKLIB IPSECCONFLIB
