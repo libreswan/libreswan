@@ -131,24 +131,11 @@ void set_debugging(lset_t deb)
 			PF_KEY_DEBUG_PARSE_MAX : PF_KEY_DEBUG_PARSE_NONE);
 }
 
-/* log a debugging message (prefixed by "| ") */
-
-int libreswan_DBG_log(const char *message, ...)
+void lswlog_dbg_raw(char *buf, size_t sizeof_buf)
 {
-	va_list args;
-	char m[LOG_WIDTH];	/* longer messages will be truncated */
-
-	va_start(args, message);
-	vsnprintf(m, sizeof(m), message, args);
-	va_end(args);
-
-	/* then sanitize anything else that is left. */
-	sanitize_string(m, sizeof(m));
-
+	sanitize_string(buf, sizeof_buf);
 	if (log_to_stderr)
-		fprintf(stderr, "| %s\n", m);
+		fprintf(stderr, "| %s\n", buf);
 	if (log_to_syslog)
-		syslog(LOG_DEBUG, "| %s", m);
-
-	return 0;
+		syslog(LOG_DEBUG, "| %s", buf);
 }

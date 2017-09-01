@@ -608,41 +608,31 @@ void set_debugging(lset_t deb)
 					 libreswan_log);
 }
 
-/* log a debugging message (prefixed by "| ") */
-/* thread locks added until all non re-entrant functions it uses have been fixed */
-int DBG_log(const char *message, ...)
+void lswlog_dbg_raw(char *buf, size_t sizeof_buf)
 {
-	va_list args;
-	char m[LOG_WIDTH]; /* longer messages will be truncated */
+	sanitize_string(buf, sizeof_buf);
 
 	pthread_mutex_lock(&log_mutex);
-	va_start(args, message);
-	vsnprintf(m, sizeof(m), message, args);
-	va_end(args);
-
-	/* this is an expensive call, but we're in (slow) debug mode already */
-	sanitize_string(m, sizeof(m));
 
 	if (log_to_stderr || pluto_log_fp != NULL) {
-		char buf[34] = "";
+		char now[34] = "";
 
 		if (log_with_timestamp)
-			prettynow(buf, sizeof(buf), "%b %e %T: ");
+			prettynow(now, sizeof(now), "%b %e %T: ");
 		fprintf(log_to_stderr ? stderr : pluto_log_fp,
-			"%s%c %s\n", buf, debug_prefix, m);
+			"%s%c %s\n", now, debug_prefix, buf);
 	}
 	if (log_to_syslog)
-		syslog(LOG_DEBUG, "%c %s", debug_prefix, m);
+		syslog(LOG_DEBUG, "%c %s", debug_prefix, buf);
 	if (log_to_perpeer) {
 		char prefix[3];
 		prefix[0] = debug_prefix;
 		prefix[1] = ' ';
 		prefix[2] = '\n';
-		peerlog(prefix, m);
+		peerlog(prefix, buf);
 	}
 
 	pthread_mutex_unlock(&log_mutex);
-	return 0;
 }
 
 static void show_system_security(void)

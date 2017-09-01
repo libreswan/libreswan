@@ -65,9 +65,14 @@ extern void set_debugging(lset_t deb);
  */
 #define DBG(cond, action)	{ if (DBGP(cond)) { action; } }
 
-#define DBG_log libreswan_DBG_log
+/*
+ * XXX: buf is read/write as code below sanitizes it.
+ */
+void lswlog_dbg_raw(char *buf, size_t sizeof_buf);
+int lswlog_dbg(const char *message, ...) PRINTF_LIKE(1);
+
+#define DBG_log lswlog_dbg
 #define DBG_dump libreswan_DBG_dump
-extern int libreswan_DBG_log(const char *message, ...) PRINTF_LIKE(1);
 extern void libreswan_DBG_dump(const char *label, const void *p, size_t len);
 
 #define DBG_dump_chunk(label, ch) DBG_dump(label, (ch).ptr, (ch).len)
@@ -303,7 +308,7 @@ size_t lswlogl(struct lswlog *log, struct lswlog *buf);
 	for (bool lswdbgp_p = DBGP(DEBUG); lswdbgp_p; lswdbgp_p = false) \
 		LSWBUF(LOG)						\
 			for (; lswdbgp_p;				\
-			     DBG_log("%s", LSWBUF_BUF(LOG)),		\
+			     lswlog_dbg_raw((LOG)->buf->buf, sizeof((LOG)->buf->buf)), \
 				     lswdbgp_p = false)
 
 #define LSWLOG(LOG)							\
