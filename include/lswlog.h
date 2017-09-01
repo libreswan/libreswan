@@ -290,6 +290,15 @@ size_t lswlogl(struct lswlog *log, struct lswlog *buf);
 			for (struct lswlog lswlog = EMPTY_LSWBUF(&lswbuf), *LOG = &lswlog; \
 			     lswbuf_p; lswbuf_p = false)
 
+#define LSWLOG_FILE(FILE, BUF)						\
+	for (bool lswlog_p = true;					\
+	     lswlog_p; lswlog_p = false)				\
+		for (struct lswbuf lswbuf = empty_lswbuf;		\
+		     lswlog_p; lswlog_p = false)			\
+			for (struct lswlog lswlog = EMPTY_LSWBUF(&lswbuf), *BUF = &lswlog; \
+			     lswlog_p;					\
+			     fwrite((BUF)->buf->buf, (BUF)->buf->len, 1, FILE), lswlog_p = false)
+
 #define LSWDBGP(DEBUG, LOG)						\
 	for (bool lswdbgp_p = DBGP(DEBUG); lswdbgp_p; lswdbgp_p = false) \
 		LSWBUF(LOG)						\

@@ -23,9 +23,10 @@
 		if (e != NULL) {					\
 			passert(err_buf[0] == '\0');			\
 			FOR_EACH_PROPOSAL_INFO(&e->ai, proposal) {	\
-				LSWBUF(log) {				\
+				LSWLOG_FILE(stdout, log) {		\
+					lswlogf(log, "\t");		\
 					lswlog_proposal_info(log, proposal); \
-					printf("\t%s\n", LSWBUF_BUF(log)); \
+					lswlogf(log, "\n");		\
 				}					\
 			}						\
 			alg_info_free(&e->ai);				\
