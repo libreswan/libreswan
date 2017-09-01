@@ -1482,7 +1482,7 @@ void add_connection(const struct whack_message *wm)
 		if (wm->esp != NULL) {
 			DBG(DBG_CONTROL,
 				DBG_log("from whack: got --esp=%s",
-					wm->esp ? wm->esp : "NULL"));
+					wm->esp == NULL ? "NULL" : wm->esp));
 
 			struct parser_policy parser_policy = {
 				.ikev1 = LIN(POLICY_IKEV1_ALLOW, wm->policy),
@@ -1530,7 +1530,7 @@ void add_connection(const struct whack_message *wm)
 		}
 
 		c->alg_info_ike = NULL;
-		if (wm->ike) {
+		if (wm->ike != NULL) {
 			c->alg_info_ike = alg_info_ike;
 
 			if (c->alg_info_ike == NULL) {
