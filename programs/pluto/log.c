@@ -645,61 +645,6 @@ int DBG_log(const char *message, ...)
 	return 0;
 }
 
-/* dump raw bytes in hex to stderr (for lack of any better destination) */
-
-void libreswan_DBG_dump(const char *label, const void *p, size_t len)
-{
-#define DUMP_LABEL_WIDTH 20  /* arbitrary modest boundary */
-#define DUMP_WIDTH   (4 * (1 + 4 * 3) + 1)
-	char buf[DUMP_LABEL_WIDTH + DUMP_WIDTH];
-	char *bp, *bufstart;
-	const unsigned char *cp = p;
-
-	bufstart = buf;
-
-	if (label != NULL && label[0] != '\0') {
-		/* Handle the label.  Care must be taken to avoid buffer overrun. */
-		size_t llen = strlen(label);
-
-		if (llen + 1 > sizeof(buf)) {
-			DBG_log("%s", label);
-		} else {
-			strcpy(buf, label);
-			if (buf[llen - 1] == '\n') {
-				buf[llen - 1] = '\0'; /* get rid of newline */
-				DBG_log("%s", buf);
-			} else if (llen < DUMP_LABEL_WIDTH) {
-				bufstart = buf + llen;
-			} else {
-				DBG_log("%s", buf);
-			}
-		}
-	}
-
-	bp = bufstart;
-	do {
-		int i, j;
-
-		for (i = 0; len != 0 && i != 4; i++) {
-			*bp++ = ' ';
-			for (j = 0; len != 0 && j != 4; len--, j++) {
-				static const char hexdig[] =
-					"0123456789abcdef";
-
-				*bp++ = ' ';
-				*bp++ = hexdig[(*cp >> 4) & 0xF];
-				*bp++ = hexdig[*cp & 0xF];
-				cp++;
-			}
-		}
-		*bp = '\0';
-		DBG_log("%s", buf);
-		bp = bufstart;
-	} while (len != 0);
-#undef DUMP_LABEL_WIDTH
-#undef DUMP_WIDTH
-}
-
 static void show_system_security(void)
 {
 	int selinux = libreswan_selinux();

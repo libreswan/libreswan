@@ -61,6 +61,7 @@ OBJS += addrtoa.o addrtot.o addrtypeof.o alg_info.o esp_info.o anyaddr.o \
 	alg_byname.o
 
 OBJS += lswlog.o
+OBJS += libreswan_DBG_dump.o
 
 # Crypto code:
 #
