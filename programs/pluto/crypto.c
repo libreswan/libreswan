@@ -184,13 +184,10 @@ void ike_alg_show_connection(const struct connection *c, const char *instance)
 		 * AES_CBC_256+AES_CBC_128-... (which is hopefully not
 		 * impossible to parse)?
 		 */
-		LSWBUF(buf) {
+		LSWLOG_WHACK(RC_COMMENT, buf) {
+			lswlogf(buf, "\"%s\"%s:   IKE algorithms: ",
+				c->name, instance);
 			lswlog_alg_info(buf, &c->alg_info_ike->ai);
-			whack_log(RC_COMMENT,
-				  "\"%s\"%s:   IKE algorithms: %s",
-				  c->name,
-				  instance,
-				  LSWBUF_BUF(buf));
 		}
 	}
 	st = state_with_serialno(c->newest_isakmp_sa);

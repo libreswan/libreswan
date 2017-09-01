@@ -321,7 +321,7 @@ void kernel_alg_show_connection(const struct connection *c, const char *instance
 	}
 
 	if (c->alg_info_esp != NULL) {
-		LSWBUF(buf) {
+		LSWLOG_WHACK(RC_COMMENT, buf) {
 			/*
 			 * If DH (PFS) was specified in the esp= or
 			 * ah= line then the below will display it
@@ -339,12 +339,9 @@ void kernel_alg_show_connection(const struct connection *c, const char *instance
 			 * The real PFS is displayed in the 'algorithm
 			 * newest' line further down.
 			 */
+			lswlogf(buf, "\"%s\"%s:   %s algorithms: ",
+				c->name, instance, satype);
 			lswlog_alg_info(buf, &c->alg_info_esp->ai);
-			whack_log(RC_COMMENT,
-				  "\"%s\"%s:   %s algorithms: %s",
-				  c->name,
-				  instance, satype,
-				  LSWBUF_BUF(buf));
 		}
 	}
 
