@@ -201,6 +201,40 @@ static void fmt_log(char *buf, size_t buf_len, const char *fmt, va_list ap)
 	vsnprintf(buf + ps, buf_len - ps, fmt, ap);
 }
 
+/* format a string for the log, with suitable prefixes.
+ * A format starting with ~ indicates that this is a reprocessing
+ * of the message, so prefixing and quoting is suppressed.
+ */
+static void lswlog_log_prefix(struct lswlog *buf)
+{
+	passert(pthread_equal(pthread_self(), main_thread));
+
+	struct connection *c = cur_state != NULL ? cur_state->st_connection :
+			       cur_connection;
+
+	if (c != NULL) {
+		lswlogf(buf, "\"%s\"", c->name);
+
+		/* if it fits, put in any connection instance information */
+		char inst[CONN_INST_BUF];
+		fmt_conn_instance(c, inst);
+		lswlogs(buf, inst);
+
+		if (cur_state != NULL) {
+			/* state number */
+			lswlogf(buf, " #%lu", cur_state->st_serialno);
+		}
+		lswlogs(buf, ": ");
+
+	} else if (cur_from != NULL) {
+		/* peer's IP address */
+		ipstr_buf b;
+		lswlogf(buf, "packet from %s:%u: ",
+			ipstr(cur_from, &b),
+			(unsigned)cur_from_port);
+	}
+}
+
 void close_peerlog(void)
 {
 	/* exit if the circular queue has not been initialized */
@@ -417,6 +451,8 @@ static void peerlog(const char *prefix, const char *m)
 	}
 }
 
+static void whack_log_log(int mess_no, char *m);
+
 /* thread locks added until all non re-entrant functions it uses have been fixed */
 void libreswan_vloglog(int mess_no, const char *message, va_list args)
 {
@@ -438,8 +474,8 @@ void libreswan_vloglog(int mess_no, const char *message, va_list args)
 	if (log_to_perpeer)
 		peerlog("", m);
 
-	if (pthread_equal(pthread_self(), main_thread)) {
-		whack_log_raw(mess_no, m);
+	if (whack_log_p()) {
+		whack_log_log(mess_no, m);
 	}
 
 	pthread_mutex_unlock(&log_mutex);
@@ -495,7 +531,24 @@ void lswlog_exit(int rc)
 	exit_pluto(rc);
 }
 
-void whack_log_raw(int mess_no, const char *buf)
+
+void whack_log_pre(int mess_no, struct lswlog *buf)
+{
+	passert(pthread_equal(pthread_self(), main_thread));
+	if (mess_no >= 0) {
+		lswlogf(buf, "%03d ", mess_no);
+	}
+	lswlog_log_prefix(buf);
+}
+
+void whack_log_log(int mess_no, char *buf)
+{
+	char m[LOG_WIDTH]; /* longer messages will be truncated */
+	snprintf(m, sizeof(m), "%03d %s", mess_no, buf);
+	whack_log_raw(m, strlen(m));
+}
+
+void whack_log_raw(char *m, size_t len)
 {
 	passert(pthread_equal(pthread_self(), main_thread));
 
@@ -507,12 +560,7 @@ void whack_log_raw(int mess_no, const char *buf)
 		return;
 	}
 
-	char m[LOG_WIDTH]; /* longer messages will be truncated */
-	int prelen = snprintf(m, sizeof(m), "%03d %s", mess_no, buf);
-	passert(prelen >= 0);
-
 	/* write to whack socket, but suppress possible SIGPIPE */
-	size_t len = strlen(m);
 #ifdef MSG_NOSIGNAL                     /* depends on version of glibc??? */
 	m[len] = '\n';  /* don't need NUL, do need NL */
 	(void) send(wfd, m, len + 1, MSG_NOSIGNAL);
@@ -532,6 +580,19 @@ void whack_log_raw(int mess_no, const char *buf)
 	r = sigaction(SIGPIPE, &oldact, NULL);
 	passert(r == 0);
 #endif /* !MSG_NOSIGNAL */
+}
+
+bool whack_log_p(void)
+{
+	if (!pthread_equal(pthread_self(), main_thread)) {
+		return false;
+	}
+
+	int wfd = whack_log_fd != NULL_FD ? whack_log_fd :
+	      cur_state != NULL ? cur_state->st_whack_sock :
+	      NULL_FD;
+
+	return wfd != NULL_FD;
 }
 
 /* emit message to whack.
@@ -586,7 +647,7 @@ void whack_log(int mess_no, const char *message, ...)
 		r = sigaction(SIGPIPE, &oldact, NULL);
 		passert(r == 0);
 #endif /* !MSG_NOSIGNAL */
-	}
+ 	}
 	pthread_mutex_unlock(&log_mutex);
 }
 

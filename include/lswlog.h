@@ -262,11 +262,20 @@ size_t lswlogl(struct lswlog *log, struct lswlog *buf);
 			for (; lswlog_p;				\
 			     fwrite((BUF)->buf->buf, (BUF)->buf->len, 1, FILE), lswlog_p = false)
 
+/*
+ * See programs/pluto/log.h for interface; should only be used in
+ * pluto.  This code assumes that it is being called from the main
+ * thread.
+ *
+ * XXX: since this is single threaded, it should be able to use a
+ * static buffer.
+ */
 #define LSWLOG_WHACK(RC, BUF)						\
-	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
+	for (bool lswlog_p = whack_log_p(); lswlog_p; lswlog_p = false) \
 		LSWBUF_(BUF)						\
-			for (; lswlog_p;				\
-			     whack_log((RC), "%s", (BUF)->buf->buf), lswlog_p = false)
+			for (whack_log_pre(RC, BUF); lswlog_p;		\
+			     whack_log_raw(BUF->buf->buf, BUF->buf->len), \
+				     lswlog_p = false)
 
 #define LSWDBGP(DEBUG, BUF)						\
 	for (bool lswlog_p = DBGP(DEBUG); lswlog_p; lswlog_p = false) \

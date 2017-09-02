@@ -113,7 +113,13 @@ extern void close_peerlog(void);
 /* free all per-peer log resources */
 extern void perpeer_logfree(struct connection *c);
 
-void whack_log_raw(int mess_no, const char *buf);
+/*
+ * XXX: whack_log_raw() stomps on the buffer's NUL terminator wich
+ * violates one of struct lswlog's invariants.
+ */
+void whack_log_raw(char *buf, size_t len);
+bool whack_log_p(void);
+void whack_log_pre(int mess_no, struct lswlog *buf);
 extern void whack_log(int mess_no, const char *message, ...) PRINTF_LIKE(2);
 
 /* show status, usually on whack log */
