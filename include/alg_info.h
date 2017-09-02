@@ -197,7 +197,6 @@ struct proposal_info {
 struct alg_info {
 	int alg_info_cnt;
 	int ref_cnt;
-	unsigned alg_info_protoid;
 	struct proposal_info proposals[128];
 };
 

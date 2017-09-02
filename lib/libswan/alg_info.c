@@ -719,7 +719,6 @@ struct alg_info *alg_info_parse_str(const struct parser_policy *policy,
 	int ret;
 	const char *ptr;
 
-	alg_info->alg_info_protoid = param->protoid;
 	err_buf[0] = '\0';
 
 	parser_init(&ctx, policy, param);
