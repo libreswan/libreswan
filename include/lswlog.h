@@ -198,7 +198,94 @@ void lswlog_exit(int rc) NEVER_RETURNS;
 extern void sanitize_string(char *buf, size_t size);
 
 /*
- * A generic buffer for accumulating log output.
+ * A generic buffer for accumulating unbounded output.
+ */
+
+struct lswlog;
+
+/*
+ * Standard routines for appending output to the log buffer.
+ *
+ * If there is insufficient space, the output is truncated and "..."
+ * is appended.
+ *
+ * Similar to C99 snprintf() et.al., always return the untruncated
+ * message length (the value can never be negative).
+ *
+ * XXX: is returning the length useful?
+ */
+
+size_t lswlogvf(struct lswlog *log, const char *format, va_list ap);
+size_t lswlogf(struct lswlog *log, const char *format, ...) PRINTF_LIKE(2);
+size_t lswlogs(struct lswlog *log, const char *string);
+size_t lswlogl(struct lswlog *log, struct lswlog *buf);
+
+/*
+ * Code wrappers that cover up the details of allocating,
+ * initializing, de-allocating (and possibly logging) a 'struct
+ * lswlog' buffer.  For instance:
+ *
+ *    LSWLOG(buf) {
+ *       lswlogf(buf, "hello world");
+ *    }
+ *
+ * BUF (a C variable name) is declared locally as a pointer to the
+ * 'struct lswlog' buffer.
+ *
+ * XXX:
+ *
+ * This implementation stores the 'struct lswlog' on the stack.  An
+ * alternative would be to put it on the heap.
+ *
+ * This implementation, unlike DBG(), does not take the code block as
+ * a parameter.  This avoids problems with "," vs macros. It also sets
+ * up a simple consistent indentation style.
+ *
+ * Apparently chaining void function calls using a comma is valid C?
+ */
+
+#define LSWBUF_(BUF)							\
+	for (struct lswbuf lswbuf = { .parrot = LSWBUF_PARROT, .canary = LSWBUF_CANARY, }; \
+	     lswlog_p; lswlog_p = false)				\
+		for (struct lswlog lswlog = { .buf = &lswbuf, .bound = sizeof(lswbuf.buf) - 1, .dots = "..." }; \
+		     lswlog_p; lswlog_p = false)			\
+			for (struct lswlog *BUF = &lswlog;		\
+			     lswlog_p; lswlog_p = false)
+
+#define LSWBUF(BUF)							\
+	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
+		LSWBUF_(BUF)
+
+#define LSWLOG_FILE(FILE, BUF)						\
+	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
+		LSWBUF_(BUF)						\
+			for (; lswlog_p;				\
+			     fwrite((BUF)->buf->buf, (BUF)->buf->len, 1, FILE), lswlog_p = false)
+
+#define LSWLOG_WHACK(RC, BUF)						\
+	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
+		LSWBUF_(BUF)						\
+			for (; lswlog_p;				\
+			     whack_log((RC), "%s", (BUF)->buf->buf), lswlog_p = false)
+
+#define LSWDBGP(DEBUG, BUF)						\
+	for (bool lswlog_p = DBGP(DEBUG); lswlog_p; lswlog_p = false) \
+		LSWBUF_(BUF)						\
+			for (; lswlog_p;				\
+			     lswlog_dbg_raw((BUF)->buf->buf, sizeof((BUF)->buf->buf)), \
+				     lswlog_p = false)
+
+#define LSWLOG(BUF)							\
+	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
+		LSWBUF_(BUF)						\
+			for (; lswlog_p;				\
+			     libreswan_log("%s", (BUF)->buf->buf),	\
+				     lswlog_p = false)
+
+/*
+ * Log buffer implementation.
+ *
+ * Treat everything below this as "private".
  */
 
 struct lswbuf {
@@ -222,13 +309,9 @@ struct lswbuf {
 	size_t len;
 };
 
-extern const struct lswbuf empty_lswbuf;
-
 struct lswlog {
-#define LSWBUF_BUF(LOG) ((LOG)->buf->buf)
-#define LSWBUF_LEN(LOG) ((LOG)->buf->len)
 	struct lswbuf *buf;
-	size_t bound; /* < sizeof(LSWBUF_BUF()) */
+	size_t bound; /* < sizeof(BUF) */
 	const char *dots;
 };
 
@@ -252,77 +335,5 @@ extern int (*lswlog_debugf)(const char *format, ...) PRINTF_LIKE(1);
 		passert((LOG)->buf->buf[(LOG)->buf->len] == '\0');	\
 		passert((LOG)->buf->canary == LSWBUF_CANARY);		\
 	} while (false)
-
-/*
- * Try to append the message to the end of the log buffer.
- *
- * If there is insufficient space, the output is truncated and "..."
- * is appended.
- *
- * Like C99 snprintf() et.al., always return the untruncated message
- * length.
- */
-size_t lswlogvf(struct lswlog *log, const char *format, va_list ap);
-size_t lswlogf(struct lswlog *log, const char *format, ...) PRINTF_LIKE(2);
-size_t lswlogs(struct lswlog *log, const char *string);
-size_t lswlogl(struct lswlog *log, struct lswlog *buf);
-
-/*
- * A code wrapper that covers up the details of allocating,
- * initializing, logging, and de-allocating the 'struct lswbuf' and
- * 'struct lswlog' objects.  For instance:
- *
- *    LSWBUFP(RC_LOG, false, log) { lswlogf(log, "hello world"); }
- *
- * LOG, a variable name, is defined as a pointer to the log buffer.
- *
- * This implementation stores the 'struct lswlog' on the stack.
- *
- * An alternative would be to put it on the heap.
- *
- * Apparently chaining void function calls using a comma is valid C?
- */
-
-#define EMPTY_LSWBUF(BUF) {						\
-		.buf = (BUF),						\
-		.bound = sizeof((BUF)->buf) - 1,			\
-		.dots = "..."						\
-	}
-
-#define LSWBUF(LOG)							\
-	for (bool lswbuf_p = true; lswbuf_p; lswbuf_p = false)		\
-		for (struct lswbuf lswbuf = empty_lswbuf; lswbuf_p;)	\
-			for (struct lswlog lswlog = EMPTY_LSWBUF(&lswbuf), *LOG = &lswlog; \
-			     lswbuf_p; lswbuf_p = false)
-
-#define LSWLOG_FILE(FILE, BUF)						\
-	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
-		for (struct lswbuf lswbuf = empty_lswbuf;		\
-		     lswlog_p; lswlog_p = false)			\
-			for (struct lswlog lswlog = EMPTY_LSWBUF(&lswbuf), *BUF = &lswlog; \
-			     lswlog_p;					\
-			     fwrite((BUF)->buf->buf, (BUF)->buf->len, 1, FILE), lswlog_p = false)
-
-#define LSWLOG_WHACK(RC, BUF)						\
-	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
-		for (struct lswbuf lswbuf = empty_lswbuf;		\
-		     lswlog_p; lswlog_p = false)			\
-			for (struct lswlog lswlog = EMPTY_LSWBUF(&lswbuf), *BUF = &lswlog; \
-			     lswlog_p;					\
-			     whack_log((RC), "%s", (BUF)->buf->buf), lswlog_p = false)
-
-#define LSWDBGP(DEBUG, LOG)						\
-	for (bool lswdbgp_p = DBGP(DEBUG); lswdbgp_p; lswdbgp_p = false) \
-		LSWBUF(LOG)						\
-			for (; lswdbgp_p;				\
-			     lswlog_dbg_raw((LOG)->buf->buf, sizeof((LOG)->buf->buf)), \
-				     lswdbgp_p = false)
-
-#define LSWLOG(LOG)							\
-	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
-		LSWBUF(LOG)						\
-			for (; lswlog_p;				\
-			     libreswan_log("%s", LSWBUF_BUF(LOG)),	\
-				     lswlog_p = false)
 
 #endif /* _LSWLOG_H_ */

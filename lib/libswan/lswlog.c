@@ -20,13 +20,6 @@
 #include "lswlog.h"
 #include "lswalloc.h"
 
-const struct lswbuf empty_lswbuf = {
-	.parrot = LSWBUF_PARROT,
-	.buf = "",
-	.canary = LSWBUF_CANARY,
-	.len = 0,
-};
-
 static int lswlog_debugf_nop(const char *format UNUSED, ...)
 {
 	return 0;
