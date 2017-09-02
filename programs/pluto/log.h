@@ -113,6 +113,7 @@ extern void close_peerlog(void);
 /* free all per-peer log resources */
 extern void perpeer_logfree(struct connection *c);
 
+void whack_log_raw(int mess_no, const char *buf);
 extern void whack_log(int mess_no, const char *message, ...) PRINTF_LIKE(2);
 
 /* show status, usually on whack log */

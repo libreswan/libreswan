@@ -438,8 +438,11 @@ void libreswan_vloglog(int mess_no, const char *message, va_list args)
 	if (log_to_perpeer)
 		peerlog("", m);
 
+	if (pthread_equal(pthread_self(), main_thread)) {
+		whack_log_raw(mess_no, m);
+	}
+
 	pthread_mutex_unlock(&log_mutex);
-	whack_log(mess_no, "~%s", m);
 }
 
 void lswlog_log_errno(int e, const char *prefix, const char *message, ...)
@@ -490,6 +493,45 @@ void exit_log(const char *message, ...)
 void lswlog_exit(int rc)
 {
 	exit_pluto(rc);
+}
+
+void whack_log_raw(int mess_no, const char *buf)
+{
+	passert(pthread_equal(pthread_self(), main_thread));
+
+	int wfd = whack_log_fd != NULL_FD ? whack_log_fd :
+	      cur_state != NULL ? cur_state->st_whack_sock :
+	      NULL_FD;
+
+	if (wfd == NULL_FD) {
+		return;
+	}
+
+	char m[LOG_WIDTH]; /* longer messages will be truncated */
+	int prelen = snprintf(m, sizeof(m), "%03d %s", mess_no, buf);
+	passert(prelen >= 0);
+
+	/* write to whack socket, but suppress possible SIGPIPE */
+	size_t len = strlen(m);
+#ifdef MSG_NOSIGNAL                     /* depends on version of glibc??? */
+	m[len] = '\n';  /* don't need NUL, do need NL */
+	(void) send(wfd, m, len + 1, MSG_NOSIGNAL);
+#else /* !MSG_NOSIGNAL */
+	int r;
+	struct sigaction act, oldact;
+
+	m[len] = '\n'; /* don't need NUL, do need NL */
+	act.sa_handler = SIG_IGN;
+	sigemptyset(&act.sa_mask);
+	act.sa_flags = 0; /* no nothing */
+	r = sigaction(SIGPIPE, &act, &oldact);
+	passert(r == 0);
+
+	(void) write(wfd, m, len + 1);
+
+	r = sigaction(SIGPIPE, &oldact, NULL);
+	passert(r == 0);
+#endif /* !MSG_NOSIGNAL */
 }
 
 /* emit message to whack.

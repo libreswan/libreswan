@@ -60,4 +60,10 @@ extern bool all_zero(const unsigned char *m, size_t len);
 #define DISCARD_CONST(vartype, varname) ((vartype)(uintptr_t)(varname))
 #endif
 
+/*
+ * So code can determine if it isn't running on the main thread; or
+ * that its thread is valid.
+ */
+extern pthread_t main_thread;
+
 #endif /* _DEFS_H */

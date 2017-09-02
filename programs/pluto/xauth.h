@@ -20,12 +20,6 @@
 struct id;
 struct state;
 
-/*
- * So code can determine if it isn't running on the main thread; or
- * that its thread is valid.
- */
-extern pthread_t main_thread;
-
 void xauth_cancel(so_serial_t serialno, pthread_t *thread);
 
 #ifdef XAUTH_HAVE_PAM
