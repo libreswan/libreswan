@@ -27,8 +27,6 @@ void lsw_passert_fail(const char *file_str,
 		      const char *func_str,
 		      const char *fmt, ...)
 {
-	lsw_dying_breath = TRUE;
-
 	va_list args;
 	char message[LOG_WIDTH];	/* longer messages will be truncated */
 

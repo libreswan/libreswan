@@ -24,12 +24,6 @@
 #define _LIBRESWAN_PASSERT_H
 /* our versions of assert: log result */
 
-/*
- * Set by lsw_passert_fail() to communicate to libreswan_loglog() that
- * the message must get through.
- */
-extern volatile sig_atomic_t lsw_dying_breath;
-
 extern void lsw_passert_fail(const char *file_str,
 			     unsigned long line_no,
 			     const char *func_str,
