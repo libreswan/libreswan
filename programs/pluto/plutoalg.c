@@ -365,8 +365,7 @@ void kernel_alg_show_connection(const struct connection *c, const char *instance
 			  "\"%s\"%s:   %s algorithm newest: %s; pfsgroup=%s",
 			  c->name,
 			  instance, satype,
-			  enum_short_name(&auth_alg_names,
-				    st->st_esp.attrs.transattrs.integ_hash),
+			  st->st_ah.attrs.transattrs.integ->common.fqn,
 			  pfsbuf);
 	}
 }
