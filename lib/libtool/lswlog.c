@@ -135,7 +135,7 @@ void lswlog_dbg_raw(char *buf, size_t sizeof_buf)
 {
 	sanitize_string(buf, sizeof_buf);
 	if (log_to_stderr)
-		fprintf(stderr, "| %s\n", buf);
+		fprintf(stderr, DEBUG_PREFIX "%s\n", buf);
 	if (log_to_syslog)
-		syslog(LOG_DEBUG, "| %s", buf);
+		syslog(LOG_DEBUG, DEBUG_PREFIX "%s", buf);
 }

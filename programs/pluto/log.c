@@ -105,9 +105,6 @@ char *base_perpeer_logdir = NULL;
 char *pluto_stats_binary = NULL;
 static int perpeer_count = 0;
 
-/* what to put in front of debug output */
-static const char debug_prefix = '|';
-
 /* from sys/queue.h -> NOW private sysdep.h. */
 static CIRCLEQ_HEAD(, connection) perpeer_list;
 
@@ -710,16 +707,12 @@ void lswlog_dbg_raw(char *buf, size_t sizeof_buf)
 		if (log_with_timestamp)
 			prettynow(now, sizeof(now), "%b %e %T: ");
 		fprintf(log_to_stderr ? stderr : pluto_log_fp,
-			"%s%c %s\n", now, debug_prefix, buf);
+			"%s" DEBUG_PREFIX "%s\n", now, buf);
 	}
 	if (log_to_syslog)
-		syslog(LOG_DEBUG, "%c %s", debug_prefix, buf);
+		syslog(LOG_DEBUG, DEBUG_PREFIX "%s", buf);
 	if (log_to_perpeer) {
-		char prefix[3];
-		prefix[0] = debug_prefix;
-		prefix[1] = ' ';
-		prefix[2] = '\n';
-		peerlog(prefix, buf);
+		peerlog(DEBUG_PREFIX "\n", buf);
 	}
 
 	pthread_mutex_unlock(&log_mutex);

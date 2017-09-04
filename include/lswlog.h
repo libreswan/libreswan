@@ -56,6 +56,8 @@ extern void set_debugging(lset_t deb);
 
 #define DBGP(cond)	(cur_debugging & (cond))
 
+#define DEBUG_PREFIX "| "
+
 /*
  * NOTE: DBG's action can be a { } block, but that block must not
  * contain commas that are outside quotes or parenthesis.
