@@ -102,7 +102,7 @@ east #
 000 "west-east-b":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 000 "west-east-b":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "west-east-b":   newest ISAKMP SA: #0; newest IPsec SA: #3;
-000 "west-east-b":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
+000 "west-east-b":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 000 "west-east-c": 198.51.100.4/32===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===198.51.100.3/32; erouted; eroute owner: #4
 000 "west-east-c":     oriented; my_ip=unset; their_ip=unset
 000 "west-east-c":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -120,7 +120,7 @@ east #
 000 "west-east-c":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "west-east-c":   newest ISAKMP SA: #1; newest IPsec SA: #4;
 000 "west-east-c":   IKE algorithm newest: AES_CBC_256-SHA2_256-MODP2048
-000 "west-east-c":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
+000 "west-east-c":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 000 #3: "west-east-b":500 STATE_QUICK_R2 (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#1; idle; import:not set
 000 #3: "west-east-b" esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.45 tun.0@192.1.2.23 ref=0 refhim=0 Traffic: ESPin=0B ESPout=0B! ESPmax=4194303B 
 000 #4: "west-east-c":500 STATE_QUICK_R2 (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#1; idle; import:not set
