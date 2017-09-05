@@ -225,104 +225,179 @@ size_t lswlogl(struct lswlog *log, struct lswlog *buf);
 /*
  * Code wrappers that cover up the details of allocating,
  * initializing, de-allocating (and possibly logging) a 'struct
- * lswlog' buffer.  For instance:
- *
- *    LSWLOG(buf) {
- *       lswlogf(buf, "hello world");
- *    }
+ * lswlog' buffer.
  *
  * BUF (a C variable name) is declared locally as a pointer to the
  * 'struct lswlog' buffer.
  *
- * XXX:
+ * Implementation notes:
  *
- * This implementation stores the 'struct lswlog' on the stack.  An
- * alternative would be to put it on the heap.
+ * This implementation puts the 'struct lswlog' on the stack.  Could
+ * just as easily use the heap.  BUF is a pointer so that this
+ * implementation detail is hidden.
  *
- * This implementation, unlike DBG(), does not take the code block as
- * a parameter.  This avoids problems with "," vs macros. It also sets
- * up a simple consistent indentation style.
+ * This implementation, unlike DBG(), does not have a code block
+ * parameter.  Instead it uses for-loops to set things up for a code
+ * block.  This avoids problems with "," within macro parameters
+ * confusing the parser.  It also permits a simple consistent
+ * indentation style.
  *
  * Apparently chaining void function calls using a comma is valid C?
  */
 
-#define LSWBUF_(BUF)							\
-	for (struct lswbuf lswbuf = { .parrot = LSWBUF_PARROT, .canary = LSWBUF_CANARY, }; \
+#define LSWBUF_ARRAY_(ARRAY, SIZEOF_ARRAY, BUF)				\
+	for (struct lswlog lswlog = { .array = ARRAY, .len = 0, .bound = SIZEOF_ARRAY - 2, .roof = SIZEOF_ARRAY - 1, .dots = "...", }; \
 	     lswlog_p; lswlog_p = false)				\
-		for (struct lswlog lswlog = { .buf = &lswbuf, .bound = sizeof(lswbuf.buf) - 1, .dots = "..." }; \
+		for (struct lswlog *BUF = &lswlog;			\
 		     lswlog_p; lswlog_p = false)			\
-			for (struct lswlog *BUF = &lswlog;		\
+			for (BUF->array[BUF->len] = BUF->array[BUF->bound] = '\0', \
+				     BUF->array[BUF->roof] = LSWBUF_CANARY; \
 			     lswlog_p; lswlog_p = false)
+
+#define LSWBUF_(BUF)							\
+	for (char lswbuf[LOG_WIDTH]; lswlog_p; lswlog_p = false)	\
+		LSWBUF_ARRAY_(lswbuf, sizeof(lswbuf), BUF)
+
+/*
+ * Wrap an existing array so lswlog*() routines can be called.
+ *
+ * For instance:
+ */
+
+#if 0
+void lswbuf_array(char *b, size_t sizeof_b)
+{
+	LSWBUF_ARRAY(b, sizeof_b, buf) {
+		lswlogf(buf, "written to the array");
+	}
+}
+#endif
+
+#define LSWBUF_ARRAY(ARRAY, SIZEOF_ARRAY, BUF)				\
+	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
+		LSWBUF_ARRAY_(ARRAY, SIZEOF_ARRAY, BUF)
+
+/*
+ * Scratch buffer for accumulating extra output.
+ *
+ * XXX: case should be expanded to illustrate how to stuff a truncated
+ * version of the output into the LOG buffer.
+ *
+ * For instance:
+ */
+
+#if 0
+void lswbuf(struct lswlog *log)
+{
+	LSWBUF(buf) {
+		lswlogf(buf, "written to buf");
+		lswlogl(log, buf); /* add to calling array */
+	}
+}
+#endif
 
 #define LSWBUF(BUF)							\
 	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
 		LSWBUF_(BUF)
 
+/*
+ * Write output to a FILE stream as a single block.
+ *
+ * For instance:
+ */
+
+#if 0
+void lswlog_file(FILE f)
+{
+	LSWLOG_FILE(f, buf) {
+		lswlogf(buf, "written to file");
+	}
+}
+#endif
+
 #define LSWLOG_FILE(FILE, BUF)						\
 	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
 		LSWBUF_(BUF)						\
 			for (; lswlog_p;				\
-			     fwrite((BUF)->buf->buf, (BUF)->buf->len, 1, FILE), lswlog_p = false)
+			     fwrite(BUF->array, BUF->len, 1, FILE),	\
+				     lswlog_p = false)
 
 /*
- * See programs/pluto/log.h for interface; should only be used in
+ * Send output to WHACK (if attached).
+ *
+ * XXX: See programs/pluto/log.h for interface; should only be used in
  * pluto.  This code assumes that it is being called from the main
  * thread.
- *
- * XXX: since this is single threaded, it should be able to use a
- * static buffer.
  */
+
 #define LSWLOG_WHACK(RC, BUF)						\
 	for (bool lswlog_p = whack_log_p(); lswlog_p; lswlog_p = false) \
 		LSWBUF_(BUF)						\
 			for (whack_log_pre(RC, BUF); lswlog_p;		\
-			     whack_log_raw(BUF->buf->buf, BUF->buf->len), \
+			     whack_log_raw(BUF->array, BUF->len),		\
 				     lswlog_p = false)
 
+/*
+ * Send debug output to the logging streams (but not WHACK).
+ */
+
 #define LSWDBGP(DEBUG, BUF)						\
-	for (bool lswlog_p = DBGP(DEBUG); lswlog_p; lswlog_p = false) \
+	for (bool lswlog_p = DBGP(DEBUG); lswlog_p; lswlog_p = false)	\
 		LSWBUF_(BUF)						\
 			for (; lswlog_p;				\
-			     lswlog_dbg_raw((BUF)->buf->buf, sizeof((BUF)->buf->buf)), \
+			     lswlog_dbg_raw(BUF->array, BUF->roof),	\
 				     lswlog_p = false)
+
+/*
+ * Send log output the logging streams (and WHACK).
+ */
 
 #define LSWLOG(BUF)							\
 	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
 		LSWBUF_(BUF)						\
 			for (; lswlog_p;				\
-			     libreswan_log("%s", (BUF)->buf->buf),	\
+			     libreswan_log("%s", BUF->array),		\
 				     lswlog_p = false)
 
 /*
- * Log buffer implementation.
+ * ARRAY, a previously allocated array, containing the accumulated
+ * NUL-terminated output.
  *
- * Treat everything below this as "private".
+ * The following offsets into ARRAY are maintained:
+ *
+ *    0 <= LEN <= BOUND < ROOF < sizeof(ARRAY)
+ *
+ * ROOF < sizeof(ARRAY); ARRAY[ROOF]==CANARY
+ *
+ * The offset to the last character in the array.  It contains a
+ * canary intended to catch overflows.  When sizeof(ARRAY) is needed,
+ * ROOF should be used as otherwise the canary may be corrupted.
+ *
+ * BOUND < ROOF; ARRAY[BOUND]=='\0'
+ *
+ * Limit on how many characters can be appended.
+ *
+ * LEN < BOUND; ARRAY[LEN]=='\0'
+ *
+ * Equivalent to strlen(BUF).  BOUND-LEN is always the amount of
+ * unused space in the array.
+ *
+ * When LEN<BOUND, space for BOUND-LEN characters, including the
+ * terminating NUL, is still available (when BOUND-LEN==1, a single
+ * NUL (empty string) write is possible).
+ *
+ * When LEN==BOUND, the array is full and writes are discarded.
+ *
+ * When the ARRAY fills, the last few characters are overwritten with
+ * DOTS.
  */
 
-struct lswbuf {
-	/*
-	 * BUF contains the accumulated log output.  It is always NUL
-	 * terminated (LEN specifes the location of the NUL).
-	 *
-	 * BUF can contain up to BOUND-1 characters of log output
-	 * (i.e. LEN<BOUND).
-	 *
-	 * An attempt to accumulate more than BOUND-1 characters will
-	 * cause the output to be truncated, and last few characters
-	 * replaced by DOTS.
-	 *
-	 * A buffer containing truncated output is identified by LEN
-	 * == BOUND.
-	 */
-	signed char parrot;
-	char buf[LOG_WIDTH + 1]; /* extra NUL */
-	signed char canary;
-	size_t len;
-};
-
 struct lswlog {
-	struct lswbuf *buf;
-	size_t bound; /* < sizeof(BUF) */
+	char *array;
+	/* 0 <= LEN < BOUND < ROOF */
+	size_t len;
+	size_t bound;
+	size_t roof;
 	const char *dots;
 };
 
@@ -331,20 +406,19 @@ struct lswlog {
  */
 extern int (*lswlog_debugf)(const char *format, ...) PRINTF_LIKE(1);
 
-#define LSWBUF_PARROT -1
 #define LSWBUF_CANARY -2
 
-#define PASSERT_LSWBUF(LOG)						\
+#define PASSERT_LSWBUF(BUF)						\
 	do {								\
-		passert((LOG)->dots != NULL);				\
+		passert(BUF->dots != NULL);				\
 		/* LEN/BOUND well defined */				\
-		passert((LOG)->buf->len <= (LOG)->bound);		\
-		passert((LOG)->bound < sizeof((LOG)->buf->buf));	\
-		/* passert((LOG)->len < sizeof((LOG)->buf)) */;		\
+		passert((BUF)->len <= (BUF)->bound);			\
+		passert((BUF)->bound < (BUF)->roof);			\
 		/* always NUL terminated */				\
-		passert((LOG)->buf->parrot == LSWBUF_PARROT);		\
-		passert((LOG)->buf->buf[(LOG)->buf->len] == '\0');	\
-		passert((LOG)->buf->canary == LSWBUF_CANARY);		\
+		passert((BUF)->array[(BUF)->len] == '\0');		\
+		passert((BUF)->array[(BUF)->bound] == '\0');		\
+		/* overflow? */						\
+		passert((BUF)->array[(BUF)->roof] == LSWBUF_CANARY);	\
 	} while (false)
 
 #endif /* _LSWLOG_H_ */
