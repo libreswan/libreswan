@@ -214,7 +214,7 @@ static void open_peerlog(struct connection *c)
 }
 
 /* log a line to cur_connection's log */
-void peerlog(const char *prefix, const char *m)
+void peerlog(const char *m)
 {
 	if (cur_connection == NULL) {
 		/* we cannot log it in this case. Oh well. */
@@ -229,8 +229,8 @@ void peerlog(const char *prefix, const char *m)
 		char datebuf[32];
 
 		prettynow(datebuf, sizeof(datebuf), "%Y-%m-%d %T");
-		fprintf(cur_connection->log_file, "%s %s%s\n",
-			datebuf, prefix, m);
+		fprintf(cur_connection->log_file, "%s %s\n",
+			datebuf, m);
 
 		/* now move it to the front of the list */
 		CIRCLEQ_REMOVE(&perpeer_list, cur_connection, log_link);

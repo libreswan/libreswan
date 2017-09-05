@@ -268,7 +268,7 @@ void libreswan_vloglog(int mess_no, const char *message, va_list args)
 	if (log_to_syslog)
 		syslog(LOG_WARNING, "%s", m);
 	if (log_to_perpeer)
-		peerlog("", m);
+		peerlog(m);
 
 	if (whack_log_p()) {
 		whack_log_log(mess_no, m);
@@ -286,18 +286,19 @@ void lswlog_log_errno(int e, const char *prefix, const char *message, ...)
 	fmt_log(m, sizeof(m), message, args);
 	va_end(args);
 
+	char b[LOG_WIDTH];
+	snprintf(b, sizeof(b), "%s%s. Errno %d: %s",
+		 prefix, m, e, strerror(e));
+
 	if (log_to_stderr || pluto_log_fp != NULL)
 		fprintf(log_to_stderr ? stderr : pluto_log_fp,
-			"%s%s. Errno %d: %s\n",
-			prefix, m, e, strerror(e));
+			"%s\n", b);
 	if (log_to_syslog)
-		syslog(LOG_ERR, "%s%s. Errno %d: %s",
-		       prefix, m, e, strerror(e));
+		syslog(LOG_ERR, "%s", b);
 	if (log_to_perpeer)
-		peerlog(strerror(e), m);
+		peerlog(b);
 
-	whack_log(RC_LOG_SERIOUS,
-		  "~%s%s. Errno %d: %s", prefix, m, e, strerror(e));
+	whack_log(RC_LOG_SERIOUS, "~%s", b);
 }
 
 void exit_log(const char *message, ...)
@@ -309,15 +310,18 @@ void exit_log(const char *message, ...)
 	fmt_log(m, sizeof(m), message, args);
 	va_end(args);
 
+	char b[LOG_WIDTH];
+	snprintf(b, sizeof(b), "FATAL ERROR: %s", m);
+
 	if (log_to_stderr || pluto_log_fp != NULL)
 		fprintf(log_to_stderr ? stderr : pluto_log_fp,
-			"FATAL ERROR: %s\n", m);
+			"%s\n", b);
 	if (log_to_syslog)
-		syslog(LOG_ERR, "FATAL ERROR: %s", m);
+		syslog(LOG_ERR, "%s", b);
 	if (log_to_perpeer)
-		peerlog("FATAL ERROR: ", m);
+		peerlog(b);
 
-	whack_log(RC_LOG_SERIOUS, "~FATAL ERROR: %s", m);
+	whack_log(RC_LOG_SERIOUS, "~%s", b);
 
 	exit_pluto(PLUTO_EXIT_FAIL);
 }
@@ -500,18 +504,21 @@ void lswlog_dbg_raw(char *buf, size_t sizeof_buf)
 
 	pthread_mutex_lock(&log_mutex);
 
+	char b[LOG_WIDTH];
+	snprintf(b, sizeof(b), DEBUG_PREFIX "%s", buf);
+
 	if (log_to_stderr || pluto_log_fp != NULL) {
 		char now[34] = "";
 
 		if (log_with_timestamp)
 			prettynow(now, sizeof(now), "%b %e %T: ");
 		fprintf(log_to_stderr ? stderr : pluto_log_fp,
-			"%s" DEBUG_PREFIX "%s\n", now, buf);
+			"%s%s\n", now, b);
 	}
 	if (log_to_syslog)
-		syslog(LOG_DEBUG, DEBUG_PREFIX "%s", buf);
+		syslog(LOG_DEBUG, "%s", b);
 	if (log_to_perpeer) {
-		peerlog(DEBUG_PREFIX "\n", buf);
+		peerlog(b);
 	}
 
 	pthread_mutex_unlock(&log_mutex);
