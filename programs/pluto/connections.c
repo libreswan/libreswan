@@ -65,6 +65,7 @@
 #include "server.h"
 #include "kernel.h" /* needs connections.h */
 #include "log.h"
+#include "peerlog.h"
 #include "keys.h"
 #include "whack.h"
 #include "alg_info.h"

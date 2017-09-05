@@ -65,6 +65,7 @@
 #include "server.h"
 #include "kernel.h"	/* needs connections.h */
 #include "log.h"
+#include "peerlog.h"
 #include "keys.h"
 #include "secrets.h"    /* for free_remembered_public_keys() */
 #include "rnd.h"
@@ -151,7 +152,7 @@ static void free_pluto_main(void)
 	pfree(pluto_vendorid);
 	pfreeany(ocsp_uri);
 	pfreeany(ocsp_trust_name);
-	pfreeany(base_perpeer_logdir);
+	pfreeany(peerlog_basedir);
 	pfreeany(curl_iface);
 	pfreeany(pluto_log_file);
 	pfreeany(pluto_dnssec_rootfile);
@@ -1139,7 +1140,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'P':	/* --perpeerlogbase */
-			base_perpeer_logdir = clone_str(optarg, "base_perpeer_logdir");
+			peerlog_basedir = clone_str(optarg, "peerlog_basedir");
 			continue;
 
 		case 'l':	/* --perpeerlog */
@@ -1263,10 +1264,10 @@ int main(int argc, char **argv)
 			if (log_to_perpeer) {
 				/* --perpeerlogbase */
 				if (cfg->setup.strings[KSF_PERPEERDIR]) {
-					set_cfg_string(&base_perpeer_logdir,
+					set_cfg_string(&peerlog_basedir,
 						cfg->setup.strings[KSF_PERPEERDIR]);
 				} else {
-					base_perpeer_logdir = clone_str("/var/log/pluto/", "perpeer_logdir");
+					peerlog_basedir = clone_str("/var/log/pluto/", "perpeer_logdir");
 				}
 			}
 
@@ -1864,7 +1865,7 @@ void show_setup_plutomain(void)
 		nhelpers,
 		uniqueIDs ? "yes" : "no",
 		do_dnssec ? "yes" : "no",
-		!log_to_perpeer ? "no" : base_perpeer_logdir,
+		!log_to_perpeer ? "no" : peerlog_basedir,
                 (intmax_t) deltasecs(pluto_shunt_lifetime),
                 (intmax_t) pluto_xfrmlifetime
 	);
