@@ -23,25 +23,16 @@
 
 #include "lswlog.h"
 
-#ifndef PERPERRLOGDIR
-#define PERPERRLOGDIR "/var/log/pluto/peer"
-#endif
-
 /* moved common code to library file */
 #include "libreswan/passert.h"
 
 extern bool
-	log_to_perpeer,         /* should log go to per-IP file? */
 	log_to_audit,         /* audit logs for kernel/auditd */
 	log_with_timestamp,     /* prefix timestamp */
 	log_append;
 
-extern char *base_perpeer_logdir;
 extern char *pluto_log_file;
 extern char *pluto_stats_binary;
-
-/* maximum number of files to keep open for per-peer log files */
-#define MAX_PEERLOG_COUNT 16
 
 /* Context for logging.
  *
@@ -106,12 +97,6 @@ extern void extra_debugging(const struct connection *c);
 extern void pluto_init_log(void);
 extern void close_log(void);
 extern void exit_log(const char *message, ...) PRINTF_LIKE(1) NEVER_RETURNS;
-
-/* close of all per-peer logging */
-extern void close_peerlog(void);
-
-/* free all per-peer log resources */
-extern void perpeer_logfree(struct connection *c);
 
 /*
  * XXX: whack_log_raw() stomps on the buffer's NUL terminator wich

@@ -60,6 +60,7 @@
 #include "kernel.h"             /* needs connections.h */
 #include "rcv_whack.h"
 #include "log.h"
+#include "peerlog.h"
 #include "lswfips.h"
 #include "keys.h"
 #include "secrets.h"

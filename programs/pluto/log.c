@@ -49,6 +49,7 @@
 
 #include "defs.h"
 #include "log.h"
+#include "peerlog.h"
 #include "server.h"
 #include "state.h"
 #include "id.h"
@@ -79,13 +80,9 @@
 
 static pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-/* close one per-peer log */
-static void perpeer_logclose(struct connection *c);     /* forward */
-
 bool
 	log_to_stderr = TRUE,		/* should log go to stderr? */
 	log_to_syslog = TRUE,		/* should log go to syslog? */
-	log_to_perpeer = FALSE,		/* should log go to per-IP file? */
 	log_with_timestamp = TRUE,	/* testsuite requires no timestamps */
 	log_to_audit = FALSE,		/* audit log messages for kernel */
 	log_append = TRUE;
@@ -101,12 +98,7 @@ bool
 char *pluto_log_file = NULL;	/* pathname */
 static FILE *pluto_log_fp = NULL;
 
-char *base_perpeer_logdir = NULL;
 char *pluto_stats_binary = NULL;
-static int perpeer_count = 0;
-
-/* from sys/queue.h -> NOW private sysdep.h. */
-static CIRCLEQ_HEAD(, connection) perpeer_list;
 
 /* Context for logging.
  *
@@ -147,7 +139,7 @@ void pluto_init_log(void)
 		openlog("pluto", LOG_CONS | LOG_NDELAY | LOG_PID,
 			LOG_AUTHPRIV);
 
-	CIRCLEQ_INIT(&perpeer_list);
+	peerlog_init();
 }
 
 /* format a string for the log, with suitable prefixes.
@@ -232,17 +224,6 @@ static void lswlog_log_prefix(struct lswlog *buf)
 	}
 }
 
-void close_peerlog(void)
-{
-	/* exit if the circular queue has not been initialized */
-	if (perpeer_list.cqh_first == NULL)
-		return;
-
-	/* end of circular queue is given by pointer to "HEAD" */
-	while (perpeer_list.cqh_first != (void *)&perpeer_list)
-		perpeer_logclose(perpeer_list.cqh_first);
-}
-
 void close_log(void)
 {
 	if (log_to_syslog)
@@ -256,160 +237,6 @@ void close_log(void)
 	close_peerlog();
 }
 
-static void perpeer_logclose(struct connection *c)
-{
-	/* only free/close things if we had used them! */
-	if (c->log_file != NULL) {
-		passert(perpeer_count > 0);
-
-		CIRCLEQ_REMOVE(&perpeer_list, c, log_link);
-		perpeer_count--;
-		fclose(c->log_file);
-		c->log_file = NULL;
-	}
-}
-
-void perpeer_logfree(struct connection *c)
-{
-	perpeer_logclose(c);
-	if (c->log_file_name != NULL) {
-		pfree(c->log_file_name);
-		c->log_file_name = NULL;
-		c->log_file_err = FALSE;
-	}
-}
-
-/* attempt to arrange a writeable parent directory for <path>
- * Result indicates success.  Failure will be logged.
- *
- * NOTE: this routine must not call our own logging facilities to report
- * an error since those routines are not re-entrant and such a call
- * would be recursive.
- */
-static bool ensure_writeable_parent_directory(char *path)
-{
-	/* NOTE: a / in the first char of a path is not like any other.
-	 * That is why the strchr starts at path + 1.
-	 */
-	char *e = strrchr(path + 1, '/'); /* end of directory prefix */
-	bool happy = TRUE;
-
-	if (e != NULL) {
-		/* path has an explicit directory prefix: deal with it */
-
-		/* Treat a run of slashes as one.
-		 * Remember that a / in the first char is different.
-		 */
-		while (e > path + 1 && e[-1] == '/')
-			e--;
-
-		*e = '\0'; /* carve off dirname part of path */
-
-		if (access(path, W_OK) == 0) {
-			/* mission accomplished, with no work */
-		} else if (errno != ENOENT) {
-			/* cannot write to this directory for some reason
-			 * other than a missing directory
-			 */
-			syslog(LOG_CRIT, "cannot write to %s: %s", path, strerror(
-				       errno));
-			happy = FALSE;
-		} else {
-			/* missing directory: try to create one */
-			happy = ensure_writeable_parent_directory(path);
-			if (happy) {
-				if (mkdir(path, 0750) != 0) {
-					syslog(LOG_CRIT,
-					       "cannot create dir %s: %s",
-					       path, strerror(errno));
-					happy = FALSE;
-				}
-			}
-		}
-
-		*e = '/'; /* restore path to original form */
-	}
-	return happy;
-}
-
-/* open the per-peer log
- *
- * NOTE: this routine must not call our own logging facilities to report
- * an error since those routines are not re-entrant and such a call
- * would be recursive.
- */
-static void open_peerlog(struct connection *c)
-{
-	/* syslog(LOG_INFO, "opening log file for conn %s", c->name); */
-
-	if (c->log_file_name == NULL) {
-		char peername[ADDRTOT_BUF], dname[ADDRTOT_BUF];
-		size_t peernamelen = addrtot(&c->spd.that.host_addr, 'Q', peername,
-			sizeof(peername)) - 1;
-		int lf_len;
-
-
-		/* copy IP address, turning : and . into / */
-		{
-			char ch, *p, *q;
-
-			p = peername;
-			q = dname;
-			do {
-				ch = *p++;
-				if (ch == '.' || ch == ':')
-					ch = '/';
-				*q++ = ch;
-			} while (ch != '\0');
-		}
-
-		lf_len = peernamelen * 2 +
-			 strlen(base_perpeer_logdir) +
-			 sizeof("//.log") +
-			 1;
-		c->log_file_name =
-			alloc_bytes(lf_len, "per-peer log file name");
-
-#if 0
-		fprintf(stderr, "base dir |%s| dname |%s| peername |%s|",
-			base_perpeer_logdir, dname, peername);
-#endif
-		snprintf(c->log_file_name, lf_len, "%s/%s/%s.log",
-			 base_perpeer_logdir, dname, peername);
-
-		/* syslog(LOG_DEBUG, "conn %s logfile is %s", c->name, c->log_file_name); */
-	}
-
-	/* now open the file, creating directories if necessary */
-
-	c->log_file_err = !ensure_writeable_parent_directory(c->log_file_name);
-	if (c->log_file_err)
-		return;
-
-	c->log_file = fopen(c->log_file_name, "w");
-	if (c->log_file == NULL) {
-		if (c->log_file_err) {
-			syslog(LOG_CRIT, "logging system cannot open %s: %s",
-			       c->log_file_name, strerror(errno));
-			c->log_file_err = TRUE;
-		}
-		return;
-	}
-
-	/* look for a connection to close! */
-	while (perpeer_count >= MAX_PEERLOG_COUNT) {
-		/* cannot be NULL because perpeer_count > 0 */
-		passert(perpeer_list.cqh_last != (void *)&perpeer_list);
-
-		perpeer_logclose(perpeer_list.cqh_last);
-	}
-
-	/* insert this into the list */
-	CIRCLEQ_INSERT_HEAD(&perpeer_list, c, log_link);
-	passert(c->log_file != NULL);
-	perpeer_count++;
-}
-
 void prettynow(char *buf, size_t buflen, const char *fmt)
 {
 	realtime_t n = realnow();
@@ -418,31 +245,6 @@ void prettynow(char *buf, size_t buflen, const char *fmt)
 
 	/* the cast suppresses a warning: <http://gcc.gnu.org/bugzilla/show_bug.cgi?id=39438> */
 	((size_t (*)(char *, size_t, const char *, const struct tm *))strftime)(buf, buflen, fmt, t);
-}
-
-/* log a line to cur_connection's log */
-static void peerlog(const char *prefix, const char *m)
-{
-	if (cur_connection == NULL) {
-		/* we cannot log it in this case. Oh well. */
-		return;
-	}
-
-	if (cur_connection->log_file == NULL)
-		open_peerlog(cur_connection);
-
-	/* despite our attempts above, we may not be able to open the file. */
-	if (cur_connection->log_file != NULL) {
-		char datebuf[32];
-
-		prettynow(datebuf, sizeof(datebuf), "%Y-%m-%d %T");
-		fprintf(cur_connection->log_file, "%s %s%s\n",
-			datebuf, prefix, m);
-
-		/* now move it to the front of the list */
-		CIRCLEQ_REMOVE(&perpeer_list, cur_connection, log_link);
-		CIRCLEQ_INSERT_HEAD(&perpeer_list, cur_connection, log_link);
-	}
 }
 
 static void whack_log_log(int mess_no, char *m);
