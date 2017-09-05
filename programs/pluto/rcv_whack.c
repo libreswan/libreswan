@@ -275,8 +275,6 @@ static bool openwhackrecordfile(char *file)
 	char when[256];
 	char FQDN[SWAN_MAX_DOMAIN_LEN];
 	const u_int32_t magic = WHACK_BASIC_MAGIC;
-	struct tm tm1, *tm;
-	realtime_t n = realnow();
 
 	strcpy(FQDN, "unknown host");
 	gethostname(FQDN, sizeof(FQDN));
@@ -289,8 +287,7 @@ static bool openwhackrecordfile(char *file)
 		return FALSE;
 	}
 
-	tm = localtime_r(&n.real_secs, &tm1);
-	strftime(when, sizeof(when), "%F %T", tm);
+	prettynow(when, sizeof(when), "%F %T");
 
 	fprintf(whackrecordfile, "#!-pluto-whack-file- recorded on %s on %s",
 		FQDN, when);

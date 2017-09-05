@@ -423,11 +423,13 @@ typedef uint32_t IPsecSAref_t;
 /* GCC magic for use in function definitions! */
 #ifdef GCC_LINT
 # define PRINTF_LIKE(n) __attribute__ ((format(printf, n, n + 1)))
+# define STRFTIME_LIKE(n) __attribute__ ((format (strftime, n, 0)))
 # define NEVER_RETURNS __attribute__ ((noreturn))
 # define UNUSED __attribute__ ((unused))
 # define MUST_USE_RESULT  __attribute__ ((warn_unused_result))
 #else
 # define PRINTF_LIKE(n) /* ignore */
+# define STRFTIME_LIKE(n) /* ignore */
 # define NEVER_RETURNS  /* ignore */
 # define UNUSED         /* ignore */
 # define MUST_USE_RESULT	/* ignore */
@@ -436,6 +438,8 @@ typedef uint32_t IPsecSAref_t;
 #ifdef COMPILER_HAS_NO_PRINTF_LIKE
 # undef PRINTF_LIKE
 # define PRINTF_LIKE(n) /* ignore */
+# undef STRFTIME_LIKE
+# define STRFTIME_LIKE(n) /* ignore */
 #endif
 
 /*

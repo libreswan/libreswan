@@ -410,10 +410,7 @@ static void open_peerlog(struct connection *c)
 	perpeer_count++;
 }
 
-#ifdef GCC_LINT
-static void prettynow(char *buf, size_t buflen, const char *fmt) __attribute__ ((format (__strftime__, 3, 0)));
-#endif
-static void prettynow(char *buf, size_t buflen, const char *fmt)
+void prettynow(char *buf, size_t buflen, const char *fmt)
 {
 	realtime_t n = realnow();
 	struct tm tm1;

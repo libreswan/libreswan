@@ -167,4 +167,6 @@ extern bool logged_txt_warning;
 extern bool logged_myid_ip_txt_warning;
 extern bool logged_myid_fqdn_txt_warning;
 
+void prettynow(char *buf, size_t buflen, const char *fmt) STRFTIME_LIKE(3);
+
 #endif /* _PLUTO_LOG_H */
