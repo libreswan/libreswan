@@ -2321,8 +2321,16 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 			close_output_pbs(&reply_stream); /* good form, but actually a no-op */
 
-			record_and_send_ike_msg(st, &reply_stream,
-				enum_name(&state_names, from_state));
+			if (st->st_state == STATE_MAIN_R2 &&
+				DBGP(IMPAIR_SEND_NO_MAIN_R2)) {
+				/* record-only so we propely emulate packet drop */
+				record_outbound_ike_msg(st, &reply_stream,
+					enum_name(&state_names, from_state));
+				libreswan_log("IMPAIR: Skipped sending STATE_MAIN_R2 response packet");
+			} else {
+				record_and_send_ike_msg(st, &reply_stream,
+					enum_name(&state_names, from_state));
+			}
 		}
 
 		/* Schedule for whatever timeout is specified */

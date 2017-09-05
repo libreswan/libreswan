@@ -618,6 +618,8 @@ static const struct option long_opts[] = {
 	I("send-key-size-check\0", IMPAIR_SEND_KEY_SIZE_CHECK_IX),
 	I("send-no-delete\0", IMPAIR_SEND_NO_DELETE_IX),
 	I("send-no-ikev2-auth\0", IMPAIR_SEND_NO_IKEV2_AUTH_IX),
+	I("send-no-xauth-r0\0", IMPAIR_SEND_NO_XAUTH_R0_IX),
+	I("send-no-main-r2\0", IMPAIR_SEND_NO_MAIN_R2_IX),
 	I("force-fips\0", IMPAIR_FORCE_FIPS_IX),
 	I("send-zero-gx\0", IMPAIR_SEND_ZERO_GX_IX),
 	I("send-bogus-dcookie\0", IMPAIR_SEND_BOGUS_DCOOKIE_IX),
@@ -1727,6 +1729,10 @@ int main(int argc, char **argv)
 		libreswan_log("Warning: IMPAIR_FORCE_FIPS enabled");
 	if (DBGP(IMPAIR_SEND_NO_IKEV2_AUTH))
 		libreswan_log("Warning: IMPAIR_SEND_NO_IKEV2_AUTH enabled");
+	if (DBGP(IMPAIR_SEND_NO_XAUTH_R0))
+		libreswan_log("Warning: IMPAIR_SEND_NO_XAUTH_R0 enabled");
+	if (DBGP(IMPAIR_SEND_NO_MAIN_R2))
+		libreswan_log("Warning: IMPAIR_SEND_NO_MAIN_R2 enabled");
 	if (DBGP(IMPAIR_SEND_ZERO_GX))
 		libreswan_log("Warning: IMPAIR_SEND_ZERO_GX enabled");
 	if (DBGP(IMPAIR_SEND_BOGUS_DCOOKIE))

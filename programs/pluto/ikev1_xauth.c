@@ -655,7 +655,13 @@ stf_status xauth_send_request(struct state *st)
 		return STF_INTERNAL_ERROR;
 
 	/* Transmit */
-	record_and_send_ike_msg(st, &reply, "XAUTH: req");
+	if (!DBGP(IMPAIR_SEND_NO_XAUTH_R0)) {
+		record_and_send_ike_msg(st, &reply, "XAUTH: req");
+	} else {
+		/* record-only so we propely emulate packet drop */
+		record_outbound_ike_msg(st, &reply, "XAUTH: req");
+		libreswan_log("IMPAIR: Skipped sending XAUTH user/pass packet");
+	}
 
 	/* RETRANSMIT if Main, SA_REPLACE if Aggressive */
 	if (st->st_event->ev_type != EVENT_v1_RETRANSMIT) {

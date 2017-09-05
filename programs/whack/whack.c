@@ -766,6 +766,10 @@ static const struct option long_opts[] = {
 		IMPAIR_SEND_NO_DELETE_IX + DO },
 	{ "impair-send-no-ikev2-auth", no_argument, NULL,
 		IMPAIR_SEND_NO_IKEV2_AUTH_IX + DO },
+	{ "impair-send-no-xauth-r0", no_argument, NULL,
+		IMPAIR_SEND_NO_XAUTH_R0_IX + DO },
+	{ "impair-send-no-main-r2", no_argument, NULL,
+		IMPAIR_SEND_NO_MAIN_R2_IX + DO },
 	/*
 	 * impair-force-fips cannot be used with whack,
 	 * it needs to be passed as daemon option to pluto

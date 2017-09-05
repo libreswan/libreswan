@@ -343,6 +343,8 @@ enum {
 	IMPAIR_SEND_IKEv2_KE_IX,		/* causes pluto to omit sending the KE payload in IKEv2 */
 	IMPAIR_SEND_NO_DELETE_IX,		/* causes pluto to omit sending Notify/Delete messages */
 	IMPAIR_SEND_NO_IKEV2_AUTH_IX,		/* causes pluto to omit sending an IKEv2 IKE_AUTH packet */
+	IMPAIR_SEND_NO_XAUTH_R0_IX,		/* causes pluto to omit sending an XAUTH user/passwd request */
+	IMPAIR_SEND_NO_MAIN_R2_IX,		/* causes pluto to omit sending an last Main Mode response packet */
 	IMPAIR_FORCE_FIPS_IX,			/* causes pluto to believe we are in fips mode, NSS needs its own hack */
 	IMPAIR_SEND_KEY_SIZE_CHECK_IX,		/* causes pluto to omit checking configured ESP key sizes for testing */
 	IMPAIR_SEND_ZERO_GX_IX,			/* causes pluto to send a g^x that is zero, breaking DH calculation */
@@ -392,6 +394,8 @@ enum {
 #define IMPAIR_SEND_IKEv2_KE	LELEM(IMPAIR_SEND_IKEv2_KE_IX)
 #define IMPAIR_SEND_NO_DELETE	LELEM(IMPAIR_SEND_NO_DELETE_IX)
 #define IMPAIR_SEND_NO_IKEV2_AUTH	LELEM(IMPAIR_SEND_NO_IKEV2_AUTH_IX)
+#define IMPAIR_SEND_NO_XAUTH_R0	LELEM(IMPAIR_SEND_NO_XAUTH_R0_IX)
+#define IMPAIR_SEND_NO_MAIN_R2	LELEM(IMPAIR_SEND_NO_MAIN_R2_IX)
 #define IMPAIR_FORCE_FIPS	LELEM(IMPAIR_FORCE_FIPS_IX)
 #define IMPAIR_SEND_KEY_SIZE_CHECK	LELEM(IMPAIR_SEND_KEY_SIZE_CHECK_IX)
 #define IMPAIR_SEND_ZERO_GX	LELEM(IMPAIR_SEND_ZERO_GX_IX)
