@@ -41,7 +41,7 @@
 static void perpeer_logclose(struct connection *c);     /* forward */
 
 bool log_to_perpeer = false;		/* should log go to per-IP file? */
-char *base_perpeer_logdir = NULL;
+char *peerlog_basedir = NULL;
 static int perpeer_count = 0;
 
 /* from sys/queue.h -> NOW private sysdep.h. */
@@ -52,7 +52,7 @@ void peerlog_init(void)
 	CIRCLEQ_INIT(&perpeer_list);
 }
 
-void close_peerlog(void)
+void peerlog_close(void)
 {
 	/* exit if the circular queue has not been initialized */
 	if (perpeer_list.cqh_first == NULL)
@@ -171,18 +171,14 @@ static void open_peerlog(struct connection *c)
 		}
 
 		lf_len = peernamelen * 2 +
-			 strlen(base_perpeer_logdir) +
+			 strlen(peerlog_basedir) +
 			 sizeof("//.log") +
 			 1;
 		c->log_file_name =
 			alloc_bytes(lf_len, "per-peer log file name");
 
-#if 0
-		fprintf(stderr, "base dir |%s| dname |%s| peername |%s|",
-			base_perpeer_logdir, dname, peername);
-#endif
 		snprintf(c->log_file_name, lf_len, "%s/%s/%s.log",
-			 base_perpeer_logdir, dname, peername);
+			 peerlog_basedir, dname, peername);
 
 		/* syslog(LOG_DEBUG, "conn %s logfile is %s", c->name, c->log_file_name); */
 	}

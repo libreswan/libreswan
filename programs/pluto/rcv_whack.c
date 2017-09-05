@@ -145,7 +145,7 @@ static void do_whacklisten(void)
 {
 	fflush(stderr);
 	fflush(stdout);
-	close_peerlog();    /* close any open per-peer logs */
+	peerlog_close();    /* close any open per-peer logs */
 #ifdef USE_SYSTEMD_WATCHDOG
         pluto_sd(PLUTO_SD_RELOADING, SD_REPORT_NO_STATUS);
 #endif

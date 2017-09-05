@@ -27,12 +27,12 @@
 struct connection;
 
 extern bool log_to_perpeer;         /* should log go to per-IP file? */
-extern char *base_perpeer_logdir;
+extern char *peerlog_basedir;
 
 void peerlog_init(void);
 
 /* close of all per-peer logging */
-void close_peerlog(void);
+void peerlog_close(void);
 
 /* free all per-peer log resources */
 void perpeer_logfree(struct connection *c);

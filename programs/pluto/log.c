@@ -234,7 +234,7 @@ void close_log(void)
 		pluto_log_fp = NULL;
 	}
 
-	close_peerlog();
+	peerlog_close();
 }
 
 void prettynow(char *buf, size_t buflen, const char *fmt)
