@@ -8,6 +8,7 @@ v3.22 (unreleased)
 * libipsecconf: reject unavailable kernel algorithms in parser [Andrew]
 * libswan/pluto: throw a clearer error for broken libunbound [Paul]
 * pluto: Various ike_alg parsing updates [Andrew]
+* libswan/pluto: Cleanup logging and tighten logging lock [Andrew]
 * Bugtracker bugs fixed:
    #294: Bug in public key reported by rsasigkey [Tijs Van Buggenhout/Andrew]
 
