@@ -142,6 +142,36 @@ void pluto_init_log(void)
 	peerlog_init();
 }
 
+/*
+ * Wrap up the logic to decide if a particular output should occure.
+ * The compiler will likely inline these.
+ */
+
+static void stdlog_raw(char *b)
+{
+	if (log_to_stderr || pluto_log_fp != NULL) {
+		char now[34] = "";
+
+		if (log_with_timestamp)
+			prettynow(now, sizeof(now), "%b %e %T: ");
+		fprintf(log_to_stderr ? stderr : pluto_log_fp,
+			"%s%s\n", now, b);
+	}
+}
+
+static void syslog_raw(int log_level, char *b)
+{
+	if (log_to_syslog)
+		syslog(log_level, "%s", b);
+}
+
+static void peerlog_raw(char *b)
+{
+	if (log_to_perpeer) {
+		peerlog(b);
+	}
+}
+
 /* format a string for the log, with suitable prefixes.
  * A format starting with ~ indicates that this is a reprocessing
  * of the message, so prefixing and quoting is suppressed.
@@ -257,19 +287,9 @@ void libreswan_vloglog(int mess_no, const char *message, va_list args)
 	pthread_mutex_lock(&log_mutex);
 	fmt_log(m, sizeof(m), message, args);
 
-	if (log_to_stderr || pluto_log_fp != NULL) {
-		char buf[34] = "";
-
-		if (log_with_timestamp)
-			prettynow(buf, sizeof(buf), "%b %e %T: ");
-		fprintf(log_to_stderr ? stderr : pluto_log_fp,
-			"%s%s\n", buf, m);
-	}
-	if (log_to_syslog)
-		syslog(LOG_WARNING, "%s", m);
-	if (log_to_perpeer)
-		peerlog(m);
-
+	stdlog_raw(m);
+	syslog_raw(LOG_WARNING, m);
+	peerlog_raw(m);
 	if (whack_log_p()) {
 		whack_log_log(mess_no, m);
 	}
@@ -290,13 +310,9 @@ void lswlog_log_errno(int e, const char *prefix, const char *message, ...)
 	snprintf(b, sizeof(b), "%s%s. Errno %d: %s",
 		 prefix, m, e, strerror(e));
 
-	if (log_to_stderr || pluto_log_fp != NULL)
-		fprintf(log_to_stderr ? stderr : pluto_log_fp,
-			"%s\n", b);
-	if (log_to_syslog)
-		syslog(LOG_ERR, "%s", b);
-	if (log_to_perpeer)
-		peerlog(b);
+	stdlog_raw(b);
+	syslog_raw(LOG_ERR, b);
+	peerlog_raw(b);
 
 	whack_log(RC_LOG_SERIOUS, "~%s", b);
 }
@@ -313,13 +329,9 @@ void exit_log(const char *message, ...)
 	char b[LOG_WIDTH];
 	snprintf(b, sizeof(b), "FATAL ERROR: %s", m);
 
-	if (log_to_stderr || pluto_log_fp != NULL)
-		fprintf(log_to_stderr ? stderr : pluto_log_fp,
-			"%s\n", b);
-	if (log_to_syslog)
-		syslog(LOG_ERR, "%s", b);
-	if (log_to_perpeer)
-		peerlog(b);
+	stdlog_raw(b);
+	syslog_raw(LOG_ERR, b);
+	peerlog_raw(b);
 
 	whack_log(RC_LOG_SERIOUS, "~%s", b);
 
@@ -507,19 +519,9 @@ void lswlog_dbg_raw(char *buf, size_t sizeof_buf)
 	char b[LOG_WIDTH];
 	snprintf(b, sizeof(b), DEBUG_PREFIX "%s", buf);
 
-	if (log_to_stderr || pluto_log_fp != NULL) {
-		char now[34] = "";
-
-		if (log_with_timestamp)
-			prettynow(now, sizeof(now), "%b %e %T: ");
-		fprintf(log_to_stderr ? stderr : pluto_log_fp,
-			"%s%s\n", now, b);
-	}
-	if (log_to_syslog)
-		syslog(LOG_DEBUG, "%s", b);
-	if (log_to_perpeer) {
-		peerlog(b);
-	}
+	stdlog_raw(b);
+	syslog_raw(LOG_DEBUG, b);
+	peerlog_raw(b);
 
 	pthread_mutex_unlock(&log_mutex);
 }
