@@ -168,7 +168,7 @@ static void help(void)
 		"\n"
 		"listen: whack (--listen | --unlisten)\n"
 		"\n"
-		"socket buffers: whack --ike-sock-bufsize <bufsize>\n"
+		"socket buffers: whack --ike-socket-bufsize <bufsize>\n"
 		"socket errqueue: whack --ike-socket-errqueue-toggle\n"
 		"\n"
 		"ddos-protection: whack (--ddos-busy | --ddos-unlimited | \\\n"
@@ -513,7 +513,7 @@ static const struct option long_opts[] = {
 	{ "crash", required_argument, NULL, OPT_DELETECRASH + OO },
 	{ "listen", no_argument, NULL, OPT_LISTEN + OO },
 	{ "unlisten", no_argument, NULL, OPT_UNLISTEN + OO },
-	{ "ike-sock-bufsize", required_argument, NULL, OPT_IKEBUF + OO + NUMERIC_ARG},
+	{ "ike-socket-bufsize", required_argument, NULL, OPT_IKEBUF + OO + NUMERIC_ARG},
 	{ "ike-socket-errqueue-toggle", no_argument, NULL, OPT_IKE_MSGERR + OO },
 
 	{ "ddos-busy", no_argument, NULL, OPT_DDOS_BUSY + OO },
