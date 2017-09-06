@@ -354,11 +354,14 @@ void lswlog_dbg_raw(struct lswlog *buf);
  * Send log output the logging streams (and WHACK).
  */
 
+void lswlog_log_pre(struct lswlog *buf);
+void lswlog_log_raw(struct lswlog *buf, int mess_no, int log_level);
+
 #define LSWLOG(BUF)							\
 	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
 		LSWBUF_(BUF)						\
-			for (; lswlog_p;				\
-			     libreswan_log("%s", BUF->array),		\
+			for (lswlog_log_pre(BUF); lswlog_p;		\
+			     lswlog_log_raw(BUF, RC_LOG, LOG_WARNING),	\
 				     lswlog_p = false)
 
 /*

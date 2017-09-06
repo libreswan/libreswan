@@ -185,6 +185,46 @@ static void whack_rc_raw(int rc, char *b)
 	}
 }
 
+
+void lswlog_log_pre(struct lswlog *buf)
+{
+	if (!pthread_equal(pthread_self(), main_thread)) {
+		return;
+	}
+
+	struct connection *c = cur_state != NULL ? cur_state->st_connection :
+		cur_connection;
+
+	if (c != NULL) {
+		lswlogf(buf, "\"%s\"", c->name);
+		/* if it fits, put in any connection instance information */
+		char inst[CONN_INST_BUF];
+		fmt_conn_instance(c, inst);
+		lswlogs(buf, inst);
+		if (cur_state != NULL) {
+			/* state number */
+			lswlogf(buf, " #%lu", cur_state->st_serialno);
+		}
+		lswlogs(buf, ": ");
+	} else if (cur_from != NULL) {
+		/* peer's IP address */
+		ipstr_buf b;
+		lswlogf(buf, "packet from %s:%u: ",
+			ipstr(cur_from, &b),
+			(unsigned)cur_from_port);
+	}
+}
+
+void lswlog_log_raw(struct lswlog *buf, int mess_no, int log_level)
+{
+	pthread_mutex_lock(&log_mutex);
+	stdlog_raw(buf->array);
+	syslog_raw(log_level, buf->array);
+	peerlog_raw(buf->array);
+	whack_rc_raw(mess_no, buf->array);
+	pthread_mutex_unlock(&log_mutex);
+}
+
 /* format a string for the log, with suitable prefixes.
  * A format starting with ~ indicates that this is a reprocessing
  * of the message, so prefixing and quoting is suppressed.
@@ -231,40 +271,6 @@ static void fmt_log(char *buf, size_t buf_len, const char *fmt, va_list ap)
 
 	ps = strlen(buf);
 	vsnprintf(buf + ps, buf_len - ps, fmt, ap);
-}
-
-/* format a string for the log, with suitable prefixes.
- * A format starting with ~ indicates that this is a reprocessing
- * of the message, so prefixing and quoting is suppressed.
- */
-static void lswlog_log_prefix(struct lswlog *buf)
-{
-	passert(pthread_equal(pthread_self(), main_thread));
-
-	struct connection *c = cur_state != NULL ? cur_state->st_connection :
-			       cur_connection;
-
-	if (c != NULL) {
-		lswlogf(buf, "\"%s\"", c->name);
-
-		/* if it fits, put in any connection instance information */
-		char inst[CONN_INST_BUF];
-		fmt_conn_instance(c, inst);
-		lswlogs(buf, inst);
-
-		if (cur_state != NULL) {
-			/* state number */
-			lswlogf(buf, " #%lu", cur_state->st_serialno);
-		}
-		lswlogs(buf, ": ");
-
-	} else if (cur_from != NULL) {
-		/* peer's IP address */
-		ipstr_buf b;
-		lswlogf(buf, "packet from %s:%u: ",
-			ipstr(cur_from, &b),
-			(unsigned)cur_from_port);
-	}
 }
 
 void close_log(void)
@@ -350,14 +356,11 @@ void lswlog_exit(int rc)
 	exit_pluto(rc);
 }
 
-
 void whack_log_pre(int mess_no, struct lswlog *buf)
 {
 	passert(pthread_equal(pthread_self(), main_thread));
-	if (mess_no >= 0) {
-		lswlogf(buf, "%03d ", mess_no);
-	}
-	lswlog_log_prefix(buf);
+	lswlogf(buf, "%03d ", mess_no);
+	lswlog_log_pre(buf);
 }
 
 void whack_log_raw(char *m, size_t len)
