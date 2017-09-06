@@ -475,6 +475,22 @@ void whack_log(int mess_no, const char *message, ...)
  	}
 }
 
+void whack_log_comment(const char *message, ...)
+{
+	pexpect(pthread_equal(pthread_self(), main_thread));
+	if (whack_log_p()) {
+		LSWBUF(buf) {
+			/* add_whack_rc_prefix() - skipped */
+			add_state_prefix(buf);
+			va_list args;
+			va_start(args, message);
+			lswlogvf(buf, message, args);
+			va_end(args);
+			whack_log_raw(buf->array, buf->len);
+		}
+	}
+}
+
 lset_t
 	base_debugging = DBG_NONE, /* default to reporting nothing */
 	cur_debugging =  DBG_NONE;

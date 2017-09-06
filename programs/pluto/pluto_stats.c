@@ -82,38 +82,38 @@ static void enum_stats(enum_names *en, unsigned long lwb, unsigned long upb, con
 
 		/* not logging "UNUSED" */
 		if (nm != NULL && strstr(nm, "UNUSED") == NULL)
-			whack_log(RC_COMMENT, "#total.%s.%s=%lu",
+			whack_log_comment("total.%s.%s=%lu",
 				what, nm, count[e]);
 	}
 }
 
 void show_pluto_stats()
 {
-	whack_log(RC_COMMENT, "#total.ipsec.type.all=%lu", pstats_ipsec_sa);
-	whack_log(RC_COMMENT, "#total.ipsec.type.esp=%lu", pstats_ipsec_esp);
-	whack_log(RC_COMMENT, "#total.ipsec.type.ah=%lu", pstats_ipsec_ah);
-	whack_log(RC_COMMENT, "#total.ipsec.type.ipcomp=%lu", pstats_ipsec_ipcomp);
-	whack_log(RC_COMMENT, "#total.ipsec.type.esn=%lu", pstats_ipsec_esn);
-	whack_log(RC_COMMENT, "#total.ipsec.type.tfc=%lu", pstats_ipsec_tfc);
-	whack_log(RC_COMMENT, "#total.ipsec.type.encap=%lu", pstats_ipsec_encap_yes);
-	whack_log(RC_COMMENT, "#total.ipsec.type.non_encap=%lu", pstats_ipsec_encap_no);
+	whack_log_comment("total.ipsec.type.all=%lu", pstats_ipsec_sa);
+	whack_log_comment("total.ipsec.type.esp=%lu", pstats_ipsec_esp);
+	whack_log_comment("total.ipsec.type.ah=%lu", pstats_ipsec_ah);
+	whack_log_comment("total.ipsec.type.ipcomp=%lu", pstats_ipsec_ipcomp);
+	whack_log_comment("total.ipsec.type.esn=%lu", pstats_ipsec_esn);
+	whack_log_comment("total.ipsec.type.tfc=%lu", pstats_ipsec_tfc);
+	whack_log_comment("total.ipsec.type.encap=%lu", pstats_ipsec_encap_yes);
+	whack_log_comment("total.ipsec.type.non_encap=%lu", pstats_ipsec_encap_no);
 	/*
 	 * Total counts only total of traffic by terminated IPsec Sa's.
 	 * Should we call get_sa_info() for bytes of active IPsec SA's?
 	 */
-	whack_log(RC_COMMENT, "#total.ipsec.traffic.in=%" PRIu64, pstats_ipsec_in_bytes);
-	whack_log(RC_COMMENT, "#total.ipsec.traffic.out=%" PRIu64, pstats_ipsec_out_bytes);
+	whack_log_comment("total.ipsec.traffic.in=%" PRIu64, pstats_ipsec_in_bytes);
+	whack_log_comment("total.ipsec.traffic.out=%" PRIu64, pstats_ipsec_out_bytes);
 
-	whack_log(RC_COMMENT, "#total.ike.ikev2.established=%lu", pstats_ikev2_sa);
-	whack_log(RC_COMMENT, "#total.ike.ikev2.failed=%lu", pstats_ikev2_fail);
-	whack_log(RC_COMMENT, "#total.ike.ikev1.established=%lu", pstats_ikev1_sa);
-	whack_log(RC_COMMENT, "#total.ike.ikev1.failed=%lu", pstats_ikev1_fail);
+	whack_log_comment("total.ike.ikev2.established=%lu", pstats_ikev2_sa);
+	whack_log_comment("total.ike.ikev2.failed=%lu", pstats_ikev2_fail);
+	whack_log_comment("total.ike.ikev1.established=%lu", pstats_ikev1_sa);
+	whack_log_comment("total.ike.ikev1.failed=%lu", pstats_ikev1_fail);
 
-	whack_log(RC_COMMENT, "#total.ike.dpd.sent=%lu", pstats_ike_dpd_sent);
-	whack_log(RC_COMMENT, "#total.ike.dpd.recv=%lu", pstats_ike_dpd_recv);
-	whack_log(RC_COMMENT, "#total.ike.dpd.replied=%lu", pstats_ike_dpd_replied);
-	whack_log(RC_COMMENT, "#total.ike.traffic.in=%lu", pstats_ike_in_bytes);
-	whack_log(RC_COMMENT, "#total.ike.traffic.out=%lu", pstats_ike_out_bytes);
+	whack_log_comment("total.ike.dpd.sent=%lu", pstats_ike_dpd_sent);
+	whack_log_comment("total.ike.dpd.recv=%lu", pstats_ike_dpd_recv);
+	whack_log_comment("total.ike.dpd.replied=%lu", pstats_ike_dpd_replied);
+	whack_log_comment("total.ike.traffic.in=%lu", pstats_ike_in_bytes);
+	whack_log_comment("total.ike.traffic.out=%lu", pstats_ike_out_bytes);
 
 	enum_stats(&oakley_enc_names, OAKLEY_3DES_CBC, OAKLEY_CAMELLIA_CCM_C, "ikev1.encr", pstats_ikev1_encr);
 	enum_stats(&oakley_hash_names, OAKLEY_MD5, OAKLEY_SHA2_512, "ikev1.integ", pstats_ikev1_integ);
@@ -132,7 +132,7 @@ void show_pluto_stats()
 	/* ??? THIS IS BROKEN (hint: array is wrong size (10)) */
 	for (unsigned long e = STF_IGNORE; e <= STF_FAIL; e++)
 	{
-		whack_log(RC_COMMENT, "#total.pluto.stf.%s=%lu",
+		whack_log_comment("total.pluto.stf.%s=%lu",
 			enum_name(&stfstatus_name, e), pstats_ike_stf[e]);
 	}
 #endif

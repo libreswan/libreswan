@@ -2650,25 +2650,25 @@ void show_globalstate_status(void)
 	enum state_kind s;
 	int shunts = show_shunt_count();
 
-	whack_log(RC_COMMENT, "#config.setup.ike.ddos_threshold=%d",pluto_ddos_threshold);
-	whack_log(RC_COMMENT, "#config.setup.ike.max_halfopen=%d",pluto_max_halfopen);
+	whack_log_comment("config.setup.ike.ddos_threshold=%d",pluto_ddos_threshold);
+	whack_log_comment("config.setup.ike.max_halfopen=%d",pluto_max_halfopen);
 
 	/* technically shunts are not a struct state's - but makes it easier to group */
-	whack_log(RC_COMMENT, "#current.states.all=%d", shunts + total());
-	whack_log(RC_COMMENT, "#current.states.ipsec=%d", total_ipsec());
-	whack_log(RC_COMMENT, "#current.states.ike=%d", total_ike());
-	whack_log(RC_COMMENT, "#current.states.shunts=%d", shunts);
-	whack_log(RC_COMMENT, "#current.states.iketype.anonymous=%d",
+	whack_log_comment("current.states.all=%d", shunts + total());
+	whack_log_comment("current.states.ipsec=%d", total_ipsec());
+	whack_log_comment("current.states.ike=%d", total_ike());
+	whack_log_comment("current.states.shunts=%d", shunts);
+	whack_log_comment("current.states.iketype.anonymous=%d",
 		  category.anonymous_ike.count);
-	whack_log(RC_COMMENT, "#current.states.iketype.authenticated=%d",
+	whack_log_comment("current.states.iketype.authenticated=%d",
 		  category.authenticated_ike.count);
-	whack_log(RC_COMMENT, "#current.states.iketype.halfopen=%d",
+	whack_log_comment("current.states.iketype.halfopen=%d",
 		  category.half_open_ike.count);
-	whack_log(RC_COMMENT, "#current.states.iketype.open=%d",
+	whack_log_comment("current.states.iketype.open=%d",
 		  category.open_ike.count);
 	for (s = STATE_MAIN_R0; s < MAX_STATES; s++)
 	{
-		whack_log(RC_COMMENT, "#current.states.enumerate.%s=%d",
+		whack_log_comment("current.states.enumerate.%s=%d",
 			enum_name(&state_names, s), state_count[s]);
 	}
 }
