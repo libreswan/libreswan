@@ -514,16 +514,12 @@ void lswlog_dbg_raw(char *buf, size_t sizeof_buf)
 {
 	sanitize_string(buf, sizeof_buf);
 
-	pthread_mutex_lock(&log_mutex);
-
 	char b[LOG_WIDTH];
 	snprintf(b, sizeof(b), DEBUG_PREFIX "%s", buf);
 
 	stdlog_raw(b);
 	syslog_raw(LOG_DEBUG, b);
 	peerlog_raw(b);
-
-	pthread_mutex_unlock(&log_mutex);
 }
 
 static void show_system_security(void)
