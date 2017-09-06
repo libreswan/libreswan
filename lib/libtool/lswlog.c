@@ -131,11 +131,16 @@ void set_debugging(lset_t deb)
 			PF_KEY_DEBUG_PARSE_MAX : PF_KEY_DEBUG_PARSE_NONE);
 }
 
-void lswlog_dbg_raw(char *buf, size_t sizeof_buf)
+void lswlog_dbg_pre(struct lswlog *buf)
 {
-	sanitize_string(buf, sizeof_buf);
+	lswlogs(buf, DEBUG_PREFIX);
+}
+
+void lswlog_dbg_raw(struct lswlog *buf)
+{
+	sanitize_string(buf->array, buf->roof);
 	if (log_to_stderr)
-		fprintf(stderr, DEBUG_PREFIX "%s\n", buf);
+		fprintf(stderr, "%s\n", buf->array);
 	if (log_to_syslog)
-		syslog(LOG_DEBUG, DEBUG_PREFIX "%s", buf);
+		syslog(LOG_DEBUG, "%s", buf->array);
 }

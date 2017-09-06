@@ -22,12 +22,11 @@
 
 int lswlog_dbg(const char *message, ...)
 {
-	char buf[LOG_WIDTH];
-	va_list args;
-	va_start(args, message);
-	vsnprintf(buf, sizeof(buf), message, args);
-	va_end(args);
-
-	lswlog_dbg_raw(buf, sizeof(buf));
+	LSWDBG(buf) {
+		va_list args;
+		va_start(args, message);
+		lswlogvf(buf, message, args);
+		va_end(args);
+	}
 	return 0;
 }

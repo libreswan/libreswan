@@ -67,10 +67,6 @@ extern void set_debugging(lset_t deb);
  */
 #define DBG(cond, action)	{ if (DBGP(cond)) { action; } }
 
-/*
- * XXX: buf is read/write as code below sanitizes it.
- */
-void lswlog_dbg_raw(char *buf, size_t sizeof_buf);
 int lswlog_dbg(const char *message, ...) PRINTF_LIKE(1);
 
 #define DBG_log lswlog_dbg
@@ -341,12 +337,18 @@ void lswlog_file(FILE f)
  * Send debug output to the logging streams (but not WHACK).
  */
 
-#define LSWDBGP(DEBUG, BUF)						\
-	for (bool lswlog_p = DBGP(DEBUG); lswlog_p; lswlog_p = false)	\
+void lswlog_dbg_pre(struct lswlog *buf);
+void lswlog_dbg_raw(struct lswlog *buf);
+
+#define LSWDBG_(PREDICATE, BUF)						\
+	for (bool lswlog_p = PREDICATE; lswlog_p; lswlog_p = false)	\
 		LSWBUF_(BUF)						\
-			for (; lswlog_p;				\
-			     lswlog_dbg_raw(BUF->array, BUF->roof),	\
+			for (lswlog_dbg_pre(BUF); lswlog_p;		\
+			     lswlog_dbg_raw(BUF),			\
 				     lswlog_p = false)
+
+#define LSWDBGP(DEBUG, BUF) LSWDBG_(DBGP(DEBUG), BUF)
+#define LSWDBG(BUF) LSWDBG_(true, BUF)
 
 /*
  * Send log output the logging streams (and WHACK).
