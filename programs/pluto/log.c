@@ -246,54 +246,6 @@ void lswlog_raw(struct lswlog *buf)
 	lswlog_log_raw(buf, RC_LOG, LOG_WARNING);
 }
 
-/* format a string for the log, with suitable prefixes.
- * A format starting with ~ indicates that this is a reprocessing
- * of the message, so prefixing and quoting is suppressed.
- */
-static void fmt_log(char *buf, size_t buf_len, const char *fmt, va_list ap)
-{
-	bool reproc = (*fmt == '~') || (*fmt == '#');
-
-	size_t ps;
-	struct connection *c = cur_state != NULL ? cur_state->st_connection :
-			       cur_connection;
-
-	buf[0] = '\0';
-	if (reproc) {
-		fmt++; /* ~ at start of format suppresses this prefix */
-	} else if (c != NULL) {
-		/* start with name of connection */
-		char *const be = buf + buf_len;
-		char *bp = buf;
-
-		snprintf(bp, be - bp, "\"%s\"", c->name);
-		bp += strlen(bp);
-
-		/* if it fits, put in any connection instance information */
-		if (be - bp > CONN_INST_BUF) {
-			fmt_conn_instance(c, bp);
-			bp += strlen(bp);
-		}
-
-		if (cur_state != NULL) {
-			/* state number */
-			snprintf(bp, be - bp, " #%lu", cur_state->st_serialno);
-			bp += strlen(bp);
-		}
-		snprintf(bp, be - bp, ": ");
-	} else if (cur_from != NULL) {
-		/* peer's IP address */
-		ipstr_buf b;
-
-		snprintf(buf, buf_len, "packet from %s:%u: ",
-			 ipstr(cur_from, &b),
-			 (unsigned)cur_from_port);
-	}
-
-	ps = strlen(buf);
-	vsnprintf(buf + ps, buf_len - ps, fmt, ap);
-}
-
 void close_log(void)
 {
 	if (log_to_syslog)
@@ -425,54 +377,17 @@ bool whack_log_p(void)
 void whack_log(int mess_no, const char *message, ...)
 {
 	pexpect(pthread_equal(pthread_self(), main_thread));
-	if (!whack_log_p()) {
-		return;
+	if (whack_log_p()) {
+		LSWBUF(buf) {
+			add_whack_rc_prefix(buf, mess_no);
+			add_state_prefix(buf);
+			va_list args;
+			va_start(args, message);
+			lswlogvf(buf, message, args);
+			va_end(args);
+			whack_log_raw(buf->array, buf->len);
+		}
 	}
-
-	int wfd;
-
-	wfd = whack_log_fd != NULL_FD ? whack_log_fd :
-	      cur_state != NULL ? cur_state->st_whack_sock :
-	      NULL_FD;
-
-	if (wfd != NULL_FD) {
-		va_list args;
-		char m[LOG_WIDTH]; /* longer messages will be truncated */
-		int prelen = 0;
-
-		/* support to suppress numeral prefix using # */
-		if (message[0] != '#')
-			prelen = snprintf(m, sizeof(m), "%03d ", mess_no);
-
-		passert(prelen >= 0);
-
-		va_start(args, message);
-		fmt_log(m + prelen, sizeof(m) - prelen, message, args);
-		va_end(args);
-
-		/* write to whack socket, but suppress possible SIGPIPE */
-		size_t len = strlen(m);
-#ifdef MSG_NOSIGNAL                     /* depends on version of glibc??? */
-		m[len] = '\n';  /* don't need NUL, do need NL */
-		(void) send(wfd, m, len + 1, MSG_NOSIGNAL);
-#else /* !MSG_NOSIGNAL */
-		int r;
-		struct sigaction act,
-			oldact;
-
-		m[len] = '\n'; /* don't need NUL, do need NL */
-		act.sa_handler = SIG_IGN;
-		sigemptyset(&act.sa_mask);
-		act.sa_flags = 0; /* no nothing */
-		r = sigaction(SIGPIPE, &act, &oldact);
-		passert(r == 0);
-
-		(void) write(wfd, m, len + 1);
-
-		r = sigaction(SIGPIPE, &oldact, NULL);
-		passert(r == 0);
-#endif /* !MSG_NOSIGNAL */
- 	}
 }
 
 void whack_log_comment(const char *message, ...)
