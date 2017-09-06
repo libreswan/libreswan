@@ -323,21 +323,16 @@ void lswlog_log_errno(int e, const char *prefix, const char *message, ...)
 
 void exit_log(const char *message, ...)
 {
-	va_list args;
-	char m[LOG_WIDTH]; /* longer messages will be truncated */
-
-	va_start(args, message);
-	fmt_log(m, sizeof(m), message, args);
-	va_end(args);
-
-	char b[LOG_WIDTH];
-	snprintf(b, sizeof(b), "FATAL ERROR: %s", m);
-
-	stdlog_raw(b);
-	syslog_raw(LOG_ERR, b);
-	peerlog_raw(b);
-	whack_rc_raw(RC_LOG_SERIOUS, b);
-
+	LSWBUF(buf) {
+		/* FATAL ERROR: <state...><message> */
+		lswlogs(buf, "FATAL ERROR: ");
+		lswlog_log_pre(buf);
+		va_list args;
+		va_start(args, message);
+		lswlogvf(buf, message, args);
+		va_end(args);
+		lswlog_log_raw(buf, RC_LOG_SERIOUS, LOG_ERR);
+	}
 	exit_pluto(PLUTO_EXIT_FAIL);
 }
 
