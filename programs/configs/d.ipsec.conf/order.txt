@@ -95,6 +95,7 @@ d.ipsec.conf/myid.xml
 d.ipsec.conf/protostack.xml
 d.ipsec.conf/interfaces.xml
 d.ipsec.conf/listen.xml
+d.ipsec.conf/ike-socket.xml
 d.ipsec.conf/ikeport.xml
 d.ipsec.conf/nflog-all.xml
 d.ipsec.conf/nat_traversal.xml
