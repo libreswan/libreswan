@@ -172,6 +172,19 @@ static void peerlog_raw(char *b)
 	}
 }
 
+static void whack_rc_raw(int rc, char *b)
+{
+	if (whack_log_p()) {
+		/*
+		 * XXX: If B is pre-populated with the whack prefix
+		 * then this copying of B can be eliminated.
+		 */
+		char m[LOG_WIDTH]; /* longer messages will be truncated */
+		snprintf(m, sizeof(m), "%03d %s", rc, b);
+		whack_log_raw(m, strlen(m));
+	}
+}
+
 /* format a string for the log, with suitable prefixes.
  * A format starting with ~ indicates that this is a reprocessing
  * of the message, so prefixing and quoting is suppressed.
@@ -277,8 +290,6 @@ void prettynow(char *buf, size_t buflen, const char *fmt)
 	((size_t (*)(char *, size_t, const char *, const struct tm *))strftime)(buf, buflen, fmt, t);
 }
 
-static void whack_log_log(int mess_no, char *m);
-
 /* thread locks added until all non re-entrant functions it uses have been fixed */
 void libreswan_vloglog(int mess_no, const char *message, va_list args)
 {
@@ -290,9 +301,7 @@ void libreswan_vloglog(int mess_no, const char *message, va_list args)
 	stdlog_raw(m);
 	syslog_raw(LOG_WARNING, m);
 	peerlog_raw(m);
-	if (whack_log_p()) {
-		whack_log_log(mess_no, m);
-	}
+	whack_rc_raw(mess_no, m);
 
 	pthread_mutex_unlock(&log_mutex);
 }
@@ -313,8 +322,7 @@ void lswlog_log_errno(int e, const char *prefix, const char *message, ...)
 	stdlog_raw(b);
 	syslog_raw(LOG_ERR, b);
 	peerlog_raw(b);
-
-	whack_log(RC_LOG_SERIOUS, "~%s", b);
+	whack_rc_raw(RC_LOG_SERIOUS, b);
 }
 
 void exit_log(const char *message, ...)
@@ -332,8 +340,7 @@ void exit_log(const char *message, ...)
 	stdlog_raw(b);
 	syslog_raw(LOG_ERR, b);
 	peerlog_raw(b);
-
-	whack_log(RC_LOG_SERIOUS, "~%s", b);
+	whack_rc_raw(RC_LOG_SERIOUS, b);
 
 	exit_pluto(PLUTO_EXIT_FAIL);
 }
@@ -351,13 +358,6 @@ void whack_log_pre(int mess_no, struct lswlog *buf)
 		lswlogf(buf, "%03d ", mess_no);
 	}
 	lswlog_log_prefix(buf);
-}
-
-void whack_log_log(int mess_no, char *buf)
-{
-	char m[LOG_WIDTH]; /* longer messages will be truncated */
-	snprintf(m, sizeof(m), "%03d %s", mess_no, buf);
-	whack_log_raw(m, strlen(m));
 }
 
 void whack_log_raw(char *m, size_t len)
