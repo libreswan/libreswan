@@ -190,6 +190,7 @@ const char *const debug_bit_names[] = {
 	"impair-sa-creation",
 	"impair-die-oninfo",
 	"impair-jacob-two-two",
+	"impair-allow-null-null",
 	"impair-major-version-bump",
 	"impair-minor-version-bump",
 	"impair-retransmits",
@@ -198,10 +199,15 @@ const char *const debug_bit_names[] = {
 	"impair-send-ikev2-ke",
 	"impair-send-no-delete",
 	"impair-send-no-ikev2-auth",
+	"impair-send-no-xauth-r0",
+	"impair-send-no-main-r2",
 	"impair-force-fips",
 	"impair-send-key-size-check",
 	"impair-send-zero-gx",
 	"impair-send-bogus-dcookie",
+	"impair-omit-hash-notify",
+	"impair-omit-hash-notify",
+	"impair-ignore-hash-notify-resp",
 	NULL	/* termination for bitnamesof() */
 };
 
