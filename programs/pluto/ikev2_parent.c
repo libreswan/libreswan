@@ -1421,7 +1421,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 					return STF_FATAL;
 			} else {
 				st->st_seen_hashnotify = FALSE;
-				libreswan_log("Impair : Ignoring the Signature hash notify in IKE_SA_INIT Request");
+				libreswan_log("Impair: Ignoring the Signature hash notify in IKE_SA_INIT Request");
 			}
 		}
 	} else {
@@ -1957,7 +1957,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 				if(!negotiate_hash_algo_from_notification(ntfy,st))
 					return STF_FATAL;
 			} else {
-				libreswan_log("Impair : Ignoring the hash notify in IKE_SA_INIT Response");
+				libreswan_log("Impair: Ignoring the hash notify in IKE_SA_INIT Response");
 			}
 			break;
 		default:
