@@ -656,7 +656,7 @@ stf_status xauth_send_request(struct state *st)
 
 	/* Transmit */
 	if (!DBGP(IMPAIR_SEND_NO_XAUTH_R0)) {
-		record_and_send_ike_msg(st, &reply, "XAUTH: req");
+		send_ike_msg_without_recording(st, &reply, "XAUTH: req");
 	} else {
 		/* record-only so we propely emulate packet drop */
 		record_outbound_ike_msg(st, &reply, "XAUTH: req");

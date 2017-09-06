@@ -1551,7 +1551,12 @@ bool send_ike_msg_without_recording(struct state *st, pb_stream *pbs, const char
 
 bool resend_ike_v1_msg(struct state *st, const char *where)
 {
-	return send_or_resend_ike_msg(st, where, TRUE);
+	bool ret = send_or_resend_ike_msg(st, where, TRUE);
+
+	if(st->st_state == STATE_XAUTH_R0)
+		event_schedule_ms(EVENT_v1_SEND_XAUTH, EVENT_v1_SEND_XAUTH_DELAY, st);
+
+	return ret;
 }
 
 /*
