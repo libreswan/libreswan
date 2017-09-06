@@ -609,7 +609,7 @@ static const struct option long_opts[] = {
 	I("sa-creation\0", IMPAIR_SA_CREATION_IX),
 	I("die-oninfo\0", IMPAIR_DIE_ONINFO_IX),
 	I("jacob-two-two\0", IMPAIR_JACOB_TWO_TWO_IX),
-	I("impair-allow-null-null\0", IMPAIR_ALLOW_NULL_NULL_IX),
+	I("allow-null-null\0", IMPAIR_ALLOW_NULL_NULL_IX),
 	I("major-version-bump\0", IMPAIR_MAJOR_VERSION_BUMP_IX),
 	I("minor-version-bump\0", IMPAIR_MINOR_VERSION_BUMP_IX),
 	I("retransmits\0", IMPAIR_RETRANSMITS_IX),
