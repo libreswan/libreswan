@@ -339,7 +339,7 @@ ipsec status
 000 "packetdefault"[1]:   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "packetdefault"[1]:   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "packetdefault"[1]:   newest ISAKMP SA: #2; newest IPsec SA: #2;
-000 "packetdefault"[1]:   IKEv2 algorithm newest: AES_GCM_C_256-AUTH_NONE-PRF_HMAC_SHA1-MODP2048
+000 "packetdefault"[1]:   IKEv2 algorithm newest: AES_GCM_16_256-AUTH_NONE-PRF_HMAC_SHA1-MODP2048
 000 "packetdefault"[1]:   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 000 "private": 192.1.3.209[%myid]---192.1.3.254...%opportunisticgroup; unrouted; eroute owner: #0
 000 "private":     oriented; my_ip=unset; their_ip=unset

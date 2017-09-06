@@ -192,35 +192,23 @@ void ike_alg_show_connection(const struct connection *c, const char *instance)
 	}
 	st = state_with_serialno(c->newest_isakmp_sa);
 	if (st != NULL) {
-		struct esb_buf encbuf, prfbuf, integbuf;
-
-		if (!st->st_ikev2) {
-			/* IKEv1 */
-			whack_log(RC_COMMENT,
-			  "\"%s\"%s:   IKE algorithm newest: %s_%03d-%s-%s",
-			  c->name,
-			  instance,
-			  enum_show_shortb(&oakley_enc_names, st->st_oakley.encrypt, &encbuf),
-			  /* st->st_oakley.encrypter->keydeflen, */
-			  st->st_oakley.enckeylen,
-			  enum_show_shortb(&oakley_hash_names,
-					   st->st_oakley.prf->common.ikev1_oakley_id,
-					   &prfbuf),
-				  st->st_oakley.group->common.name);
-		} else {
-			/* IKEv2 */
-			whack_log(RC_COMMENT,
-			  "\"%s\"%s:   IKEv2 algorithm newest: %s_%03d-%s-%s-%s",
-			  c->name,
-			  instance,
-			  enum_showb(&ikev2_trans_type_encr_names, st->st_oakley.encrypt, &encbuf),
-			  /* st->st_oakley.encrypter->keydeflen, */
-			  st->st_oakley.enckeylen,
-			  enum_showb(&ikev2_trans_type_integ_names, st->st_oakley.integ_hash, &integbuf),
-			  enum_showb(&ikev2_trans_type_prf_names,
-				     st->st_oakley.prf->common.id[IKEv2_ALG_ID],
-				     &prfbuf),
-				  st->st_oakley.group->common.name);
+		/*
+		 * Convert the crypt-suite into 'struct proposal_info'
+		 * so that the parser's print-alg code can be used.
+		 */
+		const struct proposal_info p = {
+			.encrypt = st->st_oakley.encrypter,
+			.enckeylen = st->st_oakley.enckeylen,
+			.prf = st->st_oakley.prf,
+			.integ = st->st_oakley.integ,
+			.dh = st->st_oakley.group,
+		};
+		const char *v = st->st_ikev2 ? "IKEv2" : "IKE";
+		LSWLOG_WHACK(RC_COMMENT, buf) {
+			lswlogf(buf,
+				"\"%s\"%s:   %s algorithm newest: ",
+				c->name, instance, v);
+			lswlog_proposal_info(buf, &p);
 		}
 	}
 }
