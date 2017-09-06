@@ -299,17 +299,11 @@ void prettynow(char *buf, size_t buflen, const char *fmt)
 /* thread locks added until all non re-entrant functions it uses have been fixed */
 void libreswan_vloglog(int mess_no, const char *message, va_list args)
 {
-	char m[LOG_WIDTH]; /* longer messages will be truncated */
-
-	pthread_mutex_lock(&log_mutex);
-	fmt_log(m, sizeof(m), message, args);
-
-	stdlog_raw(m);
-	syslog_raw(LOG_WARNING, m);
-	peerlog_raw(m);
-	whack_rc_raw(mess_no, m);
-
-	pthread_mutex_unlock(&log_mutex);
+	LSWBUF(buf) {
+		lswlog_log_pre(buf);
+		lswlogvf(buf, message, args);
+		lswlog_log_raw(buf, mess_no, LOG_WARNING);
+	}
 }
 
 void lswlog_log_errno(int e, const char *prefix, const char *message, ...)
