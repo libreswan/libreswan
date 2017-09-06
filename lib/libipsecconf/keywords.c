@@ -473,6 +473,7 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
   { "max-halfopen-ike",  kv_config,  kt_number,  KBF_MAX_HALFOPEN_IKE,  NOT_ENUM },
   { "ikeport",  kv_config,  kt_number,  KBF_IKEPORT,  NOT_ENUM },
   { "ike-socket-bufsize",  kv_config,  kt_number,  KBF_IKEBUF,  NOT_ENUM },
+  { "ike-socket-errqueue",  kv_config,  kt_bool,  KBF_IKE_ERRQUEUE,  NOT_ENUM },
   { "nflog-all",  kv_config,  kt_number,  KBF_NFLOG_ALL,  NOT_ENUM },
   { "xfrmlifetime",  kv_config,  kt_number,  KBF_XFRMLIFETIME,  NOT_ENUM },
   { "virtual_private",  kv_config | kv_alias,  kt_string,  KSF_VIRTUALPRIVATE,  NOT_ENUM },  /* obsolete _ */

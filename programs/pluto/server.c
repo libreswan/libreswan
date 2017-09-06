@@ -208,6 +208,7 @@ unsigned int pluto_ddos_threshold = DEFAULT_IKE_SA_DDOS_THRESHOLD;
 deltatime_t pluto_shunt_lifetime = { PLUTO_SHUNT_LIFE_DURATION_DEFAULT };
 
 unsigned int pluto_sock_bufsize = IKE_BUF_AUTO; /* use system values */
+bool pluto_sock_errqueue = TRUE; /* Enable MSG_ERRQUEUE on IKE socket */
 
 struct iface_port  *interfaces = NULL;  /* public interfaces */
 
@@ -330,11 +331,12 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 
 	/* To improve error reporting.  See ip(7). */
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
-	if (setsockopt(fd, SOL_IP, IP_RECVERR,
-		       (const void *)&on, sizeof(on)) < 0) {
-		LOG_ERRNO(errno, "setsockopt IP_RECVERR in process_raw_ifaces()");
-		close(fd);
-		return -1;
+	if (pluto_sock_errqueue) {
+		if (setsockopt(fd, SOL_IP, IP_RECVERR, (const void *)&on, sizeof(on)) < 0) {
+			LOG_ERRNO(errno, "setsockopt IP_RECVERR in process_raw_ifaces()");
+			close(fd);
+			return -1;
+		}
 	}
 #endif
 

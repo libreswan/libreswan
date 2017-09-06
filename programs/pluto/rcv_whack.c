@@ -307,7 +307,8 @@ static bool openwhackrecordfile(char *file)
  */
 void whack_process(int whackfd, const struct whack_message *const m)
 {
-	/* May be needed in future:
+	/*
+	 * May be needed in future:
 	 * const struct lsw_conf_options *oco = lsw_init_options();
 	 */
 	if (m->whack_options) {
@@ -437,6 +438,13 @@ void whack_process(int whackfd, const struct whack_message *const m)
 	if (m->ike_buf_size != 0) {
 		pluto_sock_bufsize = m->ike_buf_size;
 		libreswan_log("Set IKE socket buffer to %d", pluto_sock_bufsize);
+	}
+
+	/* update MSG_ERRQUEUE setting before size before calling listen */
+	if (m->ike_sock_err_toggle) {
+		pluto_sock_errqueue = !pluto_sock_errqueue;
+		libreswan_log("%s IKE socket MSG_ERRQUEUEs",
+			pluto_sock_errqueue ? "Enabling" : "Disabling");
 	}
 
 	/* process "listen" before any operation that could require it */

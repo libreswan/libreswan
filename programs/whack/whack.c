@@ -169,6 +169,7 @@ static void help(void)
 		"listen: whack (--listen | --unlisten)\n"
 		"\n"
 		"socket buffers: whack --ike-sock-bufsize <bufsize>\n"
+		"socket errqueue: whack --ike-socket-errqueue-toggle\n"
 		"\n"
 		"ddos-protection: whack (--ddos-busy | --ddos-unlimited | \\\n"
 		"	--ddos-auto)\n"
@@ -282,6 +283,7 @@ enum option_enums {
 	OPT_LISTEN,
 	OPT_UNLISTEN,
 	OPT_IKEBUF,
+	OPT_IKE_MSGERR,
 
 	OPT_DDOS_BUSY,
 	OPT_DDOS_UNLIMITED,
@@ -512,6 +514,7 @@ static const struct option long_opts[] = {
 	{ "listen", no_argument, NULL, OPT_LISTEN + OO },
 	{ "unlisten", no_argument, NULL, OPT_UNLISTEN + OO },
 	{ "ike-sock-bufsize", required_argument, NULL, OPT_IKEBUF + OO + NUMERIC_ARG},
+	{ "ike-socket-errqueue-toggle", no_argument, NULL, OPT_IKE_MSGERR + OO },
 
 	{ "ddos-busy", no_argument, NULL, OPT_DDOS_BUSY + OO },
 	{ "ddos-unlimited", no_argument, NULL, OPT_DDOS_UNLIMITED + OO },
@@ -1171,6 +1174,11 @@ int main(int argc, char **argv)
 				msg.ike_buf_size = opt_whole;
 				msg.whack_listen = TRUE;
 			}
+			continue;
+
+		case OPT_IKE_MSGERR:	/* --ike-socket-errqueue-toggle */
+			msg.ike_sock_err_toggle = TRUE;
+			msg.whack_listen = TRUE;
 			continue;
 
 		case OPT_MYID:	/* --myid <identity> */

@@ -129,14 +129,18 @@ struct raw_iface *find_raw_ifaces4(void)
 	if (master_sock == -1)
 		EXIT_LOG_ERRNO(errno, "socket() failed in find_raw_ifaces4()");
 
+	/* This doesn't seem Linux specific */
+	/* Should we also SO_REUSEPORT ? */
 	if (setsockopt(master_sock, SOL_SOCKET, SO_REUSEADDR,
 		       (const void *)&on, sizeof(on)) < 0)
 		EXIT_LOG_ERRNO(errno, "setsockopt(SO_REUSEADDR) in find_raw_ifaces4()");
 
+	/* This doesn't seem Linux specific */
 	if (setsockopt(master_sock, SOL_SOCKET, SO_PRIORITY,
 		       (const void *)&prio, sizeof(prio)) < 0)
 		EXIT_LOG_ERRNO(errno, "setsockopt(SO_PRIORITY) in find_raw_ifaces4()");
 
+	/* Forcing this is in fact, Linux specific */
 	if (pluto_sock_bufsize != IKE_BUF_AUTO) {
 		if (setsockopt(master_sock, SOL_SOCKET, SO_RCVBUFFORCE,
 			(const void *)&pluto_sock_bufsize, sizeof(pluto_sock_bufsize)) < 0)
