@@ -217,12 +217,10 @@ void lswlog_log_pre(struct lswlog *buf)
 
 void lswlog_log_raw(struct lswlog *buf, int mess_no, int log_level)
 {
-	pthread_mutex_lock(&log_mutex);
 	stdlog_raw(buf->array);
 	syslog_raw(log_level, buf->array);
 	peerlog_raw(buf->array);
 	whack_rc_raw(mess_no, buf->array);
-	pthread_mutex_unlock(&log_mutex);
 }
 
 /* format a string for the log, with suitable prefixes.
