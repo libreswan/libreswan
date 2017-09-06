@@ -1414,7 +1414,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 				struct payload_digest *p;
 				for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {
 					if (p->payload.v2n.isan_type == v2N_SIGNATURE_HASH_ALGORITHMS)
-					break;
+						break;
 				}
 				passert(p != NULL); /* Make Coverity happy */
 				if (!negotiate_hash_algo_from_notification(p,st))
