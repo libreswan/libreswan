@@ -317,14 +317,14 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 	}
 
 	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1) {
-		LOG_ERRNO(errno, "fcntl(,, FD_CLOEXEC) in process_raw_ifaces()");
+		LOG_ERRNO(errno, "fcntl(,, FD_CLOEXEC) in create_socket()");
 		close(fd);
 		return -1;
 	}
 
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
 		       (const void *)&on, sizeof(on)) < 0) {
-		LOG_ERRNO(errno, "setsockopt SO_REUSEADDR in process_raw_ifaces()");
+		LOG_ERRNO(errno, "setsockopt SO_REUSEADDR in create_socket()");
 		close(fd);
 		return -1;
 	}
@@ -333,7 +333,7 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
 	if (pluto_sock_errqueue) {
 		if (setsockopt(fd, SOL_IP, IP_RECVERR, (const void *)&on, sizeof(on)) < 0) {
-			LOG_ERRNO(errno, "setsockopt IP_RECVERR in process_raw_ifaces()");
+			LOG_ERRNO(errno, "setsockopt IP_RECVERR in create_socket()");
 			close(fd);
 			return -1;
 		}
