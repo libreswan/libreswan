@@ -37,8 +37,15 @@
 /* maximum number of files to keep open for per-peer log files */
 #define MAX_PEERLOG_COUNT 16
 
+/*
+ * Since peerlog() can be called from a helper thread (for instance
+ * when debug logging) while the main thread is updating these static
+ * structures, lock all operations.
+ */
+static pthread_mutex_t peerlog_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 /* close one per-peer log */
-static void perpeer_logclose(struct connection *c);     /* forward */
+static void unlocked_perpeer_logclose(struct connection *c);     /* forward */
 
 bool log_to_perpeer = false;		/* should log go to per-IP file? */
 char *peerlog_basedir = NULL;
@@ -49,10 +56,12 @@ static CIRCLEQ_HEAD(, connection) perpeer_list;
 
 void peerlog_init(void)
 {
+	pthread_mutex_lock(&peerlog_mutex);
 	CIRCLEQ_INIT(&perpeer_list);
+	pthread_mutex_unlock(&peerlog_mutex);
 }
 
-void peerlog_close(void)
+static void unlocked_peerlog_close(void)
 {
 	/* exit if the circular queue has not been initialized */
 	if (perpeer_list.cqh_first == NULL)
@@ -60,10 +69,17 @@ void peerlog_close(void)
 
 	/* end of circular queue is given by pointer to "HEAD" */
 	while (perpeer_list.cqh_first != (void *)&perpeer_list)
-		perpeer_logclose(perpeer_list.cqh_first);
+		unlocked_perpeer_logclose(perpeer_list.cqh_first);
 }
 
-static void perpeer_logclose(struct connection *c)
+void peerlog_close(void)
+{
+	pthread_mutex_lock(&peerlog_mutex);
+	unlocked_peerlog_close();
+	pthread_mutex_unlock(&peerlog_mutex);
+}
+
+static void unlocked_perpeer_logclose(struct connection *c)
 {
 	/* only free/close things if we had used them! */
 	if (c->log_file != NULL) {
@@ -76,16 +92,23 @@ static void perpeer_logclose(struct connection *c)
 	}
 }
 
-void perpeer_logfree(struct connection *c)
+static void unlocked_perpeer_logfree(struct connection *c)
 {
-	perpeer_logclose(c);
+	unlocked_perpeer_logclose(c);
 	if (c->log_file_name != NULL) {
 		pfree(c->log_file_name);
 		c->log_file_name = NULL;
 		c->log_file_err = FALSE;
 	}
 }
- 
+
+void perpeer_logfree(struct connection *c)
+{
+	pthread_mutex_lock(&peerlog_mutex);
+	unlocked_perpeer_logfree(c);
+	pthread_mutex_unlock(&peerlog_mutex);
+}
+
 /* attempt to arrange a writeable parent directory for <path>
  * Result indicates success.  Failure will be logged.
  *
@@ -93,7 +116,7 @@ void perpeer_logfree(struct connection *c)
  * an error since those routines are not re-entrant and such a call
  * would be recursive.
  */
-static bool ensure_writeable_parent_directory(char *path)
+static bool unlocked_ensure_writeable_parent_directory(char *path)
 {
 	/* NOTE: a / in the first char of a path is not like any other.
 	 * That is why the strchr starts at path + 1.
@@ -123,7 +146,7 @@ static bool ensure_writeable_parent_directory(char *path)
 			happy = FALSE;
 		} else {
 			/* missing directory: try to create one */
-			happy = ensure_writeable_parent_directory(path);
+			happy = unlocked_ensure_writeable_parent_directory(path);
 			if (happy) {
 				if (mkdir(path, 0750) != 0) {
 					syslog(LOG_CRIT,
@@ -145,7 +168,7 @@ static bool ensure_writeable_parent_directory(char *path)
  * an error since those routines are not re-entrant and such a call
  * would be recursive.
  */
-static void open_peerlog(struct connection *c)
+static void unlocked_open_peerlog(struct connection *c)
 {
 	/* syslog(LOG_INFO, "opening log file for conn %s", c->name); */
 
@@ -185,7 +208,7 @@ static void open_peerlog(struct connection *c)
 
 	/* now open the file, creating directories if necessary */
 
-	c->log_file_err = !ensure_writeable_parent_directory(c->log_file_name);
+	c->log_file_err = !unlocked_ensure_writeable_parent_directory(c->log_file_name);
 	if (c->log_file_err)
 		return;
 
@@ -204,7 +227,7 @@ static void open_peerlog(struct connection *c)
 		/* cannot be NULL because perpeer_count > 0 */
 		passert(perpeer_list.cqh_last != (void *)&perpeer_list);
 
-		perpeer_logclose(perpeer_list.cqh_last);
+		unlocked_perpeer_logclose(perpeer_list.cqh_last);
 	}
 
 	/* insert this into the list */
@@ -214,7 +237,7 @@ static void open_peerlog(struct connection *c)
 }
 
 /* log a line to cur_connection's log */
-void peerlog(const char *m)
+static void unlocked_peerlog(const char *m)
 {
 	if (cur_connection == NULL) {
 		/* we cannot log it in this case. Oh well. */
@@ -222,7 +245,7 @@ void peerlog(const char *m)
 	}
 
 	if (cur_connection->log_file == NULL)
-		open_peerlog(cur_connection);
+		unlocked_open_peerlog(cur_connection);
 
 	/* despite our attempts above, we may not be able to open the file. */
 	if (cur_connection->log_file != NULL) {
@@ -238,40 +261,10 @@ void peerlog(const char *m)
 	}
 }
 
-/*
- * We store runtime info for stats/status this way.
- * You may be able to do something similar using these hooks.
- */
-
-struct log_conn_info {
-	struct connection *conn;
-	struct state *ignore;           /* ignore this state */
-
-	/* best completed state of connection */
-
-	enum {
-		tun_down=0,
-		tun_phase1,
-		tun_phase1up,
-		tun_phase15,
-		tun_phase2,
-		tun_up
-	} tunnel;
-
-	/* best uncompleted state info for each phase */
-
-	enum {
-		p1_none=0,
-		p1_init,
-		p1_encrypt,
-		p1_auth,
-		p1_up,
-		p1_down
-	} phase1;
-
-	enum {
-		p2_none=0,
-		p2_neg,
-		p2_up,
-	} phase2;
-};
+/* log a line to cur_connection's log */
+void peerlog(const char *m)
+{
+	pthread_mutex_lock(&peerlog_mutex);
+	unlocked_peerlog(m);
+	pthread_mutex_unlock(&peerlog_mutex);
+}
