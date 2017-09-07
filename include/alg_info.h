@@ -179,7 +179,6 @@ struct proposal_info {
 	 * lengths, ENCKEYLEN is still required.
 	 */
 	const struct encrypt_desc *encrypt;
-#define ikev1esp_transid encrypt->common.id[IKEv1_ESP_ID]
 	size_t enckeylen;    /* keylength for ESP transform (bits) */
 	/*
 	 * The integrity and PRF algorithms.

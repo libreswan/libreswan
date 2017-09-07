@@ -51,7 +51,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 	int ealg_i = SADB_EALG_NONE;
 
 	if (policy & POLICY_ENCRYPT) {
-		ealg_i = esp_info->ikev1esp_transid;
+		ealg_i = esp_info->encrypt->common.id[IKEv1_ESP_ID];
 		/* already checked by the parser? */
 		if (!kernel_alg_encrypt_ok(esp_info->encrypt)) {
 			if (logit) {
@@ -217,7 +217,7 @@ bool ikev1_verify_esp(int ealg, unsigned int key_len, int aalg,
 		key_len = crypto_req_keysize(CRK_ESPorAH, ealg);
 
 	FOR_EACH_ESP_INFO(alg_info, esp_info) {
-		if (esp_info->ikev1esp_transid == ealg &&
+		if (esp_info->encrypt->common.id[IKEv1_ESP_ID] == ealg &&
 		    (esp_info->enckeylen == 0 ||
 		     key_len == 0 ||
 		     esp_info->enckeylen == key_len) &&

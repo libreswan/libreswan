@@ -440,10 +440,10 @@ static int decode_esp(char *algname)
 				"%s: alg_info: cnt=%d ealg[0]=%d aalg[0]=%d\n",
 				progname,
 				alg_info->ai.alg_info_cnt,
-				esp_info->ikev1esp_transid,
+				esp_info->encrypt->common.id[IKEv1_ESP_ID],
 				esp_info->ikev1esp_auth);
 		}
-		esp_ealg_id = esp_info->ikev1esp_transid;
+		esp_ealg_id = esp_info->encrypt->common.id[IKEv1_ESP_ID];
 		esp_aalg_id = esp_info->ikev1esp_auth;
 		if (kernel_alg_proc_read()) {
 
@@ -1174,7 +1174,7 @@ int main(int argc, char *argv[])
 			 */
 			alg_p = kernel_alg_sadb_alg_get(SADB_SATYPE_ESP,
 							SADB_EXT_SUPPORTED_ENCRYPT,
-							esp_info->ikev1esp_transid);
+							esp_info->encrypt->common.id[IKEv1_ESP_ID]);
 			assert(alg_p != NULL);
 			keylen = enckeylen * 8;
 
@@ -1347,7 +1347,7 @@ int main(int argc, char *argv[])
 		encryptalg = SADB_X_CALG_LZS;
 		break;
 	case XF_OTHER_ALG:
-		encryptalg = esp_info->ikev1esp_transid;
+		encryptalg = esp_info->encrypt->common.id[IKEv1_ESP_ID];
 		if (debug) {
 			fprintf(stdout, "%s: debug: encryptalg=%d\n",
 				progname, encryptalg);
