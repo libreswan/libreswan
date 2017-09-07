@@ -83,7 +83,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 		if (esp_info->integ != &ike_alg_integ_null) {
 			db_attr_add_values(db_ctx,
 					   AUTH_ALGORITHM,
-					   esp_info->ikev1esp_auth);
+					   esp_info->integ->common.id[IKEv1_ESP_ID]);
 		}
 
 		/* add keylength if specified in esp= string */
@@ -108,7 +108,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 					if (esp_info->integ != &ike_alg_integ_null) {
 						db_attr_add_values(db_ctx,
 							AUTH_ALGORITHM,
-							esp_info->ikev1esp_auth);
+							esp_info->integ->common.id[IKEv1_ESP_ID]);
 					}
 					db_attr_add_values(db_ctx,
 						KEY_LENGTH,
@@ -122,7 +122,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 
 		/* add ESP auth attr */
 		db_attr_add_values(db_ctx,
-				   AUTH_ALGORITHM, esp_info->ikev1esp_auth);
+				   AUTH_ALGORITHM, esp_info->integ->common.id[IKEv1_ESP_ID]);
 	}
 
 	return TRUE;
@@ -221,7 +221,7 @@ bool ikev1_verify_esp(int ealg, unsigned int key_len, int aalg,
 		    (esp_info->enckeylen == 0 ||
 		     key_len == 0 ||
 		     esp_info->enckeylen == key_len) &&
-		    esp_info->ikev1esp_auth == aalg) {
+		    esp_info->integ->common.id[IKEv1_ESP_ID] == aalg) {
 			return TRUE;
 		}
 	}
@@ -238,7 +238,7 @@ bool ikev1_verify_ah(int aalg, const struct alg_info_esp *alg_info)
 		return TRUE;
 
 	FOR_EACH_ESP_INFO(alg_info, esp_info) {	/* really AH */
-		if (esp_info->ikev1esp_auth == aalg)
+		if (esp_info->integ->common.id[IKEv1_ESP_ID] == aalg)
 			return TRUE;
 	}
 

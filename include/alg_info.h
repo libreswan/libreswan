@@ -185,7 +185,6 @@ struct proposal_info {
 	 */
 	const struct prf_desc *prf;
 	const struct integ_desc *integ;
-#define ikev1esp_auth integ->common.id[IKEv1_ESP_ID]
 	/*
 	 * PFS/DH negotiation.
 	 */

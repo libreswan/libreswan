@@ -441,10 +441,10 @@ static int decode_esp(char *algname)
 				progname,
 				alg_info->ai.alg_info_cnt,
 				esp_info->encrypt->common.id[IKEv1_ESP_ID],
-				esp_info->ikev1esp_auth);
+				esp_info->integ->common.id[IKEv1_ESP_ID]);
 		}
 		esp_ealg_id = esp_info->encrypt->common.id[IKEv1_ESP_ID];
-		esp_aalg_id = esp_info->ikev1esp_auth;
+		esp_aalg_id = esp_info->integ->common.id[IKEv1_ESP_ID];
 		if (kernel_alg_proc_read()) {
 
 			proc_read_ok++;
