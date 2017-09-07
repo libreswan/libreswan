@@ -105,7 +105,6 @@ static int pluto_ifn_roof = 0;
 
 struct raw_iface *find_raw_ifaces4(void)
 {
-	static const int on = TRUE;	/* by-reference parameter; constant, we hope */
 	int j;	/* index into buf */
 	struct ifconf ifconf;
 	struct ifreq *buf = NULL;	/* for list of interfaces -- arbitrary limit */

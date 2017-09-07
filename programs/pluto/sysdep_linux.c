@@ -109,7 +109,6 @@ static int pluto_ifn_roof = 0;
 
 struct raw_iface *find_raw_ifaces4(void)
 {
-	static const int on = TRUE;	/* by-reference parameter; constant, we hope */
 	static const int prio = 7; /* rumored maximum priority, requires CAP_NET_ADMIN */
 	int j;	/* index into buf */
 	struct ifconf ifconf;
