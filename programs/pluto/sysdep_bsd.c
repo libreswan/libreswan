@@ -122,6 +122,10 @@ struct raw_iface *find_raw_ifaces4(void)
 	if (master_sock == -1)
 		EXIT_LOG_ERRNO(errno, "socket() failed in find_raw_ifaces4()");
 
+	if (setsockopt(master_sock, SOL_SOCKET, SO_REUSEADDR,
+		       (const void *)&on, sizeof(on)) < 0)
+		EXIT_LOG_ERRNO(errno, "setsockopt() in find_raw_ifaces4()");
+
 	/* bind the socket */
 	{
 		ip_address any;
