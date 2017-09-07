@@ -78,8 +78,6 @@
 
 #include "pluto_stats.h"
 
-static pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
-
 bool
 	log_to_stderr = TRUE,		/* should log go to stderr? */
 	log_to_syslog = TRUE,		/* should log go to syslog? */
@@ -412,7 +410,6 @@ void whack_log(int mess_no, const char *message, ...)
 
 	int wfd;
 
-	pthread_mutex_lock(&log_mutex);
 	wfd = whack_log_fd != NULL_FD ? whack_log_fd :
 	      cur_state != NULL ? cur_state->st_whack_sock :
 	      NULL_FD;
@@ -455,7 +452,6 @@ void whack_log(int mess_no, const char *message, ...)
 		passert(r == 0);
 #endif /* !MSG_NOSIGNAL */
  	}
-	pthread_mutex_unlock(&log_mutex);
 }
 
 lset_t
