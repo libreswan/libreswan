@@ -330,7 +330,7 @@ void lswlog_file(FILE f)
 	for (bool lswlog_p = whack_log_p(); lswlog_p; lswlog_p = false) \
 		LSWBUF_(BUF)						\
 			for (whack_log_pre(RC, BUF); lswlog_p;		\
-			     whack_log_raw(BUF->array, BUF->len),		\
+			     whack_log_raw(BUF),			\
 				     lswlog_p = false)
 
 /*

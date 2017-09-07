@@ -214,16 +214,25 @@ static void peerlog_raw(char *b)
 
 static void whack_rc_raw(int rc, char *b)
 {
-	if (whack_log_p()) {
-		/*
-		 * On the assumption that logging to whack is rare and
-		 * slow anyway, don't try to tune this code path.
-		 */
-		LSWBUF(buf) {
-			add_whack_rc_prefix(buf, rc);
-			/* add_state_prefix() - done by caller */
-			lswlogs(buf, b);
-			whack_log_raw(buf->array, buf->len);
+	/*
+	 * Only whack-log when the main thread.
+	 *
+	 * Helper threads, which are asynchronous, shouldn't be trying
+	 * to directly emit whack output.
+	 */
+	if (pthread_equal(pthread_self(), main_thread)) {
+		if (whack_log_p()) {
+			/*
+			 * On the assumption that logging to whack is
+			 * rare and slow anyway, don't try to tune
+			 * this code path.
+			 */
+			LSWBUF(buf) {
+				add_whack_rc_prefix(buf, rc);
+				/* add_state_prefix() - done by caller */
+				lswlogs(buf, b);
+				whack_log_raw(buf);
+			}
 		}
 	}
 }
@@ -321,7 +330,7 @@ void whack_log_pre(int mess_no, struct lswlog *buf)
 	add_state_prefix(buf);
 }
 
-void whack_log_raw(char *m, size_t len)
+void whack_log_raw(struct lswlog *buf)
 {
 	passert(pthread_equal(pthread_self(), main_thread));
 
@@ -329,9 +338,10 @@ void whack_log_raw(char *m, size_t len)
 	      cur_state != NULL ? cur_state->st_whack_sock :
 	      NULL_FD;
 
-	if (wfd == NULL_FD) {
-		return;
-	}
+	passert(wfd != NULL_FD);
+
+	char *m = buf->array;
+	size_t len = buf->len;
 
 	/* write to whack socket, but suppress possible SIGPIPE */
 #ifdef MSG_NOSIGNAL                     /* depends on version of glibc??? */
@@ -358,6 +368,7 @@ void whack_log_raw(char *m, size_t len)
 bool whack_log_p(void)
 {
 	if (!pthread_equal(pthread_self(), main_thread)) {
+		PEXPECT_LOG("%s", "whack_log*() must be called from the main thread");
 		return false;
 	}
 
@@ -376,7 +387,6 @@ bool whack_log_p(void)
 
 void whack_log(int mess_no, const char *message, ...)
 {
-	pexpect(pthread_equal(pthread_self(), main_thread));
 	if (whack_log_p()) {
 		LSWBUF(buf) {
 			add_whack_rc_prefix(buf, mess_no);
@@ -385,14 +395,13 @@ void whack_log(int mess_no, const char *message, ...)
 			va_start(args, message);
 			lswlogvf(buf, message, args);
 			va_end(args);
-			whack_log_raw(buf->array, buf->len);
+			whack_log_raw(buf);
 		}
 	}
 }
 
 void whack_log_comment(const char *message, ...)
 {
-	pexpect(pthread_equal(pthread_self(), main_thread));
 	if (whack_log_p()) {
 		LSWBUF(buf) {
 			/* add_whack_rc_prefix() - skipped */
@@ -401,7 +410,7 @@ void whack_log_comment(const char *message, ...)
 			va_start(args, message);
 			lswlogvf(buf, message, args);
 			va_end(args);
-			whack_log_raw(buf->array, buf->len);
+			whack_log_raw(buf);
 		}
 	}
 }

@@ -99,12 +99,12 @@ extern void close_log(void);
 extern void exit_log(const char *message, ...) PRINTF_LIKE(1) NEVER_RETURNS;
 
 /*
- * XXX: whack_log_raw() stomps on the buffer's NUL terminator wich
- * violates one of struct lswlog's invariants.
+ * struct lswlog primatives
  */
-void whack_log_raw(char *buf, size_t len);
 bool whack_log_p(void);
 void whack_log_pre(int mess_no, struct lswlog *buf);
+void whack_log_raw(struct lswlog *buf);
+
 void whack_log(int mess_no, const char *message, ...) PRINTF_LIKE(2);
 /*
  * Like whack_log() but suppress the 'NNN ' prefix.
