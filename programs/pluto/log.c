@@ -185,8 +185,7 @@ static void whack_rc_raw(int rc, char *b)
 	}
 }
 
-
-void lswlog_log_pre(struct lswlog *buf)
+void lswlog_pre(struct lswlog *buf)
 {
 	if (!pthread_equal(pthread_self(), main_thread)) {
 		return;
@@ -215,12 +214,17 @@ void lswlog_log_pre(struct lswlog *buf)
 	}
 }
 
-void lswlog_log_raw(struct lswlog *buf, int mess_no, int log_level)
+static void lswlog_log_raw(struct lswlog *buf, int rc, int log_level)
 {
 	stdlog_raw(buf->array);
 	syslog_raw(log_level, buf->array);
 	peerlog_raw(buf->array);
-	whack_rc_raw(mess_no, buf->array);
+	whack_rc_raw(rc, buf->array);
+}
+
+void lswlog_raw(struct lswlog *buf)
+{
+	lswlog_log_raw(buf, RC_LOG, LOG_WARNING);
 }
 
 /* format a string for the log, with suitable prefixes.
@@ -298,7 +302,7 @@ void prettynow(char *buf, size_t buflen, const char *fmt)
 void libreswan_vloglog(int mess_no, const char *message, va_list args)
 {
 	LSWBUF(buf) {
-		lswlog_log_pre(buf);
+		lswlog_pre(buf);
 		lswlogvf(buf, message, args);
 		lswlog_log_raw(buf, mess_no, LOG_WARNING);
 	}
@@ -309,7 +313,7 @@ void lswlog_log_errno(int e, const char *prefix, const char *message, ...)
 	LSWBUF(buf) {
 		/* <prefix><state#N...><message>.Errno %d: <strerror> */
 		lswlogs(buf, prefix);
-		lswlog_log_pre(buf);
+		lswlog_pre(buf);
 		va_list args;
 		va_start(args, message);
 		lswlogvf(buf, message, args);
@@ -324,7 +328,7 @@ void exit_log(const char *message, ...)
 	LSWBUF(buf) {
 		/* FATAL ERROR: <state...><message> */
 		lswlogs(buf, "FATAL ERROR: ");
-		lswlog_log_pre(buf);
+		lswlog_pre(buf);
 		va_list args;
 		va_start(args, message);
 		lswlogvf(buf, message, args);
@@ -343,7 +347,7 @@ void whack_log_pre(int mess_no, struct lswlog *buf)
 {
 	passert(pthread_equal(pthread_self(), main_thread));
 	lswlogf(buf, "%03d ", mess_no);
-	lswlog_log_pre(buf);
+	lswlog_pre(buf);
 }
 
 void whack_log_raw(char *m, size_t len)
