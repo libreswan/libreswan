@@ -32,7 +32,6 @@
 #include <sys/time.h>           /* for gettimeofday */
 #include <resolv.h>
 
-#include <syslog.h>	/* workaround for LOG_WARNING */
 #include <libreswan.h>
 
 #include "sysdep.h"
