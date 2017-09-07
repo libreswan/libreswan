@@ -405,6 +405,11 @@ bool whack_log_p(void)
 
 void whack_log(int mess_no, const char *message, ...)
 {
+	pexpect(pthread_equal(pthread_self(), main_thread));
+	if (!whack_log_p()) {
+		return;
+	}
+
 	int wfd;
 
 	pthread_mutex_lock(&log_mutex);
