@@ -82,6 +82,12 @@ kvmplutotest	algparse-01				good
 kvmplutotest	algparse-02-fips			good
 
 #################################################################
+# Whack UI tests
+#################################################################
+kvmplutotest	whack-02-globalstatus			good
+
+
+#################################################################
 # IKEv2 tests
 #################################################################
 kvmplutotest	ikev2-01-fallback-ikev1			good
