@@ -277,7 +277,7 @@ kvmplutotest	ikev2-x509-11-san-dns-match		good
 kvmplutotest	ikev2-x509-12-san-dn-fromcert		good
 kvmplutotest	ikev2-x509-13-san-dn-match		good
 kvmplutotest	ikev2-x509-14-san-dn-mismatch		good
-kvmplutotest	ikev2-x509-14-san-dn-mismatch-responder	good
+kvmplutotest	ikev2-x509-15-san-dn-mismatch-responder	good
 
 kvmplutotest	interop-ikev1-x509-aggr-12-san-dn-match	good
 kvmplutotest	interop-ikev1-x509-aggr-13-san-dn-match-responder good
