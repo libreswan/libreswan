@@ -141,6 +141,48 @@ void pluto_init_log(void)
 }
 
 /*
+ * Add just the WHACK or STATE (or connection) prefix.
+ *
+ * Callers need to pick and choose.  For instance, WHACK output some
+ * times suppress the whack prefix; and there is no point adding the
+ * STATE prefix when it was added earlier.
+ */
+
+static void add_whack_rc_prefix(struct lswlog *buf, int rc)
+{
+	lswlogf(buf, "%03d ", rc);
+}
+
+static void add_state_prefix(struct lswlog *buf)
+{
+	if (!pthread_equal(pthread_self(), main_thread)) {
+		return;
+	}
+
+	struct connection *c = cur_state != NULL ? cur_state->st_connection :
+		cur_connection;
+
+	if (c != NULL) {
+		lswlogf(buf, "\"%s\"", c->name);
+		/* if it fits, put in any connection instance information */
+		char inst[CONN_INST_BUF];
+		fmt_conn_instance(c, inst);
+		lswlogs(buf, inst);
+		if (cur_state != NULL) {
+			/* state number */
+			lswlogf(buf, " #%lu", cur_state->st_serialno);
+		}
+		lswlogs(buf, ": ");
+	} else if (cur_from != NULL) {
+		/* peer's IP address */
+		ipstr_buf b;
+		lswlogf(buf, "packet from %s:%u: ",
+			ipstr(cur_from, &b),
+			(unsigned)cur_from_port);
+	}
+}
+
+/*
  * Wrap up the logic to decide if a particular output should occure.
  * The compiler will likely inline these.
  */
@@ -174,41 +216,15 @@ static void whack_rc_raw(int rc, char *b)
 {
 	if (whack_log_p()) {
 		/*
-		 * XXX: If B is pre-populated with the whack prefix
-		 * then this copying of B can be eliminated.
+		 * On the assumption that logging to whack is rare and
+		 * slow anyway, don't try to tune this code path.
 		 */
-		char m[LOG_WIDTH]; /* longer messages will be truncated */
-		snprintf(m, sizeof(m), "%03d %s", rc, b);
-		whack_log_raw(m, strlen(m));
-	}
-}
-
-void lswlog_pre(struct lswlog *buf)
-{
-	if (!pthread_equal(pthread_self(), main_thread)) {
-		return;
-	}
-
-	struct connection *c = cur_state != NULL ? cur_state->st_connection :
-		cur_connection;
-
-	if (c != NULL) {
-		lswlogf(buf, "\"%s\"", c->name);
-		/* if it fits, put in any connection instance information */
-		char inst[CONN_INST_BUF];
-		fmt_conn_instance(c, inst);
-		lswlogs(buf, inst);
-		if (cur_state != NULL) {
-			/* state number */
-			lswlogf(buf, " #%lu", cur_state->st_serialno);
+		LSWBUF(buf) {
+			add_whack_rc_prefix(buf, rc);
+			/* add_state_prefix() - done by caller */
+			lswlogs(buf, b);
+			whack_log_raw(buf->array, buf->len);
 		}
-		lswlogs(buf, ": ");
-	} else if (cur_from != NULL) {
-		/* peer's IP address */
-		ipstr_buf b;
-		lswlogf(buf, "packet from %s:%u: ",
-			ipstr(cur_from, &b),
-			(unsigned)cur_from_port);
 	}
 }
 
@@ -218,6 +234,11 @@ static void lswlog_log_raw(struct lswlog *buf, int rc, int log_level)
 	syslog_raw(log_level, buf->array);
 	peerlog_raw(buf->array);
 	whack_rc_raw(rc, buf->array);
+}
+
+void lswlog_pre(struct lswlog *buf)
+{
+	add_state_prefix(buf);
 }
 
 void lswlog_raw(struct lswlog *buf)
@@ -300,7 +321,7 @@ void prettynow(char *buf, size_t buflen, const char *fmt)
 void libreswan_vloglog(int mess_no, const char *message, va_list args)
 {
 	LSWBUF(buf) {
-		lswlog_pre(buf);
+		add_state_prefix(buf);
 		lswlogvf(buf, message, args);
 		lswlog_log_raw(buf, mess_no, LOG_WARNING);
 	}
@@ -311,7 +332,7 @@ void lswlog_log_errno(int e, const char *prefix, const char *message, ...)
 	LSWBUF(buf) {
 		/* <prefix><state#N...><message>.Errno %d: <strerror> */
 		lswlogs(buf, prefix);
-		lswlog_pre(buf);
+		add_state_prefix(buf);
 		va_list args;
 		va_start(args, message);
 		lswlogvf(buf, message, args);
@@ -326,7 +347,7 @@ void exit_log(const char *message, ...)
 	LSWBUF(buf) {
 		/* FATAL ERROR: <state...><message> */
 		lswlogs(buf, "FATAL ERROR: ");
-		lswlog_pre(buf);
+		add_state_prefix(buf);
 		va_list args;
 		va_start(args, message);
 		lswlogvf(buf, message, args);
@@ -344,8 +365,8 @@ void lswlog_exit(int rc)
 void whack_log_pre(int mess_no, struct lswlog *buf)
 {
 	passert(pthread_equal(pthread_self(), main_thread));
-	lswlogf(buf, "%03d ", mess_no);
-	lswlog_pre(buf);
+	add_whack_rc_prefix(buf, mess_no);
+	add_state_prefix(buf);
 }
 
 void whack_log_raw(char *m, size_t len)
