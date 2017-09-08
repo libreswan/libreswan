@@ -1153,7 +1153,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 			 * Dump the proposals so far.  The detailed
 			 * error reason will have already been logged.
 			 */
-			LSWDBG(buf) {
+			LSWLOG(buf) {
 				lswlogs(buf, "partial list of proposals:");
 				lswlogl(buf, remote_print_buf);
 			}
@@ -1161,13 +1161,13 @@ stf_status ikev2_process_sa_payload(const char *what,
 		} else if (matching_local_propnum == 0) {
 			/* no luck */
 			if (expect_accepted) {
-				LSWDBG(buf) {
+				LSWLOG(buf) {
 					lswlogs(buf, "accepted proposal invalid:");
 					lswlogl(buf, remote_print_buf);
 				}
 				status = STF_FAIL;
 			} else {
-				LSWDBG(buf) {
+				LSWLOG(buf) {
 					lswlogs(buf, "no proposal chosen from:");
 					lswlogl(buf, remote_print_buf);
 				}
