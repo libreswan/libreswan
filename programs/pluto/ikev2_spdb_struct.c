@@ -1519,7 +1519,7 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 	 */
 	if (ike_alg_is_aead(ta.encrypter) && ta.integ == NULL) {
 		DBG(DBG_CONTROL, DBG_log("since AEAD, setting NULL integ to 'null'"));
-		ta.integ = &ike_alg_integ_null;
+		ta.integ = &ike_alg_integ_none;
 		ta.integ_hash = 0;
 	}
 

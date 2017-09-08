@@ -907,7 +907,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 		snprintf(prfname, sizeof(prfname), "%s",
 			 st->st_oakley.prf->common.officname);
 
-		if (st->st_oakley.integ == &ike_alg_integ_null) {
+		if (st->st_oakley.integ == &ike_alg_integ_none) {
 			if (!st->st_ikev2) {
 				/* ikev1 takes integ from prf, ecept of cause gcm */
 				/* but we don't support gcm in ikev1 for now */

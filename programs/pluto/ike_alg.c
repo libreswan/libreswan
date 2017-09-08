@@ -513,13 +513,13 @@ static const struct integ_desc *integ_descriptors[] = {
 #ifdef USE_RIPEMD
 	&ike_alg_integ_hmac_ripemd_160_96,
 #endif
-	&ike_alg_integ_null,
+	&ike_alg_integ_none,
 };
 
 static void integ_desc_check(const struct ike_alg *alg)
 {
 	const struct integ_desc *integ = integ_desc(alg);
-	if (integ == &ike_alg_integ_null) {
+	if (integ == &ike_alg_integ_none) {
 		passert_ike_alg(alg, integ->integ_keymat_size == 0);
 		passert_ike_alg(alg, integ->integ_output_size == 0);
 	} else {
@@ -827,7 +827,7 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 		 * The exception is integrity where the NULL algorithm
 		 * really is 0.
 		 */
-		if (alg != &ike_alg_integ_null.common) {
+		if (alg != &ike_alg_integ_none.common) {
 			for (enum ike_alg_key key = IKE_ALG_KEY_FLOOR;
 			     key < IKE_ALG_KEY_ROOF; key++) {
 				passert_ike_alg(alg, alg->id[key] != 0);
@@ -837,7 +837,7 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 		/*
 		 * Only NULL integrity is allowed the value 0.
 		 */
-		if (alg != &ike_alg_integ_null.common) {
+		if (alg != &ike_alg_integ_none.common) {
 			pexpect_ike_alg(alg, alg->id[IKEv1_OAKLEY_ID] != 0);
 			pexpect_ike_alg(alg, alg->id[IKEv1_ESP_ID] != 0);
 			pexpect_ike_alg(alg, alg->id[IKEv2_ALG_ID] != 0);

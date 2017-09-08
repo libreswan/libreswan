@@ -2058,7 +2058,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		 */
 		if (ike_alg_is_aead(attrs->transattrs.encrypter)
 		    && attrs->transattrs.integ == NULL) {
-			attrs->transattrs.integ = &ike_alg_integ_null;
+			attrs->transattrs.integ = &ike_alg_integ_none;
 		}
 
 	}
@@ -2580,7 +2580,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					case ESP_3DES:
 						break;
 					case ESP_NULL:
-						if (esp_attrs.transattrs.integ == &ike_alg_integ_null) {
+						if (esp_attrs.transattrs.integ == &ike_alg_integ_none) {
 							loglog(RC_LOG_SERIOUS,
 							       "ESP_NULL requires auth algorithm");
 							return BAD_PROPOSAL_SYNTAX;

@@ -51,9 +51,9 @@ static bool ike_proposal_ok(const struct parser_policy *const policy UNUSED,
 	/*
 	 * This is a little loose.
 	 */
-	passert(proposal->integ != &ike_alg_integ_null ||
+	passert(proposal->integ != &ike_alg_integ_none ||
 		ike_alg_is_aead(proposal->encrypt));
-	passert(proposal->integ == &ike_alg_integ_null ||
+	passert(proposal->integ == &ike_alg_integ_none ||
 		ike_alg_is_ike(&proposal->integ->common));
 
 	passert(ike_alg_is_ike(&(proposal->dh->common)));

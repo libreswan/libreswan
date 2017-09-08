@@ -53,7 +53,7 @@ const struct encrypt_desc ike_alg_encrypt_null =
 /*
  * This doesn't really exist, yet life is easier if it does.
  */
-const struct integ_desc ike_alg_integ_null = {
+const struct integ_desc ike_alg_integ_none = {
        .common = {
                .name = "null",
                .fqn = "NULL",

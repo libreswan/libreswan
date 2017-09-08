@@ -419,12 +419,12 @@ static const char *add_proposal_defaults(const struct parser_param *param,
 		 * AEAD requires null integrity.
 		 */
 		struct proposal_info merged_proposal = *proposal;
-		merged_proposal.integ = &ike_alg_integ_null;
+		merged_proposal.integ = &ike_alg_integ_none;
 		return add_proposal_defaults(param, policy, defaults,
 					     alg_info, &merged_proposal,
 					     err_buf, err_buf_len);
 	} else if (!DBGP(IMPAIR_ALLOW_NULL_NULL) && (proposal->encrypt != NULL && !ike_alg_is_aead(proposal->encrypt)
-		   && proposal->integ != NULL && proposal->integ == &ike_alg_integ_null)) {
+		   && proposal->integ != NULL && proposal->integ == &ike_alg_integ_none)) {
 		/*
 		 * For instance, esp=aes_gcm-sha1" is invalid.
 		 */
@@ -434,7 +434,7 @@ static const char *add_proposal_defaults(const struct parser_param *param,
 			 proposal->encrypt->common.name);
 		return err_buf;
 	} else if (proposal->encrypt != NULL && ike_alg_is_aead(proposal->encrypt)
-		   && proposal->integ != NULL && proposal->integ != &ike_alg_integ_null) {
+		   && proposal->integ != NULL && proposal->integ != &ike_alg_integ_none) {
 		/*
 		 * For instance, esp=aes_cbc-null" is invalid.
 		 */

@@ -80,7 +80,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 		db_trans_add(db_ctx, ealg_i);
 
 		/* add ESP auth attr (if present) */
-		if (esp_info->integ != &ike_alg_integ_null) {
+		if (esp_info->integ != &ike_alg_integ_none) {
 			db_attr_add_values(db_ctx,
 					   AUTH_ALGORITHM,
 					   esp_info->integ->common.id[IKEv1_ESP_ID]);
@@ -105,7 +105,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 				/* add this trans again with max key size */
 				if (def_ks != max_ks) {
 					db_trans_add(db_ctx, ealg_i);
-					if (esp_info->integ != &ike_alg_integ_null) {
+					if (esp_info->integ != &ike_alg_integ_none) {
 						db_attr_add_values(db_ctx,
 							AUTH_ALGORITHM,
 							esp_info->integ->common.id[IKEv1_ESP_ID]);

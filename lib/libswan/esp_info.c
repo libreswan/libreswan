@@ -87,7 +87,7 @@ static bool ah_proposal_ok(const struct parser_policy *const policy UNUSED,
 		return true;
 
 	/* ah=null is invalid */
-	if (proposal->integ == &ike_alg_integ_null) {
+	if (proposal->integ == &ike_alg_integ_none) {
 		snprintf(err_buf, err_buf_len,
 			 "AH cannot have a 'null' integrity algorithm");
 		return false;

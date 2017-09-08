@@ -724,7 +724,7 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 	const char *integ_name;
 	char integ_buf[30];
 	if (st->st_ikev2) {
-		if (st->st_oakley.integ == &ike_alg_integ_null) {
+		if (st->st_oakley.integ == &ike_alg_integ_none) {
 			integ_name = "n/a";
 		} else {
 			snprintf(integ_buf, sizeof(integ_buf),

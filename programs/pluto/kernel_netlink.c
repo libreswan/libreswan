@@ -157,7 +157,7 @@ static const char *find_netlink_name(const struct netlink_name *table,
 }
 
 static const struct netlink_name integ_list[] = {
-	{ &ike_alg_integ_null.common, "digest_null" },
+	{ &ike_alg_integ_none.common, "digest_null" },
 	{ &ike_alg_integ_md5.common, "md5" },
 	{ &ike_alg_integ_sha1.common, "sha1" },
 	{ &ike_alg_integ_sha2_256.common, "hmac(sha256)" },
