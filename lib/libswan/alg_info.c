@@ -363,37 +363,51 @@ static const char *add_proposal_defaults(const struct parser_param *param,
 	 * MODP, ENCR, PRF/HASH - affects test results.  It determines
 	 * things like the order of proposals.
 	 */
-	if (defaults != NULL && proposal->dh == NULL && defaults->dh != NULL) {
+	if (proposal->dh == NULL &&
+	    defaults != NULL && defaults->dh != NULL) {
 		return add_alg_defaults(param, policy, defaults,
 					alg_info, proposal,
 					&ike_alg_dh, defaults->dh,
 					merge_dh_default,
 					err_buf, err_buf_len);
-	} else if (defaults != NULL && proposal->encrypt == NULL && defaults->encrypt != NULL) {
+	} else if (proposal->encrypt == NULL &&
+		   defaults != NULL && defaults->encrypt != NULL) {
 		return add_alg_defaults(param, policy, defaults,
 					alg_info, proposal,
 					&ike_alg_encrypt, defaults->encrypt,
 					merge_encrypt_default,
 					err_buf, err_buf_len);
-	} else if (defaults != NULL && proposal->prf == NULL && defaults->prf != NULL) {
+	} else if (proposal->prf == NULL &&
+		   defaults != NULL && defaults->prf != NULL) {
 		return add_alg_defaults(param, policy, defaults,
 					alg_info, proposal,
 					&ike_alg_prf, defaults->prf,
 					merge_prf_default,
 					err_buf, err_buf_len);
-	} else if (defaults != NULL && proposal->integ == NULL && defaults->integ != NULL) {
+	} else if (proposal->integ == NULL &&
+		   proposal->encrypt != NULL && ike_alg_is_aead(proposal->encrypt)) {
+		/*
+		 * Since AEAD, integrity is always 'none'.
+		 */
+		struct proposal_info merged_proposal = *proposal;
+		merged_proposal.integ = &ike_alg_integ_none;
+		return add_proposal_defaults(param, policy, defaults,
+					     alg_info, &merged_proposal,
+					     err_buf, err_buf_len);
+	} else if (proposal->integ == NULL &&
+		   defaults != NULL && defaults->integ != NULL) {
 		return add_alg_defaults(param, policy, defaults,
 					alg_info, proposal,
 					&ike_alg_integ, defaults->integ,
 					merge_integ_default,
 					err_buf, err_buf_len);
-	} else if (proposal->encrypt != NULL && !ike_alg_is_aead(proposal->encrypt)
-		   && proposal->prf != NULL && proposal->integ == NULL) {
+	} else if (proposal->integ == NULL &&
+		   proposal->prf != NULL &&
+		   proposal->encrypt != NULL && !ike_alg_is_aead(proposal->encrypt)) {
 		/*
 		 * Since non-AEAD, use an integrity algorithm that is
 		 * implemented using the PRF.
 		 */
-
 		struct proposal_info merged_proposal = *proposal;
 		for (const struct integ_desc **algp = next_integ_desc(NULL);
 		     algp != NULL; algp = next_integ_desc(algp)) {
@@ -410,16 +424,6 @@ static const char *add_proposal_defaults(const struct parser_param *param,
 				 proposal->prf->common.name);
 			return err_buf;
 		}
-		return add_proposal_defaults(param, policy, defaults,
-					     alg_info, &merged_proposal,
-					     err_buf, err_buf_len);
-	} else if (proposal->encrypt != NULL && ike_alg_is_aead(proposal->encrypt)
-		   && proposal->integ == NULL) {
-		/*
-		 * AEAD requires null integrity.
-		 */
-		struct proposal_info merged_proposal = *proposal;
-		merged_proposal.integ = &ike_alg_integ_none;
 		return add_proposal_defaults(param, policy, defaults,
 					     alg_info, &merged_proposal,
 					     err_buf, err_buf_len);
