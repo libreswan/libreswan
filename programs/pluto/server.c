@@ -1240,7 +1240,7 @@ static bool send_packet(struct state *st, const char *where,
 	ssize_t wlen;
 
 	if (len > MAX_OUTPUT_UDP_SIZE) {
-		DBG_log("send_ike_msg(): really too big %zu bytes", len);
+		loglog(RC_LOG_SERIOUS, "send_ike_msg(): really too big %zu bytes", len);
 		return FALSE;
 	}
 
