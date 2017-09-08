@@ -1287,7 +1287,7 @@ static bool send_packet(struct state *st, const char *where,
 		      sockaddrlenof(&st->st_remoteaddr));
 
 	if (wlen != (ssize_t)len) {
-		if (just_a_keepalive) {
+		if (!just_a_keepalive) {
 			ipstr_buf b;
 			LOG_ERRNO(errno, "sendto on %s to %s:%u failed in %s",
 				  st->st_interface->ip_dev->id_rname,
@@ -1320,7 +1320,7 @@ static bool send_packet(struct state *st, const char *where,
 			      sockaddrof(&st->st_remoteaddr),
 			      sockaddrlenof(&st->st_remoteaddr));
 		if (wlen != (ssize_t)len) {
-			if (just_a_keepalive) {
+			if (!just_a_keepalive) {
 				LOG_ERRNO(errno,
 					  "sendto on %s to %s:%u failed in %s",
 					  st->st_interface->ip_dev->id_rname,
