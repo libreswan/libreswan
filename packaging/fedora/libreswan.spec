@@ -108,7 +108,7 @@ sed -i "s:/usr/bin/python:/usr/bin/python3:" programs/verify/verify.in
 #796683: -fno-strict-aliasing
 make %{?_smp_mflags} \
 %if %{development}
-   USERCOMPILE="-g -DGCC_LINT %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
+  USERCOMPILE="-g -DGCC_LINT %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
 %else
   USERCOMPILE="-g -DGCC_LINT %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
 %endif
@@ -133,6 +133,7 @@ make %{?_smp_mflags} \
   USE_SECCOMP="%{USE_SECCOMP}" \
   INC_USRLOCAL=%{_prefix} \
   FINALLIBEXECDIR=%{_libexecdir}/ipsec \
+  FINALRUNDIR=%{_rundir} \
   MANTREE=%{_mandir} \
   INC_RCDEFAULT=%{_initrddir} \
   NSS_REQ_AVA_COPY=false \
@@ -154,6 +155,7 @@ make \
   DESTDIR=%{buildroot} \
   INC_USRLOCAL=%{_prefix} \
   FINALLIBEXECDIR=%{_libexecdir}/ipsec \
+  FINALRUNDIR=%{_rundir} \
   MANTREE=%{buildroot}%{_mandir} \
   INC_RCDEFAULT=%{_initrddir} \
   INSTMANFLAGS="-m 644" \
@@ -180,7 +182,7 @@ make \
 FS=$(pwd)
 rm -rf %{buildroot}/usr/share/doc/libreswan
 
-install -d -m 0700 %{buildroot}%{_localstatedir}/run/pluto
+install -d -m 0700 %{buildroot}%{_rundir}/pluto
 # used when setting --perpeerlog without --perpeerlogbase
 install -d -m 0700 %{buildroot}%{_localstatedir}/log/pluto/peer
 install -d %{buildroot}%{_sbindir}
@@ -245,7 +247,7 @@ OBJ.linux.%{_arch}/programs/cavp/cavp -v1psk ikev1_psk.fax | \
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysctl.d/50-libreswan.conf
 %attr(0700,root,root) %dir %{_localstatedir}/log/pluto
 %attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
-%attr(0700,root,root) %dir %{_localstatedir}/run/pluto
+%attr(0700,root,root) %dir %{_rundir}/pluto
 %attr(0644,root,root) %{_tmpfilesdir}/libreswan.conf
 %attr(0644,root,root) %{_unitdir}/ipsec.service
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/pam.d/pluto

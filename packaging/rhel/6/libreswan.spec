@@ -18,6 +18,9 @@
 
 #global prever rc1
 
+# _rundir is not defined on rhel6
+%{!?_rundir:%global _rundir %{_localstatedir}/run}
+
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
 Version: IPSECBASEVERSION
@@ -112,6 +115,7 @@ make %{?_smp_mflags} \
     USERLINK="-g -pie -Wl,-z,relro,-z,now %{?efence}" \
     INITSYSTEM=sysvinit \
     INC_USRLOCAL=%{_prefix} \
+    FINALRUNDIR=%{_rundir} \
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \
     MANTREE=%{_mandir} \
     INC_RCDEFAULT=%{_initrddir} \
@@ -149,6 +153,7 @@ make \
     INITSYSTEM=sysvinit \
     INC_USRLOCAL=%{_prefix} \
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \
+    FINALRUNDIR=%{_rundir} \
     MANTREE=%{buildroot}%{_mandir} \
     INC_RCDEFAULT=%{_initrddir} \
     INSTMANFLAGS="-m 644" \
@@ -171,7 +176,7 @@ make \
 FS=$(pwd)
 rm -rf %{buildroot}/usr/share/doc/libreswan
 
-install -d -m 0700 %{buildroot}%{_localstatedir}/run/pluto
+install -d -m 0700 %{buildroot}%{_rundir}/pluto
 # used when setting --perpeerlog without --perpeerlogbase
 install -d -m 0700 %{buildroot}%{_localstatedir}/log/pluto/peer
 install -d %{buildroot}%{_sbindir}
@@ -238,7 +243,7 @@ fi
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
 %attr(0700,root,root) %dir %{_localstatedir}/log/pluto
 %attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
-%attr(0700,root,root) %dir %{_localstatedir}/run/pluto
+%attr(0700,root,root) %dir %{_rundir}/pluto
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/pam.d/pluto
 %{_sbindir}/ipsec
 %attr(0755,root,root) %dir %{_libexecdir}/ipsec
