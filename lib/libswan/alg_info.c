@@ -490,8 +490,7 @@ static const char *add_proposal_defaults(const struct parser_param *param,
 		}
 
 		/* back end? */
-		if (!param->proposal_ok(policy, proposal,
-					err_buf, err_buf_len)) {
+		if (!param->proposal_ok(proposal, err_buf, err_buf_len)) {
 			passert(err_buf[0] != '\0');
 			return err_buf;
 		}

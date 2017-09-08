@@ -31,8 +31,7 @@
 #include "ike_alg_null.h"
 #include "alg_info.h"
 
-static bool ike_proposal_ok(const struct parser_policy *const policy UNUSED,
-			    const struct proposal_info *proposal,
+static bool ike_proposal_ok(const struct proposal_info *proposal,
 			    char *err_buf UNUSED, size_t err_buf_len UNUSED)
 {
 	passert(proposal->encrypt != NULL);

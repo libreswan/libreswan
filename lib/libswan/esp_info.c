@@ -38,8 +38,7 @@
 
  * Add ESP alg info _with_ logic (policy):
  */
-static bool esp_proposal_ok(const struct parser_policy *const policy UNUSED,
-			    const struct proposal_info *proposal,
+static bool esp_proposal_ok(const struct proposal_info *proposal,
 			    char *err_buf UNUSED, size_t err_buf_len UNUSED)
 {
 	passert(proposal->encrypt != NULL);
@@ -75,8 +74,7 @@ const struct parser_param esp_parser_param = {
 	.dh_alg_byname = dh_alg_byname,
 };
 
-static bool ah_proposal_ok(const struct parser_policy *const policy UNUSED,
-			   const struct proposal_info *proposal,
+static bool ah_proposal_ok(const struct proposal_info *proposal,
 			   char *err_buf, size_t err_buf_len)
 {
 	passert(proposal->encrypt == NULL);

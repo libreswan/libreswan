@@ -78,8 +78,7 @@ struct parser_param {
 	 * This is the final check, if this succeeds then the proposal
 	 * is added.
 	 */
-	bool (*proposal_ok)(const struct parser_policy *const policy,
-			    const struct proposal_info *proposal,
+	bool (*proposal_ok)(const struct proposal_info *proposal,
 			    char *err_buf, size_t err_buf_len);
 
 	/*
