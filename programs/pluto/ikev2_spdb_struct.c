@@ -2059,33 +2059,13 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 		}
 
 		/*
-		 * INTEG
+		 * Integrity.  Always propose something, which will
+		 * include 'none'.
 		 */
-		if (ike_alg_enc_requires_integ(ealg)) {
-			const struct integ_desc *integ = ike_info->integ;
-			if (integ == &ike_alg_integ_null) {
-				PEXPECT_LOG("%s", "IKEv2 proposal with no INTEG should have been dropped");
-				continue;
-			} else if (integ->common.id[IKEv2_ALG_ID] == 0) {
-				loglog(RC_LOG_SERIOUS,
-				       "IKEv2 proposal contains unsupported INTEG algorithm %s",
-				       integ->common.name);
-				continue;
-			} else {
-				append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
-						 integ->common.id[IKEv2_ALG_ID], 0);
-			}
-		} else {
-			/*
-			 * Include NULL integrity in the proposal so
-			 * that if it is proposed there is something
-			 * to match and send back.
-			 *
-			 * Should this be suppresed when PRF=NULL?
-			 */
-			append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
-					 0, 0);
-		}
+		const struct integ_desc *integ = ike_info->integ;
+		passert(integ->common.id[IKEv2_ALG_ID] >= 0);
+		append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
+				 integ->common.id[IKEv2_ALG_ID], 0);
 
 		/*
 		 * DH GROUP
@@ -2297,6 +2277,7 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 
 		switch (policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
 		case POLICY_ENCRYPT:
+		{
 			proposal->protoid = IKEv2_SEC_PROTO_ESP;
 			/*
 			 * Encryption.
@@ -2313,41 +2294,28 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 				continue;
 			}
 			/*
-			 * Integrity.
+			 * Integrity.  Always propose something, which
+			 * will include 'none'.
 			 */
-			if (esp_info->integ != &ike_alg_integ_null) {
-				const struct integ_desc *integ = esp_info->integ;
-				if (!kernel_alg_integ_ok(integ)) {
-					loglog(RC_LOG_SERIOUS,
-					       "requested ESP integrity algorithm %s not present; discarding proposal",
-					       integ->common.fqn);
-					continue;
-				}
-				append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
-						 integ->common.id[IKEv2_ALG_ID], 0);
-			}
+			const struct integ_desc *integ = esp_info->integ;
+			append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
+					 integ->common.id[IKEv2_ALG_ID], 0);
 			add_pfs_group_to_proposal(proposal, pfs_group);
 			break;
-
+		}
 		case POLICY_AUTHENTICATE:
+		{
 			proposal->protoid = IKEv2_SEC_PROTO_AH;
+			/*
+			 * Integrity.  Always propose something, which
+			 * will include 'none'.
+			 */
 			const struct integ_desc *integ = esp_info->integ;
-			if (!kernel_alg_integ_ok(integ)) {
-				loglog(RC_LOG_SERIOUS,
-				       "requested AH integrity algorithm %s not present; discarding proposal",
-				       integ->common.fqn);
-				continue;
-			}
-			if (integ == &ike_alg_integ_null) {
-				loglog(RC_LOG_SERIOUS,
-				       "requested AH integrity algorithm %s is not permitted; discarding proposal",
-				       integ->common.fqn);
-				continue;
-			}
+			passert(integ->common.id[IKEv2_ALG_ID] >= 0);
 			append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
 					 integ->common.id[IKEv2_ALG_ID], 0);
 			break;
-
+		}
 		default:
 			bad_case(policy);
 
