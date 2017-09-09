@@ -1,4 +1,0 @@
-This tests the foodgroup "never" - it attempts to send a ping from a
-host (east) to an OE capable node (sunset), verifying that in fact,
-no packets ever actually traverse.
-

@@ -1,5 +1,0 @@
-This test is a variation of oe-road-01.
-
-It tests rekeying of an OE connection - verifying that the "newest_ipsec_sa"
-is on the same SA as the "eroute_owner".
-
