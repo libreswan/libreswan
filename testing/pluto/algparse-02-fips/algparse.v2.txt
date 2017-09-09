@@ -293,7 +293,7 @@
 [ah=3des]
 	ERROR: AH integrity algorithm '3des' is not recognized, enc_alg=""(0), auth_alg="3des", modp=""
 [ah=null]
-	ERROR: AH cannot have a 'null' integrity algorithm, enc_alg=""(0), auth_alg="null", modp=""
+	ERROR: AH cannot have 'none' as the integrity algorithm, enc_alg=""(0), auth_alg="null", modp=""
 [ah=aes_gcm]
 	ERROR: AH integrity algorithm 'aes_gcm' is not recognized, enc_alg=""(0), auth_alg="aes_gcm", modp=""
 [ah=aes_ccm]
