@@ -55,10 +55,10 @@ const struct encrypt_desc ike_alg_encrypt_null =
  */
 const struct integ_desc ike_alg_integ_none = {
        .common = {
-               .name = "null",
-               .fqn = "NULL",
-	       .names = { "null", "none", },
-	       .officname = "null",
+               .name = "none",
+               .fqn = "NONE",
+	       .names = { "none", "null", },
+	       .officname = "none",
 	       .algo_type = IKE_ALG_INTEG,
 	       .id = {
 			/*
@@ -78,10 +78,10 @@ const struct integ_desc ike_alg_integ_none = {
 			[IKEv2_ALG_ID] = IKEv2_AUTH_NONE,
 		},
 	       /*
-		* Because aes_gcm-null is valid in FIPS mode, "null"
+		* Because aes_gcm-null is valid in FIPS mode, "none"
 		* integrity is an allowed FIPS algorithm.
 		*
-		* Other code gets the job of rejecting "null" when not
+		* Other code gets the job of rejecting "none" when not
 		* AEAD.
 		*/
 	       .fips = true,
