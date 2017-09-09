@@ -597,8 +597,6 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 			    c->encaps == encaps_auto ? "auto" :
 				c->encaps == encaps_yes ? "yes" : "no"));
 
-		struct esb_buf esb_t, esb_a;
-
 		snprintf(b, sad_len - (b - sadetails),
 			 "%sESP%s%s%s=>0x%08lx <0x%08lx xfrm=%s_%d-%s",
 			 ini,
@@ -607,11 +605,9 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 			 tfc ? "/TFC" : "",
 			 (unsigned long)ntohl(st->st_esp.attrs.spi),
 			 (unsigned long)ntohl(st->st_esp.our_spi),
-			 enum_show_shortb(&esp_transformid_names,
-				   st->st_esp.attrs.transattrs.encrypt, &esb_t),
+			 st->st_esp.attrs.transattrs.encrypter->common.fqn,
 			 st->st_esp.attrs.transattrs.enckeylen,
-			 enum_show_shortb(&auth_alg_names,
-				 st->st_esp.attrs.transattrs.integ_hash, &esb_a));
+			 st->st_esp.attrs.transattrs.integ->common.fqn);
 
 		/* advance b to end of string */
 		b = b + strlen(b);
@@ -630,7 +626,6 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 	}
 
 	if (st->st_ah.present) {
-		struct esb_buf ah_t;
 		bool esn = st->st_esp.attrs.transattrs.esn_enabled;
 
 		snprintf(b, sad_len - (b - sadetails),
@@ -639,8 +634,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 			 st->st_ah.attrs.transattrs.esn_enabled ? "/ESN" : "",
 			 (unsigned long)ntohl(st->st_ah.attrs.spi),
 			 (unsigned long)ntohl(st->st_ah.our_spi),
-			 enum_show_shortb(&auth_alg_names,
-					  st->st_ah.attrs.transattrs.integ_hash, &ah_t));
+			 st->st_ah.attrs.transattrs.integ->common.fqn);
 
 		/* advance b to end of string */
 		b = b + strlen(b);
