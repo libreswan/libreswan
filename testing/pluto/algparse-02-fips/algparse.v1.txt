@@ -201,9 +201,9 @@
 [esp=3des168-sha1]
 	ERROR: 3DES does not take variable key lengths, enc_alg="3des"(168), auth_alg="sha1", modp=""
 [esp=3des-null]
-	ERROR: non-AEAD ESP encryption algorithm '3des_cbc' cannot have a 'null' integrity algorithm, enc_alg="3des"(0), auth_alg="null", modp=""
+	ERROR: non-AEAD ESP encryption algorithm '3des_cbc' cannot have 'none' as the integrity algorithm, enc_alg="3des"(0), auth_alg="null", modp=""
 [esp=aes128-null]
-	ERROR: non-AEAD ESP encryption algorithm 'aes' cannot have a 'null' integrity algorithm, enc_alg="aes"(128), auth_alg="null", modp=""
+	ERROR: non-AEAD ESP encryption algorithm 'aes' cannot have 'none' as the integrity algorithm, enc_alg="aes"(128), auth_alg="null", modp=""
 [esp=aes224-sha1]
 	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes"(224), auth_alg="sha1", modp=""
 [esp=aes512-sha1]

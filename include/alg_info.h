@@ -271,4 +271,10 @@ struct alg_info *alg_info_parse_str(const struct parser_policy *policy,
 				    char *err_buf, size_t err_buf_len,
 				    const struct parser_param *param);
 
+/*
+ * Check that encrypt==AEAD and/or integ==none don't contradict.
+ */
+bool proposal_aead_none_ok(const struct proposal_info *proposal,
+			   char *err_buf, size_t err_buf_len);
+
 #endif /* ALG_INFO_H */

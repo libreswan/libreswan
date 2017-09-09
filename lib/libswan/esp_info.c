@@ -35,12 +35,16 @@
 #include "ike_alg_sha1.h"
 
 /*
-
  * Add ESP alg info _with_ logic (policy):
  */
 static bool esp_proposal_ok(const struct proposal_info *proposal,
-			    char *err_buf UNUSED, size_t err_buf_len UNUSED)
+			    char *err_buf, size_t err_buf_len)
 {
+	if (!DBGP(IMPAIR_ALLOW_NULL_NULL) &&
+	    !proposal_aead_none_ok(proposal, err_buf, err_buf_len)) {
+		return false;
+	}
+
 	passert(proposal->encrypt != NULL);
 	passert(proposal->prf == NULL);
 	passert(proposal->integ != NULL);
