@@ -91,7 +91,7 @@ static bool ah_proposal_ok(const struct proposal_info *proposal,
 	/* ah=null is invalid */
 	if (proposal->integ == &ike_alg_integ_none) {
 		snprintf(err_buf, err_buf_len,
-			 "AH cannot have a 'null' integrity algorithm");
+			 "AH cannot have 'none' as the integrity algorithm");
 		return false;
 	}
 	return true;
