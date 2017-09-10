@@ -14,7 +14,7 @@
  * for more details.
  */
 
-struct parser_param;
+struct parser_protocol;
 struct parser_policy;
 struct ike_alg;
 
@@ -26,7 +26,7 @@ struct ike_alg;
  * messages better align with the input files.
  */
 
-bool alg_byname_ok(const struct parser_param *param,
+bool alg_byname_ok(const struct parser_protocol *protocol,
 		   const struct parser_policy *const policy,
 		   const struct ike_alg *alg,
 		   const char *name,
@@ -36,22 +36,22 @@ bool alg_byname_ok(const struct parser_param *param,
  * Helper functions to implement most of the lookup.
  */
 
-const struct ike_alg *encrypt_alg_byname(const struct parser_param *param,
+const struct ike_alg *encrypt_alg_byname(const struct parser_protocol *protocol,
 					 const struct parser_policy *const policy,
 					 char *err_buf, size_t err_buf_len,
 					 const char *name, size_t key_bit_length);
 
-const struct ike_alg *prf_alg_byname(const struct parser_param *param,
+const struct ike_alg *prf_alg_byname(const struct parser_protocol *protocol,
 				     const struct parser_policy *const policy,
 				     char *err_buf, size_t err_buf_len,
 				     const char *name, size_t key_bit_length);
 
-const struct ike_alg *integ_alg_byname(const struct parser_param *param,
+const struct ike_alg *integ_alg_byname(const struct parser_protocol *protocol,
 				       const struct parser_policy *const policy,
 				       char *err_buf, size_t err_buf_len,
 				       const char *name, size_t key_bit_length);
 
-const struct ike_alg *dh_alg_byname(const struct parser_param *param,
+const struct ike_alg *dh_alg_byname(const struct parser_protocol *protocol,
 				    const struct parser_policy *const policy,
 				    char *err_buf, size_t err_buf_len,
 				    const char *name, size_t key_bit_length);

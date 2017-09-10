@@ -49,7 +49,7 @@ enum parser_state {
 #define ALG_SIZE 30
 struct parser_context {
 	unsigned state;
-	const struct parser_param *param;
+	const struct parser_protocol *protocol;
 	const struct parser_policy *policy;
 	char ealg_buf[ALG_SIZE];
 	char eklen_buf[ALG_SIZE];
@@ -90,12 +90,12 @@ static inline void parser_set_state(struct parser_context *p_ctx,
 
 static void parser_init(struct parser_context *ctx,
 			const struct parser_policy *policy,
-			const struct parser_param *param)
+			const struct parser_protocol *protocol)
 {
 	*ctx = (struct parser_context) {
-		.param = param,
+		.protocol = protocol,
 		.policy = policy,
-		.state = (param->encrypt_alg_byname
+		.state = (protocol->encrypt_alg_byname
 			  ? ST_INI_EA
 			  : ST_INI_AA),
 		/*
@@ -242,7 +242,7 @@ static err_t parser_machine(struct parser_context *p_ctx)
 			 * Only allow modpXXXX string if we have
 			 * a modp_getbyname method
 			 */
-			if (p_ctx->param->dh_alg_byname != NULL && isalpha(ch)) {
+			if (p_ctx->protocol->dh_alg_byname != NULL && isalpha(ch)) {
 				parser_set_state(p_ctx, ST_MODP);
 				continue;
 			}
@@ -502,7 +502,7 @@ static const char *merge_default_proposals(const struct parser_policy *policy,
 
 static const struct ike_alg *lookup_byname(struct parser_context *p_ctx,
 					   char *err_buf, size_t err_buf_len,
-					   const struct ike_alg *(alg_byname)(const struct parser_param *param,
+					   const struct ike_alg *(alg_byname)(const struct parser_protocol *protocol,
 									      const struct parser_policy *const policy,
 									      char *err_buf, size_t err_buf_len,
 									      const char *name,
@@ -514,7 +514,7 @@ static const struct ike_alg *lookup_byname(struct parser_context *p_ctx,
 	err_buf[0] = '\0';
 	if (name[0] != '\0') {
 		if (alg_byname != NULL) {
-			const struct ike_alg *alg = alg_byname(p_ctx->param,
+			const struct ike_alg *alg = alg_byname(p_ctx->protocol,
 							       p_ctx->policy,
 							       err_buf, err_buf_len,
 							       name, key_bit_length);
@@ -586,7 +586,7 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 	}
 	proposal.encrypt =
 		encrypt_desc(lookup_byname(p_ctx, err_buf, err_buf_len,
-					   p_ctx->param->encrypt_alg_byname,
+					   p_ctx->protocol->encrypt_alg_byname,
 					   p_ctx->ealg_buf, proposal.enckeylen,
 					   "encryption"));
 	if (err_buf[0] != '\0') {
@@ -634,7 +634,7 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 		end[1] = '\0';
 		err_buf[0] = '\0';
 		proposal.encrypt = encrypt_desc(lookup_byname(p_ctx, err_buf, err_buf_len,
-							      p_ctx->param->encrypt_alg_byname,
+							      p_ctx->protocol->encrypt_alg_byname,
 							      p_ctx->ealg_buf, proposal.enckeylen,
 							      "encryption"));
 		if (err_buf[0] != '\0') {
@@ -643,7 +643,7 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 	}
 
 	proposal.prf = prf_desc(lookup_byname(p_ctx, err_buf, err_buf_len,
-					      p_ctx->param->prf_alg_byname,
+					      p_ctx->protocol->prf_alg_byname,
 					      p_ctx->aalg_buf, 0,
 					      "PRF"));
 	if (err_buf[0] != '\0') {
@@ -651,7 +651,7 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 	}
 
 	proposal.integ = integ_desc(lookup_byname(p_ctx, err_buf, err_buf_len,
-						  p_ctx->param->integ_alg_byname,
+						  p_ctx->protocol->integ_alg_byname,
 						  p_ctx->aalg_buf, 0,
 						  "integrity"));
 	if (err_buf[0] != '\0') {
@@ -659,20 +659,20 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 	}
 
 	proposal.dh = oakley_group_desc(lookup_byname(p_ctx, err_buf, err_buf_len,
-						      p_ctx->param->dh_alg_byname,
+						      p_ctx->protocol->dh_alg_byname,
 						      p_ctx->modp_buf, 0,
 						      "group"));
 	if (err_buf[0] != '\0') {
 		return err_buf;
 	}
 
-	if (p_ctx->param->alg_info_add == NULL) {
+	if (p_ctx->protocol->alg_info_add == NULL) {
 		return merge_default_proposals(p_ctx->policy,
 					       alg_info, &proposal,
 					       err_buf, err_buf_len);
 	}
 
-	return p_ctx->param->alg_info_add(p_ctx->policy,
+	return p_ctx->protocol->alg_info_add(p_ctx->policy,
 					  alg_info,
 					  proposal.encrypt, proposal.enckeylen,
 					  proposal.prf, proposal.integ,
@@ -688,10 +688,10 @@ struct alg_info *alg_info_parse_str(const struct parser_policy *policy,
 				    struct alg_info *alg_info,
 				    const char *alg_str,
 				    char *err_buf, size_t err_buf_len,
-				    const struct parser_param *param)
+				    const struct parser_protocol *protocol)
 {
 	DBG(DBG_CONTROL,
-	    DBG_log("parsing '%s' for %s", alg_str, param->name));
+	    DBG_log("parsing '%s' for %s", alg_str, protocol->name));
 
 	struct parser_context ctx;
 	int ret;
@@ -699,10 +699,10 @@ struct alg_info *alg_info_parse_str(const struct parser_policy *policy,
 
 	err_buf[0] = '\0';
 
-	parser_init(&ctx, policy, param);
+	parser_init(&ctx, policy, protocol);
 
 	const struct proposal_info proposal = {
-		.protocol = param,
+		.protocol = protocol,
 	};
 
 	/* use default if no (NULL) string */
@@ -749,7 +749,7 @@ struct alg_info *alg_info_parse_str(const struct parser_policy *policy,
 				}
 			}
 			/* zero out for next run (ST_END) */
-			parser_init(&ctx, policy, param);
+			parser_init(&ctx, policy, protocol);
 			break;
 
 		default:

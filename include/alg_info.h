@@ -27,7 +27,7 @@
 struct parser_context;
 struct alg_info;
 struct lswlog;
-struct parser_param;
+struct parser_protocol;
 struct proposal_info;
 
 /*
@@ -62,7 +62,7 @@ struct proposal_defaults {
  * Parameters to set the parser's basic behaviour - ESP/AH/IKE.
  */
 
-struct parser_param {
+struct parser_protocol {
 	const char *name;
 	enum ike_alg_key ikev1_alg_id;
 
@@ -148,19 +148,19 @@ struct parser_param {
 	 * This lookup functions must set err and return null if NAME
 	 * isn't valid.
 	 */
-	const struct ike_alg *(*encrypt_alg_byname)(const struct parser_param *param,
+	const struct ike_alg *(*encrypt_alg_byname)(const struct parser_protocol *protocol,
 						    const struct parser_policy *const policy,
 						    char *err_buf, size_t err_buf_len,
 						    const char *name, size_t bit_length);
-	const struct ike_alg *(*prf_alg_byname)(const struct parser_param *param,
+	const struct ike_alg *(*prf_alg_byname)(const struct parser_protocol *protocol,
 						const struct parser_policy *const policy,
 						char *err_buf, size_t err_buf_len,
 						const char *name, size_t key_bit_length);
-	const struct ike_alg *(*integ_alg_byname)(const struct parser_param *param,
+	const struct ike_alg *(*integ_alg_byname)(const struct parser_protocol *protocol,
 						  const struct parser_policy *const policy,
 						  char *err_buf, size_t err_buf_len,
 						  const char *name, size_t key_bit_length);
-	const struct ike_alg *(*dh_alg_byname)(const struct parser_param *param,
+	const struct ike_alg *(*dh_alg_byname)(const struct parser_protocol *protocol,
 					       const struct parser_policy *const policy,
 					       char *err_buf, size_t err_buf_len,
 					       const char *name, size_t key_bit_length);
@@ -191,7 +191,7 @@ struct proposal_info {
 	/*
 	 * Which protocol is this proposal intended for?
 	 */
-	const struct parser_param *protocol;
+	const struct parser_protocol *protocol;
 };
 
 /* common prefix of struct alg_info_esp and struct alg_info_ike */
@@ -269,7 +269,7 @@ struct alg_info *alg_info_parse_str(const struct parser_policy *policy,
 				    struct alg_info *alg_info,
 				    const char *alg_str,
 				    char *err_buf, size_t err_buf_len,
-				    const struct parser_param *param);
+				    const struct parser_protocol *protocol);
 
 /*
  * Check that encrypt==AEAD and/or integ==none don't contradict.

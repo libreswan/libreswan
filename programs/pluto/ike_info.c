@@ -110,7 +110,7 @@ const struct proposal_defaults ikev2_ike_defaults = {
 	.prf = default_ike_aalgs,
 };
 
-const struct parser_param ike_parser_param = {
+const struct parser_protocol ike_parser_protocol = {
 	.name = "IKE",
 	.ikev1_alg_id = IKEv1_OAKLEY_ID,
 	.protoid = PROTO_ISAKMP,
@@ -138,5 +138,5 @@ struct alg_info_ike *alg_info_ike_create_from_str(const struct parser_policy *po
 				   &alg_info_ike->ai,
 				   alg_str,
 				   err_buf, err_buf_len,
-				   &ike_parser_param);
+				   &ike_parser_protocol);
 }

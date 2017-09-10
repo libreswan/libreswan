@@ -22,7 +22,7 @@
 #include "ike_alg.h"
 #include "ike_alg_null.h"
 
-bool alg_byname_ok(const struct parser_param *protocol,
+bool alg_byname_ok(const struct parser_protocol *protocol,
 		   const struct parser_policy *const policy,
 		   const struct ike_alg *alg,
 		   const char *name,
@@ -80,7 +80,7 @@ bool alg_byname_ok(const struct parser_param *protocol,
 	return true;
 }
 
-static const struct ike_alg *alg_byname(const struct parser_param *protocol,
+static const struct ike_alg *alg_byname(const struct parser_protocol *protocol,
 					const struct parser_policy *const policy,
 					const struct ike_alg_type *type,
 					char *err_buf, size_t err_buf_len,
@@ -117,12 +117,12 @@ static const struct ike_alg *alg_byname(const struct parser_param *protocol,
 	return alg;
 }
 
-const struct ike_alg *encrypt_alg_byname(const struct parser_param *param,
+const struct ike_alg *encrypt_alg_byname(const struct parser_protocol *protocol,
 					 const struct parser_policy *const policy,
 					 char *err_buf, size_t err_buf_len,
 					 const char *name, size_t key_bit_length)
 {
-	const struct ike_alg *alg = alg_byname(param, policy, IKE_ALG_ENCRYPT,
+	const struct ike_alg *alg = alg_byname(protocol, policy, IKE_ALG_ENCRYPT,
 					       err_buf, err_buf_len, name);
 	if (alg == NULL) {
 		return NULL;
@@ -150,35 +150,35 @@ const struct ike_alg *encrypt_alg_byname(const struct parser_param *param,
 	return alg;
 }
 
-const struct ike_alg *prf_alg_byname(const struct parser_param *param,
+const struct ike_alg *prf_alg_byname(const struct parser_protocol *protocol,
 				     const struct parser_policy *const policy,
 				     char *err_buf, size_t err_buf_len,
 				     const char *name,
 				     size_t key_bit_length UNUSED)
 {
-	return alg_byname(param, policy, IKE_ALG_PRF,
+	return alg_byname(protocol, policy, IKE_ALG_PRF,
 			  err_buf, err_buf_len,
 			  name);
 }
 
-const struct ike_alg *integ_alg_byname(const struct parser_param *param,
+const struct ike_alg *integ_alg_byname(const struct parser_protocol *protocol,
 				       const struct parser_policy *const policy,
 				       char *err_buf, size_t err_buf_len,
 				       const char *name,
 				       size_t key_bit_length UNUSED)
 {
-	return alg_byname(param, policy, IKE_ALG_INTEG,
+	return alg_byname(protocol, policy, IKE_ALG_INTEG,
 			  err_buf, err_buf_len,
 			  name);
 }
 
-const struct ike_alg *dh_alg_byname(const struct parser_param *param,
+const struct ike_alg *dh_alg_byname(const struct parser_protocol *protocol,
 				    const struct parser_policy *const policy,
 				    char *err_buf, size_t err_buf_len,
 				    const char *name,
 				    size_t key_bit_length UNUSED)
 {
-	return alg_byname(param, policy, IKE_ALG_DH,
+	return alg_byname(protocol, policy, IKE_ALG_DH,
 			  err_buf, err_buf_len,
 			  name);
 }

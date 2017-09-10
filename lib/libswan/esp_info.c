@@ -66,7 +66,7 @@ const struct proposal_defaults esp_defaults = {
 	.integ = default_esp_integ,
 };
 
-const struct parser_param esp_parser_param = {
+const struct parser_protocol esp_parser_protocol = {
 	.name = "ESP",
 	.ikev1_alg_id = IKEv1_ESP_ID,
 	.protoid = PROTO_IPSEC_ESP,
@@ -106,7 +106,7 @@ const struct proposal_defaults ah_defaults = {
 	.integ = default_ah_integ,
 };
 
-const struct parser_param ah_parser_param = {
+const struct parser_protocol ah_parser_protocol = {
 	.name = "AH",
 	.ikev1_alg_id = IKEv1_ESP_ID,
 	.protoid = PROTO_IPSEC_AH,
@@ -300,7 +300,7 @@ struct alg_info_esp *alg_info_esp_create_from_str(const struct parser_policy *po
 				   &alg_info_esp->ai,
 				   alg_str,
 				   err_buf, err_buf_len,
-				   &esp_parser_param);
+				   &esp_parser_protocol);
 	alg_info_esp = alg_info_discover_pfsgroup_hack(alg_info_esp, alg_str,
 						       err_buf, err_buf_len);
 	return alg_info_esp;
@@ -326,7 +326,7 @@ struct alg_info_esp *alg_info_ah_create_from_str(const struct parser_policy *pol
 				   &alg_info_ah->ai,
 				   alg_str,
 				   err_buf, err_buf_len,
-				   &ah_parser_param);
+				   &ah_parser_protocol);
 	alg_info_ah = alg_info_discover_pfsgroup_hack(alg_info_ah, alg_str,
 						      err_buf, err_buf_len);
 	return alg_info_ah;
