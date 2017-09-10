@@ -420,7 +420,7 @@ static const char *add_proposal_defaults(const struct parser_param *param,
 		if (merged_proposal.integ == NULL) {
 			snprintf(err_buf, err_buf_len,
 				 "%s integrity derived from PRF '%s' is not supported",
-				 param->protocol,
+				 proposal->protocol->name,
 				 proposal->prf->common.name);
 			return err_buf;
 		}
@@ -450,7 +450,7 @@ static const char *add_proposal_defaults(const struct parser_param *param,
 				continue;
 			DBG(DBG_CRYPT,
 			    DBG_log("discarding duplicate %s proposal encrypt=%s enckeylen=%zu prf=%s integ=%s dh=%s",
-				    param->protocol,
+				    proposal->protocol->name,
 				    proposal->encrypt != NULL ? proposal->encrypt->common.name : "n/a",
 				    proposal->enckeylen,
 				    proposal->prf != NULL ? proposal->prf->common.name : "n/a",
@@ -464,7 +464,7 @@ static const char *add_proposal_defaults(const struct parser_param *param,
 			snprintf(err_buf, err_buf_len,
 				 "more than %zu %s algorithms specified",
 				 elemsof(alg_info->proposals),
-				 param->protocol);
+				 proposal->protocol->name);
 			/* drop it like a rock */
 			return err_buf;
 		}
@@ -695,7 +695,7 @@ struct alg_info *alg_info_parse_str(const struct parser_policy *policy,
 				    const struct parser_param *param)
 {
 	DBG(DBG_CONTROL,
-	    DBG_log("parsing '%s' for %s", alg_str, param->protocol));
+	    DBG_log("parsing '%s' for %s", alg_str, param->name));
 
 	struct parser_context ctx;
 	int ret;
@@ -775,7 +775,7 @@ bool proposal_aead_none_ok(const struct proposal_info *proposal,
 		 */
 		snprintf(err_buf, err_buf_len,
 			 "AEAD %s encryption algorithm '%s' must have 'none' as the integrity algorithm",
-			 proposal->protocol->protocol,
+			 proposal->protocol->name,
 			 proposal->encrypt->common.name);
 		return false;
 	}
@@ -787,7 +787,7 @@ bool proposal_aead_none_ok(const struct proposal_info *proposal,
 		 */
 		snprintf(err_buf, err_buf_len,
 			 "non-AEAD %s encryption algorithm '%s' cannot have 'none' as the integrity algorithm",
-			 proposal->protocol->protocol,
+			 proposal->protocol->name,
 			 proposal->encrypt->common.name);
 		return false;
 	}

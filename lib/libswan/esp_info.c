@@ -67,7 +67,7 @@ const struct proposal_defaults esp_defaults = {
 };
 
 const struct parser_param esp_parser_param = {
-	.protocol = "ESP",
+	.name = "ESP",
 	.ikev1_alg_id = IKEv1_ESP_ID,
 	.protoid = PROTO_IPSEC_ESP,
 	.ikev1_defaults = &esp_defaults,
@@ -107,7 +107,7 @@ const struct proposal_defaults ah_defaults = {
 };
 
 const struct parser_param ah_parser_param = {
-	.protocol = "AH",
+	.name = "AH",
 	.ikev1_alg_id = IKEv1_ESP_ID,
 	.protoid = PROTO_IPSEC_AH,
 	.ikev1_defaults = &ah_defaults,
@@ -125,8 +125,7 @@ const struct parser_param ah_parser_param = {
 
 static struct alg_info_esp *alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,
 							    const char *alg_str,
-							    char *err_buf, size_t err_buf_len,
-							    const struct parser_param *parser_param)
+							    char *err_buf, size_t err_buf_len)
 {
 	if (aie == NULL) {
 		return NULL;
@@ -164,7 +163,7 @@ static struct alg_info_esp *alg_info_discover_pfsgroup_hack(struct alg_info_esp 
 		if (first->dh != esp_info->dh) {
 			snprintf(err_buf, err_buf_len,
 				 "%s DH algorithm '%s' must be specified last",
-				 parser_param->protocol,
+				 esp_info->protocol->name,
 				 (first->dh != NULL ? first->dh : esp_info->dh)->common.fqn);
 			alg_info_free(&aie->ai);
 			return NULL;
@@ -172,7 +171,7 @@ static struct alg_info_esp *alg_info_discover_pfsgroup_hack(struct alg_info_esp 
 		if (esp_info->dh != NULL && last->dh == NULL) {
 			snprintf(err_buf, err_buf_len,
 				 "%s DH algorithm '%s' must be specified last",
-				 parser_param->protocol,
+				 esp_info->protocol->name,
 				 esp_info->dh->common.fqn);
 			alg_info_free(&aie->ai);
 			return NULL;
@@ -180,7 +179,7 @@ static struct alg_info_esp *alg_info_discover_pfsgroup_hack(struct alg_info_esp 
 		if (esp_info->dh != NULL && esp_info->dh != last->dh) {
 			snprintf(err_buf, err_buf_len,
 				 "%s DH algorithm must be specified once",
-				 parser_param->protocol);
+				 esp_info->protocol->name);
 			alg_info_free(&aie->ai);
 			return NULL;
 		}
@@ -210,7 +209,7 @@ static struct alg_info_esp *alg_info_discover_pfsgroup_hack(struct alg_info_esp 
 			if (last_semi == NULL) {
 				snprintf(err_buf, err_buf_len,
 					 "%s DH algorithm '%s' must be separated using a ';'",
-					 parser_param->protocol,
+					 last->protocol->name,
 					 last->dh->common.fqn);
 				alg_info_free(&aie->ai);
 				return NULL;
@@ -219,7 +218,7 @@ static struct alg_info_esp *alg_info_discover_pfsgroup_hack(struct alg_info_esp 
 			if (last_comma != NULL && last_semi < last_comma) {
 				snprintf(err_buf, err_buf_len,
 					 "%s DH algorithm must appear after last proposal",
-					 parser_param->protocol);
+					 last->protocol->name);
 				alg_info_free(&aie->ai);
 				return NULL;
 			}
@@ -227,7 +226,7 @@ static struct alg_info_esp *alg_info_discover_pfsgroup_hack(struct alg_info_esp 
 			if (last_dash != NULL && last_semi < last_dash) {
 				snprintf(err_buf, err_buf_len,
 					 "%s DH algorithm must be at end of proposal",
-					 parser_param->protocol);
+					 last->protocol->name);
 				alg_info_free(&aie->ai);
 				return NULL;
 			}
@@ -236,7 +235,7 @@ static struct alg_info_esp *alg_info_discover_pfsgroup_hack(struct alg_info_esp 
 			if (last_semi != NULL) {
 				snprintf(err_buf, err_buf_len,
 					 "%s DH algorithm must appear once after last proposal",
-					 parser_param->protocol);
+					 last->protocol->name);
 				alg_info_free(&aie->ai);
 				return NULL;
 			}
@@ -303,8 +302,7 @@ struct alg_info_esp *alg_info_esp_create_from_str(const struct parser_policy *po
 				   err_buf, err_buf_len,
 				   &esp_parser_param);
 	alg_info_esp = alg_info_discover_pfsgroup_hack(alg_info_esp, alg_str,
-						       err_buf, err_buf_len,
-						       &esp_parser_param);
+						       err_buf, err_buf_len);
 	return alg_info_esp;
 }
 
@@ -330,7 +328,6 @@ struct alg_info_esp *alg_info_ah_create_from_str(const struct parser_policy *pol
 				   err_buf, err_buf_len,
 				   &ah_parser_param);
 	alg_info_ah = alg_info_discover_pfsgroup_hack(alg_info_ah, alg_str,
-						      err_buf, err_buf_len,
-						      &ah_parser_param);
+						      err_buf, err_buf_len);
 	return alg_info_ah;
 }

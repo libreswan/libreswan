@@ -63,7 +63,7 @@ struct proposal_defaults {
  */
 
 struct parser_param {
-	const char *protocol;
+	const char *name;
 	enum ike_alg_key ikev1_alg_id;
 
 	/*

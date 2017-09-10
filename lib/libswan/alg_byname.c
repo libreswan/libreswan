@@ -22,7 +22,7 @@
 #include "ike_alg.h"
 #include "ike_alg_null.h"
 
-bool alg_byname_ok(const struct parser_param *param,
+bool alg_byname_ok(const struct parser_param *protocol,
 		   const struct parser_policy *const policy,
 		   const struct ike_alg *alg,
 		   const char *name,
@@ -32,17 +32,17 @@ bool alg_byname_ok(const struct parser_param *param,
 	 * If the connection is IKEv1|IKEv2 then this code will
 	 * exclude anything not supported by both protocols.
 	 */
-	if (policy->ikev1 && alg->id[param->ikev1_alg_id] < 0) {
+	if (policy->ikev1 && alg->id[protocol->ikev1_alg_id] < 0) {
 		snprintf(err_buf, err_buf_len,
 			 "%s %s algorithm '%s' is not supported by IKEv1",
-			 param->protocol, ike_alg_type_name(alg->algo_type),
+			 protocol->name, ike_alg_type_name(alg->algo_type),
 			 name);
 		return false;
 	}
 	if (policy->ikev2 && alg->id[IKEv2_ALG_ID] < 0) {
 		snprintf(err_buf, err_buf_len,
 			 "%s %s algorithm '%s' is not supported by IKEv2",
-			 param->protocol, ike_alg_type_name(alg->algo_type),
+			 protocol->name, ike_alg_type_name(alg->algo_type),
 			 name);
 		return false;
 	}
@@ -58,7 +58,7 @@ bool alg_byname_ok(const struct parser_param *param,
 	if (!policy->alg_is_ok(alg)) {
 		snprintf(err_buf, err_buf_len,
 			 "%s %s algorithm '%s' is not supported",
-			 param->protocol, ike_alg_type_name(alg->algo_type),
+			 protocol->name, ike_alg_type_name(alg->algo_type),
 			 name);
 		return false;
 	}
@@ -73,14 +73,14 @@ bool alg_byname_ok(const struct parser_param *param,
 	if (!ike_alg_is_valid(alg)) {
 		snprintf(err_buf, err_buf_len,
 			 "%s %s algorithm '%s' is not valid",
-			 param->protocol, ike_alg_type_name(alg->algo_type),
+			 protocol->name, ike_alg_type_name(alg->algo_type),
 			 name);
 		return false;
 	}
 	return true;
 }
 
-static const struct ike_alg *alg_byname(const struct parser_param *param,
+static const struct ike_alg *alg_byname(const struct parser_param *protocol,
 					const struct parser_policy *const policy,
 					const struct ike_alg_type *type,
 					char *err_buf, size_t err_buf_len,
@@ -92,15 +92,15 @@ static const struct ike_alg *alg_byname(const struct parser_param *param,
 		 * Known at all?  Poke around in the enum tables to
 		 * see if it turns up.
 		 */
-		if (ike_alg_enum_match(type, param->ikev1_alg_id, name) >= 0
+		if (ike_alg_enum_match(type, protocol->ikev1_alg_id, name) >= 0
 		    || ike_alg_enum_match(type, IKEv2_ALG_ID, name) >= 0) {
 			snprintf(err_buf, err_buf_len,
 				 "%s %s algorithm '%s' is not supported",
-				 param->protocol, ike_alg_type_name(type), name);
+				 protocol->name, ike_alg_type_name(type), name);
 		} else {
 			snprintf(err_buf, err_buf_len,
 				 "%s %s algorithm '%s' is not recognized",
-				 param->protocol, ike_alg_type_name(type), name);
+				 protocol->name, ike_alg_type_name(type), name);
 		}
 		return NULL;
 	}
@@ -108,7 +108,7 @@ static const struct ike_alg *alg_byname(const struct parser_param *param,
 	/*
 	 * Does it pass muster?
 	 */
-	if (!alg_byname_ok(param, policy, alg, name,
+	if (!alg_byname_ok(protocol, policy, alg, name,
 			   err_buf, err_buf_len)) {
 		passert(err_buf[0] != '\0');
 		return NULL;

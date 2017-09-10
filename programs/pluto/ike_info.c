@@ -111,7 +111,7 @@ const struct proposal_defaults ikev2_ike_defaults = {
 };
 
 const struct parser_param ike_parser_param = {
-	.protocol = "IKE",
+	.name = "IKE",
 	.ikev1_alg_id = IKEv1_OAKLEY_ID,
 	.protoid = PROTO_ISAKMP,
 	.ikev1_defaults = &ikev1_ike_defaults,
