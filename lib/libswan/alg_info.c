@@ -562,6 +562,7 @@ static int parse_eklen(char *err_buf, size_t err_buf_len,
 }
 
 static const char *parser_alg_info_add(struct parser_context *p_ctx,
+				       struct proposal_info proposal,
 				       char *err_buf, size_t err_buf_len,
 				       struct alg_info *alg_info)
 {
@@ -571,10 +572,6 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 		    p_ctx->eklen_buf,
 		    p_ctx->aalg_buf,
 		    p_ctx->modp_buf));
-
-	struct proposal_info proposal = {
-		.protocol = p_ctx->param,
-	};
 
 	/*
 	 * Try the raw EALG string with "-<eklen>" if present.
@@ -708,9 +705,12 @@ struct alg_info *alg_info_parse_str(const struct parser_policy *policy,
 
 	parser_init(&ctx, policy, param);
 
+	const struct proposal_info proposal = {
+		.protocol = param,
+	};
+
 	/* use default if no (NULL) string */
 	if (alg_str == NULL) {
-		struct proposal_info proposal = { .enckeylen = 0, };
 		merge_default_proposals(ctx.param, ctx.policy,
 					alg_info, &proposal,
 					err_buf, err_buf_len);
@@ -738,7 +738,8 @@ struct alg_info *alg_info_parse_str(const struct parser_policy *policy,
 		case ST_EOF:
 			{
 				char error[100] = ""; /* arbitrary */
-				err_t ugh = parser_alg_info_add(&ctx, error, sizeof(error),
+				err_t ugh = parser_alg_info_add(&ctx, proposal,
+								error, sizeof(error),
 								alg_info);
 				if (ugh != NULL) {
 					snprintf(err_buf, err_buf_len,
