@@ -298,16 +298,14 @@ static struct proposal_info merge_integ_default(struct proposal_info proposal,
 	return proposal;
 }
 
-static const char *add_proposal_defaults(const struct parser_param *param,
-					 const struct parser_policy *policy,
+static const char *add_proposal_defaults(const struct parser_policy *policy,
 					 const struct proposal_defaults *defaults,
 					 struct alg_info *alg_info,
 					 const struct proposal_info *proposal,
 					 char *err_buf, size_t err_buf_len);
 
 
-static const char *add_alg_defaults(const struct parser_param *param,
-				    const struct parser_policy *policy,
+static const char *add_alg_defaults(const struct parser_policy *policy,
 				    const struct proposal_defaults *defaults,
 				    struct alg_info *alg_info,
 				    const struct proposal_info *proposal,
@@ -323,7 +321,7 @@ static const char *add_alg_defaults(const struct parser_param *param,
 	     *default_alg; default_alg++) {
 		const struct ike_alg *alg = *default_alg;
 		char buf[LOG_WIDTH] = "";
-		if (!alg_byname_ok(param, policy, alg,
+		if (!alg_byname_ok(proposal->protocol, policy, alg,
 				   alg->name, buf, sizeof(buf))) {
 			DBG(DBG_CONTROL|DBG_CRYPT,
 			    DBG_log("skipping default %s", buf));
@@ -336,7 +334,7 @@ static const char *add_alg_defaults(const struct parser_param *param,
 			    alg->name));
 		struct proposal_info merged_proposal = merge_alg_default(*proposal,
 									 *default_alg);
-		const char *error = add_proposal_defaults(param, policy, defaults,
+		const char *error = add_proposal_defaults(policy, defaults,
 							  alg_info, &merged_proposal,
 							  err_buf, err_buf_len);
 		if (error != NULL) {
@@ -351,8 +349,7 @@ static const char *add_alg_defaults(const struct parser_param *param,
  * there are defaults, add them.
  */
 
-static const char *add_proposal_defaults(const struct parser_param *param,
-					 const struct parser_policy *policy,
+static const char *add_proposal_defaults(const struct parser_policy *policy,
 					 const struct proposal_defaults *defaults,
 					 struct alg_info *alg_info,
 					 const struct proposal_info *proposal,
@@ -365,21 +362,21 @@ static const char *add_proposal_defaults(const struct parser_param *param,
 	 */
 	if (proposal->dh == NULL &&
 	    defaults != NULL && defaults->dh != NULL) {
-		return add_alg_defaults(param, policy, defaults,
+		return add_alg_defaults(policy, defaults,
 					alg_info, proposal,
 					&ike_alg_dh, defaults->dh,
 					merge_dh_default,
 					err_buf, err_buf_len);
 	} else if (proposal->encrypt == NULL &&
 		   defaults != NULL && defaults->encrypt != NULL) {
-		return add_alg_defaults(param, policy, defaults,
+		return add_alg_defaults(policy, defaults,
 					alg_info, proposal,
 					&ike_alg_encrypt, defaults->encrypt,
 					merge_encrypt_default,
 					err_buf, err_buf_len);
 	} else if (proposal->prf == NULL &&
 		   defaults != NULL && defaults->prf != NULL) {
-		return add_alg_defaults(param, policy, defaults,
+		return add_alg_defaults(policy, defaults,
 					alg_info, proposal,
 					&ike_alg_prf, defaults->prf,
 					merge_prf_default,
@@ -391,12 +388,12 @@ static const char *add_proposal_defaults(const struct parser_param *param,
 		 */
 		struct proposal_info merged_proposal = *proposal;
 		merged_proposal.integ = &ike_alg_integ_none;
-		return add_proposal_defaults(param, policy, defaults,
+		return add_proposal_defaults(policy, defaults,
 					     alg_info, &merged_proposal,
 					     err_buf, err_buf_len);
 	} else if (proposal->integ == NULL &&
 		   defaults != NULL && defaults->integ != NULL) {
-		return add_alg_defaults(param, policy, defaults,
+		return add_alg_defaults(policy, defaults,
 					alg_info, proposal,
 					&ike_alg_integ, defaults->integ,
 					merge_integ_default,
@@ -424,7 +421,7 @@ static const char *add_proposal_defaults(const struct parser_param *param,
 				 proposal->prf->common.name);
 			return err_buf;
 		}
-		return add_proposal_defaults(param, policy, defaults,
+		return add_proposal_defaults(policy, defaults,
 					     alg_info, &merged_proposal,
 					     err_buf, err_buf_len);
 	} else {
@@ -470,7 +467,7 @@ static const char *add_proposal_defaults(const struct parser_param *param,
 		}
 
 		/* back end? */
-		if (!param->proposal_ok(proposal, err_buf, err_buf_len)) {
+		if (!proposal->protocol->proposal_ok(proposal, err_buf, err_buf_len)) {
 			passert(err_buf[0] != '\0');
 			return err_buf;
 		}
@@ -480,8 +477,7 @@ static const char *add_proposal_defaults(const struct parser_param *param,
 	}
 }
 
-static const char *merge_default_proposals(const struct parser_param *param,
-					   const struct parser_policy *policy,
+static const char *merge_default_proposals(const struct parser_policy *policy,
 					   struct alg_info *alg_info,
 					   const struct proposal_info *proposal,
 					   char *err_buf, size_t err_buf_len)
@@ -497,9 +493,9 @@ static const char *merge_default_proposals(const struct parser_param *param,
 	 * work.
 	 */
 	const struct proposal_defaults *defaults = (policy->ikev1
-						    ? param->ikev1_defaults
-						    : param->ikev2_defaults);
-	return add_proposal_defaults(param, policy, defaults,
+						    ? proposal->protocol->ikev1_defaults
+						    : proposal->protocol->ikev2_defaults);
+	return add_proposal_defaults(policy, defaults,
 				     alg_info, proposal,
 				     err_buf, err_buf_len);
 }
@@ -671,7 +667,7 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 	}
 
 	if (p_ctx->param->alg_info_add == NULL) {
-		return merge_default_proposals(p_ctx->param, p_ctx->policy,
+		return merge_default_proposals(p_ctx->policy,
 					       alg_info, &proposal,
 					       err_buf, err_buf_len);
 	}
@@ -711,7 +707,7 @@ struct alg_info *alg_info_parse_str(const struct parser_policy *policy,
 
 	/* use default if no (NULL) string */
 	if (alg_str == NULL) {
-		merge_default_proposals(ctx.param, ctx.policy,
+		merge_default_proposals(ctx.policy,
 					alg_info, &proposal,
 					err_buf, err_buf_len);
 		return alg_info;
