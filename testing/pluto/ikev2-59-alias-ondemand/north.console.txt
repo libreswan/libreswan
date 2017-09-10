@@ -41,7 +41,7 @@ north #
 010 "noth-eastnets/0x1" #3: STATE_PARENT_I2: retransmission; will wait 400ms for response
 002 "noth-eastnets/0x1" #3: IKEv2 mode peer ID is ID_FQDN: '@east'
 002 "noth-eastnets/0x1" #3: negotiated connection [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "noth-eastnets/0x1" #3: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA2_512 NATOA=none NATD=none DPD=passive}
+004 "noth-eastnets/0x1" #3: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 NATOA=none NATD=none DPD=passive}
 139 "noth-eastnets/0x2" #4: STATE_V2_CREATE_I: sent IPsec Child req wait response
 010 "noth-eastnets/0x2" #4: STATE_V2_CREATE_I: retransmission; will wait 50ms for response
 010 "noth-eastnets/0x2" #4: STATE_V2_CREATE_I: retransmission; will wait 100ms for response
@@ -50,7 +50,7 @@ north #
 010 "noth-eastnets/0x2" #4: STATE_V2_CREATE_I: retransmission; will wait 800ms for response
 010 "noth-eastnets/0x2" #4: STATE_V2_CREATE_I: retransmission; will wait 1600ms for response
 002 "noth-eastnets/0x2" #4: negotiated connection [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.22.0-192.0.22.255:0-65535 0]
-004 "noth-eastnets/0x2" #4: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA2_512-MODP3072 NATOA=none NATD=none DPD=passive}
+004 "noth-eastnets/0x2" #4: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512-MODP3072 NATOA=none NATD=none DPD=passive}
 north #
  sleep 16
 north #
