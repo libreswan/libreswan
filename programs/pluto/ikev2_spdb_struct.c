@@ -2247,6 +2247,7 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 			passert(integ->common.id[IKEv2_ALG_ID] >= 0);
 			append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
 					 integ->common.id[IKEv2_ALG_ID], 0);
+			add_pfs_group_to_proposal(proposal, pfs_group);
 			break;
 		}
 		default:
