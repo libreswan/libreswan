@@ -2,7 +2,9 @@
 See also https://libreswan.org/
 
 v3.22 (unreleased)
-* pluto: Support for RFC 7427 Digital Signature AUTH [Sahana Prasad/GSoC]
+* IKEv2: Support for RFC 7427 Digital Signature AUTH [Sahana Prasad/GSoC]
+* IKEv2: Send ESP=AEAD+NONE and accept both ESP=AEAD+NONE and ESP=AEAD [Andrew]
+         (See also: https://www.rfc-editor.org/errata/eid5109)
 * pluto: Change default rundir from /var/run/pluto to /run/pluto [Paul]
 * various: phase out --ctlbase for --ctlsocket and --rundir [Paul]
 * libipsecconf: reject unavailable kernel algorithms in parser [Andrew]
