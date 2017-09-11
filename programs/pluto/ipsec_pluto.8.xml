@@ -596,12 +596,14 @@
       <arg choice="opt">--debug-private</arg>
       <arg choice="opt">--impair-bust-mi2</arg>
       <arg choice="opt">--impair-bust-mr2</arg>
-      <arg choice="opt">--impair-sa-fail</arg>
       <arg choice="opt">--impair-die-oninfo</arg>
+      <arg choice="opt">--impair-ikev2-exclude-integ-none</arg>
+      <arg choice="opt">--impair-ikev2-include-integ-none</arg>
       <arg choice="opt">--impair-jacob-two-two</arg>
       <arg choice="opt">--impair-major-version-bump</arg>
       <arg choice="opt">--impair-minor-version-bump</arg>
       <arg choice="opt">--impair-retransmits</arg>
+      <arg choice="opt">--impair-sa-fail</arg>
       <arg choice="opt">--impair-send-bogus-isakmp-flag</arg>
       <arg choice="opt">--impair-send-ikev2-ke</arg>
       <arg choice="opt">--impair-send-key-size-check</arg>
