@@ -487,153 +487,152 @@ u_int16_t secctx_attr_type = SECCTX;
 
 static const struct option long_opts[] = {
 	/* name, has_arg, flag, val */
-	{ "help\0", no_argument, NULL, 'h' },
-	{ "version\0", no_argument, NULL, 'v' },
 	{ "config\0<filename>", required_argument, NULL, 'z' },
-	{ "nofork\0", no_argument, NULL, '0' },
-	{ "stderrlog\0", no_argument, NULL, 'e' },
-	{ "logfile\0<filename>", required_argument, NULL, 'g' },
+	{ "coredir\0>dumpdir", required_argument, NULL, 'C' },	/* redundant spelling */
+	{ "crlcheckinterval\0", required_argument, NULL, 'x' },
+	{ "crl_strict\0", no_argument, NULL, 'r' }, /* _ */
+	{ "crl-strict\0", no_argument, NULL, 'r' },
+	{ "ctlbase\0<path>", required_argument, NULL, 'b' }, /* backwords compatibility */
+	{ "curl_iface\0<ifname|ifaddr>", required_argument, NULL, 'Z' }, /* _ */
+	{ "curl-iface\0<ifname|ifaddr>", required_argument, NULL, 'Z' },
+	{ "curl-timeout\0<secs>", required_argument, NULL, 'I' },
+	{ "curl-timeout\0<secs>", required_argument, NULL, 'I' }, /* _ */
+	{ "debug-all\0", no_argument, NULL, 'A' },
+	{ "debug-nat_t\0>debug-nattraversal", no_argument, NULL, '5' },	/* redundant spelling; _ */
+	{ "debug-nat-t\0>debug-nattraversal", no_argument, NULL, '5' },	/* redundant spelling */
+	{ "debug-nattraversal\0", no_argument, NULL, '5' },
+	{ "debug-none\0^", no_argument, NULL, 'N' },
+	{ "disable_port_floating\0!", no_argument, NULL, 'h' },	/* obsolete; _ */
 #ifdef USE_DNSSEC
 	{ "dnssec-rootkey-file\0<filename>", required_argument, NULL,
 		OPT_DNSSEC_ROOTKEY_FILE },
 	{ "dnssec-trusted\0<filename>", required_argument, NULL,
 		OPT_DNSSEC_TRUSTED },
 #endif
-	{ "log-no-time\0", no_argument, NULL, 't' }, /* was --plutostderrlogtime */
-	{ "log-no-append\0", no_argument, NULL, '7' },
+	{ "dumpdir\0<dirname>", required_argument, NULL, 'C' },
+	{ "expire-shunt-interval\0<secs>", required_argument, NULL, '9' },
+	{ "foodgroupsdir\0>ipsecdir", required_argument, NULL, 'f' },	/* redundant spelling */
 	{ "force_busy\0_", no_argument, NULL, 'D' },	/* _ */
 	{ "force-busy\0", no_argument, NULL, 'D' },
+	{ "force_keepalive\0!", no_argument, NULL, 'h' },	/* obsolete; _ */
 	{ "force-unlimited\0", no_argument, NULL, 'U' },
-	{ "crl-strict\0", no_argument, NULL, 'r' },
-	{ "crl_strict\0", no_argument, NULL, 'r' }, /* _ */
-	{ "ocsp-strict\0", no_argument, NULL, 'o' },
-	{ "ocsp_strict\0", no_argument, NULL, 'o' }, /* _ */
-	{ "ocsp-enable\0", no_argument, NULL, 'O' },
-	{ "ocsp_enable\0", no_argument, NULL, 'O' }, /* _ */
-	{ "ocsp-uri\0", required_argument, NULL, 'Y' },
-	{ "ocsp_uri\0", required_argument, NULL, 'Y' }, /* _ */
-	{ "ocsp-timeout\0", required_argument, NULL, 'T' },
-	{ "ocsp_timeout\0", required_argument, NULL, 'T' }, /* _ */
-	{ "ocsp-trustname\0", required_argument, NULL, 'J' },
-	{ "ocsp_trustname\0", required_argument, NULL, 'J' }, /* _ */
-	{ "ocsp-cache-size\0", required_argument, NULL, 'E' },
-	{ "ocsp-cache-min-age\0", required_argument, NULL, 'G' },
-	{ "ocsp-cache-max-age\0", required_argument, NULL, 'H' },
-	{ "ocsp-method\0", required_argument, NULL, 'B' },
-	{ "crlcheckinterval\0", required_argument, NULL, 'x' },
-	{ "uniqueids\0", no_argument, NULL, 'u' },
-	{ "no-dnssec\0", no_argument, NULL, 'R' },
-	{ "noklips\0>use-nostack", no_argument, NULL, 'n' },	/* redundant spelling */
-	{ "nokernel\0>use-nostack", no_argument, NULL, 'n' },	/* redundant spelling */
-	{ "use-nostack\0",  no_argument, NULL, 'n' },
-	{ "use-none\0>use-nostack", no_argument, NULL, 'n' },	/* redundant spelling */
-	{ "useklips\0>use-klips",  no_argument, NULL, 'k' },	/* redundant spelling */
-	{ "use-klips\0",  no_argument, NULL, 'k' },
-	{ "use-auto\0>use-netkey",  no_argument, NULL, 'K' },	/* rednundate spelling (sort of) */
-	{ "usenetkey\0>use-netkey", no_argument, NULL, 'K' },	/* redundant spelling */
-	{ "use-netkey\0", no_argument, NULL, 'K' },
-	{ "use-mast\0",   no_argument, NULL, 'M' },
-	{ "use-mastklips\0",   no_argument, NULL, 'M' },
-	{ "use-bsdkame\0",   no_argument, NULL, 'F' },
-	{ "interface\0<ifname|ifaddr>", required_argument, NULL, 'i' },
-	{ "curl-iface\0<ifname|ifaddr>", required_argument, NULL, 'Z' },
-	{ "curl_iface\0<ifname|ifaddr>", required_argument, NULL, 'Z' }, /* _ */
-	{ "curl-timeout\0<secs>", required_argument, NULL, 'I' },
-	{ "curl-timeout\0<secs>", required_argument, NULL, 'I' }, /* _ */
-	{ "listen\0<ifaddr>", required_argument, NULL, 'L' },
+	{ "help\0", no_argument, NULL, 'h' },
 	{ "ikeport\0<port-number>", required_argument, NULL, 'p' },
 	{ "ike-socket-bufsize\0<buf-size>", required_argument, NULL, 'W' },
 	{ "ike-socket-no-errqueue\0", no_argument, NULL, '1' },
-	{ "nflog-all\0<group-number>", required_argument, NULL, 'G' },
-	{ "natikeport\0<port-number>", required_argument, NULL, 'q' },
-	{ "rundir\0<path>", required_argument, NULL, 'b' }, /* was ctlbase */
-	{ "ctlbase\0<path>", required_argument, NULL, 'b' }, /* backwords compatibility */
-	{ "secretsfile\0<secrets-file>", required_argument, NULL, 's' },
-	{ "perpeerlogbase\0<path>", required_argument, NULL, 'P' },
-	{ "perpeerlog\0", no_argument, NULL, 'l' },
-	{ "coredir\0>dumpdir", required_argument, NULL, 'C' },	/* redundant spelling */
-	{ "dumpdir\0<dirname>", required_argument, NULL, 'C' },
-	{ "statsbin\0<filename>", required_argument, NULL, 'S' },
+	{ "interface\0<ifname|ifaddr>", required_argument, NULL, 'i' },
 	{ "ipsecdir\0<ipsec-dir>", required_argument, NULL, 'f' },
 	{ "ipsec_dir\0>ipsecdir", required_argument, NULL, 'f' },	/* redundant spelling; _ */
-	{ "foodgroupsdir\0>ipsecdir", required_argument, NULL, 'f' },	/* redundant spelling */
-	{ "nssdir\0<path>", required_argument, NULL, 'd' },	/* nss-tools use -d */
-	{ "nat_traversal\0!", no_argument, NULL, 'h' },	/* obsolete; _ */
-	{ "keep_alive\0_", required_argument, NULL, '2' },	/* _ */
 	{ "keep-alive\0<delay_secs>", required_argument, NULL, '2' },
-	{ "force_keepalive\0!", no_argument, NULL, 'h' },	/* obsolete; _ */
-	{ "disable_port_floating\0!", no_argument, NULL, 'h' },	/* obsolete; _ */
-	{ "virtual_private\0_", required_argument, NULL, '6' },	/* _ */
-	{ "virtual-private\0<network_list>", required_argument, NULL, '6' },
+	{ "keep_alive\0_", required_argument, NULL, '2' },	/* _ */
+	{ "leak-detective\0", no_argument, NULL, 'X' },
+	{ "listen\0<ifaddr>", required_argument, NULL, 'L' },
+	{ "logfile\0<filename>", required_argument, NULL, 'g' },
+	{ "log-no-append\0", no_argument, NULL, '7' },
+	{ "log-no-time\0", no_argument, NULL, 't' }, /* was --plutostderrlogtime */
+	{ "natikeport\0<port-number>", required_argument, NULL, 'q' },
+	{ "nat_traversal\0!", no_argument, NULL, 'h' },	/* obsolete; _ */
+	{ "nflog-all\0<group-number>", required_argument, NULL, 'G' },
 	{ "nhelpers\0<number>", required_argument, NULL, 'j' },
-	{ "expire-shunt-interval\0<secs>", required_argument, NULL, '9' },
-	{ "seedbits\0<number>", required_argument, NULL, 'c' },
-#ifdef HAVE_LABELED_IPSEC
-	/* ??? really an attribute type, not a value */
-	{ "secctx_attr_value\0_", required_argument, NULL, 'w' },	/* obsolete name; _ */
-	{ "secctx-attr-value\0<number>", required_argument, NULL, 'w' },	/* obsolete name */
-	{ "secctx-attr-type\0<number>", required_argument, NULL, 'w' },
-#endif
+	{ "no-dnssec\0", no_argument, NULL, 'R' },
+	{ "nofork\0", no_argument, NULL, '0' },
+	{ "nokernel\0>use-nostack", no_argument, NULL, 'n' },	/* redundant spelling */
+	{ "noklips\0>use-nostack", no_argument, NULL, 'n' },	/* redundant spelling */
+	{ "nssdir\0<path>", required_argument, NULL, 'd' },	/* nss-tools use -d */
+	{ "ocsp-cache-max-age\0", required_argument, NULL, 'H' },
+	{ "ocsp-cache-min-age\0", required_argument, NULL, 'G' },
+	{ "ocsp-cache-size\0", required_argument, NULL, 'E' },
+	{ "ocsp_enable\0", no_argument, NULL, 'O' }, /* _ */
+	{ "ocsp-enable\0", no_argument, NULL, 'O' },
+	{ "ocsp-method\0", required_argument, NULL, 'B' },
+	{ "ocsp_strict\0", no_argument, NULL, 'o' }, /* _ */
+	{ "ocsp-strict\0", no_argument, NULL, 'o' },
+	{ "ocsp_timeout\0", required_argument, NULL, 'T' }, /* _ */
+	{ "ocsp-timeout\0", required_argument, NULL, 'T' },
+	{ "ocsp_trustname\0", required_argument, NULL, 'J' }, /* _ */
+	{ "ocsp-trustname\0", required_argument, NULL, 'J' },
+	{ "ocsp_uri\0", required_argument, NULL, 'Y' }, /* _ */
+	{ "ocsp-uri\0", required_argument, NULL, 'Y' },
+	{ "perpeerlog\0", no_argument, NULL, 'l' },
+	{ "perpeerlogbase\0<path>", required_argument, NULL, 'P' },
+	{ "rundir\0<path>", required_argument, NULL, 'b' }, /* was ctlbase */
 #ifdef HAVE_SECCOMP
 	{ "seccomp-enabled\0", no_argument, NULL, '3' },
 	{ "seccomp-tolerant\0", no_argument, NULL, '4' },
 #endif
+#ifdef HAVE_LABELED_IPSEC
+	{ "secctx-attr-type\0<number>", required_argument, NULL, 'w' },
+	{ "secctx-attr-value\0<number>", required_argument, NULL, 'w' },	/* obsolete name */
+	/* ??? really an attribute type, not a value */
+	{ "secctx_attr_value\0_", required_argument, NULL, 'w' },	/* obsolete name; _ */
+#endif
+	{ "secretsfile\0<secrets-file>", required_argument, NULL, 's' },
+	{ "seedbits\0<number>", required_argument, NULL, 'c' },
+	{ "statsbin\0<filename>", required_argument, NULL, 'S' },
+	{ "stderrlog\0", no_argument, NULL, 'e' },
+	{ "uniqueids\0", no_argument, NULL, 'u' },
+	{ "use-auto\0>use-netkey",  no_argument, NULL, 'K' },	/* rednundate spelling (sort of) */
+	{ "use-bsdkame\0",   no_argument, NULL, 'F' },
+	{ "use-klips\0",  no_argument, NULL, 'k' },
+	{ "useklips\0>use-klips",  no_argument, NULL, 'k' },	/* redundant spelling */
+	{ "use-mast\0",   no_argument, NULL, 'M' },
+	{ "use-mastklips\0",   no_argument, NULL, 'M' },
+	{ "use-netkey\0", no_argument, NULL, 'K' },
+	{ "usenetkey\0>use-netkey", no_argument, NULL, 'K' },	/* redundant spelling */
+	{ "use-none\0>use-nostack", no_argument, NULL, 'n' },	/* redundant spelling */
+	{ "use-nostack\0",  no_argument, NULL, 'n' },
 	{ "vendorid\0<vendorid>", required_argument, NULL, 'V' },
-
-	{ "leak-detective\0", no_argument, NULL, 'X' },
-	{ "debug-nat_t\0>debug-nattraversal", no_argument, NULL, '5' },	/* redundant spelling; _ */
-	{ "debug-nat-t\0>debug-nattraversal", no_argument, NULL, '5' },	/* redundant spelling */
-	{ "debug-nattraversal\0", no_argument, NULL, '5' },
-	{ "debug-none\0^", no_argument, NULL, 'N' },
-	{ "debug-all\0", no_argument, NULL, 'A' },
+	{ "version\0", no_argument, NULL, 'v' },
+	{ "virtual-private\0<network_list>", required_argument, NULL, '6' },
+	{ "virtual_private\0_", required_argument, NULL, '6' },	/* _ */
 
 	/* --debug-* options (using D for shorthand) */
 #define D(name, code) { "debug-" name, no_argument, NULL, (code) + DBG_OFFSET }
-	D("raw\0", DBG_RAW_IX),
+	D("control\0", DBG_CONTROL_IX),
+	D("controlmore\0", DBG_CONTROLMORE_IX),
 	D("crypt\0", DBG_CRYPT_IX),
 	D("crypto\0>crypt", DBG_CRYPT_IX),	/* redundant spelling */
-	D("parsing\0", DBG_PARSING_IX),
+	D("dns\0", DBG_DNS_IX),
+	D("dpd\0", DBG_DPD_IX),
 	D("emitting\0", DBG_EMITTING_IX),
-	D("control\0", DBG_CONTROL_IX),
-	D("lifecycle\0", DBG_LIFECYCLE_IX),
 	D("kernel\0", DBG_KERNEL_IX),
 	D("klips\0>kernel", DBG_KERNEL_IX),	/* redundant spelling */
+	D("lifecycle\0", DBG_LIFECYCLE_IX),
 	D("netkey\0>kernel", DBG_KERNEL_IX),	/* redundant spelling */
-	D("dns\0", DBG_DNS_IX),
 	D("oppo\0", DBG_OPPO_IX),
 	D("oppoinfo\0", DBG_OPPOINFO_IX),
-	D("controlmore\0", DBG_CONTROLMORE_IX),
-	D("dpd\0", DBG_DPD_IX),
-	D("x509\0", DBG_X509_IX),
-	D("private\0", DBG_PRIVATE_IX),
+	D("parsing\0", DBG_PARSING_IX),
 	D("pfkey\0", DBG_PFKEY_IX),
+	D("private\0", DBG_PRIVATE_IX),
+	D("raw\0", DBG_RAW_IX),
+	D("x509\0", DBG_X509_IX),
 #undef D
 
 	/* --impair-* options (using I for shorthand) */
 #define I(name, code) { "impair-" name, no_argument, NULL, (code) + DBG_OFFSET }
+	I("allow-null-null\0", IMPAIR_ALLOW_NULL_NULL_IX),
 	I("bust-mi2\0", IMPAIR_BUST_MI2_IX),
 	I("bust-mr2\0", IMPAIR_BUST_MR2_IX),
-	I("sa-creation\0", IMPAIR_SA_CREATION_IX),
 	I("die-oninfo\0", IMPAIR_DIE_ONINFO_IX),
+	I("force-fips\0", IMPAIR_FORCE_FIPS_IX),
+	I("ignore-hash-notify\0", IMPAIR_IGNORE_HASH_NOTIFY_REQUEST_IX),
+	I("ignore-hash-notify-resp\0", IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE_IX),
 	I("jacob-two-two\0", IMPAIR_JACOB_TWO_TWO_IX),
-	I("allow-null-null\0", IMPAIR_ALLOW_NULL_NULL_IX),
 	I("major-version-bump\0", IMPAIR_MAJOR_VERSION_BUMP_IX),
 	I("minor-version-bump\0", IMPAIR_MINOR_VERSION_BUMP_IX),
+	I("omit-hash-notify\0", IMPAIR_OMIT_HASH_NOTIFY_REQUEST_IX),
 	I("retransmits\0", IMPAIR_RETRANSMITS_IX),
+	I("sa-creation\0", IMPAIR_SA_CREATION_IX),
+	I("send-bogus-dcookie\0", IMPAIR_SEND_BOGUS_DCOOKIE_IX),
 	I("send-bogus-isakmp-flag\0", IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX),
 	I("send-bogus-payload-flag\0", IMPAIR_SEND_BOGUS_PAYLOAD_FLAG_IX),
 	I("send-ikev2-ke\0", IMPAIR_SEND_IKEv2_KE_IX),
 	I("send-key-size-check\0", IMPAIR_SEND_KEY_SIZE_CHECK_IX),
 	I("send-no-delete\0", IMPAIR_SEND_NO_DELETE_IX),
 	I("send-no-ikev2-auth\0", IMPAIR_SEND_NO_IKEV2_AUTH_IX),
-	I("send-no-xauth-r0\0", IMPAIR_SEND_NO_XAUTH_R0_IX),
 	I("send-no-main-r2\0", IMPAIR_SEND_NO_MAIN_R2_IX),
-	I("force-fips\0", IMPAIR_FORCE_FIPS_IX),
+	I("send-no-xauth-r0\0", IMPAIR_SEND_NO_XAUTH_R0_IX),
 	I("send-zero-gx\0", IMPAIR_SEND_ZERO_GX_IX),
-	I("send-bogus-dcookie\0", IMPAIR_SEND_BOGUS_DCOOKIE_IX),
-	I("omit-hash-notify\0", IMPAIR_OMIT_HASH_NOTIFY_REQUEST_IX),
-	I("ignore-hash-notify\0", IMPAIR_IGNORE_HASH_NOTIFY_REQUEST_IX),
-	I("ignore-hash-notify-resp\0", IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE_IX),
 #undef I
 	{ 0, 0, 0, 0 }
 };
