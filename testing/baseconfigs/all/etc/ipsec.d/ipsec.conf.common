@@ -9,11 +9,6 @@
 # left  = other stuff.
 #
 
-# Having re-transmits randomly occur in the middle of most tests just
-# adds to test result noise.
-conn slow-retransmits
-        retransmit-interval=2000
-
 conn me-to-anyone
 	right=%defaultroute
 	rightnexthop=%defaultroute
