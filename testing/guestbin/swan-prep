@@ -211,6 +211,8 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
             ipsecsecrets = "/testing/baseconfigs/%s/etc/ipsec.secrets" % hostname
 
         if args.userland == "strongswan":
+            # required to write log file in /tmp
+            subprocess.getoutput("setenforce 0")
             strongswanconf = "%s/%sstrongswan.conf" % (testpath, hostname)
             shutil.copy(strongswanconf, "/etc/strongswan/strongswan.conf")
             for dir in ("/etc/strongswan/ipsec.d/aacerts", "/etc/strongswan/ipsec.d/ocspcerts"):
