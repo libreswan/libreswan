@@ -75,7 +75,7 @@
 #include "timer.h"
 #include "ipsecconf/confread.h"
 #include "xauth.h"
-
+#include "lset_names.h"
 #include "crypto.h"
 #include "vendor.h"
 #include "pluto_crypt.h"
@@ -1726,48 +1726,16 @@ int main(int argc, char **argv)
 	libreswan_log("XAUTH PAM support [disabled]");
 #endif
 
-/* Log various impair-* functions if they were enabled */
+	/* Log impair-* functions that were enabled */
 
-	if (DBGP(IMPAIR_BUST_MI2))
-		libreswan_log("Warning: IMPAIR_BUST_MI2 enabled");
-	if (DBGP(IMPAIR_BUST_MR2))
-		libreswan_log("Warning: IMPAIR_BUST_MR2 enabled");
-	if (DBGP(IMPAIR_SA_CREATION))
-		libreswan_log("Warning: IMPAIR_SA_CREATION enabled");
-	if (DBGP(IMPAIR_JACOB_TWO_TWO))
-		libreswan_log("Warning: IMPAIR_JACOB_TWO_TWO enabled");
-	if (DBGP(IMPAIR_ALLOW_NULL_NULL))
-		libreswan_log("Warning: IMPAIR_ALLOW_NULL_NULL enabled");
-	if (DBGP(IMPAIR_DIE_ONINFO))
-		libreswan_log("Warning: IMPAIR_DIE_ONINFO enabled");
-	if (DBGP(IMPAIR_MAJOR_VERSION_BUMP))
-		libreswan_log("Warning: IMPAIR_MAJOR_VERSION_BUMP enabled");
-	if (DBGP(IMPAIR_MINOR_VERSION_BUMP))
-		libreswan_log("Warning: IMPAIR_MINOR_VERSION_BUMP enabled");
-	if (DBGP(IMPAIR_RETRANSMITS))
-		libreswan_log("Warning: IMPAIR_RETRANSMITS enabled");
-	if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG))
-		libreswan_log("Warning: IMPAIR_SEND_BOGUS_ISAKMP_FLAG enabled");
-	if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG))
-		libreswan_log("Warning: IMPAIR_SEND_BOGUS_PAYLOAD_FLAG enabled");
-	if (DBGP(IMPAIR_SEND_IKEv2_KE))
-		libreswan_log("Warning: IMPAIR_SEND_IKEv2_KE enabled");
-	if (DBGP(IMPAIR_SEND_KEY_SIZE_CHECK))
-		libreswan_log("Warning: IMPAIR_SEND_KEY_SIZE_CHECK enabled");
-	if (DBGP(IMPAIR_SEND_NO_DELETE))
-		libreswan_log("Warning: IMPAIR_SEND_NO_DELETE enabled");
-	if (DBGP(IMPAIR_FORCE_FIPS))
-		libreswan_log("Warning: IMPAIR_FORCE_FIPS enabled");
-	if (DBGP(IMPAIR_SEND_NO_IKEV2_AUTH))
-		libreswan_log("Warning: IMPAIR_SEND_NO_IKEV2_AUTH enabled");
-	if (DBGP(IMPAIR_SEND_NO_XAUTH_R0))
-		libreswan_log("Warning: IMPAIR_SEND_NO_XAUTH_R0 enabled");
-	if (DBGP(IMPAIR_SEND_NO_MAIN_R2))
-		libreswan_log("Warning: IMPAIR_SEND_NO_MAIN_R2 enabled");
-	if (DBGP(IMPAIR_SEND_ZERO_GX))
-		libreswan_log("Warning: IMPAIR_SEND_ZERO_GX enabled");
-	if (DBGP(IMPAIR_SEND_BOGUS_DCOOKIE))
-		libreswan_log("Warning: IMPAIR_SEND_BOGUS_DCOOKIE enabled");
+	for (unsigned bit = 0; bit < debug_lset_names.roof; bit++) {
+		const struct lelem_name *impair = &debug_lset_names.lelems[bit];
+		if (startswith(impair->flag, "impair-")) {
+			if (DBGP(LELEM(bit))) {
+				libreswan_log("Warning: %s enabled", impair->flag);
+			}
+		}
+	}
 
 /* Initialize all of the various features */
 

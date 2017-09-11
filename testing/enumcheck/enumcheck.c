@@ -5,6 +5,7 @@
 #include "constants.h"
 #include "lswlog.h"
 #include "lswalloc.h"
+#include "lset_names.h"
 
 static void test_enum(char *enumname, enum_names *enum_test, int floor, int long roof)
 {
@@ -159,6 +160,8 @@ int main(int argc UNUSED, char *argv[])
 	test_enum("ike_idtype_names_extended", &ike_idtype_names_extended0, 0, 256);
 	test_enum("ike_idtype_names", &ike_idtype_names, 0, 256);
 	test_enum("ikev2_idtype_names", &ikev2_idtype_names, 0, 256);
+
+	lset_names_check(&debug_lset_names);
 
 	report_leaks();
 	tool_close_log();
