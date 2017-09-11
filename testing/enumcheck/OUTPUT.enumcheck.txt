@@ -1717,6 +1717,9 @@ IETF registry enum_names:
    13 -> IKEv2_AUTH_NULL
          search IKEv2_AUTH_NULL: OK
          match IKEv2_AUTH_NULL: OK
+   14 -> IKEv2_AUTH_DIGSIG
+         search IKEv2_AUTH_DIGSIG: OK
+         match IKEv2_AUTH_DIGSIG: OK
 
   ikev2_trans_type_encr_names:
     1 -> DES_IV64(UNUSED)
