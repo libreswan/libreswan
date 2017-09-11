@@ -52,8 +52,8 @@
 # either as a parameter to make, or added to Makefile.inc.local.
 #
 
-# run the stand alone programs under testing/
-kvmplutotest	basic-pluto-00				good
+# various self-check programs
+kvmplutotest	enumcheck-01			good
 
 # basic pluto test - bring up your basic CONN between eastnet-westnet.
 kvmplutotest	basic-pluto-01			good
