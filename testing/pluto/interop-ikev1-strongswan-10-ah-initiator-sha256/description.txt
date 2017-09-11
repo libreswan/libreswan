@@ -5,4 +5,9 @@ This uses IKEv1. It requires netkey
 This test requires strongswan 5.1.1 or newer for AH support
 
 This test doesn't work with strongswan 5.5.1 .. 5.5.3 see
-https://wiki.strongswan.org/issues/2347.
+https://wiki.strongswan.org/issues/2347
+
+For strongswan 5.6.0, not specifying an IKE line leads to a new
+error: we require PFS but Quick I1 SA specifies no GROUP_DESCRIPTION
+
+To work around this strongswan bug, we configure pfs=no

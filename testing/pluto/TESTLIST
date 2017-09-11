@@ -279,9 +279,6 @@ kvmplutotest	ikev2-x509-13-san-dn-match		good
 kvmplutotest	ikev2-x509-14-san-dn-mismatch		good
 kvmplutotest	ikev2-x509-15-san-dn-mismatch-responder	good
 
-kvmplutotest	interop-ikev1-x509-aggr-12-san-dn-match	good
-kvmplutotest	interop-ikev1-x509-aggr-13-san-dn-match-responder good
-
 kvmplutotest	ikev2-no-nhelpers-01			good
 
 kvmplutotest	ikev2-auth-null-01			good
@@ -639,7 +636,8 @@ kvmplutotest	interop-ikev1-strongswan-15-twofish		good
 kvmplutotest	interop-ikev1-strongswan-16-serpent		good
 kvmplutotest	interop-ikev2-strongswan-31-asymmetric-responder	good
 kvmplutotest	interop-ikev2-strongswan-32-ip-lease		wip
-
+kvmplutotest	interop-ikev1-strongswan-x509-aggr-12-san-dn-match	good
+kvmplutotest	interop-ikev1-strongswan-x509-aggr-13-san-dn-match-responder good
 
 kvmplutotest    netkey-klips-pluto-03		good
 kvmplutotest    klips-netkey-pluto-06		good

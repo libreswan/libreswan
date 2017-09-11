@@ -6,3 +6,6 @@ This test requires strongswan 5.1.1 or newer for AH support.
 
 This test doesn't work with strongswan 5.5.1 .. 5.5.3 see
 https://wiki.strongswan.org/issues/2347.
+
+Due to a strongswan bug in 5.6.0, we have to disable PFS because
+strongswan seems to never allow PFS for AH based connections.
