@@ -31,14 +31,6 @@
 # define DEFAULT_CTL_SOCKET DEFAULT_RUNDIR "/pluto.ctl"
 #endif
 
-#ifdef USE_DNSSEC
-# ifndef DEFAULT_DNSSEC_ROOTKEY_FILE
-#  define DEFAULT_DNSSEC_ROOTKEY_FILE "/var/lib/unbound/root.key"
-# endif
-#else
-# define DEFAULT_DNSSEC_ROOTKEY_FILE "<unused>"
-#endif
-
 
 /*
  * IETF has no recommendations

@@ -482,6 +482,8 @@ u_int16_t secctx_attr_type = SECCTX;
  */
 
 #define DBG_OFFSET 256
+#define OPT_DNSSEC_ROOTKEY_FILE	(DBG_OFFSET + IMPAIR_roof_IX + 1)
+#define OPT_DNSSEC_TRUSTED		(DBG_OFFSET + IMPAIR_roof_IX + 2)
 
 static const struct option long_opts[] = {
 	/* name, has_arg, flag, val */
@@ -491,7 +493,12 @@ static const struct option long_opts[] = {
 	{ "nofork\0", no_argument, NULL, '0' },
 	{ "stderrlog\0", no_argument, NULL, 'e' },
 	{ "logfile\0<filename>", required_argument, NULL, 'g' },
-	{ "dnssec-rootkey-file\0<filename>", required_argument, NULL, 'a' },
+#ifdef USE_DNSSEC
+	{ "dnssec-rootkey-file\0<filename>", required_argument, NULL,
+		OPT_DNSSEC_ROOTKEY_FILE },
+	{ "dnssec-trusted\0<filename>", required_argument, NULL,
+		OPT_DNSSEC_TRUSTED },
+#endif
 	{ "log-no-time\0", no_argument, NULL, 't' }, /* was --plutostderrlogtime */
 	{ "log-no-append\0", no_argument, NULL, '7' },
 	{ "force_busy\0_", no_argument, NULL, 'D' },	/* _ */
@@ -723,7 +730,9 @@ int main(int argc, char **argv)
 	coredir = clone_str(DEFAULT_RUNDIR, "coredir in main()");
 	rundir = clone_str(DEFAULT_RUNDIR, "rundir");
 	pluto_vendorid = clone_str(ipsec_version_vendorid(), "vendorid in main()");
+#ifdef USE_DNSSEC
 	pluto_dnssec_rootfile = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "root.key file");
+#endif
 
 	unsigned int keep_alive = 0;
 
@@ -863,8 +872,8 @@ int main(int argc, char **argv)
 			pluto_log_file = clone_str(optarg, "pluto_log_file");
 			log_to_file_desired = TRUE;
 			continue;
-
-		case 'a':	/* --dnssec-rootkey-file */
+#ifdef USE_DNSSEC
+		case OPT_DNSSEC_ROOTKEY_FILE:	/* --dnssec-rootkey-file */
 			if (strlen(optarg) > 0) {
 				pfree(pluto_dnssec_rootfile);
 				pluto_dnssec_rootfile = clone_str(optarg,
@@ -872,9 +881,10 @@ int main(int argc, char **argv)
 			}
 			continue;
 
-		case 'Q':	/* --dnssec-trusted */
+		case OPT_DNSSEC_TRUSTED:	/* --dnssec-trusted */
 			pluto_dnssec_trusted = clone_str(optarg, "pluto_dnssec_trusted");
 			continue;
+#endif  /* USE_DNSSEC */
 
 		case 't':	/* --log-no-time */
 			log_with_timestamp = FALSE;
@@ -1178,12 +1188,20 @@ int main(int argc, char **argv)
 			set_cfg_string(&pluto_log_file,
 				cfg->setup.strings[KSF_PLUTOSTDERRLOG]);
 			if (strlen(cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE]) > 0) {
-				pfree(pluto_dnssec_rootfile);
+				pfreeany(pluto_dnssec_rootfile);
 				set_cfg_string(&pluto_dnssec_rootfile,
 						cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE]);
+			} else  {
+				/* unset the global one config file unset it */
+				pfreeany(pluto_dnssec_rootfile);
+				pluto_dnssec_rootfile = NULL;
 			}
-			set_cfg_string(&pluto_dnssec_trusted,
-					cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS]);
+			if (strlen(cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS])
+					> 0) {
+				set_cfg_string(&pluto_dnssec_trusted,
+						cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS]);
+			}
+
 			if (pluto_log_file != NULL)
 				log_to_syslog = FALSE;
 			/* plutofork= no longer supported via config file */
@@ -1853,9 +1871,11 @@ void show_setup_plutomain(void)
 		coredir,
 		pluto_stats_binary == NULL ? "unset" :  pluto_stats_binary);
 
+#ifdef USE_DNSSEC
 	whack_log(RC_COMMENT, "dnssec-rootkey-file=%s, dnssec-trusted=%s",
-		pluto_dnssec_rootfile,
+		pluto_dnssec_rootfile == NULL ? "<unset>" : pluto_dnssec_rootfile,
 		pluto_dnssec_trusted == NULL ? "<unset>" : pluto_dnssec_trusted);
+#endif
 
 	whack_log(RC_COMMENT, "sbindir=%s, libexecdir=%s",
 		IPSEC_SBINDIR,
