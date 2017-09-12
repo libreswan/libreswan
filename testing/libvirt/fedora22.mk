@@ -63,7 +63,7 @@ KVM_PACKAGES = \
     vim-enhanced \
     xl2tpd \
     xmlto \
-    https://download.nohats.ca/strongswan/strongswan-5.5.2-1.fc22.x86_64.rpm \
+    https://download.nohats.ca/strongswan/strongswan-5.6.0-1.fc22.x86_64.rpm \
     https://download.nohats.ca/libfaketime/libfaketime-0.9.6-4.fc22.x86_64.rpm
 
 KVM_DEBUGINFO = \
