@@ -31,6 +31,7 @@ Build-Depends:
  man2html,
  pkg-config,
  po-debconf,
+ systemd,
  xmlto,
 Homepage: https://libreswan.org/
 
@@ -48,6 +49,7 @@ Depends:
  libnss3 (>= 3.16),
  libnss3-tools,
  libunbound2,
+ systemd,
  ${misc:Depends},
  ${shlibs:Depends},
 Recommends:
