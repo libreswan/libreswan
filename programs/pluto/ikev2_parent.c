@@ -78,9 +78,7 @@
 
 #include "pluto_stats.h"
 
-static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md, bool pam_status);
-
-//static crypto_req_cont_func ikev2_parent_outI1_continue;	/* type assertion */
+static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md, bool pam_status);
 
 static void ikev2_get_dcookie(u_char *dcookie, chunk_t st_ni,
 			      ip_address *addr, chunk_t spiI);
@@ -435,7 +433,6 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		ke = new_pcrc(ikev2_crypto_continue, what, st, md);
 
 	switch (st->st_state) {
-
 	case STATE_PARENT_I1:
 		/* if we received INVALID_KE, msgid was incremented */
 		st->st_msgid_lastack = v2_INVALID_MSGID;
@@ -738,7 +735,7 @@ stf_status ikev2parent_outI1(int whack_sock,
 			libreswan_log("initiating v2 parent SA to replace #%lu",
 				predecessor->st_serialno);
 		}
-		if (IS_V2_ESTABLISHED( predecessor->st_state)) {
+		if (IS_V2_ESTABLISHED(predecessor->st_state)) {
 			if (IS_CHILD_SA(st))
 				st->st_ipsec_pred = predecessor->st_serialno;
 			else
@@ -5162,7 +5159,7 @@ stf_status ikev2_child_out_cont(struct pluto_crypto_req_cont *qke,
 	return e;
 }
 
-void ikev2_child_send_next( struct state *st)
+void ikev2_child_send_next(struct state *st)
 {
 	struct msg_digest *md = st->st_suspended_md;
 	stf_status e;
@@ -5172,7 +5169,6 @@ void ikev2_child_send_next( struct state *st)
 	complete_v2_state_transition(&md, e);
 	release_any_md(&md);
 	reset_globals();
-	return;
 }
 
 static void delete_or_replace_state(struct state *st) {
@@ -6012,13 +6008,11 @@ void ikev2_add_ipsec_child(int whack_sock, struct state *isakmp_sa,
 	delete_event(st);
 	event_schedule(EVENT_v2_INITIATE_CHILD, 0, st);
 	reset_globals();
-	return;
 }
 
 void ikev2_child_outI(struct state *st)
 {
 	ikev2_crypto_start(NULL, st);
-	return;
 }
 
 /*
@@ -6035,8 +6029,7 @@ bool need_this_intiator(struct state *st)
 		return FALSE; /* ignore STATE_V2_CREATE_I ??? */
 
 	if (c->newest_ipsec_sa > st->st_serialno) {
-		libreswan_log( "suppressing retransmit because superseded by "
-				"#%lu try=%lu. Drop this negotitation",
+		libreswan_log("suppressing retransmit because superseded by #%lu try=%lu. Drop this negotitation",
 				c->newest_ipsec_sa, st->st_try);
 		return TRUE;
 	}

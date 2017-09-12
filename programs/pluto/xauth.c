@@ -256,7 +256,6 @@ static bool xauth_always_thread(void *arg)
 
 static void xauth_always_cleanup(void *arg UNUSED)
 {
-	return;
 }
 
 void xauth_start_always_thread(pthread_t *thread,

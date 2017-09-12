@@ -2559,7 +2559,6 @@ void ikev2_inherit_ipsec_sa(so_serial_t osn, so_serial_t nsn,
 					rehash_state(st, icookie, rcookie);
 				}});
 	}
-	return;
 }
 
 void delete_my_family(struct state *pst, bool v2_responder_state)

@@ -2723,7 +2723,7 @@ struct connection *find_host_connection(
 	return c;
 }
 
-stf_status ikev2_find_host_connection( struct connection **cp,
+stf_status ikev2_find_host_connection(struct connection **cp,
 		const ip_address *me, u_int16_t my_port, const ip_address *him,
 		u_int16_t his_port, lset_t policy)
 {
@@ -4415,5 +4415,4 @@ void liveness_action(struct connection *c, const bool ikev2)
 	default:
 		bad_case(c->dpd_action);
 	}
-	return;
 }

@@ -961,7 +961,7 @@ void ISAKMP_SA_established(struct connection *c, so_serial_t serial)
 
 	/* NULL authentication can never replaced - it is all anonnymous */
 	if (LIN(POLICY_AUTH_NULL, c->policy) ||
-	   ( c->spd.that.authby == AUTH_NULL || c->spd.this.authby == AUTH_NULL)) {
+	   (c->spd.that.authby == AUTH_NULL || c->spd.this.authby == AUTH_NULL)) {
 
 		DBG(DBG_CONTROL, DBG_log("NULL Authentication - all clients appear identical"));
 		return;

@@ -775,7 +775,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 				struct state *cst = state_with_serialno(c->newest_ipsec_sa);
 				if (cst == NULL)
 					break;
-				DBG(DBG_LIFECYCLE, DBG_log( "#%lu check last used on newest IPsec SA #%lu",
+				DBG(DBG_LIFECYCLE, DBG_log("#%lu check last used on newest IPsec SA #%lu",
 							st->st_serialno, cst->st_serialno));
 				if (get_sa_info(cst, TRUE, &last_used_age) &&
 					deltaless(c->sa_rekey_margin, last_used_age))

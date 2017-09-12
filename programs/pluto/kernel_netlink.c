@@ -1594,7 +1594,7 @@ static void netlink_policy_expire(struct nlmsghdr *n)
 	upe = NLMSG_DATA(n);
 	xfrm2ip(&upe->pol.sel.saddr, &src, upe->pol.sel.family);
 	xfrm2ip(&upe->pol.sel.daddr, &dst, upe->pol.sel.family);
-	DBG( DBG_KERNEL, {
+	DBG(DBG_KERNEL, {
 			ipstr_buf a;
 			ipstr_buf b;
 			DBG_log("%s src %s/%u dst %s/%u dir %d index %d",

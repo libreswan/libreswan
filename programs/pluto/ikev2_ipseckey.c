@@ -431,7 +431,7 @@ static err_t process_dns_resp(struct p_dns_req *dnsr)
 	return parse_rr(dnsr, ldnspkt);
 }
 
-void  free_ipseckey_dns( struct p_dns_req *d)
+void  free_ipseckey_dns(struct p_dns_req *d)
 {
 	struct p_dns_req **pp;
 	struct p_dns_req *p;
@@ -777,7 +777,7 @@ static struct p_dns_req *qry_st_init(struct state *st,
 
 
 	err = build_dns_name(qname, &id);
-	if ( err !=  NULL) {
+	if (err !=  NULL) {
 		/* is there qtype to name lookup function  */
 		loglog(RC_LOG_SERIOUS, "could not build dns query name %s %d",
 				err, qtype);
@@ -831,7 +831,7 @@ static stf_status dns_qry_start(struct p_dns_req *dnsr)
 	ub_ret = ub_resolve_event(get_unbound_ctx(), dnsr->qname, dnsr->qtype,
 			dnsr->qclass, dnsr, ipseckey_ub_cb, &dnsr->ub_async_id);
 
-	if ( ub_ret !=  0) {
+	if (ub_ret !=  0) {
 		loglog(RC_LOG_SERIOUS, "unbound resolve call failed for %s",
 				dnsr->log_buf);
 		free_ipseckey_dns(dnsr);

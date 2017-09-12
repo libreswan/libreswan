@@ -55,7 +55,7 @@ extern void ikev2_add_ipsec_child(int whack_sock, struct state *isakmp_sa,
 		);
 
 extern void ikev2_child_outI(struct state *st);
-extern void ikev2_child_send_next( struct state *st);
+extern void ikev2_child_send_next(struct state *st);
 
 extern const struct state_v2_microcode ikev2_parent_firststate_microcode;
 extern const struct state_v2_microcode ikev2_rekey_ike_firststate_microcode;

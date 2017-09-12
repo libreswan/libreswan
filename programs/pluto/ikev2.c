@@ -1724,7 +1724,6 @@ static void sechdule_next_send(struct state *st)
 		st->send_next_ix = st->send_next_ix->next;
 		pfree(p);
 	}
-	return;
 }
 
 void ikev2_update_msgid_counters(struct msg_digest *md)
@@ -1888,7 +1887,7 @@ void log_ipsec_sa_established(const char *m, const struct state *st)
 
 	rangetot(&a->net, 0, ba, sizeof(ba));
 	rangetot(&b->net, 0, bb, sizeof(bb));
-	libreswan_log( "%s [%s:%d-%d %d] -> [%s:%d-%d %d]",
+	libreswan_log("%s [%s:%d-%d %d] -> [%s:%d-%d %d]",
 			m,
 			ba,
 			a->startport,
