@@ -975,14 +975,16 @@ Low-level make targets:
     kvm-demolish                - also delete the base domain
                                   and default network
 
-  Upgrading everything:
+Standard targets and operations:
 
-    make kvm-purge
-    make kvm-upgrade-base-domain
-    make kvm-install
+  To upgrade the base domain:
 
+    kvm-upgrade-base-domain     - since the test+clone domains
+                                  will need rebuilding, use
+                                  the sequence:
 
-Standard targets:
+                                    make kvm-purge
+                                    make kvm-upgrade-base-domain
 
   To build or delete the keys used when testing:
 
