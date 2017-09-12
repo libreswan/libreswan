@@ -492,7 +492,7 @@ static const struct option long_opts[] = {
 	{ "crlcheckinterval\0", required_argument, NULL, 'x' },
 	{ "crl_strict\0", no_argument, NULL, 'r' }, /* _ */
 	{ "crl-strict\0", no_argument, NULL, 'r' },
-	{ "ctlbase\0<path>", required_argument, NULL, 'b' }, /* backwords compatibility */
+	{ "ctlbase\0<path>", required_argument, NULL, 'b' }, /* backwards compatibility */
 	{ "curl_iface\0<ifname|ifaddr>", required_argument, NULL, 'Z' }, /* _ */
 	{ "curl-iface\0<ifname|ifaddr>", required_argument, NULL, 'Z' },
 	{ "curl-timeout\0<secs>", required_argument, NULL, 'I' },
@@ -571,7 +571,7 @@ static const struct option long_opts[] = {
 	{ "statsbin\0<filename>", required_argument, NULL, 'S' },
 	{ "stderrlog\0", no_argument, NULL, 'e' },
 	{ "uniqueids\0", no_argument, NULL, 'u' },
-	{ "use-auto\0>use-netkey",  no_argument, NULL, 'K' },	/* rednundate spelling (sort of) */
+	{ "use-auto\0>use-netkey",  no_argument, NULL, 'K' },	/* redundant spelling (sort of) */
 	{ "use-bsdkame\0",   no_argument, NULL, 'F' },
 	{ "use-klips\0",  no_argument, NULL, 'k' },
 	{ "useklips\0>use-klips",  no_argument, NULL, 'k' },	/* redundant spelling */
