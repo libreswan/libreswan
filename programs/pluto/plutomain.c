@@ -694,7 +694,7 @@ static void usage(void)
 static void set_dnssec_file_names (struct starter_config *cfg)
 {
 #ifdef USE_DNSSEC
-	if (strlen(cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE]) > 0) {
+	if (cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE][0] != '\0') {
 		pfreeany(pluto_dnssec_rootfile);
 		set_cfg_string(&pluto_dnssec_rootfile,
 				cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE]);
@@ -704,7 +704,7 @@ static void set_dnssec_file_names (struct starter_config *cfg)
 		pluto_dnssec_rootfile = NULL;
 	}
 	if (cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS] != NULL &&
-			strlen(cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS]) > 0) {
+			cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS][0] != '\0') {
 		set_cfg_string(&pluto_dnssec_trusted,
 				cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS]);
 	}
@@ -892,7 +892,7 @@ int main(int argc, char **argv)
 			continue;
 #ifdef USE_DNSSEC
 		case OPT_DNSSEC_ROOTKEY_FILE:	/* --dnssec-rootkey-file */
-			if (strlen(optarg) > 0) {
+			if (optarg[0] != '\0') {
 				pfree(pluto_dnssec_rootfile);
 				pluto_dnssec_rootfile = clone_str(optarg,
 						"dnssec_rootkey_file");

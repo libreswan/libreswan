@@ -983,7 +983,7 @@ static bool do_file_authentication(struct state *st, const char *name,
 			addresspool = p;
 		}
 		/* set connectionname to NULL if empty */
-		if (connectionname != NULL && strlen(connectionname) == 0)
+		if (connectionname != NULL && connectionname[0] == '\0')
 			connectionname = NULL;
 		/* If connectionname is null, it applies
 		 * to all connections
@@ -1021,7 +1021,7 @@ static bool do_file_authentication(struct state *st, const char *name,
 
 			if (win) {
 
-				if (addresspool != NULL && strlen(addresspool)>0) {
+				if (addresspool != NULL && addresspool[0] != '\0') {
 					/* set user defined ip address or pool */
 					char *temp;
 					char single_addresspool[128];

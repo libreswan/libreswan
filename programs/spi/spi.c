@@ -241,7 +241,7 @@ static bool parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 				optargp,
 				(int)strlen(optargp));
 		}
-		if (strlen(optargp) == 0) {
+		if (optargp[0] == '\0') {
 			fprintf(stderr,
 				"%s: expected value after '=' in --life option. optargt=0p%p, optargt+strlen(optargt)=0p%p, optargp=0p%p\n",
 				progname,

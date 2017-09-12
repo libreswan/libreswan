@@ -253,8 +253,10 @@ static int send_whack_msg(struct whack_message *msg, char *ctlsocket)
 		return -1;
 	}
 	if (connect(sock, (struct sockaddr *)&ctl_addr,
-			offsetof(struct sockaddr_un,
-				sun_path) + strlen(ctl_addr.sun_path)) < 0) {
+			offsetof(struct sockaddr_un, sun_path) +
+				strlen(ctl_addr.sun_path)) <
+		0)
+	{
 		starter_log(LOG_LEVEL_ERR, "connect(pluto_ctl) failed: %s",
 			strerror(errno));
 		close(sock);

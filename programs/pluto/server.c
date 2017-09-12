@@ -157,17 +157,16 @@ err_t init_ctl_socket(void)
 #endif
 
 		if (bind(ctl_fd, (struct sockaddr *)&ctl_addr,
-			 offsetof(struct sockaddr_un,
-				  sun_path) + strlen(ctl_addr.sun_path)) < 0)
+			 offsetof(struct sockaddr_un, sun_path) +
+				strlen(ctl_addr.sun_path)) < 0)
 			failed = "bind";
 		umask(ou);
 	}
 
 #ifdef PLUTO_GROUP_CTL
 	{
-		struct group *g;
+		struct group *g = getgrnam("pluto");
 
-		g = getgrnam("pluto");
 		if (g != NULL) {
 			if (fchown(ctl_fd, -1, g->gr_gid) != 0) {
 				loglog(RC_LOG_SERIOUS,

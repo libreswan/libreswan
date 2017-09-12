@@ -776,7 +776,7 @@ unsigned int parser_enum_list(const struct keyword_def *kd, const char *s, bool 
 	numfound = 0;
 	while ((piece = strsep(&scopy, ":, \t")) != NULL) {
 		/* discard empty strings */
-		if (strlen(piece) == 0)
+		if (piece[0] == '\0')
 			continue;
 
 		assert(kd->validenum != NULL);
