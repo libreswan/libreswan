@@ -36,7 +36,7 @@ algparse   HMAC_SHA2_384_192   IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha3
 algparse   HMAC_SHA2_256_128   IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha2 sha256 sha2_256 hmac_sha2_256)
 algparse   AES_XCBC_96         IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_xcbc)
 algparse   AES_CMAC_96         IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_cmac)
-algparse   NULL                IKEv1:     ESP     IKEv2:     ESP     FIPS  (none)
+algparse   NONE                IKEv1:     ESP     IKEv2:     ESP     FIPS  (null)
 algparse DH algorithms:
 algparse   MODP1024            IKEv1: IKE ESP AH  IKEv2: IKE ESP AH        (dh2)
 algparse   MODP1536            IKEv1: IKE ESP AH  IKEv2: IKE ESP AH        (dh5)

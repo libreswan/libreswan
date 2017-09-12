@@ -5,7 +5,7 @@
 [esp=]
 	ERROR: String ended with invalid char, just after "" (state=ST_INI_EA)
 [esp=aes_gcm_a-128-null]
-	AES_GCM_8_128-NULL
+	AES_GCM_8_128-NONE
 [esp=3des-sha1;modp1024]
 	ERROR: ESP DH algorithm 'modp1024' is not supported, enc_alg="3des"(0), auth_alg="sha1", modp="modp1024"
 [esp=3des-sha1;modp1536]
@@ -67,105 +67,105 @@
 [esp=camellia256]
 	ERROR: ESP encryption algorithm 'camellia' is not supported, enc_alg="camellia"(256), auth_alg="", modp=""
 [esp=aes_ccm]
-	AES_CCM_16-NULL
+	AES_CCM_16-NONE
 [esp=aes_ccm_a-128-null]
-	AES_CCM_8_128-NULL
+	AES_CCM_8_128-NONE
 [esp=aes_ccm_a-192-null]
-	AES_CCM_8_192-NULL
+	AES_CCM_8_192-NONE
 [esp=aes_ccm_a-256-null]
-	AES_CCM_8_256-NULL
+	AES_CCM_8_256-NONE
 [esp=aes_ccm_b-128-null]
-	AES_CCM_12_128-NULL
+	AES_CCM_12_128-NONE
 [esp=aes_ccm_b-192-null]
-	AES_CCM_12_192-NULL
+	AES_CCM_12_192-NONE
 [esp=aes_ccm_b-256-null]
-	AES_CCM_12_256-NULL
+	AES_CCM_12_256-NONE
 [esp=aes_ccm_c-128-null]
-	AES_CCM_16_128-NULL
+	AES_CCM_16_128-NONE
 [esp=aes_ccm_c-192-null]
-	AES_CCM_16_192-NULL
+	AES_CCM_16_192-NONE
 [esp=aes_ccm_c-256-null]
-	AES_CCM_16_256-NULL
+	AES_CCM_16_256-NONE
 [esp=aes_gcm]
-	AES_GCM_16-NULL
+	AES_GCM_16-NONE
 [esp=aes_gcm_a-128-null]
-	AES_GCM_8_128-NULL
+	AES_GCM_8_128-NONE
 [esp=aes_gcm_a-192-null]
-	AES_GCM_8_192-NULL
+	AES_GCM_8_192-NONE
 [esp=aes_gcm_a-256-null]
-	AES_GCM_8_256-NULL
+	AES_GCM_8_256-NONE
 [esp=aes_gcm_b-128-null]
-	AES_GCM_12_128-NULL
+	AES_GCM_12_128-NONE
 [esp=aes_gcm_b-192-null]
-	AES_GCM_12_192-NULL
+	AES_GCM_12_192-NONE
 [esp=aes_gcm_b-256-null]
-	AES_GCM_12_256-NULL
+	AES_GCM_12_256-NONE
 [esp=aes_gcm_c-128-null]
-	AES_GCM_16_128-NULL
+	AES_GCM_16_128-NONE
 [esp=aes_gcm_c-192-null]
-	AES_GCM_16_192-NULL
+	AES_GCM_16_192-NONE
 [esp=aes_gcm_c-256-null]
-	AES_GCM_16_256-NULL
+	AES_GCM_16_256-NONE
 [esp=aes_ccm_a-null]
-	AES_CCM_8-NULL
+	AES_CCM_8-NONE
 [esp=aes_ccm_b-null]
-	AES_CCM_12-NULL
+	AES_CCM_12-NONE
 [esp=aes_ccm_c-null]
-	AES_CCM_16-NULL
+	AES_CCM_16-NONE
 [esp=aes_gcm_a-null]
-	AES_GCM_8-NULL
+	AES_GCM_8-NONE
 [esp=aes_gcm_b-null]
-	AES_GCM_12-NULL
+	AES_GCM_12-NONE
 [esp=aes_gcm_c-null]
-	AES_GCM_16-NULL
+	AES_GCM_16-NONE
 [esp=aes_ccm-null]
-	AES_CCM_16-NULL
+	AES_CCM_16-NONE
 [esp=aes_gcm-null]
-	AES_GCM_16-NULL
+	AES_GCM_16-NONE
 [esp=aes_ccm-256-null]
-	AES_CCM_16_256-NULL
+	AES_CCM_16_256-NONE
 [esp=aes_gcm-192-null]
-	AES_GCM_16_192-NULL
+	AES_GCM_16_192-NONE
 [esp=aes_ccm_256-null]
-	AES_CCM_16_256-NULL
+	AES_CCM_16_256-NONE
 [esp=aes_gcm_192-null]
-	AES_GCM_16_192-NULL
+	AES_GCM_16_192-NONE
 [esp=aes_ccm_8-null]
-	AES_CCM_8-NULL
+	AES_CCM_8-NONE
 [esp=aes_ccm_12-null]
-	AES_CCM_12-NULL
+	AES_CCM_12-NONE
 [esp=aes_ccm_16-null]
-	AES_CCM_16-NULL
+	AES_CCM_16-NONE
 [esp=aes_gcm_8-null]
-	AES_GCM_8-NULL
+	AES_GCM_8-NONE
 [esp=aes_gcm_12-null]
-	AES_GCM_12-NULL
+	AES_GCM_12-NONE
 [esp=aes_gcm_16-null]
-	AES_GCM_16-NULL
+	AES_GCM_16-NONE
 [esp=aes_ccm_8-128-null]
-	AES_CCM_8_128-NULL
+	AES_CCM_8_128-NONE
 [esp=aes_ccm_12-192-null]
-	AES_CCM_12_192-NULL
+	AES_CCM_12_192-NONE
 [esp=aes_ccm_16-256-null]
-	AES_CCM_16_256-NULL
+	AES_CCM_16_256-NONE
 [esp=aes_gcm_8-128-null]
-	AES_GCM_8_128-NULL
+	AES_GCM_8_128-NONE
 [esp=aes_gcm_12-192-null]
-	AES_GCM_12_192-NULL
+	AES_GCM_12_192-NONE
 [esp=aes_gcm_16-256-null]
-	AES_GCM_16_256-NULL
+	AES_GCM_16_256-NONE
 [esp=aes_ccm_8_128-null]
-	AES_CCM_8_128-NULL
+	AES_CCM_8_128-NONE
 [esp=aes_ccm_12_192-null]
-	AES_CCM_12_192-NULL
+	AES_CCM_12_192-NONE
 [esp=aes_ccm_16_256-null]
-	AES_CCM_16_256-NULL
+	AES_CCM_16_256-NONE
 [esp=aes_gcm_8_128-null]
-	AES_GCM_8_128-NULL
+	AES_GCM_8_128-NONE
 [esp=aes_gcm_12_192-null]
-	AES_GCM_12_192-NULL
+	AES_GCM_12_192-NONE
 [esp=aes_gcm_16_256-null]
-	AES_GCM_16_256-NULL
+	AES_GCM_16_256-NONE
 [esp=aes_ctr]
 	AES_CTR-HMAC_SHA1_96
 [esp=aesctr]
