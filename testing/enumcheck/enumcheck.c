@@ -99,6 +99,19 @@ static void test_enum(char *enumname, enum_names *enum_test, int floor, int long
 	printf("\n");
 }
 
+static void test_lset(const char *name, const struct lset_names *names)
+{
+	printf("%s:\n", name);
+	printf("\tcheck: ");
+	lset_names_check(names);
+	printf("ok\n");
+	LSWLOG_FILE(stdout, buf) {
+		lswlogs(buf, "\tflags: ");
+		lswlog_lset_flags(buf, names, LRANGE(0, names->roof - 1));
+		lswlogs(buf, "\n");
+	}
+}
+
 int main(int argc UNUSED, char *argv[])
 {
 	tool_init_log(argv[0]);
@@ -161,8 +174,6 @@ int main(int argc UNUSED, char *argv[])
 	test_enum("ike_idtype_names", &ike_idtype_names, 0, 256);
 	test_enum("ikev2_idtype_names", &ikev2_idtype_names, 0, 256);
 
-	lset_names_check(&debug_lset_names);
-
 	for (unsigned bit = 0; debug_bit_names[bit] != NULL; bit++) {
 		const char *old = debug_bit_names[bit];
 		const char *new = strip_prefix(debug_lset_names.lelems[bit].flag, "debug-");
@@ -171,6 +182,8 @@ int main(int argc UNUSED, char *argv[])
 			       bit, old, new);
 		}
 	}
+
+	test_lset("debug", &debug_lset_names);
 
 	report_leaks();
 	tool_close_log();

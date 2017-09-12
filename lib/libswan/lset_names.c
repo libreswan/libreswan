@@ -39,3 +39,36 @@ void lset_names_check(const struct lset_names *names)
 	struct lelem_name sentinel = SENTINEL_LELEM_NAME;
 	passert(memeq(&sentinel, lelem, sizeof(sentinel)));
 }
+
+size_t lswlog_lset_flags(struct lswlog *buf,
+			 const struct lset_names *lset_names,
+			 lset_t lset)
+{
+	if (lset == LEMPTY) {
+		return lswlogs(buf, "none");
+	}
+	/*
+	 * Similar to bitnames(), handle possibility of elements with
+	 * no names, but unlike bitnames() print the bit number, not
+	 * its hex mask.
+	 */
+	size_t size = 0;
+	const char *sep = "";
+	unsigned bit = 0;
+	do {
+		if (lset & LELEM(bit)) {
+			size += lswlogs(buf, sep);
+			sep = "+";
+			if (bit < lset_names->roof) {
+				const char *name = strip_prefix(lset_names->lelems[bit].flag,
+								lset_names->strip);
+				size += lswlogs(buf, name);
+			} else {
+				size += lswlogf(buf, "%u", bit);
+			}
+			lset &= ~LELEM(bit);
+		}
+		bit++;
+	} while (lset != LEMPTY);
+	return size;
+}

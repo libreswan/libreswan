@@ -83,7 +83,7 @@
 #include "whack.h"              /* for RC_LOG_SERIOUS */
 #include "pluto_crypt.h"        /* cryptographic helper functions */
 #include "udpfromto.h"
-
+#include "lset_names.h"
 #include <libreswan/pfkeyv2.h>
 #include <libreswan/pfkey.h>
 #include "kameipsec.h"
@@ -613,8 +613,11 @@ void show_ifaces_status(void)
 
 void show_debug_status(void)
 {
-	whack_log(RC_COMMENT, "debug %s",
-		  bitnamesof(debug_bit_names, cur_debugging));
+	LSWLOG_WHACK(RC_COMMENT, buf) {
+		lswlogs(buf, "debug ");
+		lswlog_lset_flags(buf, &debug_lset_names,
+				  cur_debugging);
+	}
 }
 
 void show_fips_status(void)

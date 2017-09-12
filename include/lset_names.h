@@ -43,4 +43,8 @@ struct lset_names {
 
 void lset_names_check(const struct lset_names *names);
 
+size_t lswlog_lset_flags(struct lswlog *buf,
+			 const struct lset_names *names,
+			 lset_t bits);
+
 #endif

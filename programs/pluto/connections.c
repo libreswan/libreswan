@@ -84,6 +84,7 @@
 #include "hostpair.h"
 #include "lswfips.h"
 #include "crypto.h"
+#include "lset_names.h"
 
 struct connection *connections = NULL;
 
@@ -4169,11 +4170,12 @@ void show_one_connection(const struct connection *c)
 	}
 
 	if (c->extra_debugging != LEMPTY) {
-		whack_log(RC_COMMENT, "\"%s\"%s:   debug: %s",
-			c->name,
-			instance,
-			bitnamesof(debug_bit_names,
-				c->extra_debugging));
+		LSWLOG_WHACK(RC_COMMENT, buf) {
+			lswlogf(buf, "\"%s\"%s:   debug: ",
+				c->name, instance);
+			lswlog_lset_flags(buf, &debug_lset_names,
+					  c->extra_debugging);
+		}
 	}
 
 	whack_log(RC_COMMENT,

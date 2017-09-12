@@ -70,7 +70,7 @@
 #include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "server.h" /* for pluto_seccomp */
-
+#include "lset_names.h"
 #include "kernel_alg.h"
 #include "ike_alg.h"
 
@@ -327,10 +327,11 @@ void whack_process(int whackfd, const struct whack_message *const m)
 				 * cause the message to print, it will be printed.
 				 */
 				set_debugging(cur_debugging | m->debugging);
-				DBG(DBG_CONTROL,
-				    DBG_log("base debugging = %s",
-					    bitnamesof(debug_bit_names,
-						       m->debugging)));
+				LSWDBGP(DBG_CONTROL, buf) {
+					lswlogs(buf, "base debugging = ");
+					lswlog_lset_flags(buf, &debug_lset_names,
+							  m->debugging);
+				}
 				base_debugging = m->debugging;
 				set_debugging(base_debugging);
 			} else if (!m->whack_connection) {
@@ -339,12 +340,12 @@ void whack_process(int whackfd, const struct whack_message *const m)
 
 				if (c != NULL) {
 					c->extra_debugging = m->debugging;
-					DBG(DBG_CONTROL,
-					    DBG_log("\"%s\" extra_debugging = %s",
-						    c->name,
-						    bitnamesof(debug_bit_names,
-							       c->
-							       extra_debugging)));
+					LSWDBGP(DBG_CONTROL, buf) {
+						lswlogf(buf, "\"%s\" extra_debugging = ",
+							c->name);
+						lswlog_lset_flags(buf, &debug_lset_names,
+								  c->extra_debugging);
+					}
 				}
 			}
 			break;

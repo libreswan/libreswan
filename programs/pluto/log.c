@@ -66,6 +66,7 @@
 /* for show_virtual_private: */
 #include "virtual.h"	/* needs connections.h */
 #include "crypto.h"
+#include "lset_names.h"
 
 #ifdef USE_LINUX_AUDIT
 # include <libaudit.h>
@@ -427,9 +428,11 @@ void extra_debugging(const struct connection *c)
 	}
 
 	if (c->extra_debugging != 0) {
-		libreswan_log("extra debugging enabled for connection: %s",
-			      bitnamesof(debug_bit_names, c->extra_debugging &
-					 ~cur_debugging));
+		LSWLOG(buf) {
+			lswlogs(buf, "extra debugging enabled for connection: ");
+			lswlog_lset_flags(buf, &debug_lset_names,
+					  c->extra_debugging & ~cur_debugging);
+		}
 		set_debugging(cur_debugging | c->extra_debugging);
 	}
 
