@@ -1186,6 +1186,8 @@ int main(int argc, char **argv)
 			/* leak */
 			set_cfg_string(&pluto_log_file,
 				cfg->setup.strings[KSF_PLUTOSTDERRLOG]);
+
+#ifdef USE_DNSSEC
 			if (strlen(cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE]) > 0) {
 				pfreeany(pluto_dnssec_rootfile);
 				set_cfg_string(&pluto_dnssec_rootfile,
@@ -1200,6 +1202,7 @@ int main(int argc, char **argv)
 				set_cfg_string(&pluto_dnssec_trusted,
 						cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS]);
 			}
+#endif
 
 			if (pluto_log_file != NULL)
 				log_to_syslog = FALSE;
