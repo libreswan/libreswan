@@ -447,6 +447,7 @@ kvmplutotest	ikev2-child-ipsec-pfs-nhelpers-0 good
 kvmplutotest	ikev2-child-ipseac-replace-ike	good
 kvmplutotest	ikev2-child-ipsec-responder	good
 kvmplutotest	ikev2-56-restart		skiptest
+kvmplutotest	ikev2-child-restart-mismatch 	wip
 
 kvmplutotest	delete-sa-01			good
 kvmplutotest	delete-sa-03			good
@@ -525,6 +526,7 @@ kvmplutotest	xauth-pluto-17		good
 kvmplutotest	xauth-pluto-18		good
 kvmplutotest	xauth-pluto-19		good
 kvmplutotest	xauth-pluto-20-pam	good
+kvmplutotest	xauth-pluto-20-pam-timeout good
 
 
 # esp=null-*
