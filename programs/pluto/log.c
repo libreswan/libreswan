@@ -954,7 +954,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			"cipher=%s ksize=%d integ=%s",
 			st->st_esp.present ?
 				enum_show_shortb(&esp_transformid_names,
-					st->st_esp.attrs.transattrs.encrypt, &esb) :
+					st->st_esp.attrs.transattrs.ta_ikev1_encrypt, &esb) :
 				"none",
 			st->st_esp.present ?
 				st->st_esp.attrs.transattrs.enckeylen :

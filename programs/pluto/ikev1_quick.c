@@ -180,7 +180,7 @@ static void compute_proto_keymat(struct state *st,
 	 */
 	switch (protoid) {
 	case PROTO_IPSEC_ESP:
-		switch (pi->attrs.transattrs.encrypt) {
+		switch (pi->attrs.transattrs.ta_ikev1_encrypt) {
 		case ESP_NULL:
 			needed_len = 0;
 			break;
@@ -298,7 +298,7 @@ static void compute_proto_keymat(struct state *st,
 
 		default:
 			needed_len = kernel_alg_esp_enc_max_keylen(
-					pi->attrs.transattrs.encrypt);
+					pi->attrs.transattrs.ta_ikev1_encrypt);
 			if (needed_len > 0) {
 				/* XXX: check key_len coupling with kernel.c's */
 				if (pi->attrs.transattrs.enckeylen) {
@@ -311,7 +311,7 @@ static void compute_proto_keymat(struct state *st,
 				}
 				break;
 			}
-			bad_case(pi->attrs.transattrs.encrypt);
+			bad_case(pi->attrs.transattrs.ta_ikev1_encrypt);
 		}
 		DBG(DBG_PARSING, DBG_log("compute_proto_keymat: needed_len (after ESP enc)=%d",
 					 (int)needed_len));

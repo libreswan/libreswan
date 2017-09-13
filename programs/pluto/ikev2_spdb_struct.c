@@ -1362,7 +1362,7 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 	/*
 	 * Start with an empty TA.
 	 */
-	struct trans_attrs ta = { .encrypt = 0, };
+	struct trans_attrs ta = { .ta_ikev1_encrypt = 0, };
 
 	enum ikev2_trans_type type;
 	struct ikev2_transforms *transforms;
@@ -1408,7 +1408,7 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 				 * and .encryptor - it makes auditing
 				 * easier.
 				 */
-				ta.encrypt = transform->id;
+				ta.ta_ikev1_encrypt = transform->id;
 				ta.encrypter = encrypter;
 				ta.enckeylen = (transform->attr_keylen > 0
 						? (unsigned)transform->attr_keylen
@@ -1605,18 +1605,18 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 		 * it makes auditing easier.
 		 */
 		const struct encrypt_desc *encrypt = ta.encrypter;
-		ta.encrypt = (encrypt->common.ikev1_esp_id > 0
+		ta.ta_ikev1_encrypt = (encrypt->common.ikev1_esp_id > 0
 			      ? encrypt->common.ikev1_esp_id
 			      : encrypt->common.id[IKEv2_ALG_ID]);
 		ta.encrypter = encrypt;
 		err_t ugh;
-		ugh = check_kernel_encrypt_alg(ta.encrypt, ta.enckeylen);
+		ugh = check_kernel_encrypt_alg(ta.ta_ikev1_encrypt, ta.enckeylen);
 		if (ugh != NULL) {
 			struct esb_buf buf;
 			libreswan_log("ESP algo %s=%d with key_len %d is not valid (%s)",
 				      enum_showb(&esp_transformid_names,
-						 ta.encrypt, &buf),
-				      ta.encrypt, ta.enckeylen, ugh);
+						 ta.ta_ikev1_encrypt, &buf),
+				      ta.ta_ikev1_encrypt, ta.enckeylen, ugh);
 			/*
 			 * Only realising that the algorithm is
 			 * invalid now is pretty lame!

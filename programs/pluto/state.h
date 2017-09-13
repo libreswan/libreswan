@@ -88,29 +88,33 @@ struct trans_attrs {
 	 * value.  See below.
 	 */
 	enum ipsec_comp_algo comp;
+
 	/*
-	 * Let me see, the ENCRYPT field, depending on which balls are
-	 * in the air at any one moment, is used for and contains one
-	 * of the following:
+	 * Let me see, the IKEV1TA_ENCRYPT field, depending on which
+	 * balls are in the air at any one moment, is used for and
+	 * contains one of the following:
 	 *
-	 * IKEv1 IKE (aka IKEv1 Phase 1?): enum ikev1_encr_attribute;
-	 * this code should use ENCRYPTER.
+	 * IKEv1 IKE (aka Phase 1?): enum ikev1_encr_attribute
 	 *
-	 * IKEv2 IKE: enum ikev2_trans_type_encr; this code should use
-	 * ENCRYPTER.
+	 * IKEv1 ESP (aka Phase 2?): enum ipsec_cipher_algo
 	 *
-	 * IKEv1 and IKEv2 ESP/AH (aka IKEv1 Phase 2?): enum
-	 * ipsec_cipher_algo; strictly speaking, for IKEv2, it starts
-	 * out containing an enum ikev2_trans_type_encr, but is then
-	 * "fixed"; the more generic code should use ENCRYPTER.
+	 * IKEv1 AH (aka Phase 2?): enum ipsec_authentication_algo (a
+	 * scratch variable it seems so that the real integ algorithm
+	 * can be verified).
+
+	 * IKEv2 IKE: enum ikev2_trans_type_encr.
+	 *
+	 * IKEv2 ESP: initially ikev2_trans_type_encr, but then later
+	 * switched to enum ipsec_cipher_algo if the IKEv1 value is
+	 * available.
 	 *
 	 * IKEv1 IPCOMP: enum ipsec_comp_algo; at least that is what
 	 * I've been told; this code, along with the rest of IKEv1
-	 * should go away.  This code should use COMP.
+	 * should go away.
 	 *
 	 * What could possibly go wrong :-)
 	 */
-	u_int16_t encrypt;
+	u_int16_t ta_ikev1_encrypt;
 
 	/*
 	 * IKEv1 IKE: N/A

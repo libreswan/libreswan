@@ -379,7 +379,7 @@ void ipsecdoi_replace(struct state *st,
 				policy |= POLICY_TUNNEL;
 		}
 		if (st->st_esp.present &&
-		    st->st_esp.attrs.transattrs.encrypt != ESP_NULL) {
+		    st->st_esp.attrs.transattrs.ta_ikev1_encrypt != ESP_NULL) {
 			policy |= POLICY_ENCRYPT;
 			if (st->st_esp.attrs.encapsulation ==
 			    ENCAPSULATION_MODE_TUNNEL)
@@ -620,7 +620,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 		ini = " ";
 
 		pstats_ipsec_esp++;
-		pstats(ipsec_encr, st->st_esp.attrs.transattrs.encrypt);
+		pstats(ipsec_encr, st->st_esp.attrs.transattrs.ta_ikev1_encrypt);
 		pstats(ipsec_integ, st->st_esp.attrs.transattrs.ta_ikev1_integ_hash);
 		pstats_sa(nat, tfc, esn);
 	}

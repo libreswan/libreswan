@@ -1939,7 +1939,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			loglog(RC_LOG_SERIOUS,
 				"IPCOMP transform %s not implemented",
 				enum_name(&ipcomp_transformid_names,
-					st->st_ipcomp.attrs.transattrs.encrypt));
+					st->st_ipcomp.attrs.transattrs.ta_ikev1_encrypt));
 			goto fail;
 		}
 
@@ -2017,7 +2017,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 		DBG(DBG_CONTROL,
 			DBG_log("looking for alg with transid: %d keylen: %d integ: %s",
-				ta->encrypt, ta->enckeylen, ta->integ->common.fqn));
+				ta->ta_ikev1_encrypt, ta->enckeylen, ta->integ->common.fqn));
 
 		/*
 		 * Check that both integrity and encryption are
@@ -2147,7 +2147,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 		said_next->natt_sport = natt_sport;
 		said_next->natt_dport = natt_dport;
-		said_next->transid = ta->encrypt;
+		said_next->transid = ta->ta_ikev1_encrypt;
 		said_next->natt_type = natt_type;
 		said_next->natt_oa = &natt_oa;
 #ifdef KLIPS_MAST

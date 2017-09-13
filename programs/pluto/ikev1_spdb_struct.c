@@ -1134,7 +1134,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 				 * and .encrypter - it makes auditing
 				 * easier.
 				 */
-				ta.encrypt = val;
+				ta.ta_ikev1_encrypt = val;
 				ta.encrypter = encrypter;
 				ta.enckeylen = ta.encrypter->keydeflen;
 				break;
@@ -1431,7 +1431,7 @@ rsasig_common:
 		 * ML: at last check for allowed transforms in alg_info_ike
 		 */
 		if (ugh == NULL) {
-			if (!ike_alg_ok_final(ta.encrypt, ta.enckeylen,
+			if (!ike_alg_ok_final(ta.ta_ikev1_encrypt, ta.enckeylen,
 					      ta.prf,
 					      ta.group != NULL ?
 						ta.group->group : 65535,
@@ -1621,8 +1621,8 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	 * XXX: Always assign both .encrypt and .encrypter - it makes
 	 * auditing easier.
 	 */
-	ta.encrypt = enc->val;         /* OAKLEY_ENCRYPTION_ALGORITHM */
-	ta.encrypter = ikev1_get_ike_encrypt_desc(ta.encrypt);
+	ta.ta_ikev1_encrypt = enc->val;         /* OAKLEY_ENCRYPTION_ALGORITHM */
+	ta.encrypter = ikev1_get_ike_encrypt_desc(ta.ta_ikev1_encrypt);
 	passert(ta.encrypter != NULL);
 
 	if (trans->attr_cnt == 5) {
@@ -1743,15 +1743,15 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	 */
 	switch (proto) {
 	case PROTO_IPCOMP:
-		attrs->transattrs.encrypt = trans->isat_transid; /* XXX */
+		attrs->transattrs.ta_ikev1_encrypt = trans->isat_transid; /* XXX */
 		attrs->transattrs.comp = trans->isat_transid;
 		break;
 	case PROTO_IPSEC_ESP:
-		attrs->transattrs.encrypt = trans->isat_transid;
+		attrs->transattrs.ta_ikev1_encrypt = trans->isat_transid;
 		attrs->transattrs.encrypter = ikev1_get_kernel_encrypt_desc(trans->isat_transid);
 		break;
 	case PROTO_IPSEC_AH:
-		attrs->transattrs.encrypt = trans->isat_transid; /* XXX */
+		attrs->transattrs.ta_ikev1_encrypt = trans->isat_transid; /* XXX */
 		break;
 	default:
 		bad_case(proto);
@@ -2032,7 +2032,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 	/* Check ealg and key length validity */
 	if (proto == PROTO_IPSEC_ESP) {
-		int ipsec_keysize = crypto_req_keysize(CRK_ESPorAH, attrs->transattrs.encrypt);
+		int ipsec_keysize = crypto_req_keysize(CRK_ESPorAH, attrs->transattrs.ta_ikev1_encrypt);
 
 		if (!LHAS(seen_attrs, KEY_LENGTH)) {
 			if (ipsec_keysize != 0) {
@@ -2044,7 +2044,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		}
 
 		err_t ugh = check_kernel_encrypt_alg(
-				attrs->transattrs.encrypt,
+				attrs->transattrs.ta_ikev1_encrypt,
 				attrs->transattrs.enckeylen);
 		if (ugh != NULL) {
 			loglog(RC_LOG_SERIOUS,
@@ -2495,7 +2495,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					break;
 				}
 
-				if (ah_attrs.transattrs.encrypt !=
+				if (ah_attrs.transattrs.ta_ikev1_encrypt !=
 				    ok_transid) {
 					struct esb_buf esb;
 
@@ -2505,7 +2505,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 							 ah_attrs.transattrs.ta_ikev1_integ_hash,
 							 &esb),
 					       enum_show(&ah_transformid_names,
-							 ah_attrs.transattrs.encrypt));
+							 ah_attrs.transattrs.ta_ikev1_encrypt));
 					return BAD_PROPOSAL_SYNTAX;
 				}
 				/* ??? should test be !ok_auth || !ESP_AALG_PRESENT(ok_transid) */
@@ -2520,7 +2520,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 								  ah_attrs.transattrs.ta_ikev1_integ_hash,
 								  &esb),
 							enum_show(&ah_transformid_names,
-								  ah_attrs.transattrs.encrypt),
+								  ah_attrs.transattrs.ta_ikev1_encrypt),
 							ipstr(&c->spd.that.host_addr, &b));
 					});
 					continue;       /* try another */
@@ -2569,12 +2569,12 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 				if (c->alg_info_esp != NULL) {
 					ugh = check_kernel_encrypt_alg(
-						esp_attrs.transattrs.encrypt,
+						esp_attrs.transattrs.ta_ikev1_encrypt,
 						esp_attrs.transattrs.enckeylen);
 				}
 
 				if (ugh != NULL) {
-					switch (esp_attrs.transattrs.encrypt) {
+					switch (esp_attrs.transattrs.ta_ikev1_encrypt) {
 					case ESP_AES:
 					case ESP_CAMELLIA:
 					case ESP_3DES:
@@ -2611,7 +2611,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 						loglog(RC_LOG_SERIOUS,
 						       "unsupported ESP Transform %s from %s",
 						       enum_show(&esp_transformid_names,
-								 esp_attrs.transattrs.encrypt),
+								 esp_attrs.transattrs.ta_ikev1_encrypt),
 						       ipstr(&c->spd.that.host_addr, &b));
 						continue; /* try another */
 						}
@@ -2672,7 +2672,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 			/* check for allowed transforms in alg_info_esp */
 			if (c->alg_info_esp != NULL &&
-			    !ikev1_verify_esp(esp_attrs.transattrs.encrypt,
+			    !ikev1_verify_esp(esp_attrs.transattrs.ta_ikev1_encrypt,
 						     esp_attrs.transattrs.enckeylen,
 						     esp_attrs.transattrs.ta_ikev1_integ_hash,
 						     c->alg_info_esp))
@@ -2750,14 +2750,14 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				previous_transnum = ipcomp_trans.isat_transnum;
 
 				if (well_known_cpi != 0 &&
-				    ipcomp_attrs.transattrs.encrypt !=
+				    ipcomp_attrs.transattrs.ta_ikev1_encrypt !=
 				      well_known_cpi) {
 					libreswan_log(
 						"illegal proposal: IPCOMP well-known CPI disagrees with transform");
 					return BAD_PROPOSAL_SYNTAX;
 				}
 
-				switch (ipcomp_attrs.transattrs.encrypt) {
+				switch (ipcomp_attrs.transattrs.ta_ikev1_encrypt) {
 				case IPCOMP_DEFLATE: /* all we can handle! */
 					break;
 
@@ -2766,7 +2766,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 						ipstr_buf b;
 						DBG_log("unsupported IPCOMP Transform %s from %s",
 							enum_show(&ipcomp_transformid_names,
-								  ipcomp_attrs.transattrs.encrypt),
+								  ipcomp_attrs.transattrs.ta_ikev1_encrypt),
 							ipstr(&c->spd.that.host_addr,
 								&b));
 					});
