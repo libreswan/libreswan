@@ -1137,6 +1137,9 @@ static int xauth_launch_authent(struct state *st,
 				       st->st_connection->instance_serial,
 				       "XAUTH",
 				       ikev1_xauth_callback);
+		delete_event(st);
+		event_schedule(EVENT_PAM_TIMEOUT, EVENT_PAM_TIMEOUT_DELAY, st);
+
 		break;
 #endif
 	case XAUTHBY_FILE:

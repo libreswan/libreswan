@@ -56,6 +56,7 @@
 #include "ikev2.h"
 #include "pending.h" /* for flush_pending_by_connection */
 #include "ikev1_xauth.h"
+#include "xauth.h"
 #include "kernel.h" /* for scan_shunts() */
 #include "kernel_pfkey.h" /* for pfkey_scan_shunts */
 
@@ -639,6 +640,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	case EVENT_SA_EXPIRE:
 	case EVENT_SO_DISCARD:
 	case EVENT_CRYPTO_FAILED:
+	case EVENT_PAM_TIMEOUT:
 		passert(st != NULL && st->st_event == ev);
 		st->st_event = NULL;
 		break;
@@ -899,6 +901,15 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		delete_state(st);
 		/* note: no md->st to clear */
 		break;
+
+	case EVENT_PAM_TIMEOUT:
+		DBG(DBG_LIFECYCLE,
+				DBG_log("PAM thread timeout on state #%lu",
+					st->st_serialno));
+		xauth_cancel(st->st_serialno, &st->st_xauth_thread);
+		/* note: no md->st to clear */
+		break;
+
 
 	default:
 		bad_case(type);

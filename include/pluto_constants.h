@@ -174,6 +174,7 @@ enum event_type {
 	EVENT_DPD,			/* v1 dead peer detection */
 	EVENT_DPD_TIMEOUT,		/* v1 dead peer detection timeout */
 	EVENT_CRYPTO_FAILED,		/* v1/v2 after some time, give up on crypto helper */
+	EVENT_PAM_TIMEOUT,		/* v1/v2 give up on PAM helper */
 
 	EVENT_v2_RETRANSMIT,		/* v2 Initiator: Retransmit IKE packet */
 	EVENT_v2_RESPONDER_TIMEOUT,	/* v2 Responder: give up on IKE Initiator */
@@ -200,6 +201,7 @@ enum event_type {
 #endif
 #define DELETE_SA_DELAY			RETRANSMIT_TIMEOUT_DEFAULT /* wait until the other side giveup on us */
 #define EVENT_CRYPTO_FAILED_DELAY	RETRANSMIT_TIMEOUT_DEFAULT /* wait till the other side give up on us */
+#define EVENT_PAM_TIMEOUT_DELAY		RETRANSMIT_TIMEOUT_DEFAULT /* wait untill this side give up on PAM */
 
 /*
  * operational importance of this cryptographic operation.
