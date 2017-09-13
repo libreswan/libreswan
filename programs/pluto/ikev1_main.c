@@ -526,9 +526,8 @@ bool encrypt_message(pb_stream *pbs, struct state *st)
 	}
 
 	DBG(DBG_CRYPT,
-		DBG_log("encrypting %d using %s",
-			(unsigned int)enc_len,
-			enum_show(&oakley_enc_names, st->st_oakley.ta_ikev1_encrypt)));
+	    DBG_log("encrypting %zu using %s", enc_len,
+		    st->st_oakley.ta_encrypt->common.fqn));
 
 	passert(st->st_new_iv_len >= e->enc_blocksize);
 	st->st_new_iv_len = e->enc_blocksize;   /* truncate */

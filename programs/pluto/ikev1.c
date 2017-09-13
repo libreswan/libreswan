@@ -1651,8 +1651,7 @@ void process_packet_tail(struct msg_digest **mdp)
 		DBG(DBG_CRYPT,
 		    DBG_log("decrypting %u bytes using algorithm %s",
 			    (unsigned) pbs_left(&md->message_pbs),
-			    enum_show(&oakley_enc_names,
-				      st->st_oakley.ta_ikev1_encrypt)));
+			    st->st_oakley.ta_encrypt->common.fqn));
 
 		/* do the specified decryption
 		 *

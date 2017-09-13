@@ -2064,8 +2064,9 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	}
 
 	if (proto == PROTO_IPSEC_AH) {
-		DBG(DBG_CONTROL, DBG_log("PROTO AH: we should check registration of attrs->transattrs.ta_ikev1_integ_hash=%d",
-			attrs->transattrs.ta_ikev1_integ_hash));
+		DBG(DBG_CONTROL,
+		    DBG_log("PROTO AH: we should check registration of %s",
+			    attrs->transattrs.ta_integ->common.fqn));
 		/* if not registered, abort early */
 	}
 
@@ -2511,16 +2512,11 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				/* ??? should test be !ok_auth || !ESP_AALG_PRESENT(ok_transid) */
 				/* ??? why is this called ESP_AALG_PRESENT when we're doing AH? */
 				if (!ok_auth) {
-					struct esb_buf esb;
-
 					DBG(DBG_CONTROL | DBG_CRYPT, {
 						ipstr_buf b;
 						DBG_log("%s attribute unsupported in %s Transform from %s",
-							enum_showb(&auth_alg_names,
-								  ah_attrs.transattrs.ta_ikev1_integ_hash,
-								  &esb),
-							enum_show(&ah_transformid_names,
-								  ah_attrs.transattrs.ta_ikev1_encrypt),
+							ah_attrs.transattrs.ta_integ->common.fqn,
+							ah_attrs.transattrs.ta_encrypt->common.fqn,
 							ipstr(&c->spd.that.host_addr, &b));
 					});
 					continue;       /* try another */
@@ -2648,8 +2644,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 						DBG(DBG_CONTROL, DBG_log(
 						       "unsupported ESP auth alg %s from %s",
-						       enum_show(&auth_alg_names,
-								 esp_attrs.transattrs.ta_ikev1_integ_hash),
+						       esp_attrs.transattrs.ta_integ->common.fqn,
 						       ipstr(&c->spd.that.host_addr,
 								&b)));
 						continue; /* try another */
@@ -2765,10 +2760,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					DBG(DBG_CONTROL | DBG_CRYPT, {
 						ipstr_buf b;
 						DBG_log("unsupported IPCOMP Transform %s from %s",
-							enum_show(&ipcomp_transformid_names,
-								  ipcomp_attrs.transattrs.ta_ikev1_encrypt),
-							ipstr(&c->spd.that.host_addr,
-								&b));
+							ipcomp_attrs.transattrs.ta_encrypt->common.fqn,
+							ipstr(&c->spd.that.host_addr, &b));
 					});
 					continue; /* try another */
 				}
