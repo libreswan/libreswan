@@ -2490,23 +2490,18 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 				default:
 					loglog(RC_LOG_SERIOUS,
-					       "Unknown integ algorithm %d not supported",
-							ah_attrs.transattrs.ta_ikev1_integ_hash);
+					       "Unknown integ algorithm %s not supported",
+					       ah_attrs.transattrs.ta_integ->common.fqn);
 					ok_auth = FALSE;
 					break;
 				}
 
 				if (ah_attrs.transattrs.ta_ikev1_encrypt !=
 				    ok_transid) {
-					struct esb_buf esb;
-
 					loglog(RC_LOG_SERIOUS,
 					       "%s attribute inappropriate in %s Transform",
-					       enum_showb(&auth_alg_names,
-							 ah_attrs.transattrs.ta_ikev1_integ_hash,
-							 &esb),
-					       enum_show(&ah_transformid_names,
-							 ah_attrs.transattrs.ta_ikev1_encrypt));
+					       ah_attrs.transattrs.ta_integ->common.fqn,
+					       ah_attrs.transattrs.ta_encrypt->common.fqn);
 					return BAD_PROPOSAL_SYNTAX;
 				}
 				/* ??? should test be !ok_auth || !ESP_AALG_PRESENT(ok_transid) */
@@ -2606,8 +2601,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 						       ugh);
 						loglog(RC_LOG_SERIOUS,
 						       "unsupported ESP Transform %s from %s",
-						       enum_show(&esp_transformid_names,
-								 esp_attrs.transattrs.ta_ikev1_encrypt),
+						       esp_attrs.transattrs.ta_encrypt->common.fqn,
 						       ipstr(&c->spd.that.host_addr, &b));
 						continue; /* try another */
 						}

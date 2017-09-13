@@ -1939,9 +1939,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 		default:
 			loglog(RC_LOG_SERIOUS,
-				"IPCOMP transform %s not implemented",
-				enum_name(&ipcomp_transformid_names,
-					st->st_ipcomp.attrs.transattrs.ta_ikev1_encrypt));
+			       "IPCOMP transform %s not implemented",
+			       st->st_ipcomp.attrs.transattrs.ta_encrypt->common.fqn);
 			goto fail;
 		}
 
