@@ -103,7 +103,8 @@ static void xauth_thread_cleanup(void *arg)
 		    xauth->serialno, xauth->method, xauth->name,
 		    xauth->success ? "SUCCESS" : "FAILURE"));
 	const struct timeval delay = { 0, 0 };
-	pluto_event_new(NULL_FD, EV_TIMEOUT, xauth_cleanup_callback, arg, &delay);
+	pluto_event_add(NULL_FD, EV_TIMEOUT, xauth_cleanup_callback, arg,
+				&delay, "xauth cleanup");
 }
 
 /*
