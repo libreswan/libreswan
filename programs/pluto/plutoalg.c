@@ -352,7 +352,7 @@ void kernel_alg_show_connection(const struct connection *c, const char *instance
 			  "\"%s\"%s:   %s algorithm newest: %s_%03d-%s; pfsgroup=%s",
 			  c->name,
 			  instance, satype,
-			  st->st_esp.attrs.transattrs.encrypter->common.fqn,
+			  st->st_esp.attrs.transattrs.ta_encrypt->common.fqn,
 			  st->st_esp.attrs.transattrs.enckeylen,
 			  st->st_esp.attrs.transattrs.integ->common.fqn,
 			  pfsbuf);

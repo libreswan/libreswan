@@ -197,7 +197,7 @@ void ike_alg_show_connection(const struct connection *c, const char *instance)
 		 * so that the parser's print-alg code can be used.
 		 */
 		const struct proposal_info p = {
-			.encrypt = st->st_oakley.encrypter,
+			.encrypt = st->st_oakley.ta_encrypt,
 			.enckeylen = st->st_oakley.enckeylen,
 			.prf = st->st_oakley.prf,
 			.integ = st->st_oakley.integ,

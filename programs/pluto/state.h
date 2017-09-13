@@ -136,7 +136,7 @@ struct trans_attrs {
 	u_int32_t life_kilobytes;	/* max life of this SA in kilobytes */
 
 	/* negotiated crypto-suite */
-	const struct encrypt_desc *encrypter;	/* package of encryption routines */
+	const struct encrypt_desc *ta_encrypt;	/* package of encryption routines */
 	u_int16_t enckeylen;			/* encryption key len (bits) */
 	const struct prf_desc *prf;		/* package of prf routines */
 	const struct integ_desc *integ;		/* package of integrity routines */

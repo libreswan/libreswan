@@ -1404,15 +1404,15 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 				 * length is present when required, or
 				 * assume matching did its job.
 				 *
-				 * XXX: Always assign both .encrypt
-				 * and .encryptor - it makes auditing
+				 * XXX: Always assign both .ta_encrypt
+				 * and .ta_encryptor - it makes auditing
 				 * easier.
 				 */
 				ta.ta_ikev1_encrypt = transform->id;
-				ta.encrypter = encrypter;
+				ta.ta_encrypt = encrypter;
 				ta.enckeylen = (transform->attr_keylen > 0
 						? (unsigned)transform->attr_keylen
-						: ta.encrypter->keydeflen);
+						: ta.ta_encrypt->keydeflen);
 				break;
 			}
 			case IKEv2_TRANS_TYPE_PRF: {
@@ -1517,7 +1517,7 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 	/*
 	 * Patch up integrity.
 	 */
-	if (ike_alg_is_aead(ta.encrypter) && ta.integ == NULL) {
+	if (ike_alg_is_aead(ta.ta_encrypt) && ta.integ == NULL) {
 		DBG(DBG_CONTROL, DBG_log("since AEAD, setting NULL integ to 'null'"));
 		ta.integ = &ike_alg_integ_none;
 		ta.ta_ikev1_integ_hash = 0;
@@ -1590,7 +1590,7 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
          *   the algorithm database already contains.
 	 */
 	if (proposal->protoid == IKEv2_SEC_PROTO_ESP) {
-		passert(ta.encrypter);
+		passert(ta.ta_encrypt);
 		/*
 		 * If there's no IKEv1 ESP/AH support then use the
 		 * IKEv2-only value.
@@ -1601,14 +1601,14 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 		 *
 		 * XXX: the real fix is to delete ENCRYPT.
 		 *
-		 * XXX: Always assign both .encrypt and .encryptor -
+		 * XXX: Always assign both .ta_encrypt and .ta_encryptor -
 		 * it makes auditing easier.
 		 */
-		const struct encrypt_desc *encrypt = ta.encrypter;
+		const struct encrypt_desc *encrypt = ta.ta_encrypt;
 		ta.ta_ikev1_encrypt = (encrypt->common.ikev1_esp_id > 0
 			      ? encrypt->common.ikev1_esp_id
 			      : encrypt->common.id[IKEv2_ALG_ID]);
-		ta.encrypter = encrypt;
+		ta.ta_encrypt = encrypt;
 		err_t ugh;
 		ugh = check_kernel_encrypt_alg(ta.ta_ikev1_encrypt, ta.enckeylen);
 		if (ugh != NULL) {

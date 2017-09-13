@@ -2034,10 +2034,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			       ta->integ->common.fqn);
 			goto fail;
 		}
-		if (!kernel_alg_encrypt_ok(ta->encrypter)) {
+		if (!kernel_alg_encrypt_ok(ta->ta_encrypt)) {
 			loglog(RC_LOG_SERIOUS,
 			       "ESP encryption algorithm %s is not implemented or allowed",
-			       ta->encrypter->common.fqn);
+			       ta->ta_encrypt->common.fqn);
 			goto fail;
 		}
 
@@ -2045,33 +2045,33 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 * Validate the encryption key size.
 		 */
 		size_t encrypt_keymat_size;
-		if (!kernel_alg_encrypt_key_size(ta->encrypter, ta->enckeylen,
+		if (!kernel_alg_encrypt_key_size(ta->ta_encrypt, ta->enckeylen,
 						 &encrypt_keymat_size)) {
 			loglog(RC_LOG_SERIOUS,
 			       "ESP encryption algorithm %s with key length %d not implemented or allowed",
-			       ta->encrypter->common.fqn, ta->enckeylen);
+			       ta->ta_encrypt->common.fqn, ta->enckeylen);
 			goto fail;
 		}
 
 		/* Fixup key lengths for special cases */
 #ifdef USE_3DES
-		if (ta->encrypter == &ike_alg_encrypt_3des_cbc) {
+		if (ta->ta_encrypt == &ike_alg_encrypt_3des_cbc) {
 			/* Grrrrr.... f*cking 7 bits jurassic algos  */
 			/* 168 bits in kernel, need 192 bits for keymat_len */
 			if (encrypt_keymat_size == 21) {
 				DBG(DBG_KERNEL,
 				    DBG_log("%s requires a 7-bit jurassic adjust",
-					    ta->encrypter->common.fqn));
+					    ta->ta_encrypt->common.fqn));
 				encrypt_keymat_size = 24;
 			}
 		}
 #endif
 
-		if (ta->encrypter->salt_size > 0) {
+		if (ta->ta_encrypt->salt_size > 0) {
 			DBG(DBG_KERNEL,
 			    DBG_log("%s requires %zu salt bytes",
-				    ta->encrypter->common.fqn, ta->encrypter->salt_size));
-			encrypt_keymat_size += ta->encrypter->salt_size;
+				    ta->ta_encrypt->common.fqn, ta->ta_encrypt->salt_size));
+			encrypt_keymat_size += ta->ta_encrypt->salt_size;
 		}
 
 		size_t integ_keymat_size = ta->integ->integ_keymat_size; /* BYTES */
@@ -2133,7 +2133,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 * setting .compalg is wrong, don't yet trust
 		 * lower-level code to be right.
 		 */
-		said_next->encrypt = ta->encrypter;
+		said_next->encrypt = ta->ta_encrypt;
 		said_next->compalg = said_next->encrypt->common.id[IKEv1_ESP_ID];
 
 		/* divide up keying material */

@@ -180,7 +180,7 @@ void ikev2_isakamp_established(struct state *st, const struct state_v2_microcode
  */
 static bool emit_wire_iv(const struct state *st, pb_stream *pbs)
 {
-	size_t wire_iv_size = st->st_oakley.encrypter->wire_iv_size;
+	size_t wire_iv_size = st->st_oakley.ta_encrypt->wire_iv_size;
 	unsigned char ivbuf[MAX_CBC_BLOCK_SIZE];
 
 	passert(wire_iv_size <= MAX_CBC_BLOCK_SIZE);
@@ -2133,12 +2133,12 @@ static bool ikev2_padup_pre_encrypt(struct state *st,
 
 	/* pads things up to message size boundary */
 	{
-		size_t blocksize = pst->st_oakley.encrypter->enc_blocksize;
+		size_t blocksize = pst->st_oakley.ta_encrypt->enc_blocksize;
 		char b[MAX_CBC_BLOCK_SIZE];
 		unsigned int i;
 		size_t padding;
 
-		if (pst->st_oakley.encrypter->pad_to_blocksize) {
+		if (pst->st_oakley.ta_encrypt->pad_to_blocksize) {
 			passert(blocksize <= MAX_CBC_BLOCK_SIZE);
 			padding = pad_up(pbs_offset(e_pbs_cipher), blocksize);
 			if (padding == 0) {
@@ -2174,9 +2174,9 @@ static unsigned char *ikev2_authloc(struct state *st,
 	}
 
 	b12 = e_pbs->cur;
-	size_t integ_size = (ike_alg_enc_requires_integ(pst->st_oakley.encrypter)
+	size_t integ_size = (ike_alg_enc_requires_integ(pst->st_oakley.ta_encrypt)
 			    ? pst->st_oakley.integ->integ_output_size
-			    : pst->st_oakley.encrypter->aead_tag_size);
+			    : pst->st_oakley.ta_encrypt->aead_tag_size);
 	if (integ_size == 0) {
 		DBG(DBG_CRYPT, DBG_log("ikev2_authloc: HMAC/KEY size is zero"));
 		return NULL;
@@ -2222,19 +2222,19 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 	size_t enc_size = e_pbs_cipher->cur - enc_start;
 
 	/* encrypt and authenticate the block */
-	if (ike_alg_enc_requires_integ(pst->st_oakley.encrypter)) {
+	if (ike_alg_enc_requires_integ(pst->st_oakley.ta_encrypt)) {
 		/* note: no iv is longer than MAX_CBC_BLOCK_SIZE */
 		unsigned char enc_iv[MAX_CBC_BLOCK_SIZE];
 		construct_enc_iv("encryption IV/starting-variable", enc_iv,
 				 wire_iv_start, salt,
-				 pst->st_oakley.encrypter);
+				 pst->st_oakley.ta_encrypt);
 
 		DBG(DBG_CRYPT,
 		    DBG_dump("data before encryption:", enc_start, enc_size));
 
 		/* now, encrypt */
-		pst->st_oakley.encrypter->encrypt_ops
-			->do_crypt(pst->st_oakley.encrypter,
+		pst->st_oakley.ta_encrypt->encrypt_ops
+			->do_crypt(pst->st_oakley.ta_encrypt,
 				   enc_start, enc_size,
 				   cipherkey,
 				   enc_iv, TRUE);
@@ -2256,8 +2256,8 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 				     pst->st_oakley.integ->integ_output_size);
 		    });
 	} else {
-		size_t wire_iv_size = pst->st_oakley.encrypter->wire_iv_size;
-		size_t integ_size = pst->st_oakley.encrypter->aead_tag_size;
+		size_t wire_iv_size = pst->st_oakley.ta_encrypt->wire_iv_size;
+		size_t integ_size = pst->st_oakley.ta_encrypt->aead_tag_size;
 		/*
 		 * Additional Authenticated Data - AAD - size.
 		 * RFC5282 says: The Initialization Vector and Ciphertext
@@ -2277,8 +2277,8 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 			     enc_start, enc_size);
 		    DBG_dump("integ before authenticated encryption:",
 			     integ_start, integ_size));
-		if (!pst->st_oakley.encrypter->encrypt_ops
-		    ->do_aead(pst->st_oakley.encrypter,
+		if (!pst->st_oakley.ta_encrypt->encrypt_ops
+		    ->do_aead(pst->st_oakley.ta_encrypt,
 			      salt.ptr, salt.len,
 			      wire_iv_start, wire_iv_size,
 			      aad_start, aad_size,
@@ -2331,10 +2331,10 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 	}
 
 	u_char *wire_iv_start = chunk->ptr + iv;
-	size_t wire_iv_size = pst->st_oakley.encrypter->wire_iv_size;
-	size_t integ_size = (ike_alg_enc_requires_integ(pst->st_oakley.encrypter)
+	size_t wire_iv_size = pst->st_oakley.ta_encrypt->wire_iv_size;
+	size_t integ_size = (ike_alg_enc_requires_integ(pst->st_oakley.ta_encrypt)
 			     ? pst->st_oakley.integ->integ_output_size
-			     : pst->st_oakley.encrypter->aead_tag_size);
+			     : pst->st_oakley.ta_encrypt->aead_tag_size);
 
 	/*
 	 * check to see if length is plausible:
@@ -2366,8 +2366,8 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 	 * (originally this was being done between integrity and
 	 * decrypt).
 	 */
-	size_t enc_blocksize = pst->st_oakley.encrypter->enc_blocksize;
-	bool pad_to_blocksize = pst->st_oakley.encrypter->pad_to_blocksize;
+	size_t enc_blocksize = pst->st_oakley.ta_encrypt->enc_blocksize;
+	bool pad_to_blocksize = pst->st_oakley.ta_encrypt->pad_to_blocksize;
 	if (pad_to_blocksize) {
 		if (enc_size % enc_blocksize != 0) {
 			libreswan_log("discarding invalid packet: %zu octet payload length is not a multiple of encryption block-size (%zu)",
@@ -2390,7 +2390,7 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 	}
 
 	/* authenticate and decrypt the block. */
-	if (ike_alg_enc_requires_integ(st->st_oakley.encrypter)) {
+	if (ike_alg_enc_requires_integ(st->st_oakley.ta_encrypt)) {
 		/*
 		 * check authenticator.  The last INTEG_SIZE bytes are
 		 * the truncated digest.
@@ -2424,12 +2424,12 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 		unsigned char enc_iv[MAX_CBC_BLOCK_SIZE];
 		construct_enc_iv("decryption IV/starting-variable", enc_iv,
 				 wire_iv_start, salt,
-				 pst->st_oakley.encrypter);
+				 pst->st_oakley.ta_encrypt);
 
 		DBG(DBG_CRYPT,
 		    DBG_dump("payload before decryption:", enc_start, enc_size));
-		pst->st_oakley.encrypter->encrypt_ops
-			->do_crypt(pst->st_oakley.encrypter,
+		pst->st_oakley.ta_encrypt->encrypt_ops
+			->do_crypt(pst->st_oakley.ta_encrypt,
 				   enc_start, enc_size,
 				   cipherkey,
 				   enc_iv, FALSE);
@@ -2456,8 +2456,8 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 			     enc_start, enc_size);
 		    DBG_dump("integ before authenticated decryption:",
 			     integ_start, integ_size));
-		if (!pst->st_oakley.encrypter->encrypt_ops
-		    ->do_aead(pst->st_oakley.encrypter,
+		if (!pst->st_oakley.ta_encrypt->encrypt_ops
+		    ->do_aead(pst->st_oakley.ta_encrypt,
 			      salt.ptr, salt.len,
 			      wire_iv_start, wire_iv_size,
 			      aad_start, aad_size,
@@ -2929,12 +2929,12 @@ static stf_status ikev2_record_fragments(struct msg_digest *md,
 
 	len -= NSIZEOF_isakmp_hdr + NSIZEOF_ikev2_skf;
 
-	len -= ike_alg_enc_requires_integ(st->st_oakley.encrypter) ?
+	len -= ike_alg_enc_requires_integ(st->st_oakley.ta_encrypt) ?
 	       st->st_oakley.integ->integ_output_size :
-	       st->st_oakley.encrypter->aead_tag_size;
+	       st->st_oakley.ta_encrypt->aead_tag_size;
 
-	if (st->st_oakley.encrypter->pad_to_blocksize)
-		len &= ~(st->st_oakley.encrypter->enc_blocksize - 1);
+	if (st->st_oakley.ta_encrypt->pad_to_blocksize)
+		len &= ~(st->st_oakley.ta_encrypt->enc_blocksize - 1);
 
 	len -= 2;	/* ??? what's this? */
 

@@ -85,7 +85,7 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 	 * Finally, some encryption algorithms such as AEAD and CTR
 	 * require "salt" as part of the "starting variable".
 	 */
-	const struct encrypt_desc *encrypt = ipi->attrs.transattrs.encrypter;
+	const struct encrypt_desc *encrypt = ipi->attrs.transattrs.ta_encrypt;
 	size_t encrypt_salt_size = (encrypt != NULL ? encrypt->salt_size : 0);
 
 	ipi->keymat_len = integ_key_size + encrypt_key_size + encrypt_salt_size;

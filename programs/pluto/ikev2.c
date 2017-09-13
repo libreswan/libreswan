@@ -1595,7 +1595,7 @@ void ikev2_log_parentSA(struct state *st)
 		char encalgo[128];
 
 		if (st->st_oakley.integ == NULL ||
-		    st->st_oakley.encrypter == NULL)
+		    st->st_oakley.ta_encrypt == NULL)
 			return;
 
 		authalgo = st->st_oakley.integ->common.officname;
@@ -1603,11 +1603,11 @@ void ikev2_log_parentSA(struct state *st)
 		if (st->st_oakley.enckeylen != 0) {
 			/* 3des will use '3des', while aes becomes 'aes128' */
 			snprintf(encalgo, sizeof(encalgo), "%s%u",
-				 st->st_oakley.encrypter->common.officname,
+				 st->st_oakley.ta_encrypt->common.officname,
 				 st->st_oakley.enckeylen);
 		} else {
 			snprintf(encalgo, sizeof(encalgo), "%s",
-				st->st_oakley.encrypter->common.officname);
+				st->st_oakley.ta_encrypt->common.officname);
 		}
 		DBG_log("ikev2 I 0x%02x%02x%02x%02x%02x%02x%02x%02x 0x%02x%02x%02x%02x%02x%02x%02x%02x %s %s",
 			st->st_icookie[0], st->st_icookie[1],

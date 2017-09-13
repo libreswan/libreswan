@@ -498,7 +498,7 @@ notification_t accept_v1_nonce(struct msg_digest *md, chunk_t *dest,
  */
 bool encrypt_message(pb_stream *pbs, struct state *st)
 {
-	const struct encrypt_desc *e = st->st_oakley.encrypter;
+	const struct encrypt_desc *e = st->st_oakley.ta_encrypt;
 	u_int8_t *enc_start = pbs->start + sizeof(struct isakmp_hdr);
 	size_t enc_len = pbs_offset(pbs) - sizeof(struct isakmp_hdr);
 

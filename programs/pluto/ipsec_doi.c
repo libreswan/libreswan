@@ -605,7 +605,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 			 tfc ? "/TFC" : "",
 			 (unsigned long)ntohl(st->st_esp.attrs.spi),
 			 (unsigned long)ntohl(st->st_esp.our_spi),
-			 st->st_esp.attrs.transattrs.encrypter->common.fqn,
+			 st->st_esp.attrs.transattrs.ta_encrypt->common.fqn,
 			 st->st_esp.attrs.transattrs.enckeylen,
 			 st->st_esp.attrs.transattrs.integ->common.fqn);
 
@@ -695,7 +695,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 			       size_t sa_details_size)
 {
-	passert(st->st_oakley.encrypter != NULL);
+	passert(st->st_oakley.ta_encrypt != NULL);
 	passert(st->st_oakley.prf != NULL);
 	passert(st->st_oakley.group != NULL);
 	/*
@@ -740,7 +740,7 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 	snprintf(sa_details, sa_details_size,
 		 " {auth=%s cipher=%s_%d integ=%s%s group=%s}",
 		 auth_name,
-		 st->st_oakley.encrypter->common.name,
+		 st->st_oakley.ta_encrypt->common.name,
 		 st->st_oakley.enckeylen,
 		 integ_name,
 		 prf_name,
@@ -749,13 +749,13 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 	/* keep IKE SA statistics */
 	if (st->st_ikev2) {
 		pstats_ikev2_sa++;
-		pstats(ikev2_encr, st->st_oakley.encrypter->common.id[IKEv2_ALG_ID]);
+		pstats(ikev2_encr, st->st_oakley.ta_encrypt->common.id[IKEv2_ALG_ID]);
 		if (st->st_oakley.integ != NULL)
 			pstats(ikev2_integ, st->st_oakley.integ->common.id[IKEv2_ALG_ID]);
 		pstats(ikev2_groups, st->st_oakley.group->group);
 	} else {
 		pstats_ikev1_sa++;
-		pstats(ikev1_encr, st->st_oakley.encrypter->common.ikev1_oakley_id);
+		pstats(ikev1_encr, st->st_oakley.ta_encrypt->common.ikev1_oakley_id);
 		pstats(ikev1_integ, st->st_oakley.prf->common.id[IKEv1_OAKLEY_ID]);
 		pstats(ikev1_groups, st->st_oakley.group->group);
 	}

@@ -1131,12 +1131,12 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 				}
 				/*
 				 * XXX: Always assign both .encrypt
-				 * and .encrypter - it makes auditing
+				 * and .encrypt - it makes auditing
 				 * easier.
 				 */
 				ta.ta_ikev1_encrypt = val;
-				ta.encrypter = encrypter;
-				ta.enckeylen = ta.encrypter->keydeflen;
+				ta.ta_encrypt = encrypter;
+				ta.enckeylen = ta.ta_encrypt->keydeflen;
 				break;
 			}
 
@@ -1352,7 +1352,7 @@ rsasig_common:
 					ugh = "OAKLEY_KEY_LENGTH attribute not preceded by OAKLEY_ENCRYPTION_ALGORITHM attribute";
 					break;
 				}
-				if (ta.encrypter == NULL) {
+				if (ta.ta_encrypt == NULL) {
 					ugh = "NULL encrypter with seen OAKLEY_ENCRYPTION_ALGORITHM";
 					break;
 				}
@@ -1366,7 +1366,7 @@ rsasig_common:
 				 * length, when val was non-zero.
 				 * Should val==0 check be added?
 				 */
-				if (val != 0 && !encrypt_has_key_bit_length(ta.encrypter, val)) {
+				if (val != 0 && !encrypt_has_key_bit_length(ta.ta_encrypt, val)) {
 					ugh = "peer proposed key_len not valid for encrypt algo setup specified";
 					break;
 				}
@@ -1618,19 +1618,19 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 
 	passert(enc->type.oakley == OAKLEY_ENCRYPTION_ALGORITHM);
 	/*
-	 * XXX: Always assign both .encrypt and .encrypter - it makes
+	 * XXX: Always assign both .ta_encrypt and .ta_encrypt - it makes
 	 * auditing easier.
 	 */
 	ta.ta_ikev1_encrypt = enc->val;         /* OAKLEY_ENCRYPTION_ALGORITHM */
-	ta.encrypter = ikev1_get_ike_encrypt_desc(ta.ta_ikev1_encrypt);
-	passert(ta.encrypter != NULL);
+	ta.ta_encrypt = ikev1_get_ike_encrypt_desc(ta.ta_ikev1_encrypt);
+	passert(ta.ta_encrypt != NULL);
 
 	if (trans->attr_cnt == 5) {
 		struct db_attr *enc_keylen;
 		enc_keylen = &trans->attrs[4];
 		ta.enckeylen = enc_keylen->val;
 	} else {
-		ta.enckeylen = ta.encrypter->keydeflen;
+		ta.enckeylen = ta.ta_encrypt->keydeflen;
 	}
 
 	passert(hash->type.oakley == OAKLEY_HASH_ALGORITHM);
@@ -1736,10 +1736,10 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	*attrs = null_ipsec_trans_attrs;
 
 	/*
-	 * XXX: Always assign both .encrypt and .encrypter - it makes
+	 * XXX: Always assign both .ta_encrypt and .ta_encrypt - it makes
 	 * auditing easier.
 	 *
-	 * XXX: See comment in state.h about how .encrypt is abused.
+	 * XXX: See comment in state.h about how .ta_encrypt is abused.
 	 */
 	switch (proto) {
 	case PROTO_IPCOMP:
@@ -1748,7 +1748,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		break;
 	case PROTO_IPSEC_ESP:
 		attrs->transattrs.ta_ikev1_encrypt = trans->isat_transid;
-		attrs->transattrs.encrypter = ikev1_get_kernel_encrypt_desc(trans->isat_transid);
+		attrs->transattrs.ta_encrypt = ikev1_get_kernel_encrypt_desc(trans->isat_transid);
 		break;
 	case PROTO_IPSEC_AH:
 		attrs->transattrs.ta_ikev1_encrypt = trans->isat_transid; /* XXX */
@@ -2056,7 +2056,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		/*
 		 * AEAD implies NULL integrity.
 		 */
-		if (ike_alg_is_aead(attrs->transattrs.encrypter)
+		if (ike_alg_is_aead(attrs->transattrs.ta_encrypt)
 		    && attrs->transattrs.integ == NULL) {
 			attrs->transattrs.integ = &ike_alg_integ_none;
 		}

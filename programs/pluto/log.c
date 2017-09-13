@@ -935,7 +935,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 
 		snprintf(cipher_str, sizeof(cipher_str),
 			"cipher=%s ksize=%d integ=%s prf=%s pfs=%s",
-			st->st_oakley.encrypter->common.officname,
+			st->st_oakley.ta_encrypt->common.officname,
 			st->st_oakley.enckeylen,
 			integname, prfname,
 			st->st_oakley.group->common.name);
