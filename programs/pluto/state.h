@@ -111,7 +111,16 @@ struct trans_attrs {
 	 * What could possibly go wrong :-)
 	 */
 	u_int16_t encrypt;
-	oakley_hash_t integ_hash;	/* Hash algorithm for integ */
+
+	/*
+	 * IKEv1 IKE: N/A
+	 *
+	 * IKEv1 ESP/AH: enum ikev1_auth_attribute.
+	 *
+	 * IKEv2 ESP/AH: initially enum ikev2_trans_type_integ but
+	 * then, possibly, switched to enum ikev1_auth_attribute.
+	 */
+	oakley_hash_t ta_ikev1_integ_hash;	/* Hash algorithm for integ */
 
 	oakley_auth_t auth;		/* Authentication method (RSA,PSK) */
 

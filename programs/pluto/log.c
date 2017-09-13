@@ -960,7 +960,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 				st->st_esp.attrs.transattrs.enckeylen :
 				0,
 			enum_show_shortb(&auth_alg_names,
-				st->st_esp.attrs.transattrs.integ_hash, &esb2));
+				st->st_esp.attrs.transattrs.ta_ikev1_integ_hash, &esb2));
 
 		snprintf(spi_str, sizeof(spi_str),
 		"in-spi=%lu(0x%08lx) out-spi=%lu(0x%08lx) in-ipcomp=%lu(0x%08lx) out-ipcomp=%lu(0x%08lx)",

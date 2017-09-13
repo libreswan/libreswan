@@ -621,7 +621,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 
 		pstats_ipsec_esp++;
 		pstats(ipsec_encr, st->st_esp.attrs.transattrs.encrypt);
-		pstats(ipsec_integ, st->st_esp.attrs.transattrs.integ_hash);
+		pstats(ipsec_integ, st->st_esp.attrs.transattrs.ta_ikev1_integ_hash);
 		pstats_sa(nat, tfc, esn);
 	}
 
@@ -642,7 +642,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 		ini = " ";
 
 		pstats_ipsec_ah++;
-		pstats(ipsec_integ, st->st_ah.attrs.transattrs.integ_hash);
+		pstats(ipsec_integ, st->st_ah.attrs.transattrs.ta_ikev1_integ_hash);
 		pstats_sa(FALSE, FALSE, esn);
 	}
 
@@ -700,7 +700,7 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 	passert(st->st_oakley.group != NULL);
 	/*
 	 * Note: for IKEv1 and AEAD encrypters,
-	 * st->st_oakley.integ_hasher is NULL!
+	 * st->st_oakley.integ is 'none'!
 	 */
 
 	struct esb_buf anb;

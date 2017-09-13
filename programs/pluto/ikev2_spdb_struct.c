@@ -1450,7 +1450,7 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 					return FALSE;
 				}
 				/*
-				 * For IKE, INTEG_HASH contains an
+				 * For IKE, TA_IKEV1_INTEG_HASH contains an
 				 * IKEv2, but for ESP/AH it contains
 				 * an IKEv1 value!
 				 *
@@ -1459,15 +1459,15 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 				 * things up.
 				 *
 				 * XXX: Short of deleting it,
-				 * INTEG_HASH should at least be moved
+				 * TA_IKEV1_INTEG_HASH should at least be moved
 				 * to enum ipsec_trans_attrs
 				 * .ipsec_authentication_algo.
 				 *
-				 * XXX: Always assign both .integ_hash
+				 * XXX: Always assign both .ta_ikev1_integ_hash
 				 * and .integ - it makes auditing
 				 * easier.
 				 */
-				ta.integ_hash = integ->common.id[IKEv2_ALG_ID];
+				ta.ta_ikev1_integ_hash = integ->common.id[IKEv2_ALG_ID];
 				ta.integ = integ;
 				break;
 			}
@@ -1520,7 +1520,7 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 	if (ike_alg_is_aead(ta.encrypter) && ta.integ == NULL) {
 		DBG(DBG_CONTROL, DBG_log("since AEAD, setting NULL integ to 'null'"));
 		ta.integ = &ike_alg_integ_none;
-		ta.integ_hash = 0;
+		ta.ta_ikev1_integ_hash = 0;
 	}
 
 	*ta_out = ta;
@@ -1540,7 +1540,7 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 	/*
 	 * Quick hack to convert much of the stuff.
 	 *
-	 * Fields, such as INTEG_HASH and ENCRYPT, which get set to
+	 * Fields, such as TA_IKEV1_INTEG_HASH and ENCRYPT, which get set to
 	 * IKEv2 values, will need fixing.
 	 */
 	struct trans_attrs ta;
@@ -1549,20 +1549,20 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 	}
 
 	/*
-	 * If there is integrity, fix INTEG_HASH by replacing the the
+	 * If there is integrity, fix TA_IKEV1_INTEG_HASH by replacing the the
 	 * IKEv2 value, with an IKEv1 ESP/AH value expected by the
 	 * kernel backend.
 	 *
 	 * If there is no IKEv1 ESP/AH support then, presumably the
 	 * algorithm has a unique IKEv2 number, and that is expected.
 	 *
-	 * XXX: The real fix is to delete INTEG_HASH.
+	 * XXX: The real fix is to delete TA_IKEV1_INTEG_HASH.
 	 *
-	 * XXX: Always assign both .integ_hash and .integ - it makes
+	 * XXX: Always assign both .ta_ikev1_integ_hash and .integ - it makes
 	 * auditing easier.
 	 */
 	const struct integ_desc *integ = ta.integ;
-	ta.integ_hash = (integ == NULL
+	ta.ta_ikev1_integ_hash = (integ == NULL
 			 ? AUTH_ALGORITHM_NONE
 			 : integ->common.ikev1_esp_id > 0
 			 ? integ->common.ikev1_esp_id

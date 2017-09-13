@@ -1952,10 +1952,10 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 		case AUTH_ALGORITHM | ISAKMP_ATTR_AF_TV:
 			/*
-			 * XXX: Always assign both .integ_hash and
+			 * XXX: Always assign both .ta_ikev1_integ_hash and
 			 * .integ - it makes auditing easier.
 			 */
-			attrs->transattrs.integ_hash = val;
+			attrs->transattrs.ta_ikev1_integ_hash = val;
 			attrs->transattrs.integ = ikev1_get_kernel_integ_desc(val);
 			break;
 
@@ -2064,8 +2064,8 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	}
 
 	if (proto == PROTO_IPSEC_AH) {
-		DBG(DBG_CONTROL, DBG_log("PROTO AH: we should check registration of attrs->transattrs.integ_hash=%d",
-			attrs->transattrs.integ_hash));
+		DBG(DBG_CONTROL, DBG_log("PROTO AH: we should check registration of attrs->transattrs.ta_ikev1_integ_hash=%d",
+			attrs->transattrs.ta_ikev1_integ_hash));
 		/* if not registered, abort early */
 	}
 
@@ -2416,7 +2416,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				previous_transnum = ah_trans.isat_transnum;
 
 				/* we must understand ah_attrs.transid
-				 * COMBINED with ah_attrs.transattrs.integ_hash.
+				 * COMBINED with ah_attrs.transattrs.ta_ikev1_integ_hash.
 				 * See RFC 2407 "IPsec DOI" section 4.4.3
 				 * The following combinations are legal,
 				 * but we don't implement all of them:
@@ -2428,7 +2428,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				 * AH_DES, AUTH_ALGORITHM_DES_MAC (unimplemented)
 				 */
 				/* ??? this switch looks a lot like alg_info_esp_aa2sadb */
-				switch (ah_attrs.transattrs.integ_hash) {
+				switch (ah_attrs.transattrs.ta_ikev1_integ_hash) {
 				case AUTH_ALGORITHM_NONE:
 					loglog(RC_LOG_SERIOUS,
 					       "AUTH_ALGORITHM attribute missing in AH Transform");
@@ -2490,7 +2490,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				default:
 					loglog(RC_LOG_SERIOUS,
 					       "Unknown integ algorithm %d not supported",
-							ah_attrs.transattrs.integ_hash);
+							ah_attrs.transattrs.ta_ikev1_integ_hash);
 					ok_auth = FALSE;
 					break;
 				}
@@ -2502,7 +2502,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					loglog(RC_LOG_SERIOUS,
 					       "%s attribute inappropriate in %s Transform",
 					       enum_showb(&auth_alg_names,
-							 ah_attrs.transattrs.integ_hash,
+							 ah_attrs.transattrs.ta_ikev1_integ_hash,
 							 &esb),
 					       enum_show(&ah_transformid_names,
 							 ah_attrs.transattrs.encrypt));
@@ -2517,7 +2517,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 						ipstr_buf b;
 						DBG_log("%s attribute unsupported in %s Transform from %s",
 							enum_showb(&auth_alg_names,
-								  ah_attrs.transattrs.integ_hash,
+								  ah_attrs.transattrs.ta_ikev1_integ_hash,
 								  &esb),
 							enum_show(&ah_transformid_names,
 								  ah_attrs.transattrs.encrypt),
@@ -2532,7 +2532,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 			/* Check AH proposal with configuration */
 			if (c->alg_info_esp != NULL &&
-			    !ikev1_verify_ah(ah_attrs.transattrs.integ_hash,
+			    !ikev1_verify_ah(ah_attrs.transattrs.ta_ikev1_integ_hash,
 					c->alg_info_esp)) {
 				continue;
 			}
@@ -2619,7 +2619,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				}
 
 				if (!kernel_alg_integ_ok(esp_attrs.transattrs.integ)) {
-					switch (esp_attrs.transattrs.integ_hash)
+					switch (esp_attrs.transattrs.ta_ikev1_integ_hash)
 					{
 					case AUTH_ALGORITHM_NONE:
 						if (!ah_seen) {
@@ -2649,7 +2649,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 						DBG(DBG_CONTROL, DBG_log(
 						       "unsupported ESP auth alg %s from %s",
 						       enum_show(&auth_alg_names,
-								 esp_attrs.transattrs.integ_hash),
+								 esp_attrs.transattrs.ta_ikev1_integ_hash),
 						       ipstr(&c->spd.that.host_addr,
 								&b)));
 						continue; /* try another */
@@ -2674,7 +2674,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			if (c->alg_info_esp != NULL &&
 			    !ikev1_verify_esp(esp_attrs.transattrs.encrypt,
 						     esp_attrs.transattrs.enckeylen,
-						     esp_attrs.transattrs.integ_hash,
+						     esp_attrs.transattrs.ta_ikev1_integ_hash,
 						     c->alg_info_esp))
 				continue;
 			esp_attrs.spi = esp_spi;
