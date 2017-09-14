@@ -160,57 +160,6 @@ enum_names doi_names = {
 	NULL
 };
 
-/*
- * debugging settings: a set of selections for reporting
- * These would be more naturally situated in log.h,
- * but they are shared with whack.
- * It turns out that "debug-" is clutter in all contexts this is used,
- * so we leave it off.
- */
-const char *const debug_bit_names[] = {
-	"raw",
-	"crypt",
-	"parsing",
-	"emitting",
-	"control",
-	"lifecycle",
-	"kernel",
-	"dns",
-	"oppo",
-	"controlmore",
-	"pfkey",
-	"nattraversal",
-	"x509",	/* 12 */
-	"dpd",
-	"oppoinfo",	/* 14 */
-	"whackwatch",
-	"private",
-	"impair-bust-mi2",
-	"impair-bust-mr2",
-	"impair-sa-creation",
-	"impair-die-oninfo",
-	"impair-jacob-two-two",
-	"impair-allow-null-null",
-	"impair-major-version-bump",
-	"impair-minor-version-bump",
-	"impair-retransmits",
-	"impair-send-bogus-payload-flag",
-	"impair-send-bogus-isakmp-flag",
-	"impair-send-ikev2-ke",
-	"impair-send-no-delete",
-	"impair-send-no-ikev2-auth",
-	"impair-send-no-xauth-r0",
-	"impair-send-no-main-r2",
-	"impair-force-fips",
-	"impair-send-key-size-check",
-	"impair-send-zero-gx",
-	"impair-send-bogus-dcookie",
-	"impair-omit-hash-notify",
-	"impair-omit-hash-notify",
-	"impair-ignore-hash-notify-resp",
-	NULL	/* termination for bitnamesof() */
-};
-
 /* kind of struct connection */
 static const char *const connection_kind_name[] = {
 	"CK_GROUP",	/* policy group: instantiates to template */

@@ -174,15 +174,6 @@ int main(int argc UNUSED, char *argv[])
 	test_enum("ike_idtype_names", &ike_idtype_names, 0, 256);
 	test_enum("ikev2_idtype_names", &ikev2_idtype_names, 0, 256);
 
-	for (unsigned bit = 0; debug_bit_names[bit] != NULL; bit++) {
-		const char *old = debug_bit_names[bit];
-		const char *new = strip_prefix(debug_lset_names.lelems[bit].flag, "debug-");
-		if (!streq(old, new)) {
-			printf("bit %d %s %s\n",
-			       bit, old, new);
-		}
-	}
-
 	test_lset("debug", &debug_lset_names);
 
 	report_leaks();
