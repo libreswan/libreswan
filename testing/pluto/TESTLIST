@@ -180,6 +180,7 @@ kvmplutotest	ikev2-algo-11-gcm-prop2			good
 kvmplutotest	ikev2-algo-12-aes-aes_cmac		good
 kvmplutotest	ikev2-algo-13-null			good
 kvmplutotest	ikev2-algo-14-esp-null-aes-gmac		good
+kvmplutotest	ikev2-algo-15-esp-null-none		good
 kvmplutotest	netkey-algo-aes_gcm-01			good
 kvmplutotest	netkey-algo-aes_gcm-02			good
 kvmplutotest	netkey-algo-aes_gcm-03			good
