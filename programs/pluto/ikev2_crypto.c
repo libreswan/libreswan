@@ -74,7 +74,7 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 	 * Integrity seed (key).  AEAD, for instance has NULL (no)
 	 * separate integrity.
 	 */
-	const struct integ_desc *integ = ipi->attrs.transattrs.integ;
+	const struct integ_desc *integ = ipi->attrs.transattrs.ta_integ;
 	size_t integ_key_size = (integ != NULL ? integ->integ_keymat_size : 0);
 	/*
 	 * If there is encryption, then ENCKEYLEN contains the

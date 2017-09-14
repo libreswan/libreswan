@@ -1463,11 +1463,11 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 				 * .ipsec_authentication_algo.
 				 *
 				 * XXX: Always assign both .ta_ikev1_integ_hash
-				 * and .integ - it makes auditing
+				 * and .ta_integ - it makes auditing
 				 * easier.
 				 */
 				ta.ta_ikev1_integ_hash = integ->common.id[IKEv2_ALG_ID];
-				ta.integ = integ;
+				ta.ta_integ = integ;
 				break;
 			}
 			case IKEv2_TRANS_TYPE_DH: {
@@ -1516,9 +1516,9 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 	/*
 	 * Patch up integrity.
 	 */
-	if (ike_alg_is_aead(ta.ta_encrypt) && ta.integ == NULL) {
+	if (ike_alg_is_aead(ta.ta_encrypt) && ta.ta_integ == NULL) {
 		DBG(DBG_CONTROL, DBG_log("since AEAD, setting NULL integ to 'null'"));
-		ta.integ = &ike_alg_integ_none;
+		ta.ta_integ = &ike_alg_integ_none;
 		ta.ta_ikev1_integ_hash = 0;
 	}
 
@@ -1557,16 +1557,16 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 	 *
 	 * XXX: The real fix is to delete TA_IKEV1_INTEG_HASH.
 	 *
-	 * XXX: Always assign both .ta_ikev1_integ_hash and .integ - it makes
+	 * XXX: Always assign both .ta_ikev1_integ_hash and .ta_integ - it makes
 	 * auditing easier.
 	 */
-	const struct integ_desc *integ = ta.integ;
+	const struct integ_desc *integ = ta.ta_integ;
 	ta.ta_ikev1_integ_hash = (integ == NULL
 			 ? AUTH_ALGORITHM_NONE
 			 : integ->common.ikev1_esp_id > 0
 			 ? integ->common.ikev1_esp_id
 			 : integ->common.id[IKEv2_ALG_ID]);
-	ta.integ = integ;
+	ta.ta_integ = integ;
 
 	/*
 	 * IKEv2 ESP/AH and IKE all use the same algorithm numbering

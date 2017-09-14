@@ -607,7 +607,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 			 (unsigned long)ntohl(st->st_esp.our_spi),
 			 st->st_esp.attrs.transattrs.ta_encrypt->common.fqn,
 			 st->st_esp.attrs.transattrs.enckeylen,
-			 st->st_esp.attrs.transattrs.integ->common.fqn);
+			 st->st_esp.attrs.transattrs.ta_integ->common.fqn);
 
 		/* advance b to end of string */
 		b = b + strlen(b);
@@ -634,7 +634,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 			 st->st_ah.attrs.transattrs.esn_enabled ? "/ESN" : "",
 			 (unsigned long)ntohl(st->st_ah.attrs.spi),
 			 (unsigned long)ntohl(st->st_ah.our_spi),
-			 st->st_ah.attrs.transattrs.integ->common.fqn);
+			 st->st_ah.attrs.transattrs.ta_integ->common.fqn);
 
 		/* advance b to end of string */
 		b = b + strlen(b);
@@ -700,7 +700,7 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 	passert(st->st_oakley.group != NULL);
 	/*
 	 * Note: for IKEv1 and AEAD encrypters,
-	 * st->st_oakley.integ is 'none'!
+	 * st->st_oakley.ta_integ is 'none'!
 	 */
 
 	struct esb_buf anb;
@@ -718,13 +718,13 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 	const char *integ_name;
 	char integ_buf[30];
 	if (st->st_ikev2) {
-		if (st->st_oakley.integ == &ike_alg_integ_none) {
+		if (st->st_oakley.ta_integ == &ike_alg_integ_none) {
 			integ_name = "n/a";
 		} else {
 			snprintf(integ_buf, sizeof(integ_buf),
 				 "%s_%zu",
-				 st->st_oakley.integ->common.officname,
-				 (st->st_oakley.integ->integ_output_size *
+				 st->st_oakley.ta_integ->common.officname,
+				 (st->st_oakley.ta_integ->integ_output_size *
 				  BITS_PER_BYTE));
 			integ_name = integ_buf;
 		}
@@ -750,8 +750,8 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 	if (st->st_ikev2) {
 		pstats_ikev2_sa++;
 		pstats(ikev2_encr, st->st_oakley.ta_encrypt->common.id[IKEv2_ALG_ID]);
-		if (st->st_oakley.integ != NULL)
-			pstats(ikev2_integ, st->st_oakley.integ->common.id[IKEv2_ALG_ID]);
+		if (st->st_oakley.ta_integ != NULL)
+			pstats(ikev2_integ, st->st_oakley.ta_integ->common.id[IKEv2_ALG_ID]);
 		pstats(ikev2_groups, st->st_oakley.group->group);
 	} else {
 		pstats_ikev1_sa++;

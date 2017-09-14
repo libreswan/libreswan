@@ -1953,10 +1953,10 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		case AUTH_ALGORITHM | ISAKMP_ATTR_AF_TV:
 			/*
 			 * XXX: Always assign both .ta_ikev1_integ_hash and
-			 * .integ - it makes auditing easier.
+			 * .ta_integ - it makes auditing easier.
 			 */
 			attrs->transattrs.ta_ikev1_integ_hash = val;
-			attrs->transattrs.integ = ikev1_get_kernel_integ_desc(val);
+			attrs->transattrs.ta_integ = ikev1_get_kernel_integ_desc(val);
 			break;
 
 		case KEY_LENGTH | ISAKMP_ATTR_AF_TV:
@@ -2057,8 +2057,8 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		 * AEAD implies NULL integrity.
 		 */
 		if (ike_alg_is_aead(attrs->transattrs.ta_encrypt)
-		    && attrs->transattrs.integ == NULL) {
-			attrs->transattrs.integ = &ike_alg_integ_none;
+		    && attrs->transattrs.ta_integ == NULL) {
+			attrs->transattrs.ta_integ = &ike_alg_integ_none;
 		}
 
 	}
@@ -2580,7 +2580,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					case ESP_3DES:
 						break;
 					case ESP_NULL:
-						if (esp_attrs.transattrs.integ == &ike_alg_integ_none) {
+						if (esp_attrs.transattrs.ta_integ == &ike_alg_integ_none) {
 							loglog(RC_LOG_SERIOUS,
 							       "ESP_NULL requires auth algorithm");
 							return BAD_PROPOSAL_SYNTAX;
@@ -2618,7 +2618,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					}
 				}
 
-				if (!kernel_alg_integ_ok(esp_attrs.transattrs.integ)) {
+				if (!kernel_alg_integ_ok(esp_attrs.transattrs.ta_integ)) {
 					switch (esp_attrs.transattrs.ta_ikev1_integ_hash)
 					{
 					case AUTH_ALGORITHM_NONE:

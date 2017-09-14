@@ -1594,11 +1594,11 @@ void ikev2_log_parentSA(struct state *st)
 		const char *authalgo;
 		char encalgo[128];
 
-		if (st->st_oakley.integ == NULL ||
+		if (st->st_oakley.ta_integ == NULL ||
 		    st->st_oakley.ta_encrypt == NULL)
 			return;
 
-		authalgo = st->st_oakley.integ->common.officname;
+		authalgo = st->st_oakley.ta_integ->common.officname;
 
 		if (st->st_oakley.enckeylen != 0) {
 			/* 3des will use '3des', while aes becomes 'aes128' */

@@ -354,7 +354,7 @@ void kernel_alg_show_connection(const struct connection *c, const char *instance
 			  instance, satype,
 			  st->st_esp.attrs.transattrs.ta_encrypt->common.fqn,
 			  st->st_esp.attrs.transattrs.enckeylen,
-			  st->st_esp.attrs.transattrs.integ->common.fqn,
+			  st->st_esp.attrs.transattrs.ta_integ->common.fqn,
 			  pfsbuf);
 	}
 
@@ -363,7 +363,7 @@ void kernel_alg_show_connection(const struct connection *c, const char *instance
 			  "\"%s\"%s:   %s algorithm newest: %s; pfsgroup=%s",
 			  c->name,
 			  instance, satype,
-			  st->st_ah.attrs.transattrs.integ->common.fqn,
+			  st->st_ah.attrs.transattrs.ta_integ->common.fqn,
 			  pfsbuf);
 	}
 }

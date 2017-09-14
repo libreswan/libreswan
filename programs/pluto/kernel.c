@@ -2017,7 +2017,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 		DBG(DBG_CONTROL,
 			DBG_log("looking for alg with transid: %d keylen: %d integ: %s",
-				ta->ta_ikev1_encrypt, ta->enckeylen, ta->integ->common.fqn));
+				ta->ta_ikev1_encrypt, ta->enckeylen, ta->ta_integ->common.fqn));
 
 		/*
 		 * Check that both integrity and encryption are
@@ -2028,10 +2028,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 * they do then strange things have been going on
 		 * since the connection was loaded).
 		 */
-		if (!kernel_alg_integ_ok(ta->integ)) {
+		if (!kernel_alg_integ_ok(ta->ta_integ)) {
 			loglog(RC_LOG_SERIOUS,
 			       "ESP integrity algorithm %s is not implemented or allowed",
-			       ta->integ->common.fqn);
+			       ta->ta_integ->common.fqn);
 			goto fail;
 		}
 		if (!kernel_alg_encrypt_ok(ta->ta_encrypt)) {
@@ -2074,7 +2074,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			encrypt_keymat_size += ta->ta_encrypt->salt_size;
 		}
 
-		size_t integ_keymat_size = ta->integ->integ_keymat_size; /* BYTES */
+		size_t integ_keymat_size = ta->ta_integ->integ_keymat_size; /* BYTES */
 
 		DBG(DBG_KERNEL, DBG_log(
 			"st->st_esp.keymat_len=%" PRIu16 " is encrypt_keymat_size=%zu + integ_keymat_size=%zu",
@@ -2096,7 +2096,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			said_next->tfcpad = c->sa_tfcpad;
 		}
 
-		said_next->integ = ta->integ;
+		said_next->integ = ta->ta_integ;
 		if (said_next->integ == &ike_alg_integ_sha2_256 &&
 			st->st_connection->sha2_truncbug) {
 			if (kernel_ops->sha2_truncbug_support) {
@@ -2229,7 +2229,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		u_char *ah_dst_keymat =
 			inbound ? st->st_ah.our_keymat : st->st_ah.peer_keymat;
 
-		const struct integ_desc *integ = st->st_ah.attrs.transattrs.integ;
+		const struct integ_desc *integ = st->st_ah.attrs.transattrs.ta_integ;
 		size_t keymat_size = integ->integ_keymat_size;
 		int authalg = integ->integ_ikev1_ah_transform;
 		if (authalg <= 0) {

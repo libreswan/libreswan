@@ -200,7 +200,7 @@ void ike_alg_show_connection(const struct connection *c, const char *instance)
 			.encrypt = st->st_oakley.ta_encrypt,
 			.enckeylen = st->st_oakley.enckeylen,
 			.prf = st->st_oakley.prf,
-			.integ = st->st_oakley.integ,
+			.integ = st->st_oakley.ta_integ,
 			.dh = st->st_oakley.group,
 		};
 		const char *v = st->st_ikev2 ? "IKEv2" : "IKE";

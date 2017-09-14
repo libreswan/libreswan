@@ -315,13 +315,13 @@ static void compute_proto_keymat(struct state *st,
 		}
 		DBG(DBG_PARSING, DBG_log("compute_proto_keymat: needed_len (after ESP enc)=%d",
 					 (int)needed_len));
-		needed_len += pi->attrs.transattrs.integ->integ_keymat_size;
+		needed_len += pi->attrs.transattrs.ta_integ->integ_keymat_size;
 		DBG(DBG_PARSING, DBG_log("compute_proto_keymat: needed_len (after ESP auth)=%d",
 					 (int)needed_len));
 		break;
 
 	case PROTO_IPSEC_AH:
-		needed_len += pi->attrs.transattrs.integ->integ_keymat_size;
+		needed_len += pi->attrs.transattrs.ta_integ->integ_keymat_size;
 		break;
 
 	default:
