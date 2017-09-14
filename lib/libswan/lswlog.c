@@ -112,6 +112,11 @@ static void truncate(struct lswlog *log)
 
 static size_t concat(struct lswlog *log, const char *string)
 {
+	/* Just in case a NULL ends up here */
+	if (string == NULL) {
+		string = "(null)";
+	}
+
 	struct dest d = dest(log);
 
 	/*
