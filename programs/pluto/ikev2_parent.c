@@ -1951,7 +1951,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		case v2N_SIGNATURE_HASH_ALGORITHMS:
 			if (!DBGP(IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE)) {
 				st->st_seen_hashnotify = TRUE;
-				if(!negotiate_hash_algo_from_notification(ntfy,st))
+				if (!negotiate_hash_algo_from_notification(ntfy,st))
 					return STF_FATAL;
 			} else {
 				libreswan_log("Impair: Ignoring the hash notify in IKE_SA_INIT Response");

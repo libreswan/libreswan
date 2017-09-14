@@ -1553,7 +1553,7 @@ bool resend_ike_v1_msg(struct state *st, const char *where)
 {
 	bool ret = send_or_resend_ike_msg(st, where, TRUE);
 
-	if(st->st_state == STATE_XAUTH_R0)
+	if (st->st_state == STATE_XAUTH_R0)
 		event_schedule_ms(EVENT_v1_SEND_XAUTH, EVENT_v1_SEND_XAUTH_DELAY, st);
 
 	return ret;
