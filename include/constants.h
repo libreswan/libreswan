@@ -22,6 +22,9 @@
  */
 
 #ifndef _CONSTANTS_H_
+#define _CONSTANTS_H_
+
+#include <stddef.h> /* for size_t */
 
 /*
  * This file was split into internal contants (Libreswan/pluto related),
@@ -350,5 +353,4 @@ extern void init_constants(void);
 #include "pluto_constants.h"
 #include "names_constant.h"
 
-#define _CONSTANTS_H_
 #endif /* _CONSTANTS_H_ */
