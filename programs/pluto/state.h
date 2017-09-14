@@ -111,7 +111,6 @@ struct trans_attrs {
 	 * What could possibly go wrong :-)
 	 */
 	u_int16_t encrypt;
-	u_int16_t enckeylen;		/* encryption key len (bits) */
 	oakley_hash_t integ_hash;	/* Hash algorithm for integ */
 
 	oakley_auth_t auth;		/* Authentication method (RSA,PSK) */
@@ -123,8 +122,9 @@ struct trans_attrs {
 	deltatime_t life_seconds;	/* max life of this SA in seconds */
 	u_int32_t life_kilobytes;	/* max life of this SA in kilobytes */
 
-	/* used in phase1/PARENT SA */
+	/* negotiated crypto-suite */
 	const struct encrypt_desc *encrypter;	/* package of encryption routines */
+	u_int16_t enckeylen;			/* encryption key len (bits) */
 	const struct prf_desc *prf;		/* package of prf routines */
 	const struct integ_desc *integ;		/* package of integrity routines */
 	const struct oakley_group_desc *group;	/* Oakley group */
