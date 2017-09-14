@@ -1081,6 +1081,8 @@ static void ikev1_xauth_callback(struct state *st, const char *name,
 		results = TRUE;
 	}
 
+	unset_suspended(st);
+
 	if (results) {
 		libreswan_log("XAUTH: User %s: Authentication Successful",
 			      name);
@@ -1325,6 +1327,7 @@ stf_status xauth_inR0(struct msg_digest *md)
 		}
 	} else {
 		xauth_launch_authent(st, &name, &password, st->st_connection->name);
+		set_suspended(st, md);
 	}
 	return STF_IGNORE;
 }
