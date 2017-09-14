@@ -163,6 +163,15 @@ int main(int argc UNUSED, char *argv[])
 
 	lset_names_check(&debug_lset_names);
 
+	for (unsigned bit = 0; debug_bit_names[bit] != NULL; bit++) {
+		const char *old = debug_bit_names[bit];
+		const char *new = strip_prefix(debug_lset_names.lelems[bit].flag, "debug-");
+		if (!streq(old, new)) {
+			printf("bit %d %s %s\n",
+			       bit, old, new);
+		}
+	}
+
 	report_leaks();
 	tool_close_log();
 	exit(0);

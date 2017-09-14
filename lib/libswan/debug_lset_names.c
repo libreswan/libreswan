@@ -43,7 +43,7 @@ const struct lset_names debug_lset_names = {
 		I(DBG_OPPO, "debug-oppo"),
 		I(DBG_CONTROLMORE, "debug-controlmore"),
 		I(DBG_PFKEY, "debug-pfkey"),
-		I(DBG_NATT, "debug-natt"),
+		I(DBG_NATT, "debug-nattraversal"),
 		I(DBG_X509, "debug-x509"),
 		I(DBG_DPD, "debug-dpd"),
 		I(DBG_OPPOINFO, "debug-oppoinfo"),
@@ -69,9 +69,9 @@ const struct lset_names debug_lset_names = {
 		I(IMPAIR_SEND_KEY_SIZE_CHECK, "impair-send-key-size-check"),
 		I(IMPAIR_SEND_ZERO_GX, "impair-send-zero-gx"),
 		I(IMPAIR_SEND_BOGUS_DCOOKIE, "impair-send-bogus-dcookie"),
-		I(IMPAIR_OMIT_HASH_NOTIFY_REQUEST, "impair-omit-hash-notify-request"),
-		I(IMPAIR_IGNORE_HASH_NOTIFY_REQUEST, "impair-ignore-hash-notify-request"),
-		I(IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE, "impair-ignore-hash-notify-response"),
+		I(IMPAIR_OMIT_HASH_NOTIFY_REQUEST, "impair-omit-hash-notify"),
+		I(IMPAIR_IGNORE_HASH_NOTIFY_REQUEST, "impair-omit-hash-notify"), /*XXX*/
+		I(IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE, "impair-ignore-hash-notify-resp"),
 		[IMPAIR_roof_IX] = SENTINEL_LELEM_NAME,
 	},
 };
