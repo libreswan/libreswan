@@ -1744,7 +1744,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	switch (proto) {
 	case PROTO_IPCOMP:
 		attrs->transattrs.ta_ikev1_encrypt = trans->isat_transid; /* XXX */
-		attrs->transattrs.comp = trans->isat_transid;
+		attrs->transattrs.ta_comp = trans->isat_transid;
 		break;
 	case PROTO_IPSEC_ESP:
 		attrs->transattrs.ta_ikev1_encrypt = trans->isat_transid;

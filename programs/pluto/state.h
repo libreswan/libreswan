@@ -87,7 +87,7 @@ struct trans_attrs {
 	 * XXX: code likely still relies on .encrypt having the same
 	 * value.  See below.
 	 */
-	enum ipsec_comp_algo comp;
+	enum ipsec_comp_algo ta_comp;
 
 	/*
 	 * Let me see, the IKEV1TA_ENCRYPT field, depending on which
