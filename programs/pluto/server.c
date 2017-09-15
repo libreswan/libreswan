@@ -145,9 +145,6 @@ err_t init_ctl_socket(void)
 		failed = "create";
 	} else if (fcntl(ctl_fd, F_SETFD, FD_CLOEXEC) == -1) {
 		failed = "fcntl FD+CLOEXEC";
-	} else if (setsockopt(ctl_fd, SOL_SOCKET, SO_REUSEADDR,
-			      (const void *)&on, sizeof(on)) < 0) {
-		failed = "setsockopt";
 	} else {
 		/* to keep control socket secure, use umask */
 #ifdef PLUTO_GROUP_CTL
