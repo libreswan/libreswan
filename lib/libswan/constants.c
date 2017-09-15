@@ -2090,6 +2090,32 @@ const char *enum_short_name(enum_names *ed, unsigned long val)
 		strip_prefix(p, ed->en_prefix);
 }
 
+size_t lswlog_enum(struct lswlog *buf, enum_names *en, unsigned long val)
+{
+	const char *name = enum_name(en, val);
+	if (name == NULL) {
+		if (en->en_prefix != NULL) {
+			lswlogs(buf, en->en_prefix);
+			lswlogs(buf, "_");
+		}
+		return lswlogf(buf, "%lu??", val);
+	}
+	return lswlogs(buf, name);
+}
+
+size_t lswlog_enum_short(struct lswlog *buf, enum_names *en, unsigned long val)
+{
+	const char *name = enum_short_name(en, val);
+	if (name == NULL) {
+		if (en->en_prefix != NULL) {
+			lswlogs(buf, en->en_prefix);
+			lswlogs(buf, "_");
+		}
+		return lswlogf(buf, "%lu??", val);
+	}
+	return lswlogs(buf, name);
+}
+
 /*
  * find or construct a string to describe an enum value
  *
@@ -2241,14 +2267,6 @@ const char *enum_enum_name(enum_enum_names *een, unsigned long table,
 	return en == NULL ? NULL : enum_name(en, val);
 }
 
-const char *enum_enum_short_name(enum_enum_names *een, unsigned long table,
-			   unsigned long val)
-{
-	enum_names *en = enum_enum_table(een, table);
-
-	return en == NULL ? NULL : enum_short_name(en, val);
-}
-
 const char *enum_enum_showb(enum_enum_names *een, unsigned long table,
 			    unsigned long val, struct esb_buf *b)
 {
@@ -2261,6 +2279,27 @@ const char *enum_enum_showb(enum_enum_names *een, unsigned long table,
 	return b->buf;
 }
 
+size_t lswlog_enum_enum(struct lswlog *buf, enum_enum_names *een,
+			unsigned long table, unsigned long val)
+{
+	enum_names *en = enum_enum_table(een, table);
+	if (en == NULL) {
+		/* XXX: dump something more meaningful */
+		return lswlogf(buf, "%lu??%lu??", table, val);
+	}
+	return lswlog_enum(buf, en, val);
+}
+
+size_t lswlog_enum_enum_short(struct lswlog *buf, enum_enum_names *een,
+			      unsigned long table, unsigned long val)
+{
+	enum_names *en = enum_enum_table(een, table);
+	if (en == NULL) {
+		/* XXX: dump something more meaningful */
+		return lswlogf(buf, "%lu??%lu??", table, val);
+	}
+	return lswlog_enum_short(buf, en, val);
+}
 
 /*
  * construct a string to name the bits on in a set

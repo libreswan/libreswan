@@ -273,9 +273,8 @@ static void print_name_value(struct lswlog *log, const char *name, int value)
 static void print_transform(struct lswlog *buf, enum ikev2_trans_type type,
 			    const struct ikev2_transform *transform)
 {
-	lswlogs(buf,
-		enum_enum_short_name(&v2_transform_ID_enums,
-				     type, transform->id));
+	lswlog_enum_enum_short(buf, &v2_transform_ID_enums,
+			       type, transform->id);
 	if (transform->attr_keylen > 0) {
 		lswlogf(buf, "_%d", transform->attr_keylen);
 	}

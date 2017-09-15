@@ -24,6 +24,8 @@
 #ifndef _CONSTANTS_H_
 #define _CONSTANTS_H_
 
+struct lswlog;
+
 #include <stddef.h> /* for size_t */
 
 /*
@@ -213,18 +215,22 @@ typedef uint_fast64_t lset_t;
  *    for any unnamed value (in a static area -- NOT RE-ENTRANT)
  * enum_showb() is like enum_show() but uses a caller-supplied buffer
  *    for any unnamed value and thus is re-entrant.
- */
-
-/* Printing lset_t values:
  *
- * bitnamesof() formats a display of a set of named bits (in a static area -- NOT RE-ENTRANT)
- * bitnamesofb() formats into a caller-supplied buffer (re-entrant)
+ * lswlog_enum() appends the name of an enum value; if unnamed, append
+ * a mashup of the standard prefix and the numeric value.
+ *
+ * lswlog_enum_short() appends the name of an enum value with any
+ * standard prefix removed; if unnamed, append a mashup of the
+ * standard prefix and the numeric value.
  */
 
 typedef const struct enum_names enum_names;
 
 extern const char *enum_name(enum_names *ed, unsigned long val);
 extern const char *enum_short_name(enum_names *ed, unsigned long val);
+
+size_t lswlog_enum(struct lswlog *, enum_names *en, unsigned long val);
+size_t lswlog_enum_short(struct lswlog *, enum_names *en, unsigned long val);
 
 /* caller-allocated buffer for enum_showb */
 struct esb_buf {
@@ -268,8 +274,14 @@ extern int enum_match(enum_names *ed, const char *string);
  *
  * enum_enum_table() returns TABLE's enum_names, or NULL.
  * enum_enum_name() returns TABLE VAL's enum, or NULL.
- * enum_enum_short_name() returns TABLE VAL's short enum, or NULL.
  * enum_enum_showb() returns TABLE VAL's enum or %ld using BUF.
+ *
+ * lswlog_enum_enum() appends TABLE VAL's enum name; if unnamed,
+ * append a mashup of the standard prefix and the numeric value.
+ *
+ * lswlog_enum_enum_short() appends TABLE VAL's enum name with any
+ * standard prefix removed; if unnamed, append a mashup of the
+ * standard prefix and the numeric value.
  */
 
 typedef const struct enum_enum_names enum_enum_names;
@@ -277,11 +289,13 @@ typedef const struct enum_enum_names enum_enum_names;
 enum_names *enum_enum_table(enum_enum_names *e, unsigned long table);
 const char *enum_enum_name(enum_enum_names *e, unsigned long table,
 			   unsigned long val);
-const char *enum_enum_short_name(enum_enum_names *e, unsigned long table,
-			   unsigned long val);
 const char *enum_enum_showb(enum_enum_names *e, unsigned long table,
 			    unsigned long val, struct esb_buf *buf);
 
+size_t lswlog_enum_enum(struct lswlog *log, enum_enum_names *een,
+			unsigned long table, unsigned long val);
+size_t lswlog_enum_enum_short(struct lswlog *log, enum_enum_names *een,
+			      unsigned long table, unsigned long val);
 
 /* Printing lset_t values:
  *
