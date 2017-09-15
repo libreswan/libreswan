@@ -11,6 +11,7 @@
  * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -971,6 +972,7 @@ void call_server(void)
 bool check_msg_errqueue(const struct iface_port *ifp, short interest, const char *before)
 {
 	struct pollfd pfd;
+	int again_count = 0;
 
 	pfd.fd = ifp->fd;
 	pfd.events = interest | POLLPRI | POLLOUT;
@@ -1020,10 +1022,18 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest, const char
 			libreswan_log("recvmsg: received truncated IKE packet (MSG_TRUNC)");
 
 		if (packet_len == -1) {
-			LOG_ERRNO(errno,
-				  "recvmsg(,, MSG_ERRQUEUE) on %s failed (noticed before %s)",
-				  ifp->ip_dev->id_rname, before);
-			break;
+			if (errno == EAGAIN) {
+				again_count++;
+				LOG_ERRNO(errno,
+					  "recvmsg(,, MSG_ERRQUEUE) on %s failed (noticed before %s) (attempt %d)",
+					  ifp->ip_dev->id_rname, before, again_count);
+				continue;
+			} else {
+				LOG_ERRNO(errno,
+					  "recvmsg(,, MSG_ERRQUEUE) on %s failed (noticed before %s)",
+					  ifp->ip_dev->id_rname, before);
+				break;
+			}
 		} else if (packet_len == (ssize_t)sizeof(buffer)) {
 			libreswan_log(
 				"MSG_ERRQUEUE message longer than %lu bytes; truncated",
