@@ -19,11 +19,13 @@
 
 struct id;
 struct state;
+struct xauth;
 
-void xauth_cancel(so_serial_t serialno, pthread_t *thread);
+void xauth_cancel(so_serial_t serialno, pthread_t *thread, struct xauth *xauth);
 
 #ifdef XAUTH_HAVE_PAM
 void xauth_start_pam_thread(pthread_t *thread,
+			    struct xauth **xauthp,
 			    const char *name,
 			    const char *password,
 			    const char *connection_name,

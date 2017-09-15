@@ -1081,6 +1081,8 @@ static void ikev1_xauth_callback(struct state *st, const char *name,
 		results = TRUE;
 	}
 
+	unset_suspended(st);
+
 	if (results) {
 		libreswan_log("XAUTH: User %s: Authentication Successful",
 			      name);
@@ -1130,6 +1132,7 @@ static int xauth_launch_authent(struct state *st,
 		libreswan_log("XAUTH: PAM authentication method requested to authenticate user '%s'",
 			      arg_name);
 		xauth_start_pam_thread(&st->st_xauth_thread,
+				       &st->st_xauth,
 				       arg_name, arg_password,
 				       connname,
 				       &st->st_remoteaddr,
@@ -1137,6 +1140,9 @@ static int xauth_launch_authent(struct state *st,
 				       st->st_connection->instance_serial,
 				       "XAUTH",
 				       ikev1_xauth_callback);
+		delete_event(st);
+		event_schedule(EVENT_PAM_TIMEOUT, EVENT_PAM_TIMEOUT_DELAY, st);
+
 		break;
 #endif
 	case XAUTHBY_FILE:
@@ -1321,6 +1327,7 @@ stf_status xauth_inR0(struct msg_digest *md)
 		}
 	} else {
 		xauth_launch_authent(st, &name, &password, st->st_connection->name);
+		set_suspended(st, md);
 	}
 	return STF_IGNORE;
 }
