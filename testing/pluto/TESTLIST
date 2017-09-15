@@ -722,6 +722,7 @@ kvmplutotest	interop-ikev2-strongswan-35-responder-rekey-pfs good
 kvmplutotest	interop-ikev2-strongswan-36-esp-gmac-responder	good
 kvmplutotest	interop-ikev2-strongswan-37-initiator-digsig	good
 kvmplutotest	interop-ikev2-strongswan-38-digsig-impair	good
+kvmplutotest	interop-ikev2-pluto-01-integ-null		good
 
 #################################################################
 # DNSSEC tests

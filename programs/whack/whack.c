@@ -789,6 +789,10 @@ static const struct option long_opts[] = {
 		IMPAIR_IGNORE_HASH_NOTIFY_REQUEST_IX + DO },
 	{ "impair-ignore-hash-notify-resp", no_argument, NULL,
 		IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE_IX + DO },
+	{ "impair-ikev2-exclude-integ-none", no_argument, NULL,
+		IMPAIR_IKEv2_EXCLUDE_INTEG_NONE_IX + DO },
+	{ "impair-ikev2-include-integ-none", no_argument, NULL,
+		IMPAIR_IKEv2_INCLUDE_INTEG_NONE_IX + DO },
 #    undef DO
 	{ "whackrecord",     required_argument, NULL, OPT_WHACKRECORD + OO },
 	{ "whackstoprecord", no_argument, NULL, OPT_WHACKSTOPRECORD + OO },

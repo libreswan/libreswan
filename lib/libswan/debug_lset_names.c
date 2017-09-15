@@ -72,6 +72,8 @@ const struct lset_names debug_lset_names = {
 		I(IMPAIR_OMIT_HASH_NOTIFY_REQUEST, "impair-omit-hash-notify"),
 		I(IMPAIR_IGNORE_HASH_NOTIFY_REQUEST, "impair-ignore-hash-notify"),
 		I(IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE, "impair-ignore-hash-notify-resp"),
+		I(IMPAIR_IKEv2_EXCLUDE_INTEG_NONE, "impair-ikev2-exclude-integ-none"),
+		I(IMPAIR_IKEv2_INCLUDE_INTEG_NONE, "impair-ikev2-include-integ-none"),
 		[IMPAIR_roof_IX] = SENTINEL_LELEM_NAME,
 	},
 };

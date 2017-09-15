@@ -3,7 +3,8 @@ See also https://libreswan.org/
 
 v3.22 (unreleased)
 * IKEv2: Support for RFC 7427 Digital Signature AUTH [Sahana Prasad/GSoC]
-* IKEv2: Send ESP=AEAD+NONE and accept both ESP=AEAD+NONE and ESP=AEAD [Andrew]
+* IKEv2: Do not include INTEG=NONE in AEAD IKE proposals [Andrew]
+* IKEv2: Accept both ESP=AEAD+NONE and ESP=AEAD in proposals [Andrew]
          (See also: https://www.rfc-editor.org/errata/eid5109)
 * pluto: Change default rundir from /var/run/pluto to /run/pluto [Paul]
 * various: phase out --ctlbase for --ctlsocket and --rundir [Paul]

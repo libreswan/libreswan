@@ -609,22 +609,6 @@ static int process_transforms(pb_stream *prop_pbs, struct lswlog *remote_print_b
 		}
 
 		/*
-		 * Detect/reject things like: INTEG=NULL INTEG=HASH
-		 * INTEG=NULL
-		 */
-		if (type == IKEv2_TRANS_TYPE_INTEG) {
-			if (first_integrity_transid < 0) {
-				first_integrity_transid = remote_trans.isat_transid;
-			} else if (first_integrity_transid == 0 || remote_trans.isat_transid == 0) {
-				libreswan_log("remote proposal %u transform %d has too much NULL integrity %d %d",
-					      remote_propnum, remote_transform_nr,
-					      first_integrity_transid, remote_trans.isat_transid);
-				lswlogs(remote_print_buf, "[mixed-integrity]");
-				return 0; /* try next proposal */
-			}
-		}
-
-		/*
 		 * Accumulate the proposal's transforms in remote_buf.
 		 */
 		print_type_transform(remote_print_buf, type, &remote_transform);
@@ -633,6 +617,23 @@ static int process_transforms(pb_stream *prop_pbs, struct lswlog *remote_print_b
 		 * Remember each remote transform type found.
 		 */
 		proposed_remote_transform_types |= LELEM(type);
+
+		/*
+		 * Detect/reject things like: INTEG=NONE INTEG=HASH
+		 * INTEG=NONE.
+		 */
+		if (type == IKEv2_TRANS_TYPE_INTEG) {
+			if (first_integrity_transid < 0) {
+				first_integrity_transid = remote_trans.isat_transid;
+			} else if (first_integrity_transid == IKEv2_AUTH_NONE ||
+				   remote_trans.isat_transid == IKEv2_AUTH_NONE) {
+				libreswan_log("remote proposal %u transform %d has more than 'none' integrity %d %d",
+					      remote_propnum, remote_transform_nr,
+					      first_integrity_transid, remote_trans.isat_transid);
+				lswlogs(remote_print_buf, "[mixed-integrity]");
+				return 0; /* try next proposal */
+			}
+		}
 
 		/*
 		 * Find the proposals that match and flag them.
@@ -1243,18 +1244,50 @@ static bool emit_transform(pb_stream *r_proposal_pbs,
  */
 static bool emit_proposal(pb_stream *sa_pbs, struct ikev2_proposal *proposal,
 			  unsigned propnum, chunk_t *local_spi,
-			  enum ikev2_last_proposal last_proposal)
+			  enum ikev2_last_proposal last_proposal,
+			  bool exclude_integrity_none)
 {
 	int numtrans = 0;
 	enum ikev2_trans_type type;
 	struct ikev2_transforms *transforms;
 
+	/*
+	 * Total up the number of transforms that will go across the
+	 * wire.  Make allowance for INTEGRITY which might be
+	 * excluded.
+	 */
 	FOR_EACH_TRANSFORMS_TYPE(type, transforms, proposal) {
 		struct ikev2_transform *transform;
 		FOR_EACH_TRANSFORM(transform, transforms) {
+			/*
+			 * When pluto initiates with an AEAD proposal,
+			 * integ=none is excluded (as recommended by
+			 * the RFC).  However, when pluto receives an
+			 * AEAD proposal that includes integ=none, the
+			 * it needs to include it (as also recommended
+			 * by the RFC?).
+			 *
+			 * The impair options then screw with this
+			 * behaviour - including or excluding
+			 * impair=none when it otherwise wouldn't.
+			 */
+			if (type == IKEv2_TRANS_TYPE_INTEG &&
+			    transform->id == IKEv2_AUTH_NONE) {
+				if (DBGP(IMPAIR_IKEv2_INCLUDE_INTEG_NONE)) {
+					libreswan_log("IMPAIR: for proposal %d include integ=none in count",
+						      propnum);
+				} else if (DBGP(IMPAIR_IKEv2_EXCLUDE_INTEG_NONE)) {
+					libreswan_log("IMPAIR: for proposal %d exclude integ=none in count",
+						      propnum);
+					continue;
+				} else if (exclude_integrity_none) {
+					continue;
+				}
+			}
 			numtrans++;
 		}
 	}
+
 	struct ikev2_prop prop = {
 		.isap_lp = last_proposal,
 		.isap_propnum = propnum,
@@ -1278,6 +1311,23 @@ static bool emit_proposal(pb_stream *sa_pbs, struct ikev2_proposal *proposal,
 	FOR_EACH_TRANSFORMS_TYPE(type, transforms, proposal) {
 		struct ikev2_transform *transform;
 		FOR_EACH_TRANSFORM(transform, transforms) {
+			/*
+			 * Since INTEG=NONE is omitted, don't include
+			 * it in the count.
+			 */
+			if (type == IKEv2_TRANS_TYPE_INTEG &&
+			    transform->id == IKEv2_AUTH_NONE) {
+				if (DBGP(IMPAIR_IKEv2_INCLUDE_INTEG_NONE)) {
+					libreswan_log("IMPAIR: for proposal %d include integ=none in payload",
+						      propnum);
+				} else if (DBGP(IMPAIR_IKEv2_EXCLUDE_INTEG_NONE)) {
+					libreswan_log("IMPAIR: for proposal %d exclude integ=none in payload",
+						      propnum);
+					continue;
+				} else if (exclude_integrity_none) {
+					continue;
+				}
+			}
 			bool last = --numtrans == 0;
 			if (!emit_transform(&proposal_pbs, type, last, transform))
 				return FALSE;
@@ -1313,7 +1363,8 @@ bool ikev2_emit_sa_proposals(pb_stream *pbs,
 		if (!emit_proposal(&sa_pbs, proposal, propnum, local_spi,
 				   (propnum < proposals->roof - 1
 				    ? v2_PROPOSAL_NON_LAST
-				    : v2_PROPOSAL_LAST))) {
+				    : v2_PROPOSAL_LAST),
+				    true)) {
 			return FALSE;
 		}
 	}
@@ -1340,7 +1391,7 @@ bool ikev2_emit_sa_proposal(pb_stream *pbs, struct ikev2_proposal *proposal,
 	}
 
 	if (!emit_proposal(&sa_pbs, proposal, proposal->propnum,
-			   local_spi, v2_PROPOSAL_LAST)) {
+			   local_spi, v2_PROPOSAL_LAST, false)) {
 		return FALSE;
 	}
 
@@ -1800,6 +1851,67 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 	return TRUE;
 }
 
+static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct proposal_info *info,
+								enum ikev2_sec_proto_id protoid,
+								struct ikev2_proposals *proposals,
+								const struct oakley_group_desc *dh)
+{
+	/*
+	 * Both initialize and empty this proposal (might
+	 * contain partially constructed stuff from an earlier
+	 * iteration).
+	 */
+	struct ikev2_proposal *proposal = &proposals->proposal[proposals->roof];
+	*proposal = (struct ikev2_proposal) {
+		.protoid = protoid,
+		.propnum = proposals->roof,
+	};
+
+	/*
+	 * Encryption.
+	 */
+	const struct encrypt_desc *encrypt = info->encrypt;
+	if (encrypt != NULL) {
+		if (!append_encrypt_transform(proposal, encrypt,
+					      info->enckeylen)) {
+			return NULL;
+		}
+	}
+
+	/*
+	 * PRF.
+	 */
+	const struct prf_desc *prf = info->prf;
+	if (prf != NULL) {
+		append_transform(proposal, IKEv2_TRANS_TYPE_PRF,
+				 prf->common.id[IKEv2_ALG_ID], 0);
+	}
+
+	/*
+	 * Integrity.
+	 */
+	const struct integ_desc *integ = info->integ;
+	if (integ != NULL) {
+		/*
+		 * While INTEG=NONE is included in the proposal it
+		 * omitted when emitted.
+		 */
+		append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
+				 integ->common.id[IKEv2_ALG_ID], 0);
+	}
+
+	/*
+	 * DH.
+	 */
+	/* const struct oakley_group_desc *dh = info->dh; */
+	if (dh != NULL) {
+		append_transform(proposal, IKEv2_TRANS_TYPE_DH,
+				 dh->common.id[IKEv2_ALG_ID], 0);
+	}
+
+	return proposal;
+}
+
 /*
  * Define macros to save some typing, perhaps avoid some duplication
  * errors, and ease the pain of occasionally rearanging these data
@@ -1957,64 +2069,13 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 			lswlogs(buf, " to ikev2 ...");
 		}
 
-		/*
-		 * Both initialize and empty this proposal (might
-		 * contain partially constructed stuff from an earlier
-		 * iteration).
-		 */
 		passert(proposals->roof < proposals_roof);
-		struct ikev2_proposal *proposal = &proposals->proposal[proposals->roof];
-		*proposal = (struct ikev2_proposal) {
-			.protoid =  IKEv2_SEC_PROTO_IKE,
-			.propnum = proposals->roof,
-		};
-
-		/*
-		 * Encryption
-		 */
-		const struct encrypt_desc *ealg = ike_info->encrypt;
-		if (!append_encrypt_transform(proposal, ealg, ike_info->enckeylen)) {
+		struct ikev2_proposal *proposal =
+			ikev2_proposal_from_proposal_info(ike_info, IKEv2_SEC_PROTO_IKE,
+							  proposals, ike_info->dh);
+		if (proposal == NULL) {
 			continue;
 		}
-
-		/*
-		 * PRF
-		 */
-		const struct prf_desc *prf = ike_info->prf;
-		if (prf == NULL) {
-			PEXPECT_LOG("%s", "IKEv2 proposal with no PRF should have been dropped");
-			continue;
-		} else if (prf->common.id[IKEv2_ALG_ID] == 0) {
-			loglog(RC_LOG_SERIOUS,
-			       "IKEv2 proposal contains unsupported PRF algorithm %s",
-			       prf->common.name);
-			continue;
-		} else {
-			append_transform(proposal, IKEv2_TRANS_TYPE_PRF,
-					 prf->common.id[IKEv2_ALG_ID], 0);
-		}
-
-		/*
-		 * Integrity.  Always propose something, which will
-		 * include 'none'.
-		 */
-		const struct integ_desc *integ = ike_info->integ;
-		passert(integ->common.id[IKEv2_ALG_ID] >= 0);
-		append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
-				 integ->common.id[IKEv2_ALG_ID], 0);
-
-		/*
-		 * DH GROUP
-		 */
-		const struct oakley_group_desc *group = ike_info->dh;
-		if (group == NULL) {
-			PEXPECT_LOG("%s", "IKEv2 proposal with no DH_GROUP should have been dropped");
-			continue;
-		} else {
-			append_transform(proposal, IKEv2_TRANS_TYPE_DH,
-					 ike_info->dh->group, 0);
-		}
-
 		DBG(DBG_CONTROL,
 		    DBG_log_ikev2_proposal("... ", proposal));
 		proposals->roof++;
@@ -2120,6 +2181,7 @@ static void add_pfs_group_to_proposal(struct ikev2_proposal *proposal,
 	if (pfs_group != NULL)
 		append_transform(proposal, IKEv2_TRANS_TYPE_DH, pfs_group->group, 0);
 }
+
 void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 				       struct alg_info_esp *alg_info_esp,
 				       lset_t policy,
@@ -2188,6 +2250,18 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 	proposals->on_heap = TRUE;
 	proposals->roof = 1;
 
+	enum ikev2_sec_proto_id protoid;
+	switch (policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
+	case POLICY_ENCRYPT:
+		protoid = IKEv2_SEC_PROTO_ESP;
+		break;
+	case POLICY_AUTHENTICATE:
+		protoid = IKEv2_SEC_PROTO_AH;
+		break;
+	default:
+		bad_case(policy);
+	}
+
 	FOR_EACH_ESP_INFO(alg_info_esp, esp_info) {
 		LSWDBGP(DBG_CONTROL, log) {
 			lswlogf(log, "converting proposal ");
@@ -2196,62 +2270,14 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 		}
 
 		/*
-		 * Both initialize and empty this proposal (might
-		 * contain partially constructed stuff from an earlier
-		 * iteration).
+		 * Get the next proposal with the basics filled in.
 		 */
 		passert(proposals->roof < proposals_roof);
-		struct ikev2_proposal *proposal = &proposals->proposal[proposals->roof];
-		*proposal = (struct ikev2_proposal) {
-			.protoid = 0,
-			.propnum = proposals->roof,
-		};
-
-		switch (policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
-		case POLICY_ENCRYPT:
-		{
-			proposal->protoid = IKEv2_SEC_PROTO_ESP;
-			/*
-			 * Encryption.
-			 */
-			const struct encrypt_desc *encrypt = esp_info->encrypt;
-			if (!kernel_alg_encrypt_ok(encrypt)) {
-				loglog(RC_LOG_SERIOUS,
-				       "requested ESP encryption algorithm %s not present; discarding proposal",
-				       encrypt->common.fqn);
-				continue;
-			}
-			if (!append_encrypt_transform(proposal, encrypt,
-						      esp_info->enckeylen)) {
-				continue;
-			}
-			/*
-			 * Integrity.  Always propose something, which
-			 * will include 'none'.
-			 */
-			const struct integ_desc *integ = esp_info->integ;
-			append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
-					 integ->common.id[IKEv2_ALG_ID], 0);
-			add_pfs_group_to_proposal(proposal, pfs_group);
-			break;
-		}
-		case POLICY_AUTHENTICATE:
-		{
-			proposal->protoid = IKEv2_SEC_PROTO_AH;
-			/*
-			 * Integrity.  Always propose something, which
-			 * will include 'none'.
-			 */
-			const struct integ_desc *integ = esp_info->integ;
-			passert(integ->common.id[IKEv2_ALG_ID] >= 0);
-			append_transform(proposal, IKEv2_TRANS_TYPE_INTEG,
-					 integ->common.id[IKEv2_ALG_ID], 0);
-			add_pfs_group_to_proposal(proposal, pfs_group);
-			break;
-		}
-		default:
-			bad_case(policy);
-
+		struct ikev2_proposal *proposal =
+			ikev2_proposal_from_proposal_info(esp_info, protoid,
+							  proposals, pfs_group);
+		if (proposal == NULL) {
+			continue;
 		}
 
 		add_esn_transforms(proposal, policy);
