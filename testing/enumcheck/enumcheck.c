@@ -7,6 +7,8 @@
 #include "lswalloc.h"
 #include "lset_names.h"
 
+#define PREFIX "         "
+
 static void test_enum(char *enumname, enum_names *enum_test, int floor, int long roof)
 {
 	printf("  %s:\n", enumname);
@@ -18,85 +20,166 @@ static void test_enum(char *enumname, enum_names *enum_test, int floor, int long
 		}
 
 		printf("  %3d -> %s\n", i, name);
-		const char *prefix = "        ";
+
+		/*
+		 * So that it is easy to see what was tested, print
+		 * something for every comparision.
+		 */
 
 		if (i < 0) {
 			/* we are cheating: don't do the other checks */
 			continue;
 		}
 
-		/*
-		 * So that it is easy to see what was tested, print
-		 * something for every comparision.
-		 *
-		 * "break" is used to make bailing early easier
-		 */
-		do {
-			int e;
+		LSWBUF(buf) {
+			printf(PREFIX "lswlog_enum %d: ", i);
+			lswlog_enum(buf, enum_test, i);
+			if (streq(name, buf->array)) {
+				printf("OK\n");
+			} else {
+				printf("ERROR\n");
+			}
+		}
 
-			printf("%s search %s: ", prefix, name);
-			e = enum_search(enum_test, name);
+		{
+			printf(PREFIX "search %s: ", name);
+			int e = enum_search(enum_test, name);
 			if (e != i) {
 				printf("%d ERROR\n", e);
-				break;
+			} else {
+				printf("OK\n");
 			}
-			printf("OK\n");
+		}
 
-			e = enum_match(enum_test, name);
-			printf("%s match %s: ", prefix, name);
+		{
+			printf(PREFIX "match %s: ", name);
+			int e = enum_match(enum_test, name);
 			if (e != i) {
 				printf("%d ERROR\n", e);
-				break;
-			}
-			printf("OK\n");
-
-			if (strchr(name, '(')) {
-				char *trunc_name = clone_str(name, "trunc_name");
-				*strchr(trunc_name, '(') = '\0';
-				e = enum_match(enum_test, trunc_name);
-				printf("%s match %s: ", prefix, trunc_name);
-				pfree(trunc_name);
-				if (e != i) {
-					printf("%d ERROR\n", e);
-					break;
-				}
+			} else {
 				printf("OK\n");
 			}
+		}
 
-			const char *short_name = enum_short_name(enum_test, i);
-
-			if (short_name != name) {
-				if (short_name == NULL) {
-					printf("%s short_name %d: ERROR\n",
-					       prefix, e);
-					break;
-				}
-
-				e = enum_match(enum_test, short_name);
-				printf("%s match %s: ", prefix, short_name);
-				if (e != i) {
-					printf("%d ERROR\n", e);
-					break;
-				}
+		if (strchr(name, '(') != NULL) {
+			char *trunc_name = clone_str(name, "trunc_name");
+			*strchr(trunc_name, '(') = '\0';
+			printf(PREFIX "match %s [trunc]: ", trunc_name);
+			int e = enum_match(enum_test, trunc_name);
+			pfree(trunc_name);
+			if (e != i) {
+				printf("%d ERROR\n", e);
+			} else {
 				printf("OK\n");
-
-				if (strchr(short_name, '(')) {
-					char *trunc_short_name = clone_str(short_name, "trunc_short_name");
-					*strchr(trunc_short_name, '(') = '\0';
-					e = enum_match(enum_test, trunc_short_name);
-					printf("%s match %s: ", prefix, trunc_short_name);
-					pfree(trunc_short_name);
-					if (e != i) {
-						printf("%d ERROR\n", e);
-						break;
-					}
-					printf("OK\n");
-				}
 			}
-		} while (FALSE);
+		}
 
+		printf(PREFIX "short_name %d: ", i);
+		const char *short_name = enum_short_name(enum_test, i);
+		if (short_name == NULL) {
+			printf("ERROR\n");
+			continue;
+		} else {
+			printf(" OK\n");
+		}
+
+		LSWBUF(buf) {
+			printf(PREFIX "lswlog_enum_short %d: ", i);
+			lswlog_enum_short(buf, enum_test, i);
+			if (streq(short_name, buf->array)) {
+				printf("OK\n");
+			} else {
+				printf("ERROR\n");
+			}
+		}
+
+		if (streq(short_name, name)) {
+			/* remaining tests redundant */
+			continue;
+		}
+
+		{
+			printf(PREFIX "match %s [short]: ", short_name);
+			int e = enum_match(enum_test, short_name);
+			if (e != i) {
+				printf("%d ERROR\n", e);
+			} else {
+				printf("OK\n");
+			}
+		}
+
+		if (strchr(short_name, '(') != NULL) {
+			char *trunc_short_name = clone_str(short_name, "trunc_short_name");
+			*strchr(trunc_short_name, '(') = '\0';
+			printf(PREFIX "match %s [short+trunc]: ", trunc_short_name);
+			int e = enum_match(enum_test, trunc_short_name);
+			pfree(trunc_short_name);
+			if (e != i) {
+				printf("%d ERROR\n", e);
+			} else {
+				printf("OK\n");
+			}
+		}
 	}
 	printf("\n");
+}
+
+static void test_enum_enum(const char *title, enum_enum_names *een,
+			   unsigned long table, enum_names *en,
+			   unsigned long val, bool val_ok)
+{
+	printf("%s:\n", title);
+
+	{
+		printf(PREFIX "enum_enum_table %lu: ", table);
+		if (en == enum_enum_table(een, table)) {
+			printf("OK\n");
+		} else {
+			printf("ERROR\n");
+		}
+	}
+
+	printf(PREFIX "enum_enum_name %lu %lu: ", table, val);
+	const char *name = enum_enum_name(een, table, val);
+	if ((val_ok) == (name != NULL)) {
+		printf("OK\n");
+	} else {
+		printf("ERROR\n");
+	}
+
+	printf(PREFIX "enum_name table %lu: ", val);
+	if (en == NULL) {
+		printf("N/A\n");
+	} else if (name == enum_name(en, val)) {
+		printf("OK\n");
+	} else {
+		printf("ERROR\n");
+	}
+
+	LSWBUF(buf) {
+		printf(PREFIX "lswlog_enum_enum %lu %lu: ", table, val);
+		lswlog_enum_enum(buf, een, table, val);
+		if (val_ok && streq(buf->array, name)) {
+			printf("OK\n");
+		} else if (strlen(buf->array) > 0) {
+			printf("OK\n");
+		} else {
+			printf("ERROR [empty]\n");
+		}
+	}
+
+	LSWBUF(buf) {
+		printf(PREFIX "lswlog_enum_enum_short %lu %lu: ", table, val);
+		lswlog_enum_enum_short(buf, een, table, val);
+		if (val_ok && streq(buf->array, enum_short_name(en, val))) {
+			printf("OK\n");
+		} else if (strlen(buf->array) > 0) {
+			printf("OK\n");
+		} else {
+			printf("ERROR [empty]\n");
+		}
+	}
+
 }
 
 static void test_lset(const char *name, const struct lset_names *names)
@@ -173,6 +256,21 @@ int main(int argc UNUSED, char *argv[])
 	test_enum("ike_idtype_names_extended", &ike_idtype_names_extended0, 0, 256);
 	test_enum("ike_idtype_names", &ike_idtype_names, 0, 256);
 	test_enum("ikev2_idtype_names", &ikev2_idtype_names, 0, 256);
+
+	/*
+	 * Some hard-wired checks of enum_enum_name.  If a lookup
+	 * should fail, pass NULL for the enum table.
+	 */
+	test_enum_enum("IKEv2 transforms", &v2_transform_ID_enums,
+		       IKEv2_TRANS_TYPE_ENCR, &ikev2_trans_type_encr_names,
+		       IKEv2_ENCR_3DES, true);
+	test_enum_enum("IKEv2 transforms", &v2_transform_ID_enums,
+		       IKEv2_TRANS_TYPE_ROOF, NULL,
+		       1, false);
+	test_enum_enum("IKEv2 transforms", &v2_transform_ID_enums,
+		       IKEv2_TRANS_TYPE_PRF, &ikev2_trans_type_prf_names,
+		       IKEv2_PRF_INVALID, false);
+	printf("\n");
 
 	test_lset("debug", &debug_lset_names);
 
