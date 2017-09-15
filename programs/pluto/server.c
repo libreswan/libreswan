@@ -103,8 +103,6 @@
  *  Server main loop and socket initialization routines.
  */
 
-static const int on = TRUE;     /* by-reference parameter; constant, we hope */
-
 char *pluto_vendorid;
 
 static pid_t addconn_child_pid = 0;
@@ -298,6 +296,8 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 {
 	int fd = socket(addrtypeof(&ifp->addr), SOCK_DGRAM, IPPROTO_UDP);
 	int fcntl_flags;
+	static const int on = TRUE;     /* by-reference parameter; constant, we hope */
+	static const int so_prio = 6; /* rumored maximum priority, might be 7 on linux? */
 
 	if (fd < 0) {
 		LOG_ERRNO(errno, "socket() in process_raw_ifaces()");
@@ -324,6 +324,36 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 		close(fd);
 		return -1;
 	}
+
+	if (setsockopt(fd, SOL_SOCKET, SO_PRIORITY,
+			(const void *)&so_prio, sizeof(so_prio)) < 0) {
+                LOG_ERRNO(errno, "setsockopt(SO_PRIORITY) in find_raw_ifaces4()");
+		/* non-fatal */
+	}
+
+	if (pluto_sock_bufsize != IKE_BUF_AUTO) {
+#if defined(linux)
+		/*
+		 * Override system maximum
+		 * Requires CAP_NET_ADMIN
+		 */
+		int so_rcv = SO_RCVBUFFORCE;
+		int so_snd = SO_SNDBUFFORCE;
+#else
+		int so_rcv = SO_RCVBUF;
+		int so_snd = SO_SNDBUF;
+#endif
+		if (setsockopt(fd, SOL_SOCKET, so_rcv,
+			(const void *)&pluto_sock_bufsize, sizeof(pluto_sock_bufsize)) < 0) {
+				LOG_ERRNO(errno, "setsockopt(SO_RCVBUFFORCE) in find_raw_ifaces4()");
+		}
+		if (setsockopt(fd, SOL_SOCKET, so_snd,
+			(const void *)&pluto_sock_bufsize, sizeof(pluto_sock_bufsize)) < 0) {
+				LOG_ERRNO(errno, "setsockopt(SO_SNDBUFFORCE) in find_raw_ifaces4()");
+		}
+	}
+
+
 
 	/* To improve error reporting.  See ip(7). */
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)

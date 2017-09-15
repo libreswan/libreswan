@@ -104,12 +104,12 @@ static int pluto_ifn_roof = 0;
 
 struct raw_iface *find_raw_ifaces4(void)
 {
-	static const int on = TRUE;	/* by-reference parameter; constant, we hope */
 	int j;	/* index into buf */
 	struct ifconf ifconf;
 	struct ifreq *buf = NULL;	/* for list of interfaces -- arbitrary limit */
 	struct raw_iface *rifaces = NULL;
 	int master_sock = safe_socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);	/* Get a UDP socket */
+	static const int on = TRUE;     /* by-reference parameter; constant, we hope */
 
 	/*
 	 * Current upper bound on number of interfaces.
@@ -123,9 +123,13 @@ struct raw_iface *find_raw_ifaces4(void)
 	if (master_sock == -1)
 		EXIT_LOG_ERRNO(errno, "socket() failed in find_raw_ifaces4()");
 
+	/*
+	 * Without SO_REUSEADDR, bind() of master_sock will cause
+	 * 'address already in use?
+	 */
 	if (setsockopt(master_sock, SOL_SOCKET, SO_REUSEADDR,
-		       (const void *)&on, sizeof(on)) < 0)
-		EXIT_LOG_ERRNO(errno, "setsockopt() in find_raw_ifaces4()");
+			(const void *)&on, sizeof(on)) < 0)
+		EXIT_LOG_ERRNO(errno, "setsockopt(SO_REUSEADDR) in find_raw_ifaces4()");
 
 	/* bind the socket */
 	{

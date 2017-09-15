@@ -109,13 +109,12 @@ static int pluto_ifn_roof = 0;
 
 struct raw_iface *find_raw_ifaces4(void)
 {
-	static const int on = TRUE;	/* by-reference parameter; constant, we hope */
-	static const int prio = 7; /* rumored maximum priority, requires CAP_NET_ADMIN */
 	int j;	/* index into buf */
 	struct ifconf ifconf;
 	struct ifreq *buf = NULL;	/* for list of interfaces -- arbitrary limit */
 	struct raw_iface *rifaces = NULL;
 	int master_sock = safe_socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);        /* Get a UDP socket */
+	static const int on = TRUE;     /* by-reference parameter; constant, we hope */
 
 	/*
 	 * Current upper bound on number of interfaces.
@@ -129,27 +128,13 @@ struct raw_iface *find_raw_ifaces4(void)
 	if (master_sock == -1)
 		EXIT_LOG_ERRNO(errno, "socket() failed in find_raw_ifaces4()");
 
-	/* This doesn't seem Linux specific */
-	/* Should we also SO_REUSEPORT ? */
+	/*
+	 * Without SO_REUSEADDR, bind() of master_sock will cause
+	 * 'address already in use?
+	 */
 	if (setsockopt(master_sock, SOL_SOCKET, SO_REUSEADDR,
-		       (const void *)&on, sizeof(on)) < 0)
+			(const void *)&on, sizeof(on)) < 0)
 		EXIT_LOG_ERRNO(errno, "setsockopt(SO_REUSEADDR) in find_raw_ifaces4()");
-
-	/* This doesn't seem Linux specific */
-	if (setsockopt(master_sock, SOL_SOCKET, SO_PRIORITY,
-		       (const void *)&prio, sizeof(prio)) < 0)
-		EXIT_LOG_ERRNO(errno, "setsockopt(SO_PRIORITY) in find_raw_ifaces4()");
-
-	/* Forcing is, in fact, Linux specific */
-	if (pluto_sock_bufsize != IKE_BUF_AUTO) {
-		if (setsockopt(master_sock, SOL_SOCKET, SO_RCVBUFFORCE,
-			(const void *)&pluto_sock_bufsize, sizeof(pluto_sock_bufsize)) < 0)
-				EXIT_LOG_ERRNO(errno, "setsockopt(SO_RCVBUFFORCE) in find_raw_ifaces4()");
-
-		if (setsockopt(master_sock, SOL_SOCKET, SO_SNDBUFFORCE,
-			(const void *)&pluto_sock_bufsize, sizeof(pluto_sock_bufsize)) < 0)
-				EXIT_LOG_ERRNO(errno, "setsockopt(SO_SNDBUFFORCE) in find_raw_ifaces4()");
-	}
 
 	/* bind the socket */
 	{
