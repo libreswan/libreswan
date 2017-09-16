@@ -692,9 +692,9 @@ static void usage(void)
 	exit(0);
 }
 
+#ifdef USE_DNSSEC
 static void set_dnssec_file_names (struct starter_config *cfg)
 {
-#ifdef USE_DNSSEC
 	if (cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE][0] != '\0') {
 		pfreeany(pluto_dnssec_rootfile);
 		set_cfg_string(&pluto_dnssec_rootfile,
@@ -709,8 +709,8 @@ static void set_dnssec_file_names (struct starter_config *cfg)
 		set_cfg_string(&pluto_dnssec_trusted,
 				cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS]);
 	}
-#endif
 }
+#endif
 
 int main(int argc, char **argv)
 {
@@ -1206,8 +1206,9 @@ int main(int argc, char **argv)
 			/* leak */
 			set_cfg_string(&pluto_log_file,
 				cfg->setup.strings[KSF_PLUTOSTDERRLOG]);
-
+#ifdef USE_DNSSEC
 			set_dnssec_file_names(cfg);
+#endif
 
 			if (pluto_log_file != NULL)
 				log_to_syslog = FALSE;
