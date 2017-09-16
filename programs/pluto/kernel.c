@@ -1721,13 +1721,15 @@ static void setup_esp_nic_offload(struct kernel_sa *sa, struct connection *c,
 {
 	if (c->nic_offload == nic_offload_no)
 		return;
+
 	if (c->interface == NULL || c->interface->ip_dev == NULL ||
 		c->interface->ip_dev->id_rname == NULL)
 		return;
 
 	if (c->nic_offload == nic_offload_auto) {
-		if (c->interface->ip_dev->id_nic_offload != IFNO_SUPPORTED)
+		if (!c->interface->ip_dev->id_nic_offload)
 			return;
+
 		*nic_offload_fallback = TRUE;
 	}
 	sa->nic_offload_dev = c->interface->ip_dev->id_rname;

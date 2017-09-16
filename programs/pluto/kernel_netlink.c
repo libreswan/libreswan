@@ -96,13 +96,12 @@
 /* Minimum priority number in SPD used by pluto. */
 #define MIN_SPD_PRIORITY 1024
 
-#define NIC_OFFLOAD_UNKNOWN (-2)
-#define NIC_OFFLOAD_UNSUPPORTED (-1)
-
 static int netlinkfd = NULL_FD;
 static int netlink_bcast_fd = NULL_FD;
 
 #ifdef USE_NIC_OFFLOAD
+#define NIC_OFFLOAD_UNKNOWN (-2)
+#define NIC_OFFLOAD_UNSUPPORTED (-1)
 static int netlink_esp_hw_offload = NIC_OFFLOAD_UNKNOWN;
 #endif
 
@@ -862,23 +861,30 @@ static void netlink_find_offload_feature(const char *ifname)
 {
 	netlink_esp_hw_offload = NIC_OFFLOAD_UNSUPPORTED;
 
-	/* Determine number of device-features */
+	/*
+	 * Determine number of device-features.
+	 * Only one set queried so .data needs only one element
+	 * See <linux/ethtool.h>
+	 */
 	struct ethtool_sset_info *sset_info = 
-		alloc_bytes(sizeof(*sset_info) + sizeof(sset_info->data[0]), "ethtool_sset_info");
+		alloc_bytes(sizeof(*sset_info) + 1 * sizeof(sset_info->data[0]),
+			"ethtool_sset_info");
 	sset_info->cmd = ETHTOOL_GSSET_INFO;
-	sset_info->sset_mask = 1ULL << ETH_SS_FEATURES;
+	sset_info->sset_mask = ((__u64)1) << ETH_SS_FEATURES;
 
 	struct ifreq ifr;
 
 	jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
 	ifr.ifr_data = (void *)sset_info;
 	if (ioctl(netlinkfd, SIOCETHTOOL, &ifr) == 0 &&
-	    sset_info->sset_mask == 1ULL << ETH_SS_FEATURES)
+	    sset_info->sset_mask == ((__u64)1) << ETH_SS_FEATURES)
 	{
 		/* Retrieve names of device-features */
 		uint32_t sset_len = sset_info->data[0];
 
-		struct ethtool_gstrings *cmd  = alloc_bytes(sizeof(*cmd) + ETH_GSTRING_LEN * sset_len, "ethtool_gstrings");
+		struct ethtool_gstrings *cmd =
+			alloc_bytes(sizeof(*cmd) + ETH_GSTRING_LEN * sset_len,
+				"ethtool_gstrings");
 		cmd->cmd = ETHTOOL_GSTRINGS;
 		cmd->string_set = ETH_SS_FEATURES;
 		jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
@@ -887,7 +893,7 @@ static void netlink_find_offload_feature(const char *ifname)
 			/* Look for the ESP_HW feature bit */
 			char *str = (char *)cmd->data;
 			for (uint32_t i = 0; i < cmd->len; i++) {
-				if (strneq(str, "esp-hw-offload", ETH_GSTRING_LEN) == 0) {
+				if (strneq(str, "esp-hw-offload", ETH_GSTRING_LEN)) {
 					netlink_esp_hw_offload = i;
 					break;
 				}
@@ -899,36 +905,36 @@ static void netlink_find_offload_feature(const char *ifname)
 	pfree(sset_info);
 }
 
-static enum iface_nic_offload netlink_detect_offload(const char *ifname)
+static bool netlink_detect_offload(const char *ifname)
 {
-	enum iface_nic_offload ret = IFNO_UNSUPPORTED;
-	struct ethtool_gfeatures *cmd;
-	uint32_t feature_bit;
-	struct ifreq ifr;
-	int blocks;
-
 	/*
 	 * Kernel requires a real interface in order to query the kernel-wide
-	 * capability, so we do it here on first invocation
+	 * capability, so we delay until our first invocation.
 	 */
 	if (netlink_esp_hw_offload == NIC_OFFLOAD_UNKNOWN)
 		netlink_find_offload_feature(ifname);
 
 	if (netlink_esp_hw_offload == NIC_OFFLOAD_UNSUPPORTED)
-		return ret;
+		return FALSE;
 
-	/* Feature is supported by kernel. Query device features */
-	blocks = (netlink_esp_hw_offload + 31) / 32;
-	feature_bit = 1 << (netlink_esp_hw_offload % 31);
+	/* Feature is supported by kernel. Query device feature. */
+	passert(netlink_esp_hw_offload >= 0);	/* it's a bit number */
 
-	cmd = alloc_bytes(sizeof(*cmd) + sizeof(cmd->features[0]) * blocks, "ethtool_gfeatures");
+	unsigned block = netlink_esp_hw_offload / 32;
+	uint32_t feature_bit = ((uint32_t) 1) << (netlink_esp_hw_offload % 32);
+
+	struct ethtool_gfeatures *cmd =
+		alloc_bytes(sizeof(*cmd) + sizeof(cmd->features[0]) * (block+1),
+			"ethtool_gfeatures");
+	struct ifreq ifr;
 	jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
 	ifr.ifr_data = (void *)cmd;
 	cmd->cmd = ETHTOOL_GFEATURES;
-	cmd->size = blocks;
-	if ((ioctl(netlinkfd, SIOCETHTOOL, &ifr) == 0) &&
-		(cmd->features[blocks-1].active & feature_bit))
-		ret = IFNO_SUPPORTED;
+	cmd->size = block + 1;
+
+	/* ??? something is very wrong if this ioctl fails */
+	bool ret = ioctl(netlinkfd, SIOCETHTOOL, &ifr) == 0 &&
+		(cmd->features[block].active & feature_bit) != 0;
 
 	pfree(cmd);
 
@@ -1245,7 +1251,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		memcpy(RTA_DATA(attr), &natt, sizeof(natt));
 
 		req.n.nlmsg_len += attr->rta_len;
-		/* ??? why is this not used? */
+		/* attr not subsequently used unless USE_NIC_OFFLOAD or HAVE_LABELED_IPSEC */
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
 
@@ -1264,7 +1270,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		memcpy(RTA_DATA(attr), &xuo, sizeof(xuo));
 
 		req.n.nlmsg_len += attr->rta_len;
-		/* attr not subsequently used. ??? why? */
+		/* attr not subsequently used unless HAVE_LABELED_IPSEC */
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
 #endif
@@ -1288,6 +1294,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 			sa->sec_ctx->sec_ctx_value, len);
 
 		req.n.nlmsg_len += attr->rta_len;
+		/* attr not subsequently used */
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
 #endif
