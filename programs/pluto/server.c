@@ -472,6 +472,7 @@ static struct pluto_event *free_event_entry(struct pluto_event **evp)
 			DBG_log("%s: release %s-pe@%p", __func__, en, e));
 
 	pfree(e);
+	pfreeany(e->ev_name);
 	*evp = NULL;
 	return next;
 }
@@ -550,7 +551,7 @@ struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
 		char *name) {
 	struct pluto_event *e = alloc_thing(struct pluto_event, name);
 	e->ev_type = EVENT_NULL;
-	e->ev_name = name;
+	e->ev_name = clone_str(name, "event name");
 	e->ev = pluto_event_wraper(fd, events, cb, arg, delay);
 	link_pluto_event_list(e);
 	if (delay != NULL)

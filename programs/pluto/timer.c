@@ -966,7 +966,7 @@ static void event_schedule_tv(enum event_type type, const struct timeval delay, 
 	pexpect(delay.tv_sec < 3600 * 24 * 31);
 
 	ev->ev_type = type;
-	ev->ev_name = enum_name(&timer_event_names, type);
+	ev->ev_name = clone_str(enum_name(&timer_event_names, type), "timeer event name");
 
 	/* ??? ev_time lacks required precision */
 	ev->ev_time = monotimesum(mononow(), deltatime(delay.tv_sec));
