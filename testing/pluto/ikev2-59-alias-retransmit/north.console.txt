@@ -8,9 +8,9 @@ north #
 north #
  /testing/pluto/bin/wait-until-pluto-started
 north #
- ipsec auto --add noth-eastnets
-002 added connection description "noth-eastnets/0x1"
-002 added connection description "noth-eastnets/0x2"
+ ipsec auto --add north-eastnets
+002 added connection description "north-eastnets/0x1"
+002 added connection description "north-eastnets/0x2"
 north #
  echo "initdone"
 initdone
@@ -31,8 +31,8 @@ north #
 done
 north #
  ipsec whack --trafficstatus
-006 #2: "noth-eastnets/0x1", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east'
-006 #3: "noth-eastnets/0x2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+006 #2: "north-eastnets/0x1", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east'
+006 #3: "north-eastnets/0x2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
 north #
 north #
  ../bin/check-for-core.sh

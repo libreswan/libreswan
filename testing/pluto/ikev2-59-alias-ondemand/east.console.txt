@@ -23,16 +23,16 @@ Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
- ipsec auto --status | grep noth-eastnets
+ ipsec auto --status | grep north-eastnets
 east #
  echo "initdone"
 initdone
 east #
  ipsec whack --trafficstatus
-006 #4: "noth-eastnets/0x1", type=ESP, add_time=1234567890, inBytes=1980468, outBytes=1991892, id='@north'
-006 #5: "noth-eastnets/0x1", type=ESP, add_time=1234567890, inBytes=1895208, outBytes=1895376, id='@north'
-006 #3: "noth-eastnets/0x2", type=ESP, add_time=1234567890, inBytes=265692, outBytes=242592, id='@north'
-006 #6: "noth-eastnets/0x2", type=ESP, add_time=1234567890, inBytes=2592492, outBytes=2639196, id='@north'
+006 #4: "north-eastnets/0x1", type=ESP, add_time=1234567890, inBytes=1980468, outBytes=1991892, id='@north'
+006 #5: "north-eastnets/0x1", type=ESP, add_time=1234567890, inBytes=1895208, outBytes=1895376, id='@north'
+006 #3: "north-eastnets/0x2", type=ESP, add_time=1234567890, inBytes=265692, outBytes=242592, id='@north'
+006 #6: "north-eastnets/0x2", type=ESP, add_time=1234567890, inBytes=2592492, outBytes=2639196, id='@north'
 east #
  ipsec look
 east NOW

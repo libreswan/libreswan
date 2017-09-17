@@ -8,5 +8,5 @@ ping -f -c 100000 -I  192.0.22.254  192.0.3.254 2>&1 >/dev/null &
 ping -f -c 100000 -I  192.0.22.251  192.0.3.254 2>&1 >/dev/null &
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
-ipsec auto --status | grep noth-eastnets
+ipsec auto --status | grep north-eastnets
 echo "initdone"

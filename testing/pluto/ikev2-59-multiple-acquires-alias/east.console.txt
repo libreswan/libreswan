@@ -23,7 +23,7 @@ Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
- ipsec auto --status | grep noth-eastnets
+ ipsec auto --status | grep north-eastnets
 east #
  echo "initdone"
 initdone
