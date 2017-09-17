@@ -28,7 +28,7 @@ east #
 000 "westnet-eastnet-subnets/1x1":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 000 "westnet-eastnet-subnets/1x1":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-subnets/1x1":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 "westnet-eastnet-subnets/1x1":   aliases: westnet-eastnet-subnets 
+000 "westnet-eastnet-subnets/1x1":   aliases: westnet-eastnet-subnets
 000 "westnet-eastnet-subnets/1x2": 192.0.2.64/30===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/28; unrouted; eroute owner: #0
 000 "westnet-eastnet-subnets/1x2":     oriented; my_ip=unset; their_ip=unset
 000 "westnet-eastnet-subnets/1x2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -45,7 +45,7 @@ east #
 000 "westnet-eastnet-subnets/1x2":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 000 "westnet-eastnet-subnets/1x2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-subnets/1x2":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 "westnet-eastnet-subnets/1x2":   aliases: westnet-eastnet-subnets 
+000 "westnet-eastnet-subnets/1x2":   aliases: westnet-eastnet-subnets
 000 "westnet-eastnet-subnets/2x1": 192.0.2.16/28===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.128/28; unrouted; eroute owner: #0
 000 "westnet-eastnet-subnets/2x1":     oriented; my_ip=unset; their_ip=unset
 000 "westnet-eastnet-subnets/2x1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -62,7 +62,7 @@ east #
 000 "westnet-eastnet-subnets/2x1":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 000 "westnet-eastnet-subnets/2x1":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-subnets/2x1":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 "westnet-eastnet-subnets/2x1":   aliases: westnet-eastnet-subnets 
+000 "westnet-eastnet-subnets/2x1":   aliases: westnet-eastnet-subnets
 000 "westnet-eastnet-subnets/2x2": 192.0.2.64/30===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.128/28; unrouted; eroute owner: #0
 000 "westnet-eastnet-subnets/2x2":     oriented; my_ip=unset; their_ip=unset
 000 "westnet-eastnet-subnets/2x2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -79,7 +79,7 @@ east #
 000 "westnet-eastnet-subnets/2x2":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 000 "westnet-eastnet-subnets/2x2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-subnets/2x2":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 "westnet-eastnet-subnets/2x2":   aliases: westnet-eastnet-subnets 
+000 "westnet-eastnet-subnets/2x2":   aliases: westnet-eastnet-subnets
 east #
  echo "initdone"
 initdone
