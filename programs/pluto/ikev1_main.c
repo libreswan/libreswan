@@ -949,7 +949,7 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 			st, md);
 
 		passert(!st->st_sec_in_use);
-		return build_ke_and_nonce(ke, st->st_oakley.group,
+		return build_ke_and_nonce(ke, st->st_oakley.ta_dh,
 				st->st_import);
 	}
 }
@@ -1128,7 +1128,7 @@ stf_status main_inI2_outR2(struct msg_digest *md)
 	struct state *const st = md->st;
 
 	/* KE in */
-	RETURN_STF_FAILURE(accept_KE(&st->st_gi, "Gi", st->st_oakley.group,
+	RETURN_STF_FAILURE(accept_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
 				     &md->chain[ISAKMP_NEXT_KE]->pbs));
 
 	/* Ni in */
@@ -1149,7 +1149,7 @@ stf_status main_inI2_outR2(struct msg_digest *md)
 
 		passert(!st->st_sec_in_use);
 		return build_ke_and_nonce(ke,
-			st->st_oakley.group, st->st_import);
+			st->st_oakley.ta_dh, st->st_import);
 	}
 }
 
@@ -1329,11 +1329,11 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *ke,
 
 		DBG(DBG_CONTROLMORE,
 			DBG_log("main inI2_outR2: starting async DH calculation (group=%d)",
-				st->st_oakley.group->group));
+				st->st_oakley.ta_dh->group));
 
 		e = start_dh_secretiv(dh, st, st->st_import,
 				      ORIGINAL_RESPONDER,
-				      st->st_oakley.group);
+				      st->st_oakley.ta_dh);
 
 		DBG(DBG_CONTROLMORE,
 			DBG_log("started dh_secretiv, returned: stf=%s",
@@ -1655,7 +1655,7 @@ stf_status main_inR2_outI3(struct msg_digest *md)
 
 	/* KE in */
 	RETURN_STF_FAILURE(accept_KE(&st->st_gr, "Gr",
-				     st->st_oakley.group,
+				     st->st_oakley.ta_dh,
 				     &md->chain[ISAKMP_NEXT_KE]->pbs));
 
 	/* Nr in */
@@ -1665,7 +1665,7 @@ stf_status main_inR2_outI3(struct msg_digest *md)
 		st, md);
 	return start_dh_secretiv(dh, st, st->st_import,
 				 ORIGINAL_INITIATOR,
-				 st->st_oakley.group);
+				 st->st_oakley.ta_dh);
 }
 
 /*

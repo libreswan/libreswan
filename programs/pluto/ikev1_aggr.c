@@ -196,7 +196,7 @@ static void aggr_inI1_outR1_continue1(struct pluto_crypto_req_cont *ke,
 
 		e = start_dh_secretiv(dh, st, st->st_import,
 				      ORIGINAL_RESPONDER,
-				      st->st_oakley.group);
+				      st->st_oakley.ta_dh);
 
 		if (e != STF_SUSPEND) {
 			passert(dh->pcrc_md != NULL);
@@ -360,7 +360,7 @@ stf_status aggr_inI1_outR1(struct msg_digest *md)
 	}
 
 	/* KE in */
-	RETURN_STF_FAILURE(accept_KE(&st->st_gi, "Gi", st->st_oakley.group,
+	RETURN_STF_FAILURE(accept_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
 				     &md->chain[ISAKMP_NEXT_KE]->pbs));
 
 	/* Ni in */
@@ -373,7 +373,7 @@ stf_status aggr_inI1_outR1(struct msg_digest *md)
 			"outI2 KE",
 			st, md);
 
-		return build_ke_and_nonce(ke, st->st_oakley.group,
+		return build_ke_and_nonce(ke, st->st_oakley.ta_dh,
 				st->st_import);
 	}
 }
@@ -690,7 +690,7 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 	set_nat_traversal(st, md);
 
 	/* KE in */
-	RETURN_STF_FAILURE(accept_KE(&st->st_gr, "Gr", st->st_oakley.group,
+	RETURN_STF_FAILURE(accept_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
 				     &md->chain[ISAKMP_NEXT_KE]->pbs));
 
 	/* Ni in */
@@ -711,7 +711,7 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 
 		return start_dh_secretiv(dh, st, st->st_import,
 					 ORIGINAL_INITIATOR,
-					 st->st_oakley.group);
+					 st->st_oakley.ta_dh);
 	}
 }
 
@@ -1251,7 +1251,7 @@ stf_status aggr_outI1(int whack_sock,
 
 		ke = new_pcrc(aggr_outI1_continue, "aggr_outI1 KE + nonce",
 			st, fake_md);
-		e = build_ke_and_nonce(ke, st->st_oakley.group, importance);
+		e = build_ke_and_nonce(ke, st->st_oakley.ta_dh, importance);
 
 		/*
 		 * ??? what exactly do we expect for e?

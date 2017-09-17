@@ -117,8 +117,8 @@ void unpack_KE_from_helper(struct state *st,
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("wire (crypto helper) group %s and state group %s %s",
 			kn->group ? kn->group->common.name : "NULL",
-			st->st_oakley.group ? st->st_oakley.group->common.name : "NULL",
-			kn->group == st->st_oakley.group ? "match" : "differ");
+			st->st_oakley.ta_dh ? st->st_oakley.ta_dh->common.name : "NULL",
+			kn->group == st->st_oakley.ta_dh ? "match" : "differ");
 	}
 
 	/* ??? if st->st_sec_in_use how could we do our job? */
@@ -697,7 +697,7 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 {
 	passert(st->st_oakley.ta_encrypt != NULL);
 	passert(st->st_oakley.prf != NULL);
-	passert(st->st_oakley.group != NULL);
+	passert(st->st_oakley.ta_dh != NULL);
 	/*
 	 * Note: for IKEv1 and AEAD encrypters,
 	 * st->st_oakley.ta_integ is 'none'!
@@ -744,7 +744,7 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 		 st->st_oakley.enckeylen,
 		 integ_name,
 		 prf_name,
-		 st->st_oakley.group->common.name);
+		 st->st_oakley.ta_dh->common.name);
 
 	/* keep IKE SA statistics */
 	if (st->st_ikev2) {
@@ -752,11 +752,11 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 		pstats(ikev2_encr, st->st_oakley.ta_encrypt->common.id[IKEv2_ALG_ID]);
 		if (st->st_oakley.ta_integ != NULL)
 			pstats(ikev2_integ, st->st_oakley.ta_integ->common.id[IKEv2_ALG_ID]);
-		pstats(ikev2_groups, st->st_oakley.group->group);
+		pstats(ikev2_groups, st->st_oakley.ta_dh->group);
 	} else {
 		pstats_ikev1_sa++;
 		pstats(ikev1_encr, st->st_oakley.ta_encrypt->common.ikev1_oakley_id);
 		pstats(ikev1_integ, st->st_oakley.prf->common.id[IKEv1_OAKLEY_ID]);
-		pstats(ikev1_groups, st->st_oakley.group->group);
+		pstats(ikev1_groups, st->st_oakley.ta_dh->group);
 	}
 }

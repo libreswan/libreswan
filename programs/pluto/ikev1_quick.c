@@ -843,7 +843,7 @@ stf_status quick_outI1(int whack_sock,
 		 * very likely supported.
 		 */
 		if (st->st_pfs_group == NULL)
-			st->st_pfs_group = isakmp_sa->st_oakley.group;
+			st->st_pfs_group = isakmp_sa->st_oakley.ta_dh;
 	}
 
 	LSWLOG(buf) {

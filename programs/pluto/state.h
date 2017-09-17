@@ -142,7 +142,7 @@ struct trans_attrs {
 	u_int16_t enckeylen;			/* encryption key len (bits) */
 	const struct prf_desc *prf;		/* package of prf routines */
 	const struct integ_desc *ta_integ;	/* package of integrity routines */
-	const struct oakley_group_desc *group;	/* Oakley group */
+	const struct oakley_group_desc *ta_dh;	/* Diffie-Helman-Merkel routines */
 };
 
 /* IPsec (Phase 2 / Quick Mode) transform and attributes

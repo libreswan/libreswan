@@ -201,7 +201,7 @@ void ike_alg_show_connection(const struct connection *c, const char *instance)
 			.enckeylen = st->st_oakley.enckeylen,
 			.prf = st->st_oakley.prf,
 			.integ = st->st_oakley.ta_integ,
-			.dh = st->st_oakley.group,
+			.dh = st->st_oakley.ta_dh,
 		};
 		const char *v = st->st_ikev2 ? "IKEv2" : "IKE";
 		LSWLOG_WHACK(RC_COMMENT, buf) {

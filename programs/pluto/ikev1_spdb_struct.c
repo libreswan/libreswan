@@ -1285,8 +1285,8 @@ rsasig_common:
 			break;
 
 			case OAKLEY_GROUP_DESCRIPTION | ISAKMP_ATTR_AF_TV:
-				ta.group = ikev1_get_ike_dh_desc(val);
-				if (ta.group == NULL) {
+				ta.ta_dh = ikev1_get_ike_dh_desc(val);
+				if (ta.ta_dh == NULL) {
 					ugh = builddiag(
 						"OAKLEY_GROUP %d not supported",
 						val);
@@ -1433,8 +1433,8 @@ rsasig_common:
 		if (ugh == NULL) {
 			if (!ike_alg_ok_final(ta.ta_ikev1_encrypt, ta.enckeylen,
 					      ta.prf,
-					      ta.group != NULL ?
-						ta.group->group : 65535,
+					      ta.ta_dh != NULL ?
+						ta.ta_dh->group : 65535,
 					      c->alg_info_ike)) {
 					ugh = "OAKLEY proposal refused";
 					loglog(RC_LOG_SERIOUS, "%s", ugh);
@@ -1641,8 +1641,8 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	ta.auth   = auth->val;         /* OAKLEY_AUTHENTICATION_METHOD */
 
 	passert(grp->type.oakley == OAKLEY_GROUP_DESCRIPTION);
-	ta.group = ikev1_get_ike_dh_desc(grp->val); /* OAKLEY_GROUP_DESCRIPTION */
-	passert(ta.group != NULL);
+	ta.ta_dh = ikev1_get_ike_dh_desc(grp->val); /* OAKLEY_GROUP_DESCRIPTION */
+	passert(ta.ta_dh != NULL);
 
 	st->st_oakley = ta;
 

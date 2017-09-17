@@ -441,13 +441,13 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		st->st_msgid = 0;
 		/* fall through */
 	case STATE_V2_REKEY_IKE_R:
-		e = build_ke_and_nonce(ke, st->st_oakley.group, ci);
+		e = build_ke_and_nonce(ke, st->st_oakley.ta_dh, ci);
 		break;
 
 	case STATE_V2_CREATE_R:
 	case STATE_V2_REKEY_CHILD_R:
 		if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
-			e = build_ke_and_nonce(ke, st->st_oakley.group, ci);
+			e = build_ke_and_nonce(ke, st->st_oakley.ta_dh, ci);
 		} else {
 			e = build_nonce(ke, ci);
 		}
@@ -772,8 +772,8 @@ stf_status ikev2parent_outI1(int whack_sock,
 						  c->alg_info_ike,
 						  &c->ike_proposals);
 		passert(c->ike_proposals != NULL);
-		st->st_oakley.group = ikev2_proposals_first_modp(c->ike_proposals);
-		passert(st->st_oakley.group != NULL); /* known! */
+		st->st_oakley.ta_dh = ikev2_proposals_first_modp(c->ike_proposals);
+		passert(st->st_oakley.ta_dh != NULL); /* known! */
 
 		/*
 		 * Calculate KE and Nonce.
@@ -940,7 +940,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	/* ??? from here on, this looks a lot like the end of ikev2_parent_inI1outR1_tail */
 
 	/* send KE */
-	if (!justship_v2KE(&st->st_gi, st->st_oakley.group,
+	if (!justship_v2KE(&st->st_gi, st->st_oakley.ta_dh,
 			   &md->rbody, ISAKMP_NEXT_v2Ni))
 		return STF_INTERNAL_ERROR;
 
@@ -1344,7 +1344,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	/*
 	 * Check the MODP group in the payload matches the accepted proposal.
 	 */
-	ret = ikev2_match_ke_group_and_proposal(md, accepted_oakley.group);
+	ret = ikev2_match_ke_group_and_proposal(md, accepted_oakley.ta_dh);
 	if (ret != STF_OK) {
 		free_ikev2_proposal(&accepted_ike_proposal);
 		return ret;
@@ -1357,7 +1357,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	{
 		/* note: v1 notification! */
 		if (accept_KE(&accepted_gi, "Gi",
-			      accepted_oakley.group,
+			      accepted_oakley.ta_dh,
 			      &md->chain[ISAKMP_NEXT_v2KE]->pbs)
 		    != NOTHING_WRONG) {
 			/*
@@ -1442,7 +1442,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			st, md);
 		stf_status e;
 
-		e = build_ke_and_nonce(ke, st->st_oakley.group,
+		e = build_ke_and_nonce(ke, st->st_oakley.ta_dh,
 			pcim_stranger_crypto);
 
 		reset_globals();
@@ -1585,13 +1585,13 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	 * Pass the crypto helper's oakley group so that it is
 	 * consistent with what was unpacked.
 	 *
-	 * IKEv2 code (arguably, incorrectly) uses st_oakley.group to
+	 * IKEv2 code (arguably, incorrectly) uses st_oakley.ta_dh to
 	 * track the most recent KE sent out.  It should instead be
 	 * maintaing a list of KEs sent out (so that they can be
 	 * reused should the initial responder flip-flop) and only set
-	 * st_oakley.group once the proposal has been accepted.
+	 * st_oakley.ta_dh once the proposal has been accepted.
 	 */
-	pexpect(st->st_oakley.group == r->pcr_d.kn.group);
+	pexpect(st->st_oakley.ta_dh == r->pcr_d.kn.group);
 	unpack_KE_from_helper(st, r, &st->st_gr);
 	if (!justship_v2KE(&st->st_gr,
 			   r->pcr_d.kn.group,
@@ -1821,7 +1821,7 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 					return STF_IGNORE;
 
 			pstats(invalidke_recv_s, sg.sg_group);
-			pstats(invalidke_recv_u, st->st_oakley.group->group);
+			pstats(invalidke_recv_u, st->st_oakley.ta_dh->group);
 
 			ikev2_proposals_from_alg_info_ike(c->name,
 							  "initial initiator (validating suggested KE)",
@@ -1841,10 +1841,10 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 				passert(new_group);
 				DBG(DBG_CONTROLMORE, {
 					DBG_log("Received unauthenticated INVALID_KE rejected our group %s suggesting group %s; resending with updated modp group",
-						st->st_oakley.group->common.name,
+						st->st_oakley.ta_dh->common.name,
 						new_group->common.name);
 				});
-				st->st_oakley.group = new_group;
+				st->st_oakley.ta_dh = new_group;
 				/* wipe our mismatched KE */
 				clear_dh_from_state(st);
 				/* wipe out any saved RCOOKIE */
@@ -1974,7 +1974,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 	    DBG_log("ikev2 parent inR1: calculating g^{xy} in order to send I2"));
 
 	/* KE in */
-	RETURN_STF_FAILURE(accept_KE(&st->st_gr, "Gr", st->st_oakley.group,
+	RETURN_STF_FAILURE(accept_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
 				     &md->chain[ISAKMP_NEXT_v2KE]->pbs));
 
 	/* Ni in */
@@ -3870,7 +3870,7 @@ static void ikev2_child_set_pfs(struct state *st)
 			(c->policy & POLICY_PFS) != LEMPTY) {
 		struct state *pst = state_with_serialno(st->st_clonedfrom);
 
-		st->st_pfs_group = pst->st_oakley.group;
+		st->st_pfs_group = pst->st_oakley.ta_dh;
 		DBG(DBG_CONTROL,
 			DBG_log("#%lu no phase2 MODP group specified on this connection %s use seletected IKE MODP group %s from #%lu",
 				st->st_serialno,
@@ -4825,7 +4825,7 @@ static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
 		close_output_pbs(&nr_pbs);
 
 	}
-	if (!justship_v2KE(local_g, st->st_oakley.group, outpbs,
+	if (!justship_v2KE(local_g, st->st_oakley.ta_dh, outpbs,
 			   ISAKMP_NEXT_v2NONE))
 		return STF_INTERNAL_ERROR;
 
@@ -4838,7 +4838,7 @@ static notification_t accept_child_sa_KE(struct msg_digest *md,
 	if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
 		chunk_t accepted_g = empty_chunk;
 		{
-			if (accept_KE(&accepted_g, "Gi", accepted_oakley.group,
+			if (accept_KE(&accepted_g, "Gi", accepted_oakley.ta_dh,
 					&md->chain[ISAKMP_NEXT_v2KE]->pbs)
 					!= NOTHING_WRONG) {
 				/*
@@ -4900,7 +4900,7 @@ static notification_t process_ike_rekey_sa_pl(struct msg_digest *md, struct stat
 		return STF_IGNORE;
 	}
 
-	ret = ikev2_match_ke_group_and_proposal(md, accepted_oakley.group);
+	ret = ikev2_match_ke_group_and_proposal(md, accepted_oakley.ta_dh);
 	if (ret != STF_OK) {
 		free_ikev2_proposal(&accepted_ike_proposal);
 		md->st = pst;

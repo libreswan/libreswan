@@ -941,7 +941,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			st->st_oakley.ta_encrypt->common.officname,
 			st->st_oakley.enckeylen,
 			integname, prfname,
-			st->st_oakley.group->common.name);
+			st->st_oakley.ta_dh->common.name);
 		break;
 
 	case LAK_CHILD_START:
