@@ -64,6 +64,10 @@
 
 #include "pluto_sd.h"
 
+extern struct event *timer_private_pluto_event_new(evutil_socket_t ft, short
+		events, event_callback_fn cb, void *arg,
+		const struct timeval *t); /* only for timer.c */
+
 static unsigned long retrans_delay(struct state *st)
 {
 	struct connection *c = st->st_connection;

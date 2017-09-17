@@ -513,8 +513,11 @@ void delete_pluto_event(struct pluto_event **evp)
 	unlink_pluto_event_list(evp);
 }
 
-/* a wrapper for libevent's event_new + event_add; any error is fatal */
-static struct event *pluto_event_new(evutil_socket_t fd, short events,
+/*
+ * a wrapper for libevent's event_new + event_add; any error is fatal
+ * If you're looking for how to set up a timer look at pluto_event_add
+ */
+static struct event *pluto_event_wraper(evutil_socket_t fd, short events,
 				     event_callback_fn cb, void *arg,
 				     const struct timeval *t)
 {
@@ -532,11 +535,14 @@ static struct event *pluto_event_new(evutil_socket_t fd, short events,
  * looking for how to set up a timer, then don't look here and don't
  * look at timer.c.  Why?
  */
+struct event *timer_private_pluto_event_new(evutil_socket_t ft, short
+		events, event_callback_fn cb, void *arg,
+		const struct timeval *t);
 struct event *timer_private_pluto_event_new(evutil_socket_t fd, short events,
 					    event_callback_fn cb, void *arg,
 					    const struct timeval *t)
 {
-	return pluto_event_new(fd, events, cb, arg, t);
+	return pluto_event_wraper(fd, events, cb, arg, t);
 }
 
 
@@ -546,7 +552,7 @@ struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
 	struct pluto_event *e = alloc_thing(struct pluto_event, name);
 	e->ev_type = EVENT_NULL;
 	e->ev_name = name;
-	e->ev = pluto_event_new(fd, events, cb, arg, delay);
+	e->ev = pluto_event_wraper(fd, events, cb, arg, delay);
 	link_pluto_event_list(e);
 	if (delay != NULL)
 	{
