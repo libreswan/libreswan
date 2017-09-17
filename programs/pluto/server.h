@@ -72,7 +72,7 @@ struct iface_port {
 	struct iface_port *next;
 	bool ike_float;
 	enum { IFN_ADD, IFN_KEEP, IFN_DELETE } change;
-	struct event *ev;
+	struct pluto_event *pev;
 };
 
 extern struct iface_port  *interfaces;   /* public interfaces */

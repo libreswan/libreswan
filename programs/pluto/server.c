@@ -260,9 +260,8 @@ static void free_dead_ifaces(void)
 
 				*pp = p->next; /* advance *pp */
 
-				if (p->ev != NULL) {
-					event_del(p->ev);
-					p->ev = NULL;
+				if (p->pev != NULL) {
+					delete_pluto_event(&p->pev);
 				}
 
 				close(p->fd);
@@ -628,16 +627,15 @@ void find_ifaces(void)
 
 	if (listening) {
 		for (ifp = interfaces; ifp != NULL; ifp = ifp->next) {
-			if (ifp->ev != NULL) {
-				event_del(ifp->ev);
-				ifp->ev = NULL;
+			if (ifp->pev != NULL) {
+				delete_pluto_event(&ifp->pev);
 				DBG_log("refresh. setup callback for interface %s:%u %d",
 						ifp->ip_dev->id_rname,ifp->port,
 						ifp->fd);
 			}
-			ifp->ev = pluto_event_new(ifp->fd,
+			ifp->pev = pluto_event_add(ifp->fd,
 					EV_READ | EV_PERSIST, comm_handle_cb,
-					ifp, NULL);
+					ifp, NULL, ifp->ip_dev->id_rname);
 			DBG_log("setup callback for interface %s:%u fd %d",
 					ifp->ip_dev->id_rname, ifp->port,
 					ifp->fd);
