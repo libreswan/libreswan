@@ -471,8 +471,8 @@ static struct pluto_event *free_event_entry(struct pluto_event **evp)
 			const char *en = enum_name(&timer_event_names, e->ev_type);
 			DBG_log("%s: release %s-pe@%p", __func__, en, e));
 
-	pfree(e);
 	pfreeany(e->ev_name);
+	pfree(e);
 	*evp = NULL;
 	return next;
 }
@@ -634,12 +634,17 @@ void find_ifaces(void)
 						ifp->ip_dev->id_rname,ifp->port,
 						ifp->fd);
 			}
+			char prefix[] ="INTERFACE_FD-";
+			char ifp_str[sizeof(prefix) +
+				strlen(ifp->ip_dev->id_rname) +
+				5 + 1 + 1 /* : + NUL */];
+			snprintf(ifp_str, sizeof(ifp_str), "%s:%u",
+					ifp->ip_dev->id_rname, ifp->port);
 			ifp->pev = pluto_event_add(ifp->fd,
 					EV_READ | EV_PERSIST, comm_handle_cb,
-					ifp, NULL, ifp->ip_dev->id_rname);
-			DBG_log("setup callback for interface %s:%u fd %d",
-					ifp->ip_dev->id_rname, ifp->port,
-					ifp->fd);
+					ifp, NULL, ifp_str);
+			DBG_log("setup callback for interface %s fd %d",
+					ifp_str, ifp->fd);
 		}
 	}
 }
