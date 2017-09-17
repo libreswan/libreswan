@@ -118,13 +118,14 @@ struct trans_attrs {
 
 	/*
 	 * IKEv1 IKE: N/A
-	 *
 	 * IKEv1 ESP/AH: enum ikev1_auth_attribute.
+	 * IKEv2 IKE/ESP/AH: N/A.
 	 *
-	 * IKEv2 ESP/AH: initially enum ikev2_trans_type_integ but
-	 * then, possibly, switched to enum ikev1_auth_attribute.
+	 * The only reason to use the expanded form of this macro is
+	 * when putting the value on, or getting the value off (i.e.,
+	 * lookup), the wire.
 	 */
-	oakley_hash_t ta_ikev1_integ_hash;	/* Hash algorithm for integ */
+#define ta_ikev1_integ_hash ta_integ->common.id[IKEv1_ESP_ID]
 
 	oakley_auth_t auth;		/* Authentication method (RSA,PSK) */
 

@@ -1951,11 +1951,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			break;
 
 		case AUTH_ALGORITHM | ISAKMP_ATTR_AF_TV:
-			/*
-			 * XXX: Always assign both .ta_ikev1_integ_hash and
-			 * .ta_integ - it makes auditing easier.
-			 */
-			attrs->transattrs.ta_ikev1_integ_hash = val;
 			attrs->transattrs.ta_integ = ikev1_get_kernel_integ_desc(val);
 			break;
 

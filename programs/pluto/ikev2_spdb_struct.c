@@ -1499,25 +1499,6 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 							       transform->id, &buf));
 					return FALSE;
 				}
-				/*
-				 * For IKE, TA_IKEV1_INTEG_HASH contains an
-				 * IKEv2, but for ESP/AH it contains
-				 * an IKEv1 value!
-				 *
-				 * For moment, set it to the IKEv2
-				 * value, and let the caller patch
-				 * things up.
-				 *
-				 * XXX: Short of deleting it,
-				 * TA_IKEV1_INTEG_HASH should at least be moved
-				 * to enum ipsec_trans_attrs
-				 * .ipsec_authentication_algo.
-				 *
-				 * XXX: Always assign both .ta_ikev1_integ_hash
-				 * and .ta_integ - it makes auditing
-				 * easier.
-				 */
-				ta.ta_ikev1_integ_hash = integ->common.id[IKEv2_ALG_ID];
 				ta.ta_integ = integ;
 				break;
 			}
@@ -1570,7 +1551,6 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 	if (ike_alg_is_aead(ta.ta_encrypt) && ta.ta_integ == NULL) {
 		DBG(DBG_CONTROL, DBG_log("since AEAD, setting NULL integ to 'null'"));
 		ta.ta_integ = &ike_alg_integ_none;
-		ta.ta_ikev1_integ_hash = 0;
 	}
 
 	*ta_out = ta;
@@ -1597,27 +1577,6 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 	if (!ikev2_proposal_to_trans_attrs(proposal, &ta)) {
 		return FALSE;
 	}
-
-	/*
-	 * If there is integrity, fix TA_IKEV1_INTEG_HASH by replacing the the
-	 * IKEv2 value, with an IKEv1 ESP/AH value expected by the
-	 * kernel backend.
-	 *
-	 * If there is no IKEv1 ESP/AH support then, presumably the
-	 * algorithm has a unique IKEv2 number, and that is expected.
-	 *
-	 * XXX: The real fix is to delete TA_IKEV1_INTEG_HASH.
-	 *
-	 * XXX: Always assign both .ta_ikev1_integ_hash and .ta_integ - it makes
-	 * auditing easier.
-	 */
-	const struct integ_desc *integ = ta.ta_integ;
-	ta.ta_ikev1_integ_hash = (integ == NULL
-			 ? AUTH_ALGORITHM_NONE
-			 : integ->common.ikev1_esp_id > 0
-			 ? integ->common.ikev1_esp_id
-			 : integ->common.id[IKEv2_ALG_ID]);
-	ta.ta_integ = integ;
 
 	/*
 	 * IKEv2 ESP/AH and IKE all use the same algorithm numbering
