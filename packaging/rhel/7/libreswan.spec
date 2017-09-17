@@ -211,13 +211,13 @@ bunzip2 *.fax.bz2
 export NSS_DISABLE_HW_GCM=1
 
 : starting CAVS test for IKEv2
-OBJ.linux.%{_arch}/programs/cavp/cavp -v2 ikev2.fax | \
+%{buildroot}%{_libexecdir}/ipsec/cavp -v2 ikev2.fax | \
     diff -u ikev2.fax - > /dev/null
 : starting CAVS test for IKEv1 RSASIG
-OBJ.linux.%{_arch}/programs/cavp/cavp -v1sig ikev1_dsa.fax | \
+%{buildroot}%{_libexecdir}/ipsec/cavp -v1sig ikev1_dsa.fax | \
     diff -u ikev1_dsa.fax - > /dev/null
 : starting CAVS test for IKEv1 PSK
-OBJ.linux.%{_arch}/programs/cavp/cavp -v1psk ikev1_psk.fax | \
+%{buildroot}%{_libexecdir}/ipsec/cavp -v1psk ikev1_psk.fax | \
     diff -u ikev1_psk.fax - > /dev/null
 : CAVS tests passed
 %endif
