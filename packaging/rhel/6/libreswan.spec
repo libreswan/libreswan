@@ -13,8 +13,7 @@
 %global USE_DNSSEC true
 %global USE_NM true
 %global USE_LINUX_AUDIT true
-# not production ready yet
-%global USE_SECCOMP false
+%global USE_SECCOMP true
 
 #global prever rc1
 

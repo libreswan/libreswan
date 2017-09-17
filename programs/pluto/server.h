@@ -42,14 +42,6 @@ extern deltatime_t pluto_shunt_lifetime; /* lifetime before we cleanup bare shun
 extern unsigned int pluto_sock_bufsize; /* pluto IKE socket buffer */
 extern bool pluto_sock_errqueue; /* Enable MSG_ERRQUEUE on IKE socket */
 
-#ifdef USE_NIC_OFFLOAD
-/* device_nic_offload: NIC offload capability of an interface */
-enum iface_nic_offload {
-	IFNO_UNSUPPORTED,
-	IFNO_SUPPORTED,
-};
-#endif
-
 /* interface: a terminal point for IKE traffic, IPsec transport mode
  * and IPsec tunnels.
  * Essentially:
@@ -68,7 +60,7 @@ struct iface_dev {
 	char *id_vname; /* virtual (ipsec) device name */
 	char *id_rname; /* real device name */
 #ifdef USE_NIC_OFFLOAD
-	enum iface_nic_offload id_nic_offload;
+	bool id_nic_offload;
 #endif
 };
 
