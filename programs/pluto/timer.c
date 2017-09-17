@@ -968,7 +968,8 @@ static void event_schedule_tv(enum event_type type, const struct timeval delay, 
 	ev->ev_time = monotimesum(mononow(), deltatime(delay.tv_sec));
 
 	ev->ev_state = st;
-	ev->ev = pluto_event_new(NULL_FD, EV_TIMEOUT, timer_event_cb, ev, &delay);
+	ev->ev = timer_private_pluto_event_new(NULL_FD, EV_TIMEOUT,
+					       timer_event_cb, ev, &delay);
 	link_pluto_event_list(ev); /* add to global ist to track */
 
 	/*

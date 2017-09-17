@@ -513,6 +513,33 @@ void delete_pluto_event(struct pluto_event **evp)
 	unlink_pluto_event_list(evp);
 }
 
+/* a wrapper for libevent's event_new + event_add; any error is fatal */
+static struct event *pluto_event_new(evutil_socket_t fd, short events,
+				     event_callback_fn cb, void *arg,
+				     const struct timeval *t)
+{
+	struct event *ev = event_new(pluto_eb, fd, events, cb, arg);
+	int r;
+
+	passert(ev != NULL);
+	r = event_add(ev, t);
+	passert(r >= 0);
+	return ev;
+}
+
+/*
+ * XXX: custom version of event new used only by timer.c.  If you're
+ * looking for how to set up a timer, then don't look here and don't
+ * look at timer.c.  Why?
+ */
+struct event *timer_private_pluto_event_new(evutil_socket_t fd, short events,
+					    event_callback_fn cb, void *arg,
+					    const struct timeval *t)
+{
+	return pluto_event_new(fd, events, cb, arg, t);
+}
+
+
 struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
 		event_callback_fn cb, void *arg, const struct timeval *delay,
 		char *name) {
@@ -526,19 +553,6 @@ struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
 		e->ev_time = monotimesum(mononow(), deltatime(delay->tv_sec));
 	}
 	return e; /* compaitable with pluto_event_new for the time being */
-}
-
-/* a wrapper for libevent's event_new + event_add; any error is fatal */
-struct event *pluto_event_new(evutil_socket_t fd, short events,
-		event_callback_fn cb, void *arg, const struct timeval *t)
-{
-	struct event *ev = event_new(pluto_eb, fd, events, cb, arg);
-	int r;
-
-	passert(ev != NULL);
-	r = event_add(ev, t);
-	passert(r >= 0);
-	return ev;
 }
 
 /*
