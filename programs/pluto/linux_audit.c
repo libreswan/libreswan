@@ -229,6 +229,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 
 	case LAK_CHILD_START:
 	case LAK_CHILD_DESTROY:
+	{
 		snprintf(head, sizeof(head), "op=%s %s connstate=%lu, satype=%s samode=%s",
 			op == LAK_CHILD_START ? "start" : "destroy",
 			conn_encode,
@@ -236,17 +237,37 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			st->st_esp.present ? "ipsec-esp" : (st->st_ah.present ? "ipsec-ah" : "ipsec-policy"),
 			c->policy & POLICY_TUNNEL ? "tunnel" : "transport");
 
-		snprintf(cipher_str, sizeof(cipher_str),
-			"cipher=%s ksize=%d integ=%s",
-			st->st_esp.present ?
-				enum_show_shortb(&esp_transformid_names,
-					st->st_esp.attrs.transattrs.ta_ikev1_encrypt, &esb) :
-				"none",
-			st->st_esp.present ?
-				st->st_esp.attrs.transattrs.enckeylen :
-				0,
-			enum_show_shortb(&auth_alg_names,
-				st->st_esp.attrs.transattrs.ta_ikev1_integ_hash, &esb2));
+		/*
+		 * XXX: Instead of IKEv1_ESP_ID, this should use
+		 * ->common.fqn or ->common.officname; however that
+		 * means changing the output.  So leave it roughly as
+		 * is for now.
+		 */
+
+		const struct encrypt_desc *encrypt;
+		const struct integ_desc *integ;
+		unsigned enckeylen;
+		if (st->st_esp.present) {
+			encrypt = st->st_esp.attrs.transattrs.ta_encrypt;
+			integ = st->st_esp.attrs.transattrs.ta_integ;
+			enckeylen = 0;
+		} else if (st->st_ah.present) {
+			encrypt = NULL;
+			integ = st->st_ah.attrs.transattrs.ta_integ;
+			enckeylen = 0;
+		} else {
+			encrypt = NULL;
+			integ = NULL;
+			enckeylen = 0;
+		}
+		snprintf(cipher_str, sizeof(cipher_str), "cipher=%s ksize=%u integ=%s",
+			 (encrypt == NULL ? "none" :
+			  enum_show_shortb(&esp_transformid_names,
+					   encrypt->common.id[IKEv1_ESP_ID], &esb)),
+			 enckeylen,
+			 (integ == NULL ? "none" :
+			  enum_show_shortb(&auth_alg_names,
+					   integ->common.id[IKEv1_ESP_ID], &esb2)));
 
 		snprintf(spi_str, sizeof(spi_str),
 		"in-spi=%lu(0x%08lx) out-spi=%lu(0x%08lx) in-ipcomp=%lu(0x%08lx) out-ipcomp=%lu(0x%08lx)",
@@ -263,6 +284,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 		st->st_ipcomp.present ? (unsigned long)ntohl(st->st_ipcomp.our_spi) : (unsigned long)0,
 		st->st_ipcomp.present ? (unsigned long)ntohl(st->st_ipcomp.our_spi) : (unsigned long)0);
 		break;
+	}
 	default:
 		bad_case(op);
 	}
