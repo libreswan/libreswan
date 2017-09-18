@@ -910,7 +910,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		DBG(DBG_LIFECYCLE,
 				DBG_log("PAM thread timeout on state #%lu",
 					st->st_serialno));
-		xauth_cancel(st->st_serialno, &st->st_xauth_thread, st->st_xauth);
+		xauth_cancel(st->st_serialno, &st->st_xauth_thread);
 		/* note: no md->st to clear */
 		break;
 

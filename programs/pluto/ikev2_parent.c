@@ -3360,7 +3360,6 @@ static stf_status ikev2_start_pam_authorize(struct msg_digest *md)
 	libreswan_log("IKEv2: [XAUTH]PAM method requested to authorize '%s'",
 		      thatid);
 	xauth_start_pam_thread(&st->st_xauth_thread,
-			       &st->st_xauth,
 			       thatid, "password",
 			       st->st_connection->name,
 			       &st->st_remoteaddr,

@@ -28,6 +28,20 @@
 
 pthread_t main_thread;
 
+void xauth_cancel(so_serial_t serialno, pthread_t *thread)
+{
+	passert(pthread_equal(main_thread, pthread_self()));
+	if (pthread_equal(*thread, main_thread)) {
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("XAUTH: #%lu: no thread to cancel", serialno));
+	} else {
+		libreswan_log("XAUTH: #%lu: cancelling authentication thread",
+			      serialno);
+		pthread_cancel(*thread);
+		*thread = main_thread;
+	}
+}
+
 struct xauth {
 	const char *method;
 	so_serial_t serialno;
@@ -83,7 +97,6 @@ static void xauth_cleanup_callback(evutil_socket_t socket UNUSED,
 			      xauth->serialno, xauth->name);
 	} else {
 		st->st_xauth_thread = main_thread; /* all done */
-		st->st_xauth = NULL;
 		xauth->callback(st, xauth->name, xauth->success);
 	}
 	xauth->cleanup(xauth->arg);
@@ -154,7 +167,6 @@ static void *xauth_thread(void *arg)
 }
 
 static void xauth_start_thread(pthread_t *thread,
-			       struct xauth **xauth_p,
 			       const char *method,
 			       const char *name,
 			       so_serial_t serialno,
@@ -177,10 +189,6 @@ static void xauth_start_thread(pthread_t *thread,
 	xauth->authenticate = authenticate;
 	xauth->cleanup = cleanup;
 	xauth->callback = callback;
-	if(xauth_p != NULL) {
-		/* workaround pthread_cancel not calling cancel/continuation */
-		*xauth_p = xauth;
-	}
 	gettimeofday(&xauth->tv0, NULL);
 
 	/*
@@ -226,7 +234,6 @@ static void xauth_pam_cleanup(void *arg)
 }
 
 void xauth_start_pam_thread(pthread_t *thread,
-			    struct xauth ** xauth_p,
 			    const char *name,
 			    const char *password,
 			    const char *connection_name,
@@ -251,7 +258,7 @@ void xauth_start_pam_thread(pthread_t *thread,
 	pam->c_instance_serial = instance_serial;
 	pam->atype = atype;
 
-	return xauth_start_thread(thread, xauth_p, "PAM", name, serialno, pam,
+	return xauth_start_thread(thread, "PAM", name, serialno, pam,
 				  xauth_pam_thread,
 				  xauth_pam_cleanup, callback);
 }
@@ -274,24 +281,8 @@ void xauth_start_always_thread(pthread_t *thread,
 						const char *name,
 						bool success))
 {
-	return xauth_start_thread(thread, NULL, method, name, serialno,
+	return xauth_start_thread(thread, method, name, serialno,
 				  success ? &main_thread : NULL,
 				  xauth_always_thread, xauth_always_cleanup,
 				  callback);
-}
-
-void xauth_cancel(so_serial_t serialno, pthread_t *thread, struct xauth *xauth)
-{
-	passert(pthread_equal(main_thread, pthread_self()));
-	if (pthread_equal(*thread, main_thread)) {
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("XAUTH: #%lu: no thread to cancel", serialno));
-	} else {
-		libreswan_log("XAUTH: #%lu: cancelling authentication thread",
-			      serialno);
-		pthread_cancel(*thread);
-		*thread = main_thread;
-		passert(xauth != NULL) /* did the cleanup already happen */
-		xauth_cleanup_callback(NULL_FD, 0, xauth);
-	}
 }

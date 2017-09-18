@@ -75,8 +75,6 @@ struct ikev2_ipseckey_dns; /* forward declaration of tag */
 
 struct state;   /* forward declaration of tag */
 
-struct xauth; /* forward declaration of tag */
-
 /* Oakley (Phase 1 / Main Mode) transform and attributes
  * This is a flattened/decoded version of what is represented
  * in the Transaction Payload.
@@ -265,10 +263,6 @@ struct state {
 	so_serial_t st_ipsec_pred; /* IKEv2: replacing established IPsec SA */
 
 	pthread_t st_xauth_thread;		/* per state xauth/pam thread */
-	struct xauth *st_xauth;			/* xauth object in the thread
-						 * in main thread only use for cleanup
-						 * after canceling the thread
-						 */
 
 	bool st_ikev2;                          /* is this an IKEv2 state? */
 	bool st_ikev2_no_del;                   /* suppress sending DELETE - eg replaced conn */
