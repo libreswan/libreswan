@@ -23,6 +23,8 @@
 
 #include "ipsecconf/keywords.h"
 
+# define DEFAULT_UPDOWN "ipsec _updown"
+
 #ifndef _LIBRESWAN_H
 #include <libreswan.h>
 #include "constants.h"

@@ -51,6 +51,7 @@
 #include "defs.h"
 #include "whack.h"
 
+#include "ipsecconf/confread.h" /* for DEFAULT_UPDOWN */
 #include <net/if.h> /* for IFNAMSIZ */
 /*
  * Print the 'ipsec --whack help' message
@@ -985,6 +986,9 @@ int main(int argc, char **argv)
 
 	msg.addr_family = AF_INET;
 	msg.tunnel_addr_family = AF_INET;
+
+	msg.right.updown = DEFAULT_UPDOWN;
+	msg.left.updown = DEFAULT_UPDOWN;
 
 	for (;;) {
 		int long_index;

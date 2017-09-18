@@ -3906,15 +3906,16 @@ static void show_one_sr(const struct connection *c,
 #define OPT_PREFIX_STR(pre, s) (s) == NULL ? "" : (pre), (s) == NULL? "" : (s)
 
 	whack_log(RC_COMMENT,
-		"\"%s\"%s:     %s; my_ip=%s; their_ip=%s%s%s%s%s%s%s%s%s",
+		"\"%s\"%s:     %s; my_ip=%s; their_ip=%s%s%s%s%s; my_updown=%s;",
 		c->name, instance,
 		oriented(*c) ? "oriented" : "unoriented",
 		OPT_HOST(&c->spd.this.host_srcip, thisipb),
 		OPT_HOST(&c->spd.that.host_srcip, thatipb),
-		OPT_PREFIX_STR("; myup=", sr->this.updown),
-		OPT_PREFIX_STR("; theirup=", sr->that.updown),
 		OPT_PREFIX_STR("; mycert=", cert_nickname(&sr->this.cert)),
-		OPT_PREFIX_STR("; hiscert=", cert_nickname(&sr->that.cert)));
+		OPT_PREFIX_STR("; hiscert=", cert_nickname(&sr->that.cert)),
+		(sr->this.updown == NULL || streq(sr->this.updown, "%disabled")) ?
+			"<disabled>" : sr->this.updown
+	);
 
 #undef OPT_HOST
 #undef OPT_PREFIX_STR

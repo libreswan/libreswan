@@ -89,10 +89,6 @@
 #define XFRM_STATE_AF_UNSPEC    32
 #endif
 
-#ifndef DEFAULT_UPDOWN
-# define DEFAULT_UPDOWN "ipsec _updown"
-#endif
-
 /* Minimum priority number in SPD used by pluto. */
 #define MIN_SPD_PRIORITY 1024
 
@@ -2314,8 +2310,7 @@ static bool netkey_do_command(const struct connection *c, const struct spd_route
 				"PLUTO_VERB='%s%s' %s%s 2>&1",
 				verb, verb_suffix,
 				common_shell_out_str,
-				sr->this.updown == NULL ?
-				DEFAULT_UPDOWN : sr->this.updown)) {
+				sr->this.updown)) {
 		loglog(RC_LOG_SERIOUS, "%s%s command too long!", verb,
 			verb_suffix);
 		return FALSE;
