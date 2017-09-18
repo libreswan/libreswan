@@ -1,4 +1,3 @@
-
 # These are rpm macros and are 0 or 1
 %global crl_fetching 1
 %global fipscheck_version 1.2.0-7
@@ -32,10 +31,10 @@ Source10: https://download.libreswan.org/cavs/ikev1_dsa.fax.bz2
 Source11: https://download.libreswan.org/cavs/ikev1_psk.fax.bz2
 Source12: https://download.libreswan.org/cavs/ikev2.fax.bz2
 %endif
-Group: System Environment/Daemons
-BuildRequires: bison flex redhat-rpm-config pkgconfig
-Requires(post): coreutils bash
-Requires(preun): initscripts chkconfig
+BuildRequires: bison
+BuildRequires: flex
+BuildRequires: pkgconfig
+BuildRequires: redhat-rpm-config
 Requires(post): /sbin/chkconfig
 Requires(preun): /sbin/chkconfig
 Requires(preun): /sbin/service
@@ -46,11 +45,13 @@ Provides: openswan = %{version}-%{release}
 Provides: openswan-doc = %{version}-%{release}
 
 BuildRequires: pkgconfig net-tools
-BuildRequires: nss-devel >= 3.16.1, nspr-devel
+BuildRequires: nss-devel >= 3.16.1
+BuildRequires: nspr-devel
 BuildRequires: pam-devel
 BuildRequires: libevent2-devel
 %if %{USE_DNSSEC}
-BuildRequires: unbound-devel >= 1.5.4 ldns-devel
+BuildRequires: ldns-devel
+BuildRequires: unbound-devel >= 1.5.4
 %endif
 %if %{USE_SECCOMP}
 BuildRequires: libseccomp-devel
@@ -70,14 +71,16 @@ Buildrequires: audit-libs-devel
 BuildRequires: libcap-ng-devel
 %endif
 %if %{crl_fetching}
-BuildRequires: openldap-devel curl-devel
+BuildRequires: curl-devel
+BuildRequires: openldap-devel
 %endif
 %if %{buildefence}
 BuildRequires: ElectricFence
 %endif
 BuildRequires: xmlto
 
-Requires: nss-tools, nss-softokn
+Requires: nss-tools
+Requires: nss-softokn
 Requires: iproute >= 2.6.8
 
 %description
@@ -101,7 +104,7 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 
 %build
 %if %{buildefence}
-%global efence "-lefence"
+%global efence -lefence
 %endif
 
 #796683: -fno-strict-aliasing
@@ -114,14 +117,14 @@ make %{?_smp_mflags} \
     USERLINK="-g -pie -Wl,-z,relro,-z,now %{?efence}" \
     INITSYSTEM=sysvinit \
     INC_USRLOCAL=%{_prefix} \
-    FINALRUNDIR=%{_rundir} \
+    FINALRUNDIR=%{_rundir}/pluto \
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \
     MANTREE=%{_mandir} \
     INC_RCDEFAULT=%{_initrddir} \
     USE_NM=%{USE_NM} \
     USE_XAUTHPAM=true \
     USE_FIPSCHECK=%{USE_FIPSCHECK} \
-    FIPSPRODUCTCHECK="%{_sysconfdir}/system-fips" \
+    FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \
     USE_LIBCAP_NG=%{USE_LIBCAP_NG} \
     USE_LABELED_IPSEC=%{USE_LABELED_IPSEC} \
 %if %{crl_fetching}
@@ -132,7 +135,7 @@ make %{?_smp_mflags} \
     USE_LIBCURL=false \
 %endif
     USE_DNSSEC=%{USE_DNSSEC} \
-    USE_SECCOMP="%{USE_SECCOMP}" \
+    USE_SECCOMP=%{USE_SECCOMP} \
     programs
 FS=$(pwd)
 
@@ -152,14 +155,14 @@ make \
     INITSYSTEM=sysvinit \
     INC_USRLOCAL=%{_prefix} \
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \
-    FINALRUNDIR=%{_rundir} \
+    FINALRUNDIR=%{_rundir}/pluto \
     MANTREE=%{buildroot}%{_mandir} \
     INC_RCDEFAULT=%{_initrddir} \
     INSTMANFLAGS="-m 644" \
     USE_NM=%{USE_NM} \
     USE_XAUTHPAM=true \
     USE_FIPSCHECK=%{USE_FIPSCHECK} \
-    FIPSPRODUCTCHECK="%{_sysconfdir}/system-fips" \
+    FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \
     USE_LIBCAP_NG=%{USE_LIBCAP_NG} \
     USE_LABELED_IPSEC=%{USE_LABELED_IPSEC} \
 %if %{crl_fetching}
@@ -170,7 +173,7 @@ make \
     USE_LIBCURL=false \
 %endif
     USE_DNSSEC=%{USE_DNSSEC} \
-    USE_SECCOMP="%{USE_SECCOMP}" \
+    USE_SECCOMP=%{USE_SECCOMP} \
     install
 FS=$(pwd)
 rm -rf %{buildroot}/usr/share/doc/libreswan
@@ -180,14 +183,17 @@ install -d -m 0700 %{buildroot}%{_rundir}/pluto
 install -d -m 0700 %{buildroot}%{_localstatedir}/log/pluto/peer
 install -d %{buildroot}%{_sbindir}
 # replace with rhel[56] specific version
-install -m 0755 initsystems/sysvinit/init.rhel %{buildroot}%{_initrddir}/ipsec
+install -m 0755 initsystems/sysvinit/init.rhel \
+    %{buildroot}%{_initrddir}/ipsec
 
-echo "include %{_sysconfdir}/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ipsec.secrets
+echo "include %{_sysconfdir}/ipsec.d/*.secrets" \
+    > %{buildroot}%{_sysconfdir}/ipsec.secrets
 rm -fr %{buildroot}%{_sysconfdir}/rc.d/rc*
 
 %if %{USE_FIPSCHECK}
 install -d %{buildroot}%{_sysconfdir}/prelink.conf.d/
-install -m644 packaging/fedora/libreswan-prelink.conf %{buildroot}%{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
+install -m644 packaging/rhel/libreswan-prelink.conf \
+    %{buildroot}%{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
 %endif
 
 %if %{cavstests}
@@ -249,10 +255,8 @@ fi
 %{_libexecdir}/ipsec/*
 %attr(0644,root,root) %{_mandir}/*/*.gz
 %{_initrddir}/ipsec
-
 %if %{USE_FIPSCHECK}
 %{_libexecdir}/ipsec/.pluto.hmac
-
 # We own the directory so we don't have to require prelink
 %attr(0755,root,root) %dir %{_sysconfdir}/prelink.conf.d/
 %{_sysconfdir}/prelink.conf.d/libreswan-fips.conf

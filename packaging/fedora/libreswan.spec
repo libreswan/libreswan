@@ -1,4 +1,3 @@
-
 # These are rpm macros and are 0 or 1
 %global crl_fetching 1
 %global _hardened_build 1
@@ -32,7 +31,6 @@ Source2: https://download.libreswan.org/cavs/ikev1_psk.fax.bz2
 Source3: https://download.libreswan.org/cavs/ikev2.fax.bz2
 
 %endif
-Group: System Environment/Daemons
 BuildRequires: bison flex pkgconfig
 BuildRequires: systemd systemd-units systemd-devel
 Requires(post): coreutils bash systemd
@@ -107,36 +105,36 @@ sed -i "s:/usr/bin/python:/usr/bin/python3:" programs/verify/verify.in
 #796683: -fno-strict-aliasing
 make %{?_smp_mflags} \
 %if %{development}
-  USERCOMPILE="-g -DGCC_LINT %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
+    USERCOMPILE="-g -DGCC_LINT %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
 %else
-  USERCOMPILE="-g -DGCC_LINT %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
+    USERCOMPILE="-g -DGCC_LINT %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
 %endif
-  USERLINK="-g -pie -Wl,-z,relro,-z,now %{?efence}" \
-  INITSYSTEM=systemd \
-  USE_NM=%{USE_NM} \
-  USE_XAUTHPAM=true \
+    USERLINK="-g -pie -Wl,-z,relro,-z,now %{?efence}" \
+    INITSYSTEM=systemd \
+    USE_NM=%{USE_NM} \
+    USE_XAUTHPAM=true \
 %if %{USE_FIPSCHECK}
-  USE_FIPSCHECK="%{USE_FIPSCHECK}" \
-  FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \
+    USE_FIPSCHECK="%{USE_FIPSCHECK}" \
+    FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \
 %endif
-  USE_LIBCAP_NG="%{USE_LIBCAP_NG}" \
-  USE_LABELED_IPSEC="%{USE_LABELED_IPSEC}" \
+    USE_LIBCAP_NG="%{USE_LIBCAP_NG}" \
+    USE_LABELED_IPSEC="%{USE_LABELED_IPSEC}" \
 %if %{crl_fetching}
-  USE_LDAP=true \
-  USE_LIBCURL=true \
+    USE_LDAP=true \
+    USE_LIBCURL=true \
 %else
-  USE_LDAP=false \
-  USE_LIBCURL=false \
+    USE_LDAP=false \
+    USE_LIBCURL=false \
 %endif
-  USE_DNSSEC="%{USE_DNSSEC}" \
-  USE_SECCOMP="%{USE_SECCOMP}" \
-  INC_USRLOCAL=%{_prefix} \
-  FINALLIBEXECDIR=%{_libexecdir}/ipsec \
-  FINALRUNDIR=%{_rundir} \
-  MANTREE=%{_mandir} \
-  INC_RCDEFAULT=%{_initrddir} \
-  NSS_REQ_AVA_COPY=false \
-  programs
+    USE_DNSSEC="%{USE_DNSSEC}" \
+    USE_SECCOMP="%{USE_SECCOMP}" \
+    INC_USRLOCAL=%{_prefix} \
+    FINALLIBEXECDIR=%{_libexecdir}/ipsec \
+    FINALRUNDIR=%{_rundir}/pluto \
+    MANTREE=%{_mandir} \
+    INC_RCDEFAULT=%{_initrddir} \
+    NSS_REQ_AVA_COPY=false \
+    programs
 FS=$(pwd)
 
 %if %{USE_FIPSCHECK}
@@ -145,39 +143,39 @@ FS=$(pwd)
     %{?__debug_package:%{__debug_install_post}} \
     %{__arch_install_post} \
     %{__os_install_post} \
-  fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_libexecdir}/ipsec/pluto \
+    fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_libexecdir}/ipsec/pluto \
 %{nil}
 %endif
 
 %install
 make \
-  DESTDIR=%{buildroot} \
-  INC_USRLOCAL=%{_prefix} \
-  FINALLIBEXECDIR=%{_libexecdir}/ipsec \
-  FINALRUNDIR=%{_rundir} \
-  MANTREE=%{buildroot}%{_mandir} \
-  INC_RCDEFAULT=%{_initrddir} \
-  INSTMANFLAGS="-m 644" \
-  INITSYSTEM=systemd \
-  USE_NM=%{USE_NM} \
-  USE_XAUTHPAM=true \
+    DESTDIR=%{buildroot} \
+    INC_USRLOCAL=%{_prefix} \
+    FINALLIBEXECDIR=%{_libexecdir}/ipsec \
+    FINALRUNDIR=%{_rundir}/pluto \
+    MANTREE=%{buildroot}%{_mandir} \
+    INC_RCDEFAULT=%{_initrddir} \
+    INSTMANFLAGS="-m 644" \
+    INITSYSTEM=systemd \
+    USE_NM=%{USE_NM} \
+    USE_XAUTHPAM=true \
 %if %{USE_FIPSCHECK}
-  USE_FIPSCHECK="%{USE_FIPSCHECK}" \
-  FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \
+    USE_FIPSCHECK="%{USE_FIPSCHECK}" \
+    FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \
 %endif
-  USE_LIBCAP_NG="%{USE_LIBCAP_NG}" \
-  USE_LABELED_IPSEC="%{USE_LABELED_IPSEC}" \
+    USE_LIBCAP_NG="%{USE_LIBCAP_NG}" \
+    USE_LABELED_IPSEC="%{USE_LABELED_IPSEC}" \
 %if %{crl_fetching}
-  USE_LDAP=true \
-  USE_LIBCURL=true \
+    USE_LDAP=true \
+    USE_LIBCURL=true \
 %else
-  USE_LDAP=false \
-  USE_LIBCURL=false \
+    USE_LDAP=false \
+    USE_LIBCURL=false \
 %endif
-  USE_DNSSEC="%{USE_DNSSEC}" \
-  USE_SECCOMP="%{USE_SECCOMP}" \
-  NSS_REQ_AVA_COPY=false \
-  install
+    USE_DNSSEC="%{USE_DNSSEC}" \
+    USE_SECCOMP="%{USE_SECCOMP}" \
+    NSS_REQ_AVA_COPY=false \
+    install
 FS=$(pwd)
 rm -rf %{buildroot}/usr/share/doc/libreswan
 
@@ -188,18 +186,18 @@ install -d %{buildroot}%{_sbindir}
 
 install -d %{buildroot}%{_sysconfdir}/sysctl.d
 install -m 0644 packaging/fedora/libreswan-sysctl.conf \
-  %{buildroot}%{_sysconfdir}/sysctl.d/50-libreswan.conf
+    %{buildroot}%{_sysconfdir}/sysctl.d/50-libreswan.conf
 
 install -d %{buildroot}%{_tmpfilesdir}
 install -m 0644 packaging/fedora/libreswan-tmpfiles.conf  \
-  %{buildroot}%{_tmpfilesdir}/libreswan.conf
+    %{buildroot}%{_tmpfilesdir}/libreswan.conf
 
 %if %{USE_FIPSCHECK}
 mkdir -p %{buildroot}%{_libdir}/fipscheck
 %endif
 
 echo "include %{_sysconfdir}/ipsec.d/*.secrets" \
-     > %{buildroot}%{_sysconfdir}/ipsec.secrets
+    > %{buildroot}%{_sysconfdir}/ipsec.secrets
 rm -fr %{buildroot}%{_sysconfdir}/rc.d/rc*
 
 %if %{cavstests}

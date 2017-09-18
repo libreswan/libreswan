@@ -1,4 +1,3 @@
-
 # These are rpm macros and are 0 or 1
 %global crl_fetching 1
 %global _hardened_build 1
@@ -30,7 +29,6 @@ Source10: https://download.libreswan.org/cavs/ikev1_dsa.fax.bz2
 Source11: https://download.libreswan.org/cavs/ikev1_psk.fax.bz2
 Source12: https://download.libreswan.org/cavs/ikev2.fax.bz2
 %endif
-Group: System Environment/Daemons
 BuildRequires: bison flex redhat-rpm-config pkgconfig
 BuildRequires: systemd
 Requires(post): coreutils bash systemd
@@ -44,11 +42,13 @@ Provides: openswan = %{version}-%{release}
 Provides: openswan-doc = %{version}-%{release}
 
 BuildRequires: pkgconfig hostname
-BuildRequires: nss-devel >= 3.16.2, nspr-devel
+BuildRequires: nss-devel >= 3.16.2
+BuildRequires: nspr-devel
 BuildRequires: pam-devel
 BuildRequires: libevent-devel
 %if %{USE_DNSSEC}
-BuildRequires: unbound-devel >= 1.5.4 ldns-devel
+BuildRequires: ldns-devel
+BuildRequires: unbound-devel >= 1.5.4
 %endif
 %if %{USE_SECCOMP}
 BuildRequires: libseccomp-devel
@@ -69,14 +69,16 @@ BuildRequires: systemd-devel
 BuildRequires: libcap-ng-devel
 %endif
 %if %{crl_fetching}
-BuildRequires: openldap-devel curl-devel
+BuildRequires: curl-devel
+BuildRequires: openldap-devel
 %endif
 %if %{buildefence}
 BuildRequires: ElectricFence
 %endif
 BuildRequires: xmlto
 
-Requires: nss-tools, nss-softokn
+Requires: nss-tools
+Requires: nss-softokn
 
 %description
 Libreswan is a free implementation of IPsec & IKE for Linux.  IPsec is
@@ -88,7 +90,7 @@ decrypted by the gateway at the other end of the tunnel.  The resulting
 tunnel is a virtual private network or VPN.
 
 This package contains the daemons and userland tools for setting up
-Libreswan. To build KLIPS, see the kmod-libreswan.spec file.
+Libreswan.
 
 Libreswan also supports IKEv2 (RFC4309) and Secure Labeling
 
@@ -112,7 +114,7 @@ make %{?_smp_mflags} \
     USERLINK="-g -pie -Wl,-z,relro,-z,now %{?efence}" \
     INC_USRLOCAL=%{_prefix} \
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \
-    FINALRUNDIR=%{_rundir} \
+    FINALRUNDIR=%{_rundir}/pluto \
     MANTREE=%{_mandir} \
     INC_RCDEFAULT=%{_initrddir} \
     INITSYSTEM=systemd \
@@ -148,7 +150,7 @@ make \
     DESTDIR=%{buildroot} \
     INC_USRLOCAL=%{_prefix} \
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \
-    FINALRUNDIR=%{_rundir} \
+    FINALRUNDIR=%{_rundir}/pluto \
     MANTREE=%{buildroot}%{_mandir} \
     INC_RCDEFAULT=%{_initrddir} \
     INSTMANFLAGS="-m 644" \
@@ -187,17 +189,13 @@ install -m 0644 packaging/rhel/libreswan-tmpfiles.conf  \
 %if %{USE_FIPSCHECK}
 mkdir -p %{buildroot}%{_libdir}/fipscheck
 install -d %{buildroot}%{_sysconfdir}/prelink.conf.d/
-install -m644 packaging/rhel/libreswan-prelink.conf %{buildroot}%{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
+install -m644 packaging/rhel/libreswan-prelink.conf \
+    %{buildroot}%{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
 %endif
 
-echo "include /etc/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ipsec.secrets
-rm -fr %{buildroot}/etc/rc.d/rc*
+echo "include /etc/ipsec.d/*.secrets" \
+    > %{buildroot}%{_sysconfdir}/ipsec.secrets
 
-%if %{USE_FIPSCHECK}
-install -d %{buildroot}%{_sysconfdir}/prelink.conf.d/
-install -m644 packaging/fedora/libreswan-prelink.conf \
-        %{buildroot}%{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
-%endif
 
 %if %{cavstests}
 %check
