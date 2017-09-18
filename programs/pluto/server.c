@@ -260,9 +260,8 @@ static void free_dead_ifaces(void)
 
 				*pp = p->next; /* advance *pp */
 
-				if (p->ev != NULL) {
-					event_del(p->ev);
-					p->ev = NULL;
+				if (p->pev != NULL) {
+					delete_pluto_event(&p->pev);
 				}
 
 				close(p->fd);
@@ -472,6 +471,7 @@ static struct pluto_event *free_event_entry(struct pluto_event **evp)
 			const char *en = enum_name(&timer_event_names, e->ev_type);
 			DBG_log("%s: release %s-pe@%p", __func__, en, e));
 
+	pfreeany(e->ev_name);
 	pfree(e);
 	*evp = NULL;
 	return next;
@@ -513,8 +513,11 @@ void delete_pluto_event(struct pluto_event **evp)
 	unlink_pluto_event_list(evp);
 }
 
-/* a wrapper for libevent's event_new + event_add; any error is fatal */
-static struct event *pluto_event_new(evutil_socket_t fd, short events,
+/*
+ * a wrapper for libevent's event_new + event_add; any error is fatal
+ * If you're looking for how to set up a timer look at pluto_event_add
+ */
+static struct event *pluto_event_wraper(evutil_socket_t fd, short events,
 				     event_callback_fn cb, void *arg,
 				     const struct timeval *t)
 {
@@ -532,11 +535,14 @@ static struct event *pluto_event_new(evutil_socket_t fd, short events,
  * looking for how to set up a timer, then don't look here and don't
  * look at timer.c.  Why?
  */
+struct event *timer_private_pluto_event_new(evutil_socket_t ft, short
+		events, event_callback_fn cb, void *arg,
+		const struct timeval *t);
 struct event *timer_private_pluto_event_new(evutil_socket_t fd, short events,
 					    event_callback_fn cb, void *arg,
 					    const struct timeval *t)
 {
-	return pluto_event_new(fd, events, cb, arg, t);
+	return pluto_event_wraper(fd, events, cb, arg, t);
 }
 
 
@@ -545,8 +551,8 @@ struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
 		char *name) {
 	struct pluto_event *e = alloc_thing(struct pluto_event, name);
 	e->ev_type = EVENT_NULL;
-	e->ev_name = name;
-	e->ev = pluto_event_new(fd, events, cb, arg, delay);
+	e->ev_name = clone_str(name, "event name");
+	e->ev = pluto_event_wraper(fd, events, cb, arg, delay);
 	link_pluto_event_list(e);
 	if (delay != NULL)
 	{
@@ -622,19 +628,23 @@ void find_ifaces(void)
 
 	if (listening) {
 		for (ifp = interfaces; ifp != NULL; ifp = ifp->next) {
-			if (ifp->ev != NULL) {
-				event_del(ifp->ev);
-				ifp->ev = NULL;
+			if (ifp->pev != NULL) {
+				delete_pluto_event(&ifp->pev);
 				DBG_log("refresh. setup callback for interface %s:%u %d",
 						ifp->ip_dev->id_rname,ifp->port,
 						ifp->fd);
 			}
-			ifp->ev = pluto_event_new(ifp->fd,
+			char prefix[] ="INTERFACE_FD-";
+			char ifp_str[sizeof(prefix) +
+				strlen(ifp->ip_dev->id_rname) +
+				5 + 1 + 1 /* : + NUL */];
+			snprintf(ifp_str, sizeof(ifp_str), "%s:%u",
+					ifp->ip_dev->id_rname, ifp->port);
+			ifp->pev = pluto_event_add(ifp->fd,
 					EV_READ | EV_PERSIST, comm_handle_cb,
-					ifp, NULL);
-			DBG_log("setup callback for interface %s:%u fd %d",
-					ifp->ip_dev->id_rname, ifp->port,
-					ifp->fd);
+					ifp, NULL, ifp_str);
+			DBG_log("setup callback for interface %s fd %d",
+					ifp_str, ifp->fd);
 		}
 	}
 }

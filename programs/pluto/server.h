@@ -72,7 +72,7 @@ struct iface_port {
 	struct iface_port *next;
 	bool ike_float;
 	enum { IFN_ADD, IFN_KEEP, IFN_DELETE } change;
-	struct event *ev;
+	struct pluto_event *pev;
 };
 
 extern struct iface_port  *interfaces;   /* public interfaces */
@@ -91,10 +91,6 @@ typedef void event_callback_routine(evutil_socket_t, const short, void *);
 extern struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
 		                event_callback_fn cb, void *arg,
 				const struct timeval *delay, char *name);
-extern struct event *timer_private_pluto_event_new(evutil_socket_t ft, short events,
-						   event_callback_fn cb, void *arg,
-						   const struct timeval *t);
-
 extern void delete_pluto_event(struct pluto_event **evp);
 extern void link_pluto_event_list(struct pluto_event *e);
 extern void free_pluto_event_list(void);

@@ -157,6 +157,7 @@ static void free_pluto_main(void)
 	pfreeany(pluto_log_file);
 	pfreeany(pluto_dnssec_rootfile);
 	pfreeany(pluto_dnssec_trusted);
+	pfreeany(rundir);
 }
 
 /*

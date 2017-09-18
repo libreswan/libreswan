@@ -64,6 +64,10 @@
 
 #include "pluto_sd.h"
 
+extern struct event *timer_private_pluto_event_new(evutil_socket_t ft, short
+		events, event_callback_fn cb, void *arg,
+		const struct timeval *t); /* only for timer.c */
+
 static unsigned long retrans_delay(struct state *st)
 {
 	struct connection *c = st->st_connection;
@@ -906,7 +910,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		DBG(DBG_LIFECYCLE,
 				DBG_log("PAM thread timeout on state #%lu",
 					st->st_serialno));
-		xauth_cancel(st->st_serialno, &st->st_xauth_thread, st->st_xauth);
+		xauth_cancel(st->st_serialno, &st->st_xauth_thread);
 		/* note: no md->st to clear */
 		break;
 
@@ -962,7 +966,7 @@ static void event_schedule_tv(enum event_type type, const struct timeval delay, 
 	pexpect(delay.tv_sec < 3600 * 24 * 31);
 
 	ev->ev_type = type;
-	ev->ev_name = enum_name(&timer_event_names, type);
+	ev->ev_name = clone_str(enum_name(&timer_event_names, type), "timeer event name");
 
 	/* ??? ev_time lacks required precision */
 	ev->ev_time = monotimesum(mononow(), deltatime(delay.tv_sec));
