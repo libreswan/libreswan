@@ -103,21 +103,18 @@ void linux_audit_init(void)
 	libreswan_log("Linux audit activated");
 }
 
-void linux_audit(const int type, const char *message, const char *addr,
-		const int result)
+static void do_linux_audit(const int type, const char *message, const char *addr,
+			   const int result)
 {
 
 	int audit_fd, rc;
 
-	if (!log_to_audit)
-		return;
-
 	audit_fd = audit_open();
 	if (audit_fd < 0) {
-			loglog(RC_LOG_SERIOUS,
-				"FATAL (SOON): audit_open() failed : %s",
-				strerror(errno));
-			exit_pluto(PLUTO_EXIT_AUDIT_FAIL);
+		loglog(RC_LOG_SERIOUS,
+		       "FATAL (SOON): audit_open() failed : %s",
+		       strerror(errno));
+		exit_pluto(PLUTO_EXIT_AUDIT_FAIL);
 	}
 
 	/*
@@ -144,11 +141,24 @@ void linux_audit(const int type, const char *message, const char *addr,
 	}
 }
 
+void linux_audit(const int type, const char *message, const char *addr,
+		 const int result)
+{
+	if (!log_to_audit) {
+		return;
+	}
+	do_linux_audit(type, message, addr, result);
+}
+
 /*
  * any admin/network strings but go through audit_encode_nv_string()
  */
 void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 {
+	if (!log_to_audit) {
+		return;
+	}
+
 	char raddr[ADDRTOT_BUF];
 	char laddr[ADDRTOT_BUF];
 	char audit_str[AUDIT_LOG_SIZE];
