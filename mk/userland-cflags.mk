@@ -40,7 +40,7 @@ USERLAND_CFLAGS+=$(OPTIMIZE_CFLAGS)
 # Dumping ground for an arbitrary set of flags.  Should probably be
 # separated out.
 ifeq ($(origin USERCOMPILE),undefined)
-USERCOMPILE= -fexceptions -fstack-protector-all -fno-strict-aliasing -fPIE -DPIE
+USERCOMPILE= -fstack-protector-all -fno-strict-aliasing -fPIE -DPIE
 endif
 USERLAND_CFLAGS+=$(USERCOMPILE)
 
