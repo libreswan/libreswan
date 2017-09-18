@@ -12,6 +12,7 @@ v3.22 (unreleased)
 * libswan/pluto: throw a clearer error for broken libunbound [Paul]
 * pluto: Various ike_alg parsing updates [Andrew]
 * libswan/pluto: Cleanup logging and tighten logging lock [Andrew]
+* updown: Allow disabling via leftupdown="" or leftupdown="%disabled" [Paul]
 * Bugtracker bugs fixed:
    #294: Bug in public key reported by rsasigkey [Tijs Van Buggenhout/Andrew]
 
