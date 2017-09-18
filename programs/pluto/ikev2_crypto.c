@@ -131,7 +131,7 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 		shared = st->st_shared_nss;
 	}
 
-	PK11SymKey *keymat = ikev2_child_sa_keymat(st->st_oakley.prf,
+	PK11SymKey *keymat = ikev2_child_sa_keymat(st->st_oakley.ta_prf,
 						   st->st_skey_d_nss,
 						   shared, ni, nr,
 						   ipi->keymat_len * 2);

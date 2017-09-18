@@ -340,9 +340,9 @@ static void compute_proto_keymat(struct state *st,
 		size_t needed_space; /* space needed for keying material (rounded up) */
 		size_t i;
 
-		hmac_init(&ctx_me, st->st_oakley.prf, st->st_skeyid_d_nss);
+		hmac_init(&ctx_me, st->st_oakley.ta_prf, st->st_skeyid_d_nss);
 		/* PK11Context * DigestContext makes hmac not allowable for copy */
-		hmac_init(&ctx_peer, st->st_oakley.prf, st->st_skeyid_d_nss);
+		hmac_init(&ctx_peer, st->st_oakley.ta_prf, st->st_skeyid_d_nss);
 		needed_space = needed_len + pad_up(needed_len,
 						   ctx_me.hmac_digest_len);
 		replace(pi->our_keymat,
@@ -379,8 +379,8 @@ static void compute_proto_keymat(struct state *st,
 				break;
 
 			/* more keying material needed: prepare to go around again */
-			hmac_init(&ctx_me, st->st_oakley.prf, st->st_skeyid_d_nss);
-			hmac_init(&ctx_peer, st->st_oakley.prf, st->st_skeyid_d_nss);
+			hmac_init(&ctx_me, st->st_oakley.ta_prf, st->st_skeyid_d_nss);
+			hmac_init(&ctx_peer, st->st_oakley.ta_prf, st->st_skeyid_d_nss);
 
 			hmac_update(&ctx_me,
 				    pi->our_keymat + i - ctx_me.hmac_digest_len,
@@ -668,7 +668,7 @@ static size_t quick_mode_hash12(u_char *dest, const u_char *start,
 }
 	DBG_dump("hash key", st->st_skeyid_a.ptr, st->st_skeyid_a.len);
 #endif
-	hmac_init(&ctx, st->st_oakley.prf, st->st_skeyid_a_nss);
+	hmac_init(&ctx, st->st_oakley.ta_prf, st->st_skeyid_a_nss);
 	hmac_update(&ctx, (const void *) msgid, sizeof(msgid_t));
 	if (hash2)
 		hmac_update_chunk(&ctx, st->st_ni); /* include Ni_b in the hash */
@@ -694,7 +694,7 @@ static size_t quick_mode_hash3(u_char *dest, struct state *st)
 {
 	struct hmac_ctx ctx;
 
-	hmac_init(&ctx, st->st_oakley.prf, st->st_skeyid_a_nss);
+	hmac_init(&ctx, st->st_oakley.ta_prf, st->st_skeyid_a_nss);
 	hmac_update(&ctx, (const u_char *)"\0", 1);
 	hmac_update(&ctx, (u_char *) &st->st_msgid, sizeof(st->st_msgid));
 	hmac_update_chunk(&ctx, st->st_ni);
@@ -710,7 +710,7 @@ static size_t quick_mode_hash3(u_char *dest, struct state *st)
  */
 void init_phase2_iv(struct state *st, const msgid_t *msgid)
 {
-	const struct hash_desc *h = st->st_oakley.prf->hasher;
+	const struct hash_desc *h = st->st_oakley.ta_prf->hasher;
 	passert(h);
 
 	DBG_cond_dump(DBG_CRYPT, "last Phase 1 IV:",

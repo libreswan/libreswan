@@ -75,7 +75,7 @@ static bool ikev2_calculate_psk_sighash(bool verify, struct state *st,
 	const char    *nonce_name = NULL;
 	const struct connection *c = st->st_connection;
 	const chunk_t *pss = &empty_chunk;
-	const size_t hash_len =  st->st_oakley.prf->prf_output_size;
+	const size_t hash_len =  st->st_oakley.ta_prf->prf_output_size;
 
 	passert(authby == AUTH_PSK || authby == AUTH_NULL);
 
@@ -92,21 +92,21 @@ static bool ikev2_calculate_psk_sighash(bool verify, struct state *st,
 			return FALSE; /* failure: no PSK to use */
 		}
 		DBG(DBG_PRIVATE, DBG_dump_chunk("User PSK:", *pss));
-		const size_t key_size_min = crypt_prf_fips_key_size_min(st->st_oakley.prf);
+		const size_t key_size_min = crypt_prf_fips_key_size_min(st->st_oakley.ta_prf);
 		if (pss->len < key_size_min) {
 			if (libreswan_fipsmode()) {
 				loglog(RC_LOG_SERIOUS,
 				       "FIPS: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
 				       st->st_connection->name,
 				       pss->len,
-				       st->st_oakley.prf->common.name,
+				       st->st_oakley.ta_prf->common.name,
 				       key_size_min);
 				return FALSE;
 			} else {
 				libreswan_log("WARNING: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
 					      st->st_connection->name,
 					      pss->len,
-					      st->st_oakley.prf->common.name,
+					      st->st_oakley.ta_prf->common.name,
 					      key_size_min);
 			}
 		}
@@ -158,16 +158,16 @@ static bool ikev2_calculate_psk_sighash(bool verify, struct state *st,
 		struct crypt_prf *prf =
 			crypt_prf_init_chunk("<prf-psk> = prf(<psk>,\"Key Pad for IKEv2\")",
 					     DBG_CRYPT,
-					     st->st_oakley.prf,
+					     st->st_oakley.ta_prf,
 					     "shared secret", *pss);
 		if (prf == NULL) {
 			if (libreswan_fipsmode()) {
 				PASSERT_FAIL("FIPS: failure creating %s PRF context for digesting PSK",
-					     st->st_oakley.prf->common.name);
+					     st->st_oakley.ta_prf->common.name);
 			}
 			loglog(RC_LOG_SERIOUS,
 			       "failure creating %s PRF context for digesting PSK",
-			       st->st_oakley.prf->common.name);
+			       st->st_oakley.ta_prf->common.name);
 			return FALSE;
 		}
 		crypt_prf_update_bytes(psk_key_pad_str/*name*/, prf,
@@ -200,7 +200,7 @@ static bool ikev2_calculate_psk_sighash(bool verify, struct state *st,
 	{
 		struct crypt_prf *prf =
 			crypt_prf_init_symkey("<signed-octets> = prf(<prf-psk>, <msg octets>)",
-					      DBG_CRYPT, st->st_oakley.prf,
+					      DBG_CRYPT, st->st_oakley.ta_prf,
 					      "<prf-psk>", prf_psk);
 		/*
 		 * For the responder, the octets to be signed start
@@ -235,7 +235,7 @@ bool ikev2_create_psk_auth(enum keyword_authby authby,
 			      unsigned char *idhash,
 			      pb_stream *a_pbs)
 {
-	unsigned int hash_len = st->st_oakley.prf->prf_output_size;
+	unsigned int hash_len = st->st_oakley.ta_prf->prf_output_size;
 	unsigned char signed_octets[hash_len];
 	/* used to generate _and_ verify PSK, so use state kind */
 
@@ -261,7 +261,7 @@ stf_status ikev2_verify_psk_auth(enum keyword_authby authby,
 				 unsigned char *idhash,
 				 pb_stream *sig_pbs)
 {
-	unsigned int hash_len = st->st_oakley.prf->prf_output_size;
+	unsigned int hash_len = st->st_oakley.ta_prf->prf_output_size;
 	unsigned char calc_hash[hash_len];
 	size_t sig_len = pbs_left(sig_pbs);
 
@@ -269,7 +269,7 @@ stf_status ikev2_verify_psk_auth(enum keyword_authby authby,
 
 	if (sig_len != hash_len) {
 		libreswan_log("negotiated prf: %s ",
-			      st->st_oakley.prf->common.name);
+			      st->st_oakley.ta_prf->common.name);
 		libreswan_log(
 			"I2 hash length:%lu does not match with PRF hash len %lu",
 			(long unsigned) sig_len,

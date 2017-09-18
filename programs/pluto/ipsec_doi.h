@@ -80,7 +80,7 @@ extern bool encrypt_message(pb_stream *pbs, struct state *st) MUST_USE_RESULT;
 		if (!ikev1_out_generic(np, &isakmp_hash_desc, &(rbody), &hash_pbs)) \
 			return STF_INTERNAL_ERROR; \
 		r_hashval = hash_pbs.cur; /* remember where to plant value */ \
-		if (!out_zero(st->st_oakley.prf->prf_output_size, \
+		if (!out_zero(st->st_oakley.ta_prf->prf_output_size, \
 			      &hash_pbs, "HASH")) \
 			return STF_INTERNAL_ERROR; \
 		close_output_pbs(&hash_pbs); \

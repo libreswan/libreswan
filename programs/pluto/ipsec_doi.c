@@ -696,7 +696,7 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 			       size_t sa_details_size)
 {
 	passert(st->st_oakley.ta_encrypt != NULL);
-	passert(st->st_oakley.prf != NULL);
+	passert(st->st_oakley.ta_prf != NULL);
 	passert(st->st_oakley.ta_dh != NULL);
 	/*
 	 * Note: for IKEv1 and AEAD encrypters,
@@ -707,7 +707,7 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 	const char *auth_name = st->st_ikev2 ? "IKEv2" :
 		enum_show_shortb(&oakley_auth_names, st->st_oakley.auth, &anb);
 
-	const char *prf_common_name = st->st_oakley.prf->common.name;
+	const char *prf_common_name = st->st_oakley.ta_prf->common.name;
 
 	char prf_name[30] = "";
 	if (st->st_ikev2) {
@@ -756,7 +756,7 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 	} else {
 		pstats_ikev1_sa++;
 		pstats(ikev1_encr, st->st_oakley.ta_encrypt->common.ikev1_oakley_id);
-		pstats(ikev1_integ, st->st_oakley.prf->common.id[IKEv1_OAKLEY_ID]);
+		pstats(ikev1_integ, st->st_oakley.ta_prf->common.id[IKEv1_OAKLEY_ID]);
 		pstats(ikev1_groups, st->st_oakley.ta_dh->group);
 	}
 }

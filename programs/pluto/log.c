@@ -908,7 +908,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 					st->st_oakley.auth, &esb));
 
 		snprintf(prfname, sizeof(prfname), "%s",
-			 st->st_oakley.prf->common.officname);
+			 st->st_oakley.ta_prf->common.officname);
 
 		if (st->st_oakley.ta_integ == &ike_alg_integ_none) {
 			if (!st->st_ikev2) {

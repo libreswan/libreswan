@@ -204,7 +204,7 @@ static size_t xauth_mode_cfg_hash(u_char *dest,
 {
 	struct hmac_ctx ctx;
 
-	hmac_init(&ctx, st->st_oakley.prf, st->st_skeyid_a_nss);
+	hmac_init(&ctx, st->st_oakley.ta_prf, st->st_skeyid_a_nss);
 	hmac_update(&ctx, (const u_char *) &st->st_msgid_phase15,
 		    sizeof(st->st_msgid_phase15));
 	hmac_update(&ctx, start, roof - start);
@@ -373,7 +373,7 @@ static stf_status modecfg_resp(struct state *st,
 			return STF_INTERNAL_ERROR;
 
 		r_hashval = hash_pbs.cur; /* remember where to plant value */
-		if (!out_zero(st->st_oakley.prf->prf_output_size,
+		if (!out_zero(st->st_oakley.ta_prf->prf_output_size,
 			      &hash_pbs, "HASH"))
 			return STF_INTERNAL_ERROR;
 
@@ -1972,7 +1972,7 @@ static stf_status xauth_client_resp(struct state *st,
 			return STF_INTERNAL_ERROR;
 
 		r_hashval = hash_pbs.cur; /* remember where to plant value */
-		if (!out_zero(st->st_oakley.prf->prf_output_size,
+		if (!out_zero(st->st_oakley.ta_prf->prf_output_size,
 			      &hash_pbs, "HASH"))
 			return STF_INTERNAL_ERROR;
 
@@ -2431,7 +2431,7 @@ static stf_status xauth_client_ackstatus(struct state *st,
 			return STF_INTERNAL_ERROR;
 
 		r_hashval = hash_pbs.cur; /* remember where to plant value */
-		if (!out_zero(st->st_oakley.prf->prf_output_size,
+		if (!out_zero(st->st_oakley.ta_prf->prf_output_size,
 			      &hash_pbs, "HASH"))
 			return STF_INTERNAL_ERROR;
 

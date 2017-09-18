@@ -75,7 +75,7 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *dh,
 
 	/* convert appropriate data to dhq */
 	dhq->auth = st->st_oakley.auth;
-	dhq->prf = st->st_oakley.prf;
+	dhq->prf = st->st_oakley.ta_prf;
 	dhq->oakley_group = oakley_group2;
 	dhq->role = role;
 	dhq->key_size = st->st_oakley.enckeylen / BITS_PER_BYTE;
@@ -153,7 +153,7 @@ stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 
 	/* convert appropriate data to dhq */
 	dhq->auth = st->st_oakley.auth;
-	dhq->prf = st->st_oakley.prf;
+	dhq->prf = st->st_oakley.ta_prf;
 	dhq->oakley_group = oakley_group2;
 	dhq->role = role;
 	dhq->key_size = st->st_oakley.enckeylen / BITS_PER_BYTE;
@@ -217,13 +217,13 @@ stf_status start_dh_v2(struct msg_digest *md,
 
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("calculating skeyseed using prf=%s integ=%s cipherkey=%s",
-		    st->st_oakley.prf->common.fqn,
+		    st->st_oakley.ta_prf->common.fqn,
 		    st->st_oakley.ta_integ->common.fqn,
 		    st->st_oakley.ta_encrypt->common.fqn));
 
 	/* convert appropriate data to dhq */
 	dhq->auth = st->st_oakley.auth;
-	dhq->prf = st->st_oakley.prf;
+	dhq->prf = st->st_oakley.ta_prf;
 	dhq->integ = st->st_oakley.ta_integ;
 	dhq->oakley_group = st->st_oakley.ta_dh;
 	dhq->role = role;

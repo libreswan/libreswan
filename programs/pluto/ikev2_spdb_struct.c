@@ -1480,7 +1480,7 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 							       transform->id, &buf));
 					return FALSE;
 				}
-				ta.prf = prf;
+				ta.ta_prf = prf;
 				break;
 			}
 			case IKEv2_TRANS_TYPE_INTEG:

@@ -140,7 +140,7 @@ struct trans_attrs {
 	/* negotiated crypto-suite */
 	const struct encrypt_desc *ta_encrypt;	/* package of encryption routines */
 	u_int16_t enckeylen;			/* encryption key len (bits) */
-	const struct prf_desc *prf;		/* package of prf routines */
+	const struct prf_desc *ta_prf;		/* package of prf routines */
 	const struct integ_desc *ta_integ;	/* package of integrity routines */
 	const struct oakley_group_desc *ta_dh;	/* Diffie-Helman-Merkel routines */
 };

@@ -1141,8 +1141,8 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 			}
 
 			case OAKLEY_HASH_ALGORITHM | ISAKMP_ATTR_AF_TV:
-				ta.prf = ikev1_get_ike_prf_desc(val);
-				if (ta.prf == NULL) {
+				ta.ta_prf = ikev1_get_ike_prf_desc(val);
+				if (ta.ta_prf == NULL) {
 					ugh = builddiag("%s is not supported",
 							enum_show(&oakley_hash_names,
 								  val));
@@ -1405,22 +1405,22 @@ rsasig_common:
 			}
 		}
 
-		if ((st->st_policy & POLICY_PSK) && pss != &empty_chunk && pss != NULL && ta.prf != NULL) {
-			const size_t key_size_min = crypt_prf_fips_key_size_min(ta.prf);
+		if ((st->st_policy & POLICY_PSK) && pss != &empty_chunk && pss != NULL && ta.ta_prf != NULL) {
+			const size_t key_size_min = crypt_prf_fips_key_size_min(ta.ta_prf);
 
 			if (pss->len < key_size_min) {
 				if (libreswan_fipsmode()) {
 					ugh = builddiag("FIPS Error: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
 						st->st_connection->name,
 						pss->len,
-						ta.prf->common.name,
+						ta.ta_prf->common.name,
 						key_size_min);
 					loglog(RC_LOG_SERIOUS, "%s", ugh);
 				} else {
 					libreswan_log("WARNING: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
 						st->st_connection->name,
 						pss->len,
-						ta.prf->common.name,
+						ta.ta_prf->common.name,
 						key_size_min);
 				}
 			}
@@ -1432,7 +1432,7 @@ rsasig_common:
 		 */
 		if (ugh == NULL) {
 			if (!ike_alg_ok_final(ta.ta_ikev1_encrypt, ta.enckeylen,
-					      ta.prf,
+					      ta.ta_prf,
 					      ta.ta_dh != NULL ?
 						ta.ta_dh->group : 65535,
 					      c->alg_info_ike)) {
@@ -1634,8 +1634,8 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	}
 
 	passert(hash->type.oakley == OAKLEY_HASH_ALGORITHM);
-	ta.prf = ikev1_get_ike_prf_desc(hash->val);
-	passert(ta.prf != NULL);
+	ta.ta_prf = ikev1_get_ike_prf_desc(hash->val);
+	passert(ta.ta_prf != NULL);
 
 	passert(auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);
 	ta.auth   = auth->val;         /* OAKLEY_AUTHENTICATION_METHOD */

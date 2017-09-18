@@ -257,7 +257,7 @@ static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
 		/* initiate calculation of g^xy */
 		e = start_dh_v2(md, "DHv2 for child sa", role,
 				pst->st_skey_d_nss, /* only IKE has SK_d */
-				pst->st_oakley.prf, /* for IKE/ESP/AH */
+				pst->st_oakley.ta_prf, /* for IKE/ESP/AH */
 				ikev2_crypto_continue);
 	}
 	return e;
@@ -464,7 +464,7 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 
 	case STATE_V2_CREATE_I:
 		e = start_dh_v2(md, "ikev2 Child SA initiator pfs=yes",
-				ORIGINAL_INITIATOR, NULL, st->st_oakley.prf,
+				ORIGINAL_INITIATOR, NULL, st->st_oakley.ta_prf,
 				ikev2_crypto_continue);
 		break;
 
@@ -3109,7 +3109,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		chunk_t id_b;
 		struct hmac_ctx id_ctx;
 
-		hmac_init(&id_ctx, pst->st_oakley.prf, pst->st_skey_pi_nss);
+		hmac_init(&id_ctx, pst->st_oakley.ta_prf, pst->st_skey_pi_nss);
 		build_id_payload((struct isakmp_ipsec_id *)&r_id, &id_b,
 				 &pc->spd.this);
 		r_id.isai_critical = ISAKMP_PAYLOAD_NONCRITICAL;
@@ -3544,7 +3544,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 		unsigned char *idstart = id_pbs->start + NSIZEOF_isakmp_generic;
 		unsigned int idlen = pbs_room(id_pbs) - NSIZEOF_isakmp_generic;
 
-		hmac_init(&id_ctx, st->st_oakley.prf, st->st_skey_pi_nss);
+		hmac_init(&id_ctx, st->st_oakley.ta_prf, st->st_skey_pi_nss);
 		DBG(DBG_CRYPT, DBG_dump("idhash verify I2", idstart, idlen));
 		hmac_update(&id_ctx, idstart, idlen);
 		hmac_final(idhash_in, &id_ctx);
@@ -3709,7 +3709,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 			unsigned char *id_start;
 			unsigned int id_len;
 
-			hmac_init(&id_ctx, st->st_oakley.prf, st->st_skey_pr_nss);
+			hmac_init(&id_ctx, st->st_oakley.ta_prf, st->st_skey_pr_nss);
 			build_id_payload((struct isakmp_ipsec_id *)&r_id,
 					 &id_b,
 					 &c->spd.this);
@@ -3939,7 +3939,7 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 		}
 
 		/* ESP/AH use use IKE negotiated PRF */
-		accepted_oakley.prf = st->st_oakley.prf;
+		accepted_oakley.ta_prf = st->st_oakley.ta_prf;
 		st->st_oakley = accepted_oakley;
 
 		if (!ikev2_proposal_to_trans_attrs(st->st_accepted_esp_or_ah_proposal,
@@ -4250,7 +4250,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		unsigned char *idstart = id_pbs->start + NSIZEOF_isakmp_generic;
 		unsigned int idlen = pbs_room(id_pbs) - NSIZEOF_isakmp_generic;
 
-		hmac_init(&id_ctx, pst->st_oakley.prf, pst->st_skey_pr_nss);
+		hmac_init(&id_ctx, pst->st_oakley.ta_prf, pst->st_skey_pr_nss);
 
 		/* calculate hash of IDr for AUTH below */
 		DBG(DBG_CRYPT, DBG_dump("idhash auth R2", idstart, idlen));
