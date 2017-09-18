@@ -86,10 +86,6 @@
  * They are useful for adjusting a firewall.
  */
 
-#ifndef DEFAULT_UPDOWN
-# define DEFAULT_UPDOWN "ipsec _updown"
-#endif
-
 /* Called to handle --interface <ifname>
  * Semantics: if specified, only these (real) interfaces are considered.
  */

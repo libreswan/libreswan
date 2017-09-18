@@ -51,10 +51,6 @@
 #include "alg_info.h"
 #include "kernel_alg.h"
 
-#ifndef DEFAULT_UPDOWN
-# define DEFAULT_UPDOWN "ipsec _updown"
-#endif
-
 static void klips_process_raw_ifaces(struct raw_iface *rifaces)
 {
 	struct raw_iface *ifp;
@@ -313,8 +309,7 @@ static bool klips_do_command(const struct connection *c, const struct spd_route 
 			   "%s",        /* actual script */
 			   verb, verb_suffix,
 			   common_shell_out_str,
-			   sr->this.updown == NULL ?
-			     DEFAULT_UPDOWN : sr->this.updown)) {
+			   sr->this.updown)) {
 		loglog(RC_LOG_SERIOUS, "%s%s command too long!", verb,
 		       verb_suffix);
 		return FALSE;

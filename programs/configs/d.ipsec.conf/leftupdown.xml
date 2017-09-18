@@ -1,7 +1,7 @@
   <varlistentry>
   <term><emphasis remap='B'>leftupdown</emphasis></term>
   <listitem>
-<para>what &ldquo;updown&rdquo; script to run to adjust routing and/or
+<para>what "updown" script to run to adjust routing and/or
 firewalling when the status of the connection changes (default
 <emphasis remap='B'>ipsec _updown</emphasis>).
 May include positional parameters separated by white space
@@ -9,6 +9,8 @@ May include positional parameters separated by white space
 including shell metacharacters is unwise. An example to enable
 routing when using the NETKEY stack, one can use:</para>
 <para>leftupdown="ipsec _updown --route yes"</para>
+<para>To disable calling an updown script, set it to the empty string, eg  leftupdown=""
+or leftupdown="%disabled".</para>
 <para>See
 <citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>
 for details.

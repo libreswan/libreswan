@@ -95,10 +95,6 @@
  * They are useful for adjusting a firewall.
  */
 
-#ifndef DEFAULT_UPDOWN
-# define DEFAULT_UPDOWN "ipsec _updown"
-#endif
-
 static const char *pluto_ifn[10];
 static int pluto_ifn_roof = 0;
 

@@ -442,7 +442,7 @@ ipsec auto --status
 000 Connection list:
 000  
 000 "block": 192.1.3.209---192.1.3.254...%group; unrouted; eroute owner: #0
-000 "block":     oriented; my_ip=unset; their_ip=unset
+000 "block":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "block":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "block":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "block":   labeled_ipsec:no;
@@ -455,7 +455,7 @@ ipsec auto --status
 000 "block":   dpd: action:disabled; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:no; ikev1_natt:both
 000 "block":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "clear": 192.1.3.209---192.1.3.254...%group; unrouted; eroute owner: #0
-000 "clear":     oriented; my_ip=unset; their_ip=unset
+000 "clear":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "clear":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "clear":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "clear":   labeled_ipsec:no;
@@ -468,7 +468,7 @@ ipsec auto --status
 000 "clear":   dpd: action:disabled; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:no; ikev1_natt:both
 000 "clear":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "clear#192.1.2.253/32": 192.1.3.209---192.1.3.254...%any; prospective erouted; eroute owner: #0
-000 "clear#192.1.2.253/32":     oriented; my_ip=unset; their_ip=unset
+000 "clear#192.1.2.253/32":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "clear#192.1.2.253/32":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "clear#192.1.2.253/32":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "clear#192.1.2.253/32":   labeled_ipsec:no;
@@ -481,7 +481,7 @@ ipsec auto --status
 000 "clear#192.1.2.253/32":   dpd: action:disabled; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:no; ikev1_natt:both
 000 "clear#192.1.2.253/32":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "clear#192.1.3.253/32": 192.1.3.209---192.1.3.254...%any; prospective erouted; eroute owner: #0
-000 "clear#192.1.3.253/32":     oriented; my_ip=unset; their_ip=unset
+000 "clear#192.1.3.253/32":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "clear#192.1.3.253/32":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "clear#192.1.3.253/32":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "clear#192.1.3.253/32":   labeled_ipsec:no;
@@ -494,7 +494,7 @@ ipsec auto --status
 000 "clear#192.1.3.253/32":   dpd: action:disabled; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:no; ikev1_natt:both
 000 "clear#192.1.3.253/32":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "clear#192.1.3.254/32": 192.1.3.209---192.1.3.254...%any; prospective erouted; eroute owner: #0
-000 "clear#192.1.3.254/32":     oriented; my_ip=unset; their_ip=unset
+000 "clear#192.1.3.254/32":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "clear#192.1.3.254/32":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "clear#192.1.3.254/32":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "clear#192.1.3.254/32":   labeled_ipsec:no;
@@ -507,7 +507,7 @@ ipsec auto --status
 000 "clear#192.1.3.254/32":   dpd: action:disabled; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:no; ikev1_natt:both
 000 "clear#192.1.3.254/32":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "clear-or-private": 192.1.3.209[ID_NULL,+MC+CAT+S=C]---192.1.3.254...%opportunisticgroup[ID_NULL]; unrouted; eroute owner: #0
-000 "clear-or-private":     oriented; my_ip=unset; their_ip=unset
+000 "clear-or-private":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "clear-or-private":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "clear-or-private":   modecfg info: us:client, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:set;
 000 "clear-or-private":   labeled_ipsec:no;
@@ -520,7 +520,7 @@ ipsec auto --status
 000 "clear-or-private":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "clear-or-private":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "private": 192.1.3.209[ID_NULL,+MC+CAT+S=C]---192.1.3.254...%opportunisticgroup[ID_NULL]; unrouted; eroute owner: #0
-000 "private":     oriented; my_ip=unset; their_ip=unset
+000 "private":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "private":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "private":   modecfg info: us:client, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:set;
 000 "private":   labeled_ipsec:no;
@@ -533,7 +533,7 @@ ipsec auto --status
 000 "private":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "private":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "private-or-clear": 192.1.3.209[ID_NULL,+MC+CAT+S=C]---192.1.3.254...%opportunisticgroup[ID_NULL]; unrouted; eroute owner: #0
-000 "private-or-clear":     oriented; my_ip=unset; their_ip=unset
+000 "private-or-clear":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "private-or-clear":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "private-or-clear":   modecfg info: us:client, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:set;
 000 "private-or-clear":   labeled_ipsec:no;
@@ -546,7 +546,7 @@ ipsec auto --status
 000 "private-or-clear":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "private-or-clear":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "private-or-clear#192.1.2.0/24": 192.1.3.209[ID_NULL,+MC+CAT+S=C]---192.1.3.254...%opportunistic[ID_NULL]===192.1.2.0/24; prospective erouted; eroute owner: #0
-000 "private-or-clear#192.1.2.0/24":     oriented; my_ip=unset; their_ip=unset
+000 "private-or-clear#192.1.2.0/24":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "private-or-clear#192.1.2.0/24":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "private-or-clear#192.1.2.0/24":   modecfg info: us:client, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:set;
 000 "private-or-clear#192.1.2.0/24":   labeled_ipsec:no;
@@ -559,7 +559,7 @@ ipsec auto --status
 000 "private-or-clear#192.1.2.0/24":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "private-or-clear#192.1.2.0/24":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "private-or-clear#192.1.2.0/24"[1]: 10.0.10.1/32===192.1.3.209[ID_NULL,+MC+CAT+S=C]---192.1.3.254...192.1.2.23[ID_NULL]; erouted; eroute owner: #2
-000 "private-or-clear#192.1.2.0/24"[1]:     oriented; my_ip=unset; their_ip=unset
+000 "private-or-clear#192.1.2.0/24"[1]:     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "private-or-clear#192.1.2.0/24"[1]:   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "private-or-clear#192.1.2.0/24"[1]:   modecfg info: us:client, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:set;
 000 "private-or-clear#192.1.2.0/24"[1]:   labeled_ipsec:no;
@@ -574,7 +574,7 @@ ipsec auto --status
 000 "private-or-clear#192.1.2.0/24"[1]:   IKEv2 algorithm newest: AES_GCM_C_256-AUTH_NONE-PRF_HMAC_SHA2-512-MODP2048
 000 "private-or-clear#192.1.2.0/24"[1]:   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
 000 "private-or-clear#192.1.2.0/24"[2]: 192.1.3.209[ID_NULL,+MC+CAT+S=C]---192.1.3.254...192.1.2.45[ID_NULL]; unrouted HOLD; eroute owner: #0
-000 "private-or-clear#192.1.2.0/24"[2]:     oriented; my_ip=unset; their_ip=unset
+000 "private-or-clear#192.1.2.0/24"[2]:     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "private-or-clear#192.1.2.0/24"[2]:   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "private-or-clear#192.1.2.0/24"[2]:   modecfg info: us:client, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:set;
 000 "private-or-clear#192.1.2.0/24"[2]:   labeled_ipsec:no;

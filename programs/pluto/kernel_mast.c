@@ -54,10 +54,6 @@
 static int next_free_mast_device = -1;
 int useful_mastno = -1;
 
-#ifndef DEFAULT_UPDOWN
-# define DEFAULT_UPDOWN "ipsec _updown"
-#endif
-
 /* for now, a kludge */
 #define MAX_MAST 64
 enum mast_stat {
@@ -413,8 +409,7 @@ static bool mast_do_command(const struct connection *c, const struct spd_route *
 			     "yes" : "no",
 			   verb, verb_suffix,
 			   common_shell_out_str,
-			   sr->this.updown == NULL ?
-			     DEFAULT_UPDOWN : sr->this.updown)) {
+			   sr->this.updown)) {
 		loglog(RC_LOG_SERIOUS, "%s%s command too long!", verb,
 		       verb_suffix);
 		return FALSE;

@@ -678,6 +678,16 @@ bool do_command(const struct connection *c,
 	const char *verb_suffix;
 
 	/*
+	 * Support for skipping updown, eg leftupdown=""
+	 * Useful on busy servers that do not need to use updown for anything
+	 */
+	if (sr->this.updown == NULL || streq(sr->this.updown, "%disabled")) {
+		DBG(DBG_CONTROL, DBG_log("skipped updown %s command - disabled per policy", verb));
+		return TRUE;
+	}
+	DBG(DBG_CONTROL, DBG_log("running updown command \"%s\" for verb %s ", sr->this.updown, verb));
+
+	/*
 	 * Figure out which verb suffix applies.
 	 * NOTE: this is a duplicate of code in mast_do_command_vs.
 	 */

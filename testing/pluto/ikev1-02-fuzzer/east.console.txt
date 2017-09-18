@@ -14,9 +14,9 @@ east #
  echo "initdone"
 initdone
 east #
- # shutting down, so output will change if we had already crashed
+ # if east was already down, the fuzzer crashed it
 east #
- ipsec whack --shutdown
+ hostname |grep east > /dev/null && ipsec whack --shutdown
 002 shutting down
 east #
 east #

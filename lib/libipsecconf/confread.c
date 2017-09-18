@@ -167,6 +167,10 @@ void ipsecconf_default_values(struct starter_config *cfg)
 
 	cfg->conn_default.options[KBF_CONNADDRFAMILY] = AF_INET;
 
+	/* set default updown script */
+	cfg->conn_default.left.updown = clone_str(DEFAULT_UPDOWN, "default updown str");
+	cfg->conn_default.right.updown = clone_str(DEFAULT_UPDOWN, "default updown str");
+
 	cfg->conn_default.left.addr_family = AF_INET;
 	anyaddr(AF_INET, &cfg->conn_default.left.addr);
 	cfg->conn_default.left.nexttype = KH_NOTSET;
