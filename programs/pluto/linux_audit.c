@@ -77,7 +77,7 @@
 
 #include "pluto_stats.h"
 
-bool log_to_audit = FALSE;		/* audit log messages for kernel */
+static bool log_to_audit = FALSE;		/* audit log messages for kernel */
 
 void linux_audit_init(void)
 {
