@@ -776,14 +776,14 @@ static bool ikev2_collect_fragment(struct msg_digest *md, struct state *st)
 	if (!ikev2_check_fragment(md, st))
 		return FALSE;
 
-	frag = alloc_thing(struct ikev2_frag, "ikev2_frag");
+	frag = alloc_thing(struct ikev2_frag, "Incoming ikev2_frag");
 	frag->np = skf->isaskf_np;
 	frag->index = skf->isaskf_number;
 	frag->total = skf->isaskf_total;
 	frag->iv = e_pbs->cur - md->packet_pbs.start;
 	clonetochunk(frag->cipher, md->packet_pbs.start,
 		     e_pbs->roof - md->packet_pbs.start,
-		     "IKEv2 encrypted fragment");
+		     "incoming IKEv2 encrypted fragment");
 
 	/*
 	 * Loop for two purposes:
