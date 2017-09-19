@@ -27,7 +27,6 @@
  * Porting to 2.x by Sean Mathews
  */
 
-#ifdef XAUTH_HAVE_PAM
 #include <string.h>
 #include <stdlib.h>
 #include <security/pam_appl.h> /* needed for pam_handle_t */
@@ -182,4 +181,3 @@ bool do_pam_authentication(struct pam_thread_arg *arg)
 	pam_end(pamh, retval);
 	return FALSE;
 }
-#endif /* XAUTH_HAVE_PAM */

@@ -99,8 +99,8 @@ ifeq ($(USE_IPSEC_CONNECTION_LIMIT),true)
 CFLAGS += -DIPSEC_CONNECTION_LIMIT=$(IPSEC_CONNECTION_LIMIT)
 endif
 
-# pam_conv.c is wrapped in #ifdef XAUTH_HAVE_PAM
-OBJS += ikev1_xauth.o addresspool.o pam_conv.o
+OBJS += ikev1_xauth.o addresspool.o
+OBJS += $(call if-enabled, USE_XAUTHPAM, pam_conv.o)
 OBJS += xauth.o
 LDFLAGS += $(XAUTHPAM_LDFLAGS)
 ifneq ($(BUILDENV), darwin)
