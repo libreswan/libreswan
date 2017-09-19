@@ -484,12 +484,6 @@ doroute() {
 	parms2="${parms2} src ${PLUTO_MY_SOURCEIP}"
     fi
 
-    if [ "$1" = "del" -a -n "${PLUTO_MY_SOURCEIP}" -a \
-	0${PLUTO_IS_PEER_CISCO} -eq 1 ]
-    then
-	delsource
-    fi
-
     case "${PLUTO_PEER_CLIENT}" in
 	"0.0.0.0/0")
 	    # need to provide route that eclipses default, without
@@ -662,6 +656,7 @@ case "${PLUTO_VERB}" in
     unroute-host|unroute-client)
 	# connection to me or my client subnet being unrouted
 	downroute
+	delsource
 	;;
     up-host)
 	# connection to me coming up
@@ -689,7 +684,6 @@ case "${PLUTO_VERB}" in
 	delnflog
 	delcat
 	delvti
-	delsource
 	# If you are doing a custom version, firewall commands go here.
 	restoreresolvconf
 	notifyNM disconnect
