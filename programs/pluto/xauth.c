@@ -132,7 +132,11 @@ static void *xauth_thread(void *arg)
 	 * Start with CANCEL disabled so that "I will survive" message
 	 * can be logged.  Presumably pthread_setcancelstate(DISABLED)
 	 * can't be cancelled?
+	 *
+	 * The call setcanceltype(DEFERED) is redundant as it should
+	 * already be the default.
 	 */
+	pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
 
 	passert(!pthread_equal(main_thread, pthread_self()));
@@ -142,25 +146,27 @@ static void *xauth_thread(void *arg)
 		    xauth->serialno, xauth->method,
 		    xauth->name));
 
-	pthread_cleanup_push(xauth_thread_cleanup, arg);
-
 	/*
-	 * Systems go, enable CANCEL and do the authentication.
+	 * Ensure the cleanup function is always runs by having cancel
+	 * during the push/pop.
 	 *
-	 * The call setcanceltype(DEFERED) is redundant as it should
-	 * already be the default.
+	 * XXX: Can this happen, as can pthread_cleanup_pop(TRUE) can
+	 * be canceled while running the cancel function?  I suspect
+	 * not - cancel seems to be a one-of - but the official
+	 * documention isn't very clear.
 	 */
-	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-	pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
-
-	xauth->success = xauth->authenticate(xauth->arg);
-
-	/*
-	 * Ensure the cleanup function is always runs by disabling
-	 * cancel.  Can pthread_cleanup_pop(TRUE) can be canceled
-	 * while running the cancel function?
-	 */
-	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+	pthread_cleanup_push(xauth_thread_cleanup, arg);
+	{
+		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+		{
+			/*
+			 * Systems go, CANCEL is enabled, do the
+			 * authentication.
+			 */
+			xauth->success = xauth->authenticate(xauth->arg);
+		}
+		pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+	}
 	pthread_cleanup_pop(TRUE);
 
 	return NULL;
