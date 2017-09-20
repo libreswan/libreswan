@@ -34,6 +34,8 @@ class STATE:
     DYING = "dying"
     PMSUSPENDED = "pmsuspended"
 
+_VIRSH = ["sudo", "virsh", "--connect", "qemu:///system"]
+
 class Domain:
 
     def __init__(self, host_name, domain_prefix="", domain_name=None):
@@ -68,38 +70,38 @@ class Domain:
         return status, output
 
     def state(self):
-        status, output = self.run_status_output(["sudo", "virsh", "domstate", self.name])
+        status, output = self.run_status_output(_VIRSH + ["domstate", self.name])
         if status:
             return None
         else:
             return output
 
     def shutdown(self):
-        return self.run_status_output(["sudo", "virsh", "shutdown", self.name])
+        return self.run_status_output(_VIRSH + ["shutdown", self.name])
 
     def reboot(self):
-        return self.run_status_output(["sudo", "virsh", "reboot", self.name])
+        return self.run_status_output(_VIRSH + ["reboot", self.name])
 
     def reset(self):
-        return self.run_status_output(["sudo", "virsh", "reset", self.name])
+        return self.run_status_output(_VIRSH + ["reset", self.name])
 
     def destroy(self):
-        return self.run_status_output(["sudo", "virsh", "destroy", self.name])
+        return self.run_status_output(_VIRSH + ["destroy", self.name])
 
     def start(self):
-        return self.run_status_output(["sudo", "virsh", "start", self.name])
+        return self.run_status_output(_VIRSH + ["start", self.name])
 
     def suspend(self):
-        return self.run_status_output(["sudo", "virsh", "suspend", self.name])
+        return self.run_status_output(_VIRSH + ["suspend", self.name])
 
     def resume(self):
-        return self.run_status_output(["sudo", "virsh", "resume", self.name])
+        return self.run_status_output(_VIRSH + ["resume", self.name])
 
     def dumpxml(self):
-        return self.run_status_output(["sudo", "virsh", "dumpxml", self.name])
+        return self.run_status_output(_VIRSH + ["dumpxml", self.name])
 
     def console(self, timeout=CONSOLE_TIMEOUT):
-        command = "sudo virsh console --force %s" % self.name
+        command = " ".join(_VIRSH + ["console", "--force", self.name])
         self.logger.debug("opening console with: %s", command)
         console = shell.Remote(command, hostname=self.host_name,
                                prefix=self.prefix)
