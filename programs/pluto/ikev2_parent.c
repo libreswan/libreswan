@@ -2762,13 +2762,15 @@ static stf_status ikev2_send_auth(struct connection *c,
 		bad_case(authby);
 	}
 
-	if (!out_struct(&a, &ikev2_a_desc, outpbs, &a_pbs))
+	if (!out_struct(&a, &ikev2_a_desc, outpbs, &a_pbs)) {
+		loglog(RC_LOG_SERIOUS, "Failed to emit IKE_AUTH payload");
 		return STF_INTERNAL_ERROR;
+	}
 
 	switch (a.isaa_type) {
 	case IKEv2_AUTH_RSA:
 		if (!ikev2_calculate_rsa_sha1(pst, role, idhash_out, &a_pbs)) {
-				loglog(RC_LOG_SERIOUS, "Failed to find our RSA key");
+			loglog(RC_LOG_SERIOUS, "Failed to find our RSA key");
 			return STF_FATAL;
 		}
 		break;
@@ -2776,27 +2778,32 @@ static stf_status ikev2_send_auth(struct connection *c,
 	case IKEv2_AUTH_PSK:
 	case IKEv2_AUTH_NULL:
 		if (!ikev2_create_psk_auth(authby, pst, idhash_out, &a_pbs)) {
-				loglog(RC_LOG_SERIOUS, "Failed to find our PreShared Key");
+			loglog(RC_LOG_SERIOUS, "Failed to find our PreShared Key");
 			return STF_FATAL;
 		}
 		break;
 	case IKEv2_AUTH_DIGSIG:
 		if (pst->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA1) {
 			if (!out_raw(len_sha1_rsa_oid_blob, ASN1_LEN_ALGO_IDENTIFIER, &a_pbs,
-				"Length of the ASN.1 Algorithm Identifier sha1WithRSAEncryption"))
+				"Length of the ASN.1 Algorithm Identifier sha1WithRSAEncryption")) {
+					loglog(RC_LOG_SERIOUS, "DigSig: failed to emit RSA-SHA1 OID length");
 					return STF_INTERNAL_ERROR;
+			}
 
 			if (!out_raw(sha1_rsa_oid_blob, ASN1_SHA1_RSA_OID_SIZE, &a_pbs,
-				"OID of ASN.1 Algorithm Identifier sha1WithRSAEncryption"))
+				"OID of ASN.1 Algorithm Identifier sha1WithRSAEncryption")) {
+					loglog(RC_LOG_SERIOUS, "DigSig: failed to emit RSA-SHA1 OID");
 					return STF_INTERNAL_ERROR;
+			}
 
 			if (!ikev2_calculate_rsa_sha1(pst, role, idhash_out, &a_pbs)) {
-				loglog(RC_LOG_SERIOUS, "Failed to find our RSA key");
+				loglog(RC_LOG_SERIOUS, "DigSig: failed to find our RSA key");
 				return STF_FATAL;
 			}
 
 		} else {
-			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+			loglog(RC_LOG_SERIOUS, "DigSig: no compatible DigSig hash algo");
+			//return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 		break;
 	}
