@@ -157,6 +157,7 @@ static void help(void)
 		"myid: whack --myid <id>\n"
 		"\n"
 		"debug: whack [--name <connection_name>] \\\n"
+		"	[--debug <class>] | \\\n"
 		"	[--debug-none] | [--debug-all] | \\\n"
 		"	( [--debug-raw] [--debug-crypt] [--debug-parsing] \\\n"
 		"	[--debug-emitting] [--debug-control] [--debug-controlmore] \\\n"
@@ -244,6 +245,13 @@ static void diagq(err_t ugh, const char *this)
 			diag(buf);
 		}
 	}
+}
+
+void libreswan_vloglog(int mess_no UNUSED, const char *fmt, va_list ap)
+{
+	fprintf(stderr, "whack: ");
+	vfprintf(stderr, fmt, ap);
+	fprintf(stderr, "\n");
 }
 
 /*
@@ -467,7 +475,10 @@ enum option_enums {
 
 	DBGOPT_LAST = DBGOPT_elems + IMPAIR_roof_IX - 1,
 
-#define	OPTION_ENUMS_LAST	DBGOPT_LAST
+	DBGOPT_DEBUG,
+	DBGOPT_IMPAIR,
+
+#define	OPTION_ENUMS_LAST	DBGOPT_IMPAIR
 };
 
 /*
@@ -720,7 +731,7 @@ static const struct option long_opts[] = {
 	{ "debug-none", no_argument, NULL, DBGOPT_NONE + OO },
 	{ "debug-all", no_argument, NULL, DBGOPT_ALL + OO },
 
-#    define DO (DBGOPT_ALL + OO + 1)
+#    define DO (DBGOPT_elems + OO)
 
 	{ "debug-raw", no_argument, NULL, DBG_RAW_IX + DO },
 	{ "debug-crypt", no_argument, NULL, DBG_CRYPT_IX + DO },
@@ -745,6 +756,8 @@ static const struct option long_opts[] = {
 	{ "debug-x509",    no_argument, NULL, DBG_X509_IX + DO },
 	{ "debug-dpd",     no_argument, NULL, DBG_DPD_IX + DO },
 	{ "debug-private", no_argument, NULL, DBG_PRIVATE_IX + DO },
+
+	{ "debug", required_argument, NULL, DBGOPT_DEBUG + OO, },
 
 	{ "impair-bust-mi2", no_argument, NULL, IMPAIR_BUST_MI2_IX + DO },
 	{ "impair-bust-mr2", no_argument, NULL, IMPAIR_BUST_MR2_IX + DO },
@@ -794,6 +807,9 @@ static const struct option long_opts[] = {
 		IMPAIR_IKEv2_EXCLUDE_INTEG_NONE_IX + DO },
 	{ "impair-ikev2-include-integ-none", no_argument, NULL,
 		IMPAIR_IKEv2_INCLUDE_INTEG_NONE_IX + DO },
+
+	{ "impair", required_argument, NULL, DBGOPT_IMPAIR + OO, },
+
 #    undef DO
 	{ "whackrecord",     required_argument, NULL, OPT_WHACKRECORD + OO },
 	{ "whackstoprecord", no_argument, NULL, OPT_WHACKSTOPRECORD + OO },
@@ -2091,6 +2107,28 @@ int main(int argc, char **argv)
 			/* note: does not include PRIVATE */
 			msg.debugging |= DBG_ALL;
 			continue;
+
+		case DBGOPT_DEBUG:
+		{
+			int ix = enum_match(&debug_names, optarg);
+			if (ix < 0) {
+				fprintf(stderr, "whack: unrecognized --debug '%s' option ignored",
+					optarg);
+			}
+			msg.debugging |= LELEM(ix);
+			continue;
+		}
+
+		case DBGOPT_IMPAIR:
+		{
+			int ix = enum_match(&impair_names, optarg);
+			if (ix < 0) {
+				fprintf(stderr, "whack: unrecognized --impair '%s' option ignored",
+					optarg);
+			}
+			msg.debugging |= LELEM(ix);
+			continue;
+		}
 
 		default:
 			/* DBG_* or IMPAIR_* flags */

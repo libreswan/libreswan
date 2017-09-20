@@ -484,9 +484,13 @@ u_int16_t secctx_attr_type = SECCTX;
  *
  */
 
-#define DBG_OFFSET 256
-#define OPT_DNSSEC_ROOTKEY_FILE	(DBG_OFFSET + IMPAIR_roof_IX + 1)
-#define OPT_DNSSEC_TRUSTED		(DBG_OFFSET + IMPAIR_roof_IX + 2)
+enum {
+	DBG_OFFSET = 256,
+	OPT_DEBUG,
+	OPT_IMPAIR,
+	OPT_DNSSEC_ROOTKEY_FILE,
+	OPT_DNSSEC_TRUSTED,
+};
 
 static const struct option long_opts[] = {
 	/* name, has_arg, flag, val */
@@ -611,6 +615,8 @@ static const struct option long_opts[] = {
 	D("private\0", DBG_PRIVATE_IX),
 	D("pfkey\0", DBG_PFKEY_IX),
 #undef D
+#define DEBUG_OPTION DBG_OFFSET + IMPAIR_roof_IX + 0
+	{ "debug\0", required_argument, NULL, DEBUG_OPTION, },
 
 	/* --impair-* options (using I for shorthand) */
 #define I(name, code) { "impair-" name, no_argument, NULL, (code) + DBG_OFFSET }
@@ -638,6 +644,9 @@ static const struct option long_opts[] = {
 	I("ignore-hash-notify\0", IMPAIR_IGNORE_HASH_NOTIFY_REQUEST_IX),
 	I("ignore-hash-notify-resp\0", IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE_IX),
 #undef I
+#define IMPAIR_OPTION DBG_OFFSET + IMPAIR_roof_IX + 1
+	{ "impair\0", required_argument, NULL, IMPAIR_OPTION, },
+
 	{ 0, 0, 0, 0 }
 };
 
@@ -1380,6 +1389,28 @@ int main(int argc, char **argv)
 			}
 
 			confread_free(cfg);
+			continue;
+		}
+
+		case DEBUG_OPTION:
+		{
+			int ix = enum_match(&debug_names, optarg);
+			if (ix < 0) {
+				libreswan_log("unrecognized --debug '%s' option ignored",
+					      optarg);
+			}
+			base_debugging |= LELEM(ix);
+			continue;
+		}
+
+		case IMPAIR_OPTION:
+		{
+			int ix = enum_match(&impair_names, optarg);
+			if (ix < 0) {
+				libreswan_log("unrecognized --impair '%s' option ignored",
+					      optarg);
+			}
+			base_debugging |= LELEM(ix);
 			continue;
 		}
 
