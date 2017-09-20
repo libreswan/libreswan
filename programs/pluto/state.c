@@ -989,7 +989,10 @@ void delete_state(struct state *st)
 	if(st->st_suspended_md != NULL) {
 		unset_suspended(st);
 	}
+
+#ifdef XAUTH_HAVE_PAM
 	xauth_delete(st->st_serialno, &st->st_xauth, NULL);
+#endif
 
 	/* If DPD is enabled on this state object, clear any pending events */
 	if (st->st_dpd_event != NULL)
