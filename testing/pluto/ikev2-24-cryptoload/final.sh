@@ -1,4 +1,8 @@
 ipsec look
+ipsec stop
+# on east ipsec stop will not work pluto is not started with ipsec start
+pidof pluto && kill `pidof pluto`
+grep leak /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
