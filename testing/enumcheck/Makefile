@@ -19,7 +19,7 @@ PROGRAM = enumcheck
 OBJS += $(PROGRAM).o
 
 OBJS += $(LIBRESWANLIB)
-OBJS += $(TOOLLIBS)
+OBJS += $(LSWTOOLLIBS)
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk

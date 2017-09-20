@@ -12,7 +12,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-LIB = libtool.a
+LIB = liblswtool.a
 
 OBJS += lswlog.o
 OBJS += lswid.o

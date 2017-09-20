@@ -16,7 +16,7 @@
 PROGRAM=showhostkey
 OBJS += $(PROGRAM).o
 OBJS += $(LIBRESWANLIB)
-OBJS += $(TOOLLIBS)
+OBJS += $(LSWTOOLLIBS)
 LDFLAGS += $(NSS_LDFLAGS)
 
 ifdef top_srcdir
