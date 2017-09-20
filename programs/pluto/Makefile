@@ -167,6 +167,8 @@ LDFLAGS += -lrt
 LDFLAGS += $(UNBOUND_LDFLAGS)
 LDFLAGS += $(LINUX_AUDIT_LDFLAGS)
 
+OBJS += $(call if-enabled, USE_LINUX_AUDIT, linux_audit.o)
+
 LDFLAGS += -levent
 LDFLAGS += -levent_pthreads
 

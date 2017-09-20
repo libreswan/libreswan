@@ -27,7 +27,6 @@
 #include "libreswan/passert.h"
 
 extern bool
-	log_to_audit,         /* audit logs for kernel/auditd */
 	log_with_timestamp,     /* prefix timestamp */
 	log_append;
 
