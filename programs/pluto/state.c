@@ -707,6 +707,7 @@ static void release_v2fragments(struct state *st)
 
 		frag = this->next;
 		freeanychunk(this->cipher);
+		freeanychunk(this->plain);
 		pfree(this);
 	}
 

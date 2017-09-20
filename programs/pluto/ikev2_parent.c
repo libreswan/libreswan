@@ -2538,7 +2538,7 @@ static stf_status ikev2_reassemble_fragments(struct msg_digest *md,
 	}
 
 	/* We have all the fragments */
-	md->raw_packet.ptr = alloc_bytes(size, "IKE fragments buffer");
+	md->raw_packet.ptr = alloc_bytes(size, "IKEv2 fragments buffer");
 
 	/* Reassemble fragments in buffer */
 	frag = st->ikev2_frags;
