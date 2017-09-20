@@ -1,6 +1,5 @@
 # These are rpm macros and are 0 or 1
 %global crl_fetching 1
-%global fipscheck_version 1.2.0-7
 %global buildefence 0
 %global development 0
 %global cavstests 1
@@ -61,8 +60,8 @@ BuildRequires: libselinux-devel
 %endif
 %if %{USE_FIPSCHECK}
 # we need fipshmac
-BuildRequires: fipscheck-devel >= %{fipscheck_version}
-Requires: fipscheck%{_isa} >= %{fipscheck_version}
+BuildRequires: fipscheck-devel
+Requires: fipscheck%{_isa}
 %endif
 %if %{USE_LINUX_AUDIT}
 Buildrequires: audit-libs-devel

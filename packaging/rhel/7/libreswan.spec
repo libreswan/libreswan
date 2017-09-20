@@ -1,7 +1,6 @@
 # These are rpm macros and are 0 or 1
 %global crl_fetching 1
 %global _hardened_build 1
-%global fipscheck_version 1.3.0
 %global buildefence 0
 %global development 0
 %global cavstests 1
