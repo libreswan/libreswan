@@ -108,7 +108,7 @@ void release_md(struct msg_digest *md)
 	/* check that we are not creating a loop */
 	passert(md != md_pool);
 
-#ifdef MSG_DIGEST_ALLOC_DEBUG
+#ifndef MSG_DIGEST_ALLOC_POOL
 	/*
 	 * This version does not maintain a pool.
 	 * Thus leak-detective, Electric Fence, and valgrind are more effective.
