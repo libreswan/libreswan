@@ -1850,6 +1850,7 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 				/* wipe out any saved RCOOKIE */
 				DBG(DBG_CONTROLMORE, DBG_log("zeroing any RCOOKIE from unauthenticated INVALID_KE packet"));
 				rehash_state(st, NULL, zero_cookie);
+				release_any_md(&md);
 				/* get a new KE */
 				return ikev2_crypto_start(NULL, st);
 			} else {
