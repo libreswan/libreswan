@@ -221,9 +221,10 @@ struct raw_iface *find_raw_ifaces4(void)
 		memcpy(auxinfo.ifr_name, buf[j].ifr_name, IFNAMSIZ-1);
 		/* auxinfo.ifr_name[IFNAMSIZ-1] already '\0' */
 		if (ioctl(master_sock, SIOCGIFFLAGS, &auxinfo) == -1) {
-			EXIT_LOG_ERRNO(errno,
-				       "ioctl(SIOCGIFFLAGS) for %s in find_raw_ifaces4()",
+			LOG_ERRNO(errno,
+				       "Ignored interface %s - ioctl(SIOCGIFFLAGS) failed in find_raw_ifaces4()",
 				       ri.name);
+			continue; /* happens when using device with label? */
 		}
 		if (!(auxinfo.ifr_flags & IFF_UP)) {
 			DBG(DBG_CONTROLMORE,
