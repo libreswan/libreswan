@@ -1067,7 +1067,7 @@ static bool do_file_authentication(struct state *st, const char *name,
  */
 
 static void ikev1_xauth_callback(struct state *st, const char *name,
-				 bool results)
+				 bool aborted UNUSED, bool results)
 {
 	/*
 	 * If XAUTH authentication failed, should we soft fail or hard fail?
@@ -1118,7 +1118,7 @@ static int xauth_launch_authent(struct state *st,
 	/*
 	 * XAUTH somehow already in progress?
 	 */
-	if (!pthread_equal(st->st_xauth_thread, main_thread))
+	if (st->st_xauth != NULL)
 		return 0;
 
 	char *arg_name = alloc_bytes(name->len + 1, "XAUTH Name");
@@ -1131,7 +1131,7 @@ static int xauth_launch_authent(struct state *st,
 	case XAUTHBY_PAM:
 		libreswan_log("XAUTH: PAM authentication method requested to authenticate user '%s'",
 			      arg_name);
-		xauth_start_pam_thread(&st->st_xauth_thread,
+		xauth_start_pam_thread(&st->st_xauth,
 				       arg_name, arg_password,
 				       connname,
 				       &st->st_remoteaddr,
@@ -1141,21 +1141,20 @@ static int xauth_launch_authent(struct state *st,
 				       ikev1_xauth_callback);
 		delete_event(st);
 		event_schedule(EVENT_PAM_TIMEOUT, EVENT_PAM_TIMEOUT_DELAY, st);
-
 		break;
 #endif
 	case XAUTHBY_FILE:
 		libreswan_log("XAUTH: password file authentication method requested to authenticate user '%s'",
 			      arg_name);
 		bool success = do_file_authentication(st, arg_name, arg_password, connname);
-		xauth_start_always_thread(&st->st_xauth_thread,
-				       "file", arg_name, st->st_serialno,
+		xauth_start_always_thread(&st->st_xauth,
+					  "file", arg_name, st->st_serialno,
 					  success, ikev1_xauth_callback);
 		break;
 	case XAUTHBY_ALWAYSOK:
 		libreswan_log("XAUTH: authentication method 'always ok' requested to authenticate user '%s'",
 			      arg_name);
-		xauth_start_always_thread(&st->st_xauth_thread,
+		xauth_start_always_thread(&st->st_xauth,
 					  "alwaysok", arg_name, st->st_serialno,
 					  TRUE, ikev1_xauth_callback);
 		break;

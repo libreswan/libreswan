@@ -124,7 +124,8 @@ static void log_pam_step(const struct pam_thread_arg *arg, const char *what)
  * @return bool success
  */
 /* IN AN AUTH THREAD */
-bool do_pam_authentication(struct pam_thread_arg *arg)
+bool do_pam_authentication(struct pam_thread_arg *arg,
+			   volatile bool *abort)
 {
 	int retval;
 	pam_handle_t *pamh = NULL;
@@ -142,14 +143,14 @@ bool do_pam_authentication(struct pam_thread_arg *arg)
 
 		what = "pam_start";
 		retval = pam_start("pluto", arg->name, &conv, &pamh);
-		if (retval != PAM_SUCCESS)
+		if (retval != PAM_SUCCESS || *abort)
 			break;
 		log_pam_step(arg, what);
 
 		/* Send the remote host address to PAM */
 		what = "pam_set_item";
 		retval = pam_set_item(pamh, PAM_RHOST, arg->ra);
-		if (retval != PAM_SUCCESS)
+		if (retval != PAM_SUCCESS || *abort)
 			break;
 		log_pam_step(arg, what);
 
@@ -158,13 +159,13 @@ bool do_pam_authentication(struct pam_thread_arg *arg)
 		 */
 		what = "pam_authenticate";
 		retval = pam_authenticate(pamh, PAM_SILENT); /* is user really user? */
-		if (retval != PAM_SUCCESS)
+		if (retval != PAM_SUCCESS || *abort)
 			break;
 		log_pam_step(arg, what);
 
 		what = "pam_acct_mgmt";
 		retval = pam_acct_mgmt(pamh, 0); /* permitted access? */
-		if (retval != PAM_SUCCESS)
+		if (retval != PAM_SUCCESS || *abort)
 			break;
 		log_pam_step(arg, what);
 
@@ -174,10 +175,11 @@ bool do_pam_authentication(struct pam_thread_arg *arg)
 	} while (FALSE);
 
 	/* common failure code */
-	libreswan_log("%s FAILED during %s with '%s' for state #%lu, %s[%lu] user=%s.",
-			arg->atype, what, pam_strerror(pamh, retval),
-			arg->st_serialno, arg->c_name, arg->c_instance_serial,
-			arg->name);
+	libreswan_log("%s FAILED during %s with '%s' for state #%lu, %s[%lu] user=%s%s.",
+		      arg->atype, what, pam_strerror(pamh, retval),
+		      arg->st_serialno, arg->c_name, arg->c_instance_serial,
+		      arg->name,
+		      *abort ? " ABORTED" : "");
 	pam_end(pamh, retval);
 	return FALSE;
 }

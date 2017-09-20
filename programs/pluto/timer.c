@@ -910,11 +910,19 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		DBG(DBG_LIFECYCLE,
 				DBG_log("PAM thread timeout on state #%lu",
 					st->st_serialno));
-		xauth_cancel(st->st_serialno, &st->st_xauth_thread);
-		event_schedule(EVENT_SA_EXPIRE, MAXIMUM_RESPONDER_WAIT, st);
+		/*
+		 * This immediately invokes the callback passing in
+		 * ST.
+		 */
+		xauth_delete(st->st_serialno, &st->st_xauth, st);
+		/*
+		 * Removed this call, presumably it was needed because
+		 * the call back didn't fire until later?
+		 *
+		 * event_schedule(EVENT_SA_EXPIRE, MAXIMUM_RESPONDER_WAIT, st);
+		 */
 		/* note: no md->st to clear */
 		break;
-
 
 	default:
 		bad_case(type);

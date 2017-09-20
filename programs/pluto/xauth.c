@@ -28,35 +28,57 @@
 
 pthread_t main_thread;
 
-void xauth_cancel(so_serial_t serialno, pthread_t *thread)
-{
-	passert(pthread_equal(main_thread, pthread_self()));
-	if (pthread_equal(*thread, main_thread)) {
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("XAUTH: #%lu: no thread to cancel", serialno));
-	} else {
-		libreswan_log("XAUTH: #%lu: cancelling authentication thread",
-			      serialno);
-		pthread_cancel(*thread);
-		*thread = main_thread;
-	}
-}
-
 struct xauth {
 	const char *method;
 	so_serial_t serialno;
 	void *arg;
 	char *name;
 	struct timeval tv0;
-	bool (*authenticate)(void *arg);
+	bool (*authenticate)(void *arg, volatile bool *abort);
 	void (*cleanup)(void *arg);
-	void (*callback)(struct state *st, const char *name, bool success);
+	void (*callback)(struct state *st, const char *name,
+			 bool aborted, bool success);
 	bool success;
+	volatile bool abort;
+	pthread_t thread;
 };
 
 /*
- * Read this code bottom up!
+ * Delete the transaction.
+ *
+ * Need to pass in serialno so that something sane can be logged when
+ * the xauth request has already been deleted.
  */
+void xauth_delete(so_serial_t serialno, struct xauth **xauthp,
+		  struct state *st_callback)
+{
+	passert(pthread_equal(main_thread, pthread_self()));
+
+	passert(xauthp != NULL);
+	struct xauth *xauth = *xauthp;
+	xauthp = NULL;
+
+	if (xauth == NULL) {
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("XAUTH: #%lu: main-thread: no thread to abort", serialno));
+	} else if (xauth->abort) {
+		passert(xauth->serialno == serialno);
+		DBG(DBG_CONTROL,
+		    DBG_log("XAUTH: #%lu: main-thread: %s-thread for '%s' already aborted",
+			    serialno, xauth->method, xauth->name));
+	} else {
+		passert(xauth->serialno == serialno);
+		libreswan_log("XAUTH: #%lu: main-thread: aborting authentication %s-thread for '%s'",
+			      serialno, xauth->method, xauth->name);
+		xauth->abort = true;
+		if (st_callback != NULL) {
+			DBG(DBG_CONTROL,
+			    DBG_log("XAUTH: #%lu: main-thread: notifying callback for user '%s'",
+				    serialno, xauth->name));
+			xauth->callback(st_callback, xauth->name, true, false);
+		}
+	}
+}
 
 /*
  * On the main thread; notify the state (if it is present) of the
@@ -66,10 +88,9 @@ static void xauth_cleanup_callback(evutil_socket_t socket UNUSED,
 				   const short event UNUSED,
 				   void *arg)
 {
-	struct xauth *xauth = arg;
-
 	passert(pthread_equal(main_thread, pthread_self()));
 
+	struct xauth *xauth = arg;
 	DBG(DBG_CONTROL, {
 			struct timeval tv1;
 			unsigned long tv_diff;
@@ -77,48 +98,33 @@ static void xauth_cleanup_callback(evutil_socket_t socket UNUSED,
 			gettimeofday(&tv1, NULL);
 			tv_diff = (tv1.tv_sec  - xauth->tv0.tv_sec) * 1000000 +
 				  (tv1.tv_usec - xauth->tv0.tv_usec);
-			DBG_log("XAUTH: #%lu: main-thread cleaning up "
-					"%s-thread for user '%s' result %s "
-					"time elapsed %ld usec.",
-					xauth->serialno,
-					xauth->method, xauth->name,
-					xauth->success ? "SUCCESS" : "FAILURE",
-					tv_diff);
+			DBG_log("XAUTH: #%lu: main-thread cleaning up %s-thread for user '%s' result %s time elapsed %ld usec%s.",
+				xauth->serialno,
+				xauth->method, xauth->name,
+				xauth->success ? "SUCCESS" : "FAILURE",
+				tv_diff,
+				xauth->abort ? " ABORTED" : "");
 			});
+
 	/*
 	 * Try to find the corresponding state.
 	 *
 	 * Since this is running on the main thread, it and
-	 * xauth_cancel() can't get into a race a state being deleted.
+	 * Xauth_abort() can't get into a race.
 	 */
-	struct state *st = state_with_serialno(xauth->serialno);
-	if (st == NULL) {
-		libreswan_log("XAUTH: #%lu: cancelled for user '%s' - state no longer exists",
+	if (xauth->abort) {
+		/* ST may or may not exist, don't try */
+		libreswan_log("XAUTH: #%lu: aborted for user '%s'",
 			      xauth->serialno, xauth->name);
 	} else {
-		st->st_xauth_thread = main_thread; /* all done */
-		xauth->callback(st, xauth->name, xauth->success);
+		struct state *st = state_with_serialno(xauth->serialno);
+		passert(st != NULL);
+		st->st_xauth = NULL; /* all done */
+		xauth->callback(st, xauth->name, false, xauth->success);
 	}
 	xauth->cleanup(xauth->arg);
 	pfree(xauth->name);
 	pfree(xauth);
-}
-
-/*
- * Schedule xauth_cleanup_callback() to run on the main thread, and
- * then let this thread die.
- */
-static void xauth_thread_cleanup(void *arg)
-{
-	passert(!pthread_equal(main_thread, pthread_self()));
-	struct xauth *xauth = arg;
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("XAUTH: #%lu: %s-thread queueing cleanup for user '%s' with result %s",
-		    xauth->serialno, xauth->method, xauth->name,
-		    xauth->success ? "SUCCESS" : "FAILURE"));
-	const struct timeval delay = { 0, 0 };
-	pluto_event_add(NULL_FD, EV_TIMEOUT, xauth_cleanup_callback, arg,
-				&delay, "xauth cleanup");
 }
 
 /*
@@ -128,63 +134,48 @@ static void xauth_thread_cleanup(void *arg)
  */
 static void *xauth_thread(void *arg)
 {
-	/*
-	 * Start with CANCEL disabled so that "I will survive" message
-	 * can be logged.  Presumably pthread_setcancelstate(DISABLED)
-	 * can't be cancelled?
-	 *
-	 * The call setcanceltype(DEFERED) is redundant as it should
-	 * already be the default.
-	 */
-	pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
-	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+	struct xauth *xauth = arg;
 
 	passert(!pthread_equal(main_thread, pthread_self()));
-	struct xauth *xauth = arg;
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("XAUTH: #%lu: %s-thread authenticating user '%s'",
 		    xauth->serialno, xauth->method,
 		    xauth->name));
+	xauth->success = xauth->authenticate(xauth->arg, &xauth->abort);
 
 	/*
-	 * Ensure the cleanup function is always runs by having cancel
-	 * during the push/pop.
+	 * Schedule xauth_cleanup_callback() to run on the main
+	 * thread, and then let this thread die.
 	 *
-	 * XXX: Can this happen, as can pthread_cleanup_pop(TRUE) can
-	 * be canceled while running the cancel function?  I suspect
-	 * not - cancel seems to be a one-of - but the official
-	 * documention isn't very clear.
+	 * Given xauth->abort is volatile and updated by the main
+	 * thread, logging it here is just a hint.
 	 */
-	pthread_cleanup_push(xauth_thread_cleanup, arg);
-	{
-		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-		{
-			/*
-			 * Systems go, CANCEL is enabled, do the
-			 * authentication.
-			 */
-			xauth->success = xauth->authenticate(xauth->arg);
-		}
-		pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
-	}
-	pthread_cleanup_pop(TRUE);
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("XAUTH: #%lu: %s-thread queueing cleanup for user '%s' with result %s%s",
+		    xauth->serialno, xauth->method, xauth->name,
+		    xauth->success ? "SUCCESS" : "FAILURE",
+		    xauth->abort ? " ABORTED" : ""));
+	const struct timeval delay = { 0, 0 };
+	pluto_event_add(NULL_FD, EV_TIMEOUT, xauth_cleanup_callback, arg,
+			&delay, "xauth_cleanup_callback");
 
 	return NULL;
 }
 
-static void xauth_start_thread(pthread_t *thread,
+static void xauth_start_thread(struct xauth **xauthp,
 			       const char *method,
 			       const char *name,
 			       so_serial_t serialno,
 			       void *arg,
-			       bool (*authenticate)(void *arg),
+			       bool (*authenticate)(void *arg, volatile bool *abort),
 			       void (*cleanup)(void *arg),
 			       void (*callback)(struct state *st,
 						const char *name,
+						bool aborted,
 						bool success))
 {
 	passert(pthread_equal(main_thread, pthread_self()));
-	// set thread to non-cancelable;
+
 	struct xauth *xauth = alloc_thing(struct xauth, "xauth arg");
 	xauth->method = method;
 	xauth->name = clone_str(name, "xauth name");
@@ -197,15 +188,14 @@ static void xauth_start_thread(pthread_t *thread,
 	xauth->callback = callback;
 	gettimeofday(&xauth->tv0, NULL);
 
-	/*
-	 * For moment don't try to "join" the thread (could do it in
-	 * xauth_cleanup_callback()?)
-	 */
 	pthread_attr_t thread_attr;
 	pthread_attr_init(&thread_attr);
 	pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
 
-	int error = pthread_create(thread, &thread_attr,
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("XAUTH: #%lu: main-thread starting %s-thread for authenticating user '%s'",
+		    xauth->serialno, xauth->method, xauth->name));
+	int error = pthread_create(&xauth->thread, &thread_attr,
 				   xauth_thread, xauth);
 
 	pthread_attr_destroy(&thread_attr);
@@ -213,20 +203,19 @@ static void xauth_start_thread(pthread_t *thread,
 	if (error) {
 		LOG_ERRNO(error, "XAUTH: #%lu: creation of %s-thread for user '%s' failed",
 			  xauth->serialno, xauth->method, xauth->name);
-		*thread = main_thread;
+		*xauthp = NULL;
+		pfree(xauth->name);
+		pfree(xauth);
 		return;
 	}
-
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("XAUTH: #%lu: main-thread started %s-thread for authenticating user '%s'",
-		    xauth->serialno, xauth->method, xauth->name));
+	*xauthp = xauth;
 };
 
 #ifdef XAUTH_HAVE_PAM
 
-static bool xauth_pam_thread(void *arg)
+static bool xauth_pam_thread(void *arg, volatile bool *abort)
 {
-	return do_pam_authentication((struct pam_thread_arg*)arg);
+	return do_pam_authentication((struct pam_thread_arg*)arg, abort);
 }
 
 static void xauth_pam_cleanup(void *arg)
@@ -239,7 +228,7 @@ static void xauth_pam_cleanup(void *arg)
 	pfree(pam);
 }
 
-void xauth_start_pam_thread(pthread_t *thread,
+void xauth_start_pam_thread(struct xauth **xauthp,
 			    const char *name,
 			    const char *password,
 			    const char *connection_name,
@@ -249,6 +238,7 @@ void xauth_start_pam_thread(pthread_t *thread,
 			    const char *atype,
 			    void (*callback)(struct state *st,
 					     const char *name,
+					     bool aborted,
 					     bool success))
 {
 	struct pam_thread_arg *pam = alloc_thing(struct pam_thread_arg, "xauth pam param");
@@ -264,14 +254,14 @@ void xauth_start_pam_thread(pthread_t *thread,
 	pam->c_instance_serial = instance_serial;
 	pam->atype = atype;
 
-	return xauth_start_thread(thread, "PAM", name, serialno, pam,
+	return xauth_start_thread(xauthp, "PAM", name, serialno, pam,
 				  xauth_pam_thread,
 				  xauth_pam_cleanup, callback);
 }
 
 #endif
 
-static bool xauth_always_thread(void *arg)
+static bool xauth_always_thread(void *arg, volatile bool *abort UNUSED)
 {
 	return arg != NULL;
 }
@@ -280,14 +270,15 @@ static void xauth_always_cleanup(void *arg UNUSED)
 {
 }
 
-void xauth_start_always_thread(pthread_t *thread,
+void xauth_start_always_thread(struct xauth **xauthp,
 			       const char *method, const char *name,
 			       so_serial_t serialno, bool success,
 			       void (*callback)(struct state *st,
 						const char *name,
+						bool aborted,
 						bool success))
 {
-	return xauth_start_thread(thread, method, name, serialno,
+	return xauth_start_thread(xauthp, method, name, serialno,
 				  success ? &main_thread : NULL,
 				  xauth_always_thread, xauth_always_cleanup,
 				  callback);

@@ -26,6 +26,7 @@ struct pam_thread_arg {
 	const char *atype;  /* string XAUTH or IKEv2 */
 };
 
-extern bool do_pam_authentication(struct pam_thread_arg *arg);
+extern bool do_pam_authentication(struct pam_thread_arg *arg,
+				  volatile bool *abort);
 
 #endif /* XAUTH_HAVE_PAM */

@@ -3319,7 +3319,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 #ifdef XAUTH_HAVE_PAM
 
 static void ikev2_pam_continue(struct state *st, const char *name UNUSED,
-			       bool success)
+			       bool aborted UNUSED, bool success)
 {
 	struct msg_digest *md = st->st_suspended_md;
 
@@ -3359,7 +3359,7 @@ static stf_status ikev2_start_pam_authorize(struct msg_digest *md)
 	idtoa(&st->st_connection->spd.that.id, thatid, sizeof(thatid));
 	libreswan_log("IKEv2: [XAUTH]PAM method requested to authorize '%s'",
 		      thatid);
-	xauth_start_pam_thread(&st->st_xauth_thread,
+	xauth_start_pam_thread(&st->st_xauth,
 			       thatid, "password",
 			       st->st_connection->name,
 			       &st->st_remoteaddr,

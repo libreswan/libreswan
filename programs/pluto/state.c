@@ -486,11 +486,7 @@ struct state *new_state(void)
 	passert(next_so > SOS_FIRST);   /* overflow can't happen! */
 	st->st_whack_sock = NULL_FD;
 
-	/*
-	 * PTHREADS has no ways to identify an invalid thread; use the
-	 * main thread.
-	 */
-	st->st_xauth_thread = main_thread;
+	st->st_xauth = NULL;
 
 	/* back-link the hash entry.  */
 	st->st_hash_entry.state = st;
@@ -877,15 +873,6 @@ static void delete_state_log(struct state *st)
 
 }
 
-static void xauth_flush(struct state *st)
-{
-	if(st->st_suspended_md != NULL) {
-		unset_suspended(st);
-	}
-
-	xauth_cancel(st->st_serialno, &st->st_xauth_thread);
-}
-
 /* delete a state object */
 void delete_state(struct state *st)
 {
@@ -995,7 +982,14 @@ void delete_state(struct state *st)
 		}
 	}
 
-	xauth_flush(st);
+	/*
+	 * Resume ST (even though it is about to be deleted), and then
+	 * cancel any XAUTH in progress.
+	 */
+	if(st->st_suspended_md != NULL) {
+		unset_suspended(st);
+	}
+	xauth_delete(st->st_serialno, &st->st_xauth, NULL);
 
 	/* If DPD is enabled on this state object, clear any pending events */
 	if (st->st_dpd_event != NULL)
