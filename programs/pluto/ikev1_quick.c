@@ -1649,11 +1649,9 @@ static void quick_inI1_outR1_cryptocontinue2(
 
 	e = quick_inI1_outR1_cryptotail(dh->pcrc_md, r);
 	passert(e != STF_INLINE);
-	if (e == STF_OK) {
-		passert(dh->pcrc_md != NULL);
-		complete_v1_state_transition(&dh->pcrc_md, e);
-		release_any_md(&dh->pcrc_md);
-	}
+	passert(dh->pcrc_md != NULL);
+	complete_v1_state_transition(&dh->pcrc_md, e);
+	release_any_md(&dh->pcrc_md);
 
 	reset_cur_state();
 }
