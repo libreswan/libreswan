@@ -70,7 +70,6 @@
 #include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "server.h" /* for pluto_seccomp */
-#include "lset_names.h"
 #include "kernel_alg.h"
 #include "ike_alg.h"
 
@@ -329,8 +328,8 @@ void whack_process(int whackfd, const struct whack_message *const m)
 				set_debugging(cur_debugging | m->debugging);
 				LSWDBGP(DBG_CONTROL, buf) {
 					lswlogs(buf, "base debugging = ");
-					lswlog_lset_flags(buf, &debug_lset_names,
-							  m->debugging);
+					lswlog_enum_lset_short(buf, &debug_and_impair_names,
+							       m->debugging);
 				}
 				base_debugging = m->debugging;
 				set_debugging(base_debugging);
@@ -343,8 +342,8 @@ void whack_process(int whackfd, const struct whack_message *const m)
 					LSWDBGP(DBG_CONTROL, buf) {
 						lswlogf(buf, "\"%s\" extra_debugging = ",
 							c->name);
-						lswlog_lset_flags(buf, &debug_lset_names,
-								  c->extra_debugging);
+						lswlog_enum_lset_short(buf, &debug_and_impair_names,
+								       c->extra_debugging);
 					}
 				}
 			}

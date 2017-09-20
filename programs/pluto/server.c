@@ -84,7 +84,6 @@
 #include "whack.h"              /* for RC_LOG_SERIOUS */
 #include "pluto_crypt.h"        /* cryptographic helper functions */
 #include "udpfromto.h"
-#include "lset_names.h"
 #include <libreswan/pfkeyv2.h>
 #include <libreswan/pfkey.h>
 #include "kameipsec.h"
@@ -667,8 +666,8 @@ void show_debug_status(void)
 {
 	LSWLOG_WHACK(RC_COMMENT, buf) {
 		lswlogs(buf, "debug ");
-		lswlog_lset_flags(buf, &debug_lset_names,
-				  cur_debugging);
+		lswlog_enum_lset_short(buf, &debug_and_impair_names,
+				       cur_debugging);
 	}
 }
 
