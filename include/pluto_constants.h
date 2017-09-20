@@ -307,7 +307,8 @@ typedef enum {
  * NOTE: when updating/adding x_IX, do so to x in the next table too!
  */
 enum {
-	DBG_RAW_IX,		/* raw packet I/O */
+	DBG_floor_IX = 0,
+	DBG_RAW_IX = DBG_floor_IX,		/* raw packet I/O */
 	DBG_CRYPT_IX,		/* encryption/decryption of messages */
 	DBG_PARSING_IX,		/* show decoding of messages */
 	DBG_EMITTING_IX,	/* show encoding of messages */
@@ -326,7 +327,14 @@ enum {
 	DBG_WHACKWATCH_IX,	/* never let WHACK go */
 	DBG_PRIVATE_IX,		/* displays private information: DANGER! */
 
-	IMPAIR_BUST_MI2_IX,			/* make MI2 really large */
+	DBG_roof_IX,		/* first unassigned DBG is assigned to IMPAIR! */
+};
+
+#define DBG_MASK	LRANGE(0, DBG_roof_IX - 1)
+
+enum {
+	IMPAIR_floor_IX = DBG_roof_IX,
+	IMPAIR_BUST_MI2_IX = IMPAIR_floor_IX,	/* make MI2 really large */
 	IMPAIR_BUST_MR2_IX,			/* make MR2 really large */
 	IMPAIR_SA_CREATION_IX,			/* fail all SA creation */
 	IMPAIR_DIE_ONINFO_IX,			/* cause state to be deleted upon receipt of information payload */
@@ -355,6 +363,8 @@ enum {
 
 	IMPAIR_roof_IX	/* first unassigned IMPAIR */
 };
+
+#define IMPAIR_MASK	LRANGE(DBG_roof_IX, IMPAIR_roof_IX - 1)
 
 /* Sets of Debug / Impair items */
 #define DBG_NONE        0                                       /* no options on, including impairments */

@@ -75,11 +75,10 @@
 #include "timer.h"
 #include "ipsecconf/confread.h"
 #include "xauth.h"
-#include "lset_names.h"
 #include "crypto.h"
 #include "vendor.h"
 #include "pluto_crypt.h"
-
+#include "enum_names.h"
 #include "virtual.h"	/* needs connections.h */
 
 #include "nat_traversal.h"
@@ -1731,14 +1730,15 @@ int main(int argc, char **argv)
 	libreswan_log("XAUTH PAM support [disabled]");
 #endif
 
-	/* Log impair-* functions that were enabled */
-
-	for (unsigned bit = 0; bit < debug_lset_names.roof; bit++) {
-		const struct lelem_name *impair = &debug_lset_names.lelems[bit];
-		if (startswith(impair->flag, "impair-")) {
-			if (DBGP(LELEM(bit))) {
-				libreswan_log("Warning: %s enabled", impair->flag);
-			}
+	/*
+	 * Log impair-* functions that were enabled
+	 */
+	for (long e = next_enum(&impair_names, -1);
+	     e >= 0; e = next_enum(&impair_names, e)) {
+		unsigned bit = e;
+		if (DBGP(LELEM(bit))) {
+			const char *name = enum_name(&impair_names, bit);
+			libreswan_log("Warning: %s enabled", name);
 		}
 	}
 

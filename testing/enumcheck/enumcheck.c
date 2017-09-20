@@ -307,6 +307,8 @@ int main(int argc UNUSED, char *argv[])
 	test_enums("ike_idtype_names", &ike_idtype_names);
 	test_enums("ikev2_idtype_names", &ikev2_idtype_names);
 
+	test_enums("debug_and_impair_names", &debug_and_impair_names);
+
 	/*
 	 * Some hard-wired checks of enum_enum_name.  If a lookup
 	 * should fail, pass NULL for the enum table.
