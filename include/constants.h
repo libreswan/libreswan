@@ -309,7 +309,6 @@ size_t lswlog_enum_enum_short(struct lswlog *log, enum_enum_names *een,
  * bitnamesof() formats a display of a set of named bits (in a static area -- NOT RE-ENTRANT)
  * bitnamesofb() formats into a caller-supplied buffer (re-entrant)
  *
- * show_set_short() formats into a caller-supplied buffer -- only form
  * lswlog_enum_lset_short() formats into a caller-supplied buffer -- only form
  */
 extern bool testset(const char *const table[], lset_t val);
@@ -318,9 +317,6 @@ extern const char *bitnamesofb(const char *const table[],
 			       lset_t val,
 			       char *buf, size_t blen);
 
-extern const char *show_set_short(enum_names *sd,
-				 lset_t val,
-				 char *buf, size_t blen);
 size_t lswlog_enum_lset_short(struct lswlog *, enum_names *sd,
 			      lset_t val);
 
