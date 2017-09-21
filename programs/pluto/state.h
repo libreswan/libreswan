@@ -109,7 +109,7 @@ struct trans_attrs {
 	 *
 	 * What could possibly go wrong :-)
 	 */
-	u_int16_t ta_ikev1_encrypt;
+#define ta_ikev1_encrypt ta_encrypt->common.id[IKEv1_ESP_ID]
 
 	/*
 	 * IKEv1 IKE: N/A

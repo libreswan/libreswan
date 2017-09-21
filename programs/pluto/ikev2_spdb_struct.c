@@ -1392,7 +1392,9 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 	/*
 	 * Start with an empty TA.
 	 */
-	struct trans_attrs ta = { .ta_ikev1_encrypt = 0, };
+	struct trans_attrs ta = {
+		.ta_encrypt = NULL,
+	};
 
 	enum ikev2_trans_type type;
 	struct ikev2_transforms *transforms;
@@ -1402,44 +1404,16 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 			struct ikev2_transform *transform = transforms->transform;
 			switch (type) {
 			case IKEv2_TRANS_TYPE_ENCR: {
-				const struct encrypt_desc * encrypter =
+				const struct encrypt_desc *encrypt =
 					ikev2_get_encrypt_desc(transform->id);
-				if (encrypter == NULL) {
-					/*
-					 * For moment assume that this
-					 * is ESP/AH and just the
-					 * value is needed.
-					 */
+				if (encrypt == NULL) {
 					struct esb_buf buf;
 					PEXPECT_LOG("accepted IKEv2 proposal contains unexpected ENCRYPT %s",
 						    enum_showb(&ikev2_trans_type_encr_names,
 							       transform->id, &buf));
 					return FALSE;
 				}
-				/*
-				 * For IKE, ENCRYPT contains an IKEv2
-				 * value, but for ESP/AH, it contains
-				 * an IKEv1 value!
-				 *
-				 * For moment, set it to the IKEv2
-				 * value, and let the caller patch
-				 * things up.
-				 *
-				 * XXX: Short of deleting it, ENCRYPT
-				 * should at least be moved to enum
-				 * ipsec_trans_attrs
-				 * .ipsec_cipher_alg.
-				 *
-				 * XXX: Should this check that the key
-				 * length is present when required, or
-				 * assume matching did its job.
-				 *
-				 * XXX: Always assign both .ta_encrypt
-				 * and .ta_encryptor - it makes auditing
-				 * easier.
-				 */
-				ta.ta_ikev1_encrypt = transform->id;
-				ta.ta_encrypt = encrypter;
+				ta.ta_encrypt = encrypt;
 				ta.enckeylen = (transform->attr_keylen > 0
 						? (unsigned)transform->attr_keylen
 						: ta.ta_encrypt->keydeflen);
@@ -1548,78 +1522,14 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 	       sizeof(proto_info->attrs.spi));
 
 	/*
-	 * Quick hack to convert much of the stuff.
-	 *
-	 * Fields, such as TA_IKEV1_INTEG_HASH and ENCRYPT, which get set to
-	 * IKEv2 values, will need fixing.
+	 * Use generic code to convert everything.
 	 */
 	struct trans_attrs ta;
 	if (!ikev2_proposal_to_trans_attrs(proposal, &ta)) {
 		return FALSE;
 	}
 
-	/*
-	 * IKEv2 ESP/AH and IKE all use the same algorithm numbering
-	 * scheme and negotiation so the function
-	 * ikev2_proposal_to_trans_attrs(), above, should have been
-	 * able to handle everything.  It can't:
-	 *
-	 * - esp/ah has its own version of the negotiated algorithm
-	 *   structure (it is a superset of the IKE one) and that
-	 *   needs to be populated with redundant value.
-	 *
-	 * - "generic" code uses IKEv1 ESP/AH/IKE numbers (which are
-         *   pretty messed up) when it could use a "struct alg_info"
-         *   object
-	 *
-	 * - rumor has it IKEv2 algorithms don't exist in the "struct
-         *   alg_info" database.  The "rationale" is that the database
-         *   should only contain IKE algorithms.  The result is that
-         *   there are many many functions duplicating the knowledge
-         *   the algorithm database already contains.
-	 */
-	if (proposal->protoid == IKEv2_SEC_PROTO_ESP) {
-		passert(ta.ta_encrypt);
-		/*
-		 * If there's no IKEv1 ESP/AH support then use the
-		 * IKEv2-only value.
-		 *
-		 * This is were screwups like CAMELLIA, where IKEv1
-		 * and IKEv2 have different and conflicting values get
-		 * "fixed".
-		 *
-		 * XXX: the real fix is to delete ENCRYPT.
-		 *
-		 * XXX: Always assign both .ta_encrypt and .ta_encryptor -
-		 * it makes auditing easier.
-		 */
-		const struct encrypt_desc *encrypt = ta.ta_encrypt;
-		ta.ta_ikev1_encrypt = (encrypt->common.ikev1_esp_id > 0
-			      ? encrypt->common.ikev1_esp_id
-			      : encrypt->common.id[IKEv2_ALG_ID]);
-		ta.ta_encrypt = encrypt;
-		err_t ugh;
-		ugh = check_kernel_encrypt_alg(ta.ta_ikev1_encrypt, ta.enckeylen);
-		if (ugh != NULL) {
-			struct esb_buf buf;
-			libreswan_log("ESP algo %s=%d with key_len %d is not valid (%s)",
-				      enum_showb(&esp_transformid_names,
-						 ta.ta_ikev1_encrypt, &buf),
-				      ta.ta_ikev1_encrypt, ta.enckeylen, ugh);
-			/*
-			 * Only realising that the algorithm is
-			 * invalid now is pretty lame!
-			 */
-			return FALSE;
-		}
-	}
-
-	/*
-	 * this is really a mess having so many different numbers for
-	 * auth algorithms.
-	 */
 	proto_info->attrs.transattrs = ta;
-
 	proto_info->present = TRUE;
 	proto_info->our_lastused = mononow();
 	proto_info->peer_lastused = mononow();

@@ -1234,12 +1234,6 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 								  val));
 					break;
 				}
-				/*
-				 * XXX: Always assign both .encrypt
-				 * and .encrypt - it makes auditing
-				 * easier.
-				 */
-				ta.ta_ikev1_encrypt = val;
 				ta.ta_encrypt = encrypter;
 				ta.enckeylen = ta.ta_encrypt->keydeflen;
 				break;
@@ -1721,12 +1715,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 		    grp->val));
 
 	passert(enc->type.oakley == OAKLEY_ENCRYPTION_ALGORITHM);
-	/*
-	 * XXX: Always assign both .ta_encrypt and .ta_encrypt - it makes
-	 * auditing easier.
-	 */
-	ta.ta_ikev1_encrypt = enc->val;         /* OAKLEY_ENCRYPTION_ALGORITHM */
-	ta.ta_encrypt = ikev1_get_ike_encrypt_desc(ta.ta_ikev1_encrypt);
+	ta.ta_encrypt = ikev1_get_ike_encrypt_desc(enc->val);
 	passert(ta.ta_encrypt != NULL);
 
 	if (trans->attr_cnt == 5) {
@@ -1839,23 +1828,14 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 	*attrs = null_ipsec_trans_attrs;
 
-	/*
-	 * XXX: Always assign both .ta_encrypt and .ta_encrypt - it makes
-	 * auditing easier.
-	 *
-	 * XXX: See comment in state.h about how .ta_encrypt is abused.
-	 */
 	switch (proto) {
 	case PROTO_IPCOMP:
-		attrs->transattrs.ta_ikev1_encrypt = trans->isat_transid; /* XXX */
 		attrs->transattrs.ta_comp = trans->isat_transid;
 		break;
 	case PROTO_IPSEC_ESP:
-		attrs->transattrs.ta_ikev1_encrypt = trans->isat_transid;
 		attrs->transattrs.ta_encrypt = ikev1_get_kernel_encrypt_desc(trans->isat_transid);
 		break;
 	case PROTO_IPSEC_AH:
-		attrs->transattrs.ta_ikev1_encrypt = trans->isat_transid; /* XXX */
 		break;
 	default:
 		bad_case(proto);
