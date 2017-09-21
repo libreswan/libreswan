@@ -1952,6 +1952,16 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 		case AUTH_ALGORITHM | ISAKMP_ATTR_AF_TV:
 			attrs->transattrs.ta_integ = ikev1_get_kernel_integ_desc(val);
+			if (attrs->transattrs.ta_integ == NULL) {
+				/*
+				 * Caller will also see NULL and
+				 * assume that things should stumble
+				 * on to the next algorithm.
+				 */
+				loglog(RC_LOG_SERIOUS,
+				       "IKEv1 AH integrity algorithm %s not supported",
+				       enum_show(&ah_transformid_names, val));
+			}
 			break;
 
 		case KEY_LENGTH | ISAKMP_ATTR_AF_TV:
@@ -2411,6 +2421,27 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					return BAD_PROPOSAL_SYNTAX;
 
 				previous_transnum = ah_trans.isat_transnum;
+
+				/*
+				 * Assuming integrity was present, is
+				 * the auth algorithm known?
+				 *
+				 * NULL here indicates that the
+				 * attempt to look up the integrity
+				 * algorithm failed (NULL because
+				 * integrity was missing will have
+				 * already been rejected by the
+				 * above).
+				 *
+				 * If it wasn't skip the proposal (the
+				 * above call will have already logged
+				 * this).
+				 */
+				if (ah_attrs.transattrs.ta_integ == NULL) {
+					DBG(DBG_CONTROL | DBG_CRYPT,
+					    DBG_log("ignoring proposal with unknown integrity"));
+					continue;       /* try another */
+				}
 
 				/* we must understand ah_attrs.transid
 				 * COMBINED with ah_attrs.transattrs.ta_ikev1_integ_hash.
