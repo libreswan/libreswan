@@ -2059,10 +2059,11 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	}
 
 	if (proto == PROTO_IPSEC_AH) {
-		DBG(DBG_CONTROL,
-		    DBG_log("PROTO AH: we should check registration of %s",
-			    attrs->transattrs.ta_integ->common.fqn));
-		/* if not registered, abort early */
+		if (!LHAS(seen_attrs, AUTH_ALGORITHM)) {
+			loglog(RC_LOG_SERIOUS,
+			       "AUTH_ALGORITHM attribute missing in AH Transform");
+			return false;
+		}
 	}
 
 	return TRUE;
