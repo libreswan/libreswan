@@ -271,16 +271,6 @@ void prettynow(char *buf, size_t buflen, const char *fmt)
 	((size_t (*)(char *, size_t, const char *, const struct tm *))strftime)(buf, buflen, fmt, t);
 }
 
-/* thread locks added until all non re-entrant functions it uses have been fixed */
-void libreswan_vloglog(enum rc_type rc, const char *message, va_list args)
-{
-	LSWBUF(buf) {
-		add_state_prefix(buf);
-		lswlogvf(buf, message, args);
-		lswlog_log_raw(buf, rc, LOG_WARNING);
-	}
-}
-
 void lswlog_to_error_stream(struct lswlog *buf)
 {
 	lswlog_log_raw(buf, RC_LOG_SERIOUS, LOG_ERR);

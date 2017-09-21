@@ -144,14 +144,6 @@ enum rc_type {
 };
 
 /*
- * Everything goes through here.
- *
- * Like vprintf() this modifies AP; to preserve AP use C99's
- * va_copy().
- */
-extern void libreswan_vloglog(enum rc_type rc, const char *fmt, va_list ap);
-
-/*
  * Log to both main log and whack log at level RC.
  */
 #define loglog	libreswan_loglog
@@ -387,11 +379,13 @@ void lswlog_dbg_pre(struct lswlog *buf);
 
 void lswlog_pre(struct lswlog *buf);
 
-#define LSWLOG(BUF)							\
+#define LSWLOG(BUF)  LSWLOG_RC(RC_LOG, BUF)
+
+#define LSWLOG_RC(RC, BUF)						\
 	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
 		LSWBUF_(BUF)						\
 			for (lswlog_pre(BUF); lswlog_p;			\
-			     lswlog_to_logger_stream(BUF, RC_LOG),	\
+			     lswlog_to_logger_stream(BUF, RC),		\
 				     lswlog_p = false)
 
 /*
