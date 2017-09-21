@@ -232,7 +232,8 @@ static void test_enum_enum(const char *title, enum_enum_names *een,
 
 }
 
-static void test_lset(const char *name, const struct lset_names *names)
+static void test_lset(const char *name, const struct lset_names *names,
+		      const enum_names *en)
 {
 	printf("%s:\n", name);
 	printf("\tcheck: ");
@@ -240,7 +241,7 @@ static void test_lset(const char *name, const struct lset_names *names)
 	printf("ok\n");
 	LSWLOG_FILE(stdout, buf) {
 		lswlogs(buf, "\tflags: ");
-		lswlog_lset_flags(buf, names, LRANGE(0, names->roof - 1));
+		lswlog_enum_lset_short(buf, en, LRANGE(0, names->roof - 1));
 		lswlogs(buf, "\n");
 	}
 }
@@ -324,7 +325,7 @@ int main(int argc UNUSED, char *argv[])
 		       IKEv2_PRF_INVALID, false);
 	printf("\n");
 
-	test_lset("debug", &debug_lset_names);
+	test_lset("debug", &debug_lset_names, &debug_and_impair_names);
 
 	report_leaks();
 	tool_close_log();
