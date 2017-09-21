@@ -2405,8 +2405,6 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			int tn;
 
 			for (tn = 0; tn != ah_proposal.isap_notrans; tn++) {
-				int ok_transid = 0;
-				bool ok_auth = TRUE;
 
 				if (!parse_ipsec_transform(&ah_trans,
 							   &ah_attrs,
@@ -2455,93 +2453,13 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				 * AH_SHA, AUTH_ALGORITHM_HMAC_SHA1
 				 * AH_DES, AUTH_ALGORITHM_DES_MAC (unimplemented)
 				 */
-				/* ??? this switch looks a lot like alg_info_esp_aa2sadb */
-				switch (ah_attrs.transattrs.ta_ikev1_integ_hash) {
-				case AUTH_ALGORITHM_NONE:
-					loglog(RC_LOG_SERIOUS,
-					       "AUTH_ALGORITHM attribute missing in AH Transform");
-					return BAD_PROPOSAL_SYNTAX;
-
-				case AUTH_ALGORITHM_HMAC_MD5:
-				case AUTH_ALGORITHM_KPDK:
-					ok_transid = AH_MD5;
-					break;
-
-				case AUTH_ALGORITHM_HMAC_SHA1:
-					ok_transid = AH_SHA;
-					break;
-
-				case AUTH_ALGORITHM_DES_MAC:
-					loglog(RC_LOG_SERIOUS,
-					       "AH_DES no longer supported");
-					ok_auth = FALSE;
-					break;
-
-				case AUTH_ALGORITHM_HMAC_SHA2_256:
-					ok_transid = AH_SHA2_256;
-					break;
-
-				case AUTH_ALGORITHM_HMAC_SHA2_384:
-					ok_transid = AH_SHA2_384;
-					break;
-
-				case AUTH_ALGORITHM_HMAC_SHA2_512:
-					ok_transid = AH_SHA2_512;
-					break;
-
-				case AUTH_ALGORITHM_HMAC_RIPEMD:
-					ok_transid = AH_RIPEMD;
-					break;
-
-				case AUTH_ALGORITHM_AES_XCBC:
-					ok_transid = AH_AES_XCBC_MAC;
-					break;
-
-				case AUTH_ALGORITHM_SIG_RSA:
-					loglog(RC_LOG_SERIOUS,
-					       "AH_RSA (RFC4359) not implemented");
-					ok_auth = FALSE;
-					break;
-
-				case AUTH_ALGORITHM_AES_128_GMAC:
-					ok_transid = AH_AES_128_GMAC;
-					break;
-
-				case AUTH_ALGORITHM_AES_192_GMAC:
-					ok_transid = AH_AES_192_GMAC;
-					break;
-
-				case AUTH_ALGORITHM_AES_256_GMAC:
-					ok_transid = AH_AES_256_GMAC;
-					break;
-
-				default:
-					loglog(RC_LOG_SERIOUS,
-					       "Unknown integ algorithm %s not supported",
-					       ah_attrs.transattrs.ta_integ->common.fqn);
-					ok_auth = FALSE;
-					break;
-				}
-
-				if (ah_attrs.transattrs.ta_ikev1_encrypt !=
-				    ok_transid) {
+				if (ah_trans.isat_transid != ah_attrs.transattrs.ta_integ->integ_ikev1_ah_transform) {
 					loglog(RC_LOG_SERIOUS,
 					       "%s attribute inappropriate in %s Transform",
 					       ah_attrs.transattrs.ta_integ->common.fqn,
-					       ah_attrs.transattrs.ta_encrypt->common.fqn);
+					       enum_show(&ah_transformid_names,
+							 ah_trans.isat_transid));
 					return BAD_PROPOSAL_SYNTAX;
-				}
-				/* ??? should test be !ok_auth || !ESP_AALG_PRESENT(ok_transid) */
-				/* ??? why is this called ESP_AALG_PRESENT when we're doing AH? */
-				if (!ok_auth) {
-					DBG(DBG_CONTROL | DBG_CRYPT, {
-						ipstr_buf b;
-						DBG_log("%s attribute unsupported in %s Transform from %s",
-							ah_attrs.transattrs.ta_integ->common.fqn,
-							ah_attrs.transattrs.ta_encrypt->common.fqn,
-							ipstr(&c->spd.that.host_addr, &b));
-					});
-					continue;       /* try another */
 				}
 				break;                  /* we seem to be happy */
 			}
