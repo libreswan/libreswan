@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 1998-2002,2015  D. Hugh Redelmeier.
- * Copyright (C) 2016-2017 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016-2017 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -2067,6 +2067,51 @@ static struct keyword_enum_value kw_host_values[] = {
 
 struct keyword_enum_values kw_host_list =
 	{ kw_host_values, elemsof(kw_host_values) };
+
+/*
+ * Iterate over the enum_names returning all the valid indexes.
+ *
+ * Use -1 as the starting point / sentinel.
+ *
+ * XXX: Works fine provided we ignore the enum_names object that
+ * contains -ve values stored in unsigned fields!
+ */
+
+long next_enum(enum_names *en, long l)
+{
+	enum_names *p = en;
+	unsigned long e;
+	if (l < 0) {
+		e = en->en_first;
+		if (en->en_names[e - p->en_first] != NULL) {
+			return e;
+		}
+	} else {
+		e = l;
+	}
+
+	while (true) {
+		while (true) {
+			if (p == NULL) {
+				return -1;
+			}
+			passert(p->en_last - p->en_first + 1 == p->en_checklen);
+			if (p->en_first <= e && e < p->en_last) {
+				e++;
+				break;
+			} else if (e == p->en_last && p->en_next_range != NULL) {
+				p = p->en_next_range;
+				e = p->en_first;
+				break;
+			} else {
+				p = p->en_next_range;
+			}
+		}
+		if (p->en_names[e - p->en_first] != NULL) {
+			return e;
+		}
+	}
+}
 
 /* look up enum names in an enum_names */
 const char *enum_name(enum_names *ed, unsigned long val)

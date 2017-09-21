@@ -248,6 +248,9 @@ extern const char *enum_show_shortb(enum_names *ed, unsigned long val, struct es
 
 extern const char *enum_show(enum_names *ed, unsigned long val);	/* NOT RE-ENTRANT */
 
+/* iterator, start with -1 - hopefully more imune to rounding */
+extern long next_enum(enum_names *en, long last);
+
 /* sometimes the prefix gets annoying */
 extern const char *strip_prefix(const char *s, const char *prefix);
 
