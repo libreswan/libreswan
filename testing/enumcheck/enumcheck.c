@@ -5,7 +5,6 @@
 #include "constants.h"
 #include "lswlog.h"
 #include "lswalloc.h"
-#include "lset_names.h"
 
 #define PREFIX "         "
 
@@ -232,17 +231,13 @@ static void test_enum_enum(const char *title, enum_enum_names *een,
 
 }
 
-static void test_lset(const char *name, const struct lset_names *names,
-		      const enum_names *en)
+static void test_enum_lset(const char *name, const enum_names *en, lset_t val)
 {
-	printf("%s:\n", name);
-	printf("\tcheck: ");
-	lset_names_check(names);
-	printf("ok\n");
+	printf("  %s %" PRIxLSET ":\n", name, val);
 	LSWLOG_FILE(stdout, buf) {
-		lswlogs(buf, "\tflags: ");
-		lswlog_enum_lset_short(buf, en, LRANGE(0, names->roof - 1));
-		lswlogs(buf, "\n");
+		lswlogs(buf, "\t<<");
+		lswlog_enum_lset_short(buf, en, val);
+		lswlogs(buf, ">>\n");
 	}
 }
 
@@ -325,7 +320,15 @@ int main(int argc UNUSED, char *argv[])
 		       IKEv2_PRF_INVALID, false);
 	printf("\n");
 
-	test_lset("debug", &debug_lset_names, &debug_and_impair_names);
+	printf("lswlog_enum_lset_short:\n\n");
+	test_enum_lset("debug", &debug_names, DBG_MASK);
+	test_enum_lset("impair", &impair_names, IMPAIR_MASK);
+	test_enum_lset("debug+impair", &debug_and_impair_names,
+		       LELEM(0) |
+		       LELEM(DBG_roof_IX-1) |
+		       LELEM(DBG_roof_IX) |
+		       LELEM(IMPAIR_roof_IX-1));
+	printf("\n");
 
 	report_leaks();
 	tool_close_log();
