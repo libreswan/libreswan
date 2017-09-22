@@ -419,7 +419,6 @@ static bool read_packet(struct msg_digest *md)
 		    memeq(md->packet_pbs.cur, non_ESP_marker,
 			   NON_ESP_MARKER_SIZE)) {
 				libreswan_log("Mangled packet with potential spurious non-esp marker ignored");
-				pfreeany(md->packet_pbs.start);
 				return FALSE;
 		}
 	}
@@ -436,7 +435,6 @@ static bool read_packet(struct msg_digest *md)
 			DBG_log("NAT-T keep-alive (boggus ?) should not reach this point. Ignored. Sender: %s:%u", ipstr(cur_from, &b),
 				(unsigned) cur_from_port);
 		});
-		pfreeany(md->packet_pbs.start);
 		return FALSE;
 	}
 
