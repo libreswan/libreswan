@@ -1515,7 +1515,8 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 				if (!md->st->st_peer_alt_id &&
 					!same_id(&c->spd.that.id, &peer_id) &&
 					id_kind(&c->spd.that.id) != ID_FROMCERT) {
-						libreswan_log("Peer mismatch on first found connection and no better connection found");
+						libreswan_log("Peer ID '%s' mismatched on first found connection and no better connection found",
+							buf);
 						return FALSE;
 				} else {
 					DBG(DBG_CONTROL, DBG_log("Peer ID matches and no better connection found - continuing with existing connection"));
