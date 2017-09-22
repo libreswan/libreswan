@@ -13,4 +13,5 @@ s/^\[[0-9]\] [0-9]*$/[x] PID/
 s/SSH-2.0-OpenSSH_.*$/SSH-2.0-OpenSSH_XXX/
 /^ *Electric Fence.*$/d
 /^.*anti-replay context:.*$/d
-s/add bare shunt 0x[^ ]* /add bare shunt 0xPOINTER/
+s/add bare shunt 0x[^ ]* /add bare shunt 0xPOINTER /
+s/delete bare shunt 0x[^ ]* /delete bare shunt 0xPOINTER /
