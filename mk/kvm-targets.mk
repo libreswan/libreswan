@@ -747,6 +747,12 @@ kvm-install: $(foreach domain, $(KVM_INSTALL_DOMAINS), kvm-$(domain)-install)
 # they still get created.
 kvm-install: | $(foreach domain,$(KVM_TEST_DOMAINS),$(KVM_DOMAIN_$(domain)_FILES))
 
+kvm-install-hive: $(KVM_DOMAIN_$(KVM_CLONE_DOMAIN)_FILES)
+	$(MAKE) kvm-uninstall-test-domains
+	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_CLONE_DOMAIN) 'export OBJDIR=/var/tmp/OBJ.kvm ; make OBJDIR=/var/tmp/OBJ.kvm base'
+	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_CLONE_DOMAIN) 'export OBJDIR=/var/tmp/OBJ.kvm ; make OBJDIR=/var/tmp/OBJ.kvm module'
+	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_CLONE_DOMAIN) 'export OBJDIR=/var/tmp/OBJ.kvm ; ./testing/guestbin/swan-install OBJDIR=/var/tmp/OBJ.kvm'
+	$(MAKE) kvm-install-test-domains
 
 # kvm-uninstall et.al.
 #
