@@ -50,50 +50,47 @@ local-base: $(PROGRAMSLIST)
 local-clean-base:
 	rm -f $(builddir)/*.o $(foreach p,$(PROGRAMSLIST), $(builddir)/$(p))
 
-local-install-base: $(builddir)/Makefile
-	$(MAKE) -C $(builddir) doinstall
-
 src-file = $(firstword $(wildcard $(srcdir)/$(1) $(builddir)/$(1)))
 
-foreach-file = @set -eu ; $(foreach f, $(1), \
+foreach-file = set -eu ; $(foreach f, $(1), \
 		file=$(f) ; \
 		destdir=$(strip $(2)) ; \
 		src=$(call src-file,$(f)) ; \
 		$(3) \
 	)
 
-doinstall:
-	$(call foreach-file, $(PROGRAM),  $(PROGRAMDIR), \
-		echo Install: $$src '->' $$destdir/$$file ; \
+local-install-base:
+	@$(call foreach-file, $(PROGRAM),  $(PROGRAMDIR), \
+		echo $$src '->' $$destdir/$$file ; \
 		mkdir -p $$destdir ; \
 		$(INSTALL) $(INSTBINFLAGS) $$src $$destdir/$$file ; \
 	)
-	set -eu ; $(foreach file, $(CONFFILES), \
+	@set -eu ; $(foreach file, $(CONFFILES), \
 		if [ ! -f $(CONFDIR)/$(file) ]; then \
-			echo Install: $(call src-file,$(file)) '->' $(CONFDIR)/$(file) ; \
+			echo $(call src-file,$(file)) '->' $(CONFDIR)/$(file) ; \
 			mkdir -p $(CONFDIR) ; \
 			$(INSTALL) $(INSTCONFFLAGS) $($(file).INSTFLAGS) $(call src-file,$(file)) $(CONFDIR)/$(file) ; \
 		fi ; \
 	)
-	$(call foreach-file, $(CONFFILES), $(CONFDIR), \
-		echo Install: $$src '->' $(EXAMPLECONFDIR)/$$file-sample ; \
+	@$(call foreach-file, $(CONFFILES), $(CONFDIR), \
+		echo $$src '->' $(EXAMPLECONFDIR)/$$file-sample ; \
 		mkdir -p $(EXAMPLECONFDIR) ; \
 		$(INSTALL) $(INSTCONFFLAGS) $$src $(EXAMPLECONFDIR)/$$file-sample ; \
 	)
 	@$(call foreach-file, $(EXCONFFILES), $(EXAMPLECONFDIR), \
-		echo Install: $$src '->' $$destdir/$$file-sample ; \
+		echo $$src '->' $$destdir/$$file-sample ; \
 		$(INSTALL) $(INSTCONFFLAGS) $$src $$destdir/$$file-sample ; \
 	)
 	@$(call foreach-file, $(CONFDFILES), $(CONFDDIR), \
 		if [ ! -f $$destdir/$$file ]; then \
-			echo Install: $$src '->' $$destdir/$$file ; \
+			echo $$src '->' $$destdir/$$file ; \
 			mkdir -p $$destdir ; \
 			$(INSTALL) $(INSTCONFFLAGS) $$src $$destdir/$$file ; \
 		fi ; \
 	)
 	@$(call foreach-file, $(CONFDSUBDIRFILES), $(CONFDDIR)/$(CONFDSUBDIR), \
 		if [ ! -f $$destdir/$$file ]; then \
-			echo Install: $$src '->' $$destdir/$$file ; \
+			echo $$src '->' $$destdir/$$file ; \
 			mkdir -p $$destdir ; \
 			$(INSTALL) $(INSTCONFFLAGS) $$src $$destdir/$$file ; \
 		fi ; \
