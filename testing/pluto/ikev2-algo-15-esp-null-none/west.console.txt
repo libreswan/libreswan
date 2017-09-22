@@ -37,7 +37,7 @@ west #
 west #
  # enable impair
 west #
- ipsec whack --debug-all --impair-allow-null-null --impair-ikev2-include-integ-none
+ ipsec whack --debug-all --impair allow-null-null --impair ikev2-include-integ-none
 west #
  ipsec auto --add westnet-eastnet-esp-null
 002 added connection description "westnet-eastnet-esp-null"
