@@ -1,32 +1,32 @@
-LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-SRCDIR?=${LIBRESWANSRCDIR}/initsystems/systemd/
-UNITDIR=$(shell pkg-config systemd --variable=systemdsystemunitdir)
-
-SYSTEMDFILE=ipsec.service
-SUBDIRS=
-ifeq ($(DESTDIR),)
-SYSTEMDDIR=${UNITDIR}
-else
-SYSTEMDDIR=$(DESTDIR)/${UNITDIR}
+ifndef top_srcdir
+include ../../mk/dirs.mk
 endif
 
-include ${LIBRESWANSRCDIR}/Makefile.inc
+UNITDIR=$(shell pkg-config systemd --variable=systemdsystemunitdir)
+SYSTEMDFILE=ipsec.service
+SYSTEMDDIR=$(DESTDIR)$(UNITDIR)
 
-programs:     systemdfiles
-systemdfiles: $(SYSTEMDFILE)
-install:      programs doinstall postcheck
-install-programs: doinstall postcheck
+include $(top_srcdir)/Makefile.inc
 
-doinstall: programs installsystemdservice oldinitdcheck
+local-base: $(SYSTEMDFILE)
 
-installsystemdservice:
+# Use dependencies to force the order: LOCAL-BASE,
+# INSTALLSYSTEMDSERVICE, OLDINITDCHECK, POSTCHECK.
+#
+# (Without this, since local-install-base depends local-base, rules
+# like local-base and installsystemdservice are allowed to run in
+# parallel)
+
+local-install-base: installsystemdservice oldinitdcheck postcheck
+
+installsystemdservice: local-base
 	@mkdir -p $(SYSTEMDDIR)
-	$(INSTALL) $(INSTCONFFLAGS) $(SYSTEMDFILE) $(SYSTEMDDIR)
-	@if test $(SYSTEMDDIR) = ${UNITDIR} ; then \
+	$(INSTALL) $(INSTCONFFLAGS) $(builddir)/$(SYSTEMDFILE) $(SYSTEMDDIR)
+	@if test $(SYSTEMDDIR) = $(UNITDIR) ; then \
 		systemctl --system daemon-reload ; \
 	fi
 
-oldinitdcheck:
+oldinitdcheck: installsystemdservice
 	@if test -f $(DESTDIR)/etc/init.d/ipsec* ; then \
 		if egrep -i '(openswan|libreswan)' $(DESTDIR)/etc/init.d/ipsec* > /dev/null 2>&1 ; then \
 			echo "WARNING: removing older SYSV style init files" ; \
@@ -38,8 +38,9 @@ oldinitdcheck:
 			echo "**********************************************************************" ; \
 		fi ; \
 	fi
-postcheck:
-	@if test -z "$(DESTDIR)" -a $(SYSTEMDDIR) = ${UNITDIR} -a $(shell systemctl is-enabled ipsec.service) = "disabled" ; then \
+
+postcheck: installsystemdservice oldinitdcheck
+	@if test -z "$(DESTDIR)" -a $(SYSTEMDDIR) = $(UNITDIR) -a $(shell systemctl is-enabled ipsec.service) = "disabled" ; then \
 		echo "DESTDIR='$(DESTDIR)'" ; \
 		echo "************************** WARNING ***********************************" ; \
 		echo "The ipsec service is currently disabled. To enable this service issue:" ; \
@@ -57,8 +58,12 @@ postcheck:
 		echo "**********************************************************************" ; \
 	fi
 
-%: ${SRCDIR}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver
-	@echo  'IN' $< '->' $@
-	${TRANSFORM_VARIABLES} < $< > $@
-	@if [ -x $< ]; then chmod +x $@; fi
-	@if [ "${PROGRAM}.in" = $< ]; then chmod +x $@; fi
+# XXX: identical to program.mk?
+
+%: %.in $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver
+	@echo  'IN' $< '->' $(builddir)/$@
+	$(TRANSFORM_VARIABLES) < $< > $(builddir)/$@
+	@if [ -x $< ]; then chmod +x $(builddir)/$@; fi
+	@if [ "$(PROGRAM).in" = $< ]; then chmod +x $(builddir)/$@; fi
+
+include ${top_srcdir}/mk/targets.mk
