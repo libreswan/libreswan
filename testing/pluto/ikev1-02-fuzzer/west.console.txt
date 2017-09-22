@@ -11,10 +11,10 @@ Starting ike-scan 1.9 with 1 hosts (http://www.nta-monitor.com/tools/ike-scan/)
 192.1.2.23	Notify message 14 (NO-PROPOSAL-CHOSEN) HDR=XXXXX
 Ending ike-scan 1.9: 1 hosts scanned in XX seconds (XX.XX hosts/sec).  0 returned handshake; 1 returned notify
 west #
- echo "Running a 1000 fuzzing scan"
-Running a 1000 fuzzing scan
+ echo "Running a fuzzing scan"
+Running a fuzzing scan
 west #
- ./ike-scan.sh > /dev/null
+ ./ike-scan.sh > OUTPUT/fuzz.log
 west #
  echo done
 done
