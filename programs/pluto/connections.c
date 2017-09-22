@@ -4342,9 +4342,6 @@ struct connection *eclipsed(const struct connection *c, struct spd_route **esrp 
 
 void liveness_clear_connection(struct connection *c, char *v)
 {
-	libreswan_log("%s: Clearing Connection %s[%lu] %s",v, c->name,
-			c->instance_serial, enum_name(&connection_kind_names,
-				c->kind));
 	/*
 	 * For CK_INSTANCE, delete_states_by_connection() will clear
 	 * Note that delete_states_by_connection changes c->kind but we need
@@ -4356,7 +4353,7 @@ void liveness_clear_connection(struct connection *c, char *v)
 		flush_pending_by_connection(c); /* remove any partial negotiations that are failing */
 		delete_states_by_connection(c, TRUE);
 		DBG(DBG_DPD,
-			DBG_log("%s: unrouting connection %s",
+			DBG_log("%s: unrouting connection %s action - clearing",
 				enum_name(&connection_kind_names,
 					c->kind), v));
 		unroute_connection(c); /* --unroute */
@@ -4396,8 +4393,9 @@ void liveness_action(struct connection *c, const bool ikev2)
 
 	switch (c->dpd_action) {
 	case DPD_ACTION_CLEAR:
-		libreswan_log("%s action - clearing connection", ikev);
-		liveness_clear_connection(c, "%s action clear");
+		libreswan_log("%s action - clearing connection kind %s", ikev,
+				enum_name(&connection_kind_names, c->kind));
+		liveness_clear_connection(c, ikev);
 		break;
 
 	case DPD_ACTION_RESTART:
@@ -4407,7 +4405,7 @@ void liveness_action(struct connection *c, const bool ikev2)
 		break;
 
 	case DPD_ACTION_HOLD:
-		libreswan_log("%s action - putting connection into %%hold", ikev);
+		libreswan_log("%s action - putting connection into hold", ikev);
 		if (c->kind == CK_INSTANCE) {
 			DBG(DBG_DPD, DBG_log("%s warning dpdaction=hold on instance futile - will be deleted",
 						ikev));
