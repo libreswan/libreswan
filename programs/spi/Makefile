@@ -35,7 +35,7 @@ PLUTOOBJS += ikev2_prf.o
 PLUTOOBJS += crypt_prf.o
 PLUTOOBJS += crypt_dh.o
 PLUTOOBJS += crypt_utils.o
-OBJS += $(addprefix $(top_builddir)/programs/pluto/, $(PLUTOOBJS))
+OBJS += $(addprefix $(abs_top_builddir)/programs/pluto/, $(PLUTOOBJS))
 # $(PROGRAM): pluto-base
 # .PHONY: pluto-base
 # pluto-base:

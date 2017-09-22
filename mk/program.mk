@@ -45,16 +45,13 @@ endif
 CONFIGLIST=$(CONFFILES) $(CONFDFILES) $(CONFDSUBDIRFILES)
 PROGRAMSLIST=${PROGRAM} $(CONFIGLIST)
 
-# XXX: Switch directory hack
-local-base: $(builddir)/Makefile
-	$(MAKE) -C $(builddir) buildall
+local-base: $(PROGRAMSLIST)
 
 local-clean-base:
 	rm -f $(builddir)/*.o $(foreach p,$(PROGRAMSLIST), $(builddir)/$(p))
 
 local-install-base: $(builddir)/Makefile
 	$(MAKE) -C $(builddir) doinstall
-buildall: $(PROGRAMSLIST)
 
 src-file = $(firstword $(wildcard $(srcdir)/$(1) $(builddir)/$(1)))
 
@@ -130,22 +127,22 @@ ifdef OBJS
 # objects and archives are handled, $(OBJS) includes both.  Duplicate
 # archives do no halm.
 $(PROGRAM): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS) $(USERLINK)
+	cd $(builddir) && $(CC) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS) $(USERLINK)
 
 include $(top_srcdir)/mk/depend.mk
 
 else
 
-%: ${SRCDIR}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver
-	@echo  'IN' $< '->' $@
-	${TRANSFORM_VARIABLES} < $< > $@
-	@if [ -x $< ]; then chmod +x $@; fi
-	@if [ "${PROGRAM}.in" = $< ]; then chmod +x $@; fi
+%: %.in $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver
+	@echo  'IN' $< '->' $(builddir)/$@
+	${TRANSFORM_VARIABLES} < $< > $(builddir)/$@
+	@if [ -x $< ]; then chmod +x $(builddir)/$@; fi
+	@if [ "${PROGRAM}.in" = $< ]; then chmod +x $(builddir)/$@; fi
 
-%: ${SRCDIR}%.pl ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver
-	@echo  'PL' $< '->' $@
-	@${TRANSFORM_VARIABLES} < $< > $@
-	@if [ -x $< ]; then chmod +x $@; fi
-	@if [ "${PROGRAM}.pl" = $< ]; then chmod +x $@; fi
+%: %.pl $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver
+	@echo  'PL' $< '->' $(builddir)/$@
+	@${TRANSFORM_VARIABLES} < $< > $(builddir)/$@
+	@if [ -x $< ]; then chmod +x $(builddir)/$@; fi
+	@if [ "${PROGRAM}.pl" = $< ]; then chmod +x $(builddir)/$@; fi
 
 endif
