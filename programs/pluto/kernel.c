@@ -656,12 +656,12 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		c->vti_routing ? "yes" : "no",
 		c->vti_shared ? "yes" : "no",
 		catstr,
-		st == NULL ? 0 : st->st_esp.present ? st->st_esp.attrs.spi :
-			st->st_ah.present ? st->st_ah.attrs.spi :
-			st->st_ipcomp.present ? st->st_ipcomp.attrs.spi : 0,
-		st == NULL ? 0 : st->st_esp.present ? st->st_esp.our_spi :
-			st->st_ah.present ? st->st_ah.our_spi :
-			st->st_ipcomp.present ? st->st_ipcomp.our_spi : 0
+		st == NULL ? 0 : st->st_esp.present ? ntohl(st->st_esp.attrs.spi) :
+			st->st_ah.present ? ntohl(st->st_ah.attrs.spi) :
+			st->st_ipcomp.present ? ntohl(st->st_ipcomp.attrs.spi) : 0,
+		st == NULL ? 0 : st->st_esp.present ? ntohl(st->st_esp.our_spi) :
+			st->st_ah.present ? ntohl(st->st_ah.our_spi) :
+			st->st_ipcomp.present ? ntohl(st->st_ipcomp.our_spi) : 0
 		);
 	/*
 	 * works for both old and new way of snprintf() returning
