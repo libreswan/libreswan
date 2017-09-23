@@ -1398,8 +1398,9 @@ int main(int argc, char **argv)
 			if (ix < 0) {
 				libreswan_log("unrecognized --debug '%s' option ignored",
 					      optarg);
+			} else {
+				base_debugging |= LELEM(ix);
 			}
-			base_debugging |= LELEM(ix);
 			continue;
 		}
 
@@ -1409,8 +1410,9 @@ int main(int argc, char **argv)
 			if (ix < 0) {
 				libreswan_log("unrecognized --impair '%s' option ignored",
 					      optarg);
+			} else {
+				base_debugging |= LELEM(ix);
 			}
-			base_debugging |= LELEM(ix);
 			continue;
 		}
 

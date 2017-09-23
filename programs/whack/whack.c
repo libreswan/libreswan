@@ -2110,8 +2110,9 @@ int main(int argc, char **argv)
 			if (ix < 0) {
 				fprintf(stderr, "whack: unrecognized --debug '%s' option ignored",
 					optarg);
+			} else {
+				msg.debugging |= LELEM(ix);
 			}
-			msg.debugging |= LELEM(ix);
 			continue;
 		}
 
@@ -2121,8 +2122,9 @@ int main(int argc, char **argv)
 			if (ix < 0) {
 				fprintf(stderr, "whack: unrecognized --impair '%s' option ignored",
 					optarg);
+			} else {
+				msg.debugging |= LELEM(ix);
 			}
-			msg.debugging |= LELEM(ix);
 			continue;
 		}
 
