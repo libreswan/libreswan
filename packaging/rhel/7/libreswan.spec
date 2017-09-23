@@ -3,6 +3,8 @@
 %global with_efence 0
 %global with_development 0
 %global with_cavstests 1
+# There is no new enough unbound on rhel7
+%global with_dnssec 0
 
 #global prever rc1
 
@@ -35,8 +37,13 @@ BuildRequires: nss-devel >= 3.16.2
 BuildRequires: nspr-devel
 BuildRequires: pam-devel
 BuildRequires: libevent-devel
+%if 0%{with_dnssec}
 BuildRequires: ldns-devel
 BuildRequires: unbound-devel >= 1.6.0
+%global USE_DNSSEC true
+%else
+%global USE_DNSSEC false
+%endif
 BuildRequires: libseccomp-devel
 BuildRequires: libselinux-devel
 BuildRequires: fipscheck-devel
@@ -92,7 +99,7 @@ make %{?_smp_mflags} \
     INC_USRLOCAL=%{_prefix} \
     INITSYSTEM=systemd \
     MANTREE=%{_mandir} \
-    USE_DNSSEC=true \
+    USE_DNSSEC=%{USE_DNSSEC} \
     USE_FIPSCHECK=true \
     USE_LABELED_IPSEC=true \
     USE_LDAP=true \
@@ -121,7 +128,7 @@ make \
     INC_USRLOCAL=%{_prefix} \
     INITSYSTEM=systemd \
     MANTREE=%{buildroot}%{_mandir} \
-    USE_DNSSEC=true \
+    USE_DNSSEC=%{USE_DNSSEC} \
     USE_FIPSCHECK=true \
     USE_LABELED_IPSEC=true \
     USE_LDAP=true \

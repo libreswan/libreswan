@@ -1,6 +1,6 @@
 # These are rpm macros and are 0 or 1
-%global with_development 0
 %global with_cavstests 1
+%global with_development 0
 %global with_efence 0
 # There is no new enough unbound on rhel6
 %global with_dnssec 0
@@ -42,7 +42,7 @@ BuildRequires: pam-devel
 BuildRequires: libevent2-devel
 %if 0%{with_dnssec}
 BuildRequires: ldns-devel
-BuildRequires: unbound-devel >= 1.5.4
+BuildRequires: unbound-devel >= 1.6.0
 %global USE_DNSSEC true
 %else
 %global USE_DNSSEC false
