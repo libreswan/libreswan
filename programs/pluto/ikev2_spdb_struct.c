@@ -285,6 +285,11 @@ static const char *trans_type_name(enum ikev2_trans_type type)
 	return enum_short_name(&ikev2_trans_type_names, type);
 }
 
+static void lswlog_trans_types(struct lswlog *buf, lset_t types)
+{
+	lswlog_enum_lset_short(buf, &ikev2_trans_type_names, types);
+}
+
 /*
  * Print <TRANSFORM-TYPE> "=" <TRANSFORM> to the buffer
  */
@@ -502,17 +507,14 @@ static int process_transforms(pb_stream *prop_pbs, struct lswlog *remote_print_b
 					    local_propnum, trans_type_name(type),
 					    sentinel_transform - local_transforms->transform));
 			}
-			if (DBGP(DBG_CONTROLMORE)) {
-				char required_bits[20]; /* arbitrary limit */
-				show_set_short(&ikev2_trans_type_names,
-					       matching_local_proposal->required_local_transform_types,
-					       required_bits, sizeof(required_bits));
-				char optional_bits[20]; /* arbitrary limit */
-				show_set_short(&ikev2_trans_type_names,
-					       matching_local_proposal->optional_local_transform_types,
-					       optional_bits, sizeof(optional_bits));
-				DBG_log("local proposal %d transforms: required: %s; optional: %s",
-					local_propnum, required_bits, optional_bits);
+			LSWDBGP(DBG_CONTROLMORE, buf) {
+				lswlogf(buf, "local proposal %d transforms: required: ",
+					local_propnum);
+				lswlog_trans_types(buf, matching_local_proposal->
+						   required_local_transform_types);
+				lswlogf(buf, "; optional: ");
+				lswlog_trans_types(buf, matching_local_proposal->
+						   optional_local_transform_types);
 			}
 		}
 	}
@@ -721,30 +723,20 @@ static int process_transforms(pb_stream *prop_pbs, struct lswlog *remote_print_b
 	 *   transform types".
 	 */
 	lset_t unmatched_remote_transform_types = proposed_remote_transform_types & ~matched_remote_transform_types;
-	if (DBGP(DBG_CONTROLMORE)) {
-		char proposed_bits[20]; /* arbitrary limit */
-		show_set_short(&ikev2_trans_type_names,
-			       proposed_remote_transform_types,
-			       proposed_bits, sizeof(proposed_bits));
-		char matched_bits[20]; /* arbitrary limit */
-		show_set_short(&ikev2_trans_type_names,
-			       matched_remote_transform_types,
-			       matched_bits, sizeof(matched_bits));
-		char unmatched_bits[20]; /* arbitrary limit */
-		show_set_short(&ikev2_trans_type_names,
-			       unmatched_remote_transform_types,
-			       unmatched_bits, sizeof(unmatched_bits));
-		DBG_log("remote proposal %u proposed transforms: %s; matched: %s; unmatched: %s",
-			remote_propnum, proposed_bits, matched_bits, unmatched_bits);
+	LSWDBGP(DBG_CONTROLMORE, buf) {
+		lswlogf(buf, "remote proposal %u proposed transforms: ",
+			remote_propnum);
+		lswlog_trans_types(buf, proposed_remote_transform_types);
+		lswlogf(buf, "; matched: ");
+		lswlog_trans_types(buf, matched_remote_transform_types);
+		lswlogf(buf, "; unmatched: ");
+		lswlog_trans_types(buf, unmatched_remote_transform_types);
 	}
 	if (unmatched_remote_transform_types) {
-		if (DBGP(DBG_CONTROL)) {
-			char unmatched_bits[20]; /* arbitrary limit */
-			show_set_short(&ikev2_trans_type_names,
-				       unmatched_remote_transform_types,
-				       unmatched_bits, sizeof(unmatched_bits));
-			DBG_log("remote proposal %u does not match; unmatched remote transforms: %s",
-				remote_propnum, unmatched_bits);
+		LSWDBGP(DBG_CONTROL, buf) {
+			lswlogf(buf, "remote proposal %u does not match; unmatched remote transforms: ",
+				remote_propnum);
+			lswlog_trans_types(buf, unmatched_remote_transform_types);
 		}
 		return 0;
 	}
@@ -754,27 +746,19 @@ static int process_transforms(pb_stream *prop_pbs, struct lswlog *remote_print_b
 	FOR_EACH_PROPOSAL_IN_RANGE(local_propnum, local_proposal, local_proposals,
 				   local_propnum_base, local_propnum_bound) {
 		struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_propnum];
-		if (DBGP(DBG_CONTROLMORE)) {
-			char matched_local_bits[20]; /* arbitrary limit */
-			show_set_short(&ikev2_trans_type_names,
-				       matching_local_proposal->matched_local_transform_types,
-				       matched_local_bits, sizeof(matched_local_bits));
-			char required_local_bits[20]; /* arbitrary limit */
-			show_set_short(&ikev2_trans_type_names,
-				       matching_local_proposal->required_local_transform_types,
-				       required_local_bits, sizeof(required_local_bits));
-			char optional_local_bits[20]; /* arbitrary limit */
-			show_set_short(&ikev2_trans_type_names,
-				       matching_local_proposal->optional_local_transform_types,
-				       optional_local_bits, sizeof(optional_local_bits));
-			char proposed_remote_bits[20]; /* arbitrary limit */
-			show_set_short(&ikev2_trans_type_names,
-				       proposed_remote_transform_types,
-				       proposed_remote_bits, sizeof(proposed_remote_bits));
-			DBG_log("comparing remote proposal %u and local proposal %d transforms: required: %s; optional: %s; proposed: %s; matched: %s",
-				remote_propnum, local_propnum,
-				required_local_bits, optional_local_bits,
-				proposed_remote_bits, matched_local_bits);
+		LSWDBGP(DBG_CONTROLMORE, log) {
+			lswlogf(log, "comparing remote proposal %u and local proposal %d transforms: required: ",
+				remote_propnum, local_propnum);
+			lswlog_trans_types(log, matching_local_proposal->
+					   matched_local_transform_types);
+			lswlogf(log, "; optional: ");
+			lswlog_trans_types(log, matching_local_proposal->
+					   required_local_transform_types);
+			lswlogf(log, "; proposed: ");
+			lswlog_trans_types(log, matching_local_proposal->
+					   optional_local_transform_types);
+			lswlogf(log, "; matched: ");
+			lswlog_trans_types(log, proposed_remote_transform_types);
 		}
 		/*
 		 * Using the set relationships:
@@ -842,16 +826,12 @@ static int process_transforms(pb_stream *prop_pbs, struct lswlog *remote_print_b
 		 *   ENCR!AEAD+ESP=NO     ENCR       INTEG+ESP  INTEG
 		 */
 		if (unmatched || missing) {
-			if (DBGP(DBG_CONTROL)) {
-				char unmatched_bits[20]; /* arbitrary limit */
-				show_set_short(&ikev2_trans_type_names, unmatched,
-					       unmatched_bits, sizeof(unmatched_bits));
-				char missing_bits[20]; /* arbitrary limit */
-				show_set_short(&ikev2_trans_type_names, missing,
-					       missing_bits, sizeof(missing_bits));
-				DBG_log("remote proposal %d does not match local proposal %d; unmatched transforms: %s; missing transforms: %s",
-					remote_propnum, local_propnum,
-					unmatched_bits, missing_bits);
+			LSWDBGP(DBG_CONTROL, log) {
+				lswlogf(log, "remote proposal %d does not match local proposal %d; unmatched transforms: ",
+					remote_propnum, local_propnum);
+				lswlog_trans_types(log, unmatched);
+				lswlogf(log, "; missing transforms: ");
+				lswlog_trans_types(log, missing);
 			}
 			continue;
 		}

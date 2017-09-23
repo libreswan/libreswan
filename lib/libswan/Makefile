@@ -60,8 +60,6 @@ OBJS += addrtoa.o addrtot.o addrtypeof.o alg_info.o esp_info.o anyaddr.o \
 	libreswan_loglog.o \
 	alg_byname.o
 
-OBJS += lset_names.o
-OBJS += debug_lset_names.o
 OBJS += debug_enum_names.o
 OBJS += lswlog.o
 OBJS += lswlog_dbg.o

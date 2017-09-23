@@ -66,7 +66,6 @@
 /* for show_virtual_private: */
 #include "virtual.h"	/* needs connections.h */
 #include "crypto.h"
-#include "lset_names.h"
 
 #ifndef NO_DB_OPS_STATS
 #define NO_DB_CONTEXT
@@ -425,8 +424,8 @@ void extra_debugging(const struct connection *c)
 	if (c->extra_debugging != 0) {
 		LSWLOG(buf) {
 			lswlogs(buf, "extra debugging enabled for connection: ");
-			lswlog_lset_flags(buf, &debug_lset_names,
-					  c->extra_debugging & ~cur_debugging);
+			lswlog_enum_lset_short(buf, &debug_and_impair_names,
+					       c->extra_debugging & ~cur_debugging);
 		}
 		set_debugging(cur_debugging | c->extra_debugging);
 	}

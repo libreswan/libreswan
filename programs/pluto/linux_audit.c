@@ -66,7 +66,6 @@
 /* for show_virtual_private: */
 #include "virtual.h"	/* needs connections.h */
 #include "crypto.h"
-#include "lset_names.h"
 
 #include <libaudit.h>
 
