@@ -2684,22 +2684,21 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				previous_transnum = ipcomp_trans.isat_transnum;
 
 				if (well_known_cpi != 0 &&
-				    ipcomp_attrs.transattrs.ta_ikev1_encrypt !=
-				      well_known_cpi) {
+				    ipcomp_attrs.transattrs.ta_comp != well_known_cpi) {
 					libreswan_log(
 						"illegal proposal: IPCOMP well-known CPI disagrees with transform");
 					return BAD_PROPOSAL_SYNTAX;
 				}
 
-				switch (ipcomp_attrs.transattrs.ta_ikev1_encrypt) {
+				switch (ipcomp_attrs.transattrs.ta_comp) {
 				case IPCOMP_DEFLATE: /* all we can handle! */
 					break;
 
 				default:
 					DBG(DBG_CONTROL | DBG_CRYPT, {
 						ipstr_buf b;
-						DBG_log("unsupported IPCOMP Transform %s from %s",
-							ipcomp_attrs.transattrs.ta_encrypt->common.fqn,
+						DBG_log("unsupported IPCOMP Transform %d from %s",
+							ipcomp_attrs.transattrs.ta_comp,
 							ipstr(&c->spd.that.host_addr, &b));
 					});
 					continue; /* try another */
