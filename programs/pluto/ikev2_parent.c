@@ -1070,8 +1070,6 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	pexpect(md->st == NULL);	/* ??? where would a state come from? Duplicate packet? */
 
 	bool seen_dcookie = FALSE;
-	bool seen_ntfy_frag = FALSE;
-	bool seen_ntfy_hash = FALSE;
 	bool require_dcookie = require_ddos_cookies();
 	struct payload_digest *ntfy;
 
@@ -1083,31 +1081,10 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 
 	/* Process NOTIFY payloads, including checking for a DCOOKIE */
 	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
-		switch (ntfy->payload.v2n.isan_type) {
-		case v2N_COOKIE:
+		if (ntfy->payload.v2n.isan_type == v2N_COOKIE) {
 			DBG(DBG_CONTROLMORE, DBG_log("Received a NOTIFY payload of type COOKIE - we will verify the COOKIE"));
 			seen_dcookie = TRUE;
-			break;
-		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
-		case v2N_USE_TRANSPORT_MODE:
-			DBG(DBG_CONTROLMORE, DBG_log("Received unauthenticated %s notify in wrong exchange - ignored",
-				enum_name(&ikev2_notify_names,
-					ntfy->payload.v2n.isan_type)));
-			break;
-		case v2N_NAT_DETECTION_DESTINATION_IP:
-		case v2N_NAT_DETECTION_SOURCE_IP:
-			/* handled further below */
-			break;
-		case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
-			seen_ntfy_frag = TRUE;
-			break;
-		case v2N_SIGNATURE_HASH_ALGORITHMS:
-			seen_ntfy_hash = TRUE;
-			break;
-		default:
-			DBG(DBG_CONTROLMORE, DBG_log("Received unauthenticated %s notify - ignored",
-				enum_name(&ikev2_notify_names,
-					ntfy->payload.v2n.isan_type)));
+			continue;
 		}
 	}
 
@@ -1403,36 +1380,59 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		md->st = st;
 		md->from_state = STATE_IKEv2_BASE;
 
-		if (seen_ntfy_frag)
-			st->st_seen_fragvid = TRUE;
-		if (seen_ntfy_hash) {
-			if (!DBGP(IMPAIR_IGNORE_HASH_NOTIFY_REQUEST)) {
-				st->st_seen_hashnotify = TRUE;
-				struct payload_digest *p;
-				for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {
-					if (p->payload.v2n.isan_type == v2N_SIGNATURE_HASH_ALGORITHMS)
-						break;
+		for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
+			bool seen_nat = FALSE;
+
+			switch(ntfy->payload.v2n.isan_type) {
+
+			case v2N_COOKIE:
+				/* already handled earlier */
+				break;
+
+			case v2N_SIGNATURE_HASH_ALGORITHMS:
+				if (!DBGP(IMPAIR_IGNORE_HASH_NOTIFY_REQUEST)) {
+					if (st->st_seen_hashnotify) {
+						DBG(DBG_CONTROL, DBG_log("Ignoring duplicate Signature Hash Notify payload"));
+					} else {
+						st->st_seen_hashnotify = TRUE;
+						if (!negotiate_hash_algo_from_notification(ntfy, st))
+							return STF_FATAL;
+					}
+				} else {
+					libreswan_log("Impair: Ignoring the Signature hash notify in IKE_SA_INIT Request");
 				}
-				passert(p != NULL); /* Make Coverity happy */
-				if (!negotiate_hash_algo_from_notification(p,st))
-					return STF_FATAL;
-			} else {
-				st->st_seen_hashnotify = FALSE;
-				libreswan_log("Impair: Ignoring the Signature hash notify in IKE_SA_INIT Request");
+				break;
+
+			case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
+				st->st_seen_fragvid = TRUE;
+				break;
+
+			case v2N_NAT_DETECTION_DESTINATION_IP:
+			case v2N_NAT_DETECTION_SOURCE_IP:
+				if (!seen_nat) {
+					ikev2_natd_lookup(md, zero_cookie);
+					seen_nat = TRUE; /* only do it once */
+				}
+				break;
+
+			/* These are not supposed to appear here */
+			case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
+			case v2N_USE_TRANSPORT_MODE:
+				DBG(DBG_CONTROLMORE, DBG_log("Received unauthenticated %s notify in wrong exchange - ignored",
+					enum_name(&ikev2_notify_names,
+						ntfy->payload.v2n.isan_type)));
+				break;
+
+			default:
+				DBG(DBG_CONTROLMORE, DBG_log("Received unauthenticated %s notify - ignored",
+					enum_name(&ikev2_notify_names,
+						ntfy->payload.v2n.isan_type)));
 			}
 		}
 	} else {
 		loglog(RC_LOG_SERIOUS, "Incoming non-duplicate packet already has state?");
 		pexpect(st == NULL); /* fire an expect so test cases see it clearly */
 		/* ??? should st->st_connection be changed to c? */
-	}
-
-	/*
-	 * check v2N_NAT_DETECTION_DESTINATION_IP or/and
-	 * v2N_NAT_DETECTION_SOURCE_IP
-	 */
-	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
-		ikev2_natd_lookup(md, zero_cookie);
 	}
 
 	/* calculate the nonce and the KE */
