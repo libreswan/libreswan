@@ -827,48 +827,52 @@ lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */)
 	return policy;
 }
 
-static bool ike_alg_ok_final(int ealg, unsigned key_len,
-			     const struct prf_desc *prf,
-			     unsigned int group,
-			     struct alg_info_ike *alg_info_ike)
+static bool isakmp_ok_final(const struct trans_attrs *ta,
+			    struct alg_info_ike *alg_info_ike)
 {
+	if (ta->ta_encrypt == NULL) {
+		loglog(RC_LOG_SERIOUS, "missing encryption");
+		return false;
+	}
+	if (ta->ta_prf == NULL) {
+		loglog(RC_LOG_SERIOUS, "missing PRF");
+		return false;
+	}
+	if (ta->ta_dh == NULL) {
+		loglog(RC_LOG_SERIOUS, "missing DH");
+		return false;
+	}
+
 	/*
 	 * simple test to toss low key_len, will accept it only
 	 * if specified in "esp" string
 	 */
-	bool ealg_insecure = (key_len < 128);
+	bool ealg_insecure = (ta->enckeylen < 128);
 
 	if (ealg_insecure || alg_info_ike != NULL) {
 		if (alg_info_ike != NULL) {
 			FOR_EACH_IKE_INFO(alg_info_ike, ike_info) {
-				if (ike_info->encrypt->common.ikev1_oakley_id == ealg &&
+				if (ike_info->encrypt == ta->ta_encrypt &&
 				    (ike_info->enckeylen == 0 ||
-				     key_len == 0 ||
-				     ike_info->enckeylen == key_len) &&
-				    ike_info->prf == prf &&
-				    ike_info->dh->group == group) {
+				     ta->enckeylen == 0 ||
+				     ike_info->enckeylen == ta->enckeylen) &&
+				    ike_info->prf == ta->ta_prf &&
+				    ike_info->dh == ta->ta_dh) {
 					if (ealg_insecure) {
 						loglog(RC_LOG_SERIOUS,
 						       "You should NOT use insecure/broken IKE algorithms (%s)!",
-						       enum_name(
-								&oakley_enc_names,
-								ealg));
+						       ta->ta_encrypt->common.fqn);
 					}
 					return TRUE;
 				}
 			}
 		}
-		libreswan_log(
-			"Oakley Transform [%s (%d), %s, %s] refused%s",
-			enum_name(&oakley_enc_names, ealg), key_len,
-			(prf != NULL) ?
-				enum_name(&oakley_hash_names,
-					prf->common.ikev1_oakley_id)
-				: "invalid prf",
-			enum_name(&oakley_group_names, group),
-			ealg_insecure ?
-				" due to insecure key_len and enc. alg. not listed in \"ike\" string" :
-				"");
+		libreswan_log("Oakley Transform [%s (%d), %s, %s] refused%s",
+			      ta->ta_encrypt->common.fqn, ta->enckeylen,
+			      ta->ta_prf->common.fqn, ta->ta_dh->common.fqn,
+			      ealg_insecure ?
+			      " due to insecure key_len and enc. alg. not listed in \"ike\" string" :
+			      "");
 		return FALSE;
 	}
 	return TRUE;
@@ -1431,11 +1435,7 @@ rsasig_common:
 		 * ML: at last check for allowed transforms in alg_info_ike
 		 */
 		if (ugh == NULL) {
-			if (!ike_alg_ok_final(ta.ta_ikev1_encrypt, ta.enckeylen,
-					      ta.ta_prf,
-					      ta.ta_dh != NULL ?
-						ta.ta_dh->group : 65535,
-					      c->alg_info_ike)) {
+			if (!isakmp_ok_final(&ta, c->alg_info_ike)) {
 					ugh = "OAKLEY proposal refused";
 					loglog(RC_LOG_SERIOUS, "%s", ugh);
 			}
