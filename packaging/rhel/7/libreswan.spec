@@ -1,18 +1,8 @@
 # These are rpm macros and are 0 or 1
-%global crl_fetching 1
 %global _hardened_build 1
-%global buildefence 0
-%global development 0
-%global cavstests 1
-
-# These are libreswan/make macros and are false or true
-%global USE_FIPSCHECK true
-%global USE_LIBCAP_NG true
-%global USE_LABELED_IPSEC true
-%global USE_DNSSEC true
-%global USE_NM true
-%global USE_LINUX_AUDIT true
-%global USE_SECCOMP true
+%global with_efence 0
+%global with_development 0
+%global with_cavstests 1
 
 #global prever rc1
 
@@ -23,7 +13,7 @@ Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://libreswan.org/
 Source0: https://download.libreswan.org/%{?prever:development/}%{name}-%{version}%{?prever}.tar.gz
-%if %{cavstests}
+%if 0%{with_cavstests}
 Source10: https://download.libreswan.org/cavs/ikev1_dsa.fax.bz2
 Source11: https://download.libreswan.org/cavs/ikev1_psk.fax.bz2
 Source12: https://download.libreswan.org/cavs/ikev2.fax.bz2
@@ -45,33 +35,18 @@ BuildRequires: nss-devel >= 3.16.2
 BuildRequires: nspr-devel
 BuildRequires: pam-devel
 BuildRequires: libevent-devel
-%if %{USE_DNSSEC}
 BuildRequires: ldns-devel
-BuildRequires: unbound-devel >= 1.5.4
-%endif
-%if %{USE_SECCOMP}
+BuildRequires: unbound-devel >= 1.6.0
 BuildRequires: libseccomp-devel
-%endif
-%if %{USE_LABELED_IPSEC}
 BuildRequires: libselinux-devel
-%endif
-%if %{USE_FIPSCHECK}
 BuildRequires: fipscheck-devel
-# we need fipshmac
 Requires: fipscheck%{_isa}
-%endif
-%if %{USE_LINUX_AUDIT}
 Buildrequires: audit-libs-devel
-%endif
 BuildRequires: systemd-devel
-%if %{USE_LIBCAP_NG}
 BuildRequires: libcap-ng-devel
-%endif
-%if %{crl_fetching}
 BuildRequires: curl-devel
 BuildRequires: openldap-devel
-%endif
-%if %{buildefence}
+%if 0%{with_efence}
 BuildRequires: ElectricFence
 %endif
 BuildRequires: xmlto
@@ -99,42 +74,36 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 %setup -q -n libreswan-%{version}%{?prever}
 
 %build
-%if %{buildefence}
+%if 0%{with_efence}
 %define efence "-lefence"
 %endif
 
 #796683: -fno-strict-aliasing
 make %{?_smp_mflags} \
-%if %{development}
+%if 0%{with_development}
     USERCOMPILE="-g -DGCC_LINT %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
 %else
     USERCOMPILE="-g -DGCC_LINT %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
 %endif
     USERLINK="-g -pie -Wl,-z,relro,-z,now %{?efence}" \
-    INC_USRLOCAL=%{_prefix} \
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \
     FINALRUNDIR=%{_rundir}/pluto \
-    MANTREE=%{_mandir} \
     INC_RCDEFAULT=%{_initrddir} \
+    INC_USRLOCAL=%{_prefix} \
     INITSYSTEM=systemd \
-    USE_NM=%{USE_NM} \
-    USE_XAUTHPAM=true \
-    USE_FIPSCHECK="%{USE_FIPSCHECK}" \
-    USE_LIBCAP_NG="%{USE_LIBCAP_NG}" \
-    USE_LABELED_IPSEC="%{USE_LABELED_IPSEC}" \
-%if %{crl_fetching}
+    MANTREE=%{_mandir} \
+    USE_DNSSEC=true \
+    USE_FIPSCHECK=true \
+    USE_LABELED_IPSEC=true \
     USE_LDAP=true \
+    USE_LIBCAP_NG=true \
     USE_LIBCURL=true \
-%else
-    USE_LDAP=false \
-    USE_LIBCURL=false \
-%endif
-    USE_DNSSEC="%{USE_DNSSEC}" \
-    USE_SECCOMP="%{USE_SECCOMP}" \
+    USE_NM=true \
+    USE_SECCOMP=true \
+    USE_XAUTHPAM=true \
     programs
 FS=$(pwd)
 
-%if %{USE_FIPSCHECK}
 # Add generation of HMAC checksums of the final stripped binaries
 %define __spec_install_post \
     %{?__debug_package:%{__debug_install_post}} \
@@ -142,32 +111,25 @@ FS=$(pwd)
     %{__os_install_post} \
     fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_libexecdir}/ipsec/pluto
 %{nil}
-%endif
 
 %install
 make \
     DESTDIR=%{buildroot} \
-    INC_USRLOCAL=%{_prefix} \
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \
     FINALRUNDIR=%{_rundir}/pluto \
-    MANTREE=%{buildroot}%{_mandir} \
     INC_RCDEFAULT=%{_initrddir} \
-    INSTMANFLAGS="-m 644" \
+    INC_USRLOCAL=%{_prefix} \
     INITSYSTEM=systemd \
-    USE_NM=%{USE_NM} \
-    USE_XAUTHPAM=true \
-    USE_FIPSCHECK="%{USE_FIPSCHECK}" \
-    USE_LIBCAP_NG="%{USE_LIBCAP_NG}" \
-    USE_LABELED_IPSEC="%{USE_LABELED_IPSEC}" \
-%if %{crl_fetching}
+    MANTREE=%{buildroot}%{_mandir} \
+    USE_DNSSEC=true \
+    USE_FIPSCHECK=true \
+    USE_LABELED_IPSEC=true \
     USE_LDAP=true \
+    USE_LIBCAP_NG=true \
     USE_LIBCURL=true \
-%else
-    USE_LDAP=false \
-    USE_LIBCURL=false \
-%endif
-    USE_DNSSEC="%{USE_DNSSEC}" \
-    USE_SECCOMP="%{USE_SECCOMP}" \
+    USE_NM=true \
+    USE_SECCOMP=true \
+    USE_XAUTHPAM=true \
     install
 FS=$(pwd)
 rm -rf %{buildroot}/usr/share/doc/libreswan
@@ -185,18 +147,16 @@ install -d %{buildroot}%{_tmpfilesdir}
 install -m 0644 packaging/rhel/libreswan-tmpfiles.conf  \
     %{buildroot}%{_tmpfilesdir}/libreswan.conf
 
-%if %{USE_FIPSCHECK}
 mkdir -p %{buildroot}%{_libdir}/fipscheck
 install -d %{buildroot}%{_sysconfdir}/prelink.conf.d/
 install -m644 packaging/rhel/libreswan-prelink.conf \
     %{buildroot}%{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
-%endif
 
 echo "include /etc/ipsec.d/*.secrets" \
     > %{buildroot}%{_sysconfdir}/ipsec.secrets
 
 
-%if %{cavstests}
+%if 0%{with_cavstests}
 %check
 # There is an elaborate upstream testing infrastructure which we do not
 # run here.
@@ -221,9 +181,7 @@ export NSS_DISABLE_HW_GCM=1
 
 %post
 %systemd_post ipsec.service
-%if %{USE_FIPSCHECK}
 prelink -u %{_libexecdir}/ipsec/* 2>/dev/null || :
-%endif
 
 %preun
 %systemd_preun ipsec.service
@@ -249,13 +207,11 @@ prelink -u %{_libexecdir}/ipsec/* 2>/dev/null || :
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/pam.d/pluto
 %{_sbindir}/ipsec
 %{_libexecdir}/ipsec
-%attr(0644,root,root) %doc %{_mandir}/*/*
-%if %{USE_FIPSCHECK}
+%doc %{_mandir}/*/*
 %{_libdir}/fipscheck/pluto.hmac
 # We own the directory so we don't have to require prelink
-%attr(0755,root,root) %dir %{_sysconfdir}/prelink.conf.d/
+%dir %{_sysconfdir}/prelink.conf.d/
 %{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
-%endif
 
 %changelog
 * Wed Aug  9 2017 Team Libreswan <team@libreswan.org> - IPSECBASEVERSION-1
