@@ -1,8 +1,8 @@
 # should be empty if east triggered
 hostname | grep west > /dev/null || ipsec whack --trafficstatus
 grep "message ID:" /tmp/pluto.log
-# grep on east 
-hostname | grep west > /dev/null || grep -A 1 "liveness_check - peer has not responded in" /tmp/pluto.log
+# grep on east
+hostname | grep west > /dev/null || grep -A 1 "has not responded in" /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

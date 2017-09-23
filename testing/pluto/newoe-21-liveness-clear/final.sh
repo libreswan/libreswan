@@ -4,7 +4,7 @@ ipsec look
 ipsec look
 grep "message ID:" /tmp/pluto.log
 # grep on east
-hostname |grep west > /dev/null || grep -A 1 "liveness_check - peer has not responded in" OUTPUT/east.pluto.log
+hostname |grep west > /dev/null || grep -A 1 "has not responded in" /tmp/pluto.log
 # A tunnel should have established
 grep "negotiated connection" /tmp/pluto.log
 : ==== cut ====

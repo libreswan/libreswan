@@ -7,7 +7,7 @@ sleep 15
 sleep 15
 sleep 15
 sleep 15
-# kill pluto; host may send ICMP unreachble. with iptables it won't 
+# kill pluto; host may send ICMP unreachble. with iptables it won't
 killall -9 pluto
 # give east time to trigger dpd, which shows up in final.sh
 sleep 20
