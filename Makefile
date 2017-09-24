@@ -593,7 +593,7 @@ showversion:
 showdebversion:
 	@echo ${IPSECVERSION} |  sed "s/^v//" | sed -e "s/\([0-9]\{1,3\}\)\.\([0-9]\{1,3\}\)\(.*\)/\1.\2~\3/" | sed "s/~-/~/"
 showrpmversion:
-	@echo ${IPSECVERSION} |  sed "s/^v//" | sed -e "s/\([0-9]\{1,3\}\)\.\([0-9]\{1,3\}\)\(.*\)/\1.\2_\3/" | sed "s/-/_/g"
+	@echo ${IPSECVERSION} |  sed "s/^v//" | sed -e "s/^v//;s/\([0-9]\{1,3\}\)\.\([0-9]\{1,3\}\)\(.*\)/\1.\2_\3/;s/-/_/g;s/__/_/g"
 showrpmrelease:
 	@echo ${IPSECVERSION} | sed "s/^v//" | sed "s/^[^-]*-\(.*\)/\1/"
 showobjdir:
