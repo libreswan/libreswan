@@ -13,9 +13,6 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-# XXX: Switch directory hack
-config:
-	$(MAKE) -C $(builddir)/$(INITSYSTEM) $@
 # XXX: Both switch directory and change the target.
 local-base:
 	$(MAKE) -C $(builddir)/$(INITSYSTEM) programs
