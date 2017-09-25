@@ -1482,8 +1482,7 @@ void add_connection(const struct whack_message *wm)
 		c->alg_info_esp = NULL;
 		if (wm->esp != NULL) {
 			DBG(DBG_CONTROL,
-				DBG_log("from whack: got --esp=%s",
-					wm->esp == NULL ? "NULL" : wm->esp));
+			    DBG_log("from whack: got --esp=%s", wm->esp));
 
 			struct parser_policy parser_policy = {
 				.ikev1 = LIN(POLICY_IKEV1_ALLOW, wm->policy),
@@ -1502,11 +1501,11 @@ void add_connection(const struct whack_message *wm)
 
 			if (c->policy & POLICY_ENCRYPT)
 				c->alg_info_esp = alg_info_esp_create_from_str(&parser_policy,
-					wm->esp ? wm->esp : "", err_buf, sizeof(err_buf));
+					wm->esp, err_buf, sizeof(err_buf));
 
 			if (c->policy & POLICY_AUTHENTICATE)
 				c->alg_info_esp = alg_info_ah_create_from_str(&parser_policy,
-					wm->esp ? wm->esp : "",  err_buf, sizeof(err_buf));
+					wm->esp,  err_buf, sizeof(err_buf));
 
 			if (c->alg_info_esp == NULL) {
 				loglog(RC_FATAL,
