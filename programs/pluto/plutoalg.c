@@ -207,46 +207,6 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 	return ctx_new;
 }
 
-bool ikev1_verify_esp(int ealg, unsigned int key_len, int aalg,
-			const struct alg_info_esp *alg_info)
-{
-	if (alg_info == NULL)
-		return TRUE;
-
-	if (key_len == 0)
-		key_len = crypto_req_keysize(CRK_ESPorAH, ealg);
-
-	FOR_EACH_ESP_INFO(alg_info, esp_info) {
-		if (esp_info->encrypt->common.id[IKEv1_ESP_ID] == ealg &&
-		    (esp_info->enckeylen == 0 ||
-		     key_len == 0 ||
-		     esp_info->enckeylen == key_len) &&
-		    esp_info->integ->common.id[IKEv1_ESP_ID] == aalg) {
-			return TRUE;
-		}
-	}
-
-	libreswan_log("ESP IPsec Transform [%s (%d), %s] refused",
-		enum_name(&esp_transformid_names, ealg),
-		key_len, enum_name(&auth_alg_names, aalg));
-	return FALSE;
-}
-
-bool ikev1_verify_ah(int aalg, const struct alg_info_esp *alg_info)
-{
-	if (alg_info == NULL)
-		return TRUE;
-
-	FOR_EACH_ESP_INFO(alg_info, esp_info) {	/* really AH */
-		if (esp_info->integ->common.id[IKEv1_ESP_ID] == aalg)
-			return TRUE;
-	}
-
-	libreswan_log("AH IPsec Transform [%s] refused",
-		enum_name(&ah_transformid_names, aalg));
-	return FALSE;
-}
-
 void kernel_alg_show_status(void)
 {
 	unsigned sadb_id;
