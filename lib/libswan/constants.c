@@ -2409,34 +2409,28 @@ const char *bitnamesof(const char *const table[], lset_t val)
 	return bitnamesofb(table, val, bitnamesbuf, sizeof(bitnamesbuf));
 }
 
-const char *show_set_short(enum_names *sd,
-			   lset_t val,
-			   char *b, size_t blen)
+size_t lswlog_enum_lset_short(struct lswlog *buf, enum_names *en, lset_t val)
 {
-	char *const roof = b + blen;
-	char *p = b;
 	unsigned int e;
 
-	passert(blen != 0); /* need room for NUL */
-
 	/* if nothing gets filled in, default to "none" rather than "" */
-	(void) jam_str(b, blen, "none");
+	if (val == LEMPTY) {
+		return lswlogs(buf, "none");
+	}
 
+	size_t size = 0;
+	const char *sep = "";
 	for (e = 0; val != 0; e++) {
 		lset_t bit = LELEM(e);
 
 		if (val & bit) {
-			if (p != b)
-				p = jam_str(p, (size_t)(roof - p), "+");
-
-			struct esb_buf esb;
-
-			p = jam_str(p, (size_t)(roof - p),
-				enum_show_shortb(sd, e, &esb));
+			size += lswlogs(buf, sep);
+			sep = "+";
+			size += lswlog_enum_short(buf, en, e);
 			val -= bit;
 		}
 	}
-	return b;
+	return size;
 }
 
 /* test a set by seeing if all bits have names */

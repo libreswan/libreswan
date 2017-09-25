@@ -115,11 +115,14 @@ ifeq ($(dirs.mk.included.from.srcdir),true)
 # In the source tree ...
 
 srcdir := .
-ifeq ($(top_srcdir),.)
-# avoid ./OBJDIR
-top_builddir := $(OBJDIR)
+ifeq ($(patsubst /%,/,$(OBJDIR)),/)
+  # absolute
+  top_builddir := $(OBJDIR)
+else ifeq ($(top_srcdir),.)
+  # avoid ./OBJDIR
+  top_builddir := $(OBJDIR)
 else
-top_builddir := $(top_srcdir)/$(OBJDIR)
+  top_builddir := $(top_srcdir)/$(OBJDIR)
 endif
 builddir := $(top_builddir)$(call dirs.mk.down.path.from,$(top_srcdir))
 

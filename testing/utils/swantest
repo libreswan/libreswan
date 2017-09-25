@@ -2104,6 +2104,7 @@ def docker_run_script(host, testname, script, timer=90):
 
         output = output.decode('ascii')
         output = output.replace('\r', '')
+        output = output.rstrip(' ') + '\n'
         f_log.writelines(output + prompt)
     f_log.close()
     f_cmds.close()

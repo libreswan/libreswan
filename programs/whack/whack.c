@@ -706,8 +706,9 @@ static const struct option long_opts[] = {
 	PS("ikev2-propose", IKEV2_PROPOSE),
 
 	PS("allow-narrowing", IKEV2_ALLOW_NARROWING),
+#ifdef XAUTH_HAVE_PAM
 	PS("ikev2-pam-authorize", IKEV2_PAM_AUTHORIZE),
-
+#endif
 	PS("sareftrack", SAREF_TRACK),
 	PS("sarefconntrack", SAREF_TRACK_CONNTRACK),
 
@@ -803,10 +804,6 @@ static const struct option long_opts[] = {
 		IMPAIR_IGNORE_HASH_NOTIFY_REQUEST_IX + DO },
 	{ "impair-ignore-hash-notify-resp", no_argument, NULL,
 		IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE_IX + DO },
-	{ "impair-ikev2-exclude-integ-none", no_argument, NULL,
-		IMPAIR_IKEv2_EXCLUDE_INTEG_NONE_IX + DO },
-	{ "impair-ikev2-include-integ-none", no_argument, NULL,
-		IMPAIR_IKEv2_INCLUDE_INTEG_NONE_IX + DO },
 
 	{ "impair", required_argument, NULL, DBGOPT_IMPAIR + OO, },
 
@@ -2010,12 +2007,14 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_XAUTHBY:
-			if (streq(optarg, "pam")) {
-				msg.xauthby = XAUTHBY_PAM;
-				continue;
-			} else if (streq(optarg, "file")) {
+			if (streq(optarg, "file")) {
 				msg.xauthby = XAUTHBY_FILE;
 				continue;
+#ifdef XAUTH_HAVE_PAM
+			} else if (streq(optarg, "pam")) {
+				msg.xauthby = XAUTHBY_PAM;
+				continue;
+#endif
 			} else if (streq(optarg, "alwaysok")) {
 				msg.xauthby = XAUTHBY_ALWAYSOK;
 				continue;
@@ -2114,8 +2113,9 @@ int main(int argc, char **argv)
 			if (ix < 0) {
 				fprintf(stderr, "whack: unrecognized --debug '%s' option ignored",
 					optarg);
+			} else {
+				msg.debugging |= LELEM(ix);
 			}
-			msg.debugging |= LELEM(ix);
 			continue;
 		}
 
@@ -2125,8 +2125,9 @@ int main(int argc, char **argv)
 			if (ix < 0) {
 				fprintf(stderr, "whack: unrecognized --impair '%s' option ignored",
 					optarg);
+			} else {
+				msg.debugging |= LELEM(ix);
 			}
-			msg.debugging |= LELEM(ix);
 			continue;
 		}
 

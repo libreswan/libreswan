@@ -4291,6 +4291,12 @@ IKEv2 transforms:
          lswlog_enum_enum 2 65536: OK
          lswlog_enum_enum_short 2 65536: OK
 
-debug:
-	check: ok
-	flags: raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo+whackwatch+private+impair-bust-mi2+impair-bust-mr2+impair-sa-creation+impair-die-oninfo+impair-jacob-two-two+impair-allow-null-null+impair-major-version-bump+impair-minor-version-bump+impair-retransmits+impair-send-bogus-payload-flag+impair-send-bogus-isakmp-flag+impair-send-ikev2-ke+impair-send-no-delete+impair-send-no-ikev2-auth+impair-send-no-xauth-r0+impair-send-no-main-r2+impair-force-fips+impair-send-key-size-check+impair-send-zero-gx+impair-send-bogus-dcookie+impair-omit-hash-notify+impair-ignore-hash-notify+impair-ignore-hash-notify-resp+impair-ikev2-exclude-integ-none+impair-ikev2-include-integ-none
+lswlog_enum_lset_short:
+
+  debug 1ffff:
+	<<raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo+whackwatch+private>>
+  impair 3fffffe0000:
+	<<bust-mi2+bust-mr2+sa-creation+die-oninfo+jacob-two-two+allow-null-null+major-version-bump+minor-version-bump+retransmits+send-bogus-payload-flag+send-bogus-isakmp-flag+send-ikev2-ke+send-no-delete+send-no-ikev2-auth+send-no-xauth-r0+send-no-main-r2+force-fips+send-key-size-check+send-zero-gx+send-bogus-dcookie+omit-hash-notify+ignore-hash-notify+ignore-hash-notify-resp+ikev2-exclude-integ-none+ikev2-include-integ-none>>
+  debug+impair 20000030001:
+	<<raw+private+impair-bust-mi2+impair-ikev2-include-integ-none>>
+
