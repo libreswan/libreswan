@@ -12,6 +12,7 @@ OBJ.*
 *.pyc
 *.o
 TAGS
+debian/*
 tags
 modobj
 modobj24

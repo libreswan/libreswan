@@ -602,8 +602,9 @@ showobjdir:
 # these need to move elsewhere and get fixed not to use root
 
 deb:
-	sed -i "s/@IPSECBASEVERSION@/`make -s showdebversion`/g" debian/{changelog,NEWS}
-	debuild -i -us -uc -b
+	cp -r --reflink=auto packaging/debian .
+	sed -i "s/@IPSECBASEVERSION@/`make -s showdebversion`/g" debian/changelog
+	debuild -i -us -uc -b -d
 	#debuild -S -sa
 	@echo "to build optional KLIPS kernel module, run make deb-klips"
 

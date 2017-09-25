@@ -1,0 +1,25 @@
+From: Daniel Kahn Gillmor <dkg@fifthhorseman.net>
+Date: Fri, 3 Feb 2017 11:58:10 -0500
+Subject: Try to include the correct headers on MIPS
+
+This comes from upstream, untested, in Message-id:
+alpine.LRH.2.20.1702022022300.25477@bofh.nohats.ca
+---
+ lib/libswan/nss_copies.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/lib/libswan/nss_copies.c b/lib/libswan/nss_copies.c
+index fe19e32..5a20918 100644
+--- a/lib/libswan/nss_copies.c
++++ b/lib/libswan/nss_copies.c
+@@ -3,6 +3,10 @@
+  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+  */
+ 
++#ifdef _MIPS_SIM
++# include <sgidefs.h>
++#endif
++
+ #include <cert.h>
+ #include <secder.h>
+ 
