@@ -1,0 +1,24 @@
+Notes about possible future directions in libreswan debian packaging
+====================================================================
+
+Service status at package installation
+--------------------------------------
+
+libreswan currently ships with an ipsec.service, which is deliberately
+not enabled by default, since it is usually meaningless to enable such
+a service without manual configuration.  The configuration necessary
+is probably too complex to put sanely into debconf.
+
+If an opportunistic/no-configuration-needed mode is functional and
+well-tested enough to run without configuration, we may enable the
+service by default in future versions.
+
+Integration with non-systemd initsystems
+----------------------------------------
+
+The Debian packaging currently only supports integration with systemd.
+It looks like upstream's sysvinit support is relatively untested, and
+other initsystems are not supported upstream at all.  If anyone wants
+to test and help maintain support for alternate initsystems (possibly
+in a separate binary package, e.g. libreswan-runit) that would be
+welcome!

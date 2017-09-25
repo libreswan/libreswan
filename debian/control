@@ -1,51 +1,66 @@
 Source: libreswan
 Section: net
 Priority: optional
-Maintainer: Paul Wouters <paul@libreswan.org>
-Uploaders: Daniel Kahn Gillmor <dkg@fifthhorseman.net>
-Vcs-Browser: https://github.com/libreswan/libreswan
-Vcs-Git: https://github.com/libreswan/libreswan.git
-Standards-Version: 3.9.6
-Build-Depends: bison,
-               bzip2,
-               debhelper (>= 9),
-               electric-fence,
-               flex,
-               htmldoc,
-               pkg-config,
-               libcap-ng-dev,
-               libcurl4-nss-dev,
-               libkrb5-dev,
-               libldap2-dev,
-               libnspr4-dev,
-               libnss3-dev (>= 3.16-1),
-               libnss3-tools,
-               libpam0g-dev,
-               libunbound-dev,
-               libldns-dev,
-               libevent-dev (>= 2.0-1),
-               libsystemd-dev,
-               man2html,
-               xmlto,
-               po-debconf
+Maintainer: Daniel Kahn Gillmor <dkg@fifthhorseman.net>
+Uploaders:
+ Paul Wouters <paul@libreswan.org>,
+ Ondřej Surý <ondrej@debian.org>,
+Vcs-Browser: https://anonscm.debian.org/git/collab-maint/libreswan.git
+Vcs-Git: https://anonscm.debian.org/git/collab-maint/libreswan.git
+Standards-Version: 4.0.1
+Build-Depends:
+ bison,
+ bzip2,
+ debhelper (>= 10~),
+ flex,
+ htmldoc,
+ libaudit-dev [linux-any],
+ libcap-ng-dev [linux-any],
+ libcurl4-nss-dev,
+ libevent-dev,
+ libkrb5-dev,
+ libldap2-dev,
+ libldns-dev,
+ libnspr4-dev,
+ libnss3-dev (>= 3.16.1),
+ libnss3-tools,
+ libpam0g-dev,
+ libselinux1-dev [linux-any],
+ libsystemd-dev,
+ libunbound-dev (>= 1.6.0~),
+ man2html,
+ pkg-config,
+ po-debconf,
+ systemd,
+ xmlto,
 Homepage: https://libreswan.org/
 
 Package: libreswan
 Architecture: any
-Pre-Depends: debconf | debconf-2.0
-Depends: bsdmainutils,
-         host,
-         iproute2 | iproute (>= 20071016-1),
-         libnspr4,
-         libnss3 (>= 3.16-1),
-         libnss3-tools,
-         libunbound2,
-         ${misc:Depends},
-         ${shlibs:Depends}
-Recommends: python
-Provides: ike-server
-Conflicts: ike-server
-Replaces: ike-server
+Pre-Depends:
+ debconf | debconf-2.0,
+Depends:
+ bsdmainutils,
+ dns-root-data,
+ host,
+ iproute2 | iproute (>= 20071016),
+ iptables,
+ libnspr4,
+ libnss3 (>= 3.16),
+ libnss3-tools,
+ libunbound2,
+ systemd,
+ ${misc:Depends},
+ ${shlibs:Depends},
+Recommends:
+ python,
+Provides:
+ ike-server,
+Conflicts:
+ ike-server,
+ strongswan-starter,
+Replaces:
+ ike-server,
 Description: Internet Key Exchange daemon
  Libreswan is an IPsec implementation for Linux. It has support for most
  of the extensions (RFC + IETF drafts) related to IPsec, including
@@ -56,15 +71,3 @@ Description: Internet Key Exchange daemon
  .
  The Libreswan IKE daemon is named pluto. It was inherited from the FreeS/WAN
  project, but provides improved X.509 certificate support and other features.
-
-Package: libreswan-dbg
-Architecture: any
-Section: debug
-Priority: extra
-Depends: libreswan (= ${binary:Version}), ${misc:Depends}
-Description: Internet Key Exchange daemon - debugging symbols
- Libreswan is an IPsec based VPN solution for the Linux kernel. Both
- IKEv1 and IKEv2 protocols are supported.
- .
- This package provides the symbols needed for debugging of libreswan
- binaries.

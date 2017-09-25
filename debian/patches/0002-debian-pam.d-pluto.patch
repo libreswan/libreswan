@@ -1,5 +1,18 @@
---- libreswan-3.16.orig/pam.d/pluto
-+++ libreswan-3.16/pam.d/pluto
+From: Marc-Christian Petersen <m.c.p@gmx.de>
+Date: Wed, 9 Mar 2016 19:22:41 +0200
+Subject: debian-pam.d-pluto
+
+debian: fix /etc/pam.d/pluto to work with debian
+    
+Signed-off-by: Tuomo Soini <tis@foobar.fi>
+---
+ pam.d/pluto | 27 +++++++++++----------------
+ 1 file changed, 11 insertions(+), 16 deletions(-)
+
+diff --git a/pam.d/pluto b/pam.d/pluto
+index 3855385..bb9b22c 100644
+--- a/pam.d/pluto
++++ b/pam.d/pluto
 @@ -1,16 +1,11 @@
 -#%PAM-1.0
 -# Regular System auth

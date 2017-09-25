@@ -1,0 +1,81 @@
+From: Daniel Kahn Gillmor <dkg@fifthhorseman.net>
+Date: Thu, 10 Aug 2017 23:06:01 -0400
+Subject: fix speling
+
+---
+ programs/configs/d.ipsec.conf/uniqueids.xml | 2 +-
+ programs/pluto/ikev2_parent.c               | 6 +++---
+ programs/pluto/ipsec_pluto.8.xml            | 2 +-
+ testing/utils/functions.sh                  | 2 +-
+ 4 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/programs/configs/d.ipsec.conf/uniqueids.xml b/programs/configs/d.ipsec.conf/uniqueids.xml
+index 742a675..05dd572 100644
+--- a/programs/configs/d.ipsec.conf/uniqueids.xml
++++ b/programs/configs/d.ipsec.conf/uniqueids.xml
+@@ -13,7 +13,7 @@ of 3.20) and old connections will never be replaced.  This situation is
+ commonly known as clients using a "Group ID".
+ </para>
+ <para> This option may disappear in the near future. People using identical
+-X.509 certificates on multiple devices are urged to upgrade to use seperate
++X.509 certificates on multiple devices are urged to upgrade to use separate
+ certificates per client and device.
+ </para>
+   </listitem>
+diff --git a/programs/pluto/ikev2_parent.c b/programs/pluto/ikev2_parent.c
+index 00a2774..2875680 100644
+--- a/programs/pluto/ikev2_parent.c
++++ b/programs/pluto/ikev2_parent.c
+@@ -2489,7 +2489,7 @@ struct ikev2_payloads_summary ikev2_decrypt_msg(struct msg_digest *md, bool veri
+ 				md->st->st_serialno,
+ 				enum_name(&ikev2_exchange_names,
+ 					md->hdr.isa_xchg),
+-				status == STF_OK ? "sucess" : "failed"));
++				status == STF_OK ? "success" : "failed"));
+ 
+ 	 enum next_payload_types_ikev2 np = md->chain[ISAKMP_NEXT_v2SK] ?
+ 		md->chain[ISAKMP_NEXT_v2SK]->payload.generic.isag_np :
+@@ -3065,7 +3065,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
+ 
+ 		if (cc != cst->st_connection){
+ 			char cib[CONN_INST_BUF];
+-			DBG_log("Switching Child conection for #%lu to \"%s\"%s"
++			DBG_log("Switching Child connection for #%lu to \"%s\"%s"
+ 					" from \"%s\"%s",
+ 					cst->st_serialno, cc->name,
+ 					fmt_conn_instance(cc, cib),
+@@ -5883,7 +5883,7 @@ bool need_this_intiator(struct state *st)
+ 		return FALSE; /* ignore STATE_V2_CREATE_I ??? */
+ 
+ 	if (c->newest_ipsec_sa > st->st_serialno) {
+-		libreswan_log( "supressing retransmit because superseded by "
++		libreswan_log( "suppressing retransmit because superseded by "
+ 				"#%lu try=%lu. Drop this negotitation",
+ 				c->newest_ipsec_sa, st->st_try);
+ 		return TRUE;
+diff --git a/programs/pluto/ipsec_pluto.8.xml b/programs/pluto/ipsec_pluto.8.xml
+index 412e2e0..32efed3 100644
+--- a/programs/pluto/ipsec_pluto.8.xml
++++ b/programs/pluto/ipsec_pluto.8.xml
+@@ -1346,7 +1346,7 @@
+                 <refentrytitle>ipsec.conf</refentrytitle>
+ 
+                 <manvolnum>5</manvolnum>
+-              </citerefentry> on how to extrac this from the PKCS#12
++              </citerefentry> on how to extract this from the PKCS#12
+             file.</para>
+           </listitem>
+         </varlistentry>
+diff --git a/testing/utils/functions.sh b/testing/utils/functions.sh
+index b4fc4e4..56ee4bf 100755
+--- a/testing/utils/functions.sh
++++ b/testing/utils/functions.sh
+@@ -371,7 +371,7 @@ recordresults() {
+ 	    2) success=false; console=false; packet=true;;
+ 	    99) success="missing 99"; console=false; packet=false;;
+ 	    true)  success=true;;
+-	    false) sucesss=false;;
++	    false) success=false;;
+ 	    succeed) success=true;;
+ 	    fail)  success=false;;
+ 	    yes)   success=true;;
