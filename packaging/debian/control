@@ -1,12 +1,11 @@
 Source: libreswan
 Section: net
 Priority: optional
-Maintainer: Daniel Kahn Gillmor <dkg@fifthhorseman.net>
+Maintainer: Paul Wouters <paul@libreswan.org>
 Uploaders:
  Paul Wouters <paul@libreswan.org>,
- Ondřej Surý <ondrej@debian.org>,
-Vcs-Browser: https://anonscm.debian.org/git/collab-maint/libreswan.git
-Vcs-Git: https://anonscm.debian.org/git/collab-maint/libreswan.git
+Vcs-Browser: https://github.com/antonyantony/libreswan
+Vcs-Git: https://github.com/antonyantony/libreswan
 Standards-Version: 4.0.1
 Build-Depends:
  bison,
