@@ -1,6 +1,6 @@
 
 ---- ESP tests that should succeed ----
-[esp=(NULL)]
+[esp]
 	AES_CBC-HMAC_SHA1_96
 [esp=]
 	ERROR: String ended with invalid char, just after "" (state=ST_INI_EA)
@@ -252,7 +252,7 @@
 	ERROR: ESP DH algorithm must appear once after last proposal
 
 ---- AH tests that should succeed ----
-[ah=(NULL)]
+[ah]
 	HMAC_SHA1_96
 [ah=]
 	ERROR: String ended with invalid char, just after "" (state=ST_INI_AA)
@@ -302,7 +302,7 @@
 	ERROR: AH integrity algorithm 'ripemd' is not recognized, enc_alg=""(0), auth_alg="ripemd", modp=""
 
 ---- IKE tests that should succeed ----
-[ike=(NULL)]
+[ike]
 	AES_CBC-HMAC_SHA2_256-MODP2048
 	AES_CBC-HMAC_SHA2_512-MODP2048
 	AES_CBC-HMAC_SHA1-MODP2048

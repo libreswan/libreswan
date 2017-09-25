@@ -9,10 +9,12 @@
 #include "ike_alg.h"
 #include "alg_info.h"
 
-
 #define CHECK(TYPE,PARSE) {						\
-		printf("[%s=%s]\n",					\
-		       #PARSE, algstr == NULL ? "(NULL)" : algstr);	\
+		if (algstr == NULL) {					\
+			printf("[%s]\n", #PARSE);			\
+		} else {						\
+			printf("[%s=%s]\n", #PARSE, algstr);		\
+		}							\
 		fflush(NULL);						\
 		char err_buf[512] = "";	/* ??? big enough? */		\
 		struct alg_info_##TYPE *e =				\
@@ -69,15 +71,50 @@ static void ike(struct parser_policy policy, const char *algstr)
 	CHECK(ike, ike);
 }
 
+typedef void (protocol_t)(struct parser_policy policy, const char *);
+
+struct protocol {
+	const char *name;
+	protocol_t *parser;
+};
+
+const struct protocol protocols[] = {
+	{ "ike", ike, },
+	{ "ah", ah, },
+	{ "esp", esp, },
+};
+
 static void all(const struct parser_policy policy, const char *algstr)
 {
-	typedef void (protocol_t)(struct parser_policy policy, const char *);
-	protocol_t *const protocols[] = { ike, ah, esp, NULL, };
-	for (protocol_t *const *protocol = protocols;
-	     *protocol != NULL;
+	for (const struct protocol *protocol = protocols;
+	     protocol < protocols + elemsof(protocols);
 	     protocol++) {
-		(*protocol)(policy, algstr);
+		protocol->parser(policy, algstr);
 	}
+}
+
+static void test_proposal(const struct parser_policy policy, const char *arg)
+{
+	const char *eq = strchr(arg, '=');
+	for (const struct protocol *protocol = protocols;
+	     protocol < protocols + elemsof(protocols);
+	     protocol++) {
+#define starts_with(ARG,STRING) strncmp(ARG,STRING,strlen(STRING))
+		if (streq(arg, protocol->name)) {
+			protocol->parser(policy, NULL);
+			return;
+		}
+		if (starts_with(arg, protocol->name)
+		    && arg + strlen(protocol->name) == eq) {
+			protocol->parser(policy, eq + 1);
+			return;
+		}
+	}
+	if (eq != NULL) {
+		fprintf(stderr, "unrecognized PROTOCOL in '%s'", arg);
+		exit(1);
+	}
+	all(policy, arg);
 }
 
 static void test(const struct parser_policy policy)
@@ -289,12 +326,27 @@ static void test(const struct parser_policy policy)
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: <option> ... [ [ike|esp|ah=]<proposals> ...]\n");
-	fprintf(stderr, "  -v1: algorithm requires IKEv1 support\n");
-	fprintf(stderr, "  -v2: algorithm requires IKEv2 support\n");
-	fprintf(stderr, "  -fips: put NSS in FIPS mode\n");
-	fprintf(stderr, "  -v: more verbose\n");
-	fprintf(stderr, "  -t: run test suite\n");
+	fprintf(stderr,
+		""
+		"Usage:\n"
+		"  algparse [ <option> ... ] -t | <protocol> | <proposals> | <protocol>=<proposals>\n"
+		"Where:\n"
+		"  -v1: only IKEv1 algorithms\n"
+		"  -v2: only IKEv2 algorithms\n"
+		"  -fips: put NSS in FIPS mode\n"
+		"  -v: more verbose\n"
+		"  -t: run testsuite\n"
+		"  <protocol>: the protocol, one of 'ike', 'esp', or 'ah'\n"
+		"  <proposals>: a comma separated list of proposals to parse\n"
+		"For instance:\n"
+		"  algparse -v1 ike\n"
+		"        expand the default IKEv1 'ike' algorithm table\n"
+		"        (with IKEv1, this is the default algorithms, with IKEv2 it is not)\n"
+		"  algparse -v1 ike=esp\n"
+		"        expand 'aes' using the IKEv1 'ike' parser and defaults\n"
+		"  algparse -v1 aes\n"
+		"        expand 'aes' using the the IKEv1 'ike', 'esp', and 'ah' parsers and defaults\n"
+		);
 }
 
 int main(int argc, char *argv[])
@@ -370,20 +422,7 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 		for (; *argp != NULL; argp++) {
-			const char *arg = *argp;
-			/*
-			 * now parse [PROTOCOL=]...
-			 */
-#define starts_with(ARG,STRING) strncmp(ARG,STRING,strlen(STRING))
-			if (starts_with(arg, "ike=") == 0) {
-				ike(policy, arg + 4);
-			} else if (starts_with(arg, "esp=") == 0) {
-				esp(policy, arg + 4);
-			} else if (starts_with(arg, "ah=") == 0) {
-				ah(policy, arg + 3);
-			} else {
-				all(policy, arg);
-			}
+			test_proposal(policy, *argp);
 		}
 	} else if (run_tests) {
 		test(policy);
