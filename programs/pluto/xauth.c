@@ -25,6 +25,7 @@
 #include "state.h"
 #include "server.h"
 #include "id.h"
+#include "pluto_stats.h"
 
 pthread_t main_thread;
 
@@ -62,6 +63,7 @@ void xauth_delete(so_serial_t serialno, struct xauth **xauthp,
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("XAUTH: #%lu: main-thread: no thread to delete (never started or already aborted)", serialno));
 	} else {
+		pstats_xauth_aborted++;
 		passert(!xauth->abort);
 		passert(xauth->serialno == serialno);
 		libreswan_log("XAUTH: #%lu: main-thread: aborting authentication %s-thread for '%s'",
@@ -84,6 +86,7 @@ static void xauth_cleanup_callback(evutil_socket_t socket UNUSED,
 				   const short event UNUSED,
 				   void *arg)
 {
+	pstats_xauth_stopped++;
 	passert(pthread_equal(main_thread, pthread_self()));
 
 	struct xauth *xauth = arg;
@@ -205,6 +208,7 @@ static void xauth_start_thread(struct xauth **xauthp,
 		return;
 	}
 	*xauthp = xauth;
+	pstats_xauth_started++;
 };
 
 #ifdef XAUTH_HAVE_PAM

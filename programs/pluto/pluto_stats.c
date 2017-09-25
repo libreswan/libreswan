@@ -73,6 +73,9 @@ unsigned long pstats_ipsec_tfc;
 unsigned long pstats_ike_dpd_recv;
 unsigned long pstats_ike_dpd_sent;
 unsigned long pstats_ike_dpd_replied;
+unsigned long pstats_xauth_started;
+unsigned long pstats_xauth_stopped;
+unsigned long pstats_xauth_aborted;
 
 static void enum_stats(enum_names *en, unsigned long lwb, unsigned long upb, const char *what, unsigned long count[])
 {
@@ -114,6 +117,10 @@ void show_pluto_stats()
 	whack_log_comment("total.ike.dpd.replied=%lu", pstats_ike_dpd_replied);
 	whack_log_comment("total.ike.traffic.in=%lu", pstats_ike_in_bytes);
 	whack_log_comment("total.ike.traffic.out=%lu", pstats_ike_out_bytes);
+
+	whack_log_comment("total.xauth.started=%lu", pstats_xauth_started);
+	whack_log_comment("total.xauth.stopped=%lu", pstats_xauth_stopped);
+	whack_log_comment("total.xauth.aborted=%lu", pstats_xauth_aborted);
 
 	enum_stats(&oakley_enc_names, OAKLEY_3DES_CBC, OAKLEY_CAMELLIA_CCM_C, "ikev1.encr", pstats_ikev1_encr);
 	enum_stats(&oakley_hash_names, OAKLEY_MD5, OAKLEY_SHA2_512, "ikev1.integ", pstats_ikev1_integ);
@@ -158,6 +165,7 @@ void clear_pluto_stats()
 	pstats_ipsec_encap_yes = pstats_ipsec_encap_no = 0;
 	pstats_ipsec_esn = pstats_ipsec_tfc = 0;
 	pstats_ike_dpd_recv = pstats_ike_dpd_sent = pstats_ike_dpd_replied = 0;
+	pstats_xauth_started = pstats_xauth_stopped = pstats_xauth_aborted = 0;
 
 	memset(pstats_ikev1_encr, 0, sizeof pstats_ikev1_encr);
 	memset(pstats_ikev2_encr, 0, sizeof pstats_ikev2_encr);

@@ -55,6 +55,10 @@ extern unsigned long pstats_ike_dpd_recv;
 extern unsigned long pstats_ike_dpd_sent;
 extern unsigned long pstats_ike_dpd_replied;
 
+extern unsigned long pstats_xauth_started;
+extern unsigned long pstats_xauth_stopped;
+extern unsigned long pstats_xauth_aborted;
+
 extern void show_pluto_stats();
 extern void clear_pluto_stats();
 
