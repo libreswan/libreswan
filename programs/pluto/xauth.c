@@ -60,13 +60,9 @@ void xauth_delete(so_serial_t serialno, struct xauth **xauthp,
 
 	if (xauth == NULL) {
 		DBG(DBG_CONTROLMORE,
-		    DBG_log("XAUTH: #%lu: main-thread: no thread to abort", serialno));
-	} else if (xauth->abort) {
-		passert(xauth->serialno == serialno);
-		DBG(DBG_CONTROL,
-		    DBG_log("XAUTH: #%lu: main-thread: %s-thread for '%s' already aborted",
-			    serialno, xauth->method, xauth->name));
+		    DBG_log("XAUTH: #%lu: main-thread: no thread to delete (never started or already aborted)", serialno));
 	} else {
+		passert(!xauth->abort);
 		passert(xauth->serialno == serialno);
 		libreswan_log("XAUTH: #%lu: main-thread: aborting authentication %s-thread for '%s'",
 			      serialno, xauth->method, xauth->name);
