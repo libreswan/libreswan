@@ -201,44 +201,62 @@ static bool out_attr(int type,
 	return TRUE;
 }
 
-static bool ikev1_verify_esp(int ealg, unsigned int key_len, int aalg,
+static bool ikev1_verify_esp(const struct encrypt_desc *encrypt,
+			     unsigned key_len,
+			     const struct integ_desc *integ,
 			     const struct alg_info_esp *alg_info)
 {
-	if (alg_info == NULL)
-		return TRUE;
+	if (encrypt == NULL) {
+		libreswan_log("ESP IPsec Transform refused: missing encryption algorithm");
+		return false;
+	}
+	if (integ == NULL) {
+		libreswan_log("ESP IPsec Transform refused: missing integrity algorithm");
+		return false;
+	}
 
-	if (key_len == 0)
-		key_len = crypto_req_keysize(CRK_ESPorAH, ealg);
+	passert(alg_info != NULL);
+
+	if (key_len == 0) {
+		key_len = crypto_req_keysize(CRK_ESPorAH,
+					     encrypt->common.id[IKEv1_ESP_ID]);
+	}
 
 	FOR_EACH_ESP_INFO(alg_info, esp_info) {
-		if (esp_info->encrypt->common.id[IKEv1_ESP_ID] == ealg &&
+		if (esp_info->encrypt == encrypt &&
 		    (esp_info->enckeylen == 0 ||
 		     key_len == 0 ||
 		     esp_info->enckeylen == key_len) &&
-		    esp_info->integ->common.id[IKEv1_ESP_ID] == aalg) {
-			return TRUE;
+		    esp_info->integ == integ) {
+			return true;
 		}
 	}
 
-	libreswan_log("ESP IPsec Transform [%s (%d), %s] refused",
-		enum_name(&esp_transformid_names, ealg),
-		key_len, enum_name(&auth_alg_names, aalg));
-	return FALSE;
+	libreswan_log("ESP IPsec Transform refused: %s_%d-%s",
+		      encrypt->common.fqn, key_len,
+		      integ->common.fqn);
+	return false;
 }
 
-static bool ikev1_verify_ah(int aalg, const struct alg_info_esp *alg_info)
+static bool ikev1_verify_ah(const struct integ_desc *integ,
+			    const struct alg_info_esp *alg_info)
 {
-	if (alg_info == NULL)
-		return TRUE;
-
-	FOR_EACH_ESP_INFO(alg_info, esp_info) {	/* really AH */
-		if (esp_info->integ->common.id[IKEv1_ESP_ID] == aalg)
-			return TRUE;
+	if (integ == NULL) {
+		libreswan_log("AH IPsec Transform refused: missing integrity algorithm");
+		return false;
 	}
 
-	libreswan_log("AH IPsec Transform [%s] refused",
-		enum_name(&ah_transformid_names, aalg));
-	return FALSE;
+	passert(alg_info != NULL);
+
+	FOR_EACH_ESP_INFO(alg_info, esp_info) {	/* really AH */
+		if (esp_info->integ == integ) {
+			return true;
+		}
+	}
+
+	libreswan_log("AH IPsec Transform refused: %s",
+		      integ->common.fqn);
+	return false;
 }
 
 #define return_on(var, val) { (var) = (val); goto return_out; }
@@ -2508,8 +2526,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 			/* Check AH proposal with configuration */
 			if (c->alg_info_esp != NULL &&
-			    !ikev1_verify_ah(ah_attrs.transattrs.ta_ikev1_integ_hash,
-					c->alg_info_esp)) {
+			    !ikev1_verify_ah(ah_attrs.transattrs.ta_integ,
+					     c->alg_info_esp)) {
 				continue;
 			}
 			ah_attrs.spi = ah_spi;
@@ -2646,10 +2664,10 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 			/* check for allowed transforms in alg_info_esp */
 			if (c->alg_info_esp != NULL &&
-			    !ikev1_verify_esp(esp_attrs.transattrs.ta_ikev1_encrypt,
-						     esp_attrs.transattrs.enckeylen,
-						     esp_attrs.transattrs.ta_ikev1_integ_hash,
-						     c->alg_info_esp))
+			    !ikev1_verify_esp(esp_attrs.transattrs.ta_encrypt,
+					      esp_attrs.transattrs.enckeylen,
+					      esp_attrs.transattrs.ta_integ,
+					      c->alg_info_esp))
 				continue;
 			esp_attrs.spi = esp_spi;
 			inner_proto = IPPROTO_ESP;
