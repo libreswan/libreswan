@@ -604,7 +604,7 @@ showobjdir:
 deb:
 	cp -r --reflink=auto packaging/debian .
 	sed -i "s/@IPSECBASEVERSION@/`make -s showdebversion`/g" debian/changelog
-	debuild -i -us -uc -b
+	debuild -i -us -uc -b -d
 	#debuild -S -sa
 	@echo "to build optional KLIPS kernel module, run make deb-klips"
 
