@@ -6,7 +6,7 @@ Uploaders:
  Paul Wouters <paul@libreswan.org>,
 Vcs-Browser: https://github.com/antonyantony/libreswan
 Vcs-Git: https://github.com/antonyantony/libreswan
-Standards-Version: 4.0.1
+Standards-Version: 4.1.0
 Build-Depends:
  bison,
  bzip2,
