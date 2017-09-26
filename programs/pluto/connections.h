@@ -128,10 +128,6 @@ typedef uint32_t policy_prio_t;
 #define POLICY_PRIO_BUF (3 + 1 + 3 + 1 + 10)	/* (10 is to silence GCC) */
 extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
 
-#ifdef XAUTH_HAVE_PAM
-# include <security/pam_appl.h>	/* from pam devel; needed for pam_handle_t */
-#endif
-
 /* Note that we include this even if not X509, because we do not want the
  * structures to change lots.
  */
@@ -325,9 +321,6 @@ struct connection {
 	struct connection *ac_next;	/* all connections list link */
 
 	enum send_ca_policy send_ca;
-#ifdef XAUTH_HAVE_PAM
-	pam_handle_t *pamh;		/*  PAM handle for that connection  */
-#endif
 	char *dnshostname;
 
 	ip_address modecfg_dns1;

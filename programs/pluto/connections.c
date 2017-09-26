@@ -1780,9 +1780,6 @@ void add_connection(const struct whack_message *wm)
 		 * need one. Does CK_TEMPLATE need one?
 		 */
 		c->spd.reqid = c->sa_reqid == 0 ? gen_reqid() : c->sa_reqid;
-#ifdef XAUTH_HAVE_PAM
-		c->pamh = NULL;
-#endif
 
 		/* force all oppo connections to have a client */
 		if (c->policy & POLICY_OPPORTUNISTIC) {

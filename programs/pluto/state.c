@@ -49,9 +49,7 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
 #include "xauth.h"		/* for xauth_cancel() */
-#endif
 #include "connections.h"	/* needs id.h */
 #include "state.h"
 #include "ikev1_msgid.h"
@@ -990,9 +988,7 @@ void delete_state(struct state *st)
 		unset_suspended(st);
 	}
 
-#ifdef XAUTH_HAVE_PAM
 	xauth_delete(st->st_serialno, &st->st_xauth, NULL);
-#endif
 
 	/* If DPD is enabled on this state object, clear any pending events */
 	if (st->st_dpd_event != NULL)

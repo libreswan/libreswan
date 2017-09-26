@@ -28,7 +28,6 @@
 #ifndef _STATE_H
 #define _STATE_H
 
-#include <pthread.h>    /* Must be the first include file */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -38,10 +37,6 @@
 #include <nss.h>
 #include <pk11pub.h>
 #include <x509.h>
-
-#ifdef XAUTH_HAVE_PAM
-# include <signal.h>
-#endif
 
 #include "labeled_ipsec.h"	/* for struct xfrm_user_sec_ctx_ike and friends */
 #include "state_entry.h"
@@ -661,9 +656,6 @@ extern void set_newest_ipsec_sa(const char *m, struct state *const st);
 extern void update_ike_endpoints(struct state *st, const struct msg_digest *md);
 extern void ikev2_expire_unused_parent(struct state *pst);
 
-#ifdef XAUTH_HAVE_PAM
-void ikev2_free_auth_pam(so_serial_t st_serialno);
-#endif
 bool shared_phase1_connection(const struct connection *c);
 
 #endif /* _STATE_H */
