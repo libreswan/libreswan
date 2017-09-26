@@ -56,7 +56,7 @@ void xauth_delete(so_serial_t serialno, struct xauth **xauthp,
 
 	passert(xauthp != NULL);
 	struct xauth *xauth = *xauthp;
-	xauthp = NULL;
+	*xauthp = NULL;
 
 	if (xauth == NULL) {
 		DBG(DBG_CONTROLMORE,
