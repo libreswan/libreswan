@@ -45,13 +45,14 @@ struct xauth {
 };
 
 /*
- * Delete the transaction.
+ * Abort the transaction, disconnecting it from state.
  *
  * Need to pass in serialno so that something sane can be logged when
- * the xauth request has already been deleted.
+ * the xauth request has already been deleted.  Need to pass in
+ * st_callback, but only when it needs to notify an abort.
  */
-void xauth_delete(so_serial_t serialno, struct xauth **xauthp,
-		  struct state *st_callback)
+void xauth_abort(so_serial_t serialno, struct xauth **xauthp,
+		 struct state *st_callback)
 {
 	passert(pthread_equal(main_thread, pthread_self()));
 
@@ -60,8 +61,8 @@ void xauth_delete(so_serial_t serialno, struct xauth **xauthp,
 	*xauthp = NULL;
 
 	if (xauth == NULL) {
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("XAUTH: #%lu: main-thread: no thread to delete (never started or already aborted)", serialno));
+		PEXPECT_LOG("XAUTH: #%lu: main-thread: no thread to abort (already aborted?)",
+			    serialno);
 	} else {
 		pstats_xauth_aborted++;
 		passert(!xauth->abort);

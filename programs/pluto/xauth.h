@@ -24,8 +24,8 @@ struct xauth;
 /*
  * XXX: Should XAUTH handle timeouts internall?
  */
-void xauth_delete(so_serial_t serialno, struct xauth **xauth,
-		  struct state *st_callback);
+void xauth_abort(so_serial_t serialno, struct xauth **xauth,
+		 struct state *st_callback);
 
 #ifdef XAUTH_HAVE_PAM
 void xauth_start_pam_thread(struct xauth **xauth,

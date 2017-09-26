@@ -988,7 +988,9 @@ void delete_state(struct state *st)
 		unset_suspended(st);
 	}
 
-	xauth_delete(st->st_serialno, &st->st_xauth, NULL);
+	if (st->st_xauth != NULL) {
+		xauth_abort(st->st_serialno, &st->st_xauth, NULL);
+	}
 
 	/* If DPD is enabled on this state object, clear any pending events */
 	if (st->st_dpd_event != NULL)

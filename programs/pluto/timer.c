@@ -914,7 +914,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		 * This immediately invokes the callback passing in
 		 * ST.
 		 */
-		xauth_delete(st->st_serialno, &st->st_xauth, st);
+		xauth_abort(st->st_serialno, &st->st_xauth, st);
 		/*
 		 * Removed this call, presumably it was needed because
 		 * the call back didn't fire until later?
