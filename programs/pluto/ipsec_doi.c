@@ -379,7 +379,7 @@ void ipsecdoi_replace(struct state *st,
 				policy |= POLICY_TUNNEL;
 		}
 		if (st->st_esp.present &&
-		    st->st_esp.attrs.transattrs.ta_ikev1_encrypt != ESP_NULL) {
+		    st->st_esp.attrs.transattrs.ta_encrypt != &ike_alg_encrypt_null) {
 			policy |= POLICY_ENCRYPT;
 			if (st->st_esp.attrs.encapsulation ==
 			    ENCAPSULATION_MODE_TUNNEL)
