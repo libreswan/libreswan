@@ -201,61 +201,95 @@ static bool out_attr(int type,
 	return TRUE;
 }
 
-static bool ikev1_verify_esp(const struct encrypt_desc *encrypt,
-			     unsigned key_len,
-			     const struct integ_desc *integ,
+static bool ikev1_verify_esp(const struct trans_attrs *ta,
 			     const struct alg_info_esp *alg_info)
 {
-	if (encrypt == NULL) {
+	if (ta->ta_encrypt == NULL) {
 		libreswan_log("ESP IPsec Transform refused: missing encryption algorithm");
 		return false;
 	}
-	if (integ == NULL) {
+	if (ta->ta_prf != NULL) {
+		PEXPECT_LOG("ESP IPsec Transform refused: contains unexpected PRF %s",
+			    ta->ta_prf->common.fqn);
+		return false;
+	}
+	if (ta->ta_integ == NULL) {
 		libreswan_log("ESP IPsec Transform refused: missing integrity algorithm");
 		return false;
 	}
+	if (ta->ta_dh != NULL) {
+		PEXPECT_LOG("ESP IPsec Transform refused: contains unexpected DH %s",
+			    ta->ta_dh->common.fqn);
+		return false;
+	}
+	if (alg_info == NULL) {
+		DBG(DBG_CONTROL,
+		    DBG_log("ESP IPsec Transform verified unconditionally; no alg_info to check against"));
+		return true;
+	}
 
-	passert(alg_info != NULL);
-
+	unsigned key_len = ta->enckeylen;
 	if (key_len == 0) {
 		key_len = crypto_req_keysize(CRK_ESPorAH,
-					     encrypt->common.id[IKEv1_ESP_ID]);
+					     ta->ta_encrypt->common.id[IKEv1_ESP_ID]);
 	}
 
 	FOR_EACH_ESP_INFO(alg_info, esp_info) {
-		if (esp_info->encrypt == encrypt &&
+		if (esp_info->encrypt == ta->ta_encrypt &&
 		    (esp_info->enckeylen == 0 ||
 		     key_len == 0 ||
 		     esp_info->enckeylen == key_len) &&
-		    esp_info->integ == integ) {
+		    esp_info->integ == ta->ta_integ) {
+			DBG(DBG_CONTROL,
+			    DBG_log("ESP IPsec Transform verified; matches alg_info entry"));
 			return true;
 		}
 	}
 
 	libreswan_log("ESP IPsec Transform refused: %s_%d-%s",
-		      encrypt->common.fqn, key_len,
-		      integ->common.fqn);
+		      ta->ta_encrypt->common.fqn, key_len,
+		      ta->ta_integ->common.fqn);
 	return false;
 }
 
-static bool ikev1_verify_ah(const struct integ_desc *integ,
+static bool ikev1_verify_ah(const struct trans_attrs *ta,
 			    const struct alg_info_esp *alg_info)
 {
-	if (integ == NULL) {
+	if (ta->ta_encrypt != NULL) {
+		PEXPECT_LOG("AH IPsec Transform refused: contains unexpected encryption %s",
+			    ta->ta_encrypt->common.fqn);
+		return false;
+	}
+	if (ta->ta_prf != NULL) {
+		PEXPECT_LOG("AH IPsec Transform refused: contains unexpected PRF %s",
+			    ta->ta_prf->common.fqn);
+		return false;
+	}
+	if (ta->ta_integ == NULL) {
 		libreswan_log("AH IPsec Transform refused: missing integrity algorithm");
 		return false;
 	}
-
-	passert(alg_info != NULL);
+	if (ta->ta_dh != NULL) {
+		PEXPECT_LOG("AH IPsec Transform refused: contains unexpected DH %s",
+			    ta->ta_dh->common.fqn);
+		return false;
+	}
+	if (alg_info == NULL) {
+		DBG(DBG_CONTROL,
+		    DBG_log("AH IPsec Transform verified unconditionally; no alg_info to check against"));
+		return true;
+	}
 
 	FOR_EACH_ESP_INFO(alg_info, esp_info) {	/* really AH */
-		if (esp_info->integ == integ) {
+		if (esp_info->integ == ta->ta_integ) {
+			DBG(DBG_CONTROL,
+			    DBG_log("ESP IPsec Transform verified; matches alg_info entry"));
 			return true;
 		}
 	}
 
 	libreswan_log("AH IPsec Transform refused: %s",
-		      integ->common.fqn);
+		      ta->ta_integ->common.fqn);
 	return false;
 }
 
@@ -885,19 +919,31 @@ lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */)
 	return policy;
 }
 
-static bool isakmp_ok_final(const struct trans_attrs *ta,
-			    struct alg_info_ike *alg_info_ike)
+static bool ikev1_verify_ike(const struct trans_attrs *ta,
+			     struct alg_info_ike *alg_info_ike)
 {
 	if (ta->ta_encrypt == NULL) {
-		loglog(RC_LOG_SERIOUS, "missing encryption");
+		loglog(RC_LOG_SERIOUS,
+		       "OAKLEY proposal refused: missing encryption");
 		return false;
 	}
 	if (ta->ta_prf == NULL) {
-		loglog(RC_LOG_SERIOUS, "missing PRF");
+		loglog(RC_LOG_SERIOUS,
+		       "OAKLEY proposal refused: missing PRF");
+		return false;
+	}
+	if (ta->ta_integ != NULL) {
+		PEXPECT_LOG("OAKLEY proposal refused: contains unexpected integrity %s",
+			    ta->ta_prf->common.fqn);
 		return false;
 	}
 	if (ta->ta_dh == NULL) {
-		loglog(RC_LOG_SERIOUS, "missing DH");
+		loglog(RC_LOG_SERIOUS, "OAKLEY proposal refused: missing DH");
+		return false;
+	}
+	if (alg_info_ike == NULL) {
+		DBG(DBG_CONTROL,
+		    DBG_log("OAKLEY proposal verified unconditionally; no alg_info to check against"));
 		return false;
 	}
 
@@ -907,33 +953,30 @@ static bool isakmp_ok_final(const struct trans_attrs *ta,
 	 */
 	bool ealg_insecure = (ta->enckeylen < 128);
 
-	if (ealg_insecure || alg_info_ike != NULL) {
-		if (alg_info_ike != NULL) {
-			FOR_EACH_IKE_INFO(alg_info_ike, ike_info) {
-				if (ike_info->encrypt == ta->ta_encrypt &&
-				    (ike_info->enckeylen == 0 ||
-				     ta->enckeylen == 0 ||
-				     ike_info->enckeylen == ta->enckeylen) &&
-				    ike_info->prf == ta->ta_prf &&
-				    ike_info->dh == ta->ta_dh) {
-					if (ealg_insecure) {
-						loglog(RC_LOG_SERIOUS,
-						       "You should NOT use insecure/broken IKE algorithms (%s)!",
-						       ta->ta_encrypt->common.fqn);
-					}
-					return TRUE;
-				}
+	FOR_EACH_IKE_INFO(alg_info_ike, ike_info) {
+		if (ike_info->encrypt == ta->ta_encrypt &&
+		    (ike_info->enckeylen == 0 ||
+		     ta->enckeylen == 0 ||
+		     ike_info->enckeylen == ta->enckeylen) &&
+		    ike_info->prf == ta->ta_prf &&
+		    ike_info->dh == ta->ta_dh) {
+			if (ealg_insecure) {
+				loglog(RC_LOG_SERIOUS,
+				       "You should NOT use insecure/broken IKE algorithms (%s)!",
+				       ta->ta_encrypt->common.fqn);
 			}
+			DBG(DBG_CONTROL,
+			    DBG_log("OAKLEY proposal verified; matching alg_info found"));
+			return true;
 		}
-		libreswan_log("Oakley Transform [%s (%d), %s, %s] refused%s",
-			      ta->ta_encrypt->common.fqn, ta->enckeylen,
-			      ta->ta_prf->common.fqn, ta->ta_dh->common.fqn,
-			      ealg_insecure ?
-			      " due to insecure key_len and enc. alg. not listed in \"ike\" string" :
-			      "");
-		return FALSE;
 	}
-	return TRUE;
+	libreswan_log("Oakley Transform [%s (%d), %s, %s] refused%s",
+		      ta->ta_encrypt->common.fqn, ta->enckeylen,
+		      ta->ta_prf->common.fqn, ta->ta_dh->common.fqn,
+		      ealg_insecure ?
+		      " due to insecure key_len and enc. alg. not listed in \"ike\" string" :
+		      "");
+	return false;
 }
 
 /**
@@ -1493,9 +1536,12 @@ rsasig_common:
 		 * ML: at last check for allowed transforms in alg_info_ike
 		 */
 		if (ugh == NULL) {
-			if (!isakmp_ok_final(&ta, c->alg_info_ike)) {
-					ugh = "OAKLEY proposal refused";
-					loglog(RC_LOG_SERIOUS, "%s", ugh);
+			if (!ikev1_verify_ike(&ta, c->alg_info_ike)) {
+				/*
+				 * already logged; UGH acts as a skip
+				 * rest of checks flag
+				 */
+				ugh = "OAKLEY proposal refused";
 			}
 		}
 
@@ -2525,8 +2571,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				continue; /* we didn't find a nice one */
 
 			/* Check AH proposal with configuration */
-			if (c->alg_info_esp != NULL &&
-			    !ikev1_verify_ah(ah_attrs.transattrs.ta_integ,
+			if (!ikev1_verify_ah(&ah_attrs.transattrs,
 					     c->alg_info_esp)) {
 				continue;
 			}
@@ -2663,10 +2708,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				continue; /* we didn't find a nice one */
 
 			/* check for allowed transforms in alg_info_esp */
-			if (c->alg_info_esp != NULL &&
-			    !ikev1_verify_esp(esp_attrs.transattrs.ta_encrypt,
-					      esp_attrs.transattrs.enckeylen,
-					      esp_attrs.transattrs.ta_integ,
+			if (!ikev1_verify_esp(&esp_attrs.transattrs,
 					      c->alg_info_esp))
 				continue;
 			esp_attrs.spi = esp_spi;
