@@ -174,7 +174,7 @@ static bool get_keyval_chunk(struct p_dns_req *dnsr, ldns_rdf *rdf,
 			&bin_len, err_buf, sizeof(err_buf), 0);
 
 	if (ugh != NULL) {
-		loglog(RC_LOG_SERIOUS, "converting base64 pubkey to binary faild %s", ugh);
+		loglog(RC_LOG_SERIOUS, "converting base64 pubkey to binary failed %s", ugh);
 		ret = FALSE;
 	}
 
