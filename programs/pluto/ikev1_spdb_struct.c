@@ -944,7 +944,7 @@ static bool ikev1_verify_ike(const struct trans_attrs *ta,
 	if (alg_info_ike == NULL) {
 		DBG(DBG_CONTROL,
 		    DBG_log("OAKLEY proposal verified unconditionally; no alg_info to check against"));
-		return false;
+		return true;
 	}
 
 	/*
