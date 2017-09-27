@@ -95,6 +95,7 @@ kvmplutotest	ikev2-02-responder-send-notify		good
 kvmplutotest	ikev2-03-basic-rawrsa			good
 kvmplutotest	ikev2-04-basic-x509			good
 kvmplutotest	ikev2-04-basic-x509-ckaid		good
+kvmplutotest	ikev2-04-basic-x509-no-ca		good
 kvmplutotest	ikev2-05-basic-psk			good
 kvmplutotest	ikev2-dcookie-01			good
 kvmplutotest	ikev2-dcookie-02			good
@@ -461,6 +462,7 @@ kvmplutotest	ikev1-27-uniqueid		good
 
 kvmplutotest	ikev1-rekey-connswitch	good
 kvmplutotest	ikev2-rekey-connswitch	good
+kvmplutotest	ikev1-ikev2-connswitch-01 good
 
 #
 # a test of using X.509 keys
