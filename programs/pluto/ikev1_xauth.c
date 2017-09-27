@@ -2103,7 +2103,7 @@ static stf_status xauth_client_resp(struct state *st,
 					}
 
 					if (st->st_xauth_password.ptr == NULL) {
-						char xauth_password[64];
+						char xauth_password[XAUTH_MAX_PASS_LENGTH];
 
 						if (st->st_whack_sock == -1) {
 							loglog(RC_LOG_SERIOUS,
