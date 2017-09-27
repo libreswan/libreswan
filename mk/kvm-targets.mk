@@ -611,8 +611,6 @@ $(foreach prefix, $(KVM_PREFIXES), \
 #
 # Rules to uninstall individual domains
 #
-# Note that these low-level rules do not uninstall the networks.
-#
 
 define uninstall-kvm-domain
   #(info uninstall-kvm-domain domain=$(1) dir=$(2))
@@ -636,10 +634,21 @@ $(foreach domain, $(KVM_BASE_DOMAIN), \
 $(foreach domain, $(KVM_CLONE_DOMAIN) $(KVM_TEST_DOMAINS), \
 	$(eval $(call uninstall-kvm-domain,$(domain),$(KVM_CLONEDIR))))
 
+# Direct dependencies.  This is so that a primitive like
+# uninstall-kvm-domain-clone isn't run until all its dependencies,
+# such as uninstall-kvm-domain-build, have been run.  Using
+# kvm-uninstall-* rules leads to indirect dependencies and
+# out-of-order distruction.
+
+$(addprefix uninstall-kvm-domain-, $(KVM_BASE_DOMAIN)): \
+	$(addprefix uninstall-kvm-domain-, $(KVM_CLONE_DOMAIN))
+$(addprefix uninstall-kvm-domain-, $(KVM_CLONE_DOMAIN)): \
+	$(addprefix uninstall-kvm-domain-, $(KVM_TEST_DOMAINS))
+
 
 #
 # Generic kvm-install-* and kvm-uninstall-* rules, point at the
-# install-kvm-* and uninstall-kvm-* versions.
+# install-kvm-* and uninstall-kvm-* primitives defined above.
 #
 
 .PHONY: kvm-install-base-domain
@@ -651,14 +660,16 @@ kvm-install-clone-domain: $(addprefix install-kvm-domain-,$(KVM_CLONE_DOMAIN))
 .PHONY: kvm-install-test-domains
 kvm-install-test-domains: $(addprefix install-kvm-domain-,$(KVM_TEST_DOMAINS))
 
+
 .PHONY: kvm-uninstall-base-domain
-kvm-uninstall-base-domain: kvm-uninstall-clone-domain $(addprefix uninstall-kvm-domain-,$(KVM_BASE_DOMAIN))
+kvm-uninstall-base-domain: $(addprefix uninstall-kvm-domain-, $(KVM_BASE_DOMAIN))
 
 .PHONY: kvm-uninstall-clone-domain
-kvm-uninstall-clone-domain: kvm-uninstall-test-domains $(addprefix uninstall-kvm-domain-,$(KVM_CLONE_DOMAIN))
+kvm-uninstall-clone-domain: $(addprefix uninstall-kvm-domain-,$(KVM_CLONE_DOMAIN))
 
 .PHONY: kvm-uninstall-test-domains
 kvm-uninstall-test-domains: $(addprefix uninstall-kvm-domain-,$(KVM_TEST_DOMAINS))
+
 
 .PHONY: kvm-install-test-networks
 kvm-install-test-networks: $(addprefix install-kvm-network-,$(KVM_TEST_NETWORKS))
