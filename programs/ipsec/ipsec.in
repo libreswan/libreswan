@@ -87,9 +87,9 @@ set_db_trusts() {
 	awk '{$NF=""; print $0}' | \
 	while read -r cert
     do
-	if certutil -L -d ${IPSEC_NSSDIR_SQL} -n "${cert}" | \
+	if certutil -L -d "${IPSEC_NSSDIR_SQL}" -n "${cert}" | \
 	    grep -q 'Is a CA' && \
-	    [ $(certutil -L -d ${IPSEC_NSSDIR_SQL} -n "${cert}" | grep -i -A3 'ssl flags' | grep -i 'trusted' | wc -l) -ne 2 ]
+	    [ $(certutil -L -d "${IPSEC_NSSDIR_SQL}" -n "${cert}" | grep -i -A3 'ssl flags' | grep -i 'trusted' | wc -l) -ne 2 ]
 	then
 	    echo "correcting trust bits for ${cert}"
 	    certutil -M -d "${IPSEC_NSSDIR_SQL}" -n "${cert}" -t 'CT,,'
