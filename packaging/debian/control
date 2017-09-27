@@ -6,11 +6,12 @@ Uploaders:
  Paul Wouters <paul@libreswan.org>,
 Vcs-Browser: https://github.com/antonyantony/libreswan
 Vcs-Git: https://github.com/antonyantony/libreswan
-Standards-Version: 4.0.1
+Standards-Version: 4.1.0
 Build-Depends:
  bison,
  bzip2,
  debhelper (>= 10~),
+ dh-systemd,
  flex,
  htmldoc,
  libaudit-dev [linux-any],
@@ -26,7 +27,7 @@ Build-Depends:
  libpam0g-dev,
  libselinux1-dev [linux-any],
  libsystemd-dev,
- libunbound-dev (>= 1.6.0~),
+ libunbound-dev (>= 1.6.5~),
  man2html,
  pkg-config,
  po-debconf,
