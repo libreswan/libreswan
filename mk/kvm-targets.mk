@@ -318,10 +318,9 @@ $(KVM_KEYS_CLEAN_TARGETS):
 
 define install-kvm-network
         : install-kvm-network network=$(1) file=$(2)
-	$(VIRSH) net-define '$(2).tmp'
+	$(VIRSH) net-define '$(2)'
 	$(VIRSH) net-autostart '$(1)'
 	$(VIRSH) net-start '$(1)'
-	mv $(2).tmp $(2)
 endef
 
 define uninstall-kvm-network
@@ -336,7 +335,7 @@ define uninstall-kvm-network
 endef
 
 define check-no-kvm-network
-        : uninstall-kvm-network network=$(1)
+        : check-no-kvm-network network=$(1)
 	if $(VIRSH) net-info '$(1)' 2>/dev/null ; then \
 		echo '' ; \
 		echo '        The network $(1) seems to already exist.' ; \
@@ -363,7 +362,6 @@ KVM_TEST_NETWORKS = \
 
 define install-kvm-test-network
   #(info prefix=$(1) network=$(2))
-
   .PHONY: install-kvm-network-$(1)$(2)
   install-kvm-network-$(1)$(2): $$(KVM_CLONEDIR)/$(1)$(2).xml
   .PRECIOUS: $$(KVM_CLONEDIR)/$(1)$(2).xml
@@ -384,7 +382,8 @@ define install-kvm-test-network
 	echo "  <!-- <ip address='$(subst _,.,$(2)).253'> -->"			>> '$$@.tmp'
   endif
 	echo "</network>"						>> '$$@.tmp'
-	$(call install-kvm-network,$(1)$(2),$$@)
+	$(call install-kvm-network,$(1)$(2),$$@.tmp)
+	mv $$@.tmp $$@
 endef
 
 $(foreach prefix, $(KVM_PREFIXES), \
@@ -393,7 +392,6 @@ $(foreach prefix, $(KVM_PREFIXES), \
 
 define uninstall-kvm-test-network
   #(info prefix=$(1) network=$(2))
-
   .PHONY: uninstall-kvm-network-$(1)$(2)
   uninstall-kvm-network-$(1)$(2):
 	: uninstall-kvm-test-network prefix=$(1) network=$(2)
@@ -410,7 +408,8 @@ install-kvm-network-$(KVM_DEFAULT_NETWORK): $(KVM_DEFAULT_NETWORK_FILE)
 $(KVM_DEFAULT_NETWORK_FILE): | testing/libvirt/net/$(KVM_DEFAULT_NETWORK) $(KVM_BASEDIR)
 	$(call check-no-kvm-network,$(KVM_DEFAULT_NETWORK),$@)
 	cp testing/libvirt/net/$(KVM_DEFAULT_NETWORK) $@.tmp
-	$(call install-kvm-network,$(KVM_DEFAULT_NETWORK),$@)
+	$(call install-kvm-network,$(KVM_DEFAULT_NETWORK),$@.tmp)
+	mv $@.tmp $@
 
 .PHONY: uninstall-kvm-network-$(KVM_DEFAULT_NETWORK)
 uninstall-kvm-network-$(KVM_DEFAULT_NETWORK): | $(KVM_BASEDIR)
