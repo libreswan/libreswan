@@ -1934,7 +1934,7 @@ static void success_v2_state_transition(struct msg_digest *md)
 	pst = IS_CHILD_SA(st) ? state_with_serialno(st->st_clonedfrom) : st;
 
 	if (from_state != svm->next_state) {
-		DBG(DBG_CONTROL, DBG_log("transition from state %s to state %s",
+		DBG(DBG_CONTROL, DBG_log("IKEv2: transition from state %s to state %s",
 			      enum_name(&state_names, from_state),
 			      enum_name(&state_names, svm->next_state)));
 	}

@@ -2220,9 +2220,9 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		/* advance the state */
 		const struct state_microcode *smc = md->smc;
 
-		libreswan_log("transition from state %s to state %s",
+		DBG(DBG_CONTROL, DBG_log("IKEv1: transition from state %s to state %s",
 			      enum_name(&state_names, from_state),
-			      enum_name(&state_names, smc->next_state));
+			      enum_name(&state_names, smc->next_state)));
 
 		/* accept info from VID because we accept this message */
 
