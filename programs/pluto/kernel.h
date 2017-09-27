@@ -122,7 +122,7 @@ struct kernel_sa {
 
 	int encapsulation;
 	u_int16_t natt_sport, natt_dport;
-	u_int8_t transid, natt_type;
+	u_int8_t natt_type;
 	ip_address *natt_oa;
 	const char *text_said;
 #ifdef HAVE_LABELED_IPSEC

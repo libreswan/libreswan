@@ -2139,14 +2139,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			said_next->esn = TRUE;
 		}
 
-		/*
-		 * XXX: Assume SADB_ and ESP_ numbers match!  Clearly
-		 * setting .compalg is wrong, don't yet trust
-		 * lower-level code to be right.
-		 */
 		said_next->encrypt = ta->ta_encrypt;
-		said_next->compalg = said_next->encrypt->common.id[IKEv1_ESP_ID];
-
 		/* divide up keying material */
 		said_next->enckey = esp_dst_keymat;
 		said_next->enckeylen = encrypt_keymat_size; /* BYTES */
@@ -2158,7 +2151,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 		said_next->natt_sport = natt_sport;
 		said_next->natt_dport = natt_dport;
-		said_next->transid = ta->ta_ikev1_encrypt;
 		said_next->natt_type = natt_type;
 		said_next->natt_oa = &natt_oa;
 #ifdef KLIPS_MAST
