@@ -42,6 +42,7 @@ v3.22 (unreleased)
 * testing: Allow null encryption with null auth for testing [Andrew]
 * Bugtracker bugs fixed:
    #294: Bug in public key reported by rsasigkey [Tijs Van Buggenhout/Andrew]
+   #303: xauth password length limited to 64 bytes [Stepan Broz]
 
 v3.21 (August 9, 2017)
 * FIPS: Don't crash on too weak PSK's in FIPS mode, warn for non-FIPS [Andrew]
