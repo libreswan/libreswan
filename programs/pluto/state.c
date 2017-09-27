@@ -1864,11 +1864,13 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 {
 	struct state *best = NULL;
 	int i;
+	bool is_ikev2 = LIN(POLICY_IKEV2_ALLOW, c->policy);
 
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
 		struct state *st;
 		FOR_EACH_ENTRY(st, i, {
 			if (LHAS(ok_states, st->st_state) &&
+				st->st_ikev2 == is_ikev2 &&
 				c->host_pair == st->st_connection->host_pair &&
 				same_peer_ids(c, st->st_connection, NULL) &&
 				IS_PARENT_SA(st) &&
