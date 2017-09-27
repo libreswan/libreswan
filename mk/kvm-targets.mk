@@ -427,7 +427,9 @@ include testing/libvirt/fedora22.mk
 else
 include testing/libvirt/$(KVM_OS).mk
 endif
-
+ifeq ($(KVM_OS_VARIANT),)
+$(error KVM_OS_VARIANT not defined)
+endif
 ifeq ($(KVM_ISO_URL),)
 $(error KVM_ISO_URL not defined)
 endif
@@ -493,6 +495,7 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_D
 	: XXX: Passing $(VIRT_SECURITY) to virt-install causes it to panic
 	$(VIRT_INSTALL) \
 		--name=$(KVM_BASE_DOMAIN) \
+		--os-variant $(KVM_OS_VARIANT) \
 		--vcpus=1 \
 		--memory 1024 \
 		--nographics \
@@ -534,6 +537,7 @@ $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | 
 		$(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).qcow2
 	$(VIRT_INSTALL) \
 		--name $(KVM_CLONE_DOMAIN) \
+		--os-variant $(KVM_OS_VARIANT) \
 		--vcpus=1 \
 		--memory 512 \
 		--nographics \
