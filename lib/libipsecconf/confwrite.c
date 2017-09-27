@@ -398,13 +398,13 @@ static void confwrite_comments(FILE *out, struct starter_conn *conn)
 	}
 }
 
-static void confwrite_conn(FILE *out,
-		    struct starter_conn *conn)
+static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 {
 	/* short-cut for writing out a field (string-valued, indented, on its own line) */
 #	define cwf(name, value)	{ fprintf(out, "\t" name "=%s\n", (value)); }
 
-	fprintf(out, "# begin conn %s\n", conn->name);
+	if (verbose)
+		fprintf(out, "# begin conn %s\n", conn->name);
 
 	fprintf(out, "conn %s\n", conn->name);
 
@@ -620,11 +620,12 @@ static void confwrite_conn(FILE *out,
 #		undef cwpbf
 	}
 
-	fprintf(out, "# end conn %s\n\n", conn->name);
+	if (verbose)
+		fprintf(out, "# end conn %s\n\n", conn->name);
 #	undef cwf
 }
 
-void confwrite(struct starter_config *cfg, FILE *out)
+void confwrite(struct starter_config *cfg, FILE *out, bool setup, char *name, bool verbose)
 {
 	struct starter_conn *conn;
 
@@ -632,20 +633,25 @@ void confwrite(struct starter_config *cfg, FILE *out)
 	/* fprintf(out, "\nversion 2.0\n\n"); */
 
 	/* output config setup section */
-	fprintf(out, "config setup\n");
-	confwrite_int(out, "",
+	if (setup) {
+		fprintf(out, "config setup\n");
+		confwrite_int(out, "",
 		      kv_config,
 		      cfg->setup.options, cfg->setup.options_set,
 		      cfg->setup.strings);
-	confwrite_str(out, "",
+		confwrite_str(out, "",
 		      kv_config,
 		      cfg->setup.strings, cfg->setup.strings_set);
 
-	fprintf(out, "\n\n");
+		fprintf(out, "\n\n");
+	}
 
 	/* output connections */
 	for (conn = cfg->conns.tqh_first; conn != NULL;
 	     conn = conn->link.tqe_next)
-		confwrite_conn(out, conn);
-	fprintf(out, "# end of config\n");
+		// if (name == NULL || strncmp(name, conn->name, strlen(name)) == 0)
+		if (name == NULL || streq(name, conn->name))
+			confwrite_conn(out, conn, verbose);
+	if (verbose)
+		fprintf(out, "# end of config\n");
 }
