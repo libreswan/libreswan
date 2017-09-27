@@ -51,6 +51,7 @@ KVM_PACKAGES = \
     python3-pexpect \
     python-setproctitle \
     racoon2 \
+    rpm-build \
     screen \
     strace \
     strongswan \

@@ -49,6 +49,7 @@ KVM_PACKAGES = \
     python3-pexpect \
     python3-setproctitle \
     pyOpenSSL \
+    rpm-build \
     screen \
     racoon2 \
     strace \
