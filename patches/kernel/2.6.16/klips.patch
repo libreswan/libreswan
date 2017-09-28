@@ -23688,7 +23688,7 @@ diff -c -w -r -N linux-2.6.16-ng-natt/net/ipsec/des/VERSION linux-2.6.16-ng-natt
 + 	Thanks to Jens Kupferschmidt <bt1cu@hpboot.rz.uni-leipzig.de>. */
 + 
 + 	SIGWINCH case put in des_read_passwd() so the function does not
-+ 	'exit' if this function is recieved.
++ 	'exit' if this function is received.
 + 
 + Version 3.25 17/07/96
 + 	Modified read_pwd.c so that stdin can be read if not a tty.
@@ -73539,7 +73539,7 @@ diff -c -w -r -N linux-2.6.16-ng-natt/libreswan.patch linux-2.6.16-ng-natt-klips
 + +	Thanks to Jens Kupferschmidt <bt1cu@hpboot.rz.uni-leipzig.de>. */
 + +
 + +	SIGWINCH case put in des_read_passwd() so the function does not
-+ +	'exit' if this function is recieved.
++ +	'exit' if this function is received.
 + +
 + +Version 3.25 17/07/96
 + +	Modified read_pwd.c so that stdin can be read if not a tty.

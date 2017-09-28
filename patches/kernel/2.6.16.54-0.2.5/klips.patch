@@ -16427,7 +16427,7 @@ diff -Naur linux-2.6.16.54-0.2.5/net/ipsec/des/VERSION linux-2.6.16.54-0.2.5.osw
 +	Thanks to Jens Kupferschmidt <bt1cu@hpboot.rz.uni-leipzig.de>. */
 +
 +	SIGWINCH case put in des_read_passwd() so the function does not
-+	'exit' if this function is recieved.
++	'exit' if this function is received.
 +
 +Version 3.25 17/07/96
 +	Modified read_pwd.c so that stdin can be read if not a tty.
