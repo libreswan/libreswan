@@ -276,11 +276,9 @@ struct state {
 	const char        *st_suspended_md_func;
 	int st_suspended_md_line;
 
-	/* collected ike fragments */
-	union {
-		struct ike_frag *ike_frags;
-		struct ikev2_frag *ikev2_frags;
-	};
+	/* collected received fragments */
+	struct ike_frag *st_v1_rfrags;
+	struct ikev2_frag *st_v2_rfrags;
 
 	struct trans_attrs st_oakley;
 

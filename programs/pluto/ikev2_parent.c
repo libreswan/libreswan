@@ -2521,7 +2521,7 @@ static stf_status ikev2_reassemble_fragments(struct msg_digest *md,
 	struct state *st = md->st;
 
 	size = 0;
-	for (frag = st->ikev2_frags; frag; frag = frag->next) {
+	for (frag = st->st_v2_rfrags; frag; frag = frag->next) {
 		setchunk(frag->plain, frag->cipher.ptr, frag->cipher.len);
 
 		status = ikev2_verify_and_decrypt_sk_payload(
@@ -2538,7 +2538,7 @@ static stf_status ikev2_reassemble_fragments(struct msg_digest *md,
 	md->raw_packet.ptr = alloc_bytes(size, "IKEv2 fragments buffer");
 
 	/* Reassemble fragments in buffer */
-	frag = st->ikev2_frags;
+	frag = st->st_v2_rfrags;
 	md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf.isaskf_np = frag->np;
 	offset = 0;
 	do {
@@ -2554,7 +2554,7 @@ static stf_status ikev2_reassemble_fragments(struct msg_digest *md,
 		pfree(old);
 	} while (frag != NULL);
 
-	st->ikev2_frags = NULL;
+	st->st_v2_rfrags = NULL;
 
 	setchunk(*chunk, md->raw_packet.ptr, size);
 
@@ -5504,7 +5504,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 								enum_show(&ikev2_protocol_names,
 									v2del->isad_protoid),
 								ntohl((uint32_t)spi)));
-						/* we just recieved a delete, don't send anther delete */
+						/* we just received a delete, don't send another delete */
 						dst->st_ikev2_no_del = TRUE;
 						passert(dst != st);	/* st is a parent */
 						if (!del_ike && responding) {

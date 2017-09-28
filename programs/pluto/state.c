@@ -693,10 +693,9 @@ void release_whack(struct state *st)
 
 static void release_v2fragments(struct state *st)
 {
-	struct ikev2_frag *frag = st->st_tfrags;
-
 	passert(st->st_ikev2);
-	while (frag != NULL) {
+
+	for (struct ikev2_frag *frag = st->st_v2_rfrags; frag != NULL; ) {
 		struct ikev2_frag *this = frag;
 
 		frag = this->next;
@@ -704,13 +703,22 @@ static void release_v2fragments(struct state *st)
 		freeanychunk(this->plain);
 		pfree(this);
 	}
+	st->st_v2_rfrags = NULL;
 
+	for (struct ikev2_frag *frag = st->st_tfrags; frag != NULL; ) {
+		struct ikev2_frag *this = frag;
+
+		frag = this->next;
+		freeanychunk(this->cipher);
+		freeanychunk(this->plain);
+		pfree(this);
+	}
 	st->st_tfrags = NULL;
 }
 
 static void release_v1fragments(struct state *st)
 {
-	struct ike_frag *frag = st->ike_frags;
+	struct ike_frag *frag = st->st_v1_rfrags;
 
 	passert(!st->st_ikev2);
 	while (frag != NULL) {
@@ -721,7 +729,7 @@ static void release_v1fragments(struct state *st)
 		pfree(this);
 	}
 
-	st->ike_frags = NULL;
+	st->st_v1_rfrags = NULL;
 }
 
 /*

@@ -1423,7 +1423,7 @@ void process_v1_packet(struct msg_digest **mdp)
 #endif
 
 		/* Add the fragment to the state */
-		i = &st->ike_frags;
+		i = &st->st_v1_rfrags;
 		for (;;) {
 			if (ike_frag != NULL) {
 				/* Still looking for a place to insert ike_frag */
@@ -1459,7 +1459,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			int prev_index = 0;
 			struct ike_frag *frag;
 
-			for (frag = st->ike_frags; frag; frag = frag->next) {
+			for (frag = st->st_v1_rfrags; frag; frag = frag->next) {
 				size += frag->size;
 				if (frag->index != ++prev_index) {
 					break; /* fragment list incomplete */
@@ -1475,7 +1475,7 @@ void process_v1_packet(struct msg_digest **mdp)
 						frag->md->sender_port;
 
 					/* Reassemble fragments in buffer */
-					frag = st->ike_frags;
+					frag = st->st_v1_rfrags;
 					while (frag != NULL &&
 					       frag->index <= last_frag_index)
 					{

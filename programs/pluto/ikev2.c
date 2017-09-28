@@ -724,7 +724,7 @@ static bool ikev2_check_fragment(struct msg_digest *md, struct state *st)
 		return FALSE;
 	}
 
-	i = st->ikev2_frags;
+	i = st->st_v2_rfrags;
 
 	if (i != NULL && skf->isaskf_total != i->total) {
 		/*
@@ -742,10 +742,10 @@ static bool ikev2_check_fragment(struct msg_digest *md, struct state *st)
 			DBG(DBG_CONTROL, DBG_log(
 				"discarding saved fragments because this fragment has larger total"));
 			do {
-				st->ikev2_frags = i->next;
+				st->st_v2_rfrags = i->next;
 				freeanychunk(i->cipher);
 				pfree(i);
-				i = st->ikev2_frags;
+				i = st->st_v2_rfrags;
 			} while (i != NULL);
 			return TRUE;
 		} else {
@@ -788,10 +788,10 @@ static bool ikev2_collect_fragment(struct msg_digest *md, struct state *st)
 	/*
 	 * Loop for two purposes:
 	 * - Add frag into ordered linked list
-	 * - set num_frags to length ot the list
+	 * - set num_frags to length of the list
 	 */
 	num_frags = 0;
-	for (i = &st->ikev2_frags; ; i = &(*i)->next) {
+	for (i = &st->st_v2_rfrags; ; i = &(*i)->next) {
 		if (frag != NULL) {
 			/* Still looking for a place to insert frag */
 			if (*i == NULL || (*i)->index > frag->index) {
