@@ -288,6 +288,8 @@ $(KVM_KEYS): testing/x509/dist_certs.py $(KVM_KEYS_SCRIPT) # | $(KVM_DOMAIN_$(KV
 	$(call check-kvm-qemu-directory)
 	$(MAKE) kvm-keys-clean
 	$(KVM_KEYS_SCRIPT) $(KVM_BUILD_DOMAIN) testing/x509
+	: Also regenerate the DNSSEC keys -- uses host
+	$(top_srcdir)/testing/baseconfigs/all/etc/bind/generate-dnssec.sh
 	touch $(KVM_KEYS)
 
 KVM_KEYS_CLEAN_TARGETS = clean-kvm-keys kvm-clean-keys kvm-keys-clean
