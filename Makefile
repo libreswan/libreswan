@@ -618,10 +618,7 @@ deb-klips:
 release:
 	packaging/utils/makerelease
 
-# Force install-programs to be run after everything else.
-install: install-programs
-install-programs: local-install recursive-install
-install-programs:
+local-install:
 	@if test -z "$(DESTDIR)" -a -x /usr/sbin/selinuxenabled -a $(PUBDIR) != "$(DESTDIR)/usr/sbin" ; then \
 	if /usr/sbin/selinuxenabled ; then  \
 		echo -e "\n************************** WARNING ***********************************" ; \
