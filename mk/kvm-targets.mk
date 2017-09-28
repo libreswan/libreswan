@@ -315,10 +315,8 @@ kvm-rpm:
 	mkdir -p ~/rpmbuild/SOURCES
 	git archive --format=tar --prefix=$(RPM_PREFIX)/ \
 		-o ~/rpmbuild/SOURCES/$(RPM_PREFIX).tar HEAD
-	tar --transform "s/^/$(RPM_PREFIX)\//" -rf ~/rpmbuild/SOURCES/$(RPM_PREFIX).tar Makefile.inc.local
+	tar --transform "s|^|$(RPM_PREFIX)/|" -rf ~/rpmbuild/SOURCES/$(RPM_PREFIX).tar Makefile.inc.local
 	gzip -f ~/rpmbuild/SOURCES/$(RPM_PREFIX).tar
-	rpmbuild -bs  ~/rpmbuild/SPECS/libreswan-testing.spec
-	rpm -i ~/rpmbuild/SRPMS/$(RPM_PREFIX)*.src.rpm
 	rpmbuild -ba ~/rpmbuild/SPECS/libreswan-testing.spec
 
 
