@@ -103,7 +103,7 @@ KVM_BUILD_DOMAIN = $(call add-first-domain-prefix, $(KVM_BUILD_HOST))
 KVM_BASIC_DOMAINS = $(call add-all-domain-prefixes, $(KVM_BASIC_HOSTS))
 KVM_INSTALL_DOMAINS = $(call add-all-domain-prefixes, $(KVM_INSTALL_HOSTS))
 KVM_TEST_DOMAINS = $(call add-all-domain-prefixes, $(KVM_TEST_HOSTS))
-KVM_DOMAINS = $(sort $(KVM_BASE_DOMAIN) $(KVM_CLONE_DOMAIN) $(KVM_BUILD_BUILD) $(KVM_TEST_DOMAINS))
+KVM_DOMAINS = $(sort $(KVM_BASE_DOMAIN) $(KVM_CLONE_DOMAIN) $(KVM_BUILD_DOMAIN) $(KVM_TEST_DOMAINS))
 
 KVMSH ?= $(abs_top_srcdir)/testing/utils/kvmsh.py
 KVMRUNNER ?= $(abs_top_srcdir)/testing/utils/kvmrunner.py
