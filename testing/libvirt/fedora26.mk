@@ -46,6 +46,7 @@ KVM_PACKAGES = \
     openldap-devel \
     pam-devel \
     pexpect \
+    policycoreutils-python-utils \
     psmisc \
     python2-pyOpenSSL \
     python3-pexpect \
