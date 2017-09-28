@@ -70,14 +70,11 @@ VIRT_TESTINGDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_TESTIN
 KVM_OS ?= fedora
 
 #
-# Note:
-#
-# Need to better differientate between DOMAINs (what KVM calls test
-# machines) and HOSTs (what the test framework calls the test
-# machines).  This is a transition.
+# Hosts
 #
 
 KVM_BASE_HOST = swan$(KVM_OS)base
+
 KVM_CLONE_HOST ?= clone
 KVM_BUILD_HOST ?= $(firstword $(KVM_INSTALL_HOSTS))
 
@@ -85,11 +82,16 @@ KVM_TEST_HOSTS = $(notdir $(wildcard testing/libvirt/vm/*[a-z]))
 KVM_BASIC_HOSTS = nic
 KVM_INSTALL_HOSTS = $(filter-out $(KVM_BASIC_HOSTS), $(KVM_TEST_HOSTS))
 
-KVM_CLONED_HOSTS = $(sort $(KVM_CLONE_HOST) $(KVM_BUILD_HOST) $(KVM_TEST_HOSTS))
+KVM_LOCAL_HOSTS = $(sort $(KVM_CLONE_HOST) $(KVM_BUILD_HOST) $(KVM_TEST_HOSTS))
 
-KVM_HOSTS = $(KVM_BASE_HOST) $(KVM_CLONED_HOSTS)
+KVM_HOSTS = $(KVM_BASE_HOST) $(KVM_LOCAL_HOSTS)
+
+#
+# Domains
+#
 
 strip-prefix = $(subst '',,$(subst "",,$(1)))
+KVM_FIRST_PREFIX = $(call strip-prefix,$(firstword $(KVM_PREFIXES)))
 add-first-domain-prefix = \
 	$(addprefix $(call strip-prefix,$(firstword $(KVM_PREFIXES))),$(1))
 add-all-domain-prefixes = \
@@ -97,13 +99,21 @@ add-all-domain-prefixes = \
 		$(addprefix $(call strip-prefix,$(prefix)),$(1)))
 
 KVM_BASE_DOMAIN = $(KVM_BASE_HOST)
-KVM_CLONE_DOMAIN = $(call add-first-domain-prefix, $(KVM_CLONE_HOST))
-KVM_BUILD_DOMAIN = $(call add-first-domain-prefix, $(KVM_BUILD_HOST))
+
+KVM_CLONE_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_CLONE_HOST))
+KVM_BUILD_DOMAIN = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_BUILD_HOST))
 
 KVM_BASIC_DOMAINS = $(call add-all-domain-prefixes, $(KVM_BASIC_HOSTS))
 KVM_INSTALL_DOMAINS = $(call add-all-domain-prefixes, $(KVM_INSTALL_HOSTS))
 KVM_TEST_DOMAINS = $(call add-all-domain-prefixes, $(KVM_TEST_HOSTS))
-KVM_DOMAINS = $(sort $(KVM_BASE_DOMAIN) $(KVM_CLONE_DOMAIN) $(KVM_BUILD_DOMAIN) $(KVM_TEST_DOMAINS))
+
+KVM_LOCAL_DOMAINS = $(sort $(KVM_CLONE_DOMAIN) $(KVM_BUILD_DOMAIN) $(KVM_TEST_DOMAINS))
+
+KVM_DOMAINS = $(KVM_BASE_DOMAIN) $(KVM_LOCAL_DOMAINS)
+
+#
+# Other utilities and directories
+#
 
 KVMSH ?= $(abs_top_srcdir)/testing/utils/kvmsh.py
 KVMRUNNER ?= $(abs_top_srcdir)/testing/utils/kvmrunner.py
@@ -116,6 +126,7 @@ RPM_PREFIX  = libreswan-$(RPM_VERSION)
 # file to mark keys are up-to-date
 KVM_KEYS = testing/x509/keys/up-to-date
 
+
 #
 # For when HOST!=DOMAIN, generate maps from the host rule to the
 # domain rule.
@@ -126,6 +137,7 @@ define kvm-HOST-DOMAIN
   .PHONY: $(1)$(2)$(3)
   $(1)$(2)$(3): $(1)$$(call add-first-domain-prefix,$(2))$(3)
 endef
+
 
 #
 # Check that things are correctly configured for creating the KVM
@@ -236,13 +248,13 @@ endef
 
 # "test" and "check" just runs the entire testsuite.
 .PHONY: kvm-check kvm-test
-kvm-check kvm-test: $(KVM_KEYS)
+kvm-check kvm-test: $(KVM_KEYS) kvm-shutdown-local-domains
 	$(call kvm-test, --test-status "good")
 
 # "retest" and "recheck" re-run the testsuite updating things that
 # didn't pass.
 .PHONY: kvm-retest kvm-recheck
-kvm-retest kvm-recheck: $(KVM_KEYS)
+kvm-retest kvm-recheck: $(KVM_KEYS) kvm-shutdown-local-domains
 	$(call kvm-test, --test-status "good" --skip passed)
 
 # clean up; accept pretty much everything
@@ -674,46 +686,41 @@ $(addprefix uninstall-kvm-domain-, $(KVM_BUILD_DOMAIN)): \
 
 
 #
-# Generic kvm-install-* and kvm-uninstall-* rules, point at the
-# install-kvm-* and uninstall-kvm-* primitives defined above.
+# Generic kvm-* rules, point at the *-kvm-* primitives defined
+# elsewhere.
 #
 
-.PHONY: kvm-install-base-domain
-kvm-install-base-domain: $(addprefix install-kvm-domain-,$(KVM_BASE_DOMAIN))
+define kvm-hosts-domains
+  #(info kvm-host-domains rule=$(1)
 
-.PHONY: kvm-install-clone-domain
-kvm-install-clone-domain: $(addprefix install-kvm-domain-,$(KVM_CLONE_DOMAIN))
+  .PHONY: kvm-$(1)-base-domain
+  kvm-$(1)-base-domain: $$(addprefix $(1)-kvm-domain-, $$(KVM_BASE_DOMAIN))
 
-.PHONY: kvm-install-build-domain
-kvm-install-build-domain: $(addprefix install-kvm-domain-,$(KVM_BUILD_DOMAIN))
+  .PHONY: kvm-$(1)-clone-domain
+  kvm-$(1)-clone-domain: $$(addprefix $(1)-kvm-domain-, $$(KVM_CLONE_DOMAIN))
 
-.PHONY: kvm-install-basic-domains
-kvm-install-basic-domains: $(addprefix install-kvm-domain-,$(KVM_BASIC_DOMAINS))
+  .PHONY: kvm-$(1)-build-domain
+  kvm-$(1)-build-domain: $$(addprefix $(1)-kvm-domain-, $$(KVM_BUILD_DOMAIN))
 
-.PHONY: kvm-install-install-domains
-kvm-install-install-domains: $(addprefix install-kvm-domain-,$(KVM_INSTALL_DOMAINS))
+  .PHONY: kvm-$(1)-basic-domains
+  kvm-$(1)-basic-domains: $$(addprefix $(1)-kvm-domain-, $$(KVM_BASIC_DOMAINS))
 
-.PHONY: kvm-install-test-domains
-kvm-install-test-domains: $(addprefix install-kvm-domain-,$(KVM_TEST_DOMAINS))
+  .PHONY: kvm-$(1)-install-domains
+  kvm-$(1)-install-domains: $$(addprefix $(1)-kvm-domain-, $$(KVM_INSTALL_DOMAINS))
 
+  .PHONY: kvm-$(1)-test-domains
+  kvm-$(1)-test-domains: $$(addprefix $(1)-kvm-domain-, $$(KVM_TEST_DOMAINS))
 
-.PHONY: kvm-uninstall-base-domain
-kvm-uninstall-base-domain: $(addprefix uninstall-kvm-domain-, $(KVM_BASE_DOMAIN))
+  .PHONY: kvm-$(1)-local-domains
+  kvm-$(1)-local-domains: $$(addprefix $(1)-kvm-domain-, $$(KVM_LOCAL_DOMAINS))
 
-.PHONY: kvm-uninstall-clone-domain
-kvm-uninstall-clone-domain: $(addprefix uninstall-kvm-domain-,$(KVM_CLONE_DOMAIN))
+endef
 
-.PHONY: kvm-uninstall-build-domain
-kvm-uninstall-build-domain: $(addprefix uninstall-kvm-domain-,$(KVM_BUILD_DOMAIN))
+$(eval $(call kvm-hosts-domains,install))
 
-.PHONY: kvm-uninstall-basic-domains
-kvm-uninstall-basic-domains: $(addprefix uninstall-kvm-domain-,$(KVM_BASIC_DOMAINS))
+$(eval $(call kvm-hosts-domains,uninstall))
 
-.PHONY: kvm-uninstall-install-domains
-kvm-uninstall-install-domains: $(addprefix uninstall-kvm-domain-,$(KVM_INSTALL_DOMAINS))
-
-.PHONY: kvm-uninstall-test-domains
-kvm-uninstall-test-domains: $(addprefix uninstall-kvm-domain-,$(KVM_TEST_DOMAINS))
+$(eval $(call kvm-hosts-domains,shutdown))
 
 
 .PHONY: kvm-install-test-networks
@@ -735,13 +742,13 @@ kvm-uninstall-default-network: kvm-uninstall-base-domain uninstall-kvm-network-$
 # XXX: don't depend on targets that trigger a KVM build.
 
 .PHONY: kvm-purge
-kvm-purge: kvm-clean kvm-test-clean kvm-keys-clean kvm-uninstall-test-networks kvm-uninstall-clone-domain
+kvm-purge: kvm-clean kvm-test-clean kvm-keys-clean kvm-uninstall-test-networks kvm-uninstall-local-domains
 
 .PHONY: kvm-demolish
 kvm-demolish: kvm-purge kvm-uninstall-default-network
 
 .PHONY: kvm-clean clean-kvm
-kvm-clean clean-kvm: kvm-shutdown kvm-keys-clean
+kvm-clean clean-kvm: kvm-shutdown-local-domains kvm-keys-clean
 	: 'make kvm-DOMAIN-make-clean' to invoke clean on a DOMAIN
 	rm -rf $(KVM_OBJDIR)
 
@@ -854,16 +861,21 @@ $(foreach host, $(filter-out $(KVM_DOMAINS), $(KVM_HOSTS)), \
 kvmsh-build: kvmsh-$(KVM_BUILD_DOMAIN)
 kvmsh-base: kvmsh-$(KVM_BASE_DOMAIN)
 
+
+#
+# Shutdown domains and hosts.
+#
+
 # Generate rules to shut down all the domains (kvm-shutdown) and
-# individual domains (kvm-shutdown-DOMAIN).
+# individual domains (kvm-shutdown-domain).
 #
 # Don't require the domains to exist.
 
-define kvm-shutdown
-  #(info kvm-shutdown domain=$(1))
-  .PHONY: kvm-shutdown-$(1)
-  kvm-shutdown-$(1):
-	: kvm-shutdown domain=$(1)
+define shutdown-kvm-domain
+  #(info shutdown-kvm-domain domain=$(1))
+  .PHONY: shutdown-kvm-domain-$(1)
+  shutdown-kvm-domain-$(1):
+	: shutdown-kvm-domain domain=$(1)
 	echo ; \
 	if $(VIRSH) dominfo $(1) > /dev/null 2>&1 ; then \
 		$(KVMSH) --shutdown $(1) || exit 1 ; \
@@ -874,10 +886,10 @@ define kvm-shutdown
 endef
 
 $(foreach domain, $(KVM_DOMAINS), \
-	$(eval $(call kvm-shutdown,$(domain))))
+	$(eval $(call shutdown-kvm-domain,$(domain))))
 
 .PHONY: kvm-shutdown
-kvm-shutdown: $(addprefix kvm-shutdown-,$(KVM_DOMAINS))
+kvm-shutdown: $(addprefix shutdown-kvm-domain-,$(KVM_DOMAINS))
 
 
 #
