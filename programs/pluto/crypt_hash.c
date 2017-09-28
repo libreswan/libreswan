@@ -94,6 +94,8 @@ void crypt_hash_final_bytes(struct crypt_hash **hashp,
 	DBG(hash->debug, DBG_log("%s hash %s final bytes@%p (length %zu)",
 				 hash->name, hash->desc->common.name,
 				 bytes, sizeof_bytes));
+	/* Must be correct, else hash code can crash. */
+	passert(sizeof_bytes == hash->desc->hash_digest_len);
 	hash->desc->hash_ops->final_bytes(&hash->context, bytes, sizeof_bytes);
 	pfree(*hashp);
 	*hashp = hash = NULL;
