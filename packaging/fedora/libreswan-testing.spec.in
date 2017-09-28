@@ -84,6 +84,9 @@ sed -i "s:/usr/bin/python:/usr/bin/python3:" programs/verify/verify.in
 %global efence "-lefence"
 %endif
 
+# for pluto --version
+%global IPSECSVERSION %{version}-%{?prever:0.}1%{?prever:.%{prever}}
+
 #796683: -fno-strict-aliasing
 make %{?_smp_mflags} \
     FINALDOCDIR=%{_pkgdocdir} \
@@ -93,7 +96,7 @@ make %{?_smp_mflags} \
     FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \
     INC_RCDEFAULT=%{_initrddir} \
     INC_USRLOCAL=%{_exec_prefix} \
-    IPSECBASEVERSION=%{version} \
+    IPSECSVERSION=%{IPSECSVERSION} \
     MANTREE=%{_mandir} \
     programs
 FS=$(pwd)
@@ -117,7 +120,7 @@ make \
     INC_RCDEFAULT=%{_initrddir} \
     INC_USRLOCAL=%{_exec_prefix} \
     INITSYSTEM=systemd \
-    IPSECBASEVERSION=%{version} \
+    IPSECSVERSION=%{IPSECSVERSION} \
     MANTREE=%{buildroot}%{_mandir} \
     install
 FS=$(pwd)
