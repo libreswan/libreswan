@@ -1,23 +1,24 @@
 %global _hardened_build 1
 # These are rpm macros and are 0 or 1
-%global with_efence 0
-%global with_development 0
+%global with_efence 1
+%global with_development 1
 %global with_cavstests 0
+%global _exec_prefix %{_prefix}/local
 
 #global prever rc1
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
-# version is generated in the release script
+# version is replaced in make target
 Version: @IPSECBASEVERSION@
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://libreswan.org/
 Source0: https://download.libreswan.org/%{?prever:development/}%{name}-%{version}%{?prever}.tar.gz
 %if 0%{with_cavstests}
-# Source1: https://download.libreswan.org/cavs/ikev1_dsa.fax.bz2
-# Source2: https://download.libreswan.org/cavs/ikev1_psk.fax.bz2
-# Source3: https://download.libreswan.org/cavs/ikev2.fax.bz2
+Source1: https://download.libreswan.org/cavs/ikev1_dsa.fax.bz2
+Source2: https://download.libreswan.org/cavs/ikev1_psk.fax.bz2
+Source3: https://download.libreswan.org/cavs/ikev2.fax.bz2
 %endif
 BuildRequires: bison
 BuildRequires: flex
@@ -39,7 +40,7 @@ BuildRequires: nss-devel >= 3.16.1
 BuildRequires: nspr-devel
 BuildRequires: pam-devel
 BuildRequires: libevent-devel
-BuildRequires: unbound-devel >= 1.6.0-6
+BuildRequires: unbound-devel >= 1.5.0-1
 BuildRequires: ldns-devel
 BuildRequires: libseccomp-devel
 BuildRequires: libselinux-devel
@@ -85,30 +86,15 @@ sed -i "s:/usr/bin/python:/usr/bin/python3:" programs/verify/verify.in
 
 #796683: -fno-strict-aliasing
 make %{?_smp_mflags} \
-%if 0%{with_development}
-    USERCOMPILE="-g -DGCC_LINT %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
-%else
-    USERCOMPILE="-g -DGCC_LINT %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
-%endif
-    USERLINK="-g -pie -Wl,-z,relro,-z,now %{?efence}" \
+    FINALDOCDIR=%{_pkgdocdir} \
+    FINALEXAMPLECONFDIR=%{_pkgdocdir} \
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \
     FINALRUNDIR=%{_rundir}/pluto \
     FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \
     INC_RCDEFAULT=%{_initrddir} \
-    INC_USRLOCAL=%{_prefix} \
-    INITSYSTEM=systemd \
+    INC_USRLOCAL=%{_exec_prefix} \
+    IPSECBASEVERSION=%{version} \
     MANTREE=%{_mandir} \
-    NSS_REQ_AVA_COPY=false \
-    USE_DNSSEC=true \
-    USE_FIPSCHECK=true \
-    USE_LABELED_IPSEC=true \
-    USE_LDAP=true \
-    USE_LIBCAP_NG=true \
-    USE_LIBCURL=true \
-    USE_LINUX_AUDIT=true \
-    USE_NM=true \
-    USE_SECCOMP=true \
-    USE_XAUTHPAM=true \
     programs
 FS=$(pwd)
 
@@ -123,27 +109,20 @@ FS=$(pwd)
 %install
 make \
     DESTDIR=%{buildroot} \
+    FINALEXAMPLECONFDIR=%{_pkgdocdir} \
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \
+    FINALDOCDIR=%{_pkgdocdir} \
     FINALRUNDIR=%{_rundir}/pluto \
     FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \
     INC_RCDEFAULT=%{_initrddir} \
-    INC_USRLOCAL=%{_prefix} \
+    INC_USRLOCAL=%{_exec_prefix} \
     INITSYSTEM=systemd \
+    IPSECBASEVERSION=%{version} \
     MANTREE=%{buildroot}%{_mandir} \
-    NSS_REQ_AVA_COPY=false \
-    USE_DNSSEC=true \
-    USE_FIPSCHECK=true \
-    USE_LABELED_IPSEC=true \
-    USE_LDAP=true \
-    USE_LIBCAP_NG=true \
-    USE_LIBCURL=true \
-    USE_LINUX_AUDIT=true \
-    USE_NM=true \
-    USE_SECCOMP=true \
-    USE_XAUTHPAM=true \
     install
 FS=$(pwd)
-rm -rf %{buildroot}/usr/share/doc/libreswan
+# Work around for FINALEXAMPLECONFDIR not working properly
+rm -rf %{buildroot}%{_prefix}/share/doc
 
 install -d -m 0700 %{buildroot}%{_rundir}/pluto
 # used when setting --perpeerlog without --perpeerlogbase
@@ -214,9 +193,10 @@ export NSS_DISABLE_HW_GCM=1
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/pam.d/pluto
 %{_sbindir}/ipsec
 %{_libexecdir}/ipsec
-%doc %{_mandir}/*/*
+%{_mandir}/*/*
 %{_libdir}/fipscheck/pluto.hmac
 
 %changelog
 * Wed Aug  9 2017 Team Libreswan <team@libreswan.org> - @IPSECBASEVERSION@
-- Automated build from release tar ball
+- Automated build for testing from git tree.
+- All compile time options are set in Makefile.inc.local not here.

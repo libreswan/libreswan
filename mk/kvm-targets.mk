@@ -265,8 +265,10 @@ kvm-rpm:
 	sed  "s/@IPSECBASEVERSION@/$(RPM_VERSION)/g" packaging/fedora/libreswan-testing.spec.in \
 		> ~/rpmbuild/SPECS/libreswan-testing.spec
 	mkdir -p ~/rpmbuild/SOURCES
-	git archive --format=tar.gz --prefix=$(RPM_PREFIX)/ \
-		-o ~/rpmbuild/SOURCES/$(RPM_PREFIX).tar.gz HEAD
+	git archive --format=tar --prefix=$(RPM_PREFIX)/ \
+		-o ~/rpmbuild/SOURCES/$(RPM_PREFIX).tar HEAD
+	tar --transform "s/^/$(RPM_PREFIX)\//" -rf ~/rpmbuild/SOURCES/$(RPM_PREFIX).tar Makefile.inc.local
+	gzip -f ~/rpmbuild/SOURCES/$(RPM_PREFIX).tar
 	rpmbuild -bs  ~/rpmbuild/SPECS/libreswan-testing.spec
 	rpm -i ~/rpmbuild/SRPMS/$(RPM_PREFIX)*.src.rpm
 	rpmbuild -ba ~/rpmbuild/SPECS/libreswan-testing.spec
