@@ -11,6 +11,8 @@ ifneq (,$(filter $(DEB_HOST_ARCH), hppa alpha))
 export USERCOMPILE = -fexceptions -fno-strict-aliasing -fPIE -DPIE
 endif
 
+DEB_UPSTREAM_VERSION ?= $(shell dpkg-parsechangelog --show-field Version)
+
 ifeq ($(DEB_HOST_ARCH_OS),linux)
   ENABLE_SELINUX = USE_LABELED_IPSEC=true USE_LINUX_AUDIT=true
   ENABLE_LIBCAP_NG = USE_LIBCAP_NG=true
@@ -21,6 +23,7 @@ endif
 
 override_dh_auto_build:
 	$(MAKE) programs \
+		IPSECVERSION=$(DEB_UPSTREAM_VERSION) \
 		INC_USRLOCAL=/usr \
 		FINALLIBEXECDIR=/usr/lib/ipsec \
 		PUBDIR=/usr/sbin \
