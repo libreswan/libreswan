@@ -452,12 +452,17 @@ include testing/libvirt/fedora22.mk
 else
 include testing/libvirt/$(KVM_OS).mk
 endif
+
 ifeq ($(KVM_OS_VARIANT),)
 $(error KVM_OS_VARIANT not defined)
 endif
 ifeq ($(KVM_ISO_URL),)
 $(error KVM_ISO_URL not defined)
 endif
+ifeq ($(KVM_KICKSTART_FILE),)
+$(error KVM_KICKSTART_FILE not defined)
+endif
+
 KVM_ISO = $(KVM_BASEDIR)/$(notdir $(KVM_ISO_URL))
 
 .PHONY: kvm-iso
@@ -493,10 +498,6 @@ define check-kvm-domain
 		exit 1 ; \
 	fi
 endef
-
-ifeq ($(KVM_KICKSTART_FILE),)
-$(error KVM_KICKSTART_FILE not defined)
-endif
 
 
 # Create the base domain and, as a side effect, the disk image.
