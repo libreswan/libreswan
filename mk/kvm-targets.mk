@@ -537,6 +537,19 @@ define destroy-kvm-domain
 	fi
 endef
 
+define shadow-kvm-disk
+	: shadow-kvm-disk to=$(1) from-domain=$(2)
+	: shutdown from and fix any disk modes - logging into from messes that up
+	$(KVMSH) --shutdown $(2)
+	test -r $(KVM_LOCALDIR)/$(2).qcow2 || sudo chgrp $(KVM_GROUP) $(KVM_LOCALDIR)/$(2).qcow2
+	test -r $(KVM_LOCALDIR)/$(2).qcow2 || sudo chmod g+r          $(KVM_LOCALDIR)/$(2).qcow2
+	: create a shadow - from is used as a backing store
+	rm -f $(1)
+	qemu-img create -f qcow2 \
+		-b $(KVM_LOCALDIR)/$(2).qcow2 \
+		$(1)
+endef
+
 
 #
 # Create the base domain and (as a side effect) the disk image.
@@ -587,37 +600,90 @@ kvm-upgrade-base-domain:
 		$(KVM_DEBUGINFO_INSTALL) $(KVM_DEBUGINFO))
 
 #
+# Create the local disk images
+#
+
+.PRECIOUS: $(foreach domain, $(KVM_LOCAL_DOMAINS), $(KVM_LOCALDIR)/$(domain).qcow2)
+
+# Create the "clone" disk from the base .ks file (really the base
+# disk).
+
+$(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).qcow2: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | $(KVM_LOCALDIR)
+	$(call check-kvm-qemu-directory)
+	: shutdown from and fix any disk modes - logging into from messes that up
+	$(KVMSH) --shutdown $(KVM_BASE_DOMAIN)
+	test -r $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 || sudo chgrp $(KVM_GROUP) $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2
+	test -r $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 || sudo chmod g+r          $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2
+	: create a full copy
+	rm -f $@
+	qemu-img convert \
+		-p -O qcow2 \
+		$(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 \
+		$@.tmp
+	mv $@.tmp $@
+
+# Create the basic disk images from clone
+
+KVM_CLONE_DISK_COPIES = $(addsuffix .qcow2, $(addprefix $(KVM_LOCALDIR)/, $(KVM_CLONE_COPIES)))
+$(KVM_CLONE_DISK_COPIES): | $(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).qcow2
+	: copy-clone-disk $@
+	$(call check-kvm-qemu-directory)
+	$(call shadow-kvm-disk,$@.tmp,$(KVM_CLONE_DOMAIN))
+	mv $@.tmp $@
+
+ifneq ($(KVM_BUILD_COPIES),)
+KVM_BUILD_DISK_COPIES = $(addsuffix .qcow2, $(addprefix $(KVM_LOCALDIR)/, $(KVM_BUILD_COPIES)))
+$(KVM_BUILD_DISK_COPIES): | $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).qcow2
+	: copy-build-disk $@
+	$(call check-kvm-qemu-directory)
+	$(call shadow-kvm-disk,$@.tmp,$(KVM_BUILD_DOMAIN))
+	mv $@.tmp $@
+endif
+
+#
 # Create the local domains
 #
+
+# Since running a domain will likely modify its .qcow2 disk image
+# (changing MTIME), the domain's disk isn't a good indicator that a
+# domain needs updating.  Instead use the .xml file to indicate that a
+# domain has been created.
 
 .PRECIOUS: $(foreach domain, $(KVM_LOCAL_DOMAINS), $(KVM_LOCALDIR)/$(domain).xml)
 
 # Create the "clone" domain from the base domain.
 
-$(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | $(KVM_BASE_GATEWAY_FILE) $(KVM_LOCALDIR)
+$(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml:
+		$(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks \
+		| \
+		$(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).qcow2 \
+		$(KVM_BASE_GATEWAY_FILE) \
+		$(KVM_LOCALDIR)
 	$(call check-kvm-qemu-directory)
 	$(call destroy-kvm-domain,$(KVM_CLONE_DOMAIN))
-	: shutdown base and fix any disk modes - logging into base messes that up
-	$(KVMSH) --shutdown $(KVM_BASE_DOMAIN)
-	test -r $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 || sudo chgrp $(KVM_GROUP)  $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2
-	test -r $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 || sudo chmod g+r $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2
-	qemu-img convert -p -O qcow2 \
-		$(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 \
-		$(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).qcow2
 	$(call create-kvm-domain,$(KVM_CLONE_DOMAIN))
 	$(VIRSH) dumpxml $(KVM_CLONE_DOMAIN) > $@.tmp
 	mv $@.tmp $@
 .PHONY: install-kvm-domain-$(KVM_CLONE_DOMAIN)
 install-kvm-domain-$(KVM_CLONE_DOMAIN): $(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml
 
-# Install the $(KVM_TEST_DOMAINS) in $(KVM_LOCALDIR)
+# Create the "build" domain (if unique)
+
+ifneq ($(KVM_BUILD_COPIES),)
+$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml: | $(KVM_BASE_NETWORK_FILE) $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).qcow2
+	: build-domain $@
+	$(call check-kvm-qemu-directory)
+	$(call destroy-kvm-domain,$(KVM_BUILD_DOMAIN))
+	$(call create-kvm-domain,$(KVM_BUILD_DOMAIN),$@.tmp)
+	$(VIRSH) dumpxml $(KVM_CLONE_DOMAIN) > $@.tmp
+	mv $@.tmp $@
+.PHONY: install-kvm-domain-$(KVM_BUILD_DOMAIN)
+install-kvm-domain-$(KVM_BUILD_DOMAIN): $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
+endif
+
 #
-# These are created as clones of $(KVM_CLONE_DOMAIN).
+# Create the test domains
 #
-# Since running a domain will likely modify its .qcow2 disk image
-# (changing MTIME), the domain's disk isn't a good indicator that a
-# domain needs updating.  Instead use the .xml file to track the
-# domain's creation time.
 
 define install-kvm-test-domain
   #(info install-kvm-test-domain prefix=$(1) host=$(2) domain=$(1)$(2))
@@ -625,17 +691,12 @@ define install-kvm-test-domain
   install-kvm-domain-$(1)$(2): $$(KVM_LOCALDIR)/$(1)$(2).xml
   $$(KVM_LOCALDIR)/$(1)$(2).xml: \
 		| \
-		$$(KVM_LOCALDIR)/$$(KVM_CLONE_DOMAIN).xml \
 		$$(foreach subnet,$$(KVM_TEST_SUBNETS), $$(KVM_LOCALDIR)/$(1)$$(subnet).xml) \
-		testing/libvirt/vm/$(2)
+		testing/libvirt/vm/$(2) \
+		$(KVM_LOCALDIR)/$(1)$(2).qcow2
 	: install-kvm-test-domain prefix=$(1) host=$(2)
 	$$(call check-kvm-qemu-directory)
 	$$(call destroy-kvm-domain,$(1)$(2))
-	$$(KVMSH) --shutdown $$(KVM_CLONE_DOMAIN)
-	rm -f '$$(KVM_LOCALDIR)/$(1)$(2).qcow2'
-	qemu-img create \
-		-b $$(KVM_LOCALDIR)/$$(KVM_CLONE_DOMAIN).qcow2 \
-		-f qcow2 $$(KVM_LOCALDIR)/$(1)$(2).qcow2
 	sed \
 		-e "s:@@NAME@@:$(1)$(2):" \
 		-e "s:@@TESTINGDIR@@:$$(KVM_TESTINGDIR):" \
