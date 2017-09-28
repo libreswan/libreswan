@@ -78,14 +78,16 @@ KVM_OS ?= fedora
 #
 
 KVM_BASE_HOST = swan$(KVM_OS)base
-
-KVM_TEST_HOSTS = $(notdir $(wildcard testing/libvirt/vm/*[a-z]))
-KVM_INSTALL_HOSTS = $(filter-out nic, $(KVM_TEST_HOSTS))
-
 KVM_CLONE_HOST ?= clone
 KVM_BUILD_HOST ?= $(firstword $(KVM_INSTALL_HOSTS))
 
-KVM_HOSTS = $(KVM_BASE_HOST) $(KVM_CLONE_HOST) $(KVM_TEST_HOSTS)
+KVM_TEST_HOSTS = $(notdir $(wildcard testing/libvirt/vm/*[a-z]))
+KVM_BASIC_HOSTS = nic
+KVM_INSTALL_HOSTS = $(filter-out $(KVM_BASIC_HOSTS), $(KVM_TEST_HOSTS))
+
+KVM_CLONED_HOSTS = $(sort $(KVM_CLONE_HOST) $(KVM_BUILD_HOST) $(KVM_TEST_HOSTS))
+
+KVM_HOSTS = $(KVM_BASE_HOST) $(KVM_CLONED_HOSTS)
 
 strip-prefix = $(subst '',,$(subst "",,$(1)))
 add-first-domain-prefix = \
@@ -95,14 +97,13 @@ add-all-domain-prefixes = \
 		$(addprefix $(call strip-prefix,$(prefix)),$(1)))
 
 KVM_BASE_DOMAIN = $(KVM_BASE_HOST)
-
-KVM_INSTALL_DOMAINS = $(call add-all-domain-prefixes, $(KVM_INSTALL_HOSTS))
-KVM_TEST_DOMAINS = $(call add-all-domain-prefixes, $(KVM_TEST_HOSTS))
-
 KVM_CLONE_DOMAIN = $(call add-first-domain-prefix, $(KVM_CLONE_HOST))
 KVM_BUILD_DOMAIN = $(call add-first-domain-prefix, $(KVM_BUILD_HOST))
 
-KVM_DOMAINS = $(KVM_BASE_DOMAIN) $(KVM_CLONE_DOMAIN) $(KVM_TEST_DOMAINS)
+KVM_BASIC_DOMAINS = $(call add-all-domain-prefixes, $(KVM_BASIC_HOSTS))
+KVM_INSTALL_DOMAINS = $(call add-all-domain-prefixes, $(KVM_INSTALL_HOSTS))
+KVM_TEST_DOMAINS = $(call add-all-domain-prefixes, $(KVM_TEST_HOSTS))
+KVM_DOMAINS = $(sort $(KVM_BASE_DOMAIN) $(KVM_CLONE_DOMAIN) $(KVM_BUILD_BUILD) $(KVM_TEST_DOMAINS))
 
 KVMSH ?= $(abs_top_srcdir)/testing/utils/kvmsh.py
 KVMRUNNER ?= $(abs_top_srcdir)/testing/utils/kvmrunner.py
@@ -634,8 +635,14 @@ define uninstall-kvm-domain
 endef
 
 $(foreach domain, $(KVM_BASE_DOMAIN), \
-	$(eval $(call uninstall-kvm-domain,$(domain),$(KVM_POOLDIR))))
-$(foreach domain, $(KVM_CLONE_DOMAIN) $(KVM_TEST_DOMAINS), \
+	$(eval $(call uninstall-kvm-domain,$(domain),$(KVM_BASEDIR))))
+$(foreach domain, $(KVM_CLONE_DOMAIN), \
+	$(eval $(call uninstall-kvm-domain,$(domain),$(KVM_BASEDIR))))
+$(foreach domain, $(KVM_BUILD_DOMAIN), \
+	$(eval $(call uninstall-kvm-domain,$(domain),$(KVM_BASEDIR))))
+$(foreach domain, $(KVM_BASIC_DOMAINS), \
+	$(eval $(call uninstall-kvm-domain,$(domain),$(KVM_CLONEDIR))))
+$(foreach domain, $(filter-out $(KVM_BUILD_DOMAIN), $(KVM_INSTALL_DOMAINS)), \
 	$(eval $(call uninstall-kvm-domain,$(domain),$(KVM_CLONEDIR))))
 
 # Direct dependencies.  This is so that a primitive like
@@ -647,7 +654,11 @@ $(foreach domain, $(KVM_CLONE_DOMAIN) $(KVM_TEST_DOMAINS), \
 $(addprefix uninstall-kvm-domain-, $(KVM_BASE_DOMAIN)): \
 	$(addprefix uninstall-kvm-domain-, $(KVM_CLONE_DOMAIN))
 $(addprefix uninstall-kvm-domain-, $(KVM_CLONE_DOMAIN)): \
-	$(addprefix uninstall-kvm-domain-, $(KVM_TEST_DOMAINS))
+	$(addprefix uninstall-kvm-domain-, $(KVM_BUILD_DOMAIN))
+$(addprefix uninstall-kvm-domain-, $(KVM_CLONE_DOMAIN)): \
+	$(addprefix uninstall-kvm-domain-, $(KVM_BASIC_DOMAINS))
+$(addprefix uninstall-kvm-domain-, $(KVM_BUILD_DOMAIN)): \
+	$(addprefix uninstall-kvm-domain-, $(filter-out $(KVM_BUILD_DOMAIN), $(KVM_INSTALL_DOMAINS)))
 
 
 #
@@ -661,6 +672,15 @@ kvm-install-base-domain: $(addprefix install-kvm-domain-,$(KVM_BASE_DOMAIN))
 .PHONY: kvm-install-clone-domain
 kvm-install-clone-domain: $(addprefix install-kvm-domain-,$(KVM_CLONE_DOMAIN))
 
+.PHONY: kvm-install-build-domain
+kvm-install-build-domain: $(addprefix install-kvm-domain-,$(KVM_BUILD_DOMAIN))
+
+.PHONY: kvm-install-basic-domains
+kvm-install-basic-domains: $(addprefix install-kvm-domain-,$(KVM_BASIC_DOMAINS))
+
+.PHONY: kvm-install-install-domains
+kvm-install-install-domains: $(addprefix install-kvm-domain-,$(KVM_INSTALL_DOMAINS))
+
 .PHONY: kvm-install-test-domains
 kvm-install-test-domains: $(addprefix install-kvm-domain-,$(KVM_TEST_DOMAINS))
 
@@ -670,6 +690,15 @@ kvm-uninstall-base-domain: $(addprefix uninstall-kvm-domain-, $(KVM_BASE_DOMAIN)
 
 .PHONY: kvm-uninstall-clone-domain
 kvm-uninstall-clone-domain: $(addprefix uninstall-kvm-domain-,$(KVM_CLONE_DOMAIN))
+
+.PHONY: kvm-uninstall-build-domain
+kvm-uninstall-build-domain: $(addprefix uninstall-kvm-domain-,$(KVM_BUILD_DOMAIN))
+
+.PHONY: kvm-uninstall-basic-domains
+kvm-uninstall-basic-domains: $(addprefix uninstall-kvm-domain-,$(KVM_BASIC_DOMAINS))
+
+.PHONY: kvm-uninstall-install-domains
+kvm-uninstall-install-domains: $(addprefix uninstall-kvm-domain-,$(KVM_INSTALL_DOMAINS))
 
 .PHONY: kvm-uninstall-test-domains
 kvm-uninstall-test-domains: $(addprefix uninstall-kvm-domain-,$(KVM_TEST_DOMAINS))
