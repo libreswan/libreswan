@@ -1397,6 +1397,8 @@ static bool send_packet(struct state *st, const char *where,
 }
 
 /*
+ * (IKE v1) send fragments of packet.
+ *
  * non-IETF magic voodoo we need to consider for interop:
  * - www.cisco.com/en/US/docs/ios/sec_secure_connectivity/configuration/guide/sec_fragment_ike_pack.html
  * - www.cisco.com/en/US/docs/ios-xml/ios/sec_conn_ikevpn/configuration/15-mt/sec-fragment-ike-pack.pdf
