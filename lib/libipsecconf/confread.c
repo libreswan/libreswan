@@ -1503,19 +1503,17 @@ struct starter_config *confread_load(const char *file,
 	}
 
 	if (!setuponly) {
-		/**
-		 * Find %default
-		 *
-		 */
-		struct section_list *sconn;
-
 #ifdef USE_DNSSEC
 		unbound_sync_init(cfg->setup.options[KBF_DO_DNSSEC],
 				cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE],
 				cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS]);
 #endif
 
-		for (sconn = cfgp->sections.tqh_first; (!err) && sconn != NULL;
+		/*
+		 * Load %default conn
+		 * ??? is it correct to accept multiple %default conns?
+		 */
+		for (struct section_list *sconn = cfgp->sections.tqh_first; (!err) && sconn != NULL;
 		     sconn = sconn->link.tqe_next) {
 			if (streq(sconn->name, "%default")) {
 				starter_log(LOG_LEVEL_DEBUG,
@@ -1527,14 +1525,13 @@ struct starter_config *confread_load(const char *file,
 			}
 		}
 
-		/**
+		/*
 		 * Load other conns
 		 */
-		for (sconn = cfgp->sections.tqh_first; sconn != NULL;
+		for (struct section_list *sconn = cfgp->sections.tqh_first; sconn != NULL;
 		     sconn = sconn->link.tqe_next) {
-			if (streq(sconn->name, "%default"))
-				continue;
-			err |= init_load_conn(cfg, cfgp, sconn,
+			if (!streq(sconn->name, "%default"))
+				err |= init_load_conn(cfg, cfgp, sconn,
 						 FALSE,
 						 resolvip, perr);
 		}

@@ -581,8 +581,7 @@ extern struct state *find_state_ikev2_parent(const u_char *icookie,
 					     const u_char *rcookie);
 
 extern struct state *ikev2_find_state_in_init(const u_char *icookie,
-						  enum state_kind expected_state,
-						  bool is_child);
+						  enum state_kind expected_state);
 
 extern struct state *find_state_ikev2_child(const u_char *icookie,
 					    const u_char *rcookie,

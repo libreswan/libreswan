@@ -833,12 +833,12 @@ static int process_transforms(pb_stream *prop_pbs, struct lswlog *remote_print_b
 				lswlogf(log, "; missing transforms: ");
 				lswlog_trans_types(log, missing);
 			}
-			continue;
+		} else {
+			DBG(DBG_CONTROL,
+			    DBG_log("remote proposal %u matches local proposal %d",
+				    remote_propnum, local_propnum));
+			return local_propnum;
 		}
-		DBG(DBG_CONTROL,
-		    DBG_log("remote proposal %u matches local proposal %d",
-			    remote_propnum, local_propnum));
-		return local_propnum;
 	}
 
 	DBG(DBG_CONTROL, DBG_log("Remote proposal %u matches no local proposals", remote_propnum));
@@ -2012,12 +2012,11 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 		struct ikev2_proposal *proposal =
 			ikev2_proposal_from_proposal_info(ike_info, IKEv2_SEC_PROTO_IKE,
 							  proposals, ike_info->dh);
-		if (proposal == NULL) {
-			continue;
+		if (proposal != NULL) {
+			DBG(DBG_CONTROL,
+			    DBG_log_ikev2_proposal("... ", proposal));
+			proposals->roof++;
 		}
-		DBG(DBG_CONTROL,
-		    DBG_log_ikev2_proposal("... ", proposal));
-		proposals->roof++;
 	}
 	*result = proposals;
 
@@ -2215,15 +2214,13 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 		struct ikev2_proposal *proposal =
 			ikev2_proposal_from_proposal_info(esp_info, protoid,
 							  proposals, pfs_group);
-		if (proposal == NULL) {
-			continue;
+		if (proposal != NULL) {
+			add_esn_transforms(proposal, policy);
+
+			DBG(DBG_CONTROL,
+			    DBG_log_ikev2_proposal("... ", proposal));
+			proposals->roof++;
 		}
-
-		add_esn_transforms(proposal, policy);
-
-		DBG(DBG_CONTROL,
-		    DBG_log_ikev2_proposal("... ", proposal));
-		proposals->roof++;
 	}
 
 	*result = proposals;
@@ -2290,9 +2287,9 @@ const struct oakley_group_desc *ikev2_proposals_first_modp(struct ikev2_proposal
 				 * for a valid group.
 				 */
 				DBG(DBG_CONTROL, DBG_log("proposals include unsupported group %d", groupnum));
-				continue;
+			} else {
+				return group;
 			}
-			return group;
 		}
 	}
 	DBG(DBG_CONTROL, DBG_log("No valid MODP (DH) transform found"));

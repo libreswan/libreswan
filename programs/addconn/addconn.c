@@ -654,7 +654,7 @@ static const struct option longopts[] =
 
 int main(int argc, char *argv[])
 {
-	int opt = 0;
+	int opt;
 	bool autoall = FALSE;
 	int configsetup = 0;
 	int checkconfig = 0;

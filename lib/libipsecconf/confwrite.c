@@ -62,14 +62,8 @@ static void confwrite_int(FILE *out,
 		if ((k->validity & KV_CONTEXT_MASK) != context)
 			continue;
 
-		/* do not output aliases */
-		if (k->validity & kv_alias)
-			continue;
-
-		/* do not output policy settings handled elsewhere */
-		if (k->validity & kv_policy)
-			continue;
-		if (k->validity & kv_processed)
+		/* do not output aliases or things handled elsewhere */
+		if (k->validity & (kv_alias | kv_policy | kv_processed))
 			continue;
 
 #if 0
@@ -94,10 +88,6 @@ static void confwrite_int(FILE *out,
 		case kt_idtype:
 		case kt_bitstring:
 			/* none of these are valid number types */
-			continue;
-
-		case kt_time:
-			/* special number, but do work later XXX */
 			break;
 
 		case kt_bool:
@@ -107,7 +97,7 @@ static void confwrite_int(FILE *out,
 				fprintf(out, "\t%s%s=%s\n", side,
 					k->keyname, options[k->field] ? "yes" : "no");
 			}
-			continue;
+			break;
 
 		case kt_enum:
 		case kt_loose_enum:
@@ -138,37 +128,35 @@ static void confwrite_int(FILE *out,
 					fprintf(out, "\n");
 				}
 			}
-			continue;
+			break;
 
 		case kt_list:
 			/* special enumeration */
 			if (options_set[k->field]) {
 				int val = options[k->field];
 
-				if (val == 0)
-					continue;
+				if (val != 0) {
+					fprintf(out, "\t%s%s=\"", side, k->keyname);
+					confwrite_list(out, "", val, k);
 
-				fprintf(out, "\t%s%s=\"", side, k->keyname);
-				confwrite_list(out, "", val, k);
-
-				fprintf(out, "\"\n");
+					fprintf(out, "\"\n");
+				}
 			}
-			continue;
-
-		case kt_number:
 			break;
 
 		case kt_comment:
-			continue;
+			break;
 
 		case kt_obsolete:
 		case kt_obsolete_quiet:
-			continue;
-		}
+			break;
 
-		if (options_set[k->field])
-			fprintf(out, "\t%s%s=%d\n", side, k->keyname,
-				options[k->field]);
+		case kt_time: /* special number, but do work later XXX */
+		case kt_number:
+			if (options_set[k->field])
+				fprintf(out, "\t%s%s=%d\n", side, k->keyname,
+					options[k->field]);
+		}
 	}
 }
 
@@ -185,14 +173,8 @@ static void confwrite_str(FILE *out,
 		if ((k->validity & KV_CONTEXT_MASK) != context)
 			continue;
 
-		/* do not output aliases */
-		if (k->validity & kv_alias)
-			continue;
-
-		/* do not output policy settings handled elsewhere */
-		if (k->validity & kv_policy)
-			continue;
-		if (k->validity & kv_processed)
+		/* do not output aliases or settings handled elsewhere */
+		if (k->validity & (kv_alias | kv_policy | kv_processed))
 			continue;
 
 		switch (k->type) {
@@ -200,13 +182,24 @@ static void confwrite_str(FILE *out,
 			if (strings_set[k->field])
 				fprintf(out, "\t%s%s={%s}\n", side, k->keyname,
 					strings[k->field]);
-			continue;
+			break;
 
 		case kt_string:
 		case kt_appendstring:
 		case kt_filename:
 		case kt_dirname:
 			/* these are strings */
+
+			if (strings_set[k->field]) {
+				const char *quote =
+					strchr(strings[k->field], ' ') == NULL ?
+						"" : "\"";
+
+				fprintf(out, "\t%s%s=%s%s%s\n", side, k->keyname,
+					quote,
+					strings[k->field],
+					quote);
+			}
 			break;
 
 		case kt_rsakey:
@@ -215,7 +208,7 @@ static void confwrite_str(FILE *out,
 		case kt_subnet:
 		case kt_idtype:
 		case kt_bitstring:
-			continue;
+			break;
 
 		case kt_bool:
 		case kt_invertbool:
@@ -223,34 +216,22 @@ static void confwrite_str(FILE *out,
 		case kt_list:
 		case kt_loose_enum:
 			/* special enumeration */
-			continue;
+			break;
 
 		case kt_time:
 			/* special number, not a string */
-			continue;
+			break;
 
 		case kt_percent:
 		case kt_number:
-			continue;
+			break;
 
 		case kt_comment:
-			continue;
+			break;
 
 		case kt_obsolete:
 		case kt_obsolete_quiet:
-			continue;
-		}
-
-		if (strings_set[k->field]) {
-			char *quote = "";
-
-			if (strchr(strings[k->field], ' '))
-				quote = "\"";
-
-			fprintf(out, "\t%s%s=%s%s%s\n", side, k->keyname,
-				quote,
-				strings[k->field],
-				quote);
+			break;
 		}
 	}
 }

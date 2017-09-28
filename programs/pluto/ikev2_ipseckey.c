@@ -392,8 +392,6 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 			DBG(DBG_DNS,
 				DBG_log("dns answer %zu qtype mismatch expect %d vs %d ignore this answer",
 					i,  dnsr->qtype, atype));
-
-			continue;
 		}
 	}
 

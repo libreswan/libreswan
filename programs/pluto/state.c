@@ -1181,9 +1181,8 @@ bool shared_phase1_connection(const struct connection *c)
 		struct state *st;
 
 		FOR_EACH_ENTRY(st, i, {
-			if (st->st_connection == c)
-				continue;
-			if (st->st_clonedfrom == serial_us)
+			if (st->st_connection != c &&
+			    st->st_clonedfrom == serial_us)
 				return TRUE;
 			});
 	}
@@ -1598,30 +1597,22 @@ struct state *find_state_ikev2_parent(const u_char *icookie,
  * state objects in the initial state).
  */
 struct state *ikev2_find_state_in_init(const u_char *icookie,
-					   enum state_kind expected_state,
-					   bool is_child)
+					   enum state_kind expected_state)
 {
 	struct state *st;
 	FOR_EACH_STATE_ENTRY(st, icookie_chain(icookie), {
-			if (!st->st_ikev2) {
-				continue;
+			if (st->st_ikev2 &&
+			    st->st_state == expected_state &&
+			    memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
+			    !IS_CHILD_SA(st)) {
+				DBG(DBG_CONTROL,
+				    DBG_log("parent_init v2 peer and cookies match on #%lu",
+					    st->st_serialno);
+				    DBG_log("v2 state object #%lu found, in %s",
+					    st->st_serialno,
+					    enum_name(&state_names, st->st_state)));
+				return st;
 			}
-			if (st->st_state != expected_state) {
-				continue;
-			}
-			if (!memeq(icookie, st->st_icookie, COOKIE_SIZE)) {
-				continue;
-			}
-			if (!is_child && IS_CHILD_SA(st)) {
-				continue;
-			}
-			DBG(DBG_CONTROL,
-			    DBG_log("parent_init v2 peer and cookies match on #%lu",
-				    st->st_serialno);
-			    DBG_log("v2 state object #%lu found, in %s",
-				    st->st_serialno,
-				    enum_name(&state_names, st->st_state)));
-			return st;
 		});
 
 	DBG(DBG_CONTROL, DBG_log("parent_init v2 state object not found"));

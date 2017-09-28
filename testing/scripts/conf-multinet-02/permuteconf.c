@@ -97,7 +97,7 @@ static int starter_print_connname(struct starter_config *cfg,
 
 int main(int argc, char *argv[])
 {
-	int opt = 0;
+	int opt;
 	struct starter_config *cfg = NULL;
 	err_t err = NULL;
 	char *confdir = NULL;
@@ -176,12 +176,10 @@ int main(int argc, char *argv[])
 	     conn != NULL;
 	     conn = conn->link.tqe_next) {
 		/* basic case, nothing special to synthize! */
-		if (!conn->left.strings_set[KSCF_SUBNETS] &&
-		    !conn->right.strings_set[KSCF_SUBNETS])
-			continue;
-
-		starter_permutate_conns(starter_print_connname,
-					cfg, conn);
+		if (conn->left.strings_set[KSCF_SUBNETS] ||
+		    conn->right.strings_set[KSCF_SUBNETS])
+			starter_permutate_conns(starter_print_connname,
+						cfg, conn);
 	}
 
 	exit(0);

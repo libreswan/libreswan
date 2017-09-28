@@ -2850,6 +2850,7 @@ struct connection *find_next_host_connection(
 				 */
 				if ((c->policy & POLICY_OPPORTUNISTIC))
 					continue;
+
 				/* shunt match - stop the search for another conn if we are groupinstance*/
 				if (c->policy & POLICY_GROUPINSTANCE)
 					break;

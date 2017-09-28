@@ -250,9 +250,6 @@ static struct alg_info_esp *alg_info_discover_pfsgroup_hack(struct alg_info_esp 
 	 * that DH.
 	 */
 	FOR_EACH_ESP_INFO(aie, esp_info) {
-		if (esp_info == last) {
-			continue;
-		}
 		esp_info->dh = last->dh;
 	}
 

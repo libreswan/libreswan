@@ -980,7 +980,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		 */
 		enum state_kind expected_state = (ike_i ? STATE_PARENT_R1 : STATE_PARENT_I1);
 		st = ikev2_find_state_in_init(md->hdr.isa_icookie,
-						  expected_state, FALSE);
+						  expected_state);
 		if (st != NULL && md->original_role == ORIGINAL_INITIATOR) {
 			/*
 			 * Responder provided a cookie, record it.

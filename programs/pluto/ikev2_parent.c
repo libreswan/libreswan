@@ -1071,7 +1071,6 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 
 	bool seen_dcookie = FALSE;
 	bool require_dcookie = require_ddos_cookies();
-	struct payload_digest *ntfy;
 
 	if (drop_new_exchanges()) {
 		/* only log for debug to prevent disk filling up */
@@ -1080,11 +1079,10 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	}
 
 	/* Process NOTIFY payloads, including checking for a DCOOKIE */
-	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
+	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 		if (ntfy->payload.v2n.isan_type == v2N_COOKIE) {
 			DBG(DBG_CONTROLMORE, DBG_log("Received a NOTIFY payload of type COOKIE - we will verify the COOKIE"));
 			seen_dcookie = TRUE;
-			continue;
 		}
 	}
 
@@ -1380,7 +1378,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		md->st = st;
 		md->from_state = STATE_IKEv2_BASE;
 
-		for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
+		for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 			bool seen_nat = FALSE;
 
 			switch(ntfy->payload.v2n.isan_type) {
@@ -1458,7 +1456,6 @@ static void ikev2_parent_inI1outR1_continue(struct pluto_crypto_req_cont *ke,
 {
 	struct msg_digest *md = ke->pcrc_md;
 	struct state *const st = md->st;
-	stf_status e;
 
 	DBG(DBG_CONTROL,
 		DBG_log("ikev2_parent_inI1outR1_continue for #%lu: calculated ke+nonce, sending R1",
@@ -1485,7 +1482,7 @@ static void ikev2_parent_inI1outR1_continue(struct pluto_crypto_req_cont *ke,
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
-	e = ikev2_parent_inI1outR1_tail(ke, r);
+	stf_status e = ikev2_parent_inI1outR1_tail(ke, r);
 
 	passert(ke->pcrc_md != NULL);
 	complete_v2_state_transition(&ke->pcrc_md, e);
@@ -1735,9 +1732,8 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 {
 	struct state *st = md->st;
 	struct connection *c = st->st_connection;
-	struct payload_digest *ntfy;
 
-	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
+	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 		if (ntfy->payload.v2n.isan_spisize != 0) {
 			DBG(DBG_CONTROLMORE, DBG_log(
 				"Notify payload for IKE must have zero length SPI - message dropped"
@@ -3336,7 +3332,7 @@ static void ikev2_pam_continue(struct state *st, const char *name UNUSED,
 	stf_status stf;
 	if (success) {
 		/*
-		 * This is a hardcoded continue, convert this to micro
+		 * This is a hardcoded continue; convert this to micro
 		 * state.
 		 */
 		stf = ikev2_parent_inI2outR2_auth_tail(md, success);

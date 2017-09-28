@@ -1173,7 +1173,6 @@ void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
 {
 	unsigned char hash_me[IKEV2_NATD_HASH_SIZE];
 	unsigned char hash_him[IKEV2_NATD_HASH_SIZE];
-	struct payload_digest *p;
 	struct state *st = md->st;
 	bool found_me = FALSE;
 	bool found_him = FALSE;
@@ -1193,7 +1192,7 @@ void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
 	natd_hash(&ike_alg_hash_sha1, hash_him, st->st_icookie, rcookie,
 		  &md->sender, md->sender_port);
 
-	for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {
+	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {
 		if (pbs_left(&p->pbs) != IKEV2_NATD_HASH_SIZE)
 			continue;
 
@@ -1209,21 +1208,18 @@ void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
 		default:
 			continue;
 		}
-		if (found_me && found_him)
-			break;
 	}
 
 	natd_lookup_common(st, &md->sender, found_me, found_him);
 
-	if ((st->st_state == STATE_PARENT_I1) &&
-		(st->hidden_variables.st_nat_traversal
-			& NAT_T_DETECTED)) {
+	if (st->st_state == STATE_PARENT_I1 &&
+	    (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED)) {
 		DBG(DBG_NATT, {
 			ipstr_buf b;
 			DBG_log("NAT-T: floating to port %s:%d",
 				ipstr(&md->sender, &b), pluto_nat_port);
 		});
-		st->st_localport  = pluto_nat_port;
+		st->st_localport = pluto_nat_port;
 		st->st_remoteport = pluto_nat_port;
 
 		nat_traversal_change_port_lookup(NULL, st);

@@ -55,11 +55,10 @@ size_t crypt_prf_fips_key_size_floor(void)
 		key_size_floor = SIZE_MAX;
 		for (const struct prf_desc **prfp = next_prf_desc(NULL);
 		     prfp != NULL; prfp = next_prf_desc(prfp)) {
-			if (!(*prfp)->common.fips) {
-				continue;
-			}
-			key_size_floor = min(key_size_floor,
+			if ((*prfp)->common.fips) {
+				key_size_floor = min(key_size_floor,
 					     crypt_prf_fips_key_size_min(*prfp));
+			}
 		}
 	}
 	return key_size_floor;

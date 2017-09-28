@@ -786,7 +786,7 @@ unsigned int parser_enum_list(const struct keyword_def *kd, const char *s, bool 
 		     kev = kd->validenum->values;
 		     kevcount > 0 && !strcaseeq(piece, kev->name);
 		     kev++, kevcount--)
-			;
+			continue;
 
 		/* if we found something */
 		if (kevcount != 0) {

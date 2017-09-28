@@ -482,10 +482,10 @@ static void unlink_pluto_event_list(struct pluto_event **evp) {
 	struct pluto_event *e = *evp;
 
 	for (pp = &pluto_events_head; (p = *pp) != NULL; pp = &p->next) {
-		if (p != e)
-			continue;
-		*pp = free_event_entry(evp); /* unlink this entry from the list */
-		return;
+		if (p == e) {
+			*pp = free_event_entry(evp); /* unlink this entry from the list */
+			return;
+		}
 	}
 }
 

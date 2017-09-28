@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
 {
 	tool_init_log(argv[0]);
 
-	int opt = 0;
+	int opt;
 	struct starter_config *cfg = NULL;
 	err_t err = NULL;
 	char *confdir = NULL;

@@ -428,32 +428,29 @@ static const char *add_proposal_defaults(const struct parser_policy *policy,
 
 		/* duplicate? */
 		FOR_EACH_PROPOSAL_INFO(alg_info, existing_proposal) {
-			if (existing_proposal->encrypt != proposal->encrypt)
-				continue;
-			if (existing_proposal->prf != proposal->prf)
-				continue;
-			if (existing_proposal->integ != proposal->integ)
-				continue;
-			if (existing_proposal->dh != proposal->dh)
-				continue;
 			/*
-			 * 0 is like a wild-card (it actually means
+			 * key length 0 is like a wild-card (it actually means
 			 * propose default and strongest key lengths)
 			 * so if either is zero just treat it as a
 			 * match.
 			 */
-			if (existing_proposal->enckeylen != proposal->enckeylen
-			    && existing_proposal->enckeylen != 0 && proposal->enckeylen != 0)
-				continue;
-			DBG(DBG_CRYPT,
-			    DBG_log("discarding duplicate %s proposal encrypt=%s enckeylen=%zu prf=%s integ=%s dh=%s",
-				    proposal->protocol->name,
-				    proposal->encrypt != NULL ? proposal->encrypt->common.name : "n/a",
-				    proposal->enckeylen,
-				    proposal->prf != NULL ? proposal->prf->common.name : "n/a",
-				    proposal->integ != NULL ? proposal->integ->common.name : "n/a",
-				    proposal->dh != NULL ? proposal->dh->common.name : "n/a"));
-			return NULL;
+			if (existing_proposal->encrypt == proposal->encrypt &&
+			    existing_proposal->prf == proposal->prf &&
+			    existing_proposal->integ == proposal->integ &&
+			    existing_proposal->dh == proposal->dh &&
+			    (existing_proposal->enckeylen == proposal->enckeylen ||
+			     existing_proposal->enckeylen == 0 ||
+			     proposal->enckeylen == 0)) {
+				DBG(DBG_CRYPT,
+				    DBG_log("discarding duplicate %s proposal encrypt=%s enckeylen=%zu prf=%s integ=%s dh=%s",
+					    proposal->protocol->name,
+					    proposal->encrypt != NULL ? proposal->encrypt->common.name : "n/a",
+					    proposal->enckeylen,
+					    proposal->prf != NULL ? proposal->prf->common.name : "n/a",
+					    proposal->integ != NULL ? proposal->integ->common.name : "n/a",
+					    proposal->dh != NULL ? proposal->dh->common.name : "n/a"));
+				return NULL;
+			}
 		}
 
 		/* Overflow? */
