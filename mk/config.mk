@@ -473,6 +473,8 @@ NONINTCONFIG=oldconfig
 ifndef IPSECVERSION
 IPSECVERSION:=$(shell ${LIBRESWANSRCDIR}/packaging/utils/setlibreswanversion ${IPSECBASEVERSION} ${LIBRESWANSRCDIR})
 export IPSECVERSION
+endif
+ifndef IPSECVIDVERSION
 # VID is a somewhat shortened version, eg "3.5" or "3.5-xxx"
 IPSECVIDVERSION:=$(shell echo ${IPSECVERSION} | sed 's/^\([^-]*\)-\([^-]*\)-.*/\1-\2/')
 export IPSECVIDVERSION
