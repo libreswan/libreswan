@@ -254,24 +254,13 @@ $(KVM_TEST_CLEAN_TARGETS):
 	find $(STRIPPED_KVM_TESTS) -name OUTPUT -type d -prune -print0 | xargs -0 -r rm -r
 
 
-# Build the keys/certificates using the KVM.
+#
+# Build the KVM keys using the KVM.
+#
+
 KVM_KEYS_SCRIPT = ./testing/x509/kvm-keys.sh
 KVM_KEYS_EXPIRATION_DAY = 14
 KVM_KEYS_EXPIRED = find testing/x509/*/ -mtime +$(KVM_KEYS_EXPIRATION_DAY)
-
-kvm-rpm:
-	@echo building rpm for libreswan testing
-	mkdir -p ~/rpmbuild/SPECS/
-	sed  "s/@IPSECBASEVERSION@/$(RPM_VERSION)/g" packaging/fedora/libreswan-testing.spec.in \
-		> ~/rpmbuild/SPECS/libreswan-testing.spec
-	mkdir -p ~/rpmbuild/SOURCES
-	git archive --format=tar --prefix=$(RPM_PREFIX)/ \
-		-o ~/rpmbuild/SOURCES/$(RPM_PREFIX).tar HEAD
-	tar --transform "s/^/$(RPM_PREFIX)\//" -rf ~/rpmbuild/SOURCES/$(RPM_PREFIX).tar Makefile.inc.local
-	gzip -f ~/rpmbuild/SOURCES/$(RPM_PREFIX).tar
-	rpmbuild -bs  ~/rpmbuild/SPECS/libreswan-testing.spec
-	rpm -i ~/rpmbuild/SRPMS/$(RPM_PREFIX)*.src.rpm
-	rpmbuild -ba ~/rpmbuild/SPECS/libreswan-testing.spec
 
 .PHONY: kvm-keys
 kvm-keys: $(KVM_KEYS)
@@ -310,6 +299,25 @@ $(KVM_KEYS_CLEAN_TARGETS):
 	rm -f testing/baseconfigs/all/etc/bind/keys/*.key
 	rm -f testing/baseconfigs/all/etc/bind/keys/*.private
 	rm -f testing/baseconfigs/all/etc/bind/dsset/dsset-*
+
+
+#
+# Create an RPM for the test domains
+#
+
+kvm-rpm:
+	@echo building rpm for libreswan testing
+	mkdir -p ~/rpmbuild/SPECS/
+	sed  "s/@IPSECBASEVERSION@/$(RPM_VERSION)/g" packaging/fedora/libreswan-testing.spec.in \
+		> ~/rpmbuild/SPECS/libreswan-testing.spec
+	mkdir -p ~/rpmbuild/SOURCES
+	git archive --format=tar --prefix=$(RPM_PREFIX)/ \
+		-o ~/rpmbuild/SOURCES/$(RPM_PREFIX).tar HEAD
+	tar --transform "s/^/$(RPM_PREFIX)\//" -rf ~/rpmbuild/SOURCES/$(RPM_PREFIX).tar Makefile.inc.local
+	gzip -f ~/rpmbuild/SOURCES/$(RPM_PREFIX).tar
+	rpmbuild -bs  ~/rpmbuild/SPECS/libreswan-testing.spec
+	rpm -i ~/rpmbuild/SRPMS/$(RPM_PREFIX)*.src.rpm
+	rpmbuild -ba ~/rpmbuild/SPECS/libreswan-testing.spec
 
 
 #
