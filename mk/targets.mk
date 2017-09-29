@@ -52,7 +52,7 @@ define recursive-target
   # doing the oposite - doing the recursion last.
 
   $(1): recursive-$(1)
-	@$(MAKE) --no-print-directory local-$(1)
+	@$$(MAKE) --no-print-directory local-$(1)
 
   # XXX: Require $(builddir)/Makefile.  Targets that switch to
   # builddir require it (but are there any left?).  In $(topsrcdir)
