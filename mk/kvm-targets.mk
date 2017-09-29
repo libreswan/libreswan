@@ -401,7 +401,7 @@ define install-kvm-test-network
   .PRECIOUS: $$(KVM_LOCALDIR)/$(1)$(2).xml
   $$(KVM_LOCALDIR)/$(1)$(2).xml:
 	: install-kvm-test-network prefix=$(1) network=$(2)
-	$$(call destroy-kvm-network,$(1)$(2),$$@)
+	$$(call destroy-kvm-network,$(1)$(2))
 	rm -f '$$@.tmp'
 	echo "<network ipv6='yes'>"					>> '$$@.tmp'
 	echo "  <name>$(1)$(2)</name>"					>> '$$@.tmp'
