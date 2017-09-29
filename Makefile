@@ -602,7 +602,7 @@ showobjdir:
 # these need to move elsewhere and get fixed not to use root
 
 deb:
-	cp -r --reflink=auto packaging/debian .
+	cp -r packaging/debian .
 	sed -i "s/@IPSECBASEVERSION@/`make -s showdebversion`/g" debian/changelog
 	debuild -i -us -uc -b
 	#debuild -S -sa
