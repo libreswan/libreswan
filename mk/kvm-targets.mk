@@ -37,11 +37,10 @@ KVM_GROUP ?= $(shell id -g qemu)
 
 # To avoid the problem where the host has no "default" KVM network
 # (there's a rumour that libreswan's main testing machine has this
-# problem) define a dedicated swandefault network.
+# problem) define a dedicated swandefault gateway.
 
-KVM_DEFAULT_NETWORK ?= swandefault
-KVM_BASE_NETWORK = $(KVM_DEFAULT_NETWORK)
-KVM_CLONE_NETWORK = $(KVM_BASE_NETWORK)
+KVM_BASE_GATEWAY ?= swandefault
+KVM_LOCAL_GATEWAY = $(KVM_BASE_GATEWAY)
 
 # The alternative is qemu:///session and it doesn't require root.
 # However, it has never been used, and the python tools all assume
@@ -58,8 +57,8 @@ VIRT_INSTALL = sudo virt-install --connect $(KVM_CONNECTION)
 
 VIRT_RND ?= --rng type=random,device=/dev/random
 VIRT_SECURITY ?= --security type=static,model=dac,label='$(KVM_USER):$(KVM_GROUP)',relabel=yes
-VIRT_BASE_NETWORK ?= --network=network:$(KVM_BASE_NETWORK),model=virtio
-VIRT_CLONE_NETWORK ?= --network=network:$(KVM_CLONE_NETWORK),model=virtio
+VIRT_BASE_NETWORK ?= --network=network:$(KVM_BASE_GATEWAY),model=virtio
+VIRT_CLONE_NETWORK ?= --network=network:$(KVM_LOCAL_GATEWAY),model=virtio
 VIRT_SOURCEDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_SOURCEDIR),target=swansource
 VIRT_TESTINGDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_TESTINGDIR),target=testing
 
@@ -338,45 +337,55 @@ kvm-rpm:
 # Build a pool of networks from scratch
 #
 
-# Generate install and uninstall rules for each network within the
-# pool.
+# This defines the primitives, the public rules are defined near the
+# end.
 
-define install-kvm-network
-        : install-kvm-network network=$(1) file=$(2)
+define create-kvm-network
+        : create-kvm-network network=$(1) file=$(2)
 	$(VIRSH) net-define '$(2)'
 	$(VIRSH) net-autostart '$(1)'
 	$(VIRSH) net-start '$(1)'
 endef
 
-define uninstall-kvm-network
-        : uninstall-kvm-network network=$(1) file=$(2)
+define destroy-kvm-network
+        : destroy-kvm-network network=$(1)
 	if $(VIRSH) net-info '$(1)' 2>/dev/null | grep 'Active:.*yes' > /dev/null ; then \
 		$(VIRSH) net-destroy '$(1)' ; \
 	fi
 	if $(VIRSH) net-info '$(1)' >/dev/null 2>&1 ; then \
 		$(VIRSH) net-undefine '$(1)' ; \
 	fi
-	rm -f $(2)
 endef
 
-define check-no-kvm-network
-        : check-no-kvm-network network=$(1)
-	if $(VIRSH) net-info '$(1)' 2>/dev/null ; then \
-		echo '' ; \
-		echo '        The network $(1) seems to already exist.' ; \
-		echo '  ' ; \
-		echo '  This is most likely because make was aborted part' ; \
-		echo '  way through creating the network, however it could be' ; \
-		echo '  because the network was created by some other means.' ; \
-		echo '' ; \
-		echo '  To continue the build, the existing network will first need to' ; \
-		echo '  be deleted using:' ; \
-		echo '' ; \
-		echo '      make uninstall-kvm-network-$(1)' ; \
-		echo '' ; \
-		exit 1 ; \
-	fi
-endef
+#
+# Base network.
+#
+
+KVM_BASE_GATEWAY_FILE = $(KVM_BASEDIR)/$(KVM_BASE_GATEWAY).xml
+.PHONY: install-kvm-network-$(KVM_BASE_GATEWAY)
+install-kvm-network-$(KVM_BASE_GATEWAY): $(KVM_BASE_GATEWAY_FILE)
+$(KVM_BASE_GATEWAY_FILE): | testing/libvirt/net/$(KVM_BASE_GATEWAY) $(KVM_BASEDIR)
+	$(call destroy-kvm-network,$(KVM_BASE_GATEWAY))
+	cp testing/libvirt/net/$(KVM_BASE_GATEWAY) $@.tmp
+	$(call create-kvm-network,$(KVM_BASE_GATEWAY),$@.tmp)
+	mv $@.tmp $@
+
+.PHONY: uninstall-kvm-network-$(KVM_BASE_GATEWAY)
+uninstall-kvm-network-$(KVM_BASE_GATEWAY):
+	rm -f $(KVM_BASE_GATEWAY_FILE)
+	$(call destroy-kvm-network,$(KVM_BASE_GATEWAY))
+
+# zap dependent domains
+
+uninstall-kvm-network-$(KVM_BASE_GATEWAY): uninstall-kvm-domain-$(KVM_BASE_DOMAIN)
+uninstall-kvm-network-$(KVM_BASE_GATEWAY): uninstall-kvm-domain-$(KVM_CLONE_DOMAIN)
+ifneq ($(filter-out $(KVM_INSTALL_DOMAINS), $(KVM_BUILD_DOMAIN)),)
+uninstall-kvm-network-$(KVM_BASE_GATEWAY): uninstall-kvm-domain-$(KVM_BUILD_DOMAIN)
+endif
+
+#
+# Test networks.
+#
 
 KVM_TEST_SUBNETS = \
 	$(notdir $(wildcard testing/libvirt/net/192*))
@@ -392,7 +401,7 @@ define install-kvm-test-network
   .PRECIOUS: $$(KVM_LOCALDIR)/$(1)$(2).xml
   $$(KVM_LOCALDIR)/$(1)$(2).xml:
 	: install-kvm-test-network prefix=$(1) network=$(2)
-	$(call check-no-kvm-network,$(1)$(2),$$@)
+	$$(call destroy-kvm-network,$(1)$(2),$$@)
 	rm -f '$$@.tmp'
 	echo "<network ipv6='yes'>"					>> '$$@.tmp'
 	echo "  <name>$(1)$(2)</name>"					>> '$$@.tmp'
@@ -407,7 +416,7 @@ define install-kvm-test-network
 	echo "  <!-- <ip address='$(subst _,.,$(2)).253'> -->"			>> '$$@.tmp'
   endif
 	echo "</network>"						>> '$$@.tmp'
-	$(call install-kvm-network,$(1)$(2),$$@.tmp)
+	$$(call create-kvm-network,$(1)$(2),$$@.tmp)
 	mv $$@.tmp $$@
 endef
 
@@ -416,29 +425,19 @@ $(foreach prefix, $(KVM_PREFIXES), \
 		$(eval $(call install-kvm-test-network,$(call strip-prefix,$(prefix)),$(subnet)))))
 
 define uninstall-kvm-test-network
-  #(info prefix=$(1) network=$(2))
+  #(info  uninstall-kvm-test-network prefix=$(1) network=$(2))
   .PHONY: uninstall-kvm-network-$(1)$(2)
   uninstall-kvm-network-$(1)$(2):
 	: uninstall-kvm-test-network prefix=$(1) network=$(2)
-	$(call uninstall-kvm-network,$(1)$(2),$$(KVM_LOCALDIR)/$(1)$(2).xml)
+	rm -f $$(KVM_LOCALDIR)/$(1)$(2).xml
+	$$(call destroy-kvm-network,$(1)$(2))
+  # zap dependent domains
+  uninstall-kvm-network-$(1)$(2): $$(addprefix uninstall-kvm-domain-, $$(addprefix $(1), $$(KVM_TEST_HOSTS)))
 endef
 
 $(foreach prefix, $(KVM_PREFIXES), \
 	$(foreach subnet, $(KVM_TEST_SUBNETS), \
 		$(eval $(call uninstall-kvm-test-network,$(call strip-prefix,$(prefix)),$(subnet)))))
-
-KVM_DEFAULT_NETWORK_FILE = $(KVM_BASEDIR)/$(KVM_DEFAULT_NETWORK).xml
-.PHONY: install-kvm-network-$(KVM_DEFAULT_NETWORK)
-install-kvm-network-$(KVM_DEFAULT_NETWORK): $(KVM_DEFAULT_NETWORK_FILE)
-$(KVM_DEFAULT_NETWORK_FILE): | testing/libvirt/net/$(KVM_DEFAULT_NETWORK) $(KVM_BASEDIR)
-	$(call check-no-kvm-network,$(KVM_DEFAULT_NETWORK),$@)
-	cp testing/libvirt/net/$(KVM_DEFAULT_NETWORK) $@.tmp
-	$(call install-kvm-network,$(KVM_DEFAULT_NETWORK),$@.tmp)
-	mv $@.tmp $@
-
-.PHONY: uninstall-kvm-network-$(KVM_DEFAULT_NETWORK)
-uninstall-kvm-network-$(KVM_DEFAULT_NETWORK): | $(KVM_BASEDIR)
-	$(call uninstall-kvm-network,$(KVM_DEFAULT_NETWORK),$(KVM_DEFAULT_NETWORK_FILE))
 
 
 #
@@ -510,7 +509,7 @@ endef
 # disk-image in an incomplete state is avoided.
 
 KVM_DOMAIN_$(KVM_BASE_DOMAIN)_FILES = $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
-$(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_DEFAULT_NETWORK_FILE) $(KVM_BASEDIR)
+$(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_BASE_GATEWAY_FILE) $(KVM_BASEDIR)
 	$(call check-no-kvm-domain,$(KVM_BASE_DOMAIN))
 	$(call check-kvm-qemu-directory)
 	$(call check-kvm-entropy)
@@ -550,7 +549,7 @@ kvm-upgrade-base-domain:
 # Create the "clone" domain from the base domain.
 KVM_DOMAIN_$(KVM_CLONE_DOMAIN)_FILES = $(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml
 .PRECIOUS: $(KVM_DOMAIN_$(KVM_CLONE_DOMAIN)_FILES)
-$(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | $(KVM_DEFAULT_NETWORK_FILE) $(KVM_LOCALDIR)
+$(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | $(KVM_BASE_GATEWAY_FILE) $(KVM_LOCALDIR)
 	$(call check-no-kvm-domain,$(KVM_CLONE_DOMAIN))
 	$(call check-kvm-qemu-directory)
 	$(call check-kvm-entropy)
@@ -724,18 +723,23 @@ $(eval $(call kvm-hosts-domains,uninstall))
 $(eval $(call kvm-hosts-domains,shutdown))
 
 
+.PHONY: kvm-install-base-network
+kvm-install-base-network: $(addprefix install-kvm-network-, $(KVM_BASE_GATEWAY))
+
 .PHONY: kvm-install-test-networks
 kvm-install-test-networks: $(addprefix install-kvm-network-,$(KVM_TEST_NETWORKS))
 
+.PHONY: kvm-install-local-networks
+kvm-install-local-networks: kvm-install-test-networks
+
 .PHONY: kvm-uninstall-test-networks
-kvm-uninstall-test-networks: kvm-uninstall-test-domains $(addprefix uninstall-kvm-network-,$(KVM_TEST_NETWORKS))
+kvm-uninstall-test-networks: $(addprefix uninstall-kvm-network-, $(KVM_TEST_NETWORKS))
 
-.PHONY: kvm-install-default-network
-kvm-install-default-network: install-kvm-network-$(KVM_DEFAULT_NETWORK)
+.PHONY: kvm-uninstall-base-network
+kvm-uninstall-base-network: $(addprefix uninstall-kvm-network-, $(KVM_BASE_GATEWAY))
 
-.PHONY: kvm-uninstall-default-network
-kvm-uninstall-default-network: kvm-uninstall-base-domain uninstall-kvm-network-$(KVM_DEFAULT_NETWORK)
-
+.PHONY: kvm-uninstall-local-networks
+kvm-uninstall-local-networks:  kvm-uninstall-test-networks
 
 #
 # Get rid of (almost) everything
@@ -746,7 +750,7 @@ kvm-uninstall-default-network: kvm-uninstall-base-domain uninstall-kvm-network-$
 kvm-purge: kvm-clean kvm-test-clean kvm-keys-clean kvm-uninstall-test-networks kvm-uninstall-local-domains
 
 .PHONY: kvm-demolish
-kvm-demolish: kvm-purge kvm-uninstall-default-network
+kvm-demolish: kvm-purge kvm-uninstall-base-network
 
 .PHONY: kvm-clean clean-kvm
 kvm-clean clean-kvm: kvm-shutdown-local-domains kvm-keys-clean
@@ -945,12 +949,23 @@ Configuration:
           temporary storage (if you feel lucky you can try pointing
           this at /tmp)
 
-  default network:
+  Networks:
 
-    The default network, used by the base and clone domains, provides
-    a NATed gateway to the real world.
+    Two types of networks are used.
 
-    $(call kvm-var-value,KVM_DEFAULT_NETWORK)
+    First there is the shared NATting gateway.  It is used by the base
+    (master) domain along with any local domains when internet access
+    is required:
+
+      $(call kvm-var-value,KVM_BASE_GATEWAY)
+      $(call kvm-var-value,KVM_LOCAL_GATEWAY)
+
+    Second there are the local test networks used to interconnect the
+    test domains.  Using $$(KVM_PREFIXES), test group is assigned
+    their own set of networks:
+
+      $(call kvm-var-value,KVM_TEST_SUBNETS)
+      $(call kvm-var-value,KVM_TEST_NETWORKS)
 
   base domain:
 
@@ -970,7 +985,7 @@ Configuration:
     $(call kvm-var-value,KVM_KICKSTART_FILE)
     $(call kvm-var-value,KVM_BASE_HOST)
     $(call kvm-var-value,KVM_BASE_DOMAIN)
-    $(call kvm-var-value,KVM_BASE_NETWORK)
+    $(call kvm-var-value,KVM_BASE_GATEWAY)
     $(call kvm-var-value,KVM_BASEDIR)
 
   clone domain:
@@ -986,7 +1001,7 @@ Configuration:
 
     $(call kvm-var-value,KVM_CLONE_HOST)
     $(call kvm-var-value,KVM_CLONE_DOMAIN)
-    $(call kvm-var-value,KVM_CLONE_NETWORK)
+    $(call kvm-var-value,KVM_LOCAL_GATEWAY)
     $(call kvm-var-value,KVM_LOCALDIR)
 
   test domains:
@@ -1033,7 +1048,7 @@ Low-level make targets:
 
     kvm-install-base-domain    - create the base domain
                                - if needed, create the
-                                 prerequisite default
+                                 prerequisite base
                                  network
 
   Destroying domains:
@@ -1050,25 +1065,26 @@ Low-level make targets:
 
   Creating networks:
 
-    kvm-install-test-networks   - create the test networks
-    kvm-install-default-network - create the default NAT
+    kvm-install-local-networks  - create the networks required
+                                  by this directory
+    kvm-install-base-network - create the NATting base
                                   network shared by
                                   base and clone domains
 
   Destroying networks:
 
-    kvm-uninstall-test-networks - destroy the test networks
-                                - also destroy the test
-                                  domains that use the
-                                  test networks
-
-    kvm-uninstall-default-network
-                                - destroy the default NAT
+    kvm-uninstall-local-networks - destroy all networks local to
+                                   this directory
+                                 - also destroy the local domains
+                                   that depend on those networks
+                                 - do not destroy the NATting base
+    kvm-uninstall-base-network
+                                - destroy the NATTing base
                                   network shared between
                                   base domains
                                 - also destroy the base
                                   and clone domains that
-                                  use the default network
+                                  use the base network
 
   Try to delete (almost) everything:
 
@@ -1077,9 +1093,8 @@ Low-level make targets:
                                   clone domain, test domains,
                                   test networks, test
                                   results, and test build
-
     kvm-demolish                - also delete the base domain
-                                  and default network
+                                  and base network
 
 Standard targets and operations:
 
