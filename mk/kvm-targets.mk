@@ -111,6 +111,25 @@ KVM_LOCAL_DOMAINS = $(sort $(KVM_CLONE_DOMAIN) $(KVM_BUILD_DOMAIN) $(KVM_TEST_DO
 KVM_DOMAINS = $(KVM_BASE_DOMAIN) $(KVM_LOCAL_DOMAINS)
 
 #
+# what needs to be copied?
+#
+
+# A non-empty KVM_BUILD_COPIES indicates a separate build domain.
+
+KVM_CLONE_COPIES =
+KVM_BUILD_COPIES =
+
+KVM_CLONE_COPIES += $(KVM_BASIC_DOMAINS)
+ifneq ($(filter $(KVM_BUILD_DOMAIN),$(KVM_INSTALL_DOMAINS)),)
+# build is an install domain
+KVM_CLONE_COPIES += $(KVM_INSTALL_DOMAINS)
+else
+# separate build
+KVM_CLONE_COPIES += $(KVM_BUILD_DOMAIN)
+KVM_BUILD_COPIES += $(KVM_INSTALL_DOMAINS)
+endif
+
+#
 # Other utilities and directories
 #
 
@@ -379,7 +398,7 @@ uninstall-kvm-network-$(KVM_BASE_GATEWAY):
 
 uninstall-kvm-network-$(KVM_BASE_GATEWAY): uninstall-kvm-domain-$(KVM_BASE_DOMAIN)
 uninstall-kvm-network-$(KVM_BASE_GATEWAY): uninstall-kvm-domain-$(KVM_CLONE_DOMAIN)
-ifneq ($(filter-out $(KVM_INSTALL_DOMAINS), $(KVM_BUILD_DOMAIN)),)
+ifneq ($(KVM_BUILD_COPIES),)
 uninstall-kvm-network-$(KVM_BASE_GATEWAY): uninstall-kvm-domain-$(KVM_BUILD_DOMAIN)
 endif
 
@@ -660,12 +679,11 @@ $(foreach domain, $(KVM_LOCAL_DOMAINS), \
 $(addprefix uninstall-kvm-domain-, $(KVM_BASE_DOMAIN)): \
 	$(addprefix uninstall-kvm-domain-, $(KVM_CLONE_DOMAIN))
 $(addprefix uninstall-kvm-domain-, $(KVM_CLONE_DOMAIN)): \
-	$(addprefix uninstall-kvm-domain-, $(KVM_BUILD_DOMAIN))
-$(addprefix uninstall-kvm-domain-, $(KVM_CLONE_DOMAIN)): \
-	$(addprefix uninstall-kvm-domain-, $(KVM_BASIC_DOMAINS))
+	$(addprefix uninstall-kvm-domain-, $(KVM_CLONE_COPIES))
+ifneq ($(KVM_BUILD_COPIES),)
 $(addprefix uninstall-kvm-domain-, $(KVM_BUILD_DOMAIN)): \
-	$(addprefix uninstall-kvm-domain-, $(filter-out $(KVM_BUILD_DOMAIN), $(KVM_INSTALL_DOMAINS)))
-
+	$(addprefix uninstall-kvm-domain-, $(KVM_BUILD_COPIES))
+endif
 
 #
 # Generic kvm-* rules, point at the *-kvm-* primitives defined
@@ -818,12 +836,18 @@ kvm-install-hive: $(KVM_DOMAIN_$(KVM_CLONE_DOMAIN)_FILES)
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_CLONE_DOMAIN) 'export OBJDIR=/var/tmp/OBJ.kvm ; ./testing/guestbin/swan-install OBJDIR=/var/tmp/OBJ.kvm'
 	$(MAKE) kvm-install-test-domains
 
-# kvm-uninstall et.al.
+
 #
-# this is simple and brutal
+# kvm-uninstall
+#
+# this is simple and brutal - just delete anything that would be
+# modified by an install
 
 .PHONY: kvm-uninstall
-kvm-uninstall: kvm-uninstall-clone-domain kvm-uninstall-test-networks
+kvm-uninstall: $(addprefix uninstall-kvm-domain-, $(KVM_INSTALL_DOMAINS))
+ifneq ($(KVM_BUILD_COPIES),)
+kvm-uninstall: $(addprefix uninstall-kvm-domain-, $(KVM_BUILD_DOMAIN))
+endif
 
 
 #
