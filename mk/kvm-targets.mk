@@ -27,7 +27,7 @@ KVM_TESTINGDIR ?= $(abs_top_srcdir)/testing
 # An educated guess ...
 KVM_POOLDIR ?= $(abspath $(abs_top_srcdir)/../pool)
 KVM_BASEDIR ?= $(KVM_POOLDIR)
-KVM_CLONEDIR ?= $(KVM_POOLDIR)
+KVM_LOCALDIR ?= $(KVM_POOLDIR)
 # While KVM_PREFIX might be empty, KVM_PREFIXES is never empty.
 KVM_PREFIX ?=
 KVM_PREFIXES ?= $(if $(KVM_PREFIX), $(KVM_PREFIX), '')
@@ -180,11 +180,11 @@ broken-kvm-qemu-directory:
 
 
 .PHONY: check-kvm-clonedir check-kvm-basedir
-check-kvm-clonedir check-kvm-basedir: | $(KVM_CLONEDIR) $(KVM_BASEDIR)
-ifeq ($(KVM_BASEDIR),$(KVM_CLONEDIR))
-  $(KVM_CLONEDIR):
+check-kvm-clonedir check-kvm-basedir: | $(KVM_LOCALDIR) $(KVM_BASEDIR)
+ifeq ($(KVM_BASEDIR),$(KVM_LOCALDIR))
+  $(KVM_LOCALDIR):
 else
-  $(KVM_BASEDIR) $(KVM_CLONEDIR):
+  $(KVM_BASEDIR) $(KVM_LOCALDIR):
 endif
 	:
 	:  The directory:
@@ -200,7 +200,7 @@ endif
 	:                  - the default location to store domain disk images and files
 	:                  - the default is ../pool
 	:
-	:      KVM_CLONEDIR=$(KVM_CLONEDIR)
+	:      KVM_LOCALDIR=$(KVM_LOCALDIR)
 	:                  - used for store the cloned test domain disk images and files
 	:                  - the default is KVM_POOLDIR
 	:
@@ -388,9 +388,9 @@ KVM_TEST_NETWORKS = \
 define install-kvm-test-network
   #(info prefix=$(1) network=$(2))
   .PHONY: install-kvm-network-$(1)$(2)
-  install-kvm-network-$(1)$(2): $$(KVM_CLONEDIR)/$(1)$(2).xml
-  .PRECIOUS: $$(KVM_CLONEDIR)/$(1)$(2).xml
-  $$(KVM_CLONEDIR)/$(1)$(2).xml:
+  install-kvm-network-$(1)$(2): $$(KVM_LOCALDIR)/$(1)$(2).xml
+  .PRECIOUS: $$(KVM_LOCALDIR)/$(1)$(2).xml
+  $$(KVM_LOCALDIR)/$(1)$(2).xml:
 	: install-kvm-test-network prefix=$(1) network=$(2)
 	$(call check-no-kvm-network,$(1)$(2),$$@)
 	rm -f '$$@.tmp'
@@ -420,7 +420,7 @@ define uninstall-kvm-test-network
   .PHONY: uninstall-kvm-network-$(1)$(2)
   uninstall-kvm-network-$(1)$(2):
 	: uninstall-kvm-test-network prefix=$(1) network=$(2)
-	$(call uninstall-kvm-network,$(1)$(2),$$(KVM_CLONEDIR)/$(1)$(2).xml)
+	$(call uninstall-kvm-network,$(1)$(2),$$(KVM_LOCALDIR)/$(1)$(2).xml)
 endef
 
 $(foreach prefix, $(KVM_PREFIXES), \
@@ -548,9 +548,9 @@ kvm-upgrade-base-domain:
 		$(KVM_DEBUGINFO_INSTALL) $(KVM_DEBUGINFO))
 
 # Create the "clone" domain from the base domain.
-KVM_DOMAIN_$(KVM_CLONE_DOMAIN)_FILES = $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml
+KVM_DOMAIN_$(KVM_CLONE_DOMAIN)_FILES = $(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml
 .PRECIOUS: $(KVM_DOMAIN_$(KVM_CLONE_DOMAIN)_FILES)
-$(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | $(KVM_DEFAULT_NETWORK_FILE) $(KVM_CLONEDIR)
+$(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | $(KVM_DEFAULT_NETWORK_FILE) $(KVM_LOCALDIR)
 	$(call check-no-kvm-domain,$(KVM_CLONE_DOMAIN))
 	$(call check-kvm-qemu-directory)
 	$(call check-kvm-entropy)
@@ -567,7 +567,7 @@ $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | 
 		--vcpus=1 \
 		--memory 512 \
 		--nographics \
-		--disk cache=writeback,path=$(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).qcow2 \
+		--disk cache=writeback,path=$(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).qcow2 \
 		$(VIRT_CLONE_NETWORK) \
 		$(VIRT_RND) \
 		$(VIRT_SECURITY) \
@@ -585,9 +585,9 @@ $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | 
 	$(VIRSH) dumpxml $(KVM_CLONE_DOMAIN) > $@.tmp
 	mv $@.tmp $@
 .PHONY: install-kvm-domain-$(KVM_CLONE_DOMAIN)
-install-kvm-domain-$(KVM_CLONE_DOMAIN): $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml
+install-kvm-domain-$(KVM_CLONE_DOMAIN): $(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml
 
-# Install the $(KVM_TEST_DOMAINS) in $(KVM_CLONEDIR)
+# Install the $(KVM_TEST_DOMAINS) in $(KVM_LOCALDIR)
 #
 # These are created as clones of $(KVM_CLONE_DOMAIN).
 #
@@ -599,30 +599,30 @@ install-kvm-domain-$(KVM_CLONE_DOMAIN): $(KVM_CLONEDIR)/$(KVM_CLONE_DOMAIN).xml
 define install-kvm-test-domain
   #(info install-kvm-test-domain prefix=$(1) host=$(2) domain=$(1)$(2))
 
-  KVM_DOMAIN_$(1)$(2)_FILES = $$(KVM_CLONEDIR)/$(1)$(2).xml
+  KVM_DOMAIN_$(1)$(2)_FILES = $$(KVM_LOCALDIR)/$(1)$(2).xml
   .PRECIOUS: $$(KVM_DOMAIN_$(1)$(2)_FILES)
 
   .PHONY: install-kvm-domain-$(1)$(2)
-  install-kvm-domain-$(1)$(2): $$(KVM_CLONEDIR)/$(1)$(2).xml
-  $$(KVM_CLONEDIR)/$(1)$(2).xml: \
+  install-kvm-domain-$(1)$(2): $$(KVM_LOCALDIR)/$(1)$(2).xml
+  $$(KVM_LOCALDIR)/$(1)$(2).xml: \
 		| \
-		$$(KVM_CLONEDIR)/$$(KVM_CLONE_DOMAIN).xml \
-		$$(foreach subnet,$$(KVM_TEST_SUBNETS), $$(KVM_CLONEDIR)/$(1)$$(subnet).xml) \
+		$$(KVM_LOCALDIR)/$$(KVM_CLONE_DOMAIN).xml \
+		$$(foreach subnet,$$(KVM_TEST_SUBNETS), $$(KVM_LOCALDIR)/$(1)$$(subnet).xml) \
 		testing/libvirt/vm/$(2)
 	: install-kvm-test-domain prefix=$(1) host=$(2)
 	$(call check-no-kvm-domain,$(1)$(2))
 	$(call check-kvm-qemu-directory)
 	$(call check-kvm-entropy)
 	$(KVMSH) --shutdown $(KVM_CLONE_DOMAIN)
-	rm -f '$$(KVM_CLONEDIR)/$(1)$(2).qcow2'
+	rm -f '$$(KVM_LOCALDIR)/$(1)$(2).qcow2'
 	qemu-img create \
-		-b $$(KVM_CLONEDIR)/$$(KVM_CLONE_DOMAIN).qcow2 \
-		-f qcow2 $$(KVM_CLONEDIR)/$(1)$(2).qcow2
+		-b $$(KVM_LOCALDIR)/$$(KVM_CLONE_DOMAIN).qcow2 \
+		-f qcow2 $$(KVM_LOCALDIR)/$(1)$(2).qcow2
 	sed \
 		-e "s:@@NAME@@:$(1)$(2):" \
 		-e "s:@@TESTINGDIR@@:$$(KVM_TESTINGDIR):" \
 		-e "s:@@SOURCEDIR@@:$$(KVM_SOURCEDIR):" \
-		-e "s:@@POOLSPACE@@:$$(KVM_CLONEDIR):" \
+		-e "s:@@POOLSPACE@@:$$(KVM_LOCALDIR):" \
 		-e "s:@@USER@@:$$(KVM_USER):" \
 		-e "s:@@GROUP@@:$$(KVM_GROUP):" \
 		-e "s:network='192_:network='$(1)192_:" \
@@ -666,9 +666,9 @@ $(foreach domain, $(KVM_CLONE_DOMAIN), \
 $(foreach domain, $(KVM_BUILD_DOMAIN), \
 	$(eval $(call uninstall-kvm-domain,$(domain),$(KVM_BASEDIR))))
 $(foreach domain, $(KVM_BASIC_DOMAINS), \
-	$(eval $(call uninstall-kvm-domain,$(domain),$(KVM_CLONEDIR))))
+	$(eval $(call uninstall-kvm-domain,$(domain),$(KVM_LOCALDIR))))
 $(foreach domain, $(filter-out $(KVM_BUILD_DOMAIN), $(KVM_INSTALL_DOMAINS)), \
-	$(eval $(call uninstall-kvm-domain,$(domain),$(KVM_CLONEDIR))))
+	$(eval $(call uninstall-kvm-domain,$(domain),$(KVM_LOCALDIR))))
 
 # Direct dependencies.  This is so that a primitive like
 # uninstall-kvm-domain-clone isn't run until all its dependencies,
@@ -920,13 +920,30 @@ Configuration:
 
     $(call kvm-var-value,KVM_SOURCEDIR)
     $(call kvm-var-value,KVM_TESTINGDIR)
-    $(call kvm-var-value,KVM_POOLDIR)
-    $(call kvm-var-value,KVM_BASEDIR)
     $(call kvm-var-value,KVM_PREFIXES)
     $(call kvm-var-value,KVM_WORKERS)
     $(call kvm-var-value,KVM_USER)
     $(call kvm-var-value,KVM_GROUP)
     $(call kvm-var-value,KVM_CONNECTION)
+
+  Directories:
+
+    By default all the VMs are stored in the directory:
+
+      $(call kvm-var-value,KVM_POOLDIR)$(if $(wildcard $(KVM_POOLDIR)),, [MISSING])
+
+    This can be tuned, with the VMs split across two directories:
+
+      $(call kvm-var-value,KVM_BASEDIR)$(if $(wildcard $(KVM_BASEDIR)),, [MISSING])
+
+          for storing the shared base (master) VM; should be
+          relatively permenant storage
+
+      $(call kvm-var-value,KVM_LOCALDIR)$(if $(wildcard $(KVM_LOCALDIR)),, [MISSING])
+
+          for storing the VMs dedicated to this build tree; can be
+          temporary storage (if you feel lucky you can try pointing
+          this at /tmp)
 
   default network:
 
@@ -970,7 +987,7 @@ Configuration:
     $(call kvm-var-value,KVM_CLONE_HOST)
     $(call kvm-var-value,KVM_CLONE_DOMAIN)
     $(call kvm-var-value,KVM_CLONE_NETWORK)
-    $(call kvm-var-value,KVM_CLONEDIR)
+    $(call kvm-var-value,KVM_LOCALDIR)
 
   test domains:
 
@@ -983,7 +1000,7 @@ $(foreach prefix,$(KVM_PREFIXES),$(crlf)\
 $(sp) $(sp)test group: $(call strip-prefix,$(prefix))$(crlf) \
 $(sp) $(sp) $(sp)domains: $(addprefix $(call strip-prefix,$(prefix)),$(KVM_TEST_HOSTS))$(crlf) \
 $(sp) $(sp) $(sp)networks: $(addprefix $(call strip-prefix,$(prefix)),$(KVM_TEST_SUBNETS))$(crlf) \
-$(sp) $(sp) $(sp)directory: $(KVM_CLONEDIR))
+$(sp) $(sp) $(sp)directory: $(KVM_LOCALDIR))
 
 endef
 
