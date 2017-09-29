@@ -623,9 +623,6 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
 	const struct connection *c = st->st_connection;
 	const char *err1 = "%dnsondemand";
 	const char *err2 = "";
-	const char *err21 = "";
-	const char *err3 = "ID_FQDN";
-	const char *err31 = "";
 	char thatid[IDTOA_BUF];
 	ipstr_buf ra;
 
@@ -646,30 +643,27 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
 	idtoa(&id, thatid, sizeof(thatid));
 
 	if (!c->spd.that.key_from_DNS_on_demand)
-	{
-		err1 = "that end rsasigkey != %dnsondemand";
-	}
+		return FALSE;
 
-	if (atype != IKEv2_AUTH_RESERVED && atype != IKEv2_AUTH_RSA) {
-		err2 = "initiator IKEv2 Auth Method is not IKEv2_AUTH_RSA, ";
-		err3 = enum_name(&ikev2_auth_names, atype);
+	if (atype != IKEv2_AUTH_RESERVED && !(atype == IKEv2_AUTH_RSA ||
+						atype == IKEv2_AUTH_DIGSIG)) {
+		err1 = " initiator IKEv2 Auth Method mismatched ";
+		err2 = enum_name(&ikev2_auth_names, atype);
 	}
 
 	if (id.kind != ID_FQDN &&
 			id.kind != ID_IPV4_ADDR &&
 			id.kind != ID_IPV6_ADDR) {
-		err2 = " can only query DNS for IPSECKEY for ID that is a FQDN, IPV4_ADDR, or IPV6_ADDR id type=";
-		err21 = enum_show(&ike_idtype_names, id.kind);
+		err1 = " mismatched ID type, that ID is not a FQDN, IPV4_ADDR, or IPV6_ADDR id type=";
+		err2 = enum_show(&ike_idtype_names, id.kind);
 	}
 
-	if (IS_LIBUNBOUND)
-		return FALSE;
+	if (!IS_LIBUNBOUND)
 
 	DBG(DBG_CONTROLMORE,
-		DBG_log("%s #%lu not fetching ipseckey %s %s%s %s%s remote=%s thatid=%s",
+		DBG_log("%s #%lu not fetching ipseckey %s%s remote=%s thatid=%s",
 			c->name, st->st_serialno,
-			err1, err2, err21, err3, err31,
-			ipstr(&st->st_remoteaddr, &ra), thatid));
+			err1, err2, ipstr(&st->st_remoteaddr, &ra), thatid));
 	return FALSE;
 }
 
