@@ -57,8 +57,8 @@ VIRT_INSTALL = sudo virt-install --connect $(KVM_CONNECTION)
 
 VIRT_RND ?= --rng type=random,device=/dev/random
 VIRT_SECURITY ?= --security type=static,model=dac,label='$(KVM_USER):$(KVM_GROUP)',relabel=yes
-VIRT_BASE_NETWORK ?= --network=network:$(KVM_BASE_GATEWAY),model=virtio
-VIRT_CLONE_NETWORK ?= --network=network:$(KVM_LOCAL_GATEWAY),model=virtio
+VIRT_BASE_GATEWAY ?= --network=network:$(KVM_BASE_GATEWAY),model=virtio
+VIRT_LOCAL_GATEWAY ?= --network=network:$(KVM_LOCAL_GATEWAY),model=virtio
 VIRT_SOURCEDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_SOURCEDIR),target=swansource
 VIRT_TESTINGDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_TESTINGDIR),target=testing
 
@@ -469,25 +469,6 @@ kvm-iso: $(KVM_ISO)
 $(KVM_ISO): | $(KVM_BASEDIR)
 	cd $(KVM_BASEDIR) && wget $(KVM_ISO_URL)
 
-define check-no-kvm-domain
-	: check-no-kvm-domain domain=$(1)
-	if $(VIRSH) dominfo '$(1)' 2>/dev/null ; then \
-		echo '' ; \
-		echo '        The domain $(1) seems to already exist.' ; \
-		echo '' ; \
-		echo '  This is most likely because to make was aborted part' ; \
-		echo '  way through creating the domain, however it could be' ; \
-		echo '  because the domain was created by some other means.' ; \
-		echo '' ; \
-		echo '  To continue the build, the existing domain will first need to' ; \
-		echo '  be deleted using:' ; \
-		echo '' ; \
-		echo '      make uninstall-kvm-domain-$(1)' ; \
-		echo '' ; \
-		exit 1; \
-	fi
-endef
-
 define check-kvm-domain
 	: check-kvm-domain domain=$(1)
 	if $(VIRSH) dominfo '$(1)' >/dev/null ; then : ; else \
@@ -495,6 +476,41 @@ define check-kvm-domain
 		echo "  ERROR: the domain $(1) seems to be missing; run 'make kvm-install'" ; \
 		echo "" ; \
 		exit 1 ; \
+	fi
+endef
+
+define create-kvm-domain
+	: create-kvm-domain domain=$(1)
+	$(VIRT_INSTALL) \
+		--name $(1) \
+		--os-variant $(KVM_OS_VARIANT) \
+		--vcpus=1 \
+		--memory 512 \
+		--nographics \
+		--disk cache=writeback,path=$(KVM_LOCALDIR)/$(1).qcow2 \
+		$(VIRT_LOCAL_GATEWAY) \
+		$(VIRT_RND) \
+		$(VIRT_SECURITY) \
+		$(VIRT_SOURCEDIR) \
+		$(VIRT_TESTINGDIR) \
+		--import \
+		--noautoconsole \
+		--noreboot
+	: Fixing up eth0, must be a better way ...
+	$(KVMSH) --shutdown $(1) \
+		sed -i -e '"s/HWADDR=.*/HWADDR=\"$$(cat /sys/class/net/e[n-t][h-s]?/address)\"/"' \
+			/etc/sysconfig/network-scripts/ifcfg-eth0 \; \
+		service network restart \; \
+		ip address show scope global
+endef
+
+define destroy-kvm-domain
+	: destroy-kvm-domain domain=$(1)
+	if $(VIRSH) domstate $(1) 2>/dev/null | grep running > /dev/null ; then \
+		$(VIRSH) destroy $(1) ; \
+	fi
+	if $(VIRSH) dominfo $(1) >/dev/null 2>&1 ; then \
+		$(VIRSH) undefine $(1) ; \
 	fi
 endef
 
@@ -510,9 +526,8 @@ endef
 
 KVM_DOMAIN_$(KVM_BASE_DOMAIN)_FILES = $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
 $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_BASE_GATEWAY_FILE) $(KVM_BASEDIR)
-	$(call check-no-kvm-domain,$(KVM_BASE_DOMAIN))
 	$(call check-kvm-qemu-directory)
-	$(call check-kvm-entropy)
+	$(call destroy-kvm-domain,$(KVM_BASE_DOMAIN))
 	: delete any old disk and let virt-install create the image
 	rm -f '$(basename $@).qcow2'
 	: Confirm that there is a tty - else virt-install fails mysteriously
@@ -525,7 +540,7 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_B
 		--memory 1024 \
 		--nographics \
 		--disk size=8,cache=writeback,path=$(basename $@).qcow2 \
-		$(VIRT_BASE_NETWORK) \
+		$(VIRT_BASE_GATEWAY) \
 		$(VIRT_RND) \
 		--location=$(KVM_ISO) \
 		--initrd-inject=$(KVM_KICKSTART_FILE) \
@@ -550,9 +565,8 @@ kvm-upgrade-base-domain:
 KVM_DOMAIN_$(KVM_CLONE_DOMAIN)_FILES = $(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml
 .PRECIOUS: $(KVM_DOMAIN_$(KVM_CLONE_DOMAIN)_FILES)
 $(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | $(KVM_BASE_GATEWAY_FILE) $(KVM_LOCALDIR)
-	$(call check-no-kvm-domain,$(KVM_CLONE_DOMAIN))
 	$(call check-kvm-qemu-directory)
-	$(call check-kvm-entropy)
+	$(call destroy-kvm-domain,$(KVM_CLONE_DOMAIN))
 	: shutdown base and fix any disk modes - logging into base messes that up
 	$(KVMSH) --shutdown $(KVM_BASE_DOMAIN)
 	test -r $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 || sudo chgrp $(KVM_GROUP)  $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2
@@ -560,27 +574,7 @@ $(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | 
 	qemu-img convert -p -O qcow2 \
 		$(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 \
 		$(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).qcow2
-	$(VIRT_INSTALL) \
-		--name $(KVM_CLONE_DOMAIN) \
-		--os-variant $(KVM_OS_VARIANT) \
-		--vcpus=1 \
-		--memory 512 \
-		--nographics \
-		--disk cache=writeback,path=$(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).qcow2 \
-		$(VIRT_CLONE_NETWORK) \
-		$(VIRT_RND) \
-		$(VIRT_SECURITY) \
-		$(VIRT_SOURCEDIR) \
-		$(VIRT_TESTINGDIR) \
-		--import \
-		--noautoconsole \
-		--noreboot
-	: Fixing up eth0, must be a better way ...in F26 This works after a reboot.
-	$(KVMSH) --shutdown $(KVM_CLONE_DOMAIN) \
-		sed -i -e '"s/HWADDR=.*/HWADDR=\"$$(cat /sys/class/net/e[n-t][h-s]?/address)\"/"' \
-			/etc/sysconfig/network-scripts/ifcfg-eth0 \; \
-		service network restart \; \
-		ip address show scope global
+	$(call create-kvm-domain,$(KVM_CLONE_DOMAIN))
 	$(VIRSH) dumpxml $(KVM_CLONE_DOMAIN) > $@.tmp
 	mv $@.tmp $@
 .PHONY: install-kvm-domain-$(KVM_CLONE_DOMAIN)
@@ -609,10 +603,9 @@ define install-kvm-test-domain
 		$$(foreach subnet,$$(KVM_TEST_SUBNETS), $$(KVM_LOCALDIR)/$(1)$$(subnet).xml) \
 		testing/libvirt/vm/$(2)
 	: install-kvm-test-domain prefix=$(1) host=$(2)
-	$(call check-no-kvm-domain,$(1)$(2))
-	$(call check-kvm-qemu-directory)
-	$(call check-kvm-entropy)
-	$(KVMSH) --shutdown $(KVM_CLONE_DOMAIN)
+	$$(call check-kvm-qemu-directory)
+	$$(call destroy-kvm-domain,$(1)$(2))
+	$$(KVMSH) --shutdown $$(KVM_CLONE_DOMAIN)
 	rm -f '$$(KVM_LOCALDIR)/$(1)$(2).qcow2'
 	qemu-img create \
 		-b $$(KVM_LOCALDIR)/$$(KVM_CLONE_DOMAIN).qcow2 \
@@ -627,8 +620,8 @@ define install-kvm-test-domain
 		-e "s:network='192_:network='$(1)192_:" \
 		< 'testing/libvirt/vm/$(2)' \
 		> '$$@.tmp'
-	$(VIRSH) define $$@.tmp
-	$(KVM_F26_HACK)
+	$$(VIRSH) define $$@.tmp
+	$$(if $$(KVM_F26_HACK),$$(KVM_F26_HACK))
 	mv $$@.tmp $$@
 endef
 
@@ -646,12 +639,7 @@ define uninstall-kvm-domain
   .PHONY: uninstall-kvm-domain-$(1)
   uninstall-kvm-domain-$(1):
 	: uninstall-kvm-domain domain=$(1) dir=$(2)
-	if $(VIRSH) domstate $(1) 2>/dev/null | grep running > /dev/null ; then \
-		$(VIRSH) destroy $(1) ; \
-	fi
-	if $(VIRSH) dominfo $(1) >/dev/null 2>&1 ; then \
-		$(VIRSH) undefine $(1) ; \
-	fi
+	$$(call destroy-kvm-domain,$(1))
 	rm -f $(2)/$(1).xml
 	rm -f $(2)/$(1).ks
 	rm -f $(2)/$(1).qcow2
@@ -1015,80 +1003,67 @@ endef
 
 define kvm-help
 
-Low-level make targets:
+Domains and networks:
 
   These directly manipulate the underling domains and networks and are
   not not generally recommended.  For the most part kvm-install and
   kvm-unsintall are sufficient.
 
-  Their names and behaviour also have a habit of changing over time:
+  Domains:
 
-  Creating domains:
+    kvm-install-test-domains
+        - create the test domains required by this directory
+        - if needed, create dependencies such as the build and base
+          domain, and test and base networks
+    kvm-install-build-domain
+        - create the build domain required by this directory
+        - if needed, create dependencies such as the and base
+          domain, and test and base networks
+    kvm-install-local-domains
+        - create all the domains required by this directory
+        - if needed, create dependencies such as the base domain and
+          networks
+    kvm-install-base-domain
+        - create the base domain
+        - if needed, create the prerequisite base network
 
-    kvm-install-test-domains   - create the test domains
-                                 from the clone domain
-                                 disk image
-                               - if needed, create the
-                                 prerequisite clone domain,
-                                 test networks, base domain,
-                                 and default network
+    kvm-uninstall-test-domains
+        - destroy the test domains required by this directory
+	- do not destroy any build or base domains
+    kvm-uninstall-build-domains
+        - destroy the build domain required by this directory
+	- do not destroy any base domains
+    kvm-uninstall-local-domains
+        - destroy the domains local to this directory
+    kvm-uninstall-base-domain
+        - destroy the base domain
+        - also destroy the derived clone domain and test domains
 
-    kvm-install-clone-domain   - create the clone domain
-                                 from the base domain disk
-                                 image
-                               - if needed, create the
-                                 prerequisite base domain
-                                 and default network
+  Networks:
 
-    kvm-install-base-domain    - create the base domain
-                               - if needed, create the
-                                 prerequisite base
-                                 network
+    kvm-install-local-networks
+        - create the networks required by this directory
+    kvm-install-base-network
+        - create the NATting base network shared by base and clone
+          domains
 
-  Destroying domains:
-
-    kvm-uninstall-test-domains - destroy the test domains
-
-    kvm-uninstall-clone-domain - destroy the clone domain,
-                               - also destroy the derived
-                                 test domains
-
-    kvm-uninstall-base-domain  - destroy the base domain
-                               - also destroy the derived
-                                 clone domain and test domains
-
-  Creating networks:
-
-    kvm-install-local-networks  - create the networks required
-                                  by this directory
-    kvm-install-base-network - create the NATting base
-                                  network shared by
-                                  base and clone domains
-
-  Destroying networks:
-
-    kvm-uninstall-local-networks - destroy all networks local to
-                                   this directory
-                                 - also destroy the local domains
-                                   that depend on those networks
-                                 - do not destroy the NATting base
+    kvm-uninstall-local-networks
+        - destroy all networks local to this directory
+        - also destroy the local domains that depend on those networks
+        - do not destroy the NATting base gateway
     kvm-uninstall-base-network
-                                - destroy the NATTing base
-                                  network shared between
-                                  base domains
-                                - also destroy the base
-                                  and clone domains that
-                                  use the base network
+        - destroy the NATTing base network shared between base domains
+        - also destroy the base and clone domains that use the base
+          network
 
   Try to delete (almost) everything:
 
-    kvm-purge                   - delete everything specific
-                                  to this directory, i.e.,
-                                  clone domain, test domains,
-                                  test networks, test
-                                  results, and test build
-    kvm-demolish                - also delete the base domain
-                                  and base network
+    kvm-purge
+        - delete everything specific to this directory, i.e., clone
+          domain, test domains, test networks, test results, and test
+          build
+    kvm-demolish
+        - also delete the base domain and base network
 
 Standard targets and operations:
 
