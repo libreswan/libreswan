@@ -13,7 +13,7 @@ v3.22 (unreleased)
 * pluto: Change default rundir from /var/run/pluto to /run/pluto [Paul]
 * pluto: Various ike_alg parsing updates [Andrew]
 * pluto: Fix missing ntohl() on the SPI numbers in ipsec status [Paul]
-* pluto: Various memory leak fixes [Antony,Paul]
+* pluto: Various memory leak fixes [Antony,Paul,Hugh]
 * pluto: Make ioctl(SIOCGIFFLAGS) failure for labeled devices non-fatal [Paul]
 * pluto: Give IKE traffic preference via SO_PRIO [Paul]
 * pluto: New setup options: ike-socket-errqueue= and ike-socket-bufsiza=e [Paul]
