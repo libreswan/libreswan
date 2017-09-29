@@ -65,7 +65,7 @@
 /* new NSS code */
 #include "pluto_x509.h"
 #include "nss_cert_load.h"
-#include "nss_cert_vfy.h"
+#include "nss_cert_verify.h"
 #include "nss_crl_import.h"
 #include "nss_err.h"
 

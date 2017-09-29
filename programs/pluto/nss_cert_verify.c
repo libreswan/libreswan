@@ -30,7 +30,7 @@
 #include "constants.h"
 #include "lswlog.h"
 #include "x509.h"
-#include "nss_cert_vfy.h"
+#include "nss_cert_verify.h"
 #include "nss_err.h"
 #include <secder.h>
 #include <secerr.h>

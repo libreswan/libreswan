@@ -220,7 +220,7 @@ OBJS += pluto_crypt.o crypt_utils.o crypt_ke.o crypt_dh.o crypt_start_dh.o
 OBJS += rnd.o spdb.o spdb_struct.o
 OBJS += vendor.o nat_traversal.o virtual.o
 OBJS += packet.o pluto_constants.o readwhackmsg.o
-OBJS += nss_cert_load.o pem.o nss_cert_vfy.o
+OBJS += nss_cert_load.o pem.o nss_cert_verify.o
 OBJS += nss_ocsp.o nss_crl_import.o
 OBJS += nss_err.o
 
