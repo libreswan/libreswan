@@ -1899,10 +1899,16 @@ void show_setup_plutomain(void)
 		pluto_vendorid);
 
 	whack_log(RC_COMMENT,
-		"nhelpers=%d, uniqueids=%s, dnssec-enable=%s, perpeerlog=%s, shuntlifetime=%jds, xfrmlifetime=%jds",
+		"nhelpers=%d, uniqueids=%s, "
+#ifdef USE_DNSSEC
+		"dnssec-enable=%s, "
+#endif
+		"perpeerlog=%s, shuntlifetime=%jds, xfrmlifetime=%jds",
 		nhelpers,
 		uniqueIDs ? "yes" : "no",
+#ifdef USE_DNSSEC
 		do_dnssec ? "yes" : "no",
+#endif
 		!log_to_perpeer ? "no" : peerlog_basedir,
                 (intmax_t) deltasecs(pluto_shunt_lifetime),
                 (intmax_t) pluto_xfrmlifetime
