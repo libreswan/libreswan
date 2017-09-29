@@ -129,6 +129,7 @@ KVM_CLONE_COPIES += $(KVM_BUILD_DOMAIN)
 KVM_BUILD_COPIES += $(KVM_INSTALL_DOMAINS)
 endif
 
+
 #
 # Other utilities and directories
 #
@@ -312,7 +313,7 @@ kvm-keys-up-to-date:
 # invoked by testing/pluto/Makefile which relies on old domain
 # configurations.
 
-$(KVM_KEYS): testing/x509/dist_certs.py $(KVM_KEYS_SCRIPT) # | $(KVM_DOMAIN_$(KVM_BUILD_DOMAIN)_FILES)
+$(KVM_KEYS): testing/x509/dist_certs.py $(KVM_KEYS_SCRIPT) # | $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
 	$(call check-kvm-domain,$(KVM_BUILD_DOMAIN))
 	$(call check-kvm-entropy)
 	$(call check-kvm-qemu-directory)
@@ -534,16 +535,18 @@ define destroy-kvm-domain
 endef
 
 
-# Create the base domain and, as a side effect, the disk image.
 #
+# Create the base domain and (as a side effect) the disk image.
+#
+
 # To avoid unintended re-builds triggered by things like a git branch
 # switch, this target is order-only dependent on its sources.
-#
+
 # This rule's target is the .ks file - moved into place right at the
 # very end.  That way the problem of a virt-install crash leaving the
 # disk-image in an incomplete state is avoided.
 
-KVM_DOMAIN_$(KVM_BASE_DOMAIN)_FILES = $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
+.PRECIOUS: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
 $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_BASE_GATEWAY_FILE) $(KVM_BASEDIR)
 	$(call check-kvm-qemu-directory)
 	$(call destroy-kvm-domain,$(KVM_BASE_DOMAIN))
@@ -580,9 +583,14 @@ kvm-upgrade-base-domain:
 	$(if $(KVM_DEBUGINFO), $(KVMSH) --shutdown $(KVM_BASE_DOMAIN) \
 		$(KVM_DEBUGINFO_INSTALL) $(KVM_DEBUGINFO))
 
+#
+# Create the local domains
+#
+
+.PRECIOUS: $(foreach domain, $(KVM_LOCAL_DOMAINS), $(KVM_LOCALDIR)/$(domain).xml)
+
 # Create the "clone" domain from the base domain.
-KVM_DOMAIN_$(KVM_CLONE_DOMAIN)_FILES = $(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml
-.PRECIOUS: $(KVM_DOMAIN_$(KVM_CLONE_DOMAIN)_FILES)
+
 $(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | $(KVM_BASE_GATEWAY_FILE) $(KVM_LOCALDIR)
 	$(call check-kvm-qemu-directory)
 	$(call destroy-kvm-domain,$(KVM_CLONE_DOMAIN))
@@ -610,10 +618,6 @@ install-kvm-domain-$(KVM_CLONE_DOMAIN): $(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml
 
 define install-kvm-test-domain
   #(info install-kvm-test-domain prefix=$(1) host=$(2) domain=$(1)$(2))
-
-  KVM_DOMAIN_$(1)$(2)_FILES = $$(KVM_LOCALDIR)/$(1)$(2).xml
-  .PRECIOUS: $$(KVM_DOMAIN_$(1)$(2)_FILES)
-
   .PHONY: install-kvm-domain-$(1)$(2)
   install-kvm-domain-$(1)$(2): $$(KVM_LOCALDIR)/$(1)$(2).xml
   $$(KVM_LOCALDIR)/$(1)$(2).xml: \
@@ -776,7 +780,7 @@ kvm-clean clean-kvm: kvm-shutdown-local-domains kvm-keys-clean
 define kvm-DOMAIN-build
   #(info kvm-DOMAIN-build domain=$(1))
   .PHONY: kvm-$(1)-build
-  kvm-$(1)-build: | $$(KVM_DOMAIN_$(1)_FILES)
+  kvm-$(1)-build: | $$(KVM_LOCALDIR)/$(1).xml
 	: kvm-DOMAIN-build domain=$(1)
 	$(call check-kvm-qemu-directory)
 	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; make -j2 OBJDIR=$$(KVM_OBJDIR) base'
@@ -808,7 +812,7 @@ kvm-build: kvm-$(KVM_BUILD_DOMAIN)-build
 define kvm-DOMAIN-install
   #(info kvm-DOMAIN-install domain=$(1))
   .PHONY: kvm-$(1)-install
-  kvm-$(1)-install: kvm-$$(KVM_BUILD_DOMAIN)-build | $$(KVM_DOMAIN_$(1)_FILES)
+  kvm-$(1)-install: kvm-$$(KVM_BUILD_DOMAIN)-build | $$(KVM_LOCALDIR)/$(1).xml
 	: kvm-DOMAIN-install domain=$(1)
 	$(call check-kvm-qemu-directory)
 	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . --shutdown $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$$(KVM_OBJDIR)'
@@ -827,9 +831,9 @@ kvm-install: $(foreach domain, $(KVM_INSTALL_DOMAINS), kvm-$(domain)-install)
 # Since the install domains list isn't exhaustive (for instance, nic
 # is missing), add an explicit dependency on all the domains so that
 # they still get created.
-kvm-install: | $(foreach domain,$(KVM_TEST_DOMAINS),$(KVM_DOMAIN_$(domain)_FILES))
+kvm-install: | $(foreach domain,$(KVM_TEST_DOMAINS),$(KVM_POOLDIR)/$(domain).xml)
 
-kvm-install-hive: $(KVM_DOMAIN_$(KVM_CLONE_DOMAIN)_FILES)
+kvm-install-hive: $(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).xml
 	$(MAKE) kvm-uninstall-test-domains
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_CLONE_DOMAIN) 'export OBJDIR=/var/tmp/OBJ.kvm ; make OBJDIR=/var/tmp/OBJ.kvm base'
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_CLONE_DOMAIN) 'export OBJDIR=/var/tmp/OBJ.kvm ; make OBJDIR=/var/tmp/OBJ.kvm module'
@@ -860,7 +864,7 @@ endif
 define kvmsh-DOMAIN
   #(info kvmsh-DOMAIN domain=$(1))
   .PHONY: kvmsh-$(1)
-  kvmsh-$(1): | $$(KVM_DOMAIN_$(1)_FILES)
+  kvmsh-$(1): | $$(KVM_POOLDIR)/$(1).xml
 	: kvmsh-DOMAIN domain=$(1)
 	$(call check-kvm-qemu-directory)
 	$$(KVMSH) $$(KVMSH_FLAGS) $(1) $(KVMSH_COMMAND)
