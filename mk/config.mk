@@ -345,6 +345,7 @@ ifeq ($(USE_SYSTEMD_WATCHDOG),true)
 SD_TYPE=notify
 SD_WATCHDOGSEC?=200
 else
+SD_WATCHDOGSEC?=0
 SD_TYPE=simple
 endif
 
