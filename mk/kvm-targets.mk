@@ -660,13 +660,7 @@ endef
 
 $(foreach domain, $(KVM_BASE_DOMAIN), \
 	$(eval $(call uninstall-kvm-domain,$(domain),$(KVM_BASEDIR))))
-$(foreach domain, $(KVM_CLONE_DOMAIN), \
-	$(eval $(call uninstall-kvm-domain,$(domain),$(KVM_BASEDIR))))
-$(foreach domain, $(KVM_BUILD_DOMAIN), \
-	$(eval $(call uninstall-kvm-domain,$(domain),$(KVM_BASEDIR))))
-$(foreach domain, $(KVM_BASIC_DOMAINS), \
-	$(eval $(call uninstall-kvm-domain,$(domain),$(KVM_LOCALDIR))))
-$(foreach domain, $(filter-out $(KVM_BUILD_DOMAIN), $(KVM_INSTALL_DOMAINS)), \
+$(foreach domain, $(KVM_LOCAL_DOMAINS), \
 	$(eval $(call uninstall-kvm-domain,$(domain),$(KVM_LOCALDIR))))
 
 # Direct dependencies.  This is so that a primitive like
