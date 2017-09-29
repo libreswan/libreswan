@@ -1,11 +1,11 @@
 Source: libreswan
 Section: net
 Priority: optional
-Maintainer: Paul Wouters <paul@libreswan.org>
+Maintainer: Libreswan Dev List  <swan-dev@lists.libreswan.org>
 Uploaders:
- Paul Wouters <paul@libreswan.org>,
-Vcs-Browser: https://github.com/antonyantony/libreswan
-Vcs-Git: https://github.com/antonyantony/libreswan
+ Paul Wouters <paul@nohats.ca>,
+Vcs-Browser: https://github.com/libreswan/libreswan
+Vcs-Git: https://github.com/libreswan/libreswan
 Standards-Version: 4.1.0
 Build-Depends:
  bison,
