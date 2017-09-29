@@ -738,7 +738,8 @@ static err_t build_dns_name(char *name_buf, /* len SWAN_MAX_DOMAIN_LEN */
 			size_t il;
 
 			/* idtoa() will have an extra @ as prefix */
-			il = snprintf(name_buf, buf_len, "%s", id->name.ptr);
+
+			il = snprintf(name_buf, buf_len, "%.*s", (int)id->name.len, id->name.ptr);
 
 			/* strip trailing "." characters, then add one */
 			while (il > 0 && name_buf[il - 1] == '.')
