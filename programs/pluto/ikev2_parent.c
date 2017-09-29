@@ -635,9 +635,11 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
 			 id.kind == ID_IPV4_ADDR ||
 			 id.kind == ID_IPV6_ADDR)) {
 		if (atype == IKEv2_AUTH_RESERVED) {
-			return FALSE; /* called from the initiator */
+			return TRUE; /* called from the initiator, success */
+		} else if (atype == IKEv2_AUTH_DIGSIG) {
+			return TRUE; /* success */
 		} else if (atype == IKEv2_AUTH_RSA) {
-			return FALSE; /* success */
+			return TRUE; /* success */
 		}
 	}
 
@@ -660,12 +662,15 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
 		err21 = enum_show(&ike_idtype_names, id.kind);
 	}
 
+	if (IS_LIBUNBOUND)
+		return FALSE;
+
 	DBG(DBG_CONTROLMORE,
 		DBG_log("%s #%lu not fetching ipseckey %s %s%s %s%s remote=%s thatid=%s",
 			c->name, st->st_serialno,
 			err1, err2, err21, err3, err31,
 			ipstr(&st->st_remoteaddr, &ra), thatid));
-	return TRUE;
+	return FALSE;
 }
 
 /*
@@ -754,7 +759,7 @@ stf_status ikev2parent_outI1(int whack_sock,
 			  enum_name(&state_names, st->st_state));
 	}
 
-	if (IS_LIBUNBOUND && !id_ipseckey_allowed(st, IKEv2_AUTH_RESERVED)) {
+	if (IS_LIBUNBOUND && id_ipseckey_allowed(st, IKEv2_AUTH_RESERVED)) {
 		stf_status ret = idr_ipseckey_fetch(st);
 		if (ret != STF_OK) {
 			reset_globals();
@@ -3522,7 +3527,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
 
 	atype = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type;
-	if (IS_LIBUNBOUND && !id_ipseckey_allowed(st, atype)) {
+	if (IS_LIBUNBOUND && id_ipseckey_allowed(st, atype)) {
 		ret = idi_ipseckey_fetch(md);
 		if (ret != STF_OK)
 			return ret;
