@@ -7,10 +7,11 @@ Uploaders:
 Vcs-Browser: https://github.com/libreswan/libreswan
 Vcs-Git: https://github.com/libreswan/libreswan
 Standards-Version: 4.1.0
+# libunbound-dev (>= 1.6.5~)  # this is not yet
 Build-Depends:
  bison,
  bzip2,
- debhelper (>= 10~),
+ debhelper (>= 9),
  dh-systemd,
  flex,
  htmldoc,
@@ -27,7 +28,7 @@ Build-Depends:
  libpam0g-dev,
  libselinux1-dev [linux-any],
  libsystemd-dev,
- libunbound-dev (>= 1.6.5~),
+ libunbound-dev,
  man2html,
  pkg-config,
  po-debconf,
