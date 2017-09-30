@@ -1,4 +1,4 @@
-ipsec look
+ipsec whack --shutdown
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

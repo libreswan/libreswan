@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep --x509
+/testing/guestbin/swan-prep
 certutil -d sql:/etc/ipsec.d -D -n west
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
