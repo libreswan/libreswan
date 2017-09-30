@@ -688,6 +688,8 @@ static bool validate_end(struct starter_conn *conn_st,
 
 	if (end->strings_set[KSCF_UPDOWN])
 		end->updown = clone_str(end->strings[KSCF_UPDOWN], "KSCF_UPDOWN");
+	else
+		end->updown = clone_str(DEFAULT_UPDOWN, "KSCF_UPDOWN default");
 
 	if (end->strings_set[KSCF_PROTOPORT]) {
 		err_t ugh;
@@ -1575,8 +1577,8 @@ static void confread_free_conn(struct starter_conn *conn)
 	pfreeany(conn->left.virt);
 	pfreeany(conn->right.virt);
 
-	pfreeany(conn_default.left.updown);
-	pfreeany(conn_default.right.updown);
+	pfreeany(conn->left.updown);
+	pfreeany(conn->right.updown);
 }
 
 void confread_free(struct starter_config *cfg)
