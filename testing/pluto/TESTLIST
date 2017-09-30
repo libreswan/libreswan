@@ -472,7 +472,7 @@ kvmplutotest	ikev1-ikev2-connswitch-01 good
 kvmplutotest	x509-pluto-01		good
 kvmplutotest	x509-pluto-02		good
 kvmplutotest	x509-pluto-03		good
-kvmplutotest	x509-pluto-04		wip
+kvmplutotest	x509-pluto-04		good
 
 kvmplutotest	x509-pluto-frag-00	good
 kvmplutotest	x509-pluto-frag-01	good
