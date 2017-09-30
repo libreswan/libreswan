@@ -35,6 +35,7 @@ extern bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *n
 #define VERIFY_RET_OK       0x0001
 #define VERIFY_RET_REVOKED  0x0002
 #define VERIFY_RET_FAIL     0x0004
+#define VERIFY_RET_SKIP     0x0008
 
 #define VERIFY_RET_CRL_NEED 0x1000
 

@@ -752,7 +752,10 @@ static int pluto_process_certs(struct state *st, chunk_t *certs,
 		return LSW_CERT_BAD;
 	}
 
-	if ((ret & VERIFY_RET_OK) && end_cert != NULL) {
+	if (ret & VERIFY_RET_SKIP) {
+		libreswan_log("No CA, certificate verified skipped");
+		return LSW_CERT_ID_OK;
+	} else if ((ret & VERIFY_RET_OK) && end_cert != NULL) {
 		libreswan_log("certificate verified OK: %s", end_cert->subjectName);
 		add_rsa_pubkey_from_cert(&c->spd.that.id, end_cert);
 

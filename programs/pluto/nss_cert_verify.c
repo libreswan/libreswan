@@ -305,6 +305,12 @@ static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
 						   bool *rev_opts)
 {
 	CERTCertificate *end_cert = NULL;
+	CERTCertList *trustcl = get_all_root_certs();
+
+	if (trustcl == NULL) {
+		DBG(DBG_X509, DBG_log("X509: no trust anchor available for verification"));
+		return VERIFY_RET_SKIP;
+	}
 
 	int i;
 
@@ -320,12 +326,6 @@ static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
 		return VERIFY_RET_FAIL;
 	}
 
-	CERTCertList *trustcl = get_all_root_certs();
-
-	if (trustcl == NULL) {
-		libreswan_log("X509: no trust anchor available for verification");
-		return VERIFY_RET_FAIL;
-	}
 
 	CERTVerifyLog *cur_log = NULL;
 	CERTVerifyLog vfy_log;
