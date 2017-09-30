@@ -100,7 +100,7 @@ VIRT_OS_VARIANT ?= --os-variant $(KVM_OS_VARIANT)
 KVM_BASE_HOST = swan$(KVM_OS)base
 
 KVM_CLONE_HOST ?= clone
-KVM_BUILD_HOST ?= $(firstword $(KVM_INSTALL_HOSTS))
+KVM_BUILD_HOST ?= build
 
 KVM_TEST_HOSTS = $(notdir $(wildcard testing/libvirt/vm/*[a-z]))
 KVM_BASIC_HOSTS = nic
