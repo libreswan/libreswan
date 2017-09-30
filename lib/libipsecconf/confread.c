@@ -1574,6 +1574,9 @@ static void confread_free_conn(struct starter_conn *conn)
 
 	pfreeany(conn->left.virt);
 	pfreeany(conn->right.virt);
+
+	pfreeany(conn_default.left.updown);
+	pfreeany(conn_default.right.updown);
 }
 
 void confread_free(struct starter_config *cfg)
