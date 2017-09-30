@@ -5,6 +5,8 @@ west #
 west #
  certutil -D -n "Libreswan test CA for mainca - Libreswan" -d sql:/etc/ipsec.d
 west #
+ certutil -D -n "east-ec" -d sql:/etc/ipsec.d
+west #
  # confirm that the network is alive
 west #
  ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
@@ -57,10 +59,6 @@ west #
  echo "initdone"
 initdone
 west #
- # temp file fixing
-west #
- ipsec whack --debug-all --impair-retransmits
-west #
  ipsec auto --up  westnet-eastnet-ikev2
 002 "westnet-eastnet-ikev2" #1: initiating v2 parent SA
 133 "westnet-eastnet-ikev2" #1: STATE_PARENT_I1: initiate
@@ -68,7 +66,7 @@ west #
 002 "westnet-eastnet-ikev2" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set.
 134 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
 002 "westnet-eastnet-ikev2" #2: suppressing retransmit because IMPAIR_RETRANSMITS is set.
-002 "westnet-eastnet-ikev2" #2: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+002 "westnet-eastnet-ikev2" #2: No CA, certificate verified skipped
 002 "westnet-eastnet-ikev2" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-ikev2" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
@@ -123,7 +121,6 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east                                                         P,,  
-east-ec                                                      P,,  
 hashsha2                                                     P,,  
 nic                                                          P,,  
 north                                                        P,,  

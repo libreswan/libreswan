@@ -1,6 +1,7 @@
 /testing/guestbin/swan-prep --x509
 # delete the CA, both ends hardcode both certificates
 certutil -D -n "Libreswan test CA for mainca - Libreswan" -d sql:/etc/ipsec.d
+certutil -D -n "east-ec" -d sql:/etc/ipsec.d
 # confirm that the network is alive
 ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
 # make sure that clear text does not get through
