@@ -581,6 +581,7 @@ stf_status xauth_send_request(struct state *st)
 	pb_stream rbody;
 	unsigned char buf[256];
 	u_char *r_hash_start, *r_hashval;
+	enum state_kind p_state;
 
 	/* set up reply */
 	init_out_pbs(&reply, buf, sizeof(buf), "xauth_buf");
@@ -589,6 +590,7 @@ stf_status xauth_send_request(struct state *st)
 
 	/* this is the beginning of a new exchange */
 	st->st_msgid_phase15 = generate_msgid(st);
+	p_state = st->st_state;
 	change_state(st, STATE_XAUTH_R0);
 
 	/* HDR out */
@@ -656,11 +658,24 @@ stf_status xauth_send_request(struct state *st)
 
 	/* Transmit */
 	if (!DBGP(IMPAIR_SEND_NO_XAUTH_R0)) {
-		send_ike_msg_without_recording(st, &reply, "XAUTH: req");
+		if (p_state == STATE_AGGR_R2) {
+			record_and_send_ike_msg(st, &reply, "XAUTH: req");
+		} else {
+			/*
+			 * Main mode responder do not record XAUTH_R0 message.
+			 * If rettransmit timer goes off retransmit the last
+			 * main mode message and send/create a new XAUTH_R0
+			 * message.
+			 */
+			send_ike_msg_without_recording(st, &reply,
+					"XAUTH: req");
+		}
 	} else {
-		/* record-only so we propely emulate packet drop */
-		record_outbound_ike_msg(st, &reply, "XAUTH: req");
 		libreswan_log("IMPAIR: Skipped sending XAUTH user/pass packet");
+		if (p_state == STATE_AGGR_R2) {
+			/* record-only so we propely emulate packet drop */
+			record_outbound_ike_msg(st, &reply, "XAUTH: req");
+		}
 	}
 
 	/* RETRANSMIT if Main, SA_REPLACE if Aggressive */
