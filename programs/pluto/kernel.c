@@ -2139,7 +2139,18 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			said_next->esn = TRUE;
 		}
 
+		/*
+		 * XXX: Assume SADB_ and ESP_ numbers match!  Clearly
+		 * setting .compalg is wrong, don't yet trust
+		 * lower-level code to be right.
+		 *
+		 * XXX: The lack of trust was wise.  Removing the
+		 * assign causes compress-pluto-netkey-klips-04 to
+		 * fail.
+		 */
 		said_next->encrypt = ta->ta_encrypt;
+		said_next->compalg = said_next->encrypt->common.id[IKEv1_ESP_ID];
+
 		/* divide up keying material */
 		said_next->enckey = esp_dst_keymat;
 		said_next->enckeylen = encrypt_keymat_size; /* BYTES */
