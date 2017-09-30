@@ -897,12 +897,19 @@ kvm-install: $(foreach domain, $(KVM_INSTALL_DOMAINS), kvm-$(domain)-install)
 # they still get created.
 kvm-install: | $(foreach domain,$(KVM_TEST_DOMAINS),$(KVM_POOLDIR)/$(domain).xml)
 
-kvm-install-hive: $(KVM_POOLDIR)/$(KVM_CLONE_DOMAIN).xml
-	$(MAKE) kvm-uninstall-test-domains
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_CLONE_DOMAIN) 'export OBJDIR=/var/tmp/OBJ.kvm ; make OBJDIR=/var/tmp/OBJ.kvm base'
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_CLONE_DOMAIN) 'export OBJDIR=/var/tmp/OBJ.kvm ; make OBJDIR=/var/tmp/OBJ.kvm module'
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(KVM_CLONE_DOMAIN) 'export OBJDIR=/var/tmp/OBJ.kvm ; ./testing/guestbin/swan-install OBJDIR=/var/tmp/OBJ.kvm'
-	$(MAKE) kvm-install-test-domains
+kvm-install-hive:
+	$(MAKE) KVM_BUILD_HOST=build kvm-uninstall-install-domains
+	$(MAKE) KVM_BUILD_HOST=build kvm-install-build-domain
+	$(KVMSH) $(KVMSH_FLAGS) --chdir . \
+		$(addprefix $(KVM_FIRST_PREFIX), build) \
+		'export OBJDIR=/var/tmp/OBJ.kvm ; make OBJDIR=/var/tmp/OBJ.kvm base'
+	$(KVMSH) $(KVMSH_FLAGS) --chdir . \
+		$(addprefix $(KVM_FIRST_PREFIX), build) \
+		'export OBJDIR=/var/tmp/OBJ.kvm ; make OBJDIR=/var/tmp/OBJ.kvm module'
+	$(KVMSH) $(KVMSH_FLAGS) --chdir . \
+		$(addprefix $(KVM_FIRST_PREFIX), build) \
+		'export OBJDIR=/var/tmp/OBJ.kvm ; ./testing/guestbin/swan-install OBJDIR=/var/tmp/OBJ.kvm'
+	$(MAKE) KVM_BUILD_HOST=build kvm-install-install-domains
 
 
 #
