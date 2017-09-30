@@ -750,7 +750,7 @@ kvm-uninstall-local-networks:  kvm-uninstall-test-networks
 kvm-purge: kvm-clean kvm-test-clean kvm-keys-clean kvm-uninstall-test-networks kvm-uninstall-local-domains
 
 .PHONY: kvm-demolish
-kvm-demolish: kvm-purge kvm-uninstall-base-network
+kvm-demolish: kvm-purge kvm-uninstall-base-network kvm-uninstall-base-domain
 
 .PHONY: kvm-clean clean-kvm
 kvm-clean clean-kvm: kvm-shutdown-local-domains kvm-keys-clean
