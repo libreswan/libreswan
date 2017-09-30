@@ -96,7 +96,9 @@ kvmplutotest	ikev2-03-basic-rawrsa			good
 kvmplutotest	ikev2-04-basic-x509			good
 kvmplutotest	ikev2-04-basic-x509-ckaid		good
 kvmplutotest	ikev2-04-basic-x509-no-ca		good
+kvmplutotest	ikev2-04-basic-x509-no-ca-02		good
 kvmplutotest	ikev2-04-basic-x509-no-ca-mismatch	good
+kvmplutotest	ikev2-04-basic-x509-no-ca-mismatch-02	good
 kvmplutotest	ikev2-05-basic-psk			good
 kvmplutotest	ikev2-dcookie-01			good
 kvmplutotest	ikev2-dcookie-02			good
