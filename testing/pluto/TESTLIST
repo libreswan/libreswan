@@ -467,6 +467,7 @@ kvmplutotest	ikev1-27-uniqueid		good
 kvmplutotest	ikev1-rekey-connswitch	good
 kvmplutotest	ikev2-rekey-connswitch	good
 kvmplutotest	ikev1-ikev2-connswitch-01 good
+kvmplutotest	ikev1-ikev2-connswitch-02 good
 
 #
 # a test of using X.509 keys
