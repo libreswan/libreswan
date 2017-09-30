@@ -35,6 +35,17 @@ KVM_WORKERS ?= 1
 KVM_USER ?= $(shell id -u)
 KVM_GROUP ?= $(shell id -g qemu)
 
+#
+# Generate local names using prefixes
+#
+
+strip-prefix = $(subst '',,$(subst "",,$(1)))
+KVM_FIRST_PREFIX = $(call strip-prefix,$(firstword $(KVM_PREFIXES)))
+add-all-domain-prefixes = \
+	$(foreach prefix, $(KVM_PREFIXES), \
+		$(addprefix $(call strip-prefix,$(prefix)),$(1)))
+
+
 # To avoid the problem where the host has no "default" KVM network
 # (there's a rumour that libreswan's main testing machine has this
 # problem) define a dedicated swandefault gateway.
@@ -88,14 +99,6 @@ KVM_HOSTS = $(KVM_BASE_HOST) $(KVM_LOCAL_HOSTS)
 #
 # Domains
 #
-
-strip-prefix = $(subst '',,$(subst "",,$(1)))
-KVM_FIRST_PREFIX = $(call strip-prefix,$(firstword $(KVM_PREFIXES)))
-add-first-domain-prefix = \
-	$(addprefix $(call strip-prefix,$(firstword $(KVM_PREFIXES))),$(1))
-add-all-domain-prefixes = \
-	$(foreach prefix, $(KVM_PREFIXES), \
-		$(addprefix $(call strip-prefix,$(prefix)),$(1)))
 
 KVM_BASE_DOMAIN = $(KVM_BASE_HOST)
 
@@ -154,7 +157,7 @@ KVM_KEYS = testing/x509/keys/up-to-date
 define kvm-HOST-DOMAIN
   #(info kvm-HOST-DOMAIN prefix=$(1) host=$(2) suffix=$(3))
   .PHONY: $(1)$(2)$(3)
-  $(1)$(2)$(3): $(1)$$(call add-first-domain-prefix,$(2))$(3)
+  $(1)$(2)$(3): $(1)$$(addprefix $$(KVM_FIRST_PREFIX),$(2))$(3)
 endef
 
 
@@ -1151,7 +1154,7 @@ Standard targets and operations:
                       - boot and log into the domain
                         using kvmsh.py
                       - for test domains log into
-                        $(call add-first-domain-prefix, HOST)
+                        $(addprefix $(KVM_FIRST_PREFIX), HOST)
 
 endef
 
