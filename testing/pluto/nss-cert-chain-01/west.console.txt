@@ -65,8 +65,6 @@ west #
 west #
  grep leak /tmp/pluto.log
 leak-detective enabled
-leak: rundir, item size: 12
-leak detective found 1 leaks, total size 12
 west #
 west #
  ../bin/check-for-core.sh
