@@ -2849,7 +2849,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		struct connection *c = st->st_connection;
 		bool fromcert;
 		uint16_t auth = xauth_calcbaseauth(st->st_oakley.auth);
-		lset_t auth_policy = LEMPTY;
+		lset_t auth_policy;
 
 		switch (auth) {
 		case OAKLEY_PRESHARED_KEY:
@@ -2867,13 +2867,15 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		case OAKLEY_ECDSA_P521:
 		default:
 			DBG(DBG_CONTROL, DBG_log("ikev1 ike_decode_peer_id bad_case due to not supported policy"));
-			// bad_case(auth);
+			return NULL;
 		}
 
-		struct connection *r = NULL;
-
-		r = refine_host_connection(st, &peer, FALSE /* we are responder */,
-				auth_policy, AUTH_UNSET /* ikev2 only */, &fromcert);
+		struct connection *r =
+			refine_host_connection(st, &peer,
+				FALSE,	/* we are responder */
+				auth_policy,
+				AUTH_UNSET,	/* ikev2 only */
+				&fromcert);
 
 		if (r == NULL) {
 			char buf[IDTOA_BUF];
