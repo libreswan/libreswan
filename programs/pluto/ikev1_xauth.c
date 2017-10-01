@@ -581,7 +581,7 @@ stf_status xauth_send_request(struct state *st)
 	pb_stream rbody;
 	unsigned char buf[256];
 	u_char *r_hash_start, *r_hashval;
-	enum state_kind p_state;
+	const enum state_kind p_state = st->st_state;
 
 	/* set up reply */
 	init_out_pbs(&reply, buf, sizeof(buf), "xauth_buf");
@@ -590,7 +590,6 @@ stf_status xauth_send_request(struct state *st)
 
 	/* this is the beginning of a new exchange */
 	st->st_msgid_phase15 = generate_msgid(st);
-	p_state = st->st_state;
 	change_state(st, STATE_XAUTH_R0);
 
 	/* HDR out */
@@ -662,9 +661,9 @@ stf_status xauth_send_request(struct state *st)
 			record_and_send_ike_msg(st, &reply, "XAUTH: req");
 		} else {
 			/*
-			 * Main mode responder do not record XAUTH_R0 message.
-			 * If rettransmit timer goes off retransmit the last
-			 * main mode message and send/create a new XAUTH_R0
+			 * Main Mode responder: do not record XAUTH_R0 message.
+			 * If retransmit timer goes off, retransmit the last
+			 * Main Mode message and send/create a new XAUTH_R0
 			 * message.
 			 */
 			send_ike_msg_without_recording(st, &reply,
@@ -679,6 +678,7 @@ stf_status xauth_send_request(struct state *st)
 	}
 
 	/* RETRANSMIT if Main, SA_REPLACE if Aggressive */
+	/* ??? the actual code seems to force EVENT_v1_RETRANSMIT */
 	if (st->st_event->ev_type != EVENT_v1_RETRANSMIT) {
 		delete_event(st);
 		event_schedule_ms(EVENT_v1_RETRANSMIT,
