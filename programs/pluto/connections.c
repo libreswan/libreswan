@@ -815,8 +815,6 @@ static void unshare_connection(struct connection *c)
 	if (c->alg_info_esp != NULL)
 		alg_info_addref(&c->alg_info_esp->ai);
 
-	if (c->pool !=  NULL)
-		reference_addresspool(c->pool);
 }
 
 static void load_end_nss_certificate(const char *which, CERTCertificate *cert,
