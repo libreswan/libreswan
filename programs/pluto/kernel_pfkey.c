@@ -1235,7 +1235,7 @@ bool pfkey_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
 		return FALSE;
 	}
 
-	// get reply
+	/* get reply */
 
 	/* extract the sa info */
 	struct sadb_ext *replies[K_SADB_EXT_MAX + 1];
