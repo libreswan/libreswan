@@ -653,8 +653,7 @@ endif
 
 # Create the "clone" domain from the base domain.
 
-$(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml:
-		$(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks \
+$(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml: \
 		| \
 		$(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).qcow2 \
 		$(KVM_BASE_GATEWAY_FILE) \
