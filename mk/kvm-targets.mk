@@ -464,6 +464,36 @@ $(foreach prefix, $(KVM_PREFIXES), \
 
 
 #
+# Upgrade domains
+#
+
+define upgrade-kvm-domain
+	: upgrade-kvm-domain domain=$(1)
+	$(if $(KVM_PACKAGES), \
+		$(KVMSH) --shutdown $(1) $(KVM_PACKAGE_INSTALL) $(KVM_PACKAGES))
+	$(if $(KVM_INSTALL_RPM_LIST), \
+		$(KVMSH) --shutdown $(1) $(KVM_INSTALL_RPM_LIST))
+	$(if $(KVM_DEBUGINFO), \
+		$(KVMSH) --shutdown $(1) $(KVM_DEBUGINFO_INSTALL) $(KVM_DEBUGINFO))
+endef
+
+.PHONY: kvm-upgrade-base-domain
+kvm-upgrade-base-domain: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
+	$(call upgrade-kvm-domain, $(KVM_BASE_DOMAIN))
+
+# need to both delete any dependent domains and/or build the clone
+# domain.
+
+.PHONY: kvm-upgrade kvm-upgrade-local-domains
+kvm-upgrade: kvm-upgrade-local-domains
+kvm-upgrade-local-domains: $(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml
+kvm-upgrade-local-domains: $(addprefix uninstall-kvm-domain-, $(KVM_CLONE_COPIES))
+kvm-upgrade-local-domains:
+	$(call upgrade-kvm-domain, $(KVM_CLONE_DOMAIN))
+	$(MAKE) kvm-install-local-domains
+
+
+#
 # Build KVM domains from scratch
 #
 
@@ -585,19 +615,10 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_B
 		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$(notdir $(KVM_KICKSTART_FILE)) console=tty0 console=ttyS0,115200" \
 		--noreboot
 	: the reboot message from virt-install can be ignored
-	$(MAKE) kvm-upgrade-base-domain
+	$(call upgrade-kvm-domain, $(KVM_BASE_DOMAIN))
 	cp $(KVM_KICKSTART_FILE) $@
 .PHONY: install-kvm-domain-$(KVM_BASE_DOMAIN)
 install-kvm-domain-$(KVM_BASE_DOMAIN): $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
-
-.PHONY: kvm-upgrade-base-domain
-kvm-upgrade-base-domain:
-	$(if $(KVM_PACKAGES), $(KVMSH) --shutdown $(KVM_BASE_DOMAIN) \
-		$(KVM_PACKAGE_INSTALL) $(KVM_PACKAGES))
-	$(if $(KVM_INSTALL_RPM_LIST), $(KVMSH) --shutdown $(KVM_BASE_DOMAIN)\
-		$(KVM_INSTALL_RPM_LIST))
-	$(if $(KVM_DEBUGINFO), $(KVMSH) --shutdown $(KVM_BASE_DOMAIN) \
-		$(KVM_DEBUGINFO_INSTALL) $(KVM_DEBUGINFO))
 
 #
 # Create the local disk images
@@ -1165,14 +1186,15 @@ Domains and networks:
 
 Standard targets and operations:
 
-  To upgrade the base domain:
+  Upgrading domains:
 
-    kvm-upgrade-base-domain     - since the test+clone domains
-                                  will need rebuilding, use
-                                  the sequence:
-
-                                    make kvm-purge
-                                    make kvm-upgrade-base-domain
+    kvm-upgrade
+    kvm-upgrade-local-domains
+        - upgrade the local domains
+          (do not modify the base domain)
+    kvm-upgrade-base-domain
+        - upgrade the base domain
+          (do not modify the local domains)
 
   To build or delete the keys used when testing:
 
