@@ -630,7 +630,6 @@ void confwrite(struct starter_config *cfg, FILE *out, bool setup, char *name, bo
 	/* output connections */
 	for (conn = cfg->conns.tqh_first; conn != NULL;
 	     conn = conn->link.tqe_next)
-		// if (name == NULL || strncmp(name, conn->name, strlen(name)) == 0)
 		if (name == NULL || streq(name, conn->name))
 			confwrite_conn(out, conn, verbose);
 	if (verbose)
