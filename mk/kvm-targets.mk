@@ -629,9 +629,10 @@ install-kvm-domain-$(KVM_BASE_DOMAIN): $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
 # Create the "clone" disk from the base .ks file (really the base
 # disk).
 
-$(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).qcow2: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks | $(KVM_LOCALDIR)
+$(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).qcow2: | $(KVM_LOCALDIR)
 	$(call check-kvm-qemu-directory)
-	: shutdown from and fix any disk modes - logging into from messes that up
+	: create the base domain if needed
+	$(MAKE) kvm-install-base-domain
 	$(KVMSH) --shutdown $(KVM_BASE_DOMAIN)
 	test -r $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 || sudo chgrp $(KVM_GROUP) $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2
 	test -r $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 || sudo chmod g+r          $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2
@@ -764,8 +765,6 @@ $(foreach domain, $(KVM_LOCAL_DOMAINS), \
 # kvm-uninstall-* rules leads to indirect dependencies and
 # out-of-order distruction.
 
-$(addprefix uninstall-kvm-domain-, $(KVM_BASE_DOMAIN)): \
-	$(addprefix uninstall-kvm-domain-, $(KVM_CLONE_DOMAIN))
 $(addprefix uninstall-kvm-domain-, $(KVM_CLONE_DOMAIN)): \
 	$(addprefix uninstall-kvm-domain-, $(KVM_CLONE_COPIES))
 ifneq ($(KVM_BUILD_COPIES),)
@@ -871,10 +870,10 @@ define kvm-DOMAIN-build
 	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; make -j2 OBJDIR=$$(KVM_OBJDIR) module'
 endef
 
-# this includes $(KVM_BASE_DOMAIN) and $(KVM_CLONE_DOMAIN)
-$(foreach domain, $(KVM_DOMAINS), \
+# this includes $(KVM_CLONE_DOMAIN)
+$(foreach domain, $(KVM_LOCAL_DOMAINS), \
 	$(eval $(call kvm-DOMAIN-build,$(domain))))
-$(foreach host, $(filter-out $(KVM_DOMAINS), $(KVM_HOSTS)), \
+$(foreach host, $(filter-out $(KVM_DOMAINS), $(KVM_LOCAL_HOSTS)), \
 	$(eval $(call kvm-HOST-DOMAIN,kvm-,$(host),-build)))
 
 .PHONY: kvm-build
@@ -902,10 +901,10 @@ define kvm-DOMAIN-install
 	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . --shutdown $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$$(KVM_OBJDIR)'
 endef
 
-# this includes $(KVM_BASE_DOMAIN) and $(KVM_CLONE_DOMAIN)
-$(foreach domain, $(KVM_DOMAINS), \
+# this includes $(KVM_CLONE_DOMAIN)
+$(foreach domain, $(KVM_LOCAL_DOMAINS), \
 	$(eval $(call kvm-DOMAIN-install,$(domain))))
-$(foreach host, $(filter-out $(KVM_DOMAINS), $(KVM_HOSTS)), \
+$(foreach host, $(filter-out $(KVM_DOMAINS), $(KVM_LOCAL_HOSTS)), \
 	$(eval $(call kvm-HOST-DOMAIN,kvm-,$(host),-install)))
 
 # By default, install where needed.
@@ -1219,6 +1218,16 @@ Standard targets and operations:
     $(addprefix kvmsh-, $(KVM_LOCAL_DOMAINS))
         - login to the specific domain
         - if necessary, create and boot the domain
+
+  Creating and deleting domains:
+
+    kvm-install-base-domain
+    kvm-uninstall-base-domain
+        - install/uninstall the $(KVM_OS) base domain
+    kvm-install-local-domains
+    kvm-uninstall-local-domains
+        - install/uninstall this directories domains
+        - if needed install the $(KVM_OS) base domain
 
   To build or delete the keys used when testing:
 
