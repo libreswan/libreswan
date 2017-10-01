@@ -953,19 +953,30 @@ endif
 #
 
 define kvmsh-DOMAIN
-  #(info kvmsh-DOMAIN domain=$(1))
+  #(info kvmsh-DOMAIN domain=$(1) file=$(2))
   .PHONY: kvmsh-$(1)
-  kvmsh-$(1): | $$(KVM_POOLDIR)/$(1).xml
-	: kvmsh-DOMAIN domain=$(1)
+  kvmsh-$(1): | $(2)
+	: kvmsh-DOMAIN domain=$(1) file=$(2)
 	$(call check-kvm-qemu-directory)
 	$$(KVMSH) $$(KVMSH_FLAGS) $(1) $(KVMSH_COMMAND)
 endef
-$(foreach domain,  $(KVM_DOMAINS), \
-	$(eval $(call kvmsh-DOMAIN,$(domain))))
+
+$(foreach domain,  $(KVM_BASE_DOMAIN), \
+	$(eval $(call kvmsh-DOMAIN,$(domain),$$(KVM_BASEDIR)/$$(KVM_BASE_DOMAIN).ks)))
+
+$(foreach domain,  $(KVM_LOCAL_DOMAINS), \
+	$(eval $(call kvmsh-DOMAIN,$(domain),$$(KVM_LOCALDIR)/$(domain).xml)))
+
 $(foreach host, $(filter-out $(KVM_DOMAINS), $(KVM_HOSTS)), \
 	$(eval $(call kvm-HOST-DOMAIN,kvmsh-,$(host))))
-kvmsh-build: kvmsh-$(KVM_BUILD_DOMAIN)
+
+.PHONY: kvmsh-base
 kvmsh-base: kvmsh-$(KVM_BASE_DOMAIN)
+
+ifeq ($(KVM_BUILD_COPIES),)
+.PHONY: kvmsh-build
+kvmsh-build: kvmsh-$(KVM_BUILD_DOMAIN)
+endif
 
 
 #
@@ -1196,6 +1207,19 @@ Standard targets and operations:
         - upgrade the base domain
           (do not modify the local domains)
 
+  Accessing (loging into) domains:
+
+    kvmsh-base
+    kvmsh-clone
+    kvmsh-build
+    kvmsh-HOST ($(filter-out build, $(KVM_TEST_HOSTS)))
+        - use 'virsh console' to login to the given domain
+	- for HOST login to the first domain vis $(addprefix $(KVM_FIRST_PREFIX), HOST)
+        - if necessary, create and boot the host
+    $(addprefix kvmsh-, $(KVM_LOCAL_DOMAINS))
+        - login to the specific domain
+        - if necessary, create and boot the domain
+
   To build or delete the keys used when testing:
 
     kvm-keys          - uses the build domain
@@ -1236,14 +1260,6 @@ Standard targets and operations:
     kvm-uninstall     - force a clean build and install by
                         deleting all the test domains and networks
     distclean         - scrubs the source tree
-
-  To log into a domain:
-
-    kvmsh-{$(subst $(empty) $(empty),$(comma),base clone build $(KVM_TEST_HOSTS))}
-                      - boot and log into the domain
-                        using kvmsh.py
-                      - for test domains log into
-                        $(addprefix $(KVM_FIRST_PREFIX), HOST)
 
 endef
 
