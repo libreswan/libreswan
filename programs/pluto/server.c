@@ -1255,10 +1255,10 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest, const char
  *
  * The first two call send_or_resend_ike_msg().
  * That handles an IKE message.
- * It calls send_frags() if the message needs to be fragmented.
+ * It calls send_v1_frags() if the message needs to be fragmented.
  * Otherwise it calls send_packet() to send it in one gulp.
  *
- * send_frags() breaks an IKE message into fragments and sends
+ * send_v1_frags() breaks an IKE message into fragments and sends
  * them by send_packet().
  *
  * send_keepalive() calls send_packet() directly: uses a special
@@ -1407,7 +1407,7 @@ static bool send_packet(struct state *st, const char *where,
  * - stock racoon source (frak length 552)
  */
 
-static bool send_frags(struct state *st, const char *where)
+static bool send_v1_frags(struct state *st, const char *where)
 {
 	unsigned int fragnum = 0;
 
@@ -1568,7 +1568,7 @@ static bool send_or_resend_ike_msg(struct state *st, const char *where,
 		    st->st_state != STATE_MAIN_I1 &&
 		    should_fragment_ike_msg(st, len + natt_bonus, resending))
 		{
-			return send_frags(st, where);
+			return send_v1_frags(st, where);
 		} else {
 			return send_packet(st, where, FALSE, st->st_tpacket.ptr,
 					   st->st_tpacket.len, NULL, 0);
