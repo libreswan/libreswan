@@ -66,7 +66,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=2100, outBytes=2100, id='@east'
+006 #2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=2184, outBytes=2184, id='@east'
 west #
  echo done
 done
