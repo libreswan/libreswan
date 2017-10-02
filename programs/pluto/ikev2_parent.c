@@ -2798,7 +2798,7 @@ static stf_status ikev2_send_auth(struct connection *c,
 
 		} else {
 			loglog(RC_LOG_SERIOUS, "DigSig: no compatible DigSig hash algo");
-			//return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 		break;
 	}
