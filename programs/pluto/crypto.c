@@ -153,19 +153,6 @@ const struct oakley_group_desc *child_dh(const struct connection *c)
 }
 
 /*
- * Get pfsgroup for this connection
- */
-const struct oakley_group_desc *ike_alg_pfsgroup(struct connection *c,
-						 lset_t policy)
-{
-	if ((policy & POLICY_PFS)) {
-		/* might be NULL */
-		return child_dh(c);
-	}
-	return NULL;
-}
-
-/*
  *      Show IKE algorithms for
  *      - this connection (result from ike= string)
  *      - newest SA
