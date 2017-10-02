@@ -2867,7 +2867,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		case OAKLEY_ECDSA_P521:
 		default:
 			DBG(DBG_CONTROL, DBG_log("ikev1 ike_decode_peer_id bad_case due to not supported policy"));
-			return NULL;
+			return FALSE;
 		}
 
 		struct connection *r =
