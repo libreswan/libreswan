@@ -1249,11 +1249,11 @@ bool pfkey_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
 		struct sadb_lifetime *sal = (struct sadb_lifetime *)
 			replies[K_SADB_EXT_LIFETIME_CURRENT];
 
-		//*allocations = sal->sadb_lifetime_allocations;
+		/* *allocations = sal->sadb_lifetime_allocations; */
 		*bytes = sal->sadb_lifetime_bytes;
 		*add_time = sal->sadb_lifetime_addtime;
-		//*use_time = sal->sadb_lifetime_usetime;
-		//*packets = sal->sadb_x_lifetime_packets;
+		/* *use_time = sal->sadb_lifetime_usetime; */
+		/* *packets = sal->sadb_x_lifetime_packets; */
 		return TRUE;
 	}
 	return FALSE;

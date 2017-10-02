@@ -131,9 +131,12 @@ struct kernel_sa {
 	const char *nic_offload_dev;
 
 	deltatime_t sa_lifetime; /* number of seconds until SA expires */
-	/* below two need to enabled and used, instead of getting passed */
-	// uint32_t sa_priority;
-	// struct sa_marks *sa_marks;
+	/*
+	 * Below two enties need to enabled and used,
+	 * instead of getting passed
+	 * uint32_t sa_priority;
+	 * struct sa_marks *sa_marks;
+	 */
 };
 
 struct raw_iface {
