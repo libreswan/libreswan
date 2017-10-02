@@ -55,7 +55,7 @@ const struct id *resolve_myid(const struct id *id)
 	// idtoa(id, tmpid, sizeof(tmpid));
 	// loglog(RC_LOG_SERIOUS,"resolve_myid() called for id:%s",tmpid);
 
-	if ((id)->kind == ID_MYID) {
+	if (id->kind == ID_MYID) {
 		return &myids[myid_state];
 	} else {
 		return id;
@@ -70,8 +70,7 @@ void show_myid_status(void)
 	whack_log(RC_COMMENT, "myid = %s", idstr);
 }
 
-/* Fills in myid from environment variable IPSECmyid or defaultrouteaddr
- */
+/* Fills in myid from environment variable IPSECmyid or defaultrouteaddr */
 void init_id(void)
 {
 	passert(empty_id.kind == ID_NONE);
