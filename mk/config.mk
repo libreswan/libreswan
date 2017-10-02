@@ -503,8 +503,12 @@ KLIPSSRCDIR=${LIBRESWANSRCDIR}/linux/net/ipsec
 #KLIPSSRCDIR=/mara1/git/klips/net/ipsec
 
 LIBSWANDIR=${LIBRESWANSRCDIR}/lib/libswan
-LIBRESWANLIB=${OBJDIRTOP}/lib/libswan/libswan.a
-LSWTOOLLIB=${OBJDIRTOP}/lib/liblswtool/liblswtool.a
+
+# Need to specify absolute paths as 'make' (checks dependencies) and
+# 'ld' (does the link) are run from different directories.
+LIBRESWANLIB=$(abs_top_builddir)/lib/libswan/libswan.a
+LSWTOOLLIB=$(abs_top_builddir)/lib/liblswtool/liblswtool.a
+
 # XXX: $(LSWTOOLLIB) has circular references to $(LIBRESWANLIB).
 LSWTOOLLIBS=$(LSWTOOLLIB) $(LIBRESWANLIB)
 

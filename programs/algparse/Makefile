@@ -27,6 +27,8 @@ PLUTOOBJS += ike_info.o
 PLUTOOBJS += crypt_symkey.o
 PLUTOOBJS += crypt_hash.o
 PLUTOOBJS += test_buffer.o
+# Need absolute path as 'make' (check dependencies) and 'ld' (do link)
+# are run from different directories.
 OBJS += $(addprefix $(abs_top_builddir)/programs/pluto/, $(PLUTOOBJS))
 # $(PROGRAM): pluto-base
 # .PHONY: pluto-base
