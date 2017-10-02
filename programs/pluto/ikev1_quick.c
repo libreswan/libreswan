@@ -832,11 +832,17 @@ stf_status quick_outI1(int whack_sock,
 
 	if (policy & POLICY_PFS ) {
 		/*
+		 * Old code called ike_alg_pfsgroup() and that first
+		 * checked st->st_policy for POLICY_PFS.  Its assumed
+		 * the check was redundant.
+		 */
+		pexpect((st->st_policy & POLICY_PFS));
+		/*
 		 * See if pfs_group has been specified for this conn,
 		 * use that group.
 		 * if not, fallback to old use-same-as-P1 behaviour
 		 */
-		st->st_pfs_group = ike_alg_pfsgroup(st->st_connection, st->st_policy);
+		st->st_pfs_group = child_dh(st->st_connection);
 
 		/* otherwise, use the same group as during Phase 1:
 		 * since no negotiation is possible, we pick one that is
