@@ -298,8 +298,6 @@ kvmplutotest	ikev1-hub-spoke 			good
 
 kvmplutotest	pluto-ipcmp-01	good
 
-kvmplutotest	ikev1-connswitch-ports-01	wip
-
 kvmplutotest	ikev2-38-psk-65bytes			good
 kvmplutotest	ikev2-39-psk-64bytes 			good
 
@@ -464,10 +462,13 @@ kvmplutotest	delete-sa-08-rhbz1311360	good
 kvmplutotest	delete-sa-09-rhbz1311360-c32	good
 kvmplutotest	ikev1-27-uniqueid		good
 
-kvmplutotest	ikev1-rekey-connswitch	good
-kvmplutotest	ikev2-rekey-connswitch	good
-kvmplutotest	ikev1-ikev2-connswitch-01 good
-kvmplutotest	ikev1-ikev2-connswitch-02 good
+# connection switching tests
+kvmplutotest	ikev1-connswitch-01		good
+kvmplutotest	ikev1-connswitch-ports-01	wip
+kvmplutotest	ikev1-ikev2-connswitch-01	good
+kvmplutotest	ikev1-rekey-connswitch		good
+kvmplutotest	ikev2-connswitch-01		good
+kvmplutotest	ikev2-connswitch-02		good
 
 #
 # a test of using X.509 keys
