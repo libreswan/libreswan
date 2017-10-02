@@ -13,6 +13,8 @@
  * for more details.
  */
 
+#include <pthread.h> /* Must be the first include file */
+
 #include <stdlib.h>
 
 #include "constants.h"

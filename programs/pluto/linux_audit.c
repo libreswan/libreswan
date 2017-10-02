@@ -22,8 +22,6 @@
  *
  */
 
-#include <pthread.h>    /* Must be the first include file */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>

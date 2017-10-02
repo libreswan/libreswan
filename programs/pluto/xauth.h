@@ -13,8 +13,6 @@
  * for more details.
  */
 
-#include <pthread.h>
-
 #include "constants.h"
 
 struct id;
