@@ -217,6 +217,7 @@ int main(int argc, char *argv[])
 
 	if (argv[optind] == NULL) {
 		/* default: spread bits between 3072 - 4096 in multiple's of 16 */
+		/* For keys to be valid for RSA-PSS they must be multiple of 8 */
 		srand(time(NULL));
 		nbits = 3072 + 16 * (rand() % 64);
 	} else {
