@@ -545,7 +545,6 @@ static stf_status modecfg_send_set(struct state *st)
 	/* Transmit */
 	record_and_send_ike_msg(st, &reply, "ModeCfg set");
 
-	/* RETRANSMIT if Main, SA_REPLACE if Aggressive */
 	if (st->st_event->ev_type != EVENT_v1_RETRANSMIT &&
 	    st->st_event->ev_type != EVENT_NULL) {
 		delete_event(st);
@@ -677,8 +676,6 @@ stf_status xauth_send_request(struct state *st)
 		}
 	}
 
-	/* RETRANSMIT if Main, SA_REPLACE if Aggressive */
-	/* ??? the actual code seems to force EVENT_v1_RETRANSMIT */
 	if (st->st_event->ev_type != EVENT_v1_RETRANSMIT) {
 		delete_event(st);
 		event_schedule_ms(EVENT_v1_RETRANSMIT,
@@ -799,7 +796,6 @@ stf_status modecfg_send_request(struct state *st)
 	/* Transmit */
 	record_and_send_ike_msg(st, &reply, "modecfg: req");
 
-	/* RETRANSMIT if Main, SA_REPLACE if Aggressive */
 	if (st->st_event->ev_type != EVENT_v1_RETRANSMIT) {
 		delete_event(st);
 		event_schedule_ms(EVENT_v1_RETRANSMIT, st->st_connection->r_interval, st);
