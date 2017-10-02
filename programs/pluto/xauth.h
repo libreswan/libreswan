@@ -40,15 +40,10 @@ void xauth_start_pam_thread(struct xauth **xauth,
 					     bool success));
 #endif
 
-/*
- * Force a pre-determined authentication outcome through the XAUTH
- * thread code.
- */
-
-void xauth_start_always_thread(struct xauth **xauth,
-			       const char *method, const char *name,
-			       so_serial_t serialno, bool success,
-			       void (*callback)(struct state *st,
-						const char *name,
-						bool aborted,
-						bool success));
+void xauth_next(struct xauth **xauth,
+		const char *method, const char *name,
+		so_serial_t serialno, bool success,
+		void (*callback)(struct state *st,
+				 const char *name,
+				 bool aborted,
+				 bool success));

@@ -164,6 +164,31 @@ static void *xauth_thread(void *arg)
 	return NULL;
 }
 
+static struct xauth *xauth_alloc(const char *method,
+				 const char *name,
+				 so_serial_t serialno,
+				 void *arg,
+				 bool (*authenticate)(void *arg, volatile bool *abort),
+				 void (*cleanup)(void *arg),
+				 void (*callback)(struct state *st,
+						  const char *name,
+						  bool aborted,
+						  bool success))
+{
+	struct xauth *xauth = alloc_thing(struct xauth, "xauth arg");
+	xauth->method = method;
+	xauth->name = clone_str(name, "xauth name");
+	xauth->arg = arg;
+	xauth->callback = callback;
+	xauth->success = FALSE;
+	xauth->serialno = serialno;
+	xauth->authenticate = authenticate;
+	xauth->cleanup = cleanup;
+	xauth->callback = callback;
+	gettimeofday(&xauth->tv0, NULL);
+	return xauth;
+}
+
 static void xauth_start_thread(struct xauth **xauthp,
 			       const char *method,
 			       const char *name,
@@ -178,17 +203,8 @@ static void xauth_start_thread(struct xauth **xauthp,
 {
 	passert(pthread_equal(main_thread, pthread_self()));
 
-	struct xauth *xauth = alloc_thing(struct xauth, "xauth arg");
-	xauth->method = method;
-	xauth->name = clone_str(name, "xauth name");
-	xauth->arg = arg;
-	xauth->callback = callback;
-	xauth->success = FALSE;
-	xauth->serialno = serialno;
-	xauth->authenticate = authenticate;
-	xauth->cleanup = cleanup;
-	xauth->callback = callback;
-	gettimeofday(&xauth->tv0, NULL);
+	struct xauth *xauth = xauth_alloc(method, name, serialno, arg,
+					  authenticate, cleanup, callback);
 
 	pthread_attr_t thread_attr;
 	pthread_attr_init(&thread_attr);
@@ -264,25 +280,32 @@ void xauth_start_pam_thread(struct xauth **xauthp,
 
 #endif
 
-static bool xauth_always_thread(void *arg, volatile bool *abort UNUSED)
-{
-	return arg != NULL;
-}
-
-static void xauth_always_cleanup(void *arg UNUSED)
+static void cleanup_xauth_now(void *arg UNUSED)
 {
 }
 
-void xauth_start_always_thread(struct xauth **xauthp,
-			       const char *method, const char *name,
-			       so_serial_t serialno, bool success,
-			       void (*callback)(struct state *st,
-						const char *name,
-						bool aborted,
-						bool success))
+/*
+ * Schedule the XAUTH callback for NOW so it is (hopefully) run next.
+ *
+ * The callers (both IKEv1) can probably be written to not do this.
+ * Later.
+ */
+void xauth_next(struct xauth **xauthp,
+		const char *method, const char *name,
+		so_serial_t serialno, bool success,
+		void (*callback)(struct state *st,
+				 const char *name,
+				 bool aborted,
+				 bool success))
 {
-	return xauth_start_thread(xauthp, method, name, serialno,
-				  success ? &main_thread : NULL,
-				  xauth_always_thread, xauth_always_cleanup,
-				  callback);
+	passert(pthread_equal(main_thread, pthread_self()));
+	struct xauth *xauth = xauth_alloc(method, name, serialno,
+					  NULL, NULL,
+					  cleanup_xauth_now,
+					  callback);
+	xauth->success = success;
+	*xauthp = xauth;
+	const struct timeval delay = { 0, 0 };
+	pluto_event_add(NULL_FD, EV_TIMEOUT, xauth_cleanup_callback, xauth,
+			&delay, "xauth_now_callback");
 }

@@ -1156,16 +1156,14 @@ static int xauth_launch_authent(struct state *st,
 		libreswan_log("XAUTH: password file authentication method requested to authenticate user '%s'",
 			      arg_name);
 		bool success = do_file_authentication(st, arg_name, arg_password, connname);
-		xauth_start_always_thread(&st->st_xauth,
-					  "file", arg_name, st->st_serialno,
-					  success, ikev1_xauth_callback);
+		xauth_next(&st->st_xauth, "file", arg_name, st->st_serialno,
+			   success, ikev1_xauth_callback);
 		break;
 	case XAUTHBY_ALWAYSOK:
 		libreswan_log("XAUTH: authentication method 'always ok' requested to authenticate user '%s'",
 			      arg_name);
-		xauth_start_always_thread(&st->st_xauth,
-					  "alwaysok", arg_name, st->st_serialno,
-					  TRUE, ikev1_xauth_callback);
+		xauth_next(&st->st_xauth, "alwaysok", arg_name, st->st_serialno,
+			   true, ikev1_xauth_callback);
 		break;
 	default:
 		libreswan_log("XAUTH: unknown authentication method requested to authenticate user '%s'",
