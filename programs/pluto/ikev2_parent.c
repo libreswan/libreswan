@@ -3867,18 +3867,18 @@ static void ikev2_child_set_pfs(struct state *st)
 {
 	struct connection *c = st->st_connection;
 
-	st->st_pfs_group = ike_alg_pfsgroup(c, c->policy);
-	if (st->st_pfs_group == NULL &&
-			(c->policy & POLICY_PFS) != LEMPTY) {
-		struct state *pst = state_with_serialno(st->st_clonedfrom);
-
-		st->st_pfs_group = pst->st_oakley.ta_dh;
-		DBG(DBG_CONTROL,
-			DBG_log("#%lu no phase2 MODP group specified on this connection %s use seletected IKE MODP group %s from #%lu",
-				st->st_serialno,
-				c->name,
-				st->st_pfs_group->common.name,
-				pst->st_serialno));
+	if ((c->policy & POLICY_PFS) != LEMPTY) {
+		st->st_pfs_group = child_dh(c);
+		if (st->st_pfs_group == NULL) {
+			struct state *pst = state_with_serialno(st->st_clonedfrom);
+			st->st_pfs_group = pst->st_oakley.ta_dh;
+			DBG(DBG_CONTROL,
+			    DBG_log("#%lu no phase2 MODP group specified on this connection %s use seletected IKE MODP group %s from #%lu",
+				    st->st_serialno,
+				    c->name,
+				    st->st_pfs_group->common.name,
+				    pst->st_serialno));
+		}
 	}
 }
 
