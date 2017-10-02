@@ -716,7 +716,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 					st->st_serialno,
 					enum_name(&state_names, st->st_state),
 					st->st_whack_sock));
-		release_pending_whacks(st, "realse whack");
+		release_pending_whacks(st, "release whack");
 		break;
 
 	case EVENT_v1_RETRANSMIT:
