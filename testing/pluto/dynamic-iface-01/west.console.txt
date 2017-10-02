@@ -65,6 +65,7 @@ west #
 002 "float-east" #4: deleting state (STATE_QUICK_I2) and sending notification
 005 "float-east" #4: ESP traffic information: in=0B out=0B
 002 "float-east" #3: deleting state (STATE_MAIN_I4) and sending notification
+003 ERROR: "float-east" #3: sendto on eth1 to 192.1.2.23:500 failed in delete notify. Errno 22: Invalid argument
 002 "float-east": terminating SAs using this connection
 002 forgetting secrets
 002 loading secrets from "/etc/ipsec.secrets"
