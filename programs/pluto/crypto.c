@@ -136,13 +136,32 @@ unsigned crypto_req_keysize(enum crk_proto ksproto, int algo)
 	}
 }
 
-/* Get pfsgroup for this connection */
+/*
+ * Get the DH algorthm specified for the child (ESP or AH).
+ *
+ * If this is NULL and PFS is required then callers fall back to using
+ * the parent's DH algorithm.
+ */
+const struct oakley_group_desc *child_dh(const struct connection *c)
+{
+	if (c->alg_info_esp == NULL) {
+		/* using default propsal list */
+		return NULL;
+	}
+	/* might be NULL */
+	return c->alg_info_esp->esp_pfsgroup;
+}
+
+/*
+ * Get pfsgroup for this connection
+ */
 const struct oakley_group_desc *ike_alg_pfsgroup(struct connection *c,
 						 lset_t policy)
 {
-	if ((policy & POLICY_PFS) && c->alg_info_esp != NULL)
-		/* might be NULL. */
-		return c->alg_info_esp->esp_pfsgroup;
+	if ((policy & POLICY_PFS)) {
+		/* might be NULL */
+		return child_dh(c);
+	}
 	return NULL;
 }
 
