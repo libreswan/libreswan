@@ -196,6 +196,10 @@ ssize_t netlink_read_reply(int sock, char *buf, unsigned int seqnum, __u32 pid)
 		if (nlhdr->nlmsg_seq == seqnum &&
 		    nlhdr->nlmsg_pid == pid)
 			break;
+
+		/* All done if we run out of buffer */
+		if (msglen == RTNL_BUFSIZE)
+			break;
 	}
 
 	return msglen;
