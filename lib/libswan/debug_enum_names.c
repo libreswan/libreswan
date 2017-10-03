@@ -70,6 +70,7 @@ static const char *impair_strings[] = {
 	I(IMPAIR_SEND_NO_DELETE, "impair-send-no-delete"),
 	I(IMPAIR_SEND_NO_IKEV2_AUTH, "impair-send-no-ikev2-auth"),
 	I(IMPAIR_SEND_NO_XAUTH_R0, "impair-send-no-xauth-r0"),
+	I(IMPAIR_DROP_XAUTH_R0, "impair-drop-xauth-r0"),
 	I(IMPAIR_SEND_NO_MAIN_R2, "impair-send-no-main-r2"),
 	I(IMPAIR_FORCE_FIPS, "impair-force-fips"),
 	I(IMPAIR_SEND_KEY_SIZE_CHECK, "impair-send-key-size-check"),

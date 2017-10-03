@@ -786,6 +786,8 @@ static const struct option long_opts[] = {
 		IMPAIR_SEND_NO_IKEV2_AUTH_IX + DO },
 	{ "impair-send-no-xauth-r0", no_argument, NULL,
 		IMPAIR_SEND_NO_XAUTH_R0_IX + DO },
+	{ "impair-drop-no-xauth-r0", no_argument, NULL,
+		IMPAIR_DROP_XAUTH_R0_IX + DO },
 	{ "impair-send-no-main-r2", no_argument, NULL,
 		IMPAIR_SEND_NO_MAIN_R2_IX + DO },
 	/*

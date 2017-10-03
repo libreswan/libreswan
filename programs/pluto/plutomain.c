@@ -637,6 +637,7 @@ static const struct option long_opts[] = {
 	I("send-no-delete\0", IMPAIR_SEND_NO_DELETE_IX),
 	I("send-no-ikev2-auth\0", IMPAIR_SEND_NO_IKEV2_AUTH_IX),
 	I("send-no-xauth-r0\0", IMPAIR_SEND_NO_XAUTH_R0_IX),
+	I("drop-xauth-r0\0", IMPAIR_DROP_XAUTH_R0_IX),
 	I("send-no-main-r2\0", IMPAIR_SEND_NO_MAIN_R2_IX),
 	I("force-fips\0", IMPAIR_FORCE_FIPS_IX),
 	I("send-zero-gx\0", IMPAIR_SEND_ZERO_GX_IX),

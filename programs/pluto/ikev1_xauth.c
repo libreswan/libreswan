@@ -2229,6 +2229,11 @@ stf_status xauth_inI0(struct msg_digest *md)
 
 	DBG(DBG_CONTROLMORE, DBG_log("arrived in xauth_inI0"));
 
+	if (DBGP(IMPAIR_DROP_XAUTH_R0)) {
+		libreswan_log("IMPAIR: drop XAUTH R0 message ");
+		return STF_FAIL;
+	}
+
 	st->st_msgid_phase15 = md->hdr.isa_msgid;
 	CHECK_QUICK_HASH(md, xauth_mode_cfg_hash(hash_val,
 						 hash_pbs->roof,
