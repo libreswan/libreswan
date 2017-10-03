@@ -172,7 +172,7 @@ ssize_t netlink_read_reply(int sock, char *buf, unsigned int seqnum, __u32 pid)
 		/*
 		 * The cast to unsigned short is to dodge an error in
 		 * netlink.h:NLMSG_OK() which triggers a GCC warning in recent
-		 * versions of GCC (2014 August):
+		 * versions of GCC (2014 August) on i686:
 		 * error: comparison between signed and unsigned integer expressions
 		 * Note: as long as RTNL_BUFSIZE <= USHRT_MAX, this is safe.
 		 */
@@ -408,7 +408,7 @@ static int resolve_defaultroute_one(struct starter_end *host,
 	/*
 	 * The cast to unsigned short is to dodge an error in
 	 * netlink.h:NLMSG_OK() which triggers a GCC warning in recent
-	 * versions of GCC (2014 August):
+	 * versions of GCC (2014 August) on i686:
 	 * error: comparison between signed and unsigned integer expressions
 	 * Note: as long as RTNL_BUFSIZE <= USHRT_MAX, this is safe.
 	 */
