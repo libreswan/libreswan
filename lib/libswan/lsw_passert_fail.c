@@ -20,8 +20,6 @@
 
 #include "lswlog.h"
 
-volatile sig_atomic_t lsw_dying_breath = FALSE;
-
 void lsw_passert_fail(const char *file_str,
 		      unsigned long line_no,
 		      const char *func_str,
