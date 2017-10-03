@@ -41,24 +41,30 @@ For Debian/Ubuntu
 
 	apt-get install libnss3-dev libnspr4-dev pkg-config libpam-dev \
 		libcap-ng-dev libcap-ng-utils libselinux-dev \
-		libcurl3-nss-dev flex bison gcc make \
+		libcurl3-nss-dev flex bison gcc make libldns-dev \
 		libunbound-dev libnss3-tools libevent-dev xmlto \
 		libsystemd-dev
 
 	(there is no fipscheck library for these, set USE_FIPSCHECK=false)
+	(unbound is build without event api, set USE_DNSSEC=false)
 
-For Fedora/RHEL/CentOS
+For Fedora/RHEL7/CentOS7
 
-	yum install nss-devel nspr-devel pkgconfig pam-devel \
-		libcap-ng-devel libselinux-devel libseccomp-devel \
-		curl-devel flex bison gcc make \
-		fipscheck-devel unbound-devel libevent-devel xmlto
+	yum install audit-libs-devel bison curl-devel fipscheck-devel flex \
+		gcc ldns-devel libcap-ng-devel libevent-devel \
+		libseccomp-devel libselinux-devel make nspr-devel nss-devel \
+		pam-devel pkgconfig systemd-devel unbound-devel xmlto
 
-(note: for rhel6/centos6 use libevent2-devel)
+       (on rhel/centos unbound is too old, set USE_DNSSEC=false)
 
-For Fedora/RHEL7/CentOS7 with systemd:
+For RHEL6/CentOS6
 
-	yum install audit-libs-devel systemd-devel
+	yum install audit-libs-devel bison curl-devel fipscheck-devel flex \
+		gcc libcap-ng-devel libevent2-devel libseccomp-devel \
+		libselinux-devel make nspr-devel nss-devel pam-devel \
+		pkgconfig systemd-devel xmlto
+
+       (unbound is too old to build dnssec support, set USE_DNSSEC=false)
 
 Runtime requirements (usually already present on the system)
 
