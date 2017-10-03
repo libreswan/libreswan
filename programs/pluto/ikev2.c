@@ -2367,19 +2367,19 @@ v2_notification_t accept_v2_nonce(struct msg_digest *md,
 }
 
 /*
- * The rold of a received (from network) message. RFC 7296 #3.1
+ * The role of a received (from network) message. RFC 7296 #3.1
  * "message is a response to a message containing the same Message ID."
  *
- * Seperate from this is IKE role ORIGINAL_INITIATOR or ORIGINAL_RESPONDER
+ * Separate from this is IKE role ORIGINAL_INITIATOR or ORIGINAL_RESPONDER
  * RFC 7296 2.2
  */
 bool is_msg_response(struct msg_digest *md)
 {
-	return(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R);
+	return (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) != 0;
 }
 
 /* message is a request */
 bool is_msg_request(struct msg_digest *md)
 {
-	return(!is_msg_response(md));
+	return !is_msg_response(md);
 }

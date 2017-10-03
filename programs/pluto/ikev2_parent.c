@@ -79,8 +79,8 @@
 
 static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md, bool pam_status);
 
-static void ikev2_get_dcookie(u_char *dcookie, chunk_t st_ni,
-			      ip_address *addr, chunk_t spiI);
+static void ikev2_calc_dcookie(u_char *dcookie, chunk_t st_ni,
+			      const ip_address *addr, chunk_t spiI);
 
 static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 					    struct state *st);
@@ -861,7 +861,6 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		struct isakmp_hdr hdr;
 
 		zero(&hdr);	/* OK: no pointer fields */
-		/* Impair function will raise major/minor by 1 for testing */
 		hdr.isa_version = build_ikev2_version();
 
 		hdr.isa_np = st->st_dcookie.ptr != NULL ?
@@ -897,7 +896,9 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 			 PROTO_v2_RESERVED,
 			 &empty_chunk,
 			 v2N_COOKIE, &st->st_dcookie, &md->rbody))
+		{
 			return STF_INTERNAL_ERROR;
+		}
 	}
 	/* SA out */
 	{
@@ -1067,7 +1068,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 {
 	pexpect(md->st == NULL);	/* ??? where would a state come from? Duplicate packet? */
 
-	bool seen_dcookie = FALSE;
+	struct payload_digest *seen_dcookie = NULL;
 	bool require_dcookie = require_ddos_cookies();
 
 	if (drop_new_exchanges()) {
@@ -1079,8 +1080,20 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	/* Process NOTIFY payloads, including checking for a DCOOKIE */
 	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 		if (ntfy->payload.v2n.isan_type == v2N_COOKIE) {
-			DBG(DBG_CONTROLMORE, DBG_log("Received a NOTIFY payload of type COOKIE - we will verify the COOKIE"));
-			seen_dcookie = TRUE;
+			if (seen_dcookie == NULL) {
+				DBG(DBG_CONTROLMORE,
+					DBG_log("Received a NOTIFY payload of type COOKIE - we will verify the COOKIE"));
+				seen_dcookie = ntfy;
+				if (ntfy != md->chain[ISAKMP_NEXT_v2N]) {
+					/* ??? Should this error be logged?  Might make DDOS worse. */
+					DBG(DBG_CONTROL, DBG_log("ERROR: NOTIFY payload of type COOKIE is not the first payload"));
+					/* accept dcookie anyway */
+				}
+			} else {
+				/* ??? Should this error be logged?  Might make DDOS worse. */
+				DBG(DBG_CONTROL,
+					DBG_log("ignoring second NOTIFY payload of type COOKIE"));
+			}
 		}
 	}
 
@@ -1089,7 +1102,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	 * violate the RFC and validate the cookie anyway. This prevents an
 	 * attacker from being able to inject a lot of data used later to HMAC
 	 */
-	if (seen_dcookie || require_dcookie) {
+	if (seen_dcookie != NULL || require_dcookie) {
 		u_char dcookie[SHA2_256_DIGEST_SIZE];
 		chunk_t dc, ni, spiI;
 
@@ -1119,34 +1132,32 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			return STF_IGNORE;
 		}
 
-		ikev2_get_dcookie(dcookie, ni, &md->sender, spiI);
+		ikev2_calc_dcookie(dcookie, ni, &md->sender, spiI);
 		dc.ptr = dcookie;
 		dc.len = SHA2_256_DIGEST_SIZE;
 
-		if (seen_dcookie) {
-			const pb_stream *dc_pbs;
-			chunk_t idc;
+		if (seen_dcookie != NULL) {
+			/* we received a dcookie: verify that it is the one we sent */
 
 			DBG(DBG_CONTROLMORE,
 			    DBG_log("received a DOS cookie in I1 verify it"));
-			/* we received dcookie we send earlier verify it */
-			if (md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_spisize != 0) {
+			if (seen_dcookie->payload.v2n.isan_spisize != 0) {
 				DBG(DBG_CONTROLMORE, DBG_log(
 					"DOS cookie contains non-zero length SPI - message discarded"
 				));
 				return STF_IGNORE;
 			}
 
-			dc_pbs = &md->chain[ISAKMP_NEXT_v2N]->pbs;
-			idc.ptr = dc_pbs->cur;
-			idc.len = pbs_left(dc_pbs);
+			const pb_stream *dc_pbs = &seen_dcookie->pbs;
+			chunk_t idc = {.ptr = dc_pbs->cur, .len = pbs_left(dc_pbs)};
+
 			DBG(DBG_CONTROLMORE,
 			    DBG_dump_chunk("received dcookie", idc);
 			    DBG_dump("dcookie computed", dcookie,
 				     SHA2_256_DIGEST_SIZE));
 
 			if (idc.len != SHA2_256_DIGEST_SIZE ||
-				!memeq(idc.ptr, dcookie, SHA2_256_DIGEST_SIZE)) {
+			    !memeq(idc.ptr, dcookie, SHA2_256_DIGEST_SIZE)) {
 				DBG(DBG_CONTROLMORE, DBG_log(
 					"mismatch in DOS v2N_COOKIE: dropping message (possible attack)"
 				));
@@ -1212,59 +1223,37 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			(ip_address *)NULL, md->sender_port);
 
 		for (; tmp != NULL; tmp = tmp->hp_next) {
-			if ((tmp->policy & POLICY_SHUNT_MASK) != LEMPTY) {
-				if (tmp->kind == CK_INSTANCE) {
-					if (addrinsubnet(&md->sender, &tmp->spd.that.client)) {
-						DBG(DBG_OPPO, DBG_log("passthrough conn %s also matches - check which has longer prefix match", tmp->name));
+			if ((tmp->policy & POLICY_SHUNT_MASK) != LEMPTY &&
+			    tmp->kind == CK_INSTANCE &&
+			    addrinsubnet(&md->sender, &tmp->spd.that.client))
+			{
+				DBG(DBG_OPPO, DBG_log("passthrough conn %s also matches - check which has longer prefix match", tmp->name));
 
-						if (c->spd.that.client.maskbits  < tmp->spd.that.client.maskbits) {
-							DBG(DBG_OPPO, DBG_log("passthrough conn was a better match (%d bits versus conn %d bits) - suppressing NO_PROPSAL_CHOSEN reply",
-								tmp->spd.that.client.maskbits,
-								c->spd.that.client.maskbits));
-							return STF_DROP;
-						}
-					}
+				if (c->spd.that.client.maskbits  < tmp->spd.that.client.maskbits) {
+					DBG(DBG_OPPO, DBG_log("passthrough conn was a better match (%d bits versus conn %d bits) - suppressing NO_PROPSAL_CHOSEN reply",
+						tmp->spd.that.client.maskbits,
+						c->spd.that.client.maskbits));
+					return STF_DROP;
 				}
 			}
 		}
 	}
 
 	/* check if we would drop the packet based on VID before we create a state */
-	if (md->chain[ISAKMP_NEXT_v2V] != NULL) {
-		struct payload_digest *p = md->chain[ISAKMP_NEXT_v2V];
-
-		DBG(DBG_CONTROLMORE, DBG_log("received at least one VID"));
-                while (p != NULL) {
-                        if (vid_is_oppo((char *)p->pbs.cur, pbs_left(&p->pbs))) {
-				DBG(DBG_CONTROLMORE, DBG_log("received VID_OPPORTUNISTIC"));
-				if (pluto_drop_oppo_null) {
-					DBG(DBG_OPPO, DBG_log("Dropped IKE request for Opportunistic IPsec by global policy"));
-					return STF_DROP; /* no state to delete */
-				} else {
-					DBG(DBG_OPPO, DBG_log("Processing IKE request for Opportunistic IPsec"));
-				}
-				break;
+	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_v2V]; p != NULL; p = p->next) {
+		if (vid_is_oppo((char *)p->pbs.cur, pbs_left(&p->pbs))) {
+			if (pluto_drop_oppo_null) {
+				DBG(DBG_OPPO, DBG_log("Dropped IKE request for Opportunistic IPsec by global policy"));
+				return STF_DROP; /* no state to delete */
 			}
-                        p = p->next;
-                }
-	} else {
-		DBG(DBG_OPPO, DBG_log("no Vendor ID's received - skipped check for VID_OPPORTUNISTIC"));
+			DBG(DBG_OPPO | DBG_CONTROLMORE, DBG_log("Processing IKE request for Opportunistic IPsec"));
+			break;
+		}
 	}
 
 	/* Vendor ID processing */
-	{
-		if (md->chain[ISAKMP_NEXT_v2V] != NULL) {
-			struct payload_digest *v = md->chain[ISAKMP_NEXT_v2V];
-
-			DBG(DBG_CONTROL, DBG_log("Processing VIDs"));
-			while (v != NULL) {
-				handle_vendorid(md, (char *)v->pbs.cur,
-					pbs_left(&v->pbs), TRUE);
-				v = v->next;
-			}
-		} else {
-			DBG(DBG_CONTROL, DBG_log("no VIDs received"));
-		}
+	for (struct payload_digest *v = md->chain[ISAKMP_NEXT_v2V]; v != NULL; v = v->next) {
+		handle_vendorid(md, (char *)v->pbs.cur, pbs_left(&v->pbs), TRUE);
 	}
 
 	/* Get the proposals ready.  */
@@ -4315,7 +4304,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 	}
 
-	return(ikev2_process_ts_and_rest(md));
+	return ikev2_process_ts_and_rest(md);
 }
 
 /*
@@ -4326,21 +4315,18 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
  * once a day and while under DOS attack, we could fail a few cookies
  * until the peer restarts from scratch.
  */
-static void ikev2_get_dcookie(u_char *dcookie, chunk_t ni,
-			      ip_address *addr, chunk_t spiI)
+static void ikev2_calc_dcookie(u_char *dcookie, chunk_t ni,
+			      const ip_address *addr, chunk_t spiI)
 {
-	size_t addr_length;
-	unsigned char addr_buff[
-		sizeof(union { struct in_addr A;
-			       struct in6_addr B;
-		       })];
-
-	addr_length = addrbytesof(addr, addr_buff, sizeof(addr_buff));
-
 	struct crypt_hash *ctx = crypt_hash_init(&ike_alg_hash_sha2_256,
 						 "dcookie", DBG_CRYPT);
+
 	crypt_hash_digest_chunk(ctx, "ni", ni);
-	crypt_hash_digest_bytes(ctx, "addr", addr_buff, addr_length);
+
+	const unsigned char *addr_ptr;
+	size_t addr_length = addrbytesptr_read(addr, &addr_ptr);
+	crypt_hash_digest_bytes(ctx, "addr", addr_ptr, addr_length);
+
 	crypt_hash_digest_chunk(ctx, "spiI", spiI);
 	crypt_hash_digest_bytes(ctx, "sod", ikev2_secret_of_the_day,
 				SHA2_256_DIGEST_SIZE);

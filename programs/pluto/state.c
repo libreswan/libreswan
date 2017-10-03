@@ -992,7 +992,7 @@ void delete_state(struct state *st)
 	 * Resume ST (even though it is about to be deleted), and then
 	 * cancel any XAUTH in progress.
 	 */
-	if(st->st_suspended_md != NULL) {
+	if (st->st_suspended_md != NULL) {
 		unset_suspended(st);
 	}
 
