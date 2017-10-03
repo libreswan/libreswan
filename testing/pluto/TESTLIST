@@ -80,6 +80,7 @@ kvmplutotest	alias-01	wip
 kvmplutotest	readwriteconf-01 wip
 kvmplutotest	algparse-01				good
 kvmplutotest	algparse-02-fips			good
+kvmplutotest	addconn-03	wip
 
 #################################################################
 # Whack UI tests
