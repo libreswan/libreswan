@@ -1646,8 +1646,9 @@ bool resend_ike_v1_msg(struct state *st, const char *where)
 {
 	bool ret = send_or_resend_ike_msg(st, where, TRUE);
 
-	if (st->st_state == STATE_XAUTH_R0) {
-		/* may cause double in aggrmode=yes, it is not fatal, fixme */
+	if (st->st_state == STATE_XAUTH_R0 &&
+	    !LIN(POLICY_AGGRESSIVE, st->st_connection->policy)) {
+		/* Only for Main mode + XAUTH */
 		event_schedule_ms(EVENT_v1_SEND_XAUTH, EVENT_v1_SEND_XAUTH_DELAY, st);
 	}
 
