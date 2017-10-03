@@ -1,16 +1,8 @@
-addconn failing in libreswan upto 3.21 in specific scenarios
-(maybe only when too many host routes?)
+addconn failing in libreswan upto 3.21 when asking for the
+routes exceeds the netlink message buffer. It caused addconn
+to fail to orient a left=%defaulroute connection.
 
-west is not really used
-
-The connection on east should succeed to load.
-
-The issue is likely related to receiving large netlink messages.
-The code that is triggering the failure is in programs/addconn/addconn.c
-around line 176:
-
-                if (!NLMSG_OK(nlhdr, (unsigned short)readlen) ||
-                        nlhdr->nlmsg_type == NLMSG_ERROR)
-                        return -1;
+This test cases ensures this issue is fixed. On east, the
+connection "test" should load without orienting issues.
 
 
