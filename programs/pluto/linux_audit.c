@@ -192,8 +192,8 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 
 		if (st->st_oakley.ta_integ == &ike_alg_integ_none) {
 			if (!st->st_ikev2) {
-				/* ikev1 takes integ from prf, ecept of cause gcm */
-				/* but we don't support gcm in ikev1 for now */
+				/* IKE takes integ from prf, except of course gcm */
+				/* but IANA doesn't define gcm for IKE, only for ESP */
 				jam_str(integname, sizeof(integname), prfname);
 			} else {
 				snprintf(integname, sizeof(integname), "none");
@@ -208,8 +208,8 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			 * XXX: dead code path?
 			 */
 			if (!st->st_ikev2) {
-				/* ikev1 takes integ from prf, ecept of cause gcm */
-				/* but we don't support gcm in ikev1 for now */
+				/* IKE takes integ from prf, except of course gcm */
+				/* but IANA doesn't define gcm for IKE, only for ESP */
 				jam_str(integname, sizeof(integname), prfname);
 			} else {
 				snprintf(integname, sizeof(integname), "none");
@@ -247,7 +247,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 		if (st->st_esp.present) {
 			encrypt = st->st_esp.attrs.transattrs.ta_encrypt;
 			integ = st->st_esp.attrs.transattrs.ta_integ;
-			enckeylen = 0;
+			enckeylen = st->st_esp.attrs.transattrs.enckeylen;
 		} else if (st->st_ah.present) {
 			encrypt = NULL;
 			integ = st->st_ah.attrs.transattrs.ta_integ;
