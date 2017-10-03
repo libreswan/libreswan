@@ -668,7 +668,6 @@ int main(int argc, char *argv[])
 			snprintf(progname, room, combine_fmt,
 				 argv[0],
 				 optarg);
-			tool_close_log();
 			tool_init_log(progname);
 
 			argcount -= 2;

@@ -431,6 +431,5 @@ int main(int argc, char *argv[])
 	report_leaks();
 
 	lsw_nss_shutdown();
-	tool_close_log();
 	exit(0);
 }

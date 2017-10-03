@@ -94,7 +94,6 @@ extern void libreswan_DBG_dump(const char *label, const void *p, size_t len);
 extern err_t builddiag(const char *fmt, ...) PRINTF_LIKE(1);	/* NOT RE-ENTRANT */
 
 extern bool log_to_stderr;          /* should log go to stderr? */
-extern bool log_to_syslog;          /* should log go to syslog? */
 
 /*
  * For stand-alone tools.
@@ -103,7 +102,6 @@ extern bool log_to_syslog;          /* should log go to syslog? */
  */
 extern char *progname;
 extern void tool_init_log(char *progname);
-extern void tool_close_log(void);
 
 /* Codes for status messages returned to whack.
  * These are 3 digit decimal numerals.  The structure

@@ -21,6 +21,5 @@
 void
 lswlog_exit(int rc)
 {
-	tool_close_log();
 	exit(rc);
 }

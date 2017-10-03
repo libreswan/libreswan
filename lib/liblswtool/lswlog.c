@@ -36,9 +36,7 @@
 #include "lswlog.h"
 #include "libreswan/pfkey_debug.h"
 
-bool
-	log_to_stderr = TRUE,	/* should log go to stderr? */
-	log_to_syslog = FALSE;	/* should log go to syslog? */
+bool log_to_stderr = TRUE;	/* should log go to stderr? */
 
 bool
 	logged_txt_warning = FALSE;	/*
@@ -53,18 +51,9 @@ void tool_init_log(char *name)
 
 	if (log_to_stderr)
 		setbuf(stderr, NULL);
-	if (log_to_syslog)
-		openlog(progname, LOG_CONS | LOG_NDELAY | LOG_PID,
-			LOG_AUTHPRIV);
 
 	pfkey_error_func = printf;
 	pfkey_debug_func = printf;
-}
-
-void tool_close_log(void)
-{
-	if (log_to_syslog)
-		closelog();
 }
 
 /*
@@ -98,8 +87,6 @@ void libreswan_vloglog(int mess_no UNUSED, const char *fmt, va_list ap)
 
 	if (log_to_stderr)
 		fprintf(stderr, "%s\n", m);
-	if (log_to_syslog)
-		syslog(LOG_WARNING, "%s", m);
 }
 
 void lswlog_log_errno(int e, const char *prefix, const char *message, ...)
@@ -114,9 +101,6 @@ void lswlog_log_errno(int e, const char *prefix, const char *message, ...)
 	if (log_to_stderr)
 		fprintf(stderr, "%s%s. Errno %d: %s\n",
 			prefix, m, e, strerror(e));
-	if (log_to_syslog)
-		syslog(LOG_ERR, "%s%s. Errno %d: %s",
-		       prefix, m, e, strerror(e));
 }
 
 lset_t
@@ -141,6 +125,4 @@ void lswlog_dbg_raw(struct lswlog *buf)
 	sanitize_string(buf->array, buf->roof);
 	if (log_to_stderr)
 		fprintf(stderr, "%s\n", buf->array);
-	if (log_to_syslog)
-		syslog(LOG_DEBUG, "%s", buf->array);
 }

@@ -331,6 +331,5 @@ int main(int argc UNUSED, char *argv[])
 	printf("\n");
 
 	report_leaks();
-	tool_close_log();
 	exit(0);
 }

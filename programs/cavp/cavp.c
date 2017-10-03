@@ -417,7 +417,5 @@ int main(int argc, char *argv[])
 	cavp_parser();
 
 	lsw_nss_shutdown();
-	tool_close_log();
-
 	exit(0);
 }
