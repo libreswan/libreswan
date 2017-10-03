@@ -58,25 +58,17 @@ void tool_init_log(char *name)
 
 /*
  * format a string for the log, with suitable prefixes.
- * A format starting with ~ indicates that this is a reprocessing
- * of the message, so prefixing and quoting is suppressed.
  */
 static void fmt_log(char *buf, size_t buf_len,
 		const char *fmt, va_list ap)
 {
-	bool reproc = *fmt == '~';
 	char *p = buf;
-
 	buf[0] = '\0';
-	if (reproc) {
-		fmt++;	/* ~ at start of format suppresses this prefix */
-	} else if (progname != NULL && (strlen(progname) + 1 + 1) < buf_len) {
+	if (progname != NULL && (strlen(progname) + 1 + 1) < buf_len) {
 		/* start with name of connection */
 		p = add_str(buf, buf_len, jam_str(buf, buf_len, progname), " ");
 	}
 	vsnprintf(p, buf_len - (p - buf), fmt, ap);
-	if (!reproc)
-		sanitize_string(buf, buf_len);
 }
 
 void libreswan_vloglog(int mess_no UNUSED, const char *fmt, va_list ap)
