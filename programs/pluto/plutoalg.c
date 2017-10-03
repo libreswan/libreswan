@@ -265,14 +265,11 @@ void kernel_alg_show_connection(const struct connection *c, const char *instance
 	}
 
 	const char *pfsbuf;
-	struct esb_buf esb;
 
 	if (c->policy & POLICY_PFS) {
-		/* ??? 0 isn't a legitimate value for esp_pfsgroup */
-		if (c->alg_info_esp != NULL && c->alg_info_esp->esp_pfsgroup != 0) {
-			pfsbuf = enum_show_shortb(&oakley_group_names,
-						  c->alg_info_esp->esp_pfsgroup->group,
-						  &esb);
+		const struct oakley_group_desc *dh = child_dh(c);
+		if (dh != NULL) {
+			pfsbuf = dh->common.fqn;
 		} else {
 			pfsbuf = "<Phase1>";
 		}
