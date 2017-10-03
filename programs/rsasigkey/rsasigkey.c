@@ -215,17 +215,22 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	/*
+	 * RSA-PSS requires keysize to be a multiple of 8 bits
+	 * (see PCS#1 v2.1).
+	 * We require a multiple of 16.  (??? why?)
+	 */
 	if (argv[optind] == NULL) {
-		/* default: spread bits between 3072 - 4096 in multiple's of 16 */
-		/* For keys to be valid for RSA-PSS they must be multiple of 8 */
+		/* default keysize: a multiple of 16 in [3072,4096) */
 		srand(time(NULL));
-		nbits = 3072 + 16 * (rand() % 64);
+		nbits = 3072 + 16 * (rand() % (1024 / 16));
 	} else {
 		unsigned long u;
 		err_t ugh = ttoulb(argv[optind], 0, 10, INT_MAX, &u);
 
 		if (ugh != NULL) {
-			fprintf(stderr, "%s: keysize specification is malformed: %s\n",
+			fprintf(stderr,
+				"%s: keysize specification is malformed: %s\n",
 				progname, ugh);
 			exit(1);
 		}
@@ -233,16 +238,19 @@ int main(int argc, char *argv[])
 	}
 
 	if (nbits < MIN_KEYBIT ) {
-		fprintf(stderr, "%s: requested RSA key size of %d is too small - use %d or more\n",
+		fprintf(stderr,
+			"%s: requested RSA key size (%d) is too small - use %d or more\n",
 			progname, nbits, MIN_KEYBIT);
 		exit(1);
 	} else if (nbits > MAXBITS) {
-		fprintf(stderr, "%s: overlarge bit count (max %d)\n", progname,
-			MAXBITS);
+		fprintf(stderr,
+			"%s: requested RSA key size (%d) is too large - (max %d)\n",
+			progname, nbits, MAXBITS);
 		exit(1);
 	} else if (nbits % (BITS_PER_BYTE * 2) != 0) {
-		fprintf(stderr, "%s: bit count (%d) not multiple of %d\n", progname,
-			nbits, (int)BITS_PER_BYTE * 2);
+		fprintf(stderr,
+			"%s: requested RSA key size (%d) is not a multiple of %d\n",
+			progname, nbits, (int)BITS_PER_BYTE * 2);
 		exit(1);
 	}
 
