@@ -1215,18 +1215,24 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest, const char
 
 					cur_state = sender;
 
-					/* note dirty trick to suppress ~ at start of format
-					 * if we know what state to blame.
-					 * Don't bother to report ee_{pad,info,data}.
+					/*
+					 * XXX: at one point there was
+					 * a hack here that used '~'
+					 * to try to suppress any
+					 * prefix when the sender
+					 * wasn't known.  If that
+					 * behaviour needs to be
+					 * resurected then, like the
+					 * above munging CUR_STATE,
+					 * this can probably mung
+					 * CUR_CONNECTION.
 					 */
-					libreswan_log((sender != NULL) + "~"
-						"ERROR: asynchronous network error report on %s (sport=%d)%s, complainant %s: %s [errno %lu, origin %s]",
-						ifp->ip_dev->id_rname, ifp->port,
-						fromstr,
-						offstr,
-						strerror(ee->ee_errno),
-						(unsigned long) ee->ee_errno, orname
-						);
+					libreswan_log("ERROR: asynchronous network error report on %s (sport=%d)%s, complainant %s: %s [errno %lu, origin %s]",
+						      ifp->ip_dev->id_rname, ifp->port,
+						      fromstr,
+						      offstr,
+						      strerror(ee->ee_errno),
+						      (unsigned long) ee->ee_errno, orname);
 					cur_state = old_state;
 				}
 			} else if (cm->cmsg_level == SOL_IP &&
