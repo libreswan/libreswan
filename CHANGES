@@ -24,6 +24,7 @@ v3.22 (unreleased)
 * pluto: don't call sanitize_string() in fmt_log() as it is expensive [Paul]
 * pluto: No longer need to specify null for AEAD, can use esp=aes_gcm [Andrew]
 * pluto: Increase default nhelpers for 1 CPU (2) and 2 CPUs (4) [Paul]
+* addconn: left=%defaultroute would fail if >500 host routes [Kim]
 * showhotkey/rsasigkey: Fixup mismatch of public key display [Andrew]
 * FIPS: Some selftests did not run properly under FIPS mode [Andrew]
 * updown Don't remove source ip if it's still used (rhbz#1492501) [Tuomo]
