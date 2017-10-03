@@ -42,8 +42,14 @@ static char *prog_suffix = "";
 
 void tool_init_log(char *name)
 {
-	progname = name;
-	prog_suffix = " "; /* : */
+	progname = strrchr(name, '/');
+	if (progname != NULL) {
+		/* step off the '/' */
+		progname++;
+	} else {
+		progname = name;
+	}
+	prog_suffix = ": ";
 
 	if (log_to_stderr)
 		setbuf(stderr, NULL);
