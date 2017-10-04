@@ -433,7 +433,6 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
   { "dnssec-rootkey-file",  kv_config,  kt_filename, KSF_PLUTO_DNSSEC_ROOTKEY_FILE,  NOT_ENUM },
   { "dnssec-anchors",  kv_config,  kt_filename, KSF_PLUTO_DNSSEC_ANCHORS,  NOT_ENUM },
 #endif
-  { "plutorestartoncrash",  kv_config,  kt_bool,  KBF_PLUTORESTARTONCRASH,  NOT_ENUM }, /* obsolete */
   { "dumpdir",  kv_config,  kt_dirname,  KSF_DUMPDIR,  NOT_ENUM },
   { "ipsecdir",  kv_config,  kt_dirname,  KSF_IPSECDIR,  NOT_ENUM },
   { "nssdir", kv_config, kt_dirname, KSF_NSSDIR, NOT_ENUM },
@@ -498,6 +497,7 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 #endif
 
   /* these options are obsoleted (and not old aliases) */
+  { "plutorestartoncrash",  kv_config,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
   { "forwardcontrol",  kv_config,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
   { "rp_filter",  kv_config,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
   { "pluto",  kv_config,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
