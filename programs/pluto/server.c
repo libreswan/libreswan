@@ -1198,42 +1198,64 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest, const char
 					 * don't log NAT-T keepalive related errors unless NATT debug is
 					 * enabled
 					 */
-				} else if (DBGP(DBG_OPPO) ||
-					   (sender != NULL && sender->st_connection != NULL &&
-					    LDISJOINT(sender->st_connection->policy, POLICY_OPPORTUNISTIC)))
-				{
+				} else if (sender != NULL && sender->st_connection != NULL &&
+					   LDISJOINT(sender->st_connection->policy, POLICY_OPPORTUNISTIC)) {
 					/*
-					 * We are selective about printing this
-					 * diagnostic since it pours out when
-					 * we are doing unrequited authnull OE.
-					 * That's the point of the condition
-					 * above.
-					 * ??? the condition treats all authnull as OE.
+					 * The sender is known and
+					 * this isn't an opportunistic
+					 * connection, so log.
+					 *
+					 * XXX: originally this path
+					 * was taken unconditionally
+					 * but with opportunistic that
+					 * got too verbose.  Is there
+					 * a global opportunistic
+					 * disabled test so that
+					 * behaviour can be restored?
+					 *
+					 * HACK: So that the logging
+					 * system doesn't accidently
+					 * include a prefix for the
+					 * wrong state et.al., switch
+					 * out everything but SENDER.
+					 * Better would be to make the
+					 * state/connection an
+					 * explicit parameter to the
+					 * logging system?
 					 */
-					/* ??? DBGP is controlling non-DBG logging! */
-					struct state *old_state = cur_state;
-
-					cur_state = sender;
-
+#define LOG_SENDER(LOG, SENDER)						\
+					struct state *old_state = cur_state; \
+					struct connection *old_connection = cur_connection; \
+					const ip_address *old_from = cur_from; \
+					cur_state = SENDER;		\
+					cur_connection = NULL;		\
+					cur_from = NULL;		\
+					LOG("ERROR: asynchronous network error report on %s (sport=%d)%s, complainant %s: %s [errno %lu, origin %s]", \
+					    ifp->ip_dev->id_rname, ifp->port, \
+					    fromstr,			\
+					    offstr,			\
+					    strerror(ee->ee_errno),	\
+					    (unsigned long) ee->ee_errno, orname); \
+					cur_state = old_state;		\
+					cur_connection = old_connection; \
+					cur_from = old_from;
+					/* */
+					LOG_SENDER(libreswan_log, sender);
+				} else if (DBGP(DBG_OPPO)) {
 					/*
-					 * XXX: at one point there was
-					 * a hack here that used '~'
-					 * to try to suppress any
-					 * prefix when the sender
-					 * wasn't known.  If that
-					 * behaviour needs to be
-					 * resurected then, like the
-					 * above munging CUR_STATE,
-					 * this can probably mung
-					 * CUR_CONNECTION.
+					 * Since this output is forced
+					 * using DBGP, report the
+					 * error using debug-log.
+					 *
+					 * Since DBG_log() doesn't add
+					 * a prefix for the current
+					 * state et.al., the above
+					 * switch hack isn't needed.
+					 * However, do it anyway, so
+					 * that there is no confusion.
 					 */
-					libreswan_log("ERROR: asynchronous network error report on %s (sport=%d)%s, complainant %s: %s [errno %lu, origin %s]",
-						      ifp->ip_dev->id_rname, ifp->port,
-						      fromstr,
-						      offstr,
-						      strerror(ee->ee_errno),
-						      (unsigned long) ee->ee_errno, orname);
-					cur_state = old_state;
+					LOG_SENDER(DBG_log, sender);
+#undef LOG_SENDER
 				}
 			} else if (cm->cmsg_level == SOL_IP &&
 				   cm->cmsg_type == IP_PKTINFO) {
