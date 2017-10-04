@@ -52,7 +52,6 @@ extern int libreswan_log(const char *fmt, ...) PRINTF_LIKE(1);
 
 extern lset_t base_debugging;	/* bits selecting what to report */
 extern lset_t cur_debugging;	/* current debugging level */
-extern void set_debugging(lset_t deb);
 
 #define DBGP(cond)	(cur_debugging & (cond))
 

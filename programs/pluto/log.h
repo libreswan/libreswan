@@ -59,6 +59,8 @@ extern void log_state(struct state *st, enum state_kind state);
 
 extern void extra_debugging(const struct connection *c);
 
+extern void set_debugging(lset_t deb);
+
 #define reset_debugging() { set_debugging(base_debugging); }
 
 #define GLOBALS_ARE_RESET() (whack_log_fd == NULL_FD \

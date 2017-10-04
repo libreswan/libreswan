@@ -94,14 +94,6 @@ lset_t
 	base_debugging = DBG_NONE,	/* default to reporting nothing */
 	cur_debugging =  DBG_NONE;
 
-void set_debugging(lset_t deb)
-{
-	cur_debugging = deb;
-
-	pfkey_lib_debug = (cur_debugging & DBG_PFKEY ?
-			PF_KEY_DEBUG_PARSE_MAX : PF_KEY_DEBUG_PARSE_NONE);
-}
-
 void lswlog_dbg_raw(struct lswlog *buf)
 {
 	sanitize_string(buf->array, buf->roof);
