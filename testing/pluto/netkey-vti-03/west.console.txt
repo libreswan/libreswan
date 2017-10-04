@@ -53,7 +53,6 @@ west #
 004 "westnet-eastnet-vti-01" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha2_256 group=MODP2048}
 002 "westnet-eastnet-vti-01" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 117 "westnet-eastnet-vti-01" #2: STATE_QUICK_I1: initiate
-002 "westnet-eastnet-vti-01" #2: prepare-client output: creating vti interface
 002 "westnet-eastnet-vti-01" #2: prepare-client output: net.ipv4.conf.ipsec0.disable_policy = 1
 002 "westnet-eastnet-vti-01" #2: prepare-client output: net.ipv4.conf.ipsec0.rp_filter = 0
 002 "westnet-eastnet-vti-01" #2: prepare-client output: net.ipv4.conf.ipsec0.forwarding = 1
@@ -111,7 +110,7 @@ west #
 west #
  ifconfig ipsec0
 ipsec0: flags=193<UP,RUNNING,NOARP>  mtu 1332
-        tunnel   txqueuelen 1  (IPIP Tunnel)
+        tunnel   txqueuelen 0  (IPIP Tunnel)
         RX packets 8  bytes 672 (672.0 B)
         RX errors 0  dropped 0  overruns 0  frame 0
         TX packets 8  bytes 1328 (1.2 KiB)
