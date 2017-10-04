@@ -166,7 +166,7 @@ ssize_t netlink_read_reply(int sock, char **pbuf, size_t bufsize,
 			readlen = recvfrom(sock, *pbuf + msglen,
 					bufsize - msglen, 0,
 					(struct sockaddr *)&sa, &salen);
-			if (readlen < 0 || salen != sizeof(sa))
+			if (readlen <= 0 || salen != sizeof(sa))
 				return -1;
 		} while (sa.nl_pid != 0);
 
