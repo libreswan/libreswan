@@ -67,13 +67,19 @@
 char *progname;
 static int verbose = 0;
 
-/* Buffer size for netlink query (~100 bytes) and replies.
+/*
+ * Buffer size for netlink query (~100 bytes) and replies.
+ * More memory will be allocated dynamically when needed for replies.
  * If DST is specified, reply will be ~100 bytes.
  * If DST is not specified, full route table will be returned.
- * 16kB was too small for biggish router, so do 32kB.
- * TODO: This should be dynamic! Fix it in netlink_read_reply().
+ * On 64bit systems 100 route entries requires about 6KiB.
+ *
+ * When reading data from netlink the final packet in each recvfrom()
+ * will be truncated if it doesn't fit to buffer. Netlink returns up
+ * to 16KiB of data so always keep that much free.
  */
-#define RTNL_BUFSIZE 32768
+#define RTNL_BUFMARGIN 16384
+#define RTNL_BUFSIZE (RTNL_BUFMARGIN + 8192)
 
 /*
  * Initialize netlink query message.
@@ -85,7 +91,6 @@ void netlink_query_init(char *msgbuf, sa_family_t family)
 	struct rtmsg *rtmsg;
 
 	/* Create request for route */
-	memset(msgbuf, 0, RTNL_BUFSIZE);
 	nlmsg = (struct nlmsghdr *)msgbuf;
 
 	nlmsg->nlmsg_len = NLMSG_LENGTH(sizeof(struct rtmsg));
@@ -145,11 +150,11 @@ void netlink_query_add(char *msgbuf, int rta_type, ip_address *addr)
 }
 
 static
-ssize_t netlink_read_reply(int sock, char *buf, unsigned int seqnum, __u32 pid)
+ssize_t netlink_read_reply(int sock, char **pbuf, size_t bufsize,
+			unsigned int seqnum, __u32 pid)
 {
-	ssize_t msglen = 0;
+	size_t msglen = 0;
 
-	/* TODO: use dynamic buf */
 	for (;;) {
 		struct sockaddr_nl sa;
 		ssize_t readlen;
@@ -158,26 +163,26 @@ ssize_t netlink_read_reply(int sock, char *buf, unsigned int seqnum, __u32 pid)
 		do {
 			socklen_t salen = sizeof(sa);
 
-			readlen = recvfrom(sock, buf, RTNL_BUFSIZE - msglen, 0,
+			readlen = recvfrom(sock, *pbuf + msglen,
+					bufsize - msglen, 0,
 					(struct sockaddr *)&sa, &salen);
 			if (readlen < 0 || salen != sizeof(sa))
 				return -1;
 		} while (sa.nl_pid != 0);
 
 		/* Verify it's valid */
-		struct nlmsghdr *nlhdr = (struct nlmsghdr *) buf;
+		struct nlmsghdr *nlhdr = (struct nlmsghdr *)(*pbuf + msglen);
 
 		if (!NLMSG_OK(nlhdr, (size_t)readlen) ||
 			nlhdr->nlmsg_type == NLMSG_ERROR)
 			return -1;
 
+		/* Move read pointer */
+		msglen += readlen;
+
 		/* Check if it is the last message */
 		if (nlhdr->nlmsg_type == NLMSG_DONE)
 			break;
-
-		/* Not last, move read pointer */
-		buf += readlen;
-		msglen += readlen;
 
 		/* all done if it's not a multi part */
 		if ((nlhdr->nlmsg_flags & NLM_F_MULTI) == 0)
@@ -188,9 +193,14 @@ ssize_t netlink_read_reply(int sock, char *buf, unsigned int seqnum, __u32 pid)
 		    nlhdr->nlmsg_pid == pid)
 			break;
 
-		/* All done if we run out of buffer */
-		if (msglen == RTNL_BUFSIZE)
-			break;
+		/* Allocate more memory for buffer if needed. */
+		if (msglen >= bufsize - RTNL_BUFMARGIN) {
+			bufsize = bufsize * 2;
+			char *newbuf = alloc_bytes(bufsize, "netlink query");
+			memcpy(newbuf, *pbuf, msglen);
+			pfree(*pbuf);
+			*pbuf = newbuf;
+		}
 	}
 
 	return msglen;
@@ -200,7 +210,7 @@ ssize_t netlink_read_reply(int sock, char *buf, unsigned int seqnum, __u32 pid)
  * Send netlink query message and read reply.
  */
 static
-ssize_t netlink_query(char *msgbuf)
+ssize_t netlink_query(char **pmsgbuf, size_t bufsize)
 {
 	int sock = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE);
 
@@ -212,7 +222,7 @@ ssize_t netlink_query(char *msgbuf)
 	}
 
 	/* Send request */
-	struct nlmsghdr *nlmsg = (struct nlmsghdr *)msgbuf;
+	struct nlmsghdr *nlmsg = (struct nlmsghdr *)*pmsgbuf;
 
 	if (send(sock, nlmsg, nlmsg->nlmsg_len, 0) < 0) {
 		int e = errno;
@@ -223,7 +233,7 @@ ssize_t netlink_query(char *msgbuf)
 
 	/* Read response */
 	errno = 0;	/* in case failure does not set it */
-	ssize_t len = netlink_read_reply(sock, msgbuf, 1, getpid());
+	ssize_t len = netlink_read_reply(sock, pmsgbuf, bufsize, 1, getpid());
 
 	if (len < 0) {
 		int e = errno;
@@ -301,13 +311,12 @@ static int resolve_defaultroute_one(struct starter_end *host,
 	if (verbose)
 		printf("\nseeking_src = %d, seeking_gateway = %d, has_peer = %d\n",
 			seeking_src, seeking_gateway, has_peer);
-
-	char msgbuf[RTNL_BUFSIZE];
-	bool has_dst = FALSE;
-	int query_again = 0;
-
 	if (!seeking_src && !seeking_gateway)
 		return 0;	/* this end already figured out */
+
+	char *msgbuf = alloc_bytes(RTNL_BUFSIZE, "netlink query");
+	bool has_dst = FALSE;
+	int query_again = 0;
 
 	/* Fill netlink request */
 	netlink_query_init(msgbuf, host->addr_family);
@@ -331,18 +340,24 @@ static int resolve_defaultroute_one(struct starter_end *host,
 			if (er != NULL) {
 				/* not numeric, so resolve it */
 				if (!unbound_resolve(peer->strings[KSCF_IP],
-					0, AF_INET, &peer->addr)) {
-						if (!unbound_resolve(peer->strings[KSCF_IP],
-							0, AF_INET6, &peer->addr)) {
-								return -1;
-						}
+							0, AF_INET,
+							&peer->addr)) {
+					if (!unbound_resolve(
+							peer->strings[KSCF_IP],
+							0, AF_INET6,
+							&peer->addr)) {
+						pfree(msgbuf);
+						return -1;
+					}
 				}
 			}
 #else
 			err_t er = ttoaddr(peer->strings[KSCF_IP], 0,
 				AF_UNSPEC, &peer->addr);
-			if (er != NULL)
+			if (er != NULL) {
+				pfree(msgbuf);
 				return -1;
+			}
 #endif
 		}
 
@@ -391,11 +406,12 @@ static int resolve_defaultroute_one(struct starter_end *host,
 			seeking_src, seeking_gateway, has_dst);
 
 	/* Send netlink get_route request */
+	ssize_t len = netlink_query(&msgbuf, RTNL_BUFSIZE);
 
-	ssize_t len = netlink_query(msgbuf);
-
-	if (len < 0)
+	if (len < 0) {
+		pfree(msgbuf);
 		return -1;
+	}
 
 	/* Parse reply */
 	struct nlmsghdr *nlmsg = (struct nlmsghdr *)msgbuf;
@@ -411,6 +427,7 @@ static int resolve_defaultroute_one(struct starter_end *host,
 
 		if (nlmsg->nlmsg_type == NLMSG_ERROR) {
 			printf("netlink error\n");
+			pfree(msgbuf);
 			return -1;
 		}
 
@@ -519,6 +536,7 @@ static int resolve_defaultroute_one(struct starter_end *host,
 			}
 		}
 	}
+	pfree(msgbuf);
 	return query_again;
 }
 
