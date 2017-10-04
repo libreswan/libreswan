@@ -72,8 +72,6 @@ static int verbose = 0;
  * If DST is not specified, full route table will be returned.
  * 16kB was too small for biggish router, so do 32kB.
  * TODO: This should be dynamic! Fix it in netlink_read_reply().
- * Note: due to our hack to dodge a bug in NLMSG_OK,
- * RTNL_BUFSIZE must be less than or equal to USHRT_MAX.
  */
 #define RTNL_BUFSIZE 32768
 
@@ -169,15 +167,7 @@ ssize_t netlink_read_reply(int sock, char *buf, unsigned int seqnum, __u32 pid)
 		/* Verify it's valid */
 		struct nlmsghdr *nlhdr = (struct nlmsghdr *) buf;
 
-		/*
-		 * The cast to unsigned short is to dodge an error in
-		 * netlink.h:NLMSG_OK() which triggers a GCC warning in recent
-		 * versions of GCC (2014 August)
-		 * on systems where sizeof(int) == sizeof(ssize_t):
-		 * error: comparison between signed and unsigned integer expressions
-		 * Note: as long as RTNL_BUFSIZE <= USHRT_MAX, this is safe.
-		 */
-		if (!NLMSG_OK(nlhdr, (unsigned short)readlen) ||
+		if (!NLMSG_OK(nlhdr, (size_t)readlen) ||
 			nlhdr->nlmsg_type == NLMSG_ERROR)
 			return -1;
 
@@ -410,15 +400,7 @@ static int resolve_defaultroute_one(struct starter_end *host,
 	/* Parse reply */
 	struct nlmsghdr *nlmsg = (struct nlmsghdr *)msgbuf;
 
-	/*
-	 * The cast to unsigned short is to dodge an error in
-	 * netlink.h:NLMSG_OK() which triggers a GCC warning in recent
-	 * versions of GCC (2014 August)
-	 * on systems where sizeof(int) == sizeof(ssize_t):
-	 * error: comparison between signed and unsigned integer expressions
-	 * Note: as long as RTNL_BUFSIZE <= USHRT_MAX, this is safe.
-	 */
-	for (; NLMSG_OK(nlmsg, (unsigned short)len); nlmsg = NLMSG_NEXT(nlmsg, len)) {
+	for (; NLMSG_OK(nlmsg, (size_t)len); nlmsg = NLMSG_NEXT(nlmsg, len)) {
 		char r_interface[IF_NAMESIZE+1];
 		char r_source[ADDRTOT_BUF];
 		char r_gateway[ADDRTOT_BUF];
