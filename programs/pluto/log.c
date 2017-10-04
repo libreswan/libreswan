@@ -407,9 +407,7 @@ void whack_log_comment(const char *message, ...)
 	}
 }
 
-lset_t
-	base_debugging = DBG_NONE, /* default to reporting nothing */
-	cur_debugging =  DBG_NONE;
+lset_t base_debugging = DBG_NONE; /* default to reporting nothing */
 
 void extra_debugging(const struct connection *c)
 {

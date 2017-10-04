@@ -90,8 +90,6 @@ void lswlog_log_errno(int e, const char *prefix, const char *message, ...)
 			prefix, m, e, strerror(e));
 }
 
-lset_t cur_debugging =  DBG_NONE;
-
 void lswlog_dbg_raw(struct lswlog *buf)
 {
 	sanitize_string(buf->array, buf->roof);
