@@ -90,9 +90,7 @@ void lswlog_log_errno(int e, const char *prefix, const char *message, ...)
 			prefix, m, e, strerror(e));
 }
 
-lset_t
-	base_debugging = DBG_NONE,	/* default to reporting nothing */
-	cur_debugging =  DBG_NONE;
+lset_t cur_debugging =  DBG_NONE;
 
 void lswlog_dbg_raw(struct lswlog *buf)
 {

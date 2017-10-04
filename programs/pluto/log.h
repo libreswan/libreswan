@@ -60,6 +60,7 @@ extern void log_state(struct state *st, enum state_kind state);
 extern void extra_debugging(const struct connection *c);
 
 extern void set_debugging(lset_t deb);
+extern lset_t base_debugging;	/* bits selecting what to report */
 
 #define reset_debugging() { set_debugging(base_debugging); }
 
