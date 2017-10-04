@@ -68,6 +68,7 @@ west #
 west #
  grep leak /tmp/pluto.log
 leak-detective enabled
+leak detective found no leaks
 west #
 west #
  ../bin/check-for-core.sh

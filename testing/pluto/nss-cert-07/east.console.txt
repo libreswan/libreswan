@@ -86,6 +86,7 @@ east #
 east #
  grep leak /tmp/pluto.log
 leak-detective enabled
+leak detective found no leaks
 east #
 east #
  ../bin/check-for-core.sh
