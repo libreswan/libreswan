@@ -121,7 +121,6 @@ d.ipsec.conf/syslog.xml
 d.ipsec.conf/klipsdebug.xml
 d.ipsec.conf/plutodebug.xml
 d.ipsec.conf/uniqueids.xml
-d.ipsec.conf/plutorestartoncrash.xml
 d.ipsec.conf/logfile.xml
 d.ipsec.conf/logappend.xml
 d.ipsec.conf/logtime.xml
