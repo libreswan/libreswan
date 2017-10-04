@@ -152,7 +152,6 @@ extern void linux_audit_conn(const struct state *st, enum linux_audit_kind);
 /*
  * some events are to be logged only occasionally.
  */
-extern bool logged_txt_warning;
 extern bool logged_myid_ip_txt_warning;
 extern bool logged_myid_fqdn_txt_warning;
 

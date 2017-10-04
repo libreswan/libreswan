@@ -38,11 +38,6 @@
 
 bool log_to_stderr = TRUE;	/* should log go to stderr? */
 
-bool
-	logged_txt_warning = FALSE;	/*
-					 * should we complain about finding
-					 * KEY?
-					 */
 char *progname = NULL;
 
 void tool_init_log(char *name)

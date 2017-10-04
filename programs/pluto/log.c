@@ -80,9 +80,6 @@ bool
 	log_with_timestamp = TRUE,	/* testsuite requires no timestamps */
 	log_append = TRUE;
 
-bool
-	logged_txt_warning = FALSE; /* should we complain about finding KEY? */
-
 /* should we complain when we find no local id */
 bool
 	logged_myid_fqdn_txt_warning = FALSE,
@@ -528,9 +525,6 @@ void show_status(void)
 
 void daily_log_reset(void)
 {
-	/* now perform actions */
-	logged_txt_warning = FALSE;
-
 	logged_myid_fqdn_txt_warning = FALSE;
 	logged_myid_ip_txt_warning   = FALSE;
 }
