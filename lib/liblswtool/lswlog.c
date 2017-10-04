@@ -34,7 +34,6 @@
 
 #include "constants.h"
 #include "lswlog.h"
-#include "libreswan/pfkey_debug.h"
 
 bool log_to_stderr = TRUE;	/* should log go to stderr? */
 
@@ -46,9 +45,6 @@ void tool_init_log(char *name)
 
 	if (log_to_stderr)
 		setbuf(stderr, NULL);
-
-	pfkey_error_func = printf;
-	pfkey_debug_func = printf;
 }
 
 /*
