@@ -20,6 +20,11 @@
 
 #include "lswlog.h"
 
+void lswlog_dbg_pre(struct lswlog *buf)
+{
+	lswlogs(buf, DEBUG_PREFIX);
+}
+
 int lswlog_dbg(const char *message, ...)
 {
 	LSWDBG(buf) {

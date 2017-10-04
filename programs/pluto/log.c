@@ -459,11 +459,6 @@ void set_debugging(lset_t deb)
 					 libreswan_log);
 }
 
-void lswlog_dbg_pre(struct lswlog *buf)
-{
-	lswlogs(buf, DEBUG_PREFIX);
-}
-
 void lswlog_dbg_raw(struct lswlog *buf)
 {
 	sanitize_string(buf->array, buf->roof);
