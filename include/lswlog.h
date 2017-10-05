@@ -222,6 +222,8 @@ size_t lswlog_pr_error(struct lswlog *log);
 /* _(in FUNC() at FILE:LINE) */
 size_t lswlog_source_line(struct lswlog *log, const char *func,
 			  const char *file, unsigned long line);
+/* <string without binary characters> */
+size_t lswlog_sanitized(struct lswlog *log, const char *string);
 
 /*
  * The logging output streams used by library code.
