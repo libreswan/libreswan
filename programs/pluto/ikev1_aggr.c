@@ -1365,10 +1365,12 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *ke,
 	if (c->spd.this.xauth_client || c->spd.this.xauth_server)
 		numvidtosend++;
 
-	if (nat_traversal_enabled)
+	if (nat_traversal_enabled && c->ikev1_natt != natt_none)
 		numvidtosend++;
+
 	if (c->cisco_unity)
 		numvidtosend++;
+
 	if (c->fake_strongswan)
 		numvidtosend++;
 
@@ -1385,13 +1387,15 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *ke,
 			return STF_INTERNAL_ERROR;
 	}
 
-	if (nat_traversal_enabled) {
+	if (nat_traversal_enabled && c->ikev1_natt != natt_none) {
 		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
 		if (!nat_traversal_insert_vid(np, &md->rbody, st)) {
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
+	} else {
+		DBG(DBG_NATT, DBG_log("not sending any NATT VID's"));
 	}
 
 	if (c->spd.this.xauth_client || c->spd.this.xauth_server) {

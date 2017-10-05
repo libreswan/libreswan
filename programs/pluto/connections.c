@@ -4160,7 +4160,8 @@ void show_one_connection(const struct connection *c)
 			 (c->encaps == encaps_yes) ? "yes" : "no",
 			(c->nat_keepalive) ? "yes" : "no",
 			(c->ikev1_natt == natt_both) ? "both" :
-			 (c->ikev1_natt == natt_rfc) ? "rfc" : "drafts"
+			 (c->ikev1_natt == natt_rfc) ? "rfc" :
+			 (c->ikev1_natt == natt_drafts) ? "drafts" : "none"
 			);
 	}
 

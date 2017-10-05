@@ -2303,7 +2303,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		/* in aggressive mode, there will be no reply packet in transition
 		 * from STATE_AGGR_R1 to STATE_AGGR_R2
 		 */
-		if (nat_traversal_enabled) {
+		if (nat_traversal_enabled && st->st_connection->ikev1_natt != natt_none) {
 			/* adjust our destination port if necessary */
 			nat_traversal_change_port_lookup(md, st);
 		}

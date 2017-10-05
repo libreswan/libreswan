@@ -112,7 +112,7 @@ stf_status main_outI1(int whack_sock,
 	if (c->policy & POLICY_IKE_FRAG_ALLOW)
 		numvidtosend++;
 
-	if (nat_traversal_enabled)
+	if (nat_traversal_enabled && c->ikev1_natt != natt_none)
 		numvidtosend++;
 
 	if (c->cisco_unity) {
@@ -257,9 +257,7 @@ stf_status main_outI1(int whack_sock,
 		}
 	}
 
-	DBG(DBG_NATT, DBG_log("nat traversal enabled: %d",
-				nat_traversal_enabled));
-	if (nat_traversal_enabled) {
+	if (nat_traversal_enabled && c->ikev1_natt != natt_none) {
 		int np = --numvidtosend > 0 ?
 			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
@@ -2708,9 +2706,8 @@ bool accept_delete(struct msg_digest *md,
 				/* note: this code is cloned for handling self_delete */
 				loglog(RC_LOG_SERIOUS, "received Delete SA payload: deleting ISAKMP State #%lu",
 					dst->st_serialno);
-				if (nat_traversal_enabled)
-					nat_traversal_change_port_lookup(md,
-									dst);
+				if (nat_traversal_enabled && dst->st_connection->ikev1_natt != natt_none)
+					nat_traversal_change_port_lookup(md, dst);
 				delete_state(dst);
 			}
 		} else {
@@ -2749,9 +2746,8 @@ bool accept_delete(struct msg_digest *md,
 
 				set_cur_connection(rc);
 
-				if (nat_traversal_enabled)
-					nat_traversal_change_port_lookup(md,
-									dst);
+				if (nat_traversal_enabled && dst->st_connection->ikev1_natt != natt_none)
+					nat_traversal_change_port_lookup(md, dst);
 
 				if (rc->newest_ipsec_sa == dst->st_serialno &&
 					(rc->policy & POLICY_UP)) {
@@ -2824,7 +2820,7 @@ void accept_self_delete(struct msg_digest *md)
 	/* note: this code is cloned from handling ISAKMP non-self_delete */
 	loglog(RC_LOG_SERIOUS, "received Delete SA payload: self-deleting ISAKMP State #%lu",
 		st->st_serialno);
-	if (nat_traversal_enabled)
+	if (nat_traversal_enabled && st->st_connection->ikev1_natt != natt_none)
 		nat_traversal_change_port_lookup(md, st);
 	delete_state(st);
 	md->st = st = NULL;

@@ -229,8 +229,12 @@ bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, const struct state *
 	/*
 	 * Some Cisco's have a broken NAT-T implementation where it
 	 * sends one NAT payload per draft, and one NAT payload for RFC.
-	 * ikev1_natt={both|drafts|rfc} helps us claim we only support the
+	 * nat-ikev1-method={both|drafts|rfc} helps us claim we only support the
 	 * drafts, so we don't hit the bad Cisco code.
+	 *
+	 * nat-ikev1-method=none was added as a workaround for some clients
+	 * that want to do no-encapsulation, but are triggered for encapsulation
+	 * when they see NATT payloads.
 	 */
 	switch (st->st_connection->ikev1_natt) {
 	case natt_rfc:
@@ -253,6 +257,10 @@ bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, const struct state *
 			return FALSE;
 		if (!out_vid(np, outs, VID_NATT_IETF_02))
 			return FALSE;
+		break;
+	case natt_none:
+		/* This should never be reached, but makes compiler happy */
+		DBG(DBG_NATT, DBG_log("not sending any NATT VID's"));
 		break;
 	}
 	return TRUE;
@@ -700,7 +708,7 @@ static void nat_traversal_show_result(lset_t nt, u_int16_t sport)
 void ikev1_natd_init(struct state *st, struct msg_digest *md)
 {
 	DBG(DBG_NATT,
-	    DBG_log("checking NAT-t: %s and %s",
+	    DBG_log("checking NAT-T: %s and %s",
 		    nat_traversal_enabled ? "enabled" : "disabled",
 		    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal)));
 
