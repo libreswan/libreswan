@@ -49,7 +49,7 @@ void tool_init_log(char *name)
 		setbuf(stderr, NULL);
 }
 
-void libreswan_vloglog(int mess_no UNUSED, const char *fmt, va_list ap)
+void libreswan_vloglog(enum rc_type rc UNUSED, const char *fmt, va_list ap)
 {
 	char m[LOG_WIDTH];	/* longer messages will be truncated */
 	vsnprintf(m, sizeof(m), fmt, ap);
@@ -76,7 +76,5 @@ void lswlog_log_errno(int e, const char *prefix, const char *message, ...)
 
 void lswlog_dbg_raw(struct lswlog *buf)
 {
-	sanitize_string(buf->array, buf->roof);
-	if (log_to_stderr)
-		fprintf(stderr, "%s\n", buf->array);
+	fprintf(stderr, "%s\n", buf->array);
 }

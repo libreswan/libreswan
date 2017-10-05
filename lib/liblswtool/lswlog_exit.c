@@ -18,8 +18,7 @@
 
 #include "lswlog.h"
 
-void
-lswlog_exit(int rc)
+void lswlog_exit(enum rc_type rc)
 {
 	exit(rc);
 }

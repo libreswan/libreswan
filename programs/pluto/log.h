@@ -105,10 +105,10 @@ extern void exit_log(const char *message, ...) PRINTF_LIKE(1) NEVER_RETURNS;
  * struct lswlog primatives
  */
 bool whack_log_p(void);
-void whack_log_pre(int mess_no, struct lswlog *buf);
+void whack_log_pre(enum rc_type rc, struct lswlog *buf);
 void whack_log_raw(struct lswlog *buf);
 
-void whack_log(int mess_no, const char *message, ...) PRINTF_LIKE(2);
+void whack_log(enum rc_type rc, const char *message, ...) PRINTF_LIKE(2);
 /*
  * Like whack_log() but suppress the 'NNN ' prefix.
  */
