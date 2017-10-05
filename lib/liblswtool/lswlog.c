@@ -37,39 +37,26 @@
 
 bool log_to_stderr = TRUE;	/* should log go to stderr? */
 
-char *progname = NULL;
+char *progname = "";
+static char *prog_suffix = "";
 
 void tool_init_log(char *name)
 {
 	progname = name;
+	prog_suffix = " "; /* : */
 
 	if (log_to_stderr)
 		setbuf(stderr, NULL);
 }
 
-/*
- * format a string for the log, with suitable prefixes.
- */
-static void fmt_log(char *buf, size_t buf_len,
-		const char *fmt, va_list ap)
-{
-	char *p = buf;
-	buf[0] = '\0';
-	if (progname != NULL && (strlen(progname) + 1 + 1) < buf_len) {
-		/* start with name of connection */
-		p = add_str(buf, buf_len, jam_str(buf, buf_len, progname), " ");
-	}
-	vsnprintf(p, buf_len - (p - buf), fmt, ap);
-}
-
 void libreswan_vloglog(int mess_no UNUSED, const char *fmt, va_list ap)
 {
 	char m[LOG_WIDTH];	/* longer messages will be truncated */
-
-	fmt_log(m, sizeof(m), fmt, ap);
+	vsnprintf(m, sizeof(m), fmt, ap);
 
 	if (log_to_stderr)
-		fprintf(stderr, "%s\n", m);
+		fprintf(stderr, "%s%s%s\n",
+			progname, prog_suffix, m);
 }
 
 void lswlog_log_errno(int e, const char *prefix, const char *message, ...)
@@ -78,12 +65,13 @@ void lswlog_log_errno(int e, const char *prefix, const char *message, ...)
 	char m[LOG_WIDTH];	/* longer messages will be truncated */
 
 	va_start(args, message);
-	fmt_log(m, sizeof(m), message, args);
+	vsnprintf(m, sizeof(m), message, args);
 	va_end(args);
 
 	if (log_to_stderr)
-		fprintf(stderr, "%s%s. Errno %d: %s\n",
-			prefix, m, e, strerror(e));
+		fprintf(stderr, "%s%s%s%s. Errno %d: %s\n",
+			prefix, progname, prog_suffix,
+			m, e, strerror(e));
 }
 
 void lswlog_dbg_raw(struct lswlog *buf)
