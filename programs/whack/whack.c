@@ -247,13 +247,6 @@ static void diagq(err_t ugh, const char *this)
 	}
 }
 
-void libreswan_vloglog(int mess_no UNUSED, const char *fmt, va_list ap)
-{
-	fprintf(stderr, "whack: ");
-	vfprintf(stderr, fmt, ap);
-	fprintf(stderr, "\n");
-}
-
 /*
  * complex combined operands return one of these enumerated values
  * Note: these become flags in an lset_t.  Since there could be more
