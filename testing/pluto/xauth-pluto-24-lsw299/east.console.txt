@@ -5,9 +5,6 @@ Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
- ipsec auto --add xauth_0-client_sn-sn_192.168.11.0/24-0.0.0.0/0
-002 added connection description "xauth_0-client_sn-sn_192.168.11.0/24-0.0.0.0/0"
-east #
  echo initdone
 initdone
 east #
