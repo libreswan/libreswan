@@ -19,18 +19,19 @@
 
 #include "lswlog.h"
 
-void lsw_pexpect_log(const char *file_str,
-		     unsigned long line_no,
-		     const char *func_str,
+void lsw_pexpect_log(const char *file,
+		     unsigned long line,
+		     const char *func,
 		     const char *fmt, ...)
 {
-	va_list ap;
-	va_start(ap, fmt);
-	char m[LOG_WIDTH] = {0};
-	vsnprintf(m, sizeof(m), fmt, ap);
-	passert(strlen(m) < sizeof(m));
-	va_end(ap);
-
-	loglog(RC_LOG_SERIOUS, "EXPECTATION FAILED: %s (in %s at %s:%lu)",
-	       m, func_str, file_str, line_no);
+	LSWBUF(buf) {
+		lswlog_pre(buf);
+		lswlogs(buf, "EXPECTATION FAILED: ");
+		va_list ap;
+		va_start(ap, fmt);
+		lswlogvf(buf, fmt, ap);
+		va_end(ap);
+		lswlog_source_line(buf, func, file, line);
+		lswlog_to_error_stream(buf);
+	}
 }

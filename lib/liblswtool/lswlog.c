@@ -96,3 +96,8 @@ void lswlog_to_debug_stream(struct lswlog *buf)
 {
 	fprintf(stderr, "%s\n", buf->array);
 }
+
+void lswlog_to_error_stream(struct lswlog *buf)
+{
+	fprintf(stderr, "%s\n", buf->array);
+}
