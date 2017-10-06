@@ -542,7 +542,7 @@ kvmplutotest	xauth-pluto-20-pam-timeout good
 kvmplutotest	xauth-pluto-21-main-xr0-drop 	wip
 kvmplutotest	xauth-pluto-22		wip
 kvmplutotest	xauth-pluto-23		wip
-vmplutotest	xauth-pluto-24-lsw299	wip
+kvmplutotest	xauth-pluto-24-lsw299	wip
 
 
 # esp=null-*
