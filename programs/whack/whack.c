@@ -247,13 +247,6 @@ static void diagq(err_t ugh, const char *this)
 	}
 }
 
-void libreswan_vloglog(int mess_no UNUSED, const char *fmt, va_list ap)
-{
-	fprintf(stderr, "whack: ");
-	vfprintf(stderr, fmt, ap);
-	fprintf(stderr, "\n");
-}
-
 /*
  * complex combined operands return one of these enumerated values
  * Note: these become flags in an lset_t.  Since there could be more
@@ -786,8 +779,6 @@ static const struct option long_opts[] = {
 		IMPAIR_SEND_NO_IKEV2_AUTH_IX + DO },
 	{ "impair-send-no-xauth-r0", no_argument, NULL,
 		IMPAIR_SEND_NO_XAUTH_R0_IX + DO },
-	{ "impair-drop-no-xauth-r0", no_argument, NULL,
-		IMPAIR_DROP_XAUTH_R0_IX + DO },
 	{ "impair-send-no-main-r2", no_argument, NULL,
 		IMPAIR_SEND_NO_MAIN_R2_IX + DO },
 	/*

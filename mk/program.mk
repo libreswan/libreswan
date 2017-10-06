@@ -122,8 +122,12 @@ ifdef OBJS
 # deleting $(PROGRAM).o, $(OBJS) must include the main object
 # (typically $(PROGRAM).o).  Since there is no difference between how
 # objects and archives are handled, $(OBJS) includes both.  Duplicate
-# archives do no halm.
-$(PROGRAM): $(OBJS)
+# archives do no harm.
+#
+# Need to depend on Makefile so that when $(OBJS) changes (for
+# instance something is removed), a re-link is triggered.
+
+$(PROGRAM): $(OBJS) $(srcdir)/Makefile
 	cd $(builddir) && $(CC) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS) $(USERLINK)
 
 include $(top_srcdir)/mk/depend.mk

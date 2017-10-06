@@ -443,6 +443,9 @@ if not os.path.isfile("/root/.gdbinit"):
     fp.write("set auto-load safe-path /")
     fp.close()
 
+subprocess.getoutput("iptables -F");
+subprocess.getoutput("iptables -X");
+
 # Create LOGDROP (used to be done in swan-transmogrify but we want it here
 # for docker)
 for ipt in ("iptables", "ip6tables"):

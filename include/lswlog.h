@@ -28,33 +28,7 @@
 /* moved common code to library file */
 #include "libreswan/passert.h"
 
-/*
- * Everything goes through here.
- *
- * Like vprintf() this modifies AP; to preserve AP use C99's
- * va_copy().
- */
-extern void libreswan_vloglog(int mess_no, const char *fmt, va_list ap);
-
-/*
- * Log to both main log and whack log with MESS_NO.
- */
-#define loglog	libreswan_loglog
-extern void libreswan_loglog(int mess_no, const char *fmt, ...) PRINTF_LIKE(2);
-
-/*
- * Log to both main log and whack log at level RC_LOG.
- */
-#define plog	libreswan_log
-extern int libreswan_log(const char *fmt, ...) PRINTF_LIKE(1);
-
 #include "constants.h"
-
-extern lset_t cur_debugging;	/* current debugging level */
-
-#define DBGP(cond)	(cur_debugging & (cond))
-
-#define DEBUG_PREFIX "| "
 
 /*
  * NOTE: DBG's action can be a { } block, but that block must not
@@ -63,8 +37,16 @@ extern lset_t cur_debugging;	/* current debugging level */
  * as macro argument separators.  This happens accidentally if
  * multiple variables are declared in one declaration.
  */
+
+extern lset_t cur_debugging;	/* current debugging level */
+
+#define DBGP(cond)	(cur_debugging & (cond))
+
+#define DEBUG_PREFIX "| "
+
 #define DBG(cond, action)	{ if (DBGP(cond)) { action; } }
 
+/* signature needs to match printf() */
 int lswlog_dbg(const char *message, ...) PRINTF_LIKE(1);
 
 #define DBG_log lswlog_dbg
@@ -162,6 +144,27 @@ enum rc_type {
 };
 
 /*
+ * Everything goes through here.
+ *
+ * Like vprintf() this modifies AP; to preserve AP use C99's
+ * va_copy().
+ */
+extern void libreswan_vloglog(enum rc_type rc, const char *fmt, va_list ap);
+
+/*
+ * Log to both main log and whack log at level RC.
+ */
+#define loglog	libreswan_loglog
+extern void libreswan_loglog(enum rc_type, const char *fmt, ...) PRINTF_LIKE(2);
+
+/*
+ * Log to both main log and whack log at level RC_LOG.
+ */
+#define plog	libreswan_log
+/* signature needs to match printf() */
+extern int libreswan_log(const char *fmt, ...) PRINTF_LIKE(1);
+
+/*
  * Wrap <message> in a prefix and suffix where the suffix contains
  * errno and message.  Since __VA_ARGS__ may alter ERRNO, it needs to
  * be saved.
@@ -169,7 +172,7 @@ enum rc_type {
 
 void lswlog_log_errno(int e, const char *prefix,
 		      const char *message, ...) PRINTF_LIKE(3);
-void lswlog_exit(int rc) NEVER_RETURNS;
+void lswlog_exit(enum rc_type rc) NEVER_RETURNS;
 
 #define LOG_ERRNO(ERRNO, ...)						\
 	{								\

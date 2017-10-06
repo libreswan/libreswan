@@ -731,7 +731,8 @@ enum certpolicy {
 enum ikev1_natt_policy {
 	natt_both = 0, /* the default */
 	natt_rfc = 1,
-	natt_drafts = 2 /* Workaround for Cisco NAT-T bug */
+	natt_drafts = 2, /* Workaround for Cisco NAT-T bug */
+	natt_none = 3 /* Workaround for forcing non-encaps */
 };
 
 enum four_options {

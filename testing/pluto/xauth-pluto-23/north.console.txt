@@ -1,0 +1,25 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+north #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+north #
+ /testing/pluto/bin/wait-until-pluto-started
+north #
+ ipsec auto --add north-east
+002 added connection description "north-east"
+north #
+ echo initdone
+initdone
+north #
+ ipsec whack --trafficstatus
+north #
+north #
+ grep "^leak" /tmp/pluto.log
+leak-detective enabled
+leak detective found no leaks
+north #
+ ../bin/check-for-core.sh
+north #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

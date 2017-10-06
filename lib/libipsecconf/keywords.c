@@ -366,12 +366,13 @@ static const struct keyword_enum_value kw_sendcert_values[] = {
 static const struct keyword_enum_values kw_sendcert_list = VALUES_INITIALIZER(kw_sendcert_values);
 
 /*
- * Values for nat-ikev1-method={drafts,rfc,both}
+ * Values for nat-ikev1-method={drafts,rfc,both,none}
  */
 static const struct keyword_enum_value kw_ikev1natt_values[] = {
 	{ "both",       natt_both },
 	{ "rfc",        natt_rfc },
 	{ "drafts",     natt_drafts },
+	{ "none",       natt_none },
 };
 
 static const struct keyword_enum_values kw_ikev1natt_list = VALUES_INITIALIZER(kw_ikev1natt_values);

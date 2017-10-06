@@ -39,7 +39,13 @@ local-clean-base:
 list-local-base:
 	@: never nothing to do
 
-$(LIB): $(OBJS) | $(builddir)
-	cd $(builddir) && $(AR) $(ARFLAGS) $(LIB) $(OBJS)
+# So that removing something from $(OBJS) triggers an archive build:
+# depend on Makefile; and always build a new archive.  Could also
+# depend the mk/* directory?
+
+$(LIB): $(OBJS) $(srcdir)/Makefile | $(builddir)
+	rm -f $(builddir)/$(LIB).tmp
+	cd $(builddir) && $(AR) $(ARFLAGS) $(LIB).tmp $(OBJS)
+	mv $(builddir)/$(LIB).tmp $(builddir)/$(LIB)
 
 include $(top_srcdir)/mk/depend.mk

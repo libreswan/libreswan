@@ -140,7 +140,7 @@ void pluto_init_log(void)
  * STATE prefix when it was added earlier.
  */
 
-static void add_whack_rc_prefix(struct lswlog *buf, int rc)
+static void add_whack_rc_prefix(struct lswlog *buf, enum rc_type rc)
 {
 	lswlogf(buf, "%03d ", rc);
 }
@@ -191,10 +191,10 @@ static void stdlog_raw(char *b)
 	}
 }
 
-static void syslog_raw(int log_level, char *b)
+static void syslog_raw(int severity, char *b)
 {
 	if (log_to_syslog)
-		syslog(log_level, "%s", b);
+		syslog(severity, "%s", b);
 }
 
 static void peerlog_raw(char *b)
@@ -204,7 +204,7 @@ static void peerlog_raw(char *b)
 	}
 }
 
-static void whack_rc_raw(int rc, char *b)
+static void whack_rc_raw(enum rc_type rc, char *b)
 {
 	/*
 	 * Only whack-log when the main thread.
@@ -229,10 +229,10 @@ static void whack_rc_raw(int rc, char *b)
 	}
 }
 
-static void lswlog_log_raw(struct lswlog *buf, int rc, int log_level)
+static void lswlog_log_raw(struct lswlog *buf, enum rc_type rc, int severity)
 {
 	stdlog_raw(buf->array);
-	syslog_raw(log_level, buf->array);
+	syslog_raw(severity, buf->array);
 	peerlog_raw(buf->array);
 	whack_rc_raw(rc, buf->array);
 }
@@ -271,12 +271,12 @@ void prettynow(char *buf, size_t buflen, const char *fmt)
 }
 
 /* thread locks added until all non re-entrant functions it uses have been fixed */
-void libreswan_vloglog(int mess_no, const char *message, va_list args)
+void libreswan_vloglog(enum rc_type rc, const char *message, va_list args)
 {
 	LSWBUF(buf) {
 		add_state_prefix(buf);
 		lswlogvf(buf, message, args);
-		lswlog_log_raw(buf, mess_no, LOG_WARNING);
+		lswlog_log_raw(buf, rc, LOG_WARNING);
 	}
 }
 
@@ -310,15 +310,15 @@ void exit_log(const char *message, ...)
 	exit_pluto(PLUTO_EXIT_FAIL);
 }
 
-void lswlog_exit(int rc)
+void lswlog_exit(enum rc_type rc)
 {
 	exit_pluto(rc);
 }
 
-void whack_log_pre(int mess_no, struct lswlog *buf)
+void whack_log_pre(enum rc_type rc, struct lswlog *buf)
 {
 	passert(pthread_equal(pthread_self(), main_thread));
-	add_whack_rc_prefix(buf, mess_no);
+	add_whack_rc_prefix(buf, rc);
 	add_state_prefix(buf);
 }
 
@@ -377,11 +377,11 @@ bool whack_log_p(void)
  * - text is a human-readable annotation
  */
 
-void whack_log(int mess_no, const char *message, ...)
+void whack_log(enum rc_type rc, const char *message, ...)
 {
 	if (whack_log_p()) {
 		LSWBUF(buf) {
-			add_whack_rc_prefix(buf, mess_no);
+			add_whack_rc_prefix(buf, rc);
 			add_state_prefix(buf);
 			va_list args;
 			va_start(args, message);

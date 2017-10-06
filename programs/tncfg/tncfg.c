@@ -44,6 +44,7 @@
 #include "libreswan/pfkey.h"
 #include "libreswan/pfkeyv2.h"
 #include "pfkey_help.h"
+#include "libreswan/pfkey_debug.h"
 
 #include "libreswan/ipsec_tunnel.h"
 
@@ -172,6 +173,8 @@ int debug = 0;
 int main(int argc, char *argv[])
 {
 	tool_init_log(argv[0]);
+	/* force pfkey logging */
+	pfkey_error_func = pfkey_debug_func = printf;
 
 	struct ifreq ifr;
 	struct ipsectunnelconf shc;
