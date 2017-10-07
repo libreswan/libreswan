@@ -451,8 +451,14 @@ void unreference_addresspool(struct connection *c)
 	c->pool = NULL;
 }
 
-void reference_addresspool(struct ip_pool *pool)
+void reference_addresspool(struct connection *c)
 {
+	struct ip_pool *pool = c->pool;
+
+	DBG(DBG_CONTROLMORE, DBG_log("reference addresspool of conn %s[%lu] kind %s refcnt %u",
+				c->name, c->instance_serial,
+				enum_name(&connection_kind_names,
+					c->kind), pool->pool_refcount));
 	pool->pool_refcount++;
 }
 

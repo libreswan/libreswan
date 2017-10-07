@@ -1056,6 +1056,7 @@ static bool do_file_authentication(struct state *st, const char *name,
 							if (c->pool)
 								unreference_addresspool(c);
 							c->pool = install_addresspool(pool_range);
+							reference_addresspool(c);
 						}
 						pfree(pool_range);
 					}
