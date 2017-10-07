@@ -23,7 +23,11 @@ road #
 041 "road-east" #1: road-east prompt for Username:
 040 "road-east" #1: road-east prompt for Password:
 002 "road-east" #1: XAUTH: Answering XAUTH challenge with user='xroad'
+<<<<<<< HEAD
 004 "road-east" #1: STATE_XAUTH_I1: XAUTH client - awaiting CFG_set {auth=PRESHARED_KEY cipher=aes_256 integ=sha2_256 group=MODP2048}
+=======
+004 "road-east" #1: STATE_XAUTH_I1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=aes_256 integ=sha2_256 group=MODP2048}
+>>>>>>> 938025e94... testing: update tests xauth-pluto-2[4-7]*
 002 "road-east" #1: XAUTH: Successfully Authenticated
 004 "road-east" #1: STATE_XAUTH_I1: XAUTH client - awaiting CFG_set {auth=PRESHARED_KEY cipher=aes_256 integ=sha2_256 group=MODP2048}
 002 "road-east" #1: modecfg: Sending IP request (MODECFG_I1)
