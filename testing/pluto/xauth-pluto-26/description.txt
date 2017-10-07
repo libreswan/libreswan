@@ -1,0 +1,4 @@
+IKEv1 XAUTH PSK + address assignment from file to a road warrior.
+
+East has an addresspool and xauth passwd file for IPv4 address asignment.
+Road will be assigned an address from the file.
