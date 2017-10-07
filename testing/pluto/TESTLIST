@@ -544,6 +544,8 @@ kvmplutotest	xauth-pluto-22		wip
 kvmplutotest	xauth-pluto-23		wip
 kvmplutotest	xauth-pluto-25-lsw299	wip
 kvmplutotest	xauth-pluto-26		wip
+kvmplutotest	xauth-pluto-24-static-addresspool wip
+kvmplutotest	xauth-pluto-25-mixed-addresspool wip
 
 
 # esp=null-*
