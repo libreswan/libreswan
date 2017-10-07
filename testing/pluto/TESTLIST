@@ -152,6 +152,7 @@ kvmplutotest	ikev2-59-alias-ondemand			wip
 kvmplutotest	ikev2-59-alias-retransmit		wip
 kvmplutotest	ikev2-59-multiple-acquires 		wip
 kvmplutotest	ikev2-60-pam				good
+kvmplutotest	ikev2-61-any-psk			good
 
 kvmplutotest	ikev2-24-cryptoload			wip
 kvmplutotest	ikev2-25-rw-nat				good
@@ -545,6 +546,7 @@ kvmplutotest	xauth-pluto-22		wip
 kvmplutotest	xauth-pluto-23		wip
 kvmplutotest	xauth-pluto-25-lsw299	wip
 kvmplutotest	xauth-pluto-26		wip
+kvmplutotest	xauth-pluto-27		good
 kvmplutotest	xauth-pluto-24-static-addresspool wip
 kvmplutotest	xauth-pluto-25-mixed-addresspool wip
 
