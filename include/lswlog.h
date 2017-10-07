@@ -218,6 +218,25 @@ size_t lswlogs(struct lswlog *log, const char *string);
 size_t lswlogl(struct lswlog *log, struct lswlog *buf);
 
 /*
+ * The logging output streams used by library code.
+ *
+ * So far three^D^D^D four have been identified; and lets not forget
+ * STDOUT and STDERR which are also written to directly.
+ *
+ * These functions can assume that the buffer already contains
+ * relevant prefixes and just needs to be sent out.
+ *
+ * For logging stream, the output can may also be directed to whack
+ * stream.  When this happens, RC is prefixed to the already formatted
+ * message.
+ */
+
+void lswlog_to_debug_stream(struct lswlog *buf);
+void lswlog_to_error_stream(struct lswlog *buf);
+void lswlog_to_logger_stream(struct lswlog *buf, enum rc_type rc);
+void lswlog_to_whack_stream(struct lswlog *buf);
+
+/*
  * Code wrappers that cover up the details of allocating,
  * initializing, de-allocating (and possibly logging) a 'struct
  * lswlog' buffer.
@@ -317,6 +336,7 @@ void lswlog_file(FILE f)
 			     fwrite(BUF->array, BUF->len, 1, FILE),	\
 				     lswlog_p = false)
 
+
 /*
  * Send output to WHACK (if attached).
  *
@@ -329,7 +349,7 @@ void lswlog_file(FILE f)
 	for (bool lswlog_p = whack_log_p(); lswlog_p; lswlog_p = false) \
 		LSWBUF_(BUF)						\
 			for (whack_log_pre(RC, BUF); lswlog_p;		\
-			     whack_log_raw(BUF),			\
+			     lswlog_to_whack_stream(BUF),		\
 				     lswlog_p = false)
 
 /*
@@ -337,13 +357,12 @@ void lswlog_file(FILE f)
  */
 
 void lswlog_dbg_pre(struct lswlog *buf);
-void lswlog_dbg_raw(struct lswlog *buf);
 
 #define LSWDBG_(PREDICATE, BUF)						\
 	for (bool lswlog_p = PREDICATE; lswlog_p; lswlog_p = false)	\
 		LSWBUF_(BUF)						\
 			for (lswlog_dbg_pre(BUF); lswlog_p;		\
-			     lswlog_dbg_raw(BUF),			\
+			     lswlog_to_debug_stream(BUF),		\
 				     lswlog_p = false)
 
 #define LSWDBGP(DEBUG, BUF) LSWDBG_(DBGP(DEBUG), BUF)
@@ -354,13 +373,12 @@ void lswlog_dbg_raw(struct lswlog *buf);
  */
 
 void lswlog_pre(struct lswlog *buf);
-void lswlog_raw(struct lswlog *buf);
 
 #define LSWLOG(BUF)							\
 	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
 		LSWBUF_(BUF)						\
 			for (lswlog_pre(BUF); lswlog_p;			\
-			     lswlog_raw(BUF),				\
+			     lswlog_to_logger_stream(BUF, RC_LOG),	\
 				     lswlog_p = false)
 
 /*

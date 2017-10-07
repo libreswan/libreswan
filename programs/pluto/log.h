@@ -106,7 +106,6 @@ extern void exit_log(const char *message, ...) PRINTF_LIKE(1) NEVER_RETURNS;
  */
 bool whack_log_p(void);
 void whack_log_pre(enum rc_type rc, struct lswlog *buf);
-void whack_log_raw(struct lswlog *buf);
 
 void whack_log(enum rc_type rc, const char *message, ...) PRINTF_LIKE(2);
 /*

@@ -80,7 +80,7 @@ void lswlog_log_errno(int e, const char *prefix, const char *message, ...)
 			m, e, strerror(e));
 }
 
-void lswlog_dbg_raw(struct lswlog *buf)
+void lswlog_to_debug_stream(struct lswlog *buf)
 {
 	fprintf(stderr, "%s\n", buf->array);
 }

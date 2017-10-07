@@ -223,7 +223,7 @@ static void whack_rc_raw(enum rc_type rc, char *b)
 				add_whack_rc_prefix(buf, rc);
 				/* add_state_prefix() - done by caller */
 				lswlogs(buf, b);
-				whack_log_raw(buf);
+				lswlog_to_whack_stream(buf);
 			}
 		}
 	}
@@ -242,9 +242,9 @@ void lswlog_pre(struct lswlog *buf)
 	add_state_prefix(buf);
 }
 
-void lswlog_raw(struct lswlog *buf)
+void lswlog_to_logger_stream(struct lswlog *buf, enum rc_type rc)
 {
-	lswlog_log_raw(buf, RC_LOG, LOG_WARNING);
+	lswlog_log_raw(buf, rc, LOG_WARNING);
 }
 
 void close_log(void)
@@ -280,6 +280,11 @@ void libreswan_vloglog(enum rc_type rc, const char *message, va_list args)
 	}
 }
 
+void lswlog_to_error_stream(struct lswlog *buf)
+{
+	lswlog_log_raw(buf, RC_LOG_SERIOUS, LOG_ERR);
+}
+
 void lswlog_log_errno(int e, const char *prefix, const char *message, ...)
 {
 	LSWBUF(buf) {
@@ -291,7 +296,7 @@ void lswlog_log_errno(int e, const char *prefix, const char *message, ...)
 		lswlogvf(buf, message, args);
 		va_end(args);
 		lswlogf(buf, ". Errno %d: %s\n", e, strerror(e));
-		lswlog_log_raw(buf, RC_LOG_SERIOUS, LOG_ERR);
+		lswlog_to_error_stream(buf);
 	}
 }
 
@@ -305,7 +310,7 @@ void exit_log(const char *message, ...)
 		va_start(args, message);
 		lswlogvf(buf, message, args);
 		va_end(args);
-		lswlog_log_raw(buf, RC_LOG_SERIOUS, LOG_ERR);
+		lswlog_to_error_stream(buf);
 	}
 	exit_pluto(PLUTO_EXIT_FAIL);
 }
@@ -322,7 +327,7 @@ void whack_log_pre(enum rc_type rc, struct lswlog *buf)
 	add_state_prefix(buf);
 }
 
-void whack_log_raw(struct lswlog *buf)
+void lswlog_to_whack_stream(struct lswlog *buf)
 {
 	passert(pthread_equal(pthread_self(), main_thread));
 
@@ -387,7 +392,7 @@ void whack_log(enum rc_type rc, const char *message, ...)
 			va_start(args, message);
 			lswlogvf(buf, message, args);
 			va_end(args);
-			whack_log_raw(buf);
+			lswlog_to_whack_stream(buf);
 		}
 	}
 }
@@ -402,7 +407,7 @@ void whack_log_comment(const char *message, ...)
 			va_start(args, message);
 			lswlogvf(buf, message, args);
 			va_end(args);
-			whack_log_raw(buf);
+			lswlog_to_whack_stream(buf);
 		}
 	}
 }
@@ -454,12 +459,13 @@ void set_debugging(lset_t deb)
 					 libreswan_log);
 }
 
-void lswlog_dbg_raw(struct lswlog *buf)
+void lswlog_to_debug_stream(struct lswlog *buf)
 {
 	sanitize_string(buf->array, buf->roof);
 	stdlog_raw(buf->array);
 	syslog_raw(LOG_DEBUG, buf->array);
 	peerlog_raw(buf->array);
+	/* not whack */
 }
 
 static void show_system_security(void)
