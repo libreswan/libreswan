@@ -618,34 +618,6 @@ static const struct option long_opts[] = {
 #undef D
 #define DEBUG_OPTION DBG_OFFSET + IMPAIR_roof_IX + 0
 	{ "debug\0", required_argument, NULL, DEBUG_OPTION, },
-
-	/* --impair-* options (using I for shorthand) */
-#define I(name, code) { "impair-" name, no_argument, NULL, (code) + DBG_OFFSET }
-	I("bust-mi2\0", IMPAIR_BUST_MI2_IX),
-	I("bust-mr2\0", IMPAIR_BUST_MR2_IX),
-	I("sa-creation\0", IMPAIR_SA_CREATION_IX),
-	I("die-oninfo\0", IMPAIR_DIE_ONINFO_IX),
-	I("jacob-two-two\0", IMPAIR_JACOB_TWO_TWO_IX),
-	I("allow-null-null\0", IMPAIR_ALLOW_NULL_NULL_IX),
-	I("major-version-bump\0", IMPAIR_MAJOR_VERSION_BUMP_IX),
-	I("minor-version-bump\0", IMPAIR_MINOR_VERSION_BUMP_IX),
-	I("retransmits\0", IMPAIR_RETRANSMITS_IX),
-	I("send-bogus-isakmp-flag\0", IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX),
-	I("send-bogus-payload-flag\0", IMPAIR_SEND_BOGUS_PAYLOAD_FLAG_IX),
-	I("send-ikev2-ke\0", IMPAIR_SEND_IKEv2_KE_IX),
-	I("send-key-size-check\0", IMPAIR_SEND_KEY_SIZE_CHECK_IX),
-	I("send-no-delete\0", IMPAIR_SEND_NO_DELETE_IX),
-	I("send-no-ikev2-auth\0", IMPAIR_SEND_NO_IKEV2_AUTH_IX),
-	I("send-no-xauth-r0\0", IMPAIR_SEND_NO_XAUTH_R0_IX),
-	I("drop-xauth-r0\0", IMPAIR_DROP_XAUTH_R0_IX),
-	I("send-no-main-r2\0", IMPAIR_SEND_NO_MAIN_R2_IX),
-	I("force-fips\0", IMPAIR_FORCE_FIPS_IX),
-	I("send-zero-gx\0", IMPAIR_SEND_ZERO_GX_IX),
-	I("send-bogus-dcookie\0", IMPAIR_SEND_BOGUS_DCOOKIE_IX),
-	I("omit-hash-notify\0", IMPAIR_OMIT_HASH_NOTIFY_REQUEST_IX),
-	I("ignore-hash-notify\0", IMPAIR_IGNORE_HASH_NOTIFY_REQUEST_IX),
-	I("ignore-hash-notify-resp\0", IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE_IX),
-#undef I
 #define IMPAIR_OPTION DBG_OFFSET + IMPAIR_roof_IX + 1
 	{ "impair\0", required_argument, NULL, IMPAIR_OPTION, },
 

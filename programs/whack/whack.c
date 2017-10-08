@@ -752,52 +752,6 @@ static const struct option long_opts[] = {
 	{ "debug-private", no_argument, NULL, DBG_PRIVATE_IX + DO },
 
 	{ "debug", required_argument, NULL, DBGOPT_DEBUG + OO, },
-
-	{ "impair-bust-mi2", no_argument, NULL, IMPAIR_BUST_MI2_IX + DO },
-	{ "impair-bust-mr2", no_argument, NULL, IMPAIR_BUST_MR2_IX + DO },
-	{ "impair-sa-fail",    no_argument, NULL, IMPAIR_SA_CREATION_IX + DO },
-	{ "impair-die-oninfo", no_argument, NULL, IMPAIR_DIE_ONINFO_IX  + DO },
-	{ "impair-jacob-two-two", no_argument, NULL,
-		IMPAIR_JACOB_TWO_TWO_IX + DO },
-	{ "impair-allow-null-null", no_argument, NULL,
-		IMPAIR_ALLOW_NULL_NULL_IX + DO },
-	{ "impair-major-version-bump", no_argument, NULL,
-		IMPAIR_MAJOR_VERSION_BUMP_IX + DO },
-	{ "impair-minor-version-bump", no_argument, NULL,
-		IMPAIR_MINOR_VERSION_BUMP_IX + DO },
-	{ "impair-retransmits", no_argument, NULL,
-		IMPAIR_RETRANSMITS_IX + DO },
-	{ "impair-send-bogus-payload-flag", no_argument, NULL,
-		IMPAIR_SEND_BOGUS_PAYLOAD_FLAG_IX + DO },
-	{ "impair-send-bogus-isakmp-flag", no_argument, NULL,
-		IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX + DO },
-	{ "impair-send-ikev2-ke", no_argument, NULL,
-		IMPAIR_SEND_IKEv2_KE_IX + DO },
-	{ "impair-send-no-delete", no_argument, NULL,
-		IMPAIR_SEND_NO_DELETE_IX + DO },
-	{ "impair-send-no-ikev2-auth", no_argument, NULL,
-		IMPAIR_SEND_NO_IKEV2_AUTH_IX + DO },
-	{ "impair-send-no-xauth-r0", no_argument, NULL,
-		IMPAIR_SEND_NO_XAUTH_R0_IX + DO },
-	{ "impair-send-no-main-r2", no_argument, NULL,
-		IMPAIR_SEND_NO_MAIN_R2_IX + DO },
-	/*
-	 * impair-force-fips cannot be used with whack,
-	 * it needs to be passed as daemon option to pluto
-	 */
-	{ "impair-send-key-size-check", no_argument, NULL,
-		IMPAIR_SEND_KEY_SIZE_CHECK_IX + DO },
-	{ "impair-send-zero-gx", no_argument, NULL,
-		IMPAIR_SEND_ZERO_GX_IX + DO },
-	{ "impair-send-bogus-dcookie", no_argument, NULL,
-		IMPAIR_SEND_BOGUS_DCOOKIE_IX + DO },
-	{ "impair-omit-hash-notify", no_argument, NULL,
-		IMPAIR_OMIT_HASH_NOTIFY_REQUEST_IX + DO },
-	{ "impair-ignore-hash-notify", no_argument, NULL,
-		IMPAIR_IGNORE_HASH_NOTIFY_REQUEST_IX + DO },
-	{ "impair-ignore-hash-notify-resp", no_argument, NULL,
-		IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE_IX + DO },
-
 	{ "impair", required_argument, NULL, DBGOPT_IMPAIR + OO, },
 
 #    undef DO
@@ -2116,7 +2070,10 @@ int main(int argc, char **argv)
 		{
 			int ix = enum_match(&impair_names, optarg);
 			if (ix < 0) {
-				fprintf(stderr, "whack: unrecognized --impair '%s' option ignored",
+				fprintf(stderr, "whack: unrecognized --impair '%s' option; ignored",
+					optarg);
+			} else if (ix == IMPAIR_FORCE_FIPS_IX) {
+				fprintf(stderr, "whack: invalid --impair '%s' option; must be passed directly to pluto",
 					optarg);
 			} else {
 				msg.debugging |= LELEM(ix);
