@@ -2500,10 +2500,13 @@ stf_status xauth_inI1(struct msg_digest *md)
 	stf_status stat;
 	lset_t xauth_resp = LEMPTY;	/* ??? value never used */
 
-	if (st->hidden_variables.st_xauth_client_done)
-		return modecfg_inI2(md);
-
 	DBG(DBG_CONTROLMORE, DBG_log("xauth_inI1"));
+
+	if (st->hidden_variables.st_xauth_client_done) {
+		DBG(DBG_CONTROLMORE, DBG_log("st_xauth_client_done, moving into modecfg_inI2"));
+		return modecfg_inI2(md);
+	}
+	DBG(DBG_CONTROLMORE, DBG_log("Continuing with xauth_inI1"));
 
 	st->st_msgid_phase15 = md->hdr.isa_msgid;
 	CHECK_QUICK_HASH(md,
