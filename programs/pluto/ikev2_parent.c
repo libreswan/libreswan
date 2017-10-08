@@ -1365,9 +1365,8 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		md->st = st;
 		md->from_state = STATE_IKEv2_BASE;
 
+		bool seen_nat = FALSE;
 		for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
-			bool seen_nat = FALSE;
-
 			switch(ntfy->payload.v2n.isan_type) {
 
 			case v2N_COOKIE:
