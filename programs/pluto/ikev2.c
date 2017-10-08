@@ -1180,7 +1180,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		 * As things stand, they probably result in a NOTIFY
 		 * when there shouldn't be one.
 		 *
-		 * XXX: hack until expected_clear_paylods is added to
+		 * XXX: hack until expected_clear_payloads is added to
 		 * struct state_v2_microcode or replacement.
 		 */
 		struct ikev2_expected_payloads expected_clear_payloads = {
@@ -1261,7 +1261,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			md->st = NULL;
 		} /* else { go ahead } */
 		/*
-		 * XXX: hack until expected_encrypted_paylods is added
+		 * XXX: hack until expected_encrypted_payloads is added
 		 * to struct state_v2_microcode or replacement.
 		 */
 		struct ikev2_expected_payloads expected_encrypted_payloads = {

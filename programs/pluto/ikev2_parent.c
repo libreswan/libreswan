@@ -2551,18 +2551,17 @@ static stf_status ikev2_reassemble_fragments(struct msg_digest *md,
 }
 
 static stf_status ikev2_verify_enc_payloads(struct msg_digest *md,
-					    struct ikev2_payloads_summary summary,
-					    const struct state_v2_microcode *svm)
+					    struct ikev2_payloads_summary summary)
 {
-	const struct state_v2_microcode *s = svm == NULL ? md->svm : svm;
+	const struct state_v2_microcode *svm = md->svm;
 
 	/*
-	 * XXX: hack until expected_encrypted_paylods is added to
+	 * XXX: hack until expected_encrypted_payloads is added to
 	 * struct state_v2_microcode or replacement.
 	 */
 	struct ikev2_expected_payloads expected_encrypted_payloads = {
-		.required = s->req_enc_payloads,
-		.optional = s->opt_enc_payloads,
+		.required = svm->req_enc_payloads,
+		.optional = svm->opt_enc_payloads,
 	};
 	struct ikev2_payload_errors errors = ikev2_verify_payloads(summary,
 								   &expected_encrypted_payloads);
@@ -2620,7 +2619,7 @@ struct ikev2_payloads_summary ikev2_decrypt_msg(struct msg_digest *md, bool veri
 	}
 
 	if (verify_pl) {
-		summary.status = ikev2_verify_enc_payloads(md, summary, md->svm);
+		summary.status = ikev2_verify_enc_payloads(md, summary);
 		if (summary.status == STF_OK) {
 			struct state *pst = IS_CHILD_SA(md->st) ?
 				state_with_serialno(md->st->st_clonedfrom) : md->st;
@@ -4374,7 +4373,7 @@ void send_v2_notification(struct state *p1st,
 	 * TBD if we are the original initiator we must set the
 	 *     ISAKMP_FLAGS_v2_IKE_I flag. This is currently not done!
 	 *
-	 * TBD when there is a child SA use that SPI in the notify paylod.
+	 * TBD when there is a child SA use that SPI in the notify payload.
 	 * TBD support encrypted notifications payloads.
 	 * TBD accept Critical bit as an argument. default is set.
 	 * TBD accept exchange type as an arg, default is ISAKMP_v2_SA_INIT
