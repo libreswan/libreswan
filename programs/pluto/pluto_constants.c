@@ -249,8 +249,8 @@ static const char *const state_story[] = {
 
 	"ModeCfg inititator - awaiting CFG_reply",      /* STATE_MODE_CFG_I1 */
 
-	"XAUTH client - awaiting CFG_request",          /* MODE_XAUTH_I0 */
-	"XAUTH client - awaiting CFG_set",              /* MODE_XAUTH_I1 */
+	"XAUTH client - possibly awaiting CFG_request",          /* MODE_XAUTH_I0 */
+	"XAUTH client - possibly awaiting CFG_set",              /* MODE_XAUTH_I1 */
 	"invalid state - IKE roof",
 	"invalid state - IKEv2 base",
 	"sent v2I1, expected v2R1",             /* STATE_PARENT_I1 */
