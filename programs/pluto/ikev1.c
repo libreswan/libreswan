@@ -1185,7 +1185,7 @@ void process_v1_packet(struct msg_digest **mdp)
 
 		if (st == NULL) {
 			DBG(DBG_CONTROL, DBG_log(
-				"No appropriate Mode Config state yet.See if we have a Main Mode state"));
+				"No appropriate Mode Config state yet. See if we have a Main Mode state"));
 			/* No appropriate Mode Config state.
 			 * See if we have a Main Mode state.
 			 * ??? what if this is a duplicate of another message?
@@ -2220,9 +2220,9 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		/* advance the state */
 		const struct state_microcode *smc = md->smc;
 
-		DBG(DBG_CONTROL, DBG_log("IKEv1: transition from state %s to state %s",
-			      enum_name(&state_names, from_state),
-			      enum_name(&state_names, smc->next_state)));
+		DBG(DBG_CONTROL, DBG_log("doing_xauth:%s, t_xauth_client_done:%s",
+			st->st_oakley.doing_xauth ? "yes" : "no",
+			st->hidden_variables.st_xauth_client_done ? "yes" : "no"));
 
 		/* accept info from VID because we accept this message */
 
@@ -2263,28 +2263,41 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			st->st_msgid_reserved = TRUE;
 		}
 
+		DBG(DBG_CONTROL, DBG_log("IKEv1: transition from state %s to state %s",
+			      enum_name(&state_names, from_state),
+			      enum_name(&state_names, smc->next_state)));
+
 		change_state(st, smc->next_state);
 
-		/* XAUTH negotiation withOUT modecfg ends in STATE_XAUTH_I1
-		 * which is wrong and creates issues further in several places
-		 * As per libreswan design, it seems every phase 1 negotiation
-		 * including xauth/modecfg must end with STATE_MAIN_I4 to mark
-		 * actual end of phase 1. With modecfg, negotiation ends with
-		 * STATE_MAIN_I4 already.
+		/*
+		 * XAUTH negotiation without ModeCFG cannot follow the regular
+		 * state machine change as it cannot be determined if the CFG
+		 * payload is "XAUTH OK, no ModeCFG" or "XAUTH OK, expect
+		 * ModeCFG". To the smc, these two cases look identical. So we
+		 * have to an "illegal" state change here for the cause where
+		 * we have XAUTH but not ModeCFG. We move it to the established
+		 * state, so the regular state machine picks up the Quick Mode.
 		 */
-#if 0	/* ??? what's this code for? */
 		if (st->st_connection->spd.this.xauth_client
 		    && st->hidden_variables.st_xauth_client_done
 		    && !st->st_connection->spd.this.modecfg_client
-		    && st->st_state == STATE_XAUTH_I1) {
-			DBG(DBG_CONTROL,
-				DBG_log("As XAUTH is done and modecfg is not configured, so Phase 1 neogtiation finishes successfully"));
-			change_state(st, STATE_MAIN_I4);
+		    && st->st_state == STATE_XAUTH_I1)
+		{
+			bool aggrmode = (st->st_connection->policy & POLICY_AGGRESSIVE);
+
+			libreswan_log("XAUTH completed, ModeCFG skipped as per configuration");
+			change_state(st, aggrmode ? STATE_AGGR_I2 : STATE_MAIN_I4);
+			st->st_msgid_phase15 = v1_MAINMODE_MSGID;
 		}
-#endif
 
 		/* Schedule for whatever timeout is specified */
 		if (!md->event_already_set) {
+			/*
+			 * This md variable is hardly ever set.
+			 * Only deals with v1 <-> v2 switching
+			 * Which will be removed in the near future anyway
+			 */
+			DBG(DBG_CONTROL, DBG_log("event_already_set, deleting event"));
 			/* Delete previous retransmission event.
 			 * New event will be scheduled below.
 			 */
@@ -2334,10 +2347,20 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 		/* Schedule for whatever timeout is specified */
 		if (!md->event_already_set) {
+			DBG(DBG_CONTROL, DBG_log("event_already_set at reschedule"));
 			unsigned long delay_ms; /* delay is in milliseconds here */
 			enum event_type kind = smc->timeout_event;
 			bool agreed_time = FALSE;
 			struct connection *c = st->st_connection;
+
+			/* fixup in case of state machine jump for xauth without modecfg */
+			if (c->spd.this.xauth_client
+				&& st->hidden_variables.st_xauth_client_done
+				&& !c->spd.this.modecfg_client
+				&& (st->st_state == STATE_MAIN_I4 || st->st_state == STATE_AGGR_I2)) {
+					DBG(DBG_CONTROL, DBG_log("fixup XAUTH without ModeCFG event from EVENT_v1_RETRANSMIT to EVENT_SA_REPLACE"));
+					kind = EVENT_SA_REPLACE;
+			}
 
 			switch (kind) {
 			case EVENT_v1_RETRANSMIT: /* Retransmit packet */
