@@ -2501,16 +2501,19 @@ static stf_status ikev2_reassemble_fragments(struct msg_digest *md,
 					     chunk_t *chunk)
 {
 	struct ikev2_frag *frag;
-	stf_status status;
-	unsigned int size;
-	unsigned int offset;
 	struct state *st = md->st;
 
-	size = 0;
-	for (frag = st->st_v2_rfrags; frag; frag = frag->next) {
+	frag = st->st_v2_rfrags;
+	if (frag == NULL) {
+		/* we expected fragments but there were none */
+		/* ??? not sure that this can happen */
+		return STF_FAIL + INVALID_PAYLOAD_TYPE;
+	}
+	unsigned int size = 0;
+	for (; frag; frag = frag->next) {
 		setchunk(frag->plain, frag->cipher.ptr, frag->cipher.len);
 
-		status = ikev2_verify_and_decrypt_sk_payload(
+		stf_status status = ikev2_verify_and_decrypt_sk_payload(
 			md, &frag->plain, frag->iv);
 		if (status != STF_OK) {
 			release_fragments(st);
@@ -2526,7 +2529,7 @@ static stf_status ikev2_reassemble_fragments(struct msg_digest *md,
 	/* Reassemble fragments in buffer */
 	frag = st->st_v2_rfrags;
 	md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf.isaskf_np = frag->np;
-	offset = 0;
+	unsigned int offset = 0;
 	do {
 		struct ikev2_frag *old = frag;
 
@@ -2581,7 +2584,7 @@ struct ikev2_payloads_summary ikev2_decrypt_msg(struct msg_digest *md, bool veri
 
 	if (md->chain[ISAKMP_NEXT_v2SKF] != NULL) {
 		status = ikev2_reassemble_fragments(md, &chunk);
-		/* note: if status is SFT_OK, chunk is set */
+		/* note: if status is STF_OK, chunk is set */
 	} else {
 		pb_stream *e_pbs = &md->chain[ISAKMP_NEXT_v2SK]->pbs;
 
