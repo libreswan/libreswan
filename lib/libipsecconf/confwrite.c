@@ -57,7 +57,7 @@ static void confwrite_int(FILE *out,
 {
 	const struct keyword_def *k;
 
-	for (k = ipsec_conf_keywords_v2; k->keyname != NULL; k++) {
+	for (k = ipsec_conf_keywords; k->keyname != NULL; k++) {
 
 		if ((k->validity & KV_CONTEXT_MASK) != context)
 			continue;
@@ -168,7 +168,7 @@ static void confwrite_str(FILE *out,
 {
 	const struct keyword_def *k;
 
-	for (k = ipsec_conf_keywords_v2; k->keyname != NULL; k++) {
+	for (k = ipsec_conf_keywords; k->keyname != NULL; k++) {
 
 		if ((k->validity & KV_CONTEXT_MASK) != context)
 			continue;

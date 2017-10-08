@@ -374,7 +374,7 @@ struct config_parsed {
 	struct section_list conn_default;
 };
 
-extern const struct keyword_def ipsec_conf_keywords_v2[];
+extern const struct keyword_def ipsec_conf_keywords[];
 
 extern unsigned int parser_enum_list(const struct keyword_def *kd, const char *s,
 				     bool list);

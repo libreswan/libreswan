@@ -1070,7 +1070,7 @@ int main(int argc, char *argv[])
 	if (liststack) {
 		const struct keyword_def *kd;
 
-		for (kd = ipsec_conf_keywords_v2; kd->keyname != NULL; kd++) {
+		for (kd = ipsec_conf_keywords; kd->keyname != NULL; kd++) {
 			if (strstr(kd->keyname, "protostack")) {
 				if (cfg->setup.strings[kd->field]) {
 					printf("%s\n",
@@ -1089,7 +1089,7 @@ int main(int argc, char *argv[])
 		const struct keyword_def *kd;
 
 		printf("%s %sconfreadstatus=''\n", export, varprefix);
-		for (kd = ipsec_conf_keywords_v2; kd->keyname != NULL; kd++) {
+		for (kd = ipsec_conf_keywords; kd->keyname != NULL; kd++) {
 			if ((kd->validity & kv_config) == 0)
 				continue;
 

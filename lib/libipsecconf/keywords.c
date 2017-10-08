@@ -406,7 +406,7 @@ static const struct keyword_enum_values kw_nic_offload_list = VALUES_INITIALIZER
  * Note: this table is terminated by an entry with keyname == NULL.
  */
 
-const struct keyword_def ipsec_conf_keywords_v2[] = {
+const struct keyword_def ipsec_conf_keywords[] = {
   { "interfaces",  kv_config,  kt_string,  KSF_INTERFACES,  NOT_ENUM },
   { "curl-iface",  kv_config,  kt_string,  KSF_CURLIFACE,  NOT_ENUM },
   { "curl-timeout",  kv_config,  kt_time,  KBF_CURLTIMEOUT,  NOT_ENUM },
@@ -697,7 +697,7 @@ int parser_find_keyword(const char *s, YYSTYPE *lval)
 	int keywordtype;
 
 	keyleft = FALSE;
-	k = ipsec_conf_keywords_v2;
+	k = ipsec_conf_keywords;
 
 	while (k->keyname != NULL) {
 		if (strcaseeq(s, k->keyname))
