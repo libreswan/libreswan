@@ -25,7 +25,7 @@ road #
 041 "xauth-road-eastnet-psk" #1: xauth-road-eastnet-psk prompt for Username:
 040 "xauth-road-eastnet-psk" #1: xauth-road-eastnet-psk prompt for Password:
 002 "xauth-road-eastnet-psk" #1: XAUTH: Answering XAUTH challenge with user='use2'
-004 "xauth-road-eastnet-psk" #1: STATE_XAUTH_I1: XAUTH client - awaiting CFG_set {auth=PRESHARED_KEY cipher=3des_cbc_192 integ=sha group=MODP1536}
+004 "xauth-road-eastnet-psk" #1: STATE_XAUTH_I1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=3des_cbc_192 integ=sha group=MODP1536}
 002 "xauth-road-eastnet-psk" #1: XAUTH: Successfully Authenticated
 002 "xauth-road-eastnet-psk" #1: XAUTH completed, ModeCFG skipped as per configuration
 004 "xauth-road-eastnet-psk" #1: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=PRESHARED_KEY cipher=3des_cbc_192 integ=sha group=MODP1536}
