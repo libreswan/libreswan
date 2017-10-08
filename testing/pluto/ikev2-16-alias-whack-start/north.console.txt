@@ -6,7 +6,7 @@ Redirecting to: systemctl start ipsec.service
 north #
  /testing/pluto/bin/wait-until-pluto-started
 north #
- ipsec whack --debug-all --impair-retransmits
+ ipsec whack --debug-all --impair retransmits
 north #
  echo "initdone"
 initdone

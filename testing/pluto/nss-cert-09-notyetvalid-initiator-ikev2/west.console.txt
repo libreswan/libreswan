@@ -21,7 +21,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec whack --debug-all --impair-retransmits
+ ipsec whack --debug-all --impair retransmits
 west #
  ipsec auto --up nss-cert
 002 "nss-cert" #1: initiating v2 parent SA

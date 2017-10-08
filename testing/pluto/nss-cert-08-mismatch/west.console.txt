@@ -21,7 +21,7 @@ initdone
 west #
  # the impair causes memory corruption and a crash ?
 west #
- ipsec whack --debug-all --impair-retransmits
+ ipsec whack --debug-all --impair retransmits
 west #
  # should succeed
 west #

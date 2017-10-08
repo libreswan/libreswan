@@ -16,7 +16,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec whack --debug-all --impair-retransmits
+ ipsec whack --debug-all --impair retransmits
 west #
  ipsec auto --up westnet-eastnet-ikev2
 002 "westnet-eastnet-ikev2" #1: initiating v2 parent SA

@@ -17,7 +17,7 @@ east #
  ipsec auto --add nss-cert-ocsp
 002 added connection description "nss-cert-ocsp"
 east #
- ipsec whack --debug-all --impair-retransmits
+ ipsec whack --debug-all --impair retransmits
 east #
  echo "initdone"
 initdone

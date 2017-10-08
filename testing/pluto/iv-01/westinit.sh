@@ -11,7 +11,7 @@ ping -n -c 4 192.0.2.254
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 
-ipsec whack --name westnet-eastnet --impair-jacob-two-two --debug-control --debug-controlmore --debug-parsing --debug-crypt
+ipsec whack --name westnet-eastnet --impair jacob-two-two --debug-control --debug-controlmore --debug-parsing --debug-crypt
 
 echo done
 

@@ -18,7 +18,7 @@ initdone
 west #
  # should fail to establish
 west #
- ipsec whack --debug-all --impair-retransmits
+ ipsec whack --debug-all --impair retransmits
 west #
  ipsec auto --up replay
 002 "replay" #1: initiating v2 parent SA

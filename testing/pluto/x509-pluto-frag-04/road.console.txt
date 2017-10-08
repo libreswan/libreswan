@@ -14,7 +14,7 @@ road #
  echo done
 done
 road #
- ipsec whack --debug-all --impair-retransmits
+ ipsec whack --debug-all --impair retransmits
 road #
  ipsec auto --up x509
 002 "x509" #1: initiating Main Mode

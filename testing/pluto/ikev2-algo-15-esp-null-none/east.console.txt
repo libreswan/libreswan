@@ -5,7 +5,7 @@ Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
- ipsec whack --debug-all --impair-allow-null-null
+ ipsec whack --debug-all --impair allow-null-null
 east #
  ipsec auto --add westnet-eastnet-esp-null
 002 added connection description "westnet-eastnet-esp-null"

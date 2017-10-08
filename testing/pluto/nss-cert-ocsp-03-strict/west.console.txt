@@ -33,7 +33,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec whack --debug-all --impair-retransmits
+ ipsec whack --debug-all --impair retransmits
 west #
  ipsec auto --up nss-cert-ocsp
 002 "nss-cert-ocsp" #1: initiating Main Mode
