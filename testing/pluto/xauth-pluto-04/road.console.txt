@@ -27,7 +27,8 @@ road #
 002 "xauth-road-eastnet-psk" #1: XAUTH: Answering XAUTH challenge with user='use2'
 004 "xauth-road-eastnet-psk" #1: STATE_XAUTH_I1: XAUTH client - awaiting CFG_set {auth=PRESHARED_KEY cipher=3des_cbc_192 integ=sha group=MODP1536}
 002 "xauth-road-eastnet-psk" #1: XAUTH: Successfully Authenticated
-004 "xauth-road-eastnet-psk" #1: STATE_XAUTH_I1: XAUTH client - awaiting CFG_set {auth=PRESHARED_KEY cipher=3des_cbc_192 integ=sha group=MODP1536}
+002 "xauth-road-eastnet-psk" #1: XAUTH completed, ModeCFG skipped as per configuration
+004 "xauth-road-eastnet-psk" #1: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=PRESHARED_KEY cipher=3des_cbc_192 integ=sha group=MODP1536}
 002 "xauth-road-eastnet-psk" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+AGGRESSIVE+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 117 "xauth-road-eastnet-psk" #2: STATE_QUICK_I1: initiate
 004 "xauth-road-eastnet-psk" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive username=use2}
@@ -46,6 +47,12 @@ rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  ipsec whack --trafficstatus
 006 #2: "xauth-road-eastnet-psk", username=use2, type=ESP, add_time=1234567890, inBytes=336, outBytes=336
+road #
+ # note there should NOT be any incomplete IKE SA attempting to do ModeCFG or EVENT_v1_RETRANSMIT
+road #
+ ipsec status |grep STATE
+000 #2: "xauth-road-eastnet-psk":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
+000 #1: "xauth-road-eastnet-psk":500 STATE_AGGR_I2 (sent AI2, ISAKMP SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle; import:admin initiate
 road #
  echo done
 done
