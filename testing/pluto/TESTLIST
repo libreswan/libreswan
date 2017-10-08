@@ -485,6 +485,7 @@ kvmplutotest	x509-pluto-frag-01	good
 kvmplutotest	x509-pluto-frag-02	good
 kvmplutotest	x509-pluto-frag-03	good
 kvmplutotest	x509-pluto-frag-04	good
+kvmplutotest	x509-ikev2-frag-01-ike-aes_gcm	good
 
 kvmplutotest	nat-pluto-01		good
 kvmplutotest	nat-pluto-02		good

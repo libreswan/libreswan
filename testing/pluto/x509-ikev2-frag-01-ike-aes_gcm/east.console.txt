@@ -1,0 +1,39 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ iptables -I INPUT -p udp -m length --length 0x5dc:0xffff -j LOGDROP
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add x509
+002 added connection description "x509"
+east #
+ echo "initdone"
+initdone
+east #
+ grep -e 'fragment number:' -e 'total fragments:' /tmp/pluto.log
+|    fragment number: 1 (0x1)
+|    total fragments: 5 (0x5)
+|    fragment number: 2 (0x2)
+|    total fragments: 5 (0x5)
+|    fragment number: 3 (0x3)
+|    total fragments: 5 (0x5)
+|    fragment number: 4 (0x4)
+|    total fragments: 5 (0x5)
+|    fragment number: 5 (0x5)
+|    total fragments: 5 (0x5)
+|    fragment number: 1 (0x1)
+|    total fragments: 3 (0x3)
+|    fragment number: 2 (0x2)
+|    total fragments: 3 (0x3)
+|    fragment number: 3 (0x3)
+|    total fragments: 3 (0x3)
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
