@@ -216,17 +216,19 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 			fmt_conn_instance(st->st_connection, cib));
 	});
 
-	/* If no DPD, then get out of here */
+	/* DPD should not have ever started? */
 	if (!st->hidden_variables.st_peer_supports_dpd) {
-		DBG(DBG_DPD,
-		    DBG_log("DPD: peer does not support dpd"));
+		/* turn into passert? */
+		pexpect(st->hidden_variables.st_peer_supports_dpd);
+		DBG(DBG_DPD, DBG_log("DPD: peer does not support dpd"));
 		return;
 	}
 
 	/* If there is no state, there can be no DPD */
 	if (!IS_ISAKMP_SA_ESTABLISHED(p1st->st_state)) {
-		DBG(DBG_DPD,
-		    DBG_log("DPD: no phase1 state, so no DPD"));
+		/* turn into passert? */
+		pexpect(IS_ISAKMP_SA_ESTABLISHED(p1st->st_state));
+		DBG(DBG_DPD, DBG_log("DPD: no phase1 state, so no DPD"));
 		return;
 	}
 
@@ -271,9 +273,9 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 	 * and return if it is active recently
 	 */
 	if (eroute_care && st->hidden_variables.st_nat_traversal == LEMPTY &&
-			!was_eroute_idle(st, delay)) {
-		DBG(DBG_DPD,
-		    DBG_log("DPD: out event not sent, phase 2 active"));
+			!was_eroute_idle(st, delay))
+	{
+		DBG(DBG_DPD, DBG_log("DPD: out event not sent, phase 2 active"));
 
 		/* update phase 2 time stamp only */
 		st->st_last_dpd = nw;
