@@ -894,6 +894,61 @@ static stf_status xauth_send_status(struct state *st, int status)
 	return STF_OK;
 }
 
+static bool add_xauth_addresspool(struct connection *c, char *userid,
+		char *addresspool)
+{
+	/* set user defined ip address or pool */
+	char *temp;
+	char single_addresspool[128];
+	bool ret = FALSE;
+	err_t er = NULL;
+	ip_range *pool_range = alloc_thing(ip_range, "pool_range");
+
+	temp = strchr(addresspool, '-');
+
+	if (temp == NULL) {
+		/* convert single ip address to addresspool */
+		sprintf(single_addresspool, "%s-%s", addresspool, addresspool);
+		DBG(DBG_CONTROLMORE,
+				DBG_log("XAUTH: adding single ip addresspool entry "
+					"%s for the conn %s user=%s",
+					single_addresspool, c->name, userid));
+		er = ttorange(single_addresspool, 0, AF_INET, pool_range, TRUE);
+		if (er != NULL) {
+			libreswan_log("XAUTH IP address %s is not valid %s "
+					"user=%s", addresspool, er, userid);
+		}
+	} else {
+		DBG(DBG_CONTROLMORE,
+				DBG_log("XAUTH: adding addresspool entry %s for the conn %s user %s",
+					addresspool, c->name, userid));
+		er = ttorange(addresspool, 0, AF_INET, pool_range, TRUE);
+		if (er != NULL) {
+			libreswan_log("XAUTH IP address %s is not valid %s "
+					"user %s", addresspool, er, userid);
+		}
+	}
+
+	/* if valid install new addresspool */
+	if (pool_range->start.u.v4.sin_addr.s_addr > 0) {
+		/* delete existing pool if exits */
+		if (c->pool != NULL) {
+			rel_lease_addr(c);
+			unreference_addresspool(c);
+		}
+
+		c->pool = install_addresspool(pool_range);
+		if (c->pool != NULL) {
+			reference_addresspool(c);
+			ret = TRUE;
+		}
+	}
+
+	pfreeany(pool_range);
+
+	return ret;
+}
+
 /** Do authentication via /etc/ipsec.d/passwd file using MD5 passwords
  *
  * Structure is one entry per line.
@@ -952,7 +1007,6 @@ static bool do_file_authentication(struct state *st, const char *name,
 		char *connectionname = NULL;
 		char *addresspool = NULL;
 		struct connection *c = st->st_connection;
-		ip_range *pool_range;
 
 		lineno++;
 
@@ -1000,8 +1054,9 @@ static bool do_file_authentication(struct state *st, const char *name,
 		DBG(DBG_CONTROL,
 			DBG_log("XAUTH: found user(%s/%s) pass(%s) connid(%s/%s) addresspool(%s)",
 				userid, name, passwdhash,
-				connectionname == NULL? "" : connectionname, connname,
-				addresspool == NULL? "" : addresspool));
+				connectionname == NULL ? "" : connectionname,
+				connname,
+				addresspool == NULL ? "" : addresspool));
 
 		if (streq(userid, name) &&
 		    (connectionname == NULL || streq(connectionname, connname)))
@@ -1021,49 +1076,24 @@ static bool do_file_authentication(struct state *st, const char *name,
 			win = cp != NULL && streq(cp, passwdhash);
 			/* ??? DBG and real-world code mixed */
 			if (DBGP(DBG_CRYPT)) {
-				DBG_log("XAUTH: checking user(%s:%s) pass %s vs %s", userid, connectionname, cp,
-					passwdhash);
+				DBG_log("XAUTH: %s user(%s:%s) pass %s vs %s",
+						win ? "success" : "fail",
+					userid, connectionname, cp, passwdhash);
 			} else {
-				libreswan_log("XAUTH: checking user(%s:%s) ",
-					      userid, connectionname);
+				libreswan_log("XAUTH: %s user(%s:%s) ",
+					win ? "success" : "fail", userid,
+					connectionname);
 			}
 
-			if (win) {
-
-				if (addresspool != NULL && addresspool[0] != '\0') {
-					/* set user defined ip address or pool */
-					char *temp;
-					char single_addresspool[128];
-					pool_range = alloc_thing(ip_range, "pool_range");
-					if (pool_range != NULL) {
-						temp = strchr(addresspool, '-');
-						if (temp == NULL ) {
-							/* convert single ip address to addresspool */
-							sprintf(single_addresspool, "%s-%s", addresspool, addresspool);
-							DBG(DBG_CONTROLMORE,
-								DBG_log("XAUTH: adding single ip addresspool entry %s for the conn %s ",
-								single_addresspool, c->name));
-							ttorange(single_addresspool, 0, AF_INET, pool_range, TRUE);
-						} else {
-							DBG(DBG_CONTROLMORE,
-								DBG_log("XAUTH: adding addresspool entry %s for the conn %s ",
-								addresspool, c->name));
-							ttorange(addresspool, 0, AF_INET, pool_range, TRUE);
-						}
-						/* if valid install new addresspool */
-						if (pool_range->start.u.v4.sin_addr.s_addr) {
-						    /* delete existing pool if exits */
-							if (c->pool)
-								unreference_addresspool(c);
-							c->pool = install_addresspool(pool_range);
-							reference_addresspool(c);
-						}
-						pfree(pool_range);
-					}
+			if (win && addresspool != NULL &&
+					addresspool[0] != '\0') {
+				if (add_xauth_addresspool(c, userid,
+							addresspool)) {
+					break;
 				}
-				break;
+
+				win = FALSE;
 			}
-			libreswan_log("XAUTH: nope");
 		}
 	}
 
