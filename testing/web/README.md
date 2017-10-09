@@ -1,7 +1,7 @@
 # Example
 
 
-See: http://libreswan.org/results/
+See: http://testing.libreswan.org/
 
 
 # Manual Setup
