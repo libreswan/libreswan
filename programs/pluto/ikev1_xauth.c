@@ -894,57 +894,52 @@ static stf_status xauth_send_status(struct state *st, int status)
 	return STF_OK;
 }
 
-static bool add_xauth_addresspool(struct connection *c, char *userid,
-		char *addresspool)
+static bool add_xauth_addresspool(struct connection *c,
+		const char *userid,
+		const char *addresspool)
 {
 	/* set user defined ip address or pool */
-	char *temp;
-	char single_addresspool[128];
 	bool ret = FALSE;
-	err_t er = NULL;
-	ip_range *pool_range = alloc_thing(ip_range, "pool_range");
+	err_t er;
+	ip_range pool_range;
 
-	temp = strchr(addresspool, '-');
-
-	if (temp == NULL) {
+	if (strchr(addresspool, '-') == NULL) {
 		/* convert single ip address to addresspool */
-		sprintf(single_addresspool, "%s-%s", addresspool, addresspool);
+		char single_addresspool[128];
+
+		snprintf(single_addresspool, sizeof(single_addresspool),
+			"%s-%s",
+			addresspool, addresspool);
 		DBG(DBG_CONTROLMORE,
-				DBG_log("XAUTH: adding single ip addresspool entry "
-					"%s for the conn %s user=%s",
-					single_addresspool, c->name, userid));
-		er = ttorange(single_addresspool, 0, AF_INET, pool_range, TRUE);
-		if (er != NULL) {
-			libreswan_log("XAUTH IP address %s is not valid %s "
-					"user=%s", addresspool, er, userid);
-		}
+			DBG_log("XAUTH: adding single ip addresspool entry %s for the conn %s user=%s",
+				single_addresspool, c->name, userid));
+		er = ttorange(single_addresspool, 0, AF_INET, &pool_range, TRUE);
 	} else {
 		DBG(DBG_CONTROLMORE,
-				DBG_log("XAUTH: adding addresspool entry %s for the conn %s user %s",
-					addresspool, c->name, userid));
-		er = ttorange(addresspool, 0, AF_INET, pool_range, TRUE);
-		if (er != NULL) {
-			libreswan_log("XAUTH IP address %s is not valid %s "
-					"user %s", addresspool, er, userid);
-		}
+			DBG_log("XAUTH: adding addresspool entry %s for the conn %s user %s",
+				addresspool, c->name, userid));
+		er = ttorange(addresspool, 0, AF_INET, &pool_range, TRUE);
 	}
+	if (er != NULL) {
+		libreswan_log("XAUTH IP address %s is not valid %s user=%s",
+			addresspool, er, userid);
+	} else if (pool_range.start.u.v4.sin_addr.s_addr > 0) {
+		/* ??? what is the point of this test? */
 
-	/* if valid install new addresspool */
-	if (pool_range->start.u.v4.sin_addr.s_addr > 0) {
-		/* delete existing pool if exits */
+		/* install new addresspool */
+
+		/* delete existing pool if it exists */
 		if (c->pool != NULL) {
 			rel_lease_addr(c);
 			unreference_addresspool(c);
 		}
 
-		c->pool = install_addresspool(pool_range);
+		c->pool = install_addresspool(&pool_range);
 		if (c->pool != NULL) {
 			reference_addresspool(c);
 			ret = TRUE;
 		}
 	}
-
-	pfreeany(pool_range);
 
 	return ret;
 }
@@ -954,13 +949,14 @@ static bool add_xauth_addresspool(struct connection *c, char *userid,
  * Structure is one entry per line.
  * Each line has fields separated by colons.
  * Empty lines and lines starting with # are ignored.
+ * Whitespace is NOT ignored.
  *
- * There are two forms:
- *	username:passwdhash
- *	username:passwdhash:connectioname
+ * Syntax of an entry:
+ *	username:passwdhash[:connectioname[:addresspool]]
  *
- * The first form (as produced by htpasswd) authorizes any connection.
- * The second is is restricted to the named connection.
+ * If connectionname is present and not empty,
+ * the entry only applies to connections with that name.
+ * Otherwise the entry applies to all connections.
  *
  * Example creation of file with two entries (without connectionname):
  *	htpasswd -c -b /etc/ipsec.d/passwd road roadpass
@@ -976,24 +972,23 @@ static bool add_xauth_addresspool(struct connection *c, char *userid,
 static bool do_file_authentication(struct state *st, const char *name,
 				   const char *password, const char *connname)
 {
-	char pwdfile[PATH_MAX];
+	char pswdpath[PATH_MAX];
 	char line[1024]; /* we hope that this is more than enough */
 	int lineno = 0;
-	FILE *fp;
 	bool win = FALSE;
 
-	snprintf(pwdfile, sizeof(pwdfile), "%s/passwd", lsw_init_options()->confddir);
+	snprintf(pswdpath, sizeof(pswdpath), "%s/passwd", lsw_init_options()->confddir);
 
-	fp = fopen(pwdfile, "r");
+	FILE *fp = fopen(pswdpath, "r");
 	if (fp == NULL) {
 		/* unable to open the password file */
 		libreswan_log(
 			"XAUTH: unable to open password file (%s) for verification",
-			pwdfile);
+			pswdpath);
 		return FALSE;
 	}
 
-	libreswan_log("XAUTH: password file (%s) open.", pwdfile);
+	libreswan_log("XAUTH: password file (%s) open.", pswdpath);
 
 	/** simple stuff read in a line then go through positioning
 	 * userid, passwd and conniectionname at the beginning of each of the
@@ -1024,7 +1019,7 @@ static bool do_file_authentication(struct state *st, const char *name,
 		p = strchr(userid, ':');	/* find end */
 		if (p == NULL) {
 			/* no end: skip line */
-			libreswan_log("XAUTH: %s:%d missing password hash field", pwdfile, lineno);
+			libreswan_log("XAUTH: %s:%d missing password hash field", pswdpath, lineno);
 			continue;
 		}
 
@@ -1038,6 +1033,7 @@ static bool do_file_authentication(struct state *st, const char *name,
 			*p++='\0';     /* terminate string by overwriting : */
 			connectionname = p;
 			p = strchr(connectionname, ':'); /* find end */
+			/* ??? any whitespace is included */
 		}
 
 		if (p != NULL) {
@@ -1045,12 +1041,11 @@ static bool do_file_authentication(struct state *st, const char *name,
 			*p++ ='\0'; /* terminate connectionname string by overwriting : */
 			addresspool = p;
 		}
-		/* set connectionname to NULL if empty */
+
+		/* now connnectionname is terminated; set to NULL if empty */
 		if (connectionname != NULL && connectionname[0] == '\0')
 			connectionname = NULL;
-		/* If connectionname is null, it applies
-		 * to all connections
-		 */
+
 		DBG(DBG_CONTROL,
 			DBG_log("XAUTH: found user(%s/%s) pass(%s) connid(%s/%s) addresspool(%s)",
 				userid, name, passwdhash,
@@ -1058,10 +1053,11 @@ static bool do_file_authentication(struct state *st, const char *name,
 				connname,
 				addresspool == NULL ? "" : addresspool));
 
+		/* If connectionname is null, it applies to all connections */
 		if (streq(userid, name) &&
 		    (connectionname == NULL || streq(connectionname, connname)))
 		{
-			char *cp;
+			const char *cp;
 #if defined(__CYGWIN32__)
 			/* password is in the clear! */
 			cp = password;
@@ -1074,25 +1070,27 @@ static bool do_file_authentication(struct state *st, const char *name,
 			cp = crypt(password, passwdhash);
 #endif
 			win = cp != NULL && streq(cp, passwdhash);
-			/* ??? DBG and real-world code mixed */
-			if (DBGP(DBG_CRYPT)) {
+
+			DBG(DBG_CRYPT,
 				DBG_log("XAUTH: %s user(%s:%s) pass %s vs %s",
-						win ? "success" : "fail",
-					userid, connectionname, cp, passwdhash);
-			} else {
-				libreswan_log("XAUTH: %s user(%s:%s) ",
-					win ? "success" : "fail", userid,
-					connectionname);
-			}
+					win ? "success" : "failure",
+					userid, connectionname, cp, passwdhash));
 
-			if (win && addresspool != NULL &&
-					addresspool[0] != '\0') {
-				if (add_xauth_addresspool(c, userid,
-							addresspool)) {
-					break;
+			libreswan_log("XAUTH: %s user(%s:%s) ",
+				win ? "success" : "failure",
+				userid, connectionname);
+
+			if (win) {
+				if (addresspool != NULL && addresspool[0] != '\0') {
+					/* ??? failure to add addresspool seems like a funny failure */
+					/* ??? should we then keep trying other entries? */
+					if (!add_xauth_addresspool(c, userid,
+								addresspool)) {
+						win = FALSE;
+						continue;	/* try other entries */
+					}
 				}
-
-				win = FALSE;
+				break;	/* we have a winner */
 			}
 		}
 	}
