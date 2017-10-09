@@ -520,7 +520,7 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	{ STATE_XAUTH_R0, STATE_XAUTH_R1,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED,
 	  P(MCFG_ATTR) | P(HASH), P(VID), PT(NONE),
-	  EVENT_NULL, xauth_inR0 }, /*Re-transmit may be done by previous state*/
+	  EVENT_NULL, xauth_inR0 }, /* Re-transmit may be done by previous state */
 
 	{ STATE_XAUTH_R1, STATE_MAIN_R3,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED,
@@ -2274,7 +2274,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 * state machine change as it cannot be determined if the CFG
 		 * payload is "XAUTH OK, no ModeCFG" or "XAUTH OK, expect
 		 * ModeCFG". To the smc, these two cases look identical. So we
-		 * have to an "illegal" state change here for the cause where
+		 * have an ad hoc state change here for the case where
 		 * we have XAUTH but not ModeCFG. We move it to the established
 		 * state, so the regular state machine picks up the Quick Mode.
 		 */
@@ -2283,9 +2283,9 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		    && !st->st_connection->spd.this.modecfg_client
 		    && st->st_state == STATE_XAUTH_I1)
 		{
-			bool aggrmode = (st->st_connection->policy & POLICY_AGGRESSIVE);
+			bool aggrmode = LHAS(st->st_connection->policy, POLICY_AGGRESSIVE_IX);
 
-			libreswan_log("XAUTH completed, ModeCFG skipped as per configuration");
+			libreswan_log("XAUTH completed; ModeCFG skipped as per configuration");
 			change_state(st, aggrmode ? STATE_AGGR_I2 : STATE_MAIN_I4);
 			st->st_msgid_phase15 = v1_MAINMODE_MSGID;
 		}
@@ -2295,10 +2295,12 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			/*
 			 * This md variable is hardly ever set.
 			 * Only deals with v1 <-> v2 switching
-			 * Which will be removed in the near future anyway
+			 * which will be removed in the near future anyway
+			 * (PW 2017 Oct 8)
 			 */
 			DBG(DBG_CONTROL, DBG_log("event_already_set, deleting event"));
-			/* Delete previous retransmission event.
+			/*
+			 * Delete previous retransmission event.
 			 * New event will be scheduled below.
 			 */
 			delete_event(st);
@@ -2347,7 +2349,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 		/* Schedule for whatever timeout is specified */
 		if (!md->event_already_set) {
-			DBG(DBG_CONTROL, DBG_log("event_already_set at reschedule"));
+			DBG(DBG_CONTROL, DBG_log("!event_already_set at reschedule"));
 			unsigned long delay_ms; /* delay is in milliseconds here */
 			enum event_type kind = smc->timeout_event;
 			bool agreed_time = FALSE;
@@ -2355,11 +2357,12 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 			/* fixup in case of state machine jump for xauth without modecfg */
 			if (c->spd.this.xauth_client
-				&& st->hidden_variables.st_xauth_client_done
-				&& !c->spd.this.modecfg_client
-				&& (st->st_state == STATE_MAIN_I4 || st->st_state == STATE_AGGR_I2)) {
-					DBG(DBG_CONTROL, DBG_log("fixup XAUTH without ModeCFG event from EVENT_v1_RETRANSMIT to EVENT_SA_REPLACE"));
-					kind = EVENT_SA_REPLACE;
+			    && st->hidden_variables.st_xauth_client_done
+			    && !c->spd.this.modecfg_client
+			    && (st->st_state == STATE_MAIN_I4 || st->st_state == STATE_AGGR_I2))
+			{
+				DBG(DBG_CONTROL, DBG_log("fixup XAUTH without ModeCFG event from EVENT_v1_RETRANSMIT to EVENT_SA_REPLACE"));
+				kind = EVENT_SA_REPLACE;
 			}
 
 			switch (kind) {

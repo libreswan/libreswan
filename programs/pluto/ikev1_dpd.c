@@ -216,18 +216,16 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 			fmt_conn_instance(st->st_connection, cib));
 	});
 
-	/* DPD should not have ever started? */
+	/* if peer doesn't support DPD, DPD should never have started */
+	pexpect(st->hidden_variables.st_peer_supports_dpd);	/* ??? passert? */
 	if (!st->hidden_variables.st_peer_supports_dpd) {
-		/* turn into passert? */
-		pexpect(st->hidden_variables.st_peer_supports_dpd);
 		DBG(DBG_DPD, DBG_log("DPD: peer does not support dpd"));
 		return;
 	}
 
-	/* If there is no state, there can be no DPD */
+	/* If there is no IKE state, there can be no DPD */
+	pexpect(IS_ISAKMP_SA_ESTABLISHED(p1st->st_state));	/* ??? passert? */
 	if (!IS_ISAKMP_SA_ESTABLISHED(p1st->st_state)) {
-		/* turn into passert? */
-		pexpect(IS_ISAKMP_SA_ESTABLISHED(p1st->st_state));
 		DBG(DBG_DPD, DBG_log("DPD: no phase1 state, so no DPD"));
 		return;
 	}

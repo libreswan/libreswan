@@ -181,7 +181,7 @@ enum event_type {
 	EVENT_v2_LIVENESS,		/* for dead peer detection */
 	EVENT_v2_RELEASE_WHACK,		/* release the whack fd */
 	EVENT_v2_INITIATE_CHILD,	/* initiate a IPsec child */
-	EVENT_v2_SEND_NEXT_IKE,	/* send next IKE message using partent*/
+	EVENT_v2_SEND_NEXT_IKE,		/* send next IKE message using parent */
 	EVENT_RETAIN,			/* don't change the previous event */
 };
 
