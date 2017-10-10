@@ -445,6 +445,11 @@
 /* RFC3948: bytes of zeros, same size as ESP SPI */
 #define NON_ESP_MARKER_SIZE 4
 
+
+/* ICMP type number for neighbor discovery */
+#define ICMP_NEIGHBOR_DISCOVERY 34816
+#define ICMP_NEIGHBOR_SOLICITATION 34560
+
 /* Version numbers - IKEv1 */
 #define ISAKMP_MAJOR_VERSION 0x1
 #define ISAKMP_MINOR_VERSION 0x0

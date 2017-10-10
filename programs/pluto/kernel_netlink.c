@@ -2319,6 +2319,92 @@ static bool netkey_do_command(const struct connection *c, const struct spd_route
 	return invoke_command(verb, verb_suffix, cmd);
 }
 
+/* add bypass policies/holes icmp */
+static bool netlink_bypass_policy(int family, int proto, int port)
+{
+	struct {
+		struct nlmsghdr n;
+		union {
+			struct xfrm_userpolicy_info p;
+			struct xfrm_userpolicy_id id;
+		} u;
+		char data[MAX_NETLINK_DATA_SIZE];
+	} req;
+
+	zero(&req);
+
+	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
+
+	req.n.nlmsg_type = XFRM_MSG_UPDPOLICY;
+	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.u.p)));
+
+	req.u.p.dir = XFRM_POLICY_IN;
+	req.u.p.priority = 1; /* give admin prio 0 as override */
+	req.u.p.action = XFRM_POLICY_ALLOW;
+	req.u.p.share = XFRM_SHARE_ANY;
+
+	req.u.p.lft.soft_byte_limit = XFRM_INF;
+	req.u.p.lft.soft_packet_limit = XFRM_INF;
+	req.u.p.lft.hard_byte_limit = XFRM_INF;
+	req.u.p.lft.hard_packet_limit = XFRM_INF;
+
+	req.u.p.sel.proto = proto;
+	req.u.p.sel.family = family;
+
+	const char* text = "add port bypass";
+
+	if (proto == IPPROTO_ICMPV6) {
+		u_int16_t icmp_type;
+		u_int16_t icmp_code;
+
+		icmp_type = port >> 8;
+		icmp_code = port & 0xFF;
+		req.u.p.sel.sport = htons(icmp_type);
+		req.u.p.sel.dport = htons(icmp_code);
+		req.u.p.sel.sport_mask = 0xffff;
+
+		if (!netlink_policy(&req.n, 1, text))
+			return FALSE;
+
+		req.u.p.dir = XFRM_POLICY_FWD;
+
+		if (!netlink_policy(&req.n, 1, text))
+			return FALSE;
+
+		req.u.p.dir  = XFRM_POLICY_OUT;
+
+		if (!netlink_policy(&req.n, 1, text))
+			return FALSE;
+
+	} else {
+		req.u.p.sel.dport = htons(port);
+		req.u.p.sel.dport_mask = 0xffff;
+
+		if (!netlink_policy(&req.n, 1, text))
+			return FALSE;
+
+		req.u.p.dir  = XFRM_POLICY_OUT;
+
+		req.u.p.sel.sport = htons(port);
+		req.u.p.sel.sport_mask = 0xffff;
+		req.u.p.sel.dport = 0;
+		req.u.p.sel.dport_mask = 0;
+
+		if (!netlink_policy(&req.n, 1, text))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+static bool netlink_v6holes()
+{
+	bool ok = netlink_bypass_policy(AF_INET6, IPPROTO_ICMPV6, ICMP_NEIGHBOR_DISCOVERY);
+	ok &= netlink_bypass_policy(AF_INET6, IPPROTO_ICMPV6, ICMP_NEIGHBOR_SOLICITATION);
+
+	return ok;
+}
+
 const struct kernel_ops netkey_kernel_ops = {
 	.kern_name = "netkey",
 	.type = USE_NETKEY,
@@ -2352,4 +2438,5 @@ const struct kernel_ops netkey_kernel_ops = {
 	.remove_orphaned_holds = NULL, /* only used for klips /proc scanner */
 	.overlap_supported = FALSE,
 	.sha2_truncbug_support = TRUE,
+	.v6holes = netlink_v6holes,
 };

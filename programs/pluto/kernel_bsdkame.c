@@ -1076,4 +1076,5 @@ const struct kernel_ops bsdkame_kernel_ops = {
 	.process_ifaces = bsdkame_process_raw_ifaces,
 	.overlap_supported = FALSE,
 	.sha2_truncbug_support = FALSE,
+	.v6holes = NULL,
 };

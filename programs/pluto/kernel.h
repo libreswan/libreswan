@@ -225,6 +225,7 @@ struct kernel_ops {
 			  struct state *st);
 	void (*process_ifaces)(struct raw_iface *rifaces);
 	bool (*exceptsocket)(int socketfd, int family);
+	bool (*v6holes)();
 };
 
 extern int create_socket(struct raw_iface *ifp, const char *v_name, int port);
