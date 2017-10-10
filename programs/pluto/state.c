@@ -700,7 +700,10 @@ static void release_v2fragments(struct state *st)
 
 		frag = this->next;
 		freeanychunk(this->cipher);
-		freeanychunk(this->plain);
+		/*
+		 * Since THIS->PLAIN is just a pointer into
+		 * THIS->CIPHER do not free it.
+		 */
 		pfree(this);
 	}
 	st->st_v2_rfrags = NULL;
