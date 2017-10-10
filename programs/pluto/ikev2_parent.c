@@ -2801,7 +2801,7 @@ static stf_status ikev2_send_auth(struct connection *c,
 static stf_status ikev2_record_fragment(struct msg_digest *md,
 				      struct isakmp_hdr *hdr,
 				      struct ikev2_generic *oe,
-				      struct ikev2_frag **fragp,
+				      struct v2_ike_tfrag **fragp,
 				      chunk_t *payload,	/* read-only */
 				      unsigned int count, unsigned int total,
 				      const char *desc)
@@ -2885,7 +2885,7 @@ static stf_status ikev2_record_fragment(struct msg_digest *md,
 			return ret;
 	}
 
-	*fragp = alloc_thing(struct ikev2_frag, "ikev2_frag");
+	*fragp = alloc_thing(struct v2_ike_tfrag, "v2_ike_tfrag");
 	(*fragp)->next = NULL;
 	clonetochunk((*fragp)->cipher, frag_stream.start,
 		     pbs_offset(&frag_stream), desc);
@@ -2935,10 +2935,9 @@ static stf_status ikev2_record_fragments(struct msg_digest *md,
 
 	unsigned int count = 0;
 	unsigned int offset = 0;
-	struct ikev2_frag **fragp;
 	int ret = STF_INTERNAL_ERROR;
 
-	for (fragp = &st->st_tfrags; ; fragp = &(*fragp)->next) {
+	for (struct v2_ike_tfrag **fragp = &st->st_v2_tfrags; ; fragp = &(*fragp)->next) {
 		chunk_t cipher;
 
 		passert(*fragp == NULL);

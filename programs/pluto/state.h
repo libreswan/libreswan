@@ -196,6 +196,11 @@ struct ikev2_frag {
 	chunk_t plain;
 };
 
+struct v2_ike_tfrag {
+	struct v2_ike_tfrag *next;
+	chunk_t cipher;
+};
+
 /*
  * internal state that
  * should get copied by god... to the child SA state.
@@ -371,7 +376,7 @@ struct state {
 
 	/* my stuff */
 	chunk_t st_tpacket;                     /* Transmitted packet */
-	struct ikev2_frag *st_tfrags;		/* Transmitted fragments */
+	struct v2_ike_tfrag *st_v2_tfrags;	/* Transmitted fragments */
 
 #ifdef HAVE_LABELED_IPSEC
 	struct xfrm_user_sec_ctx_ike *sec_ctx;

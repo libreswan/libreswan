@@ -708,15 +708,13 @@ static void release_v2fragments(struct state *st)
 	}
 	st->st_v2_rfrags = NULL;
 
-	for (struct ikev2_frag *frag = st->st_tfrags; frag != NULL; ) {
-		struct ikev2_frag *this = frag;
-
+	for (struct v2_ike_tfrag *frag = st->st_v2_tfrags; frag != NULL; ) {
+		struct v2_ike_tfrag *this = frag;
 		frag = this->next;
 		freeanychunk(this->cipher);
-		freeanychunk(this->plain);
 		pfree(this);
 	}
-	st->st_tfrags = NULL;
+	st->st_v2_tfrags = NULL;
 }
 
 static void release_v1fragments(struct state *st)

@@ -1554,9 +1554,7 @@ bool should_fragment_ike_msg(struct state *st, size_t len, bool resending)
 
 static bool send_ikev2_frags(struct state *st, const char *where)
 {
-	struct ikev2_frag *frag;
-
-	for (frag = st->st_tfrags; frag != NULL; frag = frag->next)
+	for (struct v2_ike_tfrag *frag = st->st_v2_tfrags; frag != NULL; frag = frag->next)
 		if (!send_packet(st, where, FALSE,
 				 frag->cipher.ptr, frag->cipher.len, NULL, 0))
 			return FALSE;
@@ -1572,7 +1570,7 @@ static bool send_or_resend_ike_msg(struct state *st, const char *where,
 		return FALSE;
 	}
 
-	if (st->st_tfrags != NULL) {
+	if (st->st_v2_tfrags != NULL) {
 		/* if a V2 packet needs fragmenting it would have already happened */
 		passert(st->st_ikev2);
 		passert(st->st_tpacket.ptr == NULL);
@@ -1627,17 +1625,17 @@ bool record_and_send_ike_msg(struct state *st, pb_stream *pbs, const char *what)
 bool send_ike_msg_without_recording(struct state *st, pb_stream *pbs, const char *where)
 {
 	chunk_t saved_tpacket = st->st_tpacket;
-	struct ikev2_frag *saved_tfrags  = st->st_tfrags;
+	struct v2_ike_tfrag *saved_tfrags  = st->st_v2_tfrags;
 	bool r;
 
-	st->st_tfrags = NULL; /* assume notification and no fragments */
+	st->st_v2_tfrags = NULL; /* assume notification and no fragments */
 
 	setchunk(st->st_tpacket, pbs->start, pbs_offset(pbs));
 	r = send_ike_msg(st, where);
 
 	/* restore the previous transmitted packet to st */
 	st->st_tpacket = saved_tpacket;
-	st->st_tfrags = saved_tfrags;
+	st->st_v2_tfrags = saved_tfrags;
 
 	return r;
 }
