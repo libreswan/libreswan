@@ -2503,37 +2503,40 @@ static stf_status ikev2_reassemble_fragments(struct msg_digest *md,
 	struct state *st = md->st;
 	passert(st->st_v2_rfrags != NULL);
 
+	chunk_t plain[MAX_IKE_FRAGMENTS + 1];
+	passert(elemsof(plain) == elemsof(st->st_v2_rfrags->frags));
 	unsigned int size = 0;
-	for (struct ikev2_frag *frag = st->st_v2_rfrags; frag; frag = frag->next) {
+	for (unsigned i = 1; i <= st->st_v2_rfrags->total; i++) {
+		struct v2_ike_rfrag *frag = &st->st_v2_rfrags->frags[i];
 		/*
 		 * Point PLAIN at the encrypted fragment and then
 		 * decrypt in-place.  After the decryption, PLAIN will
 		 * have been adjusted to just point at the data.
 		 */
-		setchunk(frag->plain, frag->cipher.ptr, frag->cipher.len);
+		setchunk(plain[i], frag->cipher.ptr, frag->cipher.len);
 		stf_status status = ikev2_verify_and_decrypt_sk_payload(
-			md, &frag->plain, frag->iv);
+			md, &plain[i], frag->iv);
 		if (status != STF_OK) {
 			release_fragments(st);
 			return status;
 		}
-		size += frag->plain.len;
+		size += plain[i].len;
 	}
 
 	/* We have all the fragments */
 
 	/* ???? What is this doing? */
-	md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf.isaskf_np = st->st_v2_rfrags->np;
+	md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf.isaskf_np = st->st_v2_rfrags->first_np;
 
 	/* Reassemble fragments in buffer */
 	pexpect(md->raw_packet.ptr == NULL); /* empty */
 	md->raw_packet = alloc_chunk(size, "IKEv2 fragments buffer");
 	unsigned int offset = 0;
-	for (struct ikev2_frag *frag = st->st_v2_rfrags; frag; frag = frag->next) {
-		passert(offset + frag->plain.len <= size);
-		memcpy(md->raw_packet.ptr + offset, frag->plain.ptr,
-		       frag->plain.len);
-		offset += frag->plain.len;
+	for (unsigned i = 1; i <= st->st_v2_rfrags->total; i++) {
+		passert(offset + plain[i].len <= size);
+		memcpy(md->raw_packet.ptr + offset, plain[i].ptr,
+		       plain[i].len);
+		offset += plain[i].len;
 	}
 
 	release_fragments(st);
