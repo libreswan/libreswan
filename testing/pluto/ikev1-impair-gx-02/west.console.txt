@@ -25,30 +25,12 @@ west #
 002 "westnet-eastnet-ipv4-psk" #1: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 217 "westnet-eastnet-ipv4-psk" #1: STATE_MAIN_I2: INVALID_KEY_INFORMATION
 002 "westnet-eastnet-ipv4-psk" #1: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
-217 "westnet-eastnet-ipv4-psk" #1: STATE_MAIN_I2: INVALID_KEY_INFORMATION
-002 "westnet-eastnet-ipv4-psk" #1: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
-217 "westnet-eastnet-ipv4-psk" #1: STATE_MAIN_I2: INVALID_KEY_INFORMATION
-002 "westnet-eastnet-ipv4-psk" #1: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
-217 "westnet-eastnet-ipv4-psk" #1: STATE_MAIN_I2: INVALID_KEY_INFORMATION
-002 "westnet-eastnet-ipv4-psk" #1: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 002 "westnet-eastnet-ipv4-psk" #1: deleting state (STATE_MAIN_I2)
 west #
  echo done
 done
 west #
  grep INVALID_KEY_INFORMATION /tmp/pluto.log
-| complete v1 state transition with INVALID_KEY_INFORMATION
-"westnet-eastnet-ipv4-psk" #1: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
-|    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
-| state transition function for STATE_MAIN_I2 failed: INVALID_KEY_INFORMATION
-| complete v1 state transition with INVALID_KEY_INFORMATION
-"westnet-eastnet-ipv4-psk" #1: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
-|    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
-| state transition function for STATE_MAIN_I2 failed: INVALID_KEY_INFORMATION
-| complete v1 state transition with INVALID_KEY_INFORMATION
-"westnet-eastnet-ipv4-psk" #1: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
-|    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
-| state transition function for STATE_MAIN_I2 failed: INVALID_KEY_INFORMATION
 | complete v1 state transition with INVALID_KEY_INFORMATION
 "westnet-eastnet-ipv4-psk" #1: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 |    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
