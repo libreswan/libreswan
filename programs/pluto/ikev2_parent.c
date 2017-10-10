@@ -2500,50 +2500,43 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 static stf_status ikev2_reassemble_fragments(struct msg_digest *md,
 					     chunk_t *chunk)
 {
-	struct ikev2_frag *frag;
 	struct state *st = md->st;
+	passert(st->st_v2_rfrags != NULL);
 
-	frag = st->st_v2_rfrags;
-	if (frag == NULL) {
-		/* we expected fragments but there were none */
-		/* ??? not sure that this can happen */
-		return STF_FAIL + INVALID_PAYLOAD_TYPE;
-	}
 	unsigned int size = 0;
-	for (; frag; frag = frag->next) {
+	for (struct ikev2_frag *frag = st->st_v2_rfrags; frag; frag = frag->next) {
+		/*
+		 * Point PLAIN at the encrypted fragment and then
+		 * decrypt in-place.  After the decryption, PLAIN will
+		 * have been adjusted to just point at the data.
+		 */
 		setchunk(frag->plain, frag->cipher.ptr, frag->cipher.len);
-
 		stf_status status = ikev2_verify_and_decrypt_sk_payload(
 			md, &frag->plain, frag->iv);
 		if (status != STF_OK) {
 			release_fragments(st);
 			return status;
 		}
-
 		size += frag->plain.len;
 	}
 
 	/* We have all the fragments */
-	md->raw_packet.ptr = alloc_bytes(size, "IKEv2 fragments buffer");
+
+	/* ???? What is this doing? */
+	md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf.isaskf_np = st->st_v2_rfrags->np;
 
 	/* Reassemble fragments in buffer */
-	frag = st->st_v2_rfrags;
-	md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf.isaskf_np = frag->np;
+	pexpect(md->raw_packet.ptr == NULL); /* empty */
+	md->raw_packet = alloc_chunk(size, "IKEv2 fragments buffer");
 	unsigned int offset = 0;
-	do {
-		struct ikev2_frag *old = frag;
-
+	for (struct ikev2_frag *frag = st->st_v2_rfrags; frag; frag = frag->next) {
 		passert(offset + frag->plain.len <= size);
 		memcpy(md->raw_packet.ptr + offset, frag->plain.ptr,
 		       frag->plain.len);
 		offset += frag->plain.len;
-		frag = frag->next;
+	}
 
-		freeanychunk(old->cipher);
-		pfree(old);
-	} while (frag != NULL);
-
-	st->st_v2_rfrags = NULL;
+	release_fragments(st);
 
 	setchunk(*chunk, md->raw_packet.ptr, size);
 
