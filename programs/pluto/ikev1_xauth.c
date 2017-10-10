@@ -1071,7 +1071,7 @@ static bool do_file_authentication(struct state *st, const char *name,
 #endif
 			win = cp != NULL && streq(cp, passwdhash);
 
-			DBG(DBG_CRYPT,
+			DBG(DBG_PRIVATE,
 				DBG_log("XAUTH: %s user(%s:%s) pass %s vs %s",
 					win ? "success" : "failure",
 					userid, connectionname, cp, passwdhash));
