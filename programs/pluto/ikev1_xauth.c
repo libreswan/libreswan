@@ -923,9 +923,7 @@ static bool add_xauth_addresspool(struct connection *c,
 	if (er != NULL) {
 		libreswan_log("XAUTH IP address %s is not valid %s user=%s",
 			addresspool, er, userid);
-	} else if (pool_range.start.u.v4.sin_addr.s_addr > 0) {
-		/* ??? what is the point of this test? */
-
+	} else {
 		/* install new addresspool */
 
 		/* delete existing pool if it exists */
