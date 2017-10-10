@@ -644,6 +644,8 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
 	if (!c->spd.that.key_from_DNS_on_demand)
 		return FALSE;
 
+	/* rest of the function is to log a debug message */
+
 	if (atype != IKEv2_AUTH_RESERVED && !(atype == IKEv2_AUTH_RSA ||
 						atype == IKEv2_AUTH_DIGSIG)) {
 		err1 = " initiator IKEv2 Auth Method mismatched ";
@@ -656,8 +658,6 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
 		err1 = " mismatched ID type, that ID is not a FQDN, IPV4_ADDR, or IPV6_ADDR id type=";
 		err2 = enum_show(&ike_idtype_names, id.kind);
 	}
-
-	if (!IS_LIBUNBOUND)
 
 	DBG(DBG_CONTROLMORE,
 		DBG_log("%s #%lu not fetching ipseckey %s%s remote=%s thatid=%s",
