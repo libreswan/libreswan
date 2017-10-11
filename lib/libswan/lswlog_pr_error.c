@@ -18,24 +18,50 @@
 #include <stdarg.h>
 
 #include <prerror.h>
+#include <secerr.h>
 
 #include "lswlog.h"
 #include "lswalloc.h"
 
+/*
+ * See https://bugzilla.mozilla.org/show_bug.cgi?id=172051
+ */
+
 size_t lswlog_pr_error(struct lswlog *buf)
 {
-	PRInt32 length = PR_GetErrorTextLength();
+	size_t size = 0;
 	int error = PR_GetError(); /* at least 32-bits */
-	if (length == 0) {
-		/*
-		 * NSS sometimes forgets to set the error and/or text?
-		 */
-		return lswlogf(buf, "unknown error (%d 0x%x)", error, error);
+	/* the number */
+	if (IS_SEC_ERROR(error)) {
+		size += lswlogf(buf, "SECERR: %d (0x%x): ",
+				error - SEC_ERROR_BASE,
+				error - SEC_ERROR_BASE);
 	} else {
-		char *text = alloc_things(char, length, "error message");
-		PR_GetErrorText(text);
-		size_t size = lswlogf(buf, "%s (%d 0x%x)", text, error, error);
-		pfree(text);
-		return size;
+		size += lswlogf(buf, "NSS: %d (0x%x): ", error, error);
 	}
+	/*
+	 * NSPR should contain string tables for all known error
+	 * classes.  Query that first.  Should this specify the
+	 * english language?
+	 */
+	const char *text = PR_ErrorToString(error, PR_LANGUAGE_I_DEFAULT);
+	if (text != NULL) {
+		size += lswlogs(buf, text);
+	} else {
+		/*
+		 * Try NSPR directly, is this redundant?  Sometimes
+		 * NSS forgets to set the actual error and this
+		 * handles that case.
+		 */
+		PRInt32 length = PR_GetErrorTextLength();
+		if (length != 0) {
+			char *text = alloc_things(char, length, "error message");
+			PR_GetErrorText(text);
+			size += lswlogs(buf, text);
+			pfree(text);
+		} else {
+			size += lswlogs(buf, "unknown error");
+		}
+	}
+	return size;
 }
