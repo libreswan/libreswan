@@ -2518,6 +2518,8 @@ static stf_status ikev2_reassemble_fragments(struct msg_digest *md,
 		stf_status status = ikev2_verify_and_decrypt_sk_payload(
 			md, &plain[i], frag->iv);
 		if (status != STF_OK) {
+			loglog(RC_LOG_SERIOUS, "fragment %u of %u invalid",
+			       i, st->st_v2_rfrags->total);
 			release_fragments(st);
 			return status;
 		}
