@@ -1451,6 +1451,12 @@ IETF registry enum_names:
          match COMPRESS_PRIVATE_ALG  [trunc]: OK
          short_name 9:  OK
          lswlog_enum_short 9: OK
+   10 -> NULL
+         lswlog_enum 10: OK
+         search NULL: OK
+         match NULL: OK
+         short_name 10:  OK
+         lswlog_enum_short 10: OK
 
   sa_lifetime_names:
     1 -> SA_LIFE_TYPE_SECONDS
@@ -4211,66 +4217,72 @@ IETF registry enum_names:
          match impair-send-no-xauth-r0: OK
          short_name 31:  OK
          lswlog_enum_short 31: OK
-   32 -> impair-send-no-main-r2
+   32 -> impair-drop-xauth-r0
          lswlog_enum 32: OK
-         search impair-send-no-main-r2: OK
-         match impair-send-no-main-r2: OK
+         search impair-drop-xauth-r0: OK
+         match impair-drop-xauth-r0: OK
          short_name 32:  OK
          lswlog_enum_short 32: OK
-   33 -> impair-force-fips
+   33 -> impair-send-no-main-r2
          lswlog_enum 33: OK
-         search impair-force-fips: OK
-         match impair-force-fips: OK
+         search impair-send-no-main-r2: OK
+         match impair-send-no-main-r2: OK
          short_name 33:  OK
          lswlog_enum_short 33: OK
-   34 -> impair-send-key-size-check
+   34 -> impair-force-fips
          lswlog_enum 34: OK
-         search impair-send-key-size-check: OK
-         match impair-send-key-size-check: OK
+         search impair-force-fips: OK
+         match impair-force-fips: OK
          short_name 34:  OK
          lswlog_enum_short 34: OK
-   35 -> impair-send-zero-gx
+   35 -> impair-send-key-size-check
          lswlog_enum 35: OK
-         search impair-send-zero-gx: OK
-         match impair-send-zero-gx: OK
+         search impair-send-key-size-check: OK
+         match impair-send-key-size-check: OK
          short_name 35:  OK
          lswlog_enum_short 35: OK
-   36 -> impair-send-bogus-dcookie
+   36 -> impair-send-zero-gx
          lswlog_enum 36: OK
-         search impair-send-bogus-dcookie: OK
-         match impair-send-bogus-dcookie: OK
+         search impair-send-zero-gx: OK
+         match impair-send-zero-gx: OK
          short_name 36:  OK
          lswlog_enum_short 36: OK
-   37 -> impair-omit-hash-notify
+   37 -> impair-send-bogus-dcookie
          lswlog_enum 37: OK
-         search impair-omit-hash-notify: OK
-         match impair-omit-hash-notify: OK
+         search impair-send-bogus-dcookie: OK
+         match impair-send-bogus-dcookie: OK
          short_name 37:  OK
          lswlog_enum_short 37: OK
-   38 -> impair-ignore-hash-notify
+   38 -> impair-omit-hash-notify
          lswlog_enum 38: OK
-         search impair-ignore-hash-notify: OK
-         match impair-ignore-hash-notify: OK
+         search impair-omit-hash-notify: OK
+         match impair-omit-hash-notify: OK
          short_name 38:  OK
          lswlog_enum_short 38: OK
-   39 -> impair-ignore-hash-notify-resp
+   39 -> impair-ignore-hash-notify
          lswlog_enum 39: OK
-         search impair-ignore-hash-notify-resp: OK
-         match impair-ignore-hash-notify-resp: OK
+         search impair-ignore-hash-notify: OK
+         match impair-ignore-hash-notify: OK
          short_name 39:  OK
          lswlog_enum_short 39: OK
-   40 -> impair-ikev2-exclude-integ-none
+   40 -> impair-ignore-hash-notify-resp
          lswlog_enum 40: OK
-         search impair-ikev2-exclude-integ-none: OK
-         match impair-ikev2-exclude-integ-none: OK
+         search impair-ignore-hash-notify-resp: OK
+         match impair-ignore-hash-notify-resp: OK
          short_name 40:  OK
          lswlog_enum_short 40: OK
-   41 -> impair-ikev2-include-integ-none
+   41 -> impair-ikev2-exclude-integ-none
          lswlog_enum 41: OK
-         search impair-ikev2-include-integ-none: OK
-         match impair-ikev2-include-integ-none: OK
+         search impair-ikev2-exclude-integ-none: OK
+         match impair-ikev2-exclude-integ-none: OK
          short_name 41:  OK
          lswlog_enum_short 41: OK
+   42 -> impair-ikev2-include-integ-none
+         lswlog_enum 42: OK
+         search impair-ikev2-include-integ-none: OK
+         match impair-ikev2-include-integ-none: OK
+         short_name 42:  OK
+         lswlog_enum_short 42: OK
 
 IKEv2 transforms:
          enum_enum_table 1: OK
@@ -4295,8 +4307,8 @@ lswlog_enum_lset_short:
 
   debug 1ffff:
 	<<raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo+whackwatch+private>>
-  impair 3fffffe0000:
-	<<bust-mi2+bust-mr2+sa-creation+die-oninfo+jacob-two-two+allow-null-null+major-version-bump+minor-version-bump+retransmits+send-bogus-payload-flag+send-bogus-isakmp-flag+send-ikev2-ke+send-no-delete+send-no-ikev2-auth+send-no-xauth-r0+send-no-main-r2+force-fips+send-key-size-check+send-zero-gx+send-bogus-dcookie+omit-hash-notify+ignore-hash-notify+ignore-hash-notify-resp+ikev2-exclude-integ-none+ikev2-include-integ-none>>
-  debug+impair 20000030001:
+  impair 7fffffe0000:
+	<<bust-mi2+bust-mr2+sa-creation+die-oninfo+jacob-two-two+allow-null-null+major-version-bump+minor-version-bump+retransmits+send-bogus-payload-flag+send-bogus-isakmp-flag+send-ikev2-ke+send-no-delete+send-no-ikev2-auth+send-no-xauth-r0+drop-xauth-r0+send-no-main-r2+force-fips+send-key-size-check+send-zero-gx+send-bogus-dcookie+omit-hash-notify+ignore-hash-notify+ignore-hash-notify-resp+ikev2-exclude-integ-none+ikev2-include-integ-none>>
+  debug+impair 40000030001:
 	<<raw+private+impair-bust-mi2+impair-ikev2-include-integ-none>>
 

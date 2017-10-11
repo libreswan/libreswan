@@ -1,11 +1,5 @@
 /testing/guestbin/swan-prep
 west #
- echo "initdone"
-initdone
-west #
  PATH/libexec/ipsec/enumcheck | diff -u ../../enumcheck/OUTPUT.enumcheck.txt -
-PATH/libexec/ipsec/enumcheck leak detective found no leaks
-west #
- echo done
-done
+enumcheck: leak detective found no leaks
 

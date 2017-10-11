@@ -1,7 +1,0 @@
-/testing/guestbin/swan-prep
-east #
- # not used
-east #
- echo "initdone"
-initdone
-
