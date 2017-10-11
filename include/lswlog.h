@@ -217,6 +217,8 @@ size_t lswlogf(struct lswlog *log, const char *format, ...) PRINTF_LIKE(2);
 size_t lswlogs(struct lswlog *log, const char *string);
 size_t lswlogl(struct lswlog *log, struct lswlog *buf);
 
+size_t lswlog_pr_error(struct lswlog *log);
+
 /*
  * The logging output streams used by library code.
  *
