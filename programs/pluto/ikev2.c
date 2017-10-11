@@ -771,6 +771,13 @@ static bool ikev2_collect_fragment(struct msg_digest *md, struct state *st)
 		return FALSE;
 	}
 
+	/* if receiving fragments, respond with fragments too */
+	if (!st->st_seen_fragments) {
+		st->st_seen_fragments = TRUE;
+		DBG(DBG_CONTROL,
+		    DBG_log(" updated IKE fragment state to respond using fragments without waiting for re-transmits"));
+	}
+
 	/*
 	 * Since the fragment check above can result in all fragments
 	 * so-far being discarded; always check/fix frags.
@@ -796,12 +803,6 @@ static bool ikev2_collect_fragment(struct msg_digest *md, struct state *st)
 	if (st->st_v2_rfrags->count < st->st_v2_rfrags->total) {
 		return FALSE;
 	}
-
-	/* if receiving fragments, respond with fragments too */
-	st->st_seen_fragments = TRUE;
-
-	DBG(DBG_CONTROL,
-	    DBG_log(" updated IKE fragment state to respond using fragments without waiting for re-transmits"));
 
 	return TRUE;
 }
