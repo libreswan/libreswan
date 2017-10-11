@@ -18,6 +18,8 @@ USE_KLIPS?=true
 BUILD_KLIPS?=true
 BISONOSFLAGS=-g --verbose
 
+USE_LABELED_IPSEC?=true
+
 # Detect linux variants and releases (for now just fedora and assume
 # >= 22).
 ifneq ($(wildcard /etc/fedora-release),)
