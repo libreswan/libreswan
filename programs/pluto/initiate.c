@@ -431,7 +431,8 @@ void restart_connections_by_peer(struct connection *const c)
 		host_addr = c->spd.that.host_addr;
 	}
 
-	if (hp_next == NULL)  {
+	if (c_kind == CK_INSTANCE && hp_next == NULL) {
+		/* in simple cases this is  a dangling hp */
 		DBG(DBG_CONTROL,
 			DBG_log ("no connection to restart after termination"));
 	} else {
