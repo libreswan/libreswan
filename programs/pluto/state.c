@@ -804,9 +804,10 @@ static void flush_pending_children(struct state *pst)
 	struct state *st;
 	/* AA_2016 check is it st or pst ? */
 	FOR_EACH_HASH_ENTRY(st, pst->st_icookie, pst->st_rcookie, {
-			flush_pending_ipsec(pst, st);
-			delete_cryptographic_continuation(st);
-			});
+			if (st->st_clonedfrom == pst->st_serialno) {
+				flush_pending_ipsec(pst, st);
+				delete_cryptographic_continuation(st);
+			}});
 }
 
 static bool send_delete_check(const struct state *st)
