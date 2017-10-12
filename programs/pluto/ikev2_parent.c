@@ -267,8 +267,6 @@ static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
 		struct pluto_crypto_req *r)
 {
 	struct msg_digest *md = cn->pcrc_md;
-	struct state *const st = md->st;
-	struct state *pst;
 	stf_status e = STF_OK;
 	bool only_shared = FALSE;
 
@@ -282,16 +280,34 @@ static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
 		return;
 	}
 
+	/* The state had better still be around.  */
+	struct state *st = state_with_serialno(cn->pcrc_serialno);
+	if (st == NULL) {
+		PEXPECT_LOG("IKEv2 crypto continue failed because sponsoring state #%lu is unknown",
+			    cn->pcrc_serialno);
+		/* XXX: release what? */
+		return;
+	}
+	passert(st != NULL);
 	passert(cn->pcrc_serialno == st->st_serialno);	/* transitional */
 
-	passert(cur_state == NULL);
-	passert(st != NULL);
-
-	pst = IS_CHILD_SA(st) ? state_with_serialno(st->st_clonedfrom) : st;
+	/* and a parent? */
+	struct state *pst = st;
+	if (IS_CHILD_SA(st)) {
+		pst = state_with_serialno(st->st_clonedfrom);
+		if (pst == NULL) {
+			PEXPECT_LOG("IKEv2 crypto continue failed because sponsoring child state #%lu has no parent state #%lu",
+				    st->st_serialno, st->st_clonedfrom);
+			/* XXX: release what? */
+			return;
+		}
+	}
 	passert(pst != NULL);
 
 	passert(st->st_suspended_md == cn->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
+
+	passert(cur_state == NULL);
 	set_cur_state(st);
 
 	st->st_calculating = FALSE;
