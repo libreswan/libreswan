@@ -688,7 +688,6 @@ void ikev2_log_payload_errors(struct ikev2_payload_errors errors, struct state *
 static bool ikev2_check_fragment(struct msg_digest *md, struct state *st)
 {
 	struct ikev2_skf *skf = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
-	struct ikev2_frag *i;
 
 	/* ??? CLANG 3.5 thinks st might be NULL */
 	if (!(st->st_connection->policy & POLICY_IKE_FRAG_ALLOW)) {
@@ -724,9 +723,12 @@ static bool ikev2_check_fragment(struct msg_digest *md, struct state *st)
 		return FALSE;
 	}
 
-	i = st->st_v2_rfrags;
+	if (st->st_v2_rfrags == NULL) {
+		/* first fragment, must be good */
+		return TRUE;
+	}
 
-	if (i != NULL && skf->isaskf_total != i->total) {
+	if (skf->isaskf_total != st->st_v2_rfrags->total) {
 		/*
 		 * total number of fragments changed.
 		 * Either this fragment is wrong or all the
@@ -738,15 +740,10 @@ static bool ikev2_check_fragment(struct msg_digest *md, struct state *st)
 		 * OK: skf->isaskf_total > i->total
 		 * Bad: skf->isaskf_total < i->total
 		 */
-		if (skf->isaskf_total > i->total) {
+		if (skf->isaskf_total > st->st_v2_rfrags->total) {
 			DBG(DBG_CONTROL, DBG_log(
 				"discarding saved fragments because this fragment has larger total"));
-			do {
-				st->st_v2_rfrags = i->next;
-				freeanychunk(i->cipher);
-				pfree(i);
-				i = st->st_v2_rfrags;
-			} while (i != NULL);
+			release_fragments(st);
 			return TRUE;
 		} else {
 			DBG(DBG_CONTROL, DBG_log(
@@ -755,12 +752,11 @@ static bool ikev2_check_fragment(struct msg_digest *md, struct state *st)
 		}
 	}
 
-	for (; i != NULL; i = i->next) {
-		if (i->index == skf->isaskf_number) {
-			DBG(DBG_CONTROL, DBG_log(
-				"ignoring duplicate IKE encrypted fragment"));
-			return FALSE;
-		}
+	passert(skf->isaskf_number < elemsof(st->st_v2_rfrags->frags));
+	if (st->st_v2_rfrags->frags[skf->isaskf_number].cipher.ptr != NULL) {
+		DBG(DBG_CONTROL, DBG_log(
+			    "ignoring duplicate IKE encrypted fragment"));
+		return FALSE;
 	}
 
 	return TRUE;
@@ -770,51 +766,43 @@ static bool ikev2_collect_fragment(struct msg_digest *md, struct state *st)
 {
 	struct ikev2_skf *skf = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
 	pb_stream *e_pbs = &md->chain[ISAKMP_NEXT_v2SKF]->pbs;
-	struct ikev2_frag *frag, **i;
-	int num_frags;
 
-	if (!ikev2_check_fragment(md, st))
+	if (!ikev2_check_fragment(md, st)) {
 		return FALSE;
+	}
 
-	frag = alloc_thing(struct ikev2_frag, "Incoming ikev2_frag");
-	frag->np = skf->isaskf_np;
-	frag->index = skf->isaskf_number;
-	frag->total = skf->isaskf_total;
+	/* if receiving fragments, respond with fragments too */
+	if (!st->st_seen_fragments) {
+		st->st_seen_fragments = TRUE;
+		DBG(DBG_CONTROL,
+		    DBG_log(" updated IKE fragment state to respond using fragments without waiting for re-transmits"));
+	}
+
+	/*
+	 * Since the fragment check above can result in all fragments
+	 * so-far being discarded; always check/fix frags.
+	 */
+	if (st->st_v2_rfrags == NULL) {
+		st->st_v2_rfrags = alloc_thing(struct v2_ike_rfrags, "incomming v2_ike_rfrags");
+		st->st_v2_rfrags->total = skf->isaskf_total;
+	}
+
+	passert(skf->isaskf_number < elemsof(st->st_v2_rfrags->frags));
+	struct v2_ike_rfrag *frag = &st->st_v2_rfrags->frags[skf->isaskf_number];
+	passert(frag->cipher.ptr == NULL);
 	frag->iv = e_pbs->cur - md->packet_pbs.start;
 	clonetochunk(frag->cipher, md->packet_pbs.start,
 		     e_pbs->roof - md->packet_pbs.start,
 		     "incoming IKEv2 encrypted fragment");
 
-	/*
-	 * Loop for two purposes:
-	 * - Add frag into ordered linked list
-	 * - set num_frags to length of the list
-	 */
-	num_frags = 0;
-	for (i = &st->st_v2_rfrags; ; i = &(*i)->next) {
-		if (frag != NULL) {
-			/* Still looking for a place to insert frag */
-			if (*i == NULL || (*i)->index > frag->index) {
-				frag->next = *i;
-				*i = frag;
-				frag = NULL;
-			}
-		}
-
-		if (*i == NULL)
-			break;
-
-		num_frags++;
+	if (skf->isaskf_number == 1) {
+		st->st_v2_rfrags->first_np = skf->isaskf_np;
 	}
 
-	if (num_frags < skf->isaskf_total)
+	st->st_v2_rfrags->count++;
+	if (st->st_v2_rfrags->count < st->st_v2_rfrags->total) {
 		return FALSE;
-
-	/* if receiving fragments, respond with fragments too */
-	st->st_seen_fragments = TRUE;
-
-	DBG(DBG_CONTROL,
-	    DBG_log(" updated IKE fragment state to respond using fragments without waiting for re-transmits"));
+	}
 
 	return TRUE;
 }

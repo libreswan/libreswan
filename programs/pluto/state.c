@@ -695,18 +695,14 @@ static void release_v2fragments(struct state *st)
 {
 	passert(st->st_ikev2);
 
-	for (struct ikev2_frag *frag = st->st_v2_rfrags; frag != NULL; ) {
-		struct ikev2_frag *this = frag;
-
-		frag = this->next;
-		freeanychunk(this->cipher);
-		/*
-		 * Since THIS->PLAIN is just a pointer into
-		 * THIS->CIPHER do not free it.
-		 */
-		pfree(this);
+	if (st->st_v2_rfrags != NULL) {
+		for (unsigned i = 0; i < elemsof(st->st_v2_rfrags->frags); i++) {
+			struct v2_ike_rfrag *frag = &st->st_v2_rfrags->frags[i];
+			freeanychunk(frag->cipher);
+		}
+		pfree(st->st_v2_rfrags);
+		st->st_v2_rfrags = NULL;
 	}
-	st->st_v2_rfrags = NULL;
 
 	for (struct v2_ike_tfrag *frag = st->st_v2_tfrags; frag != NULL; ) {
 		struct v2_ike_tfrag *this = frag;

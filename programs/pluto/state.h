@@ -185,15 +185,23 @@ struct ike_frag {
 	size_t size;
 };
 
-struct ikev2_frag {
-	struct ikev2_frag *next;
+struct v2_ike_rfrag {
 	chunk_t cipher;
-	/* the rest are only used in re-assembly */
-	int np;
-	int index;
-	int total;
 	unsigned int iv;
-	chunk_t plain;
+};
+
+struct v2_ike_rfrags {
+	unsigned total;
+	unsigned count;
+	/*
+	 * Next-Payload from first fragment.
+	 */
+	int first_np;
+	/*
+	 * For simplicity, index by fragment number which is 1-based;
+	 * leaving element 0 empty.
+	 */
+	struct v2_ike_rfrag frags[MAX_IKE_FRAGMENTS + 1];
 };
 
 struct v2_ike_tfrag {
@@ -283,7 +291,7 @@ struct state {
 
 	/* collected received fragments */
 	struct ike_frag *st_v1_rfrags;
-	struct ikev2_frag *st_v2_rfrags;
+	struct v2_ike_rfrags *st_v2_rfrags;
 
 	struct trans_attrs st_oakley;
 

@@ -64,6 +64,8 @@ OBJS += debug_enum_names.o
 OBJS += lswlog.o
 OBJS += lswlog_dbg.o
 OBJS += libreswan_DBG_dump.o
+OBJS += lswlog_pr_error.o
+OBJS += lswlog_source_line.o
 
 # Crypto code:
 #

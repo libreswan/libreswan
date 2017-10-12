@@ -398,6 +398,7 @@ void restart_connections_by_peer(struct connection *const c)
 
 	struct host_pair *hp = c->host_pair;
 	enum connection_kind c_kind  = c->kind;
+	struct connection *hp_next = hp->connections->hp_next;
 
 	pexpect(hp != NULL);	/* ??? why would this happen? */
 	if (hp == NULL)
@@ -430,11 +431,17 @@ void restart_connections_by_peer(struct connection *const c)
 		host_addr = c->spd.that.host_addr;
 	}
 
-	for (d = hp->connections; d != NULL; d = d->hp_next) {
-		if (same_host(dnshostname, &host_addr,
-				d->dnshostname, &d->spd.that.host_addr))
-			initiate_connection(d->name, NULL_FD, LEMPTY,
-					pcim_demand_crypto, NULL);
+	if (c_kind == CK_INSTANCE && hp_next == NULL) {
+		/* in simple cases this is  a dangling hp */
+		DBG(DBG_CONTROL,
+			DBG_log ("no connection to restart after termination"));
+	} else {
+		for (d = hp->connections; d != NULL; d = d->hp_next) {
+			if (same_host(dnshostname, &host_addr,
+					d->dnshostname, &d->spd.that.host_addr))
+				initiate_connection(d->name, NULL_FD, LEMPTY,
+						pcim_demand_crypto, NULL);
+		}
 	}
 	pfreeany(dnshostname);
 }

@@ -267,8 +267,6 @@ static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
 		struct pluto_crypto_req *r)
 {
 	struct msg_digest *md = cn->pcrc_md;
-	struct state *const st = md->st;
-	struct state *pst;
 	stf_status e = STF_OK;
 	bool only_shared = FALSE;
 
@@ -282,16 +280,34 @@ static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
 		return;
 	}
 
+	/* The state had better still be around.  */
+	struct state *st = state_with_serialno(cn->pcrc_serialno);
+	if (st == NULL) {
+		PEXPECT_LOG("IKEv2 crypto continue failed because sponsoring state #%lu is unknown",
+			    cn->pcrc_serialno);
+		/* XXX: release what? */
+		return;
+	}
+	passert(st != NULL);
 	passert(cn->pcrc_serialno == st->st_serialno);	/* transitional */
 
-	passert(cur_state == NULL);
-	passert(st != NULL);
-
-	pst = IS_CHILD_SA(st) ? state_with_serialno(st->st_clonedfrom) : st;
+	/* and a parent? */
+	struct state *pst = st;
+	if (IS_CHILD_SA(st)) {
+		pst = state_with_serialno(st->st_clonedfrom);
+		if (pst == NULL) {
+			PEXPECT_LOG("IKEv2 crypto continue failed because sponsoring child state #%lu has no parent state #%lu",
+				    st->st_serialno, st->st_clonedfrom);
+			/* XXX: release what? */
+			return;
+		}
+	}
 	passert(pst != NULL);
 
 	passert(st->st_suspended_md == cn->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
+
+	passert(cur_state == NULL);
 	set_cur_state(st);
 
 	st->st_calculating = FALSE;
@@ -618,51 +634,52 @@ static bool v2_check_auth(enum ikev2_auth_method atype,
 
 static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
 {
-	struct id id = st->st_connection->spd.that.id;
 	const struct connection *c = st->st_connection;
-	const char *err1 = "%dnsondemand";
-	const char *err2 = "";
-	char thatid[IDTOA_BUF];
-	ipstr_buf ra;
+	struct id id = st->st_connection->spd.that.id;
 
-	if (c->spd.that.key_from_DNS_on_demand &&
-			c->spd.that.authby == AUTH_RSASIG &&
-			(id.kind == ID_FQDN ||
-			 id.kind == ID_IPV4_ADDR ||
-			 id.kind == ID_IPV6_ADDR)) {
-		if (atype == IKEv2_AUTH_RESERVED) {
-			return TRUE; /* called from the initiator, success */
-		} else if (atype == IKEv2_AUTH_DIGSIG) {
-			return TRUE; /* success */
-		} else if (atype == IKEv2_AUTH_RSA) {
-			return TRUE; /* success */
-		}
-	}
-
-	idtoa(&id, thatid, sizeof(thatid));
 
 	if (!c->spd.that.key_from_DNS_on_demand)
 		return FALSE;
 
-	/* rest of the function is to log a debug message */
-
-	if (atype != IKEv2_AUTH_RESERVED && !(atype == IKEv2_AUTH_RSA ||
-						atype == IKEv2_AUTH_DIGSIG)) {
-		err1 = " initiator IKEv2 Auth Method mismatched ";
-		err2 = enum_name(&ikev2_auth_names, atype);
+	if (c->spd.that.authby == AUTH_RSASIG &&
+	    (id.kind == ID_FQDN ||
+	     id.kind == ID_IPV4_ADDR ||
+	     id.kind == ID_IPV6_ADDR))
+{
+		switch (atype) {
+		case IKEv2_AUTH_RESERVED:
+		case IKEv2_AUTH_DIGSIG:
+		case IKEv2_AUTH_RSA:
+			return TRUE; /* success */
+		default:
+			break;	/*  failure */
+		}
 	}
 
-	if (id.kind != ID_FQDN &&
-			id.kind != ID_IPV4_ADDR &&
-			id.kind != ID_IPV6_ADDR) {
-		err1 = " mismatched ID type, that ID is not a FQDN, IPV4_ADDR, or IPV6_ADDR id type=";
-		err2 = enum_show(&ike_idtype_names, id.kind);
-	}
+	DBG(DBG_CONTROLMORE, {
+		const char *err1 = "%dnsondemand";
+		const char *err2 = "";
 
-	DBG(DBG_CONTROLMORE,
+		if (atype != IKEv2_AUTH_RESERVED && !(atype == IKEv2_AUTH_RSA ||
+							atype == IKEv2_AUTH_DIGSIG)) {
+			err1 = " initiator IKEv2 Auth Method mismatched ";
+			err2 = enum_name(&ikev2_auth_names, atype);
+		}
+
+		if (id.kind != ID_FQDN &&
+				id.kind != ID_IPV4_ADDR &&
+				id.kind != ID_IPV6_ADDR) {
+			err1 = " mismatched ID type, that ID is not a FQDN, IPV4_ADDR, or IPV6_ADDR id type=";
+			err2 = enum_show(&ike_idtype_names, id.kind);
+		}
+
+		char thatid[IDTOA_BUF];
+		ipstr_buf ra;
+		idtoa(&id, thatid, sizeof(thatid));
 		DBG_log("%s #%lu not fetching ipseckey %s%s remote=%s thatid=%s",
 			c->name, st->st_serialno,
-			err1, err2, ipstr(&st->st_remoteaddr, &ra), thatid));
+			err1, err2, ipstr(&st->st_remoteaddr, &ra), thatid);
+	});
 	return FALSE;
 }
 
@@ -2503,37 +2520,42 @@ static stf_status ikev2_reassemble_fragments(struct msg_digest *md,
 	struct state *st = md->st;
 	passert(st->st_v2_rfrags != NULL);
 
+	chunk_t plain[MAX_IKE_FRAGMENTS + 1];
+	passert(elemsof(plain) == elemsof(st->st_v2_rfrags->frags));
 	unsigned int size = 0;
-	for (struct ikev2_frag *frag = st->st_v2_rfrags; frag; frag = frag->next) {
+	for (unsigned i = 1; i <= st->st_v2_rfrags->total; i++) {
+		struct v2_ike_rfrag *frag = &st->st_v2_rfrags->frags[i];
 		/*
 		 * Point PLAIN at the encrypted fragment and then
 		 * decrypt in-place.  After the decryption, PLAIN will
 		 * have been adjusted to just point at the data.
 		 */
-		setchunk(frag->plain, frag->cipher.ptr, frag->cipher.len);
+		setchunk(plain[i], frag->cipher.ptr, frag->cipher.len);
 		stf_status status = ikev2_verify_and_decrypt_sk_payload(
-			md, &frag->plain, frag->iv);
+			md, &plain[i], frag->iv);
 		if (status != STF_OK) {
+			loglog(RC_LOG_SERIOUS, "fragment %u of %u invalid",
+			       i, st->st_v2_rfrags->total);
 			release_fragments(st);
 			return status;
 		}
-		size += frag->plain.len;
+		size += plain[i].len;
 	}
 
 	/* We have all the fragments */
 
 	/* ???? What is this doing? */
-	md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf.isaskf_np = st->st_v2_rfrags->np;
+	md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf.isaskf_np = st->st_v2_rfrags->first_np;
 
 	/* Reassemble fragments in buffer */
 	pexpect(md->raw_packet.ptr == NULL); /* empty */
 	md->raw_packet = alloc_chunk(size, "IKEv2 fragments buffer");
 	unsigned int offset = 0;
-	for (struct ikev2_frag *frag = st->st_v2_rfrags; frag; frag = frag->next) {
-		passert(offset + frag->plain.len <= size);
-		memcpy(md->raw_packet.ptr + offset, frag->plain.ptr,
-		       frag->plain.len);
-		offset += frag->plain.len;
+	for (unsigned i = 1; i <= st->st_v2_rfrags->total; i++) {
+		passert(offset + plain[i].len <= size);
+		memcpy(md->raw_packet.ptr + offset, plain[i].ptr,
+		       plain[i].len);
+		offset += plain[i].len;
 	}
 
 	release_fragments(st);
