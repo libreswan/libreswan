@@ -463,8 +463,21 @@ static struct state_hash_table statetable = {
 #define FOR_EACH_ENTRY(ST, I, CODE) \
 	FOR_EACH_STATE_ENTRY(ST, statetable.entries[I], CODE)
 
-#define FOR_EACH_HASH_ENTRY(ST, ICOOKIE, RCOOKIE, CODE) \
-	FOR_EACH_HASH_BY_STATE_COOKIES_ENTRY(ST, statetable, ICOOKIE, RCOOKIE, CODE)
+/*
+ * Iterate over all entries with matching cookies.
+ */
+#define FOR_EACH_ENTRY_WITH_COOKIE(ST, ICOOKIE, RCOOKIE, CODE)		\
+	do {								\
+		struct state_entry *ST##list;				\
+		ST##list = *hash_by_state_cookies(&statetable,		\
+						  ICOOKIE, RCOOKIE);	\
+		FOR_EACH_STATE_ENTRY(ST, ST##list, {			\
+			if (!memeq(ICOOKIE, ST->st_icookie, COOKIE_SIZE) || \
+			    !memeq(RCOOKIE, ST->st_rcookie, COOKIE_SIZE)) \
+				continue;				\
+			CODE						\
+		});							\
+	} while (0)
 
 /*
  * Get a state object.
@@ -747,7 +760,7 @@ void ikev2_expire_unused_parent(struct state *pst)
 	if (pst == NULL || !IS_PARENT_SA_ESTABLISHED(pst))
 		return; /* only deal with established parent SA */
 
-	FOR_EACH_HASH_ENTRY(st, pst->st_icookie, pst->st_rcookie, {
+	FOR_EACH_ENTRY_WITH_COOKIE(st, pst->st_icookie, pst->st_rcookie, {
 			if (st->st_clonedfrom == pst->st_serialno)
 				return;
 			});
@@ -803,7 +816,7 @@ static void flush_pending_children(struct state *pst)
 {
 	struct state *st;
 	/* AA_2016 check is it st or pst ? */
-	FOR_EACH_HASH_ENTRY(st, pst->st_icookie, pst->st_rcookie, {
+	FOR_EACH_ENTRY_WITH_COOKIE(st, pst->st_icookie, pst->st_rcookie, {
 			if (st->st_clonedfrom == pst->st_serialno) {
 				flush_pending_ipsec(pst, st);
 				delete_cryptographic_continuation(st);
@@ -1535,10 +1548,8 @@ struct state *find_state_ikev1(const u_char *icookie,
 			       msgid_t /*network order*/ msgid)
 {
 	struct state *st;
-	FOR_EACH_HASH_ENTRY(st, icookie, rcookie, {
-		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
-		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE) &&
-		    !st->st_ikev2) {
+	FOR_EACH_ENTRY_WITH_COOKIE(st, icookie, rcookie, {
+		if (!st->st_ikev2) {
 			DBG(DBG_CONTROL,
 			    DBG_log("v1 peer and cookies match on #%lu, provided msgid %08" PRIx32 " == %08" PRIx32,
 				    st->st_serialno,
@@ -1570,10 +1581,8 @@ struct state *find_state_ikev2_parent(const u_char *icookie,
 				      const u_char *rcookie)
 {
 	struct state *st;
-	FOR_EACH_HASH_ENTRY(st, icookie, rcookie, {
-		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
-		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE) &&
-		    st->st_ikev2 &&
+	FOR_EACH_ENTRY_WITH_COOKIE(st, icookie, rcookie, {
+		if (st->st_ikev2 &&
 		    !IS_CHILD_SA(st)) {
 			DBG(DBG_CONTROL,
 			    DBG_log("parent v2 peer and cookies match on #%lu",
@@ -1633,10 +1642,8 @@ struct state *find_state_ikev2_child(const u_char *icookie,
 				     msgid_t msgid)
 {
 	struct state *st;
-	FOR_EACH_HASH_ENTRY(st, icookie, rcookie, {
-		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
-		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE) &&
-		    st->st_ikev2 &&
+	FOR_EACH_ENTRY_WITH_COOKIE(st, icookie, rcookie, {
+		if (st->st_ikev2 &&
 		    st->st_msgid == msgid) {
 			DBG(DBG_CONTROL,
 			    DBG_log("v2 peer, cookies and msgid match on #%lu",
@@ -1668,10 +1675,8 @@ struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
 					       ipsec_spi_t spi)
 {
 	struct state *st;
-	FOR_EACH_HASH_ENTRY(st, icookie, rcookie, {
-		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
-		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE) &&
-		    st->st_ikev2 && IS_CHILD_SA(st)) {
+	FOR_EACH_ENTRY_WITH_COOKIE(st, icookie, rcookie, {
+		if (st->st_ikev2 && IS_CHILD_SA(st)) {
 			struct ipsec_proto_info *pr;
 
 			switch (protoid) {
@@ -1717,9 +1722,7 @@ struct state *ikev1_find_info_state(const u_char *icookie,
 			      msgid_t /* network order */ msgid)
 {
 	struct state *st;
-	FOR_EACH_HASH_ENTRY(st, icookie, rcookie, {
-		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
-		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE)) {
+	FOR_EACH_ENTRY_WITH_COOKIE(st, icookie, rcookie, {
 			DBG(DBG_CONTROL,
 			    DBG_log("peer and cookies match on #%lu; msgid=%08" PRIx32 " st_msgid=%08" PRIx32 " st_msgid_phase15=%08" PRIx32,
 				    st->st_serialno,
@@ -1730,8 +1733,7 @@ struct state *ikev1_find_info_state(const u_char *icookie,
 			     msgid == st->st_msgid_phase15) ||
 			    msgid == st->st_msgid)
 				break;
-		}
-	});
+		});
 
 	DBG(DBG_CONTROL, {
 		    if (st == NULL) {
@@ -2589,7 +2591,7 @@ void delete_my_family(struct state *pst, bool v2_responder_state)
 	struct state *st;
 
 	passert(!IS_CHILD_SA(pst));	/* we had better be a parent */
-	FOR_EACH_HASH_ENTRY(st, pst->st_icookie, pst->st_rcookie, {
+	FOR_EACH_ENTRY_WITH_COOKIE(st, pst->st_icookie, pst->st_rcookie, {
 		if (st->st_clonedfrom == pst->st_serialno) {
 			if (v2_responder_state)
 				change_state(st, STATE_CHILDSA_DEL);
