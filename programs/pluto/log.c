@@ -295,7 +295,8 @@ void lswlog_log_errno(int e, const char *prefix, const char *message, ...)
 		va_start(args, message);
 		lswlogvf(buf, message, args);
 		va_end(args);
-		lswlogf(buf, ". Errno %d: %s\n", e, strerror(e));
+		lswlogs(buf, ".");
+		lswlog_errno(buf, e);
 		lswlog_to_error_stream(buf);
 	}
 }

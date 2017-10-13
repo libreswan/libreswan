@@ -224,6 +224,8 @@ size_t lswlog_source_line(struct lswlog *log, const char *func,
 			  const char *file, unsigned long line);
 /* <string without binary characters> */
 size_t lswlog_sanitized(struct lswlog *log, const char *string);
+/* _Errno E: <strerror(E)> */
+size_t lswlog_errno(struct lswlog *log, int e);
 
 /*
  * The logging output streams used by library code.
