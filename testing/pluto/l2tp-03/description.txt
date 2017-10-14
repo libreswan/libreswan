@@ -1,3 +1,0 @@
-This tests the most basic L2TP configuration --- 2 clients behind
-a NAT, and a server.
-

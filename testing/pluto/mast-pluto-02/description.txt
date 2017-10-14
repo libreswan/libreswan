@@ -1,4 +1,0 @@
-Basic pluto test using mast0 devices only
-
-This tests a /32<->/32 host to host connection between east and west.
-
