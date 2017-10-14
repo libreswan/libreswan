@@ -61,7 +61,7 @@ static struct state_hash_table icookie_hash_table = {
 	.name = "icookie hash table",
 };
 
-void hash_icookie(struct state *st)
+static void hash_icookie(struct state *st)
 {
 	insert_by_state_cookies(&icookie_hash_table, &st->st_icookie_hash_entry,
 				st->st_icookie, zero_cookie);
@@ -79,9 +79,8 @@ struct state_entry *icookie_chain(const u_char *icookie)
  * The hash is purely based on the icookie and rcookie.
  * Each has chain is a doubly linked list.
  *
- * The phase 1 initiator does does not at first know the
- * responder's cookie, so the state will have to be rehashed
- * when that becomes known.
+ * The IKEv2 initial initiator not know the responder's cookie, so the
+ * state will have to be rehashed when that becomes known.
  *
  * In IKEv2, cookies are renamed IKE SA SPIs.
  *
@@ -93,3 +92,19 @@ struct state_entry *icookie_chain(const u_char *icookie)
 struct state_hash_table statetable = {
 	.name = "state hash table",
 };
+
+
+void add_state_to_db(struct state *st)
+{
+	/* back-link the hash entry.  */
+	st->st_hash_entry.state = st;
+	st->st_icookie_hash_entry.state = st;
+
+	insert_by_state_cookies(&statetable, &st->st_hash_entry,
+				st->st_icookie, st->st_rcookie);
+	/*
+	 * Also insert it into the icookie table.  Should be more
+	 * selective about when this is done.
+	 */
+	hash_icookie(st);
+}

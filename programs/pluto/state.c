@@ -455,10 +455,6 @@ struct state *new_state(void)
 
 	st->st_xauth = NULL;
 
-	/* back-link the hash entry.  */
-	st->st_hash_entry.state = st;
-	st->st_icookie_hash_entry.state = st;
-
 	anyaddr(AF_INET, &st->hidden_variables.st_nat_oa);
 	anyaddr(AF_INET, &st->hidden_variables.st_natd);
 
@@ -588,13 +584,8 @@ void insert_state(struct state *st)
 	DBG(DBG_CONTROL,
 	    DBG_log("inserting state object #%lu",
 		    st->st_serialno))
-	insert_by_state_cookies(&statetable, &st->st_hash_entry,
-				st->st_icookie, st->st_rcookie);
-	/*
-	 * Also insert it into the icookie table.  Should be more
-	 * selective about when this is done.
-	 */
-	hash_icookie(st);
+
+	add_state_to_db(st);
 
 	/*
 	 * Ensure that somebody is in charge of killing this state:

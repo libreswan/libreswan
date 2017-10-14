@@ -18,12 +18,13 @@
 
 #include "state_entry.h"
 
+void add_state_to_db(struct state *st);
+
 /*
  * XXX: all of these should not be public.
  */
 
 extern struct state_hash_table statetable;
-extern void hash_icookie(struct state *st);
 extern struct state_entry *icookie_chain(const uint8_t *icookie);
 
 /*
