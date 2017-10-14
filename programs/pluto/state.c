@@ -551,27 +551,14 @@ struct state *state_with_parent_msgid_expect(so_serial_t psn, msgid_t st_msgid,
 }
 
 /*
- * Find the state object with this serial number.
- * This allows state object references that don't turn into dangerous
- * dangling pointers: reference a state by its serial number.
- * Returns NULL if there is no such state.
- * If this turns out to be a significant CPU hog, it could be
- * improved to use a hash table rather than sequential seartch.
+ * Find the state object with this serial number.  This allows state
+ * object references that don't turn into dangerous dangling pointers:
+ * reference a state by its serial number.  Returns NULL if there is
+ * no such state.
  */
 struct state *state_with_serialno(so_serial_t sn)
 {
-	if (sn >= SOS_FIRST) {
-		int i;
-
-		for (i = 0; i < STATE_TABLE_SIZE; i++) {
-			struct state *st;
-			FOR_EACH_ENTRY(st, i, {
-				if (st->st_serialno == sn)
-					return st;
-			});
-		}
-	}
-	return NULL;
+	return state_by_serialno(sn);
 }
 
 /*

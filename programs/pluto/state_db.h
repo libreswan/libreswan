@@ -21,6 +21,8 @@
 void add_state_to_db(struct state *st);
 void del_state_from_db(struct state *st);
 
+struct state *state_by_serialno(so_serial_t serialno);
+
 /*
  * XXX: all of these should not be public.
  */

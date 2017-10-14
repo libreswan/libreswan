@@ -21,6 +21,35 @@
 #include "lswlog.h"
 #include "cookie.h"
 
+/*
+ * A table hashed by serialno.
+ */
+
+static struct state_hash_table state_serialno_table = {
+	.name = "state serial table",
+};
+
+static struct state_entry **serialno_entries(so_serial_t serialno)
+{
+	return state_entries_by_hash(&state_serialno_table,
+				     serialno % STATE_TABLE_SIZE);
+}
+
+struct state *state_by_serialno(so_serial_t serialno)
+{
+	struct state *st;
+	FOR_EACH_STATE_ENTRY(st, *serialno_entries(serialno), {
+			if (st->st_serialno == serialno) {
+				return st;
+			}
+		});
+	return NULL;
+}
+
+/*
+ * A table hashed by icookie:rcookie.
+ */
+
 struct state_entry **hash_by_state_cookies(struct state_hash_table *table,
 					   const uint8_t *icookie,
 					   const uint8_t *rcookie)
@@ -93,13 +122,15 @@ struct state_hash_table statetable = {
 	.name = "state hash table",
 };
 
-
 void add_state_to_db(struct state *st)
 {
 	/* back-link the hash entry.  */
+	st->st_serialno_hash_entry.state = st;
 	st->st_hash_entry.state = st;
 	st->st_icookie_hash_entry.state = st;
 
+	insert_state_entry(serialno_entries(st->st_serialno),
+			   &st->st_serialno_hash_entry);
 	insert_by_state_cookies(&statetable, &st->st_hash_entry,
 				st->st_icookie, st->st_rcookie);
 	/*
@@ -111,6 +142,7 @@ void add_state_to_db(struct state *st)
 
 void del_state_from_db(struct state *st)
 {
+	remove_state_entry(&st->st_serialno_hash_entry);
 	remove_state_entry(&st->st_hash_entry);
 	remove_state_entry(&st->st_icookie_hash_entry);
 }
