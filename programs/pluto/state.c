@@ -630,18 +630,6 @@ void rehash_state(struct state *st, const u_char *icookie,
 }
 
 /*
- * unlink a state object from the hash table, but don't free it
- */
-static void unhash_state(struct state *st)
-{
-	DBG(DBG_CONTROL,
-	    DBG_log("unhashing state object #%lu",
-		    st->st_serialno));
-	remove_state_entry(&st->st_hash_entry);
-	remove_state_entry(&st->st_icookie_hash_entry);
-}
-
-/*
  * Free the Whack socket file descriptor.
  * This has the side effect of telling Whack that we're done.
  */
@@ -1012,7 +1000,7 @@ void delete_state(struct state *st)
 	/*
 	 * effectively, this deletes any ISAKMP SA that this state represents
 	 */
-	unhash_state(st);
+	del_state_from_db(st);
 
 	/*
 	 * tell kernel to delete any IPSEC SA
