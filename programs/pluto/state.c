@@ -52,6 +52,7 @@
 #include "xauth.h"		/* for xauth_cancel() */
 #include "connections.h"	/* needs id.h */
 #include "state.h"
+#include "state_db.h"
 #include "ikev1_msgid.h"
 #include "kernel.h"	/* needs connections.h */
 #include "log.h"
@@ -411,51 +412,6 @@ static char *humanize_number(uint64_t num,
 
 	return buf + ret;
 }
-
-/*
- * Hash table indexed by just the ICOOKIE.
- *
- * This is set up to work with any cookie hash table, so, eventually
- * the code can be re-used on the old hash table.
- *
- * Access using hash_entry_common and unhash_entry above.
- */
-static struct state_hash_table icookie_hash_table = {
-	.name = "icookie hash table",
-};
-
-static void hash_icookie(struct state *st)
-{
-	insert_by_state_cookies(&icookie_hash_table, &st->st_icookie_hash_entry,
-				st->st_icookie, zero_cookie);
-}
-
-static struct state_entry *icookie_chain(const u_char *icookie)
-{
-	return *hash_by_state_cookies(&icookie_hash_table, icookie, zero_cookie);
-}
-
-/*
- * State Table Functions
- *
- * The statetable is organized as a hash table.
- * The hash is purely based on the icookie and rcookie.
- * Each has chain is a doubly linked list.
- *
- * The phase 1 initiator does does not at first know the
- * responder's cookie, so the state will have to be rehashed
- * when that becomes known.
- *
- * In IKEv2, cookies are renamed IKE SA SPIs.
- *
- * In IKEv2, all children have the same cookies as their parent.
- * This means that you can look along that single chain for
- * your relatives.
- */
-
-static struct state_hash_table statetable = {
-	.name = "state hash table",
-};
 
 /*
  * Some macros to ease iterating over the above table

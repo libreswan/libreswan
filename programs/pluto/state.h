@@ -511,6 +511,12 @@ struct state {
 	 * Used to robustly find a state based only on ICOOKIE.
 	 */
 	struct state_entry st_icookie_hash_entry;
+	/*
+	 * hash table entry indexed by SERIALNO.
+	 *
+	 * Used to re-find a state based on SERIALNO.
+	 */
+	struct state_entry st_serialno_hash_entry;
 
 	struct hidden_variables hidden_variables;
 

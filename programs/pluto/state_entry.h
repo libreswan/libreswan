@@ -65,20 +65,6 @@ void insert_state_entry(struct state_entry **list,
 void remove_state_entry(struct state_entry *entry);
 
 /*
- * Return the linked list of states that match ICOOKIE+RCOOKIE hash.
- */
-struct state_entry **hash_by_state_cookies(struct state_hash_table *table,
-					   const uint8_t *icookie,
-					   const uint8_t *rcookie);
-
-/*
- * Insert the state into the hash table using cookies as the hash.
- */
-void insert_by_state_cookies(struct state_hash_table *table,
-			     struct state_entry *entry,
-			     const uint8_t *icookie, const uint8_t *rcookie);
-
-/*
  * Iterate through all the states in a list.
  *
  * So that the current state can be deleted keep the entry pointer one
