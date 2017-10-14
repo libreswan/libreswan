@@ -19,6 +19,7 @@
 #include "state_entry.h"
 
 void add_state_to_db(struct state *st);
+void del_state_from_db(struct state *st);
 
 /*
  * XXX: all of these should not be public.
@@ -33,12 +34,5 @@ extern struct state_entry *icookie_chain(const uint8_t *icookie);
 struct state_entry **hash_by_state_cookies(struct state_hash_table *table,
 					   const uint8_t *icookie,
 					   const uint8_t *rcookie);
-
-/*
- * Insert the state into the hash table using cookies as the hash.
- */
-void insert_by_state_cookies(struct state_hash_table *table,
-			     struct state_entry *entry,
-			     const uint8_t *icookie, const uint8_t *rcookie);
 
 #endif

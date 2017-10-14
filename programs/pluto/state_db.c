@@ -39,10 +39,10 @@ struct state_entry **hash_by_state_cookies(struct state_hash_table *table,
 	return state_entries_by_hash(table, i);
 }
 
-void insert_by_state_cookies(struct state_hash_table *table,
-			     struct state_entry *entry,
-			     const uint8_t *icookie,
-			     const uint8_t *rcookie)
+static void insert_by_state_cookies(struct state_hash_table *table,
+				    struct state_entry *entry,
+				    const uint8_t *icookie,
+				    const uint8_t *rcookie)
 {
 	struct state_entry **chain = hash_by_state_cookies(table, icookie, rcookie);
 	insert_state_entry(chain, entry);
@@ -107,4 +107,10 @@ void add_state_to_db(struct state *st)
 	 * selective about when this is done.
 	 */
 	hash_icookie(st);
+}
+
+void del_state_from_db(struct state *st)
+{
+	remove_state_entry(&st->st_hash_entry);
+	remove_state_entry(&st->st_icookie_hash_entry);
 }

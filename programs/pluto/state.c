@@ -600,8 +600,8 @@ void insert_state(struct state *st)
 }
 
 /*
- * unlink a state object from the hash table, update its RCOOKIE and
- * optionally ICOOKIE, and then hash it into the right place.
+ * Re-insert the state in the dabase after updating the RCOOKIE, and
+ * possibly the ICOOKIE.
  *
  * ICOOKIE is only updated if icookie != NULL
  */
@@ -611,17 +611,16 @@ void rehash_state(struct state *st, const u_char *icookie,
 	DBG(DBG_CONTROL,
 	    DBG_log("rehashing state object #%lu",
 		    st->st_serialno));
-
-	/* unlink from forward chain */
-	remove_state_entry(&st->st_hash_entry);
+	/* unlink from existing chains */
+	del_state_from_db(st);
 	/* update the cookie */
 	memcpy(st->st_rcookie, rcookie, COOKIE_SIZE);
 	if (icookie != NULL)
 		memcpy(st->st_icookie, icookie, COOKIE_SIZE);
 	/* now, re-insert */
-	insert_by_state_cookies(&statetable, &st->st_hash_entry,
-				st->st_icookie, st->st_rcookie);
-	refresh_state(st); /* just logs change */
+	add_state_to_db(st);
+	/* just logs change */
+	refresh_state(st);
 	/*
 	 * insert_state has this, and this code once called
 	 * insert_state.  Is it still needed?
