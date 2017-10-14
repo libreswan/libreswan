@@ -18,6 +18,14 @@
 #include "state_entry.h"
 #include "log.h"
 
+struct state_entry **state_entries_by_hash(struct state_hash_table *table,
+					   unsigned long hash)
+{
+	hash = hash % STATE_TABLE_SIZE;
+	DBG(DBG_CONTROL, DBG_log("found hash chain %lu", hash));
+	return &(table->entries[hash]);
+}
+
 struct state_entry **hash_by_state_cookies(struct state_hash_table *table,
 					   const uint8_t *icookie,
 					   const uint8_t *rcookie)
@@ -33,10 +41,7 @@ struct state_entry **hash_by_state_cookies(struct state_hash_table *table,
 	unsigned j;
 	for (j = 0; j < COOKIE_SIZE; j++)
 		i = i * 407 + icookie[j] + rcookie[j];
-	i = i % STATE_TABLE_SIZE;
-
-	DBG(DBG_CONTROL, DBG_log("found hash chain %d", i));
-	return &(table->entries[i]);
+	return state_entries_by_hash(table, i);
 }
 
 void insert_by_state_cookies(struct state_hash_table *table,
