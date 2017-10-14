@@ -52,28 +52,8 @@ struct state_hash_table {
 /*
  * Return the linked list of states that match ICOOKIE+RCOOKIE hash.
  */
-struct state_entry **hash_by_state_cookies(struct state_hash_table *table,
-					   const uint8_t *icookie,
-					   const uint8_t *rcookie);
-
-/*
- * Insert the state into the hash table using cookies as the hash.
- */
-void insert_by_state_cookies(struct state_hash_table *table,
-			     struct state_entry *entry,
-			     const uint8_t *icookie, const uint8_t *rcookie);
-
-/*
- * Iterate through all entries that match the cookie hash.
- */
-#define FOR_EACH_HASH_BY_STATE_COOKIES_ENTRY(ST, TABLE, ICOOKIE,	\
-					     RCOOKIE, CODE)		\
-	do {								\
-		struct state_entry *ST##list;				\
-		ST##list = *hash_by_state_cookies(&(TABLE),		\
-						  ICOOKIE, RCOOKIE);	\
-		FOR_EACH_STATE_ENTRY(ST, ST##list, CODE);		\
-	} while (0)
+struct state_entry **state_entries_by_hash(struct state_hash_table *table,
+					   unsigned long hash);
 
 /*
  * Insert (at front) or remove the state from the linked list.

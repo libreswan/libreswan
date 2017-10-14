@@ -67,17 +67,21 @@ void libreswan_vloglog(enum rc_type rc UNUSED, const char *fmt, va_list ap)
 
 void lswlog_log_errno(int e, const char *prefix, const char *message, ...)
 {
-	va_list args;
-	char m[LOG_WIDTH];	/* longer messages will be truncated */
-
-	va_start(args, message);
-	vsnprintf(m, sizeof(m), message, args);
-	va_end(args);
-
-	if (log_to_stderr)
-		fprintf(stderr, "%s%s%s%s. Errno %d: %s\n",
-			prefix, progname, prog_suffix,
-			m, e, strerror(e));
+	if (log_to_stderr) {
+		LSWLOG_FILE(stderr, buf) {
+			/* <prefix><PROGNAME>: <message>. Errno N: <errmess> */
+			lswlogs(buf, prefix);
+			lswlogs(buf, progname);
+			lswlogs(buf, prog_suffix);
+			va_list args;
+			va_start(args, message);
+			lswlogvf(buf, message, args);
+			va_end(args);
+			lswlogs(buf, ".");
+			lswlog_errno(buf, e);
+			lswlogs(buf, "\n");
+		}
+	}
 }
 
 void lswlog_pre(struct lswlog *buf)
@@ -93,6 +97,11 @@ void lswlog_to_logger_stream(struct lswlog *buf, enum rc_type rc UNUSED)
 }
 
 void lswlog_to_debug_stream(struct lswlog *buf)
+{
+	fprintf(stderr, "%s\n", buf->array);
+}
+
+void lswlog_to_error_stream(struct lswlog *buf)
 {
 	fprintf(stderr, "%s\n", buf->array);
 }

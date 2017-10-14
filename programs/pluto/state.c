@@ -52,6 +52,7 @@
 #include "xauth.h"		/* for xauth_cancel() */
 #include "connections.h"	/* needs id.h */
 #include "state.h"
+#include "state_db.h"
 #include "ikev1_msgid.h"
 #include "kernel.h"	/* needs connections.h */
 #include "log.h"
@@ -413,58 +414,26 @@ static char *humanize_number(uint64_t num,
 }
 
 /*
- * Hash table indexed by just the ICOOKIE.
- *
- * This is set up to work with any cookie hash table, so, eventually
- * the code can be re-used on the old hash table.
- *
- * Access using hash_entry_common and unhash_entry above.
- */
-static struct state_hash_table icookie_hash_table = {
-	.name = "icookie hash table",
-};
-
-static void hash_icookie(struct state *st)
-{
-	insert_by_state_cookies(&icookie_hash_table, &st->st_icookie_hash_entry,
-				st->st_icookie, zero_cookie);
-}
-
-static struct state_entry *icookie_chain(const u_char *icookie)
-{
-	return *hash_by_state_cookies(&icookie_hash_table, icookie, zero_cookie);
-}
-
-/*
- * State Table Functions
- *
- * The statetable is organized as a hash table.
- * The hash is purely based on the icookie and rcookie.
- * Each has chain is a doubly linked list.
- *
- * The phase 1 initiator does does not at first know the
- * responder's cookie, so the state will have to be rehashed
- * when that becomes known.
- *
- * In IKEv2, cookies are renamed IKE SA SPIs.
- *
- * In IKEv2, all children have the same cookies as their parent.
- * This means that you can look along that single chain for
- * your relatives.
- */
-
-static struct state_hash_table statetable = {
-	.name = "state hash table",
-};
-
-/*
  * Some macros to ease iterating over the above table
  */
 #define FOR_EACH_ENTRY(ST, I, CODE) \
 	FOR_EACH_STATE_ENTRY(ST, statetable.entries[I], CODE)
 
-#define FOR_EACH_HASH_ENTRY(ST, ICOOKIE, RCOOKIE, CODE) \
-	FOR_EACH_HASH_BY_STATE_COOKIES_ENTRY(ST, statetable, ICOOKIE, RCOOKIE, CODE)
+/*
+ * Iterate over all entries with matching cookies.
+ */
+#define FOR_EACH_ENTRY_WITH_COOKIE(ST, ICOOKIE, RCOOKIE, CODE)		\
+	do {								\
+		struct state_entry *ST##list;				\
+		ST##list = *hash_by_state_cookies(&statetable,		\
+						  ICOOKIE, RCOOKIE);	\
+		FOR_EACH_STATE_ENTRY(ST, ST##list, {			\
+			if (!memeq(ICOOKIE, ST->st_icookie, COOKIE_SIZE) || \
+			    !memeq(RCOOKIE, ST->st_rcookie, COOKIE_SIZE)) \
+				continue;				\
+			CODE						\
+		});							\
+	} while (0)
 
 /*
  * Get a state object.
@@ -485,10 +454,6 @@ struct state *new_state(void)
 	st->st_whack_sock = NULL_FD;
 
 	st->st_xauth = NULL;
-
-	/* back-link the hash entry.  */
-	st->st_hash_entry.state = st;
-	st->st_icookie_hash_entry.state = st;
 
 	anyaddr(AF_INET, &st->hidden_variables.st_nat_oa);
 	anyaddr(AF_INET, &st->hidden_variables.st_natd);
@@ -619,13 +584,8 @@ void insert_state(struct state *st)
 	DBG(DBG_CONTROL,
 	    DBG_log("inserting state object #%lu",
 		    st->st_serialno))
-	insert_by_state_cookies(&statetable, &st->st_hash_entry,
-				st->st_icookie, st->st_rcookie);
-	/*
-	 * Also insert it into the icookie table.  Should be more
-	 * selective about when this is done.
-	 */
-	hash_icookie(st);
+
+	add_state_to_db(st);
 
 	/*
 	 * Ensure that somebody is in charge of killing this state:
@@ -640,8 +600,8 @@ void insert_state(struct state *st)
 }
 
 /*
- * unlink a state object from the hash table, update its RCOOKIE and
- * optionally ICOOKIE, and then hash it into the right place.
+ * Re-insert the state in the dabase after updating the RCOOKIE, and
+ * possibly the ICOOKIE.
  *
  * ICOOKIE is only updated if icookie != NULL
  */
@@ -651,35 +611,22 @@ void rehash_state(struct state *st, const u_char *icookie,
 	DBG(DBG_CONTROL,
 	    DBG_log("rehashing state object #%lu",
 		    st->st_serialno));
-
-	/* unlink from forward chain */
-	remove_state_entry(&st->st_hash_entry);
+	/* unlink from existing chains */
+	del_state_from_db(st);
 	/* update the cookie */
 	memcpy(st->st_rcookie, rcookie, COOKIE_SIZE);
 	if (icookie != NULL)
 		memcpy(st->st_icookie, icookie, COOKIE_SIZE);
 	/* now, re-insert */
-	insert_by_state_cookies(&statetable, &st->st_hash_entry,
-				st->st_icookie, st->st_rcookie);
-	refresh_state(st); /* just logs change */
+	add_state_to_db(st);
+	/* just logs change */
+	refresh_state(st);
 	/*
 	 * insert_state has this, and this code once called
 	 * insert_state.  Is it still needed?
 	 */
 	if (st->st_event == NULL)
 		event_schedule(EVENT_SO_DISCARD, 0, st);
-}
-
-/*
- * unlink a state object from the hash table, but don't free it
- */
-static void unhash_state(struct state *st)
-{
-	DBG(DBG_CONTROL,
-	    DBG_log("unhashing state object #%lu",
-		    st->st_serialno));
-	remove_state_entry(&st->st_hash_entry);
-	remove_state_entry(&st->st_icookie_hash_entry);
 }
 
 /*
@@ -747,7 +694,7 @@ void ikev2_expire_unused_parent(struct state *pst)
 	if (pst == NULL || !IS_PARENT_SA_ESTABLISHED(pst))
 		return; /* only deal with established parent SA */
 
-	FOR_EACH_HASH_ENTRY(st, pst->st_icookie, pst->st_rcookie, {
+	FOR_EACH_ENTRY_WITH_COOKIE(st, pst->st_icookie, pst->st_rcookie, {
 			if (st->st_clonedfrom == pst->st_serialno)
 				return;
 			});
@@ -803,10 +750,11 @@ static void flush_pending_children(struct state *pst)
 {
 	struct state *st;
 	/* AA_2016 check is it st or pst ? */
-	FOR_EACH_HASH_ENTRY(st, pst->st_icookie, pst->st_rcookie, {
-			flush_pending_ipsec(pst, st);
-			delete_cryptographic_continuation(st);
-			});
+	FOR_EACH_ENTRY_WITH_COOKIE(st, pst->st_icookie, pst->st_rcookie, {
+			if (st->st_clonedfrom == pst->st_serialno) {
+				flush_pending_ipsec(pst, st);
+				delete_cryptographic_continuation(st);
+			}});
 }
 
 static bool send_delete_check(const struct state *st)
@@ -1052,7 +1000,7 @@ void delete_state(struct state *st)
 	/*
 	 * effectively, this deletes any ISAKMP SA that this state represents
 	 */
-	unhash_state(st);
+	del_state_from_db(st);
 
 	/*
 	 * tell kernel to delete any IPSEC SA
@@ -1534,10 +1482,8 @@ struct state *find_state_ikev1(const u_char *icookie,
 			       msgid_t /*network order*/ msgid)
 {
 	struct state *st;
-	FOR_EACH_HASH_ENTRY(st, icookie, rcookie, {
-		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
-		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE) &&
-		    !st->st_ikev2) {
+	FOR_EACH_ENTRY_WITH_COOKIE(st, icookie, rcookie, {
+		if (!st->st_ikev2) {
 			DBG(DBG_CONTROL,
 			    DBG_log("v1 peer and cookies match on #%lu, provided msgid %08" PRIx32 " == %08" PRIx32,
 				    st->st_serialno,
@@ -1569,10 +1515,8 @@ struct state *find_state_ikev2_parent(const u_char *icookie,
 				      const u_char *rcookie)
 {
 	struct state *st;
-	FOR_EACH_HASH_ENTRY(st, icookie, rcookie, {
-		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
-		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE) &&
-		    st->st_ikev2 &&
+	FOR_EACH_ENTRY_WITH_COOKIE(st, icookie, rcookie, {
+		if (st->st_ikev2 &&
 		    !IS_CHILD_SA(st)) {
 			DBG(DBG_CONTROL,
 			    DBG_log("parent v2 peer and cookies match on #%lu",
@@ -1632,10 +1576,8 @@ struct state *find_state_ikev2_child(const u_char *icookie,
 				     msgid_t msgid)
 {
 	struct state *st;
-	FOR_EACH_HASH_ENTRY(st, icookie, rcookie, {
-		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
-		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE) &&
-		    st->st_ikev2 &&
+	FOR_EACH_ENTRY_WITH_COOKIE(st, icookie, rcookie, {
+		if (st->st_ikev2 &&
 		    st->st_msgid == msgid) {
 			DBG(DBG_CONTROL,
 			    DBG_log("v2 peer, cookies and msgid match on #%lu",
@@ -1667,10 +1609,8 @@ struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
 					       ipsec_spi_t spi)
 {
 	struct state *st;
-	FOR_EACH_HASH_ENTRY(st, icookie, rcookie, {
-		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
-		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE) &&
-		    st->st_ikev2 && IS_CHILD_SA(st)) {
+	FOR_EACH_ENTRY_WITH_COOKIE(st, icookie, rcookie, {
+		if (st->st_ikev2 && IS_CHILD_SA(st)) {
 			struct ipsec_proto_info *pr;
 
 			switch (protoid) {
@@ -1716,9 +1656,7 @@ struct state *ikev1_find_info_state(const u_char *icookie,
 			      msgid_t /* network order */ msgid)
 {
 	struct state *st;
-	FOR_EACH_HASH_ENTRY(st, icookie, rcookie, {
-		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
-		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE)) {
+	FOR_EACH_ENTRY_WITH_COOKIE(st, icookie, rcookie, {
 			DBG(DBG_CONTROL,
 			    DBG_log("peer and cookies match on #%lu; msgid=%08" PRIx32 " st_msgid=%08" PRIx32 " st_msgid_phase15=%08" PRIx32,
 				    st->st_serialno,
@@ -1729,8 +1667,7 @@ struct state *ikev1_find_info_state(const u_char *icookie,
 			     msgid == st->st_msgid_phase15) ||
 			    msgid == st->st_msgid)
 				break;
-		}
-	});
+		});
 
 	DBG(DBG_CONTROL, {
 		    if (st == NULL) {
@@ -2588,7 +2525,7 @@ void delete_my_family(struct state *pst, bool v2_responder_state)
 	struct state *st;
 
 	passert(!IS_CHILD_SA(pst));	/* we had better be a parent */
-	FOR_EACH_HASH_ENTRY(st, pst->st_icookie, pst->st_rcookie, {
+	FOR_EACH_ENTRY_WITH_COOKIE(st, pst->st_icookie, pst->st_rcookie, {
 		if (st->st_clonedfrom == pst->st_serialno) {
 			if (v2_responder_state)
 				change_state(st, STATE_CHILDSA_DEL);

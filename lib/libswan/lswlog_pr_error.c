@@ -31,6 +31,7 @@ size_t lswlog_pr_error(struct lswlog *buf)
 {
 	size_t size = 0;
 	int error = PR_GetError(); /* at least 32-bits */
+	size += lswlogs(buf, " (");
 	/* the number */
 	if (IS_SEC_ERROR(error)) {
 		size += lswlogf(buf, "SECERR: %d (0x%x): ",
@@ -63,5 +64,6 @@ size_t lswlog_pr_error(struct lswlog *buf)
 			size += lswlogs(buf, "unknown error");
 		}
 	}
+	size += lswlogs(buf, ")");
 	return size;
 }
