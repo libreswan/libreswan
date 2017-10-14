@@ -1784,7 +1784,7 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 {
 	struct state *best = NULL;
 	int i;
-	bool is_ikev2 = LIN(POLICY_IKEV2_ALLOW, c->policy);
+	bool is_ikev2 = (c->policy & POLICY_IKEV1_ALLOW) == LEMPTY;
 
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
 		struct state *st;
