@@ -157,14 +157,6 @@ XFRM policy:
 		proto esp reqid REQID mode tunnel
 	tmpl src 192.1.2.45 dst 192.1.2.24
 		proto esp reqid REQID mode tunnel
-src 0.0.0.0/0 dst 0.0.0.0/0 proto udp dport 4500 
-	dir in priority 1 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 proto udp dport 500 
-	dir in priority 1 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 proto udp sport 4500 
-	dir out priority 1 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 proto udp sport 500 
-	dir out priority 1 ptype main 
 src 10.0.1.0/24 dst 10.0.2.0/24 
 	dir out priority 2344 ptype main 
 	mark 2/0xffffffff
@@ -183,6 +175,18 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 src 192.0.2.0/24 dst 192.0.1.0/24 
 	dir in priority 2344 ptype main 
 	mark 2/0xffffffff
+src ::/0 dst ::/0 proto ipv6-icmp type 135 
+	dir fwd priority 1 ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 135 
+	dir in priority 1 ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 135 
+	dir out priority 1 ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 136 
+	dir fwd priority 1 ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 136 
+	dir in priority 1 ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 136 
+	dir out priority 1 ptype main 
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
