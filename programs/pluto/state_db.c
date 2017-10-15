@@ -29,11 +29,11 @@ static struct state_hash_table serialno_hash_table = {
 	.name = "serialno table",
 };
 
-static struct state_entry **serialno_chain(so_serial_t serialno)
+static struct state_entry *serialno_chain(so_serial_t serialno)
 {
 
-	struct state_entry **head = state_entries_by_hash(&serialno_hash_table,
-							  serialno);
+	struct state_entry *head = state_entries_by_hash(&serialno_hash_table,
+							 serialno);
 	DBG(DBG_RAW | DBG_CONTROL,
 	    DBG_log("%s: hash serialno #%lu to head %p",
 		    serialno_hash_table.name,
@@ -56,16 +56,16 @@ struct state *state_by_serialno(so_serial_t serialno)
  * A table hashed by icookie+rcookie.
  */
 
-static struct state_entry **hash_by_state_cookies(struct state_hash_table *table,
-						  const uint8_t *icookie,
-						  const uint8_t *rcookie)
+static struct state_entry *hash_by_state_cookies(struct state_hash_table *table,
+						 const uint8_t *icookie,
+						 const uint8_t *rcookie)
 {
 	/* XXX the following hash is pretty pathetic */
 	unsigned i = 0;
 	unsigned j;
 	for (j = 0; j < COOKIE_SIZE; j++)
 		i = i * 407 + icookie[j] + rcookie[j];
-	struct state_entry **head = state_entries_by_hash(table, i);
+	struct state_entry *head = state_entries_by_hash(table, i);
 	LSWDBGP(DBG_RAW | DBG_CONTROL, buf) {
 		lswlogf(buf, "%s: hash", table->name);
 		lswlogs(buf, " icookie ");
@@ -85,7 +85,7 @@ static struct state_hash_table icookie_hash_table = {
 	.name = "icookie table",
 };
 
-struct state_entry **icookie_chain(const u_char *icookie)
+struct state_entry *icookie_chain(const u_char *icookie)
 {
 	return hash_by_state_cookies(&icookie_hash_table, icookie, zero_cookie);
 }
@@ -98,8 +98,8 @@ struct state_hash_table cookies_hash_table = {
 	.name = "cookies table",
 };
 
-struct state_entry **cookies_chain(const u_char *icookie,
-				   const u_char *rcookie)
+struct state_entry *cookies_chain(const u_char *icookie,
+				  const u_char *rcookie)
 {
 	return hash_by_state_cookies(&cookies_hash_table, icookie, rcookie);
 }

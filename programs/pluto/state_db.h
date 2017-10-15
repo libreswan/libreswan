@@ -31,10 +31,10 @@ struct state *state_by_serialno(so_serial_t serialno);
  */
 
 /* ICOOKIE chain */
-extern struct state_entry **icookie_chain(const uint8_t *icookie);
+extern struct state_entry *icookie_chain(const uint8_t *icookie);
 /* ICOOKIE:RCOOKIE chain */
-struct state_entry **cookies_chain(const uint8_t *icookie,
-				   const uint8_t *rcookie);
+struct state_entry *cookies_chain(const uint8_t *icookie,
+				  const uint8_t *rcookie);
 
 /* XXX: should not be public */
 extern struct state_hash_table cookies_hash_table;

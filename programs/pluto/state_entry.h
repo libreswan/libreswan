@@ -25,13 +25,13 @@ struct state;
  * any need to deal with memory management.
  *
  * The list proper should be declared as a pointer to this
- * structure. I.e., "struct state_list_entry *list" or "struct
- * state_entry *table[10]".
+ * structure. I.e., "struct state_entry *list" or "struct state_entry
+ * *table[10]".
  */
 
 struct state_entry {
 	struct state_entry *next;
-	struct state_entry **prev_next;
+	struct state_entry *prev;
 	struct state *state;
 };
 
@@ -46,21 +46,21 @@ struct state_entry {
 
 struct state_hash_table {
 	const char *name; /* for logging */
-	struct state_entry *entries[STATE_TABLE_SIZE];
+	struct state_entry entries[STATE_TABLE_SIZE];
 };
 
 /*
  * Return the linked list of states that match ICOOKIE+RCOOKIE hash.
  */
-struct state_entry **state_entries_by_hash(struct state_hash_table *table,
-					   unsigned long hash);
+struct state_entry *state_entries_by_hash(struct state_hash_table *table,
+					  unsigned long hash);
 
 /*
  * Insert (at front) or remove the state from the linked list.
  */
 
 void insert_state_entry(const char *table_name,
-			struct state_entry **head,
+			struct state_entry *head,
 			struct state_entry *entry);
 
 void remove_state_entry(const char *table_name,
@@ -73,17 +73,17 @@ void remove_state_entry(const char *table_name,
  * step ahead.  So that a search failure can be detected leave ST=NULL
  * if the loop exits normally.
  */
-#define FOR_EACH_STATE_ENTRY(ST, LIST, CODE)				\
+#define FOR_EACH_STATE_ENTRY(ST, CHAIN, CODE)				\
 	do {								\
-		struct state_entry *ST##entry = *(LIST);		\
-		while (1) {						\
-			if (ST##entry == NULL) {			\
+		struct state_entry *ST##entry = (CHAIN)->next;		\
+		(ST) = NULL;						\
+		if (ST##entry != NULL) {				\
+			do {						\
+				(ST) = ST##entry->state;		\
+				ST##entry = ST##entry->next;		\
+				CODE;					\
 				(ST) = NULL;				\
-				break;					\
-			}						\
-			(ST) = ST##entry->state;			\
-			ST##entry = ST##entry->next;			\
-			CODE						\
+			} while (ST##entry->state != NULL);		\
 		}							\
 	} while (0)
 
