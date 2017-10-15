@@ -16,15 +16,15 @@ west #
  sleep 30
 west #
  ipsec whack --trafficstatus
-006 #2: "west-east-auto", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+006 #4: "west-east-auto", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
 west #
  # use delete, not down - because east has auto=start
 west #
  ipsec auto --delete west-east-auto
 002 "west-east-auto": deleting non-instance connection
-002 "west-east-auto" #2: deleting state (STATE_QUICK_R2) and sending notification
-005 "west-east-auto" #2: ESP traffic information: in=0B out=0B
-002 "west-east-auto" #1: deleting state (STATE_MAIN_R3) and sending notification
+002 "west-east-auto" #4: deleting state (STATE_QUICK_R2) and sending notification
+005 "west-east-auto" #4: ESP traffic information: in=0B out=0B
+002 "west-east-auto" #3: deleting state (STATE_MAIN_R3) and sending notification
 west #
  # give Delete/Notify some time
 west #
@@ -48,7 +48,7 @@ west #
 west #
  # east howvever, should be attempting to connect to west because it has auto=start
 west #
- ipsec status |grep EVENT_v1_RETRANSMIT | sed "s/EVENT_v1_RETRANSMIT in /EVENT_v1_RETRANSMIT in .../"
+ ipsec status |grep EVENT_v1_RETRANSMIT | sed "s/EVENT_v1_RETRANSMIT in .*$/EVENT_v1_RETRANSMIT in .../"
 west #
 west #
  ../bin/check-for-core.sh
