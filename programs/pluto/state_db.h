@@ -25,6 +25,12 @@ void del_state_from_db(struct state *st);
 struct state *state_by_serialno(so_serial_t serialno);
 
 /*
+ * List of all valid states; can be iterated in old-to-new and
+ * new-to-old order.
+ */
+extern struct list_entry serialno_list_head;
+
+/*
  * Return the hash chain for the given value.  It will contain may
  * entries, not just the specified value.  Extra filtering is
  * required!

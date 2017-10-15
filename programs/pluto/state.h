@@ -40,6 +40,7 @@
 
 #include "labeled_ipsec.h"	/* for struct xfrm_user_sec_ctx_ike and friends */
 #include "state_entry.h"
+#include "list_entry.h"
 
 /* Message ID mechanism.
  *
@@ -501,6 +502,8 @@ struct state {
 
 	struct pluto_event *st_event;		/* timer event for this state object */
 
+	/* state list entry */
+	struct list_entry st_serialno_list_entry;
 	/* SERIALNO hash table entry */
 	struct state_entry st_serialno_hash_entry;
 	/* ICOOKIE:RCOOKIE hash table entry */
