@@ -376,10 +376,9 @@ static bool same_host(const char *a_dnshostname, const ip_address *a_host_addr,
 {
 	/* should this be dnshostname and host_addr ?? */
 
-	return (a_dnshostname != NULL && b_dnshostname != NULL &&
-			streq(a_dnshostname, b_dnshostname)) ||
-		(a_dnshostname == NULL && b_dnshostname == NULL &&
-		 sameaddr(a_host_addr, b_host_addr));
+	return a_dnshostname == NULL ?
+		b_dnshostname == NULL && sameaddr(a_host_addr, b_host_addr) :
+		b_dnshostname != NULL && streq(a_dnshostname, b_dnshostname);
 }
 
 static bool same_in_some_sense(const struct connection *a,
