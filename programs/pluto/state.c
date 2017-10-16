@@ -417,23 +417,18 @@ static char *humanize_number(uint64_t num,
  * Some macros to ease iterating over the above table
  */
 #define FOR_EACH_ENTRY(ST, I, CODE) \
-	FOR_EACH_STATE_ENTRY(ST, statetable.entries[I], CODE)
+	FOR_EACH_STATE_ENTRY(ST, &cookies_hash_table.entries[I], CODE)
 
 /*
  * Iterate over all entries with matching cookies.
  */
 #define FOR_EACH_ENTRY_WITH_COOKIE(ST, ICOOKIE, RCOOKIE, CODE)		\
-	do {								\
-		struct state_entry *ST##list;				\
-		ST##list = *hash_by_state_cookies(&statetable,		\
-						  ICOOKIE, RCOOKIE);	\
-		FOR_EACH_STATE_ENTRY(ST, ST##list, {			\
-			if (!memeq(ICOOKIE, ST->st_icookie, COOKIE_SIZE) || \
-			    !memeq(RCOOKIE, ST->st_rcookie, COOKIE_SIZE)) \
-				continue;				\
-			CODE						\
-		});							\
-	} while (0)
+	FOR_EACH_STATE_ENTRY(ST, cookies_chain(ICOOKIE, RCOOKIE), {	\
+		if (!memeq(ICOOKIE, ST->st_icookie, COOKIE_SIZE) ||	\
+		    !memeq(RCOOKIE, ST->st_rcookie, COOKIE_SIZE))	\
+			continue;					\
+		CODE							\
+	})								\
 
 /*
  * Get a state object.

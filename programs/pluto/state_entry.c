@@ -15,29 +15,31 @@
 
 #include <stdint.h>
 
+#include "lswlog.h"
+
+#include "defs.h"
+#include "state.h"
 #include "state_entry.h"
-#include "log.h"
 
 struct state_entry **state_entries_by_hash(struct state_hash_table *table,
 					   unsigned long hash)
 {
-	hash = hash % STATE_TABLE_SIZE;
-	DBG(DBG_CONTROL, DBG_log("found hash chain %lu", hash));
-	return &(table->entries[hash]);
+	/* let caller do logging */
+	return &(table->entries[hash % STATE_TABLE_SIZE]);
 }
 
-static void log_inserted_entry(const char *prefix, struct state_entry *entry,
-			       const char *suffix)
+static void log_entry(const char *table_name,
+		      const char *op, struct state_entry *entry)
 {
 	if (entry == NULL) {
-		DBG(DBG_CONTROL, DBG_log("%sentry is (nil)%s", prefix, suffix));
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("%s: %s entry is NULL", table_name, op));
 	} else {
-		DBG(DBG_CONTROL,
-		    DBG_log("%sstate %p entry %p next %p prev-next %p%s",
-			    prefix,
-			    entry->state, entry,
-			    entry->next, entry->prev_next,
-			    suffix));
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("%s: %s state #%lu entry (prev %p) %p (next %p)",
+			    table_name, op,
+			    (entry->state != NULL ? entry->state->st_serialno : 0LU),
+			    entry->prev_next, entry, entry->next));
 		passert(*entry->prev_next != NULL);
 		passert(*entry->prev_next == entry);
 		passert(entry->next == NULL
@@ -45,34 +47,37 @@ static void log_inserted_entry(const char *prefix, struct state_entry *entry,
 	}
 }
 
-void insert_state_entry(struct state_entry **list,
+void insert_state_entry(const char *table_name,
+			struct state_entry **head,
 			struct state_entry *entry)
 {
 	DBG(DBG_CONTROL,
-	    DBG_log("list %p first entry %p", list, *list));
+	    DBG_log("%s: inserting state #%lu entry %p into chain %p (head %p)",
+		    table_name,
+		    (entry->state != NULL ? entry->state->st_serialno : 0LU),
+		    entry, head, *head));
 	passert(entry->next == NULL && entry->prev_next == NULL);
 	/* insert at the front */
-	entry->next = *list;
-	entry->prev_next = list;
-	*list = entry;
+	entry->next = *head;
+	entry->prev_next = head;
+	*head = entry;
 	/* point next at us */
 	if (entry->next != NULL) {
 		entry->next->prev_next = &entry->next;
 	}
-	log_inserted_entry("inserted ", entry, " into list");
-	log_inserted_entry("updated next ", entry->next, "");
+	log_entry(table_name, "inserted", entry);
 }
 
-void remove_state_entry(struct state_entry *entry)
+void remove_state_entry(const char *table_name,
+			struct state_entry *entry)
 {
-	log_inserted_entry("removing ", entry, " from list");
+	log_entry(table_name, "removing", entry);
 	*entry->prev_next = entry->next;
 	/* point next at prev */
 	if (entry->next != NULL) {
 		entry->next->prev_next = entry->prev_next;
 		passert(*entry->next->prev_next == entry->next);
 	}
-	log_inserted_entry("updated next ", *entry->prev_next, "");
 	/* reset */
 	entry->next = NULL;
 	entry->prev_next = NULL;

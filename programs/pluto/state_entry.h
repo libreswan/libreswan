@@ -1,6 +1,6 @@
-/* State lists and hash tables, for libreswan
+/* State lists, for libreswan
  *
- * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2015, 2017 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -59,10 +59,12 @@ struct state_entry **state_entries_by_hash(struct state_hash_table *table,
  * Insert (at front) or remove the state from the linked list.
  */
 
-void insert_state_entry(struct state_entry **list,
+void insert_state_entry(const char *table_name,
+			struct state_entry **head,
 			struct state_entry *entry);
 
-void remove_state_entry(struct state_entry *entry);
+void remove_state_entry(const char *table_name,
+			struct state_entry *entry);
 
 /*
  * Iterate through all the states in a list.
@@ -73,7 +75,7 @@ void remove_state_entry(struct state_entry *entry);
  */
 #define FOR_EACH_STATE_ENTRY(ST, LIST, CODE)				\
 	do {								\
-		struct state_entry *ST##entry = (LIST);			\
+		struct state_entry *ST##entry = *(LIST);		\
 		while (1) {						\
 			if (ST##entry == NULL) {			\
 				(ST) = NULL;				\

@@ -24,17 +24,18 @@ void del_state_from_db(struct state *st);
 struct state *state_by_serialno(so_serial_t serialno);
 
 /*
- * XXX: all of these should not be public.
+ * Return the hash chain for the given value.  It will contain may
+ * entries, not just the specified value.  Extra filtering is
+ * required!
  */
 
-extern struct state_hash_table statetable;
-extern struct state_entry *icookie_chain(const uint8_t *icookie);
+/* ICOOKIE chain */
+extern struct state_entry **icookie_chain(const uint8_t *icookie);
+/* ICOOKIE:RCOOKIE chain */
+struct state_entry **cookies_chain(const uint8_t *icookie,
+				   const uint8_t *rcookie);
 
-/*
- * Return the linked list of states that match ICOOKIE+RCOOKIE hash.
- */
-struct state_entry **hash_by_state_cookies(struct state_hash_table *table,
-					   const uint8_t *icookie,
-					   const uint8_t *rcookie);
+/* XXX: should not be public */
+extern struct state_hash_table cookies_hash_table;
 
 #endif
