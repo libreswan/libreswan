@@ -593,14 +593,12 @@ void rehash_state(struct state *st, const u_char *icookie,
 	DBG(DBG_CONTROL,
 	    DBG_log("rehashing state object #%lu",
 		    st->st_serialno));
-	/* unlink from existing chains */
-	del_state_from_db(st);
 	/* update the cookie */
 	memcpy(st->st_rcookie, rcookie, COOKIE_SIZE);
 	if (icookie != NULL)
 		memcpy(st->st_icookie, icookie, COOKIE_SIZE);
-	/* now, re-insert */
-	add_state_to_db(st);
+	/* now, update the state */
+	rehash_state_cookies_in_db(st);
 	/* just logs change */
 	refresh_state(st);
 	/*

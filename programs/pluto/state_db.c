@@ -158,6 +158,16 @@ void add_state_to_db(struct state *st)
 	add_to_cookie_tables(st);
 }
 
+void rehash_state_cookies_in_db(struct state *st)
+{
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("%s: %s: re-hashing state #%lu cookies",
+		    icookie_hash_table.name, cookies_hash_table.name,
+		    st->st_serialno));
+	del_from_cookie_tables(st);
+	add_to_cookie_tables(st);
+}
+
 void del_state_from_db(struct state *st)
 {
 	remove_state_entry(serialno_hash_table.name,
