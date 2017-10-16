@@ -119,7 +119,7 @@ static const char *const timer_event_name[] = {
 	"EVENT_NAT_T_KEEPALIVE",
 	"EVENT_DPD",
 	"EVENT_DPD_TIMEOUT",
-	"EVENT_CRYPTO_FAILED",
+	"EVENT_CRYPTO_TIMEOUT",
 	"EVENT_PAM_TIMEOUT",
 
 	"EVENT_v2_RETRANSMIT",

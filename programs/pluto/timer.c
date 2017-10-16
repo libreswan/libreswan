@@ -643,7 +643,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	case EVENT_v2_RESPONDER_TIMEOUT:
 	case EVENT_SA_EXPIRE:
 	case EVENT_SO_DISCARD:
-	case EVENT_CRYPTO_FAILED:
+	case EVENT_CRYPTO_TIMEOUT:
 	case EVENT_PAM_TIMEOUT:
 		passert(st != NULL && st->st_event == ev);
 		st->st_event = NULL;
@@ -898,7 +898,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		dpd_timeout(st);
 		break;
 
-	case EVENT_CRYPTO_FAILED:
+	case EVENT_CRYPTO_TIMEOUT:
 		DBG(DBG_LIFECYCLE,
 			DBG_log("event crypto_failed on state #%lu, aborting",
 				st->st_serialno));
