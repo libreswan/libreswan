@@ -226,6 +226,9 @@ size_t lswlog_source_line(struct lswlog *log, const char *func,
 size_t lswlog_sanitized(struct lswlog *log, const char *string);
 /* _Errno E: <strerror(E)> */
 size_t lswlog_errno(struct lswlog *log, int e);
+/* <hex-byte>:<hex-byte>... */
+size_t lswlog_bytes(struct lswlog *log, const uint8_t *bytes,
+		    size_t sizeof_bytes);
 
 /*
  * The logging output streams used by library code.

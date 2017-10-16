@@ -68,6 +68,7 @@ OBJS += lswlog_pr_error.o
 OBJS += lswlog_source_line.o
 OBJS += lswlog_sanitized.o
 OBJS += lswlog_errno.o
+OBJS += lswlog_bytes.o
 
 # Crypto code:
 #
