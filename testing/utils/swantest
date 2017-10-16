@@ -1072,7 +1072,7 @@ class scantests:
 
     def do_diffstat(self, goodc, newc):
 
-        diffcmd = 'diff  -N -u'
+        diffcmd = 'diff  -w -N -u'
 
         diffr = ''
         cmd = diffcmd + ' ' + goodc + ' ' + newc + ' | diffstat -f 0'
