@@ -1315,6 +1315,12 @@ static bool send_packet(struct state *st, const char *where,
 		return FALSE;
 	}
 
+	/* bandaid */
+	if (aptr == NULL) {
+		libreswan_log("Cannot send packet - aptr is NULL");
+		return FALSE;
+	}
+
 	if (isanyaddr(&st->st_remoteaddr)) {
 		/* not asserting, who knows what nonsense a user can generate */
 		libreswan_log("Will not send packet to bogus address 0.0.0.0");

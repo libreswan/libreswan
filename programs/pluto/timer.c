@@ -140,7 +140,7 @@ static void retransmit_v1_msg(struct state *st)
 
 	set_cur_state(st);
 
-	/* Paul: this line can stay attempt 3 of 2 because the cleanup happens when over the maximum */
+	/* Paul: this line can say attempt 3 of 2 because the cleanup happens when over the maximum */
 	DBG(DBG_CONTROL, {
 		ipstr_buf b;
 		char cib[CONN_INST_BUF];

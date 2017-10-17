@@ -879,7 +879,20 @@ static void process_recent_rtransmit(struct state *st,
 	set_cur_state(st);
 	if (st->st_suspended_md != NULL) {
 		libreswan_log("retransmission ignored: we're still working on the previous one");
-	} else if (st->st_msgid_lastreplied != st->st_msgid_lastrecv) {
+		return;
+	}
+
+	/* this should never happen */
+	if (st->st_tpacket.len == 0) {
+		pexpect(st->st_tpacket.len == 0); /* get noticed */
+		libreswan_log("retransmission for message ID: %u exchange %s failed lastreplued %u - we have no stored packet to retransmit",
+			st->st_msgid_lastrecv,
+			enum_name(&ikev2_exchange_names, ix),
+			st->st_msgid_lastreplied);
+		return;
+        }
+
+	if (st->st_msgid_lastreplied != st->st_msgid_lastrecv) {
 		DBG(DBG_CONTROLMORE,
 			DBG_log("cannot retransmit response for message ID: %u exchange %s lastreplied %u",
 				st->st_msgid_lastrecv,
