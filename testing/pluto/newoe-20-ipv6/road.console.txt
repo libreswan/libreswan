@@ -10,8 +10,6 @@ road #
 road #
  echo "fe80::/10" >> /etc/ipsec.d/policies/clear
 road #
- cp /source/programs/configs/v6neighbor-hole.conf /etc/ipsec.d/
-road #
  ipsec start
 Redirecting to: systemctl start ipsec.service
 road #
