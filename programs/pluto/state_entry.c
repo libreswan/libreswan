@@ -15,87 +15,88 @@
 
 #include <stdint.h>
 
+#include "lswlog.h"
+
+#include "defs.h"
+#include "state.h"
 #include "state_entry.h"
-#include "log.h"
 
-struct state_entry **hash_by_state_cookies(struct state_hash_table *table,
-					   const uint8_t *icookie,
-					   const uint8_t *rcookie)
+struct state_entry *state_entries_by_hash(struct state_hash_table *table,
+					  unsigned long hash)
 {
-	DBG(DBG_RAW | DBG_CONTROL, {
-			DBG_log("finding hash chain in %s", table->name);
-			DBG_dump("  ICOOKIE:", icookie, COOKIE_SIZE);
-			DBG_dump("  RCOOKIE:", rcookie, COOKIE_SIZE);
-		});
-
-	/* XXX the following hash is pretty pathetic */
-	unsigned i = 0;
-	unsigned j;
-	for (j = 0; j < COOKIE_SIZE; j++)
-		i = i * 407 + icookie[j] + rcookie[j];
-	i = i % STATE_TABLE_SIZE;
-
-	DBG(DBG_CONTROL, DBG_log("found hash chain %d", i));
-	return &(table->entries[i]);
+	/* let caller do logging */
+	return &(table->entries[hash % STATE_TABLE_SIZE]);
 }
 
-void insert_by_state_cookies(struct state_hash_table *table,
-			     struct state_entry *entry,
-			     const uint8_t *icookie,
-			     const uint8_t *rcookie)
-{
-	struct state_entry **chain = hash_by_state_cookies(table, icookie, rcookie);
-	insert_state_entry(chain, entry);
-}
-
-static void log_inserted_entry(const char *prefix, struct state_entry *entry,
-			       const char *suffix)
+static void log_entry(const char *table_name,
+		      const char *op, struct state_entry *entry)
 {
 	if (entry == NULL) {
-		DBG(DBG_CONTROL, DBG_log("%sentry is (nil)%s", prefix, suffix));
-	} else {
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("%s: %s entry is NULL", table_name, op));
+	} else if (entry->prev == NULL && entry->next == NULL &&
+		   entry->state == NULL) {
 		DBG(DBG_CONTROL,
-		    DBG_log("%sstate %p entry %p next %p prev-next %p%s",
-			    prefix,
-			    entry->state, entry,
-			    entry->next, entry->prev_next,
-			    suffix));
-		passert(*entry->prev_next != NULL);
-		passert(*entry->prev_next == entry);
-		passert(entry->next == NULL
-			|| entry->next->prev_next == &entry->next);
+		    DBG_log("%s: %s entry is HEAD", table_name, op));
+	} else {
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("%s: %s state #%lu entry (prev %p) %p (next %p)",
+			    table_name, op,
+			    (entry->state != NULL ? entry->state->st_serialno : 0LU),
+			    entry->prev, entry, entry->next));
+		passert(entry->prev != NULL);
+		passert(entry->prev->next == entry);
+		passert(entry->next != NULL);
+		passert(entry->next->prev == entry);
 	}
 }
 
-void insert_state_entry(struct state_entry **list,
+void insert_state_entry(const char *table_name,
+			struct state_entry *head,
 			struct state_entry *entry)
 {
 	DBG(DBG_CONTROL,
-	    DBG_log("list %p first entry %p", list, *list));
-	passert(entry->next == NULL && entry->prev_next == NULL);
-	/* insert at the front */
-	entry->next = *list;
-	entry->prev_next = list;
-	*list = entry;
-	/* point next at us */
-	if (entry->next != NULL) {
-		entry->next->prev_next = &entry->next;
+	    DBG_log("%s: inserting state #%lu entry %p into chain (prev %p) %p (next %p)",
+		    table_name,
+		    (entry->state != NULL ? entry->state->st_serialno : 0LU),
+		    entry,
+		    head->prev, head, head->next));
+	passert(entry->next == NULL && entry->prev == NULL);
+	if (head->prev == NULL && head->next == NULL) {
+		entry->prev = head;
+		entry->next = head;
+		head->prev = entry;
+		head->next = entry;
+	} else {
+		/* insert at the front */
+		entry->next = head->next;
+		entry->next->prev = entry;
+		entry->prev = head;
+		head->next = entry;
+		/* head->prev = head->prev; */
 	}
-	log_inserted_entry("inserted ", entry, " into list");
-	log_inserted_entry("updated next ", entry->next, "");
+	log_entry(table_name, "inserted", entry);
 }
 
-void remove_state_entry(struct state_entry *entry)
+void remove_state_entry(const char *table_name,
+			struct state_entry *entry)
 {
-	log_inserted_entry("removing ", entry, " from list");
-	*entry->prev_next = entry->next;
-	/* point next at prev */
-	if (entry->next != NULL) {
-		entry->next->prev_next = entry->prev_next;
-		passert(*entry->next->prev_next == entry->next);
-	}
-	log_inserted_entry("updated next ", *entry->prev_next, "");
-	/* reset */
+	log_entry(table_name, "removing", entry);
+	/* unlink */
+	struct state_entry *prev = entry->prev;
+	struct state_entry *next = entry->next;
 	entry->next = NULL;
-	entry->prev_next = NULL;
+	entry->prev = NULL;
+	/* kill loop if empty.  Needed? */
+	if (prev == next) {
+		/* the head */
+		prev->next = NULL;
+		next->prev = NULL;
+		DBG(DBG_CONTROL, DBG_log("%s: empty", table_name));
+	} else {
+		prev->next = next;
+		next->prev = prev;
+		log_entry(table_name, "updated prev", prev);
+		log_entry(table_name, "updated next ", next);
+	}
 }

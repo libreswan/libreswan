@@ -501,15 +501,11 @@ struct state {
 
 	struct pluto_event *st_event;		/* timer event for this state object */
 
-	/*
-	 * hash table entry indexed by ICOOKIE+RCOOKIE
-	 */
-	struct state_entry st_hash_entry;
-	/*
-	 * Hash table indexed by ICOOKIE+ZERO_COOKIE.
-	 *
-	 * Used to robustly find a state based only on ICOOKIE.
-	 */
+	/* SERIALNO hash table entry */
+	struct state_entry st_serialno_hash_entry;
+	/* ICOOKIE:RCOOKIE hash table entry */
+	struct state_entry st_cookies_hash_entry;
+	/* ICOOKIE hash table entry */
 	struct state_entry st_icookie_hash_entry;
 
 	struct hidden_variables hidden_variables;

@@ -1,6 +1,6 @@
-/* expectation failure, for libreswan
+/* Output a sanitized string, for libreswan
  *
- * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,19 +19,7 @@
 
 #include "lswlog.h"
 
-void lsw_pexpect_log(const char *file,
-		     unsigned long line,
-		     const char *func,
-		     const char *fmt, ...)
+size_t lswlog_errno(struct lswlog *buf, int e)
 {
-	LSWBUF(buf) {
-		lswlog_pre(buf);
-		lswlogs(buf, "EXPECTATION FAILED: ");
-		va_list ap;
-		va_start(ap, fmt);
-		lswlogvf(buf, fmt, ap);
-		va_end(ap);
-		lswlog_source_line(buf, func, file, line);
-		lswlog_to_error_stream(buf);
-	}
+	return lswlogf(buf, " Errno %d: %s", e, strerror(e));
 }

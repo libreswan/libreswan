@@ -916,18 +916,27 @@ kvm-install: $(foreach domain, $(KVM_INSTALL_DOMAINS), kvm-$(domain)-install)
 # they still get created.
 kvm-install: | $(foreach domain,$(KVM_TEST_DOMAINS),$(KVM_POOLDIR)/$(domain).xml)
 
+# This is trying to work-around even more broken F26 hosts where the
+# build hangs.
+#
+# - tried OBJDIR=/var/tmp but things still hang so using $(KVM_OBJDIR)
+#   for how; pointing KVM_OBJDIR=/var/tmp/KVM.OBJ is still a speed up
+#
+# - best way to recover from a hang is to uninstall the build domain
+#   (should this always do that?)
+
 kvm-install-hive:
 	$(MAKE) KVM_BUILD_HOST=build kvm-uninstall-install-domains
 	$(MAKE) KVM_BUILD_HOST=build kvm-install-build-domain
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . \
 		$(addprefix $(KVM_FIRST_PREFIX), build) \
-		'export OBJDIR=/var/tmp/OBJ.kvm ; make OBJDIR=/var/tmp/OBJ.kvm base'
+		'export OBJDIR=$(KVM_OBJDIR) ; make OBJDIR=$(KVM_OBJDIR) base'
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . \
 		$(addprefix $(KVM_FIRST_PREFIX), build) \
-		'export OBJDIR=/var/tmp/OBJ.kvm ; make OBJDIR=/var/tmp/OBJ.kvm module'
+		'export OBJDIR=$(KVM_OBJDIR) ; make OBJDIR=$(KVM_OBJDIR) module'
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . \
 		$(addprefix $(KVM_FIRST_PREFIX), build) \
-		'export OBJDIR=/var/tmp/OBJ.kvm ; ./testing/guestbin/swan-install OBJDIR=/var/tmp/OBJ.kvm'
+		'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)'
 	$(MAKE) KVM_BUILD_HOST=build kvm-install-install-domains
 
 

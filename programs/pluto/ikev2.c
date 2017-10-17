@@ -695,6 +695,7 @@ static bool ikev2_check_fragment(struct msg_digest *md, struct state *st)
 			"discarding IKE encrypted fragment - fragmentation not allowed by local policy (ike_frag=no)"));
 		return FALSE;
 	}
+
 	if (!(st->st_seen_fragvid)) {
 		DBG(DBG_CONTROL, DBG_log(
 			    "discarding IKE encrypted fragment - remote never proposed fragmentation"));
@@ -724,7 +725,7 @@ static bool ikev2_check_fragment(struct msg_digest *md, struct state *st)
 	}
 
 	if (st->st_v2_rfrags == NULL) {
-		/* first fragment, must be good */
+		/* first fragment: must be good */
 		return TRUE;
 	}
 
@@ -750,16 +751,14 @@ static bool ikev2_check_fragment(struct msg_digest *md, struct state *st)
 				"ignoring odd IKE encrypted fragment (total shrank)"));
 			return FALSE;
 		}
-	}
-
-	passert(skf->isaskf_number < elemsof(st->st_v2_rfrags->frags));
-	if (st->st_v2_rfrags->frags[skf->isaskf_number].cipher.ptr != NULL) {
+	} else if (st->st_v2_rfrags->frags[skf->isaskf_number].cipher.ptr != NULL) {
+		/* retain earlier fragment with same index */
 		DBG(DBG_CONTROL, DBG_log(
-			    "ignoring duplicate IKE encrypted fragment"));
+			    "ignoring repeated IKE encrypted fragment"));
 		return FALSE;
+	} else {
+		return TRUE;
 	}
-
-	return TRUE;
 }
 
 static bool ikev2_collect_fragment(struct msg_digest *md, struct state *st)
@@ -799,57 +798,66 @@ static bool ikev2_collect_fragment(struct msg_digest *md, struct state *st)
 		st->st_v2_rfrags->first_np = skf->isaskf_np;
 	}
 
+	passert(st->st_v2_rfrags->count < st->st_v2_rfrags->total);
 	st->st_v2_rfrags->count++;
-	if (st->st_v2_rfrags->count < st->st_v2_rfrags->total) {
-		return FALSE;
-	}
-
-	return TRUE;
+	return st->st_v2_rfrags->count == st->st_v2_rfrags->total;
 }
 
 static struct state *process_v2_child_ix(struct msg_digest *md,
 		struct state *pst)
 {
-	struct state *st = NULL; /* child state */
-	char *what = NULL;  /* to make life easier to log */
-	char *why = "";
-	/* this a new IKE request.  Not a response */
-	const bool newreq = is_msg_request(md);
+	struct state *st; /* child state */
 
+	/* for log */
+	const char *what;
+	const char *why = "";
+
+	/* force pst to be parent state */
+	/* ??? should we not already know whether this is a parent state? */
 	pst = IS_CHILD_SA(pst) ? state_with_serialno(pst->st_clonedfrom) : pst;
 
-	if (newreq) {
+	if (is_msg_request(md)) {
+		/* this a new IKE request and not a response */
 		if (md->from_state == STATE_V2_CREATE_R) {
 			what = "Child SA Request";
 			st = duplicate_state(pst, IPSEC_SA);
 			change_state(st, STATE_V2_CREATE_R);
 			insert_state(st); /* needed for delete - we are duplicating early */
 		} else {
+			what = "IKE Rekey Request";
 			st = duplicate_state(pst, IKE_SA);
 			change_state(st, STATE_V2_REKEY_IKE_R); /* start with this */
-			what = "IKE Rekey Request";
 			/* can not call insert_state yet. no IKE cookies yet */
 		}
 	} else  {
+		/* this a response */
 		what = "Child SA Response";
 		st = state_with_parent_msgid_expect(pst->st_serialno,
 				htonl(md->msgid_received),
 				md->from_state);
-		if (st == NULL && md->from_state == STATE_V2_CREATE_I) {
-			why = "no matching IPsec child state for this response";
-			what = "Child SA Response";
-		} else if (st == NULL && md->from_state == STATE_V2_REKEY_IKE_I) {
-			why = "no matching local IKE Rekey state found";
-			what = "IKE Rekey Response";
+		if (st == NULL) {
+			switch (md->from_state) {
+			case STATE_V2_CREATE_I:
+				why = "no matching IPsec child state for this response";
+				break;
+			case STATE_V2_REKEY_IKE_I:
+				what = "IKE Rekey Response";
+				why = "no matching local IKE Rekey state found";
+				break;
+			default:
+				/* ??? can this happen? */
+				break;
+			}
 		}
 	}
+
 	if (st == NULL) {
 		libreswan_log("rejecting %s CREATE_CHILD_SA %s", what, why);
 	} else {
-		ipstr_buf b;
-		char ca[CONN_INST_BUF];
-		char cb[CONN_INST_BUF];
-		DBG(DBG_CONTROLMORE,
+		DBG(DBG_CONTROLMORE, {
+			ipstr_buf b;
+			char ca[CONN_INST_BUF];
+			char cb[CONN_INST_BUF];
 			DBG_log("\"%s\"%s #%lu received %s CREATE_CHILD_SA %s from %s:%u Child \"%s\"%s #%lu in %s will process it further",
 				pst->st_connection->name,
 				fmt_conn_instance(pst->st_connection, ca),
@@ -859,47 +867,37 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 				st->st_connection->name,
 				fmt_conn_instance(st->st_connection, cb),
 				st->st_serialno,
-				enum_name(&state_names, st->st_state)));
+				enum_name(&state_names, st->st_state));
+		});
         }
         return st;
 }
 
-static bool last_reply_retransmit(struct state *st,
-		const enum isakmp_xchg_types ix)
-{
-	if (st->st_msgid_lastreplied == st->st_msgid_lastrecv) {
-		DBG(DBG_CONTROLMORE,
-			DBG_log("retransmit response for message ID: %u exchange %s",
-				st->st_msgid_lastrecv,
-				enum_name(&ikev2_exchange_names, ix)));
-		return TRUE;
-	} else {
-		DBG(DBG_CONTROLMORE,
-			DBG_log("cannot retransmit response for message ID: %u exchange %s lastreplied %u",
-				st->st_msgid_lastrecv,
-				enum_name(&ikev2_exchange_names, ix),
-				st->st_msgid_lastreplied));
-		return FALSE;
-	}
-}
-
-static void proces_recent_rtransmit(struct state *st,
+static void process_recent_rtransmit(struct state *st,
 		const enum isakmp_xchg_types ix)
 {
 	set_cur_state(st);
 	if (st->st_suspended_md != NULL) {
 		libreswan_log("retransmission ignored: we're still working on the previous one");
+	} else if (st->st_msgid_lastreplied != st->st_msgid_lastrecv) {
+		DBG(DBG_CONTROLMORE,
+			DBG_log("cannot retransmit response for message ID: %u exchange %s lastreplied %u",
+				st->st_msgid_lastrecv,
+				enum_name(&ikev2_exchange_names, ix),
+				st->st_msgid_lastreplied));
 	} else {
-		if (last_reply_retransmit(st, ix)) {
-			send_ike_msg(st, "ikev2-responder-retransmit");
-		}
+		DBG(DBG_CONTROLMORE,
+			DBG_log("retransmit response for message ID: %u exchange %s",
+				st->st_msgid_lastrecv,
+				enum_name(&ikev2_exchange_names, ix)));
+		send_ike_msg(st, "ikev2-responder-retransmit");
 	}
 }
 
 static bool match_hdr_flag(lset_t svm_flags, enum smf2_flags smf2_flag,
 		const bool md_flag)
 {
-	return (svm_flags & smf2_flag && md_flag);
+	return (svm_flags & smf2_flag) && md_flag;
 }
 
 /*
@@ -1027,7 +1025,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			}
 			if (st->st_msgid_lastrecv == md->msgid_received) {
 				/* this is a recent retransmit. */
-				proces_recent_rtransmit(st, ix);
+				process_recent_rtransmit(st, ix);
 				return;
 			}
 			/* update lastrecv later on */
@@ -1136,14 +1134,14 @@ void process_v2_packet(struct msg_digest **mdp)
 		/*
 		 * Does the original initiator flag match?
 		 */
-		if (match_hdr_flag(svm->flags, SMF2_IKE_I_SET, (!ike_i)))
+		if (match_hdr_flag(svm->flags, SMF2_IKE_I_SET, !ike_i))
 				continue;
 		if (match_hdr_flag(svm->flags, SMF2_IKE_I_CLEAR, ike_i))
 				continue;
 		/*
 		 * Does the message reply flag match?
 		 */
-		if (match_hdr_flag(svm->flags, SMF2_MSG_R_SET, (!msg_r)))
+		if (match_hdr_flag(svm->flags, SMF2_MSG_R_SET, !msg_r))
 				continue;
 		if (match_hdr_flag(svm->flags, SMF2_MSG_R_CLEAR, msg_r))
 				continue;

@@ -2861,8 +2861,8 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 				return FALSE;
 			}
 			duplicate_id(&st->st_connection->spd.that.id, &peer);
-			return TRUE;
 		}
+		return TRUE;
 	}
 
 	/* responder */

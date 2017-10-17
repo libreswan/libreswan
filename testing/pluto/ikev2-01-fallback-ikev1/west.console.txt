@@ -120,9 +120,9 @@ west #
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
-       proto esp spi 0xSPISPIXX reqid REQID mode tunnel
-       replay-window 0
-       sel src 192.1.2.23/32 dst 192.1.2.45/32
+	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	replay-window 0 
+	sel src 192.1.2.23/32 dst 192.1.2.45/32 
 XFRM policy:
 src 192.0.1.0/24 dst 192.0.2.0/24 
 	dir out priority 2344 ptype main 

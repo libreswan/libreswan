@@ -217,11 +217,18 @@ size_t lswlogf(struct lswlog *log, const char *format, ...) PRINTF_LIKE(2);
 size_t lswlogs(struct lswlog *log, const char *string);
 size_t lswlogl(struct lswlog *log, struct lswlog *buf);
 
-/* <error-string> (<error> 0x<error>) */
+/* _(SECERR: N (0xX): <error-string>) */
 size_t lswlog_pr_error(struct lswlog *log);
 /* _(in FUNC() at FILE:LINE) */
 size_t lswlog_source_line(struct lswlog *log, const char *func,
 			  const char *file, unsigned long line);
+/* <string without binary characters> */
+size_t lswlog_sanitized(struct lswlog *log, const char *string);
+/* _Errno E: <strerror(E)> */
+size_t lswlog_errno(struct lswlog *log, int e);
+/* <hex-byte>:<hex-byte>... */
+size_t lswlog_bytes(struct lswlog *log, const uint8_t *bytes,
+		    size_t sizeof_bytes);
 
 /*
  * The logging output streams used by library code.

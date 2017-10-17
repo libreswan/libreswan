@@ -24,3 +24,4 @@ s/Sep .. ..:..:.. 20../TIMESTAMP/g
 s/Oct .. ..:..:.. 20../TIMESTAMP/g
 s/Nov .. ..:..:.. 20../TIMESTAMP/g
 s/Dec .. ..:..:.. 20../TIMESTAMP/g
+s/expires in [0-9]* days/expires in X days/g

@@ -42,7 +42,7 @@ CONFDSUBDIR=.
 endif
 
 # the list of stuff to be built for "make programs"
-CONFIGLIST=$(CONFFILES) $(CONFDFILES) $(CONFDSUBDIRFILES)
+CONFIGLIST=$(CONFFILES) $(CONFDSUBDIRFILES)
 PROGRAMSLIST=${PROGRAM} $(CONFIGLIST)
 
 local-base: $(PROGRAMSLIST)
@@ -81,13 +81,6 @@ local-install-base:
 		echo $$src '->' $$destdir/$$file-sample ; \
 		$(INSTALL) $(INSTCONFFLAGS) $$src $$destdir/$$file-sample ; \
 	)
-	@$(call foreach-file, $(CONFDFILES), $(CONFDDIR), \
-		if [ ! -f $$destdir/$$file ]; then \
-			echo $$src '->' $$destdir/$$file ; \
-			mkdir -p $$destdir ; \
-			$(INSTALL) $(INSTCONFFLAGS) $$src $$destdir/$$file ; \
-		fi ; \
-	)
 	@$(call foreach-file, $(CONFDSUBDIRFILES), $(CONFDDIR)/$(CONFDSUBDIR), \
 		if [ ! -f $$destdir/$$file ]; then \
 			echo $$src '->' $$destdir/$$file ; \
@@ -108,9 +101,6 @@ list-local-base:
 	)
 	@$(call foreach-file, $(EXCONFFILES), $(EXAMPLECONFDIR), \
 		echo $$destdir/$$file-sample ; \
-	)
-	@$(call foreach-file,  $(CONFDFILES), $(CONFDDIR), \
-		echo $$destdir/$$file ; \
 	)
 	@$(call foreach-file,  $(CONFDSUBDIRFILES), $(CONFDDIR)/$(CONFDSUBDIR), \
 		echo $$destdir/$$file ; \
