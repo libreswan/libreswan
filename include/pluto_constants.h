@@ -967,10 +967,10 @@ enum keyword_host {
  */
 enum dns_auth_level {
 	DNSSEC_UNKNOWN,		/* didn't come from DNS like source */
-	DNSSEC_BOGUS,           /* UB retunred BOGUS */
-	DNSSEC_INSECURE,        /* UB retrured INSECURE */
-	PUBKEY_LOCAL,           /* came from local source, wahck, plugin etc */
-	DNSSEC_SECURE,          /* UB retrurned SECURE */
+	DNSSEC_BOGUS,           /* UB returned BOGUS */
+	DNSSEC_INSECURE,        /* UB returned INSECURE */
+	PUBKEY_LOCAL,           /* came from local source, whack, plugin etc */
+	DNSSEC_SECURE,          /* UB returned SECURE */
 
 	DNSSEC_ROOF
 };

@@ -296,7 +296,7 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 
 	dnsr->delete_exisiting_keys = TRUE; /* there could something to add */
 
-	for (i = (size_t) 0U; i < ldns_rr_list_rr_count(answers); i++) {
+	for (i = 0; i < ldns_rr_list_rr_count(answers); i++) {
 		ldns_rr *ans = ldns_rr_list_rr(answers, i);
 		ldns_rr_type atype = ldns_rr_get_type(ans);
 		ldns_rr_class qclass = ldns_rr_get_class(ans);
@@ -401,21 +401,20 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 /* This is called when dns response arrives */
 static err_t process_dns_resp(struct p_dns_req *dnsr)
 {
-	ldns_status status;
-	ldns_pkt *ldnspkt = NULL;
 
 	if (dnsr->rcode != 0 ) {
 		return dnsr->rcode_name;
 	}
 
-	status = ldns_wire2pkt(&ldnspkt, dnsr->wire, dnsr->wire_len);
+	ldns_pkt *ldnspkt = NULL;
+	ldns_status status = ldns_wire2pkt(&ldnspkt, dnsr->wire, dnsr->wire_len);
 
 	if (status != LDNS_STATUS_OK) {
 		return "ldns could not parse response wire format";
 	}
 
-	if (ldns_rr_list_rr_count(ldns_pkt_answer(ldnspkt)) == (size_t) 0U) {
-		return "dns response has 0 answer";
+	if (ldns_rr_list_rr_count(ldns_pkt_answer(ldnspkt)) == 0) {
+		return "DNS response contains no answer";
 	}
 
 	if (dnsr->secure == UB_EVENT_BOGUS) {
@@ -424,7 +423,7 @@ static err_t process_dns_resp(struct p_dns_req *dnsr)
 
 	if (dnsr->secure == UB_EVENT_INSECURE) {
 		/* PAUL add impair here */
-		return "unbound retuned INSECURE response - ignored";
+		return "unbound returned INSECURE response - ignored";
 	}
 
 	return parse_rr(dnsr, ldnspkt);

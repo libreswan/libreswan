@@ -748,7 +748,7 @@ static void childhandler_cb(int unused UNUSED, const short event UNUSED, void *a
 	/*
 	 * ??? Super tricky:
 	 * If addconn_child_pid == 0 (i.e. there is no addcon child)
-	 * wait for any child process whose process group ID is equal to that of the calling process.
+	 * wait for any child process whose process group ID is equal to ours.
 	 * Otherwise: wait specifically for the addconn_child_pid.
 	 */
 	child = waitpid(addconn_child_pid, &status, WNOHANG);
