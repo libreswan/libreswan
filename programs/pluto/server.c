@@ -534,9 +534,6 @@ static struct event *pluto_event_wraper(evutil_socket_t fd, short events,
  * looking for how to set up a timer, then don't look here and don't
  * look at timer.c.  Why?
  */
-struct event *timer_private_pluto_event_new(evutil_socket_t ft, short
-		events, event_callback_fn cb, void *arg,
-		const struct timeval *t);
 struct event *timer_private_pluto_event_new(evutil_socket_t fd, short events,
 					    event_callback_fn cb, void *arg,
 					    const struct timeval *t)
@@ -785,8 +782,6 @@ void init_event_base(void) {
 
 static void main_loop(void)
 {
-	int r;
-
 	/*
 	 * setup basic events, CTL and SIGNALs
 	 */
@@ -810,7 +805,7 @@ static void main_loop(void)
 			"PLUTO_SIGSYS");
 #endif
 
-	r = event_base_loop(pluto_eb, 0);
+	int r = event_base_loop(pluto_eb, 0);
 	passert(r == 0);
 }
 
