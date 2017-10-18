@@ -1,4 +1,4 @@
-ipsec whack --trafficstatus
+hostname | grep east > /dev/null && ipsec whack --trafficstatus
 : ==== cut ====
 ipsec auto --status
 ipsec stop

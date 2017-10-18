@@ -534,9 +534,6 @@ static struct event *pluto_event_wraper(evutil_socket_t fd, short events,
  * looking for how to set up a timer, then don't look here and don't
  * look at timer.c.  Why?
  */
-struct event *timer_private_pluto_event_new(evutil_socket_t ft, short
-		events, event_callback_fn cb, void *arg,
-		const struct timeval *t);
 struct event *timer_private_pluto_event_new(evutil_socket_t fd, short events,
 					    event_callback_fn cb, void *arg,
 					    const struct timeval *t)
@@ -736,18 +733,24 @@ static void childhandler(int sig UNUSED)
 	sigchildflag = TRUE;
 }
 
-/*
- * Perform waitpid() for all children.
- * We used to have more different kinds of children, but these
- * days we only have one - add_conn
- */
-static void reapchildren(void)
+static void childhandler_cb(int unused UNUSED, const short event UNUSED, void *arg UNUSED)
 {
+	/*
+	 * Perform waitpid() for all children (??? really?).
+	 * We used to have more different kinds of children, but these
+	 * days we only have one - add_conn
+	 */
 	pid_t child;
 	int status;
 
 	errno = 0;
 
+	/*
+	 * ??? Super tricky:
+	 * If addconn_child_pid == 0 (i.e. there is no addcon child)
+	 * wait for any child process whose process group ID is equal to that of the calling process.
+	 * Otherwise: wait specifically for the addconn_child_pid.
+	 */
 	child = waitpid(addconn_child_pid, &status, WNOHANG);
 	if (child == addconn_child_pid) {
 		DBG(DBG_CONTROLMORE,
@@ -759,13 +762,7 @@ static void reapchildren(void)
 	} else {
 		libreswan_log("child pid=%d (status=%d) is not my child!",
 				child, status);
-
 	}
-}
-
-static void childhandler_cb(int unused UNUSED, const short event UNUSED, void *arg UNUSED)
-{
-    reapchildren();
 }
 
 void init_event_base(void) {
@@ -776,17 +773,17 @@ void init_event_base(void) {
 	 * According to section 'setup Library setup', libevent needs
 	 * to be set up in pthreads mode before doing anything else.
 	 */
-	passert(evthread_use_pthreads() >= 0);
+	int r = evthread_use_pthreads();
+	passert(r >= 0);
 	/* now do anything */
 	pluto_eb = event_base_new();
 	passert(pluto_eb != NULL);
-	passert(evthread_make_base_notifiable(pluto_eb) >= 0);
+	int s = evthread_make_base_notifiable(pluto_eb);
+	passert(s >= 0);
 }
 
 static void main_loop(void)
 {
-	int r;
-
 	/*
 	 * setup basic events, CTL and SIGNALs
 	 */
@@ -810,7 +807,7 @@ static void main_loop(void)
 			"PLUTO_SIGSYS");
 #endif
 
-	r = event_base_loop(pluto_eb, 0);
+	int r = event_base_loop(pluto_eb, 0);
 	passert(r == 0);
 }
 

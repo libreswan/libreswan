@@ -199,15 +199,28 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
                     os.chmod(dir, 0o700)
 
         # test specific files
-        ipsecconf = "%s/%s.conf" % (testpath, hostname)
-        ipsecsecrets = "%s/%s.secrets" % (testpath, hostname)
+        ipsecconf = "%s/ipsec.conf" % (testpath)
+        ipsecsecrets = "%s/ipsec.secrets" % (testpath)
+        h_ipsecconf = "%s/%s.conf" % (testpath, hostname)
+        h_ipsecsecrets = "%s/%s.secrets" % (testpath, hostname)
         xl2tpdconf = "%s/%s.xl2tpd.conf" % (testpath, hostname)
         pppoptions = "%s/%s.ppp-options.xl2tpd" % (testpath, hostname)
         chapfile = "%s/chap-secrets" % testpath
 
-        if not os.path.isfile(ipsecconf):
+        if os.path.isfile(h_ipsecconf):
+            if os.path.isfile(ipsecconf):
+                print("conflicting files %s %s" % (ipsecconf, h_ipsecconf))
+            else:
+                ipsecconf = h_ipsecconf
+        elif not os.path.isfile(ipsecconf):
             ipsecconf = "/testing/baseconfigs/%s/etc/ipsec.conf" % hostname
-        if not os.path.isfile(ipsecsecrets):
+
+        if os.path.isfile(h_ipsecsecrets):
+            if os.path.isfile(ipsecsecrets):
+                print("conflicting files %s %s" % (ipsecsecrets, h_ipsecsecrets))
+            else:
+                ipsecsecrets = h_ipsecsecrets
+        elif not os.path.isfile(ipsecsecrets):
             ipsecsecrets = "/testing/baseconfigs/%s/etc/ipsec.secrets" % hostname
 
         if args.userland == "strongswan":
