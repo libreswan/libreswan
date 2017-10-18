@@ -51,8 +51,7 @@ road #
  echo done
 done
 road #
- ipsec whack --trafficstatus
-006 #2: "road-east", username=use3, type=ESP, add_time=1234567890, inBytes=336, outBytes=336
+ hostname | grep east > /dev/null && ipsec whack --trafficstatus
 road #
 road #
  grep "^leak" /tmp/pluto.log
