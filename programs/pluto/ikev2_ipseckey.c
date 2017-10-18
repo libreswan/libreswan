@@ -418,12 +418,13 @@ static err_t process_dns_resp(struct p_dns_req *dnsr)
 		return "dns response has 0 answer";
 	}
 
-	if (dnsr->secure == UB_EVENT_BOGUS)
-	{
-		return "unbound retunred BOGUS response ignore it.";
-	} else if (dnsr->secure == UB_EVENT_INSECURE) {
+	if (dnsr->secure == UB_EVENT_BOGUS) {
+		return "unbound returned BOGUS response - ignored";
+	}
+
+	if (dnsr->secure == UB_EVENT_INSECURE) {
 		/* PAUL add impair here */
-		return "unbound retunred INSECURE response ignore it.";
+		return "unbound retuned INSECURE response - ignored";
 	}
 
 	return parse_rr(dnsr, ldnspkt);
