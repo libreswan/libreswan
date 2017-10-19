@@ -70,20 +70,27 @@ void remove_state_entry(const char *table_name,
  * Iterate through all the states in a list.
  *
  * So that the current state can be deleted keep the entry pointer one
- * step ahead.  So that a search failure can be detected leave ST=NULL
- * if the loop exits normally.
+ * step ahead.
+ *
+ * So that a search failure can be detected leave ST=NULL if the loop
+ * exits normally.
+ *
+ * So that 'continue' and 'break' both behave as expected from within
+ * CODE, CODE must be placed at the end of the loop (at one point ST
+ * was being cleared after CODE leading to a 'continue' on the final
+ * entry skipping that line leaving ST non-NULL).
  */
 #define FOR_EACH_STATE_ENTRY(ST, CHAIN, CODE)				\
 	do {								\
 		struct state_entry *ST##entry = (CHAIN)->next;		\
 		(ST) = NULL;						\
 		if (ST##entry != NULL) {				\
-			do {						\
+			while (true) {					\
 				(ST) = ST##entry->state;		\
+				if ((ST) == NULL) break;		\
 				ST##entry = ST##entry->next;		\
 				CODE;					\
-				(ST) = NULL;				\
-			} while (ST##entry->state != NULL);		\
+			}						\
 		}							\
 	} while (0)
 
