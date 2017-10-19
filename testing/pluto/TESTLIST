@@ -542,6 +542,7 @@ kvmplutotest	xauth-pluto-19		good
 kvmplutotest	xauth-pluto-20-pam	good
 kvmplutotest	xauth-pluto-20-pam-timeout good
 kvmplutotest	xauth-pluto-21-main-xr0-drop 	wip
+kvmplutotest	xauth-pluto-21-aggr-xr0-drop 	wip
 kvmplutotest	xauth-pluto-22		good
 kvmplutotest	xauth-pluto-23		good
 kvmplutotest	xauth-pluto-24-static-addresspool good
