@@ -421,13 +421,17 @@ static char *humanize_number(uint64_t num,
 
 /*
  * Iterate over all entries with matching cookies.
+ *
+ * Beware of using 'continue' here, it may unintentionally skip code
+ * burried in FOR_EACH_STATE_ENTRY (for instance a statement clearing
+ * ST).
  */
 #define FOR_EACH_ENTRY_WITH_COOKIE(ST, ICOOKIE, RCOOKIE, CODE)		\
 	FOR_EACH_STATE_ENTRY(ST, cookies_chain(ICOOKIE, RCOOKIE), {	\
-		if (!memeq(ICOOKIE, ST->st_icookie, COOKIE_SIZE) ||	\
-		    !memeq(RCOOKIE, ST->st_rcookie, COOKIE_SIZE))	\
-			continue;					\
-		CODE							\
+		if (memeq(ICOOKIE, ST->st_icookie, COOKIE_SIZE) &&	\
+		    memeq(RCOOKIE, ST->st_rcookie, COOKIE_SIZE)) {	\
+			CODE;						\
+		}							\
 	})								\
 
 /*
