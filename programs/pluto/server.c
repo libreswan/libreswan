@@ -706,35 +706,76 @@ static void syshandler_cb(int unused UNUSED, const short event UNUSED, void *arg
 }
 #endif
 
+static void addconn_exited(int status, void *context UNUSED)
+{
+       DBG(DBG_CONTROLMORE,
+           DBG_log("reaped addconn helper child (status %d)", status));
+       addconn_child_pid = 0;
+}
+
+static void log_status(struct lswlog *buf, int status)
+{
+	lswlogf(buf, "status %x ", status);
+	if (WIFEXITED(status)) {
+		lswlogf(buf, "exit status %u",
+			WEXITSTATUS(status));
+	} else if (WIFSIGNALED(status)) {
+		lswlogf(buf, "term signal %s (%d)",
+			strsignal(WTERMSIG(status)),
+			WTERMSIG(status));
+	} else if (WIFSTOPPED(status)) {
+		/* should not happen */
+		lswlogf(buf, "stop signal %s (%d) but WUNTRACED not specified",
+			strsignal(WSTOPSIG(status)),
+			WSTOPSIG(status));
+	} else if (WIFCONTINUED(status)) {
+		lswlogf(buf, "continued");
+	} else {
+		lswlogf(buf, "not recognized!");
+	}
+#ifdef WCOREDUMP
+	if (WCOREDUMP(status)) {
+		lswlogs(buf, " (core dumped)");
+	}
+#endif
+}
+
 static void childhandler_cb(int unused UNUSED, const short event UNUSED, void *arg UNUSED)
 {
-	/*
-	 * Perform waitpid() for all children (??? really?).
-	 * We used to have more different kinds of children, but these
-	 * days we only have one - add_conn
-	 */
-	pid_t child;
-	int status;
-
-	errno = 0;
-
-	/*
-	 * ??? Super tricky:
-	 * If addconn_child_pid == 0 (i.e. there is no addcon child)
-	 * wait for any child process whose process group ID is equal to ours.
-	 * Otherwise: wait specifically for the addconn_child_pid.
-	 */
-	child = waitpid(addconn_child_pid, &status, WNOHANG);
-	if (child == addconn_child_pid) {
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("reaped addconn helper child"));
-		addconn_child_pid = 0;
-	} else if (child == -1) {
-		libreswan_log("reapchild failed with errno=%d %s",
-			      errno, strerror(errno));
-	} else {
-		libreswan_log("child pid=%d (status=%d) is not my child!",
-				child, status);
+	while (true) {
+		int status;
+		errno = 0;
+		pid_t child = waitpid(-1, &status, WNOHANG);
+		switch (child) {
+		case -1: /* error? */
+			if (errno == ECHILD) {
+				DBG(DBG_CONTROLMORE,
+				    DBG_log("waitpid returned no more children"));
+			} else {
+				LOG_ERRNO(errno, "waitpid unexpectedly failed");
+			}
+			return;
+		case 0: /* nothing to do */
+			DBG(DBG_CONTROLMORE,
+			    DBG_log("waitpid returned nothing left to do (but children still running)"));
+			return;
+		default:
+			LSWDBGP(DBG_CONTROLMORE, buf) {
+				lswlogf(buf, "waitpid returned pid %d - ",
+					child);
+				log_status(buf, status);
+			}
+			if (addconn_child_pid != 0 && addconn_child_pid == child) {
+				addconn_exited(status, NULL);
+			} else {
+				LSWLOG(buf) {
+					lswlogf(buf, "waitpid return unknown child pid %d - ",
+						child);
+					log_status(buf, status);
+				}
+			}
+			break;
+		}
 	}
 }
 
@@ -769,7 +810,7 @@ void call_server(void)
 	pluto_event_add(ctl_fd, EV_READ | EV_PERSIST, whack_handle_cb, NULL,
 			NULL, "PLUTO_CTL_FD");
 
-	pluto_event_add(SIGCHLD, EV_SIGNAL, childhandler_cb, NULL, NULL,
+	pluto_event_add(SIGCHLD, EV_SIGNAL | EV_PERSIST, childhandler_cb, NULL, NULL,
 			"PLUTO_SIGCHLD");
 
 	pluto_event_add(SIGTERM, EV_SIGNAL, termhandler_cb, NULL, NULL,
