@@ -29,6 +29,7 @@
 #include "server.h"
 #include "id.h"
 #include "pluto_stats.h"
+#include "log.h"
 
 pthread_t main_thread;
 
@@ -38,13 +39,12 @@ struct xauth {
 	void *arg;
 	char *name;
 	struct timeval tv0;
-	bool (*authenticate)(void *arg, volatile bool *abort);
-	void (*cleanup)(void *arg);
+	bool (*authenticate)(void *arg);
 	void (*callback)(struct state *st, const char *name,
 			 bool aborted, bool success);
-	bool success;
-	volatile bool abort;
-	pthread_t thread;
+	void (*cleanup)(void *arg);
+	bool abort;
+	pid_t child;
 };
 
 /*
@@ -57,25 +57,31 @@ struct xauth {
 void xauth_abort(so_serial_t serialno, struct xauth **xauthp,
 		 struct state *st_callback)
 {
-	passert(pthread_equal(main_thread, pthread_self()));
-
 	passert(xauthp != NULL);
 	struct xauth *xauth = *xauthp;
 	*xauthp = NULL;
 
 	if (xauth == NULL) {
-		PEXPECT_LOG("XAUTH: #%lu: main-thread: no thread to abort (already aborted?)",
+		PEXPECT_LOG("XAUTH: #%lu: main-process: no thread to abort (already aborted?)",
 			    serialno);
 	} else {
 		pstats_xauth_aborted++;
 		passert(!xauth->abort);
 		passert(xauth->serialno == serialno);
-		libreswan_log("XAUTH: #%lu: main-thread: aborting authentication %s-thread for '%s'",
+		libreswan_log("XAUTH: #%lu: main-process: aborting authentication %s-process for '%s'",
 			      serialno, xauth->method, xauth->name);
 		xauth->abort = true;
+		/*
+		 * Don't hold back.
+		 *
+		 * XXX: need to fix child so that more friendly
+		 * SIGTERM is handled - currently the forked process
+		 * has it blocked by libvent.
+		 */
+		kill(xauth->child, SIGKILL);
 		if (st_callback != NULL) {
 			DBG(DBG_CONTROL,
-			    DBG_log("XAUTH: #%lu: main-thread: notifying callback for user '%s'",
+			    DBG_log("XAUTH: #%lu: main-process: notifying callback for user '%s'",
 				    serialno, xauth->name));
 			xauth->callback(st_callback, xauth->name, true, false);
 		}
@@ -86,14 +92,13 @@ void xauth_abort(so_serial_t serialno, struct xauth **xauthp,
  * On the main thread; notify the state (if it is present) of the
  * xauth result, and then release everything.
  */
-static void xauth_cleanup_callback(evutil_socket_t socket UNUSED,
-				   const short event UNUSED,
-				   void *arg)
+static void xauth_cleanup(int status, void *arg)
 {
 	pstats_xauth_stopped++;
-	passert(pthread_equal(main_thread, pthread_self()));
 
 	struct xauth *xauth = arg;
+	bool success = WIFEXITED(status) && WEXITSTATUS(status) == 0;
+
 	DBG(DBG_CONTROL, {
 			struct timeval tv1;
 			unsigned long tv_diff;
@@ -101,10 +106,10 @@ static void xauth_cleanup_callback(evutil_socket_t socket UNUSED,
 			gettimeofday(&tv1, NULL);
 			tv_diff = (tv1.tv_sec  - xauth->tv0.tv_sec) * 1000000 +
 				  (tv1.tv_usec - xauth->tv0.tv_usec);
-			DBG_log("XAUTH: #%lu: main-thread cleaning up %s-thread for user '%s' result %s time elapsed %ld usec%s.",
+			DBG_log("XAUTH: #%lu: main-process cleaning up %s-process for user '%s' result %s time elapsed %ld usec%s.",
 				xauth->serialno,
 				xauth->method, xauth->name,
-				xauth->success ? "SUCCESS" : "FAILURE",
+				success ? "SUCCESS" : "FAILURE",
 				tv_diff,
 				xauth->abort ? " ABORTED" : "");
 			});
@@ -123,7 +128,12 @@ static void xauth_cleanup_callback(evutil_socket_t socket UNUSED,
 		struct state *st = state_with_serialno(xauth->serialno);
 		passert(st != NULL);
 		st->st_xauth = NULL; /* all done */
-		xauth->callback(st, xauth->name, false, xauth->success);
+		set_cur_state(st);
+		libreswan_log("XAUTH: #%lu: completed for user '%s' with status %s",
+			      xauth->serialno, xauth->name,
+			      success ? "SUCCESSS" : "FAILURE");
+		xauth->callback(st, xauth->name, false, success);
+		reset_cur_state();
 	}
 	xauth->cleanup(xauth->arg);
 	pfree(xauth->name);
@@ -135,16 +145,15 @@ static void xauth_cleanup_callback(evutil_socket_t socket UNUSED,
  * and that will do the real cleanup); and then perform the
  * authorization.
  */
-static void *xauth_thread(void *arg)
+static int xauth_child(void *arg)
 {
 	struct xauth *xauth = arg;
 
-	passert(!pthread_equal(main_thread, pthread_self()));
 	DBG(DBG_CONTROLMORE,
-	    DBG_log("XAUTH: #%lu: %s-thread authenticating user '%s'",
+	    DBG_log("XAUTH: #%lu: %s-process authenticating user '%s'",
 		    xauth->serialno, xauth->method,
 		    xauth->name));
-	xauth->success = xauth->authenticate(xauth->arg, &xauth->abort);
+	bool success = xauth->authenticate(xauth->arg);
 
 	/*
 	 * Schedule xauth_cleanup_callback() to run on the main
@@ -153,23 +162,18 @@ static void *xauth_thread(void *arg)
 	 * Given xauth->abort is volatile and updated by the main
 	 * thread, logging it here is just a hint.
 	 */
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("XAUTH: #%lu: %s-thread queueing cleanup for user '%s' with result %s%s",
-		    xauth->serialno, xauth->method, xauth->name,
-		    xauth->success ? "SUCCESS" : "FAILURE",
-		    xauth->abort ? " ABORTED" : ""));
-	const struct timeval delay = { 0, 0 };
-	pluto_event_add(NULL_FD, EV_TIMEOUT, xauth_cleanup_callback, arg,
-			&delay, "xauth_cleanup_callback");
-
-	return NULL;
+	libreswan_log("XAUTH: #%lu: %s-process completed for user '%s' with result %s%s",
+		      xauth->serialno, xauth->method, xauth->name,
+		      success ? "SUCCESS" : "FAILURE",
+		      xauth->abort ? " ABORTED" : "");
+	return success ? 0 : 1;
 }
 
 static struct xauth *xauth_alloc(const char *method,
 				 const char *name,
 				 so_serial_t serialno,
 				 void *arg,
-				 bool (*authenticate)(void *arg, volatile bool *abort),
+				 bool (*authenticate)(void *arg),
 				 void (*cleanup)(void *arg),
 				 void (*callback)(struct state *st,
 						  const char *name,
@@ -181,7 +185,6 @@ static struct xauth *xauth_alloc(const char *method,
 	xauth->name = clone_str(name, "xauth name");
 	xauth->arg = arg;
 	xauth->callback = callback;
-	xauth->success = FALSE;
 	xauth->serialno = serialno;
 	xauth->authenticate = authenticate;
 	xauth->cleanup = cleanup;
@@ -190,38 +193,30 @@ static struct xauth *xauth_alloc(const char *method,
 	return xauth;
 }
 
-static void xauth_start_thread(struct xauth **xauthp,
-			       const char *method,
-			       const char *name,
-			       so_serial_t serialno,
-			       void *arg,
-			       bool (*authenticate)(void *arg, volatile bool *abort),
-			       void (*cleanup)(void *arg),
-			       void (*callback)(struct state *st,
-						const char *name,
-						bool aborted,
-						bool success))
+static void xauth_start_child(struct xauth **xauthp,
+			      const char *method,
+			      const char *name,
+			      so_serial_t serialno,
+			      void *arg,
+			      bool (*authenticate)(void *arg),
+			      void (*cleanup)(void *arg),
+			      void (*callback)(struct state *st,
+					       const char *name,
+					       bool aborted,
+					       bool success))
 {
 	passert(pthread_equal(main_thread, pthread_self()));
 
 	struct xauth *xauth = xauth_alloc(method, name, serialno, arg,
 					  authenticate, cleanup, callback);
 
-	pthread_attr_t thread_attr;
-	pthread_attr_init(&thread_attr);
-	pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
-
 	DBG(DBG_CONTROLMORE,
-	    DBG_log("XAUTH: #%lu: main-thread starting %s-thread for authenticating user '%s'",
+	    DBG_log("XAUTH: #%lu: main-process starting %s-process for authenticating user '%s'",
 		    xauth->serialno, xauth->method, xauth->name));
-	int error = pthread_create(&xauth->thread, &thread_attr,
-				   xauth_thread, xauth);
-
-	pthread_attr_destroy(&thread_attr);
-
-	if (error) {
-		LOG_ERRNO(error, "XAUTH: #%lu: creation of %s-thread for user '%s' failed",
-			  xauth->serialno, xauth->method, xauth->name);
+	xauth->child = pluto_fork(xauth_child, xauth_cleanup, xauth);
+	if (xauth->child < 0) {
+		libreswan_log("XAUTH: #%lu: creation of %s-process for user '%s' failed",
+			      xauth->serialno, xauth->method, xauth->name);
 		*xauthp = NULL;
 		pfree(xauth->name);
 		pfree(xauth);
@@ -233,9 +228,9 @@ static void xauth_start_thread(struct xauth **xauthp,
 
 #ifdef XAUTH_HAVE_PAM
 
-static bool xauth_pam_thread(void *arg, volatile bool *abort)
+static bool xauth_pam_thread(void *arg)
 {
-	return do_pam_authentication((struct pam_thread_arg*)arg, abort);
+	return do_pam_authentication((struct pam_thread_arg*)arg);
 }
 
 static void xauth_pam_cleanup(void *arg)
@@ -274,9 +269,9 @@ void xauth_start_pam_thread(struct xauth **xauthp,
 	pam->c_instance_serial = instance_serial;
 	pam->atype = atype;
 
-	return xauth_start_thread(xauthp, "PAM", name, serialno, pam,
-				  xauth_pam_thread,
-				  xauth_pam_cleanup, callback);
+	return xauth_start_child(xauthp, "PAM", name, serialno, pam,
+				 xauth_pam_thread,
+				 xauth_pam_cleanup, callback);
 }
 
 #endif

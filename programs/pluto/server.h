@@ -112,4 +112,8 @@ extern bool resend_ike_v1_msg(struct state *st, const char *where);
 extern bool send_keepalive(struct state *st, const char *where);
 extern struct event_base *get_pluto_event_base(void);
 
+extern int pluto_fork(int op(void *context),
+		      void (*callback)(int status, void *context),
+		      void *context);
+
 #endif /* _SERVER_H */

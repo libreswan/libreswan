@@ -762,6 +762,25 @@ static void add_pid(pid_t pid,
 			     new_pid, &new_pid->hash_entry);
 }
 
+int pluto_fork(int op(void *context),
+	       void (*callback)(int status, void *context),
+	       void *context)
+{
+	pid_t pid = fork();
+	switch (pid) {
+	case -1:
+		LOG_ERRNO(errno, "fork failed");
+		return -1;
+	case 0: /* child */
+		reset_globals();
+		exit(op(context));
+		break;
+	default: /* parent */
+		add_pid(pid, callback, context);
+		return pid;
+	}
+}
+
 static void addconn_exited(int status, void *context UNUSED)
 {
        DBG(DBG_CONTROLMORE,
