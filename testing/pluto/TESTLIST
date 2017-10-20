@@ -153,6 +153,8 @@ kvmplutotest	ikev2-59-alias-retransmit		wip
 kvmplutotest	ikev2-59-multiple-acquires 		wip
 kvmplutotest	ikev2-60-pam				good
 kvmplutotest	ikev2-61-any-psk			good
+kvmplutotest	ikev2-62-host-ondemand			good
+kvmplutotest	ikev2-62-host-ondemand-instance		good
 
 kvmplutotest	ikev2-24-cryptoload			wip
 kvmplutotest	ikev2-25-rw-nat				good
@@ -397,6 +399,8 @@ kvmplutotest	certoe-05-poc-reverse			good
 kvmplutotest	certoe-06-nat-packet-cop		good
 kvmplutotest	certoe-07-nat-2-clients			good
 kvmplutotest	certoe-08-nat-packet-cop-restart	good
+kvmplutotest	certoe-09-packet-host			good
+kvmplutotest	certoe-09-packet-host-2			good
 kvmplutotest	certoe-10-symetric-cert-whack		good
 kvmplutotest	certoe-11-symetric-cert-nat		good
 kvmplutotest	rawrsaoe-asymetric-nat			good
