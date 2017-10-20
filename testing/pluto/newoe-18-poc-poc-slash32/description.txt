@@ -1,6 +1,0 @@
-Same as newoe-18-poc-poc but now the policy group is a /32 and
-so the auto=ondemand of the group instance will clash with
-the instance since both are a /32.
-
-This used to fail in older versions of libreswan. It is known to
-work for libreswan-3.22
