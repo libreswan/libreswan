@@ -724,9 +724,6 @@ bool do_command(const struct connection *c,
 	return TRUE;
 }
 
-#include <signal.h>
-typedef void (*sighandler_t)(int);	/* GNU extension would define this */
-
 bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd)
 {
 #	define CHUNK_WIDTH	80	/* units for cmd logging */
@@ -754,7 +751,6 @@ bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd)
 		 * Any used by library routines (perhaps the resolver or
 		 * syslog) will remain.
 		 */
-		sighandler_t savesig = signal(SIGCHLD, SIG_DFL);
 		FILE *f = popen(cmd, "r");
 
 		if (f == NULL) {
@@ -775,7 +771,6 @@ bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd)
 #endif
 			loglog(RC_LOG_SERIOUS, "unable to popen %s%s command",
 				verb, verb_suffix);
-			signal(SIGCHLD, savesig);
 			return FALSE;
 		}
 
@@ -791,7 +786,6 @@ bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd)
 				if (ferror(f)) {
 					LOG_ERRNO(errno, "fgets failed on output of %s%s command",
 						  verb, verb_suffix);
-					signal(SIGCHLD, savesig);
 					return FALSE;
 				} else {
 					passert(feof(f));
@@ -810,7 +804,6 @@ bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd)
 		/* report on and react to return code */
 		{
 			int r = pclose(f);
-			signal(SIGCHLD, savesig);
 
 			if (r == -1) {
 				LOG_ERRNO(errno, "pclose failed for %s%s command",
