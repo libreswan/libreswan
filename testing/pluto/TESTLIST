@@ -351,6 +351,7 @@ kvmplutotest	newoe-16-pass-hold			good
 kvmplutotest	newoe-17-block-in-clear-clear		wip
 #
 kvmplutotest 	newoe-18-poc-poc 			good
+kvmplutotest 	newoe-18-poc-poc-slash32		good
 kvmplutotest 	newoe-18-poc-cop 			good
 kvmplutotest 	newoe-18-poc-private 			good
 kvmplutotest 	newoe-18-poc-clear 			good
