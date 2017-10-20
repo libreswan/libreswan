@@ -19,6 +19,7 @@
 
 #include "constants.h"
 #include "lswlog.h"
+#include "log.h"
 
 #include "defs.h"
 #include "xauth.h"
@@ -279,33 +280,3 @@ void xauth_start_pam_thread(struct xauth **xauthp,
 }
 
 #endif
-
-static void cleanup_xauth_now(void *arg UNUSED)
-{
-}
-
-/*
- * Schedule the XAUTH callback for NOW so it is (hopefully) run next.
- *
- * The callers (both IKEv1) can probably be written to not do this.
- * Later.
- */
-void xauth_next(struct xauth **xauthp,
-		const char *method, const char *name,
-		so_serial_t serialno, bool success,
-		void (*callback)(struct state *st,
-				 const char *name,
-				 bool aborted,
-				 bool success))
-{
-	passert(pthread_equal(main_thread, pthread_self()));
-	struct xauth *xauth = xauth_alloc(method, name, serialno,
-					  NULL, NULL,
-					  cleanup_xauth_now,
-					  callback);
-	xauth->success = success;
-	*xauthp = xauth;
-	const struct timeval delay = { 0, 0 };
-	pluto_event_add(NULL_FD, EV_TIMEOUT, xauth_cleanup_callback, xauth,
-			&delay, "xauth_now_callback");
-}

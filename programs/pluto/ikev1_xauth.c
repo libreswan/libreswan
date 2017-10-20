@@ -1139,6 +1139,57 @@ static void ikev1_xauth_callback(struct state *st, const char *name,
 	}
 }
 
+/*
+ * Schedule the XAUTH callback for NOW so it is (hopefully) run next.
+ *
+ * It should be possible to eliminate this event hop entirely; later.
+ */
+
+struct xauth_immediate {
+	bool success;
+	so_serial_t serialno;
+	char *name;
+	void (*callback)(struct state *st, const char *name,
+			 bool aborted, bool success);
+};
+
+static void xauth_immediate_callback(evutil_socket_t socket UNUSED,
+				     const short event UNUSED,
+				     void *arg)
+{
+	struct xauth_immediate *xauth = (struct xauth_immediate*)arg;
+	struct state *st = state_with_serialno(xauth->serialno);
+	if (st == NULL) {
+		libreswan_log("XAUTH: #%lu: state destroyed for user '%s'",
+			      xauth->serialno, xauth->name);
+	} else {
+		set_cur_state(st);
+		libreswan_log("XAUTH: #%lu: completed for user '%s' with status %s",
+			      xauth->serialno, xauth->name,
+			      xauth->success ? "SUCCESSS" : "FAILURE");
+		xauth->callback(st, xauth->name, false, xauth->success);
+		reset_cur_state();
+	}
+	pfree(xauth->name);
+	pfree(xauth);
+}
+
+static void xauth_immediate(const char *name, so_serial_t serialno, bool success,
+			    void (*callback)(struct state *st,
+					     const char *name,
+					     bool aborted,
+					     bool success))
+{
+	struct xauth_immediate *xauth = alloc_thing(struct xauth_immediate, "xauth next");
+	xauth->success = success;
+	xauth->serialno = serialno;
+	xauth->callback = callback;
+	xauth->name = clone_str(name, "xauth next name");
+	const struct timeval delay = { 0, 0 };
+	pluto_event_add(NULL_FD, EV_TIMEOUT, xauth_immediate_callback, xauth,
+			&delay, "xauth_immediate_callback");
+}
+
 /** Launch an authentication prompt
  *
  * @param st State Structure
@@ -1183,14 +1234,14 @@ static int xauth_launch_authent(struct state *st,
 		libreswan_log("XAUTH: password file authentication method requested to authenticate user '%s'",
 			      arg_name);
 		bool success = do_file_authentication(st, arg_name, arg_password, connname);
-		xauth_next(&st->st_xauth, "file", arg_name, st->st_serialno,
-			   success, ikev1_xauth_callback);
+		xauth_immediate(arg_name, st->st_serialno,
+				success, ikev1_xauth_callback);
 		break;
 	case XAUTHBY_ALWAYSOK:
 		libreswan_log("XAUTH: authentication method 'always ok' requested to authenticate user '%s'",
 			      arg_name);
-		xauth_next(&st->st_xauth, "alwaysok", arg_name, st->st_serialno,
-			   true, ikev1_xauth_callback);
+		xauth_immediate(arg_name, st->st_serialno,
+				true, ikev1_xauth_callback);
 		break;
 	default:
 		libreswan_log("XAUTH: unknown authentication method requested to authenticate user '%s'",
