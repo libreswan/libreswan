@@ -98,6 +98,7 @@
 #endif
 
 #include "pluto_stats.h"
+#include "hash_table.h"
 
 /*
  *  Server main loop and socket initialization routines.
@@ -706,6 +707,61 @@ static void syshandler_cb(int unused UNUSED, const short event UNUSED, void *arg
 }
 #endif
 
+#define PID_MAGIC 0x000f000cUL
+
+struct pid_entry {
+	unsigned long magic;
+	struct list_entry hash_entry;
+	pid_t pid;
+	void *context;
+	void (*callback)(int status, void *context);
+};
+
+static size_t log_pid_entry(struct lswlog *buf, void *data)
+{
+	if (data == NULL) {
+		return lswlogs(buf, "NULL pid");
+	} else {
+		struct pid_entry *entry = (struct pid_entry*)data;
+		passert(entry->magic == PID_MAGIC);
+		return lswlogf(buf, "pid %d", entry->pid);
+	}
+}
+
+static unsigned long hash_pid_entry(void *data)
+{
+	struct pid_entry *entry = (struct pid_entry*)data;
+	passert(entry->magic == PID_MAGIC);
+	return entry->pid;
+}
+
+static struct list_entry pid_entry_slots[23];
+
+static struct hash_table pids_hash_table = {
+	.info = {
+		.name = "pid table",
+		.log = log_pid_entry,
+	},
+	.hash = hash_pid_entry,
+	.nr_slots = elemsof(pid_entry_slots),
+	.slots = pid_entry_slots,
+};
+
+static void add_pid(pid_t pid,
+		    void (*callback)(int status, void *context),
+		    void *context)
+{
+	DBG(DBG_CONTROL,
+	    DBG_log("forked child %d", pid));
+	struct pid_entry *new_pid = alloc_thing(struct pid_entry, "fork pid");
+	new_pid->magic = PID_MAGIC;
+	new_pid->pid = pid;
+	new_pid->callback = callback;
+	new_pid->context = context;
+	add_hash_table_entry(&pids_hash_table,
+			     new_pid, &new_pid->hash_entry);
+}
+
 static void addconn_exited(int status, void *context UNUSED)
 {
        DBG(DBG_CONTROLMORE,
@@ -715,29 +771,30 @@ static void addconn_exited(int status, void *context UNUSED)
 
 static void log_status(struct lswlog *buf, int status)
 {
-	lswlogf(buf, "status %x ", status);
+	lswlogf(buf, " (");
 	if (WIFEXITED(status)) {
-		lswlogf(buf, "exit status %u",
+		lswlogf(buf, "exited with status %u",
 			WEXITSTATUS(status));
 	} else if (WIFSIGNALED(status)) {
-		lswlogf(buf, "term signal %s (%d)",
+		lswlogf(buf, "terminated with signal %s (%d)",
 			strsignal(WTERMSIG(status)),
 			WTERMSIG(status));
 	} else if (WIFSTOPPED(status)) {
 		/* should not happen */
-		lswlogf(buf, "stop signal %s (%d) but WUNTRACED not specified",
+		lswlogf(buf, "stoped with signal %s (%d) but WUNTRACED not specified",
 			strsignal(WSTOPSIG(status)),
 			WSTOPSIG(status));
 	} else if (WIFCONTINUED(status)) {
 		lswlogf(buf, "continued");
 	} else {
-		lswlogf(buf, "not recognized!");
+		lswlogf(buf, "wait status %x not recognized!", status);
 	}
 #ifdef WCOREDUMP
 	if (WCOREDUMP(status)) {
-		lswlogs(buf, " (core dumped)");
+		lswlogs(buf, ", core dumped");
 	}
 #endif
+	lswlogs(buf, ")");
 }
 
 static void childhandler_cb(int unused UNUSED, const short event UNUSED, void *arg UNUSED)
@@ -750,29 +807,38 @@ static void childhandler_cb(int unused UNUSED, const short event UNUSED, void *a
 		case -1: /* error? */
 			if (errno == ECHILD) {
 				DBG(DBG_CONTROLMORE,
-				    DBG_log("waitpid returned no more children"));
+				    DBG_log("waitpid returned ECHILD (no child processes left)"));
 			} else {
 				LOG_ERRNO(errno, "waitpid unexpectedly failed");
 			}
 			return;
 		case 0: /* nothing to do */
 			DBG(DBG_CONTROLMORE,
-			    DBG_log("waitpid returned nothing left to do (but children still running)"));
+			    DBG_log("waitpid returned nothing left to do (all child processes are busy)"));
 			return;
 		default:
 			LSWDBGP(DBG_CONTROLMORE, buf) {
-				lswlogf(buf, "waitpid returned pid %d - ",
+				lswlogf(buf, "waitpid returned pid %d",
 					child);
 				log_status(buf, status);
 			}
-			if (addconn_child_pid != 0 && addconn_child_pid == child) {
-				addconn_exited(status, NULL);
-			} else {
+			struct pid_entry *pid_entry = NULL;
+			struct list_entry *head = hash_table_slot_by_hash(&pids_hash_table, child);
+			FOR_EACH_LIST_ENTRY(head, pid_entry) {
+				passert(pid_entry->magic == PID_MAGIC);
+				if (pid_entry->pid == child) {
+					break;
+				}
+			}
+			if (pid_entry == NULL) {
 				LSWLOG(buf) {
-					lswlogf(buf, "waitpid return unknown child pid %d - ",
+					lswlogf(buf, "waitpid return unknown child pid %d",
 						child);
 					log_status(buf, status);
 				}
+			} else {
+				pid_entry->callback(status, pid_entry->context);
+				del_hash_table_entry(&pids_hash_table, &pid_entry->hash_entry);
 			}
 			break;
 		}
@@ -904,6 +970,7 @@ void call_server(void)
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("created addconn helper (pid:%d) using %s+execve",
 			    addconn_child_pid, USE_VFORK ? "vfork" : "fork"));
+		add_pid(addconn_child_pid, addconn_exited, NULL);
 		/* parent continues */
 	}
 #ifdef HAVE_SECCOMP
