@@ -730,13 +730,13 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 
 		libreswan_log(
 			"responding to Main Mode from unknown peer %s:%u",
-			ipstr(&c->spd.that.host_addr, &b),
+			log_ip ? ipstr(&c->spd.that.host_addr, &b) : "<ip address>",
 			c->spd.that.host_port);
 	} else if (c->kind == CK_INSTANCE) {
 		ipstr_buf b;
 
 		libreswan_log("responding to Main Mode from unknown peer %s on port %u",
-			ipstr(&c->spd.that.host_addr, &b),
+			log_ip ? ipstr(&c->spd.that.host_addr, &b) : "<ip address>",
 			md->sender_port);
 		DBG(DBG_CONTROL, DBG_dump("  ICOOKIE-DUMP:", st->st_icookie, COOKIE_SIZE));
 	} else {

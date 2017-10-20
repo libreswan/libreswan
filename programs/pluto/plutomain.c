@@ -509,6 +509,7 @@ static const struct option long_opts[] = {
 #endif
 	{ "log-no-time\0", no_argument, NULL, 't' }, /* was --plutostderrlogtime */
 	{ "log-no-append\0", no_argument, NULL, '7' },
+	{ "log-no-ip\0", no_argument, NULL, '<' },
 	{ "force_busy\0_", no_argument, NULL, 'D' },	/* _ */
 	{ "force-busy\0", no_argument, NULL, 'D' },
 	{ "force-unlimited\0", no_argument, NULL, 'U' },
@@ -899,6 +900,10 @@ int main(int argc, char **argv)
 			log_append = FALSE;
 			continue;
 
+		case '<':	/* --log-no-ip */
+			log_ip = FALSE;
+			continue;
+
 		case '8':	/* --drop-oppo-null */
 			pluto_drop_oppo_null = TRUE;
 			continue;
@@ -1202,6 +1207,7 @@ int main(int argc, char **argv)
 			log_with_timestamp =
 				cfg->setup.options[KBF_PLUTOSTDERRLOGTIME];
 			log_append = cfg->setup.options[KBF_PLUTOSTDERRLOGAPPEND];
+			log_ip = cfg->setup.options[KBF_PLUTOSTDERRLOGIP];
 			pluto_drop_oppo_null = cfg->setup.options[KBF_DROP_OPPO_NULL];
 			pluto_ddos_mode = cfg->setup.options[KBF_DDOS_MODE];
 #ifdef HAVE_SECCOMP
@@ -1877,13 +1883,15 @@ void show_setup_plutomain(void)
 #ifdef USE_DNSSEC
 		"dnssec-enable=%s, "
 #endif
-		"perpeerlog=%s, shuntlifetime=%jds, xfrmlifetime=%jds",
+		"perpeerlog=%s, logappend=%s, logip=%s, shuntlifetime=%jds, xfrmlifetime=%jds",
 		nhelpers,
 		uniqueIDs ? "yes" : "no",
 #ifdef USE_DNSSEC
 		do_dnssec ? "yes" : "no",
 #endif
 		!log_to_perpeer ? "no" : peerlog_basedir,
+		!log_append ? "no" : "yes",
+		!log_ip ? "no" : "yes",
                 (intmax_t) deltasecs(pluto_shunt_lifetime),
                 (intmax_t) pluto_xfrmlifetime
 	);

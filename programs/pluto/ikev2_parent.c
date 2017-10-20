@@ -4401,7 +4401,7 @@ void send_v2_notification(struct state *p1st,
 		libreswan_log("sending %sencrypted notification %s to %s:%u",
 			encst ? "" : "un",
 			enum_name(&ikev2_notify_names, ntype),
-			ipstr(&p1st->st_remoteaddr, &b),
+			log_ip ?  ipstr(&p1st->st_remoteaddr, &b) : "<IP>",
 			p1st->st_remoteport);
 	}
 

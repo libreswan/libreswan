@@ -429,6 +429,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "logtime",  kv_config,  kt_bool,  KBF_PLUTOSTDERRLOGTIME,  NOT_ENUM },
   { "plutostderrlogtime",  kv_config | kv_alias,  kt_bool,  KBF_PLUTOSTDERRLOGTIME,  NOT_ENUM },  /* obsolete */
   { "logappend",  kv_config,  kt_bool,  KBF_PLUTOSTDERRLOGAPPEND,  NOT_ENUM },
+  { "logip",  kv_config,  kt_bool,  KBF_PLUTOSTDERRLOGIP,  NOT_ENUM },
 #ifdef USE_DNSSEC
   { "dnssec-enable",  kv_config,  kt_bool,  KBF_DO_DNSSEC,  NOT_ENUM },
   { "dnssec-rootkey-file",  kv_config,  kt_filename, KSF_PLUTO_DNSSEC_ROOTKEY_FILE,  NOT_ENUM },

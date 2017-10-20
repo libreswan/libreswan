@@ -77,6 +77,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->setup.options[KBF_HIDETOS] = TRUE;
 	cfg->setup.options[KBF_PLUTOSTDERRLOGTIME] = TRUE;
 	cfg->setup.options[KBF_PLUTOSTDERRLOGAPPEND] = TRUE;
+	cfg->setup.options[KBF_PLUTOSTDERRLOGIP] = TRUE;
 	cfg->setup.options[KBF_UNIQUEIDS] = TRUE;
 	cfg->setup.options[KBF_DO_DNSSEC] = TRUE;
 	cfg->setup.options[KBF_PERPEERLOG] = FALSE;

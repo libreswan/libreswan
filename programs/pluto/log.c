@@ -78,7 +78,8 @@ bool
 	log_to_stderr = TRUE,		/* should log go to stderr? */
 	log_to_syslog = TRUE,		/* should log go to syslog? */
 	log_with_timestamp = TRUE,	/* testsuite requires no timestamps */
-	log_append = TRUE;
+	log_append = TRUE,
+	log_ip = TRUE;
 
 /* should we complain when we find no local id */
 bool
@@ -169,7 +170,7 @@ static void add_state_prefix(struct lswlog *buf)
 		/* peer's IP address */
 		ipstr_buf b;
 		lswlogf(buf, "packet from %s:%u: ",
-			ipstr(cur_from, &b),
+			log_ip ? ipstr(cur_from, &b) : "<ip address>",
 			(unsigned)cur_from_port);
 	}
 }

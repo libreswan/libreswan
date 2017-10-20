@@ -482,7 +482,7 @@ static void liveness_check(struct state *st)
 		if (pst->st_pend_liveness &&
 				deltasecs(monotimediff(tm, last_liveness)) >= timeout) {
 			libreswan_log("liveness_check - peer %s has not responded in %ld seconds, with a timeout of %ld, taking %s",
-					that_ip.buf,
+					log_ip ? that_ip.buf : "<ip address>",
 					(long)deltasecs(monotimediff(tm, last_liveness)),
 					(long)timeout,
 					enum_name(&dpd_action_names,

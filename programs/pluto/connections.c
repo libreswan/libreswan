@@ -274,7 +274,7 @@ void delete_connection(struct connection *c, bool relations)
 			libreswan_log(
 				"deleting connection \"%s\"%s instance with peer %s {isakmp=#%lu/ipsec=#%lu}",
 				c->name, fmt_conn_instance(c, cib),
-				ipstr(&c->spd.that.host_addr, &b),
+				log_ip ? ipstr(&c->spd.that.host_addr, &b) : "<ip address>",
 				c->newest_isakmp_sa, c->newest_ipsec_sa);
 		}
 		c->kind = CK_GOING_AWAY;
@@ -615,7 +615,12 @@ size_t format_end(char *buf,
 
 	/* host */
 	if (host == NULL) {
-		addrtot(&this->host_addr, 0, host_space, sizeof(host_space));
+		if (log_ip) {
+			addrtot(&this->host_addr, 0, host_space, sizeof(host_space));
+		} else {
+			host_space[0] = '\0';
+			strncat(host_space, "<ip address>", sizeof(host_space));
+		}
 		host = host_space;
 		dohost_name = TRUE;
 	}
@@ -2246,7 +2251,12 @@ char *fmt_conn_instance(const struct connection *c, char buf[CONN_INST_BUF])
 					&c->spd.that.host_addr, "===", p);
 		} else {
 			*p++ = ' ';
-			addrtot(&c->spd.that.host_addr, 0, p, ADDRTOT_BUF);
+			if (!log_ip) {
+				p[0] = '\0';
+				strncat(p, "<ip address>", ADDRTOT_BUF - 1);
+			} else {
+				addrtot(&c->spd.that.host_addr, 0, p, ADDRTOT_BUF);
+			}
 		}
 	}
 

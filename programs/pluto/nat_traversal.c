@@ -947,12 +947,12 @@ static void nat_traversal_find_new_mapp_state(struct state *st, void *data)
 		ipstr_buf b1, b2;
 		struct connection *c = st->st_connection;
 
-		libreswan_log("new NAT mapping for #%lu, was %s:%d, now %s:%d",
+		DBG(DBG_CONTROLMORE, DBG_log("new NAT mapping for #%lu, was %s:%d, now %s:%d",
 			st->st_serialno,
 			ipstr(&st->st_remoteaddr, &b1),
 			st->st_remoteport,
 			ipstr(&nfo->addr, &b2),
-			nfo->port);
+			nfo->port));
 
 		/* update it */
 		st->st_remoteaddr = nfo->addr;
