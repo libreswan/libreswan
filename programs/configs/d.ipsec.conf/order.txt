@@ -65,7 +65,7 @@ d.ipsec.conf/dpdtimeout.xml
 d.ipsec.conf/dpdaction.xml
 d.ipsec.conf/pfs.xml
 d.ipsec.conf/pfsgroup.xml
-d.ipsec.conf/aggrmode.xml
+d.ipsec.conf/aggressive.xml
 d.ipsec.conf/salifetime.xml
 d.ipsec.conf/replay-window.xml
 d.ipsec.conf/rekey.xml

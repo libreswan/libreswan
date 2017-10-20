@@ -112,7 +112,7 @@ static void help(void)
 		"	[--labeledipsec] [--policylabel <label>] \\\n"
 #endif
 		"	[--xauthby file|pam|alwaysok] [--xauthfail hard|soft] \\\n"
-		"	[--dontrekey] [--aggrmode] \\\n"
+		"	[--dontrekey] [--aggressive] \\\n"
 		"	[--initialcontact] [--cisco-unity] [--fake-strongswan] \\\n"
 		"	[--encaps <auto|yes|no>] [--no-nat-keepalive] \\\n"
 		"	[--ikev1natt <both|rfc|drafts> \\\n"
@@ -604,7 +604,8 @@ static const struct option long_opts[] = {
 	{ "tunnelipv6", no_argument, NULL, CD_TUNNELIPV6 + OO },
 	PS("pfs", PFS),
 	{ "sha2_truncbug", no_argument, NULL, CD_SHA2_TRUNCBUG + OO },
-	PS("aggrmode", AGGRESSIVE),
+	PS("aggressive", AGGRESSIVE),
+	PS("aggrmode", AGGRESSIVE), /*  backwards compatibility */
 
 	PS("disablearrivalcheck", DISABLEARRIVALCHECK),
 

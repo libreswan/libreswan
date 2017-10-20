@@ -1,10 +1,11 @@
   <varlistentry>
-  <term><emphasis remap='B'>aggrmode</emphasis></term>
+  <term><emphasis remap='B'>aggressive</emphasis></term>
   <listitem>
 <para>Use IKEv1 Aggressive Mode instead of IKEv1 Main Mode. This option has no effect
 when IKEv2 is used.  Acceptable values are <emphasis remap='B'>no</emphasis> (the default)
 or <emphasis remap='B'>yes</emphasis>. When this option is enabled, IKEv1 Main Mode will
-no longer be allowed for this connection.</para>
+no longer be allowed for this connection. The old name of this option was
+<emphasis remap='B'>aggrmode</emphasis>.</para>
 
 <para>Aggressive Mode is less secure, and more vulnerable to Denial Of Service
 attacks. It is also vulnerable to brute force attacks with software such
