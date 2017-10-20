@@ -2175,9 +2175,9 @@ static int state_compare_serial(const void *a, const void *b)
  *  type
  *  instance#
  *  isakmp_sa (XXX probably wrong)
- *
+ *  state_compare_serial above
  */
-static int state_compare_c(const void *a, const void *b)
+static int state_compare_connection(const void *a, const void *b)
 {
 	const struct state *sap = *(const struct state *const *)a;
 	struct connection *ca = sap->st_connection;
@@ -2186,7 +2186,12 @@ static int state_compare_c(const void *a, const void *b)
 
 	/* DBG_log("comparing %s to %s", ca->name, cb->name); */
 
-	return connection_compare(ca, cb);
+	int order = connection_compare(ca, cb);
+	if (order != 0) {
+		return order;
+	}
+
+	return state_compare_serial(a, b);
 }
 
 /*
@@ -2273,7 +2278,7 @@ void show_states_status(void)
 		  category.authenticated_ipsec.count, category.anonymous_ipsec.count);
 	whack_log(RC_COMMENT, " ");             /* spacer */
 
-	struct state **array = sort_states(state_compare_c);
+	struct state **array = sort_states(state_compare_connection);
 
 	if (array != NULL) {
 		monotime_t n = mononow();
