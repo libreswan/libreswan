@@ -684,27 +684,6 @@ void show_fips_status(void)
 		DBGP(IMPAIR_FORCE_FIPS) ? "enabled [forced]" : "enabled");
 }
 
-static volatile sig_atomic_t sighupflag = FALSE;
-
-static void huphandler(int sig UNUSED)
-{
-	sighupflag = TRUE;
-}
-
-static volatile sig_atomic_t sigtermflag = FALSE;
-
-static void termhandler(int sig UNUSED)
-{
-	sigtermflag = TRUE;
-}
-
-static volatile sig_atomic_t sigsysflag = FALSE;
-
-static void syshandler(int sig UNUSED)
-{
-	sigsysflag = TRUE;
-}
-
 static void huphandler_cb(int unused UNUSED, const short event UNUSED, void *arg UNUSED)
 {
 	/* logging is probably not signal handling / threa safe */
@@ -715,6 +694,7 @@ static void termhandler_cb(int unused UNUSED, const short event UNUSED, void *ar
 {
 	exit_pluto(PLUTO_EXIT_OK);
 }
+
 #ifdef HAVE_SECCOMP
 static void syshandler_cb(int unused UNUSED, const short event UNUSED, void *arg UNUSED)
 {
@@ -725,13 +705,6 @@ static void syshandler_cb(int unused UNUSED, const short event UNUSED, void *arg
 	}
 }
 #endif
-
-static volatile sig_atomic_t sigchildflag = FALSE;
-
-static void childhandler(int sig UNUSED)
-{
-	sigchildflag = TRUE;
-}
 
 static void childhandler_cb(int unused UNUSED, const short event UNUSED, void *arg UNUSED)
 {
@@ -782,7 +755,10 @@ void init_event_base(void) {
 	passert(s >= 0);
 }
 
-static void main_loop(void)
+/* call_server listens for incoming ISAKMP packets and Whack messages,
+ * and handles timer events.
+ */
+void call_server(void)
 {
 	/*
 	 * setup basic events, CTL and SIGNALs
@@ -806,41 +782,6 @@ static void main_loop(void)
 	pluto_event_add(SIGSYS, EV_SIGNAL, syshandler_cb, NULL, NULL,
 			"PLUTO_SIGSYS");
 #endif
-
-	int r = event_base_loop(pluto_eb, 0);
-	passert(r == 0);
-}
-
-/* call_server listens for incoming ISAKMP packets and Whack messages,
- * and handles timer events.
- */
-void call_server(void)
-{
-	/* catch SIGHUP, SIGTERM, SIGCHLD and SIGSYS */
-	{
-		int r;
-		struct sigaction act;
-
-		act.sa_handler = &huphandler;
-		sigemptyset(&act.sa_mask);
-		act.sa_flags = 0; /* no SA_ONESHOT, no SA_RESTART, no nothing */
-		r = sigaction(SIGHUP, &act, NULL);
-		passert(r == 0);
-
-		act.sa_handler = &termhandler;
-		r = sigaction(SIGTERM, &act, NULL);
-		passert(r == 0);
-
-		act.sa_handler = &syshandler;
-		r = sigaction(SIGSYS, &act, NULL);
-		passert(r == 0);
-
-		act.sa_handler = &childhandler;
-		act.sa_flags   = SA_RESTART;
-		r = sigaction(SIGCHLD, &act, NULL);
-		passert(r == 0);
-
-	}
 
 	/* do_whacklisten() is now done by the addconn fork */
 
@@ -940,7 +881,9 @@ void call_server(void)
 #else
 	libreswan_log("seccomp security not supported");
 #endif
-	main_loop();
+
+	int r = event_base_loop(pluto_eb, 0);
+	passert(r == 0);
 }
 
 /* Process any message on the MSG_ERRQUEUE
