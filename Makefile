@@ -60,7 +60,7 @@ KVSHORTUTIL=${MAKEUTILS}/kernelversion-short
 
 SUBDIRS?=lib programs initsystems testing
 
-TAGSFILES=$(wildcard include/*.h lib/lib*/*.c programs/*/*.c linux/include/*.h linux/include/libreswan/*.h linux/net/ipsec/*.[ch])
+TAGSFILES=$(wildcard include/*.h lib/lib*/*.[ch] programs/*/*.[ch] linux/include/*.h linux/include/libreswan/*.h linux/net/ipsec/*.[ch])
 
 tags:	$(TAGSFILES)
 	@LC_ALL=C ctags $(CTAGSFLAGS) ${TAGSFILES}
