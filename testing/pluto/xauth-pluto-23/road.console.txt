@@ -53,6 +53,12 @@ road #
  echo done
 done
 road #
+ # let road and north wait for east to show tunnels before shutting down
+road #
+ hostname | grep road > /dev/null && sleep 5
+road #
+ hostname | grep north > /dev/null && sleep 5
+road #
  hostname | grep east > /dev/null && ipsec whack --trafficstatus
 road #
 road #
