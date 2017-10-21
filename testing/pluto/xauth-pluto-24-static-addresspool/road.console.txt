@@ -15,6 +15,8 @@ initdone
 road #
  ipsec whack --debug-all --impair retransmits
 road #
+ # expected to fail due to overlap of IP
+road #
  ipsec whack --xauthname 'xroad' --xauthpass 'use1pass' --name road-east --initiate
 002 "road-east" #1: initiating Main Mode
 104 "road-east" #1: STATE_MAIN_I1: initiate
@@ -30,13 +32,6 @@ road #
 002 "road-east" #1: xauth: xauth_client_ackstatus() returned STF_OK
 002 "road-east" #1: XAUTH: aborting entire IKE Exchange
 036 "road-east" #1: encountered fatal error in state STATE_XAUTH_I1
-road #
- ping -q -w 4 -n -c 4 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 0 received, 100% packet loss, time XXXX
-road #
- ipsec whack --trafficstatus
 road #
  echo done
 done
