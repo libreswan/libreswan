@@ -9,7 +9,7 @@ west #
 west #
  # need to disable ipv6 and activate auto-interface
 west #
- cp west-unbound.conf /etc/unbound/
+ cp west-unbound.conf /etc/unbound/unbound.conf
 west #
  # will throw an error about bad unresolvable name
 west #
@@ -26,7 +26,7 @@ west #
 west #
  # use modified service file that skips ICANN root key checks
 west #
- cp unbound.service /etc/systemd/system/unbound.service
+ cat /lib/systemd/system/unbound.service | grep -v ExecStartPre > /etc/systemd/system/unbound.service
 west #
  systemctl daemon-reload
 west #
@@ -38,7 +38,7 @@ ok
 west #
  # wait for DDNS event
 west #
- # Oddly designed connection_check_ddns() will trigger --up
+ # Oddly designed connection_check_ddns will trigger --up
 west #
  sleep 30
 west #
@@ -48,49 +48,15 @@ west #
 west #
  # tunnel should show up in final.sh
 west #
- # seems to slow down/hang shutdown :/
+ # seems to slow down/hang shutdown
 west #
  rm /etc/resolv.conf
 west #
  echo done
 done
 west #
- ipsec look
-west NOW
-XFRM state:
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-XFRM policy:
-src 192.0.1.0/24 dst 192.0.2.0/24 
-	dir out priority 2344 ptype main 
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir fwd priority 2344 ptype main 
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir in priority 2344 ptype main 
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
-XFRM done
-IPSEC mangle TABLES
-NEW_IPSEC_CONN mangle TABLES
-ROUTING TABLES
-default via 192.1.2.254 dev eth1 
-192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254 
-192.0.2.0/24 via 192.1.2.23 dev eth1 
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45 
-192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45 
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
+ ipsec whack --trafficstatus
+006 #2: "named", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
 west #
  # clean up after ourselves
 west #
