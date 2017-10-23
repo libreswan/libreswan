@@ -263,7 +263,7 @@ updateresolvconf() {
 	RESOLVE_CONF="${RESOLVE_CONF}\n${ORIG_NAMESERVER}\n"
 
 	rm -f -- ${ORIG_RESOLV_CONF}
-	printf "%s" "${RESOLVE_CONF}" > ${ORIG_RESOLV_CONF}
+	echo -ne "${RESOLVE_CONF}" > ${ORIG_RESOLV_CONF}
 	return $?
     fi
 }
