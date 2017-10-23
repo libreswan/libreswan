@@ -415,6 +415,11 @@ case "${1}" in
 	"${IPSEC_EXECDIR}/whack" --ctlsocket ${CTLSOCKET} --fetchcrls
 	exit $?
 	;;
+    unbound|--unbound)
+	# activate the unbound ipsec module
+	unbound-control set_option ipsecmod-enabled: yes
+	exit $?
+	;;
     --*)
 	printf "%s: unknown option \"%s\" (perhaps command name was omitted?)\n" "${0}" "${1}" >&2
 	exit 1
