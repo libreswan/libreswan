@@ -207,7 +207,7 @@ static const char *const state_name[] = {
 enum_names state_names = {
 	STATE_UNDEFINED, STATE_IKEv2_ROOF,
 	ARRAY_REF(state_name),
-	NULL, /* prefix */
+	"STATE_", /* prefix */
 	NULL
 };
 
