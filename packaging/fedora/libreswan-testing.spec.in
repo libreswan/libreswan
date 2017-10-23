@@ -4,6 +4,19 @@
 %global with_development 1
 %global with_cavstests 0
 %global _exec_prefix %{_prefix}/local
+# Libreswan config options
+%global libreswan_config \\\
+    FINALDOCDIR=%{_pkgdocdir} \\\
+    FINALEXAMPLECONFDIR=%{_pkgdocdir} \\\
+    FINALLIBEXECDIR=%{_libexecdir}/ipsec \\\
+    FINALRUNDIR=%{_rundir}/pluto \\\
+    FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \\\
+    INC_RCDEFAULT=%{_initrddir} \\\
+    INC_USRLOCAL=%{_exec_prefix} \\\
+    IPSECSVERSION=%{IPSECSVERSION} \\\
+    MANTREE=%{_mandir} \\\
+%{nil}
+
 
 #global prever rc1
 
@@ -89,15 +102,7 @@ sed -i "s:/usr/bin/python:/usr/bin/python3:" programs/verify/verify.in
 
 #796683: -fno-strict-aliasing
 make %{?_smp_mflags} \
-    FINALDOCDIR=%{_pkgdocdir} \
-    FINALEXAMPLECONFDIR=%{_pkgdocdir} \
-    FINALLIBEXECDIR=%{_libexecdir}/ipsec \
-    FINALRUNDIR=%{_rundir}/pluto \
-    FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \
-    INC_RCDEFAULT=%{_initrddir} \
-    INC_USRLOCAL=%{_exec_prefix} \
-    IPSECSVERSION=%{IPSECSVERSION} \
-    MANTREE=%{_mandir} \
+    %{libreswan_config} \
     programs
 FS=$(pwd)
 
@@ -112,16 +117,7 @@ FS=$(pwd)
 %install
 make \
     DESTDIR=%{buildroot} \
-    FINALEXAMPLECONFDIR=%{_pkgdocdir} \
-    FINALLIBEXECDIR=%{_libexecdir}/ipsec \
-    FINALDOCDIR=%{_pkgdocdir} \
-    FINALRUNDIR=%{_rundir}/pluto \
-    FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \
-    INC_RCDEFAULT=%{_initrddir} \
-    INC_USRLOCAL=%{_exec_prefix} \
-    INITSYSTEM=systemd \
-    IPSECSVERSION=%{IPSECSVERSION} \
-    MANTREE=%{buildroot}%{_mandir} \
+    %{libreswan_config} \
     install
 FS=$(pwd)
 # Work around for FINALEXAMPLECONFDIR not working properly

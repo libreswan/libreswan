@@ -3,6 +3,27 @@
 %global with_efence 0
 %global with_development 0
 %global with_cavstests 1
+# Libreswan config options
+%global libreswan_config \\\
+    FINALLIBEXECDIR=%{_libexecdir}/ipsec \\\
+    FINALRUNDIR=%{_rundir}/pluto \\\
+    FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \\\
+    INC_RCDEFAULT=%{_initrddir} \\\
+    INC_USRLOCAL=%{_prefix} \\\
+    INITSYSTEM=systemd \\\
+    MANTREE=%{_mandir} \\\
+    NSS_REQ_AVA_COPY=false \\\
+    USE_DNSSEC=true \\\
+    USE_FIPSCHECK=true \\\
+    USE_LABELED_IPSEC=true \\\
+    USE_LDAP=true \\\
+    USE_LIBCAP_NG=true \\\
+    USE_LIBCURL=true \\\
+    USE_LINUX_AUDIT=true \\\
+    USE_NM=true \\\
+    USE_SECCOMP=true \\\
+    USE_XAUTHPAM=true \\\
+%{nil}
 
 #global prever rc1
 
@@ -91,24 +112,7 @@ make %{?_smp_mflags} \
     USERCOMPILE="-g -DGCC_LINT %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
 %endif
     USERLINK="-g -pie -Wl,-z,relro,-z,now %{?efence}" \
-    FINALLIBEXECDIR=%{_libexecdir}/ipsec \
-    FINALRUNDIR=%{_rundir}/pluto \
-    FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \
-    INC_RCDEFAULT=%{_initrddir} \
-    INC_USRLOCAL=%{_prefix} \
-    INITSYSTEM=systemd \
-    MANTREE=%{_mandir} \
-    NSS_REQ_AVA_COPY=false \
-    USE_DNSSEC=true \
-    USE_FIPSCHECK=true \
-    USE_LABELED_IPSEC=true \
-    USE_LDAP=true \
-    USE_LIBCAP_NG=true \
-    USE_LIBCURL=true \
-    USE_LINUX_AUDIT=true \
-    USE_NM=true \
-    USE_SECCOMP=true \
-    USE_XAUTHPAM=true \
+    %{libreswan_config} \
     programs
 FS=$(pwd)
 
@@ -123,24 +127,7 @@ FS=$(pwd)
 %install
 make \
     DESTDIR=%{buildroot} \
-    FINALLIBEXECDIR=%{_libexecdir}/ipsec \
-    FINALRUNDIR=%{_rundir}/pluto \
-    FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \
-    INC_RCDEFAULT=%{_initrddir} \
-    INC_USRLOCAL=%{_prefix} \
-    INITSYSTEM=systemd \
-    MANTREE=%{buildroot}%{_mandir} \
-    NSS_REQ_AVA_COPY=false \
-    USE_DNSSEC=true \
-    USE_FIPSCHECK=true \
-    USE_LABELED_IPSEC=true \
-    USE_LDAP=true \
-    USE_LIBCAP_NG=true \
-    USE_LIBCURL=true \
-    USE_LINUX_AUDIT=true \
-    USE_NM=true \
-    USE_SECCOMP=true \
-    USE_XAUTHPAM=true \
+    %{libreswan_config} \
     install
 FS=$(pwd)
 rm -rf %{buildroot}/usr/share/doc/libreswan
