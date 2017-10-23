@@ -441,7 +441,14 @@ struct lswlog {
  */
 extern int (*lswlog_debugf)(const char *format, ...) PRINTF_LIKE(1);
 
-#define LSWBUF_CANARY (-2)
+/*
+ * Since 'char' can be unsigned need to cast -2 onto a char sized
+ * value.
+ *
+ * The octal equivalent would be something like '\376' but who uses
+ * octal :-)
+ */
+#define LSWBUF_CANARY ((char) -2)
 
 #define PASSERT_LSWBUF(BUF)						\
 	do {								\
