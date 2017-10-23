@@ -11,6 +11,7 @@
  * Copyright (C) 2012-2013 Philippe Vouters <philippe.vouters@laposte.net>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2017 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -568,7 +569,8 @@ stf_status modecfg_start_set(struct state *st)
 	return modecfg_send_set(st);
 }
 
-/** Send XAUTH credential request (username + password request)
+/*
+ * Send XAUTH credential request (username + password request)
  * @param st State
  * @return stf_status
  */
@@ -583,7 +585,8 @@ stf_status xauth_send_request(struct state *st)
 	/* set up reply */
 	init_out_pbs(&reply, buf, sizeof(buf), "xauth_buf");
 
-	libreswan_log("XAUTH: Sending Username/Password request (XAUTH_R0)");
+	libreswan_log("XAUTH: Sending Username/Password request (%s->XAUTH_R0)",
+		      enum_short_name(&state_names, st->st_state));
 
 	/* this is the beginning of a new exchange */
 	st->st_msgid_phase15 = generate_msgid(st);
@@ -1213,6 +1216,16 @@ static int xauth_launch_authent(struct state *st,
 	char *arg_password = alloc_bytes(password->len + 1, "XAUTH Name");
 	memcpy(arg_password, password->ptr, password->len);
 
+	/*
+	 * For XAUTH, we're flipping between retransmitting the packet
+	 * in the retransmit slot, and the XAUTH packet, two
+	 * alternative events can be outstanding.
+	 *
+	 * Cancel both.
+	 */
+	delete_event(st);
+	delete_state_event(st, &st->st_send_xauth_event);
+
 	switch (st->st_connection->xauthby) {
 #ifdef XAUTH_HAVE_PAM
 	case XAUTHBY_PAM:
@@ -1226,7 +1239,6 @@ static int xauth_launch_authent(struct state *st,
 				       st->st_connection->instance_serial,
 				       "XAUTH",
 				       ikev1_xauth_callback);
-		delete_event(st);
 		event_schedule(EVENT_PAM_TIMEOUT, EVENT_PAM_TIMEOUT_DELAY, st);
 		break;
 #endif
