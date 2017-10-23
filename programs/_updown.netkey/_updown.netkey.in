@@ -460,11 +460,15 @@ doroute() {
     fi
     parms="${PLUTO_PEER_CLIENT}"
     parms2=${IPRARGS}
-    # use nexthop if (right/left)nexthop is set and nexthop is not %direct
-    if [ "${PLUTO_NEXT_HOP}" != "${PLUTO_PEER}" ]; then
+    # nexthop is not needed on ppp interfaces. unset it to make cases
+    # work, where left is set but no leftnexthop (e.g. left=%defaultroute)
+    if ip link show "${PLUTO_INTERFACE%:*}" | grep -q POINTOPOINT; then
+	POINTPOINT=yes
+    fi
+    # use nexthop if nexthop is not %direct and POINTPOINT is not set
+    if [ "${PLUTO_NEXT_HOP}" != "${PLUTO_PEER}" -a -z "${POINTPOINT" ]; then
 	parms2="via ${PLUTO_NEXT_HOP}"
     fi
-
     # route via proper interface according to routing table
     if [ "${1}" = "del" ]; then
 	peer_interface=$(ip -o route get ${PLUTO_PEER_CLIENT} | \
@@ -473,7 +477,7 @@ doroute() {
 	peer_interface=$(ip -o route get ${PLUTO_NEXT_HOP} | \
 	    sed "s/^.*dev \([^ ]*\) .*/\1/")
     fi
-   if [ -n "${VTI_IFACE}" ]; then
+    if [ -n "${VTI_IFACE}" ]; then
 	addsource
 	peer_interface="${VTI_IFACE}"
     fi
