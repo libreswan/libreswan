@@ -1,7 +1,8 @@
 
 See also https://libreswan.org/
 
-v3.22 (unreleased)
+v3.22 (October 22, 2017)
+* IKEv2: EXPERIMENTAL: unbound DNS server ipsecmod support [Opportunistic IPsec]
 * IKEv2: Initial support for RFC 7427 Digital Signature [Sahana Prasad/GSoC]
 * IKEv2: Do not include INTEG=NONE in AEAD IKE proposals [Andrew]
 * IKEv2: Accept both ESP=AEAD+NONE and ESP=AEAD in proposals [Andrew]
