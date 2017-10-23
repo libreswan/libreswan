@@ -1,0 +1,31 @@
+#!/usr/bin/python
+
+import sys
+import base64
+import commands
+
+log = ""
+
+status, myip = commands.getstatusoutput("ip -o route get 1.0.0.1")
+myip = myip.split("src")[1].strip().split()[0]
+
+argv = sys.argv
+argc = len(sys.argv)
+
+#log += "Number or arguments is %d\n"%argc
+#if argc >= 4:
+#	log += "QNAME:%s\n"%argv[1]
+#	log += "TTL:%s\n"%argv[2]
+#	log += "IP:%s\n"%argv[3]
+#	log += "IPSECKEY:%s\n"%argv[4]
+#	rr = argv[4]
+#	pref, gwtype, algo, gw, pubkey = rr.split(" ")
+#log += "-----------------------------\n"
+
+cmdname = "@IPSEC_EXECDIR@/whack --keyid @%s --addkey --pubkeyrsa 0s%s"%(argv[1], pubkey)
+cmdip = "@IPSEC_EXECDIR@/whack --keyid %s --addkey --pubkeyrsa 0s%s"%(argv[3], pubkey)
+cmdoe = "@IPSEC_EXECDIR@/whack --oppohere %s --oppothere %s"%(myip, argv[3])
+ret, output = commands.getstatusoutput(cmdname)
+ret, output = commands.getstatusoutput(cmdip)
+ret, output = commands.getstatusoutput(cmdoe)
+ret, output = commands.getstatusoutput("@IPSEC_EXECDIR@ whack --trafficstatus")
