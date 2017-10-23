@@ -441,7 +441,7 @@ struct lswlog {
  */
 extern int (*lswlog_debugf)(const char *format, ...) PRINTF_LIKE(1);
 
-#define LSWBUF_CANARY -2
+#define LSWBUF_CANARY (-2)
 
 #define PASSERT_LSWBUF(BUF)						\
 	do {								\
