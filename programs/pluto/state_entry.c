@@ -21,6 +21,19 @@
 #include "state.h"
 #include "state_entry.h"
 
+void init_state_chain(struct state_entry *head)
+{
+	passert(head->state == NULL);
+	if (head->next == NULL) {
+		passert(head->prev == NULL);
+		/* virgin list: initialize circularity */
+		head->prev = head->next = head;
+		DBG(DBG_CONTROL, DBG_log("initializing state chain %p", head));
+	}
+	passert(head->next != NULL && head->prev != NULL);
+}
+
+/* ??? this code assumes all hash tables are sized by STATE_TABLE_SIZE */
 struct state_entry *state_entries_by_hash(struct state_hash_table *table,
 					  unsigned long hash)
 {
@@ -37,7 +50,8 @@ static void log_entry(const char *table_name,
 	} else if (entry->prev == NULL && entry->next == NULL &&
 		   entry->state == NULL) {
 		DBG(DBG_CONTROL,
-		    DBG_log("%s: %s entry is HEAD", table_name, op));
+		    DBG_log("%s: %s entry is uninitialized HEAD %p",
+			table_name, op, entry));
 	} else {
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("%s: %s state #%lu entry (prev %p) %p (next %p)",
@@ -55,26 +69,24 @@ void insert_state_entry(const char *table_name,
 			struct state_entry *head,
 			struct state_entry *entry)
 {
+	init_state_chain(head);
+
 	DBG(DBG_CONTROL,
-	    DBG_log("%s: inserting state #%lu entry %p into chain (prev %p) %p (next %p)",
+	    DBG_log("%s: inserting state #%lu entry %p into chain %p",
 		    table_name,
-		    (entry->state != NULL ? entry->state->st_serialno : 0LU),
+		    entry->state->st_serialno,
 		    entry,
-		    head->prev, head, head->next));
+		    head));
+
 	passert(entry->next == NULL && entry->prev == NULL);
-	if (head->prev == NULL && head->next == NULL) {
-		entry->prev = head;
-		entry->next = head;
-		head->prev = entry;
-		head->next = entry;
-	} else {
-		/* insert at the front */
-		entry->next = head->next;
-		entry->next->prev = entry;
-		entry->prev = head;
-		head->next = entry;
-		/* head->prev = head->prev; */
-	}
+
+	/* insert at the front (between head and head->next) */
+	entry->next = head->next;
+	head->next = entry;
+
+	entry->prev = head;
+	entry->next->prev = entry;
+
 	log_entry(table_name, "inserted", entry);
 }
 
@@ -85,18 +97,12 @@ void remove_state_entry(const char *table_name,
 	/* unlink */
 	struct state_entry *prev = entry->prev;
 	struct state_entry *next = entry->next;
+	passert(entry != prev && entry != next);
 	entry->next = NULL;
 	entry->prev = NULL;
-	/* kill loop if empty.  Needed? */
-	if (prev == next) {
-		/* the head */
-		prev->next = NULL;
-		next->prev = NULL;
-		DBG(DBG_CONTROL, DBG_log("%s: empty", table_name));
-	} else {
-		prev->next = next;
-		next->prev = prev;
-		log_entry(table_name, "updated prev", prev);
-		log_entry(table_name, "updated next ", next);
-	}
+
+	prev->next = next;
+	next->prev = prev;
+	log_entry(table_name, "updated prev", prev);
+	log_entry(table_name, "updated next ", next);
 }
