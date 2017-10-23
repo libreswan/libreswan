@@ -27,6 +27,10 @@ struct state;
  * The list proper should be declared as a pointer to this
  * structure. I.e., "struct state_entry *list" or "struct state_entry
  * *table[10]".
+ *
+ * Each list is circular, with a distinguished empty element as the head/tail.
+ * Note: before chain is used, the circular links won't be set up.
+ * Use init_state_chain to establish these links.
  */
 
 struct state_entry {
@@ -56,6 +60,15 @@ struct state_entry *state_entries_by_hash(struct state_hash_table *table,
 					  unsigned long hash);
 
 /*
+ * initialize invariant for a state chain.
+ *
+ * This makes the chain a cycle if it hasn't been initialized.
+ * It has no effect otherwise: it is safe to use any time.
+ * (Initialization is lazy so each chain user should call this routine.)
+ */
+void init_state_chain(struct state_entry *head);
+
+/*
  * Insert (at front) or remove the state from the linked list.
  */
 
@@ -70,28 +83,30 @@ void remove_state_entry(const char *table_name,
  * Iterate through all the states in a list.
  *
  * So that the current state can be deleted keep the entry pointer one
- * step ahead.
+ * step ahead.  The distinguished head element must/can/will never be deleted.
  *
- * So that a search failure can be detected leave ST=NULL if the loop
+ * So that a search failure can be detected, leave ST=NULL if the loop
  * exits normally.
  *
  * So that 'continue' and 'break' both behave as expected from within
  * CODE, CODE must be placed at the end of the loop (at one point ST
  * was being cleared after CODE leading to a 'continue' on the final
  * entry skipping that line leaving ST non-NULL).
+ *
+ * CHAIN may be expensive or have side-effects so we evaluate it exactly once.
  */
-#define FOR_EACH_STATE_ENTRY(ST, CHAIN, CODE)				\
-	do {								\
-		struct state_entry *ST##entry = (CHAIN)->next;		\
-		(ST) = NULL;						\
-		if (ST##entry != NULL) {				\
-			while (true) {					\
-				(ST) = ST##entry->state;		\
-				if ((ST) == NULL) break;		\
-				ST##entry = ST##entry->next;		\
-				CODE;					\
-			}						\
-		}							\
-	} while (0)
-
+#define FOR_EACH_STATE_ENTRY(ST, CHAIN, CODE)			\
+	{							\
+		/* ST##entry is private to this macro */	\
+		struct state_entry *(ST##entry) = (CHAIN);	\
+		init_state_chain(ST##entry);			\
+		(ST##entry) = (ST##entry)->next;		\
+		for (;;) {					\
+			(ST) = (ST##entry)->state;		\
+			if ((ST) == NULL)			\
+				break;				\
+			(ST##entry) = (ST##entry)->next;	\
+			{ CODE }				\
+		}						\
+	}
 #endif

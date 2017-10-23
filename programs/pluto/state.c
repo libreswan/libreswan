@@ -416,20 +416,24 @@ static char *humanize_number(uint64_t num,
 /*
  * Some macros to ease iterating over the above table
  */
-#define FOR_EACH_ENTRY(ST, I, CODE) \
-	FOR_EACH_STATE_ENTRY(ST, &cookies_hash_table.entries[I], CODE)
+
+/* NOTE: BREAK will not work within CODE; CONTINUE and RETURN will */
+#define FOR_EACH_COOKIED_STATE(ST, CODE)					\
+	for (int FECS_i = 0; FECS_i < STATE_TABLE_SIZE; FECS_i++) {		\
+		struct state *ST;						\
+		FOR_EACH_STATE_ENTRY(ST, &cookies_hash_table.entries[FECS_i], {	\
+			CODE							\
+		});								\
+	}
+
 
 /*
  * Iterate over all entries with matching cookies.
- *
- * Beware of using 'continue' here, it may unintentionally skip code
- * burried in FOR_EACH_STATE_ENTRY (for instance a statement clearing
- * ST).
  */
-#define FOR_EACH_ENTRY_WITH_COOKIE(ST, ICOOKIE, RCOOKIE, CODE)		\
-	FOR_EACH_STATE_ENTRY(ST, cookies_chain(ICOOKIE, RCOOKIE), {	\
-		if (memeq(ICOOKIE, ST->st_icookie, COOKIE_SIZE) &&	\
-		    memeq(RCOOKIE, ST->st_rcookie, COOKIE_SIZE)) {	\
+#define FOR_EACH_STATE_WITH_COOKIE(ST, ICOOKIE, RCOOKIE, CODE)		\
+	FOR_EACH_STATE_ENTRY(ST, cookies_chain((ICOOKIE), (RCOOKIE)), {	\
+		if (memeq((ICOOKIE), ST->st_icookie, COOKIE_SIZE) &&	\
+		    memeq((RCOOKIE), ST->st_rcookie, COOKIE_SIZE)) {	\
 			CODE;						\
 		}							\
 	})								\
@@ -531,17 +535,12 @@ static bool eq_pst_msgid_kind(struct state *st,
 struct state *state_with_parent_msgid_expect(so_serial_t psn, msgid_t st_msgid,
 		enum state_kind expected_state)
 {
-	int i;
-
 	passert(psn >= SOS_FIRST);
 
-	for (i = 0; i < STATE_TABLE_SIZE; i++) {
-		struct state *st;
-		FOR_EACH_ENTRY(st, i, {
-				if (eq_pst_msgid_kind(st, psn, st_msgid,
-							expected_state)) {
-				return st;}});
-	}
+	FOR_EACH_COOKIED_STATE(st, {
+		if (eq_pst_msgid_kind(st, psn, st_msgid, expected_state))
+			return st;
+	});
 	DBG(DBG_CONTROL,
 		DBG_log("no waiting child state matching pst #%lu msg id %u expected state %s",
 			psn, ntohs(st_msgid),
@@ -678,10 +677,10 @@ void ikev2_expire_unused_parent(struct state *pst)
 	if (pst == NULL || !IS_PARENT_SA_ESTABLISHED(pst))
 		return; /* only deal with established parent SA */
 
-	FOR_EACH_ENTRY_WITH_COOKIE(st, pst->st_icookie, pst->st_rcookie, {
-			if (st->st_clonedfrom == pst->st_serialno)
-				return;
-			});
+	FOR_EACH_STATE_WITH_COOKIE(st, pst->st_icookie, pst->st_rcookie, {
+		if (st->st_clonedfrom == pst->st_serialno)
+			return;
+	});
 
 	{
 		char cib[CONN_INST_BUF];
@@ -734,11 +733,12 @@ static void flush_pending_children(struct state *pst)
 {
 	struct state *st;
 	/* AA_2016 check is it st or pst ? */
-	FOR_EACH_ENTRY_WITH_COOKIE(st, pst->st_icookie, pst->st_rcookie, {
-			if (st->st_clonedfrom == pst->st_serialno) {
-				flush_pending_ipsec(pst, st);
-				delete_cryptographic_continuation(st);
-			}});
+	FOR_EACH_STATE_WITH_COOKIE(st, pst->st_icookie, pst->st_rcookie, {
+		if (st->st_clonedfrom == pst->st_serialno) {
+			flush_pending_ipsec(pst, st);
+			delete_cryptographic_continuation(st);
+		}
+	});
 }
 
 static bool send_delete_check(const struct state *st)
@@ -1092,37 +1092,26 @@ void delete_state(struct state *st)
 bool states_use_connection(const struct connection *c)
 {
 	/* are there any states still using it? */
-	int i;
+	FOR_EACH_COOKIED_STATE(st, {
+		if (st->st_connection == c)
+			return TRUE;
+	});
 
-	for (i = 0; i < STATE_TABLE_SIZE; i++) {
-		struct state *st;
-
-		FOR_EACH_ENTRY(st, i, {
-			if (st->st_connection == c)
-				return TRUE;
-			});
-	}
 	return FALSE;
 }
 
 bool shared_phase1_connection(const struct connection *c)
 {
-	int i;
-
 	so_serial_t serial_us = c->newest_isakmp_sa;
 
 	if (serial_us == SOS_NOBODY)
 		return FALSE;
 
-	for (i = 0; i < STATE_TABLE_SIZE; i++) {
-		struct state *st;
+	FOR_EACH_COOKIED_STATE(st, {
+		if (st->st_connection != c && st->st_clonedfrom == serial_us)
+			return TRUE;
+	});
 
-		FOR_EACH_ENTRY(st, i, {
-			if (st->st_connection != c &&
-			    st->st_clonedfrom == serial_us)
-				return TRUE;
-			});
-	}
 	return FALSE;
 }
 
@@ -1147,38 +1136,33 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
 	 */
 	for (pass = 0; pass != 2; pass++) {
 		DBG(DBG_CONTROL, DBG_log("pass %d", pass));
-		/* For each hash chain... */
-		int i;
-		for (i = 0; i < STATE_TABLE_SIZE; i++) {
-			struct state *this;
-			FOR_EACH_ENTRY(this, i, {
-					DBG(DBG_CONTROL,
-					    DBG_log("index %d state #%lu", i,
-						    this->st_serialno));
+		FOR_EACH_COOKIED_STATE(this, {
+			DBG(DBG_CONTROL,
+			    DBG_log("state #%lu",
+				this->st_serialno));
 
-				/* on pass 1, ignore established ISAKMP SA's */
-				if (pass == 0 &&
-				    IS_ISAKMP_SA_ESTABLISHED(this->st_state))
-					continue;
+			/* on first pass, ignore established ISAKMP SA's */
+			if (pass == 0 &&
+			    IS_ISAKMP_SA_ESTABLISHED(this->st_state))
+				continue;
 
-				/* call comparison function */
-				if ((*comparefunc)(this, c)) {
-					struct state *old_cur_state =
-						cur_state == this ?
-						  NULL : cur_state;
-					lset_t old_cur_debugging =
-						cur_debugging;
+			/* call comparison function */
+			if ((*comparefunc)(this, c)) {
+				struct state *old_cur_state =
+					cur_state == this ?
+					  NULL : cur_state;
+				lset_t old_cur_debugging =
+					cur_debugging;
 
-					set_cur_state(this);
+				set_cur_state(this);
 
-					delete_state(this);
-					/* note: no md->st to clear */
+				delete_state(this);
+				/* note: no md->st to clear */
 
-					cur_state = old_cur_state;
-					set_debugging(old_cur_debugging);
-				}
-			});
-		}
+				cur_state = old_cur_state;
+				set_debugging(old_cur_debugging);
+			}
+		});
 	}
 }
 
@@ -1189,23 +1173,17 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
 
 void delete_states_dead_interfaces(void)
 {
-	int i;
-
-	for (i = 0; i < STATE_TABLE_SIZE; i++) {
-		struct state *this;
-
-		FOR_EACH_ENTRY(this, i, {
-			if (this->st_interface &&
-			    this->st_interface->change == IFN_DELETE) {
-				libreswan_log(
-					"deleting lasting state #%lu on interface (%s) which is shutting down",
-					this->st_serialno,
-					this->st_interface->ip_dev->id_vname);
-				delete_state(this);
-				/* note: no md->st to clear */
-			}
-		});
-	}
+	FOR_EACH_COOKIED_STATE(this, {
+		if (this->st_interface &&
+		    this->st_interface->change == IFN_DELETE) {
+			libreswan_log(
+				"deleting lasting state #%lu on interface (%s) which is shutting down",
+				this->st_serialno,
+				this->st_interface->ip_dev->id_vname);
+			delete_state(this);
+			/* note: no md->st to clear */
+		}
+	});
 }
 
 /*
@@ -1307,44 +1285,39 @@ void delete_p2states_by_connection(struct connection *c)
 void delete_states_by_peer(const ip_address *peer)
 {
 	char peerstr[ADDRTOT_BUF];
-	int i, ph1;
 
 	addrtot(peer, 0, peerstr, sizeof(peerstr));
 
 	whack_log(RC_COMMENT, "restarting peer %s\n", peerstr);
 
 	/* first restart the phase1s */
-	for (ph1 = 0; ph1 < 2; ph1++) {
+	for (int ph1 = 0; ph1 < 2; ph1++) {
 		/* For each hash chain... */
-		for (i = 0; i < STATE_TABLE_SIZE; i++) {
-			struct state *this;
-			FOR_EACH_ENTRY(this, i, {
-				struct connection *c = this->st_connection;
-				DBG(DBG_CONTROL, {
-					ipstr_buf b;
-					DBG_log("comparing %s to %s",
-						ipstr(&this->st_remoteaddr, &b),
-						peerstr);
-				});
-
-				if (sameaddr(&this->st_remoteaddr, peer)) {
-					if (ph1 == 0 &&
-					    IS_IKE_SA(this)) {
-						whack_log(RC_COMMENT,
-							  "peer %s for connection %s crashed, replacing",
-							  peerstr,
-							  c->name);
-						ipsecdoi_replace(this, LEMPTY,
-								 LEMPTY, 1);
-					} else {
-						delete_event(this);
-						event_schedule(
-							EVENT_SA_REPLACE, 0,
-							this);
-					}
-				}
+		FOR_EACH_COOKIED_STATE(this, {
+			const struct connection *c = this->st_connection;
+			DBG(DBG_CONTROL, {
+				ipstr_buf b;
+				DBG_log("comparing %s to %s",
+					ipstr(&this->st_remoteaddr, &b),
+					peerstr);
 			});
-		}
+
+			if (sameaddr(&this->st_remoteaddr, peer)) {
+				if (ph1 == 0 && IS_IKE_SA(this)) {
+					whack_log(RC_COMMENT,
+						  "peer %s for connection %s crashed; replacing",
+						  peerstr,
+						  c->name);
+					ipsecdoi_replace(this, LEMPTY,
+							 LEMPTY, 1);
+				} else {
+					delete_event(this);
+					event_schedule(
+						EVENT_SA_REPLACE, 0,
+						this);
+				}
+			}
+		});
 	}
 }
 
@@ -1446,15 +1419,11 @@ struct state *duplicate_state(struct state *st, sa_t sa_type)
 void for_each_state(void (*f)(struct state *, void *data), void *data)
 {
 	struct state *ocs = cur_state;
-	int i;
 
-	for (i = 0; i < STATE_TABLE_SIZE; i++) {
-		struct state *st;
-		FOR_EACH_ENTRY(st, i, {
-			set_cur_state(st);
-			f(st, data);
-		});
-	}
+	FOR_EACH_COOKIED_STATE(st, {
+		set_cur_state(st);
+		(*f)(st, data);
+	});
 	cur_state = ocs;
 }
 
@@ -1466,7 +1435,7 @@ struct state *find_state_ikev1(const u_char *icookie,
 			       msgid_t /*network order*/ msgid)
 {
 	struct state *st;
-	FOR_EACH_ENTRY_WITH_COOKIE(st, icookie, rcookie, {
+	FOR_EACH_STATE_WITH_COOKIE(st, icookie, rcookie, {
 		if (!st->st_ikev2) {
 			DBG(DBG_CONTROL,
 			    DBG_log("v1 peer and cookies match on #%lu, provided msgid %08" PRIx32 " == %08" PRIx32,
@@ -1499,7 +1468,7 @@ struct state *find_state_ikev2_parent(const u_char *icookie,
 				      const u_char *rcookie)
 {
 	struct state *st;
-	FOR_EACH_ENTRY_WITH_COOKIE(st, icookie, rcookie, {
+	FOR_EACH_STATE_WITH_COOKIE(st, icookie, rcookie, {
 		if (st->st_ikev2 &&
 		    !IS_CHILD_SA(st)) {
 			DBG(DBG_CONTROL,
@@ -1510,14 +1479,14 @@ struct state *find_state_ikev2_parent(const u_char *icookie,
 	});
 
 	DBG(DBG_CONTROL, {
-		    if (st == NULL) {
-			    DBG_log("parent v2 state object not found");
-		    } else {
-			    DBG_log("v2 state object #%lu found, in %s",
-				    st->st_serialno,
-				    enum_name(&state_names, st->st_state));
-		    }
-	    });
+		if (st == NULL) {
+			DBG_log("parent v2 state object not found");
+		} else {
+			DBG_log("v2 state object #%lu found, in %s",
+				st->st_serialno,
+				enum_name(&state_names, st->st_state));
+		}
+	});
 
 	return st;
 }
@@ -1560,7 +1529,7 @@ struct state *find_state_ikev2_child(const u_char *icookie,
 				     msgid_t msgid)
 {
 	struct state *st;
-	FOR_EACH_ENTRY_WITH_COOKIE(st, icookie, rcookie, {
+	FOR_EACH_STATE_WITH_COOKIE(st, icookie, rcookie, {
 		if (st->st_ikev2 &&
 		    st->st_msgid == msgid) {
 			DBG(DBG_CONTROL,
@@ -1571,14 +1540,14 @@ struct state *find_state_ikev2_child(const u_char *icookie,
 	});
 
 	DBG(DBG_CONTROL, {
-		    if (st == NULL) {
-			    DBG_log("v2 state object not found");
-		    } else {
-			    DBG_log("v2 state object #%lu found, in %s",
-				    st->st_serialno,
-				    enum_name(&state_names, st->st_state));
-		    }
-	    });
+		if (st == NULL) {
+			DBG_log("v2 state object not found");
+		} else {
+			DBG_log("v2 state object #%lu found, in %s",
+				st->st_serialno,
+				enum_name(&state_names, st->st_state));
+		}
+	});
 
 	return st;
 }
@@ -1593,7 +1562,7 @@ struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
 					       ipsec_spi_t spi)
 {
 	struct state *st;
-	FOR_EACH_ENTRY_WITH_COOKIE(st, icookie, rcookie, {
+	FOR_EACH_STATE_WITH_COOKIE(st, icookie, rcookie, {
 		if (st->st_ikev2 && IS_CHILD_SA(st)) {
 			struct ipsec_proto_info *pr;
 
@@ -1640,28 +1609,28 @@ struct state *ikev1_find_info_state(const u_char *icookie,
 			      msgid_t /* network order */ msgid)
 {
 	struct state *st;
-	FOR_EACH_ENTRY_WITH_COOKIE(st, icookie, rcookie, {
-			DBG(DBG_CONTROL,
-			    DBG_log("peer and cookies match on #%lu; msgid=%08" PRIx32 " st_msgid=%08" PRIx32 " st_msgid_phase15=%08" PRIx32,
-				    st->st_serialno,
-				    ntohl(msgid),
-				    ntohl(st->st_msgid),
-				    ntohl(st->st_msgid_phase15)));
-			if ((st->st_msgid_phase15 != v1_MAINMODE_MSGID &&
-			     msgid == st->st_msgid_phase15) ||
-			    msgid == st->st_msgid)
-				break;
-		});
+	FOR_EACH_STATE_WITH_COOKIE(st, icookie, rcookie, {
+		DBG(DBG_CONTROL,
+		    DBG_log("peer and cookies match on #%lu; msgid=%08" PRIx32 " st_msgid=%08" PRIx32 " st_msgid_phase15=%08" PRIx32,
+			    st->st_serialno,
+			    ntohl(msgid),
+			    ntohl(st->st_msgid),
+			    ntohl(st->st_msgid_phase15)));
+		if ((st->st_msgid_phase15 != v1_MAINMODE_MSGID &&
+		     msgid == st->st_msgid_phase15) ||
+		    msgid == st->st_msgid)
+			break;
+	});
 
 	DBG(DBG_CONTROL, {
-		    if (st == NULL) {
-			    DBG_log("p15 state object not found");
-		    } else {
-			    DBG_log("p15 state object #%lu found, in %s",
-				    st->st_serialno,
-				    enum_name(&state_names, st->st_state));
-		    }
-	    });
+		if (st == NULL) {
+			DBG_log("p15 state object not found");
+		} else {
+			DBG_log("p15 state object #%lu found, in %s",
+				st->st_serialno,
+				enum_name(&state_names, st->st_state));
+		}
+	});
 
 	return st;
 }
@@ -1673,20 +1642,14 @@ struct state *ikev1_find_info_state(const u_char *icookie,
 struct state *find_likely_sender(size_t packet_len, u_char *packet)
 {
 	if (packet_len >= sizeof(struct isakmp_hdr)) {
-		int i;
-
-		for (i = 0; i < STATE_TABLE_SIZE; i++) {
-			struct state *st;
-
-			FOR_EACH_ENTRY(st, i, {
-				if (st->st_tpacket.ptr != NULL &&
-				    st->st_tpacket.len >= packet_len &&
-				    memeq(st->st_tpacket.ptr, packet, packet_len))
-				{
-					return st;
-				}
-			});
-		}
+		FOR_EACH_COOKIED_STATE(st, {
+			if (st->st_tpacket.ptr != NULL &&
+			    st->st_tpacket.len >= packet_len &&
+			    memeq(st->st_tpacket.ptr, packet, packet_len))
+			{
+				return st;
+			}
+		});
 	}
 	return NULL;
 }
@@ -1703,67 +1666,56 @@ struct state *find_phase2_state_to_delete(const struct state *p1st,
 					  ipsec_spi_t spi,
 					  bool *bogus)
 {
+	const struct connection *p1c = p1st->st_connection;
 	struct state  *bogusst = NULL;
-	int i;
 
 	*bogus = FALSE;
-	for (i = 0; i < STATE_TABLE_SIZE; i++) {
-		struct state *st;
-
-		FOR_EACH_ENTRY(st, i, {
-			if (IS_IPSEC_SA_ESTABLISHED(st->st_state) &&
-				p1st->st_connection->host_pair ==
-				st->st_connection->host_pair &&
-				same_peer_ids(p1st->st_connection,
-					st->st_connection, NULL))
-			{
-				struct ipsec_proto_info *pr =
-					protoid == PROTO_IPSEC_AH ?
+	FOR_EACH_COOKIED_STATE(st, {
+		const struct connection *c = st->st_connection;
+		if (IS_IPSEC_SA_ESTABLISHED(st->st_state) &&
+		    p1c->host_pair == c->host_pair &&
+		    same_peer_ids(p1c, c, NULL))
+		{
+			struct ipsec_proto_info *pr =
+				protoid == PROTO_IPSEC_AH ?
 					&st->st_ah : &st->st_esp;
 
-				if (pr->present) {
-					if (pr->attrs.spi == spi) {
-						*bogus = FALSE;
-						return st;
-					}
+			if (pr->present) {
+				if (pr->attrs.spi == spi) {
+					*bogus = FALSE;
+					return st;
+				}
 
-					if (pr->our_spi == spi) {
-						*bogus = TRUE;
-						bogusst = st;
-						/* don't return! */
-					}
+				if (pr->our_spi == spi) {
+					*bogus = TRUE;
+					bogusst = st;
+					/* don't return! */
 				}
 			}
-		});
-	}
+		}
+	});
 	return bogusst;
 }
 
-bool find_pending_phas2(const so_serial_t psn,
+bool find_pending_phase2(const so_serial_t psn,
 		const struct connection *c, lset_t ok_states)
 {
 	struct state *best = NULL;
-	int i;
 	int n = 0;
 
 	passert(psn >= SOS_FIRST);
 
-	for (i = 0; i < STATE_TABLE_SIZE; i++) {
-		struct state *st;
-
-		FOR_EACH_ENTRY(st, i, {
-			if (LHAS(ok_states, st->st_state) &&
-				IS_CHILD_SA(st) &&
-				st->st_clonedfrom == psn &&
-				streq(st->st_connection->name, c->name) /* not instances */
-			   ) {
-				n++;
-				if (best == NULL ||
-					best->st_serialno < st->st_serialno) {
-					best = st;
-				}
-			}});
-	}
+	FOR_EACH_COOKIED_STATE(st, {
+		if (LHAS(ok_states, st->st_state) &&
+		    IS_CHILD_SA(st) &&
+		    st->st_clonedfrom == psn &&
+		    streq(st->st_connection->name, c->name)) /* not instances */
+		{
+			n++;
+			if (best == NULL || best->st_serialno < st->st_serialno)
+				best = st;
+		}
+	});
 
 	if (n > 0) {
 		DBG(DBG_CONTROL,
@@ -1780,22 +1732,19 @@ bool find_pending_phas2(const so_serial_t psn,
 struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 {
 	struct state *best = NULL;
-	int i;
 	bool is_ikev2 = (c->policy & POLICY_IKEV1_ALLOW) == LEMPTY;
 
-	for (i = 0; i < STATE_TABLE_SIZE; i++) {
-		struct state *st;
-		FOR_EACH_ENTRY(st, i, {
-			if (LHAS(ok_states, st->st_state) &&
-				st->st_ikev2 == is_ikev2 &&
-				c->host_pair == st->st_connection->host_pair &&
-				same_peer_ids(c, st->st_connection, NULL) &&
-				IS_PARENT_SA(st) &&
-				(best == NULL ||
-					best->st_serialno < st->st_serialno))
-				best = st;
-		});
-	}
+	FOR_EACH_COOKIED_STATE(st, {
+		if (LHAS(ok_states, st->st_state) &&
+		    st->st_ikev2 == is_ikev2 &&
+		    c->host_pair == st->st_connection->host_pair &&
+		    same_peer_ids(c, st->st_connection, NULL) &&
+		    IS_PARENT_SA(st) &&
+		    (best == NULL || best->st_serialno < st->st_serialno))
+		{
+			best = st;
+		}
+	});
 
 	return best;
 }
@@ -1803,27 +1752,22 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 			unsigned long count, monotime_t nw)
 {
-	int i;
+	FOR_EACH_COOKIED_STATE(st, {
+		struct connection *c = st->st_connection;
 
-	for (i = 0; i < STATE_TABLE_SIZE; i++) {
-		struct state *st;
-		FOR_EACH_ENTRY(st, i, {
-			struct connection *c = st->st_connection;
-
-			/* XXX spd-enum */
-			if (IS_IPSEC_SA_ESTABLISHED(st->st_state) &&
-				c->spd.eroute_owner == st->st_serialno &&
-				c->spd.routing == RT_ROUTED_TUNNEL &&
-				samesubnet(&c->spd.this.client, ours) &&
-				samesubnet(&c->spd.that.client, his)) {
-				if (st->st_outbound_count != count) {
-					st->st_outbound_count = count;
-					st->st_outbound_time = nw;
-				}
-				return;
+		/* XXX spd-enum */
+		if (IS_IPSEC_SA_ESTABLISHED(st->st_state) &&
+		    c->spd.eroute_owner == st->st_serialno &&
+		    c->spd.routing == RT_ROUTED_TUNNEL &&
+		    samesubnet(&c->spd.this.client, ours) &&
+		    samesubnet(&c->spd.that.client, his)) {
+			if (st->st_outbound_count != count) {
+				st->st_outbound_count = count;
+				st->st_outbound_time = nw;
 			}
-		});
-	}
+			return;
+		}
+	});
 	DBG(DBG_CONTROL,
 	    {
 		    char ourst[SUBNETTOT_BUF];
@@ -2201,15 +2145,10 @@ static struct state **sort_states(int (*sort_fn)(const void *, const void *))
 {
 	/* COUNT the number of states. */
 	int count = 0;
-	{
-		int i;
-		for (i = 0; i < STATE_TABLE_SIZE; i++) {
-			struct state *st UNUSED;
-			FOR_EACH_ENTRY(st, i, {
-					count++;
-				});
-		}
-	}
+
+	FOR_EACH_COOKIED_STATE(st, {
+		count++;
+	});
 
 	if (count == 0) {
 		return NULL;
@@ -2221,14 +2160,11 @@ static struct state **sort_states(int (*sort_fn)(const void *, const void *))
 	struct state **array = alloc_things(struct state *, count + 1, "sorted state");
 	{
 		int p = 0;
-		int i;
-		for (i = 0; i < STATE_TABLE_SIZE; i++) {
-			struct state *st;
-			FOR_EACH_ENTRY(st, i, {
-					passert(st != NULL);
-					array[p++] = st;
-				});
-		}
+
+		FOR_EACH_COOKIED_STATE(st, {
+			passert(st != NULL);
+			array[p++] = st;
+		});
 		passert(p == count);
 		array[p] = NULL;
 	}
@@ -2317,42 +2253,36 @@ void find_my_cpi_gap(cpi_t *latest_cpi, cpi_t *first_busy_cpi)
 	int tries = 0;
 	cpi_t base = *latest_cpi;
 	cpi_t closest;
-	int i;
 
 startover:
 	closest = ~0;   /* not close at all */
-	for (i = 0; i < STATE_TABLE_SIZE; i++) {
-		struct state *st;
-		FOR_EACH_ENTRY(st, i, {
-			if (st->st_ipcomp.present) {
-				cpi_t c = ntohl(st->st_ipcomp.our_spi) - base;
+	FOR_EACH_COOKIED_STATE(st, {
+		if (st->st_ipcomp.present) {
+			cpi_t c = ntohl(st->st_ipcomp.our_spi) - base;
 
-				if (c < closest) {
-					if (c == 0) {
-						/*
-						 * oops: next spot is
-						 * occupied; start over
-						 */
-						if (++tries == 20) {
-							/* FAILURE */
-							*latest_cpi =
-								*first_busy_cpi
-									= 0;
-							return;
-						}
-						base++;
-						if (base >
-							IPCOMP_LAST_NEGOTIATED)
-							base = IPCOMP_FIRST_NEGOTIATED;
-
-						/* really a tail call */
-						goto startover;
+			if (c < closest) {
+				if (c == 0) {
+					/*
+					 * oops: next spot is
+					 * occupied; start over
+					 */
+					if (++tries == 20) {
+						/* FAILURE */
+						*latest_cpi = 0;
+						*first_busy_cpi = 0;
+						return;
 					}
-					closest = c;
+					base++;
+					if (base > IPCOMP_LAST_NEGOTIATED)
+						base = IPCOMP_FIRST_NEGOTIATED;
+
+					/* really a tail call */
+					goto startover;
 				}
+				closest = c;
 			}
-		});
-	}
+		}
+	});
 	*latest_cpi = base;	/* base is first in next free range */
 	*first_busy_cpi = closest + base;	/* and this is the roof */
 }
@@ -2369,7 +2299,6 @@ startover:
 ipsec_spi_t uniquify_his_cpi(ipsec_spi_t cpi, const struct state *st)
 {
 	int tries = 0;
-	int i;
 
 startover:
 
@@ -2380,20 +2309,18 @@ startover:
 	 * Make sure that the result is unique.
 	 * Hard work.  If there is no unique value, we'll loop forever!
 	 */
-	for (i = 0; i < STATE_TABLE_SIZE; i++) {
-		const struct state *s;
-		FOR_EACH_ENTRY(s, i, {
-			if (s->st_ipcomp.present &&
-			    sameaddr(&s->st_connection->spd.that.host_addr,
-				     &st->st_connection->spd.that.host_addr) &&
-			    cpi == s->st_ipcomp.attrs.spi) {
-				if (++tries == 20)
-					return 0; /* FAILURE */
+	FOR_EACH_COOKIED_STATE(s, {
+		if (s->st_ipcomp.present &&
+		    sameaddr(&s->st_connection->spd.that.host_addr,
+			     &st->st_connection->spd.that.host_addr) &&
+		    cpi == s->st_ipcomp.attrs.spi)
+		{
+			if (++tries == 20)
+				return 0; /* FAILURE */
 
-				goto startover;
-			}
-		});
-	}
+			goto startover;
+		}
+	});
 	return cpi;
 }
 
@@ -2489,18 +2416,14 @@ void ikev2_inherit_ipsec_sa(so_serial_t osn, so_serial_t nsn,
 {
 	/* new sn, IKE parent, Inherit IPSEC SA from previous IKE with osn. */
 
-	int i;
-
 	passert(nsn >= SOS_FIRST);
 
-	for (i = 0; i < STATE_TABLE_SIZE; i++) {
-		struct state *st;
-		FOR_EACH_ENTRY(st, i, {
-				if (st->st_clonedfrom == osn) {
-					set_st_clonedfrom(st, nsn);
-					rehash_state(st, icookie, rcookie);
-				}});
-	}
+	FOR_EACH_COOKIED_STATE(st, {
+		if (st->st_clonedfrom == osn) {
+			set_st_clonedfrom(st, nsn);
+			rehash_state(st, icookie, rcookie);
+		}
+	});
 }
 
 void delete_my_family(struct state *pst, bool v2_responder_state)
@@ -2514,7 +2437,7 @@ void delete_my_family(struct state *pst, bool v2_responder_state)
 	struct state *st;
 
 	passert(!IS_CHILD_SA(pst));	/* we had better be a parent */
-	FOR_EACH_ENTRY_WITH_COOKIE(st, pst->st_icookie, pst->st_rcookie, {
+	FOR_EACH_STATE_WITH_COOKIE(st, pst->st_icookie, pst->st_rcookie, {
 		if (st->st_clonedfrom == pst->st_serialno) {
 			if (v2_responder_state)
 				change_state(st, STATE_CHILDSA_DEL);
@@ -2543,9 +2466,12 @@ bool state_busy(const struct state *st) {
 		 * diagnosis?
 		 */
 		if (st->st_suspended_md != NULL) {
-			loglog(RC_LOG,
-			       "discarding packet received during asynchronous work (DNS or crypto) in %s",
-			       enum_name(&state_names, st->st_state));
+
+			LSWDBG(buf) {
+				lswlog_pre(buf);
+				lswlogf(buf, "discarding packet received during asynchronous work (DNS or crypto) in %s",
+					enum_name(&state_names, st->st_state));
+			}
 			return TRUE;
 		}
 

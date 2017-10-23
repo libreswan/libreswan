@@ -5955,7 +5955,7 @@ void ikev2_add_ipsec_child(int whack_sock, struct state *isakmp_sa,
 	char replacestr[32];
 	const char *pfsgroupname = "no-pfs";
 
-	if (find_pending_phas2(isakmp_sa->st_serialno,
+	if (find_pending_phase2(isakmp_sa->st_serialno,
 				c, IPSECSA_PENDING_STATES)) {
 		return;
 	}

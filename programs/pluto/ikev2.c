@@ -1279,7 +1279,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		if (ix == ISAKMP_v2_CREATE_CHILD_SA) {
 			/*
 			 * XXX: Can this be moved to outside of the
-			 * lookup loop?  (It was originally burried in
+			 * lookup loop?  (It was originally buried in
 			 * a function checking encrypted payloads.
 			 *
 			 * XXX: Setting/clearing md->st is to preserve

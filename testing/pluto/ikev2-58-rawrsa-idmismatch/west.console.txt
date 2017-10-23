@@ -56,7 +56,6 @@ west #
 108 "west-westnet-eastnet" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "west-westnet-eastnet" #1: ignoring informational payload INVALID_ID_INFORMATION, msgid=00000000, length=12
 003 "west-westnet-eastnet" #1: received and ignored informational message
-003 "west-westnet-eastnet" #1: discarding duplicate packet; already STATE_MAIN_I3
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
