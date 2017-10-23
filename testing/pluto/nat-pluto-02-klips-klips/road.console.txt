@@ -40,16 +40,15 @@ road #
 road #
  ping -n -c 4 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
 64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
 64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
 64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
+4 packets transmitted, 3 received, 25% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  ipsec whack --trafficstatus
-006 #2: "road-eastnet-nat", type=ESP, add_time=1234567890, id='@east'
+006 #2: "road-eastnet-nat", type=ESP, add_time=1234567890, inBytes=252, outBytes=336, id='@east'
 road #
  echo done
 done
