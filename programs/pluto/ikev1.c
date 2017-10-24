@@ -246,7 +246,7 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	{ STATE_MAIN_R0, STATE_MAIN_R1,
 	  SMF_ALL_AUTH | SMF_REPLY,
 	  P(SA), P(VID) | P(CR), PT(NONE),
-	  EVENT_SA_REPLACE, main_inI1_outR1 },
+	  EVENT_v1_RETRANSMIT, main_inI1_outR1 },
 
 	/* STATE_MAIN_I1: R1 --> I2
 	 * HDR, SA --> auth dependent
@@ -395,7 +395,7 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	{ STATE_AGGR_R0, STATE_AGGR_R1,
 	  SMF_PSK_AUTH | SMF_DS_AUTH | SMF_REPLY,
 	  P(SA) | P(KE) | P(NONCE) | P(ID), P(VID) | P(NATD_RFC), PT(NONE),
-	  EVENT_SA_REPLACE, aggr_inI1_outR1 },
+	  EVENT_v1_RETRANSMIT, aggr_inI1_outR1 },
 
 	/* STATE_AGGR_I1:
 	 * SMF_PSK_AUTH: HDR, SA, KE, Nr, IDir, HASH_R

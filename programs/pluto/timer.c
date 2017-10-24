@@ -159,7 +159,11 @@ static void retransmit_v1_msg(struct state *st)
 		delay_ms = retrans_delay(st);
 
 	if (delay_ms != 0) {
-		resend_ike_v1_msg(st, "EVENT_v1_RETRANSMIT");
+		if (st->st_state != STATE_MAIN_R1 && st->st_state != STATE_AGGR_R1) {
+			resend_ike_v1_msg(st, "EVENT_v1_RETRANSMIT");
+		} else {
+			DBG(DBG_CONTROL, DBG_log("skipped initial reply packet retransmission to avoid amplification attacks"));
+		}
 		event_schedule_ms(EVENT_v1_RETRANSMIT, delay_ms, st);
 	} else {
 		/* check if we've tried rekeying enough times.
