@@ -57,6 +57,7 @@ const struct enum_names debug_names = {
 static const char *impair_strings[] = {
 	I(IMPAIR_BUST_MI2, "impair-bust-mi2"),
 	I(IMPAIR_BUST_MR2, "impair-bust-mr2"),
+	I(IMPAIR_DROP_I2, "impair-drop-i2"),
 	I(IMPAIR_SA_CREATION, "impair-sa-creation"),
 	I(IMPAIR_DIE_ONINFO, "impair-die-oninfo"),
 	I(IMPAIR_JACOB_TWO_TWO, "impair-jacob-two-two"),

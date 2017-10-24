@@ -924,6 +924,11 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 {
 	struct state *const st = md->st;
 
+	if (cur_debugging & IMPAIR_DROP_I2) {
+		DBG(DBG_CONTROL, DBG_log("dropping Main Mode I2 packet as per impair"));
+		return STF_IGNORE;
+	}
+
 	/* verify echoed SA */
 	{
 		struct payload_digest *const sapd = md->chain[ISAKMP_NEXT_SA];

@@ -659,6 +659,11 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 	 */
 	struct state *st = md->st;
 
+	if (cur_debugging & IMPAIR_DROP_I2) {
+		DBG(DBG_CONTROL, DBG_log("dropping Aggressive Mode I2 packet as per impair"));
+		return STF_IGNORE;
+	}
+
 	st->st_policy |= POLICY_AGGRESSIVE;	/* ??? surely this should be done elsewhere */
 
 	if (!ikev1_decode_peer_id(md, TRUE, TRUE)) {
