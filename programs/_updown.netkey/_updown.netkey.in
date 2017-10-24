@@ -466,7 +466,7 @@ doroute() {
 	POINTPOINT=yes
     fi
     # use nexthop if nexthop is not %direct and POINTPOINT is not set
-    if [ "${PLUTO_NEXT_HOP}" != "${PLUTO_PEER}" -a -z "${POINTPOINT" ]; then
+    if [ "${PLUTO_NEXT_HOP}" != "${PLUTO_PEER}" -a -z "${POINTPOINT}" ]; then
 	parms2="via ${PLUTO_NEXT_HOP}"
     fi
     # route via proper interface according to routing table
