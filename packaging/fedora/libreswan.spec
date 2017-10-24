@@ -6,12 +6,10 @@
 # Libreswan config options
 %global libreswan_config \\\
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \\\
-    FINALRUNDIR=%{_rundir}/pluto \\\
     FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \\\
     INC_RCDEFAULT=%{_initrddir} \\\
     INC_USRLOCAL=%{_prefix} \\\
     INITSYSTEM=systemd \\\
-    MANTREE=%{_mandir} \\\
     NSS_REQ_AVA_COPY=false \\\
     USE_DNSSEC=true \\\
     USE_FIPSCHECK=true \\\

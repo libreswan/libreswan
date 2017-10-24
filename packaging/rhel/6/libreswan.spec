@@ -4,6 +4,8 @@
 %global with_efence 0
 # There is no new enough unbound on rhel6
 %global with_dnssec 0
+# _rundir is not defined on rhel6
+%{!?_rundir:%global _rundir %{_localstatedir}/run}
 # Libreswan config options
 %global libreswan_config \\\
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \\\
@@ -12,7 +14,6 @@
     INC_RCDEFAULT=%{_initrddir} \\\
     INC_USRLOCAL=%{_prefix} \\\
     INITSYSTEM=sysvinit \\\
-    MANTREE=%{_mandir} \\\
     USE_DNSSEC=%{USE_DNSSEC} \\\
     USE_FIPSCHECK=true \\\
     USE_LABELED_IPSEC=true \\\
@@ -26,9 +27,6 @@
 %{nil}
 
 #global prever rc1
-
-# _rundir is not defined on rhel6
-%{!?_rundir:%global _rundir %{_localstatedir}/run}
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols

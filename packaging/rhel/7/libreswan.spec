@@ -8,11 +8,9 @@
 # Libreswan config options
 %global libreswan_config \\\
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \\\
-    FINALRUNDIR=%{_rundir}/pluto \\\
     INC_RCDEFAULT=%{_initrddir} \\\
     INC_USRLOCAL=%{_prefix} \\\
     INITSYSTEM=systemd \\\
-    MANTREE=%{buildroot}%{_mandir} \\\
     USE_DNSSEC=%{USE_DNSSEC} \\\
     USE_FIPSCHECK=true \\\
     USE_LABELED_IPSEC=true \\\

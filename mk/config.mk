@@ -112,9 +112,10 @@ SBINDIR?=$(DESTDIR)$(FINALSBINDIR)
 
 # where the appropriate manpage tree is located
 # location within INC_USRLOCAL
-INC_MANDIR?=man
+INC_MANDIR?=share/man
+FINALMANDIR=$(INC_USRLOCAL)/$(INC_MANDIR)
 # the full pathname
-MANTREE?=$(DESTDIR)$(INC_USRLOCAL)/$(INC_MANDIR)
+MANTREE?=$(DESTDIR)$(FINALMANDIR)
 
 # where configuration files go
 FINALSYSCONFDIR?=/etc
