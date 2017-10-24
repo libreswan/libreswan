@@ -28,7 +28,8 @@ static void log_entry(const struct list_info *info,
 		if (entry == NULL) {
 			lswlogs(buf, "entry is NULL");
 		} else if (entry->data == NULL) {
-			lswlogs(buf, "entry is HEAD");
+			lswlogf(buf, "entry %p is HEAD (older %p newer %p)",
+				entry, entry->older, entry->newer);
 		} else {
 			lswlogf(buf, " object %p (", entry->data);
 			info->log(buf, entry->data);
