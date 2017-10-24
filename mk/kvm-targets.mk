@@ -144,6 +144,7 @@ KVM_OBJDIR = OBJ.kvm
 
 RPM_VERSION = $(shell make showrpmversion)
 RPM_PREFIX  = libreswan-$(RPM_VERSION)
+RPM_BUILD_CLEAN ?= --rmsource --rmspec --clean
 
 # file to mark keys are up-to-date
 KVM_KEYS = testing/x509/keys/up-to-date
@@ -341,6 +342,7 @@ $(KVM_KEYS_CLEAN_TARGETS):
 # Create an RPM for the test domains
 #
 
+.PHONY: kvm-rpm
 kvm-rpm:
 	@echo building rpm for libreswan testing
 	mkdir -p ~/rpmbuild/SPECS/
@@ -353,7 +355,7 @@ kvm-rpm:
 		tar --transform "s|^|$(RPM_PREFIX)/|" -rf ~/rpmbuild/SOURCES/$(RPM_PREFIX).tar Makefile.inc.local ; \
 	fi;
 	gzip -f ~/rpmbuild/SOURCES/$(RPM_PREFIX).tar
-	rpmbuild -ba --rmsource --rmspec --clean ~/rpmbuild/SPECS/libreswan-testing.spec
+	rpmbuild -ba $(RPM_BUILD_CLEAN) ~/rpmbuild/SPECS/libreswan-testing.spec
 
 
 #
