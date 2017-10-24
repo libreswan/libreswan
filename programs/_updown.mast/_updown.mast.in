@@ -164,7 +164,7 @@ elif [ -f @FINALSYSCONFDIR@/default/pluto_updown ]; then
     . @FINALSYSCONFDIR@/default/pluto_updown
 fi
 
-LIBRESWAN_RESOLV_CONF=@FINALRUNDIR@/libreswan-resolv-conf-backup
+LIBRESWAN_RESOLV_CONF=@IPSEC_RUNDIR@/libreswan-resolv-conf-backup
 ORIG_RESOLV_CONF=@FINALSYSCONFDIR@/resolv.conf
 
 use_comment=true
