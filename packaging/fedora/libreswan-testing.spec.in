@@ -14,7 +14,6 @@
     FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \\\
     INC_RCDEFAULT=%{_initrddir} \\\
     INC_USRLOCAL=%{_exec_prefix} \\\
-    IPSECSVERSION=%{IPSECSVERSION} \\\
 %{nil}
 
 
@@ -103,6 +102,7 @@ sed -i "s:/usr/bin/python:/usr/bin/python3:" programs/verify/verify.in
 #796683: -fno-strict-aliasing
 make %{?_smp_mflags} \
     %{libreswan_config} \
+    IPSECSVERSION=%{IPSECSVERSION} \
     programs
 FS=$(pwd)
 
@@ -118,6 +118,7 @@ FS=$(pwd)
 make \
     DESTDIR=%{buildroot} \
     %{libreswan_config} \
+    IPSECSVERSION=%{IPSECSVERSION} \
     install
 FS=$(pwd)
 # Work around for FINALEXAMPLECONFDIR not working properly
