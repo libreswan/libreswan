@@ -20,9 +20,13 @@
 
 #include "lswlog.h"
 
-lset_t cur_debugging = DBG_NONE;	/* default to reporting nothing */
-
-void lswlog_dbg_pre(struct lswlog *buf)
+int libreswan_DBG_log(const char *message, ...)
 {
-	lswlogs(buf, DEBUG_PREFIX);
+	LSWDBG(buf) {
+		va_list args;
+		va_start(args, message);
+		lswlogvf(buf, message, args);
+		va_end(args);
+	}
+	return 0;
 }

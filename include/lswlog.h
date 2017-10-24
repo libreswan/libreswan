@@ -47,9 +47,9 @@ extern lset_t cur_debugging;	/* current debugging level */
 #define DBG(cond, action)	{ if (DBGP(cond)) { action; } }
 
 /* signature needs to match printf() */
-int lswlog_dbg(const char *message, ...) PRINTF_LIKE(1);
+#define DBG_log libreswan_DBG_log
+int libreswan_DBG_log(const char *message, ...) PRINTF_LIKE(1);
 
-#define DBG_log lswlog_dbg
 #define DBG_dump libreswan_DBG_dump
 extern void libreswan_DBG_dump(const char *label, const void *p, size_t len);
 
