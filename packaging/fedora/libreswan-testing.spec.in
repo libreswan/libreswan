@@ -14,7 +14,7 @@
     FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \\\
     INC_RCDEFAULT=%{_initrddir} \\\
     INC_USRLOCAL=%{_exec_prefix} \\\
-    IPSECVERSION=%{IPSECVERSION} \
+    IPSECVERSION=%{IPSECVERSION} \\\
 %{nil}
 
 #global prever rc1
