@@ -183,7 +183,7 @@ elif [ -f @FINALSYSCONFDIR@/default/pluto_updown ]; then
     . @FINALSYSCONFDIR@/default/pluto_updown
 fi
 
-LIBRESWAN_RESOLV_CONF=@FINALVARDIR@/run/pluto/libreswan-resolv-conf-backup
+LIBRESWAN_RESOLV_CONF=@FINALRUNDIR@/libreswan-resolv-conf-backup
 ORIG_RESOLV_CONF=@FINALSYSCONFDIR@/resolv.conf
 MAX_CIDR=32	# for ipv4
 [ "${PLUTO_CONN_ADDRFAMILY}" = ipv6 ] &&  MAX_CIDR=128
@@ -297,7 +297,7 @@ nameserver ${resolver}"
 ${ORIG_NAMESERVER}"
 
 	rm -f -- "${ORIG_RESOLV_CONF}"
-	printf "%s\n" "${RESOLVE_CONF}" > "${ORIG_RESOLV_CONF}"
+	echo "${RESOLVE_CONF}" > "${ORIG_RESOLV_CONF}"
 	return $?
     fi
 }
