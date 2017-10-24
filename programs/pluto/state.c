@@ -425,6 +425,18 @@ static char *humanize_number(uint64_t num,
 		}							\
 	} while (false)
 
+/*
+ * Iterate through all the states in a slot in new-to-old order.
+ */
+#define FOR_EACH_STATE_ENTRY(ST, SLOT, CODE)			\
+	do {							\
+		/* ST##entry is private to this macro */	\
+		struct list_entry *(ST##slot) = (SLOT);		\
+		ST = NULL;					\
+		FOR_EACH_LIST_ENTRY_NEW2OLD(ST##slot, ST) {	\
+			CODE;					\
+		}						\
+	} while (false)
 
 /*
  * Iterate over all entries with matching cookies.

@@ -16,7 +16,8 @@
 #ifndef _state_db_h_
 #define _state_db_h_
 
-#include "state_entry.h"
+struct state;
+struct list_entry;
 
 void add_state_to_db(struct state *st);
 void rehash_state_cookies_in_db(struct state *st);
@@ -45,9 +46,9 @@ extern struct list_entry serialno_list_head;
  */
 
 /* ICOOKIE chain */
-extern struct state_entry *icookie_chain(const uint8_t *icookie);
+extern struct list_entry *icookie_chain(const uint8_t *icookie);
 /* ICOOKIE:RCOOKIE chain */
-struct state_entry *cookies_chain(const uint8_t *icookie,
-				  const uint8_t *rcookie);
+struct list_entry *cookies_chain(const uint8_t *icookie,
+				 const uint8_t *rcookie);
 
 #endif
