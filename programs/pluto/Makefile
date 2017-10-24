@@ -204,7 +204,6 @@ OBJS += test_buffer.o
 OBJS += pending.o cookie.o crypto.o defs.o
 OBJS += foodgroups.o log.o state.o plutomain.o plutoalg.o server.o
 OBJS += peerlog.o
-OBJS += state_entry.o
 OBJS += hash_table.o list_entry.o
 OBJS += timer.o hmac.o hostpair.o
 OBJS += myid.o ipsec_doi.o
