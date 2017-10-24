@@ -484,7 +484,7 @@ doroute() {
     if [ -n "${PLUTO_NEXT_HOP}" -a "${PLUTO_NEXT_HOP}" != "${PLUTO_PEER}" ]; then
 	# nexthop is not needed on ppp interfaces. unset it to make cases
 	# work, where left is set but no leftnexthop (e.g. left=%defaultroute)
-	ip link show "${PLUTO_INTERFACE:%*}" | grep -qs POINTOPOINT && unset PLUTO_NEXT_HOP
+	ip link show "${PLUTO_INTERFACE%:*}" | grep -qs POINTOPOINT && unset PLUTO_NEXT_HOP
 
 	# skip routing via nexthop if it is not reachable through any
 	# directly connected network (but via default route only):
