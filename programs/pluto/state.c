@@ -417,14 +417,13 @@ static char *humanize_number(uint64_t num,
  * Some macros to ease iterating over the above table
  */
 
-/* NOTE: BREAK will not work within CODE; CONTINUE and RETURN will */
-#define FOR_EACH_COOKIED_STATE(ST, CODE)					\
-	for (int FECS_i = 0; FECS_i < STATE_TABLE_SIZE; FECS_i++) {		\
-		struct state *ST;						\
-		FOR_EACH_STATE_ENTRY(ST, &cookies_hash_table.entries[FECS_i], {	\
-			CODE							\
-		});								\
-	}
+#define FOR_EACH_COOKIED_STATE(ST, CODE)				\
+	do {								\
+		struct state *ST = NULL;				\
+		FOR_EACH_STATE_NEW2OLD(ST) {				\
+			CODE;						\
+		}							\
+	} while (false)
 
 
 /*
