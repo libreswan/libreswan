@@ -839,6 +839,7 @@ static void childhandler_cb(int unused UNUSED, const short event UNUSED, void *a
 			} else {
 				pid_entry->callback(status, pid_entry->context);
 				del_hash_table_entry(&pids_hash_table, &pid_entry->hash_entry);
+				pfree(pid_entry);
 			}
 			break;
 		}
