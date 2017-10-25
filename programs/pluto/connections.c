@@ -1863,26 +1863,6 @@ void add_connection(const struct whack_message *wm)
 				DBG_log("%s", topo);
 			});
 
-#if 0
-		/*
-		 * Make sure that address families can be correctly inferred
-		 * from printed ends.
-		 */
-		passert(c->addr_family == addrtypeof(&c->spd.this.host_addr));
-		passert(c->addr_family ==
-			addrtypeof(&c->spd.this.host_nexthop));
-		passert((c->spd.this.has_client ?
-			  c->tunnel_addr_family : c-> addr_family) ==
-			subnettypeof(&c->spd.this.client));
-
-		passert(c->addr_family == addrtypeof(&c->spd.that.host_addr));
-		passert(c->addr_family ==
-			addrtypeof(&c->spd.that.host_nexthop));
-		passert((c->spd.that.has_client ?
-			  c->tunnel_addr_family : c->addr_family) ==
-			subnettypeof(&c->spd.that.client));
-#endif
-
 		DBG(DBG_CONTROL,
 			DBG_log("ike_life: %jds; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s%s",
 				(intmax_t) deltasecs(c->sa_ike_life_seconds),
