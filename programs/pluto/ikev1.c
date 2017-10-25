@@ -2091,23 +2091,6 @@ void process_packet_tail(struct msg_digest **mdp)
 		/* note: st ought to be NULL from here on */
 	}
 
-#if 0
-	/* this does not seem to be right */
-
-	/* VERIFY that we only accept NAT-D/NAT-OE when they sent us the VID */
-	if ((md->chain[ISAKMP_NEXT_NATD_RFC] != NULL ||
-	     md->chain[ISAKMP_NEXT_NATOA_RFC] != NULL) &&
-	    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) == LEMPTY) {
-		/*
-		 * don't accept NAT-D/NAT-OA reloc directly in message,
-		 * unless we're using NAT-T RFC
-		 */
-		loglog(RC_LOG_SERIOUS,
-		       "message ignored because it contains a NAT payload, when we did not receive the appropriate VendorID");
-		return;
-	}
-#endif
-
 	/* possibly fill in hdr */
 	if (smc->first_out_payload != ISAKMP_NEXT_NONE)
 		ikev1_echo_hdr(md, (smc->flags & SMF_OUTPUT_ENCRYPTED) != 0,
