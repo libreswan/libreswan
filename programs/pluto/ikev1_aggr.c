@@ -855,6 +855,8 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 		struct isakmp_cert cert_hd;
 		cert_hd.isacert_np = ISAKMP_NEXT_NONE; /* rewritten by NAT-D payloads */
 		cert_hd.isacert_type = mycert.ty;
+		cert_hd.isacert_reserved = 0;
+		cert_hd.isacert_length = 0; /* XXX unused on sending ? */
 
 		libreswan_log("I am sending my cert");
 

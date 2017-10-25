@@ -1141,6 +1141,8 @@ bool ikev1_ship_CERT(u_int8_t type, chunk_t cert, pb_stream *outs, u_int8_t np)
 
 	cert_hd.isacert_np = np;
 	cert_hd.isacert_type = type;
+	cert_hd.isacert_reserved = 0;
+	cert_hd.isacert_lenght = 0; /* XXX unused on sending ? */
 
 	if (!out_struct(&cert_hd, &isakmp_ipsec_certificate_desc, outs,
 				&cert_pbs))
