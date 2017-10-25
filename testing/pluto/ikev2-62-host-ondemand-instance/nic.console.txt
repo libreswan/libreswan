@@ -6,7 +6,6 @@ nic #
 nic #
  ../bin/block-non-ipsec.sh
 nic #
- echo initdone
-initdone
-nic #
- 
+ echo done
+done
+
