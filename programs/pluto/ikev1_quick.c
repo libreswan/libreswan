@@ -286,15 +286,7 @@ static void compute_proto_keymat(struct state *st,
 			}
 			break;
 
-#if 0
-		case ESP_SEED_CBC:
-			if (st->st_esp.attrs.transattrs.enckeylen != 0) {
-				/* SEED-CBC is always 128bit */
-				passert(st->st_esp.attrs.transattrs.enckeylen == 128);
-				needed_len = st->st_esp.attrs.transattrs.enckeylen / BITS_PER_BYTE;
-			}
-			break;
-#endif
+		/* ESP_SEED is for IKEv1 only and not supported. Its number in IKEv2 has been re-used */
 
 		default:
 			needed_len = kernel_alg_esp_enc_max_keylen(
