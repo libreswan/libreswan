@@ -30,7 +30,15 @@ size_t lswlog_bytes(struct lswlog *buf, const uint8_t *bytes,
 	const char *sep = "";
 	for (size_t byte = 0; byte < sizeof_bytes; byte++) {
 		size += lswlogf(buf, "%s%02x", sep, bytes[byte]);
-		sep = ":";
+		/*
+		 * Roughly mimic DBG_dump(): use a space separator;
+		 * and after the 4th byte, a double space separator.
+		 *
+		 * This is so that values dumped by DBG_dump() and
+		 * lswlog_bytes() have the same 'look' - make
+		 * searching and grepping easier.
+		 */
+		sep = (byte % 4 == 3) ? "  " : " ";
 	}
 	return size;
 }
