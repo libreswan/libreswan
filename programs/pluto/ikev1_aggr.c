@@ -238,16 +238,6 @@ stf_status aggr_inI1_outR1(struct msg_digest *md)
 		&md->sender, md->sender_port,
 		policy, policy_exact_mask);
 
-#if 0 /* ??? is this useful? */
-	if (c == NULL && md->iface->ike_float) {
-		/* ??? see above for discussion about policy argument */
-		c = find_host_connection(
-			&md->iface->addr, pluto_nat_port,
-			&md->sender, md->sender_port,
-			policy, policy_exact_mask);
-	}
-#endif
-
 	if (c == NULL) {
 		c = find_host_connection(&md->iface->ip_addr, pluto_port,
 					 (ip_address*)NULL, md->sender_port,
