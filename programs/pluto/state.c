@@ -866,6 +866,14 @@ void delete_state(struct state *st)
 	}
 
 	if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
+		/* pull in the traffic counters into state before they're lost */
+		if (!get_sa_info(st, FALSE, NULL)) {
+			libreswan_log("failed to pull traffic counters from outbound IPsec SA");
+		}
+		if (!get_sa_info(st, TRUE, NULL)) {
+			libreswan_log("failed to pull traffic counters from inbound IPsec SA");
+		}
+
 		/*
 		 * Note that a state/SA can have more then one of
 		 * ESP/AH/IPCOMP
