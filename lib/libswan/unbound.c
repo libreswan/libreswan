@@ -122,7 +122,9 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 			int ugh;
 
 			zero(&buf); /* otherwise coverity will warn */
-			stat(trusted, &buf);
+			if (stat(trusted, &buf) == -1) {
+				LOG_ERRNO(errno, "stat() error in unbound.c ignored");
+			}
 			if (S_ISREG(buf.st_mode)) {
 				/* the cast is there for unbound < 1.4.12 */
 				ugh = ub_ctx_add_ta_file(dns_ctx, (char *) trusted);
