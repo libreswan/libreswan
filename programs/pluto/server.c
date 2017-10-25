@@ -728,7 +728,7 @@ static size_t log_pid_entry(struct lswlog *buf, void *data)
 	}
 }
 
-static unsigned long hash_pid_entry(void *data)
+static size_t hash_pid_entry(void *data)
 {
 	struct pid_entry *entry = (struct pid_entry*)data;
 	passert(entry->magic == PID_MAGIC);
@@ -824,7 +824,7 @@ static void childhandler_cb(int unused UNUSED, const short event UNUSED, void *a
 			}
 			struct pid_entry *pid_entry = NULL;
 			struct list_entry *head = hash_table_slot_by_hash(&pids_hash_table, child);
-			FOR_EACH_LIST_ENTRY(head, pid_entry) {
+			FOR_EACH_LIST_ENTRY_OLD2NEW(head, pid_entry) {
 				passert(pid_entry->magic == PID_MAGIC);
 				if (pid_entry->pid == child) {
 					break;

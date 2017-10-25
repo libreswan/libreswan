@@ -24,7 +24,7 @@
 
 struct hash_table {
 	const struct list_info info;
-	unsigned long (*hash)(void *data);
+	size_t (*hash)(void *data);
 	long nr_entries; /* approx? */
 	unsigned long nr_slots;
 	struct list_entry *slots;

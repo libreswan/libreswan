@@ -36,7 +36,7 @@ struct list_info {
  * lists link back to head .data == NULL acts as a sentinel.
  *
  * When the list is empty, head's .newer and .older are both forced to
- * NULL.
+ * NULL.  It makes debugging easier.
  */
 
 struct list_entry {
@@ -59,28 +59,34 @@ void remove_list_entry(const struct list_info *info,
 		       struct list_entry *entry);
 
 /*
- * Iterate through all the entries in the list in old-to-new order.
+ * Iterate through all the entries in the list in either old-to-new or
+ * new-to-old order.
  *
  * When the list is empty, HEAD's .newer and .older are both NULL and
- * the loop is skipped.  E is not modified (XXX: should it be
+ * the loop is skipped (DATA is not modified; XXX: should it be
  * explicitly set to NULL?).
  *
  * So that the current entry can be deleted, the E##entry pointer is
- * kept one step ahead.
+ * always on the next entry.
  *
  * Since a non-empty list loops back to HEAD, HEAD's .data==NULL acts
- * as the seintinel; and E is left with that NULL value.
+ * as the sentinel; and DATA is left with that NULL value.
  */
 
-#define FOR_EACH_LIST_ENTRY(HEAD, E)					\
-	/* at least one entry? */					\
-	for (struct list_entry *E##entry = (HEAD)->newer;		\
-	     E##entry != NULL; E##entry = NULL)				\
-		/* E=curr, step entry */				\
-		for (E = (typeof(E))E##entry->data,			\
-			     E##entry = E##entry->newer;		\
-		     E != NULL;						\
-		     E = (typeof(E))E##entry->data,			\
-			     E##entry = E##entry->newer)
+#define FOR_EACH_LIST_ENTRY_(HEAD, DATA, NEXT)				\
+	/* at least one entry? this for executes at most once */	\
+	for (struct list_entry *DATA##entry = (HEAD)->NEXT;		\
+	     DATA##entry != NULL; DATA##entry = NULL)			\
+		/* DATA = ENTRY->data; ENTRY = ENTRY->NEXT */		\
+		for (DATA = (typeof(DATA))DATA##entry->data,		\
+			     DATA##entry = DATA##entry->NEXT;		\
+		     DATA != NULL;					\
+		     DATA = (typeof(DATA))DATA##entry->data,		\
+			     DATA##entry = DATA##entry->NEXT)
+
+#define FOR_EACH_LIST_ENTRY_OLD2NEW(HEAD, DATA)				\
+	FOR_EACH_LIST_ENTRY_(HEAD, DATA, newer)
+#define FOR_EACH_LIST_ENTRY_NEW2OLD(HEAD, DATA)				\
+	FOR_EACH_LIST_ENTRY_(HEAD, DATA, older)
 
 #endif
