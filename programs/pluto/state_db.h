@@ -40,15 +40,13 @@ extern struct list_entry serialno_list_head;
 
 
 /*
- * Return the hash chain for the given value.  It will contain may
+ * Return the slot for the given hash value.  It will contain may
  * entries, not just the specified value.  Extra filtering is
  * required!
  */
 
-/* ICOOKIE chain */
-extern struct list_entry *icookie_chain(const uint8_t *icookie);
-/* ICOOKIE:RCOOKIE chain */
-struct list_entry *cookies_chain(const uint8_t *icookie,
-				 const uint8_t *rcookie);
+extern struct list_entry *icookie_slot(const uint8_t *icookie);
+struct list_entry *cookies_slot(const uint8_t *icookie,
+				const uint8_t *rcookie);
 
 #endif

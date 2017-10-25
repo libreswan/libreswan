@@ -102,7 +102,7 @@ static unsigned long cookie_hash(const uint8_t *icookie,
 	return i;
 }
 
-static struct list_entry *hash_by_state_cookies(struct hash_table *table,
+static struct list_entry *slot_by_state_cookies(struct hash_table *table,
 						 const uint8_t *icookie,
 						 const uint8_t *rcookie)
 {
@@ -150,9 +150,9 @@ static struct hash_table icookie_hash_table = {
 	.slots = icookie_hash_slots,
 };
 
-struct list_entry *icookie_chain(const u_char *icookie)
+struct list_entry *icookie_slot(const u_char *icookie)
 {
-	return hash_by_state_cookies(&icookie_hash_table, icookie, zero_cookie);
+	return slot_by_state_cookies(&icookie_hash_table, icookie, zero_cookie);
 }
 
 /*
@@ -188,10 +188,10 @@ static struct hash_table cookies_hash_table = {
 	.slots = cookies_hash_slots,
 };
 
-struct list_entry *cookies_chain(const u_char *icookie,
-				  const u_char *rcookie)
+struct list_entry *cookies_slot(const u_char *icookie,
+				const u_char *rcookie)
 {
-	return hash_by_state_cookies(&cookies_hash_table, icookie, rcookie);
+	return slot_by_state_cookies(&cookies_hash_table, icookie, rcookie);
 }
 
 /*
