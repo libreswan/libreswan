@@ -44,6 +44,7 @@
 #include <linux/ethtool.h>
 #include <linux/sockios.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #include "kameipsec.h"
 #include <linux/rtnetlink.h>
@@ -2399,10 +2400,38 @@ static bool netlink_bypass_policy(int family, int proto, int port)
 
 static bool netlink_v6holes()
 {
-	bool ok = netlink_bypass_policy(AF_INET6, IPPROTO_ICMPV6, ICMP_NEIGHBOR_DISCOVERY);
-	ok &= netlink_bypass_policy(AF_INET6, IPPROTO_ICMPV6, ICMP_NEIGHBOR_SOLICITATION);
+	/* this could be per interface specific too */
+	char proc_f[] = "/proc/sys/net/ipv6/conf/all/disable_ipv6";
+	int disable_ipv6 = 0;
+	bool ret = FALSE;
+	struct stat sts;
 
-	return ok;
+	if (stat(proc_f, &sts) == 0) {
+		FILE *f = fopen(proc_f, "r");
+		if (f != NULL) {
+			char buf[64];
+			if (fgets(buf, sizeof(buf), f) !=  NULL) {
+				disable_ipv6 = atoi(buf);
+			}
+		} else {
+			LOG_ERRNO(errno, "\"%s\"", proc_f);
+		}
+	} else {
+		LOG_ERRNO(errno, "could not stat \"%s\"", proc_f);
+	}
+
+	if (disable_ipv6 == 1) {
+		DBG(DBG_KERNEL, DBG_log("net.ipv6.conf.all.disable_ipv6=1 ignore ipv6 holes"));
+		ret = TRUE; /* pretend success, do not exit pluto */
+	} else {
+		ret = netlink_bypass_policy(AF_INET6, IPPROTO_ICMPV6,
+						ICMP_NEIGHBOR_DISCOVERY);
+		ret &= netlink_bypass_policy(AF_INET6, IPPROTO_ICMPV6,
+						ICMP_NEIGHBOR_SOLICITATION);
+
+	}
+
+	return ret;
 }
 
 const struct kernel_ops netkey_kernel_ops = {
