@@ -800,8 +800,6 @@ stf_status quick_outI1(int whack_sock,
 	passert(c != NULL);
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating == %s;", st->st_serialno, __FUNCTION__, __LINE__, st->st_calculating ? "TRUE" : "FALSE"));
-	if (st->st_calculating)
-		return STF_IGNORE;
 
 	set_cur_state(st); /* we must reset before exit */
 	st->st_policy = policy;
