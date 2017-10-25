@@ -4012,11 +4012,6 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 		struct payload_digest *const tsi_pd = md->chain[ISAKMP_NEXT_v2TSi];
 		struct payload_digest *const tsr_pd = md->chain[ISAKMP_NEXT_v2TSr];
 		struct traffic_selector tsi[16], tsr[16];
-#if 0
-		bool instantiate = FALSE;
-		ip_subnet tsi_subnet, tsr_subnet;
-		const char *oops;
-#endif
 		const int tsi_n = ikev2_parse_ts(tsi_pd, tsi, elemsof(tsi));
 		const int tsr_n = ikev2_parse_ts(tsr_pd, tsr, elemsof(tsr));
 
