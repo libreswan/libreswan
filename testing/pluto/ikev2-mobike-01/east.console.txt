@@ -1,0 +1,40 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add eastnet-northnet
+002 added connection description "eastnet-northnet"
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec whack --trafficstatus
+006 #2: "eastnet-northnet"[1] 192.1.8.22, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='192.1.3.33'
+east #
+ ip xfrm state
+src 192.1.8.22 dst 192.1.2.23
+	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	enc cbc(aes) 0xKEY
+src 192.1.2.23 dst 192.1.8.22
+	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	enc cbc(aes) 0xKEY
+east #
+ ip xfrm pol
+src 192.0.2.0/24 dst 192.0.3.0/24 
+	dir out priority 2344 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.8.22
+src 192.0.3.0/24 dst 192.0.2.0/24 
+	dir fwd priority 2344 ptype main 
+	tmpl src 192.1.8.22 dst 192.1.2.23
+src 192.0.3.0/24 dst 192.0.2.0/24 
+	dir in priority 2344 ptype main 
+	tmpl src 192.1.8.22 dst 192.1.2.23
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

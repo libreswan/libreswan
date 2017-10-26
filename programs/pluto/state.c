@@ -993,6 +993,7 @@ void delete_state(struct state *st)
 	delete_state_event(st, &st->st_rel_whack_event);
 	delete_state_event(st, &st->st_send_xauth_event);
 
+
 	/* if there is a suspended state transition, disconnect us */
 	if (st->st_suspended_md != NULL) {
 		passert(st->st_suspended_md->st == st);
