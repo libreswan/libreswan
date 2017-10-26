@@ -85,10 +85,14 @@ struct kernel_sa {
 	const ip_address *src;
 	const ip_address *dst;
 
+	const ip_address *ndst;		/* netlink migration new destination */
+	const ip_address *nsrc;		/* netlink migration new source */
+
 	const ip_subnet *src_client;
 	const ip_subnet *dst_client;
 
 	bool inbound;
+	int  nk_dir;			/* netky has 3, in,out & fwd */
 	bool add_selector;
 	bool esn;
 	bool decap_dscp;
@@ -231,6 +235,7 @@ struct kernel_ops {
 			  struct state *st);
 	void (*process_ifaces)(struct raw_iface *rifaces);
 	bool (*exceptsocket)(int socketfd, int family);
+	bool (*migrate_sa)(struct state *st);
 	bool (*v6holes)();
 };
 
@@ -393,6 +398,8 @@ extern bool route_and_eroute(struct connection *c,
 
 extern bool was_eroute_idle(struct state *st, deltatime_t idle_max);
 extern bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */);
+extern bool migrate_ipsec_sa(struct state *st);
+
 
 extern bool eroute_connection(const struct spd_route *sr,
 			      ipsec_spi_t cur_spi,
@@ -469,7 +476,6 @@ extern bool raw_eroute(const ip_address *this_host,
 		       );
 
 extern deltatime_t bare_shunt_interval;
-
 extern void set_text_said(char *text_said, const ip_address *dst,
 			  ipsec_spi_t spi, int sa_proto);
 #define _KERNEL_H_

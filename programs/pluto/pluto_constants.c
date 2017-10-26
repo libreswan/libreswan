@@ -25,7 +25,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <netinet/in.h>
-
+#include "linux/xfrm.h" /* local (if configured) or system copy */
 #include <libreswan.h>
 #include <libreswan/passert.h>
 
@@ -77,6 +77,20 @@ static const char *const dpd_action_name[] = {
 enum_names dpd_action_names = {
 	DPD_ACTION_DISABLED, DPD_ACTION_RESTART,
 	ARRAY_REF(dpd_action_name),
+	NULL, /* prefix */
+	NULL
+};
+
+/* netkey SA direction names */
+static const char *const netkey_sa_dir_name[] = {
+	"XFRM_IN",
+	"XFRM_OUT",
+	"XFRM_FWD",
+};
+
+enum_names netkey_sa_dir_names = {
+	XFRM_POLICY_IN, XFRM_POLICY_FWD,
+	ARRAY_REF(netkey_sa_dir_name),
 	NULL, /* prefix */
 	NULL
 };
@@ -487,6 +501,7 @@ static const enum_names *pluto_enum_names_checklist[] = {
 	&pluto_cryptoimportance_names,
 	&routing_story,
 	&stfstatus_name,
+	&netkey_sa_dir_names,
 };
 
 void init_pluto_constants(void) {

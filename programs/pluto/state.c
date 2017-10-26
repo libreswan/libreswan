@@ -2503,6 +2503,12 @@ void update_mobike_endpoints(struct state *pst,
 		return;
 	}
 
+	if (!migrate_ipsec_sa(cst)) {
+		libreswan_log("MOBIKE UPDATE_SA kernel migration to %s:%u failed",
+				ipstr(&md->sender, &b), md->sender_port);
+		return;
+	}
+
 	/* do not move the next line further down. from IP is overwritten */
 	libreswan_log("MOBIKE UPDATE_SA remote to %s:%u previous port %u",
 		ipstr(&md->sender, &b), md->sender_port,
