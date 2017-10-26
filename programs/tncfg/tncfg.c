@@ -28,11 +28,7 @@
 #include <sys/socket.h>
 #endif /* NET_21 */ /* from libreswan.h */
 
-#if 0
-#include <linux/if.h>
-#else
 #include <net/if.h>
-#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
