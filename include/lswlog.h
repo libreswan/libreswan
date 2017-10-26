@@ -236,7 +236,7 @@ size_t lswlog_bytes(struct lswlog *log, const uint8_t *bytes,
 
 void lswlog_to_debug_stream(struct lswlog *buf);
 void lswlog_to_error_stream(struct lswlog *buf);
-void lswlog_to_logger_stream(struct lswlog *buf, enum rc_type rc);
+void lswlog_to_logwhack_stream(struct lswlog *buf, enum rc_type rc);
 void lswlog_to_whack_stream(struct lswlog *buf);
 
 /*
@@ -377,13 +377,13 @@ void lswlog_dbg_pre(struct lswlog *buf);
 
 void lswlog_pre(struct lswlog *buf);
 
-#define LSWLOG(BUF)  LSWLOG_RC(RC_LOG, BUF)
+#define LSWLOG(BUF)  LSWLOG_LOGWHACK(RC_LOG, BUF)
 
-#define LSWLOG_RC(RC, BUF)						\
+#define LSWLOG_LOGWHACK(RC, BUF)					\
 	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
 		LSWBUF_(BUF)						\
 			for (lswlog_pre(BUF); lswlog_p;			\
-			     lswlog_to_logger_stream(BUF, RC),		\
+			     lswlog_to_logwhack_stream(BUF, RC),	\
 				     lswlog_p = false)
 
 /*

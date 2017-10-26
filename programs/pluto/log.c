@@ -230,7 +230,7 @@ static void whack_rc_raw(enum rc_type rc, char *b)
 	}
 }
 
-static void lswlog_log_raw(struct lswlog *buf, enum rc_type rc, int severity)
+static void lswlog_logwhack_raw(struct lswlog *buf, enum rc_type rc, int severity)
 {
 	stdlog_raw(buf->array);
 	syslog_raw(severity, buf->array);
@@ -243,9 +243,9 @@ void lswlog_pre(struct lswlog *buf)
 	add_state_prefix(buf);
 }
 
-void lswlog_to_logger_stream(struct lswlog *buf, enum rc_type rc)
+void lswlog_to_logwhack_stream(struct lswlog *buf, enum rc_type rc)
 {
-	lswlog_log_raw(buf, rc, LOG_WARNING);
+	lswlog_logwhack_raw(buf, rc, LOG_WARNING);
 }
 
 void close_log(void)
@@ -273,7 +273,7 @@ void prettynow(char *buf, size_t buflen, const char *fmt)
 
 void lswlog_to_error_stream(struct lswlog *buf)
 {
-	lswlog_log_raw(buf, RC_LOG_SERIOUS, LOG_ERR);
+	lswlog_logwhack_raw(buf, RC_LOG_SERIOUS, LOG_ERR);
 }
 
 void libreswan_log_errno(int e, const char *prefix, const char *message, ...)

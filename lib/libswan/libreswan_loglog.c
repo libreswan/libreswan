@@ -21,7 +21,7 @@
 
 void libreswan_loglog(enum rc_type rc, const char *fmt, ...)
 {
-	LSWLOG_RC(rc, buf) {
+	LSWLOG_LOGWHACK(rc, buf) {
 		va_list ap;
 		va_start(ap, fmt);
 		lswlogvf(buf, fmt, ap);
