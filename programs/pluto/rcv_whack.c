@@ -173,51 +173,6 @@ static void key_add_request(const struct whack_message *msg)
 			delete_public_keys(&pluto_pubkeys, &keyid,
 					   msg->pubkey_alg);
 
-#if 0
-		if (msg->keyval.len == 0) {
-			struct key_add_common *oc =
-				alloc_thing(struct key_add_common,
-					    "key add common things");
-			enum key_add_attempt kaa;
-
-			/* initialize state shared by queries */
-			oc->refCount = 0;
-			oc->whack_fd = dup_any(whack_log_fd);
-			oc->success = FALSE;
-
-			for (kaa = ka_TXT; kaa != ka_roof; kaa++) {
-				struct key_add_continuation *kc =
-					alloc_thing(
-						struct key_add_continuation,
-						"key add continuation");
-
-				oc->diag[kaa] = NULL;
-				oc->refCount++;
-				kc->common = oc;
-				kc->lookingfor = kaa;
-				switch (kaa) {
-				case ka_TXT:
-					break;
-#ifdef USE_KEYRR
-				case ka_KEY:
-					break;
-#endif                                                  /* USE_KEYRR */
-				default:
-					bad_case(kaa);  /* suppress gcc warning */
-				}
-				if (ugh != NULL) {
-					oc->diag[kaa] = clone_str(ugh,
-								  "early key add failure");
-					oc->refCount--;
-				}
-			}
-
-			/* Done launching queries.
-			 * Handle total failure case.
-			 */
-			key_add_merge(oc, &keyid);
-		} else
-#endif
 		if (msg->keyval.len != 0) {
 			DBG_dump_chunk("add pubkey", msg->keyval);
 			ugh = add_public_key(&keyid, PUBKEY_LOCAL,
