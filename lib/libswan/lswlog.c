@@ -20,6 +20,19 @@
 #include "lswlog.h"
 #include "lswalloc.h"
 
+#define PASSERT_LSWBUF(BUF)						\
+	do {								\
+		passert(BUF->dots != NULL);				\
+		/* LEN/BOUND well defined */				\
+		passert((BUF)->len <= (BUF)->bound);			\
+		passert((BUF)->bound < (BUF)->roof);			\
+		/* always NUL terminated */				\
+		passert((BUF)->array[(BUF)->len] == '\0');		\
+		passert((BUF)->array[(BUF)->bound] == '\0');		\
+		/* overflow? */						\
+		passert((BUF)->array[(BUF)->roof] == LSWBUF_CANARY);	\
+	} while (false)
+
 static int lswlog_debugf_nop(const char *format UNUSED, ...)
 {
 	return 0;

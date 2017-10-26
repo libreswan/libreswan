@@ -442,17 +442,4 @@ extern int (*lswlog_debugf)(const char *format, ...) PRINTF_LIKE(1);
  */
 #define LSWBUF_CANARY ((char) -2)
 
-#define PASSERT_LSWBUF(BUF)						\
-	do {								\
-		passert(BUF->dots != NULL);				\
-		/* LEN/BOUND well defined */				\
-		passert((BUF)->len <= (BUF)->bound);			\
-		passert((BUF)->bound < (BUF)->roof);			\
-		/* always NUL terminated */				\
-		passert((BUF)->array[(BUF)->len] == '\0');		\
-		passert((BUF)->array[(BUF)->bound] == '\0');		\
-		/* overflow? */						\
-		passert((BUF)->array[(BUF)->roof] == LSWBUF_CANARY);	\
-	} while (false)
-
 #endif /* _LSWLOG_H_ */
