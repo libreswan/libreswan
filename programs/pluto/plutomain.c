@@ -1443,12 +1443,6 @@ int main(int argc, char **argv)
 	if (!log_to_stderr_desired)
 		log_to_stderr = FALSE;
 
-#if 0
-	if (kernel_ops->set_debug != NULL)
-		(*kernel_ops->set_debug)(cur_debugging, DBG_log, DBG_log);
-
-#endif
-
 	/*
 	 * create control socket.
 	 * We must create it before the parent process returns so that
