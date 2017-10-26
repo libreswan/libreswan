@@ -3445,7 +3445,7 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 	sa.text_said = text_said;
 
 	DBG(DBG_KERNEL,
-		DBG_log("get %s", text_said));
+		DBG_log("get_sa_info %s", text_said));
 	if (!kernel_ops->get_sa(&sa, &bytes, &add_time))
 		return FALSE;
 
