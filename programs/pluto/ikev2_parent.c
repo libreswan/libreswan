@@ -1903,6 +1903,7 @@ stf_status ikev2parent_inR1outI2(struct state *st, struct msg_digest *md)
 						ntfy->payload.v2n.isan_type)));
 			return STF_FAIL + v2N_INVALID_SYNTAX;
 
+		case v2N_MOBIKE_SUPPORTED:
 		case v2N_USE_TRANSPORT_MODE:
 		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
 			DBG(DBG_CONTROL, DBG_log("%s: received %s which is not valid for IKE_INIT - ignoring it",
@@ -3211,7 +3212,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 	{
 		lset_t policy = pc->policy;
-		bool send_use_transport;
+		int notifies = 0;
 
 		/* child connection */
 		struct connection *cc = first_pending(pst, &policy, &cst->st_whack_sock);
@@ -3234,7 +3235,14 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		/* ??? this seems very late to change the connection */
 		cst->st_connection = cc;	/* safe: from duplicate_state */
 
-		send_use_transport = (cc->policy & POLICY_TUNNEL) == LEMPTY;
+		if ((cc->policy & POLICY_TUNNEL) == LEMPTY)
+			notifies++;
+
+		if (cc->send_no_esp_tfc)
+			notifies++;
+
+		if (LIN(POLICY_MOBIKE, cc->policy))
+			notifies++;
 
 		/* ??? this code won't support AH + ESP */
 		struct ipsec_proto_info *proto_info
@@ -3258,13 +3266,13 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		cst->st_ts_that = ikev2_end_to_ts(&cc->spd.that);
 
 		ikev2_calc_emit_ts(md, &e_pbs_cipher, ORIGINAL_INITIATOR, cc,
-			(send_use_transport || cc->send_no_esp_tfc) ?
-				ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE);
+			(notifies != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE);
 
 		if ((cc->policy & POLICY_TUNNEL) == LEMPTY) {
 			DBG(DBG_CONTROL, DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE"));
+			notifies--;
 			/* In v2, for parent, protoid must be 0 and SPI must be empty */
-			if (!ship_v2N(cc->send_no_esp_tfc ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE,
+			if (!ship_v2N((notifies != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE,
 						ISAKMP_PAYLOAD_NONCRITICAL,
 						PROTO_v2_RESERVED,
 						&empty_chunk,
@@ -3274,14 +3282,30 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		}
 
 		if (cc->send_no_esp_tfc) {
-			if (!ship_v2N(ISAKMP_NEXT_v2NONE,
-					ISAKMP_PAYLOAD_NONCRITICAL,
+			int np = notifies != 0 ? ISAKMP_NEXT_v2N :
+				ISAKMP_NEXT_v2NONE;
+			notifies--;
+			if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
 					PROTO_v2_RESERVED,
 					&empty_chunk,
-					v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &empty_chunk,
+					v2N_ESP_TFC_PADDING_NOT_SUPPORTED,
+					&empty_chunk,
 					&e_pbs_cipher))
 				return STF_INTERNAL_ERROR;
 		}
+
+		if (LIN(POLICY_MOBIKE, cc->policy)) {
+			notifies--;
+			int np = notifies != 0 ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE;
+			if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
+					PROTO_v2_RESERVED,
+					&empty_chunk,
+					v2N_MOBIKE_SUPPORTED, &empty_chunk,
+					&e_pbs_cipher))
+				return STF_INTERNAL_ERROR;
+		}
+
+		passert(notifies == 0);
 	}
 
 	const unsigned int len = pbs_offset(&e_pbs_cipher);
@@ -3604,6 +3628,17 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 				DBG(DBG_CONTROL, DBG_log("received ESP_TFC_PADDING_NOT_SUPPORTED"));
 				st->st_seen_no_tfc = TRUE;
 				break;
+			case v2N_MOBIKE_SUPPORTED:
+				st->st_seen_mobike = TRUE;
+				{
+					char *respond = "do not respond to it";
+					if (LIN(POLICY_MOBIKE, c->policy) &&
+							c->spd.that.host_type == KH_ANY)
+						respond = "sent notifiy in response";
+					DBG(DBG_CONTROL, DBG_log("received v2N_MOBIKE_SUPPORTED %s",
+								respond));
+				}
+				break;
 			default:
 				DBG(DBG_CONTROL, DBG_log("received %s but ignoring it",
 					enum_name(&ikev2_notify_names,
@@ -3635,6 +3670,17 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 		bool send_cert = FALSE;
 		unsigned int len;
 		struct isakmp_hdr hdr;
+		int notifies = 0;
+
+		if (LIN(POLICY_MOBIKE, c->policy) && st->st_seen_mobike) {
+			if (c->spd.that.host_type == KH_ANY) {
+				/* only allow %any connection to mobike */
+				notifies++;
+				st->st_sent_mobike = TRUE;
+			} else {
+				libreswan_log("not responding with v2N_MOBIKE_SUPPORTED, that end is not %%any");
+			}
+		}
 
 		/* make sure HDR is at start of a clean buffer */
 		init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
@@ -3661,8 +3707,11 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 				return STF_INTERNAL_ERROR;
 		}
 
+		/* decide to send CERT payload before we generate IDr */
+		send_cert = ikev2_send_cert_decision(st);
+
 		/* insert an Encryption payload header */
-		e.isag_np = ISAKMP_NEXT_v2IDr;
+		e.isag_np = (notifies != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2IDr;
 		e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 
 		if (!out_struct(&e, &ikev2_sk_desc, &md->rbody, &e_pbs))
@@ -3681,8 +3730,21 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 		e_pbs_cipher.cur = e_pbs.cur;
 		encstart = e_pbs_cipher.cur;
 
-		/* decide to send CERT payload before we generate IDr */
-		send_cert = ikev2_send_cert_decision(st);
+		/* send any NOTIFY payloads */
+
+		if (c->policy & POLICY_MOBIKE) {
+			notifies--;
+			if (!ship_v2N((notifies != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2IDr,
+					ISAKMP_PAYLOAD_NONCRITICAL,
+					PROTO_v2_RESERVED,
+					&empty_chunk,
+					v2N_MOBIKE_SUPPORTED, &empty_chunk,
+					&e_pbs_cipher))
+				return STF_INTERNAL_ERROR;
+		}
+
+		passert(notifies == 0);
+
 
 		/* send out the IDr payload */
 		{
@@ -4210,6 +4272,12 @@ stf_status ikev2parent_inR2(struct state *st, struct msg_digest *md)
 			break;
 		case v2N_USE_TRANSPORT_MODE:
 			got_transport = TRUE;
+			break;
+		case v2N_MOBIKE_SUPPORTED:
+			DBG(DBG_CONTROLMORE, DBG_log("received v2N_MOBIKE_SUPPORTED %s",
+						pst->st_sent_mobike ?
+						"and sent" : "while it did not sent"));
+			st->st_seen_mobike = pst->st_seen_mobike = TRUE;
 			break;
 		default:
 			DBG(DBG_CONTROLMORE, DBG_log("Received %s notify - ignored",
@@ -5191,6 +5259,94 @@ static void delete_or_replace_state(struct state *st) {
 	}
 }
 
+static bool process_mobike_notify(struct msg_digest *md, bool *ntfy_natd)
+{
+	struct payload_digest *ntfy;
+	struct state *st = md->st;
+	struct connection *c = st->st_connection;
+	bool may_mobike = ((c->policy & POLICY_MOBIKE) != LEMPTY);
+	bool ntfy_update_sa = FALSE;
+	chunk_t cookie2 = empty_chunk;
+
+	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
+		switch (ntfy->payload.v2n.isan_type) {
+		case v2N_UPDATE_SA_ADDRESSES:
+			if (may_mobike) {
+				ntfy_update_sa = TRUE;
+				DBG(DBG_CONTROLMORE, DBG_log("Need to process v2N_UPDATE_SA_ADDRESSES"));
+			} else {
+				libreswan_log("Connection does not allow MOBIKE, ignoring UPDATE_SA_ADDRESSES");
+			}
+			break;
+
+		case v2N_NO_NATS_ALLOWED:
+			if (may_mobike)
+				st->st_seen_nonats = TRUE;
+			else
+				libreswan_log("Connection does not allow MOBIKE, ignoring v2N_NO_NATS_ALLOWED");
+			break;
+
+		case v2N_NAT_DETECTION_DESTINATION_IP:
+		case v2N_NAT_DETECTION_SOURCE_IP:
+			*ntfy_natd = TRUE;
+			DBG(DBG_CONTROLMORE, DBG_log("TODO: Need to process NAT DETECTION payload if we are initiator"));
+			break;
+
+		case v2N_NO_ADDITIONAL_ADDRESSES:
+			if (may_mobike) {
+				DBG(DBG_CONTROLMORE, DBG_log("Received NO_ADDITIONAL_ADDRESSES - no need to act on this"));
+			} else {
+				libreswan_log("Connection does not allow MOBIKE, ignoring NO_ADDITIONAL_ADDRESSES payload");
+			}
+			break;
+
+		case v2N_COOKIE2:
+			if (may_mobike) {
+				/* copy cookie */
+				if (ntfy->payload.v2n.isan_length > IKEv2_MAX_COOKIE_SIZE) {
+					DBG(DBG_CONTROL, DBG_log("MOBIKE COOKIE2 notify payload too big - ignored"));
+				} else {
+					const pb_stream *dc_pbs = &ntfy->pbs;
+
+					clonetochunk(cookie2, dc_pbs->cur, pbs_left(dc_pbs),
+							"saved cookie2");
+					DBG_dump_chunk("MOBIKE COOKIE2 received:", cookie2);
+				}
+			} else {
+				libreswan_log("Connection does not allow MOBIKE, ignoring COOKIE2");
+			}
+			break;
+
+		case v2N_ADDITIONAL_IP4_ADDRESS:
+			DBG(DBG_CONTROL, DBG_log("ADDITIONAL_IP4_ADDRESS payload ignored (not yet supported)"));
+			/* not supported yet */
+			break;
+		case v2N_ADDITIONAL_IP6_ADDRESS:
+			DBG(DBG_CONTROL, DBG_log("ADDITIONAL_IP6_ADDRESS payload ignored (not yet supported)"));
+			/* not supported yet */
+			break;
+
+		default:
+			DBG(DBG_CONTROLMORE, DBG_log("Received unexpected %s notify - ignored",
+						enum_name(&ikev2_notify_names,
+							ntfy->payload.v2n.isan_type)));
+			break;
+		}
+	}
+
+	if (ntfy_update_sa) {
+		if (LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
+			libreswan_log("Ignoring MOBIKE UPDATE_SA since we are behind NAT");
+		} else {
+			libreswan_log("MOBIKE: running MOBIKE UPDATE_SA");
+			update_mobike_endpoints(st, md); /* IPs already updated from md */
+			update_ike_endpoints(st, md); /* update state sender so we can find it for IPsec SA */
+		}
+	}
+
+	return ntfy_update_sa;
+}
+
 /*
  *
  ***************************************************************
@@ -5213,6 +5369,9 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 	pexpect(st == md->st);
 	st = md->st;
 	struct payload_digest *p;
+	bool ntfy_natd = FALSE;
+	bool ntfy_update_sa = FALSE;
+	chunk_t cookie2 = empty_chunk;
 
 	/* Are we responding (as opposed to processing a response)? */
 	const bool responding = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) == 0;
@@ -5220,7 +5379,6 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 	DBG(DBG_PARSING, DBG_log("an informational %s ",
 				responding ? "request should send a response" :
 					     "response"));
-
 	/*
 	 * get parent
 	 *
@@ -5243,13 +5401,35 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 			c_serialno, st->st_serialno));
 	}
 
-	if (!LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST))
-		update_ike_endpoints(st, md);
+	/*
+	 * Process NOTITY payloads
+	 * Since DELETE payloads should not be mixed with NOTIFY payloads,
+	 * we skip processing notify if we are deleting.
+	 */
+	if (md->chain[ISAKMP_NEXT_v2D] != NULL &&
+		md->chain[ISAKMP_NEXT_v2N] != NULL) {
+
+		loglog(RC_LOG_SERIOUS, "Received INFORMATIONAL with both DELETE and NOTIFY payloads. Ignored notify payloads");
+	}
+
+	if (md->chain[ISAKMP_NEXT_v2D] == NULL) {
+		ntfy_update_sa = process_mobike_notify(md, &ntfy_natd);
+	}
 
 	/*
-	 * We only process Delete Payloads. The rest are
-	 * ignored.
-	 *
+	 * If this is a MOBIKE probe, use the received IP:port for only this reply packet,
+	 * without updating IKE endpoint and without UPDATE_SA.
+	 */
+	if (!ntfy_update_sa && ntfy_natd && st->st_seen_mobike && !LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
+		st->st_mobike_remoteaddr = md->sender;
+		st->st_mobike_remoteport = md->sender_port;
+		st->st_mobike_interface = md->iface;
+		/* local_addr and localport are not used in send_packet() ! */
+	}
+
+	/* end of MOBIKE handling */
+
+	/*
 	 * RFC 7296 1.4.1 "Deleting an SA with INFORMATIONAL Exchanges"
 	 */
 
@@ -5325,6 +5505,8 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 	 * Note that that means we will have an empty response
 	 * if no Delete Payloads came in or if the only
 	 * Delete Payload is for an IKE SA.
+	 *
+	 * If we received NAT detection payloads as per MOBIKE, send answers
 	 */
 
 	/* variables for generating response (if we are responding) */
@@ -5373,8 +5555,8 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		{
 			struct ikev2_generic e;
 
-			e.isag_np = (del_ike || ndp == 0) ?
-				ISAKMP_NEXT_v2NONE : ISAKMP_NEXT_v2D;
+			e.isag_np = (del_ike || ndp != 0) ? ISAKMP_NEXT_v2D :
+				ntfy_natd ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE;
 
 			e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 
@@ -5394,6 +5576,32 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		e_pbs_cipher.desc = NULL;
 		e_pbs_cipher.cur = e_pbs.cur;
 		encstart = e_pbs_cipher.cur;
+	}
+
+	if (ntfy_natd) {
+		/* We know we cannot be deleting */
+		libreswan_log("PAUL: adding reply NATD payloads");
+		int np = (cookie2.len != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE;
+		struct ikev2_generic in;
+
+		zero(&in);      /* OK: no pointers */
+		in.isag_np = np;
+		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
+		if (!ikev2_out_nat_v2n(np, &e_pbs_cipher, md))
+			return STF_INTERNAL_ERROR;
+		if (cookie2.len != 0) {
+			if (!ship_v2N(ISAKMP_NEXT_v2NONE,
+						ISAKMP_PAYLOAD_NONCRITICAL,
+						PROTO_v2_RESERVED, &empty_chunk,
+						v2N_COOKIE2, &cookie2,
+						&e_pbs_cipher)) {
+				freeanychunk(cookie2);
+				return STF_INTERNAL_ERROR;
+			}
+			freeanychunk(cookie2);
+		}
+	} else {
+		libreswan_log("PAUL: NO NATD payloads added");
 	}
 
 	/*
@@ -5567,6 +5775,8 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		 *
 		 * - for IPsec SA mentioned, we are sending its mate.
 		 *
+		 * - for MOBIKE, we send NAT NOTIFY payloads and optionally a COOKIE2
+		 *
 		 * Close up the packet and send it.
 		 */
 
@@ -5603,7 +5813,7 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		}
 	}
 
-	/* count as DPD/liveness only if there was no Delete (or MOBIKE Notify) */
+	/* count as DPD/liveness only if there was no Delete */
 	if (!del_ike && ndp == 0) {
 		if (responding)
 			pstats_ike_dpd_replied++;

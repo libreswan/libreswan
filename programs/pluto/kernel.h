@@ -470,5 +470,7 @@ extern bool raw_eroute(const ip_address *this_host,
 
 extern deltatime_t bare_shunt_interval;
 
+extern void set_text_said(char *text_said, const ip_address *dst,
+			  ipsec_spi_t spi, int sa_proto);
 #define _KERNEL_H_
 #endif /* _KERNEL_H_ */

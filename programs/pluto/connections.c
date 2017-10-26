@@ -9,7 +9,7 @@
  * Copyright (C) 2010 Bart Trojanowski <bart@jukie.net>
  * Copyright (C) 2010 Shinichi Furuso <Shinichi.Furuso@jp.sony.com>
  * Copyright (C) 2010,2013 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2017 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012 Philippe Vouters <Philippe.Vouters@laposte.net>
  * Copyright (C) 2012 Bram <bram-bcrafjna-erqzvar@spam.wizbit.be>
  * Copyright (C) 2013 Kim B. Heino <b@bbbs.net>
@@ -1345,6 +1345,13 @@ void add_connection(const struct whack_message *wm)
 		if ((wm->policy & POLICY_IKEV2_PROPOSE) == LEMPTY) {
 			loglog(RC_FATAL, "Failed to add connection \"%s\": opportunistic connection MUST have ikev2=insist",
 				wm->name);
+			return;
+		}
+	}
+
+	if (wm->policy & POLICY_IKEV1_ALLOW) {
+		if (wm->policy & POLICY_MOBIKE) {
+			loglog(RC_LOG_SERIOUS, "MOBIKE requires ikev2=insist");
 			return;
 		}
 	}

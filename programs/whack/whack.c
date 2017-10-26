@@ -104,7 +104,7 @@ static void help(void)
 		"	[--ikev1-allow | --ikev2-allow | --ikev2-propose] \\\n"
 		"	[--allow-narrowing] [--sareftrack] [--sarefconntrack] \\\n"
 		"	[--ikefrag-allow | --ikefrag-force] [--no-ikepad] \\\n"
-		"	[--esn ] [--no-esn] [--decap-dscp] \\\n"
+		"	[--esn ] [--no-esn] [--decap-dscp] [--mobike] \\\n"
 #ifdef HAVE_NM
 		"	[--nm-configured] \\\n"
 #endif
@@ -411,6 +411,7 @@ enum option_enums {
 	CD_INITIAL_CONTACT,
 	CD_CISCO_UNITY,
 	CD_FAKE_STRONGSWAN,
+	CD_MOBIKE,
 	CD_IKE,
 	CD_SEND_CA,
 	CD_PFSGROUP,
@@ -622,6 +623,7 @@ static const struct option long_opts[] = {
 	{ "cisco_unity", no_argument, NULL, CD_CISCO_UNITY },	/* obsolete _ */
 	{ "cisco-unity", no_argument, NULL, CD_CISCO_UNITY },
 	{ "fake-strongswan", no_argument, NULL, CD_FAKE_STRONGSWAN },
+	{ "mobike", no_argument, NULL, CD_MOBIKE },
 
 	{ "dpddelay", required_argument, NULL, CD_DPDDELAY + OO + NUMERIC_ARG },
 	{ "dpdtimeout", required_argument, NULL, CD_DPDTIMEOUT + OO + NUMERIC_ARG },
@@ -1561,6 +1563,9 @@ int main(int argc, char **argv)
 
 		/* --allow-narrowing */
 		case CDP_SINGLETON + POLICY_IKEV2_ALLOW_NARROWING_IX:
+
+		/* --mobike */
+		case CDP_SINGLETON + POLICY_MOBIKE_IX:
 
 		/* --sareftrack */
 		case CDP_SINGLETON + POLICY_SAREF_TRACK_IX:

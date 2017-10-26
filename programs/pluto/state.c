@@ -2437,11 +2437,24 @@ void merge_quirks(struct state *st, const struct msg_digest *md)
  * update if a validated packet has different port and/or address
  * values because it opens a possible DoS attack (such as allowing
  * an attacker to break the connection with a single packet).
+ *
+ * The probe bool is used to signify we are answering a MOBIKE
+ * probe request (basically a informational without UPDATE_ADDRESS
  */
 void update_ike_endpoints(struct state *st,
 			  const struct msg_digest *md)
 {
 	/* caller must ensure we are not behind NAT */
+
+	if (!sameaddr(&st->st_remoteaddr, &md->sender) ||
+		st->st_remoteport != md->sender_port) {
+		char oldip[ADDRTOT_BUF];
+		char newip[ADDRTOT_BUF];
+
+		addrtot(&st->st_remoteaddr, 0, oldip, sizeof(oldip));
+		addrtot(&md->sender, 0, newip, sizeof(newip));
+
+	} // why is below not part of this statement????
 
 	st->st_remoteaddr = md->sender;
 	st->st_remoteport = md->sender_port;
@@ -2450,19 +2463,79 @@ void update_ike_endpoints(struct state *st,
 	st->st_interface = md->iface;
 }
 
+/*
+ * We have successfully decrypted this packet, so we can update
+ * the remote IP / port
+ */
+void update_mobike_endpoints(struct state *pst,
+				const struct msg_digest *md)
+{
+	struct connection *c = pst->st_connection;
+	int af = addrtypeof(&md->iface->ip_addr);
+	ipstr_buf b;
+	/*
+	 * AA_201705 does is this the right way to find Child SA?
+	 * would it work if there are multiple Child SAs on this parent??
+	 * would it work if the Child SA is different from parent connection ?
+	 * for now just do this connection, later on loop over hostpair
+	 */
+	struct state *cst = state_with_serialno(c->newest_ipsec_sa);
+
+	libreswan_log("PAUL: start update_mobike_endpoints()");
+
+	/* check for all conditions before updating IPsec SA's */
+	if (af != addrtypeof(&c->spd.that.host_addr)) {
+		libreswan_log("MOBIKE: AF change switching between v4 and v6 not supported");
+		return;
+	}
+
+	cst->st_mobike_remoteaddr = md->sender;
+	cst->st_mobike_remoteport = md->sender_port;
+	pst->st_mobike_remoteaddr = md->sender;
+	pst->st_mobike_remoteport = md->sender_port;
+
+	if (sameaddr(&md->sender, &pst->st_remoteaddr) &&
+			pst->st_remoteport == md->sender_port) {
+		DBG(DBG_CONTROLMORE, DBG_log("#%lu MOBIKE UPDATE_SA ignore message, same IP address %s:%u",
+					pst->st_serialno,
+					ipstr(&md->sender, &b),
+					md->sender_port));
+		return;
+	}
+
+	/* do not move the next line further down. from IP is overwritten */
+	libreswan_log("MOBIKE UPDATE_SA remote to %s:%u previous port %u",
+		ipstr(&md->sender, &b), md->sender_port,
+		pst->st_remoteport);
+
+	c->spd.that.host_addr = md->sender;
+	c->spd.that.host_port = md->sender_port;
+
+	/* for the consistancy, correct output in ipsec status */
+	cst->st_remoteaddr = md->sender;
+	cst->st_remoteport = md->sender_port;
+	cst->st_localaddr = md->iface->ip_addr;
+	cst->st_localport = md->iface->port;
+	cst->st_interface = md->iface;
+
+	libreswan_log("MOBIKE PAUL: done");
+	return TRUE;
+}
+
 void set_state_ike_endpoints(struct state *st,
 			     struct connection *c)
 {
 	/* reset our choice of interface */
 	c->interface = NULL;
 	orient(c);
+	st->st_interface = c->interface;
+	passert(st->st_interface != NULL);
 
 	st->st_localaddr  = c->spd.this.host_addr;
 	st->st_localport  = c->spd.this.host_port;
 	st->st_remoteaddr = c->spd.that.host_addr;
 	st->st_remoteport = c->spd.that.host_port;
 
-	st->st_interface = c->interface;
 }
 
 /* seems to be a good spot for now */

@@ -1078,6 +1078,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 					enum_name(&ikev2_notify_names,
 						ntfy->payload.v2n.isan_type)));
 				break;
+
 			case v2N_USE_TRANSPORT_MODE:
 				DBG(DBG_CONTROL, DBG_log("received USE_TRANSPORT_MODE"));
 				cst->st_seen_use_transport = TRUE;
@@ -1085,6 +1086,10 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 			case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
 				DBG(DBG_CONTROL, DBG_log("received ESP_TFC_PADDING_NOT_SUPPORTED"));
 				cst->st_seen_no_tfc = TRUE;
+				break;
+			case v2N_MOBIKE_SUPPORTED:
+				DBG(DBG_CONTROL, DBG_log("received v2N_MOBIKE_SUPPORTED"));
+				cst->st_seen_mobike = pst->st_seen_mobike = TRUE;
 				break;
 			case v2N_REKEY_SA:
 				DBG(DBG_CONTROL, DBG_log("received REKEY_SA already proceesd"));

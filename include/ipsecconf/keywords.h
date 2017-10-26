@@ -8,7 +8,7 @@
  * Copyright (C) 2012 Philippe Vouters <philippe.vouters@laposte.net>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2013-2016 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013-2016 Antony Antony <antony@phenome.org>
  * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  *
@@ -70,6 +70,7 @@ enum keyword_numeric_config_field {
 	KBF_NEGOTIATIONSHUNT,
 	KBF_TYPE,
 	KBF_FRAGICMP,
+	KBF_MOBIKE,
 	KBF_HIDETOS,
 	KBF_UNIQUEIDS,
 	KBF_DO_DNSSEC,
