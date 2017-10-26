@@ -122,18 +122,6 @@ static void parser_y_close(struct ic_inputsource *iis)
 	}
 }
 
-#if 0	/* never used */
-static void parser_y_fini(void)
-{
-	unsigned int i;
-
-	for (i = 0; i < MAX_INCLUDE_DEPTH; i++) {
-		parser_y_close(&ic_private.stack[i]);
-	}
-	memset(&ic_private, 0, sizeof(ic_private));
-}
-#endif
-
 static int parser_y_nextglobfile(struct ic_inputsource *iis)
 {
 	FILE *f;
