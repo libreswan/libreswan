@@ -576,10 +576,6 @@ static bool validate_end(struct starter_conn *conn_st,
 			end->nexttype = KH_IPADDR;
 		}
 	} else {
-#if 0
-		if (conn_st->policy & POLICY_OPPORTUNISTIC)
-			end->nexttype = KH_DEFAULTROUTE;
-#endif
 		anyaddr(family, &end->nexthop);
 
 		if (end->addrtype == KH_DEFAULTROUTE) {
@@ -927,11 +923,6 @@ static bool translate_conn(struct starter_conn *conn,
 				/* ??? at this point, we have set *error but not err! */
 			}
 
-#if 0
-			starter_log(LOG_LEVEL_DEBUG, "#setting %s[%d]=%u",
-				    kw->keyword.keydef->keyname, field,
-				    kw->number);
-#endif
 			(*the_options)[field] = kw->number;
 			(*set_options)[field] = assigned_value;
 			break;
