@@ -845,7 +845,7 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 		      const ip_subnet *this_client,
 		      const ip_address *that_host,
 		      const ip_subnet *that_client,
-		      ipsec_spi_t cur_spi,
+		      ipsec_spi_t cur_spi UNUSED,
 		      ipsec_spi_t new_spi,
 		      int sa_proto UNUSED,
 		      unsigned int transport_proto,
@@ -887,17 +887,6 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 	if (!pfkey_msg_start(klips_op & KLIPS_OP_MASK, satype,
 			     "pfkey_msg_hdr flow", text_said, extensions))
 		return FALSE;
-
-#if 0
-	DBG_log("klips pfkey op = %u / %u (ERO_DELETE=%u)", op, klips_op,
-		ERO_DELETE);
-#endif
-
-
-// temp squash a warning
-
-	DBG(DBG_CONTROL, DBG_log(" useless SPI printing for cur(%d) and new(%d) spi",
-		cur_spi, new_spi));
 
 	if (op != ERO_DELETE) {
 		if (!(pfkey_build(pfkey_sa_build(&extensions[K_SADB_EXT_SA],
