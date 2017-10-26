@@ -16,7 +16,7 @@ LIB = liblswtool.a
 
 OBJS += lswlog.o
 OBJS += lswid.o
-OBJS += lswlog_exit.o
+OBJS += libreswan_exit.o
 
 ifdef top_srcdir
 include ${top_srcdir}/mk/library.mk

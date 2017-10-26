@@ -57,7 +57,7 @@ static struct prf_context *init(const struct prf_desc *prf_desc,
 			lswlogf(buf, "NSS: %s create %s context from key %s(%p) failed",
 				name, prf_desc->common.name,
 				key_name, key);
-			lswlog_pr_error(buf);
+			lswlog_nss_error(buf);
 		}
 		return NULL;
 	}

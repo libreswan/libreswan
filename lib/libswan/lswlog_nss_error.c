@@ -27,7 +27,7 @@
  * See https://bugzilla.mozilla.org/show_bug.cgi?id=172051
  */
 
-size_t lswlog_pr_error(struct lswlog *buf)
+size_t lswlog_nss_error(struct lswlog *buf)
 {
 	size_t size = 0;
 	int error = PR_GetError(); /* at least 32-bits */

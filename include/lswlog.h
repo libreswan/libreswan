@@ -160,21 +160,21 @@ extern int libreswan_log(const char *fmt, ...) PRINTF_LIKE(1);
  * be saved.
  */
 
-void lswlog_log_errno(int e, const char *prefix,
-		      const char *message, ...) PRINTF_LIKE(3);
-void lswlog_exit(enum rc_type rc) NEVER_RETURNS;
+void libreswan_log_errno(int e, const char *prefix,
+			 const char *message, ...) PRINTF_LIKE(3);
+void libreswan_exit(enum rc_type rc) NEVER_RETURNS;
 
 #define LOG_ERRNO(ERRNO, ...)						\
 	{								\
 		int log_errno = ERRNO; /* save the value */		\
-		lswlog_log_errno(log_errno, "ERROR: ", __VA_ARGS__);	\
+		libreswan_log_errno(log_errno, "ERROR: ", __VA_ARGS__);	\
 	}
 
 #define EXIT_LOG_ERRNO(ERRNO, ...)					\
 	{								\
 		int exit_log_errno = ERRNO; /* save the value */	\
-		lswlog_log_errno(exit_log_errno, "FATAL ERROR: ", __VA_ARGS__); \
-		lswlog_exit(PLUTO_EXIT_FAIL);				\
+		libreswan_log_errno(exit_log_errno, "FATAL ERROR: ", __VA_ARGS__); \
+		libreswan_exit(PLUTO_EXIT_FAIL);			\
 	}
 
 /*
@@ -208,7 +208,7 @@ size_t lswlogs(struct lswlog *log, const char *string);
 size_t lswlogl(struct lswlog *log, struct lswlog *buf);
 
 /* _(SECERR: N (0xX): <error-string>) */
-size_t lswlog_pr_error(struct lswlog *log);
+size_t lswlog_nss_error(struct lswlog *log);
 /* _(in FUNC() at FILE:LINE) */
 size_t lswlog_source_line(struct lswlog *log, const char *func,
 			  const char *file, unsigned long line);

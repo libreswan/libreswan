@@ -51,7 +51,7 @@ void tool_init_log(const char *name)
 		setbuf(stderr, NULL);
 }
 
-void lswlog_log_errno(int e, const char *prefix, const char *message, ...)
+void libreswan_log_errno(int e, const char *prefix, const char *message, ...)
 {
 	if (log_to_stderr) {
 		LSWLOG_FILE(stderr, buf) {

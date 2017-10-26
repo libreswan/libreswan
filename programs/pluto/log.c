@@ -276,7 +276,7 @@ void lswlog_to_error_stream(struct lswlog *buf)
 	lswlog_log_raw(buf, RC_LOG_SERIOUS, LOG_ERR);
 }
 
-void lswlog_log_errno(int e, const char *prefix, const char *message, ...)
+void libreswan_log_errno(int e, const char *prefix, const char *message, ...)
 {
 	LSWBUF(buf) {
 		/* <prefix><state#N...><message>.Errno %d: <strerror> */
@@ -307,7 +307,7 @@ void exit_log(const char *message, ...)
 	exit_pluto(PLUTO_EXIT_FAIL);
 }
 
-void lswlog_exit(enum rc_type rc)
+void libreswan_exit(enum rc_type rc)
 {
 	exit_pluto(rc);
 }

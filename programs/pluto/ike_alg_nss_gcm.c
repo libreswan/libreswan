@@ -73,7 +73,7 @@ static bool ike_alg_nss_gcm(const struct encrypt_desc *alg,
 			LSWLOG(buf) {
 				lswlogf(buf, "NSS: AEAD encryption using %s_%zu and PK11_Encrypt() failed",
 					alg->common.fqn, sizeof_symkey(sym_key) * BITS_PER_BYTE);
-				lswlog_pr_error(buf);
+				lswlog_nss_error(buf);
 			}
 			ok = FALSE;
 		} else if (out_len != text_and_tag_size) {
@@ -92,7 +92,7 @@ static bool ike_alg_nss_gcm(const struct encrypt_desc *alg,
 			LSWLOG(buf) {
 				lswlogf(buf, "NSS: AEAD decryption using %s_%zu and PK11_Decrypt() failed",
 					alg->common.fqn, sizeof_symkey(sym_key) * BITS_PER_BYTE);
-				lswlog_pr_error(buf);
+				lswlog_nss_error(buf);
 			}
 			ok = FALSE;
 		} else if (out_len != text_size) {
