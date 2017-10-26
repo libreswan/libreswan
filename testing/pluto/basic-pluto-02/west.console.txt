@@ -123,7 +123,7 @@ west #
  ipsec auto --replace westnet-all
 002 "westnet-all": deleting non-instance connection
 002 "westnet-all" #2: deleting state (STATE_QUICK_I2) and sending notification
-005 "westnet-all" #2: ESP traffic information: in=0B out=0B
+005 "westnet-all" #2: ESP traffic information: in=336B out=336B
 002 "westnet-all" #1: deleting state (STATE_MAIN_I4) and sending notification
 002 added connection description "westnet-all"
 west #
