@@ -2892,22 +2892,7 @@ bool route_and_eroute(struct connection *c,
 						"replace");
 		}
 
-#if 0
-		/* XXX - MCR. I previously felt that this was a bogus check */
-		if (ero != NULL && ero != c && esr != sr) {
-			/* By elimination, we must be eclipsing ero.  Check. */
-			passert(ero->kind == CK_TEMPLATE &&
-				streq(ero->name, c->name));
-			passert(LHAS(LELEM(RT_ROUTED_PROSPECTIVE) |
-					LELEM(RT_ROUTED_ECLIPSED),
-					esr->routing));
-			passert(samesubnet(&esr->this.client,
-						&sr->this.client) &&
-				samesubnet(&esr->that.client,
-					&sr->that.client));
-		}
-#endif
-		/* remember to free bspp iff we make it out of here alive */
+		/* remember to free bspp if we make it out of here alive */
 	} else {
 		/* we're adding an eroute */
 #ifdef IPSEC_CONNECTION_LIMIT
