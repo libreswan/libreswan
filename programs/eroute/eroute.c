@@ -301,14 +301,7 @@ int main(int argc, char **argv)
 					progname, optarg, proto_opt);
 				exit(1);
 			}
-#if 0
-			if (said.proto != 0) {
-				fprintf(stderr,
-					"%s: Warning, PROTO parameter redefined:%s\n",
-					progname, optarg);
-				exit(1);
-			}
-#endif
+
 			if (streq(optarg, "ah"))
 				said.proto = SA_AH;
 			if (streq(optarg, "esp"))
