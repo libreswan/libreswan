@@ -43,9 +43,6 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <libreswan.h>
-#if 0
-#include <linux/autoconf.h>    /* CONFIG_IPSEC_PFKEYv2 */
-#endif
 #include <signal.h>
 #include <sys/socket.h>
 #include <libreswan/pfkeyv2.h>
@@ -1581,22 +1578,6 @@ int main(int argc, char *argv[])
 				return FALSE;
 		}
 
-#if 0
-		/* not yet implemented */
-		if (natt != 0 && !isanyaddr(&natt_oa)) {
-			ip_str_buf b;
-
-			success = pfkeyext_address(SADB_X_EXT_NAT_T_OA,
-						   &natt_oa,
-						   "pfkey_nat_t_oa Add ESP SA",
-						   ipsaid_txt, extensions);
-			if (debug)
-				fprintf(stderr, "setting nat_oa to %s\n",
-					ipstr(&natt_oa, &b));
-			if (!success)
-				return FALSE;
-		}
-#endif
 	}
 
 	if (debug) {
