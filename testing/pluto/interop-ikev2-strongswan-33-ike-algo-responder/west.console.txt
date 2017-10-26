@@ -42,7 +42,7 @@ west #
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ikev2-ike=aes128-md5-dh19": terminating SAs using this connection
 002 "ikev2-ike=aes128-md5-dh19" #2: deleting state (STATE_V2_IPSEC_I) and sending notification
-005 "ikev2-ike=aes128-md5-dh19" #2: ESP traffic information: in=0B out=0B
+005 "ikev2-ike=aes128-md5-dh19" #2: ESP traffic information: in=84B out=84B
 002 "ikev2-ike=aes128-md5-dh19" #1: deleting state (STATE_PARENT_I3) and sending notification
 002 "ikev2-ike=aes128-md5-dh19": deleting non-instance connection
 west #
@@ -58,7 +58,7 @@ west #
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ikev2-ike=aes128-md5-dh20": terminating SAs using this connection
 002 "ikev2-ike=aes128-md5-dh20" #4: deleting state (STATE_V2_IPSEC_I) and sending notification
-005 "ikev2-ike=aes128-md5-dh20" #4: ESP traffic information: in=0B out=0B
+005 "ikev2-ike=aes128-md5-dh20" #4: ESP traffic information: in=84B out=84B
 002 "ikev2-ike=aes128-md5-dh20" #3: deleting state (STATE_PARENT_I3) and sending notification
 002 "ikev2-ike=aes128-md5-dh20": deleting non-instance connection
 west #
@@ -74,7 +74,7 @@ west #
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ikev2-ike=aes128-md5-dh21": terminating SAs using this connection
 002 "ikev2-ike=aes128-md5-dh21" #6: deleting state (STATE_V2_IPSEC_I) and sending notification
-005 "ikev2-ike=aes128-md5-dh21" #6: ESP traffic information: in=0B out=0B
+005 "ikev2-ike=aes128-md5-dh21" #6: ESP traffic information: in=84B out=84B
 002 "ikev2-ike=aes128-md5-dh21" #5: deleting state (STATE_PARENT_I3) and sending notification
 002 "ikev2-ike=aes128-md5-dh21": deleting non-instance connection
 west #
@@ -90,7 +90,7 @@ west #
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ikev2-ike=aes128-sha1-dh19": terminating SAs using this connection
 002 "ikev2-ike=aes128-sha1-dh19" #8: deleting state (STATE_V2_IPSEC_I) and sending notification
-005 "ikev2-ike=aes128-sha1-dh19" #8: ESP traffic information: in=0B out=0B
+005 "ikev2-ike=aes128-sha1-dh19" #8: ESP traffic information: in=84B out=84B
 002 "ikev2-ike=aes128-sha1-dh19" #7: deleting state (STATE_PARENT_I3) and sending notification
 002 "ikev2-ike=aes128-sha1-dh19": deleting non-instance connection
 west #
@@ -106,7 +106,7 @@ west #
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ikev2-ike=aes128-sha1-dh20": terminating SAs using this connection
 002 "ikev2-ike=aes128-sha1-dh20" #10: deleting state (STATE_V2_IPSEC_I) and sending notification
-005 "ikev2-ike=aes128-sha1-dh20" #10: ESP traffic information: in=0B out=0B
+005 "ikev2-ike=aes128-sha1-dh20" #10: ESP traffic information: in=84B out=84B
 002 "ikev2-ike=aes128-sha1-dh20" #9: deleting state (STATE_PARENT_I3) and sending notification
 002 "ikev2-ike=aes128-sha1-dh20": deleting non-instance connection
 west #
@@ -122,7 +122,7 @@ west #
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ikev2-ike=aes128-sha1-dh21": terminating SAs using this connection
 002 "ikev2-ike=aes128-sha1-dh21" #12: deleting state (STATE_V2_IPSEC_I) and sending notification
-005 "ikev2-ike=aes128-sha1-dh21" #12: ESP traffic information: in=0B out=0B
+005 "ikev2-ike=aes128-sha1-dh21" #12: ESP traffic information: in=84B out=84B
 002 "ikev2-ike=aes128-sha1-dh21" #11: deleting state (STATE_PARENT_I3) and sending notification
 002 "ikev2-ike=aes128-sha1-dh21": deleting non-instance connection
 west #
@@ -138,7 +138,7 @@ west #
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "ikev2-ike=3des-md5-modp2048": terminating SAs using this connection
 002 "ikev2-ike=3des-md5-modp2048" #14: deleting state (STATE_V2_IPSEC_I) and sending notification
-005 "ikev2-ike=3des-md5-modp2048" #14: ESP traffic information: in=0B out=0B
+005 "ikev2-ike=3des-md5-modp2048" #14: ESP traffic information: in=84B out=84B
 002 "ikev2-ike=3des-md5-modp2048" #13: deleting state (STATE_PARENT_I3) and sending notification
 002 "ikev2-ike=3des-md5-modp2048": deleting non-instance connection
 west #
