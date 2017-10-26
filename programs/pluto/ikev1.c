@@ -968,12 +968,14 @@ void process_v1_packet(struct msg_digest **mdp)
 					      md->hdr.isa_msgid);
 
 			if (st == NULL) {
-				/* perhaps this is a first message from the responder
-				 * and contains a responder cookie that we've not yet seen.
+				/*
+				 * perhaps this is a first message
+				 * from the responder and contains a
+				 * responder cookie that we've not yet
+				 * seen.
 				 */
-				st = find_state_ikev1(md->hdr.isa_icookie,
-						      zero_cookie,
-						      md->hdr.isa_msgid);
+				st = find_state_ikev1_init(md->hdr.isa_icookie,
+							   md->hdr.isa_msgid);
 
 				if (st == NULL) {
 					libreswan_log(
@@ -993,11 +995,12 @@ void process_v1_packet(struct msg_digest **mdp)
 
 		if (st == NULL) {
 			/*
-			 * might be an informational response to our first
-			 * message, in which case, we don't know the rcookie yet.
+			 * might be an informational response to our
+			 * first message, in which case, we don't know
+			 * the rcookie yet.
 			 */
-			st = find_state_ikev1(md->hdr.isa_icookie, zero_cookie,
-					      v1_MAINMODE_MSGID);
+			st = find_state_ikev1_init(md->hdr.isa_icookie,
+						   v1_MAINMODE_MSGID);
 		}
 
 		if (st != NULL)

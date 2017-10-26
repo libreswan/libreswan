@@ -570,14 +570,15 @@ extern void delete_my_family(struct state *pst, bool v2_responder_state);
 
 extern struct state
 	*duplicate_state(struct state *st, sa_t ipsec),
-	*find_state_ikev1(const u_char *icookie,
-			  const u_char *rcookie,
-			  msgid_t msgid),
 	*state_with_serialno(so_serial_t sn),
 	*find_phase2_state_to_delete(const struct state *p1st, u_int8_t protoid,
 			     ipsec_spi_t spi, bool *bogus),
 	*find_phase1_state(const struct connection *c, lset_t ok_states),
 	*find_likely_sender(size_t packet_len, u_char * packet);
+
+struct state *find_state_ikev1(const uint8_t *icookie, const uint8_t *rcookie,
+			       msgid_t msgid);
+struct state *find_state_ikev1_init(const uint8_t *icookie, msgid_t msgid);
 
 extern bool find_pending_phase2(const so_serial_t psn,
 					const struct connection *c,

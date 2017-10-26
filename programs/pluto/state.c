@@ -441,10 +441,18 @@ static char *humanize_number(uint64_t num,
 /*
  * Iterate over all entries with matching cookies.
  */
+
 #define FOR_EACH_STATE_WITH_COOKIES(ST, ICOOKIE, RCOOKIE, CODE)		\
 	FOR_EACH_STATE_ENTRY(ST, cookies_slot((ICOOKIE), (RCOOKIE)), {	\
 		if (memeq((ICOOKIE), ST->st_icookie, COOKIE_SIZE) &&	\
 		    memeq((RCOOKIE), ST->st_rcookie, COOKIE_SIZE)) {	\
+			CODE;						\
+		}							\
+	})								\
+
+#define FOR_EACH_STATE_WITH_ICOOKIE(ST, ICOOKIE, CODE)			\
+	FOR_EACH_STATE_ENTRY(ST, icookie_slot((ICOOKIE)), {		\
+		if (memeq((ICOOKIE), ST->st_icookie, COOKIE_SIZE)) {	\
 			CODE;						\
 		}							\
 	})								\
@@ -1449,15 +1457,45 @@ void for_each_state(void (*f)(struct state *, void *data), void *data)
 /*
  * Find a state object for an IKEv1 state
  */
-struct state *find_state_ikev1(const u_char *icookie,
-			       const u_char *rcookie,
+
+struct state *find_state_ikev1(const uint8_t *icookie,
+			       const uint8_t *rcookie,
 			       msgid_t /*network order*/ msgid)
 {
-	struct state *st;
+	struct state *st = NULL;
 	FOR_EACH_STATE_WITH_COOKIES(st, icookie, rcookie, {
 		if (!st->st_ikev2) {
 			DBG(DBG_CONTROL,
 			    DBG_log("v1 peer and cookies match on #%lu, provided msgid %08" PRIx32 " == %08" PRIx32,
+				    st->st_serialno,
+				    ntohl(msgid),
+				    ntohl(st->st_msgid)));
+			if (msgid == st->st_msgid)
+				break;
+		}
+	});
+
+	DBG(DBG_CONTROL, {
+		    if (st == NULL) {
+			    DBG_log("v1 state object not found");
+		    } else {
+			    DBG_log("v1 state object #%lu found, in %s",
+				    st->st_serialno,
+				    enum_name(&state_names, st->st_state));
+		    }
+	    });
+
+	return st;
+}
+
+struct state *find_state_ikev1_init(const uint8_t *icookie,
+				    msgid_t /*network order*/ msgid)
+{
+	struct state *st = NULL;
+	FOR_EACH_STATE_WITH_ICOOKIE(st, icookie, {
+		if (!st->st_ikev2) {
+			DBG(DBG_CONTROL,
+			    DBG_log("v1 peer and icookie match on #%lu, provided msgid %08" PRIx32 " == %08" PRIx32,
 				    st->st_serialno,
 				    ntohl(msgid),
 				    ntohl(st->st_msgid)));
@@ -1521,10 +1559,9 @@ struct state *ikev2_find_state_in_init(const u_char *icookie,
 				       enum state_kind expected_state)
 {
 	struct state *st;
-	FOR_EACH_STATE_ENTRY(st, icookie_slot(icookie), {
+	FOR_EACH_STATE_WITH_ICOOKIE(st, icookie, {
 			if (st->st_ikev2 &&
 			    st->st_state == expected_state &&
-			    memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
 			    !IS_CHILD_SA(st)) {
 				DBG(DBG_CONTROL,
 				    DBG_log("parent_init v2 peer and cookies match on #%lu",
