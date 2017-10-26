@@ -2867,21 +2867,7 @@ bool route_and_eroute(struct connection *c,
 			rosr,
 			st == NULL ? 0 : st->st_serialno));
 
-	/* look along the chain of policies for one with the same name */
-
-#if 0
-	/* XXX - mcr this made sense before, and likely will make sense
-	 * again, so I'l leaving this to remind me what is up
-	 */
-	if (ero != NULL && ero->routing == RT_UNROUTED_KEYED)
-		ero = NULL;
-
-	for (ero2 = ero; ero2 != NULL; ero2 = ero->policy_next)
-		if ((ero2->kind == CK_TEMPLATE ||
-				ero2->kind == CK_SECONDARY) &&
-			streq(ero2->name, c->name))
-			break;
-#endif
+	/* look along the chain of policies for same one */
 
 	struct bare_shunt **bspp = (ero == NULL) ?
 		bare_shunt_ptr(&sr->this.client, &sr->that.client,
