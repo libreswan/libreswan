@@ -48,7 +48,7 @@ struct list_entry serialno_list_head;
  * A table hashed by serialno.
  */
 
-static unsigned long serialno_hash(void *data)
+static size_t serialno_hash(void *data)
 {
 	struct state *st = data;
 	return st->st_serialno;
@@ -89,44 +89,27 @@ struct state *state_by_serialno(so_serial_t serialno)
 }
 
 /*
- * A table hashed by icookie+rcookie.
- */
-
-static unsigned long cookie_hash(const uint8_t *icookie,
-				 const uint8_t *rcookie)
-{
-	/* XXX the following hash is pretty pathetic */
-	unsigned long i = 0;
-	for (unsigned j = 0; j < COOKIE_SIZE; j++)
-		i = i * 407 + icookie[j] + rcookie[j];
-	return i;
-}
-
-static struct list_entry *slot_by_state_cookies(struct hash_table *table,
-						 const uint8_t *icookie,
-						 const uint8_t *rcookie)
-{
-	unsigned long i = cookie_hash(icookie, rcookie);
-	struct list_entry *slot = hash_table_slot_by_hash(table, i);
-	LSWDBGP(DBG_RAW | DBG_CONTROL, buf) {
-		lswlogf(buf, "%s: hash", table->info.name);
-		lswlogs(buf, " icookie ");
-		lswlog_bytes(buf, icookie, COOKIE_SIZE);
-		lswlogs(buf, " rcookie ");
-		lswlog_bytes(buf, rcookie, COOKIE_SIZE);
-		lswlogf(buf, " to %lu slot %p", i, slot);
-	};
-	return slot;
-}
-
-/*
  * Hash table indexed by just the ICOOKIE.
  */
 
-static unsigned long icookie_hash(void *data)
+static size_t icookie_hasher(const uint8_t *icookie)
+{
+	/*
+	 * 251 is a prime close to 256 (so like <<8).
+	 *
+	 * There's no real rationale for doing this.
+	 */
+	size_t hash = 0;
+	for (unsigned j = 0; j < COOKIE_SIZE; j++) {
+		hash = hash * 251 + icookie[j];
+	}
+	return hash;
+}
+
+static size_t icookie_hash(void *data)
 {
 	struct state *st = (struct state*) data;
-	return cookie_hash(st->st_icookie, zero_cookie);
+	return icookie_hasher(st->st_icookie);
 }
 
 static size_t icookie_log(struct lswlog *buf, void *data)
@@ -152,17 +135,44 @@ static struct hash_table icookie_hash_table = {
 
 struct list_entry *icookie_slot(const u_char *icookie)
 {
-	return slot_by_state_cookies(&icookie_hash_table, icookie, zero_cookie);
+	size_t hash = icookie_hasher(icookie);
+	struct list_entry *slot = hash_table_slot_by_hash(&icookie_hash_table, hash);
+	LSWDBGP(DBG_RAW | DBG_CONTROL, buf) {
+		lswlogf(buf, "%s: hash icookie ", icookie_hash_table.info.name);
+		lswlog_bytes(buf, icookie, COOKIE_SIZE);
+		lswlogf(buf, " to %lu slot %p", hash, slot);
+	};
+	return slot;
 }
 
 /*
  * Hash table indexed by both ICOOKIE and RCOOKIE.
  */
 
-static unsigned long cookies_hash(void *data)
+/*
+ * A table hashed by icookie+rcookie.
+ */
+
+static size_t cookies_hasher(const uint8_t *icookie,
+			     const uint8_t *rcookie)
+{
+	/*
+	 * 251 is a prime close to 256 aka <<8.  65521 is a prime
+	 * close to 65536 aka <<16.
+	 *
+	 * There's no real rationale for doing this.
+	 */
+	size_t hash = 0;
+	for (unsigned j = 0; j < COOKIE_SIZE; j++) {
+		hash = hash * 65521 + icookie[j] * 251 + rcookie[j];
+	}
+	return hash;
+}
+
+static size_t cookies_hash(void *data)
 {
 	struct state *st = (struct state *)data;
-	return cookie_hash(st->st_icookie, st->st_rcookie);
+	return cookies_hasher(st->st_icookie, st->st_rcookie);
 }
 
 static size_t cookies_log(struct lswlog *buf, void *data)
@@ -191,7 +201,16 @@ static struct hash_table cookies_hash_table = {
 struct list_entry *cookies_slot(const u_char *icookie,
 				const u_char *rcookie)
 {
-	return slot_by_state_cookies(&cookies_hash_table, icookie, rcookie);
+	size_t hash = cookies_hasher(icookie, rcookie);
+	struct list_entry *slot = hash_table_slot_by_hash(&cookies_hash_table, hash);
+	LSWDBGP(DBG_RAW | DBG_CONTROL, buf) {
+		lswlogf(buf, "%s: hash icookie ", cookies_hash_table.info.name);
+		lswlog_bytes(buf, icookie, COOKIE_SIZE);
+		lswlogs(buf, " rcookie ");
+		lswlog_bytes(buf, rcookie, COOKIE_SIZE);
+		lswlogf(buf, " to %lu slot %p", hash, slot);
+	};
+	return slot;
 }
 
 /*
