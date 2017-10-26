@@ -332,11 +332,6 @@ struct db_sa *kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei,
 		struct db_sa *sadb;
 		lset_t pm = POLICY_ENCRYPT | POLICY_AUTHENTICATE;
 
-#if 0
-		if (can_do_IPcomp)
-			pm |= POLICY_COMPRESS;
-#endif
-
 		sadb = &ipsec_sadb[(policy & pm) >> POLICY_IPSEC_SHIFT];
 
 		/* make copy, to keep from freeing the static policies */
