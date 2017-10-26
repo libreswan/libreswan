@@ -339,9 +339,9 @@ err_t check_kernel_encrypt_alg(int alg_id, unsigned int key_len)
 						alg_p->sadb_alg_maxbits);
 			}
 			break;
-#if 0
-		case ESP_SEED_CBC:
-#endif
+
+		/* ESP_SEED_CBC not supported by us - also number got re-used in IKEv2 */
+
 		case ESP_CAST:
 			if (key_len != 128) {
 				/* ??? function name does not belong in log */
