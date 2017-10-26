@@ -123,7 +123,6 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 			struct stat buf;
 			int ugh;
 
-			zero(&buf); /* otherwise coverity will warn */
 			if (stat(trusted, &buf) == -1) {
 				LOG_ERRNO(errno,
 					"stat(\"%s\") error in unbound.c; ignored",
