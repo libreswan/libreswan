@@ -1349,27 +1349,6 @@ bool pfkey_shunt_eroute(const struct connection *c,
 		}
 	}
 
-#if 0
-	{
-		enum pluto_sadb_operations inop =
-			op + ERO_ADD_INBOUND - ERO_ADD;
-
-		bool ok = pfkey_raw_eroute(&c->spd.that.host_addr,
-				      &c->spd.that.client,
-				      &c->spd.this.host_addr,
-				      &c->spd.this.client,
-				      htonl(spi),
-				      SA_INT,
-				      0,        /* transport_proto is not relevant */
-				      ET_INT, null_proto_info,
-				      0,        /* use lifetime */
-				      inop,
-				      opname);
-		if (!ok)
-			return FALSE;
-	}
-#endif
-
 	{
 		const ip_address *peer = &sr->that.host_addr;
 		char buf2[256];
