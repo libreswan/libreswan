@@ -1,8 +1,7 @@
 # A tunnel should have established with non-zero byte counters
-ipsec whack --trafficstatus 
 grep "negotiated connection" /tmp/pluto.log
-# you should see only RSA
-grep IKEv2_AUTH_ OUTPUT/*pluto.log 
+# you should RSA and NULL
+grep IKEv2_AUTH_ /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
