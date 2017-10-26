@@ -978,23 +978,6 @@ static int nat_traversal_new_mapping(struct state *st,
 			nsrcport);
 	});
 
-#if 0
-	if (!sameaddr(src, dst)) {
-		ipstr_buf a, b;
-
-		loglog(RC_LOG_SERIOUS,
-			"nat_traversal_new_mapping: address change currently not supported [%s:%d,%s:%d]",
-			ipstr(src, &a), sport,
-			ipstr(dst, &b), dport);
-		return -1;
-	}
-
-	if (sport == dport) {
-		/* no change */
-		return 0;
-	}
-#endif
-
 	nfo.st    = st;
 	nfo.addr  = *nsrc;
 	nfo.port  = nsrcport;
