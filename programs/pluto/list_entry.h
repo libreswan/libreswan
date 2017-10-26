@@ -84,9 +84,10 @@ void remove_list_entry(const struct list_info *info,
 		     DATA = (typeof(DATA))DATA##entry->data,		\
 			     DATA##entry = DATA##entry->NEXT)
 
-#define FOR_EACH_LIST_ENTRY_OLD2NEW(HEAD, DATA)				\
+#define FOR_EACH_LIST_ENTRY_OLD2NEW(HEAD, DATA)		\
 	FOR_EACH_LIST_ENTRY_(HEAD, DATA, newer)
-#define FOR_EACH_LIST_ENTRY_NEW2OLD(HEAD, DATA)				\
+
+#define FOR_EACH_LIST_ENTRY_NEW2OLD(HEAD, DATA)		\
 	FOR_EACH_LIST_ENTRY_(HEAD, DATA, older)
 
 #endif
