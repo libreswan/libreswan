@@ -36,7 +36,7 @@ extern SECStatus NSS_InitReadWrite(const char *configdir);
 /*
  * not needed here, but squelch a lswconf.h build error
  */
-char *progname;
+const char *progname;
 
 static int import_crl(const char *url, unsigned char *buf, size_t len)
 {

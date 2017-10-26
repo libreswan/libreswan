@@ -64,7 +64,7 @@
 # define EXIT_SECCOMP_FAIL 8
 #endif
 
-char *progname;
+const char *progname;
 static int verbose = 0;
 
 /*

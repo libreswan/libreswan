@@ -44,9 +44,9 @@
 
 #include "libreswan/ipsec_tunnel.h"
 
-char *progname;
+const char *progname;
 
-static void usage(char *name)
+static void usage(const char *name)
 {
 	fprintf(stdout, "%s --create <virtual>\n", name);
 	fprintf(stdout, "%s --delete <virtual>\n", name);
@@ -241,11 +241,12 @@ int main(int argc, char *argv[])
 			size_t room = strlen(argv[0]) +
 					  sizeof(combine_fmt) +
 					  strlen(optarg);
+			char *b = malloc(room);
 
-			progname = malloc(room);
-			snprintf(progname, room, combine_fmt,
+			snprintf(b, room, combine_fmt,
 				argv[0],
 				optarg);
+			progname = b;
 			argcount -= 2;
 			break;
 		}

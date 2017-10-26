@@ -77,11 +77,9 @@ extern bool log_to_stderr;          /* should log go to stderr? */
 
 /*
  * For stand-alone tools.
- *
- * XXX: can "progname" be made private to lswlog.c?
  */
-extern char *progname;
-extern void tool_init_log(char *progname);
+extern const char *progname;
+extern void tool_init_log(const char *name);
 
 /* Codes for status messages returned to whack.
  * These are 3 digit decimal numerals.  The structure

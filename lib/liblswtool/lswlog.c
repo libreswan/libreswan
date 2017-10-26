@@ -37,18 +37,14 @@
 
 bool log_to_stderr = TRUE;	/* should log go to stderr? */
 
-char *progname = "";
-static char *prog_suffix = "";
+const char *progname = "";
+static const char *prog_suffix = "";
 
-void tool_init_log(char *name)
+void tool_init_log(const char *name)
 {
-	progname = strrchr(name, '/');
-	if (progname != NULL) {
-		/* step off the '/' */
-		progname++;
-	} else {
-		progname = name;
-	}
+	const char *last_slash = strrchr(name, '/');
+
+	progname = last_slash == NULL ? name : last_slash + 1;
 	prog_suffix = ": ";
 
 	if (log_to_stderr)

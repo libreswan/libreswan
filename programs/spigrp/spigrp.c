@@ -49,7 +49,7 @@
 
 #include "lsw_select.h"
 
-char *progname;
+const char *progname;
 
 int pfkey_sock;
 uint32_t pfkey_seq = 0;
@@ -65,7 +65,7 @@ struct said_af {
 	ip_said said;
 };
 
-static void usage(char *s)
+static void usage(const char *s)
 {
 	fprintf(stdout,
 		"usage: Note: position of options and arguments is important!\n");
@@ -126,11 +126,12 @@ int main(int argc, char **argv)
 			size_t room = strlen(argv[0]) +
 					  sizeof(combine_fmt) +
 					  strlen(optarg);
+			char *b = malloc(room);
 
-			progname = malloc(room);
-			snprintf(progname, room, combine_fmt,
+			snprintf(b, room, combine_fmt,
 				argv[0],
 				argv[2]);
+			progname = b;
 			if (debug)
 				fprintf(stdout, "using \"%s\" as a label.\n",
 					progname);

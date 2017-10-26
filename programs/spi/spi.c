@@ -68,7 +68,7 @@
 
 struct encap_msghdr *em;
 
-char *progname;
+const char *progname;
 bool debug = FALSE;
 bool get = FALSE;
 int dumpsaref = 0;
@@ -139,7 +139,7 @@ static const char *usage_string =
 	"[ --listenreply ]   is optional, and causes the command to stick\n"
 	"                    around and listen to what the PF_KEY socket says.\n";
 
-static void usage(char *s, FILE *f)
+static void usage(const char *s, FILE *f)
 {
 	/* s argument is actually ignored, at present */
 	fprintf(f, "%s:%s", s, usage_string);
