@@ -27,7 +27,7 @@ ipsec_setup: Starting Libreswan IPsec VERSION
 west:~#
  ipsec auto --add westnet-eastnet
 west:~#
- ipsec whack --debug-control --debug-controlmore --debug-parsing --debug-crypt
+ ipsec whack --debug none --debug control --debug controlmore --debug parsing --debug crypt
 west:~#
  ipsec auto --listpubkeys
 000  

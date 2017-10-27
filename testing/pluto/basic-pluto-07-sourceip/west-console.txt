@@ -168,7 +168,7 @@ ipsec_setup: Trying VIA padlock driver, this may fail, which is okay.
 ipsec_setup: Trying to load Crypto API modules, some may fail, which is okay.
 ipsec_setup: aes-x86_64 aes des sha512 sha256 md5 cbc xcbc ecb twofish blowfish serpent 
 west:~# ipsec auto --add westnet-eastnet
-west:~# ipsec whack --debug-control --debug-controlmore --debug-parsing --debug-crypt
+west:~# ipsec whack --debug none --debug control --debug controlmore --debug parsing --debug crypt
 west:~# /testing/pluto/bin/wait-until-pluto-started
 west:~# echo done
 done
