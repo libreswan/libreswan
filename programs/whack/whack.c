@@ -466,10 +466,12 @@ enum option_enums {
 
 	DBGOPT_elems,	/* this point on: DBGOPT single elements */
 
-	DBGOPT_LAST = DBGOPT_elems + IMPAIR_roof_IX - 1,
+	DBGOPT_roof = DBGOPT_elems + IMPAIR_roof_IX - 1,
 
 	DBGOPT_DEBUG,
 	DBGOPT_IMPAIR,
+
+	DBGOPT_LAST = DBGOPT_IMPAIR,
 
 #define	OPTION_ENUMS_LAST	DBGOPT_IMPAIR
 };
