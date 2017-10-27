@@ -205,7 +205,7 @@ static void peerlog_raw(char *b)
 	}
 }
 
-static void whack_rc_raw(enum rc_type rc, char *b)
+static void whack_raw(struct lswlog *b, enum rc_type rc)
 {
 	/*
 	 * Only whack-log when the main thread.
@@ -223,19 +223,11 @@ static void whack_rc_raw(enum rc_type rc, char *b)
 			LSWBUF(buf) {
 				add_whack_rc_prefix(buf, rc);
 				/* add_state_prefix() - done by caller */
-				lswlogs(buf, b);
+				lswlogl(buf, b);
 				lswlog_to_whack_stream(buf);
 			}
 		}
 	}
-}
-
-static void lswlog_logwhack_raw(struct lswlog *buf, enum rc_type rc, int severity)
-{
-	stdlog_raw(buf->array);
-	syslog_raw(severity, buf->array);
-	peerlog_raw(buf->array);
-	whack_rc_raw(rc, buf->array);
 }
 
 void lswlog_pre(struct lswlog *buf)
@@ -243,9 +235,37 @@ void lswlog_pre(struct lswlog *buf)
 	add_state_prefix(buf);
 }
 
+static void log_raw(struct lswlog *buf, int severity)
+{
+	stdlog_raw(buf->array);
+	syslog_raw(severity, buf->array);
+	peerlog_raw(buf->array);
+	/* not whack */
+}
+
+void lswlog_to_debug_stream(struct lswlog *buf)
+{
+	sanitize_string(buf->array, buf->roof); /* needed? */
+	log_raw(buf, LOG_DEBUG);
+	/* not whack */
+}
+
+void lswlog_to_error_stream(struct lswlog *buf)
+{
+	log_raw(buf, LOG_ERR);
+	whack_raw(buf, RC_LOG_SERIOUS);
+}
+
+void lswlog_to_log_stream(struct lswlog *buf)
+{
+	log_raw(buf, LOG_WARNING);
+	/* not whack */
+}
+
 void lswlog_to_logwhack_stream(struct lswlog *buf, enum rc_type rc)
 {
-	lswlog_logwhack_raw(buf, rc, LOG_WARNING);
+	log_raw(buf, LOG_WARNING);
+	whack_raw(buf, rc);
 }
 
 void close_log(void)
@@ -269,11 +289,6 @@ void prettynow(char *buf, size_t buflen, const char *fmt)
 
 	/* the cast suppresses a warning: <http://gcc.gnu.org/bugzilla/show_bug.cgi?id=39438> */
 	((size_t (*)(char *, size_t, const char *, const struct tm *))strftime)(buf, buflen, fmt, t);
-}
-
-void lswlog_to_error_stream(struct lswlog *buf)
-{
-	lswlog_logwhack_raw(buf, RC_LOG_SERIOUS, LOG_ERR);
 }
 
 void libreswan_log_errno(int e, const char *prefix, const char *message, ...)
@@ -449,15 +464,6 @@ void set_debugging(lset_t deb)
 	if (kernel_ops != NULL && kernel_ops->set_debug != NULL)
 		(*kernel_ops->set_debug)(cur_debugging, DBG_log,
 					 libreswan_log);
-}
-
-void lswlog_to_debug_stream(struct lswlog *buf)
-{
-	sanitize_string(buf->array, buf->roof);
-	stdlog_raw(buf->array);
-	syslog_raw(LOG_DEBUG, buf->array);
-	peerlog_raw(buf->array);
-	/* not whack */
 }
 
 static void show_system_security(void)

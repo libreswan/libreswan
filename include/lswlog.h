@@ -221,19 +221,32 @@ size_t lswlog_bytes(struct lswlog *log, const uint8_t *bytes,
 		    size_t sizeof_bytes);
 
 /*
- * The logging output streams used by library code.
+ * The logging output streams used by libreswan.
  *
- * So far three^D^D^D four have been identified; and lets not forget
- * STDOUT and STDERR which are also written to directly.
+ * So far three^D^D^D^D^D four^D^D^D^D five have been identified; and
+ * lets not forget STDOUT and STDERR which are also written to
+ * directly.
  *
- * These functions can assume that the buffer already contains
- * relevant prefixes and just needs to be sent out.
+ * The streams differ in the syslog severity and what PREFIX is
+ * assumed to be present.
  *
- * For logging stream, the output can may also be directed to whack
- * stream.  When this happens, RC is prefixed to the already formatted
- * message.
+ *                SEVERITY     WHACK   PREFIX
+ *   log        LOG_WARNING     -      state
+ *   debug      LOG_DEBUG       -      "| "
+ *   logwhack   LOG_WARNING    yes     state
+ *   error      LOG_ERR         -      ERROR ..
+ *   whack         -           yes     NNN
+ *
+ * The streams will then add additional prefixes as required.  For
+ * instance, the logwhack stream will prefix a timestamp when sending
+ * to a file (optional), and will prefix NNN(RC) when sending to
+ * whack.
+ *
+ * For tools, the log stream goes to STDERR when enabled; and the
+ * debug stream goes to STDERR conditional on debug flags.
  */
 
+void lswlog_to_log_stream(struct lswlog *buf);
 void lswlog_to_debug_stream(struct lswlog *buf);
 void lswlog_to_error_stream(struct lswlog *buf);
 void lswlog_to_logwhack_stream(struct lswlog *buf, enum rc_type rc);
@@ -372,7 +385,7 @@ void lswlog_dbg_pre(struct lswlog *buf);
 #define LSWDBG(BUF) LSWDBG_(true, BUF)
 
 /*
- * Send log output the logging streams (and WHACK).
+ * Send log output the logging streams and WHACK (if connected).
  */
 
 void lswlog_pre(struct lswlog *buf);
@@ -384,6 +397,17 @@ void lswlog_pre(struct lswlog *buf);
 		LSWBUF_(BUF)						\
 			for (lswlog_pre(BUF); lswlog_p;			\
 			     lswlog_to_logwhack_stream(BUF, RC),	\
+				     lswlog_p = false)
+
+/*
+ * Send log output to the logging stream but not WHACK.
+ */
+
+#define LSWLOG_LOG(BUF)							\
+	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
+		LSWBUF_(BUF)						\
+			for (lswlog_pre(BUF); lswlog_p;			\
+			     lswlog_to_log_stream(BUF),			\
 				     lswlog_p = false)
 
 /*
