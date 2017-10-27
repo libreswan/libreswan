@@ -2453,7 +2453,7 @@ bool ikev1_delete_out(struct state *st)
 	struct isakmp_hdr hdr;
 
 	/* If there are IPsec SA's related to this state struct... */
-	if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
+	if (IS_IPSEC_SA_ESTABLISHED(st)) {
 		/* Find their phase1 state object */
 		p1st = find_phase1_state(st->st_connection,
 					ISAKMP_SA_ESTABLISHED_STATES);

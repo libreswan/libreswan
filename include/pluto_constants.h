@@ -632,13 +632,14 @@ enum original_role {
 				LELEM(STATE_PARENT_I2))
 
 /* IKEv1 or IKEv2 */
-#define IS_IPSEC_SA_ESTABLISHED(s) ((s) == STATE_QUICK_I2 || \
-				    (s) == STATE_QUICK_R1 || \
-				    (s) == STATE_QUICK_R2 || \
-				    (s) == STATE_V2_IPSEC_I || \
-				    (s) == STATE_V2_IPSEC_R || \
-				    (s) == STATE_PARENT_I3 || \
-				    (s) == STATE_PARENT_R2)
+#define IS_IPSEC_SA_ESTABLISHED(s) (IS_CHILD_SA(s) && \
+				    ((s->st_state) == STATE_QUICK_I2 || \
+				    (s->st_state) == STATE_QUICK_R1 || \
+				    (s->st_state) == STATE_QUICK_R2 || \
+				    (s->st_state) == STATE_V2_IPSEC_I || \
+				    (s->st_state) == STATE_V2_IPSEC_R || \
+				    (s->st_state) == STATE_PARENT_I3 || \
+				    (s->st_state) == STATE_PARENT_R2))
 
 #define IS_MODE_CFG_ESTABLISHED(s) ((s) == STATE_MODE_CFG_R2)
 

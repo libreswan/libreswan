@@ -723,7 +723,7 @@ static void flush_pending_ipsec(struct state *pst, struct state *st)
 		char cib[CONN_INST_BUF];
 		struct connection *c = st->st_connection;
 
-		if (IS_IPSEC_SA_ESTABLISHED(st->st_state))
+		if (IS_IPSEC_SA_ESTABLISHED(st))
 			return;
 
 		delete_event(st);
@@ -766,7 +766,7 @@ static bool send_delete_check(const struct state *st)
 	if (st->st_ikev2_no_del)
 		return FALSE;
 
-	if (IS_IPSEC_SA_ESTABLISHED(st->st_state) ||
+	if (IS_IPSEC_SA_ESTABLISHED(st) ||
 			IS_ISAKMP_SA_ESTABLISHED(st->st_state))
 	{
 		if (st->st_ikev2 &&
@@ -873,7 +873,7 @@ void delete_state(struct state *st)
 		}
 	}
 
-	if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
+	if (IS_IPSEC_SA_ESTABLISHED(st)) {
 		/* pull in the traffic counters into state before they're lost */
 		if (!get_sa_info(st, FALSE, NULL)) {
 			libreswan_log("failed to pull traffic counters from outbound IPsec SA");
@@ -1016,7 +1016,7 @@ void delete_state(struct state *st)
 	/*
 	 * tell kernel to delete any IPSEC SA
 	 */
-	if (IS_IPSEC_SA_ESTABLISHED(st->st_state) ||
+	if (IS_IPSEC_SA_ESTABLISHED(st) ||
 		IS_CHILD_SA_ESTABLISHED(st) ||
 		st->st_state == STATE_CHILDSA_DEL) {
 			delete_ipsec_sa(st);
@@ -1728,7 +1728,7 @@ struct state *find_phase2_state_to_delete(const struct state *p1st,
 	*bogus = FALSE;
 	FOR_EACH_COOKIED_STATE(st, {
 		const struct connection *c = st->st_connection;
-		if (IS_IPSEC_SA_ESTABLISHED(st->st_state) &&
+		if (IS_IPSEC_SA_ESTABLISHED(st) &&
 		    p1c->host_pair == c->host_pair &&
 		    same_peer_ids(p1c, c, NULL))
 		{
@@ -1812,7 +1812,7 @@ void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 		struct connection *c = st->st_connection;
 
 		/* XXX spd-enum */
-		if (IS_IPSEC_SA_ESTABLISHED(st->st_state) &&
+		if (IS_IPSEC_SA_ESTABLISHED(st) &&
 		    c->spd.eroute_owner == st->st_serialno &&
 		    c->spd.routing == RT_ROUTED_TUNNEL &&
 		    samesubnet(&c->spd.this.client, ours) &&
@@ -1852,7 +1852,7 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 	if (IS_IKE_SA(st))
 		return; /* ignore non-IPsec states */
 
-	if (!IS_IPSEC_SA_ESTABLISHED(st->st_state))
+	if (!IS_IPSEC_SA_ESTABLISHED(st))
 		return; /* ignore non established states */
 
 	fmt_conn_instance(c, inst);
@@ -1946,7 +1946,7 @@ void fmt_state(struct state *st, const monotime_t n,
 	}
 
 	dpdbuf[0] = '\0';	/* default to empty string */
-	if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
+	if (IS_IPSEC_SA_ESTABLISHED(st)) {
 		snprintf(dpdbuf, sizeof(dpdbuf), "; isakmp#%lu",
 			 (unsigned long)st->st_clonedfrom);
 	} else {
@@ -1999,7 +1999,7 @@ void fmt_state(struct state *st, const monotime_t n,
 	/* print out SPIs if SAs are established */
 	if (state_buf2_len != 0)
 		state_buf2[0] = '\0';   /* default to empty */
-	if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
+	if (IS_IPSEC_SA_ESTABLISHED(st)) {
 		char lastused[40];      /* should be plenty long enough */
 		char buf[SATOT_BUF * 6 + 1];
 		char *p = buf;

@@ -2466,7 +2466,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			sadetails[0] = '\0';
 
 			/* document IPsec SA details for admin's pleasure */
-			if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
+			if (IS_IPSEC_SA_ESTABLISHED(st)) {
 				fmt_ipsec_sa_established(st, sadetails,
 							 sizeof(sadetails));
 				w = RC_SUCCESS; /* log our success */
@@ -2626,7 +2626,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		}
 
 		if (IS_ISAKMP_SA_ESTABLISHED(st->st_state) ||
-		    IS_IPSEC_SA_ESTABLISHED(st->st_state))
+		    IS_IPSEC_SA_ESTABLISHED(st))
 			release_whack(st);
 
 		if (IS_QUICK(st->st_state))

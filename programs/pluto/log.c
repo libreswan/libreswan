@@ -663,10 +663,10 @@ static void connection_state(struct state *st, void *data)
 			lc->tunnel = tun_phase15;
 	}
 
-	if (IS_QUICK(st->st_state)) {
+	if (IS_CHILD_SA(st)) {
 		if (lc->tunnel < tun_phase2)
 			lc->tunnel = tun_phase2;
-		if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
+		if (IS_IPSEC_SA_ESTABLISHED(st)) {
 			if (lc->tunnel < tun_up)
 				lc->tunnel = tun_up;
 			lc->phase2 = p2_up;
