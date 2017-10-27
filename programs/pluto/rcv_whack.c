@@ -270,23 +270,48 @@ void whack_process(int whackfd, const struct whack_message *const m)
 		case WHACK_ADJUSTOPTIONS:
 #ifdef FIPS_CHECK
 			if (libreswan_fipsmode()) {
-				if (m->debugging & DBG_PRIVATE) {
+				if (lmod_is_set(m->debugging, DBG_PRIVATE)) {
 					whack_log(RC_FATAL, "FIPS: --debug-private is not allowed in FIPS mode, aborted");
 					goto done;
 				}
 			}
 #endif
 			if (m->name == NULL) {
-				/* we do a two-step so that if either old or new would
-				 * cause the message to print, it will be printed.
+				/*
+				 * This is done in two two-steps so
+				 * that if either old or new would
+				 * cause a debug message to print, it
+				 * will be printed.
+				 *
+				 * XXX: why not unconditionally send
+				 * what was changed back to whack?
 				 */
-				set_debugging(cur_debugging | m->debugging);
+				lset_t old_debugging = cur_debugging & DBG_MASK;
+				lset_t new_debugging = lmod(old_debugging, m->debugging);
+				lset_t old_impairing = cur_debugging & IMPAIR_MASK;
+				lset_t new_impairing = lmod(old_impairing, m->impairing);
+				set_debugging(cur_debugging | new_debugging);
+				LSWDBGP(DBG_CONTROL, buf) {
+					lswlogs(buf, "old debugging ");
+					lswlog_enum_lset_short(buf, &debug_names, old_debugging);
+					lswlogs(buf, " + ");
+					lswlog_lmod(buf, &debug_names, m->debugging);
+				}
 				LSWDBGP(DBG_CONTROL, buf) {
 					lswlogs(buf, "base debugging = ");
-					lswlog_enum_lset_short(buf, &debug_and_impair_names,
-							       m->debugging);
+					lswlog_enum_lset_short(buf, &debug_names, new_debugging);
 				}
-				base_debugging = m->debugging;
+				LSWDBGP(DBG_CONTROL, buf) {
+					lswlogs(buf, "old impairing ");
+					lswlog_enum_lset_short(buf, &impair_names, old_impairing);
+					lswlogs(buf, " + ");
+					lswlog_lmod(buf, &impair_names, m->impairing);
+				}
+				LSWDBGP(DBG_CONTROL, buf) {
+					lswlogs(buf, "base impairing = ");
+					lswlog_enum_lset_short(buf, &impair_names, new_impairing);
+				}
+				base_debugging = new_debugging | new_impairing;
 				set_debugging(base_debugging);
 			} else if (!m->whack_connection) {
 				struct connection *c = conn_by_name(m->name,
@@ -297,8 +322,13 @@ void whack_process(int whackfd, const struct whack_message *const m)
 					LSWDBGP(DBG_CONTROL, buf) {
 						lswlogf(buf, "\"%s\" extra_debugging = ",
 							c->name);
-						lswlog_enum_lset_short(buf, &debug_and_impair_names,
-								       c->extra_debugging);
+						lswlog_lmod(buf, &debug_names, c->extra_debugging);
+					}
+					c->extra_impairing = m->impairing;
+					LSWDBGP(DBG_CONTROL, buf) {
+						lswlogf(buf, "\"%s\" extra_impairing = ",
+							c->name);
+						lswlog_lmod(buf, &impair_names, c->extra_impairing);
 					}
 				}
 			}
@@ -515,13 +545,13 @@ void whack_process(int whackfd, const struct whack_message *const m)
 				}
 			}
 			initiate_connection(m->name,
-			    m->whack_async ?
-			      NULL_FD :
-			      dup_any(whackfd),
-			    m->debugging,
-			    pcim_demand_crypto,
-			    pass_remote ? m->remote_host : NULL
-				);
+					    m->whack_async ?
+					    NULL_FD :
+					    dup_any(whackfd),
+					    m->debugging,
+					    m->impairing,
+					    pcim_demand_crypto,
+					    pass_remote ? m->remote_host : NULL);
 		}
 	}
 

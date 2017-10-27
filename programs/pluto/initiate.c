@@ -192,7 +192,8 @@ bool orient(struct connection *c)
 
 struct initiate_stuff {
 	int whackfd;
-	lset_t moredebug;
+	lmod_t more_debugging;
+	lmod_t more_impairing;
 	enum crypto_importance importance;
 	char *remote_host;
 };
@@ -201,13 +202,13 @@ static int initiate_a_connection(struct connection *c, void *arg)
 {
 	struct initiate_stuff *is = (struct initiate_stuff *)arg;
 	int whackfd = is->whackfd;
-	lset_t moredebug = is->moredebug;
 	enum crypto_importance importance = is->importance;
 
 	set_cur_connection(c);
 
 	/* turn on any extra debugging asked for */
-	c->extra_debugging |= moredebug;
+	lmod_merge(&c->extra_debugging, is->more_debugging);
+	lmod_merge(&c->extra_impairing, is->more_impairing);
 
 	/* If whack supplied a remote IP, fill it in if we can */
 	if (is->remote_host != NULL && isanyaddr(&c->spd.that.host_addr)) {
@@ -339,19 +340,22 @@ static int initiate_a_connection(struct connection *c, void *arg)
 }
 
 void initiate_connection(const char *name, int whackfd,
-			 lset_t moredebug,
+			 lmod_t more_debugging,
+			 lmod_t more_impairing,
 			 enum crypto_importance importance,
 			 char *remote_host)
 {
-	struct initiate_stuff is;
 	struct connection *c = conn_by_name(name, FALSE, FALSE);
 	int count;
 
 	passert(name != NULL);
-	is.whackfd   = whackfd;
-	is.moredebug = moredebug;
-	is.importance = importance;
-	is.remote_host = remote_host;
+	struct initiate_stuff is = {
+		.whackfd = whackfd,
+		.more_debugging = more_debugging,
+		.more_impairing = more_impairing,
+		.importance = importance,
+		.remote_host = remote_host,
+	};
 
 	if (c != NULL) {
 		if (!initiate_a_connection(c, &is))
@@ -438,8 +442,9 @@ void restart_connections_by_peer(struct connection *const c)
 		for (d = hp->connections; d != NULL; d = d->hp_next) {
 			if (same_host(dnshostname, &host_addr,
 					d->dnshostname, &d->spd.that.host_addr))
-				initiate_connection(d->name, NULL_FD, LEMPTY,
-						pcim_demand_crypto, NULL);
+				initiate_connection(d->name, NULL_FD,
+						    empty_lmod, empty_lmod,
+						    pcim_demand_crypto, NULL);
 		}
 	}
 	pfreeany(dnshostname);
@@ -1112,7 +1117,8 @@ static void connection_check_ddns1(struct connection *c)
 	 * lookup
 	 */
 	update_host_pairs(c);
-	initiate_connection(c->name, NULL_FD, LEMPTY, pcim_demand_crypto, NULL);
+	initiate_connection(c->name, NULL_FD, empty_lmod, empty_lmod,
+			    pcim_demand_crypto, NULL);
 
 	/* no host pairs, no more to do */
 	pexpect(c->host_pair != NULL);	/* ??? surely */
@@ -1121,7 +1127,8 @@ static void connection_check_ddns1(struct connection *c)
 
 	for (d = c->host_pair->connections; d != NULL; d = d->hp_next) {
 		if (c != d && same_in_some_sense(c, d))
-			initiate_connection(d->name, NULL_FD, LEMPTY,
+			initiate_connection(d->name, NULL_FD,
+					    empty_lmod, empty_lmod,
 					    pcim_demand_crypto, NULL);
 	}
 }
@@ -1228,7 +1235,8 @@ void connection_check_phase2(void)
 				struct initiate_stuff is;
 
 				is.whackfd = NULL_FD;
-				is.moredebug = 0;
+				is.more_debugging = empty_lmod;
+				is.more_impairing = empty_lmod;
 				is.importance = pcim_local_crypto;
 				is.remote_host = NULL;
 

@@ -1374,24 +1374,24 @@ int main(int argc, char **argv)
 
 		case DEBUG_OPTION:
 		{
-			int ix = enum_match(&debug_names, optarg);
-			if (ix < 0) {
+			lmod_t mod = empty_lmod;
+			if (lmod_arg(&mod, &debug_names, DBG_ALL, DBG_MASK, optarg)) {
+				base_debugging = lmod(base_debugging, mod);
+			} else {
 				libreswan_log("unrecognized --debug '%s' option ignored",
 					      optarg);
-			} else {
-				base_debugging |= LELEM(ix);
 			}
 			continue;
 		}
 
 		case IMPAIR_OPTION:
 		{
-			int ix = enum_match(&impair_names, optarg);
-			if (ix < 0) {
+			lmod_t mod = empty_lmod;
+			if (lmod_arg(&mod, &impair_names, IMPAIR_MASK, IMPAIR_MASK, optarg)) {
+				base_debugging = lmod(base_debugging, mod);
+			} else {
 				libreswan_log("unrecognized --impair '%s' option ignored",
 					      optarg);
-			} else {
-				base_debugging |= LELEM(ix);
 			}
 			continue;
 		}

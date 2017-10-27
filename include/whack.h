@@ -25,6 +25,7 @@
 
 #include <libreswan.h>
 #include "ietf_constants.h"
+#include "lmod.h"
 
 /* Since the message remains on one host, native representation is used.
  * Think of this as horizontal microcode: all selected operations are
@@ -139,7 +140,8 @@ struct whack_message {
 
 	bool whack_options;
 
-	lset_t debugging;
+	lmod_t debugging;
+	lmod_t impairing;
 
 	/* for WHACK_CONNECTION */
 

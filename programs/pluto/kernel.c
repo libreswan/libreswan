@@ -2421,7 +2421,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		st->st_refhim = new_refhim;
 
 	/* if the impaired is set, pretend this fails */
-	if (st->st_connection->extra_debugging & IMPAIR_SA_CREATION) {
+	if (lmod_is_set(st->st_connection->extra_impairing, IMPAIR_SA_CREATION)) {
 		DBG_log("Impair SA creation is set, pretending to fail");
 		goto fail;
 	}

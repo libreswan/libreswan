@@ -1827,6 +1827,7 @@ void add_connection(const struct whack_message *wm)
 		set_policy_prio(c); /* must be after kind is set */
 
 		c->extra_debugging = wm->debugging;
+		c->extra_impairing = wm->impairing;
 
 		/* at most one virt can be present */
 		passert(wm->left.virt == NULL || wm->right.virt == NULL);
@@ -4157,12 +4158,19 @@ void show_one_connection(const struct connection *c)
 			);
 	}
 
-	if (c->extra_debugging != LEMPTY) {
+	if (!lmod_empty(c->extra_debugging)) {
 		LSWLOG_WHACK(RC_COMMENT, buf) {
 			lswlogf(buf, "\"%s\"%s:   debug: ",
 				c->name, instance);
-			lswlog_enum_lset_short(buf, &debug_and_impair_names,
-					       c->extra_debugging);
+			lswlog_lmod(buf, &debug_names, c->extra_debugging);
+		}
+	}
+
+	if (!lmod_empty(c->extra_impairing)) {
+		LSWLOG_WHACK(RC_COMMENT, buf) {
+			lswlogf(buf, "\"%s\"%s:   impair: ",
+				c->name, instance);
+			lswlog_lmod(buf, &impair_names, c->extra_impairing);
 		}
 	}
 

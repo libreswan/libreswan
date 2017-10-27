@@ -428,13 +428,28 @@ void extra_debugging(const struct connection *c)
 		return;
 	}
 
-	if (c->extra_debugging != 0) {
+	if (!lmod_empty(c->extra_debugging)) {
+		lset_t old_debugging = cur_debugging & DBG_MASK;
+		lset_t new_debugging = lmod(old_debugging, c->extra_debugging);
 		LSWLOG(buf) {
 			lswlogs(buf, "extra debugging enabled for connection: ");
-			lswlog_enum_lset_short(buf, &debug_and_impair_names,
-					       c->extra_debugging & ~cur_debugging);
+			lswlog_enum_lset_short(buf, &debug_names,
+					       new_debugging & ~old_debugging);
+			/* XXX: doesn't log cleared */
 		}
-		set_debugging(cur_debugging | c->extra_debugging);
+		set_debugging(new_debugging | (cur_debugging & IMPAIR_MASK));
+	}
+
+	if (!lmod_empty(c->extra_impairing)) {
+		lset_t old_impairing = cur_debugging & IMPAIR_MASK;
+		lset_t new_impairing = lmod(old_impairing, c->extra_impairing);
+		LSWLOG(buf) {
+			lswlogs(buf, "extra impairing enabled for connection: ");
+			lswlog_enum_lset_short(buf, &impair_names,
+					       new_impairing & ~old_impairing);
+			/* XXX: doesn't log cleared */
+		}
+		set_debugging(new_impairing | (cur_debugging & DBG_MASK));
 	}
 
 	/*

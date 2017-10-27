@@ -136,6 +136,7 @@ extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
 #include "defs.h"
 #include <sys/queue.h>
 #include "id.h"    /* for struct id */
+#include "lmod.h"
 
 struct virtual_t;
 
@@ -292,7 +293,8 @@ struct connection {
 		newest_isakmp_sa,
 		newest_ipsec_sa;
 
-	lset_t extra_debugging;
+	lmod_t extra_debugging;
+	lmod_t extra_impairing;
 
 	/* note: if the client is the gateway, the following must be equal */
 	sa_family_t addr_family;	/* between gateways */
@@ -358,7 +360,8 @@ struct whack_message;   /* forward declaration of tag whack_msg */
 extern void add_connection(const struct whack_message *wm);
 extern void initiate_connection(const char *name,
 				int whackfd,
-				lset_t moredebug,
+				lmod_t more_debugging,
+				lmod_t more_impairing,
 				enum crypto_importance importance,
 				char *remote_host);
 extern void restart_connections_by_peer(struct connection *c);

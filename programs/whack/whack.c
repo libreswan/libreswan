@@ -2049,45 +2049,67 @@ int main(int argc, char **argv)
 			break;
 
 		case DBGOPT_NONE:	/* --debug-none */
-			msg.debugging = DBG_NONE;
+			/*
+			 * Clear all debug and impair options.
+			 *
+			 * This preserves existing behaviour where
+			 * sequences like:
+			 *
+			 *     --debug-none
+			 *     --debug-none --debug something
+			 *
+			 * force all debug/impair options to values
+			 * defined by whack.
+			 */
+			msg.debugging = lmod_clr(msg.debugging, DBG_MASK);
+			msg.impairing = lmod_clr(msg.impairing, IMPAIR_MASK);
 			continue;
 
 		case DBGOPT_ALL:	/* --debug-all */
-			/* note: does not include PRIVATE */
-			msg.debugging |= DBG_ALL;
+			/*
+			 * Set most debug options ('all' does not
+			 * include PRIVATE which is cleared) and clear
+			 * all impair options.
+			 *
+			 * This preserves existing behaviour where
+			 * sequences like:
+			 *
+			 *     --debug-all
+			 *     --debug-all --impair something
+			 *
+			 * force all debug/impair options to values
+			 * defined by whack.
+			 */
+			msg.debugging = lmod_clr(msg.debugging, DBG_MASK);
+			msg.debugging = lmod_set(msg.debugging, DBG_ALL);
+			msg.impairing = lmod_clr(msg.impairing, IMPAIR_MASK);
 			continue;
 
 		case DBGOPT_DEBUG:
-		{
-			int ix = enum_match(&debug_names, optarg);
-			if (ix < 0) {
-				fprintf(stderr, "whack: unrecognized --debug '%s' option ignored",
+			if (!lmod_arg(&msg.debugging, &debug_names,
+				      DBG_ALL, DBG_MASK, optarg)) {
+				fprintf(stderr, "whack: unrecognized --debug '%s' option ignored\n",
 					optarg);
-			} else {
-				msg.debugging |= LELEM(ix);
 			}
 			continue;
-		}
 
 		case DBGOPT_IMPAIR:
-		{
-			int ix = enum_match(&impair_names, optarg);
-			if (ix < 0) {
-				fprintf(stderr, "whack: unrecognized --impair '%s' option; ignored",
+			if (!lmod_arg(&msg.impairing, &impair_names,
+				      IMPAIR_MASK, IMPAIR_MASK, optarg)) {
+				fprintf(stderr, "whack: unrecognized --impair '%s' option; ignored\n",
 					optarg);
-			} else if (ix == IMPAIR_FORCE_FIPS_IX) {
-				fprintf(stderr, "whack: invalid --impair '%s' option; must be passed directly to pluto",
+			}
+			if (lmod_is_set(msg.impairing, IMPAIR_FORCE_FIPS)) {
+				fprintf(stderr, "whack: invalid --impair '%s' option; must be passed directly to pluto\n",
 					optarg);
-			} else {
-				msg.debugging |= LELEM(ix);
+				lmod_clr(msg.impairing, IMPAIR_FORCE_FIPS);
 			}
 			continue;
-		}
 
 		default:
 			/* DBG_* or IMPAIR_* flags */
 			assert(DBGOPT_elems <= c && c < DBGOPT_elems + IMPAIR_roof_IX);
-			msg.debugging |= LELEM(c - DBGOPT_elems);
+			msg.debugging = lmod_set(msg.debugging, LELEM(c - DBGOPT_elems));
 			continue;
 		}
 		break;

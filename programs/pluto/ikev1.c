@@ -850,13 +850,14 @@ static stf_status informational(struct msg_digest *md)
 
 				/* Initiating connection to the redirected peer */
 				initiate_connection(tmp_name, tmp_whack_sock,
-						    LEMPTY, pcim_demand_crypto, NULL);
+						    empty_lmod, empty_lmod,
+						    pcim_demand_crypto, NULL);
 			}
 			return STF_IGNORE;
 		default:
 			if (st != NULL &&
-			    (st->st_connection->extra_debugging &
-			     IMPAIR_DIE_ONINFO)) {
+			    (lmod_is_set(st->st_connection->extra_impairing,
+					 IMPAIR_DIE_ONINFO))) {
 				loglog(RC_LOG_SERIOUS,
 				       "received unhandled informational notification payload %d: '%s'",
 				       n->isan_type,
@@ -2056,8 +2057,8 @@ void process_packet_tail(struct msg_digest **mdp)
 					DBG_dump_pbs(&p->pbs);
 				}
 				if (st != NULL &&
-				    st->st_connection->extra_debugging &
-				    IMPAIR_DIE_ONINFO) {
+				    lmod_is_set(st->st_connection->extra_impairing,
+						IMPAIR_DIE_ONINFO)) {
 					loglog(RC_LOG_SERIOUS,
 					       "received and failed on unknown informational message");
 					complete_v1_state_transition(mdp,

@@ -1333,8 +1333,7 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b)
 			{
 				lset_t old_cur_debugging = cur_debugging;
 
-				set_debugging(
-					cur_debugging | p->extra_debugging);
+				set_debugging(lmod(cur_debugging, p->extra_debugging));
 				DBG(DBG_CONTROL, {
 					char cib[CONN_INST_BUF];
 					DBG_log("using connection \"%s\"%s",
