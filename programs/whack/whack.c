@@ -2086,7 +2086,21 @@ int main(int argc, char **argv)
 			continue;
 
 		case DBGOPT_DEBUG:
-			if (!lmod_arg(&msg.debugging, &debug_names,
+			if (streq(optarg, "list") || streq(optarg, "help") || streq(optarg, "?")) {
+				fprintf(stderr, "debug options (* included in 'all'):\n");
+				for (long e = next_enum(&debug_names, -1);
+				     e != -1; e = next_enum(&debug_names, e)) {
+					LSWLOG_FILE(stdout, buf) {
+						if (LELEM(e) & DBG_ALL) {
+							lswlogs(buf, " *");
+						} else {
+							lswlogs(buf, "  ");
+						}
+						lswlog_enum_short(buf, &debug_names, e);
+					}
+				}
+				exit(1);
+			} else if (!lmod_arg(&msg.debugging, &debug_names,
 				      DBG_ALL, DBG_MASK, optarg)) {
 				fprintf(stderr, "whack: unrecognized --debug '%s' option ignored\n",
 					optarg);
@@ -2094,7 +2108,17 @@ int main(int argc, char **argv)
 			continue;
 
 		case DBGOPT_IMPAIR:
-			if (!lmod_arg(&msg.impairing, &impair_names,
+			if (streq(optarg, "list") || streq(optarg, "help") || streq(optarg, "?")) {
+				fprintf(stderr, "impair options:\n");
+				for (long e = next_enum(&impair_names, -1);
+				     e != -1; e = next_enum(&impair_names, e)) {
+					LSWLOG_FILE(stdout, buf) {
+						lswlogs(buf, "  ");
+						lswlog_enum_short(buf, &impair_names, e);
+					}
+				}
+				exit(1);
+			} else if (!lmod_arg(&msg.impairing, &impair_names,
 				      IMPAIR_MASK, IMPAIR_MASK, optarg)) {
 				fprintf(stderr, "whack: unrecognized --impair '%s' option; ignored\n",
 					optarg);
