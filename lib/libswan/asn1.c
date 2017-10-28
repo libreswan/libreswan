@@ -24,6 +24,7 @@
 #include "constants.h"
 #include "lswlog.h"
 #include "lswalloc.h"
+#include "lswtime.h"
 #include "asn1.h"
 #include "oid.h"
 

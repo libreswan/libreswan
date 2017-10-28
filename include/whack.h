@@ -23,7 +23,7 @@
 #ifndef _WHACK_H
 #define _WHACK_H
 
-#include <libreswan.h>
+#include "lswtime.h"
 #include "ietf_constants.h"
 #include "lmod.h"
 

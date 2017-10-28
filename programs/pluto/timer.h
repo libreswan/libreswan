@@ -19,6 +19,8 @@
 #ifndef _TIMER_H
 #define _TIMER_H
 
+#include "lswtime.h"
+
 struct state;   /* forward declaration */
 
 struct pluto_event {

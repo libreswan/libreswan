@@ -23,7 +23,8 @@
 
 #ifndef _X509_H
 #define _X509_H
-#include <libreswan.h>
+
+#include "lswtime.h"
 #include "lswalloc.h"
 #include <nss.h>
 #include <cert.h>

@@ -26,10 +26,11 @@
 #include <string.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <stdbool.h>
 #include <time.h>
 #include <limits.h>
 #include <sys/types.h>
-#include <libreswan.h>
+#include "lswtime.h"
 #include "sysdep.h"
 #include "constants.h"
 #include "lswlog.h"

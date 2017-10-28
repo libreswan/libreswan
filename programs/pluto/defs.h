@@ -17,6 +17,9 @@
 #ifndef _DEFS_H
 #define _DEFS_H
 
+#include <stdbool.h>
+
+#include "lswtime.h"
 #include "lswalloc.h"
 
 /* type of serial number of a state object
