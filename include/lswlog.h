@@ -349,8 +349,9 @@ void lswlog_file(FILE f)
 	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
 		LSWBUF_(BUF)						\
 			for (; lswlog_p;				\
-			     fwrite(BUF->array, BUF->len, 1, FILE),	\
-				     lswlog_p = false)
+			     lswlog_p = false,				\
+				     lswlogs(BUF, "\n"),		\
+				     fwrite(BUF->array, BUF->len, 1, FILE))
 
 
 /*

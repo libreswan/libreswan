@@ -237,7 +237,7 @@ static void test_enum_lset(const char *name, const enum_names *en, lset_t val)
 	LSWLOG_FILE(stdout, buf) {
 		lswlogs(buf, "\t<<");
 		lswlog_enum_lset_short(buf, en, val);
-		lswlogs(buf, ">>\n");
+		lswlogs(buf, ">>");
 	}
 }
 

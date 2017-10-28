@@ -28,7 +28,6 @@
 				LSWLOG_FILE(stdout, log) {		\
 					lswlogf(log, "\t");		\
 					lswlog_proposal_info(log, proposal); \
-					lswlogf(log, "\n");		\
 				}					\
 			}						\
 			alg_info_free(&e->ai);				\
