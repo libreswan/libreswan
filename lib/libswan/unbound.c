@@ -56,6 +56,12 @@ void unbound_ctx_free(void)
 	}
 }
 
+static int globugh_ta(const char *epath, int eerrno)
+{
+	LOG_ERRNO(eerrno, "problem with trusted anchor file \"%s\"", epath);
+	return 1;	/* stop glob */
+}
+
 static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char *trusted)
 {
 	int ugh;
@@ -121,7 +127,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 	} else {
 		glob_t globbuf;
 		char **fnp;
-		int r = glob(trusted, GLOB_ERR, NULL, &globbuf);
+		int r = glob(trusted, GLOB_ERR, globugh_ta, &globbuf);
 
 		switch (r) {
 		case 0:	/* success */
@@ -136,20 +142,20 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 				}
 			}
 			break;
+
 		case GLOB_NOSPACE:
-			loglog(RC_LOG_SERIOUS, "out of space procesing dnssec-trusted= argument:%s",
+			loglog(RC_LOG_SERIOUS, "out of space processing dnssec-trusted= argument: %s",
 				trusted);
-			globfree(&globbuf);
 			break;
+
 		case GLOB_ABORTED:
-			/*
-			 * already logged
-			 * ??? Really?  Where?
-			 */
+			/* already logged by globugh_ta */
 			break;
+
 		case GLOB_NOMATCH:
 			loglog(RC_LOG_SERIOUS, "no trust anchor files matched '%s'", trusted);
 			break;
+
 		default:
 			loglog(RC_LOG_SERIOUS, "trusted key file '%s': unknown glob error %d",
 				trusted, r);

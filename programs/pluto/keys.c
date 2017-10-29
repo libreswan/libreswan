@@ -37,11 +37,6 @@
 #include <arpa/inet.h>
 #include <resolv.h>
 
-#include <glob.h>
-#ifndef GLOB_ABORTED
-# define GLOB_ABORTED    GLOB_ABEND     /* fix for old versions */
-#endif
-
 #include <libreswan.h>
 
 #include "sysdep.h"

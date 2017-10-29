@@ -33,9 +33,6 @@
 #include <arpa/inet.h>
 #include <arpa/nameser.h>	/* missing from <resolv.h> on old systems */
 #include <glob.h>
-#ifndef GLOB_ABORTED
-#define GLOB_ABORTED GLOB_ABEND	/* fix for old versions */
-#endif
 
 #include <libreswan.h>
 
@@ -1112,7 +1109,7 @@ static void lsw_process_secret_records(struct secret **psecrets)
 	}
 }
 
-static int globugh(const char *epath, int eerrno)
+static int globugh_secrets(const char *epath, int eerrno)
 {
 	LOG_ERRNO(eerrno, "problem with secrets file \"%s\"", epath);
 	return 1;	/* stop glob */
@@ -1135,43 +1132,40 @@ static void lsw_process_secrets_file(struct secret **psecrets,
 	}
 
 	/* do globbing */
-	{
-		int r = glob(file_pat, GLOB_ERR, globugh, &globbuf);
+	int r = glob(file_pat, GLOB_ERR, globugh_secrets, &globbuf);
 
-		if (r != 0) {
-			switch (r) {
-			case GLOB_NOSPACE:
-				loglog(RC_LOG_SERIOUS,
-					"out of space processing secrets filename \"%s\"",
-					file_pat);
-				globfree(&globbuf);
-				return;
-			case GLOB_ABORTED:
-				break;	/* already logged */
-
-			case GLOB_NOMATCH:
-				libreswan_log("no secrets filename matched \"%s\"",
-					file_pat);
-				break;
-
-			default:
-				loglog(RC_LOG_SERIOUS, "unknown glob error %d",
-					r);
-				globfree(&globbuf);
-				return;
+	switch (r) {
+	case 0:
+		/* success */
+		/* for each file... */
+		for (fnp = globbuf.gl_pathv; fnp != NULL && *fnp != NULL; fnp++) {
+			if (lexopen(&pos, *fnp, FALSE)) {
+				libreswan_log("loading secrets from \"%s\"", *fnp);
+				(void) flushline(
+					"file starts with indentation (continuation notation)");
+				lsw_process_secret_records(psecrets);
+				lexclose();
 			}
 		}
-	}
+		break;
 
-	/* for each file... */
-	for (fnp = globbuf.gl_pathv; fnp != NULL && *fnp != NULL; fnp++) {
-		if (lexopen(&pos, *fnp, FALSE)) {
-			libreswan_log("loading secrets from \"%s\"", *fnp);
-			(void) flushline(
-				"file starts with indentation (continuation notation)");
-			lsw_process_secret_records(psecrets);
-			lexclose();
-		}
+	case GLOB_NOSPACE:
+		loglog(RC_LOG_SERIOUS,
+			"out of space processing secrets filename \"%s\"",
+			file_pat);
+		break;
+
+	case GLOB_ABORTED:
+		/* already logged by globugh_secrets() */
+		break;
+
+	case GLOB_NOMATCH:
+		libreswan_log("no secrets filename matched \"%s\"", file_pat);
+		break;
+
+	default:
+		loglog(RC_LOG_SERIOUS, "unknown glob error %d", r);
+		break;
 	}
 
 	globfree(&globbuf);
