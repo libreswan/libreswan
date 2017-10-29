@@ -3406,16 +3406,12 @@ static stf_status ikev2_parent_inI2outR2_tail(
 
 stf_status ikev2parent_inI2outR2(struct msg_digest *md)
 {
-	struct state *st = md->st;
-
 	/* for testing only */
 	if (DBGP(IMPAIR_SEND_NO_IKEV2_AUTH)) {
 		libreswan_log(
 			"IMPAIR_SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
 		return STF_IGNORE;
 	}
-
-	nat_traversal_change_port_lookup(md, st);
 
 	/*
 	 * the initiator sent us an encrypted payload. We need to calculate
@@ -3518,6 +3514,8 @@ static stf_status ikev2_parent_inI2outR2_tail(
 		if (ps.status != STF_OK)
 			return ps.status;
 	}
+
+	nat_traversal_change_port_lookup(md, st);
 
 	/* this call might update connection in md->st */
 	if (!ikev2_decode_peer_id_and_certs(md))
