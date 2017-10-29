@@ -637,7 +637,7 @@ enum original_role {
 				    (s->st_state) == STATE_QUICK_R1 || \
 				    (s->st_state) == STATE_QUICK_R2 || \
 				    (s->st_state) == STATE_V2_IPSEC_I || \
-				    (s->st_state) == STATE_V2_IPSEC_R ))
+				    (s->st_state) == STATE_V2_IPSEC_R))
 
 #define IS_MODE_CFG_ESTABLISHED(s) ((s) == STATE_MODE_CFG_R2)
 
