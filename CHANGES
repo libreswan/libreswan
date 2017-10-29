@@ -46,7 +46,7 @@ v3.22 (October 22, 2017)
 * pluto: dpdaction=restart fixup when using %any [Antony]
 * pluto: Don't die on labeled interfaces without SIOCGIFFLAGS support [Paul]
 * addconn: left=%defaultroute would fail if >500 host routes [Kim]
-* showhotkey/rsasigkey: Fixup mismatch of public key display [Andrew]
+* showhostkey/rsasigkey: Fixup mismatch of public key display [Andrew]
 * FIPS: Some selftests did not run properly under FIPS mode [Andrew]
 * KLIPS: Removed old premade patches, use make targets instead [paul]
 * updown Don't remove source ip if it's still used (rhbz#1492501) [Tuomo]
