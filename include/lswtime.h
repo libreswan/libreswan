@@ -48,13 +48,17 @@ bool deltaless_tv_dt(const struct timeval a, const deltatime_t b);
  * realtime_t: absolute UTC time.  Might be discontinuous due to clock
  * adjustment.
  *
- * realtime_epoch (by definition, zero) is used as a realtime value in
- * certificate handling.  Perhaps this is sancioned by X.509.
+ * Use struct timeval as that has the supporting macros timeradd(3)
+ * et.al. for performing arithmetic.
+ *
+ * According to the gettimeofday(2) man mage, struct timespec and
+ * clock_gettime(2) are, techncially, a far better choice but they
+ * lack pre-defined operators.
  */
 
-typedef struct { time_t real_secs; } realtime_t;
+typedef struct { struct timeval rt; } realtime_t;
 
-#define REALTIME_EPOCH ((realtime_t) { 0, })
+#define REALTIME_EPOCH ((realtime_t) { { 0, 0, }, })
 
 realtime_t realtime(time_t time);
 realtime_t realtimesum(realtime_t t, deltatime_t d);

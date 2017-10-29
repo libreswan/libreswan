@@ -57,36 +57,38 @@ bool deltaless_tv_dt(const struct timeval a, const deltatime_t b)
 
 realtime_t realtime(time_t time)
 {
-	return (realtime_t) { time, };
+	return (realtime_t) { { time, 0, }, };
 }
 
 realtime_t realtimesum(realtime_t t, deltatime_t d)
 {
-	realtime_t s = { t.real_secs + d.delta_secs };
+	realtime_t s = t;
+	s.rt.tv_sec += d.delta_secs;
 	return s;
 }
 
 bool is_realtime_epoch(realtime_t t)
 {
-	return t.real_secs == 0; /* by definition */
+	return !timerisset(&t.rt);
 }
 
 bool realbefore(realtime_t a, realtime_t b)
 {
-	return a.real_secs < b.real_secs;
+	return timercmp(&a.rt, &b.rt, <);
 }
 
 deltatime_t realtimediff(realtime_t a, realtime_t b)
 {
-	deltatime_t d = { a.real_secs - b.real_secs };
+	struct timeval tv;
+	timersub(&a.rt, &b.rt, &tv);
+	deltatime_t d = { tv.tv_sec };
 	return d;
 }
 
 realtime_t realnow(void)
 {
 	realtime_t t;
-
-	time(&t.real_secs);
+	gettimeofday(&t.rt, NULL);
 	return t;
 }
 
@@ -94,7 +96,8 @@ struct realtm local_realtime(realtime_t t)
 {
 	struct realtm tm;
 	zero(&tm);
-	localtime_r(&t.real_secs, &tm.tm);
+	localtime_r(&t.rt.tv_sec, &tm.tm);
+	tm.usecs = t.rt.tv_usec;
 	return tm;
 }
 
@@ -102,7 +105,8 @@ struct realtm utc_realtime(realtime_t t)
 {
 	struct realtm tm;
 	zero(&tm);
-	gmtime_r(&t.real_secs, &tm.tm);
+	gmtime_r(&t.rt.tv_sec, &tm.tm);
+	tm.usecs = t.rt.tv_usec;
 	return tm;
 }
 

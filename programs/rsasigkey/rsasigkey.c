@@ -345,7 +345,7 @@ void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco)
 	/* and the output */
 	libreswan_log("output...\n");  /* deliberate extra newline */
 	printf("\t# RSA %d bits   %s   %s", nbits, outputhostname,
-		ctime(&now.real_secs));
+		ctime(&now.rt.tv_sec));
 	/* ctime provides \n */
 	printf("\t# for signatures only, UNSAFE FOR ENCRYPTION\n");
 
