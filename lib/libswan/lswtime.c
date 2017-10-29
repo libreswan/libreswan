@@ -66,16 +66,9 @@ realtime_t realtimesum(realtime_t t, deltatime_t d)
 	return s;
 }
 
-realtime_t undefinedrealtime(void)
+bool is_realtime_epoch(realtime_t t)
 {
-	realtime_t u = { UNDEFINED_TIME };
-
-	return u;
-}
-
-bool isundefinedrealtime(realtime_t t)
-{
-	return t.real_secs == UNDEFINED_TIME;
+	return t.real_secs == 0; /* by definition */
 }
 
 bool realbefore(realtime_t a, realtime_t b)

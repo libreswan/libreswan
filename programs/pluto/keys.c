@@ -452,7 +452,7 @@ stf_status RSA_check_signature_gen(struct state *st,
 				    });
 
 				/* check if found public key has expired */
-				if (!isundefinedrealtime(key->until_time) &&
+				if (!is_realtime_epoch(key->until_time) &&
 				    realbefore(key->until_time, nw)) {
 					loglog(RC_LOG_SERIOUS,
 					       "cached RSA public key has expired and has been deleted");
@@ -778,7 +778,7 @@ err_t add_public_key(const struct id *id,
 	pk->id = *id;
 	pk->dns_auth_level = dns_auth_level;
 	pk->alg = alg;
-	pk->until_time = undefinedrealtime();
+	pk->until_time = REALTIME_EPOCH;
 	pk->issuer = empty_chunk;
 
 	install_public_key(pk, head);

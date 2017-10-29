@@ -121,7 +121,7 @@ const char *check_expiry(realtime_t expiration_date, time_t warning_interval,
 {
 	time_t time_left;	/* a deltatime_t, unpacked */
 
-	if (isundefinedrealtime(expiration_date))
+	if (is_realtime_epoch(expiration_date))
 		return "ok (expires never)";
 
 	time_left = deltasecs(realtimediff(expiration_date, realnow()));

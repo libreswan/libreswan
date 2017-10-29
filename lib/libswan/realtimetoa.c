@@ -25,7 +25,7 @@ static const char *months[] = {
  */
 char *realtimetoa(const realtime_t rtm, bool utc, char *b, size_t blen)
 {
-	if (isundefinedrealtime(rtm)) {
+	if (is_realtime_epoch(rtm)) {
 		snprintf(b, blen, "--- -- --:--:--%s----",
 			(utc) ? " UTC " : " ");
 	} else {

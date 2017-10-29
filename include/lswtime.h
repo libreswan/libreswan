@@ -27,21 +27,6 @@
  */
 
 /*
- * UNDEFINED_TIME is meant to be an impossible exceptional time_t value.
- *
- * ??? On UNIX, 0 is a value that means 1970-01-01 00:00:00 +0000 (UTC).
- *
- * UNDEFINED_TIME is used as a real time_t value in certificate handling.
- * Perhaps this is sancioned by X.509.
- *
- * UNDEFINED_TIME is used as a mono time_t value in liveness_check().
- * 0 is PROBABLY safely distinct in this application.
- *
- * XXX: this gets used to initialize two different object types :-(
- */
-#define UNDEFINED_TIME  ((time_t)0)	/* ??? what a kludge! */
-
-/*
  * XXX: This value isn't typed so what is it really the max of?
  */
 #define TIME_T_MAX  ((time_t) ((1ull << (sizeof(time_t) * BITS_PER_BYTE - 1)) - 1))
@@ -63,13 +48,17 @@ bool deltaless_tv_dt(const struct timeval a, const deltatime_t b);
 /*
  * realtime_t: absolute UTC time.  Might be discontinuous due to clock
  * adjustment.
+ *
+ * realtime_epoch (by definition, zero) is used as a realtime value in
+ * certificate handling.  Perhaps this is sancioned by X.509.
  */
 
 typedef struct { time_t real_secs; } realtime_t;
 
+#define REALTIME_EPOCH ((realtime_t) { 0, })
+
 realtime_t realtimesum(realtime_t t, deltatime_t d);
-realtime_t undefinedrealtime(void);
-bool isundefinedrealtime(realtime_t t);
+bool is_realtime_epoch(realtime_t t);
 bool realbefore(realtime_t a, realtime_t b);
 deltatime_t realtimediff(realtime_t a, realtime_t b);
 realtime_t realnow(void);
@@ -82,9 +71,18 @@ char *realtimetoa(const realtime_t rtm, bool utc, char *buf, size_t blen);
  *
  * XXX: what advantage is ther over realtime_t which could be
  * implemented to meet this requirement.
+ *
+ * UNDEFINED_TIME is meant to be an impossible exceptional time_t value.
+ *
+ * ??? On UNIX, 0 is a value that means 1970-01-01 00:00:00 +0000 (UTC).
+ *
+ * UNDEFINED_TIME is used as a mono time_t value in liveness_check().
+ * 0 is PROBABLY safely distinct in this application.
  */
 
 typedef struct { time_t mono_secs; } monotime_t;
+
+#define UNDEFINED_TIME  ((time_t)0)	/* ??? what a kludge! */
 
 monotime_t monotimesum(monotime_t t, deltatime_t d);
 bool monobefore(monotime_t a, monotime_t b);
