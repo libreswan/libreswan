@@ -83,8 +83,10 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 	errno = 0;
 	ugh = ub_ctx_resolvconf(dns_ctx, "/etc/resolv.conf");
 	if (ugh != 0) {
+		int e = errno;	/* protect value from ub_strerror */
+
 		loglog(RC_LOG_SERIOUS, "error reading /etc/resolv.conf: %s: %s",
-			ub_strerror(ugh), strerror(errno));
+			ub_strerror(ugh), strerror(e));
 	} else {
 		DBG(DBG_DNS, DBG_log("/etc/resolv.conf usage activated"));
 	}
@@ -106,8 +108,10 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 		errno = 0;
 		ugh = ub_ctx_add_ta_autr(dns_ctx, (char *) rootfile);
 		if (ugh != 0) {
+			int e = errno;	/* protect value from ub_strerror */
+
 			loglog(RC_LOG_SERIOUS, "error adding dnssec root key: %s: %s",
-				ub_strerror(ugh), strerror(errno));
+				ub_strerror(ugh), strerror(e));
 			loglog(RC_LOG_SERIOUS, "WARNING: DNSSEC validation likely broken!");
 		}
 	}
