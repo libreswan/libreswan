@@ -29,13 +29,12 @@ char *realtimetoa(const realtime_t rtm, bool utc, char *b, size_t blen)
 		snprintf(b, blen, "--- -- --:--:--%s----",
 			(utc) ? " UTC " : " ");
 	} else {
-		struct tm tmbuf;
-		struct tm *tm = (utc ? gmtime_r : localtime_r)(&rtm.real_secs, &tmbuf);
+		struct realtm t = (utc ? utc_realtime : local_realtime)(rtm);
 
 		snprintf(b, blen, "%s %02d %02d:%02d:%02d%s%04d",
-			months[tm->tm_mon], tm->tm_mday, tm->tm_hour,
-			tm->tm_min, tm->tm_sec,
-			(utc) ? " UTC " : " ", tm->tm_year + 1900);
+			 months[t.tm.tm_mon], t.tm.tm_mday, t.tm.tm_hour,
+			 t.tm.tm_min, t.tm.tm_sec,
+			 (utc) ? " UTC " : " ", t.tm.tm_year + 1900);
 	}
 	return b;
 }

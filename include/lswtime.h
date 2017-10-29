@@ -65,6 +65,15 @@ realtime_t realnow(void);
 #define REALTIMETOA_BUF     30	/* size of realtimetoa string buffer */
 char *realtimetoa(const realtime_t rtm, bool utc, char *buf, size_t blen);
 
+struct realtm {
+	struct tm tm;
+	long usecs;
+};
+
+struct realtm local_realtime(realtime_t t);
+struct realtm utc_realtime(realtime_t t);
+
+
 /*
  * monotime_t: absolute monotonic time.  No discontinuities (except
  * for machine sleep?)

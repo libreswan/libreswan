@@ -284,11 +284,10 @@ void close_log(void)
 void prettynow(char *buf, size_t buflen, const char *fmt)
 {
 	realtime_t n = realnow();
-	struct tm tm1;
-	struct tm *t = localtime_r(&n.real_secs, &tm1);
+	struct realtm t = local_realtime(n);
 
 	/* the cast suppresses a warning: <http://gcc.gnu.org/bugzilla/show_bug.cgi?id=39438> */
-	((size_t (*)(char *, size_t, const char *, const struct tm *))strftime)(buf, buflen, fmt, t);
+	((size_t (*)(char *, size_t, const char *, const struct tm *))strftime)(buf, buflen, fmt, &t.tm);
 }
 
 void libreswan_log_errno(int e, const char *prefix, const char *message, ...)
@@ -548,17 +547,16 @@ void daily_log_reset(void)
 
 void daily_log_event(void)
 {
-	struct tm tm1, *ltime;
 	time_t interval;
 	realtime_t n = realnow();
 
 	/* schedule event for midnight, local time */
 	tzset();
-	ltime = localtime_r(&n.real_secs, &tm1);
+	struct realtm t = local_realtime(n);
 	interval = secs_per_day -
-		   (ltime->tm_sec +
-		    ltime->tm_min * secs_per_minute +
-		    ltime->tm_hour * secs_per_hour);
+		   (t.tm.tm_sec +
+		    t.tm.tm_min * secs_per_minute +
+		    t.tm.tm_hour * secs_per_hour);
 
 	/* this might happen during a leap second */
 	if (interval <= 0)

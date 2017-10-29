@@ -17,6 +17,7 @@
 
 #include <stdbool.h>
 
+#include "constants.h"
 #include "lswtime.h"
 
 /* delta time (interval) operations */
@@ -88,6 +89,22 @@ realtime_t realnow(void)
 
 	time(&t.real_secs);
 	return t;
+}
+
+struct realtm local_realtime(realtime_t t)
+{
+	struct realtm tm;
+	zero(&tm);
+	localtime_r(&t.real_secs, &tm.tm);
+	return tm;
+}
+
+struct realtm utc_realtime(realtime_t t)
+{
+	struct realtm tm;
+	zero(&tm);
+	gmtime_r(&t.real_secs, &tm.tm);
+	return tm;
 }
 
 /* monotonic time operations */
