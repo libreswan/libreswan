@@ -97,7 +97,7 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
- grep retransmit /tmp/pluto.log
+ grep retransmit /tmp/pluto.log | grep -v impair
 west #
 west #
  ../bin/check-for-core.sh

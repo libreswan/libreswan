@@ -1,5 +1,5 @@
 ipsec look
-grep retransmit /tmp/pluto.log
+grep retransmit /tmp/pluto.log | grep -v impair
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
