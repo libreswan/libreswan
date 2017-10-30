@@ -71,7 +71,7 @@ char *realtimetoa(const realtime_t rtm, bool utc, char *buf, size_t blen);
 
 struct realtm {
 	struct tm tm;
-	long usecs;
+	long microsec; /* 1 000 000 per second */
 };
 
 struct realtm local_realtime(realtime_t t);

@@ -97,7 +97,8 @@ struct realtm local_realtime(realtime_t t)
 	struct realtm tm;
 	zero(&tm);
 	localtime_r(&t.rt.tv_sec, &tm.tm);
-	tm.usecs = t.rt.tv_usec;
+	/* 1 000 000 microseconds to a second. */
+	tm.microsec = t.rt.tv_usec;
 	return tm;
 }
 
@@ -106,7 +107,8 @@ struct realtm utc_realtime(realtime_t t)
 	struct realtm tm;
 	zero(&tm);
 	gmtime_r(&t.rt.tv_sec, &tm.tm);
-	tm.usecs = t.rt.tv_usec;
+	/* 1 000 000 microseconds to a second. */
+	tm.microsec = t.rt.tv_usec;
 	return tm;
 }
 
