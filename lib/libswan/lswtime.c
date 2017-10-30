@@ -48,12 +48,6 @@ bool deltaless(deltatime_t a, deltatime_t b)
 	return deltasecs(a) < deltasecs(b);
 }
 
-bool deltaless_tv_tv(const struct timeval a, const struct timeval b)
-{
-	return a.tv_sec < b.tv_sec ||
-		( a.tv_sec == b.tv_sec && a.tv_usec < b.tv_usec);
-}
-
 bool deltaless_tv_dt(const struct timeval a, const deltatime_t b)
 {
 	return a.tv_sec < deltasecs(b);

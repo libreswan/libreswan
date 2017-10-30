@@ -42,7 +42,6 @@ unsigned long deltamillisecs(deltatime_t d);
 time_t deltasecs(deltatime_t d);
 deltatime_t deltatimescale(int num, int denom, deltatime_t d);
 bool deltaless(deltatime_t a, deltatime_t b);
-bool deltaless_tv_tv(const struct timeval a, const struct timeval b);
 bool deltaless_tv_dt(const struct timeval a, const deltatime_t b);
 
 /*
