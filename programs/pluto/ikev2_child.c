@@ -1206,11 +1206,11 @@ static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st, int af)
 			ip_str.buf);
 
 	if (c->policy & POLICY_OPPORTUNISTIC) {
-		libreswan_log("ignored CP payload for Opportunistic IPsec");
+		libreswan_log("ignored INTERNAL_IP4_DNS CP payload for Opportunistic IPsec");
 		return TRUE;
 	}
 	if (responder) {
-		libreswan_log("responder CP ignored");
+		libreswan_log("responder INTERNAL_IP4_DNS CP ignored");
 		return TRUE;
 	}
 
