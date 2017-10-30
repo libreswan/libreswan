@@ -291,21 +291,26 @@ typedef enum {
 
 #define IKE_V2_OVERLAPPING_WINDOW_SIZE	1 /* our default for rfc 7296 # 2.3 */
 
-/* debugging settings: a set of selections for reporting
- * These would be more naturally situated in log.h,
- * but they are shared with whack.
- * IMPAIR_* actually change behaviour, usually badly,
- * to aid in testing.  Naturally, these are not included in ALL.
+/*
+ * debugging settings: a set of selections for reporting These would
+ * be more naturally situated in log.h, but they are shared with
+ * whack.
  *
- * NOTE: changes here must be done in concert with changes to DBGOPT_*
- * in whack.c.  A change to WHACK_MAGIC in whack.h will be required too.
+ * IMPAIR_* actually change behaviour, usually badly, to aid in
+ * testing.  Naturally, these are not included in ALL.
+ *
+ * NOTE: A change to WHACK_MAGIC in whack.h will be required too.
  */
 
-/* Index of DBG/IMPAIR set elements.
+/*
+ * Index of DBG set elements.
+ *
  * Note: these are NOT sets: use LELEM to turn these into singletons.
  * Used by whack and pluto.
+ *
  * NOTE: when updating/adding x_IX, do so to x in the next table too!
  */
+
 enum {
 	DBG_floor_IX = 0,
 	DBG_RAW_IX = DBG_floor_IX,		/* raw packet I/O */
@@ -324,13 +329,44 @@ enum {
 	DBG_X509_IX,		/* X.509/pkix verify, cert retrival */
 	DBG_DPD_IX,		/* DPD items */
 	DBG_OPPOINFO_IX,	/* log various informational things about oppo/%trap-keying */
+
 	DBG_WHACKWATCH_IX,	/* never let WHACK go */
 	DBG_PRIVATE_IX,		/* displays private information: DANGER! */
 
 	DBG_roof_IX,		/* first unassigned DBG is assigned to IMPAIR! */
 };
 
-#define DBG_MASK	LRANGE(0, DBG_roof_IX - 1)
+/* Sets of Debug items */
+
+#define DBG_MASK	LRANGE(DBG_floor_IX, DBG_roof_IX - 1)
+#define DBG_NONE        0                                       /* no options on, including impairments */
+#define DBG_ALL         LRANGES(DBG_RAW, DBG_OPPOINFO)          /* all logging options on EXCEPT DBG_PRIVATE and DBG_WHACKWATCH */
+
+/* singleton sets: must be kept in sync with the items! */
+
+#define DBG_RAW	LELEM(DBG_RAW_IX)
+#define DBG_CRYPT	LELEM(DBG_CRYPT_IX)
+#define DBG_PARSING	LELEM(DBG_PARSING_IX)
+#define DBG_EMITTING	LELEM(DBG_EMITTING_IX)
+#define DBG_CONTROL	LELEM(DBG_CONTROL_IX)
+#define DBG_LIFECYCLE	LELEM(DBG_LIFECYCLE_IX)
+#define DBG_KERNEL	LELEM(DBG_KERNEL_IX)
+#define DBG_DNS		LELEM(DBG_DNS_IX)
+#define DBG_OPPO	LELEM(DBG_OPPO_IX)
+#define DBG_CONTROLMORE	LELEM(DBG_CONTROLMORE_IX)
+#define DBG_PFKEY	LELEM(DBG_PFKEY_IX)
+#define DBG_NATT	LELEM(DBG_NATT_IX)
+#define DBG_X509	LELEM(DBG_X509_IX)
+#define DBG_DPD		LELEM(DBG_DPD_IX)
+#define DBG_OPPOINFO	LELEM(DBG_OPPOINFO_IX)
+
+#define DBG_WHACKWATCH	LELEM(DBG_WHACKWATCH_IX)
+#define DBG_PRIVATE	LELEM(DBG_PRIVATE_IX)
+
+/*
+ * Index of IMPAIR set elements.  These set at the end of the DBG
+ * elements.
+ */
 
 enum {
 	IMPAIR_floor_IX = DBG_roof_IX,
@@ -366,32 +402,11 @@ enum {
 	IMPAIR_roof_IX	/* first unassigned IMPAIR */
 };
 
-#define IMPAIR_MASK	LRANGE(DBG_roof_IX, IMPAIR_roof_IX - 1)
+/* Sets of Impair items */
 
-/* Sets of Debug / Impair items */
-#define DBG_NONE        0                                       /* no options on, including impairments */
-#define DBG_ALL         LRANGES(DBG_RAW, DBG_OPPOINFO)          /* all logging options on EXCEPT DBG_PRIVATE and DBG_WHACKWATCH */
+#define IMPAIR_MASK	LRANGE(IMPAIR_floor_IX, IMPAIR_roof_IX - 1)
 
 /* singleton sets: must be kept in sync with the items! */
-
-#define DBG_RAW	LELEM(DBG_RAW_IX)
-#define DBG_CRYPT	LELEM(DBG_CRYPT_IX)
-#define DBG_PARSING	LELEM(DBG_PARSING_IX)
-#define DBG_EMITTING	LELEM(DBG_EMITTING_IX)
-#define DBG_CONTROL	LELEM(DBG_CONTROL_IX)
-#define DBG_LIFECYCLE	LELEM(DBG_LIFECYCLE_IX)
-#define DBG_KERNEL	LELEM(DBG_KERNEL_IX)
-#define DBG_DNS		LELEM(DBG_DNS_IX)
-#define DBG_OPPO	LELEM(DBG_OPPO_IX)
-#define DBG_CONTROLMORE	LELEM(DBG_CONTROLMORE_IX)
-#define DBG_PFKEY	LELEM(DBG_PFKEY_IX)
-#define DBG_NATT	LELEM(DBG_NATT_IX)
-#define DBG_X509	LELEM(DBG_X509_IX)
-#define DBG_DPD		LELEM(DBG_DPD_IX)
-#define DBG_OPPOINFO	LELEM(DBG_OPPOINFO_IX)
-#define DBG_WHACKWATCH	LELEM(DBG_WHACKWATCH_IX)
-
-#define DBG_PRIVATE	LELEM(DBG_PRIVATE_IX)
 
 #define IMPAIR_BUST_MI2	LELEM(IMPAIR_BUST_MI2_IX)
 #define IMPAIR_BUST_MR2	LELEM(IMPAIR_BUST_MR2_IX)
