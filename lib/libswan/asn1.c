@@ -302,9 +302,7 @@ realtime_t asn1totime(const chunk_t *utctime, asn1_t type)
 	/* ??? is TIME_MAX really a good failure mode? */
 	{
 		time_t tc = mktime(&t);
-		realtime_t r = { tc == -1 ? TIME_MAX : tc - timezone - tz_offset };
-
-		return r;
+		return realtime(tc == -1 ? TIME_MAX : tc - timezone - tz_offset);
 	}
 }
 

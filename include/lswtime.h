@@ -57,6 +57,7 @@ typedef struct { time_t real_secs; } realtime_t;
 
 #define REALTIME_EPOCH ((realtime_t) { 0, })
 
+realtime_t realtime(time_t time);
 realtime_t realtimesum(realtime_t t, deltatime_t d);
 bool is_realtime_epoch(realtime_t t);
 bool realbefore(realtime_t a, realtime_t b);

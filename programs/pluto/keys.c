@@ -811,8 +811,8 @@ err_t add_ipseckey(const struct id *id,
 	}
 
 	pk->dns_ttl = ttl;
-	pk->until_time = pk->installed_time = realnow();
-	pk->until_time.real_secs += ttl_used; /* check for overflow ? */
+	pk->installed_time = realnow();
+	pk->until_time = realtimesum(pk->installed_time, deltatime(ttl_used));
 	pk->id = *id;
 	pk->dns_auth_level = dns_auth_level;
 	pk->alg = alg;

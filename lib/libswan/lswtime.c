@@ -61,6 +61,11 @@ bool deltaless_tv_dt(const struct timeval a, const deltatime_t b)
 
 /* real time operations */
 
+realtime_t realtime(time_t time)
+{
+	return (realtime_t) { time, };
+}
+
 realtime_t realtimesum(realtime_t t, deltatime_t d)
 {
 	realtime_t s = { t.real_secs + d.delta_secs };

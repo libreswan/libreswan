@@ -121,16 +121,14 @@ bool cert_key_is_rsa(CERTCertificate *cert)
 
 static realtime_t get_nss_cert_notafter(CERTCertificate *cert)
 {
-	realtime_t ret = REALTIME_EPOCH;
 	PRTime notBefore, notAfter;
 
 	if (CERT_GetCertTimes(cert, &notBefore, &notAfter) != SECSuccess)
-		ret.real_secs = -1;
+		return realtime(-1);
 	else
-		ret.real_secs = notAfter / PR_USEC_PER_SEC;
-
-	return ret;
+		return realtime(notAfter / PR_USEC_PER_SEC);
 }
+
 /*
  * does our CA match one of the requested CAs?
  */
