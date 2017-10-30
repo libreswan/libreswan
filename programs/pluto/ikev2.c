@@ -893,13 +893,13 @@ static void process_recent_rtransmit(struct state *st,
         }
 
 	if (st->st_msgid_lastreplied != st->st_msgid_lastrecv) {
-		DBG(DBG_CONTROLMORE,
+		DBG(DBG_CONTROLMORE|DBG_RETRANSMITS,
 			DBG_log("cannot retransmit response for message ID: %u exchange %s lastreplied %u",
 				st->st_msgid_lastrecv,
 				enum_name(&ikev2_exchange_names, ix),
 				st->st_msgid_lastreplied));
 	} else {
-		DBG(DBG_CONTROLMORE,
+		DBG(DBG_CONTROLMORE|DBG_RETRANSMITS,
 			DBG_log("retransmit response for message ID: %u exchange %s",
 				st->st_msgid_lastrecv,
 				enum_name(&ikev2_exchange_names, ix)));
@@ -1000,7 +1000,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			if (st->st_msgid_lastrecv == md->msgid_received) {
 				/* this is a recent retransmit. */
 				set_cur_state(st);
-				DBG(DBG_CONTROLMORE, DBG_log(
+				DBG(DBG_CONTROLMORE|DBG_RETRANSMITS, DBG_log(
 					"duplicate IKE_INIT_I message received, retransmiting previous packet"));
 				if (st->st_suspended_md != NULL) {
 					libreswan_log("IKE_INIT_I retransmission ignored: we're still working on the previous one");
@@ -1074,7 +1074,7 @@ void process_v2_packet(struct msg_digest **mdp)
 					if (st->st_msgid_lastack != v2_INVALID_MSGID &&
 					    st->st_msgid_lastack > md->msgid_received)
 					{
-						DBG(DBG_CONTROL, DBG_log(
+						DBG(DBG_CONTROL|DBG_RETRANSMITS, DBG_log(
 							"dropping retransmitted response with msgid %u from peer - we already processed %u.",
 						    md->msgid_received, st->st_msgid_lastack));
 						return;

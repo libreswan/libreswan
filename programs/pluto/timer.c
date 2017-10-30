@@ -137,13 +137,14 @@ static void retransmit_v1_msg(struct state *st)
 	set_cur_state(st);
 
 	/* Paul: this line can say attempt 3 of 2 because the cleanup happens when over the maximum */
-	DBG(DBG_CONTROL, {
+	DBG(DBG_CONTROL|DBG_RETRANSMITS, {
 		ipstr_buf b;
 		char cib[CONN_INST_BUF];
-		DBG_log("handling event EVENT_v1_RETRANSMIT for %s \"%s\"%s #%lu attempt %lu of %lu",
+		DBG_log("handling event EVENT_v1_RETRANSMIT for %s \"%s\"%s #%lu attempt %lu retransmit %lu of %lu",
 			ipstr(&c->spd.that.host_addr, &b),
 			c->name, fmt_conn_instance(c, cib),
-			st->st_serialno, try, try_limit);
+			st->st_serialno, try,
+			st->st_retransmit, try_limit);
 	});
 
 	if (DBGP(IMPAIR_RETRANSMITS)) {
@@ -162,7 +163,7 @@ static void retransmit_v1_msg(struct state *st)
 		if (st->st_state != STATE_MAIN_R1 && st->st_state != STATE_AGGR_R1) {
 			resend_ike_v1_msg(st, "EVENT_v1_RETRANSMIT");
 		} else {
-			DBG(DBG_CONTROL, DBG_log("skipped initial reply packet retransmission to avoid amplification attacks"));
+			DBG(DBG_CONTROL|DBG_RETRANSMITS, DBG_log("skipped initial reply packet retransmission to avoid amplification attacks"));
 		}
 		event_schedule_ms(EVENT_v1_RETRANSMIT, delay_ms, st);
 	} else {
@@ -190,7 +191,7 @@ static void retransmit_v1_msg(struct state *st)
 			break;
 		}
 		loglog(RC_NORETRANSMISSION,
-			"max number of retransmissions (%d) reached %s%s",
+			"max number of retransmissions (%ld) reached %s%s",
 			st->st_retransmit,
 			enum_name(&state_names, st->st_state),
 			details);
@@ -264,17 +265,18 @@ static void retransmit_v2_msg(struct state *st)
 	try = st->st_try + 1;
 
 	/* Paul: this line can stay attempt 3 of 2 because the cleanup happens when over the maximum */
-	DBG(DBG_CONTROL, {
+	DBG(DBG_CONTROL|DBG_RETRANSMITS, {
 		ipstr_buf b;
 		char cib[CONN_INST_BUF];
 		DBG_log("handling event EVENT_v2_RETRANSMIT for %s \"%s\"%s #%lu attempt %lu of %lu",
 			ipstr(&c->spd.that.host_addr, &b),
 			c->name, fmt_conn_instance(c, cib),
 			st->st_serialno, try, try_limit);
-		DBG_log("and parent for %s \"%s\"%s #%lu attempt %lu of %lu",
+		DBG_log("and parent for %s \"%s\"%s #%lu attempt %lu retransmit %lu of %lu",
 			ipstr(&c->spd.that.host_addr, &b),
 			c->name, fmt_conn_instance(c, cib),
-			pst->st_serialno, pst->st_try, try_limit);
+			pst->st_serialno, pst->st_try,
+			pst->st_retransmit, try_limit);
 		});
 
 	if (DBGP(IMPAIR_RETRANSMITS)) {
@@ -321,7 +323,7 @@ static void retransmit_v2_msg(struct state *st)
 	if (DBGP(DBG_OPPO) || ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY)) {
 		/* too spammy for OE */
 		loglog(RC_NORETRANSMISSION,
-			"max number of retransmissions (%d) reached %s%s",
+			"max number of retransmissions (%lu) reached %s%s",
 			st->st_retransmit,
 			enum_name(&state_names, st->st_state),
 			details);
@@ -364,7 +366,8 @@ static void retransmit_v2_msg(struct state *st)
 		}
 		ipsecdoi_replace(st, LEMPTY, LEMPTY, try);
 	} else {
-		DBG(DBG_CONTROL, DBG_log("maximum number of keyingtries reached - deleting state"));
+		DBG(DBG_CONTROL|DBG_RETRANSMITS,
+		    DBG_log("maximum number of keyingtries reached - deleting state"));
 	}
 
 
@@ -721,6 +724,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		break;
 
 	case EVENT_v1_RETRANSMIT:
+		DBG(DBG_RETRANSMITS, DBG_log("IKEv1 retransmit event"));
 		retransmit_v1_msg(st);
 		break;
 
@@ -729,6 +733,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		break;
 
 	case EVENT_v2_RETRANSMIT:
+		DBG(DBG_RETRANSMITS, DBG_log("IKEv2 retransmit event"));
 		retransmit_v2_msg(st);
 		break;
 
@@ -939,14 +944,18 @@ void delete_event(struct state *st)
 					st->st_serialno));
 		return;
 	}
-	DBG(DBG_CONTROLMORE,
-			DBG_log("state #%lu requesting %s to be deleted",
-				st->st_serialno,
-				enum_show(&timer_event_names,
-					st->st_event->ev_type)));
-
-	if (st->st_event->ev_type == EVENT_v1_RETRANSMIT || st->st_event->ev_type == EVENT_v2_RETRANSMIT)
+	if (DBGP(DBG_CONTROL) ||
+	    (DBGP(DBG_RETRANSMITS) && (st->st_event->ev_type == EVENT_v1_RETRANSMIT ||
+				       st->st_event->ev_type == EVENT_v2_RETRANSMIT))) {
+		DBG_log("state #%lu requesting %s to be deleted",
+			st->st_serialno,
+			enum_show(&timer_event_names,
+				  st->st_event->ev_type));
+	}
+	if (st->st_event->ev_type == EVENT_v1_RETRANSMIT ||
+	    st->st_event->ev_type == EVENT_v2_RETRANSMIT) {
 		st->st_retransmit = 0;
+	}
 	delete_pluto_event(&st->st_event);
 }
 
@@ -1021,7 +1030,9 @@ static void event_schedule_tv(enum event_type type, const struct timeval delay, 
 		}
 	}
 
-	DBG(DBG_CONTROL, {
+	if (DBGP(DBG_CONTROL) ||
+	    (DBGP(DBG_RETRANSMITS) && (ev->ev_type == EVENT_v1_RETRANSMIT ||
+				       ev->ev_type == EVENT_v2_RETRANSMIT))) {
 			if (st == NULL) {
 				DBG_log("inserting event %s, timeout in %lu.%06lu seconds",
 					en,
@@ -1034,7 +1045,7 @@ static void event_schedule_tv(enum event_type type, const struct timeval delay, 
 					(unsigned long)delay.tv_usec,
 					ev->ev_state->st_serialno);
 			}
-		});
+	}
 }
 
 void event_schedule_ms(enum event_type type, unsigned long delay_ms, struct state *st)

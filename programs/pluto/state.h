@@ -456,7 +456,7 @@ struct state {
 
 	enum state_kind st_state;       /* State of exchange */
 
-	u_int32_t st_retransmit;	/* Number of retransmits */
+	unsigned long st_retransmit;	/* Number of retransmits */
 	unsigned long st_try;		/* Number of times rekeying attempted.
 					 * 0 means the only time.
 					 */
