@@ -1,3 +1,13 @@
 liveness test with west using narrowing=yes, causing instantiation.
 
-west must install a %trap but does not because narowing is causing instantiation
+west will install a %trap for the TEMPLATE connection.
+Not for the narrowed one.
+
+Trap will be installed only if the connection can be oriented.
+
+
+NOTE 2017-10-21:
+West is brought up with --up, so we would expect any failure of the phase2
+to cause phase1 to try and setup a tunnel again. What instead happens is
+that phase2 is dead and removed, which seems to trigger a phase1 down as well
+without triggering a new action to initiate

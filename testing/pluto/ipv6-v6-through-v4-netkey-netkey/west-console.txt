@@ -153,7 +153,7 @@ west #
 000 Connection list:
 000  
 000 "westnet-eastnet-6in4": 2001:db8:0:1::/64===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===2001:db8:0:2::/64; erouted; eroute owner: #2
-000 "westnet-eastnet-6in4":     oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet-6in4":     oriented; my_ip=unset; their_ip=unset;; my_updown=ipsec _updown;
 000 "westnet-eastnet-6in4":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
 000 "westnet-eastnet-6in4":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "westnet-eastnet-6in4":   labeled_ipsec:no, loopback:no;
@@ -260,10 +260,10 @@ default via 192.1.2.254 dev eth1
 169.254.0.0/16 dev eth0  scope link  metric 1002 
 169.254.0.0/16 dev eth1  scope link  metric 1003 
 169.254.0.0/16 dev eth2  scope link  metric 1004 
-192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254 
 192.0.2.0/24 via 192.1.2.23 dev eth1 
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
-192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45 
+192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45 
 unreachable ::/96 dev lo  metric 1024  error -101
 unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -101
 2001:db8:0:1::/64 dev eth0  proto kernel  metric 256 
@@ -373,10 +373,10 @@ default via 192.1.2.254 dev eth1
 169.254.0.0/16 dev eth0  scope link  metric 1002 
 169.254.0.0/16 dev eth1  scope link  metric 1003 
 169.254.0.0/16 dev eth2  scope link  metric 1004 
-192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254 
 192.0.2.0/24 via 192.1.2.23 dev eth1 
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
-192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45 
+192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45 
 unreachable ::/96 dev lo  metric 1024  error -101
 unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -101
 2001:db8:0:1::/64 dev eth0  proto kernel  metric 256 
@@ -402,7 +402,7 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+ ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 type=AVC msg=audit(1395258105.677:50): avc:  denied  { read } for  pid=1756 comm="pluto" name="ipsec.conf.common" dev="9p" ino=529045 scontext=system_u:system_r:ipsec_t:s0 tcontext=system_u:object_r:var_log_t:s0 tclass=file

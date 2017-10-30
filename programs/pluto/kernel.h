@@ -97,11 +97,22 @@ struct kernel_sa {
 	unsigned replay_window;
 	reqid_t reqid;
 
-	unsigned authalg;
+	unsigned authalg; /* use INTEG */
+
+	const struct integ_desc *integ;
 	unsigned authkeylen;
 	unsigned char *authkey;
 
-	unsigned encalg;
+	/*
+	 * This field contains the compression algorithm ID (or 0).
+	 *
+	 * XXX: For the moment, when ESP, it also contains the
+	 * encryption algorithm's IKEv1 ID.  This is a just-in-case
+	 * some code is still relying on that value.
+	 */
+	unsigned compalg;
+
+	const struct encrypt_desc *encrypt;
 	unsigned enckeylen;
 	unsigned char *enckey;
 
@@ -111,17 +122,21 @@ struct kernel_sa {
 
 	int encapsulation;
 	u_int16_t natt_sport, natt_dport;
-	u_int8_t transid, natt_type;
+	u_int8_t natt_type;
 	ip_address *natt_oa;
 	const char *text_said;
 #ifdef HAVE_LABELED_IPSEC
 	struct xfrm_user_sec_ctx_ike *sec_ctx;
 #endif
+	const char *nic_offload_dev;
 
 	deltatime_t sa_lifetime; /* number of seconds until SA expires */
-	/* below two need to enabled and used, instead of getting passed */
-	// uint32_t sa_priority;
-	// struct sa_marks *sa_marks;
+	/*
+	 * Below two enties need to enabled and used,
+	 * instead of getting passed
+	 * uint32_t sa_priority;
+	 * struct sa_marks *sa_marks;
+	 */
 };
 
 struct raw_iface {
@@ -210,6 +225,7 @@ struct kernel_ops {
 			  struct state *st);
 	void (*process_ifaces)(struct raw_iface *rifaces);
 	bool (*exceptsocket)(int socketfd, int family);
+	bool (*v6holes)();
 };
 
 extern int create_socket(struct raw_iface *ifp, const char *v_name, int port);
@@ -445,8 +461,6 @@ extern bool raw_eroute(const ip_address *this_host,
 		       , const char *policy_label
 #endif
 		       );
-
-unsigned ikev1_auth_kernel_attrs(enum ikev1_auth_attribute auth, int *alg);
 
 #define _KERNEL_H_
 #endif /* _KERNEL_H_ */

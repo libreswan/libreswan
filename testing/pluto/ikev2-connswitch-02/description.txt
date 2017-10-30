@@ -1,0 +1,5 @@
+Test connection switching on east with two roadwarrior type conns,
+with different IDs and different authby policy
+
+This is https://bugs.libreswan.org/show_bug.cgi?id=301
+

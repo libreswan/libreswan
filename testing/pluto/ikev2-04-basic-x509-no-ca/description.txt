@@ -1,0 +1,7 @@
+Basic certificate testcase, but now the CA is deleted and both ends
+have to validate each other purely based on having each other's
+certificate preloaded.
+
+Additionally, no CA at all is loaded which triggered a bug in 3.21
+always rejecting the preconfigured endcert
+

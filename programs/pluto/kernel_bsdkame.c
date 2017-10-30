@@ -52,10 +52,6 @@
 #include "alg_info.h"
 #include "kernel_alg.h"
 
-#ifndef DEFAULT_UPDOWN
-# define DEFAULT_UPDOWN "ipsec _updown"
-#endif
-
 int pfkeyfd = NULL_FD;
 unsigned int pfkey_seq = 1;
 
@@ -77,14 +73,14 @@ static void bsdkame_init_pfkey(void)
 	pfkeyfd = socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
 
 	if (pfkeyfd == -1)
-		exit_log_errno((e, "socket() in init_pfkeyfd()"));
+		EXIT_LOG_ERRNO(errno, "socket() in init_pfkeyfd()");
 
 #ifdef NEVER    /* apparently unsupported! */
 	if (fcntl(pfkeyfd, F_SETFL, O_NONBLOCK) != 0)
-		exit_log_errno((e, "fcntl(O_NONBLOCK) in init_pfkeyfd()"));
+		EXIT_LOG_ERRNO(errno, "fcntl(O_NONBLOCK) in init_pfkeyfd()");
 #endif
 	if (fcntl(pfkeyfd, F_SETFD, FD_CLOEXEC) != 0)
-		exit_log_errno((e, "fcntl(FD_CLOEXEC) in init_pfkeyfd()"));
+		EXIT_LOG_ERRNO(errno, "fcntl(FD_CLOEXEC) in init_pfkeyfd()");
 
 	DBG(DBG_KERNEL,
 	    DBG_log("process %u listening for PF_KEY_V2 on file descriptor %d",
@@ -270,8 +266,7 @@ static bool bsdkame_do_command(const struct connection *c, const struct spd_rout
 			   "%s",        /* actual script */
 			   verb, verb_suffix,
 			   common_shell_out_str,
-			   sr->this.updown == NULL ?
-			       DEFAULT_UPDOWN : sr->this.updown)) {
+			   sr->this.updown)) {
 		loglog(RC_LOG_SERIOUS, "%s%s command too long!", verb,
 		       verb_suffix);
 		return FALSE;
@@ -1081,4 +1076,5 @@ const struct kernel_ops bsdkame_kernel_ops = {
 	.process_ifaces = bsdkame_process_raw_ifaces,
 	.overlap_supported = FALSE,
 	.sha2_truncbug_support = FALSE,
+	.v6holes = NULL,
 };

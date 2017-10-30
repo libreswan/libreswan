@@ -23,9 +23,9 @@ ipsec auto --status
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, nssdir=/etc/ipsec.d, dumpdir=/var/tmp, statsbin=unset
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
-000 nhelpers=-1, uniqueids=yes, perpeerlog=no, shuntlifetime=900s, xfrmlifetime=300s
+000 nhelpers=-1, uniqueids=yes, perpeerlog=no, logappend=no, logip=yes, shuntlifetime=900s, xfrmlifetime=300s
 000 ddos-cookies-threshold=50000, ddos-max-halfopen=25000, ddos-mode=auto
-000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
+000 ikeport=500, ikebuf=0, msg_errqueue=yes, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
 000 secctx-attr-type=XXXX
 000 myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
@@ -44,9 +44,10 @@ ipsec auto --status
 000 algorithm ESP encrypt: id=15, name=ESP_AES_CCM_B, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=16, name=ESP_AES_CCM_C, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=18, name=ESP_AES_GCM_A, ivlen=8, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=19, name=ESP_AES_GCM_B, ivlen=12, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=20, name=ESP_AES_GCM_C, ivlen=16, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=19, name=ESP_AES_GCM_B, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=20, name=ESP_AES_GCM_C, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=22, name=ESP_CAMELLIA, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=23, name=ESP_NULL_AUTH_AES_GMAC, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=252, name=ESP_SERPENT, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=253, name=ESP_TWOFISH, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm AH/ESP auth: id=1, name=AUTH_ALGORITHM_HMAC_MD5, keysizemin=128, keysizemax=128
@@ -62,9 +63,9 @@ ipsec auto --status
 000  
 000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
 000 algorithm IKE encrypt: v1id=8, v1name=OAKLEY_CAMELLIA_CBC, v2id=23, v2name=CAMELLIA_CBC, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: v1id=20, v1name=OAKLEY_AES_GCM_C, v2id=20, v2name=AES_GCM_C, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: v1id=19, v1name=OAKLEY_AES_GCM_B, v2id=19, v2name=AES_GCM_B, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: v1id=18, v1name=OAKLEY_AES_GCM_A, v2id=18, v2name=AES_GCM_A, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=-1, v1name=n/a, v2id=20, v2name=AES_GCM_C, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=-1, v1name=n/a, v2id=19, v2name=AES_GCM_B, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=-1, v1name=n/a, v2id=18, v2name=AES_GCM_A, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=13, v1name=OAKLEY_AES_CTR, v2id=13, v2name=AES_CTR, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=65004, v1name=OAKLEY_SERPENT_CBC, v2id=65004, v2name=SERPENT_CBC, blocksize=16, keydeflen=128
@@ -131,9 +132,9 @@ ipsec status
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, nssdir=/etc/ipsec.d, dumpdir=/var/tmp, statsbin=unset
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
-000 nhelpers=-1, uniqueids=yes, perpeerlog=no, shuntlifetime=900s, xfrmlifetime=300s
+000 nhelpers=-1, uniqueids=yes, perpeerlog=no, logappend=no, logip=yes, shuntlifetime=900s, xfrmlifetime=300s
 000 ddos-cookies-threshold=50000, ddos-max-halfopen=25000, ddos-mode=auto
-000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
+000 ikeport=500, ikebuf=0, msg_errqueue=yes, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
 000 secctx-attr-type=XXXX
 000 myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
@@ -152,9 +153,10 @@ ipsec status
 000 algorithm ESP encrypt: id=15, name=ESP_AES_CCM_B, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=16, name=ESP_AES_CCM_C, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=18, name=ESP_AES_GCM_A, ivlen=8, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=19, name=ESP_AES_GCM_B, ivlen=12, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=20, name=ESP_AES_GCM_C, ivlen=16, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=19, name=ESP_AES_GCM_B, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=20, name=ESP_AES_GCM_C, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=22, name=ESP_CAMELLIA, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=23, name=ESP_NULL_AUTH_AES_GMAC, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=252, name=ESP_SERPENT, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=253, name=ESP_TWOFISH, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm AH/ESP auth: id=1, name=AUTH_ALGORITHM_HMAC_MD5, keysizemin=128, keysizemax=128
@@ -170,9 +172,9 @@ ipsec status
 000  
 000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
 000 algorithm IKE encrypt: v1id=8, v1name=OAKLEY_CAMELLIA_CBC, v2id=23, v2name=CAMELLIA_CBC, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: v1id=20, v1name=OAKLEY_AES_GCM_C, v2id=20, v2name=AES_GCM_C, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: v1id=19, v1name=OAKLEY_AES_GCM_B, v2id=19, v2name=AES_GCM_B, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: v1id=18, v1name=OAKLEY_AES_GCM_A, v2id=18, v2name=AES_GCM_A, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=-1, v1name=n/a, v2id=20, v2name=AES_GCM_C, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=-1, v1name=n/a, v2id=19, v2name=AES_GCM_B, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=-1, v1name=n/a, v2id=18, v2name=AES_GCM_A, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=13, v1name=OAKLEY_AES_CTR, v2id=13, v2name=AES_CTR, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=65004, v1name=OAKLEY_SERPENT_CBC, v2id=65004, v2name=SERPENT_CBC, blocksize=16, keydeflen=128
@@ -198,7 +200,7 @@ ipsec status
 000 Connection list:
 000  
 000 "block": 192.1.3.209---192.1.3.254...%group; unrouted; eroute owner: #0
-000 "block":     oriented; my_ip=unset; their_ip=unset
+000 "block":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "block":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "block":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "block":   labeled_ipsec:no;
@@ -208,11 +210,11 @@ ipsec status
 000 "block":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "block":   policy: PFS+GROUP+GROUTED+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+REJECT+NEVER_NEGOTIATE+ESN_NO;
 000 "block":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "block":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "block":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "block":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "block":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "block#192.0.2.0/24": 192.1.3.209---192.1.3.254...%any; prospective erouted; eroute owner: #0
-000 "block#192.0.2.0/24":     oriented; my_ip=unset; their_ip=unset
+000 "block#192.0.2.0/24":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "block#192.0.2.0/24":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "block#192.0.2.0/24":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "block#192.0.2.0/24":   labeled_ipsec:no;
@@ -222,11 +224,11 @@ ipsec status
 000 "block#192.0.2.0/24":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "block#192.0.2.0/24":   policy: PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+REJECT+NEVER_NEGOTIATE+ESN_NO;
 000 "block#192.0.2.0/24":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "block#192.0.2.0/24":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "block#192.0.2.0/24":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "block#192.0.2.0/24":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "block#192.0.2.0/24":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "clear": 192.1.3.209---192.1.3.254...%group; unrouted; eroute owner: #0
-000 "clear":     oriented; my_ip=unset; their_ip=unset
+000 "clear":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "clear":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "clear":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "clear":   labeled_ipsec:no;
@@ -236,11 +238,11 @@ ipsec status
 000 "clear":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "clear":   policy: PFS+GROUP+GROUTED+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+PASS+NEVER_NEGOTIATE+ESN_NO;
 000 "clear":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "clear":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "clear":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "clear":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "clear":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "clear#192.1.2.0/24": 192.1.3.209---192.1.3.254...%any; prospective erouted; eroute owner: #0
-000 "clear#192.1.2.0/24":     oriented; my_ip=unset; their_ip=unset
+000 "clear#192.1.2.0/24":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "clear#192.1.2.0/24":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "clear#192.1.2.0/24":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "clear#192.1.2.0/24":   labeled_ipsec:no;
@@ -250,11 +252,11 @@ ipsec status
 000 "clear#192.1.2.0/24":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "clear#192.1.2.0/24":   policy: PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+PASS+NEVER_NEGOTIATE+ESN_NO;
 000 "clear#192.1.2.0/24":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "clear#192.1.2.0/24":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "clear#192.1.2.0/24":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "clear#192.1.2.0/24":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "clear#192.1.2.0/24":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "clear#192.1.2.129/32": 192.1.3.209---192.1.3.254...%any; prospective erouted; eroute owner: #0
-000 "clear#192.1.2.129/32":     oriented; my_ip=unset; their_ip=unset
+000 "clear#192.1.2.129/32":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "clear#192.1.2.129/32":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "clear#192.1.2.129/32":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "clear#192.1.2.129/32":   labeled_ipsec:no;
@@ -264,11 +266,11 @@ ipsec status
 000 "clear#192.1.2.129/32":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "clear#192.1.2.129/32":   policy: PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+PASS+NEVER_NEGOTIATE+ESN_NO;
 000 "clear#192.1.2.129/32":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "clear#192.1.2.129/32":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "clear#192.1.2.129/32":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "clear#192.1.2.129/32":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "clear#192.1.2.129/32":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "clear#192.1.2.130/32": 192.1.3.209---192.1.3.254...%any; prospective erouted; eroute owner: #0
-000 "clear#192.1.2.130/32":     oriented; my_ip=unset; their_ip=unset
+000 "clear#192.1.2.130/32":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "clear#192.1.2.130/32":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "clear#192.1.2.130/32":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "clear#192.1.2.130/32":   labeled_ipsec:no;
@@ -278,11 +280,11 @@ ipsec status
 000 "clear#192.1.2.130/32":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "clear#192.1.2.130/32":   policy: PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+PASS+NEVER_NEGOTIATE+ESN_NO;
 000 "clear#192.1.2.130/32":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "clear#192.1.2.130/32":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "clear#192.1.2.130/32":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "clear#192.1.2.130/32":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "clear#192.1.2.130/32":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "clear#192.1.2.254/32": 192.1.3.209---192.1.3.254...%any; prospective erouted; eroute owner: #0
-000 "clear#192.1.2.254/32":     oriented; my_ip=unset; their_ip=unset
+000 "clear#192.1.2.254/32":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "clear#192.1.2.254/32":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "clear#192.1.2.254/32":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "clear#192.1.2.254/32":   labeled_ipsec:no;
@@ -292,11 +294,11 @@ ipsec status
 000 "clear#192.1.2.254/32":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "clear#192.1.2.254/32":   policy: PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+PASS+NEVER_NEGOTIATE+ESN_NO;
 000 "clear#192.1.2.254/32":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "clear#192.1.2.254/32":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "clear#192.1.2.254/32":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "clear#192.1.2.254/32":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "clear#192.1.2.254/32":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "clear-or-private": 192.1.3.209[ID_NULL]---192.1.3.254...%opportunisticgroup[ID_NULL]; unrouted; eroute owner: #0
-000 "clear-or-private":     oriented; my_ip=unset; their_ip=unset
+000 "clear-or-private":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "clear-or-private":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "clear-or-private":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "clear-or-private":   labeled_ipsec:no;
@@ -306,11 +308,11 @@ ipsec status
 000 "clear-or-private":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "clear-or-private":   policy: AUTHNULL+PFS+NEGO_PASS+DONT_REKEY+OPPORTUNISTIC+GROUP+GROUTED+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+PASS+failurePASS+NEVER_NEGOTIATE+ESN_NO;
 000 "clear-or-private":   conn_prio: 32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "clear-or-private":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "clear-or-private":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "clear-or-private":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "clear-or-private":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "packetdefault": 192.1.3.209[ID_NULL]---192.1.3.254...%opportunistic[ID_NULL]; prospective erouted; eroute owner: #0
-000 "packetdefault":     oriented; my_ip=unset; their_ip=unset
+000 "packetdefault":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "packetdefault":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "packetdefault":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "packetdefault":   labeled_ipsec:no;
@@ -320,11 +322,11 @@ ipsec status
 000 "packetdefault":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "packetdefault":   policy: AUTHNULL+ENCRYPT+TUNNEL+PFS+NEGO_PASS+DONT_REKEY+OPPORTUNISTIC+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+failurePASS+ESN_NO;
 000 "packetdefault":   conn_prio: 32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "packetdefault":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "packetdefault":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "packetdefault":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "packetdefault":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "packetdefault"[1]: 192.1.3.209[ID_NULL]---192.1.3.254...192.1.2.23[ID_NULL]; erouted; eroute owner: #2
-000 "packetdefault"[1]:     oriented; my_ip=unset; their_ip=unset
+000 "packetdefault"[1]:     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "packetdefault"[1]:   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "packetdefault"[1]:   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "packetdefault"[1]:   labeled_ipsec:no;
@@ -334,13 +336,13 @@ ipsec status
 000 "packetdefault"[1]:   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "packetdefault"[1]:   policy: AUTHNULL+ENCRYPT+TUNNEL+PFS+NEGO_PASS+DONT_REKEY+OPPORTUNISTIC+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+failurePASS+ESN_NO;
 000 "packetdefault"[1]:   conn_prio: 32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "packetdefault"[1]:   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "packetdefault"[1]:   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "packetdefault"[1]:   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "packetdefault"[1]:   newest ISAKMP SA: #2; newest IPsec SA: #2;
-000 "packetdefault"[1]:   IKEv2 algorithm newest: AES_GCM_C_256-AUTH_NONE-PRF_HMAC_SHA1-MODP2048
-000 "packetdefault"[1]:   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
+000 "packetdefault"[1]:   IKEv2 algorithm newest: AES_GCM_16_256-AUTH_NONE-PRF_HMAC_SHA1-MODP2048
+000 "packetdefault"[1]:   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 000 "private": 192.1.3.209[%myid]---192.1.3.254...%opportunisticgroup; unrouted; eroute owner: #0
-000 "private":     oriented; my_ip=unset; their_ip=unset
+000 "private":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "private":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "private":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "private":   labeled_ipsec:no;
@@ -350,11 +352,11 @@ ipsec status
 000 "private":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "private":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+OPPORTUNISTIC+GROUP+GROUTED+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+failureDROP+ESN_NO;
 000 "private":   conn_prio: 32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "private":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "private":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "private":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "private":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000 "private-or-clear": 192.1.3.209[ID_NULL]---192.1.3.254...%opportunisticgroup[ID_NULL]; unrouted; eroute owner: #0
-000 "private-or-clear":     oriented; my_ip=unset; their_ip=unset
+000 "private-or-clear":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "private-or-clear":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "private-or-clear":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "private-or-clear":   labeled_ipsec:no;
@@ -364,7 +366,7 @@ ipsec status
 000 "private-or-clear":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "private-or-clear":   policy: AUTHNULL+ENCRYPT+TUNNEL+PFS+NEGO_PASS+DONT_REKEY+OPPORTUNISTIC+GROUP+GROUTED+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+failurePASS+ESN_NO;
 000 "private-or-clear":   conn_prio: 32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "private-or-clear":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "private-or-clear":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "private-or-clear":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "private-or-clear":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000  
@@ -445,34 +447,18 @@ src 192.1.2.0/24 dst 192.1.3.209/32
 	dir in priority 1576 ptype main 
 src 192.1.3.209/32 dst 192.1.2.0/24 
 	dir out priority 1576 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
 default via 192.1.3.254 dev eth1 
-192.1.3.0/24 dev eth1  proto kernel  scope link  src 192.1.3.209 
+192.1.3.0/24 dev eth1 proto kernel scope link src 192.1.3.209 
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 road #
 road #
-if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 road #
 if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 road #

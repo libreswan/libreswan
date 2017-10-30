@@ -142,12 +142,6 @@ extern bool ikev1_out_sa(pb_stream *outs,
 		   bool aggressive_mode,
 		   enum next_payload_types_ikev1 np);
 
-#if 0
-extern complaint_t accept_oakley_auth_method(struct state *st,  /* current state object */
-					     u_int32_t amethod, /* room for larger values */
-					     bool credcheck);   /* whether we can check credentials now */
-#endif
-
 extern lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */);
 
 extern notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,           /* body of input SA Payload */

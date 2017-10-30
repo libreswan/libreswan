@@ -112,7 +112,7 @@ stf_status main_outI1(int whack_sock,
 	if (c->policy & POLICY_IKE_FRAG_ALLOW)
 		numvidtosend++;
 
-	if (nat_traversal_enabled)
+	if (nat_traversal_enabled && c->ikev1_natt != natt_none)
 		numvidtosend++;
 
 	if (c->cisco_unity) {
@@ -257,9 +257,7 @@ stf_status main_outI1(int whack_sock,
 		}
 	}
 
-	DBG(DBG_NATT, DBG_log("nat traversal enabled: %d",
-				nat_traversal_enabled));
-	if (nat_traversal_enabled) {
+	if (nat_traversal_enabled && c->ikev1_natt != natt_none) {
 		int np = --numvidtosend > 0 ?
 			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
@@ -374,7 +372,7 @@ main_mode_hash(struct state *st,
 {
 	struct hmac_ctx ctx;
 
-	hmac_init(&ctx, st->st_oakley.prf, st->st_skeyid_nss);
+	hmac_init(&ctx, st->st_oakley.ta_prf, st->st_skeyid_nss);
 	main_mode_hash_body(st, hashi, idpl, &ctx);
 	hmac_final(hash_val, &ctx);
 	return ctx.hmac_digest_len;
@@ -498,7 +496,7 @@ notification_t accept_v1_nonce(struct msg_digest *md, chunk_t *dest,
  */
 bool encrypt_message(pb_stream *pbs, struct state *st)
 {
-	const struct encrypt_desc *e = st->st_oakley.encrypter;
+	const struct encrypt_desc *e = st->st_oakley.ta_encrypt;
 	u_int8_t *enc_start = pbs->start + sizeof(struct isakmp_hdr);
 	size_t enc_len = pbs_offset(pbs) - sizeof(struct isakmp_hdr);
 
@@ -526,11 +524,14 @@ bool encrypt_message(pb_stream *pbs, struct state *st)
 	}
 
 	DBG(DBG_CRYPT,
-		DBG_log("encrypting %d using %s",
-			(unsigned int)enc_len,
-			enum_show(&oakley_enc_names, st->st_oakley.encrypt)));
+	    DBG_log("encrypting %zu using %s", enc_len,
+		    st->st_oakley.ta_encrypt->common.fqn));
 
-	crypto_cbc_encrypt(e, TRUE, enc_start, enc_len, st);
+	passert(st->st_new_iv_len >= e->enc_blocksize);
+	st->st_new_iv_len = e->enc_blocksize;   /* truncate */
+	e->encrypt_ops->do_crypt(e, enc_start, enc_len,
+				 st->st_enc_key_nss,
+				 st->st_new_iv, TRUE);
 
 	update_iv(st);
 	DBG_cond_dump(DBG_CRYPT, "next IV:", st->st_iv, st->st_iv_len);
@@ -671,7 +672,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 			/*
 			 * Create a temporary connection that is a copy
 			 * of this one.
-			 * His ID isn't declared yet.
+			 * Their ID isn't declared yet.
 			 */
 			DBG(DBG_CONTROL, {
 				ipstr_buf b;
@@ -723,18 +724,21 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 
 	set_nat_traversal(st, md);
 
+	/* host_port_specific is set if our port is not pluto_port?? */
 	if ((c->kind == CK_INSTANCE) && (c->spd.that.host_port_specific)) {
 		ipstr_buf b;
 
 		libreswan_log(
 			"responding to Main Mode from unknown peer %s:%u",
-			ipstr(&c->spd.that.host_addr, &b),
+			log_ip ? ipstr(&c->spd.that.host_addr, &b) : "<ip address>",
 			c->spd.that.host_port);
 	} else if (c->kind == CK_INSTANCE) {
 		ipstr_buf b;
 
-		libreswan_log("responding to Main Mode from unknown peer %s",
-			ipstr(&c->spd.that.host_addr, &b));
+		libreswan_log("responding to Main Mode from unknown peer %s on port %u",
+			log_ip ? ipstr(&c->spd.that.host_addr, &b) : "<ip address>",
+			md->sender_port);
+		DBG(DBG_CONTROL, DBG_dump("  ICOOKIE-DUMP:", st->st_icookie, COOKIE_SIZE));
 	} else {
 		libreswan_log("responding to Main Mode");
 	}
@@ -767,22 +771,18 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 			return STF_INTERNAL_ERROR;
 	}
 
-	/* Increase VID counter for NAT-T VID */
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
 		DBG(DBG_NATT, DBG_log("NAT-T VID detected, sending NAT-T VID"));
 		numvidtosend++;
 	}
 
-	/* Increase VID counter for VID_CISCO_UNITY */
 	if (c->send_vendorid) {
 		numvidtosend++;
 	}
 
-	/* Increase VID counter for VID_IKE_FRAGMENTATION */
 	if (c->policy & POLICY_IKE_FRAG_ALLOW)
 		numvidtosend++;
 
-	/* Increase VID counter for VID_MISC_XAUTH */
 	if (c->spd.this.xauth_server || c->spd.this.xauth_client)
 		numvidtosend++;
 
@@ -793,12 +793,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 		zero(&r_sa);	/* OK: no pointer fields */
 		r_sa.isasa_doi = ISAKMP_DOI_IPSEC;
 
-		/*
-		 * Almost guaranteed to send a VID, set the NEXT payload
-		 * correctly
-		 */
-		r_sa.isasa_np =
-			numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		r_sa.isasa_np = numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 		if (!out_struct(&r_sa, &isakmp_sa_desc, &md->rbody, &r_sa_pbs))
 			return STF_INTERNAL_ERROR;
 	}
@@ -809,7 +804,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 						&r_sa_pbs, FALSE, st));
 
 	/*
-	 * NOW SEND VENDOR ID payloads
+	 * Send VENDOR ID payloads
 	 */
 
 	if (c->send_vendorid) {
@@ -822,7 +817,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 
 	{
 		/*
-		 * always announce our ability to do RFC 3706
+		 * Always announce our ability to do RFC 3706
 		 * Dead Peer Detection
 		 */
 		int np = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
@@ -858,7 +853,6 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 			return STF_INTERNAL_ERROR;
 	}
 
-	/* Ensure our 'next payload' types sync'ed up */
 	passert(numvidtosend == 0);
 
 	if (!close_message(&md->rbody, st))
@@ -930,6 +924,11 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 {
 	struct state *const st = md->st;
 
+	if (cur_debugging & IMPAIR_DROP_I2) {
+		DBG(DBG_CONTROL, DBG_log("dropping Main Mode I2 packet as per impair"));
+		return STF_IGNORE;
+	}
+
 	/* verify echoed SA */
 	{
 		struct payload_digest *const sapd = md->chain[ISAKMP_NEXT_SA];
@@ -940,7 +939,7 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 	}
 
 #ifdef FIPS_CHECK
-	if (libreswan_fipsmode() && st->st_oakley.prf == NULL) {
+	if (libreswan_fipsmode() && st->st_oakley.ta_prf == NULL) {
 		loglog(RC_LOG_SERIOUS, "Missing prf - algo not allowed in fips mode (inR1_outI2)?");
 		return STF_FAIL + SITUATION_NOT_SUPPORTED;
 	}
@@ -956,7 +955,7 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 			st, md);
 
 		passert(!st->st_sec_in_use);
-		return build_ke_and_nonce(ke, st->st_oakley.group,
+		return build_ke_and_nonce(ke, st->st_oakley.ta_dh,
 				st->st_import);
 	}
 }
@@ -1069,7 +1068,7 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *ke,
 		return STF_INTERNAL_ERROR;
 
 	/* Reinsert the state, using the responder cookie we just received */
-	rehash_state(st, md->hdr.isa_rcookie);
+	rehash_state(st, NULL, md->hdr.isa_rcookie);
 
 	return STF_OK;
 }
@@ -1135,7 +1134,7 @@ stf_status main_inI2_outR2(struct msg_digest *md)
 	struct state *const st = md->st;
 
 	/* KE in */
-	RETURN_STF_FAILURE(accept_KE(&st->st_gi, "Gi", st->st_oakley.group,
+	RETURN_STF_FAILURE(accept_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
 				     &md->chain[ISAKMP_NEXT_KE]->pbs));
 
 	/* Ni in */
@@ -1156,7 +1155,7 @@ stf_status main_inI2_outR2(struct msg_digest *md)
 
 		passert(!st->st_sec_in_use);
 		return build_ke_and_nonce(ke,
-			st->st_oakley.group, st->st_import);
+			st->st_oakley.ta_dh, st->st_import);
 	}
 }
 
@@ -1212,7 +1211,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *ke,
 	struct state *st = md->st;
 
 #ifdef FIPS_CHECK
-	if (libreswan_fipsmode() && st->st_oakley.prf == NULL) {
+	if (libreswan_fipsmode() && st->st_oakley.ta_prf == NULL) {
 		loglog(RC_LOG_SERIOUS,
 		       "Missing prf - algo not allowed in fips mode (inI2_outR2)?");
 		return STF_FAIL + SITUATION_NOT_SUPPORTED;
@@ -1336,11 +1335,11 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *ke,
 
 		DBG(DBG_CONTROLMORE,
 			DBG_log("main inI2_outR2: starting async DH calculation (group=%d)",
-				st->st_oakley.group->group));
+				st->st_oakley.ta_dh->group));
 
 		e = start_dh_secretiv(dh, st, st->st_import,
 				      ORIGINAL_RESPONDER,
-				      st->st_oakley.group);
+				      st->st_oakley.ta_dh);
 
 		DBG(DBG_CONTROLMORE,
 			DBG_log("started dh_secretiv, returned: stf=%s",
@@ -1662,7 +1661,7 @@ stf_status main_inR2_outI3(struct msg_digest *md)
 
 	/* KE in */
 	RETURN_STF_FAILURE(accept_KE(&st->st_gr, "Gr",
-				     st->st_oakley.group,
+				     st->st_oakley.ta_dh,
 				     &md->chain[ISAKMP_NEXT_KE]->pbs));
 
 	/* Nr in */
@@ -1672,12 +1671,13 @@ stf_status main_inR2_outI3(struct msg_digest *md)
 		st, md);
 	return start_dh_secretiv(dh, st, st->st_import,
 				 ORIGINAL_INITIATOR,
-				 st->st_oakley.group);
+				 st->st_oakley.ta_dh);
 }
 
 /*
  * Processs the Main Mode ID Payload and the Authenticator
  * (Hash or Signature Payload).
+ * XXX: This is used by aggressive mode too, move to ikev1.c ???
  */
 stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 			bool aggrmode)
@@ -1686,12 +1686,24 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 	u_char hash_val[MAX_DIGEST_LEN];
 	size_t hash_len;
 	stf_status r = STF_OK;
+	lsw_cert_ret ret = LSW_CERT_NONE;
 
 	/*
 	 * ID Payload in.
 	 * Note: this may switch the connection being used!
 	 */
-	if (!aggrmode && !ikev1_decode_peer_id(md, initiator, FALSE))
+	if (!st->st_peer_alt_id  && !ikev1_decode_peer_id(md, initiator, aggrmode)) {
+	DBG(DBG_CONTROLMORE, DBG_log("Peer ID failed to decode"));
+		return STF_FAIL + INVALID_ID_INFORMATION;
+	}
+
+	/*
+	 * process any CERT payloads if aggrmode
+	 */
+	if (!st->st_peer_alt_id)
+		ret = ike_decode_cert(md);
+
+	if (ret != LSW_CERT_NONE && ret != LSW_CERT_ID_OK)
 		return STF_FAIL + INVALID_ID_INFORMATION;
 
 	/*
@@ -2123,7 +2135,7 @@ stf_status send_isakmp_notification(struct state *st,
 		/* finish computing HASH */
 		struct hmac_ctx ctx;
 
-		hmac_init(&ctx, st->st_oakley.prf, st->st_skeyid_a_nss);
+		hmac_init(&ctx, st->st_oakley.ta_prf, st->st_skeyid_a_nss);
 		hmac_update(&ctx, (const u_char *) &msgid, sizeof(msgid_t));
 		hmac_update(&ctx, r_hash_start, rbody.cur - r_hash_start);
 		hmac_final(r_hashval, &ctx);
@@ -2275,7 +2287,7 @@ static void send_notification(struct state *sndst, notification_t type,
 		passert(ikev1_out_generic(ISAKMP_NEXT_N, &isakmp_hash_desc, &r_hdr_pbs,
 					  &hash_pbs));
 		r_hashval = hash_pbs.cur; /* remember where to plant value */
-		passert(out_zero(encst->st_oakley.prf->prf_output_size,
+		passert(out_zero(encst->st_oakley.ta_prf->prf_output_size,
 				 &hash_pbs, "HASH(1)"));
 		close_output_pbs(&hash_pbs);
 		r_hash_start = r_hdr_pbs.cur; /* hash from after HASH(1) */
@@ -2306,7 +2318,7 @@ static void send_notification(struct state *sndst, notification_t type,
 	if (encst) {
 		struct hmac_ctx ctx;
 
-		hmac_init(&ctx, encst->st_oakley.prf,
+		hmac_init(&ctx, encst->st_oakley.ta_prf,
 			  encst->st_skeyid_a_nss);
 		hmac_update(&ctx, (u_char *) &msgid, sizeof(msgid_t));
 		hmac_update(&ctx, r_hash_start, r_hdr_pbs.cur - r_hash_start);
@@ -2441,7 +2453,7 @@ bool ikev1_delete_out(struct state *st)
 	struct isakmp_hdr hdr;
 
 	/* If there are IPsec SA's related to this state struct... */
-	if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
+	if (IS_IPSEC_SA_ESTABLISHED(st)) {
 		/* Find their phase1 state object */
 		p1st = find_phase1_state(st->st_connection,
 					ISAKMP_SA_ESTABLISHED_STATES);
@@ -2498,7 +2510,7 @@ bool ikev1_delete_out(struct state *st)
 		passert(ikev1_out_generic(ISAKMP_NEXT_D, &isakmp_hash_desc, &r_hdr_pbs,
 					  &hash_pbs));
 		r_hashval = hash_pbs.cur; /* remember where to plant value */
-		passert(out_zero(p1st->st_oakley.prf->prf_output_size,
+		passert(out_zero(p1st->st_oakley.ta_prf->prf_output_size,
 				 &hash_pbs, "HASH(1)"));
 		close_output_pbs(&hash_pbs);
 		r_hash_start = r_hdr_pbs.cur; /* hash from after HASH(1) */
@@ -2551,7 +2563,7 @@ bool ikev1_delete_out(struct state *st)
 	{
 		struct hmac_ctx ctx;
 
-		hmac_init(&ctx, p1st->st_oakley.prf,
+		hmac_init(&ctx, p1st->st_oakley.ta_prf,
 			  p1st->st_skeyid_a_nss);
 		hmac_update(&ctx, (u_char *) &msgid, sizeof(msgid_t));
 		hmac_update(&ctx, r_hash_start, r_hdr_pbs.cur - r_hash_start);
@@ -2702,9 +2714,8 @@ bool accept_delete(struct msg_digest *md,
 				/* note: this code is cloned for handling self_delete */
 				loglog(RC_LOG_SERIOUS, "received Delete SA payload: deleting ISAKMP State #%lu",
 					dst->st_serialno);
-				if (nat_traversal_enabled)
-					nat_traversal_change_port_lookup(md,
-									dst);
+				if (nat_traversal_enabled && dst->st_connection->ikev1_natt != natt_none)
+					nat_traversal_change_port_lookup(md, dst);
 				delete_state(dst);
 			}
 		} else {
@@ -2743,9 +2754,8 @@ bool accept_delete(struct msg_digest *md,
 
 				set_cur_connection(rc);
 
-				if (nat_traversal_enabled)
-					nat_traversal_change_port_lookup(md,
-									dst);
+				if (nat_traversal_enabled && dst->st_connection->ikev1_natt != natt_none)
+					nat_traversal_change_port_lookup(md, dst);
 
 				if (rc->newest_ipsec_sa == dst->st_serialno &&
 					(rc->policy & POLICY_UP)) {
@@ -2818,7 +2828,7 @@ void accept_self_delete(struct msg_digest *md)
 	/* note: this code is cloned from handling ISAKMP non-self_delete */
 	loglog(RC_LOG_SERIOUS, "received Delete SA payload: self-deleting ISAKMP State #%lu",
 		st->st_serialno);
-	if (nat_traversal_enabled)
+	if (nat_traversal_enabled && st->st_connection->ikev1_natt != natt_none)
 		nat_traversal_change_port_lookup(md, st);
 	delete_state(st);
 	md->st = st = NULL;

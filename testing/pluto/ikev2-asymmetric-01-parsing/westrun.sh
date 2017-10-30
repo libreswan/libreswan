@@ -16,7 +16,7 @@ ipsec auto --add test6
 ipsec auto --add test7
 ipsec auto --add test8
 ipsec auto --add test9
-# below should all fail to load
+echo "all remaining tests should fail"
 # whack testing
 ipsec whack --name failtestmanual1 --ikev2-propose --ikev2-allow --ipv4 --host 1.2.3.5 --authby=null --to --host 2.3.4.6 --authby=rsasig
 ipsec whack --name failtestmanual2 --encrypt --ipv4 --host 1.2.3.5 --authby=null --to --host 2.3.4.6 --authby=rsasig
@@ -31,5 +31,9 @@ ipsec auto --add failtest4
 ipsec auto --add failtest5
 ipsec auto --add failtest6
 ipsec auto --add failtest7
+ipsec auto --add failtest8
+ipsec auto --add failtest9
+ipsec auto --add failtest10
+echo "Showing policies of all loaded connections"
 ipsec status | egrep 'policy: |our auth:'
 echo done

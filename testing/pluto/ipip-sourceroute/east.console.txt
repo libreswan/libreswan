@@ -33,7 +33,7 @@ east #
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, nssdir=/etc/ipsec.d, dumpdir=/tmp, statsbin=unset
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
 000 nhelpers=-1, uniqueids=yes, force-busy=no
-000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
+000 ikeport=500, ikebuf=0, msg_errqueue=yes, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
 000 secctx-attr-type=XXXX
 000 myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
@@ -81,7 +81,7 @@ east #
 000 Connection list:
 000  
 000 "westnet-eastnet": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; unrouted; eroute owner: #0
-000 "westnet-eastnet":     oriented; my_ip=unset; their_ip=unset
+000 "westnet-eastnet":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "westnet-eastnet":   labeled_ipsec:no;
@@ -90,7 +90,7 @@ east #
 000 "westnet-eastnet":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "westnet-eastnet":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "westnet-eastnet":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000  
@@ -118,15 +118,15 @@ default via 192.1.2.254 dev eth1
 169.254.0.0/16 dev eth1  scope link  metric 1003 
 169.254.0.0/16 dev eth2  scope link  metric 1004 
 192.0.1.0/24 dev ipsec0  scope link 
-192.0.2.0/24 dev eth0  proto kernel  scope link  src 192.0.2.254 
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23 
-192.9.2.0/24 dev eth2  proto kernel  scope link  src 192.9.2.23 
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254 
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23 
+192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23 
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
 east #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

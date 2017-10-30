@@ -23,6 +23,7 @@
 
 #include "constants.h"
 #include "defs.h"
+#include "lswlog.h"
 #include "rnd.h"
 #include "cookie.h"
 #include "ike_alg_sha2.h"
@@ -33,7 +34,6 @@ const u_char zero_cookie[COOKIE_SIZE];  /* guaranteed 0 */
 /*
  * Generate a cookie (aka SPI)
  * First argument is true if we're to create an Initiator cookie.
- * Length SHOULD be a multiple of sizeof(u_int32_t).
  *
  * As responder, we use a hashing method to get a pseudo random
  * value instead of using our own random pool. It will prevent
@@ -44,25 +44,20 @@ const u_char zero_cookie[COOKIE_SIZE];  /* guaranteed 0 */
 void get_cookie(bool initiator, u_int8_t cookie[COOKIE_SIZE],
 		const ip_address *addr)
 {
-
 	do {
 		if (initiator) {
 			get_rnd_bytes(cookie, COOKIE_SIZE);
 		} else {
 			static u_int32_t counter = 0; /* STATIC */
-			unsigned char addr_buff[
-				sizeof(union { struct in_addr A;
-					       struct in6_addr B;
-				       })];
-			u_char buffer[SHA2_256_DIGEST_SIZE];
 
-			size_t addr_length =
-				addrbytesof(addr, addr_buff,
-					    sizeof(addr_buff));
 			struct crypt_hash *ctx = crypt_hash_init(&ike_alg_hash_sha2_256,
 								 "cookie", DBG_CRYPT);
+
+			const unsigned char *addr_ptr;
+			size_t addr_length = addrbytesptr_read(addr, &addr_ptr);
 			crypt_hash_digest_bytes(ctx, "addr",
-						addr_buff, addr_length);
+						addr_ptr, addr_length);
+
 			crypt_hash_digest_bytes(ctx, "sod",
 						secret_of_the_day,
 						sizeof(secret_of_the_day));
@@ -70,8 +65,11 @@ void get_cookie(bool initiator, u_int8_t cookie[COOKIE_SIZE],
 			crypt_hash_digest_bytes(ctx, "counter",
 						(const void *) &counter,
 						sizeof(counter));
-			crypt_hash_final_bytes(&ctx, buffer, sizeof(buffer));
-			/* cookie size is smaller than any hash output sizes */
+
+			u_char buffer[SHA2_256_DIGEST_SIZE];
+			crypt_hash_final_bytes(&ctx, buffer, SHA2_256_DIGEST_SIZE);
+			/* cookie size is smaller than hash output size */
+			passert(COOKIE_SIZE <= SHA2_256_DIGEST_SIZE);
 			memcpy(cookie, buffer, COOKIE_SIZE);
 		}
 	} while (is_zero_cookie(cookie)); /* probably never loops */

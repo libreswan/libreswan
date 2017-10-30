@@ -1,0 +1,252 @@
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: libreswan
+Upstream-Contact: The Libreswan Project <swan-dev@lists.libreswan.org>
+Source: https://download.libreswan.org/
+Comment: Security contact: security@libreswan.org
+ Libreswan derives its copyright from Openswan. See CREDITS.openswan
+ Openswan derives its copyright from FreeS/WAN. See CREDITS.freeswan
+
+Files: *
+Copyright: 1998-2016 The Libreswan Project or their individual authors
+License: GPL-2+
+
+Files: programs/pluto/udpfromto.c
+Copyright:
+ 2001 Miquel van Smoorenburg
+ 2003 Jan Berkel <jan@sitadelle.com>
+License: LGPL-2.1+
+
+Files:
+ lib/libcrypto/libserpent/*
+ lib/libswan/initsaid.c
+ lib/libswan/initsubnet.c
+ lib/libswan/internal.h
+ lib/libswan/iprange.c
+ lib/libswan/keyblobtoid.c
+ lib/libswan/pfkey_error.c
+ lib/libswan/pfkey_sock.c
+ lib/libswan/portof.c
+ lib/libswan/rangetosubnet.c
+ lib/libswan/sameaddr.c
+ lib/libswan/sanitizestring.c
+ lib/libswan/satoa.c
+ lib/libswan/subnettot.c
+ lib/libswan/subnettypeof.c
+ lib/libswan/ttoaddr.c
+ lib/libswan/ttodata.c
+ lib/libswan/ttorange.c
+ lib/libswan/ttosa.c
+ lib/libswan/ttosubnet.c
+ lib/libswan/ttoul.c
+Copyright:
+ 1998-2002 Henry Spencer
+ 1998-2002 D. Hugh Redelmeier <hugh@mimosa.com>
+ 2000 Gisle Sælensminde
+ 2003,2006 Michael Richardson
+ 2013 Antony Antony <antony@phenome.org>
+ 2016 Andrew Cagney <cagney@gnu.org>
+License: LGPL-2+
+
+Files: linux/include/zlib/* linux/net/ipsec/zutil.c linux/net/ipsec/infutil.c
+       linux/net/ipsec/infutil.h linux/net/ipsec/inflate.c
+       linux/net/ipsec/infcodes.c linux/net/ipsec/infcodes.h
+       linux/net/ipsec/deflate.c linux/net/ipsec/deflate.h
+       linux/net/ipsec/trees.c linux/net/ipsec/infblock.c
+       linux/net/ipsec/inffast.c linux/net/ipsec/infblock.h
+       linux/net/ipsec/inffast.h linux/net/ipsec/inftrees.c
+       linux/net/ipsec/inftrees.h linux/net/ipsec/adler32.c
+Copyright: 1995-2002 Jean-loup Gailly and Mark Adler
+License: J-lG-MA-3-clause
+ This software is provided 'as-is', without any express or implied
+ warranty.  In no event will the authors be held liable for any damages
+ arising from the use of this software.
+ .
+ Permission is granted to anyone to use this software for any purpose,
+ including commercial applications, and to alter it and redistribute it
+ freely, subject to the following restrictions:
+ .
+ 1. The origin of this software must not be misrepresented; you must not
+    claim that you wrote the original software. If you use this software
+    in a product, an acknowledgment in the product documentation would be
+    appreciated but is not required.
+ 2. Altered source versions must be plainly marked as such, and must not be
+    misrepresented as being the original software.
+ 3. This notice may not be removed or altered from any source distribution.
+ .
+ Jean-loup Gailly        Mark Adler
+ jloup@gzip.org          madler@alumni.caltech.edu
+
+Files: linux/include/libreswan/radij.h linux/net/ipsec/radij.c
+Copyright: 1983, 1987, 1988, 1989, 1990, 1991, 1993, 1994, 1996
+      The Regents of the University of California.  All rights reserved.
+License: BSD-4-clause
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+ 3. All advertising materials mentioning features or use of this software
+    must display the following acknowledgement:
+      This product includes software developed by the University of
+      California, Berkeley and its contributors.
+ 4. Neither the name of the University nor the names of its contributors
+    may be used to endorse or promote products derived from this software
+    without specific prior written permission.
+ .
+ THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ SUCH DAMAGE.
+
+Files: include/libbsdkame/libpfkey.h lib/libbsdpfkey/*
+Copyright: 1995, 1996, 1997, 1998, and 1999 WIDE Project.
+License: BSD-3-clause
+ All rights reserved.
+ .
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+ 3. Neither the name of the project nor the names of its contributors
+    may be used to endorse or promote products derived from this software
+    without specific prior written permission.
+ .
+ THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ SUCH DAMAGE.
+
+Files: linux/include/des/* linux/include/klips-crypto/des.h
+   linux/net/ipsec/des/cbc_enc.c linux/net/ipsec/des/des_enc.c
+   linux/net/ipsec/des/des_opts.c linux/net/ipsec/des/ecb_enc.c
+   linux/net/ipsec/des/set_key.c
+Copyright: 1995-1998 Eric Young
+License: OpenSSL
+ Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
+ All rights reserved.
+ .
+ This package is an SSL implementation written
+ by Eric Young (eay@cryptsoft.com).
+ The implementation was written so as to conform with Netscapes SSL.
+ .
+ This library is free for commercial and non-commercial use as long as
+ the following conditions are adhered to.  The following conditions
+ apply to all code found in this distribution, be it the RC4, RSA,
+ lhash, DES, etc., code; not just the SSL code.  The SSL documentation
+ included with this distribution is covered by the same copyright terms
+ except that the holder is Tim Hudson (tjh@cryptsoft.com).
+ .
+ Copyright remains Eric Young's, and as such any Copyright notices in
+ the code are not to be removed.
+ If this package is used in a product, Eric Young should be given attribution
+ as the author of the parts of the library used.
+ This can be in the form of a textual message at program startup or
+ in documentation (online or textual) provided with the package.
+ .
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ 1. Redistributions of source code must retain the copyright
+    notice, this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+ 3. All advertising materials mentioning features or use of this software
+    must display the following acknowledgement:
+    "This product includes cryptographic software written by
+     Eric Young (eay@cryptsoft.com)"
+    The word 'cryptographic' can be left out if the routines from the library
+    being used are not cryptographic related :-).
+ 4. If you include any Windows specific code (or a derivative thereof) from
+    the apps directory (application code) you must include an acknowledgement:
+    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
+ .
+ THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
+ ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ SUCH DAMAGE.
+ .
+ The licence and distribution terms for any publically available version or
+ derivative of this code cannot be changed.  i.e. this code cannot simply be
+ copied and put under another distribution licence
+ [including the GNU Public Licence.]
+
+Files: linux/include/libreswan/pfkeyv2.h
+Copyright:  U.S. Naval Research Laboratory
+License: public-domain
+ This file defines structures and symbols for the PF_KEY Version 2
+ key management interface. It was written at the U.S. Naval Research
+ Laboratory. This file is in the public domain. The authors ask that
+ you leave this credit intact on any copies of this file.
+
+License: LGPL-2+
+ This library is free software; you can redistribute it and/or modify it
+ under the terms of the GNU Library General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or (at your
+ option) any later version.  See <http://www.fsf.org/copyleft/lgpl.txt>.
+ .
+ This library is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+ License for more details.
+ .
+ On Debian systems, a copy of the GNU Library General Public License,
+ version 2, can be found in the file
+ /usr/share/common-licenses/LGPL-2.
+
+License: LGPL-2.1+
+ This library is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Lesser General Public
+ License as published by the Free Software Foundation; either
+ version 2.1 of the License, or (at your option) any later version.
+ .
+ This library is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ Lesser General Public License for more details.
+ .
+ On Debian systems, a copy of the GNU Lesser General Public License,
+ version 2.1, can be found in the file
+ /usr/share/common-licenses/LGPL-2.1.
+
+License: GPL-2+
+ This program is free software; you can redistribute it and/or modify it
+ under the terms of the GNU General Public License as published by the
+ Free Software Foundation; either version 2 of the License, or (at your
+ option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ .
+ This program is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ for more details.
+ .
+ On Debian systems, a copy of the GNU General Public License, version 2,
+ can be found in the file /usr/share/common-licenses/GPL-2.

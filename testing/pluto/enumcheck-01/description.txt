@@ -1,0 +1,14 @@
+Verify pluto's enum tables
+
+In addition to performing internal consistency checks, this test dumps
+out and then compares the value of all enums.  This is to ensure that
+enum changes don't have unintentional consequences - for instance
+modifying an enum value that goes across the wire (as part of the IKE
+or whack protocol).
+
+To update run:
+
+$ ./OBJ.linux.x86_64/testing/enumcheck/enumcheck > testing/enumcheck/OUTPUT.enumcheck.txt
+$ git diff
+
+and then carefully examine the changes

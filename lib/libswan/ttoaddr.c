@@ -573,12 +573,12 @@ void regress(void)
 			continue;
 		}
 
-		if (oops) {
-			if (r->expectfailure)
-				continue;
-			printf("%u: '%s' failed to parse: %s\n",
-				count, r->input, oops);
-			status++;
+		if (oops != NULL) {
+			if (!r->expectfailure) {
+				printf("%u: '%s' failed to parse: %s\n",
+					count, r->input, oops);
+				status++;
+			}
 			continue;
 		}
 

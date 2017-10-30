@@ -5,15 +5,6 @@
 #define TimeZoneOffset timezone
 
 #include <limits.h>
-/* POSIX 1003.1-2001 says <unistd.h> defines this */
-#ifndef HOST_NAME_MAX
-/* some don't even use _POSIX_HOST_NAME_MAX */
-# ifdef _POSIX_HOST_NAME_MAX
-#  define HOST_NAME_MAX _POSIX_HOST_NAME_MAX
-# else
-#  define HOST_NAME_MAX 255 /* last resort */
-# endif
-#endif
 
 /*
  * This normally comes in via bind9/config.h

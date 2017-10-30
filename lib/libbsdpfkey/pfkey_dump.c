@@ -82,7 +82,7 @@
 		if (sizeof((str)[0]) == 0 \
 		    || num >= sizeof(str) / sizeof((str)[0])) \
 			printf("%u ", (num)); \
-		else if (strlen((str)[(num)]) == 0) \
+		else if ((str)[(num)][0] == '\0') \
 			printf("%u ", (num)); \
 		else \
 			printf("%s ", (str)[(num)]); \

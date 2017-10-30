@@ -1,15 +1,8 @@
 # @FINALCONFDIR@/ipsec.conf - Libreswan IPsec configuration file
-
-# Uncomment when using this configuration file with openswan
-#version 2
 #
 # Manual:     ipsec.conf.5
 
 config setup
-	# which IPsec stack to use, "netkey" (the default), "klips" or "mast".
-	# For MacOSX use "bsd"
-	protostack=netkey
-	#
 	# Normally, pluto logs via syslog. If you want to log to a file,
 	# specify below or to disable logging, eg for embedded systems, use
 	# the file name /dev/null
@@ -29,12 +22,6 @@ config setup
 	# plutodebug="all crypt"
 	# Again: only enable plutodebug when asked by a developer
 	#plutodebug=none
-	#
-	# Enable core dumps (might require system changes, like ulimit -C)
-	# This is required for abrtd to work properly
-	# Note: SElinux policies might prevent pluto writing the core at
-	#       unusual locations
-	dumpdir=/var/run/pluto/
 	#
 	# NAT-TRAVERSAL support
 	# exclude networks used on server side by adding %v4:!a.b.c.0/24

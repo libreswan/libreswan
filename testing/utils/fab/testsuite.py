@@ -56,7 +56,6 @@ class Test:
         # specified, use that.
         if testsuite_output_directory:
             self.output_directory = os.path.join(testsuite_output_directory, self.name)
-            print(self.output_directory)
         else:
             self.output_directory = os.path.join(self.directory, "OUTPUT")
 
@@ -193,6 +192,7 @@ class Testsuite:
     def __len__(self):
         return self.testlist.__len__()
 
+
 def add_arguments(parser):
 
     group = parser.add_argument_group("testsuite arguments",
@@ -203,8 +203,8 @@ def add_arguments(parser):
                        help="directory containg 'sanitizers/', 'default-testparams.sh' and 'pluto' along with other scripts and files used to perform test postmortem; default: '%(default)s/'")
 
     # There are two outputs: old and new; how to differentiate?
-    group.add_argument("--testsuite-output", metavar="DIRECTORY",
-                        help="save test results in%(metavar)s/<test> instead of <test>/OUTPUT")
+    group.add_argument("--testsuite-output", metavar="OUTPUT-DIRECTORY",
+                        help="save test results in %(metavar)s/<test> instead of testing/pluto/<test>/OUTPUT")
 
 
 def log_arguments(logger, args):
@@ -258,29 +258,37 @@ def load(logger, log_level, args,
                      testsuite_output_directory=testsuite_output_directory or args.testsuite_output)
 
 
-def append_test(tests, args, test_directory=None,
+def append_test(logger, log_level, tests, args, directory,
+                message,
+                test=None,
+                test_directory=None,
                 saved_test_output_directory=None):
     """If it looks like a test, append it"""
 
+    logger.debug("does '%s' contain %s?", directory, message)
+
+    # simple checks
     if saved_test_output_directory \
     and not is_test_output_directory(saved_test_output_directory):
         return False
 
-    # Use the saved test output directory's name to find the
-    # corresponding test directory.
-    if not test_directory:
-        if saved_test_output_directory:
-            subdir = os.path.basename(saved_test_output_directory)
-            test_directory = os.path.join(args.testing_directory, "pluto", subdir)
+    if test:
+        assert not test_directory
+        test_directory = os.path.join(args.testing_directory, "pluto", test)
+
     if not test_directory:
         return False
+
     if not is_test_directory(test_directory):
         return False
 
-    tests.append(Test(test_directory=test_directory,
-                      saved_test_output_directory=saved_test_output_directory,
-                      testing_directory=args.testing_directory,
-                      testsuite_output_directory=args.testsuite_output))
+    test = Test(test_directory=test_directory,
+                saved_test_output_directory=saved_test_output_directory,
+                testing_directory=args.testing_directory,
+                testsuite_output_directory=args.testsuite_output)
+    logger.log(log_level, "directory '%s' contains %s '%s'", directory, message, test.name)
+    tests.append(test)
+
     return True
 
 
@@ -292,6 +300,8 @@ def load_testsuite_or_tests(logger, directories, args,
 
     tests = []
     for directory in directories:
+
+        logger.debug("is %s a test or testsuite?", directory)
 
         # Python's basename is close to useless - given "foo/" it
         # returns "" and not "foo" - get around this.
@@ -308,69 +318,77 @@ def load_testsuite_or_tests(logger, directories, args,
                 tests.append(test)
             continue
 
-        # easy case, directory is a single test
-        if append_test(tests, args, test_directory=directory):
-            logger.log(log_level, "'%s' is a test directory", directory)
+        # kvmrunner.py testing/pluto/<test>
+        if append_test(logger, log_level, tests, args, directory,
+                       "the test",
+                       test_directory=directory):
             continue
 
-        # DIRECTORY is a sub-directory of a test containing test
-        # output.  For instance:
+        # kvmrunner.py testing/pluto/<test>/OUTPUT
         #
-        #     cd testing/pluto/<test>/OUTPUT
-        #     kvmrunner.py .
-        #
-        # Note that the test for the path DIRECTORY/.. only works when
-        # DIRECTORY exists.  See also below.
-        if append_test(tests, args, test_directory=os.path.join(directory, ".."),
+        # This works when OUTPUT contains results.
+        if os.path.basename(directory) == "OUTPUT" \
+        and append_test(logger, log_level, tests, args, directory,
+                       "output from the test",
+                       test_directory=os.path.dirname(directory),
                        saved_test_output_directory=directory):
-            logger.log(log_level, "'%s' is an output sub-directory of a test directory", directory)
             continue
 
-        # DIRECTORY is a sub-directory of a test, yet doesn't appear
-        # to contain test output.
-        if not is_test_output_directory(directory) \
-        and append_test(tests, args, test_directory=os.path.join(directory, "..")):
-            logger.log(log_level, "'%s' is a non-output sub-directory of a test directory", directory)
+        # rm testing/pluto/<test>/OUTPUT/* ; kvmrunner.py testing/pluto/<test>/OUTPUT/
+        # ???
+
+        # kvmrunner.py BACKUP/YYYYMMDD/<test>/OUTPUT
+        if os.path.basename(directory) == "OUTPUT" \
+        and append_test(logger, log_level, tests, args, directory,
+                       "saved output from the test",
+                       test=os.path.basename(os.path.dirname(directory)),
+                       saved_test_output_directory=directory):
             continue
 
-        # DIRECTORY doesn't exist, yet it really really looks like a
-        # test output sub-directory (if DIRECTORY did exist the
-        # earlier tests would have succeeded).  The sequence:
-        #
-        #   rm -rf testing/pluto/<test>/OUTPUT
-        #   kvmrunner.py !$
-        #
-        # will cause this.
-        if os.path.basename(directory).startswith("OUTPUT") \
-        and not os.path.exists(directory) \
-        and append_test(tests, args, test_directory=os.path.dirname(directory)):
-            logger.log(log_level, "'%s' is a deleted OUTPUT* sub-directory of a test directory", directory)
+        # kvmrunner.py BACKUP/YYYYMMDD/<test> [/OUTPUT/]
+        if append_test(logger, log_level, tests, args, directory,
+                       "OUTPUT/ which contains saved output from the test",
+                       test=os.path.basename(directory),
+                       saved_test_output_directory=os.path.join(directory, "OUTPUT")):
             continue
 
-        # DIRECTORY is a test output directory for an unknown test.  The sequence:
-        #
-        #   mv testing/pluto/<test>/OUTPUT BACKUP/YYYYMMDD/<test>
-        #   kvmrunner.py BACKUP/YYYYMMDD/<test>
-        #
-        # will cause this.  See also test below.
-        if append_test(tests, args, saved_test_output_directory=directory):
-            logger.log(log_level, "'%s' is a saved test output directory", directory)
+        # cp testing/pluto/<test>/OUTPUT <test> ; kvmrunner.py <test>
+        if append_test(logger, log_level, tests, args, directory,
+                       "saved output from the test",
+                       test=os.path.basename(directory),
+                       saved_test_output_directory=directory):
             continue
 
-        # DIRECTORY is a testsuite output directory containing <test>
-        # output sub-directories.  The sequence:
-        #
-        #   mv testing/pluto/<test>/OUTPUT BACKUP/YYYYMMDD/<test>
-        #   kvmrunner.py BACKUP/YYYYMMDD/
-        #
-        # will cause this.  Go through the directory looking for
-        # anything that looks like test output.
-        saved_testsuite = False
+        # kvmrunner.py BACKUP/YYYYMMDD/ [<test>/OUTPUT]
+        found = False
         for subdir in os.listdir(directory):
-            if append_test(tests, args, saved_test_output_directory=os.path.join(directory, subdir)):
-                logger.log(log_level, "'%s' is a saved testsuite output directory containing test '%s'", directory, subdir)
-                saved_testsuite = True
-        if saved_testsuite:
+            if append_test(logger, log_level, tests, args, directory,
+                           subdir + "/OUTPUT/ which contains saved output from the test",
+                           test=subdir,
+                           saved_test_output_directory=os.path.join(directory, subdir, "OUTPUT")):
+                found = True
+        if found:
+            continue
+
+        # kvmrunner.py BACKUP/YYYYMMDD/ [<test:OUTPUT>]
+        found = False
+        for subdir in os.listdir(directory):
+            if append_test(logger, log_level, tests, args, directory,
+                           subdir + "/ which contains saved output from the test",
+                           test=subdir,
+                           saved_test_output_directory=os.path.join(directory, subdir)):
+                found = True
+        if found:
+            continue
+
+        # rm testing/pluto/TESTLIST ; kvmrunner.py testing/pluto/
+        found = False
+        for subdir in os.listdir(directory):
+            if append_test(logger, log_level, tests, args, directory,
+                           subdir + "/ contains the test",
+                           test_directory=os.path.join(directory, subdir)):
+                found = True
+        if found:
             continue
 
         logger.error("directory '%s' is invalid", directory)

@@ -1,0 +1,91 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+road #
+ iptables -A INPUT -i eth1 -s 192.0.1.0/24 -j DROP
+road #
+ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
+road #
+ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+road #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+road #
+ /testing/pluto/bin/wait-until-pluto-started
+road #
+ ipsec auto --add road-east-x509-ipv4
+002 added connection description "road-east-x509-ipv4"
+road #
+ ipsec auto --add road-west-x509-ipv4
+002 added connection description "road-west-x509-ipv4"
+road #
+ echo "initdone"
+initdone
+road #
+ #!/bin/sh
+road #
+ ip -4 route
+default via 192.1.3.254 dev eth0 
+192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209 
+road #
+ ipsec auto --up road-east-x509-ipv4
+002 "road-east-x509-ipv4"[1] 192.1.2.23 #1: initiating v2 parent SA
+133 "road-east-x509-ipv4"[1] 192.1.2.23 #1: STATE_PARENT_I1: initiate
+133 "road-east-x509-ipv4"[1] 192.1.2.23 #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+134 "road-east-x509-ipv4"[1] 192.1.2.23 #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
+002 "road-east-x509-ipv4"[1] 192.1.2.23 #2: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+002 "road-east-x509-ipv4"[1] 192.1.2.23 #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+002 "road-east-x509-ipv4"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.2.100
+002 "road-east-x509-ipv4"[1] 192.1.2.23 #2: negotiated connection [192.0.2.100-192.0.2.100:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "road-east-x509-ipv4"[1] 192.1.2.23 #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
+road #
+ ping -q -n -c 4 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+road #
+ ipsec whack --trafficstatus
+006 #2: "road-east-x509-ipv4"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.100/32
+road #
+ ip -4 route
+default via 192.1.3.254 dev eth0 
+192.0.2.0/24 via 192.1.3.254 dev eth0  src 192.0.2.100 
+192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209 
+road #
+ # now bring up second connection to west with CP request as well
+road #
+ ipsec auto --up road-west-x509-ipv4
+002 "road-west-x509-ipv4"[1] 192.1.2.45 #3: initiating v2 parent SA
+133 "road-west-x509-ipv4"[1] 192.1.2.45 #3: STATE_PARENT_I1: initiate
+133 "road-west-x509-ipv4"[1] 192.1.2.45 #3: STATE_PARENT_I1: sent v2I1, expected v2R1
+134 "road-west-x509-ipv4"[1] 192.1.2.45 #4: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
+002 "road-west-x509-ipv4"[1] 192.1.2.45 #4: certificate verified OK: E=user-west@testing.libreswan.org,CN=west.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+002 "road-west-x509-ipv4"[1] 192.1.2.45 #4: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'
+002 "road-west-x509-ipv4"[1] 192.1.2.45 #4: received INTERNAL_IP4_ADDRESS 192.0.2.100
+002 "road-west-x509-ipv4"[1] 192.1.2.45 #4: negotiated connection [192.0.2.100-192.0.2.100:0-65535 0] -> [192.0.1.0-192.0.1.255:0-65535 0]
+004 "road-west-x509-ipv4"[1] 192.1.2.45 #4: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.45:4500 DPD=passive}
+road #
+ ping -q -n -c 4 192.0.1.254
+PING 192.0.1.254 (192.0.1.254) 56(84) bytes of data.
+--- 192.0.1.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+road #
+ ipsec whack --trafficstatus
+006 #2: "road-east-x509-ipv4"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.100/32
+006 #4: "road-west-x509-ipv4"[1] 192.1.2.45, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org', lease=192.0.2.100/32
+road #
+ ip -4 route
+default via 192.1.3.254 dev eth0 
+192.0.1.0/24 via 192.1.3.254 dev eth0  src 192.0.2.100 
+192.0.2.0/24 via 192.1.3.254 dev eth0  src 192.0.2.100 
+192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209 
+road #
+ echo done
+done
+road #
+road #
+ ../bin/check-for-core.sh
+road #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

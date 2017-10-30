@@ -13,7 +13,7 @@ east #
 east #
  sleep 5
 east #
- ipsec whack --debug-all --impair-send-no-ikev2-auth
+ ipsec whack --debug-all --impair send-no-ikev2-auth
 east #
  echo "initdone"
 initdone
@@ -23,7 +23,7 @@ east #
  grep "negotiated connection" /tmp/pluto.log
 east #
 east #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

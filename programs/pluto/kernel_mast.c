@@ -2,6 +2,7 @@
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2002  D. Hugh Redelmeier.
  * Copyright (C) 2003 Herbert Xu.
+ * Copyright (C) 2017 Richard Guy Briggs <rgb@tricolour.ca>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -52,10 +53,6 @@
 
 static int next_free_mast_device = -1;
 int useful_mastno = -1;
-
-#ifndef DEFAULT_UPDOWN
-# define DEFAULT_UPDOWN "ipsec _updown"
-#endif
 
 /* for now, a kludge */
 #define MAX_MAST 64
@@ -412,8 +409,7 @@ static bool mast_do_command(const struct connection *c, const struct spd_route *
 			     "yes" : "no",
 			   verb, verb_suffix,
 			   common_shell_out_str,
-			   sr->this.updown == NULL ?
-			     DEFAULT_UPDOWN : sr->this.updown)) {
+			   sr->this.updown)) {
 		loglog(RC_LOG_SERIOUS, "%s%s command too long!", verb,
 		       verb_suffix);
 		return FALSE;
@@ -616,7 +612,7 @@ const struct kernel_ops mast_kernel_ops = {
 	.add_sa = pfkey_add_sa,
 	.grp_sa = pfkey_grp_sa,
 	.del_sa = pfkey_del_sa,
-	.get_sa = NULL,
+	.get_sa = pfkey_get_sa,
 	.get_spi = NULL,
 	.eroute_idle = pfkey_was_eroute_idle,
 	.inbound_eroute = FALSE,
@@ -630,4 +626,5 @@ const struct kernel_ops mast_kernel_ops = {
 	.kern_name = "mast",
 	.overlap_supported = TRUE,
 	.sha2_truncbug_support = FALSE,
+	.v6holes = NULL,
 };

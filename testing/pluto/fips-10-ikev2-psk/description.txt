@@ -1,0 +1,3 @@
+FIPS with IKEv2 using PSK on the initiator (west), and on the responder.
+
+Use the default and specific cryto-suites.

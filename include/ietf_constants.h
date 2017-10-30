@@ -9,6 +9,7 @@
  * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -409,11 +410,9 @@
 #define SHA2_384_DIGEST_SIZE BYTES_FOR_BITS(384)
 #define SHA2_512_DIGEST_SIZE BYTES_FOR_BITS(512)
 
+/* not in blapit.h */
 #define DES_CBC_BLOCK_SIZE BYTES_FOR_BITS(64)
 #define AES_CBC_BLOCK_SIZE BYTES_FOR_BITS(128)
-#define AES_BLOCK_SIZE BYTES_FOR_BITS(128)
-
-#define CAMELLIA_BLOCK_SIZE BYTES_FOR_BITS(128)
 
 #define TWOFISH_CBC_BLOCK_SIZE BYTES_FOR_BITS(128)
 /* SERPENT_CBC_BLOCK_SIZE: BYTES_FOR_BITS(128) */
@@ -445,6 +444,11 @@
 #define NAT_IKE_UDP_PORT 4500 /* RFC-3947 */
 /* RFC3948: bytes of zeros, same size as ESP SPI */
 #define NON_ESP_MARKER_SIZE 4
+
+
+/* ICMP type number for neighbor discovery */
+#define ICMP_NEIGHBOR_DISCOVERY 34816
+#define ICMP_NEIGHBOR_SOLICITATION 34560
 
 /* Version numbers - IKEv1 */
 #define ISAKMP_MAJOR_VERSION 0x1
@@ -516,7 +520,8 @@ enum next_payload_types_ikev1 {
 	ISAKMP_NEXT_NATOA_DRAFTS = 131, /* NAT-Traversal: NAT-OA (drafts) */
 	/* Cisco/Microsoft proprietary IKE fragmentation */
 	ISAKMP_NEXT_IKE_FRAGMENTATION = 132,
-	ISAKMP_NEXT_ROOF, /* roof on payload types */
+
+	ISAKMP_NEXT_ROOF /* roof on payload types */
 };
 
 enum ikev2_last_proposal {
@@ -802,6 +807,7 @@ enum ikev2_sec_proto_id {
 /*
  * IKEv2 proposal
  * See http://www.iana.org/assignments/ikev2-parameters
+ * Assume indexing is [1..IKEv2_TRANS_TYPE_ROOF)
  */
 enum ikev2_trans_type {
 	IKEv2_TRANS_TYPE_ENCR = 1,
@@ -809,12 +815,9 @@ enum ikev2_trans_type {
 	IKEv2_TRANS_TYPE_INTEG = 3,
 	IKEv2_TRANS_TYPE_DH = 4, /* same as in IKEv1 */
 	IKEv2_TRANS_TYPE_ESN = 5,
-};
 
-/*
- * Assume indexing is 1..IKEv2_TRANS_TYPE_ESN.
- */
-#define IKEv2_TRANS_TYPE_ROOF (IKEv2_TRANS_TYPE_ESN + 1)
+	IKEv2_TRANS_TYPE_ROOF
+};
 
 /*
  * IKE and ESP encryption algorithms (note iana lists two table columns for these)
@@ -851,7 +854,9 @@ enum ikev2_trans_type_encr {
 	IKEv2_ENCR_CAMELLIA_CCM_B = 26, /* CAMELLIA_CCM_12 RFC 5529 */
 	IKEv2_ENCR_CAMELLIA_CCM_C = 27, /* CAMELLIA_CCM_16 RFC 5529 */
 	IKEv2_ENCR_CHACHA20_POLY1305 = 28, /* RFC7634 */
+
 	IKEv2_ENCR_ROOF,
+
 	/* 29 - 1023 Reserved to IANA */
 	/* 1024 - 65535 Private Use */
 	IKEv2_ENCR_SERPENT_CBC = 65004,
@@ -891,7 +896,9 @@ enum ikev2_trans_type_integ {
 	IKEv2_AUTH_HMAC_SHA2_256_128 = 12, /* RFC4595 */
 	IKEv2_AUTH_HMAC_SHA2_384_192 = 13, /* RFC4306 */
 	IKEv2_AUTH_HMAC_SHA2_512_256 = 14, /* RFC4306 */
-	IKEv2_AUTH_ROOF = IKEv2_AUTH_HMAC_SHA2_512_256,
+
+	IKEv2_AUTH_ROOF,
+
 	/* 15 - 1023 Reserved to IANA RFC4306 */
 	/* 1024 - 65535 Private Use RFC4306 */
 	IKEv2_AUTH_INVALID = 65536
@@ -1019,7 +1026,9 @@ enum ikev1_auth_attribute {
 	AUTH_ALGORITHM_AES_128_GMAC = 11,	/* RFC 4542 */
 	AUTH_ALGORITHM_AES_192_GMAC = 12,	/* RFC 4542 */
 	AUTH_ALGORITHM_AES_256_GMAC =  13,	/* RFC 4542 */
+
 	AUTH_ALGORITHM_ROOF,
+
 	/* 14-61439 Unassigned */
 	/* 61440-65535 Reserved for private use */
 
@@ -1128,12 +1137,14 @@ enum ikev1_hash_attribute  {
  * Hybrid: https://tools.ietf.org/html/draft-ietf-ipsec-isakmp-hybrid-auth-05
  */
 
-#define OAKLEY_AUTH_ROOF 5 /* We don't support Revised or ECDSA yet */
 enum ikev1_auth_method {
 	OAKLEY_PRESHARED_KEY = 1,
 	OAKLEY_DSS_SIG = 2,
 	OAKLEY_RSA_SIG = 3,
 	OAKLEY_RSA_ENC = 4,
+
+	OAKLEY_AUTH_ROOF,	/* we only support methods above */
+
 	OAKLEY_RSA_REVISED_MODE = 5, /* Not implemented */
 	/* 6 - 8 Reserved */
 	OAKLEY_ECDSA_P256 = 9, /* RFC 4754 */
@@ -1216,6 +1227,7 @@ enum ikev2_cp_type {
  */
 
 enum ikev2_auth_method {
+	IKEv2_AUTH_RESERVED = 0,
 	IKEv2_AUTH_RSA = 1,
 	IKEv2_AUTH_PSK = 2,
 	IKEv2_AUTH_DSA = 3,
@@ -1225,7 +1237,7 @@ enum ikev2_auth_method {
 	IKEv2_AUTH_P521 = 11, /* RFC 4754 */
 	IKEv2_AUTH_GSPM = 12, /* RFC 6467 */
 	IKEv2_AUTH_NULL = 13, /* draft-ietf-ipsecme-ikev2-null-auth */
-	IKEv2_AUTH_SIG = 14, /* RFC 7427 */
+	IKEv2_AUTH_DIGSIG = 14, /* RFC 7427 */
 	/* 15 - 200 unassigned */
 	/* 201 - 255 private use */
 };
@@ -1274,7 +1286,9 @@ enum ike_trans_type_dh {
 	OAKLEY_GROUP_BRAINPOOL_P512R1 = 30, /* RFC 6932 */
 	OAKLEY_GROUP_CURVE25519 = 31, /* RFC-ietf-ipsecme-safecurves-05 */
 	OAKLEY_GROUP_CURVE448 = 32, /* RFC-ietf-ipsecme-safecurves-05 */
-	OAKLEY_GROUP_ROOF,
+
+	OAKLEY_GROUP_ROOF
+
 	/* 33 - 32767 Unassigned */
 	/* 32768 - 65535 Reserved for private use */
 };
@@ -1328,7 +1342,9 @@ typedef enum {
 	CERTIFICATE_UNAVAILABLE = 28,
 	UNSUPPORTED_EXCHANGE_TYPE = 29,
 	UNEQUAL_PAYLOAD_LENGTHS = 30,
+
 	v1N_ERROR_ROOF, /* used to cap statistics array */
+
 	/* 31-8191 RESERVED (Future Use) */
 
 	/*
@@ -1409,6 +1425,7 @@ typedef enum {
 	v2N_CHILD_SA_NOT_FOUND = 44, /* RFC 7296 */
 	v2N_INVALID_GROUP_ID = 45, /* draft-yeung-g-ikev2 */
 	v2N_AUTHORIZATION_FAILED = 46, /* draft-yeung-g-ikev2 */
+
 	v2N_ERROR_ROOF, /* used to cap statistics array */
 
 	/* old IKEv1 entries - might be in private use for IKEv2N */
@@ -1467,15 +1484,10 @@ typedef enum {
 	/* 40960 - 65535 Private Use */
 } v2_notification_t;
 
-/* Public key algorithm number
- * Same numbering as used in DNSSEC
- * See RFC 2535 DNSSEC 3.2 The KEY Algorithm Number Specification.
- * Also found in BIND 8.2.2 include/isc/dst.h as DST algorithm codes.
- */
-
+/* Public key algorithm number in IPSECKEY DNS RR. See RFC 4025 2.4 */
 enum pubkey_alg {
-	PUBKEY_ALG_RSA = 1,
-	PUBKEY_ALG_DSA = 3,
+	PUBKEY_ALG_DSA = 1,
+	PUBKEY_ALG_RSA = 2,
 };
 
 /*
@@ -1490,9 +1502,8 @@ enum pubkey_alg {
  */
 
 enum ike_id_type {
-	ID_FROMCERT = (-3),	/* taken from certificate - private to Pluto */
-	ID_IMPOSSIBLE = (-2),	/* private to Pluto */
-	ID_MYID = (-1),		/* private to Pluto */
+	ID_FROMCERT = -2,	/* taken from certificate - private to Pluto */
+	ID_MYID = -1,		/* private to Pluto */
 	ID_NONE = 0,	/* private to Pluto */
 
 	ID_IPV4_ADDR = 1,
@@ -1580,13 +1591,18 @@ enum ipsec_authentication_algo {
 	AH_SHA2_256_TRUNC = 252,	/* our own stolen value */
 };
 
-/* (IKEv2) IPsec ESP transform values
- * IKEv2: https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-5
+/*
+ * IKEv1 IPsec ESP transform values
  * IKEv1: https://www.iana.org/assignments/isakmp-registry/isakmp-registry.xhtml#isakmp-registry-9
+ * IKEv2: https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-5
  *
- * Up to id=20 this table matches IKEv1 and IKEv2. Entries higher up
- * no longer match. IKEv2 values are specified here for those.
- * Note: We basically don't do IKEv1 encryption algo > 20
+ * Up to id=20 IKEv1 and IKEv2 match, after that things get messy.
+ * This is because pluto and the kernel keep trying to use the IKEv1
+ * ESP value when dealing with IKEv2-only algorithms.
+ *
+ * Where there is a conflict between IKEv1 and IKEv2, the IKEv1 value
+ * is included.  If there's no IKEv1 value then the IKEv2 value is
+ * used (should these be dropped).
  */
 
 enum ipsec_cipher_algo {
@@ -1611,9 +1627,9 @@ enum ipsec_cipher_algo {
 	ESP_AES_GCM_8 = 18,
 	ESP_AES_GCM_12 = 19,
 	ESP_AES_GCM_16 = 20,
-	ESP_NULL_AUTH_AES_GMAC = 21, /* IKEv1 is ESP_SEED_CBC */
-	ESP_CAMELLIAv1 = 22, /* IKEv2 is ESP_RESERVED_FOR_IEEE_P1619_XTS_AES */
-	/* IKEv1: ESP_NULL_AUTH_AES-GMAC = 23, */
+	ESP_SEED_CBC = 21, /* IKEv1, IKEv2 is NULL_AUTH_AES_GMAC */
+	ESP_CAMELLIA = 22, /* IKEv1, IKEv2 is ESP_RESERVED_FOR_IEEE_P1619_XTS_AES */
+	ESP_NULL_AUTH_AES_GMAC = 23, /* IKEv1, IKEv2 is CAMELLIA_CBC */
 	ESP_CAMELLIA_CTR = 24, /* not assigned in/for IKEv1 */
 	ESP_CAMELLIA_CCM_8 = 25, /* not assigned in/for IKEv1 */
 	ESP_CAMELLIA_CCM_12 = 26, /* not assigned in/for IKEv1 */
@@ -1646,26 +1662,47 @@ enum ipsec_comp_algo {
 	/* 64-255 Unassigned */
 };
 
-/* a SIG record in ASCII */
-struct ipsec_dns_sig {
-	char fqdn[256];
-	char dns_sig[768]; /* empty string if not signed */
+/*
+ * RFC 7427 Signature Authentication in the Internet Key Exchange Version 2 (IKEv2)
+ * Section 7: IANA Considerations
+ * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#hash-algorithms
+ */
+
+enum notify_payload_hash_algorithms {
+	IKEv2_AUTH_HASH_RESERVED = 0,
+	IKEv2_AUTH_HASH_SHA1     = 1,
+	IKEv2_AUTH_HASH_SHA2_256 = 2,
+	IKEv2_AUTH_HASH_SHA2_384 = 3,
+	IKEv2_AUTH_HASH_SHA2_512 = 4,
+	IKEv2_AUTH_HASH_IDENTITY = 5, /* RFC 4307-bis */
+	/* 6-1023 Unassigned */
+	/* 1024-65535 Reserved for private use */
+	IKEv2_AUTH_HASH_ROOF
 };
 
-struct ipsec_raw_key {
-	char id_name[256];
-	char fs_keyid[8];
-};
+/*
+ * RFC 7427 Hash Algorithm Identifiers (mentioned in
+ * notify_payload_hash_algorithms) that are sent in the Notify
+ * payload of the hash algorithm notification are 2 bytes each.
+ */
+#define RFC_7427_HASH_ALGORITHM_VALUE 2
 
-struct ipsec_identity {
-	enum ike_id_type ii_type;
-	enum ike_cert_type ii_format;
-	union {
-		struct ipsec_dns_sig ipsec_dns_signed;
-		/* some thing for PKIX */
-		struct ipsec_raw_key ipsec_raw_key;
-	} ii_credential;
-};
+/*
+ * RFC 7427 , section 3 describes the Authentication data format for
+ * Digital Signatures.
+ * ASN.1 Length (1 octet): length of ASN.1-encoded AlgorithmIdentifier object
+ * Algorithm Identifier (variable length): The AlgorithmIdentifier ASN.1 object.
+ */
+
+/* size of algorithm identifier sha1WithRSAEncryption is 15 bytes */
+#define ASN1_SHA1_RSA_OID_SIZE 15
+/* length of ASN.1 Algorithm Identifier(variable length) is 1 byte */
+#define ASN1_LEN_ALGO_IDENTIFIER 1
+
+/* 15 byte OID of sha1WithRSAEncryption is specified in RFC 7427 in A.1.1 */
+static const unsigned char sha1_rsa_oid_blob[ASN1_SHA1_RSA_OID_SIZE] = {0x30,0x0d,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,0x01,0x05,0x05,0x00};
+
+static const uint8_t len_sha1_rsa_oid_blob[ASN1_LEN_ALGO_IDENTIFIER] = {ASN1_SHA1_RSA_OID_SIZE};
 
 /* Limits on size of RSA moduli.
  * The upper bound matches that of DNSSEC (see RFC 2537).

@@ -10,3 +10,6 @@ It then proceeds to phase 2.
 
 No ModeConfig is used with this test. This should confirm a fix for rhbz#841325
 
+This test case confirms that XAUTH without ModeCFG does not end up with a
+partial PHASE 1 state. libreswan up to 3.21 suffered from this bug.
+

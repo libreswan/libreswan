@@ -1,0 +1,1 @@
+A host-to-host, /32, on deamnd tunnel, east, has narrowing=yes

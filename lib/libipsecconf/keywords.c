@@ -133,10 +133,10 @@ static const struct keyword_enum_values kw_seccomp_list = VALUES_INITIALIZER(kw_
  * Values for authby={never, rsasig, secret, null}
  */
 static const struct keyword_enum_value kw_authby_values[] = {
-        { "never",     LEMPTY },
-        { "null",      POLICY_AUTH_NULL},
         { "secret",    POLICY_PSK },
         { "rsasig",    POLICY_RSASIG },
+        { "never",     POLICY_AUTH_NEVER },
+        { "null",      POLICY_AUTH_NULL },
         { "secret|rsasig",    POLICY_PSK | POLICY_RSASIG},
 };
 static const struct keyword_enum_values kw_authby_list = VALUES_INITIALIZER(kw_authby_values);
@@ -224,8 +224,10 @@ static const struct keyword_enum_values kw_type_list = VALUES_INITIALIZER(kw_typ
 static const struct keyword_enum_value kw_rsasigkey_values[] = {
 	{ "",             PUBKEY_PREEXCHANGED },
 	{ "%cert",        PUBKEY_CERTIFICATE },
+#ifdef USE_DNSSEC
 	{ "%dns",         PUBKEY_DNSONDEMAND },
 	{ "%dnsondemand", PUBKEY_DNSONDEMAND },
+#endif
 };
 
 static const struct keyword_enum_values kw_rsasigkey_list = VALUES_INITIALIZER(kw_rsasigkey_values);
@@ -271,7 +273,9 @@ static const struct keyword_enum_values kw_remote_peer_type = VALUES_INITIALIZER
 
 static const struct keyword_enum_value kw_xauthby_list[] = {
 	{ "file",	XAUTHBY_FILE },
+#ifdef XAUTH_HAVE_PAM
 	{ "pam",	XAUTHBY_PAM },
+#endif
 	{ "alwaysok",	XAUTHBY_ALWAYSOK },
 };
 
@@ -362,12 +366,13 @@ static const struct keyword_enum_value kw_sendcert_values[] = {
 static const struct keyword_enum_values kw_sendcert_list = VALUES_INITIALIZER(kw_sendcert_values);
 
 /*
- * Values for nat-ikev1-method={drafts,rfc,both}
+ * Values for nat-ikev1-method={drafts,rfc,both,none}
  */
 static const struct keyword_enum_value kw_ikev1natt_values[] = {
 	{ "both",       natt_both },
 	{ "rfc",        natt_rfc },
 	{ "drafts",     natt_drafts },
+	{ "none",       natt_none },
 };
 
 static const struct keyword_enum_values kw_ikev1natt_list = VALUES_INITIALIZER(kw_ikev1natt_values);
@@ -387,12 +392,21 @@ static const struct keyword_enum_value kw_ocsp_method_values[] = {
 };
 static const struct keyword_enum_values kw_ocsp_method_list = VALUES_INITIALIZER(kw_ocsp_method_values);
 
+#ifdef USE_NIC_OFFLOAD
+static const struct keyword_enum_value kw_nic_offload_values[] = {
+	{ "no",   nic_offload_no  },
+	{ "yes",  nic_offload_yes },
+	{ "auto",    nic_offload_auto },
+};
+
+static const struct keyword_enum_values kw_nic_offload_list = VALUES_INITIALIZER(kw_nic_offload_values);
+#endif
 
 /* MASTER KEYWORD LIST
  * Note: this table is terminated by an entry with keyname == NULL.
  */
 
-const struct keyword_def ipsec_conf_keywords_v2[] = {
+const struct keyword_def ipsec_conf_keywords[] = {
   { "interfaces",  kv_config,  kt_string,  KSF_INTERFACES,  NOT_ENUM },
   { "curl-iface",  kv_config,  kt_string,  KSF_CURLIFACE,  NOT_ENUM },
   { "curl-timeout",  kv_config,  kt_time,  KBF_CURLTIMEOUT,  NOT_ENUM },
@@ -415,7 +429,12 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
   { "logtime",  kv_config,  kt_bool,  KBF_PLUTOSTDERRLOGTIME,  NOT_ENUM },
   { "plutostderrlogtime",  kv_config | kv_alias,  kt_bool,  KBF_PLUTOSTDERRLOGTIME,  NOT_ENUM },  /* obsolete */
   { "logappend",  kv_config,  kt_bool,  KBF_PLUTOSTDERRLOGAPPEND,  NOT_ENUM },
-  { "plutorestartoncrash",  kv_config,  kt_bool,  KBF_PLUTORESTARTONCRASH,  NOT_ENUM },
+  { "logip",  kv_config,  kt_bool,  KBF_PLUTOSTDERRLOGIP,  NOT_ENUM },
+#ifdef USE_DNSSEC
+  { "dnssec-enable",  kv_config,  kt_bool,  KBF_DO_DNSSEC,  NOT_ENUM },
+  { "dnssec-rootkey-file",  kv_config,  kt_filename, KSF_PLUTO_DNSSEC_ROOTKEY_FILE,  NOT_ENUM },
+  { "dnssec-anchors",  kv_config,  kt_filename, KSF_PLUTO_DNSSEC_ANCHORS,  NOT_ENUM },
+#endif
   { "dumpdir",  kv_config,  kt_dirname,  KSF_DUMPDIR,  NOT_ENUM },
   { "ipsecdir",  kv_config,  kt_dirname,  KSF_IPSECDIR,  NOT_ENUM },
   { "nssdir", kv_config, kt_dirname, KSF_NSSDIR, NOT_ENUM },
@@ -456,6 +475,8 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
   { "ddos-ike-threshold",  kv_config,  kt_number,  KBF_DDOS_IKE_THRESHOLD,  NOT_ENUM },
   { "max-halfopen-ike",  kv_config,  kt_number,  KBF_MAX_HALFOPEN_IKE,  NOT_ENUM },
   { "ikeport",  kv_config,  kt_number,  KBF_IKEPORT,  NOT_ENUM },
+  { "ike-socket-bufsize",  kv_config,  kt_number,  KBF_IKEBUF,  NOT_ENUM },
+  { "ike-socket-errqueue",  kv_config,  kt_bool,  KBF_IKE_ERRQUEUE,  NOT_ENUM },
   { "nflog-all",  kv_config,  kt_number,  KBF_NFLOG_ALL,  NOT_ENUM },
   { "xfrmlifetime",  kv_config,  kt_number,  KBF_XFRMLIFETIME,  NOT_ENUM },
   { "virtual_private",  kv_config | kv_alias,  kt_string,  KSF_VIRTUALPRIVATE,  NOT_ENUM },  /* obsolete _ */
@@ -478,6 +499,7 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 #endif
 
   /* these options are obsoleted (and not old aliases) */
+  { "plutorestartoncrash",  kv_config,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
   { "forwardcontrol",  kv_config,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
   { "rp_filter",  kv_config,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
   { "pluto",  kv_config,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
@@ -606,6 +628,9 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
   { "modecfgwins1",  kv_conn,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
   { "modecfgwins2",  kv_conn,  kt_obsolete,  KBF_WARNIGNORE,  NOT_ENUM },
 
+#ifdef USE_NIC_OFFLOAD
+  { "nic-offload",  kv_conn,  kt_enum,  KBF_NIC_OFFLOAD,  &kw_nic_offload_list },
+#endif
   { "encapsulation",  kv_conn,  kt_enum,  KBF_ENCAPS,  &kw_encaps_list },
   { "forceencaps",  kv_conn, kt_obsolete, KBF_WARNIGNORE, NOT_ENUM },
 
@@ -649,9 +674,9 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
   { "reqid",  kv_conn,  kt_number,  KBF_REQID,  NOT_ENUM },
   { "nflog",  kv_conn,  kt_number,  KBF_NFLOG_CONN,  NOT_ENUM },
 
-  { "aggrmode",  kv_conn,  kt_invertbool,  KBF_AGGRMODE,  NOT_ENUM },
+  { "aggressive",  kv_conn,  kt_invertbool,  KBF_AGGRMODE,  NOT_ENUM },
   /* alias for compatibility - undocumented on purpose */
-  { "aggressive",  kv_conn | kv_alias,  kt_invertbool,  KBF_AGGRMODE,  NOT_ENUM },
+  { "aggrmode",  kv_conn | kv_alias,  kt_invertbool,  KBF_AGGRMODE,  NOT_ENUM },
 
   { NULL,  0,  0,  0,  NOT_ENUM }
 };
@@ -676,7 +701,7 @@ int parser_find_keyword(const char *s, YYSTYPE *lval)
 	int keywordtype;
 
 	keyleft = FALSE;
-	k = ipsec_conf_keywords_v2;
+	k = ipsec_conf_keywords;
 
 	while (k->keyname != NULL) {
 		if (strcaseeq(s, k->keyname))
@@ -758,7 +783,7 @@ unsigned int parser_enum_list(const struct keyword_def *kd, const char *s, bool 
 	numfound = 0;
 	while ((piece = strsep(&scopy, ":, \t")) != NULL) {
 		/* discard empty strings */
-		if (strlen(piece) == 0)
+		if (piece[0] == '\0')
 			continue;
 
 		assert(kd->validenum != NULL);
@@ -766,7 +791,7 @@ unsigned int parser_enum_list(const struct keyword_def *kd, const char *s, bool 
 		     kev = kd->validenum->values;
 		     kevcount > 0 && !strcaseeq(piece, kev->name);
 		     kev++, kevcount--)
-			;
+			continue;
 
 		/* if we found something */
 		if (kevcount != 0) {

@@ -25,18 +25,18 @@ int des_check_key;
 	a non-zero value, des_set_key() will check that the key has odd
 	parity and is not one of the known weak DES keys.  By default this
 	variable is turned off;
-	
+
 void des_set_odd_parity(
 des_cblock *key );
 	This function takes a DES key (8 bytes) and sets the parity to odd.
-	
+
 int des_is_weak_key(
 des_cblock *key );
 	This function returns a non-zero value if the DES key passed is a
 	weak, DES key.  If it is a weak key, don't use it, try a different
 	one.  If you are using 'random' keys, the chances of hitting a weak
 	key are 1/2^52 so it is probably not worth checking for them.
-	
+
 int des_set_key(
 des_cblock *key,
 des_key_schedule schedule);
@@ -48,7 +48,7 @@ des_key_schedule schedule);
 	are CPU architecture dependent, DES keys are not.  If des_check_key
 	is non zero, zero is returned if the key has the wrong parity or
 	the key is a weak key, else 1 is returned.
-	
+
 int des_key_sched(
 des_cblock *key,
 des_key_schedule schedule);
@@ -96,7 +96,7 @@ int enc);
 	ks.  If enc is non zero (DES_ENCRYPT), encryption occurs, otherwise
 	decryption occurs.  Input is 8 bytes long and output is 8 bytes.
 	(the des_cblock structure is 8 chars).
-	
+
 void des_ecb3_encrypt(
 des_cblock *input,
 des_cblock *output,
@@ -110,7 +110,7 @@ int enc);
 	C=E(ks3,D(ks2,E(ks1,M))).  There is a macro, des_ecb2_encrypt()
 	that only takes 2 des_key_schedules that implements,
 	C=E(ks1,D(ks2,E(ks1,M))) in that the final encrypt is done with ks1.
-	
+
 void des_cbc_encrypt(
 des_cblock *input,
 des_cblock *output,
@@ -130,7 +130,7 @@ int enc);
 	or use des_ncbc_encrypt().
 	Only this routine has this problem with updating the ivec, all
 	other routines that are implementing cbc mode update ivec.
-	
+
 void des_ncbc_encrypt(
 des_cblock *input,
 des_cblock *output,
@@ -160,7 +160,7 @@ int enc);
 	'whiten' the encryption.  inw and outw are secret (unlike the iv)
 	and are as such, part of the key.  So the key is sort of 24 bytes.
 	This is much better than cbc des.
-	
+
 void des_3cbc_encrypt(
 des_cblock *input,
 des_cblock *output,
@@ -176,7 +176,7 @@ int enc);
 	could end up unable to decrypt files.
 	This routine implements outer triple cbc encryption using 2 ks and
 	2 ivec's.  Use des_ede2_cbc_encrypt() instead.
-	
+
 void des_ede3_cbc_encrypt(
 des_cblock *input,
 des_cblock *output,
@@ -195,7 +195,7 @@ int enc);
 	des_key_schedule's, the first being reused for the final
 	encryption.  C=E(ks1,D(ks2,E(ks1,M))).  This form of triple DES
 	is used by the RSAref library.
-	
+
 void des_pcbc_encrypt(
 des_cblock *input,
 des_cblock *output,
@@ -205,7 +205,7 @@ des_cblock *ivec,
 int enc);
 	This is Propagating Cipher Block Chaining mode of DES.  It is used
 	by Kerberos v4.  It's parameters are the same as des_ncbc_encrypt().
-	
+
 void des_cfb_encrypt(
 unsigned char *in,
 unsigned char *out,
@@ -226,7 +226,7 @@ int enc);
 	numbits of 16 will take 10 bytes. etc, etc.  This padding will
 	apply to both input and output.
 
-	
+
 void des_cfb64_encrypt(
 unsigned char *in,
 unsigned char *out,
@@ -242,7 +242,7 @@ int enc);
 	routine will encrypt the input bytes to output and then update ivec
 	and num.  num contains 'how far' we are though ivec.  If this does
 	not make much sense, read more about cfb mode of DES :-).
-	
+
 void des_ede3_cfb64_encrypt(
 unsigned char *in,
 unsigned char *out,
@@ -267,7 +267,7 @@ des_cblock *ivec);
 	This is a implementation of Output Feed Back mode of DES.  It is
 	the same as des_cfb_encrypt() in that numbits is the size of the
 	units dealt with during input and output (in bits).
-	
+
 void des_ofb64_encrypt(
 unsigned char *in,
 unsigned char *out,
@@ -316,7 +316,7 @@ des_cblock *ivec);
 	the EVP_Digest routines, or at least using MD5 or SHA.  This
 	function is used by Kerberos v4 so that is why it stays in the
 	library.
-	
+
 char *des_fcrypt(
 const char *buf,
 const char *salt
@@ -343,7 +343,7 @@ des_cblock *key);
 	When I wrote the first version of these routines back in 1990, MD5
 	did not exist but I feel these routines are still sound.  This
 	routines is compatible with the one in MIT's libdes.
-	
+
 void des_string_to_2keys(
 char *str,
 des_cblock *key1,
@@ -371,7 +371,7 @@ int verify);
 void des_random_seed(
 des_cblock key);
 	This routine sets a starting point for des_random_key().
-	
+
 void des_random_key(
 des_cblock ret);
 	This function return a random key.  Make sure to 'seed' the random

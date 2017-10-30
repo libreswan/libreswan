@@ -75,7 +75,7 @@ if [ -f /proc/net/pfkey ]; then
     echo "XFRM state:"
     ip xfrm state
     echo "XFRM policy:"
-    ip xfrm policy
+    ip -o xfrm policy |grep -v "socket" | sort | tr '\\' '\012' | sed '/^\s*$/d'
     echo "XFRM done"
 fi
 

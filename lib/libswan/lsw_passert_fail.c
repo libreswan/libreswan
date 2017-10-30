@@ -20,26 +20,21 @@
 
 #include "lswlog.h"
 
-volatile sig_atomic_t lsw_dying_breath = FALSE;
-
-void lsw_passert_fail(const char *file_str,
-		      unsigned long line_no,
-		      const char *func_str,
+void lsw_passert_fail(const char *file,
+		      unsigned long line,
+		      const char *func,
 		      const char *fmt, ...)
 {
-	lsw_dying_breath = TRUE;
-
-	va_list args;
-	char message[LOG_WIDTH];	/* longer messages will be truncated */
-
-	va_start(args, fmt);
-	vsnprintf(message, sizeof(message), fmt, args);
-	va_end(args);
-
-	libreswan_loglog(RC_LOG_SERIOUS,
-			 "ABORT: ASSERTION FAILED: %s (in %s() at %s:%lu)",
-			 message, func_str, file_str, line_no);
-
+	LSWBUF(buf) {
+		lswlog_pre(buf);
+		lswlogs(buf, "ABORT: ASSERTION FAILED: ");
+		va_list ap;
+		va_start(ap, fmt);
+		lswlogvf(buf, fmt, ap);
+		va_end(ap);
+		lswlog_source_line(buf, func, file, line);
+		lswlog_to_error_stream(buf);
+	}
 	/* this needs to panic */
 	abort();
 }

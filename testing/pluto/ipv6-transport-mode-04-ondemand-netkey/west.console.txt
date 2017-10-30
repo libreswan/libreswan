@@ -66,9 +66,10 @@ west #
 000 algorithm ESP encrypt: id=15, name=ESP_AES_CCM_B, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=16, name=ESP_AES_CCM_C, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=18, name=ESP_AES_GCM_A, ivlen=8, keysizemin=160, keysizemax=288
-000 algorithm ESP encrypt: id=19, name=ESP_AES_GCM_B, ivlen=12, keysizemin=160, keysizemax=288
-000 algorithm ESP encrypt: id=20, name=ESP_AES_GCM_C, ivlen=16, keysizemin=160, keysizemax=288
+000 algorithm ESP encrypt: id=19, name=ESP_AES_GCM_B, ivlen=8, keysizemin=160, keysizemax=288
+000 algorithm ESP encrypt: id=20, name=ESP_AES_GCM_C, ivlen=8, keysizemin=160, keysizemax=288
 000 algorithm ESP encrypt: id=22, name=ESP_CAMELLIA, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=23, name=ESP_NULL_AUTH_AES_GMAC, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=252, name=ESP_SERPENT, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=253, name=ESP_TWOFISH, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm AH/ESP auth: id=1, name=AUTH_ALGORITHM_HMAC_MD5, keysizemin=128, keysizemax=128
@@ -102,7 +103,7 @@ west #
 000 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
 000  
 000 "v6-transport": 2001:db8:1:2::45<2001:db8:1:2::45>[@west]...2001:db8:1:2::23<2001:db8:1:2::23>[@east]; unrouted; eroute owner: #0
-000 "v6-transport":     oriented; my_ip=unset; their_ip=unset
+000 "v6-transport":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "v6-transport":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "v6-transport":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
 000 "v6-transport":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; sha2-truncbug:no; initial-contact:no;
@@ -161,37 +162,13 @@ src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128
 	tmpl src :: dst ::
 		proto esp reqid 16385 mode transport
 src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
 XFRM done
 IPSEC mangle TABLES
 iptables: No chain/target/match by that name.
@@ -204,10 +181,10 @@ default via 192.1.2.254 dev eth1
 169.254.0.0/16 dev eth0  scope link  metric 1002 
 169.254.0.0/16 dev eth1  scope link  metric 1003 
 169.254.0.0/16 dev eth2  scope link  metric 1004 
-192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254 
 192.0.2.0/24 via 192.1.2.23 dev eth1 
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
-192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45 
+192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45 
 unreachable ::/96 dev lo  metric 1024  error -101
 unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -101
 2001:db8:0:1::/64 dev eth0  proto kernel  metric 256 
@@ -260,37 +237,13 @@ src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128
 	tmpl src :: dst ::
 		proto esp reqid 16385 mode transport
 src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket out priority 0 ptype main 
 src ::/0 dst ::/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
 XFRM done
 IPSEC mangle TABLES
 iptables: No chain/target/match by that name.
@@ -303,10 +256,10 @@ default via 192.1.2.254 dev eth1
 169.254.0.0/16 dev eth0  scope link  metric 1002 
 169.254.0.0/16 dev eth1  scope link  metric 1003 
 169.254.0.0/16 dev eth2  scope link  metric 1004 
-192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254 
 192.0.2.0/24 via 192.1.2.23 dev eth1 
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
-192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45 
+192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45 
 unreachable ::/96 dev lo  metric 1024  error -101
 unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -101
 2001:db8:0:1::/64 dev eth0  proto kernel  metric 256 
@@ -332,7 +285,7 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

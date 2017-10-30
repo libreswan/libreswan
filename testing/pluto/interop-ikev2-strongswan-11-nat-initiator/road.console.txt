@@ -1,20 +1,6 @@
 /testing/guestbin/swan-prep --userland strongswan
 road #
- strongswan starter --debug-all
-Starting strongSwan X.X.X IPsec [starter]...
-Loading config setup
-Loading conn 'road-eastnet-ikev2'
-  authby=secret
-  auto=add
-  fragmentation=yes
-  keyexchange=ikev2
-  left=%defaultroute
-  leftid=@road
-  leftsubnet=192.1.3.209/32
-  right=192.1.2.23
-  rightid=@east
-  rightsubnet=192.0.2.0/24
-found netkey IPsec stack
+ ../../pluto/bin/strongswan-start.sh
 road #
  echo "initdone"
 initdone
@@ -25,7 +11,7 @@ generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP
 sending packet: from 192.1.3.209[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.3.209[500] (XXX bytes)
 parsed IKE_SA_INIT response 0 [ N(INVAL_KE) ]
-peer didn't accept DH group MODP_3072, it requested MODP_2048
+peer didn't accept DH group CURVE_25519, it requested MODP_2048
 initiating IKE_SA road-eastnet-ikev2[1] to 192.1.2.23
 generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
 sending packet: from 192.1.3.209[500] to 192.1.2.23[500] (XXX bytes)
@@ -33,8 +19,8 @@ received packet: from 192.1.2.23[500] to 192.1.3.209[500] (XXX bytes)
 parsed IKE_SA_INIT response 0 [ SA KE No N(FRAG_SUP) N(NATD_S_IP) N(NATD_D_IP) ]
 local host is behind NAT, sending keep alives
 authentication of 'road' (myself) with pre-shared key
-establishing CHILD_SA road-eastnet-ikev2
-generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(NO_ADD_ADDR) N(EAP_ONLY) ]
+establishing CHILD_SA road-eastnet-ikev2{1}
+generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(NO_ADD_ADDR) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
 sending packet: from 192.1.3.209[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
 parsed IKE_AUTH response 1 [ IDr AUTH SA TSi TSr ]
@@ -42,6 +28,7 @@ authentication of 'east' with pre-shared key successful
 IKE_SA road-eastnet-ikev2[1] established between 192.1.3.209[road]...192.1.2.23[east]
 scheduling reauthentication in XXXs
 maximum IKE_SA lifetime XXXs
+CHILD_SA road-eastnet-ikev2{1} established with SPIs SPISPI_i SPISPI_o and TS 192.1.3.209/32 === 192.0.2.0/24
 connection 'road-eastnet-ikev2' established successfully
 road #
 road #
@@ -67,7 +54,7 @@ road-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP in UDP SPIs: SPISPI_i SP
 road-eastnet-ikev2{1}:   192.1.3.209/32 === 192.0.2.0/24
 road #
 road #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 road #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

@@ -5,7 +5,7 @@ Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
- ipsec whack --debug-all --impair-send-zero-gx
+ ipsec whack --debug-all --impair send-zero-gx
 east #
  ipsec auto --add westnet-eastnet-ipv4-psk-slow
 002 added connection description "westnet-eastnet-ipv4-psk-slow"
@@ -23,18 +23,9 @@ east #
 |    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
 "westnet-eastnet-ipv4-psk-slow" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
 | processing informational INVALID_KEY_INFORMATION (17)
-|    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
-"westnet-eastnet-ipv4-psk-slow" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
-| processing informational INVALID_KEY_INFORMATION (17)
-|    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
-"westnet-eastnet-ipv4-psk-slow" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
-| processing informational INVALID_KEY_INFORMATION (17)
-|    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
-"westnet-eastnet-ipv4-psk-slow" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
-| processing informational INVALID_KEY_INFORMATION (17)
 east #
 east #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

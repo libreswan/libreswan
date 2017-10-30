@@ -13,6 +13,7 @@
  * Copyright (C) 2012 Roel van Meer <roel.vanmeer@bokxing.nl>
  * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2017 Richard Guy Briggs <rgb@tricolour.ca>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -189,14 +190,14 @@ void init_pfkey(void)
 	pfkeyfd = safe_socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
 
 	if (pfkeyfd == -1)
-		exit_log_errno((e, "socket() in init_pfkeyfd()"));
+		EXIT_LOG_ERRNO(errno, "socket() in init_pfkeyfd()");
 
 #ifdef NEVER    /* apparently unsupported! */
 	if (fcntl(pfkeyfd, F_SETFL, O_NONBLOCK) != 0)
-		exit_log_errno((e, "fcntl(O_NONBLOCK) in init_pfkeyfd()"));
+		EXIT_LOG_ERRNO(errno, "fcntl(O_NONBLOCK) in init_pfkeyfd()");
 #endif
 	if (fcntl(pfkeyfd, F_SETFD, FD_CLOEXEC) != 0)
-		exit_log_errno((e, "fcntl(FD_CLOEXEC) in init_pfkeyfd()"));
+		EXIT_LOG_ERRNO(errno, "fcntl(FD_CLOEXEC) in init_pfkeyfd()");
 
 	DBG(DBG_KERNEL,
 	    DBG_log("process %u listening for PF_KEY_V2 on file descriptor %d",
@@ -256,7 +257,7 @@ static bool pfkey_input_ready(void)
 	} while (ndes == -1 && errno == EINTR);
 
 	if (ndes < 0) {
-		log_errno((e, "select() failed in pfkey_get()"));
+		LOG_ERRNO(errno, "select() failed in pfkey_get()");
 		return FALSE;
 	}
 
@@ -291,7 +292,7 @@ static bool pfkey_get(pfkey_buf *buf)
 			if (errno == EAGAIN)
 				return FALSE;
 
-			log_errno((e, "read() failed in pfkey_get()"));
+			LOG_ERRNO(errno, "read() failed in pfkey_get()");
 			return FALSE;
 		} else if ((size_t) len < sizeof(buf->msg)) {
 			libreswan_log(
@@ -666,14 +667,14 @@ static bool finish_pfkey_msg(struct sadb_ext *extensions[K_SADB_EXT_MAX + 1],
 					/* FALL THROUGH */
 					default:
 logerr:
-						libreswan_log_errno_routine(e1,
-							"pfkey write() of %s message %u for %s %s failed",
-							sparse_val_show(
-								pfkey_type_names,
-								pfkey_msg->sadb_msg_type),
-							pfkey_msg->sadb_msg_seq,
-							description,
-							text_said);
+						LOG_ERRNO(e1,
+							  "pfkey write() of %s message %u for %s %s failed",
+							  sparse_val_show(
+								  pfkey_type_names,
+								  pfkey_msg->sadb_msg_type),
+							  pfkey_msg->sadb_msg_seq,
+							  description,
+							  text_said);
 						success = FALSE;
 					}
 				} else {
@@ -844,7 +845,7 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 		      const ip_subnet *this_client,
 		      const ip_address *that_host,
 		      const ip_subnet *that_client,
-		      ipsec_spi_t cur_spi,
+		      ipsec_spi_t cur_spi UNUSED,
 		      ipsec_spi_t new_spi,
 		      int sa_proto UNUSED,
 		      unsigned int transport_proto,
@@ -886,17 +887,6 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 	if (!pfkey_msg_start(klips_op & KLIPS_OP_MASK, satype,
 			     "pfkey_msg_hdr flow", text_said, extensions))
 		return FALSE;
-
-#if 0
-	DBG_log("klips pfkey op = %u / %u (ERO_DELETE=%u)", op, klips_op,
-		ERO_DELETE);
-#endif
-
-
-// temp squash a warning
-
-	DBG(DBG_CONTROL, DBG_log(" useless SPI printing for cur(%d) and new(%d) spi",
-		cur_spi, new_spi));
 
 	if (op != ERO_DELETE) {
 		if (!(pfkey_build(pfkey_sa_build(&extensions[K_SADB_EXT_SA],
@@ -973,7 +963,7 @@ bool pfkey_add_sa(const struct kernel_sa *sa, bool replace)
 					     sa->spi,   /* in network order */
 					     sa->replay_window,
 					     K_SADB_SASTATE_MATURE,
-					     sa->authalg, sa->encalg, 0),
+					     sa->authalg, sa->compalg, 0),
 			      "pfkey_sa Add SA", sa->text_said, extensions);
 	if (!success)
 		return FALSE;
@@ -1194,6 +1184,70 @@ bool pfkey_del_sa(const struct kernel_sa *sa)
 				   NULL);
 }
 
+/*
+ * pfkey_get_sa - Get SA information from the kernel
+ *
+ * @param sa Kernel SA to be queried
+ * @param bytes octets processed by SA
+ * @param add_time timestamp when SA was added
+ * @return bool True if successful
+ */
+bool pfkey_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
+		  uint64_t *add_time)
+{
+	struct sadb_ext *extensions[K_SADB_EXT_MAX + 1];
+	pfkey_buf pfb;
+
+	if (! (pfkey_msg_start(K_SADB_GET, proto2satype(
+				       sa->proto),
+			       "pfkey_msg_hdr get SA", sa->text_said,
+			       extensions)
+
+	       && pfkey_build(pfkey_sa_build(&extensions[K_SADB_EXT_SA],
+					     K_SADB_EXT_SA,
+					     sa->spi, /* in host order */
+					     0, K_SADB_SASTATE_MATURE, 0, 0,
+					     0),
+			      "pfkey_sa get SA", sa->text_said, extensions)
+
+	       && pfkeyext_address(K_SADB_EXT_ADDRESS_SRC, sa->src,
+				   "pfkey_addr_s get SA", sa->text_said,
+				   extensions)
+
+	       && pfkeyext_address(K_SADB_EXT_ADDRESS_DST, sa->dst,
+				   "pfkey_addr_d get SA", sa->text_said,
+				   extensions)
+
+	       && finish_pfkey_msg(extensions, "Get SA", sa->text_said,
+				   &pfb) ))
+	{
+		return FALSE;
+	}
+
+	/* get reply */
+
+	/* extract the sa info */
+	struct sadb_ext *replies[K_SADB_EXT_MAX + 1];
+	int error;
+
+	error = pfkey_msg_parse(&pfb.msg, NULL, replies, EXT_BITS_IN);
+	if (error != 0)
+		libreswan_log("success on unparsable message - cannot happen");
+
+	if (replies[K_SADB_EXT_LIFETIME_CURRENT]) {
+		struct sadb_lifetime *sal = (struct sadb_lifetime *)
+			replies[K_SADB_EXT_LIFETIME_CURRENT];
+
+		/* *allocations = sal->sadb_lifetime_allocations; */
+		*bytes = sal->sadb_lifetime_bytes;
+		*add_time = sal->sadb_lifetime_addtime;
+		/* *use_time = sal->sadb_lifetime_usetime; */
+		/* *packets = sal->sadb_x_lifetime_packets; */
+		return TRUE;
+	}
+	return FALSE;
+}
+
 void pfkey_close(void)
 {
 	while (pfkey_iq_head != NULL) {
@@ -1294,27 +1348,6 @@ bool pfkey_shunt_eroute(const struct connection *c,
 						  "restoring eclipsed");
 		}
 	}
-
-#if 0
-	{
-		enum pluto_sadb_operations inop =
-			op + ERO_ADD_INBOUND - ERO_ADD;
-
-		bool ok = pfkey_raw_eroute(&c->spd.that.host_addr,
-				      &c->spd.that.client,
-				      &c->spd.this.host_addr,
-				      &c->spd.this.client,
-				      htonl(spi),
-				      SA_INT,
-				      0,        /* transport_proto is not relevant */
-				      ET_INT, null_proto_info,
-				      0,        /* use lifetime */
-				      inop,
-				      opname);
-		if (!ok)
-			return FALSE;
-	}
-#endif
 
 	{
 		const ip_address *peer = &sr->that.host_addr;

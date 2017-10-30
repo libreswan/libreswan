@@ -25,12 +25,12 @@ if  (m/^host/i) {
 if (m/^groupname/i) {
 	s/.*=//;
 	$groupname=$_;
-}	
+}
 
 if (m/^grouppwd/i) {
 	s/.*=//;
 	$grouppassword=$_;
-}	
+}
 
 
 
@@ -39,8 +39,8 @@ close(PCF);
 
 print "ipsec.conf\n\n";
 print "conn $desc\n";
-print "     ike=3des-md5-modp1024\n";
-print "     aggrmode=yes\n";
+print "     ike=aes-sha1-modp1536\n";
+print "     aggressive=yes\n";
 print "     authby=secret\n";
 print "     left=%defaultroute\n";
 print "     leftid=\@$groupname\n";

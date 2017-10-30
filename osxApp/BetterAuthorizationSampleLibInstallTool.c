@@ -57,7 +57,7 @@
 
 // Allows access to path information associated with tool and plist installation
 // from BetterAuthorizationSampleLib.h
-#define BAS_PRIVATE 1		
+#define BAS_PRIVATE 1
 
 #include "BetterAuthorizationSampleLib.h"
 
@@ -72,17 +72,17 @@ static int RunLaunchCtl(
 	// for proper clean-up. Only two commands are really supported by our
 	// implementation; loading and unloading of a job via the plist pointed at
 	// (const char *) plistPath.
-{	
+{
 	int				err;
 	const char *	args[5];
 	pid_t			childPID;
 	pid_t			waitResult;
 	int				status;
-	
+
 	// Pre-conditions.
 	assert(command != NULL);
 	assert(plistPath != NULL);
-	
+
     // Make sure we get sensible logging even if we never get to the waitpid.
 
     status = 0;
@@ -98,7 +98,7 @@ static int RunLaunchCtl(
 	args[4] = NULL;
 
     fprintf(stderr, "launchctl %s %s '%s'\n", args[1], args[2], args[3]);
-	
+
     // Do the standard fork/exec dance.
 
 	childPID = fork();
@@ -156,10 +156,10 @@ static int RunLaunchCtl(
 			err = 0;
 			break;
 	}
-	
+
     // Only the parent gets here.  Wait for the child to complete and get its
     // exit status.
-	
+
 	if (err == 0) {
 		do {
 			waitResult = waitpid(childPID, &status, 0);
@@ -177,7 +177,7 @@ static int RunLaunchCtl(
 	}
 
     fprintf(stderr, "launchctl -> %d %ld 0x%x\n", err, (long) childPID, status);
-	
+
 	return err;
 }
 
@@ -196,39 +196,39 @@ static int CopyFileOverwriting(
 	int			sourceFD;
 	int			destFD;
 	char		buf[65536];
-	
+
 	// Pre-conditions.
 	assert(sourcePath != NULL);
 	assert(destPath != NULL);
-	
+
     (void) unlink(destPath);
-	
+
 	destFD = -1;
-	
+
 	err = 0;
 	sourceFD = open(sourcePath, O_RDONLY);
 	if (sourceFD < 0) {
 		err = errno;
 	}
-	
+
 	if (err == 0) {
 		destFD = open(destPath, O_CREAT | O_EXCL | O_WRONLY, destMode);
 		if (destFD < 0) {
 			err = errno;
 		}
 	}
-	
+
 	if (err == 0) {
 		ssize_t	bytesReadThisTime;
 		ssize_t	bytesWrittenThisTime;
 		ssize_t	bytesWritten;
-		
+
 		do {
 			bytesReadThisTime = read(sourceFD, buf, sizeof(buf));
 			if (bytesReadThisTime < 0) {
 				err = errno;
 			}
-			
+
 			bytesWritten = 0;
 			while ( (err == 0) && (bytesWritten < bytesReadThisTime) ) {
 				bytesWrittenThisTime = write(destFD, &buf[bytesWritten], bytesReadThisTime - bytesWritten);
@@ -241,9 +241,9 @@ static int CopyFileOverwriting(
 
 		} while ( (err == 0) && (bytesReadThisTime != 0) );
 	}
-	
+
 	// Clean up.
-	
+
 	if (sourceFD != -1) {
 		junk = close(sourceFD);
 		assert(junk == 0);
@@ -254,7 +254,7 @@ static int CopyFileOverwriting(
 	}
 
     fprintf(stderr, "copy '%s' %#o '%s' -> %d\n", sourcePath, (int) destMode, destPath, err);
-	
+
 	return err;
 }
 
@@ -274,12 +274,12 @@ static int InstallCommand(
     static const mode_t kDirectoryMode  = ACCESSPERMS & ~(S_IWGRP | S_IWOTH);
     static const mode_t kExecutableMode = ACCESSPERMS & ~(S_IWGRP | S_IWOTH);
     static const mode_t kFileMode       = DEFFILEMODE & ~(S_IWGRP | S_IWOTH);
-	
+
 	// Pre-conditions.
 	assert(bundleID != NULL);
 	assert(toolSourcePath != NULL);
 	assert(plistSourcePath != NULL);
-	
+
 	(void) snprintf(toolDestPath,  sizeof(toolDestPath),  kBASToolPathFormat,  bundleID);
 	(void) snprintf(plistDestPath, sizeof(plistDestPath), kBASPlistPathFormat, bundleID);
 
@@ -366,14 +366,14 @@ static int InstallCommand(
 	if (err == 0) {
 		err = CopyFileOverwriting(plistSourcePath, kFileMode, plistDestPath);
 	}
-	
+
     // Use launchctl to load our job.  The plist file starts out disabled,
     // so we pass "-w" to enable it permanently.
 
 	if (err == 0) {
 		err = RunLaunchCtl(false, "load", plistDestPath);
 	}
-	
+
 	return err;
 }
 
@@ -385,10 +385,10 @@ static int EnableCommand(
 {
 	int		err;
 	char	plistPath[PATH_MAX];
-	
+
 	// Pre-condition.
 	assert(bundleID != NULL);
-	
+
 	(void) snprintf(plistPath, sizeof(plistPath), kBASPlistPathFormat, bundleID);
 	err = RunLaunchCtl(false, "load", plistPath);
 
@@ -398,7 +398,7 @@ static int EnableCommand(
 int main(int argc, char **argv)
 {
 	int err;
-	
+
 	// Print our PID so that the app can avoid creating zombies.
 
 	fprintf(stdout, kBASAntiZombiePIDToken1 "%ld" kBASAntiZombiePIDToken2 "\n", (long) getpid());
@@ -422,14 +422,14 @@ int main(int argc, char **argv)
 
 	if (err == 0) {
 		(void) umask(S_IWGRP | S_IWOTH);
-		
+
         err = setuid(0);
         if (err < 0) {
             fprintf(stderr, "setuid\n");
             err = EINVAL;
         }
 	}
-	
+
 	if ( (err == 0) && (argc < 2) ) {
 		fprintf(stderr, "usage\n");
 		err = EINVAL;
@@ -437,7 +437,7 @@ int main(int argc, char **argv)
 
 	// The first argument is the command.  Switch off that and extract the
 	// remaining arguments and pass them to our command routines.
-	
+
 	if (err == 0) {
 		if ( strcmp(argv[1], kBASInstallToolInstallCommand) == 0 ) {
 			if (argc == 5) {
@@ -461,12 +461,12 @@ int main(int argc, char **argv)
 
 	// Write "oK" to stdout and quit.  The presence of the "oK" on the last
 	// line of output is used by the calling code to detect success.
-	
+
 	if (err == 0) {
 		fprintf(stderr, kBASInstallToolSuccess "\n");
     } else {
 		fprintf(stderr, kBASInstallToolFailure "\n", err);
 	}
-	
+
 	return (err == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

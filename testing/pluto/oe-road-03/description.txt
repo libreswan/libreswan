@@ -1,6 +1,0 @@
-This test brings up a standard OE gateway, (east) as well as a "road warrior"
-living on a different network.
-
-The road warrior has an FQDN ID only, of roadbad.uml.freeswan.org. Only,
-that record has a broken TXT record. So there is no communication.
-

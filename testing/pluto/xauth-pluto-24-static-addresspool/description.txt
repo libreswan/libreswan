@@ -1,0 +1,3 @@
+Two road warriors, north and road connect to east, IKEv1, 
+xauth authby=secret with modecfg and static addresspools 
+in /etc/ipsec.d/passwd. road will fail to establish due overlapping addresspool

@@ -49,11 +49,9 @@ void sanitize_string(char *buf, size_t size)
 		 */
 		if (c == '\n' || c == '\r') {
 			*p = ' ';
-			continue;
-		}
-
-		if (c == '\\' || !isprint(c))
+		} else if (c == '\\' || !isprint(c)) {
 			added += UGLY_WIDTH - 1;
+		}
 	}
 
 	/*

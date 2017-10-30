@@ -5,7 +5,7 @@ Redirecting to: systemctl start ipsec.service
 road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
- ipsec whack --debug-all --impair-retransmits
+ ipsec whack --debug-all --impair retransmits
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
@@ -24,8 +24,8 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.2.1
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 1.2.3.4
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 8.8.8.8
-002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: negotiated connection [192.0.2.1,192.0.2.1:0-65535 0] -> [192.1.2.23,192.1.2.23:0-65535 0]
-004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_GCM_C_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
+002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: negotiated connection [192.0.2.1-192.0.2.1:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
+004 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 road #
  # AA see really weired route, I have to remove that
 road #
@@ -61,9 +61,9 @@ road #
 road #
  ipsec auto --down westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: terminating SAs using this connection
-002 "westnet-eastnet-ipv4-psk-ikev2" #2: deleting state (STATE_V2_IPSEC_I)
+002 "westnet-eastnet-ipv4-psk-ikev2" #2: deleting state (STATE_V2_IPSEC_I) and sending notification
 005 "westnet-eastnet-ipv4-psk-ikev2" #2: ESP traffic information: in=168B out=168B
-002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting state (STATE_PARENT_I3)
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting state (STATE_PARENT_I3) and sending notification
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: deleting connection "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 instance with peer 192.1.2.23
 road #
  #check if the address, 192.0.2.1, is removed
@@ -78,7 +78,7 @@ road #
 done
 road #
 road #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 road #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

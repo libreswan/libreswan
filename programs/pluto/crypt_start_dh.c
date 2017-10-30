@@ -7,6 +7,7 @@
  * Copyright (C) 2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2015 Paul Wouters <pwouters@redaht.com>
+ * Copyright (C) 2017 Antony Antony <antony@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -74,11 +75,11 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *dh,
 
 	/* convert appropriate data to dhq */
 	dhq->auth = st->st_oakley.auth;
-	dhq->prf = st->st_oakley.prf;
+	dhq->prf = st->st_oakley.ta_prf;
 	dhq->oakley_group = oakley_group2;
 	dhq->role = role;
 	dhq->key_size = st->st_oakley.enckeylen / BITS_PER_BYTE;
-	dhq->salt_size = st->st_oakley.encrypter->salt_size;
+	dhq->salt_size = st->st_oakley.ta_encrypt->salt_size;
 
 	passert(r.pcr_d.dhq.oakley_group != OAKLEY_GROUP_invalid);
 	DBG(DBG_CONTROL | DBG_CRYPT,
@@ -94,7 +95,7 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *dh,
 
 	dhq->secret = st->st_sec_nss;
 
-	dhq->encrypter = st->st_oakley.encrypter;
+	dhq->encrypter = st->st_oakley.ta_encrypt;
 	DBG(DBG_CRYPT,
 	    DBG_log("Copying DH pub key pointer to be sent to a thread helper"));
 	dhq->pubk = st->st_pubk_nss;
@@ -152,11 +153,11 @@ stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 
 	/* convert appropriate data to dhq */
 	dhq->auth = st->st_oakley.auth;
-	dhq->prf = st->st_oakley.prf;
+	dhq->prf = st->st_oakley.ta_prf;
 	dhq->oakley_group = oakley_group2;
 	dhq->role = role;
 	dhq->key_size = st->st_oakley.enckeylen / BITS_PER_BYTE;
-	dhq->salt_size = st->st_oakley.encrypter->salt_size;
+	dhq->salt_size = st->st_oakley.ta_encrypt->salt_size;
 
 	if (pss != NULL)
 		WIRE_CLONE_CHUNK(*dhq, pss, *pss);
@@ -169,7 +170,7 @@ stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 
 	/*copying required encryption algo*/
 	/* XXX Avesh: you commented this out on purpose or by accident ?? */
-	/*dhq->encrypter = st->st_oakley.encrypter;*/
+	/*dhq->encrypter = st->st_oakley.ta_encrypt;*/
 	DBG(DBG_CRYPT,
 	    DBG_log("Copying DH pub key pointer to be sent to a thread helper"));
 	dhq->pubk = st->st_pubk_nss;
@@ -216,21 +217,18 @@ stf_status start_dh_v2(struct msg_digest *md,
 
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("calculating skeyseed using prf=%s integ=%s cipherkey=%s",
-		    enum_name(&ikev2_trans_type_prf_names,
-			      st->st_oakley.prf->common.id[IKEv2_ALG_ID]),
-		    enum_name(&ikev2_trans_type_integ_names,
-			      st->st_oakley.integ_hash),
-		    enum_name(&ikev2_trans_type_encr_names,
-			      st->st_oakley.encrypt)));
+		    st->st_oakley.ta_prf->common.fqn,
+		    st->st_oakley.ta_integ->common.fqn,
+		    st->st_oakley.ta_encrypt->common.fqn));
 
 	/* convert appropriate data to dhq */
 	dhq->auth = st->st_oakley.auth;
-	dhq->prf = st->st_oakley.prf;
-	dhq->integ = st->st_oakley.integ;
-	dhq->oakley_group = st->st_oakley.group;
+	dhq->prf = st->st_oakley.ta_prf;
+	dhq->integ = st->st_oakley.ta_integ;
+	dhq->oakley_group = st->st_oakley.ta_dh;
 	dhq->role = role;
 	dhq->key_size = st->st_oakley.enckeylen / BITS_PER_BYTE;
-	dhq->salt_size = st->st_oakley.encrypter->salt_size;
+	dhq->salt_size = st->st_oakley.ta_encrypt->salt_size;
 
 	passert(r.pcr_d.dhq.oakley_group != OAKLEY_GROUP_invalid);
 
@@ -247,7 +245,7 @@ stf_status start_dh_v2(struct msg_digest *md,
 
 	dhq->secret = st->st_sec_nss;
 
-	dhq->encrypter = st->st_oakley.encrypter;
+	dhq->encrypter = st->st_oakley.ta_encrypt;
 	DBG(DBG_CRYPT,
 	    DBG_log("Copying DH pub key pointer to be sent to a thread helper"));
 	dhq->pubk = st->st_pubk_nss;
@@ -272,22 +270,48 @@ stf_status start_dh_v2(struct msg_digest *md,
 }
 
 bool finish_dh_v2(struct state *st,
-		  const struct pluto_crypto_req *r)
+		  const struct pluto_crypto_req *r,  bool only_shared)
 {
 	const struct pcr_skeycalc_v2_r *dhv2 = &r->pcr_d.dhv2;
 
+	if (only_shared) {
+		release_symkey(__func__, "st_shared_nss", &st->st_shared_nss);
+	}
+
 	st->st_shared_nss = dhv2->shared;
-	st->st_skey_d_nss = dhv2->skeyid_d;
-	st->st_skey_ai_nss = dhv2->skeyid_ai;
-	st->st_skey_ar_nss = dhv2->skeyid_ar;
-	st->st_skey_pi_nss = dhv2->skeyid_pi;
-	st->st_skey_pr_nss = dhv2->skeyid_pr;
-	st->st_skey_ei_nss = dhv2->skeyid_ei;
-	st->st_skey_er_nss = dhv2->skeyid_er;
-	st->st_skey_initiator_salt = dhv2->skey_initiator_salt;
-	st->st_skey_responder_salt = dhv2->skey_responder_salt;
-	st->st_skey_chunk_SK_pi = dhv2->skey_chunk_SK_pi;
-	st->st_skey_chunk_SK_pr = dhv2->skey_chunk_SK_pr;
+
+	if (only_shared) {
+/* work around const dhv2 from wire. */
+#define free_any_const_nss_symkey(p) {PK11SymKey *key = (p); \
+	release_symkey(__func__, #p, &key); \
+}
+		free_any_const_nss_symkey(dhv2->skeyid_d);
+		free_any_const_nss_symkey(dhv2->skeyid_ai);
+		free_any_const_nss_symkey(dhv2->skeyid_ar);
+		free_any_const_nss_symkey(dhv2->skeyid_pi);
+		free_any_const_nss_symkey(dhv2->skeyid_pr);
+		free_any_const_nss_symkey(dhv2->skeyid_ei);
+		free_any_const_nss_symkey(dhv2->skeyid_er);
+#undef free_any_const_nss_symkey
+
+		pfreeany(dhv2->skey_initiator_salt.ptr);
+		pfreeany(dhv2->skey_responder_salt.ptr);
+		pfreeany(dhv2->skey_chunk_SK_pi.ptr);
+		pfreeany(dhv2->skey_chunk_SK_pr.ptr);
+
+	} else {
+		st->st_skey_d_nss = dhv2->skeyid_d;
+		st->st_skey_ai_nss = dhv2->skeyid_ai;
+		st->st_skey_ar_nss = dhv2->skeyid_ar;
+		st->st_skey_pi_nss = dhv2->skeyid_pi;
+		st->st_skey_pr_nss = dhv2->skeyid_pr;
+		st->st_skey_ei_nss = dhv2->skeyid_ei;
+		st->st_skey_er_nss = dhv2->skeyid_er;
+		st->st_skey_initiator_salt = dhv2->skey_initiator_salt;
+		st->st_skey_responder_salt = dhv2->skey_responder_salt;
+		st->st_skey_chunk_SK_pi = dhv2->skey_chunk_SK_pi;
+		st->st_skey_chunk_SK_pr = dhv2->skey_chunk_SK_pr;
+	}
 
 	st->hidden_variables.st_skeyid_calculated = TRUE;
 	return st->st_shared_nss != NULL;	/* was NSS happy to DH? */

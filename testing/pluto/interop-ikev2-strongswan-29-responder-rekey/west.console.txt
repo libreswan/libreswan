@@ -1,0 +1,91 @@
+/testing/guestbin/swan-prep --userland strongswan
+west #
+ # confirm that the network is alive
+west #
+ #../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+west #
+ ../../pluto/bin/strongswan-start.sh
+west #
+ echo "initdone"
+initdone
+west #
+ #sleep a bit east is bring up the tunnel
+west #
+ sleep 5
+west #
+ # the tunnel should be up now
+west #
+ strongswan status
+Security Associations (1 up, 0 connecting):
+westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
+westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
+westnet-eastnet-ikev2{1}:   192.0.1.0/24 === 192.0.2.0/24
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ echo "sleep 25 sec to ike to rekey "
+sleep 25 sec to ike to rekey 
+west #
+ sleep 25
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ strongswan status
+Security Associations (1 up, 0 connecting):
+westnet-eastnet-ikev2[2]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
+westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
+westnet-eastnet-ikev2{1}:   192.0.1.0/24 === 192.0.2.0/24
+west #
+ echo "sleep 30 sec to ike to rekey "
+sleep 30 sec to ike to rekey 
+west #
+ sleep 30
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ strongswan status
+Security Associations (1 up, 0 connecting):
+westnet-eastnet-ikev2[3]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
+westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
+westnet-eastnet-ikev2{1}:   192.0.1.0/24 === 192.0.2.0/24
+west #
+ echo done
+done
+west #
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec status | grep westnet-eastnet-ikev2 ; fi
+west #
+ if [ -f /var/run/charon.pid ]; then strongswan status ; fi
+Security Associations (1 up, 0 connecting):
+westnet-eastnet-ikev2[3]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
+westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
+westnet-eastnet-ikev2{1}:   192.0.1.0/24 === 192.0.2.0/24
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

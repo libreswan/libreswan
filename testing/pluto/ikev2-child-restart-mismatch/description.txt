@@ -1,0 +1,3 @@
+Test pending child sa restart.
+
+West has three connections to east. Only the first one will establish.

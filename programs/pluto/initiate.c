@@ -94,10 +94,10 @@ static void swap_ends(struct connection *c)
 	 * incase of asymetric auth c->policy contains left.authby
 	 * This magic will help responder to find connction during INIT
 	 */
-	if(sr->this.authby != sr->that.authby)
+	if (sr->this.authby != sr->that.authby)
 	{
 		c->policy &= ~POLICY_ID_AUTH_MASK;
-		switch(sr->this.authby) {
+		switch (sr->this.authby) {
 		case AUTH_PSK:
 			c->policy |= POLICY_PSK;
 			break;
@@ -172,7 +172,7 @@ bool orient(struct connection *c)
 	 * add_connection() guaranteed there were no conflicts.
 	 */
 	if (!NEVER_NEGOTIATE(c->policy) && c->spd.this.authby != AUTH_UNSET) {
-		switch(c->spd.this.authby) {
+		switch (c->spd.this.authby) {
 		case AUTH_RSASIG:
 			c->policy |= POLICY_RSASIG;
 			break;
@@ -192,7 +192,8 @@ bool orient(struct connection *c)
 
 struct initiate_stuff {
 	int whackfd;
-	lset_t moredebug;
+	lmod_t more_debugging;
+	lmod_t more_impairing;
 	enum crypto_importance importance;
 	char *remote_host;
 };
@@ -201,13 +202,13 @@ static int initiate_a_connection(struct connection *c, void *arg)
 {
 	struct initiate_stuff *is = (struct initiate_stuff *)arg;
 	int whackfd = is->whackfd;
-	lset_t moredebug = is->moredebug;
 	enum crypto_importance importance = is->importance;
 
 	set_cur_connection(c);
 
 	/* turn on any extra debugging asked for */
-	c->extra_debugging |= moredebug;
+	lmod_merge(&c->extra_debugging, is->more_debugging);
+	lmod_merge(&c->extra_impairing, is->more_impairing);
 
 	/* If whack supplied a remote IP, fill it in if we can */
 	if (is->remote_host != NULL && isanyaddr(&c->spd.that.host_addr)) {
@@ -339,19 +340,22 @@ static int initiate_a_connection(struct connection *c, void *arg)
 }
 
 void initiate_connection(const char *name, int whackfd,
-			 lset_t moredebug,
+			 lmod_t more_debugging,
+			 lmod_t more_impairing,
 			 enum crypto_importance importance,
 			 char *remote_host)
 {
-	struct initiate_stuff is;
-	struct connection *c = con_by_name(name, FALSE);
+	struct connection *c = conn_by_name(name, FALSE, FALSE);
 	int count;
 
 	passert(name != NULL);
-	is.whackfd   = whackfd;
-	is.moredebug = moredebug;
-	is.importance = importance;
-	is.remote_host = remote_host;
+	struct initiate_stuff is = {
+		.whackfd = whackfd,
+		.more_debugging = more_debugging,
+		.more_impairing = more_impairing,
+		.importance = importance,
+		.remote_host = remote_host,
+	};
 
 	if (c != NULL) {
 		if (!initiate_a_connection(c, &is))
@@ -376,10 +380,9 @@ static bool same_host(const char *a_dnshostname, const ip_address *a_host_addr,
 {
 	/* should this be dnshostname and host_addr ?? */
 
-	return (a_dnshostname != NULL && b_dnshostname != NULL &&
-			streq(a_dnshostname, b_dnshostname)) ||
-		(a_dnshostname == NULL && b_dnshostname == NULL &&
-		 sameaddr(a_host_addr, b_host_addr));
+	return a_dnshostname == NULL ?
+		b_dnshostname == NULL && sameaddr(a_host_addr, b_host_addr) :
+		b_dnshostname != NULL && streq(a_dnshostname, b_dnshostname);
 }
 
 static bool same_in_some_sense(const struct connection *a,
@@ -398,6 +401,7 @@ void restart_connections_by_peer(struct connection *const c)
 
 	struct host_pair *hp = c->host_pair;
 	enum connection_kind c_kind  = c->kind;
+	struct connection *hp_next = hp->connections->hp_next;
 
 	pexpect(hp != NULL);	/* ??? why would this happen? */
 	if (hp == NULL)
@@ -430,11 +434,18 @@ void restart_connections_by_peer(struct connection *const c)
 		host_addr = c->spd.that.host_addr;
 	}
 
-	for (d = hp->connections; d != NULL; d = d->hp_next) {
-		if (same_host(dnshostname, &host_addr,
-				d->dnshostname, &d->spd.that.host_addr))
-			initiate_connection(d->name, NULL_FD, LEMPTY,
-					pcim_demand_crypto, NULL);
+	if (c_kind == CK_INSTANCE && hp_next == NULL) {
+		/* in simple cases this is  a dangling hp */
+		DBG(DBG_CONTROL,
+			DBG_log ("no connection to restart after termination"));
+	} else {
+		for (d = hp->connections; d != NULL; d = d->hp_next) {
+			if (same_host(dnshostname, &host_addr,
+					d->dnshostname, &d->spd.that.host_addr))
+				initiate_connection(d->name, NULL_FD,
+						    empty_lmod, empty_lmod,
+						    pcim_demand_crypto, NULL);
+		}
 	}
 	pfreeany(dnshostname);
 }
@@ -961,7 +972,7 @@ void ISAKMP_SA_established(struct connection *c, so_serial_t serial)
 
 	/* NULL authentication can never replaced - it is all anonnymous */
 	if (LIN(POLICY_AUTH_NULL, c->policy) ||
-	   ( c->spd.that.authby == AUTH_NULL || c->spd.this.authby == AUTH_NULL)) {
+	   (c->spd.that.authby == AUTH_NULL || c->spd.this.authby == AUTH_NULL)) {
 
 		DBG(DBG_CONTROL, DBG_log("NULL Authentication - all clients appear identical"));
 		return;
@@ -1106,7 +1117,8 @@ static void connection_check_ddns1(struct connection *c)
 	 * lookup
 	 */
 	update_host_pairs(c);
-	initiate_connection(c->name, NULL_FD, LEMPTY, pcim_demand_crypto, NULL);
+	initiate_connection(c->name, NULL_FD, empty_lmod, empty_lmod,
+			    pcim_demand_crypto, NULL);
 
 	/* no host pairs, no more to do */
 	pexpect(c->host_pair != NULL);	/* ??? surely */
@@ -1115,7 +1127,8 @@ static void connection_check_ddns1(struct connection *c)
 
 	for (d = c->host_pair->connections; d != NULL; d = d->hp_next) {
 		if (c != d && same_in_some_sense(c, d))
-			initiate_connection(d->name, NULL_FD, LEMPTY,
+			initiate_connection(d->name, NULL_FD,
+					    empty_lmod, empty_lmod,
 					    pcim_demand_crypto, NULL);
 	}
 }
@@ -1222,8 +1235,10 @@ void connection_check_phase2(void)
 				struct initiate_stuff is;
 
 				is.whackfd = NULL_FD;
-				is.moredebug = 0;
+				is.more_debugging = empty_lmod;
+				is.more_impairing = empty_lmod;
 				is.importance = pcim_local_crypto;
+				is.remote_host = NULL;
 
 				initiate_a_connection(c, &is);
 			}

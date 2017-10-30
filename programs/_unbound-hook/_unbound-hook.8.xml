@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry>
+<refentryinfo>
+  <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para>placeholder to suppress warning</para> </authorblurb></author>
+</refentryinfo>
+<refmeta>
+<refentrytitle>_UNBOUND-HOOK</refentrytitle>
+<manvolnum>8</manvolnum>
+<refmiscinfo class='date'>22 Oct 2017</refmiscinfo>
+<refmiscinfo class="source">libreswan</refmiscinfo>
+<refmiscinfo class="manual">Executable programs</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>ipsec _unbound-hook</refname>
+<refpurpose>Opportunistic IPsec DNS unbound hook script</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<para><emphasis remap='I'>_unbound-hook</emphasis>
+is invoked by the unbound DNS server to inform pluto of a new hostname, IP
+address and public key, so that pluto can opportunistically initiate an
+IPsec connection. Please see the libreswan wiki for more information about
+Opportunistic IPsec.
+</para>
+</refsynopsisdiv>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 id='history'><title>HISTORY</title>
+<para>Man page written for the libreswan project &lt;<ulink url='https://libreswan.org/'>https:/libreswan.org/</ulink>&gt;
+by Paul Wouters.</para>
+</refsect1>
+</refentry>
+

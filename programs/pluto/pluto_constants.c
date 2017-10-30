@@ -119,7 +119,8 @@ static const char *const timer_event_name[] = {
 	"EVENT_NAT_T_KEEPALIVE",
 	"EVENT_DPD",
 	"EVENT_DPD_TIMEOUT",
-	"EVENT_CRYPTO_FAILED",
+	"EVENT_CRYPTO_TIMEOUT",
+	"EVENT_PAM_TIMEOUT",
 
 	"EVENT_v2_RETRANSMIT",
 	"EVENT_v2_RESPONDER_TIMEOUT",
@@ -177,7 +178,7 @@ static const char *const state_name[] = {
 	"STATE_XAUTH_I0",
 	"STATE_XAUTH_I1",
 
-	"STATE_IKE_ROOF",
+	"STATE_IKEv1_ROOF",
 
 	/* v2 */
 	"STATE_IKEv2_BASE",
@@ -206,7 +207,7 @@ static const char *const state_name[] = {
 enum_names state_names = {
 	STATE_UNDEFINED, STATE_IKEv2_ROOF,
 	ARRAY_REF(state_name),
-	NULL, /* prefix */
+	"STATE_", /* prefix */
 	NULL
 };
 
@@ -248,8 +249,8 @@ static const char *const state_story[] = {
 
 	"ModeCfg inititator - awaiting CFG_reply",      /* STATE_MODE_CFG_I1 */
 
-	"XAUTH client - awaiting CFG_request",          /* MODE_XAUTH_I0 */
-	"XAUTH client - awaiting CFG_set",              /* MODE_XAUTH_I1 */
+	"XAUTH client - possibly awaiting CFG_request",          /* MODE_XAUTH_I0 */
+	"XAUTH client - possibly awaiting CFG_set",              /* MODE_XAUTH_I1 */
 	"invalid state - IKE roof",
 	"invalid state - IKEv2 base",
 	"sent v2I1, expected v2R1",             /* STATE_PARENT_I1 */
@@ -258,7 +259,7 @@ static const char *const state_story[] = {
 	"received v2I1, sent v2R1",		/* STATE_PARENT_R1 */
 	"received v2I2, PARENT SA established",	/* STATE_PARENT_R2 */
 	"STATE_V2_CREATE_I0",
-	"sent IPSec Child req wait response",
+	"sent IPsec Child req wait response",
 	"STATE_V2_REKEY_IKE_I0",
 	"STATE_V2_REKEY_IKE_I",
 	"STATE_V2_REKEY_CHILD_I0",
@@ -367,6 +368,7 @@ enum_names stfstatus_name = {
 const char *const sa_policy_bit_names[] = {
 	"PSK",
 	"RSASIG",
+	"AUTH_NEVER",
 	"AUTHNULL",
 	"ENCRYPT",
 	"AUTHENTICATE",
@@ -431,6 +433,22 @@ static const char *const policy_fail_names[4] = {
 	"PASS",
 	"DROP",
 	"REJECT",
+};
+
+static const char *const dns_auth_level_name[] = {
+	"DNSSEC_UNKNOWN",
+	"DNSSEC_BOGUS",
+	"DNSSEC_INSECURE",
+	"PUBKEY_LOCAL",
+	"DNSSEC_SECURE",
+	"DNSSEC_ROOF",
+};
+
+enum_names dns_auth_level_names = {
+	DNSSEC_UNKNOWN, DNSSEC_ROOF,
+	ARRAY_REF(dns_auth_level_name),
+	NULL, /* prefix */
+	NULL
 };
 
 /* print a policy: like bitnamesof, but it also does the non-bitfields.

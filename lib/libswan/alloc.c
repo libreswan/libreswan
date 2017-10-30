@@ -3,6 +3,7 @@
  * Header: "lswalloc.h"
  *
  * Copyright (C) 1998-2001  D. Hugh Redelmeier.
+ * Copyright (C) 2017 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -128,8 +129,15 @@ void pfree(void *ptr)
 		union mhdr *p;
 
 		passert(ptr != NULL);
+
 		p = ((union mhdr *)ptr) - 1;
-		passert(p->i.magic == LEAK_MAGIC);
+
+		if (p->i.magic == ~LEAK_MAGIC) {
+			PASSERT_FAIL("pointer %p invalid, possible double free (magic == ~LEAK_MAGIC)", ptr);
+		} else if (p->i.magic != LEAK_MAGIC) {
+			PASSERT_FAIL("pointer %p invalid, possible heap corruption or bad pointer (magic != LEAK_MAGIC or ~LEAK_MAGIC})", ptr);
+		}
+
 		{
 			pthread_mutex_lock(&leak_detective_mutex);
 			if (p->i.older != NULL) {

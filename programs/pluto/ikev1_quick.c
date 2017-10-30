@@ -81,6 +81,8 @@
 #include "pluto_x509.h"
 #include "alg_info.h"
 
+#include <blapit.h>
+
 /* accept_PFS_KE
  *
  * Check and accept optional Quick Mode KE payload for PFS.
@@ -123,32 +125,19 @@ static notification_t accept_PFS_KE(struct msg_digest *md, chunk_t *dest,
  * Note: this is not called from demux.c
  */
 
-static bool emit_subnet_id(ip_subnet *net,
+static bool emit_subnet_id(const ip_subnet *net,
 			   u_int8_t np,
 			   u_int8_t protoid,
 			   u_int16_t port,
 			   pb_stream *outs)
 {
+	const struct af_info *ai = aftoinfo(subnettypeof(net));
+	const bool usehost = net->maskbits == ai->mask_cnt;
 	struct isakmp_ipsec_id id;
 	pb_stream id_pbs;
 	ip_address ta;
-	unsigned char *tbp;
+	const unsigned char *tbp;
 	size_t tal;
-	const struct af_info *ai;
-	bool usehost = FALSE;
-	int masklen;
-
-	ai = aftoinfo(subnettypeof(net));
-
-	passert(ai != NULL);
-
-	maskof(net, &ta);
-	masklen = masktocount(&ta);
-#if 1
-	if (masklen == ai->mask_cnt)
-		usehost = TRUE;
-
-#endif
 
 	id.isaiid_np = np;
 	id.isaiid_idtype = (usehost ? ai->id_addr : ai->id_subnet);
@@ -159,13 +148,13 @@ static bool emit_subnet_id(ip_subnet *net,
 		return FALSE;
 
 	networkof(net, &ta);
-	tal = addrbytesptr(&ta, &tbp);
+	tal = addrbytesptr_read(&ta, &tbp);
 	if (!out_raw(tbp, tal, &id_pbs, "client network"))
 		return FALSE;
 
 	if (!usehost) {
 		maskof(net, &ta);
-		tal = addrbytesptr(&ta, &tbp);
+		tal = addrbytesptr_read(&ta, &tbp);
 		if (!out_raw(tbp, tal, &id_pbs, "client mask"))
 			return FALSE;
 	}
@@ -191,7 +180,7 @@ static void compute_proto_keymat(struct state *st,
 	 */
 	switch (protoid) {
 	case PROTO_IPSEC_ESP:
-		switch (pi->attrs.transattrs.encrypt) {
+		switch (pi->attrs.transattrs.ta_ikev1_encrypt) {
 		case ESP_NULL:
 			needed_len = 0;
 			break;
@@ -269,7 +258,7 @@ static void compute_proto_keymat(struct state *st,
 			needed_len = CAST_KEY_DEF_LEN / BITS_PER_BYTE;
 			break;
 
-		case ESP_CAMELLIAv1:
+		case ESP_CAMELLIA:
 			/* if an attribute is set, then use that! */
 			if (st->st_esp.attrs.transattrs.enckeylen == 0) {
 				needed_len = CAMELLIA_BLOCK_SIZE;
@@ -297,19 +286,11 @@ static void compute_proto_keymat(struct state *st,
 			}
 			break;
 
-#if 0
-		case ESP_SEED_CBC:
-			if (st->st_esp.attrs.transattrs.enckeylen != 0) {
-				/* SEED-CBC is always 128bit */
-				passert(st->st_esp.attrs.transattrs.enckeylen == 128);
-				needed_len = st->st_esp.attrs.transattrs.enckeylen / BITS_PER_BYTE;
-			}
-			break;
-#endif
+		/* ESP_SEED is for IKEv1 only and not supported. Its number in IKEv2 has been re-used */
 
 		default:
 			needed_len = kernel_alg_esp_enc_max_keylen(
-					pi->attrs.transattrs.encrypt);
+					pi->attrs.transattrs.ta_ikev1_encrypt);
 			if (needed_len > 0) {
 				/* XXX: check key_len coupling with kernel.c's */
 				if (pi->attrs.transattrs.enckeylen) {
@@ -322,114 +303,17 @@ static void compute_proto_keymat(struct state *st,
 				}
 				break;
 			}
-			bad_case(pi->attrs.transattrs.encrypt);
+			bad_case(pi->attrs.transattrs.ta_ikev1_encrypt);
 		}
 		DBG(DBG_PARSING, DBG_log("compute_proto_keymat: needed_len (after ESP enc)=%d",
 					 (int)needed_len));
-
-		switch (pi->attrs.transattrs.integ_hash) {
-		case AUTH_ALGORITHM_NONE:
-			break;
-		case AUTH_ALGORITHM_HMAC_MD5:
-			needed_len += HMAC_MD5_KEY_LEN;
-			break;
-		case AUTH_ALGORITHM_HMAC_SHA1:
-			needed_len += HMAC_SHA1_KEY_LEN;
-			break;
-		/* kernel_alg_ah_auth_ok / kernel_alg_ah_auth_keylen are incomplete */
-		case AUTH_ALGORITHM_HMAC_SHA2_256:
-			needed_len += BYTES_FOR_BITS(256);
-			break;
-		case AUTH_ALGORITHM_HMAC_SHA2_384:
-			needed_len += BYTES_FOR_BITS(384);
-			break;
-		case AUTH_ALGORITHM_HMAC_SHA2_512:
-			needed_len += BYTES_FOR_BITS(512);
-			break;
-		case AUTH_ALGORITHM_HMAC_RIPEMD:
-			needed_len += BYTES_FOR_BITS(160);
-			break;
-		case AUTH_ALGORITHM_AES_XCBC:
-			needed_len += BYTES_FOR_BITS(128);
-			break;
-		case AUTH_ALGORITHM_SIG_RSA:
-			/* ? */
-			break;
-		case AUTH_ALGORITHM_AES_128_GMAC:
-			needed_len += BYTES_FOR_BITS(128);
-			break;
-		case AUTH_ALGORITHM_AES_192_GMAC:
-			needed_len += BYTES_FOR_BITS(192);
-			break;
-		case AUTH_ALGORITHM_AES_256_GMAC:
-			needed_len += BYTES_FOR_BITS(256);
-			break;
-		case AH_NULL:
-			needed_len += 0; /* presumably? */
-			break;
-		default:
-			if (kernel_alg_esp_auth_ok(pi->attrs.transattrs.
-						   integ_hash, NULL)) {
-				needed_len += kernel_alg_esp_auth_keylen(
-					pi->attrs.transattrs.integ_hash);
-				break;
-			}
-			bad_case(pi->attrs.transattrs.integ_hash);
-		}
-
+		needed_len += pi->attrs.transattrs.ta_integ->integ_keymat_size;
 		DBG(DBG_PARSING, DBG_log("compute_proto_keymat: needed_len (after ESP auth)=%d",
 					 (int)needed_len));
 		break;
 
 	case PROTO_IPSEC_AH:
-		switch (pi->attrs.transattrs.encrypt) {
-		case AH_MD5:
-			needed_len = HMAC_MD5_KEY_LEN;
-			break;
-		case AH_SHA:
-			needed_len = HMAC_SHA1_KEY_LEN;
-			break;
-		/* kernel_alg_ah_auth_ok / kernel_alg_ah_auth_keylen are incomplete */
-		case AH_SHA2_256:
-			needed_len = BYTES_FOR_BITS(256);
-			break;
-		case AH_SHA2_384:
-			needed_len = BYTES_FOR_BITS(384);
-			break;
-		case AH_SHA2_512:
-			needed_len = BYTES_FOR_BITS(512);
-			break;
-		case AH_RIPEMD:
-			needed_len = BYTES_FOR_BITS(160);
-			break;
-		case AH_AES_XCBC_MAC:
-			needed_len = BYTES_FOR_BITS(128);
-			break;
-		case AH_RSA:
-			/* ? */
-			break;
-		case AH_AES_128_GMAC:
-			needed_len = BYTES_FOR_BITS(128);
-			break;
-		case AH_AES_192_GMAC:
-			needed_len = BYTES_FOR_BITS(192);
-			break;
-		case AH_AES_256_GMAC:
-			needed_len = BYTES_FOR_BITS(256);
-			break;
-		case AH_NULL:
-			needed_len = 0; /* presumably? */
-			break;
-
-		default:
-			if (kernel_alg_ah_auth_ok(
-			    pi->attrs.transattrs.integ_hash, NULL)) {
-				needed_len += kernel_alg_ah_auth_keylen(
-					pi->attrs.transattrs.integ_hash);
-				break;
-			}
-			bad_case(pi->attrs.transattrs.encrypt);
-		}
+		needed_len += pi->attrs.transattrs.ta_integ->integ_keymat_size;
 		break;
 
 	default:
@@ -448,9 +332,9 @@ static void compute_proto_keymat(struct state *st,
 		size_t needed_space; /* space needed for keying material (rounded up) */
 		size_t i;
 
-		hmac_init(&ctx_me, st->st_oakley.prf, st->st_skeyid_d_nss);
+		hmac_init(&ctx_me, st->st_oakley.ta_prf, st->st_skeyid_d_nss);
 		/* PK11Context * DigestContext makes hmac not allowable for copy */
-		hmac_init(&ctx_peer, st->st_oakley.prf, st->st_skeyid_d_nss);
+		hmac_init(&ctx_peer, st->st_oakley.ta_prf, st->st_skeyid_d_nss);
 		needed_space = needed_len + pad_up(needed_len,
 						   ctx_me.hmac_digest_len);
 		replace(pi->our_keymat,
@@ -487,8 +371,8 @@ static void compute_proto_keymat(struct state *st,
 				break;
 
 			/* more keying material needed: prepare to go around again */
-			hmac_init(&ctx_me, st->st_oakley.prf, st->st_skeyid_d_nss);
-			hmac_init(&ctx_peer, st->st_oakley.prf, st->st_skeyid_d_nss);
+			hmac_init(&ctx_me, st->st_oakley.ta_prf, st->st_skeyid_d_nss);
+			hmac_init(&ctx_peer, st->st_oakley.ta_prf, st->st_skeyid_d_nss);
 
 			hmac_update(&ctx_me,
 				    pi->our_keymat + i - ctx_me.hmac_digest_len,
@@ -562,8 +446,8 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 	case ID_IPV6_ADDR:
 	{
 		ip_address temp_address;
-		err_t ughmsg = initaddr(id_pbs->cur, pbs_left(
-					  id_pbs), afi->af, &temp_address);
+		err_t ughmsg = initaddr(id_pbs->cur, pbs_left(id_pbs),
+					afi->af, &temp_address);
 
 		if (ughmsg != NULL) {
 			loglog(RC_LOG_SERIOUS,
@@ -776,7 +660,7 @@ static size_t quick_mode_hash12(u_char *dest, const u_char *start,
 }
 	DBG_dump("hash key", st->st_skeyid_a.ptr, st->st_skeyid_a.len);
 #endif
-	hmac_init(&ctx, st->st_oakley.prf, st->st_skeyid_a_nss);
+	hmac_init(&ctx, st->st_oakley.ta_prf, st->st_skeyid_a_nss);
 	hmac_update(&ctx, (const void *) msgid, sizeof(msgid_t));
 	if (hash2)
 		hmac_update_chunk(&ctx, st->st_ni); /* include Ni_b in the hash */
@@ -802,7 +686,7 @@ static size_t quick_mode_hash3(u_char *dest, struct state *st)
 {
 	struct hmac_ctx ctx;
 
-	hmac_init(&ctx, st->st_oakley.prf, st->st_skeyid_a_nss);
+	hmac_init(&ctx, st->st_oakley.ta_prf, st->st_skeyid_a_nss);
 	hmac_update(&ctx, (const u_char *)"\0", 1);
 	hmac_update(&ctx, (u_char *) &st->st_msgid, sizeof(st->st_msgid));
 	hmac_update_chunk(&ctx, st->st_ni);
@@ -818,7 +702,7 @@ static size_t quick_mode_hash3(u_char *dest, struct state *st)
  */
 void init_phase2_iv(struct state *st, const msgid_t *msgid)
 {
-	const struct hash_desc *h = st->st_oakley.prf->hasher;
+	const struct hash_desc *h = st->st_oakley.ta_prf->hasher;
 	passert(h);
 
 	DBG_cond_dump(DBG_CRYPT, "last Phase 1 IV:",
@@ -902,15 +786,12 @@ stf_status quick_outI1(int whack_sock,
 		       )
 {
 	struct state *st = duplicate_state(isakmp_sa, TRUE);
-	char p2alg[256];	/* ??? who knows if this size is reasonable */
 
 	st->st_whack_sock = whack_sock;
 	st->st_connection = c;	/* safe: from duplicate_state */
 	passert(c != NULL);
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating == %s;", st->st_serialno, __FUNCTION__, __LINE__, st->st_calculating ? "TRUE" : "FALSE"));
-	if (st->st_calculating)
-		return STF_IGNORE;
 
 	set_cur_state(st); /* we must reset before exit */
 	st->st_policy = policy;
@@ -937,52 +818,50 @@ stf_status quick_outI1(int whack_sock,
 
 	insert_state(st); /* needs cookies, connection, and msgid */
 
-	strcpy(p2alg, "defaults");
-	if (st->st_connection->alg_info_esp != NULL) {
-		alg_info_snprint_phase2(p2alg, sizeof(p2alg),
-					(struct alg_info_esp *)st->st_connection->alg_info_esp);
-	}
-
 	/* figure out PFS group, if any */
 
 	if (policy & POLICY_PFS ) {
+		/*
+		 * Old code called ike_alg_pfsgroup() and that first
+		 * checked st->st_policy for POLICY_PFS.  Its assumed
+		 * the check was redundant.
+		 */
+		pexpect((st->st_policy & POLICY_PFS));
 		/*
 		 * See if pfs_group has been specified for this conn,
 		 * use that group.
 		 * if not, fallback to old use-same-as-P1 behaviour
 		 */
-		if (st->st_connection != NULL)
-			st->st_pfs_group = ike_alg_pfsgroup(st->st_connection,
-							    st->st_policy);
+		st->st_pfs_group = child_dh(st->st_connection);
 
 		/* otherwise, use the same group as during Phase 1:
 		 * since no negotiation is possible, we pick one that is
 		 * very likely supported.
 		 */
 		if (st->st_pfs_group == NULL)
-			st->st_pfs_group = isakmp_sa->st_oakley.group;
+			st->st_pfs_group = isakmp_sa->st_oakley.ta_dh;
 	}
 
-	{
-		const char *pfsgroupname = "no-pfs";
-		char replacestr[32];
-
-		if ((policy & POLICY_PFS) != LEMPTY)
-			pfsgroupname = st->st_pfs_group->common.name;
-
-		replacestr[0] = '\0';
-		if (replacing != SOS_NOBODY)
-			snprintf(replacestr, sizeof(replacestr), " to replace #%lu",
-				 replacing);
-
-		libreswan_log(
-			"initiating Quick Mode %s%s {using isakmp#%lu msgid:%08" PRIx32 " proposal=%s pfsgroup=%s}",
-			prettypolicy(policy),
-			replacestr,
-			isakmp_sa->st_serialno, st->st_msgid, p2alg,
-			pfsgroupname);
+	LSWLOG(buf) {
+		lswlogf(buf, "initiating Quick Mode %s", prettypolicy(policy));
+		if (replacing != SOS_NOBODY) {
+			lswlogf(buf, " to replace #%lu", replacing);
+		}
+		lswlogf(buf, " {using isakmp#%lu msgid:%08" PRIx32 " proposal=",
+			isakmp_sa->st_serialno, st->st_msgid);
+		if (st->st_connection->alg_info_esp != NULL) {
+			lswlog_alg_info(buf, &st->st_connection->alg_info_esp->ai);
+		} else {
+			lswlogf(buf, "defaults");
+		}
+		lswlogf(buf, " pfsgroup=");
+		if ((policy & POLICY_PFS) != LEMPTY) {
+			lswlogs(buf, st->st_pfs_group->common.fqn);
+		} else {
+			lswlogs(buf, "no-pfs");
+		}
+		lswlogf(buf, "}");
 	}
-
 
 	{
 		struct pluto_crypto_req_cont *qke = new_pcrc_repl(
@@ -1454,8 +1333,7 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b)
 			{
 				lset_t old_cur_debugging = cur_debugging;
 
-				set_debugging(
-					cur_debugging | p->extra_debugging);
+				set_debugging(lmod(cur_debugging, p->extra_debugging));
 				DBG(DBG_CONTROL, {
 					char cib[CONN_INST_BUF];
 					DBG_log("using connection \"%s\"%s",
@@ -1766,11 +1644,9 @@ static void quick_inI1_outR1_cryptocontinue2(
 
 	e = quick_inI1_outR1_cryptotail(dh->pcrc_md, r);
 	passert(e != STF_INLINE);
-	if (e == STF_OK) {
-		passert(dh->pcrc_md != NULL);
-		complete_v1_state_transition(&dh->pcrc_md, e);
-		release_any_md(&dh->pcrc_md);
-	}
+	passert(dh->pcrc_md != NULL);
+	complete_v1_state_transition(&dh->pcrc_md, e);
+	release_any_md(&dh->pcrc_md);
 
 	reset_cur_state();
 }

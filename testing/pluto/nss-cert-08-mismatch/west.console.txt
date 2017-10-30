@@ -21,7 +21,7 @@ initdone
 west #
  # the impair causes memory corruption and a crash ?
 west #
- ipsec whack --debug-all --impair-retransmits
+ ipsec whack --debug-all --impair retransmits
 west #
  # should succeed
 west #
@@ -32,16 +32,16 @@ west #
 002 "nss-cert-correct" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set.
 134 "nss-cert-correct" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
 002 "nss-cert-correct" #2: suppressing retransmit because IMPAIR_RETRANSMITS is set.
-002 "nss-cert-correct" #2: certificate E=testing@libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA OK
-002 "nss-cert-correct" #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
-002 "nss-cert-correct" #2: negotiated connection [192.0.1.254,192.0.1.254:0-65535 0] -> [192.0.2.254,192.0.2.254:0-65535 0]
-004 "nss-cert-correct" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_C_256-NONE NATOA=none NATD=none DPD=passive}
+002 "nss-cert-correct" #2: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+002 "nss-cert-correct" #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+002 "nss-cert-correct" #2: negotiated connection [192.0.1.254-192.0.1.254:0-65535 0] -> [192.0.2.254-192.0.2.254:0-65535 0]
+004 "nss-cert-correct" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --down nss-cert-correct
 002 "nss-cert-correct": terminating SAs using this connection
-002 "nss-cert-correct" #2: deleting state (STATE_PARENT_I3)
+002 "nss-cert-correct" #2: deleting state (STATE_V2_IPSEC_I) and sending notification
 005 "nss-cert-correct" #2: ESP traffic information: in=0B out=0B
-002 "nss-cert-correct" #1: deleting state (STATE_PARENT_I3)
+002 "nss-cert-correct" #1: deleting state (STATE_PARENT_I3) and sending notification
 west #
  # should fail on mismatched ID
 west #
@@ -52,8 +52,10 @@ west #
 002 "nss-cert-incorrect" #3: suppressing retransmit because IMPAIR_RETRANSMITS is set.
 134 "nss-cert-incorrect" #4: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
 002 "nss-cert-incorrect" #4: suppressing retransmit because IMPAIR_RETRANSMITS is set.
-002 "nss-cert-incorrect" #4: certificate E=testing@libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA OK
-003 "nss-cert-incorrect" #4: we require IKEv2 peer to have ID 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=testing@libreswan.org', but peer declares 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
+002 "nss-cert-incorrect" #4: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+003 "nss-cert-incorrect" #4: ID_DER_ASN1_DN 'E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA' does not match expected 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
+002 "nss-cert-incorrect" #4: Peer public key SubjectAltName does not match peer ID for this connection
+002 "nss-cert-incorrect" #4: X509: CERT payload does not match connection ID
 224 "nss-cert-incorrect" #4: STATE_PARENT_I2: v2N_AUTHENTICATION_FAILED
 west #
  echo done
@@ -70,9 +72,7 @@ east-ec                                                      P,,
 nic                                                          P,,  
 west #
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
-CORE FOUND
-mv: failed to preserve ownership for ‘OUTPUT/core.west.pluto.2316’: Operation not permitted
+ ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

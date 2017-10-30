@@ -14,5 +14,3 @@
 
 struct encrypt_desc ike_alg_encrypt_camellia_cbc;
 struct encrypt_desc ike_alg_encrypt_camellia_ctr;
-
-const struct cbc_test_vector *const camellia_cbc_tests;

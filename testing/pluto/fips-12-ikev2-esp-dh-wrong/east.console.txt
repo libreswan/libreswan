@@ -1,0 +1,25 @@
+/testing/guestbin/swan-prep
+east #
+ ip addr add 192.0.200.254/24 dev eth0:1
+east #
+ ip route add 192.0.100.0/24 via 192.1.2.45  dev eth1
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add ikev2-base
+002 added connection description "ikev2-base"
+east #
+ ipsec auto --add ikev2-esp=aes-sha1-modp1024
+002 added connection description "ikev2-esp=aes-sha1-modp1024"
+east #
+ echo "initdone"
+initdone
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

@@ -163,7 +163,7 @@ struct pluto_crypto_worker {
 	bool pcw_dead;          /* worker is dead */
 	/*TAILQ_HEAD*/ struct req_queue pcw_active;	/* queue of tasks for this worker */
 	int pcw_work;           /* how many items in pcw_active */
-	struct event *evm;      /* pointer to master_fd event. AA_2015 free it */
+	struct pluto_event *ev; /* pointer to master_fd event. AA_2015 free it */
 };
 
 static /*TAILQ_HEAD*/ struct req_queue backlog;
@@ -291,7 +291,7 @@ static void pluto_crypto_helper(int helper_fd, int helpernum)
 	FILE *out = fdopen(helper_fd, "wb");
 	struct pluto_crypto_req req;
 #ifdef HAVE_SECCOMP
-	switch(pluto_seccomp_mode) {
+	switch (pluto_seccomp_mode) {
 	case SECCOMP_ENABLED:
 		init_seccomp_cryptohelper(SCMP_ACT_KILL);
 		break;
@@ -642,7 +642,7 @@ stf_status send_crypto_helper_request(struct pluto_crypto_req *r,
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = TRUE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = TRUE;
 	delete_event(st);
-	event_schedule(EVENT_CRYPTO_FAILED, EVENT_CRYPTO_FAILED_DELAY, st);
+	event_schedule(EVENT_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, st);
 
 	return STF_SUSPEND;
 }
@@ -936,9 +936,8 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 	w->pcw_master_fd = -1;
 	w->pcw_helpernum = n;
 
-	if (w->evm != NULL) {
-		event_del(w->evm);
-		w->evm = NULL;
+	if (w->ev != NULL) {
+		delete_pluto_event(&w->ev);
 	}
 
 	if (socketpair(PF_UNIX, SOCK_STREAM, 0, fds) != 0) {
@@ -997,8 +996,9 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 
 		DBG(DBG_CONTROL, DBG_log("setup helper callback for master fd %d",
 				w->pcw_master_fd));
-		w->evm = pluto_event_new(w->pcw_master_fd, EV_READ | EV_PERSIST,
-				handle_helper_answer_cb, w, NULL);
+		w->ev = pluto_event_add(w->pcw_master_fd, EV_READ | EV_PERSIST,
+				handle_helper_answer_cb, w, NULL,
+				"CRYPTO_HELPER_FD");
 	}
 }
 
@@ -1070,14 +1070,11 @@ void init_crypto_helpers(int nhelpers)
 		ncpu_online = sysctl(mib, 2, &numcpu, &len, NULL, 0);
 #endif
 
+		/* magic numbers from experience */
 		if (ncpu_online > 2) {
 			nhelpers = ncpu_online - 1;
 		} else {
-			/*
-			 * if we have 2 CPUs or less, then create 1 helper, since
-			 * we still want to deal with head-of-queue problem.
-			 */
-			nhelpers = 1;
+			nhelpers = ncpu_online * 2;
 		}
 	}
 

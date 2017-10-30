@@ -1,0 +1,11 @@
+A road warrior, ("road":initiator) connecting to east(responder) 
+using Main Mode + XAUTH. 
+
+the conction will fail to establish due to
+ipsec whack --debug-all --impair drop-xauth-r0 
+
+road will drop XAUTH_R0 (User/Password request) from east. 
+East will try to retransmit on its own first. 
+ie. east will send STATE_MAIN_R3 + STATE_XAUTH_R0(re-created)
+
+Road will retransmit the previous main mode request

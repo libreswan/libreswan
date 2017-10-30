@@ -117,7 +117,7 @@
  *   as the original policy, even though its subnets might be smaller.
  * - display format: n,m
  */
-typedef unsigned long policy_prio_t;
+typedef uint32_t policy_prio_t;
 #define BOTTOM_PRIO   ((policy_prio_t)0)        /* smaller than any real prio */
 
 #define set_policy_prio(c) { (c)->prio = \
@@ -125,12 +125,8 @@ typedef unsigned long policy_prio_t;
 		| ((policy_prio_t)(c)->spd.that.client.maskbits << 8) \
 		|  (policy_prio_t)1; }
 
-#define POLICY_PRIO_BUF (3 + 1 + 3 + 1)
+#define POLICY_PRIO_BUF (3 + 1 + 3 + 1 + 10)	/* (10 is to silence GCC) */
 extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
-
-#ifdef XAUTH_HAVE_PAM
-# include <security/pam_appl.h>	/* from pam devel; needed for pam_handle_t */
-#endif
 
 /* Note that we include this even if not X509, because we do not want the
  * structures to change lots.
@@ -140,6 +136,7 @@ extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
 #include "defs.h"
 #include <sys/queue.h>
 #include "id.h"    /* for struct id */
+#include "lmod.h"
 
 struct virtual_t;
 
@@ -242,6 +239,7 @@ struct connection {
 	deltatime_t r_timeout; /* max time (in secs) for one packet exchange attempt */
 	reqid_t sa_reqid;
 	int encapsulation;
+	enum nic_offload_options nic_offload;
 
 	/* RFC 3706 DPD */
 	deltatime_t dpd_delay;		/* time between checks */
@@ -295,7 +293,8 @@ struct connection {
 		newest_isakmp_sa,
 		newest_ipsec_sa;
 
-	lset_t extra_debugging;
+	lmod_t extra_debugging;
+	lmod_t extra_impairing;
 
 	/* note: if the client is the gateway, the following must be equal */
 	sa_family_t addr_family;	/* between gateways */
@@ -324,9 +323,6 @@ struct connection {
 	struct connection *ac_next;	/* all connections list link */
 
 	enum send_ca_policy send_ca;
-#ifdef XAUTH_HAVE_PAM
-	pam_handle_t *pamh;		/*  PAM handle for that connection  */
-#endif
 	char *dnshostname;
 
 	ip_address modecfg_dns1;
@@ -366,7 +362,8 @@ struct whack_message;   /* forward declaration of tag whack_msg */
 extern void add_connection(const struct whack_message *wm);
 extern void initiate_connection(const char *name,
 				int whackfd,
-				lset_t moredebug,
+				lmod_t more_debugging,
+				lmod_t more_impairing,
 				enum crypto_importance importance,
 				char *remote_host);
 extern void restart_connections_by_peer(struct connection *c);
@@ -415,7 +412,7 @@ extern void ISAKMP_SA_established(struct connection *c, so_serial_t serial);
 
 struct state;   /* forward declaration of tag (defined in state.h) */
 extern struct connection
-*con_by_name(const char *nm, bool strict);
+*conn_by_name(const char *nm, bool strict, bool quiet);
 
 stf_status ikev2_find_host_connection(struct connection **cp,
 		const ip_address *me, u_int16_t my_port, const ip_address *him,
@@ -538,4 +535,4 @@ extern void unshare_connection_end(struct end *e);
 
 extern void liveness_clear_connection(struct connection *c, char *v);
 
-extern bool liveness_action_hold(struct connection *c);
+extern void liveness_action(struct connection *c, const bool ikev2);

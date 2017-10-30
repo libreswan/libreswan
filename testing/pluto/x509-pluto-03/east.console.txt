@@ -14,8 +14,8 @@ east #
 002 added connection description "westnet-eastnet-x509-cr"
 east #
  ipsec auto --status | grep westnet-eastnet-x509-cr
-000 "westnet-eastnet-x509-cr": 192.0.2.0/24===192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.45<192.1.2.45>[%fromcert]===192.0.1.0/24; unrouted; eroute owner: #0
-000 "westnet-eastnet-x509-cr":     oriented; my_ip=unset; their_ip=unset; mycert=east
+000 "westnet-eastnet-x509-cr": 192.0.2.0/24===192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]...192.1.2.45<192.1.2.45>[%fromcert]===192.0.1.0/24; unrouted; eroute owner: #0
+000 "westnet-eastnet-x509-cr":     oriented; my_ip=unset; their_ip=unset; mycert=east; my_updown=ipsec _updown;
 000 "westnet-eastnet-x509-cr":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-x509-cr":   our auth:rsasig, their auth:rsasig
 000 "westnet-eastnet-x509-cr":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
@@ -27,7 +27,8 @@ east #
 000 "westnet-eastnet-x509-cr":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet-x509-cr":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-x509-cr":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "westnet-eastnet-x509-cr":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "westnet-eastnet-x509-cr":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+000 "westnet-eastnet-x509-cr":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
 000 "westnet-eastnet-x509-cr":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-x509-cr":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 east #
@@ -48,10 +49,6 @@ src 192.1.2.23 dst 192.1.2.45
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 XFRM policy:
-src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir out priority 2344 ptype main 
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
 src 192.0.1.0/24 dst 192.0.2.0/24 
 	dir fwd priority 2344 ptype main 
 	tmpl src 192.1.2.45 dst 192.1.2.23
@@ -60,47 +57,19 @@ src 192.0.1.0/24 dst 192.0.2.0/24
 	dir in priority 2344 ptype main 
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
+src 192.0.2.0/24 dst 192.0.1.0/24 
+	dir out priority 2344 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
 192.0.1.0/24 via 192.1.2.45 dev eth1 
-192.0.2.0/24 dev eth0  proto kernel  scope link  src 192.0.2.254 
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23 
-192.9.2.0/24 dev eth2  proto kernel  scope link  src 192.9.2.23 
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254 
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23 
+192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23 
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
@@ -113,7 +82,7 @@ road                                                         P,,
 west-ec                                                      P,,  
 east #
 east #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

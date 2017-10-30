@@ -53,9 +53,9 @@
 #define CALLOC(size, cast) (cast)calloc(1, (size))
 
 unsigned int bsdpfkey_lib_debug = 0;
-libreswan_keying_debug_func_t pfkey_debug_func;
-#define PFKEY_DEBUG { if (bsdpfkey_lib_debug) \
-		(*pfkey_debug_func); }
+libreswan_keying_debug_func_t pfkey_debug_func = NULL;
+#define PFKEY_DEBUG(args...) { if (bsdpfkey_lib_debug) \
+		(*pfkey_debug_func)(args); }
 
 static int findsupportedmap(int);
 static int setsupportedmap(const struct sadb_supported *sup, int properlen);
@@ -914,9 +914,9 @@ u_int satype;
  *	flag:	set promisc off if zero, set promisc on if non-zero.
  * OUT:
  *	positive: success and return length sent.
- *	-1	: error occurred, and set errno.
- *	0     : error occurred, and set errno.
- *	others: a pointer to new allocated buffer in which supported
+ *	-1:	error occurred, and set errno.
+ *	0:	error occurred, and set errno.
+ *	others:	a pointer to new allocated buffer in which supported
  *	        algorithms is.
  */
 int pfkey_send_promisc_toggle(so, flag)

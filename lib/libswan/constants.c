@@ -3,7 +3,7 @@
  * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 1998-2002,2015  D. Hugh Redelmeier.
- * Copyright (C) 2016-2017 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016-2017 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -158,51 +158,6 @@ enum_names doi_names = {
 	ARRAY_REF(doi_name),
 	NULL, /* prefix */
 	NULL
-};
-
-/*
- * debugging settings: a set of selections for reporting
- * These would be more naturally situated in log.h,
- * but they are shared with whack.
- * It turns out that "debug-" is clutter in all contexts this is used,
- * so we leave it off.
- */
-const char *const debug_bit_names[] = {
-	"raw",
-	"crypt",
-	"parsing",
-	"emitting",
-	"control",
-	"lifecycle",
-	"kernel",
-	"dns",
-	"oppo",
-	"controlmore",
-	"pfkey",
-	"nattraversal",
-	"x509",	/* 12 */
-	"dpd",
-	"oppoinfo",	/* 14 */
-	"whackwatch",
-	"private",
-	"impair-bust-mi2",
-	"impair-bust-mr2",
-	"impair-sa-creation",
-	"impair-die-oninfo",
-	"impair-jacob-two-two",
-	"impair-major-version-bump",
-	"impair-minor-version-bump",
-	"impair-retransmits",
-	"impair-send-bogus-payload-flag",
-	"impair-send-bogus-isakmp-flag",
-	"impair-send-ikev2-ke",
-	"impair-send-no-delete",
-	"impair-send-no-ikev2-auth",
-	"impair-force-fips",
-	"impair-send-key-size-check",
-	"impair-send-zero-gx",
-	"impair-send-bogus-dcookie",
-	NULL	/* termination for bitnamesof() */
 };
 
 /* kind of struct connection */
@@ -633,25 +588,9 @@ static const char *const esp_transform_name[] = {
 	"ESP_AES_GCM_A",
 	"ESP_AES_GCM_B",
 	"ESP_AES_GCM_C",
-	/*
-	 * From here, IKEv1 and IKEv2 registries for ESP_ algorithms become
-	 * inconsistent.
-	 */
-	"ESP_NULL_AUTH_AES_GMAC", /* IKEv1 ESP_SEED_CBC */
-	/*
-	 * The linux PF_KEY API returns 22 in the IKEv1 registry
-	 * meaning (camellia).
-	 *
-	 * IKEv2 code internally maps its value onto this.
-	 */
+	"ESP_SEED_CBC", /* IKEv2 is NULL_AUTH_AES_GMAC */
 	"ESP_CAMELLIA",
-	/*
-	 * IKEv2 is ESP_CAMELLIA and IKEv1 is ESP_NULL_AUTH_AES-GMAC
-	 *
-	 * Either way, if this value is printed then there is a
-	 * problem.
-	 */
-	"IKEv2:ESP_CAMELLIA or IKEv1:ESP_NULL_AUTH_AES_GMAC",
+	"ESP_NULL_AUTH_AES_GMAC", /* IKEv2 is CAMELLIA_CBC */
 	"ESP_CAMELLIA_CTR", /* not assigned in/for IKEv1 */
 	"ESP_CAMELLIA_CCM_A", /* not assigned in/for IKEv1 */
 	"ESP_CAMELLIA_CCM_B", /* not assigned in/for IKEv1 */
@@ -690,13 +629,14 @@ enum_names ipcomp_transformid_names = {
 };
 
 /* Identification type values */
+
 static const char *const ike_idtype_name[] = {
-	/* ID_FROMCERT = (-3), taken from certificate - private to Pluto */
-	/* ID_IMPOSSIBLE = (-2), private to Pluto */
-	/* ID_MYID = (-1), private to Pluto */
+	/* private to Pluto */
+	"%fromcert",	/* -2, ID_FROMCERT:taken from certificate */
+	"%myid",	/* -1, ID_MYID */
+	"%none",	/* 0, ID_NONE */
 
-	"ID_NONE", /* = 0, private to Pluto */
-
+	/* standardized */
 	"ID_IPV4_ADDR",	/* 1 */
 	"ID_FQDN",
 	"ID_USER_FQDN",
@@ -712,34 +652,37 @@ static const char *const ike_idtype_name[] = {
 	"ID_NULL", /* draft-ietf-ipsecme-ikev2-null-auth */
 };
 
+/*
+ * Local boilerplate macro for idtype name range initializer.
+ * - macro is undef'ed very shortly
+ * - not function-like since it expands to a struct initializer
+ * - first entry in ike_idtype_name corresponds to ID_FROMCERT
+ */
+#define ID_NR(from,to,next) { \
+		(from), (to), \
+		&ike_idtype_name[(from)-ID_FROMCERT], (to)-(from) + 1, \
+		NULL, /* prefix */ \
+		next \
+	}
+
 /* IKEv1 */
-enum_names ike_idtype_names = {
-	ID_IPV4_ADDR, ID_FC_NAME,
-	&ike_idtype_name[ID_IPV4_ADDR], ID_FC_NAME-ID_IPV4_ADDR+1,
-	NULL, /* prefix */
-	NULL
-};
+enum_names ike_idtype_names = ID_NR(ID_IPV4_ADDR, ID_NULL, NULL);
 
-static enum_names ikev2_idtype_names_3 = {
-	ID_DER_ASN1_DN, ID_NULL,
-	&ike_idtype_name[ID_DER_ASN1_DN], elemsof(ike_idtype_name)-ID_DER_ASN1_DN,
-	NULL, /* prefix */
-	NULL
-};
+/*
+ * all names, including private-to-pluto
+ * Tricky: lower bound and uppers bound are treated as unsigned long
+ * so we have to tack two ranges onto ike_idtype_names.
+ */
+enum_names ike_idtype_names_extended0 = ID_NR(ID_NONE, ID_NONE, &ike_idtype_names);
+enum_names ike_idtype_names_extended = ID_NR(ID_FROMCERT, ID_MYID, &ike_idtype_names_extended0);
 
-static enum_names ikev2_idtype_names_2 = {
-	ID_IPV6_ADDR, ID_IPV6_ADDR,
-	&ike_idtype_name[ID_IPV6_ADDR], 1,
-	NULL, /* prefix */
-	&ikev2_idtype_names_3
-};
+/* IKEv2 names exclude ID_IPV4_ADDR_SUBNET, ID_IPV6_ADDR_SUBNET-ID_IPV6_ADDR_RANGE */
 
-enum_names ikev2_idtype_names = {
-	ID_IPV4_ADDR, ID_RFC822_ADDR,
-	&ike_idtype_name[ID_IPV4_ADDR], ID_RFC822_ADDR-ID_IPV4_ADDR+1,
-	NULL, /* prefix */
-	&ikev2_idtype_names_2
-};
+static enum_names ikev2_idtype_names_3 = ID_NR(ID_DER_ASN1_DN, ID_NULL,	NULL);
+static enum_names ikev2_idtype_names_2 = ID_NR(ID_IPV6_ADDR, ID_IPV6_ADDR, &ikev2_idtype_names_3);
+enum_names ikev2_idtype_names = ID_NR(ID_IPV4_ADDR, ID_RFC822_ADDR, &ikev2_idtype_names_2);
+
+#undef ID_NR
 
 /* Certificate type values */
 static const char *const ike_cert_type_name[] = {
@@ -1446,6 +1389,7 @@ enum_names ikev2_cp_type_names = {
 
 /* ikev2 auth methods */
 static const char *const ikev2_auth_name[] = {
+	"IKEv2_AUTH_RESERVED", /* 0 */
 	"IKEv2_AUTH_RSA", /* 1 */
 	"IKEv2_AUTH_SHARED",
 	"IKEv2_AUTH_DSA(UNUSED)",
@@ -1459,11 +1403,12 @@ static const char *const ikev2_auth_name[] = {
 	"IKEv2_AUTH_ECDSA_P521",
 	"IKEv2_AUTH_GSPM", /* 12 - RFC 6467 */
 	"IKEv2_AUTH_NULL",
+	"IKEv2_AUTH_DIGSIG", /* 14 - RFC 7427 */
 };
 
 enum_names ikev2_auth_names = {
-	IKEv2_AUTH_RSA,
-	IKEv2_AUTH_NULL,
+	IKEv2_AUTH_RESERVED,
+	IKEv2_AUTH_DIGSIG,
 	ARRAY_REF(ikev2_auth_name),
 	NULL, /* prefix */
 	NULL
@@ -1726,7 +1671,7 @@ static enum_names ikev2_notify_names_16384 = {
 	v2N_INITIAL_CONTACT,
 	v2N_SIGNATURE_HASH_ALGORITHMS,
 	ARRAY_REF(ikev2_notify_name_16384),
-	NULL, /* prefix */
+	"v2N_", /* prefix */
 	NULL
 };
 
@@ -1784,7 +1729,7 @@ enum_names ikev2_notify_names = {
 	v2N_NOTHING_WRONG,
 	v2N_AUTHORIZATION_FAILED,
 	ARRAY_REF(ikev2_notify_name),
-	NULL, /* prefix */
+	"v2N_", /* prefix */
 	&ikev2_notify_names_16384
 };
 
@@ -2126,6 +2071,51 @@ static struct keyword_enum_value kw_host_values[] = {
 struct keyword_enum_values kw_host_list =
 	{ kw_host_values, elemsof(kw_host_values) };
 
+/*
+ * Iterate over the enum_names returning all the valid indexes.
+ *
+ * Use -1 as the starting point / sentinel.
+ *
+ * XXX: Works fine provided we ignore the enum_names object that
+ * contains -ve values stored in unsigned fields!
+ */
+
+long next_enum(enum_names *en, long l)
+{
+	enum_names *p = en;
+	unsigned long e;
+	if (l < 0) {
+		e = en->en_first;
+		if (en->en_names[e - p->en_first] != NULL) {
+			return e;
+		}
+	} else {
+		e = l;
+	}
+
+	while (true) {
+		while (true) {
+			if (p == NULL) {
+				return -1;
+			}
+			passert(p->en_last - p->en_first + 1 == p->en_checklen);
+			if (p->en_first <= e && e < p->en_last) {
+				e++;
+				break;
+			} else if (e == p->en_last && p->en_next_range != NULL) {
+				p = p->en_next_range;
+				e = p->en_first;
+				break;
+			} else {
+				p = p->en_next_range;
+			}
+		}
+		if (p->en_names[e - p->en_first] != NULL) {
+			return e;
+		}
+	}
+}
+
 /* look up enum names in an enum_names */
 const char *enum_name(enum_names *ed, unsigned long val)
 {
@@ -2146,6 +2136,32 @@ const char *enum_short_name(enum_names *ed, unsigned long val)
 
 	return p == NULL || ed->en_prefix == NULL ? p :
 		strip_prefix(p, ed->en_prefix);
+}
+
+size_t lswlog_enum(struct lswlog *buf, enum_names *en, unsigned long val)
+{
+	const char *name = enum_name(en, val);
+	if (name == NULL) {
+		if (en->en_prefix != NULL) {
+			lswlogs(buf, en->en_prefix);
+			lswlogs(buf, "_");
+		}
+		return lswlogf(buf, "%lu??", val);
+	}
+	return lswlogs(buf, name);
+}
+
+size_t lswlog_enum_short(struct lswlog *buf, enum_names *en, unsigned long val)
+{
+	const char *name = enum_short_name(en, val);
+	if (name == NULL) {
+		if (en->en_prefix != NULL) {
+			lswlogs(buf, en->en_prefix);
+			lswlogs(buf, "_");
+		}
+		return lswlogf(buf, "%lu??", val);
+	}
+	return lswlogs(buf, name);
 }
 
 /*
@@ -2299,14 +2315,6 @@ const char *enum_enum_name(enum_enum_names *een, unsigned long table,
 	return en == NULL ? NULL : enum_name(en, val);
 }
 
-const char *enum_enum_short_name(enum_enum_names *een, unsigned long table,
-			   unsigned long val)
-{
-	enum_names *en = enum_enum_table(een, table);
-
-	return en == NULL ? NULL : enum_short_name(en, val);
-}
-
 const char *enum_enum_showb(enum_enum_names *een, unsigned long table,
 			    unsigned long val, struct esb_buf *b)
 {
@@ -2319,6 +2327,27 @@ const char *enum_enum_showb(enum_enum_names *een, unsigned long table,
 	return b->buf;
 }
 
+size_t lswlog_enum_enum(struct lswlog *buf, enum_enum_names *een,
+			unsigned long table, unsigned long val)
+{
+	enum_names *en = enum_enum_table(een, table);
+	if (en == NULL) {
+		/* XXX: dump something more meaningful */
+		return lswlogf(buf, "%lu??%lu??", table, val);
+	}
+	return lswlog_enum(buf, en, val);
+}
+
+size_t lswlog_enum_enum_short(struct lswlog *buf, enum_enum_names *een,
+			      unsigned long table, unsigned long val)
+{
+	enum_names *en = enum_enum_table(een, table);
+	if (en == NULL) {
+		/* XXX: dump something more meaningful */
+		return lswlogf(buf, "%lu??%lu??", table, val);
+	}
+	return lswlog_enum_short(buf, en, val);
+}
 
 /*
  * construct a string to name the bits on in a set
@@ -2383,34 +2412,28 @@ const char *bitnamesof(const char *const table[], lset_t val)
 	return bitnamesofb(table, val, bitnamesbuf, sizeof(bitnamesbuf));
 }
 
-const char *show_set_short(enum_names *sd,
-			   lset_t val,
-			   char *b, size_t blen)
+size_t lswlog_enum_lset_short(struct lswlog *buf, enum_names *en, lset_t val)
 {
-	char *const roof = b + blen;
-	char *p = b;
 	unsigned int e;
 
-	passert(blen != 0); /* need room for NUL */
-
 	/* if nothing gets filled in, default to "none" rather than "" */
-	(void) jam_str(b, blen, "none");
+	if (val == LEMPTY) {
+		return lswlogs(buf, "none");
+	}
 
+	size_t size = 0;
+	const char *sep = "";
 	for (e = 0; val != 0; e++) {
 		lset_t bit = LELEM(e);
 
 		if (val & bit) {
-			if (p != b)
-				p = jam_str(p, (size_t)(roof - p), "+");
-
-			struct esb_buf esb;
-
-			p = jam_str(p, (size_t)(roof - p),
-				enum_show_shortb(sd, e, &esb));
+			size += lswlogs(buf, sep);
+			sep = "+";
+			size += lswlog_enum_short(buf, en, e);
 			val -= bit;
 		}
 	}
-	return b;
+	return size;
 }
 
 /* test a set by seeing if all bits have names */

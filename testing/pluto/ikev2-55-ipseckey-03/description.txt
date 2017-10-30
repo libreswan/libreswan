@@ -1,0 +1,6 @@
+IKEv2 revese DNS OE both sides publish keys in  DNS.
+
+Road is the initiator and east is the responder.
+When road initiate it also start dns query for east using it IP adderss.
+
+East when it get IDi payload it fetch road's IPSECKEY querying reverse zone.

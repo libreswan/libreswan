@@ -872,7 +872,7 @@ static field_desc ikev2id_fields[] = {
 	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
 	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "id_type", &ikev2_idtype_names },
+	{ ft_enum, 8 / BITS_PER_BYTE, "ID type", &ikev2_idtype_names },
 	{ ft_zig,  8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_zig, 16 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_end,  0, NULL, NULL }
@@ -1301,7 +1301,7 @@ struct_desc suggested_group_desc = {
 #ifdef HAVE_LABELED_IPSEC
 
 /*
- * Undocumented Security Context for Labeled IPSec
+ * Undocumented Security Context for Labeled IPsec
  *
  * See struct sec_ctx in state.h
  */
@@ -1393,7 +1393,7 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 		u_int32_t n = 0;
 
 		switch (fp->field_type) {
-		case ft_zig:
+		case ft_zig:		/* zero (ignore violations) */
 			inp += i;
 			break;
 		case ft_nat:            /* natural number (may be 0) */
@@ -1788,7 +1788,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 				fp->name == NULL ? "<end>" : fp->name);
 #endif
 			switch (fp->field_type) {
-			case ft_zig: /* should be zero, so ensure it is */
+			case ft_zig: /* zero */
 				memset(cur, 0, i);
 				inp += i;
 				cur += i;

@@ -168,7 +168,7 @@ ipsec_setup: Trying VIA padlock driver, this may fail, which is okay.
 ipsec_setup: Trying to load Crypto API modules, some may fail, which is okay.
 ipsec_setup: aes-x86_64 aes des sha512 sha256 md5 cbc xcbc ecb twofish blowfish serpent 
 west:~# ipsec auto --add westnet-eastnet
-west:~# ipsec whack --debug-control --debug-controlmore --debug-parsing --debug-crypt
+west:~# ipsec whack --debug none --debug control --debug controlmore --debug parsing --debug crypt
 west:~# /testing/pluto/bin/wait-until-pluto-started
 west:~# echo done
 done
@@ -1437,7 +1437,7 @@ packet from 192.1.2.23:500: Informational Exchange is for an unknown (expired?) 
 | * processed 0 messages from cryptographic helpers 
 | next event EVENT_PENDING_PHASE2 in 62 seconds
 west:~# : ==== tuc ====
-west:~# if [ -f /tmp/core ]; then echo CORE FOUND; mv /tmp/core /var/tmp; fi
+ ../bin/check-for-core.sh
 west:~# : ==== end ====
 west:~# ipsec setup stop
 ipsec_setup: Stopping Libreswan IPsec...

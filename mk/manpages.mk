@@ -43,9 +43,10 @@ local-install-manpages: local-manpages
 	@set -eu $(foreach manpage,$(MANPAGES), \
 		$(foreach refname,$(call refnames,$(builddir)/$(manpage).tmp), \
 		$(foreach destdir,$(MANDIR$(suffix $(refname))), \
-		; echo $(refname) '->' $(destdir) \
+		; src=$(builddir)/$(refname) \
+		; echo $$src '->' $(destdir) \
 		; mkdir -p $(destdir) \
-		; $(INSTALL) $(INSTMANFLAGS) $(builddir)/$(refname) $(destdir))))
+		; $(INSTALL) $(INSTMANFLAGS) $$src $(destdir))))
 
 list-local-manpages: $(TRANSFORMED_MANPAGES)
 	@set -eu $(foreach manpage,$(MANPAGES), \

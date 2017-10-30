@@ -1,0 +1,73 @@
+libreswan for Debian
+--------------------
+
+1) General Remarks
+
+This package has been created by dkg with some reference/guidance from
+previous packaging work by several other packagers of both libreswan
+and other historical *swan projects (freeswan, openswan, etc).
+
+2) System "ipsec" service is disabled by default
+
+This package ships with the system service disabled by default.  After
+any configuration (see ipsec.conf(5) and ipsec.secrets(5)), you can
+start the service for the current boot with:
+
+    systemctl start ipsec
+
+If you want to make the service start at every boot, do:
+
+    systemctl enable ipsec
+
+Future versions may enable the service by default if a
+sufficiently-robust, configuration-free opportunistic mode is
+available.
+
+3) Opportunistic Encryption
+
+To set up opportunistic encryption, you may want to make use of
+/usr/share/doc/libreswan/examples/oe-upgrade-authnull.conf
+
+You can see what associations have been created with:
+
+    ipsec whack --trafficstatus
+
+See also:
+
+    https://libreswan.org/wiki/HOWTO:_Opportunistic_IPsec
+
+4) Raw RSA key creation
+
+Raw RSA keys can be generated with
+    ipsec newhostkey
+
+To display the key identifier of the key for use in leftrsasigkey/rightrsasigkey
+in the "conn" section of ipsec.conf, use:
+    ipsec showhostkey --left    (or --right)
+
+For further information please take a closer look at the manpages
+ipsec_rsasigkey, ipsec.secrets, ipsec_showhostkey and ipsec.conf.
+
+5) X.509 and secret key support uses /var/lib/ipsec/nss
+
+All certificate material, including CA certificates, CRLs and private keys
+are now stored in the NSS database in /var/lib/ipsec/nss
+
+When migrating from pre-NSS openswan, the files from /etc/ipsec.d/private,
+/etc/ipsec.d/cacerts, /etc/ipsec.d/crls and /etc/ipsec.d/certs need to be
+imported into NSS using certutil, crlutil or pk12util. For more information
+see https://libreswan.org/wiki/Using_NSS_with_libreswan
+
+Please keep in mind that upstream documentation assumes that the NSS
+database is stored in /etc/ipsec.d instead of /var/lib/ipsec/nss,
+and translate accordingly!  Debian uses /var/lib/ipsec/nss to
+avoid clutter in /etc/ipsec.d, for easier cleanup, and to follow the
+FHS.
+
+6) IPsec Kernel Support
+
+Note: This package uses the in-kernel IPsec stack, which is available
+in all recent stock Debian kernel images.  This packaging does not
+currently support KLIPS or KLIPS/MAST.
+
+ -- Daniel Kahn Gillmor <dkg@fifthhorseman.net>, Wed, 22 Jun 2016 17:58:47 -0400

@@ -3,7 +3,7 @@
  * Author: JuanJo Ciarlante <jjo-ipsec@mendoza.gov.ar>
  *
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2015-2017 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2017 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -25,9 +25,8 @@
 #include "constants.h"
 #include "alg_info.h"
 #include "ike_alg.h"
-
-/* abstract reference */
-struct oakley_group_desc;
+#include "alg_byname.h"
+#include "ike_alg_null.h"
 
 /*
  *	Creates a new alg_info by parsing passed string
@@ -47,116 +46,21 @@ enum parser_state {
 };
 
 /* XXX:jjo to implement different parser for ESP and IKE */
+#define ALG_SIZE 30
 struct parser_context {
 	unsigned state;
-	const struct parser_param *param;
-	struct parser_policy policy;
-	char ealg_buf[16];
-	char aalg_buf[16];
-	char modp_buf[16];
+	const struct parser_protocol *protocol;
+	const struct parser_policy *policy;
+	char ealg_buf[ALG_SIZE];
+	char eklen_buf[ALG_SIZE];
+	char aalg_buf[ALG_SIZE];
+	char modp_buf[ALG_SIZE];
 	char *ealg_str;
+	char *eklen_str;
 	char *aalg_str;
 	char *modp_str;
-	int eklen;
 	int ch;	/* character that stopped parsing */
 };
-
-#define MAX_ALG_ALIASES 16
-
-struct alg_alias {
-	const char *const alg;
-	const char *const alias_set[MAX_ALG_ALIASES];
-};
-
-/* if str is a known alias, return the real alg */
-static const char *find_alg_alias(const struct alg_alias *alias, const char *str)
-{
-	const struct alg_alias *aa;
-
-	for (aa = alias; aa->alg != NULL; aa++) {
-		const char *const *aset;
-
-		for (aset = aa->alias_set; *aset != NULL; aset++) {
-			if (strcaseeq(str, *aset)) {
-				return aa->alg;
-			}
-		}
-	}
-	return NULL;
-}
-
-static int alg_getbyname_or_alias(const struct alg_alias *aliases, const char *str,
-				  int (*getbyname)(const char *const str))
-{
-	const char *alias = find_alg_alias(aliases, str);
-
-	return getbyname(alias == NULL ? str : alias);
-}
-
-static int aalg_getbyname_or_alias(const struct parser_context *context,
-				   const char *str)
-{
-	static const struct alg_alias aliases[] = {
-		/* alg */	/* aliases */
-		{ "sha2_256",	{ "sha2", NULL } },
-		{ "sha2_256",	{ "sha256", NULL } },
-		{ "sha2_384",	{ "sha384", NULL } },
-		{ "sha2_512",	{ "sha512", NULL } },
-		{ "sha1",	{ "sha", NULL } },
-		{ "sha1",	{ "sha1_96", NULL } },
-		{ "aes_cmac_96", { "aes_cmac", NULL } },
-		{ NULL, { NULL } }
-	};
-
-	return alg_getbyname_or_alias(aliases, str, context->param->aalg_getbyname);
-}
-
-/*
- * Aliases should NOT be used to match a base cipher to a key size,
- * as that would change the meaning of the loaded connection. For
- * examples aes cannot become an alias for aes128 or else a responder
- * with esp=aes would reject aes256.
- */
-
-static int ealg_getbyname_or_alias(const struct parser_context *context,
-				   const char *str)
-{
-	static const struct alg_alias aliases[] = {
-		/* alg */	/* aliases */
-		{ "aes_ccm_a",	{ "aes_ccm_8",  NULL } },
-		{ "aes_ccm_b",	{ "aes_ccm_12", NULL } },
-		{ "aes_ccm_c",	{ "aes_ccm_16", "aes_ccm", NULL } },
-		{ "aes_gcm_a",	{ "aes_gcm_8", NULL } },
-		{ "aes_gcm_b",	{ "aes_gcm_12", NULL } },
-		{ "aes_gcm_c",	{ "aes_gcm_16", "aes_gcm", NULL } },
-		{ "aes_ctr",	{ "aesctr", NULL } },
-		{ "aes",	{ "aes_cbc", NULL } },
-		{ NULL, { NULL } }
-	};
-
-	return alg_getbyname_or_alias(aliases, str, context->param->ealg_getbyname);
-}
-
-/*
- * Search enum_name array with string, uppercased, prefixed, and postfixed
- */
-int alg_enum_search(enum_names *ed, const char *prefix,
-		    const char *postfix, const char *name)
-{
-	char buf[64];
-	size_t prelen = strlen(prefix);
-	size_t postlen = strlen(postfix);
-	size_t name_len = strlen(name);
-
-	if (prelen + name_len + postlen >= sizeof(buf))
-		return -1;	/* cannot match */
-
-	memcpy(buf, prefix, prelen);
-	memcpy(buf + prelen, name, name_len);
-	memcpy(buf + prelen + name_len, postfix, postlen + 1);	/* incl. NUL */
-
-	return enum_search(ed, buf);
-}
 
 static const char *parser_state_names[] = {
 	"ST_INI_EA",
@@ -167,8 +71,6 @@ static const char *parser_state_names[] = {
 	"ST_EK_END",
 	"ST_AA",
 	"ST_AA_END",
-	"ST_AK",
-	"ST_AK_END",
 	"ST_MOPD",
 	"ST_END",
 	"ST_EOF",
@@ -187,25 +89,13 @@ static inline void parser_set_state(struct parser_context *p_ctx,
 }
 
 static void parser_init(struct parser_context *ctx,
-			lset_t policy,
-			const struct parser_param *param)
+			const struct parser_policy *policy,
+			const struct parser_protocol *protocol)
 {
 	*ctx = (struct parser_context) {
-		.param = param,
-		.policy = {
-			.ikev1 = LIN(POLICY_IKEV1_ALLOW, policy),
-			/*
-			 * logic needs to match pick_initiator()
-			 *
-			 * XXX: Once pluto is changed to IKEv1 XOR
-			 * IKEv2 it should be possible to move this
-			 * magic into pluto proper and instead pass a
-			 * simple boolean.
-			 */
-			.ikev2 = ((policy & POLICY_IKEV2_PROPOSE)
-				  && (policy & POLICY_IKEV2_ALLOW)),
-		 },
-		.state = (param->ealg_getbyname
+		.protocol = protocol,
+		.policy = policy,
+		.state = (protocol->encrypt_alg_byname
 			  ? ST_INI_EA
 			  : ST_INI_AA),
 		/*
@@ -213,6 +103,7 @@ static void parser_init(struct parser_context *ctx,
 		 * the stack.
 		 */
 		.ealg_str = ctx->ealg_buf,
+		.eklen_str = ctx->eklen_buf,
 		.aalg_str = ctx->aalg_buf,
 		.modp_str = ctx->modp_buf,
 	};
@@ -252,9 +143,10 @@ static err_t parser_machine(struct parser_context *p_ctx)
 
 	for (;;) {
 		DBG(DBG_CONTROLMORE,
-		    DBG_log("state=%s ealg_buf='%s' aalg_buf='%s' modp_buf='%s'",
+		    DBG_log("state=%s ealg_buf='%s' eklen_buf='%s' aalg_buf='%s' modp_buf='%s'",
 			    parser_state_name(p_ctx->state),
 			    p_ctx->ealg_buf,
+			    p_ctx->eklen_buf,
 			    p_ctx->aalg_buf,
 			    p_ctx->modp_buf));
 		/*
@@ -285,18 +177,15 @@ static err_t parser_machine(struct parser_context *p_ctx)
 			return "No alphanum. char initially found";
 
 		case ST_EA:
-			if (isalpha(ch) || ch == '_') {
+			if (isalnum(ch) || ch == '_') {
+				/*
+				 * accept all of <ealg>[_<eklen>]
+				 */
 				*(p_ctx->ealg_str++) = ch;
 				break;
 			}
-			if (isdigit(ch)) {
-				/* bravely switch to enc keylen */
-				*(p_ctx->ealg_str) = 0;
-				parser_set_state(p_ctx, ST_EK);
-				continue;
-			}
 			if (ch == '-') {
-				*(p_ctx->ealg_str) = 0;
+				*(p_ctx->ealg_str++) = '\0';
 				parser_set_state(p_ctx, ST_EA_END);
 				break;
 			}
@@ -304,7 +193,10 @@ static err_t parser_machine(struct parser_context *p_ctx)
 
 		case ST_EA_END:
 			if (isdigit(ch)) {
-				/* bravely switch to enc keylen */
+				/*
+				 * Given legacy <ealg>-<eklen>, save
+				 * <eklen>.
+				 */
 				parser_set_state(p_ctx, ST_EK);
 				continue;
 			}
@@ -315,14 +207,13 @@ static err_t parser_machine(struct parser_context *p_ctx)
 			return "No alphanum char found after enc alg separator";
 
 		case ST_EK:
-			if (ch == '-') {
-				parser_set_state(p_ctx, ST_EK_END);
+			if (isdigit(ch)) {
+				*(p_ctx->eklen_str++) = ch;
 				break;
 			}
-			if (isdigit(ch)) {
-				if (p_ctx->eklen >= INT_MAX / 10)
-					return "enc keylen WAY too big";
-				p_ctx->eklen = p_ctx->eklen * 10 + (ch - '0');
+			if (ch == '-') {
+				*(p_ctx->eklen_str++) = '\0';
+				parser_set_state(p_ctx, ST_EK_END);
 				break;
 			}
 			return "Non digit or valid separator found while reading enc keylen";
@@ -351,14 +242,14 @@ static err_t parser_machine(struct parser_context *p_ctx)
 			 * Only allow modpXXXX string if we have
 			 * a modp_getbyname method
 			 */
-			if (p_ctx->param->group_byname != NULL && isalpha(ch)) {
+			if (p_ctx->protocol->dh_alg_byname != NULL && isalpha(ch)) {
 				parser_set_state(p_ctx, ST_MODP);
 				continue;
 			}
 			return "Invalid modulus";
 
 		case ST_MODP:
-			if (isalnum(ch)) {
+			if (isalnum(ch) || ch == '_') {
 				*(p_ctx->modp_str++) = ch;
 				break;
 			}
@@ -372,278 +263,452 @@ static err_t parser_machine(struct parser_context *p_ctx)
 	}
 }
 
+/*
+ * Add the proposal defaults for the specific algorithm.
+ */
+
+typedef struct proposal_info merge_alg_default_t(struct proposal_info proposal,
+						 const struct ike_alg *default_alg);
+
+static struct proposal_info merge_dh_default(struct proposal_info proposal,
+					     const struct ike_alg *default_alg)
+{
+	proposal.dh = oakley_group_desc(default_alg);
+	return proposal;
+}
+
+static struct proposal_info merge_encrypt_default(struct proposal_info proposal,
+						  const struct ike_alg *default_alg)
+{
+	proposal.encrypt = encrypt_desc(default_alg);
+	return proposal;
+}
+
+static struct proposal_info merge_prf_default(struct proposal_info proposal,
+					      const struct ike_alg *default_alg)
+{
+	proposal.prf = prf_desc(default_alg);
+	return proposal;
+}
+
+static struct proposal_info merge_integ_default(struct proposal_info proposal,
+						const struct ike_alg *default_alg)
+{
+	proposal.integ = integ_desc(default_alg);
+	return proposal;
+}
+
+static const char *add_proposal_defaults(const struct parser_policy *policy,
+					 const struct proposal_defaults *defaults,
+					 struct alg_info *alg_info,
+					 const struct proposal_info *proposal,
+					 char *err_buf, size_t err_buf_len);
+
+
+static const char *add_alg_defaults(const struct parser_policy *policy,
+				    const struct proposal_defaults *defaults,
+				    struct alg_info *alg_info,
+				    const struct proposal_info *proposal,
+				    const struct ike_alg_type *type,
+				    const struct ike_alg **default_algs,
+				    merge_alg_default_t *merge_alg_default,
+				    char *err_buf, size_t err_buf_len)
+{
+	/*
+	 * Use VALID_ALG to add the valid algorithms into VALID_ALGS.
+	 */
+	for (const struct ike_alg **default_alg = default_algs;
+	     *default_alg; default_alg++) {
+		const struct ike_alg *alg = *default_alg;
+		char buf[LOG_WIDTH] = "";
+		if (!alg_byname_ok(proposal->protocol, policy, alg,
+				   alg->name, buf, sizeof(buf))) {
+			DBG(DBG_CONTROL|DBG_CRYPT,
+			    DBG_log("skipping default %s", buf));
+			continue;
+		}
+		/* add it */
+		DBG(DBG_CONTROL|DBG_CRYPT,
+		    DBG_log("adding default %s %s",
+			    ike_alg_type_name(type),
+			    alg->name));
+		struct proposal_info merged_proposal = merge_alg_default(*proposal,
+									 *default_alg);
+		const char *error = add_proposal_defaults(policy, defaults,
+							  alg_info, &merged_proposal,
+							  err_buf, err_buf_len);
+		if (error != NULL) {
+			return error;
+		}
+	}
+	return NULL;
+}
+
+/*
+ * For all the algorithms, when an algorithm is missing (NULL), and
+ * there are defaults, add them.
+ */
+
+static const char *add_proposal_defaults(const struct parser_policy *policy,
+					 const struct proposal_defaults *defaults,
+					 struct alg_info *alg_info,
+					 const struct proposal_info *proposal,
+					 char *err_buf, size_t err_buf_len)
+{
+	/*
+	 * Note that the order in which things are recursively added -
+	 * MODP, ENCR, PRF/HASH - affects test results.  It determines
+	 * things like the order of proposals.
+	 */
+	if (proposal->dh == NULL &&
+	    defaults != NULL && defaults->dh != NULL) {
+		return add_alg_defaults(policy, defaults,
+					alg_info, proposal,
+					&ike_alg_dh, defaults->dh,
+					merge_dh_default,
+					err_buf, err_buf_len);
+	} else if (proposal->encrypt == NULL &&
+		   defaults != NULL && defaults->encrypt != NULL) {
+		return add_alg_defaults(policy, defaults,
+					alg_info, proposal,
+					&ike_alg_encrypt, defaults->encrypt,
+					merge_encrypt_default,
+					err_buf, err_buf_len);
+	} else if (proposal->prf == NULL &&
+		   defaults != NULL && defaults->prf != NULL) {
+		return add_alg_defaults(policy, defaults,
+					alg_info, proposal,
+					&ike_alg_prf, defaults->prf,
+					merge_prf_default,
+					err_buf, err_buf_len);
+	} else if (proposal->integ == NULL &&
+		   proposal->encrypt != NULL && ike_alg_is_aead(proposal->encrypt)) {
+		/*
+		 * Since AEAD, integrity is always 'none'.
+		 */
+		struct proposal_info merged_proposal = *proposal;
+		merged_proposal.integ = &ike_alg_integ_none;
+		return add_proposal_defaults(policy, defaults,
+					     alg_info, &merged_proposal,
+					     err_buf, err_buf_len);
+	} else if (proposal->integ == NULL &&
+		   defaults != NULL && defaults->integ != NULL) {
+		return add_alg_defaults(policy, defaults,
+					alg_info, proposal,
+					&ike_alg_integ, defaults->integ,
+					merge_integ_default,
+					err_buf, err_buf_len);
+	} else if (proposal->integ == NULL &&
+		   proposal->prf != NULL &&
+		   proposal->encrypt != NULL && !ike_alg_is_aead(proposal->encrypt)) {
+		/*
+		 * Since non-AEAD, use an integrity algorithm that is
+		 * implemented using the PRF.
+		 */
+		struct proposal_info merged_proposal = *proposal;
+		for (const struct integ_desc **algp = next_integ_desc(NULL);
+		     algp != NULL; algp = next_integ_desc(algp)) {
+			const struct integ_desc *alg = *algp;
+			if (alg->prf == proposal->prf) {
+				merged_proposal.integ = alg;
+				break;
+			}
+		}
+		if (merged_proposal.integ == NULL) {
+			snprintf(err_buf, err_buf_len,
+				 "%s integrity derived from PRF '%s' is not supported",
+				 proposal->protocol->name,
+				 proposal->prf->common.name);
+			return err_buf;
+		}
+		return add_proposal_defaults(policy, defaults,
+					     alg_info, &merged_proposal,
+					     err_buf, err_buf_len);
+	} else {
+
+		/* duplicate? */
+		FOR_EACH_PROPOSAL_INFO(alg_info, existing_proposal) {
+			/*
+			 * key length 0 is like a wild-card (it actually means
+			 * propose default and strongest key lengths)
+			 * so if either is zero just treat it as a
+			 * match.
+			 */
+			if (existing_proposal->encrypt == proposal->encrypt &&
+			    existing_proposal->prf == proposal->prf &&
+			    existing_proposal->integ == proposal->integ &&
+			    existing_proposal->dh == proposal->dh &&
+			    (existing_proposal->enckeylen == proposal->enckeylen ||
+			     existing_proposal->enckeylen == 0 ||
+			     proposal->enckeylen == 0)) {
+				DBG(DBG_CRYPT,
+				    DBG_log("discarding duplicate %s proposal encrypt=%s enckeylen=%zu prf=%s integ=%s dh=%s",
+					    proposal->protocol->name,
+					    proposal->encrypt != NULL ? proposal->encrypt->common.name : "n/a",
+					    proposal->enckeylen,
+					    proposal->prf != NULL ? proposal->prf->common.name : "n/a",
+					    proposal->integ != NULL ? proposal->integ->common.name : "n/a",
+					    proposal->dh != NULL ? proposal->dh->common.name : "n/a"));
+				return NULL;
+			}
+		}
+
+		/* Overflow? */
+		if ((unsigned)alg_info->alg_info_cnt >= elemsof(alg_info->proposals)) {
+			snprintf(err_buf, err_buf_len,
+				 "more than %zu %s algorithms specified",
+				 elemsof(alg_info->proposals),
+				 proposal->protocol->name);
+			/* drop it like a rock */
+			return err_buf;
+		}
+
+		/* back end? */
+		if (!proposal->protocol->proposal_ok(proposal, err_buf, err_buf_len)) {
+			passert(err_buf[0] != '\0');
+			return err_buf;
+		}
+
+		alg_info->proposals[alg_info->alg_info_cnt++] = *proposal;
+		return NULL;
+	}
+}
+
+static const char *merge_default_proposals(const struct parser_policy *policy,
+					   struct alg_info *alg_info,
+					   const struct proposal_info *proposal,
+					   char *err_buf, size_t err_buf_len)
+{
+	/*
+	 * If there's a hint of IKEv1 being enabled then prefer its
+	 * larger set of defaults.
+	 *
+	 * This should increase the odds of both ends interoperating.
+	 *
+	 * For instance, the IKEv2 defaults were preferred and one end
+	 * has ikev2=never then, in aggressive mode, things don't
+	 * work.
+	 */
+	const struct proposal_defaults *defaults = (policy->ikev1
+						    ? proposal->protocol->ikev1_defaults
+						    : proposal->protocol->ikev2_defaults);
+	return add_proposal_defaults(policy, defaults,
+				     alg_info, proposal,
+				     err_buf, err_buf_len);
+}
+
+static const struct ike_alg *lookup_byname(struct parser_context *p_ctx,
+					   char *err_buf, size_t err_buf_len,
+					   const struct ike_alg *(alg_byname)(const struct parser_protocol *protocol,
+									      const struct parser_policy *const policy,
+									      char *err_buf, size_t err_buf_len,
+									      const char *name,
+									      size_t key_bit_length),
+					   const char *name,
+					   size_t key_bit_length,
+					   const char *what)
+{
+	err_buf[0] = '\0';
+	if (name[0] != '\0') {
+		if (alg_byname != NULL) {
+			const struct ike_alg *alg = alg_byname(p_ctx->protocol,
+							       p_ctx->policy,
+							       err_buf, err_buf_len,
+							       name, key_bit_length);
+			if (alg == NULL) {
+				DBG(DBG_CONTROLMORE,
+				    DBG_log("%s_byname('%s') failed: %s",
+					    what, name, err_buf));
+				passert(err_buf[0]);
+				return NULL;
+			}
+			DBG(DBG_CONTROLMORE,
+			    DBG_log("%s_byname('%s') returned '%s'",
+				    what, name, alg->name));
+			return alg;
+		} else {
+			DBG(DBG_CONTROLMORE,
+			    DBG_log("ignoring %s '%s'", what, name));
+			return NULL;
+		}
+	}
+	return NULL;
+}
+
+static int parse_eklen(char *err_buf, size_t err_buf_len,
+			const char *eklen_buf)
+{
+	/* convert -<eklen> if present */
+	long eklen = strtol(eklen_buf, NULL, 10);
+	if (eklen >= INT_MAX) {
+		snprintf(err_buf, err_buf_len,
+			 "encryption key length '%s' WAY too big",
+			 eklen_buf);
+		return 0;
+	}
+	if (eklen == 0) {
+		snprintf(err_buf, err_buf_len,
+			 "encryption key length is zero");
+		return 0;
+	}
+	return eklen;
+}
+
 static const char *parser_alg_info_add(struct parser_context *p_ctx,
+				       struct proposal_info proposal,
 				       char *err_buf, size_t err_buf_len,
 				       struct alg_info *alg_info)
 {
-#	define COMMON_KEY_LENGTH(x) ((x) == 0 || (x) == 128 || (x) == 192 || (x) == 256)
-	int ealg_id, aalg_id;
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("add ealg_buf='%s' eklen_buf='%s' aalg_buf='%s' modp_buf='%s'",
+		    p_ctx->ealg_buf,
+		    p_ctx->eklen_buf,
+		    p_ctx->aalg_buf,
+		    p_ctx->modp_buf));
 
-	ealg_id = aalg_id = -1;
-	if (p_ctx->param->ealg_getbyname && p_ctx->ealg_buf[0] != '\0') {
-		ealg_id = ealg_getbyname_or_alias(p_ctx, p_ctx->ealg_buf);
-		if (ealg_id < 0) {
-			return "enc_alg not found";
+	/*
+	 * Try the raw EALG string with "-<eklen>" if present.
+	 * Strings like aes_gcm_16 and aes_gcm_16_256 end up in
+	 * <ealg>, while strings like aes_gcm_16-256 end up in
+	 * <ealg>-<eklen>.
+	 */
+	if (p_ctx->eklen_buf[0] != '\0') {
+		/* convert -<eklen> if present */
+		int enckeylen = parse_eklen(err_buf, err_buf_len, p_ctx->eklen_buf);
+		if (enckeylen <= 0) {
+			passert(err_buf[0] != '\0');
+			return err_buf;
 		}
-
-		/* reject things we know but don't like */
-		switch (p_ctx->param->protoid) {
-		case PROTO_ISAKMP:
-			switch (ealg_id) {
-			case OAKLEY_DES_CBC:
-			case OAKLEY_IDEA_CBC:
-			case OAKLEY_BLOWFISH_CBC:
-			case OAKLEY_RC5_R16_B64_CBC:
-				return "IKE cipher not implemented";
-			}
-			break;
-		case PROTO_IPSEC_ESP:
-			switch (ealg_id) {
-			case ESP_reserved:
-			case ESP_DES_IV64:
-			case ESP_DES:
-			case ESP_RC5:
-			case ESP_IDEA:
-			case ESP_BLOWFISH:
-			case ESP_3IDEA:
-			case ESP_DES_IV32:
-			case ESP_RC4:
-			case ESP_ID17:
-				/*
-				 * kernel uses IKEv1, where it is camellia
-				 * - case ESP_RESERVED_FOR_IEEE_P1619_XTS_AES:
-				 */
-				return "ESP cipher not implemented";
-			}
-			break;
+		proposal.enckeylen = enckeylen;
+	}
+	proposal.encrypt =
+		encrypt_desc(lookup_byname(p_ctx, err_buf, err_buf_len,
+					   p_ctx->protocol->encrypt_alg_byname,
+					   p_ctx->ealg_buf, proposal.enckeylen,
+					   "encryption"));
+	if (err_buf[0] != '\0') {
+		/* Was <ealg>-<eklen> rejected? */
+		if (proposal.enckeylen > 0) {
+			passert(p_ctx->eklen_buf[0] != '\0');
+			return err_buf;
 		}
-
+		passert(p_ctx->eklen_buf[0] == '\0');
+		/* Could it be <ealg><eklen>? */
+		char *end = &p_ctx->ealg_buf[strlen(p_ctx->ealg_buf) > 0 ?  strlen(p_ctx->ealg_buf) - 1 : 0];
+		if (!isdigit(*end)) {
+			/* <eklen> was rejected */
+			return err_buf;
+		}
 		/*
-		 * Enforce RFC restrictions in key size, documented in
-		 * ietf_constants.h
-		 * If using --impair-send-key-size-check this check is bypassed
-		 * for testing purposes.
+		 * Trailing digit so assume that <ealg> is really
+		 * <ealg>_<eklen> or <ealg><eklen>, strip of the
+		 * <eklen> and try again.
 		 */
-		if (p_ctx->eklen != 0 && !DBGP(IMPAIR_SEND_KEY_SIZE_CHECK)) {
-			switch (p_ctx->param->protoid) {
-			case PROTO_ISAKMP:
-				switch (ealg_id) {
-				case OAKLEY_3DES_CBC:
-					return "3DES does not take variable key lengths";
-				case OAKLEY_CAST_CBC:
-					if (p_ctx->eklen != 128) {
-						return "CAST is only supported for 128 bits (to avoid padding)";
-					}
-					break;
-				case OAKLEY_SERPENT_CBC:
-				case OAKLEY_TWOFISH_CBC:
-				case OAKLEY_TWOFISH_CBC_SSH:
-				case OAKLEY_AES_CBC:
-				case OAKLEY_AES_CTR:
-				case OAKLEY_AES_GCM_8:
-				case OAKLEY_AES_GCM_12:
-				case OAKLEY_AES_GCM_16:
-				case OAKLEY_AES_CCM_8:
-				case OAKLEY_AES_CCM_12:
-				case OAKLEY_AES_CCM_16:
-				case OAKLEY_CAMELLIA_CBC:
-				case OAKLEY_CAMELLIA_CTR:
-				case OAKLEY_CAMELLIA_CCM_A:
-				case OAKLEY_CAMELLIA_CCM_B:
-				case OAKLEY_CAMELLIA_CCM_C:
-					if (!COMMON_KEY_LENGTH(p_ctx->eklen)) {
-						return "wrong encryption key length - key size must be 128 (default), 192 or 256";
-					}
-					break;
-				}
-				break;
-			case PROTO_IPSEC_ESP:
-				switch (ealg_id) {
-				case ESP_3DES:
-					return "3DES does not take variable key lengths";
-				case ESP_NULL:
-					return "NULL does not take variable key lengths";
-				case ESP_CAST:
-					if (!COMMON_KEY_LENGTH(p_ctx->eklen)) {
-						return "CAST is only supported for 128 bits (to avoid padding)";
-					}
-					break;
-				case ESP_CAMELLIAv1: /* this value is hit instead */
-				case ESP_AES:
-				case ESP_AES_CTR:
-				case ESP_AES_GCM_8:
-				case ESP_AES_GCM_12:
-				case ESP_AES_GCM_16:
-				case ESP_AES_CCM_8:
-				case ESP_AES_CCM_12:
-				case ESP_AES_CCM_16:
-				case ESP_TWOFISH:
-				case ESP_SERPENT:
-					if (!COMMON_KEY_LENGTH(p_ctx->eklen)) {
-						return "wrong encryption key length - key size must be 128 (default), 192 or 256";
-					}
-					break;
-#if 0
-				case ESP_SEED_CBC:
-					if (p_ctx->eklen != 128) {
-						return "wrong encryption key length - SEED-CBC key size must be 128";
-					}
-					break;
-#endif
-				}
-				break;
+		do {
+			if (end == p_ctx->ealg_buf) {
+				/* <ealg> missing */
+				return err_buf;
 			}
-		}
-	}
-	if (p_ctx->param->aalg_getbyname && *p_ctx->aalg_buf != '\0') {
-		aalg_id = aalg_getbyname_or_alias(p_ctx, p_ctx->aalg_buf);
-		if (aalg_id < 0) {
-			return "hash_alg not found";
-		}
+			end--;
+		} while (isdigit(*end));
+		/* save for logging */
+		jam_str(p_ctx->eklen_buf, sizeof(p_ctx->eklen_buf), end + 1);
 
-		/* some code stupidly uses INT_MAX for "null" */
-		if (aalg_id == AH_NONE || aalg_id == AH_NULL || aalg_id == INT_MAX) {
-			switch (p_ctx->param->protoid) {
-			case PROTO_IPSEC_ESP:
-				/*
-				 * ESP AEAD ciphers do not require
-				 * separate authentication (by
-				 * definition, authentication is
-				 * built-in).
-				 */
-				switch (ealg_id) {
-				case ESP_AES_GCM_8:
-				case ESP_AES_GCM_12:
-				case ESP_AES_GCM_16:
-				case ESP_AES_CCM_8:
-				case ESP_AES_CCM_12:
-				case ESP_AES_CCM_16:
-					break; /* ok */
-				default:
-					return "non-AEAD ESP cipher cannot have null authentication";
-				}
-				break;
-			case PROTO_ISAKMP:
-				/*
-				 * While IKE AEAD ciphers do not
-				 * require separate authentication (by
-				 * definition, authentication is
-				 * built-in), they do require a PRF.
-				 *
-				 * The non-empty authentication
-				 * algorithm will be used as the PRF.
-				 */
-				switch (ealg_id) {
-				case OAKLEY_AES_CCM_8:
-				case OAKLEY_AES_CCM_12:
-				case OAKLEY_AES_CCM_16:
-				case OAKLEY_AES_GCM_8:
-				case OAKLEY_AES_GCM_12:
-				case OAKLEY_AES_GCM_16:
-				case OAKLEY_CAMELLIA_CCM_A:
-				case OAKLEY_CAMELLIA_CCM_B:
-				case OAKLEY_CAMELLIA_CCM_C:
-					return "AEAD IKE cipher cannot have null pseudo-random-function";
-				default:
-					return "non-AEAD IKE cipher cannot have null authentication";
-				}
-				break;
-			case PROTO_IPSEC_AH:
-				return "AH cannot have null authentication";
-			}
-		} else {
-			switch (p_ctx->param->protoid) {
-			case PROTO_IPSEC_ESP:
-				/*
-				 * ESP AEAD ciphers do not require
-				 * separate authentication (by
-				 * definition, authentication is
-				 * built-in).
-				 *
-				 * Reject any non-null authentication
-				 * algorithm
-				 */
-				switch (ealg_id) {
-				case ESP_AES_GCM_8:
-				case ESP_AES_GCM_12:
-				case ESP_AES_GCM_16:
-				case ESP_AES_CCM_8:
-				case ESP_AES_CCM_12:
-				case ESP_AES_CCM_16:
-					return "AEAD ESP cipher must have null authentication";
-				default:
-					break; /* ok */
-				}
-				break;
-			case PROTO_ISAKMP:
-				/*
-				 * While IKE AEAD ciphers do not
-				 * require separate authentication (by
-				 * definition, authentication is
-				 * built-in), they do require a PRF.
-				 *
-				 * So regardless of the algorithm type
-				 * allow an explicit authentication.
-				 * (IKE AEAD uses it for the PRF).
-				 */
-				break;
-			}
-		}
+		int enckeylen = parse_eklen(err_buf, err_buf_len, end + 1);
 
-		if (!DBGP(IMPAIR_SEND_KEY_SIZE_CHECK)) {
-			switch (aalg_id) {
-			case AH_NULL:
-				if (ealg_id == -1)
-					return "Encryption and authentication cannot both be null";
-				break;
-			default:
-				break;
-			}
+		if (enckeylen <= 0) {
+			passert(err_buf[0] != '\0');
+			return err_buf;
 		}
-	}
-
-	const struct oakley_group_desc *group = NULL;
-	if (p_ctx->param->group_byname != NULL && *p_ctx->modp_buf != '\0') {
-		group = p_ctx->param->group_byname(&p_ctx->policy,
-						   err_buf, err_buf_len,
-						   p_ctx->modp_buf);
-		if (group == NULL) {
-			pexpect(err_buf[0]);
+		proposal.enckeylen = enckeylen;
+		/*
+		 * strip optional "_" when "<ealg>_<eklen>"
+		 */
+		if (end > p_ctx->ealg_buf && *end == '_') {
+			end--;
+		}
+		/* truncate and try again */
+		end[1] = '\0';
+		err_buf[0] = '\0';
+		proposal.encrypt = encrypt_desc(lookup_byname(p_ctx, err_buf, err_buf_len,
+							      p_ctx->protocol->encrypt_alg_byname,
+							      p_ctx->ealg_buf, proposal.enckeylen,
+							      "encryption"));
+		if (err_buf[0] != '\0') {
 			return err_buf;
 		}
 	}
 
-	p_ctx->param->alg_info_add(&p_ctx->policy,
-				   alg_info,
-				   ealg_id, p_ctx->eklen,
-				   aalg_id,
-				   group);
-	return NULL;
-#	undef COMMON_KEY_LENGTH
+	proposal.prf = prf_desc(lookup_byname(p_ctx, err_buf, err_buf_len,
+					      p_ctx->protocol->prf_alg_byname,
+					      p_ctx->aalg_buf, 0,
+					      "PRF"));
+	if (err_buf[0] != '\0') {
+		return err_buf;
+	}
+
+	proposal.integ = integ_desc(lookup_byname(p_ctx, err_buf, err_buf_len,
+						  p_ctx->protocol->integ_alg_byname,
+						  p_ctx->aalg_buf, 0,
+						  "integrity"));
+	if (err_buf[0] != '\0') {
+		return err_buf;
+	}
+
+	proposal.dh = oakley_group_desc(lookup_byname(p_ctx, err_buf, err_buf_len,
+						      p_ctx->protocol->dh_alg_byname,
+						      p_ctx->modp_buf, 0,
+						      "group"));
+	if (err_buf[0] != '\0') {
+		return err_buf;
+	}
+
+	if (p_ctx->protocol->alg_info_add == NULL) {
+		return merge_default_proposals(p_ctx->policy,
+					       alg_info, &proposal,
+					       err_buf, err_buf_len);
+	}
+
+	return p_ctx->protocol->alg_info_add(p_ctx->policy,
+					  alg_info,
+					  proposal.encrypt, proposal.enckeylen,
+					  proposal.prf, proposal.integ,
+					  proposal.dh,
+					  err_buf, err_buf_len);
 }
 
 /*
  * on success: returns alg_info
  * on failure: alg_info_free(alg_info) and return NULL;
  */
-struct alg_info *alg_info_parse_str(lset_t policy,
+struct alg_info *alg_info_parse_str(const struct parser_policy *policy,
 				    struct alg_info *alg_info,
 				    const char *alg_str,
 				    char *err_buf, size_t err_buf_len,
-				    const struct parser_param *param)
+				    const struct parser_protocol *protocol)
 {
+	DBG(DBG_CONTROL,
+	    DBG_log("parsing '%s' for %s", alg_str, protocol->name));
+
 	struct parser_context ctx;
 	int ret;
 	const char *ptr;
 
-	alg_info->alg_info_protoid = param->protoid;
 	err_buf[0] = '\0';
 
-	parser_init(&ctx, policy, param);
+	parser_init(&ctx, policy, protocol);
 
-	/* use default if null string */
-	if (*alg_str == '\0')
-		param->alg_info_add(&ctx.policy, alg_info, 0, 0, 0, 0);
+	const struct proposal_info proposal = {
+		.protocol = protocol,
+	};
+
+	/* use default if no (NULL) string */
+	if (alg_str == NULL) {
+		merge_default_proposals(ctx.policy,
+					alg_info, &proposal,
+					err_buf, err_buf_len);
+		return alg_info;
+	}
 
 	ptr = alg_str;
 	do {
@@ -666,19 +731,22 @@ struct alg_info *alg_info_parse_str(lset_t policy,
 		case ST_EOF:
 			{
 				char error[100] = ""; /* arbitrary */
-				err_t ugh = parser_alg_info_add(&ctx, error, sizeof(error),
+				err_t ugh = parser_alg_info_add(&ctx, proposal,
+								error, sizeof(error),
 								alg_info);
 				if (ugh != NULL) {
 					snprintf(err_buf, err_buf_len,
-						"%s, enc_alg=\"%s\"(%d), auth_alg=\"%s\", modp=\"%s\"",
-						ugh, ctx.ealg_buf, ctx.eklen, ctx.aalg_buf,
-						ctx.modp_buf);
+						 "%s, enc_alg=\"%s\"(%s), auth_alg=\"%s\", modp=\"%s\"",
+						 ugh, ctx.ealg_buf,
+						 ctx.eklen_buf[0] != '\0' ? ctx.eklen_buf : "0",
+						 ctx.aalg_buf,
+						 ctx.modp_buf);
 					alg_info_free(alg_info);
 					return NULL;
 				}
 			}
 			/* zero out for next run (ST_END) */
-			parser_init(&ctx, policy, param);
+			parser_init(&ctx, policy, protocol);
 			break;
 
 		default:
@@ -688,6 +756,35 @@ struct alg_info *alg_info_parse_str(lset_t policy,
 		}
 	} while (ret < ST_EOF);
 	return alg_info;
+}
+
+bool proposal_aead_none_ok(const struct proposal_info *proposal,
+			   char *err_buf, size_t err_buf_len)
+{
+	if (proposal->encrypt != NULL && ike_alg_is_aead(proposal->encrypt)
+	    && proposal->integ != NULL && proposal->integ != &ike_alg_integ_none) {
+		/*
+		 * For instance, esp=aes_gcm-sha1" is invalid.
+		 */
+		snprintf(err_buf, err_buf_len,
+			 "AEAD %s encryption algorithm '%s' must have 'none' as the integrity algorithm",
+			 proposal->protocol->name,
+			 proposal->encrypt->common.name);
+		return false;
+	}
+
+	if (proposal->encrypt != NULL && !ike_alg_is_aead(proposal->encrypt)
+	    && proposal->integ != NULL && proposal->integ == &ike_alg_integ_none) {
+		/*
+		 * For instance, esp=aes_cbc-none" is invalid.
+		 */
+		snprintf(err_buf, err_buf_len,
+			 "non-AEAD %s encryption algorithm '%s' cannot have 'none' as the integrity algorithm",
+			 proposal->protocol->name,
+			 proposal->encrypt->common.name);
+		return false;
+	}
+	return true;
 }
 
 /*
@@ -716,4 +813,42 @@ void alg_info_delref(struct alg_info *alg_info)
 	alg_info->ref_cnt--;
 	if (alg_info->ref_cnt == 0)
 		alg_info_free(alg_info);
+}
+
+size_t lswlog_proposal_info(struct lswlog *log,
+			    const struct proposal_info *proposal)
+{
+	size_t size = 0;
+	const char *sep = "";
+	if (proposal->encrypt != NULL) {
+		size += lswlogf(log, "%s%s", sep, proposal->encrypt->common.fqn);
+		sep = "-";
+		if (proposal->enckeylen != 0) {
+			size += lswlogf(log, "_%zd", proposal->enckeylen);
+		}
+	}
+	if (proposal->prf != NULL) {
+		size += lswlogf(log, "%s%s", sep, proposal->prf->common.fqn);
+		sep = "-";
+	} else if (proposal->integ != NULL) {
+		size += lswlogf(log, "%s%s", sep, proposal->integ->common.fqn);
+		sep = "-";
+	}
+	if (proposal->dh != NULL) {
+		size += lswlogf(log, "%s%s", sep, proposal->dh->common.fqn);
+		sep = "-";	/* sep not subsequently used */
+	}
+	return size;
+}
+
+size_t lswlog_alg_info(struct lswlog *log, const struct alg_info *alg_info)
+{
+	size_t size = 0;
+	const char *sep = "";
+	FOR_EACH_PROPOSAL_INFO(alg_info, proposal) {
+		size += lswlogs(log, sep);
+		size += lswlog_proposal_info(log, proposal);
+		sep = ", ";
+	}
+	return size;
 }

@@ -234,7 +234,8 @@ Paul: add "ipsec export" ?
 
 To export the CA certificate:
 
-	NSS_DEFAULT_DB_TYPE="sql:" pk12util -o cacert1.p12 -n cacert1 -d /etc/ipsec.d
+	NSS_DEFAULT_DB_TYPE="sql:" pk12util -o cacert1.p12 -n cacert1 \
+		-d /etc/ipsec.d
 
 Copy the file "cacert1.p12" to the new machine and import it using:
 

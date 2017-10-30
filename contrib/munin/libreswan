@@ -1,0 +1,240 @@
+#!/usr/bin/python -tt
+
+"""Munin plugin to monitor libreswan ipsec servers
+Copyright 2017, Kim B. Heino, b@bbbs.net, Foobar Oy
+Copyright 2017, Paul Wouters <paul@nohats.ca>
+License GPLv2+
+
+This plugin requires Munin config /etc/munin/plugin-conf.d/libreswan:
+
+[libreswan]
+user root
+
+#%# capabilities=autoconf
+#%# family=auto
+"""
+
+from __future__ import print_function, unicode_literals
+import subprocess
+import sys
+from collections import defaultdict
+
+
+def tree():
+    """Tree of defaultdicts"""
+    return defaultdict(tree)
+
+
+def get_stats():
+    """Get statistics"""
+    # Get status output
+    try:
+        pipe = subprocess.Popen(
+            ['/usr/sbin/ipsec', 'whack', '--globalstatus'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT)
+        output = pipe.communicate()[0]
+    except OSError:
+        return {}
+
+    # Parse output
+    values = tree()
+    for line in output.splitlines():
+        prefix, val = line.split("=")
+        prefix = prefix.split('.')
+        pos = values
+        for key in prefix[:-1]:
+            pos = pos[key]
+        pos[prefix[-1]] = val
+    return values
+
+
+def derive_gauge(entry, value, config, graph_type):
+    """Print config or value"""
+    if config:
+        print('{}.label {}'.format(entry, entry))
+        print('{}.type {}'.format(entry, graph_type))
+        print('{}.min 0'.format(entry))
+    else:
+        print('{}.value {}'.format(entry, value))
+
+
+def derive(entry, value, config):
+    """Print config or value"""
+    derive_gauge(entry, value, config, 'DERIVE')
+
+
+def gauge(entry, value, config):
+    """Print config or value"""
+    derive_gauge(entry, value, config, 'GAUGE')
+
+
+def print_config(name, title, vlabel, config):
+    """Print config header"""
+    print('multigraph {}'.format(name))
+    if config:
+        print('graph_title {}'.format(title))
+        print('graph_vlabel {}'.format(vlabel))
+        print('graph_category vpn')
+        print('graph_args --base 1000 --lower-limit 0')
+
+
+def updown(name, title, values, config):
+    """Print up/down header"""
+    print('multigraph {}'.format(name))
+    if config:
+        print('graph_title {}'.format(title))
+        print('graph_category vpn')
+        print('graph_order down up')
+        print('graph_args --base 1000')
+        print('graph_vlabel bytes in (-) / out (+) per ${graph_period}')
+        print('down.label received')
+        print('down.type DERIVE')
+        print('down.graph no')
+        print('down.cdef down,8,*')
+        print('down.min 0')
+        print('up.label bps')
+        print('up.type DERIVE')
+        print('up.negative down')
+        print('up.cdef up,8,*')
+        print('up.min 0')
+    for entry, value in values.items():
+        orig = 'down' if entry == 'in' else 'up'
+        if config:
+            print('{}.label {}'.format(orig, entry))
+            print('{}.type DERIVE'.format(orig))
+            print('{}.min 0'.format(orig))
+        else:
+            print('{}.value {}'.format(orig, value))
+
+
+def derive_all(name, title, vlabel, values, config):
+    """Print config of value for all items"""
+    print_config(name, title, vlabel, config)
+    for entry, value in values.items():
+        derive(entry, value, config)
+
+
+def gauge_all(name, title, vlabel, values, config):
+    """Print config of value for all items"""
+    print_config(name, title, vlabel, config)
+    for entry, value in values.items():
+        gauge(entry, value, config)
+
+
+def print_values(values, config):
+    """Print values or config"""
+    if not values:
+        return
+
+    derive_all(
+        'vpn_ipsec_types', 'IPsec SA Types', 'total',
+        values['total']['ipsec']['type'], config)
+    derive_all(
+        'vpn_ipsec_encr', 'IPsec SA ENCR', 'total',
+        values['total']['ipsec']['encr'], config)
+    derive_all(
+        'vpn_ipsec_integ', 'IPsec SA INTEG', 'total',
+        values['total']['ipsec']['integ'], config)
+
+    print_config('vpn_current', 'Current States', 'current', config)
+    for entry, value in values['current']['states']. items():
+        if entry not in ('enumerate', 'iketype'):
+            gauge(entry, value, config)
+
+    gauge_all(
+        'vpn_iketype', 'Current IKE types', 'iketypes',
+        values['current']['states']['iketype'], config)
+    gauge_all(
+        'vpn_state_kind', 'Current pluto states', 'pluto_states',
+        values['current']['states']['enumerate'], config)
+    derive_all(
+        'vpn_state_transition_func', 'Pluto STFs', 'total',
+        values['total']['pluto']['stf'], config)
+    updown(
+        'vpn_traffic_ipsec', 'Total IPsec Traffic',
+        values['total']['ipsec']['traffic'], config)
+    updown(
+        'vpn_traffic_ike', 'Total IKE Traffic',
+        values['total']['ike']['traffic'], config)
+    derive_all(
+        'vpn_dpd', 'Total DPD Traffic', 'dpd_traffic',
+        values['total']['ike']['dpd'], config)
+
+    print_config('vpn_ike', 'Total IKE Sessions', 'ike_traffic', config)
+    for entry in ('ikev2_ok', 'ikev2_fail', 'ikev1_ok', 'ikev1_fail'):
+        if config:
+            print('{}.label {}'.format(entry, entry))
+            print('{}.type DERIVE'.format(entry))
+            print('{}.min 0'.format(entry))
+        else:
+            ike = entry[:5]
+            if 'fail' in entry:
+                status = 'failed'
+            else:
+                status = 'established'
+            print('{}.value {}'.format(
+                entry, values['total']['ike'][ike][status]))
+
+    derive_all(
+        'vpn_ikev1_sent_notifies', 'IKEv1 sent NOTIFIES', 'total',
+        values['total']['ikev1']['sent']['notifies']['error'], config)
+    derive_all(
+        'vpn_ikev2_sent_notifies', 'IKEv2 sent NOTIFIES', 'total',
+        values['total']['ikev2']['sent']['notifies']['error'], config)
+    derive_all(
+        'vpn_ikev1_recv_notifies', 'IKEv1 recv NOTIFIES', 'total',
+        values['total']['ikev1']['recv']['notifies']['error'], config)
+    derive_all(
+        'vpn_ikev2_recv_notifies', 'IKEv2 recv NOTIFIES', 'total',
+        values['total']['ikev2']['recv']['notifies']['error'], config)
+
+    # Down from here it is all crypto params
+
+    derive_all(
+        'vpn_ikev1_encr', 'IKEv1 ENCR', 'total',
+        values['total']['ikev1']['encr'], config)
+    derive_all(
+        'vpn_ikev2_encr', 'IKEv2 ENCR', 'total',
+        values['total']['ikev2']['encr'], config)
+    derive_all(
+        'vpn_ikev1_integ', 'IKEv1 INTEG', 'total',
+        values['total']['ikev1']['integ'], config)
+    derive_all(
+        'vpn_ikev2_integ', 'IKEv2 INTEG', 'total',
+        values['total']['ikev2']['integ'], config)
+    derive_all(
+        'vpn_ikev1_group', 'IKEv1 GROUP', 'total',
+        values['total']['ikev1']['group'], config)
+    derive_all(
+        'vpn_ikev2_group', 'IKEv2 GROUP', 'total',
+        values['total']['ikev2']['group'], config)
+    derive_all(
+        'vpn_ikev2_recv_badgroup_in', 'IKEv2 recv INVALID GROUP', 'total',
+        values['total']['ikev2']['recv']['invalidke']['using'], config)
+    derive_all(
+        'vpn_ikev2_recv_badgroup_out', 'IKEv2 recv-sent INVALID GROUP',
+        'total',
+        values['total']['ikev2']['recv']['invalidke']['suggesting'], config)
+    derive_all(
+        'vpn_ikev2_sent_badgroup_in', 'IKEv2 sent-recv INVALID GROUP', 'total',
+        values['total']['ikev2']['sent']['invalidke']['using'], config)
+    derive_all(
+        'vpn_ikev2_sent_badgroup_out', 'IKEv2 sent-sent INVALID GROUP',
+        'total',
+        values['total']['ikev2']['sent']['invalidke']['suggesting'], config)
+
+
+def main(args):
+    """Main program"""
+    values = get_stats()
+    if len(args) > 1 and args[1] == 'autoconf':
+        print('yes' if values else 'no')
+    elif len(args) > 1 and args[1] == 'config':
+        print_values(values, True)
+    else:
+        print_values(values, False)
+
+
+if __name__ == '__main__':
+    main(sys.argv)

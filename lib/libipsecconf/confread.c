@@ -6,7 +6,7 @@
  * Copyright (C) 2006-2012 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2010 Michael Smith <msmith@cbnco.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Antony Antony <antony@phenome.org>
@@ -36,7 +36,6 @@
 
 #include "lswalloc.h"
 
-#include "ipsecconf/files.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/starterlog.h"
 #include "ipsecconf/interfaces.h"
@@ -54,12 +53,12 @@
 			(conn)->options[KBF_AUTO] = STARTUP_POLICY; \
 	}
 
-#ifdef DNSSEC
+#ifdef USE_DNSSEC
 # include <unbound.h>
 # include <errno.h>
 # include <arpa/inet.h> /* for inet_ntop */
 # include "dnssec.h"
-#endif /* DNSSEC */
+#endif /* USE_DNSSEC */
 
 /**
  * Set up hardcoded defaults, from data in programs/pluto/constants.h
@@ -76,12 +75,15 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	/* config setup */
 	cfg->setup.options[KBF_FRAGICMP] = FALSE; /* see sysctl_ipsec_icmp in ipsec_proc.c */
 	cfg->setup.options[KBF_HIDETOS] = TRUE;
-	cfg->setup.options[KBF_PLUTORESTARTONCRASH] = TRUE;
 	cfg->setup.options[KBF_PLUTOSTDERRLOGTIME] = TRUE;
 	cfg->setup.options[KBF_PLUTOSTDERRLOGAPPEND] = TRUE;
+	cfg->setup.options[KBF_PLUTOSTDERRLOGIP] = TRUE;
 	cfg->setup.options[KBF_UNIQUEIDS] = TRUE;
+	cfg->setup.options[KBF_DO_DNSSEC] = TRUE;
 	cfg->setup.options[KBF_PERPEERLOG] = FALSE;
 	cfg->setup.options[KBF_IKEPORT] = IKE_UDP_PORT;
+	cfg->setup.options[KBF_IKEBUF] = IKE_BUF_AUTO;
+	cfg->setup.options[KBF_IKE_ERRQUEUE] = TRUE;
 	cfg->setup.options[KBF_NFLOG_ALL] = 0; /* disabled per default */
 	cfg->setup.options[KBF_XFRMLIFETIME] = 300; /* not used by pluto itself */
 	cfg->setup.options[KBF_NHELPERS] = -1; /* see also plutomain.c */
@@ -94,6 +96,8 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	/* Don't inflict BSI requirements on everyone */
 	cfg->setup.options[KBF_SEEDBITS] = 0;
 	cfg->setup.options[KBF_DROP_OPPO_NULL] = FALSE;
+
+	cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE] = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "dnssec rootkey file");
 
 #ifdef HAVE_LABELED_IPSEC
 	cfg->setup.options[KBF_SECCTX] = SECCTX;
@@ -147,6 +151,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 		POLICY_IKE_FRAG_ALLOW |      /* ike_frag=yes */
 		POLICY_ESN_NO;      /* esn=no */
 
+	cfg->conn_default.options[KBF_NIC_OFFLOAD] = nic_offload_auto;
 	cfg->conn_default.options[KBF_IKELIFETIME] = IKE_SA_LIFETIME_DEFAULT;
 
 	cfg->conn_default.options[KBF_REPLAY_WINDOW] = IPSEC_SA_DEFAULT_REPLAY_WINDOW;
@@ -161,6 +166,10 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.options[KBF_KEYINGTRIES] = SA_REPLACEMENT_RETRIES_DEFAULT;
 
 	cfg->conn_default.options[KBF_CONNADDRFAMILY] = AF_INET;
+
+	/* set default updown script */
+	cfg->conn_default.left.updown = clone_str(DEFAULT_UPDOWN, "default updown str");
+	cfg->conn_default.right.updown = clone_str(DEFAULT_UPDOWN, "default updown str");
 
 	cfg->conn_default.left.addr_family = AF_INET;
 	anyaddr(AF_INET, &cfg->conn_default.left.addr);
@@ -179,7 +188,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.options[KBF_AUTO] = STARTUP_IGNORE;
 	cfg->conn_default.state = STATE_LOADED;
 
-	cfg->ctlbase = clone_str(CTL_FILE, "default base");
+	cfg->ctlsocket = clone_str(DEFAULT_CTL_SOCKET, "default control socket");
 
 	cfg->conn_default.left.authby = AUTH_UNSET;
 	cfg->conn_default.right.authby = AUTH_UNSET;
@@ -190,7 +199,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
  *
  * Currently only used within validate_end().
  * ??? the messages are not separated by anything (eg. SP or NL): unreadable?
- * ??? Leak?  Where is the *perr freed?  
+ * ??? Leak?  Where is the *perr freed?
  */
 static void error_append(char **perr, const char *fmt, ...)
 {
@@ -237,50 +246,58 @@ static void free_list(char **list)
 {
 	char **s;
 
-	for (s = list ; *s; s++)
+	for (s = list ; *s != NULL; s++)
 		pfreeany(*s);
 	pfree(list);
 }
 
 /**
- * Create a new list (array) of pointers to strings, NULL-terminated
+ * Create a NULL-terminated array of tokens from a string of whitespace-separated tokens.
  *
- * @param value string to be broken up at spaces, creating strings for list
- * @return new_list (pointer to NULL-terminated array of pointers to strings)
+ * @param value string to be broken up at blanks, creating strings for list
+ * @param n where to place element count (excluding terminating NULL)
+ * @return tokens_from_string (NULL or pointer to NULL-terminated array of pointers to strings)
  */
-static char **new_list(const char *value)
+static char **tokens_from_string(const char *value, int *n)
 {
-	char *val, *b, *e, *end, **nlist;
-	int count;
+	*n = 0;	/* in case of early exit */
 
 	if (value == NULL)
 		return NULL;
 
 	/* avoid damaging original string */
-	val = clone_str(value, "new_list value");
+	char *const val = clone_str(value, "tokens_from_string value");
 	if (val == NULL)
 		return NULL;	/* cannot happen -- silence a coverity warning */
-	end = val + strlen(val);
 
-	/* count number of items in string */
-	for (b = val, count = 0; b < end; ) {
-		for (e = b; *e != ' ' && *e != '\0'; e++)
+	char *const end = val + strlen(val);
+
+	/* count number of items in string and terminate each with NUL */
+	int count = 0;
+	for (char *b = val; b < end; ) {
+		char *e;
+		for (e = b; *e != '\0' && !isblank(*e); e++)
 			;
 		*e = '\0';
 		if (e != b)
 			count++;
 		b = e + 1;
 	}
+
+	*n = count;
+
 	if (count == 0) {
 		pfree(val);
 		return NULL;
 	}
 
-	nlist = (char **)alloc_bytes((count + 1) * sizeof(char *), "new_list nlist");
-	for (b = val, count = 0; b < end; ) {
-		e = b + strlen(b);
+	char **const nlist = (char **)alloc_bytes((count + 1) * sizeof(char *), "tokens_from_string nlist");
+
+	count = 0;
+	for (char *b = val; b < end; ) {
+		char *e = b + strlen(b);
 		if (e != b)
-			nlist[count++] = clone_str(b, "new_list item");
+			nlist[count++] = clone_str(b, "tokens_from_string item");
 		b = e + 1;
 	}
 	nlist[count] = NULL;
@@ -360,7 +377,7 @@ static bool load_setup(struct starter_config *cfg,
 				    kw->keyword.keydef->keyname);
 			break;
 		case kt_obsolete_quiet:
-			starter_log(LOG_LEVEL_DEBUG,
+			starter_log(LOG_LEVEL_ERR,
 				    "Warning: ignored obsolete keyword '%s'",
 				    kw->keyword.keydef->keyname);
 			break;
@@ -369,13 +386,6 @@ static bool load_setup(struct starter_config *cfg,
 			break;
 		}
 	}
-
-	/* now process some things with specific values */
-
-	/* interfaces has to be chopped up */
-	if (cfg->setup.interfaces != NULL)
-		FREE_LIST(cfg->setup.interfaces);
-	cfg->setup.interfaces = new_list(cfg->setup.strings[KSF_INTERFACES]);
 
 	return err;
 }
@@ -394,11 +404,7 @@ static bool load_setup(struct starter_config *cfg,
  * @return bool TRUE if failed
  */
 
-static bool validate_end(
-#ifdef DNSSEC
-			struct ub_ctx *dnsctx,
-#endif
-			struct starter_conn *conn_st,
+static bool validate_end(struct starter_conn *conn_st,
 			struct starter_end *end,
 			const char *leftright,
 			bool resolvip UNUSED,
@@ -433,7 +439,7 @@ static bool validate_end(
 
 		if (end->strings[KSCF_IP][0] == '%') {
 			pfree(end->iface);
-			end->iface = clone_str(end->strings[KSCF_IP] + 1, "KH_IPADDR end->iface");
+			end->iface = clone_str(end->strings[KSCF_IP], "KH_IPADDR end->iface");
 			if (!starter_iface_find(end->iface, family,
 					       &end->addr,
 					       &end->nexthop))
@@ -546,14 +552,14 @@ static bool validate_end(
 		} else {
 			if (tnatoaddr(value, strlen(value), AF_UNSPEC,
 				      &end->nexthop) != NULL) {
-#ifdef DNSSEC
+#ifdef USE_DNSSEC
 				starter_log(LOG_LEVEL_DEBUG,
 					    "Calling unbound_resolve() for %snexthop value",
 					    leftright);
-				if (!unbound_resolve(dnsctx, value,
+				if (!unbound_resolve(value,
 						strlen(value), AF_INET,
 						&end->nexthop) &&
-				    !unbound_resolve(dnsctx, value,
+				    !unbound_resolve(value,
 						strlen(value), AF_INET6,
 						&end->nexthop))
 					ERR_FOUND("bad value for %snexthop=%s\n",
@@ -570,10 +576,6 @@ static bool validate_end(
 			end->nexttype = KH_IPADDR;
 		}
 	} else {
-#if 0
-		if (conn_st->policy & POLICY_OPPORTUNISTIC)
-			end->nexttype = KH_DEFAULTROUTE;
-#endif
 		anyaddr(family, &end->nexthop);
 
 		if (end->addrtype == KH_DEFAULTROUTE) {
@@ -624,14 +626,14 @@ static bool validate_end(
 
 		if (tnatoaddr(value, strlen(value), AF_UNSPEC,
 			      &end->sourceip) != NULL) {
-#ifdef DNSSEC
+#ifdef USE_DNSSEC
 			starter_log(LOG_LEVEL_DEBUG,
 				    "Calling unbound_resolve() for %ssourceip value",
 				    leftright);
-			if (!unbound_resolve(dnsctx, value,
+			if (!unbound_resolve(value,
 					strlen(value), AF_INET,
 					&end->sourceip) &&
-			    !unbound_resolve(dnsctx, value,
+			    !unbound_resolve(value,
 					strlen(value), AF_INET6,
 					&end->sourceip))
 				ERR_FOUND("bad value for %ssourceip=%s\n",
@@ -649,9 +651,6 @@ static bool validate_end(
 					leftright, value, er);
 		}
 		if (!end->has_client) {
-			starter_log(LOG_LEVEL_INFO,
-				    "%ssourceip= used but not %ssubnet= defined, defaulting %ssubnet to %s",
-				    leftright, leftright, leftright, value);
 			er = addrtosubnet(&end->sourceip, &end->subnet);
 			if (er != NULL) {
 				ERR_FOUND("attempt to default %ssubnet from %s failed: %s",
@@ -685,6 +684,8 @@ static bool validate_end(
 
 	if (end->strings_set[KSCF_UPDOWN])
 		end->updown = clone_str(end->strings[KSCF_UPDOWN], "KSCF_UPDOWN");
+	else
+		end->updown = clone_str(DEFAULT_UPDOWN, "KSCF_UPDOWN default");
 
 	if (end->strings_set[KSCF_PROTOPORT]) {
 		err_t ugh;
@@ -755,7 +756,7 @@ static bool translate_conn(struct starter_conn *conn,
 	bool err = FALSE;
 	const struct kw_list *kw;
 
-	for (kw = sl->kw; kw; kw = kw->next) {
+	for (kw = sl->kw; kw != NULL; kw = kw->next) {
 		ksf *the_strings = &conn->strings;
 		str_set *set_strings = &conn->strings_set;
 		knf *the_options = &conn->options;
@@ -784,12 +785,6 @@ static bool translate_conn(struct starter_conn *conn,
 		}
 
 		unsigned int field = kw->keyword.keydef->field;
-
-#ifdef PARSER_TYPE_DEBUG
-		starter_log(LOG_LEVEL_DEBUG, "#analyzing %s[%d] kwtype=%d",
-			    kw->keyword.keydef->keyname, field,
-			    kw->keyword.keydef->type);
-#endif
 
 		assert(kw->keyword.keydef != NULL);
 		switch (kw->keyword.keydef->type) {
@@ -928,11 +923,6 @@ static bool translate_conn(struct starter_conn *conn,
 				/* ??? at this point, we have set *error but not err! */
 			}
 
-#if 0
-			starter_log(LOG_LEVEL_DEBUG, "#setting %s[%d]=%u",
-				    kw->keyword.keydef->keyname, field,
-				    kw->number);
-#endif
 			(*the_options)[field] = kw->number;
 			(*set_options)[field] = assigned_value;
 			break;
@@ -947,7 +937,7 @@ static bool translate_conn(struct starter_conn *conn,
 			break;
 
 		case kt_obsolete_quiet:
-			starter_log(LOG_LEVEL_DEBUG,
+			starter_log(LOG_LEVEL_ERR,
 				    "Warning: obsolete keyword '%s' ignored",
 				    kw->keyword.keydef->keyname);
 			break;
@@ -971,9 +961,6 @@ static void move_comment_list(struct starter_comments_list *to,
 }
 
 static bool load_conn(
-#ifdef DNSSEC
-		     struct ub_ctx *dnsctx,
-#endif
 		     struct starter_conn *conn,
 		     const struct config_parsed *cfgp,
 		     struct section_list *sl,
@@ -1000,173 +987,174 @@ static bool load_conn(
 		starter_log(LOG_LEVEL_INFO,
 			    "also= is not valid in section '%s'",
 			    sl->name);
-		/* ??? should we not set *perr? */
+		*perr = "unexpected ALSO=";
 		return TRUE;	/* error */
 	}
 
-	/* now, process the also's */
+	/*
+	 * Process the also list
+	 *
+	 * Note: conn->alsos will be NULL until we finish
+	 * and the appropriate list will be in local variable alsos.
+	 */
 	if (conn->alsos != NULL)
 		FREE_LIST(conn->alsos);
-	conn->alsos = new_list(conn->strings[KSCF_ALSO]);
 
-	if (alsoprocessing && conn->alsos != NULL) {
-		struct section_list *sl1;
-		/* note: for the duration of this loop body
-		 * conn->alsos is migrated to local variable alsos.
-		 */
-		char **alsos = conn->alsos;
-		int alsosize;
-		int alsoplace;
+	int alsosize;
+	char **alsos = tokens_from_string(conn->strings[KSCF_ALSO], &alsosize);
 
-		conn->alsos = NULL;
-
+	if (alsoprocessing && alsos != NULL) {
 		/* reset all of the "beenhere" flags */
-		for (sl1 = cfgp->sections.tqh_first; sl1 != NULL;
-		     sl1 = sl1->link.tqe_next)
-			sl1->beenhere = FALSE;
+		for (struct section_list *s = cfgp->sections.tqh_first; s != NULL;
+		     s = s->link.tqe_next)
+			s->beenhere = FALSE;
 		sl->beenhere = TRUE;
 
-		/* count them */
-		for (alsosize = 0; alsos[alsosize] != NULL; alsosize++)
-			;
+		for (int alsoplace = 0; alsoplace < alsosize; alsoplace++) {
+			/*
+			 * Check for too many alsos.
+			 * Inside the loop because of indirect alsos.
+			 */
+			if (alsosize >= ALSO_LIMIT) {
+				starter_log(LOG_LEVEL_INFO,
+					    "while loading conn '%s', too many also= used at section %s. Limit is %d",
+					    conn->name,
+					    alsos[alsosize],
+					    ALSO_LIMIT);
+				*perr = "too many alsos";
+				return TRUE;	/* error */
+			}
 
-		alsoplace = 0;
-		while (alsoplace < alsosize && alsos[alsoplace] != NULL &&
-		       alsoplace < ALSO_LIMIT) {
 			/*
 			 * for each also= listed, go find this section's keyword list, and
 			 * load it as well. This may extend the also= list (and the end),
 			 * which we handle by zeroing the also list, and adding to it after
 			 * checking for duplicates.
 			 */
-			for (sl1 = cfgp->sections.tqh_first;
-			     sl1 != NULL &&
-			     !streq(alsos[alsoplace], sl1->name);
-			     sl1 = sl1->link.tqe_next)
+			struct section_list *addin;
+
+			for (addin = cfgp->sections.tqh_first;
+			     addin != NULL &&
+			     !streq(alsos[alsoplace], addin->name);
+			     addin = addin->link.tqe_next)
 				;
+
+			if (addin == NULL) {
+				starter_log(LOG_LEVEL_ERR,
+					    "cannot find conn '%s' needed by conn '%s'",
+					    alsos[alsoplace], conn->name);
+				*perr = "missing also";
+				err = TRUE;
+				continue;	/* allowing further error detection */
+			}
+
+			if (addin->beenhere)
+				continue;	/* already handled */
 
 			starter_log(LOG_LEVEL_DEBUG,
 				    "\twhile loading conn '%s' also including '%s'",
 				    conn->name, alsos[alsoplace]);
 
-			/*
-			 * if we found something that matches by name,
-			 * and we haven't been there, then process it.
-			 */
-			if (sl1 != NULL && !sl1->beenhere) {
-				conn->strings_set[KSCF_ALSO] = FALSE;
-				pfreeany(conn->strings[KSCF_ALSO]);
-				conn->strings[KSCF_ALSO] = NULL;
-				sl1->beenhere = TRUE;
+			conn->strings_set[KSCF_ALSO] = FALSE;
+			pfreeany(conn->strings[KSCF_ALSO]);
+			conn->strings[KSCF_ALSO] = NULL;
+			addin->beenhere = TRUE;
 
-				/* translate things, but do not replace earlier settings! */
-				err |= translate_conn(conn, sl1, k_set, perr);
+			/* translate things, but do not replace earlier settings! */
+			err |= translate_conn(conn, addin, k_set, perr);
 
-				if (conn->strings[KSCF_ALSO] != NULL) {
-					/* now, check out the KSCF_ALSO, and extend list if we need to */
-					char **newalsos = new_list(
-						conn->strings[KSCF_ALSO]);
+			if (conn->strings[KSCF_ALSO] != NULL) {
+				/* add this guy's alsos too */
+				int newalsosize;
+				char **newalsos = tokens_from_string(
+					conn->strings[KSCF_ALSO], &newalsosize);
 
-					if (newalsos != NULL) {
-						char **ra;
-						int newalsoplace;
+				if (newalsos != NULL) {
+					/*
+					 * Append newalsos onto alsos.
+					 * Requires a re-allocation.
+					 * Copying is shallow: the lists
+					 * are copied and freed but
+					 * the underlaying strings are unchanged.
+					 */
+					char **ra = alloc_bytes((alsosize +
+						newalsosize + 1) *
+						sizeof(char *),
+						"conn->alsos");
+					memcpy(ra, alsos, alsosize * sizeof(char *));
+					pfree(alsos);
+					alsos = ra;
 
-						/* count them */
-						for (newalsoplace = 0;
-						     newalsos[newalsoplace] !=
-						     NULL;
-						     newalsoplace++)
-							;
+					memcpy(ra + alsosize, newalsos,
+						(newalsosize + 1) * sizeof(char *));
+					pfree(newalsos);
 
-						/* extend conn->alss */
-						ra = alloc_bytes((alsosize +
-							newalsoplace + 1) *
-							sizeof(char *),
-							"conn->alsos");
-						memcpy(ra, alsos, alsosize * sizeof(char *));
-						pfree(alsos);
-						alsos = ra;
-						for (newalsoplace = 0;
-						     newalsos[newalsoplace] !=
-						     NULL;
-						     newalsoplace++) {
-							assert(conn != NULL);
-							assert(conn->name !=
-								NULL);
-							starter_log(
-								LOG_LEVEL_DEBUG,
-								"\twhile processing section '%s' added also=%s",
-								sl1->name,
-								newalsos[newalsoplace]);
-
-							alsos[alsosize++] =
-								clone_str(newalsos[newalsoplace],
-									"alsos");
-						}
-						alsos[alsosize] = NULL;
-					}
-
-					FREE_LIST(newalsos);
+					alsosize += newalsosize;
 				}
 			}
-			alsoplace++;
-		}
-
-		/* migrate alsos back to conn->alsos */
-		conn->alsos = alsos;
-
-		if (alsoplace >= ALSO_LIMIT) {
-			starter_log(LOG_LEVEL_INFO,
-				    "while loading conn '%s', too many also= used at section %s. Limit is %d",
-				    conn->name,
-				    alsos[alsoplace],
-				    ALSO_LIMIT);
-			/* ??? should we not set *perr? */
-			return TRUE;	/* error */
 		}
 	}
 
-#ifdef PARSER_TYPE_DEBUG
-	/* translate strings/numbers into conn items */
-	starter_log(LOG_LEVEL_DEBUG,
-		    "#checking options_set[KBF_TYPE,%d]=%d %d",
-		    KBF_TYPE,
-		    conn->options_set[KBF_TYPE], conn->options[KBF_TYPE]);
-#endif
+	/*
+	 * Migrate alsos back to conn->alsos.
+	 * Note that this is the transitive closure.
+	 */
+	conn->alsos = alsos;
 
 	if (conn->options_set[KBF_TYPE]) {
 		switch ((enum keyword_satype)conn->options[KBF_TYPE]) {
 		case KS_TUNNEL:
+			if (conn->options_set[KBF_AUTHBY] &&
+				conn->options[KBF_AUTHBY] == POLICY_AUTH_NEVER) {
+					*perr = "connection type=tunnel must not specify authby=never";
+					return TRUE;
+			}
 			conn->policy |= POLICY_TUNNEL;
 			conn->policy &= ~POLICY_SHUNT_MASK;
 			break;
 
 		case KS_TRANSPORT:
-			conn->policy &= ~POLICY_TUNNEL;
-			conn->policy &= ~POLICY_SHUNT_MASK;
+			if (conn->options_set[KBF_AUTHBY] &&
+				conn->options[KBF_AUTHBY] == POLICY_AUTH_NEVER) {
+					*perr = "connection type=transport must not specify authby=never";
+					return TRUE;
+			}
+			conn->policy &= ~POLICY_TUNNEL & ~POLICY_SHUNT_MASK;
 			break;
 
 		case KS_PASSTHROUGH:
+			if (!conn->options_set[KBF_AUTHBY] ||
+				conn->options[KBF_AUTHBY] != POLICY_AUTH_NEVER) {
+					*perr = "connection type=passthrough must specify authby=never";
+			}
 			conn->policy &=
 				~(POLICY_ENCRYPT | POLICY_AUTHENTICATE |
-				  POLICY_TUNNEL | POLICY_RSASIG);
-			conn->policy &= ~POLICY_SHUNT_MASK;
+				  POLICY_TUNNEL | POLICY_RSASIG) &
+				~POLICY_SHUNT_MASK;
 			conn->policy |= POLICY_SHUNT_PASS;
 			break;
 
 		case KS_DROP:
+			if (!conn->options_set[KBF_AUTHBY] ||
+				conn->options[KBF_AUTHBY] != POLICY_AUTH_NEVER) {
+					*perr = "connection type=drop must specify authby=never";
+			}
 			conn->policy &=
 				~(POLICY_ENCRYPT | POLICY_AUTHENTICATE |
-				  POLICY_TUNNEL | POLICY_RSASIG);
-			conn->policy &= ~POLICY_SHUNT_MASK;
+				  POLICY_TUNNEL | POLICY_RSASIG) &
+				~POLICY_SHUNT_MASK;
 			conn->policy |= POLICY_SHUNT_DROP;
 			break;
 
 		case KS_REJECT:
+			if (!conn->options_set[KBF_AUTHBY] ||
+				conn->options[KBF_AUTHBY] != POLICY_AUTH_NEVER) {
+					*perr = "connection type=drop must specify authby=never";
+			}
 			conn->policy &=
 				~(POLICY_ENCRYPT | POLICY_AUTHENTICATE |
-				  POLICY_TUNNEL | POLICY_RSASIG);
-			conn->policy &= ~POLICY_SHUNT_MASK;
+				  POLICY_TUNNEL | POLICY_RSASIG) &
+				~POLICY_SHUNT_MASK;
 			conn->policy |= POLICY_SHUNT_REJECT;
 			break;
 		}
@@ -1204,19 +1192,12 @@ static bool load_conn(
 	KW_POLICY_FLAG(KBF_COMPRESS, POLICY_COMPRESS);
 	KW_POLICY_FLAG(KBF_PFS, POLICY_PFS);
 
-	/* reset authby flags */
+	/* reset authby= flags */
 	if (conn->options_set[KBF_AUTHBY]) {
 
 		conn->policy &= ~POLICY_ID_AUTH_MASK;
 		conn->policy |= conn->options[KBF_AUTHBY];
 
-#ifdef STARTER_POLICY_DEBUG
-		starter_log(LOG_LEVEL_DEBUG,
-			    "%s: setting conn->policy=%08x (%08x)",
-			    conn->name,
-			    (unsigned int)conn->policy,
-			    conn->options[KBF_AUTHBY]);
-#endif
 	}
 
 	KW_POLICY_NEGATIVE_FLAG(KBF_IKEPAD, POLICY_NO_IKEPAD);
@@ -1354,16 +1335,24 @@ static bool load_conn(
 		}
 	}
 
-	err |= validate_end(
-#ifdef DNSSEC
-		dnsctx,
-#endif
-		conn, &conn->left, "left", resolvip, perr);
-	err |= validate_end(
-#ifdef DNSSEC
-		dnsctx,
-#endif
-		conn, &conn->right, "right", resolvip, perr);
+	/*
+	 * some options are set as part of our default, but
+	 * some make no sense for shunts, so remove those again
+	 */
+	if (NEVER_NEGOTIATE(conn->policy)) {
+		/* remove IPsec related options */
+		conn->policy &= ~(POLICY_PFS | POLICY_COMPRESS | POLICY_ESN_NO |
+			POLICY_ESN_YES | POLICY_SAREF_TRACK |
+			POLICY_SAREF_TRACK_CONNTRACK) &
+			/* remove IKE related options */
+			~(POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW |
+			POLICY_IKEV2_PROPOSE | POLICY_IKE_FRAG_ALLOW |
+			POLICY_IKE_FRAG_FORCE);
+	}
+
+	err |= validate_end(conn, &conn->left, "left", resolvip, perr);
+	err |= validate_end(conn, &conn->right, "right", resolvip, perr);
+
 	/*
 	 * TODO:
 	 * verify both ends are using the same inet family, if one end
@@ -1448,11 +1437,7 @@ struct starter_conn *alloc_add_conn(struct starter_config *cfg, const char *name
 	return conn;
 }
 
-static bool init_load_conn(
-#ifdef DNSSEC
-		   struct ub_ctx *dnsctx,
-#endif
-		   struct starter_config *cfg,
+static bool init_load_conn(struct starter_config *cfg,
 		   const struct config_parsed *cfgp,
 		   struct section_list *sconn,
 		   bool defaultconn,
@@ -1463,11 +1448,7 @@ static bool init_load_conn(
 
 	struct starter_conn *conn = alloc_add_conn(cfg, sconn->name);
 
-	bool connerr = load_conn(
-#ifdef DNSSEC
-				dnsctx,
-#endif
-				conn, cfgp, sconn, TRUE,
+	bool connerr = load_conn(conn, cfgp, sconn, TRUE,
 				defaultconn, resolvip, perr);
 
 	if (connerr) {
@@ -1482,7 +1463,7 @@ static bool init_load_conn(
 struct starter_config *confread_load(const char *file,
 				     err_t *perr,
 				     bool resolvip,
-				     const char *ctlbase,
+				     const char *ctlsocket,
 				     bool setuponly)
 {
 	bool err = FALSE;
@@ -1502,9 +1483,9 @@ struct starter_config *confread_load(const char *file,
 	 */
 	ipsecconf_default_values(cfg);
 
-	if (ctlbase != NULL) {
-		pfree(cfg->ctlbase);
-		cfg->ctlbase = clone_str(ctlbase, "control socket");
+	if (ctlsocket != NULL) {
+		pfree(cfg->ctlsocket);
+		cfg->ctlsocket = clone_str(ctlsocket, "default ctlsocket");
 	}
 
 	/**
@@ -1518,56 +1499,44 @@ struct starter_config *confread_load(const char *file,
 		return NULL;
 	}
 
-#ifdef DNSSEC
-	struct ub_ctx *dnsctx = unbound_init();
-
-	if (dnsctx == NULL)
-		return NULL;
+	if (!setuponly) {
+#ifdef USE_DNSSEC
+		unbound_sync_init(cfg->setup.options[KBF_DO_DNSSEC],
+				cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE],
+				cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS]);
 #endif
 
-	if (!setuponly) {
-		/**
-		 * Find %default
-		 *
+		/*
+		 * Load %default conn
+		 * ??? is it correct to accept multiple %default conns?
 		 */
-		struct section_list *sconn;
-
-		for (sconn = cfgp->sections.tqh_first; (!err) && sconn != NULL;
+		for (struct section_list *sconn = cfgp->sections.tqh_first; (!err) && sconn != NULL;
 		     sconn = sconn->link.tqe_next) {
 			if (streq(sconn->name, "%default")) {
 				starter_log(LOG_LEVEL_DEBUG,
 					    "Loading default conn");
-				err |= load_conn(
-#ifdef DNSSEC
-						dnsctx,
-#endif
-						 &cfg->conn_default,
+				err |= load_conn(&cfg->conn_default,
 						 cfgp, sconn, FALSE,
 						/*default conn*/ TRUE,
 						 resolvip, perr);
 			}
 		}
 
-		/**
+		/*
 		 * Load other conns
 		 */
-		for (sconn = cfgp->sections.tqh_first; sconn != NULL;
+		for (struct section_list *sconn = cfgp->sections.tqh_first; sconn != NULL;
 		     sconn = sconn->link.tqe_next) {
-			if (streq(sconn->name, "%default"))
-				continue;
-			err |= init_load_conn(
-#ifdef DNSSEC
-						 dnsctx,
-#endif
-						 cfg, cfgp, sconn,
+			if (!streq(sconn->name, "%default"))
+				err |= init_load_conn(cfg, cfgp, sconn,
 						 FALSE,
 						 resolvip, perr);
 		}
 	}
 
 	parser_free_conf(cfgp);
-#ifdef DNSSEC
-	ub_ctx_delete(dnsctx);
+#ifdef USE_DNSSEC
+	unbound_ctx_free();
 #endif
 	return cfg;
 }
@@ -1604,12 +1573,14 @@ static void confread_free_conn(struct starter_conn *conn)
 
 	pfreeany(conn->left.virt);
 	pfreeany(conn->right.virt);
+
+	pfreeany(conn->left.updown);
+	pfreeany(conn->right.updown);
 }
 
 void confread_free(struct starter_config *cfg)
 {
-	FREE_LIST(cfg->setup.interfaces);
-	pfree(cfg->ctlbase);
+	pfree(cfg->ctlsocket);
 
 	int i;
 

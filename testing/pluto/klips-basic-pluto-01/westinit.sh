@@ -1,4 +1,5 @@
 /testing/guestbin/swan-prep
+setenforce 0
 # confirm that the network is alive
 ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
 # make sure that clear text does not get through

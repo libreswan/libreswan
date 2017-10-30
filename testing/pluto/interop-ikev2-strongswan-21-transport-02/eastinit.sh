@@ -1,3 +1,3 @@
 /testing/guestbin/swan-prep --userland strongswan
-strongswan starter --debug-all
+../../pluto/bin/strongswan-start.sh
 echo "initdone"

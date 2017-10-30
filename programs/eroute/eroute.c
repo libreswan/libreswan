@@ -2,6 +2,8 @@
  * manipulate eroutes
  * Copyright (C) 1996  John Ioannidis.
  * Copyright (C) 1997, 1998, 1999, 2000, 2001  Richard Guy Briggs.
+ * Copyright (C) 2013 - 2017 D. Hugh Redelmeier
+ * Copyright (C) 2017 Paul Wouters
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -47,11 +49,11 @@
 
 #include "lsw_select.h"
 
-char *progname;
-static char me[] = "ipsec eroute";
+const char *progname;
+static const char me[] = "ipsec eroute";
 
 static char *eroute_af_opt, *said_af_opt, *edst_opt, *spi_opt, *proto_opt, *said_opt,
-*dst_opt, *src_opt;
+	*dst_opt, *src_opt;
 static char *transport_proto_opt, *src_port_opt, *dst_port_opt;
 static int action_type = 0;
 
@@ -74,7 +76,7 @@ static uint32_t pfkey_seq = 0;
 #define EMT_INEROUTE    14              /* set incoming policy for IPIP on a chain */
 #define EMT_INREPLACEROUTE      15      /* replace incoming policy for IPIP on a chain */
 
-static void usage(char *arg)
+static void usage(const char *arg)
 {
 	fprintf(stdout,
 		"usage: %s --{add,addin,replace,replacein} --eraf <inet | inet6> --src <src>/<srcmaskbits>|<srcmask> --dst <dst>/<dstmaskbits>|<dstmask> [ --transport-proto <protocol> ] [ --src-port <source-port> ] [ --dst-port <dest-port> ] <SA>\n",
@@ -299,14 +301,7 @@ int main(int argc, char **argv)
 					progname, optarg, proto_opt);
 				exit(1);
 			}
-#if 0
-			if (said.proto != 0) {
-				fprintf(stderr,
-					"%s: Warning, PROTO parameter redefined:%s\n",
-					progname, optarg);
-				exit(1);
-			}
-#endif
+
 			if (streq(optarg, "ah"))
 				said.proto = SA_AH;
 			if (streq(optarg, "esp"))
@@ -440,12 +435,13 @@ int main(int argc, char **argv)
 			size_t room = strlen(argv[0]) +
 					  sizeof(combine_fmt) +
 					  strlen(optarg);
+			char *b = malloc(room);
 
-			progname = malloc(room);
-			snprintf(progname, room, combine_fmt,
+			snprintf(b, room, combine_fmt,
 				argv[0],
 				optarg);
 			argcount -= 2;
+			progname = b;
 			break;
 		}
 		case 'i': /* specifies the address family of the SAID, stored in said_af */
@@ -908,22 +904,20 @@ sa_build:
 			if ((action_type == EMT_SETEROUTE) ||
 			    (action_type == EMT_REPLACEROUTE)) {
 				fprintf(stderr, "Invalid mask.\n");
-				break;
 			}
 			if (action_type == EMT_DELEROUTE) {
 				fprintf(stderr, "Mask not found.\n");
-				break;
 			}
+			break;
 		case EFAULT:
 			if ((action_type == EMT_SETEROUTE) ||
 			    (action_type == EMT_REPLACEROUTE)) {
 				fprintf(stderr, "Invalid address.\n");
-				break;
 			}
 			if (action_type == EMT_DELEROUTE) {
 				fprintf(stderr, "Address not found.\n");
-				break;
 			}
+			break;
 		case EACCES:
 			fprintf(stderr, "access denied.  ");
 			if (getuid() == 0)
@@ -963,26 +957,20 @@ sa_build:
 			if (action_type == EMT_INEROUTE ||
 			    action_type == EMT_INREPLACEROUTE) {
 				fprintf(stderr, "non-existant IPIP SA.\n");
-				break;
+			} else {
+				fprintf(stderr, "eroute doesn't exist.  Can't delete.\n");
 			}
-			fprintf(stderr,
-				"eroute doesn't exist.  Can't delete.\n");
 			break;
 		case ENOSPC:
-			fprintf(stderr,
-				"no room in kernel SAref table.  Cannot process request.\n");
+			fprintf(stderr, "no room in kernel SAref table.  Cannot process request.\n");
 			break;
 		case ESPIPE:
-			fprintf(stderr,
-				"kernel SAref table internal error.  Cannot process request.\n");
+			fprintf(stderr, "kernel SAref table internal error.  Cannot process request.\n");
 			break;
 		default:
-			fprintf(stderr,
-				"Unknown socket write error %d.  Please report as much detail as possible to development team.\n",
+			fprintf(stderr, "Unknown socket write error %d.  Please report as much detail as possible to development team.\n",
 				errno);
 		}
-/*		fprintf(stderr, "%s: socket write returned errno %d\n",
-		progname, errno);*/
 		exit(1);
 	}
 	if (debug)
@@ -1001,109 +989,3 @@ sa_build:
 
 	exit(0);
 }
-/*
- * $Log: eroute.c,v $
- * Revision 1.67  2005/08/18 14:04:39  ken
- * Patch from mt@suse.de to avoid GCC warnings with system() calls
- *
- * Revision 1.66  2005/07/08 02:56:38  paul
- * gcc4 fixes that were not committed because vault was down
- *
- * Revision 1.65  2005/03/22 23:14:54  ken
- * *** empty log message ***
- *
- * Revision 1.64  2005/03/22 23:14:06  ken
- * Fix logic
- *
- * Revision 1.63  2005/03/22 23:06:13  ken
- * Fix sloppy typo
- *
- * Revision 1.62  2005/03/22 23:02:37  ken
- * Nicer error messages - #234
- *
- * Revision 1.61  2004/12/10 12:38:29  paul
- * Renamed the stack names consistently to KLIPS and NETKEY
- *
- * Revision 1.60  2004/04/06 02:58:43  mcr
- *      freeswan->libreswan changes.
- *
- * Revision 1.59  2004/02/09 23:07:35  paul
- * better error for native 2.6 pfk_key for 'ipsec eroute'
- *
- * Revision 1.58  2003/12/05 16:44:12  mcr
- *      patches to avoid ipsec_netlink.h, which has been obsolete for
- *      some time now.
- *
- * Revision 1.57  2003/10/31 02:32:27  mcr
- *      pulled up port-selector patches
- *
- * Revision 1.56.2.1  2003/09/21 14:00:26  mcr
- *      pre-liminary X.509 patch - does not yet pass tests.
- *
- * Revision 1.56  2003/09/10 00:01:25  mcr
- *      fixes for gcc 3.3 from Matthias Bethke <Matthias.Bethke@gmx.net>
- *
- * Revision 1.55  2003/01/30 02:33:07  rgb
- *
- * Added ENOSPC for no room in SAref table and ESPIPE for SAref internal error.
- *
- * Revision 1.54  2002/10/04 03:52:46  dhr
- *
- * gcc3 now enforces C restriction on placement of labels
- *
- * Revision 1.53  2002/09/20 05:02:15  rgb
- * Cleaned up pfkey_lib_debug usage.
- *
- * Revision 1.52  2002/07/23 02:58:58  rgb
- * Fixed "opening" speeling mistake.
- *
- * Revision 1.51  2002/04/24 07:55:32  mcr
- *      #include patches and Makefiles for post-reorg compilation.
- *
- * Revision 1.50  2002/04/24 07:35:38  mcr
- * Moved from ./klips/utils/eroute.c,v
- *
- * Revision 1.49  2002/03/08 21:44:04  rgb
- * Update for all GNU-compliant --version strings.
- *
- * Revision 1.48  2002/02/15 19:54:11  rgb
- * Purged dead code.
- *
- * Revision 1.47  2001/11/09 01:42:36  rgb
- * Re-formatted usage text for clarity.
- *
- * Revision 1.46  2001/10/02 17:03:45  rgb
- * Check error return for all "tto*" calls and report errors.  This, in
- * conjunction with the fix to "tto*" will detect AF not set.
- *
- * Revision 1.45  2001/09/07 22:12:27  rgb
- * Added EAFNOSUPPORT error return explanation for KLIPS not loaded.
- *
- * Revision 1.44  2001/07/06 19:49:33  rgb
- * Renamed EMT_RPLACEROUTE to EMT_REPLACEROUTE for clarity and logical text
- * searching.
- * Added EMT_INEROUTE for supporting incoming policy checks.
- * Added inbound policy checking code for IPIP SAs.
- *
- * Revision 1.43  2001/06/15 05:02:05  rgb
- * Fixed error return messages and codes.
- *
- * Revision 1.42  2001/06/14 19:35:14  rgb
- * Update copyright date.
- *
- * Revision 1.41  2001/05/21 02:02:54  rgb
- * Eliminate 1-letter options.
- *
- * Revision 1.40  2001/05/16 04:39:57  rgb
- * Fix --label option to add to command name rather than replace it.
- * Fix 'print table' option to ignore --label and --debug options.
- *
- * Revision 1.39  2001/02/26 19:59:03  rgb
- * Added a number of missing ntohl() conversions for debug output.
- * Implement magic SAs %drop, %reject, %trap, %hold, %pass as part
- * of the new SPD and to support opportunistic.
- * Enforced spi > 0x100 requirement, now that pass uses a magic SA.
- *
- *
- *
- */

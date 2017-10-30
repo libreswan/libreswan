@@ -1,4 +1,4 @@
-/* Labeled IPSec
+/* Labeled IPsec
  * Copyright (C) 2014 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it

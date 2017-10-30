@@ -7,7 +7,6 @@ Documentation=man:ipsec(8) man:pluto(8) man:ipsec.conf(5)
 [Service]
 Type=@SD_TYPE@
 Restart=@SD_RESTART_TYPE@
-# backwards compatible with plutorestartoncrash=no
 #RestartPreventExitStatus=137 143 SIGTERM SIGKILL
 
 # Set WatchdogSec to the amount of time (in seconds) that systemd will wait

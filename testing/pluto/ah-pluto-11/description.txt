@@ -1,3 +1,0 @@
-Testing AH with ripemd with NETKEY
-
-This test uses ikev1

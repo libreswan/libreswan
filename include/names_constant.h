@@ -13,7 +13,9 @@ extern enum_names sd_action_names;
 extern enum_names pluto_cryptoimportance_names;
 extern enum_names stfstatus_name;
 extern enum_names ikev2_asym_auth_name;
-extern const char *const debug_bit_names[];
+extern const enum_names debug_and_impair_names;
+extern const enum_names debug_names;
+extern const enum_names impair_names;
 extern enum_names state_names;
 extern enum_names state_stories;
 extern enum_names connection_kind_names;
@@ -55,6 +57,8 @@ extern enum_names isakmp_transformid_names;
 extern enum_names ah_transformid_names;
 extern enum_names esp_transformid_names;
 extern enum_names ipcomp_transformid_names;
+extern enum_names ike_idtype_names_extended0;
+extern enum_names ike_idtype_names_extended;
 extern enum_names ike_idtype_names;
 extern enum_names ike_cert_type_names;
 extern enum_names oakley_enc_names;
@@ -79,6 +83,8 @@ extern enum_names ikev2_notify_names;
 extern enum_names ikev2_ts_type_names;
 extern enum_names ikev2_cp_type_names;
 extern enum_names ikev2_cp_attribute_type_names;
+
+extern enum_names dns_auth_level_names;
 
 #ifdef HAVE_LABELED_IPSEC
 /*

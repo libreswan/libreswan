@@ -51,28 +51,35 @@
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
 #include "ipsecconf/starterlog.h"
-#include "ipsecconf/files.h"
 #include "ipsecconf/starterwhack.h"
 #include "ipsecconf/keywords.h"
 #include "ipsecconf/parser-controls.h"
+
+#ifdef USE_DNSSEC
+# include "dnssec.h"
+#endif
 
 #ifdef HAVE_SECCOMP
 # include <seccomp.h>
 # define EXIT_SECCOMP_FAIL 8
 #endif
 
-char *progname;
+const char *progname;
 static int verbose = 0;
 
-/* Buffer size for netlink query (~100 bytes) and replies.
+/*
+ * Buffer size for netlink query (~100 bytes) and replies.
+ * More memory will be allocated dynamically when needed for replies.
  * If DST is specified, reply will be ~100 bytes.
  * If DST is not specified, full route table will be returned.
- * 16kB was too small for biggish router, so do 32kB.
- * TODO: This should be dynamic! Fix it in netlink_read_reply().
- * Note: due to our hack to dodge a bug in NLMSG_OK,
- * RTNL_BUFSIZE must be less than or equal to USHRT_MAX.
+ * On 64bit systems 100 route entries requires about 6KiB.
+ *
+ * When reading data from netlink the final packet in each recvfrom()
+ * will be truncated if it doesn't fit to buffer. Netlink returns up
+ * to 16KiB of data so always keep that much free.
  */
-#define RTNL_BUFSIZE 32768
+#define RTNL_BUFMARGIN 16384
+#define RTNL_BUFSIZE (RTNL_BUFMARGIN + 8192)
 
 /*
  * Initialize netlink query message.
@@ -84,7 +91,6 @@ void netlink_query_init(char *msgbuf, sa_family_t family)
 	struct rtmsg *rtmsg;
 
 	/* Create request for route */
-	memset(msgbuf, 0, RTNL_BUFSIZE);
 	nlmsg = (struct nlmsghdr *)msgbuf;
 
 	nlmsg->nlmsg_len = NLMSG_LENGTH(sizeof(struct rtmsg));
@@ -144,11 +150,11 @@ void netlink_query_add(char *msgbuf, int rta_type, ip_address *addr)
 }
 
 static
-ssize_t netlink_read_reply(int sock, char *buf, unsigned int seqnum, __u32 pid)
+ssize_t netlink_read_reply(int sock, char **pbuf, size_t bufsize,
+			unsigned int seqnum, __u32 pid)
 {
-	ssize_t msglen = 0;
+	size_t msglen = 0;
 
-	/* TODO: use dynamic buf */
 	for (;;) {
 		struct sockaddr_nl sa;
 		ssize_t readlen;
@@ -157,33 +163,26 @@ ssize_t netlink_read_reply(int sock, char *buf, unsigned int seqnum, __u32 pid)
 		do {
 			socklen_t salen = sizeof(sa);
 
-			readlen = recvfrom(sock, buf, RTNL_BUFSIZE - msglen, 0,
+			readlen = recvfrom(sock, *pbuf + msglen,
+					bufsize - msglen, 0,
 					(struct sockaddr *)&sa, &salen);
-			if (readlen < 0 || salen != sizeof(sa))
+			if (readlen <= 0 || salen != sizeof(sa))
 				return -1;
 		} while (sa.nl_pid != 0);
 
 		/* Verify it's valid */
-		struct nlmsghdr *nlhdr = (struct nlmsghdr *) buf;
+		struct nlmsghdr *nlhdr = (struct nlmsghdr *)(*pbuf + msglen);
 
-		/*
-		 * The cast to unsigned short is to dodge an error in
-		 * netlink.h:NLMSG_OK() which triggers a GCC warning in recent
-		 * versions of GCC (2014 August):
-		 * error: comparison between signed and unsigned integer expressions
-		 * Note: as long as RTNL_BUFSIZE <= USHRT_MAX, this is safe.
-		 */
-		if (!NLMSG_OK(nlhdr, (unsigned short)readlen) ||
+		if (!NLMSG_OK(nlhdr, (size_t)readlen) ||
 			nlhdr->nlmsg_type == NLMSG_ERROR)
 			return -1;
+
+		/* Move read pointer */
+		msglen += readlen;
 
 		/* Check if it is the last message */
 		if (nlhdr->nlmsg_type == NLMSG_DONE)
 			break;
-
-		/* Not last, move read pointer */
-		buf += readlen;
-		msglen += readlen;
 
 		/* all done if it's not a multi part */
 		if ((nlhdr->nlmsg_flags & NLM_F_MULTI) == 0)
@@ -193,6 +192,15 @@ ssize_t netlink_read_reply(int sock, char *buf, unsigned int seqnum, __u32 pid)
 		if (nlhdr->nlmsg_seq == seqnum &&
 		    nlhdr->nlmsg_pid == pid)
 			break;
+
+		/* Allocate more memory for buffer if needed. */
+		if (msglen >= bufsize - RTNL_BUFMARGIN) {
+			bufsize = bufsize * 2;
+			char *newbuf = alloc_bytes(bufsize, "netlink query");
+			memcpy(newbuf, *pbuf, msglen);
+			pfree(*pbuf);
+			*pbuf = newbuf;
+		}
 	}
 
 	return msglen;
@@ -202,7 +210,7 @@ ssize_t netlink_read_reply(int sock, char *buf, unsigned int seqnum, __u32 pid)
  * Send netlink query message and read reply.
  */
 static
-ssize_t netlink_query(char *msgbuf)
+ssize_t netlink_query(char **pmsgbuf, size_t bufsize)
 {
 	int sock = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE);
 
@@ -214,7 +222,7 @@ ssize_t netlink_query(char *msgbuf)
 	}
 
 	/* Send request */
-	struct nlmsghdr *nlmsg = (struct nlmsghdr *)msgbuf;
+	struct nlmsghdr *nlmsg = (struct nlmsghdr *)*pmsgbuf;
 
 	if (send(sock, nlmsg, nlmsg->nlmsg_len, 0) < 0) {
 		int e = errno;
@@ -225,12 +233,13 @@ ssize_t netlink_query(char *msgbuf)
 
 	/* Read response */
 	errno = 0;	/* in case failure does not set it */
-	ssize_t len = netlink_read_reply(sock, msgbuf, 1, getpid());
+	ssize_t len = netlink_read_reply(sock, pmsgbuf, bufsize, 1, getpid());
 
 	if (len < 0) {
 		int e = errno;
 
 		printf("read netlink socket failure: (%d: %s)\n", e, strerror(e));
+		close(sock);
 		return -1;
 	}
 	close(sock);
@@ -302,13 +311,12 @@ static int resolve_defaultroute_one(struct starter_end *host,
 	if (verbose)
 		printf("\nseeking_src = %d, seeking_gateway = %d, has_peer = %d\n",
 			seeking_src, seeking_gateway, has_peer);
-
-	char msgbuf[RTNL_BUFSIZE];
-	bool has_dst = FALSE;
-	int query_again = 0;
-
 	if (!seeking_src && !seeking_gateway)
 		return 0;	/* this end already figured out */
+
+	char *msgbuf = alloc_bytes(RTNL_BUFSIZE, "netlink query");
+	bool has_dst = FALSE;
+	int query_again = 0;
 
 	/* Fill netlink request */
 	netlink_query_init(msgbuf, host->addr_family);
@@ -326,10 +334,31 @@ static int resolve_defaultroute_one(struct starter_end *host,
 		 * and gateway IP to get there.
 		 */
 		if (peer->addrtype == KH_IPHOSTNAME) {
+#ifdef USE_DNSSEC
+			err_t er = ttoaddr_num(peer->strings[KSCF_IP], 0,
+				AF_UNSPEC, &peer->addr);
+			if (er != NULL) {
+				/* not numeric, so resolve it */
+				if (!unbound_resolve(peer->strings[KSCF_IP],
+							0, AF_INET,
+							&peer->addr)) {
+					if (!unbound_resolve(
+							peer->strings[KSCF_IP],
+							0, AF_INET6,
+							&peer->addr)) {
+						pfree(msgbuf);
+						return -1;
+					}
+				}
+			}
+#else
 			err_t er = ttoaddr(peer->strings[KSCF_IP], 0,
 				AF_UNSPEC, &peer->addr);
-			if (er != NULL)
+			if (er != NULL) {
+				pfree(msgbuf);
 				return -1;
+			}
+#endif
 		}
 
 		netlink_query_add(msgbuf, RTA_DST, &peer->addr);
@@ -377,23 +406,17 @@ static int resolve_defaultroute_one(struct starter_end *host,
 			seeking_src, seeking_gateway, has_dst);
 
 	/* Send netlink get_route request */
+	ssize_t len = netlink_query(&msgbuf, RTNL_BUFSIZE);
 
-	ssize_t len = netlink_query(msgbuf);
-
-	if (len < 0)
+	if (len < 0) {
+		pfree(msgbuf);
 		return -1;
+	}
 
 	/* Parse reply */
 	struct nlmsghdr *nlmsg = (struct nlmsghdr *)msgbuf;
 
-	/*
-	 * The cast to unsigned short is to dodge an error in
-	 * netlink.h:NLMSG_OK() which triggers a GCC warning in recent
-	 * versions of GCC (2014 August):
-	 * error: comparison between signed and unsigned integer expressions
-	 * Note: as long as RTNL_BUFSIZE <= USHRT_MAX, this is safe.
-	 */
-	for (; NLMSG_OK(nlmsg, (unsigned short)len); nlmsg = NLMSG_NEXT(nlmsg, len)) {
+	for (; NLMSG_OK(nlmsg, (size_t)len); nlmsg = NLMSG_NEXT(nlmsg, len)) {
 		char r_interface[IF_NAMESIZE+1];
 		char r_source[ADDRTOT_BUF];
 		char r_gateway[ADDRTOT_BUF];
@@ -404,6 +427,7 @@ static int resolve_defaultroute_one(struct starter_end *host,
 
 		if (nlmsg->nlmsg_type == NLMSG_ERROR) {
 			printf("netlink error\n");
+			pfree(msgbuf);
 			return -1;
 		}
 
@@ -512,6 +536,7 @@ static int resolve_defaultroute_one(struct starter_end *host,
 			}
 		}
 	}
+	pfree(msgbuf);
 	return query_again;
 }
 
@@ -587,7 +612,7 @@ void init_seccomp_addconn(uint32_t def_action)
 #endif
 
 static const char *usage_string = ""
-	"Usage: addconn [--config file] [--rootdir dir] [--ctlbase socketfile]\n"
+	"Usage: addconn [--config file] [--rootdir dir] [--ctlsocket socketfile]\n"
 	"               [--varprefix prefix] [--noexport]\n"
 	"               [--verbose]\n"
 	"               [--configsetup]\n"
@@ -618,7 +643,8 @@ static const struct option longopts[] =
 	{ "liststart", no_argument, NULL, 's' },
 	{ "listignore", no_argument, NULL, 'i' },
 	{ "varprefix", required_argument, NULL, 'P' },
-	{ "ctlbase", required_argument, NULL, 'c' },
+	{ "ctlsocket", required_argument, NULL, 'c' },
+	{ "ctlbase", required_argument, NULL, 'c' }, /* backwards compatibility */
 	{ "rootdir", required_argument, NULL, 'R' },
 	{ "configsetup", no_argument, NULL, 'T' },
 	{ "liststack", no_argument, NULL, 'S' },
@@ -634,7 +660,7 @@ static const struct option longopts[] =
 
 int main(int argc, char *argv[])
 {
-	int opt = 0;
+	int opt;
 	bool autoall = FALSE;
 	int configsetup = 0;
 	int checkconfig = 0;
@@ -651,7 +677,7 @@ int main(int argc, char *argv[])
 	const char *varprefix = "";
 	int exit_status = 0;
 	struct starter_conn *conn = NULL;
-	const char *ctlbase = NULL;
+	const char *ctlsocket = NULL;
 	bool resolvip = TRUE; /* default to looking up names */
 
 #if 0
@@ -700,7 +726,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'c':
-			ctlbase = clone_str(optarg, "control base");
+			ctlsocket = clone_str(optarg, "control socket");
 			break;
 
 		case 'L':
@@ -791,7 +817,7 @@ int main(int argc, char *argv[])
 	{
 		err_t err = NULL;
 
-		cfg = confread_load(configfile, &err, resolvip, ctlbase, configsetup);
+		cfg = confread_load(configfile, &err, resolvip, ctlsocket, configsetup);
 
 		if (cfg == NULL) {
 			fprintf(stderr, "cannot load config '%s': %s\n",
@@ -804,7 +830,7 @@ int main(int argc, char *argv[])
 	}
 
 #ifdef HAVE_SECCOMP
-	switch(cfg->setup.options[KBF_SECCOMP]) {
+	switch (cfg->setup.options[KBF_SECCOMP]) {
 		case SECCOMP_ENABLED:
 		init_seccomp_addconn(SCMP_ACT_KILL);
 		break;
@@ -816,6 +842,12 @@ int main(int argc, char *argv[])
 	default:
 		bad_case(cfg->setup.options[KBF_SECCOMP]);
 	}
+#endif
+
+#ifdef USE_DNSSEC
+	unbound_sync_init(cfg->setup.options[KBF_DO_DNSSEC],
+		cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE],
+		cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS]);
 #endif
 
 	if (autoall) {
@@ -1038,7 +1070,7 @@ int main(int argc, char *argv[])
 	if (liststack) {
 		const struct keyword_def *kd;
 
-		for (kd = ipsec_conf_keywords_v2; kd->keyname != NULL; kd++) {
+		for (kd = ipsec_conf_keywords; kd->keyname != NULL; kd++) {
 			if (strstr(kd->keyname, "protostack")) {
 				if (cfg->setup.strings[kd->field]) {
 					printf("%s\n",
@@ -1057,7 +1089,7 @@ int main(int argc, char *argv[])
 		const struct keyword_def *kd;
 
 		printf("%s %sconfreadstatus=''\n", export, varprefix);
-		for (kd = ipsec_conf_keywords_v2; kd->keyname != NULL; kd++) {
+		for (kd = ipsec_conf_keywords; kd->keyname != NULL; kd++) {
 			if ((kd->validity & kv_config) == 0)
 				continue;
 
@@ -1109,5 +1141,8 @@ int main(int argc, char *argv[])
 	}
 
 	confread_free(cfg);
+#ifdef USE_DNSSEC
+	unbound_ctx_free();
+#endif
 	exit(exit_status);
 }

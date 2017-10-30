@@ -3,7 +3,7 @@
 # Copyright (C) 2001, 2002  Henry Spencer.
 # Copyright (C) 2003-2006   Xelerance Corporation
 # Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015,2017 Andrew Cagney
 # Copyright (C) 2015-2016 Tuomo Soini <tis@foobar.fi>
 #
 # This program is free software; you can redistribute it and/or modify it
@@ -15,6 +15,9 @@
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
+
+ifndef config.mk
+config.mk = true
 
 # A Makefile wanting to test variables defined below has two choides:
 #
@@ -109,12 +112,19 @@ SBINDIR?=$(DESTDIR)$(FINALSBINDIR)
 
 # where the appropriate manpage tree is located
 # location within INC_USRLOCAL
-INC_MANDIR?=man
+INC_MANDIR?=share/man
+FINALMANDIR=$(INC_USRLOCAL)/$(INC_MANDIR)
 # the full pathname
-MANTREE?=$(DESTDIR)$(INC_USRLOCAL)/$(INC_MANDIR)
+MANTREE?=$(DESTDIR)$(FINALMANDIR)
 
 # where configuration files go
 FINALSYSCONFDIR?=/etc
+
+# run dir - defaults to /run/pluto
+# Some older systems might need to set this to /var/run/pluto
+# DEFAULT_RUNDIR=/run/pluto
+FINALRUNDIR?=/run/pluto
+RUNDIR?=$(DESTDIR)$(FINALRUNDIR)
 
 # final configuration file
 FINALCONFFILE?=$(FINALSYSCONFDIR)/ipsec.conf
@@ -241,6 +251,23 @@ NSS_LDFLAGS ?= -lnss3 -lnspr4
 # See https://bugzilla.mozilla.org/show_bug.cgi?id=1336487
 NSS_REQ_AVA_COPY?=true
 
+# Use a local copy of xfrm.h. This can be needed on older systems
+# that do not ship linux/xfrm.h, or when the shipped version is too
+# old. Since we ship some not-yet merged ipsec-next offload code, this
+# is currently true for basically all distro's
+USE_XFRM_HEADER_COPY?=true
+
+# Enable NIC IPsec hardware offloading API. Introduced in Linux Kernel 4.12
+USE_NIC_OFFLOAD?=true
+
+# When compiling on a system where unbound is missing the required unbound-event.h
+# include file, enable this workaround option that will enable an included copy of
+# this file as shipped with libreswan. The copy is taken from unbound 1.6.0.
+USE_UNBOUND_EVENT_H_COPY?=true
+
+# The default DNSSEC root key location is set to /var/lib/unbound/root.key
+# DEFAULT_DNSSEC_ROOTKEY_FILE=/var/lib/unbound/root.key
+
 # To build with clang, use: scan-build make programs
 #GCC=clang
 GCC?=gcc
@@ -319,6 +346,7 @@ ifeq ($(USE_SYSTEMD_WATCHDOG),true)
 SD_TYPE=notify
 SD_WATCHDOGSEC?=200
 else
+SD_WATCHDOGSEC?=0
 SD_TYPE=simple
 endif
 
@@ -394,7 +422,7 @@ ifeq ($(OSDEP),linux)
 USE_LINUX_AUDIT?=false
 endif
 
-# Enable Labeled IPSec Functionality (requires SElinux)
+# Enable Labeled IPsec Functionality (requires SElinux)
 USE_LABELED_IPSEC?=false
 
 # Enable seccomp support (whitelist allows syscalls)
@@ -429,7 +457,7 @@ USE_3DES?=true
 USE_DH22?=false
 USE_CAMELLIA?=true
 USE_CAST?=true
-USE_RIPEMD?=true
+USE_RIPEMD?=false
 
 # Do we want to limit the number of ipsec connections artificially
 USE_IPSEC_CONNECTION_LIMIT?=false
@@ -447,6 +475,8 @@ NONINTCONFIG=oldconfig
 ifndef IPSECVERSION
 IPSECVERSION:=$(shell ${LIBRESWANSRCDIR}/packaging/utils/setlibreswanversion ${IPSECBASEVERSION} ${LIBRESWANSRCDIR})
 export IPSECVERSION
+endif
+ifndef IPSECVIDVERSION
 # VID is a somewhat shortened version, eg "3.5" or "3.5-xxx"
 IPSECVIDVERSION:=$(shell echo ${IPSECVERSION} | sed 's/^\([^-]*\)-\([^-]*\)-.*/\1-\2/')
 export IPSECVIDVERSION
@@ -474,21 +504,23 @@ KLIPSSRCDIR=${LIBRESWANSRCDIR}/linux/net/ipsec
 #KLIPSSRCDIR=/mara1/git/klips/net/ipsec
 
 LIBSWANDIR=${LIBRESWANSRCDIR}/lib/libswan
-LIBRESWANLIB=${OBJDIRTOP}/lib/libswan/libswan.a
-LSWLOGLIB=${OBJDIRTOP}/lib/liblswlog/liblswlog.a
-# XXX: $(LSWLOGLIB) has circular references to $(LIBRESWANLIB).
-LSWLOGLIBS=$(LSWLOGLIB) $(LIBRESWANLIB)
+
+# Need to specify absolute paths as 'make' (checks dependencies) and
+# 'ld' (does the link) are run from different directories.
+LIBRESWANLIB=$(abs_top_builddir)/lib/libswan/libswan.a
+LSWTOOLLIB=$(abs_top_builddir)/lib/liblswtool/liblswtool.a
+
+# XXX: $(LSWTOOLLIB) has circular references to $(LIBRESWANLIB).
+LSWTOOLLIBS=$(LSWTOOLLIB) $(LIBRESWANLIB)
 
 LIBDESSRCDIR=${LIBRESWANSRCDIR}/linux/crypto/ciphers/des
-LIBTWOFISH=${OBJDIRTOP}/lib/libcrypto/libtwofish/libtwofish.a
-LIBSERPENT=${OBJDIRTOP}/lib/libcrypto/libserpent/libserpent.a
 
 WHACKLIB=${OBJDIRTOP}/lib/libwhack/libwhack.a
 IPSECCONFLIB=${OBJDIRTOP}/lib/libipsecconf/libipsecconf.a
 
 # export everything so that scripts can use them.
 export LIBSWANDIR LIBRESWANSRCDIR ARCH PORTINCLUDE
-export LIBRESWANLIB LSWLOGLIB
+export LIBRESWANLIB LSWTOOLLIB
 export LIBDESSRCDIR
 export LIBTWOFISH LIBSERPENT
 export WHACKLIB IPSECCONFLIB
@@ -514,6 +546,7 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@FINALVARDIR@:$(FINALVARDIR):g" \
 			-e "s:@IPSEC_CONF@:$(FINALCONFFILE):g" \
 			-e "s:@IPSEC_CONFDDIR@:$(FINALCONFDDIR):g" \
+			-e "s:@IPSEC_RUNDIR@:$(FINALRUNDIR):g" \
 			-e "s:@IPSEC_NSSDIR@:$(FINALNSSDIR):g" \
 			-e "s:@IPSEC_DIR@:$(FINALBINDIR):g" \
 			-e "s:@IPSEC_EXECDIR@:$(FINALLIBEXECDIR):g" \
@@ -542,3 +575,5 @@ OSMEDIA?=http://download.fedoraproject.org/pub/fedora/linux/releases/21/Server/x
 # Now that all the configuration variables are defined, use them to
 # define USERLAND_CFLAGS
 include ${LIBRESWANSRCDIR}/mk/userland-cflags.mk
+
+endif

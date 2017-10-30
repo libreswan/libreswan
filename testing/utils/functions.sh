@@ -31,11 +31,11 @@ consolediff() {
 		      ${FIXUPDIR} ${FIXUPDIR2:-} \
 		      > ${fixedoutput}
 
-    if diff -N -u $ref $fixedoutput >OUTPUT/${prefix}.console.diff
+    if diff -w -N -u $ref $fixedoutput >OUTPUT/${prefix}.console.diff
     then
 	echo "${prefix} Consoleoutput matched"
     else
-	diffstat=`diff -N -u $ref $fixedoutput | diffstat -f 0`
+	diffstat=`diff -w -N -u $ref $fixedoutput | diffstat -f 0`
 	echo "${prefix} Consoleoutput differed '$diffstat'"
 
 	case "$success" in
@@ -185,7 +185,7 @@ libtest() {
 	    else
 		if [ -r OUTPUT.$testobj.txt ]
 		then
-		    if diff -N -u lib-$testobj/OUTPUT${KLIPS_MODULE}/$testobj.txt OUTPUT.$testobj.txt > lib-$testobj/OUTPUT${KLIPS_MODULE}/$testobj.output.diff
+		    if diff -w -N -u lib-$testobj/OUTPUT${KLIPS_MODULE}/$testobj.txt OUTPUT.$testobj.txt > lib-$testobj/OUTPUT${KLIPS_MODULE}/$testobj.output.diff
 		    then
 			${ECHO} "   ""output matched"
 			stat="0"
@@ -230,7 +230,7 @@ multilibtest() {
 	    else
 		if [ -r OUTPUT.$testobj.txt ]
 		then
-		    if diff -N -u OUTPUT.$testobj.txt lib-$testobj/OUTPUT${KLIPS_MODULE}/$testobj.txt > lib-$testobj/OUTPUT${KLIPS_MODULE}/$testobj.output.diff
+		    if diff -w -N -u OUTPUT.$testobj.txt lib-$testobj/OUTPUT${KLIPS_MODULE}/$testobj.txt > lib-$testobj/OUTPUT${KLIPS_MODULE}/$testobj.output.diff
 		    then
 			${ECHO} "output matched"
 			stat="0"
@@ -371,7 +371,7 @@ recordresults() {
 	    2) success=false; console=false; packet=true;;
 	    99) success="missing 99"; console=false; packet=false;;
 	    true)  success=true;;
-	    false) sucesss=false;;
+	    false) success=false;;
 	    succeed) success=true;;
 	    fail)  success=false;;
 	    yes)   success=true;;

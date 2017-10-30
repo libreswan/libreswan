@@ -50,7 +50,6 @@
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
 #include "ipsecconf/starterlog.h"
-#include "ipsecconf/files.h"
 #include "ipsecconf/starterwhack.h"
 #include "ipsecconf/parser-controls.h"
 
@@ -59,7 +58,7 @@ static int verbose = 0;
 static void usage(void)
 {
 	/* print usage */
-	printf("Usage: %s [--config <file>] [--debug] [--rootdir <dir>] [--rootdir2 <dir2>]\n",
+	printf("Usage: %s [--config <file>] [--nosetup] [--debug] [--rootdir <dir>] [--rootdir2 <dir2>] [--conn conn_name]\n",
 		progname);
 	exit(0);
 }
@@ -68,10 +67,12 @@ static void usage(void)
 static const struct option longopts[] =
 {
 	{ "config",              required_argument, NULL, 'C' },
+	{ "conn",                required_argument, NULL, 'c' },
 	{ "debug",               no_argument, NULL, 'D' },
 	{ "verbose",             no_argument, NULL, 'D' },
 	{ "rootdir",             required_argument, NULL, 'R' },
 	{ "rootdir2",            required_argument, NULL, 'S' },
+	{ "nosetup",             no_argument, NULL, 'n' },
 	{ "help",                no_argument, NULL, 'h' },
 	{ 0, 0, 0, 0 }
 };
@@ -80,12 +81,14 @@ int main(int argc, char *argv[])
 {
 	tool_init_log(argv[0]);
 
-	int opt = 0;
+	int opt;
 	struct starter_config *cfg = NULL;
 	err_t err = NULL;
 	char *confdir = NULL;
 	char *configfile = NULL;
 	struct starter_conn *conn = NULL;
+	char *name = NULL;
+	bool setup = TRUE;
 
 	rootdir[0] = '\0';
 	rootdir2[0] = '\0';
@@ -95,6 +98,10 @@ int main(int argc, char *argv[])
 		case 'h':
 			/* usage: */
 			usage();
+			break;
+
+		case 'n':
+			setup = FALSE;
 			break;
 
 		case 'D':
@@ -115,6 +122,9 @@ int main(int argc, char *argv[])
 			printf("#setting rootdir2=%s\n", optarg);
 			jam_str(rootdir2, sizeof(rootdir2), optarg);
 			break;
+		case 'c':
+			name = optarg;
+			break;
 		case '?':
 			exit(5);
 		default:
@@ -124,8 +134,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (optind != argc) {
-		fprintf(stderr,"%s: unexpected arguments\n",
-			progname);
+		fprintf(stderr,"%s: unexpected arguments\n", progname);
 		exit(4);
 	}
 
@@ -164,12 +173,14 @@ int main(int argc, char *argv[])
 	}
 
 	/* load all conns marked as auto=add or better */
-	for (conn = cfg->conns.tqh_first;
-	     conn != NULL;
-	     conn = conn->link.tqe_next)
-		printf("#conn %s loaded\n", conn->name);
+	if (verbose) {
+		for (conn = cfg->conns.tqh_first;
+		conn != NULL;
+		conn = conn->link.tqe_next)
+				printf("#conn %s loaded\n", conn->name);
+	}
 
-	confwrite(cfg, stdout);
+	confwrite(cfg, stdout, setup, name, verbose);
 	confread_free(cfg);
 	exit(0);
 }

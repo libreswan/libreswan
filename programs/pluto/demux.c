@@ -222,12 +222,12 @@ static void comm_handle(const struct iface_port *ifp)
 	 * This is early enough that teardown isn't required:
 	 * just return on failure.
 	 */
-	if (!check_msg_errqueue(ifp, POLLIN))
+	if (!check_msg_errqueue(ifp, POLLIN, "read_packet"))
 		return; /* no normal message to read */
 
 #endif /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
 
-	md = alloc_md();
+	md = alloc_md("msg_digest in comm_handle");
 	md->iface = ifp;
 
 	if (read_packet(md))
@@ -339,16 +339,15 @@ static bool read_packet(struct msg_digest *md)
 			libreswan_log(
 				"some IKE message we sent has been rejected with ECONNREFUSED (kernel supplied no details)");
 		} else if (from_ugh != NULL) {
-			log_errno((e,
-				   "recvfrom on %s failed; Pluto cannot decode source sockaddr in rejection: %s",
-				   ifp->ip_dev->id_rname, from_ugh));
+			LOG_ERRNO(errno,
+				  "recvfrom on %s failed; Pluto cannot decode source sockaddr in rejection: %s",
+				  ifp->ip_dev->id_rname, from_ugh);
 		} else {
 			ipstr_buf b;
-
-			log_errno((e, "recvfrom on %s from %s:%u failed",
-				   ifp->ip_dev->id_rname,
-				   ipstr(&md->sender, &b),
-				   (unsigned)md->sender_port));
+			LOG_ERRNO(errno, "recvfrom on %s from %s:%u failed",
+				  ifp->ip_dev->id_rname,
+				  ipstr(&md->sender, &b),
+				  (unsigned)md->sender_port);
 		}
 
 		return FALSE;
@@ -390,7 +389,7 @@ static bool read_packet(struct msg_digest *md)
 	 */
 	init_pbs(&md->packet_pbs
 		 , clone_bytes(_buffer, packet_len,
-			       "message buffer in comm_handle()")
+			       "message buffer in read_packet()")
 		 , packet_len, "packet");
 
 	DBG(DBG_RAW | DBG_CRYPT | DBG_PARSING | DBG_CONTROL, {
@@ -419,12 +418,8 @@ static bool read_packet(struct msg_digest *md)
 		    pbs_left(&md->packet_pbs) >= NON_ESP_MARKER_SIZE &&
 		    memeq(md->packet_pbs.cur, non_ESP_marker,
 			   NON_ESP_MARKER_SIZE)) {
-			bool happy = in_raw(NULL, NON_ESP_MARKER_SIZE,
-					    &md->packet_pbs,
-					    "spurious extra Non ESP Marker");
-			libreswan_log(
-				"Removed spurious non-esp marker from IKE packet - Racoon bug");
-			passert(happy);
+				libreswan_log("Mangled packet with potential spurious non-esp marker ignored");
+				return FALSE;
 		}
 	}
 

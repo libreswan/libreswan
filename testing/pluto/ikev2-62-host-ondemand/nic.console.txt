@@ -1,0 +1,11 @@
+iptables -t nat -F
+nic #
+ iptables -F
+nic #
+ iptables -X
+nic #
+ ../bin/block-non-ipsec.sh
+nic #
+ echo done
+done
+

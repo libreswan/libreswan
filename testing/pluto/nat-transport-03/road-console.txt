@@ -29,7 +29,7 @@ road:~#
 road:~#
  ipsec auto --add road--east-pass
 road:~#
- ipsec whack --debug-control --debug-controlmore --debug-parsing --debug-crypt
+ ipsec whack --debug none --debug control --debug controlmore --debug parsing --debug crypt
 road:~#
  /testing/pluto/bin/wait-until-pluto-started
 road:~#
@@ -65,6 +65,6 @@ road:~#
 
 road:~#
 road:~#
- if [ -f /tmp/core ]; then echo CORE FOUND; mv /tmp/core /var/tmp; fi
+ ../bin/check-for-core.sh
 road:~#
 

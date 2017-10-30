@@ -3,7 +3,7 @@
 # prefix command to run stuff from our programs directory
 #
 # Copyright (C) 1998-2002  Henry Spencer.
-# Copyright (C) 2013-2016  Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2013-2017  Tuomo Soini <tis@foobar.fi>
 # Copyright (C) 2013-2016  Paul Wouters <pwouters@redhat.com>
 #
 # This program is free software; you can redistribute it and/or modify it
@@ -24,15 +24,18 @@ IPSEC_CONF="${IPSEC_CONF:-@FINALCONFFILE@}"
 IPSEC_EXECDIR="${IPSEC_EXECDIR:-@IPSEC_EXECDIR@}"
 IPSEC_SBINDIR="${IPSEC_SBINDIR:-@IPSEC_SBINDIR@}"
 IPSEC_CONFDDIR="${IPSEC_CONFDDIR:-@IPSEC_CONFDDIR@}"
+IPSEC_RUNDIR="${IPSEC_RUNDIR:-@IPSEC_RUNDIR@}"
 IPSEC_NSSDIR="${IPSEC_NSSDIR:-@IPSEC_NSSDIR@}"
 IPSEC_NSSDIR_SQL="sql:${IPSEC_NSSDIR}"
 IPSEC_NSSPW="${IPSEC_CONFDDIR}/nsspassword"
 DBPW=""
 CACERTDIR="${IPSEC_CONFDDIR}/cacerts"
 CRLDIR="${IPSEC_CONFDDIR}/crls"
+CTLSOCKET="${IPSEC_RUNDIR}/pluto.ctl"
+ADDSOCKET=""
 
 IPSEC_DIR="${IPSEC_EXECDIR}"
-export IPSEC_DIR IPSEC_EXECDIR IPSEC_CONF
+export IPSEC_DIR IPSEC_EXECDIR IPSEC_CONF IPSEC_RUNDIR CTLSOCKET
 
 # standardize PATH, and export it for everything else's benefit
 PATH="${IPSEC_SBINDIR}":/sbin:/usr/sbin:/usr/local/bin:/bin:/usr/bin
@@ -79,14 +82,36 @@ fixversion() {
 
 set_db_trusts() {
     # has to handle a NSS nick with spaces
-    certutil -L -d "${IPSEC_NSSDIR_SQL}" | egrep -v 'Certificate|MIME' | awk '{$NF=""; print $0}' | grep -v "^$" | while read -r cert; do
-	if certutil -L -d ${IPSEC_NSSDIR_SQL} -n "${cert}" | grep -q 'Is a CA' &&
-	  [ $(certutil -L -d ${IPSEC_NSSDIR_SQL} -n "${cert}" | grep -i -A3 'ssl flags' | grep -i 'trusted' | wc -l) -ne 2 ]; then
+    certutil -L -d "${IPSEC_NSSDIR_SQL}" | \
+	grep -E -v '(Trust Attributes|SSL,S/MIME,JAR/XPI|^)$' | \
+	awk '{$NF=""; print $0}' | \
+	while read -r cert
+    do
+	if certutil -L -d "${IPSEC_NSSDIR_SQL}" -n "${cert}" | \
+	    grep -q 'Is a CA' && \
+	    [ $(certutil -L -d "${IPSEC_NSSDIR_SQL}" -n "${cert}" | grep -i -A3 'ssl flags' | grep -i 'trusted' | wc -l) -ne 2 ]
+	then
 	    echo "correcting trust bits for ${cert}"
 	    certutil -M -d "${IPSEC_NSSDIR_SQL}" -n "${cert}" -t 'CT,,'
 	fi
     done
 }
+
+case "${1}" in
+    rundir|--rundir)
+	RUNDIR="${2}"
+	CTLSOCKET="${RUNDIR}/pluto.ctl"
+	shift;
+	shift;
+	;;
+esac
+case "${1}" in
+    ctlsocket|--ctlsocket)
+	CTLSOCKET="${2}"
+	shift;
+	shift;
+	;;
+esac
 
 case "${1}" in
     '')
@@ -99,7 +124,7 @@ case "${1}" in
 	exit 0
 	;;
     status|--status)
-	exec ipsec auto --status
+	exec ${IPSEC_EXECDIR}/whack --ctlsocket ${CTLSOCKET} --status
 	;;
     start|--start)
 	exec ipsec setup start
@@ -159,9 +184,9 @@ case "${1}" in
 	;;
 
     --stopnflog|stopnflog)
-	NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --configsetup | grep -v "#" | grep nflog | sed -e "s/^.*=//" -e "s/'//g");
+	NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --ctlsocket ${CTLSOCKET} --configsetup | grep -v "#" | grep nflog | sed -e "s/^.*=//" -e "s/'//g");
 	if [ -z "${NFGROUP}" ]; then
-		exit 0
+	    exit 0
 	fi
 	iptables -D INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group ${NFGROUP} --nflog-prefix all-ipsec
 	iptables -D OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group ${NFGROUP} --nflog-prefix all-ipsec
@@ -169,14 +194,14 @@ case "${1}" in
 	;;
 
     --checknflog|checknflog|nflog)
-	NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --configsetup | grep -v "#" | grep nflog| sed -e "s/^.*=//" -e "s/'//g");
+	NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --ctlsocket ${CTLSOCKET} --configsetup | grep -v "#" | grep nflog| sed -e "s/^.*=//" -e "s/'//g");
 	if [ -z "${NFGROUP}" ]; then
 	    OLDNFGROUP=$(iptables -L -n |grep "all-ipsec nflog-group" | sed "s/^.* //" | tail -1);
 	    if [ -n "${OLDNFGROUP}" ]; then
-		    echo "deleting rules with old nflog group ${OLDNFGROUP}"
-		    iptables -D INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group ${OLDNFGROUP} --nflog-prefix all-ipsec
-		    iptables -D OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group ${OLDNFGROUP} --nflog-prefix all-ipsec
-		fi
+		echo "deleting rules with old nflog group ${OLDNFGROUP}"
+		iptables -D INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group ${OLDNFGROUP} --nflog-prefix all-ipsec
+		iptables -D OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group ${OLDNFGROUP} --nflog-prefix all-ipsec
+	    fi
 	    echo "nflog ipsec capture disabled"
 	    exit 0
 	else
@@ -203,7 +228,7 @@ case "${1}" in
 
     sniff|--sniff)
 	if [ -z "${2}" ]; then
-	    NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --configsetup | grep -v "#" | grep nflog | sed -e "s/^.*=//" -e "s/'//g");
+	    NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --ctlsocket ${CTLSOCKET} --configsetup | grep -v "#" | grep nflog | sed -e "s/^.*=//" -e "s/'//g");
 	    tcpdump -n -i nflog:${NFGROUP}
 	else
 	    echo "conn specific coming soon"
@@ -379,7 +404,7 @@ case "${1}" in
 	exit 0
 	;;
     secrets)
-	"${IPSEC_EXECDIR}/whack" --rereadsecrets
+	"${IPSEC_EXECDIR}/whack" --ctlsocket ${CTLSOCKET} --rereadsecrets
 	exit $?
 	;;
     rereadcrls|--rereadcrls)
@@ -387,7 +412,12 @@ case "${1}" in
 	exit 1
 	;;
     crls|fetchcrls)
-	"${IPSEC_EXECDIR}/whack" --fetchcrls
+	"${IPSEC_EXECDIR}/whack" --ctlsocket ${CTLSOCKET} --fetchcrls
+	exit $?
+	;;
+    unbound|--unbound)
+	# activate the unbound ipsec module
+	unbound-control set_option ipsecmod-enabled: yes
 	exit $?
 	;;
     --*)
@@ -397,6 +427,9 @@ case "${1}" in
 esac
 
 cmd="${1}"
+if [ "${cmd}" = "whack" ]; then
+     ADDSOCKET="--ctlsocket ${CTLSOCKET}"
+fi
 shift
 
 path="${IPSEC_EXECDIR}/${cmd}"
@@ -409,4 +442,4 @@ if [ ! -x "${path}" ]; then
     fi
 fi
 
-exec "${path}" "$@"
+exec ${path} ${ADDSOCKET} $@

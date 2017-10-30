@@ -74,17 +74,6 @@ typedef struct {
 	u8 rsv_bit;
 } option_data;
 
-int read_hex_int(char *c);
-u8 read_nyble(FILE *fp, int *err);
-u8 read_byte(u8 *c, u8 endmark);
-void read_mac(u8 *c, u8 *mac);
-void read_block(u8 *c, u8 *block);
-u32 read_dotted_ipv4_address(u8 *str);
 u16 ipheader_checksum(u16 *buffer, u16 len);
 void ipv4_print_address(u32 address);
 int read_arguments(int argc, char *argv[], option_data *opt);
-u16 compute_tcpudp_checksum(u32 sourceip,
-			    u32 destip,
-			    u8 protocol,
-			    u16 datalen,
-			    u8 *data);

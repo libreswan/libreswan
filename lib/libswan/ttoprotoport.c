@@ -170,15 +170,12 @@ char *pgm;
 				&proto, &port, &has_port_wildcard);
 
 		if (r->wild == -1) {
-			if (err != NULL) {
-				/* okay, error expected */
-				continue;
-			} else {
+			if (err == NULL) {
 				printf("%s expected error, got none.\n",
 					r->ascii);
 				status = 1;
-				continue;
 			}
+			continue;
 		}
 
 		if (err != NULL) {

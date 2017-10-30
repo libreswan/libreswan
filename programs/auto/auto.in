@@ -1,7 +1,7 @@
 #! /bin/sh
 # user interface to automatic keying and Pluto in general
 # Copyright (C) 1998, 1999, 2000  Henry Spencer.
-# Copyright (C) 2014 Paul Wouters
+# Copyright (C) 2014-2017 Paul Wouters <pwouters@redhat.com>
 # Copyright (C) 2015 Tuomo Soini <tis@foobar.fi>
 #
 # This program is free software; you can redistribute it and/or modify it
@@ -14,12 +14,16 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
+IPSEC_RUNDIR="${IPSEC_RUNDIR:-@IPSEC_RUNDIR@}"
+CTLSOCKET="${IPSEC_RUNDIR}/pluto.ctl"
+
 me='ipsec auto'
 usage="Usage:
-	${me} [--showonly] [--asynchronous] --up connectionname [--remote-host ipaddr]
-	${me} [--showonly] [--asynchronous] --down connectionname 
+	${me} [--showonly] [--asynchronous] --up connectionname \\
+		[--remote-host ipaddr]
+	${me} [--showonly] [--asynchronous] --down connectionname
 	${me} [--showonly] --{add|delete|replace|start} connectionname
-	${me} [--showonly] --{route|unroute} connectionname
+	${me} [--showonly] --{route|unroute|ondemand} connectionname
 	${me} [--showonly] --{ready|status|rereadsecrets|rereadgroups}
 	${me} [--showonly] --{rereadcrls|rereadall}
 	${me} [--showonly] [--utc] --{listpubkeys|listcerts}
@@ -28,7 +32,7 @@ usage="Usage:
 	${me} [--showonly] [--utc] --{listcrls|listall}
 	${me} [--showonly] [--utc] --purgeocsp
 
-	other options: [--config ipsecconfigfile] [--verbose]"
+	other options: [--config ipsecconfigfile] [--verbose] [--ctlsocket <file>]"
 
 config=
 async=
@@ -61,6 +65,10 @@ do
 	    config="--config $2"
 	    shift
 	    ;;
+	--ctlsocket)
+	    CTLSOCKET="$2"
+	    shift
+	    ;;
 	--remote-host)
 	    remote="--remote-host $2"
 	    shift
@@ -71,7 +79,8 @@ do
 	--verbose)
 	    verbose=" --verbose "
 	    ;;
-	--up|--down|--add|--delete|--replace|--start|--route|--unroute)
+	--up|--down|--add|--delete|--replace|--route|--unroute|\
+	--start|--ondemand)
 	    if [ " ${op}" != " " ]; then
 		echo "${usage}" >&2
 		exit 2
@@ -138,19 +147,19 @@ esac
 
 case "${op}" in
     --ready)
-	${showonly} ipsec whack --listen
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack --listen
 	exit
 	;;
     --rereadsecrets)
-	${showonly} ipsec whack --rereadsecrets
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack --rereadsecrets
 	exit
 	;;
     --rereadgroups)
-	${showonly} ipsec whack --listen
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack --listen
 	exit
 	;;
     --rereadcacerts)
-	${showonly} ipsec whack --rereadcacerts
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack --rereadcacerts
 	exit
 	;;
     --rereadcrls)
@@ -158,71 +167,75 @@ case "${op}" in
 	exit 1
 	;;
     --rereadall)
-	${showonly} ipsec whack --rereadall
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack --rereadall
 	exit
 	;;
     --listpubkeys)
-	${showonly} ipsec whack ${utc} --listpubkeys
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack ${utc} --listpubkeys
 	exit
 	;;
     --checkpubkeys)
-	${showonly} ipsec whack ${utc} --checkpubkeys
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack ${utc} --checkpubkeys
 	exit
 	;;
     --listcerts)
-	${showonly} ipsec whack ${utc} --listcerts
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack ${utc} --listcerts
 	exit
 	;;
     --listcacerts)
-	${showonly} ipsec whack ${utc} --listcacerts
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack ${utc} --listcacerts
 	exit
 	;;
     --listgroups)
-	${showonly} ipsec whack ${utc} --listgroups
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack ${utc} --listgroups
 	exit
 	;;
     --listcrls)
-	${showonly} ipsec whack ${utc} --listcrls
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack ${utc} --listcrls
 	exit
 	;;
     --listall)
-	${showonly} ipsec whack ${utc} --listall
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack ${utc} --listall
 	exit
 	;;
     --purgeocsp)
-	${showonly} ipsec whack ${utc} --listall --purgeocsp
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack ${utc} --listall --purgeocsp
 	exit
 	;;
     --up)
-	${showonly} ipsec whack ${async} --name ${names} --initiate ${remote}
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack ${async} --name ${names} --initiate ${remote}
 	exit
 	;;
     --start)
-	${showonly} ipsec addconn ${verbose} ${config} ${names}
-	${showonly} ipsec whack ${async} --name ${names} --initiate ${remote}
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} addconn ${verbose} ${config} ${names}
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack ${async} --name ${names} --initiate ${remote}
 	exit
 	;;
     --down)
-	${showonly} ipsec whack --name ${names} --terminate
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack --name ${names} --terminate
 	exit
 	;;
     --delete)
-	${showonly} ipsec whack --name ${names} --delete
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack --name ${names} --delete
 	exit
 	;;
     --route)
-	${showonly} ipsec whack --name ${names} --route
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack --name ${names} --route
+	exit
+	;;
+    --ondemand)
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} addconn ${verbose} ${config} ${names}
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack --name ${names} --route
 	exit
 	;;
     --unroute)
-	${showonly} ipsec whack --name ${names} --unroute
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack --name ${names} --unroute
 	exit
 	;;
     --status)
-	${showonly}
-	ipsec whack --status
+	${showonly} ipsec --ctlsocket ${CTLSOCKET} whack --status
 	exit
 	;;
 esac
 
-${showonly} ipsec addconn ${verbose} ${config} ${names}
+${showonly} ipsec addconn --ctlsocket ${CTLSOCKET} ${verbose} ${config} ${names}

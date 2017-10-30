@@ -1,0 +1,146 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+road #
+ certutil -D -n road -d sql:/etc/ipsec.d
+road #
+ certutil -D -n east -d sql:/etc/ipsec.d
+road #
+ cp road-ikev2-oe.conf /etc/ipsec.d/ikev2-oe.conf
+road #
+ cp policies/* /etc/ipsec.d/policies/
+road #
+ echo "192.1.3.128/27"  >> /etc/ipsec.d/policies/private-or-clear
+road #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+road #
+ /testing/pluto/bin/wait-until-pluto-started
+road #
+ ipsec whack --debug-all --impair retransmits
+road #
+ # ensure for tests acquires expire before our failureshunt=2m
+road #
+ echo 30 > /proc/sys/net/core/xfrm_acq_expires
+road #
+ # give OE policies time to load
+road #
+ sleep 5
+road #
+ ip -s xfrm monitor > /tmp/xfrm-monitor.out &
+[x] PID
+road #
+ echo "initdone"
+initdone
+road #
+ # one packet, which gets eaten by XFRM, so east does not initiate
+road #
+ ping -n -c 1 -I 192.1.3.209 192.1.3.130
+PING 192.1.3.130 (192.1.3.130) from 192.1.3.209 : 56(84) bytes of data.
+--- 192.1.3.130 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time XXXX
+road #
+ # wait on OE IKE negotiation
+road #
+ # ping should succeed through tunnel
+road #
+ ping -n -c 2 -I 192.1.3.209 192.1.3.130
+PING 192.1.3.130 (192.1.3.130) from 192.1.3.209 : 56(84) bytes of data.
+64 bytes from 192.1.3.130: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.1.3.130: icmp_seq=2 ttl=64 time=0.XXX ms
+--- 192.1.3.130 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+road #
+ sleep 1
+road #
+ # should show established tunnel and no bare shunts
+road #
+ ipsec whack --trafficstatus
+006 #2: "private-or-clear#192.1.3.128/27"[1] ...192.1.3.130, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+road #
+ ipsec whack --shuntstatus
+000 Bare Shunt list:
+000  
+road #
+ killall ip > /dev/null 2> /dev/null
+[1]+  Terminated              ip -s xfrm monitor > /tmp/xfrm-monitor.out
+road #
+ cp /tmp/xfrm-monitor.out OUTPUT/road.xfrm-monitor.txt
+road #
+ echo done
+done
+road #
+ # A tunnel should have established with non-zero byte counters
+road #
+ ip addr show scope global
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether 12:00:00:ab:cd:02 brd ff:ff:ff:ff:ff:ff
+    inet 192.1.3.209/24 brd 192.1.3.255 scope global eth0
+       valid_lft forever preferred_lft forever
+3: ip_vti0@NONE: <NOARP> mtu 1332 qdisc noop state DOWN group default 
+    link/ipip 0.0.0.0 brd 0.0.0.0
+road #
+ # jacob two two for east?
+road #
+ ipsec whack --trafficstatus
+road #
+ ipsec whack --trafficstatus
+road #
+ ipsec look
+road NOW
+XFRM state:
+src 192.1.3.209 dst 192.1.3.130
+	proto esp spi 0xSPISPIXX reqid REQID mode transport
+	replay-window 0 
+	sel src 192.1.3.209/32 dst 192.1.3.130/32 proto icmp type 8 code 0 dev eth0 
+XFRM policy:
+src 192.1.3.209/32 dst 192.1.3.128/27 
+	dir out priority 2085 ptype main 
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+src 192.1.3.254/32 dst 192.1.3.209/32 
+	dir fwd priority 1568 ptype main 
+src 192.1.3.254/32 dst 192.1.3.209/32 
+	dir in priority 1568 ptype main 
+src 192.1.3.209/32 dst 192.1.3.254/32 
+	dir out priority 1568 ptype main 
+src 192.1.3.253/32 dst 192.1.3.209/32 
+	dir fwd priority 1568 ptype main 
+src 192.1.3.253/32 dst 192.1.3.209/32 
+	dir in priority 1568 ptype main 
+src 192.1.3.209/32 dst 192.1.3.253/32 
+	dir out priority 1568 ptype main 
+src 192.1.2.253/32 dst 192.1.3.209/32 
+	dir fwd priority 1568 ptype main 
+src 192.1.2.253/32 dst 192.1.3.209/32 
+	dir in priority 1568 ptype main 
+src 192.1.3.209/32 dst 192.1.2.253/32 
+	dir out priority 1568 ptype main 
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.3.254 dev eth0 
+192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209 
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+Libreswan test CA for mainca - Libreswan                     CT,, 
+east-ec                                                      P,,  
+hashsha2                                                     P,,  
+nic                                                          P,,  
+north                                                        P,,  
+west                                                         P,,  
+west-ec                                                      P,,  
+road #
+ # you should see both RSA and NULL
+road #
+ grep IKEv2_AUTH_ /tmp/pluto.log
+|    auth method: IKEv2_AUTH_NULL (0xd)
+|    auth method: IKEv2_AUTH_RSA (0x1)
+road #
+road #
+ ../bin/check-for-core.sh
+road #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

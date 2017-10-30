@@ -56,6 +56,8 @@ parser.add_argument('--userland', '-u', action='store',
                     default='libreswan', help='which userland to prepapre')
 parser.add_argument('--x509', '-x', action='store_true',
                     help='create X509 NSS file by importing test certs')
+parser.add_argument('--dnssec', '-d', action='store_true',
+                    help='start nsd and unbound for DNSSEC - meant only for nic')
 parser.add_argument('--x509name', '-X', action='store', default="",
                     help='create X509 NSS file by importing test certs')
 parser.add_argument('--fips', '-f', action='store_true',
@@ -85,6 +87,7 @@ if args.hostname:
     if hostname == "nic":
         # nothing to do, just stop
         sys.exit()
+
 else:
     hostname = socket.gethostname()
 if "." in hostname:
@@ -176,60 +179,79 @@ fp.close()
 if userland == "libreswan" or userland == "openswan" or userland == "strongswan":
     # copy in base configs
 
-    # this brings in the nss *.db files that are path-specific -
-    # they have pathnames hardcoded inside the file
-    # shutil.copytree("/testing/baseconfigs/%s/etc/ipsec.d"%hostname,
-    # "/etc/").  This default database contains a default key-pair
-    # for basic testing.
-    distutils.dir_util.copy_tree(
-        "/testing/baseconfigs/%s/etc/ipsec.d" % hostname, "/etc/ipsec.d/")
 
-    # fill in any missing dirs
-    if userland == "strongswan":
-        prefix = "strongswan/"
-    else:
-        prefix = ""
-    for dir in ("/etc/%sipsec.d" % prefix, "/etc/%sipsec.d/policies" % prefix, "/etc/%sipsec.d/cacerts" % prefix, "/etc/%sipsec.d/crls" % prefix, "/etc/%sipsec.d/certs" % prefix, "/etc/%sipsec.d/private" % prefix):
-        if not os.path.isdir(dir):
-            os.mkdir(dir)
-            if "private" in dir:
-                os.chmod(dir, 0o700)
-
-    # test specific files
-    ipsecconf = "%s/%s.conf" % (testpath, hostname)
-    ipsecsecrets = "%s/%s.secrets" % (testpath, hostname)
-    xl2tpdconf = "%s/%s.xl2tpd.conf" % (testpath, hostname)
-    pppoptions = "%s/%s.ppp-options.xl2tpd" % (testpath, hostname)
-    chapfile = "%s/chap-secrets" % testpath
-
-    if not os.path.isfile(ipsecconf):
-        ipsecconf = "/testing/baseconfigs/%s/etc/ipsec.conf" % hostname
-    if not os.path.isfile(ipsecsecrets):
-        ipsecsecrets = "/testing/baseconfigs/%s/etc/ipsec.secrets" % hostname
-
-    if args.userland == "strongswan":
-        strongswanconf = "%s/%sstrongswan.conf" % (testpath, hostname)
-        shutil.copy(strongswanconf, "/etc/strongswan/strongswan.conf")
-        for dir in ("/etc/strongswan/ipsec.d/aacerts", "/etc/strongswan/ipsec.d/ocspcerts"):
+    if hostname != "nic":
+        # this brings in the nss *.db files that are path-specific -
+        # they have pathnames hardcoded inside the file
+        # shutil.copytree("/testing/baseconfigs/%s/etc/ipsec.d"%hostname,
+        # "/etc/").  This default database contains a default key-pair
+        # for basic testing.
+        distutils.dir_util.copy_tree("/testing/baseconfigs/%s/etc/ipsec.d" % hostname, "/etc/ipsec.d/")
+        # fill in any missing dirs
+        if userland == "strongswan":
+            prefix = "strongswan/"
+        else:
+            prefix = ""
+        for dir in ("/etc/%sipsec.d" % prefix, "/etc/%sipsec.d/policies" % prefix, "/etc/%sipsec.d/cacerts" % prefix, "/etc/%sipsec.d/crls" % prefix, "/etc/%sipsec.d/certs" % prefix, "/etc/%sipsec.d/private" % prefix):
             if not os.path.isdir(dir):
                 os.mkdir(dir)
+                if "private" in dir:
+                    os.chmod(dir, 0o700)
 
-    dstconf = "/etc/%sipsec.conf" % (prefix)
-    dstsecrets = "/etc/%sipsec.secrets" % (prefix)
-    shutil.copy(ipsecconf, dstconf)
-    shutil.copy(ipsecsecrets, dstsecrets)
-    os.chmod(dstsecrets, 0o600)
+        # test specific files
+        ipsecconf = "%s/ipsec.conf" % (testpath)
+        ipsecsecrets = "%s/ipsec.secrets" % (testpath)
+        h_ipsecconf = "%s/%s.conf" % (testpath, hostname)
+        h_ipsecsecrets = "%s/%s.secrets" % (testpath, hostname)
+        xl2tpdconf = "%s/%s.xl2tpd.conf" % (testpath, hostname)
+        pppoptions = "%s/%s.ppp-options.xl2tpd" % (testpath, hostname)
+        chapfile = "%s/chap-secrets" % testpath
 
-    if os.path.isfile(xl2tpdconf):
-        shutil.copyfile(xl2tpdconf, "/etc/xl2tpd/xl2tpd.conf")
-    if os.path.isfile(pppoptions):
-        shutil.copyfile(pppoptions, "/etc/ppp/options.xl2tpd")
-    if os.path.isfile(chapfile):
-        shutil.copyfile(chapfile, "/etc/ppp/chap-secrets")
+        if os.path.isfile(h_ipsecconf):
+            if os.path.isfile(ipsecconf):
+                print("conflicting files %s %s" % (ipsecconf, h_ipsecconf))
+            else:
+                ipsecconf = h_ipsecconf
+        elif not os.path.isfile(ipsecconf):
+            ipsecconf = "/testing/baseconfigs/%s/etc/ipsec.conf" % hostname
 
-    dbfiles = glob.glob("/etc/ipsec.d/*db")
-    for dbfile in dbfiles:
-        os.chown(dbfile, 0, 0)
+        if os.path.isfile(h_ipsecsecrets):
+            if os.path.isfile(ipsecsecrets):
+                print("conflicting files %s %s" % (ipsecsecrets, h_ipsecsecrets))
+            else:
+                ipsecsecrets = h_ipsecsecrets
+        elif not os.path.isfile(ipsecsecrets):
+            ipsecsecrets = "/testing/baseconfigs/%s/etc/ipsec.secrets" % hostname
+
+        if args.userland == "strongswan":
+            # check version and fail early
+            output = subprocess.getoutput("strongswan version")
+            if not "U5.6.0" in output:
+                sys.exit("strongswan 5.6.0 must be installed")
+            # required to write log file in /tmp
+            subprocess.getoutput("setenforce 0")
+            strongswanconf = "%s/%sstrongswan.conf" % (testpath, hostname)
+            shutil.copy(strongswanconf, "/etc/strongswan/strongswan.conf")
+            for dir in ("/etc/strongswan/ipsec.d/aacerts", "/etc/strongswan/ipsec.d/ocspcerts"):
+                if not os.path.isdir(dir):
+                    os.mkdir(dir)
+
+        dstconf = "/etc/%sipsec.conf" % (prefix)
+        dstsecrets = "/etc/%sipsec.secrets" % (prefix)
+        shutil.copy(ipsecconf, dstconf)
+        shutil.copy(ipsecsecrets, dstsecrets)
+        os.chmod(dstsecrets, 0o600)
+
+        if os.path.isfile(xl2tpdconf):
+            shutil.copyfile(xl2tpdconf, "/etc/xl2tpd/xl2tpd.conf")
+        if os.path.isfile(pppoptions):
+            shutil.copyfile(pppoptions, "/etc/ppp/options.xl2tpd")
+        if os.path.isfile(chapfile):
+            shutil.copyfile(chapfile, "/etc/ppp/chap-secrets")
+
+        dbfiles = glob.glob("/etc/ipsec.d/*db")
+        for dbfile in dbfiles:
+            os.chown(dbfile, 0, 0)
 
     # restore /etc/hosts to original - some tests make changes
     shutil.copyfile("/testing/baseconfigs/all/etc/hosts", "/etc/hosts")
@@ -300,6 +322,8 @@ if userland in ("libreswan", "openswan"):
 
     # this section is getting rough. could use a nice refactoring
     if args.x509:
+        shutil.rmtree("/etc/strongswan/ipsec.d/cacerts/")
+        os.mkdir("/etc/strongswan/ipsec.d/cacerts/")
 
         if not os.path.isfile("/testing/x509/keys/mainca.key"):
             print("\n\n---------------------------------------------------------------------\n"
@@ -412,7 +436,7 @@ if userland == "racoon2" or userland == "racoon":
 if userland == "shrew":
     print("shrew not yet tested/integrated")
 
-if not args.ipv:
+if hostname != "nic" and not args.ipv:
     subprocess.getoutput("sysctl net.ipv6.conf.all.disable_ipv6=1")
     subprocess.getoutput("sysctl net.ipv6.conf.default.disable_ipv6=1")
 
@@ -425,10 +449,17 @@ if args.ipv6:
     else:
         subprocess.getoutput("service network restart")
 
+if args.dnssec:
+        subprocess.getoutput("service nsd start")
+        subprocess.getoutput("service unbound start")
+
 if not os.path.isfile("/root/.gdbinit"):
     fp = open("/root/.gdbinit", "w")
     fp.write("set auto-load safe-path /")
     fp.close()
+
+subprocess.getoutput("iptables -F");
+subprocess.getoutput("iptables -X");
 
 # Create LOGDROP (used to be done in swan-transmogrify but we want it here
 # for docker)
@@ -438,27 +469,15 @@ for ipt in ("iptables", "ip6tables"):
     subprocess.getoutput("%s -A LOGDROP -j DROP" % ipt)
 
 # final prep - this kills any running userland
-output = subprocess.getoutput("ipsec stop")
-# python has no pidof :/. getoutput return a string not a list.
-# split the string to make a list. Empty strings will discarded
-
-pids = []
-pluto = subprocess.getoutput("pidof pluto")
-pids.extend(pluto.split())
-charon = subprocess.getoutput("pidof starter")
-pids.extend(charon.split())
-charonstarter = subprocess.getoutput("pidof charon")
-pids.extend(charonstarter.split())
-shrew = subprocess.getoutput("pidof iked")
-pids.extend(shrew.split())
-racoon1 = subprocess.getoutput("pidof racoon2-spmd")
-pids.extend(racoon1.split())
-racoon2 = subprocess.getoutput("pidof racoon2-iked")
-pids.extend(racoon2.split())
-
-for pid in pids:
-    if pid:
-        os.kill(int(pid), 9)
+subprocess.call(["systemctl", "stop", "ipsec"])
+# for some reason this fails to stop strongswan?
+subprocess.call(["systemctl", "stop", "strongswan"])
+# python has no pidof - just outsource to the shell, thanks python!
+for dname in ( "pluto", "charon", "starter", "iked", "racoon2-spmd", "racoon2-iked"):
+    try:
+        subprocess.check_output(["killall", "-9", dname], stderr=subprocess.STDOUT)
+    except:
+        pass
 
 # note shrew and racoon2 share a pid file name
 for pidfile in ("/var/run/pluto/pluto.pid", "/var/run/charon.pid", "/var/run/iked.pid", "/var/run/spmd.pid", "/var/run/starter.charon.pid"):

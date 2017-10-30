@@ -5,7 +5,8 @@
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2013-2014 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Andrew Cagney
+ * Copyright (C) 2017 Antony Antony <antony@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -65,60 +66,37 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 		st->st_esp.present? &st->st_esp :
 		st->st_ah.present? &st->st_ah :
 		NULL;
-	struct esp_info *ei;
 
 	passert(ipi != NULL);	/* ESP or AH must be present */
 	passert(st->st_esp.present != st->st_ah.present);	/* only one */
 
-	/* ??? there is no kernel_alg_ah_info */
-	/* ??? will this work if the result of kernel_alg_esp_info
-	 * is a pointer into its own static buffer (therefore ephemeral)?
+	/*
+	 * Integrity seed (key).  AEAD, for instance has NULL (no)
+	 * separate integrity.
 	 */
-	ei = kernel_alg_esp_info(
-		ipi->attrs.transattrs.encrypt,
-		ipi->attrs.transattrs.enckeylen,
-		ipi->attrs.transattrs.integ_hash);
+	const struct integ_desc *integ = ipi->attrs.transattrs.ta_integ;
+	size_t integ_key_size = (integ != NULL ? integ->integ_keymat_size : 0);
+	/*
+	 * If there is encryption, then ENCKEYLEN contains the
+	 * required number of bits.
+	 */
+	size_t encrypt_key_size = BYTES_FOR_BITS(ipi->attrs.transattrs.enckeylen);
+	/*
+	 * Finally, some encryption algorithms such as AEAD and CTR
+	 * require "salt" as part of the "starting variable".
+	 */
+	const struct encrypt_desc *encrypt = ipi->attrs.transattrs.ta_encrypt;
+	size_t encrypt_salt_size = (encrypt != NULL ? encrypt->salt_size : 0);
 
-	passert(ei != NULL);
-	ipi->attrs.transattrs.ei = ei;
-
-	/* ipi->attrs.transattrs.integ_hasher->hash_key_size / BITS_PER_BYTE; */
-	unsigned authkeylen = ikev1_auth_kernel_attrs(ei->auth, NULL);
-	/* ??? no account is taken of AH */
-	/* transid is same as esp_ealg_id */
-	switch (ei->transid) {
-	case IKEv2_ENCR_reserved:
-		/* AH */
-		ipi->keymat_len = authkeylen;
-		break;
-
-	case IKEv2_ENCR_AES_CTR:
-		ipi->keymat_len = ei->enckeylen + authkeylen + AES_CTR_SALT_BYTES;;
-		break;
-
-	case IKEv2_ENCR_AES_GCM_8:
-	case IKEv2_ENCR_AES_GCM_12:
-	case IKEv2_ENCR_AES_GCM_16:
-		/* aes_gcm does not use an integ (auth) algo - see RFC 4106 */
-		ipi->keymat_len = ei->enckeylen + AES_GCM_SALT_BYTES;
-		break;
-
-	case IKEv2_ENCR_AES_CCM_8:
-	case IKEv2_ENCR_AES_CCM_12:
-	case IKEv2_ENCR_AES_CCM_16:
-		/* aes_ccm does not use an integ (auth) algo - see RFC 4309 */
-		ipi->keymat_len = ei->enckeylen + AES_CCM_SALT_BYTES;
-		break;
-
-	default:
-		/* ordinary ESP */
-		ipi->keymat_len = ei->enckeylen + authkeylen;
-		break;
-	}
+	ipi->keymat_len = integ_key_size + encrypt_key_size + encrypt_salt_size;
 
 	DBG(DBG_CONTROL,
-		DBG_log("enckeylen=%" PRIu32 ", authkeylen=%u, keymat_len=%" PRIu16,
-			ei->enckeylen, authkeylen, ipi->keymat_len));
+	    DBG_log("integ=%s: .key_size=%zu encrypt=%s: .key_size=%zu .salt_size=%zu keymat_len=%" PRIu16,
+		    integ != NULL ? integ->common.name : "N/A",
+		    integ_key_size,
+		    encrypt != NULL ? encrypt->common.name : "N/A",
+		    encrypt_key_size, encrypt_salt_size,
+		    ipi->keymat_len));
 
 	/*
 	 *
@@ -143,10 +121,19 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 	chunk_t nr;
 	setchunk(ni, st->st_ni.ptr, st->st_ni.len);
 	setchunk(nr, st->st_nr.ptr, st->st_nr.len);
+	PK11SymKey *shared = NULL;
 
-	PK11SymKey *keymat = ikev2_child_sa_keymat(st->st_oakley.prf,
+	if (st->st_pfs_group != NULL) {
+		DBG(DBG_CRYPT, DBG_log("#%lu %s add g^ir to child key %p",
+					st->st_serialno,
+					enum_name(&state_names, st->st_state),
+					st->st_shared_nss));
+		shared = st->st_shared_nss;
+	}
+
+	PK11SymKey *keymat = ikev2_child_sa_keymat(st->st_oakley.ta_prf,
 						   st->st_skey_d_nss,
-						   NULL/*dh*/, ni, nr,
+						   shared, ni, nr,
 						   ipi->keymat_len * 2);
 	PK11SymKey *ikey = key_from_symkey_bytes(keymat, 0, ipi->keymat_len);
 	ikeymat = chunk_from_symkey("initiator keys", DBG_CRYPT, ikey);

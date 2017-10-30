@@ -1,7 +1,7 @@
 /*
  * All-in-one program to set Security Association parameters
  * Copyright (C) 1996  John Ioannidis.
- * Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002  Richard Guy Briggs.
+ * Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2017  Richard Guy Briggs <rgb@tricolour.ca>
  * Copyright (C) 2005-2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2007-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2013 Paul Wouters <paul@libreswan.org>
@@ -43,9 +43,6 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <libreswan.h>
-#if 0
-#include <linux/autoconf.h>    /* CONFIG_IPSEC_PFKEYv2 */
-#endif
 #include <signal.h>
 #include <sys/socket.h>
 #include <libreswan/pfkeyv2.h>
@@ -71,8 +68,9 @@
 
 struct encap_msghdr *em;
 
-char *progname;
+const char *progname;
 bool debug = FALSE;
+bool get = FALSE;
 int dumpsaref = 0;
 int saref_him = 0;
 int saref_me  = 0;
@@ -85,13 +83,9 @@ int address_family = 0;
 unsigned char proto = 0;
 int alg = 0;
 
-/*
- *      Manual connection support for modular algos (ipsec_alg) --Juanjo.
- */
-#define XF_OTHER_ALG (XF_CLR - 1)       /* define magic XF_ symbol for alg_info's */
 #include <assert.h>
 const char *alg_string = NULL;          /* algorithm string */
-struct esp_info *esp_info = NULL;       /* esp info from 1st (only) element */
+struct proposal_info *esp_info = NULL;       /* esp info from 1st (only) element */
 int proc_read_ok = 0;                   /* /proc/net/pf_key_support read ok */
 
 unsigned long replay_window = 0;
@@ -140,11 +134,12 @@ static const char *usage_string =
 	"[ --dumpsaref ] show the saref allocated\n"
 	"[ --outif=XXX ] set the outgoing interface to use\n"
 	"[ --debug ] is optional to any spi command.\n"
+	"[ --get ] show the current lifetime stats for the <SA>.\n"
 	"[ --label <label> ] is optional to any spi command.\n"
 	"[ --listenreply ]   is optional, and causes the command to stick\n"
 	"                    around and listen to what the PF_KEY socket says.\n";
 
-static void usage(char *s, FILE *f)
+static void usage(const char *s, FILE *f)
 {
 	/* s argument is actually ignored, at present */
 	fprintf(f, "%s:%s", s, usage_string);
@@ -243,7 +238,7 @@ static bool parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 				optargp,
 				(int)strlen(optargp));
 		}
-		if (strlen(optargp) == 0) {
+		if (optargp[0] == '\0') {
 			fprintf(stderr,
 				"%s: expected value after '=' in --life option. optargt=0p%p, optargt+strlen(optargt)=0p%p, optargp=0p%p\n",
 				progname,
@@ -337,6 +332,7 @@ static const struct option longopts[] =
 	{ "saref_him", required_argument, NULL, 'B' },
 	{ "dumpsaref", no_argument,       NULL, 'r' },
 	{ "listenreply", 0, 0, 'R' },
+	{ "get",	no_argument,       NULL, 't' },
 	{ 0, 0, 0, 0 }
 };
 
@@ -355,16 +351,72 @@ static bool pfkey_build(int error,
 	}
 }
 
+/*
+ * Load kernel_alg arrays from /proc
+ * Only used in manual mode from programs/spi/spi.c
+ */
+static bool kernel_alg_proc_read(void)
+{
+	int satype;
+	int supp_exttype;
+	int alg_id, ivlen, minbits, maxbits;
+	char name[20];
+	struct sadb_alg sadb_alg;
+	char buf[128];
+	FILE *fp = fopen("/proc/net/pf_key_supported", "r");
+
+	if (fp == NULL)
+		return FALSE;
+
+	kernel_alg_init();
+	while (fgets(buf, sizeof(buf), fp)) {
+		if (buf[0] != ' ')	/* skip titles */
+			continue;
+		sscanf(buf, "%d %d %d %d %d %d %s",
+			&satype, &supp_exttype,
+			&alg_id, &ivlen,
+			&minbits, &maxbits, name);
+		switch (satype) {
+		case SADB_SATYPE_ESP:
+			switch (supp_exttype) {
+			case SADB_EXT_SUPPORTED_AUTH:
+			case SADB_EXT_SUPPORTED_ENCRYPT:
+				sadb_alg.sadb_alg_id = alg_id;
+				sadb_alg.sadb_alg_ivlen = ivlen;
+				sadb_alg.sadb_alg_minbits = minbits;
+				sadb_alg.sadb_alg_maxbits = maxbits;
+				sadb_alg.sadb_alg_reserved = 0;
+				kernel_alg_add(satype, supp_exttype,
+					       &sadb_alg);
+				break;
+			}
+			break;
+		default:
+			break;
+		}
+	}
+	fclose(fp);
+	return TRUE;
+}
+
+/*
+ * This policy disables both IKEv1 and IKEv2 checks so all algorithms
+ * are valid.
+ */
+
+const struct parser_policy policy = {
+	.ikev1 = false,
+	.ikev2 = false,
+	.alg_is_ok = kernel_alg_is_ok,
+};
+
 static int decode_esp(char *algname)
 {
 	char err_buf[256] = "";	/* ??? big enough? */
 	int esp_alg;
 
-	/*
-	 * POLICY=0 disables checks that the algorithm will work with
-	 * IKEv1 and/or IKEv2.
-	 */
-	struct alg_info_esp *alg_info = alg_info_esp_create_from_str(0, algname, err_buf, sizeof(err_buf));
+	struct alg_info_esp *alg_info = alg_info_esp_create_from_str(&policy, algname,
+								     err_buf, sizeof(err_buf));
 
 	if (alg_info != NULL) {
 		int esp_ealg_id, esp_aalg_id;
@@ -379,35 +431,32 @@ static int decode_esp(char *algname)
 			exit(1);
 		}
 		alg_string = algname;
-		esp_info = &alg_info->esp[0];
+		esp_info = &alg_info->ai.proposals[0];
 		if (debug) {
 			fprintf(stdout,
 				"%s: alg_info: cnt=%d ealg[0]=%d aalg[0]=%d\n",
 				progname,
 				alg_info->ai.alg_info_cnt,
-				esp_info->encryptalg,
-				esp_info->authalg);
+				esp_info->encrypt->common.id[IKEv1_ESP_ID],
+				esp_info->integ->common.id[IKEv1_ESP_ID]);
 		}
-		esp_ealg_id = esp_info->transid;
-		esp_aalg_id = esp_info->auth;
+		esp_ealg_id = esp_info->encrypt->common.id[IKEv1_ESP_ID];
+		esp_aalg_id = esp_info->integ->common.id[IKEv1_ESP_ID];
 		if (kernel_alg_proc_read()) {
-			err_t ugh;
 
 			proc_read_ok++;
 
-			ugh = check_kernel_encrypt_alg(esp_ealg_id, 0);
-			if (ugh != NULL) {
+			if (!kernel_alg_encrypt_ok(esp_info->encrypt)) {
 				fprintf(stderr, "%s: ESP encryptalg=%d (\"%s\") "
-					"not present - %s\n",
+					"not present\n",
 					progname,
 					esp_ealg_id,
 					enum_name(&esp_transformid_names,
-						  esp_ealg_id),
-					ugh);
+						  esp_ealg_id));
 				exit(1);
 			}
 
-			if (!kernel_alg_esp_auth_ok(esp_aalg_id, 0)) {
+			if (!kernel_alg_integ_ok(esp_info->integ)) {
 				/* ??? this message looks badly worded */
 				fprintf(stderr, "%s: ESP authalg=%d (\"%s\") - alg not present\n",
 					progname, esp_aalg_id,
@@ -489,6 +538,8 @@ static void emit_lifetime(const char *extname, uint16_t exttype, struct sadb_ext
 int main(int argc, char *argv[])
 {
 	tool_init_log(argv[0]);
+	/* force pfkey logging */
+	pfkey_error_func = pfkey_debug_func = printf;
 
 	__u32 spi = 0;
 	int c;
@@ -535,12 +586,23 @@ int main(int argc, char *argv[])
 	}
 
 	while ((c = getopt_long(argc, argv,
-				"" /*"H:P:Z:46dcA:E:e:s:a:w:i:D:S:hvgl:+:f:"*/,
+				"" /*"H:P:Z:46dcA:E:e:s:a:w:i:D:S:hvgl:+:f:t"*/,
 				longopts, 0)) != EOF) {
 		unsigned long u;
 		err_t ugh;
 
 		switch (c) {
+		case 't':
+			get = TRUE;
+			argcount--;
+			alg = XF_GET;
+			if (debug) {
+				fprintf(stdout, "%s: Algorithm %d selected.\n",
+					progname,
+					alg);
+			}
+			break;
+
 		case 'g':
 			debug = TRUE;
 			pfkey_lib_debug = PF_KEY_DEBUG_PARSE_MAX;
@@ -605,7 +667,6 @@ int main(int argc, char *argv[])
 			snprintf(progname, room, combine_fmt,
 				 argv[0],
 				 optarg);
-			tool_close_log();
 			tool_init_log(progname);
 
 			argcount -= 2;
@@ -1103,9 +1164,15 @@ int main(int argc, char *argv[])
 		if (proc_read_ok) {
 			const struct sadb_alg *alg_p;
 			size_t keylen, minbits, maxbits;
+			/*
+			 * XXX: According to "alg_info.h", TRANSID is
+			 * an "enum ipsec_cipher_algo".  This code
+			 * seems to assume that those values 1:1 map
+			 * onto the corresponding kernel SADB value?
+			 */
 			alg_p = kernel_alg_sadb_alg_get(SADB_SATYPE_ESP,
 							SADB_EXT_SUPPORTED_ENCRYPT,
-							esp_info->encryptalg);
+							esp_info->encrypt->common.id[IKEv1_ESP_ID]);
 			assert(alg_p != NULL);
 			keylen = enckeylen * 8;
 
@@ -1139,7 +1206,7 @@ int main(int argc, char *argv[])
 			}
 			alg_p = kernel_alg_sadb_alg_get(SADB_SATYPE_ESP,
 							SADB_EXT_SUPPORTED_AUTH,
-							esp_info->authalg);
+							esp_info->integ->integ_ikev1_ah_transform);
 			assert(alg_p);
 			keylen = authkeylen * 8;
 			minbits = alg_p->sadb_alg_minbits;
@@ -1165,6 +1232,7 @@ int main(int argc, char *argv[])
 	case XF_DEL:
 	case XF_COMPDEFLATE:
 	case XF_COMPLZS:
+	case XF_GET:
 		if (said_opt == NULL) {
 			if (isanyaddr(&edst)) {
 				fprintf(stderr,
@@ -1219,6 +1287,7 @@ int main(int argc, char *argv[])
 	case XF_COMPDEFLATE:
 	case XF_COMPLZS:
 	case XF_OTHER_ALG:
+	case XF_GET:
 		break;
 	default:
 		fprintf(stderr,
@@ -1243,7 +1312,8 @@ int main(int argc, char *argv[])
 	error = pfkey_msg_hdr_build(&extensions[0],
 				    alg == XF_DEL ? SADB_DELETE :
 					alg == XF_CLR ? SADB_FLUSH :
-					SADB_ADD,
+					    alg == XF_GET ? SADB_GET :
+					    SADB_ADD,
 				    proto2satype(proto),
 				    0,
 				    ++pfkey_seq,
@@ -1258,7 +1328,7 @@ int main(int argc, char *argv[])
 
 	switch (alg) {
 	case XF_OTHER_ALG:
-		authalg = esp_info->authalg;
+		authalg = esp_info->integ->integ_ikev1_ah_transform;
 		if (debug) {
 			fprintf(stdout, "%s: debug: authalg=%d\n",
 				progname, authalg);
@@ -1275,7 +1345,7 @@ int main(int argc, char *argv[])
 		encryptalg = SADB_X_CALG_LZS;
 		break;
 	case XF_OTHER_ALG:
-		encryptalg = esp_info->encryptalg;
+		encryptalg = esp_info->encrypt->common.id[IKEv1_ESP_ID];
 		if (debug) {
 			fprintf(stdout, "%s: debug: encryptalg=%d\n",
 				progname, encryptalg);
@@ -1508,22 +1578,6 @@ int main(int argc, char *argv[])
 				return FALSE;
 		}
 
-#if 0
-		/* not yet implemented */
-		if (natt != 0 && !isanyaddr(&natt_oa)) {
-			ip_str_buf b;
-
-			success = pfkeyext_address(SADB_X_EXT_NAT_T_OA,
-						   &natt_oa,
-						   "pfkey_nat_t_oa Add ESP SA",
-						   ipsaid_txt, extensions);
-			if (debug)
-				fprintf(stderr, "setting nat_oa to %s\n",
-					ipstr(&natt_oa, &b));
-			if (!success)
-				return FALSE;
-		}
-#endif
 	}
 
 	if (debug) {
@@ -1654,7 +1708,7 @@ int main(int argc, char *argv[])
 		free(iv);
 	}
 
-	if (listenreply || saref_me || dumpsaref) {
+	if (listenreply || saref_me || dumpsaref || get) {
 		ssize_t readlen;
 		unsigned char pfkey_buf[PFKEYv2_MAX_MSGSIZE];
 
@@ -1729,6 +1783,29 @@ int main(int argc, char *argv[])
 						       progname,
 						       s->sadb_x_saref_me,
 						       s->sadb_x_saref_him);
+					}
+				}
+				if (get) {
+					struct sadb_lifetime *s =
+						(struct sadb_lifetime *)
+						extensions[
+							K_SADB_EXT_LIFETIME_CURRENT];
+
+					if (s != NULL) {
+						printf("%s: lifetime_current=%u(allocations)/%" PRIu64 "(bytes)/%" PRIu64 "(addtime)/%" PRIu64 "(usetime)"
+#ifdef NOT_YET
+						       "/%d(packets)"
+#endif /* NOT_YET */
+						       "\n",
+						       progname,
+						       s->sadb_lifetime_allocations,
+						       s->sadb_lifetime_bytes,
+						       s->sadb_lifetime_addtime,
+						       s->sadb_lifetime_usetime
+#ifdef NOT_YET
+						       , s->sadb_x_lifetime_packets
+#endif /* NOT_YET */
+							);
 					}
 				}
 				break;

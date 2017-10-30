@@ -23,8 +23,9 @@
 #ifndef _WHACK_H
 #define _WHACK_H
 
-#include <libreswan.h>
+#include "lswtime.h"
 #include "ietf_constants.h"
+#include "lmod.h"
 
 /* Since the message remains on one host, native representation is used.
  * Think of this as horizontal microcode: all selected operations are
@@ -46,7 +47,7 @@
  */
 
 #define WHACK_BASIC_MAGIC (((((('w' << 8) + 'h') << 8) + 'k') << 8) + 25)
-#define WHACK_MAGIC (((((('o' << 8) + 'h') << 8) + 'k') << 8) + 43)
+#define WHACK_MAGIC (((((('o' << 8) + 'h') << 8) + 'k') << 8) + 45)
 
 /*
  * Where, if any, is the pubkey coming from.
@@ -139,7 +140,8 @@ struct whack_message {
 
 	bool whack_options;
 
-	lset_t debugging;
+	lmod_t debugging;
+	lmod_t impairing;
 
 	/* for WHACK_CONNECTION */
 
@@ -155,6 +157,7 @@ struct whack_message {
 	unsigned long sa_replay_window;
 	deltatime_t r_timeout; /* in secs */
 	unsigned long  r_interval; /* in msec */
+	enum nic_offload_options nic_offload;
 
 	/* For IKEv1 RFC 3706 - Dead Peer Detection */
 	deltatime_t dpd_delay;
@@ -280,6 +283,8 @@ struct whack_message {
 
 	/* for WHACK_LISTEN: */
 	bool whack_listen, whack_unlisten;
+	long unsigned int ike_buf_size;	/* IKE socket recv/snd buffer size */
+	bool ike_sock_err_toggle; /* toggle MSG_ERRQUEUE on IKE socket */
 
 	/* for DDOS modes */
 	enum ddos_mode whack_ddos;

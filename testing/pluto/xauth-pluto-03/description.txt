@@ -10,3 +10,6 @@ It then proceeds to phase 2.
 
 (see -04 for a case where aggressive mode is used)
 
+
+This test case confirms that XAUTH without ModeCFG does not end up with a
+partial PHASE 1 state. libreswan up to 3.21 suffered from this bug.

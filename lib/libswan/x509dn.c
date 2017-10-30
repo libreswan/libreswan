@@ -26,10 +26,11 @@
 #include <string.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <stdbool.h>
 #include <time.h>
 #include <limits.h>
 #include <sys/types.h>
-#include <libreswan.h>
+#include "lswtime.h"
 #include "sysdep.h"
 #include "constants.h"
 #include "lswlog.h"
@@ -359,6 +360,7 @@ int dntoa(char *dst, size_t dstlen, chunk_t dn)
 
 	if (ugh != NULL) {	/* error, print DN as hex string */
 		libreswan_log("error in DN parsing: %s", ugh);
+		DBG_dump_chunk("Bad DN:",dn);
 		str.ptr = (unsigned char *)dst;
 		str.len = dstlen;
 		hex_str(dn, &str);

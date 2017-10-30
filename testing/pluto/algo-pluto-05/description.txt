@@ -1,6 +1,0 @@
-This is a test of having the initiator offer AES + 3des, and the responder having
-only AES.
-
-(This is the converse from algo-pluto-01)
-
-

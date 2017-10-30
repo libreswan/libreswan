@@ -1,0 +1,17 @@
+iptables -t nat -F
+nic #
+ iptables -F
+nic #
+ # NAT to NIC's address
+nic #
+ # NAT UDP 500,4500 to NICs address with sport
+nic #
+ iptables -t nat -A POSTROUTING -s 192.1.3.0/24 -p udp --sport 4500  -j SNAT --to-source 192.1.2.254:2500-2700
+nic #
+ iptables -t nat -A POSTROUTING -s 192.1.3.0/24 -p udp --sport 500  -j SNAT --to-source 192.1.2.254:3500-3700
+nic #
+ iptables -t nat -A POSTROUTING -s 192.1.3.0/24 -j SNAT --to-source 192.1.2.254
+nic #
+ echo done
+done
+

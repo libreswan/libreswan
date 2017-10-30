@@ -1,5 +1,0 @@
-Test for problems when policy group files have been changed:  if a new
-conn needs the eroute in use for an obsolete conn, unless care is take
-the eroute installation may fail.
-
-east is where the action is; west is passive.

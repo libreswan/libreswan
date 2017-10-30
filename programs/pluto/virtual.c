@@ -235,7 +235,7 @@ struct virtual_t *create_virtual(const struct connection *c, const char *string)
 	}
 
 	/*
-	 * Parse string : fill flags & count subnets
+	 * Parse string: fill flags & count subnets
 	 */
 	while (str != NULL && *str != '\0') {
 		ip_subnet sub;	/* sink -- value never used */

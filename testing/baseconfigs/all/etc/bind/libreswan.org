@@ -1,0 +1,11 @@
+$TTL	604800
+@	IN	SOA	testing.libreswan.org. root.testing.libreswan.org. (
+			2017010101	; Serial
+			 604800		; Refresh
+			  86400		; Retry
+			2419200		; Expire
+			 604800 )	; Negative Cache TTL
+	IN	NS	nic.testing.libreswan.org.
+
+;
+testing.libreswan.org.  IN NS	nic.testing.libreswan.org.

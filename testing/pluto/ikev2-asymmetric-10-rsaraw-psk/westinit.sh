@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep
 # we meed to pickup stock secrets for raw rsa key
-echo '@east @west : PSK "ABCDEFGHIJ12345"' >> /etc/ipsec.secrets
+echo '@east @west : PSK "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"' >> /etc/ipsec.secrets
 # confirm that the network is alive
 ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
 # make sure that clear text does not get through

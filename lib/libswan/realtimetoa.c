@@ -11,19 +11,10 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <time.h>
-#include <unistd.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include <stdbool.h>
 
-#include <libreswan.h> /* for bool */
+#include "lswtime.h"
 
-//#include "sysdep.h"
-//#include "constants.h"
-
-/* Names of the months */
 static const char *months[] = {
 	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"

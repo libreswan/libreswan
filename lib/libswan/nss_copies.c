@@ -3,6 +3,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+#ifdef _MIPS_SIM
+# include <sgidefs.h>
+#endif
+
 #include <cert.h>
 #include <secder.h>
 

@@ -153,7 +153,7 @@ extern "C" {
     @field commandName
                     A identifier for this command.  This can be any string that is unique within
                     the context of your programs.  A NULL value in this field terminates the array.
-					
+
 					The length of the command name must not be greater than 1024 UTF-16 values.
 
     @field rightName
@@ -208,7 +208,7 @@ typedef struct BASCommandSpec BASCommandSpec;
     @discussion     Within a request, this key must reference a string that is the name of the
                     command to execute.  This must match one of the commands in the
                     BASCommandSpec array.
-					
+
 					The length of a command name must not be greater than 1024 UTF-16 values.
 */
 
@@ -239,22 +239,22 @@ typedef struct BASCommandSpec BASCommandSpec;
 
 #define kBASDescriptorArrayKey "com.apple.dts.BetterAuthorizationSample.descriptors"	// CFArray of CFNumber
 
-	
+
 	/*!
 	 @define         kBASTestString
-	
+
 	 @abstract       Key for a file descriptor array within the response dictionary.
-	
+
 	 @discussion     Within a response, this key, if present, must reference an array
 	 of numbers, which are the file descriptors being returned with
 	 the response.  The numbers are interpreted as ints.
 	 */
-	
+
 #define kBASTestString "com.apple.dts.BetterAuthorizationSample.testString"	// CFArray of CFNumber
-	
-	
-	
-	
+
+
+
+
 /////////////////////////////////////////////////////////////////
 #pragma mark ***** Helper Tool Routines
 
@@ -382,7 +382,7 @@ typedef OSStatus (*BASCommandProc)(
 
                     IMPORTANT: The array must have exactly the same number of entries as the
                     commands array.
-					
+
 	@result			An integer representing EXIT_SUCCESS or EXIT_FAILURE.
 */
 
@@ -501,7 +501,7 @@ extern void BASSetDefaultRules(
 
                     On success, you are responsible for disposing of *response.  You are also
                     responsible for closing any descriptors returned in the response.
-	
+
 	@result			An OSStatus code (see BASErrnoToOSStatus and BASOSStatusToErrno).
 */
 
@@ -644,8 +644,8 @@ extern BASFailCode BASDiagnoseFailure(
 
     @param failCode A value indicating the type of failure that's occurred.  In most cases you get this
                     value by calling BASDiagnoseFailure.
-	
-	@result			An OSStatus code (see BASErrnoToOSStatus and BASOSStatusToErrno).			
+
+	@result			An OSStatus code (see BASErrnoToOSStatus and BASOSStatusToErrno).
 */
 
 extern OSStatus BASFixFailure(
@@ -677,9 +677,9 @@ extern OSStatus BASFixFailure(
 
 					For more information about errSecErrnoBase, see DTS Q&A 1499
 					<http://developer.apple.com/qa/qa2006/qa1499.html>.
-					
+
     @param errNum   The errno value to convert.
-	
+
 	@result			An OSStatus code representing the errno equivalent.
 */
 
@@ -705,7 +705,7 @@ extern OSStatus BASErrnoToOSStatus(int errNum);
 					<http://developer.apple.com/qa/qa2006/qa1499.html>.
 
     @param errNum   The OSStatus value to convert.
-	
+
 	@result			An integer code representing the OSStatus equivalent.
 */
 
@@ -723,7 +723,7 @@ extern int      BASOSStatusToErrno(OSStatus errNum);
     @param response A helper tool response, typically acquired by calling BASExecuteRequestInHelperTool.
 
                     This must not be NULL
-	
+
 	@result			An OSStatus code (see BASErrnoToOSStatus and BASOSStatusToErrno).
 */
 
@@ -769,19 +769,19 @@ extern void BASCloseDescriptorArray(
 	// Hard-wired file system paths for the launchd property list file and
 	// the privileged helper tool.  In all cases, %s is a placeholder
 	// for the bundle ID (in file system representation).
-	
+
     #define kBASPlistPathFormat             "/Library/LaunchDaemons/%s.plist"
 
     #define kBASToolDirPath                 "/Library/PrivilegedHelperTools"			// KEEP IN SYNC!
     #define kBASToolPathFormat              "/Library/PrivilegedHelperTools/%s"			// KEEP IN SYNC!
-	
+
 	// Commands strings for the install tool.
 
     #define kBASInstallToolInstallCommand "install"
     #define kBASInstallToolEnableCommand  "enable"
 
 	// Magic values used to bracket the process ID returned by the install tool.
-	
+
     #define kBASAntiZombiePIDToken1 "cricket<"
     #define kBASAntiZombiePIDToken2 ">bat"
 

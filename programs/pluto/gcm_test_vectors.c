@@ -26,6 +26,50 @@
 #include "pk11pub.h"
 #include "crypt_symkey.h"
 
+/*
+ * Ref: http://csrc.nist.gov/groups/STM/cavp/documents/mac/gcmtestvectors.zip
+ *
+ * some select entries
+ */
+static const struct gcm_test_vector aes_gcm_test_vectors[] = {
+	{
+		.key ="0xcf063a34d4a9a76c2c86787d3f96db71",
+		.salted_iv = "0x113b9785971864c83b01c787",
+		.ciphertext = "",
+		.aad = "",
+		.tag = "0x72ac8493e3a5228b5d130a69d2510e42",
+		.plaintext = ""
+	},
+	{
+		.key = "0xe98b72a9881a84ca6b76e0f43e68647a",
+		.salted_iv = "0x8b23299fde174053f3d652ba",
+		.ciphertext = "0x5a3c1cf1985dbb8bed818036fdd5ab42",
+		.aad = "",
+		.tag = "0x23c7ab0f952b7091cd324835043b5eb5",
+		.plaintext = "0x28286a321293253c3e0aa2704a278032",
+	},
+	{
+		.key = "0xbfd414a6212958a607a0f5d3ab48471d",
+		.salted_iv = "0x86d8ea0ab8e40dcc481cd0e2",
+		.ciphertext = "0x62171db33193292d930bf6647347652c1ef33316d7feca99d54f1db4fcf513f8",
+		.aad = "",
+		.tag = "0xc28280aa5c6c7a8bd366f28c1cfd1f6e",
+		.plaintext = "0xa6b76a066e63392c9443e60272ceaeb9d25c991b0f2e55e2804e168c05ea591a",
+	},
+	{
+		.key = "0x006c458100fc5f4d62949d2c833b82d1",
+		.salted_iv = "0xa4e9c4bc5725a21ff42c82b2",
+		.ciphertext = "0xf39b4db3542d8542fb73fd2d66be568f26d7f814b3f87d1eceac3dd09a8d697e",
+		.aad = "0x2efb14fb3657cdd6b9a8ff1a5f5a39b9",
+		.tag = "0x39f045cb23b698c925db134d56c5",
+		.plaintext = "0xf381d3bfbee0a879f7a4e17b623278cedd6978053dd313530a18f1a836100950",
+	},
+	{
+		.key = NULL,
+	}
+};
+const struct gcm_test_vector *const aes_gcm_tests = aes_gcm_test_vectors;
+
 static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 			    const struct gcm_test_vector *test)
 {

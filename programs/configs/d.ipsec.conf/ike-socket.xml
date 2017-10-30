@@ -1,0 +1,25 @@
+  <varlistentry>
+  <term><emphasis remap='B'>ike-socket-bufsize</emphasis></term>
+  <listitem>
+<para>Set the IKE socket buffer size. Default size is determined by the OS (as of writing,
+this seems to be set to 212992. On Linux this is visible via /proc/sys/net/core/rmem_default
+and /proc/sys/net/core/wmem_default. On Linux, this option uses SO_RCVBUFFORCE and SO_SNDBUFFORCE
+so that it can override rmem_max/wmem_max values of the OS. This requires CAP_NET_ADMIN
+(which is also required for other tasks). This option can also be toggled on a running
+system using <emphasis remap='I'>ipsec whack --ike-socket-bufsize bufsize</emphasis>.
+</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>ike-socket-errqueue</emphasis></term>
+  <listitem>
+<para>Whether to enable or disable receiving socket errors via IP_RECVERR. The default
+is enabled. This will cause the socket to receive, process and log socket errors, such
+as ICMP unreachable messages or Connection Refused messages. Disabling this only makes
+sense on very busy servers, and even then it might not make much of a difference. This
+option can also be toggled on a running system using
+<emphasis remap='I'>ipsec whack --ike-socket-errqueue-toggle</emphasis>.
+</para>
+  </listitem>
+  </varlistentry>

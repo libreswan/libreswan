@@ -27,7 +27,7 @@ ipsec auto --status
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, nssdir=/etc/ipsec.d, dumpdir=/var/tmp, statsbin=unset
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
 000 nhelpers=-1, uniqueids=yes, force-busy=no
-000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
+000 ikeport=500, ikebuf=0, msg_errqueue=yes, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
 000 secctx-attr-type=XXXX
 000 myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
@@ -46,9 +46,10 @@ ipsec auto --status
 000 algorithm ESP encrypt: id=15, name=ESP_AES_CCM_B, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=16, name=ESP_AES_CCM_C, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=18, name=ESP_AES_GCM_A, ivlen=8, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=19, name=ESP_AES_GCM_B, ivlen=12, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=20, name=ESP_AES_GCM_C, ivlen=16, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=19, name=ESP_AES_GCM_B, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=20, name=ESP_AES_GCM_C, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=22, name=ESP_CAMELLIA, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=23, name=ESP_NULL_AUTH_AES_GMAC, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=252, name=ESP_SERPENT, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=253, name=ESP_TWOFISH, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm AH/ESP auth: id=1, name=AUTH_ALGORITHM_HMAC_MD5, keysizemin=128, keysizemax=128
@@ -92,7 +93,7 @@ ipsec auto --status
 000 Connection list:
 000  
 000 "road-eastnet-nonat": 192.1.2.23<192.1.2.23>[@east]...%any; unrouted; eroute owner: #0
-000 "road-eastnet-nonat":     oriented; my_ip=unset; their_ip=unset
+000 "road-eastnet-nonat":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "road-eastnet-nonat":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "road-eastnet-nonat":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
 000 "road-eastnet-nonat":   labeled_ipsec:no;
@@ -101,13 +102,11 @@ ipsec auto --status
 000 "road-eastnet-nonat":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "road-eastnet-nonat":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "road-eastnet-nonat":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "road-eastnet-nonat":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "road-eastnet-nonat":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "road-eastnet-nonat":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "road-eastnet-nonat":   newest ISAKMP SA: #0; newest IPsec SA: #0;
-000 "road-eastnet-nonat":   IKE algorithms wanted: 3DES_CBC(5)_000-SHA1(2)-DH24(24)
-000 "road-eastnet-nonat":   IKE algorithms found:  3DES_CBC(5)_192-SHA1(2)-DH24(24)
-000 "road-eastnet-nonat":   ESP algorithms wanted: AES(12)_256-SHA2_512(7); pfsgroup=MODP3072(15)
-000 "road-eastnet-nonat":   ESP algorithms loaded: AES(12)_256-SHA2_512(7)
+000 "road-eastnet-nonat":   IKE algorithms: 3DES_CBC-HMAC_SHA1-DH24
+000 "road-eastnet-nonat":   ESP algorithms: AES_CBC_256-HMAC_SHA2_512_256-MODP3072
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
@@ -5183,44 +5182,20 @@ src 192.1.3.23/32 dst 192.1.2.23/32
 	dir in priority 2080 ptype main 
 	tmpl src 192.1.3.23 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
 192.0.1.0/24 via 192.1.2.45 dev eth1 
-192.0.2.0/24 dev eth2  proto kernel  scope link  src 192.0.2.254 
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23 
+192.0.2.0/24 dev eth2 proto kernel scope link src 192.0.2.254 
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23 
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
 east #
-if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 east #
 if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 east #

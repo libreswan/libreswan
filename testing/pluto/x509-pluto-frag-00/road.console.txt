@@ -14,7 +14,7 @@ road #
  echo done
 done
 road #
- ipsec whack --debug-all --impair-retransmits
+ ipsec whack --debug-all --impair retransmits
 road #
  ipsec auto --up x509
 002 "x509" #1: initiating Main Mode
@@ -23,7 +23,6 @@ road #
 002 "x509" #1: I am sending my cert
 002 "x509" #1: I am sending a certificate request
 108 "x509" #1: STATE_MAIN_I3: sent MI3, expecting MR3
-003 "x509" #1: discarding duplicate packet; already STATE_MAIN_I3
 002 "x509" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set
 031 "x509" #1: max number of retransmissions (0) reached STATE_MAIN_I3.  Possible authentication failure: no acceptable response to our first encrypted message
 002 "x509" #1: deleting state (STATE_MAIN_I3)
@@ -36,7 +35,7 @@ road #
  egrep -i fragment /tmp/pluto.log
 road #
 road #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 road #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

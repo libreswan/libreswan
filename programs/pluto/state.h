@@ -10,7 +10,7 @@
  * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2014 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2014,2017 Antony Antony <antony@phenome.org>
  * Copyright (C) 2015-2017 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
  *
@@ -28,7 +28,6 @@
 #ifndef _STATE_H
 #define _STATE_H
 
-#include <pthread.h>    /* Must be the first include file */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -39,12 +38,8 @@
 #include <pk11pub.h>
 #include <x509.h>
 
-#ifdef XAUTH_HAVE_PAM
-# include <signal.h>
-#endif
-
 #include "labeled_ipsec.h"	/* for struct xfrm_user_sec_ctx_ike and friends */
-#include "state_entry.h"
+#include "list_entry.h"
 
 /* Message ID mechanism.
  *
@@ -71,6 +66,8 @@
 
 #define v2_INVALID_MSGID  ((msgid_t) 0xffffffff)	/* network and host order */
 
+struct ikev2_ipseckey_dns; /* forward declaration of tag */
+
 struct state;   /* forward declaration of tag */
 
 /* Oakley (Phase 1 / Main Mode) transform and attributes
@@ -80,33 +77,50 @@ struct state;   /* forward declaration of tag */
  */
 struct trans_attrs {
 	/*
-	 * Let me see, the ENCRYPT field, depending on which balls are
-	 * in the air at any one moment, is used for and contains one
-	 * of the following:
+	 * If IPCOMP, the compession algorithm.
 	 *
-	 * IKEv1 IKE (aka IKEv1 Phase 1?): enum ikev1_encr_attribute;
-	 * this code should use ENCRYPTER.
+	 * XXX: code likely still relies on .encrypt having the same
+	 * value.  See below.
+	 */
+	enum ipsec_comp_algo ta_comp;
+
+	/*
+	 * Let me see, the IKEV1TA_ENCRYPT field, depending on which
+	 * balls are in the air at any one moment, is used for and
+	 * contains one of the following:
 	 *
-	 * IKEv2 IKE: enum ikev2_trans_type_encr; this code should use
-	 * ENCRYPTER.
+	 * IKEv1 IKE (aka Phase 1?): enum ikev1_encr_attribute
 	 *
-	 * IKEv1 and IKEv2 ESP/AH (aka IKEv1 Phase 2?): enum
-	 * ipsec_cipher_algo; strictly speaking, for IKEv2, it starts
-	 * out containing an enum ikev2_trans_type_encr, but is then
-	 * "fixed"; the more generic code should use ENCRYPTER.
+	 * IKEv1 ESP (aka Phase 2?): enum ipsec_cipher_algo
+	 *
+	 * IKEv1 AH (aka Phase 2?): enum ipsec_authentication_algo (a
+	 * scratch variable it seems so that the real integ algorithm
+	 * can be verified).
+
+	 * IKEv2 IKE: enum ikev2_trans_type_encr.
+	 *
+	 * IKEv2 ESP: initially ikev2_trans_type_encr, but then later
+	 * switched to enum ipsec_cipher_algo if the IKEv1 value is
+	 * available.
 	 *
 	 * IKEv1 IPCOMP: enum ipsec_comp_algo; at least that is what
 	 * I've been told; this code, along with the rest of IKEv1
 	 * should go away.
 	 *
 	 * What could possibly go wrong :-)
-	 *
-	 * It is pretty safe to say that the field should minimally be
-	 * moved to more specific structs if not deleted.
 	 */
-	u_int16_t encrypt;
-	u_int16_t enckeylen;		/* encryption key len (bits) */
-	oakley_hash_t integ_hash;	/* Hash algorithm for integ */
+#define ta_ikev1_encrypt ta_encrypt->common.id[IKEv1_ESP_ID]
+
+	/*
+	 * IKEv1 IKE: N/A
+	 * IKEv1 ESP/AH: enum ikev1_auth_attribute.
+	 * IKEv2 IKE/ESP/AH: N/A.
+	 *
+	 * The only reason to use the expanded form of this macro is
+	 * when putting the value on, or getting the value off (i.e.,
+	 * lookup), the wire.
+	 */
+#define ta_ikev1_integ_hash ta_integ->common.id[IKEv1_ESP_ID]
 
 	oakley_auth_t auth;		/* Authentication method (RSA,PSK) */
 
@@ -117,14 +131,12 @@ struct trans_attrs {
 	deltatime_t life_seconds;	/* max life of this SA in seconds */
 	u_int32_t life_kilobytes;	/* max life of this SA in kilobytes */
 
-	/* used in phase1/PARENT SA */
-	const struct encrypt_desc *encrypter;	/* package of encryption routines */
-	const struct prf_desc *prf;		/* package of prf routines */
-	const struct integ_desc *integ;		/* package of integrity routines */
-	const struct oakley_group_desc *group;	/* Oakley group */
-
-	/* used in phase2/CHILD_SA */
-	struct esp_info *ei;
+	/* negotiated crypto-suite */
+	const struct encrypt_desc *ta_encrypt;	/* package of encryption routines */
+	u_int16_t enckeylen;			/* encryption key len (bits) */
+	const struct prf_desc *ta_prf;		/* package of prf routines */
+	const struct integ_desc *ta_integ;	/* package of integrity routines */
+	const struct oakley_group_desc *ta_dh;	/* Diffie-Helman-Merkel routines */
 };
 
 /* IPsec (Phase 2 / Quick Mode) transform and attributes
@@ -173,15 +185,28 @@ struct ike_frag {
 	size_t size;
 };
 
-struct ikev2_frag {
-	struct ikev2_frag *next;
+struct v2_ike_rfrag {
 	chunk_t cipher;
-	/* the rest are only used in re-assembly */
-	int np;
-	int index;
-	int total;
 	unsigned int iv;
-	chunk_t plain;
+};
+
+struct v2_ike_rfrags {
+	unsigned total;
+	unsigned count;
+	/*
+	 * Next-Payload from first fragment.
+	 */
+	int first_np;
+	/*
+	 * For simplicity, index by fragment number which is 1-based;
+	 * leaving element 0 empty.
+	 */
+	struct v2_ike_rfrag frags[MAX_IKE_FRAGMENTS + 1];
+};
+
+struct v2_ike_tfrag {
+	struct v2_ike_tfrag *next;
+	chunk_t cipher;
 };
 
 /*
@@ -230,8 +255,7 @@ struct traffic_selector {
 	u_int8_t ipprotoid;
 	u_int16_t startport;
 	u_int16_t endport;
-	ip_address low;
-	ip_address high;
+	ip_range net;	/* for now, always happens to be a CIDR */
 };
 
 /* state object: record the state of a (possibly nascent) SA
@@ -247,9 +271,7 @@ struct state {
 	so_serial_t st_ike_pred; /* IKEv2: replacing established IKE SA */
 	so_serial_t st_ipsec_pred; /* IKEv2: replacing established IPsec SA */
 
-	pthread_mutex_t xauth_mutex;            /* per state xauth_mutex */
-	pthread_t xauth_tid;                 /* per state XAUTH_RO thread id */
-	bool has_pam_thread;                   /* per state PAM thread flag */
+	struct xauth *st_xauth;			/* per state xauth/pam thread */
 
 	bool st_ikev2;                          /* is this an IKEv2 state? */
 	bool st_ikev2_no_del;                   /* suppress sending DELETE - eg replaced conn */
@@ -267,11 +289,9 @@ struct state {
 	const char        *st_suspended_md_func;
 	int st_suspended_md_line;
 
-	/* collected ike fragments */
-	union {
-		struct ike_frag *ike_frags;
-		struct ikev2_frag *ikev2_frags;
-	};
+	/* collected received fragments */
+	struct ike_frag *st_v1_rfrags;
+	struct v2_ike_rfrags *st_v2_rfrags;
 
 	struct trans_attrs st_oakley;
 
@@ -289,7 +309,7 @@ struct state {
 	bool st_outbound_done;			/* if true, then outgoing SA already installed */
 
 	const struct oakley_group_desc *st_pfs_group;   /*group for Phase 2 PFS */
-
+	lset_t st_hash_negotiated;              /* Saving the negotiated hash values here */
 	lset_t st_policy;                       /* policy for IPsec SA */
 
 	ip_address st_remoteaddr;               /* where to send packets to */
@@ -337,10 +357,14 @@ struct state {
 	msgid_t st_msgid_nextuse;               /* next one to use - host order */
 	/* message ID sequence for things we receive (as responder) */
 	msgid_t st_msgid_lastrecv;             /* last one peer sent - Host order v2 only */
+	msgid_t st_msgid_lastreplied;         /* to decide retransmit CREATE_CHILD_SA */
 
 	chunk_t st_firstpacket_me;              /* copy of my message 1 (for hashing) */
 	chunk_t st_firstpacket_him;             /* copy of his message 1 (for hashing) */
 	struct initiate_list *send_next_ix;
+
+	struct p_dns_req *ipseckey_dnsr;    /* ipseckey of that end */
+	struct p_dns_req *ipseckey_fwd_dnsr;/* validate IDi that IP in forward A/AAAA */
 
 	/** end of IKEv2-only things **/
 
@@ -360,7 +384,7 @@ struct state {
 
 	/* my stuff */
 	chunk_t st_tpacket;                     /* Transmitted packet */
-	struct ikev2_frag *st_tfrags;		/* Transmitted fragments */
+	struct v2_ike_tfrag *st_v2_tfrags;	/* Transmitted fragments */
 
 #ifdef HAVE_LABELED_IPSEC
 	struct xfrm_user_sec_ctx_ike *sec_ctx;
@@ -384,6 +408,8 @@ struct state {
 	 */
 	u_int8_t st_peeridentity_protocol;
 	u_int16_t st_peeridentity_port;
+
+	bool st_peer_alt_id;	/* scratchpad for writing we found alt peer id in CERT */
 
 	/*
 	 * Diffie-Hellman exchange values
@@ -428,9 +454,9 @@ struct state {
 	/* In a Phase 1 state, preserve peer's public key after authentication */
 	struct pubkey *st_peer_pubkey;
 
-	enum state_kind st_state;               /* State of exchange */
+	enum state_kind st_state;       /* State of exchange */
 
-	u_int8_t st_retransmit;		/* Number of retransmits */
+	u_int32_t st_retransmit;	/* Number of retransmits */
 	unsigned long st_try;		/* Number of times rekeying attempted.
 					 * 0 means the only time.
 					 */
@@ -475,16 +501,14 @@ struct state {
 
 	struct pluto_event *st_event;		/* timer event for this state object */
 
-	/*
-	 * hash table entry indexed by ICOOKIE+RCOOKIE
-	 */
-	struct state_entry st_hash_entry;
-	/*
-	 * Hash table indexed by ICOOKIE+ZERO_COOKIE.
-	 *
-	 * Used to robustly find a state based only on ICOOKIE.
-	 */
-	struct state_entry st_icookie_hash_entry;
+	/* state list entry */
+	struct list_entry st_serialno_list_entry;
+	/* SERIALNO hash table entry */
+	struct list_entry st_serialno_hash_entry;
+	/* ICOOKIE:RCOOKIE hash table entry */
+	struct list_entry st_cookies_hash_entry;
+	/* ICOOKIE hash table entry */
+	struct list_entry st_icookie_hash_entry;
 
 	struct hidden_variables hidden_variables;
 
@@ -509,6 +533,7 @@ struct state {
 	struct isakmp_quirks quirks;            /* work arounds for faults in other products */
 	bool st_xauth_soft;                     /* XAUTH failed but policy is to soft fail */
 	bool st_seen_fragvid;                   /* should really use st_seen_vendorid, but no one else is */
+	bool st_seen_hashnotify;		/* did we receive hash algo notification in IKE_INIT, then send in response as well */
 	bool st_seen_fragments;                 /* did we receive ike fragments from peer, if so use them in return as well */
 	bool st_seen_no_tfc;			/* did we receive ESP_TFC_PADDING_NOT_SUPPORTED */
 	bool st_seen_use_transport;		/* did we receive USE_TRANSPORT_MODE */
@@ -533,27 +558,32 @@ extern struct state *new_rstate(struct msg_digest *md);
 
 extern void init_states(void);
 extern void insert_state(struct state *st);
-extern void rehash_state(struct state *st, const u_char *rcookie);
+extern void rehash_state(struct state *st, const u_char *icookie,
+		const u_char *rcookie);
 extern void release_whack(struct state *st);
 extern void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 			       unsigned long count, monotime_t nw);
 extern void delete_state(struct state *st);
-struct connection;      /* forward declaration of tag */
 extern void delete_states_by_connection(struct connection *c, bool relations);
 extern void delete_p2states_by_connection(struct connection *c);
 extern void rekey_p2states_by_connection(struct connection *c);
 extern void delete_my_family(struct state *pst, bool v2_responder_state);
 
 extern struct state
-	*duplicate_state(struct state *st, bool ipsec),
-	*find_state_ikev1(const u_char *icookie,
-			  const u_char *rcookie,
-			  msgid_t msgid),
+	*duplicate_state(struct state *st, sa_t ipsec),
 	*state_with_serialno(so_serial_t sn),
 	*find_phase2_state_to_delete(const struct state *p1st, u_int8_t protoid,
 			     ipsec_spi_t spi, bool *bogus),
 	*find_phase1_state(const struct connection *c, lset_t ok_states),
 	*find_likely_sender(size_t packet_len, u_char * packet);
+
+struct state *find_state_ikev1(const uint8_t *icookie, const uint8_t *rcookie,
+			       msgid_t msgid);
+struct state *find_state_ikev1_init(const uint8_t *icookie, msgid_t msgid);
+
+extern bool find_pending_phase2(const so_serial_t psn,
+					const struct connection *c,
+					lset_t ok_states);
 
 struct state *state_with_parent_msgid_expect(so_serial_t psn, msgid_t st_msgid,
 		                enum state_kind expected_state);
@@ -562,8 +592,7 @@ extern struct state *find_state_ikev2_parent(const u_char *icookie,
 					     const u_char *rcookie);
 
 extern struct state *ikev2_find_state_in_init(const u_char *icookie,
-						  enum state_kind expected_state,
-						  bool is_child);
+						  enum state_kind expected_state);
 
 extern struct state *find_state_ikev2_child(const u_char *icookie,
 					    const u_char *rcookie,
@@ -591,7 +620,9 @@ extern void show_states_status(void);
 
 
 extern void ikev2_repl_est_ipsec(struct state *st, void *data);
-extern void ikev2_inherit_ipsec_sa(so_serial_t osn, so_serial_t nsn);
+extern void ikev2_inherit_ipsec_sa(so_serial_t osn, so_serial_t nsn,
+		                const u_char *icookie,
+				const u_char *rcookie);
 
 void for_each_state(void (*f)(struct state *, void *data), void *data);
 
@@ -635,9 +666,6 @@ extern void set_newest_ipsec_sa(const char *m, struct state *const st);
 extern void update_ike_endpoints(struct state *st, const struct msg_digest *md);
 extern void ikev2_expire_unused_parent(struct state *pst);
 
-#ifdef XAUTH_HAVE_PAM
-void ikev2_free_auth_pam(so_serial_t st_serialno);
-#endif
 bool shared_phase1_connection(const struct connection *c);
 
 #endif /* _STATE_H */

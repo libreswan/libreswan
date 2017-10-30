@@ -229,7 +229,7 @@ static state_transition_fn      /* forward declaration */
  */
 
 static const struct state_microcode
-	*ike_microcode_index[STATE_IKE_ROOF - STATE_IKE_FLOOR];
+	*ike_microcode_index[STATE_IKEv1_ROOF - STATE_IKE_FLOOR];
 
 static const struct state_microcode v1_state_microcode_table[] = {
 
@@ -246,7 +246,7 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	{ STATE_MAIN_R0, STATE_MAIN_R1,
 	  SMF_ALL_AUTH | SMF_REPLY,
 	  P(SA), P(VID) | P(CR), PT(NONE),
-	  EVENT_SA_REPLACE, main_inI1_outR1 },
+	  EVENT_v1_RETRANSMIT, main_inI1_outR1 },
 
 	/* STATE_MAIN_I1: R1 --> I2
 	 * HDR, SA --> auth dependent
@@ -395,7 +395,7 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	{ STATE_AGGR_R0, STATE_AGGR_R1,
 	  SMF_PSK_AUTH | SMF_DS_AUTH | SMF_REPLY,
 	  P(SA) | P(KE) | P(NONCE) | P(ID), P(VID) | P(NATD_RFC), PT(NONE),
-	  EVENT_SA_REPLACE, aggr_inI1_outR1 },
+	  EVENT_v1_RETRANSMIT, aggr_inI1_outR1 },
 
 	/* STATE_AGGR_I1:
 	 * SMF_PSK_AUTH: HDR, SA, KE, Nr, IDir, HASH_R
@@ -520,7 +520,7 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	{ STATE_XAUTH_R0, STATE_XAUTH_R1,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED,
 	  P(MCFG_ATTR) | P(HASH), P(VID), PT(NONE),
-	  EVENT_NULL, xauth_inR0 }, /*Re-transmit may be done by previous state*/
+	  EVENT_NULL, xauth_inR0 }, /* Re-transmit may be done by previous state */
 
 	{ STATE_XAUTH_R1, STATE_MAIN_R3,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED,
@@ -596,7 +596,7 @@ void init_ikev1(void)
 	for (t = &v1_state_microcode_table[elemsof(v1_state_microcode_table) - 1];;)
 	{
 		passert(STATE_IKE_FLOOR <= t->state &&
-			t->state < STATE_IKE_ROOF);
+			t->state < STATE_IKEv1_ROOF);
 		ike_microcode_index[t->state - STATE_IKE_FLOOR] = t;
 		if (t == v1_state_microcode_table)
 			break;
@@ -685,7 +685,31 @@ static stf_status informational(struct msg_digest *md)
 			return STF_IGNORE;
 
 		case ISAKMP_N_CISCO_LOAD_BALANCE:
-			if (st != NULL && IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+			/*
+			 * ??? what the heck is in the payload?
+			 * We take the peer's new IP address from the last 4 octets.
+			 * Is anything else possible?  Expected?  Documented?
+			 */
+			if (st == NULL || !IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+				loglog(RC_LOG_SERIOUS,
+					"ignoring ISAKMP_N_CISCO_LOAD_BALANCE Informational Message with for unestablished state.");
+			} else if (pbs_left(n_pbs) < 4) {
+				loglog(RC_LOG_SERIOUS,
+					"ignoring ISAKMP_N_CISCO_LOAD_BALANCE Informational Message without IPv4 address");
+			} else {
+				ip_address new_peer;
+
+				(void)initaddr(n_pbs->roof - 4, 4, AF_INET, &new_peer);
+
+				if (isanyaddr(&new_peer)) {
+					ipstr_buf b;
+
+					loglog(RC_LOG_SERIOUS,
+						"ignoring ISAKMP_N_CISCO_LOAD_BALANCE Informational Message with invalid IPv4 address %s",
+						ipstr(&new_peer, &b));
+					return FALSE;
+				}
+
 				/* Saving connection name and whack sock id */
 				const char *tmp_name = st->st_connection->name;
 				int tmp_whack_sock = dup_any(st->st_whack_sock);
@@ -696,15 +720,15 @@ static stf_status informational(struct msg_digest *md)
 
 				/* to find and store the connection associated with tmp_name */
 				/* ??? how do we know that tmp_name hasn't been freed? */
-				struct connection *tmp_c = con_by_name(tmp_name, FALSE);
+				struct connection *tmp_c = conn_by_name(tmp_name, FALSE, FALSE);
 
-				DBG_cond_dump(DBG_PARSING,
-					      "redirected remote end info:", n_pbs->cur + pbs_left(
-						      n_pbs) - 4, 4);
+				DBG(DBG_PARSING, {
+					ipstr_buf npb;
+					DBG_log("new peer address: %s", ipstr(&new_peer, &npb));
+				});
 
 				/* Current remote peer info */
 				{
-
 					ipstr_buf b;
 					const struct spd_route *tmp_spd =
 						&tmp_c->spd;
@@ -771,75 +795,69 @@ static stf_status informational(struct msg_digest *md)
 					}
 				}
 
-				/* storing old address for comparison purposes */
+				/* save peer's old address for comparison purposes */
 				ip_address old_addr = tmp_c->spd.that.host_addr;
 
-				/* Decoding remote peer address info where connection has to be redirected to */
-				memcpy(&tmp_c->spd.that.host_addr.u.v4.sin_addr.s_addr,
-					(u_int32_t *)(n_pbs->cur +
-						      pbs_left(n_pbs) - 4),
-					sizeof(tmp_c->spd.that.host_addr.u.v4.
-					       sin_addr.
-					       s_addr));
+				/* update peer's address */
+				tmp_c->spd.that.host_addr = new_peer;
 
 				/* Modifying connection info to store the redirected remote peer info */
 				DBG(DBG_CONTROLMORE,
 				    DBG_log("Old host_addr_name : %s",
 					    tmp_c->spd.that.host_addr_name));
 				tmp_c->spd.that.host_addr_name = NULL;
-				tmp_c->spd.that.id.ip_addr =
-					tmp_c->spd.that.host_addr;
 
-				DBG(DBG_CONTROLMORE, {
-					ipstr_buf b;
-					if (sameaddr(&tmp_c->spd.this.
-						     host_nexthop,
-						     &old_addr)) {
-						DBG_log("Old remote addr %s",
+				/* ??? do we know the id.kind has an ip_addr? */
+				tmp_c->spd.that.id.ip_addr = new_peer;
+
+				/* update things that were the old peer */
+				ipstr_buf b;
+				if (sameaddr(&tmp_c->spd.this.host_nexthop,
+					     &old_addr)) {
+					DBG(DBG_CONTROLMORE, {
+						DBG_log("this host's next hop %s was the same as the old remote addr",
 							ipstr(&old_addr, &b));
-						DBG_log("Old this host next hop %s",
-							ipstr(&tmp_c->spd.this.host_nexthop, &b));
-						tmp_c->spd.this.host_nexthop = tmp_c->spd.that.host_addr;
-						DBG_log("New this host next hop %s",
-							ipstr(&tmp_c->spd.this.host_nexthop, &b));
-					}
+						DBG_log("changing this host's next hop to %s",
+							ipstr(&new_peer, &b));
+					});
+					tmp_c->spd.this.host_nexthop = new_peer;
+				}
 
-					if (sameaddr(&tmp_c->spd.that.
-						     host_srcip,
-						     &old_addr)) {
-						DBG_log("Old that host srcip %s",
-							ipstr(&tmp_c->spd.that.host_srcip, &b));
-						tmp_c->spd.that.host_srcip = tmp_c->spd.that.host_addr;
-						DBG_log("New that host srcip %s",
-							ipstr(&tmp_c->spd.that.host_srcip, &b));
-					}
+				if (sameaddr(&tmp_c->spd.that.host_srcip,
+					     &old_addr)) {
+					DBG(DBG_CONTROLMORE, {
+						DBG_log("Old that host's srcip %s was the same as the old remote addr",
+							ipstr(&old_addr, &b));
+						DBG_log("changing that host's srcip to %s",
+							ipstr(&new_peer, &b));
+					});
+					tmp_c->spd.that.host_srcip = new_peer;
+				}
 
-					if (sameaddr(&tmp_c->spd.that.
-						     client.addr,
-						     &old_addr)) {
-						DBG_log("Old that client ip %s",
-							ipstr(&tmp_c->spd.that.client.addr, &b));
-						tmp_c->spd.that.client.addr = tmp_c->spd.that.host_addr;
-						DBG_log("New that client ip %s",
-							ipstr(&tmp_c->spd.that.client.addr, &b));
-					}
-				});
+				if (sameaddr(&tmp_c->spd.that.client.addr,
+					     &old_addr)) {
+					DBG(DBG_CONTROLMORE, {
+						DBG_log("Old that client ip %s was the same as the old remote address",
+							ipstr(&old_addr, &b));
+						DBG_log("changing that client's ip to %s",
+							ipstr(&new_peer, &b));
+					});
+					tmp_c->spd.that.client.addr = new_peer;
+				}
 
-				tmp_c->host_pair->him.addr =
-					tmp_c->spd.that.host_addr;
+				/* ??? is this wise?  This may changes a lot of other connections. */
+				tmp_c->host_pair->him.addr = new_peer;
 
 				/* Initiating connection to the redirected peer */
 				initiate_connection(tmp_name, tmp_whack_sock,
-						    LEMPTY, pcim_demand_crypto, NULL);
-				return STF_IGNORE;
+						    empty_lmod, empty_lmod,
+						    pcim_demand_crypto, NULL);
 			}
-			loglog(RC_LOG_SERIOUS,
-			       "received and ignored informational message with ISAKMP_N_CISCO_LOAD_BALANCE for unestablished state.");
 			return STF_IGNORE;
 		default:
 			if (st != NULL &&
-			    (st->st_connection->extra_debugging &
-			     IMPAIR_DIE_ONINFO)) {
+			    (lmod_is_set(st->st_connection->extra_impairing,
+					 IMPAIR_DIE_ONINFO))) {
 				loglog(RC_LOG_SERIOUS,
 				       "received unhandled informational notification payload %d: '%s'",
 				       n->isan_type,
@@ -951,12 +969,14 @@ void process_v1_packet(struct msg_digest **mdp)
 					      md->hdr.isa_msgid);
 
 			if (st == NULL) {
-				/* perhaps this is a first message from the responder
-				 * and contains a responder cookie that we've not yet seen.
+				/*
+				 * perhaps this is a first message
+				 * from the responder and contains a
+				 * responder cookie that we've not yet
+				 * seen.
 				 */
-				st = find_state_ikev1(md->hdr.isa_icookie,
-						      zero_cookie,
-						      md->hdr.isa_msgid);
+				st = find_state_ikev1_init(md->hdr.isa_icookie,
+							   md->hdr.isa_msgid);
 
 				if (st == NULL) {
 					libreswan_log(
@@ -976,11 +996,12 @@ void process_v1_packet(struct msg_digest **mdp)
 
 		if (st == NULL) {
 			/*
-			 * might be an informational response to our first
-			 * message, in which case, we don't know the rcookie yet.
+			 * might be an informational response to our
+			 * first message, in which case, we don't know
+			 * the rcookie yet.
 			 */
-			st = find_state_ikev1(md->hdr.isa_icookie, zero_cookie,
-					      v1_MAINMODE_MSGID);
+			st = find_state_ikev1_init(md->hdr.isa_icookie,
+						   v1_MAINMODE_MSGID);
 		}
 
 		if (st != NULL)
@@ -1168,7 +1189,7 @@ void process_v1_packet(struct msg_digest **mdp)
 
 		if (st == NULL) {
 			DBG(DBG_CONTROL, DBG_log(
-				"No appropriate Mode Config state yet.See if we have a Main Mode state"));
+				"No appropriate Mode Config state yet. See if we have a Main Mode state"));
 			/* No appropriate Mode Config state.
 			 * See if we have a Main Mode state.
 			 * ??? what if this is a duplicate of another message?
@@ -1406,7 +1427,7 @@ void process_v1_packet(struct msg_digest **mdp)
 #endif
 
 		/* Add the fragment to the state */
-		i = &st->ike_frags;
+		i = &st->st_v1_rfrags;
 		for (;;) {
 			if (ike_frag != NULL) {
 				/* Still looking for a place to insert ike_frag */
@@ -1442,12 +1463,12 @@ void process_v1_packet(struct msg_digest **mdp)
 			int prev_index = 0;
 			struct ike_frag *frag;
 
-			for (frag = st->ike_frags; frag; frag = frag->next) {
+			for (frag = st->st_v1_rfrags; frag; frag = frag->next) {
 				size += frag->size;
 				if (frag->index != ++prev_index) {
 					break; /* fragment list incomplete */
 				} else if (frag->index == last_frag_index) {
-					struct msg_digest *whole_md = alloc_md();
+					struct msg_digest *whole_md = alloc_md("msg_digest by ikev1 fragment handler");
 					u_int8_t *buffer = alloc_bytes(size,
 								       "IKE fragments buffer");
 					size_t offset = 0;
@@ -1458,7 +1479,7 @@ void process_v1_packet(struct msg_digest **mdp)
 						frag->md->sender_port;
 
 					/* Reassemble fragments in buffer */
-					frag = st->ike_frags;
+					frag = st->st_v1_rfrags;
 					while (frag != NULL &&
 					       frag->index <= last_frag_index)
 					{
@@ -1495,7 +1516,7 @@ void process_v1_packet(struct msg_digest **mdp)
 	 * Look up the appropriate microcode based on state and
 	 * possibly Oakley Auth type.
 	 */
-	passert(STATE_IKE_FLOOR <= from_state && from_state <= STATE_IKE_ROOF);
+	passert(STATE_IKE_FLOOR <= from_state && from_state <= STATE_IKEv1_ROOF);
 	smc = ike_microcode_index[from_state - STATE_IKE_FLOOR];
 
 	if (st != NULL) {
@@ -1540,9 +1561,11 @@ void process_v1_packet(struct msg_digest **mdp)
 				       enum_name(&state_names, st->st_state));
 			}
 		} else {
-			loglog(RC_LOG_SERIOUS,
-			       "discarding duplicate packet; already %s",
-			       enum_name(&state_names, st->st_state));
+			LSWDBGP(DBG_CONTROLMORE, buf) {
+				lswlog_pre(buf);
+				lswlogf(buf, "discarding duplicate packet; already %s",
+				enum_name(&state_names, st->st_state));
+			}
 		}
 		return;
 	}
@@ -1634,8 +1657,7 @@ void process_packet_tail(struct msg_digest **mdp)
 		DBG(DBG_CRYPT,
 		    DBG_log("decrypting %u bytes using algorithm %s",
 			    (unsigned) pbs_left(&md->message_pbs),
-			    enum_show(&oakley_enc_names,
-				      st->st_oakley.encrypt)));
+			    st->st_oakley.ta_encrypt->common.fqn));
 
 		/* do the specified decryption
 		 *
@@ -1653,7 +1675,7 @@ void process_packet_tail(struct msg_digest **mdp)
 		 * the last phase 1 block, not the last block sent.
 		 */
 		{
-			const struct encrypt_desc *e = st->st_oakley.encrypter;
+			const struct encrypt_desc *e = st->st_oakley.ta_encrypt;
 
 			if (pbs_left(&md->message_pbs) % e->enc_blocksize != 0)
 			{
@@ -1679,8 +1701,12 @@ void process_packet_tail(struct msg_digest **mdp)
 				}
 			}
 
-			crypto_cbc_encrypt(e, FALSE, md->message_pbs.cur,
-					   pbs_left(&md->message_pbs), st);
+			passert(st->st_new_iv_len >= e->enc_blocksize);
+			st->st_new_iv_len = e->enc_blocksize;   /* truncate */
+			e->encrypt_ops->do_crypt(e, md->message_pbs.cur,
+						 pbs_left(&md->message_pbs),
+						 st->st_enc_key_nss,
+						 st->st_new_iv, FALSE);
 
 		}
 
@@ -2031,8 +2057,8 @@ void process_packet_tail(struct msg_digest **mdp)
 					DBG_dump_pbs(&p->pbs);
 				}
 				if (st != NULL &&
-				    st->st_connection->extra_debugging &
-				    IMPAIR_DIE_ONINFO) {
+				    lmod_is_set(st->st_connection->extra_impairing,
+						IMPAIR_DIE_ONINFO)) {
 					loglog(RC_LOG_SERIOUS,
 					       "received and failed on unknown informational message");
 					complete_v1_state_transition(mdp,
@@ -2068,23 +2094,6 @@ void process_packet_tail(struct msg_digest **mdp)
 		st = md->st;	/* st not subsequently used */
 		/* note: st ought to be NULL from here on */
 	}
-
-#if 0
-	/* this does not seem to be right */
-
-	/* VERIFY that we only accept NAT-D/NAT-OE when they sent us the VID */
-	if ((md->chain[ISAKMP_NEXT_NATD_RFC] != NULL ||
-	     md->chain[ISAKMP_NEXT_NATOA_RFC] != NULL) &&
-	    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) == LEMPTY) {
-		/*
-		 * don't accept NAT-D/NAT-OA reloc directly in message,
-		 * unless we're using NAT-T RFC
-		 */
-		loglog(RC_LOG_SERIOUS,
-		       "message ignored because it contains a NAT payload, when we did not receive the appropriate VendorID");
-		return;
-	}
-#endif
 
 	/* possibly fill in hdr */
 	if (smc->first_out_payload != ISAKMP_NEXT_NONE)
@@ -2200,9 +2209,9 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		/* advance the state */
 		const struct state_microcode *smc = md->smc;
 
-		libreswan_log("transition from state %s to state %s",
-			      enum_name(&state_names, from_state),
-			      enum_name(&state_names, smc->next_state));
+		DBG(DBG_CONTROL, DBG_log("doing_xauth:%s, t_xauth_client_done:%s",
+			st->st_oakley.doing_xauth ? "yes" : "no",
+			st->hidden_variables.st_xauth_client_done ? "yes" : "no"));
 
 		/* accept info from VID because we accept this message */
 
@@ -2243,29 +2252,44 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			st->st_msgid_reserved = TRUE;
 		}
 
+		DBG(DBG_CONTROL, DBG_log("IKEv1: transition from state %s to state %s",
+			      enum_name(&state_names, from_state),
+			      enum_name(&state_names, smc->next_state)));
+
 		change_state(st, smc->next_state);
 
-		/* XAUTH negotiation withOUT modecfg ends in STATE_XAUTH_I1
-		 * which is wrong and creates issues further in several places
-		 * As per libreswan design, it seems every phase 1 negotiation
-		 * including xauth/modecfg must end with STATE_MAIN_I4 to mark
-		 * actual end of phase 1. With modecfg, negotiation ends with
-		 * STATE_MAIN_I4 already.
+		/*
+		 * XAUTH negotiation without ModeCFG cannot follow the regular
+		 * state machine change as it cannot be determined if the CFG
+		 * payload is "XAUTH OK, no ModeCFG" or "XAUTH OK, expect
+		 * ModeCFG". To the smc, these two cases look identical. So we
+		 * have an ad hoc state change here for the case where
+		 * we have XAUTH but not ModeCFG. We move it to the established
+		 * state, so the regular state machine picks up the Quick Mode.
 		 */
-#if 0	/* ??? what's this code for? */
 		if (st->st_connection->spd.this.xauth_client
 		    && st->hidden_variables.st_xauth_client_done
 		    && !st->st_connection->spd.this.modecfg_client
-		    && st->st_state == STATE_XAUTH_I1) {
-			DBG(DBG_CONTROL,
-				DBG_log("As XAUTH is done and modecfg is not configured, so Phase 1 neogtiation finishes successfully"));
-			change_state(st, STATE_MAIN_I4);
+		    && st->st_state == STATE_XAUTH_I1)
+		{
+			bool aggrmode = LHAS(st->st_connection->policy, POLICY_AGGRESSIVE_IX);
+
+			libreswan_log("XAUTH completed; ModeCFG skipped as per configuration");
+			change_state(st, aggrmode ? STATE_AGGR_I2 : STATE_MAIN_I4);
+			st->st_msgid_phase15 = v1_MAINMODE_MSGID;
 		}
-#endif
 
 		/* Schedule for whatever timeout is specified */
 		if (!md->event_already_set) {
-			/* Delete previous retransmission event.
+			/*
+			 * This md variable is hardly ever set.
+			 * Only deals with v1 <-> v2 switching
+			 * which will be removed in the near future anyway
+			 * (PW 2017 Oct 8)
+			 */
+			DBG(DBG_CONTROL, DBG_log("event_already_set, deleting event"));
+			/*
+			 * Delete previous retransmission event.
 			 * New event will be scheduled below.
 			 */
 			delete_event(st);
@@ -2283,7 +2307,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		/* in aggressive mode, there will be no reply packet in transition
 		 * from STATE_AGGR_R1 to STATE_AGGR_R2
 		 */
-		if (nat_traversal_enabled) {
+		if (nat_traversal_enabled && st->st_connection->ikev1_natt != natt_none) {
 			/* adjust our destination port if necessary */
 			nat_traversal_change_port_lookup(md, st);
 		}
@@ -2300,16 +2324,35 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 			close_output_pbs(&reply_stream); /* good form, but actually a no-op */
 
-			record_and_send_ike_msg(st, &reply_stream,
-				enum_name(&state_names, from_state));
+			if (st->st_state == STATE_MAIN_R2 &&
+				DBGP(IMPAIR_SEND_NO_MAIN_R2)) {
+				/* record-only so we propely emulate packet drop */
+				record_outbound_ike_msg(st, &reply_stream,
+					enum_name(&state_names, from_state));
+				libreswan_log("IMPAIR: Skipped sending STATE_MAIN_R2 response packet");
+			} else {
+				record_and_send_ike_msg(st, &reply_stream,
+					enum_name(&state_names, from_state));
+			}
 		}
 
 		/* Schedule for whatever timeout is specified */
 		if (!md->event_already_set) {
+			DBG(DBG_CONTROL, DBG_log("!event_already_set at reschedule"));
 			unsigned long delay_ms; /* delay is in milliseconds here */
 			enum event_type kind = smc->timeout_event;
 			bool agreed_time = FALSE;
 			struct connection *c = st->st_connection;
+
+			/* fixup in case of state machine jump for xauth without modecfg */
+			if (c->spd.this.xauth_client
+			    && st->hidden_variables.st_xauth_client_done
+			    && !c->spd.this.modecfg_client
+			    && (st->st_state == STATE_MAIN_I4 || st->st_state == STATE_AGGR_I2))
+			{
+				DBG(DBG_CONTROL, DBG_log("fixup XAUTH without ModeCFG event from EVENT_v1_RETRANSMIT to EVENT_SA_REPLACE"));
+				kind = EVENT_SA_REPLACE;
+			}
 
 			switch (kind) {
 			case EVENT_v1_RETRANSMIT: /* Retransmit packet */
@@ -2418,12 +2461,12 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			enum rc_type w = RC_NEW_STATE + st->st_state;
 			char sadetails[512];
 
-			passert(st->st_state < STATE_IKE_ROOF);
+			passert(st->st_state < STATE_IKEv1_ROOF);
 
 			sadetails[0] = '\0';
 
 			/* document IPsec SA details for admin's pleasure */
-			if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
+			if (IS_IPSEC_SA_ESTABLISHED(st)) {
 				fmt_ipsec_sa_established(st, sadetails,
 							 sizeof(sadetails));
 				w = RC_SUCCESS; /* log our success */
@@ -2583,7 +2626,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		}
 
 		if (IS_ISAKMP_SA_ESTABLISHED(st->st_state) ||
-		    IS_IPSEC_SA_ESTABLISHED(st->st_state))
+		    IS_IPSEC_SA_ESTABLISHED(st))
 			release_whack(st);
 
 		if (IS_QUICK(st->st_state))
@@ -2689,6 +2732,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 {
 	struct state *const st = md->st;
+	struct connection *c = st->st_connection;
 	struct payload_digest *const id_pld = md->chain[ISAKMP_NEXT_ID];
 	const pb_stream *const id_pbs = &id_pld->pbs;
 	struct isakmp_id *const id = &id_pld->payload.id;
@@ -2730,6 +2774,10 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 
 	if (!extract_peer_id(&peer, id_pbs))
 		return FALSE;
+	if (id_kind(&c->spd.that.id) == ID_FROMCERT) {
+		/* breaks API, connection modified by %fromcert */
+		duplicate_id(&c->spd.that.id, &peer);
+	}
 
 	/*
 	 * For interop with SoftRemote/aggressive mode we need to remember some
@@ -2742,24 +2790,49 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		char buf[IDTOA_BUF];
 
 		idtoa(&peer, buf, sizeof(buf));
-		libreswan_log("%s mode peer ID is %s: '%s'",
-			      aggrmode ? "Aggressive" : "Main",
-			      enum_show(&ike_idtype_names, id->isaid_idtype), buf);
+		libreswan_log("Peer ID is %s: '%s'",
+			enum_show(&ike_idtype_names, id->isaid_idtype), buf);
 	}
 
 	/* check for certificates */
-	if (!ikev1_decode_cert(md))
+	lsw_cert_ret ret = ike_decode_cert(md);
+	switch (ret) {
+	case LSW_CERT_NONE:
+		DBG(DBG_X509, DBG_log("X509: no CERT payloads to process"));
+		break;
+	case LSW_CERT_BAD:
+		libreswan_log("X509: CERT payload bogus or revoked");
 		return FALSE;
+	case LSW_CERT_MISMATCHED_ID:
+		libreswan_log("X509: CERT payload does not match connection ID");
+		if (initiator || aggrmode) {
+			/* cannot switch connection so fail */
+			return FALSE;
+		}
+		break;
+	case LSW_CERT_ID_OK:
+		DBG(DBG_X509, DBG_log("X509: CERT and ID matches current connection"));
+		break;
+	default:
+		bad_case(ret);
+	}
+
+	/* check for certificate requests */
+	ikev1_decode_cr(md);
 
 	/* Now that we've decoded the ID payload, let's see if we
 	 * need to switch connections.
+	 * Aggressive mode cannot switch connections
 	 * We must not switch horses if we initiated:
 	 * - if the initiation was explicit, we'd be ignoring user's intent
 	 * - if opportunistic, we'll lose our HOLD info
 	 */
+
 	if (initiator) {
-		if (!same_id(&st->st_connection->spd.that.id, &peer) &&
-		     id_kind(&st->st_connection->spd.that.id) != ID_FROMCERT) {
+		if (!st->st_peer_alt_id &&
+			!same_id(&st->st_connection->spd.that.id, &peer) &&
+			id_kind(&st->st_connection->spd.that.id) != ID_FROMCERT) {
+
 			char expect[IDTOA_BUF],
 			     found[IDTOA_BUF];
 
@@ -2778,11 +2851,20 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			}
 			duplicate_id(&st->st_connection->spd.that.id, &peer);
 		}
-	} else {
+		return TRUE;
+	}
+
+	/* responder */
+
+	if (aggrmode)
+		return TRUE;
+
+	/* only Main Mode from here */
+	{
 		struct connection *c = st->st_connection;
 		bool fromcert;
 		uint16_t auth = xauth_calcbaseauth(st->st_oakley.auth);
-		lset_t auth_policy = LEMPTY;
+		lset_t auth_policy;
 
 		switch (auth) {
 		case OAKLEY_PRESHARED_KEY:
@@ -2799,32 +2881,33 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		case OAKLEY_ECDSA_P384:
 		case OAKLEY_ECDSA_P521:
 		default:
-			DBG(DBG_CONTROL, DBG_log("ikev1 ikev1_decode_peer_id bad_case due to not supported policy"));
-			// bad_case(auth);
+			DBG(DBG_CONTROL, DBG_log("ikev1 ike_decode_peer_id bad_case due to not supported policy"));
+			return FALSE;
 		}
 
-		if (aggrmode)
-			auth_policy |=  POLICY_AGGRESSIVE;
-
-		/* check for certificate requests */
-		ikev1_decode_cr(md);
-
-		struct connection *r = NULL;
-
-		if ((auth_policy & ~POLICY_AGGRESSIVE) != LEMPTY) {
-			r = refine_host_connection(st, &peer, initiator,
-				auth_policy, AUTH_UNSET /* ikev2 only */, &fromcert);
-			pexpect(r != NULL);
-		}
+		struct connection *r =
+			refine_host_connection(st, &peer,
+				FALSE,	/* we are responder */
+				auth_policy,
+				AUTH_UNSET,	/* ikev2 only */
+				&fromcert);
 
 		if (r == NULL) {
 			char buf[IDTOA_BUF];
 
 			idtoa(&peer, buf, sizeof(buf));
-			loglog(RC_LOG_SERIOUS,
-			       "no suitable connection for peer '%s'",
-			       buf);
-			return FALSE;
+			DBG(DBG_CONTROL, DBG_log(
+			       "no more suitable connection for peer '%s'", buf));
+			/* can we continue with what we had? */
+			if (!md->st->st_peer_alt_id &&
+				!same_id(&c->spd.that.id, &peer) &&
+				id_kind(&c->spd.that.id) != ID_FROMCERT) {
+					libreswan_log("Peer mismatch on first found connection and no better connection found");
+					return FALSE;
+			} else {
+				DBG(DBG_CONTROL, DBG_log("Peer ID matches and no better connection found - continuing with existing connection"));
+				r = c;
+			}
 		}
 
 		DBG(DBG_CONTROL, {
@@ -2844,6 +2927,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 				fmt_conn_instance(c, b1),
 				r->name,
 				fmt_conn_instance(r, b2));
+
 			if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
 				/* instantiate it, filling in peer's ID */
 				r = rw_instantiate(r, &c->spd.that.host_addr,
@@ -2852,7 +2936,11 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			}
 
 			update_state_connection(st, r);
-			c = r;	/* value not used */
+			c = r;	/* c not subsequently used */
+			/* redo from scratch so we read and check CERT payload */
+			DBG(DBG_CONTROL, DBG_log("retrying ike_decode_peer_id() with new conn"));
+			return ikev1_decode_peer_id(md, FALSE, aggrmode);
+
 		} else if (c->spd.that.has_id_wildcards) {
 			duplicate_id(&c->spd.that.id, &peer);
 			c->spd.that.has_id_wildcards = FALSE;

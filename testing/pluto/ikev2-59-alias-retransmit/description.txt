@@ -1,0 +1,4 @@
+IKEv2 test retransmit with alias/subnets and crypto delay on responder.
+
+The CREATE_CHILD_SA retransmited while responder is busy with crypto.
+These retransmits will be ignored on the responder.

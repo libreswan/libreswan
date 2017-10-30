@@ -35,149 +35,13 @@
 
 #include <stddef.h>
 
-/* ================ time-related declarations ================ */
+/* Some constants code likes to use. Useful? */
 
 enum {
 	secs_per_minute = 60,
 	secs_per_hour = 60 * secs_per_minute,
 	secs_per_day = 24 * secs_per_hour
 };
-
-#if !defined(__KERNEL__)
-
-#include <sys/time.h>
-#include <time.h>
-
-/*
- * UNDEFINED_TIME is meant to be an impossible exceptional time_t value.
- *
- * ??? On UNIX, 0 is a value that means 1970-01-01 00:00:00 +0000 (UTC).
- *
- * UNDEFINED_TIME is used as a real time_t value in certificate handling.
- * Perhaps this is sancioned by X.509.
- *
- * UNDEFINED_TIME is used as a mono time_t value in liveness_check().
- * 0 is PROBABLY safely distinct in this application.
- */
-#define UNDEFINED_TIME  ((time_t)0)	/* ??? what a kludge! */
-
-#define TIME_T_MAX  ((time_t) ((1ull << (sizeof(time_t) * BITS_PER_BYTE - 1)) - 1))
-
-/*
- * Wrap time_t so that dimensional analysis will be enforced by the compiler.
- *
- * realtime_t: absolute UTC time.  Might be discontinuous due to clock adjustment.
- * monotime_t: absolute monotonic time.  No discontinuities (except for machine sleep?)
- * deltatime_t: relative time between events.  Presumed continuous.
- *
- * Try to stick to the operations implemented here.
- * A good compiler should produce identical code for these or for time_t values
- * but will catch nonsense operations through type enforcement.
- */
-
-typedef struct { time_t delta_secs; } deltatime_t;
-typedef struct { time_t real_secs; } realtime_t;
-typedef struct { time_t mono_secs; } monotime_t;
-
-/* delta time (interval) operations */
-
-static inline deltatime_t deltatime(time_t secs) {
-	deltatime_t d = { secs };
-	return d;
-}
-
-static inline unsigned long deltamillisecs(deltatime_t d) {
-	return d.delta_secs * 1000;
-}
-
-static inline time_t deltasecs(deltatime_t d) {
-	return d.delta_secs;
-}
-
-static inline deltatime_t deltatimescale(int num, int denom, deltatime_t d) {
-	/* ??? should check for overflow */
-	return deltatime(deltasecs(d) * num / denom);
-}
-
-static inline bool deltaless(deltatime_t a, deltatime_t b)
-{
-	return deltasecs(a) < deltasecs(b);
-}
-
-static inline bool deltaless_tv_tv(const struct timeval a, const struct timeval b)
-{
-	return a.tv_sec < b.tv_sec ||
-		( a.tv_sec == b.tv_sec && a.tv_usec < b.tv_usec);
-}
-
-static inline bool deltaless_tv_dt(const struct timeval a, const deltatime_t b)
-{
-	return a.tv_sec < deltasecs(b);
-}
-
-/* real time operations */
-
-static inline realtime_t realtimesum(realtime_t t, deltatime_t d) {
-	realtime_t s = { t.real_secs + d.delta_secs };
-	return s;
-}
-
-static inline realtime_t undefinedrealtime(void)
-{
-	realtime_t u = { UNDEFINED_TIME };
-
-	return u;
-}
-
-static inline bool isundefinedrealtime(realtime_t t)
-{
-	return t.real_secs == UNDEFINED_TIME;
-}
-
-static inline bool realbefore(realtime_t a, realtime_t b)
-{
-	return a.real_secs < b.real_secs;
-}
-
-static inline deltatime_t realtimediff(realtime_t a, realtime_t b) {
-	deltatime_t d = { a.real_secs - b.real_secs };
-	return d;
-}
-
-static inline realtime_t realnow(void)
-{
-	realtime_t t;
-
-	time(&t.real_secs);
-	return t;
-}
-
-#define REALTIMETOA_BUF     30	/* size of realtimetoa string buffer */
-extern char *realtimetoa(const realtime_t rtm, bool utc, char *buf, size_t blen);
-
-/* monotonic time operations */
-
-static inline monotime_t monotimesum(monotime_t t, deltatime_t d) {
-	monotime_t s = { t.mono_secs + d.delta_secs };
-	return s;
-}
-
-static inline bool monobefore(monotime_t a, monotime_t b)
-{
-	return a.mono_secs < b.mono_secs;
-}
-
-static inline deltatime_t monotimediff(monotime_t a, monotime_t b) {
-	deltatime_t d = { a.mono_secs - b.mono_secs };
-
-	return d;
-}
-
-/* defs.h declares extern monotime_t mononow(void) */
-
-#endif	/* !defined(__KERNEL__) */
-
-/* ================ end of time-related declarations ================ */
 
 /*
  * When using uclibc, malloc(0) returns NULL instead of success. This is
@@ -423,11 +287,13 @@ typedef uint32_t IPsecSAref_t;
 /* GCC magic for use in function definitions! */
 #ifdef GCC_LINT
 # define PRINTF_LIKE(n) __attribute__ ((format(printf, n, n + 1)))
+# define STRFTIME_LIKE(n) __attribute__ ((format (strftime, n, 0)))
 # define NEVER_RETURNS __attribute__ ((noreturn))
 # define UNUSED __attribute__ ((unused))
 # define MUST_USE_RESULT  __attribute__ ((warn_unused_result))
 #else
 # define PRINTF_LIKE(n) /* ignore */
+# define STRFTIME_LIKE(n) /* ignore */
 # define NEVER_RETURNS  /* ignore */
 # define UNUSED         /* ignore */
 # define MUST_USE_RESULT	/* ignore */
@@ -436,13 +302,15 @@ typedef uint32_t IPsecSAref_t;
 #ifdef COMPILER_HAS_NO_PRINTF_LIKE
 # undef PRINTF_LIKE
 # define PRINTF_LIKE(n) /* ignore */
+# undef STRFTIME_LIKE
+# define STRFTIME_LIKE(n) /* ignore */
 #endif
 
 /*
  * function to log stuff from libraries that may be used in multiple
  * places.
  */
-typedef int (*libreswan_keying_debug_func_t)(const char *message, ...);
+typedef int (*libreswan_keying_debug_func_t)(const char *message, ...) PRINTF_LIKE(1);
 
 /*
  * new IPv6-compatible functions
@@ -524,7 +392,7 @@ extern err_t rangetosubnet(const ip_address *from, const ip_address *to,
 extern int addrtypeof(const ip_address *src);
 extern int subnettypeof(const ip_subnet *src);
 extern size_t addrlenof(const ip_address *src);
-extern size_t addrbytesptr(const ip_address *src, unsigned char **dst);
+extern size_t addrbytesptr_read(const ip_address *src, const unsigned char **dst);
 extern size_t addrbytesptr_write(ip_address *src, unsigned char **dst);
 extern size_t addrbytesof(const ip_address *src, unsigned char *dst, size_t dstlen);
 extern int masktocount(const ip_address *src);

@@ -26,6 +26,14 @@ struct hash_desc;
 struct crypt_prf;
 
 /*
+ * FIPS requires a minimum key size.  In FIPS mode, when the key is
+ * less than this, the init will fail.  Here the "floor" is the
+ * minimum of all the fips algorithms so failing this is really bad.
+ */
+size_t crypt_prf_fips_key_size_min(const struct prf_desc *prf_desc);
+size_t crypt_prf_fips_key_size_floor(void);
+
+/*
  * Primitives implementing IKE PRFs.
  *
  * Some PRFs are implemented using the HMAC algorithm (described in

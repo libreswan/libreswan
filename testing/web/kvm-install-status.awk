@@ -8,11 +8,7 @@ BEGIN {
 }
 
 function status(message,  date, command) {
-    # current time in ISO format
-    date = strftime("%FT%TZ", systime(), 1)
-    if (debug) print("date:", date)
-
-    command = script " --date " date " ' (" message ")'"
+    command = script " '" message "'"
     if (debug) {
 	print("command:", command)
     } else {

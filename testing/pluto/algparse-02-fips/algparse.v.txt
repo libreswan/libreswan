@@ -1,0 +1,53 @@
+algparse: Encryption algorithm CAMELLIA_CTR disabled; not FIPS compliant
+algparse: Encryption algorithm CAMELLIA_CBC disabled; not FIPS compliant
+algparse: Encryption algorithm SERPENT_CBC disabled; not FIPS compliant
+algparse: Encryption algorithm TWOFISH_CBC disabled; not FIPS compliant
+algparse: Encryption algorithm TWOFISH_SSH disabled; not FIPS compliant
+algparse: Encryption algorithm CAST_CBC disabled; not FIPS compliant
+algparse: Encryption algorithm NULL_AUTH_AES_GMAC disabled; not FIPS compliant
+algparse: Encryption algorithm NULL disabled; not FIPS compliant
+algparse: Hash algorithm MD5 disabled; not FIPS compliant
+algparse: PRF algorithm HMAC_MD5 disabled; not FIPS compliant
+algparse: Integrity algorithm HMAC_MD5_96 disabled; not FIPS compliant
+algparse: DH algorithm MODP1024 disabled; not FIPS compliant
+algparse: DH algorithm MODP1536 disabled; not FIPS compliant
+algparse: FIPS Encryption algorithms:
+algparse:   AES_CCM_16          IKEv1:     ESP     IKEv2:     ESP     FIPS  {256,192,*128}  (aes_ccm aes_ccm_c)
+algparse:   AES_CCM_12          IKEv1:     ESP     IKEv2:     ESP     FIPS  {256,192,*128}  (aes_ccm_b)
+algparse:   AES_CCM_8           IKEv1:     ESP     IKEv2:     ESP     FIPS  {256,192,*128}  (aes_ccm_a)
+algparse:   3DES_CBC            IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  [*192]  (3des)
+algparse:   AES_GCM_16          IKEv1:     ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aes_gcm aes_gcm_c)
+algparse:   AES_GCM_12          IKEv1:     ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aes_gcm_b)
+algparse:   AES_GCM_8           IKEv1:     ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aes_gcm_a)
+algparse:   AES_CTR             IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aesctr)
+algparse:   AES_CBC             IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aes)
+algparse: FIPS Hash algorithms:
+algparse:   SHA1                IKEv1: IKE         IKEv2:             FIPS  (sha)
+algparse:   SHA2_256            IKEv1: IKE         IKEv2:             FIPS  (sha2 sha256)
+algparse:   SHA2_384            IKEv1: IKE         IKEv2:             FIPS  (sha384)
+algparse:   SHA2_512            IKEv1: IKE         IKEv2:             FIPS  (sha512)
+algparse: FIPS PRF algorithms:
+algparse:   HMAC_SHA1           IKEv1: IKE         IKEv2: IKE         FIPS  (sha sha1)
+algparse:   HMAC_SHA2_256       IKEv1: IKE         IKEv2: IKE         FIPS  (sha2 sha256 sha2_256)
+algparse:   HMAC_SHA2_384       IKEv1: IKE         IKEv2: IKE         FIPS  (sha384 sha2_384)
+algparse:   HMAC_SHA2_512       IKEv1: IKE         IKEv2: IKE         FIPS  (sha512 sha2_512)
+algparse: FIPS Integrity algorithms:
+algparse:   HMAC_SHA1_96        IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha sha1 sha1_96 hmac_sha1)
+algparse:   HMAC_SHA2_512_256   IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha512 sha2_512 hmac_sha2_512)
+algparse:   HMAC_SHA2_384_192   IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha384 sha2_384 hmac_sha2_384)
+algparse:   HMAC_SHA2_256_128   IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha2 sha256 sha2_256 hmac_sha2_256)
+algparse:   AES_XCBC_96         IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_xcbc)
+algparse:   AES_CMAC_96         IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_cmac)
+algparse:   NONE                IKEv1:     ESP     IKEv2:     ESP     FIPS  (null)
+algparse: FIPS DH algorithms:
+algparse:   MODP2048            IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (dh14)
+algparse:   MODP3072            IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (dh15)
+algparse:   MODP4096            IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (dh16)
+algparse:   MODP6144            IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (dh17)
+algparse:   MODP8192            IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (dh18)
+algparse:   DH19                IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  (ecp_256)
+algparse:   DH20                IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  (ecp_384)
+algparse:   DH21                IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  (ecp_521)
+algparse:   DH23                IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS
+algparse:   DH24                IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS
+algparse: leak detective found no leaks

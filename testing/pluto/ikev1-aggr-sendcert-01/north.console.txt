@@ -14,18 +14,19 @@ initdone
 north #
  # temp while the test still fails
 north #
- ipsec whack --debug-all --impair-retransmits
+ ipsec whack --debug-all --impair retransmits
 north #
  ipsec auto --up north-east
-003 "north-east": IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's
 002 "north-east" #1: initiating Aggressive Mode
+002 "north-east" #1: I am sending a certificate request
 112 "north-east" #1: STATE_AGGR_I1: initiate
-002 "north-east" #1: Aggressive mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
-002 "north-east" #1: certificate E=testing@libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA OK
+002 "north-east" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+002 "north-east" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+002 "north-east" #1: I am sending my cert
 004 "north-east" #1: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=RSA_SIG cipher=aes_128 integ=sha group=MODP2048}
 002 "north-east" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 117 "north-east" #2: STATE_QUICK_I1: initiate
-004 "north-east" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
+004 "north-east" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 north #
  echo done
 done
@@ -37,10 +38,10 @@ north #
  # should only show 1 connection
 north #
  ipsec whack --trafficstatus
-006 #2: "north-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
+006 #2: "north-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 north #
 north #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 north #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

@@ -26,17 +26,13 @@
 #include <libreswan.h>
 
 #include "sysdep.h"
+#include "constants.h"
 #include "socketwrapper.h"
 #include "libreswan/ipsec_tunnel.h"
 
 #include "ipsecconf/interfaces.h"
 #include "ipsecconf/exec.h"
-#include "ipsecconf/files.h"
 #include "ipsecconf/starterlog.h"
-
-#ifndef MIN
-# define MIN(a, b) ( ((a) <= (b)) ? (a) : (b) )
-#endif
 
 bool starter_iface_find(const char *iface, int af, ip_address *dst, ip_address *nh)
 {
@@ -51,7 +47,8 @@ bool starter_iface_find(const char *iface, int af, ip_address *dst, ip_address *
 	if (sock < 0)
 		return FALSE;
 
-	strncpy(req.ifr_name, iface, IFNAMSIZ - 1);
+	fill_and_terminate(req.ifr_name, iface, IFNAMSIZ);
+
 	if (ioctl(sock, SIOCGIFFLAGS, &req) != 0 ||
 	    (req.ifr_flags & IFF_UP) == 0x0) {
 		close(sock);

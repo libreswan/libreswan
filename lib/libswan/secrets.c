@@ -33,9 +33,6 @@
 #include <arpa/inet.h>
 #include <arpa/nameser.h>	/* missing from <resolv.h> on old systems */
 #include <glob.h>
-#ifndef GLOB_ABORTED
-#define GLOB_ABORTED GLOB_ABEND	/* fix for old versions */
-#endif
 
 #include <libreswan.h>
 
@@ -526,15 +523,13 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 						bad_case(kind);
 					}
 					if (!same) {
-						loglog(RC_LOG_SERIOUS,
-							"multiple ipsec.secrets entries with distinct secrets match endpoints: first secret used"
-							);
-						best = s;	/*
-								 * list is
-								 * backwards:
-								 * take latest
-								 * in list
-								 */
+						DBG(DBG_CONTROL,
+						    DBG_log("multiple ipsec.secrets entries with distinct secrets match endpoints: first secret used"));
+						/*
+						 * list is backwards:
+						 * take latest in list
+						 */
+						best = s;
 					}
 				} else if (match > best_match) {
 					DBG(DBG_CONTROL,
@@ -1027,8 +1022,10 @@ static void lsw_process_secret_records(struct secret **psecrets)
 			/*
 			 * The above test checks that there is enough space for strcpy
 			 * but clang 3.4 thinks the destination will overflow.
+			 *	strcpy(p, flp->tok);
+			 * Rewrite as a memcpy in the hope of calming it.
 			 */
-			strcpy(p, flp->tok);
+			memcpy(p, flp->tok, flp->cur - flp->tok + 1);
 			(void) shift();	/* move to Record Boundary, we hope */
 			if (flushline("ignoring malformed INCLUDE -- expected Record Boundary after filename"))
 			{
@@ -1112,10 +1109,9 @@ static void lsw_process_secret_records(struct secret **psecrets)
 	}
 }
 
-static int globugh(const char *epath, int eerrno)
+static int globugh_secrets(const char *epath, int eerrno)
 {
-	libreswan_log_errno_routine(eerrno, "problem with secrets file \"%s\"",
-				epath);
+	LOG_ERRNO(eerrno, "problem with secrets file \"%s\"", epath);
 	return 1;	/* stop glob */
 }
 
@@ -1136,43 +1132,40 @@ static void lsw_process_secrets_file(struct secret **psecrets,
 	}
 
 	/* do globbing */
-	{
-		int r = glob(file_pat, GLOB_ERR, globugh, &globbuf);
+	int r = glob(file_pat, GLOB_ERR, globugh_secrets, &globbuf);
 
-		if (r != 0) {
-			switch (r) {
-			case GLOB_NOSPACE:
-				loglog(RC_LOG_SERIOUS,
-					"out of space processing secrets filename \"%s\"",
-					file_pat);
-				globfree(&globbuf);
-				return;
-			case GLOB_ABORTED:
-				break;	/* already logged */
-
-			case GLOB_NOMATCH:
-				libreswan_log("no secrets filename matched \"%s\"",
-					file_pat);
-				break;
-
-			default:
-				loglog(RC_LOG_SERIOUS, "unknown glob error %d",
-					r);
-				globfree(&globbuf);
-				return;
+	switch (r) {
+	case 0:
+		/* success */
+		/* for each file... */
+		for (fnp = globbuf.gl_pathv; fnp != NULL && *fnp != NULL; fnp++) {
+			if (lexopen(&pos, *fnp, FALSE)) {
+				libreswan_log("loading secrets from \"%s\"", *fnp);
+				(void) flushline(
+					"file starts with indentation (continuation notation)");
+				lsw_process_secret_records(psecrets);
+				lexclose();
 			}
 		}
-	}
+		break;
 
-	/* for each file... */
-	for (fnp = globbuf.gl_pathv; fnp != NULL && *fnp != NULL; fnp++) {
-		if (lexopen(&pos, *fnp, FALSE)) {
-			libreswan_log("loading secrets from \"%s\"", *fnp);
-			(void) flushline(
-				"file starts with indentation (continuation notation)");
-			lsw_process_secret_records(psecrets);
-			lexclose();
-		}
+	case GLOB_NOSPACE:
+		loglog(RC_LOG_SERIOUS,
+			"out of space processing secrets filename \"%s\"",
+			file_pat);
+		break;
+
+	case GLOB_ABORTED:
+		/* already logged by globugh_secrets() */
+		break;
+
+	case GLOB_NOMATCH:
+		libreswan_log("no secrets filename matched \"%s\"", file_pat);
+		break;
+
+	default:
+		loglog(RC_LOG_SERIOUS, "unknown glob error %d", r);
+		break;
 	}
 
 	globfree(&globbuf);

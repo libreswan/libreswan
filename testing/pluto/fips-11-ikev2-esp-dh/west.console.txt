@@ -1,0 +1,73 @@
+/testing/guestbin/swan-prep --fips
+Password changed successfully.
+FIPS mode enabled.
+west #
+ ip addr add 192.0.100.254/24 dev eth0:1
+west #
+ ip route add 192.0.200.0/24 via 192.1.2.23  dev eth1
+west #
+ # make sure that clear text does not get through
+west #
+ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
+west #
+ iptables -A INPUT -i eth1 -s 192.0.200.0/24 -j LOGDROP
+west #
+ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec whack --debug-all --impair retransmits
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --add ikev2-base
+002 added connection description "ikev2-base"
+west #
+ ipsec auto --up ikev2-base
+002 "ikev2-base" #1: initiating v2 parent SA
+133 "ikev2-base" #1: STATE_PARENT_I1: initiate
+133 "ikev2-base" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "ikev2-base" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set.
+134 "ikev2-base" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
+002 "ikev2-base" #2: suppressing retransmit because IMPAIR_RETRANSMITS is set.
+002 "ikev2-base" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+002 "ikev2-base" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "ikev2-base" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ../bin/libreswan-up-down.sh ikev2-esp=aes-sha1-modp4096 -I 192.0.100.254 192.0.200.254
+002 added connection description "ikev2-esp=aes-sha1-modp4096"
+139 "ikev2-esp=aes-sha1-modp4096" #3: STATE_V2_CREATE_I: sent IPsec Child req wait response
+002 "ikev2-esp=aes-sha1-modp4096" #3: suppressing retransmit because IMPAIR_RETRANSMITS is set.
+002 "ikev2-esp=aes-sha1-modp4096" #3: negotiated connection [192.0.100.0-192.0.100.255:0-65535 0] -> [192.0.200.0-192.0.200.255:0-65535 0]
+004 "ikev2-esp=aes-sha1-modp4096" #3: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96-MODP4096 NATOA=none NATD=none DPD=passive}
+destination -I 192.0.100.254 192.0.200.254 is alive
+002 "ikev2-esp=aes-sha1-modp4096": terminating SAs using this connection
+002 "ikev2-esp=aes-sha1-modp4096" #3: deleting state (STATE_V2_IPSEC_I) and sending notification
+005 "ikev2-esp=aes-sha1-modp4096" #3: ESP traffic information: in=84B out=84B
+002 "ikev2-esp=aes-sha1-modp4096": deleting non-instance connection
+west #
+ ipsec auto --delete ikev2-base
+002 "ikev2-base": deleting non-instance connection
+002 "ikev2-base" #2: deleting state (STATE_V2_IPSEC_I) and sending notification
+005 "ikev2-base" #2: ESP traffic information: in=336B out=336B
+002 "ikev2-base" #1: deleting state (STATE_PARENT_I3) and sending notification
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

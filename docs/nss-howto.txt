@@ -112,9 +112,9 @@ Is useful if you want to migrate from openswan to libreswan.
 Import a CA:
     certutil -A -i <ca_cert_file>  -n "<ca_cert_alias>" -t "C,C,C" -d /etc/ipsec.d/
     example: certutil -A -i /etc/ipsec.d/cacerts/CaCert.pem  -n "CaCert" -t "C,C,C" -d /etc/ipsec.d/
-	
-	
-	
+
+
+
 Import a cert:
     certutil -A -i <cert_file>  -n "<cert_alias>" -t "C,C,C" -d /etc/ipsec.d/
     example: certutil -A -i /etc/ipsec.d/certs/serverCert.pemm  -n "serverCert" -t "C,C,C" -d /etc/ipsec.d/
@@ -129,7 +129,7 @@ Convert key:
 Import Key:
     pk12util -i /etc/ipsec.d/private/userKey.p12 -d /etc/ipsec.d
 In your secret file you can use:
-    : RSA  "userCert"	
+    : RSA  "userCert"
 
 	
 

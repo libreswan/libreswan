@@ -1,5 +1,4 @@
-/* IKEv2 - CHILD SA - calculations
- *
+/*
  * Copyright (C) 2007-2008 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
@@ -8,6 +7,7 @@
  * Copyright (C) 2012,2016-2017 Antony Antony <appu@phenome.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2014-2015 Andrew cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Antony Antony <antony@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -67,62 +67,62 @@
 
 void ikev2_print_ts(struct traffic_selector *ts)
 {
-	ipstr_buf b;
+	DBG(DBG_CONTROLMORE, {
+		char b[RANGETOT_BUF];
 
-	DBG(DBG_CONTROLMORE,
+		rangetot(&ts->net, 0, b, sizeof(b));
 		DBG_log("printing contents struct traffic_selector");
 		DBG_log("  ts_type: %s", enum_name(&ikev2_ts_type_names, ts->ts_type));
 		DBG_log("  ipprotoid: %d", ts->ipprotoid);
-		DBG_log("  startport: %d", ts->startport);
-		DBG_log("  endport: %d", ts->endport);
-		DBG_log("  ip low: %s", ipstr(&ts->low, &b));
-		DBG_log("  ip high: %s", ipstr(&ts->high, &b));
-	);
+		DBG_log("  port range: %d-%d", ts->startport, ts->endport);
+		DBG_log("  ip range: %s", b);
+	});
 }
 
-/* rewrite me with addrbytesptr() */
+/* rewrite me with addrbytesptr_write() */
 struct traffic_selector ikev2_end_to_ts(const struct end *e)
 {
 	struct traffic_selector ts;
-	struct in6_addr v6mask;
 
 	zero(&ts);	/* OK: no pointer fields */
 
+	/* subnet => range */
+	ts.net.start = e->client.addr;
+	ts.net.end = e->client.addr;
 	switch (e->client.addr.u.v4.sin_family) {
 	case AF_INET:
+	{
+		struct in_addr v4mask = bitstomask(e->client.maskbits);
+
 		ts.ts_type = IKEv2_TS_IPV4_ADDR_RANGE;
-		ts.low = e->client.addr;
-		ts.low.u.v4.sin_addr.s_addr &=
-			bitstomask(e->client.maskbits).s_addr;
-		ts.high = e->client.addr;
-		ts.high.u.v4.sin_addr.s_addr |=
-			~bitstomask(e->client.maskbits).s_addr;
+		ts.net.start.u.v4.sin_addr.s_addr &= v4mask.s_addr;
+		ts.net.end.u.v4.sin_addr.s_addr |= ~v4mask.s_addr;
 		break;
-
-	case AF_INET6:
-		ts.ts_type = IKEv2_TS_IPV6_ADDR_RANGE;
-		v6mask = bitstomask6(e->client.maskbits);
-
-		ts.low = e->client.addr;
-		ts.low.u.v6.sin6_addr.s6_addr32[0] &= v6mask.s6_addr32[0];
-		ts.low.u.v6.sin6_addr.s6_addr32[1] &= v6mask.s6_addr32[1];
-		ts.low.u.v6.sin6_addr.s6_addr32[2] &= v6mask.s6_addr32[2];
-		ts.low.u.v6.sin6_addr.s6_addr32[3] &= v6mask.s6_addr32[3];
-
-		ts.high = e->client.addr;
-		ts.high.u.v6.sin6_addr.s6_addr32[0] |= ~v6mask.s6_addr32[0];
-		ts.high.u.v6.sin6_addr.s6_addr32[1] |= ~v6mask.s6_addr32[1];
-		ts.high.u.v6.sin6_addr.s6_addr32[2] |= ~v6mask.s6_addr32[2];
-		ts.high.u.v6.sin6_addr.s6_addr32[3] |= ~v6mask.s6_addr32[3];
-		break;
-
-		/* Setting ts_type IKEv2_TS_FC_ADDR_RANGE (RFC-4595) not yet supproted */
 	}
+	case AF_INET6:
+	{
+		struct in6_addr v6mask = bitstomask6(e->client.maskbits);
+
+		ts.ts_type = IKEv2_TS_IPV6_ADDR_RANGE;
+		ts.net.start.u.v6.sin6_addr.s6_addr32[0] &= v6mask.s6_addr32[0];
+		ts.net.start.u.v6.sin6_addr.s6_addr32[1] &= v6mask.s6_addr32[1];
+		ts.net.start.u.v6.sin6_addr.s6_addr32[2] &= v6mask.s6_addr32[2];
+		ts.net.start.u.v6.sin6_addr.s6_addr32[3] &= v6mask.s6_addr32[3];
+
+		ts.net.end.u.v6.sin6_addr.s6_addr32[0] |= ~v6mask.s6_addr32[0];
+		ts.net.end.u.v6.sin6_addr.s6_addr32[1] |= ~v6mask.s6_addr32[1];
+		ts.net.end.u.v6.sin6_addr.s6_addr32[2] |= ~v6mask.s6_addr32[2];
+		ts.net.end.u.v6.sin6_addr.s6_addr32[3] |= ~v6mask.s6_addr32[3];
+		break;
+	}
+
+	}
+	/* Setting ts_type IKEv2_TS_FC_ADDR_RANGE (RFC-4595) not yet supported */
 
 	ts.ipprotoid = e->protocol;
 
 	/*
-	 * if port is %any or 0 we mean all ports (or all iccmp/icmpv6
+	 * if port is %any or 0 we mean all ports (or all iccmp/icmpv6)
 	 * See RFC-5996 Section 3.13.1 handling for ICMP(1) and ICMPv6(58)
 	 *   we only support providing Type, not Code, eg protoport=1/1
 	 */
@@ -182,18 +182,18 @@ static stf_status ikev2_emit_ts(struct msg_digest *md UNUSED,
 	/* now do IP addresses */
 	switch (ts->ts_type) {
 	case IKEv2_TS_IPV4_ADDR_RANGE:
-		if (!out_raw(&ts->low.u.v4.sin_addr.s_addr, 4, &ts_pbs2,
-			     "ipv4 low") ||
-		    !out_raw(&ts->high.u.v4.sin_addr.s_addr, 4, &ts_pbs2,
-			     "ipv4 high"))
+		if (!out_raw(&ts->net.start.u.v4.sin_addr.s_addr, 4, &ts_pbs2,
+			     "ipv4 start") ||
+		    !out_raw(&ts->net.end.u.v4.sin_addr.s_addr, 4, &ts_pbs2,
+			     "ipv4 end"))
 			return STF_INTERNAL_ERROR;
 
 		break;
 	case IKEv2_TS_IPV6_ADDR_RANGE:
-		if (!out_raw(&ts->low.u.v6.sin6_addr.s6_addr, 16, &ts_pbs2,
-			     "ipv6 low") ||
-		    !out_raw(&ts->high.u.v6.sin6_addr.s6_addr, 16, &ts_pbs2,
-			     "ipv6 high"))
+		if (!out_raw(&ts->net.start.u.v6.sin6_addr.s6_addr, 16, &ts_pbs2,
+			     "ipv6 start") ||
+		    !out_raw(&ts->net.end.u.v6.sin6_addr.s6_addr, 16, &ts_pbs2,
+			     "ipv6 end"))
 			return STF_INTERNAL_ERROR;
 
 		break;
@@ -269,51 +269,51 @@ int ikev2_parse_ts(struct payload_digest *const ts_pd,
 		switch (ts1.isat1_type) {
 		case IKEv2_TS_IPV4_ADDR_RANGE:
 			array[i].ts_type = IKEv2_TS_IPV4_ADDR_RANGE;
-			array[i].low.u.v4.sin_family = AF_INET;
+			array[i].net.start.u.v4.sin_family = AF_INET;
 #ifdef NEED_SIN_LEN
-			array[i].low.u.v4.sin_len =
+			array[i].net.start.u.v4.sin_len =
 				sizeof(struct sockaddr_in);
 #endif
-			if (!in_raw(&array[i].low.u.v4.sin_addr.s_addr,
-				    sizeof(array[i].low.u.v4.sin_addr.s_addr),
-				    &addr, "ipv4 ts"))
+			if (!in_raw(&array[i].net.start.u.v4.sin_addr.s_addr,
+				    sizeof(array[i].net.start.u.v4.sin_addr.s_addr),
+				    &addr, "ipv4 ts low"))
 				return -1;
 
-			array[i].high.u.v4.sin_family = AF_INET;
+			array[i].net.end.u.v4.sin_family = AF_INET;
 #ifdef NEED_SIN_LEN
-			array[i].high.u.v4.sin_len =
+			array[i].net.end.u.v4.sin_len =
 				sizeof(struct sockaddr_in);
 #endif
 
-			if (!in_raw(&array[i].high.u.v4.sin_addr.s_addr,
-				    sizeof(array[i].high.u.v4.sin_addr.s_addr),
-				    &addr, "ipv4 ts"))
+			if (!in_raw(&array[i].net.end.u.v4.sin_addr.s_addr,
+				    sizeof(array[i].net.end.u.v4.sin_addr.s_addr),
+				    &addr, "ipv4 ts high"))
 				return -1;
 
 			break;
 
 		case IKEv2_TS_IPV6_ADDR_RANGE:
 			array[i].ts_type = IKEv2_TS_IPV6_ADDR_RANGE;
-			array[i].low.u.v6.sin6_family = AF_INET6;
+			array[i].net.start.u.v6.sin6_family = AF_INET6;
 #ifdef NEED_SIN_LEN
-			array[i].low.u.v6.sin6_len =
+			array[i].net.start.u.v6.sin6_len =
 				sizeof(struct sockaddr_in6);
 #endif
 
-			if (!in_raw(&array[i].low.u.v6.sin6_addr.s6_addr,
-				    sizeof(array[i].low.u.v6.sin6_addr.s6_addr),
-				    &addr, "ipv6 ts"))
+			if (!in_raw(&array[i].net.start.u.v6.sin6_addr.s6_addr,
+				    sizeof(array[i].net.start.u.v6.sin6_addr.s6_addr),
+				    &addr, "ipv6 ts low"))
 				return -1;
 
-			array[i].high.u.v6.sin6_family = AF_INET6;
+			array[i].net.end.u.v6.sin6_family = AF_INET6;
 #ifdef NEED_SIN_LEN
-			array[i].high.u.v6.sin6_len =
+			array[i].net.end.u.v6.sin6_len =
 				sizeof(struct sockaddr_in6);
 #endif
 
-			if (!in_raw(&array[i].high.u.v6.sin6_addr.s6_addr,
-				    sizeof(array[i].high.u.v6.sin6_addr.s6_addr),
-				    &addr, "ipv6 ts"))
+			if (!in_raw(&array[i].net.end.u.v6.sin6_addr.s6_addr,
+				    sizeof(array[i].net.end.u.v6.sin6_addr.s6_addr),
+				    &addr, "ipv6 ts high"))
 				return -1;
 
 			break;
@@ -586,20 +586,19 @@ int ikev2_evaluate_connection_fit(const struct connection *d,
 			/* does it fit at all? */
 
 			DBG(DBG_CONTROLMORE, {
-				ipstr_buf bli;
-				ipstr_buf bhi;
-				ipstr_buf blr;
-				ipstr_buf bhr;
-				DBG_log("    tsi[%u]=%s/%s proto=%d portrange %d-%d, tsr[%u]=%s/%s proto=%d portrange %d-%d",
+				char bi[RANGETOT_BUF];
+				char br[RANGETOT_BUF];
+
+				rangetot(&tsi[tsi_ni].net, 0, bi, sizeof(bi));
+				rangetot(&tsr[tsi_ni].net, 0, br, sizeof(br));
+				DBG_log("    tsi[%u]=%s proto=%d portrange %d-%d, tsr[%u]=%s proto=%d portrange %d-%d",
 					tsi_ni,
-					ipstr(&tsi[tsi_ni].low, &bli),
-					ipstr(&tsi[tsi_ni].high, &bhi),
+					bi,
 					tsi[tsi_ni].ipprotoid,
 					tsi[tsi_ni].startport,
 					tsi[tsi_ni].endport,
 					tsr_ni,
-					ipstr(&tsr[tsr_ni].low, &blr),
-					ipstr(&tsr[tsr_ni].high, &bhr),
+					br,
 					tsr[tsr_ni].ipprotoid,
 					tsr[tsr_ni].startport,
 					tsr[tsr_ni].endport);
@@ -610,21 +609,21 @@ int ikev2_evaluate_connection_fit(const struct connection *d,
 			 * NOTE: Our parser/config only allows 1 CIDR, however IKEv2 ranges can be non-CIDR
 			 *       for now we really support/limit ourselves to a single CIDR
 			 */
-			if (addrinsubnet(&tsi[tsi_ni].low, &ei->client) &&
-			    addrinsubnet(&tsi[tsi_ni].high, &ei->client) &&
-			    addrinsubnet(&tsr[tsr_ni].low,  &er->client) &&
-			    addrinsubnet(&tsr[tsr_ni].high, &er->client)) {
+			if (addrinsubnet(&tsi[tsi_ni].net.start, &ei->client) &&
+			    addrinsubnet(&tsi[tsi_ni].net.end, &ei->client) &&
+			    addrinsubnet(&tsr[tsr_ni].net.start,  &er->client) &&
+			    addrinsubnet(&tsr[tsr_ni].net.end, &er->client)) {
 				/*
 				 * now, how good a fit is it? --- sum of bits gives
 				 * how good a fit this is.
 				 */
-				int ts_range1 = ikev2_calc_iprangediff(
-					tsi[tsi_ni].low, tsi[tsi_ni].high);
+				int ts_range1 = iprange_bits(
+					tsi[tsi_ni].net.start, tsi[tsi_ni].net.end);
 				int maskbits1 = ei->client.maskbits;
 				int fitbits1 = maskbits1 + ts_range1;
 
-				int ts_range2 = ikev2_calc_iprangediff(
-					tsr[tsr_ni].low, tsr[tsr_ni].high);
+				int ts_range2 = iprange_bits(
+					tsr[tsr_ni].net.start, tsr[tsr_ni].net.end);
 				int maskbits2 = er->client.maskbits;
 				int fitbits2 = maskbits2 + ts_range2;
 
@@ -670,7 +669,7 @@ int ikev2_evaluate_connection_fit(const struct connection *d,
 /*
  * find the best connection and, if it is AUTH exchange, create the child state
  */
-static stf_status ikev2_create_responder_child_state(
+stf_status ikev2_resp_accept_child_ts(
 	const struct msg_digest *md,
 	struct state **ret_cst,	/* where to return child state */
 	enum original_role role, enum isakmp_xchg_types isa_xchg)
@@ -957,129 +956,31 @@ static stf_status ikev2_cp_reply_state(const struct msg_digest *md,
 	return STF_OK;
 }
 
-static struct state *find_state_to_rekey(struct payload_digest *p,
-		struct state *pst)
-{
-	struct state *st;
-	ipsec_spi_t spi;
-	struct ikev2_notify ntfy = p->payload.v2n;
-
-	if (ntfy.isan_protoid == PROTO_IPSEC_ESP ||
-			ntfy.isan_protoid == PROTO_IPSEC_AH) {
-		DBG(DBG_CONTROLMORE, DBG_log("CREATE_CHILD_SA IPsec SA rekey "
-					"Protocol %s",
-					enum_show(&ikev2_protocol_names,
-						ntfy.isan_protoid)));
-
-	} else {
-		libreswan_log("CREATE_CHILD_SA IPsec SA rekey invalid Protocol ID %s",
-				enum_show(&ikev2_protocol_names,
-					ntfy.isan_protoid));
-		return NULL;
-	}
-	if (ntfy.isan_spisize != sizeof(ipsec_spi_t)) {
-		libreswan_log("CREATE_CHILD_SA IPsec SA rekey invalid spi "
-				"size %u", ntfy.isan_spisize);
-		return NULL;
-	}
-
-	if (!in_raw(&spi, sizeof(spi), &p->pbs, "SPI"))
-		return NULL;      /* cannot happen */
-
-	DBG(DBG_CONTROLMORE, DBG_log("CREATE_CHILD_S to rekey IPsec SA(0x%08"
-				PRIx32 ") Protocol %s", ntohl((uint32_t) spi),
-				enum_show(&ikev2_protocol_names,
-					ntfy.isan_protoid)));
-
-	st = find_state_ikev2_child_to_delete(pst->st_icookie, pst->st_rcookie,
-			ntfy.isan_protoid, spi);
-	if (st == NULL) {
-		libreswan_log("CREATE_CHILD_SA no such IPsec SA to rekey SA(0x%08"
-				PRIx32 ") Protocol %s", ntohl((uint32_t) spi),
-				enum_show(&ikev2_protocol_names,
-					ntfy.isan_protoid));
-	}
-
-	return st;
-}
-
-static bool ikev2_rekey_child_copy_ts(const struct msg_digest *md)
-{
-
-	struct state *st = md->st;  /* new child state */
-	struct state *rst = NULL; /* old child state being rekeyed */
-	struct payload_digest *ntfy;
-	struct state *pst = state_with_serialno(st->st_clonedfrom);
-
-	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
-		switch (ntfy->payload.v2n.isan_type) {
-
-		case v2N_REKEY_SA:
-			DBG(DBG_CONTROL, DBG_log("received v2N REKEY_SA "));
-			/*
-			 * incase of a failure the response is
-			 * a v2N_CHILD_SA_NOT_FOUND with
-			 * with SPI and type {AH|ESP} in the notify
-			 * do we support that yet? RFC 7296 3.10
-			 * return STF_FAIL + v2N_CHILD_SA_NOT_FOUND;
-			 */
-			change_state(st, STATE_V2_REKEY_CHILD_R);
-			rst = find_state_to_rekey(ntfy, pst);
-			if(rst == NULL) {
-				libreswan_log("no valid IPsec SA SPI to rekey");
-				return FALSE;
-			}
-			break;
-		default:
-			/*
-			 * there is another pass of notify payloads after this
-			 * that will handle all other but REKEY
-			 */
-			break;
-		}
-	}
-
-	if (rst != NULL) {
-		/*
-		 * RFC 7296 #2.9.2 the exact or the superset.
-		 * exact is a should. Here we only allow the exact.
-		 * Inherit the TSi TSr from old state, IPsec SA.
-		 */
-
-		DBG(DBG_CONTROLMORE, DBG_log("#%lu inherit spd, TSi TSr, from "
-					"#%lu", st->st_serialno,
-					rst->st_serialno));
-		struct spd_route *spd = &rst->st_connection->spd;
-		st->st_ts_this = ikev2_end_to_ts(&spd->this);
-		st->st_ts_that = ikev2_end_to_ts(&spd->that);
-		ikev2_print_ts(&st->st_ts_this);
-		ikev2_print_ts(&st->st_ts_that);
-	}
-
-	return (rst == NULL ? FALSE : TRUE );
-}
-
 stf_status ikev2_child_sa_respond(struct msg_digest *md,
 				  enum original_role role,
 				  pb_stream *outpbs,
 				  enum isakmp_xchg_types isa_xchg)
 {
 	struct state *cst;	/* child state */
-	struct state *pst = md->st;	/* parent state */
+	struct state *pst;
 	struct connection *c = md->st->st_connection;
-	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	bool send_use_transport;
 	stf_status ret = STF_FAIL;
 
+	pst = IS_CHILD_SA(md->st) ?
+		state_with_serialno(md->st->st_clonedfrom) : md->st;
+
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA &&
-			ikev2_rekey_child_copy_ts(md)) {
+			md->st->st_ipsec_pred != SOS_NOBODY) {
+		/* this is Child SA rekey we already have child state object */
 		cst = md->st;
 	} else if (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) {
-		ret = ikev2_cp_reply_state(md, &cst, isa_xchg);
-		if (ret != STF_OK)
-			return ret;
+		RETURN_STF_FAILURE_STATUS(ikev2_cp_reply_state(md, &cst,
+					isa_xchg));
+	} else if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
+		cst = md->st;
 	} else {
-		ret = ikev2_create_responder_child_state(md, &cst, role,
+		ret = ikev2_resp_accept_child_ts(md, &cst, role,
 				isa_xchg);
 	}
 
@@ -1116,44 +1017,20 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		/* ??? this code won't support AH + ESP */
 		struct ipsec_proto_info *proto_info
 			= ikev2_esp_or_ah_proto_info(cst, c->policy);
-		stf_status ret;
 
-		ikev2_proposals_from_alg_info_esp(c->name, "responder",
-						  c->alg_info_esp, c->policy,
-						  &c->esp_or_ah_proposals);
-		passert(c->esp_or_ah_proposals != NULL);
-
-		ret = ikev2_process_sa_payload("ESP/AH responder",
-				&sa_pd->pbs,
-				/*expect_ike*/ FALSE,
-				/*expect_spi*/ TRUE,
-				/*expect_accepted*/ FALSE,
-				c->policy & POLICY_OPPORTUNISTIC,
-				&cst->st_accepted_esp_or_ah_proposal,
-				c->esp_or_ah_proposals);
-
-		if (ret == STF_OK) {
-			passert(cst->st_accepted_esp_or_ah_proposal != NULL);
-			DBG(DBG_CONTROL, DBG_log_ikev2_proposal("ESP/AH", cst->st_accepted_esp_or_ah_proposal));
-			if (!ikev2_proposal_to_proto_info(cst->st_accepted_esp_or_ah_proposal, proto_info)) {
-				DBG(DBG_CONTROL, DBG_log("proposed/accepted a proposal we don't actually support!"));
-				ret =  STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-			} else {
-				proto_info->our_spi = ikev2_esp_or_ah_spi(&c->spd, c->policy);
-				chunk_t local_spi;
-				setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
-					 sizeof(proto_info->our_spi));
-				if (!ikev2_emit_sa_proposal(outpbs,
-							    cst->st_accepted_esp_or_ah_proposal,
-							    &local_spi, next_payload_type)) {
-					DBG(DBG_CONTROL, DBG_log("problem emitting accepted proposal (%d)", ret));
-					ret = STF_INTERNAL_ERROR;
-				}
-			}
+		if (isa_xchg != ISAKMP_v2_CREATE_CHILD_SA)  {
+			RETURN_STF_FAILURE_STATUS(ikev2_process_child_sa_pl(md, FALSE));
 		}
-
-		if (ret != STF_OK)
-			return ret;
+		proto_info->our_spi = ikev2_esp_or_ah_spi(&c->spd, c->policy);
+		chunk_t local_spi;
+		setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
+				sizeof(proto_info->our_spi));
+		if (!ikev2_emit_sa_proposal(outpbs,
+					cst->st_accepted_esp_or_ah_proposal,
+					&local_spi, next_payload_type)) {
+			DBG(DBG_CONTROL, DBG_log("problem emitting accepted proposal (%d)", ret));
+			return STF_INTERNAL_ERROR;
+		}
 	}
 
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
@@ -1162,7 +1039,9 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		pb_stream pb_nr;
 
 		zero(&in);	/* OK: no pointer fields */
-		in.isag_np = ISAKMP_NEXT_v2TSi;
+		in.isag_np = (md->chain[ISAKMP_NEXT_v2KE] != NULL) ?
+			ISAKMP_NEXT_v2KE: ISAKMP_NEXT_v2TSi;
+
 		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
 			libreswan_log(" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
@@ -1173,6 +1052,14 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&pb_nr);
+
+		if (in.isag_np == ISAKMP_NEXT_v2KE)  {
+			if (!justship_v2KE(&cst->st_gr,
+						cst->st_oakley.ta_dh, outpbs,
+						ISAKMP_NEXT_v2TSi))
+				return STF_INTERNAL_ERROR;
+		}
+
 	}
 
 	if (role == ORIGINAL_RESPONDER) {
@@ -1267,14 +1154,14 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 		if (c->send_no_esp_tfc) {
 			DBG(DBG_CONTROL, DBG_log("Sending ESP_TFC_PADDING_NOT_SUPPORTED"));
-				if (!ship_v2N(ISAKMP_NEXT_v2NONE,
-				      ISAKMP_PAYLOAD_NONCRITICAL,
-				      PROTO_v2_RESERVED,
-				      &empty_chunk,
-				      v2N_ESP_TFC_PADDING_NOT_SUPPORTED,
-				      &empty_chunk,
-				      outpbs))
-				return STF_INTERNAL_ERROR;
+			if (!ship_v2N(ISAKMP_NEXT_v2NONE,
+			      ISAKMP_PAYLOAD_NONCRITICAL,
+			      PROTO_v2_RESERVED,
+			      &empty_chunk,
+			      v2N_ESP_TFC_PADDING_NOT_SUPPORTED,
+			      &empty_chunk,
+			      outpbs))
+			return STF_INTERNAL_ERROR;
 		}
 	}
 
@@ -1308,9 +1195,15 @@ static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st, int af)
 		return FALSE;
 	}
 
-	libreswan_log("received INTERNAL_IPi%s_DNS %s",
-			af == AF_INET ? "4" : "6",
-			ipstr(&ip, &ip_str));
+	if (isanyaddr(&ip)) {
+		libreswan_log("ERROR INTERNAL_IP4_DNS %s is invalid",
+				ipstr(&ip, &ip_str));
+		return FALSE;
+	}
+
+	(void)ipstr(&ip, &ip_str);
+	libreswan_log("received INTERNAL_IP4_DNS %s",
+			ip_str.buf);
 
 	if (c->policy & POLICY_OPPORTUNISTIC) {
 		libreswan_log("ignored CP payload for Opportunistic IPsec");
@@ -1327,7 +1220,7 @@ static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st, int af)
 		c->cisco_dns_info = clone_str(ip_str.buf, "ikev2 cisco_dns_info");
 	} else {
 		/*
-		 * concatenate new IP address  string on end of existing
+		 * concatenate new IP address string on end of existing
 		 * string, separated by ' '.
 		 */
 		size_t sz_old = strlen(old);
@@ -1374,7 +1267,7 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st, int af)
 	if (c->spd.this.cat) {
 		DBG(DBG_CONTROL, DBG_log("CAT is set, not setting host source IP address to %s",
 			ipstr(&ip, &ip_str)));
-		if (sameaddr (&c->spd.this.client.addr, &ip)) {
+		if (sameaddr(&c->spd.this.client.addr, &ip)) {
 			/* The address we received is same as this side
 			 * should we also check the host_srcip */
 			DBG(DBG_CONTROL, DBG_log("#%lu %s[%lu] received NTERNAL_IP%s_ADDRESS which is same as this.client.addr %s. Will not add CAT iptable rules",
@@ -1394,7 +1287,7 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st, int af)
 		addrtosubnet(&ip, &c->spd.this.client);
 		setportof(0, &c->spd.this.client.addr); /* ??? redundant? */
 		/* ??? the following test seems obscure.  What's it about? */
-		if (addrbytesptr(&c->spd.this.host_srcip, NULL) == 0 ||
+		if (addrlenof(&c->spd.this.host_srcip) == 0 ||
 			isanyaddr(&c->spd.this.host_srcip)) {
 				DBG(DBG_CONTROL, DBG_log("setting host source IP address to %s",
 					ipstr(&ip, &ip_str)));

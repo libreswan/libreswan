@@ -1,0 +1,3 @@
+# Libreswan IPSec daemon needs to be configured before enabling.
+# See /usr/share/doc/libreswan/README.Debian for details.
+disable ipsec.service

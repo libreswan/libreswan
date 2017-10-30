@@ -10,7 +10,7 @@
  * a bug in Rules.make for .s builds - specifically it references EXTRA_CFLAGS
  * which may contain stuff that AS doesn't understand instead of
  * referencing EXTRA_AFLAGS.
- */	
+ */
 
 	.file	"dx86unix.S"
 	.version	"01.01"
@@ -22,7 +22,7 @@ des_encrypt:
 	pushl	%esi
 	pushl	%edi
 
-	
+
 	movl	12(%esp),	%esi
 	xorl	%ecx,		%ecx
 	pushl	%ebx
@@ -31,7 +31,7 @@ des_encrypt:
 	movl	28(%esp),	%ebx
 	movl	4(%esi),	%edi
 
-	
+
 	roll	$4,		%eax
 	movl	%eax,		%esi
 	xorl	%edi,		%eax
@@ -68,12 +68,12 @@ des_encrypt:
 	xorl	%eax,		%edi
 
 .byte 209
-.byte 199		
+.byte 199
 	movl	24(%esp),	%ebp
 	cmpl	$0,		%ebx
 	je	.L000start_decrypt
 
-	
+
 	movl	(%ebp),		%eax
 	xorl	%ebx,		%ebx
 	movl	4(%ebp),	%edx
@@ -110,7 +110,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	8(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	12(%ebp),	%edx
@@ -147,7 +147,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	
+
 	movl	16(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	20(%ebp),	%edx
@@ -184,7 +184,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	24(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	28(%ebp),	%edx
@@ -221,7 +221,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	
+
 	movl	32(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	36(%ebp),	%edx
@@ -258,7 +258,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	40(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	44(%ebp),	%edx
@@ -295,7 +295,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	
+
 	movl	48(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	52(%ebp),	%edx
@@ -332,7 +332,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	56(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	60(%ebp),	%edx
@@ -369,7 +369,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	
+
 	movl	64(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	68(%ebp),	%edx
@@ -406,7 +406,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	72(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	76(%ebp),	%edx
@@ -443,7 +443,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	
+
 	movl	80(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	84(%ebp),	%edx
@@ -480,7 +480,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	88(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	92(%ebp),	%edx
@@ -517,7 +517,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	
+
 	movl	96(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	100(%ebp),	%edx
@@ -554,7 +554,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	104(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	108(%ebp),	%edx
@@ -591,7 +591,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	
+
 	movl	112(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	116(%ebp),	%edx
@@ -628,7 +628,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	120(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	124(%ebp),	%edx
@@ -667,7 +667,7 @@ des_encrypt:
 	jmp	.L001end
 .L000start_decrypt:
 
-	
+
 	movl	120(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	124(%ebp),	%edx
@@ -704,7 +704,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	112(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	116(%ebp),	%edx
@@ -741,7 +741,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	
+
 	movl	104(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	108(%ebp),	%edx
@@ -778,7 +778,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	96(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	100(%ebp),	%edx
@@ -815,7 +815,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	
+
 	movl	88(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	92(%ebp),	%edx
@@ -852,7 +852,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	80(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	84(%ebp),	%edx
@@ -889,7 +889,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	
+
 	movl	72(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	76(%ebp),	%edx
@@ -926,7 +926,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	64(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	68(%ebp),	%edx
@@ -963,7 +963,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	
+
 	movl	56(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	60(%ebp),	%edx
@@ -1000,7 +1000,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	48(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	52(%ebp),	%edx
@@ -1037,7 +1037,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	
+
 	movl	40(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	44(%ebp),	%edx
@@ -1074,7 +1074,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	32(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	36(%ebp),	%edx
@@ -1111,7 +1111,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	
+
 	movl	24(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	28(%ebp),	%edx
@@ -1148,7 +1148,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	16(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	20(%ebp),	%edx
@@ -1185,7 +1185,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	
+
 	movl	8(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	12(%ebp),	%edx
@@ -1222,7 +1222,7 @@ des_encrypt:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	(%ebp),		%eax
 	xorl	%ebx,		%ebx
 	movl	4(%ebp),	%edx
@@ -1260,10 +1260,10 @@ des_encrypt:
 	xorl	%ebx,		%esi
 .L001end:
 
-	
+
 	movl	20(%esp),	%edx
 .byte 209
-.byte 206		
+.byte 206
 	movl	%edi,		%eax
 	xorl	%esi,		%edi
 	andl	$0xaaaaaaaa,	%edi
@@ -1317,7 +1317,7 @@ des_encrypt2:
 	pushl	%esi
 	pushl	%edi
 
-	
+
 	movl	12(%esp),	%eax
 	xorl	%ecx,		%ecx
 	pushl	%ebx
@@ -1331,7 +1331,7 @@ des_encrypt2:
 	cmpl	$0,		%ebx
 	je	.L002start_decrypt
 
-	
+
 	movl	(%ebp),		%eax
 	xorl	%ebx,		%ebx
 	movl	4(%ebp),	%edx
@@ -1368,7 +1368,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	8(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	12(%ebp),	%edx
@@ -1405,7 +1405,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	
+
 	movl	16(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	20(%ebp),	%edx
@@ -1442,7 +1442,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	24(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	28(%ebp),	%edx
@@ -1479,7 +1479,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	
+
 	movl	32(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	36(%ebp),	%edx
@@ -1516,7 +1516,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	40(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	44(%ebp),	%edx
@@ -1553,7 +1553,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	
+
 	movl	48(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	52(%ebp),	%edx
@@ -1590,7 +1590,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	56(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	60(%ebp),	%edx
@@ -1627,7 +1627,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	
+
 	movl	64(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	68(%ebp),	%edx
@@ -1664,7 +1664,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	72(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	76(%ebp),	%edx
@@ -1701,7 +1701,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	
+
 	movl	80(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	84(%ebp),	%edx
@@ -1738,7 +1738,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	88(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	92(%ebp),	%edx
@@ -1775,7 +1775,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	
+
 	movl	96(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	100(%ebp),	%edx
@@ -1812,7 +1812,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	104(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	108(%ebp),	%edx
@@ -1849,7 +1849,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	
+
 	movl	112(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	116(%ebp),	%edx
@@ -1886,7 +1886,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	120(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	124(%ebp),	%edx
@@ -1925,7 +1925,7 @@ des_encrypt2:
 	jmp	.L003end
 .L002start_decrypt:
 
-	
+
 	movl	120(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	124(%ebp),	%edx
@@ -1962,7 +1962,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	112(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	116(%ebp),	%edx
@@ -1999,7 +1999,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	
+
 	movl	104(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	108(%ebp),	%edx
@@ -2036,7 +2036,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	96(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	100(%ebp),	%edx
@@ -2073,7 +2073,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	
+
 	movl	88(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	92(%ebp),	%edx
@@ -2110,7 +2110,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	80(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	84(%ebp),	%edx
@@ -2147,7 +2147,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	
+
 	movl	72(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	76(%ebp),	%edx
@@ -2184,7 +2184,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	64(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	68(%ebp),	%edx
@@ -2221,7 +2221,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	
+
 	movl	56(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	60(%ebp),	%edx
@@ -2258,7 +2258,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	48(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	52(%ebp),	%edx
@@ -2295,7 +2295,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	
+
 	movl	40(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	44(%ebp),	%edx
@@ -2332,7 +2332,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	32(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	36(%ebp),	%edx
@@ -2369,7 +2369,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	
+
 	movl	24(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	28(%ebp),	%edx
@@ -2406,7 +2406,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	16(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	20(%ebp),	%edx
@@ -2443,7 +2443,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%esi
 
-	
+
 	movl	8(%ebp),	%eax
 	xorl	%ebx,		%ebx
 	movl	12(%ebp),	%edx
@@ -2480,7 +2480,7 @@ des_encrypt2:
 	movl	0x500+des_SPtrans(%edx),%ebx
 	xorl	%ebx,		%edi
 
-	
+
 	movl	(%ebp),		%eax
 	xorl	%ebx,		%ebx
 	movl	4(%ebp),	%edx
@@ -2518,7 +2518,7 @@ des_encrypt2:
 	xorl	%ebx,		%esi
 .L003end:
 
-	
+
 	rorl	$3,		%edi
 	movl	20(%esp),	%eax
 	rorl	$3,		%esi
@@ -2543,12 +2543,12 @@ des_encrypt3:
 	pushl	%esi
 	pushl	%edi
 
-	
+
 	movl	(%ebx),		%edi
 	movl	4(%ebx),	%esi
 	subl	$12,		%esp
 
-	
+
 	roll	$4,		%edi
 	movl	%edi,		%edx
 	xorl	%esi,		%edi
@@ -2607,7 +2607,7 @@ des_encrypt3:
 	movl	(%ebx),		%edi
 	movl	4(%ebx),	%esi
 
-	
+
 	roll	$2,		%esi
 	roll	$3,		%edi
 	movl	%edi,		%eax
@@ -2666,12 +2666,12 @@ des_decrypt3:
 	pushl	%esi
 	pushl	%edi
 
-	
+
 	movl	(%ebx),		%edi
 	movl	4(%ebx),	%esi
 	subl	$12,		%esp
 
-	
+
 	roll	$4,		%edi
 	movl	%edi,		%edx
 	xorl	%esi,		%edi
@@ -2730,7 +2730,7 @@ des_decrypt3:
 	movl	(%ebx),		%edi
 	movl	4(%ebx),	%esi
 
-	
+
 	roll	$2,		%esi
 	roll	$3,		%edi
 	movl	%edi,		%eax
@@ -2789,7 +2789,7 @@ des_ncbc_encrypt:
 	pushl	%esi
 	pushl	%edi
 	movl	28(%esp),	%ebp
-	
+
 	movl	36(%esp),	%ebx
 	movl	(%ebx),		%esi
 	movl	4(%ebx),	%edi
@@ -2800,11 +2800,11 @@ des_ncbc_encrypt:
 	movl	%esp,		%ebx
 	movl	36(%esp),	%esi
 	movl	40(%esp),	%edi
-	
+
 	movl	56(%esp),	%ecx
-	
+
 	pushl	%ecx
-	
+
 	movl	52(%esp),	%eax
 	pushl	%eax
 	pushl	%ebx
@@ -2977,7 +2977,7 @@ des_ede3_cbc_encrypt:
 	pushl	%esi
 	pushl	%edi
 	movl	28(%esp),	%ebp
-	
+
 	movl	44(%esp),	%ebx
 	movl	(%ebx),		%esi
 	movl	4(%ebx),	%edi
@@ -2988,15 +2988,15 @@ des_ede3_cbc_encrypt:
 	movl	%esp,		%ebx
 	movl	36(%esp),	%esi
 	movl	40(%esp),	%edi
-	
+
 	movl	64(%esp),	%ecx
-	
+
 	movl	56(%esp),	%eax
 	pushl	%eax
-	
+
 	movl	56(%esp),	%eax
 	pushl	%eax
-	
+
 	movl	56(%esp),	%eax
 	pushl	%eax
 	pushl	%ebx

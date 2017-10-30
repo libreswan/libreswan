@@ -1,6 +1,0 @@
-192.1.2.23 > 192.1.2.45: ICMP echo request (DF)
-192.1.2.45 > 192.1.2.23: ICMP echo reply
-192.1.2.45 > 192.1.2.23: ICMP echo reply
-192.1.2.23 > 192.1.2.45: ICMP echo request (DF)
-192.1.2.45 > 192.1.2.23: ICMP echo reply
-192.1.2.45 > 192.1.2.23: ICMP echo reply

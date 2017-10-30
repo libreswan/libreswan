@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry>
+<refentryinfo>
+  <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para>placeholder to suppress warning</para> </authorblurb></author>
+</refentryinfo>
+<refmeta>
+<refentrytitle>IPSEC_CHECK</refentrytitle>
+<manvolnum>8</manvolnum>
+<refmiscinfo class='date'>20 June 2017</refmiscinfo>
+<refmiscinfo class="source">libreswan</refmiscinfo>
+<refmiscinfo class="manual">Executable programs</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>ipsec show</refname>
+<refpurpose>see if a target IP address would get encrypted or not </refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>ipsec</command>
+    <arg choice='plain'><replaceable>show</replaceable> IP-address</arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para>The
+<emphasis remap='I'>ipsec show</emphasis>
+show if the target IP address would get encrypted. Currently requires
+the XFRM/NETKEY stack root access. If no target IP is given, show all
+active source - dest tunnels.
+</para>
+
+
+</refsect1>
+
+<refsect1 id='history'><title>HISTORY</title>
+<para>Written originally for the Libreswan Project by Paul Wouters</para>
+</refsect1>
+
+<refsect1 id='bugs'><title>BUGS</title>
+<para>It's pretty simplistic, so there might be cases where it is wrong. There is also obviously a race condition if you run this show and right afterwards the tunnel goes down.
+</para>
+
+</refsect1>
+</refentry>
+

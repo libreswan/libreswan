@@ -1,0 +1,2 @@
+An interop test of ESP with strongswan as the responder
+using NULL_AES_GMAC

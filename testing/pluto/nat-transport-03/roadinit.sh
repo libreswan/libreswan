@@ -17,7 +17,7 @@ ipsec start
 
 ipsec auto --add road--east-port3
 ipsec auto --add road--east-pass
-ipsec whack --debug-control --debug-controlmore --debug-parsing --debug-crypt
+ipsec whack --debug none --debug control --debug controlmore --debug parsing --debug crypt
 
 echo done
 

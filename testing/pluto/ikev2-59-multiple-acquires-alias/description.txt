@@ -1,0 +1,2 @@
+This is an IKEv2 test with alias/subnets using ipsec auto --up
+The test output is not stable enough to be commited as good console output.

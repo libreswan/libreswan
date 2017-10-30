@@ -10,7 +10,7 @@ Redirecting to: systemctl start ipsec.service
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
- ipsec whack --debug-all --impair-major-version-bump --impair-retransmits
+ ipsec whack --debug-all --impair major-version-bump --impair retransmits
 west #
  ipsec auto --add westnet-eastnet-ikev2-major
 002 added connection description "westnet-eastnet-ikev2-major"
@@ -33,7 +33,7 @@ west #
  grep "INVALID_MAJOR_VERSION" /tmp/pluto.log >/dev/null && echo payload found
 west #
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

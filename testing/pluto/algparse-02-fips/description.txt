@@ -1,0 +1,4 @@
+Put the algorithm parser through its paces in FIPS mode.
+
+First run algparse in various modes comparing the output with what is
+expected, and then start PLUTO checking its algorithm table.

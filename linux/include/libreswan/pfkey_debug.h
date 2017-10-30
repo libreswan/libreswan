@@ -40,8 +40,8 @@ extern unsigned int pfkey_lib_debug;  /* bits selecting what to report */
 
 #else
 
-extern int (*pfkey_debug_func)(const char *message, ...) PRINTF_LIKE(1);
-extern int (*pfkey_error_func)(const char *message, ...) PRINTF_LIKE(1);
+extern libreswan_keying_debug_func_t pfkey_debug_func;
+extern libreswan_keying_debug_func_t pfkey_error_func;
 
 #define DEBUGGING(level, args ...)  { if (pfkey_lib_debug & (level)) { \
 		if (pfkey_debug_func != NULL) { \

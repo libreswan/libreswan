@@ -1,8 +1,0 @@
-This tests the most basic L2TP configuration --- 1 client behind
-a NAT, and a server. Basic east/west connection.
-
-However, unlike -01 it rekeys the connection.
-
-
-
-

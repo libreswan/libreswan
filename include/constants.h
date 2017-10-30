@@ -22,6 +22,11 @@
  */
 
 #ifndef _CONSTANTS_H_
+#define _CONSTANTS_H_
+
+struct lswlog;
+
+#include <stddef.h> /* for size_t */
 
 /*
  * This file was split into internal contants (Libreswan/pluto related),
@@ -120,6 +125,15 @@
 #define strncaseeq(a, b, n) (strncasecmp((a), (b), (n)) == 0)
 #define memeq(a, b, n) (memcmp((a), (b), (n)) == 0)
 
+/*
+ * Fill a string field, ensuring that it is padded and terminated with NUL
+ * If termination isn't required, strncpy would do.
+ * If filling isn't required, jam_str would do.
+ */
+#define fill_and_terminate(dest, src, len) { \
+		strncpy((dest), (src), (len)-1); \
+		(dest)[(len)-1] = '\0'; \
+	}
 
 /*
  * zero an object given a pointer to it.
@@ -201,18 +215,22 @@ typedef uint_fast64_t lset_t;
  *    for any unnamed value (in a static area -- NOT RE-ENTRANT)
  * enum_showb() is like enum_show() but uses a caller-supplied buffer
  *    for any unnamed value and thus is re-entrant.
- */
-
-/* Printing lset_t values:
  *
- * bitnamesof() formats a display of a set of named bits (in a static area -- NOT RE-ENTRANT)
- * bitnamesofb() formats into a caller-supplied buffer (re-entrant)
+ * lswlog_enum() appends the name of an enum value; if unnamed, append
+ * a mashup of the standard prefix and the numeric value.
+ *
+ * lswlog_enum_short() appends the name of an enum value with any
+ * standard prefix removed; if unnamed, append a mashup of the
+ * standard prefix and the numeric value.
  */
 
 typedef const struct enum_names enum_names;
 
 extern const char *enum_name(enum_names *ed, unsigned long val);
 extern const char *enum_short_name(enum_names *ed, unsigned long val);
+
+size_t lswlog_enum(struct lswlog *, enum_names *en, unsigned long val);
+size_t lswlog_enum_short(struct lswlog *, enum_names *en, unsigned long val);
 
 /* caller-allocated buffer for enum_showb */
 struct esb_buf {
@@ -229,6 +247,9 @@ extern const char *enum_showb(enum_names *ed, unsigned long val, struct esb_buf 
 extern const char *enum_show_shortb(enum_names *ed, unsigned long val, struct esb_buf *);
 
 extern const char *enum_show(enum_names *ed, unsigned long val);	/* NOT RE-ENTRANT */
+
+/* iterator, start with -1 - hopefully more imune to rounding */
+extern long next_enum(enum_names *en, long last);
 
 /* sometimes the prefix gets annoying */
 extern const char *strip_prefix(const char *s, const char *prefix);
@@ -256,8 +277,14 @@ extern int enum_match(enum_names *ed, const char *string);
  *
  * enum_enum_table() returns TABLE's enum_names, or NULL.
  * enum_enum_name() returns TABLE VAL's enum, or NULL.
- * enum_enum_short_name() returns TABLE VAL's short enum, or NULL.
  * enum_enum_showb() returns TABLE VAL's enum or %ld using BUF.
+ *
+ * lswlog_enum_enum() appends TABLE VAL's enum name; if unnamed,
+ * append a mashup of the standard prefix and the numeric value.
+ *
+ * lswlog_enum_enum_short() appends TABLE VAL's enum name with any
+ * standard prefix removed; if unnamed, append a mashup of the
+ * standard prefix and the numeric value.
  */
 
 typedef const struct enum_enum_names enum_enum_names;
@@ -265,11 +292,13 @@ typedef const struct enum_enum_names enum_enum_names;
 enum_names *enum_enum_table(enum_enum_names *e, unsigned long table);
 const char *enum_enum_name(enum_enum_names *e, unsigned long table,
 			   unsigned long val);
-const char *enum_enum_short_name(enum_enum_names *e, unsigned long table,
-			   unsigned long val);
 const char *enum_enum_showb(enum_enum_names *e, unsigned long table,
 			    unsigned long val, struct esb_buf *buf);
 
+size_t lswlog_enum_enum(struct lswlog *log, enum_enum_names *een,
+			unsigned long table, unsigned long val);
+size_t lswlog_enum_enum_short(struct lswlog *log, enum_enum_names *een,
+			      unsigned long table, unsigned long val);
 
 /* Printing lset_t values:
  *
@@ -280,7 +309,7 @@ const char *enum_enum_showb(enum_enum_names *e, unsigned long table,
  * bitnamesof() formats a display of a set of named bits (in a static area -- NOT RE-ENTRANT)
  * bitnamesofb() formats into a caller-supplied buffer (re-entrant)
  *
- * show_set_short() formats into a caller-supplied buffer -- only form
+ * lswlog_enum_lset_short() formats into a caller-supplied buffer -- only form
  */
 extern bool testset(const char *const table[], lset_t val);
 extern const char *bitnamesof(const char *const table[], lset_t val);	/* NOT RE-ENTRANT */
@@ -288,9 +317,8 @@ extern const char *bitnamesofb(const char *const table[],
 			       lset_t val,
 			       char *buf, size_t blen);
 
-extern const char *show_set_short(enum_names *sd,
-				 lset_t val,
-				 char *buf, size_t blen);
+size_t lswlog_enum_lset_short(struct lswlog *, enum_names *sd,
+			      lset_t val);
 
 /*
  * The sparser_name should be transformed into keyword_enum_value
@@ -341,5 +369,4 @@ extern void init_constants(void);
 #include "pluto_constants.h"
 #include "names_constant.h"
 
-#define _CONSTANTS_H_
 #endif /* _CONSTANTS_H_ */

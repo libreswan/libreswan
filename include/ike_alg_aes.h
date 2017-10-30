@@ -14,18 +14,15 @@
  * for more details.
  */
 
-extern struct encrypt_desc ike_alg_encrypt_aes_cbc;
-extern struct encrypt_desc ike_alg_encrypt_aes_ctr;
-extern struct encrypt_desc ike_alg_encrypt_aes_gcm_8;
-extern struct encrypt_desc ike_alg_encrypt_aes_gcm_12;
-extern struct encrypt_desc ike_alg_encrypt_aes_gcm_16;
-extern struct encrypt_desc ike_alg_encrypt_aes_ccm_8;
-extern struct encrypt_desc ike_alg_encrypt_aes_ccm_12;
-extern struct encrypt_desc ike_alg_encrypt_aes_ccm_16;
+extern const struct encrypt_desc ike_alg_encrypt_aes_cbc;
+extern const struct encrypt_desc ike_alg_encrypt_aes_ctr;
+extern const struct encrypt_desc ike_alg_encrypt_aes_gcm_8;
+extern const struct encrypt_desc ike_alg_encrypt_aes_gcm_12;
+extern const struct encrypt_desc ike_alg_encrypt_aes_gcm_16;
+extern const struct encrypt_desc ike_alg_encrypt_aes_ccm_8;
+extern const struct encrypt_desc ike_alg_encrypt_aes_ccm_12;
+extern const struct encrypt_desc ike_alg_encrypt_aes_ccm_16;
+extern const struct encrypt_desc ike_alg_encrypt_null_integ_aes_gmac;
 
-extern struct integ_desc ike_alg_integ_aes_xcbc;
-extern struct integ_desc ike_alg_integ_aes_cmac;
-
-const struct gcm_test_vector *const aes_gcm_tests;
-const struct cbc_test_vector *const aes_cbc_tests;
-const struct ctr_test_vector *const aes_ctr_tests;
+extern const struct integ_desc ike_alg_integ_aes_xcbc;
+extern const struct integ_desc ike_alg_integ_aes_cmac;

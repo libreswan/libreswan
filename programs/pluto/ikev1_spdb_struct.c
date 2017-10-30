@@ -50,8 +50,10 @@
 #include "alg_info.h"
 #include "kernel_alg.h"
 #include "ike_alg.h"
+#include "ike_alg_null.h"
 #include "db_ops.h"
 #include "lswfips.h" /* for libreswan_fipsmode */
+#include "crypt_prf.h"
 
 #include "nat_traversal.h"
 
@@ -197,6 +199,98 @@ static bool out_attr(int type,
 				    val, enum_show(d, val));
 	    });
 	return TRUE;
+}
+
+static bool ikev1_verify_esp(const struct trans_attrs *ta,
+			     const struct alg_info_esp *alg_info)
+{
+	if (ta->ta_encrypt == NULL) {
+		libreswan_log("ESP IPsec Transform refused: missing encryption algorithm");
+		return false;
+	}
+	if (ta->ta_prf != NULL) {
+		PEXPECT_LOG("ESP IPsec Transform refused: contains unexpected PRF %s",
+			    ta->ta_prf->common.fqn);
+		return false;
+	}
+	if (ta->ta_integ == NULL) {
+		libreswan_log("ESP IPsec Transform refused: missing integrity algorithm");
+		return false;
+	}
+	if (ta->ta_dh != NULL) {
+		PEXPECT_LOG("ESP IPsec Transform refused: contains unexpected DH %s",
+			    ta->ta_dh->common.fqn);
+		return false;
+	}
+	if (alg_info == NULL) {
+		DBG(DBG_CONTROL,
+		    DBG_log("ESP IPsec Transform verified unconditionally; no alg_info to check against"));
+		return true;
+	}
+
+	unsigned key_len = ta->enckeylen;
+	if (key_len == 0) {
+		key_len = crypto_req_keysize(CRK_ESPorAH,
+					     ta->ta_encrypt->common.id[IKEv1_ESP_ID]);
+	}
+
+	FOR_EACH_ESP_INFO(alg_info, esp_info) {
+		if (esp_info->encrypt == ta->ta_encrypt &&
+		    (esp_info->enckeylen == 0 ||
+		     key_len == 0 ||
+		     esp_info->enckeylen == key_len) &&
+		    esp_info->integ == ta->ta_integ) {
+			DBG(DBG_CONTROL,
+			    DBG_log("ESP IPsec Transform verified; matches alg_info entry"));
+			return true;
+		}
+	}
+
+	libreswan_log("ESP IPsec Transform refused: %s_%d-%s",
+		      ta->ta_encrypt->common.fqn, key_len,
+		      ta->ta_integ->common.fqn);
+	return false;
+}
+
+static bool ikev1_verify_ah(const struct trans_attrs *ta,
+			    const struct alg_info_esp *alg_info)
+{
+	if (ta->ta_encrypt != NULL) {
+		PEXPECT_LOG("AH IPsec Transform refused: contains unexpected encryption %s",
+			    ta->ta_encrypt->common.fqn);
+		return false;
+	}
+	if (ta->ta_prf != NULL) {
+		PEXPECT_LOG("AH IPsec Transform refused: contains unexpected PRF %s",
+			    ta->ta_prf->common.fqn);
+		return false;
+	}
+	if (ta->ta_integ == NULL) {
+		libreswan_log("AH IPsec Transform refused: missing integrity algorithm");
+		return false;
+	}
+	if (ta->ta_dh != NULL) {
+		PEXPECT_LOG("AH IPsec Transform refused: contains unexpected DH %s",
+			    ta->ta_dh->common.fqn);
+		return false;
+	}
+	if (alg_info == NULL) {
+		DBG(DBG_CONTROL,
+		    DBG_log("AH IPsec Transform verified unconditionally; no alg_info to check against"));
+		return true;
+	}
+
+	FOR_EACH_ESP_INFO(alg_info, esp_info) {	/* really AH */
+		if (esp_info->integ == ta->ta_integ) {
+			DBG(DBG_CONTROL,
+			    DBG_log("ESP IPsec Transform verified; matches alg_info entry"));
+			return true;
+		}
+	}
+
+	libreswan_log("AH IPsec Transform refused: %s",
+		      ta->ta_integ->common.fqn);
+	return false;
 }
 
 #define return_on(var, val) { (var) = (val); goto return_out; }
@@ -825,49 +919,64 @@ lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */)
 	return policy;
 }
 
-static bool ike_alg_ok_final(int ealg, unsigned key_len,
-			     const struct prf_desc *prf,
-			     unsigned int group,
+static bool ikev1_verify_ike(const struct trans_attrs *ta,
 			     struct alg_info_ike *alg_info_ike)
 {
+	if (ta->ta_encrypt == NULL) {
+		loglog(RC_LOG_SERIOUS,
+		       "OAKLEY proposal refused: missing encryption");
+		return false;
+	}
+	if (ta->ta_prf == NULL) {
+		loglog(RC_LOG_SERIOUS,
+		       "OAKLEY proposal refused: missing PRF");
+		return false;
+	}
+	if (ta->ta_integ != NULL) {
+		PEXPECT_LOG("OAKLEY proposal refused: contains unexpected integrity %s",
+			    ta->ta_prf->common.fqn);
+		return false;
+	}
+	if (ta->ta_dh == NULL) {
+		loglog(RC_LOG_SERIOUS, "OAKLEY proposal refused: missing DH");
+		return false;
+	}
+	if (alg_info_ike == NULL) {
+		DBG(DBG_CONTROL,
+		    DBG_log("OAKLEY proposal verified unconditionally; no alg_info to check against"));
+		return true;
+	}
+
 	/*
 	 * simple test to toss low key_len, will accept it only
 	 * if specified in "esp" string
 	 */
-	bool ealg_insecure = (key_len < 128);
+	bool ealg_insecure = (ta->enckeylen < 128);
 
-	if (ealg_insecure || alg_info_ike != NULL) {
-		if (alg_info_ike != NULL) {
-			FOR_EACH_IKE_INFO(alg_info_ike, ike_info) {
-				if (ike_info->ike_encrypt->common.ikev1_oakley_id == ealg &&
-				    (ike_info->ike_eklen == 0 ||
-				     key_len == 0 ||
-				     ike_info->ike_eklen == key_len) &&
-				    ike_info->ike_prf == prf &&
-				    ike_info->ike_dh_group->group == group) {
-					if (ealg_insecure) {
-						loglog(RC_LOG_SERIOUS,
-						       "You should NOT use insecure/broken IKE algorithms (%s)!",
-						       enum_name(
-								&oakley_enc_names,
-								ealg));
-					}
-					return TRUE;
-				}
+	FOR_EACH_IKE_INFO(alg_info_ike, ike_info) {
+		if (ike_info->encrypt == ta->ta_encrypt &&
+		    (ike_info->enckeylen == 0 ||
+		     ta->enckeylen == 0 ||
+		     ike_info->enckeylen == ta->enckeylen) &&
+		    ike_info->prf == ta->ta_prf &&
+		    ike_info->dh == ta->ta_dh) {
+			if (ealg_insecure) {
+				loglog(RC_LOG_SERIOUS,
+				       "You should NOT use insecure/broken IKE algorithms (%s)!",
+				       ta->ta_encrypt->common.fqn);
 			}
+			DBG(DBG_CONTROL,
+			    DBG_log("OAKLEY proposal verified; matching alg_info found"));
+			return true;
 		}
-		libreswan_log(
-			"Oakley Transform [%s (%d), %s, %s] refused%s",
-			enum_name(&oakley_enc_names, ealg), key_len,
-			enum_name(&oakley_hash_names,
-				  prf->common.ikev1_oakley_id),
-			enum_name(&oakley_group_names, group),
-			ealg_insecure ?
-				" due to insecure key_len and enc. alg. not listed in \"ike\" string" :
-				"");
-		return FALSE;
 	}
-	return TRUE;
+	libreswan_log("Oakley Transform [%s (%d), %s, %s] refused%s",
+		      ta->ta_encrypt->common.fqn, ta->enckeylen,
+		      ta->ta_prf->common.fqn, ta->ta_dh->common.fqn,
+		      ealg_insecure ?
+		      " due to insecure key_len and enc. alg. not listed in \"ike\" string" :
+		      "");
+	return false;
 }
 
 /**
@@ -901,6 +1010,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 	bool xauth_init = FALSE,
 		xauth_resp = FALSE;
 	const char *const role = selection ? "initiator" : "responder";
+	const chunk_t *pss = &empty_chunk;
 
 	passert(c != NULL);
 
@@ -1124,21 +1234,14 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 								  val));
 					break;
 				}
-				if (ike_alg_is_aead(encrypter)) {
-					ugh = builddiag("AEAD algorithm %s is not supported",
-							enum_show(&oakley_enc_names,
-								  val));
-					break;
-				}
-				ta.encrypter = encrypter;
-				ta.encrypt = val;
-				ta.enckeylen = ta.encrypter->keydeflen;
+				ta.ta_encrypt = encrypter;
+				ta.enckeylen = ta.ta_encrypt->keydeflen;
 				break;
 			}
 
 			case OAKLEY_HASH_ALGORITHM | ISAKMP_ATTR_AF_TV:
-				ta.prf = ikev1_get_ike_prf_desc(val);
-				if (ta.prf == NULL) {
+				ta.ta_prf = ikev1_get_ike_prf_desc(val);
+				if (ta.ta_prf == NULL) {
 					ugh = builddiag("%s is not supported",
 							enum_show(&oakley_hash_names,
 								  val));
@@ -1190,9 +1293,10 @@ psk_common:
 					if ((iap & POLICY_PSK) == LEMPTY) {
 						ugh = "policy does not allow OAKLEY_PRESHARED_KEY authentication";
 					} else {
-						/* check that we can find a preshared secret */
-						if (get_preshared_secret(c)
-						    == NULL)
+						/* check that we can find a proper preshared secret */
+						pss = get_preshared_secret(c);
+
+						if (pss == NULL)
 						{
 							char mid[IDTOA_BUF],
 							     hid[IDTOA_BUF];
@@ -1212,6 +1316,8 @@ psk_common:
 							ugh = builddiag(
 								"Can't authenticate: no preshared key found for `%s' and `%s'",
 								mid, hid);
+						} else {
+							DBG(DBG_PRIVATE, DBG_dump_chunk("User PSK:", *pss));
 						}
 						ta.auth = OAKLEY_PRESHARED_KEY;
 					}
@@ -1278,8 +1384,8 @@ rsasig_common:
 			break;
 
 			case OAKLEY_GROUP_DESCRIPTION | ISAKMP_ATTR_AF_TV:
-				ta.group = lookup_group(val);
-				if (ta.group == NULL) {
+				ta.ta_dh = ikev1_get_ike_dh_desc(val);
+				if (ta.ta_dh == NULL) {
 					ugh = builddiag(
 						"OAKLEY_GROUP %d not supported",
 						val);
@@ -1345,7 +1451,7 @@ rsasig_common:
 					ugh = "OAKLEY_KEY_LENGTH attribute not preceded by OAKLEY_ENCRYPTION_ALGORITHM attribute";
 					break;
 				}
-				if (ta.encrypter == NULL) {
+				if (ta.ta_encrypt == NULL) {
 					ugh = "NULL encrypter with seen OAKLEY_ENCRYPTION_ALGORITHM";
 					break;
 				}
@@ -1359,31 +1465,14 @@ rsasig_common:
 				 * length, when val was non-zero.
 				 * Should val==0 check be added?
 				 */
-				if (val != 0 && !encrypt_has_key_bit_length(ta.encrypter, val)) {
+				if (val != 0 && !encrypt_has_key_bit_length(ta.ta_encrypt, val)) {
 					ugh = "peer proposed key_len not valid for encrypt algo setup specified";
 					break;
 				}
 
 				ta.enckeylen = val;
 				break;
-#if 0                           /* not yet supported */
-			case OAKLEY_GROUP_TYPE | ISAKMP_ATTR_AF_TV:
-			case OAKLEY_PRF | ISAKMP_ATTR_AF_TV:
-			case OAKLEY_FIELD_SIZE | ISAKMP_ATTR_AF_TV:
 
-			case OAKLEY_GROUP_PRIME | ISAKMP_ATTR_AF_TV:
-			case OAKLEY_GROUP_PRIME | ISAKMP_ATTR_AF_TLV:
-			case OAKLEY_GROUP_GENERATOR_ONE | ISAKMP_ATTR_AF_TV:
-			case OAKLEY_GROUP_GENERATOR_ONE | ISAKMP_ATTR_AF_TLV:
-			case OAKLEY_GROUP_GENERATOR_TWO | ISAKMP_ATTR_AF_TV:
-			case OAKLEY_GROUP_GENERATOR_TWO | ISAKMP_ATTR_AF_TLV:
-			case OAKLEY_GROUP_CURVE_A | ISAKMP_ATTR_AF_TV:
-			case OAKLEY_GROUP_CURVE_A | ISAKMP_ATTR_AF_TLV:
-			case OAKLEY_GROUP_CURVE_B | ISAKMP_ATTR_AF_TV:
-			case OAKLEY_GROUP_CURVE_B | ISAKMP_ATTR_AF_TLV:
-			case OAKLEY_GROUP_ORDER | ISAKMP_ATTR_AF_TV:
-			case OAKLEY_GROUP_ORDER | ISAKMP_ATTR_AF_TLV:
-#endif
 			default:
 				ugh = "unsupported OAKLEY attribute";
 				break;
@@ -1398,16 +1487,39 @@ rsasig_common:
 			}
 		}
 
+		if ((st->st_policy & POLICY_PSK) && pss != &empty_chunk && pss != NULL && ta.ta_prf != NULL) {
+			const size_t key_size_min = crypt_prf_fips_key_size_min(ta.ta_prf);
+
+			if (pss->len < key_size_min) {
+				if (libreswan_fipsmode()) {
+					ugh = builddiag("FIPS Error: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
+						st->st_connection->name,
+						pss->len,
+						ta.ta_prf->common.name,
+						key_size_min);
+					loglog(RC_LOG_SERIOUS, "%s", ugh);
+				} else {
+					libreswan_log("WARNING: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
+						st->st_connection->name,
+						pss->len,
+						ta.ta_prf->common.name,
+						key_size_min);
+				}
+			}
+
+		}
+
 		/*
 		 * ML: at last check for allowed transforms in alg_info_ike
 		 */
 		if (ugh == NULL) {
-			if (!ike_alg_ok_final(ta.encrypt, ta.enckeylen,
-					      ta.prf,
-					      ta.group != NULL ?
-						ta.group->group : 65535,
-					      c->alg_info_ike))
+			if (!ikev1_verify_ike(&ta, c->alg_info_ike)) {
+				/*
+				 * already logged; UGH acts as a skip
+				 * rest of checks flag
+				 */
 				ugh = "OAKLEY proposal refused";
+			}
 		}
 
 		if (ugh == NULL) {
@@ -1586,28 +1698,27 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 		    grp->val));
 
 	passert(enc->type.oakley == OAKLEY_ENCRYPTION_ALGORITHM);
-	ta.encrypt = enc->val;         /* OAKLEY_ENCRYPTION_ALGORITHM */
-	ta.encrypter = ikev1_get_ike_encrypt_desc(ta.encrypt);
-	passert(ta.encrypter != NULL);
+	ta.ta_encrypt = ikev1_get_ike_encrypt_desc(enc->val);
+	passert(ta.ta_encrypt != NULL);
 
 	if (trans->attr_cnt == 5) {
 		struct db_attr *enc_keylen;
 		enc_keylen = &trans->attrs[4];
 		ta.enckeylen = enc_keylen->val;
 	} else {
-		ta.enckeylen = ta.encrypter->keydeflen;
+		ta.enckeylen = ta.ta_encrypt->keydeflen;
 	}
 
 	passert(hash->type.oakley == OAKLEY_HASH_ALGORITHM);
-	ta.prf = ikev1_get_ike_prf_desc(hash->val);
-	passert(ta.prf != NULL);
+	ta.ta_prf = ikev1_get_ike_prf_desc(hash->val);
+	passert(ta.ta_prf != NULL);
 
 	passert(auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);
 	ta.auth   = auth->val;         /* OAKLEY_AUTHENTICATION_METHOD */
 
 	passert(grp->type.oakley == OAKLEY_GROUP_DESCRIPTION);
-	ta.group = lookup_group(grp->val); /* OAKLEY_GROUP_DESCRIPTION */
-	passert(ta.group != NULL);
+	ta.ta_dh = ikev1_get_ike_dh_desc(grp->val); /* OAKLEY_GROUP_DESCRIPTION */
+	passert(ta.ta_dh != NULL);
 
 	st->st_oakley = ta;
 
@@ -1699,7 +1810,19 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	}
 
 	*attrs = null_ipsec_trans_attrs;
-	attrs->transattrs.encrypt = trans->isat_transid;
+
+	switch (proto) {
+	case PROTO_IPCOMP:
+		attrs->transattrs.ta_comp = trans->isat_transid;
+		break;
+	case PROTO_IPSEC_ESP:
+		attrs->transattrs.ta_encrypt = ikev1_get_kernel_encrypt_desc(trans->isat_transid);
+		break;
+	case PROTO_IPSEC_AH:
+		break;
+	default:
+		bad_case(proto);
+	}
 
 	while (pbs_left(trans_pbs) >= isakmp_ipsec_attribute_desc.size) {
 		struct isakmp_attribute a;
@@ -1840,7 +1963,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				loglog(RC_COMMENT,
 				       "IPCA (IPcomp SA) contains GROUP_DESCRIPTION.  Ignoring inappropriate attribute.");
 			}
-			pfs_group = lookup_group(val);
+			pfs_group = ikev1_get_ike_dh_desc(val);
 			if (pfs_group == NULL) {
 				loglog(RC_LOG_SERIOUS,
 				       "OAKLEY_GROUP %" PRIu32 " not supported for PFS",
@@ -1895,7 +2018,17 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			break;
 
 		case AUTH_ALGORITHM | ISAKMP_ATTR_AF_TV:
-			attrs->transattrs.integ_hash = val;
+			attrs->transattrs.ta_integ = ikev1_get_kernel_integ_desc(val);
+			if (attrs->transattrs.ta_integ == NULL) {
+				/*
+				 * Caller will also see NULL and
+				 * assume that things should stumble
+				 * on to the next algorithm.
+				 */
+				loglog(RC_LOG_SERIOUS,
+				       "IKEv1 AH integrity algorithm %s not supported",
+				       enum_show(&ah_transformid_names, val));
+			}
 			break;
 
 		case KEY_LENGTH | ISAKMP_ATTR_AF_TV:
@@ -1971,7 +2104,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 	/* Check ealg and key length validity */
 	if (proto == PROTO_IPSEC_ESP) {
-		int ipsec_keysize = crypto_req_keysize(CRK_ESPorAH, attrs->transattrs.encrypt);
+		int ipsec_keysize = crypto_req_keysize(CRK_ESPorAH, attrs->transattrs.ta_ikev1_encrypt);
 
 		if (!LHAS(seen_attrs, KEY_LENGTH)) {
 			if (ipsec_keysize != 0) {
@@ -1983,7 +2116,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		}
 
 		err_t ugh = check_kernel_encrypt_alg(
-				attrs->transattrs.encrypt,
+				attrs->transattrs.ta_ikev1_encrypt,
 				attrs->transattrs.enckeylen);
 		if (ugh != NULL) {
 			loglog(RC_LOG_SERIOUS,
@@ -1991,12 +2124,23 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				ugh);
 			return FALSE;
 		}
+
+		/*
+		 * AEAD implies NULL integrity.
+		 */
+		if (ike_alg_is_aead(attrs->transattrs.ta_encrypt)
+		    && attrs->transattrs.ta_integ == NULL) {
+			attrs->transattrs.ta_integ = &ike_alg_integ_none;
+		}
+
 	}
 
 	if (proto == PROTO_IPSEC_AH) {
-		DBG(DBG_CONTROL, DBG_log("PROTO AH: we should check registration of attrs->transattrs.integ_hash=%d",
-			attrs->transattrs.integ_hash));
-		/* if not registered, abort early */
+		if (!LHAS(seen_attrs, AUTH_ALGORITHM)) {
+			loglog(RC_LOG_SERIOUS,
+			       "AUTH_ALGORITHM attribute missing in AH Transform");
+			return false;
+		}
 	}
 
 	return TRUE;
@@ -2328,8 +2472,6 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			int tn;
 
 			for (tn = 0; tn != ah_proposal.isap_notrans; tn++) {
-				int ok_transid = 0;
-				bool ok_auth = TRUE;
 
 				if (!parse_ipsec_transform(&ah_trans,
 							   &ah_attrs,
@@ -2345,8 +2487,29 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 				previous_transnum = ah_trans.isat_transnum;
 
+				/*
+				 * Assuming integrity was present, is
+				 * the auth algorithm known?
+				 *
+				 * NULL here indicates that the
+				 * attempt to look up the integrity
+				 * algorithm failed (NULL because
+				 * integrity was missing will have
+				 * already been rejected by the
+				 * above).
+				 *
+				 * If it wasn't skip the proposal (the
+				 * above call will have already logged
+				 * this).
+				 */
+				if (ah_attrs.transattrs.ta_integ == NULL) {
+					DBG(DBG_CONTROL | DBG_CRYPT,
+					    DBG_log("ignoring proposal with unknown integrity"));
+					continue;       /* try another */
+				}
+
 				/* we must understand ah_attrs.transid
-				 * COMBINED with ah_attrs.transattrs.integ_hash.
+				 * COMBINED with ah_attrs.transattrs.ta_ikev1_integ_hash.
 				 * See RFC 2407 "IPsec DOI" section 4.4.3
 				 * The following combinations are legal,
 				 * but we don't implement all of them:
@@ -2357,103 +2520,13 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				 * AH_SHA, AUTH_ALGORITHM_HMAC_SHA1
 				 * AH_DES, AUTH_ALGORITHM_DES_MAC (unimplemented)
 				 */
-				/* ??? this switch looks a lot like alg_info_esp_aa2sadb */
-				switch (ah_attrs.transattrs.integ_hash) {
-				case AUTH_ALGORITHM_NONE:
-					loglog(RC_LOG_SERIOUS,
-					       "AUTH_ALGORITHM attribute missing in AH Transform");
-					return BAD_PROPOSAL_SYNTAX;
-
-				case AUTH_ALGORITHM_HMAC_MD5:
-				case AUTH_ALGORITHM_KPDK:
-					ok_transid = AH_MD5;
-					break;
-
-				case AUTH_ALGORITHM_HMAC_SHA1:
-					ok_transid = AH_SHA;
-					break;
-
-				case AUTH_ALGORITHM_DES_MAC:
-					loglog(RC_LOG_SERIOUS,
-					       "AH_DES no longer supported");
-					ok_auth = FALSE;
-					break;
-
-				case AUTH_ALGORITHM_HMAC_SHA2_256:
-					ok_transid = AH_SHA2_256;
-					break;
-
-				case AUTH_ALGORITHM_HMAC_SHA2_384:
-					ok_transid = AH_SHA2_384;
-					break;
-
-				case AUTH_ALGORITHM_HMAC_SHA2_512:
-					ok_transid = AH_SHA2_512;
-					break;
-
-				case AUTH_ALGORITHM_HMAC_RIPEMD:
-					ok_transid = AH_RIPEMD;
-					break;
-
-				case AUTH_ALGORITHM_AES_XCBC:
-					ok_transid = AH_AES_XCBC_MAC;
-					break;
-
-				case AUTH_ALGORITHM_SIG_RSA:
-					loglog(RC_LOG_SERIOUS,
-					       "AH_RSA (RFC4359) not implemented");
-					ok_auth = FALSE;
-					break;
-
-				case AUTH_ALGORITHM_AES_128_GMAC:
-					ok_transid = AH_AES_128_GMAC;
-					break;
-
-				case AUTH_ALGORITHM_AES_192_GMAC:
-					ok_transid = AH_AES_192_GMAC;
-					break;
-
-				case AUTH_ALGORITHM_AES_256_GMAC:
-					ok_transid = AH_AES_256_GMAC;
-					break;
-
-				default:
-					loglog(RC_LOG_SERIOUS,
-					       "Unknown integ algorithm %d not supported",
-							ah_attrs.transattrs.integ_hash);
-					ok_auth = FALSE;
-					break;
-				}
-
-				if (ah_attrs.transattrs.encrypt !=
-				    ok_transid) {
-					struct esb_buf esb;
-
+				if (ah_trans.isat_transid != ah_attrs.transattrs.ta_integ->integ_ikev1_ah_transform) {
 					loglog(RC_LOG_SERIOUS,
 					       "%s attribute inappropriate in %s Transform",
-					       enum_showb(&auth_alg_names,
-							 ah_attrs.transattrs.integ_hash,
-							 &esb),
+					       ah_attrs.transattrs.ta_integ->common.fqn,
 					       enum_show(&ah_transformid_names,
-							 ah_attrs.transattrs.encrypt));
+							 ah_trans.isat_transid));
 					return BAD_PROPOSAL_SYNTAX;
-				}
-				/* ??? should test be !ok_auth || !ESP_AALG_PRESENT(ok_transid) */
-				/* ??? why is this called ESP_AALG_PRESENT when we're doing AH? */
-				if (!ok_auth) {
-					struct esb_buf esb;
-
-					DBG(DBG_CONTROL | DBG_CRYPT, {
-						ipstr_buf b;
-						DBG_log("%s attribute unsupported in %s Transform from %s",
-							enum_showb(&auth_alg_names,
-								  ah_attrs.transattrs.integ_hash,
-								  &esb),
-							enum_show(&ah_transformid_names,
-								  ah_attrs.transattrs.encrypt),
-							ipstr(&c->spd.that.host_addr, &b));
-					});
-					continue;       /* try another */
 				}
 				break;                  /* we seem to be happy */
 			}
@@ -2461,9 +2534,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				continue; /* we didn't find a nice one */
 
 			/* Check AH proposal with configuration */
-			if (c->alg_info_esp != NULL &&
-			    !ikev1_verify_ah(ah_attrs.transattrs.integ_hash,
-					c->alg_info_esp)) {
+			if (!ikev1_verify_ah(&ah_attrs.transattrs,
+					     c->alg_info_esp)) {
 				continue;
 			}
 			ah_attrs.spi = ah_spi;
@@ -2499,19 +2571,18 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 				if (c->alg_info_esp != NULL) {
 					ugh = check_kernel_encrypt_alg(
-						esp_attrs.transattrs.encrypt,
+						esp_attrs.transattrs.ta_ikev1_encrypt,
 						esp_attrs.transattrs.enckeylen);
 				}
 
 				if (ugh != NULL) {
-					switch (esp_attrs.transattrs.encrypt) {
+					switch (esp_attrs.transattrs.ta_ikev1_encrypt) {
 					case ESP_AES:
-					case ESP_CAMELLIAv1:
+					case ESP_CAMELLIA:
 					case ESP_3DES:
 						break;
 					case ESP_NULL:
-						if (esp_attrs.transattrs.integ_hash ==
-						    AUTH_ALGORITHM_NONE) {
+						if (esp_attrs.transattrs.ta_integ == &ike_alg_integ_none) {
 							loglog(RC_LOG_SERIOUS,
 							       "ESP_NULL requires auth algorithm");
 							return BAD_PROPOSAL_SYNTAX;
@@ -2541,18 +2612,15 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 						       ugh);
 						loglog(RC_LOG_SERIOUS,
 						       "unsupported ESP Transform %s from %s",
-						       enum_show(&esp_transformid_names,
-								 esp_attrs.transattrs.encrypt),
+						       esp_attrs.transattrs.ta_encrypt->common.fqn,
 						       ipstr(&c->spd.that.host_addr, &b));
 						continue; /* try another */
 						}
 					}
 				}
 
-				if (!kernel_alg_esp_auth_ok(
-						esp_attrs.transattrs.integ_hash,
-						c->alg_info_esp)) {
-					switch (esp_attrs.transattrs.integ_hash)
+				if (!kernel_alg_integ_ok(esp_attrs.transattrs.ta_integ)) {
+					switch (esp_attrs.transattrs.ta_ikev1_integ_hash)
 					{
 					case AUTH_ALGORITHM_NONE:
 						if (!ah_seen) {
@@ -2581,8 +2649,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 						DBG(DBG_CONTROL, DBG_log(
 						       "unsupported ESP auth alg %s from %s",
-						       enum_show(&auth_alg_names,
-								 esp_attrs.transattrs.integ_hash),
+						       esp_attrs.transattrs.ta_integ->common.fqn,
 						       ipstr(&c->spd.that.host_addr,
 								&b)));
 						continue; /* try another */
@@ -2604,11 +2671,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				continue; /* we didn't find a nice one */
 
 			/* check for allowed transforms in alg_info_esp */
-			if (c->alg_info_esp != NULL &&
-			    !ikev1_verify_esp(esp_attrs.transattrs.encrypt,
-						     esp_attrs.transattrs.enckeylen,
-						     esp_attrs.transattrs.integ_hash,
-						     c->alg_info_esp))
+			if (!ikev1_verify_esp(&esp_attrs.transattrs,
+					      c->alg_info_esp))
 				continue;
 			esp_attrs.spi = esp_spi;
 			inner_proto = IPPROTO_ESP;
@@ -2683,25 +2747,22 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				previous_transnum = ipcomp_trans.isat_transnum;
 
 				if (well_known_cpi != 0 &&
-				    ipcomp_attrs.transattrs.encrypt !=
-				      well_known_cpi) {
+				    ipcomp_attrs.transattrs.ta_comp != well_known_cpi) {
 					libreswan_log(
 						"illegal proposal: IPCOMP well-known CPI disagrees with transform");
 					return BAD_PROPOSAL_SYNTAX;
 				}
 
-				switch (ipcomp_attrs.transattrs.encrypt) {
+				switch (ipcomp_attrs.transattrs.ta_comp) {
 				case IPCOMP_DEFLATE: /* all we can handle! */
 					break;
 
 				default:
 					DBG(DBG_CONTROL | DBG_CRYPT, {
 						ipstr_buf b;
-						DBG_log("unsupported IPCOMP Transform %s from %s",
-							enum_show(&ipcomp_transformid_names,
-								  ipcomp_attrs.transattrs.encrypt),
-							ipstr(&c->spd.that.host_addr,
-								&b));
+						DBG_log("unsupported IPCOMP Transform %d from %s",
+							ipcomp_attrs.transattrs.ta_comp,
+							ipstr(&c->spd.that.host_addr, &b));
 					});
 					continue; /* try another */
 				}

@@ -53,10 +53,12 @@ static struct prf_context *init(const struct prf_desc *prf_desc,
 							  CKA_SIGN,
 							  key, &ignore);
 	if (context == NULL) {
-		libreswan_log("NSS: %s create %s context from key %s(%p) failed (%x)\n",
-			      name, prf_desc->common.name,
-			      key_name, key,
-			      PR_GetError());
+		LSWLOG(buf) {
+			lswlogf(buf, "NSS: %s create %s context from key %s(%p) failed",
+				name, prf_desc->common.name,
+				key_name, key);
+			lswlog_nss_error(buf);
+		}
 		return NULL;
 	}
 	if (DBGP(debug)) {

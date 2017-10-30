@@ -54,6 +54,8 @@ enum keyword_string_config_field {
 	KSF_MYID,
 	KSF_MYVENDORID,
 	KSF_PLUTOSTDERRLOG,
+	KSF_PLUTO_DNSSEC_ROOTKEY_FILE,
+	KSF_PLUTO_DNSSEC_ANCHORS,
 	KSF_PROTOSTACK,
 	KSF_LISTEN,
 	KSF_OCSP_URI,
@@ -71,9 +73,13 @@ enum keyword_numeric_config_field {
 	KBF_FRAGICMP,
 	KBF_HIDETOS,
 	KBF_UNIQUEIDS,
+	KBF_DO_DNSSEC,
 	KBF_PLUTOSTDERRLOGTIME,
 	KBF_PLUTOSTDERRLOGAPPEND,
+	KBF_PLUTOSTDERRLOGIP,
 	KBF_IKEPORT,
+	KBF_IKEBUF,
+	KBF_IKE_ERRQUEUE,
 	KBF_PERPEERLOG,
 	KBF_OVERRIDEMTU,
 	KBF_CONNMTU,
@@ -96,7 +102,6 @@ enum keyword_numeric_config_field {
 	KBF_SEEDBITS,
 	KBF_DROP_OPPO_NULL,
 	KBF_KEEPALIVE,
-	KBF_PLUTORESTARTONCRASH,
 	KBF_KLIPSDEBUG,
 	KBF_PLUTODEBUG,
 	KBF_NHELPERS,
@@ -156,6 +161,7 @@ enum keyword_numeric_config_field {
 	KBF_SECCOMP,		/* set SECCOMP mode */
 	KBF_VTI_ROUTING,	/* let updown do routing into VTI device */
 	KBF_VTI_SHARED,		/* VTI device is shared - enable checks and disable cleanup */
+	KBF_NIC_OFFLOAD,	/* xfrm offload to network device */
 	KBF_MAX
 };
 
@@ -371,7 +377,7 @@ struct config_parsed {
 	struct section_list conn_default;
 };
 
-extern const struct keyword_def ipsec_conf_keywords_v2[];
+extern const struct keyword_def ipsec_conf_keywords[];
 
 extern unsigned int parser_enum_list(const struct keyword_def *kd, const char *s,
 				     bool list);

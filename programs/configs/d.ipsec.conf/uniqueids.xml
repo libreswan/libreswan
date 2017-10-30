@@ -13,7 +13,7 @@ of 3.20) and old connections will never be replaced.  This situation is
 commonly known as clients using a "Group ID".
 </para>
 <para> This option may disappear in the near future. People using identical
-X.509 certificates on multiple devices are urged to upgrade to use seperate
+X.509 certificates on multiple devices are urged to upgrade to use separate
 certificates per client and device.
 </para>
   </listitem>

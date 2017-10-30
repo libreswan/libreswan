@@ -28,11 +28,7 @@
 #include <sys/socket.h>
 #endif /* NET_21 */ /* from libreswan.h */
 
-#if 0
-#include <linux/if.h>
-#else
 #include <net/if.h>
-#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -44,12 +40,13 @@
 #include "libreswan/pfkey.h"
 #include "libreswan/pfkeyv2.h"
 #include "pfkey_help.h"
+#include "libreswan/pfkey_debug.h"
 
 #include "libreswan/ipsec_tunnel.h"
 
-char *progname;
+const char *progname;
 
-static void usage(char *name)
+static void usage(const char *name)
 {
 	fprintf(stdout, "%s --create <virtual>\n", name);
 	fprintf(stdout, "%s --delete <virtual>\n", name);
@@ -172,6 +169,8 @@ int debug = 0;
 int main(int argc, char *argv[])
 {
 	tool_init_log(argv[0]);
+	/* force pfkey logging */
+	pfkey_error_func = pfkey_debug_func = printf;
 
 	struct ifreq ifr;
 	struct ipsectunnelconf shc;
@@ -231,10 +230,10 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'V':
-			strncpy(ifr.ifr_name, optarg, sizeof(ifr.ifr_name));
+			fill_and_terminate(ifr.ifr_name, optarg, sizeof(ifr.ifr_name));
 			break;
 		case 'P':
-			strncpy(shc.cf_name, optarg, sizeof(shc.cf_name));
+			fill_and_terminate(shc.cf_name, optarg, sizeof(shc.cf_name));
 			break;
 		case 'l':
 		{
@@ -242,11 +241,12 @@ int main(int argc, char *argv[])
 			size_t room = strlen(argv[0]) +
 					  sizeof(combine_fmt) +
 					  strlen(optarg);
+			char *b = malloc(room);
 
-			progname = malloc(room);
-			snprintf(progname, room, combine_fmt,
+			snprintf(b, room, combine_fmt,
 				argv[0],
 				optarg);
+			progname = b;
 			argcount -= 2;
 			break;
 		}
@@ -307,7 +307,7 @@ int main(int argc, char *argv[])
 		}
 		break;
 	case IPSEC_CLR_DEV:
-		strncpy(ifr.ifr_name, "ipsec0", sizeof(ifr.ifr_name));
+		fill_and_terminate(ifr.ifr_name, "ipsec0", sizeof(ifr.ifr_name));
 		break;
 	default:
 		fprintf(stderr, "%s: exactly one of '--attach', '--detach' or '--clear' options must be specified.\n"

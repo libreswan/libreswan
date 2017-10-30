@@ -158,4 +158,5 @@ const struct kernel_ops win2k_kernel_ops = {
 	.opname = "win2k",
 	.overlap_supported = FALSE,
 	.sha2_truncbug_support = FALSE,
+	.v6holes = NULL,
 };

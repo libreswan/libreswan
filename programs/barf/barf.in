@@ -323,7 +323,7 @@ then
 		then
 			iptables -L -v -n
 			_________________________ iptables-nat
-		
+
 			grep ^nat /proc/net/ip_tables_names > /dev/null 2>/dev/null &&
 				iptables -t nat -L -v -n
 			_________________________ iptables-mangle
@@ -398,7 +398,7 @@ else
 		echo "broken (redhat/fedora) 2.6 kernel without kallsyms"
 	fi
 fi
-	
+
 _________________________ lib/modules-netif_rx
 modulegoo kernel/net/ipv4/ipip.o netif_rx
 _________________________ kern.debug

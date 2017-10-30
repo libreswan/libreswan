@@ -110,12 +110,11 @@ void add_pending(int whack_sock,
 		char ciba[CONN_INST_BUF];
 		char cibb[CONN_INST_BUF];
 		struct connection *cb = isakmp_sa->st_connection;
-		DBG_log("Queuing pending IPsec SA negotiating with %s \"%s\"%s "
-				"IKE SA #%lu \"%s\"%s",
-				ipstr(&c->spd.that.host_addr, &b),
-				c->name, fmt_conn_instance(c, ciba),
-				isakmp_sa->st_serialno,
-				cb->name, fmt_conn_instance(cb, cibb));
+		DBG_log("Queuing pending IPsec SA negotiating with %s \"%s\"%s IKE SA #%lu \"%s\"%s",
+			ipstr(&c->spd.that.host_addr, &b),
+			c->name, fmt_conn_instance(c, ciba),
+			isakmp_sa->st_serialno,
+			cb->name, fmt_conn_instance(cb, cibb));
 		});
 
 	p = alloc_thing(struct pending, "struct pending");
@@ -243,10 +242,10 @@ void unpend(struct state *st, struct connection *cc)
 					st->st_serialno));
 	} else {
 		char cib[CONN_INST_BUF];
-		DBG(DBG_CONTROL, DBG_log("unpending state #%lu connection "
-					"\"%s\"%s",
-					st->st_serialno, cc->name,
-					fmt_conn_instance(cc, cib)));
+		DBG(DBG_CONTROL,
+			DBG_log("unpending state #%lu connection \"%s\"%s",
+				st->st_serialno, cc->name,
+				fmt_conn_instance(cc, cib)));
 	}
 
 	for (pp = host_pair_first_pending(st->st_connection);

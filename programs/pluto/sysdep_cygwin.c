@@ -44,7 +44,7 @@
 #include "kernel.h"
 #include "kernel_netlink.h"
 #include "kernel_pfkey.h"
-#include "kernel_noklips.h"
+#include "kernel_nokernel.h"
 #include "packet.h"
 #include "x509.h"
 #include "log.h"
@@ -85,10 +85,6 @@
  * "down-host" and "down-client" are run when an eroute is deleted.
  * They are useful for adjusting a firewall.
  */
-
-#ifndef DEFAULT_UPDOWN
-# define DEFAULT_UPDOWN "ipsec _updown"
-#endif
 
 /* Called to handle --interface <ifname>
  * Semantics: if specified, only these (real) interfaces are considered.

@@ -2,7 +2,7 @@
 # IPsec startup and shutdown command
 # Copyright (C) 1998, 1999, 2001  Henry Spencer.
 # Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2013, 2017 Tuomo Soini <tis@foobar.fi>
 # Copyright (C) 2016 Kim B. Heino <b@bbbs.net>
 #
 # This program is free software; you can redistribute it and/or modify it
@@ -15,17 +15,10 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 #
-# This is the version for use on Linux, see _realsetup.bsd for OSX/BSD
-
-IPSEC_CONF="${IPSEC_CONF:-@FINALCONFFILE@}"
-
+# This is the version for use on Linux.
 
 # Misc. paths (some of this should perhaps be overrideable from ipsec.conf).
-rundir=@FINALVARDIR@/run/pluto
-plutopid=${rundir}/pluto.pid
-plutoctl=${rundir}/pluto.ctl
-ipsecversion=/proc/net/ipsec_version
-kamepfkey=/proc/net/pfkey
+rundir=@IPSEC_RUNDIR@
 
 #pluto searches the current directory, so this is required for making it selinux compliant
 cd /
@@ -35,15 +28,12 @@ LIBRESWAN_RESOLV_CONF=${rundir}/libreswan-resolv-conf-backup
 ORIG_RESOLV_CONF=@FINALSYSCONFDIR@/resolv.conf
 
 
-if test `ip addr list|grep -c cipsec` -ne 0
-then
-	echo "Cisco IPSec client is already loaded, aborting! (cipsec# device found)"
-	exit 1
+if [ $(ip addr list|grep -c cipsec) -ne 0 ]; then
+    echo "Cisco IPsec client is already loaded, aborting! (cipsec# device found)"
+    exit 1
 fi
 
-# which kernel are we using?
-IPSECprotostack=`ipsec addconn --config $IPSEC_CONF --liststack`
-
+initsystem=unknown
 if [ -d /run/systemd/system ]; then
     initsystem=systemd
 elif [ -f /sbin/start ]; then
@@ -56,8 +46,6 @@ elif [ -f /sbin/rc-service ]; then
     initsystem=openrc
 elif [ -x /etc/init.d/ipsec ]; then
     initsystem=sysv
-else
-    initsystem=unknown
 fi
 
 case "$1" in

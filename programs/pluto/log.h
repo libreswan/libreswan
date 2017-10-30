@@ -23,25 +23,17 @@
 
 #include "lswlog.h"
 
-#ifndef PERPERRLOGDIR
-#define PERPERRLOGDIR "/var/log/pluto/peer"
-#endif
-
 /* moved common code to library file */
 #include "libreswan/passert.h"
 
 extern bool
-	log_to_perpeer,         /* should log go to per-IP file? */
-	log_to_audit,         /* audit logs for kernel/auditd */
 	log_with_timestamp,     /* prefix timestamp */
-	log_append;
+	log_append,
+	log_ip;
 
-extern char *base_perpeer_logdir;
+extern bool log_to_syslog;          /* should log go to syslog? */
 extern char *pluto_log_file;
 extern char *pluto_stats_binary;
-
-/* maximum number of files to keep open for per-peer log files */
-#define MAX_PEERLOG_COUNT 16
 
 /* Context for logging.
  *
@@ -67,6 +59,9 @@ extern bool whack_prompt_for(int whackfd,
 extern void log_state(struct state *st, enum state_kind state);
 
 extern void extra_debugging(const struct connection *c);
+
+extern void set_debugging(lset_t deb);
+extern lset_t base_debugging;	/* bits selecting what to report */
 
 #define reset_debugging() { set_debugging(base_debugging); }
 
@@ -107,13 +102,17 @@ extern void pluto_init_log(void);
 extern void close_log(void);
 extern void exit_log(const char *message, ...) PRINTF_LIKE(1) NEVER_RETURNS;
 
-/* close of all per-peer logging */
-extern void close_peerlog(void);
+/*
+ * struct lswlog primatives
+ */
+bool whack_log_p(void);
+void whack_log_pre(enum rc_type rc, struct lswlog *buf);
 
-/* free all per-peer log resources */
-extern void perpeer_logfree(struct connection *c);
-
-extern void whack_log(int mess_no, const char *message, ...) PRINTF_LIKE(2);
+void whack_log(enum rc_type rc, const char *message, ...) PRINTF_LIKE(2);
+/*
+ * Like whack_log() but suppress the 'NNN ' prefix.
+ */
+void whack_log_comment(const char *message, ...) PRINTF_LIKE(1);
 
 /* show status, usually on whack log */
 extern void show_status(void);
@@ -156,8 +155,9 @@ extern void linux_audit_conn(const struct state *st, enum linux_audit_kind);
 /*
  * some events are to be logged only occasionally.
  */
-extern bool logged_txt_warning;
 extern bool logged_myid_ip_txt_warning;
 extern bool logged_myid_fqdn_txt_warning;
+
+void prettynow(char *buf, size_t buflen, const char *fmt) STRFTIME_LIKE(3);
 
 #endif /* _PLUTO_LOG_H */

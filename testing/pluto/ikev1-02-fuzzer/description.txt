@@ -1,0 +1,7 @@
+This uses a basic IKEv1 PSK setup, and then sends known broken
+and malicious packets from the ike-scan fuzzer
+
+The first packet is a manual packet known to crash v3.20.
+The rest is a fuzzer scan of 10000 packets
+
+This test requires the ike-scan package to be installed on west

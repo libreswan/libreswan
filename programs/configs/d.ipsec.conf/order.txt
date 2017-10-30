@@ -65,7 +65,7 @@ d.ipsec.conf/dpdtimeout.xml
 d.ipsec.conf/dpdaction.xml
 d.ipsec.conf/pfs.xml
 d.ipsec.conf/pfsgroup.xml
-d.ipsec.conf/aggrmode.xml
+d.ipsec.conf/aggressive.xml
 d.ipsec.conf/salifetime.xml
 d.ipsec.conf/replay-window.xml
 d.ipsec.conf/rekey.xml
@@ -95,6 +95,7 @@ d.ipsec.conf/myid.xml
 d.ipsec.conf/protostack.xml
 d.ipsec.conf/interfaces.xml
 d.ipsec.conf/listen.xml
+d.ipsec.conf/ike-socket.xml
 d.ipsec.conf/ikeport.xml
 d.ipsec.conf/nflog-all.xml
 d.ipsec.conf/nat_traversal.xml
@@ -120,9 +121,9 @@ d.ipsec.conf/syslog.xml
 d.ipsec.conf/klipsdebug.xml
 d.ipsec.conf/plutodebug.xml
 d.ipsec.conf/uniqueids.xml
-d.ipsec.conf/plutorestartoncrash.xml
 d.ipsec.conf/logfile.xml
 d.ipsec.conf/logappend.xml
+d.ipsec.conf/logip.xml
 d.ipsec.conf/logtime.xml
 d.ipsec.conf/force-busy.xml
 d.ipsec.conf/ddos-mode.xml

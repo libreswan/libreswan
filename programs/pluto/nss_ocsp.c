@@ -95,7 +95,7 @@ bool init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 	if (strict)
 		rv = CERT_SetOCSPFailureMode(ocspMode_FailureIsVerificationFailure);
 	else
-		rv = CERT_SetOCSPFailureMode( ocspMode_FailureIsNotAVerificationFailure);
+		rv = CERT_SetOCSPFailureMode(ocspMode_FailureIsNotAVerificationFailure);
 
 	if (rv != SECSuccess) {
 		loglog(RC_LOG_SERIOUS, "NSS error setting OCSP failure mode: %s",

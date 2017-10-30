@@ -1,0 +1,100 @@
+/testing/guestbin/swan-prep
+west #
+ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
+west #
+ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec auto --add westnet-eastnet-ikev2
+002 added connection description "westnet-eastnet-ikev2"
+west #
+ echo "initdone"
+initdone
+west #
+ #east is the initiator
+west #
+ sleep 10
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ipsec whack --trafficstatus
+006 #2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+west #
+ ipsec stop
+Redirecting to: systemctl stop ipsec.service
+west #
+ # wait till east retransmit delay get to bigger.
+west #
+ sleep 17
+west #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec auto --add westnet-eastnet-ikev2
+002 added connection description "westnet-eastnet-ikev2"
+west #
+ ipsec auto --up westnet-eastnet-ikev2
+002 "westnet-eastnet-ikev2" #1: initiating v2 parent SA
+133 "westnet-eastnet-ikev2" #1: STATE_PARENT_I1: initiate
+133 "westnet-eastnet-ikev2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+134 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
+002 "westnet-eastnet-ikev2" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+002 "westnet-eastnet-ikev2" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "westnet-eastnet-ikev2" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ipsec whack --trafficstatus
+006 #2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+west #
+ echo "sleep 33 seconds. there should be only one Child SA after this"
+sleep 33 seconds. there should be only one Child SA after this
+west #
+ sleep 13
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ipsec whack --trafficstatus
+006 #2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=672, outBytes=672, id='@east'
+west #
+ echo done
+done
+west #
+ ipsec whack --trafficstatus
+006 #2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=672, outBytes=672, id='@east'
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

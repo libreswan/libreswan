@@ -1,0 +1,26 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec _stackmanager start
+east #
+ # Start only one, so it is easier to spot a crash
+east #
+ ipsec pluto --config /etc/ipsec.conf
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add test
+002 added connection description "test"
+east #
+ echo "initdone"
+initdone
+east #
+ # if east was already down, the fuzzer crashed it
+east #
+ hostname |grep east > /dev/null && ipsec whack --shutdown
+002 shutting down
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

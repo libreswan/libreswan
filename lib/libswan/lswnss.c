@@ -17,12 +17,14 @@
 #include <nspr.h>
 #include <nss.h>
 #include <pk11pub.h>
+#include <secmod.h>
 #include <keyhi.h>
 
 #include "lswconf.h"
 #include "lswnss.h"
 #include "lswalloc.h"
 #include "lswlog.h"
+#include "lswfips.h"
 
 static unsigned flags;
 
@@ -41,7 +43,7 @@ bool lsw_nss_setup(const char *configdir, unsigned setup_flags,
 	PR_Init(PR_USER_THREAD, PR_PRIORITY_NORMAL, 1);
 
 	libreswan_log("Initializing NSS");
-	if (configdir) {
+	if (configdir != NULL) {
 		const char sql[] = "sql:";
 		char *nssdir;
 		if (strncmp(sql, configdir, strlen(sql)) == 0) {
@@ -65,19 +67,38 @@ bool lsw_nss_setup(const char *configdir, unsigned setup_flags,
 		}
 	} else {
 		NSS_NoDB_Init(".");
+		if (libreswan_fipsmode() && !PK11_IsFIPS()) {
+			SECMODModule *internal = SECMOD_GetInternalModule();
+			if (internal == NULL) {
+				snprintf(err, sizeof(lsw_nss_buf_t),
+					 "SECMOD_GetInternalModule() failed");
+				return false;
+			}
+			if (SECMOD_DeleteInternalModule(internal->commonName) != SECSuccess) {
+				snprintf(err, sizeof(lsw_nss_buf_t),
+					 "SECMOD_DeleteInternalModule(%s) failed",
+					 internal->commonName);
+				return false;
+			}
+			if (!PK11_IsFIPS()) {
+				snprintf(err, sizeof(lsw_nss_buf_t),
+					 "NSS FIPS mode toggle failed");
+				return false;
+			}
+		}
 	}
 
-	if (PK11_IsFIPS() && get_password == NULL) {
+	if (PK11_IsFIPS() && configdir != NULL && get_password == NULL) {
 		snprintf(err, sizeof(lsw_nss_buf_t),
-			 "on FIPS mode a password is required");
+			 "in FIPS mode a password is required");
 		return FALSE;
 	}
 
-	if (get_password) {
+	if (get_password != NULL) {
 		PK11_SetPasswordFunc(get_password);
 	}
 
-	if (!(flags & LSW_NSS_SKIP_AUTH)) {
+	if (configdir != NULL) {
 		PK11SlotInfo *slot = lsw_nss_get_authenticated_slot(err);
 		if (slot == NULL) {
 			return FALSE;

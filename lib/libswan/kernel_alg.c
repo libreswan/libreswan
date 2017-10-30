@@ -35,8 +35,23 @@
 #include "kernel_alg.h"
 #include "lswlog.h"
 #include "lswalloc.h"
-#include "ike_alg.h"
 #include "ietf_constants.h"
+
+#include "ike_alg.h"
+#include "ike_alg_null.h"
+#include "ike_alg_aes.h"
+
+/*
+ * XXX: The kernel algorithm database is indexed by SADB kernel values
+ * (which date back to the defunct pfkey interface) and assumes there
+ * is a value for every single supported algorithm.
+ *
+ * The assumption isn't valid.  Magic SADB values have been added when
+ * no official value was available.
+ *
+ * The code should instead be rewritten to use 'struct ike_alg*' as a
+ * kernel interface agnostic way of identifying algorithms.  Later.
+ */
 
 /* ALG storage */
 struct sadb_alg esp_aalg[K_SADB_AALG_MAX + 1];	/* ??? who fills this table in? */
@@ -208,54 +223,83 @@ int kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 	return 1;
 }
 
-static struct kernel_integ *kernel_integ;
+/*
+ * The kernel_alg database should work with IKE_ALGs and not SADBs,
+ * this works for the moment.
+ */
+struct sadb_id {
+	const struct ike_alg *alg;
+	int id;
+};
 
-void kernel_integ_add(enum sadb_aalg sadb_aalg,
-		      const struct integ_desc *integ,
-		      const char *netlink_name)
+static int find_sadb_id(const struct sadb_id *table, const struct ike_alg *alg)
 {
+	for (const struct sadb_id *map = table; map->alg != NULL; map++) {
+		if (map->alg == alg) {
+			return map->id;
+		}
+	}
+	return -1;
+}
+
+const struct sadb_id integ_sadb_ids[] = {
+	{ &ike_alg_integ_aes_cmac.common, SADB_X_AALG_AES_CMAC_96, },
+	{ NULL, 0 },
+};
+
+void kernel_integ_add(const struct integ_desc *integ)
+{
+	int sadb_aalg = find_sadb_id(integ_sadb_ids, &integ->common);
+	if (sadb_aalg < 0) {
+		PEXPECT_LOG("Integrity algorithm %s has no matching SADB ID",
+			    integ->common.fqn);
+		return;
+	}
+
 	struct sadb_alg alg = {
-		.sadb_alg_minbits = integ->integ_key_size * BITS_PER_BYTE,
-		.sadb_alg_maxbits = integ->integ_key_size * BITS_PER_BYTE,
+		.sadb_alg_minbits = integ->integ_keymat_size * BITS_PER_BYTE,
+		.sadb_alg_maxbits = integ->integ_keymat_size * BITS_PER_BYTE,
 		.sadb_alg_id = sadb_aalg,
 	};
 	if (kernel_alg_add(SADB_SATYPE_ESP,  SADB_EXT_SUPPORTED_AUTH, &alg) != 1) {
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register %s for ESP",
-		       integ->common.name);
+		PEXPECT_LOG("Warning: failed to register %s for ESP",
+			    integ->common.fqn);
 		return;
 	}
-	struct kernel_integ *new = alloc_thing(struct kernel_integ, "kernel integ");
-	*new = (struct kernel_integ) {
-		.sadb_aalg = sadb_aalg,
-		.integ = integ,
-		.netlink_name = netlink_name,
-		.next = kernel_integ,
+}
+
+const struct sadb_id encrypt_sadb_ids[] = {
+	{ &ike_alg_encrypt_aes_gcm_8.common, SADB_X_EALG_AES_GCM_ICV8, },
+	{ &ike_alg_encrypt_aes_gcm_12.common, SADB_X_EALG_AES_GCM_ICV12, },
+	{ &ike_alg_encrypt_aes_gcm_16.common, SADB_X_EALG_AES_GCM_ICV16, },
+	{ &ike_alg_encrypt_aes_ccm_8.common, SADB_X_EALG_AES_CCM_ICV8, },
+	{ &ike_alg_encrypt_aes_ccm_12.common, SADB_X_EALG_AES_CCM_ICV12, },
+	{ &ike_alg_encrypt_aes_ccm_16.common, SADB_X_EALG_AES_CCM_ICV16, },
+	{ &ike_alg_encrypt_null_integ_aes_gmac.common, SADB_X_EALG_NULL_AUTH_AES_GMAC, },
+	{ NULL, 0},
+};
+
+void kernel_encrypt_add(const struct encrypt_desc *encrypt)
+{
+	int sadb_ealg = find_sadb_id(encrypt_sadb_ids, &encrypt->common);
+	if (sadb_ealg < 0) {
+		PEXPECT_LOG("Integrity algorithm %s has no matching SADB ID",
+			    encrypt->common.fqn);
+		return;
+	}
+
+	struct sadb_alg alg = {
+		.sadb_alg_ivlen = encrypt->wire_iv_size,
+		.sadb_alg_minbits = encrypt_min_key_bit_length(encrypt),
+		.sadb_alg_maxbits = encrypt_max_key_bit_length(encrypt),
+		.sadb_alg_id = sadb_ealg,
 	};
-	kernel_integ = new;
-}
 
-const struct kernel_integ *kernel_integ_by_sadb_aalg(enum sadb_aalg sadb_aalg)
-{
-	for (struct kernel_integ *k = kernel_integ; k != NULL; k = k->next) {
-		if (k->sadb_aalg == sadb_aalg) {
-			return k;
-		}
+	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1) {
+		PEXPECT_LOG("Warning: failed to register %s for ESP",
+			    encrypt->common.fqn);
+		return;
 	}
-	return NULL;
-}
-
-const struct kernel_integ *kernel_integ_by_ikev1_auth_attribute(enum ikev1_auth_attribute id)
-{
-	for (struct kernel_integ *k = kernel_integ; k != NULL; k = k->next) {
-		/*
-		 * For integ, the ESP_ID contains enum
-		 * ikev1_auth_attribute
-		 */
-		if ((enum ikev1_auth_attribute) k->integ->common.ikev1_esp_id == id) {
-			return k;
-		}
-	}
-	return NULL;
 }
 
 err_t check_kernel_encrypt_alg(int alg_id, unsigned int key_len)
@@ -284,7 +328,7 @@ err_t check_kernel_encrypt_alg(int alg_id, unsigned int key_len)
 		case ESP_AES_CCM_12:
 		case ESP_AES_CCM_16:
 		case ESP_AES_CTR:
-		case ESP_CAMELLIAv1:
+		case ESP_CAMELLIA:
 			/* ??? does 0 make sense here? */
 			if (key_len != 0 && key_len != 128 &&
 			    key_len != 192 && key_len != 256) {
@@ -295,9 +339,9 @@ err_t check_kernel_encrypt_alg(int alg_id, unsigned int key_len)
 						alg_p->sadb_alg_maxbits);
 			}
 			break;
-#if 0
-		case ESP_SEED_CBC:
-#endif
+
+		/* ESP_SEED_CBC not supported by us - also number got re-used in IKEv2 */
+
 		case ESP_CAST:
 			if (key_len != 128) {
 				/* ??? function name does not belong in log */
@@ -339,54 +383,6 @@ err_t check_kernel_encrypt_alg(int alg_id, unsigned int key_len)
 	}
 
 	return ugh;
-}
-
-/*
- * Load kernel_alg arrays from /proc
- * Only used in manual mode from programs/spi/spi.c
- */
-bool kernel_alg_proc_read(void)
-{
-	int satype;
-	int supp_exttype;
-	int alg_id, ivlen, minbits, maxbits;
-	char name[20];
-	struct sadb_alg sadb_alg;
-	char buf[128];
-	FILE *fp = fopen("/proc/net/pf_key_supported", "r");
-
-	if (fp == NULL)
-		return FALSE;
-
-	kernel_alg_init();
-	while (fgets(buf, sizeof(buf), fp)) {
-		if (buf[0] != ' ')	/* skip titles */
-			continue;
-		sscanf(buf, "%d %d %d %d %d %d %s",
-			&satype, &supp_exttype,
-			&alg_id, &ivlen,
-			&minbits, &maxbits, name);
-		switch (satype) {
-		case SADB_SATYPE_ESP:
-			switch (supp_exttype) {
-			case SADB_EXT_SUPPORTED_AUTH:
-			case SADB_EXT_SUPPORTED_ENCRYPT:
-				sadb_alg.sadb_alg_id = alg_id;
-				sadb_alg.sadb_alg_ivlen = ivlen;
-				sadb_alg.sadb_alg_minbits = minbits;
-				sadb_alg.sadb_alg_maxbits = maxbits;
-				sadb_alg.sadb_alg_reserved = 0;
-				kernel_alg_add(satype, supp_exttype,
-					       &sadb_alg);
-				break;
-			}
-			break;
-		default:
-			break;
-		}
-	}
-	fclose(fp);
-	return TRUE;
 }
 
 /*
@@ -467,108 +463,177 @@ struct sadb_alg *kernel_alg_esp_sadb_alg(int alg_id)
 	return sadb_alg;
 }
 
-/* ??? identical to kernel_alg_ah_auth_ok */
-bool kernel_alg_esp_auth_ok(int auth,
-			struct alg_info_esp *alg_info __attribute__((unused)))
+bool kernel_alg_dh_ok(const struct oakley_group_desc *dh)
 {
-	return ESP_AALG_PRESENT(alg_info_esp_aa2sadb(auth));
-}
-
-/* ??? pretty similar to kernel_alg_ah_auth_keylen */
-int kernel_alg_esp_auth_keylen(int auth)
-{
-	int sadb_aalg = alg_info_esp_aa2sadb(auth);
-	int a_keylen = 0;
-
-	if (sadb_aalg != 0)
-		a_keylen = esp_aalg[sadb_aalg].sadb_alg_maxbits /
-			BITS_PER_BYTE;
-
-	DBG(DBG_CONTROL | DBG_CRYPT | DBG_PARSING,
-		DBG_log("kernel_alg_esp_auth_keylen(auth=%d, sadb_aalg=%d): a_keylen=%d",
-			auth, sadb_aalg, a_keylen);
-		);
-	return a_keylen;
-}
-
-/* ??? identical to kernel_alg_esp_auth_ok */
-bool kernel_alg_ah_auth_ok(int auth,
-			struct alg_info_esp *alg_info __attribute__((unused)))
-{
-	return ESP_AALG_PRESENT(alg_info_esp_aa2sadb(auth));
-}
-
-/* ??? pretty similar to kernel_alg_esp_auth_keylen */
-int kernel_alg_ah_auth_keylen(int auth)
-{
-	int sadb_aalg = alg_info_esp_aa2sadb(auth);
-	int a_keylen = 0;
-
-	if (sadb_aalg != 0)
-		a_keylen = esp_aalg[sadb_aalg].sadb_alg_maxbits /
-			BITS_PER_BYTE;
-
-	DBG(DBG_CONTROL | DBG_CRYPT | DBG_PARSING,
-		DBG_log("kernel_alg_ah_auth_keylen(auth=%d, sadb_aalg=%d): a_keylen=%d",
-			auth, sadb_aalg, a_keylen);
-		);
-	return a_keylen;
-}
-
-/* returns pointer to static buffer -- NOT RE-ENTRANT */
-struct esp_info *kernel_alg_esp_info(u_int8_t transid, u_int16_t keylen,
-				u_int16_t auth)
-{
-	int sadb_aalg, sadb_ealg;
-	static struct esp_info ei_buf; /* static ??? fixme */
-
-	DBG(DBG_PARSING,
-		DBG_log("kernel_alg_esp_info(): transid=%d, keylen=%d,auth=%d, ",
-			transid, keylen, auth));
-	sadb_ealg = transid;
-	sadb_aalg = alg_info_esp_aa2sadb(auth);
-
-	if (!ESP_EALG_PRESENT(sadb_ealg) ||
-		!ESP_AALG_PRESENT(sadb_aalg)) {
-		DBG(DBG_PARSING,
-			DBG_log("kernel_alg_esp_info(): transid or auth not registered with kernel"));
-		return NULL;
+	if (dh == NULL) {
+		PEXPECT_LOG("%s", "DH needs to be valid (non-NULL)");
+		return false;
 	}
-	zero(&ei_buf);
-	ei_buf.transid = transid;
-	ei_buf.auth = auth;
+	/* require an in-process/ike implementation of DH */
+	return ike_alg_is_ike(&dh->common);
+}
+
+bool kernel_alg_encrypt_ok(const struct encrypt_desc *encrypt)
+{
+	if (encrypt == NULL) {
+		PEXPECT_LOG("%s", "encryption needs to be valid (non-NULL)");
+		return false;
+	}
+	return ESP_EALG_PRESENT(encrypt->common.id[IKEv1_ESP_ID]);
+}
+
+bool kernel_alg_integ_ok(const struct integ_desc *integ)
+{
+	if (integ == NULL) {
+		PEXPECT_LOG("%s", "integrity needs to be valid (non-NULL)");
+		return false;
+	}
+	return ESP_AALG_PRESENT(integ->integ_ikev1_ah_transform);
+}
+
+bool kernel_alg_is_ok(const struct ike_alg *alg)
+{
+	if (alg == NULL) {
+		PEXPECT_LOG("%s", "algorithm needs to be valid (non-NULL)");
+		return false;
+	} else if (alg->algo_type == &ike_alg_dh) {
+		return kernel_alg_dh_ok(dh_desc(alg));
+	} else if (alg->algo_type == &ike_alg_encrypt) {
+		return kernel_alg_encrypt_ok(encrypt_desc(alg));
+	} else if (alg->algo_type == &ike_alg_integ) {
+		return kernel_alg_integ_ok(integ_desc(alg));
+	} else {
+		PASSERT_FAIL("algorithm %s of type %s is not valid in the kernel",
+			     alg->fqn, ike_alg_type_name(alg->algo_type));
+	}
+}
+
+bool kernel_alg_encrypt_key_size(const struct encrypt_desc *encrypt,
+				 int keylen, size_t *key_size)
+{
+	/*
+	 * Assume the two ENUMs are the same!
+	 */
+	enum ipsec_cipher_algo transid = encrypt->common.id[IKEv1_ESP_ID];
+	int sadb_ealg = transid;
 
 	/*
-	 * don't return "default" keylen because this value is used from
-	 * setup_half_ipsec_sa() to "validate" keylen
-	 * In effect,  enckeylen will be used as "max" value
+	 * XXX: Is KEYLEN ever zero for any case other than 'null'
+	 * encryption?  If it is, patch it up and then log it to find
+	 * out.
 	 */
-
-	/* if no key length is given, return default */
 	if (keylen == 0) {
-		ei_buf.enckeylen = esp_ealg[sadb_ealg].sadb_alg_minbits /
-			BITS_PER_BYTE;
-	} else if (esp_ealg[sadb_ealg].sadb_alg_minbits <= keylen &&
-		keylen <= esp_ealg[sadb_ealg].sadb_alg_maxbits) {
-		ei_buf.enckeylen = keylen / BITS_PER_BYTE;
-	} else {
-		DBG(DBG_PARSING,
-			DBG_log("kernel_alg_esp_info(): transid=%d, proposed keylen=%u is invalid, not %u<=X<=%u",
-				transid, keylen,
-				esp_ealg[sadb_ealg].sadb_alg_minbits,
-				esp_ealg[sadb_ealg].sadb_alg_maxbits);
-			);
-		/* proposed key length is invalid! */
-		return NULL;
+		if (encrypt != &ike_alg_encrypt_null) {
+			keylen = esp_ealg[sadb_ealg].sadb_alg_minbits;
+			DBG(DBG_KERNEL,
+			    DBG_log("XXX: %s has key length of 0, adjusting to %d",
+				    encrypt->common.fqn, keylen));
+		}
 	}
 
-	ei_buf.encryptalg = sadb_ealg;
-	ei_buf.authalg = sadb_aalg;
+	if (esp_ealg[sadb_ealg].sadb_alg_minbits <= keylen &&
+	    keylen <= esp_ealg[sadb_ealg].sadb_alg_maxbits) {
+		/*
+		 * XXX: is the above check equivalent to
+		 * encrypt_has_key_bit_length()?  If it is then it
+		 * should have been applied already by the parser?
+		 * Find out.
+		 */
+		if (!encrypt_has_key_bit_length(encrypt, keylen)) {
+			DBG(DBG_KERNEL, DBG_log("XXX: IKE_ALG rejects %s key length of %d accepted by SADB",
+						encrypt->common.fqn, keylen));
+
+		}
+	} else {
+		/*
+		 * XXX: conversely is SADB rejecting something IKE_ALG
+		 * things is ok?
+		 */
+		if (encrypt_has_key_bit_length(encrypt, keylen)) {
+			DBG(DBG_KERNEL, DBG_log("XXX: IKE_ALG accepts %s key length of %d rejected by SADB",
+						encrypt->common.fqn, keylen));
+		}
+		DBG(DBG_KERNEL,
+		    DBG_log("kernel_alg_esp_info(): transid=%d, proposed keylen=%u is invalid, not %u<=X<=%u",
+			    transid, keylen,
+			    esp_ealg[sadb_ealg].sadb_alg_minbits,
+			    esp_ealg[sadb_ealg].sadb_alg_maxbits));
+		/* proposed key length is invalid! */
+		return FALSE;
+	}
+
+	/*
+	 * This is all this function should be doing, which isn't
+	 * much.
+	 */
+	*key_size = keylen / BITS_PER_BYTE;
 	DBG(DBG_PARSING,
-		DBG_log("kernel_alg_esp_info(): transid=%d, auth=%d, ei=%p, enckeylen=%d, encryptalg=%d, authalg=%d",
-			transid, auth, &ei_buf, (int)ei_buf.enckeylen,
-			ei_buf.encryptalg,
-			ei_buf.authalg);
-		);
-	return &ei_buf;
+	    DBG_log("encrypt %s keylen=%d transid=%d, key_size=%zu, encryptalg=%d",
+		    encrypt->common.fqn, keylen, transid, *key_size, sadb_ealg));
+	return TRUE;
+}
+
+/*
+ * XXX This maps IPSEC AH Transform Identifiers to IKE Integrity Algorithm
+ * Transform IDs. But IKEv1 and IKEv2 tables don't match fully! See:
+ *
+ * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-7
+ * http://www.iana.org/assignments/isakmp-registry/isakmp-registry.xhtml#isakmp-registry-7
+ * http://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-6
+ *
+ * Callers of this function should get fixed
+ */
+int alg_info_esp_sadb2aa(int sadb_aalg)
+{
+	int auth = 0;
+
+	/* md5 and sha1 entries are "off by one" */
+	switch (sadb_aalg) {
+	/* 0-1 RESERVED */
+	case SADB_AALG_MD5HMAC: /* 2 */
+		auth = AUTH_ALGORITHM_HMAC_MD5; /* 1 */
+		break;
+	case SADB_AALG_SHA1HMAC: /* 3 */
+		auth = AUTH_ALGORITHM_HMAC_SHA1; /* 2 */
+		break;
+	/* 4 - SADB_AALG_DES */
+	case SADB_X_AALG_SHA2_256HMAC:
+		auth = AUTH_ALGORITHM_HMAC_SHA2_256;
+		break;
+	case SADB_X_AALG_SHA2_384HMAC:
+		auth = AUTH_ALGORITHM_HMAC_SHA2_384;
+		break;
+	case SADB_X_AALG_SHA2_512HMAC:
+		auth = AUTH_ALGORITHM_HMAC_SHA2_512;
+		break;
+	case SADB_X_AALG_RIPEMD160HMAC:
+		auth = AUTH_ALGORITHM_HMAC_RIPEMD;
+		break;
+	case SADB_X_AALG_AES_XCBC_MAC:
+		auth = AUTH_ALGORITHM_AES_XCBC;
+		break;
+	case SADB_X_AALG_RSA: /* unsupported by us */
+		auth = AUTH_ALGORITHM_SIG_RSA;
+		break;
+	case SADB_X_AALG_AH_AES_128_GMAC:
+		auth = AUTH_ALGORITHM_AES_128_GMAC;
+		break;
+	case SADB_X_AALG_AH_AES_192_GMAC:
+		auth = AUTH_ALGORITHM_AES_192_GMAC;
+		break;
+	case SADB_X_AALG_AH_AES_256_GMAC:
+		auth = AUTH_ALGORITHM_AES_256_GMAC;
+		break;
+	/* private use numbers */
+	case SADB_X_AALG_AES_CMAC_96:
+		auth = AUTH_ALGORITHM_AES_CMAC_96;
+		break;
+	case SADB_X_AALG_NULL:
+		auth = AUTH_ALGORITHM_NULL_KAME;
+		break;
+	default:
+		/* which would hopefully be true  */
+		auth = sadb_aalg;
+	}
+	return auth;
 }

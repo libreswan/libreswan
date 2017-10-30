@@ -1,0 +1,75 @@
+../../guestbin/swan-prep
+west #
+ ../bin/algparse.sh PATH/libexec/ipsec/algparse algparse*.txt
+PATH/libexec/ipsec/algparse -v1 -t # algparse.v1.txt
+PATH/libexec/ipsec/algparse -v2 -t # algparse.v2.txt
+PATH/libexec/ipsec/algparse -v # algparse.v.txt
+west #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ grep ^FIPS /tmp/pluto.log
+FIPS Product: NO
+FIPS Kernel: NO
+FIPS Mode: NO
+FIPS HMAC integrity support [enabled]
+FIPS mode disabled for pluto daemon
+FIPS HMAC integrity verification self-test passed
+west #
+ sed -n -e '/^|/d' -e '/ algorithms:/ { :loop ; p ; n ; /^  / b loop }' /tmp/pluto.log
+Encryption algorithms:
+  AES_CCM_16          IKEv1:     ESP     IKEv2:     ESP     FIPS  {256,192,*128}  (aes_ccm aes_ccm_c)
+  AES_CCM_12          IKEv1:     ESP     IKEv2:     ESP     FIPS  {256,192,*128}  (aes_ccm_b)
+  AES_CCM_8           IKEv1:     ESP     IKEv2:     ESP     FIPS  {256,192,*128}  (aes_ccm_a)
+  3DES_CBC            IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  [*192]  (3des)
+  CAMELLIA_CTR        IKEv1:     ESP     IKEv2:     ESP           {256,192,*128}
+  CAMELLIA_CBC        IKEv1: IKE ESP     IKEv2: IKE ESP           {256,192,*128}  (camellia)
+  AES_GCM_16          IKEv1:     ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aes_gcm aes_gcm_c)
+  AES_GCM_12          IKEv1:     ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aes_gcm_b)
+  AES_GCM_8           IKEv1:     ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aes_gcm_a)
+  AES_CTR             IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aesctr)
+  AES_CBC             IKEv1: IKE ESP     IKEv2: IKE ESP     FIPS  {256,192,*128}  (aes)
+  SERPENT_CBC         IKEv1: IKE ESP     IKEv2: IKE ESP           {256,192,*128}  (serpent)
+  TWOFISH_CBC         IKEv1: IKE ESP     IKEv2: IKE ESP           {256,192,*128}  (twofish)
+  TWOFISH_SSH         IKEv1: IKE         IKEv2: IKE ESP           {256,192,*128}  (twofish_cbc_ssh)
+  CAST_CBC            IKEv1:     ESP     IKEv2:     ESP           {*128}  (cast)
+  NULL_AUTH_AES_GMAC  IKEv1:     ESP     IKEv2:     ESP           {256,192,*128}  (aes_gmac)
+  NULL                IKEv1:     ESP     IKEv2:     ESP           []
+Hash algorithms:
+  MD5                 IKEv1: IKE         IKEv2:                 
+  SHA1                IKEv1: IKE         IKEv2:             FIPS  (sha)
+  SHA2_256            IKEv1: IKE         IKEv2:             FIPS  (sha2 sha256)
+  SHA2_384            IKEv1: IKE         IKEv2:             FIPS  (sha384)
+  SHA2_512            IKEv1: IKE         IKEv2:             FIPS  (sha512)
+PRF algorithms:
+  HMAC_MD5            IKEv1: IKE         IKEv2: IKE               (md5)
+  HMAC_SHA1           IKEv1: IKE         IKEv2: IKE         FIPS  (sha sha1)
+  HMAC_SHA2_256       IKEv1: IKE         IKEv2: IKE         FIPS  (sha2 sha256 sha2_256)
+  HMAC_SHA2_384       IKEv1: IKE         IKEv2: IKE         FIPS  (sha384 sha2_384)
+  HMAC_SHA2_512       IKEv1: IKE         IKEv2: IKE         FIPS  (sha512 sha2_512)
+Integrity algorithms:
+  HMAC_MD5_96         IKEv1: IKE ESP AH  IKEv2: IKE ESP AH        (md5 hmac_md5)
+  HMAC_SHA1_96        IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha sha1 sha1_96 hmac_sha1)
+  HMAC_SHA2_512_256   IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha512 sha2_512 hmac_sha2_512)
+  HMAC_SHA2_384_192   IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha384 sha2_384 hmac_sha2_384)
+  HMAC_SHA2_256_128   IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha2 sha256 sha2_256 hmac_sha2_256)
+  AES_XCBC_96         IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_xcbc)
+  AES_CMAC_96         IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_cmac)
+  NONE                IKEv1:     ESP     IKEv2:     ESP     FIPS  (null)
+DH algorithms:
+  MODP1024            IKEv1: IKE ESP AH  IKEv2: IKE ESP AH        (dh2)
+  MODP1536            IKEv1: IKE ESP AH  IKEv2: IKE ESP AH        (dh5)
+  MODP2048            IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (dh14)
+  MODP3072            IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (dh15)
+  MODP4096            IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (dh16)
+  MODP6144            IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (dh17)
+  MODP8192            IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (dh18)
+  DH19                IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  (ecp_256)
+  DH20                IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  (ecp_384)
+  DH21                IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  (ecp_521)
+  DH23                IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS
+  DH24                IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS
+west #
+ 

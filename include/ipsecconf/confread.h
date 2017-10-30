@@ -23,6 +23,8 @@
 
 #include "ipsecconf/keywords.h"
 
+# define DEFAULT_UPDOWN "ipsec _updown"
+
 #ifndef _LIBRESWAN_H
 #include <libreswan.h>
 #include "constants.h"
@@ -124,15 +126,12 @@ struct starter_config {
 		knf options;
 		str_set strings_set;
 		int_set options_set;
-
-		/* derived types */
-		char **interfaces;
 	} setup;
 
 	/* conn %default */
 	struct starter_conn conn_default;
 
-	char *ctlbase;  /* location of pluto control socket */
+	char *ctlsocket;  /* location of pluto control socket */
 
 	/* connections list (without %default) */
 	TAILQ_HEAD(, starter_conn) conns;
@@ -141,7 +140,7 @@ struct starter_config {
 extern struct starter_config *confread_load(const char *file,
 					    err_t *perr,
 					    bool resolvip,
-					    const char *ctlbase,
+					    const char *ctlsocket,
 					    bool setuponly);
 extern struct starter_conn *alloc_add_conn(struct starter_config *cfg,
 					   const char *name);

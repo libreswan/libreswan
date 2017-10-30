@@ -5,7 +5,7 @@ Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
- ipsec whack --debug-all --impair-retransmits
+ ipsec whack --debug-all --impair retransmits
 east #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
 002 added connection description "westnet-eastnet-ipv4-psk-ikev1"
@@ -20,7 +20,7 @@ east #
 | state transition function for STATE_QUICK_R0 failed: NO_PROPOSAL_CHOSEN
 east #
 east #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

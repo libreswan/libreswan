@@ -1,0 +1,13 @@
+; only used in co-terminal - might be better to remove this
+$TTL	604800
+@	IN	SOA	4.1.192.in-addr.arpa. root.testing.libreswan.org. (
+			2017010101	; Serial
+			 604800		; Refresh
+			  86400		; Retry
+			2419200		; Expire
+			 604800 )	; Negative Cache TTL
+	IN	NS	nic.testing.libreswan.org.
+	IN	NS	beet.testing.libreswan.org.
+
+44	IN	PTR	south.testing.libreswan.org.
+254	IN	PTR	nic.testing.libreswan.org.

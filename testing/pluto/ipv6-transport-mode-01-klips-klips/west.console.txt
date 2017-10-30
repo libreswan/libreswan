@@ -60,11 +60,13 @@ west #
 000  
 000 config setup options:
 000  
-000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, nssdir=/etc/ipsec.d, dumpdir=/tmp, statsbin=unset
+000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d
+000 nssdir=/etc/ipsec.d, dumpdir=/tmp, statsbin=unset
+000 dnssec-rootkey-file=/var/lib/unbound/root.key, dnssec-trusted=<unset>
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
-000 nhelpers=-1, uniqueids=yes, perpeerlog=no, shuntlifetime=900s, xfrmlifetime=300s
+000 nhelpers=-1, uniqueids=yes, dnssec-enable=yes, perpeerlog=no, logappend=no, logip=yes, shuntlifetime=900s, xfrmlifetime=300s
 000 ddos-cookies-threshold=50000, ddos-max-halfopen=25000, ddos-mode=auto
-000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
+000 ikeport=500, ikebuf=0, msg_errqueue=yes, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
 000 ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2, ocsp-uri=<unset>
 000 ocsp-trust-name=<unset>
 000 ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-method=get
@@ -94,9 +96,9 @@ west #
 000  
 000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
 000 algorithm IKE encrypt: v1id=8, v1name=OAKLEY_CAMELLIA_CBC, v2id=23, v2name=CAMELLIA_CBC, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: v1id=20, v1name=OAKLEY_AES_GCM_C, v2id=20, v2name=AES_GCM_C, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: v1id=19, v1name=OAKLEY_AES_GCM_B, v2id=19, v2name=AES_GCM_B, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: v1id=18, v1name=OAKLEY_AES_GCM_A, v2id=18, v2name=AES_GCM_A, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=-1, v1name=n/a, v2id=20, v2name=AES_GCM_C, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=-1, v1name=n/a, v2id=19, v2name=AES_GCM_B, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=-1, v1name=n/a, v2id=18, v2name=AES_GCM_A, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=13, v1name=OAKLEY_AES_CTR, v2id=13, v2name=AES_CTR, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=65004, v1name=OAKLEY_SERPENT_CBC, v2id=65004, v2name=SERPENT_CBC, blocksize=16, keydeflen=128
@@ -114,6 +116,9 @@ west #
 000 algorithm IKE DH Key Exchange: name=MODP4096, bits=4096
 000 algorithm IKE DH Key Exchange: name=MODP6144, bits=6144
 000 algorithm IKE DH Key Exchange: name=MODP8192, bits=8192
+000 algorithm IKE DH Key Exchange: name=DH19, bits=512
+000 algorithm IKE DH Key Exchange: name=DH20, bits=768
+000 algorithm IKE DH Key Exchange: name=DH21, bits=1056
 000 algorithm IKE DH Key Exchange: name=DH23, bits=2048
 000 algorithm IKE DH Key Exchange: name=DH24, bits=2048
 000  
@@ -122,7 +127,7 @@ west #
 000 Connection list:
 000  
 000 "v6-transport": 2001:db8:1:2::45<2001:db8:1:2::45>[@west]...2001:db8:1:2::23<2001:db8:1:2::23>[@east]; unrouted; eroute owner: #0
-000 "v6-transport":     oriented; my_ip=unset; their_ip=unset
+000 "v6-transport":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "v6-transport":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "v6-transport":   our auth:rsasig, their auth:rsasig
 000 "v6-transport":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
@@ -133,7 +138,7 @@ west #
 000 "v6-transport":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "v6-transport":   policy: RSASIG+ENCRYPT+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "v6-transport":   conn_prio: 128,128; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "v6-transport":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no;
+000 "v6-transport":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "v6-transport":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000  
 000 Total IPsec connections: loaded 1, active 0
@@ -153,11 +158,11 @@ west #
 104 "v6-transport" #1: STATE_MAIN_I1: initiate
 106 "v6-transport" #1: STATE_MAIN_I2: sent MI2, expecting MR2
 108 "v6-transport" #1: STATE_MAIN_I3: sent MI3, expecting MR3
-002 "v6-transport" #1: Main mode peer ID is ID_FQDN: '@east'
+002 "v6-transport" #1: Peer ID is ID_FQDN: '@east'
 004 "v6-transport" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha group=MODP2048}
 002 "v6-transport" #2: initiating Quick Mode RSASIG+ENCRYPT+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 117 "v6-transport" #2: STATE_QUICK_I1: initiate
-004 "v6-transport" #2: STATE_QUICK_I2: sent QI2, IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
+004 "v6-transport" #2: STATE_QUICK_I2: sent QI2, IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ping6 -n -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
 PING 2001:db8:1:2::23(2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes
@@ -178,10 +183,10 @@ default via 192.1.2.254 dev eth1
 169.254.0.0/16 dev eth0  scope link  metric 1002 
 169.254.0.0/16 dev eth1  scope link  metric 1003 
 169.254.0.0/16 dev eth2  scope link  metric 1004 
-192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254 
 192.0.2.0/24 via 192.1.2.23 dev eth1 
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
-192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45 
+192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45 
 unreachable ::/96 dev lo  metric 1024  error -101
 unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -101
 2001:db8:0:1::/64 dev eth0  proto kernel  metric 256 
@@ -220,10 +225,10 @@ ipsec0->eth1 mtu=16260(9999)->1500
 
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
-192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254 
 192.0.2.0/24 via 192.1.2.23 dev eth1 
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
-192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45 
+192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45 
 unreachable ::/96 dev lo  metric 1024  error -101
 unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -101
 2001:db8:0:1::/64 dev eth0  proto kernel  metric 256 
@@ -252,7 +257,7 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

@@ -22,11 +22,11 @@ east #
 east #
  # east howvever, should be attempting to connect to west because it has auto=start
 east #
- ipsec status |grep EVENT_v1_RETRANSMIT | sed "s/EVENT_v1_RETRANSMIT in /EVENT_v1_RETRANSMIT in .../"
-000 #5: "west-east-auto":500 STATE_MAIN_I1 (sent MI1, expecting MR1); EVENT_v1_RETRANSMIT in ...10s; nodpd; idle; import:admin initiate
+ ipsec status |grep EVENT_v1_RETRANSMIT | sed "s/EVENT_v1_RETRANSMIT in .*$/EVENT_v1_RETRANSMIT in .../"
+000 #7: "west-east-auto":500 STATE_MAIN_I1 (sent MI1, expecting MR1); EVENT_v1_RETRANSMIT in ...
 east #
 east #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

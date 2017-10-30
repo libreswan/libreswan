@@ -9,14 +9,9 @@ ff00::0 ip6-mcastprefix
 ff02::1 ip6-allnodes
 ff02::2 ip6-allrouters
 ff02::3 ip6-allhosts
-192.0.1.1 sunset	
-192.0.1.2 japan
 192.1.2.45  west-out west-eth1	west
 192.0.1.254 west-in  west-eth0  west
-192.1.2.129 carrot
-192.1.2.129 beet
 192.1.2.254	fakegate
 192.1.2.23  east-out east-eth1	east	
 192.0.2.254 east-in  east-eth0  east	
-192.0.2.1   sunrise	
 192.9.4.245 nic nic.testing.libreswan.org

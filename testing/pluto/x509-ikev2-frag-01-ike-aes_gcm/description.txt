@@ -1,0 +1,9 @@
+Basic IKEv2 X.509 test with fragmentation of the AES-GCM encrypted AUTH packet
+
+> 1500 (tried dropping fragments but linux outsmarts us)
+
+Our default policy of ike_frag=yes should kick in and we start sending
+fragments.
+
+As a result, this connection should establish successfully.
+

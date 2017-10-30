@@ -1,5 +1,4 @@
+Interop IKEv2 aes-sha2 (non-AEAD) signed fragments with strongswan
+
 Basic pluto with IKEv2 using X.509 on the initiator (west), and Strongswan on
 the responder (east).
-
-This is the reverse test of interop-ikev2-strongswan-05
-

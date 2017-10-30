@@ -1,0 +1,41 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add ikev1
+002 added connection description "ikev1"
+east #
+ ipsec auto --add ikev1-aggr
+002 added connection description "ikev1-aggr"
+east #
+ ipsec auto --add ikev2
+002 added connection description "ikev2"
+east #
+ echo "initdone"
+initdone
+east #
+east #
+ ipsec stop
+Redirecting to: systemctl stop ipsec.service
+east #
+ egrep -i "IKE|ipsec-" /var/log/audit/audit.log
+type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=responder conn-name="ikev1" connstate=1 ike-version=1 auth=RSA_SIG cipher=aes ksize=256 integ=sha1 prf=sha1 pfs=MODP1536  laddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'
+type=CRYPTO_IPSEC_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start conn-name="ikev1" connstate=2, satype=ipsec-esp samode=tunnel cipher=AES ksize=128 integ=HMAC_SHA1 in-spi=DEC(HEX) out-spi=DEC(HEX) in-spi=DEC(HEX) out-spi=DEC(HEX) laddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'
+type=CRYPTO_IPSEC_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=destroy conn-name="ikev1" connstate=2, satype=ipsec-esp samode=tunnel cipher=AES ksize=128 integ=HMAC_SHA1 in-spi=DEC(HEX) out-spi=DEC(HEX) in-spi=DEC(HEX) out-spi=DEC(HEX) laddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'
+type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=destroy direction=responder conn-name="ikev1" connstate=1 ike-version=1 auth=RSA_SIG cipher=aes ksize=256 integ=sha1 prf=sha1 pfs=MODP1536  laddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'
+type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=responder conn-name="ikev1-aggr" connstate=3 ike-version=1 auth=RSA_SIG cipher=aes ksize=256 integ=sha1 prf=sha1 pfs=MODP1536  laddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'
+type=CRYPTO_IPSEC_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start conn-name="ikev1" connstate=4, satype=ipsec-esp samode=tunnel cipher=AES ksize=128 integ=HMAC_SHA1 in-spi=DEC(HEX) out-spi=DEC(HEX) in-spi=DEC(HEX) out-spi=DEC(HEX) laddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'
+type=CRYPTO_IPSEC_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=destroy conn-name="ikev1" connstate=4, satype=ipsec-esp samode=tunnel cipher=AES ksize=128 integ=HMAC_SHA1 in-spi=DEC(HEX) out-spi=DEC(HEX) in-spi=DEC(HEX) out-spi=DEC(HEX) laddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'
+type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=destroy direction=responder conn-name="ikev1-aggr" connstate=3 ike-version=1 auth=RSA_SIG cipher=aes ksize=256 integ=sha1 prf=sha1 pfs=MODP1536  laddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'
+type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=responder conn-name="ikev2" connstate=5 ike-version=2.0 auth=RSA_SIG cipher=aes_gcm_16 ksize=256 integ=none prf=sha512 pfs=MODP2048  laddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'
+type=CRYPTO_IPSEC_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start conn-name="ikev2" connstate=6, satype=ipsec-esp samode=tunnel cipher=AES_GCM_C ksize=256 integ=NONE in-spi=DEC(HEX) out-spi=DEC(HEX) in-spi=DEC(HEX) out-spi=DEC(HEX) laddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'
+type=CRYPTO_IPSEC_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=destroy conn-name="ikev2" connstate=6, satype=ipsec-esp samode=tunnel cipher=AES_GCM_C ksize=256 integ=NONE in-spi=DEC(HEX) out-spi=DEC(HEX) in-spi=DEC(HEX) out-spi=DEC(HEX) laddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'
+type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=destroy direction=responder conn-name="ikev2" connstate=5 ike-version=2.0 auth=RSA_SIG cipher=aes_gcm_16 ksize=256 integ=none prf=sha512 pfs=MODP2048  laddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=success'
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

@@ -169,7 +169,7 @@ def rpfiltercheck():
 			print_result("OK","OK")
 	else:
 		print("  rp_filter is not fully aware of IPsec and should be disabled")
-		
+
 def cmdchecks():
 	global retcode
 	printfun("Checking 'ip' command")
@@ -306,7 +306,7 @@ def installcheckklips():
 			print_result("OK","OK")
 		else:
 			print_result("WARN","N/A")
-			
+
 	except:
 		print_result("WARN","N/A")
 
@@ -343,7 +343,7 @@ def installchecknetkey():
 		print_result("OK","OK")
 	else:
 		print_result("FAIL","NOT ENABLED")
-	
+
 def ipsecsecretcheck():
 	global retcode
 	# we need to be root, because the only way to check is to reload them

@@ -7,5 +7,5 @@ ipsec start
 
 ipsec whack --whackrecord /var/tmp/east.record
 ipsec auto --add westnet-eastnet
-ipsec whack --debug-control --debug-controlmore --debug-crypt
+ipsec whack --debug none --debug control --debug controlmore --debug crypt
 

@@ -13,8 +13,8 @@ east #
 initdone
 east #
  ipsec whack --trafficstatus
-006 #2: "pool-eastnet-ikev2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=testing@libreswan.org', lease=192.0.2.100/32
-006 #4: "pool-eastnet-ikev2"[2] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=testing@libreswan.org', lease=192.0.2.101/32
+006 #2: "pool-eastnet-ikev2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org', lease=192.0.2.100/32
+006 #4: "pool-eastnet-ikev2"[2] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org', lease=192.0.2.101/32
 east #
  ipsec look
 east NOW
@@ -40,22 +40,14 @@ src 192.1.2.23 dst 192.1.2.254
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 XFRM policy:
-src 0.0.0.0/0 dst 192.0.2.101/32 
-	dir out priority 3104 ptype main 
-	tmpl src 192.1.2.23 dst 192.1.2.254
-		proto esp reqid REQID mode tunnel
-src 192.0.2.101/32 dst 0.0.0.0/0 
-	dir fwd priority 3104 ptype main 
-	tmpl src 192.1.2.254 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 192.0.2.101/32 dst 0.0.0.0/0 
-	dir in priority 3104 ptype main 
-	tmpl src 192.1.2.254 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
 src 0.0.0.0/0 dst 192.0.2.100/32 
 	dir out priority 3104 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.254
 		proto esp reqid REQID mode tunnel
+src 0.0.0.0/0 dst 192.0.2.101/32 
+	dir out priority 3104 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.254
+		proto esp reqid REQID mode tunnel
 src 192.0.2.100/32 dst 0.0.0.0/0 
 	dir fwd priority 3104 ptype main 
 	tmpl src 192.1.2.254 dst 192.1.2.23
@@ -64,47 +56,23 @@ src 192.0.2.100/32 dst 0.0.0.0/0
 	dir in priority 3104 ptype main 
 	tmpl src 192.1.2.254 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
+src 192.0.2.101/32 dst 0.0.0.0/0 
+	dir fwd priority 3104 ptype main 
+	tmpl src 192.1.2.254 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.2.101/32 dst 0.0.0.0/0 
+	dir in priority 3104 ptype main 
+	tmpl src 192.1.2.254 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
 192.0.1.0/24 via 192.1.2.45 dev eth1 
-192.0.2.0/24 dev eth0  proto kernel  scope link  src 192.0.2.254 
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23 
-192.9.2.0/24 dev eth2  proto kernel  scope link  src 192.9.2.23 
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254 
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23 
+192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23 
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
@@ -118,7 +86,7 @@ west                                                         P,,
 west-ec                                                      P,,  
 east #
 east #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

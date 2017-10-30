@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = "purge" ] ; then
+    # clean up NSS database (see debian/README.Debian for more
+    # details)
+    rm -f \
+       /var/lib/ipsec/nss/*
+fi
+
+#DEBHELPER#

@@ -26,11 +26,6 @@
 
 extern void init_crypto(void);
 
-struct oakley_group_desc;
-
-void get_oakley_group_param(const struct oakley_group_desc *,
-			    chunk_t *base, chunk_t *prime);
-
 /* unification of cryptographic encoding/decoding algorithms
  *
  * The IV is taken from and returned to st->st_new_iv.
@@ -41,15 +36,6 @@ void get_oakley_group_param(const struct oakley_group_desc *,
 
 #define MAX_OAKLEY_KEY_LEN_OLD  (3 * DES_CBC_BLOCK_SIZE)
 #define MAX_OAKLEY_KEY_LEN  (256 / BITS_PER_BYTE)
-
-struct state;   /* forward declaration, dammit */
-
-struct encrypt_desc;	/* opaque */
-struct hash_desc;	/* opaque */
-struct prf_desc;        /* opaque */
-
-void crypto_cbc_encrypt(const struct encrypt_desc *e, bool enc, u_int8_t *buf,
-			size_t size, struct state *st);
 
 /* macros to manipulate IVs in state */
 
@@ -94,6 +80,7 @@ void crypto_cbc_encrypt(const struct encrypt_desc *e, bool enc, u_int8_t *buf,
  */
 
 struct crypt_prf;
+struct prf_desc;        /* opaque */
 
 struct hmac_ctx {
 	struct crypt_prf *prf;
@@ -116,14 +103,13 @@ enum crk_proto {
 	CRK_ESPorAH,
 };
 
-extern int crypto_req_keysize(enum crk_proto ksproto, int algo);
+extern unsigned crypto_req_keysize(enum crk_proto ksproto, int algo);
 
 struct connection;
 
 void ike_alg_show_connection(const struct connection *c, const char *instance);
 
-const struct oakley_group_desc *ike_alg_pfsgroup(struct connection *c,
-						 lset_t policy);
+const struct oakley_group_desc *child_dh(const struct connection *c);
 
 void ike_alg_show_status(void);
 

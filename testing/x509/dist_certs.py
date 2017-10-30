@@ -111,8 +111,19 @@ def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocsp
 	add_ext(cert, 'basicConstraints', False, bc)
 
 	if not isCA:
-		dnsname = "DNS: " + cnstr
-		add_ext(cert, 'subjectAltName', False, dnsname)
+		SAN = "DNS: " + cnstr
+		if "." in cnstr:
+			ee = cnstr.split(".")[0]
+			print "EE:%s"%ee
+			if ee == "west" or ee == "east":
+				SAN += ", email:%s@testing.libreswan.org"%ee
+				if ee == "west":
+					SAN += ", IP:192.1.2.45"
+				else:
+					SAN += ", IP:192.1.2.23"
+			if ee == "otherwest" or ee == "othereast":
+				SAN += ", email:%s@other.libreswan.org"%ee
+		add_ext(cert, 'subjectAltName', False, SAN)
 
 	if cnstr == 'usage-server.testing.libreswan.org':
 		eku_str = 'serverAuth'
@@ -141,7 +152,7 @@ def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocsp
 def create_sub_cert(CN, CACert, CAkey, snum, START, END,
 					C='CA', ST='Ontario', L='Toronto',
 					O='Libreswan', OU='Test Department',
-					emailAddress='testing@libreswan.org',
+					emailAddress='',
 					ty=crypto.TYPE_RSA, keybits=1024,
 					sign_alg='sha1', isCA=False, ocsp=False):
 	""" Create a subordinate cert and return the cert, key tuple
@@ -299,7 +310,7 @@ def create_mainca_end_certs(mainca_end_certs):
 			startdate = dates['OK_NOW']
 			enddate = dates['FUTURE_END']
 
-		if name == 'signedbyother':
+		if 'other' in name:
 			signer = 'otherca'
 		elif name[:3] == 'bad':
 			signer = 'badca'
@@ -323,6 +334,8 @@ def create_mainca_end_certs(mainca_end_certs):
 			common_name = 'space invaders.testing.libreswan.org'
 		elif name == 'cnofca':
 			common_name = 'Libreswan test CA for mainca'
+		elif 'other' in name:
+			common_name = name + '.other.libreswan.org'
 		else:
 			common_name = name + '.testing.libreswan.org'
 
@@ -331,10 +344,16 @@ def create_mainca_end_certs(mainca_end_certs):
 		else:
 			alg = 'sha1'
 
+		if " " in common_name:
+			emailAddress = "root@testing.libreswan.org"
+		else:
+			emailAddress = "user-%s@testing.libreswan.org"%name
+
 		cert, key = create_sub_cert(common_name,
 									ca_certs[signer][0],
 									ca_certs[signer][1],
 									serial, O=org,
+									emailAddress=emailAddress,
 									START=startdate, END=enddate,
 									keybits=keysize,
 									sign_alg=alg, ocsp=ocsp_resp)
@@ -375,6 +394,7 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
 									  signpair[0], signpair[1], serial,
 									  START=dates['OK_NOW'],
 									  END=dates['FUTURE'],
+									  emailAddress="%s@testing.libreswan.org"%cname,
 									  isCA=True, ocsp=False)
 
 			writeout_cert_and_key("certs/", cname, ca, key)
@@ -390,6 +410,7 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
 				print " - creating %s" % endcert_name
 				ecert, ekey = create_sub_cert(endcert_name + ".testing.libreswan.org",
 											  signpair[0], signpair[1], serial,
+											  emailAddress="%s@testing.libreswan.org"%endcert_name,
 											  START=dates['OK_NOW'],
 											  END=dates['FUTURE'])
 
@@ -403,6 +424,7 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
 				print " - creating %s" % endrev_name
 				ercert, erkey = create_sub_cert(endrev_name + ".testing.libreswan.org",
 											  signpair[0], signpair[1], serial,
+											  emailAddress="%s@testing.libreswan.org"%endcert_name,
 											  START=dates['OK_NOW'],
 											  END=dates['FUTURE'])
 
@@ -592,7 +614,7 @@ def run_dist_certs():
 						'nic-noext', 'nic-nourl',
 						'japan','bigkey', 'key4096',
 						'notyetvalid','notvalidanymore',
-						'signedbyother','wrongdnorg',
+						'signedbyother','otherwest','othereast','wrongdnorg',
 						'unwisechar','spaceincn','hashsha2',
 						'cnofca','revoked', 'badwest', 'badeast')
 	# Add chain roots here

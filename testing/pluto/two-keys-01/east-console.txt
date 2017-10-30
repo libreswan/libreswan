@@ -8,7 +8,7 @@ ipsec_setup: Starting Libreswan IPsec VERSION
 east:~#
  ipsec auto --add westnet-eastnet
 east:~#
- ipsec whack --debug-control --debug-controlmore --debug-crypt
+ ipsec whack --debug none --debug control --debug controlmore --debug crypt
 east:~#
  ipsec auto --listpubkeys
 000  
@@ -25,6 +25,6 @@ east:~#
 
 east:~#
 east:~#
- if [ -f /tmp/core ]; then echo CORE FOUND; mv /tmp/core /var/tmp; fi
+ ../bin/check-for-core.sh
 east:~#
 

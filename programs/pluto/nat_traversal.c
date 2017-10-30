@@ -229,8 +229,12 @@ bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, const struct state *
 	/*
 	 * Some Cisco's have a broken NAT-T implementation where it
 	 * sends one NAT payload per draft, and one NAT payload for RFC.
-	 * ikev1_natt={both|drafts|rfc} helps us claim we only support the
+	 * nat-ikev1-method={both|drafts|rfc} helps us claim we only support the
 	 * drafts, so we don't hit the bad Cisco code.
+	 *
+	 * nat-ikev1-method=none was added as a workaround for some clients
+	 * that want to do no-encapsulation, but are triggered for encapsulation
+	 * when they see NATT payloads.
 	 */
 	switch (st->st_connection->ikev1_natt) {
 	case natt_rfc:
@@ -253,6 +257,10 @@ bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, const struct state *
 			return FALSE;
 		if (!out_vid(np, outs, VID_NATT_IETF_02))
 			return FALSE;
+		break;
+	case natt_none:
+		/* This should never be reached, but makes compiler happy */
+		DBG(DBG_NATT, DBG_log("not sending any NATT VID's"));
 		break;
 	}
 	return TRUE;
@@ -362,7 +370,7 @@ static void ikev1_natd_lookup(struct msg_digest *md)
 	unsigned char hash_me[MAX_DIGEST_LEN];
 	unsigned char hash_him[MAX_DIGEST_LEN];
 	struct state *st = md->st;
-	const struct hash_desc *const hasher = st->st_oakley.prf->hasher;
+	const struct hash_desc *const hasher = st->st_oakley.ta_prf->hasher;
 	const size_t hl = hasher->hash_digest_len;
 	const struct payload_digest *const hd = md->chain[ISAKMP_NEXT_NATD_RFC];
 	const struct payload_digest *p;
@@ -434,7 +442,7 @@ bool ikev1_nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 	const ip_address *first, *second;
 	unsigned short firstport, secondport;
 
-	passert(st->st_oakley.prf != NULL);
+	passert(st->st_oakley.ta_prf != NULL);
 
 	DBG(DBG_EMITTING | DBG_NATT, DBG_log("sending NAT-D payloads"));
 
@@ -471,24 +479,24 @@ bool ikev1_nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 	/*
 	 * First one with sender IP & port
 	 */
-	natd_hash(st->st_oakley.prf->hasher, hash, st->st_icookie,
+	natd_hash(st->st_oakley.ta_prf->hasher, hash, st->st_icookie,
 		  is_zero_cookie(st->st_rcookie) ? md->hdr.isa_rcookie :
 		  st->st_rcookie, first, firstport);
 
 	if (!ikev1_out_generic_raw(nat_np, &isakmp_nat_d, outs, hash,
-				   st->st_oakley.prf->hasher->hash_digest_len,
+				   st->st_oakley.ta_prf->hasher->hash_digest_len,
 				   "NAT-D"))
 		return FALSE;
 
 	/*
 	 * Second one with my IP & port
 	 */
-	natd_hash(st->st_oakley.prf->hasher, hash,
+	natd_hash(st->st_oakley.ta_prf->hasher, hash,
 		  st->st_icookie, is_zero_cookie(st->st_rcookie) ?
 		  md->hdr.isa_rcookie : st->st_rcookie, second, secondport);
 
 	return ikev1_out_generic_raw(np, &isakmp_nat_d, outs, hash,
-				     st->st_oakley.prf->hasher->hash_digest_len,
+				     st->st_oakley.ta_prf->hasher->hash_digest_len,
 				     "NAT-D");
 }
 
@@ -700,12 +708,12 @@ static void nat_traversal_show_result(lset_t nt, u_int16_t sport)
 void ikev1_natd_init(struct state *st, struct msg_digest *md)
 {
 	DBG(DBG_NATT,
-	    DBG_log("checking NAT-t: %s and %s",
+	    DBG_log("checking NAT-T: %s and %s",
 		    nat_traversal_enabled ? "enabled" : "disabled",
 		    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal)));
 
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
-		if (md->st->st_oakley.prf == NULL) {
+		if (md->st->st_oakley.ta_prf == NULL) {
 			/*
 			 * This connection is doomed - no PRF for NATD hash
 			 * Probably in FIPS trying MD5 ?
@@ -771,7 +779,7 @@ int nat_traversal_espinudp_socket(int sk, const char *fam)
 		DBG(DBG_NATT, DBG_log("NAT-Traversal: Trying old ioctl style NAT-T"));
 		zero(&ifr);
 		ifn = "ipsec0"; /* mast must use ipsec0 too */
-		strncpy(ifr.ifr_name, ifn, sizeof(ifr.ifr_name));
+		fill_and_terminate(ifr.ifr_name, ifn, sizeof(ifr.ifr_name));
 		fdp[0] = sk;
 		fdp[1] = ESPINUDP_WITH_NON_ESP; /* no longer support non-ike or non-floating */
 		r = ioctl(sk, IPSEC_UDP_ENCAP_CONVERT, &ifr); /* private to KLIPS only */
@@ -939,12 +947,12 @@ static void nat_traversal_find_new_mapp_state(struct state *st, void *data)
 		ipstr_buf b1, b2;
 		struct connection *c = st->st_connection;
 
-		libreswan_log("new NAT mapping for #%lu, was %s:%d, now %s:%d",
+		DBG(DBG_CONTROLMORE, DBG_log("new NAT mapping for #%lu, was %s:%d, now %s:%d",
 			st->st_serialno,
 			ipstr(&st->st_remoteaddr, &b1),
 			st->st_remoteport,
 			ipstr(&nfo->addr, &b2),
-			nfo->port);
+			nfo->port));
 
 		/* update it */
 		st->st_remoteaddr = nfo->addr;
@@ -969,23 +977,6 @@ static int nat_traversal_new_mapping(struct state *st,
 			ipstr(nsrc, &b),
 			nsrcport);
 	});
-
-#if 0
-	if (!sameaddr(src, dst)) {
-		ipstr_buf a, b;
-
-		loglog(RC_LOG_SERIOUS,
-			"nat_traversal_new_mapping: address change currently not supported [%s:%d,%s:%d]",
-			ipstr(src, &a), sport,
-			ipstr(dst, &b), dport);
-		return -1;
-	}
-
-	if (sport == dport) {
-		/* no change */
-		return 0;
-	}
-#endif
 
 	nfo.st    = st;
 	nfo.addr  = *nsrc;
@@ -1173,7 +1164,6 @@ void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
 {
 	unsigned char hash_me[IKEV2_NATD_HASH_SIZE];
 	unsigned char hash_him[IKEV2_NATD_HASH_SIZE];
-	struct payload_digest *p;
 	struct state *st = md->st;
 	bool found_me = FALSE;
 	bool found_him = FALSE;
@@ -1193,7 +1183,7 @@ void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
 	natd_hash(&ike_alg_hash_sha1, hash_him, st->st_icookie, rcookie,
 		  &md->sender, md->sender_port);
 
-	for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {
+	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {
 		if (pbs_left(&p->pbs) != IKEV2_NATD_HASH_SIZE)
 			continue;
 
@@ -1209,21 +1199,18 @@ void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
 		default:
 			continue;
 		}
-		if (found_me && found_him)
-			break;
 	}
 
 	natd_lookup_common(st, &md->sender, found_me, found_him);
 
-	if ((st->st_state == STATE_PARENT_I1) &&
-		(st->hidden_variables.st_nat_traversal
-			& NAT_T_DETECTED)) {
+	if (st->st_state == STATE_PARENT_I1 &&
+	    (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED)) {
 		DBG(DBG_NATT, {
 			ipstr_buf b;
 			DBG_log("NAT-T: floating to port %s:%d",
 				ipstr(&md->sender, &b), pluto_nat_port);
 		});
-		st->st_localport  = pluto_nat_port;
+		st->st_localport = pluto_nat_port;
 		st->st_remoteport = pluto_nat_port;
 
 		nat_traversal_change_port_lookup(NULL, st);

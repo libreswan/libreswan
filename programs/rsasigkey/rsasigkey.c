@@ -5,7 +5,7 @@
  * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012-2015 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2017 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2016 Tuomo Soini <tis@foobar.fi>
  *
@@ -18,6 +18,8 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
+ *
+ * NOTE: This should probably be rewritten to use NSS RSA_NewKey()
  */
 
 #include <sys/types.h>
@@ -76,8 +78,8 @@
 
 #define DEFAULT_SEED_BITS 60 /* 480 bits of random seed */
 
-#define E       3               /* standard public exponent */
-/* #define F4	65537 */	/* possible future public exponent, Fermat's 4th number */
+/* No longer use E=3 to comply to FIPS 186-4, section B.3.1 */
+#define F4	65537
 
 char usage[] =
 	"rsasigkey [--verbose] [--seeddev <device>] [--nssdir <dir>]\n"
@@ -105,35 +107,6 @@ char outputhostname[NS_MAXDNAME];  /* hostname for output */
 void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco);
 void lsw_random(size_t nbytes, unsigned char *buf);
 static const char *conv(const unsigned char *bits, size_t nbytes, int format);
-
-/*
- * bundle - bundle e and n into an RFC2537-format chunk_t
- */
-static char *base64_bundle(int e, chunk_t modulus)
-{
-	/*
-	 * Pack the single-byte exponent into a byte array.
-	 */
-	assert(e <= 255);
-	u_char exponent_byte = e;
-	chunk_t exponent = {
-		.ptr = &exponent_byte,
-		.len = 1,
-	};
-
-	/*
-	 * Create the resource record.
-	 */
-	char *bundle;
-	err_t err = rsa_pubkey_to_base64(exponent, modulus, &bundle);
-	if (err) {
-		fprintf(stderr, "%s: can't-happen bundle convert error `%s'\n",
-			progname, err);
-		exit(1);
-	}
-
-	return bundle;
-}
 
 /*
  * UpdateRNG - Updates NSS's PRNG with user generated entropy
@@ -242,16 +215,22 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	/*
+	 * RSA-PSS requires keysize to be a multiple of 8 bits
+	 * (see PCS#1 v2.1).
+	 * We require a multiple of 16.  (??? why?)
+	 */
 	if (argv[optind] == NULL) {
-		/* default: spread bits between 3072 - 4096 in multiple's of 16 */
+		/* default keysize: a multiple of 16 in [3072,4096) */
 		srand(time(NULL));
-		nbits = 3072 + 16 * (rand() % 64);
+		nbits = 3072 + 16 * (rand() % (1024 / 16));
 	} else {
 		unsigned long u;
 		err_t ugh = ttoulb(argv[optind], 0, 10, INT_MAX, &u);
 
 		if (ugh != NULL) {
-			fprintf(stderr, "%s: keysize specification is malformed: %s\n",
+			fprintf(stderr,
+				"%s: keysize specification is malformed: %s\n",
 				progname, ugh);
 			exit(1);
 		}
@@ -259,16 +238,19 @@ int main(int argc, char *argv[])
 	}
 
 	if (nbits < MIN_KEYBIT ) {
-		fprintf(stderr, "%s: requested RSA key size of %d is too small - use %d or more\n",
+		fprintf(stderr,
+			"%s: requested RSA key size (%d) is too small - use %d or more\n",
 			progname, nbits, MIN_KEYBIT);
 		exit(1);
 	} else if (nbits > MAXBITS) {
-		fprintf(stderr, "%s: overlarge bit count (max %d)\n", progname,
-			MAXBITS);
+		fprintf(stderr,
+			"%s: requested RSA key size (%d) is too large - (max %d)\n",
+			progname, nbits, MAXBITS);
 		exit(1);
 	} else if (nbits % (BITS_PER_BYTE * 2) != 0) {
-		fprintf(stderr, "%s: bit count (%d) not multiple of %d\n", progname,
-			nbits, (int)BITS_PER_BYTE * 2);
+		fprintf(stderr,
+			"%s: requested RSA key size (%d) is not a multiple of %d\n",
+			progname, nbits, (int)BITS_PER_BYTE * 2);
 		exit(1);
 	}
 
@@ -291,7 +273,7 @@ int main(int argc, char *argv[])
  */
 void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco)
 {
-	PK11RSAGenParams rsaparams = { nbits, (long) E };
+	PK11RSAGenParams rsaparams = { nbits, (long) F4 };
 	PK11SlotInfo *slot = NULL;
 	SECKEYPrivateKey *privkey = NULL;
 	SECKEYPublicKey *pubkey = NULL;
@@ -371,9 +353,15 @@ void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco)
 
 	/* RFC2537/RFC3110-ish format */
 	{
-		char *bundle = base64_bundle(E, public_modulus);
-		printf("\t#pubkey=%s\n", bundle);
-		pfree(bundle);
+		char *base64 = NULL;
+		err_t err = rsa_pubkey_to_base64(public_exponent, public_modulus, &base64);
+		if (err) {
+			fprintf(stderr, "%s: unexpected error encoding RSA public key '%s'\n",
+				progname, err);
+			exit(1);
+		}
+		printf("\t#pubkey=%s\n", base64);
+		pfree(base64);
 	}
 
 	printf("\tModulus: 0x%s\n", conv(public_modulus.ptr, public_modulus.len, 16));

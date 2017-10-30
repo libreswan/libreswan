@@ -61,11 +61,11 @@
 #include "whack.h"
 #include "fetch.h"
 #include "asn1.h"
-
 #include "crypto.h"
 #include "secrets.h"
 
 #include "ike_alg.h"
+#include "ike_alg_null.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
 #include "pluto_crypt.h"
@@ -82,19 +82,6 @@
 #include "pluto_x509.h"
 
 #include "pluto_stats.h"
-
-/* MAGIC: perform f, a function that returns notification_t
- * and return from the ENCLOSING stf_status returning function if it fails.
- */
-/* ??? why are there so many copies of this routine (ikev2.h, ikev1_continuations.h, ipsec_doi.c).
- * Sometimes more than one copy is defined!
- */
-#define RETURN_STF_FAILURE(f) { \
-	notification_t res = (f); \
-	if (res != NOTHING_WRONG) { \
-		  return STF_FAIL + res; \
-	} \
-}
 
 /*
  * Process KE values.
@@ -130,8 +117,8 @@ void unpack_KE_from_helper(struct state *st,
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("wire (crypto helper) group %s and state group %s %s",
 			kn->group ? kn->group->common.name : "NULL",
-			st->st_oakley.group ? st->st_oakley.group->common.name : "NULL",
-			kn->group == st->st_oakley.group ? "match" : "differ");
+			st->st_oakley.ta_dh ? st->st_oakley.ta_dh->common.name : "NULL",
+			kn->group == st->st_oakley.ta_dh ? "match" : "differ");
 	}
 
 	/* ??? if st->st_sec_in_use how could we do our job? */
@@ -316,7 +303,7 @@ void ipsecdoi_initiate(int whack_sock,
 				    , uctx
 #endif
 				    );
-		} else if(st->st_ikev2) {
+		} else if (st->st_ikev2) {
 			ikev2_add_ipsec_child(whack_sock, st, c, policy, try,
 					replacing
 #ifdef HAVE_LABELED_IPSEC
@@ -392,7 +379,7 @@ void ipsecdoi_replace(struct state *st,
 				policy |= POLICY_TUNNEL;
 		}
 		if (st->st_esp.present &&
-		    st->st_esp.attrs.transattrs.encrypt != ESP_NULL) {
+		    st->st_esp.attrs.transattrs.ta_encrypt != &ike_alg_encrypt_null) {
 			policy |= POLICY_ENCRYPT;
 			if (st->st_esp.attrs.encapsulation ==
 			    ENCAPSULATION_MODE_TUNNEL)
@@ -472,6 +459,7 @@ bool extract_peer_id(struct id *peer, const pb_stream *id_pbs)
 	}
 	break;
 
+	/* seems odd to continue as ID_FQDN? */
 	case ID_USER_FQDN:
 		if (memchr(id_pbs->cur, '@', pbs_left(id_pbs)) == NULL) {
 			loglog(RC_LOG_SERIOUS,
@@ -561,6 +549,10 @@ bool send_delete(struct state *st)
 			DBG_log("send_delete(): impair-send-no-delete set - not sending Delete/Notify"));
 		return TRUE;
 	}
+	DBG(DBG_CONTROL, DBG_log("#%lu send %s detlete notification for %s",
+			st->st_serialno, st->st_ikev2 ? "IKEv2": "IKEv1",
+			enum_name(&state_names, st->st_state)));
+
 	return st->st_ikev2 ? ikev2_delete_out(st) : ikev1_delete_out(st);
 }
 
@@ -605,8 +597,6 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 			    c->encaps == encaps_auto ? "auto" :
 				c->encaps == encaps_yes ? "yes" : "no"));
 
-		struct esb_buf esb_t, esb_a;
-
 		snprintf(b, sad_len - (b - sadetails),
 			 "%sESP%s%s%s=>0x%08lx <0x%08lx xfrm=%s_%d-%s",
 			 ini,
@@ -615,25 +605,27 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 			 tfc ? "/TFC" : "",
 			 (unsigned long)ntohl(st->st_esp.attrs.spi),
 			 (unsigned long)ntohl(st->st_esp.our_spi),
-			 enum_show_shortb(&esp_transformid_names,
-				   st->st_esp.attrs.transattrs.encrypt, &esb_t),
+			 st->st_esp.attrs.transattrs.ta_encrypt->common.fqn,
 			 st->st_esp.attrs.transattrs.enckeylen,
-			 enum_show_shortb(&auth_alg_names,
-				   st->st_esp.attrs.transattrs.integ_hash, &esb_a));
+			 st->st_esp.attrs.transattrs.ta_integ->common.fqn);
 
 		/* advance b to end of string */
 		b = b + strlen(b);
 
+		if (st->st_ikev2 && st->st_pfs_group != NULL)  {
+			b = add_str(sadetails, sad_len , b, "-");
+			b = add_str(sadetails, sad_len, b, st->st_pfs_group->common.name);
+		}
+
 		ini = " ";
 
 		pstats_ipsec_esp++;
-		pstats(ipsec_encr, st->st_esp.attrs.transattrs.encrypt);
-		pstats(ipsec_integ, st->st_esp.attrs.transattrs.integ_hash);
+		pstats(ipsec_encr, st->st_esp.attrs.transattrs.ta_ikev1_encrypt);
+		pstats(ipsec_integ, st->st_esp.attrs.transattrs.ta_ikev1_integ_hash);
 		pstats_sa(nat, tfc, esn);
 	}
 
 	if (st->st_ah.present) {
-		struct esb_buf ah_t;
 		bool esn = st->st_esp.attrs.transattrs.esn_enabled;
 
 		snprintf(b, sad_len - (b - sadetails),
@@ -642,8 +634,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 			 st->st_ah.attrs.transattrs.esn_enabled ? "/ESN" : "",
 			 (unsigned long)ntohl(st->st_ah.attrs.spi),
 			 (unsigned long)ntohl(st->st_ah.our_spi),
-			 enum_show_shortb(&auth_alg_names,
-					  st->st_ah.attrs.transattrs.integ_hash, &ah_t));
+			 st->st_ah.attrs.transattrs.ta_integ->common.fqn);
 
 		/* advance b to end of string */
 		b = b + strlen(b);
@@ -651,7 +642,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 		ini = " ";
 
 		pstats_ipsec_ah++;
-		pstats(ipsec_integ, st->st_ah.attrs.transattrs.integ_hash);
+		pstats(ipsec_integ, st->st_ah.attrs.transattrs.ta_ikev1_integ_hash);
 		pstats_sa(FALSE, FALSE, esn);
 	}
 
@@ -685,7 +676,8 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 
 		snprintf(oa, sizeof(oa),
 			 "%s:%d",
-			 ipstr(&st->hidden_variables.st_natd, &ipb),
+			 log_ip ? ipstr(&st->hidden_variables.st_natd, &ipb)
+				: "<ip address>",
 			 st->st_remoteport);
 		b = add_str(sadetails, sad_len, b, oa);
 	}
@@ -704,19 +696,19 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 			       size_t sa_details_size)
 {
-	passert(st->st_oakley.encrypter != NULL);
-	passert(st->st_oakley.prf != NULL);
-	passert(st->st_oakley.group != NULL);
+	passert(st->st_oakley.ta_encrypt != NULL);
+	passert(st->st_oakley.ta_prf != NULL);
+	passert(st->st_oakley.ta_dh != NULL);
 	/*
 	 * Note: for IKEv1 and AEAD encrypters,
-	 * st->st_oakley.integ_hasher is NULL!
+	 * st->st_oakley.ta_integ is 'none'!
 	 */
 
 	struct esb_buf anb;
 	const char *auth_name = st->st_ikev2 ? "IKEv2" :
 		enum_show_shortb(&oakley_auth_names, st->st_oakley.auth, &anb);
 
-	const char *prf_common_name = st->st_oakley.prf->common.name;
+	const char *prf_common_name = st->st_oakley.ta_prf->common.name;
 
 	char prf_name[30] = "";
 	if (st->st_ikev2) {
@@ -727,13 +719,13 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 	const char *integ_name;
 	char integ_buf[30];
 	if (st->st_ikev2) {
-		if (st->st_oakley.integ == NULL) {
+		if (st->st_oakley.ta_integ == &ike_alg_integ_none) {
 			integ_name = "n/a";
 		} else {
 			snprintf(integ_buf, sizeof(integ_buf),
 				 "%s_%zu",
-				 st->st_oakley.integ->common.officname,
-				 (st->st_oakley.integ->integ_output_size *
+				 st->st_oakley.ta_integ->common.officname,
+				 (st->st_oakley.ta_integ->integ_output_size *
 				  BITS_PER_BYTE));
 			integ_name = integ_buf;
 		}
@@ -749,23 +741,23 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 	snprintf(sa_details, sa_details_size,
 		 " {auth=%s cipher=%s_%d integ=%s%s group=%s}",
 		 auth_name,
-		 st->st_oakley.encrypter->common.name,
+		 st->st_oakley.ta_encrypt->common.name,
 		 st->st_oakley.enckeylen,
 		 integ_name,
 		 prf_name,
-		 st->st_oakley.group->common.name);
+		 st->st_oakley.ta_dh->common.name);
 
 	/* keep IKE SA statistics */
 	if (st->st_ikev2) {
 		pstats_ikev2_sa++;
-		pstats(ikev2_encr, st->st_oakley.encrypter->common.id[IKEv2_ALG_ID]);
-		if (st->st_oakley.integ != NULL)
-			pstats(ikev2_integ, st->st_oakley.integ->common.id[IKEv2_ALG_ID]);
-		pstats(ikev2_groups, st->st_oakley.group->group);
+		pstats(ikev2_encr, st->st_oakley.ta_encrypt->common.id[IKEv2_ALG_ID]);
+		if (st->st_oakley.ta_integ != NULL)
+			pstats(ikev2_integ, st->st_oakley.ta_integ->common.id[IKEv2_ALG_ID]);
+		pstats(ikev2_groups, st->st_oakley.ta_dh->group);
 	} else {
 		pstats_ikev1_sa++;
-		pstats(ikev1_encr, st->st_oakley.encrypter->common.ikev1_oakley_id);
-		pstats(ikev1_integ, st->st_oakley.prf->common.id[IKEv1_OAKLEY_ID]);
-		pstats(ikev1_groups, st->st_oakley.group->group);
+		pstats(ikev1_encr, st->st_oakley.ta_encrypt->common.ikev1_oakley_id);
+		pstats(ikev1_integ, st->st_oakley.ta_prf->common.id[IKEv1_OAKLEY_ID]);
+		pstats(ikev1_groups, st->st_oakley.ta_dh->group);
 	}
 }

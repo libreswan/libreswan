@@ -27,7 +27,7 @@ ipsec_setup: Starting Libreswan IPsec VERSION
 west:~#
  ipsec auto --add westnet-eastnet
 west:~#
- ipsec whack --debug-control --debug-controlmore --debug-parsing --debug-crypt
+ ipsec whack --debug none --debug control --debug controlmore --debug parsing --debug crypt
 west:~#
  ipsec auto --listpubkeys
 000  
@@ -62,7 +62,7 @@ esp0xKLIPSPIK@192.1.2.23 ESP_3DES_HMAC_MD5: dir=out src=192.1.2.45 iv_bits=64bit
 esp0xKLIPSPIK@192.1.2.45 ESP_3DES_HMAC_MD5: dir=in  src=192.1.2.23 iv_bits=64bits iv=0xIVISFORRANDOM000 ooowin=64   alen=128 aklen=128 eklen=192  natencap=none natsport=0 natdport=0  
 tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<>  natencap=none natsport=0 natdport=0  
 ROUTING TABLE
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45 
 192.1.2.0/24 dev ipsec0  proto kernel  scope link  src 192.1.2.45 
 192.0.2.0/24 dev ipsec0  scope link 
 default via 192.1.2.254 dev eth1 
@@ -71,6 +71,6 @@ west:~#
 
 west:~#
 west:~#
- if [ -f /tmp/core ]; then echo CORE FOUND; mv /tmp/core /var/tmp; fi
+ ../bin/check-for-core.sh
 west:~#
 

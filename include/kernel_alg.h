@@ -3,6 +3,7 @@
  * Author: JuanJo Ciarlante <jjo-ipsec@mendoza.gov.ar>
  * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2017 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,6 +20,7 @@
 #define _KERNEL_ALG_H
 #include "libreswan/pfkeyv2.h"
 
+struct ike_alg; /* forward declaration */
 struct sadb_msg; /* forward definition */
 
 /* Registration messages from pluto */
@@ -29,39 +31,27 @@ struct esp_info;	/* forward declaration */
 struct alg_info_ike;	/* forward declaration */
 struct alg_info_esp;	/* forward declaration */
 
+extern bool kernel_alg_is_ok(const struct ike_alg *alg);
+
+extern bool kernel_alg_dh_ok(const struct oakley_group_desc *dh);
+extern bool kernel_alg_encrypt_ok(const struct encrypt_desc *encrypt);
+extern bool kernel_alg_integ_ok(const struct integ_desc *integ);
+
 /* ESP interface */
 extern struct sadb_alg *kernel_alg_esp_sadb_alg(int alg_id);
-extern int kernel_alg_esp_ivlen(int alg_id);
 
 /* returns success (NULL) if encrypt alg is present in kernel */
 extern err_t check_kernel_encrypt_alg(int alg_id, unsigned int key_len);
 
-extern bool kernel_alg_esp_ok_final(int ealg, unsigned int key_len, int aalg,
-				    struct alg_info_esp *alg_info);
 /* returns encrypt keylen in BYTES for esp enc alg passed */
 extern int kernel_alg_esp_enc_max_keylen(int alg_id);
-
-/* returns bool success if esp auth alg is present  */
-extern bool kernel_alg_esp_auth_ok(int auth, struct alg_info_esp *nfo);
-
-extern int kernel_alg_ah_auth_keylen(int auth);
-
-extern bool kernel_alg_ah_auth_ok(int auth, struct alg_info_esp *alg_info);
-
-/* returns auth keylen in BYTES for esp auth alg passed */
-extern int kernel_alg_esp_auth_keylen(int auth);
-
-/* returns TRUE if read ok from /proc/net/pf_key_supported */
-extern bool kernel_alg_proc_read(void);
 
 /* get sadb_alg for passed args */
 extern const struct sadb_alg *kernel_alg_sadb_alg_get(unsigned satype, unsigned exttype,
 						       unsigned alg_id);
 
-/* returns pointer to static buffer -- NOT RE-ENTRANT */
-extern struct esp_info *kernel_alg_esp_info(u_int8_t transid,
-					    u_int16_t keylen,
-					    u_int16_t auth);
+bool kernel_alg_encrypt_key_size(const struct encrypt_desc *encrypt,
+				 int keylen, size_t *key_size);
 
 extern struct sadb_alg esp_aalg[];
 extern struct sadb_alg esp_ealg[];
@@ -91,19 +81,9 @@ extern void kernel_alg_init(void);
 extern int kernel_alg_add(int satype, int exttype,
 			  const struct sadb_alg *sadb_alg);
 
-struct integ_desc;
+void kernel_integ_add(const struct integ_desc *integ);
+void kernel_encrypt_add(const struct encrypt_desc *encrypt);
 
-struct kernel_integ {
-	enum sadb_aalg sadb_aalg;
-	const struct integ_desc *integ;
-	const char *netlink_name;
-	struct kernel_integ *next;
-};
-
-void kernel_integ_add(enum sadb_aalg aalg, const struct integ_desc *integ,
-		      const char *netkey);
-
-const struct kernel_integ *kernel_integ_by_sadb_aalg(enum sadb_aalg aalg);
-const struct kernel_integ *kernel_integ_by_ikev1_auth_attribute(enum ikev1_auth_attribute auth);
+extern int alg_info_esp_sadb2aa(int sadb_aalg);
 
 #endif /* _KERNEL_ALG_H */

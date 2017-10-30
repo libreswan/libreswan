@@ -10,6 +10,7 @@
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -36,7 +37,6 @@
 
 #include "ipsecconf/starterwhack.h"
 #include "ipsecconf/confread.h"
-#include "ipsecconf/files.h"
 #include "ipsecconf/starterlog.h"
 
 #include "socketwrapper.h"
@@ -218,7 +218,7 @@ static int starter_whack_read_reply(int sock,
 	return ret;
 }
 
-static int send_whack_msg(struct whack_message *msg, char *ctlbase)
+static int send_whack_msg(struct whack_message *msg, char *ctlsocket)
 {
 	struct sockaddr_un ctl_addr = { .sun_family = AF_UNIX };
 	int sock;
@@ -228,7 +228,7 @@ static int send_whack_msg(struct whack_message *msg, char *ctlbase)
 	int ret;
 
 	/* copy socket location */
-	strncpy(ctl_addr.sun_path, ctlbase, sizeof(ctl_addr.sun_path) - 1);
+	fill_and_terminate(ctl_addr.sun_path, ctlsocket, sizeof(ctl_addr.sun_path));
 
 	/*  Pack strings */
 	wp.msg = msg;
@@ -253,8 +253,10 @@ static int send_whack_msg(struct whack_message *msg, char *ctlbase)
 		return -1;
 	}
 	if (connect(sock, (struct sockaddr *)&ctl_addr,
-			offsetof(struct sockaddr_un,
-				sun_path) + strlen(ctl_addr.sun_path)) < 0) {
+			offsetof(struct sockaddr_un, sun_path) +
+				strlen(ctl_addr.sun_path)) <
+		0)
+	{
 		starter_log(LOG_LEVEL_ERR, "connect(pluto_ctl) failed: %s",
 			strerror(errno));
 		close(sock);
@@ -292,7 +294,7 @@ static void init_whack_msg(struct whack_message *msg)
 }
 
 /* NOT RE-ENTRANT: uses a static buffer */
-static char *connection_name(struct starter_conn *conn)
+static char *connection_name(const struct starter_conn *conn)
 {
 	/* If connection name is '%auto', create a new name like conn_xxxxx */
 	static char buf[32];
@@ -307,7 +309,7 @@ static char *connection_name(struct starter_conn *conn)
 
 static void set_whack_end(char *lr,
 			struct whack_end *w,
-			struct starter_end *l)
+			const struct starter_end *l)
 {
 	w->id = l->id;
 	w->host_type = l->addrtype;
@@ -419,8 +421,8 @@ static void set_whack_end(char *lr,
 }
 
 static int starter_whack_add_pubkey(struct starter_config *cfg,
-				struct starter_conn *conn,
-				struct starter_end *end, const char *lr)
+				const struct starter_conn *conn,
+				const struct starter_end *end, const char *lr)
 {
 	const char *err;
 	char err_buf[TTODATAV_BUF];
@@ -468,7 +470,7 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 					    "\tsending %s %srsasigkey=%s",
 					    connection_name(conn), lr, end->rsakey1);
 				msg.keyval.ptr = (unsigned char *)keyspace;
-				ret = send_whack_msg(&msg, cfg->ctlbase);
+				ret = send_whack_msg(&msg, cfg->ctlsocket);
 			}
 		}
 	}
@@ -505,7 +507,7 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 					    "\tsending %s %srsasigkey2=%s",
 					    connection_name(conn), lr, end->rsakey1);
 				msg.keyval.ptr = (unsigned char *)keyspace;
-				return send_whack_msg(&msg, cfg->ctlbase);
+				return send_whack_msg(&msg, cfg->ctlsocket);
 			}
 		}
 	}
@@ -513,7 +515,7 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 }
 
 static int starter_whack_basic_add_conn(struct starter_config *cfg,
-					struct starter_conn *conn)
+					const struct starter_conn *conn)
 {
 	struct whack_message msg;
 	int r;
@@ -530,6 +532,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	if (conn->right.addrtype == KH_IPHOSTNAME)
 		msg.dnshostname = conn->right.strings[KSCF_IP];
 
+	msg.nic_offload = conn->options[KBF_NIC_OFFLOAD];
 	msg.sa_ike_life_seconds = deltatime(conn->options[KBF_IKELIFETIME]);
 	msg.sa_ipsec_life_seconds = deltatime(conn->options[KBF_SALIFETIME]);
 	msg.sa_rekey_margin = deltatime(conn->options[KBF_REKEYMARGIN]);
@@ -611,6 +614,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		msg.nat_keepalive = conn->options[KBF_NAT_KEEPALIVE];
 	else
 		msg.nat_keepalive = TRUE;
+
 	if (conn->options_set[KBF_IKEV1_NATT])
 		msg.ikev1_natt = conn->options[KBF_IKEV1_NATT];
 	else
@@ -711,18 +715,6 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	set_whack_end("left",  &msg.left, &conn->left);
 	set_whack_end("right", &msg.right, &conn->right);
 
-	if (conn->options_set[KBF_AUTHBY]) {
-		conn->policy &= ~POLICY_ID_AUTH_MASK;
-		conn->policy |= conn->options[KBF_AUTHBY];
-#ifdef STARTER_POLICY_DEBUG
-		starter_log(LOG_LEVEL_DEBUG,
-				"%s: setting conn->policy=%08x (%08x)",
-				conn->name,
-				(unsigned int)conn->policy,
-				conn->options[KBF_AUTHBY]);
-#endif
-	}
-
 	/* for bug #1004 */
 	update_ports(&msg);
 
@@ -730,29 +722,17 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.ike = conn->ike;
 
 
-	r = send_whack_msg(&msg, cfg->ctlbase);
+	r = send_whack_msg(&msg, cfg->ctlsocket);
 	if (r != 0)
 		return r;
 
-	/* why does this not work?
-	 * if ((conn->policy & POLICY_ID_AUTH_MASK) == LEMPTY) {
-	 */
-
-	if ((conn->policy & POLICY_RSASIG) == LEMPTY &&
-		(conn->policy & POLICY_PSK) == LEMPTY &&
-		(conn->policy & POLICY_AUTH_NULL) == LEMPTY) {
-			/* authby= was also not specified - fill in default */
-			conn->policy |= POLICY_RSASIG;
-	}
-
-	if ((conn->policy & POLICY_RSASIG) || conn->left.authby == AUTH_RSASIG) {
+	if (conn->left.rsakey1 != NULL || conn->left.rsakey2 != NULL) {
 		r = starter_whack_add_pubkey(cfg, conn, &conn->left,  "left");
 		if (r != 0)
 			return r;
 	}
-
-	if ((conn->policy & POLICY_RSASIG) || conn->right.authby == AUTH_RSASIG) {
-		r = starter_whack_add_pubkey(cfg, conn, &conn->right, "right");
+	if (conn->right.rsakey1 != NULL || conn->right.rsakey2 != NULL) {
+		r = starter_whack_add_pubkey(cfg, conn, &conn->right,  "right");
 		if (r != 0)
 			return r;
 	}
@@ -760,7 +740,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	return 0;
 }
 
-static bool one_subnet_from_string(struct starter_conn *conn,
+static bool one_subnet_from_string(const struct starter_conn *conn,
 				char **psubnets,
 				int af,
 				ip_subnet *sn,
@@ -812,11 +792,11 @@ static bool one_subnet_from_string(struct starter_conn *conn,
  * (which is usually add/delete/route/etc.)
  *
  */
-int starter_permutate_conns(int
+static int starter_permutate_conns(int
 			(*operation)(struct starter_config *cfg,
-				struct starter_conn *conn),
+				const struct starter_conn *conn),
 			struct starter_config *cfg,
-			struct starter_conn *conn)
+			const struct starter_conn *conn)
 {
 	struct starter_conn sc;
 	int lc, rc;
@@ -886,7 +866,7 @@ int starter_permutate_conns(int
 
 		success = (*operation)(cfg, &sc);
 		if (success != 0) {
-			/* fail at first failure? . I think so */
+			/* Fail at first failure?  I think so. */
 			return success;
 		}
 
@@ -927,7 +907,7 @@ int starter_permutate_conns(int
 }
 
 int starter_whack_add_conn(struct starter_config *cfg,
-			struct starter_conn *conn)
+			const struct starter_conn *conn)
 {
 	/* basic case, nothing special to synthize! */
 	if (!conn->left.strings_set[KSCF_SUBNETS] &&
@@ -939,14 +919,14 @@ int starter_whack_add_conn(struct starter_config *cfg,
 }
 
 static int starter_whack_basic_route_conn(struct starter_config *cfg,
-					struct starter_conn *conn)
+					const struct starter_conn *conn)
 {
 	struct whack_message msg;
 
 	init_whack_msg(&msg);
 	msg.whack_route = TRUE;
 	msg.name = connection_name(conn);
-	return send_whack_msg(&msg, cfg->ctlbase);
+	return send_whack_msg(&msg, cfg->ctlsocket);
 }
 
 int starter_whack_route_conn(struct starter_config *cfg,
@@ -970,7 +950,7 @@ int starter_whack_initiate_conn(struct starter_config *cfg,
 	msg.whack_initiate = TRUE;
 	msg.whack_async = TRUE;
 	msg.name = connection_name(conn);
-	return send_whack_msg(&msg, cfg->ctlbase);
+	return send_whack_msg(&msg, cfg->ctlsocket);
 }
 
 int starter_whack_listen(struct starter_config *cfg)
@@ -979,5 +959,5 @@ int starter_whack_listen(struct starter_config *cfg)
 
 	init_whack_msg(&msg);
 	msg.whack_listen = TRUE;
-	return send_whack_msg(&msg, cfg->ctlbase);
+	return send_whack_msg(&msg, cfg->ctlsocket);
 }

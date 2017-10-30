@@ -23,7 +23,6 @@ CONFFILES += ipsec.secrets
 
 EXCONFILES=ipsec.win2k.conf
 
-CONFDFILES = v6neighbor-hole.conf
 CONFDSUBDIR = policies
 CONFDSUBDIRFILES = clear clear-or-private private-or-clear private block
 

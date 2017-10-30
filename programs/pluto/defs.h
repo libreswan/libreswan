@@ -17,6 +17,9 @@
 #ifndef _DEFS_H
 #define _DEFS_H
 
+#include <stdbool.h>
+
+#include "lswtime.h"
 #include "lswalloc.h"
 
 /* type of serial number of a state object
@@ -26,7 +29,7 @@ typedef unsigned long so_serial_t;
 #define SOS_NOBODY      0       /* null serial number */
 #define SOS_FIRST       1       /* first normal serial number */
 
-typedef bool sa_t;
+typedef int sa_t;
 #define  IKE_SA		0
 #define  IPSEC_SA	1
 
@@ -59,5 +62,11 @@ extern bool all_zero(const unsigned char *m, size_t len);
 #else
 #define DISCARD_CONST(vartype, varname) ((vartype)(uintptr_t)(varname))
 #endif
+
+/*
+ * So code can determine if it isn't running on the main thread; or
+ * that its thread is valid.
+ */
+extern pthread_t main_thread;
 
 #endif /* _DEFS_H */

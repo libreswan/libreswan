@@ -1580,8 +1580,10 @@ DEBUG_NO_STATIC int ipsec_tunnel_ioctl(struct net_device *dev,
 			    "klips_debug:ipsec_tunnel_ioctl: "
 			    "calling ipsec_tunnel_attatch...\n");
 		/* If this is an IP alias interface, get its real physical name */
-		strncpy(realphysname, cf->cf_name, IFNAMSIZ);
+		/* fill_and_terminate(realphysname, cf->cf_name, IFNAMSIZ); */
+		strncpy(realphysname, cf->cf_name, IFNAMSIZ-1);
 		realphysname[IFNAMSIZ - 1] = 0;
+
 		colon = strchr(realphysname, ':');
 		if (colon)
 			*colon = 0;
@@ -1894,7 +1896,7 @@ int ipsec_device_event(struct notifier_block *unused, unsigned long event,
 	if (dev && (dev->flags & IFF_LOOPBACK))
 		return NOTIFY_DONE;
 
-	if (strlen(dev->name) == 0) {
+	if (dev->name[0] == '\0') {
 		KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
 			    "klips_debug:ipsec_device_event: "
 			    "dev=\"\" ??? for event type.\n");
@@ -1913,8 +1915,7 @@ int ipsec_device_event(struct notifier_block *unused, unsigned long event,
 				    "NETDEV_DOWN dev=%s flags=%x\n",
 				    dev->name,
 				    dev->flags);
-			if (strncmp(dev->name, "ipsec",
-				    strlen("ipsec")) == 0) {
+			if (strncmp(dev->name, "ipsec", strlen("ipsec")) == 0) {
 				printk(KERN_CRIT "IPSEC EVENT: KLIPS device %s shut down.\n",
 					dev->name);
 			}
@@ -2154,7 +2155,10 @@ int ipsec_tunnel_createnum(int ifnum)
 	}
 #ifndef ipsec_alloc_netdev
 	memset((caddr_t)dev_ipsec, 0, sizeof(struct net_device));
-	strncpy(dev_ipsec->name, name, sizeof(dev_ipsec->name));
+	/* fill_and_terminate(dev_ipsec->name, name, sizeof(dev_ipsec->name)); */
+	strncpy(dev_ipsec->name, name, sizeof(dev_ipsec->name)-1);
+	dev_ipsec->name[sizeof(dev_ipsec->name)-1] ='\0';
+
 #ifdef PAUL_FIXME
 	dev_ipsec->next = NULL;
 #endif

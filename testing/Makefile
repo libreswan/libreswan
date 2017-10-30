@@ -14,7 +14,6 @@
 
 SUBDIRS = pluto
 SUBDIRS += enumcheck
-SUBDIRS += algparse
 
 ifndef top_srcdir
 include ../mk/dirs.mk

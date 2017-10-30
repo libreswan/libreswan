@@ -32,16 +32,20 @@ ARFLAGS=crvs
 local-base: $(LIB)
 
 local-clean-base:
-	rm -f $(foreach f,$(OBJS) $(LIB), $(builddir)/$(f))
+	rm -f $(builddir)/*.o
+	rm -f $(builddir)/*.a
+	rm -f $(builddir)/*.c
 
 list-local-base:
 	@: never nothing to do
 
-$(LIB): $(OBJS)
-	cd $(builddir) ; $(AR) $(ARFLAGS) $(LIB) $(OBJS)
+# So that removing something from $(OBJS) triggers an archive build:
+# depend on Makefile; and always build a new archive.  Could also
+# depend the mk/* directory?
 
-$(OBJS):	$(HDRS)
+$(LIB): $(OBJS) $(srcdir)/Makefile | $(builddir)
+	rm -f $(builddir)/$(LIB).tmp
+	cd $(builddir) && $(AR) $(ARFLAGS) $(LIB).tmp $(OBJS)
+	mv $(builddir)/$(LIB).tmp $(builddir)/$(LIB)
 
-MK_DEPEND_FILES = $(OBJS)
-MK_DEPEND_CFLAGS = $(CFLAGS)
 include $(top_srcdir)/mk/depend.mk

@@ -19,7 +19,7 @@ PROGRAM = enumcheck
 OBJS += $(PROGRAM).o
 
 OBJS += $(LIBRESWANLIB)
-OBJS += $(LSWLOGLIBS)
+OBJS += $(LSWTOOLLIBS)
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
@@ -27,5 +27,5 @@ else
 include ../../mk/program.mk
 endif
 
-selfcheck:
+local-selfcheck:
 	$(builddir)/$(PROGRAM) | diff -u $(srcdir)/OUTPUT.$(PROGRAM).txt -
