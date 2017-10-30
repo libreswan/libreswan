@@ -421,7 +421,7 @@ bool has_preloaded_public_key(struct state *st)
 
 			if (key->alg == PUBKEY_ALG_RSA &&
 			    same_id(&c->spd.that.id, &key->id) &&
-			    isundefinedrealtime(key->until_time)) {
+			    is_realtime_epoch(key->until_time)) {
 				/* found a preloaded public key */
 				return TRUE;
 			}

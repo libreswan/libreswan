@@ -61,6 +61,7 @@ OBJS += addrtoa.o addrtot.o addrtypeof.o alg_info.o esp_info.o anyaddr.o \
 	alg_byname.o
 
 OBJS += lmod.o
+OBJS += lswtime.o
 
 OBJS += debug_enum_names.o
 OBJS += lswlog.o

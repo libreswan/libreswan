@@ -66,7 +66,7 @@ struct fetch_req {
 
 static fetch_req_t empty_fetch_req = {
 	NULL,           /* next */
-	{ 0 },		/* installed */
+	REALTIME_EPOCH,	/* installed */
 	0,              /* trials */
 	{ NULL, 0 },    /* issuer */
 	NULL            /* distributionPoints */
