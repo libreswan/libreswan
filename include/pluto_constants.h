@@ -328,6 +328,7 @@ enum {
 	DBG_NATT_IX,		/* debugging of NAT-traversal */
 	DBG_X509_IX,		/* X.509/pkix verify, cert retrival */
 	DBG_DPD_IX,		/* DPD items */
+	DBG_XAUTH_IX,		/* XAUTH aka PAM */
 	DBG_OPPOINFO_IX,	/* log various informational things about oppo/%trap-keying */
 
 	DBG_WHACKWATCH_IX,	/* never let WHACK go */
@@ -359,6 +360,7 @@ enum {
 #define DBG_NATT	LELEM(DBG_NATT_IX)
 #define DBG_X509	LELEM(DBG_X509_IX)
 #define DBG_DPD		LELEM(DBG_DPD_IX)
+#define DBG_XAUTH	LELEM(DBG_XAUTH_IX)
 #define DBG_OPPOINFO	LELEM(DBG_OPPOINFO_IX)
 
 #define DBG_WHACKWATCH	LELEM(DBG_WHACKWATCH_IX)

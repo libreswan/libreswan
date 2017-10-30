@@ -2510,8 +2510,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		if (st->st_connection->spd.this.xauth_server) {
 			if (st->st_oakley.doing_xauth &&
 			    IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
-				DBG(DBG_CONTROL,
-					DBG_log("XAUTH: Sending XAUTH Login/Password Request"));
+				DBG(DBG_CONTROLMORE|DBG_XAUTH,
+				    DBG_log("XAUTH: Sending XAUTH Login/Password Request"));
 				event_schedule_ms(EVENT_v1_SEND_XAUTH,
 						EVENT_v1_SEND_XAUTH_DELAY, st);
 						break;

@@ -627,8 +627,9 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 
 	case EVENT_v1_SEND_XAUTH:
 		passert(st != NULL && st->st_send_xauth_event == ev);
-		DBG_log("event EVENT_v1_SEND_XAUTH #%lu %s", st->st_serialno,
-				enum_name(&state_names, st->st_state));
+		DBG(DBG_CONTROLMORE|DBG_XAUTH,
+		    DBG_log("XAUTH: event EVENT_v1_SEND_XAUTH #%lu %s",
+			    st->st_serialno, enum_name(&state_names, st->st_state)));
 		st->st_send_xauth_event = NULL;
 		break;
 

@@ -80,7 +80,7 @@ void xauth_abort(so_serial_t serialno, struct xauth **xauthp,
 		 */
 		kill(xauth->child, SIGKILL);
 		if (st_callback != NULL) {
-			DBG(DBG_CONTROL,
+			DBG(DBG_XAUTH,
 			    DBG_log("XAUTH: #%lu: main-process: notifying callback for user '%s'",
 				    serialno, xauth->name));
 			xauth->callback(st_callback, xauth->name, true, false);
@@ -99,7 +99,7 @@ static void xauth_cleanup(int status, void *arg)
 	struct xauth *xauth = arg;
 	bool success = WIFEXITED(status) && WEXITSTATUS(status) == 0;
 
-	DBG(DBG_CONTROL, {
+	DBG(DBG_XAUTH, {
 			struct timeval tv1;
 			unsigned long tv_diff;
 
@@ -149,23 +149,16 @@ static int xauth_child(void *arg)
 {
 	struct xauth *xauth = arg;
 
-	DBG(DBG_CONTROLMORE,
+	DBG(DBG_XAUTH,
 	    DBG_log("XAUTH: #%lu: %s-process authenticating user '%s'",
 		    xauth->serialno, xauth->method,
 		    xauth->name));
 	bool success = xauth->authenticate(xauth->arg);
-
-	/*
-	 * Schedule xauth_cleanup_callback() to run on the main
-	 * thread, and then let this thread die.
-	 *
-	 * Given xauth->abort is volatile and updated by the main
-	 * thread, logging it here is just a hint.
-	 */
-	libreswan_log("XAUTH: #%lu: %s-process completed for user '%s' with result %s%s",
-		      xauth->serialno, xauth->method, xauth->name,
-		      success ? "SUCCESS" : "FAILURE",
-		      xauth->abort ? " ABORTED" : "");
+	DBG(DBG_XAUTH,
+	    DBG_log("XAUTH: #%lu: %s-process completed for user '%s' with result %s%s",
+		    xauth->serialno, xauth->method, xauth->name,
+		    success ? "SUCCESS" : "FAILURE",
+		    xauth->abort ? " ABORTED" : ""));
 	return success ? 0 : 1;
 }
 
@@ -210,7 +203,7 @@ static void xauth_start_child(struct xauth **xauthp,
 	struct xauth *xauth = xauth_alloc(method, name, serialno, arg,
 					  authenticate, cleanup, callback);
 
-	DBG(DBG_CONTROLMORE,
+	DBG(DBG_XAUTH,
 	    DBG_log("XAUTH: #%lu: main-process starting %s-process for authenticating user '%s'",
 		    xauth->serialno, xauth->method, xauth->name));
 	xauth->child = pluto_fork(xauth_child, xauth_cleanup, xauth);

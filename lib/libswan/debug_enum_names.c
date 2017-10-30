@@ -40,6 +40,7 @@ static const char *debug_strings[] = {
 	D(DBG_NATT, "debug-nattraversal"),
 	D(DBG_X509, "debug-x509"),
 	D(DBG_DPD, "debug-dpd"),
+	D(DBG_XAUTH, "debug-xauth"),
 	D(DBG_OPPOINFO, "debug-oppoinfo"),
 	D(DBG_WHACKWATCH, "debug-whackwatch"),
 	D(DBG_PRIVATE, "debug-private"),

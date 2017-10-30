@@ -209,7 +209,7 @@ static size_t xauth_mode_cfg_hash(u_char *dest,
 	hmac_update(&ctx, start, roof - start);
 	hmac_final(dest, &ctx);
 
-	DBG(DBG_CRYPT, {
+	DBG(DBG_CRYPT|DBG_XAUTH, {
 		DBG_log("XAUTH: HASH computed:");
 		DBG_dump("", dest, ctx.hmac_digest_len);
 	});
@@ -913,12 +913,12 @@ static bool add_xauth_addresspool(struct connection *c,
 		snprintf(single_addresspool, sizeof(single_addresspool),
 			"%s-%s",
 			addresspool, addresspool);
-		DBG(DBG_CONTROLMORE,
+		DBG(DBG_CONTROLMORE|DBG_XAUTH,
 			DBG_log("XAUTH: adding single ip addresspool entry %s for the conn %s user=%s",
 				single_addresspool, c->name, userid));
 		er = ttorange(single_addresspool, 0, AF_INET, &pool_range, TRUE);
 	} else {
-		DBG(DBG_CONTROLMORE,
+		DBG(DBG_CONTROLMORE|DBG_XAUTH,
 			DBG_log("XAUTH: adding addresspool entry %s for the conn %s user %s",
 				addresspool, c->name, userid));
 		er = ttorange(addresspool, 0, AF_INET, &pool_range, TRUE);
@@ -1047,7 +1047,7 @@ static bool do_file_authentication(struct state *st, const char *name,
 		if (connectionname != NULL && connectionname[0] == '\0')
 			connectionname = NULL;
 
-		DBG(DBG_CONTROL,
+		DBG(DBG_XAUTH|DBG_CONTROLMORE,
 			DBG_log("XAUTH: found user(%s/%s) pass(%s) connid(%s/%s) addresspool(%s)",
 				userid, name, passwdhash,
 				connectionname == NULL ? "" : connectionname,
@@ -1351,8 +1351,8 @@ stf_status xauth_inR0(struct msg_digest *md)
 
 		case XAUTH_USER_NAME | ISAKMP_ATTR_AF_TLV:
 			if (gotname) {
-				DBG(DBG_CONTROLMORE, DBG_log(
-					"XAUTH: two User Names!  Rejected"));
+				DBG(DBG_CONTROLMORE|DBG_XAUTH,
+				    DBG_log("XAUTH: two User Names!  Rejected"));
 				return STF_FAIL + NO_PROPOSAL_CHOSEN;
 			}
 			sz = pbs_left(&strattr);
@@ -2467,7 +2467,7 @@ stf_status xauth_inI0(struct msg_digest *md)
 	}
 
 	if (gotrequest) {
-		DBG(DBG_CONTROL, {
+		DBG(DBG_CONTROLMORE|DBG_XAUTH, {
 			if (xauth_resp &
 			    (XAUTHLELEM(XAUTH_USER_NAME) |
 			     XAUTHLELEM(XAUTH_USER_PASSWORD)))
