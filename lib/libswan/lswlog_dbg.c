@@ -25,4 +25,7 @@ lset_t cur_debugging = DBG_NONE;	/* default to reporting nothing */
 void lswlog_dbg_pre(struct lswlog *buf)
 {
 	lswlogs(buf, DEBUG_PREFIX);
+	if (DBGP(DBG_ADD_PREFIX)) {
+		lswlog_log_prefix(buf);
+	}
 }

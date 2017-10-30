@@ -189,6 +189,12 @@ void lswlog_log_prefix(struct lswlog *buf)
 		if (cur_state != NULL) {
 			/* state number */
 			lswlogf(buf, " #%lu", cur_state->st_serialno);
+			/* state name */
+			if (DBGP(DBG_ADD_PREFIX)) {
+				lswlogf(buf, " ");
+				lswlog_enum_short(buf, &state_names,
+						  cur_state->st_state);
+			}
 		}
 		lswlogs(buf, ": ");
 	} else if (cur_from != NULL) {

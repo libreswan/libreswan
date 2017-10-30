@@ -332,6 +332,7 @@ enum {
 
 	DBG_WHACKWATCH_IX,	/* never let WHACK go */
 	DBG_PRIVATE_IX,		/* displays private information: DANGER! */
+	DBG_ADD_PREFIX_IX,	/* add the log+state prefix to debug lines */
 
 	DBG_roof_IX,		/* first unassigned DBG is assigned to IMPAIR! */
 };
@@ -362,6 +363,7 @@ enum {
 
 #define DBG_WHACKWATCH	LELEM(DBG_WHACKWATCH_IX)
 #define DBG_PRIVATE	LELEM(DBG_PRIVATE_IX)
+#define DBG_ADD_PREFIX	LELEM(DBG_ADD_PREFIX_IX)
 
 /*
  * Index of IMPAIR set elements.  These set at the end of the DBG
