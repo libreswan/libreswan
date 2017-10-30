@@ -25,7 +25,7 @@ void lsw_pexpect_log(const char *file,
 		     const char *fmt, ...)
 {
 	LSWBUF(buf) {
-		lswlog_pre(buf);
+		lswlog_log_prefix(buf);
 		lswlogs(buf, "EXPECTATION FAILED: ");
 		va_list ap;
 		va_start(ap, fmt);

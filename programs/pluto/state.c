@@ -2524,7 +2524,7 @@ bool state_busy(const struct state *st) {
 		if (st->st_suspended_md != NULL) {
 
 			LSWDBG(buf) {
-				lswlog_pre(buf);
+				lswlog_log_prefix(buf);
 				lswlogf(buf, "discarding packet received during asynchronous work (DNS or crypto) in %s",
 					enum_name(&state_names, st->st_state));
 			}

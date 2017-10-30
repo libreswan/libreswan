@@ -70,7 +70,7 @@ void libreswan_log_errno(int e, const char *prefix, const char *message, ...)
 	}
 }
 
-void lswlog_pre(struct lswlog *buf)
+void lswlog_log_prefix(struct lswlog *buf)
 {
 	lswlogf(buf, "%s%s", progname, prog_suffix);
 }

@@ -112,35 +112,6 @@ static void add_whack_rc_prefix(struct lswlog *buf, enum rc_type rc)
 	lswlogf(buf, "%03d ", rc);
 }
 
-static void add_state_prefix(struct lswlog *buf)
-{
-	if (!pthread_equal(pthread_self(), main_thread)) {
-		return;
-	}
-
-	struct connection *c = cur_state != NULL ? cur_state->st_connection :
-		cur_connection;
-
-	if (c != NULL) {
-		lswlogf(buf, "\"%s\"", c->name);
-		/* if it fits, put in any connection instance information */
-		char inst[CONN_INST_BUF];
-		fmt_conn_instance(c, inst);
-		lswlogs(buf, inst);
-		if (cur_state != NULL) {
-			/* state number */
-			lswlogf(buf, " #%lu", cur_state->st_serialno);
-		}
-		lswlogs(buf, ": ");
-	} else if (cur_from != NULL) {
-		/* peer's IP address */
-		ipstr_buf b;
-		lswlogf(buf, "packet from %s:%u: ",
-			log_ip ? ipstr(cur_from, &b) : "<ip address>",
-			(unsigned)cur_from_port);
-	}
-}
-
 /*
  * Wrap up the logic to decide if a particular output should occure.
  * The compiler will likely inline these.
@@ -200,9 +171,33 @@ static void whack_raw(struct lswlog *b, enum rc_type rc)
 	}
 }
 
-void lswlog_pre(struct lswlog *buf)
+void lswlog_log_prefix(struct lswlog *buf)
 {
-	add_state_prefix(buf);
+	if (!pthread_equal(pthread_self(), main_thread)) {
+		return;
+	}
+
+	struct connection *c = cur_state != NULL ? cur_state->st_connection :
+		cur_connection;
+
+	if (c != NULL) {
+		lswlogf(buf, "\"%s\"", c->name);
+		/* if it fits, put in any connection instance information */
+		char inst[CONN_INST_BUF];
+		fmt_conn_instance(c, inst);
+		lswlogs(buf, inst);
+		if (cur_state != NULL) {
+			/* state number */
+			lswlogf(buf, " #%lu", cur_state->st_serialno);
+		}
+		lswlogs(buf, ": ");
+	} else if (cur_from != NULL) {
+		/* peer's IP address */
+		ipstr_buf b;
+		lswlogf(buf, "packet from %s:%u: ",
+			log_ip ? ipstr(cur_from, &b) : "<ip address>",
+			(unsigned)cur_from_port);
+	}
 }
 
 static void log_raw(struct lswlog *buf, int severity)
@@ -256,7 +251,7 @@ void libreswan_log_errno(int e, const char *prefix, const char *message, ...)
 	LSWBUF(buf) {
 		/* <prefix><state#N...><message>.Errno %d: <strerror> */
 		lswlogs(buf, prefix);
-		add_state_prefix(buf);
+		lswlog_log_prefix(buf);
 		va_list args;
 		va_start(args, message);
 		lswlogvf(buf, message, args);
@@ -272,7 +267,7 @@ void exit_log(const char *message, ...)
 	LSWBUF(buf) {
 		/* FATAL ERROR: <state...><message> */
 		lswlogs(buf, "FATAL ERROR: ");
-		add_state_prefix(buf);
+		lswlog_log_prefix(buf);
 		va_list args;
 		va_start(args, message);
 		lswlogvf(buf, message, args);
@@ -291,7 +286,7 @@ void whack_log_pre(enum rc_type rc, struct lswlog *buf)
 {
 	passert(pthread_equal(pthread_self(), main_thread));
 	add_whack_rc_prefix(buf, rc);
-	add_state_prefix(buf);
+	lswlog_log_prefix(buf);
 }
 
 void lswlog_to_whack_stream(struct lswlog *buf)
@@ -354,7 +349,7 @@ void whack_log(enum rc_type rc, const char *message, ...)
 	if (whack_log_p()) {
 		LSWBUF(buf) {
 			add_whack_rc_prefix(buf, rc);
-			add_state_prefix(buf);
+			lswlog_log_prefix(buf);
 			va_list args;
 			va_start(args, message);
 			lswlogvf(buf, message, args);
@@ -369,7 +364,7 @@ void whack_log_comment(const char *message, ...)
 	if (whack_log_p()) {
 		LSWBUF(buf) {
 			/* add_whack_rc_prefix() - skipped */
-			add_state_prefix(buf);
+			lswlog_log_prefix(buf);
 			va_list args;
 			va_start(args, message);
 			lswlogvf(buf, message, args);

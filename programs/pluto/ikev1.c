@@ -1562,7 +1562,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			}
 		} else {
 			LSWDBGP(DBG_CONTROLMORE, buf) {
-				lswlog_pre(buf);
+				lswlog_log_prefix(buf);
 				lswlogf(buf, "discarding duplicate packet; already %s",
 				enum_name(&state_names, st->st_state));
 			}

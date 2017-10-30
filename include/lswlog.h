@@ -389,14 +389,14 @@ void lswlog_dbg_pre(struct lswlog *buf);
  * Send log output the logging streams and WHACK (if connected).
  */
 
-void lswlog_pre(struct lswlog *buf);
+void lswlog_log_prefix(struct lswlog *buf);
 
 #define LSWLOG(BUF)  LSWLOG_LOGWHACK(RC_LOG, BUF)
 
 #define LSWLOG_LOGWHACK(RC, BUF)					\
 	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
 		LSWBUF_(BUF)						\
-			for (lswlog_pre(BUF); lswlog_p;			\
+			for (lswlog_log_prefix(BUF); lswlog_p;			\
 			     lswlog_to_logwhack_stream(BUF, RC),	\
 				     lswlog_p = false)
 
