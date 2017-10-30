@@ -252,7 +252,8 @@ static void unlocked_peerlog(const char *m)
 	if (cur_connection->log_file != NULL) {
 		char datebuf[32];
 
-		prettynow(datebuf, sizeof(datebuf), "%Y-%m-%d %T");
+		struct realtm now = local_realtime(realnow());
+		strftime(datebuf, sizeof(datebuf), "%Y-%m-%d %T", &now.tm);
 		fprintf(cur_connection->log_file, "%s %s\n",
 			datebuf, m);
 

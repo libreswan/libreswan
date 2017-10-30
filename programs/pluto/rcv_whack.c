@@ -242,7 +242,8 @@ static bool openwhackrecordfile(char *file)
 		return FALSE;
 	}
 
-	prettynow(when, sizeof(when), "%F %T");
+	struct realtm now = local_realtime(realnow());
+	strftime(when, sizeof(when), "%F %T", &now.tm);
 
 	fprintf(whackrecordfile, "#!-pluto-whack-file- recorded on %s on %s",
 		FQDN, when);

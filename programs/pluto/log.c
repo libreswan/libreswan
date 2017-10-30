@@ -149,12 +149,16 @@ static void add_state_prefix(struct lswlog *buf)
 static void stdlog_raw(char *b)
 {
 	if (log_to_stderr || pluto_log_fp != NULL) {
-		char now[34] = "";
+		FILE *out = log_to_stderr ? stderr : pluto_log_fp;
 
-		if (log_with_timestamp)
-			prettynow(now, sizeof(now), "%b %e %T: ");
-		fprintf(log_to_stderr ? stderr : pluto_log_fp,
-			"%s%s\n", now, b);
+		if (log_with_timestamp) {
+			char now[34] = "";
+			struct realtm t = local_realtime(realnow());
+			strftime(now, sizeof(now), "%b %e %T", &t.tm);
+			fprintf(out, "%s: %s", now, b);
+		} else {
+			fprintf(out, "%s\n", b);
+		}
 	}
 }
 
@@ -245,15 +249,6 @@ void close_log(void)
 	}
 
 	peerlog_close();
-}
-
-void prettynow(char *buf, size_t buflen, const char *fmt)
-{
-	realtime_t n = realnow();
-	struct realtm t = local_realtime(n);
-
-	/* the cast suppresses a warning: <http://gcc.gnu.org/bugzilla/show_bug.cgi?id=39438> */
-	((size_t (*)(char *, size_t, const char *, const struct tm *))strftime)(buf, buflen, fmt, &t.tm);
 }
 
 void libreswan_log_errno(int e, const char *prefix, const char *message, ...)
