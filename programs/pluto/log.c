@@ -155,7 +155,7 @@ static void stdlog_raw(char *b)
 			char now[34] = "";
 			struct realtm t = local_realtime(realnow());
 			strftime(now, sizeof(now), "%b %e %T", &t.tm);
-			fprintf(out, "%s: %s", now, b);
+			fprintf(out, "%s: %s\n", now, b);
 		} else {
 			fprintf(out, "%s\n", b);
 		}
