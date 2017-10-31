@@ -914,51 +914,57 @@ void call_server(void)
 
 	/*
 	 * fork to issue the command "ipsec addconn --autoall"
-	 * (or vfork() when fork() isn't available, eg on embedded platforms
-	 * without MMU, like uClibc
+	 * (or vfork() when fork() isn't available, eg. on embedded platforms
+	 * without MMU, like uClibc)
 	 */
 	{
 		/* find a pathname to the addconn program */
-		const char *addconn_path = NULL;
 		static const char addconn_name[] = "addconn";
 		char addconn_path_space[4096]; /* plenty long? */
-		ssize_t n = 0;
+		ssize_t n;
 
 #if !(defined(macintosh) || (defined(__MACH__) && defined(__APPLE__)))
-		{
-			/* The program will be in the same directory as Pluto,
-			 * so we use the sympolic link /proc/self/exe to
-			 * tell us of the path prefix.
-			 */
-			n = readlink("/proc/self/exe", addconn_path_space,
-				     sizeof(addconn_path_space));
-			if (n < 0) {
+		/*
+		 * The program will be in the same directory as Pluto,
+		 * so we use the symbolic link /proc/self/exe to
+		 * tell us of the path prefix.
+		 */
+		n = readlink("/proc/self/exe", addconn_path_space,
+			     sizeof(addconn_path_space));
+		if (n < 0) {
 # ifdef __uClibc__
-				/* on some nommu we have no proc/self/exe, try without path */
-				*addconn_path_space = '\0';
-				n = 0;
+			/*
+			 * Some noMMU systems have no proc/self/exe.
+			 * Try without path.
+			 */
+			n = 0;
 # else
-				EXIT_LOG_ERRNO(errno,
-					       "readlink(\"/proc/self/exe\") failed in call_server()");
+			EXIT_LOG_ERRNO(errno,
+				       "readlink(\"/proc/self/exe\") failed in call_server()");
 # endif
-			}
 		}
 #else
-		/* This is wrong. Should end up in a resource_dir on MacOSX -- Paul */
-		addconn_path = "/usr/local/libexec/ipsec/addconn";
+		/* Hardwire a path */
+		/* ??? This is wrong. Should end up in a resource_dir on MacOSX -- Paul */
+		n = jam_str(addconn_path_space,
+				sizeof(addconn_path_space),
+				"/usr/local/libexec/ipsec/") -
+			addcon_path_space;
 #endif
-		if ((size_t)n > sizeof(addconn_path_space) -
-		    sizeof(addconn_name))
-			exit_log("path to %s is too long", addconn_name);
+
+		/* strip any final name from addconn_path_space */
 		while (n > 0 && addconn_path_space[n - 1] != '/')
 			n--;
 
-		strcpy(addconn_path_space + n, addconn_name);
-		addconn_path = addconn_path_space;
+		if ((size_t)n >
+		    sizeof(addconn_path_space) - sizeof(addconn_name))
+			exit_log("path to %s is too long", addconn_name);
 
-		if (access(addconn_path, X_OK) < 0)
+		strcpy(addconn_path_space + n, addconn_name);
+
+		if (access(addconn_path_space, X_OK) < 0)
 			EXIT_LOG_ERRNO(errno, "%s missing or not executable",
-				       addconn_path);
+				       addconn_path_space);
 
 		char *newargv[] = { DISCARD_CONST(char *, "addconn"),
 				    DISCARD_CONST(char *, "--ctlsocket"),
@@ -974,25 +980,30 @@ void call_server(void)
 #endif
 		if (addconn_child_pid == 0) {
 			/*
-			 * child
+			 * Child
 			 *
-			 * Note that, when vfork() was used, calls
-			 * like sleep() and DBG_log() are not valid.
-			 *
-			 * XXX: Why the sleep?
+			 * Note: when vfork() is used, calls
+			 * like sleep() and DBG_log() are not valid
+			 * before the exec* call.
 			 */
 #if USE_FORK
+			/* XXX: Why the sleep?  See 1987ac98f8.  Hack! */
 			sleep(1);
 #endif
-			execve(addconn_path, newargv, newenv);
+			execve(addconn_path_space, newargv, newenv);
 			_exit(42);
 		}
+
+		/* Parent */
+
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("created addconn helper (pid:%d) using %s+execve",
 			    addconn_child_pid, USE_VFORK ? "vfork" : "fork"));
 		add_pid(addconn_child_pid, addconn_exited, NULL);
-		/* parent continues */
 	}
+
+	/* parent continues */
+
 #ifdef HAVE_SECCOMP
 	switch (pluto_seccomp_mode) {
 	case SECCOMP_ENABLED:

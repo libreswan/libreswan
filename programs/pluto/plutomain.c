@@ -1832,13 +1832,12 @@ void exit_pluto(int status)
 	unbound_ctx_free();
 #endif
 
-
 	/* report memory leaks now, after all free_* calls */
 	if (leak_detective)
 		report_leaks();
 	close_log();	/* close the logfiles */
 #ifdef USE_SYSTEMD_WATCHDOG
-	pluto_sd(PLUTO_SD_EXIT,status);
+	pluto_sd(PLUTO_SD_EXIT, status);
 #endif
 	exit(status);	/* exit, with our error code */
 }
