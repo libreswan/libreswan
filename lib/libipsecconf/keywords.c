@@ -7,7 +7,7 @@
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013-2016 Antony Antony <antony@phenome.org>
- * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016-2017, Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -31,6 +31,7 @@
 #ifndef _LIBRESWAN_H
 #include <libreswan.h>
 #include "constants.h"
+#include "lmod.h"
 #endif
 
 #include "ipsecconf/keywords.h"
@@ -292,33 +293,6 @@ static const struct keyword_enum_values kw_xauthfail = VALUES_INITIALIZER(kw_xau
  * Values for right= and left=
  */
 
-static const struct keyword_enum_value kw_plutodebug_values[] = {
-	{ "none",     DBG_NONE },
-	{ "all",      DBG_ALL },
-	{ "raw",      DBG_RAW },
-	{ "crypt",    DBG_CRYPT },
-	{ "parsing",  DBG_PARSING },
-	{ "emitting", DBG_EMITTING },
-	{ "control",  DBG_CONTROL },
-	{ "lifecycle", DBG_LIFECYCLE },
-	{ "kernel",    DBG_KERNEL },
-	{ "dns",      DBG_DNS },
-	{ "oppo",     DBG_OPPO },
-	{ "oppoinfo",    DBG_OPPOINFO },
-	{ "controlmore", DBG_CONTROLMORE },
-	{ "private",  DBG_PRIVATE },
-	{ "x509",     DBG_X509 },
-	{ "dpd",      DBG_DPD },
-	{ "pfkey",    DBG_PFKEY },
-	{ "natt",     DBG_NATT },
-	{ "nattraversal", DBG_NATT },
-	/* backwards compatibility */
-	{ "klips",    DBG_KERNEL },
-	{ "netkey",    DBG_KERNEL },
-};
-
-static const struct keyword_enum_values kw_plutodebug_list = VALUES_INITIALIZER(kw_plutodebug_values);
-
 static const struct keyword_enum_value kw_klipsdebug_values[] = {
 	{ "all",      LRANGE(KDF_XMIT, KDF_COMP) },
 	{ "none",     0 },
@@ -423,7 +397,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "myvendorid",  kv_config,  kt_string,  KSF_MYVENDORID, NULL, NULL, },
   { "syslog",  kv_config,  kt_string,  KSF_SYSLOG, NULL, NULL, },
   { "klipsdebug",  kv_config,  kt_list,  KBF_KLIPSDEBUG,  &kw_klipsdebug_list, NULL, },
-  { "plutodebug",  kv_config,  kt_list,  KBF_PLUTODEBUG,  &kw_plutodebug_list, NULL, },
+  { "plutodebug",  kv_config,  kt_lset,  KBF_PLUTODEBUG, NULL, &debug_lmod_info, },
   { "logfile",  kv_config,  kt_filename,  KSF_PLUTOSTDERRLOG, NULL, NULL, },
   { "plutostderrlog",  kv_config | kv_alias,  kt_filename,  KSF_PLUTOSTDERRLOG, NULL, NULL, },  /* obsolete */
   { "logtime",  kv_config,  kt_bool,  KBF_PLUTOSTDERRLOGTIME, NULL, NULL, },
@@ -822,6 +796,34 @@ unsigned int parser_enum_list(const struct keyword_def *kd, const char *s, bool 
 
 	free(scopy);
 	return valresult;
+}
+
+lset_t parser_lset(const struct keyword_def *kd, const char *value)
+{
+	assert(kd->type == kt_lset);
+
+	lmod_t result;
+	zero(&result);
+
+	/*
+	 * Use lmod_args() since it both knows how to parse a comma
+	 * separated list and can handle no-XXX (ex: all,no-xauth).
+	 * The final set of enabled bits is returned in .set.
+	 */
+	if (!lmod_arg(&result, kd->info, value)) {
+		/*
+		 * If the lookup failed, complain (and exit!).
+		 *
+		 * XXX: the error diagnostic is a little vague -
+		 * should lmod_arg() instead return the error?
+		 */
+		fprintf(stderr, "ERROR: %s: %d: keyword %s, invalid value: %s\n",
+			parser_cur_filename(), parser_cur_lineno(),
+			kd->keyname, value);
+		exit(1);
+	}
+
+	return result.set;
 }
 
 unsigned int parser_loose_enum(struct keyword *k, const char *s)

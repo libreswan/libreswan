@@ -344,6 +344,7 @@ static bool load_setup(struct starter_config *cfg,
 			break;
 
 		case kt_list:
+		case kt_lset:
 		case kt_bool:
 		case kt_invertbool:
 		case kt_enum:
@@ -898,6 +899,7 @@ static bool translate_conn(struct starter_conn *conn,
 			break;
 
 		case kt_list:
+		case kt_lset:
 		case kt_bool:
 		case kt_invertbool:
 		case kt_enum:

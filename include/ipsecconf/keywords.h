@@ -308,6 +308,7 @@ enum keyword_type {
 	kt_invertbool,          /* value is an off/on type ("disable") */
 	kt_enum,                /* value is from a set of key words */
 	kt_list,                /* a set of values from a set of key words */
+	kt_lset,		/* a set of values from an enum name */
 	kt_loose_enum,          /* either a string, or a %-prefixed enum */
 	kt_rsakey,              /* a key, or set of values */
 	kt_number,              /* an integer */
@@ -329,7 +330,7 @@ struct keyword_def {
 	enum keyword_type type;
 	unsigned int field;             /* one of keyword_*_field */
 	const struct keyword_enum_values *validenum;
-	const struct enum_names *names;
+	const struct lmod_info *info;
 };
 
 struct keyword {
@@ -376,6 +377,7 @@ struct config_parsed {
 
 extern const struct keyword_def ipsec_conf_keywords[];
 
+extern lset_t parser_lset(const struct keyword_def *kd, const char *s);
 extern unsigned int parser_enum_list(const struct keyword_def *kd, const char *s,
 				     bool list);
 extern unsigned int parser_loose_enum(struct keyword *k, const char *s);
