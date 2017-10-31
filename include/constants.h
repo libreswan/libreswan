@@ -318,7 +318,7 @@ extern const char *bitnamesofb(const char *const table[],
 			       char *buf, size_t blen);
 
 size_t lswlog_enum_lset_short(struct lswlog *, enum_names *sd,
-			      lset_t val);
+			      const char *separator, lset_t val);
 
 /*
  * The sparser_name should be transformed into keyword_enum_value

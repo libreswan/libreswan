@@ -49,6 +49,7 @@ struct lmod_info {
 bool lmod_arg(lmod_t *mod, const struct lmod_info *info,
 	      const char *optarg);
 
-void lswlog_lmod(struct lswlog *buf, const struct enum_names *names, lmod_t mod);
+void lswlog_lmod(struct lswlog *buf, const struct enum_names *names,
+		 const char *separator, lmod_t mod);
 
 #endif

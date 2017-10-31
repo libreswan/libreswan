@@ -294,23 +294,29 @@ void whack_process(int whackfd, const struct whack_message *const m)
 				set_debugging(cur_debugging | new_debugging);
 				LSWDBGP(DBG_CONTROL, buf) {
 					lswlogs(buf, "old debugging ");
-					lswlog_enum_lset_short(buf, &debug_names, old_debugging);
+					lswlog_enum_lset_short(buf, &debug_names,
+							        "+", old_debugging);
 					lswlogs(buf, " + ");
-					lswlog_lmod(buf, &debug_names, m->debugging);
+					lswlog_lmod(buf, &debug_names,
+						    "+", m->debugging);
 				}
 				LSWDBGP(DBG_CONTROL, buf) {
 					lswlogs(buf, "base debugging = ");
-					lswlog_enum_lset_short(buf, &debug_names, new_debugging);
+					lswlog_enum_lset_short(buf, &debug_names,
+							       "+", new_debugging);
 				}
 				LSWDBGP(DBG_CONTROL, buf) {
 					lswlogs(buf, "old impairing ");
-					lswlog_enum_lset_short(buf, &impair_names, old_impairing);
+					lswlog_enum_lset_short(buf, &impair_names,
+							       "+", old_impairing);
 					lswlogs(buf, " + ");
-					lswlog_lmod(buf, &impair_names, m->impairing);
+					lswlog_lmod(buf, &impair_names,
+						    "+", m->impairing);
 				}
 				LSWDBGP(DBG_CONTROL, buf) {
 					lswlogs(buf, "base impairing = ");
-					lswlog_enum_lset_short(buf, &impair_names, new_impairing);
+					lswlog_enum_lset_short(buf, &impair_names,
+							       "+", new_impairing);
 				}
 				base_debugging = new_debugging | new_impairing;
 				set_debugging(base_debugging);
@@ -323,13 +329,15 @@ void whack_process(int whackfd, const struct whack_message *const m)
 					LSWDBGP(DBG_CONTROL, buf) {
 						lswlogf(buf, "\"%s\" extra_debugging = ",
 							c->name);
-						lswlog_lmod(buf, &debug_names, c->extra_debugging);
+						lswlog_lmod(buf, &debug_names,
+							    "+", c->extra_debugging);
 					}
 					c->extra_impairing = m->impairing;
 					LSWDBGP(DBG_CONTROL, buf) {
 						lswlogf(buf, "\"%s\" extra_impairing = ",
 							c->name);
-						lswlog_lmod(buf, &impair_names, c->extra_impairing);
+						lswlog_lmod(buf, &impair_names,
+							    "+", c->extra_impairing);
 					}
 				}
 			}

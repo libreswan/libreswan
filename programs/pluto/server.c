@@ -665,7 +665,7 @@ void show_debug_status(void)
 	LSWLOG_WHACK(RC_COMMENT, buf) {
 		lswlogs(buf, "debug ");
 		lswlog_enum_lset_short(buf, &debug_and_impair_names,
-				       cur_debugging);
+				       "+", cur_debugging);
 	}
 }
 

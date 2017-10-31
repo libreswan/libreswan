@@ -394,7 +394,7 @@ void extra_debugging(const struct connection *c)
 		lset_t new_debugging = lmod(old_debugging, c->extra_debugging);
 		LSWLOG(buf) {
 			lswlogs(buf, "extra debugging enabled for connection: ");
-			lswlog_enum_lset_short(buf, &debug_names,
+			lswlog_enum_lset_short(buf, &debug_names, "+",
 					       new_debugging & ~old_debugging);
 			/* XXX: doesn't log cleared */
 		}
@@ -406,7 +406,7 @@ void extra_debugging(const struct connection *c)
 		lset_t new_impairing = lmod(old_impairing, c->extra_impairing);
 		LSWLOG(buf) {
 			lswlogs(buf, "extra impairing enabled for connection: ");
-			lswlog_enum_lset_short(buf, &impair_names,
+			lswlog_enum_lset_short(buf, &impair_names, "+",
 					       new_impairing & ~old_impairing);
 			/* XXX: doesn't log cleared */
 		}

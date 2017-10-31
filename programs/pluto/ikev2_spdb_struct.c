@@ -287,7 +287,8 @@ static const char *trans_type_name(enum ikev2_trans_type type)
 
 static void lswlog_trans_types(struct lswlog *buf, lset_t types)
 {
-	lswlog_enum_lset_short(buf, &ikev2_trans_type_names, types);
+	lswlog_enum_lset_short(buf, &ikev2_trans_type_names,
+			       "+", types);
 }
 
 /*

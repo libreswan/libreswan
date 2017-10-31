@@ -95,11 +95,12 @@ bool lmod_arg(lmod_t *mod, const struct lmod_info *info,
 	return true;
 }
 
-void lswlog_lmod(struct lswlog *buf, enum_names *names, lmod_t mod)
+void lswlog_lmod(struct lswlog *buf, enum_names *names,
+		 const char *separator, lmod_t mod)
 {
-	lswlog_enum_lset_short(buf, names, mod.set);
+	lswlog_enum_lset_short(buf, names, separator, mod.set);
 	if (mod.clr != LEMPTY) {
 		lswlogs(buf, " - ");
-		lswlog_enum_lset_short(buf, names, mod.clr);
+		lswlog_enum_lset_short(buf, names, separator, mod.clr);
 	}
 }
