@@ -83,24 +83,16 @@
 
       <arg choice="plain"><replaceable>whack</replaceable></arg>
 
-      <arg choice="opt">--debug-none</arg>
-      <arg choice="opt">--debug-all</arg>
-      <arg choice="opt">--debug-raw</arg>
-      <arg choice="opt">--debug-crypt</arg>
-      <arg choice="opt">--debug-parsing</arg>
-      <arg choice="opt">--debug-emitting</arg>
-      <arg choice="opt">--debug-control</arg>
-      <arg choice="opt">--debug-lifecycle</arg>
-      <arg choice="opt">--debug-kernel</arg>
-      <arg choice="opt">--debug-pfkey</arg>
-      <arg choice="opt">--debug-nat-t</arg>
-      <arg choice="opt">--debug-dpd</arg>
-      <arg choice="opt">--debug-dns</arg>
-      <arg choice="opt">--debug-oppo</arg>
-      <arg choice="opt">--debug-oppoinfo</arg>
-      <arg choice="opt">--debug-whackwatch</arg>
-      <arg choice="opt">--debug-private</arg>
-      <arg choice="opt">--debug-x509</arg>
+      <arg choice="opt">--debug all</arg>
+      <arg choice="opt">--debug none</arg>
+      <arg choice="opt">--debug private</arg>
+      <arg choice="opt">--debug list</arg>
+      <arg choice="opt">--debug <replaceable>class</replaceable></arg>
+      <arg choice="opt">--debug no-<replaceable>class</replaceable></arg>
+
+      <arg choice="opt">--impair <replaceable>behaviour</replaceable></arg>
+      <arg choice="opt">--impair no-<replaceable>behaviour</replaceable></arg>
+
     </cmdsynopsis>
 
     <cmdsynopsis>
@@ -576,38 +568,17 @@
       <arg choice="opt">--name
       <replaceable>connection-name</replaceable></arg>
 
-      <arg choice="opt">--debug-none</arg>
-      <arg choice="opt">--debug-all</arg>
-      <arg choice="opt">--debug-raw</arg>
-      <arg choice="opt">--debug-crypt</arg>
-      <arg choice="opt">--debug-parsing</arg>
-      <arg choice="opt">--debug-emitting</arg>
-      <arg choice="opt">--debug-control</arg>
-      <arg choice="opt">--debug-controlmore</arg>
-      <arg choice="opt">--debug-lifecycle</arg>
-      <arg choice="opt">--debug-klips</arg>
-      <arg choice="opt">--debug-pfkey</arg>
-      <arg choice="opt">--debug-dns</arg>
-      <arg choice="opt">--debug-dpd</arg>
-      <arg choice="opt">--debug-natt</arg>
-      <arg choice="opt">--debug-oppo</arg>
-      <arg choice="opt">--debug-oppoinfo</arg>
-      <arg choice="opt">--debug-whackwatch</arg>
-      <arg choice="opt">--debug-private</arg>
+      <arg choice="opt">--debug all</arg>
+      <arg choice="opt">--debug none</arg>
+      <arg choice="opt">--debug private</arg>
+      <arg choice="opt">--debug list</arg>
       <arg choice="opt">--debug <replaceable>class</replaceable></arg>
-      <arg choice="opt">--impair-bust-mi2</arg>
-      <arg choice="opt">--impair-bust-mr2</arg>
-      <arg choice="opt">--impair-die-oninfo</arg>
-      <arg choice="opt">--impair-jacob-two-two</arg>
-      <arg choice="opt">--impair-major-version-bump</arg>
-      <arg choice="opt">--impair-minor-version-bump</arg>
-      <arg choice="opt">--impair-retransmits</arg>
-      <arg choice="opt">--impair-sa-fail</arg>
-      <arg choice="opt">--impair-send-bogus-isakmp-flag</arg>
-      <arg choice="opt">--impair-send-ikev2-ke</arg>
-      <arg choice="opt">--impair-send-key-size-check</arg>
-      <arg choice="opt">--impair-send-no-delete</arg>
-      <arg choice="opt">--impair <replaceable>class</replaceable></arg>
+      <arg choice="opt">--debug no-<replaceable>class</replaceable></arg>
+
+      <arg choice="opt">--impair list</arg>
+      <arg choice="opt">--impair <replaceable>behaviour</replaceable></arg>
+      <arg choice="opt">--impair no-<replaceable>behaviour</replaceable></arg>
+
     </cmdsynopsis>
 
     <cmdsynopsis>
@@ -3219,196 +3190,133 @@
       <para>lets one test <emphasis remap="B">pluto</emphasis> without using
       the superuser account.</para>
 
-      <para><emphasis remap="B">pluto</emphasis> is willing to produce a
-      prodigious amount of debugging information. There are several classes
-      of debugging output, and <emphasis remap="B">pluto</emphasis> may be
-      directed to produce a selection of them. All lines of debugging output
-      are prefixed with "|&nbsp;" to distinguish them from error messages.
+      <para>
+	<emphasis remap="B">pluto</emphasis> is willing to produce a
+	prodigious amount of debugging information.  There are several
+	classes of debugging output, and <emphasis
+	remap="B">pluto</emphasis> may be directed to produce a
+	selection of them.  All lines of debugging output are prefixed
+	with "|&nbsp;" to distinguish them from normal diagnostic
+	messages.
       </para>
 
-      <para>When <emphasis remap="B">pluto</emphasis> is invoked, it may be
-      given arguments to specify which classes to output. The current options
-      are:</para>
+      <para>
+	When <emphasis remap="B">pluto</emphasis> is invoked, it may
+	be given arguments to specify which debug classes to output.
+	The current options are:
+      </para>
 
       <variablelist remap="TP">
-        <varlistentry>
-          <term><option>--debug-none</option></term>
 
+        <varlistentry>
+          <term><option>--debug all</option></term>
+          <listitem>
+            <para>
+	      enable logging of all standard debugging classes (this
+	      does not include debugging classes that may expose
+	      private information)
+	    </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--debug none</option></term>
           <listitem>
             <para>disable all debugging</para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
-          <term><option>--debug-all</option></term>
-
+          <term><option>--debug private</option></term>
+          <term><option>--debug no-private</option></term>
           <listitem>
-            <para>enable all debugging</para>
+            <para>enable (disable) logging of private information
+            (this class is not enabled by all)</para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
-          <term><option>--debug-raw</option></term>
-
+          <term><option>--debug list</option></term>
           <listitem>
-            <para>show the raw bytes of messages</para>
+            <para>
+	      list the debugging classes recognised by <emphasis
+	      remap="B">pluto</emphasis>
+	    </para>
+	    <para>
+	      this list includes debug classes intended for use by
+	      developers
+	    </para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
-          <term><option>--debug-crypt</option></term>
-
+          <term><option>--debug <replaceable>class</replaceable></option></term>
+          <term><option>--debug no-<replaceable>class</replaceable></option></term>
           <listitem>
-            <para>show the encryption and decryption of messages</para>
+            <para>
+	      enable (disable) logging of the specified debugging
+	      <replaceable>class</replaceable>
+	    </para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
-          <term><option>--debug-parsing</option></term>
-
+          <term><option>--impair list</option></term>
           <listitem>
-            <para>show the structure of input messages</para>
+            <para>
+	      list of behaviours that can be altered (impaired)
+	    </para>
+	    <para>
+	      this option is intended for use by developers
+	    </para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
-          <term><option>--debug-emitting</option></term>
-
+          <term><option>--impair <replaceable>behaviour</replaceable></option></term>
+          <term><option>--impair no-<replaceable>behaviour</replaceable></option></term>
           <listitem>
-            <para>show the structure of output messages</para>
+            <para>
+	      alter (impair) <emphasis remap="B">pluto</emphasis>
+	      inducing the (possibly erroneous)
+	      <replaceable>behaviour</replaceable>
+	    </para>
+	    <para>
+	      this option is intended for use by developers
+	    </para>
           </listitem>
         </varlistentry>
 
-        <varlistentry>
-          <term><option>--debug-control</option></term>
-
-          <listitem>
-            <para>show <emphasis remap="B">pluto</emphasis>'s decision
-            making</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--debug-controlmore</option></term>
-
-          <listitem>
-            <para>show even more detailed <emphasis remap="B">pluto</emphasis>
-            decision making</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--debug-lifecycle</option></term>
-
-          <listitem>
-            <para>[this option is temporary] log more detail of lifecycle of
-            SAs</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--debug-klips</option></term>
-
-          <listitem>
-            <para>show <emphasis remap="B">pluto</emphasis>'s interaction with
-            <emphasis remap="B">KLIPS</emphasis></para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--debug-pfkey</option></term>
-
-          <listitem>
-            <para>show <emphasis remap="B">pluto</emphasis>'s <emphasis
-            remap="B">PFKEY</emphasis>interface communication</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--debug-dns</option></term>
-
-          <listitem>
-            <para>show <emphasis remap="B">pluto</emphasis>'s interaction with
-            <emphasis remap="B">DNS</emphasis> for KEY and TXT records</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--debug-dpd</option></term>
-
-          <listitem>
-            <para>show <emphasis remap="B">pluto</emphasis>'s <emphasis
-            remap="B">Dead Peer Detection</emphasis> handling</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--debug-natt</option></term>
-
-          <listitem>
-            <para>show <emphasis remap="B">pluto</emphasis>'s <emphasis
-            remap="B">NAT Traversal</emphasis> handling</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--debug-oppo</option></term>
-
-          <listitem>
-            <para>show why <emphasis remap="B">pluto</emphasis> didn't find a
-            suitable DNS TXT record to authorize opportunistic
-            initiation</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--debug-oppoinfo</option></term>
-
-          <listitem>
-            <para>log when connections are initiated due to acquires from the kernel.  This is often useful to know, but can be extremely chatty on a busy system. </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--debug-whackwatch</option></term>
-
-          <listitem>
-            <para>if set, causes pluto not to release the whack --initiate channel until the SA is completely up.  This will cause the requestor to possibly wait forever while pluto unsuccessfully negotiates.  Used often in test cases.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--debug-private</option></term>
-
-          <listitem>
-            <para>allow debugging output with private keys.</para>
-          </listitem>
-        </varlistentry>
       </variablelist>
 
-      <para>The debug form of the <emphasis remap="B">whack</emphasis> command
-      will change the selection in a running <emphasis
-      remap="B">pluto</emphasis>. If a connection name is specified, the flags
-      are added whenever <emphasis remap="B">pluto</emphasis> has identified
-      that it is dealing with that connection. Unfortunately, this is often
-      part way into the operation being observed.</para>
+      <para>
+	The debug form of the <emphasis remap="B">whack</emphasis>
+	command will change the selection in a running <emphasis
+	remap="B">pluto</emphasis>. If a connection name is specified,
+	the flags are added whenever <emphasis
+	remap="B">pluto</emphasis> has identified that it is dealing
+	with that connection.  Unfortunately, this is often part way
+	into the operation being observed.
+      </para>
 
-      <para>For example, to start a <emphasis remap="B">pluto</emphasis> with
-      a display of the structure of input and output:</para>
+      <para>
+	For example, to start a <emphasis remap="B">pluto</emphasis>
+	with a display of the structure of input and output:
+      </para>
 
-      <para>pluto --debug-emitting --debug-parsing</para>
+      <para>pluto --debug xauth --debug retransmits</para>
 
-      <para>To later change this <emphasis remap="B">pluto</emphasis> to only
-      display raw bytes:</para>
+      <para>
+	To later change this <emphasis remap="B">pluto</emphasis> to
+	disable the retransmits debug class use either:
+      </para>
 
-      <para>whack --debug-raw</para>
+      <para>whack --debug no-retransmits</para>
 
-      <para>Hint: ISAKMP SAs are often kept alive by IKEs even after the IPsec
-      SA is established. This allows future IPsec SA's to be negotiated
-      directly. If one of the IKEs is restarted, the other may try to use the
-      ISAKMP SA but the new IKE won't know about it. This can lead to much
-      confusion. <emphasis remap="B">pluto</emphasis> is not yet smart enough
-      to get out of such a mess.</para>
+      <para>or:</para>
+
+      <para>whack --debug none --debug xauth</para>
+
     </refsect2>
 
     <refsect2 id="plutos_behaviour_when_things_go_wrong">
