@@ -323,14 +323,13 @@ enum keyword_type {
 	kt_obsolete_quiet,      /* option that is obsoleted, allow keyword but don't bother warning */
 };
 
-#define NOT_ENUM NULL
-
 struct keyword_def {
 	const char        *keyname;
 	unsigned int validity;          /* has bits from enum keyword_valid (kv_*) */
 	enum keyword_type type;
 	unsigned int field;             /* one of keyword_*_field */
 	const struct keyword_enum_values *validenum;
+	const struct enum_names *names;
 };
 
 struct keyword {
