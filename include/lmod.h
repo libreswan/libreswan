@@ -40,9 +40,13 @@ bool lmod_is_clr(lmod_t lhs, lset_t set);
 bool lmod_empty(lmod_t mod);
 void lmod_merge(lmod_t *lhs, lmod_t rhs);
 
-bool lmod_arg(lmod_t *mod,
-	      const struct enum_names *names,
-	      lset_t all, lset_t none,
+struct lmod_info {
+	const struct enum_names *names;
+	lset_t all;
+	lset_t mask;
+};
+
+bool lmod_arg(lmod_t *mod, const struct lmod_info *info,
 	      const char *optarg);
 
 void lswlog_lmod(struct lswlog *buf, const struct enum_names *names, lmod_t mod);

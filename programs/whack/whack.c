@@ -2100,8 +2100,7 @@ int main(int argc, char **argv)
 					}
 				}
 				exit(1);
-			} else if (!lmod_arg(&msg.debugging, &debug_names,
-				      DBG_ALL, DBG_MASK, optarg)) {
+			} else if (!lmod_arg(&msg.debugging, &debug_lmod_info, optarg)) {
 				fprintf(stderr, "whack: unrecognized --debug '%s' option ignored\n",
 					optarg);
 			}
@@ -2118,8 +2117,7 @@ int main(int argc, char **argv)
 					}
 				}
 				exit(1);
-			} else if (!lmod_arg(&msg.impairing, &impair_names,
-				      IMPAIR_MASK, IMPAIR_MASK, optarg)) {
+			} else if (!lmod_arg(&msg.impairing, &impair_lmod_info, optarg)) {
 				fprintf(stderr, "whack: unrecognized --impair '%s' option; ignored\n",
 					optarg);
 			}

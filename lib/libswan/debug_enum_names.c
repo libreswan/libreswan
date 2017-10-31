@@ -17,6 +17,7 @@
 
 #include "constants.h"
 #include "enum_names.h"
+#include "lmod.h"
 
 /*
  * See plutomain.c for what the extra "\0" is all about (hint it is a
@@ -53,6 +54,12 @@ const struct enum_names debug_names = {
 	ARRAY_REF(debug_strings),
 	"debug-",
 	NULL,
+};
+
+const struct lmod_info debug_lmod_info = {
+	.names = &debug_names,
+	.all = DBG_ALL,
+	.mask = DBG_MASK,
 };
 
 #define I(N,A) [N##_IX - DBG_roof_IX] = LELEM(N##_IX) == N ? A "\0" : NULL
@@ -92,6 +99,12 @@ const struct enum_names impair_names = {
 	ARRAY_REF(impair_strings),
 	"impair-",
 	NULL,
+};
+
+const struct lmod_info impair_lmod_info = {
+	.names = &impair_names,
+	.all = IMPAIR_MASK,
+	.mask = IMPAIR_MASK,
 };
 
 const struct enum_names debug_and_impair_names = {

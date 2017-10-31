@@ -67,20 +67,19 @@ bool lmod_is_clr(lmod_t mod, lset_t clr)
 	return LIN(clr, mod.clr);
 }
 
-bool lmod_arg(lmod_t *mod, enum_names *names,
-	      lset_t all, lset_t none,
+bool lmod_arg(lmod_t *mod, const struct lmod_info *info,
 	      const char *optarg)
 {
 	if (streq(optarg, "all")) {
 		mod->clr = LEMPTY;
-		mod->set = all;
+		mod->set = info->all;
 	} else if (streq(optarg, "none")) {
-		mod->clr = none;
+		mod->clr = info->mask;
 		mod->set = LEMPTY;
 	} else {
 		const char *arg = optarg;
 		bool no = eat(arg, "no-");
-		int ix = enum_match(names, arg);
+		int ix = enum_match(info->names, arg);
 		if (ix < 0) {
 			return false;
 		}
