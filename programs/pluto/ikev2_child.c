@@ -1183,7 +1183,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st)
 {
 	ip_address ip;
-	ipstr_buf ip_str;
+	char ip_str[ADDRTOT_BUF];
 	struct connection *c = st->st_connection;
 	err_t ugh = initaddr(cp_a_pbs->cur, pbs_left(cp_a_pbs), AF_INET, &ip);
 
@@ -1192,33 +1192,33 @@ static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st)
 		return FALSE;
 	}
 
+	addrtot(&ip, 0, ip_str, sizeof(ip_str));
+
 	if (isanyaddr(&ip)) {
-		libreswan_log("ERROR INTERNAL_IP4_DNS %s is invalid",
-				ipstr(&ip, &ip_str));
+		libreswan_log("ERROR INTERNAL_IP4_DNS %s is invalid", ip_str);
 		return FALSE;
 	}
 
-	(void)ipstr(&ip, &ip_str);
 	libreswan_log("received INTERNAL_IP4_DNS %s",
-			ip_str.buf);
+			ip_str);
 
 	char *old = c->cisco_dns_info;
 
 	if (old == NULL) {
-		c->cisco_dns_info = clone_str(ip_str.buf, "ikev2 cisco_dns_info");
+		c->cisco_dns_info = clone_str(ip_str, "ikev2 cisco_dns_info");
 	} else {
 		/*
 		 * concatenate new IP address string on end of existing
 		 * string, separated by ' '.
 		 */
 		size_t sz_old = strlen(old);
-		size_t sz_added = strlen(ip_str.buf) + 1;
+		size_t sz_added = strlen(ip_str) + 1;
 		char *new = alloc_bytes(sz_old + 1 + sz_added,
 				"ikev2 cisco_dns_info+");
 
 		memcpy(new, old, sz_old);
 		new[sz_old] = ' ';
-		memcpy(new + sz_old + 1, ip_str.buf, sz_added);
+		memcpy(new + sz_old + 1, ip_str, sz_added);
 		c->cisco_dns_info = new;
 		pfree(old);
 	}
