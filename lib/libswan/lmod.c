@@ -80,10 +80,24 @@ bool lmod_arg(lmod_t *mod, const struct lmod_info *info,
 		const char *arg = optarg;
 		bool no = eat(arg, "no-");
 		int ix = enum_match(info->names, arg);
-		if (ix < 0) {
+		lset_t bit;
+		if (ix >= 0) {
+			bit = LELEM(ix);
+		} else if (info->compat != NULL) {
+			bit = LEMPTY;
+			for (struct lmod_compat *c = info->compat;
+			     c->name != NULL; c++) {
+				if (streq(c->name, arg)) {
+					bit = c->bit;
+					break;
+				}
+			}
+			if (bit == LEMPTY) {
+				return false;
+			}
+		} else {
 			return false;
 		}
-		lset_t bit = LELEM(ix);
 		if (no) {
 			mod->clr |= bit;
 			mod->set &= ~bit;

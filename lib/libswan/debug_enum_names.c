@@ -56,10 +56,17 @@ const struct enum_names debug_names = {
 	NULL,
 };
 
+struct lmod_compat debug_compat[] = {
+       { "klips",    DBG_KERNEL },
+       { "netkey",    DBG_KERNEL },
+       { NULL, LEMPTY, },
+};
+
 const struct lmod_info debug_lmod_info = {
 	.names = &debug_names,
 	.all = DBG_ALL,
 	.mask = DBG_MASK,
+	.compat = debug_compat,
 };
 
 #define I(N,A) [N##_IX - DBG_roof_IX] = LELEM(N##_IX) == N ? A "\0" : NULL
