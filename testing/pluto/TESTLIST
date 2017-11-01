@@ -446,6 +446,8 @@ kvmplutotest	dpd-05	good
 kvmplutotest	dpd-06	good
 kvmplutotest	dpd-07	good
 kvmplutotest	dpd-08	wip
+kvmplutotest	dpd-09-shared		wip
+kvmplutotest	dpd-10-alias 		wip
 kvmplutotest	ikev2-liveness-01	good
 kvmplutotest	ikev2-liveness-02	good
 kvmplutotest	ikev2-liveness-03	good

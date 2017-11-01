@@ -1,0 +1,3 @@
+This is an IKEv1 test with alias/subnets with dpd=restart
+
+after a dpdrestart both networks come up.
