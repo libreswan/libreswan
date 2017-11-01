@@ -615,12 +615,10 @@ size_t format_end(char *buf,
 
 	/* host */
 	if (host == NULL) {
-		if (log_ip) {
-			addrtot(&this->host_addr, 0, host_space, sizeof(host_space));
-		} else {
-			host_space[0] = '\0';
-			strncat(host_space, "<ip address>", sizeof(host_space));
-		}
+		ipstr_buf b;
+
+		jam_str(host_space, sizeof(host_space),
+			sensitive_ipstr(&this->host_addr, &b));
 		host = host_space;
 		dohost_name = TRUE;
 	}
@@ -2231,13 +2229,11 @@ char *fmt_conn_instance(const struct connection *c, char buf[CONN_INST_BUF])
 			(void) fmt_client(&c->spd.that.client,
 					&c->spd.that.host_addr, "===", p);
 		} else {
+			ipstr_buf b;
+
 			*p++ = ' ';
-			if (!log_ip) {
-				p[0] = '\0';
-				strncat(p, "<ip address>", ADDRTOT_BUF - 1);
-			} else {
-				addrtot(&c->spd.that.host_addr, 0, p, ADDRTOT_BUF);
-			}
+			p = jam_str(p, &buf[CONN_INST_BUF] - p,
+				sensitive_ipstr(&c->spd.that.host_addr, &b));
 		}
 	}
 

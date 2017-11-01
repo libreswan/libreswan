@@ -889,7 +889,8 @@ int main(int argc, char **argv)
 
 	char username[MAX_USERNAME_LEN];
 	char xauthpass[XAUTH_MAX_PASS_LENGTH];
-	int usernamelen = 0, xauthpasslen = 0;
+	int usernamelen = 0;
+	int xauthpasslen = 0;
 	bool gotusername = FALSE, gotxauthpass = FALSE;
 	const char *ugh;
 
@@ -1885,18 +1886,18 @@ int main(int argc, char **argv)
 			 */
 			msg.right.username = optarg;
 			gotusername = TRUE;
-			username[0] = '\0';
-			strncat(username, optarg, sizeof(username) -
-				strlen(username) - 1);
-			usernamelen = strlen(username) + 1;
+			/* ??? why does this length include NUL? */
+			usernamelen = jam_str(username, sizeof(username),
+					optarg) -
+				username + 1;
 			continue;
 
 		case OPT_XAUTHPASS:
 			gotxauthpass = TRUE;
-			xauthpass[0] = '\0';
-			strncat(xauthpass, optarg, sizeof(xauthpass) -
-				strlen(xauthpass) - 1);
-			xauthpasslen = strlen(xauthpass) + 1;
+			/* ??? why does this length include NUL? */
+			xauthpasslen = jam_str(xauthpass, sizeof(xauthpass),
+					optarg) -
+				xauthpass + 1;
 			continue;
 
 		case END_MODECFGCLIENT:
@@ -2358,159 +2359,146 @@ int main(int argc, char **argv)
 			break;
 		}
 		exit(RC_WHACK_PROBLEM);
-	} else {
-		int sock = safe_socket(AF_UNIX, SOCK_STREAM, 0);
-		int exit_status = 0;
-		ssize_t len = wp.str_next - (unsigned char *)&msg;
+	}
 
-		if (sock == -1) {
-			int e = errno;
+	int sock = safe_socket(AF_UNIX, SOCK_STREAM, 0);
+	int exit_status = 0;
+	ssize_t len = wp.str_next - (unsigned char *)&msg;
 
-			fprintf(stderr, "whack: socket() failed (%d %s)\n", e, strerror(
-					e));
-			exit(RC_WHACK_PROBLEM);
-		}
+	if (sock == -1) {
+		int e = errno;
 
-		if (connect(sock, (struct sockaddr *)&ctl_addr,
-			    offsetof(struct sockaddr_un,
-				     sun_path) + strlen(ctl_addr.sun_path)) <
-		    0) {
+		fprintf(stderr, "whack: socket() failed (%d %s)\n", e, strerror(
+				e));
+		exit(RC_WHACK_PROBLEM);
+	}
+
+	if (connect(sock, (struct sockaddr *)&ctl_addr,
+		    offsetof(struct sockaddr_un,
+			     sun_path) + strlen(ctl_addr.sun_path)) < 0)
+	{
+		int e = errno;
+
+		fprintf(stderr,
+			"whack:%s connect() for \"%s\" failed (%d %s)\n",
+			e == ECONNREFUSED ? " is Pluto running? " : "",
+			ctl_addr.sun_path, e, strerror(e));
+		exit(RC_WHACK_PROBLEM);
+	}
+
+	if (write(sock, &msg, len) != len) {
+		int e = errno;
+
+		fprintf(stderr, "whack: write() failed (%d %s)\n",
+			e, strerror(e));
+		exit(RC_WHACK_PROBLEM);
+	}
+
+	/* for now, just copy reply back to stdout */
+
+	char buf[4097];	/* arbitrary limit on log line length */
+	char *be = buf;
+
+	for (;;) {
+		char *ls = buf;
+		ssize_t rl = read(sock, be, (buf + sizeof(buf) - 1) - be);
+
+		if (rl < 0) {
 			int e = errno;
 
 			fprintf(stderr,
-				"whack:%s connect() for \"%s\" failed (%d %s)\n",
-				e == ECONNREFUSED ? " is Pluto running? " : "",
-				ctl_addr.sun_path, e, strerror(e));
+				"whack: read() failed (%d %s)\n",
+				e, strerror(e));
 			exit(RC_WHACK_PROBLEM);
 		}
-
-		if (write(sock, &msg, len) != len) {
-			int e = errno;
-
-			fprintf(stderr, "whack: write() failed (%d %s)\n", e, strerror(
-					e));
-			exit(RC_WHACK_PROBLEM);
+		if (rl == 0) {
+			if (be != buf)
+				fprintf(stderr,
+					"whack: last line from pluto too long or unterminated\n");
+			break;
 		}
 
-		/* for now, just copy reply back to stdout */
+		be += rl;
+		*be = '\0';
 
-		{
-			char buf[4097];	/* arbitrary limit on log line length */
-			char *be = buf;
+		for (;;) {
+			char *le = strchr(ls, '\n');
 
-			for (;;) {
-				char *ls = buf;
-				ssize_t rl =
-					read(sock, be,
-					     (buf + sizeof(buf) - 1) - be);
-
-				if (rl < 0) {
-					int e = errno;
-
-					fprintf(stderr,
-						"whack: read() failed (%d %s)\n", e,
-						strerror(e));
-					exit(RC_WHACK_PROBLEM);
-				}
-				if (rl == 0) {
-					if (be != buf)
-						fprintf(stderr,
-							"whack: last line from pluto too long or unterminated\n");
-
-
-					break;
-				}
-
-				be += rl;
-				*be = '\0';
-
-				for (;;) {
-					char *le = strchr(ls, '\n');
-
-					if (le == NULL) {
-						/*
-						 * move last, partial line
-						 * to start of buffer
-						 */
-						memmove(buf, ls, be - ls);
-						be -= ls - buf;
-						break;
-					}
-
-					le++;	/* include NL in line */
-					if (write(STDOUT_FILENO, ls, le -
-						  ls) != (le - ls)) {
-						int e = errno;
-						fprintf(stderr,
-							"whack: write() failed to stdout(%d %s)\n", e,
-							strerror(e));
-					}
-
-					/*
-					 * figure out prefix number
-					 * and how it should affect our exit
-					 * status
-					 *
-					 * we don't generally use strtoul but
-					 * in this case, its failure mode
-					 * (0 for nonsense) is probably OK.
-					 */
-					{
-						unsigned long s =
-							strtoul(ls, NULL, 10);
-
-						switch (s) {
-						/* these logs are informational only */
-						case RC_COMMENT:
-						case RC_INFORMATIONAL:
-						case RC_INFORMATIONAL_TRAFFIC:
-						case RC_LOG:
-						/* RC_LOG_SERIOUS is supposed to be here according to lswlog.h, but seems oudated? */
-							/* ignore */
-							break;
-						case RC_SUCCESS:
-							/* be happy */
-							exit_status = 0;
-							break;
-
-						case RC_ENTERSECRET:
-							if (!gotxauthpass) {
-								xauthpasslen =
-									whack_get_secret(
-										xauthpass,
-										sizeof(xauthpass));
-							}
-							send_reply(sock,
-								   xauthpass,
-								   xauthpasslen);
-							break;
-
-						case RC_USERPROMPT:
-							if (!gotusername) {
-								usernamelen =
-									whack_get_value(
-										username,
-										sizeof(username));
-							}
-							send_reply(sock,
-								   username,
-								   usernamelen);
-							break;
-
-						default:
-							if (msg.whack_async)
-								exit_status =
-									0;
-							else
-								exit_status =
-									s;
-							break;
-						}
-					}
-					ls = le;
-				}
+			if (le == NULL) {
+				/*
+				 * move last, partial line
+				 * to start of buffer
+				 */
+				memmove(buf, ls, be - ls);
+				be -= ls - buf;
+				break;
 			}
+
+			le++;	/* include NL in line */
+			if (write(STDOUT_FILENO, ls, le - ls) != (le - ls)) {
+				int e = errno;
+
+				fprintf(stderr,
+					"whack: write() failed to stdout(%d %s)\n",
+					e, strerror(e));
+			}
+
+			/*
+			 * figure out prefix number
+			 * and how it should affect our exit
+			 * status
+			 *
+			 * we don't generally use strtoul but
+			 * in this case, its failure mode
+			 * (0 for nonsense) is probably OK.
+			 */
+			unsigned long s = strtoul(ls, NULL, 10);
+
+			switch (s) {
+			/* these logs are informational only */
+			case RC_COMMENT:
+			case RC_INFORMATIONAL:
+			case RC_INFORMATIONAL_TRAFFIC:
+			case RC_LOG:
+			/* RC_LOG_SERIOUS is supposed to be here according to lswlog.h, but seems oudated? */
+				/* ignore */
+				break;
+			case RC_SUCCESS:
+				/* be happy */
+				exit_status = 0;
+				break;
+
+			case RC_ENTERSECRET:
+				if (!gotxauthpass) {
+					xauthpasslen = whack_get_secret(
+						xauthpass,
+						sizeof(xauthpass));
+				}
+				send_reply(sock,
+					   xauthpass,
+					   xauthpasslen);
+				break;
+
+			case RC_USERPROMPT:
+				if (!gotusername) {
+					usernamelen = whack_get_value(
+						username,
+						sizeof(username));
+				}
+				send_reply(sock,
+					   username,
+					   usernamelen);
+				break;
+
+			default:
+				exit_status = msg.whack_async ?
+					0 : s;
+				break;
+			}
+
+			ls = le;
 		}
-		return exit_status;
 	}
+
+	return exit_status;
 }
