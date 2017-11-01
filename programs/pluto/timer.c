@@ -966,12 +966,16 @@ void delete_event(struct state *st)
  */
 static void event_schedule_tv(enum event_type type, const struct timeval delay, struct state *st)
 {
+	/* unexpectedly far away, pexpect will flag in test cases */
+	pexpect(delay.tv_sec < 3600 * 24 * 31);
+
 	const char *en = enum_name(&timer_event_names, type);
 	struct pluto_event *ev = alloc_thing(struct pluto_event, en);
 	DBG(DBG_LIFECYCLE, DBG_log("%s: new %s-pe@%p", __func__, en, ev));
 
-	DBG(DBG_LIFECYCLE, DBG_log("event_schedule_tv called for about %jd seconds and change",
-	    (intmax_t) delay.tv_sec));
+	DBG(DBG_LIFECYCLE,
+	    DBG_log("event_schedule called for %jd.%06jd seconds",
+		    (intmax_t) delay.tv_sec, (intmax_t) delay.tv_usec));
 
 	/*
 	 * Scheduling a month into the future is most likely a bug.
@@ -1052,9 +1056,6 @@ static void event_schedule_tv(enum event_type type, const struct timeval delay, 
 void event_schedule_ms(enum event_type type, unsigned long delay_ms, struct state *st)
 {
 	struct timeval delay;
-
-	DBG(DBG_LIFECYCLE, DBG_log("event_schedule_ms called for about %lu ms", delay_ms));
-
 	delay.tv_sec = delay_ms / 1000;
 	delay.tv_usec = (delay_ms % 1000) * 1000;
 	event_schedule_tv(type, delay, st);
@@ -1063,11 +1064,6 @@ void event_schedule_ms(enum event_type type, unsigned long delay_ms, struct stat
 void event_schedule(enum event_type type, time_t delay_sec, struct state *st)
 {
 	struct timeval delay;
-
-	DBG(DBG_LIFECYCLE, DBG_log("event_schedule called for %jd seconds", (intmax_t) delay_sec));
-
-	/* unexpectedly far away, pexpect will flag in test cases */
-	pexpect(delay_sec < 3600 * 24 * 31);
 	delay.tv_sec = delay_sec;
 	delay.tv_usec = 0;
 	event_schedule_tv(type, delay, st);
