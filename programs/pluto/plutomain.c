@@ -128,13 +128,6 @@ static bool do_dnssec = FALSE;
 static char *pluto_dnssec_rootfile = NULL;
 static char *pluto_dnssec_trusted = NULL;
 
-extern bool crl_strict;
-extern bool ocsp_strict;
-extern bool ocsp_enable;
-extern char *curl_iface;
-extern long curl_timeout;
-extern int bare_shunt_interval;
-
 static char *ocsp_uri = NULL;
 static char *ocsp_trust_name = NULL;
 static int ocsp_timeout = OCSP_DEFAULT_TIMEOUT;

@@ -80,9 +80,6 @@ static pthread_mutex_t crl_fetch_list_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t fetch_wake_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t fetch_wake_cond = PTHREAD_COND_INITIALIZER;
 
-extern char *curl_iface;
-extern long curl_timeout;
-
 /*
  * lock access to the chained crl fetch request list
  */
