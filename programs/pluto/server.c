@@ -1125,6 +1125,11 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest, const char
 
 		if (packet_len == -1) {
 			if (errno == EAGAIN) {
+				/* 32 is picked from thin air */
+				if (again_count == 32) {
+					loglog(RC_LOG_SERIOUS, "recvmsg(,, MSG_ERRQUEUE): given up reading socket after 32 EAGAIN errors");
+					return FALSE;
+				}
 				again_count++;
 				LOG_ERRNO(errno,
 					  "recvmsg(,, MSG_ERRQUEUE) on %s failed (noticed before %s) (attempt %d)",
