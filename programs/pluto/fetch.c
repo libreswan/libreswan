@@ -445,7 +445,7 @@ static void fetch_crls(void)
 
 static void *fetch_thread(void *arg UNUSED)
 {
-	deltatime_t interval = { 5 }; /* First fetch interval, then regular */
+	deltatime_t interval = DELTATIME(5); /* First fetch interval, then regular */
 
 	DBG(DBG_X509,
 	    DBG_log("fetch thread started"));

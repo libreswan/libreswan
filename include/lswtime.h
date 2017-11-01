@@ -37,6 +37,9 @@
 
 typedef struct { time_t delta_secs; } deltatime_t;
 
+/* static constructor; obsoletes deltatime() */
+#define DELTATIME(TIME) ((deltatime_t) { TIME })
+
 deltatime_t deltatime(time_t secs);
 unsigned long deltamillisecs(deltatime_t d);
 time_t deltasecs(deltatime_t d);

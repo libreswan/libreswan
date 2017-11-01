@@ -1753,7 +1753,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 
 static const struct ipsec_trans_attrs null_ipsec_trans_attrs = {
 	.spi = 0,                                               /* spi */
-	.life_seconds = { IPSEC_SA_LIFETIME_DEFAULT },		/* life_seconds */
+	.life_seconds = DELTATIME(IPSEC_SA_LIFETIME_DEFAULT),	/* life_seconds */
 	.life_kilobytes = SA_LIFE_DURATION_K_DEFAULT,           /* life_kilobytes */
 	.encapsulation = ENCAPSULATION_MODE_UNSPECIFIED,        /* encapsulation */
 };
