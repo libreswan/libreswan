@@ -1,0 +1,5 @@
+
+using marking and VTI, test that on east we get "unique marks" for our client,
+by using the magic value of -1 (which should not end up as the mark itself,
+which happened in at least libreswan 3.20)
+
