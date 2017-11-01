@@ -159,9 +159,7 @@ stf_status dpd_init(struct state *st)
 					st->st_connection->dpd_delay)) {
 			if (st->st_dpd_event != NULL)
 				delete_dpd_event(st);
-			event_schedule(EVENT_DPD,
-					deltasecs(st->st_connection->dpd_delay),
-					st);
+			event_schedule(EVENT_DPD, st->st_connection->dpd_delay, st);
 		}
 	} else {
 		loglog(RC_LOG_SERIOUS,
@@ -190,7 +188,7 @@ static void dpd_sched_timeout(struct state *p1st, monotime_t nw, deltatime_t tim
 				     (long)deltasecs(timeout)));
 		if (p1st->st_dpd_event != NULL)
 			delete_dpd_event(p1st);
-		event_schedule(EVENT_DPD_TIMEOUT, deltasecs(timeout), p1st);
+		event_schedule(EVENT_DPD_TIMEOUT, timeout, p1st);
 	}
 }
 
@@ -257,7 +255,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 		    DBG_log("DPD: not yet time for dpd event: %ld < %ld",
 			    (long)nw.mono_secs,
 			    (long)(last.mono_secs + deltasecs(delay))));
-		event_schedule(EVENT_DPD, deltasecs(nextdelay), st);
+		event_schedule(EVENT_DPD, nextdelay, st);
 		return;
 	}
 
@@ -291,7 +289,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 			delete_dpd_event(p1st);
 		}
 
-		event_schedule(EVENT_DPD, deltasecs(nextdelay), st);
+		event_schedule(EVENT_DPD, nextdelay, st);
 		return;
 	}
 
@@ -300,7 +298,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 		 * reschedule next event, since we cannot do it from the activity
 		 * routine.
 		 */
-		event_schedule(EVENT_DPD, deltasecs(nextdelay), st);
+		event_schedule(EVENT_DPD, nextdelay, st);
 	}
 
 	if (p1st->st_dpd_seqno == 0) {

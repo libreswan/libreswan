@@ -32,12 +32,12 @@ struct pluto_event {
 	struct pluto_event *next;
 };
 
-extern void event_schedule(enum event_type type, time_t delay_sec,
-		struct state *st);
+extern void event_schedule(enum event_type type, deltatime_t delay,
+			   struct state *st);
 extern void event_schedule_s(enum event_type type, time_t delay_seconds,
 			     struct state *st);
 extern void event_schedule_ms(enum event_type type, unsigned long delay_ms,
-		struct state *st);
+			      struct state *st);
 extern void delete_event(struct state *st);
 extern void handle_next_timer_event(void);
 extern void init_timer(void);

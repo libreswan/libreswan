@@ -519,9 +519,10 @@ static void liveness_check(struct state *st)
 
 	DBG(DBG_DPD, DBG_log("#%lu liveness_check - peer %s is ok schedule new",
 				st->st_serialno, that_ip));
+	deltatime_t min_liveness = DELTATIME(MIN_LIVENESS);
 	event_schedule(EVENT_v2_LIVENESS,
-			deltasecs(c->dpd_delay) >= MIN_LIVENESS ?
-			deltasecs(c->dpd_delay) : MIN_LIVENESS, st);
+		       deltatime_cmp(c->dpd_delay, min_liveness) >= 0 ?
+		       c->dpd_delay : min_liveness, st);
 }
 
 static void ikev2_log_v2_sa_expired(struct state *st, enum event_type type)
@@ -834,7 +835,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 
 		delete_liveness_event(st);
 		delete_dpd_event(st);
-		event_schedule(EVENT_SA_EXPIRE, deltasecs(st->st_margin), st);
+		event_schedule(EVENT_SA_EXPIRE, st->st_margin, st);
 	}
 	break;
 
@@ -964,8 +965,9 @@ void delete_event(struct state *st)
  * This routine places an event in the event list.
  * Delay should really be a deltatime_t but this is easier
  */
-static void event_schedule_tv(enum event_type type, const struct timeval delay, struct state *st)
+void event_schedule(enum event_type type, deltatime_t dt, struct state *st)
 {
+	struct timeval delay = dt.dt;
 	/* unexpectedly far away, pexpect will flag in test cases */
 	pexpect(delay.tv_sec < 3600 * 24 * 31);
 
@@ -1055,27 +1057,12 @@ static void event_schedule_tv(enum event_type type, const struct timeval delay, 
 
 void event_schedule_ms(enum event_type type, unsigned long delay_ms, struct state *st)
 {
-	struct timeval delay;
-	delay.tv_sec = delay_ms / 1000;
-	delay.tv_usec = (delay_ms % 1000) * 1000;
-	event_schedule_tv(type, delay, st);
-}
-
-void event_schedule(enum event_type type, time_t delay_sec, struct state *st)
-{
-	struct timeval delay;
-	delay.tv_sec = delay_sec;
-	delay.tv_usec = 0;
-	event_schedule_tv(type, delay, st);
+	deltatime_t delay = deltatime_ms(delay_ms);
+	event_schedule(type, delay, st);
 }
 
 void event_schedule_s(enum event_type type, time_t delay_sec, struct state *st)
 {
-	/* unexpectedly far away, pexpect will flag in test cases */
-	pexpect(delay_sec < 3600 * 24 * 31);
-	struct timeval tv = {
-		.tv_sec = delay_sec,
-		.tv_usec = 0,
-	};
-	event_schedule_tv(type, tv, st);
+	deltatime_t delay = deltatime(delay_sec);
+	event_schedule(type, delay, st);
 }

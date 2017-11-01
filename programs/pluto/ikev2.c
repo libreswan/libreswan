@@ -2095,9 +2095,10 @@ static void success_v2_state_transition(struct msg_digest *md)
 			dpd_active_locally(st)) {
 			DBG(DBG_DPD,
 			    DBG_log("dpd enabled, scheduling ikev2 liveness checks"));
+			deltatime_t min_liveness = DELTATIME(MIN_LIVENESS);
 			event_schedule(EVENT_v2_LIVENESS,
-				       deltasecs(c->dpd_delay) >= MIN_LIVENESS ?
-					deltasecs(c->dpd_delay) : MIN_LIVENESS,
+				       deltatime_cmp(c->dpd_delay, min_liveness) >= 0 ?
+				       c->dpd_delay : min_liveness,
 				       st);
 		}
 	}

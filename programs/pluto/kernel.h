@@ -465,7 +465,7 @@ extern bool raw_eroute(const ip_address *this_host,
 #endif
 		       );
 
-extern int bare_shunt_interval;
+extern deltatime_t bare_shunt_interval;
 
 #define _KERNEL_H_
 #endif /* _KERNEL_H_ */

@@ -2571,7 +2571,7 @@ static void kernel_process_queue_cb(evutil_socket_t fd UNUSED,
 static char kversion[256];
 
 const struct kernel_ops *kernel_ops = NULL;
-int bare_shunt_interval = SHUNT_SCAN_INTERVAL;
+deltatime_t bare_shunt_interval = DELTATIME(SHUNT_SCAN_INTERVAL);
 
 
 void init_kernel(void)

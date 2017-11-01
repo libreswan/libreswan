@@ -26,6 +26,12 @@ deltatime_t deltatime(time_t secs)
 	return (deltatime_t) DELTATIME(secs);
 }
 
+/* delta time (interval) operations */
+deltatime_t deltatime_ms(long ms)
+{
+	return (deltatime_t) DELTATIME_MS(ms);
+}
+
 int deltatime_cmp(deltatime_t a, deltatime_t b)
 {
 	/* return sign(a - b) */

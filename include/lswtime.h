@@ -37,7 +37,8 @@
  * It seems that some compilers don't like the static constructor
  * DELTATIME() being strongly typed (that is using a cast like
  * (deltatime_t) {{...}}).  Get around this by providing both
- * DELTATIME() and deltatime(); sigh.
+ * DELTATIME() and deltatime(); and DELTATIME_MS() and deltatime_ms().
+ * Sigh.
  */
 
 typedef struct { struct timeval dt; } deltatime_t;
@@ -45,6 +46,9 @@ typedef struct { struct timeval dt; } deltatime_t;
 #define DELTATIME(S) {{ (time_t)(S), 0, }}
 deltatime_t deltatime(time_t secs);
 /* #define DELTATIME(S) {{ (time_t)(S), (long)(((S) - (time_t)(S)) * 1000000) }} */
+
+#define DELTATIME_MS(MS) {{ (time_t)((MS) / 1000), (long)(((MS) % 1000) * 1000) }}
+deltatime_t deltatime_ms(long ms);
 
 /* cmp() < 0; cmp() != 0; cmp() >= 0 et.al. */
 int deltatime_cmp(deltatime_t a, deltatime_t b);

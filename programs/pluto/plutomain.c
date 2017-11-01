@@ -899,11 +899,14 @@ int main(int argc, char **argv)
 			continue;
 
 		case '9':	/* --expire-bare-shunt <interval> */
-			ugh = ttoulb(optarg, 0, 10, 1000, &u);
+		{
+			unsigned long d = 0;
+			ugh = ttoulb(optarg, 0, 10, 1000, &d);
 			if (ugh != NULL)
 				break;
-			bare_shunt_interval = u;
+			bare_shunt_interval = deltatime(d);
 			continue;
+		}
 
 		case 'k':	/* --use-klips */
 			kern_interface = USE_KLIPS;
