@@ -89,7 +89,8 @@ struct connection *connections = NULL;
 
 struct connection *unoriented_connections = NULL;
 
-static uint32_t global_marks = 1001;
+#define MINIMUM_IPSEC_SA_RANDOM_MARK 65536
+static uint32_t global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
 
 /*
  * Find a connection by name.
@@ -1213,6 +1214,9 @@ static bool preload_wm_cert_secrets(const struct whack_message *wm)
 static void mark_parse(char *wmmark, struct sa_mark *sa_mark) {
 	char *mask_start = strstr(wmmark,"/");
 
+	if (strneq(wmmark, "-1", 2)) {
+		sa_mark->unique = TRUE;
+	}
 	sa_mark->val = strtol(wmmark, &mask_start, 0);
 	if (mask_start != wmmark && *mask_start == '/')
 		sa_mark->mask = strtol(mask_start + 1, NULL, 0);
@@ -2031,14 +2035,13 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 	d->log_file = NULL;
 	d->log_file_err = FALSE;
 
-	if (c->sa_marks.in.val == UINT_MAX) {
-		/* -1 means unique marks */
+	if (c->sa_marks.in.unique) {
 		d->sa_marks.in.val = global_marks;
 		d->sa_marks.out.val = global_marks;
 		global_marks++;
 		if (global_marks == UINT_MAX - 1) {
 			/* hopefully 2^32 connections ago are no longer around */
-			global_marks = 1001;
+			global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
 		}
 	}
 

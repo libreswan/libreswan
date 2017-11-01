@@ -211,6 +211,7 @@ struct spd_route {
 struct sa_mark {
 	uint32_t val;
 	uint32_t mask;
+	bool unique;
 };
 struct sa_marks {
 	struct sa_mark in;
