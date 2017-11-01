@@ -337,7 +337,7 @@ extern size_t sin_addrtot(const void *sin, int format, char *dst, size_t dstlen)
 /* RFC 1886 old IPv6 reverse-lookup format is the bulkiest */
 #define ADDRTOT_BUF     (32 * 2 + 3 + 1 + 3 + 1 + 1)
 typedef struct {
-	char buf[ADDRTOT_BUF];
+	char private_buf[ADDRTOT_BUF];
 } ipstr_buf;
 extern const char *ipstr(const ip_address *src, ipstr_buf *b);
 extern err_t ttorange(const char *src, size_t srclen, int af, ip_range *dst,

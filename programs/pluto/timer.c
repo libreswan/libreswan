@@ -430,8 +430,6 @@ static void liveness_check(struct state *st)
 	deltatime_t last_msg_age;
 
 	struct connection *c = st->st_connection;
-	ipstr_buf this_ip;
-	ipstr_buf that_ip;
 
 	passert(st->st_ikev2);
 
@@ -450,8 +448,11 @@ static void liveness_check(struct state *st)
 		pst = st;
 	}
 
-	ipstr(&st->st_remoteaddr, &that_ip);
-	ipstr(&st->st_localaddr, &this_ip);
+	char this_ip[ADDRTOT_BUF];
+	char that_ip[ADDRTOT_BUF];
+
+	addrtot(&st->st_localaddr, 0, this_ip, sizeof(this_ip));
+	addrtot(&st->st_remoteaddr, 0, that_ip, sizeof(that_ip));
 
 	/*
 	 * don't bother sending the check and reset
@@ -489,7 +490,7 @@ static void liveness_check(struct state *st)
 		if (pst->st_pend_liveness &&
 				deltasecs(monotimediff(tm, last_liveness)) >= timeout) {
 			libreswan_log("liveness_check - peer %s has not responded in %ld seconds, with a timeout of %ld, taking %s",
-					log_ip ? that_ip.buf : "<ip address>",
+					log_ip ? that_ip : "<ip address>",
 					(long)deltasecs(monotimediff(tm, last_liveness)),
 					(long)timeout,
 					enum_name(&dpd_action_names,
@@ -502,14 +503,14 @@ static void liveness_check(struct state *st)
 
 			DBG(DBG_DPD,
 				DBG_log("#%lu liveness_check - peer %s is missing - giving them some time to come back",
-					st->st_serialno, that_ip.buf));
+					st->st_serialno, that_ip));
 
 			if (ret != STF_OK) {
 				DBG(DBG_DPD,
 					DBG_log("#%lu failed to send liveness informational from %s to %s using parent  #%lu",
 						st->st_serialno,
-						this_ip.buf,
-						that_ip.buf,
+						this_ip,
+						that_ip,
 						pst->st_serialno));
 				return; /* this prevents any new scheduling ??? */
 			}
@@ -517,7 +518,7 @@ static void liveness_check(struct state *st)
 	}
 
 	DBG(DBG_DPD, DBG_log("#%lu liveness_check - peer %s is ok schedule new",
-				st->st_serialno, that_ip.buf));
+				st->st_serialno, that_ip));
 	event_schedule(EVENT_v2_LIVENESS,
 			deltasecs(c->dpd_delay) >= MIN_LIVENESS ?
 			deltasecs(c->dpd_delay) : MIN_LIVENESS, st);

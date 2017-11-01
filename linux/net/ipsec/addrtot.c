@@ -361,8 +361,8 @@ char **dstp;                    /* where to put result pointer */
 
 const char *ipstr(const ip_address *src, ipstr_buf *b)
 {
-	addrtot(src, 0, b->buf, sizeof(b->buf));
-	return b->buf;
+	addrtot(src, 0, b->private_buf, sizeof(b->private_buf));
+	return b->private_buf;
 }
 
 /*
