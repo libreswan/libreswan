@@ -28,6 +28,18 @@ deltatime_t deltatime(time_t secs)
 	return d;
 }
 
+int deltatime_cmp(deltatime_t a, deltatime_t b)
+{
+	/* return sign(a - b) */
+	if (a.delta_secs < b.delta_secs) {
+		return -1;
+	} else if (a.delta_secs > b.delta_secs) {
+		return +1;
+	} else {
+		return 0;
+	}
+}
+
 unsigned long deltamillisecs(deltatime_t d)
 {
 	return d.delta_secs * 1000;
@@ -45,7 +57,7 @@ deltatime_t deltatimescale(int num, int denom, deltatime_t d)
 
 bool deltaless(deltatime_t a, deltatime_t b)
 {
-	return deltasecs(a) < deltasecs(b);
+	return deltatime_cmp(a, b) < 0;
 }
 
 bool deltaless_tv_dt(const struct timeval a, const deltatime_t b)

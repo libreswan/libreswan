@@ -40,11 +40,14 @@ typedef struct { time_t delta_secs; } deltatime_t;
 /* static constructor; obsoletes deltatime() */
 #define DELTATIME(TIME) ((deltatime_t) { TIME })
 
+/* cmp() < 0; cmp() != 0; cmp() >= 0 et.al. */
+int deltatime_cmp(deltatime_t a, deltatime_t b);
+
 deltatime_t deltatime(time_t secs);
 unsigned long deltamillisecs(deltatime_t d);
 time_t deltasecs(deltatime_t d);
 deltatime_t deltatimescale(int num, int denom, deltatime_t d);
-bool deltaless(deltatime_t a, deltatime_t b);
+bool deltaless(deltatime_t a, deltatime_t b); /* obsolete; use deltatime_cmp() */
 bool deltaless_tv_dt(const struct timeval a, const deltatime_t b);
 
 /*
