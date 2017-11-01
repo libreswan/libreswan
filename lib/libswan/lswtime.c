@@ -21,19 +21,17 @@
 #include "lswtime.h"
 
 /* delta time (interval) operations */
-
 deltatime_t deltatime(time_t secs)
 {
-	deltatime_t d = { secs };
-	return d;
+	return DELTATIME(secs);
 }
 
 int deltatime_cmp(deltatime_t a, deltatime_t b)
 {
 	/* return sign(a - b) */
-	if (a.delta_secs < b.delta_secs) {
+	if (timercmp(&a.dt, &b.dt, <)) {
 		return -1;
-	} else if (a.delta_secs > b.delta_secs) {
+	} else if (timercmp(&a.dt, &b.dt, >)) {
 		return +1;
 	} else {
 		return 0;
@@ -42,11 +40,12 @@ int deltatime_cmp(deltatime_t a, deltatime_t b)
 
 unsigned long deltamillisecs(deltatime_t d)
 {
-	return d.delta_secs * 1000;
+	return d.dt.tv_sec * 1000 + d.dt.tv_usec / 1000;
 }
 
-time_t deltasecs(deltatime_t d) {
-	return d.delta_secs;
+time_t deltasecs(deltatime_t d)
+{
+	return d.dt.tv_sec;
 }
 
 deltatime_t deltatimescale(int num, int denom, deltatime_t d)
@@ -74,8 +73,8 @@ realtime_t realtime(time_t time)
 
 realtime_t realtimesum(realtime_t t, deltatime_t d)
 {
-	realtime_t s = t;
-	s.rt.tv_sec += d.delta_secs;
+	realtime_t s;
+	timeradd(&t.rt, &d.dt, &s.rt);
 	return s;
 }
 
@@ -91,9 +90,8 @@ bool realbefore(realtime_t a, realtime_t b)
 
 deltatime_t realtimediff(realtime_t a, realtime_t b)
 {
-	struct timeval tv;
-	timersub(&a.rt, &b.rt, &tv);
-	deltatime_t d = { tv.tv_sec };
+	deltatime_t d;
+	timersub(&a.rt, &b.rt, &d.dt);
 	return d;
 }
 
@@ -128,7 +126,7 @@ struct realtm utc_realtime(realtime_t t)
 
 monotime_t monotimesum(monotime_t t, deltatime_t d)
 {
-	monotime_t s = { t.mono_secs + d.delta_secs };
+	monotime_t s = { t.mono_secs + deltasecs(d) };
 	return s;
 }
 
@@ -139,7 +137,5 @@ bool monobefore(monotime_t a, monotime_t b)
 
 deltatime_t monotimediff(monotime_t a, monotime_t b)
 {
-	deltatime_t d = { a.mono_secs - b.mono_secs };
-
-	return d;
+	return DELTATIME(a.mono_secs - b.mono_secs);
 }

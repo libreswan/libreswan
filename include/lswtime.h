@@ -35,15 +35,16 @@
  * deltatime_t: relative time between events.  Presumed continuous.
  */
 
-typedef struct { time_t delta_secs; } deltatime_t;
+typedef struct { struct timeval dt; } deltatime_t;
 
 /* static constructor; obsoletes deltatime() */
-#define DELTATIME(TIME) ((deltatime_t) { TIME })
+#define DELTATIME(S) ((deltatime_t){{ (time_t)(S), 0, }})
+/* #define DELTATIME(S) ((deltatime_t){{ (time_t)(S), (long)(((S) - (time_t)(S)) * 1000000) }}) */
 
 /* cmp() < 0; cmp() != 0; cmp() >= 0 et.al. */
 int deltatime_cmp(deltatime_t a, deltatime_t b);
 
-deltatime_t deltatime(time_t secs);
+deltatime_t deltatime(time_t secs); /* obsolete; use DELTATIME() */
 unsigned long deltamillisecs(deltatime_t d);
 time_t deltasecs(deltatime_t d);
 deltatime_t deltatimescale(int num, int denom, deltatime_t d);
