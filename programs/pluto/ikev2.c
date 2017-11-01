@@ -2315,7 +2315,9 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 						delete_state(st);
 					} else {
 						delete_event(st);
-						event_schedule(EVENT_v2_RESPONDER_TIMEOUT, MAXIMUM_RESPONDER_WAIT, st);
+						event_schedule_s(EVENT_v2_RESPONDER_TIMEOUT,
+								 MAXIMUM_RESPONDER_WAIT,
+								 st);
 					}
 				}
 			}

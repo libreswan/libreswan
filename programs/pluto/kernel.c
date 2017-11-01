@@ -2668,7 +2668,7 @@ void init_kernel(void)
 	if (kernel_ops->pfkey_register != NULL)
 		kernel_ops->pfkey_register();
 
-	event_schedule(EVENT_SHUNT_SCAN, SHUNT_SCAN_INTERVAL, NULL);
+	event_schedule_s(EVENT_SHUNT_SCAN, SHUNT_SCAN_INTERVAL, NULL);
 
 	DBG(DBG_KERNEL, DBG_log("setup kernel fd callback"));
 

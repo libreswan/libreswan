@@ -1141,7 +1141,7 @@ void connection_check_ddns(void)
 	gettimeofday(&tv1, NULL);
 
 	/* reschedule */
-	event_schedule(EVENT_PENDING_DDNS, PENDING_DDNS_INTERVAL, NULL);
+	event_schedule_s(EVENT_PENDING_DDNS, PENDING_DDNS_INTERVAL, NULL);
 
 	for (c = connections; c != NULL; c = cnext) {
 		cnext = c->ac_next;
@@ -1178,7 +1178,7 @@ void connection_check_phase2(void)
 	struct connection *c, *cnext;
 
 	/* reschedule */
-	event_schedule(EVENT_PENDING_PHASE2, PENDING_PHASE2_INTERVAL, NULL);
+	event_schedule_s(EVENT_PENDING_PHASE2, PENDING_PHASE2_INTERVAL, NULL);
 
 	for (c = connections; c != NULL; c = cnext) {
 		cnext = c->ac_next;
@@ -1248,6 +1248,6 @@ void connection_check_phase2(void)
 
 void init_connections(void)
 {
-	event_schedule(EVENT_PENDING_DDNS, PENDING_DDNS_INTERVAL, NULL);
-	event_schedule(EVENT_PENDING_PHASE2, PENDING_PHASE2_INTERVAL, NULL);
+	event_schedule_s(EVENT_PENDING_DDNS, PENDING_DDNS_INTERVAL, NULL);
+	event_schedule_s(EVENT_PENDING_PHASE2, PENDING_PHASE2_INTERVAL, NULL);
 }
