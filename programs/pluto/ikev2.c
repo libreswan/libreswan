@@ -1719,7 +1719,7 @@ static void sechdule_next_send(struct state *st)
 		cst = state_with_serialno(p->st_serialno);
 		if (cst != NULL) {
 			delete_event(cst);
-			event_schedule(EVENT_v2_SEND_NEXT_IKE, 0, cst);
+			event_schedule_s(EVENT_v2_SEND_NEXT_IKE, 0, cst);
 			DBG(DBG_CONTROLMORE,
 				DBG_log("#%lu send next using parent #%lu next message id=%u, waiting to send %d",
 					cst->st_serialno, st->st_serialno,
@@ -2042,12 +2042,12 @@ static void success_v2_state_transition(struct msg_digest *md)
 					pfreeany(st->st_rel_whack_event);
 					st->st_rel_whack_event = NULL;
 				}
-				event_schedule(EVENT_v2_RELEASE_WHACK,
-						EVENT_RELEASE_WHACK_DELAY, st);
+				event_schedule_s(EVENT_v2_RELEASE_WHACK,
+						 EVENT_RELEASE_WHACK_DELAY, st);
 				kind = EVENT_SA_REPLACE;
 				delay = ikev2_replace_delay(st, &kind, st->st_original_role);
 				DBG(DBG_LIFECYCLE, DBG_log("ikev2 case EVENT_v2_RETRANSMIT: for %jd seconds", (intmax_t) delay));
-				event_schedule(kind, delay, st);
+				event_schedule_s(kind, delay, st);
 
 			}  else {
 				DBG(DBG_LIFECYCLE,DBG_log(
@@ -2062,12 +2062,12 @@ static void success_v2_state_transition(struct msg_digest *md)
 			DBG(DBG_LIFECYCLE, DBG_log("ikev2 case EVENT_SA_REPLACE for %s state for %jd seconds",
                             IS_IKE_SA(st) ? "parent" : "child", (intmax_t) delay));
 			delete_event(st);
-			event_schedule(kind, delay, st);
+			event_schedule_s(kind, delay, st);
 			break;
 
 		case EVENT_v2_RESPONDER_TIMEOUT:
 			delete_event(st);
-			event_schedule(kind, MAXIMUM_RESPONDER_WAIT, st);
+			event_schedule_s(kind, MAXIMUM_RESPONDER_WAIT, st);
 			break;
 
 		case EVENT_NULL:

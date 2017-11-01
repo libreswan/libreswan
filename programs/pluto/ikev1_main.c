@@ -2063,7 +2063,7 @@ static stf_status main_inR3_tail(struct msg_digest *md)
 			md->event_already_set = TRUE;
 			st->st_rekeytov2 = TRUE;
 			delete_event(st);
-			event_schedule(EVENT_SA_REPLACE, 0, st);
+			event_schedule_s(EVENT_SA_REPLACE, 0, st);
 		}
 	}
 
@@ -2790,8 +2790,7 @@ bool accept_delete(struct msg_digest *md,
 							dst->st_serialno);
 						dst->st_margin = deltatime(0);
 						delete_event(dst);
-						event_schedule(EVENT_SA_REPLACE,
-								0, dst);
+						event_schedule_s(EVENT_SA_REPLACE, 0, dst);
 					}
 				} else {
 					loglog(RC_LOG_SERIOUS,

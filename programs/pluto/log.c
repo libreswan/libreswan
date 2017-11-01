@@ -475,7 +475,7 @@ void daily_log_event(void)
 	if (interval <= 0)
 		interval = secs_per_day;
 
-	event_schedule(EVENT_LOG_DAILY, interval, NULL);
+	event_schedule_s(EVENT_LOG_DAILY, interval, NULL);
 
 	daily_log_reset();
 }

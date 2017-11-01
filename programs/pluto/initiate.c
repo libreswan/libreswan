@@ -1228,7 +1228,7 @@ void connection_check_phase2(void)
 					restart_connections_by_peer(c);
 				} else {
 					delete_event(p1st);
-					event_schedule(EVENT_SA_REPLACE, 0, p1st);
+					event_schedule_s(EVENT_SA_REPLACE, 0, p1st);
 				}
 			} else {
 				/* start a new connection. Something wanted it up */

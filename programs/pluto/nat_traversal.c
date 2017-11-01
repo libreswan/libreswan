@@ -816,7 +816,7 @@ void nat_traversal_new_ka_event(void)
 	if (nat_kap_event)
 		return;	/* Event already schedule */
 
-	event_schedule(EVENT_NAT_T_KEEPALIVE, nat_kap, NULL);
+	event_schedule_s(EVENT_NAT_T_KEEPALIVE, nat_kap, NULL);
 	nat_kap_event = TRUE;
 }
 

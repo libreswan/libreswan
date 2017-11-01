@@ -598,7 +598,7 @@ void insert_state(struct state *st)
 	 * a more appropriate one.
 	 */
 	if (st->st_event == NULL)
-		event_schedule(EVENT_SO_DISCARD, 0, st);
+		event_schedule_s(EVENT_SO_DISCARD, 0, st);
 
 	refresh_state(st);
 }
@@ -628,7 +628,7 @@ void rehash_state(struct state *st, const u_char *icookie,
 	 * insert_state.  Is it still needed?
 	 */
 	if (st->st_event == NULL)
-		event_schedule(EVENT_SO_DISCARD, 0, st);
+		event_schedule_s(EVENT_SO_DISCARD, 0, st);
 }
 
 /*
@@ -709,7 +709,7 @@ void ikev2_expire_unused_parent(struct state *pst)
 				pst->st_serialno, c->name,
 				fmt_conn_instance(c, cib));
 		delete_event(pst);
-		event_schedule(EVENT_SA_EXPIRE, 0, pst);
+		event_schedule_s(EVENT_SA_EXPIRE, 0, pst);
 	}
 }
 
@@ -736,14 +736,14 @@ static void flush_pending_ipsec(struct state *pst, struct state *st)
 					c->name, fmt_conn_instance(c, cib),
 					st->st_serialno);
 
-			event_schedule(EVENT_SA_REPLACE, 0, st);
+			event_schedule_s(EVENT_SA_REPLACE, 0, st);
 		} else {
 			loglog(RC_LOG_SERIOUS, "expire pending Phase 2 of "
 					"connection\"%s\"%s state #%lu: - the parent is going away",
 					c->name, fmt_conn_instance(c, cib),
 					st->st_serialno);
 
-			event_schedule(EVENT_SA_EXPIRE, 0, st);
+			event_schedule_s(EVENT_SA_EXPIRE, 0, st);
 		}
 	}
 }
@@ -1339,9 +1339,8 @@ void delete_states_by_peer(const ip_address *peer)
 							 LEMPTY, 1);
 				} else {
 					delete_event(this);
-					event_schedule(
-						EVENT_SA_REPLACE, 0,
-						this);
+					event_schedule_s(EVENT_SA_REPLACE,
+							 0, this);
 				}
 			}
 		});
@@ -2463,7 +2462,7 @@ void ikev2_repl_est_ipsec(struct state *st, void *data)
 		enum event_type ev_type = st->st_event->ev_type;
 		passert(st->st_event != NULL);
 		delete_event(st);
-		event_schedule(ev_type, 0, st);
+		event_schedule_s(ev_type, 0, st);
 	}
 }
 

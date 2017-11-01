@@ -168,7 +168,7 @@ void ikev2_isakamp_established(struct state *st, const struct state_v2_microcode
 	c->newest_isakmp_sa = st->st_serialno;
 	delay = ikev2_replace_delay(st, &kind, role);
 	delete_event(st);
-	event_schedule(kind, delay, st);
+	event_schedule_s(kind, delay, st);
 }
 
 /*
@@ -205,7 +205,9 @@ static stf_status add_st_send_list(struct state *st, struct state *pst)
 
 		what = "wait sending, add to send next list";
 		delete_event(st);
-		event_schedule(EVENT_SA_REPLACE, MAXIMUM_RESPONDER_WAIT, st);
+		event_schedule_s(EVENT_SA_REPLACE,
+				 MAXIMUM_RESPONDER_WAIT,
+				 st);
 
 		for (p = pst->send_next_ix; (p != NULL && p->next != NULL);
 				p = p->next) {
@@ -3025,7 +3027,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		enum event_type x = md->svm->timeout_event;
 		time_t delay = ikev2_replace_delay(pst, &x, ORIGINAL_INITIATOR);
 
-		event_schedule(x, delay, pst);
+		event_schedule_s(x, delay, pst);
 	}
 
 	/* need to force parent state to I2 */
@@ -5180,7 +5182,7 @@ static void delete_or_replace_state(struct state *st) {
 	if (st->st_event->ev_type == EVENT_SA_EXPIRE) {
 		/* this state  was going to  EXPIRE just let it now*/
 		delete_event(st);
-		event_schedule(EVENT_SA_EXPIRE, 0, st);
+		event_schedule_s(EVENT_SA_EXPIRE, 0, st);
 		loglog(RC_LOG_SERIOUS, "received Delete SA payload: expire IPSEC State #%lu now",
 				st->st_serialno);
 		return;
@@ -5197,7 +5199,7 @@ static void delete_or_replace_state(struct state *st) {
 				st->st_serialno);
 		delete_event(st);
 		st->st_margin = deltatime(0);
-		event_schedule(EVENT_SA_REPLACE, 0, st);
+		event_schedule_s(EVENT_SA_REPLACE, 0, st);
 	} else {
 		loglog(RC_LOG_SERIOUS, "received Delete SA payload: delete IPSEC State #%lu now",
 				st->st_serialno);
@@ -6002,7 +6004,7 @@ void ikev2_add_ipsec_child(int whack_sock, struct state *isakmp_sa,
 			isakmp_sa->st_serialno,
 			pfsgroupname));
 	delete_event(st);
-	event_schedule(EVENT_v2_INITIATE_CHILD, 0, st);
+	event_schedule_s(EVENT_v2_INITIATE_CHILD, 0, st);
 	reset_globals();
 }
 
