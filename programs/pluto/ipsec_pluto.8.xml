@@ -85,11 +85,15 @@
 
       <arg choice="opt">--debug all</arg>
       <arg choice="opt">--debug none</arg>
-      <arg choice="opt">--debug private</arg>
       <arg choice="opt">--debug list</arg>
       <arg choice="opt">--debug <replaceable>class</replaceable></arg>
       <arg choice="opt">--debug no-<replaceable>class</replaceable></arg>
 
+      <arg choice="opt">--debug-all (obsolete)</arg>
+      <arg choice="opt">--debug-none (obsolete)</arg>
+
+      <arg choice="opt">--impair list</arg>
+      <arg choice="opt">--impair none</arg>
       <arg choice="opt">--impair <replaceable>behaviour</replaceable></arg>
       <arg choice="opt">--impair no-<replaceable>behaviour</replaceable></arg>
 
@@ -570,12 +574,15 @@
 
       <arg choice="opt">--debug all</arg>
       <arg choice="opt">--debug none</arg>
-      <arg choice="opt">--debug private</arg>
       <arg choice="opt">--debug list</arg>
       <arg choice="opt">--debug <replaceable>class</replaceable></arg>
       <arg choice="opt">--debug no-<replaceable>class</replaceable></arg>
 
+      <arg choice="opt">--debug-all (obsolete)</arg>
+      <arg choice="opt">--debug-none (obsolete)</arg>
+
       <arg choice="opt">--impair list</arg>
+      <arg choice="opt">--impair none</arg>
       <arg choice="opt">--impair <replaceable>behaviour</replaceable></arg>
       <arg choice="opt">--impair no-<replaceable>behaviour</replaceable></arg>
 
@@ -3212,8 +3219,8 @@
           <term><option>--debug all</option></term>
           <listitem>
             <para>
-	      enable logging of all standard debugging classes (this
-	      does not include debugging classes that may expose
+	      enable logging of a standard set of debugging classes
+	      (this does not include debugging classes that may expose
 	      private information)
 	    </para>
           </listitem>
@@ -3222,29 +3229,16 @@
         <varlistentry>
           <term><option>--debug none</option></term>
           <listitem>
-            <para>disable all debugging</para>
+            <para>disable logging for all debugging classes</para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
-          <term><option>--debug private</option></term>
-          <term><option>--debug no-private</option></term>
-          <listitem>
-            <para>enable (disable) logging of private information
-            (this class is not enabled by all)</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--debug list</option></term>
+          <term><option>--debug list</option> (whack only)</term>
           <listitem>
             <para>
 	      list the debugging classes recognised by <emphasis
 	      remap="B">pluto</emphasis>
-	    </para>
-	    <para>
-	      this list includes debug classes intended for use by
-	      developers
 	    </para>
           </listitem>
         </varlistentry>
@@ -3255,34 +3249,44 @@
           <listitem>
             <para>
 	      enable (disable) logging of the specified debugging
-	      <replaceable>class</replaceable>
+	      <replaceable>class</replaceable>,
+	      <replaceable>class</replaceable> is one of:
+	    </para>
+	    <variablelist>
+              <varlistentry>
+		<term>private</term>
+		<listitem>
+		  <para>
+		    control logging of private information (this class
+		    is not included in all)
+		  </para>
+		</listitem>
+              </varlistentry>
+	    </variablelist>
+	    <para>
+	      use <option>--debug list</option> to list additional
+	      debugging classes recognized by <emphasis
+	      remap="B">pluto</emphasis>
 	    </para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
-          <term><option>--impair list</option></term>
+          <term><option>--debug-all</option> (obsolete)</term>
           <listitem>
             <para>
-	      list of behaviours that can be altered (impaired)
-	    </para>
-	    <para>
-	      this option is intended for use by developers
+	      alias for <option>--debug all</option> <option>--impair
+	      none</option>
 	    </para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
-          <term><option>--impair <replaceable>behaviour</replaceable></option></term>
-          <term><option>--impair no-<replaceable>behaviour</replaceable></option></term>
+          <term><option>--debug-none</option> (obsolete)</term>
           <listitem>
             <para>
-	      alter (impair) <emphasis remap="B">pluto</emphasis>
-	      inducing the (possibly erroneous)
-	      <replaceable>behaviour</replaceable>
-	    </para>
-	    <para>
-	      this option is intended for use by developers
+	      alias for <option>--debug none</option> <option>--impair
+	      none</option>
 	    </para>
           </listitem>
         </varlistentry>
@@ -3308,14 +3312,65 @@
 
       <para>
 	To later change this <emphasis remap="B">pluto</emphasis> to
-	disable the retransmits debug class use either:
+	disable the retransmits debug class use either of:
       </para>
 
-      <para>whack --debug no-retransmits</para>
+      <para>
+	whack --debug no-retransmits
+      </para>
 
-      <para>or:</para>
+      <para>
+	whack --debug none --debug xauth
+      </para>
 
-      <para>whack --debug none --debug xauth</para>
+    </refsect2>
+
+    <refsect2 id="impairing">
+      <title>Impairing</title>
+
+      <para>
+	<emphasis remap="B">pluto</emphasis> and <emphasis
+	remap="B">whack</emphasis> accept several optional arguments
+	that alter (impair) correct behaviour.
+      </para>
+      <para>
+	These options are solely intended for use by developers when
+	testing <emphasis remap="B">pluto</emphasis>.
+      </para>
+
+      <variablelist remap="TP">
+
+        <varlistentry>
+          <term><option>--impair list</option> (whack only)</term>
+          <listitem>
+            <para>
+	      list all the behaviours that can be altered (impaired)
+	    </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--impair none</option></term>
+          <listitem>
+            <para>
+	      disable all altered (impaired) behaviours
+	    </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--impair <replaceable>behaviour</replaceable></option></term>
+          <term><option>--impair no-<replaceable>behaviour</replaceable></option></term>
+          <listitem>
+            <para>
+	      alter (impair) <emphasis remap="B">pluto</emphasis>
+	      inducing the (possibly erroneous)
+	      <replaceable>behaviour</replaceable>
+	    </para>
+          </listitem>
+        </varlistentry>
+
+      </variablelist>
 
     </refsect2>
 
