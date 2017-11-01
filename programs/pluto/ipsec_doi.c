@@ -676,8 +676,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 
 		snprintf(oa, sizeof(oa),
 			 "%s:%d",
-			 log_ip ? ipstr(&st->hidden_variables.st_natd, &ipb)
-				: "<ip address>",
+			 sensitive_ipstr(&st->hidden_variables.st_natd, &ipb),
 			 st->st_remoteport);
 		b = add_str(sadetails, sad_len, b, oa);
 	}

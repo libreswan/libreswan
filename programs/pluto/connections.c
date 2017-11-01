@@ -274,7 +274,7 @@ void delete_connection(struct connection *c, bool relations)
 			libreswan_log(
 				"deleting connection \"%s\"%s instance with peer %s {isakmp=#%lu/ipsec=#%lu}",
 				c->name, fmt_conn_instance(c, cib),
-				log_ip ? ipstr(&c->spd.that.host_addr, &b) : "<ip address>",
+				sensitive_ipstr(&c->spd.that.host_addr, &b),
 				c->newest_isakmp_sa, c->newest_ipsec_sa);
 		}
 		c->kind = CK_GOING_AWAY;

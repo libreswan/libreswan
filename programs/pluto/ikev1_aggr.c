@@ -316,7 +316,7 @@ stf_status aggr_inI1_outR1(struct msg_digest *md)
 		libreswan_log("responding to Aggressive Mode, state #%lu, connection \"%s\"%s from %s",
 			st->st_serialno,
 			st->st_connection->name, fmt_conn_instance(st->st_connection, cib),
-			log_ip ? ipstr(&c->spd.that.host_addr, &b) : "<ip address>");
+			sensitive_ipstr(&c->spd.that.host_addr, &b));
 	}
 
 	merge_quirks(st, md);

@@ -1443,7 +1443,7 @@ static bool send_packet(struct state *st, const char *where,
 			where,
 			st->st_interface->ip_dev->id_rname,
 			st->st_interface->port,
-			log_ip ? ipstr(&st->st_remoteaddr, &b) : "<ip>",
+			sensitive_ipstr(&st->st_remoteaddr, &b),
 			st->st_remoteport,
 			st->st_serialno);
 	});
@@ -1466,7 +1466,7 @@ static bool send_packet(struct state *st, const char *where,
 			ipstr_buf b;
 			LOG_ERRNO(errno, "sendto on %s to %s:%u failed in %s",
 				  st->st_interface->ip_dev->id_rname,
-				  log_ip ? ipstr(&st->st_remoteaddr, &b) : "<ip>",
+				  sensitive_ipstr(&st->st_remoteaddr, &b),
 				  st->st_remoteport,
 				  where);
 		}

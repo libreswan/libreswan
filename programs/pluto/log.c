@@ -57,6 +57,11 @@ static FILE *pluto_log_fp = NULL;
 
 char *pluto_stats_binary = NULL;
 
+const char *sensitive_ipstr(const ip_address *src, ipstr_buf *b)
+{
+	return log_ip ? ipstr(src, b) : "<ip address>";
+}
+
 /* Context for logging.
  *
  * Global variables: must be carefully adjusted at transaction boundaries!
@@ -201,7 +206,7 @@ void lswlog_log_prefix(struct lswlog *buf)
 		/* peer's IP address */
 		ipstr_buf b;
 		lswlogf(buf, "packet from %s:%u: ",
-			log_ip ? ipstr(cur_from, &b) : "<ip address>",
+			sensitive_ipstr(cur_from, &b),
 			(unsigned)cur_from_port);
 	}
 }

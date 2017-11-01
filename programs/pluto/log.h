@@ -31,6 +31,8 @@ extern bool
 	log_append,
 	log_ip;
 
+extern const char *sensitive_ipstr(const ip_address *src, ipstr_buf *b);
+
 extern bool log_to_syslog;          /* should log go to syslog? */
 extern char *pluto_log_file;
 extern char *pluto_stats_binary;
