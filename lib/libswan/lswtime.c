@@ -44,6 +44,15 @@ int deltatime_cmp(deltatime_t a, deltatime_t b)
 	}
 }
 
+deltatime_t deltatime_max(deltatime_t a, deltatime_t b)
+{
+	if (deltatime_cmp(a, b) > 0) {
+		return a;
+	} else {
+		return b;
+	}
+}
+
 intmax_t deltamillisecs(deltatime_t d)
 {
 	return d.dt.tv_sec * 1000 + d.dt.tv_usec / 1000;

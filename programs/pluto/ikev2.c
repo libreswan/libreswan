@@ -2086,8 +2086,9 @@ static void success_v2_state_transition(struct msg_digest *md)
 		default:
 			bad_case(kind);
 		}
-		/* start liveness checks if set, making sure we only schedule once when moving
-		 * from I2->I3 or R1->R2
+		/*
+		 * start liveness checks if set, making sure we only
+		 * schedule once when moving from I2->I3 or R1->R2
 		 */
 		if (st->st_state != from_state &&
 			st->st_state != STATE_UNDEFINED &&
@@ -2095,11 +2096,8 @@ static void success_v2_state_transition(struct msg_digest *md)
 			dpd_active_locally(st)) {
 			DBG(DBG_DPD,
 			    DBG_log("dpd enabled, scheduling ikev2 liveness checks"));
-			deltatime_t min_liveness = DELTATIME(MIN_LIVENESS);
-			event_schedule(EVENT_v2_LIVENESS,
-				       deltatime_cmp(c->dpd_delay, min_liveness) >= 0 ?
-				       c->dpd_delay : min_liveness,
-				       st);
+			deltatime_t delay = deltatime_max(c->dpd_delay, deltatime(MIN_LIVENESS));
+			event_schedule(EVENT_v2_LIVENESS, delay, st);
 		}
 	}
 }

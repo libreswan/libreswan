@@ -60,6 +60,9 @@ deltatime_t deltatime_ms(intmax_t ms);
 /* sign(a - b) */
 int deltatime_cmp(deltatime_t a, deltatime_t b);
 
+/* max(a, b) */
+deltatime_t deltatime_max(deltatime_t a, deltatime_t b);
+
 intmax_t deltamillisecs(deltatime_t d);
 time_t deltasecs(deltatime_t d);
 deltatime_t deltatimescale(int num, int denom, deltatime_t d);

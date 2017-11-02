@@ -519,10 +519,8 @@ static void liveness_check(struct state *st)
 
 	DBG(DBG_DPD, DBG_log("#%lu liveness_check - peer %s is ok schedule new",
 				st->st_serialno, that_ip));
-	deltatime_t min_liveness = DELTATIME(MIN_LIVENESS);
-	event_schedule(EVENT_v2_LIVENESS,
-		       deltatime_cmp(c->dpd_delay, min_liveness) >= 0 ?
-		       c->dpd_delay : min_liveness, st);
+	deltatime_t delay = deltatime_max(c->dpd_delay, deltatime(MIN_LIVENESS));
+	event_schedule(EVENT_v2_LIVENESS, delay, st);
 }
 
 static void ikev2_log_v2_sa_expired(struct state *st, enum event_type type)
