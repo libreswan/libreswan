@@ -2512,9 +2512,10 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			    IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
 				DBG(DBG_CONTROLMORE|DBG_XAUTH,
 				    DBG_log("XAUTH: Sending XAUTH Login/Password Request"));
-				event_schedule_ms(EVENT_v1_SEND_XAUTH,
-						EVENT_v1_SEND_XAUTH_DELAY, st);
-						break;
+				event_schedule(EVENT_v1_SEND_XAUTH,
+					       deltatime_ms(EVENT_v1_SEND_XAUTH_DELAY_MS),
+					       st);
+				break;
 			}
 		}
 

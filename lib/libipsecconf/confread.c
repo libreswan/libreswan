@@ -157,7 +157,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.options[KBF_REPLAY_WINDOW] = IPSEC_SA_DEFAULT_REPLAY_WINDOW;
 
 	cfg->conn_default.options[KBF_RETRANSMIT_TIMEOUT] = RETRANSMIT_TIMEOUT_DEFAULT;
-	cfg->conn_default.options[KBF_RETRANSMIT_INTERVAL] = RETRANSMIT_INTERVAL_DEFAULT;
+	cfg->conn_default.options[KBF_RETRANSMIT_INTERVAL_MS] = RETRANSMIT_INTERVAL_DEFAULT_MS;
 
 	cfg->conn_default.options[KBF_SALIFETIME] = IPSEC_SA_LIFETIME_DEFAULT;
 	cfg->conn_default.options[KBF_REKEYMARGIN] = SA_REPLACEMENT_MARGIN_DEFAULT;

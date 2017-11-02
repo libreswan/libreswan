@@ -1737,7 +1737,7 @@ bool resend_ike_v1_msg(struct state *st, const char *where)
 	if (st->st_state == STATE_XAUTH_R0 &&
 	    !LIN(POLICY_AGGRESSIVE, st->st_connection->policy)) {
 		/* Only for Main mode + XAUTH */
-		event_schedule_ms(EVENT_v1_SEND_XAUTH, EVENT_v1_SEND_XAUTH_DELAY, st);
+		event_schedule(EVENT_v1_SEND_XAUTH, deltatime_ms(EVENT_v1_SEND_XAUTH_DELAY_MS), st);
 	}
 
 	return ret;
