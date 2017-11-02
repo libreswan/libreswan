@@ -246,8 +246,8 @@ extern bool ship_v2N(enum next_payload_types_ikev2 np,
 		     v2_notification_t type,
 		     const chunk_t *n_data, pb_stream *rbody);
 
-extern time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
-				  enum original_role role);
+extern deltatime_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
+				       enum original_role role);
 
 stf_status ikev2_send_cp(struct connection *c, enum next_payload_types_ikev2 np,
 		pb_stream *outpbs);

@@ -1794,24 +1794,26 @@ void ikev2_update_msgid_counters(struct msg_digest *md)
 
 }
 
-time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
-		enum original_role role)
+deltatime_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
+				enum original_role role)
 {
 	enum event_type kind = *pkind;
 	time_t delay;   /* unwrapped deltatime_t */
 	struct connection *c = st->st_connection;
 
-	if (IS_PARENT_SA(st)) /* workaround for child appearing as parent */
-	{
-		/* Note: we will defer to the "negotiated" (dictated)
-		 * lifetime if we are POLICY_DONT_REKEY.
-		 * This allows the other side to dictate
-		 * a time we would not otherwise accept
-		 * but it prevents us from having to initiate
-		 * rekeying.  The negative consequences seem
+	if (IS_PARENT_SA(st)) {
+		/*
+		 * workaround for child appearing as parent
+		 *
+		 * Note: we will defer to the "negotiated" (dictated)
+		 * lifetime if we are POLICY_DONT_REKEY.  This allows
+		 * the other side to dictate a time we would not
+		 * otherwise accept but it prevents us from having to
+		 * initiate rekeying.  The negative consequences seem
 		 * minor.
 		 *
-		 * We cleanup halfopen IKE SAs fast, could be spoofed packets
+		 * We cleanup halfopen IKE SAs fast, could be spoofed
+		 * packets
 		 */
 		if (IS_IKE_SA_ESTABLISHED(st)) {
 			delay = deltasecs(c->sa_ike_life_seconds);
@@ -1879,7 +1881,7 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 			*pkind = kind = EVENT_SA_EXPIRE;
 		}
 	}
-	return delay;
+	return deltatime(delay);
 }
 
 void log_ipsec_sa_established(const char *m, const struct state *st)
@@ -2029,7 +2031,6 @@ static void success_v2_state_transition(struct msg_digest *md)
 
 	/* Schedule for whatever timeout is specified */
 	{
-		time_t delay;   /* unwrapped deltatime_t */
 		enum event_type kind = svm->timeout_event;
 		struct connection *c = st->st_connection;
 
@@ -2045,9 +2046,12 @@ static void success_v2_state_transition(struct msg_digest *md)
 				event_schedule_s(EVENT_v2_RELEASE_WHACK,
 						 EVENT_RELEASE_WHACK_DELAY, st);
 				kind = EVENT_SA_REPLACE;
-				delay = ikev2_replace_delay(st, &kind, st->st_original_role);
-				DBG(DBG_LIFECYCLE, DBG_log("ikev2 case EVENT_v2_RETRANSMIT: for %jd seconds", (intmax_t) delay));
-				event_schedule_s(kind, delay, st);
+				deltatime_t delay = ikev2_replace_delay(st, &kind,
+									st->st_original_role);
+				DBG(DBG_LIFECYCLE,
+				    DBG_log("ikev2 case EVENT_v2_RETRANSMIT: for %jdms",
+					    deltamillisecs(delay)));
+				event_schedule(kind, delay, st);
 
 			}  else {
 				DBG(DBG_LIFECYCLE,
@@ -2058,12 +2062,15 @@ static void success_v2_state_transition(struct msg_digest *md)
 			}
 			break;
 		case EVENT_SA_REPLACE: /* IKE or Child SA replacement event */
-			delay = ikev2_replace_delay(st, &kind, st->st_original_role);
-			DBG(DBG_LIFECYCLE, DBG_log("ikev2 case EVENT_SA_REPLACE for %s state for %jd seconds",
-                            IS_IKE_SA(st) ? "parent" : "child", (intmax_t) delay));
+		{
+			deltatime_t delay = ikev2_replace_delay(st, &kind, st->st_original_role);
+			DBG(DBG_LIFECYCLE,
+			    DBG_log("ikev2 case EVENT_SA_REPLACE for %s state for %jdms",
+				    IS_IKE_SA(st) ? "parent" : "child", deltamillisecs(delay)));
 			delete_event(st);
-			event_schedule_s(kind, delay, st);
+			event_schedule(kind, delay, st);
 			break;
+		}
 
 		case EVENT_v2_RESPONDER_TIMEOUT:
 			delete_event(st);

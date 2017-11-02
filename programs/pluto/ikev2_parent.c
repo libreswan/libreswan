@@ -154,7 +154,6 @@ void ikev2_isakamp_established(struct state *st, const struct state_v2_microcode
 	 * ??? I wonder what this comment means?  Needs rewording.
 	 */
 	enum event_type kind = svm->timeout_event;
-	time_t delay;
 
 	/*
 	 * update the parent state to make sure that it knows we have
@@ -166,9 +165,9 @@ void ikev2_isakamp_established(struct state *st, const struct state_v2_microcode
 		for_each_state(ikev2_repl_est_ipsec, &st->st_ike_pred);
 	}
 	c->newest_isakmp_sa = st->st_serialno;
-	delay = ikev2_replace_delay(st, &kind, role);
+	deltatime_t delay = ikev2_replace_delay(st, &kind, role);
 	delete_event(st);
-	event_schedule_s(kind, delay, st);
+	event_schedule(kind, delay, st);
 }
 
 /*
@@ -3025,9 +3024,8 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	delete_event(pst);
 	{
 		enum event_type x = md->svm->timeout_event;
-		time_t delay = ikev2_replace_delay(pst, &x, ORIGINAL_INITIATOR);
-
-		event_schedule_s(x, delay, pst);
+		deltatime_t delay = ikev2_replace_delay(pst, &x, ORIGINAL_INITIATOR);
+		event_schedule(x, delay, pst);
 	}
 
 	/* need to force parent state to I2 */
