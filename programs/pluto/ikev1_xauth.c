@@ -547,7 +547,7 @@ static stf_status modecfg_send_set(struct state *st)
 	if (st->st_event->ev_type != EVENT_v1_RETRANSMIT &&
 	    st->st_event->ev_type != EVENT_NULL) {
 		delete_event(st);
-		event_schedule_ms(EVENT_v1_RETRANSMIT, st->st_connection->r_interval, st);
+		event_schedule(EVENT_v1_RETRANSMIT, st->st_connection->r_interval, st);
 	}
 
 	return STF_OK;
@@ -679,8 +679,8 @@ stf_status xauth_send_request(struct state *st)
 
 	if (st->st_event->ev_type != EVENT_v1_RETRANSMIT) {
 		delete_event(st);
-		event_schedule_ms(EVENT_v1_RETRANSMIT,
-				st->st_connection->r_interval, st);
+		event_schedule(EVENT_v1_RETRANSMIT,
+			       st->st_connection->r_interval, st);
 	}
 
 	return STF_OK;
@@ -799,7 +799,7 @@ stf_status modecfg_send_request(struct state *st)
 
 	if (st->st_event->ev_type != EVENT_v1_RETRANSMIT) {
 		delete_event(st);
-		event_schedule_ms(EVENT_v1_RETRANSMIT, st->st_connection->r_interval, st);
+		event_schedule(EVENT_v1_RETRANSMIT, st->st_connection->r_interval, st);
 	}
 	st->hidden_variables.st_modecfg_started = TRUE;
 
@@ -886,7 +886,7 @@ static stf_status xauth_send_status(struct state *st, int status)
 	/* Set up a retransmission event, half a minute hence */
 	/* Schedule retransmit before sending, to avoid race with master thread */
 	delete_event(st);
-	event_schedule_ms(EVENT_v1_RETRANSMIT, st->st_connection->r_interval, st);
+	event_schedule(EVENT_v1_RETRANSMIT, st->st_connection->r_interval, st);
 
 	/* Transmit */
 	record_and_send_ike_msg(st, &reply, "XAUTH: status");

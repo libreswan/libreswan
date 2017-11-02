@@ -67,7 +67,7 @@
 static unsigned long retrans_delay(struct state *st)
 {
 	struct connection *c = st->st_connection;
-	unsigned long delay_ms = c->r_interval;
+	unsigned long delay_ms = deltamillisecs(c->r_interval);
 	unsigned long delay_cap = deltamillisecs(c->r_timeout); /* ms */
 	u_int32_t x = st->st_retransmit++;
 
@@ -153,7 +153,7 @@ static void retransmit_v1_msg(struct state *st)
 		delay_ms = 0;
 		try = 0;
 	} else {
-		delay_ms = c->r_interval;
+		delay_ms = deltamillisecs(c->r_interval);
 	}
 
 	if (delay_ms != 0)
@@ -285,7 +285,7 @@ static void retransmit_v2_msg(struct state *st)
 		delay_ms = 0;
 		try = 0;
 	} else {
-		delay_ms = c->r_interval;
+		delay_ms = deltamillisecs(c->r_interval);
 	}
 
 	if (need_this_intiator(st)) {

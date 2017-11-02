@@ -294,7 +294,7 @@ stf_status main_outI1(int whack_sock,
 		"reply packet for main_outI1");
 
 	delete_event(st);
-	event_schedule_ms(EVENT_v1_RETRANSMIT, c->r_interval, st);
+	event_schedule(EVENT_v1_RETRANSMIT, c->r_interval, st);
 
 	if (predecessor != NULL) {
 		update_pending(predecessor, st);

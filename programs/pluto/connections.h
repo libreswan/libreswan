@@ -236,7 +236,7 @@ struct connection {
 	char *vti_iface;
 	bool vti_routing; /* should updown perform routing into the vti device */
 	bool vti_shared; /* should updown leave remote empty and not cleanup device on down */
-	unsigned long r_interval; /* initial retransmit time in msec, doubles each time */
+	deltatime_t r_interval; /* initial retransmit time, doubles each time */
 	deltatime_t r_timeout; /* max time (in secs) for one packet exchange attempt */
 	reqid_t sa_reqid;
 	int encapsulation;

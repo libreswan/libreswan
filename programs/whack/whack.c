@@ -946,7 +946,7 @@ int main(int argc, char **argv)
 	/* whack cannot access kernel_ops->replay_window */
 	msg.sa_replay_window = IPSEC_SA_DEFAULT_REPLAY_WINDOW;
 	msg.r_timeout = deltatime(RETRANSMIT_TIMEOUT_DEFAULT);
-	msg.r_interval = RETRANSMIT_INTERVAL_DEFAULT_MS;
+	msg.r_interval = deltatime_ms(RETRANSMIT_INTERVAL_DEFAULT_MS);
 
 	msg.addr_family = AF_INET;
 	msg.tunnel_addr_family = AF_INET;
@@ -1656,7 +1656,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_RETRANSMIT_I:	/* --retransmit-interval <msecs> */
-			msg.r_interval = opt_whole;
+			msg.r_interval = deltatime_ms(opt_whole);
 			continue;
 
 		case CD_IKELIFETIME:	/* --ikelifetime <seconds> */

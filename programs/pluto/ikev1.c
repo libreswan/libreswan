@@ -2356,7 +2356,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 			switch (kind) {
 			case EVENT_v1_RETRANSMIT: /* Retransmit packet */
-				delay_ms = c->r_interval;
+				delay_ms = deltamillisecs(c->r_interval);
 				break;
 
 			case EVENT_SA_REPLACE: /* SA replacement event */

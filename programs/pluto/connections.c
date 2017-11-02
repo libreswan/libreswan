@@ -4039,11 +4039,11 @@ void show_one_connection(const struct connection *c)
 		c->sa_keying_tries);
 
 	whack_log(RC_COMMENT,
-		"\"%s\"%s:   retransmit-interval: %ldms; retransmit-timeout: %jds;",
-		c->name,
-		instance,
-		c->r_interval,
-		(intmax_t) deltasecs(c->r_timeout));
+		  "\"%s\"%s:   retransmit-interval: %ldms; retransmit-timeout: %jds;",
+		  c->name,
+		  instance,
+		  deltamillisecs(c->r_interval),
+		  (intmax_t) deltasecs(c->r_timeout));
 
 	whack_log(RC_COMMENT,
 		  "\"%s\"%s:   sha2-truncbug:%s; initial-contact:%s; cisco-unity:%s; fake-strongswan:%s; send-vendorid:%s; send-no-esp-tfc:%s;",

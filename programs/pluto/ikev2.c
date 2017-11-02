@@ -2050,11 +2050,11 @@ static void success_v2_state_transition(struct msg_digest *md)
 				event_schedule_s(kind, delay, st);
 
 			}  else {
-				DBG(DBG_LIFECYCLE,DBG_log(
-					"success_v2_state_transition scheduling EVENT_v2_RETRANSMIT of c->r_interval=%lu",
-					c->r_interval));
-				event_schedule_ms(EVENT_v2_RETRANSMIT,
-						c->r_interval, st);
+				DBG(DBG_LIFECYCLE,
+				    DBG_log("success_v2_state_transition scheduling EVENT_v2_RETRANSMIT of c->r_interval=%lu",
+					    deltamillisecs(c->r_interval)));
+				event_schedule(EVENT_v2_RETRANSMIT,
+					       c->r_interval, st);
 			}
 			break;
 		case EVENT_SA_REPLACE: /* IKE or Child SA replacement event */

@@ -156,7 +156,7 @@ struct whack_message {
 	unsigned long sa_keying_tries;
 	unsigned long sa_replay_window;
 	deltatime_t r_timeout; /* in secs */
-	unsigned long  r_interval; /* in msec */
+	deltatime_t r_interval; /* in msec */
 	enum nic_offload_options nic_offload;
 
 	/* For IKEv1 RFC 3706 - Dead Peer Detection */
