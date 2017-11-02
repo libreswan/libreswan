@@ -20,6 +20,7 @@
 
 #include <sys/time.h>
 #include <time.h>
+#include <inttypes.h>
 
 /*
  * The time objects are wrapped so that dimensional analysis will be
@@ -39,24 +40,30 @@
  * (deltatime_t) {{...}}).  Get around this by providing both
  * DELTATIME() and deltatime(); and DELTATIME_MS() and deltatime_ms().
  * Sigh.
+ *
+ * C99 defines '%' used in DELATTIME_MS() thus:
+ *
+ * [...] the result of the % operator is the remainder. [...] If the
+ * quotient a/b is representable, the expression (a/b)*b + a%b shall
+ * equal a.
  */
 
 typedef struct { struct timeval dt; } deltatime_t;
 
 #define DELTATIME(S) {{ (time_t)(S), 0, }}
 deltatime_t deltatime(time_t secs);
-/* #define DELTATIME(S) {{ (time_t)(S), (long)(((S) - (time_t)(S)) * 1000000) }} */
+/* #define DELTATIME(S) {{ (time_t)(S), (long)(((S) - (intmax_t)(S)) * 1000000) }} */
 
-#define DELTATIME_MS(MS) {{ (time_t)((MS) / 1000), (long)(((MS) % 1000) * 1000) }}
-deltatime_t deltatime_ms(long ms);
+#define DELTATIME_MS(MS) {{ (MS) / 1000, (MS) % 1000 * 1000 }}
+deltatime_t deltatime_ms(intmax_t ms);
 
-/* cmp() < 0; cmp() != 0; cmp() >= 0 et.al. */
+/* sign(a - b) */
 int deltatime_cmp(deltatime_t a, deltatime_t b);
 
-unsigned long deltamillisecs(deltatime_t d);
+intmax_t deltamillisecs(deltatime_t d);
 time_t deltasecs(deltatime_t d);
 deltatime_t deltatimescale(int num, int denom, deltatime_t d);
-bool deltaless(deltatime_t a, deltatime_t b); /* obsolete; use deltatime_cmp() */
+bool deltaless(deltatime_t a, deltatime_t b);
 bool deltaless_tv_dt(const struct timeval a, const deltatime_t b);
 
 /*

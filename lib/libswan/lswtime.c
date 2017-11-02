@@ -44,7 +44,7 @@ int deltatime_cmp(deltatime_t a, deltatime_t b)
 	}
 }
 
-unsigned long deltamillisecs(deltatime_t d)
+intmax_t deltamillisecs(deltatime_t d)
 {
 	return d.dt.tv_sec * 1000 + d.dt.tv_usec / 1000;
 }

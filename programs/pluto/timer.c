@@ -67,8 +67,8 @@
 static unsigned long retrans_delay(struct state *st)
 {
 	struct connection *c = st->st_connection;
-	unsigned long delay_ms = deltamillisecs(c->r_interval);
-	unsigned long delay_cap = deltamillisecs(c->r_timeout); /* ms */
+	intmax_t delay_ms = deltamillisecs(c->r_interval);
+	intmax_t delay_cap = deltamillisecs(c->r_timeout); /* ms */
 	u_int32_t x = st->st_retransmit++;
 
 	/*
@@ -87,7 +87,7 @@ static unsigned long retrans_delay(struct state *st)
 	{
 		/* if delay_ms > c->r_timeout no re-transmit */
 		x--;
-		unsigned long delay_p = (x > MAXIMUM_RETRANSMITS_PER_EXCHANGE ||
+		intmax_t delay_p = (x > MAXIMUM_RETRANSMITS_PER_EXCHANGE ||
 				delay_cap >> x < delay_ms) ?  delay_cap :
 			delay_ms << x;
 		if (delay_p == delay_ms) /* previus delay was already caped retrun zero */
@@ -96,9 +96,9 @@ static unsigned long retrans_delay(struct state *st)
 
 	if (delay_ms > 0) {
 		whack_log(RC_RETRANSMISSION,
-				"%s: retransmission; will wait %lums for response",
+				"%s: retransmission; will wait %jdms for response",
 				enum_name(&state_names, st->st_state),
-				(unsigned long)delay_ms);
+				delay_ms);
 	}
 	return delay_ms;
 }
@@ -129,7 +129,7 @@ static unsigned long retrans_delay(struct state *st)
  */
 static void retransmit_v1_msg(struct state *st)
 {
-	unsigned long delay_ms = 0;	/* relative time; 0 means NO */
+	intmax_t delay_ms = 0;	/* relative time; 0 means NO */
 	struct connection *c = st->st_connection;
 	unsigned long try = st->st_try;
 	unsigned long try_limit = c->sa_keying_tries;
@@ -249,7 +249,7 @@ static void retransmit_v1_msg(struct state *st)
 
 static void retransmit_v2_msg(struct state *st)
 {
-	unsigned long delay_ms = 0;  /* relative time; 0 means NO */
+	intmax_t delay_ms = 0;  /* relative time; 0 means NO */
 	struct connection *c;
 	unsigned long try;
 	unsigned long try_limit;

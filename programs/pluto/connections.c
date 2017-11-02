@@ -4039,7 +4039,7 @@ void show_one_connection(const struct connection *c)
 		c->sa_keying_tries);
 
 	whack_log(RC_COMMENT,
-		  "\"%s\"%s:   retransmit-interval: %ldms; retransmit-timeout: %jds;",
+		  "\"%s\"%s:   retransmit-interval: %jdms; retransmit-timeout: %jds;",
 		  c->name,
 		  instance,
 		  deltamillisecs(c->r_interval),

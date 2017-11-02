@@ -2051,7 +2051,7 @@ static void success_v2_state_transition(struct msg_digest *md)
 
 			}  else {
 				DBG(DBG_LIFECYCLE,
-				    DBG_log("success_v2_state_transition scheduling EVENT_v2_RETRANSMIT of c->r_interval=%lu",
+				    DBG_log("success_v2_state_transition scheduling EVENT_v2_RETRANSMIT of c->r_interval=%jdms",
 					    deltamillisecs(c->r_interval)));
 				event_schedule(EVENT_v2_RETRANSMIT,
 					       c->r_interval, st);

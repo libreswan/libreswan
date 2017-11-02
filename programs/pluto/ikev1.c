@@ -2339,7 +2339,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		/* Schedule for whatever timeout is specified */
 		if (!md->event_already_set) {
 			DBG(DBG_CONTROL, DBG_log("!event_already_set at reschedule"));
-			unsigned long delay_ms; /* delay is in milliseconds here */
+			intmax_t delay_ms; /* delay is in milliseconds here */
 			enum event_type kind = smc->timeout_event;
 			bool agreed_time = FALSE;
 			struct connection *c = st->st_connection;
@@ -2439,8 +2439,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 						marg /= 2;
 					}
 
-					if (delay_ms > (unsigned long)marg * 1000) {
-						delay_ms -= (unsigned long)marg * 1000;
+					if (delay_ms > marg * 1000) {
+						delay_ms -= marg * 1000;
 						st->st_margin = deltatime(marg);
 					} else {
 						kind = EVENT_SA_EXPIRE;
