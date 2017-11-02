@@ -82,12 +82,12 @@
 
 bool nat_traversal_enabled = TRUE; /* can get disabled if kernel lacks support */
 
-static time_t nat_kap = DEFAULT_KEEP_ALIVE_PERIOD;	/* keep-alive period */
+static deltatime_t nat_kap = DELTATIME(DEFAULT_KEEP_ALIVE_PERIOD);	/* keep-alive period */
 static bool nat_kap_event = FALSE;
 
 #define IKEV2_NATD_HASH_SIZE	SHA1_DIGEST_SIZE
 
-void init_nat_traversal(unsigned int keep_alive_period)
+void init_nat_traversal(deltatime_t keep_alive_period)
 {
 	{
 		FILE *f = fopen("/proc/net/ipsec/natt", "r");
@@ -106,11 +106,12 @@ void init_nat_traversal(unsigned int keep_alive_period)
 	}
 
 
-	if (keep_alive_period != 0)
+	if (deltamillisecs(keep_alive_period) != 0)
 		nat_kap = keep_alive_period;
 
-	DBG(DBG_NATT, DBG_log("init_nat_traversal() initialized with keep_alive=%d",
-		keep_alive_period));
+	DBG(DBG_NATT,
+	    DBG_log("init_nat_traversal() initialized with keep_alive=%jds",
+		    (intmax_t)deltasecs(keep_alive_period)));
 	libreswan_log("NAT-Traversal support %s",
 		nat_traversal_enabled ? " [enabled]" : " [disabled]");
 
@@ -816,7 +817,7 @@ void nat_traversal_new_ka_event(void)
 	if (nat_kap_event)
 		return;	/* Event already schedule */
 
-	event_schedule_s(EVENT_NAT_T_KEEPALIVE, nat_kap, NULL);
+	event_schedule(EVENT_NAT_T_KEEPALIVE, nat_kap, NULL);
 	nat_kap_event = TRUE;
 }
 
@@ -1155,9 +1156,9 @@ void show_setup_natt(void)
 {
 	whack_log(RC_COMMENT, " ");     /* spacer */
 	whack_log(RC_COMMENT, "nat-traversal=%s, keep-alive=%ld, nat-ikeport=%d",
-		bool_str(nat_traversal_enabled),
-		(long) nat_kap,
-		pluto_nat_port);
+		  bool_str(nat_traversal_enabled),
+		  (long) deltasecs(nat_kap),
+		  pluto_nat_port);
 }
 
 void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)

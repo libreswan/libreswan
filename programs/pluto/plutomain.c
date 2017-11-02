@@ -730,7 +730,7 @@ int main(int argc, char **argv)
 	pluto_dnssec_rootfile = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "root.key file");
 #endif
 
-	unsigned int keep_alive = 0;
+	deltatime_t keep_alive = DELTATIME(0);
 
 	/* Overridden by virtual_private= in ipsec.conf */
 	char *virtual_private = NULL;
@@ -1168,7 +1168,7 @@ int main(int argc, char **argv)
 			ugh = ttoulb(optarg, 0, 10, secs_per_day, &u);
 			if (ugh != NULL)
 				break;
-			keep_alive = u;
+			keep_alive = deltatime(u);
 			continue;
 
 		case '5':	/* --debug-nat-t aliases */
@@ -1325,7 +1325,7 @@ int main(int argc, char **argv)
 			pluto_nss_seedbits = cfg->setup.options[KBF_SEEDBITS];
 			pluto_nat_port =
 				cfg->setup.options[KBF_NATIKEPORT];
-			keep_alive = cfg->setup.options[KBF_KEEPALIVE];
+			keep_alive = deltatime(cfg->setup.options[KBF_KEEPALIVE]);
 
 			set_cfg_string(&virtual_private,
 				cfg->setup.strings[KSF_VIRTUALPRIVATE]);
