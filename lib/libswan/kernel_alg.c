@@ -632,7 +632,8 @@ int alg_info_esp_sadb2aa(int sadb_aalg)
 		auth = AUTH_ALGORITHM_NULL_KAME;
 		break;
 	default:
-		/* which would hopefully be true  */
+		/* which would hopefully be true */
+		/* ??? what do we hope to be true? */
 		auth = sadb_aalg;
 	}
 	return auth;

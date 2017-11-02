@@ -1275,7 +1275,7 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b)
 			p = c;
 			DBG(DBG_CONTROL, {
 				char cib[CONN_INST_BUF];
-				DBG_log("using (something - hopefully the IP we or they are NAT'ed to) for transport mode connection \"%s\"%s",
+				DBG_log("using something (we hope the IP we or they are NAT'ed to) for transport mode connection \"%s\"%s",
 				    p->name, fmt_conn_instance(p, cib));
 			});
 		}
@@ -1347,9 +1347,9 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b)
 		/* fill in the client's true ip address/subnet */
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("client wildcard: %s  port wildcard: %s  virtual: %s",
-			    c->spd.that.has_client_wildcard ? "yes" : "no",
-			    c->spd.that.has_port_wildcard  ? "yes" : "no",
-			    is_virtual_connection(c) ? "yes" : "no"));
+			    bool_str(c->spd.that.has_client_wildcard),
+			    bool_str(c->spd.that.has_port_wildcard),
+			    bool_str(is_virtual_connection(c))));
 
 		if (c->spd.that.has_client_wildcard) {
 			c->spd.that.client = *his_net;

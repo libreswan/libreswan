@@ -2210,8 +2210,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		const struct state_microcode *smc = md->smc;
 
 		DBG(DBG_CONTROL, DBG_log("doing_xauth:%s, t_xauth_client_done:%s",
-			st->st_oakley.doing_xauth ? "yes" : "no",
-			st->hidden_variables.st_xauth_client_done ? "yes" : "no"));
+			bool_str(st->st_oakley.doing_xauth),
+			bool_str(st->hidden_variables.st_xauth_client_done)));
 
 		/* accept info from VID because we accept this message */
 

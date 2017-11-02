@@ -173,6 +173,8 @@ struct lswlog;
 #define messupn(x, n) memset((x), 0xFB, (n))	/* set n bytes to wrong value */
 #define messup(x) messupn((x), sizeof(*(x)))	/* set all bytes to wrong value */
 
+extern const char *bool_str(bool b);	/* bool -> string */
+
 /* routines to copy C strings to fixed-length buffers */
 extern char *jam_str(char *dest, size_t size, const char *src);
 extern char *add_str(char *buf, size_t size, char *hint, const char *src);
@@ -248,7 +250,12 @@ extern const char *enum_show_shortb(enum_names *ed, unsigned long val, struct es
 
 extern const char *enum_show(enum_names *ed, unsigned long val);	/* NOT RE-ENTRANT */
 
-/* iterator, start with -1 - hopefully more imune to rounding */
+/*
+ * iterator
+ *
+ * start with -1 -- we hope more immune to rounding
+ * ??? how are integers subject to rounding?
+ */
 extern long next_enum(enum_names *en, long last);
 
 /* sometimes the prefix gets annoying */

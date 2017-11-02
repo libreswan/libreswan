@@ -187,7 +187,7 @@ void ike_alg_show_connection(const struct connection *c, const char *instance)
 		 * What is needed is a way to display all key lengths
 		 * in the order that they will be proposed (remember
 		 * ESP reverses this).  Something like
-		 * AES_CBC_256+AES_CBC_128-... (which is hopefully not
+		 * AES_CBC_256+AES_CBC_128-... (which we hope is not
 		 * impossible to parse)?
 		 */
 		LSWLOG_WHACK(RC_COMMENT, buf) {

@@ -35,6 +35,11 @@
 #include "enum_names.h"
 #include "lswlog.h"
 
+const char *bool_str(bool b)
+{
+	return b ? "yes" : "no";
+}
+
 /*
  * Jam a string into a buffer of limited size.
  *
@@ -2074,7 +2079,7 @@ struct keyword_enum_values kw_host_list =
  * Use -1 as the starting point / sentinel.
  *
  * XXX: Works fine provided we ignore the enum_names object that
- * contains -ve values stored in unsigned fields!
+ * contains negative values stored in unsigned fields!
  */
 
 long next_enum(enum_names *en, long l)

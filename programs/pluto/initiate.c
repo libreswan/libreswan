@@ -285,7 +285,7 @@ static int initiate_a_connection(struct connection *c, void *arg)
 			loglog(RC_NOPEERIP,
 				"cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s, narrowing=%s)",
 				enum_show(&connection_kind_names, c->kind),
-					(c->policy & POLICY_IKEV2_ALLOW_NARROWING) ? "yes" : "no");
+					bool_str((c->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY));
 			c->policy |= POLICY_UP;
 			reset_cur_connection();
 			return 1;
@@ -294,7 +294,7 @@ static int initiate_a_connection(struct connection *c, void *arg)
 				"cannot initiate connection without knowing peer IP address (kind=%s narrowing=%s)",
 				enum_show(&connection_kind_names,
 					c->kind),
-				(c->policy & POLICY_IKEV2_ALLOW_NARROWING) ? "yes" : "no");
+				bool_str((c->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY));
 			reset_cur_connection();
 			return 0;
 		}

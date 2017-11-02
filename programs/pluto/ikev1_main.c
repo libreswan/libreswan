@@ -2431,7 +2431,7 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
  * inbound IPSEC SAs. Does nothing if no such SAs are being deleted.
  * Delete Notifications cannot announce deletion of outbound IPSEC/ISAKMP SAs.
  *
- * @param st State struct (hopefully has some SA's related to it)
+ * @param st State struct (we hope it has some SA's related to it)
  */
 bool ikev1_delete_out(struct state *st)
 {

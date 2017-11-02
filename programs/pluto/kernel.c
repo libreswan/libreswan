@@ -80,6 +80,9 @@
 
 #include "lswfips.h" /* for libreswan_fipsmode() */
 
+/* which kernel interface to use */
+enum kernel_interface kern_interface = USE_NETKEY;
+
 bool can_do_IPcomp = TRUE;  /* can system actually perform IPCOMP? */
 
 /* test if the routes required for two different connections agree
@@ -653,8 +656,8 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		nflogstr,
 		connmarkstr,
 		c->vti_iface ? c->vti_iface : "",
-		c->vti_routing ? "yes" : "no",
-		c->vti_shared ? "yes" : "no",
+		bool_str(c->vti_routing),
+		bool_str(c->vti_shared),
 		catstr,
 		st == NULL ? 0 : st->st_esp.present ? ntohl(st->st_esp.attrs.spi) :
 			st->st_ah.present ? ntohl(st->st_ah.attrs.spi) :

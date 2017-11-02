@@ -1108,8 +1108,7 @@ int main(int argc, char *argv[])
 			case kt_bool:
 				printf("%s %s%s='%s'\n", export, varprefix,
 					kd->keyname,
-					cfg->setup.options[kd->field] ?
-					"yes" : "no");
+					bool_str(cfg->setup.options[kd->field]));
 				break;
 
 			case kt_list:

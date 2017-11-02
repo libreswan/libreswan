@@ -439,9 +439,6 @@ static bool pluto_init_nss(char *nssdir)
 /* 0 is special and default: do not check crls dynamically */
 deltatime_t crl_check_interval = { 0 };
 
-/* whether or not to use klips */
-enum kernel_interface kern_interface = USE_NETKEY;	/* new default */
-
 #ifdef HAVE_LABELED_IPSEC
 /*
  * Attribute Type "constant" for Security Context
@@ -1871,13 +1868,13 @@ void show_setup_plutomain(void)
 #endif
 		"perpeerlog=%s, logappend=%s, logip=%s, shuntlifetime=%jds, xfrmlifetime=%jds",
 		nhelpers,
-		uniqueIDs ? "yes" : "no",
+		bool_str(uniqueIDs),
 #ifdef USE_DNSSEC
-		do_dnssec ? "yes" : "no",
+		bool_str(do_dnssec),
 #endif
-		!log_to_perpeer ? "no" : peerlog_basedir,
-		!log_append ? "no" : "yes",
-		!log_ip ? "no" : "yes",
+		log_to_perpeer ? peerlog_basedir : "no",
+		bool_str(log_append),
+		bool_str(log_ip),
                 (intmax_t) deltasecs(pluto_shunt_lifetime),
                 (intmax_t) pluto_xfrmlifetime
 	);
@@ -1893,8 +1890,8 @@ void show_setup_plutomain(void)
 		"ikeport=%d, ikebuf=%d, msg_errqueue=%s, strictcrlpolicy=%s, crlcheckinterval=%jd, listen=%s, nflog-all=%d",
 		pluto_port,
 		pluto_sock_bufsize,
-		pluto_sock_errqueue ? "yes" : "no",
-		crl_strict ? "yes" : "no",
+		bool_str(pluto_sock_errqueue),
+		bool_str(crl_strict),
                 (intmax_t) deltasecs(crl_check_interval),
 		pluto_listen != NULL ? pluto_listen : "<any>",
 		pluto_nflog_group
@@ -1902,8 +1899,8 @@ void show_setup_plutomain(void)
 
 	whack_log(RC_COMMENT,
 		"ocsp-enable=%s, ocsp-strict=%s, ocsp-timeout=%d, ocsp-uri=%s",
-		ocsp_enable ? "yes" : "no",
-		ocsp_strict ? "yes" : "no",
+		bool_str(ocsp_enable),
+		bool_str(ocsp_strict),
 		ocsp_timeout,
 		ocsp_uri != NULL ? ocsp_uri : "<unset>"
 		);

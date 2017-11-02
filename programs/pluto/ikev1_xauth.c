@@ -1143,7 +1143,7 @@ static void ikev1_xauth_callback(struct state *st, const char *name,
 }
 
 /*
- * Schedule the XAUTH callback for NOW so it is (hopefully) run next.
+ * Schedule the XAUTH callback for NOW so it is (we hope) run next.
  *
  * It should be possible to eliminate this event hop entirely; later.
  */

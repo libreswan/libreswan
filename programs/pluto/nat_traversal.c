@@ -1155,7 +1155,7 @@ void show_setup_natt(void)
 {
 	whack_log(RC_COMMENT, " ");     /* spacer */
 	whack_log(RC_COMMENT, "nat-traversal=%s, keep-alive=%ld, nat-ikeport=%d",
-		nat_traversal_enabled ? "yes" : "no",
+		bool_str(nat_traversal_enabled),
 		(long) nat_kap,
 		pluto_nat_port);
 }

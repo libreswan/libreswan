@@ -495,7 +495,7 @@ static void ipseckey_dbg_dns_resp(struct p_dns_req *dnsr)
 		DBG_log("%s returned %s cache=%s elapsedtime %lu.%06lu",
 			dnsr->log_buf,
 			dnsr->rcode_name,
-			dnsr->cache_hit ? "yes" : "no",
+			bool_str(dnsr->cache_hit),
 			(unsigned long)served_delta.tv_sec,
 			(unsigned long)(served_delta.tv_usec * 1000000)));
 

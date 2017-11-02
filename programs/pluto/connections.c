@@ -2040,7 +2040,7 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 		d->sa_marks.out.val = global_marks;
 		global_marks++;
 		if (global_marks == UINT_MAX - 1) {
-			/* hopefully 2^32 connections ago are no longer around */
+			/* we hope 2^32 connections ago are no longer around */
 			global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
 		}
 	}
@@ -3971,7 +3971,7 @@ static void show_one_sr(const struct connection *c,
 	const char *labeled_ipsec;
 	const char *policy_label;
 #ifdef HAVE_LABELED_IPSEC
-	labeled_ipsec = c->labeled_ipsec ? "yes" : "no";
+	labeled_ipsec = bool_str(c->labeled_ipsec);
 	policy_label = (c->policy_label == NULL) ? "unset" : c->policy_label;
 #else
 	labeled_ipsec = "no";
@@ -4048,12 +4048,12 @@ void show_one_connection(const struct connection *c)
 	whack_log(RC_COMMENT,
 		  "\"%s\"%s:   sha2-truncbug:%s; initial-contact:%s; cisco-unity:%s; fake-strongswan:%s; send-vendorid:%s; send-no-esp-tfc:%s;",
 		  c->name, instance,
-		  (c->sha2_truncbug) ? "yes" : "no",
-		  (c->initial_contact) ? "yes" : "no",
-		  (c->cisco_unity) ? "yes" : "no",
-		  (c->fake_strongswan) ? "yes" : "no",
-		  (c->send_vendorid) ? "yes" : "no",
-		  (c->send_no_esp_tfc) ? "yes" : "no");
+		  bool_str(c->sha2_truncbug),
+		  bool_str(c->initial_contact),
+		  bool_str(c->cisco_unity),
+		  bool_str(c->fake_strongswan),
+		  bool_str(c->send_vendorid),
+		  bool_str(c->send_no_esp_tfc));
 
 	if (c->policy_next != NULL) {
 		whack_log(RC_COMMENT,
@@ -4116,12 +4116,12 @@ void show_one_connection(const struct connection *c)
 		  ,
 		  c->name, instance, nflogstr, markstr,
 		  c->vti_iface == NULL ? "unset" : c->vti_iface,
-		  c->vti_routing ? "yes" : "no",
-		  c->vti_shared ? "yes" : "no"
+		  bool_str(c->vti_routing),
+		  bool_str(c->vti_shared)
 #ifdef USE_NIC_OFFLOAD
 		  ,
 		  (c->nic_offload == nic_offload_auto) ? "auto" :
-		  (c->nic_offload == nic_offload_yes) ? "yes" : "no"
+			bool_str(c->nic_offload == nic_offload_yes)
 #endif
 	);
 
@@ -4149,8 +4149,8 @@ void show_one_connection(const struct connection *c)
 			(long) deltasecs(c->dpd_delay),
 			(long) deltasecs(c->dpd_timeout),
 			(c->encaps == encaps_auto) ? "auto" :
-			 (c->encaps == encaps_yes) ? "yes" : "no",
-			(c->nat_keepalive) ? "yes" : "no",
+			    bool_str(c->encaps == encaps_yes),
+			bool_str(c->nat_keepalive),
 			(c->ikev1_natt == natt_both) ? "both" :
 			 (c->ikev1_natt == natt_rfc) ? "rfc" :
 			 (c->ikev1_natt == natt_drafts) ? "drafts" : "none"

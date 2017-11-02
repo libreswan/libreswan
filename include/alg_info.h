@@ -259,8 +259,8 @@ size_t lswlog_alg_info(struct lswlog *log, const struct alg_info *alg_info);
  * support is required.
  *
  * Parsing with POLICY=IKEV1, but then proposing the result using
- * IKEv2 is a program error.  The IKEv2 should complain loudly and
- * hopefully not crash.
+ * IKEv2 is a program error.  The IKEv2 should complain loudly and,
+ * we hope, not crash.
  *
  * Parsing with POLICY='0' is allowed. It will accept the algorithms
  * unconditionally (spi.c seems to need this).

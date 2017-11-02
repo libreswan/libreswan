@@ -41,7 +41,7 @@ PK11SymKey *reference_symkey(const char *prefix, const char *name, PK11SymKey *k
 /*
  * Length of a symkey in bytes.
  *
- * If KEY is NULL, return 0 (and hopefully not dump core).  (if we're
+ * If KEY is NULL, return 0 (and we hope not dump core).  (If we're
  * not allowed to know the length of the key then this will also
  * return 0).
  */

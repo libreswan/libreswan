@@ -187,7 +187,7 @@ static size_t append(struct lswlog *log, const char *format, va_list ap)
 		 * values are unsigned.
 		 *
 		 * Calling PEXPECT_LOG() here is recursive; is this a
-		 * problem? (if it is then hopefully things crash).
+		 * problem? (if it is then we hope things crash).
 		 */
 		PEXPECT_LOG("vsnprintf() unexpectedly returned the -ve value %d", sn);
 		return log->roof;
