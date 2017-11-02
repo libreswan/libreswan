@@ -20,6 +20,7 @@
 #define _TIMER_H
 
 #include "lswtime.h"
+#include "monotime.h"
 
 struct state;   /* forward declaration */
 

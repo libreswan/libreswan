@@ -92,28 +92,4 @@ struct realtm {
 struct realtm local_realtime(realtime_t t);
 struct realtm utc_realtime(realtime_t t);
 
-
-/*
- * monotime_t: absolute monotonic time.  No discontinuities (except
- * for machine sleep?)
- *
- * XXX: what advantage is ther over realtime_t which could be
- * implemented to meet this requirement.
- *
- * UNDEFINED_TIME is meant to be an impossible exceptional time_t value.
- *
- * ??? On UNIX, 0 is a value that means 1970-01-01 00:00:00 +0000 (UTC).
- *
- * UNDEFINED_TIME is used as a mono time_t value in liveness_check().
- * 0 is PROBABLY safely distinct in this application.
- */
-
-typedef struct { time_t mono_secs; } monotime_t;
-
-#define UNDEFINED_TIME  ((time_t)0)	/* ??? what a kludge! */
-
-monotime_t monotimesum(monotime_t t, deltatime_t d);
-bool monobefore(monotime_t a, monotime_t b);
-deltatime_t monotimediff(monotime_t a, monotime_t b);
-
 #endif /* _LIBRESWAN_H */

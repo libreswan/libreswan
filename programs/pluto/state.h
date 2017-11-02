@@ -31,8 +31,10 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <time.h>
 #include "quirks.h"
+
+#include "lswtime.h"
+#include "monotime.h"
 
 #include <nss.h>
 #include <pk11pub.h>

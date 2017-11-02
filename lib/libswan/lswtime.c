@@ -127,21 +127,3 @@ struct realtm utc_realtime(realtime_t t)
 	tm.microsec = t.rt.tv_usec;
 	return tm;
 }
-
-/* monotonic time operations */
-
-monotime_t monotimesum(monotime_t t, deltatime_t d)
-{
-	monotime_t s = { t.mono_secs + deltasecs(d) };
-	return s;
-}
-
-bool monobefore(monotime_t a, monotime_t b)
-{
-	return a.mono_secs < b.mono_secs;
-}
-
-deltatime_t monotimediff(monotime_t a, monotime_t b)
-{
-	return deltatime(a.mono_secs - b.mono_secs);
-}
