@@ -18,9 +18,10 @@
 #ifndef _MONOTIME_H
 #define _MONOTIME_H    /* seen it, no need to see it again */
 
-#include "lswtime.h"
 #include <sys/time.h>
 #include <time.h>
+
+#include "deltatime.h"
 
 /*
  * The time objects are wrapped so that dimensional analysis will be

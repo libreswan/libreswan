@@ -33,7 +33,7 @@
 #include <netinet/in.h>
 #include "quirks.h"
 
-#include "lswtime.h"
+#include "deltatime.h"
 #include "monotime.h"
 
 #include <nss.h>

@@ -19,8 +19,8 @@
 
 #include <stdbool.h>
 
-#include "lswtime.h"
 #include "lswalloc.h"
+#include "realtime.h"
 
 /* type of serial number of a state object
  * Needed in connections.h and state.h; here to simplify dependencies.

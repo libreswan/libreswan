@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#include "lswtime.h"
+#include "realtime.h"
 
 static const char *months[] = {
 	"Jan", "Feb", "Mar", "Apr", "May", "Jun",

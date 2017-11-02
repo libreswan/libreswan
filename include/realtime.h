@@ -15,59 +15,18 @@
  *
  */
 
-#ifndef _LSWTIME_H
-#define _LSWTIME_H    /* seen it, no need to see it again */
+#ifndef _REALTIME_H
+#define _REALTIME_H    /* seen it, no need to see it again */
 
 #include <sys/time.h>
 #include <time.h>
-#include <inttypes.h>
+
+#include "deltatime.h"
 
 /*
  * The time objects are wrapped so that dimensional analysis will be
  * enforced by the compiler.
  */
-
-/*
- * XXX: This value isn't typed so what is it really the max of?
- */
-#define TIME_T_MAX  ((time_t) ((1ull << (sizeof(time_t) * BITS_PER_BYTE - 1)) - 1))
-
-/*
- * deltatime_t: relative time between events.  Presumed continuous.
- *
- * It seems that some compilers don't like the static constructor
- * DELTATIME() being strongly typed (that is using a cast like
- * (deltatime_t) {{...}}).  Get around this by providing both
- * DELTATIME() and deltatime(); and DELTATIME_MS() and deltatime_ms().
- * Sigh.
- *
- * C99 defines '%' used in DELATTIME_MS() thus:
- *
- * [...] the result of the % operator is the remainder. [...] If the
- * quotient a/b is representable, the expression (a/b)*b + a%b shall
- * equal a.
- */
-
-typedef struct { struct timeval dt; } deltatime_t;
-
-#define DELTATIME(S) {{ (time_t)(S), 0, }}
-deltatime_t deltatime(time_t secs);
-/* #define DELTATIME(S) {{ (time_t)(S), (long)(((S) - (intmax_t)(S)) * 1000000) }} */
-
-#define DELTATIME_MS(MS) {{ (MS) / 1000, (MS) % 1000 * 1000 }}
-deltatime_t deltatime_ms(intmax_t ms);
-
-/* sign(a - b) */
-int deltatime_cmp(deltatime_t a, deltatime_t b);
-
-/* max(a, b) */
-deltatime_t deltatime_max(deltatime_t a, deltatime_t b);
-
-intmax_t deltamillisecs(deltatime_t d);
-time_t deltasecs(deltatime_t d);
-deltatime_t deltatimescale(int num, int denom, deltatime_t d);
-bool deltaless(deltatime_t a, deltatime_t b);
-bool deltaless_tv_dt(const struct timeval a, const deltatime_t b);
 
 /*
  * realtime_t: absolute UTC time.  Might be discontinuous due to clock
@@ -79,14 +38,12 @@ bool deltaless_tv_dt(const struct timeval a, const deltatime_t b);
  * According to the gettimeofday(2) man mage, struct timespec and
  * clock_gettime(2) are, techncially, a far better choice but they
  * lack pre-defined operators.
- *
- * Need two versions of REALTIME_EPOCH as some compilers can't handle
- * a structure cast in an initialization of a static construct.
  */
 
 typedef struct { struct timeval rt; } realtime_t;
 
-#define REALTIME_EPOCH {{ 0, 0, }}
+#define REALTIME_EPOCH ((realtime_t) { { 0, 0, }, })
+
 extern realtime_t realtime_epoch;
 
 realtime_t realtime(time_t time);
@@ -106,4 +63,5 @@ struct realtm {
 struct realtm local_realtime(realtime_t t);
 struct realtm utc_realtime(realtime_t t);
 
-#endif /* _LIBRESWAN_H */
+#endif
+

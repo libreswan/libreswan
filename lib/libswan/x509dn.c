@@ -30,7 +30,6 @@
 #include <time.h>
 #include <limits.h>
 #include <sys/types.h>
-#include "lswtime.h"
 #include "sysdep.h"
 #include "constants.h"
 #include "lswlog.h"

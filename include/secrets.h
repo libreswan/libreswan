@@ -26,6 +26,7 @@
 #include <nss.h>
 #include <pk11pub.h>
 #include "x509.h"
+#include "realtime.h"
 
 struct state;	/* forward declaration */
 struct secret;	/* opaque definition, private to secrets.c */

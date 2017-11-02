@@ -23,9 +23,9 @@
 #ifndef _WHACK_H
 #define _WHACK_H
 
-#include "lswtime.h"
 #include "ietf_constants.h"
 #include "lmod.h"
+#include "deltatime.h"
 
 /* Since the message remains on one host, native representation is used.
  * Think of this as horizontal microcode: all selected operations are
