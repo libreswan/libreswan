@@ -23,7 +23,7 @@
 /* delta time (interval) operations */
 deltatime_t deltatime(time_t secs)
 {
-	return DELTATIME(secs);
+	return (deltatime_t) DELTATIME(secs);
 }
 
 int deltatime_cmp(deltatime_t a, deltatime_t b)
@@ -137,5 +137,5 @@ bool monobefore(monotime_t a, monotime_t b)
 
 deltatime_t monotimediff(monotime_t a, monotime_t b)
 {
-	return DELTATIME(a.mono_secs - b.mono_secs);
+	return deltatime(a.mono_secs - b.mono_secs);
 }
