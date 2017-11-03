@@ -78,3 +78,20 @@ bool deltaless_tv_dt(const struct timeval a, const deltatime_t b)
 {
 	return a.tv_sec < deltasecs(b);
 }
+
+struct timeval deltatimeval(deltatime_t d)
+{
+	/*
+	 * C99 defines '%' thus:
+	 *
+	 * [...] the result of the % operator is the remainder. [...]
+	 * If the quotient a/b is representable, the expression
+	 * (a/b)*b + a%b shall equal a.
+	 */
+	intmax_t ms = deltamillisecs(d);
+	struct timeval e = {
+		.tv_sec = ms / 1000,
+		.tv_usec = ms % 1000 * 1000,
+	};
+	return e;
+}

@@ -70,4 +70,7 @@ deltatime_t deltatimescale(int num, int denom, deltatime_t d);
 bool deltaless(deltatime_t a, deltatime_t b);
 bool deltaless_tv_dt(const struct timeval a, const deltatime_t b);
 
+/* Convert to struct timeval. */
+struct timeval deltatimeval(deltatime_t);
+
 #endif

@@ -965,7 +965,7 @@ void delete_event(struct state *st)
  */
 void event_schedule(enum event_type type, deltatime_t dt, struct state *st)
 {
-	struct timeval delay = dt.dt;
+	struct timeval delay = deltatimeval(dt);
 	/* unexpectedly far away, pexpect will flag in test cases */
 	pexpect(delay.tv_sec < 3600 * 24 * 31);
 

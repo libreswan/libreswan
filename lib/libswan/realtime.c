@@ -29,8 +29,9 @@ realtime_t realtime(time_t time)
 
 realtime_t realtimesum(realtime_t t, deltatime_t d)
 {
+	struct timeval dv = deltatimeval(d);
 	realtime_t s;
-	timeradd(&t.rt, &d.dt, &s.rt);
+	timeradd(&t.rt, &dv, &s.rt);
 	return s;
 }
 
@@ -46,9 +47,9 @@ bool realbefore(realtime_t a, realtime_t b)
 
 deltatime_t realtimediff(realtime_t a, realtime_t b)
 {
-	deltatime_t d;
-	timersub(&a.rt, &b.rt, &d.dt);
-	return d;
+	struct timeval d;
+	timersub(&a.rt, &b.rt, &d);
+	return deltatime_ms((intmax_t)d.tv_sec * 1000 + d.tv_usec / 1000);
 }
 
 realtime_t realnow(void)
