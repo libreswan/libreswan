@@ -119,7 +119,7 @@ struct lswlog;
 /* clearer shorthand for *cmp functions */
 #define streq(a, b) (strcmp((a), (b)) == 0)
 #define strneq(a, b, c) (strncmp((a), (b), (c)) == 0)
-#define startswith(a, b) strneq((a), (b), sizeof(b)-1)	/* b must be literal! */
+#define startswith(a, b) strneq((a), (b), strlen(b))
 #define eat(a, b) (startswith((a), (b))? ((a) += sizeof(b) - 1), TRUE : FALSE)
 #define strcaseeq(a, b) (strcasecmp((a), (b)) == 0)
 #define strncaseeq(a, b, n) (strncasecmp((a), (b), (n)) == 0)
