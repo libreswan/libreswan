@@ -43,21 +43,14 @@ struct lswlog;
  * (deltatime_t) {{...}}).  Get around this by providing both
  * DELTATIME() and deltatime(); and DELTATIME_MS() and deltatime_ms().
  * Sigh.
- *
- * C99 defines '%' used in DELATTIME_MS() thus:
- *
- * [...] the result of the % operator is the remainder. [...] If the
- * quotient a/b is representable, the expression (a/b)*b + a%b shall
- * equal a.
  */
 
-typedef struct { struct timeval dt; } deltatime_t;
+typedef struct { intmax_t ms; } deltatime_t;
 
-#define DELTATIME(S) {{ (time_t)(S), 0, }}
+#define DELTATIME(S) { (intmax_t)((S) * 1000) }
 deltatime_t deltatime(time_t secs);
-/* #define DELTATIME(S) {{ (time_t)(S), (long)(((S) - (intmax_t)(S)) * 1000000) }} */
 
-#define DELTATIME_MS(MS) {{ (MS) / 1000, (MS) % 1000 * 1000 }}
+#define DELTATIME_MS(MS) { (MS) }
 deltatime_t deltatime_ms(intmax_t ms);
 
 /* sign(a - b) */
