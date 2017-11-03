@@ -42,7 +42,7 @@
 
 typedef struct { struct timeval rt; } realtime_t;
 
-#define REALTIME_EPOCH ((realtime_t) { { 0, 0, }, })
+#define REALTIME_EPOCH {{ 0, 0, }}
 
 extern realtime_t realtime_epoch;
 
