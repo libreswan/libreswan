@@ -46,11 +46,11 @@ north #
  ipsec whack --trafficstatus
 006 #2: "north-a-dpd", type=ESP, add_time=1234567890, inBytes=0, outBytes=168, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 north #
- # 
+ #
 north #
  ip route add unreachable 192.1.2.23
 north #
- #sleep 40 
+ #sleep 40
 north #
  sleep 20
 north #
