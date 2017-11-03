@@ -437,7 +437,7 @@ static bool pluto_init_nss(char *nssdir)
 }
 
 /* 0 is special and default: do not check crls dynamically */
-deltatime_t crl_check_interval = { 0 };
+deltatime_t crl_check_interval = DELTATIME(0);
 
 #ifdef HAVE_LABELED_IPSEC
 /*
