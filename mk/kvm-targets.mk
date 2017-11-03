@@ -74,10 +74,7 @@ VIRT_SOURCEDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_SOURCED
 VIRT_TESTINGDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_TESTINGDIR),target=testing
 
 # The KVM's operating system.
-#
-# It should be KVM_OS ?= fedora22 so an upgrade leaves the old stuff
-# in place?
-KVM_OS ?= fedora
+KVM_OS ?= fedora22
 
 #
 # Hosts
@@ -501,11 +498,7 @@ kvm-upgrade-local-domains:
 
 # XXX: Once KVM_OS gets re-named to include the release, this hack can
 # be deleted.
-ifeq ($(KVM_OS),fedora)
-include testing/libvirt/fedora22.mk
-else
 include testing/libvirt/$(KVM_OS).mk
-endif
 
 ifeq ($(KVM_OS_VARIANT),)
 $(error KVM_OS_VARIANT not defined)
