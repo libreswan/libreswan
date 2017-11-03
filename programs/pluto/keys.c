@@ -778,7 +778,7 @@ err_t add_public_key(const struct id *id,
 	pk->id = *id;
 	pk->dns_auth_level = dns_auth_level;
 	pk->alg = alg;
-	pk->until_time = REALTIME_EPOCH;
+	pk->until_time = realtime_epoch;
 	pk->issuer = empty_chunk;
 
 	install_public_key(pk, head);

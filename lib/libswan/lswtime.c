@@ -81,6 +81,8 @@ bool deltaless_tv_dt(const struct timeval a, const deltatime_t b)
 
 /* real time operations */
 
+realtime_t realtime_epoch = REALTIME_EPOCH;
+
 realtime_t realtime(time_t time)
 {
 	return (realtime_t) { { time, 0, }, };

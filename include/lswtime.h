@@ -79,11 +79,15 @@ bool deltaless_tv_dt(const struct timeval a, const deltatime_t b);
  * According to the gettimeofday(2) man mage, struct timespec and
  * clock_gettime(2) are, techncially, a far better choice but they
  * lack pre-defined operators.
+ *
+ * Need two versions of REALTIME_EPOCH as some compilers can't handle
+ * a structure cast in an initialization of a static construct.
  */
 
 typedef struct { struct timeval rt; } realtime_t;
 
-#define REALTIME_EPOCH ((realtime_t) { { 0, 0, }, })
+#define REALTIME_EPOCH {{ 0, 0, }}
+extern realtime_t realtime_epoch;
 
 realtime_t realtime(time_t time);
 realtime_t realtimesum(realtime_t t, deltatime_t d);

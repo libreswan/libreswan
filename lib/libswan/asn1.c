@@ -247,7 +247,7 @@ realtime_t asn1totime(const chunk_t *utctime, asn1_t type)
 		int tz_hour, tz_min;
 
 		if (sscanf(eot + 1, "%2d%2d", &tz_hour, &tz_min) != 2)
-			return REALTIME_EPOCH; /* error in positive timezone offset format */
+			return realtime_epoch; /* error in positive timezone offset format */
 
 		/* positive time zone offset */
 		tz_offset = tz_hour * secs_per_hour + tz_min * secs_per_minute;
@@ -255,12 +255,12 @@ realtime_t asn1totime(const chunk_t *utctime, asn1_t type)
 		int tz_hour, tz_min;
 
 		if (sscanf(eot + 1, "%2d%2d", &tz_hour, &tz_min) != 2)
-			return REALTIME_EPOCH; /* error in negative timezone offset format */
+			return realtime_epoch; /* error in negative timezone offset format */
 
 		/* negative time zone offset */
 		tz_offset = -(tz_hour * secs_per_hour + tz_min * secs_per_minute);
 	} else {
-		return REALTIME_EPOCH; /* error in time format */
+		return realtime_epoch; /* error in time format */
 	}
 
 	/* parse ASN.1 time string */
@@ -270,13 +270,13 @@ realtime_t asn1totime(const chunk_t *utctime, asn1_t type)
 			  "%4d%2d%2d%2d%2d",
 			&t.tm_year, &t.tm_mon, &t.tm_mday,
 			&t.tm_hour, &t.tm_min) != 5)
-		return REALTIME_EPOCH;	/* error in time st [yy]yymmddhhmm time format */
+		return realtime_epoch;	/* error in time st [yy]yymmddhhmm time format */
 
 	/* is there a seconds field? */
 	if ((eot - (char *)utctime->ptr) ==
 	    ((type == ASN1_UTCTIME) ? 12 : 14)) {
 		if (sscanf(eot - 2, "%2d", &t.tm_sec) != 1)
-			return REALTIME_EPOCH;	/* error in ss seconds field format */
+			return realtime_epoch;	/* error in ss seconds field format */
 	} else {
 		t.tm_sec = 0;
 	}
@@ -285,12 +285,12 @@ realtime_t asn1totime(const chunk_t *utctime, asn1_t type)
 	if (t.tm_year >= 1900)
 		t.tm_year -= 1900;
 	else if (t.tm_year >= 100)
-		return REALTIME_EPOCH;
+		return realtime_epoch;
 	else if (t.tm_year < 50)
 		t.tm_year += 100;
 
 	if (t.tm_mon < 1 || t.tm_mon > 12)
-		return REALTIME_EPOCH; /* error in month format */
+		return realtime_epoch; /* error in month format */
 
 	/* representation of month 0..11 in struct tm */
 	t.tm_mon--;
