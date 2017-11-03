@@ -462,12 +462,11 @@ bool extract_object(const asn1Object_t *const objects,
 
 		case ASN1_UTCTIME:
 		case ASN1_GENERALIZEDTIME:
-			DBG(DBG_PARSING,
-				char tbuf[REALTIMETOA_BUF];
-				DBG_log("  '%s'",
-					realtimetoa(asn1totime(object, obj.type), TRUE, tbuf,
-						sizeof(tbuf)));
-				);
+			LSWDBGP(DBG_PARSING, buf) {
+				lswlogs(buf, "  '");
+				lswlog_realtime(buf, asn1totime(object, obj.type), true);
+				lswlogs(buf, "'");
+			}
 			return TRUE;
 
 		default:

@@ -23,6 +23,8 @@
 
 #include "deltatime.h"
 
+struct lswlog;
+
 /*
  * The time objects are wrapped so that dimensional analysis will be
  * enforced by the compiler.
@@ -52,8 +54,8 @@ bool is_realtime_epoch(realtime_t t);
 bool realbefore(realtime_t a, realtime_t b);
 deltatime_t realtimediff(realtime_t a, realtime_t b);
 realtime_t realnow(void);
-#define REALTIMETOA_BUF     30	/* size of realtimetoa string buffer */
-char *realtimetoa(const realtime_t rtm, bool utc, char *buf, size_t blen);
+
+void lswlog_realtime(struct lswlog *buf, realtime_t r, bool utc);
 
 struct realtm {
 	struct tm tm;

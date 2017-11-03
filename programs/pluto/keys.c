@@ -845,25 +845,19 @@ void list_public_keys(bool utc, bool check_pub_keys)
 
 			if (!check_pub_keys ||
 			    !startswith(check_expiry_msg, "ok")) {
-				char expires_buf[REALTIMETOA_BUF];
-				char installed_buf[REALTIMETOA_BUF];
 				char id_buf[IDTOA_BUF];
 
 				idtoa(&key->id, id_buf, IDTOA_BUF);
 
-				whack_log(RC_COMMENT,
-					  "%s, %4d RSA Key %s (%s private key), until %s %s",
-					  realtimetoa(key->installed_time, utc,
-						  installed_buf,
-						  sizeof(installed_buf)),
-					  8 * key->u.rsa.k,
-					  key->u.rsa.keyid,
-					  (has_private_rawkey(key) ? "has" :
-					   "no"),
-					  realtimetoa(key->until_time, utc,
-						  expires_buf,
-						  sizeof(expires_buf)),
-					  check_expiry_msg);
+				LSWLOG_WHACK(RC_COMMENT, buf) {
+					lswlog_realtime(buf, key->installed_time, utc);
+					lswlogf(buf, ", %4d RSA Key %s (%s private key), until ",
+						8 * key->u.rsa.k,
+						key->u.rsa.keyid,
+						(has_private_rawkey(key) ? "has" : "no"));
+					lswlog_realtime(buf, key->until_time, utc);
+					lswlogf(buf, " %s", check_expiry_msg);
+				}
 
 				/* XXX could be ikev2_idtype_names */
 				whack_log(RC_COMMENT, "       %s '%s'",

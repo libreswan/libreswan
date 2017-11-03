@@ -45,7 +45,7 @@ OBJS += addrtoa.o addrtot.o addrtypeof.o alg_info.o esp_info.o anyaddr.o \
 	iprange.o \
         keyblobtoid.o \
 	kernel_alg.o lex.o \
-	realtimetoa.o lswconf.o \
+	lswconf.o \
 	lswfips.o \
 	portof.o rangetosubnet.o sameaddr.o \
 	satot.o secrets.o subnetof.o subnettoa.o subnettot.o \
@@ -77,6 +77,7 @@ OBJS += lswlog_sanitized.o
 OBJS += lswlog_errno.o
 OBJS += lswlog_bytes.o
 OBJS += lswlog_enum_lset_short.o
+OBJS += lswlog_realtime.o
 
 # Crypto code:
 #

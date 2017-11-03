@@ -15,6 +15,8 @@
 
 #include "realtime.h"
 
+#include "lswlog.h"
+
 static const char *months[] = {
 	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
@@ -23,18 +25,16 @@ static const char *months[] = {
 /*
  *  Display a date either in local or UTC time
  */
-char *realtimetoa(const realtime_t rtm, bool utc, char *b, size_t blen)
+void lswlog_realtime(struct lswlog *buf, const realtime_t rtm, bool utc)
 {
 	if (is_realtime_epoch(rtm)) {
-		snprintf(b, blen, "--- -- --:--:--%s----",
-			(utc) ? " UTC " : " ");
+		lswlogf(buf, "--- -- --:--:--%s----", (utc) ? " UTC " : " ");
 	} else {
 		struct realtm t = (utc ? utc_realtime : local_realtime)(rtm);
 
-		snprintf(b, blen, "%s %02d %02d:%02d:%02d%s%04d",
-			 months[t.tm.tm_mon], t.tm.tm_mday, t.tm.tm_hour,
-			 t.tm.tm_min, t.tm.tm_sec,
-			 (utc) ? " UTC " : " ", t.tm.tm_year + 1900);
+		lswlogf(buf, "%s %02d %02d:%02d:%02d%s%04d",
+			months[t.tm.tm_mon], t.tm.tm_mday, t.tm.tm_hour,
+			t.tm.tm_min, t.tm.tm_sec,
+			(utc) ? " UTC " : " ", t.tm.tm_year + 1900);
 	}
-	return b;
 }

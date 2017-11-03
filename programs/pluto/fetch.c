@@ -690,11 +690,10 @@ void list_crl_fetch_requests(bool utc)
 
 	while (req != NULL) {
 		char buf[ASN1_BUF_LEN];
-		char tbuf[REALTIMETOA_BUF];
-
-		whack_log(RC_COMMENT, "%s, trials: %d",
-			  realtimetoa(req->installed, utc, tbuf, sizeof(tbuf)),
-			  req->trials);
+		LSWLOG_WHACK(RC_COMMENT, buf) {
+			lswlog_realtime(buf, req->installed, utc);
+			lswlogf(buf, ", trials: %d", req->trials);
+		}
 		dntoa(buf, ASN1_BUF_LEN, req->issuer);
 		whack_log(RC_COMMENT, "       issuer:  '%s'", buf);
 		list_distribution_points(req->distributionPoints);
