@@ -463,7 +463,6 @@ static void liveness_check(struct state *st)
 	} else {
 		monotime_t tm = mononow();
 		monotime_t last_liveness = pst->st_last_liveness;
-		time_t timeout;
 
 		/* ensure that the very first liveness_check works out */
 		if (last_liveness.mono_secs == UNDEFINED_TIME) {
@@ -479,22 +478,21 @@ static void liveness_check(struct state *st)
 				(long)last_liveness.mono_secs,
 				(long)tm.mono_secs, pst->st_serialno));
 
-		/* ??? MAX the hard way */
-		if (deltaless(c->dpd_timeout, deltatimescale(3, 1, c->dpd_delay)))
-			timeout = deltasecs(c->dpd_delay) * 3;
-		else
-			timeout = deltasecs(c->dpd_timeout);
+		deltatime_t timeout = deltatime_max(c->dpd_timeout,
+						    deltatime_mulu(c->dpd_delay, 3));
 
 		if (pst->st_pend_liveness &&
-				deltasecs(monotimediff(tm, last_liveness)) >= timeout) {
-			libreswan_log("liveness_check - peer %s has not responded in %ld seconds, with a timeout of %ld, taking %s",
-					log_ip ? that_ip : "<ip address>",
-					(long)deltasecs(monotimediff(tm, last_liveness)),
-					(long)timeout,
-					enum_name(&dpd_action_names,
-						c->dpd_action));
+		    deltatime_cmp(monotimediff(tm, last_liveness), timeout) >= 0) {
+			LSWLOG(buf) {
+				lswlogf(buf, "liveness_check - peer %s has not responded in ",
+					log_ip ? that_ip : "<ip address>");
+				lswlog_deltatime(buf, monotimediff(tm, last_liveness));
+				lswlogs(buf, " seconds, with a timeout of ");
+				lswlog_deltatime(buf, timeout);
+				lswlogf(buf, ", taking %s",
+					enum_name(&dpd_action_names, c->dpd_action));
+			}
 			liveness_action(c, st->st_ikev2);
-
 			return;
 		} else {
 			stf_status ret = ikev2_send_informational(st);
