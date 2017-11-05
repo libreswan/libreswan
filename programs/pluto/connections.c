@@ -40,6 +40,7 @@
 #include <sys/stat.h>
 #include <arpa/inet.h>
 #include <resolv.h>
+#include <errno.h>
 
 #include <libreswan.h>
 #include "libreswan/pfkeyv2.h"
@@ -1211,18 +1212,51 @@ static bool preload_wm_cert_secrets(const struct whack_message *wm)
 }
 
 /* only used by add_connection() */
-static void mark_parse(char *wmmark, struct sa_mark *sa_mark) {
-	char *mask_start = strstr(wmmark,"/");
+static void mark_parse(const char *cnm, /*const*/ char *wmmark, struct sa_mark *sa_mark) {
+	/*const*/ char *val_end;
 
-	if (strneq(wmmark, "-1", 2)) {
+	sa_mark->unique = FALSE;
+	sa_mark->val = 0xffffffff;
+	sa_mark->mask = 0xffffffff;
+	if (streq(wmmark, "-1") || startswith(wmmark, "-1/")) {
 		sa_mark->unique = TRUE;
+		val_end = wmmark + strlen("-1");
+	} else {
+		errno = 0;
+		unsigned long v = strtoul(wmmark, &val_end, 0);
+		if (errno != 0 || v > 0xffffffff ||
+		    (*val_end != '\0' && *val_end != '/'))
+		{
+			/* ??? should be detected and reported by confread and whack */
+			loglog(RC_LOG_SERIOUS,
+				"connection \"%s\": bad mark value \"%s\"",
+				cnm, wmmark);
+		} else {
+			sa_mark->val = v;
+		}
 	}
-	sa_mark->val = strtol(wmmark, &mask_start, 0);
-	if (mask_start != wmmark && *mask_start == '/')
-		sa_mark->mask = strtol(mask_start + 1, NULL, 0);
-	else
-		sa_mark->mask = 0xffffffff;
+
+	if (*val_end == '/') {
+		/*const*/ char *mask_end;
+		errno = 0;
+		unsigned long v = strtoul(val_end+1, &mask_end, 0);
+		if (errno != 0 || v > 0xffffffff || *mask_end != '\0') {
+			/* ??? should be detected and reported by confread and whack */
+			loglog(RC_LOG_SERIOUS,
+				"connection \"%s\": bad mark mask \"%s\"",
+				cnm, mask_end);
+		} else {
+			sa_mark->mask = v;
+		}
+	}
+	if ((sa_mark->val & ~sa_mark->mask) != 0) {
+		/* ??? should be detected and reported by confread and whack */
+		loglog(RC_LOG_SERIOUS,
+			"connection \"%s\": mark value %#08" PRIx32 " has bits outside mask %#08" PRIx32,
+			cnm, sa_mark->val, sa_mark->mask);
+	}
 }
+
 /*
  * XXX: This function should be rewritten, with more careful distinction
  * between wm->policy and c->policy. It now jumps back and forth due to
@@ -1593,13 +1627,15 @@ void add_connection(const struct whack_message *wm)
 		}
 #endif
 			if (deltasecs(c->sa_ike_life_seconds) > max_ike) {
-				loglog(RC_LOG_SERIOUS,"IKE lifetime limited to the maximum allowed %jds",
-                                       (intmax_t) max_ike);
+				loglog(RC_LOG_SERIOUS,
+					"IKE lifetime limited to the maximum allowed %jds",
+					(intmax_t) max_ike);
 				c->sa_ike_life_seconds = deltatime(max_ike);
 			}
 			if (deltasecs(c->sa_ipsec_life_seconds) > max_ipsec) {
-				loglog(RC_LOG_SERIOUS,"IPsec lifetime limited to the maximum allowed %jds",
-                                       (intmax_t) max_ipsec);
+				loglog(RC_LOG_SERIOUS,
+					"IPsec lifetime limited to the maximum allowed %jds",
+					(intmax_t) max_ipsec);
 				c->sa_ipsec_life_seconds = deltatime(max_ipsec);
 			}
 		}
@@ -1635,7 +1671,7 @@ void add_connection(const struct whack_message *wm)
 		/*
 		 * parse mark and mask values form the mark/mask string
 		 * acceptable string formats are
-		 * (<int>|<hex>)[/ <int>| <hex>]
+		 * ( -1 | <nat> | <hex> ) [ / ( <nat> | <hex> ) ]
 		 * examples:
 		 *   10
 		 *   10/0xffffffff
@@ -1648,13 +1684,18 @@ void add_connection(const struct whack_message *wm)
 
 		/* mark-in= and mark-out= overwrite mark= */
 		if (wm->conn_mark_both != NULL) {
-			mark_parse(wm->conn_mark_both, &c->sa_marks.in);
-			mark_parse(wm->conn_mark_both, &c->sa_marks.out);
+			mark_parse(wm->name, wm->conn_mark_both, &c->sa_marks.in);
+			mark_parse(wm->name, wm->conn_mark_both, &c->sa_marks.out);
+			if (wm->conn_mark_in != NULL || wm->conn_mark_out != NULL) {
+				loglog(RC_LOG_SERIOUS,
+					"connection \"%s\": conflicting mark specifications",
+					wm->name);
+			}
 		}
 		if (wm->conn_mark_in != NULL)
-			mark_parse(wm->conn_mark_in, &c->sa_marks.in);
+			mark_parse(wm->name, wm->conn_mark_in, &c->sa_marks.in);
 		if (wm->conn_mark_out != NULL)
-			mark_parse(wm->conn_mark_out, &c->sa_marks.out);
+			mark_parse(wm->name, wm->conn_mark_out, &c->sa_marks.out);
 
 		c->vti_iface = wm->vti_iface;
 		c->vti_routing = wm->vti_routing;
@@ -1858,13 +1899,13 @@ void add_connection(const struct whack_message *wm)
 		/* log all about this connection */
 		libreswan_log("added connection description \"%s\"", c->name);
 		DBG(DBG_CONTROL, {
-				char topo[CONN_BUF_LEN];
+			char topo[CONN_BUF_LEN];
 
-				(void) format_connection(topo, sizeof(topo), c,
-							&c->spd);
+			(void) format_connection(topo, sizeof(topo), c,
+						&c->spd);
 
-				DBG_log("%s", topo);
-			});
+			DBG_log("%s", topo);
+		});
 
 		DBG(DBG_CONTROL,
 			DBG_log("ike_life: %jds; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s%s",
@@ -2045,7 +2086,7 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 		}
 	}
 
-	 connect_to_host_pair(d);
+	connect_to_host_pair(d);
 
 	return d;
 }
@@ -2522,27 +2563,28 @@ struct connection *route_owner(struct connection *c,
 	enum routing_t best_routing = cur_spd->routing,
 		best_erouting = best_routing;
 
-	struct connection *d;
-
-	for (d = connections; d != NULL; d = d->ac_next) {
-
+	for (struct connection *d = connections; d != NULL; d = d->ac_next) {
+		if (!oriented(*d))
+			continue;
 #ifdef KLIPS_MAST
 		/* in mast mode we must also delete the iptables rule */
-		if (kern_interface == USE_MASTKLIPS)
-			if (compatible_overlapping_connections(c, d))
-				continue;
+		if (kern_interface == USE_MASTKLIPS &&
+		    compatible_overlapping_connections(c, d))
+			continue;
 #endif
 
 		/*
 		 * allow policies different by mark/mask
 		 */
-		DBG(DBG_PARSING, DBG_log(" conn %s mark %"PRIu32"/%#010x, %"PRIu32"/%#010x vs",
-			c->name, c->sa_marks.in.val, c->sa_marks.in.mask,
-			c->sa_marks.out.val, c->sa_marks.out.mask));
+		DBG(DBG_PARSING, {
+			DBG_log(" conn %s mark %" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32 " vs",
+				c->name, c->sa_marks.in.val, c->sa_marks.in.mask,
+				c->sa_marks.out.val, c->sa_marks.out.mask);
 
-		DBG(DBG_PARSING, DBG_log(" conn %s mark %"PRIu32"/%#010x, %"PRIu32"/%#010x",
-			d->name, d->sa_marks.in.val, d->sa_marks.in.mask,
-			d->sa_marks.out.val, d->sa_marks.out.mask));
+			DBG_log(" conn %s mark %" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32,
+				d->name, d->sa_marks.in.val, d->sa_marks.in.mask,
+				d->sa_marks.out.val, d->sa_marks.out.mask);
+		});
 
 		if ( (c->sa_marks.in.val & c->sa_marks.in.mask) != (d->sa_marks.in.val & d->sa_marks.in.mask) &&
 		     (c->sa_marks.out.val & c->sa_marks.out.mask) != (d->sa_marks.out.val & d->sa_marks.out.mask))
@@ -2561,38 +2603,25 @@ struct connection *route_owner(struct connection *c,
 					continue;
 
 				if (!samesubnet(&src->that.client,
-							&srd->that.client))
-					continue;
-				if (src->that.protocol != srd->that.protocol)
-					continue;
-				if (src->that.port != srd->that.port)
-					continue;
-
-				/*
-				 * with old eroutes/routing, we could not do
-				 * this. This allows a host with two IP's to
-				 * talk to 1 oter host with both IP's using
-				 * two different tunnels.
-				 */
-				if (!sameaddr(&src->this.host_addr,
+						&srd->that.client) ||
+				    src->that.protocol != srd->that.protocol ||
+				    src->that.port != srd->that.port ||
+				    !sameaddr(&src->this.host_addr,
 						&srd->this.host_addr))
 					continue;
 
-				passert(oriented(*d));
 				if (srd->routing > best_routing) {
 					best_ro = d;
 					best_sr = srd;
 					best_routing = srd->routing;
 				}
 
-				if (!samesubnet(&src->this.client,
-							&srd->this.client))
-					continue;
-				if (src->this.protocol != srd->this.protocol)
-					continue;
-				if (src->this.port != srd->this.port)
-					continue;
-				if (srd->routing > best_erouting) {
+				if (samesubnet(&src->this.client,
+						&srd->this.client) &&
+				    src->this.protocol == srd->this.protocol &&
+				    src->this.port == srd->this.port &&
+				    srd->routing > best_erouting)
+				{
 					best_ero = d;
 					best_esr = srd;
 					best_erouting = srd->routing;
@@ -3297,7 +3326,8 @@ struct connection *refine_host_connection(const struct state *st,
 					c->spd.that.host_port);
 	}
 	/* we should never get here */
-	loglog(RC_LOG_SERIOUS,"refine_host_connection() reached end of function without returning a connection");
+	loglog(RC_LOG_SERIOUS,
+		"refine_host_connection() reached end of function without returning a connection");
 	pexpect(FALSE);
 }
 
@@ -4100,12 +4130,13 @@ void show_one_connection(const struct connection *c)
 	else
 		strcpy(nflogstr, "unset");
 
-	if (c->sa_marks.in.val != 0 || c->sa_marks.out.val != 0 )
-		snprintf(markstr, sizeof(markstr), "%"PRIu32"/%#010x, %"PRIu32"/%#010x",
+	if (c->sa_marks.in.val != 0 || c->sa_marks.out.val != 0 ) {
+		snprintf(markstr, sizeof(markstr), "%" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32,
 			c->sa_marks.in.val, c->sa_marks.in.mask,
 			c->sa_marks.out.val, c->sa_marks.out.mask);
-	else
+	} else {
 		strcpy(markstr, "unset");
+	}
 
 	whack_log(RC_COMMENT,
 		  "\"%s\"%s:   nflog-group: %s; mark: %s; vti-iface:%s; "

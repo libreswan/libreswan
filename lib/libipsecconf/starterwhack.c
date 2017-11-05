@@ -670,6 +670,9 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" modecfgbanner=%s",
 		conn->name, msg.modecfg_banner);
 
+	msg.conn_mark_both = conn->conn_mark_both;
+	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" mark=%s",
+		conn->name, msg.conn_mark_both);
 	msg.conn_mark_in = conn->conn_mark_in;
 	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" mark-in=%s",
 		conn->name, msg.conn_mark_in);

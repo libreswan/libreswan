@@ -1794,8 +1794,7 @@ static enum ipsec_rcv_value ipsec_rcv_decap_cont(struct ipsec_rcv_state *irs)
 	irs->ipsp->ips_life.ipl_usetime.ipl_last = jiffies / HZ;
 	irs->ipsp->ips_life.ipl_packets.ipl_count += 1;
 
-#if defined(CONFIG_KLIPS_COMPAT_NAT_NFMARK)
-#if defined(CONFIG_NETFILTER)
+#if defined(CONFIG_KLIPS_COMPAT_NAT_NFMARK) && defined(CONFIG_NETFILTER)
 	if (irs->proto == IPPROTO_ESP || irs->proto == IPPROTO_AH) {
 		skb->nfmark = IPSEC_NFMARK_IS_SAREF_BIT |
 			      (skb->nfmark &
@@ -1807,7 +1806,6 @@ static enum ipsec_rcv_value ipsec_rcv_decap_cont(struct ipsec_rcv_state *irs)
 			    irs->proto == IPPROTO_ESP ? "ESP" : "AH",
 			    (unsigned)skb->nfmark);
 	}
-#endif	/* CONFIG_NETFILTER */
 #endif
 	/* do we need to do more decapsulation */
 	if ((irs->proto == IPPROTO_ESP ||

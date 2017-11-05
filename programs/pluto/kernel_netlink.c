@@ -1102,7 +1102,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 				.replay_window = sa->replay_window,
 				.bmp_len = bmp_size / sizeof(u_int32_t),
 			};
-			DBG(DBG_KERNEL, DBG_log("netlink: setting IPsec SA replay-window to %"PRIu32" using xfrm_replay_state_esn",
+			DBG(DBG_KERNEL, DBG_log("netlink: setting IPsec SA replay-window to %" PRIu32 " using xfrm_replay_state_esn",
 				xre.replay_window));
 
 			attr->rta_type = XFRMA_REPLAY_ESN_VAL;
@@ -1221,7 +1221,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 			/* Traffic Flow Confidentiality is only for ESP tunnel mode */
 			if (sa->tfcpad != 0 &&
 			    sa->encapsulation == ENCAPSULATION_MODE_TUNNEL) {
-				DBG(DBG_KERNEL, DBG_log("netlink: setting TFC to %"PRIu32" (up to PMTU",
+				DBG(DBG_KERNEL, DBG_log("netlink: setting TFC to %" PRIu32 " (up to PMTU)",
 							sa->tfcpad));
 
 				attr->rta_type = XFRMA_TFCPAD;

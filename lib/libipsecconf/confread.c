@@ -1238,9 +1238,7 @@ static bool load_conn(
 	str_to_conn(modecfg_domain, KSCF_MODECFGDOMAIN);
 	str_to_conn(modecfg_banner, KSCF_MODECFGBANNER);
 
-	/* mark-in= and mark-out= override mark= */
-	str_to_conn(conn_mark_in, KSCF_CONN_MARK_BOTH);
-	str_to_conn(conn_mark_out, KSCF_CONN_MARK_BOTH);
+	str_to_conn(conn_mark_both, KSCF_CONN_MARK_BOTH);
 	str_to_conn(conn_mark_in, KSCF_CONN_MARK_IN);
 	str_to_conn(conn_mark_out, KSCF_CONN_MARK_OUT);
 	str_to_conn(vti_iface, KSCF_VTI_IFACE);

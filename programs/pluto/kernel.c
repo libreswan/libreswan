@@ -515,12 +515,14 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 
 	connmarkstr[0] = '\0';
 	if (c->sa_marks.in.val != 0) {
-		snprintf(connmarkstr, sizeof(connmarkstr), "CONNMARK_IN=%"PRIu32"/%#010x ",
+		snprintf(connmarkstr, sizeof(connmarkstr),
+			"CONNMARK_IN=%" PRIu32 "/%#08" PRIx32 " ",
 			c->sa_marks.in.val, c->sa_marks.in.mask);
 	}
 	if (c->sa_marks.out.val != 0) {
 		size_t inend = strlen(connmarkstr);
-		snprintf(connmarkstr+inend, sizeof(connmarkstr)-inend, "CONNMARK_OUT=%"PRIu32"/%#010x ",
+		snprintf(connmarkstr+inend, sizeof(connmarkstr)-inend,
+			"CONNMARK_OUT=%" PRIu32 "/%#08" PRIx32 " ",
 			c->sa_marks.out.val, c->sa_marks.out.mask);
 	}
 
