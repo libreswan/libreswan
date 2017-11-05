@@ -1,5 +1,5 @@
 ipsec auto --up  westnet-eastnet-vti
-# since we have vti-routing=no, no marking, so unencryted pacets are dropped
+# since we have vti-routing=no, no marking, so unencrypted packets are dropped
 ping -n -c 4 -I 192.0.1.254 192.0.2.254
 ipsec whack --trafficstatus
 ip route add 192.0.2.0/24 dev vti0
