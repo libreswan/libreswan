@@ -150,7 +150,6 @@ static void do_whacklisten(void)
 #endif
 	libreswan_log("listening for IKE messages");
 	listening = TRUE;
-	daily_log_reset();
 	set_myFQDN();
 	find_ifaces();
 	load_preshared_secrets();

@@ -448,10 +448,6 @@ void set_debugging(lset_t deb)
  *
  */
 
-void daily_log_reset(void)
-{
-}
-
 void daily_log_event(void)
 {
 	time_t interval;
@@ -481,6 +477,4 @@ void daily_log_event(void)
 		interval = secs_per_day;
 
 	event_schedule_s(EVENT_LOG_DAILY, interval, NULL);
-
-	daily_log_reset();
 }
