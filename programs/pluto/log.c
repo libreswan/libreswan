@@ -465,6 +465,17 @@ void daily_log_event(void)
 	realtime_t n = realnow();
 
 	/* schedule event for midnight, local time */
+	/*
+	 * XXX: The below computes MIDNIGHT-NOW seconds and then
+	 * schedules a periodic event for that interval.  While the
+	 * first event will be around midnight, subsequent events are
+	 * not.  In fact a pluto started at 1 minute to midnight would
+	 * schedule this event every minute.
+	 *
+	 * Having a way to schedule an event for a specific time (easy
+	 * day) and/or schedule a one-off timer event would make
+	 * fixing this easier.
+	 */
 	tzset();
 	struct realtm t = local_realtime(n);
 	interval = secs_per_day -
