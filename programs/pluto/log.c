@@ -442,39 +442,3 @@ void set_debugging(lset_t deb)
 		(*kernel_ops->set_debug)(cur_debugging, DBG_log,
 					 libreswan_log);
 }
-
-/*
- * a routine that attempts to schedule itself daily.
- *
- */
-
-void daily_log_event(void)
-{
-	time_t interval;
-	realtime_t n = realnow();
-
-	/* schedule event for midnight, local time */
-	/*
-	 * XXX: The below computes MIDNIGHT-NOW seconds and then
-	 * schedules a periodic event for that interval.  While the
-	 * first event will be around midnight, subsequent events are
-	 * not.  In fact a pluto started at 1 minute to midnight would
-	 * schedule this event every minute.
-	 *
-	 * Having a way to schedule an event for a specific time (easy
-	 * day) and/or schedule a one-off timer event would make
-	 * fixing this easier.
-	 */
-	tzset();
-	struct realtm t = local_realtime(n);
-	interval = secs_per_day -
-		   (t.tm.tm_sec +
-		    t.tm.tm_min * secs_per_minute +
-		    t.tm.tm_hour * secs_per_hour);
-
-	/* this might happen during a leap second */
-	if (interval <= 0)
-		interval = secs_per_day;
-
-	event_schedule_s(EVENT_LOG_DAILY, interval, NULL);
-}

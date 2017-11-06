@@ -119,12 +119,6 @@ void whack_log_comment(const char *message, ...) PRINTF_LIKE(1);
 /* show status, usually on whack log */
 extern void show_status(void);
 
-/*
- * call this routine to reset daily items.
- */
-extern void daily_log_reset(void);
-extern void daily_log_event(void);
-
 extern void show_setup_plutomain(void);
 extern void show_setup_natt(void);
 extern void show_global_status(void);

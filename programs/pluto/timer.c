@@ -624,7 +624,6 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	case EVENT_SHUNT_SCAN:
 	case EVENT_PENDING_DDNS:
 	case EVENT_PENDING_PHASE2:
-	case EVENT_LOG_DAILY:
 	case EVENT_SD_WATCHDOG:
 	case EVENT_NAT_T_KEEPALIVE:
 		passert(st == NULL);
@@ -700,10 +699,6 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 
 	case EVENT_PENDING_PHASE2:
 		connection_check_phase2();
-		break;
-
-	case EVENT_LOG_DAILY:
-		daily_log_event();
 		break;
 
 #ifdef USE_SYSTEMD_WATCHDOG

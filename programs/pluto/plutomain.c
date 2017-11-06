@@ -1764,7 +1764,6 @@ int main(int argc, char **argv)
 #ifdef HAVE_LABELED_IPSEC
 	init_avc();
 #endif
-	daily_log_event();
 #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd_init();
 #endif

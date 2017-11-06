@@ -103,7 +103,6 @@ static const char *const timer_event_name[] = {
 
 	"EVENT_REINIT_SECRET",
 	"EVENT_SHUNT_SCAN",
-	"EVENT_LOG_DAILY",
 	"EVENT_PENDING_DDNS",
 	"EVENT_SD_WATCHDOG",
 	"EVENT_PENDING_PHASE2",
