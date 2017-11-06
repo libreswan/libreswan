@@ -48,11 +48,6 @@ bool
 	log_append = TRUE,
 	log_ip = TRUE;
 
-/* should we complain when we find no local id */
-bool
-	logged_myid_fqdn_txt_warning = FALSE,
-	logged_myid_ip_txt_warning   = FALSE;
-
 char *pluto_log_file = NULL;	/* pathname */
 static FILE *pluto_log_fp = NULL;
 
@@ -455,8 +450,6 @@ void set_debugging(lset_t deb)
 
 void daily_log_reset(void)
 {
-	logged_myid_fqdn_txt_warning = FALSE;
-	logged_myid_ip_txt_warning   = FALSE;
 }
 
 void daily_log_event(void)
