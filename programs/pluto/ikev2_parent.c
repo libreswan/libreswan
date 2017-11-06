@@ -77,6 +77,15 @@
 
 #include "pluto_stats.h"
 
+#include "ipsecconf/confread.h"
+#include "ipsecconf/addr_lookup.h"
+
+struct mobike {
+	ip_address remoteaddr;
+	u_int16_t remoteport;
+	const struct iface_port *interface;
+};
+
 static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md, bool pam_status);
 
 static void ikev2_calc_dcookie(u_char *dcookie, chunk_t st_ni,
@@ -5259,14 +5268,27 @@ static void delete_or_replace_state(struct state *st) {
 	}
 }
 
-static bool process_mobike_notify(struct msg_digest *md, bool *ntfy_natd)
+static void set_mobike_remote_addr(struct msg_digest *md, struct state *st)
+{
+	/*
+	 * If this is a MOBIKE probe, use the received IP:port for only this reply packet,
+	 * without updating IKE endpoint and without UPDATE_SA.
+	 */
+
+	st->st_mobike_remoteaddr = md->sender;
+	st->st_mobike_remoteport = md->sender_port;
+	st->st_mobike_interface = md->iface;
+	/* local_addr and localport are not used in send_packet() ! */
+}
+
+static bool process_mobike_notify(struct msg_digest *md, bool *ntfy_natd,
+		chunk_t *cookie2)
 {
 	struct payload_digest *ntfy;
 	struct state *st = md->st;
 	struct connection *c = st->st_connection;
 	bool may_mobike = ((c->policy & POLICY_MOBIKE) != LEMPTY);
 	bool ntfy_update_sa = FALSE;
-	chunk_t cookie2 = empty_chunk;
 
 	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 		switch (ntfy->payload.v2n.isan_type) {
@@ -5308,9 +5330,9 @@ static bool process_mobike_notify(struct msg_digest *md, bool *ntfy_natd)
 				} else {
 					const pb_stream *dc_pbs = &ntfy->pbs;
 
-					clonetochunk(cookie2, dc_pbs->cur, pbs_left(dc_pbs),
+					clonetochunk(*cookie2, dc_pbs->cur, pbs_left(dc_pbs),
 							"saved cookie2");
-					DBG_dump_chunk("MOBIKE COOKIE2 received:", cookie2);
+					DBG_dump_chunk("MOBIKE COOKIE2 received:", *cookie2);
 				}
 			} else {
 				libreswan_log("Connection does not allow MOBIKE, ignoring COOKIE2");
@@ -5344,9 +5366,56 @@ static bool process_mobike_notify(struct msg_digest *md, bool *ntfy_natd)
 		}
 	}
 
+
+	if (may_mobike && !ntfy_update_sa && ntfy_natd &&
+			st->st_seen_mobike &&
+			!LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
+
+		set_mobike_remote_addr(md, st);
+	}
+
 	return ntfy_update_sa;
 }
 
+static void mobike_reset_remote(struct state *st, struct mobike *est_remote)
+{
+
+	if (est_remote->interface == NULL)
+		return;
+
+	st->st_remoteaddr = est_remote->remoteaddr;
+	st->st_remoteport = est_remote->remoteport;
+	st->st_interface = est_remote->interface;
+
+	anyaddr(AF_INET, &st->st_mobike_remoteaddr);
+	st->st_mobike_remoteport = 0;
+	st->st_mobike_interface = NULL;
+}
+
+/* MOBIKE liveness/update response. set temp remote address/interface */
+static void mobike_switch_remote(struct msg_digest *md, struct mobike *est_remote)
+{
+	struct state *st = md->st;
+
+	est_remote->interface = NULL;
+
+	if (mobike_check_established(st) &&
+			!LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
+		if (!sameaddr(&md->sender, &st->st_remoteaddr) ||
+				!(md->sender_port == st->st_remoteport)) {
+
+			/* remember the established/old address and interface */
+			est_remote->remoteaddr = st->st_remoteaddr;
+			est_remote->remoteport = st->st_mobike_remoteport;
+			est_remote->interface = md->iface;
+
+			/* set temp one and after the message sent reset it */
+			st->st_remoteaddr = md->sender;
+			st->st_remoteport = md->sender_port;
+			st->st_interface = md->iface;
+		}
+	}
+}
 /*
  *
  ***************************************************************
@@ -5370,7 +5439,6 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 	st = md->st;
 	struct payload_digest *p;
 	bool ntfy_natd = FALSE;
-	bool ntfy_update_sa = FALSE;
 	chunk_t cookie2 = empty_chunk;
 
 	/* Are we responding (as opposed to processing a response)? */
@@ -5410,24 +5478,12 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		md->chain[ISAKMP_NEXT_v2N] != NULL) {
 
 		loglog(RC_LOG_SERIOUS, "Received INFORMATIONAL with both DELETE and NOTIFY payloads. Ignored notify payloads");
+	} else if (process_mobike_notify(md, &ntfy_natd, &cookie2)) {
+		/* MOBIKE handled */
+	} else {
+		/* is this mobike liveness ? */
+		mobike_liveness(md);
 	}
-
-	if (md->chain[ISAKMP_NEXT_v2D] == NULL) {
-		ntfy_update_sa = process_mobike_notify(md, &ntfy_natd);
-	}
-
-	/*
-	 * If this is a MOBIKE probe, use the received IP:port for only this reply packet,
-	 * without updating IKE endpoint and without UPDATE_SA.
-	 */
-	if (!ntfy_update_sa && ntfy_natd && st->st_seen_mobike && !LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
-		st->st_mobike_remoteaddr = md->sender;
-		st->st_mobike_remoteport = md->sender_port;
-		st->st_mobike_interface = md->iface;
-		/* local_addr and localport are not used in send_packet() ! */
-	}
-
-	/* end of MOBIKE handling */
 
 	/*
 	 * RFC 7296 1.4.1 "Deleting an SA with INFORMATIONAL Exchanges"
@@ -5802,9 +5858,14 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 				return ret;
 		}
 
+		struct mobike mobike_remote;
+
+		mobike_switch_remote(md, &mobike_remote);
 		record_and_send_ike_msg(st, &reply_stream,
 			"reply packet for process_encrypted_informational_ikev2");
 		st->st_msgid_lastreplied = md->msgid_received;
+
+		mobike_reset_remote(st, &mobike_remote);
 
 		/* Now we can delete the IKE SA if we want to */
 		if (del_ike) {
