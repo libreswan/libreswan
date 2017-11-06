@@ -165,7 +165,8 @@ static void retransmit_v1_msg(struct state *st)
 		} else {
 			DBG(DBG_CONTROL|DBG_RETRANSMITS, DBG_log("skipped initial reply packet retransmission to avoid amplification attacks"));
 		}
-		event_schedule_ms(EVENT_v1_RETRANSMIT, delay_ms, st);
+		/* XXX: delay_ms should be deltatime_t */
+		event_schedule(EVENT_v1_RETRANSMIT, deltatime_ms(delay_ms), st);
 	} else {
 		/* check if we've tried rekeying enough times.
 		 * st->st_try == 0 means that this should be the only try.
@@ -298,7 +299,8 @@ static void retransmit_v2_msg(struct state *st)
 
 		if (delay_ms != 0) {
 			send_ike_msg(pst, "EVENT_v2_RETRANSMIT");
-			event_schedule_ms(EVENT_v2_RETRANSMIT, delay_ms, st);
+			/* XXX: delay_ms should be deltatime_t */
+			event_schedule(EVENT_v2_RETRANSMIT, deltatime_ms(delay_ms), st);
 			return;
 		}
 	}
@@ -1051,12 +1053,6 @@ void event_schedule(enum event_type type, deltatime_t dt, struct state *st)
 					ev->ev_state->st_serialno);
 			}
 	}
-}
-
-void event_schedule_ms(enum event_type type, unsigned long delay_ms, struct state *st)
-{
-	deltatime_t delay = deltatime_ms(delay_ms);
-	event_schedule(type, delay, st);
 }
 
 void event_schedule_s(enum event_type type, time_t delay_sec, struct state *st)

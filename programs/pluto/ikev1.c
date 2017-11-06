@@ -2451,7 +2451,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			default:
 				bad_case(kind);
 			}
-			event_schedule_ms(kind, delay_ms, st);
+			/* XXX: DELAY_MS should be a deltatime_t */
+			event_schedule(kind, deltatime_ms(delay_ms), st);
 		}
 
 		/* tell whack and log of progress */
