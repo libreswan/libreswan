@@ -471,7 +471,6 @@ static struct pluto_event *free_event_entry(struct pluto_event **evp)
 			const char *en = enum_name(&timer_event_names, e->ev_type);
 			DBG_log("%s: release %s-pe@%p", __func__, en, e));
 
-	pfreeany(e->ev_name);
 	pfree(e);
 	*evp = NULL;
 	return next;
@@ -544,11 +543,13 @@ struct event *timer_private_pluto_event_new(evutil_socket_t fd, short events,
 
 
 struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
-		event_callback_fn cb, void *arg, const struct timeval *delay,
-		char *name) {
+				    event_callback_fn cb, void *arg,
+				    const struct timeval *delay,
+				    const char *name)
+{
 	struct pluto_event *e = alloc_thing(struct pluto_event, name);
 	e->ev_type = EVENT_NULL;
-	e->ev_name = clone_str(name, "event name");
+	e->ev_name = name;
 	e->ev = pluto_event_wraper(fd, events, cb, arg, delay);
 	link_pluto_event_list(e);
 	if (delay != NULL)

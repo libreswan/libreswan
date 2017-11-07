@@ -26,7 +26,7 @@ struct state;   /* forward declaration */
 
 struct pluto_event {
 	enum event_type ev_type;        /* Event type if time based */
-	char *ev_name;			/* Name or enum_name(ev_type) */
+	const char *ev_name;		/* Name or enum_name(ev_type) */
 	struct state   *ev_state;       /* Pointer to relevant state (if any) */
 	struct event *ev;               /* libevent data structure */
 	monotime_t ev_time;
