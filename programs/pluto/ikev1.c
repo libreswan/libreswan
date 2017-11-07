@@ -899,6 +899,41 @@ void ikev1_echo_hdr(struct msg_digest *md, bool enc, u_int8_t np)
 	passert(out_struct(&hdr, &isakmp_hdr_desc, &reply_stream, &md->rbody));
 }
 
+/*
+ * Recognise and deal with an IKEv1 duplicate.
+ */
+static bool ikev1_duplicate(struct state *st, struct msg_digest *md,
+			    bool retransmit_on_duplicate)
+{
+	passert(st != NULL);
+	if (st->st_rpacket.ptr != NULL &&
+	    st->st_rpacket.len == pbs_room(&md->packet_pbs) &&
+	    memeq(st->st_rpacket.ptr, md->packet_pbs.start,
+		  st->st_rpacket.len)) {
+		if (retransmit_on_duplicate) {
+			if (st->st_retransmit < MAXIMUM_v1_ACCEPTED_DUPLICATES) {
+				st->st_retransmit++;
+				loglog(RC_RETRANSMISSION,
+				       "retransmitting in response to duplicate packet; already %s",
+				       enum_name(&state_names, st->st_state));
+				resend_ike_v1_msg(st, "retransmit in response to duplicate");
+			} else {
+				loglog(RC_LOG_SERIOUS,
+				       "discarding duplicate packet -- exhausted retransmission; already %s",
+				       enum_name(&state_names, st->st_state));
+			}
+		} else {
+			LSWDBGP(DBG_CONTROLMORE, buf) {
+				lswlog_log_prefix(buf);
+				lswlogf(buf, "discarding duplicate packet; already %s",
+				enum_name(&state_names, st->st_state));
+			}
+		}
+		return true;
+	}
+	return false;
+}
+
 /* process an input packet, possibly generating a reply.
  *
  * If all goes well, this routine eventually calls a state-specific
@@ -949,15 +984,36 @@ void process_v1_packet(struct msg_digest **mdp)
 		}
 
 		if (is_zero_cookie(md->hdr.isa_rcookie)) {
-			/* initial message from initiator
-			 * ??? what if this is a duplicate of another message?
+			/*
+			 * initial message from initiator
 			 */
 			if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
 				libreswan_log("initial phase 1 message is invalid: its Encrypted Flag is on");
 				SEND_NOTIFICATION(INVALID_FLAGS);
 				return;
 			}
-
+			/*
+			 * If there is already an existing state with
+			 * this ICOOKIE, asssume it is some sort of
+			 * re-transmit.
+			 */
+			st = find_state_ikev1_init(md->hdr.isa_icookie,
+						   md->hdr.isa_msgid);
+			if (st != NULL) {
+				if (!ikev1_duplicate(st, md, true)) {
+					/*
+					 * Not a duplicate for the
+					 * current state; assume that
+					 * this a really old
+					 * re-transmit for an earlier
+					 * state that should be
+					 * discarded.
+					 */
+					libreswan_log("discarding initial packet; already %s",
+						      enum_name(&state_names, st->st_state));
+				}
+				return;
+			}
 			/* don't build a state until the message looks tasty */
 			from_state = (md->hdr.isa_xchg == ISAKMP_XCHG_IDPROT ?
 				      STATE_MAIN_R0 : STATE_AGGR_R0);
@@ -1532,41 +1588,18 @@ void process_v1_packet(struct msg_digest **mdp)
 	if (state_busy(st))
 		return;
 
-	/* Detect and handle duplicated packets.
-	 * This won't work for the initial packet of an exchange
-	 * because we won't have a state object to remember it.
-	 * If we are in a non-receiving state (terminal), and the preceding
-	 * state did transmit, then the duplicate may indicate that that
-	 * transmission wasn't received -- retransmit it.
-	 * Otherwise, just discard it.
-	 * ??? Notification packets are like exchanges -- I hope that
-	 * they are idempotent!
+	/*
+	 * Detect and handle duplicated packets.  This won't work for
+	 * the initial packet of an exchange because we won't have a
+	 * state object to remember it.  If we are in a non-receiving
+	 * state (terminal), and the preceding state did transmit,
+	 * then the duplicate may indicate that that transmission
+	 * wasn't received -- retransmit it.  Otherwise, just discard
+	 * it.  ??? Notification packets are like exchanges -- I hope
+	 * that they are idempotent!
 	 */
 	if (st != NULL &&
-	    st->st_rpacket.ptr != NULL &&
-	    st->st_rpacket.len == pbs_room(&md->packet_pbs) &&
-	    memeq(st->st_rpacket.ptr, md->packet_pbs.start,
-		   st->st_rpacket.len)) {
-		if (smc->flags & SMF_RETRANSMIT_ON_DUPLICATE) {
-			if (st->st_retransmit < MAXIMUM_v1_ACCEPTED_DUPLICATES) {
-				st->st_retransmit++;
-				loglog(RC_RETRANSMISSION,
-				       "retransmitting in response to duplicate packet; already %s",
-				       enum_name(&state_names, st->st_state));
-				resend_ike_v1_msg(st,
-						  "retransmit in response to duplicate");
-			} else {
-				loglog(RC_LOG_SERIOUS,
-				       "discarding duplicate packet -- exhausted retransmission; already %s",
-				       enum_name(&state_names, st->st_state));
-			}
-		} else {
-			LSWDBGP(DBG_CONTROLMORE, buf) {
-				lswlog_log_prefix(buf);
-				lswlogf(buf, "discarding duplicate packet; already %s",
-				enum_name(&state_names, st->st_state));
-			}
-		}
+	    ikev1_duplicate(st, md, (smc->flags & SMF_RETRANSMIT_ON_DUPLICATE))) {
 		return;
 	}
 
