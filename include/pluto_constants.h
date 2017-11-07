@@ -403,6 +403,7 @@ enum {
 	IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE_IX,	/* causes pluto to ignore incoming hash notify from IKE_SA_INIT Response*/
 	IMPAIR_IKEv2_EXCLUDE_INTEG_NONE_IX,	/* lets pluto exclude integrity 'none' in proposals */
 	IMPAIR_IKEv2_INCLUDE_INTEG_NONE_IX,	/* lets pluto include integrity 'none' in proposals */
+	IMPAIR_DUP_INCOMING_PACKETS_IX,		/* duplicate all incoming packets */
 
 	IMPAIR_roof_IX	/* first unassigned IMPAIR */
 };
@@ -440,6 +441,7 @@ enum {
 #define IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE	LELEM(IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE_IX)
 #define IMPAIR_IKEv2_EXCLUDE_INTEG_NONE LELEM(IMPAIR_IKEv2_EXCLUDE_INTEG_NONE_IX)
 #define IMPAIR_IKEv2_INCLUDE_INTEG_NONE LELEM(IMPAIR_IKEv2_INCLUDE_INTEG_NONE_IX)
+#define IMPAIR_DUP_INCOMING_PACKETS 	LELEM(IMPAIR_DUP_INCOMING_PACKETS_IX)
 
 /* State of exchanges
  *

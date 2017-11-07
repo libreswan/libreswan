@@ -99,6 +99,7 @@ static const char *impair_strings[] = {
 	I(IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE, "impair-ignore-hash-notify-resp"),
 	I(IMPAIR_IKEv2_EXCLUDE_INTEG_NONE, "impair-ikev2-exclude-integ-none"),
 	I(IMPAIR_IKEv2_INCLUDE_INTEG_NONE, "impair-ikev2-include-integ-none"),
+	I(IMPAIR_DUP_INCOMING_PACKETS, "impair-dup-incoming-packets"),
 };
 
 const struct enum_names impair_names = {
