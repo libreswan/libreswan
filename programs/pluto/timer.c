@@ -1024,11 +1024,6 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 		}
 	}
 
-	DBG(DBG_LIFECYCLE,
-	    DBG_log("event_schedule called for %jd.%06jd seconds",
-		    (intmax_t) deltasecs(delay),
-		    (intmax_t) (deltamillisecs(delay) % 1000)));
-
 	if (DBGP(DBG_CONTROL) || DBGP(DBG_LIFECYCLE) ||
 	    (DBGP(DBG_RETRANSMITS) && (ev->ev_type == EVENT_v1_RETRANSMIT ||
 				       ev->ev_type == EVENT_v2_RETRANSMIT))) {
