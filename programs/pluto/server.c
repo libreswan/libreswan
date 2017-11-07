@@ -535,6 +535,51 @@ static struct event *pluto_event_wraper(evutil_socket_t fd, short events,
 }
 
 /*
+ * Schedule an event now.
+ *
+ * Unlike pluto_event_add(), it can't be canceled, can only run once,
+ * doesn't show up in the event list, and leaks when the event-loop
+ * aborts (like a few others).
+ *
+ * However, unlike pluto_event_add(), it works from any thread, and
+ * cleans up after the event has run.
+ */
+
+struct now_event {
+	void (*ne_cb)(void*);
+	void *ne_arg;
+	const char *ne_name;
+	struct event *ne_event;
+};
+
+static void schedule_event_now_cb(evutil_socket_t fd UNUSED,
+				  short events UNUSED,
+				  void *arg)
+{
+	struct now_event *ne = (struct now_event *)arg;
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("executing now-event %s", ne->ne_name));
+	ne->ne_cb(ne->ne_arg);
+	event_del(ne->ne_event);
+	pfree(ne);
+}
+
+void pluto_event_now(const char *name, void (*cb)(void*), void*arg)
+{
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("scheduling now-event %s", name));
+	struct now_event *ne = alloc_thing(struct now_event, name);
+	ne->ne_cb = cb;
+	ne->ne_arg = arg;
+	ne->ne_name = name;
+	static const deltatime_t no_delay = DELTATIME(0);
+	/* use common code, not event_base_once() */
+	ne->ne_event = pluto_event_wraper(NULL_FD, EV_TIMEOUT,
+					  schedule_event_now_cb, ne,
+					  &no_delay);
+}
+
+/*
  * XXX: custom version of event new used only by timer.c.  If you're
  * looking for how to set up a timer, then don't look here and don't
  * look at timer.c.  Why?

@@ -63,6 +63,7 @@
 #include "demux.h"		/* needs packet.h */
 #include "log.h"
 #include "timer.h"
+#include "server.h"
 #include "keys.h"
 #include "ipsec_doi.h"	/* needs demux.h and state.h */
 #include "xauth.h"
@@ -1154,12 +1155,9 @@ struct xauth_immediate {
 	char *name;
 	void (*callback)(struct state *st, const char *name,
 			 bool aborted, bool success);
-	struct pluto_event *event;
 };
 
-static void xauth_immediate_callback(evutil_socket_t socket UNUSED,
-				     const short event UNUSED,
-				     void *arg)
+static void xauth_immediate_callback(void *arg)
 {
 	struct xauth_immediate *xauth = (struct xauth_immediate*)arg;
 	struct state *st = state_with_serialno(xauth->serialno);
@@ -1174,7 +1172,6 @@ static void xauth_immediate_callback(evutil_socket_t socket UNUSED,
 		xauth->callback(st, xauth->name, false, xauth->success);
 		reset_cur_state();
 	}
-	delete_pluto_event(&xauth->event);
 	pfree(xauth->name);
 	pfree(xauth);
 }
@@ -1190,9 +1187,7 @@ static void xauth_immediate(const char *name, so_serial_t serialno, bool success
 	xauth->serialno = serialno;
 	xauth->callback = callback;
 	xauth->name = clone_str(name, "xauth next name");
-	static const deltatime_t delay = DELTATIME(0);
-	xauth->event = pluto_event_add(NULL_FD, EV_TIMEOUT, xauth_immediate_callback, xauth,
-				       &delay, "xauth_immediate_callback");
+	pluto_event_now("xauth immediate", xauth_immediate_callback, xauth);
 }
 
 /** Launch an authentication prompt

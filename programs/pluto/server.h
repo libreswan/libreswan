@@ -87,6 +87,7 @@ extern void show_debug_status(void);
 extern void show_fips_status(void);
 extern void call_server(void);
 extern void init_event_base(void);
+extern void pluto_event_now(const char *name, void (*cb)(void*), void *arg);
 typedef void event_callback_routine(evutil_socket_t, const short, void *);
 extern struct event *timer_private_pluto_event_new(evutil_socket_t ft,
 						   short events,
