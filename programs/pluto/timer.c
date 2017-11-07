@@ -960,35 +960,27 @@ void delete_event(struct state *st)
  * This routine places an event in the event list.
  * Delay should really be a deltatime_t but this is easier
  */
-void event_schedule(enum event_type type, deltatime_t dt, struct state *st)
+void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 {
-	struct timeval delay = deltatimeval(dt);
-	/* unexpectedly far away, pexpect will flag in test cases */
-	pexpect(delay.tv_sec < 3600 * 24 * 31);
+	/*
+	 * Scheduling a month into the future is most likely a bug.
+	 * pexpect() causes us to flag this in our test cases
+	 */
+	pexpect(deltasecs(delay) < secs_per_day * 31);
 
 	const char *en = enum_name(&timer_event_names, type);
 	struct pluto_event *ev = alloc_thing(struct pluto_event, en);
 	DBG(DBG_LIFECYCLE, DBG_log("%s: new %s-pe@%p", __func__, en, ev));
 
-	DBG(DBG_LIFECYCLE,
-	    DBG_log("event_schedule called for %jd.%06jd seconds",
-		    (intmax_t) delay.tv_sec, (intmax_t) delay.tv_usec));
-
-	/*
-	 * Scheduling a month into the future is most likely a bug.
-	 * pexpect() causes us to flag this in our test cases
-	 */
-	pexpect(delay.tv_sec < 3600 * 24 * 31);
-
 	ev->ev_type = type;
 	ev->ev_name = en;
 
 	/* ??? ev_time lacks required precision */
-	ev->ev_time = monotimesum(mononow(), deltatime(delay.tv_sec));
+	ev->ev_time = monotimesum(mononow(), delay);
 
 	ev->ev_state = st;
 	ev->ev = timer_private_pluto_event_new(NULL_FD, EV_TIMEOUT,
-					       timer_event_cb, ev, &delay);
+					       timer_event_cb, ev, delay);
 	link_pluto_event_list(ev); /* add to global ist to track */
 
 	/*
@@ -1032,19 +1024,24 @@ void event_schedule(enum event_type type, deltatime_t dt, struct state *st)
 		}
 	}
 
-	if (DBGP(DBG_CONTROL) ||
+	DBG(DBG_LIFECYCLE,
+	    DBG_log("event_schedule called for %jd.%06jd seconds",
+		    (intmax_t) deltasecs(delay),
+		    (intmax_t) (deltamillisecs(delay) % 1000)));
+
+	if (DBGP(DBG_CONTROL) || DBGP(DBG_LIFECYCLE) ||
 	    (DBGP(DBG_RETRANSMITS) && (ev->ev_type == EVENT_v1_RETRANSMIT ||
 				       ev->ev_type == EVENT_v2_RETRANSMIT))) {
 			if (st == NULL) {
-				DBG_log("inserting event %s, timeout in %lu.%06lu seconds",
+				DBG_log("inserting event %s, timeout in %jd.%06jd seconds",
 					en,
-					(unsigned long)delay.tv_sec,
-					(unsigned long)delay.tv_usec);
+					(intmax_t) deltasecs(delay),
+					(intmax_t) (deltamillisecs(delay) % 1000));
 			} else {
-				DBG_log("inserting event %s, timeout in %lu.%06lu seconds for #%lu",
+				DBG_log("inserting event %s, timeout in %jd.%06jd seconds for #%lu",
 					en,
-					(unsigned long)delay.tv_sec,
-					(unsigned long)delay.tv_usec,
+					(intmax_t) deltasecs(delay),
+					(intmax_t) (deltamillisecs(delay) % 1000),
 					ev->ev_state->st_serialno);
 			}
 	}

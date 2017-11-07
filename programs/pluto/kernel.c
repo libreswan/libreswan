@@ -2689,7 +2689,7 @@ void init_kernel(void)
 		 * call process_queue periodically.  Does the order
 		 * matter?
 		 */
-		static const struct timeval delay = {KERNEL_PROCESS_Q_PERIOD, 0};
+		static const deltatime_t delay = DELTATIME(KERNEL_PROCESS_Q_PERIOD);
 
 		/* Note: kernel_ops is read-only but pluto_event_add cannot know that */
 		pluto_event_add(NULL_FD, EV_TIMEOUT | EV_PERSIST,

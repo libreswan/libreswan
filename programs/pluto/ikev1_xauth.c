@@ -1190,7 +1190,7 @@ static void xauth_immediate(const char *name, so_serial_t serialno, bool success
 	xauth->serialno = serialno;
 	xauth->callback = callback;
 	xauth->name = clone_str(name, "xauth next name");
-	const struct timeval delay = { 0, 0 };
+	static const deltatime_t delay = DELTATIME(0);
 	xauth->event = pluto_event_add(NULL_FD, EV_TIMEOUT, xauth_immediate_callback, xauth,
 				       &delay, "xauth_immediate_callback");
 }

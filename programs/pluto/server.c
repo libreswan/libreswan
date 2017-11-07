@@ -518,13 +518,18 @@ void delete_pluto_event(struct pluto_event **evp)
  */
 static struct event *pluto_event_wraper(evutil_socket_t fd, short events,
 				     event_callback_fn cb, void *arg,
-				     const struct timeval *t)
+				     const deltatime_t *delay)
 {
 	struct event *ev = event_new(pluto_eb, fd, events, cb, arg);
-	int r;
-
 	passert(ev != NULL);
-	r = event_add(ev, t);
+
+	int r;
+	if (delay == NULL) {
+		r = event_add(ev, NULL);
+	} else {
+		struct timeval t = deltatimeval(*delay);
+		r = event_add(ev, &t);
+	}
 	passert(r >= 0);
 	return ev;
 }
@@ -536,15 +541,15 @@ static struct event *pluto_event_wraper(evutil_socket_t fd, short events,
  */
 struct event *timer_private_pluto_event_new(evutil_socket_t fd, short events,
 					    event_callback_fn cb, void *arg,
-					    const struct timeval *t)
+					    deltatime_t delay)
 {
-	return pluto_event_wraper(fd, events, cb, arg, t);
+	return pluto_event_wraper(fd, events, cb, arg, &delay);
 }
 
 
 struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
 				    event_callback_fn cb, void *arg,
-				    const struct timeval *delay,
+				    const deltatime_t *delay,
 				    const char *name)
 {
 	struct pluto_event *e = alloc_thing(struct pluto_event, name);
@@ -552,9 +557,8 @@ struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
 	e->ev_name = name;
 	e->ev = pluto_event_wraper(fd, events, cb, arg, delay);
 	link_pluto_event_list(e);
-	if (delay != NULL)
-	{
-		e->ev_time = monotimesum(mononow(), deltatime(delay->tv_sec));
+	if (delay != NULL) {
+		e->ev_time = monotimesum(mononow(), *delay);
 	}
 	return e; /* compaitable with pluto_event_new for the time being */
 }
