@@ -1028,12 +1028,12 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 	    (DBGP(DBG_RETRANSMITS) && (ev->ev_type == EVENT_v1_RETRANSMIT ||
 				       ev->ev_type == EVENT_v2_RETRANSMIT))) {
 			if (st == NULL) {
-				DBG_log("inserting event %s, timeout in %jd.%06jd seconds",
+				DBG_log("inserting event %s, timeout in %jd.%03jd seconds",
 					en,
 					(intmax_t) deltasecs(delay),
 					(intmax_t) (deltamillisecs(delay) % 1000));
 			} else {
-				DBG_log("inserting event %s, timeout in %jd.%06jd seconds for #%lu",
+				DBG_log("inserting event %s, timeout in %jd.%03jd seconds for #%lu",
 					en,
 					(intmax_t) deltasecs(delay),
 					(intmax_t) (deltamillisecs(delay) % 1000),
