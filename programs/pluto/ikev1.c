@@ -246,7 +246,7 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	{ STATE_MAIN_R0, STATE_MAIN_R1,
 	  SMF_ALL_AUTH | SMF_REPLY,
 	  P(SA), P(VID) | P(CR), PT(NONE),
-	  EVENT_v1_RETRANSMIT, main_inI1_outR1 },
+	  EVENT_SO_DISCARD, main_inI1_outR1 },
 
 	/* STATE_MAIN_I1: R1 --> I2
 	 * HDR, SA --> auth dependent
@@ -272,17 +272,17 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	 *	    --> HDR, <Nr_b>PubKey_i, <KE_b>Ke_r, <IDr1_b>Ke_r
 	 */
 	{ STATE_MAIN_R1, STATE_MAIN_R2,
-	  SMF_PSK_AUTH | SMF_DS_AUTH | SMF_REPLY
+	  SMF_PSK_AUTH | SMF_DS_AUTH | SMF_REPLY | SMF_RETRANSMIT_ON_DUPLICATE
 	  , P(KE) | P(NONCE), P(VID) | P(CR) | P(NATD_RFC), PT(NONE)
 	  , EVENT_v1_RETRANSMIT, main_inI2_outR2 },
 
 	{ STATE_MAIN_R1, STATE_UNDEFINED,
-	  SMF_PKE_AUTH | SMF_REPLY,
+	  SMF_PKE_AUTH | SMF_REPLY | SMF_RETRANSMIT_ON_DUPLICATE,
 	  P(KE) | P(ID) | P(NONCE), P(VID) | P(CR) | P(HASH), PT(KE),
 	  EVENT_v1_RETRANSMIT, unexpected /* ??? not yet implemented */ },
 
 	{ STATE_MAIN_R1, STATE_UNDEFINED,
-	  SMF_RPKE_AUTH | SMF_REPLY,
+	  SMF_RPKE_AUTH | SMF_REPLY | SMF_RETRANSMIT_ON_DUPLICATE,
 	  P(NONCE) | P(KE) | P(ID), P(VID) | P(CR) | P(HASH) | P(CERT), PT(
 		  NONCE),
 	  EVENT_v1_RETRANSMIT, unexpected /* ??? not yet implemented */ },
@@ -395,7 +395,7 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	{ STATE_AGGR_R0, STATE_AGGR_R1,
 	  SMF_PSK_AUTH | SMF_DS_AUTH | SMF_REPLY,
 	  P(SA) | P(KE) | P(NONCE) | P(ID), P(VID) | P(NATD_RFC), PT(NONE),
-	  EVENT_v1_RETRANSMIT, aggr_inI1_outR1 },
+	  EVENT_SO_DISCARD, aggr_inI1_outR1 },
 
 	/* STATE_AGGR_I1:
 	 * SMF_PSK_AUTH: HDR, SA, KE, Nr, IDir, HASH_R
@@ -423,13 +423,15 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	 */
 	{ STATE_AGGR_R1, STATE_AGGR_R2,
 	  SMF_PSK_AUTH | SMF_FIRST_ENCRYPTED_INPUT |
-		SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
+		SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2 |
+		SMF_RETRANSMIT_ON_DUPLICATE,
 	  P(HASH), P(VID) | P(NATD_RFC), PT(NONE),
 	  EVENT_SA_REPLACE, aggr_inI2 },
 
 	{ STATE_AGGR_R1, STATE_AGGR_R2,
 	  SMF_DS_AUTH | SMF_FIRST_ENCRYPTED_INPUT |
-		SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
+		SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2 |
+		SMF_RETRANSMIT_ON_DUPLICATE,
 	  P(SIG), P(VID) | P(NATD_RFC), PT(NONE),
 	  EVENT_SA_REPLACE, aggr_inI2 },
 
@@ -903,14 +905,14 @@ void ikev1_echo_hdr(struct msg_digest *md, bool enc, u_int8_t np)
  * Recognise and deal with an IKEv1 duplicate.
  */
 static bool ikev1_duplicate(struct state *st, struct msg_digest *md,
-			    bool retransmit_on_duplicate)
+			    const struct state_microcode *smc)
 {
 	passert(st != NULL);
 	if (st->st_rpacket.ptr != NULL &&
 	    st->st_rpacket.len == pbs_room(&md->packet_pbs) &&
 	    memeq(st->st_rpacket.ptr, md->packet_pbs.start,
 		  st->st_rpacket.len)) {
-		if (retransmit_on_duplicate) {
+		if ((smc->flags & SMF_RETRANSMIT_ON_DUPLICATE)) {
 			if (st->st_retransmit < MAXIMUM_v1_ACCEPTED_DUPLICATES) {
 				st->st_retransmit++;
 				loglog(RC_RETRANSMISSION,
@@ -992,6 +994,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				SEND_NOTIFICATION(INVALID_FLAGS);
 				return;
 			}
+
 			/*
 			 * If there is already an existing state with
 			 * this ICOOKIE, asssume it is some sort of
@@ -1000,7 +1003,10 @@ void process_v1_packet(struct msg_digest **mdp)
 			st = find_state_ikev1_init(md->hdr.isa_icookie,
 						   md->hdr.isa_msgid);
 			if (st != NULL) {
-				if (!ikev1_duplicate(st, md, true)) {
+				passert(STATE_IKE_FLOOR <= st->st_state &&
+					st->st_state <= STATE_IKEv1_ROOF);
+				smc = ike_microcode_index[st->st_state - STATE_IKE_FLOOR];
+				if (!ikev1_duplicate(st, md, smc)) {
 					/*
 					 * Not a duplicate for the
 					 * current state; assume that
@@ -1599,7 +1605,7 @@ void process_v1_packet(struct msg_digest **mdp)
 	 * that they are idempotent!
 	 */
 	if (st != NULL &&
-	    ikev1_duplicate(st, md, (smc->flags & SMF_RETRANSMIT_ON_DUPLICATE))) {
+	    ikev1_duplicate(st, md, smc)) {
 		return;
 	}
 
@@ -2479,6 +2485,10 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 						kind = EVENT_SA_EXPIRE;
 					}
 				}
+				break;
+
+			case EVENT_SO_DISCARD:
+				delay_ms = deltamillisecs(c->r_timeout);
 				break;
 
 			default:

@@ -160,11 +160,7 @@ static void retransmit_v1_msg(struct state *st)
 		delay_ms = retrans_delay(st);
 
 	if (delay_ms != 0) {
-		if (st->st_state != STATE_MAIN_R1 && st->st_state != STATE_AGGR_R1) {
-			resend_ike_v1_msg(st, "EVENT_v1_RETRANSMIT");
-		} else {
-			DBG(DBG_CONTROL|DBG_RETRANSMITS, DBG_log("skipped initial reply packet retransmission to avoid amplification attacks"));
-		}
+		resend_ike_v1_msg(st, "EVENT_v1_RETRANSMIT");
 		/* XXX: delay_ms should be deltatime_t */
 		event_schedule(EVENT_v1_RETRANSMIT, deltatime_ms(delay_ms), st);
 	} else {
@@ -870,9 +866,6 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 					(c->policy & POLICY_DONT_REKEY) ?
 						"--dontrekey" : "LATEST!");
 		}
-	}
-	/* FALLTHROUGH */
-	case EVENT_SO_DISCARD:
 		/* Delete this state object.  It must be in the hash table. */
 		if (st->st_ikev2 && IS_IKE_SA(st)) {
 			/* IKEv2 parent, delete children too */
@@ -886,6 +879,23 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 			ikev2_expire_unused_parent(pst);
 		}
 		break;
+	}
+
+	case EVENT_SO_DISCARD:
+	{
+		passert(st != NULL);
+		struct connection *c = st->st_connection;
+		/*
+		 * If there is a screw-up because code forgot to
+		 * update the default event, this log message will be
+		 * wrong.  See hack in insert_state().
+		 */
+		libreswan_log("deleting incomplete state after %jd.%03jd seconds",
+			      (intmax_t) deltasecs(c->r_timeout),
+			      (intmax_t) deltamillisecs(c->r_timeout) % 1000);
+		delete_state(st);
+		break;
+	}
 
 	case EVENT_DPD:
 		dpd_event(st);
