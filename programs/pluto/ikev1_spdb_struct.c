@@ -154,6 +154,96 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 
 #endif
 
+static err_t check_kernel_encrypt_alg(const struct encrypt_desc *encrypt,
+				      unsigned int key_len)
+{
+	int alg_id = encrypt->common.id[IKEv1_ESP_ID];
+	err_t ugh = NULL;
+
+	/*
+	 * test #1: encrypt algo must be present
+	 */
+
+	if (!ESP_EALG_PRESENT(alg_id)) {
+		DBG(DBG_KERNEL,
+			DBG_log("check_kernel_encrypt_alg(%d,%d): alg not present in system",
+				alg_id, key_len);
+			);
+		ugh = "encryption alg not present in kernel";
+	} else {
+		/*
+		 * XXX: Pretty much all of the code below is bogus.
+		 * Can instead just ask the IKE_ALG if the key_length
+		 * is valid.  See IKEv2.
+		 */
+		struct sadb_alg *alg_p = kernel_alg_esp_sadb_alg(alg_id);
+
+		passert(alg_p != NULL);
+		switch (alg_id) {
+		case ESP_AES_GCM_8:
+		case ESP_AES_GCM_12:
+		case ESP_AES_GCM_16:
+		case ESP_AES_CCM_8:
+		case ESP_AES_CCM_12:
+		case ESP_AES_CCM_16:
+		case ESP_AES_CTR:
+		case ESP_CAMELLIA:
+			/* ??? does 0 make sense here? */
+			if (key_len != 0 && key_len != 128 &&
+			    key_len != 192 && key_len != 256) {
+				/* ??? function name does not belong in log */
+				ugh = builddiag("kernel_alg_db_add() key_len is incorrect: alg_id=%d, key_len=%d, alg_minbits=%d, alg_maxbits=%d",
+						alg_id, key_len,
+						alg_p->sadb_alg_minbits,
+						alg_p->sadb_alg_maxbits);
+			}
+			break;
+
+		/* ESP_SEED_CBC not supported by us - also number got re-used in IKEv2 */
+
+		case ESP_CAST:
+			if (key_len != 128) {
+				/* ??? function name does not belong in log */
+				ugh = builddiag("kernel_alg_db_add() key_len is incorrect: alg_id=%d, key_len=%d, alg_minbits=%d, alg_maxbits=%d",
+						alg_id, key_len,
+						alg_p->sadb_alg_minbits,
+						alg_p->sadb_alg_maxbits);
+			}
+			break;
+		default:
+			/* old behaviour - not necc. correct */
+			if (key_len != 0 &&
+			    (key_len < alg_p->sadb_alg_minbits ||
+			     key_len > alg_p->sadb_alg_maxbits)) {
+				/* ??? function name does not belong in log */
+				ugh = builddiag("kernel_alg_db_add() key_len not in range: alg_id=%d, key_len=%d, alg_minbits=%d, alg_maxbits=%d",
+					alg_id, key_len,
+					alg_p->sadb_alg_minbits,
+					alg_p->sadb_alg_maxbits);
+			}
+		}
+
+		if (ugh != NULL) {
+			DBG(DBG_KERNEL,
+				DBG_log("check_kernel_encrypt_alg(%d,%d): %s alg_id=%d, alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, res=%d",
+					alg_id, key_len, ugh,
+					alg_p->sadb_alg_id,
+					alg_p->sadb_alg_ivlen,
+					alg_p->sadb_alg_minbits,
+					alg_p->sadb_alg_maxbits,
+					alg_p->sadb_alg_reserved);
+				);
+		} else {
+			DBG(DBG_KERNEL,
+				DBG_log("check_kernel_encrypt_alg(%d,%d): OK",
+					alg_id, key_len);
+				);
+		}
+	}
+
+	return ugh;
+}
+
 /** output an attribute (within an SA) */
 /* Note: ikev2_out_attr is a clone, with the same bugs */
 static bool out_attr(int type,
@@ -2115,9 +2205,9 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			}
 		}
 
-		err_t ugh = check_kernel_encrypt_alg(
-				attrs->transattrs.ta_ikev1_encrypt,
-				attrs->transattrs.enckeylen);
+		err_t ugh = check_kernel_encrypt_alg
+			(attrs->transattrs.ta_encrypt,
+			 attrs->transattrs.enckeylen);
 		if (ugh != NULL) {
 			loglog(RC_LOG_SERIOUS,
 				"IPsec encryption transform rejected: %s",
@@ -2570,9 +2660,9 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				ugh = "no alg";
 
 				if (c->alg_info_esp != NULL) {
-					ugh = check_kernel_encrypt_alg(
-						esp_attrs.transattrs.ta_ikev1_encrypt,
-						esp_attrs.transattrs.enckeylen);
+					ugh = check_kernel_encrypt_alg
+						(esp_attrs.transattrs.ta_encrypt,
+						 esp_attrs.transattrs.enckeylen);
 				}
 
 				if (ugh != NULL) {
