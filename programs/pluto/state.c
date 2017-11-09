@@ -590,16 +590,6 @@ void insert_state(struct state *st)
 		    st->st_serialno))
 
 	add_state_to_db(st);
-
-	/*
-	 * Ensure that somebody is in charge of killing this state:
-	 * if no event is scheduled for it, schedule one to discard the state.
-	 * If nothing goes wrong, this event will be replaced by
-	 * a more appropriate one.
-	 */
-	if (st->st_event == NULL)
-		event_schedule_s(EVENT_SO_DISCARD, 0, st);
-
 	refresh_state(st);
 }
 
@@ -623,12 +613,6 @@ void rehash_state(struct state *st, const u_char *icookie,
 	rehash_state_cookies_in_db(st);
 	/* just logs change */
 	refresh_state(st);
-	/*
-	 * insert_state has this, and this code once called
-	 * insert_state.  Is it still needed?
-	 */
-	if (st->st_event == NULL)
-		event_schedule_s(EVENT_SO_DISCARD, 0, st);
 }
 
 /*
