@@ -11,7 +11,7 @@
  * Copyright (C) 2008 Neil Horman <nhorman@redhat.com>
  * Copyright (C) 2008-2010 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2006-2010 Paul Wouters <paul@xelerance.com>
- * Copyright (C) 2010,2013,2014 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2010-2017 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2010 Mika Ilmaranta <ilmis@foobar.fi>
  * Copyright (C) 2010 Roman Hoog Antink <rha@open.ch>
  * Copyright (C) 2010 D. Hugh Redelmeier
@@ -87,7 +87,7 @@
 
 /* required for Linux 2.6.26 kernel and later */
 #ifndef XFRM_STATE_AF_UNSPEC
-#define XFRM_STATE_AF_UNSPEC    32
+#define XFRM_STATE_AF_UNSPEC 32
 #endif
 
 /* Minimum priority number in SPD used by pluto. */
@@ -104,9 +104,9 @@ enum nic_offload_state {
 };
 
 static struct {
-       unsigned int bit;
-       unsigned int total_blocks;
-       enum nic_offload_state state;
+	unsigned int bit;
+	unsigned int total_blocks;
+	enum nic_offload_state state;
 } netlink_esp_hw_offload;
 #endif
 
@@ -150,7 +150,7 @@ struct netlink_name {
 };
 
 static const char *find_netlink_name(const struct netlink_name *table,
-				     const struct ike_alg *alg)
+				const struct ike_alg *alg)
 {
 	for (; table->alg != NULL; table++) {
 		if (table->alg == alg) {
@@ -289,12 +289,12 @@ static void init_netlink(void)
 
 	if (fcntl(netlink_bcast_fd, F_SETFD, FD_CLOEXEC) != 0)
 		EXIT_LOG_ERRNO(errno,
-			       "fcntl(FD_CLOEXEC) for bcast in init_netlink()");
+			"fcntl(FD_CLOEXEC) for bcast in init_netlink()");
 
 
 	if (fcntl(netlink_bcast_fd, F_SETFL, O_NONBLOCK) != 0)
 		EXIT_LOG_ERRNO(errno,
-			       "fcntl(O_NONBLOCK) for bcast in init_netlink()");
+			"fcntl(O_NONBLOCK) for bcast in init_netlink()");
 
 
 	addr.nl_family = AF_NETLINK;
@@ -322,7 +322,7 @@ static void init_netlink(void)
 	 * crypto module gets loaded.
 	 */
 	DBG(DBG_KERNEL,
-	    DBG_log("Hard-wiring new AEAD algorithms"));
+		DBG_log("Hard-wiring new AEAD algorithms"));
 
 	kernel_encrypt_add(&ike_alg_encrypt_aes_gcm_8);
 	kernel_encrypt_add(&ike_alg_encrypt_aes_gcm_12);
@@ -333,7 +333,7 @@ static void init_netlink(void)
 	kernel_encrypt_add(&ike_alg_encrypt_null_integ_aes_gmac);
 
 	DBG(DBG_KERNEL,
-	    DBG_log("Hard-wiring new INTEG algorithms"));
+		DBG_log("Hard-wiring new INTEG algorithms"));
 
 	kernel_integ_add(&ike_alg_integ_aes_cmac);
 }
@@ -905,7 +905,7 @@ static void netlink_find_offload_feature(const char *ifname)
 			break;
 		str += ETH_GSTRING_LEN;
 	}
-       if (i >= cmd->len)
+	if (i >= cmd->len)
 		goto out;
 
 	netlink_esp_hw_offload.bit = i;
@@ -1135,7 +1135,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	if (sa->authkeylen != 0) {
 
 		const char *name = find_netlink_name(integ_list,
-						     &sa->integ->common);
+						&sa->integ->common);
 		if (name == NULL) {
 			loglog(RC_LOG_SERIOUS,
 				"NETKEY/XFRM: unknown authentication algorithm: %s",
@@ -1163,7 +1163,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		fill_and_terminate(algo.alg_name, name, sizeof(algo.alg_name));
 		memcpy(RTA_DATA(attr), &algo, sizeof(algo));
 		memcpy((char *)RTA_DATA(attr) + sizeof(algo),
-		       sa->authkey, sa->authkeylen);
+			sa->authkey, sa->authkeylen);
 
 		req.n.nlmsg_len += attr->rta_len;
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
@@ -1196,7 +1196,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	} else if (sa->esatype == ET_ESP) {
 		const char *name = find_netlink_name(encrypt_list,
-						     &sa->encrypt->common);
+						&sa->encrypt->common);
 		if (name == NULL) {
 			loglog(RC_LOG_SERIOUS,
 				"unknown encryption algorithm: %s",
@@ -1207,7 +1207,8 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		if (ike_alg_is_aead(sa->encrypt)) {
 			struct xfrm_algo_aead algo;
 
-			fill_and_terminate(algo.alg_name, name, sizeof(algo.alg_name));
+			fill_and_terminate(algo.alg_name, name,
+					sizeof(algo.alg_name));
 			algo.alg_key_len = sa->enckeylen * BITS_PER_BYTE;
 			algo.alg_icv_len = sa->encrypt->aead_tag_size * BITS_PER_BYTE;
 
@@ -1215,8 +1216,8 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 			attr->rta_len = RTA_LENGTH(sizeof(algo) + sa->enckeylen);
 
 			memcpy(RTA_DATA(attr), &algo, sizeof(algo));
-			memcpy((char *)RTA_DATA(attr) + sizeof(algo), sa->enckey,
-			       sa->enckeylen);
+			memcpy((char *)RTA_DATA(attr) + sizeof(algo),
+				sa->enckey, sa->enckeylen);
 
 			req.n.nlmsg_len += attr->rta_len;
 			attr = (struct rtattr *)((char *)attr + attr->rta_len);
@@ -1224,14 +1225,16 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		} else {
 			struct xfrm_algo algo;
 
-			fill_and_terminate(algo.alg_name, name, sizeof(algo.alg_name));
+			fill_and_terminate(algo.alg_name, name,
+					sizeof(algo.alg_name));
 			algo.alg_key_len = sa->enckeylen * BITS_PER_BYTE;
 
 			attr->rta_type = XFRMA_ALG_CRYPT;
 			attr->rta_len = RTA_LENGTH(sizeof(algo) + sa->enckeylen);
 
 			memcpy(RTA_DATA(attr), &algo, sizeof(algo));
-			memcpy((char *)RTA_DATA(attr) + sizeof(algo), sa->enckey,
+			memcpy((char *)RTA_DATA(attr) + sizeof(algo),
+				sa->enckey,
 			sa->enckeylen);
 
 			req.n.nlmsg_len += attr->rta_len;
@@ -1239,9 +1242,10 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 
 			/* Traffic Flow Confidentiality is only for ESP tunnel mode */
 			if (sa->tfcpad != 0 &&
-			    sa->encapsulation == ENCAPSULATION_MODE_TUNNEL) {
-				DBG(DBG_KERNEL, DBG_log("netlink: setting TFC to %" PRIu32 " (up to PMTU)",
-							sa->tfcpad));
+				sa->encapsulation == ENCAPSULATION_MODE_TUNNEL) {
+				DBG(DBG_KERNEL,
+					DBG_log("netlink: setting TFC to %" PRIu32 " (up to PMTU)",
+						sa->tfcpad));
 
 				attr->rta_type = XFRMA_TFCPAD;
 				attr->rta_len = RTA_LENGTH(sizeof(sa->tfcpad));
@@ -2252,8 +2256,8 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 				 */
 				for (q = q->next; q; q = q->next) {
 					if (streq(q->ip_dev->id_rname, ifp->name) &&
-					    streq(q->ip_dev->id_vname, v->name) &&
-					    sameaddr(&q->ip_addr, &ifp->addr))
+						streq(q->ip_dev->id_vname, v->name) &&
+						sameaddr(&q->ip_addr, &ifp->addr))
 						q->change = IFN_KEEP;
 				}
 
