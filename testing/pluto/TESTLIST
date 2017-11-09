@@ -906,3 +906,10 @@ kvmplutotest	ipsec-hostkey-ckaid-01		good
 kvmplutotest	ipsec-hostkey-ckaid-02-fips	good
 kvmplutotest	ipsec-hostkey-ckaid-03-nsspw	good
 
+# TCP tests
+kvmplutotest	ikev2-03-basic-rawrsa-tcp	wip
+kvmplutotest	ikev2-04-basic-x509-tcp		wip
+kvmplutotest	ikev2-05-basic-psk-tcp		wip
+kvmplutotest	ikev2-17-rekey-ipsec-tcp	wip
+kvmplutotest	ikev2-25-rw-nat-tcp		wip
+
