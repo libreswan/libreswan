@@ -11,6 +11,7 @@
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -560,6 +561,14 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	if (conn->options_set[KBF_NFLOG_CONN])
 		msg.nflog_group = conn->options[KBF_NFLOG_CONN];
 
+	if (conn->options_set[KBF_TCPREMOTE]){
+		msg.remote_tcpport = conn->options[KBF_TCPREMOTE];
+	}
+
+	if (conn->options_set[KBF_TCPONLY]){
+		msg.tcponly = conn->options[KBF_TCPONLY];
+	}
+
 	if (conn->options_set[KBF_REQID]) {
 		if (conn->options[KBF_REQID] <= 0 ||
 		    conn->options[KBF_REQID] > IPSEC_MANUAL_REQID_MAX) {
@@ -719,8 +728,8 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.esp = conn->esp;
 	msg.ike = conn->ike;
 
-
 	r = send_whack_msg(&msg, cfg->ctlsocket);
+
 	if (r != 0)
 		return r;
 

@@ -12,6 +12,7 @@
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -54,6 +55,9 @@
 
 #include <event2/event.h>
 #include <event2/event_struct.h>
+#include <event2/listener.h>
+#include <event2/bufferevent.h>
+#include <event2/buffer.h>
 #include <event2/thread.h>
 
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
@@ -292,9 +296,14 @@ void free_ifaces(void)
 
 struct raw_iface *static_ifn = NULL;
 
-int create_socket(struct raw_iface *ifp, const char *v_name, int port)
+int create_socket(struct raw_iface *ifp, const char *v_name, int port, int proto)
 {
-	int fd = socket(addrtypeof(&ifp->addr), SOCK_DGRAM, IPPROTO_UDP);
+	int fd;
+	if (proto == IPPROTO_UDP) {
+		fd = socket(addrtypeof(&ifp->addr), SOCK_DGRAM, IPPROTO_UDP);
+	} else {
+		fd = socket(addrtypeof(&ifp->addr), SOCK_STREAM, IPPROTO_TCP);
+	}
 	int fcntl_flags;
 	static const int on = TRUE;     /* by-reference parameter; constant, we hope */
 	static const int so_prio = 6; /* rumored maximum priority, might be 7 on linux? */
@@ -654,6 +663,130 @@ void timer_list(void)
 	}
 }
 
+void event_cb(struct bufferevent *bev,
+		short events, void *arg UNUSED)
+{
+    if (events & BEV_EVENT_ERROR)
+            libreswan_log("There was an error in a bufferevent operation");
+    if (events & (BEV_EVENT_EOF | BEV_EVENT_ERROR)) {
+            bufferevent_free(bev);
+    }
+}
+
+
+stf_status create_tcp_interface(struct state *st)
+{
+	int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+	evutil_make_socket_nonblocking(fd);
+
+	connect(fd, sockaddrof(&st->st_remoteaddr), sizeof(struct sockaddr));
+
+	/* Adding a socket bypass policy */
+	struct sadb_x_policy policy;
+	int level, opt;
+
+	zero(&policy);
+	policy.sadb_x_policy_len = sizeof(policy) /
+					 IPSEC_PFKEYv2_ALIGN;
+	policy.sadb_x_policy_exttype = SADB_X_EXT_POLICY;
+	policy.sadb_x_policy_type = IPSEC_POLICY_BYPASS;
+	policy.sadb_x_policy_dir = IPSEC_DIR_INBOUND;
+	policy.sadb_x_policy_id = 0;
+
+	level = IPPROTO_IP;
+	opt = IP_IPSEC_POLICY;
+
+	if (setsockopt(fd, level, opt, &policy, sizeof(policy)) < 0) {
+		LOG_ERRNO(errno,
+		 	  "setsockopt IPSEC_POLICY in create_tcp_interface()");
+		return STF_FATAL;
+	}
+
+	policy.sadb_x_policy_dir = IPSEC_DIR_OUTBOUND;
+
+	if (setsockopt(fd, level, opt, &policy, sizeof(policy)) < 0) {
+		LOG_ERRNO(errno,
+			  "setsockopt IPSEC_POLICY in create_tcp_interface()");
+		return STF_FATAL;
+	}
+
+	struct iface_port *ifp = NULL;
+	ifp = alloc_thing(struct iface_port, "struct iface_port");
+
+	ifp->ip_dev = st->st_interface->ip_dev;
+
+	ifp->fd = fd;
+
+	struct sockaddr_in myaddr;
+
+	socklen_t addr_size = sizeof(myaddr);
+
+	getsockname(ifp->fd, (struct sockaddr *)&myaddr, &addr_size);
+
+	ifp->ip_addr.u.v4 = myaddr;
+
+	ifp->proto = IPPROTO_TCP;
+	ifp->change = IFN_ADD;
+	ifp->port = ntohs(portof(&ifp->ip_addr));
+	ifp->ike_float = TRUE;
+
+	ifp->bev = bufferevent_socket_new(pluto_eb, ifp->fd , BEV_OPT_CLOSE_ON_FREE);
+
+	if (ifp->bev == NULL){
+		libreswan_log("bufferevent could not be created");
+		close(ifp->fd);
+		pfree(ifp);
+		return STF_FATAL;
+	}
+
+	bufferevent_setcb(ifp->bev, read_cb, NULL, event_cb, ifp);
+	bufferevent_enable(ifp->bev, EV_READ|EV_WRITE);
+
+	/* Socket is now connected, send the IKETCP stream */
+
+	char temp[IKETCP_STREAM_PREFIX_LENGTH] = "IKETCP";
+	
+	int ret = bufferevent_write(ifp->bev, (void *)temp, IKETCP_STREAM_PREFIX_LENGTH);
+	if (ret == -1) {
+		libreswan_log("Couldn't send stream prefix, closing connection");
+		bufferevent_free(ifp->bev);
+		pfree(ifp);
+		return STF_FATAL;
+	} 
+	st->st_interface = ifp;
+	st->st_localaddr = ifp->ip_addr;
+	st->st_localport = ntohs(portof(&ifp->ip_addr));
+
+	return STF_OK;
+}
+
+static void accept_conn_cb(struct evconnlistener *listener UNUSED,
+		evutil_socket_t fd, struct sockaddr *address UNUSED, int socklen UNUSED,
+		void *arg)
+{
+	struct iface_port *ifp = NULL;
+	ifp = alloc_thing(struct iface_port, "struct iface_port");
+
+	memcpy(ifp,(struct iface_port *)arg,sizeof(struct iface_port));
+
+	ifp->bev = bufferevent_socket_new(
+		pluto_eb, fd, BEV_OPT_CLOSE_ON_FREE);
+
+ 	if (ifp->bev == NULL){
+		libreswan_log("couldn't create bufferevent, exit");
+		close(fd);
+		pfree(ifp);
+		return;
+	}
+
+	ifp->fd = fd;
+
+	bufferevent_setcb(ifp->bev, read_prefix_cb, NULL, event_cb, ifp);
+
+	bufferevent_enable(ifp->bev, EV_READ|EV_WRITE);
+}
+
 void find_ifaces(void)
 {
 	struct iface_port *ifp;
@@ -687,11 +820,19 @@ void find_ifaces(void)
 				5 + 1 + 1 /* : + NUL */];
 			snprintf(ifp_str, sizeof(ifp_str), "%s:%u",
 					ifp->ip_dev->id_rname, ifp->port);
-			ifp->pev = pluto_event_add(ifp->fd,
+			if (ifp->proto == IPPROTO_UDP) {
+				ifp->pev = pluto_event_add(ifp->fd,
 					EV_READ | EV_PERSIST, comm_handle_cb,
 					ifp, NULL, ifp_str);
-			DBG_log("setup callback for interface %s fd %d",
-					ifp_str, ifp->fd);
+			} else {
+				struct evconnlistener *tcp_listener = evconnlistener_new(
+					pluto_eb, accept_conn_cb, ifp, LEV_OPT_CLOSE_ON_FREE,
+					-1, ifp->fd);
+				passert(tcp_listener!=NULL);
+			}
+			DBG(DBG_CONTROL, DBG_log("setup callback for interface %s fd %d on %s",
+					ifp_str, ifp->fd,
+					ifp->proto == IPPROTO_UDP ? "UDP" : "TCP"));
 		}
 	}
 }
@@ -1444,6 +1585,11 @@ static bool send_packet(struct state *st, const char *where,
 	 */
 	size_t natt_bonus;
 
+	/* We need to send the length of packet if using TCP
+	 * tcp_packetsize is the size of the tcp length field in the header
+	 */
+	u_int16_t tcp_packetsize;
+
 	if (st->st_interface == NULL) {
 		libreswan_log("Cannot send packet - interface vanished!");
 		return FALSE;
@@ -1465,8 +1611,10 @@ static bool send_packet(struct state *st, const char *where,
 				  st->st_interface->ike_float ?
 				  NON_ESP_MARKER_SIZE : 0;
 
+	tcp_packetsize = st->st_interface->proto == IPPROTO_TCP ? IKE_TCP_LENGTH_FIELD_SIZE : 0;
+
 	const u_int8_t *ptr;
-	size_t len = natt_bonus + alen + blen;
+	size_t len = tcp_packetsize + natt_bonus + alen + blen;
 	ssize_t wlen;
 
 	if (len > MAX_OUTPUT_UDP_SIZE) {
@@ -1474,17 +1622,22 @@ static bool send_packet(struct state *st, const char *where,
 		return FALSE;
 	}
 
+	size_t network_len = htons(len);
+
 	if (len != alen) {
 		/* copying required */
 
-		/* 1. non-ESP Marker (0x00 octets) */
-		memset(buf, 0x00, natt_bonus);
+		/* 1. packet length in header for TCP*/
+		memcpy(buf, &network_len, tcp_packetsize);
 
-		/* 2. chunk a */
-		memcpy(buf + natt_bonus, aptr, alen);
+		/* 2. non-ESP Marker (0x00 octets) */
+		memset(buf + tcp_packetsize, 0x00, natt_bonus);
 
-		/* 3. chunk b */
-		memcpy(buf + natt_bonus + alen, bptr, blen);
+		/* 3. chunk a */
+		memcpy(buf + tcp_packetsize + natt_bonus, aptr, alen);
+
+		/* 4. chunk b */
+		memcpy(buf + tcp_packetsize + natt_bonus + alen, bptr, blen);
 
 		ptr = buf;
 	} else {
@@ -1493,9 +1646,10 @@ static bool send_packet(struct state *st, const char *where,
 
 	DBG(DBG_CONTROL | DBG_RAW, {
 		ipstr_buf b;
-		DBG_log("sending %zu bytes for %s through %s:%d to %s:%u (using #%lu)",
+		DBG_log("sending %zu bytes for %s through %s %s:%d to %s:%u (using #%lu)",
 			len,
 			where,
+			st->st_interface->proto == IPPROTO_TCP ? "TCP" : "UDP",
 			st->st_interface->ip_dev->id_rname,
 			st->st_interface->port,
 			sensitive_ipstr(&st->st_remoteaddr, &b),
@@ -1510,19 +1664,24 @@ static bool send_packet(struct state *st, const char *where,
 	(void) check_msg_errqueue(st->st_interface, POLLOUT, "sending a packet");
 #endif  /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
 
-	wlen = sendto(st->st_interface->fd,
+	if (st->st_interface->proto == IPPROTO_TCP && st->st_interface->bev != NULL) {
+		wlen = bufferevent_write(st->st_interface->bev,(void *)ptr,len);
+	} else {
+		wlen = sendto(st->st_interface->fd,
 		      ptr,
 		      len, 0,
 		      sockaddrof(&st->st_remoteaddr),
 		      sockaddrlenof(&st->st_remoteaddr));
+	}
 
 	if (wlen != (ssize_t)len) {
 		if (!just_a_keepalive) {
 			ipstr_buf b;
-			LOG_ERRNO(errno, "sendto on %s to %s:%u failed in %s",
+			LOG_ERRNO(errno, "sendto on %s to %s:%u via %s failed in %s",
 				  st->st_interface->ip_dev->id_rname,
 				  sensitive_ipstr(&st->st_remoteaddr, &b),
 				  st->st_remoteport,
+				  st->st_interface->proto == IPPROTO_TCP ? "TCP" : "UDP",
 				  where);
 		}
 		return FALSE;

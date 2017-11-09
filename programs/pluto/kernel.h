@@ -5,6 +5,7 @@
  * Copyright (C) 2013 Kim Heino <b@bbbs.net>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -233,7 +234,7 @@ struct kernel_ops {
 	bool (*v6holes)();
 };
 
-extern int create_socket(struct raw_iface *ifp, const char *v_name, int port);
+extern int create_socket(struct raw_iface *ifp, const char *v_name, int port, int proto);
 
 #ifndef IPSECDEVPREFIX
 # define IPSECDEVPREFIX "ipsec"

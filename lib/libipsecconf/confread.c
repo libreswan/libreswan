@@ -14,6 +14,7 @@
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -130,6 +131,10 @@ void ipsecconf_default_values(struct starter_config *cfg)
 
 	cfg->conn_default.options[KBF_IKEV1_NATT] = natt_both;
 	cfg->conn_default.options[KBF_ENCAPS] = encaps_auto;
+
+	cfg->conn_default.options[KBF_TCPONLY] = FALSE;
+	cfg->conn_default.options[KBF_TCPREMOTE] = 0;
+
 
 	/* Network Manager support */
 #ifdef HAVE_NM

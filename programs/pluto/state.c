@@ -18,6 +18,7 @@
  * Copyright (C) 2015-2017 Antony Antony <antony@phenome.org>
  * Copyright (C) 2015-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2017 Richard Guy Briggs <rgb@tricolour.ca>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -40,6 +41,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
+
+#include <event2/bufferevent.h>
 
 #include <libreswan.h>
 
@@ -89,6 +92,7 @@ static void update_state_stats(struct state *st, enum state_kind old_state,
 
 u_int16_t pluto_port = IKE_UDP_PORT;	/* Pluto's port */
 u_int16_t pluto_nat_port = NAT_IKE_UDP_PORT;	/* Pluto's NAT-T port */
+u_int16_t pluto_tcpport = 0; /* Pluto's TCP port */
 
 /*
  * default global NFLOG group - 0 means no logging
@@ -827,6 +831,13 @@ static void delete_state_log(struct state *st)
 
 }
 
+static void write_cb(struct bufferevent *bev UNUSED, void *arg UNUSED)
+{
+	struct iface_port *ifp = (struct iface_port *)arg;
+	bufferevent_free(bev);
+	pfree(ifp);
+}
+
 /* delete a state object */
 void delete_state(struct state *st)
 {
@@ -1044,6 +1055,13 @@ void delete_state(struct state *st)
 	change_state(st, STATE_UNDEFINED);
 
 	release_whack(st);
+
+    /* Freeing bufferevent */
+
+	if (st->st_interface->proto == IPPROTO_TCP && IS_PARENT_SA(st)) {
+		bufferevent_setcb(st->st_interface->bev, read_cb, 
+					write_cb, event_cb, (void *)st->st_interface);
+	}
 
 	/* from here on we are just freeing RAM */
 

@@ -11,6 +11,7 @@
  * Copyright (C) 2013-2016 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013-2016 Antony Antony <antony@phenome.org>
  * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -162,6 +163,9 @@ enum keyword_numeric_config_field {
 	KBF_VTI_ROUTING,	/* let updown do routing into VTI device */
 	KBF_VTI_SHARED,		/* VTI device is shared - enable checks and disable cleanup */
 	KBF_NIC_OFFLOAD,	/* xfrm offload to network device */
+	KBF_TCPPORT,
+	KBF_TCPONLY,
+	KBF_TCPREMOTE,
 	KBF_MAX
 };
 

@@ -2,6 +2,7 @@
  * Copyright (C) 1998-2001,2013  D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,6 +21,7 @@
 #include <sys/queue.h>
 #include <event2/event.h>	/* from libevent devel */
 #include <event2/event_struct.h>
+#include <event2/bufferevent.h>
 #include "timer.h"
 
 extern char *pluto_vendorid;
@@ -32,6 +34,9 @@ extern struct sockaddr_un info_addr;    /* address of control (info) socket */
 
 extern err_t init_ctl_socket(void);
 extern void delete_ctl_socket(void);
+
+extern void event_cb(struct bufferevent *bev, short events, void *arg);
+extern stf_status create_tcp_interface(struct state *st);
 
 extern bool listening;  /* should we pay attention to IKE messages? */
 extern enum ddos_mode pluto_ddos_mode; /* auto-detect or manual? */
@@ -73,6 +78,8 @@ struct iface_port {
 	bool ike_float;
 	enum { IFN_ADD, IFN_KEEP, IFN_DELETE } change;
 	struct pluto_event *pev;
+	struct bufferevent *bev;
+	int proto;
 };
 
 extern struct iface_port  *interfaces;   /* public interfaces */

@@ -3,6 +3,7 @@
  * Copyright (C) 1998-2002  D. Hugh Redelmeier.
  * Copyright (C) 2003 Herbert Xu.
  * Copyright (C) 2017 Richard Guy Briggs <rgb@tricolour.ca>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -274,7 +275,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 
 				vname = clone_str(useful_mast_name,
 						  "virtual device name mast");
-				fd = create_socket(ifp, vname, pluto_port);
+				fd = create_socket(ifp, vname, pluto_port, IPPROTO_UDP);
 
 				if (fd < 0)
 					break;
@@ -320,7 +321,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 				if (addrtypeof(&ifp->addr) == AF_INET) {
 					fd = create_socket(ifp,
 							   q->ip_dev->id_vname,
-							   pluto_nat_port);
+							   pluto_nat_port, IPPROTO_UDP);
 					if (fd < 0) {
 						libreswan_log(
 							"failed to create socket for NAT-T: %s",

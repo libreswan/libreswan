@@ -12,6 +12,7 @@
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -255,6 +256,9 @@ struct connection {
 	bool sha2_truncbug;
 	enum ikev1_natt_policy ikev1_natt; /* whether or not to send IKEv1 draft/rfc NATT VIDs */
 	enum encaps_options encaps; /* encapsulation mode of auto/yes/no - formerly forceencaps=yes/no */
+
+	bool tcponly;
+	int remote_tcpport;
 
 	/* Network Manager support */
 #ifdef HAVE_NM

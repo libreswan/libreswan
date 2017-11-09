@@ -3,6 +3,7 @@
  * Copyright (C) 2005-2008 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -26,6 +27,8 @@ struct state;   /* forward declaration of tag */
 
 extern void init_demux(void);
 extern event_callback_routine comm_handle_cb;
+extern void read_cb(struct bufferevent *bev, void *arg);
+extern void read_prefix_cb(struct bufferevent *bev, void *arg);
 
 extern pb_stream reply_stream;
 extern u_int8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];

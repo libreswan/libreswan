@@ -18,6 +18,7 @@
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  * Copyright (C) 2015-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1662,6 +1663,10 @@ void add_connection(const struct whack_message *wm)
 		c->send_ca = wm->send_ca;
 		c->xauthby = wm->xauthby;
 		c->xauthfail = wm->xauthfail;
+
+		/* RFC 8229 TCP encap*/
+		c->remote_tcpport = wm->remote_tcpport;
+		c->tcponly = wm->tcponly;
 
 		c->modecfg_dns1 = wm->modecfg_dns1;
 		c->modecfg_dns2 = wm->modecfg_dns2;

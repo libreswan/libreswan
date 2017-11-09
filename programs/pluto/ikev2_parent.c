@@ -14,6 +14,7 @@
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2015-2017 Andrew Cagney
  * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -729,6 +730,15 @@ stf_status ikev2parent_outI1(int whack_sock,
 	st->st_msgid_lastrecv = v2_INVALID_MSGID;
 	st->st_msgid_nextuse = 0;
 	st->st_try = try;
+
+	if ((try > 1 && c->remote_tcpport) || (c->tcponly && c->remote_tcpport)) {
+		setportof(htons(c->remote_tcpport),&st->st_remoteaddr);
+		st->st_remoteport = c->remote_tcpport;
+
+		stf_status ret = create_tcp_interface(st);
+		if (ret != STF_OK)
+			return ret;
+	}
 
 	if (HAS_IPSEC_POLICY(policy)) {
 #ifdef HAVE_LABELED_IPSEC
@@ -3304,7 +3314,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	close_output_pbs(&md->rbody);
 	close_output_pbs(&reply_stream);
 
-	if (should_fragment_ike_msg(cst, pbs_offset(&reply_stream), TRUE)) {
+	if (should_fragment_ike_msg(cst, pbs_offset(&reply_stream), TRUE) && cst->st_interface->proto == IPPROTO_UDP) {
 		chunk_t payload;
 
 		setchunk(payload, e_pbs_cipher.start, len);
@@ -3838,7 +3848,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 		close_output_pbs(&reply_stream);
 
 		if (should_fragment_ike_msg(cst, pbs_offset(&reply_stream),
-						TRUE)) {
+						TRUE) && cst->st_interface->proto == IPPROTO_UDP) {
 			chunk_t payload;
 
 			setchunk(payload, e_pbs_cipher.start, len);

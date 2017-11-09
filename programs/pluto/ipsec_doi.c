@@ -11,6 +11,7 @@
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2014,2017 Andrew Cagney <cagney@gmail.com>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -588,6 +589,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 		bool nat = st->hidden_variables.st_nat_traversal & NAT_T_DETECTED;
 		bool tfc = c->sa_tfcpad != 0 && !st->st_seen_no_tfc;
 		bool esn = st->st_esp.attrs.transattrs.esn_enabled;
+		bool tcp = st->st_interface->proto == IPPROTO_TCP;
 
 		if (nat)
 			DBG(DBG_NATT, DBG_log("NAT-T: NAT Traversal detected - their IKE port is '%d'",
@@ -598,11 +600,12 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 				bool_str(c->encaps == encaps_yes)));
 
 		snprintf(b, sad_len - (b - sadetails),
-			 "%sESP%s%s%s=>0x%08lx <0x%08lx xfrm=%s_%d-%s",
+			 "%sESP%s%s%s%s=>0x%08lx <0x%08lx xfrm=%s_%d-%s",
 			 ini,
 			 nat ? "/NAT" : "",
 			 esn ? "/ESN" : "",
 			 tfc ? "/TFC" : "",
+			 tcp ? "/TCP" : "",
 			 (unsigned long)ntohl(st->st_esp.attrs.spi),
 			 (unsigned long)ntohl(st->st_esp.our_spi),
 			 st->st_esp.attrs.transattrs.ta_encrypt->common.fqn,

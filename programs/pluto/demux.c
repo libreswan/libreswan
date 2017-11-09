@@ -9,6 +9,7 @@
  * Copyright (C) 2013,2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2015 Antony Antony <antony@phenome.org>
  * Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -33,8 +34,12 @@
 #include <sys/time.h>   /* only used for belt-and-suspenders select call */
 #include <sys/poll.h>   /* only used for forensic poll call */
 #include <sys/socket.h>
+#include <fcntl.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <event2/bufferevent.h>
+#include <event2/buffer.h>
+
 
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
 #  include <asm/types.h>        /* for __u8, __u32 */
@@ -186,6 +191,73 @@ void process_packet(struct msg_digest **mdp)
 	}
 }
 
+void read_cb(struct bufferevent *bev UNUSED, void *arg)
+{
+	struct iface_port *ifp = (struct iface_port *)arg;
+
+	struct msg_digest *md;
+
+	md = alloc_md("msg_digest in bufferevent read_cb");
+	md->iface = ifp;
+
+	if (read_packet(md))
+		process_packet(&md);
+	
+	release_any_md(&md);
+
+	cur_state = NULL;
+	reset_cur_connection();
+	cur_from = NULL;
+	passert(GLOBALS_ARE_RESET());
+}
+
+
+void read_prefix_cb(struct bufferevent *bev UNUSED, void *arg)
+{
+       struct iface_port *ifp = (struct iface_port *)arg;
+
+       bufferevent_disable(ifp->bev, EV_READ | EV_WRITE);
+
+       u_int8_t buf[IKETCP_STREAM_PREFIX_LENGTH];
+
+       struct evbuffer *input = bufferevent_get_input(ifp->bev);
+
+       int prefix_len = evbuffer_remove(input, buf, IKETCP_STREAM_PREFIX_LENGTH);
+
+       if ((prefix_len != IKETCP_STREAM_PREFIX_LENGTH) || strcmp((const char *)buf,"IKETCP")) {
+               /* discard this tcp connection */
+               libreswan_log("Did not receive the TCP stream prefix, closing socket");
+               bufferevent_free(ifp->bev);
+               pfree(ifp);
+               return;
+       }
+
+       libreswan_log("accepting this TCP connection, stream prefix received");
+
+       int len_in_buf = evbuffer_get_length(input);
+
+       if (len_in_buf > 0) {
+
+               struct msg_digest *md;
+
+               md = alloc_md("msg_digest in bufferevent read_prefix_cb");
+               md->iface = ifp;
+
+               if (read_packet(md))
+                       process_packet(&md);
+
+               release_any_md(&md);
+
+               cur_state = NULL;
+               reset_cur_connection();
+               cur_from = NULL;
+               passert(GLOBALS_ARE_RESET());
+       }
+
+       bufferevent_setcb(ifp->bev, read_cb, NULL, event_cb, ifp);
+       bufferevent_enable(ifp->bev, EV_READ|EV_WRITE);
+}
+
 static void comm_handle(const struct iface_port *ifp);
 
 void comm_handle_cb(evutil_socket_t fd UNUSED, const short event UNUSED, void *arg)
@@ -331,16 +403,45 @@ static bool read_packet(struct msg_digest *md)
 	happy(anyaddr(addrtypeof(&ifp->ip_addr), &md->sender));
 	zero(&from.sa);
 
+
+	if (ifp->proto == IPPROTO_TCP) {
+
+		struct evbuffer *input = bufferevent_get_input(ifp->bev);
+		ev_uint16_t len_encoded;
+		int tcp_length = 0;
+
+		int len_in_buf = evbuffer_get_length(input);
+		if (len_in_buf < IKE_TCP_LENGTH_FIELD_SIZE)
+			return FALSE;
+
+		evbuffer_copyout(input, &len_encoded, IKE_TCP_LENGTH_FIELD_SIZE);
+		tcp_length = ntohs(len_encoded);
+
+		if (len_in_buf < tcp_length) {
+			/* The entire packet hasn't arrived yet. */
+			return FALSE;
+		}
+
+		evbuffer_drain(input, IKE_TCP_LENGTH_FIELD_SIZE); /*discard the length field */
+		packet_len = evbuffer_remove(input, bigbuffer, tcp_length-IKE_TCP_LENGTH_FIELD_SIZE);
+
+		/* getting the from address for tcp connections */
+		getpeername(ifp->fd, &from.sa, &from_len);
+
+	} else {
+
 #if defined(HAVE_UDPFROMTO)
-	packet_len = recvfromto(ifp->fd, bigbuffer,
-				sizeof(bigbuffer), /*flags*/ 0,
-				&from.sa, &from_len,
-				&to.sa, &to_len);
+		packet_len = recvfromto(ifp->fd, bigbuffer,
+			sizeof(bigbuffer), /*flags*/ 0,
+			&from.sa, &from_len,
+			&to.sa, &to_len);
 #else
-	packet_len = recvfrom(ifp->fd, bigbuffer,
-			      sizeof(bigbuffer), /*flags*/ 0,
-			      &from.sa, &from_len);
+		packet_len = recvfrom(ifp->fd, bigbuffer,
+			sizeof(bigbuffer), /*flags*/ 0,
+			&from.sa, &from_len);
 #endif
+    		}
+
 
 	/* we do not do anything with *to* addresses yet... we will */
 
@@ -436,8 +537,18 @@ static bool read_packet(struct msg_digest *md)
 			libreswan_log("recvfrom %s:%u has no Non-ESP marker",
 				      ipstr(cur_from, &b),
 				      (unsigned) cur_from_port);
+			/* could be an ESP packet, log here */
+			if (ifp->proto == IPPROTO_TCP){
+				chunk_t espintcp;
+				setchunk(espintcp, _buffer, packet_len);
+				libreswan_log("Received an ESPinTCP packet, TCP encap is working");
+
+				DBG_dump_chunk("ESPinTCP packet", espintcp);
+			}
 			return FALSE;
+
 		}
+
 		_buffer += sizeof(u_int32_t);
 		packet_len -= sizeof(u_int32_t);
 	}
@@ -452,10 +563,11 @@ static bool read_packet(struct msg_digest *md)
 
 	DBG(DBG_RAW | DBG_CRYPT | DBG_PARSING | DBG_CONTROL, {
 		ipstr_buf b;
-		DBG_log("*received %d bytes from %s:%u on %s (port=%d)",
+		DBG_log("*received %d bytes from %s:%u on %s (%s port=%d)",
 			(int) pbs_room(&md->packet_pbs),
 			ipstr(cur_from, &b), (unsigned) cur_from_port,
 			ifp->ip_dev->id_rname,
+			ifp->proto == IPPROTO_TCP ? "TCP" : "UDP",
 			ifp->port);
 	});
 

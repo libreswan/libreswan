@@ -21,6 +21,7 @@
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2017 Richard Guy Briggs <rgb@tricolour.ca>
  * Copyright (C) 2016-2017 Andrew Cagney
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -2161,7 +2162,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 				/* matches nothing -- create a new entry */
 				ipstr_buf b;
 				int fd = create_socket(ifp, v->name,
-						pluto_port);
+						pluto_port, IPPROTO_UDP);
 
 				if (fd < 0)
 					break;
@@ -2186,6 +2187,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 
 				q->ip_addr = ifp->addr;
 				q->fd = fd;
+				q->proto = IPPROTO_UDP;
 				q->next = interfaces;
 				q->change = IFN_ADD;
 				q->port = pluto_port;
@@ -2209,7 +2211,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 				if (addrtypeof(&ifp->addr) == AF_INET) {
 					fd = create_socket(ifp,
 							v->name,
-							pluto_nat_port);
+							pluto_nat_port, IPPROTO_UDP);
 					if (fd < 0)
 						break;
 					nat_traversal_espinudp_socket(
@@ -2225,6 +2227,37 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 						&q->ip_addr);
 					q->port = pluto_nat_port;
 					q->fd = fd;
+					q->proto = IPPROTO_UDP;
+					q->next = interfaces;
+					q->change = IFN_ADD;
+					q->ike_float = TRUE;
+					interfaces = q;
+					libreswan_log(
+						"adding interface %s/%s %s:%d",
+						q->ip_dev->id_vname, q->ip_dev->id_rname,
+						ipstr(&q->ip_addr, &b),
+						q->port);
+				}
+
+				if (pluto_tcpport != 0) {
+					fd = create_socket(ifp,
+							v->name,
+							pluto_tcpport, IPPROTO_TCP);
+					if (fd < 0)
+						break;
+
+					q = alloc_thing(
+						struct iface_port,
+						"struct iface_port");
+					q->ip_dev = id;
+					id->id_count++;
+
+					q->ip_addr = ifp->addr;
+					setportof(htons(pluto_tcpport),
+						&q->ip_addr);
+					q->port = pluto_tcpport;
+					q->fd = fd;
+					q->proto = IPPROTO_TCP;
 					q->next = interfaces;
 					q->change = IFN_ADD;
 					q->ike_float = TRUE;

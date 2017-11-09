@@ -3,6 +3,7 @@
  * Copyright (C) 1998-2002  D. Hugh Redelmeier.
  * Copyright (C) 2003 Herbert Xu.
  * Copyright (C) 2017 Richard Guy Briggs <rgb@tricolour.ca>
+ * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -175,7 +176,7 @@ add_entry:
 				if (q == NULL) {
 					/* matches nothing -- create a new entry */
 					int fd = create_socket(ifp, v->name,
-							       pluto_port);
+							       pluto_port, IPPROTO_UDP);
 					ipstr_buf b;
 
 					if (fd < 0)
@@ -222,7 +223,7 @@ add_entry:
 						    DBG_log("NAT-T KLIPS: calling nat_traversal_espinudp_socket"));
 						fd = create_socket(ifp,
 								   v->name,
-								   pluto_nat_port);
+								   pluto_nat_port, IPPROTO_UDP);
 						if (fd < 0)
 							break;
 						nat_traversal_espinudp_socket(
