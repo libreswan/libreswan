@@ -861,8 +861,8 @@ define kvm-DOMAIN-build
   kvm-$(1)-build: | $$(KVM_LOCALDIR)/$(1).xml
 	: kvm-DOMAIN-build domain=$(1)
 	$(call check-kvm-qemu-directory)
-	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; make -j2 OBJDIR=$$(KVM_OBJDIR) base'
-	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; make -j2 OBJDIR=$$(KVM_OBJDIR) module'
+	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; make OBJDIR=$$(KVM_OBJDIR) base'
+	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; make OBJDIR=$$(KVM_OBJDIR) module'
 endef
 
 # this includes $(KVM_CLONE_DOMAIN)
