@@ -737,8 +737,8 @@ $(foreach prefix, $(KVM_PREFIXES), \
 # Rules to uninstall individual domains
 #
 
-define uninstall-kvm-domain
-  #(info uninstall-kvm-domain domain=$(1) dir=$(2))
+define uninstall-kvm-domain-DOMAIN
+  #(info uninstall-kvm-domain-DOMAIN domain=$(1) dir=$(2))
   .PHONY: uninstall-kvm-domain-$(1)
   uninstall-kvm-domain-$(1):
 	: uninstall-kvm-domain domain=$(1) dir=$(2)
@@ -750,9 +750,9 @@ define uninstall-kvm-domain
 endef
 
 $(foreach domain, $(KVM_BASE_DOMAIN), \
-	$(eval $(call uninstall-kvm-domain,$(domain),$(KVM_BASEDIR))))
+	$(eval $(call uninstall-kvm-domain-DOMAIN,$(domain),$(KVM_BASEDIR))))
 $(foreach domain, $(KVM_LOCAL_DOMAINS), \
-	$(eval $(call uninstall-kvm-domain,$(domain),$(KVM_LOCALDIR))))
+	$(eval $(call uninstall-kvm-domain-DOMAIN,$(domain),$(KVM_LOCALDIR))))
 
 # Direct dependencies.  This is so that a primitive like
 # uninstall-kvm-domain-clone isn't run until all its dependencies,
@@ -903,13 +903,8 @@ $(foreach host, $(filter-out $(KVM_DOMAINS), $(KVM_LOCAL_HOSTS)), \
 	$(eval $(call kvm-HOST-DOMAIN,kvm-,$(host),-install)))
 
 # By default, install where needed.
-.PHONY: kvm-install
-kvm-install: $(foreach domain, $(KVM_INSTALL_DOMAINS), kvm-$(domain)-install)
-
-# Since the install domains list isn't exhaustive (for instance, nic
-# is missing), add an explicit dependency on all the domains so that
-# they still get created.
-kvm-install: | $(foreach domain,$(KVM_TEST_DOMAINS),$(KVM_POOLDIR)/$(domain).xml)
+.PHONY: kvm-install-all
+kvm-all-install: $(foreach domain, $(KVM_INSTALL_DOMAINS), kvm-$(domain)-install)
 
 # This is trying to work-around even more broken F26 hosts where the
 # build hangs.
@@ -920,20 +915,38 @@ kvm-install: | $(foreach domain,$(KVM_TEST_DOMAINS),$(KVM_POOLDIR)/$(domain).xml
 # - best way to recover from a hang is to uninstall the build domain
 #   (should this always do that?)
 
-kvm-install-hive:
-	$(MAKE) KVM_BUILD_HOST=build kvm-uninstall-install-domains
-	$(MAKE) KVM_BUILD_HOST=build kvm-install-build-domain
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . \
-		$(addprefix $(KVM_FIRST_PREFIX), build) \
-		'export OBJDIR=$(KVM_OBJDIR) ; make OBJDIR=$(KVM_OBJDIR) base'
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . \
-		$(addprefix $(KVM_FIRST_PREFIX), build) \
-		'export OBJDIR=$(KVM_OBJDIR) ; make OBJDIR=$(KVM_OBJDIR) module'
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . \
-		$(addprefix $(KVM_FIRST_PREFIX), build) \
-		'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)'
-	$(MAKE) KVM_BUILD_HOST=build kvm-install-install-domains
+define kvm-DOMAIN-hive
+  #(info kvm-DOMAIN-hive domain=$(1))
+  .PHONY: kvm-$(1)-hive
+  kvm-$(1)-hive: kvm-$$(KVM_BUILD_DOMAIN)-install uninstall-kvm-domain-$(1)
+	$(MAKE) install-kvm-domain-$(1)
+endef
 
+$(foreach domain, $(KVM_INSTALL_DOMAINS), \
+	$(eval $(call kvm-DOMAIN-hive,$(domain))))
+$(foreach host, $(filter-out $(KVM_DOMAINS), $(KVM_INSTALL_HOSTS)), \
+	$(eval $(call kvm-HOST-DOMAIN,kvm-,$(host),-hive)))
+
+.PHONY: kvm-install-hive
+kvm-hive-install: $(foreach domain, $(KVM_INSTALL_DOMAINS), kvm-$(domain)-hive)
+
+# Legacy, should go away.
+.PHONY: kvm-install-hive
+kvm-install-hive:
+	$(MAKE) KVM_BUILD_HOST=build kvm-hive
+
+# If BUILD is defined, assume the HIVE install should be used.
+.PHONY: kvm-install
+ifeq ($(KVM_BUILD_HOST),build)
+kvm-install: kvm-hive-install
+else
+kvm-install: kvm-all-install
+endif
+
+# Since the install domains list isn't exhaustive (for instance, nic
+# is missing), add an explicit dependency on all the domains so that
+# they still get created.
+kvm-install: | $(foreach domain,$(KVM_TEST_DOMAINS),$(KVM_POOLDIR)/$(domain).xml)
 
 #
 # kvm-uninstall
