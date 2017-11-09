@@ -76,7 +76,7 @@ struct msg_digest {
 	struct isakmp_hdr hdr;			/* message's header */
 	bool encrypted;				/* (v1) was it encrypted? */
 	enum state_kind from_state;		/* state we started in */
-	const struct state_microcode *smc;	/* (v1) microcode for initial state */
+	const struct state_v1_microcode *smc;	/* (v1) microcode for initial state */
 	const struct state_v2_microcode *svm;	/* (v2) microcode for initial state */
 	bool new_iv_set;			/* (v1) */
 	struct state *st;			/* current state object */

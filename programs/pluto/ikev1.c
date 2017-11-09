@@ -163,16 +163,16 @@
 #include "pluto_stats.h"
 
 /*
- * state_microcode is a tuple of information parameterizing certain
+ * state_v1_microcode is a tuple of information parameterizing certain
  * centralized processing of a packet.  For example, it roughly
- * specifies what payloads are expected in this message.
- * The microcode is selected primarily based on the state.
- * In Phase 1, the payload structure often depends on the
- * authentication technique, so that too plays a part in selecting
- * the state_microcode to use.
+ * specifies what payloads are expected in this message.  The
+ * microcode is selected primarily based on the state.  In Phase 1,
+ * the payload structure often depends on the authentication
+ * technique, so that too plays a part in selecting the
+ * state_v1_microcode to use.
  */
 
-struct state_microcode {
+struct state_v1_microcode {
 	enum state_kind state, next_state;
 	lset_t flags;
 	lset_t req_payloads;    /* required payloads (allows just one) */
@@ -220,7 +220,7 @@ static state_transition_fn      /* forward declaration */
 	unexpected,
 	informational;
 
-/* v1_state_microcode_table is a table of all state_microcode tuples.
+/* v1_state_microcode_table is a table of all state_v1_microcode tuples.
  * It must be in order of state (the first element).
  * After initialization, ike_microcode_index[s] points to the
  * first entry in v1_state_microcode_table for state s.
@@ -228,10 +228,10 @@ static state_transition_fn      /* forward declaration */
  * what has happened in the past, not what this message is.
  */
 
-static const struct state_microcode
+static const struct state_v1_microcode
 	*ike_microcode_index[STATE_IKEv1_ROOF - STATE_IKE_FLOOR];
 
-static const struct state_microcode v1_state_microcode_table[] = {
+static const struct state_v1_microcode v1_state_microcode_table[] = {
 
 #define PT(n) ISAKMP_NEXT_ ## n
 #define P(n) LELEM(PT(n))
@@ -593,7 +593,7 @@ void init_ikev1(void)
 	 * Check that table is in order -- catch coding errors.
 	 * For what it's worth, this routine is idempotent.
 	 */
-	const struct state_microcode *t;
+	const struct state_v1_microcode *t;
 
 	for (t = &v1_state_microcode_table[elemsof(v1_state_microcode_table) - 1];;)
 	{
@@ -905,7 +905,7 @@ void ikev1_echo_hdr(struct msg_digest *md, bool enc, u_int8_t np)
  * Recognise and deal with an IKEv1 duplicate.
  */
 static bool ikev1_duplicate(struct state *st, struct msg_digest *md,
-			    const struct state_microcode *smc)
+			    const struct state_v1_microcode *smc)
 {
 	passert(st != NULL);
 	if (st->st_rpacket.ptr != NULL &&
@@ -949,7 +949,7 @@ static bool ikev1_duplicate(struct state *st, struct msg_digest *md,
 void process_v1_packet(struct msg_digest **mdp)
 {
 	struct msg_digest *md = *mdp;
-	const struct state_microcode *smc;
+	const struct state_v1_microcode *smc;
 	bool new_iv_set = FALSE;
 	struct state *st = NULL;
 	enum state_kind from_state = STATE_UNDEFINED;   /* state we started in */
@@ -1665,7 +1665,7 @@ void process_packet_tail(struct msg_digest **mdp)
 	struct msg_digest *md = *mdp;
 	struct state *st = md->st;
 	enum state_kind from_state = md->from_state;
-	const struct state_microcode *smc = md->smc;
+	const struct state_v1_microcode *smc = md->smc;
 	bool new_iv_set = md->new_iv_set;
 	bool self_delete = FALSE;
 
@@ -2246,7 +2246,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	case STF_OK:
 	{
 		/* advance the state */
-		const struct state_microcode *smc = md->smc;
+		const struct state_v1_microcode *smc = md->smc;
 
 		DBG(DBG_CONTROL, DBG_log("doing_xauth:%s, t_xauth_client_done:%s",
 			bool_str(st->st_oakley.doing_xauth),
