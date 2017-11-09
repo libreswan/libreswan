@@ -97,9 +97,17 @@ static int netlinkfd = NULL_FD;
 static int netlink_bcast_fd = NULL_FD;
 
 #ifdef USE_NIC_OFFLOAD
-#define NIC_OFFLOAD_UNKNOWN (-2)
-#define NIC_OFFLOAD_UNSUPPORTED (-1)
-static int netlink_esp_hw_offload = NIC_OFFLOAD_UNKNOWN;
+enum nic_offload_state {
+	NIC_OFFLOAD_UNKNOWN = 0,
+	NIC_OFFLOAD_UNSUPPORTED,
+	NIC_OFFLOAD_SUPPORTED,
+};
+
+static struct {
+       unsigned int bit;
+       unsigned int total_blocks;
+       enum nic_offload_state state;
+} netlink_esp_hw_offload;
 #endif
 
 #define NE(x) { x, #x }	/* Name Entry -- shorthand for sparse_names */
@@ -856,85 +864,96 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 #ifdef USE_NIC_OFFLOAD
 static void netlink_find_offload_feature(const char *ifname)
 {
-	netlink_esp_hw_offload = NIC_OFFLOAD_UNSUPPORTED;
+	struct ethtool_sset_info *sset_info = NULL;
+	struct ethtool_gstrings *cmd = NULL;
+	struct ifreq ifr;
+	uint32_t sset_len, i;
+	char *str;
+	int err;
 
-	/*
-	 * Determine number of device-features.
-	 * Only one set queried so .data needs only one element
-	 * See <linux/ethtool.h>
-	 */
-	struct ethtool_sset_info *sset_info = 
-		alloc_bytes(sizeof(*sset_info) + 1 * sizeof(sset_info->data[0]),
+	netlink_esp_hw_offload.state = NIC_OFFLOAD_UNSUPPORTED;
+
+	/* Determine number of device-features */
+	sset_info = alloc_bytes(sizeof(*sset_info) + sizeof(sset_info->data[0]),
 			"ethtool_sset_info");
 	sset_info->cmd = ETHTOOL_GSSET_INFO;
-	sset_info->sset_mask = ((__u64)1) << ETH_SS_FEATURES;
-
-	struct ifreq ifr;
-
+	sset_info->sset_mask = 1ULL << ETH_SS_FEATURES;
 	jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
 	ifr.ifr_data = (void *)sset_info;
-	if (ioctl(netlinkfd, SIOCETHTOOL, &ifr) == 0 &&
-	    sset_info->sset_mask == ((__u64)1) << ETH_SS_FEATURES)
-	{
-		/* Retrieve names of device-features */
-		uint32_t sset_len = sset_info->data[0];
+	err = ioctl(netlinkfd, SIOCETHTOOL, &ifr);
+	if (err != 0)
+		goto out;
 
-		struct ethtool_gstrings *cmd =
-			alloc_bytes(sizeof(*cmd) + ETH_GSTRING_LEN * sset_len,
-				"ethtool_gstrings");
-		cmd->cmd = ETHTOOL_GSTRINGS;
-		cmd->string_set = ETH_SS_FEATURES;
-		jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
-		ifr.ifr_data = (void *)cmd;
-		if (ioctl(netlinkfd, SIOCETHTOOL, &ifr) == 0) {
-			/* Look for the ESP_HW feature bit */
-			char *str = (char *)cmd->data;
-			for (uint32_t i = 0; i < cmd->len; i++) {
-				if (strneq(str, "esp-hw-offload", ETH_GSTRING_LEN)) {
-					netlink_esp_hw_offload = i;
-					break;
-				}
-				str += ETH_GSTRING_LEN;
-			}
-		}
-		pfree(cmd);
+	if (sset_info->sset_mask != 1ULL << ETH_SS_FEATURES)
+		goto out;
+	sset_len = sset_info->data[0];
+
+	/* Retrieve names of device-features */
+	cmd = alloc_bytes(sizeof(*cmd) + ETH_GSTRING_LEN * sset_len, "ethtool_gstrings");
+	cmd->cmd = ETHTOOL_GSTRINGS;
+	cmd->string_set = ETH_SS_FEATURES;
+	jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
+	ifr.ifr_data = (void *)cmd;
+	err = ioctl(netlinkfd, SIOCETHTOOL, &ifr);
+	if (err)
+		goto out;
+
+	/* Look for the ESP_HW feature bit */
+	str = (char *)cmd->data;
+	for (i = 0; i < cmd->len; i++) {
+		if (strneq(str, "esp-hw-offload", ETH_GSTRING_LEN) == 1)
+			break;
+		str += ETH_GSTRING_LEN;
 	}
+       if (i >= cmd->len)
+		goto out;
+
+	netlink_esp_hw_offload.bit = i;
+	netlink_esp_hw_offload.total_blocks = (sset_len + 31) / 32;
+	netlink_esp_hw_offload.state = NIC_OFFLOAD_SUPPORTED;
+
+out:
 	pfree(sset_info);
+	if (cmd != NULL)
+		pfree(cmd);
 }
 
 static bool netlink_detect_offload(const char *ifname)
 {
+	struct ethtool_gfeatures *cmd;
+	uint32_t feature_bit;
+	struct ifreq ifr;
+	bool ret = false;
+	int block;
+
 	/*
 	 * Kernel requires a real interface in order to query the kernel-wide
-	 * capability, so we delay until our first invocation.
+	 * capability, so we do it here on first invocation.
 	 */
-	if (netlink_esp_hw_offload == NIC_OFFLOAD_UNKNOWN)
+	if (netlink_esp_hw_offload.state == NIC_OFFLOAD_UNKNOWN)
 		netlink_find_offload_feature(ifname);
 
-	if (netlink_esp_hw_offload == NIC_OFFLOAD_UNSUPPORTED)
+	if (netlink_esp_hw_offload.state == NIC_OFFLOAD_UNSUPPORTED)
 		return FALSE;
 
-	/* Feature is supported by kernel. Query device feature. */
-	passert(netlink_esp_hw_offload >= 0);	/* it's a bit number */
-
-	unsigned block = netlink_esp_hw_offload / 32;
-	uint32_t feature_bit = ((uint32_t) 1) << (netlink_esp_hw_offload % 32);
-
-	struct ethtool_gfeatures *cmd =
-		alloc_bytes(sizeof(*cmd) + sizeof(cmd->features[0]) * (block+1),
-			"ethtool_gfeatures");
-	struct ifreq ifr;
+	/* Feature is supported by kernel. Query device features */
+	cmd = alloc_bytes(sizeof(*cmd) + sizeof(cmd->features[0]) *
+		netlink_esp_hw_offload.total_blocks,
+		"ethtool_gfeatures");
 	jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
 	ifr.ifr_data = (void *)cmd;
 	cmd->cmd = ETHTOOL_GFEATURES;
-	cmd->size = block + 1;
+	cmd->size = netlink_esp_hw_offload.total_blocks;
+	if (ioctl(netlinkfd, SIOCETHTOOL, &ifr))
+		goto out;
 
-	/* ??? something is very wrong if this ioctl fails */
-	bool ret = ioctl(netlinkfd, SIOCETHTOOL, &ifr) == 0 &&
-		(cmd->features[block].active & feature_bit) != 0;
+	block = netlink_esp_hw_offload.bit / 32;
+	feature_bit = 1U << (netlink_esp_hw_offload.bit % 32);
+	if (cmd->features[block].active & feature_bit)
+		ret = TRUE;
 
+out:
 	pfree(cmd);
-
 	return ret;
 }
 #endif /* USE_NIC_OFFLOAD */
