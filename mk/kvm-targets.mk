@@ -268,13 +268,13 @@ endef
 
 # "test" and "check" just runs the entire testsuite.
 .PHONY: kvm-check kvm-test
-kvm-check kvm-test: $(KVM_KEYS) kvm-shutdown-local-domains
+kvm-check kvm-test: $(KVM_KEYS) kvm-shutdown-test-domains
 	$(call kvm-test, --test-status "good")
 
 # "retest" and "recheck" re-run the testsuite updating things that
 # didn't pass.
 .PHONY: kvm-retest kvm-recheck
-kvm-retest kvm-recheck: $(KVM_KEYS) kvm-shutdown-local-domains
+kvm-retest kvm-recheck: $(KVM_KEYS) kvm-shutdown-test-domains
 	$(call kvm-test, --test-status "good" --skip passed)
 
 # clean up; accept pretty much everything
@@ -854,11 +854,13 @@ kvm-clean clean-kvm: kvm-shutdown-local-domains kvm-keys-clean
 # commands (each invokes make on the domain) to ensre that "make base"
 # and "make modules" are serialized.
 #
+# Shutdown the domains before building.  The build domain won't boot
+# when its clones are running.
 
 define kvm-DOMAIN-build
   #(info kvm-DOMAIN-build domain=$(1))
   .PHONY: kvm-$(1)-build
-  kvm-$(1)-build: | $$(KVM_LOCALDIR)/$(1).xml
+  kvm-$(1)-build: kvm-shutdown-install-domains | $$(KVM_LOCALDIR)/$(1).xml
 	: kvm-DOMAIN-build domain=$(1)
 	$(call check-kvm-qemu-directory)
 	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; make OBJDIR=$$(KVM_OBJDIR) base'
@@ -890,7 +892,7 @@ kvm-build: kvm-$(KVM_BUILD_DOMAIN)-build
 define kvm-DOMAIN-install
   #(info kvm-DOMAIN-install domain=$(1))
   .PHONY: kvm-$(1)-install
-  kvm-$(1)-install: kvm-$$(KVM_BUILD_DOMAIN)-build | $$(KVM_LOCALDIR)/$(1).xml
+  kvm-$(1)-install: kvm-shutdown-install-domains kvm-$$(KVM_BUILD_DOMAIN)-build | $$(KVM_LOCALDIR)/$(1).xml
 	: kvm-DOMAIN-install domain=$(1)
 	$(call check-kvm-qemu-directory)
 	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . --shutdown $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$$(KVM_OBJDIR)'
@@ -929,11 +931,6 @@ $(foreach host, $(filter-out $(KVM_DOMAINS), $(KVM_INSTALL_HOSTS)), \
 
 .PHONY: kvm-install-hive
 kvm-hive-install: $(foreach domain, $(KVM_INSTALL_DOMAINS), kvm-$(domain)-hive)
-
-# Legacy, should go away.
-.PHONY: kvm-install-hive
-kvm-install-hive:
-	$(MAKE) KVM_BUILD_HOST=build kvm-hive
 
 # If BUILD is defined, assume the HIVE install should be used.
 .PHONY: kvm-install
@@ -1024,6 +1021,14 @@ $(foreach domain, $(KVM_DOMAINS), \
 .PHONY: kvm-shutdown
 kvm-shutdown: $(addprefix shutdown-kvm-domain-,$(KVM_DOMAINS))
 
+.PHONY: kvm-shutdown-install-domains
+kvm-shutdown-install-domains: $(addprefix shutdown-kvm-domain-,$(KVM_INSTALL_DOMAINS))
+
+.PHONY: kvm-shutdown-test-domains
+kvm-shutdown-test-domains: $(addprefix shutdown-kvm-domain-,$(KVM_TEST_DOMAINS))
+
+.PHONY: kvm-shutdown-local-domains
+kvm-shutdown-local-domains: $(addprefix shutdown-kvm-domain-,$(KVM_LOCAL_DOMAINS))
 
 #
 # Some hints
