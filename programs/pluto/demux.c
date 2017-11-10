@@ -283,8 +283,13 @@ static void comm_handle(const struct iface_port *ifp)
 
 	if (read_packet(md)) {
 		if (DBGP(IMPAIR_DUP_INCOMING_PACKETS)) {
-			pluto_event_now("process dup", process_dup,
-					dup_md(md));
+			/*
+			 * Overwelm the IKEv1 duplicate packet code.
+			 */
+			for (int d = 0; d <= MAXIMUM_v1_ACCEPTED_DUPLICATES; d++) {
+				pluto_event_now("process dup", process_dup,
+						dup_md(md));
+			}
 			process_packet(&md);
 		} else {
 			process_packet(&md);
