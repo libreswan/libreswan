@@ -135,6 +135,7 @@ kvmplutotest	ikev2-41-rw-replace			good
 kvmplutotest	ikev2-42-rw-replace-responder		good
 kvmplutotest	ikev2-45-impair-gx-01			good
 kvmplutotest	ikev2-45-impair-gx-02			good
+kvmplutotest	ikev1-impair-01-dup-incomming-packets	good
 kvmplutotest	ikev2-46-basic-psk-netkey		good
 kvmplutotest	ikev2-47-priority			good
 kvmplutotest	ikev2-48-nat-cp				good
