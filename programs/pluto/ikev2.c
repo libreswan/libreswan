@@ -782,7 +782,7 @@ static bool ikev2_collect_fragment(struct msg_digest *md, struct state *st)
 	 * so-far being discarded; always check/fix frags.
 	 */
 	if (st->st_v2_rfrags == NULL) {
-		st->st_v2_rfrags = alloc_thing(struct v2_ike_rfrags, "incomming v2_ike_rfrags");
+		st->st_v2_rfrags = alloc_thing(struct v2_ike_rfrags, "incoming v2_ike_rfrags");
 		st->st_v2_rfrags->total = skf->isaskf_total;
 	}
 
