@@ -59,49 +59,10 @@
 #include "xauth.h"
 #include "kernel.h" /* for scan_shunts() */
 #include "kernel_pfkey.h" /* for pfkey_scan_shunts */
-
+#include "retransmit.h"
 #include "nat_traversal.h"
 
 #include "pluto_sd.h"
-
-static unsigned long retrans_delay(struct state *st)
-{
-	struct connection *c = st->st_connection;
-	intmax_t delay_ms = deltamillisecs(c->r_interval);
-	intmax_t delay_cap = deltamillisecs(c->r_timeout); /* ms */
-	u_int32_t x = st->st_retransmit++;
-
-	/*
-	 * Very carefully calculate capped exponential backoff.
-	 * The test is expressed as a right shift to avoid overflow.
-	 * Even then, we must avoid a right shift of the width of
-	 * the data or more since it is not defined by the C standard.
-	 * Surely a bound of 12 (factor of 2048) is safe and more than enough.
-	 */
-
-	delay_ms = (x > MAXIMUM_RETRANSMITS_PER_EXCHANGE ||
-			delay_cap >> x < delay_ms) ?
-		delay_cap : delay_ms << x;
-
-	if (x > 1 && delay_ms == delay_cap)
-	{
-		/* if delay_ms > c->r_timeout no re-transmit */
-		x--;
-		intmax_t delay_p = (x > MAXIMUM_RETRANSMITS_PER_EXCHANGE ||
-				delay_cap >> x < delay_ms) ?  delay_cap :
-			delay_ms << x;
-		if (delay_p == delay_ms) /* previus delay was already caped retrun zero */
-			delay_ms = 0;
-	}
-
-	if (delay_ms > 0) {
-		whack_log(RC_RETRANSMISSION,
-				"%s: retransmission; will wait %jdms for response",
-				enum_name(&state_names, st->st_state),
-				delay_ms);
-	}
-	return delay_ms;
-}
 
 /*
  * This file has the event handling routines. Events are
@@ -129,7 +90,6 @@ static unsigned long retrans_delay(struct state *st)
  */
 static void retransmit_v1_msg(struct state *st)
 {
-	intmax_t delay_ms = 0;	/* relative time; 0 means NO */
 	struct connection *c = st->st_connection;
 	unsigned long try = st->st_try;
 	unsigned long try_limit = c->sa_keying_tries;
@@ -144,26 +104,22 @@ static void retransmit_v1_msg(struct state *st)
 			ipstr(&c->spd.that.host_addr, &b),
 			c->name, fmt_conn_instance(c, cib),
 			st->st_serialno, try,
-			st->st_retransmit, try_limit);
+			retransmit_count(st), try_limit);
 	});
 
-	if (DBGP(IMPAIR_RETRANSMITS)) {
+	switch (retransmit(st)) {
+	case RETRANSMIT_YES:
+		resend_ike_v1_msg(st, "EVENT_v1_RETRANSMIT");
+		break;
+	case RETRANSMIT_NO:
+		break;
+	case RETRANSMIT_IMPAIRED_AND_CAPPED:
 		libreswan_log(
 			"suppressing retransmit because IMPAIR_RETRANSMITS is set");
-		delay_ms = 0;
 		try = 0;
-	} else {
-		delay_ms = deltamillisecs(c->r_interval);
-	}
-
-	if (delay_ms != 0)
-		delay_ms = retrans_delay(st);
-
-	if (delay_ms != 0) {
-		resend_ike_v1_msg(st, "EVENT_v1_RETRANSMIT");
-		/* XXX: delay_ms should be deltatime_t */
-		event_schedule(EVENT_v1_RETRANSMIT, deltatime_ms(delay_ms), st);
-	} else {
+		/* FALLTHROUGH */
+	case RETRANSMIT_CAPPED:
+	{
 		/* check if we've tried rekeying enough times.
 		 * st->st_try == 0 means that this should be the only try.
 		 * c->sa_keying_tries == 0 means that there is no limit.
@@ -189,7 +145,7 @@ static void retransmit_v1_msg(struct state *st)
 		}
 		loglog(RC_NORETRANSMISSION,
 			"max number of retransmissions (%ld) reached %s%s",
-			st->st_retransmit,
+		        retransmit_count(st),
 			enum_name(&state_names, st->st_state),
 			details);
 		if (try != 0 && (try <= try_limit || try_limit == 0)) {
@@ -241,12 +197,13 @@ static void retransmit_v1_msg(struct state *st)
 		set_cur_state(st);  /* ipsecdoi_replace would reset cur_state, set it again */
 		delete_state(st);
 		/* note: no md->st to clear */
+		break;
+	}
 	}
 }
 
 static void retransmit_v2_msg(struct state *st)
 {
-	intmax_t delay_ms = 0;  /* relative time; 0 means NO */
 	struct connection *c;
 	unsigned long try;
 	unsigned long try_limit;
@@ -273,32 +230,29 @@ static void retransmit_v2_msg(struct state *st)
 			ipstr(&c->spd.that.host_addr, &b),
 			c->name, fmt_conn_instance(c, cib),
 			pst->st_serialno, pst->st_try,
-			pst->st_retransmit, try_limit);
+			retransmit_count(pst), try_limit);
 		});
-
-	if (DBGP(IMPAIR_RETRANSMITS)) {
-		libreswan_log(
-			"suppressing retransmit because IMPAIR_RETRANSMITS is set");
-		delay_ms = 0;
-		try = 0;
-	} else {
-		delay_ms = deltamillisecs(c->r_interval);
-	}
 
 	if (need_this_intiator(st)) {
 		delete_state(st);
 		return;
 	}
 
-	if (delay_ms != 0) {
-		delay_ms = retrans_delay(st);
-
-		if (delay_ms != 0) {
-			send_ike_msg(pst, "EVENT_v2_RETRANSMIT");
-			/* XXX: delay_ms should be deltatime_t */
-			event_schedule(EVENT_v2_RETRANSMIT, deltatime_ms(delay_ms), st);
-			return;
-		}
+	switch (retransmit(st)) {
+	case RETRANSMIT_YES:
+		send_ike_msg(pst, "EVENT_v2_RETRANSMIT");
+		return;
+	case RETRANSMIT_NO:
+		return;
+	case RETRANSMIT_IMPAIRED_AND_CAPPED:
+		libreswan_log(
+			"suppressing retransmit because IMPAIR_RETRANSMITS is set");
+		try = 0;
+		/* continued below */
+		break;
+	case RETRANSMIT_CAPPED:
+		/* continued below */
+		break;
 	}
 
 	/*
@@ -322,7 +276,7 @@ static void retransmit_v2_msg(struct state *st)
 		/* too spammy for OE */
 		loglog(RC_NORETRANSMISSION,
 			"max number of retransmissions (%lu) reached %s%s",
-			st->st_retransmit,
+		        retransmit_count(st),
 			enum_name(&state_names, st->st_state),
 			details);
 	}
@@ -959,7 +913,7 @@ void delete_event(struct state *st)
 	}
 	if (st->st_event->ev_type == EVENT_v1_RETRANSMIT ||
 	    st->st_event->ev_type == EVENT_v2_RETRANSMIT) {
-		st->st_retransmit = 0;
+		clear_retransmits(st);
 	}
 	delete_pluto_event(&st->st_event);
 }

@@ -42,6 +42,7 @@
 
 #include "labeled_ipsec.h"	/* for struct xfrm_user_sec_ctx_ike and friends */
 #include "list_entry.h"
+#include "retransmit.h"
 
 /* Message ID mechanism.
  *
@@ -458,7 +459,7 @@ struct state {
 
 	enum state_kind st_state;       /* State of exchange */
 
-	unsigned long st_retransmit;	/* Number of retransmits */
+	retransmit_t st_retransmit;	/* retransmit counters; opaque */
 	unsigned long st_try;		/* Number of times rekeying attempted.
 					 * 0 means the only time.
 					 */
