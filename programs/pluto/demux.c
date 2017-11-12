@@ -194,7 +194,7 @@ void comm_handle_cb(evutil_socket_t fd UNUSED, const short event UNUSED, void *a
 }
 
 /*
- * duplicate incomming packets as a fast way to mimic re-transmits.
+ * duplicate incoming packets as a fast way to mimic re-transmits.
  */
 
 static struct msg_digest *dup_md(struct msg_digest *orig)
