@@ -5,7 +5,7 @@ Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
- ipsec whack --impair dup-incoming-packets
+ ipsec whack --impair replay-duplicates
 east #
  ipsec auto --add westnet-eastnet
 002 added connection description "westnet-eastnet"
@@ -40,7 +40,7 @@ east #
 000 ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-method=get
 000 secctx-attr-type=XXXX
 000 myid = (none)
-000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+xauth+retransmits+oppoinfo+impair-dup-incoming-packets
+000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+xauth+retransmits+oppoinfo+impair-replay-duplicates
 000  
 000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500
 000 virtual-private (%priv):
@@ -175,17 +175,32 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
  grep 'duplicate packet' /tmp/pluto.log
+IMPAIR: duplicate packet 1 copy 1 of 3
 retransmitting in response to duplicate packet; already STATE_MAIN_R1
+IMPAIR: duplicate packet 1 copy 2 of 3
 retransmitting in response to duplicate packet; already STATE_MAIN_R1
+IMPAIR: duplicate packet 1 copy 3 of 3
 discarding duplicate packet -- exhausted retransmission; already STATE_MAIN_R1
+IMPAIR: duplicate packet 2 copy 1 of 3
 | "westnet-eastnet" #1: discarding duplicate packet; already STATE_MAIN_R2
+IMPAIR: duplicate packet 2 copy 2 of 3
 | "westnet-eastnet" #1: discarding duplicate packet; already STATE_MAIN_R2
+IMPAIR: duplicate packet 2 copy 3 of 3
 | "westnet-eastnet" #1: discarding duplicate packet; already STATE_MAIN_R2
+IMPAIR: duplicate packet 3 copy 1 of 3
 "westnet-eastnet" #1: retransmitting in response to duplicate packet; already STATE_MAIN_R3
+IMPAIR: duplicate packet 3 copy 2 of 3
 "westnet-eastnet" #1: retransmitting in response to duplicate packet; already STATE_MAIN_R3
+IMPAIR: duplicate packet 3 copy 3 of 3
 "westnet-eastnet" #1: discarding duplicate packet -- exhausted retransmission; already STATE_MAIN_R3
+IMPAIR: duplicate packet 4 copy 1 of 3
+IMPAIR: duplicate packet 4 copy 2 of 3
+IMPAIR: duplicate packet 4 copy 3 of 3
+IMPAIR: duplicate packet 5 copy 1 of 3
 | "westnet-eastnet" #2: discarding duplicate packet; already STATE_QUICK_R2
+IMPAIR: duplicate packet 5 copy 2 of 3
 | "westnet-eastnet" #2: discarding duplicate packet; already STATE_QUICK_R2
+IMPAIR: duplicate packet 5 copy 3 of 3
 | "westnet-eastnet" #2: discarding duplicate packet; already STATE_QUICK_R2
 east #
 east #
