@@ -64,6 +64,15 @@ int deltatime_cmp(deltatime_t a, deltatime_t b);
 /* max(a, b) */
 deltatime_t deltatime_max(deltatime_t a, deltatime_t b);
 
+/* a+b */
+deltatime_t deltatime_add(deltatime_t a, deltatime_t b);
+
+/* a*s */
+deltatime_t deltatime_mulu(deltatime_t a, unsigned scalar);
+
+/* a/s */
+deltatime_t deltatime_divu(deltatime_t a, unsigned scalar);
+
 intmax_t deltamillisecs(deltatime_t d);
 time_t deltasecs(deltatime_t d);
 deltatime_t deltatimescale(int num, int denom, deltatime_t d);

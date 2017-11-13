@@ -53,6 +53,21 @@ deltatime_t deltatime_max(deltatime_t a, deltatime_t b)
 	}
 }
 
+deltatime_t deltatime_add(deltatime_t a, deltatime_t b)
+{
+	return deltatime_ms(deltamillisecs(a) + deltamillisecs(b));
+}
+
+deltatime_t deltatime_mulu(deltatime_t a, unsigned scalar)
+{
+	return deltatime_ms(deltamillisecs(a) * scalar);
+}
+
+deltatime_t deltatime_divu(deltatime_t a, unsigned scalar)
+{
+	return deltatime_ms(deltamillisecs(a) / scalar);
+}
+
 intmax_t deltamillisecs(deltatime_t d)
 {
 	return d.dt.tv_sec * 1000 + d.dt.tv_usec / 1000;
