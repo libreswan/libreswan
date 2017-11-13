@@ -4310,12 +4310,24 @@ IETF registry enum_names:
          match impair-ikev2-include-integ-none: OK
          short_name 46:  OK
          lswlog_enum_short 46: OK
-   47 -> impair-dup-incoming-packets
+   47 -> impair-replay-duplicates
          lswlog_enum 47: OK
-         search impair-dup-incoming-packets: OK
-         match impair-dup-incoming-packets: OK
+         search impair-replay-duplicates: OK
+         match impair-replay-duplicates: OK
          short_name 47:  OK
          lswlog_enum_short 47: OK
+   48 -> impair-replay-forward
+         lswlog_enum 48: OK
+         search impair-replay-forward: OK
+         match impair-replay-forward: OK
+         short_name 48:  OK
+         lswlog_enum_short 48: OK
+   49 -> impair-replay-backward
+         lswlog_enum 49: OK
+         search impair-replay-backward: OK
+         match impair-replay-backward: OK
+         short_name 49:  OK
+         lswlog_enum_short 49: OK
 
 IKEv2 transforms:
          enum_enum_table 1: OK
@@ -4340,8 +4352,8 @@ lswlog_enum_lset_short:
 
   debug fffff:
 	<<raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+xauth+retransmits+oppoinfo+whackwatch+private+add-prefix>>
-  impair fffffff00000:
-	<<bust-mi2+bust-mr2+drop-i2+sa-creation+die-oninfo+jacob-two-two+allow-null-null+major-version-bump+minor-version-bump+retransmits+send-bogus-payload-flag+send-bogus-isakmp-flag+send-ikev2-ke+send-no-delete+send-no-ikev2-auth+send-no-xauth-r0+drop-xauth-r0+send-no-main-r2+force-fips+send-key-size-check+send-zero-gx+send-bogus-dcookie+omit-hash-notify+ignore-hash-notify+ignore-hash-notify-resp+ikev2-exclude-integ-none+ikev2-include-integ-none+dup-incoming-packets>>
-  debug+impair 800000180001:
-	<<raw+add-prefix+impair-bust-mi2+impair-dup-incoming-packets>>
+  impair 3fffffff00000:
+	<<bust-mi2+bust-mr2+drop-i2+sa-creation+die-oninfo+jacob-two-two+allow-null-null+major-version-bump+minor-version-bump+retransmits+send-bogus-payload-flag+send-bogus-isakmp-flag+send-ikev2-ke+send-no-delete+send-no-ikev2-auth+send-no-xauth-r0+drop-xauth-r0+send-no-main-r2+force-fips+send-key-size-check+send-zero-gx+send-bogus-dcookie+omit-hash-notify+ignore-hash-notify+ignore-hash-notify-resp+ikev2-exclude-integ-none+ikev2-include-integ-none+replay-duplicates+replay-forward+replay-backward>>
+  debug+impair 2000000180001:
+	<<raw+add-prefix+impair-bust-mi2+impair-replay-backward>>
 
