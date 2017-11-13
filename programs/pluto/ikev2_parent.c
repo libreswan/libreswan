@@ -382,8 +382,6 @@ static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
 static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 {
 	struct msg_digest *fake_md = NULL;
-	struct pluto_crypto_req_cont *ke;
-	stf_status e = STF_OK;
 	char  *what = "";
 	enum crypto_importance ci = pcim_stranger_crypto;
 
@@ -445,9 +443,12 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		break;
 	}
 
-	if (st->st_state != STATE_V2_CREATE_I)
-		ke = new_pcrc(ikev2_crypto_continue, what, st, md);
 
+	struct pluto_crypto_req_cont *ke =
+		(st->st_state == STATE_V2_CREATE_I ? NULL :
+		 new_pcrc(ikev2_crypto_continue, what, st, md));
+
+	stf_status e;
 	switch (st->st_state) {
 	case STATE_PARENT_I1:
 		/* if we received INVALID_KE, msgid was incremented */
@@ -485,6 +486,7 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		break;
 
 	default:
+		e = STF_OK;
 		break;
 	}
 

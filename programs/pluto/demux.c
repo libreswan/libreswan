@@ -75,6 +75,7 @@
 void init_demux(void)
 {
 	init_ikev1();
+	init_ikev2();
 }
 
 /* forward declarations */

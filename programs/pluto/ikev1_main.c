@@ -2416,6 +2416,7 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
 	struct state fake_state = {
 		.st_serialno = SOS_NOBODY,
 		.st_connection = &fake_connection,	/* for should_fragment_ike_msg() */
+		.st_finite_state = finite_states[STATE_UNDEFINED],
 	};
 
 	passert(md != NULL);

@@ -104,6 +104,35 @@ u_int16_t pluto_nflog_group = 0;
 u_int16_t pluto_xfrmlifetime = 300;
 
 /*
+ * Handle for each and every state.
+ *
+ * XXX: The array finite_states[] is something of a hack until it is
+ * figured out if the array or separate objects for each state is
+ * better.
+ */
+struct finite_state state_undefined = {
+	.fs_state = STATE_UNDEFINED,
+	.fs_name = "UNDEFINED",
+	.fs_story = "not defined and probably dead (internal)",
+};
+
+const struct finite_state *finite_states[STATE_IKE_ROOF] = {
+	[STATE_UNDEFINED] = &state_undefined,
+};
+
+void lswlog_finite_state(struct lswlog *buf, const struct finite_state *fs)
+{
+	if (fs == NULL) {
+		lswlogs(buf, "NULL-FINITE_STATE");
+	} else {
+		lswlogf(buf, "%s (timeout: ", fs->fs_name);
+		lswlog_enum_short(buf, &timer_event_names, fs->fs_timeout_event);
+		/* no enum_name available? */
+		lswlogf(buf, " flags: %" PRIxLSET ")", fs->fs_flags);
+	}
+}
+
+/*
  * This file has the functions that handle the
  * state hash table and the Message ID list.
  */
@@ -125,7 +154,8 @@ void change_state(struct state *st, enum state_kind new_state)
 		return;
 
 	log_state(st, new_state);
-	st->st_state = new_state;
+	st->st_finite_state = finite_states[new_state];
+	passert(st->st_finite_state != NULL);
 }
 
 /* non-intersecting state categories */
@@ -476,7 +506,7 @@ struct state *new_state(void)
 	st->st_serialno = next_so++;
 	passert(next_so > SOS_FIRST);   /* overflow can't happen! */
 	st->st_whack_sock = NULL_FD;
-
+	st->st_finite_state = &state_undefined;
 	st->st_xauth = NULL;
 
 	anyaddr(AF_INET, &st->hidden_variables.st_nat_oa);

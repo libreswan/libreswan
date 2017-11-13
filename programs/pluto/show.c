@@ -211,7 +211,6 @@ void log_state(struct state *st, enum state_kind new_state)
 	struct log_conn_info lc;
 	struct connection *conn;
 	const char *tun = NULL, *p1 = NULL, *p2 = NULL;
-	enum state_kind save_state;
 
 	if (pluto_stats_binary == NULL)
 		return;
@@ -236,10 +235,10 @@ void log_state(struct state *st, enum state_kind new_state)
 	lc.conn = conn;
 	lc.ignore = NULL;
 
-	save_state = st->st_state;
-	st->st_state = new_state;
+	const struct finite_state *save_state = st->st_finite_state;
+	st->st_finite_state = finite_states[new_state];
 	for_each_state(connection_state, &lc);
-	st->st_state = save_state;
+	st->st_finite_state = save_state;
 
 	if (conn->statsval ==
 	    (IPsecSAref2NFmark(st->st_ref) | LOG_CONN_STATSVAL(&lc))) {
