@@ -78,6 +78,7 @@ OBJS += lswlog_errno.o
 OBJS += lswlog_bytes.o
 OBJS += lswlog_enum_lset_short.o
 OBJS += lswlog_realtime.o
+OBJS += lswlog_deltatime.o
 
 # Crypto code:
 #
