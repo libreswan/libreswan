@@ -691,7 +691,7 @@ $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml: | $(KVM_BASE_NETWORK_FILE) $(KVM_LOCALD
 	$(call check-kvm-qemu-directory)
 	$(call destroy-kvm-domain,$(KVM_BUILD_DOMAIN))
 	$(call create-kvm-domain,$(KVM_BUILD_DOMAIN),$@.tmp)
-	$(VIRSH) dumpxml $(KVM_CLONE_DOMAIN) > $@.tmp
+	$(VIRSH) dumpxml $(KVM_BUILD_DOMAIN) > $@.tmp
 	mv $@.tmp $@
 .PHONY: install-kvm-domain-$(KVM_BUILD_DOMAIN)
 install-kvm-domain-$(KVM_BUILD_DOMAIN): $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
@@ -934,7 +934,7 @@ kvm-hive-install: $(foreach domain, $(KVM_INSTALL_DOMAINS), kvm-$(domain)-hive)
 
 # If BUILD is defined, assume the HIVE install should be used.
 .PHONY: kvm-install
-ifeq ($(KVM_BUILD_HOST),build)
+ifneq ($(KVM_BUILD_COPIES),)
 kvm-install: kvm-hive-install
 else
 kvm-install: kvm-all-install
