@@ -1331,7 +1331,10 @@ void process_v2_packet(struct msg_digest **mdp)
 			 * XXX: Returning INVALID_MESSAGE_ID seems
 			 * pretty bogus.
 			 */
-			SEND_V2_NOTIFICATION(v2N_INVALID_IKE_SPI);
+			if (st != NULL)
+				send_v2_notification_from_state(st, v2N_INVALID_IKE_SPI, NULL);
+			else
+				send_v2_notification_from_md(md, v2N_INVALID_IKE_SPI, NULL);
 		}
 		return;
 	}
@@ -2313,7 +2316,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 				}
 
 				if (st == NULL) {
-					SEND_V2_NOTIFICATION(md->note);
+					send_v2_notification_from_md(md, md->note, NULL);
 				} else {
 					send_v2_notification_from_state(pst,
 							md->note, NULL);

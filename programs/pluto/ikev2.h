@@ -337,10 +337,3 @@ extern bool is_msg_response(struct msg_digest *md);
 extern bool is_msg_request(struct msg_digest *md);
 
 extern bool need_this_intiator(struct state *st);
-
-#define SEND_V2_NOTIFICATION(t) { \
-	if (st != NULL) \
-		send_v2_notification_from_state(st, t, NULL); \
-	else \
-		send_v2_notification_from_md(md, t, NULL); }
-

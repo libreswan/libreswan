@@ -3483,7 +3483,7 @@ static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *dh,
 		DBG(DBG_OPPO,
 			DBG_log("Deleting opportunistic Parent with no Child SA"));
 		e = STF_FATAL;
-		SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
+		send_v2_notification_from_state(st, v2N_AUTHENTICATION_FAILED, NULL);
 	}
 
 	passert(dh->pcrc_md != NULL);
@@ -3571,7 +3571,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 		st->st_connection->spd.that.authby))
 	{
 		/* TODO: This should really be an encrypted message! */
-		SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
+		send_v2_notification_from_state(st, v2N_AUTHENTICATION_FAILED, NULL);
 		return STF_FATAL;
 	}
 
@@ -3598,7 +3598,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 		 * TBD: send this notification encrypted because the
 		 * AUTH payload succeed
 		 */
-		SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
+		send_v2_notification_from_state(st, v2N_AUTHENTICATION_FAILED, NULL);
 		return STF_FATAL;
 	}
 
