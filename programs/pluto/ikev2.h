@@ -232,9 +232,8 @@ extern stf_status ikev2_resp_accept_child_ts(const struct msg_digest *md,
 extern void ikev2_update_msgid_counters(struct msg_digest *md);
 extern void ikev2_print_ts(struct traffic_selector *ts);
 
-extern void send_v2_notification(struct state *p1st,
+extern void send_v2_notification(struct state *pst,
 				 v2_notification_t type,
-				 struct state *encst,
 				 u_char *icookie,
 				 u_char *rcookie,
 				 chunk_t *data);

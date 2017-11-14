@@ -4357,9 +4357,8 @@ static void ikev2_calc_dcookie(u_char *dcookie, chunk_t ni,
  *
  */
 
-void send_v2_notification(struct state *p1st,
+void send_v2_notification(struct state *pst,
 			  v2_notification_t ntype,
-			  struct state *encst,
 			  u_char *icookie,
 			  u_char *rcookie,
 			  chunk_t *n_data)
@@ -4391,11 +4390,10 @@ void send_v2_notification(struct state *p1st,
 	{
 		ipstr_buf b;
 
-		libreswan_log("sending %sencrypted notification %s to %s:%u",
-			encst ? "" : "un",
-			enum_name(&ikev2_notify_names, ntype),
-			sensitive_ipstr(&p1st->st_remoteaddr, &b),
-			p1st->st_remoteport);
+		libreswan_log("sending unencrypted notification %s to %s:%u",
+			      enum_name(&ikev2_notify_names, ntype),
+			      sensitive_ipstr(&pst->st_remoteaddr, &b),
+			      pst->st_remoteport);
 	}
 
 	init_out_pbs(&reply_stream, buffer, sizeof(buffer), "notification msg");
@@ -4411,7 +4409,7 @@ void send_v2_notification(struct state *p1st,
 		memcpy(hdr.isa_icookie, icookie, COOKIE_SIZE);
 
 		/* incomplete */
-		switch (p1st->st_state) {
+		switch (pst->st_state) {
 		case STATE_PARENT_R2:
 			hdr.isa_xchg = ISAKMP_v2_AUTH;
 			break;
@@ -4420,8 +4418,8 @@ void send_v2_notification(struct state *p1st,
 			hdr.isa_xchg = ISAKMP_v2_SA_INIT;
 			break;
 		}
-		if (p1st->st_reply_xchg != 0)
-			hdr.isa_xchg = p1st->st_reply_xchg; /* use received exchange type */
+		if (pst->st_reply_xchg != 0)
+			hdr.isa_xchg = pst->st_reply_xchg; /* use received exchange type */
 
 		hdr.isa_np = ISAKMP_NEXT_v2N;
 		/* XXX unconditionally clearing original initiator flag is wrong */
@@ -4450,7 +4448,7 @@ void send_v2_notification(struct state *p1st,
 		 ntype, n_data, &rbody))
 		return;	/* ??? NO WAY TO SIGNAL INTERNAL ERROR */
 
-	if (!close_message(&rbody, p1st))
+	if (!close_message(&rbody, pst))
 		return; /* ??? NO WAY TO SIGNAL INTERNAL ERROR */
 
 	close_output_pbs(&reply_stream);
@@ -4461,7 +4459,7 @@ void send_v2_notification(struct state *p1st,
 	 * one with retrying).  So we need not preserve the packet we
 	 * are sending.
 	 */
-	send_ike_msg_without_recording(p1st, &reply_stream, "v2 notify");
+	send_ike_msg_without_recording(pst, &reply_stream, "v2 notify");
 
 	if (ntype < v2N_ERROR_ROOF)
 		pstats(ikev2_sent_notifies_e, ntype);

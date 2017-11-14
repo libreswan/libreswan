@@ -1660,7 +1660,7 @@ void send_v2_notification_from_state(struct state *st,
 				     v2_notification_t ntype,
 				     chunk_t *data)
 {
-	send_v2_notification(st, ntype, NULL, st->st_icookie, st->st_rcookie,
+	send_v2_notification(st, ntype, st->st_icookie, st->st_rcookie,
 			     data);
 }
 
@@ -1702,7 +1702,7 @@ void send_v2_notification_from_md(struct msg_digest *md,
 
 	update_ike_endpoints(&fake_state, md);
 
-	send_v2_notification(&fake_state, ntype, NULL,
+	send_v2_notification(&fake_state, ntype,
 			     md->hdr.isa_icookie, md->hdr.isa_rcookie, data);
 
 	pstats(ikev2_sent_notifies_e, ntype);
