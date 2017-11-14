@@ -5974,8 +5974,7 @@ void ikev2_add_ipsec_child(int whack_sock, struct state *isakmp_sa,
 			    st->sec_ctx->sec_ctx_value));
 	}
 #endif
-	st->st_state = STATE_UNDEFINED; /* change_state ignores from == to */
-	change_state(st, STATE_V2_CREATE_I0);
+	change_state(st, STATE_V2_CREATE_I0); /* from STATE_UNDEFINED */
 
 	insert_state(st); /* needs cookies, connection, and msgid */
 

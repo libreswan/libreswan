@@ -813,8 +813,7 @@ stf_status quick_outI1(int whack_sock,
 	st->st_peeruserport = c->spd.that.port;
 
 	st->st_msgid = generate_msgid(isakmp_sa);
-	st->st_state = STATE_UNDEFINED; /* change_state ignores from == to */
-	change_state(st, STATE_QUICK_I1);
+	change_state(st, STATE_QUICK_I1); /* from STATE_UNDEFINED */
 
 	insert_state(st); /* needs cookies, connection, and msgid */
 
