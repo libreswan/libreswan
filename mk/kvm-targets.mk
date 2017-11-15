@@ -948,11 +948,23 @@ kvm-install: | $(foreach domain,$(KVM_TEST_DOMAINS),$(KVM_POOLDIR)/$(domain).xml
 #
 # kvm-uninstall
 #
-# this is simple and brutal - just delete anything that would be
-# modified by an install
+# Rather than just removing libreswan from the all the test (install)
+# domains.  This removes the test and build domains completely, this
+# way, in addition to giving kvm-install a 100% fresh start (no
+# depdenence on 'make uninstall'), any broken test domains (including
+# NIC) are rebuilt.  For instance:
+#
+#     - a domain hanging because of KVM breakage
+#
+#     - a domain (including the basic domain NIC) having a wrong
+#       directory mount point
+#
+# Think of this as the make target to use when trying to dig ones way
+# out of a hole.
 
 .PHONY: kvm-uninstall
 kvm-uninstall: $(addprefix uninstall-kvm-domain-, $(KVM_INSTALL_DOMAINS))
+kvm-uninstall: $(addprefix uninstall-kvm-domain-, $(KVM_BASIC_DOMAINS))
 ifneq ($(KVM_BUILD_COPIES),)
 kvm-uninstall: $(addprefix uninstall-kvm-domain-, $(KVM_BUILD_DOMAIN))
 endif
