@@ -149,7 +149,7 @@
 #include "server.h"
 
 #include "ikev1_xauth.h"
-
+#include "retransmit.h"
 #include "nat_traversal.h"
 #include "vendor.h"
 #include "ikev1_dpd.h"
@@ -913,8 +913,7 @@ static bool ikev1_duplicate(struct state *st, struct msg_digest *md,
 	    memeq(st->st_rpacket.ptr, md->packet_pbs.start,
 		  st->st_rpacket.len)) {
 		if ((smc->flags & SMF_RETRANSMIT_ON_DUPLICATE)) {
-			if (st->st_retransmit < MAXIMUM_v1_ACCEPTED_DUPLICATES) {
-				st->st_retransmit++;
+			if (count_duplicate(st, MAXIMUM_v1_ACCEPTED_DUPLICATES)) {
 				loglog(RC_RETRANSMISSION,
 				       "retransmitting in response to duplicate packet; already %s",
 				       enum_name(&state_names, st->st_state));
@@ -2394,8 +2393,9 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			}
 
 			switch (kind) {
+
 			case EVENT_v1_RETRANSMIT: /* Retransmit packet */
-				delay_ms = deltamillisecs(c->r_interval);
+				start_retransmits(st, EVENT_v1_RETRANSMIT);
 				break;
 
 			case EVENT_SA_REPLACE: /* SA replacement event */
@@ -2485,17 +2485,17 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 						kind = EVENT_SA_EXPIRE;
 					}
 				}
+				/* XXX: DELAY_MS should be a deltatime_t */
+				event_schedule(kind, deltatime_ms(delay_ms), st);
 				break;
 
 			case EVENT_SO_DISCARD:
-				delay_ms = deltamillisecs(c->r_timeout);
+				event_schedule(EVENT_SO_DISCARD, c->r_timeout, st);
 				break;
 
 			default:
 				bad_case(kind);
 			}
-			/* XXX: DELAY_MS should be a deltatime_t */
-			event_schedule(kind, deltatime_ms(delay_ms), st);
 		}
 
 		/* tell whack and log of progress */

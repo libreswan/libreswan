@@ -1806,11 +1806,10 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 			struct suggested_group sg;
 
 			/* we treat this as a "retransmit" event to rate limit these */
-			if (st->st_retransmit >= MAXIMUM_INVALID_KE_RETRANS) {
+			if (!count_duplicate(st, MAXIMUM_INVALID_KE_RETRANS)) {
 				DBG(DBG_CONTROLMORE, DBG_log("ignoring received INVALID_KE packets - received too many (DoS?)"));
 				return STF_IGNORE;
 			}
-			st->st_retransmit++;
 
 			if (ntfy->next != NULL) {
 				DBG(DBG_CONTROL, DBG_log("ignoring Notify payloads after v2N_INVALID_KE_PAYLOAD"));

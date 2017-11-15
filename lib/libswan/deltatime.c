@@ -34,14 +34,16 @@ deltatime_t deltatime_ms(intmax_t ms)
 
 int deltatime_cmp(deltatime_t a, deltatime_t b)
 {
-	/* return sign(a - b) */
-	if (timercmp(&a.dt, &b.dt, <)) {
-		return -1;
-	} else if (timercmp(&a.dt, &b.dt, >)) {
-		return +1;
-	} else {
-		return 0;
-	}
+	/*
+	 * return sign(a - b)
+	 *
+	 * Can't simply return d because it is larger than int;
+	 * instead embrace the stack overflow:
+	 *
+	 * https://stackoverflow.com/questions/14579920/fast-sign-of-integer-in-c#14612943
+	 */
+	intmax_t d = a.ms - b.ms;
+	return (d > 0) - (d < 0);
 }
 
 deltatime_t deltatime_max(deltatime_t a, deltatime_t b)
@@ -53,14 +55,29 @@ deltatime_t deltatime_max(deltatime_t a, deltatime_t b)
 	}
 }
 
+deltatime_t deltatime_add(deltatime_t a, deltatime_t b)
+{
+	return deltatime_ms(deltamillisecs(a) + deltamillisecs(b));
+}
+
+deltatime_t deltatime_mulu(deltatime_t a, unsigned scalar)
+{
+	return deltatime_ms(deltamillisecs(a) * scalar);
+}
+
+deltatime_t deltatime_divu(deltatime_t a, unsigned scalar)
+{
+	return deltatime_ms(deltamillisecs(a) / scalar);
+}
+
 intmax_t deltamillisecs(deltatime_t d)
 {
-	return d.dt.tv_sec * 1000 + d.dt.tv_usec / 1000;
+	return d.ms;
 }
 
 time_t deltasecs(deltatime_t d)
 {
-	return d.dt.tv_sec;
+	return d.ms / 1000;
 }
 
 deltatime_t deltatimescale(int num, int denom, deltatime_t d)

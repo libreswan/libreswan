@@ -1037,7 +1037,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *qke,
 		"reply packet from quick_outI1");
 
 	delete_event(st);
-	event_schedule(EVENT_v1_RETRANSMIT, c->r_interval, st);
+	start_retransmits(st, EVENT_v1_RETRANSMIT);
 
 	if (qke->pcrc_replacing == SOS_NOBODY) {
 		whack_log(RC_NEW_STATE + STATE_QUICK_I1,
