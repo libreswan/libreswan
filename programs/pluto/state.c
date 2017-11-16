@@ -109,7 +109,7 @@ u_int16_t pluto_xfrmlifetime = 300;
  */
 
 /* for DDoS tracking, used in change_state */
-static unsigned int state_count[MAX_STATES];
+static unsigned int state_count[STATE_IKE_ROOF];
 
 void change_state(struct state *st, enum state_kind new_state)
 {
@@ -359,7 +359,7 @@ static void update_state_stats(struct state *st, enum state_kind old_state,
 	    }
 	    int count_states = 0;
 	    int s;
-	    for (s = STATE_MAIN_R0; s < MAX_STATES; s++) {
+	    for (s = STATE_MAIN_R0; s < STATE_IKE_ROOF; s++) {
 		    count_states += state_count[s];
 	    }
 	    DBG_log("category states: %d count states: %d",
@@ -2572,7 +2572,7 @@ void show_globalstate_status(void)
 		  category.half_open_ike.count);
 	whack_log_comment("current.states.iketype.open=%d",
 		  category.open_ike.count);
-	for (s = STATE_MAIN_R0; s < MAX_STATES; s++)
+	for (s = STATE_MAIN_R0; s < STATE_IKE_ROOF; s++)
 	{
 		whack_log_comment("current.states.enumerate.%s=%d",
 			enum_name(&state_names, s), state_count[s]);

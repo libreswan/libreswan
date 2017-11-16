@@ -480,7 +480,7 @@ enum {
  */
 
 enum state_kind {
-	STATE_UNDEFINED = 0,
+	STATE_UNDEFINED,
 
 	/*  Opportunism states: see "Opportunistic Encryption" 2.2 */
 
@@ -525,7 +525,7 @@ enum state_kind {
 	STATE_XAUTH_I0,                 /* client state is awaiting request */
 	STATE_XAUTH_I1,                 /* client state is awaiting result code */
 
-	STATE_IKEv1_ROOF,
+	STATE_IKEv1_ROOF,	/* not a state! */
 
 	/*
 	 * IKEv2 states.
@@ -568,11 +568,11 @@ enum state_kind {
 	STATE_IKESA_DEL,
 	STATE_CHILDSA_DEL,
 
-	STATE_IKEv2_ROOF
+	STATE_IKEv2_ROOF	/* not a state! */
 };
 
-#define STATE_IKE_FLOOR STATE_MAIN_R0
-#define MAX_STATES STATE_IKEv2_ROOF
+#define STATE_IKE_FLOOR STATE_MAIN_R0	/* excludes Opportunism States */
+#define STATE_IKE_ROOF STATE_IKEv2_ROOF	/* not a state! */
 
 
 /*
