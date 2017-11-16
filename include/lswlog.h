@@ -36,11 +36,15 @@
  * If it does, they will be interpreted by the C preprocesser
  * as macro argument separators.  This happens accidentally if
  * multiple variables are declared in one declaration.
+ *
+ * IMPAIR currently uses the same lset_t as DBG.  Define a separate
+ * macro so that, one day, that can change.
  */
 
 extern lset_t cur_debugging;	/* current debugging level */
 
 #define DBGP(cond)	(cur_debugging & (cond))
+#define IMPAIR(BEHAVIOUR) (cur_debugging & (IMPAIR_##BEHAVIOUR))
 
 #define DEBUG_PREFIX "| "
 
