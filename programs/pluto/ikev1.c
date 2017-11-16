@@ -974,18 +974,26 @@ void ikev1_echo_hdr(struct msg_digest *md, bool enc, u_int8_t np)
 }
 
 /*
- * Recognise and deal with an IKEv1 duplicate.
+ * Recognise and, if necesssary, respond to an IKEv1 duplicate.
+ *
+ * Use .st_finite_state, which is the real current state, and not
+ * FROM_STATE (which is derived from some convoluted magic) when
+ * determining if the duplicate should or should not get a response.
  */
-static bool ikev1_duplicate(struct state *st, struct msg_digest *md,
-			    const struct state_v1_microcode *smc)
+static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
 {
 	passert(st != NULL);
 	if (st->st_rpacket.ptr != NULL &&
 	    st->st_rpacket.len == pbs_room(&md->packet_pbs) &&
 	    memeq(st->st_rpacket.ptr, md->packet_pbs.start,
 		  st->st_rpacket.len)) {
-		if ((smc->flags & SMF_RETRANSMIT_ON_DUPLICATE)) {
-			if (count_duplicate(st, MAXIMUM_v1_ACCEPTED_DUPLICATES)) {
+		if (st->st_finite_state->fs_flags & SMF_RETRANSMIT_ON_DUPLICATE) {
+			/*
+			 * States with EVENT_SO_DISCARD always respond
+			 * to re-transmits; else cap.
+			 */
+			if (st->st_finite_state->fs_timeout_event == EVENT_SO_DISCARD ||
+			    count_duplicate(st, MAXIMUM_v1_ACCEPTED_DUPLICATES)) {
 				loglog(RC_RETRANSMISSION,
 				       "retransmitting in response to duplicate packet; already %s",
 				       enum_name(&state_names, st->st_state));
@@ -1074,8 +1082,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			st = find_state_ikev1_init(md->hdr.isa_icookie,
 						   md->hdr.isa_msgid);
 			if (st != NULL) {
-				smc = st->st_finite_state->fs_microcode;
-				if (!ikev1_duplicate(st, md, smc)) {
+				if (!ikev1_duplicate(st, md)) {
 					/*
 					 * Not a duplicate for the
 					 * current state; assume that
@@ -1676,8 +1683,7 @@ void process_v1_packet(struct msg_digest **mdp)
 	 * it.  ??? Notification packets are like exchanges -- I hope
 	 * that they are idempotent!
 	 */
-	if (st != NULL &&
-	    ikev1_duplicate(st, md, smc)) {
+	if (st != NULL && ikev1_duplicate(st, md)) {
 		return;
 	}
 
