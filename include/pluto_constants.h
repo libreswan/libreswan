@@ -566,7 +566,7 @@ enum state_kind {
 	STATE_IKEv2_ROOF	/* not a state! */
 };
 
-#define STATE_IKE_FLOOR STATE_MAIN_R0	/* excludes Opportunism States */
+#define STATE_IKE_FLOOR STATE_MAIN_R0
 #define STATE_IKE_ROOF STATE_IKEv2_ROOF	/* not a state! */
 
 
