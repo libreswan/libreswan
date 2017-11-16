@@ -140,8 +140,6 @@ enum_names timer_event_names = {
 /* State of exchanges */
 static const char *const state_name[] = {
 	"STATE_UNDEFINED",
-	"OPPO_ACQUIRE",
-	"OPPO_GW_DISCOVERED",
 	"STATE_MAIN_R0",
 	"STATE_MAIN_I1",
 	"STATE_MAIN_R1",
@@ -214,8 +212,6 @@ enum_names state_names = {
 
 static const char *const state_story[] = {
 	"not defined and probably dead (internal)",             /* STATE_UNDEFINED */
-	"got an ACQUIRE message for this pair (internal)",      /* OPPO_QCQUIRE */
-	"got TXT specifying gateway (internal)",                /* OPPO_GW_DISCOVERED */
 	"expecting MI1",                                        /* STATE_MAIN_R0 */
 	"sent MI1, expecting MR1",                              /* STATE_MAIN_I1 */
 	"sent MR1, expecting MI2",                              /* STATE_MAIN_R1 */

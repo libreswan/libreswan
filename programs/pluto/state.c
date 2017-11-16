@@ -287,13 +287,6 @@ static struct state_category *categorize_state(struct state *st,
 		return established_ike;
 
 		/*
-		 * Some internal state, will it ever occur?
-		 */
-	case OPPO_ACQUIRE:
-	case OPPO_GW_DISCOVERED:
-		return &category.unknown;
-
-		/*
 		 * IKEv1: QUICK is for child connections children.
 		 * Probably won't occur as a parent?
 		 */
