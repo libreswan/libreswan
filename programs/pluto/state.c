@@ -287,6 +287,13 @@ static struct state_category *categorize_state(struct state *st,
 		return established_ike;
 
 		/*
+		 * Some internal state, will it ever occur?
+		 */
+	case STATE_UNUSED_1:
+	case STATE_UNUSED_2:
+		return &category.unknown;
+
+		/*
 		 * IKEv1: QUICK is for child connections children.
 		 * Probably won't occur as a parent?
 		 */

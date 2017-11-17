@@ -482,6 +482,11 @@ enum {
 enum state_kind {
 	STATE_UNDEFINED,
 
+	/* Hack so state numbers don't change */
+
+	STATE_UNUSED_1,
+	STATE_UNUSED_2,
+
 	/* IKE states */
 
 	STATE_MAIN_R0,
