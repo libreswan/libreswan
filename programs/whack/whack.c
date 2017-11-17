@@ -155,14 +155,9 @@ static void help(void)
 		"pubkey: whack --keyid <id> [--addkey] [--pubkeyrsa <key>]\n"
 		"\n"
 		"debug: whack [--name <connection_name>] \\\n"
-		"	[--debug <class>] | \\\n"
 		"	[--debug-none] | [--debug-all] | \\\n"
-		"	( [--debug-raw] [--debug-crypt] [--debug-parsing] \\\n"
-		"	[--debug-emitting] [--debug-control] [--debug-controlmore] \\\n"
-		"	[--debug-dns] [--debug-pfkey] [--debug-dpd] \\\n"
-		"	[--debug-nat-t] [--debug-x509] [--debug-oppo] \\\n"
-		"	[--debug-oppoinfo] \\\n"
-		"	[--debug-private] )\n"
+		"	[--debug <class>] | [--debug private] \\\n"
+		"	[--debug list]\n"
 		"\n"
 		"testcases: [--whackrecord <file>] [--whackstoprecord]\n"
 		"\n"
@@ -454,15 +449,9 @@ enum option_enums {
 
 /* === end of correspondence with POLICY_* === */
 
-/* NOTE: these definitions must match DBG_* and IMPAIR_* in constants.h */
-
 #   define DBGOPT_FIRST DBGOPT_NONE
 	DBGOPT_NONE,
 	DBGOPT_ALL,
-
-	DBGOPT_elems,	/* this point on: DBGOPT single elements */
-
-	DBGOPT_roof = DBGOPT_elems + IMPAIR_roof_IX - 1,
 
 	DBGOPT_DEBUG,
 	DBGOPT_IMPAIR,
@@ -721,33 +710,6 @@ static const struct option long_opts[] = {
 
 	{ "debug-none", no_argument, NULL, DBGOPT_NONE + OO },
 	{ "debug-all", no_argument, NULL, DBGOPT_ALL + OO },
-
-#    define DO (DBGOPT_elems + OO)
-
-	{ "debug-raw", no_argument, NULL, DBG_RAW_IX + DO },
-	{ "debug-crypt", no_argument, NULL, DBG_CRYPT_IX + DO },
-	{ "debug-parsing", no_argument, NULL, DBG_PARSING_IX + DO },
-	{ "debug-emitting", no_argument, NULL, DBG_EMITTING_IX + DO },
-	{ "debug-control", no_argument, NULL, DBG_CONTROL_IX + DO },
-	{ "debug-lifecycle", no_argument, NULL, DBG_LIFECYCLE_IX + DO },
-	{ "debug-kernel", no_argument, NULL, DBG_KERNEL_IX + DO },
-	{ "debug-dns", no_argument, NULL, DBG_DNS_IX + DO },
-	{ "debug-oppo", no_argument, NULL, DBG_OPPO_IX + DO },
-	{ "debug-oppoinfo", no_argument, NULL, DBG_OPPOINFO_IX + DO },
-	{ "debug-whackwatch",  no_argument, NULL, DBG_WHACKWATCH_IX + DO },
-	{ "debug-controlmore", no_argument, NULL, DBG_CONTROLMORE_IX + DO },
-	{ "debug-pfkey",   no_argument, NULL, DBG_PFKEY_IX + DO },
-	/* ??? redundant spelling */
-	{ "debug-nattraversal", no_argument, NULL, DBG_NATT_IX + DO },
-	/* ??? redundant spelling */
-	{ "debug-natt",    no_argument, NULL, DBG_NATT_IX + DO },
-	/* obsolete _ */
-	{ "debug-nat_t",   no_argument, NULL, DBG_NATT_IX + DO },
-	{ "debug-nat-t",   no_argument, NULL, DBG_NATT_IX + DO },
-	{ "debug-x509",    no_argument, NULL, DBG_X509_IX + DO },
-	{ "debug-dpd",     no_argument, NULL, DBG_DPD_IX + DO },
-	{ "debug-private", no_argument, NULL, DBG_PRIVATE_IX + DO },
-
 	{ "debug", required_argument, NULL, DBGOPT_DEBUG + OO, },
 	{ "impair", required_argument, NULL, DBGOPT_IMPAIR + OO, },
 
@@ -2119,10 +2081,8 @@ int main(int argc, char **argv)
 			continue;
 
 		default:
-			/* DBG_* or IMPAIR_* flags */
-			assert(DBGOPT_elems <= c && c < DBGOPT_elems + IMPAIR_roof_IX);
-			msg.debugging = lmod_set(msg.debugging, LELEM(c - DBGOPT_elems));
-			continue;
+			bad_case(c);
+			break;
 		}
 		break;
 	}

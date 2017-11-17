@@ -476,7 +476,7 @@ u_int16_t secctx_attr_type = SECCTX;
  */
 
 enum {
-	DBG_OFFSET = 256,
+	OPT_OFFSET = 256, /* larger than largest char */
 	OPT_DEBUG,
 	OPT_IMPAIR,
 	OPT_DNSSEC_ROOTKEY_FILE,
@@ -580,37 +580,10 @@ static const struct option long_opts[] = {
 	{ "vendorid\0<vendorid>", required_argument, NULL, 'V' },
 
 	{ "leak-detective\0", no_argument, NULL, 'X' },
-	{ "debug-nat_t\0>debug-nattraversal", no_argument, NULL, '5' },	/* redundant spelling; _ */
-	{ "debug-nat-t\0>debug-nattraversal", no_argument, NULL, '5' },	/* redundant spelling */
-	{ "debug-nattraversal\0", no_argument, NULL, '5' },
 	{ "debug-none\0^", no_argument, NULL, 'N' },
 	{ "debug-all\0", no_argument, NULL, 'A' },
-
-	/* --debug-* options (using D for shorthand) */
-#define D(name, code) { "debug-" name, no_argument, NULL, (code) + DBG_OFFSET }
-	D("raw\0", DBG_RAW_IX),
-	D("crypt\0", DBG_CRYPT_IX),
-	D("crypto\0>crypt", DBG_CRYPT_IX),	/* redundant spelling */
-	D("parsing\0", DBG_PARSING_IX),
-	D("emitting\0", DBG_EMITTING_IX),
-	D("control\0", DBG_CONTROL_IX),
-	D("lifecycle\0", DBG_LIFECYCLE_IX),
-	D("kernel\0", DBG_KERNEL_IX),
-	D("klips\0>kernel", DBG_KERNEL_IX),	/* redundant spelling */
-	D("netkey\0>kernel", DBG_KERNEL_IX),	/* redundant spelling */
-	D("dns\0", DBG_DNS_IX),
-	D("oppo\0", DBG_OPPO_IX),
-	D("oppoinfo\0", DBG_OPPOINFO_IX),
-	D("controlmore\0", DBG_CONTROLMORE_IX),
-	D("dpd\0", DBG_DPD_IX),
-	D("x509\0", DBG_X509_IX),
-	D("private\0", DBG_PRIVATE_IX),
-	D("pfkey\0", DBG_PFKEY_IX),
-#undef D
-#define DEBUG_OPTION DBG_OFFSET + IMPAIR_roof_IX + 0
-	{ "debug\0", required_argument, NULL, DEBUG_OPTION, },
-#define IMPAIR_OPTION DBG_OFFSET + IMPAIR_roof_IX + 1
-	{ "impair\0", required_argument, NULL, IMPAIR_OPTION, },
+	{ "debug\0", required_argument, NULL, OPT_DEBUG, },
+	{ "impair\0", required_argument, NULL, OPT_IMPAIR, },
 
 	{ 0, 0, 0, 0 }
 };
@@ -1365,7 +1338,7 @@ int main(int argc, char **argv)
 			continue;
 		}
 
-		case DEBUG_OPTION:
+		case OPT_DEBUG:
 		{
 			lmod_t mod = empty_lmod;
 			if (lmod_arg(&mod, &debug_lmod_info, optarg)) {
@@ -1377,7 +1350,7 @@ int main(int argc, char **argv)
 			continue;
 		}
 
-		case IMPAIR_OPTION:
+		case OPT_IMPAIR:
 		{
 			lmod_t mod = empty_lmod;
 			if (lmod_arg(&mod, &impair_lmod_info, optarg)) {
@@ -1390,11 +1363,6 @@ int main(int argc, char **argv)
 		}
 
 		default:
-			if (DBG_OFFSET <= c &&
-			    c < DBG_OFFSET + IMPAIR_roof_IX) {
-				base_debugging |= LELEM(c - DBG_OFFSET);
-				continue;
-			}
 			bad_case(c);
 		}
 		/* if ugh is set, bail with diagnostic */
