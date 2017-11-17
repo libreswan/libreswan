@@ -261,10 +261,33 @@ struct traffic_selector {
 	ip_range net;	/* for now, always happens to be a CIDR */
 };
 
-/* state object: record the state of a (possibly nascent) SA
+/*
+ * Abstract state machine that drives the parent and child SA.
+ *
+ * IKEv1 and IKEv2 construct states using this as a base.
+ */
+struct finite_state {
+	enum state_kind fs_state;
+	const char *fs_name;
+	const char *fs_story;
+	lset_t fs_flags;
+	enum event_type fs_timeout_event;
+	const void *fs_microcode;	/* aka edge */
+};
+
+void lswlog_finite_state(struct lswlog *buf, const struct finite_state *fs);
+
+/* this includes space for lurking STATE_IKEv2_ROOF */
+extern const struct finite_state *finite_states[STATE_IKE_ROOF];
+
+/*
+ * state object: record the state of a (possibly nascent) parent or
+ * child SA
  *
  * Invariants (violated only during short transitions):
+ *
  * - each state object will be in statetable exactly once.
+ *
  * - each state object will always have a pending event.
  *   This prevents leaks.
  */
@@ -457,7 +480,8 @@ struct state {
 	/* In a Phase 1 state, preserve peer's public key after authentication */
 	struct pubkey *st_peer_pubkey;
 
-	enum state_kind st_state;       /* State of exchange */
+#define st_state st_finite_state->fs_state
+	const struct finite_state *st_finite_state;	/* Current FSM state */
 
 	retransmit_t st_retransmit;	/* retransmit counters; opaque */
 	unsigned long st_try;		/* Number of times rekeying attempted.

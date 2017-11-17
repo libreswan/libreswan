@@ -337,3 +337,5 @@ extern bool is_msg_response(struct msg_digest *md);
 extern bool is_msg_request(struct msg_digest *md);
 
 extern bool need_this_intiator(struct state *st);
+
+extern void init_ikev2(void);

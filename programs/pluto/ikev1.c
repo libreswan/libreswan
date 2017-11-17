@@ -220,15 +220,14 @@ static state_transition_fn      /* forward declaration */
 	unexpected,
 	informational;
 
-/* v1_state_microcode_table is a table of all state_v1_microcode tuples.
- * It must be in order of state (the first element).
- * After initialization, ike_microcode_index[s] points to the
- * first entry in v1_state_microcode_table for state s.
- * Remember that each state name in Main or Quick Mode describes
- * what has happened in the past, not what this message is.
+/*
+ * v1_state_microcode_table is a table of all state_v1_microcode
+ * tuples.  It must be in order of state (the first element).  After
+ * initialization, ike_microcode_index[s] points to the first entry in
+ * v1_state_microcode_table for state s.  Remember that each state
+ * name in Main or Quick Mode describes what has happened in the past,
+ * not what this message is.
  */
-
-static const struct state_v1_microcode *ike_microcode_index[STATE_IKEv1_ROOF - STATE_IKEv1_FLOOR];
 
 static const struct state_v1_microcode v1_state_microcode_table[] = {
 
@@ -580,30 +579,104 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 	  P(MCFG_ATTR) | P(HASH), P(VID), PT(HASH),
 	  EVENT_v1_RETRANSMIT, xauth_inI1 },
 
+	{ STATE_IKEv1_ROOF, STATE_IKEv1_ROOF,
+	  LEMPTY,
+	  LEMPTY, LEMPTY, LEMPTY,
+	  EVENT_NULL, NULL },
 #undef P
 #undef PT
 };
 
 void init_ikev1(void)
 {
-	/* fill ike_microcode_index:
-	 * make ike_microcode_index[s] point to first entry in
-	 * v1_state_microcode_table for state s (backward scan makes this easier).
-	 * Check that table is in order -- catch coding errors.
-	 * For what it's worth, this routine is idempotent.
+	/*
+	 * Fill in the states.  This is a hack until each finite-state
+	 * is a stand-alone object with corresponding edges (aka
+	 * microcodes).
 	 */
-	const struct state_v1_microcode *t;
+	static struct finite_state v1_states[STATE_IKEv1_ROOF - STATE_IKEv1_FLOOR];
+	for (unsigned k = 0; k < elemsof(v1_states); k++) {
+		struct finite_state *fs = &v1_states[k];
+		fs->fs_state = k + STATE_IKEv1_FLOOR;
+		fs->fs_name = enum_short_name(&state_names, fs->fs_state);
+		fs->fs_story = enum_name(&state_stories, fs->fs_state);
+		finite_states[fs->fs_state] = fs;
+	}
 
-	for (t = &v1_state_microcode_table[elemsof(v1_state_microcode_table) - 1];;)
-	{
+	/*
+	 * Fill in .fs_microcode and .fs_flags; check that table is in
+	 * order -- catch coding errors.
+	 */
+	const struct state_v1_microcode *t = v1_state_microcode_table;
+	do {
 		passert(STATE_IKEv1_FLOOR <= t->state &&
 			t->state < STATE_IKEv1_ROOF);
-		ike_microcode_index[t->state - STATE_IKEv1_FLOOR] = t;
-		if (t == v1_state_microcode_table)
-			break;
-		t--;
-		passert(t[0].state <= t[1].state);
+		struct finite_state *fs = &v1_states[t->state - STATE_IKEv1_FLOOR];
+		/*
+		 * Point .fs_microcode to the first entry in
+		 * v1_state_microcode_table for that state.  All other
+		 * microcodes for that state should follow immediately
+		 * after.
+		 */
+		fs->fs_microcode = t;
+		/*
+		 * Copy over the flags that apply to the state; and
+		 * not the edge.
+		 */
+		fs->fs_flags = (t->flags & ( SMF_RETRANSMIT_ON_DUPLICATE));
+		do {
+			t++;
+		} while (t->state == fs->fs_state);
+		passert(t->state > fs->fs_state);
+	} while (t->state < STATE_IKEv1_ROOF);
+
+	/*
+	 * Try to fill in .fs_timeout_event.
+	 *
+	 * Since the timeout event, stored in the edge structure (aka
+	 * microcode), is for the target state, .next_state is used.
+	 */
+	for (t = v1_state_microcode_table; t->state < STATE_IKEv1_ROOF; t++) {
+		if (t->next_state != STATE_UNDEFINED) {
+			passert(STATE_IKEv1_FLOOR <= t->next_state &&
+				t->next_state < STATE_IKEv1_ROOF);
+			struct finite_state *fs = &v1_states[t->next_state - STATE_IKEv1_FLOOR];
+			if (fs->fs_timeout_event == 0) {
+				fs->fs_timeout_event = t->timeout_event;
+			} else if (fs->fs_timeout_event != t->timeout_event) {
+				/*
+				 * Annoyingly, a state can seemingly
+				 * have multiple and inconsistent
+				 * timeout_events.
+				 *
+				 * For instance, MAIN_I3->MAIN_I4 has
+				 * SA_REPLACE while XAUTH_I1->MAIN_I4
+				 * has RETRANSMIT.  This is arguably a
+				 * bug caused by a skipped state.
+				 */
+				LSWDBGP(DBG_CONTROLMORE, buf) {
+					lswlogs(buf, "ignoring microcode for ");
+					lswlog_finite_state(buf, finite_states[t->state]);
+					lswlogs(buf, " -> ");
+					lswlog_finite_state(buf, fs);
+					lswlogs(buf, " with event ");
+					lswlog_enum_short(buf, &timer_event_names,
+							  t->timeout_event);
+				}
+			}
+		}
 	}
+
+	/*
+	 * Finally list the states.
+	 */
+	DBG(DBG_CONTROLMORE,
+	    for (unsigned s = STATE_IKEv1_FLOOR; s < STATE_IKEv1_ROOF; s++) {
+		    const struct finite_state *fs = finite_states[s];
+		    LSWDBG(buf) {
+			    lswlog_finite_state(buf, fs);
+		    }
+	    });
 }
 
 static stf_status unexpected(struct msg_digest *md)
@@ -901,18 +974,26 @@ void ikev1_echo_hdr(struct msg_digest *md, bool enc, u_int8_t np)
 }
 
 /*
- * Recognise and deal with an IKEv1 duplicate.
+ * Recognise and, if necesssary, respond to an IKEv1 duplicate.
+ *
+ * Use .st_finite_state, which is the real current state, and not
+ * FROM_STATE (which is derived from some convoluted magic) when
+ * determining if the duplicate should or should not get a response.
  */
-static bool ikev1_duplicate(struct state *st, struct msg_digest *md,
-			    const struct state_v1_microcode *smc)
+static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
 {
 	passert(st != NULL);
 	if (st->st_rpacket.ptr != NULL &&
 	    st->st_rpacket.len == pbs_room(&md->packet_pbs) &&
 	    memeq(st->st_rpacket.ptr, md->packet_pbs.start,
 		  st->st_rpacket.len)) {
-		if ((smc->flags & SMF_RETRANSMIT_ON_DUPLICATE)) {
-			if (count_duplicate(st, MAXIMUM_v1_ACCEPTED_DUPLICATES)) {
+		if (st->st_finite_state->fs_flags & SMF_RETRANSMIT_ON_DUPLICATE) {
+			/*
+			 * States with EVENT_SO_DISCARD always respond
+			 * to re-transmits; else cap.
+			 */
+			if (st->st_finite_state->fs_timeout_event == EVENT_SO_DISCARD ||
+			    count_duplicate(st, MAXIMUM_v1_ACCEPTED_DUPLICATES)) {
 				loglog(RC_RETRANSMISSION,
 				       "retransmitting in response to duplicate packet; already %s",
 				       enum_name(&state_names, st->st_state));
@@ -1001,10 +1082,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			st = find_state_ikev1_init(md->hdr.isa_icookie,
 						   md->hdr.isa_msgid);
 			if (st != NULL) {
-				passert(STATE_IKEv1_FLOOR <= st->st_state &&
-					st->st_state < STATE_IKEv1_ROOF);
-				smc = ike_microcode_index[st->st_state - STATE_IKEv1_FLOOR];
-				if (!ikev1_duplicate(st, md, smc)) {
+				if (!ikev1_duplicate(st, md)) {
 					/*
 					 * Not a duplicate for the
 					 * current state; assume that
@@ -1577,7 +1655,10 @@ void process_v1_packet(struct msg_digest **mdp)
 	 * possibly Oakley Auth type.
 	 */
 	passert(STATE_IKEv1_FLOOR <= from_state && from_state < STATE_IKEv1_ROOF);
-	smc = ike_microcode_index[from_state - STATE_IKEv1_FLOOR];
+	const struct finite_state *fs = finite_states[from_state];
+	passert(fs != NULL);
+	smc = fs->fs_microcode;
+	passert(smc != NULL);
 
 	if (st != NULL) {
 		oakley_auth_t baseauth =
@@ -1602,8 +1683,7 @@ void process_v1_packet(struct msg_digest **mdp)
 	 * it.  ??? Notification packets are like exchanges -- I hope
 	 * that they are idempotent!
 	 */
-	if (st != NULL &&
-	    ikev1_duplicate(st, md, smc)) {
+	if (st != NULL && ikev1_duplicate(st, md)) {
 		return;
 	}
 

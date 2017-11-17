@@ -493,6 +493,104 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .state      = STATE_IKEv2_ROOF }
 };
 
+void init_ikev2(void)
+{
+	/*
+	 * Fill in the states.  This is a hack until each finite-state
+	 * is object with corresponding edges (aka microcodes).
+	 */
+	static struct finite_state v2_states[STATE_IKEv2_ROOF - STATE_IKEv2_FLOOR];
+	for (unsigned k = 0; k < elemsof(v2_states); k++) {
+		struct finite_state *fs = &v2_states[k];
+		fs->fs_state = k + STATE_IKEv2_BASE;
+		fs->fs_name = enum_short_name(&state_names, fs->fs_state);
+		fs->fs_story = enum_name(&state_stories, fs->fs_state);
+		finite_states[fs->fs_state] = fs;
+	}
+
+	/* fill ike_microcode_index:
+	 * make ike_microcode_index[s] point to first entry in
+	 * v1_state_microcode_table for state s (backward scan makes this easier).
+	 * Check that table is in order -- catch coding errors.
+	 * For what it's worth, this routine is idempotent.
+	 */
+	const struct state_v2_microcode *t = v2_state_microcode_table;
+	do {
+		const char *name = enum_short_name(&state_names, t->state);
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("Processing IKEv2 state %s (microcode %s)",
+			    name, t->story));
+		if (t->state == STATE_UNDEFINED) {
+			t++;
+			continue;
+		}
+		passert(STATE_IKEv2_FLOOR <= t->state &&
+			t->state < STATE_IKEv2_ROOF);
+		struct finite_state *fs = &v2_states[t->state - STATE_IKEv2_FLOOR];
+		/*
+		 * Point .fs_microcode to the first entry in
+		 * v1_state_microcode_table for that state.  All other
+		 * microcodes for that state should follow immediately
+		 * after.
+		 */
+		fs->fs_microcode = t;
+		do {
+			t++;
+		} while (t->state == fs->fs_state);
+	} while (t->state < STATE_IKEv2_ROOF);
+
+	/*
+	 * Try to fill in .fs_timeout_event.
+	 *
+	 * Since the timeout event, stored in the edge structure (aka
+	 * microcode), is for the target state, .next_state is used.
+	 */
+	for (t = v2_state_microcode_table; t->state < STATE_IKEv2_ROOF; t++) {
+		if (t->next_state != STATE_UNDEFINED) {
+			passert(STATE_IKEv2_BASE <= t->next_state &&
+				t->next_state < STATE_IKEv2_ROOF);
+			struct finite_state *fs = &v2_states[t->next_state - STATE_IKEv2_BASE];
+			if (fs->fs_timeout_event == 0) {
+				fs->fs_timeout_event = t->timeout_event;
+			} else if (fs->fs_timeout_event != t->timeout_event) {
+				/*
+				 * Annoyingly, a state can seemingly
+				 * have multiple and inconsistent
+				 * timeout_events.
+				 *
+				 * For instance, EVENT_RETAIN is used
+				 * to indicate that the previously
+				 * scheduled event should be left in
+				 * place.  Arguably this is a bug;
+				 * instead a flag should mark this,
+				 * and the code check that
+				 * before/after states are identical.
+				 */
+				LSWDBGP(DBG_CONTROLMORE, buf) {
+					lswlogs(buf, "ignoring microcode for ");
+					lswlog_finite_state(buf, finite_states[t->state]);
+					lswlogs(buf, " -> ");
+					lswlog_finite_state(buf, fs);
+					lswlogs(buf, " with event ");
+					lswlog_enum_short(buf, &timer_event_names,
+							  t->timeout_event);
+				}
+			}
+		}
+	}
+
+	/*
+	 * Finally list the states.
+	 */
+	DBG(DBG_CONTROLMORE,
+	    for (unsigned s = STATE_IKEv2_BASE; s < STATE_IKEv2_ROOF; s++) {
+		    const struct finite_state *fs = finite_states[s];
+		    LSWDBG(buf) {
+			    lswlog_finite_state(buf, fs);
+		    }
+	    });
+}
+
 /*
  * split an incoming message into payloads
  */
@@ -1699,6 +1797,7 @@ void send_v2_notification_from_md(struct msg_digest *md,
 		.st_serialno = SOS_NOBODY,
 		.st_connection = &fake_connection,
 		.st_reply_xchg = md->hdr.isa_xchg,
+		.st_finite_state = finite_states[STATE_UNDEFINED],
 	};
 
 	passert(md != NULL);

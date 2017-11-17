@@ -180,7 +180,7 @@ retransmitting in response to duplicate packet; already STATE_MAIN_R1
 IMPAIR: duplicate packet 1 copy 2 of 3
 retransmitting in response to duplicate packet; already STATE_MAIN_R1
 IMPAIR: duplicate packet 1 copy 3 of 3
-discarding duplicate packet -- exhausted retransmission; already STATE_MAIN_R1
+retransmitting in response to duplicate packet; already STATE_MAIN_R1
 IMPAIR: duplicate packet 2 copy 1 of 3
 | "westnet-eastnet" #1: discarding duplicate packet; already STATE_MAIN_R2
 IMPAIR: duplicate packet 2 copy 2 of 3
