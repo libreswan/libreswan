@@ -228,8 +228,7 @@ static state_transition_fn      /* forward declaration */
  * what has happened in the past, not what this message is.
  */
 
-static const struct state_v1_microcode
-	*ike_microcode_index[STATE_IKEv1_ROOF - STATE_IKE_FLOOR];
+static const struct state_v1_microcode *ike_microcode_index[STATE_IKEv1_ROOF - STATE_IKEv1_FLOOR];
 
 static const struct state_v1_microcode v1_state_microcode_table[] = {
 
@@ -597,9 +596,9 @@ void init_ikev1(void)
 
 	for (t = &v1_state_microcode_table[elemsof(v1_state_microcode_table) - 1];;)
 	{
-		passert(STATE_IKE_FLOOR <= t->state &&
+		passert(STATE_IKEv1_FLOOR <= t->state &&
 			t->state < STATE_IKEv1_ROOF);
-		ike_microcode_index[t->state - STATE_IKE_FLOOR] = t;
+		ike_microcode_index[t->state - STATE_IKEv1_FLOOR] = t;
 		if (t == v1_state_microcode_table)
 			break;
 		t--;
@@ -1002,9 +1001,9 @@ void process_v1_packet(struct msg_digest **mdp)
 			st = find_state_ikev1_init(md->hdr.isa_icookie,
 						   md->hdr.isa_msgid);
 			if (st != NULL) {
-				passert(STATE_IKE_FLOOR <= st->st_state &&
-					st->st_state <= STATE_IKEv1_ROOF);
-				smc = ike_microcode_index[st->st_state - STATE_IKE_FLOOR];
+				passert(STATE_IKEv1_FLOOR <= st->st_state &&
+					st->st_state < STATE_IKEv1_ROOF);
+				smc = ike_microcode_index[st->st_state - STATE_IKEv1_FLOOR];
 				if (!ikev1_duplicate(st, md, smc)) {
 					/*
 					 * Not a duplicate for the
@@ -1577,8 +1576,8 @@ void process_v1_packet(struct msg_digest **mdp)
 	 * Look up the appropriate microcode based on state and
 	 * possibly Oakley Auth type.
 	 */
-	passert(STATE_IKE_FLOOR <= from_state && from_state <= STATE_IKEv1_ROOF);
-	smc = ike_microcode_index[from_state - STATE_IKE_FLOOR];
+	passert(STATE_IKEv1_FLOOR <= from_state && from_state < STATE_IKEv1_ROOF);
+	smc = ike_microcode_index[from_state - STATE_IKEv1_FLOOR];
 
 	if (st != NULL) {
 		oakley_auth_t baseauth =

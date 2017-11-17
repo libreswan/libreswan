@@ -358,8 +358,10 @@ static void update_state_stats(struct state *st, enum state_kind old_state,
 		    category_states += state_category->count;
 	    }
 	    int count_states = 0;
-	    int s;
-	    for (s = STATE_MAIN_R0; s < STATE_IKE_ROOF; s++) {
+	    for (enum state_kind s = STATE_IKEv1_FLOOR; s < STATE_IKEv1_ROOF; s++) {
+		    count_states += state_count[s];
+	    }
+	    for (enum state_kind s = STATE_IKEv2_FLOOR; s < STATE_IKEv2_ROOF; s++) {
 		    count_states += state_count[s];
 	    }
 	    DBG_log("category states: %d count states: %d",
@@ -2553,7 +2555,6 @@ bool drop_new_exchanges(void)
 
 void show_globalstate_status(void)
 {
-	enum state_kind s;
 	int shunts = show_shunt_count();
 
 	whack_log_comment("config.setup.ike.ddos_threshold=%d",pluto_ddos_threshold);
@@ -2572,8 +2573,11 @@ void show_globalstate_status(void)
 		  category.half_open_ike.count);
 	whack_log_comment("current.states.iketype.open=%d",
 		  category.open_ike.count);
-	for (s = STATE_MAIN_R0; s < STATE_IKE_ROOF; s++)
-	{
+	for (enum state_kind s = STATE_IKEv1_FLOOR; s < STATE_IKEv1_ROOF; s++) {
+		whack_log_comment("current.states.enumerate.%s=%d",
+			enum_name(&state_names, s), state_count[s]);
+	}
+	for (enum state_kind s = STATE_IKEv2_FLOOR; s < STATE_IKEv2_ROOF; s++) {
 		whack_log_comment("current.states.enumerate.%s=%d",
 			enum_name(&state_names, s), state_count[s]);
 	}

@@ -576,8 +576,8 @@ enum state_kind {
 	STATE_IKEv2_ROOF	/* not a state! */
 };
 
-#define STATE_IKE_FLOOR STATE_MAIN_R0
-#define STATE_IKE_ROOF STATE_IKEv2_ROOF	/* not a state! */
+/* STATE_IKEv2_ROOF lurks in the code so leave space for it */
+#define STATE_IKE_ROOF (STATE_IKEv2_ROOF+1)	/* not a state! */
 
 
 /*
