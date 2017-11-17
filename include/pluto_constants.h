@@ -489,7 +489,9 @@ enum state_kind {
 
 	/* IKE states */
 
-	STATE_MAIN_R0,
+	STATE_IKEv1_FLOOR,
+
+	STATE_MAIN_R0 = STATE_IKEv1_FLOOR,
 	STATE_MAIN_I1,
 	STATE_MAIN_R1,
 	STATE_MAIN_I2,
@@ -529,10 +531,13 @@ enum state_kind {
 
 	/*
 	 * IKEv2 states.
-	 * Note that message reliably sending is done by initiator only,
-	 * unlike with IKEv1.
+	 *
+	 * Note that message reliably sending is done by initiator
+	 * only, unlike with IKEv1.
 	 */
-	STATE_IKEv2_BASE,	/* state when faking a state */
+	STATE_IKEv2_FLOOR,
+
+	STATE_IKEv2_BASE = STATE_IKEv2_FLOOR,	/* state when faking a state */
 
 	/* INITIATOR states */
 	STATE_PARENT_I1,        /* IKE_SA_INIT: sent initial message, waiting for reply */
