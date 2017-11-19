@@ -1554,7 +1554,7 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 	if (initiator) {
 		if (!md->st->st_peer_alt_id &&
 			!same_id(&c->spd.that.id, &peer_id) &&
-			id_kind(&st->st_connection->spd.that.id) != ID_FROMCERT) {
+			st->st_connection->spd.that.id.kind != ID_FROMCERT) {
 
 			char expect[IDTOA_BUF],
 			     found[IDTOA_BUF];
@@ -1566,8 +1566,8 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 				"we require IKEv2 peer to have ID '%s', but peer declares '%s'",
 				expect, found);
 			return FALSE;
-		} else if (id_kind(&st->st_connection->spd.that.id) == ID_FROMCERT) {
-			if (id_kind(&peer_id) != ID_DER_ASN1_DN) {
+		} else if (st->st_connection->spd.that.id.kind == ID_FROMCERT) {
+			if (peer_id.kind != ID_DER_ASN1_DN) {
 				loglog(RC_LOG_SERIOUS, "peer ID is not a certificate type");
 				return FALSE;
 			}
@@ -1618,7 +1618,7 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 				/* can we continue with what we had? */
 				if (!md->st->st_peer_alt_id &&
 					!same_id(&c->spd.that.id, &peer_id) &&
-					id_kind(&c->spd.that.id) != ID_FROMCERT) {
+					c->spd.that.id.kind != ID_FROMCERT) {
 						libreswan_log("Peer ID '%s' mismatched on first found connection and no better connection found",
 							buf);
 						return FALSE;

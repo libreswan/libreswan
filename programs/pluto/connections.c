@@ -3164,8 +3164,7 @@ struct connection *refine_host_connection(const struct state *st,
 			 */
 			bool d_fromcert = FALSE;
 			if (!match1) {
-				d_fromcert = id_kind(&d->spd.that.id) ==
-					ID_FROMCERT;
+				d_fromcert = d->spd.that.id.kind == ID_FROMCERT;
 				if (!d_fromcert)
 					continue;
 			}

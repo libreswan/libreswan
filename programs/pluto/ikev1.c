@@ -2898,7 +2898,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 
 	if (!extract_peer_id(&peer, id_pbs))
 		return FALSE;
-	if (id_kind(&c->spd.that.id) == ID_FROMCERT) {
+	if (c->spd.that.id.kind == ID_FROMCERT) {
 		/* breaks API, connection modified by %fromcert */
 		duplicate_id(&c->spd.that.id, &peer);
 	}
@@ -2955,7 +2955,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	if (initiator) {
 		if (!st->st_peer_alt_id &&
 			!same_id(&st->st_connection->spd.that.id, &peer) &&
-			id_kind(&st->st_connection->spd.that.id) != ID_FROMCERT) {
+			st->st_connection->spd.that.id.kind != ID_FROMCERT) {
 
 			char expect[IDTOA_BUF],
 			     found[IDTOA_BUF];
@@ -2967,8 +2967,8 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			       "we require IKEv1 peer to have ID '%s', but peer declares '%s'",
 			       expect, found);
 			return FALSE;
-		} else if (id_kind(&st->st_connection->spd.that.id) == ID_FROMCERT) {
-			if (id_kind(&peer) != ID_DER_ASN1_DN) {
+		} else if (st->st_connection->spd.that.id.kind == ID_FROMCERT) {
+			if (peer.kind != ID_DER_ASN1_DN) {
 				loglog(RC_LOG_SERIOUS,
 				       "peer ID is not a certificate type");
 				return FALSE;
@@ -3025,7 +3025,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			/* can we continue with what we had? */
 			if (!md->st->st_peer_alt_id &&
 				!same_id(&c->spd.that.id, &peer) &&
-				id_kind(&c->spd.that.id) != ID_FROMCERT) {
+				c->spd.that.id.kind != ID_FROMCERT) {
 					libreswan_log("Peer mismatch on first found connection and no better connection found");
 					return FALSE;
 			} else {
