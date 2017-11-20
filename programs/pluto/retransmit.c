@@ -166,7 +166,7 @@ enum retransmit_status retransmit(struct state *st)
 	 */
 	if (IMPAIR(RETRANSMITS)) {
 		libreswan_log("suppressing retransmit because IMPAIR_RETRANSMITS is set");
-		return RETRANSMIT_IMPAIRED_AND_CAPPED;
+		return RETRANSMITS_TIMED_OUT;
 	}
 
 	/*
@@ -215,7 +215,7 @@ enum retransmit_status retransmit(struct state *st)
 				break;
 			}
 		}
-		return RETRANSMIT_CAPPED;
+		return RETRANSMITS_TIMED_OUT;
 	}
 
 	double_delay(rt, nr_retransmits);
