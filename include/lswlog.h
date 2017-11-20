@@ -407,7 +407,7 @@ void lswlog_log_prefix(struct lswlog *buf);
 #define LSWLOG_LOG(BUF)							\
 	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
 		LSWBUF_(BUF)						\
-			for (lswlog_pre(BUF); lswlog_p;			\
+			for (lswlog_log_prefix(BUF); lswlog_p;		\
 			     lswlog_to_log_stream(BUF),			\
 				     lswlog_p = false)
 
