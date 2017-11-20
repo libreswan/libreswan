@@ -369,7 +369,7 @@ static void lswlog_chosen_proposal(struct lswlog *buf,
 void DBG_log_ikev2_proposal(const char *prefix,
 			    struct ikev2_proposal *proposal)
 {
-	LSWDBG(buf) {
+	LSWLOG_DEBUG(buf) {
 		lswlogf(buf, "%s ikev2_proposal: ", prefix);
 		print_proposal(buf, proposal->propnum, proposal);
 	}
@@ -402,7 +402,7 @@ void DBG_log_ikev2_proposals(const char *prefix,
 		} else {
 			DBG_log("  proposal: %d", propnum);
 		}
-		LSWDBG(buf) {
+		LSWLOG_DEBUG(buf) {
 			lswlogf(buf, "    ");
 			lswlogs(buf, "protoid=");
 			print_name_value(buf, protoid_name(proposal->protoid),
@@ -411,7 +411,7 @@ void DBG_log_ikev2_proposals(const char *prefix,
 		enum ikev2_trans_type type;
 		const struct ikev2_transforms *transforms;
 		FOR_EACH_TRANSFORMS_TYPE(type, transforms, proposal) {
-			LSWDBG(buf) {
+			LSWLOG_DEBUG(buf) {
 				lswlogf(buf, "    ");
 				print_type_transforms(buf, type, transforms);
 			}

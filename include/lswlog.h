@@ -383,7 +383,7 @@ void lswlog_dbg_pre(struct lswlog *buf);
 				     lswlog_p = false)
 
 #define LSWDBGP(DEBUG, BUF) LSWDBG_(DBGP(DEBUG), BUF)
-#define LSWDBG(BUF) LSWDBG_(true, BUF)
+#define LSWLOG_DEBUG(BUF) LSWDBG_(true, BUF)
 
 /*
  * Send log output the logging streams and WHACK (if connected).

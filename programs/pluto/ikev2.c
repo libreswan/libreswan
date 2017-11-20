@@ -585,7 +585,7 @@ void init_ikev2(void)
 	DBG(DBG_CONTROLMORE,
 	    for (unsigned s = STATE_IKEv2_BASE; s < STATE_IKEv2_ROOF; s++) {
 		    const struct finite_state *fs = finite_states[s];
-		    LSWDBG(buf) {
+		    LSWLOG_DEBUG(buf) {
 			    lswlog_finite_state(buf, fs);
 		    }
 	    });

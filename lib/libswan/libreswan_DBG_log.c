@@ -22,7 +22,7 @@
 
 int libreswan_DBG_log(const char *message, ...)
 {
-	LSWDBG(buf) {
+	LSWLOG_DEBUG(buf) {
 		va_list args;
 		va_start(args, message);
 		lswlogvf(buf, message, args);
