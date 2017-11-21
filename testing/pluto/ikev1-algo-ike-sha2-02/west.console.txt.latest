@@ -49,7 +49,6 @@ west #
 000 using kernel interface: klips
 000 interface ipsec0/eth1 2001:db8:1:2::45
 000 interface ipsec0/eth1 192.1.2.45
-000 %myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+klips+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
 000 virtual_private (%priv):

@@ -164,7 +164,6 @@ east:~# ipsec auto --status
 000 interface eth1/eth1 192.1.2.23
 000 interface eth2/eth2 192.9.2.23
 000 interface lo/lo 127.0.0.1
-000 %myid = (none)
 000 debug crypt+control+controlmore
 000  
 000 algorithm ESP encrypt: id=2, name=ESP_DES, ivlen=8, keysizemin=64, keysizemax=64

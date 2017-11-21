@@ -40,7 +40,6 @@ whackwest --name ipsec-rsa-c --initiate
 004 "ipsec-rsa-c" #2: STATE_QUICK_I2: sent QI2, IPsec SA established
 whackwest --status
 000 interface virtual128.95.7.1/lo:w 128.95.7.1
-000 %myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+klips+dns+oppo+controlmore+pfkey+nattraversal+x509+private
 000  
 000  

@@ -14,7 +14,6 @@ whackwest --route --name ipsec-oppo-me
 whackeast --route --name ipsec-oppo-me
 whackwest --status
 000 interface virtual128.95.7.1/lo:w 128.95.7.1
-000 %myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+klips+dns+oppo+controlmore+pfkey+nattraversal+x509+private
 000  
 000  
@@ -41,7 +40,6 @@ whackwest --status
 000  
 whackeast --status
 000 interface virtual128.95.7.2/lo:e 128.95.7.2
-000 %myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+klips+dns+oppo+controlmore+pfkey+nattraversal+x509+private
 000  
 000  
@@ -80,7 +78,6 @@ whackwest --oppohere 128.95.7.1 --oppothere 128.95.7.2
 004 "ipsec-oppo-me"[1] ...128.95.7.2 #2: STATE_QUICK_I2: sent QI2, IPsec SA established
 whackwest --status
 000 interface virtual128.95.7.1/lo:w 128.95.7.1
-000 %myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+klips+dns+oppo+controlmore+pfkey+nattraversal+x509+private
 000  
 000  
@@ -116,7 +113,6 @@ whackwest --status
 000  
 whackeast --status
 000 interface virtual128.95.7.2/lo:e 128.95.7.2
-000 %myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+klips+dns+oppo+controlmore+pfkey+nattraversal+x509+private
 000  
 000  
@@ -158,7 +154,6 @@ whackeast --status
 whackwest --deletestate 2
 whackwest --status
 000 interface virtual128.95.7.1/lo:w 128.95.7.1
-000 %myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+klips+dns+oppo+controlmore+pfkey+nattraversal+x509+private
 000  
 000  
@@ -194,7 +189,6 @@ whackwest --deletestate 1
 002 "ipsec-oppo-me"[1] ...128.95.7.2: deleting connection "ipsec-oppo-me" instance with peer 128.95.7.2
 whackwest --status
 000 interface virtual128.95.7.1/lo:w 128.95.7.1
-000 %myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+klips+dns+oppo+controlmore+pfkey+nattraversal+x509+private
 000  
 000  
@@ -221,7 +215,6 @@ whackwest --status
 000  
 whackeast --status
 000 interface virtual128.95.7.2/lo:e 128.95.7.2
-000 %myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+klips+dns+oppo+controlmore+pfkey+nattraversal+x509+private
 000  
 000  

@@ -26,7 +26,6 @@ whackwest --route --name ipsec-oppo-halfbroad
 whackeast --route --name ipsec-oppo-halfbroad
 whackwest --status
 000 interface virtual128.95.7.1/lo:w 128.95.7.1
-000 %myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+klips+dns+oppo+controlmore+pfkey+nattraversal+x509+private
 000  
 000  
@@ -63,7 +62,6 @@ whackwest --status
 000  
 whackeast --status
 000 interface virtual128.95.7.2/lo:e 128.95.7.2
-000 %myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+klips+dns+oppo+controlmore+pfkey+nattraversal+x509+private
 000  
 000  
@@ -112,7 +110,6 @@ whackwest --oppohere 128.95.7.1 --oppothere 128.95.7.21
 004 "ipsec-oppo"[1] ...128.95.7.2===128.95.7.21/32 #2: STATE_QUICK_I2: sent QI2, IPsec SA established
 whackwest --status
 000 interface virtual128.95.7.1/lo:w 128.95.7.1
-000 %myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+klips+dns+oppo+controlmore+pfkey+nattraversal+x509+private
 000  
 000  
@@ -158,7 +155,6 @@ whackwest --status
 000  
 whackeast --status
 000 interface virtual128.95.7.2/lo:e 128.95.7.2
-000 %myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+klips+dns+oppo+controlmore+pfkey+nattraversal+x509+private
 000  
 000  

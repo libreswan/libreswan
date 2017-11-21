@@ -14,7 +14,6 @@ whackwest --name clear-west-east --route
 whackeast --name clear-west-east --route
 whackwest --status
 000 interface virtual128.95.7.1/lo:w 128.95.7.1
-000 %myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+klips+dns+oppo+controlmore+pfkey+nattraversal+x509+private
 000  
 000  

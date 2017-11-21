@@ -28,7 +28,6 @@ whackeast --listen
 002 loading secrets from "/tmp/ipsec.secrets/east"
 whackeast --status
 000 interface virtual128.95.7.2/lo:e 128.95.7.2
-000 %myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+klips+dns+oppo+controlmore+pfkey+nattraversal+x509+private
 000  
 000  
