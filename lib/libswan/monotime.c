@@ -22,6 +22,13 @@
 #include "monotime.h"
 #include "lswlog.h"
 
+const monotime_t monotime_epoch = MONOTIME_EPOCH;
+
+bool is_monotime_epoch(monotime_t t)
+{
+	return memeq(&t, &monotime_epoch, sizeof(monotime_t));
+}
+
 /*
  * monotonic variant of time(2)
  *

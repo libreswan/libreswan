@@ -46,7 +46,7 @@ typedef struct { struct timeval rt; } realtime_t;
 
 #define REALTIME_EPOCH {{ 0, 0, }}
 
-extern realtime_t realtime_epoch;
+extern const realtime_t realtime_epoch;
 
 realtime_t realtime(time_t time);
 realtime_t realtimesum(realtime_t t, deltatime_t d);
