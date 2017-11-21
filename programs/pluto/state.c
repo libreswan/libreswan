@@ -1970,7 +1970,7 @@ void fmt_state(struct state *st, const monotime_t n,
 			/* ??? why is printing -1 better than 0? */
 			snprintf(dpdbuf, sizeof(dpdbuf),
 				 "; lastdpd=%jds(seq in:%u out:%u)",
-				 st->st_last_dpd.mono_secs != UNDEFINED_TIME ?
+				 !is_monotime_epoch(st->st_last_dpd) ?
 					(intmax_t)deltasecs(monotimediff(mononow(), st->st_last_dpd)) : (intmax_t)-1,
 				 st->st_dpd_seqno,
 				 st->st_dpd_expectseqno);
@@ -1982,7 +1982,7 @@ void fmt_state(struct state *st, const monotime_t n,
 				if (pst != NULL) {
 					snprintf(dpdbuf, sizeof(dpdbuf),
 						"; lastlive=%jds",
-						pst->st_last_liveness.mono_secs != UNDEFINED_TIME ?
+						 !is_monotime_epoch(pst->st_last_liveness) ?
                                                  (intmax_t) deltasecs(monotimediff(mononow(), pst->st_last_liveness)) :
 						0);
 				}
@@ -2538,7 +2538,7 @@ bool state_busy(const struct state *st) {
 		 */
 		if (st->st_suspended_md != NULL) {
 
-			LSWDBG(buf) {
+			LSWLOG_DEBUG(buf) {
 				lswlog_log_prefix(buf);
 				lswlogf(buf, "discarding packet received during asynchronous work (DNS or crypto) in %s",
 					enum_name(&state_names, st->st_state));

@@ -43,15 +43,15 @@
  *
  * - unfortunately there is no way to detect forward jumps
  *
- * ??? On UNIX, 0 is a value that means 1970-01-01 00:00:00 +0000 (UTC).
- *
- * UNDEFINED_TIME is used as a mono time_t value in liveness_check().
- * 0 is PROBABLY safely distinct in this application.
  */
 
 typedef struct { time_t mono_secs; } monotime_t;
 
-#define UNDEFINED_TIME  ((time_t)0)	/* ??? what a kludge! */
+#define MONOTIME_EPOCH { 0 }
+
+extern const monotime_t monotime_epoch;
+
+bool is_monotime_epoch(monotime_t t);
 
 monotime_t mononow(void);
 monotime_t monotimesum(monotime_t t, deltatime_t d);

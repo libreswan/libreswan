@@ -67,7 +67,7 @@ void clear_retransmits(struct state *st)
 	rt->nr_retransmits = 0;
 	rt->limit = 0;
 	rt->delay = deltatime(0);
-	rt->cap = (monotime_t) { UNDEFINED_TIME };
+	rt->timeout = monotime_epoch;
 	DBG(DBG_RETRANSMITS,
 	    DBG_log("#%ld %s: retransmits: cleared",
 		    st->st_serialno, enum_name(&state_names, st->st_state)));
@@ -82,7 +82,7 @@ void start_retransmits(struct state *st, enum event_type type)
 	rt->limit = MAXIMUM_RETRANSMITS_PER_EXCHANGE;
 	rt->type = type;
 	rt->delay = c->r_interval;
-	rt->cap = monotimesum(mononow(), c->r_timeout);
+	rt->timeout = monotimesum(mononow(), c->r_timeout);
 	/*
 	 * XXX: If retransmits are impaired, this code should just
 	 * schedule a timeout for when retransmits are ment to stop,

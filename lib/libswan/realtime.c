@@ -20,7 +20,7 @@
 #include "constants.h"
 #include "realtime.h"
 
-realtime_t realtime_epoch = REALTIME_EPOCH;
+const realtime_t realtime_epoch = REALTIME_EPOCH;
 
 realtime_t realtime(time_t time)
 {

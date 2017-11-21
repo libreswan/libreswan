@@ -413,13 +413,13 @@ static void liveness_check(struct state *st)
 	if (get_sa_info(st, TRUE, &last_msg_age) &&
 		deltaless(last_msg_age, c->dpd_timeout)) {
 		pst->st_pend_liveness = FALSE;
-		pst->st_last_liveness.mono_secs = UNDEFINED_TIME;
+		pst->st_last_liveness = monotime_epoch;
 	} else {
 		monotime_t tm = mononow();
 		monotime_t last_liveness = pst->st_last_liveness;
 
 		/* ensure that the very first liveness_check works out */
-		if (last_liveness.mono_secs == UNDEFINED_TIME) {
+		if (is_monotime_epoch(last_liveness)) {
 			pst->st_last_liveness = last_liveness = tm;
 			DBG(DBG_DPD, DBG_log("#%lu liveness initial timestamp set %ld",
 						st->st_serialno,

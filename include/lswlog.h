@@ -36,11 +36,15 @@
  * If it does, they will be interpreted by the C preprocesser
  * as macro argument separators.  This happens accidentally if
  * multiple variables are declared in one declaration.
+ *
+ * IMPAIR currently uses the same lset_t as DBG.  Define a separate
+ * macro so that, one day, that can change.
  */
 
 extern lset_t cur_debugging;	/* current debugging level */
 
 #define DBGP(cond)	(cur_debugging & (cond))
+#define IMPAIR(BEHAVIOUR) (cur_debugging & (IMPAIR_##BEHAVIOUR))
 
 #define DEBUG_PREFIX "| "
 
@@ -383,7 +387,7 @@ void lswlog_dbg_pre(struct lswlog *buf);
 				     lswlog_p = false)
 
 #define LSWDBGP(DEBUG, BUF) LSWDBG_(DBGP(DEBUG), BUF)
-#define LSWDBG(BUF) LSWDBG_(true, BUF)
+#define LSWLOG_DEBUG(BUF) LSWDBG_(true, BUF)
 
 /*
  * Send log output the logging streams and WHACK (if connected).
@@ -407,7 +411,7 @@ void lswlog_log_prefix(struct lswlog *buf);
 #define LSWLOG_LOG(BUF)							\
 	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
 		LSWBUF_(BUF)						\
-			for (lswlog_pre(BUF); lswlog_p;			\
+			for (lswlog_log_prefix(BUF); lswlog_p;		\
 			     lswlog_to_log_stream(BUF),			\
 				     lswlog_p = false)
 
