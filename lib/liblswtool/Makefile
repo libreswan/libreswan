@@ -15,7 +15,6 @@
 LIB = liblswtool.a
 
 OBJS += lswlog.o
-OBJS += lswid.o
 OBJS += libreswan_exit.o
 
 ifdef top_srcdir

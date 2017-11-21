@@ -81,7 +81,6 @@ void show_status(void)
 	show_ifaces_status();
 	show_system_security();
 	show_setup_plutomain();
-	show_myid_status();
 	show_debug_status();
 	show_setup_natt();
 	show_virtual_private();

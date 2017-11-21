@@ -113,7 +113,7 @@ err_t pack_whack_msg(struct whackpacker *wp)
 	    !pack_str(wp, &wp->msg->right.updown) ||		/* string 12 */
 	    !pack_str(wp, &wp->msg->right.virt) ||		/* string 13 */
 	    !pack_str(wp, &wp->msg->keyid) ||			/* string 14 */
-	    !pack_str(wp, &wp->msg->myid) ||			/* string 15 */
+
 	    !pack_str(wp, &wp->msg->ike) ||			/* string 16 */
 	    !pack_str(wp, &wp->msg->esp) ||			/* string 17 */
 	    !pack_str(wp, &wp->msg->left.username) ||		/* string 18 */
@@ -181,7 +181,7 @@ err_t unpack_whack_msg(struct whackpacker *wp)
 	    !unpack_str(wp, &wp->msg->right.updown) ||		/* string 12 */
 	    !unpack_str(wp, &wp->msg->right.virt) ||		/* string 13 */
 	    !unpack_str(wp, &wp->msg->keyid) ||			/* string 14 */
-	    !unpack_str(wp, &wp->msg->myid) ||			/* string 15 */
+
 	    !unpack_str(wp, &wp->msg->ike) ||			/* string 16 */
 	    !unpack_str(wp, &wp->msg->esp) ||			/* string 17 */
 	    !unpack_str(wp, &wp->msg->left.username) ||		/* string 18 */

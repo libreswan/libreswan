@@ -393,7 +393,6 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "curl_iface",  kv_config | kv_alias,  kt_string,  KSF_CURLIFACE, NULL, NULL, },  /* obsolete _ */
   { "curl_timeout",  kv_config | kv_alias,  kt_time,  KBF_CURLTIMEOUT, NULL, NULL, },  /* obsolete _ */
 
-  { "myid",  kv_config,  kt_string,  KSF_MYID, NULL, NULL, },
   { "myvendorid",  kv_config,  kt_string,  KSF_MYVENDORID, NULL, NULL, },
   { "syslog",  kv_config,  kt_string,  KSF_SYSLOG, NULL, NULL, },
   { "klipsdebug",  kv_config,  kt_list,  KBF_KLIPSDEBUG,  &kw_klipsdebug_list, NULL, },

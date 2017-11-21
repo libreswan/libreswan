@@ -22,8 +22,6 @@ struct id {
 				/* ID_KEY_ID, ID_DER_ASN_DN */
 };
 
-extern void init_id(void);
-
 struct id_list {
 	struct id id;
 	struct id_list *next;
@@ -31,23 +29,7 @@ struct id_list {
 
 extern const struct id empty_id;	/* ID_NONE */
 
-enum myid_state {
-	MYID_UNKNOWN,	/* not yet figured out */
-	MYID_HOSTNAME,	/* our current hostname */
-	MYID_IP,	/* our default IP address */
-	MYID_SPECIFIED	/* as specified by ipsec.conf */
-};
-
-extern enum myid_state myid_state;
-extern struct id myids[MYID_SPECIFIED + 1];	/* %myid */
-extern char *myid_str[MYID_SPECIFIED + 1];	/* strings */
-extern void set_myid(enum myid_state s, char *);
-extern void show_myid_status(void);
-extern const struct id *resolve_myid(const struct id *id);
-extern void set_myFQDN(void);
-extern void free_myFQDN(void);
-
-extern err_t atoid(char *src, struct id *id, bool myid_ok, bool oe_only);
+extern err_t atoid(char *src, struct id *id, bool oe_only);
 extern void iptoid(const ip_address *ip, struct id *id);
 extern unsigned char *temporary_cyclic_buffer(void);
 extern int idtoa(const struct id *id, char *dst, size_t dstlen);

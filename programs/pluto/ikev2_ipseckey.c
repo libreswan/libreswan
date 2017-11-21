@@ -719,7 +719,6 @@ static err_t build_dns_name(char *name_buf, /* len SWAN_MAX_DOMAIN_LEN */
 		const struct id *id)
 {
 	/* note: all end in "." to suppress relative searches */
-	id = resolve_myid(id);
 
 	if (id->name.len >= SWAN_MAX_DOMAIN_LEN)
 		return "ID is too long >= SWAN_MAX_DOMAIN_LEN";

@@ -237,10 +237,6 @@ struct whack_message {
 	enum pubkey_alg pubkey_alg;
 	chunk_t keyval;	/* chunk */
 
-	/* for WHACK_MYID: */
-	bool whack_myid;
-	char *myid;	/* string 7 */
-
 	/* for REMOTE_HOST */
 	char *remote_host;
 
@@ -345,7 +341,7 @@ struct whack_message {
 	 * 12 right's updown
 	 * 13 right's virt
 	 * 14 keyid
-	 * 15 myid
+	 * 15 unused (was myid)
 	 * 16 ike
 	 * 17 esp
 	 * 18 left.username

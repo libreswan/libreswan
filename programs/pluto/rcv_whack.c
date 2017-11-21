@@ -150,7 +150,6 @@ static void do_whacklisten(void)
 #endif
 	libreswan_log("listening for IKE messages");
 	listening = TRUE;
-	set_myFQDN();
 	find_ifaces();
 	load_preshared_secrets();
 	load_groups();
@@ -163,7 +162,7 @@ static void key_add_request(const struct whack_message *msg)
 {
 	DBG_log("add keyid %s", msg->keyid);
 	struct id keyid;
-	err_t ugh = atoid(msg->keyid, &keyid, FALSE, FALSE);
+	err_t ugh = atoid(msg->keyid, &keyid, FALSE);
 
 	if (ugh != NULL) {
 		loglog(RC_BADID, "bad --keyid \"%s\": %s", msg->keyid, ugh);
@@ -373,9 +372,6 @@ void whack_process(int whackfd, const struct whack_message *const m)
 			goto done;
 		}
 	}
-
-	if (m->whack_myid)
-		set_myid(MYID_SPECIFIED, m->myid);
 
 	/* Deleting combined with adding a connection works as replace.
 	 * To make this more useful, in only this combination,

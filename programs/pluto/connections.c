@@ -656,11 +656,7 @@ size_t format_end(char *buf,
 
 	/* id, if different from host */
 	host_id[0] = '\0';
-	if (this->id.kind == ID_MYID) {
-		id_obrackets = "[";
-		id_cbrackets = "]";
-		strcpy(host_id, "%myid");
-	} else if (!(this->id.kind == ID_NONE ||
+	if (!(this->id.kind == ID_NONE ||
 			(id_is_ipaddr(&this->id) &&
 				sameaddr(&this->id.ip_addr,
 					&this->host_addr)))) {
@@ -871,7 +867,7 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 	if (src->id == NULL) {
 		dst->id.kind = ID_NONE;
 	} else {
-		err_t ugh = atoid(src->id, &dst->id, TRUE, FALSE);
+		err_t ugh = atoid(src->id, &dst->id, FALSE);
 
 		if (ugh != NULL) {
 			loglog(RC_BADID, "bad %s --id: %s (ignored)", which,

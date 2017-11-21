@@ -638,7 +638,6 @@ enum_names ipcomp_transformid_names = {
 static const char *const ike_idtype_name[] = {
 	/* private to Pluto */
 	"%fromcert",	/* -2, ID_FROMCERT:taken from certificate */
-	"%myid",	/* -1, ID_MYID */
 	"%none",	/* 0, ID_NONE */
 
 	/* standardized */
@@ -679,7 +678,7 @@ enum_names ike_idtype_names = ID_NR(ID_IPV4_ADDR, ID_NULL, NULL);
  * so we have to tack two ranges onto ike_idtype_names.
  */
 enum_names ike_idtype_names_extended0 = ID_NR(ID_NONE, ID_NONE, &ike_idtype_names);
-enum_names ike_idtype_names_extended = ID_NR(ID_FROMCERT, ID_MYID, &ike_idtype_names_extended0);
+enum_names ike_idtype_names_extended = ID_NR(ID_FROMCERT, ID_FROMCERT, &ike_idtype_names_extended0);
 
 /* IKEv2 names exclude ID_IPV4_ADDR_SUBNET, ID_IPV6_ADDR_SUBNET-ID_IPV6_ADDR_RANGE */
 

@@ -154,8 +154,6 @@ static void help(void)
 		"\n"
 		"pubkey: whack --keyid <id> [--addkey] [--pubkeyrsa <key>]\n"
 		"\n"
-		"myid: whack --myid <id>\n"
-		"\n"
 		"debug: whack [--name <connection_name>] \\\n"
 		"	[--debug <class>] | \\\n"
 		"	[--debug-none] | [--debug-all] | \\\n"
@@ -270,8 +268,6 @@ enum option_enums {
 	OPT_KEYID,
 	OPT_ADDKEY,
 	OPT_PUBKEYRSA,
-
-	OPT_MYID,
 
 	OPT_ROUTE,
 	OPT_UNROUTE,
@@ -504,8 +500,6 @@ static const struct option long_opts[] = {
 	{ "keyid", required_argument, NULL, OPT_KEYID + OO },
 	{ "addkey", no_argument, NULL, OPT_ADDKEY + OO },
 	{ "pubkeyrsa", required_argument, NULL, OPT_PUBKEYRSA + OO },
-
-	{ "myid", required_argument, NULL, OPT_MYID + OO },
 
 	{ "route", no_argument, NULL, OPT_ROUTE + OO },
 	{ "ondemand", no_argument, NULL, OPT_ROUTE + OO },	/* alias */
@@ -1151,11 +1145,6 @@ int main(int argc, char **argv)
 		case OPT_IKE_MSGERR:	/* --ike-socket-errqueue-toggle */
 			msg.ike_sock_err_toggle = TRUE;
 			msg.whack_listen = TRUE;
-			continue;
-
-		case OPT_MYID:	/* --myid <identity> */
-			msg.whack_myid = TRUE;
-			msg.myid = optarg;	/* decoded by Pluto */
 			continue;
 
 		case OPT_ADDKEY:	/* --addkey */
@@ -2256,7 +2245,7 @@ int main(int argc, char **argv)
 			diag("--addkey and --pubkeyrsa require --keyid");
 	}
 
-	if (!(msg.whack_connection || msg.whack_key || msg.whack_myid ||
+	if (!(msg.whack_connection || msg.whack_key ||
 	      msg.whack_delete ||msg.whack_deleteid || msg.whack_deletestate ||
 	      msg.whack_deleteuser ||
 	      msg.whack_initiate || msg.whack_oppo_initiate ||

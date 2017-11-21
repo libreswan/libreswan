@@ -1756,7 +1756,6 @@ int main(int argc, char **argv)
 	init_crypto_helpers(nhelpers);
 	init_demux();
 	init_kernel();
-	init_id();
 	init_vendorid();
 #if defined(LIBCURL) || defined(LIBLDAP)
 	init_fetch();
@@ -1809,8 +1808,6 @@ void exit_pluto(int status)
 #endif
 
 	lsw_conf_free_oco();	/* free global_oco containing path names */
-
-	free_myFQDN();	/* free myid FQDN */
 
 	free_ifaces();	/* free interface list from memory */
 	free_md_pool();	/* free the md pool */

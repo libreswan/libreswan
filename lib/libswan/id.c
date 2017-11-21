@@ -62,15 +62,13 @@ unsigned char *temporary_cyclic_buffer(void)
  * This function should be split into parts so the boolean arguments can be
  * removed -- Paul
  */
-err_t atoid(char *src, struct id *id, bool myid_ok, bool oe_only)
+err_t atoid(char *src, struct id *id, bool oe_only)
 {
 	err_t ugh = NULL;
 
 	*id = empty_id;
 
-	if (!oe_only && myid_ok && streq("%myid", src)) {
-		id->kind = ID_MYID;
-	} else if (!oe_only && streq("%fromcert", src)) {
+	if (!oe_only && streq("%fromcert", src)) {
 		id->kind = ID_FROMCERT;
 	} else if (!oe_only && streq("%none", src)) {
 		id->kind = ID_NONE;
@@ -203,11 +201,7 @@ int idtoa(const struct id *id, char *dst, size_t dstlen)
 {
 	int n;
 
-	id = resolve_myid(id);
 	switch (id->kind) {
-	case ID_MYID:
-		n = snprintf(dst, dstlen, "%s", "%myid");
-		break;
 	case ID_FROMCERT:
 		n = snprintf(dst, dstlen, "%s", "%fromcert");
 		break;
@@ -339,7 +333,6 @@ void unshare_id_content(struct id *id)
 					"keep id name");
 		/* Somehow assert we have a valid id here? */
 		break;
-	case ID_MYID:
 	case ID_FROMCERT:
 	case ID_NONE:
 	case ID_NULL:
@@ -360,7 +353,6 @@ void free_id_content(struct id *id)
 	case ID_KEY_ID:
 		freeanychunk(id->name);
 		break;
-	case ID_MYID:
 	case ID_FROMCERT:
 	case ID_NONE:
 	case ID_NULL:
@@ -375,8 +367,6 @@ void free_id_content(struct id *id)
 /* is this a "match anything" id */
 bool any_id(const struct id *a)
 {
-	a = resolve_myid(a);
-
 	switch (a->kind) {
 	case ID_NONE:
 		return TRUE; /* wildcard */
@@ -402,9 +392,6 @@ bool any_id(const struct id *a)
 /* compare two struct id values */
 bool same_id(const struct id *a, const struct id *b)
 {
-	a = resolve_myid(a);
-	b = resolve_myid(b);
-
 	if (b->kind == ID_NONE || a->kind == ID_NONE) {
 		DBG(DBG_PARSING, DBG_log("id type with ID_NONE means wildcard match"));
 		return TRUE; /* it's the wildcard */
