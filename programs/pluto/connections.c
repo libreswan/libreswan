@@ -2033,7 +2033,7 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 	c->instance_serial++;
 	d = clone_thing(*c, "instantiated connection");
 	if (his_id != NULL) {
-		int wildcards;	/* ??? ignored? */
+		int wildcards;	/* value ignored */
 
 		passert(d->spd.that.id.kind == ID_FROMCERT || match_id(his_id, &d->spd.that.id, &wildcards));
 		d->spd.that.id = *his_id;
@@ -2918,6 +2918,8 @@ static chunk_t get_peer_ca(const struct id *peer_id)
 }
 
 /*
+ * ??? NOTE: THESE IMPORTANT COMMENTS DO NOT REFLECT ANY CHANGES MADE AFTER FreeS/WAN.
+ *
  * Given an up-until-now satisfactory connection, find the best connection
  * now that we just got the Phase 1 Id Payload from the peer.
  *
@@ -2989,43 +2991,34 @@ struct connection *refine_host_connection(const struct state *st,
 	/* Ensure the caller and we know the IKE version we are looking for */
 	bool ikev1 = auth_policy != LEMPTY;
 	bool ikev2 = this_authby != AUTH_UNSET;
-	bool ikev1_aggr = LIN(POLICY_AGGRESSIVE, auth_policy);
 
 	*fromcert = FALSE;
 
-	passert(ikev1 != ikev2);
-	if (ikev1) {
-		passert(this_authby == AUTH_UNSET);
-		passert(!st->st_ikev2);
-	}
-	if (ikev2) {
-		passert(auth_policy == LEMPTY);
-		passert(this_authby != AUTH_NEVER);
-		passert(st->st_ikev2);
-		if (c->spd.this.authby != c->spd.that.authby)
-			passert(this_authby != AUTH_UNSET);
-		passert(ikev1_aggr == FALSE);
-	}
+	passert(ikev1 != ikev2 && ikev2 == st->st_ikev2);
+	passert(this_authby != AUTH_NEVER);
 
 	/*
 	 * Translate the IKEv1 policy onto an IKEv2 policy.
 	 * Saves duplicating the checks for v1 and v2, and the
 	 * v1 policy is a subset of the v2 policy. Use the ikev2
-	 * bool for IKEv2 only feature checks.
+	 * bool for IKEv2-only feature checks.
 	 */
 	if (ikev1) {
+		/* ??? are these cases mutually exclusive? */
 		if (LIN(POLICY_RSASIG, auth_policy))
 			this_authby = AUTH_RSASIG;
 		if (LIN(POLICY_PSK, auth_policy))
 			this_authby = AUTH_PSK;
-	} /* auth_policy must no longer be used below */
+		passert(this_authby != AUTH_UNSET);
+	}
+	/* from here on, auth_policy must only be used to check POLICY_AGGRESSIVE */
 
 	DBG(DBG_CONTROLMORE, {
 		char cib[CONN_INST_BUF];
 		DBG_log("refine_host_connection for %s: starting with \"%s\"%s",
 			ikev1 ? "IKEv1" : "IKEv2",
 			c->name, fmt_conn_instance(c, cib));
-		});
+	});
 
 	chunk_t peer_ca = get_peer_ca(peer_id);
 
@@ -3034,17 +3027,17 @@ struct connection *refine_host_connection(const struct state *st,
 		int ppl;
 
 		if (same_id(&c->spd.that.id, peer_id) &&
-			peer_ca.ptr != NULL &&
-			trusted_ca_nss(peer_ca, c->spd.that.ca, &ppl) &&
-			ppl == 0 &&
-			match_requested_ca(requested_ca, c->spd.this.ca, &opl) &&
-			opl == 0) {
-
+		    peer_ca.ptr != NULL &&
+		    trusted_ca_nss(peer_ca, c->spd.that.ca, &ppl) &&
+		    ppl == 0 &&
+		    match_requested_ca(requested_ca, c->spd.this.ca, &opl) &&
+		    opl == 0)
+		{
 			DBG(DBG_CONTROLMORE, {
 				char cib[CONN_INST_BUF];
 				DBG_log("refine_host_connection: happy with starting point: \"%s\"%s",
 					c->name,fmt_conn_instance(c, cib));
-				});
+			});
 
 			/* peer ID matches current connection -- look no further */
 			return c;
@@ -3056,43 +3049,44 @@ struct connection *refine_host_connection(const struct state *st,
 
 	if (initiator)
 	{
+		switch (this_authby) {
+		case AUTH_PSK:
+			psk = get_preshared_secret(c);
+			/*
+			 * It should be virtually impossible to fail to find
+			 * PSK: we just used it to decode the current message!
+			 * Paul: only true for IKEv1
+			 */
+			if (psk == NULL) {
+				loglog(RC_LOG_SERIOUS, "cannot find PSK");
+				return c; /* cannot determine PSK, so not switching */
+			}
+			break;
+		case AUTH_NULL:
+			/* we know our AUTH_NULL key :) */
+			break;
 
-	switch (this_authby) {
-	case AUTH_PSK:
-		psk = get_preshared_secret(c);
-		/*
-		 * It should be virtually impossible to fail to find
-		 * PSK: we just used it to decode the current message!
-		 * Paul: only true for IKEv1
-		 */
-		if (psk == NULL) {
-			loglog(RC_LOG_SERIOUS, "cannot find PSK");
-			return c; /* cannot determine PSK, so not switching */
-		}
-		break;
-	case AUTH_NULL:
-		/* we know our AUTH_NULL key :) */
-		break;
+		case AUTH_RSASIG:
+			/*
+			 * At this point, we've committed to our RSA private
+			 * key: we used it in our previous message.
+			 * Paul: only true for IKEv1
+			 */
+			my_RSA_pri = get_RSA_private_key(c);
+			if (my_RSA_pri == NULL) {
+				loglog(RC_LOG_SERIOUS, "cannot find RSA key");
+				 /* cannot determine my RSA private key, so not switching */
+				return c;
+			}
+			break;
+		default:
+			/* don't die on bad_case(auth); */
 
-	case AUTH_RSASIG:
-		/*
-		 * At this point, we've committed to our RSA private
-		 * key: we used it in our previous message.
-		 * Paul: only true for IKEv1
-		 */
-		my_RSA_pri = get_RSA_private_key(c);
-		if (my_RSA_pri == NULL) {
-			loglog(RC_LOG_SERIOUS, "cannot find RSA key");
-			 /* cannot determine my RSA private key! */
+			/* ??? why not dies?  How could this happen? */
+			loglog(RC_LOG_SERIOUS, "refine_host_connection: unexpected auth policy (%s): only handling PSK, NULL or RSA",
+				enum_name(&ikev2_asym_auth_name, this_authby));
 			return c;
 		}
-		break;
-	default:
-		/* don't die on bad_case(auth); */
-		loglog(RC_LOG_SERIOUS, "refine_host_connection: unexpected auth policy (%s): only handling PSK, NULL or RSA",
-			enum_name(&ikev2_asym_auth_name, this_authby));
-		return c;
-	}
 	}
 
 	/*
@@ -3117,17 +3111,19 @@ struct connection *refine_host_connection(const struct state *st,
 	struct connection *best_found = NULL;
 	int best_wildcards = 0;
 
-	bool wcpip; /* wildcard Peer IP? */
-	for (wcpip = FALSE;; wcpip = TRUE) {
+	/* wcip stands for: wildcard Peer IP? */
+	for (bool wcpip = FALSE;; wcpip = TRUE) {
 		for (; d != NULL; d = d->hp_next) {
-			int wildcards = 0;
-			bool match1 = match_id(peer_id, &d->spd.that.id,
+			int wildcards;
+			bool matching_peer_id = match_id(peer_id, &d->spd.that.id,
 					&wildcards);
+
 			int peer_pathlen;
-			bool match2 = trusted_ca_nss(peer_ca, d->spd.that.ca,
+			bool matching_peer_ca = trusted_ca_nss(peer_ca, d->spd.that.ca,
 						&peer_pathlen);
+
 			int our_pathlen;
-			bool match3 = match_requested_ca(requested_ca,
+			bool matching_requested_ca = match_requested_ca(requested_ca,
 							d->spd.this.ca,
 							&our_pathlen);
 
@@ -3142,15 +3138,15 @@ struct connection *refine_host_connection(const struct state *st,
 					fmt_conn_instance(d, b2),
 					best_found != NULL ?
 						best_found->name : "(none)",
-					match1 && match2 && match3,
-					match1, match2, match3);});
+					matching_peer_id && matching_peer_ca && matching_requested_ca,
+					matching_peer_id, matching_peer_ca, matching_requested_ca);});
 
 			/* ignore group connections */
 			if (d->policy & POLICY_GROUP)
 				continue;
 
-			/* match2 and match3 are required */
-			if (!match2 || !match3)
+			/* matching_peer_ca and matching_requested_ca are required */
+			if (!matching_peer_ca || !matching_requested_ca)
 				continue;
 			/*
 			 * Check if peer_id matches, exactly or after
@@ -3159,7 +3155,7 @@ struct connection *refine_host_connection(const struct state *st,
 			 * the %fromcert + peer id match result. - matt
 			 */
 			bool d_fromcert = FALSE;
-			if (!match1) {
+			if (!matching_peer_id) {
 				d_fromcert = d->spd.that.id.kind == ID_FROMCERT;
 				if (!d_fromcert)
 					continue;
@@ -3167,7 +3163,7 @@ struct connection *refine_host_connection(const struct state *st,
 
 			/* if initiator, our ID must match exactly */
 			if (initiator &&
-				!same_id(&c->spd.this.id, &d->spd.this.id))
+			    !same_id(&c->spd.this.id, &d->spd.this.id))
 				continue;
 
 			if ((d->policy & (st->st_ikev2 ? POLICY_IKEV2_ALLOW : POLICY_IKEV1_ALLOW)) == LEMPTY) {
@@ -3180,13 +3176,13 @@ struct connection *refine_host_connection(const struct state *st,
 			 * connection.
 			 */
 			if (ikev1) {
+				if ((auth_policy ^ d->policy) & POLICY_AGGRESSIVE)
+					continue;	/* differ about aggressive mode */
+
 				if ((d->policy & auth_policy & ~POLICY_AGGRESSIVE) == LEMPTY) {
 					/* Our auth isn't OK for this connection. */
 					continue;
 				}
-				/* check AGGR mode matches too */
-				if (((d->policy & POLICY_AGGRESSIVE) == LEMPTY) == ikev1_aggr)
-					continue;
 			} else {
 				/*
 				 * We need to check if leftauth and rightauth match, but we only know
@@ -3196,7 +3192,7 @@ struct connection *refine_host_connection(const struct state *st,
 				 * This also means, we have already sent out AUTH payload, so we cannot
 				 * switch away from previously used this.authby.
 				 */
-				pexpect(initiator == FALSE);
+				passert(initiator == FALSE);
 				if (this_authby != d->spd.that.authby)
 					continue;
 				if (c->spd.this.authby != d->spd.this.authby)
@@ -3232,14 +3228,15 @@ struct connection *refine_host_connection(const struct state *st,
 				 * If we initiated, the key we used and the key
 				 * we would have used with d must match.
 				 */
-				if (!st->st_ikev2 && !(auth_policy & POLICY_AGGRESSIVE)) {
+				if (!(st->st_ikev2 || (auth_policy & POLICY_AGGRESSIVE))) {
 					if (dpsk == NULL)
 						continue; /* no secret */
 
-					if (initiator && psk != dpsk &&
+					if (initiator &&
 					    !(psk->len == dpsk->len &&
-					      memeq(psk->ptr, dpsk->ptr, psk->len))) {
-							continue; /* different secret */
+					      memeq(psk->ptr, dpsk->ptr, psk->len)))
+					{
+						continue; /* different secret */
 					}
 				}
 			}
@@ -3271,8 +3268,9 @@ struct connection *refine_host_connection(const struct state *st,
 			 * d has passed all the tests.
 			 * We'll go with it if the Peer ID was an exact match.
 			 */
-			if (match1 && wildcards == 0 &&
-				peer_pathlen == 0 && our_pathlen == 0) {
+			if (matching_peer_id && wildcards == 0 &&
+			    peer_pathlen == 0 && our_pathlen == 0)
+			{
 				*fromcert = d_fromcert;
 				return d;
 			}
@@ -3303,6 +3301,7 @@ struct connection *refine_host_connection(const struct state *st,
 				best_our_pathlen = our_pathlen;
 			}
 		}
+
 		if (wcpip) {
 			/* been around twice already */
 			return best_found;
@@ -3320,10 +3319,6 @@ struct connection *refine_host_connection(const struct state *st,
 					(ip_address *)NULL,
 					c->spd.that.host_port);
 	}
-	/* we should never get here */
-	loglog(RC_LOG_SERIOUS,
-		"refine_host_connection() reached end of function without returning a connection");
-	pexpect(FALSE);
 }
 
 /*
@@ -3476,19 +3471,20 @@ static struct connection *fc_try(const struct connection *c,
 		int wildcards, pathlen;
 
 		if (!(same_id(&c->spd.this.id, &d->spd.this.id) &&
-				match_id(&c->spd.that.id, &d->spd.that.id,
-					&wildcards) &&
-				trusted_ca_nss(c->spd.that.ca, d->spd.that.ca,
-					&pathlen)))
+		      match_id(&c->spd.that.id, &d->spd.that.id, &wildcards) &&
+		      trusted_ca_nss(c->spd.that.ca, d->spd.that.ca, &pathlen)))
+		{
 			continue;
+		}
 
 		/* compare protocol and ports */
-		if (d->spd.this.protocol != our_protocol ||
-			(d->spd.this.port && d->spd.this.port != our_port) ||
-			d->spd.that.protocol != peer_protocol ||
-			(d->spd.that.port != peer_port &&
-				!d->spd.that.has_port_wildcard))
+		if (!(d->spd.this.protocol == our_protocol &&
+		      d->spd.that.protocol == peer_protocol &&
+		      (d->spd.this.port == 0 || d->spd.this.port == our_port) &&
+		      (d->spd.that.has_port_wildcard || d->spd.that.port == peer_port)))
+		{
 			continue;
+		}
 
 		/*
 		 * non-Opportunistic case:

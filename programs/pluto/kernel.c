@@ -543,12 +543,12 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 
 		for (p = pluto_pubkeys; p != NULL; p = p->next) {
 			struct pubkey *key = p->key;
-			int pathlen;
+			int pathlen;	/* value ignored */
 
 			if (key->alg == PUBKEY_ALG_RSA &&
-				same_id(&sr->that.id, &key->id) &&
-				trusted_ca_nss(key->issuer, sr->that.ca,
-					&pathlen)) {
+			    same_id(&sr->that.id, &key->id) &&
+			    trusted_ca_nss(key->issuer, sr->that.ca, &pathlen))
+			{
 				dntoa_or_null(peerca_str, IDTOA_BUF,
 					key->issuer, "");
 				escape_metachar(peerca_str, secure_peerca_str,

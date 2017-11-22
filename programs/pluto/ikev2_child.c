@@ -791,8 +791,6 @@ stf_status ikev2_resp_accept_child_ts(
 		struct connection *d;
 
 		for (d = hp->connections; d != NULL; d = d->hp_next) {
-			int wildcards, pathlen; /* XXX */
-
 			if (d->policy & POLICY_GROUP)
 				continue;
 
@@ -808,13 +806,17 @@ stf_status ikev2_resp_accept_child_ts(
 			 * So: if wildcards are desired, just use match_id.
 			 * If they are not, just use same_id
 			 */
+			int wildcards;	/* value ignored */
+			int pathlen;	/* value ignored */
 			if (!(same_id(&c->spd.this.id,
 				      &d->spd.this.id) &&
 			      match_id(&c->spd.that.id,
 				       &d->spd.that.id, &wildcards) &&
 			      trusted_ca_nss(c->spd.that.ca,
 					 d->spd.that.ca, &pathlen)))
+			{
 				continue;
+			}
 
 			const struct spd_route *sr;
 

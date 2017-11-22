@@ -413,47 +413,45 @@ stf_status RSA_check_signature_gen(struct state *st,
 
 	/* try all appropriate Public keys */
 	{
-		struct pubkey_list *p, **pp;
-		int pathlen;
 		realtime_t nw = realnow();
-		char thatid[IDTOA_BUF];
 
-		idtoa(&c->spd.that.id, thatid, IDTOA_BUF);
+		DBG(DBG_CONTROL, {
+			char buf[IDTOA_BUF];
+			dntoa_or_null(buf, IDTOA_BUF, c->spd.that.ca, "%any");
+			DBG_log("required CA is '%s'", buf);
+		});
 
-		pp = &pluto_pubkeys;
+		struct pubkey_list **pp = &pluto_pubkeys;
 
-		{
-
-			DBG(DBG_CONTROL, {
-				    char buf[IDTOA_BUF];
-				    dntoa_or_null(buf, IDTOA_BUF,
-						  c->spd.that.ca, "%any");
-				    DBG_log("required CA is '%s'", buf);
-			    });
-		}
-		for (p = pluto_pubkeys; p != NULL; p = *pp) {
+		for (struct pubkey_list *p = pluto_pubkeys; p != NULL; p = *pp) {
 			struct pubkey *key = p->key;
 			char printkid[IDTOA_BUF];
 
 			idtoa(&key->id, printkid, IDTOA_BUF);
-			DBG(DBG_CONTROL, DBG_log("checking keyid '%s' for match with '%s'",
-				printkid, thatid));
+			DBG(DBG_CONTROL, {
+				char thatid[IDTOA_BUF];
+				idtoa(&c->spd.that.id, thatid, IDTOA_BUF);
+				DBG_log("checking keyid '%s' for match with '%s'",
+					printkid, thatid);
+			});
+
+			int pl;	/* value ignored */
+
 			if (key->alg == PUBKEY_ALG_RSA &&
 			    same_id(&c->spd.that.id, &key->id) &&
-			    trusted_ca_nss(key->issuer, c->spd.that.ca,
-				       &pathlen)) {
-
+			    trusted_ca_nss(key->issuer, c->spd.that.ca, &pl))
+			{
 				DBG(DBG_CONTROL, {
-					    char buf[IDTOA_BUF];
-					    dntoa_or_null(buf, IDTOA_BUF,
-							  key->issuer, "%any");
-					    DBG_log("key issuer CA is '%s'",
-						    buf);
-				    });
+					char buf[IDTOA_BUF];
+					dntoa_or_null(buf, IDTOA_BUF,
+						key->issuer, "%any");
+					DBG_log("key issuer CA is '%s'", buf);
+				});
 
 				/* check if found public key has expired */
 				if (!is_realtime_epoch(key->until_time) &&
-				    realbefore(key->until_time, nw)) {
+				    realbefore(key->until_time, nw))
+				{
 					loglog(RC_LOG_SERIOUS,
 					       "cached RSA public key has expired and has been deleted");
 					*pp = free_public_keyentry(p);

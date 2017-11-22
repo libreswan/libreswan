@@ -212,33 +212,33 @@ static void convert_nss_gn_to_pluto_gn(CERTGeneralName *nss_gn,
 /*
  * Checks if CA a is trusted by CA b
  * This very well could end up being condensed into
- * an NSS call or two. TBD
+ * an NSS call or two. TBD.
  */
 bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 {
-	bool match = FALSE;
-	CERTCertDBHandle *handle;
-	CERTCertificate *cacert = NULL;
-	char abuf[ASN1_BUF_LEN], bbuf[ASN1_BUF_LEN];
+	DBG(DBG_X509 | DBG_CONTROLMORE, {
+		if (a.ptr != NULL) {
+			char abuf[ASN1_BUF_LEN];
+			dntoa(abuf, ASN1_BUF_LEN, a);
+	    		DBG_log("%s: trustee A = '%s'", __FUNCTION__, abuf);
+		}
+	});
 
-	if (a.ptr != NULL) {
-		dntoa(abuf, ASN1_BUF_LEN, a);
-		DBG(DBG_X509 | DBG_CONTROLMORE,
-	    		DBG_log("%s: trustee A = '%s'", __FUNCTION__, abuf));
-	}
-	if (b.ptr != NULL) {
-		dntoa(bbuf, ASN1_BUF_LEN, b);
-		DBG(DBG_X509 | DBG_CONTROLMORE,
-	    		DBG_log("%s: trustor B = '%s'", __FUNCTION__, bbuf));
-	}
+	DBG(DBG_X509 | DBG_CONTROLMORE, {
+		if (b.ptr != NULL) {
+			char bbuf[ASN1_BUF_LEN];
+			dntoa(bbuf, ASN1_BUF_LEN, b);
+	    		DBG_log("%s: trustor B = '%s'", __FUNCTION__, bbuf);
+		}
+	});
 
-	/* no CA b specified -> any CA a is accepted */
+	/* no CA b specified => any CA a is accepted */
 	if (b.ptr == NULL) {
 		*pathlen = (a.ptr == NULL) ? 0 : MAX_CA_PATH_LEN;
 		return TRUE;
 	}
 
-	/* no CA a specified -> trust cannot be established */
+	/* no CA a specified => trust cannot be established */
 	if (a.ptr == NULL) {
 		*pathlen = MAX_CA_PATH_LEN;
 		return FALSE;
@@ -246,25 +246,30 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 
 	*pathlen = 0;
 
-	/* CA a equals CA b -> we have a match */
+	/* CA a equals CA b => we have a match */
 	if (same_dn_any_order(a, b)) {
 		return TRUE;
 	}
 
-	handle = CERT_GetDefaultCertDB();
+	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
+
 	if (handle == NULL) {
 		libreswan_log("trusted_ca_nss handle failure");
 		return FALSE;
 	}
 
 	/* CA a might be a subordinate CA of b */
+
+	bool match = FALSE;
+	CERTCertificate *cacert = NULL;
+
 	while ((*pathlen)++ < MAX_CA_PATH_LEN) {
 		SECItem a_dn = same_chunk_as_dercert_secitem(a);
 		chunk_t i_dn = empty_chunk;
 
 		cacert = CERT_FindCertByName(handle, &a_dn);
 
-		/* cacert not found or self-signed root cacert-> exit */
+		/* cacert not found or self-signed root cacert => exit */
 		if (cacert == NULL || CERT_IsRootDERCert(&cacert->derCert)) {
 			break;
 		}
@@ -273,8 +278,8 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 		i_dn = same_secitem_as_chunk(cacert->derIssuer);
 		match = same_dn_any_order(i_dn, b);
 
-		/* we have a match and exit the loop */
 		if (match) {
+			/* we have a match: exit the loop */
 			DBG(DBG_X509 | DBG_CONTROLMORE,
 			    DBG_log("%s: A is a subordinate of B",
 				    __FUNCTION__));
@@ -288,8 +293,10 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 	}
 
 	DBG(DBG_X509 | DBG_CONTROLMORE,
-		DBG_log("%s: returning %s at pathlen %d", __FUNCTION__,
-			match ? "trusted":"untrusted", *pathlen));
+		DBG_log("%s: returning %s at pathlen %d",
+			__FUNCTION__,
+			match ? "trusted" : "untrusted",
+			*pathlen));
 
 	if (cacert != NULL) {
 		CERT_DestroyCertificate(cacert);
