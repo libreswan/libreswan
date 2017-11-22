@@ -252,30 +252,33 @@ KVM_TESTS ?= testing/pluto
 STRIPPED_KVM_TESTS = $(strip $(KVM_TESTS))
 
 define kvm-test
-	: kvm-test param=$(1)
-	$(call check-kvm-qemu-directory)
-	$(call check-kvm-entropy)
+.PHONY: $(1)
+$(1): $$(KVM_KEYS) kvm-shutdown-test-domains web-test-prep
+	: kvm-test target=$(1) param=$(2)
+	$$(call check-kvm-qemu-directory)
+	$$(call check-kvm-entropy)
 	: KVM_TESTS=$(STRIPPED_KVM_TESTS)
-	$(MAKE) --no-print-directory web-test-prep
-	$(KVMRUNNER) \
-		$(foreach prefix,$(KVM_PREFIXES), --prefix $(prefix)) \
-		$(if $(KVM_WORKERS), --workers $(KVM_WORKERS)) \
-		$(if $(WEB_RESULTSDIR), --publish-results $(WEB_RESULTSDIR)) \
-		$(if $(WEB_SUMMARYDIR), --publish-status $(WEB_SUMMARYDIR)/status.json) \
-		$(1) $(KVM_TEST_FLAGS) $(STRIPPED_KVM_TESTS)
-	$(MAKE) --no-print-directory web-test-post
+	$$(KVMRUNNER) \
+		$$(foreach prefix,$$(KVM_PREFIXES), --prefix $$(prefix)) \
+		$$(if $$(KVM_WORKERS), --workers $$(KVM_WORKERS)) \
+		$$(if $$(WEB_RESULTSDIR), --publish-results $$(WEB_RESULTSDIR)) \
+		$$(if $$(WEB_SUMMARYDIR), --publish-status $$(WEB_SUMMARYDIR)/status.json) \
+		$$(2) $$(KVM_TEST_FLAGS) $$(STRIPPED_KVM_TESTS)
+ifeq ($$(WEB_SUMMARYDIR),)
+	@echo
+	@echo Web-pages disabled.
+	@echo
+	@echo To enable web pages create the directory $$(LSW_WEBDIR).
+	@echo To convert this result into a web page run: make web-page
+endif
 endef
 
 # "test" and "check" just runs the entire testsuite.
-.PHONY: kvm-check kvm-test
-kvm-check kvm-test: $(KVM_KEYS) kvm-shutdown-test-domains
-	$(call kvm-test, --test-status "good")
+$(eval $(call kvm-test,kvm-check kvm-test, --test-status "good"))
 
 # "retest" and "recheck" re-run the testsuite updating things that
 # didn't pass.
-.PHONY: kvm-retest kvm-recheck
-kvm-retest kvm-recheck: $(KVM_KEYS) kvm-shutdown-test-domains
-	$(call kvm-test, --test-status "good" --skip passed)
+$(eval $(call kvm-test,kvm-retest kvm-recheck, --test-status "good" --skip passed))
 
 # clean up; accept pretty much everything
 KVM_TEST_CLEAN_TARGETS = \
