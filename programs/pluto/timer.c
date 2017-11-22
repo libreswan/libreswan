@@ -114,8 +114,6 @@ static void retransmit_v1_msg(struct state *st)
 	case RETRANSMIT_NO:
 		break;
 	case RETRANSMIT_IMPAIRED_AND_CAPPED:
-		libreswan_log(
-			"suppressing retransmit because IMPAIR_RETRANSMITS is set");
 		try = 0;
 		/* FALLTHROUGH */
 	case RETRANSMIT_CAPPED:
@@ -245,8 +243,6 @@ static void retransmit_v2_msg(struct state *st)
 	case RETRANSMIT_NO:
 		return;
 	case RETRANSMIT_IMPAIRED_AND_CAPPED:
-		libreswan_log(
-			"suppressing retransmit because IMPAIR_RETRANSMITS is set");
 		try = 0;
 		/* continued below */
 		break;
