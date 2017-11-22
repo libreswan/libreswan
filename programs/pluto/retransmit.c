@@ -82,14 +82,20 @@ void start_retransmits(struct state *st, enum event_type type)
 	rt->limit = MAXIMUM_RETRANSMITS_PER_EXCHANGE;
 	rt->type = type;
 	rt->delay = c->r_interval;
-	rt->timeout = monotimesum(mononow(), c->r_timeout);
-	/*
-	 * XXX: If retransmits are impaired, this code should just
-	 * schedule a timeout for when retransmits are ment to stop,
-	 * and then go silent.
-	 *
-	 * Unfortunately this would affect a number of tests?
-	 */
+	if (IMPAIR(RETRANSMITS)) {
+		/*
+		 * Speed up impaired retransmits by using DELAY as the
+		 * timeout
+		 */
+		LSWLOG(buf) {
+			lswlogs(buf, "IMPAIR RETRANSMITS: scheduling timeout in ");
+			lswlog_deltatime(buf, rt->delay);
+			lswlogs(buf, " seconds");
+		}
+		rt->timeout = monotimesum(mononow(), rt->delay);
+	} else {
+		rt->timeout = monotimesum(mononow(), c->r_timeout);
+	}
 	event_schedule(rt->type, rt->delay, st);
 	LSWDBGP(DBG_RETRANSMITS, buf) {
 		lswlogf(buf, "#%ld %s: retransmits: first event in ",
@@ -115,21 +121,14 @@ enum retransmit_status retransmit(struct state *st)
 	retransmit_t *rt = &st->st_retransmit;
 
 	/*
-	 * Should the retransmit be weirdly impaired:
+	 * Are re-transmits being impaired:
 	 *
-	 * - don't send the retransmit out
+	 * - don't send the retransmit packet
 	 *
-	 * - trigger the retransmit limit (cap) code path
-	 *
-	 * XXX: should these two behaviours be split: have "impair
-	 * retransmits", in start_retransmits() above, just schedule a
-	 * "done" event at the end of the timeout; and tests wanting a
-	 * quick cap event to also reduce the timer.
+	 * - trigger the retransmit timeout path after the first delay
 	 */
-	if (DBGP(IMPAIR_RETRANSMITS)) {
-		DBG(DBG_RETRANSMITS,
-		    DBG_log("#%ld %s: retransmits: impaired",
-			    st->st_serialno, enum_name(&state_names, st->st_state)));
+	if (IMPAIR(RETRANSMITS)) {
+		libreswan_log("suppressing retransmit because IMPAIR_RETRANSMITS is set");
 		return RETRANSMIT_IMPAIRED_AND_CAPPED;
 	}
 
