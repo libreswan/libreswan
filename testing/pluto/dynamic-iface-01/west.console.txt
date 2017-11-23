@@ -75,8 +75,8 @@ west #
  ipsec auto --up west-float
 002 "west-float" #5: initiating Main Mode
 104 "west-float" #5: STATE_MAIN_I1: initiate
-010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 15000ms for response
-010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 30000ms for response
+010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 15 seconds for response
+010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 30 seconds for response
 031 "west-float" #5: max number of retransmissions (3) reached STATE_MAIN_I1.  No response (or no acceptable response) to our first IKEv1 message
 000 "west-float" #5: starting keying attempt 2 of an unlimited number, but releasing whack
 west #

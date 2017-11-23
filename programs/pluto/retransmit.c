@@ -204,69 +204,12 @@ enum retransmit_status retransmit(struct state *st)
 		}
 	}
 
-#if 0
-	/*
-	 * exceeded cap?
-	 *
-	 * !(now<cap) -> cap>=now
-	 */
-	monotime_t now = mononow();
-	if (!monobefore(now, rt->cap)) {
-		DBG(DBG_RETRANSMITS,
-		    DBG_log("#%ld %s: retransmits: exceeded cap",
-			    st->st_serialno, enum_name(&state_names, st->st_state)));
-		return RETRANSMIT_CAPPED;
-	}
-
-	/* exceeded retry count; advance to cap */
-	if (rt->count >= rt->limit) {
-		rt->delay = monotimediff(rt->cap, now);
-		event_schedule(rt->type, rt->delay, st);
-		whack_log(RC_RETRANSMISSION,
-			  "%s: retransmission; will wait %jdms for response",
-			  enum_name(&state_names, st->st_state),
-			  deltamillisecs(rt->delay));
-		LSWLOGP(DBG_RETRANSMITS, buf) {
-			lswlogf(buf, "#%ld %s: retransmits: exceeded limit %lu; final event in ",
-				st->st_serialno, enum_name(&state_names, st->st_state),
-				rt->limit);
-			lswlog_deltatime(buf, rt->delay);
-			lswlogs(buf, " seconds");
-		}
-		return RETRANSMIT_NO;
-	}
-
-	rt->count++;
-	if (rt->count > 1) {
-		/* after first few tries; double it */
-		timeradd(&rt->delay.dt, &rt->delay.dt, &rt->delay.dt);
-	}
-	/*
-	 * Limit it to cap?  This is different to the old code that
-	 * would instead limit delay<=r_timeout which ment it went for
-	 * much longer than r_timeout.
-	 *
-	 * For moment just let it grow; cap check above will stop it.
-	 */
-	if (monobefore(rt->cap, monotimesum(now, rt->delay))) {
-		rt->delay = monotimediff(rt->cap, now);
-	}
-	if (monobefore(rt->delay, (monotime_t) { 1 })) {
-		/* avoid anything looking like 0! */
-		rt->delay = (monotime_t) { 1 };
-	}
-#endif
 	event_schedule(rt->type, rt->delay, st);
-	whack_log(RC_RETRANSMISSION,
-		  "%s: retransmission; will wait %jdms for response",
-		  enum_name(&state_names, st->st_state),
-		  deltamillisecs(rt->delay));
-	LSWDBGP(DBG_RETRANSMITS, buf) {
-		lswlogf(buf, "#%ld %s: retransmits: retransmit %lu of %lu; next event in ",
-			st->st_serialno, enum_name(&state_names, st->st_state),
-			retransmit_count(st), rt->limit);
+	LSWLOG_LOGWHACK(RC_RETRANSMISSION, buf) {
+		lswlogf(buf, "%s: retransmission; will wait ",
+			st->st_finite_state->fs_name);
 		lswlog_deltatime(buf, rt->delay);
-		lswlogs(buf, " seconds");
+		lswlogs(buf, " seconds for response");
 	}
 	return RETRANSMIT_YES;
 }
