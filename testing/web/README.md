@@ -116,6 +116,7 @@ Automated testing uses the following:
       $ git clone git@github.com:libreswan/libreswan.git libreswan-web-slave
       $ echo 'KVM_PREFIXES=w1. w2.' >> libreswan-web-slave/Makefile.inc.local
       $ echo 'KVM_WORKERS=2' >> libreswan-web-slave/Makefile.inc.local
+      $ echo 'KVM_BUILD_HOST=build' >> libreswan-web-slave/Makefile.inc.local
 
 - the repository containing the web sources and scripts (aka master),
   for instance libreswan-web-master/
@@ -134,6 +135,11 @@ Automated testing uses the following:
   For instance, to set up libreswan-web-scratch/:
 
       $ git clone git@github.com:libreswan/libreswan.git libreswan-web-scratch
+
+- create the base domain (creating the base domain requires a TTY;
+  blame kvm):
+
+      $ ( cd libreswan-web-slave/ && make kvm-install-base-domain )
 
 
 ## Running
@@ -175,6 +181,11 @@ automate the below.
       $ sudo dnf upgrade -y
       $ sudo reboot
 
+- (optional, but recommended) cleanup and update the slave:
+
+      $ ( cd libreswan-web-slave && git clean -f )
+      $ ( cd libreswan-web-slave && git pull --ff-only )
+
 - (optional) update the master repository:
 
       $ ( cd libreswan-web-master && git pull --ff-only )
@@ -190,15 +201,28 @@ automate the below.
 
 - examine (and perhaps delete) a random selection of test runs:
 
-      # form a list of all the test results but exclude the most recent
-      $ ./libreswan-web-master/testing/web/gime-work.sh results libreswan-web-slave 2>&1 | grep tested: | tail -n +2 | tee tested.txt
-      # create list of uninteresting test runs
-      $ grep -v -e ' true$' -e ':.*:' tested.txt | while read t h b ; do echo results/*-g$h* ; done
-      # create a random list of interesting test runs
-      $ grep -e ' true$' tested.txt | shuf | tail -n +100 | while read t h b ; do echo results/*-g$h* ; done
+  - form a raw list of tested commits (gime-work.sh outputs, on
+    stderr, a line for each test run and how "interesting" it was):
 
-  (gime-work.sh lists each test result, and how "interesting" it was,
-  on stderror)
+        $ ./libreswan-web-master/testing/web/gime-work.sh results libreswan-web-slave 2>&1 | tee commits.tmp
+
+  - strip the raw list of everything but tested commits (and discard
+    the most recent tested commit):
+
+        $ grep tested: commits.tmp | tail -n +2 | tee tested.tmp
+
+  - list, as delete candidates, the test runs for un-interesting
+    commits (for instance, a change that does not modify the code and
+    is not a merge); this occurs because the most recent HEAD is
+    always tested unconditionally:
+
+        $ grep -e ' false$' tested.tmp | while read t h b ; do d=$(echo results/*-g$h-*) ; test -d "$d" && echo $d ; done
+
+  - list, as delete candidates, a random selection of more interesting
+    commits (for instance, a change that modifies the code but is not
+    a merge):
+
+        $ grep -e ' true$' tested.tmp | while read t h b ; do d=$(echo results/*-g$h-*) ; test -d "$d" && echo $d ; done | shuf | tail -n +100
 
 - restart <tt>tester.sh</tt>:
 

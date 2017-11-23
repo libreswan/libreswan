@@ -80,9 +80,13 @@ while read hashes ; do
 	# of all the tests is skipped: ${tested} || break
     fi
 
-    # Find out if the commit is interesting; and why.
+    # Find out how interesting the commit is; and why.
 
-    interesting=$(${webdir}/git-interesting.sh ${hash})
+    if interesting=$(${webdir}/git-interesting.sh ${hash}) ; then
+	uninteresting=false
+    else
+	uninteresting=true
+    fi
 
     # List all the tested commits.
     #
@@ -97,7 +101,7 @@ while read hashes ; do
 
     # Skip uninteresting commits; don't include them in untested runs.
 
-    if test -z "${interesting}" ; then
+    if ${uninteresting} ; then
 	continue
     fi
 
