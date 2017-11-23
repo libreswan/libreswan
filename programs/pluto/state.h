@@ -268,7 +268,7 @@ struct traffic_selector {
  */
 struct finite_state {
 	enum state_kind fs_state;
-	const char *fs_name;
+	const char *fs_short_name;
 	const char *fs_story;
 	lset_t fs_flags;
 	enum event_type fs_timeout_event;

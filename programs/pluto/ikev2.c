@@ -503,7 +503,7 @@ void init_ikev2(void)
 	for (unsigned k = 0; k < elemsof(v2_states); k++) {
 		struct finite_state *fs = &v2_states[k];
 		fs->fs_state = k + STATE_IKEv2_BASE;
-		fs->fs_name = enum_short_name(&state_names, fs->fs_state);
+		fs->fs_short_name = enum_short_name(&state_names, fs->fs_state);
 		fs->fs_story = enum_name(&state_stories, fs->fs_state);
 		finite_states[fs->fs_state] = fs;
 	}

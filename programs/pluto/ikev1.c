@@ -598,7 +598,7 @@ void init_ikev1(void)
 	for (unsigned k = 0; k < elemsof(v1_states); k++) {
 		struct finite_state *fs = &v1_states[k];
 		fs->fs_state = k + STATE_IKEv1_FLOOR;
-		fs->fs_name = enum_short_name(&state_names, fs->fs_state);
+		fs->fs_short_name = enum_short_name(&state_names, fs->fs_state);
 		fs->fs_story = enum_name(&state_stories, fs->fs_state);
 		finite_states[fs->fs_state] = fs;
 	}

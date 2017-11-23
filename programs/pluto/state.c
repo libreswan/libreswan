@@ -112,7 +112,7 @@ u_int16_t pluto_xfrmlifetime = 300;
  */
 struct finite_state state_undefined = {
 	.fs_state = STATE_UNDEFINED,
-	.fs_name = "UNDEFINED",
+	.fs_short_name = "UNDEFINED",
 	.fs_story = "not defined and probably dead (internal)",
 };
 
@@ -125,7 +125,7 @@ void lswlog_finite_state(struct lswlog *buf, const struct finite_state *fs)
 	if (fs == NULL) {
 		lswlogs(buf, "NULL-FINITE_STATE");
 	} else {
-		lswlogf(buf, "%s (timeout: ", fs->fs_name);
+		lswlogf(buf, "%s (timeout: ", fs->fs_short_name);
 		lswlog_enum_short(buf, &timer_event_names, fs->fs_timeout_event);
 		/* no enum_name available? */
 		lswlogf(buf, " flags: %" PRIxLSET ")", fs->fs_flags);
