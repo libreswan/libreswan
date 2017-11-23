@@ -122,30 +122,6 @@ static void retransmit_v1_msg(struct state *st)
 		 * st->st_try == 0 means that this should be the only try.
 		 * c->sa_keying_tries == 0 means that there is no limit.
 		 */
-		const char *details = "";
-
-		switch (st->st_state) {
-		case STATE_MAIN_I3:
-		case STATE_AGGR_I2:
-			details = ".  Possible authentication failure: no acceptable response to our first encrypted message";
-			break;
-		case STATE_MAIN_I1:
-		case STATE_AGGR_I1:
-			details = ".  No response (or no acceptable response) to our first IKEv1 message";
-			break;
-		case STATE_QUICK_I1:
-			if (c->newest_ipsec_sa == SOS_NOBODY) {
-				details = ".  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal";
-			}
-			break;
-		default:
-			break;
-		}
-		loglog(RC_NORETRANSMISSION,
-			"max number of retransmissions (%ld) reached %s%s",
-		        retransmit_count(st),
-			st->st_state_name,
-			details);
 		if (try != 0 && (try <= try_limit || try_limit == 0)) {
 			/*
 			 * A lot like EVENT_SA_REPLACE, but over again.
@@ -205,7 +181,6 @@ static void retransmit_v2_msg(struct state *st)
 	struct connection *c;
 	unsigned long try;
 	unsigned long try_limit;
-	const char *details = "";
 	struct state *pst = IS_CHILD_SA(st) ? state_with_serialno(st->st_clonedfrom) : st;
 
 	passert(st != NULL);
@@ -257,27 +232,6 @@ static void retransmit_v2_msg(struct state *st)
 	 * st->st_try == 0 means that this should be the only try.
 	 * c->sa_keying_tries == 0 means that there is no limit.
 	 */
-	switch (st->st_state) {
-	case STATE_PARENT_I2:
-		details = ".  Possible authentication failure: no acceptable response to our first encrypted message";
-		break;
-	case STATE_PARENT_I1:
-		details = ".  No response (or no acceptable response) to our first IKEv2 message";
-		break;
-	default:
-		details = ".  No response (or no acceptable response) to our IKEv2 message";
-		break;
-	}
-
-	if (DBGP(DBG_OPPO) || ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY)) {
-		/* too spammy for OE */
-		loglog(RC_NORETRANSMISSION,
-			"max number of retransmissions (%lu) reached %s%s",
-		        retransmit_count(st),
-			st->st_state_name,
-			details);
-	}
-
 	/* XXX try can never be 0?! */
 	if (try != 0 && (try <= try_limit || try_limit == 0)) {
 		/*
