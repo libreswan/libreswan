@@ -34,6 +34,40 @@ unsigned long retransmit_count(struct state *st)
 }
 
 /*
+ * Update the amount of time to wait, setting it to the delay required
+ * after this re-transmit.
+ *
+ * The equation used is:
+ *
+ *     COUNT = min(NR_RETRANSMITS, floor(log2(R_TIMEOUT/R_INTERVAL)))
+ *     DELAY * 2 ** COUNT
+ *
+ * Where floor(log2(R_TIMEOUT/R_INTERVAL)) comes from re-aranging:
+ *
+ *     DELAY*2**NR_RETRANSMITS <= TIMEOUT *
+ *
+ * Including the initial hardwired delay, the resulting sequence is:
+ *
+ *     DELAY,
+ *     DELAY*1, DELAY*2, DELAY*4, ...,
+ *     DELAY*2**floor(log2(TIMEOUT/DELAY)),
+ *     DELAY*2**floor(log2(TIMEOUT/DELAY)), ...
+ *
+ * But all this complexity is avoided by simply doubling delay, and
+ * updating it provided it is less than R_TIMEOUT.
+
+ */
+static void double_delay(retransmit_t *rt, unsigned long nr_retransmits)
+{
+	if (nr_retransmits > 0) {
+		deltatime_t delay = deltatime_add(rt->delay, rt->delay);
+		if (deltatime_cmp(delay, rt->timeout) < 0) {
+			rt->delay = delay;
+		}
+	}
+}
+
+/*
  * If there is still space, increment the retransmit counter.
  *
  * Used by the duplicate packet code to cap the number of times
@@ -42,7 +76,9 @@ unsigned long retransmit_count(struct state *st)
 bool count_duplicate(struct state *st, unsigned long limit)
 {
 	retransmit_t *rt = &st->st_retransmit;
-	if (retransmit_count(st) < limit) {
+	unsigned long nr_retransmits = retransmit_count(st);
+	if (nr_retransmits < limit) {
+		double_delay(rt, nr_retransmits);
 		rt->nr_duplicate_replies++;
 		DBG(DBG_RETRANSMITS,
 		    DBG_log("#%ld %s: retransmits: duplicate reply %lu + retransmit %lu of duplicate limit %lu (retransmit limit %lu)",
@@ -67,7 +103,8 @@ void clear_retransmits(struct state *st)
 	rt->nr_retransmits = 0;
 	rt->limit = 0;
 	rt->delay = deltatime(0);
-	rt->timeout = monotime_epoch;
+	rt->stop = monotime_epoch;
+	rt->timeout = deltatime(0);
 	DBG(DBG_RETRANSMITS,
 	    DBG_log("#%ld %s: retransmits: cleared",
 		    st->st_serialno, st->st_state_name));
@@ -92,18 +129,19 @@ void start_retransmits(struct state *st, enum event_type type)
 			lswlog_deltatime(buf, rt->delay);
 			lswlogs(buf, " seconds");
 		}
-		rt->timeout = monotimesum(mononow(), rt->delay);
+		rt->timeout = rt->delay;
 	} else {
-		rt->timeout = monotimesum(mononow(), c->r_timeout);
+		rt->timeout = c->r_timeout;
 	}
+	rt->stop = monotimesum(mononow(), rt->timeout);
 	event_schedule(rt->type, rt->delay, st);
 	LSWDBGP(DBG_RETRANSMITS, buf) {
 		lswlogf(buf, "#%ld %s: retransmits: first event in ",
 			st->st_serialno, st->st_state_name);
 		lswlog_deltatime(buf, rt->delay);
-		lswlogs(buf, " seconds; cap: ");
-		lswlog_deltatime(buf, c->r_timeout);
-		lswlogf(buf, " seconds; limit: %lu retransmits", rt->limit);
+		lswlogs(buf, " seconds; timeout in ");
+		lswlog_deltatime(buf, rt->timeout);
+		lswlogf(buf, " seconds; limit of %lu retransmits", rt->limit);
 	}
 }
 
@@ -117,7 +155,6 @@ void start_retransmits(struct state *st, enum event_type type)
 
 enum retransmit_status retransmit(struct state *st)
 {
-	struct connection *c = st->st_connection;
 	retransmit_t *rt = &st->st_retransmit;
 
 	/*
@@ -133,77 +170,17 @@ enum retransmit_status retransmit(struct state *st)
 	}
 
 	/*
-	 * Exceeded limit?
-	 *
-	 * XXX: The count is updated _after_ the value is read (the
-	 * original code used post increment).  This, combined with
-	 * code below computing the delay using the retransmit count,
-	 * results in to a delay sequence of DELAY, DELAY(*1),
-	 * DELAY*2, DELAY*4, ...  It isn't clear if this was
-	 * intentional.
+	 * Exceeded limits - timeout or number of retransmits?
 	 */
 	unsigned long nr_retransmits = retransmit_count(st);
-	rt->nr_retransmits++; /* "post increment" */
-	if (nr_retransmits >= rt->limit) {
-		DBG(DBG_RETRANSMITS,
-		    DBG_log("#%ld %s: retransmits: capped as retransmit limit %lu exceeded (%lu duplicate replies + %lu retransmits)",
-			    st->st_serialno, st->st_state_name,
-			    rt->limit, rt->nr_duplicate_replies, nr_retransmits));
+	bool too_many_retransmits = nr_retransmits >= rt->limit;
+	monotime_t now = mononow();
+	if (too_many_retransmits || monobefore(rt->stop, now)) {
 		return RETRANSMIT_CAPPED;
 	}
 
-	/*
-	 * Calculate the delay.
-	 *
-	 * Because the retries counter can be changed by both a retry
-	 * and a duplicate, re-compute the necessary delay each time vis:
-	 *
-	 *    DELAY * 2**nr_retransmits
-	 *
-	 * However, because of the post increment above, the value
-	 * used is off by one and the actual delay sequence is DELAY,
-	 * DELAY(*1), DELAY*2, DELAY*4, ...
-	 *
-	 * XXX: The below performs the exponent using timeradd() 'cos
-	 * it is easy and has more precision than using an integer;
-	 * beside there are at most 12 operations.
-	 *
-	 * XXX: Shouldn't the implicit delay==0 check have been
-	 * performed earlier; is it even needed?
-	 *
-	 * XXX: The r_timeout comparison looks wrong.  It should be
-	 * comparing "now"-"start" >= r_timeout.  That way a 2 minute
-	 * limit means a two minute limit, not something else.
-	 *
-	 * XXX: The delay should be allowed to grow expotentally;
-	 * instead just let it grow to some value and then keep
-	 * re-using that.
-	 */
-	rt->delay = c->r_interval;
-	if (deltatime_cmp(rt->delay, deltatime(0)) == 0) {
-		DBG(DBG_RETRANSMITS,
-		    DBG_log("#%ld %s: retransmits: capped as interval is zero!?!",
-			    st->st_serialno, st->st_state_name));
-		return RETRANSMIT_CAPPED;
-	}
-	for (unsigned long i = 0; i < nr_retransmits; i++) {
-		rt->delay = deltatime_add(rt->delay, rt->delay);
-		if (deltatime_cmp(c->r_timeout, deltatime(0)) > 0 &&
-		    deltatime_cmp(rt->delay, c->r_timeout) >= 0) {
-			/*
-			 * XXX: This is the wrong comparision, it
-			 * should be checking "now" - "start" >=
-			 * r_timeout.
-			 */
-			LSWDBGP(DBG_RETRANSMITS, buf) {
-				lswlogf(buf, "#%ld %s: retransmits: delay exceeded timeout ",
-					st->st_serialno, st->st_state_name);
-				lswlog_deltatime(buf, c->r_timeout);
-			}
-			return RETRANSMIT_CAPPED;
-		}
-	}
-
+	double_delay(rt, nr_retransmits);
+	rt->nr_retransmits++;
 	event_schedule(rt->type, rt->delay, st);
 	LSWLOG_LOGWHACK(RC_RETRANSMISSION, buf) {
 		lswlogf(buf, "%s: retransmission; will wait ",

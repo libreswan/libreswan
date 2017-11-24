@@ -23,7 +23,8 @@
 
 typedef struct {
 	deltatime_t delay;
-	monotime_t timeout;
+	deltatime_t timeout;
+	monotime_t stop; /* start+timeout */
 	unsigned long nr_retransmits;
 	unsigned long nr_duplicate_replies;
 	unsigned long limit;
