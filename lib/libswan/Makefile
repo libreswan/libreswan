@@ -66,11 +66,11 @@ OBJS += realtime.o
 OBJS += monotime.o
 
 OBJS += debug_enum_names.o
-OBJS += lswlog.o
-OBJS += lswlog_dbg.o
 OBJS += libreswan_DBG_dump.o
 OBJS += libreswan_DBG_log.o
 
+OBJS += lswlog.o
+OBJS += lswlog_dbg.o
 OBJS += lswlog_nss_error.o
 OBJS += lswlog_source_line.o
 OBJS += lswlog_sanitized.o
@@ -79,6 +79,7 @@ OBJS += lswlog_bytes.o
 OBJS += lswlog_enum_lset_short.o
 OBJS += lswlog_realtime.o
 OBJS += lswlog_deltatime.o
+OBJS += lswlog_ip.o
 
 # Crypto code:
 #
