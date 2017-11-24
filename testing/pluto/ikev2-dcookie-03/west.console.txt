@@ -22,7 +22,7 @@ west #
 010 "westnet-eastnet-ikev2" #1: STATE_PARENT_I1: retransmission; will wait 1 seconds for response
 010 "westnet-eastnet-ikev2" #1: STATE_PARENT_I1: retransmission; will wait 2 seconds for response
 010 "westnet-eastnet-ikev2" #1: STATE_PARENT_I1: retransmission; will wait 4 seconds for response
-031 "westnet-eastnet-ikev2" #1: max number of retransmissions (4) reached STATE_PARENT_I1.  No response (or no acceptable response) to our first IKEv2 message
+031 "westnet-eastnet-ikev2" #1: max number of retransmissions (3) reached STATE_PARENT_I1.  No response (or no acceptable response) to our first IKEv2 message
 000 "westnet-eastnet-ikev2" #1: starting keying attempt 2 of an unlimited number, but releasing whack
 west #
  echo done
