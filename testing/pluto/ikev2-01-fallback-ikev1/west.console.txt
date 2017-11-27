@@ -70,7 +70,7 @@ west #
 002 "westnet-eastnet-ikev2-fallback" #1: STATE_PARENT_I1: received unauthenticated v2N_NO_PROPOSAL_CHOSEN - ignored
 010 "westnet-eastnet-ikev2-fallback" #1: STATE_PARENT_I1: retransmission; will wait 32 seconds for response
 002 "westnet-eastnet-ikev2-fallback" #1: STATE_PARENT_I1: received unauthenticated v2N_NO_PROPOSAL_CHOSEN - ignored
-031 "westnet-eastnet-ikev2-fallback" #1: max number of retransmissions (8) reached STATE_PARENT_I1.  No response (or no acceptable response) to our first IKEv2 message
+031 "westnet-eastnet-ikev2-fallback" #1: max number of retransmissions (7) reached STATE_PARENT_I1.  No response (or no acceptable response) to our first IKEv2 message
 000 "westnet-eastnet-ikev2-fallback" #1: starting keying attempt 2 of at most 12, but releasing whack
 west #
  # we lose whack just before the fallback to ikev1, give it some time
