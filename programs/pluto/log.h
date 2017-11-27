@@ -70,25 +70,19 @@ extern lset_t base_debugging;	/* bits selecting what to report */
 extern void reset_globals(void);
 extern bool globals_are_reset(void);
 
-#define set_cur_connection(c) { \
-		cur_connection = (c); \
-		extra_debugging(c); \
-}
+struct connection *push_log_connection(struct connection *c, const char *func,
+				       const char *file, long line);
+void pop_log_connection(struct connection *c, const char *func,
+			const char *file, long line);
+#define set_cur_connection(C) push_log_connection(C, __func__, PASSERT_BASENAME, __LINE__)
+#define reset_cur_connection() pop_log_connection(NULL, __func__, PASSERT_BASENAME, __LINE__)
 
-#define reset_cur_connection() { \
-		cur_connection = NULL; \
-		reset_debugging(); \
-}
-
-#define set_cur_state(s) { \
-		cur_state = (s); \
-		extra_debugging((s)->st_connection); \
-}
-
-#define reset_cur_state() { \
-		cur_state = NULL; \
-		reset_debugging(); \
-}
+struct state *push_log_state(struct state *st, const char *func,
+			     const char *file, long line);
+void pop_log_state(struct state *st, const char *func,
+		   const char *file, long line);
+#define set_cur_state(ST) push_log_state(ST, __func__, PASSERT_BASENAME, __LINE__)
+#define reset_cur_state() pop_log_state(NULL, __func__, PASSERT_BASENAME, __LINE__)
 
 extern void pluto_init_log(void);
 extern void close_log(void);
