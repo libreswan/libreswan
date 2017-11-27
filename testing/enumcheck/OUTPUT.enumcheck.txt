@@ -3782,8 +3782,7 @@ IETF registry enum_names:
          lswlog_enum_short 19: OK
 
   ike_idtype_names_extended:
-   -2 -> %fromcert
-   -1 -> %myid
+   -1 -> %fromcert
 
   ike_idtype_names_extended:
     0 -> %none

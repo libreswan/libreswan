@@ -637,7 +637,7 @@ enum_names ipcomp_transformid_names = {
 
 static const char *const ike_idtype_name[] = {
 	/* private to Pluto */
-	"%fromcert",	/* -2, ID_FROMCERT:taken from certificate */
+	"%fromcert",	/* -1, ID_FROMCERT:taken from certificate */
 	"%none",	/* 0, ID_NONE */
 
 	/* standardized */
