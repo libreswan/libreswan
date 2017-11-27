@@ -2013,7 +2013,7 @@ void fmt_state(struct state *st, const monotime_t n,
 		 c->name, inst,
 		 st->st_remoteport,
 		 enum_name(&state_names, st->st_state),
-		 enum_name(&state_stories, st->st_state),
+		 st->st_state_story,
 		 st->st_event == NULL ? "none" :
 			enum_name(&timer_event_names, st->st_event->ev_type),
 		 delta,

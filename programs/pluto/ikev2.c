@@ -2082,7 +2082,7 @@ static void success_v2_state_transition(struct msg_digest *md)
 		if (c == NULL || (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY)
 			loglog(w, "%s: %s%s",
 				st->st_state_name,
-				enum_name(&state_stories, st->st_state),
+				st->st_state_story,
 				sadetails);
 	}
 
