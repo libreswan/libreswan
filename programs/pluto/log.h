@@ -60,8 +60,6 @@ extern bool whack_prompt_for(int whackfd,
 /* for pushing state to other subsystems */
 extern void log_state(struct state *st, enum state_kind state);
 
-extern void extra_debugging(const struct connection *c);
-
 extern void set_debugging(lset_t deb);
 extern void reset_debugging(void);
 

@@ -299,8 +299,8 @@ stf_status aggr_inI1_outR1(struct msg_digest *md)
 	}
 
 	c = st->st_connection;	/* ikev1_decode_peer_id() may change md->st->st_connection */
+	set_cur_state(st);
 
-	extra_debugging(c);
 	st->st_try = 0;                                 /* Not our job to try again from start */
 	st->st_policy = c->policy & ~POLICY_IPSEC_MASK; /* only as accurate as connection */
 
@@ -1168,14 +1168,17 @@ stf_status aggr_outI1(int whack_sock,
 	}
 
 	/* set up new state */
-	cur_state = st = new_state();
+	st = new_state();
+	set_cur_state(st);
 	st->st_connection = c;	/* safe: from new_state */
+
 #ifdef HAVE_LABELED_IPSEC
 	st->sec_ctx = NULL;
 #endif
 	set_state_ike_endpoints(st, c);
 
-	extra_debugging(c);
+	set_cur_state(st);
+
 	st->st_policy = policy & ~POLICY_IPSEC_MASK;
 	st->st_whack_sock = whack_sock;
 	st->st_try = try;

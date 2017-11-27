@@ -539,7 +539,7 @@ void initialize_new_state(struct state *st,
 
 	insert_state(st); /* needs cookies, connection */
 
-	extra_debugging(c);
+	set_cur_state(st);
 }
 
 bool send_delete(struct state *st)

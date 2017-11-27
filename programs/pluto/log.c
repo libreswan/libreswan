@@ -617,57 +617,6 @@ void whack_log_comment(const char *message, ...)
 
 lset_t base_debugging = DBG_NONE; /* default to reporting nothing */
 
-void extra_debugging(const struct connection *c)
-{
-	if (c == NULL) {
-		reset_debugging();
-		return;
-	}
-
-	if (!lmod_empty(c->extra_debugging)) {
-		lset_t old_debugging = cur_debugging & DBG_MASK;
-		lset_t new_debugging = lmod(old_debugging, c->extra_debugging);
-		LSWLOG(buf) {
-			lswlogs(buf, "extra debugging enabled for connection: ");
-			lswlog_enum_lset_short(buf, &debug_names, "+",
-					       new_debugging & ~old_debugging);
-			/* XXX: doesn't log cleared */
-		}
-		set_debugging(new_debugging | (cur_debugging & IMPAIR_MASK));
-	}
-
-	if (!lmod_empty(c->extra_impairing)) {
-		lset_t old_impairing = cur_debugging & IMPAIR_MASK;
-		lset_t new_impairing = lmod(old_impairing, c->extra_impairing);
-		LSWLOG(buf) {
-			lswlogs(buf, "extra impairing enabled for connection: ");
-			lswlog_enum_lset_short(buf, &impair_names, "+",
-					       new_impairing & ~old_impairing);
-			/* XXX: doesn't log cleared */
-		}
-		set_debugging(new_impairing | (cur_debugging & DBG_MASK));
-	}
-
-	/*
-	 * if any debugging is on, make sure that we log the connection
-	 * we are processing, because it may not be clear in later debugging.
-	 */
-	DBG(~LEMPTY, {
-		char buf[CONN_INST_BUF] =  "";
-		char b1[CONN_INST_BUF];
-		ipstr_buf ra;
-		/* fmt_conn_instance include the same if  POLICY_OPPORTUNISTIC */
-		if (cur_state != NULL && !(c->policy & POLICY_OPPORTUNISTIC)) {
-			snprintf(buf, sizeof(buf), " #%lu %s",
-				cur_state->st_serialno,
-				ipstr(&cur_state->st_remoteaddr, &ra));
-		}
-		DBG_log("processing connection \"%s\"%s%s",
-			c->name, fmt_conn_instance(c, b1), buf);
-	});
-
-}
-
 void set_debugging(lset_t deb)
 {
 	cur_debugging = deb;
