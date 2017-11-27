@@ -144,7 +144,7 @@ static void retransmit_v1_msg(struct state *st)
 		loglog(RC_NORETRANSMISSION,
 			"max number of retransmissions (%ld) reached %s%s",
 		        retransmit_count(st),
-			enum_name(&state_names, st->st_state),
+			st->st_state_name,
 			details);
 		if (try != 0 && (try <= try_limit || try_limit == 0)) {
 			/*
@@ -273,7 +273,7 @@ static void retransmit_v2_msg(struct state *st)
 		loglog(RC_NORETRANSMISSION,
 			"max number of retransmissions (%lu) reached %s%s",
 		        retransmit_count(st),
-			enum_name(&state_names, st->st_state),
+			st->st_state_name,
 			details);
 	}
 
@@ -577,7 +577,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		passert(st != NULL && st->st_send_xauth_event == ev);
 		DBG(DBG_CONTROLMORE|DBG_XAUTH,
 		    DBG_log("XAUTH: event EVENT_v1_SEND_XAUTH #%lu %s",
-			    st->st_serialno, enum_name(&state_names, st->st_state)));
+			    st->st_serialno, st->st_state_name));
 		st->st_send_xauth_event = NULL;
 		break;
 
@@ -602,7 +602,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		passert(st != NULL && st->st_rel_whack_event == ev);
 		DBG(DBG_CONTROL,
 			DBG_log("event EVENT_v2_RELEASE_WHACK st_rel_whack_event=NULL #%lu %s",
-				st->st_serialno, enum_name(&state_names, st->st_state)));
+				st->st_serialno, st->st_state_name));
 		st->st_rel_whack_event = NULL;
 		break;
 
@@ -661,7 +661,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		DBG(DBG_CONTROL, DBG_log("%s releasing whack for #%lu %s (sock=%d)",
 					enum_show(&timer_event_names, type),
 					st->st_serialno,
-					enum_name(&state_names, st->st_state),
+					st->st_state_name,
 					st->st_whack_sock));
 		release_pending_whacks(st, "release whack");
 		break;

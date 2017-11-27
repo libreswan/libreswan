@@ -529,7 +529,7 @@ struct state *new_state(void)
 		enum categories cg = categorize_state(st, st->st_state);
 		DBG_log("%s state #%lu: new => %s(%s)",
 			IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
-			enum_name(&state_names, st->st_state), enum_name(&cat_names, cg));
+			st->st_state_name, enum_name(&cat_names, cg));
 	});
 
 	return st;
@@ -821,7 +821,7 @@ static void delete_state_log(struct state *st)
 				char cib[CONN_INST_BUF];
 				DBG_log("deleting state #%lu (%s) \"%s\"%s%s",
 					st->st_serialno,
-					enum_name(&state_names, st->st_state),
+					st->st_state_name,
 					c->name,
 					fmt_conn_instance(c, cib), send_inf);
 		});
@@ -831,18 +831,18 @@ static void delete_state_log(struct state *st)
 		 * the message prefix.
 		 */
 		libreswan_log("deleting state (%s)%s",
-				enum_name(&state_names, st->st_state), send_inf);
+				st->st_state_name, send_inf);
 	} else if (cur_state != NULL && cur_state->st_connection ==  st->st_connection) {
 		libreswan_log("deleting other state #%lu (%s)%s",
 				st->st_serialno,
-				enum_name(&state_names, st->st_state),
+				st->st_state_name,
 				send_inf);
 
 	} else {
 		char cib[CONN_INST_BUF];
 		libreswan_log("deleting other state #%lu connection (%s) \"%s\"%s%s",
 				st->st_serialno,
-				enum_name(&state_names, st->st_state),
+				st->st_state_name,
 				c->name,
 				fmt_conn_instance(c, cib), send_inf);
 	}
@@ -851,7 +851,7 @@ static void delete_state_log(struct state *st)
 		enum categories cg = categorize_state(st, st->st_state);
 		DBG_log("%s state #%lu: %s(%s) => delete",
 			IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
-			enum_name(&state_names, st->st_state), enum_name(&cat_names, cg));
+			st->st_state_name, enum_name(&cat_names, cg));
 	});
 }
 
@@ -1508,7 +1508,7 @@ struct state *find_state_ikev1(const uint8_t *icookie,
 		    } else {
 			    DBG_log("v1 state object #%lu found, in %s",
 				    st->st_serialno,
-				    enum_name(&state_names, st->st_state));
+				    st->st_state_name);
 		    }
 	    });
 
@@ -1537,7 +1537,7 @@ struct state *find_state_ikev1_init(const uint8_t *icookie,
 		    } else {
 			    DBG_log("v1 state object #%lu found, in %s",
 				    st->st_serialno,
-				    enum_name(&state_names, st->st_state));
+				    st->st_state_name);
 		    }
 	    });
 
@@ -1568,7 +1568,7 @@ struct state *find_state_ikev2_parent(const u_char *icookie,
 		} else {
 			DBG_log("v2 state object #%lu found, in %s",
 				st->st_serialno,
-				enum_name(&state_names, st->st_state));
+				st->st_state_name);
 		}
 	});
 
@@ -1595,7 +1595,7 @@ struct state *ikev2_find_state_in_init(const u_char *icookie,
 					    st->st_serialno);
 				    DBG_log("v2 state object #%lu found, in %s",
 					    st->st_serialno,
-					    enum_name(&state_names, st->st_state)));
+					    st->st_state_name));
 				return st;
 			}
 		});
@@ -1628,7 +1628,7 @@ struct state *find_state_ikev2_child(const u_char *icookie,
 		} else {
 			DBG_log("v2 state object #%lu found, in %s",
 				st->st_serialno,
-				enum_name(&state_names, st->st_state));
+				st->st_state_name);
 		}
 	});
 
@@ -1676,7 +1676,7 @@ struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
 		    } else {
 			    DBG_log("v2 child state object #%lu found, in %s",
 				    st->st_serialno,
-				    enum_name(&state_names, st->st_state));
+				    st->st_state_name);
 		    }
 	    });
 
@@ -1711,7 +1711,7 @@ struct state *ikev1_find_info_state(const u_char *icookie,
 		} else {
 			DBG_log("p15 state object #%lu found, in %s",
 				st->st_serialno,
-				enum_name(&state_names, st->st_state));
+				st->st_state_name);
 		}
 	});
 
@@ -2012,7 +2012,7 @@ void fmt_state(struct state *st, const monotime_t n,
 		 st->st_serialno,
 		 c->name, inst,
 		 st->st_remoteport,
-		 enum_name(&state_names, st->st_state),
+		 st->st_state_name,
 		 st->st_state_story,
 		 st->st_event == NULL ? "none" :
 			enum_name(&timer_event_names, st->st_event->ev_type),
@@ -2553,7 +2553,7 @@ bool state_busy(const struct state *st) {
 			LSWLOG_DEBUG(buf) {
 				lswlog_log_prefix(buf);
 				lswlogf(buf, "discarding packet received during asynchronous work (DNS or crypto) in %s",
-					enum_name(&state_names, st->st_state));
+					st->st_state_name);
 			}
 			return TRUE;
 		}

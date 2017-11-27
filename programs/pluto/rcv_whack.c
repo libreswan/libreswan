@@ -404,7 +404,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 			DBG_log("received whack to delete %s state #%lu %s",
 				st->st_ikev2 ? "IKEv2" : "IKEv1",
 				st->st_serialno,
-				enum_name(&state_names, st->st_state));
+				st->st_state_name);
 
 			if (st->st_ikev2 && !IS_CHILD_SA(st)) {
 				DBG_log("Also deleting any corresponding CHILD_SAs");

@@ -46,14 +46,14 @@ bool count_duplicate(struct state *st, unsigned long limit)
 		rt->nr_duplicate_replies++;
 		DBG(DBG_RETRANSMITS,
 		    DBG_log("#%ld %s: retransmits: duplicate reply %lu + retransmit %lu of duplicate limit %lu (retransmit limit %lu)",
-			    st->st_serialno, enum_name(&state_names, st->st_state),
+			    st->st_serialno, st->st_state_name,
 			    rt->nr_duplicate_replies, rt->nr_retransmits,
 			    limit, rt->limit));
 		return true;
 	} else {
 		DBG(DBG_RETRANSMITS,
 		    DBG_log("#%ld %s: retransmits: total duplicate replies (%lu) + retransmits (%lu) exceeds duplicate limit %lu (retransmit limit %lu)",
-			    st->st_serialno, enum_name(&state_names, st->st_state),
+			    st->st_serialno, st->st_state_name,
 			    rt->nr_duplicate_replies, +rt->nr_retransmits,
 			    limit, rt->limit));
 		return false;
@@ -70,7 +70,7 @@ void clear_retransmits(struct state *st)
 	rt->timeout = monotime_epoch;
 	DBG(DBG_RETRANSMITS,
 	    DBG_log("#%ld %s: retransmits: cleared",
-		    st->st_serialno, enum_name(&state_names, st->st_state)));
+		    st->st_serialno, st->st_state_name));
 }
 
 void start_retransmits(struct state *st, enum event_type type)
@@ -99,7 +99,7 @@ void start_retransmits(struct state *st, enum event_type type)
 	event_schedule(rt->type, rt->delay, st);
 	LSWDBGP(DBG_RETRANSMITS, buf) {
 		lswlogf(buf, "#%ld %s: retransmits: first event in ",
-			st->st_serialno, enum_name(&state_names, st->st_state));
+			st->st_serialno, st->st_state_name);
 		lswlog_deltatime(buf, rt->delay);
 		lswlogs(buf, " seconds; cap: ");
 		lswlog_deltatime(buf, c->r_timeout);
@@ -147,7 +147,7 @@ enum retransmit_status retransmit(struct state *st)
 	if (nr_retransmits >= rt->limit) {
 		DBG(DBG_RETRANSMITS,
 		    DBG_log("#%ld %s: retransmits: capped as retransmit limit %lu exceeded (%lu duplicate replies + %lu retransmits)",
-			    st->st_serialno, enum_name(&state_names, st->st_state),
+			    st->st_serialno, st->st_state_name,
 			    rt->limit, rt->nr_duplicate_replies, nr_retransmits));
 		return RETRANSMIT_CAPPED;
 	}
@@ -183,7 +183,7 @@ enum retransmit_status retransmit(struct state *st)
 	if (deltatime_cmp(rt->delay, deltatime(0)) == 0) {
 		DBG(DBG_RETRANSMITS,
 		    DBG_log("#%ld %s: retransmits: capped as interval is zero!?!",
-			    st->st_serialno, enum_name(&state_names, st->st_state)));
+			    st->st_serialno, st->st_state_name));
 		return RETRANSMIT_CAPPED;
 	}
 	for (unsigned long i = 0; i < nr_retransmits; i++) {
@@ -197,7 +197,7 @@ enum retransmit_status retransmit(struct state *st)
 			 */
 			LSWDBGP(DBG_RETRANSMITS, buf) {
 				lswlogf(buf, "#%ld %s: retransmits: delay exceeded timeout ",
-					st->st_serialno, enum_name(&state_names, st->st_state));
+					st->st_serialno, st->st_state_name);
 				lswlog_deltatime(buf, c->r_timeout);
 			}
 			return RETRANSMIT_CAPPED;
