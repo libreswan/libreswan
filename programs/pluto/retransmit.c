@@ -182,7 +182,7 @@ enum retransmit_status retransmit(struct state *st)
 	double_delay(rt, nr_retransmits);
 	rt->nr_retransmits++;
 	event_schedule(rt->type, rt->delay, st);
-	LSWLOG_LOGWHACK(RC_RETRANSMISSION, buf) {
+	LSWLOG_LOG_WHACK(RC_RETRANSMISSION, buf) {
 		lswlogf(buf, "%s: retransmission; will wait ",
 			st->st_finite_state->fs_name);
 		lswlog_deltatime(buf, rt->delay);

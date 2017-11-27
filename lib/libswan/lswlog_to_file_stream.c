@@ -1,4 +1,4 @@
-/* log wrapper, for libreswan
+/* Send LSWLOG to a file with implicit '\n', for libreswan
  *
  * Copyright (C) 2017 Andrew Cagney
  *
@@ -15,16 +15,11 @@
  */
 
 #include <stdio.h>
-#include <stdarg.h>
 
 #include "lswlog.h"
 
-void libreswan_loglog(enum rc_type rc, const char *fmt, ...)
+size_t lswlog_to_file_stream(struct lswlog *buf, FILE *file)
 {
-	LSWLOG_LOG_WHACK(rc, buf) {
-		va_list ap;
-		va_start(ap, fmt);
-		lswlogvf(buf, fmt, ap);
-		va_end(ap);
-	}
+	lswlogs(buf, "\n");
+	return fwrite(buf->array, buf->len, 1, file);
 }

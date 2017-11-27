@@ -229,9 +229,9 @@ size_t lswlog_ip(struct lswlog *log, const ip_address*);
 /*
  * The logging output streams used by libreswan.
  *
- * So far three^D^D^D^D^D four^D^D^D^D five have been identified; and
- * lets not forget STDOUT and STDERR which are also written to
- * directly.
+ * So far three^D^D^D^D^D four^D^D^D^D five^D^D^D^D six have been
+ * identified; and lets not forget that code writes to STDOUT and
+ * STDERR directly.
  *
  * The streams differ in the syslog severity and what PREFIX is
  * assumed to be present.
@@ -239,24 +239,29 @@ size_t lswlog_ip(struct lswlog *log, const ip_address*);
  *                SEVERITY     WHACK   PREFIX
  *   log        LOG_WARNING     -      state
  *   debug      LOG_DEBUG       -      "| "
- *   logwhack   LOG_WARNING    yes     state
+ *   log_whack  LOG_WARNING    yes     state
  *   error      LOG_ERR         -      ERROR ..
  *   whack         -           yes     NNN
+ *   file          -            -       -
  *
  * The streams will then add additional prefixes as required.  For
- * instance, the logwhack stream will prefix a timestamp when sending
+ * instance, the log_whack stream will prefix a timestamp when sending
  * to a file (optional), and will prefix NNN(RC) when sending to
  * whack.
  *
  * For tools, the log stream goes to STDERR when enabled; and the
  * debug stream goes to STDERR conditional on debug flags.
+ *
+ * Return size_t so that implementations have somewhere to send values
+ * that should not be ignored; for instance fwrite() :-/
  */
 
 void lswlog_to_log_stream(struct lswlog *buf);
 void lswlog_to_debug_stream(struct lswlog *buf);
 void lswlog_to_error_stream(struct lswlog *buf);
-void lswlog_to_logwhack_stream(struct lswlog *buf, enum rc_type rc);
+void lswlog_to_log_whack_stream(struct lswlog *buf, enum rc_type rc);
 void lswlog_to_whack_stream(struct lswlog *buf);
+size_t lswlog_to_file_stream(struct lswlog *buf, FILE *file);
 
 /*
  * Code wrappers that cover up the details of allocating,
@@ -337,7 +342,17 @@ void lswbuf(struct lswlog *log)
 		LSWBUF_(BUF)
 
 /*
- * Write output to a FILE stream as a single block.
+ * Various logging constructs all based on this template.
+ */
+
+#define LSWLOG_(PREDICATE, BUF, PREFIX, SUFFIX)				\
+	for (bool lswlog_p = PREDICATE; lswlog_p; lswlog_p = false)	\
+		LSWBUF_(BUF)						\
+			for (PREFIX; lswlog_p; lswlog_p = false, SUFFIX)
+
+/*
+ * Write a line of output to the FILE stream as a single block;
+ * includes an implicit new-line.
  *
  * For instance:
  */
@@ -352,13 +367,9 @@ void lswlog_file(FILE f)
 #endif
 
 #define LSWLOG_FILE(FILE, BUF)						\
-	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
-		LSWBUF_(BUF)						\
-			for (; lswlog_p;				\
-			     lswlog_p = false,				\
-				     lswlogs(BUF, "\n"),		\
-				     fwrite(BUF->array, BUF->len, 1, FILE))
-
+	LSWLOG_(true, BUF,						\
+		,							\
+		lswlog_to_file_stream(BUF, FILE))
 
 /*
  * Send output to WHACK (if attached).
@@ -369,11 +380,9 @@ void lswlog_file(FILE f)
  */
 
 #define LSWLOG_WHACK(RC, BUF)						\
-	for (bool lswlog_p = whack_log_p(); lswlog_p; lswlog_p = false) \
-		LSWBUF_(BUF)						\
-			for (whack_log_pre(RC, BUF); lswlog_p;		\
-			     lswlog_to_whack_stream(BUF),		\
-				     lswlog_p = false)
+	LSWLOG_(whack_log_p(), BUF,					\
+		whack_log_pre(RC, BUF),					\
+		lswlog_to_whack_stream(BUF))
 
 /*
  * Send debug output to the logging streams (but not WHACK).
@@ -382,11 +391,9 @@ void lswlog_file(FILE f)
 void lswlog_dbg_pre(struct lswlog *buf);
 
 #define LSWDBG_(PREDICATE, BUF)						\
-	for (bool lswlog_p = PREDICATE; lswlog_p; lswlog_p = false)	\
-		LSWBUF_(BUF)						\
-			for (lswlog_dbg_pre(BUF); lswlog_p;		\
-			     lswlog_to_debug_stream(BUF),		\
-				     lswlog_p = false)
+	LSWLOG_(PREDICATE, BUF,						\
+		lswlog_dbg_pre(BUF),					\
+		lswlog_to_debug_stream(BUF))
 
 #define LSWDBGP(DEBUG, BUF) LSWDBG_(DBGP(DEBUG), BUF)
 #define LSWLOG_DEBUG(BUF) LSWDBG_(true, BUF)
@@ -397,25 +404,22 @@ void lswlog_dbg_pre(struct lswlog *buf);
 
 void lswlog_log_prefix(struct lswlog *buf);
 
-#define LSWLOG(BUF)  LSWLOG_LOGWHACK(RC_LOG, BUF)
+#define LSWLOG_LOG_WHACK(RC, BUF)					\
+	LSWLOG_(true, BUF,						\
+		lswlog_log_prefix(BUF),					\
+		lswlog_to_log_whack_stream(BUF, RC))
 
-#define LSWLOG_LOGWHACK(RC, BUF)					\
-	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
-		LSWBUF_(BUF)						\
-			for (lswlog_log_prefix(BUF); lswlog_p;			\
-			     lswlog_to_logwhack_stream(BUF, RC),	\
-				     lswlog_p = false)
+#define LSWLOG(BUF)  LSWLOG_LOG_WHACK(RC_LOG, BUF)
 
 /*
  * Send log output to the logging stream but not WHACK.
  */
 
 #define LSWLOG_LOG(BUF)							\
-	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
-		LSWBUF_(BUF)						\
-			for (lswlog_log_prefix(BUF); lswlog_p;		\
-			     lswlog_to_log_stream(BUF),			\
-				     lswlog_p = false)
+	LSWLOG_(true, BUF,						\
+		lswlog_log_prefix(BUF),					\
+		lswlog_to_log_stream(BUF))
+
 
 /*
  * ARRAY, a previously allocated array, containing the accumulated
