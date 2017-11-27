@@ -1315,6 +1315,7 @@ int pfkey_msg_parse(struct sadb_msg *pfkey_msg,
 							    sadb_msg_type));
 			SENDERR(EINVAL);
 		}
+		break;
 	default:
 		break;
 	}
