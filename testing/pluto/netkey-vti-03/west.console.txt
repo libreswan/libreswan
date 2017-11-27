@@ -116,6 +116,12 @@ ipsec0: flags=193<UP,RUNNING,NOARP>  mtu 1332
         TX packets 8  bytes 1328 (1.2 KiB)
         TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
 west #
+ # show how our tunnel interface looks
+west #
+ ip tun
+ip_vti0: ip/ip  remote any  local any  ttl inherit  nopmtudisc key 0
+ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 2
+west #
  echo done
 done
 west #
