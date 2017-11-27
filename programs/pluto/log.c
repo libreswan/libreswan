@@ -406,7 +406,10 @@ static void whack_raw(struct lswlog *b, enum rc_type rc)
 	}
 }
 
-void lswlog_log_prefix(struct lswlog *buf)
+static void lswlog_cur_prefix(struct lswlog *buf,
+			      struct state *cur_state,
+			      struct connection *cur_connection,
+			      const ip_address *cur_from, u_int16_t cur_from_port)
 {
 	if (!pthread_equal(pthread_self(), main_thread)) {
 		return;
@@ -438,6 +441,43 @@ void lswlog_log_prefix(struct lswlog *buf)
 		lswlogf(buf, "packet from %s:%u: ",
 			sensitive_ipstr(cur_from, &b),
 			(unsigned)cur_from_port);
+	}
+}
+
+void lswlog_log_prefix(struct lswlog *buf)
+{
+	lswlog_cur_prefix(buf, cur_state, cur_connection,
+			  cur_from, cur_from_port);
+}
+
+/*
+ * This needs to mimic both lswlog_log_prefix() and
+ * lswlog_dbg_prefix().
+ */
+
+void log_prefix(struct lswlog *buf, bool debug,
+		struct state *st, struct connection *c)
+{
+	if (debug) {
+		lswlogs(buf, DEBUG_PREFIX);
+	}
+	if (!debug || DBGP(DBG_ADD_PREFIX)) {
+		lswlog_cur_prefix(buf, st, c, cur_from, cur_from_port);
+	}
+}
+
+bool log_debugging(struct state *st, struct connection *c,
+		   lset_t debug)
+{
+	if (st != NULL) {
+		c = st->st_connection;
+	}
+	if (c == NULL) {
+		return base_debugging & debug;
+	} else {
+		lset_t debugging = lmod(base_debugging,
+					st->st_connection->extra_debugging);
+		return debugging & debug;
 	}
 }
 

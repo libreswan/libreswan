@@ -1357,39 +1357,26 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest, const char
 					 * explicit parameter to the
 					 * logging system?
 					 */
-#define LOG_SENDER(LOG, SENDER)						\
-					struct state *old_state = cur_state; \
-					struct connection *old_connection = cur_connection; \
-					const ip_address *old_from = cur_from; \
-					cur_state = SENDER;		\
-					cur_connection = NULL;		\
-					cur_from = NULL;		\
-					LOG("ERROR: asynchronous network error report on %s (sport=%d)%s, complainant %s: %s [errno %lu, origin %s]", \
-					    ifp->ip_dev->id_rname, ifp->port, \
-					    fromstr,			\
-					    offstr,			\
-					    strerror(ee->ee_errno),	\
-					    (unsigned long) ee->ee_errno, orname); \
-					cur_state = old_state;		\
-					cur_connection = old_connection; \
-					cur_from = old_from;
-					/* */
-					LOG_SENDER(libreswan_log, sender);
-				} else if (DBGP(DBG_OPPO)) {
+#define LOG(buf)	lswlogf(buf, "ERROR: asynchronous network error report on %s (sport=%d)%s, complainant %s: %s [errno %lu, origin %s]", \
+				ifp->ip_dev->id_rname, ifp->port,	\
+				fromstr,				\
+				offstr,					\
+				strerror(ee->ee_errno),			\
+				(unsigned long) ee->ee_errno, orname);
+
+					LSWLOG_STATE(sender, buf) {
+						LOG(buf);
+					}
+				} else {
 					/*
 					 * Since this output is forced
 					 * using DBGP, report the
 					 * error using debug-log.
-					 *
-					 * Since DBG_log() doesn't add
-					 * a prefix for the current
-					 * state et.al., the above
-					 * switch hack isn't needed.
-					 * However, do it anyway, so
-					 * that there is no confusion.
 					 */
-					LOG_SENDER(DBG_log, sender);
-#undef LOG_SENDER
+					LSWDBGP_STATE(DBG_OPPO, sender, buf) {
+						LOG(buf);
+					}
+#undef LOG
 				}
 			} else if (cm->cmsg_level == SOL_IP &&
 				   cm->cmsg_type == IP_PKTINFO) {

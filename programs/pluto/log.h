@@ -89,6 +89,35 @@ void log_pop_state(so_serial_t serialno, const char *func,
 #define set_cur_state(ST) push_cur_state(ST)
 #define reset_cur_state() pop_cur_state(SOS_NOBODY)
 
+/*
+ * Log 'cur' directly (without setting it first).
+ */
+
+void log_prefix(struct lswlog *buf, bool debug,
+		struct state *st, struct connection *c);
+
+#define LSWLOG_STATE(STATE, BUF)					\
+	LSWLOG_(true, BUF,						\
+		log_prefix(BUF, false, STATE, NULL),			\
+		lswlog_to_log_whack_stream(BUF, RC_LOG))
+
+#define LSWLOG_CONNECTION(CONNECTION, BUF)				\
+	LSWLOG_(true, BUF,						\
+		log_prefix(BUF, true, NULL, CONNECTION),		\
+		lswlog_to_log_whack_stream(BUF, RC_LOG))
+
+bool log_debugging(struct state *st, struct connection *c, lset_t predicate);
+
+#define LSWDBGP_STATE(DEBUG, STATE, BUF)				\
+	LSWLOG_(log_debugging(STATE, NULL, DEBUG), BUF,			\
+		log_prefix(BUF, true, STATE, NULL),			\
+		lswlog_to_debug_stream(BUF))
+
+#define LSWDBGP_CONNECTION(DEBUG, CONNECTION, BUF)			\
+	LSWLOG_(log_debugging(NULL, CONNECTION, DEBUG), BUF,		\
+		log_prefix(BUF, true, NULL, CONNECTION),		\
+		lswlog_to_debug_stream(BUF))
+
 extern void pluto_init_log(void);
 extern void close_log(void);
 extern void exit_log(const char *message, ...) PRINTF_LIKE(1) NEVER_RETURNS;
