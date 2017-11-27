@@ -600,7 +600,9 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 
 	case EVENT_v2_RELEASE_WHACK:
 		passert(st != NULL && st->st_rel_whack_event == ev);
-		DBG_log("event EVENT_v2_RELEASE_WHACK st_rel_whack_event=NULL #%lu %s",  st->st_serialno, enum_name(&state_names, st->st_state));
+		DBG(DBG_CONTROL,
+			DBG_log("event EVENT_v2_RELEASE_WHACK st_rel_whack_event=NULL #%lu %s",
+				st->st_serialno, enum_name(&state_names, st->st_state)));
 		st->st_rel_whack_event = NULL;
 		break;
 
