@@ -2114,9 +2114,13 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				 * Caller will also see NULL and
 				 * assume that things should stumble
 				 * on to the next algorithm.
+				 *
+				 * Either straight AH, or ESP
+				 * containing AUTH; or what?
 				 */
 				loglog(RC_LOG_SERIOUS,
-				       "IKEv1 AH integrity algorithm %s not supported",
+				       "IKEv1 %s integrity algorithm %s not supported",
+				       (proto == PROTO_IPSEC_ESP ? "ESP" : "AH"),
 				       enum_show(&ah_transformid_names, val));
 			}
 			break;
@@ -2216,13 +2220,18 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		}
 
 		/*
-		 * AEAD implies NULL integrity.
+		 * If integrity is completly missing, set it to NONE.
+		 * This way NULL strictly means that there was
+		 * integrity but it wasn't recognised.
+		 *
+		 * IKEv1 AEAD leaves out integrity; for other
+		 * algorithms there is a check that AH is present and
+		 * it is providing the integrity.
 		 */
-		if (ike_alg_is_aead(attrs->transattrs.ta_encrypt)
-		    && attrs->transattrs.ta_integ == NULL) {
+		if (!LHAS(seen_attrs, AUTH_ALGORITHM)) {
+			DBG(DBG_PARSING, DBG_log("ES missing INTEG aka AUTH, setting it to NONE"));
 			attrs->transattrs.ta_integ = &ike_alg_integ_none;
 		}
-
 	}
 
 	if (proto == PROTO_IPSEC_AH) {
@@ -2578,23 +2587,16 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				previous_transnum = ah_trans.isat_transnum;
 
 				/*
-				 * Assuming integrity was present, is
-				 * the auth algorithm known?
-				 *
-				 * NULL here indicates that the
-				 * attempt to look up the integrity
-				 * algorithm failed (NULL because
-				 * integrity was missing will have
-				 * already been rejected by the
-				 * above).
-				 *
-				 * If it wasn't skip the proposal (the
-				 * above call will have already logged
-				 * this).
+				 * Since, for AH, when integrity is
+				 * missing, the proposal gets rejected
+				 * outright, a NULL here must indicate
+				 * that integrity was present but the
+				 * lookup failed.
 				 */
 				if (ah_attrs.transattrs.ta_integ == NULL) {
-					DBG(DBG_CONTROL | DBG_CRYPT,
-					    DBG_log("ignoring proposal with unknown integrity"));
+					/* error already logged */
+					DBG(DBG_PARSING,
+					    DBG_log("ignoring AH proposal with unknown integrity"));
 					continue;       /* try another */
 				}
 
@@ -2657,6 +2659,20 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 				previous_transnum = esp_trans.isat_transnum;
 
+				/*
+				 * Since, for ESP, when integrity is
+				 * missing, it is forced to
+				 * .ta_integ=NONE, a NULL here must
+				 * indicate that integrity was present
+				 * but the lookup failed.
+				 */
+				if (ah_attrs.transattrs.ta_integ == NULL) {
+					/* error already logged */
+					DBG(DBG_PARSING,
+					    DBG_log("ignoring ESP proposal with unknown integrity"));
+					continue;       /* try another */
+				}
+
 				ugh = "no alg";
 
 				if (c->alg_info_esp != NULL) {
@@ -2709,42 +2725,23 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					}
 				}
 
-				if (!kernel_alg_integ_ok(esp_attrs.transattrs.ta_integ)) {
-					switch (esp_attrs.transattrs.ta_ikev1_integ_hash)
-					{
-					case AUTH_ALGORITHM_NONE:
-						if (!ah_seen) {
-							DBG(DBG_CONTROL, {
-								ipstr_buf b;
-								DBG_log("ESP from %s must either have AUTH or be combined with AH",
-								    ipstr(&c->spd.that.host_addr, &b));
-							});
-							continue; /* try another */
-						}
-						break;
-
-					/* ??? why do we accept these when kernel_alg_esp_auth_ok says not to? */
-					case AUTH_ALGORITHM_HMAC_MD5:
-					case AUTH_ALGORITHM_HMAC_SHA1:
-					case AUTH_ALGORITHM_HMAC_SHA2_256:
-					case AUTH_ALGORITHM_HMAC_SHA2_384:
-					case AUTH_ALGORITHM_HMAC_SHA2_512:
-					case AUTH_ALGORITHM_HMAC_RIPEMD:
-					case AUTH_ALGORITHM_AES_XCBC:
-						break;
-
-					default:
-						{
-						ipstr_buf b;
-
-						DBG(DBG_CONTROL, DBG_log(
-						       "unsupported ESP auth alg %s from %s",
-						       esp_attrs.transattrs.ta_integ->common.fqn,
-						       ipstr(&c->spd.that.host_addr,
-								&b)));
+				if (esp_attrs.transattrs.ta_integ == &ike_alg_integ_none) {
+					if (!ike_alg_is_aead(esp_attrs.transattrs.ta_encrypt) &&
+					    !ah_seen) {
+						LSWDBGP(DBG_PARSING, buf) {
+							lswlogs(buf, "ESP from ");
+							lswlog_ip(buf, &c->spd.that.host_addr);
+							lswlogs(buf, " must either have AUTH or be combined with AH");
+						};
 						continue; /* try another */
-						}
 					}
+				} else if (!kernel_alg_integ_ok(esp_attrs.transattrs.ta_integ)) {
+					LSWDBGP(DBG_PARSING, buf) {
+						lswlogf(buf, "unsupported ESP auth alg %s from ",
+							esp_attrs.transattrs.ta_integ->common.fqn);
+						lswlog_ip(buf, &c->spd.that.host_addr);
+					}
+					continue; /* try another */
 				}
 
 				if (ah_seen &&
