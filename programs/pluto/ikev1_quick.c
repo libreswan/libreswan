@@ -1042,11 +1042,11 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *qke,
 	if (qke->pcrc_replacing == SOS_NOBODY) {
 		whack_log(RC_NEW_STATE + STATE_QUICK_I1,
 			  "%s: initiate",
-			  enum_name(&state_names, st->st_state));
+			  st->st_state_name);
 	} else {
 		whack_log(RC_NEW_STATE + STATE_QUICK_I1,
 			  "%s: initiate to replace #%lu",
-			  enum_name(&state_names, st->st_state),
+			  st->st_state_name,
 			  qke->pcrc_replacing);
 	}
 

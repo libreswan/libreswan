@@ -997,18 +997,18 @@ static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
 			    count_duplicate(st, MAXIMUM_v1_ACCEPTED_DUPLICATES)) {
 				loglog(RC_RETRANSMISSION,
 				       "retransmitting in response to duplicate packet; already %s",
-				       enum_name(&state_names, st->st_state));
+				       st->st_state_name);
 				resend_ike_v1_msg(st, "retransmit in response to duplicate");
 			} else {
 				loglog(RC_LOG_SERIOUS,
 				       "discarding duplicate packet -- exhausted retransmission; already %s",
-				       enum_name(&state_names, st->st_state));
+				       st->st_state_name);
 			}
 		} else {
 			LSWDBGP(DBG_CONTROLMORE, buf) {
 				lswlog_log_prefix(buf);
 				lswlogf(buf, "discarding duplicate packet; already %s",
-				enum_name(&state_names, st->st_state));
+				st->st_state_name);
 			}
 		}
 		return true;
@@ -1093,7 +1093,7 @@ void process_v1_packet(struct msg_digest **mdp)
 					 * discarded.
 					 */
 					libreswan_log("discarding initial packet; already %s",
-						      enum_name(&state_names, st->st_state));
+						      st->st_state_name);
 				}
 				return;
 			}
@@ -1368,7 +1368,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
 				DBG(DBG_CONTROLMORE, DBG_log(
 					"Mode Config message is unacceptable because it is for an incomplete ISAKMP SA (state=%s)",
-					enum_name(&state_names, st->st_state)));
+					st->st_state_name));
 				/* XXX Could send notification back */
 				return;
 			}
@@ -2604,7 +2604,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			/* tell whack and logs our progress */
 			loglog(w,
 			       "%s: %s%s",
-			       enum_name(&state_names, st->st_state),
+			       st->st_state_name,
 			       story,
 			       sadetails);
 		}
@@ -2766,7 +2766,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 		whack_log(RC_INTERNALERR + md->note,
 			  "%s: internal error",
-			  enum_name(&state_names, st->st_state));
+			  st->st_state_name);
 
 		DBG(DBG_CONTROL,
 		    DBG_log("state transition function for %s had internal error",
@@ -2793,7 +2793,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 		whack_log(RC_FATAL,
 			  "encountered fatal error in state %s",
-			  enum_name(&state_names, st->st_state));
+			  st->st_state_name);
 #ifdef HAVE_NM
 		if (st->st_connection->remotepeertype == CISCO &&
 		    st->st_connection->nmconfigured) {
@@ -2823,7 +2823,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 * But then then any duplicate would lose too, I would think.
 		 */
 		whack_log(RC_NOTIFICATION + md->note,
-			  "%s: %s", enum_name(&state_names, st->st_state),
+			  "%s: %s", st->st_state_name,
 			  enum_name(&ikev1_notify_names, md->note));
 
 		if (md->note != NOTHING_WRONG)

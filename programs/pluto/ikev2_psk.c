@@ -80,7 +80,7 @@ static bool ikev2_calculate_psk_sighash(bool verify, struct state *st,
 	passert(authby == AUTH_PSK || authby == AUTH_NULL);
 
 	DBG(DBG_CONTROL,DBG_log("ikev2_calculate_psk_sighash() called from %s to %s PSK with authby=%s",
-		enum_name(&state_names, st->st_state),
+		st->st_state_name,
 		verify ? "verify" : "create",
 		enum_name(&ikev2_asym_auth_name, authby)));
 

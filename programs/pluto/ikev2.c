@@ -966,7 +966,7 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 				st->st_connection->name,
 				fmt_conn_instance(st->st_connection, cb),
 				st->st_serialno,
-				enum_name(&state_names, st->st_state));
+				st->st_state_name);
 		});
         }
         return st;
@@ -1888,7 +1888,7 @@ void ikev2_update_msgid_counters(struct msg_digest *md)
 
 	DBG(DBG_CONTROLMORE,
 		DBG_log("message ID #%lu %s %s pst #%lu st_msgid_nextuse(before=%u) %u st_msgid_lastack %u st_msgid_lastrecv %u md is a %s",
-			st->st_serialno, enum_name(&state_names, st->st_state),
+			st->st_serialno, st->st_state_name,
 			st->st_connection->name, ikesa->st_serialno,
 			st_msgid_nextuse,
 			ikesa->st_msgid_nextuse, ikesa->st_msgid_lastack,
@@ -2081,7 +2081,7 @@ static void success_v2_state_transition(struct msg_digest *md)
 		/* tell whack and logs our progress - unless OE, then be quiet*/
 		if (c == NULL || (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY)
 			loglog(w, "%s: %s%s",
-				enum_name(&state_names, st->st_state),
+				st->st_state_name,
 				enum_name(&state_stories, st->st_state),
 				sadetails);
 	}
@@ -2222,7 +2222,7 @@ static void log_stf_suspend(struct state *st, stf_status result)
 
 	DBG(DBG_CONTROL, DBG_log("\"%s\"%s #%lu complete v2 state %s transition with %s suspended from %s:%d",
 				st->st_connection->name, b, st->st_serialno,
-				enum_name(&state_names, st->st_state),
+				st->st_state_name,
 				enum_show(&stfstatus_name, result),
 				st->st_suspended_md_func,
 				st->st_suspended_md_line

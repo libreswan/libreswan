@@ -1445,7 +1445,7 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *ke,
 	start_retransmits(st, EVENT_v1_RETRANSMIT);
 
 	whack_log(RC_NEW_STATE + STATE_AGGR_I1,
-		  "%s: initiate", enum_name(&state_names, st->st_state));
+		  "%s: initiate", st->st_state_name);
 	cur_state = NULL;
 	return STF_IGNORE;
 }

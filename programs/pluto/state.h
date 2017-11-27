@@ -482,6 +482,7 @@ struct state {
 	struct pubkey *st_peer_pubkey;
 
 #define st_state st_finite_state->fs_state
+#define st_state_name st_finite_state->fs_name
 	const struct finite_state *st_finite_state;	/* Current FSM state */
 
 	retransmit_t st_retransmit;	/* retransmit counters; opaque */

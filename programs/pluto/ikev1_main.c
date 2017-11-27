@@ -300,12 +300,12 @@ stf_status main_outI1(int whack_sock,
 		update_pending(predecessor, st);
 		whack_log(RC_NEW_STATE + STATE_MAIN_I1,
 			"%s: initiate, replacing #%lu",
-			enum_name(&state_names, st->st_state),
+			st->st_state_name,
 			predecessor->st_serialno);
 	} else {
 		whack_log(RC_NEW_STATE + STATE_MAIN_I1,
 			"%s: initiate",
-			enum_name(&state_names, st->st_state));
+			st->st_state_name);
 	}
 	reset_cur_state();
 	return STF_OK;

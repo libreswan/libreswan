@@ -762,14 +762,14 @@ stf_status ikev2parent_outI1(int whack_sock,
 		update_pending(predecessor, st);
 		whack_log(RC_NEW_STATE + STATE_PARENT_I1,
 			  "%s: initiate, replacing #%lu",
-			  enum_name(&state_names, st->st_state),
+			  st->st_state_name,
 			  predecessor->st_serialno);
 	} else {
 		if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 			libreswan_log("initiating v2 parent SA");
 		}
 		whack_log(RC_NEW_STATE + STATE_PARENT_I1, "%s: initiate",
-			  enum_name(&state_names, st->st_state));
+			  st->st_state_name);
 	}
 
 	if (IS_LIBUNBOUND && id_ipseckey_allowed(st, IKEv2_AUTH_RESERVED)) {
@@ -1880,7 +1880,7 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 			 */
 			if (DBGP(DBG_OPPO) || (st->st_connection->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 				libreswan_log("%s: received unauthenticated %s - ignored",
-					enum_name(&state_names, st->st_state),
+					st->st_state_name,
 					enum_name(&ikev2_notify_names,
 						ntfy->payload.v2n.isan_type));
 			}
@@ -1938,7 +1938,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		case v2N_USE_TRANSPORT_MODE:
 		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
 			DBG(DBG_CONTROL, DBG_log("%s: received %s which is not valid for IKE_INIT - ignoring it",
-				enum_name(&state_names, st->st_state),
+				st->st_state_name,
 				enum_name(&ikev2_notify_names,
 					ntfy->payload.v2n.isan_type)));
 			break;
@@ -1961,7 +1961,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 			break;
 		default:
 			DBG(DBG_CONTROL, DBG_log("%s: received %s but ignoring it",
-				enum_name(&state_names, st->st_state),
+				st->st_state_name,
 				enum_name(&ikev2_notify_names,
 					ntfy->payload.v2n.isan_type)));
 		}
