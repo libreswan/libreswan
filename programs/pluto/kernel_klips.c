@@ -321,6 +321,7 @@ static bool klips_do_command(const struct connection *c, const struct spd_route 
 const struct kernel_ops klips_kernel_ops = {
 	.type = USE_KLIPS,
 	.async_fdp = &pfkeyfd,
+	.route_fdp = NULL,
 	.replay_window = 64,
 
 	.pfkey_register = klips_pfkey_register,

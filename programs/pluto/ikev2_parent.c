@@ -6293,3 +6293,99 @@ bool need_this_intiator(struct state *st)
 	}
 	return FALSE;
 }
+
+void ikev2_record_newaddr(struct state *st, void *arg_ip)
+{
+	ip_address *ip = arg_ip;
+
+	if (!mobike_check_established(st))
+		return;
+
+	if (sameaddr(ip, &st->st_localaddr))
+		return; /* same as old ignore this change */
+
+	if (!isanyaddr(&st->st_deleted_local_addr)) {
+		/*
+		 * A work around for delay between new address and new route
+		 * A better fix would be listen to  RTM_NEWROUTE, RTM_DELROUTE
+		 */
+		if (st->st_addr_change_event == NULL) {
+			event_schedule_s(EVENT_v2_ADDR_CHANGE,
+					 RTM_NEWADDR_ROUTE_DELAY, st);
+		} else {
+			ipstr_buf b;
+			DBG(DBG_CONTROL, DBG_log("#%lu MOBIKE ignore address %s change pending previous",
+						st->st_serialno,
+						sensitive_ipstr(ip, &b)));
+		}
+	}
+}
+
+void ikev2_record_deladdr(struct state *st, void *arg_ip)
+{
+	ip_address *ip = arg_ip;
+
+	if (!mobike_check_established(st))
+		return;
+
+	if (sameaddr(ip, &st->st_localaddr)) {
+		ip_address ip_p = st->st_deleted_local_addr;
+		st->st_deleted_local_addr = st->st_localaddr;
+		if (st->st_addr_change_event == NULL) {
+			event_schedule_s(EVENT_v2_ADDR_CHANGE, 0, st);
+		} else {
+			ipstr_buf o, n;
+			DBG(DBG_CONTROL, DBG_log("#%lu MOBIKE new RTM_DELADDR %s pending previous %s",
+						st->st_serialno,
+						sensitive_ipstr(ip, &n),
+						sensitive_ipstr(&ip_p, &o)));
+		}
+	}
+}
+
+void ikev2_addr_del(struct state *st)
+{
+	struct starter_end this;
+	struct starter_end that;
+
+	zero(&this);
+	zero(&that);
+
+	/* lets re-discover local address */
+	this.addrtype = KH_DEFAULTROUTE;
+	this.nexttype = KH_DEFAULTROUTE;
+	this.addr_family = st->st_remoteaddr.u.v4.sin_family;
+
+	that.addrtype = KH_IPADDR;
+	that.addr_family = st->st_remoteaddr.u.v4.sin_family;
+	that.addr = st->st_remoteaddr;
+
+	/*
+	 * mobike need two lookups. one for the gateway and
+	 * the one for the source address
+	 */
+	if (resolve_defaultroute_one(&this, &that, 3) == 1) {
+		if (resolve_defaultroute_one(&this, &that, 3) == 0) {
+			/* success */
+			ipstr_buf s, g, b;
+			 DBG(DBG_CONTROL, DBG_log("#%lu MOBIKE new source address %s remote %s and gateway %s",
+			st->st_serialno, ipstr(&this.addr, &s),
+			sensitive_ipstr(&that.addr, &b),
+			ipstr(&this.nexthop, &g)));
+			st->st_mobike_localaddr = this.addr;
+			st->st_mobike_localport = st->st_localport;
+
+		} else {
+			ipstr_buf g, b;
+			libreswan_log("no local source address for remote %s, local gateway %s",
+					sensitive_ipstr(&that.addr, &b),
+					ipstr(&this.nexthop, &g));
+		}
+	} else {
+		ipstr_buf b;
+		/* keep this DEBUG, if a libreswan log, too many false +ve */
+		DBG(DBG_CONTROL, DBG_log("#%lu could not find local gatway to remote %s",
+					st->st_serialno,
+					sensitive_ipstr(&that.addr, &b)));
+	}
+}

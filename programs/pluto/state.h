@@ -352,6 +352,9 @@ struct state {
 	ip_address st_mobike_remoteaddr;
 	u_int16_t st_mobike_remoteport;
 	const struct iface_port *st_mobike_interface;
+	ip_address st_deleted_local_addr;	/* kernel deleted address */
+	ip_address st_mobike_localaddr;		/* new address to initiate MOBIKE */
+	u_int16_t st_mobike_localport;		/* is this necessary ? */
 
 	/** IKEv1-only things **/
 
@@ -564,6 +567,8 @@ struct state {
 	struct pluto_event *st_liveness_event;
 	struct pluto_event *st_rel_whack_event;
 	struct pluto_event *st_send_xauth_event;
+	struct pluto_event *st_addr_change_event;
+
 
 	/* RFC 3706 Dead Peer Detection */
 	monotime_t st_last_dpd;			/* Time of last DPD transmit (0 means never?) */
@@ -712,5 +717,7 @@ extern void update_mobike_endpoints(struct state *st, const struct msg_digest *m
 extern void ikev2_expire_unused_parent(struct state *pst);
 
 bool shared_phase1_connection(const struct connection *c);
+
+extern void record_addr_del(ip_address *ip);
 
 #endif /* _STATE_H */

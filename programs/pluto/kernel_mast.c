@@ -600,6 +600,7 @@ static bool mast_sag_eroute(const struct state *st, const struct spd_route *sr,
 const struct kernel_ops mast_kernel_ops = {
 	.type = USE_MASTKLIPS,
 	.async_fdp = &pfkeyfd,
+	.route_fdp = NULL,
 	.replay_window = 64,
 
 	.pfkey_register = klips_pfkey_register,

@@ -175,12 +175,13 @@ struct kernel_ops {
 	bool sha2_truncbug_support;
 	int replay_window;
 	int *async_fdp;
+	int *route_fdp;
 
 	void (*init)(void);
 	void (*pfkey_register)(void);
 	void (*pfkey_register_response)(const struct sadb_msg *msg);
 	void (*process_queue)(void);
-	void (*process_msg)(void);
+	void (*process_msg)(int);
 	void (*set_debug)(int,
 			  libreswan_keying_debug_func_t debug_func,
 			  libreswan_keying_debug_func_t error_func);

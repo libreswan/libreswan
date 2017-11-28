@@ -2538,13 +2538,13 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 
 static event_callback_routine kernel_process_msg_cb;
 
-static void kernel_process_msg_cb(evutil_socket_t fd UNUSED,
+static void kernel_process_msg_cb(evutil_socket_t fd,
 		const short event UNUSED, void *arg)
 {
 	const struct kernel_ops *kernel_ops = arg;
 
 	DBG(DBG_KERNEL, DBG_log(" %s process netlink message", __func__));
-	kernel_ops->process_msg();
+	kernel_ops->process_msg(fd);
 	passert(globals_are_reset());
 }
 
@@ -2671,7 +2671,14 @@ void init_kernel(void)
 	/* Note: kernel_ops is const but pluto_event_add cannot know that */
 	pluto_event_add(*kernel_ops->async_fdp, EV_READ | EV_PERSIST,
 			kernel_process_msg_cb, (void *)kernel_ops, NULL,
-			"KERNEL_FD");
+			"KERNEL_XRM_FD");
+
+	if (kernel_ops->route_fdp != NULL &&
+			*kernel_ops->route_fdp  > NULL_FD) {
+		pluto_event_add(*kernel_ops->route_fdp, EV_READ | EV_PERSIST,
+				kernel_process_msg_cb, (void *)kernel_ops, NULL,
+				"KERNEL_ROUTE_FD");
+	}
 
 	if (kernel_ops->process_queue != NULL) {
 		/*

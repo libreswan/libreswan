@@ -339,3 +339,6 @@ extern bool is_msg_request(const struct msg_digest *md);
 extern bool need_this_intiator(struct state *st);
 
 extern void init_ikev2(void);
+
+extern void ikev2_record_addr_del(struct state *st, void *arg_ip);
+extern void ikev2_addr_del(struct state *st);

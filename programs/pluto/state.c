@@ -992,6 +992,7 @@ void delete_state(struct state *st)
 
 	delete_state_event(st, &st->st_rel_whack_event);
 	delete_state_event(st, &st->st_send_xauth_event);
+	delete_state_event(st, &st->st_addr_change_event);
 
 
 	/* if there is a suspended state transition, disconnect us */
@@ -2722,4 +2723,9 @@ void set_newest_ipsec_sa(const char *m, struct state *const st)
 	st->st_connection->newest_ipsec_sa = st->st_serialno;
 	log_newest_sa_change(m, old_ipsec_sa, st);
 
+}
+
+void record_addr_del(ip_address *ip)
+{
+        for_each_state(ikev2_record_addr_del, ip);
 }

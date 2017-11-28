@@ -141,6 +141,7 @@ static const char *const timer_event_name[] = {
 	"EVENT_v2_RELEASE_WHACK",
 	"EVENT_v2_INITIATE_CHILD",
 	"EVENT_v2_SEND_NEXT_IKE",
+	"EVENT_v2_ADDR_CHANGE",
 	"EVENT_RETAIN",
 };
 
