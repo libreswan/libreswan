@@ -98,14 +98,8 @@ stf_status build_ke_and_nonce(struct state *st,
 			      enum crypto_importance importance)
 {
 	struct pluto_crypto_req rd;
-
-	/*
-	 * tricky assertion uses indirection for speed:
-	 * The only way to get the state from the cn is to look up
-	 * cn->pcrc_serialno but that is a bit expensive.
-	 * We exploit the fact(?) that cur_state is right (we hope and check).
-	 */
-	passert(cur_state->st_serialno == cn->pcrc_serialno && !cur_state->st_sec_in_use);
+	passert(st->st_serialno == cn->pcrc_serialno);
+	passert(!st->st_sec_in_use);
 	pcr_nonce_init(&rd, pcr_build_ke_and_nonce, importance);
 	rd.pcr_d.kn.group = group;
 
