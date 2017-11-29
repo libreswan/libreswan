@@ -1203,7 +1203,15 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
 
 			/* call comparison function */
 			if ((*comparefunc)(this, c)) {
+				/*
+				 * XXX: this simingly redundant
+				 * push/pop has the side effect
+				 * suppressing the message 'deleting
+				 * other state'.
+				 */
+				so_serial_t old_serialno = push_cur_state(this);
 				delete_state(this);
+				pop_cur_state(old_serialno);
 			}
 		});
 	}
