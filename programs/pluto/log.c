@@ -203,7 +203,7 @@ struct connection *log_push_connection(struct connection *c, const char *func,
 			lswlogf(buf, "trying to processing NULL connection");
 			lswlog_source_line(buf, func, file, line);
 		}
-	} if (cur_connection == old_connection) {
+	} else if (cur_connection == old_connection) {
 		log_processing(STILL, current,
 			       NULL, cur_connection,
 			       func, file, line);
