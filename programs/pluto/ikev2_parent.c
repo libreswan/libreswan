@@ -458,24 +458,24 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		st->st_msgid = 0;
 		/* fall through */
 	case STATE_V2_REKEY_IKE_R:
-		e = build_ke_and_nonce(ke, st->st_oakley.ta_dh, ci);
+		e = build_ke_and_nonce(st, ke, st->st_oakley.ta_dh, ci);
 		break;
 
 	case STATE_V2_CREATE_R:
 	case STATE_V2_REKEY_CHILD_R:
 		if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
-			e = build_ke_and_nonce(ke, st->st_oakley.ta_dh, ci);
+			e = build_ke_and_nonce(st, ke, st->st_oakley.ta_dh, ci);
 		} else {
-			e = build_nonce(ke, ci);
+			e = build_nonce(st, ke, ci);
 		}
 		break;
 
 	case STATE_V2_REKEY_CHILD_I0:
 	case STATE_V2_CREATE_I0:
 		if (st->st_pfs_group == NULL) {
-			e = build_nonce(ke, ci);
+			e = build_nonce(st, ke, ci);
 		} else {
-			e = build_ke_and_nonce(ke, st->st_pfs_group, ci);
+			e = build_ke_and_nonce(st, ke, st->st_pfs_group, ci);
 		}
 		break;
 
@@ -1446,8 +1446,8 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			st, md);
 		stf_status e;
 
-		e = build_ke_and_nonce(ke, st->st_oakley.ta_dh,
-			pcim_stranger_crypto);
+		e = build_ke_and_nonce(st, ke, st->st_oakley.ta_dh,
+				       pcim_stranger_crypto);
 
 		reset_globals();
 

@@ -506,26 +506,30 @@ static bool crypto_write_request(struct pluto_crypto_worker *w,
  * the same as in the response.
  */
 
-stf_status send_crypto_helper_request(struct pluto_crypto_req *r,
-				 struct pluto_crypto_req_cont *cn)
+stf_status send_crypto_helper_request(struct state *st,
+				      struct pluto_crypto_req *r,
+				      struct pluto_crypto_req_cont *cn)
 {
 	static int pc_worker_num = 0;	/* index of last worker assigned work */
 	struct pluto_crypto_worker *w;	/* best worker for task */
 	struct pluto_crypto_worker *c;	/* candidate worker */
-	struct state *st = cur_state;	/* TRANSITIONAL */
 
 	/*
 	 * transitional: caller must have set pcrc_serialno.
 	 * It ought to match cur_state->st_serialno.
 	 */
 	passert(cn->pcrc_serialno == st->st_serialno);
-
 	passert(st->st_serialno != SOS_NOBODY);
-	cn->pcrc_serialno = st->st_serialno;
 
 	passert(cn->pcrc_func != NULL);
 
-	/* do it all ourselves? */
+	/*
+	 * do it all ourselves?
+	 *
+	 * XXX: Instead of inline, this should add the work to the
+	 * main event-loop.  That way the work-done code becomes
+	 * identical and the special STF_INLINE can be deleted.
+	 */
 	if (pc_workers == NULL) {
 		reset_cur_state();
 

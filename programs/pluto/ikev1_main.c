@@ -955,8 +955,8 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 			st, md);
 
 		passert(!st->st_sec_in_use);
-		return build_ke_and_nonce(ke, st->st_oakley.ta_dh,
-				st->st_import);
+		return build_ke_and_nonce(st, ke, st->st_oakley.ta_dh,
+					  st->st_import);
 	}
 }
 
@@ -1154,8 +1154,9 @@ stf_status main_inI2_outR2(struct msg_digest *md)
 			st, md);
 
 		passert(!st->st_sec_in_use);
-		return build_ke_and_nonce(ke,
-			st->st_oakley.ta_dh, st->st_import);
+		return build_ke_and_nonce(st, ke,
+					  st->st_oakley.ta_dh,
+					  st->st_import);
 	}
 }
 

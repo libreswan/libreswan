@@ -342,8 +342,9 @@ extern struct pluto_crypto_req_cont *new_pcrc_repl(
 
 extern void init_crypto_helpers(int nhelpers);
 
-extern stf_status send_crypto_helper_request(struct pluto_crypto_req *r,
-					struct pluto_crypto_req_cont *cn);
+extern stf_status send_crypto_helper_request(struct state *st,
+					     struct pluto_crypto_req *r,
+					     struct pluto_crypto_req_cont *cn);
 
 extern void enumerate_crypto_helper_response_sockets(lsw_fd_set *readfds);
 
@@ -356,13 +357,15 @@ extern stf_status build_child_dh_v2(struct pluto_crypto_req_cont *cn,
 		const struct oakley_group_desc *group,
 		enum crypto_importance importance);
 
-extern stf_status build_ke_and_nonce(struct pluto_crypto_req_cont *cn,
-			   const struct oakley_group_desc *group,
-			   enum crypto_importance importance);
+extern stf_status build_ke_and_nonce(struct state *st,
+				     struct pluto_crypto_req_cont *cn,
+				     const struct oakley_group_desc *group,
+				     enum crypto_importance importance);
 
 extern void calc_ke(struct pluto_crypto_req *r);
 
-extern stf_status build_nonce(struct pluto_crypto_req_cont *cn,
+extern stf_status build_nonce(struct state *st,
+			      struct pluto_crypto_req_cont *cn,
 			      enum crypto_importance importance);
 
 extern void calc_nonce(struct pluto_crypto_req *r);

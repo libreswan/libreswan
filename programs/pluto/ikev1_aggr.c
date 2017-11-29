@@ -366,8 +366,8 @@ stf_status aggr_inI1_outR1(struct msg_digest *md)
 			"outI2 KE",
 			st, md);
 
-		return build_ke_and_nonce(ke, st->st_oakley.ta_dh,
-				st->st_import);
+		return build_ke_and_nonce(st, ke, st->st_oakley.ta_dh,
+					  st->st_import);
 	}
 }
 
@@ -1255,7 +1255,7 @@ stf_status aggr_outI1(int whack_sock,
 
 		ke = new_pcrc(aggr_outI1_continue, "aggr_outI1 KE + nonce",
 			st, fake_md);
-		e = build_ke_and_nonce(ke, st->st_oakley.ta_dh, importance);
+		e = build_ke_and_nonce(st, ke, st->st_oakley.ta_dh, importance);
 
 		/*
 		 * ??? what exactly do we expect for e?

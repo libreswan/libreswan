@@ -871,10 +871,10 @@ stf_status quick_outI1(int whack_sock,
 		stf_status e;
 
 		if (policy & POLICY_PFS) {
-			e = build_ke_and_nonce(qke, st->st_pfs_group,
-				     st->st_import);
+			e = build_ke_and_nonce(st, qke, st->st_pfs_group,
+					       st->st_import);
 		} else {
-			e = build_nonce(qke, st->st_import);
+			e = build_nonce(st, qke, st->st_import);
 		}
 
 		reset_globals();
@@ -1507,10 +1507,10 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b)
 				ci = st->st_import;
 
 			if (st->st_pfs_group != NULL) {
-				e = build_ke_and_nonce(qke,
-					st->st_pfs_group, ci);
+				e = build_ke_and_nonce(st, qke,
+						       st->st_pfs_group, ci);
 			} else {
-				e = build_nonce(qke, ci);
+				e = build_nonce(st, qke, ci);
 			}
 
 			passert(st->st_connection != NULL);

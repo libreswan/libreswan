@@ -109,7 +109,7 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *dh,
 	       st->st_rcookie, COOKIE_SIZE);
 
 	passert(dhq->oakley_group != OAKLEY_GROUP_invalid);
-	return send_crypto_helper_request(&r, dh);
+	return send_crypto_helper_request(st, &r, dh);
 }
 
 bool finish_dh_secretiv(struct state *st,
@@ -183,7 +183,7 @@ stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 	memcpy(WIRE_CHUNK_PTR(*dhq, rcookie),
 	       st->st_rcookie, COOKIE_SIZE);
 
-	return send_crypto_helper_request(&r, cn);
+	return send_crypto_helper_request(st, &r, cn);
 }
 
 void finish_dh_secret(struct state *st,
@@ -261,7 +261,7 @@ stf_status start_dh_v2(struct msg_digest *md,
 	passert(dhq->oakley_group != OAKLEY_GROUP_invalid);
 
 	{
-		stf_status e = send_crypto_helper_request(&r, dh);
+		stf_status e = send_crypto_helper_request(st, &r, dh);
 
 		reset_globals(); /* XXX suspicious - why was this deemed necessary? */
 
