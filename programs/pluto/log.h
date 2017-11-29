@@ -63,22 +63,12 @@ extern void log_state(struct state *st, enum state_kind state);
 extern void extra_debugging(const struct connection *c);
 
 extern void set_debugging(lset_t deb);
+extern void reset_debugging(void);
+
 extern lset_t base_debugging;	/* bits selecting what to report */
 
-#define reset_debugging() { set_debugging(base_debugging); }
-
-#define GLOBALS_ARE_RESET() (whack_log_fd == NULL_FD \
-			      && cur_state == NULL \
-			      && cur_connection == NULL \
-			      && cur_from == NULL \
-			      && cur_debugging == base_debugging)
-
-#define reset_globals() { \
-		whack_log_fd = NULL_FD; \
-		cur_state = NULL; \
-		cur_from = NULL; \
-		reset_cur_connection(); \
-}
+extern void reset_globals(void);
+extern bool globals_are_reset(void);
 
 #define set_cur_connection(c) { \
 		cur_connection = (c); \

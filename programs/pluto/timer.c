@@ -550,7 +550,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	    DBG_log("handling event %s%s",
 		    enum_show(&timer_event_names, type), statenum));
 
-	passert(GLOBALS_ARE_RESET());
+	passert(globals_are_reset());
 
 	if (st != NULL)
 		set_cur_state(st);

@@ -1137,7 +1137,7 @@ static void aggr_outI1_continue(struct pluto_crypto_req_cont *ke,
 	release_any_md(&ke->pcrc_md);
 	reset_globals();
 
-	passert(GLOBALS_ARE_RESET());
+	passert(globals_are_reset());
 }
 
 /* No initial state for aggr_outI1:

@@ -70,6 +70,28 @@ struct connection *cur_connection = NULL;       /* current connection, for diagn
 const ip_address *cur_from = NULL;              /* source of current current message */
 u_int16_t cur_from_port;                        /* host order */
 
+void reset_globals(void)
+{
+	whack_log_fd = NULL_FD;
+	cur_state = NULL;
+	cur_from = NULL;
+	reset_cur_connection();
+}
+
+
+bool globals_are_reset(void)
+{
+	return  (whack_log_fd == NULL_FD
+		 && cur_state == NULL
+		 && cur_connection == NULL
+		 && cur_from == NULL
+		 && cur_debugging == base_debugging);
+}
+
+/*
+ * Initialization.
+ */
+
 void pluto_init_log(void)
 {
 	set_alloc_exit_log_func(exit_log);
@@ -441,4 +463,9 @@ void set_debugging(lset_t deb)
 	if (kernel_ops != NULL && kernel_ops->set_debug != NULL)
 		(*kernel_ops->set_debug)(cur_debugging, DBG_log,
 					 libreswan_log);
+}
+
+void reset_debugging(void)
+{
+	set_debugging(base_debugging);
 }
