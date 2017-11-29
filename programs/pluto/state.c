@@ -1208,19 +1208,7 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
 
 			/* call comparison function */
 			if ((*comparefunc)(this, c)) {
-				struct state *old_cur_state =
-					cur_state == this ?
-					  NULL : cur_state;
-				lset_t old_cur_debugging =
-					cur_debugging;
-
-				set_cur_state(this);
-
 				delete_state(this);
-				/* note: no md->st to clear */
-
-				cur_state = old_cur_state;
-				set_debugging(old_cur_debugging);
 			}
 		});
 	}
