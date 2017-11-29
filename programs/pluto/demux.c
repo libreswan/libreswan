@@ -248,7 +248,7 @@ static void process_dup(struct msg_digest *orig)
 	process_packet(&md);
 	/* copy of comm_handle() tail */
 	release_any_md(&md);
-	cur_state = NULL;
+	reset_cur_state();
 	reset_cur_connection();
 	cur_from = NULL;
 	passert(globals_are_reset());
@@ -373,7 +373,7 @@ static void comm_handle(const struct iface_port *ifp)
 
 	release_any_md(&md);
 
-	cur_state = NULL;
+	reset_cur_state();
 	reset_cur_connection();
 	cur_from = NULL;
 	passert(globals_are_reset());

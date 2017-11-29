@@ -2301,7 +2301,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 	from_state_name = enum_name(&state_names,
 		st == NULL ? STATE_UNDEFINED : st->st_state);
 
-	cur_state = st; /* might have changed */
+	set_cur_state(st); /* might have changed */
 
 	/*
 	 * XXX/SML:  There is no need to abort here in all cases where st is

@@ -268,7 +268,8 @@ stf_status aggr_inI1_outR1(struct msg_digest *md)
 	/* Set up state */
 	struct state *st = new_rstate(md);
 
-	cur_state = md->st = st;  /* (caller will reset cur_state) */
+	md->st = st;  /* (caller will reset cur_state) */
+	set_cur_state(st);
 	st->st_connection = c;	/* safe: from new_state */
 	change_state(st, STATE_AGGR_R1);
 
@@ -1301,7 +1302,7 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *ke,
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
 				&md->rbody)) {
-			cur_state = NULL;
+			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -1313,7 +1314,7 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *ke,
 		if (!ikev1_out_sa(&md->rbody,
 				  IKEv1_oakley_am_sadb(st->st_policy, c),
 				  st, TRUE, TRUE, ISAKMP_NEXT_KE)) {
-			cur_state = NULL;
+			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
 
@@ -1449,6 +1450,6 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *ke,
 
 	whack_log(RC_NEW_STATE + STATE_AGGR_I1,
 		  "%s: initiate", st->st_state_name);
-	cur_state = NULL;
+	reset_cur_state();
 	return STF_IGNORE;
 }
