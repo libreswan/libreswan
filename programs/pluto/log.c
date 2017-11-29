@@ -186,7 +186,7 @@ static void log_processing(enum processing processing, bool current,
 	}
 }
 
-struct connection *push_log_connection(struct connection *c, const char *func,
+struct connection *log_push_connection(struct connection *c, const char *func,
 				       const char *file, long line)
 {
 	bool current = (cur_state != NULL); /* not hidden? */
@@ -220,7 +220,7 @@ struct connection *push_log_connection(struct connection *c, const char *func,
 	return old_connection;
 }
 
-void pop_log_connection(struct connection *c, const char *func,
+void log_pop_connection(struct connection *c, const char *func,
 			const char *file, long line)
 {
 	if (cur_connection != NULL) {
@@ -242,7 +242,7 @@ void pop_log_connection(struct connection *c, const char *func,
 	}
 }
 
-struct state *push_log_state(struct state *st, const char *func,
+struct state *log_push_state(struct state *st, const char *func,
 			     const char *file, long line)
 {
 	if (cur_state != NULL) {
@@ -274,7 +274,7 @@ struct state *push_log_state(struct state *st, const char *func,
 	return old_state;
 }
 
-void pop_log_state(struct state *st, const char *func,
+void log_pop_state(struct state *st, const char *func,
 		   const char *file, long line)
 {
 	if (cur_state != NULL) {
