@@ -428,6 +428,7 @@ bool same_id(const struct id *a, const struct id *b)
 		size_t al = a->name.len,
 			bl = b->name.len;
 
+		/* strip trailing dots */
 		while (al > 0 && a->name.ptr[al - 1] == '.')
 			al--;
 		while (bl > 0 && b->name.ptr[bl - 1] == '.')
@@ -436,7 +437,6 @@ bool same_id(const struct id *a, const struct id *b)
 			strncaseeq((char *)a->name.ptr,
 				(char *)b->name.ptr, al);
 	}
-
 	case ID_FROMCERT:
 		DBG(DBG_CONTROL,
 			DBG_log("same_id() received ID_FROMCERT - unexpected"));

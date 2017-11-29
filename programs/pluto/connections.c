@@ -78,6 +78,7 @@
 #include "addresspool.h"
 #include "nat_traversal.h"
 #include "pluto_x509.h"
+#include "nss_cert_verify.h" /* for cert_VerifySubjectAltName() */
 #include "nss_cert_load.h"
 #include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
@@ -2981,6 +2982,7 @@ static chunk_t get_peer_ca(const struct id *peer_id)
  */
 struct connection *refine_host_connection(const struct state *st,
 					const struct id *peer_id,
+					const struct id *tarzan_id,
 					bool initiator,
 					lset_t auth_policy /* used by ikev1 */,
 					enum keyword_authby this_authby /* used by ikev2 */,
@@ -3039,8 +3041,18 @@ struct connection *refine_host_connection(const struct state *st,
 					c->name,fmt_conn_instance(c, cib));
 			});
 
-			/* peer ID matches current connection -- look no further */
-			return c;
+			/* peer ID matches current connection -- check for "you Tarzan, me Jane" */
+			if (!initiator && tarzan_id != NULL) {
+				if (idr_wildmatch(c, tarzan_id)) {
+					DBG(DBG_CONTROLMORE, DBG_log("The remote specified our ID in its IDr payload"));
+					return c;
+				} else {
+					DBG(DBG_CONTROLMORE, DBG_log("The remote specified an IDr that is not our ID for this connection"));
+				}
+			} else {
+				DBG(DBG_CONTROLMORE, DBG_log("The remote did not specify an IDr and our current connection is good enough"));
+				return c;
+			}
 		}
 	}
 
@@ -3141,13 +3153,43 @@ struct connection *refine_host_connection(const struct state *st,
 					matching_peer_id && matching_peer_ca && matching_requested_ca,
 					matching_peer_id, matching_peer_ca, matching_requested_ca);});
 
-			/* ignore group connections */
-			if (d->policy & POLICY_GROUP)
+			/* Ignore template from which we instantiated - this should never happen */
+			if (c->kind == CK_INSTANCE && d->kind == CK_TEMPLATE && streq(c->name, d->name)) {
+				libreswan_log("Warning: not switching back to template of current instance (FIXME)");
 				continue;
+			}
+
+			/* 'You Tarzan, me Jane' check based on received IDr */
+			if (!initiator && tarzan_id != NULL) {
+				char tarzan_str[IDTOA_BUF];
+				char us_str[IDTOA_BUF];
+
+				idtoa(tarzan_id, tarzan_str, sizeof(tarzan_str));
+				idtoa(&d->spd.this.id, us_str, sizeof(us_str));
+				DBG(DBG_CONTROL, DBG_log("Peer expects us to be %s (%s) according to its IDr payload",
+					tarzan_str, enum_show(&ike_idtype_names, tarzan_id->kind)));
+				DBG(DBG_CONTROL, DBG_log("This connection's local id is %s (%s)",
+					us_str, enum_show(&ike_idtype_names,d->spd.this.id.kind)));
+				if (!idr_wildmatch(d, tarzan_id)) {
+					DBG(DBG_CONTROL, DBG_log("Peer IDr payload does not match our expected ID, this connection will not do"));
+					continue;
+				}
+			} else {
+				DBG(DBG_CONTROL, DBG_log("No IDr payload received from peer"));
+			}
+
+
+			/* ignore group connections */
+			if (d->policy & POLICY_GROUP) {
+				DBG(DBG_CONTROL, DBG_log("skipping group connection"));
+				continue;
+			}
 
 			/* matching_peer_ca and matching_requested_ca are required */
-			if (!matching_peer_ca || !matching_requested_ca)
+			if (!matching_peer_ca || !matching_requested_ca) {
+				DBG(DBG_CONTROL, DBG_log("skipping !match2 || !match3"));
 				continue;
+			}
 			/*
 			 * Check if peer_id matches, exactly or after
 			 * instantiation.
@@ -3157,17 +3199,22 @@ struct connection *refine_host_connection(const struct state *st,
 			bool d_fromcert = FALSE;
 			if (!matching_peer_id) {
 				d_fromcert = d->spd.that.id.kind == ID_FROMCERT;
-				if (!d_fromcert)
+				if (!d_fromcert) {
+					DBG(DBG_CONTROL, DBG_log("skipping because peer_id does not match"));
 					continue;
+				}
 			}
 
 			/* if initiator, our ID must match exactly */
 			if (initiator &&
-			    !same_id(&c->spd.this.id, &d->spd.this.id))
-				continue;
+				!same_id(&c->spd.this.id, &d->spd.this.id)) {
+					DBG(DBG_CONTROL, DBG_log("skipping because initiator id does not match"));
+					continue;
+			}
 
 			if ((d->policy & (st->st_ikev2 ? POLICY_IKEV2_ALLOW : POLICY_IKEV1_ALLOW)) == LEMPTY) {
 				/* IKE version has to match */
+				DBG(DBG_CONTROL, DBG_log("skipping because mismatching IKE version"));
 				continue;
 			}
 
@@ -3181,6 +3228,7 @@ struct connection *refine_host_connection(const struct state *st,
 
 				if ((d->policy & auth_policy & ~POLICY_AGGRESSIVE) == LEMPTY) {
 					/* Our auth isn't OK for this connection. */
+					DBG(DBG_CONTROL, DBG_log("skipping because AUTH isnt right"));
 					continue;
 				}
 			} else {
@@ -3192,20 +3240,26 @@ struct connection *refine_host_connection(const struct state *st,
 				 * This also means, we have already sent out AUTH payload, so we cannot
 				 * switch away from previously used this.authby.
 				 */
-				passert(initiator == FALSE);
-				if (this_authby != d->spd.that.authby)
+				pexpect(initiator == FALSE);
+				if (this_authby != d->spd.that.authby) {
+					DBG(DBG_CONTROL, DBG_log("skipping because mismatched authby"));
 					continue;
-				if (c->spd.this.authby != d->spd.this.authby)
+				}
+				if (c->spd.this.authby != d->spd.this.authby) {
+					DBG(DBG_CONTROL, DBG_log("skipping because mismatched this authby"));
 					continue;
+				}
 			}
 
 			if (d->spd.this.xauth_server != c->spd.this.xauth_server) {
 				/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
+				DBG(DBG_CONTROL, DBG_log("skipping because mismatched xauthserver"));
 				continue;
 			}
 
 			if (d->spd.this.xauth_client != c->spd.this.xauth_client) {
 				/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
+				DBG(DBG_CONTROL, DBG_log("skipping because mismatched xauthclient"));
 				continue;
 			}
 
@@ -3255,6 +3309,7 @@ struct connection *refine_host_connection(const struct state *st,
 
 				if (initiator &&
 				    !same_RSA_public_key(&my_RSA_pri->pub, &pri->pub)) {
+					DBG(DBG_CONTROL, DBG_log("skipping because mismatched pubkey"));
 					continue;	/* different key */
 				}
 			}
@@ -3272,6 +3327,7 @@ struct connection *refine_host_connection(const struct state *st,
 			    peer_pathlen == 0 && our_pathlen == 0)
 			{
 				*fromcert = d_fromcert;
+				DBG(DBG_CONTROL, DBG_log("returning because exact peer id match"));
 				return d;
 			}
 
@@ -3304,6 +3360,7 @@ struct connection *refine_host_connection(const struct state *st,
 
 		if (wcpip) {
 			/* been around twice already */
+			DBG(DBG_CONTROL, DBG_log("returning since no better match then original best_found"));
 			return best_found;
 		}
 
@@ -3314,6 +3371,7 @@ struct connection *refine_host_connection(const struct state *st,
 		 * Look on list of connections for host pair with wildcard
 		 * Peer IP.
 		 */
+		DBG(DBG_CONTROL, DBG_log("refine going into 2nd loop allowing instantiated conns as well"));
 		d = find_host_pair_connections(&c->spd.this.host_addr,
 					c->spd.this.host_port,
 					(ip_address *)NULL,
@@ -4441,4 +4499,40 @@ void liveness_action(struct connection *c, const bool ikev2)
 	default:
 		bad_case(c->dpd_action);
 	}
+}
+
+
+bool idr_wildmatch(const struct connection *c, const struct id *idr)
+{
+	const struct id *wild = &c->spd.this.id;
+
+	/* check if received IDr is a valid SAN of our cert */
+	if (c->spd.this.cert.ty != CERT_NONE && (idr->kind == ID_FQDN || idr->kind == ID_DER_ASN1_DN)) {
+		char idrbuf[IDTOA_BUF];
+
+		idtoa(idr, idrbuf, sizeof(idrbuf));
+		if (cert_VerifySubjectAltName(c->spd.this.cert.u.nss_cert, idrbuf + 1 /* skip @ */)) {
+			DBG(DBG_CONTROL, DBG_log("IDr payload '%s' is a valid certificate SAN for this connection",
+				idrbuf));
+			return TRUE;
+		} else {
+			DBG(DBG_CONTROL, DBG_log("IDr payload '%s' is NOT a valid certificate SAN for this connection",
+				idrbuf));
+		}
+	}
+
+	/* if no wildcard, do simple id check */
+	if (!(wild->kind == idr->kind && wild->kind == ID_FQDN))
+		return same_id(wild, idr);
+
+	/* check wildcard ID on connection case against IDr payload */
+	size_t wl = wild->name.len, il = idr->name.len;
+	const char *wp = (const char *) wild->name.ptr;
+	const char *ip = (const char *) idr->name.ptr;
+
+        return  wl > 0 && wp[0] == '*' ?
+                /* wildcard case */
+                wl-1 <= il && strncaseeq(wp+1, ip+il-(wl-1), wl-1) :
+                /* literal case */
+                wl == il && strncaseeq(wp, ip, wl);
 }

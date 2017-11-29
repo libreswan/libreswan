@@ -3104,7 +3104,11 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 	/* it should use parent not child state */
 	bool send_cert = ikev2_send_cert_decision(cst);
+	bool send_idr = pc->spd.that.id.name.len != 0; /* me tarzan, you jane */
 	bool ic =  pc->initial_contact && (pst->st_ike_pred == SOS_NOBODY);
+
+	libreswan_log("PAUL: IDr payload will %sbe sent", send_idr ? "" : "NOT ");
+	DBG_dump_chunk("PAUL:pc->spd.that.id.name", pc->spd.that.id.name);
 
 	/* send out the IDi payload */
 
@@ -3126,9 +3130,10 @@ static stf_status ikev2_parent_inR1outI2_tail(
 			r_id.isai_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
 		}
 
-		r_id.isai_np = send_cert ?
-			ISAKMP_NEXT_v2CERT : ic ? ISAKMP_NEXT_v2N :
-			ISAKMP_NEXT_v2AUTH;
+		r_id.isai_np = send_cert ?  ISAKMP_NEXT_v2CERT :
+			send_idr ? ISAKMP_NEXT_v2IDr :
+				ic ? ISAKMP_NEXT_v2N :
+					ISAKMP_NEXT_v2AUTH;
 
 		/* HASH of ID is not done over common header */
 		unsigned char *const id_start =
@@ -3154,8 +3159,9 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 	/* send [CERT,] payload RFC 4306 3.6, 1.2) */
 	if (send_cert) {
-		enum next_payload_types_ikev2 np = ic ?
-			ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2AUTH;
+		enum next_payload_types_ikev2 np = send_idr ?
+			ISAKMP_NEXT_v2IDr : ic ?
+				ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2AUTH;
 
 		stf_status certstat = ikev2_send_cert(cst, md,
 						      ORIGINAL_INITIATOR,
@@ -3163,6 +3169,47 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 		if (certstat != STF_OK)
 			return certstat;
+	}
+
+	/* you Tarzan, me Jane support */
+	if (send_idr) {
+		struct ikev2_id r_id;
+		pb_stream r_id_pbs;
+		chunk_t id_b;
+		r_id.isai_type = ID_NONE;
+
+		switch (pc->spd.that.id.kind) {
+		case ID_DER_ASN1_DN:
+			r_id.isai_type = ID_DER_ASN1_DN;
+			break;
+		case ID_FQDN:
+			r_id.isai_type = ID_FQDN;
+			break;
+		case ID_USER_FQDN:
+			r_id.isai_type = ID_USER_FQDN;
+			break;
+		case ID_KEY_ID:
+			r_id.isai_type = ID_KEY_ID;
+			break;
+		default:
+			DBG(DBG_CONTROL, DBG_log("Not sending IDr payload for remote ID type %s",
+				enum_show(&ike_idtype_names, pc->spd.that.id.kind)));
+			break;
+		}
+
+		if (r_id.isai_type != ID_NONE) {
+			build_id_payload((struct isakmp_ipsec_id *)&r_id,
+				 &id_b,
+				 &pc->spd.that);
+			r_id.isai_critical = ISAKMP_PAYLOAD_NONCRITICAL;
+			r_id.isai_np = ic ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2AUTH;
+
+			if (!out_struct(&r_id, &ikev2_id_desc, &e_pbs_cipher,
+				&r_id_pbs) || !out_chunk(id_b, &r_id_pbs, "IDr"))
+				return STF_INTERNAL_ERROR;
+
+			close_output_pbs(&r_id_pbs);
+		}
 	}
 
 	if (ic) {

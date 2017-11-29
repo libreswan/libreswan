@@ -424,6 +424,7 @@ extern struct connection
 	*find_next_host_connection(struct connection *c,
 		       lset_t req_policy, lset_t policy_exact_mask),
 	*refine_host_connection(const struct state *st, const struct id *peer_id,
+			const struct id *tarzan_id,
 			bool initiator, lset_t auth_policy /* used by ikev1 */,
 			enum keyword_authby, bool *fromcert),
 	*find_client_connection(struct connection *c,
@@ -535,3 +536,6 @@ extern void unshare_connection_end(struct end *e);
 extern void liveness_clear_connection(struct connection *c, char *v);
 
 extern void liveness_action(struct connection *c, const bool ikev2);
+
+extern bool idr_wildmatch(const struct connection *c, const struct id *b);
+

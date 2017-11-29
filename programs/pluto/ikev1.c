@@ -3013,6 +3013,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 
 		struct connection *r =
 			refine_host_connection(st, &peer,
+				NULL, /* IKEv1 does not support 'you Tarzan, me Jane' */
 				FALSE,	/* we are responder */
 				auth_policy,
 				AUTH_UNSET,	/* ikev2 only */

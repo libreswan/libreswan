@@ -1496,7 +1496,13 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 	struct ikev2_id *v2id;
 	struct id peer_id;
 
+	struct payload_digest *const tarzan_pld = md->chain[ISAKMP_NEXT_v2IDr];
+	const pb_stream *tarzan_pbs;
+	struct ikev2_id *id_tarzan;
+	struct id tarzan_id;
+
 	memset(&peer_id, 0x00, sizeof(struct id)); /* rhbz#1392191 */
+	memset(&tarzan_id, 0x00, sizeof(struct id));
 
 	if (id_him == NULL) {
 		libreswan_log("IKEv2 mode no peer ID (hisID)");
@@ -1510,6 +1516,23 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 	if (!extract_peer_id(&peer_id, id_pbs)) {
 		libreswan_log("IKEv2 mode peer ID extraction failed");
 		return FALSE;
+	}
+
+	/* You Tarzan, me Jane */
+	if (!initiator && md->chain[ISAKMP_NEXT_v2IDr] != NULL) {
+		tarzan_pbs = &tarzan_pld->pbs;
+		id_tarzan = &tarzan_pld->payload.v2id;
+		tarzan_id.kind = id_tarzan->isai_type;
+
+		DBG(DBG_CONTROL, DBG_log("received IDr payload - extracting our alleged ID"));
+		if (tarzan_pbs == NULL) {
+			libreswan_log("Peer IDr payload is empty - ignored");
+		} else {
+			if (!extract_peer_id(&tarzan_id, tarzan_pbs)) {
+				libreswan_log("Peer IDr payload extraction failed");
+				return FALSE;
+			}
+		}
 	}
 
 	lsw_cert_ret ret = ike_decode_cert(md);
@@ -1606,7 +1629,7 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 
 			if (authby != AUTH_NULL) {
 				r = refine_host_connection(
-				md->st, &peer_id, FALSE /*initiator*/,
+				md->st, &peer_id, &tarzan_id, FALSE /*initiator*/,
 				LEMPTY /* auth_policy */, authby, &fromcert);
 			}
 
