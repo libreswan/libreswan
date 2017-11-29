@@ -17,7 +17,7 @@
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  * Copyright (C) 2015-2017 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016-2017 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -256,11 +256,10 @@ static void delete_sr(struct spd_route *sr)
 
 void delete_connection(struct connection *c, bool relations)
 {
-	struct connection *old_cur_connection =
-		cur_connection == c ? NULL : cur_connection;
-
-	lset_t old_cur_debugging = cur_debugging;
-	set_cur_connection(c);
+	struct connection *old_cur_connection = push_cur_connection(c);
+	if (old_cur_connection == c) {
+		old_cur_connection = NULL;
+	}
 
 	/*
 	 * Must be careful to avoid circularity:
@@ -298,7 +297,6 @@ void delete_connection(struct connection *c, bool relations)
 
 	/* find and delete c from connections list */
 	list_rm(struct connection, ac_next, c, connections);
-	cur_connection = old_cur_connection;
 
 	/* find and delete c from the host pair list */
 	if (c->host_pair == NULL) {
@@ -322,7 +320,9 @@ void delete_connection(struct connection *c, bool relations)
 		}
 	}
 
-	set_debugging(old_cur_debugging);
+	/* any logging past this point is for the wrong connection */
+	pop_cur_connection(old_cur_connection);
+
 	pfreeany(c->name);
 	pfreeany(c->connalias);
 	pfreeany(c->vti_iface);
