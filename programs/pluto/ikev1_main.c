@@ -14,6 +14,7 @@
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
  * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2017 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -2753,9 +2754,7 @@ bool accept_delete(struct msg_digest *md,
 				}
 
 				struct connection *rc = dst->st_connection;
-				struct connection *oldc = cur_connection;
-
-				set_cur_connection(rc);
+				struct connection *oldc = push_cur_connection(rc);
 
 				if (nat_traversal_enabled && dst->st_connection->ikev1_natt != natt_none)
 					nat_traversal_change_port_lookup(md, dst);
@@ -2814,7 +2813,7 @@ bool accept_delete(struct msg_digest *md,
 					reset_cur_connection();
 				}
 				/* reset connection */
-				set_cur_connection(oldc);
+				pop_cur_connection(oldc);
 			}
 		}
 	}
