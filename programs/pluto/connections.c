@@ -4305,8 +4305,17 @@ void update_state_connection(struct state *st, struct connection *c)
 		st->st_connection = c;
 		st->st_peer_alt_id = FALSE; /* must be rechecked against new 'that' */
 		if (t != NULL) {
-			if (cur_connection == t)
-				set_cur_connection(c);
+			/*
+			 * Hack to see cur_connection needs to be
+			 * updated.  If nothing else, it will log a
+			 * suspend then resume.
+			 */
+			struct connection *cur = push_cur_connection(NULL); /* suspend */
+			if (cur == t) {
+				set_cur_connection(c); /* start */
+			} else if (cur != NULL) {
+				pop_cur_connection(cur); /* resume */
+			}
 			connection_discard(t);
 		}
 	}
