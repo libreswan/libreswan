@@ -83,8 +83,8 @@ int whack_log_fd = NULL_FD;                     /* only set during whack_handle(
  * Global variables: must be carefully adjusted at transaction
  * boundaries!
  */
-struct state *cur_state = NULL;                 /* current state, for diagnostics */
-struct connection *cur_connection = NULL;       /* current connection, for diagnostics */
+static struct state *cur_state = NULL;                 /* current state, for diagnostics */
+static struct connection *cur_connection = NULL;       /* current connection, for diagnostics */
 const ip_address *cur_from = NULL;              /* source of current current message */
 u_int16_t cur_from_port;                        /* host order */
 

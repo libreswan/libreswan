@@ -23,6 +23,9 @@
 
 #include "lswlog.h"
 
+struct state;
+struct connection;
+
 /* moved common code to library file */
 #include "libreswan/passert.h"
 
@@ -46,8 +49,6 @@ extern char *pluto_stats_binary;
  * should be copied to it -- see whack_log()
  */
 extern int whack_log_fd;                        /* only set during whack_handle() */
-extern struct state *cur_state;                 /* current state, for diagnostics */
-extern struct connection *cur_connection;       /* current connection, for diagnostics */
 extern const ip_address *cur_from;              /* source of current current message */
 extern u_int16_t cur_from_port;                 /* host order */
 
