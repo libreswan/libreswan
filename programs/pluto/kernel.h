@@ -317,7 +317,7 @@ struct bare_shunt {
 };
 
 extern void show_shunt_status(void);
-extern int show_shunt_count(void);
+extern unsigned show_shunt_count(void);
 
 struct bare_shunt **bare_shunt_ptr(const ip_subnet *ours,
 				   const ip_subnet *his,

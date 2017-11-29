@@ -1163,9 +1163,9 @@ static void free_bare_shunt(struct bare_shunt **pp)
 	pfree(p);
 }
 
-int show_shunt_count(void)
+unsigned show_shunt_count(void)
 {
-	int i = 0;
+	unsigned i = 0;
 	const struct bare_shunt *bs;
 
 	for (bs = bare_shunts; bs != NULL; bs = bs->next)

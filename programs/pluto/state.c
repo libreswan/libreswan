@@ -6,7 +6,7 @@
  * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
- * Copyright (C) 2009,2012 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2009, 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
  * Copyright (C) 2012 Bram <bram-bcrafjna-erqzvar@spam.wizbit.be>
@@ -139,7 +139,7 @@ void lswlog_finite_state(struct lswlog *buf, const struct finite_state *fs)
  */
 
 /* for DDoS tracking, used in change_state */
-static unsigned int state_count[STATE_IKE_ROOF];
+static unsigned state_count[STATE_IKE_ROOF];
 
 void change_state(struct state *st, enum state_kind new_state)
 {
@@ -192,28 +192,28 @@ static enum_names cat_names = {
 	NULL
 };
 
-static unsigned int cat_count[CAT_roof] = { 0 };
+static unsigned cat_count[CAT_roof] = { 0 };
 
 /* space for unknown as well */
-static unsigned int total_established_ike(void)
+static unsigned total_established_ike(void)
 {
 	return cat_count[CAT_ANONYMOUS_IKE] + cat_count[CAT_AUTHENTICATED_IKE];
 }
 
-static unsigned int total_ike(void)
+static unsigned total_ike(void)
 {
 	return cat_count[CAT_HALF_OPEN_IKE] +
 		cat_count[CAT_OPEN_IKE] +
 		total_established_ike();
 }
 
-static unsigned int total_ipsec(void)
+static unsigned total_ipsec(void)
 {
 	return cat_count[CAT_AUTHENTICATED_IPSEC] +
 		cat_count[CAT_ANONYMOUS_IPSEC];
 }
 
-static unsigned int total(void)
+static unsigned total(void)
 {
 	return total_ike() + total_ipsec() + cat_count[CAT_UNKNOWN];
 }
@@ -384,17 +384,16 @@ static void update_state_stats(struct state *st, enum state_kind old_state,
 			enum_name(&state_names, old_state), enum_name(&cat_names, old_category),
 			enum_name(&state_names, new_state), enum_name(&cat_names, new_category));
 
-		/* ??? walking through struct with ++,  Wow! */
-		int category_states = 0;
+		unsigned category_states = 0;
 
 		for (enum categories cat = CAT_IGNORE; cat != CAT_roof; cat++) {
-			DBG_log("%s states: %d",
+			DBG_log("%s states: %u",
 				enum_name(&cat_names, cat),
 				cat_count[cat]);
 			category_states += cat_count[cat];
 		}
 
-		int count_states = 0;
+		unsigned count_states = 0;
 
 		for (enum state_kind s = STATE_IKEv1_FLOOR; s < STATE_IKEv1_ROOF; s++) {
 			count_states += state_count[s];
@@ -404,7 +403,7 @@ static void update_state_stats(struct state *st, enum state_kind old_state,
 			count_states += state_count[s];
 		}
 
-		DBG_log("category states: %d count states: %d",
+		DBG_log("category states: %u count states: %u",
 			category_states, count_states);
 		pexpect(category_states == count_states);
 	});
@@ -897,7 +896,7 @@ void delete_state(struct state *st)
 			enum_short_name(&spi_names, nego_shunt)));
 
 		if (!orphan_holdpass(c, &c->spd, 0 /* transport_proto */, failure_shunt)) {
-			loglog(RC_LOG_SERIOUS,"orphan_holdpass() failure ignored");
+			loglog(RC_LOG_SERIOUS, "orphan_holdpass() failure ignored");
 		}
 	}
 
@@ -2292,7 +2291,7 @@ void show_states_status(void)
 		  cat_count[CAT_OPEN_IKE],
 		  cat_count[CAT_AUTHENTICATED_IKE],
 		  cat_count[CAT_ANONYMOUS_IKE]);
-	whack_log(RC_COMMENT, "IPsec SAs: total(%u), authenticated(%u), anonymous(%d)",
+	whack_log(RC_COMMENT, "IPsec SAs: total(%u), authenticated(%u), anonymous(%u)",
 		  total_ipsec(),
 		  cat_count[CAT_AUTHENTICATED_IPSEC], cat_count[CAT_ANONYMOUS_IPSEC]);
 	whack_log(RC_COMMENT, " ");             /* spacer */
@@ -2468,7 +2467,7 @@ static void  set_st_clonedfrom(struct state *st, so_serial_t nsn)
 {
 	/* add debug line  too */
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu inherit #%lu from parent #%lu",
-				nsn, st->st_serialno,st->st_clonedfrom));
+		nsn, st->st_serialno, st->st_clonedfrom));
 	st->st_clonedfrom = nsn;
 }
 
@@ -2476,6 +2475,7 @@ static void  set_st_clonedfrom(struct state *st, so_serial_t nsn)
 void ikev2_repl_est_ipsec(struct state *st, void *data)
 {
 	so_serial_t predecessor = *(so_serial_t *)data;
+
 	if (st->st_clonedfrom != predecessor)
 		return;
 
@@ -2486,12 +2486,11 @@ void ikev2_repl_est_ipsec(struct state *st, void *data)
 				predecessor, st->st_connection->name));
 	}
 
-	{
-		enum event_type ev_type = st->st_event->ev_type;
-		passert(st->st_event != NULL);
-		delete_event(st);
-		event_schedule_s(ev_type, 0, st);
-	}
+	enum event_type ev_type = st->st_event->ev_type;
+
+	passert(st->st_event != NULL);
+	delete_event(st);
+	event_schedule_s(ev_type, 0, st);
 }
 
 void ikev2_inherit_ipsec_sa(so_serial_t osn, so_serial_t nsn,
@@ -2597,30 +2596,30 @@ bool drop_new_exchanges(void)
 
 void show_globalstate_status(void)
 {
-	int shunts = show_shunt_count();
+	unsigned shunts = show_shunt_count();
 
-	whack_log_comment("config.setup.ike.ddos_threshold=%d",pluto_ddos_threshold);
-	whack_log_comment("config.setup.ike.max_halfopen=%d",pluto_max_halfopen);
+	whack_log_comment("config.setup.ike.ddos_threshold=%u", pluto_ddos_threshold);
+	whack_log_comment("config.setup.ike.max_halfopen=%u", pluto_max_halfopen);
 
 	/* technically shunts are not a struct state's - but makes it easier to group */
-	whack_log_comment("current.states.all=%d", shunts + total());
-	whack_log_comment("current.states.ipsec=%d", total_ipsec());
-	whack_log_comment("current.states.ike=%d", total_ike());
-	whack_log_comment("current.states.shunts=%d", shunts);
-	whack_log_comment("current.states.iketype.anonymous=%d",
+	whack_log_comment("current.states.all=%u", shunts + total());
+	whack_log_comment("current.states.ipsec=%u", total_ipsec());
+	whack_log_comment("current.states.ike=%u", total_ike());
+	whack_log_comment("current.states.shunts=%u", shunts);
+	whack_log_comment("current.states.iketype.anonymous=%u",
 		  cat_count[CAT_ANONYMOUS_IKE]);
-	whack_log_comment("current.states.iketype.authenticated=%d",
+	whack_log_comment("current.states.iketype.authenticated=%u",
 		  cat_count[CAT_AUTHENTICATED_IKE]);
-	whack_log_comment("current.states.iketype.halfopen=%d",
+	whack_log_comment("current.states.iketype.halfopen=%u",
 		  cat_count[CAT_HALF_OPEN_IKE]);
-	whack_log_comment("current.states.iketype.open=%d",
+	whack_log_comment("current.states.iketype.open=%u",
 		  cat_count[CAT_OPEN_IKE]);
 	for (enum state_kind s = STATE_IKEv1_FLOOR; s < STATE_IKEv1_ROOF; s++) {
-		whack_log_comment("current.states.enumerate.%s=%d",
+		whack_log_comment("current.states.enumerate.%s=%u",
 			enum_name(&state_names, s), state_count[s]);
 	}
 	for (enum state_kind s = STATE_IKEv2_FLOOR; s < STATE_IKEv2_ROOF; s++) {
-		whack_log_comment("current.states.enumerate.%s=%d",
+		whack_log_comment("current.states.enumerate.%s=%u",
 			enum_name(&state_names, s), state_count[s]);
 	}
 }
