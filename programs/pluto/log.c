@@ -377,7 +377,7 @@ static void syslog_raw(int severity, char *b)
 static void peerlog_raw(char *b)
 {
 	if (log_to_perpeer) {
-		peerlog(b);
+		peerlog(cur_connection, b);
 	}
 }
 
