@@ -809,7 +809,7 @@ static bool send_delete_check(const struct state *st)
 	return FALSE;
 }
 
-static void delete_state_log(struct state *st)
+static void delete_state_log(struct state *st, struct state *cur_state)
 {
 	struct connection *const c = st->st_connection;
 	char *send_inf = send_delete_check(st) ? " and sending notification" : "";
@@ -858,7 +858,6 @@ static void delete_state_log(struct state *st)
 void delete_state(struct state *st)
 {
 	struct connection *const c = st->st_connection;
-	struct state *old_cur_state = cur_state == st ? NULL : cur_state;
 
 	/*
 	 * statistics for IKE SA failures. We cannot do the same for IPsec SA
@@ -873,7 +872,12 @@ void delete_state(struct state *st)
 		}
 	}
 
-	delete_state_log(st);
+	struct state *old_cur_state = push_cur_state(st);
+	delete_state_log(st, old_cur_state);
+	if (old_cur_state == st) {
+		/* no going back */
+		old_cur_state = NULL;
+	}
 
 #ifdef USE_LINUX_AUDIT
 	/*
@@ -1064,8 +1068,6 @@ void delete_state(struct state *st)
 
 	/* we might be about to free it */
 	st->st_connection = NULL;	/* c will be discarded */
-	/* without st_connection, st isn't complete */
-	cur_state = old_cur_state;
 	connection_discard(c);
 
 	change_state(st, STATE_UNDEFINED);
@@ -1086,6 +1088,10 @@ void delete_state(struct state *st)
 	free_ikev2_proposal(&st->st_accepted_esp_or_ah_proposal);
 
 	clear_dh_from_state(st);
+
+	/* without st_connection, st isn't complete */
+	/* from here on logging is for the wrong state */
+	pop_cur_state(old_cur_state);
 
 	free_generalNames(st->st_requested_ca, TRUE);
 
