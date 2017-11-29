@@ -308,8 +308,8 @@ static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
 	passert(st->st_suspended_md == cn->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
 
-	struct state *old_state = push_cur_state(st);
-	passert(old_state == NULL);
+	so_serial_t old_serialno = push_cur_state(st);
+	pexpect(old_serialno == SOS_NOBODY);
 
 	st->st_calculating = FALSE;
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
@@ -1482,8 +1482,8 @@ static void ikev2_parent_inI1outR1_continue(struct pluto_crypto_req_cont *ke,
 	passert(st->st_suspended_md == ke->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
 
-	struct state *old_state = push_cur_state(st);
-	passert(old_state == NULL);
+	so_serial_t old_serialno = push_cur_state(st);
+	pexpect(old_serialno == SOS_NOBODY);
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
@@ -2064,8 +2064,8 @@ static void ikev2_parent_inR1outI2_continue(struct pluto_crypto_req_cont *dh,
 	passert(st->st_suspended_md == dh->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
 
-	struct state *old_state = push_cur_state(st);
-	passert(old_state == NULL);
+	so_serial_t old_serialno = push_cur_state(st);
+	pexpect(old_serialno == SOS_NOBODY);
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
@@ -3453,8 +3453,8 @@ static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *dh,
 	passert(st->st_suspended_md == dh->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
 
-	struct state *old_state = push_cur_state(st);
-	passert(old_state == NULL);
+	so_serial_t old_serialno = push_cur_state(st);
+	pexpect(old_serialno == SOS_NOBODY);
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;

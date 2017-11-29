@@ -757,8 +757,8 @@ static void quick_outI1_continue(struct pluto_crypto_req_cont *qke,
 	passert(st != NULL);
 
 
-	struct state *old_state = push_cur_state(st); /* we must reset before exit */
-	passert(old_state == NULL);
+	so_serial_t old_serialno = push_cur_state(st); /* we must reset before exit */
+	pexpect(old_serialno == SOS_NOBODY);
 
 	unset_suspended(st);
 	e = quick_outI1_tail(qke, r, st);
@@ -1551,8 +1551,8 @@ static void quick_inI1_outR1_cryptocontinue1(
 
 	passert(st->st_connection != NULL);
 
-	struct state *old_state = push_cur_state(st); /* we must reset before exit */
-	passert(old_state == NULL);
+	so_serial_t old_serialno = push_cur_state(st); /* we must reset before exit */
+	pexpect(old_serialno == SOS_NOBODY);
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
@@ -1638,8 +1638,8 @@ static void quick_inI1_outR1_cryptocontinue2(
 
 	passert(st->st_connection != NULL);
 
-	struct state *old_state = push_cur_state(st); /* we must reset before exit */
-	passert(old_state == NULL);
+	so_serial_t old_serialno = push_cur_state(st); /* we must reset before exit */
+	pexpect(old_serialno == SOS_NOBODY);
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
@@ -1914,8 +1914,8 @@ static void quick_inR1_outI2_continue(struct pluto_crypto_req_cont *dh,
 
 	passert(st->st_connection != NULL);
 
-	struct state *old_state = push_cur_state(st); /* we must reset before exit */
-	passert(old_state == NULL);
+	so_serial_t old_serialno = push_cur_state(st); /* we must reset before exit */
+	pexpect(old_serialno == SOS_NOBODY);
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;

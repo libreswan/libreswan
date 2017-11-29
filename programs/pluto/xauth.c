@@ -19,9 +19,8 @@
 
 #include "constants.h"
 #include "lswlog.h"
-#include "log.h"
-
 #include "defs.h"
+#include "log.h"
 #include "xauth.h"
 #include "pam_conv.h"
 #include "event.h"

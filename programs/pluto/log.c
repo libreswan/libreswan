@@ -35,7 +35,7 @@
 #include "lswlog.h"
 #include "log.h"
 #include "peerlog.h"
-
+#include "state_db.h"
 #include "connections.h"
 #include "state.h"
 #include "kernel.h"	/* for kernel_ops */
@@ -242,8 +242,8 @@ void log_pop_connection(struct connection *c, const char *func,
 	}
 }
 
-struct state *log_push_state(struct state *st, const char *func,
-			     const char *file, long line)
+so_serial_t log_push_state(struct state *st, const char *func,
+			   const char *file, long line)
 {
 	if (cur_state != NULL) {
 		log_processing(SUSPEND, true /* must be current */,
@@ -254,7 +254,7 @@ struct state *log_push_state(struct state *st, const char *func,
 			       NULL, cur_connection,
 			       func, file, line);
 	}
-	struct state *old_state = cur_state;
+	so_serial_t old_serialno = (cur_state != NULL ? cur_state->st_serialno : SOS_NOBODY);
 	cur_state = st;
 	update_debugging();
 	if (cur_state == NULL) {
@@ -262,7 +262,7 @@ struct state *log_push_state(struct state *st, const char *func,
 			lswlogf(buf, "trying to processing NULL state #0");
 			lswlog_source_line(buf, func, file, line);
 		}
-	} else if (cur_state == old_state) {
+	} else if (cur_state->st_serialno == old_serialno) {
 		log_processing(STILL, true /* must be current */,
 			       cur_state, NULL,
 			       func, file, line);
@@ -271,10 +271,10 @@ struct state *log_push_state(struct state *st, const char *func,
 			       cur_state, NULL,
 			       func, file, line);
 	}
-	return old_state;
+	return old_serialno;
 }
 
-void log_pop_state(struct state *st, const char *func,
+void log_pop_state(so_serial_t serialno, const char *func,
 		   const char *file, long line)
 {
 	if (cur_state != NULL) {
@@ -287,7 +287,7 @@ void log_pop_state(struct state *st, const char *func,
 			lswlog_source_line(buf, func, file, line);
 		}
 	}
-	cur_state = st;
+	cur_state = state_by_serialno(serialno);
 	update_debugging();
 	if (cur_state != NULL) {
 		log_processing(RESUME, true, /* must be current */

@@ -76,9 +76,9 @@ void log_pop_connection(struct connection *c, const char *func,
 #define push_cur_connection(C) log_push_connection(C, __func__, PASSERT_BASENAME, __LINE__)
 #define pop_cur_connection(C) log_pop_connection(C, __func__, PASSERT_BASENAME, __LINE__)
 
-struct state *log_push_state(struct state *st, const char *func,
-			     const char *file, long line);
-void log_pop_state(struct state *st, const char *func,
+so_serial_t log_push_state(struct state *st, const char *func,
+			   const char *file, long line);
+void log_pop_state(so_serial_t serialno, const char *func,
 		   const char *file, long line);
 
 #define push_cur_state(ST) log_push_state(ST, __func__, PASSERT_BASENAME, __LINE__)
@@ -87,7 +87,7 @@ void log_pop_state(struct state *st, const char *func,
 #define set_cur_connection(C) push_cur_connection(C)
 #define reset_cur_connection() pop_cur_connection(NULL)
 #define set_cur_state(ST) push_cur_state(ST)
-#define reset_cur_state() pop_cur_state(NULL)
+#define reset_cur_state() pop_cur_state(SOS_NOBODY)
 
 extern void pluto_init_log(void);
 extern void close_log(void);

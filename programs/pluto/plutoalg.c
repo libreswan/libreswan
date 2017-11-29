@@ -27,9 +27,9 @@
 
 #include "sysdep.h"
 #include "constants.h"
+#include "defs.h"
 #include "log.h"
 #include "lswalloc.h"
-#include "defs.h"
 #include "id.h"
 #include "connections.h"
 #include "state.h"

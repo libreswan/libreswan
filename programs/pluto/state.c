@@ -831,12 +831,11 @@ static void delete_state_log(struct state *st, struct state *cur_state)
 		 */
 		libreswan_log("deleting state (%s)%s",
 				st->st_state_name, send_inf);
-	} else if (cur_state != NULL && cur_state->st_connection ==  st->st_connection) {
+	} else if (cur_state != NULL && cur_state->st_connection == st->st_connection) {
 		libreswan_log("deleting other state #%lu (%s)%s",
 				st->st_serialno,
 				st->st_state_name,
 				send_inf);
-
 	} else {
 		char cib[CONN_INST_BUF];
 		libreswan_log("deleting other state #%lu connection (%s) \"%s\"%s%s",
@@ -872,12 +871,8 @@ void delete_state(struct state *st)
 		}
 	}
 
-	struct state *old_cur_state = push_cur_state(st);
-	delete_state_log(st, old_cur_state);
-	if (old_cur_state == st) {
-		/* no going back */
-		old_cur_state = NULL;
-	}
+	so_serial_t old_serialno = push_cur_state(st);
+	delete_state_log(st, state_by_serialno(old_serialno));
 
 #ifdef USE_LINUX_AUDIT
 	/*
@@ -1091,7 +1086,7 @@ void delete_state(struct state *st)
 
 	/* without st_connection, st isn't complete */
 	/* from here on logging is for the wrong state */
-	pop_cur_state(old_cur_state);
+	pop_cur_state(old_serialno);
 
 	free_generalNames(st->st_requested_ca, TRUE);
 
@@ -1470,10 +1465,9 @@ void for_each_state(void (*f)(struct state *, void *data), void *data)
 		 * Since OLD_STATE might be deleted by f();
 		 * save/restore using serialno.
 		 */
-		struct state *old_state = push_cur_state(st);
-		so_serial_t serialno = (old_state != NULL ? old_state->st_serialno : SOS_NOBODY);
+		so_serial_t old_serialno = push_cur_state(st);
 		(*f)(st, data);
-		pop_cur_state(state_by_serialno(serialno));
+		pop_cur_state(old_serialno);
 	});
 }
 
