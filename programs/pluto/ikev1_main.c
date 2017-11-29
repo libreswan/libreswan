@@ -900,13 +900,13 @@ static void main_inR1_outI2_continue(struct pluto_crypto_req_cont *ke,
 
 	passert(ke->pcrc_serialno == st->st_serialno);	/* transitional */
 
-	passert(cur_state == NULL);
 	passert(st != NULL);
 
 	passert(st->st_suspended_md == ke->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
 
-	set_cur_state(st);
+	struct state *old_state = push_cur_state(st);
+	passert(old_state == NULL);
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
@@ -1111,13 +1111,13 @@ static void main_inI2_outR2_continue(struct pluto_crypto_req_cont *ke,
 
 	passert(ke->pcrc_serialno == st->st_serialno);	/* transitional */
 
-	passert(cur_state == NULL);
 	passert(st != NULL);
 
 	passert(st->st_suspended_md == ke->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
 
-	set_cur_state(st);
+	struct state *old_state = push_cur_state(st);
+	passert(old_state == NULL);
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
@@ -1634,13 +1634,14 @@ static void main_inR2_outI3_cryptotail(struct pluto_crypto_req_cont *dh,
 
 	passert(dh->pcrc_serialno == st->st_serialno);	/* transitional */
 
-	passert(cur_state == NULL);
 	passert(st != NULL);
 
 	passert(st->st_suspended_md == dh->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
 
-	set_cur_state(st);
+	struct state *old_state = push_cur_state(st);
+	passert(old_state == NULL);
+
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 

@@ -754,10 +754,12 @@ static void quick_outI1_continue(struct pluto_crypto_req_cont *qke,
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
-	passert(cur_state == NULL);
 	passert(st != NULL);
 
-	set_cur_state(st); /* we must reset before exit */
+
+	struct state *old_state = push_cur_state(st); /* we must reset before exit */
+	passert(old_state == NULL);
+
 	unset_suspended(st);
 	e = quick_outI1_tail(qke, r, st);
 
@@ -1545,12 +1547,13 @@ static void quick_inI1_outR1_cryptocontinue1(
 
 	passert(qke->pcrc_serialno == st->st_serialno);	/* transitional */
 
-	passert(cur_state == NULL);
 	passert(st != NULL);
 
 	passert(st->st_connection != NULL);
 
-	set_cur_state(st); /* we must reset before exit */
+	struct state *old_state = push_cur_state(st); /* we must reset before exit */
+	passert(old_state == NULL);
+
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 	unset_suspended(st);
@@ -1631,12 +1634,13 @@ static void quick_inI1_outR1_cryptocontinue2(
 
 	passert(dh->pcrc_serialno == st->st_serialno);	/* transitional */
 
-	passert(cur_state == NULL);
 	passert(st != NULL);
 
 	passert(st->st_connection != NULL);
 
-	set_cur_state(st); /* we must reset before exit */
+	struct state *old_state = push_cur_state(st); /* we must reset before exit */
+	passert(old_state == NULL);
+
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 	unset_suspended(st);
@@ -1906,12 +1910,13 @@ static void quick_inR1_outI2_continue(struct pluto_crypto_req_cont *dh,
 
 	passert(dh->pcrc_serialno == st->st_serialno);	/* transitional */
 
-	passert(cur_state == NULL);
 	passert(st != NULL);
 
 	passert(st->st_connection != NULL);
 
-	set_cur_state(st); /* we must reset before exit */
+	struct state *old_state = push_cur_state(st); /* we must reset before exit */
+	passert(old_state == NULL);
+
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 	unset_suspended(st);
