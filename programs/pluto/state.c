@@ -1477,13 +1477,16 @@ struct state *duplicate_state(struct state *st, sa_t sa_type)
 
 void for_each_state(void (*f)(struct state *, void *data), void *data)
 {
-	struct state *ocs = cur_state;
-
 	FOR_EACH_COOKIED_STATE(st, {
-		set_cur_state(st);
+		/*
+		 * Since OLD_STATE might be deleted by f();
+		 * save/restore using serialno.
+		 */
+		struct state *old_state = push_cur_state(st);
+		so_serial_t serialno = (old_state != NULL ? old_state->st_serialno : SOS_NOBODY);
 		(*f)(st, data);
+		pop_cur_state(state_by_serialno(serialno));
 	});
-	cur_state = ocs;
 }
 
 /*
