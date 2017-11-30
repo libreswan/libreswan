@@ -140,7 +140,7 @@ struct list_entry *icookie_slot(const u_char *icookie)
 	LSWDBGP(DBG_RAW | DBG_CONTROL, buf) {
 		lswlogf(buf, "%s: hash icookie ", icookie_hash_table.info.name);
 		lswlog_bytes(buf, icookie, COOKIE_SIZE);
-		lswlogf(buf, " to %lu slot %p", hash, slot);
+		lswlogf(buf, " to %zu slot %p", hash, slot);
 	};
 	return slot;
 }
@@ -208,7 +208,7 @@ struct list_entry *cookies_slot(const u_char *icookie,
 		lswlog_bytes(buf, icookie, COOKIE_SIZE);
 		lswlogs(buf, " rcookie ");
 		lswlog_bytes(buf, rcookie, COOKIE_SIZE);
-		lswlogf(buf, " to %lu slot %p", hash, slot);
+		lswlogf(buf, " to %zu slot %p", hash, slot);
 	};
 	return slot;
 }
