@@ -100,11 +100,11 @@ static void retransmit_v1_msg(struct state *st)
 	DBG(DBG_CONTROL|DBG_RETRANSMITS, {
 		ipstr_buf b;
 		char cib[CONN_INST_BUF];
-		DBG_log("handling event EVENT_v1_RETRANSMIT for %s \"%s\"%s #%lu attempt %lu retransmit %lu of %lu",
+		DBG_log("handling event EVENT_v1_RETRANSMIT for %s \"%s\"%s #%lu keying attempt %lu of %lu; retransmit %lu",
 			ipstr(&c->spd.that.host_addr, &b),
 			c->name, fmt_conn_instance(c, cib),
-			st->st_serialno, try,
-			retransmit_count(st), try_limit);
+			st->st_serialno, try, try_limit,
+			retransmit_count(st) + 1);
 	});
 
 	switch (retransmit(st)) {
@@ -224,11 +224,12 @@ static void retransmit_v2_msg(struct state *st)
 			ipstr(&c->spd.that.host_addr, &b),
 			c->name, fmt_conn_instance(c, cib),
 			st->st_serialno, try, try_limit);
-		DBG_log("and parent for %s \"%s\"%s #%lu attempt %lu retransmit %lu of %lu",
+		DBG_log("and parent for %s \"%s\"%s #%lu keying attempt %lu of %lu; retransmit %lu",
 			ipstr(&c->spd.that.host_addr, &b),
 			c->name, fmt_conn_instance(c, cib),
-			pst->st_serialno, pst->st_try,
-			retransmit_count(pst), try_limit);
+			pst->st_serialno,
+			pst->st_try, try_limit,
+			retransmit_count(pst) + 1);
 		});
 
 	if (need_this_intiator(st)) {
