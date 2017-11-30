@@ -172,7 +172,6 @@ kvmplutotest	ikev2-05-basic-psk-nhelpers0		good
 
 kvmplutotest	ikev2-04-basic-x509-nsspw		good
 
-kvmplutotest	ikev2-x509-01		good
 kvmplutotest	ikev2-10-2behind-nat	good
 
 # modp tests for checking if we deal with sending different KE's
@@ -278,6 +277,8 @@ kvmplutotest	ikev1-x509-aggr-12-san-dn-match		good
 kvmplutotest	ikev1-x509-aggr-13-san-dn-mismatch	good
 kvmplutotest	ikev1-x509-aggr-14-san-dn-fromcert	good
 
+kvmplutotest	ikev2-x509-01				good
+kvmplutotest	ikev2-x509-03				good
 kvmplutotest	ikev2-x509-05-san-firstemail-match	good
 kvmplutotest	ikev2-x509-06-san-email-mismatch	good
 kvmplutotest	ikev2-x509-07-san-ip-mismatch		good
@@ -289,6 +290,11 @@ kvmplutotest	ikev2-x509-12-san-dn-fromcert		good
 kvmplutotest	ikev2-x509-13-san-dn-match		good
 kvmplutotest	ikev2-x509-14-san-dn-mismatch		good
 kvmplutotest	ikev2-x509-15-san-dn-mismatch-responder	good
+kvmplutotest	ikev2-x509-16-multicert			good
+kvmplutotest	ikev2-x509-17-multicert-02		good
+kvmplutotest	ikev2-x509-18-multicert-rightid		good
+kvmplutotest	ikev2-x509-19-multicert-rightid-san	good
+kvmplutotest	ikev2-x509-20-multicert-rightid-san-wildcard	good
 
 kvmplutotest	ikev2-no-nhelpers-01			good
 
