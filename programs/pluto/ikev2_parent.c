@@ -3107,8 +3107,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	bool send_idr = pc->spd.that.id.name.len != 0; /* me tarzan, you jane */
 	bool ic =  pc->initial_contact && (pst->st_ike_pred == SOS_NOBODY);
 
-	libreswan_log("PAUL: IDr payload will %sbe sent", send_idr ? "" : "NOT ");
-	DBG_dump_chunk("PAUL:pc->spd.that.id.name", pc->spd.that.id.name);
+	DBG(DBG_CONTROL, DBG_log("IDr payload will %sbe sent", send_idr ? "" : "NOT "));
 
 	/* send out the IDi payload */
 
