@@ -151,25 +151,44 @@ $(WEB_SUMMARYDIR)/status.json:
 # rebuild of all relevant commits.
 #
 # To avoid lots of '... is up to date', the recursive make is silent.
+#
+# In theory, all the .json files needing an update can be processed
+# using a single make invocation.  Unfortunately the list can get so
+# long that it exceeds command line length limits, so a slow pipe is
+# used instead.
+
+WEB_COMMITSDIR = $(WEB_SUMMARYDIR)/commits
+FIRST_COMMIT = $(shell $(WEB_SOURCEDIR)/earliest-commit.sh $(WEB_SUMMARYDIR) $(WEB_REPODIR))
+# MISSING_COMMIT_FILES = $(filter-out $(wildcard $(WEB_COMMITSDIR)/*.json), $(COMMIT_FILES))
 
 .PHONY: web-commits-json $(WEB_SUMMARYDIR)/commits.json
 web-site web-summarydir web-commits-json: $(WEB_SUMMARYDIR)/commits.json
 $(WEB_SUMMARYDIR)/commits.json:
-	: running MAKE silently to rebuild out-of-date commits
-	@$(MAKE) --no-print-directory -s \
-		WEB_SUMMARYDIR=$(WEB_SUMMARYDIR) WEB_RESULTSDIR=$(WEB_RESULTSDIR) \
-		$(WEB_COMMITSDIR) $(COMMIT_FILES)
+	: using a pipe to avoid line len when rebuilding out-of-date commits
+	set -e ; \
+	web_repodir=$(WEB_REPODIR) ; \
+	web_summarydir=$(WEB_SUMMARYDIR) ; \
+	web_resultsdir=$(WEB_RESULTSDIR) ; \
+	web_commitsdir=$(WEB_COMMITSDIR) ; \
+	web_subdir=$(WEB_SUBDIR) ; \
+	$(MAKE) --no-print-directory -s \
+		WEB_SUBDIR=$${web_subdir} \
+		WEB_SUMMARYDIR=$${web_summarydir} \
+		WEB_RESULTSDIR=$${web_resultsdir} \
+		$${web_commitsdir} ; \
+	( cd $${WEB_REPODIR} ; git rev-list --abbrev-commit $(FIRST_COMMIT)^..) \
+	| while read commit ; do \
+		echo $${web_commitsdir}/$${commit}.json ; \
+		$(MAKE) --no-print-directory -s \
+			WEB_SUBDIR=$${web_subdir} \
+			WEB_SUMMARYDIR=$${web_summarydir} \
+			WEB_RESULTSDIR=$${web_resultsdir} \
+			$${web_commitsdir}/$${commit}.json ; \
+	done
 	: pick up all commits unconditionally and unsorted.
 	find $(WEB_COMMITSDIR) -name '*.json' -exec cat \{\} \; \
 		| jq -s . > $@.tmp
 	mv $@.tmp $@
-
-WEB_COMMITSDIR = $(WEB_SUMMARYDIR)/commits
-
-FIRST_COMMIT = $(shell $(WEB_SOURCEDIR)/earliest-commit.sh $(WEB_SUMMARYDIR) $(WEB_REPODIR))
-COMMIT_HASHES = $(shell cd $(WEB_REPODIR) ; git rev-list --abbrev-commit $(FIRST_COMMIT)^..)
-COMMIT_FILES = $(addsuffix .json, $(addprefix $(WEB_COMMITSDIR)/, $(COMMIT_HASHES)))
-# MISSING_COMMIT_FILES = $(filter-out $(wildcard $(WEB_COMMITSDIR)/*.json), $(COMMIT_FILES))
 
 $(WEB_COMMITSDIR)/%.json: $(WEB_SOURCEDIR)/json-commit.sh | $(WEB_COMMITSDIR)
 	$(WEB_SOURCEDIR)/json-commit.sh $* $(WEB_REPODIR) > $@.tmp
