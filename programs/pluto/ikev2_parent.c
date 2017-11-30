@@ -3306,6 +3306,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		if (LIN(POLICY_MOBIKE, cc->policy)) {
 			notifies--;
 			int np = notifies != 0 ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE;
+			cst->st_sent_mobike = pst->st_sent_mobike = TRUE;
 			if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
 					PROTO_v2_RESERVED,
 					&empty_chunk,
@@ -3740,8 +3741,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 		encstart = e_pbs_cipher.cur;
 
 		/* send any NOTIFY payloads */
-
-		if (c->policy & POLICY_MOBIKE) {
+		if (st->st_sent_mobike) {
 			notifies--;
 			if (!ship_v2N((notifies != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2IDr,
 					ISAKMP_PAYLOAD_NONCRITICAL,
@@ -5281,13 +5281,63 @@ static void set_mobike_remote_addr(struct msg_digest *md, struct state *st)
 	/* local_addr and localport are not used in send_packet() ! */
 }
 
-static bool process_mobike_notify(struct msg_digest *md, bool *ntfy_natd,
+/* can an established state initiate or respond to mobike probe */
+static bool mobike_check_established(const struct state *st)
+{
+	struct connection *c = st->st_connection;
+	bool ret = LIN(POLICY_MOBIKE, c->policy) &
+		   st->st_seen_mobike & st->st_sent_mobike &
+		   IS_ISAKMP_SA_ESTABLISHED(st->st_state);
+
+	return ret;
+}
+
+static bool process_mobike_resp(struct msg_digest *md)
+{
+	struct state *st = md->st;
+	bool may_mobike = mobike_check_established(st);
+	bool natd_s = FALSE;
+	bool natd_d = FALSE;
+	struct payload_digest *ntfy;
+
+	if (!may_mobike) {
+		return FALSE;
+	}
+
+	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
+		switch (ntfy->payload.v2n.isan_type) {
+
+		case v2N_NAT_DETECTION_DESTINATION_IP:
+			natd_d =  TRUE;
+			DBG(DBG_CONTROLMORE, DBG_log("TODO: process %s in MOBIKE response ",
+						enum_name(&ikev2_notify_names,
+							ntfy->payload.v2n.isan_type)));
+			break;
+		case v2N_NAT_DETECTION_SOURCE_IP:
+			natd_s = TRUE;
+			DBG(DBG_CONTROLMORE, DBG_log("TODO: process %s in MOBIKE response ",
+						enum_name(&ikev2_notify_names,
+							ntfy->payload.v2n.isan_type)));
+
+			break;
+		}
+	}
+	bool ret  = natd_s & natd_d;
+	if (ret)
+		if (!update_mobike_endpoints(st, md)) { /* IPs already updated from md */
+			return FALSE;
+		}
+	update_ike_endpoints(st, md); /* update state sender so we can find it for IPsec SA */
+
+	return ret;
+}
+
+static bool process_mobike_req(struct msg_digest *md, bool *ntfy_natd,
 		chunk_t *cookie2)
 {
 	struct payload_digest *ntfy;
 	struct state *st = md->st;
-	struct connection *c = st->st_connection;
-	bool may_mobike = ((c->policy & POLICY_MOBIKE) != LEMPTY);
+	bool may_mobike = mobike_check_established(st);
 	bool ntfy_update_sa = FALSE;
 
 	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
@@ -5360,17 +5410,14 @@ static bool process_mobike_notify(struct msg_digest *md, bool *ntfy_natd,
 		if (LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
 			libreswan_log("Ignoring MOBIKE UPDATE_SA since we are behind NAT");
 		} else {
-			libreswan_log("MOBIKE: running MOBIKE UPDATE_SA");
-			update_mobike_endpoints(st, md); /* IPs already updated from md */
+			if (!update_mobike_endpoints(st, md))
+				*ntfy_natd = FALSE;
 			update_ike_endpoints(st, md); /* update state sender so we can find it for IPsec SA */
 		}
 	}
 
-
-	if (may_mobike && !ntfy_update_sa && ntfy_natd &&
-			st->st_seen_mobike &&
+	if (may_mobike && !ntfy_update_sa && *ntfy_natd &&
 			!LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
-
 		set_mobike_remote_addr(md, st);
 	}
 
@@ -5416,6 +5463,33 @@ static void mobike_switch_remote(struct msg_digest *md, struct mobike *est_remot
 		}
 	}
 }
+
+static stf_status add_mobike_response_payloads(int np, chunk_t *cookie2,
+					 struct msg_digest *md, pb_stream *pbs)
+{
+	struct ikev2_generic in;
+
+	DBG(DBG_CONTROLMORE, DBG_log("adding NATD %s payloads to MOBIKE response",
+				cookie2->len != 0 ? "and cookie2 " : ""));
+
+	zero(&in);      /* OK: no pointers */
+	in.isag_np = np;
+	in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
+	if (!ikev2_out_nat_v2n(np, pbs, md))
+		return STF_INTERNAL_ERROR;
+	if (cookie2->len != 0) {
+		if (!ship_v2N(ISAKMP_NEXT_v2NONE,
+					ISAKMP_PAYLOAD_NONCRITICAL,
+					PROTO_v2_RESERVED, &empty_chunk,
+					v2N_COOKIE2, cookie2, pbs)) {
+			freeanychunk(*cookie2);
+			return STF_INTERNAL_ERROR;
+		}
+		freeanychunk(*cookie2);
+	}
+
+	return STF_OK;
+}
 /*
  *
  ***************************************************************
@@ -5438,7 +5512,7 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 	pexpect(st == md->st);
 	st = md->st;
 	struct payload_digest *p;
-	bool ntfy_natd = FALSE;
+	bool send_mobike_resp = FALSE;
 	chunk_t cookie2 = empty_chunk;
 
 	/* Are we responding (as opposed to processing a response)? */
@@ -5478,11 +5552,10 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		md->chain[ISAKMP_NEXT_v2N] != NULL) {
 
 		loglog(RC_LOG_SERIOUS, "Received INFORMATIONAL with both DELETE and NOTIFY payloads. Ignored notify payloads");
-	} else if (process_mobike_notify(md, &ntfy_natd, &cookie2)) {
-		/* MOBIKE handled */
-	} else {
-		/* is this mobike liveness ? */
-		mobike_liveness(md);
+	} else if (responding && process_mobike_req(md, &send_mobike_resp, &cookie2)) {
+		/* MOBIKE request processed */
+	} else if (!responding && process_mobike_resp(md)) {
+		/* lets migrage the kernel SA */
 	}
 
 	/*
@@ -5612,7 +5685,7 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 			struct ikev2_generic e;
 
 			e.isag_np = (del_ike || ndp != 0) ? ISAKMP_NEXT_v2D :
-				ntfy_natd ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE;
+				send_mobike_resp ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE;
 
 			e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 
@@ -5634,30 +5707,12 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		encstart = e_pbs_cipher.cur;
 	}
 
-	if (ntfy_natd) {
-		/* We know we cannot be deleting */
-		libreswan_log("PAUL: adding reply NATD payloads");
+	if (send_mobike_resp) {
+		stf_status e;
 		int np = (cookie2.len != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE;
-		struct ikev2_generic in;
-
-		zero(&in);      /* OK: no pointers */
-		in.isag_np = np;
-		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-		if (!ikev2_out_nat_v2n(np, &e_pbs_cipher, md))
-			return STF_INTERNAL_ERROR;
-		if (cookie2.len != 0) {
-			if (!ship_v2N(ISAKMP_NEXT_v2NONE,
-						ISAKMP_PAYLOAD_NONCRITICAL,
-						PROTO_v2_RESERVED, &empty_chunk,
-						v2N_COOKIE2, &cookie2,
-						&e_pbs_cipher)) {
-				freeanychunk(cookie2);
-				return STF_INTERNAL_ERROR;
-			}
-			freeanychunk(cookie2);
-		}
-	} else {
-		libreswan_log("PAUL: NO NATD payloads added");
+		e = add_mobike_response_payloads(np, &cookie2, md, &e_pbs_cipher);
+		if (e != STF_OK)
+			return e;
 	}
 
 	/*
@@ -5886,7 +5941,7 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 	return STF_OK;
 }
 
-stf_status ikev2_send_informational(struct state *st)
+stf_status ikev2_send_livenss_probe(struct state *st)
 {
 	struct state *pst = st;
 
@@ -5901,102 +5956,147 @@ stf_status ikev2_send_informational(struct state *st)
 		}
 	}
 
-	{
-		/* buffer in which to marshal our informational message.
-		 * We don't use reply_buffer/reply_stream because they might be in use.
-		 */
-		u_char buffer[1024];	/* ??? large enough for any informational? */
-		unsigned char *authstart;
-		unsigned char *encstart;
-		unsigned char *iv;
-
-		struct ikev2_generic e;
-		pb_stream e_pbs, e_pbs_cipher;
-		pb_stream rbody;
-		pb_stream reply_stream;
-
-		init_out_pbs(&reply_stream, buffer, sizeof(buffer),
-			 "informational exchange request packet");
-		authstart = reply_stream.cur;
-
-		/* HDR out */
-		{
-			struct isakmp_hdr hdr;
-
-			zero(&hdr);	/* OK: no pointer fields */
-			hdr.isa_version = build_ikev2_version();
-			memcpy(hdr.isa_rcookie, pst->st_rcookie, COOKIE_SIZE);
-			memcpy(hdr.isa_icookie, pst->st_icookie, COOKIE_SIZE);
-			hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
-			hdr.isa_np = ISAKMP_NEXT_v2SK;
-			hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
-
-			/* encryption role based on original state not md state */
-			if (pst->st_original_role == ORIGINAL_INITIATOR)
-				hdr.isa_flags = ISAKMP_FLAGS_v2_IKE_I;
-
-			/* not setting message responder flag */
-
-			if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG))
-				hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
-
-			if (!out_struct(&hdr, &isakmp_hdr_desc,
-					&reply_stream, &rbody))
-				return STF_FATAL;
-		}
-
-		/* insert an Encryption payload header */
-		e.isag_np = ISAKMP_NEXT_v2NONE;
-		e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-		if (!out_struct(&e, &ikev2_sk_desc, &rbody, &e_pbs))
-			return STF_FATAL;
-
-		/* IV */
-		iv = e_pbs.cur;
-		if (!emit_wire_iv(st, &e_pbs))
-			return STF_INTERNAL_ERROR;
-
-		/* note where cleartext starts */
-		init_pbs(&e_pbs_cipher, e_pbs.cur, e_pbs.roof - e_pbs.cur,
-			 "cleartext");
-		e_pbs_cipher.container = &e_pbs;
-		e_pbs_cipher.desc = NULL;
-		e_pbs_cipher.cur = e_pbs.cur;
-		encstart = e_pbs_cipher.cur;
-
-		/* This is an empty informational exchange (A.K.A liveness check) */
-
-		if (!ikev2_padup_pre_encrypt(st, &e_pbs_cipher))
-			return STF_INTERNAL_ERROR;
-
-		close_output_pbs(&e_pbs_cipher);
-
-		{
-			stf_status ret;
-			unsigned char *authloc = ikev2_authloc(pst, &e_pbs);
-
-			passert(authloc != NULL);
-
-			close_output_pbs(&e_pbs);
-			close_output_pbs(&rbody);
-			close_output_pbs(&reply_stream);
-
-			ret = ikev2_encrypt_msg(st, authstart,
-						iv, encstart, authloc,
-						&e_pbs_cipher);
-			if (ret != STF_OK)
-				return STF_FATAL;
-		}
-		/* cannot use ikev2_update_msgid_counters - no md here */
-		/* But we know we are the initiator for thie exchange */
-		pst->st_msgid_nextuse += 1;
-
-		pst->st_pend_liveness = TRUE; /* we should only do this when dpd/liveness is active? */
-		record_and_send_ike_msg(st, &reply_stream,
-			"packet for ikev2_send_informational");
-	}
+	stf_status e = ikev2_send_informational(st, pst, 0);
 
 	pstats_ike_dpd_sent++;
+
+	return e;
+}
+
+static stf_status add_mobike_payloads(struct state *st UNUSED, pb_stream *pbs)
+{
+	if (!ship_v2N(ISAKMP_NEXT_v2N, ISAKMP_PAYLOAD_NONCRITICAL,
+				PROTO_v2_RESERVED, &empty_chunk,
+				v2N_UPDATE_SA_ADDRESSES, &empty_chunk, pbs))
+		return STF_INTERNAL_ERROR;
+
+	if (!ikev2_out_natd(st, ISAKMP_NEXT_v2NONE,
+				&st->st_mobike_localaddr,
+				st->st_mobike_localport,
+				&st->st_remoteaddr, st->st_remoteport,
+				st->st_rcookie, pbs))
+		return STF_INTERNAL_ERROR;
+
+	return STF_OK;
+}
+
+stf_status ikev2_send_informational(struct state *st, struct state *pst,
+		v2_notification_t v2N)
+{
+
+	/* buffer in which to marshal our informational message.
+	 * We don't use reply_buffer/reply_stream because they might be in use.
+	 */
+	u_char buffer[1024];	/* ??? large enough for any informational? */
+	unsigned char *authstart;
+	unsigned char *encstart;
+	unsigned char *iv;
+
+	struct ikev2_generic e;
+	pb_stream e_pbs, e_pbs_cipher;
+	pb_stream rbody;
+	pb_stream reply_stream;
+
+	stf_status (*add_payloads)(struct state *st, pb_stream *pbs);
+
+	switch (v2N) {
+	case v2N_NOTHING_WRONG:
+		/* This is an empty informational exchange (A.K.A liveness check) */
+		e.isag_np = ISAKMP_NEXT_v2NONE;
+		add_payloads = NULL;
+		break;
+
+	case v2N_UPDATE_SA_ADDRESSES:
+		e.isag_np = ISAKMP_NEXT_v2N;
+		add_payloads = add_mobike_payloads;
+		break;
+
+	/*  e.isag_np = ISAKMP_NEXT_v2D; */
+
+	default:
+		bad_case(v2N);
+
+	}
+
+	init_out_pbs(&reply_stream, buffer, sizeof(buffer),
+			"informational exchange request packet");
+	authstart = reply_stream.cur;
+
+	/* HDR out */
+	{
+		struct isakmp_hdr hdr;
+
+		zero(&hdr);	/* OK: no pointer fields */
+		hdr.isa_version = build_ikev2_version();
+		memcpy(hdr.isa_rcookie, pst->st_rcookie, COOKIE_SIZE);
+		memcpy(hdr.isa_icookie, pst->st_icookie, COOKIE_SIZE);
+		hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
+		hdr.isa_np = ISAKMP_NEXT_v2SK;
+		hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
+
+		/* encryption role based on original state not md state */
+		if (pst->st_original_role == ORIGINAL_INITIATOR)
+			hdr.isa_flags = ISAKMP_FLAGS_v2_IKE_I;
+
+		/* not setting message responder flag */
+
+		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG))
+			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
+
+		if (!out_struct(&hdr, &isakmp_hdr_desc,
+					&reply_stream, &rbody))
+			return STF_FATAL;
+	}
+
+	/* insert an Encryption payload header */
+	e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
+	if (!out_struct(&e, &ikev2_sk_desc, &rbody, &e_pbs))
+		return STF_FATAL;
+
+	/* IV */
+	iv = e_pbs.cur;
+	if (!emit_wire_iv(st, &e_pbs))
+		return STF_INTERNAL_ERROR;
+
+	/* note where cleartext starts */
+	init_pbs(&e_pbs_cipher, e_pbs.cur, e_pbs.roof - e_pbs.cur,
+			"cleartext");
+	e_pbs_cipher.container = &e_pbs;
+	e_pbs_cipher.desc = NULL;
+	e_pbs_cipher.cur = e_pbs.cur;
+	encstart = e_pbs_cipher.cur;
+
+	if (add_payloads != NULL)
+		add_payloads(st, &e_pbs_cipher);
+
+	if (!ikev2_padup_pre_encrypt(st, &e_pbs_cipher))
+		return STF_INTERNAL_ERROR;
+
+	close_output_pbs(&e_pbs_cipher);
+
+	{
+		stf_status ret;
+		unsigned char *authloc = ikev2_authloc(pst, &e_pbs);
+
+		passert(authloc != NULL);
+
+		close_output_pbs(&e_pbs);
+		close_output_pbs(&rbody);
+		close_output_pbs(&reply_stream);
+
+		ret = ikev2_encrypt_msg(st, authstart,
+				iv, encstart, authloc,
+				&e_pbs_cipher);
+		if (ret != STF_OK)
+			return STF_FATAL;
+	}
+	/* cannot use ikev2_update_msgid_counters - no md here */
+	/* But we know we are the initiator for thie exchange */
+	pst->st_msgid_nextuse += 1;
+
+	pst->st_pend_liveness = TRUE; /* we should only do this when dpd/liveness is active? */
+	record_and_send_ike_msg(st, &reply_stream,
+			"packet for ikev2_send_informational");
 
 	return STF_OK;
 }
@@ -6343,13 +6443,39 @@ void ikev2_record_deladdr(struct state *st, void *arg_ip)
 	}
 }
 
-void ikev2_addr_del(struct state *st)
+static void initiate_mobike_probe(struct state *st, struct starter_end *this,
+		const struct iface_port *iface)
+{
+	/*
+	 * caveat: could a CP initiator find an address received
+	 * from the pool as a new source address?
+	 */
+
+	ipstr_buf s, g, b;
+	DBG(DBG_CONTROL, DBG_log("#%lu MOBIKE new source address %s remote %s and gateway %s",
+				st->st_serialno, ipstr(&this->addr, &s),
+				sensitive_ipstr(&st->st_remoteaddr, &b),
+				ipstr(&this->nexthop, &g)));
+	st->st_mobike_localaddr = this->addr;
+	st->st_mobike_localport = st->st_localport;
+	const struct iface_port *o_iface = st->st_interface;
+	st->st_interface = iface;
+
+	ikev2_send_informational(st, st, v2N_UPDATE_SA_ADDRESSES);
+
+	st->st_interface = o_iface;
+}
+
+void ikev2_addr_change(struct state *st)
 {
 	struct starter_end this;
 	struct starter_end that;
 
 	zero(&this);
 	zero(&that);
+
+	if (!mobike_check_established(st))
+		return;
 
 	/* lets re-discover local address */
 	this.addrtype = KH_DEFAULTROUTE;
@@ -6366,25 +6492,37 @@ void ikev2_addr_del(struct state *st)
 	 */
 	if (resolve_defaultroute_one(&this, &that, 3) == 1) {
 		if (resolve_defaultroute_one(&this, &that, 3) == 0) {
-			/* success */
-			ipstr_buf s, g, b;
-			 DBG(DBG_CONTROL, DBG_log("#%lu MOBIKE new source address %s remote %s and gateway %s",
-			st->st_serialno, ipstr(&this.addr, &s),
-			sensitive_ipstr(&that.addr, &b),
-			ipstr(&this.nexthop, &g)));
-			st->st_mobike_localaddr = this.addr;
-			st->st_mobike_localport = st->st_localport;
+			const struct iface_port *iface;
+			ipstr_buf b;
 
+			if (sameaddr(&st->st_localaddr, &this.addr)) {
+				DBG(DBG_CONTROL, DBG_log("#%lu new address %s is same as old. No MOBIKE action",
+							st->st_serialno,
+							sensitive_ipstr(&this.addr, &b)));
+				return;
+			} else {
+				DBG(DBG_CONTROL, DBG_log("#%lu new address %s looup interface",
+							st->st_serialno,
+							sensitive_ipstr(&this.addr,
+								&b)));
+			}
+			/* success found a new source address */
+
+			iface = lookup_iface_ip(&this.addr, st->st_localport);
+			if (iface ==  NULL)
+				return;
+
+			initiate_mobike_probe(st, &this, iface);
 		} else {
 			ipstr_buf g, b;
-			libreswan_log("no local source address for remote %s, local gateway %s",
+			libreswan_log("no local source address to reach remote %s, local gateway %s",
 					sensitive_ipstr(&that.addr, &b),
 					ipstr(&this.nexthop, &g));
 		}
 	} else {
 		ipstr_buf b;
 		/* keep this DEBUG, if a libreswan log, too many false +ve */
-		DBG(DBG_CONTROL, DBG_log("#%lu could not find local gatway to remote %s",
+		DBG(DBG_CONTROL, DBG_log("#%lu no local gatway to reach %s",
 					st->st_serialno,
 					sensitive_ipstr(&that.addr, &b)));
 	}

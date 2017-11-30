@@ -74,6 +74,7 @@
 #include "secrets.h"    /* unreference_key() */
 #include "enum_names.h"
 #include "crypt_dh.h"
+#include "hostpair.h"
 
 #include <nss.h>
 #include <pk11pub.h>
@@ -2468,64 +2469,120 @@ void update_ike_endpoints(struct state *st,
  * We have successfully decrypted this packet, so we can update
  * the remote IP / port
  */
-void update_mobike_endpoints(struct state *pst,
+bool update_mobike_endpoints(struct state *pst,
 				const struct msg_digest *md)
 {
 	struct connection *c = pst->st_connection;
 	int af = addrtypeof(&md->iface->ip_addr);
 	ipstr_buf b;
+	ip_address *old_addr, *new_addr;
+	u_int16_t old_port, new_port;
+	bool ret = FALSE;
+
 	/*
-	 * AA_201705 does is this the right way to find Child SA?
+	 * AA_201705 is this the right way to find Child SA(s)?
 	 * would it work if there are multiple Child SAs on this parent??
-	 * would it work if the Child SA is different from parent connection ?
-	 * for now just do this connection, later on loop over hostpair
+	 * would it work if the Child SA connection is different from IKE SA?
+	 * for now just do this one connection, later on loop over all Child SAs
 	 */
 	struct state *cst = state_with_serialno(c->newest_ipsec_sa);
+	const bool msg_r = is_msg_response(md); /* MOBIKE inititor */
 
-	libreswan_log("PAUL: start update_mobike_endpoints()");
 
 	/* check for all conditions before updating IPsec SA's */
 	if (af != addrtypeof(&c->spd.that.host_addr)) {
 		libreswan_log("MOBIKE: AF change switching between v4 and v6 not supported");
-		return;
+		return ret;
 	}
 
-	cst->st_mobike_remoteaddr = md->sender;
-	cst->st_mobike_remoteport = md->sender_port;
-	pst->st_mobike_remoteaddr = md->sender;
-	pst->st_mobike_remoteport = md->sender_port;
+	passert(cst->st_connection == pst->st_connection);
 
-	if (sameaddr(&md->sender, &pst->st_remoteaddr) &&
-			pst->st_remoteport == md->sender_port) {
+	if (msg_r) {
+		/* MOBIKE initiator */
+		old_addr = &pst->st_localaddr;
+		old_port = pst->st_localport;
+
+		cst->st_mobike_localaddr = pst->st_mobike_localaddr;
+		cst->st_mobike_localport = pst->st_mobike_localport;
+
+		new_addr = &pst->st_mobike_localaddr;
+		new_port = pst->st_mobike_localport;
+	} else {
+		/* MOBIKE responder */
+		old_addr = &pst->st_remoteaddr;
+		old_port = pst->st_remoteport;
+
+		cst->st_mobike_remoteaddr = md->sender;
+		cst->st_mobike_remoteport = md->sender_port;
+		pst->st_mobike_remoteaddr = md->sender;
+		pst->st_mobike_remoteport = md->sender_port;
+
+		new_addr = &pst->st_mobike_remoteaddr;
+		new_port = pst->st_mobike_remoteport;
+	}
+
+	char buf[256];
+	ipstr_buf old;
+	ipstr_buf new;
+	snprintf(buf, sizeof(buf), "MOBIKE update %s address %s:%u -> %s:%u",
+			msg_r ? "local" : "remote",
+			sensitive_ipstr(old_addr, &old),
+			old_port,
+			sensitive_ipstr(new_addr, &new), new_port);
+
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu pst=#%lu %s", cst->st_serialno,
+					pst->st_serialno, buf));
+
+	if (sameaddr(old_addr, new_addr) && new_port == old_port) {
 		DBG(DBG_CONTROLMORE, DBG_log("#%lu MOBIKE UPDATE_SA ignore message, same IP address %s:%u",
-					pst->st_serialno,
-					ipstr(&md->sender, &b),
-					md->sender_port));
-		return;
+					pst->st_serialno, sensitive_ipstr(old_addr, &b),
+					old_port));
+		if (msg_r) {
+			/* initiator should be migrating */
+			PEXPECT_LOG("%s no change to kernel SA", buf);
+		} else {
+			/* on responder NAT could hide end-to-end change */
+			libreswan_log("MOBIKE success no change in kernel SA");
+		}
+
+		return TRUE;
 	}
 
 	if (!migrate_ipsec_sa(cst)) {
-		libreswan_log("MOBIKE UPDATE_SA kernel migration to %s:%u failed",
-				ipstr(&md->sender, &b), md->sender_port);
-		return;
+		libreswan_log("%s FAILED", buf);
+		return ret;
 	}
 
-	/* do not move the next line further down. from IP is overwritten */
-	libreswan_log("MOBIKE UPDATE_SA remote to %s:%u previous port %u",
-		ipstr(&md->sender, &b), md->sender_port,
-		pst->st_remoteport);
+	libreswan_log(" success %s", buf);
 
-	c->spd.that.host_addr = md->sender;
-	c->spd.that.host_port = md->sender_port;
+	if (msg_r) {
+		/* MOBIKE initiator */
+		c->spd.this.host_addr = cst->st_mobike_localaddr;
+		c->spd.this.host_port = cst->st_mobike_localport;
 
-	/* for the consistancy, correct output in ipsec status */
-	cst->st_remoteaddr = md->sender;
-	cst->st_remoteport = md->sender_port;
-	cst->st_localaddr = md->iface->ip_addr;
-	cst->st_localport = md->iface->port;
-	cst->st_interface = md->iface;
+		pst->st_localaddr = cst->st_localaddr = md->iface->ip_addr;
+		pst->st_localport = cst->st_localport = md->iface->port;
+		pst->st_interface = cst->st_interface = md->iface;
 
-	libreswan_log("MOBIKE PAUL: done");
+	} else {
+		/* MOBIKE responder */
+		c->spd.that.host_addr = md->sender;
+		c->spd.that.host_port = md->sender_port;
+
+		/* for the consistency, correct output in ipsec status */
+		cst->st_remoteaddr = pst->st_remoteaddr = md->sender;
+		cst->st_remoteport = pst->st_remoteport = md->sender_port;
+		cst->st_localaddr = pst->st_localaddr = md->iface->ip_addr;
+		cst->st_localport = pst->st_localport = md->iface->port;
+		cst->st_interface = pst->st_interface = md->iface;
+	}
+
+	delete_oriented_hp(c); /* hp list may have changed */
+	if (!orient(c)) {
+		PEXPECT_LOG("%s after mobike failed", "orient");
+	}
+	connect_to_host_pair(c); /* re-create hp listing */
+
 	return TRUE;
 }
 
@@ -2725,7 +2782,18 @@ void set_newest_ipsec_sa(const char *m, struct state *const st)
 
 }
 
-void record_addr_del(ip_address *ip)
+void record_newaddr(ip_address *ip, char *a_type)
 {
-        for_each_state(ikev2_record_addr_del, ip);
+	ipstr_buf ip_str;
+	DBG(DBG_KERNEL, DBG_log("XFRM RTM_NEWADDR %s %s",
+				ipstr(ip, &ip_str), a_type));
+	for_each_state(ikev2_record_newaddr, ip);
+}
+
+void record_deladdr(ip_address *ip, char *a_type)
+{
+	ipstr_buf ip_str;
+	DBG(DBG_KERNEL, DBG_log("XFRM RTM_DELADDR %s %s",
+				ipstr(ip, &ip_str), a_type));
+	for_each_state(ikev2_record_deladdr, ip);
 }

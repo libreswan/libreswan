@@ -423,7 +423,7 @@ static void liveness_check(struct state *st)
 			liveness_action(c, st->st_ikev2);
 			return;
 		} else {
-			stf_status ret = ikev2_send_informational(st);
+			stf_status ret = ikev2_send_livenss_probe(st);
 
 			DBG(DBG_DPD,
 				DBG_log("#%lu liveness_check - peer %s is missing - giving them some time to come back",
@@ -609,7 +609,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	case EVENT_v2_ADDR_CHANGE:
 		DBG(DBG_RETRANSMITS, DBG_log("#%lu IKEv2 local address change",
 					st->st_serialno));
-                ikev2_addr_del(st);
+		ikev2_addr_change(st);
 		break;
 	case EVENT_REINIT_SECRET:
 		DBG(DBG_CONTROL,

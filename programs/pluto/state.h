@@ -587,6 +587,7 @@ struct state {
 	bool st_seen_no_tfc;			/* did we receive ESP_TFC_PADDING_NOT_SUPPORTED */
 	bool st_seen_use_transport;		/* did we receive USE_TRANSPORT_MODE */
 	bool st_seen_mobike;			/* did we receive MOBIKE */
+	bool st_sent_mobike;			/* sent MOBIKE notify */
 	bool st_seen_nonats;			/* did we receive NO_NATS_ALLOWED */
 	generalName_t *st_requested_ca;		/* collected certificate requests */
 	u_int8_t st_reply_xchg;
@@ -713,11 +714,12 @@ extern bool require_ddos_cookies(void);
 extern void show_globalstate_status(void);
 extern void set_newest_ipsec_sa(const char *m, struct state *const st);
 extern void update_ike_endpoints(struct state *st, const struct msg_digest *md);
-extern void update_mobike_endpoints(struct state *st, const struct msg_digest *md);
+extern bool update_mobike_endpoints(struct state *st, const struct msg_digest *md);
 extern void ikev2_expire_unused_parent(struct state *pst);
 
 bool shared_phase1_connection(const struct connection *c);
 
-extern void record_addr_del(ip_address *ip);
+extern void record_deladdr(ip_address *ip, char *a_type);
+extern void record_newaddr(ip_address *ip, char *a_type);
 
 #endif /* _STATE_H */

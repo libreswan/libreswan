@@ -26,7 +26,10 @@ extern void log_ipsec_sa_established(const char *m, const struct state *st);
 extern void complete_v2_state_transition(struct msg_digest **mdp,
 					 stf_status result);
 
-extern stf_status ikev2_send_informational(struct state *st);
+extern stf_status ikev2_send_livenss_probe(struct state *st);
+
+extern stf_status ikev2_send_informational(struct state *st, struct state *pst,
+					   v2_notification_t v2N);
 
 extern state_transition_fn process_encrypted_informational_ikev2;
 
@@ -340,5 +343,7 @@ extern bool need_this_intiator(struct state *st);
 
 extern void init_ikev2(void);
 
-extern void ikev2_record_addr_del(struct state *st, void *arg_ip);
-extern void ikev2_addr_del(struct state *st);
+extern void ikev2_record_newaddr(struct state *st, void *arg_ip);
+extern void ikev2_record_deladdr(struct state *st, void *arg_ip);
+extern void ikev2_addr_change(struct state *st);
+

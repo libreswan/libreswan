@@ -189,6 +189,8 @@ enum event_type {
 #define EVENT_GIVEUP_ON_DNS_DELAY	(5 * secs_per_minute)
 #define EVENT_RELEASE_WHACK_DELAY	10	/* seconds */
 
+#define RTM_NEWADDR_ROUTE_DELAY		3 /* seconds */
+
 /*
  * an arbitrary milliseconds delay for responder. A workaround for iOS, iPhone.
  * If xauth message arrive before main mode response iPhone may abort.

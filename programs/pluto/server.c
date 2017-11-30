@@ -726,6 +726,17 @@ void find_ifaces(void)
 	}
 }
 
+struct iface_port *lookup_iface_ip(ip_address *ip, u_int16_t port)
+{
+	struct iface_port *p;
+	for (p = interfaces; p != NULL; p = p->next) {
+		if (sameaddr(ip, &p->ip_addr) && (p->port == port))
+			return p;
+	}
+
+	return NULL;
+}
+
 void show_ifaces_status(void)
 {
 	struct iface_port *p;

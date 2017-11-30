@@ -1940,7 +1940,6 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol)
 
 static void process_addr_chage(struct nlmsghdr *n)
 {
-
 	struct ifaddrmsg *nl_msg = NLMSG_DATA(n);
 	struct rtattr *rta = IFLA_RTA(nl_msg);
 	size_t msg_size = IFA_PAYLOAD (n);
