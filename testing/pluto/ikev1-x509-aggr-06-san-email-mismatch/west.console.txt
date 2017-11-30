@@ -33,7 +33,7 @@ west #
 218 "san" #1: STATE_AGGR_I1: INVALID_ID_INFORMATION
 002 "san" #1: sending notification INVALID_ID_INFORMATION to 192.1.2.23:500
 002 "san" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set
-031 "san" #1: max number of retransmissions (0) reached STATE_AGGR_I1.  No response (or no acceptable response) to our first IKEv1 message
+002 "san" #1: IMPAIR RETRANSMITS: suppressing re-key
 002 "san" #1: deleting state (STATE_AGGR_I1)
 west #
  echo "done"

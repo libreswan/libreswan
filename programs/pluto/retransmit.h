@@ -24,7 +24,7 @@
 typedef struct {
 	deltatime_t delay;
 	deltatime_t timeout;
-	monotime_t stop; /* start+timeout */
+	monotime_t start;
 	unsigned long nr_retransmits;
 	unsigned long nr_duplicate_replies;
 	unsigned long limit;
@@ -40,8 +40,7 @@ void start_retransmits(struct state *st, enum event_type event);
 void clear_retransmits(struct state *st);
 
 enum retransmit_status {
-	RETRANSMIT_IMPAIRED_AND_CAPPED = 1,
-	RETRANSMIT_CAPPED,
+	RETRANSMITS_TIMED_OUT = 1,
 	RETRANSMIT_NO,
 	RETRANSMIT_YES,
 };

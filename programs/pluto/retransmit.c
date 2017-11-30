@@ -103,7 +103,7 @@ void clear_retransmits(struct state *st)
 	rt->nr_retransmits = 0;
 	rt->limit = 0;
 	rt->delay = deltatime(0);
-	rt->stop = monotime_epoch;
+	rt->start = monotime_epoch;
 	rt->timeout = deltatime(0);
 	DBG(DBG_RETRANSMITS,
 	    DBG_log("#%ld %s: retransmits: cleared",
@@ -133,7 +133,7 @@ void start_retransmits(struct state *st, enum event_type type)
 	} else {
 		rt->timeout = c->r_timeout;
 	}
-	rt->stop = monotimesum(mononow(), rt->timeout);
+	rt->start = mononow();
 	event_schedule(rt->type, rt->delay, st);
 	LSWDBGP(DBG_RETRANSMITS, buf) {
 		lswlogf(buf, "#%ld %s: retransmits: first event in ",
@@ -166,7 +166,7 @@ enum retransmit_status retransmit(struct state *st)
 	 */
 	if (IMPAIR(RETRANSMITS)) {
 		libreswan_log("suppressing retransmit because IMPAIR_RETRANSMITS is set");
-		return RETRANSMIT_IMPAIRED_AND_CAPPED;
+		return RETRANSMITS_TIMED_OUT;
 	}
 
 	/*
@@ -175,8 +175,47 @@ enum retransmit_status retransmit(struct state *st)
 	unsigned long nr_retransmits = retransmit_count(st);
 	bool too_many_retransmits = nr_retransmits >= rt->limit;
 	monotime_t now = mononow();
-	if (too_many_retransmits || monobefore(rt->stop, now)) {
-		return RETRANSMIT_CAPPED;
+	deltatime_t waited = monotimediff(now, rt->start);
+	if (too_many_retransmits || deltatime_cmp(waited, rt->timeout) >= 0) {
+		LSWLOG_LOG_WHACK(RC_NORETRANSMISSION, buf) {
+			lswlogf(buf, "%s: ", st->st_finite_state->fs_name);
+			if (too_many_retransmits) {
+				lswlogf(buf, "max number of retransmissions (%lu) reached after ",
+					nr_retransmits);
+				lswlog_deltatime(buf, waited);
+				lswlogs(buf, " seconds");
+			} else {
+				lswlog_deltatime(buf, rt->timeout);
+				lswlogf(buf, " second timeout exceeded after %lu retransmits",
+					nr_retransmits);
+			}
+			switch (st->st_state) {
+			case STATE_MAIN_I3:
+			case STATE_AGGR_I2:
+				lswlogs(buf, ".  Possible authentication failure: no acceptable response to our first encrypted message");
+				break;
+			case STATE_MAIN_I1:
+			case STATE_AGGR_I1:
+				lswlogs(buf, ".  No response (or no acceptable response) to our first IKEv1 message");
+				break;
+			case STATE_QUICK_I1:
+				if (st->st_connection->newest_ipsec_sa == SOS_NOBODY) {
+					lswlogs(buf, ".  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal");
+				}
+				break;
+			case STATE_PARENT_I2:
+				lswlogs(buf, ".  Possible authentication failure: no acceptable response to our first encrypted message");
+				break;
+			case STATE_PARENT_I1:
+				lswlogs(buf, ".  No response (or no acceptable response) to our first IKEv2 message");
+				break;
+			default:
+				lswlogf(buf, ".  No response (or no acceptable response) to our %s message",
+					st->st_ikev2 ? "IKEv2" : "IKEv1");
+				break;
+			}
+		}
+		return RETRANSMITS_TIMED_OUT;
 	}
 
 	double_delay(rt, nr_retransmits);
