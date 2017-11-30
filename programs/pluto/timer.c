@@ -110,94 +110,80 @@ static void retransmit_v1_msg(struct state *st)
 	switch (retransmit(st)) {
 	case RETRANSMIT_YES:
 		resend_ike_v1_msg(st, "EVENT_v1_RETRANSMIT");
-		break;
+		return;
 	case RETRANSMIT_NO:
+		return;
+	case RETRANSMITS_TIMED_OUT:
 		break;
-	case RETRANSMIT_IMPAIRED_AND_CAPPED:
-		try = 0;
-		/* FALLTHROUGH */
-	case RETRANSMIT_CAPPED:
-	{
-		/* check if we've tried rekeying enough times.
-		 * st->st_try == 0 means that this should be the only try.
-		 * c->sa_keying_tries == 0 means that there is no limit.
+	}
+
+	/*
+	 * check if we've tried rekeying enough times.  st->st_try ==
+	 * 0 means that this should be the only try (possibly from
+	 * IMPAIR).  c->sa_keying_tries == 0 means that there is no
+	 * limit.
+	 */
+
+	if (IMPAIR(RETRANSMITS) && try > 0) {
+		/*
+		 * IKEv1 never retries to IKEv2; but IKEv2 can retry
+		 * to IKEv1
 		 */
-		const char *details = "";
+		libreswan_log("IMPAIR RETRANSMITS: suppressing re-key");
+		/* disable re-key code */
+		try = 0;
+	}
 
-		switch (st->st_state) {
-		case STATE_MAIN_I3:
-		case STATE_AGGR_I2:
-			details = ".  Possible authentication failure: no acceptable response to our first encrypted message";
-			break;
-		case STATE_MAIN_I1:
-		case STATE_AGGR_I1:
-			details = ".  No response (or no acceptable response) to our first IKEv1 message";
-			break;
-		case STATE_QUICK_I1:
-			if (c->newest_ipsec_sa == SOS_NOBODY) {
-				details = ".  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal";
-			}
-			break;
-		default:
-			break;
-		}
-		loglog(RC_NORETRANSMISSION,
-			"max number of retransmissions (%ld) reached %s%s",
-		        retransmit_count(st),
-			st->st_state_name,
-			details);
-		if (try != 0 && (try <= try_limit || try_limit == 0)) {
-			/*
-			 * A lot like EVENT_SA_REPLACE, but over again.
-			 * Since we know that st cannot be in use,
-			 * we can delete it right away.
-			 */
-			char story[80]; /* arbitrary limit */
+	if (try != 0 && (try <= try_limit || try_limit == 0)) {
+		/*
+		 * A lot like EVENT_SA_REPLACE, but over again.  Since
+		 * we know that st cannot be in use, we can delete it
+		 * right away.
+		 */
+		char story[80]; /* arbitrary limit */
 
-			try++;
-			snprintf(story, sizeof(story), try_limit == 0 ?
-				"starting keying attempt %ld of an unlimited number" :
-				"starting keying attempt %ld of at most %ld",
-				try, try_limit);
+		try++;
+		snprintf(story, sizeof(story), try_limit == 0 ?
+			 "starting keying attempt %ld of an unlimited number" :
+			 "starting keying attempt %ld of at most %ld",
+			 try, try_limit);
 
-			/* ??? DBG and real-world code mixed */
-			if (!DBGP(DBG_WHACKWATCH)) {
-				if (st->st_whack_sock != NULL_FD) {
-					/*
-					 * Release whack because the observer
-					 * will get bored.
-					 */
-					loglog(RC_COMMENT,
-						"%s, but releasing whack",
-						story);
-					release_pending_whacks(st, story);
-				} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-					/* no whack: just log */
-					libreswan_log("%s", story);
-				}
-			} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-				loglog(RC_COMMENT, "%s", story);
-			}
-
-			if (try % 3 == 0 &&
-				LIN(POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE,
-					c->policy)) {
+		/* ??? DBG and real-world code mixed */
+		if (!DBGP(DBG_WHACKWATCH)) {
+			if (st->st_whack_sock != NULL_FD) {
 				/*
-				 * so, let's retry with IKEv2, alternating
-				 * every three messages
+				 * Release whack because the observer
+				 * will get bored.
 				 */
-				c->failed_ikev2 = FALSE;
 				loglog(RC_COMMENT,
-					"next attempt will be IKEv2");
+				       "%s, but releasing whack",
+				       story);
+				release_pending_whacks(st, story);
+			} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+				/* no whack: just log */
+				libreswan_log("%s", story);
 			}
-			ipsecdoi_replace(st, LEMPTY, LEMPTY, try);
+		} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+			loglog(RC_COMMENT, "%s", story);
 		}
-		set_cur_state(st);  /* ipsecdoi_replace would reset cur_state, set it again */
-		delete_state(st);
-		/* note: no md->st to clear */
-		break;
+
+		if (try % 3 == 0 &&
+		    LIN(POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE,
+			c->policy)) {
+			/*
+			 * so, let's retry with IKEv2, alternating
+			 * every three messages
+			 */
+			c->failed_ikev2 = FALSE;
+			loglog(RC_COMMENT,
+			       "next attempt will be IKEv2");
+		}
+		ipsecdoi_replace(st, LEMPTY, LEMPTY, try);
 	}
-	}
+
+	set_cur_state(st);  /* ipsecdoi_replace would reset cur_state, set it again */
+	delete_state(st);
+	/* note: no md->st to clear */
 }
 
 static void retransmit_v2_msg(struct state *st)
@@ -205,7 +191,6 @@ static void retransmit_v2_msg(struct state *st)
 	struct connection *c;
 	unsigned long try;
 	unsigned long try_limit;
-	const char *details = "";
 	struct state *pst = IS_CHILD_SA(st) ? state_with_serialno(st->st_clonedfrom) : st;
 
 	passert(st != NULL);
@@ -243,42 +228,34 @@ static void retransmit_v2_msg(struct state *st)
 		return;
 	case RETRANSMIT_NO:
 		return;
-	case RETRANSMIT_IMPAIRED_AND_CAPPED:
-		try = 0;
-		/* continued below */
-		break;
-	case RETRANSMIT_CAPPED:
-		/* continued below */
+	case RETRANSMITS_TIMED_OUT:
 		break;
 	}
 
 	/*
-	 * check if we've tried rekeying enough times.
-	 * st->st_try == 0 means that this should be the only try.
-	 * c->sa_keying_tries == 0 means that there is no limit.
+	 * Current state is dead and will be deleted at the end of the
+	 * function.
 	 */
-	switch (st->st_state) {
-	case STATE_PARENT_I2:
-		details = ".  Possible authentication failure: no acceptable response to our first encrypted message";
-		break;
-	case STATE_PARENT_I1:
-		details = ".  No response (or no acceptable response) to our first IKEv2 message";
-		break;
-	default:
-		details = ".  No response (or no acceptable response) to our IKEv2 message";
-		break;
+
+	/*
+	 * check if we've tried rekeying enough times.  st->st_try ==
+	 * 0 means that this should be the only try (possibly from
+	 * IMPAIR).  c->sa_keying_tries == 0 means that there is no
+	 * limit.
+	 */
+
+	if (IMPAIR(RETRANSMITS) && try > 0) {
+		/*
+		 * XXX: Even though TRY is always non-zero; check it.
+		 * At some point TRY, and the code falling back to
+		 * IKEv1 will go away and this is a bread-crumb for
+		 * what needs to be changed.
+		 */
+		libreswan_log("IMPAIR RETRANSMITS: suppressing re-key");
+		/* disable re-key code */
+		try = 0;
 	}
 
-	if (DBGP(DBG_OPPO) || ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY)) {
-		/* too spammy for OE */
-		loglog(RC_NORETRANSMISSION,
-			"max number of retransmissions (%lu) reached %s%s",
-		        retransmit_count(st),
-			st->st_state_name,
-			details);
-	}
-
-	/* XXX try can never be 0?! */
 	if (try != 0 && (try <= try_limit || try_limit == 0)) {
 		/*
 		 * A lot like EVENT_SA_REPLACE, but over again.

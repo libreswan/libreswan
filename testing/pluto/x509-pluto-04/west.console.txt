@@ -36,7 +36,7 @@ west #
 003 "westnet-eastnet-x509-cr" #1: ignoring informational payload INVALID_ID_INFORMATION, msgid=00000000, length=12
 003 "westnet-eastnet-x509-cr" #1: received and ignored informational message
 002 "westnet-eastnet-x509-cr" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set
-031 "westnet-eastnet-x509-cr" #1: max number of retransmissions (0) reached STATE_MAIN_I3.  Possible authentication failure: no acceptable response to our first encrypted message
+002 "westnet-eastnet-x509-cr" #1: IMPAIR RETRANSMITS: suppressing re-key
 002 "westnet-eastnet-x509-cr" #1: deleting state (STATE_MAIN_I3)
 west #
  echo done
