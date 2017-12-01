@@ -2581,8 +2581,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 		/* tell whack and log of progress */
 		{
-			const char *story = enum_name(&state_stories,
-						      st->st_state);
+			const char *story = st->st_state_story;
 			enum rc_type w = RC_NEW_STATE + st->st_state;
 			char sadetails[512];
 
