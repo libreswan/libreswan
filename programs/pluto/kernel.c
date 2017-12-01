@@ -2096,6 +2096,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			said_next->tfcpad = c->sa_tfcpad;
 		}
 
+		if (c->policy & POLICY_DECAP_DSCP) {
+			DBG(DBG_KERNEL, DBG_log("Enabling Decap ToS/DSCP bits"));
+			said_next->decap_dscp = TRUE;
+		}
+
 		said_next->integ = ta->ta_integ;
 		if (said_next->integ == &ike_alg_integ_sha2_256 &&
 			st->st_connection->sha2_truncbug) {
@@ -2124,7 +2129,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->authalg = said_next->integ->integ_ikev1_ah_transform;
 
 		if (st->st_esp.attrs.transattrs.esn_enabled == TRUE) {
-			DBG(DBG_KERNEL, DBG_log("Enabling ESN "));
+			DBG(DBG_KERNEL, DBG_log("Enabling ESN"));
 			said_next->esn = TRUE;
 		}
 
@@ -2260,7 +2265,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			c->sa_replay_window));
 
 		if (st->st_ah.attrs.transattrs.esn_enabled == TRUE) {
-			DBG(DBG_KERNEL, DBG_log("Enabling ESN "));
+			DBG(DBG_KERNEL, DBG_log("Enabling ESN"));
 			said_next->esn = TRUE;
 		}
 
