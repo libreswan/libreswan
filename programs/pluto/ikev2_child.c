@@ -1291,7 +1291,7 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
 				st->st_serialno, c->name, c->instance_serial));
 
 	if (cp->isacp_type !=  IKEv2_CP_CFG_REPLY) {
-		libreswan_log("ERROR expected IKEv2_CP_CFG_REPLY got a %s",
+		loglog(RC_LOG_SERIOUS, "ERROR expected IKEv2_CP_CFG_REPLY got a %s",
 			enum_name(&ikev2_cp_type_names,cp->isacp_type));
 		return FALSE;
 	}
@@ -1301,19 +1301,23 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
 
 		if (!in_struct(&cp_a, &ikev2_cp_attribute_desc,
 					attrs, &cp_a_pbs)) {
-			/* reject malformed */
-			return STF_FAIL;
+			loglog(RC_LOG_SERIOUS, "ERROR malformed CP attribute");
+			return FALSE;
 		}
 
 		switch (cp_a.type) {
 		case INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
-			if (!ikev2_set_ia(&cp_a_pbs, st))
+			if (!ikev2_set_ia(&cp_a_pbs, st)) {
+				loglog(RC_LOG_SERIOUS, "ERROR malformed INTERNAL_IP4_ADDRESS attribute");
 				return FALSE;
+			}
 			break;
 
 		case INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
-			if (!ikev2_set_dns(&cp_a_pbs, st))
+			if (!ikev2_set_dns(&cp_a_pbs, st)) {
+				loglog(RC_LOG_SERIOUS, "ERROR malformed INTERNAL_IP4_DNS attribute");
 				return FALSE;
+			}
 			break;
 		default:
 			libreswan_log("unknown attribute %s length %u",

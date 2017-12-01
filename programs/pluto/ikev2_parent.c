@@ -1866,6 +1866,8 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 		}
 
 		case v2N_NO_PROPOSAL_CHOSEN:
+			DBG(DBG_CONTROL, DBG_log("Received NO_PROPOSAL_CHOSEN"));
+			/* FALLTHROUGH */
 		default:
 			/*
 			 * ??? At least NO_PROPOSAL_CHOSEN
@@ -3974,8 +3976,11 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 			&st->st_accepted_esp_or_ah_proposal,
 			c->esp_or_ah_proposals);
 
-	if (ret != STF_OK)
+	if (ret != STF_OK) {
+		loglog(RC_LOG_SERIOUS, "%s responder SA processing returned %s", what,
+			enum_name(&stfstatus_name, ret));
 		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+	}
 
 	passert(st->st_accepted_esp_or_ah_proposal != NULL);
 
@@ -4026,7 +4031,7 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 	if (cp_r == ISAKMP_NEXT_v2CP) {
 		if (md->chain[ISAKMP_NEXT_v2CP] == NULL) {
 			/* not really anything to here... but it would be worth unpending again */
-			libreswan_log("missing v2CP reply, not attempting to setup child SA");
+			loglog(RC_LOG_SERIOUS, "missing v2CP reply, not attempting to setup child SA");
 			/* Delete previous retransmission event. */
 			delete_event(st);
 			/*
@@ -4332,11 +4337,11 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 
 	/* AUTH is ok, we can trust the notify payloads */
 	if (!got_transport && ((st->st_connection->policy & POLICY_TUNNEL) == LEMPTY)) {
-		libreswan_log("local policy requires Transport Mode but peer requires required Tunnel Mode");
+		loglog(RC_LOG_SERIOUS, "local policy requires Transport Mode but peer requires required Tunnel Mode");
 		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN; /* applies only to Child SA */
 	}
 	if (got_transport && ((st->st_connection->policy & POLICY_TUNNEL) != LEMPTY)) {
-		libreswan_log("local policy requires Tunnel Mode but peer requires required Transport Mode");
+		loglog(RC_LOG_SERIOUS, "local policy requires Tunnel Mode but peer requires required Transport Mode");
 		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN; /* applies only to Child SA */
 	}
 
@@ -4345,7 +4350,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	    md->chain[ISAKMP_NEXT_v2TSi] == NULL ||
 	    md->chain[ISAKMP_NEXT_v2TSr] == NULL) {
 		/* not really anything to here... but it would be worth unpending again */
-		libreswan_log("missing v2SA, v2TSi or v2TSr: not attempting to setup child SA");
+		loglog(RC_LOG_SERIOUS, "missing v2SA, v2TSi or v2TSr: not attempting to setup child SA");
 		/*
 		 * Delete previous retransmission event.
 		 */
