@@ -322,6 +322,9 @@ static bool ikev1_verify_esp(const struct trans_attrs *ta,
 	if (key_len == 0) {
 		key_len = crypto_req_keysize(CRK_ESPorAH,
 					     ta->ta_encrypt->common.id[IKEv1_ESP_ID]);
+		unsigned new_keysize = (ta->ta_encrypt->keylen_omitted ? 0
+				   : ta->ta_encrypt->keydeflen);
+		pexpect(key_len == new_keysize);
 	}
 
 	FOR_EACH_ESP_INFO(alg_info, esp_info) {
@@ -2199,6 +2202,9 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	/* Check ealg and key length validity */
 	if (proto == PROTO_IPSEC_ESP) {
 		int ipsec_keysize = crypto_req_keysize(CRK_ESPorAH, attrs->transattrs.ta_ikev1_encrypt);
+		int new_keysize = (attrs->transattrs.ta_encrypt->keylen_omitted ? 0
+				   : attrs->transattrs.ta_encrypt->keydeflen);
+		pexpect(ipsec_keysize == new_keysize);
 
 		if (!LHAS(seen_attrs, KEY_LENGTH)) {
 			if (ipsec_keysize != 0) {
