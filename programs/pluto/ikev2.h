@@ -333,8 +333,8 @@ extern stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 extern bool justship_v2KE(chunk_t *g, const struct oakley_group_desc *group,
 		pb_stream *outs, u_int8_t np);
 
-extern bool is_msg_response(struct msg_digest *md);
-extern bool is_msg_request(struct msg_digest *md);
+extern bool is_msg_response(const struct msg_digest *md);
+extern bool is_msg_request(const struct msg_digest *md);
 
 extern bool need_this_intiator(struct state *st);
 
