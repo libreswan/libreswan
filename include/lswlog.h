@@ -370,6 +370,14 @@ void lswlog_file(FILE f)
 		lswlog_to_file_stream(BUF, FILE))
 
 /*
+ * Save the output in a string.
+ */
+#define LSWLOG_STRING(STRING, BUF)		\
+	LSWLOG_(true, BUF,			\
+		,				\
+		STRING = clone_str(BUF->array, "lswlog string"))
+
+/*
  * Send output to WHACK (if attached).
  *
  * XXX: See programs/pluto/log.h for interface; should only be used in
