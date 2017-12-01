@@ -850,7 +850,7 @@ static void log_status(struct lswlog *buf, int status)
 			WTERMSIG(status));
 	} else if (WIFSTOPPED(status)) {
 		/* should not happen */
-		lswlogf(buf, "stoped with signal %s (%d) but WUNTRACED not specified",
+		lswlogf(buf, "stopped with signal %s (%d) but WUNTRACED not specified",
 			strsignal(WSTOPSIG(status)),
 			WSTOPSIG(status));
 	} else if (WIFCONTINUED(status)) {
