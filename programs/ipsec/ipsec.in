@@ -133,7 +133,7 @@ case "${1}" in
 	exec ipsec setup stop
 	;;
     restart|--restart)
-	# restart does not work when stoped in systemd - it's dumb
+	# restart does not work when stopped in systemd - it's dumb
 	ipsec setup stop
 	exec ipsec setup start
 	;;

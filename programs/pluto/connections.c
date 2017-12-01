@@ -3228,7 +3228,7 @@ struct connection *refine_host_connection(const struct state *st,
 
 				if ((d->policy & auth_policy & ~POLICY_AGGRESSIVE) == LEMPTY) {
 					/* Our auth isn't OK for this connection. */
-					DBG(DBG_CONTROL, DBG_log("skipping because AUTH isnt right"));
+					DBG(DBG_CONTROL, DBG_log("skipping because AUTH isn't right"));
 					continue;
 				}
 			} else {
