@@ -1106,6 +1106,10 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 			DBG(DBG_KERNEL, DBG_log("netlink: enabling ESN"));
 			req.p.flags |= XFRM_STATE_ESN;
 		}
+		if (sa->decap_dscp) {
+			DBG(DBG_KERNEL, DBG_log("netlink: enabling Decap DSCP"));
+			req.p.flags |= XFRM_STATE_DECAP_DSCP;
+		}
 
 		if (sa->replay_window <= 32 && !sa->esn) {
 			/* this only works up to 32, for > 32 and for ESN, we need struct xfrm_replay_state_esn */

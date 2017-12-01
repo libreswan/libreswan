@@ -91,6 +91,7 @@ struct kernel_sa {
 	bool inbound;
 	bool add_selector;
 	bool esn;
+	bool decap_dscp;
 	u_int32_t tfcpad;
 	ipsec_spi_t spi;
 	unsigned proto;

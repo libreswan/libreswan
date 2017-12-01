@@ -852,6 +852,7 @@ enum sa_policy_bits {
 	POLICY_TUNNEL_IX,
 	POLICY_PFS_IX,
 	POLICY_DISABLEARRIVALCHECK_IX,	/* suppress tunnel egress address checking */
+	POLICY_DECAP_DSCP_IX,	/* decapsulate ToS/DSCP bits */
 
 #define POLICY_IPSEC_SHIFT	POLICY_ENCRYPT_IX
 #define POLICY_IPSEC_MASK	LRANGE(POLICY_ENCRYPT_IX, POLICY_DISABLEARRIVALCHECK_IX)
@@ -957,6 +958,7 @@ enum sa_policy_bits {
 #define POLICY_NO_IKEPAD	LELEM(POLICY_NO_IKEPAD_IX)	/* pad ike packets to 4 bytes or not */
 #define POLICY_ESN_NO		LELEM(POLICY_ESN_NO_IX)	/* accept or request ESNno */
 #define POLICY_ESN_YES		LELEM(POLICY_ESN_YES_IX)	/* accept or request ESNyes */
+#define POLICY_DECAP_DSCP	LELEM(POLICY_DECAP_DSCP_IX)	/* decap ToS/DSCP bits */
 
 #define NEGOTIATE_AUTH_HASH_SHA1		LELEM(IKEv2_AUTH_HASH_SHA1)	/* rfc7427 does responder support SHA1? */
 #define NEGOTIATE_AUTH_HASH_SHA2_256		LELEM(IKEv2_AUTH_HASH_SHA2_256)	/* rfc7427 does responder support SHA2-256?  */

@@ -104,7 +104,7 @@ static void help(void)
 		"	[--ikev1-allow | --ikev2-allow | --ikev2-propose] \\\n"
 		"	[--allow-narrowing] [--sareftrack] [--sarefconntrack] \\\n"
 		"	[--ikefrag-allow | --ikefrag-force] [--no-ikepad] \\\n"
-		"	[--esn ] [--no-esn] \\\n"
+		"	[--esn ] [--no-esn] [--decap-dscp] \\\n"
 #ifdef HAVE_NM
 		"	[--nm-configured] \\\n"
 #endif
@@ -697,6 +697,7 @@ static const struct option long_opts[] = {
 
 	PS("no-esn", ESN_NO),
 	PS("esn", ESN_YES),
+	PS("decap-dscp", DECAP_DSCP),
 #undef PS
 
 
@@ -1576,6 +1577,8 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_ESN_NO_IX:
 		/* --esn */
 		case CDP_SINGLETON + POLICY_ESN_YES_IX:
+		/* --decap-dscp */
+		case CDP_SINGLETON + POLICY_DECAP_DSCP_IX:
 
 			msg.policy |= LELEM(c - CDP_SINGLETON);
 			continue;

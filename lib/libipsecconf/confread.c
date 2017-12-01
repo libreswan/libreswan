@@ -1218,6 +1218,8 @@ static bool load_conn(
 	KW_POLICY_FLAG(KBF_IKEv2_PAM_AUTHORIZE,
 		       POLICY_IKEV2_PAM_AUTHORIZE);
 
+	KW_POLICY_FLAG(KBF_DECAP_DSCP, POLICY_DECAP_DSCP);
+
 #	define str_to_conn(member, kscf) { \
 		if (conn->strings_set[kscf]) \
 			conn->member = clone_str(conn->strings[kscf], #kscf); \
@@ -1340,7 +1342,7 @@ static bool load_conn(
 	if (NEVER_NEGOTIATE(conn->policy)) {
 		/* remove IPsec related options */
 		conn->policy &= ~(POLICY_PFS | POLICY_COMPRESS | POLICY_ESN_NO |
-			POLICY_ESN_YES | POLICY_SAREF_TRACK |
+			POLICY_ESN_YES | POLICY_SAREF_TRACK | POLICY_DECAP_DSCP |
 			POLICY_SAREF_TRACK_CONNTRACK) &
 			/* remove IKE related options */
 			~(POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW |
