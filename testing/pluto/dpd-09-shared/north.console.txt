@@ -50,7 +50,7 @@ north #
 north #
  ip route add unreachable 192.1.2.23
 north #
- #sleep 40
+ # sleep 40
 north #
  sleep 20
 north #
