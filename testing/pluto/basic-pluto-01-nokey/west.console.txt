@@ -1,0 +1,65 @@
+/testing/guestbin/swan-prep
+west #
+ rm /etc/ipsec.d/*db
+west #
+ ipsec initnss > /dev/null 2> /dev/null
+west #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec auto --add westnet-eastnet
+002 added connection description "westnet-eastnet"
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec whack --debug-all --impair retransmits
+west #
+ # this is expected to fail to to our own misconfigured key
+west #
+ ipsec auto --up  westnet-eastnet
+002 "westnet-eastnet" #1: initiating Main Mode
+002 "westnet-eastnet" #1: IMPAIR RETRANSMITS: scheduling timeout in 2 seconds
+104 "westnet-eastnet" #1: STATE_MAIN_I1: initiate
+002 "westnet-eastnet" #1: IMPAIR RETRANSMITS: scheduling timeout in 2 seconds
+106 "westnet-eastnet" #1: STATE_MAIN_I2: sent MI2, expecting MR2
+003 "westnet-eastnet" #1: Can't find the certificate or private key from the NSS CKA_ID
+003 "westnet-eastnet" #1: unable to locate my private key for RSA Signature
+224 "westnet-eastnet" #1: STATE_MAIN_I2: AUTHENTICATION_FAILED
+002 "westnet-eastnet" #1: sending notification AUTHENTICATION_FAILED to 192.1.2.23:500
+003 "westnet-eastnet" #1: Can't find the certificate or private key from the NSS CKA_ID
+003 "westnet-eastnet" #1: unable to locate my private key for RSA Signature
+224 "westnet-eastnet" #1: STATE_MAIN_I2: AUTHENTICATION_FAILED
+002 "westnet-eastnet" #1: sending notification AUTHENTICATION_FAILED to 192.1.2.23:500
+003 "westnet-eastnet" #1: Can't find the certificate or private key from the NSS CKA_ID
+003 "westnet-eastnet" #1: unable to locate my private key for RSA Signature
+224 "westnet-eastnet" #1: STATE_MAIN_I2: AUTHENTICATION_FAILED
+002 "westnet-eastnet" #1: sending notification AUTHENTICATION_FAILED to 192.1.2.23:500
+003 "westnet-eastnet" #1: Can't find the certificate or private key from the NSS CKA_ID
+003 "westnet-eastnet" #1: unable to locate my private key for RSA Signature
+224 "westnet-eastnet" #1: STATE_MAIN_I2: AUTHENTICATION_FAILED
+002 "westnet-eastnet" #1: sending notification AUTHENTICATION_FAILED to 192.1.2.23:500
+003 "westnet-eastnet" #1: Can't find the certificate or private key from the NSS CKA_ID
+003 "westnet-eastnet" #1: unable to locate my private key for RSA Signature
+224 "westnet-eastnet" #1: STATE_MAIN_I2: AUTHENTICATION_FAILED
+002 "westnet-eastnet" #1: sending notification AUTHENTICATION_FAILED to 192.1.2.23:500
+003 "westnet-eastnet" #1: Can't find the certificate or private key from the NSS CKA_ID
+003 "westnet-eastnet" #1: unable to locate my private key for RSA Signature
+224 "westnet-eastnet" #1: STATE_MAIN_I2: AUTHENTICATION_FAILED
+002 "westnet-eastnet" #1: sending notification AUTHENTICATION_FAILED to 192.1.2.23:500
+002 "westnet-eastnet" #1: deleting state (STATE_MAIN_I2)
+west #
+ # we should not see any leftover states
+west #
+ ipsec status |grep STATE_
+west #
+ echo done
+done
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

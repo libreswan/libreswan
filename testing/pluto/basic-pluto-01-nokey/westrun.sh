@@ -1,5 +1,6 @@
+ipsec whack --debug-all --impair retransmits
 # this is expected to fail to to our own misconfigured key
 ipsec auto --up  westnet-eastnet
-# we should NOT see more than one of our own outcoming attempts
-ipsec status
+# we should not see any leftover states
+ipsec status |grep STATE_
 echo done
