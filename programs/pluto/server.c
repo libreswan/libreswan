@@ -684,11 +684,12 @@ void timer_list(void)
 	}
 }
 
-void find_ifaces(void)
+void find_ifaces(bool rm_dead)
 {
 	struct iface_port *ifp;
 
-	mark_ifaces_dead();
+	if (rm_dead)
+		mark_ifaces_dead();
 
 	if (kernel_ops->process_ifaces != NULL) {
 #if !defined(__CYGWIN32__)
@@ -698,7 +699,8 @@ void find_ifaces(void)
 		kernel_ops->process_ifaces(static_ifn);
 	}
 
-	free_dead_ifaces(); /* ditch remaining old entries */
+	if (rm_dead)
+		free_dead_ifaces(); /* ditch remaining old entries */
 
 	if (interfaces == NULL)
 		loglog(RC_LOG_SERIOUS, "no public interfaces found");

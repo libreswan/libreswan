@@ -2673,8 +2673,7 @@ void init_kernel(void)
 			kernel_process_msg_cb, (void *)kernel_ops, NULL,
 			"KERNEL_XRM_FD");
 
-	if (kernel_ops->route_fdp != NULL &&
-			*kernel_ops->route_fdp  > NULL_FD) {
+	if (kernel_ops->route_fdp != NULL && *kernel_ops->route_fdp  > NULL_FD) {
 		pluto_event_add(*kernel_ops->route_fdp, EV_READ | EV_PERSIST,
 				kernel_process_msg_cb, (void *)kernel_ops, NULL,
 				"KERNEL_ROUTE_FD");

@@ -152,7 +152,7 @@ static void do_whacklisten(void)
 #endif
 	libreswan_log("listening for IKE messages");
 	listening = TRUE;
-	find_ifaces();
+	find_ifaces(TRUE /* remove dead interfaces */);
 	load_preshared_secrets();
 	load_groups();
 #ifdef USE_SYSTEMD_WATCHDOG

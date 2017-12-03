@@ -6466,6 +6466,39 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 	st->st_interface = o_iface;
 }
 
+static const struct iface_port *ikev2_src_iface(struct state *st,
+						struct starter_end *this)
+{
+	const struct iface_port *iface;
+	ipstr_buf b;
+
+	if (sameaddr(&st->st_localaddr, &this->addr)) {
+		DBG(DBG_CONTROL, DBG_log("#%lu new address %s is same as old. No MOBIKE action",
+					st->st_serialno,
+					sensitive_ipstr(&this->addr, &b)));
+		return NULL;
+	} else {
+		DBG(DBG_CONTROL, DBG_log("#%lu new address %s lookup an interface",
+					st->st_serialno,
+					sensitive_ipstr(&this->addr, &b)));
+	}
+	/* success found a new source address */
+
+	iface = lookup_iface_ip(&this->addr, st->st_localport);
+	if (iface ==  NULL) {
+		DBG(DBG_CONTROL, DBG_log("#%lu no interface for %s try to initialize",
+					st->st_serialno,
+					sensitive_ipstr(&this->addr, &b)));
+		find_ifaces(FALSE);
+		iface = lookup_iface_ip(&this->addr, st->st_localport);
+		if (iface ==  NULL) {
+			return NULL;
+		}
+	}
+
+	return iface;
+}
+
 void ikev2_addr_change(struct state *st)
 {
 	struct starter_end this;
@@ -6492,27 +6525,11 @@ void ikev2_addr_change(struct state *st)
 	 */
 	if (resolve_defaultroute_one(&this, &that, 3) == 1) {
 		if (resolve_defaultroute_one(&this, &that, 3) == 0) {
-			const struct iface_port *iface;
-			ipstr_buf b;
-
-			if (sameaddr(&st->st_localaddr, &this.addr)) {
-				DBG(DBG_CONTROL, DBG_log("#%lu new address %s is same as old. No MOBIKE action",
-							st->st_serialno,
-							sensitive_ipstr(&this.addr, &b)));
+			const struct iface_port *iface = ikev2_src_iface(st, &this);
+			if (iface != NULL)
+				initiate_mobike_probe(st, &this, iface);
+			else
 				return;
-			} else {
-				DBG(DBG_CONTROL, DBG_log("#%lu new address %s looup interface",
-							st->st_serialno,
-							sensitive_ipstr(&this.addr,
-								&b)));
-			}
-			/* success found a new source address */
-
-			iface = lookup_iface_ip(&this.addr, st->st_localport);
-			if (iface ==  NULL)
-				return;
-
-			initiate_mobike_probe(st, &this, iface);
 		} else {
 			ipstr_buf g, b;
 			libreswan_log("no local source address to reach remote %s, local gateway %s",
