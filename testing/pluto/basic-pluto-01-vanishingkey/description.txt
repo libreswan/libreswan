@@ -1,6 +1,0 @@
-
-On west, the leftrsasigkey= points to the right key, but
-after loading the connection (which should check for a
-valid private key before loading) we will delete the key
-from nss. The connection should fail but we should not crash
-

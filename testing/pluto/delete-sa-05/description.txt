@@ -5,5 +5,5 @@ so that west can become the "responder" to send the --down
 command.
 
 This test brings up two connections, then we send a delete
-for "first" one. Ideally, the ISAKMP SA should not be
-terminated as it is used for the second connection.
+for "first" one. The ISAKMP SA should not be terminated
+as it is used for the second connection.
