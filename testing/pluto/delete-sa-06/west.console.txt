@@ -1,0 +1,56 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec auto --add westnet-eastnet
+002 added connection description "westnet-eastnet"
+west #
+ echo "initdone"
+initdone
+west #
+ # wait for east to initiate to us
+west #
+ sleep 10
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ # should show non-zero traffic counters
+west #
+ ipsec whack --trafficstatus
+006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+west #
+ # sending delete/notify should cause east to re-initiate
+west #
+ ipsec auto --down westnet-eastnet
+002 "westnet-eastnet": terminating SAs using this connection
+002 "westnet-eastnet" #2: deleting state (STATE_QUICK_R2) and sending notification
+005 "westnet-eastnet" #2: ESP traffic information: in=336B out=336B
+002 "westnet-eastnet" #1: deleting state (STATE_MAIN_R3) and sending notification
+west #
+ # give Delete/Notify some time
+west #
+ sleep 5
+west #
+ # A new IPsec SA should be established (older versions would take 30 seconds)
+west #
+ # traffic counters should be zero
+west #
+ ipsec whack --trafficstatus
+006 #4: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

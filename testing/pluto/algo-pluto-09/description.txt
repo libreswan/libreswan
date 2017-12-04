@@ -1,0 +1,3 @@
+Testing ECP group (group 19) from RFC 5903
+
+It needs to use IKEv2 because we don't support it in IKEv1.
