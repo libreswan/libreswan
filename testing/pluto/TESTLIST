@@ -586,7 +586,7 @@ kvmplutotest	ikev1-expire-r1-01-main	good
 kvmplutotest	ikev1-expire-r1-02-aggr	good
 
 # passthrough protoport tests
-kvmplutotest	basic-pluto-12		wip
+kvmplutotest	basic-pluto-12		good
 kvmplutotest	basic-pluto-13-netkey-route good
 kvmplutotest	basic-pluto-14-klips-route wip
 kvmplutotest	basic-pluto-15-no-retransmit good
@@ -632,7 +632,7 @@ kvmplutotest    algo-pluto-14-aes_ctr	good
 #
 # tests for usnig multiple subnets using conn aliases
 #
-kvmplutotest	multinet-01		wip
+kvmplutotest	multinet-01		good
 kvmplutotest	multinet-03		wip
 kvmplutotest	multinet-04		good
 
@@ -830,7 +830,6 @@ kvmplutotest	nss-cert-04-ikev2		good
 kvmplutotest	nss-cert-05			good
 kvmplutotest	nss-cert-05-ikev2		good
 kvmplutotest	nss-cert-06			good
-kvmplutotest	nss-cert-07			wip
 kvmplutotest	nss-cert-08-mismatch		good
 kvmplutotest	nss-cert-chain-01		good
 kvmplutotest	nss-cert-chain-02		good
