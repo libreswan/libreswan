@@ -156,10 +156,10 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	next_byte += integ_size;
 
 	/* The encryption key and salt are extracted together. */
-	SK_ei_k = symkey_from_symkey_bytes("SK_ei_k", DBG_CRYPT,
-					   &encrypter->common,
-					   next_byte, key_size,
-					   finalkey);
+	SK_ei_k = encrypt_key_from_symkey_bytes("SK_ei_k", DBG_CRYPT,
+						encrypter,
+						next_byte, key_size,
+						finalkey);
 	next_byte += key_size;
 	PK11SymKey *initiator_salt_key = key_from_symkey_bytes(finalkey, next_byte,
 							       salt_size);
@@ -170,10 +170,10 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	next_byte += salt_size;
 
 	/* The encryption key and salt are extracted together. */
-	SK_er_k = symkey_from_symkey_bytes("SK_er_k", DBG_CRYPT,
-					   &encrypter->common,
-					   next_byte, key_size,
-					   finalkey);
+	SK_er_k = encrypt_key_from_symkey_bytes("SK_er_k", DBG_CRYPT,
+						encrypter,
+						next_byte, key_size,
+						finalkey);
 	next_byte += key_size;
 	PK11SymKey *responder_salt_key = key_from_symkey_bytes(finalkey, next_byte,
 							       salt_size);

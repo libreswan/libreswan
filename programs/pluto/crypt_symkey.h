@@ -24,6 +24,7 @@
 struct ike_alg;
 struct hash_desc;
 struct encrypt_desc;
+struct prf_desc;
 
 /*
  * Log some information on a SYMKEY.
@@ -84,10 +85,24 @@ void append_chunk_chunk(const char *name, chunk_t *lhs, chunk_t rhs);
  *
  * Offset into the SYMKEY is in BYTES.
  */
-PK11SymKey *symkey_from_symkey_bytes(const char *name, lset_t debug,
-				     const struct ike_alg *symkey_alg,
-				     size_t symkey_start_byte, size_t sizeof_symkey,
-				     PK11SymKey *source_key);
+PK11SymKey *prf_key_from_symkey_bytes(const char *name, lset_t debug,
+				      const struct prf_desc *prf,
+				      size_t symkey_start_byte, size_t sizeof_symkey,
+				      PK11SymKey *source_key);
+
+/*
+ * Extract SIZEOF_SYMKEY bytes of keying material as an ALG key (i.e.,
+ * can be used to implement ALG).
+ *
+ * For instance, an encryption key needs to have a type matching the
+ * NSS encryption algorithm.
+ *
+ * Offset into the SYMKEY is in BYTES.
+ */
+PK11SymKey *encrypt_key_from_symkey_bytes(const char *name, lset_t debug,
+					  const struct encrypt_desc *encrypt,
+					  size_t symkey_start_byte, size_t sizeof_symkey,
+					  PK11SymKey *source_key);
 
 /*
  * Extract wire material from a symkey.

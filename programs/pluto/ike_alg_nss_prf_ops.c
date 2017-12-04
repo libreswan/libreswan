@@ -99,10 +99,10 @@ static struct prf_context *init_symkey(const struct prf_desc *prf_desc,
 	 *
 	 * This key has both the mechanism and flags set.
 	 */
-	PK11SymKey *clone = symkey_from_symkey_bytes("clone", debug,
-						     &prf_desc->common,
-						     0, sizeof_symkey(key),
-						     key);
+	PK11SymKey *clone = prf_key_from_symkey_bytes("clone", debug,
+						      prf_desc,
+						      0, sizeof_symkey(key),
+						      key);
 	struct prf_context *prf = init(prf_desc, name, debug,
 				       key_name, clone);
 	release_symkey(name, "clone", &clone);

@@ -191,10 +191,10 @@ static void decrypt(void)
 		return;
 	}
 
-	PK11SymKey *gcm_key = symkey_from_symkey_bytes("GCM key", DBG_CRYPT,
-						       &gcm_alg->common,
-						       0, sizeof_symkey(key),
-						       key);
+	PK11SymKey *gcm_key = encrypt_key_from_symkey_bytes("GCM key", DBG_CRYPT,
+							    gcm_alg,
+							    0, sizeof_symkey(key),
+							    key);
 
 	chunk_t text_and_tag = concat_chunk_chunk("text-and-tag", ct, tag);
 

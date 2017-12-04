@@ -100,6 +100,11 @@ static struct nss_alg nss_alg(const char *verb, const char *name, lset_t debug,
 	};
 }
 
+PK11SymKey *symkey_from_symkey_bytes(const char *name, lset_t debug,
+				     const struct ike_alg *symkey_alg,
+				     size_t symkey_start_byte, size_t sizeof_symkey,
+				     PK11SymKey *source_key);
+
 static PK11SymKey *ephemeral_symkey(int debug)
 {
 	static int tried;
@@ -561,6 +566,77 @@ PK11SymKey *symkey_from_symkey_bytes(const char *name, lset_t debug,
 	 */
 	struct nss_alg nss = nss_alg("extract symkey", name, debug, symkey_alg);
 	return symkey_from_symkey(debug, source_key, nss.mechanism, nss.flags,
+				  symkey_start_byte, sizeof_symkey);
+}
+
+/*
+ * Extract SIZEOF_SYMKEY bytes of keying material as a PRF key.
+ *
+ * Offset into the SYMKEY is in BYTES.
+ */
+
+PK11SymKey *prf_key_from_symkey_bytes(const char *name UNUSED, lset_t debug,
+				      const struct prf_desc *prf,
+				      size_t symkey_start_byte, size_t sizeof_symkey,
+				      PK11SymKey *source_key)
+{
+	/*
+	 * NSS expects a key's mechanism to match the NSS algorithm
+	 * the key is intended for.  If this is wrong then the
+	 * operation fails.
+	 *
+	 * Unfortunately, some algorithms are not implemented by NSS,
+	 * so the correct key type can't always be specified.  For
+	 * those specify CKM_VENDOR_DEFINED.
+	 *
+	 * XXX: this function should be part of prf_ops.
+	 */
+	CK_FLAGS flags;
+	CK_MECHANISM_TYPE mechanism;
+	if (prf->nss.mechanism == 0) {
+		flags = 0;
+		mechanism = CKM_VENDOR_DEFINED;
+	} else {
+		flags = CKF_SIGN;
+		mechanism = prf->nss.mechanism;
+	}
+	return symkey_from_symkey(debug, source_key, mechanism, flags,
+				  symkey_start_byte, sizeof_symkey);
+}
+
+/*
+ * Extract SIZEOF_SYMKEY bytes of keying material as an ENCRYPTER key
+ * (i.e., can be used to encrypt/decrypt data using ENCRYPTER).
+ *
+ * Offset into the SYMKEY is in BYTES.
+ */
+
+PK11SymKey *encrypt_key_from_symkey_bytes(const char *name UNUSED, lset_t debug,
+					  const struct encrypt_desc *encrypt,
+					  size_t symkey_start_byte, size_t sizeof_symkey,
+					  PK11SymKey *source_key)
+{
+	/*
+	 * NSS expects a key's mechanism to match the NSS algorithm
+	 * the key is intended for.  If this is wrong then the
+	 * operation fails.
+	 *
+	 * Unfortunately, some algorithms are not implemented by NSS,
+	 * so the correct key type can't always be specified.  For
+	 * those specify CKM_VENDOR_DEFINED.
+	 *
+	 * XXX: This function should be part of encrypt_ops.
+	 */
+	CK_FLAGS flags;
+	CK_MECHANISM_TYPE mechanism;
+	if (encrypt->nss.mechanism == 0) {
+		flags = 0;
+		mechanism = CKM_VENDOR_DEFINED;
+	} else {
+		flags = CKF_ENCRYPT | CKF_DECRYPT;
+		mechanism = encrypt->nss.mechanism;
+	}
+	return symkey_from_symkey(debug, source_key, mechanism, flags,
 				  symkey_start_byte, sizeof_symkey);
 }
 
