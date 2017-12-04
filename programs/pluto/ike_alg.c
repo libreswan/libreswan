@@ -437,6 +437,9 @@ static const struct prf_desc *prf_descriptors[] = {
 	&ike_alg_prf_sha2_384,
 	&ike_alg_prf_sha2_512,
 #endif
+#ifdef USE_XCBC
+	&ike_alg_prf_aes_xcbc,
+#endif
 };
 
 static void prf_desc_check(const struct ike_alg *alg)

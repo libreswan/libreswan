@@ -37,6 +37,7 @@
 #include "ike_alg_encrypt_nss_cbc_ops.h"
 #include "ike_alg_encrypt_nss_ctr_ops.h"
 #include "ike_alg_encrypt_nss_gcm_ops.h"
+#include "ike_alg_prf_nss_xcbc_ops.h"
 #include "ike_alg_aes.h"
 
 const struct encrypt_desc ike_alg_encrypt_aes_cbc = {
@@ -259,11 +260,32 @@ const struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 	.aead_tag_size = 16,
 };
 
+const struct prf_desc ike_alg_prf_aes_xcbc = {
+	.common = {
+		.name = "aes_xcbc",
+		.fqn = "AES_XCBC",
+		.names = { "aes128_xcbc", "aes_xcbc", },
+		.officname = "aes_xcbc",
+		.algo_type = IKE_ALG_PRF,
+		.id = {
+			[IKEv1_OAKLEY_ID] = -1,
+			[IKEv1_ESP_ID] = -1,
+			[IKEv2_ALG_ID] = IKEv2_PRF_AES128_XCBC,
+		},
+	},
+	.nss = {
+		.mechanism = CKM_AES_ECB,
+	},
+	.prf_key_size = BYTES_FOR_BITS(128),
+	.prf_output_size = BYTES_FOR_BITS(128),
+	.prf_ops = &ike_alg_prf_nss_xcbc_ops,
+};
+
 const struct integ_desc ike_alg_integ_aes_xcbc = {
 	.common = {
 		.name = "aes_xcbc",
 		.fqn = "AES_XCBC_96",
-		.names = { "aes_xcbc", "aes_xcbc_96", },
+		.names = { "aes_xcbc", "aes128_xcbc", "aes_xcbc_96", "aes128_xcbc_96", },
 		.officname =  "aes_xcbc",
 		.algo_type = IKE_ALG_INTEG,
 		.id = {
@@ -276,6 +298,9 @@ const struct integ_desc ike_alg_integ_aes_xcbc = {
 	.integ_keymat_size = AES_XCBC_DIGEST_SIZE,
 	.integ_output_size = AES_XCBC_DIGEST_SIZE_TRUNC, /* XXX 96 */
 	.integ_ikev1_ah_transform = AH_AES_XCBC_MAC,
+#ifdef USE_XCBC
+	.prf = &ike_alg_prf_aes_xcbc,
+#endif
 };
 
 const struct integ_desc ike_alg_integ_aes_cmac = {

@@ -465,6 +465,14 @@ PK11SymKey *concat_bytes_symkey(const void *lhs, size_t sizeof_lhs,
 				  target);
 }
 
+chunk_t concat_chunk_symkey(const char *name, chunk_t lhs, PK11SymKey *rhs)
+{
+	chunk_t rhs_chunk = chunk_from_symkey(name, DBG_CRYPT, rhs);
+	chunk_t new = concat_chunk_chunk(name, lhs, rhs_chunk);
+	freeanychunk(rhs_chunk);
+	return new;
+}
+
 PK11SymKey *concat_symkey_chunk(PK11SymKey *lhs, chunk_t rhs)
 {
 	return concat_symkey_bytes(lhs, rhs.ptr, rhs.len);
@@ -484,6 +492,19 @@ chunk_t concat_chunk_chunk(const char *name, chunk_t lhs, chunk_t rhs)
 	};
 	memcpy(cat.ptr, lhs.ptr, lhs.len);
 	memcpy(cat.ptr + lhs.len, rhs.ptr, rhs.len);
+	return cat;
+}
+
+chunk_t concat_chunk_bytes(const char *name, chunk_t lhs,
+			   const void *rhs, size_t sizeof_rhs)
+{
+	size_t len = lhs.len + sizeof_rhs;
+	chunk_t cat = {
+		.len = len,
+		.ptr = alloc_things(u_int8_t, len, name),
+	};
+	memcpy(cat.ptr, lhs.ptr, lhs.len);
+	memcpy(cat.ptr + lhs.len, rhs, sizeof_rhs);
 	return cat;
 }
 
@@ -530,6 +551,21 @@ void append_symkey_byte(PK11SymKey **lhs, uint8_t rhs)
 void append_chunk_chunk(const char *name, chunk_t *lhs, chunk_t rhs)
 {
 	chunk_t new = concat_chunk_chunk(name, *lhs, rhs);
+	freeanychunk(*lhs);
+	*lhs = new;
+}
+
+void append_chunk_bytes(const char *name, chunk_t *lhs,
+			const void *rhs, size_t sizeof_rhs)
+{
+	chunk_t new = concat_chunk_bytes(name, *lhs, rhs, sizeof_rhs);
+	freeanychunk(*lhs);
+	*lhs = new;
+}
+
+void append_chunk_symkey(const char *name, chunk_t *lhs, PK11SymKey *rhs)
+{
+	chunk_t new = concat_chunk_symkey(name, *lhs, rhs);
 	freeanychunk(*lhs);
 	*lhs = new;
 }

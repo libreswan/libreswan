@@ -148,6 +148,7 @@ OBJS += ike_alg_encrypt_nss_gcm_ops.o
 OBJS += ike_alg_hash_nss_ops.o
 OBJS += ike_alg_prf_hmac_ops.o
 OBJS += ike_alg_prf_nss_ops.o
+OBJS += ike_alg_prf_nss_xcbc_ops.o
 
 OBJS += db_ops.o
 
@@ -209,6 +210,7 @@ OBJS += connections.o initiate.o terminate.o
 OBJS += cbc_test_vectors.o
 OBJS += ctr_test_vectors.o
 OBJS += gcm_test_vectors.o
+OBJS += prf_test_vectors.o
 OBJS += test_buffer.o
 OBJS += pending.o cookie.o crypto.o defs.o
 OBJS += foodgroups.o log.o state.o plutomain.o plutoalg.o server.o

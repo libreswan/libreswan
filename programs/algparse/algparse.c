@@ -481,18 +481,19 @@ int main(int argc, char *argv[])
 	log_to_stderr = verbose;
 
 	ike_alg_init();
-	ike_alg_test();
 
 	/*
 	 * Only enabling debugging and impairing after things have
 	 * started.  Otherwise there's just TMI.
 	 */
 	if (debug) {
-		cur_debugging |= DBG_PROPOSAL_PARSER;
+		cur_debugging |= DBG_PROPOSAL_PARSER | DBG_CRYPT;
 	}
 	if (impair) {
 		cur_debugging |= IMPAIR_PROPOSAL_PARSER;
 	}
+
+	ike_alg_test();
 
 	if (*argp) {
 		if (run_tests) {

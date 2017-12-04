@@ -21,6 +21,7 @@
 #include "ike_alg_test_ctr.h"
 #include "ike_alg_test_cbc.h"
 #include "ike_alg_test_gcm.h"
+#include "ike_alg_test_prf.h"
 
 void ike_alg_test(void)
 {
@@ -32,4 +33,5 @@ void ike_alg_test(void)
 				 aes_ctr_tests));
 	passert(test_cbc_vectors(&ike_alg_encrypt_aes_cbc,
 				 aes_cbc_tests));
+	passert(test_prf_vectors(&aes_xcbc_prf_tests));
 }

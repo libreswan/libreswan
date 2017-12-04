@@ -181,3 +181,18 @@ void crypt_prf_final_bytes(struct crypt_prf **prfp,
 	pfree(*prfp);
 	*prfp = prf = NULL;
 }
+
+chunk_t crypt_prf_final_chunk(struct crypt_prf **prfp)
+{
+	struct crypt_prf *prf = *prfp;
+	DBG(prf->debug, DBG_log("%s PRF %s final-chunk ...",
+				prf->name, prf->desc->common.name));
+	chunk_t chunk = alloc_chunk(prf->desc->prf_output_size, prf->name);
+	prf->desc->prf_ops->final_bytes(&prf->context, chunk.ptr, chunk.len);
+	DBG(prf->debug, DBG_log("%s PRF %s final-chunk@%p (length %zu)",
+				(*prfp)->name, (*prfp)->desc->common.name,
+				chunk.ptr, chunk.len));
+	pfree(*prfp);
+	*prfp = prf = NULL;
+	return chunk;
+}

@@ -79,5 +79,6 @@ void crypt_prf_update_bytes(const char *name, struct crypt_prf *prf,
 PK11SymKey *crypt_prf_final_symkey(struct crypt_prf **prfp);
 void crypt_prf_final_bytes(struct crypt_prf **prfp,
 			   void *bytes, size_t sizeof_bytes);
+chunk_t crypt_prf_final_chunk(struct crypt_prf **prfp);
 
 #endif

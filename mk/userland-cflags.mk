@@ -138,6 +138,9 @@ endif
 ifeq ($(USE_DH31),true)
 USERLAND_CFLAGS+=-DUSE_DH31
 endif
+ifeq ($(USE_XCBC),true)
+USERLAND_CFLAGS+=-DUSE_XCBC
+endif
 
 ifeq ($(USE_SINGLE_CONF_DIR),true)
 USERLAND_CFLAGS+=-DSINGLE_CONF_DIR=1

@@ -165,6 +165,7 @@ static void final(struct prf_context *prf, void *bytes, size_t sizeof_bytes)
 	SECStatus rc = PK11_DigestFinal(prf->context, bytes,
 					&bytes_out, sizeof_bytes);
 	passert(rc == SECSuccess);
+	pexpect(bytes_out == sizeof_bytes);
 	PK11_DestroyContext(prf->context, PR_TRUE);
 	prf->context = NULL;
 }
