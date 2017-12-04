@@ -319,7 +319,7 @@ static const struct keyword_enum_values kw_klipsdebug_list = VALUES_INITIALIZER(
 
 static const struct keyword_enum_value kw_phase2types_values[] = {
 	/* note: these POLICY bits happen to fit in an unsigned int */
-	{ "ah+esp",   POLICY_ENCRYPT | POLICY_AUTHENTICATE },
+	/* note2: ah+esp is no longer supported as per RFC-8221 Section 4 */
 	{ "esp",      POLICY_ENCRYPT },
 	{ "ah",       POLICY_AUTHENTICATE },
 	{ "default",  POLICY_ENCRYPT }, /* alias, find it last */
