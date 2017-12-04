@@ -730,11 +730,11 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *qke,
 
 static crypto_req_cont_func quick_outI1_continue;	/* type assertion */
 
-static void quick_outI1_continue(struct pluto_crypto_req_cont *qke,
+static void quick_outI1_continue(struct state *st,
+				 struct pluto_crypto_req_cont *qke,
 				 struct pluto_crypto_req *r)
 {
-	struct state *const st = state_with_serialno(
-		qke->pcrc_serialno);
+	pexpect(st != NULL && st == state_with_serialno(qke->pcrc_serialno));
 	stf_status e;
 
 	DBG(DBG_CONTROL,
@@ -1522,13 +1522,12 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b)
 
 /* redundant type assertion: static crypto_req_cont_func quick_inI1_outR1_cryptocontinue1; */
 
-static void quick_inI1_outR1_cryptocontinue1(
-	struct pluto_crypto_req_cont *qke,
-	struct pluto_crypto_req *r)
+static void quick_inI1_outR1_cryptocontinue1(struct state *st,
+					     struct pluto_crypto_req_cont *qke,
+					     struct pluto_crypto_req *r)
 {
 	struct msg_digest *md = qke->pcrc_md;
-	struct state *const st = state_with_serialno(
-		qke->pcrc_serialno);
+	pexpect(st != NULL && st == state_with_serialno(qke->pcrc_serialno));
 	stf_status e;
 
 	DBG(DBG_CONTROL,
@@ -1612,12 +1611,12 @@ static void quick_inI1_outR1_cryptocontinue1(
 
 /* redundant type assertion: static crypto_req_cont_func quick_inI1_outR1_cryptocontinue2; */
 
-static void quick_inI1_outR1_cryptocontinue2(
-	struct pluto_crypto_req_cont *dh,
-	struct pluto_crypto_req *r)
+static void quick_inI1_outR1_cryptocontinue2(struct state *st,
+					     struct pluto_crypto_req_cont *dh,
+					     struct pluto_crypto_req *r)
 {
 	struct msg_digest *md = dh->pcrc_md;
-	struct state *const st = md->st;
+	pexpect(st != NULL && st == md->st);
 	stf_status e;
 
 	DBG(DBG_CONTROL,
@@ -1889,11 +1888,12 @@ stf_status quick_inR1_outI2(struct msg_digest *md)
 
 /* redundant type assertion: static crypto_req_cont_func quick_inR1_outI2_continue; */
 
-static void quick_inR1_outI2_continue(struct pluto_crypto_req_cont *dh,
+static void quick_inR1_outI2_continue(struct state *st,
+				      struct pluto_crypto_req_cont *dh,
 				      struct pluto_crypto_req *r)
 {
 	struct msg_digest *md = dh->pcrc_md;
-	struct state *const st = md->st;
+	pexpect(st != NULL && st == md->st);
 	stf_status e;
 
 	DBG(DBG_CONTROL,

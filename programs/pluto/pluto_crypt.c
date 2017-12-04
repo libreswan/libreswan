@@ -70,6 +70,7 @@
 #include "ikev2_prf.h"
 #include "crypt_dh.h"
 #include "ikev1_prf.h"
+#include "state_db.h"
 
 #ifdef HAVE_SECCOMP
 # include "pluto_seccomp.h"
@@ -536,7 +537,7 @@ stf_status send_crypto_helper_request(struct state *st,
 		pluto_do_crypto_op(r, -1);
 
 		/* call the continuation */
-		(*cn->pcrc_func)(cn, r);
+		(*cn->pcrc_func)(st, cn, r);
 
 		pfree(cn);	/* ownership transferred from caller */
 
@@ -907,11 +908,52 @@ static void handle_helper_answer(struct pluto_crypto_worker *w)
 	}
 	cn->pcrc_reply_buffer = NULL;
 
-	/* call the continuation (skip if suppressed) */
+	/*
+	 * call the continuation (skip if suppressed)
+	 */
 	cn->pcrc_pcr = &rr;
 	reset_cur_state();
-	if (cn->pcrc_serialno != SOS_NOBODY)
-		(*cn->pcrc_func)(cn, &rr);
+	struct state *st = state_by_serialno(cn->pcrc_serialno);
+	if (st == NULL) {
+		if (cn->pcrc_serialno == SOS_NOBODY) {
+			/* suppressed */
+			DBG(DBG_CONTROL, DBG_log("state #%lu crypto result suppressed",
+						 cn->pcrc_serialno));
+		} else {
+			/* oops, the state disappeared! */
+			PEXPECT_LOG("state #%lu for crypto callback disappeared!",
+				    cn->pcrc_serialno);
+		}
+		/*
+		 * XXX: everything needs to be freed!
+		 */
+	} else {
+		/*
+		 * XXX:
+		 *
+		 * TODO: enable push/pop.
+		 *
+		 * Current each individual .pcrc_func handles this in
+		 * their own special way.
+		 *
+		 * TODO: delete individual ST/PCRC_SERIALNO checks.
+		 *
+		 * Currently each individual .pcrc_func contains its
+		 * own redundant checks.
+		 *
+		 * TODO: delete md?
+		 *
+		 * Currently each individual .pcrc_func contains its
+		 * own, probably dead, code for deleting MD et.al.
+		 */
+#if 0
+		so_serial_t old_state = push_cur_state(st);
+#endif
+		(*cn->pcrc_func)(st, cn, &rr);
+#if 0
+		pop_cur_state(old_state);
+#endif
+	}
 
 	/* now free up the continuation */
 	pfree(cn);

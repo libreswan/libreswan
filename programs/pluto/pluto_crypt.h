@@ -41,6 +41,8 @@
 #include "crypto.h"
 #include "libreswan/passert.h"
 
+struct state;
+
 /*
  * cryptographic helper operations.
  */
@@ -257,9 +259,12 @@ struct pluto_crypto_req_cont;	/* forward reference */
  *	Never sent across wire but perhaps copied.
  *	For example, it includes a struct msg_digest *
  *	in the cases where that is appropriate
+ *
+ * If state disappeared then ST is NULL.
  */
-typedef void crypto_req_cont_func(struct pluto_crypto_req_cont *,
-				struct pluto_crypto_req *);
+typedef void crypto_req_cont_func(struct state *st,
+				  struct pluto_crypto_req_cont *,
+				  struct pluto_crypto_req *);
 
 /*
  * The crypto continuation structure

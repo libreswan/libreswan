@@ -227,8 +227,8 @@ static stf_status add_st_send_list(struct state *st, struct state *pst)
 	return e;
 }
 
-static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
-		struct pluto_crypto_req *r);
+
+static crypto_req_cont_func ikev2_crypto_continue;
 
 static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
 		struct msg_digest *md)
@@ -264,8 +264,9 @@ static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
 }
 
 /* redundant type assertion: static crypto_req_cont_func ikev2_crypto_continue; */
-static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
-		struct pluto_crypto_req *r)
+static void ikev2_crypto_continue(struct state *st,
+				  struct pluto_crypto_req_cont *cn,
+				  struct pluto_crypto_req *r)
 {
 	struct msg_digest *md = cn->pcrc_md;
 	stf_status e = STF_OK;
@@ -282,7 +283,7 @@ static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
 	}
 
 	/* The state had better still be around.  */
-	struct state *st = state_with_serialno(cn->pcrc_serialno);
+	pexpect(st != NULL && st == state_with_serialno(cn->pcrc_serialno));
 	if (st == NULL) {
 		PEXPECT_LOG("IKEv2 crypto continue failed because sponsoring state #%lu is unknown",
 			    cn->pcrc_serialno);
@@ -1457,11 +1458,12 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 
 /* redundant type assertion: static crypto_req_cont_func ikev2_parent_inI1outR1_continue; */
 
-static void ikev2_parent_inI1outR1_continue(struct pluto_crypto_req_cont *ke,
+static void ikev2_parent_inI1outR1_continue(struct state *st,
+					    struct pluto_crypto_req_cont *ke,
 					    struct pluto_crypto_req *r)
 {
 	struct msg_digest *md = ke->pcrc_md;
-	struct state *const st = md->st;
+	pexpect(st != NULL && st == md->st);
 
 	DBG(DBG_CONTROL,
 		DBG_log("ikev2_parent_inI1outR1_continue for #%lu: calculated ke+nonce, sending R1",
@@ -2040,11 +2042,12 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 
 /* redundant type assertion: static crypto_req_cont_func ikev2_parent_inR1outI2_continue; */
 
-static void ikev2_parent_inR1outI2_continue(struct pluto_crypto_req_cont *dh,
+static void ikev2_parent_inR1outI2_continue(struct state *st,
+					    struct pluto_crypto_req_cont *dh,
 					    struct pluto_crypto_req *r)
 {
 	struct msg_digest *md = dh->pcrc_md;
-	struct state *const st = md->st;
+	pexpect(st != NULL && st == md->st);
 	stf_status e;
 
 	DBG(DBG_CONTROL,
@@ -3475,11 +3478,12 @@ stf_status ikev2parent_inI2outR2(struct msg_digest *md)
 			NULL, ikev2_parent_inI2outR2_continue);
 }
 
-static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *dh,
+static void ikev2_parent_inI2outR2_continue(struct state *st,
+					    struct pluto_crypto_req_cont *dh,
 					    struct pluto_crypto_req *r)
 {
 	struct msg_digest *md = dh->pcrc_md;
-	struct state *const st = md->st;
+	pexpect(st != NULL && st == md->st);
 	stf_status e;
 
 	DBG(DBG_CONTROL,

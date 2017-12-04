@@ -880,11 +880,12 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *ke,
 
 static crypto_req_cont_func main_inR1_outI2_continue;	/* type assertion */
 
-static void main_inR1_outI2_continue(struct pluto_crypto_req_cont *ke,
-				struct pluto_crypto_req *r)
+static void main_inR1_outI2_continue(struct state *st,
+				     struct pluto_crypto_req_cont *ke,
+				     struct pluto_crypto_req *r)
 {
 	struct msg_digest *md = ke->pcrc_md;
-	struct state *const st = md->st;
+	pexpect(st != NULL && st == md->st);
 	stf_status e;
 
 	DBG(DBG_CONTROL,
@@ -1091,11 +1092,12 @@ static stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *ke,
 
 static crypto_req_cont_func main_inI2_outR2_continue;	/* type assertion */
 
-static void main_inI2_outR2_continue(struct pluto_crypto_req_cont *ke,
-				struct pluto_crypto_req *r)
+static void main_inI2_outR2_continue(struct state *st,
+				     struct pluto_crypto_req_cont *ke,
+				     struct pluto_crypto_req *r)
 {
 	struct msg_digest *md = ke->pcrc_md;
-	struct state *const st = md->st;
+	pexpect(st != NULL && st == md->st);
 	stf_status e;
 
 	DBG(DBG_CONTROL,
@@ -1169,11 +1171,10 @@ stf_status main_inI2_outR2(struct msg_digest *md)
  */
 static crypto_req_cont_func main_inI2_outR2_calcdone;	/* type assertion */
 
-static void main_inI2_outR2_calcdone(struct pluto_crypto_req_cont *dh,
-				struct pluto_crypto_req *r)
+static void main_inI2_outR2_calcdone(struct state *st,
+				     struct pluto_crypto_req_cont *dh,
+				     struct pluto_crypto_req *r)
 {
-	struct state *st;
-
 	DBG(DBG_CONTROL,
 		DBG_log("main_inI2_outR2_calcdone for #%lu: calculate DH finished",
 			dh->pcrc_serialno));
@@ -1184,7 +1185,7 @@ static void main_inI2_outR2_calcdone(struct pluto_crypto_req_cont *dh,
 		/* note: no md exists in this odd case */
 		return;
 	}
-	st = state_with_serialno(dh->pcrc_serialno);
+	pexpect(st != NULL && st == state_with_serialno(dh->pcrc_serialno));
 
 	set_cur_state(st);
 
@@ -1615,11 +1616,12 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 
 static crypto_req_cont_func main_inR2_outI3_cryptotail;	/* type assertion */
 
-static void main_inR2_outI3_cryptotail(struct pluto_crypto_req_cont *dh,
-				struct pluto_crypto_req *r)
+static void main_inR2_outI3_cryptotail(struct state *st,
+				       struct pluto_crypto_req_cont *dh,
+				       struct pluto_crypto_req *r)
 {
 	struct msg_digest *md = dh->pcrc_md;
-	struct state *const st = md->st;
+	pexpect(st != NULL && st == md->st);
 	stf_status e;
 
 	DBG(DBG_CONTROL,
