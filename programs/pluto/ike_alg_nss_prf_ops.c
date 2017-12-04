@@ -44,12 +44,12 @@ static struct prf_context *init(const struct prf_desc *prf_desc,
 				const char *key_name, PK11SymKey *key)
 
 {
-	passert(prf_desc->common.nss_mechanism > 0);
+	passert(prf_desc->nss.mechanism > 0);
 	/* lame, screwed up old compilers what this */
 	SECItem ignore = {
 		.len = 0,
 	};
-	PK11Context *context = PK11_CreateContextBySymKey(prf_desc->common.nss_mechanism,
+	PK11Context *context = PK11_CreateContextBySymKey(prf_desc->nss.mechanism,
 							  CKA_SIGN,
 							  key, &ignore);
 	if (context == NULL) {
@@ -190,7 +190,7 @@ static PK11SymKey *final_symkey(struct prf_context **prf)
 static void nss_prf_check(const struct prf_desc *prf)
 {
 	const struct ike_alg *alg = &prf->common;
-	passert_ike_alg(alg, prf->common.nss_mechanism > 0);
+	passert_ike_alg(alg, prf->nss.mechanism > 0);
 }
 
 const struct prf_ops ike_alg_nss_prf_ops = {

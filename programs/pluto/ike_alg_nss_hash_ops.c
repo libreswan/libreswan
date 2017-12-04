@@ -38,7 +38,7 @@ static struct hash_context *init(const struct hash_desc *hash_desc,
 {
 	struct hash_context *hash = alloc_thing(struct hash_context, "hasher");
 	*hash = (struct hash_context) {
-		.context = PK11_CreateDigestContext(hash_desc->nss_oid_tag),
+		.context = PK11_CreateDigestContext(hash_desc->nss.oid_tag),
 		.name = name,
 		.debug = debug,
 		.desc = hash_desc,
@@ -88,48 +88,11 @@ static void final_bytes(struct hash_context **hashp,
 	*hashp = NULL;
 }
 
-/*
- * Some magic never dies.
- */
-static CK_MECHANISM_TYPE nss_digest_derivation(CK_MECHANISM_TYPE hash)
-{
-	CK_MECHANISM_TYPE mechanism;
-	switch (hash) {
-	case CKM_MD5:
-		mechanism = CKM_MD5_KEY_DERIVATION;
-		break;
-	case CKM_SHA_1:
-		mechanism = CKM_SHA1_KEY_DERIVATION;
-		break;
-	case CKM_SHA224:
-		mechanism = CKM_SHA224_KEY_DERIVATION;
-		break;
-	case CKM_SHA256:
-		mechanism = CKM_SHA256_KEY_DERIVATION;
-		break;
-	case CKM_SHA384:
-		mechanism = CKM_SHA384_KEY_DERIVATION;
-		break;
-	case CKM_SHA512:
-		mechanism = CKM_SHA512_KEY_DERIVATION;
-		break;
-	default:
-		libreswan_log("NSS hash %lx not supported", hash);
-		mechanism = CKM_VENDOR_DEFINED;
-		break;
-	}
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("NSS: hash mechanism %lx derivation %lx",
-			hash, mechanism);
-	}
-	return mechanism;
-}
-
 static PK11SymKey *symkey_to_symkey(const struct hash_desc *hash_desc,
 				    const char *name, lset_t debug,
 				    const char *symkey_name, PK11SymKey *symkey)
 {
-	CK_MECHANISM_TYPE derive = hash_desc->nss_derive_mechanism;
+	CK_MECHANISM_TYPE derive = hash_desc->nss.derivation_mechanism;
 	SECItem *param = NULL;
 	CK_MECHANISM_TYPE target = CKM_CONCATENATE_BASE_AND_KEY; /* bogus */
 	CK_ATTRIBUTE_TYPE operation = CKA_DERIVE;
@@ -154,12 +117,11 @@ static void nss_hash_check(const struct hash_desc *hash)
 {
 	const struct ike_alg *alg = &hash->common;
 	// passert_ike_alg(alg, hash->common.nss_mechanism == 0);
-	passert_ike_alg(alg, hash->nss_oid_tag > 0);
-	passert_ike_alg(alg, hash->nss_derive_mechanism > 0);
-	passert_ike_alg(alg, (nss_digest_derivation(hash->common.nss_mechanism)
-			      == hash->nss_derive_mechanism));
-	passert_ike_alg(alg, (PK11_MechanismToAlgtag(hash->common.nss_mechanism)
-			      == hash->nss_oid_tag));
+	passert_ike_alg(alg, hash->nss.oid_tag > 0);
+	passert_ike_alg(alg, hash->nss.derivation_mechanism > 0);
+	passert_ike_alg(alg, hash->nss.key_type_mechanism > 0);
+	passert_ike_alg(alg, (PK11_MechanismToAlgtag(hash->nss.key_type_mechanism)
+			      == hash->nss.oid_tag));
 }
 
 const struct hash_ops ike_alg_nss_hash_ops = {

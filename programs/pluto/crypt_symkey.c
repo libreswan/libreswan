@@ -48,42 +48,46 @@ static struct nss_alg nss_alg(const char *verb, const char *name, lset_t debug,
 		 * Something of an old code hack.  Keys fed to the
 		 * hasher get this type.
 		 */
-		mechanism = CKM_EXTRACT_KEY_FROM_KEY;
 		flags = 0;
+		mechanism = CKM_EXTRACT_KEY_FROM_KEY;
 		if (DBGP(debug)) {
 			DBG_log("%s %s for non-NSS algorithm: NULL (legacy hack), mechanism: %s(%lu), flags: %lx",
 				verb, name,
 				lsw_nss_ckm_to_string(mechanism), mechanism,
 				flags);
 		}
-	} else if (alg->nss_mechanism == 0) {
-		/*
-		 * A non-NSS algorithm.  The values shouldn't matter.
-		 */
-		mechanism = CKM_VENDOR_DEFINED;
-		flags = 0;
-		if (DBGP(debug)) {
-			DBG_log("%s %s for non-NSS algorithm: %s, mechanism: %s(%lu), flags: %lx",
-				verb, name, alg->name,
-				lsw_nss_ckm_to_string(mechanism), mechanism,
-				flags);
-		}
 	} else {
-		mechanism = alg->nss_mechanism;
 		if (alg->algo_type == IKE_ALG_ENCRYPT) {
 			flags = CKF_ENCRYPT | CKF_DECRYPT;
+			mechanism = encrypt_desc(alg)->nss.mechanism;
 		} else if (alg->algo_type == IKE_ALG_PRF
 			   || alg->algo_type == IKE_ALG_INTEG) {
 			flags = CKF_SIGN;
+			mechanism = prf_desc(alg)->nss.mechanism;
 		} else if (alg->algo_type == IKE_ALG_HASH) {
 			flags = CKF_DIGEST;
+			mechanism = hash_desc(alg)->nss.key_type_mechanism;
 		} else {
 			flags = 0;	/* flags not subsequently used */
+			mechanism = 0;	/* see below */
 			/* should never happen - ike_alg checks for this */
-			PASSERT_FAIL("NSS algorithm '%s' type %s unknown",
-				     alg->name, ike_alg_type_name(alg->algo_type));
+			PEXPECT_LOG("NSS algorithm '%s' type %s unknown",
+				    alg->name, ike_alg_type_name(alg->algo_type));
 		}
-		if (DBGP(debug)) {
+		if (mechanism == 0) {
+			/*
+			 * A non-NSS algorithm.  The values shouldn't
+			 * matter.
+			 */
+			mechanism = CKM_VENDOR_DEFINED;
+			flags = 0;
+			if (DBGP(debug)) {
+				DBG_log("%s %s for non-NSS algorithm: %s, mechanism: %s(%lu), flags: %lx",
+					verb, name, alg->name,
+					lsw_nss_ckm_to_string(mechanism), mechanism,
+					flags);
+			}
+		} else if (DBGP(debug)) {
 			DBG_log("%s %s for NSS algorithm: %s, mechanism: %s(%lu), flags: %lx",
 				verb, name, alg->name,
 				lsw_nss_ckm_to_string(mechanism), mechanism,
