@@ -1,0 +1,5 @@
+
+Test to confirm MODP up to 8192 is in the default set, as well as ECP group DH19.
+(and curve25519 / curve448 once supported)
+
+It also tests MODP1536 is no longer in the default proposal set
