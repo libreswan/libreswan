@@ -22,6 +22,7 @@ v3.23 (unrelased)
 * IKEv1: Don't linger R1 states for 1h but use configured timeouts [Paul]
 * IKEv2: nat_traversal_change_port_lookup() code moved [Antony]
 * IKEv2: Macros could misinterpret some IKE/IPsec states [Paul/Antony]
+* IKEv2: Updated Group transforms to comply with RFC 8247 [Paul]
 * PAM: Don't cancel pam threads (unsupported!) but drop results instead [Andrew]
 * _updown: Fix resolv.conf handling (github #130) [Tuomo]
 * _updown: Fix POINTPOINT interfaces not to use nexthop [Tuomo]
