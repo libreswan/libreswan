@@ -44,7 +44,6 @@ const struct hash_desc ike_alg_hash_sha2_256 = {
 		.fips = TRUE,
 	},
 	.nss = {
-		.key_type_mechanism = CKM_SHA256,
 		.oid_tag = SEC_OID_SHA256,
 		.derivation_mechanism = CKM_SHA256_KEY_DERIVATION,
 	},
@@ -130,7 +129,6 @@ const struct hash_desc ike_alg_hash_sha2_384 = {
 		.fips = TRUE,
 	},
 	.nss = {
-		.key_type_mechanism = CKM_SHA384,
 		.oid_tag = SEC_OID_SHA384,
 		.derivation_mechanism = CKM_SHA384_KEY_DERIVATION,
 	},
@@ -197,7 +195,6 @@ const struct hash_desc ike_alg_hash_sha2_512 = {
 		.fips = TRUE,
 	},
 	.nss = {
-		.key_type_mechanism = CKM_SHA512,
 		.oid_tag = SEC_OID_SHA512,
 		.derivation_mechanism = CKM_SHA512_KEY_DERIVATION,
 	},

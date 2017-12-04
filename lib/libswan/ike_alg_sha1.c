@@ -49,7 +49,6 @@ const struct hash_desc ike_alg_hash_sha1 = {
 		.fips = TRUE,
 	},
 	.nss = {
-		.key_type_mechanism = CKM_SHA_1,
 		.oid_tag = SEC_OID_SHA1,
 		.derivation_mechanism = CKM_SHA1_KEY_DERIVATION,
 	},

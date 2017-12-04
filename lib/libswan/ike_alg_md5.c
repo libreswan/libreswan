@@ -51,7 +51,6 @@ const struct hash_desc ike_alg_hash_md5 = {
 		},
 	},
 	.nss = {
-		.key_type_mechanism = CKM_MD5,
 		.oid_tag = SEC_OID_MD5,
 		.derivation_mechanism = CKM_MD5_KEY_DERIVATION,
 	},

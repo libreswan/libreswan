@@ -414,17 +414,6 @@ struct hash_desc {
 		 * (algorithm) to use when using PK11_Derive().
 		 */
 		CK_MECHANISM_TYPE derivation_mechanism;
-		/*
-		 * The NSS key type expected when using this
-		 * algorithm.
-		 *
-		 * SYMKEY object passed to NSS also need to have the
-		 * mechanism (type) set to this value.  If it isn't,
-		 * the the operation fails.
-		 *
-		 * XXX: Is this more of a PRF/ENCRYPT requrement?
-		 */
-		CK_MECHANISM_TYPE key_type_mechanism;
 	} nss;
 	const struct hash_ops *hash_ops;
 };

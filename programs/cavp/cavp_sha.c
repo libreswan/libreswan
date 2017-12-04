@@ -44,9 +44,6 @@ struct hash_desc ike_alg_hash_sha2_224 = {
 		.algo_type = IKE_ALG_HASH,
 		.fips = TRUE,
 	},
-	.nss = {
-		.key_type_mechanism = CKM_SHA224,
-	},
 	.hash_digest_len = 28, /* 224/8 */
 	.hash_block_size = 64, /* from RFC 4868 */
 	.hash_ops = &ike_alg_nss_hash_ops,

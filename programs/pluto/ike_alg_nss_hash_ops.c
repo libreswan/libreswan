@@ -119,9 +119,6 @@ static void nss_hash_check(const struct hash_desc *hash)
 	// passert_ike_alg(alg, hash->common.nss_mechanism == 0);
 	passert_ike_alg(alg, hash->nss.oid_tag > 0);
 	passert_ike_alg(alg, hash->nss.derivation_mechanism > 0);
-	passert_ike_alg(alg, hash->nss.key_type_mechanism > 0);
-	passert_ike_alg(alg, (PK11_MechanismToAlgtag(hash->nss.key_type_mechanism)
-			      == hash->nss.oid_tag));
 }
 
 const struct hash_ops ike_alg_nss_hash_ops = {
