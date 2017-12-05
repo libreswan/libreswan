@@ -2128,7 +2128,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		}
 		said_next->authalg = said_next->integ->integ_ikev1_ah_transform;
 
-		if (st->st_esp.attrs.transattrs.esn_enabled == TRUE) {
+		if (st->st_esp.attrs.transattrs.esn_enabled) {
 			DBG(DBG_KERNEL, DBG_log("Enabling ESN"));
 			said_next->esn = TRUE;
 		}
@@ -2264,7 +2264,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		DBG(DBG_KERNEL, DBG_log("setting IPsec SA replay-window to %d",
 			c->sa_replay_window));
 
-		if (st->st_ah.attrs.transattrs.esn_enabled == TRUE) {
+		if (st->st_ah.attrs.transattrs.esn_enabled) {
 			DBG(DBG_KERNEL, DBG_log("Enabling ESN"));
 			said_next->esn = TRUE;
 		}

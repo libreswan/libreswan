@@ -3241,7 +3241,7 @@ struct connection *refine_host_connection(const struct state *st,
 				 * This also means, we have already sent out AUTH payload, so we cannot
 				 * switch away from previously used this.authby.
 				 */
-				pexpect(initiator == FALSE);
+				pexpect(!initiator);
 				if (this_authby != d->spd.that.authby) {
 					DBG(DBG_CONTROL, DBG_log("skipping because mismatched authby"));
 					continue;
