@@ -283,7 +283,8 @@ static void ikev2_crypto_continue(struct state *st,
 	}
 
 	/* The state had better still be around.  */
-	pexpect(st != NULL && st == state_with_serialno(cn->pcrc_serialno));
+	pexpect(st == state_with_serialno(cn->pcrc_serialno));
+	st = state_with_serialno(cn->pcrc_serialno);
 	if (st == NULL) {
 		PEXPECT_LOG("IKEv2 crypto continue failed because sponsoring state #%lu is unknown",
 			    cn->pcrc_serialno);
@@ -1085,8 +1086,9 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	struct pluto_crypto_req_cont *ke,
 	struct pluto_crypto_req *r);
 
-stf_status ikev2parent_inI1outR1(struct msg_digest *md)
+stf_status ikev2parent_inI1outR1(struct state *st, struct msg_digest *md)
 {
+	pexpect(st == NULL);
 	pexpect(md->st == NULL);	/* ??? where would a state come from? Duplicate packet? */
 
 	struct payload_digest *seen_dcookie = NULL;
@@ -1362,7 +1364,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	 * We've committed to creating a state and, presumably,
 	 * dedicating real resources to the connection.
 	 */
-	struct state *st = md->st;
+	st = md->st;
 	if (st == NULL) {
 		st = new_state();
 		/* set up new state */
@@ -1463,7 +1465,8 @@ static void ikev2_parent_inI1outR1_continue(struct state *st,
 					    struct pluto_crypto_req *r)
 {
 	struct msg_digest *md = ke->pcrc_md;
-	pexpect(st != NULL && st == md->st);
+	pexpect(st == md->st);
+	st = md->st;
 
 	DBG(DBG_CONTROL,
 		DBG_log("ikev2_parent_inI1outR1_continue for #%lu: calculated ke+nonce, sending R1",
@@ -1736,9 +1739,10 @@ static stf_status ikev2_parent_inI1outR1_tail(
  *                     <--  HDR, N(COOKIE)
  * HDR, N(COOKIE), SAi1, KEi, Ni -->
  */
-stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
+stf_status ikev2parent_inR1BoutI1B(struct state *st, struct msg_digest *md)
 {
-	struct state *st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 	struct connection *c = st->st_connection;
 
 	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
@@ -1906,9 +1910,10 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	struct pluto_crypto_req_cont *dh,
 	struct pluto_crypto_req *r);
 
-stf_status ikev2parent_inR1outI2(struct msg_digest *md)
+stf_status ikev2parent_inR1outI2(struct state *st, struct msg_digest *md)
 {
-	struct state *st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 	struct connection *c = st->st_connection;
 	struct payload_digest *ntfy;
 
@@ -2047,7 +2052,8 @@ static void ikev2_parent_inR1outI2_continue(struct state *st,
 					    struct pluto_crypto_req *r)
 {
 	struct msg_digest *md = dh->pcrc_md;
-	pexpect(st != NULL && st == md->st);
+	pexpect(st == md->st);
+	st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROL,
@@ -3456,7 +3462,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	struct pluto_crypto_req_cont *dh,
 	struct pluto_crypto_req *r);
 
-stf_status ikev2parent_inI2outR2(struct msg_digest *md)
+stf_status ikev2parent_inI2outR2(struct state *st UNUSED, struct msg_digest *md)
 {
 	/* for testing only */
 	if (DBGP(IMPAIR_SEND_NO_IKEV2_AUTH)) {
@@ -3483,7 +3489,8 @@ static void ikev2_parent_inI2outR2_continue(struct state *st,
 					    struct pluto_crypto_req *r)
 {
 	struct msg_digest *md = dh->pcrc_md;
-	pexpect(st != NULL && st == md->st);
+	pexpect(st == md->st);
+	st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROL,
@@ -4258,9 +4265,10 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
  * https://tools.ietf.org/html/rfc7296#section-2.21.2
  */
 
-stf_status ikev2parent_inR2(struct msg_digest *md)
+stf_status ikev2parent_inR2(struct state *st, struct msg_digest *md)
 {
-	struct state *st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 	unsigned char idhash_in[MAX_DIGEST_LEN];
 	struct payload_digest *ntfy;
 	struct state *pst = st;
@@ -4980,9 +4988,10 @@ static notification_t process_ike_rekey_sa_pl(struct msg_digest *md, struct stat
 
 
 /* ikev2 initiator received a create Child SA Response */
-stf_status ikev2_child_inR(struct msg_digest *md)
+stf_status ikev2_child_inR(struct state *st, struct msg_digest *md)
 {
-	struct state *st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 	stf_status e;
 
 	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_nr, "Nr"));
@@ -5002,9 +5011,10 @@ stf_status ikev2_child_inR(struct msg_digest *md)
 }
 
 /* processing a new Child SA (RFC 7296 1.3.1 or 1.3.3) request */
-stf_status ikev2_child_inIoutR(struct msg_digest *md)
+stf_status ikev2_child_inIoutR(struct state *st, struct msg_digest *md)
 {
-	struct state *st = md->st; /* child state */
+	pexpect(st == md->st); /* child state */
+	st = md->st;
 	struct state *pst = state_with_serialno(st->st_clonedfrom);
 
 	passert(pst != NULL);
@@ -5034,9 +5044,10 @@ stf_status ikev2_child_inIoutR(struct msg_digest *md)
 }
 
 /* processsing a new Rekey IKE SA (RFC 7296 1.3.2) request */
-stf_status ikev2_child_ike_inIoutR(struct msg_digest *md)
+stf_status ikev2_child_ike_inIoutR(struct state *st, struct msg_digest *md)
 {
-	struct state *st = md->st; /* child state */
+	pexpect(st == md->st); /* child state */
+	st = md->st;
 	struct state *pst = state_with_serialno(st->st_clonedfrom);
 
 	passert(pst != NULL);
@@ -5275,9 +5286,10 @@ static void delete_or_replace_state(struct state *st) {
  *   <--  HDR, SK {[N,] [D,] [CP], ...}
  */
 
-stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
+stf_status process_encrypted_informational_ikev2(struct state *st, struct msg_digest *md)
 {
-	struct state *st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 	struct payload_digest *p;
 
 	/* Are we responding (as opposed to processing a response)? */

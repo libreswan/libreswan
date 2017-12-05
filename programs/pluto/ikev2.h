@@ -28,20 +28,20 @@ extern void complete_v2_state_transition(struct msg_digest **mdp,
 
 extern stf_status ikev2_send_informational(struct state *st);
 
-extern stf_status process_encrypted_informational_ikev2(struct msg_digest *md);
+extern state_transition_fn process_encrypted_informational_ikev2;
 
 extern stf_status ikev2_parent_outI1_tail(struct pluto_crypto_req_cont *ke,
 						struct pluto_crypto_req *r);
-extern stf_status ikev2_child_ike_inIoutR(struct msg_digest *md);
-extern stf_status ikev2_child_inR(struct msg_digest *md);
-extern stf_status ikev2_child_inIoutR(struct msg_digest *md);
+extern state_transition_fn ikev2_child_ike_inIoutR;
+extern state_transition_fn ikev2_child_inR;
+extern state_transition_fn ikev2_child_inIoutR;
 
-extern stf_status ikev2parent_inI1outR1(struct msg_digest *md);
-extern stf_status ikev2parent_inR1(struct msg_digest *md);
-extern stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md);
-extern stf_status ikev2parent_inR1outI2(struct msg_digest *md);
-extern stf_status ikev2parent_inI2outR2(struct msg_digest *md);
-extern stf_status ikev2parent_inR2(struct msg_digest *md);
+extern state_transition_fn ikev2parent_inI1outR1;
+extern state_transition_fn ikev2parent_inR1;
+extern state_transition_fn ikev2parent_inR1BoutI1B;
+extern state_transition_fn ikev2parent_inR1outI2;
+extern state_transition_fn ikev2parent_inI2outR2;
+extern state_transition_fn ikev2parent_inR2;
 extern stf_status ikev2_child_out_cont(struct pluto_crypto_req_cont *qke,
 						struct pluto_crypto_req *r);
 extern stf_status ikev2_child_inR_tail(struct pluto_crypto_req_cont *qke,

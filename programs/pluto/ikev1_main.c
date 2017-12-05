@@ -568,11 +568,10 @@ bool encrypt_message(pb_stream *pbs, struct state *st)
  * HDR;SA --> HDR;SA
  */
 
-stf_status main_inI1_outR1(struct msg_digest *md)
+stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
 {
 	/* ??? this code looks a lot like the middle of ikev2parent_inI1outR1 */
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
-	struct state *st;
 	struct connection *c;
 	pb_stream r_sa_pbs;
 
@@ -704,6 +703,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	}
 
 	/* Set up state */
+	pexpect(st == NULL);
 	md->st = st = new_rstate(md);
 
 	passert(!st->st_oakley.doing_xauth);
@@ -885,7 +885,8 @@ static void main_inR1_outI2_continue(struct state *st,
 				     struct pluto_crypto_req *r)
 {
 	struct msg_digest *md = ke->pcrc_md;
-	pexpect(st != NULL && st == md->st);
+	pexpect(st == md->st);
+	st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROL,
@@ -922,9 +923,10 @@ static void main_inR1_outI2_continue(struct state *st,
 	reset_cur_state();
 }
 
-stf_status main_inR1_outI2(struct msg_digest *md)
+stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
 {
-	struct state *const st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 
 	if (cur_debugging & IMPAIR_DROP_I2) {
 		DBG(DBG_CONTROL, DBG_log("dropping Main Mode I2 packet as per impair"));
@@ -1097,7 +1099,8 @@ static void main_inI2_outR2_continue(struct state *st,
 				     struct pluto_crypto_req *r)
 {
 	struct msg_digest *md = ke->pcrc_md;
-	pexpect(st != NULL && st == md->st);
+	pexpect(st == md->st);
+	st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROL,
@@ -1132,9 +1135,10 @@ static void main_inI2_outR2_continue(struct state *st,
 	reset_cur_state();
 }
 
-stf_status main_inI2_outR2(struct msg_digest *md)
+stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
 {
-	struct state *const st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 
 	/* KE in */
 	RETURN_STF_FAILURE(accept_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
@@ -1185,7 +1189,8 @@ static void main_inI2_outR2_calcdone(struct state *st,
 		/* note: no md exists in this odd case */
 		return;
 	}
-	pexpect(st != NULL && st == state_with_serialno(dh->pcrc_serialno));
+	pexpect(st == state_with_serialno(dh->pcrc_serialno));
+	st = state_with_serialno(dh->pcrc_serialno);
 
 	set_cur_state(st);
 
@@ -1621,7 +1626,8 @@ static void main_inR2_outI3_cryptotail(struct state *st,
 				       struct pluto_crypto_req *r)
 {
 	struct msg_digest *md = dh->pcrc_md;
-	pexpect(st != NULL && st == md->st);
+	pexpect(st == md->st);
+	st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROL,
@@ -1659,10 +1665,11 @@ static void main_inR2_outI3_cryptotail(struct state *st,
 	reset_cur_state();
 }
 
-stf_status main_inR2_outI3(struct msg_digest *md)
+stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)
 {
 	struct pluto_crypto_req_cont *dh;
-	struct state *const st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 
 	/* KE in */
 	RETURN_STF_FAILURE(accept_KE(&st->st_gr, "Gr",
@@ -1774,9 +1781,10 @@ static inline stf_status main_id_and_auth(struct msg_digest *md,
 	return oakley_id_and_auth(md, initiator, FALSE);
 }
 
-stf_status main_inI3_outR3(struct msg_digest *md)
+stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 {
-	struct state *const st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 	u_int8_t auth_payload;
 	pb_stream r_id_pbs; /* ID Payload; also used for hash calculation */
 	cert_t mycert;
@@ -1990,16 +1998,17 @@ stf_status main_inI3_outR3(struct msg_digest *md)
  *
  */
 
-static stf_status main_inR3_tail(struct msg_digest *md);
+static state_transition_fn main_inR3_tail;
 
-stf_status main_inR3(struct msg_digest *md)
+stf_status main_inR3(struct state *st, struct msg_digest *md)
 {
-	return main_inR3_tail(md);
+	return main_inR3_tail(st, md);
 }
 
-static stf_status main_inR3_tail(struct msg_digest *md)
+static stf_status main_inR3_tail(struct state *st, struct msg_digest *md)
 {
-	struct state *const st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 
 	/*
 	 * ID and HASH_R or SIG_R in

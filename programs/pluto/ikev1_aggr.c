@@ -109,7 +109,10 @@ static void aggr_inI1_outR1_continue2(struct state *st,
 				      struct pluto_crypto_req *r)
 {
 	struct msg_digest *md = dh->pcrc_md;
-	pexpect(st != NULL && st == md->st);
+
+	pexpect(st == md->st);
+	st = md->st;
+
 	stf_status e;
 
 	DBG(DBG_CONTROL,
@@ -158,7 +161,9 @@ static void aggr_inI1_outR1_continue1(struct state *st,
 				      struct pluto_crypto_req *r)
 {
 	struct msg_digest *md = ke->pcrc_md;
-	pexpect(st != NULL && st == md->st);
+	pexpect(st == md->st);
+	st = md->st;
+
 	stf_status e;
 
 	DBG(DBG_CONTROLMORE,
@@ -218,7 +223,7 @@ static void aggr_inI1_outR1_continue1(struct state *st,
  * SMF_DS_AUTH:  HDR, SA, KE, Nr, IDii
  *           --> HDR, SA, KE, Nr, IDir, [CERT,] SIG_R
  */
-stf_status aggr_inI1_outR1(struct msg_digest *md)
+stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 {
 	/* With Aggressive Mode, we get an ID payload in this, the first
 	 * message, so we can use it to index the preshared-secrets
@@ -270,7 +275,8 @@ stf_status aggr_inI1_outR1(struct msg_digest *md)
 	}
 
 	/* Set up state */
-	struct state *st = new_rstate(md);
+	pexpect(st == NULL);
+	st = new_rstate(md);
 
 	md->st = st;  /* (caller will reset cur_state) */
 	set_cur_state(st);
@@ -645,14 +651,15 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
  */
 static stf_status aggr_inR1_outI2_tail(struct msg_digest *md); /* forward */
 
-stf_status aggr_inR1_outI2(struct msg_digest *md)
+stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 {
 	/* With Aggressive Mode, we get an ID payload in this, the second
 	 * message, so we can use it to index the preshared-secrets
 	 * when the IP address would not be meaningful (i.e. Road
 	 * Warrior).  So our first task is to unravel the ID payload.
 	 */
-	struct state *st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 
 	if (cur_debugging & IMPAIR_DROP_I2) {
 		DBG(DBG_CONTROL, DBG_log("dropping Aggressive Mode I2 packet as per impair"));
@@ -722,7 +729,8 @@ static void aggr_inR1_outI2_crypto_continue(struct state *st,
 					    struct pluto_crypto_req *r)
 {
 	struct msg_digest *md = dh->pcrc_md;
-	pexpect(st != NULL && st == md->st);
+	pexpect(st == md->st);
+	st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROLMORE,
@@ -992,9 +1000,10 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
  * SMF_DS_AUTH:  HDR*, SIG_I  --> done
  */
 
-stf_status aggr_inI2(struct msg_digest *md)
+stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 {
-	struct state *const st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 	struct connection *c = st->st_connection;
 	u_char idbuf[1024];	/* ??? enough room for reconstructed peer ID payload? */
 	struct payload_digest id_pd;
@@ -1110,7 +1119,8 @@ static void aggr_outI1_continue(struct state *st,
 				struct pluto_crypto_req *r)
 {
 	struct msg_digest *md = ke->pcrc_md;
-	pexpect(st != NULL && st == md->st);
+	pexpect(st == md->st);
+	st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROL,

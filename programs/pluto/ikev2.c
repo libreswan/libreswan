@@ -1480,7 +1480,7 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	DBG(DBG_CONTROL,
 	    DBG_log("calling processor %s", svm->story));
-	complete_v2_state_transition(mdp, (svm->processor)(md));
+	complete_v2_state_transition(mdp, (svm->processor)(st, md));
 	/* our caller with release_any_md(mdp) */
 }
 

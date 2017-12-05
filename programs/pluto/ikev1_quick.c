@@ -734,7 +734,8 @@ static void quick_outI1_continue(struct state *st,
 				 struct pluto_crypto_req_cont *qke,
 				 struct pluto_crypto_req *r)
 {
-	pexpect(st != NULL && st == state_with_serialno(qke->pcrc_serialno));
+	pexpect(st == state_with_serialno(qke->pcrc_serialno));
+	st = state_with_serialno(qke->pcrc_serialno);
 	stf_status e;
 
 	DBG(DBG_CONTROL,
@@ -1101,9 +1102,9 @@ struct verify_oppo_bundle {
 
 static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b);
 
-stf_status quick_inI1_outR1(struct msg_digest *md)
+stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 {
-	const struct state *const p1st = md->st;
+	pexpect(p1st != NULL && p1st == md->st);
 	struct connection *c = p1st->st_connection;
 	struct payload_digest *const id_pd = md->chain[ISAKMP_NEXT_ID];
 	struct verify_oppo_bundle b;
@@ -1527,7 +1528,8 @@ static void quick_inI1_outR1_cryptocontinue1(struct state *st,
 					     struct pluto_crypto_req *r)
 {
 	struct msg_digest *md = qke->pcrc_md;
-	pexpect(st != NULL && st == state_with_serialno(qke->pcrc_serialno));
+	pexpect(st == state_with_serialno(qke->pcrc_serialno));
+	st = state_with_serialno(qke->pcrc_serialno);
 	stf_status e;
 
 	DBG(DBG_CONTROL,
@@ -1616,7 +1618,8 @@ static void quick_inI1_outR1_cryptocontinue2(struct state *st,
 					     struct pluto_crypto_req *r)
 {
 	struct msg_digest *md = dh->pcrc_md;
-	pexpect(st != NULL && st == md->st);
+	pexpect(st == md->st);
+	st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROL,
@@ -1844,9 +1847,10 @@ static stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 
 static crypto_req_cont_func quick_inR1_outI2_continue;	/* type assertion */
 
-stf_status quick_inR1_outI2(struct msg_digest *md)
+stf_status quick_inR1_outI2(struct state *st, struct msg_digest *md)
 {
-	struct state *const st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 
 	/* HASH(2) in */
 	CHECK_QUICK_HASH(md,
@@ -1893,7 +1897,8 @@ static void quick_inR1_outI2_continue(struct state *st,
 				      struct pluto_crypto_req *r)
 {
 	struct msg_digest *md = dh->pcrc_md;
-	pexpect(st != NULL && st == md->st);
+	pexpect(st == md->st);
+	st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROL,
@@ -2110,9 +2115,10 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
  * (see RFC 2409 "IKE" 5.5)
  * Installs outbound IPsec SAs, routing, etc.
  */
-stf_status quick_inI2(struct msg_digest *md)
+stf_status quick_inI2(struct state *st, struct msg_digest *md)
 {
-	struct state *const st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 
 	/* HASH(3) in */
 	CHECK_QUICK_HASH(md, quick_mode_hash3(hash_val, st),

@@ -680,10 +680,12 @@ void init_ikev1(void)
 	    });
 }
 
-static stf_status unexpected(struct msg_digest *md)
+static stf_status unexpected(struct state *st, struct msg_digest *md)
 {
+	pexpect(st == md->st);
+	st = md->st;
 	loglog(RC_LOG_SERIOUS, "unexpected message received in state %s",
-	       enum_name(&state_names, md->st->st_state));
+	       st->st_state_name);
 	return STF_IGNORE;
 }
 
@@ -693,7 +695,7 @@ static stf_status unexpected(struct msg_digest *md)
  *  #   Initiator  Direction Responder  NOTE
  * (1)  HDR*; N/D     =>                Error Notification or Deletion
  */
-static stf_status informational(struct msg_digest *md)
+static stf_status informational(struct state *st UNUSED, struct msg_digest *md)
 {
 	struct payload_digest *const n_pld = md->chain[ISAKMP_NEXT_N];
 
@@ -2218,7 +2220,7 @@ void process_packet_tail(struct msg_digest **mdp)
 		ikev1_echo_hdr(md, (smc->flags & SMF_OUTPUT_ENCRYPTED) != 0,
 			 smc->first_out_payload);
 
-	complete_v1_state_transition(mdp, smc->processor(md));
+	complete_v1_state_transition(mdp, smc->processor(st, md));
 	/* our caller will release_any_md(mdp); */
 }
 
