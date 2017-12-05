@@ -40,6 +40,7 @@ size_t lswlog_nss_error(struct lswlog *buf)
 	} else {
 		size += lswlogf(buf, "NSS: %d (0x%x): ", error, error);
 	}
+
 	/*
 	 * NSPR should contain string tables for all known error
 	 * classes.  Query that first.  Should this specify the
@@ -63,6 +64,9 @@ size_t lswlog_nss_error(struct lswlog *buf)
 		} else {
 			size += lswlogs(buf, "unknown error");
 		}
+	}
+	if (error == 0) {
+		lswlogs(buf, "; 0 indicates NSS lost the error code");
 	}
 	size += lswlogs(buf, ")");
 	return size;
