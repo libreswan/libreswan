@@ -392,6 +392,7 @@ const char *lsw_nss_ckm_to_string(CK_MECHANISM_TYPE mechanism)
 		CASE(CKM_CAMELLIA_CBC);
 		CASE(CKM_AES_CTR);
 		CASE(CKM_AES_GCM);
+		CASE(CKM_AES_MAC);
 
 		CASE(CKM_AES_KEY_GEN);
 
