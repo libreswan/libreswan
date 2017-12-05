@@ -312,8 +312,10 @@ static PK11SymKey *symkey_from_symkey(lset_t debug,
 	 * NSS returns NULL when key_size is 0.
 	 */
 	if (result == NULL && key_size > 0) {
-		PEXPECT_LOG("%s: NSS failed with error %d(0x%x) (0 means error unknown)",
-			    prefix, PORT_GetError(), PORT_GetError());
+		LSWLOG_PEXPECT(buf) {
+			lswlogf(buf, "%s: NSS failed", prefix);
+			lswlog_nss_error(buf);
+		}
 	}
 	DBG(debug, DBG_symkey(prefix, "new result", result));
 	return result;
