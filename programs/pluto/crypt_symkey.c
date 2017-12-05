@@ -23,88 +23,6 @@
 #include "lswfips.h"
 #include "lswnss.h"
 
-
-struct nss_alg {
-	CK_FLAGS flags;
-	CK_MECHANISM_TYPE mechanism;
-};
-
-static struct nss_alg nss_alg(const char *verb, const char *name, lset_t debug,
-			      const struct ike_alg *alg)
-{
-	/*
-	 * NSS expects a key's mechanism to match the NSS algorithm
-	 * the key is intended for.  If this is wrong then the
-	 * operation fails.
-	 *
-	 * Unfortunately, some algorithms are not implemented by NSS,
-	 * so the correct key type can't always be specified.  For
-	 * those specify CKM_VENDOR_DEFINED.
-	 */
-	CK_FLAGS flags;
-	CK_MECHANISM_TYPE mechanism;
-	if (alg == NULL) {
-		/*
-		 * Something of an old code hack.  Keys fed to the
-		 * hasher get this type.
-		 */
-		flags = 0;
-		mechanism = CKM_EXTRACT_KEY_FROM_KEY;
-		if (DBGP(debug)) {
-			DBG_log("%s %s for non-NSS algorithm: NULL (legacy hack), mechanism: %s(%lu), flags: %lx",
-				verb, name,
-				lsw_nss_ckm_to_string(mechanism), mechanism,
-				flags);
-		}
-	} else {
-		if (alg->algo_type == IKE_ALG_ENCRYPT) {
-			flags = CKF_ENCRYPT | CKF_DECRYPT;
-			mechanism = encrypt_desc(alg)->nss.mechanism;
-		} else if (alg->algo_type == IKE_ALG_PRF
-			   || alg->algo_type == IKE_ALG_INTEG) {
-			flags = CKF_SIGN;
-			mechanism = prf_desc(alg)->nss.mechanism;
-		} else if (alg->algo_type == IKE_ALG_HASH) {
-			flags = CKF_DIGEST;
-			mechanism = hash_desc(alg)->nss.key_type_mechanism;
-		} else {
-			flags = 0;	/* flags not subsequently used */
-			mechanism = 0;	/* see below */
-			/* should never happen - ike_alg checks for this */
-			PEXPECT_LOG("NSS algorithm '%s' type %s unknown",
-				    alg->name, ike_alg_type_name(alg->algo_type));
-		}
-		if (mechanism == 0) {
-			/*
-			 * A non-NSS algorithm.  The values shouldn't
-			 * matter.
-			 */
-			mechanism = CKM_VENDOR_DEFINED;
-			flags = 0;
-			if (DBGP(debug)) {
-				DBG_log("%s %s for non-NSS algorithm: %s, mechanism: %s(%lu), flags: %lx",
-					verb, name, alg->name,
-					lsw_nss_ckm_to_string(mechanism), mechanism,
-					flags);
-			}
-		} else if (DBGP(debug)) {
-			DBG_log("%s %s for NSS algorithm: %s, mechanism: %s(%lu), flags: %lx",
-				verb, name, alg->name,
-				lsw_nss_ckm_to_string(mechanism), mechanism,
-				flags);
-		}
-	}
-	return (struct nss_alg) {
-		.mechanism = mechanism,
-		.flags = flags,
-	};
-}
-
-PK11SymKey *symkey_from_symkey_bytes(const char *name, lset_t debug,
-				     const struct ike_alg *symkey_alg,
-				     size_t symkey_start_byte, size_t sizeof_symkey,
-				     PK11SymKey *source_key);
-
 static PK11SymKey *ephemeral_symkey(int debug)
 {
 	static int tried;
@@ -417,11 +335,18 @@ chunk_t chunk_from_symkey(const char *name, lset_t debug,
 }
 
 /*
- * SYMKEY I/O operations.
+ * Extract SIZEOF_SYMKEY bytes of keying material as a generic
+ * key.
+ *
+ * Since NSS NSS expects a key's mechanism to match the NSS algorithm
+ * the key is intended for, this generic key cannot be used for
+ * encryption and/or PRF calculation.  Instead use encrypt_key_*() or
+ * prf_key_*().
+ *
+ * Offset into the SYMKEY is in BYTES.
  */
 
 PK11SymKey *symkey_from_bytes(const char *name, lset_t debug,
-			      const struct ike_alg *alg,
 			      const u_int8_t *bytes, size_t sizeof_bytes)
 {
 	PK11SymKey *scratch = ephemeral_symkey(debug);
@@ -429,19 +354,56 @@ PK11SymKey *symkey_from_bytes(const char *name, lset_t debug,
 					     CKM_CONCATENATE_DATA_AND_BASE,
 					     CKM_EXTRACT_KEY_FROM_KEY);
 	passert(tmp != NULL);
-	PK11SymKey *key = symkey_from_symkey_bytes(name, debug, alg,
-						   0, sizeof_bytes, tmp);
+	/*
+	 * Something of an old code hack.  Keys fed to the hasher, for
+	 * instance, get this type.
+	 */
+	CK_FLAGS flags = 0;
+	CK_MECHANISM_TYPE target = CKM_EXTRACT_KEY_FROM_KEY;
+	PK11SymKey *key = symkey_from_symkey(debug, tmp, target, flags,
+					     0, sizeof_bytes);
 	passert(key != NULL);
 	release_symkey(name, "tmp", &tmp);
 	return key;
 }
 
 PK11SymKey *symkey_from_chunk(const char *name, lset_t debug,
-			      const struct ike_alg *alg,
 			      chunk_t chunk)
 {
-	return symkey_from_bytes(name, debug, alg,
+	return symkey_from_bytes(name, debug,
 				 chunk.ptr, chunk.len);
+}
+
+PK11SymKey *encrypt_key_from_bytes(const char *name, lset_t debug,
+				   const struct encrypt_desc *encrypt,
+				   const u_int8_t *bytes, size_t sizeof_bytes)
+{
+	PK11SymKey *scratch = ephemeral_symkey(debug);
+	PK11SymKey *tmp = merge_symkey_bytes(debug, scratch, bytes, sizeof_bytes,
+					     CKM_CONCATENATE_DATA_AND_BASE,
+					     CKM_EXTRACT_KEY_FROM_KEY);
+	passert(tmp != NULL);
+	PK11SymKey *key = encrypt_key_from_symkey_bytes(name, debug, encrypt,
+							0, sizeof_bytes, tmp);
+	passert(key != NULL);
+	release_symkey(name, "tmp", &tmp);
+	return key;
+}
+
+PK11SymKey *prf_key_from_bytes(const char *name, lset_t debug,
+			       const struct prf_desc *prf,
+			       const u_int8_t *bytes, size_t sizeof_bytes)
+{
+	PK11SymKey *scratch = ephemeral_symkey(debug);
+	PK11SymKey *tmp = merge_symkey_bytes(debug, scratch, bytes, sizeof_bytes,
+					     CKM_CONCATENATE_DATA_AND_BASE,
+					     CKM_EXTRACT_KEY_FROM_KEY);
+	passert(tmp != NULL);
+	PK11SymKey *key = prf_key_from_symkey_bytes(name, debug, prf,
+						    0, sizeof_bytes, tmp);
+	passert(key != NULL);
+	release_symkey(name, "tmp", &tmp);
+	return key;
 }
 
 /*
@@ -541,32 +503,6 @@ void append_chunk_chunk(const char *name, chunk_t *lhs, chunk_t rhs)
 	chunk_t new = concat_chunk_chunk(name, *lhs, rhs);
 	freeanychunk(*lhs);
 	*lhs = new;
-}
-
-/*
- * Extract SIZEOF_SYMKEY bytes of keying material as an ENCRYPTER key
- * (i.e., can be used to encrypt/decrypt data using ENCRYPTER).
- *
- * Offset into the SYMKEY is in BYTES.
- */
-
-PK11SymKey *symkey_from_symkey_bytes(const char *name, lset_t debug,
-				     const struct ike_alg *symkey_alg,
-				     size_t symkey_start_byte, size_t sizeof_symkey,
-				     PK11SymKey *source_key)
-{
-	/*
-	 * NSS expects a key's mechanism to match the NSS algorithm
-	 * the key is intended for.  If this is wrong then the
-	 * operation fails.
-	 *
-	 * Unfortunately, some algorithms are not implemented by NSS,
-	 * so the correct key type can't always be specified.  For
-	 * those specify CKM_VENDOR_DEFINED.
-	 */
-	struct nss_alg nss = nss_alg("extract symkey", name, debug, symkey_alg);
-	return symkey_from_symkey(debug, source_key, nss.mechanism, nss.flags,
-				  symkey_start_byte, sizeof_symkey);
 }
 
 /*

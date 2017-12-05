@@ -65,7 +65,7 @@ static struct prf_context *init_bytes(const struct prf_desc *prf_desc,
 {
 	struct prf_context *prf = prf_init(prf_desc, name, debug);
 	/* XXX: use an untyped key */
-	prf->key = symkey_from_bytes(name, debug, NULL, key, sizeof_key);
+	prf->key = symkey_from_bytes(name, debug, key, sizeof_key);
 	prf_update(prf);
 	return prf;
 }

@@ -368,7 +368,7 @@ PK11SymKey *ikev2_ike_sa_keymat(const struct prf_desc *prf_desc,
 				const chunk_t SPIi, const chunk_t SPIr,
 				size_t required_bytes)
 {
-	PK11SymKey *data = symkey_from_chunk("data", DBG_CRYPT, NULL, Ni);
+	PK11SymKey *data = symkey_from_chunk("data", DBG_CRYPT, Ni);
 	append_symkey_chunk(&data, Nr);
 	append_symkey_chunk(&data, SPIi);
 	append_symkey_chunk(&data, SPIr);
@@ -390,7 +390,7 @@ PK11SymKey *ikev2_child_sa_keymat(const struct prf_desc *prf_desc,
 {
 	PK11SymKey *data;
 	if (new_dh_secret == NULL) {
-		data = symkey_from_chunk("data", DBG_CRYPT, NULL, Ni);
+		data = symkey_from_chunk("data", DBG_CRYPT, Ni);
 		append_symkey_chunk(&data, Nr);
 	} else {
 		data = concat_symkey_chunk(new_dh_secret, Ni);

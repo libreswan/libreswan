@@ -119,9 +119,9 @@ static struct prf_context *init_bytes(const struct prf_desc *prf_desc,
 	 *
 	 * This key has both the mechanism and flags set.
 	 */
-	PK11SymKey *clone = symkey_from_bytes(key_name, DBG_CRYPT,
-					      &prf_desc->common,
-					      key, sizeof_key);
+	PK11SymKey *clone = prf_key_from_bytes(key_name, DBG_CRYPT,
+					       prf_desc,
+					       key, sizeof_key);
 	struct prf_context *prf = init(prf_desc, name, debug,
 				       key_name, clone);
 	release_symkey(name, "clone", &clone);
@@ -180,7 +180,7 @@ static PK11SymKey *final_symkey(struct prf_context **prf)
 	size_t sizeof_bytes = (*prf)->desc->prf_output_size;
 	u_int8_t *bytes = alloc_things(u_int8_t, sizeof_bytes, "bytes");
 	final(*prf, bytes, sizeof_bytes);
-	PK11SymKey *final = symkey_from_bytes("final", (*prf)->debug, NULL,
+	PK11SymKey *final = symkey_from_bytes("final", (*prf)->debug,
 					      bytes, sizeof_bytes);
 	pfree(bytes);
 	pfree(*prf); *prf = NULL;
