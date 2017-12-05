@@ -3161,15 +3161,16 @@ struct connection *refine_host_connection(const struct state *st,
 
 			/* 'You Tarzan, me Jane' check based on received IDr */
 			if (!initiator && tarzan_id != NULL) {
-				char tarzan_str[IDTOA_BUF];
-				char us_str[IDTOA_BUF];
-
-				idtoa(tarzan_id, tarzan_str, sizeof(tarzan_str));
-				idtoa(&d->spd.this.id, us_str, sizeof(us_str));
-				DBG(DBG_CONTROL, DBG_log("Peer expects us to be %s (%s) according to its IDr payload",
-					tarzan_str, enum_show(&ike_idtype_names, tarzan_id->kind)));
-				DBG(DBG_CONTROL, DBG_log("This connection's local id is %s (%s)",
-					us_str, enum_show(&ike_idtype_names,d->spd.this.id.kind)));
+				DBG(DBG_CONTROL, {
+					char tarzan_str[IDTOA_BUF];
+					idtoa(tarzan_id, tarzan_str, sizeof(tarzan_str));
+					DBG_log("Peer expects us to be %s (%s) according to its IDr payload",
+						tarzan_str, enum_show(&ike_idtype_names, tarzan_id->kind));
+					char us_str[IDTOA_BUF];
+					idtoa(&d->spd.this.id, us_str, sizeof(us_str));
+					DBG_log("This connection's local id is %s (%s)",
+						us_str, enum_show(&ike_idtype_names,d->spd.this.id.kind));
+				});
 				if (!idr_wildmatch(d, tarzan_id)) {
 					DBG(DBG_CONTROL, DBG_log("Peer IDr payload does not match our expected ID, this connection will not do"));
 					continue;
