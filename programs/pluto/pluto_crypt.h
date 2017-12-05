@@ -206,8 +206,6 @@ struct pcr_skeyid_r {
 
 /* response */
 struct pcr_skeycalc_v2_r {
-	DECLARE_WIRE_ARENA(DHCALC_SIZE);
-
 	PK11SymKey *shared;
 	PK11SymKey *skeyid_d;
 	PK11SymKey *skeyid_ai;

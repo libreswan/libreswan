@@ -238,7 +238,6 @@ void calc_dh_v2(struct pluto_crypto_req *r)
 	/* clear out the reply (including pointers) */
 	static const struct pcr_skeycalc_v2_r zero_pcr_skeycalc_v2_r;
 	*skr = zero_pcr_skeycalc_v2_r;
-	INIT_WIRE_ARENA(*skr);
 
 	const struct oakley_group_desc *group = dhq.oakley_group;
 	passert(group != NULL);
