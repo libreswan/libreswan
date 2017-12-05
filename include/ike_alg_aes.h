@@ -24,5 +24,7 @@ extern const struct encrypt_desc ike_alg_encrypt_aes_ccm_12;
 extern const struct encrypt_desc ike_alg_encrypt_aes_ccm_16;
 extern const struct encrypt_desc ike_alg_encrypt_null_integ_aes_gmac;
 
+extern const struct prf_desc ike_alg_prf_aes_xcbc;
+
 extern const struct integ_desc ike_alg_integ_aes_xcbc;
 extern const struct integ_desc ike_alg_integ_aes_cmac;
