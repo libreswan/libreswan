@@ -2896,11 +2896,9 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		/* return FALSE; */
 	}
 
-	zero(&peer);	/* ??? pointer fields might not be NULLed */
-	peer.kind = id->isaid_idtype;
-
-	if (!extract_peer_id(&peer, id_pbs))
+	if (!extract_peer_id(id->isaid_idtype, &peer, id_pbs))
 		return FALSE;
+
 	if (c->spd.that.id.kind == ID_FROMCERT) {
 		/* breaks API, connection modified by %fromcert */
 		duplicate_id(&c->spd.that.id, &peer);
