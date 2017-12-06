@@ -3028,8 +3028,7 @@ struct connection *refine_host_connection(const struct state *st,
 		int opl;
 		int ppl;
 
-		if ((same_id(&c->spd.that.id, peer_id) ||
-		     ((peer_id->kind == ID_IPV4_ADDR  || peer_id->kind == ID_IPV6_ADDR)
+		if ((same_id(&c->spd.that.id, peer_id) || (id_is_ipaddr(peer_id)
 			&& c->spd.that.host_type == KH_ANY)) &&
 		    peer_ca.ptr != NULL &&
 		    trusted_ca_nss(peer_ca, c->spd.that.ca, &ppl) &&
@@ -3130,8 +3129,7 @@ struct connection *refine_host_connection(const struct state *st,
 		for (; d != NULL; d = d->hp_next) {
 			int wildcards;
 			bool matching_peer_id = match_id(peer_id, &d->spd.that.id, &wildcards) ||
-				((peer_id->kind == ID_IPV4_ADDR  || peer_id->kind == ID_IPV6_ADDR)
-					&& d->spd.that.host_type == KH_ANY);
+				(id_is_ipaddr(peer_id) && d->spd.that.host_type == KH_ANY);
 
 			int peer_pathlen;
 			bool matching_peer_ca = trusted_ca_nss(peer_ca, d->spd.that.ca,

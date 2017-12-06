@@ -647,9 +647,7 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
 		return FALSE;
 
 	if (c->spd.that.authby == AUTH_RSASIG &&
-	    (id.kind == ID_FQDN ||
-	     id.kind == ID_IPV4_ADDR ||
-	     id.kind == ID_IPV6_ADDR))
+	    (id.kind == ID_FQDN || id_is_ipaddr(&id)))
 {
 		switch (atype) {
 		case IKEv2_AUTH_RESERVED:
