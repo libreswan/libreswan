@@ -1,8 +1,12 @@
 /*
  * identity representation, as in IKE ID Payloads (RFC 2407 DOI 4.6.2.1)
  *
- * Copyright (C) 1999-2001  D. Hugh Redelmeier
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 1999-2001,2013-2017  D. Hugh Redelmeier
+ * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013-2017 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2013-2015 Matt Rogers, <mrogers@libreswan.org>
+ * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
+ * Copyright (C) 2015 Valeriu Goldberger <vgoldberger@ventusnetworks.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
