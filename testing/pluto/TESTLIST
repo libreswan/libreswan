@@ -772,6 +772,8 @@ kvmplutotest 	ikev2-55-ipseckey-03				good
 kvmplutotest 	ikev2-55-ipseckey-04				good
 kvmplutotest 	ikev2-55-ipseckey-05				good
 kvmplutotest 	ikev2-55-ipseckey-06				good
+kvmplutotest 	ikev2-55-ipseckey-07				wip
+kvmplutotest 	ikev2-55-ipseckey-08				good
 
 #################################################################
 # Specific bug tests
