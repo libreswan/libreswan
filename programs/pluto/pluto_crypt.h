@@ -312,11 +312,6 @@ struct pluto_crypto_req_cont {
 	pcr_req_id pcrc_id;
 	pb_stream pcrc_reply_stream;	/* reply stream of suspended state transition */
 	u_int8_t *pcrc_reply_buffer;	/* saved buffer contents (if any) */
-#ifdef IPSEC_PLUTO_PCRC_DEBUG
-	char *pcrc_function;
-	char *pcrc_filep;
-	int pcrc_line;
-#endif
 };
 /* struct pluto_crypto_req_cont allocators */
 
