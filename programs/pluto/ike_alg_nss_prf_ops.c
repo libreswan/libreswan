@@ -22,6 +22,7 @@
 
 #include "lswlog.h"
 #include "lswalloc.h"
+#include "lswnss.h"
 
 #include "constants.h"
 #include "ike_alg.h"

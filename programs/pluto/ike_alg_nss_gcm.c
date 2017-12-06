@@ -18,6 +18,7 @@
 #include <libreswan.h>
 
 #include "lswlog.h"
+#include "lswnss.h"
 #include "prmem.h"
 #include "prerror.h"
 

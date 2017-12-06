@@ -99,16 +99,18 @@ static PK11SymKey *symkey_to_symkey(const struct hash_desc *hash_desc,
 	int key_size = 0;
 
 	if (DBGP(debug)) {
-		DBG_log("%s hash(%s) symkey %s(%p) to symkey - derive(%s)",
-			name, hash_desc->common.name,
-			symkey_name, symkey,
-			lsw_nss_ckm_to_string(derive));
+		LSWLOG_DEBUG(buf) {
+			lswlogf(buf, "%s hash(%s) symkey %s(%p) to symkey - derive:",
+				name, hash_desc->common.name,
+				symkey_name, symkey);
+			lswlog_nss_ckm(buf, derive);
+		}
 		DBG_symkey(name, symkey_name, symkey);
 	}
 	PK11SymKey *result = PK11_Derive(symkey, derive, param, target,
 					 operation, key_size);
 	if (DBGP(debug)) {
-		DBG_symkey(name, "new result", result);
+		DBG_symkey("    result: ", name, result);
 	}
 	return result;
 }

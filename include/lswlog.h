@@ -211,8 +211,6 @@ size_t lswlogf(struct lswlog *log, const char *format, ...) PRINTF_LIKE(2);
 size_t lswlogs(struct lswlog *log, const char *string);
 size_t lswlogl(struct lswlog *log, struct lswlog *buf);
 
-/* _(SECERR: N (0xX): <error-string>) */
-size_t lswlog_nss_error(struct lswlog *log);
 /* _(in FUNC() at FILE:LINE) */
 size_t lswlog_source_line(struct lswlog *log, const char *func,
 			  const char *file, unsigned long line);

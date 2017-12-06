@@ -142,7 +142,7 @@ static PK11SymKey *nss_ecp_calc_g_ir(const struct oakley_group_desc *group UNUSE
 						 /* KDF */ CKD_NULL,
 						 /* shared data */ NULL,
 						 /* ctx */ lsw_return_nss_password_file_info());
-	DBG(DBG_CRYPT, DBG_symkey(__func__, "new temp", temp));
+	DBG(DBG_CRYPT, DBG_symkey("g_ir ", "temp", temp));
 
 	/*
 	 * The key returned above doesn't play well with PK11_Derive()

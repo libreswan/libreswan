@@ -29,7 +29,7 @@ struct prf_desc;
 /*
  * Log some information on a SYMKEY.
  *
- * The format is <PREFIX>: <NAME>-key@...
+ * The format is <PREFIX><NAME>-key@...
  */
 void DBG_symkey(const char *prefix, const char *name, PK11SymKey *key);
 

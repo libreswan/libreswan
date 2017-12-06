@@ -22,6 +22,7 @@
 
 #include "lswlog.h"
 #include "lswalloc.h"
+#include "lswnss.h"
 
 /*
  * See https://bugzilla.mozilla.org/show_bug.cgi?id=172051
