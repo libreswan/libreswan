@@ -295,8 +295,8 @@ extern const struct finite_state *finite_states[STATE_IKE_ROOF];
 struct state {
 	so_serial_t st_serialno;                /* serial number (for seniority)*/
 	so_serial_t st_clonedfrom;              /* serial number of parent */
-	so_serial_t st_ike_pred; /* IKEv2: replacing established IKE SA */
-	so_serial_t st_ipsec_pred; /* IKEv2: replacing established IPsec SA */
+	so_serial_t st_ike_pred;		/* IKEv2: replacing established IKE SA */
+	so_serial_t st_ipsec_pred;		/* replacing established IPsec SA */
 
 	struct xauth *st_xauth;			/* per state xauth/pam thread */
 

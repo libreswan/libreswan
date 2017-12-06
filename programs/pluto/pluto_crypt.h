@@ -305,13 +305,6 @@ struct pluto_crypto_req_cont {
 
 	const char *pcrc_name;
 
-	/*
-	 * For IKEv1 Quick Mode Key Exchange:
-	 * pcrc_replacing identifies the state object that
-	 * the exchange will be replacing.
-	 */
-	so_serial_t pcrc_replacing;
-
 	/* the rest of these fields are private to pluto_crypt.c */
 
 	TAILQ_ENTRY(pluto_crypto_req_cont) pcrc_list;
@@ -334,14 +327,6 @@ extern struct pluto_crypto_req_cont *new_pcrc(
 	const char *name,
 	struct state *st,
 	struct msg_digest *md);
-
-extern struct pluto_crypto_req_cont *new_pcrc_repl(
-	crypto_req_cont_func fn,
-	const char *name,
-	struct state *st,
-	struct msg_digest *md,
-	so_serial_t replacing);
-
 
 extern void init_crypto_helpers(int nhelpers);
 

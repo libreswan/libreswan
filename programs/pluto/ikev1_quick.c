@@ -865,26 +865,26 @@ stf_status quick_outI1(int whack_sock,
 		lswlogf(buf, "}");
 	}
 
-	{
-		struct pluto_crypto_req_cont *qke = new_pcrc_repl(
-			quick_outI1_continue, "quick_outI1 KE",
-			st, NULL, replacing);
-		stf_status e;
+	/* save for post crytpo logging */
+	st->st_ipsec_pred = replacing;
+	struct pluto_crypto_req_cont *qke = new_pcrc(quick_outI1_continue,
+						     "quick_outI1 KE",
+						     st, NULL);
 
-		if (policy & POLICY_PFS) {
-			e = build_ke_and_nonce(st, qke, st->st_pfs_group,
-					       st->st_import);
-		} else {
-			e = build_nonce(st, qke, st->st_import);
-		}
-
-		reset_globals();
-
-		return e;
+	stf_status e;
+	if (policy & POLICY_PFS) {
+		e = build_ke_and_nonce(st, qke, st->st_pfs_group,
+				       st->st_import);
+	} else {
+		e = build_nonce(st, qke, st->st_import);
 	}
+
+	reset_globals();
+
+	return e;
 }
 
-static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *qke,
+static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *qke UNUSED,
 				   struct pluto_crypto_req *r,
 				   struct state *st)
 {
@@ -1042,7 +1042,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *qke,
 	delete_event(st);
 	start_retransmits(st, EVENT_v1_RETRANSMIT);
 
-	if (qke->pcrc_replacing == SOS_NOBODY) {
+	if (st->st_ipsec_pred == SOS_NOBODY) {
 		whack_log(RC_NEW_STATE + STATE_QUICK_I1,
 			  "%s: initiate",
 			  st->st_state_name);
@@ -1050,7 +1050,8 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *qke,
 		whack_log(RC_NEW_STATE + STATE_QUICK_I1,
 			  "%s: initiate to replace #%lu",
 			  st->st_state_name,
-			  qke->pcrc_replacing);
+			  st->st_ipsec_pred);
+		st->st_ipsec_pred = SOS_NOBODY;
 	}
 
 	return STF_OK;
