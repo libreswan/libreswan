@@ -449,7 +449,7 @@ kvmplutotest	dpd-05	good
 kvmplutotest	dpd-06	good
 kvmplutotest	dpd-07	good
 kvmplutotest	dpd-08	wip
-kvmplutotest	dpd-09-shared		wip
+kvmplutotest	dpd-09-shared		good
 kvmplutotest	dpd-10-alias 		wip
 kvmplutotest	ikev2-liveness-01	good
 kvmplutotest	ikev2-liveness-02	good
@@ -691,7 +691,7 @@ kvmplutotest	sourceip-01			good
 #################################################################
 # IPv6 tests
 #################################################################
-kvmplutotest	ipv6-v6-through-v6-klips-klips		wip
+kvmplutotest	ipv6-v6-through-v6-klips-klips		good
 kvmplutotest	ipv6-v6-through-v6-netkey-netkey	wip
 kvmplutotest	ipv6-v6-through-v6-klips-netkey		wip
 kvmplutotest	ipv6-v4-through-v6-klips-klips		wip
@@ -840,7 +840,7 @@ kvmplutotest	nss-cert-08-mismatch		good
 kvmplutotest	nss-cert-chain-01		good
 kvmplutotest	nss-cert-chain-02		good
 kvmplutotest	nss-cert-chain-03		good
-kvmplutotest	nss-cert-chain-04		wip
+kvmplutotest	nss-cert-chain-04		good
 kvmplutotest	nss-cert-chain-01-ikev2		good
 kvmplutotest	nss-cert-chain-02-ikev2		good
 kvmplutotest	nss-cert-chain-03-ikev2		good
