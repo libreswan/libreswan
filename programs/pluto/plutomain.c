@@ -110,6 +110,8 @@
 
 static const char *pluto_name;	/* name (path) we were invoked with */
 
+pthread_t main_thread;
+
 static char *rundir = NULL;
 char *pluto_listen = NULL;
 static bool fork_desired = USE_FORK || USE_DAEMON;

@@ -252,7 +252,7 @@ static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
 					st->st_clonedfrom);
 			return STF_FAIL;
 		}
-		passert(st->st_sec_in_use == TRUE); /* child has its own KE */
+		passert(st->st_sec_in_use); /* child has its own KE */
 
 		/* initiate calculation of g^xy */
 		e = start_dh_v2(md, "DHv2 for child sa", role,
@@ -3423,12 +3423,8 @@ static stf_status ikev2_start_pam_authorize(struct msg_digest *md)
 	idtoa(&st->st_connection->spd.that.id, thatid, sizeof(thatid));
 	libreswan_log("IKEv2: [XAUTH]PAM method requested to authorize '%s'",
 		      thatid);
-	xauth_start_pam_thread(&st->st_xauth,
+	xauth_start_pam_thread(st,
 			       thatid, "password",
-			       st->st_connection->name,
-			       &st->st_remoteaddr,
-			       st->st_serialno,
-			       st->st_connection->instance_serial,
 			       "IKEv2",
 			       ikev2_pam_continue);
 	return STF_SUSPEND;

@@ -1194,18 +1194,18 @@ static void xauth_immediate(const char *name, so_serial_t serialno, bool success
  * @param st State Structure
  * @param name Username
  * @param password Password
- * @param connname connnection name, from ipsec.conf
  */
 static int xauth_launch_authent(struct state *st,
 				chunk_t *name,
-				chunk_t *password,
-				const char *connname)
+				chunk_t *password)
 {
 	/*
 	 * XAUTH somehow already in progress?
 	 */
+#ifdef XAUTH_HAVE_PAM
 	if (st->st_xauth != NULL)
 		return 0;
+#endif
 
 	char *arg_name = alloc_bytes(name->len + 1, "XAUTH Name");
 	memcpy(arg_name, name->ptr, name->len);
@@ -1227,12 +1227,8 @@ static int xauth_launch_authent(struct state *st,
 	case XAUTHBY_PAM:
 		libreswan_log("XAUTH: PAM authentication method requested to authenticate user '%s'",
 			      arg_name);
-		xauth_start_pam_thread(&st->st_xauth,
+		xauth_start_pam_thread(st,
 				       arg_name, arg_password,
-				       connname,
-				       &st->st_remoteaddr,
-				       st->st_serialno,
-				       st->st_connection->instance_serial,
 				       "XAUTH",
 				       ikev1_xauth_callback);
 		event_schedule_s(EVENT_PAM_TIMEOUT, EVENT_PAM_TIMEOUT_DELAY, st);
@@ -1241,7 +1237,7 @@ static int xauth_launch_authent(struct state *st,
 	case XAUTHBY_FILE:
 		libreswan_log("XAUTH: password file authentication method requested to authenticate user '%s'",
 			      arg_name);
-		bool success = do_file_authentication(st, arg_name, arg_password, connname);
+		bool success = do_file_authentication(st, arg_name, arg_password, st->st_connection->name);
 		xauth_immediate(arg_name, st->st_serialno,
 				success, ikev1_xauth_callback);
 		break;
@@ -1418,10 +1414,10 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 			return stat == STF_OK ? STF_FAIL : stat;
 		}
 	} else {
-		xauth_launch_authent(st, &name, &password, st->st_connection->name);
+		xauth_launch_authent(st, &name, &password);
 		set_suspended(st, md);
+		return STF_IGNORE;
 	}
-	return STF_IGNORE;
 }
 
 /*

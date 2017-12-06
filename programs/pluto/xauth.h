@@ -1,4 +1,4 @@
-/* XAUTH handling, for libreswan.
+/* XAUTH PAM handling
  *
  * Copyright (C) 2017 Andrew Cagney
  *
@@ -15,27 +15,25 @@
 
 #include "constants.h"
 
-struct id;
 struct state;
-struct xauth;
-
-/*
- * XXX: Should XAUTH handle timeouts internall?
- */
-void xauth_abort(so_serial_t serialno, struct xauth **xauth,
-		 struct state *st_callback);
 
 #ifdef XAUTH_HAVE_PAM
-void xauth_start_pam_thread(struct xauth **xauth,
+
+/*
+ * XXX: Should XAUTH handle timeouts internally?
+ */
+void xauth_pam_abort(struct state *st, bool call_callback);
+
+typedef void (*xauth_callback_t)(
+		struct state *st,
+		const char *,
+		bool aborted,
+		bool success);
+
+void xauth_start_pam_thread(struct state *st,
 			    const char *name,
 			    const char *password,
-			    const char *connection_name,
-			    const ip_address *remote_addr,
-			    so_serial_t serialno,
-			    unsigned long instance_serial,
 			    const char *atype,
-			    void (*callback)(struct state *st,
-					     const char *name,
-					     bool aborted,
-					     bool success));
+			    xauth_callback_t callback);
+
 #endif

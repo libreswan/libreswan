@@ -971,16 +971,15 @@ void delete_state(struct state *st)
 	}
 
 	/*
-	 * Resume ST (even though it is about to be deleted), and then
+	 * Resume st (even though it is about to be deleted), and then
 	 * cancel any XAUTH in progress.
+	 * ??? in what sense are we resuming st?
 	 */
-	if (st->st_suspended_md != NULL) {
-		unset_suspended(st);
-	}
-
+#ifdef XAUTH_HAVE_PAM
 	if (st->st_xauth != NULL) {
-		xauth_abort(st->st_serialno, &st->st_xauth, NULL);
+		xauth_pam_abort(st, FALSE);
 	}
+#endif
 
 	/* If DPD is enabled on this state object, clear any pending events */
 	if (st->st_dpd_event != NULL)
@@ -999,6 +998,8 @@ void delete_state(struct state *st)
 		DBG(DBG_CONTROL, DBG_log("disconnecting state #%lu from md",
 					 st->st_serialno));
 		st->st_suspended_md->st = NULL;
+		unset_suspended(st);
+		/* ??? has md just leaked? */
 	}
 
 	if (send_delete_check(st)) {

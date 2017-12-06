@@ -841,6 +841,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		/* note: no md->st to clear */
 		break;
 
+#ifdef XAUTH_HAVE_PAM
 	case EVENT_PAM_TIMEOUT:
 		DBG(DBG_LIFECYCLE,
 				DBG_log("PAM thread timeout on state #%lu",
@@ -849,7 +850,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		 * This immediately invokes the callback passing in
 		 * ST.
 		 */
-		xauth_abort(st->st_serialno, &st->st_xauth, st);
+		xauth_pam_abort(st, TRUE);
 		/*
 		 * Removed this call, presumably it was needed because
 		 * the call back didn't fire until later?
@@ -858,6 +859,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		 */
 		/* note: no md->st to clear */
 		break;
+#endif
 
 	default:
 		bad_case(type);
