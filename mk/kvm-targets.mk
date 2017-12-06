@@ -251,9 +251,19 @@ KVM_TESTS ?= testing/pluto
 # then KVM_TESTS ends up containing new lines, strip them out.
 STRIPPED_KVM_TESTS = $(strip $(KVM_TESTS))
 
+.PHONY:
+web-pages-disabled:
+	@echo
+	@echo Web-pages disabled.
+	@echo
+	@echo To enable web pages create the directory: $(LSW_WEBDIR)
+	@echo To convert this result into a web page run: make web-page
+	@echo
+
 define kvm-test
 .PHONY: $(1)
 $(1): $$(KVM_KEYS) kvm-shutdown-test-domains web-test-prep
+	$$(if $$(WEB_SUMMARYDIR),,@$(MAKE) -s web-pages-disabled)
 	: kvm-test target=$(1) param=$(2)
 	$$(call check-kvm-qemu-directory)
 	$$(call check-kvm-entropy)
@@ -264,13 +274,7 @@ $(1): $$(KVM_KEYS) kvm-shutdown-test-domains web-test-prep
 		$$(if $$(WEB_RESULTSDIR), --publish-results $$(WEB_RESULTSDIR)) \
 		$$(if $$(WEB_SUMMARYDIR), --publish-status $$(WEB_SUMMARYDIR)/status.json) \
 		$$(2) $$(KVM_TEST_FLAGS) $$(STRIPPED_KVM_TESTS)
-ifeq ($$(WEB_SUMMARYDIR),)
-	@echo
-	@echo Web-pages disabled.
-	@echo
-	@echo To enable web pages create the directory $$(LSW_WEBDIR).
-	@echo To convert this result into a web page run: make web-page
-endif
+	$$(if $$(WEB_SUMMARYDIR),,@$(MAKE) -s web-pages-disabled)
 endef
 
 # "test" and "check" just runs the entire testsuite.
