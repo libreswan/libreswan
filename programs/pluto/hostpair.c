@@ -303,3 +303,23 @@ void release_dead_interfaces(void)
 		}
 	}
 }
+
+void delete_oriented_hp(struct connection *c)
+{
+	struct host_pair *hp = c->host_pair;
+
+	list_rm(struct connection, hp_next, c, hp->connections);
+	c->host_pair = NULL; /* redundant, but safe */
+
+	/*
+	 * if there are no more connections with this host_pair
+	 * and we haven't even made an initial contact, let's delete
+	 * this guy in case we were created by an attempted DOS attack.
+	 */
+	if (hp->connections == NULL) {
+		/* ??? must deal with this! */
+		passert(hp->pending == NULL);
+		remove_host_pair(hp);
+		pfree(hp);
+	}
+}

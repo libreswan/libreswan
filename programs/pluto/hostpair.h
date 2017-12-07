@@ -51,6 +51,7 @@ extern struct host_pair *find_host_pair(const ip_address *myaddr,
 		*ep = (e)->enext; \
 	}
 
+void delete_oriented_hp(struct connection *c);
 extern void remove_host_pair(struct host_pair *hp);
 
 extern struct connection *connections;
