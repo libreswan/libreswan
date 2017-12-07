@@ -2273,6 +2273,7 @@ char *fmt_conn_instance(const struct connection *c, char buf[CONN_INST_BUF])
 			ipstr_buf b;
 
 			*p++ = ' ';
+			/* p not subsequently used */
 			p = jam_str(p, &buf[CONN_INST_BUF] - p,
 				sensitive_ipstr(&c->spd.that.host_addr, &b));
 		}

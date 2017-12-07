@@ -734,52 +734,50 @@ int parser_find_keyword(const char *s, YYSTYPE *lval)
 
 unsigned int parser_enum_list(const struct keyword_def *kd, const char *s, bool list)
 {
-	char *piece;
-	char *scopy;
-	int numfound, kevcount;
-	const struct keyword_enum_value *kev;
-	unsigned int valresult;
 	char complaintbuf[80];
 
 	assert(kd->type == kt_list || kd->type == kt_enum);
 
-	scopy = strdup(s); /* leaks */
-	valresult = 0;
+	/* strsep(3) is destructive, so give it a safe-to-munge copy of s */
+	char *scopy = strdup(s);
+	char *scursor = scopy;
+
+	unsigned int valresult = 0;
 
 	/*
 	 * split up the string into comma separated pieces, and look each piece up in the
 	 * value list provided in the definition.
 	 */
 
-	numfound = 0;
-	while ((piece = strsep(&scopy, ":, \t")) != NULL) {
+	int numfound = 0;
+	char *piece;
+	while ((piece = strsep(&scursor, ":, \t")) != NULL) {
 		/* discard empty strings */
 		if (piece[0] == '\0')
 			continue;
 
 		assert(kd->validenum != NULL);
-		for (kevcount = kd->validenum->valuesize,
-		     kev = kd->validenum->values;
-		     kevcount > 0 && !strcaseeq(piece, kev->name);
-		     kev++, kevcount--)
-			continue;
-
-		/* if we found something */
-		if (kevcount != 0) {
-			/* count it */
-			numfound++;
-
-			valresult |= kev->value;
-		} else {
-			/* we didn't find anything, complain */
-			snprintf(complaintbuf, sizeof(complaintbuf),
-				 "%s: %d: keyword %s, invalid value: %s",
-				 parser_cur_filename(), parser_cur_lineno(),
-				 kd->keyname, piece);
+		int kevcount = kd->validenum->valuesize;
+		const struct keyword_enum_value *kev = kd->validenum->values;
+		for ( ; ; kev++, kevcount--) {
+			if (kevcount == 0) {
+				/* we didn't find anything, complain */
+				snprintf(complaintbuf, sizeof(complaintbuf),
+					 "%s: %d: keyword %s, invalid value: %s",
+					 parser_cur_filename(),
+					 parser_cur_lineno(),
+					 kd->keyname, piece);
 
 				fprintf(stderr, "ERROR: %s\n", complaintbuf);
 				free(scopy);
 				exit(1);
+			}
+			if (strcaseeq(piece, kev->name)) {
+				/* found it: count it */
+				numfound++;
+				valresult |= kev->value;
+				break;
+			}
 		}
 	}
 
@@ -789,9 +787,9 @@ unsigned int parser_enum_list(const struct keyword_def *kd, const char *s, bool 
 			 parser_cur_filename(), parser_cur_lineno(),
 			 kd->keyname, scopy);
 
-			fprintf(stderr, "ERROR: %s\n", complaintbuf);
-			free(scopy);
-			exit(1);
+		fprintf(stderr, "ERROR: %s\n", complaintbuf);
+		free(scopy);
+		exit(1);
 	}
 
 	free(scopy);

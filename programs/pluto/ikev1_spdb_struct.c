@@ -2666,7 +2666,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				 * indicate that integrity was present
 				 * but the lookup failed.
 				 */
-				if (ah_attrs.transattrs.ta_integ == NULL) {
+				if (esp_attrs.transattrs.ta_integ == NULL) {
 					/* error already logged */
 					DBG(DBG_PARSING,
 					    DBG_log("ignoring ESP proposal with unknown integrity"));

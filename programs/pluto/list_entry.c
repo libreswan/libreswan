@@ -37,6 +37,7 @@ static void log_entry(const struct list_info *info,
 				entry, entry->older, entry->newer);
 		}
 	}
+	passert(entry != NULL);
 	if (entry->newer != NULL || entry->older != NULL) {
 		passert(entry->newer != NULL);
 		passert(entry->newer->older == entry);

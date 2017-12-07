@@ -393,16 +393,29 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		fake_md->from_state = STATE_IKEv2_BASE;
 		fake_md->msgid_received = v2_INVALID_MSGID;
 		md = fake_md;
+
+		switch (st->st_state) {
+		case STATE_PARENT_I1:
+		case STATE_V2_REKEY_CHILD_I0:
+			fake_md->svm = &ikev2_parent_firststate_microcode;
+			break;
+
+		case STATE_V2_CREATE_I0:
+			fake_md->svm = &ikev2_create_child_initiate_microcode;
+			break;
+
+		default:
+			bad_case(st->st_state);
+			break;
+		}
 	}
 
 	switch (st->st_state) {
 	case STATE_PARENT_I1:
-		fake_md->svm = &ikev2_parent_firststate_microcode;
 		what = "ikev2_outI1 KE";
 		break;
 
 	case STATE_V2_REKEY_CHILD_I0:
-		fake_md->svm = &ikev2_rekey_ike_firststate_microcode;
 		ci = pcim_known_crypto;
 		what = (st->st_pfs_group == NULL) ? "Child Rekey Initiator nonce ni" :
 			"Child Rekey Initiator KE and nonce ni";
@@ -428,7 +441,6 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		break;
 
 	case STATE_V2_CREATE_I0:
-		fake_md->svm = &ikev2_create_child_initiate_microcode;
 		ci = pcim_known_crypto;
 		what = (st->st_pfs_group == NULL) ? "Child Initiator nonce ni" :
 			"Child Initiator KE and nonce ni";
@@ -6006,8 +6018,6 @@ void ikev2_add_ipsec_child(int whack_sock, struct state *isakmp_sa,
 {
 	struct state *st;
 	char replacestr[32];
-	const char *pfsgroupname = "no-pfs";
-
 	if (find_pending_phase2(isakmp_sa->st_serialno,
 				c, IPSECSA_PENDING_STATES)) {
 		return;
@@ -6048,18 +6058,20 @@ void ikev2_add_ipsec_child(int whack_sock, struct state *isakmp_sa,
 	passert(st->st_connection != NULL);
 
 	st->st_pfs_group = NULL;
-	if ((policy & POLICY_PFS) != LEMPTY) {
+	if ((policy & POLICY_PFS) != LEMPTY)
 		ikev2_child_set_pfs(st);
-		pfsgroupname = st->st_pfs_group->common.name;
-	}
 
-	DBG(DBG_CONTROLMORE,
+	DBG(DBG_CONTROLMORE, {
+		const char *pfsgroupname = st->st_pfs_group == NULL ?
+			"no-pfs" : st->st_pfs_group->common.name;
+
 		DBG_log("#%lu schedule event to initiate IPsec SA %s%s using IKE#%lu pfs=%s",
 			st->st_serialno,
 			prettypolicy(policy),
 			replacestr,
 			isakmp_sa->st_serialno,
-			pfsgroupname));
+			pfsgroupname);
+	});
 	delete_event(st);
 	event_schedule_s(EVENT_v2_INITIATE_CHILD, 0, st);
 	reset_globals();

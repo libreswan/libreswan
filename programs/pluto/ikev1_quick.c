@@ -1105,7 +1105,7 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b);
 
 stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 {
-	pexpect(p1st != NULL && p1st == md->st);
+	passert(p1st != NULL && p1st == md->st);
 	struct connection *c = p1st->st_connection;
 	struct payload_digest *const id_pd = md->chain[ISAKMP_NEXT_ID];
 	struct verify_oppo_bundle b;
