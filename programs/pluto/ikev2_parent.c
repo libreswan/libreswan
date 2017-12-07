@@ -264,11 +264,10 @@ static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
 }
 
 /* redundant type assertion: static crypto_req_cont_func ikev2_crypto_continue; */
-static void ikev2_crypto_continue(struct state *st,
+static void ikev2_crypto_continue(struct state *st, struct msg_digest *md,
 				  struct pluto_crypto_req_cont *cn,
 				  struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = cn->pcrc_md;
 	stf_status e = STF_OK;
 	bool only_shared = FALSE;
 
@@ -1470,11 +1469,10 @@ stf_status ikev2parent_inI1outR1(struct state *st, struct msg_digest *md)
 
 /* redundant type assertion: static crypto_req_cont_func ikev2_parent_inI1outR1_continue; */
 
-static void ikev2_parent_inI1outR1_continue(struct state *st,
+static void ikev2_parent_inI1outR1_continue(struct state *st, struct msg_digest *md,
 					    struct pluto_crypto_req_cont *ke,
 					    struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = ke->pcrc_md;
 	pexpect(st == md->st);
 	st = md->st;
 
@@ -2057,11 +2055,10 @@ stf_status ikev2parent_inR1outI2(struct state *st, struct msg_digest *md)
 
 /* redundant type assertion: static crypto_req_cont_func ikev2_parent_inR1outI2_continue; */
 
-static void ikev2_parent_inR1outI2_continue(struct state *st,
+static void ikev2_parent_inR1outI2_continue(struct state *st, struct msg_digest *md,
 					    struct pluto_crypto_req_cont *dh,
 					    struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = dh->pcrc_md;
 	pexpect(st == md->st);
 	st = md->st;
 	stf_status e;
@@ -3490,11 +3487,10 @@ stf_status ikev2parent_inI2outR2(struct state *st UNUSED, struct msg_digest *md)
 			NULL, ikev2_parent_inI2outR2_continue);
 }
 
-static void ikev2_parent_inI2outR2_continue(struct state *st,
+static void ikev2_parent_inI2outR2_continue(struct state *st, struct msg_digest *md,
 					    struct pluto_crypto_req_cont *dh,
 					    struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = dh->pcrc_md;
 	pexpect(st == md->st);
 	st = md->st;
 	stf_status e;

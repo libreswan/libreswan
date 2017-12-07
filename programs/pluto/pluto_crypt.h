@@ -42,6 +42,7 @@
 #include "libreswan/passert.h"
 
 struct state;
+struct msg_digest;
 
 /*
  * cryptographic helper operations.
@@ -241,28 +242,50 @@ struct pluto_crypto_req_cont;	/* forward reference */
 /*
  * pluto_crypto_req_cont_func:
  *
- * A function that continues a state transition after
- * an asynchronous cryptographic calculation completes.
+ * A function that resumes a state transition after an asynchronous
+ * cryptographic calculation completes.
  *
- * See also comments prefixing send_crypto_helper_request.
+ * It is passed:
  *
- * It is passed a pointer to each of the two structures.
+ * struct state *st:
  *
- * struct pluto_crypto_req_cont:
- *	Information back from helper process.
- *	Notionally sent across the wire.
+ *      The always non-NULL SA (aka state) that requested the crypto.
+ *      If, on completion of the crypto, the requesting state has been
+ *      deleted, this function IS NOT called.
  *
- * struct pluto_crypto_req:
- *	Bookkeeping information to resume the computation.
- *	Never sent across wire but perhaps copied.
- *	For example, it includes a struct msg_digest *
- *	in the cases where that is appropriate
+ *	Before calling, the current global state context will have
+ *	been set to this state, that is, don't call set_cur_state().
  *
- * If state disappeared then ST is NULL.
+ * struct msg_digest *md:
+ *
+ *      If applicable, the incomming packet that triggered the
+ *      requested crypto.  Re-keying, for instance, will not have this
+ *      packet?
+ *
+ *      This function is responsible for either releasing or
+ *      transfering ownership of the MD.
+ *
+ * struct pluto_crypto_req_cont *c:
+ *
+ *      Move along, nothing to see.
+ *
+ *	Some code still seems to accesses this structures internals.
+ *	There is no clear reason why.
+ *
+ * struct pluto_crypto_req *r:
+ *
+ *	The results from the crypto operation.
+ *
+ *      This function is responsible for releasing or transfering the
+ *      contents (and for "just knowing" the right contents in the
+ *      union it should be using).
+ *
+ * See also the comments that prefix send_crypto_helper_request().
  */
-typedef void crypto_req_cont_func(struct state *st,
-				  struct pluto_crypto_req_cont *,
-				  struct pluto_crypto_req *);
+
+typedef void crypto_req_cont_func(struct state *st, struct msg_digest *md,
+				  struct pluto_crypto_req_cont *c,
+				  struct pluto_crypto_req *r);
 
 /*
  * The crypto continuation structure

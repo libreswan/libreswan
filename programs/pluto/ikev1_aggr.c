@@ -104,12 +104,10 @@ static crypto_req_cont_func aggr_inR1_outI2_crypto_continue;
 
 static crypto_req_cont_func aggr_inI1_outR1_continue2;	/* type assertion */
 
-static void aggr_inI1_outR1_continue2(struct state *st,
+static void aggr_inI1_outR1_continue2(struct state *st, struct msg_digest *md,
 				      struct pluto_crypto_req_cont *dh,
 				      struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = dh->pcrc_md;
-
 	pexpect(st == md->st);
 	st = md->st;
 
@@ -156,11 +154,10 @@ static void aggr_inI1_outR1_continue2(struct state *st,
 
 static crypto_req_cont_func aggr_inI1_outR1_continue1;	/* type assertion */
 
-static void aggr_inI1_outR1_continue1(struct state *st,
+static void aggr_inI1_outR1_continue1(struct state *st, struct msg_digest *md,
 				      struct pluto_crypto_req_cont *ke,
 				      struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = ke->pcrc_md;
 	pexpect(st == md->st);
 	st = md->st;
 
@@ -724,11 +721,10 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 
 /* redundant type assertion: static crypto_req_cont_func aggr_inR1_outI2_crypto_continue; */
 
-static void aggr_inR1_outI2_crypto_continue(struct state *st,
+static void aggr_inR1_outI2_crypto_continue(struct state *st, struct msg_digest *md,
 					    struct pluto_crypto_req_cont *dh,
 					    struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = dh->pcrc_md;
 	pexpect(st == md->st);
 	st = md->st;
 	stf_status e;
@@ -1114,11 +1110,10 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *ke,
 
 static crypto_req_cont_func aggr_outI1_continue;	/* type assertion */
 
-static void aggr_outI1_continue(struct state *st,
+static void aggr_outI1_continue(struct state *st, struct msg_digest *md,
 				struct pluto_crypto_req_cont *ke,
 				struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = ke->pcrc_md;
 	pexpect(st == md->st);
 	st = md->st;
 	stf_status e;

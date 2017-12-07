@@ -523,7 +523,7 @@ stf_status send_crypto_helper_request(struct state *st,
 		pluto_do_crypto_op(r, -1);
 
 		/* call the continuation */
-		(*cn->pcrc_func)(st, cn, r);
+		(*cn->pcrc_func)(st, cn->pcrc_md, cn, r);
 
 		pfree(cn);	/* ownership transferred from caller */
 
@@ -935,7 +935,7 @@ static void handle_helper_answer(struct pluto_crypto_worker *w)
 #if 0
 		so_serial_t old_state = push_cur_state(st);
 #endif
-		(*cn->pcrc_func)(st, cn, &rr);
+		(*cn->pcrc_func)(st, cn->pcrc_md, cn, &rr);
 #if 0
 		pop_cur_state(old_state);
 #endif

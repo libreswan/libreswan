@@ -880,11 +880,10 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *ke,
 
 static crypto_req_cont_func main_inR1_outI2_continue;	/* type assertion */
 
-static void main_inR1_outI2_continue(struct state *st,
+static void main_inR1_outI2_continue(struct state *st, struct msg_digest *md,
 				     struct pluto_crypto_req_cont *ke,
 				     struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = ke->pcrc_md;
 	pexpect(st == md->st);
 	st = md->st;
 	stf_status e;
@@ -1094,11 +1093,10 @@ static stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *ke,
 
 static crypto_req_cont_func main_inI2_outR2_continue;	/* type assertion */
 
-static void main_inI2_outR2_continue(struct state *st,
+static void main_inI2_outR2_continue(struct state *st, struct msg_digest *md,
 				     struct pluto_crypto_req_cont *ke,
 				     struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = ke->pcrc_md;
 	pexpect(st == md->st);
 	st = md->st;
 	stf_status e;
@@ -1175,7 +1173,7 @@ stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
  */
 static crypto_req_cont_func main_inI2_outR2_calcdone;	/* type assertion */
 
-static void main_inI2_outR2_calcdone(struct state *st,
+static void main_inI2_outR2_calcdone(struct state *st, struct msg_digest *md UNUSED,
 				     struct pluto_crypto_req_cont *dh,
 				     struct pluto_crypto_req *r)
 {
@@ -1621,11 +1619,10 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 
 static crypto_req_cont_func main_inR2_outI3_cryptotail;	/* type assertion */
 
-static void main_inR2_outI3_cryptotail(struct state *st,
+static void main_inR2_outI3_cryptotail(struct state *st, struct msg_digest *md,
 				       struct pluto_crypto_req_cont *dh,
 				       struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = dh->pcrc_md;
 	pexpect(st == md->st);
 	st = md->st;
 	stf_status e;

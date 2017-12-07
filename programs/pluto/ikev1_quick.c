@@ -730,7 +730,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *qke,
 
 static crypto_req_cont_func quick_outI1_continue;	/* type assertion */
 
-static void quick_outI1_continue(struct state *st,
+static void quick_outI1_continue(struct state *st, struct msg_digest *md UNUSED,
 				 struct pluto_crypto_req_cont *qke,
 				 struct pluto_crypto_req *r)
 {
@@ -1524,11 +1524,10 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b)
 
 /* redundant type assertion: static crypto_req_cont_func quick_inI1_outR1_cryptocontinue1; */
 
-static void quick_inI1_outR1_cryptocontinue1(struct state *st,
+static void quick_inI1_outR1_cryptocontinue1(struct state *st, struct msg_digest *md,
 					     struct pluto_crypto_req_cont *qke,
 					     struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = qke->pcrc_md;
 	pexpect(st == state_with_serialno(qke->pcrc_serialno));
 	st = state_with_serialno(qke->pcrc_serialno);
 	stf_status e;
@@ -1614,11 +1613,10 @@ static void quick_inI1_outR1_cryptocontinue1(struct state *st,
 
 /* redundant type assertion: static crypto_req_cont_func quick_inI1_outR1_cryptocontinue2; */
 
-static void quick_inI1_outR1_cryptocontinue2(struct state *st,
+static void quick_inI1_outR1_cryptocontinue2(struct state *st, struct msg_digest *md,
 					     struct pluto_crypto_req_cont *dh,
 					     struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = dh->pcrc_md;
 	pexpect(st == md->st);
 	st = md->st;
 	stf_status e;
@@ -1893,11 +1891,10 @@ stf_status quick_inR1_outI2(struct state *st, struct msg_digest *md)
 
 /* redundant type assertion: static crypto_req_cont_func quick_inR1_outI2_continue; */
 
-static void quick_inR1_outI2_continue(struct state *st,
+static void quick_inR1_outI2_continue(struct state *st, struct msg_digest *md,
 				      struct pluto_crypto_req_cont *dh,
 				      struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = dh->pcrc_md;
 	pexpect(st == md->st);
 	st = md->st;
 	stf_status e;
