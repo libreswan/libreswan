@@ -348,6 +348,7 @@ kvmplutotest	newoe-07-ike-replace-initiator-esp	good
 kvmplutotest	newoe-08-ike-replace-responder		good
 kvmplutotest	newoe-08-restart			good
 kvmplutotest	newoe-09-mutual				good
+kvmplutotest	newoe-09-mutual-transport		good
 kvmplutotest	newoe-10-expire-inactive		good
 kvmplutotest	newoe-10-expire-inactive-ike		good
 kvmplutotest	newoe-11-failike			good
