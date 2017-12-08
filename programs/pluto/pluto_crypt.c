@@ -624,6 +624,8 @@ stf_status send_crypto_helper_request(struct state *st,
 			cn->pcrc_reply_buffer = NULL;
 			loglog(RC_LOG_SERIOUS, "cannot start crypto helper %d: failed to write",
 				w->pcw_helpernum);
+			pcr_release_crypto_request(r);
+			pfree(cn);	/* ownership transferred from caller */
 			return STF_FAIL;
 		}
 
@@ -661,7 +663,7 @@ stf_status send_crypto_helper_request(struct state *st,
 				      r->pcr_pcim)));
 
 		loglog(RC_LOG_SERIOUS, "cannot start crypto helper: failed to find any available worker");
-
+		pcr_release_crypto_request(r);
 		pfree(cn);	/* ownership transferred from caller */
 		return STF_TOOMUCHCRYPTO;
 	}
