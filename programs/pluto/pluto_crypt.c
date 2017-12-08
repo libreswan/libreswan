@@ -201,8 +201,9 @@ static void pcr_init(struct pluto_crypto_req *r,
  * release being performed pre- or post- crypto.  Ewwww!
  */
 
-static void pcr_release_crypto_request(struct pluto_crypto_req *r)
+static void pcrc_release_request(struct pluto_crypto_req_cont *cn)
 {
+	struct pluto_crypto_req *r = &cn->pcrc_pcr;
 	switch (r->pcr_type) {
 	case pcr_build_ke_and_nonce:
 	case pcr_build_nonce:
@@ -217,6 +218,9 @@ static void pcr_release_crypto_request(struct pluto_crypto_req *r)
 		DBG(DBG_CONTROL, DBG_log("missing pre-crypto release code"));
 		break;
 	}
+	/* free the heap space */
+	pfreeany(cn->pcrc_reply_buffer);
+	pfree(cn);
 }
 
 static void pcr_release_crypto_response(struct pluto_crypto_req *r)
@@ -558,6 +562,21 @@ stf_status send_crypto_helper_request(struct state *st,
 
 	passert(cn->pcrc_func != NULL);
 
+	/* attempt to send to a worker thread */
+
+	/* set up the id */
+	cn->pcrc_id = cn->pcrc_pcr.pcr_id = pcw_id++;
+
+	/* copy partially built reply stream to heap */
+	cn->pcrc_reply_stream = reply_stream;
+	if (pbs_offset(&reply_stream) == 0) {
+		cn->pcrc_reply_buffer = NULL;
+	} else {
+		cn->pcrc_reply_buffer = clone_bytes(reply_stream.start,
+						    pbs_offset(&reply_stream),
+						    "saved reply buffer");
+	}
+
 	/*
 	 * do it all ourselves?
 	 *
@@ -573,16 +592,19 @@ stf_status send_crypto_helper_request(struct state *st,
 		/* call the continuation */
 		(*cn->pcrc_func)(st, cn->pcrc_md, cn, &cn->pcrc_pcr);
 
+		reply_stream = cn->pcrc_reply_stream;
+		if (cn->pcrc_reply_buffer != NULL) {
+			memcpy(reply_stream.start, cn->pcrc_reply_buffer,
+			       pbs_offset(&reply_stream));
+			pfree(cn->pcrc_reply_buffer);
+		}
+		cn->pcrc_reply_buffer = NULL;
+
 		pfree(cn);	/* ownership transferred from caller */
 
 		/* indicate that we completed the work */
 		return STF_INLINE;
 	}
-
-	/* attempt to send to a worker thread */
-
-	/* set up the id */
-	cn->pcrc_id = cn->pcrc_pcr.pcr_id = pcw_id++;
 
 	/* Find the first of the least-busy workers (if any) */
 
@@ -615,26 +637,10 @@ stf_status send_crypto_helper_request(struct state *st,
 
 		passert(w->pcw_master_fd != -1);
 
-		cn->pcrc_reply_stream = reply_stream;
-		if (pbs_offset(&reply_stream) != 0) {
-			/* copy partially built reply stream to heap
-			 * IMPORTANT: don't leak this.
-			 */
-			cn->pcrc_reply_buffer =
-				clone_bytes(reply_stream.start,
-					    pbs_offset(&reply_stream),
-						       "saved reply buffer");
-		}
-
 		if (!crypto_write_request(w, &cn->pcrc_pcr)) {
-			/* free the heap space */
-			if (pbs_offset(&cn->pcrc_reply_stream) != 0)
-				pfree(cn->pcrc_reply_buffer);
-			cn->pcrc_reply_buffer = NULL;
 			loglog(RC_LOG_SERIOUS, "cannot start crypto helper %d: failed to write",
 				w->pcw_helpernum);
-			pcr_release_crypto_request(&cn->pcrc_pcr);
-			pfree(cn);	/* ownership transferred from caller */
+			pcrc_release_request(cn);	/* ownership transferred from caller */
 			return STF_FAIL;
 		}
 
@@ -644,17 +650,6 @@ stf_status send_crypto_helper_request(struct state *st,
 
 		/* cn transferred from caller */
 		TAILQ_INSERT_TAIL(&backlog, cn, pcrc_list);
-
-		cn->pcrc_reply_stream = reply_stream;
-		if (pbs_offset(&reply_stream) != 0) {
-			/* copy partially built reply stream to heap
-			 * IMPORTANT: don't leak this.
-			 */
-			cn->pcrc_reply_buffer =
-				clone_bytes(reply_stream.start,
-					    pbs_offset(&reply_stream),
-					    "saved reply buffer");
-		}
 
 		backlog_queue_len++;
 		DBG(DBG_CONTROL,
@@ -668,8 +663,7 @@ stf_status send_crypto_helper_request(struct state *st,
 				      cn->pcrc_pcr.pcr_pcim)));
 
 		loglog(RC_LOG_SERIOUS, "cannot start crypto helper: failed to find any available worker");
-		pcr_release_crypto_request(&cn->pcrc_pcr);
-		pfree(cn);	/* ownership transferred from caller */
+		pcrc_release_request(cn);	/* ownership transferred from caller */
 		return STF_TOOMUCHCRYPTO;
 	}
 
@@ -710,10 +704,7 @@ static void crypto_send_backlog(struct pluto_crypto_worker *w)
 				/* discard request ??? is this the best action? */
 				/* XXX invoke callback with failure */
 				passert(FALSE);
-				if (pbs_offset(&cn->pcrc_reply_stream) != 0) {
-					pfree(cn->pcrc_reply_buffer);
-					cn->pcrc_reply_buffer = NULL;
-				}
+				pcrc_release_request(cn);
 				return;
 			}
 		}
@@ -728,33 +719,12 @@ static void crypto_send_backlog(struct pluto_crypto_worker *w)
 		if (!crypto_write_request(w, &cn->pcrc_pcr)) {
 			/* XXX invoke callback with failure */
 			passert(FALSE);
-			if (pbs_offset(&cn->pcrc_reply_stream) != 0)
-				pfree(cn->pcrc_reply_buffer);
-			cn->pcrc_reply_buffer = NULL;
+			pcrc_release_request(cn);
 			return;
 		}
 
 		w->pcw_work++;
 	}
-}
-
-/*
- * look for any states attached to continuations
- * also check the backlog
- */
-static void scrap_crypto_cont(/*TAILQ_HEAD*/ struct req_queue *qh,
-			      struct pluto_crypto_req_cont *cn,
-			      const char *what)
-{
-	DBG(DBG_CONTROL,
-		DBG_log("scrapping crypto request ID%u for #%lu from %s",
-			cn->pcrc_id, cn->pcrc_serialno, what));
-	TAILQ_REMOVE(qh, cn, pcrc_list);
-	if (pbs_offset(&cn->pcrc_reply_stream) != 0) {
-		pfree(cn->pcrc_reply_buffer);
-		cn->pcrc_reply_buffer = NULL;
-	}
-	pfree(cn);
 }
 
 void delete_cryptographic_continuation(struct state *st)
@@ -774,8 +744,11 @@ void delete_cryptographic_continuation(struct state *st)
 
 			if (st->st_serialno == cn->pcrc_serialno) {
 				backlog_queue_len--;
-				pcr_release_crypto_request(&cn->pcrc_pcr);
-				scrap_crypto_cont(&backlog, cn, "backlog");
+				DBG(DBG_CONTROL,
+				    DBG_log("scrapping crypto request ID%u for #%lu from backlog",
+					    cn->pcrc_id, cn->pcrc_serialno));
+				TAILQ_REMOVE(&backlog, cn, pcrc_list);
+				pcrc_release_request(cn);
 			}
 		}
 	}
@@ -923,7 +896,7 @@ static void handle_helper_answer(struct pluto_crypto_worker *w)
 			cn->pcrc_func));
 
 	reply_stream = cn->pcrc_reply_stream;
-	if (pbs_offset(&reply_stream) != 0) {
+	if (cn->pcrc_reply_buffer != NULL) {
 		memcpy(reply_stream.start, cn->pcrc_reply_buffer,
 		       pbs_offset(&reply_stream));
 		pfree(cn->pcrc_reply_buffer);
