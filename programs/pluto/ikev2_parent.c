@@ -272,8 +272,7 @@ static void ikev2_crypto_continue(struct state *st, struct msg_digest *md,
 	bool only_shared = FALSE;
 
 	DBG(DBG_CRYPT | DBG_CONTROL,
-		DBG_log("ikev2_crypto_continue for #%lu: %s", cn->pcrc_serialno,
-			cn->pcrc_name));
+	    DBG_log("ikev2_crypto_continue for #%lu", st->st_serialno));
 	if (cn->pcrc_serialno == SOS_NOBODY) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state", __FUNCTION__);

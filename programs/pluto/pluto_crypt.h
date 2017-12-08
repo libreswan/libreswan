@@ -323,11 +323,10 @@ struct pluto_crypto_req_cont {
 	 */
 	struct msg_digest *pcrc_md;
 
-	const char *pcrc_name;
-
 	/* the rest of these fields are private to pluto_crypt.c */
 
 	TAILQ_ENTRY(pluto_crypto_req_cont) pcrc_list;
+	const char *pcrc_name;
 	struct pluto_crypto_req *pcrc_pcr;	/* owner iff on backlog queue */
 	pcr_req_id pcrc_id;
 	pb_stream pcrc_reply_stream;	/* reply stream of suspended state transition */
