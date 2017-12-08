@@ -1576,17 +1576,11 @@ static void quick_inI1_outR1_cryptocontinue1(struct state *st, struct msg_digest
 				    st->st_pfs_group);
 
 		/*
-		 * In the STF_INLINE case, quick_inI1_outR1_cryptocontinue2 has
-		 * already called complete_v1_state_transition and it has freed
-		 * *dh.
-		 * It called quick_inI1_outR1_cryptocontinue2 which did the
-		 * release_any_md too.
-		 *
 		 * In the STF_SUSPEND case, we are done for now and must
 		 * wait for the computation to finish.  *dh and md ownership
 		 * has been transferred.
 		 */
-		if (e != STF_SUSPEND && e != STF_INLINE) {
+		if (e != STF_SUSPEND) {
 			passert(md != NULL);	/* ??? when would this fail? */
 			if (dh->pcrc_md != NULL) {
 				complete_v1_state_transition(&dh->pcrc_md, e);
@@ -1647,7 +1641,6 @@ static void quick_inI1_outR1_cryptocontinue2(struct state *st, struct msg_digest
 	unset_suspended(st);
 
 	e = quick_inI1_outR1_cryptotail(dh->pcrc_md, r);
-	passert(e != STF_INLINE);
 	passert(dh->pcrc_md != NULL);
 	complete_v1_state_transition(&dh->pcrc_md, e);
 	release_any_md(&dh->pcrc_md);

@@ -344,7 +344,6 @@ enum_names routing_story = {
 
 static const char *const stfstatus_names[] = {
 	"STF_IGNORE",
-	"STF_INLINE",
 	"STF_SUSPEND",
 	"STF_OK",
 	"STF_INTERNAL_ERROR",

@@ -2293,8 +2293,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	switch (result) {
 	case STF_SUSPEND:
 		set_cur_state(md->st);	/* might have changed */
-		/* FALL THROUGH */
-	case STF_INLINE:	/* all done, including release_any_md */
 		*mdp = NULL;	/* take md away from parent */
 		/* FALL THROUGH */
 	case STF_IGNORE:

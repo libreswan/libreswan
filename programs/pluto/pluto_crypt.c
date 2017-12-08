@@ -482,6 +482,42 @@ static bool crypto_write_request(struct pluto_crypto_worker *w,
 }
 
 /*
+ * Do the work 'inline' which really means on the event queue.
+ *
+ * Given threads are assumed, this has not been tested.
+ */
+
+static void inline_worker(void *arg)
+{
+	struct pluto_crypto_req_cont *cn = arg;
+	struct state *st = state_by_serialno(cn->pcrc_serialno);
+	if (st == NULL) {
+		pcrc_release_request(cn);
+	} else {
+		pluto_do_crypto_op(&cn->pcrc_pcr, -1);
+
+		reply_stream = cn->pcrc_reply_stream;
+		if (cn->pcrc_reply_buffer != NULL) {
+			memcpy(reply_stream.start, cn->pcrc_reply_buffer,
+			       pbs_offset(&reply_stream));
+			pfree(cn->pcrc_reply_buffer);
+		}
+		cn->pcrc_reply_buffer = NULL;
+
+		/* call the continuation */
+#if 0
+		so_serial_t old_state = push_cur_state(st);
+#endif
+		(*cn->pcrc_func)(st, cn->pcrc_md, cn, &cn->pcrc_pcr);
+#if 0
+		pop_cur_state(old_state);
+#endif
+
+		pfree(cn);
+	}
+}
+
+/*
  * send_crypto_helper_request is called with a request to do some
  * cryptographic operations along with a continuation structure,
  * which will be used to deal with the response.
@@ -499,7 +535,7 @@ static bool crypto_write_request(struct pluto_crypto_worker *w,
  *	after the continuation function is called or failure is determined.)
  *
  * NOTE: we don't free any resources held in the cn (eg. a msg_digest).
- *	If the continuation function is called (STF_SUSPEND, STF_INLINE),
+ *	If the continuation function is called (STF_SUSPEND),
  *	the continuation function must deal with such resources,
  *	directly or indirectly.
  *	Otherwise (STF_FAIL, STF_TOOMUCHCRYPTO) this responsibility remains
@@ -514,13 +550,6 @@ static bool crypto_write_request(struct pluto_crypto_worker *w,
  * with the comment TRANSITIONAL.
  *
  * Return values:
- *
- *	STF_INLINE: computation and continuation done.
- *		STF already called by continuation.
- *		That means that everything is done,
- *		including freeing resources!
- *		When you see one of these, don't do
- *		anything more!
  *
  *	STF_FAIL: failure; message already logged.
  *		STF not called.
@@ -579,31 +608,10 @@ stf_status send_crypto_helper_request(struct state *st,
 
 	/*
 	 * do it all ourselves?
-	 *
-	 * XXX: Instead of inline, this should add the work to the
-	 * main event-loop.  That way the work-done code becomes
-	 * identical and the special STF_INLINE can be deleted.
 	 */
 	if (pc_workers == NULL) {
-		reset_cur_state();
-
-		pluto_do_crypto_op(&cn->pcrc_pcr, -1);
-
-		/* call the continuation */
-		(*cn->pcrc_func)(st, cn->pcrc_md, cn, &cn->pcrc_pcr);
-
-		reply_stream = cn->pcrc_reply_stream;
-		if (cn->pcrc_reply_buffer != NULL) {
-			memcpy(reply_stream.start, cn->pcrc_reply_buffer,
-			       pbs_offset(&reply_stream));
-			pfree(cn->pcrc_reply_buffer);
-		}
-		cn->pcrc_reply_buffer = NULL;
-
-		pfree(cn);	/* ownership transferred from caller */
-
-		/* indicate that we completed the work */
-		return STF_INLINE;
+		pluto_event_now("inline crypto", inline_worker, cn);
+		return STF_SUSPEND;
 	}
 
 	/* Find the first of the least-busy workers (if any) */

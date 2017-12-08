@@ -2247,9 +2247,10 @@ static void log_stf_suspend(struct state *st, stf_status result)
 
 /* complete job started by the state-specific state transition function
  *
- * This routine requires a valid non-NULL *mdp unless result is STF_INLINE.
- * So, for example, it does not make sense for state transitions that are
- * not provoked by a packet.
+ * This routine requires a valid non-NULL *mdp.
+ *
+ * So, for example, it does not make sense for state transitions that
+ * are not provoked by a packet.
  *
  * This routine will not release_any_md(mdp).  It is expected that its
  * caller will do this.  In fact, it will zap *mdp to NULL if it thinks
@@ -2298,9 +2299,6 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		*mdp = NULL;    /* take md away from parent */
 		return;
 
-	case STF_INLINE:	/* all done, including release_any_md */
-		*mdp = NULL;	/* take md away from parent */
-		/* FALL THROUGH */
 	case STF_IGNORE:
 		DBG(DBG_CONTROL,
 		    DBG_log("complete v2 state transition with %s",

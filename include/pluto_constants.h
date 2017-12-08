@@ -248,7 +248,6 @@ enum seccomp_mode {
 
 typedef enum {
 	STF_IGNORE,             /* don't respond */
-	STF_INLINE,             /* set to this on second time through complete_state_trans */
 	STF_SUSPEND,            /* unfinished -- don't release resources */
 	STF_OK,                 /* success */
 	STF_INTERNAL_ERROR,     /* discard everything, we failed */
