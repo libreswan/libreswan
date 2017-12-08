@@ -194,6 +194,44 @@ static void pcr_init(struct pluto_crypto_req *r,
 	r->pcr_pcim = pcr_pcim;
 }
 
+/*
+ * Release the contents of R.
+ *
+ * For at least DH what part of the union is in use is depdent on the
+ * release being performed pre- or post- crypto.  Ewwww!
+ */
+
+static void pcr_release_crypto_request(struct pluto_crypto_req *r)
+{
+	switch (r->pcr_type) {
+	case pcr_build_ke_and_nonce:
+	case pcr_build_nonce:
+	case pcr_compute_dh_iv:
+	case pcr_compute_dh:
+	case pcr_compute_dh_v2:
+		/*
+		 * XXX: everything needs to be freed!
+		 */
+		DBG(DBG_CONTROL, DBG_log("missing pre-crypto release code"));
+		break;
+	}
+}
+
+static void pcr_release_crypto_response(struct pluto_crypto_req *r)
+{
+	switch (r->pcr_type) {
+	case pcr_build_ke_and_nonce:
+	case pcr_build_nonce:
+	case pcr_compute_dh_iv:
+	case pcr_compute_dh:
+	case pcr_compute_dh_v2:
+		/*
+		 * XXX: everything needs to be freed!
+		 */
+		DBG(DBG_CONTROL, DBG_log("missing post-crypto release code"));
+		break;
+	}
+}
 
 void pcr_nonce_init(struct pluto_crypto_req *r,
 			    enum pluto_crypto_requests pcr_type,
@@ -737,6 +775,7 @@ void delete_cryptographic_continuation(struct state *st)
 			if (st->st_serialno == cn->pcrc_serialno) {
 				backlog_queue_len--;
 				/* iff it was on the backlog, cn->pcrc_pcr was malloced, free it */
+				pcr_release_crypto_request(cn->pcrc_pcr);
 				pfree(cn->pcrc_pcr);
 				cn->pcrc_pcr = NULL;
 				scrap_crypto_cont(&backlog, cn, "backlog");
@@ -910,9 +949,9 @@ static void handle_helper_answer(struct pluto_crypto_worker *w)
 			PEXPECT_LOG("state #%lu for crypto callback disappeared!",
 				    cn->pcrc_serialno);
 		}
-		/*
-		 * XXX: everything needs to be freed!
-		 */
+			PEXPECT_LOG("%s: state #%lu for crypto disappeared!",
+				    cn->pcrc_name, cn->pcrc_serialno);
+		pcr_release_crypto_response(&rr);
 	} else {
 		/*
 		 * XXX:
