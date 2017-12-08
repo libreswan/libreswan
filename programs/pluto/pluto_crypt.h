@@ -151,17 +151,14 @@ extern void wire_clone_chunk(wire_arena_t *arena,
 
 /* query and response */
 struct pcr_kenonce {
-	/* input, then output */
-	DECLARE_WIRE_ARENA(KENONCE_SIZE);
-
 	/* inputs */
 	const struct oakley_group_desc *group;
 
 	/* outputs */
 	SECKEYPrivateKey *secret;
 	SECKEYPublicKey *pubk;
-	wire_chunk_t gi;
-	wire_chunk_t n;
+	chunk_t gi;
+	chunk_t n;
 };
 
 #define DHCALC_SIZE 2560
@@ -359,22 +356,33 @@ extern int pluto_crypto_helper_response_ready(lsw_fd_set *readfds);
 extern void log_crypto_workers(void);
 
 /* actual helper functions */
-extern stf_status build_child_dh_v2(struct pluto_crypto_req_cont *cn,
-		const struct oakley_group_desc *group,
-		enum crypto_importance importance);
+
+/*
+ * KE/NONCE
+ */
 
 extern stf_status build_ke_and_nonce(struct state *st,
 				     struct pluto_crypto_req_cont *cn,
 				     const struct oakley_group_desc *group,
 				     enum crypto_importance importance);
 
-extern void calc_ke(struct pluto_crypto_req *r);
-
 extern stf_status build_nonce(struct state *st,
 			      struct pluto_crypto_req_cont *cn,
 			      enum crypto_importance importance);
 
-extern void calc_nonce(struct pluto_crypto_req *r);
+extern void calc_ke(struct pcr_kenonce *kn);
+
+extern void calc_nonce(struct pcr_kenonce *kn);
+
+extern void cancelled_ke_and_nonce(struct pcr_kenonce *kn);
+
+/*
+ * DH
+ */
+
+extern stf_status build_child_dh_v2(struct pluto_crypto_req_cont *cn,
+		const struct oakley_group_desc *group,
+		enum crypto_importance importance);
 
 extern void compute_dh_shared(struct state *st, const chunk_t g,
 			      const struct oakley_group_desc *group);

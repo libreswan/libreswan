@@ -125,9 +125,7 @@ void unpack_KE_from_helper(struct state *st,
 	passert(!st->st_sec_in_use);
 	st->st_sec_in_use = TRUE;
 	freeanychunk(*g); /* happens in odd error cases */
-
-	clonetochunk(*g, WIRE_CHUNK_PTR(*kn, gi),
-		     kn->gi.len, "saved gi value");
+	*g = kn->gi;
 	DBG(DBG_CRYPT,
 	    DBG_log("saving DH priv (local secret) and pub key into state struct"));
 	st->st_sec_nss = kn->secret;
@@ -164,8 +162,7 @@ void unpack_nonce(chunk_t *n, const struct pluto_crypto_req *r)
 	const struct pcr_kenonce *kn = &r->pcr_d.kn;
 
 	freeanychunk(*n);
-	clonetochunk(*n, WIRE_CHUNK_PTR(*kn, n),
-		     DEFAULT_NONCE_SIZE, "initiator nonce");
+	*n = kn->n;
 }
 
 bool ikev1_justship_nonce(chunk_t *n, pb_stream *outs, u_int8_t np,

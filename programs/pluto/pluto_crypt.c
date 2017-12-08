@@ -206,6 +206,8 @@ static void pcr_release_crypto_request(struct pluto_crypto_req *r)
 	switch (r->pcr_type) {
 	case pcr_build_ke_and_nonce:
 	case pcr_build_nonce:
+		cancelled_ke_and_nonce(&r->pcr_d.kn);
+		break;
 	case pcr_compute_dh_iv:
 	case pcr_compute_dh:
 	case pcr_compute_dh_v2:
@@ -222,6 +224,8 @@ static void pcr_release_crypto_response(struct pluto_crypto_req *r)
 	switch (r->pcr_type) {
 	case pcr_build_ke_and_nonce:
 	case pcr_build_nonce:
+		cancelled_ke_and_nonce(&r->pcr_d.kn);
+		break;
 	case pcr_compute_dh_iv:
 	case pcr_compute_dh:
 	case pcr_compute_dh_v2:
@@ -238,8 +242,6 @@ void pcr_nonce_init(struct pluto_crypto_req *r,
 			    enum crypto_importance pcr_pcim)
 {
 	pcr_init(r, pcr_type, pcr_pcim);
-
-	INIT_WIRE_ARENA(r->pcr_d.kn);
 }
 
 void pcr_dh_init(struct pluto_crypto_req *r,
@@ -276,11 +278,14 @@ static void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 
 	/* now we have the entire request in the buffer, process it */
 	switch (r->pcr_type) {
+
 	case pcr_build_ke_and_nonce:
-		calc_ke(r);
-		/* FALL THROUGH */
+		calc_ke(&r->pcr_d.kn);
+		calc_nonce(&r->pcr_d.kn);
+		break;
+
 	case pcr_build_nonce:
-		calc_nonce(r);
+		calc_nonce(&r->pcr_d.kn);
 		break;
 
 	case pcr_compute_dh_iv:
