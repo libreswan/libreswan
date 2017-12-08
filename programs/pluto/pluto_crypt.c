@@ -237,20 +237,26 @@ static void pcr_release_crypto_response(struct pluto_crypto_req *r)
 	}
 }
 
-void pcr_nonce_init(struct pluto_crypto_req *r,
-			    enum pluto_crypto_requests pcr_type,
-			    enum crypto_importance pcr_pcim)
+void pcr_kenonce_init(struct pluto_crypto_req_cont *cn,
+		      enum pluto_crypto_requests pcr_type,
+		      enum crypto_importance pcr_pcim,
+		      const struct oakley_group_desc *dh)
 {
+	struct pluto_crypto_req *r = &cn->pcrc_pcr;
 	pcr_init(r, pcr_type, pcr_pcim);
+	r->pcr_d.kn.group = dh;
 }
 
-void pcr_dh_init(struct pluto_crypto_req *r,
-			enum pluto_crypto_requests pcr_type,
-			enum crypto_importance pcr_pcim)
+struct pcr_skeyid_q *pcr_dh_init(struct pluto_crypto_req_cont *cn,
+				 enum pluto_crypto_requests pcr_type,
+				 enum crypto_importance pcr_pcim)
 {
+	struct pluto_crypto_req *r = &cn->pcrc_pcr;
 	pcr_init(r, pcr_type, pcr_pcim);
 
-	INIT_WIRE_ARENA(r->pcr_d.dhq);
+	struct pcr_skeyid_q *dhq = &r->pcr_d.dhq;
+	INIT_WIRE_ARENA(*dhq);
+	return dhq;
 }
 
 /*
@@ -537,7 +543,6 @@ static bool crypto_write_request(struct pluto_crypto_worker *w,
  */
 
 stf_status send_crypto_helper_request(struct state *st,
-				      struct pluto_crypto_req *r,
 				      struct pluto_crypto_req_cont *cn)
 {
 	static int pc_worker_num = 0;	/* index of last worker assigned work */
@@ -563,10 +568,10 @@ stf_status send_crypto_helper_request(struct state *st,
 	if (pc_workers == NULL) {
 		reset_cur_state();
 
-		pluto_do_crypto_op(r, -1);
+		pluto_do_crypto_op(&cn->pcrc_pcr, -1);
 
 		/* call the continuation */
-		(*cn->pcrc_func)(st, cn->pcrc_md, cn, r);
+		(*cn->pcrc_func)(st, cn->pcrc_md, cn, &cn->pcrc_pcr);
 
 		pfree(cn);	/* ownership transferred from caller */
 
@@ -577,9 +582,7 @@ stf_status send_crypto_helper_request(struct state *st,
 	/* attempt to send to a worker thread */
 
 	/* set up the id */
-	r->pcr_id = pcw_id++;
-	cn->pcrc_id = r->pcr_id;
-	cn->pcrc_pcr = r;
+	cn->pcrc_id = cn->pcrc_pcr.pcr_id = pcw_id++;
 
 	/* Find the first of the least-busy workers (if any) */
 
@@ -600,7 +603,8 @@ stf_status send_crypto_helper_request(struct state *st,
 
 	if (w != NULL &&
 	    (w->pcw_work < w->pcw_maxbasicwork ||
-	      (w->pcw_work < w->pcw_maxcritwork && r->pcr_pcim > pcim_ongoing_crypto)))
+	      (w->pcw_work < w->pcw_maxcritwork &&
+	       cn->pcrc_pcr.pcr_pcim > pcim_ongoing_crypto)))
 	{
 		/* allocate task to worker w */
 
@@ -622,28 +626,24 @@ stf_status send_crypto_helper_request(struct state *st,
 						       "saved reply buffer");
 		}
 
-		if (!crypto_write_request(w, r)) {
+		if (!crypto_write_request(w, &cn->pcrc_pcr)) {
 			/* free the heap space */
 			if (pbs_offset(&cn->pcrc_reply_stream) != 0)
 				pfree(cn->pcrc_reply_buffer);
 			cn->pcrc_reply_buffer = NULL;
 			loglog(RC_LOG_SERIOUS, "cannot start crypto helper %d: failed to write",
 				w->pcw_helpernum);
-			pcr_release_crypto_request(r);
+			pcr_release_crypto_request(&cn->pcrc_pcr);
 			pfree(cn);	/* ownership transferred from caller */
 			return STF_FAIL;
 		}
 
 		w->pcw_work++;
-	} else if (r->pcr_pcim >= pcim_demand_crypto) {
+	} else if (cn->pcrc_pcr.pcr_pcim >= pcim_demand_crypto) {
 		/* Task is important: put it all on the backlog queue for later */
 
 		/* cn transferred from caller */
 		TAILQ_INSERT_TAIL(&backlog, cn, pcrc_list);
-
-		/* copy the request */
-		r = clone_bytes(r, r->pcr_len, "saved crypto request");
-		cn->pcrc_pcr = r;
 
 		cn->pcrc_reply_stream = reply_stream;
 		if (pbs_offset(&reply_stream) != 0) {
@@ -659,16 +659,16 @@ stf_status send_crypto_helper_request(struct state *st,
 		backlog_queue_len++;
 		DBG(DBG_CONTROL,
 		    DBG_log("critical demand crypto operation queued on backlog as %dth item; request ID %u",
-			    backlog_queue_len, r->pcr_id));
+			    backlog_queue_len, cn->pcrc_pcr.pcr_id));
 	} else {
 		/* didn't find any available workers */
 		DBG(DBG_CONTROL,
 		    DBG_log("failed to find any available crypto worker (import=%s)",
 			    enum_name(&pluto_cryptoimportance_names,
-				      r->pcr_pcim)));
+				      cn->pcrc_pcr.pcr_pcim)));
 
 		loglog(RC_LOG_SERIOUS, "cannot start crypto helper: failed to find any available worker");
-		pcr_release_crypto_request(r);
+		pcr_release_crypto_request(&cn->pcrc_pcr);
 		pfree(cn);	/* ownership transferred from caller */
 		return STF_TOOMUCHCRYPTO;
 	}
@@ -690,18 +690,15 @@ static void crypto_send_backlog(struct pluto_crypto_worker *w)
 {
 	if (backlog_queue_len > 0) {
 		struct pluto_crypto_req_cont *cn = backlog.tqh_first;
-		struct pluto_crypto_req *r;
 
 		passert(cn != NULL);
 		TAILQ_REMOVE(&backlog, cn, pcrc_list);
 
 		backlog_queue_len--;
 
-		r = cn->pcrc_pcr;
-
 		DBG(DBG_CONTROL,
 		    DBG_log("removing request ID %u from crypto backlog queue; %d left",
-			    r->pcr_id, backlog_queue_len));
+			    cn->pcrc_pcr.pcr_id, backlog_queue_len));
 
 		/* w points to a worker. Make sure it is live */
 		if (w->pcw_dead) {
@@ -728,7 +725,7 @@ static void crypto_send_backlog(struct pluto_crypto_worker *w)
 		passert(w->pcw_work > 0);
 
 		/* send the request, and then mark the worker as having more work */
-		if (!crypto_write_request(w, r)) {
+		if (!crypto_write_request(w, &cn->pcrc_pcr)) {
 			/* XXX invoke callback with failure */
 			passert(FALSE);
 			if (pbs_offset(&cn->pcrc_reply_stream) != 0)
@@ -736,10 +733,6 @@ static void crypto_send_backlog(struct pluto_crypto_worker *w)
 			cn->pcrc_reply_buffer = NULL;
 			return;
 		}
-
-		/* if it was on the backlog, it was saved, free it */
-		pfree(r);
-		cn->pcrc_pcr = NULL;
 
 		w->pcw_work++;
 	}
@@ -781,10 +774,7 @@ void delete_cryptographic_continuation(struct state *st)
 
 			if (st->st_serialno == cn->pcrc_serialno) {
 				backlog_queue_len--;
-				/* iff it was on the backlog, cn->pcrc_pcr was malloced, free it */
-				pcr_release_crypto_request(cn->pcrc_pcr);
-				pfree(cn->pcrc_pcr);
-				cn->pcrc_pcr = NULL;
+				pcr_release_crypto_request(&cn->pcrc_pcr);
 				scrap_crypto_cont(&backlog, cn, "backlog");
 			}
 		}
@@ -943,7 +933,6 @@ static void handle_helper_answer(struct pluto_crypto_worker *w)
 	/*
 	 * call the continuation (skip if suppressed)
 	 */
-	cn->pcrc_pcr = &rr;
 	reset_cur_state();
 	struct state *st = state_by_serialno(cn->pcrc_serialno);
 	if (st == NULL) {

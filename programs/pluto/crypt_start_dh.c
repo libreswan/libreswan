@@ -65,11 +65,9 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *dh,
 			     enum original_role role,
 			     const struct oakley_group_desc *oakley_group2)
 {
-	struct pluto_crypto_req r;
-	struct pcr_skeyid_q *const dhq = &r.pcr_d.dhq;
 	const chunk_t *pss = get_preshared_secret(st->st_connection);
 
-	pcr_dh_init(&r, pcr_compute_dh_iv, importance);
+	struct pcr_skeyid_q *const dhq = pcr_dh_init(dh, pcr_compute_dh_iv, importance);
 
 	passert(st->st_sec_in_use);
 
@@ -81,11 +79,7 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *dh,
 	dhq->key_size = st->st_oakley.enckeylen / BITS_PER_BYTE;
 	dhq->salt_size = st->st_oakley.ta_encrypt->salt_size;
 
-	passert(r.pcr_d.dhq.oakley_group != OAKLEY_GROUP_invalid);
-	DBG(DBG_CONTROL | DBG_CRYPT,
-	    DBG_log("parent1 type: %d group: %d len: %d", r.pcr_type,
-		    r.pcr_d.dhq.oakley_group->group, (int)r.pcr_len));
-
+	passert(dhq->oakley_group != OAKLEY_GROUP_invalid);
 	if (pss != NULL)
 		WIRE_CLONE_CHUNK(*dhq, pss, *pss);
 	WIRE_CLONE_CHUNK(*dhq, ni, st->st_ni);
@@ -109,7 +103,7 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *dh,
 	       st->st_rcookie, COOKIE_SIZE);
 
 	passert(dhq->oakley_group != OAKLEY_GROUP_invalid);
-	return send_crypto_helper_request(st, &r, dh);
+	return send_crypto_helper_request(st, dh);
 }
 
 bool finish_dh_secretiv(struct state *st,
@@ -143,11 +137,9 @@ stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 			   enum original_role role,
 			   const struct oakley_group_desc *oakley_group2)
 {
-	struct pluto_crypto_req r;
-	struct pcr_skeyid_q *const dhq = &r.pcr_d.dhq;
 	const chunk_t *pss = get_preshared_secret(st->st_connection);
 
-	pcr_dh_init(&r, pcr_compute_dh, importance);
+	struct pcr_skeyid_q *const dhq = pcr_dh_init(cn, pcr_compute_dh, importance);
 
 	passert(st->st_sec_in_use);
 
@@ -183,7 +175,7 @@ stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 	memcpy(WIRE_CHUNK_PTR(*dhq, rcookie),
 	       st->st_rcookie, COOKIE_SIZE);
 
-	return send_crypto_helper_request(st, &r, cn);
+	return send_crypto_helper_request(st, cn);
 }
 
 void finish_dh_secret(struct state *st,
@@ -205,13 +197,9 @@ stf_status start_dh_v2(struct msg_digest *md,
 		       crypto_req_cont_func pcrc_func)
 {
 	struct state *st = md->st;
-	struct pluto_crypto_req_cont *dh = new_pcrc(
-		pcrc_func, name,
-		st, md);
-	struct pluto_crypto_req r;
-	struct pcr_skeyid_q *const dhq = &r.pcr_d.dhq;
-
-	pcr_dh_init(&r, pcr_compute_dh_v2, st->st_import);
+	struct pluto_crypto_req_cont *dh = new_pcrc(pcrc_func, name,
+						    st, md);
+	struct pcr_skeyid_q *const dhq = pcr_dh_init(dh, pcr_compute_dh_v2, st->st_import);
 
 	passert(st->st_sec_in_use);
 
@@ -230,7 +218,7 @@ stf_status start_dh_v2(struct msg_digest *md,
 	dhq->key_size = st->st_oakley.enckeylen / BITS_PER_BYTE;
 	dhq->salt_size = st->st_oakley.ta_encrypt->salt_size;
 
-	passert(r.pcr_d.dhq.oakley_group != OAKLEY_GROUP_invalid);
+	passert(dhq->oakley_group != OAKLEY_GROUP_invalid);
 
 	dhq->old_prf = old_prf;
 	dhq->skey_d_old = reference_symkey(__func__, "skey_d_old", skey_d_old);
@@ -260,13 +248,11 @@ stf_status start_dh_v2(struct msg_digest *md,
 
 	passert(dhq->oakley_group != OAKLEY_GROUP_invalid);
 
-	{
-		stf_status e = send_crypto_helper_request(st, &r, dh);
+	stf_status e = send_crypto_helper_request(st, dh);
 
-		reset_globals(); /* XXX suspicious - why was this deemed necessary? */
+	reset_globals(); /* XXX suspicious - why was this deemed necessary? */
 
-		return e;
-	}
+	return e;
 }
 
 bool finish_dh_v2(struct state *st,

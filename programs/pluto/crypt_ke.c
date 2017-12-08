@@ -102,22 +102,19 @@ stf_status build_ke_and_nonce(struct state *st,
 			      const struct oakley_group_desc *group,
 			      enum crypto_importance importance)
 {
-	struct pluto_crypto_req rd;
 	passert(st->st_serialno == cn->pcrc_serialno);
 	passert(!st->st_sec_in_use);
-	pcr_nonce_init(&rd, pcr_build_ke_and_nonce, importance);
-	rd.pcr_d.kn.group = group;
-
-	return send_crypto_helper_request(st, &rd, cn);
+	pcr_kenonce_init(cn, pcr_build_ke_and_nonce,
+			 importance, group);
+	return send_crypto_helper_request(st, cn);
 }
 
 stf_status build_nonce(struct state *st,
 		       struct pluto_crypto_req_cont *cn,
 		       enum crypto_importance importance)
 {
-	struct pluto_crypto_req rd;
+	pcr_kenonce_init(cn, pcr_build_nonce,
+			 importance, NULL);
 
-	pcr_nonce_init(&rd, pcr_build_nonce, importance);
-
-	return send_crypto_helper_request(st, &rd, cn);
+	return send_crypto_helper_request(st, cn);
 }

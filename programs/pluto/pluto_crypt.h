@@ -327,7 +327,7 @@ struct pluto_crypto_req_cont {
 
 	TAILQ_ENTRY(pluto_crypto_req_cont) pcrc_list;
 	const char *pcrc_name;
-	struct pluto_crypto_req *pcrc_pcr;	/* owner iff on backlog queue */
+	struct pluto_crypto_req pcrc_pcr;
 	pcr_req_id pcrc_id;
 	pb_stream pcrc_reply_stream;	/* reply stream of suspended state transition */
 	u_int8_t *pcrc_reply_buffer;	/* saved buffer contents (if any) */
@@ -345,7 +345,6 @@ extern struct pluto_crypto_req_cont *new_pcrc(
 extern void init_crypto_helpers(int nhelpers);
 
 extern stf_status send_crypto_helper_request(struct state *st,
-					     struct pluto_crypto_req *r,
 					     struct pluto_crypto_req_cont *cn);
 
 extern void enumerate_crypto_helper_response_sockets(lsw_fd_set *readfds);
@@ -424,12 +423,13 @@ extern void unpack_KE_from_helper(
 	const struct pluto_crypto_req *r,
 	chunk_t *g);
 
-extern void pcr_nonce_init(struct pluto_crypto_req *r,
-			    enum pluto_crypto_requests pcr_type,
-			    enum crypto_importance pcr_pcim);
+void pcr_kenonce_init(struct pluto_crypto_req_cont *cn,
+		      enum pluto_crypto_requests pcr_type,
+		      enum crypto_importance pcr_pcim,
+		      const struct oakley_group_desc *dh);
 
-extern void pcr_dh_init(struct pluto_crypto_req *r,
-			enum pluto_crypto_requests pcr_type,
-			enum crypto_importance pcr_pcim);
+struct pcr_skeyid_q *pcr_dh_init(struct pluto_crypto_req_cont *cn,
+				 enum pluto_crypto_requests pcr_type,
+				 enum crypto_importance pcr_pcim);
 
 #endif /* _PLUTO_CRYPT_H */
