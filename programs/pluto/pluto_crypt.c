@@ -185,10 +185,10 @@ static enum_names pluto_cryptoop_names = {
 /* initializers for pluto_crypto_request continuations */
 
 static void pcr_init(struct pluto_crypto_req *r,
-			    enum pluto_crypto_requests pcr_type,
-			    enum crypto_importance pcr_pcim)
+		     enum pluto_crypto_requests pcr_type,
+		     enum crypto_importance pcr_pcim)
 {
-	messup(r);
+	zero(r);
 	r->pcr_len  = sizeof(struct pluto_crypto_req);
 	r->pcr_type = pcr_type;
 	r->pcr_pcim = pcr_pcim;
