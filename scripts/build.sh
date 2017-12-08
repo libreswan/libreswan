@@ -1,25 +1,38 @@
 #!/bin/bash
 
+dExe() {
+  local user=$1
+  local name=$2
+  local cmd=$3
+
+  docker exec -u "$user" "$name" /bin/bash -c "$cmd"
+}
+
+dRun() {
+  local name=$1
+  local img=$2
+  local cmd=$3
+
+  local user=$(id -un)
+  local gid=$(id -g)
+  local group=$(id -gn)
+
+  docker rm -f "$name" || true
+  docker run --privileged -d -v /tmp:/tmp -v "/home/$user:/home/$user" -h "$name" --name "$name" "$img" init
+  dExe "root" "$name" "groupadd -g $gid $group && useradd -M -s /bin/bash -g $gid -u $UID $user"
+  dExe "$UID" "$name" "$cmd"
+}
+
 set -eu
 
-dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$dir/.."
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$DIR/.."
 
-if [ "$(uname)" != "Linux" ]; then
-  make -j3 all
-  make -j3 install
-  exit 0
-fi
-
-dockerfiles/docker.sh pull
-
-for doc in $(dockerfiles/docker.sh list); do
-  git clean -fdx
-  name=$(printf $doc | sed "s#curtine/##" | sed "s/:/-/")
-  docker run -v "$PWD":"$PWD" -h "$name" --name "$name" "$doc" \
-             /bin/bash -c "cd $PWD && \
-                           export CC=$CC && \
-                           make -j3 all && \
-                           make -j3 install"
+for doc in $(testing/dockerfiles/docker.sh list); do
+  name=$(printf "$doc" | sed "s#curtine/##" | sed "s/:/-/")
+  dRun "$name" "$doc" "cd $PWD && \
+                       export CC=gcc && \
+                       make clean && \
+                       make -j3 all"
 done
 
