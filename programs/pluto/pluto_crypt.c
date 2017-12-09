@@ -76,8 +76,6 @@
 # include "pluto_seccomp.h"
 #endif
 
-static void handle_helper_answer(void *arg);
-
 struct pluto_crypto_req_cont *new_pcrc(
 	crypto_req_cont_func fn,
 	const char *name,
@@ -118,6 +116,18 @@ TAILQ_HEAD(req_queue, pluto_crypto_req_cont);
  *
  * - cleanup_crypto_helper.
  *   Called by send_crypto_helper_request (if worker is dead and reaped)
+ *   Called by handle_helper_answer on EOF if reaped (set dead)
+ *	pcw_work = 0
+ *	pcw_dead = FALSE (marking as not dead -- lets it live again)
+ *
+ * - kill_helper does a pthread_cancel.
+ *   It is called if the main program's handle_helper_answer cannot
+ *   read correctly from helper.
+ *	pcw_dead = TRUE
+ *
+ * - handle_helper_answer reads from helper
+ *   + calls kill_helper on read error
+ *	pcw_dead = TRUE on EOF
  *
  * pcw_work:
  * - send_crypto_helper_request increments it at end
@@ -140,6 +150,7 @@ struct pluto_crypto_worker {
 	bool pcw_dead;          /* worker is dead */
 	/*TAILQ_HEAD*/ struct req_queue pcw_active;	/* queue of tasks for this worker */
 	int pcw_work;           /* how many items in pcw_active */
+	struct pluto_event *ev; /* pointer to master_fd event. AA_2015 free it */
 };
 
 static /*TAILQ_HEAD*/ struct req_queue backlog;
@@ -316,6 +327,8 @@ static void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 static void pluto_crypto_helper(int helper_fd, int helpernum)
 {
 	FILE *in = fdopen(helper_fd, "rb");
+	FILE *out = fdopen(helper_fd, "wb");
+	struct pluto_crypto_req_cont *cn;
 #ifdef HAVE_SECCOMP
 	switch (pluto_seccomp_mode) {
 	case SECCOMP_ENABLED:
@@ -355,7 +368,6 @@ static void pluto_crypto_helper(int helper_fd, int helpernum)
 		size_t sz;
 
 		errno = 0;
-		struct pluto_crypto_req_cont *cn;
 		sz = fread(&cn, sizeof(char), sizeof(cn), in);
 
 		if (sz == 0 && feof(in)) {
@@ -391,25 +403,49 @@ static void pluto_crypto_helper(int helper_fd, int helpernum)
 
 		pluto_do_crypto_op(&cn->pcrc_pcr, helpernum);
 
-		pluto_event_now("sending helper answer", handle_helper_answer, cn);
+		errno = 0;
+		sz = fwrite(&cn, sizeof(char), sizeof(cn), out);
+		fflush(out);
+
+		if (sz != sizeof(cn)) {
+			if (ferror(out) != 0) {
+				/* ??? is strerror(ferror(out)) correct? */
+				char errbuf[100];	/* ??? how big is big enough? */
+
+				strerror_r(errno, errbuf, sizeof(errbuf));
+				loglog(RC_LOG_SERIOUS,
+				       "crypto helper %d failed to write answer: %s",
+				       helpernum, errbuf);
+			} else {
+				/*
+				 * XXX: since CN is smaller than a
+				 * page, this should never happen?
+				 */
+				/* short write -- fatal */
+				loglog(RC_LOG_SERIOUS,
+				       "pluto_crypto_helper error: crypto helper %d write truncated: %zu instead of %zu",
+				       helpernum, sz, sizeof(cn));
+			}
+			break;
+		}
 	}
 
 	/* We have no way to report this thread's success or failure. */
 
 	fclose(in);
+	fclose(out);
 	/*pthread_exit();*/
 }
 
 /* send the request, make sure it all goes down. */
 static bool crypto_write_request(struct pluto_crypto_worker *w,
-				 struct pluto_crypto_req_cont *cn)
+				 const struct pluto_crypto_req_cont *cn)
 {
 	DBG(DBG_CONTROL,
 	    DBG_log("asking crypto helper %d to do %s; request ID %u (pcw_work=%d)",
 		    w->pcw_helpernum,
 		    enum_show(&pluto_cryptoop_names, cn->pcrc_pcr.pcr_type),
 		    cn->pcrc_pcr.pcr_id, w->pcw_work));
-	cn->pcrc_worker = w; /* helper assigned */
 
 	const unsigned char *wdat = (unsigned char*)&cn;
 	size_t wlen = sizeof(cn);
@@ -747,6 +783,12 @@ void delete_cryptographic_continuation(struct state *st)
 	}
 }
 
+static void kill_helper(struct pluto_crypto_worker *w)
+{
+	pthread_cancel(w->pcw_pid);
+	w->pcw_dead = TRUE;
+}
+
 void log_crypto_workers(void) {
 	static bool first_time = TRUE;
 	int i;
@@ -769,14 +811,58 @@ void log_crypto_workers(void) {
 }
 
 /*
- * This function is called when a helper passes work back to the main
- * thread using the event loop.
+ * This function is called when there is socketpair input from a helper.
+ * This is the answer from the helper.
+ * We read the request from the socketpair, and find the associated continuation,
+ * and dispatch to that continuation.
+ *
+ * This function should process only a single answer, and then go back
+ * to the select call to get called again. This is not most efficient,
+ * but is is most fair.
  *
  */
-static void handle_helper_answer(void *arg)
+static void handle_helper_answer(struct pluto_crypto_worker *w)
 {
-	struct pluto_crypto_req_cont *cn = arg;
-	struct pluto_crypto_worker *w = cn->pcrc_worker;
+	ssize_t actlen;
+	struct pluto_crypto_req_cont *cn;
+
+	DBG(DBG_CONTROL,
+	    DBG_log("crypto helper %d has finished work (pcw_work now %d)",
+		    w->pcw_helpernum,
+		    w->pcw_work));
+
+	/* read from the socketpair in one gulp */
+
+	errno = 0;
+	actlen = read(w->pcw_master_fd, (void *)&cn, sizeof(cn));
+
+	if (actlen != sizeof(cn)) {
+		if (actlen == -1) {
+			loglog(RC_LOG_SERIOUS,
+			       "read from crypto helper %d failed: %s.  Killing helper.",
+			       w->pcw_helpernum, strerror(errno));
+			kill_helper(w);
+		} else if (actlen == 0) {
+			/* EOF: mark worker as dead. */
+			w->pcw_dead = TRUE;
+		} else if (errno == 0) {
+			loglog(RC_LOG_SERIOUS,
+			       "read from crypto helper %d failed with short length %zd of %zu.  Killing helper.",
+			       w->pcw_helpernum, actlen, sizeof(cn));
+			kill_helper(w);
+		} else {
+			/*
+			 * XXX: since CN is smaller than a page, this
+			 * should never happen?
+			 */
+			loglog(RC_LOG_SERIOUS,
+			       "read from crypto helper %d failed with short length %zd of %zu (errno=%s).  Killing helper.",
+			       w->pcw_helpernum, actlen, sizeof(cn),
+			       strerror(errno));
+			kill_helper(w);
+		}
+		return;
+	}
 
 	DBG(DBG_CONTROL,
 		DBG_log("crypto helper %d replies to request ID %u",
@@ -856,6 +942,14 @@ static void handle_helper_answer(void *arg)
 	pfree(cn);
 }
 
+static event_callback_routine handle_helper_answer_cb;
+
+static void handle_helper_answer_cb(evutil_socket_t fd UNUSED, const short event UNUSED,
+		void *arg)
+{
+	handle_helper_answer((struct pluto_crypto_worker *) arg);
+}
+
 #define MAX_HELPER_BASIC_WORK 200
 #define MAX_HELPER_CRIT_WORK 400
 
@@ -869,13 +963,12 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 
 	/* reset this */
 	w->pcw_master_fd = -1;
-	w->pcw_helper_fd = -1;
 	w->pcw_helpernum = n;
 
-	/*
-	 * XXX: socketpar() is total overkill.  pipe() is sufficient.
-	 * But then, so would an in-memory queue.
-	 */
+	if (w->ev != NULL) {
+		delete_pluto_event(&w->ev);
+	}
+
 	if (socketpair(PF_UNIX, SOCK_STREAM, 0, fds) != 0) {
 		loglog(RC_LOG_SERIOUS,
 		       "could not create socketpair for crypto helper %d: %s",
@@ -925,6 +1018,16 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 	} else {
 		libreswan_log("started thread for crypto helper %d (master fd %d)",
 			      n, w->pcw_master_fd);
+	}
+	{
+		/* setup call back crypto helper fd */
+		/* EV_WRITE event is ignored do we care about EV_WRITE AA_2015 ??? */
+
+		DBG(DBG_CONTROL, DBG_log("setup helper callback for master fd %d",
+				w->pcw_master_fd));
+		w->ev = pluto_event_add(w->pcw_master_fd, EV_READ | EV_PERSIST,
+				handle_helper_answer_cb, w, NULL,
+				"CRYPTO_HELPER_FD");
 	}
 }
 
@@ -1017,4 +1120,40 @@ void init_crypto_helpers(int nhelpers)
 		libreswan_log(
 			"no crypto helpers will be started; all cryptographic operations will be done inline");
 	}
+}
+
+void enumerate_crypto_helper_response_sockets(lsw_fd_set *readfds)
+{
+	int cnt;
+	struct pluto_crypto_worker *w = pc_workers;
+
+	for (cnt = 0; cnt < pc_workers_cnt; cnt++, w++) {
+		if (!w->pcw_dead) {
+			passert(w->pcw_master_fd > 0);
+
+			LSW_FD_SET(w->pcw_master_fd, readfds);
+		}
+	}
+}
+
+int pluto_crypto_helper_response_ready(lsw_fd_set *readfds)
+{
+	int cnt;
+	struct pluto_crypto_worker *w = pc_workers;
+	int ndes;
+
+	ndes = 0;
+
+	for (cnt = 0; cnt < pc_workers_cnt; cnt++, w++) {
+		if (!w->pcw_dead) {
+			passert(w->pcw_master_fd > 0);
+
+			if (LSW_FD_ISSET(w->pcw_master_fd, readfds)) {
+				handle_helper_answer(w);
+				ndes++;
+			}
+		}
+	}
+
+	return ndes;
 }

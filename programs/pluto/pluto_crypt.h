@@ -330,7 +330,6 @@ struct pluto_crypto_req_cont {
 	pcr_req_id pcrc_id;
 	pb_stream pcrc_reply_stream;	/* reply stream of suspended state transition */
 	u_int8_t *pcrc_reply_buffer;	/* saved buffer contents (if any) */
-	struct pluto_crypto_worker *pcrc_worker;
 };
 /* struct pluto_crypto_req_cont allocators */
 
@@ -346,6 +345,10 @@ extern void init_crypto_helpers(int nhelpers);
 
 extern stf_status send_crypto_helper_request(struct state *st,
 					     struct pluto_crypto_req_cont *cn);
+
+extern void enumerate_crypto_helper_response_sockets(lsw_fd_set *readfds);
+
+extern int pluto_crypto_helper_response_ready(lsw_fd_set *readfds);
 
 extern void log_crypto_workers(void);
 
