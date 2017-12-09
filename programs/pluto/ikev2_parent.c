@@ -273,12 +273,6 @@ static void ikev2_crypto_continue(struct state *st, struct msg_digest *md,
 
 	DBG(DBG_CRYPT | DBG_CONTROL,
 	    DBG_log("ikev2_crypto_continue for #%lu", st->st_serialno));
-	if (cn->pcrc_serialno == SOS_NOBODY) {
-		loglog(RC_LOG_SERIOUS,
-		       "%s: Request was disconnected from state", __FUNCTION__);
-		release_any_md(&cn->pcrc_md);
-		return;
-	}
 
 	/* The state had better still be around.  */
 	pexpect(st == state_with_serialno(cn->pcrc_serialno));
@@ -1479,14 +1473,6 @@ static void ikev2_parent_inI1outR1_continue(struct state *st, struct msg_digest 
 		DBG_log("ikev2_parent_inI1outR1_continue for #%lu: calculated ke+nonce, sending R1",
 			ke->pcrc_serialno));
 
-	if (ke->pcrc_serialno == SOS_NOBODY) {
-		loglog(RC_LOG_SERIOUS,
-		       "%s: Request was disconnected from state",
-		       __FUNCTION__);
-		release_any_md(&ke->pcrc_md);
-		return;
-	}
-
 	passert(ke->pcrc_serialno == st->st_serialno);	/* transitional */
 
 	passert(st != NULL);
@@ -2065,14 +2051,6 @@ static void ikev2_parent_inR1outI2_continue(struct state *st, struct msg_digest 
 	DBG(DBG_CONTROL,
 		DBG_log("ikev2_parent_inR1outI2_continue for #%lu: calculating g^{xy}, sending I2",
 			dh->pcrc_serialno));
-
-	if (dh->pcrc_serialno == SOS_NOBODY) {
-		loglog(RC_LOG_SERIOUS,
-		       "%s: Request was disconnected from state",
-		       __FUNCTION__);
-		release_any_md(&dh->pcrc_md);
-		return;
-	}
 
 	passert(dh->pcrc_serialno == st->st_serialno);	/* transitional */
 
@@ -3497,14 +3475,6 @@ static void ikev2_parent_inI2outR2_continue(struct state *st, struct msg_digest 
 	DBG(DBG_CONTROL,
 		DBG_log("ikev2_parent_inI2outR2_continue for #%lu: calculating g^{xy}, sending R2",
 			dh->pcrc_serialno));
-
-	if (dh->pcrc_serialno == SOS_NOBODY) {
-		loglog(RC_LOG_SERIOUS,
-		       "%s: Request was disconnected from state",
-		       __FUNCTION__);
-		release_any_md(&dh->pcrc_md);
-		return;
-	}
 
 	passert(dh->pcrc_serialno == st->st_serialno);	/* transitional */
 

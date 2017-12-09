@@ -742,14 +742,6 @@ static void quick_outI1_continue(struct state *st, struct msg_digest *md UNUSED,
 		DBG_log("quick_outI1_continue for #%lu: calculated ke+nonce, sending I1",
 			qke->pcrc_serialno));
 
-	if (qke->pcrc_serialno == SOS_NOBODY) {
-		loglog(RC_LOG_SERIOUS,
-		       "%s: Request was disconnected from state",
-		       __FUNCTION__);
-		release_any_md(&qke->pcrc_md);
-		return;
-	}
-
 	passert(qke->pcrc_serialno == st->st_serialno);	/* transitional */
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
@@ -1536,14 +1528,6 @@ static void quick_inI1_outR1_cryptocontinue1(struct state *st, struct msg_digest
 		DBG_log("quick_inI1_outR1_cryptocontinue1 for #%lu: calculated ke+nonce, calculating DH",
 			qke->pcrc_serialno));
 
-	if (qke->pcrc_serialno == SOS_NOBODY) {
-		loglog(RC_LOG_SERIOUS,
-		       "%s: Request was disconnected from state",
-		       __FUNCTION__);
-		release_any_md(&qke->pcrc_md);
-		return;
-	}
-
 	pexpect(st == md->st);	/* ??? why not? */
 
 	passert(qke->pcrc_serialno == st->st_serialno);	/* transitional */
@@ -1618,14 +1602,6 @@ static void quick_inI1_outR1_cryptocontinue2(struct state *st, struct msg_digest
 	DBG(DBG_CONTROL,
 		DBG_log("quick_inI1_outR1_cryptocontinue2 for #%lu: calculated DH, sending R1",
 			dh->pcrc_serialno));
-
-	if (dh->pcrc_serialno == SOS_NOBODY) {
-		loglog(RC_LOG_SERIOUS,
-		       "%s: Request was disconnected from state",
-		       __FUNCTION__);
-		release_any_md(&dh->pcrc_md);
-		return;
-	}
 
 	passert(dh->pcrc_serialno == st->st_serialno);	/* transitional */
 
@@ -1895,14 +1871,6 @@ static void quick_inR1_outI2_continue(struct state *st, struct msg_digest *md,
 	DBG(DBG_CONTROL,
 		DBG_log("quick_inR1_outI2_continue for #%lu: calculated ke+nonce, calculating DH",
 			dh->pcrc_serialno));
-
-	if (dh->pcrc_serialno == SOS_NOBODY) {
-		loglog(RC_LOG_SERIOUS,
-		       "%s: Request was disconnected from state",
-		       __FUNCTION__);
-		release_any_md(&dh->pcrc_md);
-		return;
-	}
 
 	passert(dh->pcrc_serialno == st->st_serialno);	/* transitional */
 

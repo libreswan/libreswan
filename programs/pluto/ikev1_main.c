@@ -892,14 +892,6 @@ static void main_inR1_outI2_continue(struct state *st, struct msg_digest *md,
 		DBG_log("main_inR1_outI2_continue for #%lu: calculated ke+nonce, sending I2",
 			ke->pcrc_serialno));
 
-	if (ke->pcrc_serialno == SOS_NOBODY) {
-		loglog(RC_LOG_SERIOUS,
-			"%s: Request was disconnected from state",
-			__FUNCTION__);
-		release_any_md(&ke->pcrc_md);
-		return;
-	}
-
 	passert(ke->pcrc_serialno == st->st_serialno);	/* transitional */
 
 	passert(st != NULL);
@@ -1105,14 +1097,6 @@ static void main_inI2_outR2_continue(struct state *st, struct msg_digest *md,
 		DBG_log("main_inI2_outR2_continue for #%lu: calculated ke+nonce, sending R2",
 			ke->pcrc_serialno));
 
-	if (ke->pcrc_serialno == SOS_NOBODY) {
-		loglog(RC_LOG_SERIOUS,
-			"%s: Request was disconnected from state",
-			__FUNCTION__);
-		release_any_md(&ke->pcrc_md);
-		return;
-	}
-
 	passert(ke->pcrc_serialno == st->st_serialno);	/* transitional */
 
 	passert(st != NULL);
@@ -1181,12 +1165,6 @@ static void main_inI2_outR2_calcdone(struct state *st, struct msg_digest *md UNU
 		DBG_log("main_inI2_outR2_calcdone for #%lu: calculate DH finished",
 			dh->pcrc_serialno));
 
-	if (dh->pcrc_serialno == SOS_NOBODY) {
-		libreswan_log("state #%lu disappeared during crypto",
-			dh->pcrc_serialno);
-		/* note: no md exists in this odd case */
-		return;
-	}
 	pexpect(st == state_with_serialno(dh->pcrc_serialno));
 	st = state_with_serialno(dh->pcrc_serialno);
 
@@ -1630,14 +1608,6 @@ static void main_inR2_outI3_cryptotail(struct state *st, struct msg_digest *md,
 	DBG(DBG_CONTROL,
 		DBG_log("main_inR2_outI3_cryptotail for #%lu: calculated DH, sending R1",
 			dh->pcrc_serialno));
-
-	if (dh->pcrc_serialno == SOS_NOBODY) {
-		loglog(RC_LOG_SERIOUS,
-			"%s: Request was disconnected from state",
-			__FUNCTION__);
-		release_any_md(&dh->pcrc_md);
-		return;
-	}
 
 	passert(dh->pcrc_serialno == st->st_serialno);	/* transitional */
 

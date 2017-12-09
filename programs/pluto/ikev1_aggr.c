@@ -117,14 +117,6 @@ static void aggr_inI1_outR1_continue2(struct state *st, struct msg_digest *md,
 		DBG_log("aggr_inI1_outR1_continue2 for #%lu: calculated ke+nonce+DH, sending R1",
 			dh->pcrc_serialno));
 
-	if (dh->pcrc_serialno == SOS_NOBODY) {
-		loglog(RC_LOG_SERIOUS,
-		       "%s: Request was disconnected from state",
-		       __FUNCTION__);
-		release_any_md(&dh->pcrc_md);
-		return;
-	}
-
 	passert(dh->pcrc_serialno == st->st_serialno);	/* transitional */
 
 	passert(st != NULL);
@@ -165,14 +157,6 @@ static void aggr_inI1_outR1_continue1(struct state *st, struct msg_digest *md,
 
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("aggr inI1_outR1: calculated ke+nonce, calculating DH"));
-
-	if (ke->pcrc_serialno == SOS_NOBODY) {
-		loglog(RC_LOG_SERIOUS,
-		       "%s: Request was disconnected from state",
-		       __FUNCTION__);
-		release_any_md(&ke->pcrc_md);
-		return;
-	}
 
 	passert(st != NULL);
 
@@ -732,14 +716,6 @@ static void aggr_inR1_outI2_crypto_continue(struct state *st, struct msg_digest 
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("aggr inR1_outI2: calculated DH, sending I2"));
 
-	if (dh->pcrc_serialno == SOS_NOBODY) {
-		loglog(RC_LOG_SERIOUS,
-		       "%s: Request was disconnected from state",
-		       __FUNCTION__);
-		release_any_md(&dh->pcrc_md);
-		return;
-	}
-
 	passert(st != NULL);
 
 	passert(st->st_suspended_md == dh->pcrc_md);
@@ -1121,14 +1097,6 @@ static void aggr_outI1_continue(struct state *st, struct msg_digest *md,
 	DBG(DBG_CONTROL,
 		DBG_log("aggr_outI1_continue for #%lu: calculated ke+nonce, sending I1",
 			ke->pcrc_serialno));
-
-	if (ke->pcrc_serialno == SOS_NOBODY) {
-		loglog(RC_LOG_SERIOUS,
-		       "%s: Request was disconnected from state",
-		       __FUNCTION__);
-		release_any_md(&ke->pcrc_md);
-		return;
-	}
 
 	passert(ke->pcrc_serialno == st->st_serialno);	/* transitional */
 
