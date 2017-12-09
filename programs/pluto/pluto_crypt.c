@@ -189,7 +189,6 @@ static void pcr_init(struct pluto_crypto_req *r,
 		     enum crypto_importance pcr_pcim)
 {
 	zero(r);
-	r->pcr_len  = sizeof(struct pluto_crypto_req);
 	r->pcr_type = pcr_type;
 	r->pcr_pcim = pcr_pcim;
 }

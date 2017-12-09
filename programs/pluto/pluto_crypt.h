@@ -219,7 +219,6 @@ struct pcr_skeycalc_v2_r {
 };
 
 struct pluto_crypto_req {
-	size_t pcr_len;	/* MUST BE FIRST FIELD IN STRUCT */
 	enum pluto_crypto_requests pcr_type;
 	pcr_req_id pcr_id;
 	enum crypto_importance pcr_pcim;
