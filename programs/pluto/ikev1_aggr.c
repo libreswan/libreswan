@@ -147,20 +147,14 @@ static void aggr_inI1_outR1_continue2(struct state *st, struct msg_digest *md,
 static crypto_req_cont_func aggr_inI1_outR1_continue1;	/* type assertion */
 
 static void aggr_inI1_outR1_continue1(struct state *st, struct msg_digest *md,
-				      struct pluto_crypto_req_cont *ke,
+				      struct pluto_crypto_req_cont *unused1 UNUSED,
 				      struct pluto_crypto_req *r)
 {
-	pexpect(st == md->st);
-	st = md->st;
-
 	stf_status e;
 
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("aggr inI1_outR1: calculated ke+nonce, calculating DH"));
 
-	passert(st != NULL);
-
-	passert(st->st_suspended_md == ke->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
 
 	so_serial_t old_serialno = push_cur_state(st);
@@ -189,9 +183,9 @@ static void aggr_inI1_outR1_continue1(struct state *st, struct msg_digest *md,
 				      st->st_oakley.ta_dh);
 
 		if (e != STF_SUSPEND) {
-			passert(dh->pcrc_md != NULL);
-			complete_v1_state_transition(&dh->pcrc_md, e);
-			release_any_md(&dh->pcrc_md);
+			passert(md != NULL);
+			complete_v1_state_transition(&md, e);
+			release_any_md(&md);
 		}
 
 		reset_cur_state();

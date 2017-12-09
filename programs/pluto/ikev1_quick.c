@@ -1517,22 +1517,14 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b)
 /* redundant type assertion: static crypto_req_cont_func quick_inI1_outR1_cryptocontinue1; */
 
 static void quick_inI1_outR1_cryptocontinue1(struct state *st, struct msg_digest *md,
-					     struct pluto_crypto_req_cont *qke,
+					     struct pluto_crypto_req_cont *unused1 UNUSED,
 					     struct pluto_crypto_req *r)
 {
-	pexpect(st == state_with_serialno(qke->pcrc_serialno));
-	st = state_with_serialno(qke->pcrc_serialno);
 	stf_status e;
 
 	DBG(DBG_CONTROL,
 		DBG_log("quick_inI1_outR1_cryptocontinue1 for #%lu: calculated ke+nonce, calculating DH",
-			qke->pcrc_serialno));
-
-	pexpect(st == md->st);	/* ??? why not? */
-
-	passert(qke->pcrc_serialno == st->st_serialno);	/* transitional */
-
-	passert(st != NULL);
+			st->st_serialno));
 
 	passert(st->st_connection != NULL);
 
@@ -1548,28 +1540,28 @@ static void quick_inI1_outR1_cryptocontinue1(struct state *st, struct msg_digest
 
 	if (st->st_pfs_group != NULL) {
 		/* PFS is on: do a new DH */
-		struct pluto_crypto_req_cont *dh = new_pcrc(
-			quick_inI1_outR1_cryptocontinue2,
-			"quick outR1 DH",
-			st, md);
-
 		unpack_KE_from_helper(st, r, &st->st_gr);
+
+
+		struct pluto_crypto_req_cont *dh =
+			new_pcrc(quick_inI1_outR1_cryptocontinue2,
+				 "quick outR1 DH",
+				 st, md);
 
 		e = start_dh_secret(dh, st, st->st_import,
 				    ORIGINAL_RESPONDER,
 				    st->st_pfs_group);
 
 		/*
-		 * In the STF_SUSPEND case, we are done for now and must
-		 * wait for the computation to finish.  *dh and md ownership
-		 * has been transferred.
+		 * Ownership of DH is always transfered.
+		 *
+		 * But MD ownership is only transfered when
+		 * STF_SUSPEND.
 		 */
 		if (e != STF_SUSPEND) {
 			passert(md != NULL);	/* ??? when would this fail? */
-			if (dh->pcrc_md != NULL) {
-				complete_v1_state_transition(&dh->pcrc_md, e);
-				release_any_md(&dh->pcrc_md);
-			}
+			complete_v1_state_transition(&md, e);
+			release_any_md(&md);
 		}
 	} else {
 		/* but if PFS is off, we don't do a second DH, so just
@@ -1578,11 +1570,8 @@ static void quick_inI1_outR1_cryptocontinue1(struct state *st, struct msg_digest
 		e = quick_inI1_outR1_cryptotail(md, NULL);
 		if (e == STF_OK) {
 			passert(md != NULL);	/* ??? when would this fail? */
-			if (md != NULL) {
-				/* note: use qke-> pointer */
-				complete_v1_state_transition(&qke->pcrc_md, e);
-				release_any_md(&qke->pcrc_md);
-			}
+			complete_v1_state_transition(&md, e);
+			release_any_md(&md);
 		}
 	}
 	reset_cur_state();
