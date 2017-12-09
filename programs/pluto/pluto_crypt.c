@@ -329,7 +329,7 @@ static void pluto_crypto_helper(int helper_fd, int helpernum)
 {
 	FILE *in = fdopen(helper_fd, "rb");
 	FILE *out = fdopen(helper_fd, "wb");
-	struct pluto_crypto_req req;
+	struct pluto_crypto_req_cont *cn;
 #ifdef HAVE_SECCOMP
 	switch (pluto_seccomp_mode) {
 	case SECCOMP_ENABLED:
@@ -365,20 +365,22 @@ static void pluto_crypto_helper(int helper_fd, int helpernum)
 	DBG(DBG_CONTROL, DBG_log("crypto helper %d waiting on fd %d",
 				 helpernum, fileno(in)));
 
-	passert(offsetof(struct pluto_crypto_req, pcr_len) == 0);
-
 	for (;;) {
 		size_t sz;
 
 		errno = 0;
-		sz = fread(&req, sizeof(char), sizeof(req), in);
+		sz = fread(&cn, sizeof(char), sizeof(cn), in);
 
 		if (sz == 0 && feof(in)) {
 			loglog(RC_LOG_SERIOUS,
 			       "pluto_crypto_helper: crypto helper %d normal exit (EOF)",
 			       helpernum);
 			break;
-		} else if (sz != sizeof(req)) {
+		} else if (sz != sizeof(cn)) {
+			/*
+			 * XXX: since CN is smaller than a page, this
+			 * should never happen?
+			 */
 			if (ferror(in) != 0) {
 				/* ??? is strerror(ferror(in)) correct? */
 				char errbuf[100];	/* ??? how big is big enough? */
@@ -391,26 +393,22 @@ static void pluto_crypto_helper(int helper_fd, int helpernum)
 				/* short read -- fatal */
 				loglog(RC_LOG_SERIOUS,
 				       "pluto_crypto_helper: crypto helper %d got a short read error: %zu instead of %zu",
-				       helpernum, sz, sizeof(req));
+				       helpernum, sz, sizeof(cn));
 			}
 			break;
 		}
-
-		passert(req.pcr_len == sizeof(req));
 
 		DBG(DBG_CONTROL, DBG_log("crypto helper %d read fd: %d",
 					 helpernum,
 					 fileno(in)));
 
-		pluto_do_crypto_op(&req, helpernum);
-
-		passert(req.pcr_len == sizeof(req));
+		pluto_do_crypto_op(&cn->pcrc_pcr, helpernum);
 
 		errno = 0;
-		sz = fwrite(&req, sizeof(char), sizeof(req), out);
+		sz = fwrite(&cn, sizeof(char), sizeof(cn), out);
 		fflush(out);
 
-		if (sz != sizeof(req)) {
+		if (sz != sizeof(cn)) {
 			if (ferror(out) != 0) {
 				/* ??? is strerror(ferror(out)) correct? */
 				char errbuf[100];	/* ??? how big is big enough? */
@@ -420,10 +418,14 @@ static void pluto_crypto_helper(int helper_fd, int helpernum)
 				       "crypto helper %d failed to write answer: %s",
 				       helpernum, errbuf);
 			} else {
+				/*
+				 * XXX: since CN is smaller than a
+				 * page, this should never happen?
+				 */
 				/* short write -- fatal */
 				loglog(RC_LOG_SERIOUS,
 				       "pluto_crypto_helper error: crypto helper %d write truncated: %zu instead of %zu",
-				       helpernum, sz, sizeof(req));
+				       helpernum, sz, sizeof(cn));
 			}
 			break;
 		}
@@ -438,19 +440,16 @@ static void pluto_crypto_helper(int helper_fd, int helpernum)
 
 /* send the request, make sure it all goes down. */
 static bool crypto_write_request(struct pluto_crypto_worker *w,
-				 const struct pluto_crypto_req *r)
+				 const struct pluto_crypto_req_cont *cn)
 {
-	const unsigned char *wdat = (unsigned char *)r;
-	size_t wlen = r->pcr_len;
-
-	passert(wlen == sizeof(*r));
-
 	DBG(DBG_CONTROL,
-	    DBG_log("asking crypto helper %d to do %s; request ID %u (len=%zu, pcw_work=%d)",
+	    DBG_log("asking crypto helper %d to do %s; request ID %u (pcw_work=%d)",
 		    w->pcw_helpernum,
-		    enum_show(&pluto_cryptoop_names, r->pcr_type),
-		    r->pcr_id, r->pcr_len, w->pcw_work));
+		    enum_show(&pluto_cryptoop_names, cn->pcrc_pcr.pcr_type),
+		    cn->pcrc_pcr.pcr_id, w->pcw_work));
 
+	const unsigned char *wdat = (unsigned char*)&cn;
+	size_t wlen = sizeof(cn);
 	while (wlen > 0) {
 		ssize_t cnt = write(w->pcw_master_fd, wdat, wlen);
 
@@ -470,6 +469,10 @@ static bool crypto_write_request(struct pluto_crypto_worker *w,
 		}
 
 		if ((size_t)cnt != wlen) {
+			/*
+			 * XXX: since CN is smaller than a page, this
+			 * should never happen?
+			 */
 			libreswan_log("short write to crypto helper %d (%zu of %zu bytes); will continue",
 				w->pcw_helpernum, (size_t)cnt, wlen);
 		}
@@ -645,7 +648,7 @@ stf_status send_crypto_helper_request(struct state *st,
 
 		passert(w->pcw_master_fd != -1);
 
-		if (!crypto_write_request(w, &cn->pcrc_pcr)) {
+		if (!crypto_write_request(w, cn)) {
 			loglog(RC_LOG_SERIOUS, "cannot start crypto helper %d: failed to write",
 				w->pcw_helpernum);
 			pcrc_release_request(cn);	/* ownership transferred from caller */
@@ -724,7 +727,7 @@ static void crypto_send_backlog(struct pluto_crypto_worker *w)
 		passert(w->pcw_work > 0);
 
 		/* send the request, and then mark the worker as having more work */
-		if (!crypto_write_request(w, &cn->pcrc_pcr)) {
+		if (!crypto_write_request(w, cn)) {
 			/* XXX invoke callback with failure */
 			passert(FALSE);
 			pcrc_release_request(cn);
@@ -821,7 +824,6 @@ void log_crypto_workers(void) {
  */
 static void handle_helper_answer(struct pluto_crypto_worker *w)
 {
-	struct pluto_crypto_req rr;
 	ssize_t actlen;
 	struct pluto_crypto_req_cont *cn;
 
@@ -833,9 +835,9 @@ static void handle_helper_answer(struct pluto_crypto_worker *w)
 	/* read from the socketpair in one gulp */
 
 	errno = 0;
-	actlen = read(w->pcw_master_fd, (void *)&rr, sizeof(rr));
+	actlen = read(w->pcw_master_fd, (void *)&cn, sizeof(cn));
 
-	if (actlen != sizeof(rr)) {
+	if (actlen != sizeof(cn)) {
 		if (actlen == -1) {
 			loglog(RC_LOG_SERIOUS,
 			       "read from crypto helper %d failed: %s.  Killing helper.",
@@ -847,29 +849,25 @@ static void handle_helper_answer(struct pluto_crypto_worker *w)
 		} else if (errno == 0) {
 			loglog(RC_LOG_SERIOUS,
 			       "read from crypto helper %d failed with short length %zd of %zu.  Killing helper.",
-			       w->pcw_helpernum, actlen, sizeof(rr));
+			       w->pcw_helpernum, actlen, sizeof(cn));
 			kill_helper(w);
 		} else {
+			/*
+			 * XXX: since CN is smaller than a page, this
+			 * should never happen?
+			 */
 			loglog(RC_LOG_SERIOUS,
 			       "read from crypto helper %d failed with short length %zd of %zu (errno=%s).  Killing helper.",
-			       w->pcw_helpernum, actlen, sizeof(rr), strerror(errno));
+			       w->pcw_helpernum, actlen, sizeof(cn),
+			       strerror(errno));
 			kill_helper(w);
 		}
 		return;
 	}
 
-	if (rr.pcr_len != sizeof(rr)) {
-		loglog(RC_LOG_SERIOUS,
-		       "crypto helper %d screwed up length: %zu != %zu; killing it",
-		       w->pcw_helpernum,
-		       rr.pcr_len, sizeof(rr));
-		kill_helper(w);
-		return;
-	}
-
 	DBG(DBG_CONTROL,
 		DBG_log("crypto helper %d replies to request ID %u",
-			w->pcw_helpernum, rr.pcr_id));
+			w->pcw_helpernum, cn->pcrc_pcr.pcr_id));
 
 	/* worker w can accept more work now that we have read from its socketpair */
 	w->pcw_work--;
@@ -879,20 +877,6 @@ static void handle_helper_answer(struct pluto_crypto_worker *w)
 	 * avoids the most deadlocks
 	 */
 	crypto_send_backlog(w);
-
-	/* now match up request to continuation, and invoke it */
-	for (cn = w->pcw_active.tqh_first;
-	     cn != NULL && rr.pcr_id != cn->pcrc_id;
-	     cn = cn->pcrc_list.tqe_next)
-		;
-
-	if (cn == NULL) {
-		loglog(RC_LOG_SERIOUS,
-		       "failed to find crypto continuation associated with request ID %u performed by crypto helper %d",
-		       rr.pcr_id,
-		       w->pcw_helpernum);
-		return;
-	}
 
 	/* unlink it */
 	TAILQ_REMOVE(&w->pcw_active, cn, pcrc_list);
@@ -926,9 +910,7 @@ static void handle_helper_answer(struct pluto_crypto_worker *w)
 			PEXPECT_LOG("state #%lu for crypto callback disappeared!",
 				    cn->pcrc_serialno);
 		}
-			PEXPECT_LOG("%s: state #%lu for crypto disappeared!",
-				    cn->pcrc_name, cn->pcrc_serialno);
-		pcr_release_crypto_response(&rr);
+		pcr_release_crypto_response(&cn->pcrc_pcr);
 	} else {
 		/*
 		 * XXX:
@@ -951,7 +933,7 @@ static void handle_helper_answer(struct pluto_crypto_worker *w)
 #if 0
 		so_serial_t old_state = push_cur_state(st);
 #endif
-		(*cn->pcrc_func)(st, cn->pcrc_md, cn, &rr);
+		(*cn->pcrc_func)(st, cn->pcrc_md, cn, &cn->pcrc_pcr);
 #if 0
 		pop_cur_state(old_state);
 #endif
