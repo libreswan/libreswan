@@ -914,13 +914,10 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 
 	ev->ev_type = type;
 	ev->ev_name = en;
+	ev->ev_state = st;
 
 	/* ??? ev_time lacks required precision */
 	ev->ev_time = monotimesum(mononow(), delay);
-
-	ev->ev_state = st;
-	ev->ev = timer_private_pluto_event_new(NULL_FD, EV_TIMEOUT,
-					       timer_event_cb, ev, delay);
 	link_pluto_event_list(ev); /* add to global ist to track */
 
 	/*
@@ -980,6 +977,10 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 					ev->ev_state->st_serialno);
 			}
 	}
+
+	timer_private_pluto_event_new(&ev->ev,
+				      NULL_FD, EV_TIMEOUT,
+				      timer_event_cb, ev, delay);
 }
 
 void event_schedule_s(enum event_type type, time_t delay_sec, struct state *st)

@@ -89,11 +89,12 @@ extern void call_server(void);
 extern void init_event_base(void);
 extern void pluto_event_now(const char *name, void (*cb)(void*), void *arg);
 typedef void event_callback_routine(evutil_socket_t, const short, void *);
-extern struct event *timer_private_pluto_event_new(evutil_socket_t ft,
-						   short events,
-						   event_callback_fn cb,
-						   void *arg,
-						   deltatime_t delay);
+extern void timer_private_pluto_event_new(struct event **evp,
+					  evutil_socket_t ft,
+					  short events,
+					  event_callback_fn cb,
+					  void *arg,
+					  deltatime_t delay);
 extern struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
 					   event_callback_fn cb, void *arg,
 					   const deltatime_t *delay,

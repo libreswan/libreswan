@@ -513,15 +513,27 @@ void delete_pluto_event(struct pluto_event **evp)
 }
 
 /*
- * a wrapper for libevent's event_new + event_add; any error is fatal
- * If you're looking for how to set up a timer look at pluto_event_add
+ * A wrapper for libevent's event_new + event_add; any error is fatal.
+ *
+ * When setting up an event, this must be called last.  Else the event
+ * can fire before setting it up has finished.
  */
-static struct event *pluto_event_wraper(evutil_socket_t fd, short events,
-				     event_callback_fn cb, void *arg,
-				     const deltatime_t *delay)
+
+static void fire_event_photon_torpedo(struct event **evp,
+				      evutil_socket_t fd, short events,
+				      event_callback_fn cb, void *arg,
+				      const deltatime_t *delay)
 {
 	struct event *ev = event_new(pluto_eb, fd, events, cb, arg);
 	passert(ev != NULL);
+	/*
+	 * EV must be saved in its final destination before the event
+	 * is enabled.
+	 *
+	 * Otherwise the event on the main thread will try to use the
+	 * saved EV before it has been saved by the helper thread.
+	 */
+	*evp = ev;
 
 	int r;
 	if (delay == NULL) {
@@ -531,7 +543,6 @@ static struct event *pluto_event_wraper(evutil_socket_t fd, short events,
 		r = event_add(ev, &t);
 	}
 	passert(r >= 0);
-	return ev;
 }
 
 /*
@@ -559,7 +570,18 @@ static void schedule_event_now_cb(evutil_socket_t fd UNUSED,
 	struct now_event *ne = (struct now_event *)arg;
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("executing now-event %s", ne->ne_name));
+
+	/*
+	 * At one point, .ne_event was was being set after the event
+	 * was enabled.  With multiple threads this resulted in a race
+	 * where the event ran before .ne_event was set.  The
+	 * pexpect() followed by the passert() demonstrated this - the
+	 * pexpect() failed yet the passert() passed.
+	 */
+	pexpect(ne->ne_event != NULL);
 	ne->ne_cb(ne->ne_arg);
+	passert(ne->ne_event != NULL);
+
 	event_del(ne->ne_event);
 	pfree(ne);
 }
@@ -573,10 +595,14 @@ void pluto_event_now(const char *name, void (*cb)(void*), void*arg)
 	ne->ne_arg = arg;
 	ne->ne_name = name;
 	static const deltatime_t no_delay = DELTATIME(0);
-	/* use common code, not event_base_once() */
-	ne->ne_event = pluto_event_wraper(NULL_FD, EV_TIMEOUT,
-					  schedule_event_now_cb, ne,
-					  &no_delay);
+	/*
+	 * Everything set up; arm and fire torpedo.  Event may have
+	 * even run before the below function returns.
+	 */
+	fire_event_photon_torpedo(&ne->ne_event,
+				  NULL_FD, EV_TIMEOUT,
+				  schedule_event_now_cb, ne,
+				  &no_delay);
 }
 
 /*
@@ -584,13 +610,13 @@ void pluto_event_now(const char *name, void (*cb)(void*), void*arg)
  * looking for how to set up a timer, then don't look here and don't
  * look at timer.c.  Why?
  */
-struct event *timer_private_pluto_event_new(evutil_socket_t fd, short events,
-					    event_callback_fn cb, void *arg,
-					    deltatime_t delay)
+void timer_private_pluto_event_new(struct event **evp,
+				   evutil_socket_t fd, short events,
+				   event_callback_fn cb, void *arg,
+				   deltatime_t delay)
 {
-	return pluto_event_wraper(fd, events, cb, arg, &delay);
+	fire_event_photon_torpedo(evp, fd, events, cb, arg, &delay);
 }
-
 
 struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
 				    event_callback_fn cb, void *arg,
@@ -600,11 +626,11 @@ struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
 	struct pluto_event *e = alloc_thing(struct pluto_event, name);
 	e->ev_type = EVENT_NULL;
 	e->ev_name = name;
-	e->ev = pluto_event_wraper(fd, events, cb, arg, delay);
 	link_pluto_event_list(e);
 	if (delay != NULL) {
 		e->ev_time = monotimesum(mononow(), *delay);
 	}
+	fire_event_photon_torpedo(&e->ev, fd, events, cb, arg, delay);
 	return e; /* compaitable with pluto_event_new for the time being */
 }
 
