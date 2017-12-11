@@ -309,14 +309,6 @@ typedef void crypto_req_cont_func(struct state *st, struct msg_digest *md,
 struct pluto_crypto_req_cont {
 	crypto_req_cont_func *pcrc_func;	/* function to continue with */
 	/*
-	 * Sponsoring state's serial number and state pointer.
-	 * Currently a mish-mash but will transition
-	 * to central management by send_crypto_helper_request
-	 * and friends.
-	 */
-	so_serial_t pcrc_serialno;
-
-	/*
 	 * Sponsoring message's msg_digest.
 	 * Used in most but not all continuations.
 	 */
@@ -325,6 +317,7 @@ struct pluto_crypto_req_cont {
 	/* the rest of these fields are private to pluto_crypt.c */
 
 	TAILQ_ENTRY(pluto_crypto_req_cont) pcrc_list;
+	so_serial_t pcrc_serialno;	/* sponsoring state's serial number */
 	const char *pcrc_name;
 	struct pluto_crypto_req pcrc_pcr;
 	pcr_req_id pcrc_id;

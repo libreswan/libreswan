@@ -274,18 +274,6 @@ static void ikev2_crypto_continue(struct state *st, struct msg_digest *md,
 	DBG(DBG_CRYPT | DBG_CONTROL,
 	    DBG_log("ikev2_crypto_continue for #%lu", st->st_serialno));
 
-	/* The state had better still be around.  */
-	pexpect(st == state_with_serialno(cn->pcrc_serialno));
-	st = state_with_serialno(cn->pcrc_serialno);
-	if (st == NULL) {
-		PEXPECT_LOG("IKEv2 crypto continue failed because sponsoring state #%lu is unknown",
-			    cn->pcrc_serialno);
-		/* XXX: release what? */
-		return;
-	}
-	passert(st != NULL);
-	passert(cn->pcrc_serialno == st->st_serialno);	/* transitional */
-
 	/* and a parent? */
 	struct state *pst = st;
 	if (IS_CHILD_SA(st)) {
@@ -844,9 +832,7 @@ stf_status ikev2_parent_outI1_tail(struct pluto_crypto_req_cont *ke,
 
 	DBG(DBG_CONTROL,
 		DBG_log("ikev2_parent_outI1_tail for #%lu",
-			ke->pcrc_serialno));
-
-	passert(ke->pcrc_serialno == st->st_serialno);	/* transitional */
+			st->st_serialno));
 
 	unpack_KE_from_helper(st, r, &st->st_gi);
 	unpack_nonce(&st->st_ni, r);
@@ -1471,11 +1457,7 @@ static void ikev2_parent_inI1outR1_continue(struct state *st, struct msg_digest 
 
 	DBG(DBG_CONTROL,
 		DBG_log("ikev2_parent_inI1outR1_continue for #%lu: calculated ke+nonce, sending R1",
-			ke->pcrc_serialno));
-
-	passert(ke->pcrc_serialno == st->st_serialno);	/* transitional */
-
-	passert(st != NULL);
+			st->st_serialno));
 
 	passert(st->st_suspended_md == ke->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
@@ -1510,8 +1492,6 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	struct connection *c = st->st_connection;
 	bool send_certreq = FALSE;
 	int vids = 0;
-
-	passert(ke->pcrc_serialno == st->st_serialno);	/* transitional */
 
 	/* note that we don't update the state here yet */
 
@@ -2050,11 +2030,7 @@ static void ikev2_parent_inR1outI2_continue(struct state *st, struct msg_digest 
 
 	DBG(DBG_CONTROL,
 		DBG_log("ikev2_parent_inR1outI2_continue for #%lu: calculating g^{xy}, sending I2",
-			dh->pcrc_serialno));
-
-	passert(dh->pcrc_serialno == st->st_serialno);	/* transitional */
-
-	passert(st != NULL);
+			st->st_serialno));
 
 	passert(st->st_suspended_md == dh->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
@@ -3474,11 +3450,7 @@ static void ikev2_parent_inI2outR2_continue(struct state *st, struct msg_digest 
 
 	DBG(DBG_CONTROL,
 		DBG_log("ikev2_parent_inI2outR2_continue for #%lu: calculating g^{xy}, sending R2",
-			dh->pcrc_serialno));
-
-	passert(dh->pcrc_serialno == st->st_serialno);	/* transitional */
-
-	passert(st != NULL);
+			st->st_serialno));
 
 	passert(st->st_suspended_md == dh->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */

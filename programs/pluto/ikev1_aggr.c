@@ -115,11 +115,7 @@ static void aggr_inI1_outR1_continue2(struct state *st, struct msg_digest *md,
 
 	DBG(DBG_CONTROL,
 		DBG_log("aggr_inI1_outR1_continue2 for #%lu: calculated ke+nonce+DH, sending R1",
-			dh->pcrc_serialno));
-
-	passert(dh->pcrc_serialno == st->st_serialno);	/* transitional */
-
-	passert(st != NULL);
+			st->st_serialno));
 
 	passert(st->st_suspended_md == dh->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
@@ -1090,11 +1086,7 @@ static void aggr_outI1_continue(struct state *st, struct msg_digest *md,
 
 	DBG(DBG_CONTROL,
 		DBG_log("aggr_outI1_continue for #%lu: calculated ke+nonce, sending I1",
-			ke->pcrc_serialno));
-
-	passert(ke->pcrc_serialno == st->st_serialno);	/* transitional */
-
-	passert(st != NULL);
+			st->st_serialno));
 
 	passert(st->st_suspended_md == ke->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
@@ -1250,11 +1242,9 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *ke,
 		    (c->spd.this.sendcert == cert_sendifasked ||
 		     c->spd.this.sendcert == cert_alwayssend);
 
-	passert(ke->pcrc_serialno == st->st_serialno);	/* transitional */
-
 	DBG(DBG_CONTROL,
 		DBG_log("aggr_outI1_tail for #%lu",
-			ke->pcrc_serialno));
+			st->st_serialno));
 
 	/* the MD is already set up by alloc_md() */
 

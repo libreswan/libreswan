@@ -734,15 +734,11 @@ static void quick_outI1_continue(struct state *st, struct msg_digest *md UNUSED,
 				 struct pluto_crypto_req_cont *qke,
 				 struct pluto_crypto_req *r)
 {
-	pexpect(st == state_with_serialno(qke->pcrc_serialno));
-	st = state_with_serialno(qke->pcrc_serialno);
 	stf_status e;
 
 	DBG(DBG_CONTROL,
 		DBG_log("quick_outI1_continue for #%lu: calculated ke+nonce, sending I1",
-			qke->pcrc_serialno));
-
-	passert(qke->pcrc_serialno == st->st_serialno);	/* transitional */
+			st->st_serialno));
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
@@ -1590,11 +1586,7 @@ static void quick_inI1_outR1_cryptocontinue2(struct state *st, struct msg_digest
 
 	DBG(DBG_CONTROL,
 		DBG_log("quick_inI1_outR1_cryptocontinue2 for #%lu: calculated DH, sending R1",
-			dh->pcrc_serialno));
-
-	passert(dh->pcrc_serialno == st->st_serialno);	/* transitional */
-
-	passert(st != NULL);
+			st->st_serialno));
 
 	passert(st->st_connection != NULL);
 
@@ -1859,11 +1851,7 @@ static void quick_inR1_outI2_continue(struct state *st, struct msg_digest *md,
 
 	DBG(DBG_CONTROL,
 		DBG_log("quick_inR1_outI2_continue for #%lu: calculated ke+nonce, calculating DH",
-			dh->pcrc_serialno));
-
-	passert(dh->pcrc_serialno == st->st_serialno);	/* transitional */
-
-	passert(st != NULL);
+			st->st_serialno));
 
 	passert(st->st_connection != NULL);
 

@@ -890,11 +890,7 @@ static void main_inR1_outI2_continue(struct state *st, struct msg_digest *md,
 
 	DBG(DBG_CONTROL,
 		DBG_log("main_inR1_outI2_continue for #%lu: calculated ke+nonce, sending I2",
-			ke->pcrc_serialno));
-
-	passert(ke->pcrc_serialno == st->st_serialno);	/* transitional */
-
-	passert(st != NULL);
+			st->st_serialno));
 
 	passert(st->st_suspended_md == ke->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
@@ -1095,11 +1091,7 @@ static void main_inI2_outR2_continue(struct state *st, struct msg_digest *md,
 
 	DBG(DBG_CONTROL,
 		DBG_log("main_inI2_outR2_continue for #%lu: calculated ke+nonce, sending R2",
-			ke->pcrc_serialno));
-
-	passert(ke->pcrc_serialno == st->st_serialno);	/* transitional */
-
-	passert(st != NULL);
+			st->st_serialno));
 
 	passert(st->st_suspended_md == ke->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
@@ -1158,15 +1150,12 @@ stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
 static crypto_req_cont_func main_inI2_outR2_calcdone;	/* type assertion */
 
 static void main_inI2_outR2_calcdone(struct state *st, struct msg_digest *md UNUSED,
-				     struct pluto_crypto_req_cont *dh,
+				     struct pluto_crypto_req_cont *dh UNUSED,
 				     struct pluto_crypto_req *r)
 {
 	DBG(DBG_CONTROL,
 		DBG_log("main_inI2_outR2_calcdone for #%lu: calculate DH finished",
-			dh->pcrc_serialno));
-
-	pexpect(st == state_with_serialno(dh->pcrc_serialno));
-	st = state_with_serialno(dh->pcrc_serialno);
+			st->st_serialno));
 
 	set_cur_state(st);
 
@@ -1607,11 +1596,7 @@ static void main_inR2_outI3_cryptotail(struct state *st, struct msg_digest *md,
 
 	DBG(DBG_CONTROL,
 		DBG_log("main_inR2_outI3_cryptotail for #%lu: calculated DH, sending R1",
-			dh->pcrc_serialno));
-
-	passert(dh->pcrc_serialno == st->st_serialno);	/* transitional */
-
-	passert(st != NULL);
+			st->st_serialno));
 
 	passert(st->st_suspended_md == dh->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */

@@ -102,7 +102,6 @@ stf_status build_ke_and_nonce(struct state *st,
 			      const struct oakley_group_desc *group,
 			      enum crypto_importance importance)
 {
-	passert(st->st_serialno == cn->pcrc_serialno);
 	passert(!st->st_sec_in_use);
 	pcr_kenonce_init(cn, pcr_build_ke_and_nonce,
 			 importance, group);
