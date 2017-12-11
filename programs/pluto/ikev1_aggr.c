@@ -339,15 +339,10 @@ stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 	RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_ni, "Ni"));
 
 	/* calculate KE and Nonce */
-	{
-		struct pluto_crypto_req_cont *ke = new_pcrc(
-			aggr_inI1_outR1_continue1,
-			"outI2 KE",
-			st, md);
-
-		return build_ke_and_nonce(st, ke, st->st_oakley.ta_dh,
-					  st->st_import);
-	}
+	return request_ke_and_nonce("outI2 KE", st, md,
+				    st->st_oakley.ta_dh,
+				    st->st_import,
+				    aggr_inI1_outR1_continue1);
 }
 
 static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
@@ -1209,16 +1204,16 @@ stf_status aggr_outI1(int whack_sock,
 	 */
 	{
 		struct msg_digest *fake_md = alloc_md("msg_digest by aggr_outI1");
-		struct pluto_crypto_req_cont *ke;
 		stf_status e;
 
 		fake_md->st = st;
 		fake_md->smc = NULL;	/* ??? */
 		fake_md->from_state = STATE_UNDEFINED;	/* ??? */
 
-		ke = new_pcrc(aggr_outI1_continue, "aggr_outI1 KE + nonce",
-			st, fake_md);
-		e = build_ke_and_nonce(st, ke, st->st_oakley.ta_dh, importance);
+		e = request_ke_and_nonce("aggr_outI1 KE + nonce",
+					 st, fake_md,
+					 st->st_oakley.ta_dh, importance,
+					 aggr_outI1_continue);
 
 		/*
 		 * ??? what exactly do we expect for e?

@@ -437,11 +437,6 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		break;
 	}
 
-
-	struct pluto_crypto_req_cont *ke =
-		(st->st_state == STATE_V2_CREATE_I ? NULL :
-		 new_pcrc(ikev2_crypto_continue, what, st, md));
-
 	stf_status e;
 	switch (st->st_state) {
 	case STATE_PARENT_I1:
@@ -452,24 +447,32 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		st->st_msgid = 0;
 		/* fall through */
 	case STATE_V2_REKEY_IKE_R:
-		e = build_ke_and_nonce(st, ke, st->st_oakley.ta_dh, ci);
+		e = request_ke_and_nonce(what, st, md,
+					 st->st_oakley.ta_dh, ci,
+					 ikev2_crypto_continue);
 		break;
 
 	case STATE_V2_CREATE_R:
 	case STATE_V2_REKEY_CHILD_R:
 		if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
-			e = build_ke_and_nonce(st, ke, st->st_oakley.ta_dh, ci);
+			e = request_ke_and_nonce(what, st, md,
+						 st->st_oakley.ta_dh, ci,
+						 ikev2_crypto_continue);
 		} else {
-			e = build_nonce(st, ke, ci);
+			e = request_nonce(what, st, md, ci,
+					  ikev2_crypto_continue);
 		}
 		break;
 
 	case STATE_V2_REKEY_CHILD_I0:
 	case STATE_V2_CREATE_I0:
 		if (st->st_pfs_group == NULL) {
-			e = build_nonce(st, ke, ci);
+			e = request_nonce(what, st, md, ci,
+					  ikev2_crypto_continue);
 		} else {
-			e = build_ke_and_nonce(st, ke, st->st_pfs_group, ci);
+			e = request_ke_and_nonce(what, st, md,
+						 st->st_pfs_group, ci,
+						 ikev2_crypto_continue);
 		}
 		break;
 
@@ -1431,19 +1434,12 @@ stf_status ikev2parent_inI1outR1(struct state *st, struct msg_digest *md)
 	}
 
 	/* calculate the nonce and the KE */
-	{
-		struct pluto_crypto_req_cont *ke = new_pcrc(
-			ikev2_parent_inI1outR1_continue, "ikev2_inI1outR1 KE",
-			st, md);
-		stf_status e;
-
-		e = build_ke_and_nonce(st, ke, st->st_oakley.ta_dh,
-				       pcim_stranger_crypto);
-
-		reset_globals();
-
-		return e;
-	}
+	e = request_ke_and_nonce("ikev2_inI1outR1 KE", st, md,
+				 st->st_oakley.ta_dh,
+				 pcim_stranger_crypto,
+				 ikev2_parent_inI1outR1_continue);
+	reset_globals();
+	return e;
 }
 
 /* redundant type assertion: static crypto_req_cont_func ikev2_parent_inI1outR1_continue; */

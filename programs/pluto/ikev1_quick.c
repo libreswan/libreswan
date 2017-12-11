@@ -855,16 +855,16 @@ stf_status quick_outI1(int whack_sock,
 
 	/* save for post crytpo logging */
 	st->st_ipsec_pred = replacing;
-	struct pluto_crypto_req_cont *qke = new_pcrc(quick_outI1_continue,
-						     "quick_outI1 KE",
-						     st, NULL);
 
 	stf_status e;
 	if (policy & POLICY_PFS) {
-		e = build_ke_and_nonce(st, qke, st->st_pfs_group,
-				       st->st_import);
+		e = request_ke_and_nonce("quick_outI1 KE", st, NULL,
+					 st->st_pfs_group, st->st_import,
+					 quick_outI1_continue);
 	} else {
-		e = build_nonce(st, qke, st->st_import);
+		e = request_nonce("quick_outI1 KE", st, NULL,
+				  st->st_import,
+				  quick_outI1_continue);
 	}
 
 	reset_globals();
@@ -1479,34 +1479,27 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b)
 
 		passert(st->st_connection != NULL);
 
-		{
-			struct pluto_crypto_req_cont *qke = new_pcrc(
-				quick_inI1_outR1_cryptocontinue1,
-				"quick_outI1 KE",
-				st, md);
-			stf_status e;
-			enum crypto_importance ci;
+		/*
+		 * ??? this code did NOT have a set_suspended(st, md).
+		 * Now that is perfomed by new_pcrc.  Correct?
+		 */
+		/* ??? can ci calc be absorbed into build*nonce? */
+		enum crypto_importance ci = pcim_ongoing_crypto;
+		if (ci < st->st_import)
+			ci = st->st_import;
 
-			/*
-			 * ??? this code did NOT have a set_suspended(st, md).
-			 * Now that is perfomed by new_pcrc.  Correct?
-			 */
-			/* ??? can ci calc be absorbed into build*nonce? */
-			ci = pcim_ongoing_crypto;
-			if (ci < st->st_import)
-				ci = st->st_import;
-
-			if (st->st_pfs_group != NULL) {
-				e = build_ke_and_nonce(st, qke,
-						       st->st_pfs_group, ci);
-			} else {
-				e = build_nonce(st, qke, ci);
-			}
-
-			passert(st->st_connection != NULL);
-
-			return e;
+		stf_status e;
+		if (st->st_pfs_group != NULL) {
+			e = request_ke_and_nonce("quick_outI1 KE", st, md,
+						 st->st_pfs_group, ci,
+						 quick_inI1_outR1_cryptocontinue1);
+		} else {
+			e = request_nonce("quick_outI1 KE", st, md, ci,
+					  quick_inI1_outR1_cryptocontinue1);
 		}
+
+		passert(st->st_connection != NULL);
+		return e;
 	}
 }
 

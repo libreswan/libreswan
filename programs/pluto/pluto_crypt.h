@@ -348,14 +348,16 @@ extern void log_crypto_workers(void);
  * KE/NONCE
  */
 
-extern stf_status build_ke_and_nonce(struct state *st,
-				     struct pluto_crypto_req_cont *cn,
-				     const struct oakley_group_desc *group,
-				     enum crypto_importance importance);
+extern stf_status request_ke_and_nonce(const char *name,
+				       struct state *st, struct msg_digest *md,
+				       const struct oakley_group_desc *group,
+				       enum crypto_importance importance,
+				       crypto_req_cont_func *callback);
 
-extern stf_status build_nonce(struct state *st,
-			      struct pluto_crypto_req_cont *cn,
-			      enum crypto_importance importance);
+extern stf_status request_nonce(const char *name,
+				struct state *st, struct msg_digest *md,
+				enum crypto_importance importance,
+				crypto_req_cont_func *callback);
 
 extern void calc_ke(struct pcr_kenonce *kn);
 
