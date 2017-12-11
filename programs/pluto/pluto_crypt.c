@@ -251,6 +251,16 @@ struct pcr_skeyid_q *pcr_dh_init(struct pluto_crypto_req_cont *cn,
 	return dhq;
 }
 
+struct pcr_dh_v2 *pcr_dh_v2_init(struct pluto_crypto_req_cont *cn,
+				 enum crypto_importance pcr_pcim)
+{
+	struct pluto_crypto_req *r = &cn->pcrc_pcr;
+	pcr_init(r, pcr_compute_dh_v2, pcr_pcim);
+	struct pcr_dh_v2 *dhq = &r->pcr_d.dh_v2;
+	INIT_WIRE_ARENA(*dhq);
+	return dhq;
+}
+
 /*
  * If there are any helper threads, this code is always executed IN A HELPER
  * THREAD. Otherwise it is executed in the main (only) thread.

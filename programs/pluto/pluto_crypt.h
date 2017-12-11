@@ -203,7 +203,29 @@ struct pcr_skeyid_r {
 };
 
 /* response */
-struct pcr_skeycalc_v2_r {
+struct pcr_dh_v2 {
+	/* incoming */
+	DECLARE_WIRE_ARENA(DHCALC_SIZE);
+
+	const struct oakley_group_desc *dh;
+	const struct integ_desc *integ;
+	const struct prf_desc *prf;
+	const struct encrypt_desc *encrypt;
+	enum original_role role;
+	size_t key_size; /* of encryptor, in bytes */
+	size_t salt_size; /* of IV salt, in bytes */
+	wire_chunk_t gi;
+	wire_chunk_t gr;
+	wire_chunk_t ni;
+	wire_chunk_t nr;
+	wire_chunk_t icookie;
+	wire_chunk_t rcookie;
+	SECKEYPrivateKey *secret;
+	SECKEYPublicKey *pubk;
+	PK11SymKey *skey_d_old;
+	const struct prf_desc *old_prf;
+
+	/* outgoing */
 	PK11SymKey *shared;
 	PK11SymKey *skeyid_d;
 	PK11SymKey *skeyid_ai;
@@ -224,11 +246,11 @@ struct pluto_crypto_req {
 	enum crypto_importance pcr_pcim;
 
 	union {
-		struct pcr_kenonce kn;	/* query and result */
+		struct pcr_kenonce kn;		/* query and result */
+		struct pcr_dh_v2 dh_v2;		/* query and response v2 */
 
 		struct pcr_skeyid_q dhq;	/* query v1 and v2 */
 		struct pcr_skeyid_r dhr;	/* response v1 */
-		struct pcr_skeycalc_v2_r dhv2;	/* response v2 */
 	} pcr_d;
 };
 
@@ -417,6 +439,9 @@ void pcr_kenonce_init(struct pluto_crypto_req_cont *cn,
 
 struct pcr_skeyid_q *pcr_dh_init(struct pluto_crypto_req_cont *cn,
 				 enum pluto_crypto_requests pcr_type,
+				 enum crypto_importance pcr_pcim);
+
+struct pcr_dh_v2 *pcr_dh_v2_init(struct pluto_crypto_req_cont *cn,
 				 enum crypto_importance pcr_pcim);
 
 #endif /* _PLUTO_CRYPT_H */

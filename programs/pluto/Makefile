@@ -221,6 +221,7 @@ OBJS += kernel.o
 OBJS += kernel_nokernel.o rcv_whack.o pluto_stats.o
 OBJS += demux.o msgdigest.o keys.o
 OBJS += pluto_crypt.o crypt_utils.o crypt_ke.o crypt_dh.o crypt_start_dh.o
+OBJS += crypt_dh_v2.o
 OBJS += rnd.o spdb.o spdb_struct.o
 OBJS += vendor.o nat_traversal.o virtual.o
 OBJS += packet.o pluto_constants.o readwhackmsg.o
