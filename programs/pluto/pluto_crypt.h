@@ -369,10 +369,6 @@ extern void cancelled_ke_and_nonce(struct pcr_kenonce *kn);
  * DH
  */
 
-extern stf_status build_child_dh_v2(struct pluto_crypto_req_cont *cn,
-		const struct oakley_group_desc *group,
-		enum crypto_importance importance);
-
 extern void compute_dh_shared(struct state *st, const chunk_t g,
 			      const struct oakley_group_desc *group);
 
