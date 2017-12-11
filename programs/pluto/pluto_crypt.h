@@ -423,6 +423,12 @@ extern stf_status start_child_dh_v2(struct msg_digest *md,
 extern bool finish_dh_v2(struct state *st,
 			 struct pluto_crypto_req *r, bool only_shared);
 
+extern void cancelled_dh_v2(struct pcr_dh_v2 *dh);
+
+/*
+ * KE and NONCE
+ */
+
 extern void unpack_KE_from_helper(struct state *st,
 				  struct pluto_crypto_req *r,
 				  chunk_t *g);

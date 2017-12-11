@@ -197,9 +197,11 @@ static void pcrc_release_request(struct pluto_crypto_req_cont *cn)
 	case pcr_build_nonce:
 		cancelled_ke_and_nonce(&r->pcr_d.kn);
 		break;
+	case pcr_compute_dh_v2:
+		cancelled_dh_v2(&r->pcr_d.dh_v2);
+		break;
 	case pcr_compute_dh_iv:
 	case pcr_compute_dh:
-	case pcr_compute_dh_v2:
 		/*
 		 * XXX: everything needs to be freed!
 		 */
@@ -218,9 +220,11 @@ static void pcr_release_crypto_response(struct pluto_crypto_req *r)
 	case pcr_build_nonce:
 		cancelled_ke_and_nonce(&r->pcr_d.kn);
 		break;
+	case pcr_compute_dh_v2:
+		cancelled_dh_v2(&r->pcr_d.dh_v2);
+		break;
 	case pcr_compute_dh_iv:
 	case pcr_compute_dh:
-	case pcr_compute_dh_v2:
 		/*
 		 * XXX: everything needs to be freed!
 		 */

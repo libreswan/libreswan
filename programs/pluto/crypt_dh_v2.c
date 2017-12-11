@@ -37,6 +37,10 @@
 #include <sys/types.h>
 #include <signal.h>
 
+#include <nss.h>
+#include <pk11pub.h>
+#include <keyhi.h>
+
 #include <libreswan.h>
 
 #include "sysdep.h"
@@ -55,6 +59,29 @@
 #include "keys.h"
 #include "crypt_symkey.h" /* to get free_any_symkey */
 #include "crypt_dh.h"
+
+void cancelled_dh_v2(struct pcr_dh_v2 *dh)
+{
+	/* incoming */
+
+	free_dh_secret(&dh->secret); /* must own */
+	release_symkey("cancelled IKEv2 DH", "skey_d_old", &dh->skey_d_old);
+
+	/* outgoing */
+	release_symkey("cancelled IKEv2 DH", "shared", &dh->shared);
+	release_symkey("cancelled IKEv2 DH", "skeyid_d", &dh->skeyid_d);
+	release_symkey("cancelled IKEv2 DH", "skeyid_ai", &dh->skeyid_ai);
+	release_symkey("cancelled IKEv2 DH", "skeyid_ar", &dh->skeyid_ar);
+	release_symkey("cancelled IKEv2 DH", "skeyid_ei", &dh->skeyid_ei);
+	release_symkey("cancelled IKEv2 DH", "skeyid_er", &dh->skeyid_er);
+	release_symkey("cancelled IKEv2 DH", "skeyid_pi", &dh->skeyid_pi);
+	release_symkey("cancelled IKEv2 DH", "skeyid_pr", &dh->skeyid_pr);
+
+	freeanychunk(dh->skey_initiator_salt);
+	freeanychunk(dh->skey_responder_salt);
+	freeanychunk(dh->skey_chunk_SK_pi);
+	freeanychunk(dh->skey_chunk_SK_pr);
+}
 
 /*
  * invoke helper to do DH work.
@@ -125,30 +152,24 @@ bool finish_dh_v2(struct state *st,
 
 	transfer_dh_secret_to_state("IKEv2 DH", &dhv2->secret, st);
 
-	if (only_shared) {
-		release_symkey(__func__, "st_shared_nss", &st->st_shared_nss);
-	}
-
+	release_symkey(__func__, "st_shared_nss", &st->st_shared_nss);
 	st->st_shared_nss = dhv2->shared;
 
 	if (only_shared) {
-/* work around const dhv2 from wire. */
-#define free_any_const_nss_symkey(p) {PK11SymKey *key = (p); \
-	release_symkey(__func__, #p, &key); \
-}
-		free_any_const_nss_symkey(dhv2->skeyid_d);
-		free_any_const_nss_symkey(dhv2->skeyid_ai);
-		free_any_const_nss_symkey(dhv2->skeyid_ar);
-		free_any_const_nss_symkey(dhv2->skeyid_pi);
-		free_any_const_nss_symkey(dhv2->skeyid_pr);
-		free_any_const_nss_symkey(dhv2->skeyid_ei);
-		free_any_const_nss_symkey(dhv2->skeyid_er);
-#undef free_any_const_nss_symkey
+#define free_any_symkey(p) release_symkey(__func__, #p, &p)
+		free_any_symkey(dhv2->skeyid_d);
+		free_any_symkey(dhv2->skeyid_ai);
+		free_any_symkey(dhv2->skeyid_ar);
+		free_any_symkey(dhv2->skeyid_pi);
+		free_any_symkey(dhv2->skeyid_pr);
+		free_any_symkey(dhv2->skeyid_ei);
+		free_any_symkey(dhv2->skeyid_er);
+#undef free_any_symkey
 
-		pfreeany(dhv2->skey_initiator_salt.ptr);
-		pfreeany(dhv2->skey_responder_salt.ptr);
-		pfreeany(dhv2->skey_chunk_SK_pi.ptr);
-		pfreeany(dhv2->skey_chunk_SK_pr.ptr);
+		freeanychunk(dhv2->skey_initiator_salt);
+		freeanychunk(dhv2->skey_responder_salt);
+		freeanychunk(dhv2->skey_chunk_SK_pi);
+		freeanychunk(dhv2->skey_chunk_SK_pr);
 
 	} else {
 		st->st_skey_d_nss = dhv2->skeyid_d;
