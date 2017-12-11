@@ -16,6 +16,7 @@ v3.23 (unrelased)
 * XFRM: Fix unique marks accidentally setting -1 instead of random [Paul]
 * XFRM: Only install IPv6 holes when system has configured IPv6 [Antony]
 * XFRM: Add support for decap-dscp=yes [Paul]
+* KLIPS: Support kernels 4.14+ with renamed dev->priv_destructor [Paul]
 * IKEv1: better handle ESP with no integrity vs unknown integrity [Andrew]
 * IKEv1: Fix packet retransmit code wrf timeouts vs duplucates [Andrew]
 * IKEv1: Prevent duplicate responder states on retransmision [Andrew]
