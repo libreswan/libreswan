@@ -68,9 +68,9 @@ date_format() {
 
     # Create the message, github seems to strip trailing new lines.
 
-    git show --no-patch --format=%B ${gitrev} \
-	| jq -s --raw-input \
-	     '{ message: sub("\n\n$";""), }'
+    #    git show --no-patch --format=%B ${gitrev} \
+    #	| jq -s --raw-input \
+    #	     '{ message: sub("\n\n$";""), }'
 
     # Add an "interesting" commit attribute.  Only "interesting"
     # commits get tested.
