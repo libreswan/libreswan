@@ -371,10 +371,12 @@ static void set_whack_end(char *lr,
 		w->host_vtiip = l->vti_ip;
 
 	w->has_client = l->has_client;
-	if (l->has_client)
+	if (l->has_client) {
 		w->client = l->subnet;
-	else
+	} else {
+		/* ??? is this a crude way of seting client to anyaddr? */
 		w->client.addr.u.v4.sin_family = l->addr_family;
+	}
 	w->updown = l->strings[KSCF_UPDOWN];
 	w->host_port = IKE_UDP_PORT; /* XXX starter should support (nat)-ike-port */
 	w->has_client_wildcard = l->has_client_wildcard;

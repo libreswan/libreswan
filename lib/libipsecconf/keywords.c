@@ -602,6 +602,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
 #ifdef USE_NIC_OFFLOAD
   { "nic-offload",  kv_conn,  kt_enum,  KBF_NIC_OFFLOAD,  &kw_nic_offload_list, NULL, },
 #endif
+
   { "encapsulation",  kv_conn,  kt_enum,  KBF_ENCAPS,  &kw_encaps_list, NULL, },
   { "forceencaps",  kv_conn, kt_obsolete, KBF_WARNIGNORE, NULL, NULL, },
 

@@ -89,7 +89,7 @@ struct traffic_selector ikev2_end_to_ts(const struct end *e)
 	/* subnet => range */
 	ts.net.start = e->client.addr;
 	ts.net.end = e->client.addr;
-	switch (e->client.addr.u.v4.sin_family) {
+	switch (addrtypeof(&e->client.addr)) {
 	case AF_INET:
 	{
 		struct in_addr v4mask = bitstomask(e->client.maskbits);
@@ -251,18 +251,18 @@ stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 /* return number of traffic selectors found; -1 for error */
 int ikev2_parse_ts(struct payload_digest *const ts_pd,
 		   struct traffic_selector *array,
-		   unsigned int array_max)
+		   unsigned int array_roof)
 {
 	unsigned int i;
+
+	if (ts_pd->payload.v2ts.isat_num >= array_roof)
+		return -1;	/* won't fit in array */
 
 	for (i = 0; i < ts_pd->payload.v2ts.isat_num; i++) {
 		pb_stream addr;
 		struct ikev2_ts1 ts1;
 
 		if (!in_struct(&ts1, &ikev2_ts1_desc, &ts_pd->pbs, &addr))
-			return -1;
-
-		if (i >= array_max)
 			return -1;
 
 		zero(&array[i]);	/* OK: no pointer fields */

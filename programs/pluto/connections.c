@@ -985,7 +985,7 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 
 		switch (dst->host_type) {
 		case KH_IPHOSTNAME:
-			er = ttoaddr(dst->host_addr_name, 0, dst->host_addr.u.v4.sin_family,
+			er = ttoaddr(dst->host_addr_name, 0, addrtypeof(&dst->host_addr),
 				&dst->host_addr);
 
 			/* The above call wipes out the port, put it again */

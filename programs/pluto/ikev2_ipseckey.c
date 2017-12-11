@@ -260,7 +260,7 @@ static void validate_address(struct p_dns_req *dnsr, unsigned char *addr)
 	ip_address ipaddr;
 	ipstr_buf ra;
 	ipstr_buf rb;
-	unsigned short af = st->st_remoteaddr.u.v4.sin_family;
+	unsigned short af = addrtypeof(&st->st_remoteaddr);
 	size_t addr_len = af == AF_INET ? 4 : 16;
 
 	if (dnsr->qtype != LDNS_RR_TYPE_A) {

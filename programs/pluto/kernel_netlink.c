@@ -96,20 +96,6 @@
 static int netlinkfd = NULL_FD;
 static int netlink_bcast_fd = NULL_FD;
 
-#ifdef USE_NIC_OFFLOAD
-enum nic_offload_state {
-	NIC_OFFLOAD_UNKNOWN = 0,
-	NIC_OFFLOAD_UNSUPPORTED,
-	NIC_OFFLOAD_SUPPORTED,
-};
-
-static struct {
-	unsigned int bit;
-	unsigned int total_blocks;
-	enum nic_offload_state state;
-} netlink_esp_hw_offload;
-#endif
-
 #define NE(x) { x, #x }	/* Name Entry -- shorthand for sparse_names */
 
 static sparse_names xfrm_type_names = {
@@ -657,7 +643,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
 
-	const int family = that_client->addr.u.v4.sin_family;
+	const int family = addrtypeof(&that_client->addr);
 	const int shift = (family == AF_INET) ? 5 : 7;
 
 	req.u.p.sel.sport = portof(&this_client->addr);
@@ -769,7 +755,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 				proto_info[i].proto == IPPROTO_COMP &&
 				dir != XFRM_POLICY_OUT;
 			tmpl[i].aalgos = tmpl[i].ealgos = tmpl[i].calgos = ~0;
-			tmpl[i].family = that_host->u.v4.sin_family;
+			tmpl[i].family = addrtypeof(that_host);
 			tmpl[i].mode =
 				proto_info[i].encapsulation ==
 				ENCAPSULATION_MODE_TUNNEL;
@@ -862,6 +848,19 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 }
 
 #ifdef USE_NIC_OFFLOAD
+
+enum nic_offload_state {
+	NIC_OFFLOAD_UNKNOWN,
+	NIC_OFFLOAD_UNSUPPORTED,
+	NIC_OFFLOAD_SUPPORTED
+};
+
+static struct {
+	unsigned int bit;
+	unsigned int total_blocks;
+	enum nic_offload_state state;
+} netlink_esp_hw_offload;
+
 static void netlink_find_offload_feature(const char *ifname)
 {
 	struct ethtool_sset_info *sset_info = NULL;
@@ -956,6 +955,7 @@ out:
 	pfree(cmd);
 	return ret;
 }
+
 #endif /* USE_NIC_OFFLOAD */
 
 /*
@@ -984,7 +984,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 
 	req.p.id.spi = sa->spi;
 	req.p.id.proto = esatype2proto(sa->esatype);
-	req.p.family = sa->src->u.v4.sin_family;
+	req.p.family = addrtypeof(sa->src);
 	/*
 	 * This requires ipv6 modules. It is required to support 6in4 and 4in6
 	 * tunnels in linux 2.6.25+
@@ -1067,7 +1067,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		req.p.sel.prefixlen_s = src->maskbits;
 		req.p.sel.prefixlen_d = dst->maskbits;
 		req.p.sel.proto = sa->transport_proto;
-		req.p.sel.family = src->addr.u.v4.sin_family;
+		req.p.sel.family = addrtypeof(&src->addr);
 	}
 
 	req.p.reqid = sa->reqid;
@@ -1096,7 +1096,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	 * To avoid breaking backward compatibility, we use a new flag
 	 * (XFRM_STATE_ALIGN4) do change original behavior.
 	*/
-	if (sa->esatype == ET_AH && sa->src->u.v4.sin_family == AF_INET) {
+	if (sa->esatype == ET_AH && addrtypeof(sa->src) == AF_INET) {
 		DBG(DBG_KERNEL, DBG_log("netlink: aligning IPv4 AH to 32bits as per RFC-4302, Section 3.3.3.2.1"));
 		req.p.flags |= XFRM_STATE_ALIGN4;
 	}
@@ -1281,12 +1281,11 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 
 #ifdef USE_NIC_OFFLOAD
 	if (sa->nic_offload_dev) {
-		struct xfrm_user_offload xuo = { 0, 0 };
-
-		xuo.flags |= sa->inbound ? XFRM_OFFLOAD_INBOUND : 0;
-		if (sa->src->u.v4.sin_family == AF_INET6)
-			xuo.flags |= XFRM_OFFLOAD_IPV6;
-		xuo.ifindex = if_nametoindex(sa->nic_offload_dev);
+		struct xfrm_user_offload xuo = {
+			.flags = (sa->inbound ? XFRM_OFFLOAD_INBOUND : 0) |
+				(addrtypeof(sa->src) == AF_INET6 ? XFRM_OFFLOAD_IPV6 : 0),
+			.ifindex = if_nametoindex(sa->nic_offload_dev),
+		};
 
 		attr->rta_type = XFRMA_OFFLOAD_DEV;
 		attr->rta_len = RTA_LENGTH(sizeof(xuo));
@@ -1352,7 +1351,7 @@ static bool netlink_del_sa(const struct kernel_sa *sa)
 	ip2xfrm(sa->dst, &req.id.daddr);
 
 	req.id.spi = sa->spi;
-	req.id.family = sa->src->u.v4.sin_family;
+	req.id.family = addrtypeof(sa->src);
 	req.id.proto = sa->proto;
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
@@ -1752,7 +1751,7 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 	req.spi.info.mode = tunnel_mode;
 	req.spi.info.reqid = reqid;
 	req.spi.info.id.proto = proto;
-	req.spi.info.family = src->u.v4.sin_family;
+	req.spi.info.family = addrtypeof(src);
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.spi)));
 
@@ -2307,7 +2306,7 @@ static bool netlink_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
 	ip2xfrm(sa->dst, &req.id.daddr);
 
 	req.id.spi = sa->spi;
-	req.id.family = sa->src->u.v4.sin_family;
+	req.id.family = addrtypeof(sa->src);
 	req.id.proto = sa->proto;
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));

@@ -168,7 +168,7 @@ enum {
  */
 
 /* first, some quick fakes in case we're on an old system with no IPv6 */
-#if !defined(s6_addr16) && defined(__CYGWIN32__)
+#if defined(__CYGWIN32__) && !defined(s6_addr16)
 extern struct in6_addr {
 	union {
 		u_int8_t u6_addr8[16];

@@ -1718,11 +1718,9 @@ static bool del_spi(ipsec_spi_t spi, int proto,
 static void setup_esp_nic_offload(struct kernel_sa *sa, struct connection *c,
 		bool *nic_offload_fallback)
 {
-	if (c->nic_offload == nic_offload_no)
-		return;
-
-	if (c->interface == NULL || c->interface->ip_dev == NULL ||
-		c->interface->ip_dev->id_rname == NULL)
+	if (c->nic_offload == nic_offload_no ||
+	    c->interface == NULL || c->interface->ip_dev == NULL ||
+	    c->interface->ip_dev->id_rname == NULL)
 		return;
 
 	if (c->nic_offload == nic_offload_auto) {
@@ -1753,7 +1751,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	bool incoming_ref_set = FALSE;
 	IPsecSAref_t refhim = st->st_refhim;
 	IPsecSAref_t new_refhim = IPSEC_SAREF_NULL;
-	bool ret;
 #ifdef USE_NIC_OFFLOAD
 	bool nic_offload_fallback = FALSE;
 #endif
@@ -2164,16 +2161,15 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			useful_mastno != -1)
 			said_next->outif = MASTTRANSPORT_OFFSET +
 				useful_mastno;
-
 #endif
 		said_next->text_said = text_esp;
 
 		DBG(DBG_PRIVATE, {
-				DBG_dump("ESP enckey:",  said_next->enckey,
-					said_next->enckeylen);
-				DBG_dump("ESP authkey:", said_next->authkey,
-					said_next->authkeylen);
-			});
+			DBG_dump("ESP enckey:",  said_next->enckey,
+				said_next->enckeylen);
+			DBG_dump("ESP authkey:", said_next->authkey,
+				said_next->authkeylen);
+		});
 
 		if (inbound) {
 			/*
@@ -2190,7 +2186,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		setup_esp_nic_offload(said_next, c, &nic_offload_fallback);
 #endif
 
-		ret = kernel_ops->add_sa(said_next, replace);
+		bool ret = kernel_ops->add_sa(said_next, replace);
 
 #ifdef USE_NIC_OFFLOAD
 		if (!ret && nic_offload_fallback &&
@@ -2200,15 +2196,12 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			ret = kernel_ops->add_sa(said_next, replace);
 		}
 #endif
-		if (!ret) {
-			/* scrub keys from memory */
-			memset(said_next->enckey, 0, said_next->enckeylen);
-			memset(said_next->authkey, 0, said_next->authkeylen);
-			goto fail;
-		}
 		/* scrub keys from memory */
 		memset(said_next->enckey, 0, said_next->enckeylen);
 		memset(said_next->authkey, 0, said_next->authkeylen);
+
+		if (!ret)
+			goto fail;
 
 		/*
 		 * SA refs will have been allocated for this SA.

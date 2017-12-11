@@ -207,7 +207,7 @@ extern stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 
 extern int ikev2_parse_ts(struct payload_digest *ts_pd,
 			  struct traffic_selector *array,
-			  unsigned int array_max);
+			  unsigned int array_roof);
 
 extern int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
 						  const struct spd_route *sr,
