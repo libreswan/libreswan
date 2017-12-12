@@ -388,7 +388,7 @@ extern void calc_nonce(struct pcr_kenonce *kn);
 extern void cancelled_ke_and_nonce(struct pcr_kenonce *kn);
 
 /*
- * DH
+ * IKEv1 DH
  */
 
 extern void compute_dh_shared(struct state *st, const chunk_t g,
@@ -411,6 +411,12 @@ extern stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 
 extern void finish_dh_secret(struct state *st,
 			     struct pluto_crypto_req *r);
+
+void calc_dh(struct pluto_crypto_req *r);
+
+/*
+ * IKEv2 DH
+ */
 
 extern stf_status start_dh_v2(struct msg_digest *md,
 			      const char *name,

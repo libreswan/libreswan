@@ -85,33 +85,3 @@ PK11SymKey *calc_dh_shared(const chunk_t g,	/* converted to SECItem */
 	DBG(DBG_CRYPT, DBG_symkey("dh-shared ", "g^ir", dhshared));
 	return dhshared;
 }
-
-/* NOTE: if NSS refuses to calculate DH, skr->shared == NULL */
-/* MUST BE THREAD-SAFE */
-void calc_dh(struct pluto_crypto_req *r)
-{
-	/* copy the request, since the reply will re-use the memory of the r->pcr_d.dhq */
-	struct pcr_skeyid_q dhq;
-	memcpy(&dhq, &r->pcr_d.dhq, sizeof(r->pcr_d.dhq));
-
-	/* clear out the reply */
-	struct pcr_skeyid_r *skr = &r->pcr_d.dhr;
-	zero(skr);	/* ??? pointer fields might not be NULLed */
-	INIT_WIRE_ARENA(*skr);
-
-	const struct oakley_group_desc *group = dhq.oakley_group;
-	passert(group != NULL);
-
-	SECKEYPrivateKey *ltsecret = dhq.secret;
-	SECKEYPublicKey *pubk = dhq.pubk;
-
-	/* now calculate the (g^x)(g^y) */
-
-	chunk_t g;
-
-	setchunk_from_wire(g, &dhq, dhq.role == ORIGINAL_RESPONDER ? &dhq.gi : &dhq.gr);
-
-	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
-
-	skr->shared = calc_dh_shared(g, ltsecret, group, pubk);
-}
