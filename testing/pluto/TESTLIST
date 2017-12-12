@@ -466,6 +466,7 @@ kvmplutotest	ikev2-child-ipsec-pfs	good
 kvmplutotest	ikev2-child-ipsec-pfs-nhelpers-0 good
 kvmplutotest	ikev2-child-ipsec-replace-ike	good
 kvmplutotest	ikev2-child-ipsec-responder	good
+kvmplutotest	ikev2-child-ipsec-timer		wip
 kvmplutotest	ikev2-56-restart		skiptest
 kvmplutotest	ikev2-child-restart-mismatch 	wip
 
