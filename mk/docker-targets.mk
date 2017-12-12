@@ -20,13 +20,13 @@ DISTRO_REL ?= 27 	# default release
 DI_T ?= swanbase 	#docker image tag
 
 # for travis
-#ifeq ($(DISTRO), travis)
-#	BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
-#	DISTRO =  $(call W2, $(BRANCH), '')
-#	DISTRO_REL = $(call W3, $(BRANCH), '')
-#else
-#	BRANCH =
-#endif
+TRAVIS=$(call W1, $(FIRST_TARGET))
+ifeq ($(TRAVIS), travis)
+	BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
+	DISTRO =  $(call W2, $(BRANCH), '')
+	DISTRO_REL = $(call W3, $(BRANCH), '')
+	$(call DISTRO=$(DISTRO) DISTRO_REL=$(DISTRO_REL) docker-image)
+endif
 
 # end of configurable variables 
 
@@ -36,14 +36,26 @@ DOCKER_PACKAGES = $(DI)-packages
 DOCKER_SSH = $(DI)-ssh
 DOCKER_START = $(DI)-start
 DOCKERFILE ?= $(D)/dockerfile
+DOCKERFILE_PKG = $(D)/Dockerfile-$(DISTRO)-min-packages
+
+ifeq ($(DISTRO), ubuntu)
+		DOCKERFILE_PKG=$(D)/Dockerfile-debian-min-packages
+endif
+
+.PHONY: dcokerfile-debian-cmd
+dcokerfile-debian-min:
+	$call(sed -i   's#CMD.*#CMD ["/lib/systemd/systemd"]#' testing/docker/dockerfile)
+
+dcokerfile-ubuntu-min:
+	$call(sed -i   's#CMD.*#CMD ["/sbin/init"]#' testing/docker/dockerfile)
 
 .PHONY: dcokerfile
-dockerfile: DOCKERFILE_PKG = $(D)/Dockerfile-$(DISTRO)-min-packages
 dockerfile: $(DOCKERFILE_BASE) $(DOCKERFILE_PKG)
 	echo "FROM $(DISTRO):$(DISTRO_REL) " >  $(DOCKERFILE)
-	echo "ENV container docker\n"  >> $(DOCKERFILE)
+	echo "ENV container docker"  >> $(DOCKERFILE)
 	echo 'MAINTAINER "Antony Antony" <antony@phenome.org>' >> $(DOCKERFILE)
 	cat $(DOCKERFILE_BASE)  $(DOCKERFILE_PKG) >> $(DOCKERFILE)
+	$(call make dockerfile-$(DISTRO)-cmd)
 
 .PHONY docker-image:
 docker-image: $(DI)

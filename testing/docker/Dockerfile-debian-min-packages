@@ -1,9 +1,9 @@
-FROM BASE_IMAGE
-ENV container docker
-MAINTAINER "Antony Antony" <antony@phenome.org>
+# FROM BASE_IMAGE
+# ENV container docker
+# MAINTAINER "Antony Antony" <antony@phenome.org>
 # Don't start any optional services except for the few we need.
 RUN apt-get update
-RUN apt-get -y install systemd
+RUN apt-get -y install systemd apt-utils
 RUN find /etc/systemd/system \
          /lib/systemd/system \
          -path '*.wants/*' \
