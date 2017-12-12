@@ -19,14 +19,12 @@ DISTRO_REL ?= 27 	# default release
 
 DI_T ?= swanbase 	#docker image tag
 
-# for travis
-TRAVIS=$(call W1, $(FIRST_TARGET))
-ifeq ($(TRAVIS), travis)
-	BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
-	DISTRO =  $(call W2, $(BRANCH), '')
-	DISTRO_REL = $(call W3, $(BRANCH), '')
-	$(call DISTRO=$(DISTRO) DISTRO_REL=$(DISTRO_REL) docker-image)
-endif
+.PHONY: travis-docker-image
+travis-docker-image: BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
+travis-docker-image: DISTRO =  $(call W2, $(BRANCH),fedora)
+travis-docker-image: DISTRO_REL = $(call W3, $(BRANCH),27)
+travis-docker-image:
+	$(MAKE) DISTRO=$(DISTRO) DISTRO_REL=$(DISTRO_REL) docker-image
 
 # end of configurable variables 
 
@@ -37,32 +35,32 @@ DOCKER_SSH = $(DI)-ssh
 DOCKER_START = $(DI)-start
 DOCKERFILE ?= $(D)/dockerfile
 DOCKERFILE_PKG = $(D)/Dockerfile-$(DISTRO)-min-packages
+CMD_CHANGE=
 
 ifeq ($(DISTRO), ubuntu)
-		DOCKERFILE_PKG=$(D)/Dockerfile-debian-min-packages
+	DOCKERFILE_PKG=$(D)/Dockerfile-debian-min-packages
+	CMD_CHANGE = dcokerfile-ubuntu-cmd
+endif
+
+ifeq ($(DISTRO), debian)
+	DOCKERFILE_PKG=$(D)/Dockerfile-debian-min-packages
+	CMD_CHANGE = dcokerfile-debian-cmd
 endif
 
 .PHONY: dcokerfile-debian-cmd
 dcokerfile-debian-min:
-	$call(sed -i   's#CMD.*#CMD ["/lib/systemd/systemd"]#' testing/docker/dockerfile)
+	$(shell sed -i 's#CMD.*#CMD ["/lib/systemd/systemd"]#' testing/docker/dockerfile)
 
-dcokerfile-ubuntu-min:
-	$call(sed -i   's#CMD.*#CMD ["/sbin/init"]#' testing/docker/dockerfile)
+.PHONY: dcokerfile-ubuntu-cmd
+dcokerfile-ubuntu-cmd:
+	$(shell sed -i 's#CMD.*#CMD ["/sbin/init"]#' testing/docker/dockerfile)
 
 .PHONY: dcokerfile
-dockerfile: $(DOCKERFILE_BASE) $(DOCKERFILE_PKG)
-	echo "FROM $(DISTRO):$(DISTRO_REL) " >  $(DOCKERFILE)
-	echo "ENV container docker"  >> $(DOCKERFILE)
+dockerfile: $(DOCKERFILE_PKG)
+	echo "FROM $(DISTRO):$(DISTRO_REL)" > $(DOCKERFILE)
+	echo "ENV container docker" >> $(DOCKERFILE)
 	echo 'MAINTAINER "Antony Antony" <antony@phenome.org>' >> $(DOCKERFILE)
-	cat $(DOCKERFILE_BASE)  $(DOCKERFILE_PKG) >> $(DOCKERFILE)
-	$(call make dockerfile-$(DISTRO)-cmd)
-
-.PHONY docker-image:
-docker-image: $(DI)
-
-.PHONY travis-docker-image:
-travis-image:
-	$(MAKE) $(BRANCH)
+	cat $(DOCKERFILE_PKG) >> $(DOCKERFILE)
 
 .PHONY: travis-ubuntu-xenial
 travis-ubuntu-xenial: ubuntu-xenial-packages
@@ -71,17 +69,22 @@ travis-ubuntu-xenial: ubuntu-xenial-packages
 	-v /sys/fs/cgroup:/sys/fs/cgroup:ro -d ubuntu-xenial-packages
 	$(DOCKER_CMD) ps -a
 
-$(DOCKER_SSH): DOCKERFILE_SSH = $(D)/Dockerfile-swan-ssh
-$(DOCKER_SSH): dcokerfile $(DOCKERFILE_SSH)
-	@echo "make $@" 
-	cat $(DOCKERFILE_SSH) >>  $(DOCKERFILE)
+.PHONY: docker-build
+docker-build: dcokerfile
 	$(DOCKER_CMD) build -t $(DI_T) -f $(DOCKERFILE) .
 
-.PHONY: $(DI)
-$(DI): dockerfile $(DOCKER_SSH)
-$(DI):
-	@echo "DISTRO $(DISTRO) $(DISTRO_REL)"
-	@echo "make $@"
+.PHONY: docker-ssh-image
+docker-ssh-image: DOCKERFILE_SSH = $(D)/Dockerfile-swan-ssh
+docker-ssh-image: dcokerfile $(CMD_CHANGE) docker-build
+	cat $(DOCKERFILE_SSH) >> $(DOCKERFILE)
+
+.PHONY: docker-min-image
+docker-min-image: dockerfile $(CMD_CHANGE) docker-build
+	echo "done docker image tag $(DI_T) from $(DISTRO)-$(DISTRO_REL)"
+
+.PHONY: docker-image
+docker-image: dockerfile docker-ssh-image docker-build
+	echo "done docker image tag $(DI_T) from $(DISTRO)-$(DISTRO_REL) with ssh"
 
 .PHONY: docker-start
 docker-start:
