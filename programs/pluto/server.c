@@ -200,7 +200,7 @@ enum seccomp_mode pluto_seccomp_mode = SECCOMP_DISABLED;
 #endif
 unsigned int pluto_max_halfopen = DEFAULT_MAXIMUM_HALFOPEN_IKE_SA;
 unsigned int pluto_ddos_threshold = DEFAULT_IKE_SA_DDOS_THRESHOLD;
-deltatime_t pluto_shunt_lifetime = { PLUTO_SHUNT_LIFE_DURATION_DEFAULT };
+deltatime_t pluto_shunt_lifetime = DELTATIME(PLUTO_SHUNT_LIFE_DURATION_DEFAULT);
 
 unsigned int pluto_sock_bufsize = IKE_BUF_AUTO; /* use system values */
 bool pluto_sock_errqueue = TRUE; /* Enable MSG_ERRQUEUE on IKE socket */
@@ -471,7 +471,6 @@ static struct pluto_event *free_event_entry(struct pluto_event **evp)
 			const char *en = enum_name(&timer_event_names, e->ev_type);
 			DBG_log("%s: release %s-pe@%p", __func__, en, e));
 
-	pfreeany(e->ev_name);
 	pfree(e);
 	*evp = NULL;
 	return next;
@@ -514,20 +513,96 @@ void delete_pluto_event(struct pluto_event **evp)
 }
 
 /*
- * a wrapper for libevent's event_new + event_add; any error is fatal
- * If you're looking for how to set up a timer look at pluto_event_add
+ * A wrapper for libevent's event_new + event_add; any error is fatal.
+ *
+ * When setting up an event, this must be called last.  Else the event
+ * can fire before setting it up has finished.
  */
-static struct event *pluto_event_wraper(evutil_socket_t fd, short events,
-				     event_callback_fn cb, void *arg,
-				     const struct timeval *t)
+
+static void fire_event_photon_torpedo(struct event **evp,
+				      evutil_socket_t fd, short events,
+				      event_callback_fn cb, void *arg,
+				      const deltatime_t *delay)
 {
 	struct event *ev = event_new(pluto_eb, fd, events, cb, arg);
-	int r;
-
 	passert(ev != NULL);
-	r = event_add(ev, t);
+	/*
+	 * EV must be saved in its final destination before the event
+	 * is enabled.
+	 *
+	 * Otherwise the event on the main thread will try to use the
+	 * saved EV before it has been saved by the helper thread.
+	 */
+	*evp = ev;
+
+	int r;
+	if (delay == NULL) {
+		r = event_add(ev, NULL);
+	} else {
+		struct timeval t = deltatimeval(*delay);
+		r = event_add(ev, &t);
+	}
 	passert(r >= 0);
-	return ev;
+}
+
+/*
+ * Schedule an event now.
+ *
+ * Unlike pluto_event_add(), it can't be canceled, can only run once,
+ * doesn't show up in the event list, and leaks when the event-loop
+ * aborts (like a few others).
+ *
+ * However, unlike pluto_event_add(), it works from any thread, and
+ * cleans up after the event has run.
+ */
+
+struct now_event {
+	void (*ne_cb)(void*);
+	void *ne_arg;
+	const char *ne_name;
+	struct event *ne_event;
+};
+
+static void schedule_event_now_cb(evutil_socket_t fd UNUSED,
+				  short events UNUSED,
+				  void *arg)
+{
+	struct now_event *ne = (struct now_event *)arg;
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("executing now-event %s", ne->ne_name));
+
+	/*
+	 * At one point, .ne_event was was being set after the event
+	 * was enabled.  With multiple threads this resulted in a race
+	 * where the event ran before .ne_event was set.  The
+	 * pexpect() followed by the passert() demonstrated this - the
+	 * pexpect() failed yet the passert() passed.
+	 */
+	pexpect(ne->ne_event != NULL);
+	ne->ne_cb(ne->ne_arg);
+	passert(ne->ne_event != NULL);
+
+	event_del(ne->ne_event);
+	pfree(ne);
+}
+
+void pluto_event_now(const char *name, void (*cb)(void*), void*arg)
+{
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("scheduling now-event %s", name));
+	struct now_event *ne = alloc_thing(struct now_event, name);
+	ne->ne_cb = cb;
+	ne->ne_arg = arg;
+	ne->ne_name = name;
+	static const deltatime_t no_delay = DELTATIME(0);
+	/*
+	 * Everything set up; arm and fire torpedo.  Event may have
+	 * even run before the below function returns.
+	 */
+	fire_event_photon_torpedo(&ne->ne_event,
+				  NULL_FD, EV_TIMEOUT,
+				  schedule_event_now_cb, ne,
+				  &no_delay);
 }
 
 /*
@@ -535,26 +610,27 @@ static struct event *pluto_event_wraper(evutil_socket_t fd, short events,
  * looking for how to set up a timer, then don't look here and don't
  * look at timer.c.  Why?
  */
-struct event *timer_private_pluto_event_new(evutil_socket_t fd, short events,
-					    event_callback_fn cb, void *arg,
-					    const struct timeval *t)
+void timer_private_pluto_event_new(struct event **evp,
+				   evutil_socket_t fd, short events,
+				   event_callback_fn cb, void *arg,
+				   deltatime_t delay)
 {
-	return pluto_event_wraper(fd, events, cb, arg, t);
+	fire_event_photon_torpedo(evp, fd, events, cb, arg, &delay);
 }
 
-
 struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
-		event_callback_fn cb, void *arg, const struct timeval *delay,
-		char *name) {
+				    event_callback_fn cb, void *arg,
+				    const deltatime_t *delay,
+				    const char *name)
+{
 	struct pluto_event *e = alloc_thing(struct pluto_event, name);
 	e->ev_type = EVENT_NULL;
-	e->ev_name = clone_str(name, "event name");
-	e->ev = pluto_event_wraper(fd, events, cb, arg, delay);
+	e->ev_name = name;
 	link_pluto_event_list(e);
-	if (delay != NULL)
-	{
-		e->ev_time = monotimesum(mononow(), deltatime(delay->tv_sec));
+	if (delay != NULL) {
+		e->ev_time = monotimesum(mononow(), *delay);
 	}
+	fire_event_photon_torpedo(&e->ev, fd, events, cb, arg, delay);
 	return e; /* compaitable with pluto_event_new for the time being */
 }
 
@@ -665,7 +741,7 @@ void show_debug_status(void)
 	LSWLOG_WHACK(RC_COMMENT, buf) {
 		lswlogs(buf, "debug ");
 		lswlog_enum_lset_short(buf, &debug_and_impair_names,
-				       cur_debugging);
+				       "+", cur_debugging);
 	}
 }
 
@@ -800,7 +876,7 @@ static void log_status(struct lswlog *buf, int status)
 			WTERMSIG(status));
 	} else if (WIFSTOPPED(status)) {
 		/* should not happen */
-		lswlogf(buf, "stoped with signal %s (%d) but WUNTRACED not specified",
+		lswlogf(buf, "stopped with signal %s (%d) but WUNTRACED not specified",
 			strsignal(WSTOPSIG(status)),
 			WSTOPSIG(status));
 	} else if (WIFCONTINUED(status)) {
@@ -914,51 +990,57 @@ void call_server(void)
 
 	/*
 	 * fork to issue the command "ipsec addconn --autoall"
-	 * (or vfork() when fork() isn't available, eg on embedded platforms
-	 * without MMU, like uClibc
+	 * (or vfork() when fork() isn't available, eg. on embedded platforms
+	 * without MMU, like uClibc)
 	 */
 	{
 		/* find a pathname to the addconn program */
-		const char *addconn_path = NULL;
 		static const char addconn_name[] = "addconn";
 		char addconn_path_space[4096]; /* plenty long? */
-		ssize_t n = 0;
+		ssize_t n;
 
 #if !(defined(macintosh) || (defined(__MACH__) && defined(__APPLE__)))
-		{
-			/* The program will be in the same directory as Pluto,
-			 * so we use the sympolic link /proc/self/exe to
-			 * tell us of the path prefix.
-			 */
-			n = readlink("/proc/self/exe", addconn_path_space,
-				     sizeof(addconn_path_space));
-			if (n < 0) {
+		/*
+		 * The program will be in the same directory as Pluto,
+		 * so we use the symbolic link /proc/self/exe to
+		 * tell us of the path prefix.
+		 */
+		n = readlink("/proc/self/exe", addconn_path_space,
+			     sizeof(addconn_path_space));
+		if (n < 0) {
 # ifdef __uClibc__
-				/* on some nommu we have no proc/self/exe, try without path */
-				*addconn_path_space = '\0';
-				n = 0;
+			/*
+			 * Some noMMU systems have no proc/self/exe.
+			 * Try without path.
+			 */
+			n = 0;
 # else
-				EXIT_LOG_ERRNO(errno,
-					       "readlink(\"/proc/self/exe\") failed in call_server()");
+			EXIT_LOG_ERRNO(errno,
+				       "readlink(\"/proc/self/exe\") failed in call_server()");
 # endif
-			}
 		}
 #else
-		/* This is wrong. Should end up in a resource_dir on MacOSX -- Paul */
-		addconn_path = "/usr/local/libexec/ipsec/addconn";
+		/* Hardwire a path */
+		/* ??? This is wrong. Should end up in a resource_dir on MacOSX -- Paul */
+		n = jam_str(addconn_path_space,
+				sizeof(addconn_path_space),
+				"/usr/local/libexec/ipsec/") -
+			addcon_path_space;
 #endif
-		if ((size_t)n > sizeof(addconn_path_space) -
-		    sizeof(addconn_name))
-			exit_log("path to %s is too long", addconn_name);
+
+		/* strip any final name from addconn_path_space */
 		while (n > 0 && addconn_path_space[n - 1] != '/')
 			n--;
 
-		strcpy(addconn_path_space + n, addconn_name);
-		addconn_path = addconn_path_space;
+		if ((size_t)n >
+		    sizeof(addconn_path_space) - sizeof(addconn_name))
+			exit_log("path to %s is too long", addconn_name);
 
-		if (access(addconn_path, X_OK) < 0)
+		strcpy(addconn_path_space + n, addconn_name);
+
+		if (access(addconn_path_space, X_OK) < 0)
 			EXIT_LOG_ERRNO(errno, "%s missing or not executable",
-				       addconn_path);
+				       addconn_path_space);
 
 		char *newargv[] = { DISCARD_CONST(char *, "addconn"),
 				    DISCARD_CONST(char *, "--ctlsocket"),
@@ -974,25 +1056,30 @@ void call_server(void)
 #endif
 		if (addconn_child_pid == 0) {
 			/*
-			 * child
+			 * Child
 			 *
-			 * Note that, when vfork() was used, calls
-			 * like sleep() and DBG_log() are not valid.
-			 *
-			 * XXX: Why the sleep?
+			 * Note: when vfork() is used, calls
+			 * like sleep() and DBG_log() are not valid
+			 * before the exec* call.
 			 */
 #if USE_FORK
+			/* XXX: Why the sleep?  See 1987ac98f8.  Hack! */
 			sleep(1);
 #endif
-			execve(addconn_path, newargv, newenv);
+			execve(addconn_path_space, newargv, newenv);
 			_exit(42);
 		}
+
+		/* Parent */
+
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("created addconn helper (pid:%d) using %s+execve",
 			    addconn_child_pid, USE_VFORK ? "vfork" : "fork"));
 		add_pid(addconn_child_pid, addconn_exited, NULL);
-		/* parent continues */
 	}
+
+	/* parent continues */
+
 #ifdef HAVE_SECCOMP
 	switch (pluto_seccomp_mode) {
 	case SECCOMP_ENABLED:
@@ -1114,6 +1201,11 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest, const char
 
 		if (packet_len == -1) {
 			if (errno == EAGAIN) {
+				/* 32 is picked from thin air */
+				if (again_count == 32) {
+					loglog(RC_LOG_SERIOUS, "recvmsg(,, MSG_ERRQUEUE): given up reading socket after 32 EAGAIN errors");
+					return FALSE;
+				}
 				again_count++;
 				LOG_ERRNO(errno,
 					  "recvmsg(,, MSG_ERRQUEUE) on %s failed (noticed before %s) (attempt %d)",
@@ -1291,39 +1383,26 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest, const char
 					 * explicit parameter to the
 					 * logging system?
 					 */
-#define LOG_SENDER(LOG, SENDER)						\
-					struct state *old_state = cur_state; \
-					struct connection *old_connection = cur_connection; \
-					const ip_address *old_from = cur_from; \
-					cur_state = SENDER;		\
-					cur_connection = NULL;		\
-					cur_from = NULL;		\
-					LOG("ERROR: asynchronous network error report on %s (sport=%d)%s, complainant %s: %s [errno %lu, origin %s]", \
-					    ifp->ip_dev->id_rname, ifp->port, \
-					    fromstr,			\
-					    offstr,			\
-					    strerror(ee->ee_errno),	\
-					    (unsigned long) ee->ee_errno, orname); \
-					cur_state = old_state;		\
-					cur_connection = old_connection; \
-					cur_from = old_from;
-					/* */
-					LOG_SENDER(libreswan_log, sender);
-				} else if (DBGP(DBG_OPPO)) {
+#define LOG(buf)	lswlogf(buf, "ERROR: asynchronous network error report on %s (sport=%d)%s, complainant %s: %s [errno %lu, origin %s]", \
+				ifp->ip_dev->id_rname, ifp->port,	\
+				fromstr,				\
+				offstr,					\
+				strerror(ee->ee_errno),			\
+				(unsigned long) ee->ee_errno, orname);
+
+					LSWLOG_STATE(sender, buf) {
+						LOG(buf);
+					}
+				} else {
 					/*
 					 * Since this output is forced
 					 * using DBGP, report the
 					 * error using debug-log.
-					 *
-					 * Since DBG_log() doesn't add
-					 * a prefix for the current
-					 * state et.al., the above
-					 * switch hack isn't needed.
-					 * However, do it anyway, so
-					 * that there is no confusion.
 					 */
-					LOG_SENDER(DBG_log, sender);
-#undef LOG_SENDER
+					LSWDBGP_STATE(DBG_OPPO, sender, buf) {
+						LOG(buf);
+					}
+#undef LOG
 				}
 			} else if (cm->cmsg_level == SOL_IP &&
 				   cm->cmsg_type == IP_PKTINFO) {
@@ -1432,7 +1511,7 @@ static bool send_packet(struct state *st, const char *where,
 			where,
 			st->st_interface->ip_dev->id_rname,
 			st->st_interface->port,
-			log_ip ? ipstr(&st->st_remoteaddr, &b) : "<ip>",
+			sensitive_ipstr(&st->st_remoteaddr, &b),
 			st->st_remoteport,
 			st->st_serialno);
 	});
@@ -1455,7 +1534,7 @@ static bool send_packet(struct state *st, const char *where,
 			ipstr_buf b;
 			LOG_ERRNO(errno, "sendto on %s to %s:%u failed in %s",
 				  st->st_interface->ip_dev->id_rname,
-				  log_ip ? ipstr(&st->st_remoteaddr, &b) : "<ip>",
+				  sensitive_ipstr(&st->st_remoteaddr, &b),
 				  st->st_remoteport,
 				  where);
 		}
@@ -1721,7 +1800,7 @@ bool resend_ike_v1_msg(struct state *st, const char *where)
 	if (st->st_state == STATE_XAUTH_R0 &&
 	    !LIN(POLICY_AGGRESSIVE, st->st_connection->policy)) {
 		/* Only for Main mode + XAUTH */
-		event_schedule_ms(EVENT_v1_SEND_XAUTH, EVENT_v1_SEND_XAUTH_DELAY, st);
+		event_schedule(EVENT_v1_SEND_XAUTH, deltatime_ms(EVENT_v1_SEND_XAUTH_DELAY_MS), st);
 	}
 
 	return ret;

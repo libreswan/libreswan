@@ -11,7 +11,7 @@
  * Copyright (C) 2008 Neil Horman <nhorman@redhat.com>
  * Copyright (C) 2008-2010 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2006-2010 Paul Wouters <paul@xelerance.com>
- * Copyright (C) 2010,2013,2014 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2010-2017 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2010 Mika Ilmaranta <ilmis@foobar.fi>
  * Copyright (C) 2010 Roman Hoog Antink <rha@open.ch>
  * Copyright (C) 2010 D. Hugh Redelmeier
@@ -87,7 +87,7 @@
 
 /* required for Linux 2.6.26 kernel and later */
 #ifndef XFRM_STATE_AF_UNSPEC
-#define XFRM_STATE_AF_UNSPEC    32
+#define XFRM_STATE_AF_UNSPEC 32
 #endif
 
 /* Minimum priority number in SPD used by pluto. */
@@ -95,12 +95,6 @@
 
 static int netlinkfd = NULL_FD;
 static int netlink_bcast_fd = NULL_FD;
-
-#ifdef USE_NIC_OFFLOAD
-#define NIC_OFFLOAD_UNKNOWN (-2)
-#define NIC_OFFLOAD_UNSUPPORTED (-1)
-static int netlink_esp_hw_offload = NIC_OFFLOAD_UNKNOWN;
-#endif
 
 #define NE(x) { x, #x }	/* Name Entry -- shorthand for sparse_names */
 
@@ -142,7 +136,7 @@ struct netlink_name {
 };
 
 static const char *find_netlink_name(const struct netlink_name *table,
-				     const struct ike_alg *alg)
+				const struct ike_alg *alg)
 {
 	for (; table->alg != NULL; table++) {
 		if (table->alg == alg) {
@@ -281,12 +275,12 @@ static void init_netlink(void)
 
 	if (fcntl(netlink_bcast_fd, F_SETFD, FD_CLOEXEC) != 0)
 		EXIT_LOG_ERRNO(errno,
-			       "fcntl(FD_CLOEXEC) for bcast in init_netlink()");
+			"fcntl(FD_CLOEXEC) for bcast in init_netlink()");
 
 
 	if (fcntl(netlink_bcast_fd, F_SETFL, O_NONBLOCK) != 0)
 		EXIT_LOG_ERRNO(errno,
-			       "fcntl(O_NONBLOCK) for bcast in init_netlink()");
+			"fcntl(O_NONBLOCK) for bcast in init_netlink()");
 
 
 	addr.nl_family = AF_NETLINK;
@@ -314,7 +308,7 @@ static void init_netlink(void)
 	 * crypto module gets loaded.
 	 */
 	DBG(DBG_KERNEL,
-	    DBG_log("Hard-wiring new AEAD algorithms"));
+		DBG_log("Hard-wiring new AEAD algorithms"));
 
 	kernel_encrypt_add(&ike_alg_encrypt_aes_gcm_8);
 	kernel_encrypt_add(&ike_alg_encrypt_aes_gcm_12);
@@ -325,7 +319,7 @@ static void init_netlink(void)
 	kernel_encrypt_add(&ike_alg_encrypt_null_integ_aes_gmac);
 
 	DBG(DBG_KERNEL,
-	    DBG_log("Hard-wiring new INTEG algorithms"));
+		DBG_log("Hard-wiring new INTEG algorithms"));
 
 	kernel_integ_add(&ike_alg_integ_aes_cmac);
 }
@@ -649,7 +643,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
 
-	const int family = that_client->addr.u.v4.sin_family;
+	const int family = addrtypeof(&that_client->addr);
 	const int shift = (family == AF_INET) ? 5 : 7;
 
 	req.u.p.sel.sport = portof(&this_client->addr);
@@ -761,7 +755,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 				proto_info[i].proto == IPPROTO_COMP &&
 				dir != XFRM_POLICY_OUT;
 			tmpl[i].aalgos = tmpl[i].ealgos = tmpl[i].calgos = ~0;
-			tmpl[i].family = that_host->u.v4.sin_family;
+			tmpl[i].family = addrtypeof(that_host);
 			tmpl[i].mode =
 				proto_info[i].encapsulation ==
 				ENCAPSULATION_MODE_TUNNEL;
@@ -854,89 +848,114 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 }
 
 #ifdef USE_NIC_OFFLOAD
+
+enum nic_offload_state {
+	NIC_OFFLOAD_UNKNOWN,
+	NIC_OFFLOAD_UNSUPPORTED,
+	NIC_OFFLOAD_SUPPORTED
+};
+
+static struct {
+	unsigned int bit;
+	unsigned int total_blocks;
+	enum nic_offload_state state;
+} netlink_esp_hw_offload;
+
 static void netlink_find_offload_feature(const char *ifname)
 {
-	netlink_esp_hw_offload = NIC_OFFLOAD_UNSUPPORTED;
+	struct ethtool_sset_info *sset_info = NULL;
+	struct ethtool_gstrings *cmd = NULL;
+	struct ifreq ifr;
+	uint32_t sset_len, i;
+	char *str;
+	int err;
 
-	/*
-	 * Determine number of device-features.
-	 * Only one set queried so .data needs only one element
-	 * See <linux/ethtool.h>
-	 */
-	struct ethtool_sset_info *sset_info = 
-		alloc_bytes(sizeof(*sset_info) + 1 * sizeof(sset_info->data[0]),
+	netlink_esp_hw_offload.state = NIC_OFFLOAD_UNSUPPORTED;
+
+	/* Determine number of device-features */
+	sset_info = alloc_bytes(sizeof(*sset_info) + sizeof(sset_info->data[0]),
 			"ethtool_sset_info");
 	sset_info->cmd = ETHTOOL_GSSET_INFO;
-	sset_info->sset_mask = ((__u64)1) << ETH_SS_FEATURES;
-
-	struct ifreq ifr;
-
+	sset_info->sset_mask = 1ULL << ETH_SS_FEATURES;
 	jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
 	ifr.ifr_data = (void *)sset_info;
-	if (ioctl(netlinkfd, SIOCETHTOOL, &ifr) == 0 &&
-	    sset_info->sset_mask == ((__u64)1) << ETH_SS_FEATURES)
-	{
-		/* Retrieve names of device-features */
-		uint32_t sset_len = sset_info->data[0];
+	err = ioctl(netlinkfd, SIOCETHTOOL, &ifr);
+	if (err != 0)
+		goto out;
 
-		struct ethtool_gstrings *cmd =
-			alloc_bytes(sizeof(*cmd) + ETH_GSTRING_LEN * sset_len,
-				"ethtool_gstrings");
-		cmd->cmd = ETHTOOL_GSTRINGS;
-		cmd->string_set = ETH_SS_FEATURES;
-		jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
-		ifr.ifr_data = (void *)cmd;
-		if (ioctl(netlinkfd, SIOCETHTOOL, &ifr) == 0) {
-			/* Look for the ESP_HW feature bit */
-			char *str = (char *)cmd->data;
-			for (uint32_t i = 0; i < cmd->len; i++) {
-				if (strneq(str, "esp-hw-offload", ETH_GSTRING_LEN)) {
-					netlink_esp_hw_offload = i;
-					break;
-				}
-				str += ETH_GSTRING_LEN;
-			}
-		}
-		pfree(cmd);
+	if (sset_info->sset_mask != 1ULL << ETH_SS_FEATURES)
+		goto out;
+	sset_len = sset_info->data[0];
+
+	/* Retrieve names of device-features */
+	cmd = alloc_bytes(sizeof(*cmd) + ETH_GSTRING_LEN * sset_len, "ethtool_gstrings");
+	cmd->cmd = ETHTOOL_GSTRINGS;
+	cmd->string_set = ETH_SS_FEATURES;
+	jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
+	ifr.ifr_data = (void *)cmd;
+	err = ioctl(netlinkfd, SIOCETHTOOL, &ifr);
+	if (err)
+		goto out;
+
+	/* Look for the ESP_HW feature bit */
+	str = (char *)cmd->data;
+	for (i = 0; i < cmd->len; i++) {
+		if (strneq(str, "esp-hw-offload", ETH_GSTRING_LEN) == 1)
+			break;
+		str += ETH_GSTRING_LEN;
 	}
+	if (i >= cmd->len)
+		goto out;
+
+	netlink_esp_hw_offload.bit = i;
+	netlink_esp_hw_offload.total_blocks = (sset_len + 31) / 32;
+	netlink_esp_hw_offload.state = NIC_OFFLOAD_SUPPORTED;
+
+out:
 	pfree(sset_info);
+	if (cmd != NULL)
+		pfree(cmd);
 }
 
 static bool netlink_detect_offload(const char *ifname)
 {
+	struct ethtool_gfeatures *cmd;
+	uint32_t feature_bit;
+	struct ifreq ifr;
+	bool ret = false;
+	int block;
+
 	/*
 	 * Kernel requires a real interface in order to query the kernel-wide
-	 * capability, so we delay until our first invocation.
+	 * capability, so we do it here on first invocation.
 	 */
-	if (netlink_esp_hw_offload == NIC_OFFLOAD_UNKNOWN)
+	if (netlink_esp_hw_offload.state == NIC_OFFLOAD_UNKNOWN)
 		netlink_find_offload_feature(ifname);
 
-	if (netlink_esp_hw_offload == NIC_OFFLOAD_UNSUPPORTED)
+	if (netlink_esp_hw_offload.state == NIC_OFFLOAD_UNSUPPORTED)
 		return FALSE;
 
-	/* Feature is supported by kernel. Query device feature. */
-	passert(netlink_esp_hw_offload >= 0);	/* it's a bit number */
-
-	unsigned block = netlink_esp_hw_offload / 32;
-	uint32_t feature_bit = ((uint32_t) 1) << (netlink_esp_hw_offload % 32);
-
-	struct ethtool_gfeatures *cmd =
-		alloc_bytes(sizeof(*cmd) + sizeof(cmd->features[0]) * (block+1),
-			"ethtool_gfeatures");
-	struct ifreq ifr;
+	/* Feature is supported by kernel. Query device features */
+	cmd = alloc_bytes(sizeof(*cmd) + sizeof(cmd->features[0]) *
+		netlink_esp_hw_offload.total_blocks,
+		"ethtool_gfeatures");
 	jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
 	ifr.ifr_data = (void *)cmd;
 	cmd->cmd = ETHTOOL_GFEATURES;
-	cmd->size = block + 1;
+	cmd->size = netlink_esp_hw_offload.total_blocks;
+	if (ioctl(netlinkfd, SIOCETHTOOL, &ifr))
+		goto out;
 
-	/* ??? something is very wrong if this ioctl fails */
-	bool ret = ioctl(netlinkfd, SIOCETHTOOL, &ifr) == 0 &&
-		(cmd->features[block].active & feature_bit) != 0;
+	block = netlink_esp_hw_offload.bit / 32;
+	feature_bit = 1U << (netlink_esp_hw_offload.bit % 32);
+	if (cmd->features[block].active & feature_bit)
+		ret = TRUE;
 
+out:
 	pfree(cmd);
-
 	return ret;
 }
+
 #endif /* USE_NIC_OFFLOAD */
 
 /*
@@ -965,7 +984,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 
 	req.p.id.spi = sa->spi;
 	req.p.id.proto = esatype2proto(sa->esatype);
-	req.p.family = sa->src->u.v4.sin_family;
+	req.p.family = addrtypeof(sa->src);
 	/*
 	 * This requires ipv6 modules. It is required to support 6in4 and 4in6
 	 * tunnels in linux 2.6.25+
@@ -1048,7 +1067,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		req.p.sel.prefixlen_s = src->maskbits;
 		req.p.sel.prefixlen_d = dst->maskbits;
 		req.p.sel.proto = sa->transport_proto;
-		req.p.sel.family = src->addr.u.v4.sin_family;
+		req.p.sel.family = addrtypeof(&src->addr);
 	}
 
 	req.p.reqid = sa->reqid;
@@ -1077,7 +1096,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	 * To avoid breaking backward compatibility, we use a new flag
 	 * (XFRM_STATE_ALIGN4) do change original behavior.
 	*/
-	if (sa->esatype == ET_AH && sa->src->u.v4.sin_family == AF_INET) {
+	if (sa->esatype == ET_AH && addrtypeof(sa->src) == AF_INET) {
 		DBG(DBG_KERNEL, DBG_log("netlink: aligning IPv4 AH to 32bits as per RFC-4302, Section 3.3.3.2.1"));
 		req.p.flags |= XFRM_STATE_ALIGN4;
 	}
@@ -1086,6 +1105,10 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		if (sa->esn) {
 			DBG(DBG_KERNEL, DBG_log("netlink: enabling ESN"));
 			req.p.flags |= XFRM_STATE_ESN;
+		}
+		if (sa->decap_dscp) {
+			DBG(DBG_KERNEL, DBG_log("netlink: enabling Decap DSCP"));
+			req.p.flags |= XFRM_STATE_DECAP_DSCP;
 		}
 
 		if (sa->replay_window <= 32 && !sa->esn) {
@@ -1102,7 +1125,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 				.replay_window = sa->replay_window,
 				.bmp_len = bmp_size / sizeof(u_int32_t),
 			};
-			DBG(DBG_KERNEL, DBG_log("netlink: setting IPsec SA replay-window to %"PRIu32" using xfrm_replay_state_esn",
+			DBG(DBG_KERNEL, DBG_log("netlink: setting IPsec SA replay-window to %" PRIu32 " using xfrm_replay_state_esn",
 				xre.replay_window));
 
 			attr->rta_type = XFRMA_REPLAY_ESN_VAL;
@@ -1116,7 +1139,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	if (sa->authkeylen != 0) {
 
 		const char *name = find_netlink_name(integ_list,
-						     &sa->integ->common);
+						&sa->integ->common);
 		if (name == NULL) {
 			loglog(RC_LOG_SERIOUS,
 				"NETKEY/XFRM: unknown authentication algorithm: %s",
@@ -1144,7 +1167,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		fill_and_terminate(algo.alg_name, name, sizeof(algo.alg_name));
 		memcpy(RTA_DATA(attr), &algo, sizeof(algo));
 		memcpy((char *)RTA_DATA(attr) + sizeof(algo),
-		       sa->authkey, sa->authkeylen);
+			sa->authkey, sa->authkeylen);
 
 		req.n.nlmsg_len += attr->rta_len;
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
@@ -1177,7 +1200,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	} else if (sa->esatype == ET_ESP) {
 		const char *name = find_netlink_name(encrypt_list,
-						     &sa->encrypt->common);
+						&sa->encrypt->common);
 		if (name == NULL) {
 			loglog(RC_LOG_SERIOUS,
 				"unknown encryption algorithm: %s",
@@ -1188,7 +1211,8 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		if (ike_alg_is_aead(sa->encrypt)) {
 			struct xfrm_algo_aead algo;
 
-			fill_and_terminate(algo.alg_name, name, sizeof(algo.alg_name));
+			fill_and_terminate(algo.alg_name, name,
+					sizeof(algo.alg_name));
 			algo.alg_key_len = sa->enckeylen * BITS_PER_BYTE;
 			algo.alg_icv_len = sa->encrypt->aead_tag_size * BITS_PER_BYTE;
 
@@ -1196,8 +1220,8 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 			attr->rta_len = RTA_LENGTH(sizeof(algo) + sa->enckeylen);
 
 			memcpy(RTA_DATA(attr), &algo, sizeof(algo));
-			memcpy((char *)RTA_DATA(attr) + sizeof(algo), sa->enckey,
-			       sa->enckeylen);
+			memcpy((char *)RTA_DATA(attr) + sizeof(algo),
+				sa->enckey, sa->enckeylen);
 
 			req.n.nlmsg_len += attr->rta_len;
 			attr = (struct rtattr *)((char *)attr + attr->rta_len);
@@ -1205,14 +1229,16 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		} else {
 			struct xfrm_algo algo;
 
-			fill_and_terminate(algo.alg_name, name, sizeof(algo.alg_name));
+			fill_and_terminate(algo.alg_name, name,
+					sizeof(algo.alg_name));
 			algo.alg_key_len = sa->enckeylen * BITS_PER_BYTE;
 
 			attr->rta_type = XFRMA_ALG_CRYPT;
 			attr->rta_len = RTA_LENGTH(sizeof(algo) + sa->enckeylen);
 
 			memcpy(RTA_DATA(attr), &algo, sizeof(algo));
-			memcpy((char *)RTA_DATA(attr) + sizeof(algo), sa->enckey,
+			memcpy((char *)RTA_DATA(attr) + sizeof(algo),
+				sa->enckey,
 			sa->enckeylen);
 
 			req.n.nlmsg_len += attr->rta_len;
@@ -1220,9 +1246,10 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 
 			/* Traffic Flow Confidentiality is only for ESP tunnel mode */
 			if (sa->tfcpad != 0 &&
-			    sa->encapsulation == ENCAPSULATION_MODE_TUNNEL) {
-				DBG(DBG_KERNEL, DBG_log("netlink: setting TFC to %"PRIu32" (up to PMTU",
-							sa->tfcpad));
+				sa->encapsulation == ENCAPSULATION_MODE_TUNNEL) {
+				DBG(DBG_KERNEL,
+					DBG_log("netlink: setting TFC to %" PRIu32 " (up to PMTU)",
+						sa->tfcpad));
 
 				attr->rta_type = XFRMA_TFCPAD;
 				attr->rta_len = RTA_LENGTH(sizeof(sa->tfcpad));
@@ -1254,12 +1281,11 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 
 #ifdef USE_NIC_OFFLOAD
 	if (sa->nic_offload_dev) {
-		struct xfrm_user_offload xuo = { 0, 0 };
-
-		xuo.flags |= sa->inbound ? XFRM_OFFLOAD_INBOUND : 0;
-		if (sa->src->u.v4.sin_family == AF_INET6)
-			xuo.flags |= XFRM_OFFLOAD_IPV6;
-		xuo.ifindex = if_nametoindex(sa->nic_offload_dev);
+		struct xfrm_user_offload xuo = {
+			.flags = (sa->inbound ? XFRM_OFFLOAD_INBOUND : 0) |
+				(addrtypeof(sa->src) == AF_INET6 ? XFRM_OFFLOAD_IPV6 : 0),
+			.ifindex = if_nametoindex(sa->nic_offload_dev),
+		};
 
 		attr->rta_type = XFRMA_OFFLOAD_DEV;
 		attr->rta_len = RTA_LENGTH(sizeof(xuo));
@@ -1325,7 +1351,7 @@ static bool netlink_del_sa(const struct kernel_sa *sa)
 	ip2xfrm(sa->dst, &req.id.daddr);
 
 	req.id.spi = sa->spi;
-	req.id.family = sa->src->u.v4.sin_family;
+	req.id.family = addrtypeof(sa->src);
 	req.id.proto = sa->proto;
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
@@ -1725,7 +1751,7 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 	req.spi.info.mode = tunnel_mode;
 	req.spi.info.reqid = reqid;
 	req.spi.info.id.proto = proto;
-	req.spi.info.family = src->u.v4.sin_family;
+	req.spi.info.family = addrtypeof(src);
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.spi)));
 
@@ -2233,8 +2259,8 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 				 */
 				for (q = q->next; q; q = q->next) {
 					if (streq(q->ip_dev->id_rname, ifp->name) &&
-					    streq(q->ip_dev->id_vname, v->name) &&
-					    sameaddr(&q->ip_addr, &ifp->addr))
+						streq(q->ip_dev->id_vname, v->name) &&
+						sameaddr(&q->ip_addr, &ifp->addr))
 						q->change = IFN_KEEP;
 				}
 
@@ -2280,7 +2306,7 @@ static bool netlink_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
 	ip2xfrm(sa->dst, &req.id.daddr);
 
 	req.id.spi = sa->spi;
-	req.id.family = sa->src->u.v4.sin_family;
+	req.id.family = addrtypeof(sa->src);
 	req.id.proto = sa->proto;
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));

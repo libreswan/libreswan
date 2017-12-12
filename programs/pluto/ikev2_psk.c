@@ -71,8 +71,6 @@ static bool ikev2_calculate_psk_sighash(bool verify, struct state *st,
 					chunk_t firstpacket,
 					unsigned char *signed_octets)
 {
-	const chunk_t *nonce = NULL;
-	const char    *nonce_name = NULL;
 	const struct connection *c = st->st_connection;
 	const chunk_t *pss = &empty_chunk;
 	const size_t hash_len =  st->st_oakley.ta_prf->prf_output_size;
@@ -80,7 +78,7 @@ static bool ikev2_calculate_psk_sighash(bool verify, struct state *st,
 	passert(authby == AUTH_PSK || authby == AUTH_NULL);
 
 	DBG(DBG_CONTROL,DBG_log("ikev2_calculate_psk_sighash() called from %s to %s PSK with authby=%s",
-		enum_name(&state_names, st->st_state),
+		st->st_state_name,
 		verify ? "verify" : "create",
 		enum_name(&ikev2_asym_auth_name, authby)));
 
@@ -176,6 +174,8 @@ static bool ikev2_calculate_psk_sighash(bool verify, struct state *st,
 	}
 
 	/* pick nonce */
+	const chunk_t *nonce = NULL;
+	const char *nonce_name = NULL;
 
 	if (st->st_state == STATE_PARENT_I2 && !verify) {
 		/* we are initiator sending PSK */
@@ -195,6 +195,8 @@ static bool ikev2_calculate_psk_sighash(bool verify, struct state *st,
 		nonce = &st->st_nr;
 		nonce_name = "verify: initiator inputs to hash2 (responder nonce)";
 	}
+
+	passert(nonce != NULL);	/* we NEED a nonce */
 
 	/* calculate outer prf */
 	{

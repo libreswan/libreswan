@@ -24,10 +24,11 @@
 #ifndef _X509_H
 #define _X509_H
 
-#include "lswtime.h"
-#include "lswalloc.h"
 #include <nss.h>
 #include <cert.h>
+
+#include "lswalloc.h"
+#include "deltatime.h"
 
 typedef enum {
 LSW_CERT_NONE = 0,

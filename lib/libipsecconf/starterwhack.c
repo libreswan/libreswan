@@ -371,10 +371,12 @@ static void set_whack_end(char *lr,
 		w->host_vtiip = l->vti_ip;
 
 	w->has_client = l->has_client;
-	if (l->has_client)
+	if (l->has_client) {
 		w->client = l->subnet;
-	else
+	} else {
+		/* ??? is this a crude way of seting client to anyaddr? */
 		w->client.addr.u.v4.sin_family = l->addr_family;
+	}
 	w->updown = l->strings[KSCF_UPDOWN];
 	w->host_port = IKE_UDP_PORT; /* XXX starter should support (nat)-ike-port */
 	w->has_client_wildcard = l->has_client_wildcard;
@@ -540,7 +542,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.sa_keying_tries = conn->options[KBF_KEYINGTRIES];
 	msg.sa_replay_window = conn->options[KBF_REPLAY_WINDOW];
 
-	msg.r_interval = conn->options[KBF_RETRANSMIT_INTERVAL];
+	msg.r_interval = deltatime_ms(conn->options[KBF_RETRANSMIT_INTERVAL_MS]);
 	msg.r_timeout = deltatime(conn->options[KBF_RETRANSMIT_TIMEOUT]);
 
 	msg.policy = conn->policy;
@@ -673,6 +675,9 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.internal_domain1 = conn->internal_domain1;
 	msg.internal_domain2 = conn->internal_domain2;
 
+	msg.conn_mark_both = conn->conn_mark_both;
+	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" mark=%s",
+		conn->name, msg.conn_mark_both);
 	msg.conn_mark_in = conn->conn_mark_in;
 	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" mark-in=%s",
 		conn->name, msg.conn_mark_in);

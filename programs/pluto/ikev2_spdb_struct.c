@@ -4,7 +4,7 @@
  * Copyright (C) 2008-2011 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008 Antony Antony <antony@xelerance.com>
  * Copyright (C) 2012,2107 Antony Antony <antony@phenome.org>
- * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2013,2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2015-2017 Andrew Cagney
@@ -134,7 +134,7 @@ struct ikev2_transform {
  */
 
 struct ikev2_transforms {
-	struct ikev2_transform transform[4 + 1];
+	struct ikev2_transform transform[10 + 1]; /* 10 ought to be enough */
 };
 
 #define SENTINEL_TRANSFORM(TRANSFORMS) \
@@ -287,7 +287,8 @@ static const char *trans_type_name(enum ikev2_trans_type type)
 
 static void lswlog_trans_types(struct lswlog *buf, lset_t types)
 {
-	lswlog_enum_lset_short(buf, &ikev2_trans_type_names, types);
+	lswlog_enum_lset_short(buf, &ikev2_trans_type_names,
+			       "+", types);
 }
 
 /*
@@ -368,7 +369,7 @@ static void lswlog_chosen_proposal(struct lswlog *buf,
 void DBG_log_ikev2_proposal(const char *prefix,
 			    struct ikev2_proposal *proposal)
 {
-	LSWDBG(buf) {
+	LSWLOG_DEBUG(buf) {
 		lswlogf(buf, "%s ikev2_proposal: ", prefix);
 		print_proposal(buf, proposal->propnum, proposal);
 	}
@@ -401,7 +402,7 @@ void DBG_log_ikev2_proposals(const char *prefix,
 		} else {
 			DBG_log("  proposal: %d", propnum);
 		}
-		LSWDBG(buf) {
+		LSWLOG_DEBUG(buf) {
 			lswlogf(buf, "    ");
 			lswlogs(buf, "protoid=");
 			print_name_value(buf, protoid_name(proposal->protoid),
@@ -410,7 +411,7 @@ void DBG_log_ikev2_proposals(const char *prefix,
 		enum ikev2_trans_type type;
 		const struct ikev2_transforms *transforms;
 		FOR_EACH_TRANSFORMS_TYPE(type, transforms, proposal) {
-			LSWDBG(buf) {
+			LSWLOG_DEBUG(buf) {
 				lswlogf(buf, "    ");
 				print_type_transforms(buf, type, transforms);
 			}
@@ -1786,6 +1787,9 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 #define DH_MODP3072 { .id = OAKLEY_GROUP_MODP3072, .valid = TRUE, }
 #define DH_MODP4096 { .id = OAKLEY_GROUP_MODP4096, .valid = TRUE, }
 #define DH_MODP8192 { .id = OAKLEY_GROUP_MODP8192, .valid = TRUE, }
+#define DH_ECP256   { .id = OAKLEY_GROUP_ECP_256, .valid = TRUE, }
+#define DH_ECP384   { .id = OAKLEY_GROUP_ECP_384, .valid = TRUE, }
+#define DH_ECP521   { .id = OAKLEY_GROUP_ECP_521, .valid = TRUE, }
 
 #define TR(T, ...) { .transform = { T, __VA_ARGS__ } }
 
@@ -1794,8 +1798,8 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 	/*
 	 * AES_GCM_16/C[256]
 	 * NULL
-	 * SHA2_512, SHA2_256, SHA1
-	 * MODP2048, MODP3072, MODP4096, MODP8192
+	 * SHA2_512, SHA2_256, SHA1 - SHA1 is MUST- in RFC 8247
+	 * MODP2048, MODP3072, MODP4096, MODP8192, DH_ECP256
 	 *
 	 * Note: Strongswan cherry-picks proposals (for instance will
 	 * pick AES_128 over AES_256 when both are in the same
@@ -1807,14 +1811,14 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_GCM16_256),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_NONE),
 			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA2_512, PRF_SHA2_256, PRF_SHA1),
-			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP4096, DH_MODP8192),
+			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP4096, DH_MODP8192, DH_ECP256),
 		},
 	},
         /*
 	 * AES_GCM_16/C[128]
 	 * NULL
-	 * SHA2_512, SHA2_256, SHA1
-	 * MODP2048, MODP4096, MODP8192
+	 * SHA2_512, SHA2_256, SHA1 - SHA1 is MUST- in RFC 8247
+	 * MODP2048, DH_MODP3072, MODP4096, MODP8192, DH_ECP256
 	 *
 	 * Note: Strongswan cherry-picks proposals (for instance will
 	 * pick AES_128 over AES_256 when both are in the same
@@ -1826,14 +1830,14 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_GCM16_128),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_NONE),
 			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA2_512, PRF_SHA2_256, PRF_SHA1),
-			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP4096, DH_MODP8192),
+			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP4096, DH_MODP8192, DH_ECP256),
 		},
 	},
         /*
 	 * AES_CBC[256]
+	 * SHA2_512, SHA2_256, SHA1 - SHA1 is MUST- in RFC 8247
 	 * SHA2_512, SHA2_256, SHA1
-	 * SHA2_512, SHA2_256, SHA1
-	 * MODP2048, MODP3072, MODP1536
+	 * MODP2048, MODP3072, MODP4096, MODP8192, DH_ECP256
 	 *
 	 * Note: Strongswan cherry-picks proposals (for instance will
 	 * pick AES_128 over AES_256 when both are in the same
@@ -1845,14 +1849,14 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_CBC_256),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA2_512_256, AUTH_SHA2_256_128, AUTH_SHA1_96),
 			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA2_512, PRF_SHA2_256, PRF_SHA1),
-			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP1536),
+			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP4096, DH_MODP8192, DH_ECP256),
 		},
 	},
         /*
 	 * AES_CBC[128]
-	 * SHA2_512, SHA2_256, SHA1
-	 * SHA2_512, SHA2_256, SHA1
-	 * MODP2048, MODP3072, MODP1536
+	 * SHA2_512, SHA2_256, SHA1 - SHA1 is MUST- in RFC 8247
+	 * SHA2_512, SHA2_256, SHA1 - SHA1 is MUST- in RFC 8247
+	 * MODP2048, MODP3072, MODP4096, MODP8192, DH_ECP256
 	 *
 	 * Note: Strongswan cherry-picks proposals (for instance will
 	 * pick AES_128 over AES_256 when both are in the same
@@ -1864,7 +1868,7 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 			[IKEv2_TRANS_TYPE_ENCR] = TR(ENCR_AES_CBC_128),
 			[IKEv2_TRANS_TYPE_INTEG] = TR(AUTH_SHA2_512_256, AUTH_SHA2_256_128, AUTH_SHA1_96),
 			[IKEv2_TRANS_TYPE_PRF] = TR(PRF_SHA2_512, PRF_SHA2_256, PRF_SHA1),
-			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP1536),
+			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP4096, DH_MODP8192, DH_ECP256),
 		},
 	},
 };

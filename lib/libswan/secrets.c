@@ -33,6 +33,9 @@
 #include <arpa/inet.h>
 #include <arpa/nameser.h>	/* missing from <resolv.h> on old systems */
 #include <glob.h>
+#ifndef GLOB_ABORTED
+#define GLOB_ABORTED GLOB_ABEND        /* fix for old versions */
+#endif
 
 #include <libreswan.h>
 
@@ -1067,8 +1070,7 @@ static void lsw_process_secret_records(struct secret **psecrets)
 					id.kind = ID_IPV6_ADDR;
 					ugh = anyaddr(AF_INET6, &id.ip_addr);
 				} else {
-					ugh = atoid(flp->tok, &id, FALSE,
-						    FALSE);
+					ugh = atoid(flp->tok, &id, FALSE);
 				}
 
 				if (ugh != NULL) {

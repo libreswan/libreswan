@@ -66,7 +66,7 @@ struct fetch_req {
 
 static fetch_req_t empty_fetch_req = {
 	NULL,           /* next */
-	{ 0 },		/* installed */
+	REALTIME_EPOCH,	/* installed */
 	0,              /* trials */
 	{ NULL, 0 },    /* issuer */
 	NULL            /* distributionPoints */
@@ -79,9 +79,6 @@ static pthread_t thread;
 static pthread_mutex_t crl_fetch_list_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t fetch_wake_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t fetch_wake_cond = PTHREAD_COND_INITIALIZER;
-
-extern char *curl_iface;
-extern long curl_timeout;
 
 /*
  * lock access to the chained crl fetch request list
@@ -445,7 +442,7 @@ static void fetch_crls(void)
 
 static void *fetch_thread(void *arg UNUSED)
 {
-	deltatime_t interval = { 5 }; /* First fetch interval, then regular */
+	deltatime_t interval = DELTATIME(5); /* First fetch interval, then regular */
 
 	DBG(DBG_X509,
 	    DBG_log("fetch thread started"));
@@ -693,11 +690,10 @@ void list_crl_fetch_requests(bool utc)
 
 	while (req != NULL) {
 		char buf[ASN1_BUF_LEN];
-		char tbuf[REALTIMETOA_BUF];
-
-		whack_log(RC_COMMENT, "%s, trials: %d",
-			  realtimetoa(req->installed, utc, tbuf, sizeof(tbuf)),
-			  req->trials);
+		LSWLOG_WHACK(RC_COMMENT, buf) {
+			lswlog_realtime(buf, req->installed, utc);
+			lswlogf(buf, ", trials: %d", req->trials);
+		}
 		dntoa(buf, ASN1_BUF_LEN, req->issuer);
 		whack_log(RC_COMMENT, "       issuer:  '%s'", buf);
 		list_distribution_points(req->distributionPoints);

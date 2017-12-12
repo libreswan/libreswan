@@ -35,6 +35,11 @@
 #include "enum_names.h"
 #include "lswlog.h"
 
+const char *bool_str(bool b)
+{
+	return b ? "yes" : "no";
+}
+
 /*
  * Jam a string into a buffer of limited size.
  *
@@ -632,8 +637,7 @@ enum_names ipcomp_transformid_names = {
 
 static const char *const ike_idtype_name[] = {
 	/* private to Pluto */
-	"%fromcert",	/* -2, ID_FROMCERT:taken from certificate */
-	"%myid",	/* -1, ID_MYID */
+	"%fromcert",	/* -1, ID_FROMCERT:taken from certificate */
 	"%none",	/* 0, ID_NONE */
 
 	/* standardized */
@@ -674,7 +678,7 @@ enum_names ike_idtype_names = ID_NR(ID_IPV4_ADDR, ID_NULL, NULL);
  * so we have to tack two ranges onto ike_idtype_names.
  */
 enum_names ike_idtype_names_extended0 = ID_NR(ID_NONE, ID_NONE, &ike_idtype_names);
-enum_names ike_idtype_names_extended = ID_NR(ID_FROMCERT, ID_MYID, &ike_idtype_names_extended0);
+enum_names ike_idtype_names_extended = ID_NR(ID_FROMCERT, ID_FROMCERT, &ike_idtype_names_extended0);
 
 /* IKEv2 names exclude ID_IPV4_ADDR_SUBNET, ID_IPV6_ADDR_SUBNET-ID_IPV6_ADDR_RANGE */
 
@@ -2077,7 +2081,7 @@ struct keyword_enum_values kw_host_list =
  * Use -1 as the starting point / sentinel.
  *
  * XXX: Works fine provided we ignore the enum_names object that
- * contains -ve values stored in unsigned fields!
+ * contains negative values stored in unsigned fields!
  */
 
 long next_enum(enum_names *en, long l)
@@ -2410,30 +2414,6 @@ const char *bitnamesof(const char *const table[], lset_t val)
 	static char bitnamesbuf[8192]; /* I hope that it is big enough! */
 
 	return bitnamesofb(table, val, bitnamesbuf, sizeof(bitnamesbuf));
-}
-
-size_t lswlog_enum_lset_short(struct lswlog *buf, enum_names *en, lset_t val)
-{
-	unsigned int e;
-
-	/* if nothing gets filled in, default to "none" rather than "" */
-	if (val == LEMPTY) {
-		return lswlogs(buf, "none");
-	}
-
-	size_t size = 0;
-	const char *sep = "";
-	for (e = 0; val != 0; e++) {
-		lset_t bit = LELEM(e);
-
-		if (val & bit) {
-			size += lswlogs(buf, sep);
-			sep = "+";
-			size += lswlog_enum_short(buf, en, e);
-			val -= bit;
-		}
-	}
-	return size;
 }
 
 /* test a set by seeing if all bits have names */

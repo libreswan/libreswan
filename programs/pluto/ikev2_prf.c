@@ -156,10 +156,10 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	next_byte += integ_size;
 
 	/* The encryption key and salt are extracted together. */
-	SK_ei_k = symkey_from_symkey_bytes("SK_ei_k", DBG_CRYPT,
-					   &encrypter->common,
-					   next_byte, key_size,
-					   finalkey);
+	SK_ei_k = encrypt_key_from_symkey_bytes("SK_ei_k", DBG_CRYPT,
+						encrypter,
+						next_byte, key_size,
+						finalkey);
 	next_byte += key_size;
 	PK11SymKey *initiator_salt_key = key_from_symkey_bytes(finalkey, next_byte,
 							       salt_size);
@@ -170,10 +170,10 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	next_byte += salt_size;
 
 	/* The encryption key and salt are extracted together. */
-	SK_er_k = symkey_from_symkey_bytes("SK_er_k", DBG_CRYPT,
-					   &encrypter->common,
-					   next_byte, key_size,
-					   finalkey);
+	SK_er_k = encrypt_key_from_symkey_bytes("SK_er_k", DBG_CRYPT,
+						encrypter,
+						next_byte, key_size,
+						finalkey);
 	next_byte += key_size;
 	PK11SymKey *responder_salt_key = key_from_symkey_bytes(finalkey, next_byte,
 							       salt_size);
@@ -238,7 +238,6 @@ void calc_dh_v2(struct pluto_crypto_req *r)
 	/* clear out the reply (including pointers) */
 	static const struct pcr_skeycalc_v2_r zero_pcr_skeycalc_v2_r;
 	*skr = zero_pcr_skeycalc_v2_r;
-	INIT_WIRE_ARENA(*skr);
 
 	const struct oakley_group_desc *group = dhq.oakley_group;
 	passert(group != NULL);
@@ -368,7 +367,7 @@ PK11SymKey *ikev2_ike_sa_keymat(const struct prf_desc *prf_desc,
 				const chunk_t SPIi, const chunk_t SPIr,
 				size_t required_bytes)
 {
-	PK11SymKey *data = symkey_from_chunk("data", DBG_CRYPT, NULL, Ni);
+	PK11SymKey *data = symkey_from_chunk("data", DBG_CRYPT, Ni);
 	append_symkey_chunk(&data, Nr);
 	append_symkey_chunk(&data, SPIi);
 	append_symkey_chunk(&data, SPIr);
@@ -390,7 +389,7 @@ PK11SymKey *ikev2_child_sa_keymat(const struct prf_desc *prf_desc,
 {
 	PK11SymKey *data;
 	if (new_dh_secret == NULL) {
-		data = symkey_from_chunk("data", DBG_CRYPT, NULL, Ni);
+		data = symkey_from_chunk("data", DBG_CRYPT, Ni);
 		append_symkey_chunk(&data, Nr);
 	} else {
 		data = concat_symkey_chunk(new_dh_secret, Ni);

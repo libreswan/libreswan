@@ -23,9 +23,9 @@
 #ifndef _WHACK_H
 #define _WHACK_H
 
-#include "lswtime.h"
 #include "ietf_constants.h"
 #include "lmod.h"
+#include "deltatime.h"
 
 /* Since the message remains on one host, native representation is used.
  * Think of this as horizontal microcode: all selected operations are
@@ -156,7 +156,7 @@ struct whack_message {
 	unsigned long sa_keying_tries;
 	unsigned long sa_replay_window;
 	deltatime_t r_timeout; /* in secs */
-	unsigned long  r_interval; /* in msec */
+	deltatime_t r_interval; /* in msec */
 	enum nic_offload_options nic_offload;
 
 	/* For IKEv1 RFC 3706 - Dead Peer Detection */
@@ -185,7 +185,7 @@ struct whack_message {
 	 */
 	bool cisco_unity;
 
-	/* Option to send strongswan VID to allowe better interop */
+	/* Option to send strongswan VID to allow better interop */
 	bool fake_strongswan;
 
 	/* send our own libreswan vendorid or not */
@@ -236,10 +236,6 @@ struct whack_message {
 	char *keyid;	/* string 8 */
 	enum pubkey_alg pubkey_alg;
 	chunk_t keyval;	/* chunk */
-
-	/* for WHACK_MYID: */
-	bool whack_myid;
-	char *myid;	/* string 7 */
 
 	/* for REMOTE_HOST */
 	char *remote_host;
@@ -347,7 +343,7 @@ struct whack_message {
 	 * 12 right's updown
 	 * 13 right's virt
 	 * 14 keyid
-	 * 15 myid
+	 * 15 unused (was myid)
 	 * 16 ike
 	 * 17 esp
 	 * 18 left.username

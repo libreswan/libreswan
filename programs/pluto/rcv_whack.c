@@ -122,19 +122,21 @@ static int whack_unroute_connection(struct connection *c,
 	const struct spd_route *sr;
 	int fail = 0;
 
+	passert(c != NULL);
 	set_cur_connection(c);
 
 	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		if (sr->routing >= RT_ROUTED_TUNNEL)
 			fail++;
 	}
-	if (fail > 0)
+	if (fail > 0) {
 		whack_log(RC_RTBUSY,
 			"cannot unroute: route busy");
-	else if (c->policy & POLICY_GROUP)
+	} else if (c->policy & POLICY_GROUP) {
 		unroute_group(c);
-	else
+	} else {
 		unroute_connection(c);
+	}
 
 	reset_cur_connection();
 	return 1;
@@ -150,8 +152,6 @@ static void do_whacklisten(void)
 #endif
 	libreswan_log("listening for IKE messages");
 	listening = TRUE;
-	daily_log_reset();
-	set_myFQDN();
 	find_ifaces();
 	load_preshared_secrets();
 	load_groups();
@@ -164,7 +164,7 @@ static void key_add_request(const struct whack_message *msg)
 {
 	DBG_log("add keyid %s", msg->keyid);
 	struct id keyid;
-	err_t ugh = atoid(msg->keyid, &keyid, FALSE, FALSE);
+	err_t ugh = atoid(msg->keyid, &keyid, FALSE);
 
 	if (ugh != NULL) {
 		loglog(RC_BADID, "bad --keyid \"%s\": %s", msg->keyid, ugh);
@@ -242,7 +242,8 @@ static bool openwhackrecordfile(char *file)
 		return FALSE;
 	}
 
-	prettynow(when, sizeof(when), "%F %T");
+	struct realtm now = local_realtime(realnow());
+	strftime(when, sizeof(when), "%F %T", &now.tm);
 
 	fprintf(whackrecordfile, "#!-pluto-whack-file- recorded on %s on %s",
 		FQDN, when);
@@ -293,23 +294,29 @@ void whack_process(int whackfd, const struct whack_message *const m)
 				set_debugging(cur_debugging | new_debugging);
 				LSWDBGP(DBG_CONTROL, buf) {
 					lswlogs(buf, "old debugging ");
-					lswlog_enum_lset_short(buf, &debug_names, old_debugging);
+					lswlog_enum_lset_short(buf, &debug_names,
+							        "+", old_debugging);
 					lswlogs(buf, " + ");
-					lswlog_lmod(buf, &debug_names, m->debugging);
+					lswlog_lmod(buf, &debug_names,
+						    "+", m->debugging);
 				}
 				LSWDBGP(DBG_CONTROL, buf) {
 					lswlogs(buf, "base debugging = ");
-					lswlog_enum_lset_short(buf, &debug_names, new_debugging);
+					lswlog_enum_lset_short(buf, &debug_names,
+							       "+", new_debugging);
 				}
 				LSWDBGP(DBG_CONTROL, buf) {
 					lswlogs(buf, "old impairing ");
-					lswlog_enum_lset_short(buf, &impair_names, old_impairing);
+					lswlog_enum_lset_short(buf, &impair_names,
+							       "+", old_impairing);
 					lswlogs(buf, " + ");
-					lswlog_lmod(buf, &impair_names, m->impairing);
+					lswlog_lmod(buf, &impair_names,
+						    "+", m->impairing);
 				}
 				LSWDBGP(DBG_CONTROL, buf) {
 					lswlogs(buf, "base impairing = ");
-					lswlog_enum_lset_short(buf, &impair_names, new_impairing);
+					lswlog_enum_lset_short(buf, &impair_names,
+							       "+", new_impairing);
 				}
 				base_debugging = new_debugging | new_impairing;
 				set_debugging(base_debugging);
@@ -322,13 +329,15 @@ void whack_process(int whackfd, const struct whack_message *const m)
 					LSWDBGP(DBG_CONTROL, buf) {
 						lswlogf(buf, "\"%s\" extra_debugging = ",
 							c->name);
-						lswlog_lmod(buf, &debug_names, c->extra_debugging);
+						lswlog_lmod(buf, &debug_names,
+							    "+", c->extra_debugging);
 					}
 					c->extra_impairing = m->impairing;
 					LSWDBGP(DBG_CONTROL, buf) {
 						lswlogf(buf, "\"%s\" extra_impairing = ",
 							c->name);
-						lswlog_lmod(buf, &impair_names, c->extra_impairing);
+						lswlog_lmod(buf, &impair_names,
+							    "+", c->extra_impairing);
 					}
 				}
 			}
@@ -366,9 +375,6 @@ void whack_process(int whackfd, const struct whack_message *const m)
 		}
 	}
 
-	if (m->whack_myid)
-		set_myid(MYID_SPECIFIED, m->myid);
-
 	/* Deleting combined with adding a connection works as replace.
 	 * To make this more useful, in only this combination,
 	 * delete will silently ignore the lack of the connection.
@@ -400,7 +406,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 			DBG_log("received whack to delete %s state #%lu %s",
 				st->st_ikev2 ? "IKEv2" : "IKEv1",
 				st->st_serialno,
-				enum_name(&state_names, st->st_state));
+				st->st_state_name);
 
 			if (st->st_ikev2 && !IS_CHILD_SA(st)) {
 				DBG_log("Also deleting any corresponding CHILD_SAs");

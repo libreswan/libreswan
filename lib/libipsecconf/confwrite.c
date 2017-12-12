@@ -24,6 +24,10 @@
 #include <assert.h>
 #include <sys/queue.h>
 
+#include "constants.h"
+#include "lswlog.h"
+#include "lmod.h"
+
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
 #include "ipsecconf/keywords.h"
@@ -144,6 +148,21 @@ static void confwrite_int(FILE *out,
 			}
 			break;
 
+		case kt_lset:
+			if (options_set[k->field]) {
+				unsigned long val = options[k->field];
+
+				if (val != 0) {
+					LSWLOG_FILE(out, buf) {
+						lswlogf(buf, "\t%s%s=\"", side, k->keyname);
+						lswlog_enum_lset_short(buf, k->info->names,
+								       ",", val);
+						lswlogf(buf, "\"");
+					}
+				}
+			}
+			break;
+
 		case kt_comment:
 			break;
 
@@ -214,6 +233,7 @@ static void confwrite_str(FILE *out,
 		case kt_invertbool:
 		case kt_enum:
 		case kt_list:
+		case kt_lset:
 		case kt_loose_enum:
 			/* special enumeration */
 			break;

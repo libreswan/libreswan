@@ -23,6 +23,9 @@
 
 #include "lswlog.h"
 
+struct state;
+struct connection;
+
 /* moved common code to library file */
 #include "libreswan/passert.h"
 
@@ -30,6 +33,8 @@ extern bool
 	log_with_timestamp,     /* prefix timestamp */
 	log_append,
 	log_ip;
+
+extern const char *sensitive_ipstr(const ip_address *src, ipstr_buf *b);
 
 extern bool log_to_syslog;          /* should log go to syslog? */
 extern char *pluto_log_file;
@@ -44,8 +49,6 @@ extern char *pluto_stats_binary;
  * should be copied to it -- see whack_log()
  */
 extern int whack_log_fd;                        /* only set during whack_handle() */
-extern struct state *cur_state;                 /* current state, for diagnostics */
-extern struct connection *cur_connection;       /* current connection, for diagnostics */
 extern const ip_address *cur_from;              /* source of current current message */
 extern u_int16_t cur_from_port;                 /* host order */
 
@@ -58,45 +61,63 @@ extern bool whack_prompt_for(int whackfd,
 /* for pushing state to other subsystems */
 extern void log_state(struct state *st, enum state_kind state);
 
-extern void extra_debugging(const struct connection *c);
-
 extern void set_debugging(lset_t deb);
+extern void reset_debugging(void);
+
 extern lset_t base_debugging;	/* bits selecting what to report */
 
-#define reset_debugging() { set_debugging(base_debugging); }
+extern void reset_globals(void);
+extern bool globals_are_reset(void);
 
-#define GLOBALS_ARE_RESET() (whack_log_fd == NULL_FD \
-			      && cur_state == NULL \
-			      && cur_connection == NULL \
-			      && cur_from == NULL \
-			      && cur_debugging == base_debugging)
+struct connection *log_push_connection(struct connection *c, const char *func,
+				       const char *file, long line);
+void log_pop_connection(struct connection *c, const char *func,
+			const char *file, long line);
 
-#define reset_globals() { \
-		whack_log_fd = NULL_FD; \
-		cur_state = NULL; \
-		cur_from = NULL; \
-		reset_cur_connection(); \
-}
+#define push_cur_connection(C) log_push_connection(C, __func__, PASSERT_BASENAME, __LINE__)
+#define pop_cur_connection(C) log_pop_connection(C, __func__, PASSERT_BASENAME, __LINE__)
 
-#define set_cur_connection(c) { \
-		cur_connection = (c); \
-		extra_debugging(c); \
-}
+so_serial_t log_push_state(struct state *st, const char *func,
+			   const char *file, long line);
+void log_pop_state(so_serial_t serialno, const char *func,
+		   const char *file, long line);
 
-#define reset_cur_connection() { \
-		cur_connection = NULL; \
-		reset_debugging(); \
-}
+#define push_cur_state(ST) log_push_state(ST, __func__, PASSERT_BASENAME, __LINE__)
+#define pop_cur_state(ST) log_pop_state(ST, __func__, PASSERT_BASENAME, __LINE__)
 
-#define set_cur_state(s) { \
-		cur_state = (s); \
-		extra_debugging((s)->st_connection); \
-}
+#define set_cur_connection(C) push_cur_connection(C)
+#define reset_cur_connection() pop_cur_connection(NULL)
+#define set_cur_state(ST) push_cur_state(ST)
+#define reset_cur_state() pop_cur_state(SOS_NOBODY)
 
-#define reset_cur_state() { \
-		cur_state = NULL; \
-		reset_debugging(); \
-}
+/*
+ * Log 'cur' directly (without setting it first).
+ */
+
+void log_prefix(struct lswlog *buf, bool debug,
+		struct state *st, struct connection *c);
+
+#define LSWLOG_STATE(STATE, BUF)					\
+	LSWLOG_(true, BUF,						\
+		log_prefix(BUF, false, STATE, NULL),			\
+		lswlog_to_log_whack_stream(BUF, RC_LOG))
+
+#define LSWLOG_CONNECTION(CONNECTION, BUF)				\
+	LSWLOG_(true, BUF,						\
+		log_prefix(BUF, true, NULL, CONNECTION),		\
+		lswlog_to_log_whack_stream(BUF, RC_LOG))
+
+bool log_debugging(struct state *st, struct connection *c, lset_t predicate);
+
+#define LSWDBGP_STATE(DEBUG, STATE, BUF)				\
+	LSWLOG_(log_debugging(STATE, NULL, DEBUG), BUF,			\
+		log_prefix(BUF, true, STATE, NULL),			\
+		lswlog_to_debug_stream(BUF))
+
+#define LSWDBGP_CONNECTION(DEBUG, CONNECTION, BUF)			\
+	LSWLOG_(log_debugging(NULL, CONNECTION, DEBUG), BUF,		\
+		log_prefix(BUF, true, NULL, CONNECTION),		\
+		lswlog_to_debug_stream(BUF))
 
 extern void pluto_init_log(void);
 extern void close_log(void);
@@ -116,12 +137,6 @@ void whack_log_comment(const char *message, ...) PRINTF_LIKE(1);
 
 /* show status, usually on whack log */
 extern void show_status(void);
-
-/*
- * call this routine to reset daily items.
- */
-extern void daily_log_reset(void);
-extern void daily_log_event(void);
 
 extern void show_setup_plutomain(void);
 extern void show_setup_natt(void);
@@ -151,13 +166,5 @@ extern void linux_audit(const int type, const char *message,
 			const char *addr, const int result);
 extern void linux_audit_conn(const struct state *st, enum linux_audit_kind);
 #endif
-
-/*
- * some events are to be logged only occasionally.
- */
-extern bool logged_myid_ip_txt_warning;
-extern bool logged_myid_fqdn_txt_warning;
-
-void prettynow(char *buf, size_t buflen, const char *fmt) STRFTIME_LIKE(3);
 
 #endif /* _PLUTO_LOG_H */

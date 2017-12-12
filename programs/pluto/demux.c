@@ -75,6 +75,7 @@
 void init_demux(void)
 {
 	init_ikev1();
+	init_ikev2();
 }
 
 /* forward declarations */
@@ -194,6 +195,141 @@ void comm_handle_cb(evutil_socket_t fd UNUSED, const short event UNUSED, void *a
 }
 
 
+/*
+ * Impair pluto by replaying packets.
+ *
+ * To make things easier, all packets received are saved, in-order, in
+ * a list and then various impair operations iterate over this list.
+ *
+ * For instance, IKEv1 sends back-to-back packets (see XAUTH).  By
+ * replaying them (and everything else) this can simulate what happens
+ * when the remote starts re-transmitting them.
+ */
+
+static struct msg_digest *dup_md(struct msg_digest *orig)
+{
+	struct msg_digest *dup = alloc_md("dup");
+	/* raw_packet */
+	dup->iface = orig->iface;
+	dup->sender = orig->sender;
+	dup->sender_port = orig->sender_port;
+	/* packet_pbs ... */
+	size_t packet_size = pbs_room(&orig->packet_pbs);
+	void *packet_bytes = clone_bytes(orig->packet_pbs.start, packet_size, "dup packet");
+	init_pbs(&dup->packet_pbs, packet_bytes, packet_size, "dup pbs");
+	/* message_pbs */
+	/* clr_pbs */
+	/* hdr */
+	/* encrypted */
+	/* from_state */
+	/* smc */
+	/* svm */
+	/* new_iv_set */
+	/* st */
+	/* original_role */
+	/* msgid_received */
+	/* rbody */
+	/* note */
+	/* dpd */
+	/* ikev2 */
+	/* fragvid */
+	/* nortel */
+	/* event_already_set */
+	/* digest */
+	/* digest_roof */
+	/* chain */
+	/* quirks */
+	return dup;
+}
+
+static void process_dup(struct msg_digest *orig)
+{
+	struct msg_digest *md = dup_md(orig);
+	process_packet(&md);
+	/* copy of comm_handle() tail */
+	release_any_md(&md);
+	reset_cur_state();
+	reset_cur_connection();
+	cur_from = NULL;
+	passert(globals_are_reset());
+}
+
+static unsigned long replay_count;
+
+struct replay_entry {
+	struct list_entry entry;
+	struct msg_digest *md;
+	unsigned long nr;
+};
+
+static struct replay_entry *replay_entry(struct msg_digest *md)
+{
+	struct replay_entry *e = alloc_thing(struct replay_entry, "replay");
+	e->md = dup_md(md);
+	e->nr = ++replay_count; /* yes; pre-increment */
+	e->entry.data = e; /* back-link */
+	return e;
+}
+
+static size_t log_replay_entry(struct lswlog *buf, void *data)
+{
+	struct replay_entry *r = (struct replay_entry*)data;
+	return lswlogf(buf, "replay packet %lu", r == NULL ? 0L : r->nr);
+}
+
+static struct list_entry replay_packets;
+
+static struct list_info replay_info = {
+	.name = "replay list",
+	.log = log_replay_entry,
+};
+
+static void impair_replay(void *data UNUSED)
+{
+	if (DBGP(IMPAIR_REPLAY_DUPLICATES)) {
+		/* get the most recent entry */
+		struct replay_entry *e = NULL;
+		FOR_EACH_LIST_ENTRY_NEW2OLD(&replay_packets, e) {
+			break;
+		}
+		passert(e != NULL);
+		const int max_duplicates = MAXIMUM_v1_ACCEPTED_DUPLICATES+1;
+		for (int d = 1; d <= max_duplicates; d++) {
+			libreswan_log("IMPAIR: duplicate packet %lu copy %d of %d",
+				      e->nr, d, max_duplicates);
+			process_dup(e->md);
+		}
+	}
+	if (DBGP(IMPAIR_REPLAY_FORWARD)) {
+		struct replay_entry *e = NULL;
+		FOR_EACH_LIST_ENTRY_OLD2NEW(&replay_packets, e) {
+			libreswan_log("IMPAIR: replay forward: packet %lu of %lu",
+				      e->nr, replay_count);
+			process_dup(e->md);
+		}
+	}
+	if (DBGP(IMPAIR_REPLAY_BACKWARD)) {
+		struct replay_entry *e = NULL;
+		FOR_EACH_LIST_ENTRY_NEW2OLD(&replay_packets, e) {
+			libreswan_log("IMPAIR: replay backward: packet %lu of %lu",
+				      e->nr, replay_count);
+			process_dup(e->md);
+		}
+	}
+}
+
+static void impair_incoming(struct msg_digest *md)
+{
+	if (DBGP(IMPAIR_REPLAY_DUPLICATES) ||
+	    DBGP(IMPAIR_REPLAY_FORWARD) ||
+	    DBGP(IMPAIR_REPLAY_BACKWARD)) {
+		/* save this packet */
+		struct replay_entry *e = replay_entry(md);
+		insert_list_entry(&replay_info, &replay_packets, &e->entry);
+		pluto_event_now("replay", impair_replay, NULL);
+	}
+}
+
 /* wrapper for read_packet and process_packet
  *
  * The main purpose of this wrapper is to factor out teardown code
@@ -230,15 +366,17 @@ static void comm_handle(const struct iface_port *ifp)
 	md = alloc_md("msg_digest in comm_handle");
 	md->iface = ifp;
 
-	if (read_packet(md))
+	if (read_packet(md)) {
+		impair_incoming(md);
 		process_packet(&md);
+	}
 
 	release_any_md(&md);
 
-	cur_state = NULL;
+	reset_cur_state();
 	reset_cur_connection();
 	cur_from = NULL;
-	passert(GLOBALS_ARE_RESET());
+	passert(globals_are_reset());
 }
 
 /* read the message.

@@ -1,0 +1,69 @@
+#!/bin/bash -e
+
+# Copyright (C) 2017 Paul Wouters <paul@libreswan.org>
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+
+# TSIG keys can be generated using bind's ddns-confgen command
+#
+#KEY=/etc/bind/keys/yourddns.key
+
+KEY="$(dirname $0)/dyn.nohats.ca.key"
+
+echo "Using keyfile: $KEY"
+
+# The zone in which the update happens
+#ZONE=yourdomain
+ZONE=dyn.nohats.ca
+
+# TTL to use for new DNS entries
+TTL=300
+
+# Name of Dyn DNS update utility (eg nsupdate, kupdate, etc)
+DNSUPDATER=nsupdate
+
+# The name/IP of the server to send the Dynamic DNS update to
+#DNSSERVER=ns0.yourdomain.com
+# Demo server that accepts DYN DNS updates for the zone dyn.nohats.ca
+DNSSERVER=hiddenmaster.nohats.ca
+
+# Your IP address to update the A and/or PTR records for
+# 8.8.8.8 is a random IP to get the default route
+MYIP=$(ip route get 8.8.8.8 | head -1 | awk '{print $7}')
+
+# Your hostname, default is to use hostname.ZONE
+MYNAME="$(hostname -s).$ZONE"
+# If you don't have a raw RSA key, generate one using:
+# ipsec newhostkey --output  /etc/ipsec.d/hostkey.secrets
+#
+# Get our raw RSA key and generate the IPSECKEY syntax
+CKAID="$(ipsec showhostkey --list | head -1 | sed 's/^.*://')"
+IPSECKEY="$(ipsec showhostkey --ipseckey --ckaid $CKAID)"
+
+#echo $MYNAME
+#echo $IPSECKEY
+KEYDATA=$(echo $IPSECKEY | sed "s/^.*IPSECKEY//")
+echo $KEYDATA
+
+echo "Updating $MYNAME A record to $MYIP and sending IPSECKEY using server $DNSSERVER"
+
+echo "->update add IPSECKEY $IPSECKEY"
+
+cat <<EOF | $DNSUPDATER -k "$KEY"
+server $DNSSERVER
+zone $ZONE
+update delete $MYNAME A
+update add $MYNAME $TTL A $MYIP
+update delete $MYNAME IPSECKEY
+update add $MYNAME $TTL IPSECKEY $KEYDATA
+send
+EOF
+

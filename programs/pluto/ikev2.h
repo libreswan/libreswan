@@ -28,20 +28,20 @@ extern void complete_v2_state_transition(struct msg_digest **mdp,
 
 extern stf_status ikev2_send_informational(struct state *st);
 
-extern stf_status process_encrypted_informational_ikev2(struct msg_digest *md);
+extern state_transition_fn process_encrypted_informational_ikev2;
 
 extern stf_status ikev2_parent_outI1_tail(struct pluto_crypto_req_cont *ke,
 						struct pluto_crypto_req *r);
-extern stf_status ikev2_child_ike_inIoutR(struct msg_digest *md);
-extern stf_status ikev2_child_inR(struct msg_digest *md);
-extern stf_status ikev2_child_inIoutR(struct msg_digest *md);
+extern state_transition_fn ikev2_child_ike_inIoutR;
+extern state_transition_fn ikev2_child_inR;
+extern state_transition_fn ikev2_child_inIoutR;
 
-extern stf_status ikev2parent_inI1outR1(struct msg_digest *md);
-extern stf_status ikev2parent_inR1(struct msg_digest *md);
-extern stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md);
-extern stf_status ikev2parent_inR1outI2(struct msg_digest *md);
-extern stf_status ikev2parent_inI2outR2(struct msg_digest *md);
-extern stf_status ikev2parent_inR2(struct msg_digest *md);
+extern state_transition_fn ikev2parent_inI1outR1;
+extern state_transition_fn ikev2parent_inR1;
+extern state_transition_fn ikev2parent_inR1BoutI1B;
+extern state_transition_fn ikev2parent_inR1outI2;
+extern state_transition_fn ikev2parent_inI2outR2;
+extern state_transition_fn ikev2parent_inR2;
 extern stf_status ikev2_child_out_cont(struct pluto_crypto_req_cont *qke,
 						struct pluto_crypto_req *r);
 extern stf_status ikev2_child_inR_tail(struct pluto_crypto_req_cont *qke,
@@ -207,7 +207,7 @@ extern stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 
 extern int ikev2_parse_ts(struct payload_digest *ts_pd,
 			  struct traffic_selector *array,
-			  unsigned int array_max);
+			  unsigned int array_roof);
 
 extern int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
 						  const struct spd_route *sr,
@@ -232,9 +232,8 @@ extern stf_status ikev2_resp_accept_child_ts(const struct msg_digest *md,
 extern void ikev2_update_msgid_counters(struct msg_digest *md);
 extern void ikev2_print_ts(struct traffic_selector *ts);
 
-extern void send_v2_notification(struct state *p1st,
+extern void send_v2_notification(struct state *pst,
 				 v2_notification_t type,
-				 struct state *encst,
 				 u_char *icookie,
 				 u_char *rcookie,
 				 chunk_t *data);
@@ -246,8 +245,8 @@ extern bool ship_v2N(enum next_payload_types_ikev2 np,
 		     v2_notification_t type,
 		     const chunk_t *n_data, pb_stream *rbody);
 
-extern time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
-				  enum original_role role);
+extern deltatime_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
+				       enum original_role role);
 
 stf_status ikev2_send_cp(struct state *st, enum next_payload_types_ikev2 np,
 		pb_stream *outpbs);
@@ -339,9 +338,4 @@ extern bool is_msg_request(struct msg_digest *md);
 
 extern bool need_this_intiator(struct state *st);
 
-#define SEND_V2_NOTIFICATION(t) { \
-	if (st != NULL) \
-		send_v2_notification_from_state(st, t, NULL); \
-	else \
-		send_v2_notification_from_md(md, t, NULL); }
-
+extern void init_ikev2(void);

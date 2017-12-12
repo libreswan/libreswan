@@ -1,10 +1,9 @@
 ipsec auto --up westnet-eastnet-ikev2a
 ping -w 1 -q -n -c 4 -I 192.0.1.254 192.0.2.254
-# this will fail
-#
+# These two conns are mismatched and should fail
+# The whack should release the socket on receiving NO_PROPOSAL_CHOSEN
 ipsec auto --up westnet-eastnet-ikev2b
-# next one whack is not releasing ?
-#ipsec auto --up westnet-eastnet-ikev2c &
+ipsec auto --up westnet-eastnet-ikev2c
 #
 # should see westnet-eastnet-ikev2b expiring
 # should see westnet-eastnet-ikev2c replacing

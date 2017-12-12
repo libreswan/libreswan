@@ -70,12 +70,12 @@ void libreswan_log_errno(int e, const char *prefix, const char *message, ...)
 	}
 }
 
-void lswlog_pre(struct lswlog *buf)
+void lswlog_log_prefix(struct lswlog *buf)
 {
 	lswlogf(buf, "%s%s", progname, prog_suffix);
 }
 
-void lswlog_to_logwhack_stream(struct lswlog *buf, enum rc_type rc UNUSED)
+void lswlog_to_log_whack_stream(struct lswlog *buf, enum rc_type rc UNUSED)
 {
 	if (log_to_stderr) {
 		fprintf(stderr, "%s\n", buf->array);

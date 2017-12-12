@@ -27,43 +27,33 @@ WEB_UTILSDIR = testing/utils
 WEB_SOURCEDIR = testing/web
 WEB_REPODIR ?= .
 
+ifndef WEB_SUMMARYDIR
+WEB_SUMMARYDIR := $(if $(wildcard $(LSW_WEBDIR)),$(LSW_WEBDIR))
+endif
 # This is verbose so it being invoked is easy to spot
 WEB_SUBDIR ?= $(shell set -x ; $(WEB_SOURCEDIR)/gime-git-description.sh $(WEB_REPODIR))
+ifndef WEB_RESULTSDIR
+WEB_RESULTSDIR := $(if $(WEB_SUMMARYDIR),$(WEB_SUMMARYDIR)/$(WEB_SUBDIR))
+endif
 
 #
 # Rules for building web pages during test runs.
 #
-# To prevent GIT being invoked: this is only enabled when the
-# destination directory exists; and WEB_SUMMARYDIR is only set as part
-# of a further recursive make.
 
-.PHONY: web-test-prep web-test-post web-page
+.PHONY: web-test-prep web-page web
 
 ifeq ($(wildcard $(LSW_WEBDIR)),)
-
-define web-page
-Web-pages disabled.
-To enable web pages create the directory $(LSW_WEBDIR) (LSW_WEBDIR).
-To convert the current results into a web page run: make web-page
-endef
-
-web-test-prep web-test-post:
-	$(info $(web-page))
-
-else
-
 web-test-prep:
-	$(MAKE) web-resultsdir WEB_SUMMARYDIR=$(LSW_WEBDIR)
-	$(MAKE) web-summarydir WEB_SUMMARYDIR=$(LSW_WEBDIR)
-
-web-test-post:
-	@: nothing to do
-
+else
+web-test-prep: web-resultsdir web-summarydir
 endif
 
-web-page: | $(LSW_WEBDIR)
-	$(MAKE) web-summarydir WEB_SUMMARYDIR=$(LSW_WEBDIR)
-	$(MAKE) web-resultsdir WEB_SUMMARYDIR=$(LSW_WEBDIR)
+# this invokes $(WEB_SUBDIR) a lot; easier to ignore than fix
+web web-page: | $(LSW_WEBDIR)
+	$(MAKE) web-summarydir \
+		WEB_SUMMARYDIR=$(LSW_WEBDIR) WEB_RESULTSDIR=$(LSW_WEBDIR)/$(WEB_SUBDIR)
+	$(MAKE) web-resultsdir \
+		WEB_SUMMARYDIR=$(LSW_WEBDIR) WEB_RESULTSDIR=$(LSW_WEBDIR)/$(WEB_SUBDIR)
 	$(WEB_UTILSDIR)/kvmresults.py \
 		--quick \
 		--test-kind '' \
@@ -82,8 +72,8 @@ $(LSW_WEBDIR):
 # default - very slow.
 #
 
-.PHONY: web
-web:
+.PHONY: web-site
+web-site:
 
 #
 # Create or update just the summary web page.
@@ -107,8 +97,6 @@ web-resultsdir:
 # WEB_SUMMARYDIR.
 #
 
-WEB_SUMMARYDIR ?=
-
 ifneq ($(WEB_SUMMARYDIR),)
 
 WEB_SOURCES = $(wildcard $(addprefix $(WEB_SOURCEDIR)/, *.css *.js *.html))
@@ -120,7 +108,7 @@ WEB_TIME := $(shell $(WEB_SOURCEDIR)/now.sh)
 #
 
 .PHONY: web-summary-html
-web web-summarydir web-summary-html: $(WEB_SUMMARYDIR)/summary.html
+web-site web-summarydir web-summary-html: $(WEB_SUMMARYDIR)/summary.html
 $(WEB_SUMMARYDIR)/summary.html: $(WEB_SOURCES) | $(WEB_SUMMARYDIR)
 	: WEB_SUMMARYDIR=$(WEB_SUMMARYDIR)
 	: WEB_SOURCES=$(WEB_SOURCES)
@@ -133,7 +121,7 @@ $(WEB_SUMMARYDIR)/summary.html: $(WEB_SOURCES) | $(WEB_SUMMARYDIR)
 #
 
 .PHONY: web-summaries-json
-web web-summarydir web-summaries-json: $(WEB_SUMMARYDIR)/summaries.json
+web-site web-summarydir web-summaries-json: $(WEB_SUMMARYDIR)/summaries.json
 $(WEB_SUMMARYDIR)/summaries.json: $(wildcard $(WEB_SUMMARYDIR)/*-g*/summary.json) $(WEB_SOURCEDIR)/json-summaries.sh
 	$(WEB_SOURCEDIR)/json-summaries.sh \
 		$(wildcard $(WEB_SUMMARYDIR)/*-g*/summary.json) \
@@ -146,7 +134,7 @@ $(WEB_SUMMARYDIR)/summaries.json: $(wildcard $(WEB_SUMMARYDIR)/*-g*/summary.json
 # no dependencies, just ensure it exists.
 
 .PHONY: web-status-json
-web web-summarydir web-status-json: $(WEB_SUMMARYDIR)/status.json
+web-site web-summarydir web-status-json: $(WEB_SUMMARYDIR)/status.json
 $(WEB_SUMMARYDIR)/status.json:
 	$(WEB_SOURCEDIR)/json-status.sh "initialized" > $@.tmp
 	mv $@.tmp $@
@@ -163,23 +151,48 @@ $(WEB_SUMMARYDIR)/status.json:
 # rebuild of all relevant commits.
 #
 # To avoid lots of '... is up to date', the recursive make is silent.
-
-.PHONY: web-commits-json $(WEB_SUMMARYDIR)/commits.json
-web web-summarydir web-commits-json: $(WEB_SUMMARYDIR)/commits.json
-$(WEB_SUMMARYDIR)/commits.json:
-	: running MAKE silently to rebuild out-of-date commits
-	@$(MAKE) --no-print-directory -s $(WEB_COMMITSDIR) $(COMMIT_FILES)
-	: pick up all commits unconditionally and unsorted.
-	find $(WEB_COMMITSDIR) -name '*.json' -exec cat \{\} \; \
-		| jq -s . > $@.tmp
-	mv $@.tmp $@
+#
+# In theory, all the .json files needing an update can be processed
+# using a single make invocation.  Unfortunately the list can get so
+# long that it exceeds command line length limits, so a slow pipe is
+# used instead.
 
 WEB_COMMITSDIR = $(WEB_SUMMARYDIR)/commits
-
 FIRST_COMMIT = $(shell $(WEB_SOURCEDIR)/earliest-commit.sh $(WEB_SUMMARYDIR) $(WEB_REPODIR))
-COMMIT_HASHES = $(shell cd $(WEB_REPODIR) ; git rev-list --abbrev-commit $(FIRST_COMMIT)^..)
-COMMIT_FILES = $(addsuffix .json, $(addprefix $(WEB_COMMITSDIR)/, $(COMMIT_HASHES)))
 # MISSING_COMMIT_FILES = $(filter-out $(wildcard $(WEB_COMMITSDIR)/*.json), $(COMMIT_FILES))
+
+.PHONY: web-commits-json $(WEB_SUMMARYDIR)/commits.json
+web-site web-summarydir web-commits-json: $(WEB_SUMMARYDIR)/commits.json
+$(WEB_SUMMARYDIR)/commits.json:
+	: use a pipe to avoid to-long-line when rebuilding out-of-date commits
+	: use shell variables to avoid re-evaluation
+	set -e ; \
+	web_sourcedir=$(WEB_SOURCEDIR) ; \
+	web_repodir=$(WEB_REPODIR) ; \
+	web_summarydir=$(WEB_SUMMARYDIR) ; \
+	web_resultsdir=$(WEB_RESULTSDIR) ; \
+	web_commitsdir=$(WEB_COMMITSDIR) ; \
+	web_subdir=$(WEB_SUBDIR) ; \
+	first_commit=$(FIRST_COMMIT) ; \
+	$(MAKE) $${web_commitsdir} \
+		WEB_SUBDIR=$${web_subdir} \
+		WEB_SUMMARYDIR=$${web_summarydir} \
+		WEB_RESULTSDIR=$${web_resultsdir} \
+		; \
+	( cd $${web_repodir} ; git rev-list --abbrev-commit $${first_commit}^..) \
+	| while read commit ; do \
+		echo $${web_commitsdir}/$${commit}.json ; \
+		$(MAKE) --no-print-directory -s \
+			WEB_SUBDIR=$${web_subdir} \
+			WEB_SUMMARYDIR=$${web_summarydir} \
+			WEB_RESULTSDIR=$${web_resultsdir} \
+			$${web_commitsdir}/$${commit}.json ; \
+	done ; \
+	: pick up all commits unconditionally and unsorted. ; \
+	find $${web_commitsdir} -name '*.json' \
+		| xargs --no-run-if-empty cat \
+		| jq -s . > $@.tmp
+	mv $@.tmp $@
 
 $(WEB_COMMITSDIR)/%.json: $(WEB_SOURCEDIR)/json-commit.sh | $(WEB_COMMITSDIR)
 	$(WEB_SOURCEDIR)/json-commit.sh $* $(WEB_REPODIR) > $@.tmp
@@ -196,10 +209,11 @@ $(WEB_COMMITSDIR):
 
 WEB_RESULTS_HTML = $(wildcard $(WEB_SUMMARYDIR)/*-g*/results.html)
 .PHONY: web-results-html
-web web-results-html: $(WEB_RESULTS_HTML)
+web-site web-results-html: $(WEB_RESULTS_HTML)
 
 $(WEB_SUMMARYDIR)/%/results.html: $(WEB_SOURCES)
-	$(MAKE) web-resultsdir WEB_RESULTSDIR=$(dir $@)
+	$(MAKE) web-resultsdir \
+		WEB_SUMMARYDIR=$(WEB_SUMMARYDIR) WEB_RESULTSDIR=$(dir $@)
 
 endif
 
@@ -208,7 +222,6 @@ endif
 # page.  Requires WEB_SUMMARYDIR or WEB_RESULTSDIR.
 #
 
-WEB_RESULTSDIR := $(if $(WEB_SUMMARYDIR),$(WEB_SUMMARYDIR)/$(WEB_SUBDIR))
 
 ifneq  ($(WEB_RESULTSDIR),)
 
@@ -244,7 +257,7 @@ ifneq ($(WEB_SCRATCH_REPODIR),)
 ifneq ($(abspath $(WEB_SCRATCH_REPODIR)),$(abspath .))
 
 .PHONY: web-results-json
-web web-results-json: $(sort $(wildcard $(WEB_SUMMARYDIR)/*-g*/results.json))
+web-site web-results-json: $(sort $(wildcard $(WEB_SUMMARYDIR)/*-g*/results.json))
 
 $(WEB_SUMMARYDIR)/%/results.json: $(WEB_UTILSDIR)/kvmresults.py $(WEB_UTILSDIR)/fab/*.py
 	$(WEB_SOURCEDIR)/json-results.sh $(WEB_SCRATCH_REPODIR) $(dir $@)
@@ -293,7 +306,7 @@ Web Configuration:
 
 Internal targets:
 
-    web:
+    web-site:
 
         update the web site
 

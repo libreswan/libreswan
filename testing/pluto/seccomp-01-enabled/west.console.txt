@@ -46,7 +46,7 @@ west #
 west #
  # whack socket will hang because pluto is expected to die
 west #
- ipsec whack --seccomp-crashtest &
+ ipsec whack --seccomp-crashtest --asynchronous &
 [x] PID
 west #
  disown
@@ -61,10 +61,14 @@ west #
 west #
  # one entry of SECCOMP activating should show up in the log
 west #
- grep SECCOMP /var/log/audit/audit.log
-type=SECCOMP msg=audit(XXX): auid=AUID uid=0 gid=0 ses=SES subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 pid=PID comm="pluto" exe="PATH/libexec/ipsec/pluto" sig=31 arch=c000003e syscall=124 compat=0 ip=0x7fef65f253e7 code=0x0
+ grep SECCOMP /var/log/audit/audit.log | sed "s/ip=.*/ip=XXX/"
+type=SECCOMP msg=audit(XXX): auid=AUID uid=0 gid=0 ses=SES subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 pid=PID comm="pluto" exe="PATH/libexec/ipsec/pluto" sig=31 arch=c000003e syscall=124 compat=0 ip=XXX
 west #
  echo done
 done
 west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

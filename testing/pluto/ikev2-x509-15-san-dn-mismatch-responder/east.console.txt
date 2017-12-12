@@ -18,6 +18,7 @@ east #
 east #
  grep "ID type" /tmp/pluto.log
 |    ID type: ID_DER_ASN1_DN (0x9)
+|    ID type: ID_DER_ASN1_DN (0x9)
 east #
  grep "RSA authentication failed" /tmp/pluto.log
 east #

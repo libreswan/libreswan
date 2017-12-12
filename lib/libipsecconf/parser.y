@@ -156,6 +156,9 @@ statement_kw:
 		case kt_list:
 			number = parser_enum_list(kw.keydef, value, TRUE);
 			break;
+		case kt_lset:
+			number = parser_lset(kw.keydef, value);	/* XXX: truncates! */
+			break;
 		case kt_enum:
 			number = parser_enum_list(kw.keydef, value, FALSE);
 			break;
@@ -216,6 +219,9 @@ statement_kw:
 		switch (kw.keydef->type) {
 		case kt_list:
 			number = parser_enum_list(kw.keydef, $3, TRUE);
+			break;
+		case kt_lset:
+			number = parser_lset(kw.keydef, $3); /* XXX: truncates! */
 			break;
 		case kt_enum:
 			number = parser_enum_list(kw.keydef, $3, FALSE);

@@ -98,12 +98,11 @@ static void test_proposal(const struct parser_policy policy, const char *arg)
 	for (const struct protocol *protocol = protocols;
 	     protocol < protocols + elemsof(protocols);
 	     protocol++) {
-#define starts_with(ARG,STRING) strncmp(ARG,STRING,strlen(STRING))
 		if (streq(arg, protocol->name)) {
 			protocol->parser(policy, NULL);
 			return;
 		}
-		if (starts_with(arg, protocol->name)
+		if (startswith(arg, protocol->name)
 		    && arg + strlen(protocol->name) == eq) {
 			protocol->parser(policy, eq + 1);
 			return;

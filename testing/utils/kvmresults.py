@@ -209,11 +209,13 @@ def results(logger, tests, baseline, args, result_stats):
             publish.json_result(logger, args, result)
 
             # If there is a baseline; limit what is printed to just
-            # those that differ.
+            # those where the result is different.  If both baseline
+            # and this result fail differently then skip.
             if baseline:
                 baseline_issue = False
                 for issue in result.issues:
-                    if "baseline" in issue:
+                    if "baseline-passed" in issue \
+                    or "baseline-failed" in issue:
                         baseline_issue = True
                         break
                 if not baseline_issue:

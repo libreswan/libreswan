@@ -24,11 +24,12 @@
 struct ike_alg;
 struct hash_desc;
 struct encrypt_desc;
+struct prf_desc;
 
 /*
  * Log some information on a SYMKEY.
  *
- * The format is <PREFIX>: <NAME>-key@...
+ * The format is <PREFIX><NAME>-key@...
  */
 void DBG_symkey(const char *prefix, const char *name, PK11SymKey *key);
 
@@ -41,7 +42,7 @@ PK11SymKey *reference_symkey(const char *prefix, const char *name, PK11SymKey *k
 /*
  * Length of a symkey in bytes.
  *
- * If KEY is NULL, return 0 (and hopefully not dump core).  (if we're
+ * If KEY is NULL, return 0 (and we hope not dump core).  (If we're
  * not allowed to know the length of the key then this will also
  * return 0).
  */
@@ -84,10 +85,24 @@ void append_chunk_chunk(const char *name, chunk_t *lhs, chunk_t rhs);
  *
  * Offset into the SYMKEY is in BYTES.
  */
-PK11SymKey *symkey_from_symkey_bytes(const char *name, lset_t debug,
-				     const struct ike_alg *symkey_alg,
-				     size_t symkey_start_byte, size_t sizeof_symkey,
-				     PK11SymKey *source_key);
+PK11SymKey *prf_key_from_symkey_bytes(const char *name, lset_t debug,
+				      const struct prf_desc *prf,
+				      size_t symkey_start_byte, size_t sizeof_symkey,
+				      PK11SymKey *source_key);
+
+/*
+ * Extract SIZEOF_SYMKEY bytes of keying material as an ALG key (i.e.,
+ * can be used to implement ALG).
+ *
+ * For instance, an encryption key needs to have a type matching the
+ * NSS encryption algorithm.
+ *
+ * Offset into the SYMKEY is in BYTES.
+ */
+PK11SymKey *encrypt_key_from_symkey_bytes(const char *name, lset_t debug,
+					  const struct encrypt_desc *encrypt,
+					  size_t symkey_start_byte, size_t sizeof_symkey,
+					  PK11SymKey *source_key);
 
 /*
  * Extract wire material from a symkey.
@@ -107,11 +122,15 @@ chunk_t chunk_from_symkey_bytes(const char *prefix, lset_t debug,
  * Used to avoid interface issues with NSS.
  */
 PK11SymKey *symkey_from_bytes(const char *name, lset_t debug,
-			      const struct ike_alg *alg,
 			      const u_int8_t *bytes, size_t sizeof_bytes);
 PK11SymKey *symkey_from_chunk(const char *name, lset_t debug,
-			      const struct ike_alg *alg,
 			      chunk_t chunk);
+PK11SymKey *encrypt_key_from_bytes(const char *name, lset_t debug,
+				   const struct encrypt_desc *encrypt,
+				   const u_int8_t *bytes, size_t sizeof_bytes);
+PK11SymKey *prf_key_from_bytes(const char *name, lset_t debug,
+			       const struct prf_desc *prf,
+			       const u_int8_t *bytes, size_t sizeof_bytes);
 
 /*
  * Extract SIZEOF_KEY bytes of keying material as a KEY.

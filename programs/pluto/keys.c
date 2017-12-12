@@ -413,47 +413,45 @@ stf_status RSA_check_signature_gen(struct state *st,
 
 	/* try all appropriate Public keys */
 	{
-		struct pubkey_list *p, **pp;
-		int pathlen;
 		realtime_t nw = realnow();
-		char thatid[IDTOA_BUF];
 
-		idtoa(&c->spd.that.id, thatid, IDTOA_BUF);
+		DBG(DBG_CONTROL, {
+			char buf[IDTOA_BUF];
+			dntoa_or_null(buf, IDTOA_BUF, c->spd.that.ca, "%any");
+			DBG_log("required CA is '%s'", buf);
+		});
 
-		pp = &pluto_pubkeys;
+		struct pubkey_list **pp = &pluto_pubkeys;
 
-		{
-
-			DBG(DBG_CONTROL, {
-				    char buf[IDTOA_BUF];
-				    dntoa_or_null(buf, IDTOA_BUF,
-						  c->spd.that.ca, "%any");
-				    DBG_log("required CA is '%s'", buf);
-			    });
-		}
-		for (p = pluto_pubkeys; p != NULL; p = *pp) {
+		for (struct pubkey_list *p = pluto_pubkeys; p != NULL; p = *pp) {
 			struct pubkey *key = p->key;
 			char printkid[IDTOA_BUF];
 
 			idtoa(&key->id, printkid, IDTOA_BUF);
-			DBG(DBG_CONTROL, DBG_log("checking keyid '%s' for match with '%s'",
-				printkid, thatid));
+			DBG(DBG_CONTROL, {
+				char thatid[IDTOA_BUF];
+				idtoa(&c->spd.that.id, thatid, IDTOA_BUF);
+				DBG_log("checking keyid '%s' for match with '%s'",
+					printkid, thatid);
+			});
+
+			int pl;	/* value ignored */
+
 			if (key->alg == PUBKEY_ALG_RSA &&
 			    same_id(&c->spd.that.id, &key->id) &&
-			    trusted_ca_nss(key->issuer, c->spd.that.ca,
-				       &pathlen)) {
-
+			    trusted_ca_nss(key->issuer, c->spd.that.ca, &pl))
+			{
 				DBG(DBG_CONTROL, {
-					    char buf[IDTOA_BUF];
-					    dntoa_or_null(buf, IDTOA_BUF,
-							  key->issuer, "%any");
-					    DBG_log("key issuer CA is '%s'",
-						    buf);
-				    });
+					char buf[IDTOA_BUF];
+					dntoa_or_null(buf, IDTOA_BUF,
+						key->issuer, "%any");
+					DBG_log("key issuer CA is '%s'", buf);
+				});
 
 				/* check if found public key has expired */
-				if (!isundefinedrealtime(key->until_time) &&
-				    realbefore(key->until_time, nw)) {
+				if (!is_realtime_epoch(key->until_time) &&
+				    realbefore(key->until_time, nw))
+				{
 					loglog(RC_LOG_SERIOUS,
 					       "cached RSA public key has expired and has been deleted");
 					*pp = free_public_keyentry(p);
@@ -778,7 +776,7 @@ err_t add_public_key(const struct id *id,
 	pk->id = *id;
 	pk->dns_auth_level = dns_auth_level;
 	pk->alg = alg;
-	pk->until_time = undefinedrealtime();
+	pk->until_time = realtime_epoch;
 	pk->issuer = empty_chunk;
 
 	install_public_key(pk, head);
@@ -811,8 +809,8 @@ err_t add_ipseckey(const struct id *id,
 	}
 
 	pk->dns_ttl = ttl;
-	pk->until_time = pk->installed_time = realnow();
-	pk->until_time.real_secs += ttl_used; /* check for overflow ? */
+	pk->installed_time = realnow();
+	pk->until_time = realtimesum(pk->installed_time, deltatime(ttl_used));
 	pk->id = *id;
 	pk->dns_auth_level = dns_auth_level;
 	pk->alg = alg;
@@ -845,25 +843,19 @@ void list_public_keys(bool utc, bool check_pub_keys)
 
 			if (!check_pub_keys ||
 			    !startswith(check_expiry_msg, "ok")) {
-				char expires_buf[REALTIMETOA_BUF];
-				char installed_buf[REALTIMETOA_BUF];
 				char id_buf[IDTOA_BUF];
 
 				idtoa(&key->id, id_buf, IDTOA_BUF);
 
-				whack_log(RC_COMMENT,
-					  "%s, %4d RSA Key %s (%s private key), until %s %s",
-					  realtimetoa(key->installed_time, utc,
-						  installed_buf,
-						  sizeof(installed_buf)),
-					  8 * key->u.rsa.k,
-					  key->u.rsa.keyid,
-					  (has_private_rawkey(key) ? "has" :
-					   "no"),
-					  realtimetoa(key->until_time, utc,
-						  expires_buf,
-						  sizeof(expires_buf)),
-					  check_expiry_msg);
+				LSWLOG_WHACK(RC_COMMENT, buf) {
+					lswlog_realtime(buf, key->installed_time, utc);
+					lswlogf(buf, ", %4d RSA Key %s (%s private key), until ",
+						8 * key->u.rsa.k,
+						key->u.rsa.keyid,
+						(has_private_rawkey(key) ? "has" : "no"));
+					lswlog_realtime(buf, key->until_time, utc);
+					lswlogf(buf, " %s", check_expiry_msg);
+				}
 
 				/* XXX could be ikev2_idtype_names */
 				whack_log(RC_COMMENT, "       %s '%s'",

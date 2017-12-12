@@ -238,7 +238,8 @@ static void unlocked_open_peerlog(struct connection *c)
 }
 
 /* log a line to cur_connection's log */
-static void unlocked_peerlog(const char *m)
+static void unlocked_peerlog(struct connection *cur_connection,
+			     const char *m)
 {
 	if (cur_connection == NULL) {
 		/* we cannot log it in this case. Oh well. */
@@ -252,7 +253,8 @@ static void unlocked_peerlog(const char *m)
 	if (cur_connection->log_file != NULL) {
 		char datebuf[32];
 
-		prettynow(datebuf, sizeof(datebuf), "%Y-%m-%d %T");
+		struct realtm now = local_realtime(realnow());
+		strftime(datebuf, sizeof(datebuf), "%Y-%m-%d %T", &now.tm);
 		fprintf(cur_connection->log_file, "%s %s\n",
 			datebuf, m);
 
@@ -263,9 +265,9 @@ static void unlocked_peerlog(const char *m)
 }
 
 /* log a line to cur_connection's log */
-void peerlog(const char *m)
+void peerlog(struct connection *cur_connection, const char *m)
 {
 	pthread_mutex_lock(&peerlog_mutex);
-	unlocked_peerlog(m);
+	unlocked_peerlog(cur_connection, m);
 	pthread_mutex_unlock(&peerlog_mutex);
 }

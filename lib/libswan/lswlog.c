@@ -16,22 +16,29 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "lswlog.h"
 #include "lswalloc.h"
 
-#define PASSERT_LSWBUF(BUF)						\
-	do {								\
-		passert(BUF->dots != NULL);				\
-		/* LEN/BOUND well defined */				\
-		passert((BUF)->len <= (BUF)->bound);			\
-		passert((BUF)->bound < (BUF)->roof);			\
-		/* always NUL terminated */				\
-		passert((BUF)->array[(BUF)->len] == '\0');		\
-		passert((BUF)->array[(BUF)->bound] == '\0');		\
-		/* overflow? */						\
-		passert((BUF)->array[(BUF)->roof] == LSWBUF_CANARY);	\
-	} while (false)
+/*
+ * This is the one place where PASSERT() can't be used - it will
+ * recursively end up back here!
+ */
+static void check_lswbuf(struct lswlog *buf)
+{
+#define A(ASSERTION) if (!(ASSERTION)) abort()
+	A(buf->dots != NULL);
+	/* LEN/BOUND well defined */
+	A(buf->len <= buf->bound);
+	A(buf->bound < buf->roof);
+	/* always NUL terminated */
+	A(buf->array[buf->len] == '\0');
+	A(buf->array[buf->bound] == '\0');
+	/* overflow? */
+	A(buf->array[buf->roof] == LSWBUF_CANARY);
+#undef A
+}
 
 static int lswlog_debugf_nop(const char *format UNUSED, ...)
 {
@@ -53,7 +60,7 @@ static struct dest dest(struct lswlog *log)
 {
 	lswlog_debugf("dest(.log=%p)\n", log);
 	lswlog_debugf("\tbbound=%zu\n", log->bound);
-	PASSERT_LSWBUF(log);
+	check_lswbuf(log);
 
 	/*
 	 * Where will the next message be written?
@@ -100,7 +107,7 @@ static void truncate(struct lswlog *log)
 	lswlog_debugf("\tblen=%zu\n", log->len);
 	lswlog_debugf("\tbbound=%zu\n", log->bound);
 	lswlog_debugf("\tbdots=%s\n", log->dots);
-	PASSERT_LSWBUF(log);
+	check_lswbuf(log);
 
 	/*
 	 * Transition from "full" to overfull (truncated).
@@ -162,7 +169,7 @@ static size_t concat(struct lswlog *log, const char *string)
 	}
 	/* already overflowed */
 
-	PASSERT_LSWBUF(log);
+	check_lswbuf(log);
 	return n;
 }
 
@@ -187,7 +194,7 @@ static size_t append(struct lswlog *log, const char *format, va_list ap)
 		 * values are unsigned.
 		 *
 		 * Calling PEXPECT_LOG() here is recursive; is this a
-		 * problem? (if it is then hopefully things crash).
+		 * problem? (if it is then we hope things crash).
 		 */
 		PEXPECT_LOG("vsnprintf() unexpectedly returned the -ve value %d", sn);
 		return log->roof;
@@ -214,7 +221,7 @@ static size_t append(struct lswlog *log, const char *format, va_list ap)
 	}
 	/* already overflowed */
 
-	PASSERT_LSWBUF(log);
+	check_lswbuf(log);
 	return n;
 }
 

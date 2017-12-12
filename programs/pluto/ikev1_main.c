@@ -14,6 +14,7 @@
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
  * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2017 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -294,18 +295,18 @@ stf_status main_outI1(int whack_sock,
 		"reply packet for main_outI1");
 
 	delete_event(st);
-	event_schedule_ms(EVENT_v1_RETRANSMIT, c->r_interval, st);
+	start_retransmits(st, EVENT_v1_RETRANSMIT);
 
 	if (predecessor != NULL) {
 		update_pending(predecessor, st);
 		whack_log(RC_NEW_STATE + STATE_MAIN_I1,
 			"%s: initiate, replacing #%lu",
-			enum_name(&state_names, st->st_state),
+			st->st_state_name,
 			predecessor->st_serialno);
 	} else {
 		whack_log(RC_NEW_STATE + STATE_MAIN_I1,
 			"%s: initiate",
-			enum_name(&state_names, st->st_state));
+			st->st_state_name);
 	}
 	reset_cur_state();
 	return STF_OK;
@@ -567,11 +568,10 @@ bool encrypt_message(pb_stream *pbs, struct state *st)
  * HDR;SA --> HDR;SA
  */
 
-stf_status main_inI1_outR1(struct msg_digest *md)
+stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
 {
 	/* ??? this code looks a lot like the middle of ikev2parent_inI1outR1 */
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
-	struct state *st;
 	struct connection *c;
 	pb_stream r_sa_pbs;
 
@@ -703,6 +703,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	}
 
 	/* Set up state */
+	pexpect(st == NULL);
 	md->st = st = new_rstate(md);
 
 	passert(!st->st_oakley.doing_xauth);
@@ -730,13 +731,13 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 
 		libreswan_log(
 			"responding to Main Mode from unknown peer %s:%u",
-			log_ip ? ipstr(&c->spd.that.host_addr, &b) : "<ip address>",
+			sensitive_ipstr(&c->spd.that.host_addr, &b),
 			c->spd.that.host_port);
 	} else if (c->kind == CK_INSTANCE) {
 		ipstr_buf b;
 
 		libreswan_log("responding to Main Mode from unknown peer %s on port %u",
-			log_ip ? ipstr(&c->spd.that.host_addr, &b) : "<ip address>",
+			sensitive_ipstr(&c->spd.that.host_addr, &b),
 			md->sender_port);
 		DBG(DBG_CONTROL, DBG_dump("  ICOOKIE-DUMP:", st->st_icookie, COOKIE_SIZE));
 	} else {
@@ -879,34 +880,23 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *ke,
 
 static crypto_req_cont_func main_inR1_outI2_continue;	/* type assertion */
 
-static void main_inR1_outI2_continue(struct pluto_crypto_req_cont *ke,
-				struct pluto_crypto_req *r)
+static void main_inR1_outI2_continue(struct state *st, struct msg_digest *md,
+				     struct pluto_crypto_req_cont *ke,
+				     struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = ke->pcrc_md;
-	struct state *const st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROL,
 		DBG_log("main_inR1_outI2_continue for #%lu: calculated ke+nonce, sending I2",
-			ke->pcrc_serialno));
-
-	if (ke->pcrc_serialno == SOS_NOBODY) {
-		loglog(RC_LOG_SERIOUS,
-			"%s: Request was disconnected from state",
-			__FUNCTION__);
-		release_any_md(&ke->pcrc_md);
-		return;
-	}
-
-	passert(ke->pcrc_serialno == st->st_serialno);	/* transitional */
-
-	passert(cur_state == NULL);
-	passert(st != NULL);
+			st->st_serialno));
 
 	passert(st->st_suspended_md == ke->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
 
-	set_cur_state(st);
+	so_serial_t old_serialno = push_cur_state(st);
+	pexpect(old_serialno == SOS_NOBODY);
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
@@ -920,9 +910,10 @@ static void main_inR1_outI2_continue(struct pluto_crypto_req_cont *ke,
 	reset_cur_state();
 }
 
-stf_status main_inR1_outI2(struct msg_digest *md)
+stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
 {
-	struct state *const st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 
 	if (cur_debugging & IMPAIR_DROP_I2) {
 		DBG(DBG_CONTROL, DBG_log("dropping Main Mode I2 packet as per impair"));
@@ -949,15 +940,11 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 
 	set_nat_traversal(st, md);
 
-	{
-		struct pluto_crypto_req_cont *ke = new_pcrc(
-			main_inR1_outI2_continue, "outI2 KE",
-			st, md);
-
-		passert(!st->st_sec_in_use);
-		return build_ke_and_nonce(ke, st->st_oakley.ta_dh,
-				st->st_import);
-	}
+	passert(!st->st_sec_in_use);
+	return request_ke_and_nonce("outI2 KE", st, md,
+				    st->st_oakley.ta_dh,
+				    st->st_import,
+				    main_inR1_outI2_continue);
 }
 
 /*
@@ -1090,34 +1077,23 @@ static stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *ke,
 
 static crypto_req_cont_func main_inI2_outR2_continue;	/* type assertion */
 
-static void main_inI2_outR2_continue(struct pluto_crypto_req_cont *ke,
-				struct pluto_crypto_req *r)
+static void main_inI2_outR2_continue(struct state *st, struct msg_digest *md,
+				     struct pluto_crypto_req_cont *ke,
+				     struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = ke->pcrc_md;
-	struct state *const st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROL,
 		DBG_log("main_inI2_outR2_continue for #%lu: calculated ke+nonce, sending R2",
-			ke->pcrc_serialno));
-
-	if (ke->pcrc_serialno == SOS_NOBODY) {
-		loglog(RC_LOG_SERIOUS,
-			"%s: Request was disconnected from state",
-			__FUNCTION__);
-		release_any_md(&ke->pcrc_md);
-		return;
-	}
-
-	passert(ke->pcrc_serialno == st->st_serialno);	/* transitional */
-
-	passert(cur_state == NULL);
-	passert(st != NULL);
+			st->st_serialno));
 
 	passert(st->st_suspended_md == ke->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
 
-	set_cur_state(st);
+	so_serial_t old_serialno = push_cur_state(st);
+	pexpect(old_serialno == SOS_NOBODY);
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
@@ -1129,9 +1105,10 @@ static void main_inI2_outR2_continue(struct pluto_crypto_req_cont *ke,
 	reset_cur_state();
 }
 
-stf_status main_inI2_outR2(struct msg_digest *md)
+stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
 {
-	struct state *const st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 
 	/* KE in */
 	RETURN_STF_FAILURE(accept_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
@@ -1148,15 +1125,11 @@ stf_status main_inI2_outR2(struct msg_digest *md)
 
 	ikev1_natd_init(st, md);
 
-	{
-		struct pluto_crypto_req_cont *ke = new_pcrc(
-			main_inI2_outR2_continue, "inI2_outR2 KE",
-			st, md);
-
-		passert(!st->st_sec_in_use);
-		return build_ke_and_nonce(ke,
-			st->st_oakley.ta_dh, st->st_import);
-	}
+	passert(!st->st_sec_in_use);
+	return request_ke_and_nonce("inI2_outR2 KE", st, md,
+				    st->st_oakley.ta_dh,
+				    st->st_import,
+				    main_inI2_outR2_continue);
 }
 
 /*
@@ -1167,22 +1140,13 @@ stf_status main_inI2_outR2(struct msg_digest *md)
  */
 static crypto_req_cont_func main_inI2_outR2_calcdone;	/* type assertion */
 
-static void main_inI2_outR2_calcdone(struct pluto_crypto_req_cont *dh,
-				struct pluto_crypto_req *r)
+static void main_inI2_outR2_calcdone(struct state *st, struct msg_digest *md UNUSED,
+				     struct pluto_crypto_req_cont *dh UNUSED,
+				     struct pluto_crypto_req *r)
 {
-	struct state *st;
-
 	DBG(DBG_CONTROL,
 		DBG_log("main_inI2_outR2_calcdone for #%lu: calculate DH finished",
-			dh->pcrc_serialno));
-
-	if (dh->pcrc_serialno == SOS_NOBODY) {
-		libreswan_log("state #%lu disappeared during crypto",
-			dh->pcrc_serialno);
-		/* note: no md exists in this odd case */
-		return;
-	}
-	st = state_with_serialno(dh->pcrc_serialno);
+			st->st_serialno));
 
 	set_cur_state(st);
 
@@ -1613,34 +1577,24 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 
 static crypto_req_cont_func main_inR2_outI3_cryptotail;	/* type assertion */
 
-static void main_inR2_outI3_cryptotail(struct pluto_crypto_req_cont *dh,
-				struct pluto_crypto_req *r)
+static void main_inR2_outI3_cryptotail(struct state *st, struct msg_digest *md,
+				       struct pluto_crypto_req_cont *dh,
+				       struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = dh->pcrc_md;
-	struct state *const st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROL,
 		DBG_log("main_inR2_outI3_cryptotail for #%lu: calculated DH, sending R1",
-			dh->pcrc_serialno));
-
-	if (dh->pcrc_serialno == SOS_NOBODY) {
-		loglog(RC_LOG_SERIOUS,
-			"%s: Request was disconnected from state",
-			__FUNCTION__);
-		release_any_md(&dh->pcrc_md);
-		return;
-	}
-
-	passert(dh->pcrc_serialno == st->st_serialno);	/* transitional */
-
-	passert(cur_state == NULL);
-	passert(st != NULL);
+			st->st_serialno));
 
 	passert(st->st_suspended_md == dh->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
 
-	set_cur_state(st);
+	so_serial_t old_serialno = push_cur_state(st);
+	pexpect(old_serialno == SOS_NOBODY);
+
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
@@ -1654,10 +1608,11 @@ static void main_inR2_outI3_cryptotail(struct pluto_crypto_req_cont *dh,
 	reset_cur_state();
 }
 
-stf_status main_inR2_outI3(struct msg_digest *md)
+stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)
 {
 	struct pluto_crypto_req_cont *dh;
-	struct state *const st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 
 	/* KE in */
 	RETURN_STF_FAILURE(accept_KE(&st->st_gr, "Gr",
@@ -1769,9 +1724,10 @@ static inline stf_status main_id_and_auth(struct msg_digest *md,
 	return oakley_id_and_auth(md, initiator, FALSE);
 }
 
-stf_status main_inI3_outR3(struct msg_digest *md)
+stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 {
-	struct state *const st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 	u_int8_t auth_payload;
 	pb_stream r_id_pbs; /* ID Payload; also used for hash calculation */
 	cert_t mycert;
@@ -1985,16 +1941,17 @@ stf_status main_inI3_outR3(struct msg_digest *md)
  *
  */
 
-static stf_status main_inR3_tail(struct msg_digest *md);
+static state_transition_fn main_inR3_tail;
 
-stf_status main_inR3(struct msg_digest *md)
+stf_status main_inR3(struct state *st, struct msg_digest *md)
 {
-	return main_inR3_tail(md);
+	return main_inR3_tail(st, md);
 }
 
-static stf_status main_inR3_tail(struct msg_digest *md)
+static stf_status main_inR3_tail(struct state *st, struct msg_digest *md)
 {
-	struct state *const st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 
 	/*
 	 * ID and HASH_R or SIG_R in
@@ -2063,7 +2020,7 @@ static stf_status main_inR3_tail(struct msg_digest *md)
 			md->event_already_set = TRUE;
 			st->st_rekeytov2 = TRUE;
 			delete_event(st);
-			event_schedule(EVENT_SA_REPLACE, 0, st);
+			event_schedule_s(EVENT_SA_REPLACE, 0, st);
 		}
 	}
 
@@ -2416,6 +2373,7 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
 	struct state fake_state = {
 		.st_serialno = SOS_NOBODY,
 		.st_connection = &fake_connection,	/* for should_fragment_ike_msg() */
+		.st_finite_state = finite_states[STATE_UNDEFINED],
 	};
 
 	passert(md != NULL);
@@ -2431,7 +2389,7 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
  * inbound IPSEC SAs. Does nothing if no such SAs are being deleted.
  * Delete Notifications cannot announce deletion of outbound IPSEC/ISAKMP SAs.
  *
- * @param st State struct (hopefully has some SA's related to it)
+ * @param st State struct (we hope it has some SA's related to it)
  */
 bool ikev1_delete_out(struct state *st)
 {
@@ -2750,9 +2708,7 @@ bool accept_delete(struct msg_digest *md,
 				}
 
 				struct connection *rc = dst->st_connection;
-				struct connection *oldc = cur_connection;
-
-				set_cur_connection(rc);
+				struct connection *oldc = push_cur_connection(rc);
 
 				if (nat_traversal_enabled && dst->st_connection->ikev1_natt != natt_none)
 					nat_traversal_change_port_lookup(md, dst);
@@ -2790,8 +2746,7 @@ bool accept_delete(struct msg_digest *md,
 							dst->st_serialno);
 						dst->st_margin = deltatime(0);
 						delete_event(dst);
-						event_schedule(EVENT_SA_REPLACE,
-								0, dst);
+						event_schedule_s(EVENT_SA_REPLACE, 0, dst);
 					}
 				} else {
 					loglog(RC_LOG_SERIOUS,
@@ -2812,7 +2767,7 @@ bool accept_delete(struct msg_digest *md,
 					reset_cur_connection();
 				}
 				/* reset connection */
-				set_cur_connection(oldc);
+				pop_cur_connection(oldc);
 			}
 		}
 	}

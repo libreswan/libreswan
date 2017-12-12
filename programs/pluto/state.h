@@ -31,8 +31,10 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <time.h>
 #include "quirks.h"
+
+#include "deltatime.h"
+#include "monotime.h"
 
 #include <nss.h>
 #include <pk11pub.h>
@@ -40,6 +42,7 @@
 
 #include "labeled_ipsec.h"	/* for struct xfrm_user_sec_ctx_ike and friends */
 #include "list_entry.h"
+#include "retransmit.h"
 
 /* Message ID mechanism.
  *
@@ -258,20 +261,46 @@ struct traffic_selector {
 	ip_range net;	/* for now, always happens to be a CIDR */
 };
 
-/* state object: record the state of a (possibly nascent) SA
+/*
+ * Abstract state machine that drives the parent and child SA.
+ *
+ * IKEv1 and IKEv2 construct states using this as a base.
+ */
+struct finite_state {
+	enum state_kind fs_state;
+	const char *fs_name;
+	const char *fs_short_name;
+	const char *fs_story;
+	lset_t fs_flags;
+	enum event_type fs_timeout_event;
+	const void *fs_microcode;	/* aka edge */
+};
+
+void lswlog_finite_state(struct lswlog *buf, const struct finite_state *fs);
+
+/* this includes space for lurking STATE_IKEv2_ROOF */
+extern const struct finite_state *finite_states[STATE_IKE_ROOF];
+
+/*
+ * state object: record the state of a (possibly nascent) parent or
+ * child SA
  *
  * Invariants (violated only during short transitions):
+ *
  * - each state object will be in statetable exactly once.
+ *
  * - each state object will always have a pending event.
  *   This prevents leaks.
  */
 struct state {
 	so_serial_t st_serialno;                /* serial number (for seniority)*/
 	so_serial_t st_clonedfrom;              /* serial number of parent */
-	so_serial_t st_ike_pred; /* IKEv2: replacing established IKE SA */
-	so_serial_t st_ipsec_pred; /* IKEv2: replacing established IPsec SA */
+	so_serial_t st_ike_pred;		/* IKEv2: replacing established IKE SA */
+	so_serial_t st_ipsec_pred;		/* replacing established IPsec SA */
 
+#ifdef XAUTH_HAVE_PAM
 	struct xauth *st_xauth;			/* per state xauth/pam thread */
+#endif
 
 	bool st_ikev2;                          /* is this an IKEv2 state? */
 	bool st_ikev2_no_del;                   /* suppress sending DELETE - eg replaced conn */
@@ -454,9 +483,12 @@ struct state {
 	/* In a Phase 1 state, preserve peer's public key after authentication */
 	struct pubkey *st_peer_pubkey;
 
-	enum state_kind st_state;       /* State of exchange */
+#define st_state st_finite_state->fs_state
+#define st_state_name st_finite_state->fs_name
+#define st_state_story st_finite_state->fs_story
+	const struct finite_state *st_finite_state;	/* Current FSM state */
 
-	u_int32_t st_retransmit;	/* Number of retransmits */
+	retransmit_t st_retransmit;	/* retransmit counters; opaque */
 	unsigned long st_try;		/* Number of times rekeying attempted.
 					 * 0 means the only time.
 					 */

@@ -1,9 +1,0 @@
-Basic pluto test, west and east has initial-contact enabled.
-West kill pluto and restart ipsec and establish again.
-
-east should end up with 1 IKE SA and 1 IPsec SA.
-
-it should not show:
-
-"westnet-eastnet" #1: ignoring informational payload IPSEC_INITIAL_CONTACT, msgid=00000000, length=28
-

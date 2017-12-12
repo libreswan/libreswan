@@ -63,6 +63,7 @@
 #include "demux.h"		/* needs packet.h */
 #include "log.h"
 #include "timer.h"
+#include "server.h"
 #include "keys.h"
 #include "ipsec_doi.h"	/* needs demux.h and state.h */
 #include "xauth.h"
@@ -209,7 +210,7 @@ static size_t xauth_mode_cfg_hash(u_char *dest,
 	hmac_update(&ctx, start, roof - start);
 	hmac_final(dest, &ctx);
 
-	DBG(DBG_CRYPT, {
+	DBG(DBG_CRYPT|DBG_XAUTH, {
 		DBG_log("XAUTH: HASH computed:");
 		DBG_dump("", dest, ctx.hmac_digest_len);
 	});
@@ -547,7 +548,7 @@ static stf_status modecfg_send_set(struct state *st)
 	if (st->st_event->ev_type != EVENT_v1_RETRANSMIT &&
 	    st->st_event->ev_type != EVENT_NULL) {
 		delete_event(st);
-		event_schedule_ms(EVENT_v1_RETRANSMIT, st->st_connection->r_interval, st);
+		start_retransmits(st, EVENT_v1_RETRANSMIT);
 	}
 
 	return STF_OK;
@@ -679,8 +680,7 @@ stf_status xauth_send_request(struct state *st)
 
 	if (st->st_event->ev_type != EVENT_v1_RETRANSMIT) {
 		delete_event(st);
-		event_schedule_ms(EVENT_v1_RETRANSMIT,
-				st->st_connection->r_interval, st);
+		start_retransmits(st, EVENT_v1_RETRANSMIT);
 	}
 
 	return STF_OK;
@@ -799,7 +799,7 @@ stf_status modecfg_send_request(struct state *st)
 
 	if (st->st_event->ev_type != EVENT_v1_RETRANSMIT) {
 		delete_event(st);
-		event_schedule_ms(EVENT_v1_RETRANSMIT, st->st_connection->r_interval, st);
+		start_retransmits(st, EVENT_v1_RETRANSMIT);
 	}
 	st->hidden_variables.st_modecfg_started = TRUE;
 
@@ -886,7 +886,7 @@ static stf_status xauth_send_status(struct state *st, int status)
 	/* Set up a retransmission event, half a minute hence */
 	/* Schedule retransmit before sending, to avoid race with master thread */
 	delete_event(st);
-	event_schedule_ms(EVENT_v1_RETRANSMIT, st->st_connection->r_interval, st);
+	start_retransmits(st, EVENT_v1_RETRANSMIT);
 
 	/* Transmit */
 	record_and_send_ike_msg(st, &reply, "XAUTH: status");
@@ -913,12 +913,12 @@ static bool add_xauth_addresspool(struct connection *c,
 		snprintf(single_addresspool, sizeof(single_addresspool),
 			"%s-%s",
 			addresspool, addresspool);
-		DBG(DBG_CONTROLMORE,
+		DBG(DBG_CONTROLMORE|DBG_XAUTH,
 			DBG_log("XAUTH: adding single ip addresspool entry %s for the conn %s user=%s",
 				single_addresspool, c->name, userid));
 		er = ttorange(single_addresspool, 0, AF_INET, &pool_range, TRUE);
 	} else {
-		DBG(DBG_CONTROLMORE,
+		DBG(DBG_CONTROLMORE|DBG_XAUTH,
 			DBG_log("XAUTH: adding addresspool entry %s for the conn %s user %s",
 				addresspool, c->name, userid));
 		er = ttorange(addresspool, 0, AF_INET, &pool_range, TRUE);
@@ -1047,7 +1047,7 @@ static bool do_file_authentication(struct state *st, const char *name,
 		if (connectionname != NULL && connectionname[0] == '\0')
 			connectionname = NULL;
 
-		DBG(DBG_CONTROL,
+		DBG(DBG_XAUTH|DBG_CONTROLMORE,
 			DBG_log("XAUTH: found user(%s/%s) pass(%s) connid(%s/%s) addresspool(%s)",
 				userid, name, passwdhash,
 				connectionname == NULL ? "" : connectionname,
@@ -1143,7 +1143,7 @@ static void ikev1_xauth_callback(struct state *st, const char *name,
 }
 
 /*
- * Schedule the XAUTH callback for NOW so it is (hopefully) run next.
+ * Schedule the XAUTH callback for NOW so it is (we hope) run next.
  *
  * It should be possible to eliminate this event hop entirely; later.
  */
@@ -1154,12 +1154,9 @@ struct xauth_immediate {
 	char *name;
 	void (*callback)(struct state *st, const char *name,
 			 bool aborted, bool success);
-	struct pluto_event *event;
 };
 
-static void xauth_immediate_callback(evutil_socket_t socket UNUSED,
-				     const short event UNUSED,
-				     void *arg)
+static void xauth_immediate_callback(void *arg)
 {
 	struct xauth_immediate *xauth = (struct xauth_immediate*)arg;
 	struct state *st = state_with_serialno(xauth->serialno);
@@ -1174,7 +1171,6 @@ static void xauth_immediate_callback(evutil_socket_t socket UNUSED,
 		xauth->callback(st, xauth->name, false, xauth->success);
 		reset_cur_state();
 	}
-	delete_pluto_event(&xauth->event);
 	pfree(xauth->name);
 	pfree(xauth);
 }
@@ -1190,9 +1186,7 @@ static void xauth_immediate(const char *name, so_serial_t serialno, bool success
 	xauth->serialno = serialno;
 	xauth->callback = callback;
 	xauth->name = clone_str(name, "xauth next name");
-	const struct timeval delay = { 0, 0 };
-	xauth->event = pluto_event_add(NULL_FD, EV_TIMEOUT, xauth_immediate_callback, xauth,
-				       &delay, "xauth_immediate_callback");
+	pluto_event_now("xauth immediate", xauth_immediate_callback, xauth);
 }
 
 /** Launch an authentication prompt
@@ -1200,18 +1194,18 @@ static void xauth_immediate(const char *name, so_serial_t serialno, bool success
  * @param st State Structure
  * @param name Username
  * @param password Password
- * @param connname connnection name, from ipsec.conf
  */
 static int xauth_launch_authent(struct state *st,
 				chunk_t *name,
-				chunk_t *password,
-				const char *connname)
+				chunk_t *password)
 {
 	/*
 	 * XAUTH somehow already in progress?
 	 */
+#ifdef XAUTH_HAVE_PAM
 	if (st->st_xauth != NULL)
 		return 0;
+#endif
 
 	char *arg_name = alloc_bytes(name->len + 1, "XAUTH Name");
 	memcpy(arg_name, name->ptr, name->len);
@@ -1233,21 +1227,17 @@ static int xauth_launch_authent(struct state *st,
 	case XAUTHBY_PAM:
 		libreswan_log("XAUTH: PAM authentication method requested to authenticate user '%s'",
 			      arg_name);
-		xauth_start_pam_thread(&st->st_xauth,
+		xauth_start_pam_thread(st,
 				       arg_name, arg_password,
-				       connname,
-				       &st->st_remoteaddr,
-				       st->st_serialno,
-				       st->st_connection->instance_serial,
 				       "XAUTH",
 				       ikev1_xauth_callback);
-		event_schedule(EVENT_PAM_TIMEOUT, EVENT_PAM_TIMEOUT_DELAY, st);
+		event_schedule_s(EVENT_PAM_TIMEOUT, EVENT_PAM_TIMEOUT_DELAY, st);
 		break;
 #endif
 	case XAUTHBY_FILE:
 		libreswan_log("XAUTH: password file authentication method requested to authenticate user '%s'",
 			      arg_name);
-		bool success = do_file_authentication(st, arg_name, arg_password, connname);
+		bool success = do_file_authentication(st, arg_name, arg_password, st->st_connection->name);
 		xauth_immediate(arg_name, st->st_serialno,
 				success, ikev1_xauth_callback);
 		break;
@@ -1286,11 +1276,12 @@ static void log_bad_attr(const char *kind, enum_names *ed, unsigned val)
  * @param md Message Digest
  * @return stf_status
  */
-stf_status xauth_inR0(struct msg_digest *md)
+stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 {
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 
-	struct state *const st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 
 	/*
 	 * There are many ways out of this routine
@@ -1351,8 +1342,8 @@ stf_status xauth_inR0(struct msg_digest *md)
 
 		case XAUTH_USER_NAME | ISAKMP_ATTR_AF_TLV:
 			if (gotname) {
-				DBG(DBG_CONTROLMORE, DBG_log(
-					"XAUTH: two User Names!  Rejected"));
+				DBG(DBG_CONTROLMORE|DBG_XAUTH,
+				    DBG_log("XAUTH: two User Names!  Rejected"));
 				return STF_FAIL + NO_PROPOSAL_CHOSEN;
 			}
 			sz = pbs_left(&strattr);
@@ -1423,10 +1414,10 @@ stf_status xauth_inR0(struct msg_digest *md)
 			return stat == STF_OK ? STF_FAIL : stat;
 		}
 	} else {
-		xauth_launch_authent(st, &name, &password, st->st_connection->name);
+		xauth_launch_authent(st, &name, &password);
 		set_suspended(st, md);
+		return STF_IGNORE;
 	}
-	return STF_IGNORE;
 }
 
 /*
@@ -1437,9 +1428,10 @@ stf_status xauth_inR0(struct msg_digest *md)
  * @param md Message Digest
  * @return stf_status
  */
-stf_status xauth_inR1(struct msg_digest *md)
+stf_status xauth_inR1(struct state *st, struct msg_digest *md)
 {
-	struct state *const st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 
 	libreswan_log("XAUTH: xauth_inR1(STF_OK)");
 	/* Back to where we were */
@@ -1482,9 +1474,11 @@ stf_status xauth_inR1(struct msg_digest *md)
  * @param md Message Digest
  * @return stf_status
  */
-stf_status modecfg_inR0(struct msg_digest *md)
+stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 {
-	struct state *const st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
+
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 	lset_t resp = LEMPTY;
@@ -1726,9 +1720,11 @@ static char *cisco_stringify(pb_stream *pbs, const char *attr_name)
  * @param md Message Digest
  * @return stf_status
  */
-stf_status modecfg_inR1(struct msg_digest *md)
+stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 {
-	struct state *const st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
+
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 	lset_t resp = LEMPTY;
@@ -2303,9 +2299,11 @@ static stf_status xauth_client_resp(struct state *st,
  * @param md Message Digest
  * @return stf_status
  */
-stf_status xauth_inI0(struct msg_digest *md)
+stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 {
-	struct state *const st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
+
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 	lset_t xauth_resp = LEMPTY;
@@ -2467,7 +2465,7 @@ stf_status xauth_inI0(struct msg_digest *md)
 	}
 
 	if (gotrequest) {
-		DBG(DBG_CONTROL, {
+		DBG(DBG_CONTROLMORE|DBG_XAUTH, {
 			if (xauth_resp &
 			    (XAUTHLELEM(XAUTH_USER_NAME) |
 			     XAUTHLELEM(XAUTH_USER_PASSWORD)))
@@ -2582,9 +2580,11 @@ static stf_status xauth_client_ackstatus(struct state *st,
  * @param md Message Digest
  * @return stf_status
  */
-stf_status xauth_inI1(struct msg_digest *md)
+stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 {
-	struct state *const st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
+
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 	bool got_status = FALSE;
@@ -2662,7 +2662,7 @@ stf_status xauth_inI1(struct msg_digest *md)
 		libreswan_log(
 			"did not get status attribute in xauth_inI1, looking for new challenge.");
 		change_state(st, STATE_XAUTH_I0);
-		return xauth_inI0(md);
+		return xauth_inI0(st, md);
 	}
 
 	/* ACK whatever it was that we got */

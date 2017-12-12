@@ -125,9 +125,7 @@ void unpack_KE_from_helper(struct state *st,
 	passert(!st->st_sec_in_use);
 	st->st_sec_in_use = TRUE;
 	freeanychunk(*g); /* happens in odd error cases */
-
-	clonetochunk(*g, WIRE_CHUNK_PTR(*kn, gi),
-		     kn->gi.len, "saved gi value");
+	*g = kn->gi;
 	DBG(DBG_CRYPT,
 	    DBG_log("saving DH priv (local secret) and pub key into state struct"));
 	st->st_sec_nss = kn->secret;
@@ -164,8 +162,7 @@ void unpack_nonce(chunk_t *n, const struct pluto_crypto_req *r)
 	const struct pcr_kenonce *kn = &r->pcr_d.kn;
 
 	freeanychunk(*n);
-	clonetochunk(*n, WIRE_CHUNK_PTR(*kn, n),
-		     DEFAULT_NONCE_SIZE, "initiator nonce");
+	*n = kn->n;
 }
 
 bool ikev1_justship_nonce(chunk_t *n, pb_stream *outs, u_int8_t np,
@@ -421,7 +418,7 @@ bool has_preloaded_public_key(struct state *st)
 
 			if (key->alg == PUBKEY_ALG_RSA &&
 			    same_id(&c->spd.that.id, &key->id) &&
-			    isundefinedrealtime(key->until_time)) {
+			    is_realtime_epoch(key->until_time)) {
 				/* found a preloaded public key */
 				return TRUE;
 			}
@@ -430,21 +427,27 @@ bool has_preloaded_public_key(struct state *st)
 	return FALSE;
 }
 
-/* Decode the ID payload of Phase 1 (main_inI3_outR3 and main_inR3)
- * Note: we may change connections as a result.
+/*
+ * Decode the ID payload of Phase 1 (main_inI3_outR3 and main_inR3)
+ * Clears *peer to avoid surprises.
+ * Note: what we discover may oblige Pluto to switch connections.
  * We must be called before SIG or HASH are decoded since we
  * may change the peer's RSA key or ID.
  */
 
-bool extract_peer_id(struct id *peer, const pb_stream *id_pbs)
+bool extract_peer_id(enum ike_id_type kind, struct id *peer, const pb_stream *id_pbs)
 {
-	switch (peer->kind) {
+	size_t left = pbs_left(id_pbs);
+	memset(peer, 0x00, sizeof(struct id));
+	peer->kind = kind;
+
+	switch (kind) {
 	/* ident types mostly match between IKEv1 and IKEv2 */
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
 		/* failure mode for initaddr is probably inappropriate address length */
 	{
-		err_t ugh = initaddr(id_pbs->cur, pbs_left(id_pbs),
+		err_t ugh = initaddr(id_pbs->cur, left,
 				peer->kind == ID_IPV4_ADDR ? AF_INET : AF_INET6,
 				&peer->ip_addr);
 
@@ -461,16 +464,16 @@ bool extract_peer_id(struct id *peer, const pb_stream *id_pbs)
 
 	/* seems odd to continue as ID_FQDN? */
 	case ID_USER_FQDN:
-		if (memchr(id_pbs->cur, '@', pbs_left(id_pbs)) == NULL) {
+		if (memchr(id_pbs->cur, '@', left) == NULL) {
 			loglog(RC_LOG_SERIOUS,
 				"peer's ID_USER_FQDN contains no @: %.*s",
-				(int) pbs_left(id_pbs),
+				(int) left,
 				id_pbs->cur);
 			/* return FALSE; */
 		}
 	/* FALLTHROUGH */
 	case ID_FQDN:
-		if (memchr(id_pbs->cur, '\0', pbs_left(id_pbs)) != NULL) {
+		if (memchr(id_pbs->cur, '\0', left) != NULL) {
 			loglog(RC_LOG_SERIOUS,
 				"Phase 1 (Parent)ID Payload of type %s contains a NUL",
 				enum_show(&ike_idtype_names, peer->kind));
@@ -479,22 +482,27 @@ bool extract_peer_id(struct id *peer, const pb_stream *id_pbs)
 
 		/* ??? ought to do some more sanity check, but what? */
 
-		setchunk(peer->name, id_pbs->cur, pbs_left(id_pbs));
+		setchunk(peer->name, id_pbs->cur, left);
 		break;
 
 	case ID_KEY_ID:
-		setchunk(peer->name, id_pbs->cur, pbs_left(id_pbs));
+		setchunk(peer->name, id_pbs->cur, left);
 		DBG(DBG_PARSING,
 		    DBG_dump_chunk("KEY ID:", peer->name));
 		break;
 
 	case ID_DER_ASN1_DN:
-		setchunk(peer->name, id_pbs->cur, pbs_left(id_pbs));
+		setchunk(peer->name, id_pbs->cur, left);
 		DBG(DBG_PARSING,
 		    DBG_dump_chunk("DER ASN1 DN:", peer->name));
 		break;
 
 	case ID_NULL:
+		if (left != 0) {
+			loglog(RC_LOG_SERIOUS,
+				"peer's ID_NULL must be empty but is not");
+			return FALSE;
+		}
 		break;
 
 	default:
@@ -539,7 +547,7 @@ void initialize_new_state(struct state *st,
 
 	insert_state(st); /* needs cookies, connection */
 
-	extra_debugging(c);
+	set_cur_state(st);
 }
 
 bool send_delete(struct state *st)
@@ -551,7 +559,7 @@ bool send_delete(struct state *st)
 	}
 	DBG(DBG_CONTROL, DBG_log("#%lu send %s detlete notification for %s",
 			st->st_serialno, st->st_ikev2 ? "IKEv2": "IKEv1",
-			enum_name(&state_names, st->st_state)));
+			st->st_state_name));
 
 	return st->st_ikev2 ? ikev2_delete_out(st) : ikev1_delete_out(st);
 }
@@ -595,7 +603,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 
 		DBG(DBG_NATT, DBG_log("NAT-T: encaps is '%s'",
 			    c->encaps == encaps_auto ? "auto" :
-				c->encaps == encaps_yes ? "yes" : "no"));
+				bool_str(c->encaps == encaps_yes)));
 
 		snprintf(b, sad_len - (b - sadetails),
 			 "%sESP%s%s%s=>0x%08lx <0x%08lx xfrm=%s_%d-%s",
@@ -676,8 +684,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 
 		snprintf(oa, sizeof(oa),
 			 "%s:%d",
-			 log_ip ? ipstr(&st->hidden_variables.st_natd, &ipb)
-				: "<ip address>",
+			 sensitive_ipstr(&st->hidden_variables.st_natd, &ipb),
 			 st->st_remoteport);
 		b = add_str(sadetails, sad_len, b, oa);
 	}

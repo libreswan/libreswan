@@ -26,6 +26,7 @@
 #include <cert.h>
 #include "nss_crl_import.h"
 #include <certdb.h>
+#include "defs.h"
 #include "log.h"
 #include "lswalloc.h"
 #include "nss_err.h"

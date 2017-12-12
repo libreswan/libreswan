@@ -21,6 +21,7 @@
 #include "constants.h"
 #include "lmod.h"
 #include "lswlog.h"
+#include "lswalloc.h"
 
 const lmod_t empty_lmod = {
 	LEMPTY,
@@ -67,40 +68,60 @@ bool lmod_is_clr(lmod_t mod, lset_t clr)
 	return LIN(clr, mod.clr);
 }
 
-bool lmod_arg(lmod_t *mod, enum_names *names,
-	      lset_t all, lset_t none,
-	      const char *optarg)
+bool lmod_arg(lmod_t *mod, const struct lmod_info *info,
+	      const char *args)
 {
-	if (streq(optarg, "all")) {
-		mod->clr = LEMPTY;
-		mod->set = all;
-	} else if (streq(optarg, "none")) {
-		mod->clr = none;
-		mod->set = LEMPTY;
-	} else {
-		const char *arg = optarg;
-		bool no = eat(arg, "no-");
-		int ix = enum_match(names, arg);
-		if (ix < 0) {
-			return false;
-		}
-		lset_t bit = LELEM(ix);
-		if (no) {
-			mod->clr |= bit;
-			mod->set &= ~bit;
-		} else {
-			mod->set |= bit;
-			mod->clr &= ~bit;
-		}
+	char *list = clone_str(args, "list"); /* must free */
+	bool ok = true;
+	const char *delim = "+, \t";
+	for (char *tmp = list, *elem = strsep(&tmp, delim);
+	     elem != NULL; elem = strsep(&tmp, delim)) {
+		if (streq(elem, "all")) {
+			mod->clr = LEMPTY;
+			mod->set = info->all;
+		} else if (streq(elem, "none")) {
+			mod->clr = info->mask;
+			mod->set = LEMPTY;
+		} else if (*elem != '\0') {
+			/* non-empty */
+			const char *arg = elem;
+			bool no = eat(arg, "no-");
+			int ix = enum_match(info->names, arg);
+			lset_t bit = LEMPTY;
+			if (ix >= 0) {
+				bit = LELEM(ix);
+			} else if (info->compat != NULL) {
+				for (struct lmod_compat *c = info->compat;
+				     c->name != NULL; c++) {
+					if (streq(c->name, arg)) {
+						bit = c->bit;
+						break;
+					}
+				}
+			}
+			if (bit == LEMPTY) {
+				ok = false;
+				break;
+			}
+			if (no) {
+				mod->clr |= bit;
+				mod->set &= ~bit;
+			} else {
+				mod->set |= bit;
+				mod->clr &= ~bit;
+			}
+		} /* else ignore empty ... */
 	}
-	return true;
+	pfree(list);
+	return ok;
 }
 
-void lswlog_lmod(struct lswlog *buf, enum_names *names, lmod_t mod)
+void lswlog_lmod(struct lswlog *buf, enum_names *names,
+		 const char *separator, lmod_t mod)
 {
-	lswlog_enum_lset_short(buf, names, mod.set);
+	lswlog_enum_lset_short(buf, names, separator, mod.set);
 	if (mod.clr != LEMPTY) {
 		lswlogs(buf, " - ");
-		lswlog_enum_lset_short(buf, names, mod.clr);
+		lswlog_enum_lset_short(buf, names, separator, mod.clr);
 	}
 }

@@ -17,6 +17,8 @@
  *
  */
 
+#include "realtime.h"
+
 /* Defines some primitive ASN1 types */
 
 typedef enum {

@@ -103,7 +103,6 @@ static const char *const timer_event_name[] = {
 
 	"EVENT_REINIT_SECRET",
 	"EVENT_SHUNT_SCAN",
-	"EVENT_LOG_DAILY",
 	"EVENT_PENDING_DDNS",
 	"EVENT_SD_WATCHDOG",
 	"EVENT_PENDING_PHASE2",
@@ -141,8 +140,8 @@ enum_names timer_event_names = {
 /* State of exchanges */
 static const char *const state_name[] = {
 	"STATE_UNDEFINED",
-	"OPPO_ACQUIRE",
-	"OPPO_GW_DISCOVERED",
+	"STATE_UNUSED_1",
+	"STATE_UNUSED_2",
 	"STATE_MAIN_R0",
 	"STATE_MAIN_I1",
 	"STATE_MAIN_R1",
@@ -215,8 +214,8 @@ enum_names state_names = {
 
 static const char *const state_story[] = {
 	"not defined and probably dead (internal)",             /* STATE_UNDEFINED */
-	"got an ACQUIRE message for this pair (internal)",      /* OPPO_QCQUIRE */
-	"got TXT specifying gateway (internal)",                /* OPPO_GW_DISCOVERED */
+	"STATE_UNUSED_1",
+	"STATE_UNUSED_2",
 	"expecting MI1",                                        /* STATE_MAIN_R0 */
 	"sent MI1, expecting MR1",                              /* STATE_MAIN_I1 */
 	"sent MR1, expecting MI2",                              /* STATE_MAIN_R1 */
@@ -345,7 +344,6 @@ enum_names routing_story = {
 
 static const char *const stfstatus_names[] = {
 	"STF_IGNORE",
-	"STF_INLINE",
 	"STF_SUSPEND",
 	"STF_OK",
 	"STF_INTERNAL_ERROR",
@@ -376,6 +374,7 @@ const char *const sa_policy_bit_names[] = {
 	"TUNNEL",
 	"PFS",
 	"DISABLEARRIVALCHECK",
+	"DECAP_DSCP",
 	"SHUNT0",
 	"SHUNT1",
 	"FAIL0",

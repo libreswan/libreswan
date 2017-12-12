@@ -22,6 +22,8 @@
 
 #include <net/if.h>
 
+#include "monotime.h"
+
 extern bool can_do_IPcomp;  /* can system actually perform IPCOMP? */
 extern reqid_t global_reqids;
 
@@ -89,6 +91,7 @@ struct kernel_sa {
 	bool inbound;
 	bool add_selector;
 	bool esn;
+	bool decap_dscp;
 	u_int32_t tfcpad;
 	ipsec_spi_t spi;
 	unsigned proto;
@@ -144,6 +147,9 @@ struct raw_iface {
 	char name[IFNAMSIZ + 20]; /* what would be a safe size? */
 	struct raw_iface *next;
 };
+
+/* which kernel interface to use */
+extern enum kernel_interface kern_interface;
 
 LIST_HEAD(iface_list, iface_dev);
 extern struct iface_list interface_dev;
@@ -312,7 +318,7 @@ struct bare_shunt {
 };
 
 extern void show_shunt_status(void);
-extern int show_shunt_count(void);
+extern unsigned show_shunt_count(void);
 
 struct bare_shunt **bare_shunt_ptr(const ip_subnet *ours,
 				   const ip_subnet *his,
@@ -461,6 +467,8 @@ extern bool raw_eroute(const ip_address *this_host,
 		       , const char *policy_label
 #endif
 		       );
+
+extern deltatime_t bare_shunt_interval;
 
 #define _KERNEL_H_
 #endif /* _KERNEL_H_ */

@@ -59,17 +59,15 @@ kvmplutotest	enumcheck-01			good
 kvmplutotest	basic-pluto-01			good
 kvmplutotest	basic-pluto-02			good
 kvmplutotest	basic-pluto-03			good
-kvmplutotest    basic-pluto-07-sourceip		wip
+kvmplutotest    basic-pluto-07-sourceip		good
 
 kvmplutotest	linux-audit-01	good
 
 kvmplutotest	ikev1-01-fuzzer	good
 kvmplutotest	ikev1-02-fuzzer	good
-kvmplutotest	ikev1-initial-contact-01	wip
 
 kvmplutotest	basic-pluto-01-wrongkey			wip
-kvmplutotest	basic-pluto-01-nokey			wip
-kvmplutotest	basic-pluto-01-vanishingkey		wip
+kvmplutotest	basic-pluto-01-nokey			good
 
 
 #################################################################
@@ -80,7 +78,7 @@ kvmplutotest	alias-01	wip
 kvmplutotest	readwriteconf-01 wip
 kvmplutotest	algparse-01				good
 kvmplutotest	algparse-02-fips			good
-kvmplutotest	addconn-03	wip
+kvmplutotest	addconn-03				good
 
 #################################################################
 # Whack UI tests
@@ -105,13 +103,12 @@ kvmplutotest	ikev2-dcookie-01			good
 kvmplutotest	ikev2-dcookie-02			good
 kvmplutotest	ikev2-dcookie-03			good
 
-kvmplutotest	ikev2-07-biddown			wip
 kvmplutotest	ikev2-08-delete-notify			good
 kvmplutotest	ikev2-delete-01				good
 kvmplutotest	ikev2-delete-02				good
 kvmplutotest	ikev2-delete-03-valgrind		skiptest
 kvmplutotest	ikev2-delete-04				wip
-kvmplutotest	ikev2-delete-05-sa-start		wip
+kvmplutotest	ikev2-delete-05-sa-start		good
 kvmplutotest	ikev2-delete-06-start-both		good
 
 
@@ -135,6 +132,7 @@ kvmplutotest	ikev2-41-rw-replace			good
 kvmplutotest	ikev2-42-rw-replace-responder		good
 kvmplutotest	ikev2-45-impair-gx-01			good
 kvmplutotest	ikev2-45-impair-gx-02			good
+kvmplutotest	ikev1-impair-01-replay-duplicates	good
 kvmplutotest	ikev2-46-basic-psk-netkey		good
 kvmplutotest	ikev2-47-priority			good
 kvmplutotest	ikev2-48-nat-cp				good
@@ -155,6 +153,7 @@ kvmplutotest	ikev2-60-pam				good
 kvmplutotest	ikev2-61-any-psk			good
 kvmplutotest	ikev2-62-host-ondemand			good
 kvmplutotest	ikev2-62-host-ondemand-instance		good
+kvmplutotest	ikev2-63-anyid-nat			good
 
 kvmplutotest	ikev2-24-cryptoload			wip
 kvmplutotest	ikev2-25-rw-nat				good
@@ -171,7 +170,6 @@ kvmplutotest	ikev2-05-basic-psk-nhelpers0		good
 
 kvmplutotest	ikev2-04-basic-x509-nsspw		good
 
-kvmplutotest	ikev2-x509-01		good
 kvmplutotest	ikev2-10-2behind-nat	good
 
 # modp tests for checking if we deal with sending different KE's
@@ -190,6 +188,7 @@ kvmplutotest	ikev2-algo-12-aes-aes_cmac		good
 kvmplutotest	ikev2-algo-13-null			good
 kvmplutotest	ikev2-algo-14-esp-null-aes-gmac		good
 kvmplutotest	ikev2-algo-15-esp-null-none		good
+kvmplutotest	ikev2-algo-16-newer-dh			good
 kvmplutotest	netkey-algo-aes_gcm-01			good
 kvmplutotest	netkey-algo-aes_gcm-02			good
 kvmplutotest	netkey-algo-aes_gcm-03			good
@@ -277,6 +276,8 @@ kvmplutotest	ikev1-x509-aggr-12-san-dn-match		good
 kvmplutotest	ikev1-x509-aggr-13-san-dn-mismatch	good
 kvmplutotest	ikev1-x509-aggr-14-san-dn-fromcert	good
 
+kvmplutotest	ikev2-x509-01				good
+kvmplutotest	ikev2-x509-03				good
 kvmplutotest	ikev2-x509-05-san-firstemail-match	good
 kvmplutotest	ikev2-x509-06-san-email-mismatch	good
 kvmplutotest	ikev2-x509-07-san-ip-mismatch		good
@@ -288,6 +289,11 @@ kvmplutotest	ikev2-x509-12-san-dn-fromcert		good
 kvmplutotest	ikev2-x509-13-san-dn-match		good
 kvmplutotest	ikev2-x509-14-san-dn-mismatch		good
 kvmplutotest	ikev2-x509-15-san-dn-mismatch-responder	good
+kvmplutotest	ikev2-x509-16-multicert			good
+kvmplutotest	ikev2-x509-17-multicert-02		good
+kvmplutotest	ikev2-x509-18-multicert-rightid		good
+kvmplutotest	ikev2-x509-19-multicert-rightid-san	good
+kvmplutotest	ikev2-x509-20-multicert-rightid-san-wildcard	good
 
 kvmplutotest	ikev2-no-nhelpers-01			good
 
@@ -295,8 +301,8 @@ kvmplutotest	ikev2-auth-null-01			good
 
 kvmplutotest	ikev2-ddos-01				wip
 
-kvmplutotest	ikev2-switchnat-01			wip
-kvmplutotest	ikev1-switchnat-01			wip
+kvmplutotest	ikev2-switchnat-01			good
+kvmplutotest	ikev1-switchnat-01			good
 
 kvmplutotest	ikev1-hub-spoke 			good
 
@@ -311,15 +317,18 @@ kvmplutotest	nflog-03-conns				good
 
 kvmplutotest	netkey-vti-01				good
 kvmplutotest	netkey-vti-02				good
-kvmplutotest	netkey-vti-03				wip
+kvmplutotest	netkey-vti-03				good
 kvmplutotest	netkey-vti-04				wip
 kvmplutotest	netkey-vti-05				good
 kvmplutotest	netkey-vti-06				good
 kvmplutotest	netkey-vti-07				wip
+kvmplutotest	netkey-vti-08				good
 
 kvmplutotest	netkey-tfc-01				good
 kvmplutotest	netkey-tfc-02				good
 kvmplutotest	netkey-tfc-03				good
+
+kvmplutotest	netkey-decap-dscp-01			good
 
 kvmplutotest	ikev2-43-init-retransmit		good
 
@@ -330,7 +339,6 @@ kvmplutotest	dynamic-iface-01			good
 
 # Opportunstic Encryption using AUTH NULL
 kvmplutotest	newoe-01-whack				good
-kvmplutotest	newoe-02-klips				wip
 kvmplutotest	newoe-03-oeself				good
 kvmplutotest	newoe-04-pass-pass			good
 kvmplutotest	newoe-05-hold-pass			good
@@ -340,6 +348,7 @@ kvmplutotest	newoe-07-ike-replace-initiator-esp	good
 kvmplutotest	newoe-08-ike-replace-responder		good
 kvmplutotest	newoe-08-restart			good
 kvmplutotest	newoe-09-mutual				good
+kvmplutotest	newoe-09-mutual-transport		good
 kvmplutotest	newoe-10-expire-inactive		good
 kvmplutotest	newoe-10-expire-inactive-ike		good
 kvmplutotest	newoe-11-failike			good
@@ -417,10 +426,6 @@ kvmplutotest	ikev2-asymmetric-02-orienting		good
 kvmplutotest	ikev2-asymmetric-03-null-rsacert	good
 kvmplutotest	ikev2-asymmetric-04-null-rsaraw		good
 
-# get_shared_secret() needs to know if it is initiator/responder/asymmetric
-kvmplutotest	ikev2-asymmetric-05-null-psk		wip
-kvmplutotest	ikev2-asymmetric-06-psk-null		wip
-
 kvmplutotest	ikev2-asymmetric-07-psk-rsaraw		good
 kvmplutotest	ikev2-asymmetric-08-psk-rsacert		good
 kvmplutotest	ikev2-asymmetric-09-rsaraw-null		good
@@ -445,6 +450,8 @@ kvmplutotest	dpd-05	good
 kvmplutotest	dpd-06	good
 kvmplutotest	dpd-07	good
 kvmplutotest	dpd-08	wip
+kvmplutotest	dpd-09-shared		good
+kvmplutotest	dpd-10-alias 		wip
 kvmplutotest	ikev2-liveness-01	good
 kvmplutotest	ikev2-liveness-02	good
 kvmplutotest	ikev2-liveness-03	good
@@ -465,8 +472,8 @@ kvmplutotest	ikev2-child-restart-mismatch 	wip
 kvmplutotest	delete-sa-01			good
 kvmplutotest	delete-sa-03			good
 kvmplutotest	delete-sa-04			good
-kvmplutotest	delete-sa-05			wip
-kvmplutotest	delete-sa-06			wip
+kvmplutotest	delete-sa-05			good
+kvmplutotest	delete-sa-06			good
 kvmplutotest	delete-sa-08-rhbz1311360	good
 kvmplutotest	delete-sa-09-rhbz1311360-c32	good
 kvmplutotest	ikev1-27-uniqueid		good
@@ -486,6 +493,7 @@ kvmplutotest	x509-pluto-01		good
 kvmplutotest	x509-pluto-02		good
 kvmplutotest	x509-pluto-03		good
 kvmplutotest	x509-pluto-04		good
+kvmplutotest	x509-pluto-05		good
 
 kvmplutotest	x509-pluto-frag-00	good
 kvmplutotest	x509-pluto-frag-01	good
@@ -504,7 +512,7 @@ kvmplutotest	nat-pluto-04		good
 kvmplutotest	nat-pluto-07		good
 kvmplutotest	nat-pluto-08		good
 kvmplutotest	nat-pluto-09		good
-kvmplutotest	nat-pluto-10		wip
+kvmplutotest	nat-pluto-10		good
 kvmplutotest	nat-pluto-11		good
 
 #
@@ -535,8 +543,8 @@ kvmplutotest	xauth-pluto-07		good
 kvmplutotest	xauth-pluto-08		good
 kvmplutotest	xauth-pluto-09		good
 
-kvmplutotest	xauth-pluto-10		wip
-kvmplutotest	xauth-pluto-11		wip
+kvmplutotest	xauth-pluto-10		good
+kvmplutotest	xauth-pluto-11		good
 kvmplutotest	xauth-pluto-12		good
 kvmplutotest	xauth-pluto-13		good
 kvmplutotest	xauth-pluto-14		good
@@ -576,17 +584,13 @@ kvmplutotest	ikev1-algo-ike-pfs-01	good
 
 kvmplutotest	basic-pluto-01-valgrind	skiptest
 
-# This needs a new impair as the parser now prevents us from
-# creating the bogus keysize
-kvmplutotest	ikev1-algo-ike-bogus-01	wip
-
 kvmplutotest	ikev1-aggr-sendcert-01	good
 kvmplutotest	ikev1-aggr-replace-01	good
 kvmplutotest	ikev1-expire-r1-01-main	good
 kvmplutotest	ikev1-expire-r1-02-aggr	good
 
 # passthrough protoport tests
-kvmplutotest	basic-pluto-12		wip
+kvmplutotest	basic-pluto-12		good
 kvmplutotest	basic-pluto-13-netkey-route good
 kvmplutotest	basic-pluto-14-klips-route wip
 kvmplutotest	basic-pluto-15-no-retransmit good
@@ -623,6 +627,7 @@ kvmplutotest    algo-pluto-01          good
 kvmplutotest    algo-pluto-04          wip
 kvmplutotest    algo-pluto-07          good
 kvmplutotest    algo-pluto-08          good
+kvmplutotest    algo-pluto-09          good
 kvmplutotest    algo-pluto-10          good
 kvmplutotest    algo-pluto-11          good
 kvmplutotest    algo-pluto-12-aes-default	good
@@ -632,7 +637,7 @@ kvmplutotest    algo-pluto-14-aes_ctr	good
 #
 # tests for usnig multiple subnets using conn aliases
 #
-kvmplutotest	multinet-01		wip
+kvmplutotest	multinet-01		good
 kvmplutotest	multinet-03		wip
 kvmplutotest	multinet-04		good
 
@@ -653,8 +658,8 @@ kvmplutotest	ah-pluto-10		good
 kvmplutotest	interop-ikev1-strongswan-09-dh22-initiator	good
 kvmplutotest	interop-ikev2-strongswan-09-dh22-initiator	good
 # requires strongswan > 5.5.3 see https://wiki.strongswan.org/issues/2347
-kvmplutotest	interop-ikev1-strongswan-10-ah-initiator-sha256	wip
-kvmplutotest	interop-ikev1-strongswan-11-ah-initiator-sha512	wip
+kvmplutotest	interop-ikev1-strongswan-10-ah-initiator-sha256	good
+kvmplutotest	interop-ikev1-strongswan-11-ah-initiator-sha512	good
 kvmplutotest	interop-ikev1-strongswan-12-esp-sha2_256 good
 kvmplutotest	interop-ikev1-strongswan-13-esp-sha2_512 good
 kvmplutotest	interop-ikev1-strongswan-14-camellia	good
@@ -687,7 +692,7 @@ kvmplutotest	sourceip-01			good
 #################################################################
 # IPv6 tests
 #################################################################
-kvmplutotest	ipv6-v6-through-v6-klips-klips		wip
+kvmplutotest	ipv6-v6-through-v6-klips-klips		good
 kvmplutotest	ipv6-v6-through-v6-netkey-netkey	wip
 kvmplutotest	ipv6-v6-through-v6-klips-netkey		wip
 kvmplutotest	ipv6-v4-through-v6-klips-klips		wip
@@ -768,6 +773,8 @@ kvmplutotest 	ikev2-55-ipseckey-03				good
 kvmplutotest 	ikev2-55-ipseckey-04				good
 kvmplutotest 	ikev2-55-ipseckey-05				good
 kvmplutotest 	ikev2-55-ipseckey-06				good
+kvmplutotest 	ikev2-55-ipseckey-07				wip
+kvmplutotest 	ikev2-55-ipseckey-08				good
 
 #################################################################
 # Specific bug tests
@@ -830,12 +837,11 @@ kvmplutotest	nss-cert-04-ikev2		good
 kvmplutotest	nss-cert-05			good
 kvmplutotest	nss-cert-05-ikev2		good
 kvmplutotest	nss-cert-06			good
-kvmplutotest	nss-cert-07			wip
 kvmplutotest	nss-cert-08-mismatch		good
 kvmplutotest	nss-cert-chain-01		good
 kvmplutotest	nss-cert-chain-02		good
 kvmplutotest	nss-cert-chain-03		good
-kvmplutotest	nss-cert-chain-04		wip
+kvmplutotest	nss-cert-chain-04		good
 kvmplutotest	nss-cert-chain-01-ikev2		good
 kvmplutotest	nss-cert-chain-02-ikev2		good
 kvmplutotest	nss-cert-chain-03-ikev2		good
@@ -895,7 +901,7 @@ kvmplutotest	klips-nat-transport-02		skiptest
 kvmplutotest	klips-pluto-ipcmp-01		skiptest
 
 # seccomp
-kvmplutotest	seccomp-01-enabled		wip
+kvmplutotest	seccomp-01-enabled		good
 kvmplutotest	seccomp-02-tolerant		good
 
 # Utility tests like "ipsec showhostkey"

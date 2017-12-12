@@ -24,3 +24,8 @@ extern void free_crl_fetch(void);
 extern void add_crl_fetch_request_nss(SECItem *issuer_dn, generalName_t *end_dp);
 extern void list_crl_fetch_requests(bool utc);
 
+extern char *curl_iface;
+extern long curl_timeout;
+extern bool crl_strict;
+extern bool ocsp_strict;
+extern bool ocsp_enable;

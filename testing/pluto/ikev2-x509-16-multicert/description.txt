@@ -1,0 +1,5 @@
+east now has two certs loaded with two different rightid='s for
+itself. It should properly connswitch based on matching the
+received IDR from west which is a SAN on one of the certificates.
+
+conn other should be selected on both ends

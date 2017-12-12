@@ -68,23 +68,24 @@ date_format() {
 
     # Create the message, github seems to strip trailing new lines.
 
-    git show --no-patch --format=%B ${gitrev} \
-	| jq -s --raw-input \
-	     '{ message: sub("\n\n$";""), }'
+    #    git show --no-patch --format=%B ${gitrev} \
+    #	| jq -s --raw-input \
+    #	     '{ message: sub("\n\n$";""), }'
 
     # Add an "interesting" commit attribute.  Only "interesting"
     # commits get tested.
     #
-    # git-interesting outputs "reason: details" for really interesting
-    # stuff, "true" for patches, and nothing otherwise.  Need to
-    # convert that to proper json.
+    # git-interesting outputs either "false", "true" or "reason:
+    # details" (for really interesting stuff).  Need to convert the
+    # last one to proper json:
 
-    if interesting=$(${webdir}/git-interesting.sh ${gitrev}) ; then
-	# 'reason: details' -> '"reason"'
-	interesting=$(echo ${interesting} | sed -e 's/\(.*\):.*/"\1"/')
-    else
-	interesting=false
-    fi
+    interesting=$(${webdir}/git-interesting.sh ${gitrev})
+    case "${interesting}" in
+	*:* )
+	    # convert 'reason: details' -> '"reason"'
+	    interesting=$(echo ${interesting} | sed -e 's/\(.*\):.*/"\1"/')
+	    ;;
+    esac
     jq --null-input \
        --argjson interesting "${interesting}" \
        '{ interesting: $interesting }'

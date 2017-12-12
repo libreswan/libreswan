@@ -119,7 +119,7 @@ struct lswlog;
 /* clearer shorthand for *cmp functions */
 #define streq(a, b) (strcmp((a), (b)) == 0)
 #define strneq(a, b, c) (strncmp((a), (b), (c)) == 0)
-#define startswith(a, b) strneq((a), (b), sizeof(b)-1)	/* b must be literal! */
+#define startswith(a, b) strneq((a), (b), strlen(b))
 #define eat(a, b) (startswith((a), (b))? ((a) += sizeof(b) - 1), TRUE : FALSE)
 #define strcaseeq(a, b) (strcasecmp((a), (b)) == 0)
 #define strncaseeq(a, b, n) (strncasecmp((a), (b), (n)) == 0)
@@ -172,6 +172,8 @@ struct lswlog;
 
 #define messupn(x, n) memset((x), 0xFB, (n))	/* set n bytes to wrong value */
 #define messup(x) messupn((x), sizeof(*(x)))	/* set all bytes to wrong value */
+
+extern const char *bool_str(bool b);	/* bool -> string */
 
 /* routines to copy C strings to fixed-length buffers */
 extern char *jam_str(char *dest, size_t size, const char *src);
@@ -248,7 +250,12 @@ extern const char *enum_show_shortb(enum_names *ed, unsigned long val, struct es
 
 extern const char *enum_show(enum_names *ed, unsigned long val);	/* NOT RE-ENTRANT */
 
-/* iterator, start with -1 - hopefully more imune to rounding */
+/*
+ * iterator
+ *
+ * start with -1 -- we hope more immune to rounding
+ * ??? how are integers subject to rounding?
+ */
 extern long next_enum(enum_names *en, long last);
 
 /* sometimes the prefix gets annoying */
@@ -318,7 +325,7 @@ extern const char *bitnamesofb(const char *const table[],
 			       char *buf, size_t blen);
 
 size_t lswlog_enum_lset_short(struct lswlog *, enum_names *sd,
-			      lset_t val);
+			      const char *separator, lset_t val);
 
 /*
  * The sparser_name should be transformed into keyword_enum_value

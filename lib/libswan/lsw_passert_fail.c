@@ -26,7 +26,7 @@ void lsw_passert_fail(const char *file,
 		      const char *fmt, ...)
 {
 	LSWBUF(buf) {
-		lswlog_pre(buf);
+		lswlog_log_prefix(buf);
 		lswlogs(buf, "ABORT: ASSERTION FAILED: ");
 		va_list ap;
 		va_start(ap, fmt);

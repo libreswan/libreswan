@@ -389,7 +389,6 @@ def configsetupcheck():
 	p = subprocess.Popen(["ipsec","addconn","--configsetup"], universal_newlines=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	configsetup, err = p.communicate()
 
-	myid = ""
 	# grab obsolete settings
 	printfun("Checking for obsolete ipsec.conf options")
 	if not err:

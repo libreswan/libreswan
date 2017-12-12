@@ -227,8 +227,6 @@ def is_test_output_directory(directory):
             return True
     return False
 
-TESTLIST = "TESTLIST"
-
 
 def load(logger, log_level, args,
          testsuite_directory=None,
@@ -243,16 +241,25 @@ def load(logger, log_level, args,
 
     # Is DIRECTORY a testsuite or a testlist file?  For instance:
     # testing/pluto or testing/pluto/TESTLIST.
+
     if os.path.isfile(testsuite_directory):
         testlist = testsuite_directory
         testsuite_directory = os.path.dirname(testsuite_directory)
         logger.log(log_level, "'%s' is a TESTLIST file", testlist)
     else:
-        testlist = os.path.join(testsuite_directory, TESTLIST)
-        if not os.path.exists(testlist):
-            logger.debug("'%s' does not appear to be a testsuite directory", testsuite_directory)
-            return None
-        logger.log(log_level, "'%s' is a testsuite directory", testsuite_directory)
+        head = "testing/pluto"
+        path = "TESTLIST"
+        while True:
+            testlist = os.path.join(testsuite_directory, path)
+            if os.path.isfile(testlist):
+                logger.log(log_level, "'%s' is a testsuite directory", testsuite_directory)
+                break
+            if not head:
+                logger.debug("'%s' does not appear to be a testsuite directory", testsuite_directory)
+                return None
+            head, tail = os.path.split(head)
+            path = os.path.join(tail, path)
+
     return Testsuite(logger, testlist, error_level,
                      testing_directory=args.testing_directory,
                      testsuite_output_directory=testsuite_output_directory or args.testsuite_output)

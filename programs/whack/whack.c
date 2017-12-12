@@ -104,7 +104,7 @@ static void help(void)
 		"	[--ikev1-allow | --ikev2-allow | --ikev2-propose] \\\n"
 		"	[--allow-narrowing] [--sareftrack] [--sarefconntrack] \\\n"
 		"	[--ikefrag-allow | --ikefrag-force] [--no-ikepad] \\\n"
-		"	[--esn ] [--no-esn] \\\n"
+		"	[--esn ] [--no-esn] [--decap-dscp] \\\n"
 #ifdef HAVE_NM
 		"	[--nm-configured] \\\n"
 #endif
@@ -156,17 +156,10 @@ static void help(void)
 		"\n"
 		"pubkey: whack --keyid <id> [--addkey] [--pubkeyrsa <key>]\n"
 		"\n"
-		"myid: whack --myid <id>\n"
-		"\n"
 		"debug: whack [--name <connection_name>] \\\n"
-		"	[--debug <class>] | \\\n"
 		"	[--debug-none] | [--debug-all] | \\\n"
-		"	( [--debug-raw] [--debug-crypt] [--debug-parsing] \\\n"
-		"	[--debug-emitting] [--debug-control] [--debug-controlmore] \\\n"
-		"	[--debug-dns] [--debug-pfkey] [--debug-dpd] \\\n"
-		"	[--debug-nat-t] [--debug-x509] [--debug-oppo] \\\n"
-		"	[--debug-oppoinfo] \\\n"
-		"	[--debug-private] )\n"
+		"	[--debug <class>] | [--debug private] \\\n"
+		"	[--debug list]\n"
 		"\n"
 		"testcases: [--whackrecord <file>] [--whackstoprecord]\n"
 		"\n"
@@ -272,8 +265,6 @@ enum option_enums {
 	OPT_KEYID,
 	OPT_ADDKEY,
 	OPT_PUBKEYRSA,
-
-	OPT_MYID,
 
 	OPT_ROUTE,
 	OPT_UNROUTE,
@@ -462,15 +453,9 @@ enum option_enums {
 
 /* === end of correspondence with POLICY_* === */
 
-/* NOTE: these definitions must match DBG_* and IMPAIR_* in constants.h */
-
 #   define DBGOPT_FIRST DBGOPT_NONE
 	DBGOPT_NONE,
 	DBGOPT_ALL,
-
-	DBGOPT_elems,	/* this point on: DBGOPT single elements */
-
-	DBGOPT_roof = DBGOPT_elems + IMPAIR_roof_IX - 1,
 
 	DBGOPT_DEBUG,
 	DBGOPT_IMPAIR,
@@ -508,8 +493,6 @@ static const struct option long_opts[] = {
 	{ "keyid", required_argument, NULL, OPT_KEYID + OO },
 	{ "addkey", no_argument, NULL, OPT_ADDKEY + OO },
 	{ "pubkeyrsa", required_argument, NULL, OPT_PUBKEYRSA + OO },
-
-	{ "myid", required_argument, NULL, OPT_MYID + OO },
 
 	{ "route", no_argument, NULL, OPT_ROUTE + OO },
 	{ "ondemand", no_argument, NULL, OPT_ROUTE + OO },	/* alias */
@@ -720,6 +703,7 @@ static const struct option long_opts[] = {
 
 	PS("no-esn", ESN_NO),
 	PS("esn", ESN_YES),
+	PS("decap-dscp", DECAP_DSCP),
 #undef PS
 
 
@@ -733,33 +717,6 @@ static const struct option long_opts[] = {
 
 	{ "debug-none", no_argument, NULL, DBGOPT_NONE + OO },
 	{ "debug-all", no_argument, NULL, DBGOPT_ALL + OO },
-
-#    define DO (DBGOPT_elems + OO)
-
-	{ "debug-raw", no_argument, NULL, DBG_RAW_IX + DO },
-	{ "debug-crypt", no_argument, NULL, DBG_CRYPT_IX + DO },
-	{ "debug-parsing", no_argument, NULL, DBG_PARSING_IX + DO },
-	{ "debug-emitting", no_argument, NULL, DBG_EMITTING_IX + DO },
-	{ "debug-control", no_argument, NULL, DBG_CONTROL_IX + DO },
-	{ "debug-lifecycle", no_argument, NULL, DBG_LIFECYCLE_IX + DO },
-	{ "debug-kernel", no_argument, NULL, DBG_KERNEL_IX + DO },
-	{ "debug-dns", no_argument, NULL, DBG_DNS_IX + DO },
-	{ "debug-oppo", no_argument, NULL, DBG_OPPO_IX + DO },
-	{ "debug-oppoinfo", no_argument, NULL, DBG_OPPOINFO_IX + DO },
-	{ "debug-whackwatch",  no_argument, NULL, DBG_WHACKWATCH_IX + DO },
-	{ "debug-controlmore", no_argument, NULL, DBG_CONTROLMORE_IX + DO },
-	{ "debug-pfkey",   no_argument, NULL, DBG_PFKEY_IX + DO },
-	/* ??? redundant spelling */
-	{ "debug-nattraversal", no_argument, NULL, DBG_NATT_IX + DO },
-	/* ??? redundant spelling */
-	{ "debug-natt",    no_argument, NULL, DBG_NATT_IX + DO },
-	/* obsolete _ */
-	{ "debug-nat_t",   no_argument, NULL, DBG_NATT_IX + DO },
-	{ "debug-nat-t",   no_argument, NULL, DBG_NATT_IX + DO },
-	{ "debug-x509",    no_argument, NULL, DBG_X509_IX + DO },
-	{ "debug-dpd",     no_argument, NULL, DBG_DPD_IX + DO },
-	{ "debug-private", no_argument, NULL, DBG_PRIVATE_IX + DO },
-
 	{ "debug", required_argument, NULL, DBGOPT_DEBUG + OO, },
 	{ "impair", required_argument, NULL, DBGOPT_IMPAIR + OO, },
 
@@ -895,7 +852,8 @@ int main(int argc, char **argv)
 
 	char username[MAX_USERNAME_LEN];
 	char xauthpass[XAUTH_MAX_PASS_LENGTH];
-	int usernamelen = 0, xauthpasslen = 0;
+	int usernamelen = 0;
+	int xauthpasslen = 0;
 	bool gotusername = FALSE, gotxauthpass = FALSE;
 	const char *ugh;
 
@@ -953,7 +911,7 @@ int main(int argc, char **argv)
 	/* whack cannot access kernel_ops->replay_window */
 	msg.sa_replay_window = IPSEC_SA_DEFAULT_REPLAY_WINDOW;
 	msg.r_timeout = deltatime(RETRANSMIT_TIMEOUT_DEFAULT);
-	msg.r_interval = RETRANSMIT_INTERVAL_DEFAULT;
+	msg.r_interval = deltatime_ms(RETRANSMIT_INTERVAL_DEFAULT_MS);
 
 	msg.addr_family = AF_INET;
 	msg.tunnel_addr_family = AF_INET;
@@ -1158,11 +1116,6 @@ int main(int argc, char **argv)
 		case OPT_IKE_MSGERR:	/* --ike-socket-errqueue-toggle */
 			msg.ike_sock_err_toggle = TRUE;
 			msg.whack_listen = TRUE;
-			continue;
-
-		case OPT_MYID:	/* --myid <identity> */
-			msg.whack_myid = TRUE;
-			msg.myid = optarg;	/* decoded by Pluto */
 			continue;
 
 		case OPT_ADDKEY:	/* --addkey */
@@ -1632,6 +1585,8 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_ESN_NO_IX:
 		/* --esn */
 		case CDP_SINGLETON + POLICY_ESN_YES_IX:
+		/* --decap-dscp */
+		case CDP_SINGLETON + POLICY_DECAP_DSCP_IX:
 
 			msg.policy |= LELEM(c - CDP_SINGLETON);
 			continue;
@@ -1663,7 +1618,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_RETRANSMIT_I:	/* --retransmit-interval <msecs> */
-			msg.r_interval = opt_whole;
+			msg.r_interval = deltatime_ms(opt_whole);
 			continue;
 
 		case CD_IKELIFETIME:	/* --ikelifetime <seconds> */
@@ -1893,18 +1848,18 @@ int main(int argc, char **argv)
 			 */
 			msg.right.username = optarg;
 			gotusername = TRUE;
-			username[0] = '\0';
-			strncat(username, optarg, sizeof(username) -
-				strlen(username) - 1);
-			usernamelen = strlen(username) + 1;
+			/* ??? why does this length include NUL? */
+			usernamelen = jam_str(username, sizeof(username),
+					optarg) -
+				username + 1;
 			continue;
 
 		case OPT_XAUTHPASS:
 			gotxauthpass = TRUE;
-			xauthpass[0] = '\0';
-			strncat(xauthpass, optarg, sizeof(xauthpass) -
-				strlen(xauthpass) - 1);
-			xauthpasslen = strlen(xauthpass) + 1;
+			/* ??? why does this length include NUL? */
+			xauthpasslen = jam_str(xauthpass, sizeof(xauthpass),
+					optarg) -
+				xauthpass + 1;
 			continue;
 
 		case END_MODECFGCLIENT:
@@ -2118,8 +2073,7 @@ int main(int argc, char **argv)
 					}
 				}
 				exit(1);
-			} else if (!lmod_arg(&msg.debugging, &debug_names,
-				      DBG_ALL, DBG_MASK, optarg)) {
+			} else if (!lmod_arg(&msg.debugging, &debug_lmod_info, optarg)) {
 				fprintf(stderr, "whack: unrecognized --debug '%s' option ignored\n",
 					optarg);
 			}
@@ -2136,8 +2090,7 @@ int main(int argc, char **argv)
 					}
 				}
 				exit(1);
-			} else if (!lmod_arg(&msg.impairing, &impair_names,
-				      IMPAIR_MASK, IMPAIR_MASK, optarg)) {
+			} else if (!lmod_arg(&msg.impairing, &impair_lmod_info, optarg)) {
 				fprintf(stderr, "whack: unrecognized --impair '%s' option; ignored\n",
 					optarg);
 			}
@@ -2149,10 +2102,8 @@ int main(int argc, char **argv)
 			continue;
 
 		default:
-			/* DBG_* or IMPAIR_* flags */
-			assert(DBGOPT_elems <= c && c < DBGOPT_elems + IMPAIR_roof_IX);
-			msg.debugging = lmod_set(msg.debugging, LELEM(c - DBGOPT_elems));
-			continue;
+			bad_case(c);
+			break;
 		}
 		break;
 	}
@@ -2275,7 +2226,7 @@ int main(int argc, char **argv)
 			diag("--addkey and --pubkeyrsa require --keyid");
 	}
 
-	if (!(msg.whack_connection || msg.whack_key || msg.whack_myid ||
+	if (!(msg.whack_connection || msg.whack_key ||
 	      msg.whack_delete ||msg.whack_deleteid || msg.whack_deletestate ||
 	      msg.whack_deleteuser ||
 	      msg.whack_initiate || msg.whack_oppo_initiate ||
@@ -2378,159 +2329,146 @@ int main(int argc, char **argv)
 			break;
 		}
 		exit(RC_WHACK_PROBLEM);
-	} else {
-		int sock = safe_socket(AF_UNIX, SOCK_STREAM, 0);
-		int exit_status = 0;
-		ssize_t len = wp.str_next - (unsigned char *)&msg;
+	}
 
-		if (sock == -1) {
-			int e = errno;
+	int sock = safe_socket(AF_UNIX, SOCK_STREAM, 0);
+	int exit_status = 0;
+	ssize_t len = wp.str_next - (unsigned char *)&msg;
 
-			fprintf(stderr, "whack: socket() failed (%d %s)\n", e, strerror(
-					e));
-			exit(RC_WHACK_PROBLEM);
-		}
+	if (sock == -1) {
+		int e = errno;
 
-		if (connect(sock, (struct sockaddr *)&ctl_addr,
-			    offsetof(struct sockaddr_un,
-				     sun_path) + strlen(ctl_addr.sun_path)) <
-		    0) {
+		fprintf(stderr, "whack: socket() failed (%d %s)\n", e, strerror(
+				e));
+		exit(RC_WHACK_PROBLEM);
+	}
+
+	if (connect(sock, (struct sockaddr *)&ctl_addr,
+		    offsetof(struct sockaddr_un,
+			     sun_path) + strlen(ctl_addr.sun_path)) < 0)
+	{
+		int e = errno;
+
+		fprintf(stderr,
+			"whack:%s connect() for \"%s\" failed (%d %s)\n",
+			e == ECONNREFUSED ? " is Pluto running? " : "",
+			ctl_addr.sun_path, e, strerror(e));
+		exit(RC_WHACK_PROBLEM);
+	}
+
+	if (write(sock, &msg, len) != len) {
+		int e = errno;
+
+		fprintf(stderr, "whack: write() failed (%d %s)\n",
+			e, strerror(e));
+		exit(RC_WHACK_PROBLEM);
+	}
+
+	/* for now, just copy reply back to stdout */
+
+	char buf[4097];	/* arbitrary limit on log line length */
+	char *be = buf;
+
+	for (;;) {
+		char *ls = buf;
+		ssize_t rl = read(sock, be, (buf + sizeof(buf) - 1) - be);
+
+		if (rl < 0) {
 			int e = errno;
 
 			fprintf(stderr,
-				"whack:%s connect() for \"%s\" failed (%d %s)\n",
-				e == ECONNREFUSED ? " is Pluto running? " : "",
-				ctl_addr.sun_path, e, strerror(e));
+				"whack: read() failed (%d %s)\n",
+				e, strerror(e));
 			exit(RC_WHACK_PROBLEM);
 		}
-
-		if (write(sock, &msg, len) != len) {
-			int e = errno;
-
-			fprintf(stderr, "whack: write() failed (%d %s)\n", e, strerror(
-					e));
-			exit(RC_WHACK_PROBLEM);
+		if (rl == 0) {
+			if (be != buf)
+				fprintf(stderr,
+					"whack: last line from pluto too long or unterminated\n");
+			break;
 		}
 
-		/* for now, just copy reply back to stdout */
+		be += rl;
+		*be = '\0';
 
-		{
-			char buf[4097];	/* arbitrary limit on log line length */
-			char *be = buf;
+		for (;;) {
+			char *le = strchr(ls, '\n');
 
-			for (;;) {
-				char *ls = buf;
-				ssize_t rl =
-					read(sock, be,
-					     (buf + sizeof(buf) - 1) - be);
-
-				if (rl < 0) {
-					int e = errno;
-
-					fprintf(stderr,
-						"whack: read() failed (%d %s)\n", e,
-						strerror(e));
-					exit(RC_WHACK_PROBLEM);
-				}
-				if (rl == 0) {
-					if (be != buf)
-						fprintf(stderr,
-							"whack: last line from pluto too long or unterminated\n");
-
-
-					break;
-				}
-
-				be += rl;
-				*be = '\0';
-
-				for (;;) {
-					char *le = strchr(ls, '\n');
-
-					if (le == NULL) {
-						/*
-						 * move last, partial line
-						 * to start of buffer
-						 */
-						memmove(buf, ls, be - ls);
-						be -= ls - buf;
-						break;
-					}
-
-					le++;	/* include NL in line */
-					if (write(STDOUT_FILENO, ls, le -
-						  ls) != (le - ls)) {
-						int e = errno;
-						fprintf(stderr,
-							"whack: write() failed to stdout(%d %s)\n", e,
-							strerror(e));
-					}
-
-					/*
-					 * figure out prefix number
-					 * and how it should affect our exit
-					 * status
-					 *
-					 * we don't generally use strtoul but
-					 * in this case, its failure mode
-					 * (0 for nonsense) is probably OK.
-					 */
-					{
-						unsigned long s =
-							strtoul(ls, NULL, 10);
-
-						switch (s) {
-						/* these logs are informational only */
-						case RC_COMMENT:
-						case RC_INFORMATIONAL:
-						case RC_INFORMATIONAL_TRAFFIC:
-						case RC_LOG:
-						/* RC_LOG_SERIOUS is supposed to be here according to lswlog.h, but seems oudated? */
-							/* ignore */
-							break;
-						case RC_SUCCESS:
-							/* be happy */
-							exit_status = 0;
-							break;
-
-						case RC_ENTERSECRET:
-							if (!gotxauthpass) {
-								xauthpasslen =
-									whack_get_secret(
-										xauthpass,
-										sizeof(xauthpass));
-							}
-							send_reply(sock,
-								   xauthpass,
-								   xauthpasslen);
-							break;
-
-						case RC_USERPROMPT:
-							if (!gotusername) {
-								usernamelen =
-									whack_get_value(
-										username,
-										sizeof(username));
-							}
-							send_reply(sock,
-								   username,
-								   usernamelen);
-							break;
-
-						default:
-							if (msg.whack_async)
-								exit_status =
-									0;
-							else
-								exit_status =
-									s;
-							break;
-						}
-					}
-					ls = le;
-				}
+			if (le == NULL) {
+				/*
+				 * move last, partial line
+				 * to start of buffer
+				 */
+				memmove(buf, ls, be - ls);
+				be -= ls - buf;
+				break;
 			}
+
+			le++;	/* include NL in line */
+			if (write(STDOUT_FILENO, ls, le - ls) != (le - ls)) {
+				int e = errno;
+
+				fprintf(stderr,
+					"whack: write() failed to stdout(%d %s)\n",
+					e, strerror(e));
+			}
+
+			/*
+			 * figure out prefix number
+			 * and how it should affect our exit
+			 * status
+			 *
+			 * we don't generally use strtoul but
+			 * in this case, its failure mode
+			 * (0 for nonsense) is probably OK.
+			 */
+			unsigned long s = strtoul(ls, NULL, 10);
+
+			switch (s) {
+			/* these logs are informational only */
+			case RC_COMMENT:
+			case RC_INFORMATIONAL:
+			case RC_INFORMATIONAL_TRAFFIC:
+			case RC_LOG:
+			/* RC_LOG_SERIOUS is supposed to be here according to lswlog.h, but seems oudated? */
+				/* ignore */
+				break;
+			case RC_SUCCESS:
+				/* be happy */
+				exit_status = 0;
+				break;
+
+			case RC_ENTERSECRET:
+				if (!gotxauthpass) {
+					xauthpasslen = whack_get_secret(
+						xauthpass,
+						sizeof(xauthpass));
+				}
+				send_reply(sock,
+					   xauthpass,
+					   xauthpasslen);
+				break;
+
+			case RC_USERPROMPT:
+				if (!gotusername) {
+					usernamelen = whack_get_value(
+						username,
+						sizeof(username));
+				}
+				send_reply(sock,
+					   username,
+					   usernamelen);
+				break;
+
+			default:
+				exit_status = msg.whack_async ?
+					0 : s;
+				break;
+			}
+
+			ls = le;
 		}
-		return exit_status;
 	}
+
+	return exit_status;
 }

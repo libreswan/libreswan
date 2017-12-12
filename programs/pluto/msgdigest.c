@@ -71,7 +71,7 @@ void free_md_pool(void)
 	}
 }
 
-struct msg_digest *alloc_md(char *mdname)
+struct msg_digest *alloc_md(const char *mdname)
 {
 	struct msg_digest *md = md_pool;
 

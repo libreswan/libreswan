@@ -126,7 +126,7 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 	if (st->st_pfs_group != NULL) {
 		DBG(DBG_CRYPT, DBG_log("#%lu %s add g^ir to child key %p",
 					st->st_serialno,
-					enum_name(&state_names, st->st_state),
+					st->st_state_name,
 					st->st_shared_nss));
 		shared = st->st_shared_nss;
 	}

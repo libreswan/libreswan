@@ -17,7 +17,7 @@
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  * Copyright (C) 2015-2017 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016-2017 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -40,6 +40,7 @@
 #include <sys/stat.h>
 #include <arpa/inet.h>
 #include <resolv.h>
+#include <errno.h>
 
 #include <libreswan.h>
 #include "libreswan/pfkeyv2.h"
@@ -77,6 +78,7 @@
 #include "addresspool.h"
 #include "nat_traversal.h"
 #include "pluto_x509.h"
+#include "nss_cert_verify.h" /* for cert_VerifySubjectAltName() */
 #include "nss_cert_load.h"
 #include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
@@ -89,7 +91,8 @@ struct connection *connections = NULL;
 
 struct connection *unoriented_connections = NULL;
 
-static uint32_t global_marks = 1001;
+#define MINIMUM_IPSEC_SA_RANDOM_MARK 65536
+static uint32_t global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
 
 /*
  * Find a connection by name.
@@ -254,11 +257,10 @@ static void delete_sr(struct spd_route *sr)
 
 void delete_connection(struct connection *c, bool relations)
 {
-	struct connection *old_cur_connection =
-		cur_connection == c ? NULL : cur_connection;
-
-	lset_t old_cur_debugging = cur_debugging;
-	set_cur_connection(c);
+	struct connection *old_cur_connection = push_cur_connection(c);
+	if (old_cur_connection == c) {
+		old_cur_connection = NULL;
+	}
 
 	/*
 	 * Must be careful to avoid circularity:
@@ -274,7 +276,7 @@ void delete_connection(struct connection *c, bool relations)
 			libreswan_log(
 				"deleting connection \"%s\"%s instance with peer %s {isakmp=#%lu/ipsec=#%lu}",
 				c->name, fmt_conn_instance(c, cib),
-				log_ip ? ipstr(&c->spd.that.host_addr, &b) : "<ip address>",
+				sensitive_ipstr(&c->spd.that.host_addr, &b),
 				c->newest_isakmp_sa, c->newest_ipsec_sa);
 		}
 		c->kind = CK_GOING_AWAY;
@@ -296,7 +298,6 @@ void delete_connection(struct connection *c, bool relations)
 
 	/* find and delete c from connections list */
 	list_rm(struct connection, ac_next, c, connections);
-	cur_connection = old_cur_connection;
 
 	/* find and delete c from the host pair list */
 	if (c->host_pair == NULL) {
@@ -320,7 +321,9 @@ void delete_connection(struct connection *c, bool relations)
 		}
 	}
 
-	set_debugging(old_cur_debugging);
+	/* any logging past this point is for the wrong connection */
+	pop_cur_connection(old_cur_connection);
+
 	pfreeany(c->name);
 	pfreeany(c->connalias);
 	pfreeany(c->vti_iface);
@@ -615,12 +618,10 @@ size_t format_end(char *buf,
 
 	/* host */
 	if (host == NULL) {
-		if (log_ip) {
-			addrtot(&this->host_addr, 0, host_space, sizeof(host_space));
-		} else {
-			host_space[0] = '\0';
-			strncat(host_space, "<ip address>", sizeof(host_space));
-		}
+		ipstr_buf b;
+
+		jam_str(host_space, sizeof(host_space),
+			sensitive_ipstr(&this->host_addr, &b));
 		host = host_space;
 		dohost_name = TRUE;
 	}
@@ -656,11 +657,7 @@ size_t format_end(char *buf,
 
 	/* id, if different from host */
 	host_id[0] = '\0';
-	if (this->id.kind == ID_MYID) {
-		id_obrackets = "[";
-		id_cbrackets = "]";
-		strcpy(host_id, "%myid");
-	} else if (!(this->id.kind == ID_NONE ||
+	if (!(this->id.kind == ID_NONE ||
 			(id_is_ipaddr(&this->id) &&
 				sameaddr(&this->id.ip_addr,
 					&this->host_addr)))) {
@@ -875,7 +872,7 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 	if (src->id == NULL) {
 		dst->id.kind = ID_NONE;
 	} else {
-		err_t ugh = atoid(src->id, &dst->id, TRUE, FALSE);
+		err_t ugh = atoid(src->id, &dst->id, FALSE);
 
 		if (ugh != NULL) {
 			loglog(RC_BADID, "bad %s --id: %s (ignored)", which,
@@ -992,7 +989,7 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 
 		switch (dst->host_type) {
 		case KH_IPHOSTNAME:
-			er = ttoaddr(dst->host_addr_name, 0, dst->host_addr.u.v4.sin_family,
+			er = ttoaddr(dst->host_addr_name, 0, addrtypeof(&dst->host_addr),
 				&dst->host_addr);
 
 			/* The above call wipes out the port, put it again */
@@ -1216,15 +1213,51 @@ static bool preload_wm_cert_secrets(const struct whack_message *wm)
 }
 
 /* only used by add_connection() */
-static void mark_parse(char *wmmark, struct sa_mark *sa_mark) {
-	char *mask_start = strstr(wmmark,"/");
+static void mark_parse(const char *cnm, /*const*/ char *wmmark, struct sa_mark *sa_mark) {
+	/*const*/ char *val_end;
 
-	sa_mark->val = strtol(wmmark, &mask_start, 0);
-	if (mask_start != wmmark && *mask_start == '/')
-		sa_mark->mask = strtol(mask_start + 1, NULL, 0);
-	else
-		sa_mark->mask = 0xffffffff;
+	sa_mark->unique = FALSE;
+	sa_mark->val = 0xffffffff;
+	sa_mark->mask = 0xffffffff;
+	if (streq(wmmark, "-1") || startswith(wmmark, "-1/")) {
+		sa_mark->unique = TRUE;
+		val_end = wmmark + strlen("-1");
+	} else {
+		errno = 0;
+		unsigned long v = strtoul(wmmark, &val_end, 0);
+		if (errno != 0 || v > 0xffffffff ||
+		    (*val_end != '\0' && *val_end != '/'))
+		{
+			/* ??? should be detected and reported by confread and whack */
+			loglog(RC_LOG_SERIOUS,
+				"connection \"%s\": bad mark value \"%s\"",
+				cnm, wmmark);
+		} else {
+			sa_mark->val = v;
+		}
+	}
+
+	if (*val_end == '/') {
+		/*const*/ char *mask_end;
+		errno = 0;
+		unsigned long v = strtoul(val_end+1, &mask_end, 0);
+		if (errno != 0 || v > 0xffffffff || *mask_end != '\0') {
+			/* ??? should be detected and reported by confread and whack */
+			loglog(RC_LOG_SERIOUS,
+				"connection \"%s\": bad mark mask \"%s\"",
+				cnm, mask_end);
+		} else {
+			sa_mark->mask = v;
+		}
+	}
+	if ((sa_mark->val & ~sa_mark->mask) != 0) {
+		/* ??? should be detected and reported by confread and whack */
+		loglog(RC_LOG_SERIOUS,
+			"connection \"%s\": mark value %#08" PRIx32 " has bits outside mask %#08" PRIx32,
+			cnm, sa_mark->val, sa_mark->mask);
+	}
 }
+
 /*
  * XXX: This function should be rewritten, with more careful distinction
  * between wm->policy and c->policy. It now jumps back and forth due to
@@ -1595,13 +1628,15 @@ void add_connection(const struct whack_message *wm)
 		}
 #endif
 			if (deltasecs(c->sa_ike_life_seconds) > max_ike) {
-				loglog(RC_LOG_SERIOUS,"IKE lifetime limited to the maximum allowed %jds",
-                                       (intmax_t) max_ike);
+				loglog(RC_LOG_SERIOUS,
+					"IKE lifetime limited to the maximum allowed %jds",
+					(intmax_t) max_ike);
 				c->sa_ike_life_seconds = deltatime(max_ike);
 			}
 			if (deltasecs(c->sa_ipsec_life_seconds) > max_ipsec) {
-				loglog(RC_LOG_SERIOUS,"IPsec lifetime limited to the maximum allowed %jds",
-                                       (intmax_t) max_ipsec);
+				loglog(RC_LOG_SERIOUS,
+					"IPsec lifetime limited to the maximum allowed %jds",
+					(intmax_t) max_ipsec);
 				c->sa_ipsec_life_seconds = deltatime(max_ipsec);
 			}
 		}
@@ -1641,7 +1676,7 @@ void add_connection(const struct whack_message *wm)
 		/*
 		 * parse mark and mask values form the mark/mask string
 		 * acceptable string formats are
-		 * (<int>|<hex>)[/ <int>| <hex>]
+		 * ( -1 | <nat> | <hex> ) [ / ( <nat> | <hex> ) ]
 		 * examples:
 		 *   10
 		 *   10/0xffffffff
@@ -1654,13 +1689,18 @@ void add_connection(const struct whack_message *wm)
 
 		/* mark-in= and mark-out= overwrite mark= */
 		if (wm->conn_mark_both != NULL) {
-			mark_parse(wm->conn_mark_both, &c->sa_marks.in);
-			mark_parse(wm->conn_mark_both, &c->sa_marks.out);
+			mark_parse(wm->name, wm->conn_mark_both, &c->sa_marks.in);
+			mark_parse(wm->name, wm->conn_mark_both, &c->sa_marks.out);
+			if (wm->conn_mark_in != NULL || wm->conn_mark_out != NULL) {
+				loglog(RC_LOG_SERIOUS,
+					"connection \"%s\": conflicting mark specifications",
+					wm->name);
+			}
 		}
 		if (wm->conn_mark_in != NULL)
-			mark_parse(wm->conn_mark_in, &c->sa_marks.in);
+			mark_parse(wm->name, wm->conn_mark_in, &c->sa_marks.in);
 		if (wm->conn_mark_out != NULL)
-			mark_parse(wm->conn_mark_out, &c->sa_marks.out);
+			mark_parse(wm->name, wm->conn_mark_out, &c->sa_marks.out);
 
 		c->vti_iface = wm->vti_iface;
 		c->vti_routing = wm->vti_routing;
@@ -1864,13 +1904,13 @@ void add_connection(const struct whack_message *wm)
 		/* log all about this connection */
 		libreswan_log("added connection description \"%s\"", c->name);
 		DBG(DBG_CONTROL, {
-				char topo[CONN_BUF_LEN];
+			char topo[CONN_BUF_LEN];
 
-				(void) format_connection(topo, sizeof(topo), c,
-							&c->spd);
+			(void) format_connection(topo, sizeof(topo), c,
+						&c->spd);
 
-				DBG_log("%s", topo);
-			});
+			DBG_log("%s", topo);
+		});
 
 		DBG(DBG_CONTROL,
 			DBG_log("ike_life: %jds; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s%s",
@@ -2002,7 +2042,7 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 	c->instance_serial++;
 	d = clone_thing(*c, "instantiated connection");
 	if (his_id != NULL) {
-		int wildcards;	/* ??? ignored? */
+		int wildcards;	/* value ignored */
 
 		passert(d->spd.that.id.kind == ID_FROMCERT || match_id(his_id, &d->spd.that.id, &wildcards));
 		d->spd.that.id = *his_id;
@@ -2041,18 +2081,17 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 	d->log_file = NULL;
 	d->log_file_err = FALSE;
 
-	if (c->sa_marks.in.val == UINT_MAX) {
-		/* -1 means unique marks */
+	if (c->sa_marks.in.unique) {
 		d->sa_marks.in.val = global_marks;
 		d->sa_marks.out.val = global_marks;
 		global_marks++;
 		if (global_marks == UINT_MAX - 1) {
-			/* hopefully 2^32 connections ago are no longer around */
-			global_marks = 1001;
+			/* we hope 2^32 connections ago are no longer around */
+			global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
 		}
 	}
 
-	 connect_to_host_pair(d);
+	connect_to_host_pair(d);
 
 	return d;
 }
@@ -2239,13 +2278,12 @@ char *fmt_conn_instance(const struct connection *c, char buf[CONN_INST_BUF])
 			(void) fmt_client(&c->spd.that.client,
 					&c->spd.that.host_addr, "===", p);
 		} else {
+			ipstr_buf b;
+
 			*p++ = ' ';
-			if (!log_ip) {
-				p[0] = '\0';
-				strncat(p, "<ip address>", ADDRTOT_BUF - 1);
-			} else {
-				addrtot(&c->spd.that.host_addr, 0, p, ADDRTOT_BUF);
-			}
+			/* p not subsequently used */
+			p = jam_str(p, &buf[CONN_INST_BUF] - p,
+				sensitive_ipstr(&c->spd.that.host_addr, &b));
 		}
 	}
 
@@ -2531,27 +2569,28 @@ struct connection *route_owner(struct connection *c,
 	enum routing_t best_routing = cur_spd->routing,
 		best_erouting = best_routing;
 
-	struct connection *d;
-
-	for (d = connections; d != NULL; d = d->ac_next) {
-
+	for (struct connection *d = connections; d != NULL; d = d->ac_next) {
+		if (!oriented(*d))
+			continue;
 #ifdef KLIPS_MAST
 		/* in mast mode we must also delete the iptables rule */
-		if (kern_interface == USE_MASTKLIPS)
-			if (compatible_overlapping_connections(c, d))
-				continue;
+		if (kern_interface == USE_MASTKLIPS &&
+		    compatible_overlapping_connections(c, d))
+			continue;
 #endif
 
 		/*
 		 * allow policies different by mark/mask
 		 */
-		DBG(DBG_PARSING, DBG_log(" conn %s mark %"PRIu32"/%#010x, %"PRIu32"/%#010x vs",
-			c->name, c->sa_marks.in.val, c->sa_marks.in.mask,
-			c->sa_marks.out.val, c->sa_marks.out.mask));
+		DBG(DBG_PARSING, {
+			DBG_log(" conn %s mark %" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32 " vs",
+				c->name, c->sa_marks.in.val, c->sa_marks.in.mask,
+				c->sa_marks.out.val, c->sa_marks.out.mask);
 
-		DBG(DBG_PARSING, DBG_log(" conn %s mark %"PRIu32"/%#010x, %"PRIu32"/%#010x",
-			d->name, d->sa_marks.in.val, d->sa_marks.in.mask,
-			d->sa_marks.out.val, d->sa_marks.out.mask));
+			DBG_log(" conn %s mark %" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32,
+				d->name, d->sa_marks.in.val, d->sa_marks.in.mask,
+				d->sa_marks.out.val, d->sa_marks.out.mask);
+		});
 
 		if ( (c->sa_marks.in.val & c->sa_marks.in.mask) != (d->sa_marks.in.val & d->sa_marks.in.mask) &&
 		     (c->sa_marks.out.val & c->sa_marks.out.mask) != (d->sa_marks.out.val & d->sa_marks.out.mask))
@@ -2570,38 +2609,25 @@ struct connection *route_owner(struct connection *c,
 					continue;
 
 				if (!samesubnet(&src->that.client,
-							&srd->that.client))
-					continue;
-				if (src->that.protocol != srd->that.protocol)
-					continue;
-				if (src->that.port != srd->that.port)
-					continue;
-
-				/*
-				 * with old eroutes/routing, we could not do
-				 * this. This allows a host with two IP's to
-				 * talk to 1 oter host with both IP's using
-				 * two different tunnels.
-				 */
-				if (!sameaddr(&src->this.host_addr,
+						&srd->that.client) ||
+				    src->that.protocol != srd->that.protocol ||
+				    src->that.port != srd->that.port ||
+				    !sameaddr(&src->this.host_addr,
 						&srd->this.host_addr))
 					continue;
 
-				passert(oriented(*d));
 				if (srd->routing > best_routing) {
 					best_ro = d;
 					best_sr = srd;
 					best_routing = srd->routing;
 				}
 
-				if (!samesubnet(&src->this.client,
-							&srd->this.client))
-					continue;
-				if (src->this.protocol != srd->this.protocol)
-					continue;
-				if (src->this.port != srd->this.port)
-					continue;
-				if (srd->routing > best_erouting) {
+				if (samesubnet(&src->this.client,
+						&srd->this.client) &&
+				    src->this.protocol == srd->this.protocol &&
+				    src->this.port == srd->this.port &&
+				    srd->routing > best_erouting)
+				{
 					best_ero = d;
 					best_esr = srd;
 					best_erouting = srd->routing;
@@ -2902,6 +2928,8 @@ static chunk_t get_peer_ca(const struct id *peer_id)
 }
 
 /*
+ * ??? NOTE: THESE IMPORTANT COMMENTS DO NOT REFLECT ANY CHANGES MADE AFTER FreeS/WAN.
+ *
  * Given an up-until-now satisfactory connection, find the best connection
  * now that we just got the Phase 1 Id Payload from the peer.
  *
@@ -2963,6 +2991,7 @@ static chunk_t get_peer_ca(const struct id *peer_id)
  */
 struct connection *refine_host_connection(const struct state *st,
 					const struct id *peer_id,
+					const struct id *tarzan_id,
 					bool initiator,
 					lset_t auth_policy /* used by ikev1 */,
 					enum keyword_authby this_authby /* used by ikev2 */,
@@ -2973,43 +3002,34 @@ struct connection *refine_host_connection(const struct state *st,
 	/* Ensure the caller and we know the IKE version we are looking for */
 	bool ikev1 = auth_policy != LEMPTY;
 	bool ikev2 = this_authby != AUTH_UNSET;
-	bool ikev1_aggr = LIN(POLICY_AGGRESSIVE, auth_policy);
 
 	*fromcert = FALSE;
 
-	passert(ikev1 != ikev2);
-	if (ikev1) {
-		passert(this_authby == AUTH_UNSET);
-		passert(!st->st_ikev2);
-	}
-	if (ikev2) {
-		passert(auth_policy == LEMPTY);
-		passert(this_authby != AUTH_NEVER);
-		passert(st->st_ikev2);
-		if (c->spd.this.authby != c->spd.that.authby)
-			passert(this_authby != AUTH_UNSET);
-		passert(ikev1_aggr == FALSE);
-	}
+	passert(ikev1 != ikev2 && ikev2 == st->st_ikev2);
+	passert(this_authby != AUTH_NEVER);
 
 	/*
 	 * Translate the IKEv1 policy onto an IKEv2 policy.
 	 * Saves duplicating the checks for v1 and v2, and the
 	 * v1 policy is a subset of the v2 policy. Use the ikev2
-	 * bool for IKEv2 only feature checks.
+	 * bool for IKEv2-only feature checks.
 	 */
 	if (ikev1) {
+		/* ??? are these cases mutually exclusive? */
 		if (LIN(POLICY_RSASIG, auth_policy))
 			this_authby = AUTH_RSASIG;
 		if (LIN(POLICY_PSK, auth_policy))
 			this_authby = AUTH_PSK;
-	} /* auth_policy must no longer be used below */
+		passert(this_authby != AUTH_UNSET);
+	}
+	/* from here on, auth_policy must only be used to check POLICY_AGGRESSIVE */
 
 	DBG(DBG_CONTROLMORE, {
 		char cib[CONN_INST_BUF];
 		DBG_log("refine_host_connection for %s: starting with \"%s\"%s",
 			ikev1 ? "IKEv1" : "IKEv2",
 			c->name, fmt_conn_instance(c, cib));
-		});
+	});
 
 	chunk_t peer_ca = get_peer_ca(peer_id);
 
@@ -3017,21 +3037,32 @@ struct connection *refine_host_connection(const struct state *st,
 		int opl;
 		int ppl;
 
-		if (same_id(&c->spd.that.id, peer_id) &&
-			peer_ca.ptr != NULL &&
-			trusted_ca_nss(peer_ca, c->spd.that.ca, &ppl) &&
-			ppl == 0 &&
-			match_requested_ca(requested_ca, c->spd.this.ca, &opl) &&
-			opl == 0) {
-
+		if ((same_id(&c->spd.that.id, peer_id) || (id_is_ipaddr(peer_id)
+			&& c->spd.that.host_type == KH_ANY)) &&
+		    peer_ca.ptr != NULL &&
+		    trusted_ca_nss(peer_ca, c->spd.that.ca, &ppl) &&
+		    ppl == 0 &&
+		    match_requested_ca(requested_ca, c->spd.this.ca, &opl) &&
+		    opl == 0)
+		{
 			DBG(DBG_CONTROLMORE, {
 				char cib[CONN_INST_BUF];
 				DBG_log("refine_host_connection: happy with starting point: \"%s\"%s",
 					c->name,fmt_conn_instance(c, cib));
-				});
+			});
 
-			/* peer ID matches current connection -- look no further */
-			return c;
+			/* peer ID matches current connection -- check for "you Tarzan, me Jane" */
+			if (!initiator && tarzan_id != NULL) {
+				if (idr_wildmatch(c, tarzan_id)) {
+					DBG(DBG_CONTROLMORE, DBG_log("The remote specified our ID in its IDr payload"));
+					return c;
+				} else {
+					DBG(DBG_CONTROLMORE, DBG_log("The remote specified an IDr that is not our ID for this connection"));
+				}
+			} else {
+				DBG(DBG_CONTROLMORE, DBG_log("The remote did not specify an IDr and our current connection is good enough"));
+				return c;
+			}
 		}
 	}
 
@@ -3040,43 +3071,44 @@ struct connection *refine_host_connection(const struct state *st,
 
 	if (initiator)
 	{
+		switch (this_authby) {
+		case AUTH_PSK:
+			psk = get_preshared_secret(c);
+			/*
+			 * It should be virtually impossible to fail to find
+			 * PSK: we just used it to decode the current message!
+			 * Paul: only true for IKEv1
+			 */
+			if (psk == NULL) {
+				loglog(RC_LOG_SERIOUS, "cannot find PSK");
+				return c; /* cannot determine PSK, so not switching */
+			}
+			break;
+		case AUTH_NULL:
+			/* we know our AUTH_NULL key :) */
+			break;
 
-	switch (this_authby) {
-	case AUTH_PSK:
-		psk = get_preshared_secret(c);
-		/*
-		 * It should be virtually impossible to fail to find
-		 * PSK: we just used it to decode the current message!
-		 * Paul: only true for IKEv1
-		 */
-		if (psk == NULL) {
-			loglog(RC_LOG_SERIOUS, "cannot find PSK");
-			return c; /* cannot determine PSK, so not switching */
-		}
-		break;
-	case AUTH_NULL:
-		/* we know our AUTH_NULL key :) */
-		break;
+		case AUTH_RSASIG:
+			/*
+			 * At this point, we've committed to our RSA private
+			 * key: we used it in our previous message.
+			 * Paul: only true for IKEv1
+			 */
+			my_RSA_pri = get_RSA_private_key(c);
+			if (my_RSA_pri == NULL) {
+				loglog(RC_LOG_SERIOUS, "cannot find RSA key");
+				 /* cannot determine my RSA private key, so not switching */
+				return c;
+			}
+			break;
+		default:
+			/* don't die on bad_case(auth); */
 
-	case AUTH_RSASIG:
-		/*
-		 * At this point, we've committed to our RSA private
-		 * key: we used it in our previous message.
-		 * Paul: only true for IKEv1
-		 */
-		my_RSA_pri = get_RSA_private_key(c);
-		if (my_RSA_pri == NULL) {
-			loglog(RC_LOG_SERIOUS, "cannot find RSA key");
-			 /* cannot determine my RSA private key! */
+			/* ??? why not dies?  How could this happen? */
+			loglog(RC_LOG_SERIOUS, "refine_host_connection: unexpected auth policy (%s): only handling PSK, NULL or RSA",
+				enum_name(&ikev2_asym_auth_name, this_authby));
 			return c;
 		}
-		break;
-	default:
-		/* don't die on bad_case(auth); */
-		loglog(RC_LOG_SERIOUS, "refine_host_connection: unexpected auth policy (%s): only handling PSK, NULL or RSA",
-			enum_name(&ikev2_asym_auth_name, this_authby));
-		return c;
-	}
 	}
 
 	/*
@@ -3101,17 +3133,19 @@ struct connection *refine_host_connection(const struct state *st,
 	struct connection *best_found = NULL;
 	int best_wildcards = 0;
 
-	bool wcpip; /* wildcard Peer IP? */
-	for (wcpip = FALSE;; wcpip = TRUE) {
+	/* wcip stands for: wildcard Peer IP? */
+	for (bool wcpip = FALSE;; wcpip = TRUE) {
 		for (; d != NULL; d = d->hp_next) {
-			int wildcards = 0;
-			bool match1 = match_id(peer_id, &d->spd.that.id,
-					&wildcards);
+			int wildcards;
+			bool matching_peer_id = match_id(peer_id, &d->spd.that.id, &wildcards) ||
+				(id_is_ipaddr(peer_id) && d->spd.that.host_type == KH_ANY);
+
 			int peer_pathlen;
-			bool match2 = trusted_ca_nss(peer_ca, d->spd.that.ca,
+			bool matching_peer_ca = trusted_ca_nss(peer_ca, d->spd.that.ca,
 						&peer_pathlen);
+
 			int our_pathlen;
-			bool match3 = match_requested_ca(requested_ca,
+			bool matching_requested_ca = match_requested_ca(requested_ca,
 							d->spd.this.ca,
 							&our_pathlen);
 
@@ -3126,16 +3160,47 @@ struct connection *refine_host_connection(const struct state *st,
 					fmt_conn_instance(d, b2),
 					best_found != NULL ?
 						best_found->name : "(none)",
-					match1 && match2 && match3,
-					match1, match2, match3);});
+					matching_peer_id && matching_peer_ca && matching_requested_ca,
+					matching_peer_id, matching_peer_ca, matching_requested_ca);});
+
+			/* Ignore template from which we instantiated - this should never happen */
+			if (c->kind == CK_INSTANCE && d->kind == CK_TEMPLATE && streq(c->name, d->name)) {
+				libreswan_log("Warning: not switching back to template of current instance (FIXME)");
+				continue;
+			}
+
+			/* 'You Tarzan, me Jane' check based on received IDr */
+			if (!initiator && tarzan_id != NULL) {
+				DBG(DBG_CONTROL, {
+					char tarzan_str[IDTOA_BUF];
+					idtoa(tarzan_id, tarzan_str, sizeof(tarzan_str));
+					DBG_log("Peer expects us to be %s (%s) according to its IDr payload",
+						tarzan_str, enum_show(&ike_idtype_names, tarzan_id->kind));
+					char us_str[IDTOA_BUF];
+					idtoa(&d->spd.this.id, us_str, sizeof(us_str));
+					DBG_log("This connection's local id is %s (%s)",
+						us_str, enum_show(&ike_idtype_names,d->spd.this.id.kind));
+				});
+				if (!idr_wildmatch(d, tarzan_id)) {
+					DBG(DBG_CONTROL, DBG_log("Peer IDr payload does not match our expected ID, this connection will not do"));
+					continue;
+				}
+			} else {
+				DBG(DBG_CONTROL, DBG_log("No IDr payload received from peer"));
+			}
+
 
 			/* ignore group connections */
-			if (d->policy & POLICY_GROUP)
+			if (d->policy & POLICY_GROUP) {
+				DBG(DBG_CONTROL, DBG_log("skipping group connection"));
 				continue;
+			}
 
-			/* match2 and match3 are required */
-			if (!match2 || !match3)
+			/* matching_peer_ca and matching_requested_ca are required */
+			if (!matching_peer_ca || !matching_requested_ca) {
+				DBG(DBG_CONTROL, DBG_log("skipping !match2 || !match3"));
 				continue;
+			}
 			/*
 			 * Check if peer_id matches, exactly or after
 			 * instantiation.
@@ -3143,20 +3208,24 @@ struct connection *refine_host_connection(const struct state *st,
 			 * the %fromcert + peer id match result. - matt
 			 */
 			bool d_fromcert = FALSE;
-			if (!match1) {
-				d_fromcert = id_kind(&d->spd.that.id) ==
-					ID_FROMCERT;
-				if (!d_fromcert)
+			if (!matching_peer_id) {
+				d_fromcert = d->spd.that.id.kind == ID_FROMCERT;
+				if (!d_fromcert) {
+					DBG(DBG_CONTROL, DBG_log("skipping because peer_id does not match"));
 					continue;
+				}
 			}
 
 			/* if initiator, our ID must match exactly */
 			if (initiator &&
-				!same_id(&c->spd.this.id, &d->spd.this.id))
-				continue;
+				!same_id(&c->spd.this.id, &d->spd.this.id)) {
+					DBG(DBG_CONTROL, DBG_log("skipping because initiator id does not match"));
+					continue;
+			}
 
 			if ((d->policy & (st->st_ikev2 ? POLICY_IKEV2_ALLOW : POLICY_IKEV1_ALLOW)) == LEMPTY) {
 				/* IKE version has to match */
+				DBG(DBG_CONTROL, DBG_log("skipping because mismatching IKE version"));
 				continue;
 			}
 
@@ -3165,13 +3234,14 @@ struct connection *refine_host_connection(const struct state *st,
 			 * connection.
 			 */
 			if (ikev1) {
+				if ((auth_policy ^ d->policy) & POLICY_AGGRESSIVE)
+					continue;	/* differ about aggressive mode */
+
 				if ((d->policy & auth_policy & ~POLICY_AGGRESSIVE) == LEMPTY) {
 					/* Our auth isn't OK for this connection. */
+					DBG(DBG_CONTROL, DBG_log("skipping because AUTH isn't right"));
 					continue;
 				}
-				/* check AGGR mode matches too */
-				if (((d->policy & POLICY_AGGRESSIVE) == LEMPTY) == ikev1_aggr)
-					continue;
 			} else {
 				/*
 				 * We need to check if leftauth and rightauth match, but we only know
@@ -3181,20 +3251,26 @@ struct connection *refine_host_connection(const struct state *st,
 				 * This also means, we have already sent out AUTH payload, so we cannot
 				 * switch away from previously used this.authby.
 				 */
-				pexpect(initiator == FALSE);
-				if (this_authby != d->spd.that.authby)
+				pexpect(!initiator);
+				if (this_authby != d->spd.that.authby) {
+					DBG(DBG_CONTROL, DBG_log("skipping because mismatched authby"));
 					continue;
-				if (c->spd.this.authby != d->spd.this.authby)
+				}
+				if (c->spd.this.authby != d->spd.this.authby) {
+					DBG(DBG_CONTROL, DBG_log("skipping because mismatched this authby"));
 					continue;
+				}
 			}
 
 			if (d->spd.this.xauth_server != c->spd.this.xauth_server) {
 				/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
+				DBG(DBG_CONTROL, DBG_log("skipping because mismatched xauthserver"));
 				continue;
 			}
 
 			if (d->spd.this.xauth_client != c->spd.this.xauth_client) {
 				/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
+				DBG(DBG_CONTROL, DBG_log("skipping because mismatched xauthclient"));
 				continue;
 			}
 
@@ -3217,14 +3293,15 @@ struct connection *refine_host_connection(const struct state *st,
 				 * If we initiated, the key we used and the key
 				 * we would have used with d must match.
 				 */
-				if (!st->st_ikev2 && !(auth_policy & POLICY_AGGRESSIVE)) {
+				if (!(st->st_ikev2 || (auth_policy & POLICY_AGGRESSIVE))) {
 					if (dpsk == NULL)
 						continue; /* no secret */
 
-					if (initiator && psk != dpsk &&
+					if (initiator &&
 					    !(psk->len == dpsk->len &&
-					      memeq(psk->ptr, dpsk->ptr, psk->len))) {
-							continue; /* different secret */
+					      memeq(psk->ptr, dpsk->ptr, psk->len)))
+					{
+						continue; /* different secret */
 					}
 				}
 			}
@@ -3243,6 +3320,7 @@ struct connection *refine_host_connection(const struct state *st,
 
 				if (initiator &&
 				    !same_RSA_public_key(&my_RSA_pri->pub, &pri->pub)) {
+					DBG(DBG_CONTROL, DBG_log("skipping because mismatched pubkey"));
 					continue;	/* different key */
 				}
 			}
@@ -3256,9 +3334,11 @@ struct connection *refine_host_connection(const struct state *st,
 			 * d has passed all the tests.
 			 * We'll go with it if the Peer ID was an exact match.
 			 */
-			if (match1 && wildcards == 0 &&
-				peer_pathlen == 0 && our_pathlen == 0) {
+			if (matching_peer_id && wildcards == 0 &&
+			    peer_pathlen == 0 && our_pathlen == 0)
+			{
 				*fromcert = d_fromcert;
+				DBG(DBG_CONTROL, DBG_log("returning because exact peer id match"));
 				return d;
 			}
 
@@ -3288,8 +3368,10 @@ struct connection *refine_host_connection(const struct state *st,
 				best_our_pathlen = our_pathlen;
 			}
 		}
+
 		if (wcpip) {
 			/* been around twice already */
+			DBG(DBG_CONTROL, DBG_log("returning since no better match then original best_found"));
 			return best_found;
 		}
 
@@ -3300,14 +3382,12 @@ struct connection *refine_host_connection(const struct state *st,
 		 * Look on list of connections for host pair with wildcard
 		 * Peer IP.
 		 */
+		DBG(DBG_CONTROL, DBG_log("refine going into 2nd loop allowing instantiated conns as well"));
 		d = find_host_pair_connections(&c->spd.this.host_addr,
 					c->spd.this.host_port,
 					(ip_address *)NULL,
 					c->spd.that.host_port);
 	}
-	/* we should never get here */
-	loglog(RC_LOG_SERIOUS,"refine_host_connection() reached end of function without returning a connection");
-	pexpect(FALSE);
 }
 
 /*
@@ -3460,19 +3540,20 @@ static struct connection *fc_try(const struct connection *c,
 		int wildcards, pathlen;
 
 		if (!(same_id(&c->spd.this.id, &d->spd.this.id) &&
-				match_id(&c->spd.that.id, &d->spd.that.id,
-					&wildcards) &&
-				trusted_ca_nss(c->spd.that.ca, d->spd.that.ca,
-					&pathlen)))
+		      match_id(&c->spd.that.id, &d->spd.that.id, &wildcards) &&
+		      trusted_ca_nss(c->spd.that.ca, d->spd.that.ca, &pathlen)))
+		{
 			continue;
+		}
 
 		/* compare protocol and ports */
-		if (d->spd.this.protocol != our_protocol ||
-			(d->spd.this.port && d->spd.this.port != our_port) ||
-			d->spd.that.protocol != peer_protocol ||
-			(d->spd.that.port != peer_port &&
-				!d->spd.that.has_port_wildcard))
+		if (!(d->spd.this.protocol == our_protocol &&
+		      d->spd.that.protocol == peer_protocol &&
+		      (d->spd.this.port == 0 || d->spd.this.port == our_port) &&
+		      (d->spd.that.has_port_wildcard || d->spd.that.port == peer_port)))
+		{
 			continue;
+		}
 
 		/*
 		 * non-Opportunistic case:
@@ -3987,7 +4068,7 @@ static void show_one_sr(const struct connection *c,
 	const char *labeled_ipsec;
 	const char *policy_label;
 #ifdef HAVE_LABELED_IPSEC
-	labeled_ipsec = c->labeled_ipsec ? "yes" : "no";
+	labeled_ipsec = bool_str(c->labeled_ipsec);
 	policy_label = (c->policy_label == NULL) ? "unset" : c->policy_label;
 #else
 	labeled_ipsec = "no";
@@ -4055,21 +4136,21 @@ void show_one_connection(const struct connection *c)
 		c->sa_keying_tries);
 
 	whack_log(RC_COMMENT,
-		"\"%s\"%s:   retransmit-interval: %ldms; retransmit-timeout: %jds;",
-		c->name,
-		instance,
-		c->r_interval,
-		(intmax_t) deltasecs(c->r_timeout));
+		  "\"%s\"%s:   retransmit-interval: %jdms; retransmit-timeout: %jds;",
+		  c->name,
+		  instance,
+		  deltamillisecs(c->r_interval),
+		  (intmax_t) deltasecs(c->r_timeout));
 
 	whack_log(RC_COMMENT,
 		  "\"%s\"%s:   sha2-truncbug:%s; initial-contact:%s; cisco-unity:%s; fake-strongswan:%s; send-vendorid:%s; send-no-esp-tfc:%s;",
 		  c->name, instance,
-		  (c->sha2_truncbug) ? "yes" : "no",
-		  (c->initial_contact) ? "yes" : "no",
-		  (c->cisco_unity) ? "yes" : "no",
-		  (c->fake_strongswan) ? "yes" : "no",
-		  (c->send_vendorid) ? "yes" : "no",
-		  (c->send_no_esp_tfc) ? "yes" : "no");
+		  bool_str(c->sha2_truncbug),
+		  bool_str(c->initial_contact),
+		  bool_str(c->cisco_unity),
+		  bool_str(c->fake_strongswan),
+		  bool_str(c->send_vendorid),
+		  bool_str(c->send_no_esp_tfc));
 
 	if (c->policy_next != NULL) {
 		whack_log(RC_COMMENT,
@@ -4116,12 +4197,13 @@ void show_one_connection(const struct connection *c)
 	else
 		strcpy(nflogstr, "unset");
 
-	if (c->sa_marks.in.val != 0 || c->sa_marks.out.val != 0 )
-		snprintf(markstr, sizeof(markstr), "%"PRIu32"/%#010x, %"PRIu32"/%#010x",
+	if (c->sa_marks.in.val != 0 || c->sa_marks.out.val != 0 ) {
+		snprintf(markstr, sizeof(markstr), "%" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32,
 			c->sa_marks.in.val, c->sa_marks.in.mask,
 			c->sa_marks.out.val, c->sa_marks.out.mask);
-	else
+	} else {
 		strcpy(markstr, "unset");
+	}
 
 	whack_log(RC_COMMENT,
 		  "\"%s\"%s:   nflog-group: %s; mark: %s; vti-iface:%s; "
@@ -4132,12 +4214,12 @@ void show_one_connection(const struct connection *c)
 		  ,
 		  c->name, instance, nflogstr, markstr,
 		  c->vti_iface == NULL ? "unset" : c->vti_iface,
-		  c->vti_routing ? "yes" : "no",
-		  c->vti_shared ? "yes" : "no"
+		  bool_str(c->vti_routing),
+		  bool_str(c->vti_shared)
 #ifdef USE_NIC_OFFLOAD
 		  ,
 		  (c->nic_offload == nic_offload_auto) ? "auto" :
-		  (c->nic_offload == nic_offload_yes) ? "yes" : "no"
+			bool_str(c->nic_offload == nic_offload_yes)
 #endif
 	);
 
@@ -4165,8 +4247,8 @@ void show_one_connection(const struct connection *c)
 			(long) deltasecs(c->dpd_delay),
 			(long) deltasecs(c->dpd_timeout),
 			(c->encaps == encaps_auto) ? "auto" :
-			 (c->encaps == encaps_yes) ? "yes" : "no",
-			(c->nat_keepalive) ? "yes" : "no",
+			    bool_str(c->encaps == encaps_yes),
+			bool_str(c->nat_keepalive),
 			(c->ikev1_natt == natt_both) ? "both" :
 			 (c->ikev1_natt == natt_rfc) ? "rfc" :
 			 (c->ikev1_natt == natt_drafts) ? "drafts" : "none"
@@ -4177,7 +4259,7 @@ void show_one_connection(const struct connection *c)
 		LSWLOG_WHACK(RC_COMMENT, buf) {
 			lswlogf(buf, "\"%s\"%s:   debug: ",
 				c->name, instance);
-			lswlog_lmod(buf, &debug_names, c->extra_debugging);
+			lswlog_lmod(buf, &debug_names, "+", c->extra_debugging);
 		}
 	}
 
@@ -4185,7 +4267,7 @@ void show_one_connection(const struct connection *c)
 		LSWLOG_WHACK(RC_COMMENT, buf) {
 			lswlogf(buf, "\"%s\"%s:   impair: ",
 				c->name, instance);
-			lswlog_lmod(buf, &impair_names, c->extra_impairing);
+			lswlog_lmod(buf, &impair_names, "+", c->extra_impairing);
 		}
 	}
 
@@ -4299,8 +4381,17 @@ void update_state_connection(struct state *st, struct connection *c)
 		st->st_connection = c;
 		st->st_peer_alt_id = FALSE; /* must be rechecked against new 'that' */
 		if (t != NULL) {
-			if (cur_connection == t)
-				set_cur_connection(c);
+			/*
+			 * Hack to see cur_connection needs to be
+			 * updated.  If nothing else, it will log a
+			 * suspend then resume.
+			 */
+			struct connection *cur = push_cur_connection(NULL); /* suspend */
+			if (cur == t) {
+				set_cur_connection(c); /* start */
+			} else if (cur != NULL) {
+				pop_cur_connection(cur); /* resume */
+			}
 			connection_discard(t);
 		}
 	}
@@ -4426,4 +4517,40 @@ void liveness_action(struct connection *c, const bool ikev2)
 	default:
 		bad_case(c->dpd_action);
 	}
+}
+
+
+bool idr_wildmatch(const struct connection *c, const struct id *idr)
+{
+	const struct id *wild = &c->spd.this.id;
+
+	/* check if received IDr is a valid SAN of our cert */
+	if (c->spd.this.cert.ty != CERT_NONE && (idr->kind == ID_FQDN || idr->kind == ID_DER_ASN1_DN)) {
+		char idrbuf[IDTOA_BUF];
+
+		idtoa(idr, idrbuf, sizeof(idrbuf));
+		if (cert_VerifySubjectAltName(c->spd.this.cert.u.nss_cert, idrbuf + 1 /* skip @ */)) {
+			DBG(DBG_CONTROL, DBG_log("IDr payload '%s' is a valid certificate SAN for this connection",
+				idrbuf));
+			return TRUE;
+		} else {
+			DBG(DBG_CONTROL, DBG_log("IDr payload '%s' is NOT a valid certificate SAN for this connection",
+				idrbuf));
+		}
+	}
+
+	/* if no wildcard, do simple id check */
+	if (!(wild->kind == idr->kind && wild->kind == ID_FQDN))
+		return same_id(wild, idr);
+
+	/* check wildcard ID on connection case against IDr payload */
+	size_t wl = wild->name.len, il = idr->name.len;
+	const char *wp = (const char *) wild->name.ptr;
+	const char *ip = (const char *) idr->name.ptr;
+
+        return  wl > 0 && wp[0] == '*' ?
+                /* wildcard case */
+                wl-1 <= il && strncaseeq(wp+1, ip+il-(wl-1), wl-1) :
+                /* literal case */
+                wl == il && strncaseeq(wp, ip, wl);
 }

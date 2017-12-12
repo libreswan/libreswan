@@ -65,7 +65,7 @@ static struct prf_context *init_bytes(const struct prf_desc *prf_desc,
 {
 	struct prf_context *prf = prf_init(prf_desc, name, debug);
 	/* XXX: use an untyped key */
-	prf->key = symkey_from_bytes(name, debug, NULL, key, sizeof_key);
+	prf->key = symkey_from_bytes(name, debug, key, sizeof_key);
 	prf_update(prf);
 	return prf;
 }
@@ -169,7 +169,7 @@ static PK11SymKey *final_symkey(struct prf_context **prfp)
 						     "prf outer hash", DBG_CRYPT,
 						     "outer", outer);
 	release_symkey((*prfp)->name, "outer", &outer);
-	DBG(DBG_CRYPT, DBG_symkey((*prfp)->name, "hashed-outer", hashed_outer));
+	DBG(DBG_CRYPT, DBG_symkey("    ", " hashed-outer", hashed_outer));
 	pfree(*prfp);
 	*prfp = NULL;
 	return hashed_outer;

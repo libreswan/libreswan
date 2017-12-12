@@ -42,10 +42,11 @@ const struct hash_desc ike_alg_hash_sha2_256 = {
 			[IKEv2_ALG_ID] = -1,
 		},
 		.fips = TRUE,
-		.nss_mechanism = CKM_SHA256,
 	},
-	.nss_oid_tag = SEC_OID_SHA256,
-	.nss_derive_mechanism = CKM_SHA256_KEY_DERIVATION,
+	.nss = {
+		.oid_tag = SEC_OID_SHA256,
+		.derivation_mechanism = CKM_SHA256_KEY_DERIVATION,
+	},
 	.hash_digest_len = SHA2_256_DIGEST_SIZE,
 	.hash_block_size = 64,	/* from RFC 4868 */
 	.hash_ops = &ike_alg_nss_hash_ops,
@@ -64,7 +65,9 @@ const struct prf_desc ike_alg_prf_sha2_256 = {
 			[IKEv2_ALG_ID] = IKEv2_PRF_HMAC_SHA2_256,
 		},
 		.fips = TRUE,
-		.nss_mechanism = CKM_SHA256_HMAC,
+	},
+	.nss = {
+		.mechanism = CKM_SHA256_HMAC,
 	},
 	.prf_key_size = SHA2_256_DIGEST_SIZE,
 	.prf_output_size = SHA2_256_DIGEST_SIZE,
@@ -124,10 +127,11 @@ const struct hash_desc ike_alg_hash_sha2_384 = {
 			[IKEv2_ALG_ID] = -1,
 		},
 		.fips = TRUE,
-		.nss_mechanism = CKM_SHA384,
 	},
-	.nss_oid_tag = SEC_OID_SHA384,
-	.nss_derive_mechanism = CKM_SHA384_KEY_DERIVATION,
+	.nss = {
+		.oid_tag = SEC_OID_SHA384,
+		.derivation_mechanism = CKM_SHA384_KEY_DERIVATION,
+	},
 	.hash_digest_len = SHA2_384_DIGEST_SIZE,
 	.hash_block_size = 128,	/* from RFC 4868 */
 	.hash_ops = &ike_alg_nss_hash_ops,
@@ -146,7 +150,9 @@ const struct prf_desc ike_alg_prf_sha2_384 = {
 			[IKEv2_ALG_ID] = IKEv2_PRF_HMAC_SHA2_384,
 		},
 		.fips = TRUE,
-		.nss_mechanism = CKM_SHA384_HMAC,
+	},
+	.nss = {
+		.mechanism = CKM_SHA384_HMAC,
 	},
 	.prf_key_size = SHA2_384_DIGEST_SIZE,
 	.prf_output_size = SHA2_384_DIGEST_SIZE,
@@ -187,10 +193,11 @@ const struct hash_desc ike_alg_hash_sha2_512 = {
 			[IKEv2_ALG_ID] = -1,
 		},
 		.fips = TRUE,
-		.nss_mechanism = CKM_SHA512,
 	},
-	.nss_oid_tag = SEC_OID_SHA512,
-	.nss_derive_mechanism = CKM_SHA512_KEY_DERIVATION,
+	.nss = {
+		.oid_tag = SEC_OID_SHA512,
+		.derivation_mechanism = CKM_SHA512_KEY_DERIVATION,
+	},
 	.hash_digest_len = SHA2_512_DIGEST_SIZE,
 	.hash_block_size = 128,	/* from RFC 4868 */
 	.hash_ops = &ike_alg_nss_hash_ops,
@@ -209,7 +216,9 @@ const struct prf_desc ike_alg_prf_sha2_512 = {
 			[IKEv2_ALG_ID] = IKEv2_PRF_HMAC_SHA2_512,
 		},
 		.fips = TRUE,
-		.nss_mechanism = CKM_SHA512_HMAC,
+	},
+	.nss = {
+		.mechanism = CKM_SHA512_HMAC,
 	},
 	.prf_key_size = SHA2_512_DIGEST_SIZE,
 	.prf_output_size = SHA2_512_DIGEST_SIZE,

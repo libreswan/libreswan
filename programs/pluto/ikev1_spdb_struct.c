@@ -154,6 +154,96 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 
 #endif
 
+static err_t check_kernel_encrypt_alg(const struct encrypt_desc *encrypt,
+				      unsigned int key_len)
+{
+	int alg_id = encrypt->common.id[IKEv1_ESP_ID];
+	err_t ugh = NULL;
+
+	/*
+	 * test #1: encrypt algo must be present
+	 */
+
+	if (!ESP_EALG_PRESENT(alg_id)) {
+		DBG(DBG_KERNEL,
+			DBG_log("check_kernel_encrypt_alg(%d,%d): alg not present in system",
+				alg_id, key_len);
+			);
+		ugh = "encryption alg not present in kernel";
+	} else {
+		/*
+		 * XXX: Pretty much all of the code below is bogus.
+		 * Can instead just ask the IKE_ALG if the key_length
+		 * is valid.  See IKEv2.
+		 */
+		struct sadb_alg *alg_p = kernel_alg_esp_sadb_alg(alg_id);
+
+		passert(alg_p != NULL);
+		switch (alg_id) {
+		case ESP_AES_GCM_8:
+		case ESP_AES_GCM_12:
+		case ESP_AES_GCM_16:
+		case ESP_AES_CCM_8:
+		case ESP_AES_CCM_12:
+		case ESP_AES_CCM_16:
+		case ESP_AES_CTR:
+		case ESP_CAMELLIA:
+			/* ??? does 0 make sense here? */
+			if (key_len != 0 && key_len != 128 &&
+			    key_len != 192 && key_len != 256) {
+				/* ??? function name does not belong in log */
+				ugh = builddiag("kernel_alg_db_add() key_len is incorrect: alg_id=%d, key_len=%d, alg_minbits=%d, alg_maxbits=%d",
+						alg_id, key_len,
+						alg_p->sadb_alg_minbits,
+						alg_p->sadb_alg_maxbits);
+			}
+			break;
+
+		/* ESP_SEED_CBC not supported by us - also number got re-used in IKEv2 */
+
+		case ESP_CAST:
+			if (key_len != 128) {
+				/* ??? function name does not belong in log */
+				ugh = builddiag("kernel_alg_db_add() key_len is incorrect: alg_id=%d, key_len=%d, alg_minbits=%d, alg_maxbits=%d",
+						alg_id, key_len,
+						alg_p->sadb_alg_minbits,
+						alg_p->sadb_alg_maxbits);
+			}
+			break;
+		default:
+			/* old behaviour - not necc. correct */
+			if (key_len != 0 &&
+			    (key_len < alg_p->sadb_alg_minbits ||
+			     key_len > alg_p->sadb_alg_maxbits)) {
+				/* ??? function name does not belong in log */
+				ugh = builddiag("kernel_alg_db_add() key_len not in range: alg_id=%d, key_len=%d, alg_minbits=%d, alg_maxbits=%d",
+					alg_id, key_len,
+					alg_p->sadb_alg_minbits,
+					alg_p->sadb_alg_maxbits);
+			}
+		}
+
+		if (ugh != NULL) {
+			DBG(DBG_KERNEL,
+				DBG_log("check_kernel_encrypt_alg(%d,%d): %s alg_id=%d, alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, res=%d",
+					alg_id, key_len, ugh,
+					alg_p->sadb_alg_id,
+					alg_p->sadb_alg_ivlen,
+					alg_p->sadb_alg_minbits,
+					alg_p->sadb_alg_maxbits,
+					alg_p->sadb_alg_reserved);
+				);
+		} else {
+			DBG(DBG_KERNEL,
+				DBG_log("check_kernel_encrypt_alg(%d,%d): OK",
+					alg_id, key_len);
+				);
+		}
+	}
+
+	return ugh;
+}
+
 /** output an attribute (within an SA) */
 /* Note: ikev2_out_attr is a clone, with the same bugs */
 static bool out_attr(int type,
@@ -1753,7 +1843,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 
 static const struct ipsec_trans_attrs null_ipsec_trans_attrs = {
 	.spi = 0,                                               /* spi */
-	.life_seconds = { IPSEC_SA_LIFETIME_DEFAULT },		/* life_seconds */
+	.life_seconds = DELTATIME(IPSEC_SA_LIFETIME_DEFAULT),	/* life_seconds */
 	.life_kilobytes = SA_LIFE_DURATION_K_DEFAULT,           /* life_kilobytes */
 	.encapsulation = ENCAPSULATION_MODE_UNSPECIFIED,        /* encapsulation */
 };
@@ -2024,9 +2114,13 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				 * Caller will also see NULL and
 				 * assume that things should stumble
 				 * on to the next algorithm.
+				 *
+				 * Either straight AH, or ESP
+				 * containing AUTH; or what?
 				 */
 				loglog(RC_LOG_SERIOUS,
-				       "IKEv1 AH integrity algorithm %s not supported",
+				       "IKEv1 %s integrity algorithm %s not supported",
+				       (proto == PROTO_IPSEC_ESP ? "ESP" : "AH"),
 				       enum_show(&ah_transformid_names, val));
 			}
 			break;
@@ -2115,9 +2209,9 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			}
 		}
 
-		err_t ugh = check_kernel_encrypt_alg(
-				attrs->transattrs.ta_ikev1_encrypt,
-				attrs->transattrs.enckeylen);
+		err_t ugh = check_kernel_encrypt_alg
+			(attrs->transattrs.ta_encrypt,
+			 attrs->transattrs.enckeylen);
 		if (ugh != NULL) {
 			loglog(RC_LOG_SERIOUS,
 				"IPsec encryption transform rejected: %s",
@@ -2126,13 +2220,18 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		}
 
 		/*
-		 * AEAD implies NULL integrity.
+		 * If integrity is completly missing, set it to NONE.
+		 * This way NULL strictly means that there was
+		 * integrity but it wasn't recognised.
+		 *
+		 * IKEv1 AEAD leaves out integrity; for other
+		 * algorithms there is a check that AH is present and
+		 * it is providing the integrity.
 		 */
-		if (ike_alg_is_aead(attrs->transattrs.ta_encrypt)
-		    && attrs->transattrs.ta_integ == NULL) {
+		if (!LHAS(seen_attrs, AUTH_ALGORITHM)) {
+			DBG(DBG_PARSING, DBG_log("ES missing INTEG aka AUTH, setting it to NONE"));
 			attrs->transattrs.ta_integ = &ike_alg_integ_none;
 		}
-
 	}
 
 	if (proto == PROTO_IPSEC_AH) {
@@ -2488,23 +2587,16 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				previous_transnum = ah_trans.isat_transnum;
 
 				/*
-				 * Assuming integrity was present, is
-				 * the auth algorithm known?
-				 *
-				 * NULL here indicates that the
-				 * attempt to look up the integrity
-				 * algorithm failed (NULL because
-				 * integrity was missing will have
-				 * already been rejected by the
-				 * above).
-				 *
-				 * If it wasn't skip the proposal (the
-				 * above call will have already logged
-				 * this).
+				 * Since, for AH, when integrity is
+				 * missing, the proposal gets rejected
+				 * outright, a NULL here must indicate
+				 * that integrity was present but the
+				 * lookup failed.
 				 */
 				if (ah_attrs.transattrs.ta_integ == NULL) {
-					DBG(DBG_CONTROL | DBG_CRYPT,
-					    DBG_log("ignoring proposal with unknown integrity"));
+					/* error already logged */
+					DBG(DBG_PARSING,
+					    DBG_log("ignoring AH proposal with unknown integrity"));
 					continue;       /* try another */
 				}
 
@@ -2567,12 +2659,26 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 				previous_transnum = esp_trans.isat_transnum;
 
+				/*
+				 * Since, for ESP, when integrity is
+				 * missing, it is forced to
+				 * .ta_integ=NONE, a NULL here must
+				 * indicate that integrity was present
+				 * but the lookup failed.
+				 */
+				if (esp_attrs.transattrs.ta_integ == NULL) {
+					/* error already logged */
+					DBG(DBG_PARSING,
+					    DBG_log("ignoring ESP proposal with unknown integrity"));
+					continue;       /* try another */
+				}
+
 				ugh = "no alg";
 
 				if (c->alg_info_esp != NULL) {
-					ugh = check_kernel_encrypt_alg(
-						esp_attrs.transattrs.ta_ikev1_encrypt,
-						esp_attrs.transattrs.enckeylen);
+					ugh = check_kernel_encrypt_alg
+						(esp_attrs.transattrs.ta_encrypt,
+						 esp_attrs.transattrs.enckeylen);
 				}
 
 				if (ugh != NULL) {
@@ -2619,42 +2725,23 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					}
 				}
 
-				if (!kernel_alg_integ_ok(esp_attrs.transattrs.ta_integ)) {
-					switch (esp_attrs.transattrs.ta_ikev1_integ_hash)
-					{
-					case AUTH_ALGORITHM_NONE:
-						if (!ah_seen) {
-							DBG(DBG_CONTROL, {
-								ipstr_buf b;
-								DBG_log("ESP from %s must either have AUTH or be combined with AH",
-								    ipstr(&c->spd.that.host_addr, &b));
-							});
-							continue; /* try another */
-						}
-						break;
-
-					/* ??? why do we accept these when kernel_alg_esp_auth_ok says not to? */
-					case AUTH_ALGORITHM_HMAC_MD5:
-					case AUTH_ALGORITHM_HMAC_SHA1:
-					case AUTH_ALGORITHM_HMAC_SHA2_256:
-					case AUTH_ALGORITHM_HMAC_SHA2_384:
-					case AUTH_ALGORITHM_HMAC_SHA2_512:
-					case AUTH_ALGORITHM_HMAC_RIPEMD:
-					case AUTH_ALGORITHM_AES_XCBC:
-						break;
-
-					default:
-						{
-						ipstr_buf b;
-
-						DBG(DBG_CONTROL, DBG_log(
-						       "unsupported ESP auth alg %s from %s",
-						       esp_attrs.transattrs.ta_integ->common.fqn,
-						       ipstr(&c->spd.that.host_addr,
-								&b)));
+				if (esp_attrs.transattrs.ta_integ == &ike_alg_integ_none) {
+					if (!ike_alg_is_aead(esp_attrs.transattrs.ta_encrypt) &&
+					    !ah_seen) {
+						LSWDBGP(DBG_PARSING, buf) {
+							lswlogs(buf, "ESP from ");
+							lswlog_ip(buf, &c->spd.that.host_addr);
+							lswlogs(buf, " must either have AUTH or be combined with AH");
+						};
 						continue; /* try another */
-						}
 					}
+				} else if (!kernel_alg_integ_ok(esp_attrs.transattrs.ta_integ)) {
+					LSWDBGP(DBG_PARSING, buf) {
+						lswlogf(buf, "unsupported ESP auth alg %s from ",
+							esp_attrs.transattrs.ta_integ->common.fqn);
+						lswlog_ip(buf, &c->spd.that.host_addr);
+					}
+					continue; /* try another */
 				}
 
 				if (ah_seen &&

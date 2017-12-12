@@ -285,7 +285,7 @@ static int initiate_a_connection(struct connection *c, void *arg)
 			loglog(RC_NOPEERIP,
 				"cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s, narrowing=%s)",
 				enum_show(&connection_kind_names, c->kind),
-					(c->policy & POLICY_IKEV2_ALLOW_NARROWING) ? "yes" : "no");
+					bool_str((c->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY));
 			c->policy |= POLICY_UP;
 			reset_cur_connection();
 			return 1;
@@ -294,7 +294,7 @@ static int initiate_a_connection(struct connection *c, void *arg)
 				"cannot initiate connection without knowing peer IP address (kind=%s narrowing=%s)",
 				enum_show(&connection_kind_names,
 					c->kind),
-				(c->policy & POLICY_IKEV2_ALLOW_NARROWING) ? "yes" : "no");
+				bool_str((c->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY));
 			reset_cur_connection();
 			return 0;
 		}
@@ -1141,7 +1141,7 @@ void connection_check_ddns(void)
 	gettimeofday(&tv1, NULL);
 
 	/* reschedule */
-	event_schedule(EVENT_PENDING_DDNS, PENDING_DDNS_INTERVAL, NULL);
+	event_schedule_s(EVENT_PENDING_DDNS, PENDING_DDNS_INTERVAL, NULL);
 
 	for (c = connections; c != NULL; c = cnext) {
 		cnext = c->ac_next;
@@ -1178,7 +1178,7 @@ void connection_check_phase2(void)
 	struct connection *c, *cnext;
 
 	/* reschedule */
-	event_schedule(EVENT_PENDING_PHASE2, PENDING_PHASE2_INTERVAL, NULL);
+	event_schedule_s(EVENT_PENDING_PHASE2, PENDING_PHASE2_INTERVAL, NULL);
 
 	for (c = connections; c != NULL; c = cnext) {
 		cnext = c->ac_next;
@@ -1228,7 +1228,7 @@ void connection_check_phase2(void)
 					restart_connections_by_peer(c);
 				} else {
 					delete_event(p1st);
-					event_schedule(EVENT_SA_REPLACE, 0, p1st);
+					event_schedule_s(EVENT_SA_REPLACE, 0, p1st);
 				}
 			} else {
 				/* start a new connection. Something wanted it up */
@@ -1248,6 +1248,6 @@ void connection_check_phase2(void)
 
 void init_connections(void)
 {
-	event_schedule(EVENT_PENDING_DDNS, PENDING_DDNS_INTERVAL, NULL);
-	event_schedule(EVENT_PENDING_PHASE2, PENDING_PHASE2_INTERVAL, NULL);
+	event_schedule_s(EVENT_PENDING_DDNS, PENDING_DDNS_INTERVAL, NULL);
+	event_schedule_s(EVENT_PENDING_PHASE2, PENDING_PHASE2_INTERVAL, NULL);
 }

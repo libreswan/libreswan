@@ -154,7 +154,6 @@ void ikev2_isakamp_established(struct state *st, const struct state_v2_microcode
 	 * ??? I wonder what this comment means?  Needs rewording.
 	 */
 	enum event_type kind = svm->timeout_event;
-	time_t delay;
 
 	/*
 	 * update the parent state to make sure that it knows we have
@@ -166,7 +165,7 @@ void ikev2_isakamp_established(struct state *st, const struct state_v2_microcode
 		for_each_state(ikev2_repl_est_ipsec, &st->st_ike_pred);
 	}
 	c->newest_isakmp_sa = st->st_serialno;
-	delay = ikev2_replace_delay(st, &kind, role);
+	deltatime_t delay = ikev2_replace_delay(st, &kind, role);
 	delete_event(st);
 	event_schedule(kind, delay, st);
 }
@@ -205,7 +204,9 @@ static stf_status add_st_send_list(struct state *st, struct state *pst)
 
 		what = "wait sending, add to send next list";
 		delete_event(st);
-		event_schedule(EVENT_SA_REPLACE, MAXIMUM_RESPONDER_WAIT, st);
+		event_schedule_s(EVENT_SA_REPLACE,
+				 MAXIMUM_RESPONDER_WAIT,
+				 st);
 
 		for (p = pst->send_next_ix; (p != NULL && p->next != NULL);
 				p = p->next) {
@@ -226,8 +227,8 @@ static stf_status add_st_send_list(struct state *st, struct state *pst)
 	return e;
 }
 
-static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
-		struct pluto_crypto_req *r);
+
+static crypto_req_cont_func ikev2_crypto_continue;
 
 static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
 		struct msg_digest *md)
@@ -251,7 +252,7 @@ static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
 					st->st_clonedfrom);
 			return STF_FAIL;
 		}
-		passert(st->st_sec_in_use == TRUE); /* child has its own KE */
+		passert(st->st_sec_in_use); /* child has its own KE */
 
 		/* initiate calculation of g^xy */
 		e = start_dh_v2(md, "DHv2 for child sa", role,
@@ -263,33 +264,15 @@ static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
 }
 
 /* redundant type assertion: static crypto_req_cont_func ikev2_crypto_continue; */
-static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
-		struct pluto_crypto_req *r)
+static void ikev2_crypto_continue(struct state *st, struct msg_digest *md,
+				  struct pluto_crypto_req_cont *cn,
+				  struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = cn->pcrc_md;
 	stf_status e = STF_OK;
 	bool only_shared = FALSE;
 
 	DBG(DBG_CRYPT | DBG_CONTROL,
-		DBG_log("ikev2_crypto_continue for #%lu: %s", cn->pcrc_serialno,
-			cn->pcrc_name));
-	if (cn->pcrc_serialno == SOS_NOBODY) {
-		loglog(RC_LOG_SERIOUS,
-		       "%s: Request was disconnected from state", __FUNCTION__);
-		release_any_md(&cn->pcrc_md);
-		return;
-	}
-
-	/* The state had better still be around.  */
-	struct state *st = state_with_serialno(cn->pcrc_serialno);
-	if (st == NULL) {
-		PEXPECT_LOG("IKEv2 crypto continue failed because sponsoring state #%lu is unknown",
-			    cn->pcrc_serialno);
-		/* XXX: release what? */
-		return;
-	}
-	passert(st != NULL);
-	passert(cn->pcrc_serialno == st->st_serialno);	/* transitional */
+	    DBG_log("ikev2_crypto_continue for #%lu", st->st_serialno));
 
 	/* and a parent? */
 	struct state *pst = st;
@@ -307,8 +290,8 @@ static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
 	passert(st->st_suspended_md == cn->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
 
-	passert(cur_state == NULL);
-	set_cur_state(st);
+	so_serial_t old_serialno = push_cur_state(st);
+	pexpect(old_serialno == SOS_NOBODY);
 
 	st->st_calculating = FALSE;
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
@@ -381,8 +364,6 @@ static void ikev2_crypto_continue(struct pluto_crypto_req_cont *cn,
 static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 {
 	struct msg_digest *fake_md = NULL;
-	struct pluto_crypto_req_cont *ke;
-	stf_status e = STF_OK;
 	char  *what = "";
 	enum crypto_importance ci = pcim_stranger_crypto;
 
@@ -392,16 +373,29 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		fake_md->from_state = STATE_IKEv2_BASE;
 		fake_md->msgid_received = v2_INVALID_MSGID;
 		md = fake_md;
+
+		switch (st->st_state) {
+		case STATE_PARENT_I1:
+		case STATE_V2_REKEY_CHILD_I0:
+			fake_md->svm = &ikev2_parent_firststate_microcode;
+			break;
+
+		case STATE_V2_CREATE_I0:
+			fake_md->svm = &ikev2_create_child_initiate_microcode;
+			break;
+
+		default:
+			bad_case(st->st_state);
+			break;
+		}
 	}
 
 	switch (st->st_state) {
 	case STATE_PARENT_I1:
-		fake_md->svm = &ikev2_parent_firststate_microcode;
 		what = "ikev2_outI1 KE";
 		break;
 
 	case STATE_V2_REKEY_CHILD_I0:
-		fake_md->svm = &ikev2_rekey_ike_firststate_microcode;
 		ci = pcim_known_crypto;
 		what = (st->st_pfs_group == NULL) ? "Child Rekey Initiator nonce ni" :
 			"Child Rekey Initiator KE and nonce ni";
@@ -427,7 +421,6 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		break;
 
 	case STATE_V2_CREATE_I0:
-		fake_md->svm = &ikev2_create_child_initiate_microcode;
 		ci = pcim_known_crypto;
 		what = (st->st_pfs_group == NULL) ? "Child Initiator nonce ni" :
 			"Child Initiator KE and nonce ni";
@@ -444,9 +437,7 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		break;
 	}
 
-	if (st->st_state != STATE_V2_CREATE_I)
-		ke = new_pcrc(ikev2_crypto_continue, what, st, md);
-
+	stf_status e;
 	switch (st->st_state) {
 	case STATE_PARENT_I1:
 		/* if we received INVALID_KE, msgid was incremented */
@@ -456,24 +447,32 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		st->st_msgid = 0;
 		/* fall through */
 	case STATE_V2_REKEY_IKE_R:
-		e = build_ke_and_nonce(ke, st->st_oakley.ta_dh, ci);
+		e = request_ke_and_nonce(what, st, md,
+					 st->st_oakley.ta_dh, ci,
+					 ikev2_crypto_continue);
 		break;
 
 	case STATE_V2_CREATE_R:
 	case STATE_V2_REKEY_CHILD_R:
 		if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
-			e = build_ke_and_nonce(ke, st->st_oakley.ta_dh, ci);
+			e = request_ke_and_nonce(what, st, md,
+						 st->st_oakley.ta_dh, ci,
+						 ikev2_crypto_continue);
 		} else {
-			e = build_nonce(ke, ci);
+			e = request_nonce(what, st, md, ci,
+					  ikev2_crypto_continue);
 		}
 		break;
 
 	case STATE_V2_REKEY_CHILD_I0:
 	case STATE_V2_CREATE_I0:
 		if (st->st_pfs_group == NULL) {
-			e = build_nonce(ke, ci);
+			e = request_nonce(what, st, md, ci,
+					  ikev2_crypto_continue);
 		} else {
-			e = build_ke_and_nonce(ke, st->st_pfs_group, ci);
+			e = request_ke_and_nonce(what, st, md,
+						 st->st_pfs_group, ci,
+						 ikev2_crypto_continue);
 		}
 		break;
 
@@ -484,6 +483,7 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		break;
 
 	default:
+		e = STF_OK;
 		break;
 	}
 
@@ -642,9 +642,7 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
 		return FALSE;
 
 	if (c->spd.that.authby == AUTH_RSASIG &&
-	    (id.kind == ID_FQDN ||
-	     id.kind == ID_IPV4_ADDR ||
-	     id.kind == ID_IPV6_ADDR))
+	    (id.kind == ID_FQDN || id_is_ipaddr(&id)))
 {
 		switch (atype) {
 		case IKEv2_AUTH_RESERVED:
@@ -759,14 +757,14 @@ stf_status ikev2parent_outI1(int whack_sock,
 		update_pending(predecessor, st);
 		whack_log(RC_NEW_STATE + STATE_PARENT_I1,
 			  "%s: initiate, replacing #%lu",
-			  enum_name(&state_names, st->st_state),
+			  st->st_state_name,
 			  predecessor->st_serialno);
 	} else {
 		if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 			libreswan_log("initiating v2 parent SA");
 		}
 		whack_log(RC_NEW_STATE + STATE_PARENT_I1, "%s: initiate",
-			  enum_name(&state_names, st->st_state));
+			  st->st_state_name);
 	}
 
 	if (IS_LIBUNBOUND && id_ipseckey_allowed(st, IKEv2_AUTH_RESERVED)) {
@@ -837,9 +835,7 @@ stf_status ikev2_parent_outI1_tail(struct pluto_crypto_req_cont *ke,
 
 	DBG(DBG_CONTROL,
 		DBG_log("ikev2_parent_outI1_tail for #%lu",
-			ke->pcrc_serialno));
-
-	passert(ke->pcrc_serialno == st->st_serialno);	/* transitional */
+			st->st_serialno));
 
 	unpack_KE_from_helper(st, r, &st->st_gi);
 	unpack_nonce(&st->st_ni, r);
@@ -1081,8 +1077,9 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	struct pluto_crypto_req_cont *ke,
 	struct pluto_crypto_req *r);
 
-stf_status ikev2parent_inI1outR1(struct msg_digest *md)
+stf_status ikev2parent_inI1outR1(struct state *st, struct msg_digest *md)
 {
+	pexpect(st == NULL);
 	pexpect(md->st == NULL);	/* ??? where would a state come from? Duplicate packet? */
 
 	struct payload_digest *seen_dcookie = NULL;
@@ -1358,7 +1355,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	 * We've committed to creating a state and, presumably,
 	 * dedicating real resources to the connection.
 	 */
-	struct state *st = md->st;
+	st = md->st;
 	if (st == NULL) {
 		st = new_state();
 		/* set up new state */
@@ -1437,50 +1434,32 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	}
 
 	/* calculate the nonce and the KE */
-	{
-		struct pluto_crypto_req_cont *ke = new_pcrc(
-			ikev2_parent_inI1outR1_continue, "ikev2_inI1outR1 KE",
-			st, md);
-		stf_status e;
-
-		e = build_ke_and_nonce(ke, st->st_oakley.ta_dh,
-			pcim_stranger_crypto);
-
-		reset_globals();
-
-		return e;
-	}
+	e = request_ke_and_nonce("ikev2_inI1outR1 KE", st, md,
+				 st->st_oakley.ta_dh,
+				 pcim_stranger_crypto,
+				 ikev2_parent_inI1outR1_continue);
+	reset_globals();
+	return e;
 }
 
 /* redundant type assertion: static crypto_req_cont_func ikev2_parent_inI1outR1_continue; */
 
-static void ikev2_parent_inI1outR1_continue(struct pluto_crypto_req_cont *ke,
+static void ikev2_parent_inI1outR1_continue(struct state *st, struct msg_digest *md,
+					    struct pluto_crypto_req_cont *ke,
 					    struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = ke->pcrc_md;
-	struct state *const st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 
 	DBG(DBG_CONTROL,
 		DBG_log("ikev2_parent_inI1outR1_continue for #%lu: calculated ke+nonce, sending R1",
-			ke->pcrc_serialno));
-
-	if (ke->pcrc_serialno == SOS_NOBODY) {
-		loglog(RC_LOG_SERIOUS,
-		       "%s: Request was disconnected from state",
-		       __FUNCTION__);
-		release_any_md(&ke->pcrc_md);
-		return;
-	}
-
-	passert(ke->pcrc_serialno == st->st_serialno);	/* transitional */
-
-	passert(cur_state == NULL);
-	passert(st != NULL);
+			st->st_serialno));
 
 	passert(st->st_suspended_md == ke->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
 
-	set_cur_state(st);
+	so_serial_t old_serialno = push_cur_state(st);
+	pexpect(old_serialno == SOS_NOBODY);
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
@@ -1509,8 +1488,6 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	struct connection *c = st->st_connection;
 	bool send_certreq = FALSE;
 	int vids = 0;
-
-	passert(ke->pcrc_serialno == st->st_serialno);	/* transitional */
 
 	/* note that we don't update the state here yet */
 
@@ -1731,9 +1708,10 @@ static stf_status ikev2_parent_inI1outR1_tail(
  *                     <--  HDR, N(COOKIE)
  * HDR, N(COOKIE), SAi1, KEi, Ni -->
  */
-stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
+stf_status ikev2parent_inR1BoutI1B(struct state *st, struct msg_digest *md)
 {
-	struct state *st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 	struct connection *c = st->st_connection;
 
 	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
@@ -1805,11 +1783,10 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 			struct suggested_group sg;
 
 			/* we treat this as a "retransmit" event to rate limit these */
-			if (st->st_retransmit >= MAXIMUM_INVALID_KE_RETRANS) {
+			if (!count_duplicate(st, MAXIMUM_INVALID_KE_RETRANS)) {
 				DBG(DBG_CONTROLMORE, DBG_log("ignoring received INVALID_KE packets - received too many (DoS?)"));
 				return STF_IGNORE;
 			}
-			st->st_retransmit++;
 
 			if (ntfy->next != NULL) {
 				DBG(DBG_CONTROL, DBG_log("ignoring Notify payloads after v2N_INVALID_KE_PAYLOAD"));
@@ -1864,6 +1841,8 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 		}
 
 		case v2N_NO_PROPOSAL_CHOSEN:
+			DBG(DBG_CONTROL, DBG_log("Received NO_PROPOSAL_CHOSEN"));
+			/* FALLTHROUGH */
 		default:
 			/*
 			 * ??? At least NO_PROPOSAL_CHOSEN
@@ -1878,7 +1857,7 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 			 */
 			if (DBGP(DBG_OPPO) || (st->st_connection->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 				libreswan_log("%s: received unauthenticated %s - ignored",
-					enum_name(&state_names, st->st_state),
+					st->st_state_name,
 					enum_name(&ikev2_notify_names,
 						ntfy->payload.v2n.isan_type));
 			}
@@ -1900,9 +1879,10 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	struct pluto_crypto_req_cont *dh,
 	struct pluto_crypto_req *r);
 
-stf_status ikev2parent_inR1outI2(struct msg_digest *md)
+stf_status ikev2parent_inR1outI2(struct state *st, struct msg_digest *md)
 {
-	struct state *st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 	struct connection *c = st->st_connection;
 	struct payload_digest *ntfy;
 
@@ -1936,7 +1916,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		case v2N_USE_TRANSPORT_MODE:
 		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
 			DBG(DBG_CONTROL, DBG_log("%s: received %s which is not valid for IKE_INIT - ignoring it",
-				enum_name(&state_names, st->st_state),
+				st->st_state_name,
 				enum_name(&ikev2_notify_names,
 					ntfy->payload.v2n.isan_type)));
 			break;
@@ -1959,7 +1939,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 			break;
 		default:
 			DBG(DBG_CONTROL, DBG_log("%s: received %s but ignoring it",
-				enum_name(&state_names, st->st_state),
+				st->st_state_name,
 				enum_name(&ikev2_notify_names,
 					ntfy->payload.v2n.isan_type)));
 		}
@@ -2036,34 +2016,23 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 
 /* redundant type assertion: static crypto_req_cont_func ikev2_parent_inR1outI2_continue; */
 
-static void ikev2_parent_inR1outI2_continue(struct pluto_crypto_req_cont *dh,
+static void ikev2_parent_inR1outI2_continue(struct state *st, struct msg_digest *md,
+					    struct pluto_crypto_req_cont *dh,
 					    struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = dh->pcrc_md;
-	struct state *const st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROL,
 		DBG_log("ikev2_parent_inR1outI2_continue for #%lu: calculating g^{xy}, sending I2",
-			dh->pcrc_serialno));
-
-	if (dh->pcrc_serialno == SOS_NOBODY) {
-		loglog(RC_LOG_SERIOUS,
-		       "%s: Request was disconnected from state",
-		       __FUNCTION__);
-		release_any_md(&dh->pcrc_md);
-		return;
-	}
-
-	passert(dh->pcrc_serialno == st->st_serialno);	/* transitional */
-
-	passert(cur_state == NULL);
-	passert(st != NULL);
+			st->st_serialno));
 
 	passert(st->st_suspended_md == dh->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
 
-	set_cur_state(st);
+	so_serial_t old_serialno = push_cur_state(st);
+	pexpect(old_serialno == SOS_NOBODY);
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
@@ -3057,8 +3026,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	delete_event(pst);
 	{
 		enum event_type x = md->svm->timeout_event;
-		time_t delay = ikev2_replace_delay(pst, &x, ORIGINAL_INITIATOR);
-
+		deltatime_t delay = ikev2_replace_delay(pst, &x, ORIGINAL_INITIATOR);
 		event_schedule(x, delay, pst);
 	}
 
@@ -3137,7 +3105,10 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 	/* it should use parent not child state */
 	bool send_cert = ikev2_send_cert_decision(cst);
+	bool send_idr = pc->spd.that.id.name.len != 0; /* me tarzan, you jane */
 	bool ic =  pc->initial_contact && (pst->st_ike_pred == SOS_NOBODY);
+
+	DBG(DBG_CONTROL, DBG_log("IDr payload will %sbe sent", send_idr ? "" : "NOT "));
 
 	/* send out the IDi payload */
 
@@ -3159,9 +3130,10 @@ static stf_status ikev2_parent_inR1outI2_tail(
 			r_id.isai_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
 		}
 
-		r_id.isai_np = send_cert ?
-			ISAKMP_NEXT_v2CERT : ic ? ISAKMP_NEXT_v2N :
-			ISAKMP_NEXT_v2AUTH;
+		r_id.isai_np = send_cert ?  ISAKMP_NEXT_v2CERT :
+			send_idr ? ISAKMP_NEXT_v2IDr :
+				ic ? ISAKMP_NEXT_v2N :
+					ISAKMP_NEXT_v2AUTH;
 
 		/* HASH of ID is not done over common header */
 		unsigned char *const id_start =
@@ -3187,8 +3159,9 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 	/* send [CERT,] payload RFC 4306 3.6, 1.2) */
 	if (send_cert) {
-		enum next_payload_types_ikev2 np = ic ?
-			ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2AUTH;
+		enum next_payload_types_ikev2 np = send_idr ?
+			ISAKMP_NEXT_v2IDr : ic ?
+				ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2AUTH;
 
 		stf_status certstat = ikev2_send_cert(cst, md,
 						      ORIGINAL_INITIATOR,
@@ -3196,6 +3169,47 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 		if (certstat != STF_OK)
 			return certstat;
+	}
+
+	/* you Tarzan, me Jane support */
+	if (send_idr) {
+		struct ikev2_id r_id;
+		pb_stream r_id_pbs;
+		chunk_t id_b;
+		r_id.isai_type = ID_NONE;
+
+		switch (pc->spd.that.id.kind) {
+		case ID_DER_ASN1_DN:
+			r_id.isai_type = ID_DER_ASN1_DN;
+			break;
+		case ID_FQDN:
+			r_id.isai_type = ID_FQDN;
+			break;
+		case ID_USER_FQDN:
+			r_id.isai_type = ID_USER_FQDN;
+			break;
+		case ID_KEY_ID:
+			r_id.isai_type = ID_KEY_ID;
+			break;
+		default:
+			DBG(DBG_CONTROL, DBG_log("Not sending IDr payload for remote ID type %s",
+				enum_show(&ike_idtype_names, pc->spd.that.id.kind)));
+			break;
+		}
+
+		if (r_id.isai_type != ID_NONE) {
+			build_id_payload((struct isakmp_ipsec_id *)&r_id,
+				 &id_b,
+				 &pc->spd.that);
+			r_id.isai_critical = ISAKMP_PAYLOAD_NONCRITICAL;
+			r_id.isai_np = ic ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2AUTH;
+
+			if (!out_struct(&r_id, &ikev2_id_desc, &e_pbs_cipher,
+				&r_id_pbs) || !out_chunk(id_b, &r_id_pbs, "IDr"))
+				return STF_INTERNAL_ERROR;
+
+			close_output_pbs(&r_id_pbs);
+		}
 	}
 
 	if (ic) {
@@ -3407,12 +3421,8 @@ static stf_status ikev2_start_pam_authorize(struct msg_digest *md)
 	idtoa(&st->st_connection->spd.that.id, thatid, sizeof(thatid));
 	libreswan_log("IKEv2: [XAUTH]PAM method requested to authorize '%s'",
 		      thatid);
-	xauth_start_pam_thread(&st->st_xauth,
+	xauth_start_pam_thread(st,
 			       thatid, "password",
-			       st->st_connection->name,
-			       &st->st_remoteaddr,
-			       st->st_serialno,
-			       st->st_connection->instance_serial,
 			       "IKEv2",
 			       ikev2_pam_continue);
 	return STF_SUSPEND;
@@ -3446,18 +3456,14 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	struct pluto_crypto_req_cont *dh,
 	struct pluto_crypto_req *r);
 
-stf_status ikev2parent_inI2outR2(struct msg_digest *md)
+stf_status ikev2parent_inI2outR2(struct state *st UNUSED, struct msg_digest *md)
 {
-	struct state *st = md->st;
-
 	/* for testing only */
 	if (DBGP(IMPAIR_SEND_NO_IKEV2_AUTH)) {
 		libreswan_log(
 			"IMPAIR_SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
 		return STF_IGNORE;
 	}
-
-	nat_traversal_change_port_lookup(md, st);
 
 	/*
 	 * the initiator sent us an encrypted payload. We need to calculate
@@ -3472,34 +3478,23 @@ stf_status ikev2parent_inI2outR2(struct msg_digest *md)
 			NULL, ikev2_parent_inI2outR2_continue);
 }
 
-static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *dh,
+static void ikev2_parent_inI2outR2_continue(struct state *st, struct msg_digest *md,
+					    struct pluto_crypto_req_cont *dh,
 					    struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = dh->pcrc_md;
-	struct state *const st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROL,
 		DBG_log("ikev2_parent_inI2outR2_continue for #%lu: calculating g^{xy}, sending R2",
-			dh->pcrc_serialno));
-
-	if (dh->pcrc_serialno == SOS_NOBODY) {
-		loglog(RC_LOG_SERIOUS,
-		       "%s: Request was disconnected from state",
-		       __FUNCTION__);
-		release_any_md(&dh->pcrc_md);
-		return;
-	}
-
-	passert(dh->pcrc_serialno == st->st_serialno);	/* transitional */
-
-	passert(cur_state == NULL);
-	passert(st != NULL);
+			st->st_serialno));
 
 	passert(st->st_suspended_md == dh->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
 
-	set_cur_state(st);
+	so_serial_t old_serialno = push_cur_state(st);
+	pexpect(old_serialno == SOS_NOBODY);
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
@@ -3529,7 +3524,7 @@ static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *dh,
 		DBG(DBG_OPPO,
 			DBG_log("Deleting opportunistic Parent with no Child SA"));
 		e = STF_FATAL;
-		SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
+		send_v2_notification_from_state(st, v2N_AUTHENTICATION_FAILED, NULL);
 	}
 
 	passert(dh->pcrc_md != NULL);
@@ -3560,6 +3555,8 @@ static stf_status ikev2_parent_inI2outR2_tail(
 		if (ps.status != STF_OK)
 			return ps.status;
 	}
+
+	nat_traversal_change_port_lookup(md, st);
 
 	/* this call might update connection in md->st */
 	if (!ikev2_decode_peer_id_and_certs(md))
@@ -3623,7 +3620,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 		st->st_connection->spd.that.authby))
 	{
 		/* TODO: This should really be an encrypted message! */
-		SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
+		send_v2_notification_from_state(st, v2N_AUTHENTICATION_FAILED, NULL);
 		return STF_FATAL;
 	}
 
@@ -3650,7 +3647,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 		 * TBD: send this notification encrypted because the
 		 * AUTH payload succeed
 		 */
-		SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
+		send_v2_notification_from_state(st, v2N_AUTHENTICATION_FAILED, NULL);
 		return STF_FATAL;
 	}
 
@@ -3979,8 +3976,11 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 			&st->st_accepted_esp_or_ah_proposal,
 			c->esp_or_ah_proposals);
 
-	if (ret != STF_OK)
+	if (ret != STF_OK) {
+		loglog(RC_LOG_SERIOUS, "%s responder SA processing returned %s", what,
+			enum_name(&stfstatus_name, ret));
 		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+	}
 
 	passert(st->st_accepted_esp_or_ah_proposal != NULL);
 
@@ -4031,7 +4031,7 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 	if (cp_r == ISAKMP_NEXT_v2CP) {
 		if (md->chain[ISAKMP_NEXT_v2CP] == NULL) {
 			/* not really anything to here... but it would be worth unpending again */
-			libreswan_log("missing v2CP reply, not attempting to setup child SA");
+			loglog(RC_LOG_SERIOUS, "missing v2CP reply, not attempting to setup child SA");
 			/* Delete previous retransmission event. */
 			delete_event(st);
 			/*
@@ -4254,9 +4254,10 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
  * https://tools.ietf.org/html/rfc7296#section-2.21.2
  */
 
-stf_status ikev2parent_inR2(struct msg_digest *md)
+stf_status ikev2parent_inR2(struct state *st, struct msg_digest *md)
 {
-	struct state *st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 	unsigned char idhash_in[MAX_DIGEST_LEN];
 	struct payload_digest *ntfy;
 	struct state *pst = st;
@@ -4337,11 +4338,11 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 
 	/* AUTH is ok, we can trust the notify payloads */
 	if (!got_transport && ((st->st_connection->policy & POLICY_TUNNEL) == LEMPTY)) {
-		libreswan_log("local policy requires Transport Mode but peer requires required Tunnel Mode");
+		loglog(RC_LOG_SERIOUS, "local policy requires Transport Mode but peer requires required Tunnel Mode");
 		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN; /* applies only to Child SA */
 	}
 	if (got_transport && ((st->st_connection->policy & POLICY_TUNNEL) != LEMPTY)) {
-		libreswan_log("local policy requires Tunnel Mode but peer requires required Transport Mode");
+		loglog(RC_LOG_SERIOUS, "local policy requires Tunnel Mode but peer requires required Transport Mode");
 		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN; /* applies only to Child SA */
 	}
 
@@ -4350,7 +4351,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	    md->chain[ISAKMP_NEXT_v2TSi] == NULL ||
 	    md->chain[ISAKMP_NEXT_v2TSr] == NULL) {
 		/* not really anything to here... but it would be worth unpending again */
-		libreswan_log("missing v2SA, v2TSi or v2TSr: not attempting to setup child SA");
+		loglog(RC_LOG_SERIOUS, "missing v2SA, v2TSi or v2TSr: not attempting to setup child SA");
 		/*
 		 * Delete previous retransmission event.
 		 */
@@ -4409,9 +4410,8 @@ static void ikev2_calc_dcookie(u_char *dcookie, chunk_t ni,
  *
  */
 
-void send_v2_notification(struct state *p1st,
+void send_v2_notification(struct state *pst,
 			  v2_notification_t ntype,
-			  struct state *encst,
 			  u_char *icookie,
 			  u_char *rcookie,
 			  chunk_t *n_data)
@@ -4443,11 +4443,10 @@ void send_v2_notification(struct state *p1st,
 	{
 		ipstr_buf b;
 
-		libreswan_log("sending %sencrypted notification %s to %s:%u",
-			encst ? "" : "un",
-			enum_name(&ikev2_notify_names, ntype),
-			log_ip ?  ipstr(&p1st->st_remoteaddr, &b) : "<IP>",
-			p1st->st_remoteport);
+		libreswan_log("sending unencrypted notification %s to %s:%u",
+			      enum_name(&ikev2_notify_names, ntype),
+			      sensitive_ipstr(&pst->st_remoteaddr, &b),
+			      pst->st_remoteport);
 	}
 
 	init_out_pbs(&reply_stream, buffer, sizeof(buffer), "notification msg");
@@ -4463,7 +4462,7 @@ void send_v2_notification(struct state *p1st,
 		memcpy(hdr.isa_icookie, icookie, COOKIE_SIZE);
 
 		/* incomplete */
-		switch (p1st->st_state) {
+		switch (pst->st_state) {
 		case STATE_PARENT_R2:
 			hdr.isa_xchg = ISAKMP_v2_AUTH;
 			break;
@@ -4472,8 +4471,8 @@ void send_v2_notification(struct state *p1st,
 			hdr.isa_xchg = ISAKMP_v2_SA_INIT;
 			break;
 		}
-		if (p1st->st_reply_xchg != 0)
-			hdr.isa_xchg = p1st->st_reply_xchg; /* use received exchange type */
+		if (pst->st_reply_xchg != 0)
+			hdr.isa_xchg = pst->st_reply_xchg; /* use received exchange type */
 
 		hdr.isa_np = ISAKMP_NEXT_v2N;
 		/* XXX unconditionally clearing original initiator flag is wrong */
@@ -4502,7 +4501,7 @@ void send_v2_notification(struct state *p1st,
 		 ntype, n_data, &rbody))
 		return;	/* ??? NO WAY TO SIGNAL INTERNAL ERROR */
 
-	if (!close_message(&rbody, p1st))
+	if (!close_message(&rbody, pst))
 		return; /* ??? NO WAY TO SIGNAL INTERNAL ERROR */
 
 	close_output_pbs(&reply_stream);
@@ -4513,7 +4512,7 @@ void send_v2_notification(struct state *p1st,
 	 * one with retrying).  So we need not preserve the packet we
 	 * are sending.
 	 */
-	send_ike_msg_without_recording(p1st, &reply_stream, "v2 notify");
+	send_ike_msg_without_recording(pst, &reply_stream, "v2 notify");
 
 	if (ntype < v2N_ERROR_ROOF)
 		pstats(ikev2_sent_notifies_e, ntype);
@@ -4978,9 +4977,10 @@ static notification_t process_ike_rekey_sa_pl(struct msg_digest *md, struct stat
 
 
 /* ikev2 initiator received a create Child SA Response */
-stf_status ikev2_child_inR(struct msg_digest *md)
+stf_status ikev2_child_inR(struct state *st, struct msg_digest *md)
 {
-	struct state *st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 	stf_status e;
 
 	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_nr, "Nr"));
@@ -5000,9 +5000,10 @@ stf_status ikev2_child_inR(struct msg_digest *md)
 }
 
 /* processing a new Child SA (RFC 7296 1.3.1 or 1.3.3) request */
-stf_status ikev2_child_inIoutR(struct msg_digest *md)
+stf_status ikev2_child_inIoutR(struct state *st, struct msg_digest *md)
 {
-	struct state *st = md->st; /* child state */
+	pexpect(st == md->st); /* child state */
+	st = md->st;
 	struct state *pst = state_with_serialno(st->st_clonedfrom);
 
 	passert(pst != NULL);
@@ -5032,9 +5033,10 @@ stf_status ikev2_child_inIoutR(struct msg_digest *md)
 }
 
 /* processsing a new Rekey IKE SA (RFC 7296 1.3.2) request */
-stf_status ikev2_child_ike_inIoutR(struct msg_digest *md)
+stf_status ikev2_child_ike_inIoutR(struct state *st, struct msg_digest *md)
 {
-	struct state *st = md->st; /* child state */
+	pexpect(st == md->st); /* child state */
+	st = md->st;
 	struct state *pst = state_with_serialno(st->st_clonedfrom);
 
 	passert(pst != NULL);
@@ -5232,7 +5234,7 @@ static void delete_or_replace_state(struct state *st) {
 	if (st->st_event->ev_type == EVENT_SA_EXPIRE) {
 		/* this state  was going to  EXPIRE just let it now*/
 		delete_event(st);
-		event_schedule(EVENT_SA_EXPIRE, 0, st);
+		event_schedule_s(EVENT_SA_EXPIRE, 0, st);
 		loglog(RC_LOG_SERIOUS, "received Delete SA payload: expire IPSEC State #%lu now",
 				st->st_serialno);
 		return;
@@ -5249,7 +5251,7 @@ static void delete_or_replace_state(struct state *st) {
 				st->st_serialno);
 		delete_event(st);
 		st->st_margin = deltatime(0);
-		event_schedule(EVENT_SA_REPLACE, 0, st);
+		event_schedule_s(EVENT_SA_REPLACE, 0, st);
 	} else {
 		loglog(RC_LOG_SERIOUS, "received Delete SA payload: delete IPSEC State #%lu now",
 				st->st_serialno);
@@ -5273,9 +5275,10 @@ static void delete_or_replace_state(struct state *st) {
  *   <--  HDR, SK {[N,] [D,] [CP], ...}
  */
 
-stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
+stf_status process_encrypted_informational_ikev2(struct state *st, struct msg_digest *md)
 {
-	struct state *st = md->st;
+	pexpect(st == md->st);
+	st = md->st;
 	struct payload_digest *p;
 
 	/* Are we responding (as opposed to processing a response)? */
@@ -5998,8 +6001,6 @@ void ikev2_add_ipsec_child(int whack_sock, struct state *isakmp_sa,
 {
 	struct state *st;
 	char replacestr[32];
-	const char *pfsgroupname = "no-pfs";
-
 	if (find_pending_phase2(isakmp_sa->st_serialno,
 				c, IPSECSA_PENDING_STATES)) {
 		return;
@@ -6028,8 +6029,7 @@ void ikev2_add_ipsec_child(int whack_sock, struct state *isakmp_sa,
 			    st->sec_ctx->sec_ctx_value));
 	}
 #endif
-	st->st_state = STATE_UNDEFINED; /* change_state ignores from == to */
-	change_state(st, STATE_V2_CREATE_I0);
+	change_state(st, STATE_V2_CREATE_I0); /* from STATE_UNDEFINED */
 
 	insert_state(st); /* needs cookies, connection, and msgid */
 
@@ -6041,20 +6041,22 @@ void ikev2_add_ipsec_child(int whack_sock, struct state *isakmp_sa,
 	passert(st->st_connection != NULL);
 
 	st->st_pfs_group = NULL;
-	if ((policy & POLICY_PFS) != LEMPTY) {
+	if ((policy & POLICY_PFS) != LEMPTY)
 		ikev2_child_set_pfs(st);
-		pfsgroupname = st->st_pfs_group->common.name;
-	}
 
-	DBG(DBG_CONTROLMORE,
+	DBG(DBG_CONTROLMORE, {
+		const char *pfsgroupname = st->st_pfs_group == NULL ?
+			"no-pfs" : st->st_pfs_group->common.name;
+
 		DBG_log("#%lu schedule event to initiate IPsec SA %s%s using IKE#%lu pfs=%s",
 			st->st_serialno,
 			prettypolicy(policy),
 			replacestr,
 			isakmp_sa->st_serialno,
-			pfsgroupname));
+			pfsgroupname);
+	});
 	delete_event(st);
-	event_schedule(EVENT_v2_INITIATE_CHILD, 0, st);
+	event_schedule_s(EVENT_v2_INITIATE_CHILD, 0, st);
 	reset_globals();
 }
 

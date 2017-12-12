@@ -324,7 +324,7 @@ struct connection *first_pending(const struct state *st,
 /*
  * Look for phase2s that were waiting for a phase 1.  If the time that we
  * have been pending exceeds a DPD timeout that was set, then we call the
- * dpd_timeout() on this state, which hopefully kills this pending state.
+ * dpd_timeout() on this state.  We hope this kills the pending state.
  */
 bool pending_check_timeout(const struct connection *c)
 {

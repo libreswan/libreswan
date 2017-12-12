@@ -51,7 +51,6 @@ enum keyword_string_config_field {
 	KSF_NSSDIR,
 	KSF_SECRETSFILE,
 	KSF_PERPEERDIR,
-	KSF_MYID,
 	KSF_MYVENDORID,
 	KSF_PLUTOSTDERRLOG,
 	KSF_PLUTO_DNSSEC_ROOTKEY_FILE,
@@ -125,12 +124,13 @@ enum keyword_numeric_config_field {
 	KBF_IKELIFETIME,
 	KBF_SHUNTLIFETIME,
 	KBF_RETRANSMIT_TIMEOUT,
-	KBF_RETRANSMIT_INTERVAL,
+	KBF_RETRANSMIT_INTERVAL_MS,
 	KBF_AGGRMODE,
 	KBF_MODECONFIGPULL,
 	KBF_ENCAPS,
 	KBF_IKEv2,
 	KBF_ESN,
+	KBF_DECAP_DSCP,
 	KBF_IKEv2_ALLOW_NARROWING,
 	KBF_IKEv2_PAM_AUTHORIZE,
 	KBF_CONNADDRFAMILY,
@@ -310,6 +310,7 @@ enum keyword_type {
 	kt_invertbool,          /* value is an off/on type ("disable") */
 	kt_enum,                /* value is from a set of key words */
 	kt_list,                /* a set of values from a set of key words */
+	kt_lset,		/* a set of values from an enum name */
 	kt_loose_enum,          /* either a string, or a %-prefixed enum */
 	kt_rsakey,              /* a key, or set of values */
 	kt_number,              /* an integer */
@@ -325,14 +326,13 @@ enum keyword_type {
 	kt_obsolete_quiet,      /* option that is obsoleted, allow keyword but don't bother warning */
 };
 
-#define NOT_ENUM NULL
-
 struct keyword_def {
 	const char        *keyname;
 	unsigned int validity;          /* has bits from enum keyword_valid (kv_*) */
 	enum keyword_type type;
 	unsigned int field;             /* one of keyword_*_field */
 	const struct keyword_enum_values *validenum;
+	const struct lmod_info *info;
 };
 
 struct keyword {
@@ -379,6 +379,7 @@ struct config_parsed {
 
 extern const struct keyword_def ipsec_conf_keywords[];
 
+extern lset_t parser_lset(const struct keyword_def *kd, const char *s);
 extern unsigned int parser_enum_list(const struct keyword_def *kd, const char *s,
 				     bool list);
 extern unsigned int parser_loose_enum(struct keyword *k, const char *s);

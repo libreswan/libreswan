@@ -6,7 +6,7 @@
  * Copyright (C) 2012 Philippe Vouters <philippe.vouters@laposte.net>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
- * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016-2017, Andrew Cagney
  * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -155,7 +155,6 @@ enum event_type {
 
 	EVENT_REINIT_SECRET,		/* Refresh cookie secret */
 	EVENT_SHUNT_SCAN,		/* scan shunt eroutes known to kernel */
-	EVENT_LOG_DAILY,		/* reset certain log events/stats */
 	EVENT_PENDING_DDNS,		/* try to start connections where DNS failed at init */
 	EVENT_SD_WATCHDOG,		/* update systemd's watchdog interval */
 	EVENT_PENDING_PHASE2,		/* do not make pending phase2 wait forever */
@@ -193,11 +192,11 @@ enum event_type {
  * an arbitrary milliseconds delay for responder. A workaround for iOS, iPhone.
  * If xauth message arrive before main mode response iPhone may abort.
  */
-#define EVENT_v1_SEND_XAUTH_DELAY	80 /* milliseconds */
+#define EVENT_v1_SEND_XAUTH_DELAY_MS	80 /* milliseconds */
 
 #define RETRANSMIT_TIMEOUT_DEFAULT	60  /* seconds */
-#ifndef RETRANSMIT_INTERVAL_DEFAULT
-# define RETRANSMIT_INTERVAL_DEFAULT	500 /* wait time doubled each retransmit - in milliseconds */
+#ifndef RETRANSMIT_INTERVAL_DEFAULT_MS
+# define RETRANSMIT_INTERVAL_DEFAULT_MS	500 /* wait time doubled each retransmit - in milliseconds */
 #endif
 #define DELETE_SA_DELAY			RETRANSMIT_TIMEOUT_DEFAULT /* wait until the other side giveup on us */
 #define EVENT_CRYPTO_TIMEOUT_DELAY	RETRANSMIT_TIMEOUT_DEFAULT /* wait till the other side give up on us */
@@ -249,7 +248,6 @@ enum seccomp_mode {
 
 typedef enum {
 	STF_IGNORE,             /* don't respond */
-	STF_INLINE,             /* set to this on second time through complete_state_trans */
 	STF_SUSPEND,            /* unfinished -- don't release resources */
 	STF_OK,                 /* success */
 	STF_INTERNAL_ERROR,     /* discard everything, we failed */
@@ -291,21 +289,26 @@ typedef enum {
 
 #define IKE_V2_OVERLAPPING_WINDOW_SIZE	1 /* our default for rfc 7296 # 2.3 */
 
-/* debugging settings: a set of selections for reporting
- * These would be more naturally situated in log.h,
- * but they are shared with whack.
- * IMPAIR_* actually change behaviour, usually badly,
- * to aid in testing.  Naturally, these are not included in ALL.
+/*
+ * debugging settings: a set of selections for reporting These would
+ * be more naturally situated in log.h, but they are shared with
+ * whack.
  *
- * NOTE: changes here must be done in concert with changes to DBGOPT_*
- * in whack.c.  A change to WHACK_MAGIC in whack.h will be required too.
+ * IMPAIR_* actually change behaviour, usually badly, to aid in
+ * testing.  Naturally, these are not included in ALL.
+ *
+ * NOTE: A change to WHACK_MAGIC in whack.h will be required too.
  */
 
-/* Index of DBG/IMPAIR set elements.
+/*
+ * Index of DBG set elements.
+ *
  * Note: these are NOT sets: use LELEM to turn these into singletons.
  * Used by whack and pluto.
+ *
  * NOTE: when updating/adding x_IX, do so to x in the next table too!
  */
+
 enum {
 	DBG_floor_IX = 0,
 	DBG_RAW_IX = DBG_floor_IX,		/* raw packet I/O */
@@ -323,14 +326,51 @@ enum {
 	DBG_NATT_IX,		/* debugging of NAT-traversal */
 	DBG_X509_IX,		/* X.509/pkix verify, cert retrival */
 	DBG_DPD_IX,		/* DPD items */
+	DBG_XAUTH_IX,		/* XAUTH aka PAM */
+	DBG_RETRANSMITS_IX,	/* Retransmitting packets */
 	DBG_OPPOINFO_IX,	/* log various informational things about oppo/%trap-keying */
+
 	DBG_WHACKWATCH_IX,	/* never let WHACK go */
 	DBG_PRIVATE_IX,		/* displays private information: DANGER! */
+	DBG_ADD_PREFIX_IX,	/* add the log+state prefix to debug lines */
 
 	DBG_roof_IX,		/* first unassigned DBG is assigned to IMPAIR! */
 };
 
-#define DBG_MASK	LRANGE(0, DBG_roof_IX - 1)
+/* Sets of Debug items */
+
+#define DBG_MASK	LRANGE(DBG_floor_IX, DBG_roof_IX - 1)
+#define DBG_NONE        0                                       /* no options on, including impairments */
+#define DBG_ALL         LRANGES(DBG_RAW, DBG_OPPOINFO)          /* all logging options on EXCEPT DBG_PRIVATE and DBG_WHACKWATCH */
+
+/* singleton sets: must be kept in sync with the items! */
+
+#define DBG_RAW	LELEM(DBG_RAW_IX)
+#define DBG_CRYPT	LELEM(DBG_CRYPT_IX)
+#define DBG_PARSING	LELEM(DBG_PARSING_IX)
+#define DBG_EMITTING	LELEM(DBG_EMITTING_IX)
+#define DBG_CONTROL	LELEM(DBG_CONTROL_IX)
+#define DBG_LIFECYCLE	LELEM(DBG_LIFECYCLE_IX)
+#define DBG_KERNEL	LELEM(DBG_KERNEL_IX)
+#define DBG_DNS		LELEM(DBG_DNS_IX)
+#define DBG_OPPO	LELEM(DBG_OPPO_IX)
+#define DBG_CONTROLMORE	LELEM(DBG_CONTROLMORE_IX)
+#define DBG_PFKEY	LELEM(DBG_PFKEY_IX)
+#define DBG_NATT	LELEM(DBG_NATT_IX)
+#define DBG_X509	LELEM(DBG_X509_IX)
+#define DBG_DPD		LELEM(DBG_DPD_IX)
+#define DBG_XAUTH	LELEM(DBG_XAUTH_IX)
+#define DBG_RETRANSMITS	LELEM(DBG_RETRANSMITS_IX)
+#define DBG_OPPOINFO	LELEM(DBG_OPPOINFO_IX)
+
+#define DBG_WHACKWATCH	LELEM(DBG_WHACKWATCH_IX)
+#define DBG_PRIVATE	LELEM(DBG_PRIVATE_IX)
+#define DBG_ADD_PREFIX	LELEM(DBG_ADD_PREFIX_IX)
+
+/*
+ * Index of IMPAIR set elements.  These set at the end of the DBG
+ * elements.
+ */
 
 enum {
 	IMPAIR_floor_IX = DBG_roof_IX,
@@ -362,36 +402,18 @@ enum {
 	IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE_IX,	/* causes pluto to ignore incoming hash notify from IKE_SA_INIT Response*/
 	IMPAIR_IKEv2_EXCLUDE_INTEG_NONE_IX,	/* lets pluto exclude integrity 'none' in proposals */
 	IMPAIR_IKEv2_INCLUDE_INTEG_NONE_IX,	/* lets pluto include integrity 'none' in proposals */
+	IMPAIR_REPLAY_DUPLICATES_IX,		/* replay duplicates of each incoming packet */
+	IMPAIR_REPLAY_FORWARD_IX,		/* replay all earlier packets old-to-new */
+	IMPAIR_REPLAY_BACKWARD_IX,		/* replay all earlier packets new-to-old */
 
 	IMPAIR_roof_IX	/* first unassigned IMPAIR */
 };
 
-#define IMPAIR_MASK	LRANGE(DBG_roof_IX, IMPAIR_roof_IX - 1)
+/* Sets of Impair items */
 
-/* Sets of Debug / Impair items */
-#define DBG_NONE        0                                       /* no options on, including impairments */
-#define DBG_ALL         LRANGES(DBG_RAW, DBG_OPPOINFO)          /* all logging options on EXCEPT DBG_PRIVATE and DBG_WHACKWATCH */
+#define IMPAIR_MASK	LRANGE(IMPAIR_floor_IX, IMPAIR_roof_IX - 1)
 
 /* singleton sets: must be kept in sync with the items! */
-
-#define DBG_RAW	LELEM(DBG_RAW_IX)
-#define DBG_CRYPT	LELEM(DBG_CRYPT_IX)
-#define DBG_PARSING	LELEM(DBG_PARSING_IX)
-#define DBG_EMITTING	LELEM(DBG_EMITTING_IX)
-#define DBG_CONTROL	LELEM(DBG_CONTROL_IX)
-#define DBG_LIFECYCLE	LELEM(DBG_LIFECYCLE_IX)
-#define DBG_KERNEL	LELEM(DBG_KERNEL_IX)
-#define DBG_DNS		LELEM(DBG_DNS_IX)
-#define DBG_OPPO	LELEM(DBG_OPPO_IX)
-#define DBG_CONTROLMORE	LELEM(DBG_CONTROLMORE_IX)
-#define DBG_PFKEY	LELEM(DBG_PFKEY_IX)
-#define DBG_NATT	LELEM(DBG_NATT_IX)
-#define DBG_X509	LELEM(DBG_X509_IX)
-#define DBG_DPD		LELEM(DBG_DPD_IX)
-#define DBG_OPPOINFO	LELEM(DBG_OPPOINFO_IX)
-#define DBG_WHACKWATCH	LELEM(DBG_WHACKWATCH_IX)
-
-#define DBG_PRIVATE	LELEM(DBG_PRIVATE_IX)
 
 #define IMPAIR_BUST_MI2	LELEM(IMPAIR_BUST_MI2_IX)
 #define IMPAIR_BUST_MR2	LELEM(IMPAIR_BUST_MR2_IX)
@@ -420,6 +442,9 @@ enum {
 #define IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE	LELEM(IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE_IX)
 #define IMPAIR_IKEv2_EXCLUDE_INTEG_NONE LELEM(IMPAIR_IKEv2_EXCLUDE_INTEG_NONE_IX)
 #define IMPAIR_IKEv2_INCLUDE_INTEG_NONE LELEM(IMPAIR_IKEv2_INCLUDE_INTEG_NONE_IX)
+#define IMPAIR_REPLAY_DUPLICATES 	LELEM(IMPAIR_REPLAY_DUPLICATES_IX)
+#define IMPAIR_REPLAY_FORWARD	 	LELEM(IMPAIR_REPLAY_FORWARD_IX)
+#define IMPAIR_REPLAY_BACKWARD 		LELEM(IMPAIR_REPLAY_BACKWARD_IX)
 
 /* State of exchanges
  *
@@ -454,16 +479,18 @@ enum {
  */
 
 enum state_kind {
-	STATE_UNDEFINED = 0,
+	STATE_UNDEFINED,
 
-	/*  Opportunism states: see "Opportunistic Encryption" 2.2 */
+	/* Hack so state numbers don't change */
 
-	OPPO_ACQUIRE,           /* got an ACQUIRE message for this pair */
-	OPPO_GW_DISCOVERED,     /* got TXT specifying gateway */
+	STATE_UNUSED_1,
+	STATE_UNUSED_2,
 
 	/* IKE states */
 
-	STATE_MAIN_R0,
+	STATE_IKEv1_FLOOR,
+
+	STATE_MAIN_R0 = STATE_IKEv1_FLOOR,
 	STATE_MAIN_I1,
 	STATE_MAIN_R1,
 	STATE_MAIN_I2,
@@ -499,14 +526,17 @@ enum state_kind {
 	STATE_XAUTH_I0,                 /* client state is awaiting request */
 	STATE_XAUTH_I1,                 /* client state is awaiting result code */
 
-	STATE_IKEv1_ROOF,
+	STATE_IKEv1_ROOF,	/* not a state! */
 
 	/*
 	 * IKEv2 states.
-	 * Note that message reliably sending is done by initiator only,
-	 * unlike with IKEv1.
+	 *
+	 * Note that message reliably sending is done by initiator
+	 * only, unlike with IKEv1.
 	 */
-	STATE_IKEv2_BASE,	/* state when faking a state */
+	STATE_IKEv2_FLOOR,
+
+	STATE_IKEv2_BASE = STATE_IKEv2_FLOOR,	/* state when faking a state */
 
 	/* INITIATOR states */
 	STATE_PARENT_I1,        /* IKE_SA_INIT: sent initial message, waiting for reply */
@@ -542,11 +572,11 @@ enum state_kind {
 	STATE_IKESA_DEL,
 	STATE_CHILDSA_DEL,
 
-	STATE_IKEv2_ROOF
+	STATE_IKEv2_ROOF	/* not a state! */
 };
 
-#define STATE_IKE_FLOOR STATE_MAIN_R0
-#define MAX_STATES STATE_IKEv2_ROOF
+/* STATE_IKEv2_ROOF lurks in the code so leave space for it */
+#define STATE_IKE_ROOF (STATE_IKEv2_ROOF+1)	/* not a state! */
 
 
 /*
@@ -821,6 +851,7 @@ enum sa_policy_bits {
 	POLICY_TUNNEL_IX,
 	POLICY_PFS_IX,
 	POLICY_DISABLEARRIVALCHECK_IX,	/* suppress tunnel egress address checking */
+	POLICY_DECAP_DSCP_IX,	/* decapsulate ToS/DSCP bits */
 
 #define POLICY_IPSEC_SHIFT	POLICY_ENCRYPT_IX
 #define POLICY_IPSEC_MASK	LRANGE(POLICY_ENCRYPT_IX, POLICY_DISABLEARRIVALCHECK_IX)
@@ -926,6 +957,7 @@ enum sa_policy_bits {
 #define POLICY_NO_IKEPAD	LELEM(POLICY_NO_IKEPAD_IX)	/* pad ike packets to 4 bytes or not */
 #define POLICY_ESN_NO		LELEM(POLICY_ESN_NO_IX)	/* accept or request ESNno */
 #define POLICY_ESN_YES		LELEM(POLICY_ESN_YES_IX)	/* accept or request ESNyes */
+#define POLICY_DECAP_DSCP	LELEM(POLICY_DECAP_DSCP_IX)	/* decap ToS/DSCP bits */
 
 #define NEGOTIATE_AUTH_HASH_SHA1		LELEM(IKEv2_AUTH_HASH_SHA1)	/* rfc7427 does responder support SHA1? */
 #define NEGOTIATE_AUTH_HASH_SHA2_256		LELEM(IKEv2_AUTH_HASH_SHA2_256)	/* rfc7427 does responder support SHA2-256?  */

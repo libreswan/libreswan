@@ -464,7 +464,13 @@ def mortem(test, args, domain_prefix="",
 
     for host_name in test.host_names:
 
-        if not host_name in test_result.sanitized_output:
+        # result missing output; still check baseline ..
+        if host_name not in test_result.sanitized_output:
+            if host_name in baseline_result.sanitized_output:
+                if host_name in baseline_result.diffs:
+                    test_result.issues.add("baseline-failed", host_name)
+                else:
+                    test_result.issues.add("baseline-passed", host_name)
             continue
 
         if not host_name in baseline_result.sanitized_output:

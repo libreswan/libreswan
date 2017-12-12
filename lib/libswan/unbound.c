@@ -85,13 +85,19 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 	 * to reconfigure this file if they need to work around DHCP DNS
 	 * obtained servers.
 	 */
-	/* ??? ub_ctx_resolvconf is not documented to set errno */
+	/*
+	 * ??? ub_ctx_resolvconf is not currently documented to set errno.
+	 * Private communications with W.C.A. Wijngaards 2017 October:
+	 * "Is errno is meaningful after a failed call to libunbound?"
+	 * "Yes it is.  Specifically for the error-to-read-file case.
+	 *  Not other cases (eg. socket errors happen too far away in the code)."
+	 */
 	errno = 0;
 	ugh = ub_ctx_resolvconf(dns_ctx, "/etc/resolv.conf");
 	if (ugh != 0) {
 		int e = errno;	/* protect value from ub_strerror */
 
-		loglog(RC_LOG_SERIOUS, "error reading /etc/resolv.conf: %s: %s",
+		loglog(RC_LOG_SERIOUS, "error reading /etc/resolv.conf: %s: [errno: %s]",
 			ub_strerror(ugh), strerror(e));
 	} else {
 		DBG(DBG_DNS, DBG_log("/etc/resolv.conf usage activated"));
@@ -116,7 +122,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 		if (ugh != 0) {
 			int e = errno;	/* protect value from ub_strerror */
 
-			loglog(RC_LOG_SERIOUS, "error adding dnssec root key: %s: %s",
+			loglog(RC_LOG_SERIOUS, "error adding dnssec root key: %s [errno: %s]",
 				ub_strerror(ugh), strerror(e));
 			loglog(RC_LOG_SERIOUS, "WARNING: DNSSEC validation likely broken!");
 		}

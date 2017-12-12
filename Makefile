@@ -605,6 +605,7 @@ deb:
 	cp -r packaging/debian .
 	sed -i "s/@IPSECBASEVERSION@/`make -s showdebversion`/g" debian/changelog
 	debuild -i -us -uc -b
+	rm -fr debian
 	#debuild -S -sa
 	@echo "to build optional KLIPS kernel module, run make deb-klips"
 

@@ -23,7 +23,6 @@ west:~#
 west:~#
  ipsec whack --status
 000 interface ipsec0/eth1 192.1.2.45
-000 %myid = (none)
 000 debug dns
 000  
 000 algorithm ESP encrypt: id=3, name=ESP_3DES, ivlen=64, keysizemin=192, keysizemax=192
@@ -78,7 +77,6 @@ west:~#
 west:~#
  ipsec whack --status
 000 interface ipsec0/eth1 192.1.2.45
-000 %myid = (none)
 000 debug none
 000  
 000 algorithm ESP encrypt: id=3, name=ESP_3DES, ivlen=64, keysizemin=192, keysizemax=192

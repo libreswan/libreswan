@@ -19,23 +19,24 @@
 #ifndef _TIMER_H
 #define _TIMER_H
 
-#include "lswtime.h"
+#include "deltatime.h"
+#include "monotime.h"
 
 struct state;   /* forward declaration */
 
 struct pluto_event {
 	enum event_type ev_type;        /* Event type if time based */
-	char *ev_name;			/* Name or enum_name(ev_type) */
+	const char *ev_name;		/* Name or enum_name(ev_type) */
 	struct state   *ev_state;       /* Pointer to relevant state (if any) */
 	struct event *ev;               /* libevent data structure */
 	monotime_t ev_time;
 	struct pluto_event *next;
 };
 
-extern void event_schedule(enum event_type type, time_t delay_sec,
-		struct state *st);
-extern void event_schedule_ms(enum event_type type, unsigned long delay_ms,
-		struct state *st);
+extern void event_schedule(enum event_type type, deltatime_t delay,
+			   struct state *st);
+extern void event_schedule_s(enum event_type type, time_t delay_seconds,
+			     struct state *st);
 extern void delete_event(struct state *st);
 extern void handle_next_timer_event(void);
 extern void init_timer(void);

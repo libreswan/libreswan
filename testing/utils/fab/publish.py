@@ -42,6 +42,7 @@ def add_arguments(parser):
 def log_arguments(logger, args):
     logger.info("Publish arguments:")
     logger.info("  publish-directory: '%s'", args.publish_results)
+    logger.info("  publish-status: '%s'", args.publish_status)
 
 
 results_to_print = printer.Print(printer.Print.test_name,

@@ -67,7 +67,6 @@ static struct hash_table serialno_hash_table = {
 
 static struct list_entry *serialno_chain(so_serial_t serialno)
 {
-
 	struct list_entry *head = hash_table_slot_by_hash(&serialno_hash_table,
 							  serialno);
 	DBG(DBG_RAW | DBG_CONTROL,
@@ -79,6 +78,10 @@ static struct list_entry *serialno_chain(so_serial_t serialno)
 
 struct state *state_by_serialno(so_serial_t serialno)
 {
+	/*
+	 * Note that since SOS_NOBODY is never hashed, a lookup of
+	 * SOS_NOBODY always returns NULL.
+	 */
 	struct state *st;
 	FOR_EACH_LIST_ENTRY_NEW2OLD(serialno_chain(serialno), st) {
 		if (st->st_serialno == serialno) {
@@ -140,7 +143,7 @@ struct list_entry *icookie_slot(const u_char *icookie)
 	LSWDBGP(DBG_RAW | DBG_CONTROL, buf) {
 		lswlogf(buf, "%s: hash icookie ", icookie_hash_table.info.name);
 		lswlog_bytes(buf, icookie, COOKIE_SIZE);
-		lswlogf(buf, " to %lu slot %p", hash, slot);
+		lswlogf(buf, " to %zu slot %p", hash, slot);
 	};
 	return slot;
 }
@@ -208,7 +211,7 @@ struct list_entry *cookies_slot(const u_char *icookie,
 		lswlog_bytes(buf, icookie, COOKIE_SIZE);
 		lswlogs(buf, " rcookie ");
 		lswlog_bytes(buf, rcookie, COOKIE_SIZE);
-		lswlogf(buf, " to %lu slot %p", hash, slot);
+		lswlogf(buf, " to %zu slot %p", hash, slot);
 	};
 	return slot;
 }
@@ -253,6 +256,7 @@ static void del_from_cookie_tables(struct state *st)
 
 void add_state_to_db(struct state *st)
 {
+	passert(st->st_serialno != SOS_NOBODY);
 	/* serial NR list, entries are only added */
 	st->st_serialno_list_entry.data = st;
 	insert_list_entry(&serialno_list_info, &serialno_list_head,

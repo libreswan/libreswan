@@ -62,8 +62,7 @@ road #
 000 ocsp-trust-name=<unset>
 000 ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-method=get
 000 secctx-attr-type=XXXX
-000 myid = (none)
-000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
+000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+xauth+retransmits+oppoinfo
 000  
 000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500
 000 virtual-private (%priv):
@@ -190,15 +189,15 @@ PING 192.1.2.23 (192.1.2.23) from 192.0.2.100 : 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  grep -E  'EVENT_SA_EXPIRE|EVENT_SA_REPLACE' OUTPUT/road.pluto.log | grep -v pe@ | head -9
-| inserting event EVENT_SA_EXPIRE, timeout in 60.000000 seconds for #1
-| state #1 requesting EVENT_SA_EXPIRE to be deleted
-| inserting event EVENT_SA_EXPIRE, timeout in 2848.000000 seconds for #1
-| ikev2 case EVENT_SA_REPLACE for child state for 27838 seconds
-| inserting event EVENT_SA_EXPIRE, timeout in 27838.000000 seconds for #2
-| inserting event EVENT_SA_EXPIRE, timeout in 3330.000000 seconds for #3
-| ikev2 case EVENT_SA_REPLACE for child state for 28530 seconds
-| inserting event EVENT_SA_EXPIRE, timeout in 28530.000000 seconds for #4
-| state #2 requesting EVENT_SA_EXPIRE to be deleted
+| ignoring microcode for XAUTH_I1 (timeout: EVENT_v1_RETRANSMIT flags: 0) -> MAIN_I4 (timeout: EVENT_SA_REPLACE flags: 0) with event EVENT_v1_RETRANSMIT
+| MAIN_R3 (timeout: EVENT_SA_REPLACE flags: 200)
+| MAIN_I4 (timeout: EVENT_SA_REPLACE flags: 0)
+| AGGR_I2 (timeout: EVENT_SA_REPLACE flags: 200)
+| AGGR_R2 (timeout: EVENT_SA_REPLACE flags: 0)
+| QUICK_I2 (timeout: EVENT_SA_REPLACE flags: 200)
+| QUICK_R2 (timeout: EVENT_SA_REPLACE flags: 0)
+| MODE_CFG_R1 (timeout: EVENT_SA_REPLACE flags: 0)
+| MODE_CFG_R2 (timeout: EVENT_SA_REPLACE flags: 0)
 road #
  ipsec status
 000 using kernel interface: netkey
@@ -225,8 +224,7 @@ road #
 000 ocsp-trust-name=<unset>
 000 ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-method=get
 000 secctx-attr-type=XXXX
-000 myid = (none)
-000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
+000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+xauth+retransmits+oppoinfo
 000  
 000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500
 000 virtual-private (%priv):

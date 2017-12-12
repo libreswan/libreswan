@@ -493,6 +493,105 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .state      = STATE_IKEv2_ROOF }
 };
 
+void init_ikev2(void)
+{
+	/*
+	 * Fill in the states.  This is a hack until each finite-state
+	 * is object with corresponding edges (aka microcodes).
+	 */
+	static struct finite_state v2_states[STATE_IKEv2_ROOF - STATE_IKEv2_FLOOR];
+	for (unsigned k = 0; k < elemsof(v2_states); k++) {
+		struct finite_state *fs = &v2_states[k];
+		fs->fs_state = k + STATE_IKEv2_BASE;
+		fs->fs_name = enum_name(&state_names, fs->fs_state);
+		fs->fs_short_name = enum_short_name(&state_names, fs->fs_state);
+		fs->fs_story = enum_name(&state_stories, fs->fs_state);
+		finite_states[fs->fs_state] = fs;
+	}
+
+	/* fill ike_microcode_index:
+	 * make ike_microcode_index[s] point to first entry in
+	 * v1_state_microcode_table for state s (backward scan makes this easier).
+	 * Check that table is in order -- catch coding errors.
+	 * For what it's worth, this routine is idempotent.
+	 */
+	const struct state_v2_microcode *t = v2_state_microcode_table;
+	do {
+		const char *name = enum_short_name(&state_names, t->state);
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("Processing IKEv2 state %s (microcode %s)",
+			    name, t->story));
+		if (t->state == STATE_UNDEFINED) {
+			t++;
+			continue;
+		}
+		passert(STATE_IKEv2_FLOOR <= t->state &&
+			t->state < STATE_IKEv2_ROOF);
+		struct finite_state *fs = &v2_states[t->state - STATE_IKEv2_FLOOR];
+		/*
+		 * Point .fs_microcode to the first entry in
+		 * v1_state_microcode_table for that state.  All other
+		 * microcodes for that state should follow immediately
+		 * after.
+		 */
+		fs->fs_microcode = t;
+		do {
+			t++;
+		} while (t->state == fs->fs_state);
+	} while (t->state < STATE_IKEv2_ROOF);
+
+	/*
+	 * Try to fill in .fs_timeout_event.
+	 *
+	 * Since the timeout event, stored in the edge structure (aka
+	 * microcode), is for the target state, .next_state is used.
+	 */
+	for (t = v2_state_microcode_table; t->state < STATE_IKEv2_ROOF; t++) {
+		if (t->next_state != STATE_UNDEFINED) {
+			passert(STATE_IKEv2_BASE <= t->next_state &&
+				t->next_state < STATE_IKEv2_ROOF);
+			struct finite_state *fs = &v2_states[t->next_state - STATE_IKEv2_BASE];
+			if (fs->fs_timeout_event == 0) {
+				fs->fs_timeout_event = t->timeout_event;
+			} else if (fs->fs_timeout_event != t->timeout_event) {
+				/*
+				 * Annoyingly, a state can seemingly
+				 * have multiple and inconsistent
+				 * timeout_events.
+				 *
+				 * For instance, EVENT_RETAIN is used
+				 * to indicate that the previously
+				 * scheduled event should be left in
+				 * place.  Arguably this is a bug;
+				 * instead a flag should mark this,
+				 * and the code check that
+				 * before/after states are identical.
+				 */
+				LSWDBGP(DBG_CONTROLMORE, buf) {
+					lswlogs(buf, "ignoring microcode for ");
+					lswlog_finite_state(buf, finite_states[t->state]);
+					lswlogs(buf, " -> ");
+					lswlog_finite_state(buf, fs);
+					lswlogs(buf, " with event ");
+					lswlog_enum_short(buf, &timer_event_names,
+							  t->timeout_event);
+				}
+			}
+		}
+	}
+
+	/*
+	 * Finally list the states.
+	 */
+	DBG(DBG_CONTROLMORE,
+	    for (unsigned s = STATE_IKEv2_BASE; s < STATE_IKEv2_ROOF; s++) {
+		    const struct finite_state *fs = finite_states[s];
+		    LSWLOG_DEBUG(buf) {
+			    lswlog_finite_state(buf, fs);
+		    }
+	    });
+}
+
 /*
  * split an incoming message into payloads
  */
@@ -782,7 +881,7 @@ static bool ikev2_collect_fragment(struct msg_digest *md, struct state *st)
 	 * so-far being discarded; always check/fix frags.
 	 */
 	if (st->st_v2_rfrags == NULL) {
-		st->st_v2_rfrags = alloc_thing(struct v2_ike_rfrags, "incomming v2_ike_rfrags");
+		st->st_v2_rfrags = alloc_thing(struct v2_ike_rfrags, "incoming v2_ike_rfrags");
 		st->st_v2_rfrags->total = skf->isaskf_total;
 	}
 
@@ -867,7 +966,7 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 				st->st_connection->name,
 				fmt_conn_instance(st->st_connection, cb),
 				st->st_serialno,
-				enum_name(&state_names, st->st_state));
+				st->st_state_name);
 		});
         }
         return st;
@@ -893,13 +992,13 @@ static void process_recent_rtransmit(struct state *st,
         }
 
 	if (st->st_msgid_lastreplied != st->st_msgid_lastrecv) {
-		DBG(DBG_CONTROLMORE,
+		DBG(DBG_CONTROLMORE|DBG_RETRANSMITS,
 			DBG_log("cannot retransmit response for message ID: %u exchange %s lastreplied %u",
 				st->st_msgid_lastrecv,
 				enum_name(&ikev2_exchange_names, ix),
 				st->st_msgid_lastreplied));
 	} else {
-		DBG(DBG_CONTROLMORE,
+		DBG(DBG_CONTROLMORE|DBG_RETRANSMITS,
 			DBG_log("retransmit response for message ID: %u exchange %s",
 				st->st_msgid_lastrecv,
 				enum_name(&ikev2_exchange_names, ix)));
@@ -1000,7 +1099,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			if (st->st_msgid_lastrecv == md->msgid_received) {
 				/* this is a recent retransmit. */
 				set_cur_state(st);
-				DBG(DBG_CONTROLMORE, DBG_log(
+				DBG(DBG_CONTROLMORE|DBG_RETRANSMITS, DBG_log(
 					"duplicate IKE_INIT_I message received, retransmiting previous packet"));
 				if (st->st_suspended_md != NULL) {
 					libreswan_log("IKE_INIT_I retransmission ignored: we're still working on the previous one");
@@ -1074,7 +1173,7 @@ void process_v2_packet(struct msg_digest **mdp)
 					if (st->st_msgid_lastack != v2_INVALID_MSGID &&
 					    st->st_msgid_lastack > md->msgid_received)
 					{
-						DBG(DBG_CONTROL, DBG_log(
+						DBG(DBG_CONTROL|DBG_RETRANSMITS, DBG_log(
 							"dropping retransmitted response with msgid %u from peer - we already processed %u.",
 						    md->msgid_received, st->st_msgid_lastack));
 						return;
@@ -1331,7 +1430,10 @@ void process_v2_packet(struct msg_digest **mdp)
 			 * XXX: Returning INVALID_MESSAGE_ID seems
 			 * pretty bogus.
 			 */
-			SEND_V2_NOTIFICATION(v2N_INVALID_IKE_SPI);
+			if (st != NULL)
+				send_v2_notification_from_state(st, v2N_INVALID_IKE_SPI, NULL);
+			else
+				send_v2_notification_from_md(md, v2N_INVALID_IKE_SPI, NULL);
 		}
 		return;
 	}
@@ -1378,36 +1480,52 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	DBG(DBG_CONTROL,
 	    DBG_log("calling processor %s", svm->story));
-	complete_v2_state_transition(mdp, (svm->processor)(md));
+	complete_v2_state_transition(mdp, (svm->processor)(st, md));
 	/* our caller with release_any_md(mdp) */
 }
 
 bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 {
 	bool initiator = md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R;
-
-	unsigned int hisID = initiator ? ISAKMP_NEXT_v2IDr : ISAKMP_NEXT_v2IDi;
 	struct state *const st = md->st;
-	struct payload_digest *const id_him = md->chain[hisID];
 	struct connection *c = md->st->st_connection;
-	const pb_stream *id_pbs;
-	struct ikev2_id *v2id;
-	struct id peer_id;
 
-	memset(&peer_id, 0x00, sizeof(struct id)); /* rhbz#1392191 */
+	struct payload_digest *const id_him = initiator ?
+		md->chain[ISAKMP_NEXT_v2IDr] : md->chain[ISAKMP_NEXT_v2IDi];
 
 	if (id_him == NULL) {
 		libreswan_log("IKEv2 mode no peer ID (hisID)");
 		return FALSE;
 	}
 
-	id_pbs = &id_him->pbs;
-	v2id = &id_him->payload.v2id;
-	peer_id.kind = v2id->isai_type;
+	enum ike_id_type hik = id_him->payload.v2id.isai_type;	/* His Id Kind */
 
-	if (!extract_peer_id(&peer_id, id_pbs)) {
+	struct id peer_id;
+
+	if (!extract_peer_id(hik, &peer_id, &id_him->pbs)) {
 		libreswan_log("IKEv2 mode peer ID extraction failed");
 		return FALSE;
+	}
+
+	/* You Tarzan, me Jane? */
+	struct payload_digest *const tarzan_pld = md->chain[ISAKMP_NEXT_v2IDr];
+
+	struct id tarzan_id;
+	struct id *tip = NULL;
+
+	if (!initiator && tarzan_pld != NULL) {
+		/*
+		 * ??? problem with diagnostics: what we're calling "peer ID"
+		 * is really our "peer's peer ID", in other words us!
+		 */
+		DBG(DBG_CONTROL, DBG_log("received IDr payload - extracting our alleged ID"));
+		if (!extract_peer_id(tarzan_pld->payload.v2id.isai_type,
+		     &tarzan_id, &tarzan_pld->pbs))
+		{
+			libreswan_log("Peer IDr payload extraction failed");
+			return FALSE;
+		}
+		tip = &tarzan_id;
 	}
 
 	lsw_cert_ret ret = ike_decode_cert(md);
@@ -1453,7 +1571,7 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 	if (initiator) {
 		if (!md->st->st_peer_alt_id &&
 			!same_id(&c->spd.that.id, &peer_id) &&
-			id_kind(&st->st_connection->spd.that.id) != ID_FROMCERT) {
+			st->st_connection->spd.that.id.kind != ID_FROMCERT) {
 
 			char expect[IDTOA_BUF],
 			     found[IDTOA_BUF];
@@ -1465,8 +1583,8 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 				"we require IKEv2 peer to have ID '%s', but peer declares '%s'",
 				expect, found);
 			return FALSE;
-		} else if (id_kind(&st->st_connection->spd.that.id) == ID_FROMCERT) {
-			if (id_kind(&peer_id) != ID_DER_ASN1_DN) {
+		} else if (st->st_connection->spd.that.id.kind == ID_FROMCERT) {
+			if (peer_id.kind != ID_DER_ASN1_DN) {
 				loglog(RC_LOG_SERIOUS, "peer ID is not a certificate type");
 				return FALSE;
 			}
@@ -1504,8 +1622,8 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 
 			if (authby != AUTH_NULL) {
 				r = refine_host_connection(
-				md->st, &peer_id, FALSE /*initiator*/,
-				LEMPTY /* auth_policy */, authby, &fromcert);
+					md->st, &peer_id, tip, FALSE /*initiator*/,
+					LEMPTY /* auth_policy */, authby, &fromcert);
 			}
 
 			if (r == NULL) {
@@ -1516,16 +1634,16 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 					"no suitable connection for peer '%s'", buf));
 				/* can we continue with what we had? */
 				if (!md->st->st_peer_alt_id &&
-					!same_id(&c->spd.that.id, &peer_id) &&
-					id_kind(&c->spd.that.id) != ID_FROMCERT) {
-						libreswan_log("Peer ID '%s' mismatched on first found connection and no better connection found",
+				    !same_id(&c->spd.that.id, &peer_id) &&
+				    c->spd.that.id.kind != ID_FROMCERT)
+				{
+					libreswan_log("Peer ID '%s' mismatched on first found connection and no better connection found",
 							buf);
-						return FALSE;
+					return FALSE;
 				} else {
 					DBG(DBG_CONTROL, DBG_log("Peer ID matches and no better connection found - continuing with existing connection"));
 					r = c;
 				}
-
 			}
 
 			if (r != c) {
@@ -1572,11 +1690,11 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 
 	if (!(c->policy & POLICY_OPPORTUNISTIC)) {
 		libreswan_log("IKEv2 mode peer ID is %s: '%s'",
-			enum_show(&ikev2_idtype_names, v2id->isai_type),
+			enum_show(&ikev2_idtype_names, hik),
 			idbuf);
 	} else {
 		DBG(DBG_OPPO, DBG_log("IKEv2 mode peer ID is %s: '%s'",
-			enum_show(&ikev2_idtype_names, v2id->isai_type),
+			enum_show(&ikev2_idtype_names, hik),
 			idbuf));
 	}
 
@@ -1660,7 +1778,7 @@ void send_v2_notification_from_state(struct state *st,
 				     v2_notification_t ntype,
 				     chunk_t *data)
 {
-	send_v2_notification(st, ntype, NULL, st->st_icookie, st->st_rcookie,
+	send_v2_notification(st, ntype, st->st_icookie, st->st_rcookie,
 			     data);
 }
 
@@ -1696,13 +1814,14 @@ void send_v2_notification_from_md(struct msg_digest *md,
 		.st_serialno = SOS_NOBODY,
 		.st_connection = &fake_connection,
 		.st_reply_xchg = md->hdr.isa_xchg,
+		.st_finite_state = finite_states[STATE_UNDEFINED],
 	};
 
 	passert(md != NULL);
 
 	update_ike_endpoints(&fake_state, md);
 
-	send_v2_notification(&fake_state, ntype, NULL,
+	send_v2_notification(&fake_state, ntype,
 			     md->hdr.isa_icookie, md->hdr.isa_rcookie, data);
 
 	pstats(ikev2_sent_notifies_e, ntype);
@@ -1719,7 +1838,7 @@ static void sechdule_next_send(struct state *st)
 		cst = state_with_serialno(p->st_serialno);
 		if (cst != NULL) {
 			delete_event(cst);
-			event_schedule(EVENT_v2_SEND_NEXT_IKE, 0, cst);
+			event_schedule_s(EVENT_v2_SEND_NEXT_IKE, 0, cst);
 			DBG(DBG_CONTROLMORE,
 				DBG_log("#%lu send next using parent #%lu next message id=%u, waiting to send %d",
 					cst->st_serialno, st->st_serialno,
@@ -1785,7 +1904,7 @@ void ikev2_update_msgid_counters(struct msg_digest *md)
 
 	DBG(DBG_CONTROLMORE,
 		DBG_log("message ID #%lu %s %s pst #%lu st_msgid_nextuse(before=%u) %u st_msgid_lastack %u st_msgid_lastrecv %u md is a %s",
-			st->st_serialno, enum_name(&state_names, st->st_state),
+			st->st_serialno, st->st_state_name,
 			st->st_connection->name, ikesa->st_serialno,
 			st_msgid_nextuse,
 			ikesa->st_msgid_nextuse, ikesa->st_msgid_lastack,
@@ -1794,24 +1913,26 @@ void ikev2_update_msgid_counters(struct msg_digest *md)
 
 }
 
-time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
-		enum original_role role)
+deltatime_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
+				enum original_role role)
 {
 	enum event_type kind = *pkind;
 	time_t delay;   /* unwrapped deltatime_t */
 	struct connection *c = st->st_connection;
 
-	if (IS_PARENT_SA(st)) /* workaround for child appearing as parent */
-	{
-		/* Note: we will defer to the "negotiated" (dictated)
-		 * lifetime if we are POLICY_DONT_REKEY.
-		 * This allows the other side to dictate
-		 * a time we would not otherwise accept
-		 * but it prevents us from having to initiate
-		 * rekeying.  The negative consequences seem
+	if (IS_PARENT_SA(st)) {
+		/*
+		 * workaround for child appearing as parent
+		 *
+		 * Note: we will defer to the "negotiated" (dictated)
+		 * lifetime if we are POLICY_DONT_REKEY.  This allows
+		 * the other side to dictate a time we would not
+		 * otherwise accept but it prevents us from having to
+		 * initiate rekeying.  The negative consequences seem
 		 * minor.
 		 *
-		 * We cleanup halfopen IKE SAs fast, could be spoofed packets
+		 * We cleanup halfopen IKE SAs fast, could be spoofed
+		 * packets
 		 */
 		if (IS_IKE_SA_ESTABLISHED(st)) {
 			delay = deltasecs(c->sa_ike_life_seconds);
@@ -1879,7 +2000,7 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 			*pkind = kind = EVENT_SA_EXPIRE;
 		}
 	}
-	return delay;
+	return deltatime(delay);
 }
 
 void log_ipsec_sa_established(const char *m, const struct state *st)
@@ -1976,8 +2097,8 @@ static void success_v2_state_transition(struct msg_digest *md)
 		/* tell whack and logs our progress - unless OE, then be quiet*/
 		if (c == NULL || (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY)
 			loglog(w, "%s: %s%s",
-				enum_name(&state_names, st->st_state),
-				enum_name(&state_stories, st->st_state),
+				st->st_state_name,
+				st->st_state_story,
 				sadetails);
 	}
 
@@ -2029,7 +2150,6 @@ static void success_v2_state_transition(struct msg_digest *md)
 
 	/* Schedule for whatever timeout is specified */
 	{
-		time_t delay;   /* unwrapped deltatime_t */
 		enum event_type kind = svm->timeout_event;
 		struct connection *c = st->st_connection;
 
@@ -2042,32 +2162,38 @@ static void success_v2_state_transition(struct msg_digest *md)
 					pfreeany(st->st_rel_whack_event);
 					st->st_rel_whack_event = NULL;
 				}
-				event_schedule(EVENT_v2_RELEASE_WHACK,
-						EVENT_RELEASE_WHACK_DELAY, st);
+				event_schedule_s(EVENT_v2_RELEASE_WHACK,
+						 EVENT_RELEASE_WHACK_DELAY, st);
 				kind = EVENT_SA_REPLACE;
-				delay = ikev2_replace_delay(st, &kind, st->st_original_role);
-				DBG(DBG_LIFECYCLE, DBG_log("ikev2 case EVENT_v2_RETRANSMIT: for %jd seconds", (intmax_t) delay));
+				deltatime_t delay = ikev2_replace_delay(st, &kind,
+									st->st_original_role);
+				DBG(DBG_LIFECYCLE,
+				    DBG_log("ikev2 case EVENT_v2_RETRANSMIT: for %jdms",
+					    deltamillisecs(delay)));
+				passert(kind != EVENT_v2_RETRANSMIT);
 				event_schedule(kind, delay, st);
 
 			}  else {
-				DBG(DBG_LIFECYCLE,DBG_log(
-					"success_v2_state_transition scheduling EVENT_v2_RETRANSMIT of c->r_interval=%lu",
-					c->r_interval));
-				event_schedule_ms(EVENT_v2_RETRANSMIT,
-						c->r_interval, st);
+				DBG(DBG_LIFECYCLE,
+				    DBG_log("success_v2_state_transition scheduling EVENT_v2_RETRANSMIT of c->r_interval=%jdms",
+					    deltamillisecs(c->r_interval)));
+				start_retransmits(st, EVENT_v2_RETRANSMIT);
 			}
 			break;
 		case EVENT_SA_REPLACE: /* IKE or Child SA replacement event */
-			delay = ikev2_replace_delay(st, &kind, st->st_original_role);
-			DBG(DBG_LIFECYCLE, DBG_log("ikev2 case EVENT_SA_REPLACE for %s state for %jd seconds",
-                            IS_IKE_SA(st) ? "parent" : "child", (intmax_t) delay));
+		{
+			deltatime_t delay = ikev2_replace_delay(st, &kind, st->st_original_role);
+			DBG(DBG_LIFECYCLE,
+			    DBG_log("ikev2 case EVENT_SA_REPLACE for %s state for %jdms",
+				    IS_IKE_SA(st) ? "parent" : "child", deltamillisecs(delay)));
 			delete_event(st);
 			event_schedule(kind, delay, st);
 			break;
+		}
 
 		case EVENT_v2_RESPONDER_TIMEOUT:
 			delete_event(st);
-			event_schedule(kind, MAXIMUM_RESPONDER_WAIT, st);
+			event_schedule_s(kind, MAXIMUM_RESPONDER_WAIT, st);
 			break;
 
 		case EVENT_NULL:
@@ -2086,8 +2212,9 @@ static void success_v2_state_transition(struct msg_digest *md)
 		default:
 			bad_case(kind);
 		}
-		/* start liveness checks if set, making sure we only schedule once when moving
-		 * from I2->I3 or R1->R2
+		/*
+		 * start liveness checks if set, making sure we only
+		 * schedule once when moving from I2->I3 or R1->R2
 		 */
 		if (st->st_state != from_state &&
 			st->st_state != STATE_UNDEFINED &&
@@ -2095,10 +2222,8 @@ static void success_v2_state_transition(struct msg_digest *md)
 			dpd_active_locally(st)) {
 			DBG(DBG_DPD,
 			    DBG_log("dpd enabled, scheduling ikev2 liveness checks"));
-			event_schedule(EVENT_v2_LIVENESS,
-				       deltasecs(c->dpd_delay) >= MIN_LIVENESS ?
-					deltasecs(c->dpd_delay) : MIN_LIVENESS,
-				       st);
+			deltatime_t delay = deltatime_max(c->dpd_delay, deltatime(MIN_LIVENESS));
+			event_schedule(EVENT_v2_LIVENESS, delay, st);
 		}
 	}
 }
@@ -2113,7 +2238,7 @@ static void log_stf_suspend(struct state *st, stf_status result)
 
 	DBG(DBG_CONTROL, DBG_log("\"%s\"%s #%lu complete v2 state %s transition with %s suspended from %s:%d",
 				st->st_connection->name, b, st->st_serialno,
-				enum_name(&state_names, st->st_state),
+				st->st_state_name,
 				enum_show(&stfstatus_name, result),
 				st->st_suspended_md_func,
 				st->st_suspended_md_line
@@ -2122,9 +2247,10 @@ static void log_stf_suspend(struct state *st, stf_status result)
 
 /* complete job started by the state-specific state transition function
  *
- * This routine requires a valid non-NULL *mdp unless result is STF_INLINE.
- * So, for example, it does not make sense for state transitions that are
- * not provoked by a packet.
+ * This routine requires a valid non-NULL *mdp.
+ *
+ * So, for example, it does not make sense for state transitions that
+ * are not provoked by a packet.
  *
  * This routine will not release_any_md(mdp).  It is expected that its
  * caller will do this.  In fact, it will zap *mdp to NULL if it thinks
@@ -2173,9 +2299,6 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		*mdp = NULL;    /* take md away from parent */
 		return;
 
-	case STF_INLINE:	/* all done, including release_any_md */
-		*mdp = NULL;	/* take md away from parent */
-		/* FALL THROUGH */
 	case STF_IGNORE:
 		DBG(DBG_CONTROL,
 		    DBG_log("complete v2 state transition with %s",
@@ -2192,7 +2315,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 	from_state_name = enum_name(&state_names,
 		st == NULL ? STATE_UNDEFINED : st->st_state);
 
-	cur_state = st; /* might have changed */
+	set_cur_state(st); /* might have changed */
 
 	/*
 	 * XXX/SML:  There is no need to abort here in all cases where st is
@@ -2307,7 +2430,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 				}
 
 				if (st == NULL) {
-					SEND_V2_NOTIFICATION(md->note);
+					send_v2_notification_from_md(md, md->note, NULL);
 				} else {
 					send_v2_notification_from_state(pst,
 							md->note, NULL);
@@ -2315,7 +2438,9 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 						delete_state(st);
 					} else {
 						delete_event(st);
-						event_schedule(EVENT_v2_RESPONDER_TIMEOUT, MAXIMUM_RESPONDER_WAIT, st);
+						event_schedule_s(EVENT_v2_RESPONDER_TIMEOUT,
+								 MAXIMUM_RESPONDER_WAIT,
+								 st);
 					}
 				}
 			}

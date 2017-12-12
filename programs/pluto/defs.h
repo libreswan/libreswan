@@ -19,8 +19,8 @@
 
 #include <stdbool.h>
 
-#include "lswtime.h"
 #include "lswalloc.h"
+#include "realtime.h"
 
 /* type of serial number of a state object
  * Needed in connections.h and state.h; here to simplify dependencies.
@@ -32,8 +32,6 @@ typedef unsigned long so_serial_t;
 typedef int sa_t;
 #define  IKE_SA		0
 #define  IPSEC_SA	1
-
-extern monotime_t mononow(void);	/* monotonic variant of time(2) */
 
 /* warns a predefined interval before expiry */
 extern const char *check_expiry(realtime_t expiration_date,

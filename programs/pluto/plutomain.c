@@ -110,6 +110,8 @@
 
 static const char *pluto_name;	/* name (path) we were invoked with */
 
+pthread_t main_thread;
+
 static char *rundir = NULL;
 char *pluto_listen = NULL;
 static bool fork_desired = USE_FORK || USE_DAEMON;
@@ -127,13 +129,6 @@ static int nhelpers = -1;
 static bool do_dnssec = FALSE;
 static char *pluto_dnssec_rootfile = NULL;
 static char *pluto_dnssec_trusted = NULL;
-
-extern bool crl_strict;
-extern bool ocsp_strict;
-extern bool ocsp_enable;
-extern char *curl_iface;
-extern long curl_timeout;
-extern int bare_shunt_interval;
 
 static char *ocsp_uri = NULL;
 static char *ocsp_trust_name = NULL;
@@ -444,10 +439,7 @@ static bool pluto_init_nss(char *nssdir)
 }
 
 /* 0 is special and default: do not check crls dynamically */
-deltatime_t crl_check_interval = { 0 };
-
-/* whether or not to use klips */
-enum kernel_interface kern_interface = USE_NETKEY;	/* new default */
+deltatime_t crl_check_interval = DELTATIME(0);
 
 #ifdef HAVE_LABELED_IPSEC
 /*
@@ -486,7 +478,7 @@ u_int16_t secctx_attr_type = SECCTX;
  */
 
 enum {
-	DBG_OFFSET = 256,
+	OPT_OFFSET = 256, /* larger than largest char */
 	OPT_DEBUG,
 	OPT_IMPAIR,
 	OPT_DNSSEC_ROOTKEY_FILE,
@@ -590,37 +582,10 @@ static const struct option long_opts[] = {
 	{ "vendorid\0<vendorid>", required_argument, NULL, 'V' },
 
 	{ "leak-detective\0", no_argument, NULL, 'X' },
-	{ "debug-nat_t\0>debug-nattraversal", no_argument, NULL, '5' },	/* redundant spelling; _ */
-	{ "debug-nat-t\0>debug-nattraversal", no_argument, NULL, '5' },	/* redundant spelling */
-	{ "debug-nattraversal\0", no_argument, NULL, '5' },
 	{ "debug-none\0^", no_argument, NULL, 'N' },
 	{ "debug-all\0", no_argument, NULL, 'A' },
-
-	/* --debug-* options (using D for shorthand) */
-#define D(name, code) { "debug-" name, no_argument, NULL, (code) + DBG_OFFSET }
-	D("raw\0", DBG_RAW_IX),
-	D("crypt\0", DBG_CRYPT_IX),
-	D("crypto\0>crypt", DBG_CRYPT_IX),	/* redundant spelling */
-	D("parsing\0", DBG_PARSING_IX),
-	D("emitting\0", DBG_EMITTING_IX),
-	D("control\0", DBG_CONTROL_IX),
-	D("lifecycle\0", DBG_LIFECYCLE_IX),
-	D("kernel\0", DBG_KERNEL_IX),
-	D("klips\0>kernel", DBG_KERNEL_IX),	/* redundant spelling */
-	D("netkey\0>kernel", DBG_KERNEL_IX),	/* redundant spelling */
-	D("dns\0", DBG_DNS_IX),
-	D("oppo\0", DBG_OPPO_IX),
-	D("oppoinfo\0", DBG_OPPOINFO_IX),
-	D("controlmore\0", DBG_CONTROLMORE_IX),
-	D("dpd\0", DBG_DPD_IX),
-	D("x509\0", DBG_X509_IX),
-	D("private\0", DBG_PRIVATE_IX),
-	D("pfkey\0", DBG_PFKEY_IX),
-#undef D
-#define DEBUG_OPTION DBG_OFFSET + IMPAIR_roof_IX + 0
-	{ "debug\0", required_argument, NULL, DEBUG_OPTION, },
-#define IMPAIR_OPTION DBG_OFFSET + IMPAIR_roof_IX + 1
-	{ "impair\0", required_argument, NULL, IMPAIR_OPTION, },
+	{ "debug\0", required_argument, NULL, OPT_DEBUG, },
+	{ "impair\0", required_argument, NULL, OPT_IMPAIR, },
 
 	{ 0, 0, 0, 0 }
 };
@@ -740,7 +705,7 @@ int main(int argc, char **argv)
 	pluto_dnssec_rootfile = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "root.key file");
 #endif
 
-	unsigned int keep_alive = 0;
+	deltatime_t keep_alive = DELTATIME(0);
 
 	/* Overridden by virtual_private= in ipsec.conf */
 	char *virtual_private = NULL;
@@ -909,11 +874,14 @@ int main(int argc, char **argv)
 			continue;
 
 		case '9':	/* --expire-bare-shunt <interval> */
-			ugh = ttoulb(optarg, 0, 10, 1000, &u);
+		{
+			unsigned long d = 0;
+			ugh = ttoulb(optarg, 0, 10, 1000, &d);
 			if (ugh != NULL)
 				break;
-			bare_shunt_interval = u;
+			bare_shunt_interval = deltatime(d);
 			continue;
+		}
 
 		case 'k':	/* --use-klips */
 			kern_interface = USE_KLIPS;
@@ -1175,7 +1143,7 @@ int main(int argc, char **argv)
 			ugh = ttoulb(optarg, 0, 10, secs_per_day, &u);
 			if (ugh != NULL)
 				break;
-			keep_alive = u;
+			keep_alive = deltatime(u);
 			continue;
 
 		case '5':	/* --debug-nat-t aliases */
@@ -1332,7 +1300,7 @@ int main(int argc, char **argv)
 			pluto_nss_seedbits = cfg->setup.options[KBF_SEEDBITS];
 			pluto_nat_port =
 				cfg->setup.options[KBF_NATIKEPORT];
-			keep_alive = cfg->setup.options[KBF_KEEPALIVE];
+			keep_alive = deltatime(cfg->setup.options[KBF_KEEPALIVE]);
 
 			set_cfg_string(&virtual_private,
 				cfg->setup.strings[KSF_VIRTUALPRIVATE]);
@@ -1372,10 +1340,10 @@ int main(int argc, char **argv)
 			continue;
 		}
 
-		case DEBUG_OPTION:
+		case OPT_DEBUG:
 		{
 			lmod_t mod = empty_lmod;
-			if (lmod_arg(&mod, &debug_names, DBG_ALL, DBG_MASK, optarg)) {
+			if (lmod_arg(&mod, &debug_lmod_info, optarg)) {
 				base_debugging = lmod(base_debugging, mod);
 			} else {
 				libreswan_log("unrecognized --debug '%s' option ignored",
@@ -1384,10 +1352,10 @@ int main(int argc, char **argv)
 			continue;
 		}
 
-		case IMPAIR_OPTION:
+		case OPT_IMPAIR:
 		{
 			lmod_t mod = empty_lmod;
-			if (lmod_arg(&mod, &impair_names, IMPAIR_MASK, IMPAIR_MASK, optarg)) {
+			if (lmod_arg(&mod, &impair_lmod_info, optarg)) {
 				base_debugging = lmod(base_debugging, mod);
 			} else {
 				libreswan_log("unrecognized --impair '%s' option ignored",
@@ -1397,11 +1365,6 @@ int main(int argc, char **argv)
 		}
 
 		default:
-			if (DBG_OFFSET <= c &&
-			    c < DBG_OFFSET + IMPAIR_roof_IX) {
-				base_debugging |= LELEM(c - DBG_OFFSET);
-				continue;
-			}
 			bad_case(c);
 		}
 		/* if ugh is set, bail with diagnostic */
@@ -1763,7 +1726,6 @@ int main(int argc, char **argv)
 	init_crypto_helpers(nhelpers);
 	init_demux();
 	init_kernel();
-	init_id();
 	init_vendorid();
 #if defined(LIBCURL) || defined(LIBLDAP)
 	init_fetch();
@@ -1771,7 +1733,6 @@ int main(int argc, char **argv)
 #ifdef HAVE_LABELED_IPSEC
 	init_avc();
 #endif
-	daily_log_event();
 #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd_init();
 #endif
@@ -1818,8 +1779,6 @@ void exit_pluto(int status)
 
 	lsw_conf_free_oco();	/* free global_oco containing path names */
 
-	free_myFQDN();	/* free myid FQDN */
-
 	free_ifaces();	/* free interface list from memory */
 	free_md_pool();	/* free the md pool */
 	lsw_nss_shutdown();
@@ -1832,13 +1791,12 @@ void exit_pluto(int status)
 	unbound_ctx_free();
 #endif
 
-
 	/* report memory leaks now, after all free_* calls */
 	if (leak_detective)
 		report_leaks();
 	close_log();	/* close the logfiles */
 #ifdef USE_SYSTEMD_WATCHDOG
-	pluto_sd(PLUTO_SD_EXIT,status);
+	pluto_sd(PLUTO_SD_EXIT, status);
 #endif
 	exit(status);	/* exit, with our error code */
 }
@@ -1879,13 +1837,13 @@ void show_setup_plutomain(void)
 #endif
 		"perpeerlog=%s, logappend=%s, logip=%s, shuntlifetime=%jds, xfrmlifetime=%jds",
 		nhelpers,
-		uniqueIDs ? "yes" : "no",
+		bool_str(uniqueIDs),
 #ifdef USE_DNSSEC
-		do_dnssec ? "yes" : "no",
+		bool_str(do_dnssec),
 #endif
-		!log_to_perpeer ? "no" : peerlog_basedir,
-		!log_append ? "no" : "yes",
-		!log_ip ? "no" : "yes",
+		log_to_perpeer ? peerlog_basedir : "no",
+		bool_str(log_append),
+		bool_str(log_ip),
                 (intmax_t) deltasecs(pluto_shunt_lifetime),
                 (intmax_t) pluto_xfrmlifetime
 	);
@@ -1901,8 +1859,8 @@ void show_setup_plutomain(void)
 		"ikeport=%d, ikebuf=%d, msg_errqueue=%s, strictcrlpolicy=%s, crlcheckinterval=%jd, listen=%s, nflog-all=%d",
 		pluto_port,
 		pluto_sock_bufsize,
-		pluto_sock_errqueue ? "yes" : "no",
-		crl_strict ? "yes" : "no",
+		bool_str(pluto_sock_errqueue),
+		bool_str(crl_strict),
                 (intmax_t) deltasecs(crl_check_interval),
 		pluto_listen != NULL ? pluto_listen : "<any>",
 		pluto_nflog_group
@@ -1910,8 +1868,8 @@ void show_setup_plutomain(void)
 
 	whack_log(RC_COMMENT,
 		"ocsp-enable=%s, ocsp-strict=%s, ocsp-timeout=%d, ocsp-uri=%s",
-		ocsp_enable ? "yes" : "no",
-		ocsp_strict ? "yes" : "no",
+		bool_str(ocsp_enable),
+		bool_str(ocsp_strict),
 		ocsp_timeout,
 		ocsp_uri != NULL ? ocsp_uri : "<unset>"
 		);

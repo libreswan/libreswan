@@ -52,7 +52,6 @@ west #
 000 interface eth0/eth0 192.0.1.254
 000 interface eth1/eth1 192.1.2.45
 000 interface eth2/eth2 192.9.4.45
-000 %myid = (none)
 000 debug none
 000  
 000 virtual_private (%priv):

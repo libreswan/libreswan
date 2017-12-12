@@ -80,6 +80,9 @@
 
 #include "lswfips.h" /* for libreswan_fipsmode() */
 
+/* which kernel interface to use */
+enum kernel_interface kern_interface = USE_NETKEY;
+
 bool can_do_IPcomp = TRUE;  /* can system actually perform IPCOMP? */
 
 /* test if the routes required for two different connections agree
@@ -512,12 +515,14 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 
 	connmarkstr[0] = '\0';
 	if (c->sa_marks.in.val != 0) {
-		snprintf(connmarkstr, sizeof(connmarkstr), "CONNMARK_IN=%"PRIu32"/%#010x ",
+		snprintf(connmarkstr, sizeof(connmarkstr),
+			"CONNMARK_IN=%" PRIu32 "/%#08" PRIx32 " ",
 			c->sa_marks.in.val, c->sa_marks.in.mask);
 	}
 	if (c->sa_marks.out.val != 0) {
 		size_t inend = strlen(connmarkstr);
-		snprintf(connmarkstr+inend, sizeof(connmarkstr)-inend, "CONNMARK_OUT=%"PRIu32"/%#010x ",
+		snprintf(connmarkstr+inend, sizeof(connmarkstr)-inend,
+			"CONNMARK_OUT=%" PRIu32 "/%#08" PRIx32 " ",
 			c->sa_marks.out.val, c->sa_marks.out.mask);
 	}
 
@@ -538,12 +543,12 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 
 		for (p = pluto_pubkeys; p != NULL; p = p->next) {
 			struct pubkey *key = p->key;
-			int pathlen;
+			int pathlen;	/* value ignored */
 
 			if (key->alg == PUBKEY_ALG_RSA &&
-				same_id(&sr->that.id, &key->id) &&
-				trusted_ca_nss(key->issuer, sr->that.ca,
-					&pathlen)) {
+			    same_id(&sr->that.id, &key->id) &&
+			    trusted_ca_nss(key->issuer, sr->that.ca, &pathlen))
+			{
 				dntoa_or_null(peerca_str, IDTOA_BUF,
 					key->issuer, "");
 				escape_metachar(peerca_str, secure_peerca_str,
@@ -653,8 +658,8 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		nflogstr,
 		connmarkstr,
 		c->vti_iface ? c->vti_iface : "",
-		c->vti_routing ? "yes" : "no",
-		c->vti_shared ? "yes" : "no",
+		bool_str(c->vti_routing),
+		bool_str(c->vti_shared),
 		catstr,
 		st == NULL ? 0 : st->st_esp.present ? ntohl(st->st_esp.attrs.spi) :
 			st->st_ah.present ? ntohl(st->st_ah.attrs.spi) :
@@ -1158,9 +1163,9 @@ static void free_bare_shunt(struct bare_shunt **pp)
 	pfree(p);
 }
 
-int show_shunt_count(void)
+unsigned show_shunt_count(void)
 {
-	int i = 0;
+	unsigned i = 0;
 	const struct bare_shunt *bs;
 
 	for (bs = bare_shunts; bs != NULL; bs = bs->next)
@@ -1713,11 +1718,9 @@ static bool del_spi(ipsec_spi_t spi, int proto,
 static void setup_esp_nic_offload(struct kernel_sa *sa, struct connection *c,
 		bool *nic_offload_fallback)
 {
-	if (c->nic_offload == nic_offload_no)
-		return;
-
-	if (c->interface == NULL || c->interface->ip_dev == NULL ||
-		c->interface->ip_dev->id_rname == NULL)
+	if (c->nic_offload == nic_offload_no ||
+	    c->interface == NULL || c->interface->ip_dev == NULL ||
+	    c->interface->ip_dev->id_rname == NULL)
 		return;
 
 	if (c->nic_offload == nic_offload_auto) {
@@ -1748,7 +1751,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	bool incoming_ref_set = FALSE;
 	IPsecSAref_t refhim = st->st_refhim;
 	IPsecSAref_t new_refhim = IPSEC_SAREF_NULL;
-	bool ret;
 #ifdef USE_NIC_OFFLOAD
 	bool nic_offload_fallback = FALSE;
 #endif
@@ -2091,6 +2093,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			said_next->tfcpad = c->sa_tfcpad;
 		}
 
+		if (c->policy & POLICY_DECAP_DSCP) {
+			DBG(DBG_KERNEL, DBG_log("Enabling Decap ToS/DSCP bits"));
+			said_next->decap_dscp = TRUE;
+		}
+
 		said_next->integ = ta->ta_integ;
 		if (said_next->integ == &ike_alg_integ_sha2_256 &&
 			st->st_connection->sha2_truncbug) {
@@ -2118,8 +2125,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		}
 		said_next->authalg = said_next->integ->integ_ikev1_ah_transform;
 
-		if (st->st_esp.attrs.transattrs.esn_enabled == TRUE) {
-			DBG(DBG_KERNEL, DBG_log("Enabling ESN "));
+		if (st->st_esp.attrs.transattrs.esn_enabled) {
+			DBG(DBG_KERNEL, DBG_log("Enabling ESN"));
 			said_next->esn = TRUE;
 		}
 
@@ -2154,16 +2161,15 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			useful_mastno != -1)
 			said_next->outif = MASTTRANSPORT_OFFSET +
 				useful_mastno;
-
 #endif
 		said_next->text_said = text_esp;
 
 		DBG(DBG_PRIVATE, {
-				DBG_dump("ESP enckey:",  said_next->enckey,
-					said_next->enckeylen);
-				DBG_dump("ESP authkey:", said_next->authkey,
-					said_next->authkeylen);
-			});
+			DBG_dump("ESP enckey:",  said_next->enckey,
+				said_next->enckeylen);
+			DBG_dump("ESP authkey:", said_next->authkey,
+				said_next->authkeylen);
+		});
 
 		if (inbound) {
 			/*
@@ -2180,7 +2186,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		setup_esp_nic_offload(said_next, c, &nic_offload_fallback);
 #endif
 
-		ret = kernel_ops->add_sa(said_next, replace);
+		bool ret = kernel_ops->add_sa(said_next, replace);
 
 #ifdef USE_NIC_OFFLOAD
 		if (!ret && nic_offload_fallback &&
@@ -2190,15 +2196,12 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			ret = kernel_ops->add_sa(said_next, replace);
 		}
 #endif
-		if (!ret) {
-			/* scrub keys from memory */
-			memset(said_next->enckey, 0, said_next->enckeylen);
-			memset(said_next->authkey, 0, said_next->authkeylen);
-			goto fail;
-		}
 		/* scrub keys from memory */
 		memset(said_next->enckey, 0, said_next->enckeylen);
 		memset(said_next->authkey, 0, said_next->authkeylen);
+
+		if (!ret)
+			goto fail;
 
 		/*
 		 * SA refs will have been allocated for this SA.
@@ -2254,8 +2257,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		DBG(DBG_KERNEL, DBG_log("setting IPsec SA replay-window to %d",
 			c->sa_replay_window));
 
-		if (st->st_ah.attrs.transattrs.esn_enabled == TRUE) {
-			DBG(DBG_KERNEL, DBG_log("Enabling ESN "));
+		if (st->st_ah.attrs.transattrs.esn_enabled) {
+			DBG(DBG_KERNEL, DBG_log("Enabling ESN"));
 			said_next->esn = TRUE;
 		}
 
@@ -2273,7 +2276,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		} else if (!outgoing_ref_set) {
 			/* on outbound, pick up the SAref if not already done */
 			said_next->ref = refhim;
-			outgoing_ref_set = TRUE;	/* not currently used */
+			outgoing_ref_set = TRUE;	/* outgoing_ref_set not subsequently used */
 		}
 
 		if (!kernel_ops->add_sa(said_next, replace)) {
@@ -2296,11 +2299,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		}
 		if (!incoming_ref_set && inbound) {
 			st->st_ref = said_next->ref;
-			incoming_ref_set = TRUE;	/* not currently used */
+			incoming_ref_set = TRUE;	/* incoming_ref_set not subsequently used */
 		}
 		said_next++;
 
-		encap_oneshot = ENCAPSULATION_MODE_TRANSPORT;	/* not currently used */
+		encap_oneshot = ENCAPSULATION_MODE_TRANSPORT;	/* encap_oneshot not subsequently used */
 	}
 
 	/*
@@ -2549,7 +2552,7 @@ static void kernel_process_msg_cb(evutil_socket_t fd UNUSED,
 
 	DBG(DBG_KERNEL, DBG_log(" %s process netlink message", __func__));
 	kernel_ops->process_msg();
-	passert(GLOBALS_ARE_RESET());
+	passert(globals_are_reset());
 }
 
 static event_callback_routine kernel_process_queue_cb;
@@ -2560,7 +2563,7 @@ static void kernel_process_queue_cb(evutil_socket_t fd UNUSED,
 	const struct kernel_ops *kernel_ops = arg;
 
 	kernel_ops->process_queue();
-	passert(GLOBALS_ARE_RESET());
+	passert(globals_are_reset());
 
 }
 
@@ -2568,7 +2571,7 @@ static void kernel_process_queue_cb(evutil_socket_t fd UNUSED,
 static char kversion[256];
 
 const struct kernel_ops *kernel_ops = NULL;
-int bare_shunt_interval = SHUNT_SCAN_INTERVAL;
+deltatime_t bare_shunt_interval = DELTATIME(SHUNT_SCAN_INTERVAL);
 
 
 void init_kernel(void)
@@ -2668,7 +2671,7 @@ void init_kernel(void)
 	if (kernel_ops->pfkey_register != NULL)
 		kernel_ops->pfkey_register();
 
-	event_schedule(EVENT_SHUNT_SCAN, SHUNT_SCAN_INTERVAL, NULL);
+	event_schedule_s(EVENT_SHUNT_SCAN, SHUNT_SCAN_INTERVAL, NULL);
 
 	DBG(DBG_KERNEL, DBG_log("setup kernel fd callback"));
 
@@ -2684,7 +2687,7 @@ void init_kernel(void)
 		 * call process_queue periodically.  Does the order
 		 * matter?
 		 */
-		static const struct timeval delay = {KERNEL_PROCESS_Q_PERIOD, 0};
+		static const deltatime_t delay = DELTATIME(KERNEL_PROCESS_Q_PERIOD);
 
 		/* Note: kernel_ops is read-only but pluto_event_add cannot know that */
 		pluto_event_add(NULL_FD, EV_TIMEOUT | EV_PERSIST,

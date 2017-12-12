@@ -43,7 +43,7 @@ void pluto_sd_init(void) {
         /* tell systemd that we have finished starting up */
 	pluto_sd(PLUTO_SD_START, SD_REPORT_NO_STATUS);
         /* start the keepalive events */
-        event_schedule(EVENT_SD_WATCHDOG, sd_secs, NULL);
+        event_schedule_s(EVENT_SD_WATCHDOG, sd_secs, NULL);
 }
 
 /*
@@ -83,5 +83,5 @@ void pluto_sd(int action, int status)
 void sd_watchdog_event(void)
 {
 	pluto_sd(PLUTO_SD_WATCHDOG, SD_REPORT_NO_STATUS);
-	event_schedule(EVENT_SD_WATCHDOG, sd_secs, NULL);
+	event_schedule_s(EVENT_SD_WATCHDOG, sd_secs, NULL);
 }

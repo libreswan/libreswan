@@ -157,7 +157,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.options[KBF_REPLAY_WINDOW] = IPSEC_SA_DEFAULT_REPLAY_WINDOW;
 
 	cfg->conn_default.options[KBF_RETRANSMIT_TIMEOUT] = RETRANSMIT_TIMEOUT_DEFAULT;
-	cfg->conn_default.options[KBF_RETRANSMIT_INTERVAL] = RETRANSMIT_INTERVAL_DEFAULT;
+	cfg->conn_default.options[KBF_RETRANSMIT_INTERVAL_MS] = RETRANSMIT_INTERVAL_DEFAULT_MS;
 
 	cfg->conn_default.options[KBF_SALIFETIME] = IPSEC_SA_LIFETIME_DEFAULT;
 	cfg->conn_default.options[KBF_REKEYMARGIN] = SA_REPLACEMENT_MARGIN_DEFAULT;
@@ -344,6 +344,7 @@ static bool load_setup(struct starter_config *cfg,
 			break;
 
 		case kt_list:
+		case kt_lset:
 		case kt_bool:
 		case kt_invertbool:
 		case kt_enum:
@@ -898,6 +899,7 @@ static bool translate_conn(struct starter_conn *conn,
 			break;
 
 		case kt_list:
+		case kt_lset:
 		case kt_bool:
 		case kt_invertbool:
 		case kt_enum:
@@ -1216,6 +1218,8 @@ static bool load_conn(
 	KW_POLICY_FLAG(KBF_IKEv2_PAM_AUTHORIZE,
 		       POLICY_IKEV2_PAM_AUTHORIZE);
 
+	KW_POLICY_FLAG(KBF_DECAP_DSCP, POLICY_DECAP_DSCP);
+
 #	define str_to_conn(member, kscf) { \
 		if (conn->strings_set[kscf]) \
 			conn->member = clone_str(conn->strings[kscf], #kscf); \
@@ -1238,9 +1242,7 @@ static bool load_conn(
 	str_to_conn(internal_domain2, KSCF_INTERNALDOMAIN2);
 	str_to_conn(modecfg_banner, KSCF_MODECFGBANNER);
 
-	/* mark-in= and mark-out= override mark= */
-	str_to_conn(conn_mark_in, KSCF_CONN_MARK_BOTH);
-	str_to_conn(conn_mark_out, KSCF_CONN_MARK_BOTH);
+	str_to_conn(conn_mark_both, KSCF_CONN_MARK_BOTH);
 	str_to_conn(conn_mark_in, KSCF_CONN_MARK_IN);
 	str_to_conn(conn_mark_out, KSCF_CONN_MARK_OUT);
 	str_to_conn(vti_iface, KSCF_VTI_IFACE);
@@ -1342,7 +1344,7 @@ static bool load_conn(
 	if (NEVER_NEGOTIATE(conn->policy)) {
 		/* remove IPsec related options */
 		conn->policy &= ~(POLICY_PFS | POLICY_COMPRESS | POLICY_ESN_NO |
-			POLICY_ESN_YES | POLICY_SAREF_TRACK |
+			POLICY_ESN_YES | POLICY_SAREF_TRACK | POLICY_DECAP_DSCP |
 			POLICY_SAREF_TRACK_CONNTRACK) &
 			/* remove IKE related options */
 			~(POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW |

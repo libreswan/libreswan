@@ -76,7 +76,7 @@ struct msg_digest {
 	struct isakmp_hdr hdr;			/* message's header */
 	bool encrypted;				/* (v1) was it encrypted? */
 	enum state_kind from_state;		/* state we started in */
-	const struct state_microcode *smc;	/* (v1) microcode for initial state */
+	const struct state_v1_microcode *smc;	/* (v1) microcode for initial state */
 	const struct state_v2_microcode *svm;	/* (v2) microcode for initial state */
 	bool new_iv_set;			/* (v1) */
 	struct state *st;			/* current state object */
@@ -107,11 +107,11 @@ struct msg_digest {
 	struct isakmp_quirks quirks;
 };
 
-extern struct msg_digest *alloc_md(char *mdname);
+extern struct msg_digest *alloc_md(const char *mdname);
 extern void release_md(struct msg_digest *md);
 extern void release_any_md(struct msg_digest **mdp);
 
-typedef stf_status state_transition_fn(struct msg_digest *md);
+typedef stf_status state_transition_fn(struct state *st, struct msg_digest *md);
 
 extern void fmt_ipsec_sa_established(struct state *st,
 				     char *sadetails, size_t sad_len);

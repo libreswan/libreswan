@@ -69,7 +69,7 @@
  */
 #define NAT_T_DETECTED  ( LELEM(NATED_HOST) | LELEM(NATED_PEER) )
 
-void init_nat_traversal(unsigned int keep_alive_period);
+void init_nat_traversal(deltatime_t keep_alive_period);
 
 extern bool nat_traversal_enabled;
 extern bool nat_traversal_support_non_ike;

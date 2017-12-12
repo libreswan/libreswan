@@ -149,7 +149,7 @@
 #include "server.h"
 
 #include "ikev1_xauth.h"
-
+#include "retransmit.h"
 #include "nat_traversal.h"
 #include "vendor.h"
 #include "ikev1_dpd.h"
@@ -163,16 +163,16 @@
 #include "pluto_stats.h"
 
 /*
- * state_microcode is a tuple of information parameterizing certain
+ * state_v1_microcode is a tuple of information parameterizing certain
  * centralized processing of a packet.  For example, it roughly
- * specifies what payloads are expected in this message.
- * The microcode is selected primarily based on the state.
- * In Phase 1, the payload structure often depends on the
- * authentication technique, so that too plays a part in selecting
- * the state_microcode to use.
+ * specifies what payloads are expected in this message.  The
+ * microcode is selected primarily based on the state.  In Phase 1,
+ * the payload structure often depends on the authentication
+ * technique, so that too plays a part in selecting the
+ * state_v1_microcode to use.
  */
 
-struct state_microcode {
+struct state_v1_microcode {
 	enum state_kind state, next_state;
 	lset_t flags;
 	lset_t req_payloads;    /* required payloads (allows just one) */
@@ -220,18 +220,16 @@ static state_transition_fn      /* forward declaration */
 	unexpected,
 	informational;
 
-/* v1_state_microcode_table is a table of all state_microcode tuples.
- * It must be in order of state (the first element).
- * After initialization, ike_microcode_index[s] points to the
- * first entry in v1_state_microcode_table for state s.
- * Remember that each state name in Main or Quick Mode describes
- * what has happened in the past, not what this message is.
+/*
+ * v1_state_microcode_table is a table of all state_v1_microcode
+ * tuples.  It must be in order of state (the first element).  After
+ * initialization, ike_microcode_index[s] points to the first entry in
+ * v1_state_microcode_table for state s.  Remember that each state
+ * name in Main or Quick Mode describes what has happened in the past,
+ * not what this message is.
  */
 
-static const struct state_microcode
-	*ike_microcode_index[STATE_IKEv1_ROOF - STATE_IKE_FLOOR];
-
-static const struct state_microcode v1_state_microcode_table[] = {
+static const struct state_v1_microcode v1_state_microcode_table[] = {
 
 #define PT(n) ISAKMP_NEXT_ ## n
 #define P(n) LELEM(PT(n))
@@ -246,7 +244,7 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	{ STATE_MAIN_R0, STATE_MAIN_R1,
 	  SMF_ALL_AUTH | SMF_REPLY,
 	  P(SA), P(VID) | P(CR), PT(NONE),
-	  EVENT_v1_RETRANSMIT, main_inI1_outR1 },
+	  EVENT_SO_DISCARD, main_inI1_outR1 },
 
 	/* STATE_MAIN_I1: R1 --> I2
 	 * HDR, SA --> auth dependent
@@ -272,17 +270,17 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	 *	    --> HDR, <Nr_b>PubKey_i, <KE_b>Ke_r, <IDr1_b>Ke_r
 	 */
 	{ STATE_MAIN_R1, STATE_MAIN_R2,
-	  SMF_PSK_AUTH | SMF_DS_AUTH | SMF_REPLY
+	  SMF_PSK_AUTH | SMF_DS_AUTH | SMF_REPLY | SMF_RETRANSMIT_ON_DUPLICATE
 	  , P(KE) | P(NONCE), P(VID) | P(CR) | P(NATD_RFC), PT(NONE)
 	  , EVENT_v1_RETRANSMIT, main_inI2_outR2 },
 
 	{ STATE_MAIN_R1, STATE_UNDEFINED,
-	  SMF_PKE_AUTH | SMF_REPLY,
+	  SMF_PKE_AUTH | SMF_REPLY | SMF_RETRANSMIT_ON_DUPLICATE,
 	  P(KE) | P(ID) | P(NONCE), P(VID) | P(CR) | P(HASH), PT(KE),
 	  EVENT_v1_RETRANSMIT, unexpected /* ??? not yet implemented */ },
 
 	{ STATE_MAIN_R1, STATE_UNDEFINED,
-	  SMF_RPKE_AUTH | SMF_REPLY,
+	  SMF_RPKE_AUTH | SMF_REPLY | SMF_RETRANSMIT_ON_DUPLICATE,
 	  P(NONCE) | P(KE) | P(ID), P(VID) | P(CR) | P(HASH) | P(CERT), PT(
 		  NONCE),
 	  EVENT_v1_RETRANSMIT, unexpected /* ??? not yet implemented */ },
@@ -395,7 +393,7 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	{ STATE_AGGR_R0, STATE_AGGR_R1,
 	  SMF_PSK_AUTH | SMF_DS_AUTH | SMF_REPLY,
 	  P(SA) | P(KE) | P(NONCE) | P(ID), P(VID) | P(NATD_RFC), PT(NONE),
-	  EVENT_v1_RETRANSMIT, aggr_inI1_outR1 },
+	  EVENT_SO_DISCARD, aggr_inI1_outR1 },
 
 	/* STATE_AGGR_I1:
 	 * SMF_PSK_AUTH: HDR, SA, KE, Nr, IDir, HASH_R
@@ -423,13 +421,15 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	 */
 	{ STATE_AGGR_R1, STATE_AGGR_R2,
 	  SMF_PSK_AUTH | SMF_FIRST_ENCRYPTED_INPUT |
-		SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
+		SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2 |
+		SMF_RETRANSMIT_ON_DUPLICATE,
 	  P(HASH), P(VID) | P(NATD_RFC), PT(NONE),
 	  EVENT_SA_REPLACE, aggr_inI2 },
 
 	{ STATE_AGGR_R1, STATE_AGGR_R2,
 	  SMF_DS_AUTH | SMF_FIRST_ENCRYPTED_INPUT |
-		SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
+		SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2 |
+		SMF_RETRANSMIT_ON_DUPLICATE,
 	  P(SIG), P(VID) | P(NATD_RFC), PT(NONE),
 	  EVENT_SA_REPLACE, aggr_inI2 },
 
@@ -579,36 +579,113 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	  P(MCFG_ATTR) | P(HASH), P(VID), PT(HASH),
 	  EVENT_v1_RETRANSMIT, xauth_inI1 },
 
+	{ STATE_IKEv1_ROOF, STATE_IKEv1_ROOF,
+	  LEMPTY,
+	  LEMPTY, LEMPTY, LEMPTY,
+	  EVENT_NULL, NULL },
 #undef P
 #undef PT
 };
 
 void init_ikev1(void)
 {
-	/* fill ike_microcode_index:
-	 * make ike_microcode_index[s] point to first entry in
-	 * v1_state_microcode_table for state s (backward scan makes this easier).
-	 * Check that table is in order -- catch coding errors.
-	 * For what it's worth, this routine is idempotent.
+	/*
+	 * Fill in the states.  This is a hack until each finite-state
+	 * is a stand-alone object with corresponding edges (aka
+	 * microcodes).
 	 */
-	const struct state_microcode *t;
-
-	for (t = &v1_state_microcode_table[elemsof(v1_state_microcode_table) - 1];;)
-	{
-		passert(STATE_IKE_FLOOR <= t->state &&
-			t->state < STATE_IKEv1_ROOF);
-		ike_microcode_index[t->state - STATE_IKE_FLOOR] = t;
-		if (t == v1_state_microcode_table)
-			break;
-		t--;
-		passert(t[0].state <= t[1].state);
+	static struct finite_state v1_states[STATE_IKEv1_ROOF - STATE_IKEv1_FLOOR];
+	for (unsigned k = 0; k < elemsof(v1_states); k++) {
+		struct finite_state *fs = &v1_states[k];
+		fs->fs_state = k + STATE_IKEv1_FLOOR;
+		fs->fs_name = enum_name(&state_names, fs->fs_state);
+		fs->fs_short_name = enum_short_name(&state_names, fs->fs_state);
+		fs->fs_story = enum_name(&state_stories, fs->fs_state);
+		finite_states[fs->fs_state] = fs;
 	}
+
+	/*
+	 * Fill in .fs_microcode and .fs_flags; check that table is in
+	 * order -- catch coding errors.
+	 */
+	const struct state_v1_microcode *t = v1_state_microcode_table;
+	do {
+		passert(STATE_IKEv1_FLOOR <= t->state &&
+			t->state < STATE_IKEv1_ROOF);
+		struct finite_state *fs = &v1_states[t->state - STATE_IKEv1_FLOOR];
+		/*
+		 * Point .fs_microcode to the first entry in
+		 * v1_state_microcode_table for that state.  All other
+		 * microcodes for that state should follow immediately
+		 * after.
+		 */
+		fs->fs_microcode = t;
+		/*
+		 * Copy over the flags that apply to the state; and
+		 * not the edge.
+		 */
+		fs->fs_flags = (t->flags & ( SMF_RETRANSMIT_ON_DUPLICATE));
+		do {
+			t++;
+		} while (t->state == fs->fs_state);
+		passert(t->state > fs->fs_state);
+	} while (t->state < STATE_IKEv1_ROOF);
+
+	/*
+	 * Try to fill in .fs_timeout_event.
+	 *
+	 * Since the timeout event, stored in the edge structure (aka
+	 * microcode), is for the target state, .next_state is used.
+	 */
+	for (t = v1_state_microcode_table; t->state < STATE_IKEv1_ROOF; t++) {
+		if (t->next_state != STATE_UNDEFINED) {
+			passert(STATE_IKEv1_FLOOR <= t->next_state &&
+				t->next_state < STATE_IKEv1_ROOF);
+			struct finite_state *fs = &v1_states[t->next_state - STATE_IKEv1_FLOOR];
+			if (fs->fs_timeout_event == 0) {
+				fs->fs_timeout_event = t->timeout_event;
+			} else if (fs->fs_timeout_event != t->timeout_event) {
+				/*
+				 * Annoyingly, a state can seemingly
+				 * have multiple and inconsistent
+				 * timeout_events.
+				 *
+				 * For instance, MAIN_I3->MAIN_I4 has
+				 * SA_REPLACE while XAUTH_I1->MAIN_I4
+				 * has RETRANSMIT.  This is arguably a
+				 * bug caused by a skipped state.
+				 */
+				LSWDBGP(DBG_CONTROLMORE, buf) {
+					lswlogs(buf, "ignoring microcode for ");
+					lswlog_finite_state(buf, finite_states[t->state]);
+					lswlogs(buf, " -> ");
+					lswlog_finite_state(buf, fs);
+					lswlogs(buf, " with event ");
+					lswlog_enum_short(buf, &timer_event_names,
+							  t->timeout_event);
+				}
+			}
+		}
+	}
+
+	/*
+	 * Finally list the states.
+	 */
+	DBG(DBG_CONTROLMORE,
+	    for (unsigned s = STATE_IKEv1_FLOOR; s < STATE_IKEv1_ROOF; s++) {
+		    const struct finite_state *fs = finite_states[s];
+		    LSWLOG_DEBUG(buf) {
+			    lswlog_finite_state(buf, fs);
+		    }
+	    });
 }
 
-static stf_status unexpected(struct msg_digest *md)
+static stf_status unexpected(struct state *st, struct msg_digest *md)
 {
+	pexpect(st == md->st);
+	st = md->st;
 	loglog(RC_LOG_SERIOUS, "unexpected message received in state %s",
-	       enum_name(&state_names, md->st->st_state));
+	       st->st_state_name);
 	return STF_IGNORE;
 }
 
@@ -618,7 +695,7 @@ static stf_status unexpected(struct msg_digest *md)
  *  #   Initiator  Direction Responder  NOTE
  * (1)  HDR*; N/D     =>                Error Notification or Deletion
  */
-static stf_status informational(struct msg_digest *md)
+static stf_status informational(struct state *st UNUSED, struct msg_digest *md)
 {
 	struct payload_digest *const n_pld = md->chain[ISAKMP_NEXT_N];
 
@@ -899,6 +976,48 @@ void ikev1_echo_hdr(struct msg_digest *md, bool enc, u_int8_t np)
 	passert(out_struct(&hdr, &isakmp_hdr_desc, &reply_stream, &md->rbody));
 }
 
+/*
+ * Recognise and, if necesssary, respond to an IKEv1 duplicate.
+ *
+ * Use .st_finite_state, which is the real current state, and not
+ * FROM_STATE (which is derived from some convoluted magic) when
+ * determining if the duplicate should or should not get a response.
+ */
+static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
+{
+	passert(st != NULL);
+	if (st->st_rpacket.ptr != NULL &&
+	    st->st_rpacket.len == pbs_room(&md->packet_pbs) &&
+	    memeq(st->st_rpacket.ptr, md->packet_pbs.start,
+		  st->st_rpacket.len)) {
+		if (st->st_finite_state->fs_flags & SMF_RETRANSMIT_ON_DUPLICATE) {
+			/*
+			 * States with EVENT_SO_DISCARD always respond
+			 * to re-transmits; else cap.
+			 */
+			if (st->st_finite_state->fs_timeout_event == EVENT_SO_DISCARD ||
+			    count_duplicate(st, MAXIMUM_v1_ACCEPTED_DUPLICATES)) {
+				loglog(RC_RETRANSMISSION,
+				       "retransmitting in response to duplicate packet; already %s",
+				       st->st_state_name);
+				resend_ike_v1_msg(st, "retransmit in response to duplicate");
+			} else {
+				loglog(RC_LOG_SERIOUS,
+				       "discarding duplicate packet -- exhausted retransmission; already %s",
+				       st->st_state_name);
+			}
+		} else {
+			LSWDBGP(DBG_CONTROLMORE, buf) {
+				lswlog_log_prefix(buf);
+				lswlogf(buf, "discarding duplicate packet; already %s",
+				st->st_state_name);
+			}
+		}
+		return true;
+	}
+	return false;
+}
+
 /* process an input packet, possibly generating a reply.
  *
  * If all goes well, this routine eventually calls a state-specific
@@ -912,7 +1031,7 @@ void ikev1_echo_hdr(struct msg_digest *md, bool enc, u_int8_t np)
 void process_v1_packet(struct msg_digest **mdp)
 {
 	struct msg_digest *md = *mdp;
-	const struct state_microcode *smc;
+	const struct state_v1_microcode *smc;
 	bool new_iv_set = FALSE;
 	struct state *st = NULL;
 	enum state_kind from_state = STATE_UNDEFINED;   /* state we started in */
@@ -949,8 +1068,8 @@ void process_v1_packet(struct msg_digest **mdp)
 		}
 
 		if (is_zero_cookie(md->hdr.isa_rcookie)) {
-			/* initial message from initiator
-			 * ??? what if this is a duplicate of another message?
+			/*
+			 * initial message from initiator
 			 */
 			if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
 				libreswan_log("initial phase 1 message is invalid: its Encrypted Flag is on");
@@ -958,6 +1077,28 @@ void process_v1_packet(struct msg_digest **mdp)
 				return;
 			}
 
+			/*
+			 * If there is already an existing state with
+			 * this ICOOKIE, asssume it is some sort of
+			 * re-transmit.
+			 */
+			st = find_state_ikev1_init(md->hdr.isa_icookie,
+						   md->hdr.isa_msgid);
+			if (st != NULL) {
+				if (!ikev1_duplicate(st, md)) {
+					/*
+					 * Not a duplicate for the
+					 * current state; assume that
+					 * this a really old
+					 * re-transmit for an earlier
+					 * state that should be
+					 * discarded.
+					 */
+					libreswan_log("discarding initial packet; already %s",
+						      st->st_state_name);
+				}
+				return;
+			}
 			/* don't build a state until the message looks tasty */
 			from_state = (md->hdr.isa_xchg == ISAKMP_XCHG_IDPROT ?
 				      STATE_MAIN_R0 : STATE_AGGR_R0);
@@ -1229,7 +1370,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
 				DBG(DBG_CONTROLMORE, DBG_log(
 					"Mode Config message is unacceptable because it is for an incomplete ISAKMP SA (state=%s)",
-					enum_name(&state_names, st->st_state)));
+					st->st_state_name));
 				/* XXX Could send notification back */
 				return;
 			}
@@ -1516,8 +1657,11 @@ void process_v1_packet(struct msg_digest **mdp)
 	 * Look up the appropriate microcode based on state and
 	 * possibly Oakley Auth type.
 	 */
-	passert(STATE_IKE_FLOOR <= from_state && from_state <= STATE_IKEv1_ROOF);
-	smc = ike_microcode_index[from_state - STATE_IKE_FLOOR];
+	passert(STATE_IKEv1_FLOOR <= from_state && from_state < STATE_IKEv1_ROOF);
+	const struct finite_state *fs = finite_states[from_state];
+	passert(fs != NULL);
+	smc = fs->fs_microcode;
+	passert(smc != NULL);
 
 	if (st != NULL) {
 		oakley_auth_t baseauth =
@@ -1532,41 +1676,17 @@ void process_v1_packet(struct msg_digest **mdp)
 	if (state_busy(st))
 		return;
 
-	/* Detect and handle duplicated packets.
-	 * This won't work for the initial packet of an exchange
-	 * because we won't have a state object to remember it.
-	 * If we are in a non-receiving state (terminal), and the preceding
-	 * state did transmit, then the duplicate may indicate that that
-	 * transmission wasn't received -- retransmit it.
-	 * Otherwise, just discard it.
-	 * ??? Notification packets are like exchanges -- I hope that
-	 * they are idempotent!
+	/*
+	 * Detect and handle duplicated packets.  This won't work for
+	 * the initial packet of an exchange because we won't have a
+	 * state object to remember it.  If we are in a non-receiving
+	 * state (terminal), and the preceding state did transmit,
+	 * then the duplicate may indicate that that transmission
+	 * wasn't received -- retransmit it.  Otherwise, just discard
+	 * it.  ??? Notification packets are like exchanges -- I hope
+	 * that they are idempotent!
 	 */
-	if (st != NULL &&
-	    st->st_rpacket.ptr != NULL &&
-	    st->st_rpacket.len == pbs_room(&md->packet_pbs) &&
-	    memeq(st->st_rpacket.ptr, md->packet_pbs.start,
-		   st->st_rpacket.len)) {
-		if (smc->flags & SMF_RETRANSMIT_ON_DUPLICATE) {
-			if (st->st_retransmit < MAXIMUM_v1_ACCEPTED_DUPLICATES) {
-				st->st_retransmit++;
-				loglog(RC_RETRANSMISSION,
-				       "retransmitting in response to duplicate packet; already %s",
-				       enum_name(&state_names, st->st_state));
-				resend_ike_v1_msg(st,
-						  "retransmit in response to duplicate");
-			} else {
-				loglog(RC_LOG_SERIOUS,
-				       "discarding duplicate packet -- exhausted retransmission; already %s",
-				       enum_name(&state_names, st->st_state));
-			}
-		} else {
-			LSWDBGP(DBG_CONTROLMORE, buf) {
-				lswlog_pre(buf);
-				lswlogf(buf, "discarding duplicate packet; already %s",
-				enum_name(&state_names, st->st_state));
-			}
-		}
+	if (st != NULL && ikev1_duplicate(st, md)) {
 		return;
 	}
 
@@ -1626,7 +1746,7 @@ void process_packet_tail(struct msg_digest **mdp)
 	struct msg_digest *md = *mdp;
 	struct state *st = md->st;
 	enum state_kind from_state = md->from_state;
-	const struct state_microcode *smc = md->smc;
+	const struct state_v1_microcode *smc = md->smc;
 	bool new_iv_set = md->new_iv_set;
 	bool self_delete = FALSE;
 
@@ -2100,7 +2220,7 @@ void process_packet_tail(struct msg_digest **mdp)
 		ikev1_echo_hdr(md, (smc->flags & SMF_OUTPUT_ENCRYPTED) != 0,
 			 smc->first_out_payload);
 
-	complete_v1_state_transition(mdp, smc->processor(md));
+	complete_v1_state_transition(mdp, smc->processor(st, md));
 	/* our caller will release_any_md(mdp); */
 }
 
@@ -2172,9 +2292,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 	switch (result) {
 	case STF_SUSPEND:
-		cur_state = md->st;	/* might have changed */
-		/* FALL THROUGH */
-	case STF_INLINE:	/* all done, including release_any_md */
+		set_cur_state(md->st);	/* might have changed */
 		*mdp = NULL;	/* take md away from parent */
 		/* FALL THROUGH */
 	case STF_IGNORE:
@@ -2197,7 +2315,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 	from_state = md->from_state;
 
-	cur_state = st = md->st; /* might have changed */
+	st = md->st;
+	set_cur_state(st); /* might have changed */
 
 	passert(st != NULL);
 
@@ -2207,11 +2326,11 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	case STF_OK:
 	{
 		/* advance the state */
-		const struct state_microcode *smc = md->smc;
+		const struct state_v1_microcode *smc = md->smc;
 
 		DBG(DBG_CONTROL, DBG_log("doing_xauth:%s, t_xauth_client_done:%s",
-			st->st_oakley.doing_xauth ? "yes" : "no",
-			st->hidden_variables.st_xauth_client_done ? "yes" : "no"));
+			bool_str(st->st_oakley.doing_xauth),
+			bool_str(st->hidden_variables.st_xauth_client_done)));
 
 		/* accept info from VID because we accept this message */
 
@@ -2339,7 +2458,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		/* Schedule for whatever timeout is specified */
 		if (!md->event_already_set) {
 			DBG(DBG_CONTROL, DBG_log("!event_already_set at reschedule"));
-			unsigned long delay_ms; /* delay is in milliseconds here */
+			intmax_t delay_ms; /* delay is in milliseconds here */
 			enum event_type kind = smc->timeout_event;
 			bool agreed_time = FALSE;
 			struct connection *c = st->st_connection;
@@ -2355,8 +2474,9 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			}
 
 			switch (kind) {
+
 			case EVENT_v1_RETRANSMIT: /* Retransmit packet */
-				delay_ms = c->r_interval;
+				start_retransmits(st, EVENT_v1_RETRANSMIT);
 				break;
 
 			case EVENT_SA_REPLACE: /* SA replacement event */
@@ -2439,25 +2559,29 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 						marg /= 2;
 					}
 
-					if (delay_ms > (unsigned long)marg * 1000) {
-						delay_ms -= (unsigned long)marg * 1000;
+					if (delay_ms > marg * 1000) {
+						delay_ms -= marg * 1000;
 						st->st_margin = deltatime(marg);
 					} else {
 						kind = EVENT_SA_EXPIRE;
 					}
 				}
+				/* XXX: DELAY_MS should be a deltatime_t */
+				event_schedule(kind, deltatime_ms(delay_ms), st);
+				break;
+
+			case EVENT_SO_DISCARD:
+				event_schedule(EVENT_SO_DISCARD, c->r_timeout, st);
 				break;
 
 			default:
 				bad_case(kind);
 			}
-			event_schedule_ms(kind, delay_ms, st);
 		}
 
 		/* tell whack and log of progress */
 		{
-			const char *story = enum_name(&state_stories,
-						      st->st_state);
+			const char *story = st->st_state_story;
 			enum rc_type w = RC_NEW_STATE + st->st_state;
 			char sadetails[512];
 
@@ -2480,7 +2604,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			/* tell whack and logs our progress */
 			loglog(w,
 			       "%s: %s%s",
-			       enum_name(&state_names, st->st_state),
+			       st->st_state_name,
 			       story,
 			       sadetails);
 		}
@@ -2510,11 +2634,12 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		if (st->st_connection->spd.this.xauth_server) {
 			if (st->st_oakley.doing_xauth &&
 			    IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
-				DBG(DBG_CONTROL,
-					DBG_log("XAUTH: Sending XAUTH Login/Password Request"));
-				event_schedule_ms(EVENT_v1_SEND_XAUTH,
-						EVENT_v1_SEND_XAUTH_DELAY, st);
-						break;
+				DBG(DBG_CONTROLMORE|DBG_XAUTH,
+				    DBG_log("XAUTH: Sending XAUTH Login/Password Request"));
+				event_schedule(EVENT_v1_SEND_XAUTH,
+					       deltatime_ms(EVENT_v1_SEND_XAUTH_DELAY_MS),
+					       st);
+				break;
 			}
 		}
 
@@ -2641,7 +2766,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 		whack_log(RC_INTERNALERR + md->note,
 			  "%s: internal error",
-			  enum_name(&state_names, st->st_state));
+			  st->st_state_name);
 
 		DBG(DBG_CONTROL,
 		    DBG_log("state transition function for %s had internal error",
@@ -2668,7 +2793,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 		whack_log(RC_FATAL,
 			  "encountered fatal error in state %s",
-			  enum_name(&state_names, st->st_state));
+			  st->st_state_name);
 #ifdef HAVE_NM
 		if (st->st_connection->remotepeertype == CISCO &&
 		    st->st_connection->nmconfigured) {
@@ -2698,7 +2823,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 * But then then any duplicate would lose too, I would think.
 		 */
 		whack_log(RC_NOTIFICATION + md->note,
-			  "%s: %s", enum_name(&state_names, st->st_state),
+			  "%s: %s", st->st_state_name,
 			  enum_name(&ikev1_notify_names, md->note));
 
 		if (md->note != NOTHING_WRONG)
@@ -2769,12 +2894,10 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		/* return FALSE; */
 	}
 
-	zero(&peer);	/* ??? pointer fields might not be NULLed */
-	peer.kind = id->isaid_idtype;
-
-	if (!extract_peer_id(&peer, id_pbs))
+	if (!extract_peer_id(id->isaid_idtype, &peer, id_pbs))
 		return FALSE;
-	if (id_kind(&c->spd.that.id) == ID_FROMCERT) {
+
+	if (c->spd.that.id.kind == ID_FROMCERT) {
 		/* breaks API, connection modified by %fromcert */
 		duplicate_id(&c->spd.that.id, &peer);
 	}
@@ -2831,7 +2954,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	if (initiator) {
 		if (!st->st_peer_alt_id &&
 			!same_id(&st->st_connection->spd.that.id, &peer) &&
-			id_kind(&st->st_connection->spd.that.id) != ID_FROMCERT) {
+			st->st_connection->spd.that.id.kind != ID_FROMCERT) {
 
 			char expect[IDTOA_BUF],
 			     found[IDTOA_BUF];
@@ -2843,8 +2966,8 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			       "we require IKEv1 peer to have ID '%s', but peer declares '%s'",
 			       expect, found);
 			return FALSE;
-		} else if (id_kind(&st->st_connection->spd.that.id) == ID_FROMCERT) {
-			if (id_kind(&peer) != ID_DER_ASN1_DN) {
+		} else if (st->st_connection->spd.that.id.kind == ID_FROMCERT) {
+			if (peer.kind != ID_DER_ASN1_DN) {
 				loglog(RC_LOG_SERIOUS,
 				       "peer ID is not a certificate type");
 				return FALSE;
@@ -2887,6 +3010,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 
 		struct connection *r =
 			refine_host_connection(st, &peer,
+				NULL, /* IKEv1 does not support 'you Tarzan, me Jane' */
 				FALSE,	/* we are responder */
 				auth_policy,
 				AUTH_UNSET,	/* ikev2 only */
@@ -2901,7 +3025,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			/* can we continue with what we had? */
 			if (!md->st->st_peer_alt_id &&
 				!same_id(&c->spd.that.id, &peer) &&
-				id_kind(&c->spd.that.id) != ID_FROMCERT) {
+				c->spd.that.id.kind != ID_FROMCERT) {
 					libreswan_log("Peer mismatch on first found connection and no better connection found");
 					return FALSE;
 			} else {

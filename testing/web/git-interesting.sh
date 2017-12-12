@@ -13,15 +13,23 @@ order needs to be reversed.
 Examine <gitrev> in <repodir> and determine if it is sufficiently
 "interesting" to be worth testing.
 
-"interesting" is any of:
+The output is one of:
 
-    - a commit with a tag
+    <reason>[: <details>]
+    true
+    false
 
-    - a merge point
+where:
 
-    [- a branch point (disabled)]
+    tag: <tagname> - a commit containing a tag
 
-    - a commit that changes build and/or source files
+    merge: <parents>  - a merge point
+
+    [ branch: <children> - a branch point, disabled ]
+
+    true - a commit that changes build and/or source files
+
+    false - the commit is not interesting
 
 EOF
 }
@@ -100,4 +108,5 @@ if git show "${gitrev}^{commit}" \
     exit 0
 fi
 
+echo "false"
 exit 1

@@ -74,10 +74,7 @@ VIRT_SOURCEDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_SOURCED
 VIRT_TESTINGDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_TESTINGDIR),target=testing
 
 # The KVM's operating system.
-#
-# It should be KVM_OS ?= fedora22 so an upgrade leaves the old stuff
-# in place?
-KVM_OS ?= fedora
+KVM_OS ?= fedora22
 
 #
 # Hosts
@@ -254,31 +251,38 @@ KVM_TESTS ?= testing/pluto
 # then KVM_TESTS ends up containing new lines, strip them out.
 STRIPPED_KVM_TESTS = $(strip $(KVM_TESTS))
 
+.PHONY:
+web-pages-disabled:
+	@echo
+	@echo Web-pages disabled.
+	@echo
+	@echo To enable web pages create the directory: $(LSW_WEBDIR)
+	@echo To convert this result into a web page run: make web-page
+	@echo
+
 define kvm-test
-	: kvm-test param=$(1)
-	$(call check-kvm-qemu-directory)
-	$(call check-kvm-entropy)
+.PHONY: $(1)
+$(1): $$(KVM_KEYS) kvm-shutdown-test-domains web-test-prep
+	$$(if $$(WEB_SUMMARYDIR),,@$(MAKE) -s web-pages-disabled)
+	: kvm-test target=$(1) param=$(2)
+	$$(call check-kvm-qemu-directory)
+	$$(call check-kvm-entropy)
 	: KVM_TESTS=$(STRIPPED_KVM_TESTS)
-	$(MAKE) --no-print-directory web-test-prep
-	$(KVMRUNNER) \
-		$(foreach prefix,$(KVM_PREFIXES), --prefix $(prefix)) \
-		$(if $(KVM_WORKERS), --workers $(KVM_WORKERS)) \
-		$(if $(WEB_RESULTSDIR), --publish-results $(WEB_RESULTSDIR)) \
-		$(if $(WEB_SUMMARYDIR), --publish-status $(WEB_SUMMARYDIR)/status.json) \
-		$(1) $(KVM_TEST_FLAGS) $(STRIPPED_KVM_TESTS)
-	$(MAKE) --no-print-directory web-test-post
+	$$(KVMRUNNER) \
+		$$(foreach prefix,$$(KVM_PREFIXES), --prefix $$(prefix)) \
+		$$(if $$(KVM_WORKERS), --workers $$(KVM_WORKERS)) \
+		$$(if $$(WEB_RESULTSDIR), --publish-results $$(WEB_RESULTSDIR)) \
+		$$(if $$(WEB_SUMMARYDIR), --publish-status $$(WEB_SUMMARYDIR)/status.json) \
+		$$(2) $$(KVM_TEST_FLAGS) $$(STRIPPED_KVM_TESTS)
+	$$(if $$(WEB_SUMMARYDIR),,@$(MAKE) -s web-pages-disabled)
 endef
 
 # "test" and "check" just runs the entire testsuite.
-.PHONY: kvm-check kvm-test
-kvm-check kvm-test: $(KVM_KEYS) kvm-shutdown-local-domains
-	$(call kvm-test, --test-status "good")
+$(eval $(call kvm-test,kvm-check kvm-test, --test-status "good"))
 
 # "retest" and "recheck" re-run the testsuite updating things that
 # didn't pass.
-.PHONY: kvm-retest kvm-recheck
-kvm-retest kvm-recheck: $(KVM_KEYS) kvm-shutdown-local-domains
-	$(call kvm-test, --test-status "good" --skip passed)
+$(eval $(call kvm-test,kvm-retest kvm-recheck, --test-status "good" --skip passed))
 
 # clean up; accept pretty much everything
 KVM_TEST_CLEAN_TARGETS = \
@@ -501,11 +505,7 @@ kvm-upgrade-local-domains:
 
 # XXX: Once KVM_OS gets re-named to include the release, this hack can
 # be deleted.
-ifeq ($(KVM_OS),fedora)
-include testing/libvirt/fedora22.mk
-else
 include testing/libvirt/$(KVM_OS).mk
-endif
 
 ifeq ($(KVM_OS_VARIANT),)
 $(error KVM_OS_VARIANT not defined)
@@ -698,7 +698,7 @@ $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml: | $(KVM_BASE_NETWORK_FILE) $(KVM_LOCALD
 	$(call check-kvm-qemu-directory)
 	$(call destroy-kvm-domain,$(KVM_BUILD_DOMAIN))
 	$(call create-kvm-domain,$(KVM_BUILD_DOMAIN),$@.tmp)
-	$(VIRSH) dumpxml $(KVM_CLONE_DOMAIN) > $@.tmp
+	$(VIRSH) dumpxml $(KVM_BUILD_DOMAIN) > $@.tmp
 	mv $@.tmp $@
 .PHONY: install-kvm-domain-$(KVM_BUILD_DOMAIN)
 install-kvm-domain-$(KVM_BUILD_DOMAIN): $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
@@ -744,8 +744,8 @@ $(foreach prefix, $(KVM_PREFIXES), \
 # Rules to uninstall individual domains
 #
 
-define uninstall-kvm-domain
-  #(info uninstall-kvm-domain domain=$(1) dir=$(2))
+define uninstall-kvm-domain-DOMAIN
+  #(info uninstall-kvm-domain-DOMAIN domain=$(1) dir=$(2))
   .PHONY: uninstall-kvm-domain-$(1)
   uninstall-kvm-domain-$(1):
 	: uninstall-kvm-domain domain=$(1) dir=$(2)
@@ -757,9 +757,9 @@ define uninstall-kvm-domain
 endef
 
 $(foreach domain, $(KVM_BASE_DOMAIN), \
-	$(eval $(call uninstall-kvm-domain,$(domain),$(KVM_BASEDIR))))
+	$(eval $(call uninstall-kvm-domain-DOMAIN,$(domain),$(KVM_BASEDIR))))
 $(foreach domain, $(KVM_LOCAL_DOMAINS), \
-	$(eval $(call uninstall-kvm-domain,$(domain),$(KVM_LOCALDIR))))
+	$(eval $(call uninstall-kvm-domain-DOMAIN,$(domain),$(KVM_LOCALDIR))))
 
 # Direct dependencies.  This is so that a primitive like
 # uninstall-kvm-domain-clone isn't run until all its dependencies,
@@ -861,15 +861,17 @@ kvm-clean clean-kvm: kvm-shutdown-local-domains kvm-keys-clean
 # commands (each invokes make on the domain) to ensre that "make base"
 # and "make modules" are serialized.
 #
+# Shutdown the domains before building.  The build domain won't boot
+# when its clones are running.
 
 define kvm-DOMAIN-build
   #(info kvm-DOMAIN-build domain=$(1))
   .PHONY: kvm-$(1)-build
-  kvm-$(1)-build: | $$(KVM_LOCALDIR)/$(1).xml
+  kvm-$(1)-build: kvm-shutdown-install-domains | $$(KVM_LOCALDIR)/$(1).xml
 	: kvm-DOMAIN-build domain=$(1)
 	$(call check-kvm-qemu-directory)
-	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; make -j2 OBJDIR=$$(KVM_OBJDIR) base'
-	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; make -j2 OBJDIR=$$(KVM_OBJDIR) module'
+	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; make OBJDIR=$$(KVM_OBJDIR) base'
+	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; make OBJDIR=$$(KVM_OBJDIR) module'
 endef
 
 # this includes $(KVM_CLONE_DOMAIN)
@@ -897,7 +899,7 @@ kvm-build: kvm-$(KVM_BUILD_DOMAIN)-build
 define kvm-DOMAIN-install
   #(info kvm-DOMAIN-install domain=$(1))
   .PHONY: kvm-$(1)-install
-  kvm-$(1)-install: kvm-$$(KVM_BUILD_DOMAIN)-build | $$(KVM_LOCALDIR)/$(1).xml
+  kvm-$(1)-install: kvm-shutdown-install-domains kvm-$$(KVM_BUILD_DOMAIN)-build | $$(KVM_LOCALDIR)/$(1).xml
 	: kvm-DOMAIN-install domain=$(1)
 	$(call check-kvm-qemu-directory)
 	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . --shutdown $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$$(KVM_OBJDIR)'
@@ -910,13 +912,8 @@ $(foreach host, $(filter-out $(KVM_DOMAINS), $(KVM_LOCAL_HOSTS)), \
 	$(eval $(call kvm-HOST-DOMAIN,kvm-,$(host),-install)))
 
 # By default, install where needed.
-.PHONY: kvm-install
-kvm-install: $(foreach domain, $(KVM_INSTALL_DOMAINS), kvm-$(domain)-install)
-
-# Since the install domains list isn't exhaustive (for instance, nic
-# is missing), add an explicit dependency on all the domains so that
-# they still get created.
-kvm-install: | $(foreach domain,$(KVM_TEST_DOMAINS),$(KVM_POOLDIR)/$(domain).xml)
+.PHONY: kvm-install-all
+kvm-all-install: $(foreach domain, $(KVM_INSTALL_DOMAINS), kvm-$(domain)-install)
 
 # This is trying to work-around even more broken F26 hosts where the
 # build hangs.
@@ -927,29 +924,54 @@ kvm-install: | $(foreach domain,$(KVM_TEST_DOMAINS),$(KVM_POOLDIR)/$(domain).xml
 # - best way to recover from a hang is to uninstall the build domain
 #   (should this always do that?)
 
-kvm-install-hive:
-	$(MAKE) KVM_BUILD_HOST=build kvm-uninstall-install-domains
-	$(MAKE) KVM_BUILD_HOST=build kvm-install-build-domain
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . \
-		$(addprefix $(KVM_FIRST_PREFIX), build) \
-		'export OBJDIR=$(KVM_OBJDIR) ; make OBJDIR=$(KVM_OBJDIR) base'
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . \
-		$(addprefix $(KVM_FIRST_PREFIX), build) \
-		'export OBJDIR=$(KVM_OBJDIR) ; make OBJDIR=$(KVM_OBJDIR) module'
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . \
-		$(addprefix $(KVM_FIRST_PREFIX), build) \
-		'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)'
-	$(MAKE) KVM_BUILD_HOST=build kvm-install-install-domains
+define kvm-DOMAIN-hive
+  #(info kvm-DOMAIN-hive domain=$(1))
+  .PHONY: kvm-$(1)-hive
+  kvm-$(1)-hive: kvm-$$(KVM_BUILD_DOMAIN)-install uninstall-kvm-domain-$(1)
+	$(MAKE) install-kvm-domain-$(1)
+endef
 
+$(foreach domain, $(KVM_INSTALL_DOMAINS), \
+	$(eval $(call kvm-DOMAIN-hive,$(domain))))
+$(foreach host, $(filter-out $(KVM_DOMAINS), $(KVM_INSTALL_HOSTS)), \
+	$(eval $(call kvm-HOST-DOMAIN,kvm-,$(host),-hive)))
+
+.PHONY: kvm-install-hive
+kvm-hive-install: $(foreach domain, $(KVM_INSTALL_DOMAINS), kvm-$(domain)-hive)
+
+# If BUILD is defined, assume the HIVE install should be used.
+.PHONY: kvm-install
+ifneq ($(KVM_BUILD_COPIES),)
+kvm-install: kvm-hive-install
+else
+kvm-install: kvm-all-install
+endif
+
+# Since the install domains list isn't exhaustive (for instance, nic
+# is missing), add an explicit dependency on all the domains so that
+# they still get created.
+kvm-install: | $(foreach domain,$(KVM_TEST_DOMAINS),$(KVM_POOLDIR)/$(domain).xml)
 
 #
 # kvm-uninstall
 #
-# this is simple and brutal - just delete anything that would be
-# modified by an install
+# Rather than just removing libreswan from the all the test (install)
+# domains, this removes the test and build domains completely.  This
+# way, in addition to giving kvm-install a 100% fresh start (no
+# depdenence on 'make uninstall'), any broken test domains (including
+# NIC) are rebuilt.  For instance:
+#
+#     - a domain hanging because of KVM breakage
+#
+#     - a domain (including the basic domain NIC) having a wrong
+#       directory mount point
+#
+# Think of this as the make target to use when trying to dig ones way
+# out of a hole.
 
 .PHONY: kvm-uninstall
 kvm-uninstall: $(addprefix uninstall-kvm-domain-, $(KVM_INSTALL_DOMAINS))
+kvm-uninstall: $(addprefix uninstall-kvm-domain-, $(KVM_BASIC_DOMAINS))
 ifneq ($(KVM_BUILD_COPIES),)
 kvm-uninstall: $(addprefix uninstall-kvm-domain-, $(KVM_BUILD_DOMAIN))
 endif
@@ -1018,6 +1040,14 @@ $(foreach domain, $(KVM_DOMAINS), \
 .PHONY: kvm-shutdown
 kvm-shutdown: $(addprefix shutdown-kvm-domain-,$(KVM_DOMAINS))
 
+.PHONY: kvm-shutdown-install-domains
+kvm-shutdown-install-domains: $(addprefix shutdown-kvm-domain-,$(KVM_INSTALL_DOMAINS))
+
+.PHONY: kvm-shutdown-test-domains
+kvm-shutdown-test-domains: $(addprefix shutdown-kvm-domain-,$(KVM_TEST_DOMAINS))
+
+.PHONY: kvm-shutdown-local-domains
+kvm-shutdown-local-domains: $(addprefix shutdown-kvm-domain-,$(KVM_LOCAL_DOMAINS))
 
 #
 # Some hints

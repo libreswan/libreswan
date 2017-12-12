@@ -1502,8 +1502,7 @@ enum pubkey_alg {
  */
 
 enum ike_id_type {
-	ID_FROMCERT = -2,	/* taken from certificate - private to Pluto */
-	ID_MYID = -1,		/* private to Pluto */
+	ID_FROMCERT = -1,	/* taken from certificate - private to Pluto */
 	ID_NONE = 0,	/* private to Pluto */
 
 	ID_IPV4_ADDR = 1,
@@ -1519,7 +1518,7 @@ enum ike_id_type {
 	ID_DER_ASN1_GN = 10,
 	ID_KEY_ID = 11,
 	ID_FC_NAME = 12,	/* RFC 4595 */
-	ID_NULL = 13, /* draft-ietf-ipsecme-ikev2-null-auth */
+	ID_NULL = 13, /* RFC 7619 */
 	/* In IKEv1 registry, non-IKE value ID_LIST = 12 as per RFC 3554 */
 	/* 14-248 Unassigned */
 	/* 249-255 Reserved for private use */
