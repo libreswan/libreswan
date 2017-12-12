@@ -476,8 +476,6 @@ struct state {
 	 */
 	struct dh_secret *st_dh_secret;
 
-	bool st_sec_in_use;		/* bool: do st_sec_nss/st_pubk_nss hold values */
-
 	PK11SymKey *st_shared_nss;	/* Derived shared secret
 					 * Note: during Quick Mode,
 					 * presence indicates PFS

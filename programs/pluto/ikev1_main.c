@@ -940,7 +940,6 @@ stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
 
 	set_nat_traversal(st, md);
 
-	passert(!st->st_sec_in_use);
 	return request_ke_and_nonce("outI2 KE", st, md,
 				    st->st_oakley.ta_dh,
 				    st->st_import,
@@ -1125,7 +1124,6 @@ stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
 
 	ikev1_natd_init(st, md);
 
-	passert(!st->st_sec_in_use);
 	return request_ke_and_nonce("inI2_outR2 KE", st, md,
 				    st->st_oakley.ta_dh,
 				    st->st_import,

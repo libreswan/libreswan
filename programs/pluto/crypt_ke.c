@@ -98,7 +98,6 @@ stf_status request_ke_and_nonce(const char *name,
 				crypto_req_cont_func *callback)
 {
 	struct pluto_crypto_req_cont *cn = new_pcrc(callback, name, st, md);
-	passert(!st->st_sec_in_use);
 	pcr_kenonce_init(cn, pcr_build_ke_and_nonce,
 			 importance, group);
 	return send_crypto_helper_request(st, cn);

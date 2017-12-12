@@ -252,8 +252,6 @@ static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
 					st->st_clonedfrom);
 			return STF_FAIL;
 		}
-		passert(st->st_sec_in_use); /* child has its own KE */
-
 		/* initiate calculation of g^xy */
 		e = start_dh_v2(md, "DHv2 for child sa", role,
 				pst->st_skey_d_nss, /* only IKE has SK_d */

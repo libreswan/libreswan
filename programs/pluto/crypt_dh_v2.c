@@ -71,8 +71,6 @@ stf_status start_dh_v2(struct msg_digest *md,
 						    st, md);
 	struct pcr_dh_v2 *const dhq = pcr_dh_v2_init(dh, st->st_import);
 
-	passert(st->st_sec_in_use);
-
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("calculating skeyseed using prf=%s integ=%s cipherkey=%s",
 		    st->st_oakley.ta_prf->common.fqn,

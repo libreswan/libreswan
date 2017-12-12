@@ -121,9 +121,6 @@ void unpack_KE_from_helper(struct state *st,
 			kn->group == st->st_oakley.ta_dh ? "match" : "differ");
 	}
 
-	/* ??? if st->st_sec_in_use how could we do our job? */
-	passert(!st->st_sec_in_use);
-	st->st_sec_in_use = TRUE;
 	freeanychunk(*g); /* happens in odd error cases */
 	*g = kn->gi;
 

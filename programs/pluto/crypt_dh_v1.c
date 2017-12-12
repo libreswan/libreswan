@@ -70,8 +70,6 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *dh,
 
 	struct pcr_v1_dh *const dhq = pcr_v1_dh_init(dh, pcr_compute_dh_iv, importance);
 
-	passert(st->st_sec_in_use);
-
 	/* convert appropriate data to dhq */
 	dhq->auth = st->st_oakley.auth;
 	dhq->prf = st->st_oakley.ta_prf;
@@ -140,8 +138,6 @@ stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 	const chunk_t *pss = get_preshared_secret(st->st_connection);
 
 	struct pcr_v1_dh *const dhq = pcr_v1_dh_init(cn, pcr_compute_dh, importance);
-
-	passert(st->st_sec_in_use);
 
 	/* convert appropriate data to dhq */
 	dhq->auth = st->st_oakley.auth;

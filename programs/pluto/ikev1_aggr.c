@@ -1292,8 +1292,6 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *ke,
 	if (!ikev1_ship_nonce(&st->st_ni, r, &md->rbody, ISAKMP_NEXT_ID, "Ni"))
 		return STF_INTERNAL_ERROR;
 
-	DBG(DBG_CONTROLMORE, DBG_log("setting sec: %s", st->st_sec_in_use ? "TRUE" : "FALSE"));
-
 	/* IDii out */
 	{
 		struct isakmp_ipsec_id id_hd;
