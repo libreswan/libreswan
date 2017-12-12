@@ -19,12 +19,6 @@ DISTRO_REL ?= 27 	# default release
 
 DI_T ?= swanbase 	#docker image tag
 
-.PHONY: travis-docker-image
-travis-docker-image: BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
-travis-docker-image: DISTRO =  $(call W2, $(BRANCH),fedora)
-travis-docker-image: DISTRO_REL = $(call W3, $(BRANCH),27)
-travis-docker-image:
-	$(MAKE) DISTRO=$(DISTRO) DISTRO_REL=$(DISTRO_REL) docker-image
 
 # end of configurable variables 
 
@@ -35,31 +29,87 @@ DOCKER_SSH = $(DI)-ssh
 DOCKER_START = $(DI)-start
 DOCKERFILE ?= $(D)/dockerfile
 DOCKERFILE_PKG = $(D)/Dockerfile-$(DISTRO)-min-packages
-CMD_CHANGE=
+TWEAKS=
 
+#
+# Distribution specific tweaks
+#
 ifeq ($(DISTRO), ubuntu)
 	DOCKERFILE_PKG=$(D)/Dockerfile-debian-min-packages
-	CMD_CHANGE = dcokerfile-ubuntu-cmd
+	TWEAKS = dcokerfile-ubuntu-cmd
 endif
 
 ifeq ($(DISTRO), debian)
 	DOCKERFILE_PKG=$(D)/Dockerfile-debian-min-packages
-	CMD_CHANGE = dcokerfile-debian-cmd
+	TWEAKS = dcokerfile-debian-cmd
 endif
 
+ifeq ($(DISTRO), centos)
+	ifeq ($(DISTRO_REL), 7)
+		TWEAKS = disable-dsnssec
+	endif
+	ifeq ($(DISTRO_REL), 6)
+		TWEAKS = disable-dsnssec
+	endif
+endif
+
+ifeq ($(DISTRO), fedora)
+	ifeq ($(DISTRO_REL), 22)
+		TWEAKS = dcokerfile-remove-libreswan-spec
+		TWEAKS += disable-seccomp
+		TWEAKS += f22-missing-rpm
+	endif
+endif
+
+
+PHONY: f22-missing-rpm
+f22-missing-rpm:
+	$(shell echo "RUN dnf install -y ldns ldns-devel libcap-ng libcap-ng-devel systemd-devel" >> testing/docker/dockerfile)
+
+.PHONY: dcokerfile-remove-libreswan-spec
+dcokerfile-remove-libreswan-spec:
+	$(shell sed -i '/libreswan\.spec/d' testing/docker/dockerfile)
+
 .PHONY: dcokerfile-debian-cmd
-dcokerfile-debian-min:
+dcokerfile-debian-cmd:
 	$(shell sed -i 's#CMD.*#CMD ["/lib/systemd/systemd"]#' testing/docker/dockerfile)
 
 .PHONY: dcokerfile-ubuntu-cmd
 dcokerfile-ubuntu-cmd:
 	$(shell sed -i 's#CMD.*#CMD ["/sbin/init"]#' testing/docker/dockerfile)
 
+.PHONY: disable-dsnssec
+disable-dsnssec:
+	$(shell (grep "^USE_DNSSEC=" Makefile.inc.local || echo "USE_DNSSEC=false" >> Makefile.inc.local))
+
+.PHONY: disable-seccomp
+disable-seccomp:
+	$(shell (grep "^USE_SECCOMP=" Makefile.inc.local || echo "USE_SECCOMP=false" >> Makefile.inc.local))
+
+
+#
+# end  of Distribution tweaks
+#
+
+.PHONY: travis-docker-image
+travis-docker-image: BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
+travis-docker-image: DISTRO =  $(call W2, $(BRANCH),fedora)
+travis-docker-image: DISTRO_REL = $(call W3, $(BRANCH),27)
+travis-docker-image:
+	$(MAKE) DISTRO=$(DISTRO) DISTRO_REL=$(DISTRO_REL) docker-image
+
+define debian_exp_repo
+	if [ $(1) == "experimental" ] ; then \
+		echo 'RUN echo "deb http://deb.debian.org/debian experimental main" >> /etc/apt/sources.list.d/experimental.list' >> $(2);\
+	fi
+endef
+
 .PHONY: dcokerfile
 dockerfile: $(DOCKERFILE_PKG)
 	echo "FROM $(DISTRO):$(DISTRO_REL)" > $(DOCKERFILE)
 	echo "ENV container docker" >> $(DOCKERFILE)
 	echo 'MAINTAINER "Antony Antony" <antony@phenome.org>' >> $(DOCKERFILE)
+	@$(call debian_exp_repo,$(DISTRO_REL),$(DOCKERFILE))
 	cat $(DOCKERFILE_PKG) >> $(DOCKERFILE)
 
 .PHONY: travis-ubuntu-xenial
@@ -75,11 +125,11 @@ docker-build: dcokerfile
 
 .PHONY: docker-ssh-image
 docker-ssh-image: DOCKERFILE_SSH = $(D)/Dockerfile-swan-ssh
-docker-ssh-image: dcokerfile $(CMD_CHANGE) docker-build
+docker-ssh-image: dcokerfile $(TWEAKS) docker-build
 	cat $(DOCKERFILE_SSH) >> $(DOCKERFILE)
 
 .PHONY: docker-min-image
-docker-min-image: dockerfile $(CMD_CHANGE) docker-build
+docker-min-image: dockerfile $(TWEAKS) docker-build
 	echo "done docker image tag $(DI_T) from $(DISTRO)-$(DISTRO_REL)"
 
 .PHONY: docker-image
