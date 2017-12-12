@@ -670,7 +670,7 @@ struct dhmke_ops {
 	void (*const check)(const struct oakley_group_desc *alg);
 
 	/*
-	 * Create KE.
+	 * Create the local secret and KE for remote.
 	 *
 	 * The LOCAL_PUBK parameter is arguably redundant - just the
 	 * KE bytes and private key are needed - however MODP's
@@ -680,14 +680,14 @@ struct dhmke_ops {
 	 * SIZEOF_KE == .BYTES from above, but pass it in so both ends
 	 * can perform a sanity check.
 	 */
-	void (*calc_ke)(const struct oakley_group_desc *group,
-			SECKEYPrivateKey **local_privk,
-			SECKEYPublicKey **locak_pubk,
-			uint8_t *ke, size_t sizeof_ke);
-	PK11SymKey *(*calc_g_ir)(const struct oakley_group_desc *group,
-				 SECKEYPrivateKey *local_privk,
-				 const SECKEYPublicKey *local_pubk,
-				 uint8_t *remote_ke, size_t sizeof_remote_ke);
+	void (*calc_secret)(const struct oakley_group_desc *group,
+			    SECKEYPrivateKey **local_privk,
+			    SECKEYPublicKey **locak_pubk,
+			    uint8_t *ke, size_t sizeof_ke);
+	PK11SymKey *(*calc_shared)(const struct oakley_group_desc *group,
+				   SECKEYPrivateKey *local_privk,
+				   const SECKEYPublicKey *local_pubk,
+				   uint8_t *remote_ke, size_t sizeof_remote_ke);
 };
 
 extern const struct oakley_group_desc unset_group;      /* magic signifier */

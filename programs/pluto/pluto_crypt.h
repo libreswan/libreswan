@@ -155,8 +155,7 @@ struct pcr_kenonce {
 	const struct oakley_group_desc *group;
 
 	/* outputs */
-	SECKEYPrivateKey *secret;
-	SECKEYPublicKey *pubk;
+	struct dh_secret *secret;
 	chunk_t gi;
 	chunk_t n;
 };
@@ -171,6 +170,7 @@ struct pcr_v1_dh {
 	oakley_auth_t auth; /*IKEv1 AUTH*/
 	const struct integ_desc *integ;
 	const struct prf_desc *prf;
+	const struct encrypt_desc *encrypter;
 	enum original_role role;
 	size_t key_size; /* of encryptor, in bytes */
 	size_t salt_size; /* of IV salt, in bytes */
@@ -181,9 +181,7 @@ struct pcr_v1_dh {
 	wire_chunk_t nr;
 	wire_chunk_t icookie;
 	wire_chunk_t rcookie;
-	SECKEYPrivateKey *secret;
-	const struct encrypt_desc *encrypter;
-	SECKEYPublicKey *pubk;
+	struct dh_secret *secret;
 	PK11SymKey *skey_d_old;
 	const struct prf_desc *old_prf;
 
@@ -215,8 +213,7 @@ struct pcr_dh_v2 {
 	wire_chunk_t nr;
 	wire_chunk_t icookie;
 	wire_chunk_t rcookie;
-	SECKEYPrivateKey *secret;
-	SECKEYPublicKey *pubk;
+	struct dh_secret *secret;
 	PK11SymKey *skey_d_old;
 	const struct prf_desc *old_prf;
 
@@ -424,12 +421,11 @@ extern stf_status start_child_dh_v2(struct msg_digest *md,
 			      crypto_req_cont_func pcrc_func);
 
 extern bool finish_dh_v2(struct state *st,
-			 const struct pluto_crypto_req *r, bool only_shared);
+			 struct pluto_crypto_req *r, bool only_shared);
 
-extern void unpack_KE_from_helper(
-	struct state *st,
-	const struct pluto_crypto_req *r,
-	chunk_t *g);
+extern void unpack_KE_from_helper(struct state *st,
+				  struct pluto_crypto_req *r,
+				  chunk_t *g);
 
 void pcr_kenonce_init(struct pluto_crypto_req_cont *cn,
 		      enum pluto_crypto_requests pcr_type,

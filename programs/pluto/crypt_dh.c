@@ -65,23 +65,108 @@
 #include <keyhi.h>
 #include "lswnss.h"
 
+struct dh_secret {
+	const struct oakley_group_desc *group;
+	SECKEYPrivateKey *privk;
+	SECKEYPublicKey *pubk;
+};
+
+static void lswlog_dh_secret(struct lswlog *buf, struct dh_secret *secret)
+{
+	lswlogf(buf, "DH secret %s@%p: ",
+		secret->group->common.name, secret);
+}
+
+struct dh_secret *calc_dh_secret(const struct oakley_group_desc *group,
+				 chunk_t *local_ke)
+{
+	chunk_t ke = alloc_chunk(group->bytes, "local ke");
+	SECKEYPrivateKey *privk;
+	SECKEYPublicKey *pubk;
+	group->dhmke_ops->calc_secret(group, &privk, &pubk,
+				      ke.ptr, ke.len);
+	passert(privk != NULL);
+	passert(pubk != NULL);
+	*local_ke = ke;
+	struct dh_secret *secret = alloc_thing(struct dh_secret, "DH secret");
+	secret->group = group;
+	secret->privk = privk;
+	secret->pubk = pubk;
+	LSWDBGP(DBG_CRYPT, buf) {
+		lswlog_dh_secret(buf, secret);
+		lswlogs(buf, "created");
+	}
+	return secret;
+}
+
 /** Compute DH shared secret from our local secret and the peer's public value.
  * We make the leap that the length should be that of the group
  * (see quoted passage at start of ACCEPT_KE).
  * If there is something that upsets NSS (what?) we will return NULL.
  */
 /* MUST BE THREAD-SAFE */
-PK11SymKey *calc_dh_shared(const chunk_t g,	/* converted to SECItem */
-			   /*const*/ SECKEYPrivateKey *privk,	/* NSS doesn't do const */
-			   const struct oakley_group_desc *group,
-			   const SECKEYPublicKey *local_pubk)
+PK11SymKey *calc_dh_shared(struct dh_secret *secret,
+			   chunk_t remote_ke)
 {
-	PK11SymKey *dhshared = group->dhmke_ops->calc_g_ir(group, privk,
-							   local_pubk,
-							   g.ptr, g.len);
+	PK11SymKey *dhshared =
+		secret->group->dhmke_ops->calc_shared(secret->group,
+						      secret->privk,
+						      secret->pubk,
+						      remote_ke.ptr, remote_ke.len);
 	/*
 	 * The IKEv2 documentation, even for ECP, refers to "g^ir".
 	 */
+	LSWDBGP(DBG_CRYPT, buf) {
+		lswlog_dh_secret(buf, secret);
+		lswlogf(buf, "computed shared DH secret key@%p",
+			dhshared);
+	}
 	DBG(DBG_CRYPT, DBG_symkey("dh-shared ", "g^ir", dhshared));
 	return dhshared;
+}
+
+/*
+ * If needed, these functions can be tweaked to; instead of moving use
+ * a copy and/or a reference count.
+ */
+
+void transfer_dh_secret_to_state(const char *helper, struct dh_secret **secret,
+				 struct state *st)
+{
+	LSWDBGP(DBG_CRYPT, buf) {
+		lswlog_dh_secret(buf, *secret);
+		lswlogf(buf, "transfering ownership from helper %s to state #%lu",
+			helper, st->st_serialno);
+	}
+	pexpect(st->st_dh_secret == NULL);
+	st->st_dh_secret = *secret;
+	*secret = NULL;
+}
+
+void transfer_dh_secret_to_helper(struct state *st,
+				  const char *helper, struct dh_secret **secret)
+{
+	LSWDBGP(DBG_CRYPT, buf) {
+		lswlog_dh_secret(buf, st->st_dh_secret);
+		lswlogf(buf, "transfering ownership from state #%lu to helper %s",
+			st->st_serialno, helper);
+	}
+	pexpect(*secret == NULL);
+	*secret = st->st_dh_secret;
+	st->st_dh_secret = NULL;
+}
+
+void free_dh_secret(struct dh_secret **secret)
+{
+	pexpect(*secret != NULL);
+	if (*secret != NULL) {
+		LSWDBGP(DBG_CRYPT, buf) {
+			lswlog_dh_secret(buf, *secret);
+			lswlogs(buf, "destroyed");
+		}
+		SECKEY_DestroyPublicKey((*secret)->pubk);
+		SECKEY_DestroyPrivateKey((*secret)->privk);
+		pfree(*secret);
+		*secret = NULL;
+	}
 }

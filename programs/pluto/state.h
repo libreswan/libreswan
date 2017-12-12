@@ -441,33 +441,42 @@ struct state {
 	bool st_peer_alt_id;	/* scratchpad for writing we found alt peer id in CERT */
 
 	/*
-	 * Diffie-Hellman exchange values
+	 * Diffie-Hellman exchange values.
 	 *
-	 * st_sec_nss is our local ephemeral secret.  Its sole use is an input
-	 * in the calculation of the shared secret.
+	 * At any point only one of the state or a crypto helper
+	 * (request) owns the secret.
 	 *
-	 * st_gi and st_gr (above) are the initiator and responder public
-	 * values that are shipped in KE payloads.
-	 * On initiator: st_gi = GROUP_GENERATOR ^ st_sec_nss
-	 *               st_gr comes from KE
-	 * On responder: st_gi comes from KE
-	 *               st_gr = GROUP_GENERATOR ^ st_sec_nss
+	 * However, because of the way IKEv1 and IKEv2 handle the DH
+	 * exchange things get a little messy.
 	 *
-	 * st_pubk_nss is ???
+	 * In IKEv2, since DH and auth involve separate exchanges and
+	 * packets, the DH derivation code is free to 'consume' the
+	 * secret.  But it doesn't ...
 	 *
-	 * st_shared_nss is the output of the DH: an ephemeral secret
-	 * shared by the two ends.  Of course the other end might
-	 * be a man in the middle unless we authenticate.
-	 * st_shared_nss = GROUP_GENERATOR ^ (initiator's st_sec_nss * responder's st_sec_nss)
-	 *               = st_gr ^ initiator's st_sec_nss
-	 *               = sg_gi ^ responder's st_sec_nss
+	 * In IKEv1, both the the DH exchange and authentication can
+	 * be combined into a single packet.  Consequently, processing
+	 * consits of: first DH is used to derive the shared secret
+	 * from DH_SECRET and the keying material; and then
+	 * authentication is performed.  However, should
+	 * authentication fail, everything thing derived from that
+	 * packet gets discarded and this includes the DH derived
+	 * shared secret.  When the real packet arrives (or a
+	 * re-transmit), the whole process is performed again, and
+	 * using the same DH_SECRET.
+	 *
+	 * Consequently, when the crypto helper gets created, it gets
+	 * ownership of the DH_SECRET, and then when it finishes,
+	 * ownership is passed back to state.
+	 *
+	 * This all assumes that the crypto helper gets to delete
+	 * DH_SECRET iff state has already been deleted.
+	 *
+	 * (An alternative would be to reference count dh_secret; or
+	 * copy the underlying keying material using NSS, hmm, NSS).
 	 */
+	struct dh_secret *st_dh_secret;
 
 	bool st_sec_in_use;		/* bool: do st_sec_nss/st_pubk_nss hold values */
-
-	SECKEYPrivateKey *st_sec_nss;	/* our secret (owned by NSS) */
-
-	SECKEYPublicKey *st_pubk_nss;	/* DH public key (owned by NSS) */
 
 	PK11SymKey *st_shared_nss;	/* Derived shared secret
 					 * Note: during Quick Mode,
@@ -690,7 +699,6 @@ extern bool dpd_active_locally(const struct state *st);
 extern void change_state(struct state *st, enum state_kind new_state);
 
 extern bool state_busy(const struct state *st);
-extern void clear_dh_from_state(struct state *st);
 extern bool drop_new_exchanges(void);
 extern bool require_ddos_cookies(void);
 extern void show_globalstate_status(void);

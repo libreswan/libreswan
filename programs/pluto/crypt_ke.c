@@ -55,19 +55,16 @@
 #include "lswnss.h"
 #include "test_buffer.h"
 #include "ike_alg.h"
+#include "crypt_dh.h"
 
 /* MUST BE THREAD-SAFE */
 void calc_ke(struct pcr_kenonce *kn)
 {
 	const struct oakley_group_desc *group = kn->group;
 
-	kn->gi = alloc_chunk(group->bytes, "gi");
-	group->dhmke_ops->calc_ke(group, &kn->secret, &kn->pubk,
-				  kn->gi.ptr, kn->gi.len);
+	kn->secret = calc_dh_secret(kn->group, &kn->gi);
 
 	DBG(DBG_CRYPT,
-	    DBG_log("NSS: Local DH %s public value (pointer): %p",
-		    group->common.name, kn->pubk);
 	    DBG_log("NSS: Local DH %s secret (pointer): %p",
 		    group->common.name, kn->secret);
 	    DBG_dump_chunk("NSS: Public DH wire value:",
@@ -87,10 +84,7 @@ void calc_nonce(struct pcr_kenonce *kn)
 void cancelled_ke_and_nonce(struct pcr_kenonce *kn)
 {
 	if (kn->secret != NULL) {
-		SECKEY_DestroyPrivateKey(kn->secret);
-	}
-	if (kn->pubk != NULL) {
-		SECKEY_DestroyPublicKey(kn->pubk);
+		free_dh_secret(&kn->secret);
 	}
 	freeanychunk(kn->n);
 	freeanychunk(kn->gi);

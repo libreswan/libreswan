@@ -234,17 +234,14 @@ void calc_dh_v2(struct pluto_crypto_req *r)
 	const struct oakley_group_desc *group = sk->dh;
 	passert(group != NULL);
 
-	SECKEYPrivateKey *ltsecret = sk->secret;
-	SECKEYPublicKey *pubk = sk->pubk;
-
 	/* now calculate the (g^x)(g^y) --- need gi on responder, gr on initiator */
 
-	chunk_t g;
-	setchunk_from_wire(g, sk, sk->role == ORIGINAL_RESPONDER ? &sk->gi : &sk->gr);
+	chunk_t remote_ke;
+	setchunk_from_wire(remote_ke, sk, sk->role == ORIGINAL_RESPONDER ? &sk->gi : &sk->gr);
 
-	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
+	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", remote_ke));
 
-	sk->shared = calc_dh_shared(g, ltsecret, group, pubk);
+	sk->shared = calc_dh_shared(sk->secret, remote_ke);
 	if (sk->shared == NULL) {
 		return; /* something went wrong */
 	}

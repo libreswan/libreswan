@@ -54,6 +54,7 @@
 #include "id.h"
 #include "keys.h"
 #include "crypt_symkey.h" /* to get free_any_symkey */
+#include "crypt_dh.h"
 
 /*
  * invoke helper to do DH work.
@@ -82,6 +83,7 @@ stf_status start_dh_v2(struct msg_digest *md,
 	dhq->prf = st->st_oakley.ta_prf;
 	dhq->integ = st->st_oakley.ta_integ;
 	dhq->dh = st->st_oakley.ta_dh;
+	dhq->encrypt = st->st_oakley.ta_encrypt;
 	dhq->role = role;
 	dhq->key_size = st->st_oakley.enckeylen / BITS_PER_BYTE;
 	dhq->salt_size = st->st_oakley.ta_encrypt->salt_size;
@@ -99,12 +101,7 @@ stf_status start_dh_v2(struct msg_digest *md,
 	WIRE_CLONE_CHUNK(*dhq, gi, st->st_gi);
 	WIRE_CLONE_CHUNK(*dhq, gr, st->st_gr);
 
-	dhq->secret = st->st_sec_nss;
-
-	dhq->encrypt = st->st_oakley.ta_encrypt;
-	DBG(DBG_CRYPT,
-	    DBG_log("Copying DH pub key pointer to be sent to a thread helper"));
-	dhq->pubk = st->st_pubk_nss;
+	transfer_dh_secret_to_helper(st, "IKEv2 DH", &dhq->secret);
 
 	ALLOC_WIRE_CHUNK(*dhq, icookie, COOKIE_SIZE);
 	memcpy(WIRE_CHUNK_PTR(*dhq, icookie),
@@ -124,9 +121,11 @@ stf_status start_dh_v2(struct msg_digest *md,
 }
 
 bool finish_dh_v2(struct state *st,
-		  const struct pluto_crypto_req *r,  bool only_shared)
+		  struct pluto_crypto_req *r,  bool only_shared)
 {
-	const struct pcr_dh_v2 *dhv2 = &r->pcr_d.dh_v2;
+	struct pcr_dh_v2 *dhv2 = &r->pcr_d.dh_v2;
+
+	transfer_dh_secret_to_state("IKEv2 DH", &dhv2->secret, st);
 
 	if (only_shared) {
 		release_symkey(__func__, "st_shared_nss", &st->st_shared_nss);

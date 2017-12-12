@@ -73,6 +73,7 @@
 #include "ikev2.h"
 #include "secrets.h"    /* unreference_key() */
 #include "enum_names.h"
+#include "crypt_dh.h"
 
 #include <nss.h>
 #include <pk11pub.h>
@@ -1083,7 +1084,14 @@ void delete_state(struct state *st)
 	free_ikev2_proposal(&st->st_accepted_ike_proposal);
 	free_ikev2_proposal(&st->st_accepted_esp_or_ah_proposal);
 
-	clear_dh_from_state(st);
+	/*
+	 * If this state 'owns' the DH secret, release it.  If not
+	 * then it is presumably owned by a crypto-helper and that can
+	 * clean it up.
+	 */
+	if (st->st_dh_secret != NULL) {
+		free_dh_secret(&st->st_dh_secret);
+	}
 
 	/* without st_connection, st isn't complete */
 	/* from here on logging is for the wrong state */
@@ -2570,16 +2578,6 @@ bool state_busy(const struct state *st) {
 		}
 	}
 	return FALSE;
-}
-
-void clear_dh_from_state(struct state *st)
-{
-	/* when responding with INVALID_DH, we didn't do the work yet */
-	if (st->st_sec_in_use) {
-		SECKEY_DestroyPublicKey(st->st_pubk_nss);
-		SECKEY_DestroyPrivateKey(st->st_sec_nss);
-		st->st_sec_in_use = FALSE;
-	}
 }
 
 bool require_ddos_cookies(void)

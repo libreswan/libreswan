@@ -63,7 +63,7 @@
 #include "asn1.h"
 #include "crypto.h"
 #include "secrets.h"
-
+#include "crypt_dh.h"
 #include "ike_alg.h"
 #include "ike_alg_null.h"
 #include "kernel_alg.h"
@@ -87,10 +87,10 @@
  * Process KE values.
  */
 void unpack_KE_from_helper(struct state *st,
-			   const struct pluto_crypto_req *r,
+			   struct pluto_crypto_req *r,
 			   chunk_t *g)
 {
-	const struct pcr_kenonce *kn = &r->pcr_d.kn;
+	struct pcr_kenonce *kn = &r->pcr_d.kn;
 
 	/*
 	 * Should the crypto helper group and the state group be in
@@ -126,10 +126,8 @@ void unpack_KE_from_helper(struct state *st,
 	st->st_sec_in_use = TRUE;
 	freeanychunk(*g); /* happens in odd error cases */
 	*g = kn->gi;
-	DBG(DBG_CRYPT,
-	    DBG_log("saving DH priv (local secret) and pub key into state struct"));
-	st->st_sec_nss = kn->secret;
-	st->st_pubk_nss = kn->pubk;
+
+	transfer_dh_secret_to_state("KE", &kn->secret, st);
 }
 
 /* accept_KE

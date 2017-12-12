@@ -285,9 +285,6 @@ void calc_dh_iv(struct pcr_v1_dh *dh)
 	const struct oakley_group_desc *group = dh->oakley_group;
 	passert(group != NULL);
 
-	SECKEYPrivateKey *ltsecret = dh->secret;
-	SECKEYPublicKey *pubk = dh->pubk;
-
 	/*
 	 * Now calculate the (g^x)(g^y).
 	 * Need gi on responder and gr on initiator.
@@ -299,7 +296,7 @@ void calc_dh_iv(struct pcr_v1_dh *dh)
 
 	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
 
-	dh->shared = calc_dh_shared(g, ltsecret, group, pubk);
+	dh->shared = calc_dh_shared(dh->secret, g);
 
 	if (dh->shared != NULL) {
 		/* okay, so now calculate IV */

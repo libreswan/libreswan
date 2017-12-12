@@ -76,6 +76,7 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *dh,
 	dhq->auth = st->st_oakley.auth;
 	dhq->prf = st->st_oakley.ta_prf;
 	dhq->oakley_group = oakley_group2;
+	dhq->encrypter = st->st_oakley.ta_encrypt;
 	dhq->role = role;
 	dhq->key_size = st->st_oakley.enckeylen / BITS_PER_BYTE;
 	dhq->salt_size = st->st_oakley.ta_encrypt->salt_size;
@@ -88,12 +89,7 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *dh,
 	WIRE_CLONE_CHUNK(*dhq, gi, st->st_gi);
 	WIRE_CLONE_CHUNK(*dhq, gr, st->st_gr);
 
-	dhq->secret = st->st_sec_nss;
-
-	dhq->encrypter = st->st_oakley.ta_encrypt;
-	DBG(DBG_CRYPT,
-	    DBG_log("Copying DH pub key pointer to be sent to a thread helper"));
-	dhq->pubk = st->st_pubk_nss;
+	transfer_dh_secret_to_helper(st, "IKEv1 DH+IV", &dhq->secret);
 
 	ALLOC_WIRE_CHUNK(*dhq, icookie, COOKIE_SIZE);
 	memcpy(WIRE_CHUNK_PTR(*dhq, icookie),
@@ -111,6 +107,8 @@ bool finish_dh_secretiv(struct state *st,
 			struct pluto_crypto_req *r)
 {
 	struct pcr_v1_dh *dhr = &r->pcr_d.v1_dh;
+
+	transfer_dh_secret_to_state("IKEv1 DH+IV", &dhr->secret, st);
 
 	st->st_shared_nss = dhr->shared;
 	st->st_skeyid_nss = dhr->skeyid;
@@ -160,14 +158,7 @@ stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 	WIRE_CLONE_CHUNK(*dhq, gi, st->st_gi);
 	WIRE_CLONE_CHUNK(*dhq, gr, st->st_gr);
 
-	dhq->secret = st->st_sec_nss;
-
-	/*copying required encryption algo*/
-	/* XXX Avesh: you commented this out on purpose or by accident ?? */
-	/*dhq->encrypter = st->st_oakley.ta_encrypt;*/
-	DBG(DBG_CRYPT,
-	    DBG_log("Copying DH pub key pointer to be sent to a thread helper"));
-	dhq->pubk = st->st_pubk_nss;
+	transfer_dh_secret_to_helper(st, "IKEv1 DH", &dhq->secret);
 
 	ALLOC_WIRE_CHUNK(*dhq, icookie, COOKIE_SIZE);
 	memcpy(WIRE_CHUNK_PTR(*dhq, icookie),
@@ -187,24 +178,18 @@ void calc_dh(struct pcr_v1_dh *dh)
 	const struct oakley_group_desc *group = dh->oakley_group;
 	passert(group != NULL);
 
-	SECKEYPrivateKey *ltsecret = dh->secret;
-	SECKEYPublicKey *pubk = dh->pubk;
-
 	/* now calculate the (g^x)(g^y) */
-
 	chunk_t g;
-
 	setchunk_from_wire(g, dh, dh->role == ORIGINAL_RESPONDER ? &dh->gi : &dh->gr);
-
 	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
 
-	dh->shared = calc_dh_shared(g, ltsecret, group, pubk);
+	dh->shared = calc_dh_shared(dh->secret, g);
 }
 
 void finish_dh_secret(struct state *st,
 		      struct pluto_crypto_req *r)
 {
 	struct pcr_v1_dh *dhr = &r->pcr_d.v1_dh;
-
+	transfer_dh_secret_to_state("IKEv1 DH", &dhr->secret, st);
 	st->st_shared_nss = dhr->shared;
 }

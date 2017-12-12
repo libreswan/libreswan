@@ -70,7 +70,7 @@
 #include "crypt_hash.h"
 #include "ikev2_ipseckey.h"
 #include "xauth.h"
-
+#include "crypt_dh.h"
 #include "ietf_constants.h"
 
 #include "hostpair.h"
@@ -1822,7 +1822,7 @@ stf_status ikev2parent_inR1BoutI1B(struct state *st, struct msg_digest *md)
 				});
 				st->st_oakley.ta_dh = new_group;
 				/* wipe our mismatched KE */
-				clear_dh_from_state(st);
+				free_dh_secret(&st->st_dh_secret);
 				/* wipe out any saved RCOOKIE */
 				DBG(DBG_CONTROLMORE, DBG_log("zeroing any RCOOKIE from unauthenticated INVALID_KE packet"));
 				rehash_state(st, NULL, zero_cookie);
