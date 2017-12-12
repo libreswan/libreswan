@@ -1002,7 +1002,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	if (c->spd.that.has_lease &&
 			md->chain[ISAKMP_NEXT_v2CP] != NULL &&
 			cst->st_state != STATE_V2_REKEY_IKE_R) {
-		ikev2_send_cp(c, ISAKMP_NEXT_v2SA, outpbs);
+		ikev2_send_cp(pst, ISAKMP_NEXT_v2SA, outpbs);
 	} else if (md->chain[ISAKMP_NEXT_v2CP] != NULL) {
 		DBG(DBG_CONTROL, DBG_log("#%lu %s ignoring unexpected v2CP payload",
 					cst->st_serialno,
@@ -1190,10 +1190,9 @@ static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st, int af)
 	err_t ugh = initaddr(cp_a_pbs->cur, pbs_left(cp_a_pbs), af, &ip);
 	bool responder = (st->st_state != STATE_PARENT_I2);
 
-	if ((ugh != NULL && st->st_state == STATE_PARENT_I2) || isanyaddr(&ip)) {
+	if ((ugh != NULL && st->st_state == STATE_PARENT_I2)) {
 		libreswan_log("ERROR INTERNAL_IP%s_DNS malformed: %s",
-			af == AF_INET ? "4" : "6",
-			ugh == NULL ? ipstr(&ip, &ip_str) : ugh);
+			af == AF_INET ? "4" : "6", ugh);
 		return FALSE;
 	}
 
@@ -1313,13 +1312,13 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
 		loglog(RC_LOG_SERIOUS, "ERROR expected IKEv2_CP_CFG_REPLY got a %s",
 			enum_name(&ikev2_cp_type_names,cp->isacp_type));
 		return FALSE;
-	} 
+	}
 	if (st->st_state == STATE_PARENT_R1 && cp->isacp_type !=  IKEv2_CP_CFG_REQUEST) {
 		libreswan_log("ERROR expected IKEv2_CP_CFG_REQUEST got a %s",
 			enum_name(&ikev2_cp_type_names,cp->isacp_type));
 		return FALSE;
 	}
- 
+
 	while (pbs_left(attrs) > 0) {
 		struct ikev2_cp_attribute cp_a;
 		pb_stream cp_a_pbs;
@@ -1341,21 +1340,21 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
 		case IKEv2_INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
 			if (!ikev2_set_dns(&cp_a_pbs, st, AF_INET)) {
 				loglog(RC_LOG_SERIOUS, "ERROR malformed INTERNAL_IP4_DNS attribute");
-				return FALSE; 
+				return FALSE;
 			}
 			break;
 
 		case IKEv2_INTERNAL_IP6_ADDRESS | ISAKMP_ATTR_AF_TLV:
 			if (!ikev2_set_ia(&cp_a_pbs, st, AF_INET6)) {
 				loglog(RC_LOG_SERIOUS, "ERROR malformed INTERNAL_IP6_ADDRESS attribute");
-				return FALSE; 
+				return FALSE;
 			}
 			break;
 
 		case IKEv2_INTERNAL_IP6_DNS | ISAKMP_ATTR_AF_TLV:
 			if (!ikev2_set_dns(&cp_a_pbs, st, AF_INET6)) {
 				loglog(RC_LOG_SERIOUS, "ERROR malformed INTERNAL_IP6_DNS attribute");
-				return FALSE; 
+				return FALSE;
 			}
 			break;
 		case IKEv2_INTERNAL_DNS_DOMAIN | ISAKMP_ATTR_AF_TLV:

@@ -1666,8 +1666,6 @@ void add_connection(const struct whack_message *wm)
 
 		c->modecfg_dns1 = wm->modecfg_dns1;
 		c->modecfg_dns2 = wm->modecfg_dns2;
-		libreswan_log("PAUL: internal_domain1 %s internal_domain2 %s",
-			wm->internal_domain1, wm->internal_domain2);
 		c->internal_domain1 = wm->internal_domain1;
 		c->internal_domain2 = wm->internal_domain2;
 		c->modecfg_domain = wm->modecfg_domain;
