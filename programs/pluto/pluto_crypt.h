@@ -273,13 +273,6 @@ struct pluto_crypto_req_cont;	/* forward reference */
  *      This function is responsible for either releasing or
  *      transfering ownership of the MD.
  *
- * struct pluto_crypto_req_cont *c:
- *
- *      Move along, nothing to see.
- *
- *	Some code still seems to accesses this structures internals.
- *	There is no clear reason why.
- *
  * struct pluto_crypto_req *r:
  *
  *	The results from the crypto operation.
@@ -292,8 +285,8 @@ struct pluto_crypto_req_cont;	/* forward reference */
  */
 
 typedef void crypto_req_cont_func(struct state *st, struct msg_digest *md,
-				  struct pluto_crypto_req_cont *c,
 				  struct pluto_crypto_req *r);
+
 /* struct pluto_crypto_req_cont allocators */
 
 struct state;

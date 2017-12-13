@@ -881,7 +881,6 @@ static stf_status main_inR1_outI2_tail(struct state *st, struct msg_digest *md,
 static crypto_req_cont_func main_inR1_outI2_continue;	/* type assertion */
 
 static void main_inR1_outI2_continue(struct state *st, struct msg_digest *md,
-				     struct pluto_crypto_req_cont *ke UNUSED,
 				     struct pluto_crypto_req *r)
 {
 	pexpect(st == md->st);
@@ -1070,7 +1069,6 @@ static stf_status main_inI2_outR2_tail(struct state *st, struct msg_digest *md,
 static crypto_req_cont_func main_inI2_outR2_continue;	/* type assertion */
 
 static void main_inI2_outR2_continue(struct state *st, struct msg_digest *md,
-				     struct pluto_crypto_req_cont *ke UNUSED,
 				     struct pluto_crypto_req *r)
 {
 	pexpect(st == md->st);
@@ -1128,7 +1126,6 @@ stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
 static crypto_req_cont_func main_inI2_outR2_calcdone;	/* type assertion */
 
 static void main_inI2_outR2_calcdone(struct state *st, struct msg_digest *md UNUSED,
-				     struct pluto_crypto_req_cont *dh UNUSED,
 				     struct pluto_crypto_req *r)
 {
 	DBG(DBG_CONTROL,
@@ -1562,7 +1559,6 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 static crypto_req_cont_func main_inR2_outI3_cryptotail;	/* type assertion */
 
 static void main_inR2_outI3_cryptotail(struct state *st, struct msg_digest *md,
-				       struct pluto_crypto_req_cont *dh UNUSED,
 				       struct pluto_crypto_req *r)
 {
 	pexpect(st == md->st);

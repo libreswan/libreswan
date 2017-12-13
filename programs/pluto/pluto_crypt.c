@@ -507,7 +507,7 @@ static void inline_worker(void *arg)
 
 		/* call the continuation */
 		so_serial_t old_state = push_cur_state(st);
-		(*cn->pcrc_func)(st, cn->pcrc_md, cn, &cn->pcrc_pcr);
+		(*cn->pcrc_func)(st, cn->pcrc_md, &cn->pcrc_pcr);
 		pop_cur_state(old_state);
 
 		pfree(cn);
@@ -875,7 +875,7 @@ static void handle_helper_answer(void *arg)
 		 * own, probably dead, code for deleting MD et.al.
 		 */
 		so_serial_t old_state = push_cur_state(st);
-		(*cn->pcrc_func)(st, cn->pcrc_md, cn, &cn->pcrc_pcr);
+		(*cn->pcrc_func)(st, cn->pcrc_md, &cn->pcrc_pcr);
 		pop_cur_state(old_state);
 	}
 
