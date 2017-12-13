@@ -126,8 +126,9 @@ bool finish_dh_secretiv(struct state *st,
 	} else {
 		passert(dhr->new_iv.len <= MAX_DIGEST_LEN);
 		passert(dhr->new_iv.len > 0);
-		memcpy(st->st_new_iv, WIRE_CHUNK_PTR(*dhr, new_iv), dhr->new_iv.len);
+		memcpy(st->st_new_iv, dhr->new_iv.ptr, dhr->new_iv.len);
 		st->st_new_iv_len = dhr->new_iv.len;
+		freeanychunk(dhr->new_iv);
 		return TRUE;
 	}
 }
@@ -190,7 +191,6 @@ void calc_dh(struct pluto_crypto_req *r)
 	/* clear out the reply */
 	struct pcr_skeyid_r *skr = &r->pcr_d.dhr;
 	zero(skr);	/* ??? pointer fields might not be NULLed */
-	INIT_WIRE_ARENA(*skr);
 
 	const struct oakley_group_desc *group = dhq.oakley_group;
 	passert(group != NULL);

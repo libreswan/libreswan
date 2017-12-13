@@ -190,7 +190,6 @@ struct pcr_skeyid_q {
 
 /* response */
 struct pcr_skeyid_r {
-	DECLARE_WIRE_ARENA(DHCALC_SIZE);
 
 	PK11SymKey *shared;
 	PK11SymKey *skeyid;
@@ -199,7 +198,7 @@ struct pcr_skeyid_r {
 	PK11SymKey *skeyid_e;
 	PK11SymKey *enc_key;
 
-	wire_chunk_t new_iv;
+	chunk_t new_iv;
 };
 
 /* response */

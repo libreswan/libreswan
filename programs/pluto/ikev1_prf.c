@@ -289,7 +289,6 @@ void calc_dh_iv(struct pluto_crypto_req *r)
 	/* clear out the reply */
 	struct pcr_skeyid_r *const skr = &r->pcr_d.dhr;
 	zero(skr);	/* ??? pointer fields may not be NULLed */
-	INIT_WIRE_ARENA(*skr);
 
 	const struct oakley_group_desc *group = dhq.oakley_group;
 	passert(group != NULL);
@@ -311,8 +310,6 @@ void calc_dh_iv(struct pluto_crypto_req *r)
 	skr->shared = calc_dh_shared(g, ltsecret, group, pubk);
 
 	if (skr->shared != NULL) {
-		chunk_t new_iv = empty_chunk;
-
 		/* okay, so now calculate IV */
 		calc_skeyids_iv(&dhq,
 			skr->shared,
@@ -322,11 +319,8 @@ void calc_dh_iv(struct pluto_crypto_req *r)
 			&skr->skeyid_d,	/* output */
 			&skr->skeyid_a,	/* output */
 			&skr->skeyid_e,	/* output */
-			&new_iv,	/* output */
+			&skr->new_iv,	/* output */
 			&skr->enc_key	/* output */
 			);
-
-		WIRE_CLONE_CHUNK(*skr, new_iv, new_iv);
-		freeanychunk(new_iv);
 	}
 }
