@@ -790,6 +790,10 @@ static void unshare_connection(struct connection *c)
 				"connection cisco_dns_info");
 	c->modecfg_domain = clone_str(c->modecfg_domain,
 				"connection modecfg_domain");
+	c->internal_domain1 = clone_str(c->internal_domain1,
+				"connection internal domain1");
+	c->internal_domain2 = clone_str(c->internal_domain2,
+				"connection internal domain1");
 	c->modecfg_banner = clone_str(c->modecfg_banner,
 				"connection modecfg_banner");
 #ifdef HAVE_LABELED_IPSEC
@@ -1662,6 +1666,8 @@ void add_connection(const struct whack_message *wm)
 
 		c->modecfg_dns1 = wm->modecfg_dns1;
 		c->modecfg_dns2 = wm->modecfg_dns2;
+		c->internal_domain1 = wm->internal_domain1;
+		c->internal_domain2 = wm->internal_domain2;
 		c->modecfg_domain = wm->modecfg_domain;
 		c->modecfg_banner = wm->modecfg_banner;
 
@@ -4039,6 +4045,13 @@ static void show_one_sr(const struct connection *c,
 		sr->this.cat ? "set" : "unset");
 
 #undef COMBO
+
+	whack_log(RC_COMMENT,
+		"\"%s\"%s:   internal domain1:%s, domain2:%s;",
+		c->name, instance,
+		c->internal_domain1,
+		c->internal_domain2
+		);
 
 	if (c->modecfg_banner != NULL) {
 		whack_log(RC_COMMENT, "\"%s\"%s: banner:%s;",

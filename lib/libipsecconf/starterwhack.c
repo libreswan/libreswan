@@ -672,6 +672,9 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" modecfgbanner=%s",
 		conn->name, msg.modecfg_banner);
 
+	msg.internal_domain1 = conn->internal_domain1;
+	msg.internal_domain2 = conn->internal_domain2;
+
 	msg.conn_mark_both = conn->conn_mark_both;
 	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" mark=%s",
 		conn->name, msg.conn_mark_both);
@@ -711,6 +714,8 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 			starter_log(LOG_LEVEL_ERR,
 				"Ignoring modecfgdns2= entry, it is not a valid IPv4 or IPv6 address");
 	}
+
+	/* add sanity check for internal_dns / internal_domain */
 
 	set_whack_end("left",  &msg.left, &conn->left);
 	set_whack_end("right", &msg.right, &conn->right);

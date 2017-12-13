@@ -2639,11 +2639,37 @@ static stf_status ikev2_ship_cp_attr_ip4(u_int16_t type, ip_address *ip4,
 	return STF_OK;
 }
 
-stf_status ikev2_send_cp(struct connection *c, enum next_payload_types_ikev2 np,
+static stf_status ikev2_ship_cp_attr_str(u_int16_t type, char *str,
+		const char *story, pb_stream *outpbs)
+{
+	struct ikev2_cp_attribute attr;
+	pb_stream a_pbs;
+
+	attr.type = type;
+	if (str == NULL)
+		attr.len = 0;
+	else
+		attr.len = strlen(str);
+
+	if (!out_struct(&attr, &ikev2_cp_attribute_desc, outpbs,
+				&a_pbs))
+		return STF_INTERNAL_ERROR;
+
+	if (attr.len > 0) {
+		if (!out_raw(str, attr.len, &a_pbs, story))
+			return STF_INTERNAL_ERROR;
+	}
+
+	close_output_pbs(&a_pbs);
+	return STF_OK;
+}
+
+stf_status ikev2_send_cp(struct state *st, enum next_payload_types_ikev2 np,
 				  pb_stream *outpbs)
 {
 	struct ikev2_cp cp;
 	pb_stream cp_pbs;
+	struct connection *c = st->st_connection;
 	bool cfg_reply = c->spd.that.has_lease;
 
 	DBG(DBG_CONTROLMORE, DBG_log("Send Configuration Payload %s ",
@@ -2656,11 +2682,11 @@ stf_status ikev2_send_cp(struct connection *c, enum next_payload_types_ikev2 np,
 	if (!out_struct(&cp, &ikev2_cp_desc, outpbs, &cp_pbs))
 		return STF_INTERNAL_ERROR;
 
-	ikev2_ship_cp_attr_ip4(IKEv2_INTERNAL_IP4_ADDRESS,
-			cfg_reply ? &c->spd.that.client.addr : NULL,
+	if (cfg_reply) {
+		ikev2_ship_cp_attr_ip4(IKEv2_INTERNAL_IP4_ADDRESS,
+			&c->spd.that.client.addr,
 			"IPV4 Address", &cp_pbs);
 
-	if (cfg_reply) {
 		if (!isanyaddr(&c->modecfg_dns1)) {
 			ikev2_ship_cp_attr_ip4(IKEv2_INTERNAL_IP4_DNS, &c->modecfg_dns1,
 					"DNS 1", &cp_pbs);
@@ -2670,7 +2696,17 @@ stf_status ikev2_send_cp(struct connection *c, enum next_payload_types_ikev2 np,
 					"DNS 2", &cp_pbs);
 		}
 	} else {
+		ikev2_ship_cp_attr_ip4(IKEv2_INTERNAL_IP4_ADDRESS,
+			 NULL, "IPV4 Address", &cp_pbs);
 		ikev2_ship_cp_attr_ip4(IKEv2_INTERNAL_IP4_DNS, NULL, "DNS", &cp_pbs);
+	}
+
+	if (st->st_seen_internal_domain) {
+		/* configured means sent by server or requested limitation by client */
+		ikev2_ship_cp_attr_str(IKEv2_INTERNAL_DNS_DOMAIN, c->internal_domain1,
+				"INTERNAL DOMAIN 1", &cp_pbs);
+		ikev2_ship_cp_attr_str(IKEv2_INTERNAL_DNS_DOMAIN, c->internal_domain2,
+				"INTERNAL DOMAIN 2", &cp_pbs);
 	}
 
 	close_output_pbs(&cp_pbs);
@@ -2949,18 +2985,16 @@ static stf_status ikev2_record_fragments(struct msg_digest *md,
 static int ikev2_np_cp_or_sa(struct connection *const pc, int np, const lset_t
 	   st_nat_traversal)
 {
-	int rnp = np;
-
 	if (pc->spd.this.modecfg_client) {
 		if (pc->spd.this.cat) {
 			if (LHAS(st_nat_traversal, NATED_HOST)) {
-				rnp = ISAKMP_NEXT_v2CP;
+				return ISAKMP_NEXT_v2CP;
 			}
 		} else {
-			rnp = ISAKMP_NEXT_v2CP;
+			return ISAKMP_NEXT_v2CP;
 		}
 	}
-	return rnp;
+	return np;
 }
 
 static stf_status ikev2_parent_inR1outI2_tail(
@@ -3204,7 +3238,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	}
 
 	if (send_cp_r == ISAKMP_NEXT_v2CP) {
-		stf_status cpstat = ikev2_send_cp(pc, ISAKMP_NEXT_v2SA,
+		stf_status cpstat = ikev2_send_cp(pst, ISAKMP_NEXT_v2SA,
 				&e_pbs_cipher);
 
 		if (cpstat != STF_OK)
@@ -3288,7 +3322,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		}
 
 		if (cc->send_no_esp_tfc) {
-			if (!ship_v2N(ISAKMP_NEXT_v2NONE,
+			if (!ship_v2N( (cc->internal_domain1 != NULL) ? ISAKMP_NEXT_v2CP : ISAKMP_NEXT_v2NONE,
 					ISAKMP_PAYLOAD_NONCRITICAL,
 					PROTO_v2_RESERVED,
 					&empty_chunk,
@@ -3296,6 +3330,14 @@ static stf_status ikev2_parent_inR1outI2_tail(
 					&e_pbs_cipher))
 				return STF_INTERNAL_ERROR;
 		}
+
+
+		/* send CP payload */
+		if (cc->internal_domain1 != NULL) {
+			ikev2_send_cp(pst, ISAKMP_NEXT_v2NONE, &e_pbs_cipher);
+		}
+
+
 	}
 
 	const unsigned int len = pbs_offset(&e_pbs_cipher);
@@ -3557,6 +3599,14 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("received CERTREQ payload; going to decode it"));
 		ikev2_decode_cr(md);
+	}
+
+	/* process CP payloads */
+	if (md->chain[ISAKMP_NEXT_v2CP] != NULL) {
+		if (!ikev2_parse_cp_r_body(md->chain[ISAKMP_NEXT_v2CP], st))
+		{
+			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+		}
 	}
 
 	/* process AUTH payload */

@@ -587,6 +587,9 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "modecfgdns1",  kv_conn,  kt_string,  KSCF_MODECFGDNS1, NULL, NULL, },
   { "modecfgdns2",  kv_conn,  kt_string,  KSCF_MODECFGDNS2, NULL, NULL, },
 
+  { "internaldomain1",  kv_conn,  kt_string,  KSCF_INTERNALDOMAIN1,  NULL, NULL },
+  { "internaldomain2",  kv_conn,  kt_string,  KSCF_INTERNALDOMAIN2,  NULL, NULL },
+
   { "modecfgdomain",  kv_conn,  kt_string,  KSCF_MODECFGDOMAIN, NULL, NULL, },
   { "modecfgbanner",  kv_conn,  kt_string,  KSCF_MODECFGBANNER, NULL, NULL, },
   { "mark",  kv_conn,  kt_string,  KSCF_CONN_MARK_BOTH, NULL, NULL, },
