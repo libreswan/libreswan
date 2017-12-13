@@ -300,7 +300,7 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 	static const int so_prio = 6; /* rumored maximum priority, might be 7 on linux? */
 
 	if (fd < 0) {
-		LOG_ERRNO(errno, "socket() in process_raw_ifaces()");
+		LOG_ERRNO(errno, "socket() in create_socket()");
 		return -1;
 	}
 
@@ -308,7 +308,9 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 	if ((fcntl_flags = fcntl(fd, F_GETFL)) >= 0) {
 		if (!(fcntl_flags & O_NONBLOCK)) {
 			fcntl_flags |= O_NONBLOCK;
-			fcntl(fd, F_SETFL, fcntl_flags);
+			if (fcntl(fd, F_SETFL, fcntl_flags) == -1) {
+				LOG_ERRNO(errno, "fcntl(,, O_NONBLOCK) in create_socket()");
+			}
 		}
 	}
 
