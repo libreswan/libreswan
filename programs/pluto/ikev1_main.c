@@ -875,13 +875,13 @@ stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
  *
  */
 
-static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *ke,
-				struct pluto_crypto_req *r);
+static stf_status main_inR1_outI2_tail(struct state *st, struct msg_digest *md,
+				       struct pluto_crypto_req *r);
 
 static crypto_req_cont_func main_inR1_outI2_continue;	/* type assertion */
 
 static void main_inR1_outI2_continue(struct state *st, struct msg_digest *md,
-				     struct pluto_crypto_req_cont *ke,
+				     struct pluto_crypto_req_cont *ke UNUSED,
 				     struct pluto_crypto_req *r)
 {
 	pexpect(st == md->st);
@@ -898,7 +898,7 @@ static void main_inR1_outI2_continue(struct state *st, struct msg_digest *md,
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
-	e = main_inR1_outI2_tail(ke, r);
+	e = main_inR1_outI2_tail(st, md, r);
 
 	passert(md != NULL);
 	complete_v1_state_transition(&md, e);
@@ -982,12 +982,9 @@ bool ikev1_ship_KE(struct state *st,
  *
  * We must verify that the proposal received matches one we sent.
  */
-static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *ke,
-				struct pluto_crypto_req *r)
+static stf_status main_inR1_outI2_tail(struct state *st, struct msg_digest *md,
+				       struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = ke->pcrc_md;
-	struct state *const st = md->st;
-
 	/* Build output packet HDR;KE;Ni */
 	zero(&reply_buffer);	/* redundant */
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
@@ -1066,13 +1063,14 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *ke,
  *	    [,<<Cert-I_b>Ke_i]
  *	    --> HDR, <Nr_b>PubKey_i, <KE_b>Ke_r, <IDr1_b>Ke_r
  */
-static stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *ke,
-				struct pluto_crypto_req *r);
+
+static stf_status main_inI2_outR2_tail(struct state *st, struct msg_digest *md,
+				       struct pluto_crypto_req *r);
 
 static crypto_req_cont_func main_inI2_outR2_continue;	/* type assertion */
 
 static void main_inI2_outR2_continue(struct state *st, struct msg_digest *md,
-				     struct pluto_crypto_req_cont *ke,
+				     struct pluto_crypto_req_cont *ke UNUSED,
 				     struct pluto_crypto_req *r)
 {
 	pexpect(st == md->st);
@@ -1088,7 +1086,7 @@ static void main_inI2_outR2_continue(struct state *st, struct msg_digest *md,
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
-	e = main_inI2_outR2_tail(ke, r);
+	e = main_inI2_outR2_tail(st, md, r);
 
 	passert(md != NULL);
 	complete_v1_state_transition(&md, e);
@@ -1157,12 +1155,9 @@ static void main_inI2_outR2_calcdone(struct state *st, struct msg_digest *md UNU
 	reset_cur_state();
 }
 
-stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *ke,
+stf_status main_inI2_outR2_tail(struct state *st, struct msg_digest *md,
 				struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = ke->pcrc_md;
-	struct state *st = md->st;
-
 #ifdef FIPS_CHECK
 	if (libreswan_fipsmode() && st->st_oakley.ta_prf == NULL) {
 		loglog(RC_LOG_SERIOUS,

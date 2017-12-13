@@ -1053,13 +1053,14 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
  * Initiate an Oakley Aggressive Mode exchange.
  * --> HDR, SA, KE, Ni, IDii
  */
-static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *ke,
-				  struct pluto_crypto_req *r);	/* forward */
+
+static stf_status aggr_outI1_tail(struct state *st, struct msg_digest *md,
+				  struct pluto_crypto_req *r);
 
 static crypto_req_cont_func aggr_outI1_continue;	/* type assertion */
 
 static void aggr_outI1_continue(struct state *st, struct msg_digest *md,
-				struct pluto_crypto_req_cont *ke,
+				struct pluto_crypto_req_cont *ke UNUSED,
 				struct pluto_crypto_req *r)
 {
 	pexpect(st == md->st);
@@ -1076,7 +1077,7 @@ static void aggr_outI1_continue(struct state *st, struct msg_digest *md,
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
-	e = aggr_outI1_tail(ke, r);
+	e = aggr_outI1_tail(st, md, r);
 
 	passert(md != NULL);
 	complete_v1_state_transition(&md, e);
@@ -1206,11 +1207,9 @@ stf_status aggr_outI1(int whack_sock,
 	}
 }
 
-static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *ke,
+static stf_status aggr_outI1_tail(struct state *st, struct msg_digest *md,
 				  struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = ke->pcrc_md;
-	struct state *const st = md->st;
 	struct connection *c = st->st_connection;
 	cert_t mycert = c->spd.this.cert;
 	bool send_cr = mycert.ty != CERT_NONE && mycert.u.nss_cert != NULL &&
