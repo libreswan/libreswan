@@ -895,9 +895,6 @@ static void main_inR1_outI2_continue(struct state *st, struct msg_digest *md,
 	passert(st->st_suspended_md == ke->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
 
-	so_serial_t old_serialno = push_cur_state(st);
-	pexpect(old_serialno == SOS_NOBODY);
-
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
@@ -906,8 +903,6 @@ static void main_inR1_outI2_continue(struct state *st, struct msg_digest *md,
 	passert(ke->pcrc_md != NULL);
 	complete_v1_state_transition(&ke->pcrc_md, e);
 	release_any_md(&ke->pcrc_md);
-
-	reset_cur_state();
 }
 
 stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
@@ -1091,9 +1086,6 @@ static void main_inI2_outR2_continue(struct state *st, struct msg_digest *md,
 	passert(st->st_suspended_md == ke->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
 
-	so_serial_t old_serialno = push_cur_state(st);
-	pexpect(old_serialno == SOS_NOBODY);
-
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 	e = main_inI2_outR2_tail(ke, r);
@@ -1101,7 +1093,6 @@ static void main_inI2_outR2_continue(struct state *st, struct msg_digest *md,
 	passert(ke->pcrc_md != NULL);
 	complete_v1_state_transition(&ke->pcrc_md, e);
 	release_any_md(&ke->pcrc_md);
-	reset_cur_state();
 }
 
 stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
@@ -1590,9 +1581,6 @@ static void main_inR2_outI3_cryptotail(struct state *st, struct msg_digest *md,
 	passert(st->st_suspended_md == dh->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
 
-	so_serial_t old_serialno = push_cur_state(st);
-	pexpect(old_serialno == SOS_NOBODY);
-
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
@@ -1603,7 +1591,6 @@ static void main_inR2_outI3_cryptotail(struct state *st, struct msg_digest *md,
 		complete_v1_state_transition(&dh->pcrc_md, e);
 		release_any_md(&dh->pcrc_md);
 	}
-	reset_cur_state();
 }
 
 stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)

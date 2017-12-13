@@ -466,13 +466,9 @@ static void inline_worker(void *arg)
 		cn->pcrc_reply_buffer = NULL;
 
 		/* call the continuation */
-#if 0
 		so_serial_t old_state = push_cur_state(st);
-#endif
 		(*cn->pcrc_func)(st, cn->pcrc_md, cn, &cn->pcrc_pcr);
-#if 0
 		pop_cur_state(old_state);
-#endif
 
 		pfree(cn);
 	}
@@ -838,13 +834,9 @@ static void handle_helper_answer(void *arg)
 		 * Currently each individual .pcrc_func contains its
 		 * own, probably dead, code for deleting MD et.al.
 		 */
-#if 0
 		so_serial_t old_state = push_cur_state(st);
-#endif
 		(*cn->pcrc_func)(st, cn->pcrc_md, cn, &cn->pcrc_pcr);
-#if 0
 		pop_cur_state(old_state);
-#endif
 	}
 
 	/* now free up the continuation */

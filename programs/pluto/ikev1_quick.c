@@ -745,10 +745,6 @@ static void quick_outI1_continue(struct state *st, struct msg_digest *md UNUSED,
 
 	passert(st != NULL);
 
-
-	so_serial_t old_serialno = push_cur_state(st); /* we must reset before exit */
-	pexpect(old_serialno == SOS_NOBODY);
-
 	unset_suspended(st);
 	e = quick_outI1_tail(qke, r, st);
 
@@ -761,8 +757,6 @@ static void quick_outI1_continue(struct state *st, struct msg_digest *md UNUSED,
 		       "%s: quick_outI1_tail() failed with STF_INTERNAL_ERROR",
 		       __FUNCTION__);
 	}
-
-	reset_globals();
 }
 
 stf_status quick_outI1(int whack_sock,
@@ -1517,9 +1511,6 @@ static void quick_inI1_outR1_cryptocontinue1(struct state *st, struct msg_digest
 
 	passert(st->st_connection != NULL);
 
-	so_serial_t old_serialno = push_cur_state(st); /* we must reset before exit */
-	pexpect(old_serialno == SOS_NOBODY);
-
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 	unset_suspended(st);
@@ -1563,7 +1554,6 @@ static void quick_inI1_outR1_cryptocontinue1(struct state *st, struct msg_digest
 			release_any_md(&md);
 		}
 	}
-	reset_cur_state();
 	/* ??? why does our caller not care about e? */
 }
 
@@ -1583,9 +1573,6 @@ static void quick_inI1_outR1_cryptocontinue2(struct state *st, struct msg_digest
 
 	passert(st->st_connection != NULL);
 
-	so_serial_t old_serialno = push_cur_state(st); /* we must reset before exit */
-	pexpect(old_serialno == SOS_NOBODY);
-
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 	unset_suspended(st);
@@ -1594,8 +1581,6 @@ static void quick_inI1_outR1_cryptocontinue2(struct state *st, struct msg_digest
 	passert(dh->pcrc_md != NULL);
 	complete_v1_state_transition(&dh->pcrc_md, e);
 	release_any_md(&dh->pcrc_md);
-
-	reset_cur_state();
 }
 
 static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
@@ -1848,9 +1833,6 @@ static void quick_inR1_outI2_continue(struct state *st, struct msg_digest *md,
 
 	passert(st->st_connection != NULL);
 
-	so_serial_t old_serialno = push_cur_state(st); /* we must reset before exit */
-	pexpect(old_serialno == SOS_NOBODY);
-
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 	unset_suspended(st);
@@ -1860,7 +1842,6 @@ static void quick_inR1_outI2_continue(struct state *st, struct msg_digest *md,
 	passert(dh->pcrc_md != NULL);
 	complete_v1_state_transition(&dh->pcrc_md, e);
 	release_any_md(&dh->pcrc_md);
-	reset_cur_state();
 }
 
 stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,

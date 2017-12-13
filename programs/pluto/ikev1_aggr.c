@@ -120,9 +120,6 @@ static void aggr_inI1_outR1_continue2(struct state *st, struct msg_digest *md,
 	passert(st->st_suspended_md == dh->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
 
-	so_serial_t old_serialno = push_cur_state(st);
-	pexpect(old_serialno == SOS_NOBODY);
-
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
@@ -131,7 +128,6 @@ static void aggr_inI1_outR1_continue2(struct state *st, struct msg_digest *md,
 	passert(dh->pcrc_md != NULL);
 	complete_v1_state_transition(&dh->pcrc_md, e);
 	release_any_md(&dh->pcrc_md);
-	reset_cur_state();
 }
 
 /*
@@ -152,9 +148,6 @@ static void aggr_inI1_outR1_continue1(struct state *st, struct msg_digest *md,
 	    DBG_log("aggr inI1_outR1: calculated ke+nonce, calculating DH"));
 
 	unset_suspended(st); /* no longer connected or suspended */
-
-	so_serial_t old_serialno = push_cur_state(st);
-	pexpect(old_serialno == SOS_NOBODY);
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
@@ -183,8 +176,6 @@ static void aggr_inI1_outR1_continue1(struct state *st, struct msg_digest *md,
 			complete_v1_state_transition(&md, e);
 			release_any_md(&md);
 		}
-
-		reset_cur_state();
 	}
 }
 
@@ -706,9 +697,6 @@ static void aggr_inR1_outI2_crypto_continue(struct state *st, struct msg_digest 
 	passert(st->st_suspended_md == dh->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
 
-	so_serial_t old_serialno = push_cur_state(st);
-	pexpect(old_serialno == SOS_NOBODY);
-
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
@@ -721,7 +709,6 @@ static void aggr_inR1_outI2_crypto_continue(struct state *st, struct msg_digest 
 	passert(dh->pcrc_md != NULL);
 	complete_v1_state_transition(&dh->pcrc_md, e);
 	release_any_md(&dh->pcrc_md);
-	reset_cur_state();
 }
 
 static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
@@ -1086,9 +1073,6 @@ static void aggr_outI1_continue(struct state *st, struct msg_digest *md,
 	passert(st->st_suspended_md == ke->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
 
-	so_serial_t old_serialno = push_cur_state(st);
-	pexpect(old_serialno == SOS_NOBODY);
-
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
@@ -1097,9 +1081,6 @@ static void aggr_outI1_continue(struct state *st, struct msg_digest *md,
 	passert(ke->pcrc_md != NULL);
 	complete_v1_state_transition(&ke->pcrc_md, e);
 	release_any_md(&ke->pcrc_md);
-	reset_globals();
-
-	passert(globals_are_reset());
 }
 
 /* No initial state for aggr_outI1:
