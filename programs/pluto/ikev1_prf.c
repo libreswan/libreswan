@@ -187,7 +187,7 @@ static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf_desc,
  * See draft-ietf-ipsec-ike-01.txt 4.1
  */
 /* MUST BE THREAD-SAFE */
-static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
+static void calc_skeyids_iv(struct pcr_v1_dh *skq,
 			    /*const*/ PK11SymKey *shared,	/* NSS doesn't do const */
 			    const size_t keysize,	/* = st->st_oakley.enckeylen/BITS_PER_BYTE; */
 			    PK11SymKey **skeyid_out,	/* output */
@@ -280,21 +280,13 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 }
 
 /* MUST BE THREAD-SAFE */
-void calc_dh_iv(struct pluto_crypto_req *r)
+void calc_dh_iv(struct pcr_v1_dh *dh)
 {
-	/* copy the request, since the reply will re-use the memory of the r->pcr_d.dhq */
-	struct pcr_skeyid_q dhq;
-	memcpy(&dhq, &r->pcr_d.dhq, sizeof(r->pcr_d.dhq));
-
-	/* clear out the reply */
-	struct pcr_skeyid_r *const skr = &r->pcr_d.dhr;
-	zero(skr);	/* ??? pointer fields may not be NULLed */
-
-	const struct oakley_group_desc *group = dhq.oakley_group;
+	const struct oakley_group_desc *group = dh->oakley_group;
 	passert(group != NULL);
 
-	SECKEYPrivateKey *ltsecret = dhq.secret;
-	SECKEYPublicKey *pubk = dhq.pubk;
+	SECKEYPrivateKey *ltsecret = dh->secret;
+	SECKEYPublicKey *pubk = dh->pubk;
 
 	/*
 	 * Now calculate the (g^x)(g^y).
@@ -302,25 +294,25 @@ void calc_dh_iv(struct pluto_crypto_req *r)
 	 */
 
 	chunk_t g;
-	setchunk_from_wire(g, &dhq,
-		dhq.role == ORIGINAL_RESPONDER ? &dhq.gi : &dhq.gr);
+	setchunk_from_wire(g, dh,
+		dh->role == ORIGINAL_RESPONDER ? &dh->gi : &dh->gr);
 
 	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
 
-	skr->shared = calc_dh_shared(g, ltsecret, group, pubk);
+	dh->shared = calc_dh_shared(g, ltsecret, group, pubk);
 
-	if (skr->shared != NULL) {
+	if (dh->shared != NULL) {
 		/* okay, so now calculate IV */
-		calc_skeyids_iv(&dhq,
-			skr->shared,
-			dhq.key_size,
+		calc_skeyids_iv(dh,
+			dh->shared,
+			dh->key_size,
 
-			&skr->skeyid,	/* output */
-			&skr->skeyid_d,	/* output */
-			&skr->skeyid_a,	/* output */
-			&skr->skeyid_e,	/* output */
-			&skr->new_iv,	/* output */
-			&skr->enc_key	/* output */
+			&dh->skeyid,	/* output */
+			&dh->skeyid_d,	/* output */
+			&dh->skeyid_a,	/* output */
+			&dh->skeyid_e,	/* output */
+			&dh->new_iv,	/* output */
+			&dh->enc_key	/* output */
 			);
 	}
 }

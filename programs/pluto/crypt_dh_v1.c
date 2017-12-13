@@ -68,7 +68,7 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *dh,
 {
 	const chunk_t *pss = get_preshared_secret(st->st_connection);
 
-	struct pcr_skeyid_q *const dhq = pcr_dh_init(dh, pcr_compute_dh_iv, importance);
+	struct pcr_v1_dh *const dhq = pcr_v1_dh_init(dh, pcr_compute_dh_iv, importance);
 
 	passert(st->st_sec_in_use);
 
@@ -110,7 +110,7 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *dh,
 bool finish_dh_secretiv(struct state *st,
 			struct pluto_crypto_req *r)
 {
-	struct pcr_skeyid_r *dhr = &r->pcr_d.dhr;
+	struct pcr_v1_dh *dhr = &r->pcr_d.v1_dh;
 
 	st->st_shared_nss = dhr->shared;
 	st->st_skeyid_nss = dhr->skeyid;
@@ -141,7 +141,7 @@ stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 {
 	const chunk_t *pss = get_preshared_secret(st->st_connection);
 
-	struct pcr_skeyid_q *const dhq = pcr_dh_init(cn, pcr_compute_dh, importance);
+	struct pcr_v1_dh *const dhq = pcr_v1_dh_init(cn, pcr_compute_dh, importance);
 
 	passert(st->st_sec_in_use);
 
@@ -182,37 +182,29 @@ stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 
 /* NOTE: if NSS refuses to calculate DH, skr->shared == NULL */
 /* MUST BE THREAD-SAFE */
-void calc_dh(struct pluto_crypto_req *r)
+void calc_dh(struct pcr_v1_dh *dh)
 {
-	/* copy the request, since the reply will re-use the memory of the r->pcr_d.dhq */
-	struct pcr_skeyid_q dhq;
-	memcpy(&dhq, &r->pcr_d.dhq, sizeof(r->pcr_d.dhq));
-
-	/* clear out the reply */
-	struct pcr_skeyid_r *skr = &r->pcr_d.dhr;
-	zero(skr);	/* ??? pointer fields might not be NULLed */
-
-	const struct oakley_group_desc *group = dhq.oakley_group;
+	const struct oakley_group_desc *group = dh->oakley_group;
 	passert(group != NULL);
 
-	SECKEYPrivateKey *ltsecret = dhq.secret;
-	SECKEYPublicKey *pubk = dhq.pubk;
+	SECKEYPrivateKey *ltsecret = dh->secret;
+	SECKEYPublicKey *pubk = dh->pubk;
 
 	/* now calculate the (g^x)(g^y) */
 
 	chunk_t g;
 
-	setchunk_from_wire(g, &dhq, dhq.role == ORIGINAL_RESPONDER ? &dhq.gi : &dhq.gr);
+	setchunk_from_wire(g, dh, dh->role == ORIGINAL_RESPONDER ? &dh->gi : &dh->gr);
 
 	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
 
-	skr->shared = calc_dh_shared(g, ltsecret, group, pubk);
+	dh->shared = calc_dh_shared(g, ltsecret, group, pubk);
 }
 
 void finish_dh_secret(struct state *st,
 		      struct pluto_crypto_req *r)
 {
-	struct pcr_skeyid_r *dhr = &r->pcr_d.dhr;
+	struct pcr_v1_dh *dhr = &r->pcr_d.v1_dh;
 
 	st->st_shared_nss = dhr->shared;
 }

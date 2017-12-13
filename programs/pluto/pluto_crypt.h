@@ -163,10 +163,10 @@ struct pcr_kenonce {
 
 #define DHCALC_SIZE 2560
 
-/* query */
-struct pcr_skeyid_q {
+struct pcr_v1_dh {
 	DECLARE_WIRE_ARENA(DHCALC_SIZE);
 
+	/* query */
 	const struct oakley_group_desc *oakley_group;
 	oakley_auth_t auth; /*IKEv1 AUTH*/
 	const struct integ_desc *integ;
@@ -186,18 +186,14 @@ struct pcr_skeyid_q {
 	SECKEYPublicKey *pubk;
 	PK11SymKey *skey_d_old;
 	const struct prf_desc *old_prf;
-};
 
-/* response */
-struct pcr_skeyid_r {
-
+	/* response */
 	PK11SymKey *shared;
 	PK11SymKey *skeyid;
 	PK11SymKey *skeyid_d;
 	PK11SymKey *skeyid_a;
 	PK11SymKey *skeyid_e;
 	PK11SymKey *enc_key;
-
 	chunk_t new_iv;
 };
 
@@ -247,9 +243,7 @@ struct pluto_crypto_req {
 	union {
 		struct pcr_kenonce kn;		/* query and result */
 		struct pcr_dh_v2 dh_v2;		/* query and response v2 */
-
-		struct pcr_skeyid_q dhq;	/* query v1 and v2 */
-		struct pcr_skeyid_r dhr;	/* response v1 */
+		struct pcr_v1_dh v1_dh;		/* query and response v1 */
 	} pcr_d;
 };
 
@@ -411,7 +405,7 @@ extern stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 extern void finish_dh_secret(struct state *st,
 			     struct pluto_crypto_req *r);
 
-void calc_dh(struct pluto_crypto_req *r);
+void calc_dh(struct pcr_v1_dh *dh);
 
 /*
  * IKEv2 DH
@@ -442,7 +436,7 @@ void pcr_kenonce_init(struct pluto_crypto_req_cont *cn,
 		      enum crypto_importance pcr_pcim,
 		      const struct oakley_group_desc *dh);
 
-struct pcr_skeyid_q *pcr_dh_init(struct pluto_crypto_req_cont *cn,
+struct pcr_v1_dh *pcr_v1_dh_init(struct pluto_crypto_req_cont *cn,
 				 enum pluto_crypto_requests pcr_type,
 				 enum crypto_importance pcr_pcim);
 

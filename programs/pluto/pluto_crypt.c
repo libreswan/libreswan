@@ -239,14 +239,14 @@ void pcr_kenonce_init(struct pluto_crypto_req_cont *cn,
 	r->pcr_d.kn.group = dh;
 }
 
-struct pcr_skeyid_q *pcr_dh_init(struct pluto_crypto_req_cont *cn,
+struct pcr_v1_dh *pcr_v1_dh_init(struct pluto_crypto_req_cont *cn,
 				 enum pluto_crypto_requests pcr_type,
 				 enum crypto_importance pcr_pcim)
 {
 	struct pluto_crypto_req *r = &cn->pcrc_pcr;
 	pcr_init(r, pcr_type, pcr_pcim);
 
-	struct pcr_skeyid_q *dhq = &r->pcr_d.dhq;
+	struct pcr_v1_dh *dhq = &r->pcr_d.v1_dh;
 	INIT_WIRE_ARENA(*dhq);
 	return dhq;
 }
@@ -297,11 +297,11 @@ static void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 		break;
 
 	case pcr_compute_dh_iv:
-		calc_dh_iv(r);
+		calc_dh_iv(&r->pcr_d.v1_dh);
 		break;
 
 	case pcr_compute_dh:
-		calc_dh(r);
+		calc_dh(&r->pcr_d.v1_dh);
 		break;
 
 	case pcr_compute_dh_v2:

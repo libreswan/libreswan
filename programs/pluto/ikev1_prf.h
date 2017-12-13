@@ -60,8 +60,8 @@ PK11SymKey *ikev1_skeyid_e(const struct prf_desc *prf_desc,
 /*
  * Old way.
  */
-struct pluto_crypto_req;
+struct pcr_v1_dh;
 
-void calc_dh_iv(struct pluto_crypto_req *r);
+void calc_dh_iv(struct pcr_v1_dh *r);
 
 #endif
