@@ -294,49 +294,6 @@ struct pluto_crypto_req_cont;	/* forward reference */
 typedef void crypto_req_cont_func(struct state *st, struct msg_digest *md,
 				  struct pluto_crypto_req_cont *c,
 				  struct pluto_crypto_req *r);
-
-/*
- * The crypto continuation structure
- *
- * Pluto is an event-driven transaction system.
- * Each transaction must take a very small slice of time.
- * Those that cannot, must be broken into multiple
- * transactions and the state carried between them
- * cannot be on the stack or in simple global variables.
- * A continuation is used to hold such state.
- *
- * A struct pluto_crypto_req_cont is heap-allocated
- * by code that wants to delegate cryptographic work.  It fills
- * in parts of the struct, and "fires and forgets" the work.
- * Unless the firing fails, a case that must be handled.
- * This struct stays on the master side: it isn't sent to the helper.
- * It is used to keep track of in-process work and what to do
- * when the work is complete.
- *
- * Used for:
- *	IKEv1 Quick Mode Key Exchange
- *	Other Key Exchange
- *	Diffie-Hellman computation
- */
-struct pluto_crypto_req_cont {
-	crypto_req_cont_func *pcrc_func;	/* function to continue with */
-	/*
-	 * Sponsoring message's msg_digest.
-	 * Used in most but not all continuations.
-	 */
-	struct msg_digest *pcrc_md;
-
-	/* the rest of these fields are private to pluto_crypt.c */
-
-	TAILQ_ENTRY(pluto_crypto_req_cont) pcrc_list;
-	so_serial_t pcrc_serialno;	/* sponsoring state's serial number */
-	const char *pcrc_name;
-	struct pluto_crypto_req pcrc_pcr;
-	pcr_req_id pcrc_id;
-	pb_stream pcrc_reply_stream;	/* reply stream of suspended state transition */
-	u_int8_t *pcrc_reply_buffer;	/* saved buffer contents (if any) */
-	struct pluto_crypto_worker *pcrc_worker;
-};
 /* struct pluto_crypto_req_cont allocators */
 
 struct state;
