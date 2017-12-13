@@ -6,6 +6,9 @@
  * Copyright (C) 2017 Andrew Cagney
  */
 
+typedef stf_status crypto_transition_fn(struct state *st, struct msg_digest *md,
+					struct pluto_crypto_req *r);
+
 extern void process_v2_packet(struct msg_digest **mdp);
 
 extern stf_status ikev2parent_outI1(int whack_sock,
@@ -33,8 +36,7 @@ extern stf_status ikev2_send_informational(struct state *st, struct state *pst,
 
 extern state_transition_fn process_encrypted_informational_ikev2;
 
-extern stf_status ikev2_parent_outI1_tail(struct pluto_crypto_req_cont *ke,
-						struct pluto_crypto_req *r);
+extern crypto_transition_fn ikev2_parent_outI1_tail;
 extern state_transition_fn ikev2_child_ike_inIoutR;
 extern state_transition_fn ikev2_child_inR;
 extern state_transition_fn ikev2_child_inIoutR;
@@ -45,10 +47,8 @@ extern state_transition_fn ikev2parent_inR1BoutI1B;
 extern state_transition_fn ikev2parent_inR1outI2;
 extern state_transition_fn ikev2parent_inI2outR2;
 extern state_transition_fn ikev2parent_inR2;
-extern stf_status ikev2_child_out_cont(struct pluto_crypto_req_cont *qke,
-						struct pluto_crypto_req *r);
-extern stf_status ikev2_child_inR_tail(struct pluto_crypto_req_cont *qke,
-					struct pluto_crypto_req *r);
+extern crypto_transition_fn ikev2_child_out_cont;
+extern crypto_transition_fn ikev2_child_inR_tail;
 extern void ikev2_add_ipsec_child(int whack_sock, struct state *isakmp_sa,
 		struct connection *c, lset_t policy, unsigned long try,
 		so_serial_t replacing
@@ -271,9 +271,6 @@ struct ikev2_payloads_summary ikev2_decode_payloads(struct msg_digest *md,
 
 struct ikev2_payloads_summary ikev2_decrypt_msg(struct msg_digest *md, bool
 		verify_pl);
-
-typedef stf_status crypto_transition_fn(struct pluto_crypto_req_cont *cn,
-		                struct pluto_crypto_req *r);
 
 struct ikev2_payload_errors {
 	stf_status status;
