@@ -189,9 +189,8 @@ static void pcr_init(struct pluto_crypto_req *r,
  * release being performed pre- or post- crypto.  Ewwww!
  */
 
-static void pcrc_release_request(struct pluto_crypto_req_cont *cn)
+static void pcr_release(struct pluto_crypto_req *r)
 {
-	struct pluto_crypto_req *r = &cn->pcrc_pcr;
 	switch (r->pcr_type) {
 	case pcr_build_ke_and_nonce:
 	case pcr_build_nonce:
@@ -202,35 +201,17 @@ static void pcrc_release_request(struct pluto_crypto_req_cont *cn)
 		break;
 	case pcr_compute_dh_iv:
 	case pcr_compute_dh:
-		/*
-		 * XXX: everything needs to be freed!
-		 */
-		DBG(DBG_CONTROL, DBG_log("missing pre-crypto release code"));
+		cancelled_v1_dh(&r->pcr_d.v1_dh);
 		break;
 	}
+}
+
+static void pcrc_release_request(struct pluto_crypto_req_cont *cn)
+{
+	pcr_release(&cn->pcrc_pcr);
 	/* free the heap space */
 	pfreeany(cn->pcrc_reply_buffer);
 	pfree(cn);
-}
-
-static void pcr_release_crypto_response(struct pluto_crypto_req *r)
-{
-	switch (r->pcr_type) {
-	case pcr_build_ke_and_nonce:
-	case pcr_build_nonce:
-		cancelled_ke_and_nonce(&r->pcr_d.kn);
-		break;
-	case pcr_compute_dh_v2:
-		cancelled_dh_v2(&r->pcr_d.dh_v2);
-		break;
-	case pcr_compute_dh_iv:
-	case pcr_compute_dh:
-		/*
-		 * XXX: everything needs to be freed!
-		 */
-		DBG(DBG_CONTROL, DBG_log("missing post-crypto release code"));
-		break;
-	}
 }
 
 void pcr_kenonce_init(struct pluto_crypto_req_cont *cn,
@@ -837,7 +818,7 @@ static void handle_helper_answer(void *arg)
 			PEXPECT_LOG("state #%lu for crypto callback disappeared!",
 				    cn->pcrc_serialno);
 		}
-		pcr_release_crypto_response(&cn->pcrc_pcr);
+		pcr_release(&cn->pcrc_pcr);
 	} else {
 		/*
 		 * XXX:

@@ -37,10 +37,6 @@
 #include <sys/types.h>
 #include <signal.h>
 
-#include <nss.h>
-#include <pk11pub.h>
-#include <keyhi.h>
-
 #include <libreswan.h>
 
 #include "sysdep.h"

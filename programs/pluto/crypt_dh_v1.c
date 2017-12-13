@@ -55,6 +55,22 @@
 #include "crypt_symkey.h" /* to get free_any_symkey */
 #include "crypt_dh.h"
 
+void cancelled_v1_dh(struct pcr_v1_dh *dh)
+{
+	/* query */
+	free_dh_secret(&dh->secret); /* helper must be owner */
+	release_symkey("cancelled IKEv1 DH", "skey_d_old", &dh->skey_d_old);
+
+	/* response */
+	release_symkey("cancelled IKEv1 DH", "shared", &dh->shared);
+	release_symkey("cancelled IKEv1 DH", "skeyid", &dh->skeyid);
+	release_symkey("cancelled IKEv1 DH", "skeyid_d", &dh->skeyid_d);
+	release_symkey("cancelled IKEv1 DH", "skeyid_a", &dh->skeyid_a);
+	release_symkey("cancelled IKEv1 DH", "skeyid_e", &dh->skeyid_e);
+	release_symkey("cancelled IKEv1 DH", "enc_key", &dh->enc_key);
+	freeanychunk(dh->new_iv);
+}
+
 /*
  * invoke helper to do DH work (IKEv1)
  *

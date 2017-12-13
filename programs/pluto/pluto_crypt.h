@@ -402,7 +402,9 @@ extern stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 extern void finish_dh_secret(struct state *st,
 			     struct pluto_crypto_req *r);
 
-void calc_dh(struct pcr_v1_dh *dh);
+extern void calc_dh(struct pcr_v1_dh *dh);
+
+extern void cancelled_v1_dh(struct pcr_v1_dh *dh);
 
 /*
  * IKEv2 DH
