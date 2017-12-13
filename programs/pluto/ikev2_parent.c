@@ -1698,8 +1698,6 @@ static stf_status ikev2_parent_inI1outR1_tail(struct state *st, struct msg_diges
  */
 stf_status ikev2parent_inR1BoutI1B(struct state *st, struct msg_digest *md)
 {
-	pexpect(st == md->st);
-	st = md->st;
 	struct connection *c = st->st_connection;
 
 	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
@@ -1866,8 +1864,6 @@ static crypto_transition_fn ikev2_parent_inR1outI2_tail;
 
 stf_status ikev2parent_inR1outI2(struct state *st, struct msg_digest *md)
 {
-	pexpect(st == md->st);
-	st = md->st;
 	struct connection *c = st->st_connection;
 	struct payload_digest *ntfy;
 
@@ -2005,8 +2001,6 @@ stf_status ikev2parent_inR1outI2(struct state *st, struct msg_digest *md)
 static void ikev2_parent_inR1outI2_continue(struct state *st, struct msg_digest *md,
 					    struct pluto_crypto_req *r)
 {
-	pexpect(st == md->st);
-	st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROL,
@@ -3440,8 +3434,6 @@ stf_status ikev2parent_inI2outR2(struct state *st UNUSED, struct msg_digest *md)
 static void ikev2_parent_inI2outR2_continue(struct state *st, struct msg_digest *md,
 					    struct pluto_crypto_req *r)
 {
-	pexpect(st == md->st);
-	st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROL,
@@ -4236,8 +4228,6 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 
 stf_status ikev2parent_inR2(struct state *st, struct msg_digest *md)
 {
-	pexpect(st == md->st);
-	st = md->st;
 	unsigned char idhash_in[MAX_DIGEST_LEN];
 	struct payload_digest *ntfy;
 	struct state *pst = st;
@@ -4965,8 +4955,6 @@ static notification_t process_ike_rekey_sa_pl(struct msg_digest *md, struct stat
 /* ikev2 initiator received a create Child SA Response */
 stf_status ikev2_child_inR(struct state *st, struct msg_digest *md)
 {
-	pexpect(st == md->st);
-	st = md->st;
 	stf_status e;
 
 	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_nr, "Nr"));
@@ -4986,10 +4974,9 @@ stf_status ikev2_child_inR(struct state *st, struct msg_digest *md)
 }
 
 /* processing a new Child SA (RFC 7296 1.3.1 or 1.3.3) request */
-stf_status ikev2_child_inIoutR(struct state *st, struct msg_digest *md)
+stf_status ikev2_child_inIoutR(struct state *st /* child state */,
+			       struct msg_digest *md)
 {
-	pexpect(st == md->st); /* child state */
-	st = md->st;
 	struct state *pst = state_with_serialno(st->st_clonedfrom);
 
 	passert(pst != NULL);
@@ -5019,10 +5006,9 @@ stf_status ikev2_child_inIoutR(struct state *st, struct msg_digest *md)
 }
 
 /* processsing a new Rekey IKE SA (RFC 7296 1.3.2) request */
-stf_status ikev2_child_ike_inIoutR(struct state *st, struct msg_digest *md)
+stf_status ikev2_child_ike_inIoutR(struct state *st /* child state */,
+				   struct msg_digest *md)
 {
-	pexpect(st == md->st); /* child state */
-	st = md->st;
 	struct state *pst = state_with_serialno(st->st_clonedfrom);
 
 	passert(pst != NULL);
@@ -5483,8 +5469,6 @@ static stf_status add_mobike_response_payloads(int np, chunk_t *cookie2,
 stf_status process_encrypted_informational_ikev2(struct state *st,
 						 struct msg_digest *md)
 {
-	pexpect(st == md->st);
-	st = md->st;
 	struct payload_digest *p;
 	bool send_mobike_resp = FALSE;
 	chunk_t cookie2 = empty_chunk;

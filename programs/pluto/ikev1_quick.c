@@ -1558,8 +1558,6 @@ static void quick_inI1_outR1_cryptocontinue1(struct state *st, struct msg_digest
 static void quick_inI1_outR1_cryptocontinue2(struct state *st, struct msg_digest *md,
 					     struct pluto_crypto_req *r)
 {
-	pexpect(st == md->st);
-	st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROL,
@@ -1771,9 +1769,6 @@ static crypto_req_cont_func quick_inR1_outI2_continue;	/* type assertion */
 
 stf_status quick_inR1_outI2(struct state *st, struct msg_digest *md)
 {
-	pexpect(st == md->st);
-	st = md->st;
-
 	/* HASH(2) in */
 	CHECK_QUICK_HASH(md,
 			 quick_mode_hash12(hash_val, hash_pbs->roof,
@@ -1817,8 +1812,6 @@ stf_status quick_inR1_outI2(struct state *st, struct msg_digest *md)
 static void quick_inR1_outI2_continue(struct state *st, struct msg_digest *md,
 				      struct pluto_crypto_req *r)
 {
-	pexpect(st == md->st);
-	st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROL,
@@ -2021,9 +2014,6 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
  */
 stf_status quick_inI2(struct state *st, struct msg_digest *md)
 {
-	pexpect(st == md->st);
-	st = md->st;
-
 	/* HASH(3) in */
 	CHECK_QUICK_HASH(md, quick_mode_hash3(hash_val, st),
 			 "HASH(3)", "Quick I2");

@@ -1275,9 +1275,6 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 {
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 
-	pexpect(st == md->st);
-	st = md->st;
-
 	/*
 	 * There are many ways out of this routine
 	 * so we don't want an obligation to free anything.
@@ -1423,11 +1420,8 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
  * @param md Message Digest
  * @return stf_status
  */
-stf_status xauth_inR1(struct state *st, struct msg_digest *md)
+stf_status xauth_inR1(struct state *st, struct msg_digest *md UNUSED)
 {
-	pexpect(st == md->st);
-	st = md->st;
-
 	libreswan_log("XAUTH: xauth_inR1(STF_OK)");
 	/* Back to where we were */
 	st->st_oakley.doing_xauth = FALSE;
@@ -1471,9 +1465,6 @@ stf_status xauth_inR1(struct state *st, struct msg_digest *md)
  */
 stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 {
-	pexpect(st == md->st);
-	st = md->st;
-
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 	lset_t resp = LEMPTY;
@@ -1717,9 +1708,6 @@ static char *cisco_stringify(pb_stream *pbs, const char *attr_name)
  */
 stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 {
-	pexpect(st == md->st);
-	st = md->st;
-
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 	lset_t resp = LEMPTY;
@@ -2296,9 +2284,6 @@ static stf_status xauth_client_resp(struct state *st,
  */
 stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 {
-	pexpect(st == md->st);
-	st = md->st;
-
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 	lset_t xauth_resp = LEMPTY;
@@ -2577,9 +2562,6 @@ static stf_status xauth_client_ackstatus(struct state *st,
  */
 stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 {
-	pexpect(st == md->st);
-	st = md->st;
-
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 	bool got_status = FALSE;

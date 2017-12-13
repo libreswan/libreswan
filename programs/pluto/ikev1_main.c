@@ -883,8 +883,6 @@ static crypto_req_cont_func main_inR1_outI2_continue;	/* type assertion */
 static void main_inR1_outI2_continue(struct state *st, struct msg_digest *md,
 				     struct pluto_crypto_req *r)
 {
-	pexpect(st == md->st);
-	st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROL,
@@ -906,9 +904,6 @@ static void main_inR1_outI2_continue(struct state *st, struct msg_digest *md,
 
 stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
 {
-	pexpect(st == md->st);
-	st = md->st;
-
 	if (cur_debugging & IMPAIR_DROP_I2) {
 		DBG(DBG_CONTROL, DBG_log("dropping Main Mode I2 packet as per impair"));
 		return STF_IGNORE;
@@ -1071,8 +1066,6 @@ static crypto_req_cont_func main_inI2_outR2_continue;	/* type assertion */
 static void main_inI2_outR2_continue(struct state *st, struct msg_digest *md,
 				     struct pluto_crypto_req *r)
 {
-	pexpect(st == md->st);
-	st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROL,
@@ -1093,9 +1086,6 @@ static void main_inI2_outR2_continue(struct state *st, struct msg_digest *md,
 
 stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
 {
-	pexpect(st == md->st);
-	st = md->st;
-
 	/* KE in */
 	RETURN_STF_FAILURE(accept_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
 				     &md->chain[ISAKMP_NEXT_KE]->pbs));
@@ -1561,8 +1551,6 @@ static crypto_req_cont_func main_inR2_outI3_cryptotail;	/* type assertion */
 static void main_inR2_outI3_cryptotail(struct state *st, struct msg_digest *md,
 				       struct pluto_crypto_req *r)
 {
-	pexpect(st == md->st);
-	st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROL,
@@ -1585,9 +1573,6 @@ static void main_inR2_outI3_cryptotail(struct state *st, struct msg_digest *md,
 stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)
 {
 	struct pluto_crypto_req_cont *dh;
-	pexpect(st == md->st);
-	st = md->st;
-
 	/* KE in */
 	RETURN_STF_FAILURE(accept_KE(&st->st_gr, "Gr",
 				     st->st_oakley.ta_dh,
@@ -1924,9 +1909,6 @@ stf_status main_inR3(struct state *st, struct msg_digest *md)
 
 static stf_status main_inR3_tail(struct state *st, struct msg_digest *md)
 {
-	pexpect(st == md->st);
-	st = md->st;
-
 	/*
 	 * ID and HASH_R or SIG_R in
 	 * Note: this may switch the connection being used!

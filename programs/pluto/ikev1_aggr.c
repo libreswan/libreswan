@@ -107,9 +107,6 @@ static crypto_req_cont_func aggr_inI1_outR1_continue2;	/* type assertion */
 static void aggr_inI1_outR1_continue2(struct state *st, struct msg_digest *md,
 				      struct pluto_crypto_req *r)
 {
-	pexpect(st == md->st);
-	st = md->st;
-
 	stf_status e;
 
 	DBG(DBG_CONTROL,
@@ -613,9 +610,6 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	 * when the IP address would not be meaningful (i.e. Road
 	 * Warrior).  So our first task is to unravel the ID payload.
 	 */
-	pexpect(st == md->st);
-	st = md->st;
-
 	if (cur_debugging & IMPAIR_DROP_I2) {
 		DBG(DBG_CONTROL, DBG_log("dropping Aggressive Mode I2 packet as per impair"));
 		return STF_IGNORE;
@@ -682,8 +676,6 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 static void aggr_inR1_outI2_crypto_continue(struct state *st, struct msg_digest *md,
 					    struct pluto_crypto_req *r)
 {
-	pexpect(st == md->st);
-	st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROLMORE,
@@ -943,8 +935,6 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 
 stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 {
-	pexpect(st == md->st);
-	st = md->st;
 	struct connection *c = st->st_connection;
 	u_char idbuf[1024];	/* ??? enough room for reconstructed peer ID payload? */
 	struct payload_digest id_pd;
@@ -1059,8 +1049,6 @@ static crypto_req_cont_func aggr_outI1_continue;	/* type assertion */
 static void aggr_outI1_continue(struct state *st, struct msg_digest *md,
 				struct pluto_crypto_req *r)
 {
-	pexpect(st == md->st);
-	st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROL,

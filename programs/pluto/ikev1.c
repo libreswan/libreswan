@@ -680,10 +680,8 @@ void init_ikev1(void)
 	    });
 }
 
-static stf_status unexpected(struct state *st, struct msg_digest *md)
+static stf_status unexpected(struct state *st, struct msg_digest *md UNUSED)
 {
-	pexpect(st == md->st);
-	st = md->st;
 	loglog(RC_LOG_SERIOUS, "unexpected message received in state %s",
 	       st->st_state_name);
 	return STF_IGNORE;
