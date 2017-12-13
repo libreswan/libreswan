@@ -285,6 +285,7 @@ static void init_netlink(void)
 
 	addr.nl_family = AF_NETLINK;
 	addr.nl_pid = getpid();
+	addr.nl_pad = 0; /* make coverity happy */
 	addr.nl_groups = XFRMGRP_ACQUIRE | XFRMGRP_EXPIRE;
 	if (bind(netlink_bcast_fd, (struct sockaddr *)&addr, sizeof(addr)) !=
 		0)
