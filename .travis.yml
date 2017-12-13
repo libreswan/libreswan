@@ -15,24 +15,12 @@ before_install:
   - git rev-parse --abbrev-ref HEAD
   - git checkout $TRAVIS_BRANCH
   #
-  # travis-docker-image read the branch name
-  # <travis>-<distro>-<rel> . default to Fedora 27
+  # 'make travis-docker-image' reads the branch name
+  # <travis>-<distro>-<rel>  or default to Fedora 27
   #
   - make travis-docker-image
-  #
-  # CentOS 7
-  # - echo "USE_DNSSEC=false" >> Makefile.inc.local
-  #
-  - echo $TRAVIS_BRANCH | grep -i "travis-centos-7" || (grep "^USE_DNSSEC=" Makefile.inc.local || echo "USE_DNSSEC=true" >> Makefile.inc.local) && (grep "^USE_DNSSEC=" Makefile.inc.local || echo "USE_DNSSEC=false" >> Makefile.inc.local)
-  # 
   - sudo docker run -h west --privileged --net=none --name swanbase -v $PWD:/home/build/libreswan -v /sys/fs/cgroup:/sys/fs/cgroup:ro -d swanbase
-   #- sudo docker run -h west --privileged --net=none --name swanbase -v $PWD:/home/build/libreswan -v /sys/fs/cgroup:/sys/fs/cgroup:ro -d swanbase /sbin/init
-   # debian specific start command
-   # - sudo docker run -h west --privileged --net=none --name swanbase -v $PWD:/home/build/libreswan -v /sys/fs/cgroup:/sys/fs/cgroup:ro -d swanbase /usr/sbin/init
-  - sudo docker ps
 
 script:
-  - ls
-  - uname -a
   - sudo docker exec -ti swanbase  /bin/bash -c 'cd /home/build/libreswan && make base'
   - sudo docker exec -ti swanbase  /bin/bash -c 'cd /home/build/libreswan && make install-base'

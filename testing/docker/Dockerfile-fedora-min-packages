@@ -18,5 +18,6 @@ CMD ["/sbin/init"]
 RUN dnf install -y dnf-plugins-core git openssh-server openssh-clients \
 	vim-enhanced wget 
 RUN dnf install -y @development-tools
+RUN dnf builddep -y libreswan
 RUN wget -O libreswan.spec https://raw.githubusercontent.com/libreswan/libreswan/master/packaging/fedora/libreswan.spec
 RUN dnf builddep -y libreswan.spec
