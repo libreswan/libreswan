@@ -45,6 +45,7 @@ KVM_PACKAGES = \
     ocspd\
     openldap-devel \
     pam-devel \
+    patch \
     pexpect \
     policycoreutils-python-utils \
     psmisc \
