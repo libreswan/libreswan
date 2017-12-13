@@ -1,0 +1,3 @@
+seccomp test based on ikev2-48-nat-cp which performs more work
+in updown, possibly triggering more syscalls. This test will
+also test CP support for DNS with IKEv2 in the near future

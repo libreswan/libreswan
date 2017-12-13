@@ -904,6 +904,7 @@ kvmplutotest	klips-pluto-ipcmp-01		skiptest
 # seccomp
 kvmplutotest	seccomp-01-enabled		good
 kvmplutotest	seccomp-02-tolerant		good
+kvmplutotest	seccomp-03-updown		good
 
 # Utility tests like "ipsec showhostkey"
 kvmplutotest	ipsec-hostkey-ckaid-01		good
