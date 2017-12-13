@@ -105,7 +105,7 @@ static crypto_req_cont_func aggr_inR1_outI2_crypto_continue;
 static crypto_req_cont_func aggr_inI1_outR1_continue2;	/* type assertion */
 
 static void aggr_inI1_outR1_continue2(struct state *st, struct msg_digest *md,
-				      struct pluto_crypto_req_cont *dh,
+				      struct pluto_crypto_req_cont *dh UNUSED,
 				      struct pluto_crypto_req *r)
 {
 	pexpect(st == md->st);
@@ -117,17 +117,17 @@ static void aggr_inI1_outR1_continue2(struct state *st, struct msg_digest *md,
 		DBG_log("aggr_inI1_outR1_continue2 for #%lu: calculated ke+nonce+DH, sending R1",
 			st->st_serialno));
 
-	passert(st->st_suspended_md == dh->pcrc_md);
+	passert(st->st_suspended_md == md);
 	unset_suspended(st); /* no longer connected or suspended */
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
-	e = aggr_inI1_outR1_tail(dh->pcrc_md, r);
+	e = aggr_inI1_outR1_tail(md, r);
 
-	passert(dh->pcrc_md != NULL);
-	complete_v1_state_transition(&dh->pcrc_md, e);
-	release_any_md(&dh->pcrc_md);
+	passert(md != NULL);
+	complete_v1_state_transition(&md, e);
+	release_any_md(&md);
 }
 
 /*
@@ -682,7 +682,7 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 /* redundant type assertion: static crypto_req_cont_func aggr_inR1_outI2_crypto_continue; */
 
 static void aggr_inR1_outI2_crypto_continue(struct state *st, struct msg_digest *md,
-					    struct pluto_crypto_req_cont *dh,
+					    struct pluto_crypto_req_cont *dh UNUSED,
 					    struct pluto_crypto_req *r)
 {
 	pexpect(st == md->st);
@@ -694,7 +694,7 @@ static void aggr_inR1_outI2_crypto_continue(struct state *st, struct msg_digest 
 
 	passert(st != NULL);
 
-	passert(st->st_suspended_md == dh->pcrc_md);
+	passert(st->st_suspended_md == md);
 	unset_suspended(st); /* no longer connected or suspended */
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
@@ -706,9 +706,9 @@ static void aggr_inR1_outI2_crypto_continue(struct state *st, struct msg_digest 
 		e = aggr_inR1_outI2_tail(md);
 	}
 
-	passert(dh->pcrc_md != NULL);
-	complete_v1_state_transition(&dh->pcrc_md, e);
-	release_any_md(&dh->pcrc_md);
+	passert(md != NULL);
+	complete_v1_state_transition(&md, e);
+	release_any_md(&md);
 }
 
 static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
@@ -1070,7 +1070,7 @@ static void aggr_outI1_continue(struct state *st, struct msg_digest *md,
 		DBG_log("aggr_outI1_continue for #%lu: calculated ke+nonce, sending I1",
 			st->st_serialno));
 
-	passert(st->st_suspended_md == ke->pcrc_md);
+	passert(st->st_suspended_md == md);
 	unset_suspended(st); /* no longer connected or suspended */
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
@@ -1078,9 +1078,9 @@ static void aggr_outI1_continue(struct state *st, struct msg_digest *md,
 
 	e = aggr_outI1_tail(ke, r);
 
-	passert(ke->pcrc_md != NULL);
-	complete_v1_state_transition(&ke->pcrc_md, e);
-	release_any_md(&ke->pcrc_md);
+	passert(md != NULL);
+	complete_v1_state_transition(&md, e);
+	release_any_md(&md);
 }
 
 /* No initial state for aggr_outI1:

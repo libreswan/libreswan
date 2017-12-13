@@ -285,7 +285,7 @@ static void ikev2_crypto_continue(struct state *st, struct msg_digest *md,
 	}
 	passert(pst != NULL);
 
-	passert(st->st_suspended_md == cn->pcrc_md);
+	passert(st->st_suspended_md == md);
 	unset_suspended(st); /* no longer connected or suspended */
 
 	st->st_calculating = FALSE;
@@ -343,9 +343,9 @@ static void ikev2_crypto_continue(struct state *st, struct msg_digest *md,
 		e = md->svm->crypto_end(cn, r);
 	}
 
-	passert(cn->pcrc_md != NULL);
-	complete_v2_state_transition(&cn->pcrc_md, e);
-	release_any_md(&cn->pcrc_md);
+	passert(md != NULL);
+	complete_v2_state_transition(&md, e);
+	release_any_md(&md);
 }
 
 /*
@@ -1449,7 +1449,7 @@ static void ikev2_parent_inI1outR1_continue(struct state *st, struct msg_digest 
 		DBG_log("ikev2_parent_inI1outR1_continue for #%lu: calculated ke+nonce, sending R1",
 			st->st_serialno));
 
-	passert(st->st_suspended_md == ke->pcrc_md);
+	passert(st->st_suspended_md == md);
 	unset_suspended(st); /* no longer connected or suspended */
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
@@ -1457,9 +1457,9 @@ static void ikev2_parent_inI1outR1_continue(struct state *st, struct msg_digest 
 
 	stf_status e = ikev2_parent_inI1outR1_tail(ke, r);
 
-	passert(ke->pcrc_md != NULL);
-	complete_v2_state_transition(&ke->pcrc_md, e);
-	release_any_md(&ke->pcrc_md);
+	passert(md != NULL);
+	complete_v2_state_transition(&md, e);
+	release_any_md(&md);
 }
 
 /*
@@ -2018,7 +2018,7 @@ static void ikev2_parent_inR1outI2_continue(struct state *st, struct msg_digest 
 		DBG_log("ikev2_parent_inR1outI2_continue for #%lu: calculating g^{xy}, sending I2",
 			st->st_serialno));
 
-	passert(st->st_suspended_md == dh->pcrc_md);
+	passert(st->st_suspended_md == md);
 	unset_suspended(st); /* no longer connected or suspended */
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
@@ -2026,9 +2026,9 @@ static void ikev2_parent_inR1outI2_continue(struct state *st, struct msg_digest 
 
 	e = ikev2_parent_inR1outI2_tail(dh, r);
 
-	passert(dh->pcrc_md != NULL);
-	complete_v2_state_transition(&dh->pcrc_md, e);
-	release_any_md(&dh->pcrc_md);
+	passert(md != NULL);
+	complete_v2_state_transition(&md, e);
+	release_any_md(&md);
 }
 
 /*
@@ -3434,7 +3434,7 @@ static void ikev2_parent_inI2outR2_continue(struct state *st, struct msg_digest 
 		DBG_log("ikev2_parent_inI2outR2_continue for #%lu: calculating g^{xy}, sending R2",
 			st->st_serialno));
 
-	passert(st->st_suspended_md == dh->pcrc_md);
+	passert(st->st_suspended_md == md);
 	unset_suspended(st); /* no longer connected or suspended */
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
@@ -3468,9 +3468,9 @@ static void ikev2_parent_inI2outR2_continue(struct state *st, struct msg_digest 
 		send_v2_notification_from_state(st, v2N_AUTHENTICATION_FAILED, NULL);
 	}
 
-	passert(dh->pcrc_md != NULL);
-	complete_v2_state_transition(&dh->pcrc_md, e);
-	release_any_md(&dh->pcrc_md);
+	passert(md != NULL);
+	complete_v2_state_transition(&md, e);
+	release_any_md(&md);
 }
 
 static stf_status ikev2_parent_inI2outR2_tail(
