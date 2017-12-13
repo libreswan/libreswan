@@ -4046,12 +4046,13 @@ static void show_one_sr(const struct connection *c,
 
 #undef COMBO
 
-	whack_log(RC_COMMENT,
-		"\"%s\"%s:   internal domain1:%s, domain2:%s;",
-		c->name, instance,
-		c->internal_domain1,
-		c->internal_domain2
-		);
+	if (c->internal_domain1 != NULL || c->internal_domain2 != NULL) {
+		whack_log(RC_COMMENT,
+			  "\"%s\"%s:   internal domain1:%s, domain2:%s;",
+			  c->name, instance,
+			  c->internal_domain1,
+			  c->internal_domain2);
+	}
 
 	if (c->modecfg_banner != NULL) {
 		whack_log(RC_COMMENT, "\"%s\"%s: banner:%s;",
