@@ -442,7 +442,9 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 
 #if defined(HAVE_UDPFROMTO)
 	/* we are going to use udpfromto.c, so initialize it */
-	udpfromto_init(fd);
+	if (udpfromto_init(fd) == -1) {
+		LOG_ERRNO(errno, "udpfromto_init() returned an error - ignored");
+	}
 #endif
 
 	/* poke a hole for IKE messages in the IPsec layer */
