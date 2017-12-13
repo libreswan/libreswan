@@ -328,7 +328,7 @@ POD2MAN?=$(shell which pod2man | grep / | head -n1)
 # HAVE_ variables let you tell Libreswan what system related libraries
 #       you may or maynot have
 
-# Enable support for DNSSEC. This requires the unbound library
+# Enable support for DNSSEC. This requires the unbound and ldns libraries.
 USE_DNSSEC?=true
 
 # For systemd start/stop notifications and watchdog feature
