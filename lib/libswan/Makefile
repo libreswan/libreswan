@@ -85,6 +85,7 @@ OBJS += lswlog_deltatime.o
 OBJS += lswlog_ip.o
 OBJS += lswlog_to_file_stream.o
 OBJS += lswlog_pexpect.o
+OBJS += lswlog_passert.o
 
 # Crypto code:
 #

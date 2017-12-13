@@ -441,6 +441,20 @@ void lswlog_pexpect_suffix(struct lswlog *buf, const char *func,
 				      PASSERT_BASENAME,	   \
 				      __LINE__))
 
+/*
+ * Send an expectation failure to everwhere.
+ */
+
+void lswlog_passert_prefix(struct lswlog *buf);
+void lswlog_passert_suffix(struct lswlog *buf, const char *func,
+			   const char *file, unsigned long line) NEVER_RETURNS;
+
+#define LSWLOG_PASSERT(BUF)				   \
+	LSWLOG_(true, BUF,				   \
+		lswlog_passert_prefix(BUF),		   \
+		lswlog_passert_suffix(BUF, __func__,	   \
+				      PASSERT_BASENAME,	   \
+				      __LINE__))
 
 /*
  * ARRAY, a previously allocated array, containing the accumulated

@@ -38,9 +38,4 @@ PK11SymKey *calc_dh_shared(chunk_t g,	/* converted to SECItem */
 			   const struct oakley_group_desc *group,
 			   const SECKEYPublicKey *local_pubk);
 
-
-struct pluto_crypto_req;
-
-void calc_dh(struct pluto_crypto_req *r);
-
 #endif

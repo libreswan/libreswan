@@ -1,7 +1,6 @@
-/*
- * abort log function, for libreswan
+/* Output an expection failure, for libreswan
  *
- * Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -12,27 +11,24 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
+ *
  */
 
-#include <stdarg.h>
 #include <stdlib.h>
-#include <stdio.h>
 
 #include "lswlog.h"
 
-void lsw_passert_fail(const char *file,
-		      unsigned long line,
-		      const char *func,
-		      const char *fmt, ...)
+void lswlog_passert_prefix(struct lswlog *buf)
 {
-	LSWBUF(buf) {
-		lswlog_passert_prefix(buf);
-		va_list ap;
-		va_start(ap, fmt);
-		lswlogvf(buf, fmt, ap);
-		va_end(ap);
-		lswlog_passert_suffix(buf, func, file, line);
-	}
-	/* above will panic but compiler doesn't know this */
+	lswlog_log_prefix(buf);
+	lswlogs(buf, "ABORT: ASSERTION FAILED: ");
+}
+
+void lswlog_passert_suffix(struct lswlog *buf, const char *func,
+			   const char *file, unsigned long line)
+{
+	lswlog_source_line(buf, func, file, line);
+	lswlog_to_error_stream(buf);
+	/* this needs to panic */
 	abort();
 }
