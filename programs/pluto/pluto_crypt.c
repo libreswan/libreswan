@@ -31,20 +31,9 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include <unistd.h>
 #include <sys/time.h>
-#include <sys/resource.h>
 #include <sys/types.h>
-#if defined(macintosh) || (defined(__MACH__) && defined(__APPLE__))
-#include <sys/sysctl.h>
-#endif
-
-#include <signal.h>
-#include <event2/event.h>
-#include <event2/event_struct.h>
 
 #include <libreswan.h>
 
@@ -52,21 +41,14 @@
 #include "constants.h"
 #include "enum_names.h"
 #include "defs.h"
-#include "packet.h"
-#include "demux.h"
 #include "lswlog.h"
 #include "log.h"
 #include "state.h"
 #include "demux.h"
-#include "rnd.h"
 #include "pluto_crypt.h"
 #include "timer.h"
 
-#include <nss.h>
-#include "lswconf.h"
-
-#include "lsw_select.h"
-#include  "server.h"
+#include "server.h"
 #include "ikev2_prf.h"
 #include "crypt_dh.h"
 #include "ikev1_prf.h"
@@ -99,6 +81,7 @@
  *	Other Key Exchange
  *	Diffie-Hellman computation
  */
+
 struct pluto_crypto_req_cont {
 	crypto_req_cont_func *pcrc_func;	/* function to continue with */
 	/*
@@ -106,7 +89,7 @@ struct pluto_crypto_req_cont {
 	 * Used in most but not all continuations.
 	 */
 	struct msg_digest *pcrc_md;
-	TAILQ_ENTRY(pluto_crypto_req_cont) pcrc_list;
+	struct list_entry pcrc_backlog;
 	so_serial_t pcrc_serialno;	/* sponsoring state's serial number */
 	bool pcrc_cancelled;
 	const char *pcrc_name;
@@ -114,8 +97,49 @@ struct pluto_crypto_req_cont {
 	pcr_req_id pcrc_id;
 	pb_stream pcrc_reply_stream;	/* reply stream of suspended state transition */
 	u_int8_t *pcrc_reply_buffer;	/* saved buffer contents (if any) */
-	struct pluto_crypto_worker *pcrc_worker;
+	int pcrc_helpernum;
 };
+
+/*
+ * The work queue.  Accesses must be locked.
+ */
+
+static size_t log_backlog(struct lswlog *buf, void *data)
+{
+	size_t size = 0;
+	if (data == NULL) {
+		size += lswlogf(buf, "no work-order");
+	} else {
+		struct pluto_crypto_req_cont *cn = data;
+		size += lswlogf(buf, "work-order %zu", (uintmax_t)cn->pcrc_id);
+		if (cn->pcrc_serialno != SOS_NOBODY) {
+			size += lswlogf(buf, " state #%lu", cn->pcrc_serialno);
+		}
+		if (cn->pcrc_helpernum != 0) {
+			size += lswlogf(buf, " helper %u", cn->pcrc_helpernum);
+		}
+		if (cn->pcrc_cancelled) {
+			size += lswlogf(buf, " cancelled");
+		}
+	}
+	return size;
+}
+
+struct list_info backlog_info = {
+	.debug = DBG_CONTROLMORE,
+	.name = "backlog",
+	.log = log_backlog,
+};
+
+static pthread_mutex_t backlog_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t backlog_cond = PTHREAD_COND_INITIALIZER;
+
+struct list_head backlog;
+static int backlog_queue_len = 0;
+
+/*
+ * Create the pluto crypto request object.
+ */
 
 static void handle_helper_answer(void *arg);
 
@@ -132,6 +156,7 @@ struct pluto_crypto_req_cont *new_pcrc(
 	r->pcrc_cancelled = false;
 	r->pcrc_md = md;
 	r->pcrc_name = name;
+	r->pcrc_backlog = list_entry(&backlog_info, r);
 
 	passert(md == NULL || md->st == st);
 	passert(st->st_suspended_md == NULL);
@@ -145,8 +170,6 @@ struct pluto_crypto_req_cont *new_pcrc(
 		set_suspended(st, md);
 	return r;
 }
-
-TAILQ_HEAD(req_queue, pluto_crypto_req_cont);
 
 /*
  * Note: this per-helper struct is never modified in a helper thread
@@ -166,36 +189,21 @@ TAILQ_HEAD(req_queue, pluto_crypto_req_cont);
  * - crypto_send_backlog increments it at end
  * - handle_helper_answer decrements it after reading
  */
+
 struct pluto_crypto_worker {
 	int pcw_helpernum;
 	pthread_t pcw_pid;
-
-	/*
-	 * socketpair's file descriptors
-	 * Each socket is bidirectional and they are cross-connected.
-	 */
-	int pcw_master_fd;	/* master's fd (-1 if none) */
-	int pcw_helper_fd;	/* helper's fd */
-
-	int pcw_maxbasicwork;   /* how many basic things can be queued */
-	int pcw_maxcritwork;    /* how many critical things can be queued */
-	bool pcw_dead;          /* worker is dead */
-	/*TAILQ_HEAD*/ struct req_queue pcw_active;	/* queue of tasks for this worker */
-	int pcw_work;           /* how many items in pcw_active */
+	bool pcw_dead;
+	pcr_req_id pcw_pcrc_id;
+	so_serial_t pcw_pcrc_serialno;
 };
 
-static /*TAILQ_HEAD*/ struct req_queue backlog;
-static int backlog_queue_len = 0;
-
 static void init_crypto_helper(struct pluto_crypto_worker *w, int n);
-
-static void *pluto_helper_thread(void *w);	/* forward */
 
 /* may be NULL if we are to do all the work ourselves */
 static struct pluto_crypto_worker *pc_workers = NULL;
 
 static int pc_workers_cnt = 0;	/* number of workers threads */
-static pcr_req_id pcw_id;	/* counter for generating unique request IDs */
 
 /* pluto crypto operations */
 static const char *const pluto_cryptoop_strings[] = {
@@ -350,9 +358,10 @@ static void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 }
 
 /* IN A HELPER THREAD */
-static void pluto_crypto_helper(int helper_fd, int helpernum)
+static void *pluto_crypto_helper_thread(void *arg)
 {
-	FILE *in = fdopen(helper_fd, "rb");
+	struct pluto_crypto_worker *w = arg;
+
 #ifdef HAVE_SECCOMP
 	switch (pluto_seccomp_mode) {
 	case SECCOMP_ENABLED:
@@ -369,119 +378,63 @@ static void pluto_crypto_helper(int helper_fd, int helpernum)
 #else
         libreswan_log("seccomp security for crypto helper not supported");
 #endif
-#if 0
-	pid_t testpid = getsid(0);
-	if (testpid == -1)
-		loglog(RC_LOG_SERIOUS, "Success: seccomp security was tolerant and the rogue syscall was blocked");
-	else
-		loglog(RC_LOG_SERIOUS, "Failure: seccomp security was disabled or failed to block the rogue syscall");
-#endif
+
 	/* OS X does not have pthread_setschedprio */
 #if USE_PTHREAD_SETSCHEDPRIO
 	int status = pthread_setschedprio(pthread_self(), 10);
-
 	DBG(DBG_CONTROL,
 	    DBG_log("status value returned by setting the priority of this thread (crypto helper %d) %d",
-		    helpernum, status));
+		    w->pcw_helpernum, status));
 #endif
 
-	DBG(DBG_CONTROL, DBG_log("crypto helper %d waiting on fd %d",
-				 helpernum, fileno(in)));
-
 	for (;;) {
-		size_t sz;
-
-		errno = 0;
-		struct pluto_crypto_req_cont *cn;
-		sz = fread(&cn, sizeof(char), sizeof(cn), in);
-
-		if (sz == 0 && feof(in)) {
-			loglog(RC_LOG_SERIOUS,
-			       "pluto_crypto_helper: crypto helper %d normal exit (EOF)",
-			       helpernum);
-			break;
-		} else if (sz != sizeof(cn)) {
+		w->pcw_pcrc_id = 0;
+		w->pcw_pcrc_serialno = SOS_NOBODY;
+		struct pluto_crypto_req_cont *cn = NULL;
+		pthread_mutex_lock(&backlog_mutex);
+		{
 			/*
-			 * XXX: since CN is smaller than a page, this
-			 * should never happen?
+			 * Search the backlog[] for something to do.
+			 * If needed sleep.
 			 */
-			if (ferror(in) != 0) {
-				/* ??? is strerror(ferror(in)) correct? */
-				char errbuf[100];	/* ??? how big is big enough? */
-
-				strerror_r(errno, errbuf, sizeof(errbuf));
-				loglog(RC_LOG_SERIOUS,
-				       "pluto_crypto_helper: crypto helper %d got read error: %s",
-				       helpernum, errbuf);
-			} else {
-				/* short read -- fatal */
-				loglog(RC_LOG_SERIOUS,
-				       "pluto_crypto_helper: crypto helper %d got a short read error: %zu instead of %zu",
-				       helpernum, sz, sizeof(cn));
+			for (;;) {
+				/* get oldest; if any */
+				FOR_EACH_LIST_ENTRY_OLD2NEW(&backlog, cn) {
+					/* CN is the first entry */
+					goto found_work;
+				}
+				DBG(DBG_CONTROL, DBG_log("crypto helper %d waiting (nothing to do)",
+							 w->pcw_helpernum));
+				pthread_cond_wait(&backlog_cond, &backlog_mutex);
+				DBG(DBG_CONTROL, DBG_log("crypto helper %d resuming",
+							 w->pcw_helpernum));
 			}
-			break;
+		found_work:
+			/*
+			 * Assign the entry to this thread, removing
+			 * it from the backlog.
+			 */
+			remove_list_entry(&cn->pcrc_backlog);
+			cn->pcrc_helpernum = w->pcw_helpernum;
+			w->pcw_pcrc_id = cn->pcrc_id;
+			w->pcw_pcrc_serialno = cn->pcrc_serialno;
 		}
-
-		DBG(DBG_CONTROL, DBG_log("crypto helper %d read fd: %d",
-					 helpernum,
-					 fileno(in)));
-
-		pluto_do_crypto_op(&cn->pcrc_pcr, helpernum);
-
+		pthread_mutex_unlock(&backlog_mutex);
+		if (!cn->pcrc_cancelled) {
+			DBG(DBG_CONTROL,
+			    DBG_log("crypto helper %d starting work-order %u for state #%lu from queue %d",
+				    w->pcw_helpernum, w->pcw_pcrc_id,
+				    w->pcw_pcrc_serialno,
+				    cn->pcrc_pcr.pcr_pcim));
+			pluto_do_crypto_op(&cn->pcrc_pcr, w->pcw_helpernum);
+		}
+		DBG(DBG_CONTROL,
+		    DBG_log("crypto helper %d sending results from work-order %u for state #%lu to event queue",
+			    w->pcw_helpernum, w->pcw_pcrc_id,
+			    w->pcw_pcrc_serialno));
 		pluto_event_now("sending helper answer", handle_helper_answer, cn);
 	}
-
-	/* We have no way to report this thread's success or failure. */
-
-	fclose(in);
-	/*pthread_exit();*/
-}
-
-/* send the request, make sure it all goes down. */
-static bool crypto_write_request(struct pluto_crypto_worker *w,
-				 struct pluto_crypto_req_cont *cn)
-{
-	DBG(DBG_CONTROL,
-	    DBG_log("asking crypto helper %d to do %s; request ID %u (pcw_work=%d)",
-		    w->pcw_helpernum,
-		    enum_show(&pluto_cryptoop_names, cn->pcrc_pcr.pcr_type),
-		    cn->pcrc_pcr.pcr_id, w->pcw_work));
-	cn->pcrc_worker = w; /* helper assigned */
-
-	const unsigned char *wdat = (unsigned char*)&cn;
-	size_t wlen = sizeof(cn);
-	while (wlen > 0) {
-		ssize_t cnt = write(w->pcw_master_fd, wdat, wlen);
-
-		if (cnt < 0) {
-			libreswan_log(
-				"write to crypto helper %d failed: cnt=%d err=%s",
-				w->pcw_helpernum, (int)cnt, strerror(errno));
-			return FALSE;
-		}
-
-		if (cnt == 0) {
-			/* Not clear why this would happen.  Socket full? */
-			libreswan_log(
-				"write to crypto helper %d failed to write any bytes",
-				w->pcw_helpernum);
-			return FALSE;
-		}
-
-		if ((size_t)cnt != wlen) {
-			/*
-			 * XXX: since CN is smaller than a page, this
-			 * should never happen?
-			 */
-			libreswan_log("short write to crypto helper %d (%zu of %zu bytes); will continue",
-				w->pcw_helpernum, (size_t)cnt, wlen);
-		}
-
-		wlen -= cnt;
-		wdat += cnt;
-	}
-
-	return TRUE;
+	return NULL;
 }
 
 /*
@@ -539,23 +492,17 @@ static void inline_worker(void *arg)
 stf_status send_crypto_helper_request(struct state *st,
 				      struct pluto_crypto_req_cont *cn)
 {
-	static int pc_worker_num = 0;	/* index of last worker assigned work */
-	struct pluto_crypto_worker *w;	/* best worker for task */
-	struct pluto_crypto_worker *c;	/* candidate worker */
-
 	/*
 	 * transitional: caller must have set pcrc_serialno.
 	 * It ought to match cur_state->st_serialno.
 	 */
 	passert(cn->pcrc_serialno == st->st_serialno);
 	passert(st->st_serialno != SOS_NOBODY);
-
 	passert(cn->pcrc_func != NULL);
 
-	/* attempt to send to a worker thread */
-
 	/* set up the id */
-	cn->pcrc_id = cn->pcrc_pcr.pcr_id = pcw_id++;
+	static pcr_req_id pcw_id;	/* counter for generating unique request IDs */
+	cn->pcrc_id = cn->pcrc_pcr.pcr_id = ++pcw_id;
 
 	/* copy partially built reply stream to heap */
 	cn->pcrc_reply_stream = reply_stream;
@@ -568,199 +515,87 @@ stf_status send_crypto_helper_request(struct state *st,
 	}
 
 	/*
+	 * Save in case it needs to be cancelled.
+	 */
+	pexpect(st->st_work_order == NULL);
+	st->st_work_order = cn;
+
+	/*
 	 * do it all ourselves?
 	 */
 	if (pc_workers == NULL) {
 		pluto_event_now("inline crypto", inline_worker, cn);
-		return STF_SUSPEND;
-	}
-
-	/* Find the first of the least-busy workers (if any) */
-
-	w = NULL;
-	for (c = pc_workers; c != &pc_workers[pc_workers_cnt]; c++) {
-		DBG(DBG_CONTROL,
-		    DBG_log("crypto helper %d%s: pcw_work: %d",
-			    pc_worker_num,
-			    c->pcw_dead? " DEAD" : "",
-			    c->pcw_work));
-
-		if (!c->pcw_dead && (w == NULL || c->pcw_work < w->pcw_work)) {
-			w = c;	/* c is the best so far */
-			if (c->pcw_work == 0)
-				break;	/* early out: cannot do better */
-		}
-	}
-
-	if (w != NULL &&
-	    (w->pcw_work < w->pcw_maxbasicwork ||
-	      (w->pcw_work < w->pcw_maxcritwork &&
-	       cn->pcrc_pcr.pcr_pcim > pcim_ongoing_crypto)))
-	{
-		/* allocate task to worker w */
-
-		/* link it to the worker's active list
-		 * cn transferred from caller
-		 */
-		TAILQ_INSERT_TAIL(&w->pcw_active, cn, pcrc_list);
-
-		passert(w->pcw_master_fd != -1);
-
-		if (!crypto_write_request(w, cn)) {
-			loglog(RC_LOG_SERIOUS, "cannot start crypto helper %d: failed to write",
-				w->pcw_helpernum);
-			pcrc_release_request(cn);	/* ownership transferred from caller */
-			return STF_FAIL;
-		}
-
-		w->pcw_work++;
-	} else if (cn->pcrc_pcr.pcr_pcim >= pcim_demand_crypto) {
-		/* Task is important: put it all on the backlog queue for later */
-
-		/* cn transferred from caller */
-		TAILQ_INSERT_TAIL(&backlog, cn, pcrc_list);
-
-		backlog_queue_len++;
-		DBG(DBG_CONTROL,
-		    DBG_log("critical demand crypto operation queued on backlog as %dth item; request ID %u",
-			    backlog_queue_len, cn->pcrc_pcr.pcr_id));
 	} else {
-		/* didn't find any available workers */
-		DBG(DBG_CONTROL,
-		    DBG_log("failed to find any available crypto worker (import=%s)",
-			    enum_name(&pluto_cryptoimportance_names,
-				      cn->pcrc_pcr.pcr_pcim)));
-
-		loglog(RC_LOG_SERIOUS, "cannot start crypto helper: failed to find any available worker");
-		pcrc_release_request(cn);	/* ownership transferred from caller */
-		return STF_TOOMUCHCRYPTO;
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("adding %s work-order %u for state #%lu to queue %d",
+			    cn->pcrc_name, cn->pcrc_id,
+			    cn->pcrc_serialno,
+			    cn->pcrc_pcr.pcr_pcim));
+		st->st_calculating = TRUE;
+		delete_event(st);
+		event_schedule_s(EVENT_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, st);
+		/* add to backlog */
+		pthread_mutex_lock(&backlog_mutex);
+		{
+			insert_list_entry(&backlog, &cn->pcrc_backlog);
+			backlog_queue_len++;
+			/* wake up threads waiting for work */
+			pthread_cond_signal(&backlog_cond);
+		}
+		pthread_mutex_unlock(&backlog_mutex);
 	}
-
-	/* cn ownership transferred on to backlog */
-
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = TRUE;", st->st_serialno, __FUNCTION__, __LINE__));
-	st->st_calculating = TRUE;
-	delete_event(st);
-	event_schedule_s(EVENT_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, st);
-
 	return STF_SUSPEND;
-}
-
-/*
- * send 1 unit of backlog, if any, to indicated worker.
- */
-static void crypto_send_backlog(struct pluto_crypto_worker *w)
-{
-	if (backlog_queue_len > 0) {
-		struct pluto_crypto_req_cont *cn = backlog.tqh_first;
-
-		passert(cn != NULL);
-		TAILQ_REMOVE(&backlog, cn, pcrc_list);
-
-		backlog_queue_len--;
-
-		DBG(DBG_CONTROL,
-		    DBG_log("removing request ID %u from crypto backlog queue; %d left",
-			    cn->pcrc_pcr.pcr_id, backlog_queue_len));
-
-		/* w points to a worker. Make sure it is live */
-		if (w->pcw_dead) {
-			init_crypto_helper(w, w->pcw_helpernum);
-			if (w->pcw_dead) {
-				DBG(DBG_CONTROL,
-				    DBG_log("found only a dead crypto helper %d, and failed to restart it",
-					w->pcw_helpernum));
-				/* discard request ??? is this the best action? */
-				/* XXX invoke callback with failure */
-				passert(FALSE);
-				pcrc_release_request(cn);
-				return;
-			}
-		}
-
-		/* link it to the active worker list */
-		TAILQ_INSERT_TAIL(&w->pcw_active, cn, pcrc_list);
-
-		passert(w->pcw_master_fd != -1);
-		passert(w->pcw_work > 0);
-
-		/* send the request, and then mark the worker as having more work */
-		if (!crypto_write_request(w, cn)) {
-			/* XXX invoke callback with failure */
-			passert(FALSE);
-			pcrc_release_request(cn);
-			return;
-		}
-
-		w->pcw_work++;
-	}
 }
 
 void delete_cryptographic_continuation(struct state *st)
 {
-	int i;
-
 	passert(st->st_serialno != SOS_NOBODY);
-
-	/* check backlog queue */
-	if (backlog_queue_len > 0) {
-		struct pluto_crypto_req_cont *cn, *next_cn;
-
-		passert(backlog.tqh_first != NULL);
-
-		for (cn = backlog.tqh_first; cn != NULL; cn = next_cn) {
-			next_cn = cn->pcrc_list.tqe_next;	/* grab before cn is freed */
-
-			if (st->st_serialno == cn->pcrc_serialno) {
-				backlog_queue_len--;
-				DBG(DBG_CONTROL,
-				    DBG_log("scrapping crypto request ID%u for #%lu from backlog",
-					    cn->pcrc_id, cn->pcrc_serialno));
-				TAILQ_REMOVE(&backlog, cn, pcrc_list);
-				pcrc_release_request(cn);
-			}
-		}
+	struct pluto_crypto_req_cont *cn = st->st_work_order;
+	if (cn == NULL) {
+		return;
 	}
-
-	/*
-	 * Check each worker's queue.
-	 * We cannot delete an in-flight computation, but we can mark it as
-	 * no longer of interest.
-	 */
-	for (i = 0; i < pc_workers_cnt; i++) {
-		struct pluto_crypto_worker *w = &pc_workers[i];
-		struct pluto_crypto_req_cont *cn;
-
-		for (cn = w->pcw_active.tqh_first; cn != NULL; cn = cn->pcrc_list.tqe_next) {
-			if (st->st_serialno == cn->pcrc_serialno) {
-				DBG(DBG_CONTROL,
-					DBG_log("we will ignore result of crypto request ID%u for #%lu from crypto helper %d",
-						cn->pcrc_id, cn->pcrc_serialno, i));
-				/* no longer of interest */
-				cn->pcrc_cancelled = true;
-			}
+	/* shut it down */
+	cn->pcrc_cancelled = true;
+	st->st_work_order = NULL;
+	/* remove it from any queue */
+	if (pc_workers != NULL) {
+		/* remove it from any queue */
+		pthread_mutex_lock(&backlog_mutex);
+		if (remove_list_entry(&cn->pcrc_backlog)) {
+			backlog_queue_len--;
+		} else {
+			/*
+			 * Already grabbed by the helper thread so
+			 * can't delete it here.
+			 */
+			cn = NULL;
+		}
+		pthread_mutex_unlock(&backlog_mutex);
+		if (cn != NULL) {
+			pcrc_release_request(cn);
 		}
 	}
 }
 
-void log_crypto_workers(void) {
+void log_crypto_workers(void)
+{
 	static bool first_time = TRUE;
-	int i;
 
 	if (!first_time)
+		/* why? see callers, code dead */
 		return;
 
 	first_time = FALSE;
 
-	for (i = 0; i < pc_workers_cnt; i++) {
+	for (int i = 0; i < pc_workers_cnt; i++) {
 		struct pluto_crypto_worker *w = &pc_workers[i];
-		struct pluto_crypto_req_cont *cn;
-
-		for (cn = w->pcw_active.tqh_first; cn != NULL; cn = cn->pcrc_list.tqe_next) {
-			libreswan_log("crypto queue: request ID %u for #%lu assigned to %scrypto helper %d",
-					cn->pcrc_id, cn->pcrc_serialno,
-					w->pcw_dead ? "dead " : "", i);
-		}
+		pthread_mutex_lock(&backlog_mutex);
+		so_serial_t serialno = w->pcw_pcrc_serialno;
+		int id = w->pcw_pcrc_id;
+		bool dead = w->pcw_dead;
+		pthread_mutex_unlock(&backlog_mutex);
+		libreswan_log("crypto queue: request ID %u for #%lu assigned to %scrypto helper %d",
+			      id, serialno, dead ? "dead " : "", i);
 	}
 }
 
@@ -772,23 +607,10 @@ void log_crypto_workers(void) {
 static void handle_helper_answer(void *arg)
 {
 	struct pluto_crypto_req_cont *cn = arg;
-	struct pluto_crypto_worker *w = cn->pcrc_worker;
 
 	DBG(DBG_CONTROL,
 		DBG_log("crypto helper %d replies to request ID %u",
-			w->pcw_helpernum, cn->pcrc_pcr.pcr_id));
-
-	/* worker w can accept more work now that we have read from its socketpair */
-	w->pcw_work--;
-
-	/*
-	 * if there is work queued, then send it off after reading, since this
-	 * avoids the most deadlocks
-	 */
-	crypto_send_backlog(w);
-
-	/* unlink it */
-	TAILQ_REMOVE(&w->pcw_active, cn, pcrc_list);
+			cn->pcrc_helpernum, cn->pcrc_pcr.pcr_id));
 
 	passert(cn->pcrc_func != NULL);
 
@@ -823,6 +645,7 @@ static void handle_helper_answer(void *arg)
 		}
 		pcr_release(&cn->pcrc_pcr);
 	} else {
+		st->st_work_order = NULL;
 		st->st_calculating = false;
 		so_serial_t old_state = push_cur_state(st);
 		(*cn->pcrc_func)(st, cn->pcrc_md, &cn->pcrc_pcr);
@@ -833,86 +656,24 @@ static void handle_helper_answer(void *arg)
 	pfree(cn);
 }
 
-#define MAX_HELPER_BASIC_WORK 200
-#define MAX_HELPER_CRIT_WORK 400
-
 /*
  * initialize a helper.
  */
 static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 {
-	int fds[2];
 	int thread_status;
 
-	/* reset this */
-	w->pcw_master_fd = -1;
-	w->pcw_helper_fd = -1;
 	w->pcw_helpernum = n;
 
-	/*
-	 * XXX: socketpar() is total overkill.  pipe() is sufficient.
-	 * But then, so would an in-memory queue.
-	 */
-	if (socketpair(PF_UNIX, SOCK_STREAM, 0, fds) != 0) {
-		loglog(RC_LOG_SERIOUS,
-		       "could not create socketpair for crypto helper %d: %s",
-		       n, strerror(errno));
-		return;
-	}
-
-	w->pcw_master_fd = fds[0];
-	w->pcw_helper_fd = fds[1];
-	w->pcw_maxbasicwork = MAX_HELPER_BASIC_WORK;
-	w->pcw_maxcritwork = MAX_HELPER_CRIT_WORK;
-	w->pcw_work = 0;
-	w->pcw_dead = FALSE;
-	TAILQ_INIT(&w->pcw_active);
-
-	/* set the send/received queue length to be at least maxcritwork
-	 * times sizeof(pluto_crypto_req) in size
-	 */
-	{
-		int qlen = w->pcw_maxcritwork *
-			   sizeof(struct pluto_crypto_req);
-
-		if (setsockopt(fds[0], SOL_SOCKET, SO_SNDBUF, &qlen,
-			       sizeof(qlen)) == -1 ||
-		    setsockopt(fds[1], SOL_SOCKET, SO_SNDBUF, &qlen,
-			       sizeof(qlen)) == -1 ||
-		    setsockopt(fds[0], SOL_SOCKET, SO_RCVBUF, &qlen,
-			       sizeof(qlen)) == -1 ||
-		    setsockopt(fds[1], SOL_SOCKET, SO_RCVBUF, &qlen,
-			       sizeof(qlen)) == -1) {
-			loglog(RC_LOG_SERIOUS,
-			       "could not set socket queue to %d for crypto helper %d",
-			       qlen, n);
-			return;
-		}
-	}
-
 	thread_status = pthread_create(&w->pcw_pid, NULL,
-				       pluto_helper_thread, (void *)w);
+				       pluto_crypto_helper_thread, (void *)w);
 	if (thread_status != 0) {
 		loglog(RC_LOG_SERIOUS, "failed to start child thread for crypto helper %d, error = %d",
 		       n, thread_status);
-		close(fds[1]);
-		close(fds[0]);
-		w->pcw_master_fd = -1;
 		w->pcw_dead = TRUE;
 	} else {
-		libreswan_log("started thread for crypto helper %d (master fd %d)",
-			      n, w->pcw_master_fd);
+		libreswan_log("started thread for crypto helper %d", n);
 	}
-}
-
-/* IN A HELPER THREAD */
-static void *pluto_helper_thread(void *w)
-{
-	const struct pluto_crypto_worker *helper;
-
-	helper = (struct pluto_crypto_worker *)w;
-	pluto_crypto_helper(helper->pcw_helper_fd, helper->pcw_helpernum);
-	return NULL;	/* end of thread */
 }
 
 /*
@@ -951,10 +712,8 @@ void init_crypto_helpers(int nhelpers)
 
 	pc_workers = NULL;
 	pc_workers_cnt = 0;
-	pcw_id = 1;
 
-	TAILQ_INIT(&backlog);
-
+	init_list(&backlog_info, &backlog);
 	init_crypto_helper_delay();
 
 	/* find out how many CPUs there are, if nhelpers is -1 */

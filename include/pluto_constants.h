@@ -219,7 +219,9 @@ enum crypto_importance {
 	pcim_ongoing_crypto,
 	pcim_local_crypto,
 	pcim_demand_crypto
+#define CRYPTO_IMPORTANCE_ROOF (pcim_demand_crypto + 1)
 };
+
 
 /* is pluto automatically switching busy state or set manually */
 enum ddos_mode {
