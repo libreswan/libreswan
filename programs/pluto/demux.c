@@ -262,27 +262,28 @@ struct replay_entry {
 	unsigned long nr;
 };
 
-static struct replay_entry *replay_entry(struct msg_digest *md)
-{
-	struct replay_entry *e = alloc_thing(struct replay_entry, "replay");
-	e->md = dup_md(md);
-	e->nr = ++replay_count; /* yes; pre-increment */
-	e->entry.data = e; /* back-link */
-	return e;
-}
-
 static size_t log_replay_entry(struct lswlog *buf, void *data)
 {
 	struct replay_entry *r = (struct replay_entry*)data;
 	return lswlogf(buf, "replay packet %lu", r == NULL ? 0L : r->nr);
 }
 
-static struct list_entry replay_packets;
+static struct list_head replay_packets;
 
 static struct list_info replay_info = {
+	.debug = DBG_CONTROLMORE,
 	.name = "replay list",
 	.log = log_replay_entry,
 };
+
+static struct replay_entry *replay_entry(struct msg_digest *md)
+{
+	struct replay_entry *e = alloc_thing(struct replay_entry, "replay");
+	e->md = dup_md(md);
+	e->nr = ++replay_count; /* yes; pre-increment */
+	e->entry = list_entry(&replay_info, e); /* back-link */
+	return e;
+}
 
 static void impair_replay(void *data UNUSED)
 {
@@ -323,9 +324,10 @@ static void impair_incoming(struct msg_digest *md)
 	if (DBGP(IMPAIR_REPLAY_DUPLICATES) ||
 	    DBGP(IMPAIR_REPLAY_FORWARD) ||
 	    DBGP(IMPAIR_REPLAY_BACKWARD)) {
+		init_list(&replay_info, &replay_packets);
 		/* save this packet */
 		struct replay_entry *e = replay_entry(md);
-		insert_list_entry(&replay_info, &replay_packets, &e->entry);
+		insert_list_entry(&replay_packets, &e->entry);
 		pluto_event_now("replay", impair_replay, NULL);
 	}
 }

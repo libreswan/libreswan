@@ -38,11 +38,12 @@ static size_t log_state(struct lswlog *buf, void *data)
  */
 
 struct list_info serialno_list_info = {
+	.debug = DBG_CONTROLMORE,
 	.name = "serialno list",
 	.log = log_state,
 };
 
-struct list_entry serialno_list_head;
+struct list_head serialno_list_head;
 
 /*
  * A table hashed by serialno.
@@ -54,9 +55,10 @@ static size_t serialno_hash(void *data)
 	return st->st_serialno;
 }
 
-static struct list_entry serialno_hash_slots[STATE_TABLE_SIZE];
+static struct list_head serialno_hash_slots[STATE_TABLE_SIZE];
 static struct hash_table serialno_hash_table = {
 	.info = {
+		.debug = DBG_CONTROLMORE,
 		.name = "serialno table",
 		.log = log_state,
 	},
@@ -65,10 +67,10 @@ static struct hash_table serialno_hash_table = {
 	.slots = serialno_hash_slots,
 };
 
-static struct list_entry *serialno_chain(so_serial_t serialno)
+static struct list_head *serialno_chain(so_serial_t serialno)
 {
-	struct list_entry *head = hash_table_slot_by_hash(&serialno_hash_table,
-							  serialno);
+	struct list_head *head = hash_table_slot_by_hash(&serialno_hash_table,
+							 serialno);
 	DBG(DBG_RAW | DBG_CONTROL,
 	    DBG_log("%s: hash serialno #%lu to head %p",
 		    serialno_hash_table.info.name,
@@ -125,7 +127,7 @@ static size_t icookie_log(struct lswlog *buf, void *data)
 	return size;
 }
 
-static struct list_entry icookie_hash_slots[STATE_TABLE_SIZE];
+static struct list_head icookie_hash_slots[STATE_TABLE_SIZE];
 static struct hash_table icookie_hash_table = {
 	.info = {
 		.name = "icookie table",
@@ -136,10 +138,10 @@ static struct hash_table icookie_hash_table = {
 	.slots = icookie_hash_slots,
 };
 
-struct list_entry *icookie_slot(const u_char *icookie)
+struct list_head *icookie_slot(const u_char *icookie)
 {
 	size_t hash = icookie_hasher(icookie);
-	struct list_entry *slot = hash_table_slot_by_hash(&icookie_hash_table, hash);
+	struct list_head *slot = hash_table_slot_by_hash(&icookie_hash_table, hash);
 	LSWDBGP(DBG_RAW | DBG_CONTROL, buf) {
 		lswlogf(buf, "%s: hash icookie ", icookie_hash_table.info.name);
 		lswlog_bytes(buf, icookie, COOKIE_SIZE);
@@ -190,7 +192,7 @@ static size_t cookies_log(struct lswlog *buf, void *data)
 	return size;
 }
 
-static struct list_entry cookies_hash_slots[STATE_TABLE_SIZE];
+static struct list_head cookies_hash_slots[STATE_TABLE_SIZE];
 static struct hash_table cookies_hash_table = {
 	.info = {
 		.name = "cookies table",
@@ -201,11 +203,11 @@ static struct hash_table cookies_hash_table = {
 	.slots = cookies_hash_slots,
 };
 
-struct list_entry *cookies_slot(const u_char *icookie,
-				const u_char *rcookie)
+struct list_head *cookies_slot(const u_char *icookie,
+			       const u_char *rcookie)
 {
 	size_t hash = cookies_hasher(icookie, rcookie);
-	struct list_entry *slot = hash_table_slot_by_hash(&cookies_hash_table, hash);
+	struct list_head *slot = hash_table_slot_by_hash(&cookies_hash_table, hash);
 	LSWDBGP(DBG_RAW | DBG_CONTROL, buf) {
 		lswlogf(buf, "%s: hash icookie ", cookies_hash_table.info.name);
 		lswlog_bytes(buf, icookie, COOKIE_SIZE);
@@ -258,8 +260,8 @@ void add_state_to_db(struct state *st)
 {
 	passert(st->st_serialno != SOS_NOBODY);
 	/* serial NR list, entries are only added */
-	st->st_serialno_list_entry.data = st;
-	insert_list_entry(&serialno_list_info, &serialno_list_head,
+	st->st_serialno_list_entry = list_entry(&serialno_list_info, st);
+	insert_list_entry(&serialno_list_head,
 			  &st->st_serialno_list_entry);
 
 	/* serial NR to state hash table */
@@ -281,9 +283,16 @@ void rehash_state_cookies_in_db(struct state *st)
 
 void del_state_from_db(struct state *st)
 {
-	remove_list_entry(&serialno_list_info,
-			  &st->st_serialno_list_entry);
+	remove_list_entry(&st->st_serialno_list_entry);
 	del_hash_table_entry(&serialno_hash_table,
 			     &st->st_serialno_hash_entry);
 	del_from_cookie_tables(st);
+}
+
+void init_state_db(void)
+{
+	init_list(&serialno_list_info, &serialno_list_head);
+	init_hash_table(&serialno_hash_table);
+	init_hash_table(&cookies_hash_table);
+	init_hash_table(&icookie_hash_table);
 }

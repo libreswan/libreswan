@@ -81,7 +81,7 @@
 #include "pluto_crypt.h"
 #include "enum_names.h"
 #include "virtual.h"	/* needs connections.h */
-
+#include "state_db.h"	/* for init_state_db() */
 #include "nat_traversal.h"
 
 #include "cbc_test_vectors.h"
@@ -1713,6 +1713,8 @@ int main(int argc, char **argv)
 	}
 
 /* Initialize all of the various features */
+
+	init_state_db();
 
 	init_nat_traversal(keep_alive);
 

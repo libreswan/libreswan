@@ -475,7 +475,7 @@ static char *humanize_number(uint64_t num,
 #define FOR_EACH_STATE_ENTRY(ST, SLOT, CODE)			\
 	do {							\
 		/* ST##entry is private to this macro */	\
-		struct list_entry *(ST##slot) = (SLOT);		\
+		struct list_head *(ST##slot) = (SLOT);		\
 		ST = NULL;					\
 		FOR_EACH_LIST_ENTRY_NEW2OLD(ST##slot, ST) {	\
 			CODE;					\

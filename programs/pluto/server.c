@@ -828,10 +828,11 @@ static size_t hash_pid_entry(void *data)
 	return entry->pid;
 }
 
-static struct list_entry pid_entry_slots[23];
+static struct list_head pid_entry_slots[23];
 
 static struct hash_table pids_hash_table = {
 	.info = {
+		.debug = DBG_CONTROLMORE,
 		.name = "pid table",
 		.log = log_pid_entry,
 	},
@@ -935,7 +936,7 @@ static void childhandler_cb(int unused UNUSED, const short event UNUSED, void *a
 				log_status(buf, status);
 			}
 			struct pid_entry *pid_entry = NULL;
-			struct list_entry *head = hash_table_slot_by_hash(&pids_hash_table, child);
+			struct list_head *head = hash_table_slot_by_hash(&pids_hash_table, child);
 			FOR_EACH_LIST_ENTRY_OLD2NEW(head, pid_entry) {
 				passert(pid_entry->magic == PID_MAGIC);
 				if (pid_entry->pid == child) {
@@ -980,6 +981,8 @@ void init_event_base(void) {
  */
 void call_server(void)
 {
+	init_hash_table(&pids_hash_table);
+
 	/*
 	 * setup basic events, CTL and SIGNALs
 	 */

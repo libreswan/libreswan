@@ -27,8 +27,10 @@ struct hash_table {
 	size_t (*hash)(void *data);
 	long nr_entries; /* approx? */
 	unsigned long nr_slots;
-	struct list_entry *slots;
+	struct list_head *slots;
 };
+
+void init_hash_table(struct hash_table *table);
 
 /*
  * Maintain the table.
@@ -50,7 +52,7 @@ void del_hash_table_entry(struct hash_table *table,
  * than one hash can map to the one list of entries.
  */
 
-struct list_entry *hash_table_slot_by_hash(struct hash_table *table,
-					   unsigned long hash);
+struct list_head *hash_table_slot_by_hash(struct hash_table *table,
+					  unsigned long hash);
 
 #endif
