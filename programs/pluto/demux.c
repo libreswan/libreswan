@@ -244,10 +244,18 @@ static struct msg_digest *dup_md(struct msg_digest *orig)
 
 static void process_dup(struct msg_digest *orig)
 {
+	/* not whack FD yet is expected to be reset! */
+	reset_cur_state();
+	reset_cur_connection();
+	cur_from = NULL;
+	pexpect_reset_globals();
+
 	struct msg_digest *md = dup_md(orig);
 	process_packet(&md);
 	/* copy of comm_handle() tail */
 	release_any_md(&md);
+
+	/* not whack FD */
 	reset_cur_state();
 	reset_cur_connection();
 	cur_from = NULL;
@@ -285,50 +293,46 @@ static struct replay_entry *replay_entry(struct msg_digest *md)
 	return e;
 }
 
-static void impair_replay(void *data UNUSED)
+static bool incoming_impaired(void)
 {
-	if (DBGP(IMPAIR_REPLAY_DUPLICATES)) {
-		/* get the most recent entry */
-		struct replay_entry *e = NULL;
-		FOR_EACH_LIST_ENTRY_NEW2OLD(&replay_packets, e) {
-			break;
-		}
-		passert(e != NULL);
-		const int max_duplicates = MAXIMUM_v1_ACCEPTED_DUPLICATES+1;
-		for (int d = 1; d <= max_duplicates; d++) {
-			libreswan_log("IMPAIR: duplicate packet %lu copy %d of %d",
-				      e->nr, d, max_duplicates);
-			process_dup(e->md);
-		}
-	}
-	if (DBGP(IMPAIR_REPLAY_FORWARD)) {
-		struct replay_entry *e = NULL;
-		FOR_EACH_LIST_ENTRY_OLD2NEW(&replay_packets, e) {
-			libreswan_log("IMPAIR: replay forward: packet %lu of %lu",
-				      e->nr, replay_count);
-			process_dup(e->md);
-		}
-	}
-	if (DBGP(IMPAIR_REPLAY_BACKWARD)) {
-		struct replay_entry *e = NULL;
-		FOR_EACH_LIST_ENTRY_NEW2OLD(&replay_packets, e) {
-			libreswan_log("IMPAIR: replay backward: packet %lu of %lu",
-				      e->nr, replay_count);
-			process_dup(e->md);
-		}
-	}
+	return (DBGP(IMPAIR_REPLAY_DUPLICATES) ||
+		DBGP(IMPAIR_REPLAY_FORWARD) ||
+		DBGP(IMPAIR_REPLAY_BACKWARD));
 }
 
 static void impair_incoming(struct msg_digest *md)
 {
-	if (DBGP(IMPAIR_REPLAY_DUPLICATES) ||
-	    DBGP(IMPAIR_REPLAY_FORWARD) ||
-	    DBGP(IMPAIR_REPLAY_BACKWARD)) {
-		init_list(&replay_info, &replay_packets);
-		/* save this packet */
-		struct replay_entry *e = replay_entry(md);
-		insert_list_entry(&replay_packets, &e->entry);
-		pluto_event_now("replay", impair_replay, NULL);
+	/* save this packet */
+	init_list(&replay_info, &replay_packets);
+	struct replay_entry *e = replay_entry(md);
+	insert_list_entry(&replay_packets, &e->entry);
+	/* now behave per enabled impair */
+	if (IMPAIR(REPLAY_DUPLICATES)) {
+		/* MD is the most recent entry */
+		process_dup(md);
+		libreswan_log("IMPAIR: start duplicate packet");
+		process_dup(e->md);
+		libreswan_log("IMPAIR: stop duplicate packet");
+	}
+	if (IMPAIR(REPLAY_FORWARD)) {
+		struct replay_entry *e = NULL;
+		FOR_EACH_LIST_ENTRY_OLD2NEW(&replay_packets, e) {
+			libreswan_log("IMPAIR: start replay forward: packet %lu of %lu",
+				      e->nr, replay_count);
+			process_dup(e->md);
+			libreswan_log("IMPAIR: stop replay forward: packet %lu of %lu",
+				      e->nr, replay_count);
+		}
+	}
+	if (IMPAIR(REPLAY_BACKWARD)) {
+		struct replay_entry *e = NULL;
+		FOR_EACH_LIST_ENTRY_NEW2OLD(&replay_packets, e) {
+			libreswan_log("IMPAIR: start replay backward: packet %lu of %lu",
+				      e->nr, replay_count);
+			process_dup(e->md);
+			libreswan_log("IMPAIR: stop replay backward: packet %lu of %lu",
+				      e->nr, replay_count);
+		}
 	}
 }
 
@@ -369,8 +373,11 @@ static void comm_handle(const struct iface_port *ifp)
 	md->iface = ifp;
 
 	if (read_packet(md)) {
-		impair_incoming(md);
-		process_packet(&md);
+		if (incoming_impaired()) {
+			impair_incoming(md);
+		} else {
+			process_packet(&md);
+		}
 	}
 
 	release_any_md(&md);
