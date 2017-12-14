@@ -86,6 +86,7 @@
 #include "hostpair.h"
 #include "lswfips.h"
 #include "crypto.h"
+#include "kernel_netlink.h"
 
 struct connection *connections = NULL;
 
@@ -1352,6 +1353,13 @@ void add_connection(const struct whack_message *wm)
 	if (wm->policy & POLICY_IKEV1_ALLOW) {
 		if (wm->policy & POLICY_MOBIKE) {
 			loglog(RC_LOG_SERIOUS, "MOBIKE requires ikev2=insist");
+			return;
+		}
+	}
+
+	if (wm->policy & POLICY_MOBIKE) {
+		if (!migrate_xfrm_sa_check()) {
+			loglog(RC_LOG_SERIOUS, "MOBIKE missing kernel support CONFIG_XFRM_MIGRATE && CONFIG_NET_KEY_MIGRATE");
 			return;
 		}
 	}

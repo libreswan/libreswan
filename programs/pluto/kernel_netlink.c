@@ -99,6 +99,8 @@ static int nl_send_fd = NULL_FD; /* to send to NETLINK_XFRM */
 static int nl_xfrm_fd = NULL_FD; /* listen to NETLINK_XFRM broadcast */
 static int nl_route_fd = NULL_FD; /* listen to NETLINK_ROUTE broadcast */
 
+static int kernel_mobike_supprt ; /* kernel xfrm_migrate_support */
+
 #define NE(x) { x, #x }	/* Name Entry -- shorthand for sparse_names */
 
 static sparse_names xfrm_type_names = {
@@ -2858,6 +2860,110 @@ static bool netlink_v6holes()
 						ICMP_NEIGHBOR_SOLICITATION);
 
 	}
+
+	return ret;
+}
+
+static bool qry_xfrm_mirgrate_support(struct nlmsghdr *hdr)
+{
+	struct nlm_resp rsp;
+	size_t len;
+	ssize_t r;
+	struct sockaddr_nl addr;
+	int nl_fd = socket(AF_NETLINK, SOCK_DGRAM, NETLINK_XFRM);
+
+	if (nl_fd < 0) {
+		LOG_ERRNO(errno, "socket() in qry_xfrm_mirgrate_support()");
+		return FALSE;
+	}
+
+	if (fcntl(nl_fd, F_SETFL, O_NONBLOCK) != 0) {
+		LOG_ERRNO(errno, "fcntl(O_NONBLOCK in qry_xfrm_mirgrate_support()");
+		close(nl_fd);
+
+		return FALSE;
+	}
+
+	/* hdr->nlmsg_seq = ++seq; */
+	len = hdr->nlmsg_len;
+	do {
+		r = write(nl_fd, hdr, len);
+	} while (r < 0 && errno == EINTR);
+	if (r < 0) {
+		LOG_ERRNO(errno, "netlink write() xfrm_migrate_support lookup");
+		close(nl_fd);
+		return FALSE;
+	} else if ((size_t)r != len) {
+		loglog(RC_LOG_SERIOUS,
+			"ERROR: netlink write() xfrm_migrate_support message truncated: %zd instead of %zu",
+			r, len);
+		close(nl_fd);
+		return FALSE;
+	}
+
+	for (;;) {
+		socklen_t alen = sizeof(addr);
+
+		r = recvfrom(nl_fd, &rsp, sizeof(rsp), 0,
+				(struct sockaddr *)&addr, &alen);
+		if (r < 0) {
+			if (errno == EINTR) {
+				continue;
+			} else if (errno == EAGAIN) {
+				/* old kernel F22 - dos not return proper error ??? */
+				DBG(DBG_KERNEL, DBG_log("ignore EAGAIN in %s assume MOBIKE migration is supported", __func__));
+				break;
+			}
+		}
+		break;
+	}
+
+	close(nl_fd);
+
+	if (rsp.n.nlmsg_type == NLMSG_ERROR && rsp.u.e.error == -ENOPROTOOPT) {
+		DBG(DBG_KERNEL, DBG_log("MOBIKE will fail got ENOPROTOOPT"));
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+bool migrate_xfrm_sa_check(void)
+{
+	struct {
+		struct nlmsghdr n;
+		struct xfrm_userpolicy_id id;
+		char data[MAX_NETLINK_DATA_SIZE];
+	} req;
+
+	if (kernel_mobike_supprt > 0)
+		return TRUE;
+	else if (kernel_mobike_supprt < 0)
+		return FALSE;
+	/* else check the kernel */
+
+	zero(&req);
+	req.n.nlmsg_flags = NLM_F_REQUEST;
+	req.n.nlmsg_type = XFRM_MSG_MIGRATE;
+	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
+
+	/* add attrs[XFRM_MSG_MIGRATE] */
+	{
+		struct rtattr *attr;
+		struct xfrm_user_migrate migrate;
+
+		zero(&migrate);
+		attr =  (struct rtattr *)((char *)&req + req.n.nlmsg_len);
+		attr->rta_type = XFRMA_MIGRATE;
+		attr->rta_len = sizeof(migrate);
+
+		memcpy(RTA_DATA(attr), &migrate, attr->rta_len);
+		attr->rta_len = RTA_LENGTH(attr->rta_len);
+		req.n.nlmsg_len += attr->rta_len;
+	}
+
+	bool ret = qry_xfrm_mirgrate_support(&req.n);
+	kernel_mobike_supprt = ret ? 1 : -1;
 
 	return ret;
 }
