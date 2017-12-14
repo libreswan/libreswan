@@ -109,8 +109,6 @@ struct starter_conn {
 	char *modecfg_dns2;
 	char *modecfg_domain;
 	char *modecfg_banner;
-	char *internal_domain1;
-	char *internal_domain2;
 	char *policy_label;
 	char *conn_mark_both;
 	char *conn_mark_in;

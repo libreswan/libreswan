@@ -305,8 +305,6 @@ struct whack_message {
 	ip_address modecfg_dns2;
 	char *modecfg_domain;
 	char *modecfg_banner;
-	char *internal_domain1;
-	char *internal_domain2;
 
 	char *conn_mark_both;
 	char *conn_mark_in;
