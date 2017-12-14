@@ -5207,7 +5207,8 @@ static void delete_or_replace_state(struct state *st) {
  *   <--  HDR, SK {[N,] [D,] [CP], ...}
  */
 
-stf_status process_encrypted_informational_ikev2(struct state *st, struct msg_digest *md)
+stf_status process_encrypted_informational_ikev2(struct state *st,
+						 struct msg_digest *md)
 {
 	pexpect(st == md->st);
 	st = md->st;
@@ -5215,6 +5216,10 @@ stf_status process_encrypted_informational_ikev2(struct state *st, struct msg_di
 
 	/* Are we responding (as opposed to processing a response)? */
 	const bool responding = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) == 0;
+
+	DBG(DBG_PARSING, DBG_log("an informational %s ",
+				responding ? "request should send a response" :
+					     "response"));
 
 	/*
 	 * get parent
