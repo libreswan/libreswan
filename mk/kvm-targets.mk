@@ -950,7 +950,7 @@ endif
 # Since the install domains list isn't exhaustive (for instance, nic
 # is missing), add an explicit dependency on all the domains so that
 # they still get created.
-kvm-install: | $(foreach domain,$(KVM_TEST_DOMAINS),$(KVM_POOLDIR)/$(domain).xml)
+kvm-install: | $(foreach domain,$(KVM_TEST_DOMAINS),$(KVM_LOCALDIR)/$(domain).xml)
 
 #
 # kvm-uninstall
