@@ -6793,9 +6793,6 @@ void ikev2_record_newaddr(struct state *st, void *arg_ip)
 	if (!mobike_check_established(st))
 		return;
 
-	if (sameaddr(ip, &st->st_localaddr))
-		return; /* same as old ignore this change */
-
 	if (!isanyaddr(&st->st_deleted_local_addr)) {
 		/*
 		 * A work around for delay between new address and new route
@@ -6823,6 +6820,9 @@ void ikev2_record_deladdr(struct state *st, void *arg_ip)
 	if (sameaddr(ip, &st->st_localaddr)) {
 		ip_address ip_p = st->st_deleted_local_addr;
 		st->st_deleted_local_addr = st->st_localaddr;
+		struct state *cst = state_with_serialno(st->st_connection->newest_ipsec_sa);
+		migration_down(cst->st_connection, cst);
+		 unroute_connection(st->st_connection);
 		if (st->st_addr_change_event == NULL) {
 			event_schedule_s(EVENT_v2_ADDR_CHANGE, 0, st);
 		} else {
@@ -6850,6 +6850,7 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 				ipstr(&this->nexthop, &g)));
 	st->st_mobike_localaddr = this->addr;
 	st->st_mobike_localport = st->st_localport;
+	st->st_mobike_host_nexthop = this->nexthop; /* for updown, after xfrm migration */
 	const struct iface_port *o_iface = st->st_interface;
 	st->st_interface = iface;
 
@@ -6864,16 +6865,6 @@ static const struct iface_port *ikev2_src_iface(struct state *st,
 	const struct iface_port *iface;
 	ipstr_buf b;
 
-	if (sameaddr(&st->st_localaddr, &this->addr)) {
-		DBG(DBG_CONTROL, DBG_log("#%lu new address %s is same as old. No MOBIKE action",
-					st->st_serialno,
-					sensitive_ipstr(&this->addr, &b)));
-		return NULL;
-	} else {
-		DBG(DBG_CONTROL, DBG_log("#%lu new address %s lookup an interface",
-					st->st_serialno,
-					sensitive_ipstr(&this->addr, &b)));
-	}
 	/* success found a new source address */
 
 	iface = lookup_iface_ip(&this->addr, st->st_localport);

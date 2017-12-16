@@ -2600,6 +2600,7 @@ bool update_mobike_endpoints(struct state *pst,
 
 		cst->st_mobike_localaddr = pst->st_mobike_localaddr;
 		cst->st_mobike_localport = pst->st_mobike_localport;
+		cst->st_mobike_host_nexthop = pst->st_mobike_host_nexthop;
 
 		new_addr = &pst->st_mobike_localaddr;
 		new_port = pst->st_mobike_localport;
@@ -2630,18 +2631,14 @@ bool update_mobike_endpoints(struct state *pst,
 					pst->st_serialno, buf));
 
 	if (sameaddr(old_addr, new_addr) && new_port == old_port) {
-		DBG(DBG_CONTROLMORE, DBG_log("#%lu MOBIKE UPDATE_SA ignore message, same IP address %s:%u",
-					pst->st_serialno, sensitive_ipstr(old_addr, &b),
-					old_port));
-		if (msg_r) {
-			/* initiator should be migrating */
-			PEXPECT_LOG("%s no change to kernel SA", buf);
-		} else {
+		if (!msg_r) {
 			/* on responder NAT could hide end-to-end change */
-			libreswan_log("MOBIKE success no change in kernel SA");
+			libreswan_log("MOBIKE success no change to kernel SA same IP address ad port  %s:%u",
+						sensitive_ipstr(old_addr, &b), old_port);
+
+			return TRUE;
 		}
 
-		return TRUE;
 	}
 
 	if (!migrate_ipsec_sa(cst)) {
@@ -2655,6 +2652,7 @@ bool update_mobike_endpoints(struct state *pst,
 		/* MOBIKE initiator */
 		c->spd.this.host_addr = cst->st_mobike_localaddr;
 		c->spd.this.host_port = cst->st_mobike_localport;
+		c->spd.this.host_nexthop  = cst->st_mobike_host_nexthop;
 
 		pst->st_localaddr = cst->st_localaddr = md->iface->ip_addr;
 		pst->st_localport = cst->st_localport = md->iface->port;
@@ -2682,6 +2680,11 @@ bool update_mobike_endpoints(struct state *pst,
 		PEXPECT_LOG("%s after mobike failed", "orient");
 	}
 	connect_to_host_pair(c); /* re-create hp listing */
+
+	if (msg_r) {
+		/* MOBIKE initiator */
+		migration_up(cst->st_connection, cst);
+	}
 
 	return TRUE;
 }
