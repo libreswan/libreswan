@@ -262,7 +262,7 @@ web-pages-disabled:
 
 define kvm-test
 .PHONY: $(1)
-$(1): $$(KVM_KEYS) kvm-shutdown-test-domains web-test-prep
+$(1): $$(KVM_KEYS) kvm-shutdown-local-domains web-test-prep
 	$$(if $$(WEB_SUMMARYDIR),,@$(MAKE) -s web-pages-disabled)
 	: kvm-test target=$(1) param=$(2)
 	$$(call check-kvm-qemu-directory)
