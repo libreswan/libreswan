@@ -74,6 +74,7 @@
 #include "secrets.h"    /* unreference_key() */
 #include "enum_names.h"
 #include "crypt_dh.h"
+#include "hostpair.h"
 
 #include <nss.h>
 #include <pk11pub.h>
@@ -992,6 +993,8 @@ void delete_state(struct state *st)
 
 	delete_state_event(st, &st->st_rel_whack_event);
 	delete_state_event(st, &st->st_send_xauth_event);
+	delete_state_event(st, &st->st_addr_change_event);
+
 
 	/* if there is a suspended state transition, disconnect us */
 	if (st->st_suspended_md != NULL) {
@@ -2436,11 +2439,24 @@ void merge_quirks(struct state *st, const struct msg_digest *md)
  * update if a validated packet has different port and/or address
  * values because it opens a possible DoS attack (such as allowing
  * an attacker to break the connection with a single packet).
+ *
+ * The probe bool is used to signify we are answering a MOBIKE
+ * probe request (basically a informational without UPDATE_ADDRESS
  */
 void update_ike_endpoints(struct state *st,
 			  const struct msg_digest *md)
 {
 	/* caller must ensure we are not behind NAT */
+
+	if (!sameaddr(&st->st_remoteaddr, &md->sender) ||
+		st->st_remoteport != md->sender_port) {
+		char oldip[ADDRTOT_BUF];
+		char newip[ADDRTOT_BUF];
+
+		addrtot(&st->st_remoteaddr, 0, oldip, sizeof(oldip));
+		addrtot(&md->sender, 0, newip, sizeof(newip));
+
+	} // why is below not part of this statement????
 
 	st->st_remoteaddr = md->sender;
 	st->st_remoteport = md->sender_port;
@@ -2449,19 +2465,141 @@ void update_ike_endpoints(struct state *st,
 	st->st_interface = md->iface;
 }
 
+/*
+ * We have successfully decrypted this packet, so we can update
+ * the remote IP / port
+ */
+bool update_mobike_endpoints(struct state *pst,
+				const struct msg_digest *md)
+{
+	struct connection *c = pst->st_connection;
+	int af = addrtypeof(&md->iface->ip_addr);
+	ipstr_buf b;
+	ip_address *old_addr, *new_addr;
+	u_int16_t old_port, new_port;
+	bool ret = FALSE;
+
+	/*
+	 * AA_201705 is this the right way to find Child SA(s)?
+	 * would it work if there are multiple Child SAs on this parent??
+	 * would it work if the Child SA connection is different from IKE SA?
+	 * for now just do this one connection, later on loop over all Child SAs
+	 */
+	struct state *cst = state_with_serialno(c->newest_ipsec_sa);
+	const bool msg_r = is_msg_response(md); /* MOBIKE inititor */
+
+
+	/* check for all conditions before updating IPsec SA's */
+	if (af != addrtypeof(&c->spd.that.host_addr)) {
+		libreswan_log("MOBIKE: AF change switching between v4 and v6 not supported");
+		return ret;
+	}
+
+	passert(cst->st_connection == pst->st_connection);
+
+	if (msg_r) {
+		/* MOBIKE initiator */
+		old_addr = &pst->st_localaddr;
+		old_port = pst->st_localport;
+
+		cst->st_mobike_localaddr = pst->st_mobike_localaddr;
+		cst->st_mobike_localport = pst->st_mobike_localport;
+
+		new_addr = &pst->st_mobike_localaddr;
+		new_port = pst->st_mobike_localport;
+	} else {
+		/* MOBIKE responder */
+		old_addr = &pst->st_remoteaddr;
+		old_port = pst->st_remoteport;
+
+		cst->st_mobike_remoteaddr = md->sender;
+		cst->st_mobike_remoteport = md->sender_port;
+		pst->st_mobike_remoteaddr = md->sender;
+		pst->st_mobike_remoteport = md->sender_port;
+
+		new_addr = &pst->st_mobike_remoteaddr;
+		new_port = pst->st_mobike_remoteport;
+	}
+
+	char buf[256];
+	ipstr_buf old;
+	ipstr_buf new;
+	snprintf(buf, sizeof(buf), "MOBIKE update %s address %s:%u -> %s:%u",
+			msg_r ? "local" : "remote",
+			sensitive_ipstr(old_addr, &old),
+			old_port,
+			sensitive_ipstr(new_addr, &new), new_port);
+
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu pst=#%lu %s", cst->st_serialno,
+					pst->st_serialno, buf));
+
+	if (sameaddr(old_addr, new_addr) && new_port == old_port) {
+		DBG(DBG_CONTROLMORE, DBG_log("#%lu MOBIKE UPDATE_SA ignore message, same IP address %s:%u",
+					pst->st_serialno, sensitive_ipstr(old_addr, &b),
+					old_port));
+		if (msg_r) {
+			/* initiator should be migrating */
+			PEXPECT_LOG("%s no change to kernel SA", buf);
+		} else {
+			/* on responder NAT could hide end-to-end change */
+			libreswan_log("MOBIKE success no change in kernel SA");
+		}
+
+		return TRUE;
+	}
+
+	if (!migrate_ipsec_sa(cst)) {
+		libreswan_log("%s FAILED", buf);
+		return ret;
+	}
+
+	libreswan_log(" success %s", buf);
+
+	if (msg_r) {
+		/* MOBIKE initiator */
+		c->spd.this.host_addr = cst->st_mobike_localaddr;
+		c->spd.this.host_port = cst->st_mobike_localport;
+
+		pst->st_localaddr = cst->st_localaddr = md->iface->ip_addr;
+		pst->st_localport = cst->st_localport = md->iface->port;
+		pst->st_interface = cst->st_interface = md->iface;
+
+	} else {
+		/* MOBIKE responder */
+		c->spd.that.host_addr = md->sender;
+		c->spd.that.host_port = md->sender_port;
+
+		/* for the consistency, correct output in ipsec status */
+		cst->st_remoteaddr = pst->st_remoteaddr = md->sender;
+		cst->st_remoteport = pst->st_remoteport = md->sender_port;
+		cst->st_localaddr = pst->st_localaddr = md->iface->ip_addr;
+		cst->st_localport = pst->st_localport = md->iface->port;
+		cst->st_interface = pst->st_interface = md->iface;
+	}
+
+	delete_oriented_hp(c); /* hp list may have changed */
+	if (!orient(c)) {
+		PEXPECT_LOG("%s after mobike failed", "orient");
+	}
+	connect_to_host_pair(c); /* re-create hp listing */
+
+	return TRUE;
+}
+
 void set_state_ike_endpoints(struct state *st,
 			     struct connection *c)
 {
 	/* reset our choice of interface */
 	c->interface = NULL;
 	orient(c);
+	st->st_interface = c->interface;
+	passert(st->st_interface != NULL);
 
 	st->st_localaddr  = c->spd.this.host_addr;
 	st->st_localport  = c->spd.this.host_port;
 	st->st_remoteaddr = c->spd.that.host_addr;
 	st->st_remoteport = c->spd.that.host_port;
 
-	st->st_interface = c->interface;
 }
 
 /* seems to be a good spot for now */
@@ -2642,4 +2780,20 @@ void set_newest_ipsec_sa(const char *m, struct state *const st)
 	st->st_connection->newest_ipsec_sa = st->st_serialno;
 	log_newest_sa_change(m, old_ipsec_sa, st);
 
+}
+
+void record_newaddr(ip_address *ip, char *a_type)
+{
+	ipstr_buf ip_str;
+	DBG(DBG_KERNEL, DBG_log("XFRM RTM_NEWADDR %s %s",
+				ipstr(ip, &ip_str), a_type));
+	for_each_state(ikev2_record_newaddr, ip);
+}
+
+void record_deladdr(ip_address *ip, char *a_type)
+{
+	ipstr_buf ip_str;
+	DBG(DBG_KERNEL, DBG_log("XFRM RTM_DELADDR %s %s",
+				ipstr(ip, &ip_str), a_type));
+	for_each_state(ikev2_record_deladdr, ip);
 }

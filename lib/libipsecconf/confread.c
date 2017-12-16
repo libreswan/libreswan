@@ -7,7 +7,6 @@
  * Copyright (C) 2010 Michael Smith <msmith@cbnco.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
@@ -1214,6 +1213,8 @@ static bool load_conn(
 
 	KW_POLICY_FLAG(KBF_IKEv2_ALLOW_NARROWING,
 		       POLICY_IKEV2_ALLOW_NARROWING);
+
+	KW_POLICY_FLAG(KBF_MOBIKE, POLICY_MOBIKE);
 
 	KW_POLICY_FLAG(KBF_IKEv2_PAM_AUTHORIZE,
 		       POLICY_IKEV2_PAM_AUTHORIZE);

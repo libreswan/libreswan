@@ -79,8 +79,9 @@ extern struct iface_port  *interfaces;   /* public interfaces */
 extern enum pluto_ddos_mode ddos_mode;
 extern bool pluto_drop_oppo_null;
 
+extern struct iface_port *lookup_iface_ip(ip_address *ip, u_int16_t port);
 extern bool use_interface(const char *rifn);
-extern void find_ifaces(void);
+extern void find_ifaces(bool rm_dead);
 extern void show_ifaces_status(void);
 extern void free_ifaces(void);
 extern void show_debug_status(void);

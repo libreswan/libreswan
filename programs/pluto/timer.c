@@ -423,7 +423,7 @@ static void liveness_check(struct state *st)
 			liveness_action(c, st->st_ikev2);
 			return;
 		} else {
-			stf_status ret = ikev2_send_informational(st);
+			stf_status ret = ikev2_send_livenss_probe(st);
 
 			DBG(DBG_DPD,
 				DBG_log("#%lu liveness_check - peer %s is missing - giving them some time to come back",
@@ -576,6 +576,11 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		st->st_event = NULL;
 		break;
 
+	case EVENT_v2_ADDR_CHANGE:
+		passert(st != NULL && st->st_addr_change_event == ev);
+		st->st_addr_change_event = NULL;
+		break;
+
 	case EVENT_v2_RELEASE_WHACK:
 		passert(st != NULL && st->st_rel_whack_event == ev);
 		DBG(DBG_CONTROL,
@@ -601,6 +606,11 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 
 	/* now do the actual event's work */
 	switch (type) {
+	case EVENT_v2_ADDR_CHANGE:
+		DBG(DBG_RETRANSMITS, DBG_log("#%lu IKEv2 local address change",
+					st->st_serialno));
+		ikev2_addr_change(st);
+		break;
 	case EVENT_REINIT_SECRET:
 		DBG(DBG_CONTROL,
 			DBG_log("event EVENT_REINIT_SECRET handled"));
@@ -929,6 +939,13 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 	 */
 	if (st != NULL) {
 		switch (type) {
+
+
+		case EVENT_v2_ADDR_CHANGE:
+			passert(st->st_addr_change_event == NULL);
+			st->st_addr_change_event = ev;
+			break;
+
 		case EVENT_DPD:
 		case EVENT_DPD_TIMEOUT:
 			passert(st->st_dpd_event == NULL);

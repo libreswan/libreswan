@@ -93,12 +93,6 @@ bool can_do_IPcomp = TRUE;  /* can system actually perform IPCOMP? */
 				&& sameaddr(&(c)->spd.this.host_nexthop, \
 					&(d)->spd.this.host_nexthop))
 
-/* forward declarations */
-static void set_text_said(char *text_said,
-			  const ip_address *dst,
-			  ipsec_spi_t spi,
-			  int proto);
-
 const struct pfkey_proto_info null_proto_info[2] = {
 	{
 		.proto = IPPROTO_ESP,
@@ -1117,7 +1111,7 @@ void unroute_connection(struct connection *c)
 #include "alg_info.h"
 #include "kernel_alg.h"
 
-static void set_text_said(char *text_said, const ip_address *dst,
+void set_text_said(char *text_said, const ip_address *dst,
 			ipsec_spi_t spi, int sa_proto)
 {
 	ip_said said;
@@ -1772,7 +1766,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	 */
 	int encapsulation = ENCAPSULATION_MODE_TRANSPORT;
 	int encap_oneshot;
-
 	bool add_selector;
 
 	src.maskbits = 0;
@@ -1780,13 +1773,13 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 	if (inbound) {
 		src.addr = c->spd.that.host_addr;
-		dst.addr = c->spd.this.host_addr;
 		src_client = c->spd.that.client;
+		dst.addr = c->spd.this.host_addr;
 		dst_client = c->spd.this.client;
 	} else {
 		src.addr = c->spd.this.host_addr,
-		dst.addr = c->spd.that.host_addr;
 		src_client = c->spd.this.client;
+		dst.addr = c->spd.that.host_addr;
 		dst_client = c->spd.that.client;
 	}
 
@@ -2545,13 +2538,13 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 
 static event_callback_routine kernel_process_msg_cb;
 
-static void kernel_process_msg_cb(evutil_socket_t fd UNUSED,
+static void kernel_process_msg_cb(evutil_socket_t fd,
 		const short event UNUSED, void *arg)
 {
 	const struct kernel_ops *kernel_ops = arg;
 
 	DBG(DBG_KERNEL, DBG_log(" %s process netlink message", __func__));
-	kernel_ops->process_msg();
+	kernel_ops->process_msg(fd);
 	passert(globals_are_reset());
 }
 
@@ -2678,7 +2671,13 @@ void init_kernel(void)
 	/* Note: kernel_ops is const but pluto_event_add cannot know that */
 	pluto_event_add(*kernel_ops->async_fdp, EV_READ | EV_PERSIST,
 			kernel_process_msg_cb, (void *)kernel_ops, NULL,
-			"KERNEL_FD");
+			"KERNEL_XRM_FD");
+
+	if (kernel_ops->route_fdp != NULL && *kernel_ops->route_fdp  > NULL_FD) {
+		pluto_event_add(*kernel_ops->route_fdp, EV_READ | EV_PERSIST,
+				kernel_process_msg_cb, (void *)kernel_ops, NULL,
+				"KERNEL_ROUTE_FD");
+	}
 
 	if (kernel_ops->process_queue != NULL) {
 		/*
@@ -3186,8 +3185,9 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 
 	/* setup outgoing SA if we haven't already */
 	if (!st->st_outbound_done) {
-		if (!setup_half_ipsec_sa(st, FALSE))
+		if (!setup_half_ipsec_sa(st, FALSE)) {
 			return FALSE;
+		}
 
 		DBG(DBG_KERNEL,
 			DBG_log("set up outgoing SA, ref=%u/%u", st->st_ref,
@@ -3256,6 +3256,32 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 #endif
 
 	return TRUE;
+}
+
+bool migrate_ipsec_sa(struct state *st)
+{
+	switch (kern_interface) {
+	case USE_NETKEY:
+		/* support ah? if(!st->st_esp.present && !st->st_ah.present)) */
+		if (!st->st_esp.present) {
+			libreswan_log("mobike SA migration only support ESP SA");
+			return FALSE;
+		}
+
+		if (!kernel_ops->migrate_sa(st))
+			return FALSE;
+
+		return TRUE;
+
+	case NO_KERNEL:
+		DBG(DBG_CONTROL, DBG_log("No support required to migrate_ipsec_sa with NoKernel support"));
+		return TRUE;
+
+	default:
+		DBG(DBG_CONTROL,
+			DBG_log("Usupported kernel stack in migrate_ipsec_sa"));
+		return FALSE;
+	}
 }
 
 /* delete an IPSEC SA.

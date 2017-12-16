@@ -24,7 +24,7 @@ extern void pfkey_close(void);
 extern void pfkey_register_response(const struct sadb_msg *msg);
 #endif
 extern void pfkey_dequeue(void);
-extern void pfkey_event(void);
+extern void pfkey_event(int);
 #ifdef KLIPS
 extern void klips_pfkey_register(void);
 #endif

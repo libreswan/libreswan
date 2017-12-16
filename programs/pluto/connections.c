@@ -9,7 +9,7 @@
  * Copyright (C) 2010 Bart Trojanowski <bart@jukie.net>
  * Copyright (C) 2010 Shinichi Furuso <Shinichi.Furuso@jp.sony.com>
  * Copyright (C) 2010,2013 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2017 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012 Philippe Vouters <Philippe.Vouters@laposte.net>
  * Copyright (C) 2012 Bram <bram-bcrafjna-erqzvar@spam.wizbit.be>
  * Copyright (C) 2013 Kim B. Heino <b@bbbs.net>
@@ -86,6 +86,7 @@
 #include "hostpair.h"
 #include "lswfips.h"
 #include "crypto.h"
+#include "kernel_netlink.h"
 
 struct connection *connections = NULL;
 
@@ -303,22 +304,7 @@ void delete_connection(struct connection *c, bool relations)
 	if (c->host_pair == NULL) {
 		list_rm(struct connection, hp_next, c, unoriented_connections);
 	} else {
-		struct host_pair *hp = c->host_pair;
-
-		list_rm(struct connection, hp_next, c, hp->connections);
-		c->host_pair = NULL; /* redundant, but safe */
-
-		/*
-		 * if there are no more connections with this host_pair
-		 * and we haven't even made an initial contact, let's delete
-		 * this guy in case we were created by an attempted DOS attack.
-		 */
-		if (hp->connections == NULL) {
-			/* ??? must deal with this! */
-			passert(hp->pending == NULL);
-			remove_host_pair(hp);
-			pfree(hp);
-		}
+		delete_oriented_hp(c);
 	}
 
 	/* any logging past this point is for the wrong connection */
@@ -1360,6 +1346,20 @@ void add_connection(const struct whack_message *wm)
 		if ((wm->policy & POLICY_IKEV2_PROPOSE) == LEMPTY) {
 			loglog(RC_FATAL, "Failed to add connection \"%s\": opportunistic connection MUST have ikev2=insist",
 				wm->name);
+			return;
+		}
+	}
+
+	if (wm->policy & POLICY_IKEV1_ALLOW) {
+		if (wm->policy & POLICY_MOBIKE) {
+			loglog(RC_LOG_SERIOUS, "MOBIKE requires ikev2=insist");
+			return;
+		}
+	}
+
+	if (wm->policy & POLICY_MOBIKE) {
+		if (!migrate_xfrm_sa_check()) {
+			loglog(RC_LOG_SERIOUS, "MOBIKE missing kernel support CONFIG_XFRM_MIGRATE && CONFIG_NET_KEY_MIGRATE");
 			return;
 		}
 	}

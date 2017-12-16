@@ -54,7 +54,7 @@ static void nokernel_dequeue(void)
 }
 
 /* asynchronous messages directly from PF_KEY socket */
-static void nokernel_event(void)
+static void nokernel_event(int fd UNUSED)
 {
 }
 
@@ -126,6 +126,7 @@ static bool nokernel_shunt_eroute(const struct connection *c UNUSED,
 const struct kernel_ops nokernel_kernel_ops = {
 	.type = NO_KERNEL,
 	.async_fdp = NULL,
+	.route_fdp = NULL,
 
 	.init = init_nokernel,
 	.pfkey_register = nokernel_register,

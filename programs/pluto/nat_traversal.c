@@ -178,7 +178,18 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md)
 {
 	struct state *st = md->st;
+	u_int8_t *rcookie = is_zero_cookie(st->st_rcookie) ? md->hdr.isa_rcookie : st->st_rcookie;
+	bool e = ikev2_out_natd(st, np, &st->st_localaddr,
+			st->st_localport, &st->st_remoteaddr,
+			st->st_remoteport,
+			rcookie, outs);
+	return e;
+}
 
+bool ikev2_out_natd(struct state *st, u_int8_t np, ip_address *localaddr,
+		u_int16_t localport, ip_address *remoteaddr,
+		u_int16_t remoteport,  u_int8_t *rcookie, pb_stream *outs)
+{
 	unsigned char hb[IKEV2_NATD_HASH_SIZE];
 	chunk_t hch = { hb, sizeof(hb) };
 
@@ -190,10 +201,7 @@ bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md)
 	 *  First: one with local (source) IP & port
 	 */
 	natd_hash(&ike_alg_hash_sha1, hb, st->st_icookie,
-		  (is_zero_cookie(st->st_rcookie)
-		   ? md->hdr.isa_rcookie
-		   : st->st_rcookie),
-		  &st->st_localaddr, st->st_localport);
+		  rcookie, localaddr, localport);
 
 	/* In v2, for parent, protoid must be 0 and SPI must be empty */
 	if (!ship_v2N(ISAKMP_NEXT_v2N, ISAKMP_PAYLOAD_NONCRITICAL,
@@ -204,10 +212,7 @@ bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md)
 	 * Second: one with remote (destination) IP & port
 	 */
 	natd_hash(&ike_alg_hash_sha1, hb, st->st_icookie,
-		  (is_zero_cookie(st->st_rcookie)
-		   ? md->hdr.isa_rcookie
-		   : st->st_rcookie),
-		  &st->st_remoteaddr, st->st_remoteport);
+			rcookie, remoteaddr, remoteport);
 
 	/* In v2, for parent, protoid must be 0 and SPI must be empty */
 	if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,

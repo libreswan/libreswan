@@ -348,6 +348,14 @@ struct state {
 	ip_address st_localaddr;                /* where to send them from */
 	u_int16_t st_localport;
 
+	/* IKEv2 MOBIKE probe copies */
+	ip_address st_mobike_remoteaddr;
+	u_int16_t st_mobike_remoteport;
+	const struct iface_port *st_mobike_interface;
+	ip_address st_deleted_local_addr;	/* kernel deleted address */
+	ip_address st_mobike_localaddr;		/* new address to initiate MOBIKE */
+	u_int16_t st_mobike_localport;		/* is this necessary ? */
+
 	/** IKEv1-only things **/
 
 	msgid_t st_msgid;                       /* MSG-ID from header.
@@ -559,6 +567,8 @@ struct state {
 	struct pluto_event *st_liveness_event;
 	struct pluto_event *st_rel_whack_event;
 	struct pluto_event *st_send_xauth_event;
+	struct pluto_event *st_addr_change_event;
+
 
 	/* RFC 3706 Dead Peer Detection */
 	monotime_t st_last_dpd;			/* Time of last DPD transmit (0 means never?) */
@@ -576,6 +586,9 @@ struct state {
 	bool st_seen_fragments;                 /* did we receive ike fragments from peer, if so use them in return as well */
 	bool st_seen_no_tfc;			/* did we receive ESP_TFC_PADDING_NOT_SUPPORTED */
 	bool st_seen_use_transport;		/* did we receive USE_TRANSPORT_MODE */
+	bool st_seen_mobike;			/* did we receive MOBIKE */
+	bool st_sent_mobike;			/* sent MOBIKE notify */
+	bool st_seen_nonats;			/* did we receive NO_NATS_ALLOWED */
 	generalName_t *st_requested_ca;		/* collected certificate requests */
 	u_int8_t st_reply_xchg;
 };
@@ -701,8 +714,12 @@ extern bool require_ddos_cookies(void);
 extern void show_globalstate_status(void);
 extern void set_newest_ipsec_sa(const char *m, struct state *const st);
 extern void update_ike_endpoints(struct state *st, const struct msg_digest *md);
+extern bool update_mobike_endpoints(struct state *st, const struct msg_digest *md);
 extern void ikev2_expire_unused_parent(struct state *pst);
 
 bool shared_phase1_connection(const struct connection *c);
+
+extern void record_deladdr(ip_address *ip, char *a_type);
+extern void record_newaddr(ip_address *ip, char *a_type);
 
 #endif /* _STATE_H */

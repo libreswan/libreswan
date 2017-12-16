@@ -1,0 +1,11 @@
+ip addr show dev eth1 | grep 192.1.33.254 || ip addr add 192.1.33.254/24 dev eth1
+nic #
+ iptables -t nat -F
+nic #
+ iptables -F
+nic #
+ iptables -X
+nic #
+ echo initdone
+initdone
+
