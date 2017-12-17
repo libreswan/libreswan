@@ -88,7 +88,7 @@ void xauth_pam_abort(struct state *st, bool call_callback)
 			DBG(DBG_XAUTH,
 			    DBG_log("XAUTH: #%lu: main-process: notifying callback for user '%s'",
 				    st->st_serialno, xauth->ptarg.name));
-			xauth->callback(st, xauth->ptarg.name, true, false);
+			xauth->callback(st, xauth->ptarg.name, false);
 		} else {
 			pfree_xauth(xauth);
 		}
@@ -141,7 +141,7 @@ static void xauth_pam_child_cleanup(int status, void *arg)
 		libreswan_log("XAUTH: #%lu: completed for user '%s' with status %s",
 			      xauth->serialno, xauth->ptarg.name,
 			      success ? "SUCCESSS" : "FAILURE");
-		xauth->callback(st, xauth->ptarg.name, false, success);
+		xauth->callback(st, xauth->ptarg.name, success);
 		reset_cur_state();
 	}
 

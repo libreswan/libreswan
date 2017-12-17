@@ -3361,7 +3361,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 static xauth_callback_t ikev2_pam_continue;	/* type assertion */
 
 static void ikev2_pam_continue(struct state *st, const char *name UNUSED,
-			       bool aborted UNUSED, bool success)
+			       bool success)
 {
 	struct msg_digest *md = st->st_suspended_md;
 

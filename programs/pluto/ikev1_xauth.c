@@ -1108,7 +1108,7 @@ static bool do_file_authentication(struct state *st, const char *name,
 static xauth_callback_t ikev1_xauth_callback;	/* type assertion */
 
 static void ikev1_xauth_callback(struct state *st, const char *name,
-				 bool aborted UNUSED, bool results)
+				 bool results)
 {
 	/*
 	 * If XAUTH authentication failed, should we soft fail or hard fail?
@@ -1169,7 +1169,7 @@ static void xauth_immediate_callback(void *arg)
 		libreswan_log("XAUTH: #%lu: completed for user '%s' with status %s",
 			      xauth->serialno, xauth->name,
 			      xauth->success ? "SUCCESSS" : "FAILURE");
-		xauth->callback(st, xauth->name, false, xauth->success);
+		xauth->callback(st, xauth->name, xauth->success);
 		reset_cur_state();
 	}
 	pfree(xauth->name);

@@ -22,7 +22,6 @@ struct state;
 typedef void xauth_callback_t(
 		struct state *st,
 		const char *,
-		bool aborted,
 		bool success);
 
 #ifdef XAUTH_HAVE_PAM
