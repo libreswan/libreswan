@@ -1176,13 +1176,12 @@ static void xauth_immediate_callback(void *arg)
 	pfree(xauth);
 }
 
-static void xauth_immediate(const char *name, so_serial_t serialno, bool success,
-			    xauth_callback_t *callback)
+static void xauth_immediate(const char *name, const struct state *st, bool success)
 {
 	struct xauth_immediate_context *xauth = alloc_thing(struct xauth_immediate_context, "xauth next");
 	xauth->success = success;
-	xauth->serialno = serialno;
-	xauth->callback = callback;
+	xauth->serialno = st->st_serialno;
+	xauth->callback = ikev1_xauth_callback;
 	xauth->name = clone_str(name, "xauth next name");
 	pluto_event_now("xauth immediate", xauth_immediate_callback, xauth);
 }
@@ -1236,14 +1235,12 @@ static int xauth_launch_authent(struct state *st,
 		libreswan_log("XAUTH: password file authentication method requested to authenticate user '%s'",
 			      arg_name);
 		bool success = do_file_authentication(st, arg_name, arg_password, st->st_connection->name);
-		xauth_immediate(arg_name, st->st_serialno,
-				success, ikev1_xauth_callback);
+		xauth_immediate(arg_name, st, success);
 		break;
 	case XAUTHBY_ALWAYSOK:
 		libreswan_log("XAUTH: authentication method 'always ok' requested to authenticate user '%s'",
 			      arg_name);
-		xauth_immediate(arg_name, st->st_serialno,
-				true, ikev1_xauth_callback);
+		xauth_immediate(arg_name, st, true);
 		break;
 	default:
 		libreswan_log("XAUTH: unknown authentication method requested to authenticate user '%s'",
