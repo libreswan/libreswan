@@ -89,8 +89,9 @@ void xauth_pam_abort(struct state *st, bool call_callback)
 			    DBG_log("XAUTH: #%lu: main-process: notifying callback for user '%s'",
 				    st->st_serialno, xauth->ptarg.name));
 			xauth->callback(st, xauth->ptarg.name, true, false);
+		} else {
+			pfree_xauth(xauth);
 		}
-		pfree_xauth(xauth);
 	}
 }
 
