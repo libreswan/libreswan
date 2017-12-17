@@ -1150,7 +1150,7 @@ static void ikev1_xauth_callback(struct state *st, const char *name,
  * It should be possible to eliminate this event hop entirely; later.
  */
 
-struct xauth_immediate {
+struct xauth_immediate_context {
 	bool success;
 	so_serial_t serialno;
 	char *name;
@@ -1159,7 +1159,7 @@ struct xauth_immediate {
 
 static void xauth_immediate_callback(void *arg)
 {
-	struct xauth_immediate *xauth = (struct xauth_immediate*)arg;
+	struct xauth_immediate_context *xauth = (struct xauth_immediate_context *)arg;
 	struct state *st = state_with_serialno(xauth->serialno);
 	if (st == NULL) {
 		libreswan_log("XAUTH: #%lu: state destroyed for user '%s'",
@@ -1179,7 +1179,7 @@ static void xauth_immediate_callback(void *arg)
 static void xauth_immediate(const char *name, so_serial_t serialno, bool success,
 			    xauth_callback_t *callback)
 {
-	struct xauth_immediate *xauth = alloc_thing(struct xauth_immediate, "xauth next");
+	struct xauth_immediate_context *xauth = alloc_thing(struct xauth_immediate_context, "xauth next");
 	xauth->success = success;
 	xauth->serialno = serialno;
 	xauth->callback = callback;
