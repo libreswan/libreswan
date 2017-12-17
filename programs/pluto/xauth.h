@@ -17,6 +17,14 @@
 
 struct state;
 
+/* ??? needlessly used even if !XAUTH_HAVE_PAM */
+
+typedef void xauth_callback_t(
+		struct state *st,
+		const char *,
+		bool aborted,
+		bool success);
+
 #ifdef XAUTH_HAVE_PAM
 
 /*
@@ -24,16 +32,10 @@ struct state;
  */
 void xauth_pam_abort(struct state *st, bool call_callback);
 
-typedef void (*xauth_callback_t)(
-		struct state *st,
-		const char *,
-		bool aborted,
-		bool success);
-
 void xauth_start_pam_thread(struct state *st,
 			    const char *name,
 			    const char *password,
 			    const char *atype,
-			    xauth_callback_t callback);
+			    xauth_callback_t *callback);
 
 #endif

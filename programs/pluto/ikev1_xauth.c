@@ -1105,6 +1105,8 @@ static bool do_file_authentication(struct state *st, const char *name,
  * method to verify the user/password
  */
 
+static xauth_callback_t ikev1_xauth_callback;	/* type assertion */
+
 static void ikev1_xauth_callback(struct state *st, const char *name,
 				 bool aborted UNUSED, bool results)
 {
@@ -1152,8 +1154,7 @@ struct xauth_immediate {
 	bool success;
 	so_serial_t serialno;
 	char *name;
-	void (*callback)(struct state *st, const char *name,
-			 bool aborted, bool success);
+	xauth_callback_t *callback;
 };
 
 static void xauth_immediate_callback(void *arg)
@@ -1176,10 +1177,7 @@ static void xauth_immediate_callback(void *arg)
 }
 
 static void xauth_immediate(const char *name, so_serial_t serialno, bool success,
-			    void (*callback)(struct state *st,
-					     const char *name,
-					     bool aborted,
-					     bool success))
+			    xauth_callback_t *callback)
 {
 	struct xauth_immediate *xauth = alloc_thing(struct xauth_immediate, "xauth next");
 	xauth->success = success;

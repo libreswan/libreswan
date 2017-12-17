@@ -39,7 +39,7 @@ struct xauth {
 	so_serial_t serialno;
 	struct pam_thread_arg ptarg;
 	struct timeval tv0;
-	xauth_callback_t callback;
+	xauth_callback_t *callback;
 	bool abort;
 	pid_t child;
 };
@@ -179,7 +179,7 @@ void xauth_start_pam_thread(struct state *st,
 			    const char *name,
 			    const char *password,
 			    const char *atype,
-			    xauth_callback_t callback)
+			    xauth_callback_t *callback)
 {
 	so_serial_t serialno = st->st_serialno;
 
