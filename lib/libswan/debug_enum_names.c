@@ -82,6 +82,7 @@ static const char *impair_strings[] = {
 	I(IMPAIR_MAJOR_VERSION_BUMP, "impair-major-version-bump"),
 	I(IMPAIR_MINOR_VERSION_BUMP, "impair-minor-version-bump"),
 	I(IMPAIR_RETRANSMITS, "impair-retransmits"),
+	I(IMPAIR_SEND_NO_RETRANSMITS, "impair-send-no-retransmits"),
 	I(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG, "impair-send-bogus-payload-flag"),
 	I(IMPAIR_SEND_BOGUS_ISAKMP_FLAG, "impair-send-bogus-isakmp-flag"),
 	I(IMPAIR_SEND_IKEv2_KE, "impair-send-ikev2-ke"),
