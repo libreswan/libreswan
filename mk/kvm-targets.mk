@@ -320,12 +320,15 @@ kvm-keys-up-to-date:
 # Can't yet force the domain's creation.  This target may have been
 # invoked by testing/pluto/Makefile which relies on old domain
 # configurations.
+#
+# Make certain everything is shutdown.
 
 $(KVM_KEYS): testing/x509/dist_certs.py $(KVM_KEYS_SCRIPT) # | $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
 	$(call check-kvm-domain,$(KVM_BUILD_DOMAIN))
 	$(call check-kvm-entropy)
 	$(call check-kvm-qemu-directory)
 	$(MAKE) kvm-keys-clean
+	$(MAKE) kvm-shutdown-local-domains
 	$(KVM_KEYS_SCRIPT) $(KVM_BUILD_DOMAIN) testing/x509
 	: Also regenerate the DNSSEC keys -- uses host
 	$(top_srcdir)/testing/baseconfigs/all/etc/bind/generate-dnssec.sh
