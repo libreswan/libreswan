@@ -1737,14 +1737,43 @@ struct state *ikev2_find_state_in_init(const u_char *icookie,
 /*
  * Find a state object for an IKEv2 state, a response that includes a msgid.
  */
-struct state *find_state_ikev2_child(const u_char *icookie,
+
+static bool ikev2_ix_state_match(const struct state *st,
+		const enum isakmp_xchg_types ix)
+{
+	bool ret = FALSE;
+
+	switch (ix) {
+	case ISAKMP_v2_SA_INIT:
+	case ISAKMP_v2_AUTH:
+	case ISAKMP_v2_INFORMATIONAL:
+		ret = TRUE; /* good enough, strict check could be double work */
+		break;
+
+	case ISAKMP_v2_CREATE_CHILD_SA:
+		if (IS_CHILD_IPSECSA_RESPONSE(st))
+			ret = TRUE;
+		break;
+
+	default:
+		DBG(DBG_CONTROLMORE, DBG_log("unsolicited response? did we send %s request? ",
+					enum_name(&ikev2_exchange_names, ix)));
+		break;
+	}
+
+	return ret;
+}
+
+struct state *find_state_ikev2_child(const enum isakmp_xchg_types ix,
+				     const u_char *icookie,
 				     const u_char *rcookie,
-				     msgid_t msgid)
+				     const msgid_t msgid)
 {
 	struct state *st;
 	FOR_EACH_STATE_WITH_COOKIES(st, icookie, rcookie, {
 		if (st->st_ikev2 &&
-		    st->st_msgid == msgid) {
+		    st->st_msgid == msgid &&
+		    ikev2_ix_state_match(st, ix)) {
 			DBG(DBG_CONTROL,
 			    DBG_log("v2 peer, cookies and msgid match on #%lu",
 				    st->st_serialno));

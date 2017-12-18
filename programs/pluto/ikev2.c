@@ -1389,9 +1389,10 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		 * an AUTH exchange.  Hmm, perhaps, because the code
 		 * commits to creating a child early, it finds that.
 		 */
-		st = find_state_ikev2_child(md->hdr.isa_icookie,
-					    md->hdr.isa_rcookie,
-					    md->hdr.isa_msgid); /* message ID in NW order */
+		st = find_state_ikev2_child(ix, md->hdr.isa_icookie,
+				md->hdr.isa_rcookie,
+				md->hdr.isa_msgid); /* message ID in NW order */
+
 		if (st == NULL) {
 			/*
 			 * Didn't find a child waiting on that message
