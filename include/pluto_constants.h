@@ -182,6 +182,8 @@ enum event_type {
 
 #define RTM_NEWADDR_ROUTE_DELAY		3 /* seconds */
 
+#define PARENT_MIN_LIFE			1 /* sedond */
+
 /*
  * an arbitrary milliseconds delay for responder. A workaround for iOS, iPhone.
  * If xauth message arrive before main mode response iPhone may abort.

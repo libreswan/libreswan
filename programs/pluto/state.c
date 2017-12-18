@@ -1940,6 +1940,30 @@ bool find_pending_phase2(const so_serial_t psn,
 }
 
 /*
+ *a viable parent must be around for while.
+ *max(PARENT_MIN_LIFE, st_margin)
+ */
+static bool ikev2_viable_parent(const struct state *st)
+{
+	/* this check is defied only for an IKEv2 parent */
+	if (!st->st_ikev2)
+		return TRUE;
+
+	monotime_t now = mononow();
+	const struct pluto_event *ev = st->st_event;
+	long lifetime = monobefore(now, ev->ev_time) ?
+				deltasecs(monotimediff(ev->ev_time, now)) :
+				-1 * deltasecs(monotimediff(now, ev->ev_time));
+
+	if (lifetime > PARENT_MIN_LIFE)
+		/* incase st_margin == 0, insist minium life */
+		if (lifetime > deltasecs(st->st_margin))
+			return TRUE;
+
+	return FALSE;
+}
+
+/*
  * Find newest Phase 1 negotiation state object for suitable for connection c
  */
 struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
@@ -1949,6 +1973,7 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 
 	FOR_EACH_COOKIED_STATE(st, {
 		if (LHAS(ok_states, st->st_state) &&
+		    ikev2_viable_parent(st) &&
 		    st->st_ikev2 == is_ikev2 &&
 		    c->host_pair == st->st_connection->host_pair &&
 		    same_peer_ids(c, st->st_connection, NULL) &&
