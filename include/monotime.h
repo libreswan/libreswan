@@ -45,9 +45,9 @@
  *
  */
 
-typedef struct { time_t mono_secs; } monotime_t;
+typedef struct { struct timeval mt; } monotime_t;
 
-#define MONOTIME_EPOCH { 0 }
+#define MONOTIME_EPOCH { { 0, 0 } }
 
 extern const monotime_t monotime_epoch;
 
