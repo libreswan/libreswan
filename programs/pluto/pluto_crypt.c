@@ -108,6 +108,7 @@ struct pluto_crypto_req_cont {
 	struct msg_digest *pcrc_md;
 	TAILQ_ENTRY(pluto_crypto_req_cont) pcrc_list;
 	so_serial_t pcrc_serialno;	/* sponsoring state's serial number */
+	bool pcrc_cancelled;
 	const char *pcrc_name;
 	struct pluto_crypto_req pcrc_pcr;
 	pcr_req_id pcrc_id;
@@ -128,6 +129,7 @@ struct pluto_crypto_req_cont *new_pcrc(
 
 	r->pcrc_func = fn;
 	r->pcrc_serialno = st->st_serialno;
+	r->pcrc_cancelled = false;
 	r->pcrc_md = md;
 	r->pcrc_name = name;
 
@@ -484,34 +486,15 @@ static bool crypto_write_request(struct pluto_crypto_worker *w,
 
 /*
  * Do the work 'inline' which really means on the event queue.
- *
- * Given threads are assumed, this has not been tested.
  */
 
 static void inline_worker(void *arg)
 {
 	struct pluto_crypto_req_cont *cn = arg;
-	struct state *st = state_by_serialno(cn->pcrc_serialno);
-	if (st == NULL) {
-		pcrc_release_request(cn);
-	} else {
+	if (!cn->pcrc_cancelled) {
 		pluto_do_crypto_op(&cn->pcrc_pcr, -1);
-
-		reply_stream = cn->pcrc_reply_stream;
-		if (cn->pcrc_reply_buffer != NULL) {
-			memcpy(reply_stream.start, cn->pcrc_reply_buffer,
-			       pbs_offset(&reply_stream));
-			pfree(cn->pcrc_reply_buffer);
-		}
-		cn->pcrc_reply_buffer = NULL;
-
-		/* call the continuation */
-		so_serial_t old_state = push_cur_state(st);
-		(*cn->pcrc_func)(st, cn->pcrc_md, &cn->pcrc_pcr);
-		pop_cur_state(old_state);
-
-		pfree(cn);
 	}
+	handle_helper_answer(arg);
 }
 
 /*
@@ -521,30 +504,15 @@ static void inline_worker(void *arg)
  *
  * See also comments prefixing the typedef for crypto_req_cont_func.
  *
- * struct pluto_crypto_req *r:
- *	points to a auto variable in the caller.  Its content must be
- *	relocatable since it gets sent down a notional wire (or copied
- *	for the backlog queue).  Our caller need not worry about allocation.
- *
  * struct pluto_crypto_req_cont *cn:
- *	Points to a heap-allocated struct.  The caller transfers ownership
- *	(i.e responsibility to free) to us.  (We or our allies will free it
- *	after the continuation function is called or failure is determined.)
  *
- * NOTE: we don't free any resources held in the cn (eg. a msg_digest).
- *	If the continuation function is called (STF_SUSPEND),
- *	the continuation function must deal with such resources,
- *	directly or indirectly.
- *	Otherwise (STF_FAIL, STF_TOOMUCHCRYPTO) this responsibility remains
- *	with the caller of send_crypto_helper_request (and its callers).
- *	(??? is this discipline followed?)
+ *	Points to a heap-allocated struct.  The caller transfers
+ *	ownership (i.e responsibility to free) to us.  (We or our
+ *	allies will free it after the continuation function is called
+ *	or failure is determined.)
  *
- * If a state is deleted, and that state's serial number is in a queued
- * cn->pcrc_serialno, that cn->pcrc_serialno will be set to SOS_NOBODY
- * signifying that that continuation is a lame duck.  Computation will
- * still be done but the continuation should discard the result.
- * This is a bit of a fudge so much of the implementation is marked
- * with the comment TRANSITIONAL.
+ * If a state is deleted (which will cancel any outstanding crypto
+ * request), then cn->pcrc_cancelled will be set true.
  *
  * Return values:
  *
@@ -566,10 +534,6 @@ static void inline_worker(void *arg)
  * - resource should be preserved in the case of STF_SUSPEND since
  *   it will be needed in the future.
  *
- * - normally complete_v?_state_transition frees these resources.
- *
- * Note that the struct pluto_crypto_req in the request is not
- * the same as in the response.
  */
 
 stf_status send_crypto_helper_request(struct state *st,
@@ -772,7 +736,8 @@ void delete_cryptographic_continuation(struct state *st)
 				DBG(DBG_CONTROL,
 					DBG_log("we will ignore result of crypto request ID%u for #%lu from crypto helper %d",
 						cn->pcrc_id, cn->pcrc_serialno, i));
-				cn->pcrc_serialno = SOS_NOBODY;	/* no longer of interest */
+				/* no longer of interest */
+				cn->pcrc_cancelled = true;
 			}
 		}
 	}
@@ -842,38 +807,23 @@ static void handle_helper_answer(void *arg)
 	/*
 	 * call the continuation (skip if suppressed)
 	 */
-	reset_cur_state();
 	struct state *st = state_by_serialno(cn->pcrc_serialno);
-	if (st == NULL) {
-		if (cn->pcrc_serialno == SOS_NOBODY) {
-			/* suppressed */
-			DBG(DBG_CONTROL, DBG_log("state #%lu crypto result suppressed",
-						 cn->pcrc_serialno));
-		} else {
-			/* oops, the state disappeared! */
-			PEXPECT_LOG("state #%lu for crypto callback disappeared!",
-				    cn->pcrc_serialno);
+
+	if (cn->pcrc_cancelled) {
+		/* suppressed */
+		DBG(DBG_CONTROL, DBG_log("work-order %u state #%lu crypto result suppressed",
+					 cn->pcrc_id, cn->pcrc_serialno));
+		pexpect(st == NULL || st->st_work_order == NULL);
+		pcr_release(&cn->pcrc_pcr);
+	} else if (st == NULL) {
+		/* oops, the state disappeared! */
+		LSWLOG_PEXPECT(buf) {
+			lswlogf(buf, "work-order %u state #%lu disappeared!",
+				cn->pcrc_id, cn->pcrc_serialno);
 		}
 		pcr_release(&cn->pcrc_pcr);
 	} else {
-		/*
-		 * XXX:
-		 *
-		 * TODO: enable push/pop.
-		 *
-		 * Current each individual .pcrc_func handles this in
-		 * their own special way.
-		 *
-		 * TODO: delete individual ST/PCRC_SERIALNO checks.
-		 *
-		 * Currently each individual .pcrc_func contains its
-		 * own redundant checks.
-		 *
-		 * TODO: delete md?
-		 *
-		 * Currently each individual .pcrc_func contains its
-		 * own, probably dead, code for deleting MD et.al.
-		 */
+		st->st_calculating = false;
 		so_serial_t old_state = push_cur_state(st);
 		(*cn->pcrc_func)(st, cn->pcrc_md, &cn->pcrc_pcr);
 		pop_cur_state(old_state);

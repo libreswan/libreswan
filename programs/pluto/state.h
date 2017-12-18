@@ -513,11 +513,16 @@ struct state {
 					 * st_outbound_count
 					 */
 
-	bool st_calculating;                    /* set to TRUE, if we are
-							 * performing cryptographic
-							 * operations on this state at
-							 * this time
-							 */
+	/*
+	 * ST_WORK_ORDER, when non-NULL, is is the outstanding work
+	 * sent to the crypto helpers.
+	 *
+	 * ST_CALCULATING indicates that the work is 'official', false
+	 * can either mean there is no work or the work is being done
+	 * in the background - look at the IKEv1 code.
+	 */
+	struct pluto_crypto_req_cont *st_work_order;
+	bool st_calculating;
 
 	chunk_t st_p1isa;	/* Phase 1 initiator SA (Payload) for HASH */
 
