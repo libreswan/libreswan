@@ -122,6 +122,7 @@ kvmplutotest	ikev2-13-ah				good
 kvmplutotest	ikev2-14-missing-ke			good
 kvmplutotest	ikev2-15-fuzzer				good
 kvmplutotest	ikev2-17-rekey-ipsec			good
+kvmplutotest	ikev2-20-ikesa-reauth			wip
 kvmplutotest	ikev2-18-x509-alias			wip
 kvmplutotest	ikev2-16-alias-whack-up			good
 kvmplutotest	ikev2-16-alias-whack-start		good
@@ -521,6 +522,14 @@ kvmplutotest	ikev2-child-ipsec-retransmit	good
 kvmplutotest	ikev2-56-restart		skiptest
 kvmplutotest	ikev2-child-restart-mismatch 	wip
 kvmplutotest	ikev2-cp-01-resolvconf	good
+kvmplutotest	ikev2-child-rekey		wip
+kvmplutotest	ikev2-child-rekey-01		wip
+kvmplutotest	ikev2-child-rekey-02		wip
+kvmplutotest	ikev2-child-rekey-03		wip
+kvmplutotest	ikev2-ike-rekey-01		good
+kvmplutotest	ikev2-ike-rekey-02		good
+kvmplutotest	ikev2-ike-rekey-03		wip
+kvmplutotest	ikev2-ike-rekey-04		wip
 
 kvmplutotest	delete-sa-01			good
 kvmplutotest	delete-sa-03			good
@@ -806,6 +815,7 @@ kvmplutotest	interop-ikev2-strongswan-33-ike-algo-responder	good
 kvmplutotest	interop-ikev2-strongswan-35-ipsec-rekey		good
 kvmplutotest	interop-ikev2-strongswan-35-rekey-pfs		good
 kvmplutotest	interop-ikev2-strongswan-35-rekey-reauth	good
+kvmplutotest	interop-ikev2-strongswan-35-rekey-responder	wip
 kvmplutotest	interop-ikev2-strongswan-35-responder-rekey-pfs good
 kvmplutotest	interop-ikev2-strongswan-36-esp-gmac-responder	good
 kvmplutotest	interop-ikev2-strongswan-37-initiator-digsig	good

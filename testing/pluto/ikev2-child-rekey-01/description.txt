@@ -1,0 +1,7 @@
+Test CREATE_CHILD_SA IPsec SA rekey by IKE responder.
+
+IKE initiator is west, establish a tunnel. The IKE responder east
+has lower salifetime, east will rekey the IPsec SA.
+
+First IPsec rekey between 25 - 35 seconds by east.
+Second rekey this in 50 - 70 seconds east

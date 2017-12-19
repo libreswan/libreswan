@@ -1,0 +1,164 @@
+/testing/guestbin/swan-prep
+[   20.479796] ip6_tables: (C) 2000-2006 Netfilter Core Team
+[root@east ikev2-child-rekey]# ipsec start
+[   20.929432] sha512_ssse3: Neither AVX nor SSSE3 is available/usable.
+[   20.934845] sha256_ssse3: Neither AVX nor SSSE3 is available/usable.
+[   20.955716] AVX instructions are not detected.
+[   20.983994] AVX instructions are not detected.
+[   20.989104] AVX instructions are not detected.
+[   21.028172] AVX instructions are not detected.
+[   21.036692] AVX instructions are not detected.
+[   21.050867] AVX or AES-NI instructions are not detected.
+[   21.053879] AVX or AES-NI instructions are not detected.
+[   21.180203] NET: Registered protocol family 15
+[   21.188238] IPv4 over IPsec tunneling driver
+Redirecting to: systemctl start ipsec.service
+[   21.451494] sha512_ssse3: Neither AVX nor SSSE3 is available/usable.
+[   21.456642] sha256_ssse3: Neither AVX nor SSSE3 is available/usable.
+[   21.470036] AVX instructions are not detected.
+[   21.478156] AVX instructions are not detected.
+[   21.481760] AVX instructions are not detected.
+[   21.497339] AVX instructions are not detected.
+[   21.503665] AVX instructions are not detected.
+[   21.515385] AVX or AES-NI instructions are not detected.
+[   21.518729] AVX or AES-NI instructions are not detected.
+[root@east ikev2-child-rekey]# /testing/pluto/bin/wait-until-pluto-started
+[root@east ikev2-child-rekey]# ipsec auto --add east
+002 added connection description "east"
+[root@east ikev2-child-rekey]# echo "initdone"
+initdone
+[root@east ikev2-child-rekey]# ipsec whack --trafficstatus
+006 #4: "east", type=ESP, add_time=0, inBytes=336, outBytes=336, id='@west'
+[root@east ikev2-child-rekey]# : ==== cut ====
+[root@east ikev2-child-rekey]# ipsec auto --status
+000 using kernel interface: netkey
+000 interface lo/lo 127.0.0.1@4500
+000 interface lo/lo 127.0.0.1@500
+000 interface eth0/eth0 192.0.2.254@4500
+000 interface eth0/eth0 192.0.2.254@500
+000 interface eth1/eth1 192.1.2.23@4500
+000 interface eth1/eth1 192.1.2.23@500
+000 interface eth2/eth2 192.9.2.23@4500
+000 interface eth2/eth2 192.9.2.23@500
+000  
+000  
+000 fips mode=disabled;
+000 SElinux=enabled
+000 seccomp=unsupported
+000  
+000 config setup options:
+000  
+000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d
+000 nssdir=/etc/ipsec.d, dumpdir=/tmp, statsbin=unset
+000 dnssec-rootkey-file=/var/lib/unbound/root.key, dnssec-trusted=<unset>
+000 sbindir=/usr/local/sbin, libexecdir=/usr/local/libexec/ipsec
+000 pluto_version=3.22_538_gd830a1b_ipsec_rekey_child-1, pluto_vendorid=OE-Libreswan-v3.22-538
+000 nhelpers=-1, uniqueids=yes, dnssec-enable=yes, perpeerlog=no, logappend=no, logip=yes, shuntlifetime=900s, xfrmlifetime=300s
+000 ddos-cookies-threshold=50000, ddos-max-halfopen=25000, ddos-mode=auto
+000 ikeport=500, ikebuf=0, msg_errqueue=yes, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
+000 ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2, ocsp-uri=<unset>
+000 ocsp-trust-name=<unset>
+000 ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-method=get
+000 secctx-attr-type=32001
+000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+xauth+retransmits+oppoinfo
+000  
+000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500
+000 virtual-private (%priv):
+000  
+000 ESP algorithms supported:
+000  
+000 algorithm ESP encrypt: id=3, name=ESP_3DES, ivlen=8, keysizemin=192, keysizemax=192
+000 algorithm ESP encrypt: id=6, name=ESP_CAST, ivlen=8, keysizemin=128, keysizemax=128
+000 algorithm ESP encrypt: id=11, name=ESP_NULL, ivlen=0, keysizemin=0, keysizemax=0
+000 algorithm ESP encrypt: id=12, name=ESP_AES, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=13, name=ESP_AES_CTR, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=14, name=ESP_AES_CCM_A, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=15, name=ESP_AES_CCM_B, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=16, name=ESP_AES_CCM_C, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=18, name=ESP_AES_GCM_A, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=19, name=ESP_AES_GCM_B, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=20, name=ESP_AES_GCM_C, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=22, name=ESP_CAMELLIA, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=23, name=ESP_NULL_AUTH_AES_GMAC, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=252, name=ESP_SERPENT, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: id=253, name=ESP_TWOFISH, ivlen=8, keysizemin=128, keysizemax=256
+000 algorithm AH/ESP auth: id=1, name=AUTH_ALGORITHM_HMAC_MD5, keysizemin=128, keysizemax=128
+000 algorithm AH/ESP auth: id=2, name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
+000 algorithm AH/ESP auth: id=5, name=AUTH_ALGORITHM_HMAC_SHA2_256, keysizemin=256, keysizemax=256
+000 algorithm AH/ESP auth: id=6, name=AUTH_ALGORITHM_HMAC_SHA2_384, keysizemin=384, keysizemax=384
+000 algorithm AH/ESP auth: id=7, name=AUTH_ALGORITHM_HMAC_SHA2_512, keysizemin=512, keysizemax=512
+000 algorithm AH/ESP auth: id=8, name=AUTH_ALGORITHM_HMAC_RIPEMD, keysizemin=160, keysizemax=160
+000 algorithm AH/ESP auth: id=9, name=AUTH_ALGORITHM_AES_XCBC, keysizemin=128, keysizemax=128
+000 algorithm AH/ESP auth: id=250, name=AUTH_ALGORITHM_AES_CMAC_96, keysizemin=128, keysizemax=128
+000 algorithm AH/ESP auth: id=251, name=AUTH_ALGORITHM_NULL_KAME, keysizemin=0, keysizemax=0
+000  
+000 IKE algorithms supported:
+000  
+000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
+000 algorithm IKE encrypt: v1id=8, v1name=OAKLEY_CAMELLIA_CBC, v2id=23, v2name=CAMELLIA_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=-1, v1name=n/a, v2id=20, v2name=AES_GCM_C, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=-1, v1name=n/a, v2id=19, v2name=AES_GCM_B, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=-1, v1name=n/a, v2id=18, v2name=AES_GCM_A, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=13, v1name=OAKLEY_AES_CTR, v2id=13, v2name=AES_CTR, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=65004, v1name=OAKLEY_SERPENT_CBC, v2id=65004, v2name=SERPENT_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=65005, v1name=OAKLEY_TWOFISH_CBC, v2id=65005, v2name=TWOFISH_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=65289, v1name=OAKLEY_TWOFISH_CBC_SSH, v2id=65289, v2name=TWOFISH_CBC_SSH, blocksize=16, keydeflen=128
+000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashlen=16
+000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashlen=20
+000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashlen=32
+000 algorithm IKE hash: id=5, name=OAKLEY_SHA2_384, hashlen=48
+000 algorithm IKE hash: id=6, name=OAKLEY_SHA2_512, hashlen=64
+000 algorithm IKE DH Key Exchange: name=MODP1024, bits=1024
+000 algorithm IKE DH Key Exchange: name=MODP1536, bits=1536
+000 algorithm IKE DH Key Exchange: name=MODP2048, bits=2048
+000 algorithm IKE DH Key Exchange: name=MODP3072, bits=3072
+000 algorithm IKE DH Key Exchange: name=MODP4096, bits=4096
+000 algorithm IKE DH Key Exchange: name=MODP6144, bits=6144
+000 algorithm IKE DH Key Exchange: name=MODP8192, bits=8192
+000 algorithm IKE DH Key Exchange: name=DH19, bits=512
+000 algorithm IKE DH Key Exchange: name=DH20, bits=768
+000 algorithm IKE DH Key Exchange: name=DH21, bits=1056
+000 algorithm IKE DH Key Exchange: name=DH23, bits=2048
+000 algorithm IKE DH Key Exchange: name=DH24, bits=2048
+000  
+000 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
+000  
+000 Connection list:
+000  
+000 "east": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; erouted; eroute owner: #4
+000 "east":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "east":   our auth:secret, their auth:secret
+000 "east":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
+000 "east":   labeled_ipsec:no;
+000 "east":   policy_label:unset;
+000 "east":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 5s; rekey_fuzz: 100%; keyingtries: 0;
+000 "east":   retransmit-interval: 15000ms; retransmit-timeout: 60s;
+000 "east":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "east":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "east":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+000 "east":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
+000 "east":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
+000 "east":   newest ISAKMP SA: #1; newest IPsec SA: #4;
+000 "east":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-MODP2048
+000 "east":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
+000  
+000 Total IPsec connections: loaded 1, active 1
+000  
+000 State Information: DDoS cookies not required, Accepting new IKE connections
+000 IKE SAs: total(1), half-open(0), open(0), authenticated(1), anonymous(0)
+000 IPsec SAs: total(1), authenticated(1), anonymous(0)
+000  
+000 #1: "east":500 STATE_PARENT_R2 (received v2I2, PARENT SA established); EVENT_SA_REPLACE in 3536s; newest ISAKMP; idle; import:respond to stranger
+000 #4: "east":500 STATE_V2_IPSEC_R (IPsec SA established); EVENT_SA_REPLACE in 28782s; newest IPSEC; eroute owner; isakmp#1; idle; import:respond to stranger
+000 #4: "east" esp.d9aa3fc7@192.1.2.45 esp.a3a1601a@192.1.2.23 tun.0@192.1.2.45 tun.0@192.1.2.23 ref=0 refhim=0 Traffic: ESPin=336B ESPout=336B! ESPmax=0B 
+000  
+000 Bare Shunt list:
+000  
+[root@east ikev2-child-rekey]# : ==== tuc ====
+[root@east ikev2-child-rekey]# ../bin/check-for-core.sh
+[root@east ikev2-child-rekey]# if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+[root@east ikev2-child-rekey]# : ==== end ====
+[root@east ikev2-child-rekey]# 

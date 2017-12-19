@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --x509
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
-ipsec auto --add road-east-ipv4-ikev2
+ipsec auto --add westnet-eastnet-ikev2
 echo "initdone"
