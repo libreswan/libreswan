@@ -336,7 +336,8 @@ void ipsecdoi_replace(struct state *st,
 				policy |= POLICY_TUNNEL;
 		}
 
-		passert(HAS_IPSEC_POLICY(policy));
+		if (!st->st_ikev2)
+			passert(HAS_IPSEC_POLICY(policy));
 		ipsecdoi_initiate(whack_sock, st->st_connection, policy, try,
 				  st->st_serialno, st->st_import
 #ifdef HAVE_LABELED_IPSEC
