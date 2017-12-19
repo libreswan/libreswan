@@ -2366,24 +2366,6 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 			    from_state_name));
 		break;
 
-	case STF_TOOMUCHCRYPTO:
-		passert(st != NULL);
-		unset_suspended(st);
-		pexpect(!st->st_calculating);
-		libreswan_log("message in state %s ignored due to cryptographic overload",
-			      from_state_name);
-		log_crypto_workers();
-		/*
-		 * ??? this used to FALL THROUGH to case STF_FATAL.
-		 *
-		 * Effectively we ignore this state transition
-		 * but keep the original state.
-		 *
-		 * ??? Perhaps we have half-computed crypto and perhaps
-		 * that is a problem if we try to advance the state later.
-		 */
-		break;
-
 	case STF_DROP:
 		/* be vewy vewy quiet */
 		if (st != NULL) {

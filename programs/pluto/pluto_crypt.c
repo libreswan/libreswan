@@ -476,9 +476,6 @@ static void inline_worker(void *arg)
  *		STF will be called in the indefinite future.
  *		Resources must be preserved until then.
  *
- *	STF_TOOMUCHCRYPTO: queue overloaded: we won't do this; message logged.
- *		STF not called.
- *
  * Suggested life-cycle of a resource like a msg_digest:
  *
  * - Note: not implemented by this mechanism, just a convention

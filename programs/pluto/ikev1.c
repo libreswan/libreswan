@@ -2771,20 +2771,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			    enum_name(&state_names, from_state)));
 		break;
 
-	case STF_TOOMUCHCRYPTO:
-		/* ??? Why is this comment useful:
-		 * well, this should never happen during a whack, since
-		 * a whack will always force crypto.
-		 */
-		/* ??? why no call of remember_received_packet? */
-		unset_suspended(st);
-		libreswan_log(
-			"message in state %s ignored due to cryptographic overload",
-			enum_name(&state_names, from_state));
-		log_crypto_workers();
-		/* ??? the ikev2.c version used to FALL THROUGH to STF_FATAL */
-		break;
-
 	case STF_FATAL:
 		/* update the previous packet history */
 		remember_received_packet(st, md);

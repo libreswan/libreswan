@@ -362,7 +362,6 @@ static const char *const stfstatus_names[] = {
 	"STF_SUSPEND",
 	"STF_OK",
 	"STF_INTERNAL_ERROR",
-	"STF_TOOMUCHCRYPTO",
 	"STF_FATAL",
 	"STF_DROP",
 	"STF_FAIL"
