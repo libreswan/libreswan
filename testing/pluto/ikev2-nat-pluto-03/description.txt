@@ -1,0 +1,10 @@
+Same as nat-pluto-03 but for IKEv2.
+
+This test has a road warrior, ("road") connecting to VPN host east.
+
+It shows up from a random IP.
+
+Road has encaps=yes, so even though there is no NAT happening, we
+should still do a NAT-T ESPinUDP encaps connection to east.
+
+East has a default config, with an implicit encaps=auto
