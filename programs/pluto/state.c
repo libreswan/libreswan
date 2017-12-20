@@ -1953,13 +1953,12 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 /*
  * odd fact: st cannot be const because we call get_sa_info on it
  */
-void fmt_state(struct state *st, const monotime_t n,
+void fmt_state(struct state *st, const monotime_t now,
 	       char *state_buf, const size_t state_buf_len,
 	       char *state_buf2, const size_t state_buf2_len)
 {
 	/* what the heck is interesting about a state? */
 	const struct connection *c = st->st_connection;
-	long delta;
 	char inst[CONN_INST_BUF];
 	char dpdbuf[128];
 	char traffic_buf[512], *mbcp;
@@ -1972,15 +1971,6 @@ void fmt_state(struct state *st, const monotime_t n,
 			 "; eroute owner" : "";
 
 	fmt_conn_instance(c, inst);
-
-	if (st->st_event != NULL) {
-		/* tricky: in case time_t/monotime_t is an unsigned type */
-		delta = monobefore(n, st->st_event->ev_time) ?
-			(long)(st->st_event->ev_time.mono_secs - n.mono_secs) :
-			-(long)(n.mono_secs - st->st_event->ev_time.mono_secs);
-	} else {
-		delta = -1;	/* ??? sort of odd signifier */
-	}
 
 	dpdbuf[0] = '\0';	/* default to empty string */
 	if (IS_IPSEC_SA_ESTABLISHED(st)) {
@@ -2015,8 +2005,15 @@ void fmt_state(struct state *st, const monotime_t n,
 		}
 	}
 
+	intmax_t delta;
+	if (st->st_event != NULL) {
+		delta = deltasecs(monotimediff(st->st_event->ev_time, now));
+	} else {
+		delta = -1;	/* ??? sort of odd signifier */
+	}
+
 	snprintf(state_buf, state_buf_len,
-		 "#%lu: \"%s\"%s:%u %s (%s); %s in %lds%s%s%s%s; %s; %s",
+		 "#%lu: \"%s\"%s:%u %s (%s); %s in %zds%s%s%s%s; %s; %s",
 		 st->st_serialno,
 		 c->name, inst,
 		 st->st_remoteport,
