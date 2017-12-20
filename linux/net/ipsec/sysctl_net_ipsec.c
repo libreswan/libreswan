@@ -288,7 +288,11 @@ static ctl_table ipsec_table[] = {
 	  .mode     = 0644,
 	  .child    = NULL,
 	  .proc_handler = &proc_dointvec, },
+# ifdef HAS_PRIV_DESTRUCTOR
+	{ }
+# else
 	{ 0 }
+# endif
 #else
 	{ NET_IPSEC_ICMP, "icmp", &sysctl_ipsec_icmp,
 	  sizeof(int), 0644, NULL, .proc_handler = &proc_dointvec },
@@ -297,7 +301,11 @@ static ctl_table ipsec_table[] = {
 	  sizeof(int), 0644, NULL, .proc_handler = &proc_dointvec },
 	{ NET_IPSEC_TOS, "tos", &sysctl_ipsec_tos,
 	  sizeof(int), 0644, NULL, .proc_handler = &proc_dointvec },
+# ifdef HAS_PRIV_DESTRUCTOR
+	{ }
+# else
 	{ 0 }
+# endif
 #endif
 };
 
@@ -310,10 +318,13 @@ static ctl_table ipsec_net_table[] = {
 	  .mode     = 0555,
 	  .child    = ipsec_table,
 	  .proc_handler = NULL, },
+# ifdef HAS_PRIV_DESTRUCTOR
+       { }
+# else
 	{ 0 }
+# endif
 #else
 	{ NET_IPSEC, "ipsec", NULL, 0, 0555, ipsec_table },
-	{ 0 }
 #endif
 };
 
@@ -326,10 +337,18 @@ static ctl_table ipsec_root_table[] = {
 	  .mode     = 0555,
 	  .child    = ipsec_net_table,
 	  .proc_handler = NULL, },
+# ifdef HAS_PRIV_DESTRUCTOR
+       { }
+# else
 	{ 0 }
+# endif
 #else
 	{ CTL_NET, "net", NULL, 0, 0555, ipsec_net_table },
+# ifdef HAS_PRIV_DESTRUCTOR
+	{ }
+# else
 	{ 0 }
+# endif
 #endif
 };
 

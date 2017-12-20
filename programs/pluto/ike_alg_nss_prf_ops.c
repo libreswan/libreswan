@@ -22,6 +22,7 @@
 
 #include "lswlog.h"
 #include "lswalloc.h"
+#include "lswnss.h"
 
 #include "constants.h"
 #include "ike_alg.h"
@@ -44,12 +45,12 @@ static struct prf_context *init(const struct prf_desc *prf_desc,
 				const char *key_name, PK11SymKey *key)
 
 {
-	passert(prf_desc->common.nss_mechanism > 0);
+	passert(prf_desc->nss.mechanism > 0);
 	/* lame, screwed up old compilers what this */
 	SECItem ignore = {
 		.len = 0,
 	};
-	PK11Context *context = PK11_CreateContextBySymKey(prf_desc->common.nss_mechanism,
+	PK11Context *context = PK11_CreateContextBySymKey(prf_desc->nss.mechanism,
 							  CKA_SIGN,
 							  key, &ignore);
 	if (context == NULL) {
@@ -99,10 +100,10 @@ static struct prf_context *init_symkey(const struct prf_desc *prf_desc,
 	 *
 	 * This key has both the mechanism and flags set.
 	 */
-	PK11SymKey *clone = symkey_from_symkey_bytes("clone", debug,
-						     &prf_desc->common,
-						     0, sizeof_symkey(key),
-						     key);
+	PK11SymKey *clone = prf_key_from_symkey_bytes("clone", debug,
+						      prf_desc,
+						      0, sizeof_symkey(key),
+						      key);
 	struct prf_context *prf = init(prf_desc, name, debug,
 				       key_name, clone);
 	release_symkey(name, "clone", &clone);
@@ -119,9 +120,9 @@ static struct prf_context *init_bytes(const struct prf_desc *prf_desc,
 	 *
 	 * This key has both the mechanism and flags set.
 	 */
-	PK11SymKey *clone = symkey_from_bytes(key_name, DBG_CRYPT,
-					      &prf_desc->common,
-					      key, sizeof_key);
+	PK11SymKey *clone = prf_key_from_bytes(key_name, DBG_CRYPT,
+					       prf_desc,
+					       key, sizeof_key);
 	struct prf_context *prf = init(prf_desc, name, debug,
 				       key_name, clone);
 	release_symkey(name, "clone", &clone);
@@ -180,7 +181,7 @@ static PK11SymKey *final_symkey(struct prf_context **prf)
 	size_t sizeof_bytes = (*prf)->desc->prf_output_size;
 	u_int8_t *bytes = alloc_things(u_int8_t, sizeof_bytes, "bytes");
 	final(*prf, bytes, sizeof_bytes);
-	PK11SymKey *final = symkey_from_bytes("final", (*prf)->debug, NULL,
+	PK11SymKey *final = symkey_from_bytes("final", (*prf)->debug,
 					      bytes, sizeof_bytes);
 	pfree(bytes);
 	pfree(*prf); *prf = NULL;
@@ -190,7 +191,7 @@ static PK11SymKey *final_symkey(struct prf_context **prf)
 static void nss_prf_check(const struct prf_desc *prf)
 {
 	const struct ike_alg *alg = &prf->common;
-	passert_ike_alg(alg, prf->common.nss_mechanism > 0);
+	passert_ike_alg(alg, prf->nss.mechanism > 0);
 }
 
 const struct prf_ops ike_alg_nss_prf_ops = {

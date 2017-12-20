@@ -78,6 +78,6 @@ bool deltaless_tv_dt(const struct timeval a, const deltatime_t b);
 struct timeval deltatimeval(deltatime_t);
 
 /* output as "smart" seconds */
-void lswlog_deltatime(struct lswlog *buf, deltatime_t d);
+size_t lswlog_deltatime(struct lswlog *buf, deltatime_t d);
 
 #endif

@@ -59,6 +59,7 @@ kvmplutotest	enumcheck-01			good
 kvmplutotest	basic-pluto-01			good
 kvmplutotest	basic-pluto-02			good
 kvmplutotest	basic-pluto-03			good
+kvmplutotest	basic-pluto-04			wip
 kvmplutotest    basic-pluto-07-sourceip		good
 
 kvmplutotest	linux-audit-01	good
@@ -153,6 +154,7 @@ kvmplutotest	ikev2-60-pam				good
 kvmplutotest	ikev2-61-any-psk			good
 kvmplutotest	ikev2-62-host-ondemand			good
 kvmplutotest	ikev2-62-host-ondemand-instance		good
+kvmplutotest	ikev2-63-anyid-nat			good
 
 kvmplutotest	ikev2-24-cryptoload			wip
 kvmplutotest	ikev2-25-rw-nat				good
@@ -191,7 +193,6 @@ kvmplutotest	ikev2-algo-16-newer-dh			good
 kvmplutotest	netkey-algo-aes_gcm-01			good
 kvmplutotest	netkey-algo-aes_gcm-02			good
 kvmplutotest	netkey-algo-aes_gcm-03			good
-kvmplutotest	netkey-algo-aes_ccm-01			good
 
 # various ESP SHA2 tests (sha2/sha2_128/sha2_192/sha2_256)
 kvmplutotest	ikev2-algo-sha2-01			good
@@ -231,6 +232,16 @@ kvmplutotest	ikev2-algo-esn-04			good
 kvmplutotest	ikev2-algo-esn-05			good
 kvmplutotest	ikev2-algo-esn-06			good
 kvmplutotest	interop-ikev2-strongswan-30-esn		good
+
+# MOBIKE tests
+kvmplutotest	ikev2-mobike-01				good
+kvmplutotest	ikev2-mobike-02				good
+kvmplutotest	ikev2-mobike-03				good
+kvmplutotest	ikev2-mobike-04				wip
+kvmplutotest	ikev2-mobike-05-gcm			wip
+kvmplutotest	interop-ikev2-strongswan-38-mobike-pool		good
+kvmplutotest 	interop-ikev2-strongswan-38-mobike-initiator	good
+kvmplutotest 	interop-ikev2-strongswan-39-mobike-responder	good
 
 # Various corner case tests for IKEv2
 kvmplutotest	ikev2-major-version-initiator		good
@@ -347,6 +358,7 @@ kvmplutotest	newoe-07-ike-replace-initiator-esp	good
 kvmplutotest	newoe-08-ike-replace-responder		good
 kvmplutotest	newoe-08-restart			good
 kvmplutotest	newoe-09-mutual				good
+kvmplutotest	newoe-09-mutual-transport		good
 kvmplutotest	newoe-10-expire-inactive		good
 kvmplutotest	newoe-10-expire-inactive-ike		good
 kvmplutotest	newoe-11-failike			good
@@ -448,7 +460,7 @@ kvmplutotest	dpd-05	good
 kvmplutotest	dpd-06	good
 kvmplutotest	dpd-07	good
 kvmplutotest	dpd-08	wip
-kvmplutotest	dpd-09-shared		wip
+kvmplutotest	dpd-09-shared		good
 kvmplutotest	dpd-10-alias 		wip
 kvmplutotest	ikev2-liveness-01	good
 kvmplutotest	ikev2-liveness-02	good
@@ -462,8 +474,9 @@ kvmplutotest	ikev2-liveness-10	wip
 kvmplutotest	ikev2-child-ipsec	good
 kvmplutotest	ikev2-child-ipsec-pfs	good
 kvmplutotest	ikev2-child-ipsec-pfs-nhelpers-0 good
-kvmplutotest	ikev2-child-ipseac-replace-ike	good
+kvmplutotest	ikev2-child-ipsec-replace-ike	good
 kvmplutotest	ikev2-child-ipsec-responder	good
+kvmplutotest	ikev2-child-ipsec-timer		wip
 kvmplutotest	ikev2-56-restart		skiptest
 kvmplutotest	ikev2-child-restart-mismatch 	wip
 
@@ -690,7 +703,7 @@ kvmplutotest	sourceip-01			good
 #################################################################
 # IPv6 tests
 #################################################################
-kvmplutotest	ipv6-v6-through-v6-klips-klips		wip
+kvmplutotest	ipv6-v6-through-v6-klips-klips		good
 kvmplutotest	ipv6-v6-through-v6-netkey-netkey	wip
 kvmplutotest	ipv6-v6-through-v6-klips-netkey		wip
 kvmplutotest	ipv6-v4-through-v6-klips-klips		wip
@@ -771,6 +784,8 @@ kvmplutotest 	ikev2-55-ipseckey-03				good
 kvmplutotest 	ikev2-55-ipseckey-04				good
 kvmplutotest 	ikev2-55-ipseckey-05				good
 kvmplutotest 	ikev2-55-ipseckey-06				good
+kvmplutotest 	ikev2-55-ipseckey-07				wip
+kvmplutotest 	ikev2-55-ipseckey-08				good
 
 #################################################################
 # Specific bug tests
@@ -837,7 +852,7 @@ kvmplutotest	nss-cert-08-mismatch		good
 kvmplutotest	nss-cert-chain-01		good
 kvmplutotest	nss-cert-chain-02		good
 kvmplutotest	nss-cert-chain-03		good
-kvmplutotest	nss-cert-chain-04		wip
+kvmplutotest	nss-cert-chain-04		good
 kvmplutotest	nss-cert-chain-01-ikev2		good
 kvmplutotest	nss-cert-chain-02-ikev2		good
 kvmplutotest	nss-cert-chain-03-ikev2		good
@@ -899,6 +914,7 @@ kvmplutotest	klips-pluto-ipcmp-01		skiptest
 # seccomp
 kvmplutotest	seccomp-01-enabled		good
 kvmplutotest	seccomp-02-tolerant		good
+kvmplutotest	seccomp-03-updown		good
 
 # Utility tests like "ipsec showhostkey"
 kvmplutotest	ipsec-hostkey-ckaid-01		good

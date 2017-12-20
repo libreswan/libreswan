@@ -19,6 +19,8 @@
 struct state;
 struct list_entry;
 
+void init_state_db(void);
+
 void add_state_to_db(struct state *st);
 void rehash_state_cookies_in_db(struct state *st);
 void del_state_from_db(struct state *st);
@@ -30,7 +32,7 @@ struct state *state_by_serialno(so_serial_t serialno);
  * new-to-old order.
  */
 
-extern struct list_entry serialno_list_head;
+extern struct list_head serialno_list_head;
 
 #define FOR_EACH_STATE_NEW2OLD(ST)				\
 	FOR_EACH_LIST_ENTRY_NEW2OLD(&serialno_list_head, ST)
@@ -45,8 +47,8 @@ extern struct list_entry serialno_list_head;
  * required!
  */
 
-extern struct list_entry *icookie_slot(const uint8_t *icookie);
-struct list_entry *cookies_slot(const uint8_t *icookie,
-				const uint8_t *rcookie);
+extern struct list_head *icookie_slot(const uint8_t *icookie);
+struct list_head *cookies_slot(const uint8_t *icookie,
+			       const uint8_t *rcookie);
 
 #endif

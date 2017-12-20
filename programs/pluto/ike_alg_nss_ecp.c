@@ -39,10 +39,10 @@
 #include "ike_alg_nss_ecp.h"
 #include "crypt_symkey.h"
 
-static void nss_ecp_calc_ke(const struct oakley_group_desc *group,
-			    SECKEYPrivateKey **privk,
-			    SECKEYPublicKey **pubk,
-			    uint8_t *ke, size_t sizeof_ke)
+static void nss_ecp_calc_secret(const struct oakley_group_desc *group,
+				SECKEYPrivateKey **privk,
+				SECKEYPublicKey **pubk,
+				uint8_t *ke, size_t sizeof_ke)
 {
 	passert(sizeof_ke == group->bytes);
 	/*
@@ -78,8 +78,10 @@ static void nss_ecp_calc_ke(const struct oakley_group_desc *group,
 	SECITEM_FreeItem(pk11_param, PR_TRUE);
 
 	if (*pubk == NULL || *privk == NULL) {
-		PASSERT_FAIL("NSS: DH ECP private key creation failed (err %d)",
-			     PR_GetError());
+		LSWLOG_PASSERT(buf) {
+			lswlogs(buf, "NSS: DH ECP private key creation failed");
+			lswlog_nss_error(buf);
+		}
 	}
 
 	DBG(DBG_CRYPT,
@@ -96,10 +98,10 @@ static void nss_ecp_calc_ke(const struct oakley_group_desc *group,
 	memcpy(ke, (*pubk)->u.ec.publicValue.data + 1, group->bytes);
 }
 
-static PK11SymKey *nss_ecp_calc_g_ir(const struct oakley_group_desc *group UNUSED,
-				     SECKEYPrivateKey *local_privk,
-				     const SECKEYPublicKey *local_pubk UNUSED,
-				     uint8_t *remote_ke, size_t sizeof_remote_ke)
+static PK11SymKey *nss_ecp_calc_shared(const struct oakley_group_desc *group UNUSED,
+				       SECKEYPrivateKey *local_privk,
+				       const SECKEYPublicKey *local_pubk UNUSED,
+				       uint8_t *remote_ke, size_t sizeof_remote_ke)
 {
 	passert(sizeof_remote_ke == group->bytes);
 	passert(sizeof_remote_ke == local_pubk->u.ec.publicValue.len - 1);
@@ -142,7 +144,7 @@ static PK11SymKey *nss_ecp_calc_g_ir(const struct oakley_group_desc *group UNUSE
 						 /* KDF */ CKD_NULL,
 						 /* shared data */ NULL,
 						 /* ctx */ lsw_return_nss_password_file_info());
-	DBG(DBG_CRYPT, DBG_symkey(__func__, "new temp", temp));
+	DBG(DBG_CRYPT, DBG_symkey("g_ir ", "temp", temp));
 
 	/*
 	 * The key returned above doesn't play well with PK11_Derive()
@@ -169,6 +171,6 @@ static void nss_ecp_check(const struct oakley_group_desc *dhmke)
 
 const struct dhmke_ops ike_alg_nss_ecp_dhmke_ops = {
 	.check = nss_ecp_check,
-	.calc_ke = nss_ecp_calc_ke,
-	.calc_g_ir = nss_ecp_calc_g_ir,
+	.calc_secret = nss_ecp_calc_secret,
+	.calc_shared = nss_ecp_calc_shared,
 };

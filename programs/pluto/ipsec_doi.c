@@ -63,7 +63,7 @@
 #include "asn1.h"
 #include "crypto.h"
 #include "secrets.h"
-
+#include "crypt_dh.h"
 #include "ike_alg.h"
 #include "ike_alg_null.h"
 #include "kernel_alg.h"
@@ -87,10 +87,10 @@
  * Process KE values.
  */
 void unpack_KE_from_helper(struct state *st,
-			   const struct pluto_crypto_req *r,
+			   struct pluto_crypto_req *r,
 			   chunk_t *g)
 {
-	const struct pcr_kenonce *kn = &r->pcr_d.kn;
+	struct pcr_kenonce *kn = &r->pcr_d.kn;
 
 	/*
 	 * Should the crypto helper group and the state group be in
@@ -121,17 +121,10 @@ void unpack_KE_from_helper(struct state *st,
 			kn->group == st->st_oakley.ta_dh ? "match" : "differ");
 	}
 
-	/* ??? if st->st_sec_in_use how could we do our job? */
-	passert(!st->st_sec_in_use);
-	st->st_sec_in_use = TRUE;
 	freeanychunk(*g); /* happens in odd error cases */
+	*g = kn->gi;
 
-	clonetochunk(*g, WIRE_CHUNK_PTR(*kn, gi),
-		     kn->gi.len, "saved gi value");
-	DBG(DBG_CRYPT,
-	    DBG_log("saving DH priv (local secret) and pub key into state struct"));
-	st->st_sec_nss = kn->secret;
-	st->st_pubk_nss = kn->pubk;
+	transfer_dh_secret_to_state("KE", &kn->secret, st);
 }
 
 /* accept_KE
@@ -164,8 +157,7 @@ void unpack_nonce(chunk_t *n, const struct pluto_crypto_req *r)
 	const struct pcr_kenonce *kn = &r->pcr_d.kn;
 
 	freeanychunk(*n);
-	clonetochunk(*n, WIRE_CHUNK_PTR(*kn, n),
-		     DEFAULT_NONCE_SIZE, "initiator nonce");
+	*n = kn->n;
 }
 
 bool ikev1_justship_nonce(chunk_t *n, pb_stream *outs, u_int8_t np,
@@ -430,21 +422,27 @@ bool has_preloaded_public_key(struct state *st)
 	return FALSE;
 }
 
-/* Decode the ID payload of Phase 1 (main_inI3_outR3 and main_inR3)
- * Note: we may change connections as a result.
+/*
+ * Decode the ID payload of Phase 1 (main_inI3_outR3 and main_inR3)
+ * Clears *peer to avoid surprises.
+ * Note: what we discover may oblige Pluto to switch connections.
  * We must be called before SIG or HASH are decoded since we
  * may change the peer's RSA key or ID.
  */
 
-bool extract_peer_id(struct id *peer, const pb_stream *id_pbs)
+bool extract_peer_id(enum ike_id_type kind, struct id *peer, const pb_stream *id_pbs)
 {
-	switch (peer->kind) {
+	size_t left = pbs_left(id_pbs);
+	memset(peer, 0x00, sizeof(struct id));
+	peer->kind = kind;
+
+	switch (kind) {
 	/* ident types mostly match between IKEv1 and IKEv2 */
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
 		/* failure mode for initaddr is probably inappropriate address length */
 	{
-		err_t ugh = initaddr(id_pbs->cur, pbs_left(id_pbs),
+		err_t ugh = initaddr(id_pbs->cur, left,
 				peer->kind == ID_IPV4_ADDR ? AF_INET : AF_INET6,
 				&peer->ip_addr);
 
@@ -461,16 +459,16 @@ bool extract_peer_id(struct id *peer, const pb_stream *id_pbs)
 
 	/* seems odd to continue as ID_FQDN? */
 	case ID_USER_FQDN:
-		if (memchr(id_pbs->cur, '@', pbs_left(id_pbs)) == NULL) {
+		if (memchr(id_pbs->cur, '@', left) == NULL) {
 			loglog(RC_LOG_SERIOUS,
 				"peer's ID_USER_FQDN contains no @: %.*s",
-				(int) pbs_left(id_pbs),
+				(int) left,
 				id_pbs->cur);
 			/* return FALSE; */
 		}
 	/* FALLTHROUGH */
 	case ID_FQDN:
-		if (memchr(id_pbs->cur, '\0', pbs_left(id_pbs)) != NULL) {
+		if (memchr(id_pbs->cur, '\0', left) != NULL) {
 			loglog(RC_LOG_SERIOUS,
 				"Phase 1 (Parent)ID Payload of type %s contains a NUL",
 				enum_show(&ike_idtype_names, peer->kind));
@@ -479,22 +477,27 @@ bool extract_peer_id(struct id *peer, const pb_stream *id_pbs)
 
 		/* ??? ought to do some more sanity check, but what? */
 
-		setchunk(peer->name, id_pbs->cur, pbs_left(id_pbs));
+		setchunk(peer->name, id_pbs->cur, left);
 		break;
 
 	case ID_KEY_ID:
-		setchunk(peer->name, id_pbs->cur, pbs_left(id_pbs));
+		setchunk(peer->name, id_pbs->cur, left);
 		DBG(DBG_PARSING,
 		    DBG_dump_chunk("KEY ID:", peer->name));
 		break;
 
 	case ID_DER_ASN1_DN:
-		setchunk(peer->name, id_pbs->cur, pbs_left(id_pbs));
+		setchunk(peer->name, id_pbs->cur, left);
 		DBG(DBG_PARSING,
 		    DBG_dump_chunk("DER ASN1 DN:", peer->name));
 		break;
 
 	case ID_NULL:
+		if (left != 0) {
+			loglog(RC_LOG_SERIOUS,
+				"peer's ID_NULL must be empty but is not");
+			return FALSE;
+		}
 		break;
 
 	default:

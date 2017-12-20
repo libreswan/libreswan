@@ -48,6 +48,8 @@
 
 #include "kameipsec.h"
 #include <linux/rtnetlink.h>
+#include <linux/if_addr.h>
+#include <linux/if_link.h>
 
 #include "libreswan.h" /* before xfrm.h otherwise break on F22 */
 #include "linux/xfrm.h" /* local (if configured) or system copy */
@@ -93,22 +95,11 @@
 /* Minimum priority number in SPD used by pluto. */
 #define MIN_SPD_PRIORITY 1024
 
-static int netlinkfd = NULL_FD;
-static int netlink_bcast_fd = NULL_FD;
+static int nl_send_fd = NULL_FD; /* to send to NETLINK_XFRM */
+static int nl_xfrm_fd = NULL_FD; /* listen to NETLINK_XFRM broadcast */
+static int nl_route_fd = NULL_FD; /* listen to NETLINK_ROUTE broadcast */
 
-#ifdef USE_NIC_OFFLOAD
-enum nic_offload_state {
-	NIC_OFFLOAD_UNKNOWN = 0,
-	NIC_OFFLOAD_UNSUPPORTED,
-	NIC_OFFLOAD_SUPPORTED,
-};
-
-static struct {
-	unsigned int bit;
-	unsigned int total_blocks;
-	enum nic_offload_state state;
-} netlink_esp_hw_offload;
-#endif
+static int kernel_mobike_supprt ; /* kernel xfrm_migrate_support */
 
 #define NE(x) { x, #x }	/* Name Entry -- shorthand for sparse_names */
 
@@ -138,8 +129,15 @@ static sparse_names xfrm_type_names = {
 	NE(XFRM_MSG_MAX),
 
 	{ 0, sparse_end }
-};
+}; 
 
+static sparse_names rtm_type_names = {
+	NE(RTM_BASE),
+	NE(RTM_NEWADDR),
+	NE(RTM_DELADDR),
+	NE(RTM_MAX),
+	{ 0, sparse_end }
+};
 #undef NE
 
 /* Authentication Algs */
@@ -266,6 +264,33 @@ static void ip2xfrm(const ip_address *addr, xfrm_address_t *xaddr)
 		memcpy(xaddr->a6, &addr->u.v6.sin6_addr, sizeof(xaddr->a6));
 }
 
+static void init_netlink_route_fd(void)
+{
+	struct sockaddr_nl addr;
+
+	nl_route_fd = safe_socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+
+	if (nl_route_fd < 0)
+		EXIT_LOG_ERRNO(errno, "socket() ");
+
+	if (fcntl(nl_route_fd, F_SETFD, FD_CLOEXEC) != 0)
+		EXIT_LOG_ERRNO(errno,
+				"fcntl(FD_CLOEXEC) for bcast NETLINK_ROUTE ");
+
+	if (fcntl(nl_route_fd, F_SETFL, O_NONBLOCK) != 0)
+		EXIT_LOG_ERRNO(errno,
+				"fcntl(O_NONBLOCK) for bcast NETLINK_ROUTE");
+
+	addr.nl_family = AF_NETLINK;
+	addr.nl_pid = getpid();
+	addr.nl_groups = RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR |
+			 RTMGRP_IPV4_ROUTE | RTMGRP_IPV6_ROUTE | RTMGRP_LINK;
+	if (bind(nl_route_fd, (struct sockaddr *)&addr, sizeof(addr)) != 0)
+		EXIT_LOG_ERRNO(errno, "Failed to bind NETLINK_ROUTE bcast socket - Perhaps kernel was not compiled with CONFIG_XFRM");
+
+}
+
+
 /*
  * init_netlink - Initialize the netlink inferface.  Opens the sockets and
  * then binds to the broadcast socket.
@@ -274,36 +299,36 @@ static void init_netlink(void)
 {
 	struct sockaddr_nl addr;
 
-	netlinkfd = safe_socket(AF_NETLINK, SOCK_DGRAM, NETLINK_XFRM);
+	nl_send_fd = safe_socket(AF_NETLINK, SOCK_DGRAM, NETLINK_XFRM);
 
-	if (netlinkfd < 0)
+	if (nl_send_fd < 0)
 		EXIT_LOG_ERRNO(errno, "socket() in init_netlink()");
 
-	if (fcntl(netlinkfd, F_SETFD, FD_CLOEXEC) != 0)
+	if (fcntl(nl_send_fd, F_SETFD, FD_CLOEXEC) != 0)
 		EXIT_LOG_ERRNO(errno, "fcntl(FD_CLOEXEC) in init_netlink()");
 
-	netlink_bcast_fd = safe_socket(AF_NETLINK, SOCK_DGRAM, NETLINK_XFRM);
+	nl_xfrm_fd = safe_socket(AF_NETLINK, SOCK_DGRAM, NETLINK_XFRM);
 
-	if (netlink_bcast_fd < 0)
+	if (nl_xfrm_fd < 0)
 		EXIT_LOG_ERRNO(errno, "socket() for bcast in init_netlink()");
 
-	if (fcntl(netlink_bcast_fd, F_SETFD, FD_CLOEXEC) != 0)
+	if (fcntl(nl_xfrm_fd, F_SETFD, FD_CLOEXEC) != 0)
 		EXIT_LOG_ERRNO(errno,
 			"fcntl(FD_CLOEXEC) for bcast in init_netlink()");
 
 
-	if (fcntl(netlink_bcast_fd, F_SETFL, O_NONBLOCK) != 0)
+	if (fcntl(nl_xfrm_fd, F_SETFL, O_NONBLOCK) != 0)
 		EXIT_LOG_ERRNO(errno,
 			"fcntl(O_NONBLOCK) for bcast in init_netlink()");
 
-
 	addr.nl_family = AF_NETLINK;
 	addr.nl_pid = getpid();
+	addr.nl_pad = 0; /* make coverity happy */
 	addr.nl_groups = XFRMGRP_ACQUIRE | XFRMGRP_EXPIRE;
-	if (bind(netlink_bcast_fd, (struct sockaddr *)&addr, sizeof(addr)) !=
-		0)
+	if (bind(nl_xfrm_fd, (struct sockaddr *)&addr, sizeof(addr)) != 0)
 		EXIT_LOG_ERRNO(errno, "Failed to bind bcast socket in init_netlink() - Perhaps kernel was not compiled with CONFIG_XFRM");
 
+	init_netlink_route_fd();
 
 	/*
 	 * also open the pfkey socket, since we need it to get a list of
@@ -377,7 +402,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 	hdr->nlmsg_seq = ++seq;
 	len = hdr->nlmsg_len;
 	do {
-		r = write(netlinkfd, hdr, len);
+		r = write(nl_send_fd, hdr, len);
 	} while (r < 0 && errno == EINTR);
 	if (r < 0) {
 		LOG_ERRNO(errno, "netlink write() of %s message for %s %s failed",
@@ -396,7 +421,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 	for (;;) {
 		socklen_t alen = sizeof(addr);
 
-		r = recvfrom(netlinkfd, &rsp, sizeof(rsp), 0,
+		r = recvfrom(nl_send_fd, &rsp, sizeof(rsp), 0,
 			(struct sockaddr *)&addr, &alen);
 		if (r < 0) {
 			if (errno == EINTR)
@@ -440,7 +465,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr,
 			len, (size_t) rsp.n.nlmsg_len);
 		return FALSE;
 	}
-	netlink_errno = -rsp.u.e.error;
+
 	if (rsp.n.nlmsg_type != expected_resp_type && rsp.n.nlmsg_type == NLMSG_ERROR) {
 		if (rsp.u.e.error != 0) {
 			loglog(RC_LOG_SERIOUS,
@@ -657,7 +682,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
 
-	const int family = that_client->addr.u.v4.sin_family;
+	const int family = addrtypeof(&that_client->addr);
 	const int shift = (family == AF_INET) ? 5 : 7;
 
 	req.u.p.sel.sport = portof(&this_client->addr);
@@ -769,7 +794,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 				proto_info[i].proto == IPPROTO_COMP &&
 				dir != XFRM_POLICY_OUT;
 			tmpl[i].aalgos = tmpl[i].ealgos = tmpl[i].calgos = ~0;
-			tmpl[i].family = that_host->u.v4.sin_family;
+			tmpl[i].family = addrtypeof(that_host);
 			tmpl[i].mode =
 				proto_info[i].encapsulation ==
 				ENCAPSULATION_MODE_TUNNEL;
@@ -861,7 +886,319 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	return ok;
 }
 
+static void netlink_sa_policy_to_id(struct xfrm_userpolicy_id *id,
+		struct xfrm_userpolicy_info *pol)
+{
+	id->sel = pol->sel;
+	id->index = pol->index;
+	id->dir =  pol->dir;
+}
+
+static bool netlink_get_sa_policy(const struct kernel_sa *sa,
+		struct xfrm_userpolicy_id *id)
+{
+	struct {
+		struct nlmsghdr n;
+		struct xfrm_userpolicy_id id;
+	} req;
+	struct nlm_resp rsp;
+
+	zero(&req);
+	zero(&rsp);
+
+	req.n.nlmsg_flags = NLM_F_REQUEST;
+	req.n.nlmsg_type = XFRM_MSG_GETPOLICY;
+	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
+
+	req.id.dir = sa->nk_dir;
+	req.id.sel.family = sa->src->u.v4.sin_family;
+
+	ip2xfrm(&sa->src_client->addr, &req.id.sel.saddr);
+	ip2xfrm(&sa->dst_client->addr, &req.id.sel.daddr);
+	req.id.sel.prefixlen_s = sa->src_client->maskbits;
+	req.id.sel.prefixlen_d = sa->dst_client->maskbits;
+
+	req.id.sel.sport = portof(&sa->src_client->addr);
+	req.id.sel.dport = portof(&sa->dst_client->addr);
+
+	if (!send_netlink_msg(&req.n, XFRM_MSG_NEWPOLICY, &rsp, "Get policy",
+			      sa->text_said)) {
+		DBG(DBG_KERNEL, DBG_log(" netlink_get_sa_policy : policy died on us: %s, "
+				       "index=%d %s",
+					enum_name(&netkey_sa_dir_names,
+						req.id.dir),
+					req.id.index, sa->text_said));
+		return FALSE;
+	} else if (rsp.n.nlmsg_len < NLMSG_LENGTH(sizeof(rsp.u.pol))) {
+		libreswan_log(" netlink_get_sa_policy: XFRM_MSG_GETPOLICY %s "
+				"returned message with length %zu < %zu "
+				"bytes; ignore message",
+				enum_name(&netkey_sa_dir_names, req.id.dir),
+				(size_t) rsp.n.nlmsg_len, sizeof(rsp.u.pol));
+				return FALSE;
+	}
+
+	netlink_sa_policy_to_id(id, &rsp.u.pol);
+
+	return TRUE;
+}
+
+static void  set_migration_attr(const struct kernel_sa *sa,
+		struct xfrm_user_migrate *m)
+{
+	ip2xfrm(sa->src, &m->old_saddr);
+	ip2xfrm(sa->dst, &m->old_daddr);
+	ip2xfrm(sa->nsrc, &m->new_saddr);
+	ip2xfrm(sa->ndst, &m->new_daddr);
+
+	m->proto = sa->proto;
+	m->mode = XFRM_MODE_TUNNEL;  /* AA_201705 hard coded how to figure this out */
+	m->reqid = sa->reqid;
+	m->old_family = m->new_family = sa->src->u.v4.sin_family;
+}
+
+static void create_xfrm_migrate_sa(struct state *st, const int dir,
+		struct kernel_sa *ret_sa, char *text_said)
+{
+
+	struct kernel_sa sa;
+	char reqid_buf[ULTOT_BUF + 32];
+	u_int8_t natt_type = 0;
+	u_int16_t natt_sport = 0, natt_dport = 0;
+	const ip_address *src, *dst;
+	const ip_subnet *src_client, *dst_client;
+	struct ipsec_proto_info *p2;
+	ipstr_buf ra;
+	u_int proto;
+	u_int16_t old_port;
+	u_int16_t new_port;
+	ip_address *new_addr;
+	const struct connection *c = st->st_connection;
+
+	if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) {
+		natt_type = ESPINUDP_WITH_NON_ESP;
+	}
+
+	zero(&sa);
+
+	if (st->st_esp.present) {
+		proto = SA_ESP;
+		p2 = &st->st_esp;
+	} else if (st->st_ah.present) {
+		proto = SA_AH;
+		p2 = &st->st_ah;
+	} else {
+		return;
+	}
+
+	char *n;
+
+	if (st->st_mobike_localport > 0) {
+		jam_str(text_said, SAMIGTOT_BUF, "initiator migrate kernel SA ");
+		n = text_said + strlen(text_said);
+		passert((SAMIGTOT_BUF - strlen(text_said)) > SATOT_BUF);
+		old_port = st->st_localport;
+		new_port = st->st_mobike_localport;
+		new_addr = &st->st_mobike_localaddr;
+
+		if (dir == XFRM_POLICY_IN || dir == XFRM_POLICY_FWD) {
+			src = &c->spd.that.host_addr;
+			dst = &c->spd.this.host_addr;
+			src_client = &c->spd.that.client;
+			dst_client = &c->spd.this.client;
+			sa.nsrc = src;
+			sa.ndst = &st->st_mobike_localaddr;
+			sa.spi = p2->our_spi;
+			set_text_said(n, dst, sa.spi, proto);
+			if (natt_type != 0) {
+				natt_sport = st->st_remoteport;
+				natt_dport = st->st_mobike_localport;
+			}
+		} else {
+			src = &c->spd.this.host_addr;
+			dst = &c->spd.that.host_addr;
+			src_client = &c->spd.this.client;
+			dst_client = &c->spd.that.client;
+			sa.nsrc = &st->st_mobike_localaddr;
+			sa.ndst = dst;
+			sa.spi = p2->attrs.spi;
+			set_text_said(n, src, sa.spi, proto);
+			if (natt_type != 0) {
+				natt_sport = st->st_mobike_localport;
+				natt_dport = st->st_remoteport;
+			}
+		}
+
+
+	} else {
+		jam_str(text_said, SAMIGTOT_BUF, "responder migrate kernel SA ");
+		n = text_said + strlen(text_said);
+		passert((SAMIGTOT_BUF - strlen(text_said)) > SATOT_BUF);
+		old_port = st->st_remoteport;
+		new_port = st->st_mobike_remoteport;
+		new_addr = &st->st_mobike_remoteaddr;
+
+		if (dir == XFRM_POLICY_IN || dir == XFRM_POLICY_FWD) {
+			src = &c->spd.that.host_addr;
+			dst = &c->spd.this.host_addr;
+			src_client = &c->spd.that.client;
+			dst_client = &c->spd.this.client;
+			sa.nsrc = &st->st_mobike_remoteaddr;
+			sa.ndst = &c->spd.this.host_addr;
+			sa.spi = p2->our_spi;
+			set_text_said(n, src, sa.spi, proto);
+			if (natt_type != 0) {
+				natt_sport = st->st_mobike_remoteport;
+				natt_dport = st->st_localport;
+			}
+
+		} else {
+			src = &c->spd.this.host_addr;
+			dst = &c->spd.that.host_addr;
+			src_client = &c->spd.this.client;
+			dst_client = &c->spd.that.client;
+			sa.nsrc = &c->spd.this.host_addr;
+			sa.ndst = &st->st_mobike_remoteaddr;
+			sa.spi = p2->attrs.spi;
+			set_text_said(n, dst, sa.spi, proto);
+
+			if (natt_type != 0) {
+				natt_sport = st->st_localport;
+				natt_dport = st->st_mobike_remoteport;
+			}
+		}
+	}
+
+	sa.nk_dir = dir;
+	sa.proto = proto;
+	sa.src = src;
+	sa.dst = dst;
+	sa.text_said = text_said;
+	sa.src_client = src_client;
+	sa.dst_client = dst_client;
+
+	sa.reqid = c->spd.reqid + 1; /* why is reqid off by one ??? AA_2017 */
+
+	sa.natt_sport = natt_sport;
+	sa.natt_dport = natt_dport;
+	sa.natt_type = natt_type;
+
+	snprintf(reqid_buf, sizeof(reqid_buf), ":%u to %s:%u reqid=%u %s",
+			old_port,
+			ipstr(new_addr, &ra), new_port,
+			sa.reqid,
+			enum_name(&netkey_sa_dir_names, dir));
+	add_str(text_said, SAMIGTOT_BUF, text_said, reqid_buf);
+
+	DBG(DBG_KERNEL, DBG_log("%s", text_said));
+
+	*ret_sa = sa;
+}
+
+static bool migrate_xfrm_sa(const struct kernel_sa *sa)
+{
+	struct {
+		struct nlmsghdr n;
+		struct xfrm_userpolicy_id id;
+		char data[MAX_NETLINK_DATA_SIZE];
+	} req;
+	struct nlm_resp rsp;
+	struct rtattr *attr;
+
+	zero(&req);
+
+	if (!netlink_get_sa_policy(sa, &req.id)) {
+		return FALSE;
+	}
+
+	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
+	req.n.nlmsg_type = XFRM_MSG_MIGRATE;
+	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
+
+
+	/* add attrs[XFRM_MSG_MIGRATE] */
+	{
+		struct xfrm_user_migrate migrate;
+
+		attr =  (struct rtattr *)((char *)&req + req.n.nlmsg_len);
+		attr->rta_type = XFRMA_MIGRATE;
+		attr->rta_len = sizeof(migrate);
+
+		set_migration_attr(sa, &migrate);
+
+		memcpy(RTA_DATA(attr), &migrate, attr->rta_len);
+		attr->rta_len = RTA_LENGTH(attr->rta_len);
+		req.n.nlmsg_len += attr->rta_len;
+	}
+
+	if (sa->natt_type != 0) {
+		attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
+		struct xfrm_encap_tmpl natt;
+
+		natt.encap_type = sa->natt_type;
+		natt.encap_sport = ntohs(sa->natt_sport);
+		natt.encap_dport = ntohs(sa->natt_dport);
+		zero(&natt.encap_oa);
+
+		attr->rta_type = XFRMA_ENCAP;
+		attr->rta_len = RTA_LENGTH(sizeof(natt));
+
+		memcpy(RTA_DATA(attr), &natt, sizeof(natt));
+
+		req.n.nlmsg_len += attr->rta_len;
+	}
+
+	bool r = send_netlink_msg(&req.n, NLMSG_ERROR, &rsp, "mobike",
+			sa->text_said);
+	if (!r)
+		return FALSE;
+
+	if (rsp.u.e.error < 0) {
+		/* error is already logged */
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static bool netlink_migrate_sa(struct state *st)
+{
+
+	struct kernel_sa sa;
+	char mig_said[SAMIGTOT_BUF];
+
+	create_xfrm_migrate_sa(st, XFRM_POLICY_OUT, &sa, mig_said);
+	if (!migrate_xfrm_sa(&sa))
+		return FALSE;
+
+	create_xfrm_migrate_sa(st, XFRM_POLICY_IN, &sa, mig_said);
+	if (!migrate_xfrm_sa(&sa))
+		return FALSE;
+
+	create_xfrm_migrate_sa(st, XFRM_POLICY_FWD, &sa, mig_said);
+	if (!migrate_xfrm_sa(&sa))
+		return FALSE;
+
+	return TRUE;
+
+}
+
+
+
 #ifdef USE_NIC_OFFLOAD
+
+enum nic_offload_state {
+	NIC_OFFLOAD_UNKNOWN,
+	NIC_OFFLOAD_UNSUPPORTED,
+	NIC_OFFLOAD_SUPPORTED
+};
+
+static struct {
+	unsigned int bit;
+	unsigned int total_blocks;
+	enum nic_offload_state state;
+} netlink_esp_hw_offload;
+
 static void netlink_find_offload_feature(const char *ifname)
 {
 	struct ethtool_sset_info *sset_info = NULL;
@@ -880,7 +1217,7 @@ static void netlink_find_offload_feature(const char *ifname)
 	sset_info->sset_mask = 1ULL << ETH_SS_FEATURES;
 	jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
 	ifr.ifr_data = (void *)sset_info;
-	err = ioctl(netlinkfd, SIOCETHTOOL, &ifr);
+	err = ioctl(nl_send_fd, SIOCETHTOOL, &ifr);
 	if (err != 0)
 		goto out;
 
@@ -894,7 +1231,7 @@ static void netlink_find_offload_feature(const char *ifname)
 	cmd->string_set = ETH_SS_FEATURES;
 	jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
 	ifr.ifr_data = (void *)cmd;
-	err = ioctl(netlinkfd, SIOCETHTOOL, &ifr);
+	err = ioctl(nl_send_fd, SIOCETHTOOL, &ifr);
 	if (err)
 		goto out;
 
@@ -944,7 +1281,7 @@ static bool netlink_detect_offload(const char *ifname)
 	ifr.ifr_data = (void *)cmd;
 	cmd->cmd = ETHTOOL_GFEATURES;
 	cmd->size = netlink_esp_hw_offload.total_blocks;
-	if (ioctl(netlinkfd, SIOCETHTOOL, &ifr))
+	if (ioctl(nl_send_fd, SIOCETHTOOL, &ifr))
 		goto out;
 
 	block = netlink_esp_hw_offload.bit / 32;
@@ -956,6 +1293,7 @@ out:
 	pfree(cmd);
 	return ret;
 }
+
 #endif /* USE_NIC_OFFLOAD */
 
 /*
@@ -984,7 +1322,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 
 	req.p.id.spi = sa->spi;
 	req.p.id.proto = esatype2proto(sa->esatype);
-	req.p.family = sa->src->u.v4.sin_family;
+	req.p.family = addrtypeof(sa->src);
 	/*
 	 * This requires ipv6 modules. It is required to support 6in4 and 4in6
 	 * tunnels in linux 2.6.25+
@@ -1067,7 +1405,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		req.p.sel.prefixlen_s = src->maskbits;
 		req.p.sel.prefixlen_d = dst->maskbits;
 		req.p.sel.proto = sa->transport_proto;
-		req.p.sel.family = src->addr.u.v4.sin_family;
+		req.p.sel.family = addrtypeof(&src->addr);
 	}
 
 	req.p.reqid = sa->reqid;
@@ -1096,7 +1434,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	 * To avoid breaking backward compatibility, we use a new flag
 	 * (XFRM_STATE_ALIGN4) do change original behavior.
 	*/
-	if (sa->esatype == ET_AH && sa->src->u.v4.sin_family == AF_INET) {
+	if (sa->esatype == ET_AH && addrtypeof(sa->src) == AF_INET) {
 		DBG(DBG_KERNEL, DBG_log("netlink: aligning IPv4 AH to 32bits as per RFC-4302, Section 3.3.3.2.1"));
 		req.p.flags |= XFRM_STATE_ALIGN4;
 	}
@@ -1281,12 +1619,11 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 
 #ifdef USE_NIC_OFFLOAD
 	if (sa->nic_offload_dev) {
-		struct xfrm_user_offload xuo = { 0, 0 };
-
-		xuo.flags |= sa->inbound ? XFRM_OFFLOAD_INBOUND : 0;
-		if (sa->src->u.v4.sin_family == AF_INET6)
-			xuo.flags |= XFRM_OFFLOAD_IPV6;
-		xuo.ifindex = if_nametoindex(sa->nic_offload_dev);
+		struct xfrm_user_offload xuo = {
+			.flags = (sa->inbound ? XFRM_OFFLOAD_INBOUND : 0) |
+				(addrtypeof(sa->src) == AF_INET6 ? XFRM_OFFLOAD_IPV6 : 0),
+			.ifindex = if_nametoindex(sa->nic_offload_dev),
+		};
 
 		attr->rta_type = XFRMA_OFFLOAD_DEV;
 		attr->rta_len = RTA_LENGTH(sizeof(xuo));
@@ -1352,7 +1689,7 @@ static bool netlink_del_sa(const struct kernel_sa *sa)
 	ip2xfrm(sa->dst, &req.id.daddr);
 
 	req.id.spi = sa->spi;
-	req.id.family = sa->src->u.v4.sin_family;
+	req.id.family = addrtypeof(sa->src);
 	req.id.proto = sa->proto;
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
@@ -1603,6 +1940,63 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol)
 	}
 }
 
+static void process_addr_chage(struct nlmsghdr *n)
+{
+	struct ifaddrmsg *nl_msg = NLMSG_DATA(n);
+	struct rtattr *rta = IFLA_RTA(nl_msg);
+	size_t msg_size = IFA_PAYLOAD (n);
+	chunk_t local_addr = empty_chunk;
+	chunk_t addr = empty_chunk;
+	ip_address ip;
+	ipstr_buf ip_str;
+
+	DBG(DBG_KERNEL, DBG_log("xfrm netlink address change %s msg len %zu",
+				sparse_val_show(rtm_type_names, n->nlmsg_type),
+				(size_t) n->nlmsg_len));
+
+	while (RTA_OK(rta, msg_size)) {
+		err_t ugh;
+
+		switch (rta->rta_type) {
+		case IFA_LOCAL:
+			local_addr.ptr = RTA_DATA(rta);
+			local_addr.len = RTA_PAYLOAD(rta);
+			ugh = initaddr(local_addr.ptr, local_addr.len,
+					nl_msg->ifa_family, &ip);
+			if (ugh != NULL) {
+				libreswan_log("ERROR IFA_LOCAL invalid %s", ugh);
+			} else  {
+				if (n->nlmsg_type == RTM_DELADDR)
+					record_deladdr(&ip, "IFA_LOCAL");
+				else if (n->nlmsg_type == RTM_NEWADDR)
+					record_newaddr(&ip, "IFA_LOCAL");
+			}
+			break;
+
+		case IFA_ADDRESS:
+			addr.ptr = RTA_DATA(rta);
+			addr.len = RTA_PAYLOAD(rta);
+			ugh = initaddr(addr.ptr, addr.len, nl_msg->ifa_family, &ip);
+			if (ugh != NULL) {
+				libreswan_log("ERROR IFA_ADDRESS invalid %s",
+						ugh);
+			} else  {
+				DBG(DBG_KERNEL, DBG_log("XFRM IFA_ADDRESS %s IFA_ADDRESS is this PPP?",
+							ipstr(&ip, &ip_str)));
+			}
+			break;
+
+		default:
+			DBG(DBG_KERNEL, DBG_log("IKEv2 received address %s type %u",
+						sparse_val_show(rtm_type_names, n->nlmsg_type),
+						rta->rta_type));
+			break;
+		}
+
+		rta = RTA_NEXT(rta, msg_size);
+	}
+}
+
 static void netlink_policy_expire(struct nlmsghdr *n)
 {
 	struct xfrm_user_polexpire *upe;
@@ -1668,12 +2062,12 @@ static void netlink_policy_expire(struct nlmsghdr *n)
 }
 
 /* returns FALSE iff EAGAIN */
-static bool netlink_get(void)
+static bool netlink_get(int fd)
 {
 	struct nlm_resp rsp;
 	struct sockaddr_nl addr;
 	socklen_t alen = sizeof(addr);
-	ssize_t r = recvfrom(netlink_bcast_fd, &rsp, sizeof(rsp), 0,
+	ssize_t r = recvfrom(fd, &rsp, sizeof(rsp), 0,
 		(struct sockaddr *)&addr, &alen);
 
 	if (r < 0) {
@@ -1715,6 +2109,15 @@ static bool netlink_get(void)
 	case XFRM_MSG_POLEXPIRE:
 		netlink_policy_expire(&rsp.n);
 		break;
+
+	case RTM_NEWADDR:
+		process_addr_chage(&rsp.n);
+		break;
+
+	case RTM_DELADDR:
+		process_addr_chage(&rsp.n);
+		break;
+
 	default:
 		/* ignored */
 		break;
@@ -1723,9 +2126,9 @@ static bool netlink_get(void)
 	return TRUE;
 }
 
-static void netlink_process_msg(void)
+static void netlink_process_msg(int fd)
 {
-	do {} while (netlink_get());
+	do {} while (netlink_get(fd));
 }
 
 static ipsec_spi_t netlink_get_spi(const ip_address *src,
@@ -1752,7 +2155,7 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 	req.spi.info.mode = tunnel_mode;
 	req.spi.info.reqid = reqid;
 	req.spi.info.id.proto = proto;
-	req.spi.info.family = src->u.v4.sin_family;
+	req.spi.info.family = addrtypeof(src);
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.spi)));
 
@@ -2307,7 +2710,7 @@ static bool netlink_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
 	ip2xfrm(sa->dst, &req.id.daddr);
 
 	req.id.spi = sa->spi;
-	req.id.family = sa->src->u.v4.sin_family;
+	req.id.family = addrtypeof(sa->src);
 	req.id.proto = sa->proto;
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
@@ -2461,12 +2864,117 @@ static bool netlink_v6holes()
 	return ret;
 }
 
+static bool qry_xfrm_mirgrate_support(struct nlmsghdr *hdr)
+{
+	struct nlm_resp rsp;
+	size_t len;
+	ssize_t r;
+	struct sockaddr_nl addr;
+	int nl_fd = socket(AF_NETLINK, SOCK_DGRAM, NETLINK_XFRM);
+
+	if (nl_fd < 0) {
+		LOG_ERRNO(errno, "socket() in qry_xfrm_mirgrate_support()");
+		return FALSE;
+	}
+
+	if (fcntl(nl_fd, F_SETFL, O_NONBLOCK) != 0) {
+		LOG_ERRNO(errno, "fcntl(O_NONBLOCK in qry_xfrm_mirgrate_support()");
+		close(nl_fd);
+
+		return FALSE;
+	}
+
+	/* hdr->nlmsg_seq = ++seq; */
+	len = hdr->nlmsg_len;
+	do {
+		r = write(nl_fd, hdr, len);
+	} while (r < 0 && errno == EINTR);
+	if (r < 0) {
+		LOG_ERRNO(errno, "netlink write() xfrm_migrate_support lookup");
+		close(nl_fd);
+		return FALSE;
+	} else if ((size_t)r != len) {
+		loglog(RC_LOG_SERIOUS,
+			"ERROR: netlink write() xfrm_migrate_support message truncated: %zd instead of %zu",
+			r, len);
+		close(nl_fd);
+		return FALSE;
+	}
+
+	for (;;) {
+		socklen_t alen = sizeof(addr);
+
+		r = recvfrom(nl_fd, &rsp, sizeof(rsp), 0,
+				(struct sockaddr *)&addr, &alen);
+		if (r < 0) {
+			if (errno == EINTR) {
+				continue;
+			} else if (errno == EAGAIN) {
+				/* old kernel F22 - dos not return proper error ??? */
+				DBG(DBG_KERNEL, DBG_log("ignore EAGAIN in %s assume MOBIKE migration is supported", __func__));
+				break;
+			}
+		}
+		break;
+	}
+
+	close(nl_fd);
+
+	if (rsp.n.nlmsg_type == NLMSG_ERROR && rsp.u.e.error == -ENOPROTOOPT) {
+		DBG(DBG_KERNEL, DBG_log("MOBIKE will fail got ENOPROTOOPT"));
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+bool migrate_xfrm_sa_check(void)
+{
+	struct {
+		struct nlmsghdr n;
+		struct xfrm_userpolicy_id id;
+		char data[MAX_NETLINK_DATA_SIZE];
+	} req;
+
+	if (kernel_mobike_supprt > 0)
+		return TRUE;
+	else if (kernel_mobike_supprt < 0)
+		return FALSE;
+	/* else check the kernel */
+
+	zero(&req);
+	req.n.nlmsg_flags = NLM_F_REQUEST;
+	req.n.nlmsg_type = XFRM_MSG_MIGRATE;
+	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
+
+	/* add attrs[XFRM_MSG_MIGRATE] */
+	{
+		struct rtattr *attr;
+		struct xfrm_user_migrate migrate;
+
+		zero(&migrate);
+		attr =  (struct rtattr *)((char *)&req + req.n.nlmsg_len);
+		attr->rta_type = XFRMA_MIGRATE;
+		attr->rta_len = sizeof(migrate);
+
+		memcpy(RTA_DATA(attr), &migrate, attr->rta_len);
+		attr->rta_len = RTA_LENGTH(attr->rta_len);
+		req.n.nlmsg_len += attr->rta_len;
+	}
+
+	bool ret = qry_xfrm_mirgrate_support(&req.n);
+	kernel_mobike_supprt = ret ? 1 : -1;
+
+	return ret;
+}
+
 const struct kernel_ops netkey_kernel_ops = {
 	.kern_name = "netkey",
 	.type = USE_NETKEY,
 	.inbound_eroute =  TRUE,
 	.policy_lifetime = TRUE,
-	.async_fdp = &netlink_bcast_fd,
+	.async_fdp = &nl_xfrm_fd,
+	.route_fdp = &nl_route_fd,
 	.replay_window = IPSEC_SA_DEFAULT_REPLAY_WINDOW,
 
 	.init = init_netlink,
@@ -2486,6 +2994,7 @@ const struct kernel_ops netkey_kernel_ops = {
 	.shunt_eroute = netlink_shunt_eroute,
 	.sag_eroute = netlink_sag_eroute,
 	.eroute_idle = netlink_eroute_idle,
+	.migrate_sa = netlink_migrate_sa,
 	.set_debug = NULL,	/* pfkey_set_debug, */
 	/*
 	 * We should implement netlink_remove_orphaned_holds

@@ -251,9 +251,19 @@ KVM_TESTS ?= testing/pluto
 # then KVM_TESTS ends up containing new lines, strip them out.
 STRIPPED_KVM_TESTS = $(strip $(KVM_TESTS))
 
+.PHONY:
+web-pages-disabled:
+	@echo
+	@echo Web-pages disabled.
+	@echo
+	@echo To enable web pages create the directory: $(LSW_WEBDIR)
+	@echo To convert this result into a web page run: make web-page
+	@echo
+
 define kvm-test
 .PHONY: $(1)
-$(1): $$(KVM_KEYS) kvm-shutdown-test-domains web-test-prep
+$(1): $$(KVM_KEYS) kvm-shutdown-local-domains web-test-prep
+	$$(if $$(WEB_SUMMARYDIR),,@$(MAKE) -s web-pages-disabled)
 	: kvm-test target=$(1) param=$(2)
 	$$(call check-kvm-qemu-directory)
 	$$(call check-kvm-entropy)
@@ -264,13 +274,7 @@ $(1): $$(KVM_KEYS) kvm-shutdown-test-domains web-test-prep
 		$$(if $$(WEB_RESULTSDIR), --publish-results $$(WEB_RESULTSDIR)) \
 		$$(if $$(WEB_SUMMARYDIR), --publish-status $$(WEB_SUMMARYDIR)/status.json) \
 		$$(2) $$(KVM_TEST_FLAGS) $$(STRIPPED_KVM_TESTS)
-ifeq ($$(WEB_SUMMARYDIR),)
-	@echo
-	@echo Web-pages disabled.
-	@echo
-	@echo To enable web pages create the directory $$(LSW_WEBDIR).
-	@echo To convert this result into a web page run: make web-page
-endif
+	$$(if $$(WEB_SUMMARYDIR),,@$(MAKE) -s web-pages-disabled)
 endef
 
 # "test" and "check" just runs the entire testsuite.
@@ -316,12 +320,15 @@ kvm-keys-up-to-date:
 # Can't yet force the domain's creation.  This target may have been
 # invoked by testing/pluto/Makefile which relies on old domain
 # configurations.
+#
+# Make certain everything is shutdown.
 
 $(KVM_KEYS): testing/x509/dist_certs.py $(KVM_KEYS_SCRIPT) # | $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
 	$(call check-kvm-domain,$(KVM_BUILD_DOMAIN))
 	$(call check-kvm-entropy)
 	$(call check-kvm-qemu-directory)
 	$(MAKE) kvm-keys-clean
+	$(MAKE) kvm-shutdown-local-domains
 	$(KVM_KEYS_SCRIPT) $(KVM_BUILD_DOMAIN) testing/x509
 	: Also regenerate the DNSSEC keys -- uses host
 	$(top_srcdir)/testing/baseconfigs/all/etc/bind/generate-dnssec.sh
@@ -946,7 +953,7 @@ endif
 # Since the install domains list isn't exhaustive (for instance, nic
 # is missing), add an explicit dependency on all the domains so that
 # they still get created.
-kvm-install: | $(foreach domain,$(KVM_TEST_DOMAINS),$(KVM_POOLDIR)/$(domain).xml)
+kvm-install: | $(foreach domain,$(KVM_TEST_DOMAINS),$(KVM_LOCALDIR)/$(domain).xml)
 
 #
 # kvm-uninstall

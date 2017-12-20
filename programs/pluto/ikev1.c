@@ -680,10 +680,10 @@ void init_ikev1(void)
 	    });
 }
 
-static stf_status unexpected(struct msg_digest *md)
+static stf_status unexpected(struct state *st, struct msg_digest *md UNUSED)
 {
 	loglog(RC_LOG_SERIOUS, "unexpected message received in state %s",
-	       enum_name(&state_names, md->st->st_state));
+	       st->st_state_name);
 	return STF_IGNORE;
 }
 
@@ -693,7 +693,7 @@ static stf_status unexpected(struct msg_digest *md)
  *  #   Initiator  Direction Responder  NOTE
  * (1)  HDR*; N/D     =>                Error Notification or Deletion
  */
-static stf_status informational(struct msg_digest *md)
+static stf_status informational(struct state *st UNUSED, struct msg_digest *md)
 {
 	struct payload_digest *const n_pld = md->chain[ISAKMP_NEXT_N];
 
@@ -2218,7 +2218,7 @@ void process_packet_tail(struct msg_digest **mdp)
 		ikev1_echo_hdr(md, (smc->flags & SMF_OUTPUT_ENCRYPTED) != 0,
 			 smc->first_out_payload);
 
-	complete_v1_state_transition(mdp, smc->processor(md));
+	complete_v1_state_transition(mdp, smc->processor(st, md));
 	/* our caller will release_any_md(mdp); */
 }
 
@@ -2291,8 +2291,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	switch (result) {
 	case STF_SUSPEND:
 		set_cur_state(md->st);	/* might have changed */
-		/* FALL THROUGH */
-	case STF_INLINE:	/* all done, including release_any_md */
 		*mdp = NULL;	/* take md away from parent */
 		/* FALL THROUGH */
 	case STF_IGNORE:
@@ -2773,20 +2771,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			    enum_name(&state_names, from_state)));
 		break;
 
-	case STF_TOOMUCHCRYPTO:
-		/* ??? Why is this comment useful:
-		 * well, this should never happen during a whack, since
-		 * a whack will always force crypto.
-		 */
-		/* ??? why no call of remember_received_packet? */
-		unset_suspended(st);
-		libreswan_log(
-			"message in state %s ignored due to cryptographic overload",
-			enum_name(&state_names, from_state));
-		log_crypto_workers();
-		/* ??? the ikev2.c version used to FALL THROUGH to STF_FATAL */
-		break;
-
 	case STF_FATAL:
 		/* update the previous packet history */
 		remember_received_packet(st, md);
@@ -2894,11 +2878,9 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		/* return FALSE; */
 	}
 
-	zero(&peer);	/* ??? pointer fields might not be NULLed */
-	peer.kind = id->isaid_idtype;
-
-	if (!extract_peer_id(&peer, id_pbs))
+	if (!extract_peer_id(id->isaid_idtype, &peer, id_pbs))
 		return FALSE;
+
 	if (c->spd.that.id.kind == ID_FROMCERT) {
 		/* breaks API, connection modified by %fromcert */
 		duplicate_id(&c->spd.that.id, &peer);

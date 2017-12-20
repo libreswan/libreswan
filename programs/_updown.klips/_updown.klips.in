@@ -360,7 +360,7 @@ changesource() {
     if [ -n "${IPROUTETABLE}" ]; then
 	parms3="${parms3} table ${IPROUTETABLE}"
     fi
-    it="ip route replace ${parms} ${parms2} ${parms3}"
+    it="ip route replace ${parms} ${parms2} ${parms3}${PLUTO_MTU:+ mtu ${PLUTO_MTU}} ${PLUTO_METRIC:+ metric ${PLUTO_METRIC}}"
     case "${PLUTO_PEER_CLIENT}" in
  	"0.0.0.0/0"|"::/0")
 	    # opportunistic encryption work around
@@ -632,7 +632,7 @@ case "${PLUTO_VERB}:${1}" in
     #
     prepare-host-v6:*|prepare-client-v6:*)
 	case "${PLUTO_PEER_CLIENT_NET}" in
-	    "0.0.0.0"|"::/0"|"%any")
+	    "0.0.0.0"|"::"|"%any")
 		;;
 	    *)
 		ip -6 route del ${PLUTO_PEER_CLIENT} || echo

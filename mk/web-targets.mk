@@ -164,19 +164,22 @@ FIRST_COMMIT = $(shell $(WEB_SOURCEDIR)/earliest-commit.sh $(WEB_SUMMARYDIR) $(W
 .PHONY: web-commits-json $(WEB_SUMMARYDIR)/commits.json
 web-site web-summarydir web-commits-json: $(WEB_SUMMARYDIR)/commits.json
 $(WEB_SUMMARYDIR)/commits.json:
-	: using a pipe to avoid line len when rebuilding out-of-date commits
+	: use a pipe to avoid to-long-line when rebuilding out-of-date commits
+	: use shell variables to avoid re-evaluation
 	set -e ; \
+	web_sourcedir=$(WEB_SOURCEDIR) ; \
 	web_repodir=$(WEB_REPODIR) ; \
 	web_summarydir=$(WEB_SUMMARYDIR) ; \
 	web_resultsdir=$(WEB_RESULTSDIR) ; \
 	web_commitsdir=$(WEB_COMMITSDIR) ; \
 	web_subdir=$(WEB_SUBDIR) ; \
-	$(MAKE) --no-print-directory -s \
+	first_commit=$(FIRST_COMMIT) ; \
+	$(MAKE) $${web_commitsdir} \
 		WEB_SUBDIR=$${web_subdir} \
 		WEB_SUMMARYDIR=$${web_summarydir} \
 		WEB_RESULTSDIR=$${web_resultsdir} \
-		$${web_commitsdir} ; \
-	( cd $${WEB_REPODIR} ; git rev-list --abbrev-commit $(FIRST_COMMIT)^..) \
+		; \
+	( cd $${web_repodir} ; git rev-list --abbrev-commit $${first_commit}^..) \
 	| while read commit ; do \
 		echo $${web_commitsdir}/$${commit}.json ; \
 		$(MAKE) --no-print-directory -s \
@@ -184,9 +187,10 @@ $(WEB_SUMMARYDIR)/commits.json:
 			WEB_SUMMARYDIR=$${web_summarydir} \
 			WEB_RESULTSDIR=$${web_resultsdir} \
 			$${web_commitsdir}/$${commit}.json ; \
-	done
-	: pick up all commits unconditionally and unsorted.
-	find $(WEB_COMMITSDIR) -name '*.json' -exec cat \{\} \; \
+	done ; \
+	: pick up all commits unconditionally and unsorted. ; \
+	find $${web_commitsdir} -name '*.json' \
+		| xargs --no-run-if-empty cat \
 		| jq -s . > $@.tmp
 	mv $@.tmp $@
 

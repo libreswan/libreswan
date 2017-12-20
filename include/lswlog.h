@@ -203,7 +203,10 @@ struct lswlog;
  * Similar to C99 snprintf() et.al., always return the untruncated
  * message length (the value can never be negative).
  *
- * XXX: is returning the length useful?
+ * These functions return the number of bytes that should have been
+ * written to the buffer (i.e., ignore truncation).  While probably
+ * not directly useful, it provides a sink for functions that insist
+ * on their return value being consumed.
  */
 
 size_t lswlogvf(struct lswlog *log, const char *format, va_list ap);
@@ -211,8 +214,6 @@ size_t lswlogf(struct lswlog *log, const char *format, ...) PRINTF_LIKE(2);
 size_t lswlogs(struct lswlog *log, const char *string);
 size_t lswlogl(struct lswlog *log, struct lswlog *buf);
 
-/* _(SECERR: N (0xX): <error-string>) */
-size_t lswlog_nss_error(struct lswlog *log);
 /* _(in FUNC() at FILE:LINE) */
 size_t lswlog_source_line(struct lswlog *log, const char *func,
 			  const char *file, unsigned long line);
@@ -252,8 +253,9 @@ size_t lswlog_ip(struct lswlog *log, const ip_address*);
  * For tools, the log stream goes to STDERR when enabled; and the
  * debug stream goes to STDERR conditional on debug flags.
  *
- * Return size_t so that implementations have somewhere to send values
- * that should not be ignored; for instance fwrite() :-/
+ * Return size_t - the number of bytes written - so that
+ * implementations have somewhere to send values that should not be
+ * ignored; for instance fwrite() :-/
  */
 
 void lswlog_to_log_stream(struct lswlog *buf);
@@ -372,6 +374,14 @@ void lswlog_file(FILE f)
 		lswlog_to_file_stream(BUF, FILE))
 
 /*
+ * Save the output in a string.
+ */
+#define LSWLOG_STRING(STRING, BUF)		\
+	LSWLOG_(true, BUF,			\
+		,				\
+		STRING = clone_str(BUF->array, "lswlog string"))
+
+/*
  * Send output to WHACK (if attached).
  *
  * XXX: See programs/pluto/log.h for interface; should only be used in
@@ -420,6 +430,35 @@ void lswlog_log_prefix(struct lswlog *buf);
 		lswlog_log_prefix(BUF),					\
 		lswlog_to_log_stream(BUF))
 
+/*
+ * Send an expectation failure to everwhere.
+ */
+
+void lswlog_pexpect_prefix(struct lswlog *buf);
+void lswlog_pexpect_suffix(struct lswlog *buf, const char *func,
+			   const char *file, unsigned long line);
+
+#define LSWLOG_PEXPECT(BUF)				   \
+	LSWLOG_(true, BUF,				   \
+		lswlog_pexpect_prefix(BUF),		   \
+		lswlog_pexpect_suffix(BUF, __func__,	   \
+				      PASSERT_BASENAME,	   \
+				      __LINE__))
+
+/*
+ * Send an expectation failure to everwhere.
+ */
+
+void lswlog_passert_prefix(struct lswlog *buf);
+void lswlog_passert_suffix(struct lswlog *buf, const char *func,
+			   const char *file, unsigned long line) NEVER_RETURNS;
+
+#define LSWLOG_PASSERT(BUF)				   \
+	LSWLOG_(true, BUF,				   \
+		lswlog_passert_prefix(BUF),		   \
+		lswlog_passert_suffix(BUF, __func__,	   \
+				      PASSERT_BASENAME,	   \
+				      __LINE__))
 
 /*
  * ARRAY, a previously allocated array, containing the accumulated

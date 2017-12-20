@@ -1,6 +1,6 @@
 /* log deltatime, for libreswan
  *
- * Copyright (C) 2007  Richard Guy Briggs
+ * Copyright (C) 2017 Andrew Cagney
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
@@ -46,7 +46,7 @@ static uintmax_t abs_ms(intmax_t ms, const char **sign)
 	}
 }
 
-void lswlog_deltatime(struct lswlog *buf, deltatime_t d)
+size_t lswlog_deltatime(struct lswlog *buf, deltatime_t d)
 {
 	const char *sign = "";
 	uintmax_t ms = abs_ms(deltamillisecs(d), &sign);
@@ -54,12 +54,12 @@ void lswlog_deltatime(struct lswlog *buf, deltatime_t d)
 	uintmax_t s = ms / 1000;
 	ms = ms % 1000;
 	if (ms == 0) {
-		lswlogf(buf, "%s%ju", sign, s);
+		return lswlogf(buf, "%s%ju", sign, s);
 	} else if (ms % 100 == 0) {
-		lswlogf(buf, "%s%ju.%01ju", sign, s, ms / 100);
+		return lswlogf(buf, "%s%ju.%01ju", sign, s, ms / 100);
 	} else if (ms % 10 == 0) {
-		lswlogf(buf, "%s%ju.%02ju", sign, s, ms / 10);
+		return lswlogf(buf, "%s%ju.%02ju", sign, s, ms / 10);
 	} else {
-		lswlogf(buf, "%s%ju.%03ju", sign, s, ms);
+		return lswlogf(buf, "%s%ju.%03ju", sign, s, ms);
 	}
 }

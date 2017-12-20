@@ -1,0 +1,4 @@
+test for https://github.com/libreswan/libreswan/issues/126
+
+The test case up to at least 3.22 shows a weird interaction
+with conn %default and another bad conn on a good conn.

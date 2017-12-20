@@ -72,6 +72,9 @@ OBJS += libreswan_DBG_log.o
 OBJS += lswlog.o
 OBJS += lswlog_dbg.o
 OBJS += lswlog_nss_error.o
+OBJS += lswlog_nss_ckm.o
+OBJS += lswlog_nss_ckf.o
+OBJS += lswlog_nss_cka.o
 OBJS += lswlog_source_line.o
 OBJS += lswlog_sanitized.o
 OBJS += lswlog_errno.o
@@ -79,8 +82,11 @@ OBJS += lswlog_bytes.o
 OBJS += lswlog_enum_lset_short.o
 OBJS += lswlog_realtime.o
 OBJS += lswlog_deltatime.o
+OBJS += lswlog_monotime.o
 OBJS += lswlog_ip.o
 OBJS += lswlog_to_file_stream.o
+OBJS += lswlog_pexpect.o
+OBJS += lswlog_passert.o
 
 # Crypto code:
 #

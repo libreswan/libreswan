@@ -1,0 +1,6 @@
+Test Reauthentication of CREATE_CHILD_SA IPsec SA sharing IKE SA.
+
+West has two connections to east. Both will share one IKE SA. 
+And IKE will expire and Reauthentiate -- create new IKE and Child SAs.
+When the IKE SA EXPIRE it will delete it's Child SAs along with it.
+

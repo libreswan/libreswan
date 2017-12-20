@@ -1,15 +1,26 @@
+sudo: required
+
 services: docker
 
 language: c
 
 os:
   - linux
-  - osx
 
 compiler:
-  - clang
   - gcc
 
-script:
-  - scripts/build.sh
+before_install:
+  - echo $PWD
+  - git rev-parse --abbrev-ref HEAD
+  - git checkout $TRAVIS_BRANCH
+  #
+  # 'make travis-docker-image' reads the branch name
+  # <travis>-<distro>-<rel>  or default to Fedora 27
+  #
+  - make travis-docker-image
+  - sudo docker run -h west --privileged --net=none --name swanbase -v $PWD:/home/build/libreswan -v /sys/fs/cgroup:/sys/fs/cgroup:ro -d swanbase
 
+script:
+  - sudo docker exec -ti swanbase  /bin/bash -c 'cd /home/build/libreswan && make base'
+  - sudo docker exec -ti swanbase  /bin/bash -c 'cd /home/build/libreswan && make install-base'

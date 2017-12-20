@@ -25,13 +25,11 @@ void lsw_pexpect_log(const char *file,
 		     const char *fmt, ...)
 {
 	LSWBUF(buf) {
-		lswlog_log_prefix(buf);
-		lswlogs(buf, "EXPECTATION FAILED: ");
+		lswlog_pexpect_prefix(buf);
 		va_list ap;
 		va_start(ap, fmt);
 		lswlogvf(buf, fmt, ap);
 		va_end(ap);
-		lswlog_source_line(buf, func, file, line);
-		lswlog_to_error_stream(buf);
+		lswlog_pexpect_suffix(buf, func, file, line);
 	}
 }

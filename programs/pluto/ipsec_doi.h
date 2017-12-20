@@ -128,7 +128,7 @@ extern stf_status send_isakmp_notification(struct state *st,
 
 extern bool has_preloaded_public_key(struct state *st);
 
-extern bool extract_peer_id(struct id *peer, const pb_stream *id_pbs);
+extern bool extract_peer_id(enum ike_id_type kind, struct id *peer, const pb_stream *id_pbs);
 
 struct pluto_crypto_req;	/* prevent struct type being local to function protocol */
 extern void unpack_nonce(chunk_t *n, const struct pluto_crypto_req *r);

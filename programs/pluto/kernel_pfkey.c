@@ -545,7 +545,7 @@ void pfkey_dequeue(void)
 }
 
 /* asynchronous messages directly from PF_KEY socket */
-void pfkey_event(void)
+void pfkey_event(int fd UNUSED)
 {
 	pfkey_buf buf;
 

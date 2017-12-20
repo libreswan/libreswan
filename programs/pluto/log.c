@@ -475,8 +475,7 @@ bool log_debugging(struct state *st, struct connection *c,
 	if (c == NULL) {
 		return base_debugging & debug;
 	} else {
-		lset_t debugging = lmod(base_debugging,
-					st->st_connection->extra_debugging);
+		lset_t debugging = lmod(base_debugging, c->extra_debugging);
 		return debugging & debug;
 	}
 }

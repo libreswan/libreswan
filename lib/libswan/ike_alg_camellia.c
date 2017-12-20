@@ -63,7 +63,9 @@ struct encrypt_desc ike_alg_encrypt_camellia_cbc =
 			[IKEv1_ESP_ID] = ESP_CAMELLIA,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_CAMELLIA_CBC,
 		},
-		.nss_mechanism = CKM_CAMELLIA_CBC,
+	},
+	.nss = {
+		.mechanism = CKM_CAMELLIA_CBC,
 	},
 	.enc_blocksize = CAMELLIA_BLOCK_SIZE,
 	.pad_to_blocksize = TRUE,

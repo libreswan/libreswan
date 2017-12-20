@@ -295,10 +295,12 @@ extern const struct finite_state *finite_states[STATE_IKE_ROOF];
 struct state {
 	so_serial_t st_serialno;                /* serial number (for seniority)*/
 	so_serial_t st_clonedfrom;              /* serial number of parent */
-	so_serial_t st_ike_pred; /* IKEv2: replacing established IKE SA */
-	so_serial_t st_ipsec_pred; /* IKEv2: replacing established IPsec SA */
+	so_serial_t st_ike_pred;		/* IKEv2: replacing established IKE SA */
+	so_serial_t st_ipsec_pred;		/* replacing established IPsec SA */
 
+#ifdef XAUTH_HAVE_PAM
 	struct xauth *st_xauth;			/* per state xauth/pam thread */
+#endif
 
 	bool st_ikev2;                          /* is this an IKEv2 state? */
 	bool st_ikev2_no_del;                   /* suppress sending DELETE - eg replaced conn */
@@ -345,6 +347,14 @@ struct state {
 	const struct iface_port *st_interface;  /* where to send from */  /* dhr 2013: why? There was already connection->interface */
 	ip_address st_localaddr;                /* where to send them from */
 	u_int16_t st_localport;
+
+	/* IKEv2 MOBIKE probe copies */
+	ip_address st_mobike_remoteaddr;
+	u_int16_t st_mobike_remoteport;
+	const struct iface_port *st_mobike_interface;
+	ip_address st_deleted_local_addr;	/* kernel deleted address */
+	ip_address st_mobike_localaddr;		/* new address to initiate MOBIKE */
+	u_int16_t st_mobike_localport;		/* is this necessary ? */
 
 	/** IKEv1-only things **/
 
@@ -439,33 +449,40 @@ struct state {
 	bool st_peer_alt_id;	/* scratchpad for writing we found alt peer id in CERT */
 
 	/*
-	 * Diffie-Hellman exchange values
+	 * Diffie-Hellman exchange values.
 	 *
-	 * st_sec_nss is our local ephemeral secret.  Its sole use is an input
-	 * in the calculation of the shared secret.
+	 * At any point only one of the state or a crypto helper
+	 * (request) owns the secret.
 	 *
-	 * st_gi and st_gr (above) are the initiator and responder public
-	 * values that are shipped in KE payloads.
-	 * On initiator: st_gi = GROUP_GENERATOR ^ st_sec_nss
-	 *               st_gr comes from KE
-	 * On responder: st_gi comes from KE
-	 *               st_gr = GROUP_GENERATOR ^ st_sec_nss
+	 * However, because of the way IKEv1 and IKEv2 handle the DH
+	 * exchange things get a little messy.
 	 *
-	 * st_pubk_nss is ???
+	 * In IKEv2, since DH and auth involve separate exchanges and
+	 * packets, the DH derivation code is free to 'consume' the
+	 * secret.  But it doesn't ...
 	 *
-	 * st_shared_nss is the output of the DH: an ephemeral secret
-	 * shared by the two ends.  Of course the other end might
-	 * be a man in the middle unless we authenticate.
-	 * st_shared_nss = GROUP_GENERATOR ^ (initiator's st_sec_nss * responder's st_sec_nss)
-	 *               = st_gr ^ initiator's st_sec_nss
-	 *               = sg_gi ^ responder's st_sec_nss
+	 * In IKEv1, both the the DH exchange and authentication can
+	 * be combined into a single packet.  Consequently, processing
+	 * consits of: first DH is used to derive the shared secret
+	 * from DH_SECRET and the keying material; and then
+	 * authentication is performed.  However, should
+	 * authentication fail, everything thing derived from that
+	 * packet gets discarded and this includes the DH derived
+	 * shared secret.  When the real packet arrives (or a
+	 * re-transmit), the whole process is performed again, and
+	 * using the same DH_SECRET.
+	 *
+	 * Consequently, when the crypto helper gets created, it gets
+	 * ownership of the DH_SECRET, and then when it finishes,
+	 * ownership is passed back to state.
+	 *
+	 * This all assumes that the crypto helper gets to delete
+	 * DH_SECRET iff state has already been deleted.
+	 *
+	 * (An alternative would be to reference count dh_secret; or
+	 * copy the underlying keying material using NSS, hmm, NSS).
 	 */
-
-	bool st_sec_in_use;		/* bool: do st_sec_nss/st_pubk_nss hold values */
-
-	SECKEYPrivateKey *st_sec_nss;	/* our secret (owned by NSS) */
-
-	SECKEYPublicKey *st_pubk_nss;	/* DH public key (owned by NSS) */
+	struct dh_secret *st_dh_secret;
 
 	PK11SymKey *st_shared_nss;	/* Derived shared secret
 					 * Note: during Quick Mode,
@@ -496,11 +513,16 @@ struct state {
 					 * st_outbound_count
 					 */
 
-	bool st_calculating;                    /* set to TRUE, if we are
-							 * performing cryptographic
-							 * operations on this state at
-							 * this time
-							 */
+	/*
+	 * ST_WORK_ORDER, when non-NULL, is is the outstanding work
+	 * sent to the crypto helpers.
+	 *
+	 * ST_CALCULATING indicates that the work is 'official', false
+	 * can either mean there is no work or the work is being done
+	 * in the background - look at the IKEv1 code.
+	 */
+	struct pluto_crypto_req_cont *st_work_order;
+	bool st_calculating;
 
 	chunk_t st_p1isa;	/* Phase 1 initiator SA (Payload) for HASH */
 
@@ -550,6 +572,8 @@ struct state {
 	struct pluto_event *st_liveness_event;
 	struct pluto_event *st_rel_whack_event;
 	struct pluto_event *st_send_xauth_event;
+	struct pluto_event *st_addr_change_event;
+
 
 	/* RFC 3706 Dead Peer Detection */
 	monotime_t st_last_dpd;			/* Time of last DPD transmit (0 means never?) */
@@ -567,6 +591,9 @@ struct state {
 	bool st_seen_fragments;                 /* did we receive ike fragments from peer, if so use them in return as well */
 	bool st_seen_no_tfc;			/* did we receive ESP_TFC_PADDING_NOT_SUPPORTED */
 	bool st_seen_use_transport;		/* did we receive USE_TRANSPORT_MODE */
+	bool st_seen_mobike;			/* did we receive MOBIKE */
+	bool st_sent_mobike;			/* sent MOBIKE notify */
+	bool st_seen_nonats;			/* did we receive NO_NATS_ALLOWED */
 	generalName_t *st_requested_ca;		/* collected certificate requests */
 	u_int8_t st_reply_xchg;
 };
@@ -687,14 +714,17 @@ extern bool dpd_active_locally(const struct state *st);
 extern void change_state(struct state *st, enum state_kind new_state);
 
 extern bool state_busy(const struct state *st);
-extern void clear_dh_from_state(struct state *st);
 extern bool drop_new_exchanges(void);
 extern bool require_ddos_cookies(void);
 extern void show_globalstate_status(void);
 extern void set_newest_ipsec_sa(const char *m, struct state *const st);
 extern void update_ike_endpoints(struct state *st, const struct msg_digest *md);
+extern bool update_mobike_endpoints(struct state *st, const struct msg_digest *md);
 extern void ikev2_expire_unused_parent(struct state *pst);
 
 bool shared_phase1_connection(const struct connection *c);
+
+extern void record_deladdr(ip_address *ip, char *a_type);
+extern void record_newaddr(ip_address *ip, char *a_type);
 
 #endif /* _STATE_H */

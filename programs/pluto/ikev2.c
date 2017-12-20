@@ -1480,59 +1480,52 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	DBG(DBG_CONTROL,
 	    DBG_log("calling processor %s", svm->story));
-	complete_v2_state_transition(mdp, (svm->processor)(md));
+	complete_v2_state_transition(mdp, (svm->processor)(st, md));
 	/* our caller with release_any_md(mdp) */
 }
 
 bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 {
 	bool initiator = md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R;
-
-	unsigned int hisID = initiator ? ISAKMP_NEXT_v2IDr : ISAKMP_NEXT_v2IDi;
 	struct state *const st = md->st;
-	struct payload_digest *const id_him = md->chain[hisID];
 	struct connection *c = md->st->st_connection;
-	const pb_stream *id_pbs;
-	struct ikev2_id *v2id;
-	struct id peer_id;
 
-	struct payload_digest *const tarzan_pld = md->chain[ISAKMP_NEXT_v2IDr];
-	const pb_stream *tarzan_pbs;
-	struct ikev2_id *id_tarzan;
-	struct id tarzan_id;
-
-	memset(&peer_id, 0x00, sizeof(struct id)); /* rhbz#1392191 */
-	memset(&tarzan_id, 0x00, sizeof(struct id));
+	struct payload_digest *const id_him = initiator ?
+		md->chain[ISAKMP_NEXT_v2IDr] : md->chain[ISAKMP_NEXT_v2IDi];
 
 	if (id_him == NULL) {
 		libreswan_log("IKEv2 mode no peer ID (hisID)");
 		return FALSE;
 	}
 
-	id_pbs = &id_him->pbs;
-	v2id = &id_him->payload.v2id;
-	peer_id.kind = v2id->isai_type;
+	enum ike_id_type hik = id_him->payload.v2id.isai_type;	/* His Id Kind */
 
-	if (!extract_peer_id(&peer_id, id_pbs)) {
+	struct id peer_id;
+
+	if (!extract_peer_id(hik, &peer_id, &id_him->pbs)) {
 		libreswan_log("IKEv2 mode peer ID extraction failed");
 		return FALSE;
 	}
 
-	/* You Tarzan, me Jane */
-	if (!initiator && md->chain[ISAKMP_NEXT_v2IDr] != NULL) {
-		tarzan_pbs = &tarzan_pld->pbs;
-		id_tarzan = &tarzan_pld->payload.v2id;
-		tarzan_id.kind = id_tarzan->isai_type;
+	/* You Tarzan, me Jane? */
+	struct payload_digest *const tarzan_pld = md->chain[ISAKMP_NEXT_v2IDr];
 
+	struct id tarzan_id;
+	struct id *tip = NULL;
+
+	if (!initiator && tarzan_pld != NULL) {
+		/*
+		 * ??? problem with diagnostics: what we're calling "peer ID"
+		 * is really our "peer's peer ID", in other words us!
+		 */
 		DBG(DBG_CONTROL, DBG_log("received IDr payload - extracting our alleged ID"));
-		if (tarzan_pbs == NULL) {
-			libreswan_log("Peer IDr payload is empty - ignored");
-		} else {
-			if (!extract_peer_id(&tarzan_id, tarzan_pbs)) {
-				libreswan_log("Peer IDr payload extraction failed");
-				return FALSE;
-			}
+		if (!extract_peer_id(tarzan_pld->payload.v2id.isai_type,
+		     &tarzan_id, &tarzan_pld->pbs))
+		{
+			libreswan_log("Peer IDr payload extraction failed");
+			return FALSE;
 		}
+		tip = &tarzan_id;
 	}
 
 	lsw_cert_ret ret = ike_decode_cert(md);
@@ -1629,8 +1622,8 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 
 			if (authby != AUTH_NULL) {
 				r = refine_host_connection(
-				md->st, &peer_id, &tarzan_id, FALSE /*initiator*/,
-				LEMPTY /* auth_policy */, authby, &fromcert);
+					md->st, &peer_id, tip, FALSE /*initiator*/,
+					LEMPTY /* auth_policy */, authby, &fromcert);
 			}
 
 			if (r == NULL) {
@@ -1641,16 +1634,16 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 					"no suitable connection for peer '%s'", buf));
 				/* can we continue with what we had? */
 				if (!md->st->st_peer_alt_id &&
-					!same_id(&c->spd.that.id, &peer_id) &&
-					c->spd.that.id.kind != ID_FROMCERT) {
-						libreswan_log("Peer ID '%s' mismatched on first found connection and no better connection found",
+				    !same_id(&c->spd.that.id, &peer_id) &&
+				    c->spd.that.id.kind != ID_FROMCERT)
+				{
+					libreswan_log("Peer ID '%s' mismatched on first found connection and no better connection found",
 							buf);
-						return FALSE;
+					return FALSE;
 				} else {
 					DBG(DBG_CONTROL, DBG_log("Peer ID matches and no better connection found - continuing with existing connection"));
 					r = c;
 				}
-
 			}
 
 			if (r != c) {
@@ -1697,11 +1690,11 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 
 	if (!(c->policy & POLICY_OPPORTUNISTIC)) {
 		libreswan_log("IKEv2 mode peer ID is %s: '%s'",
-			enum_show(&ikev2_idtype_names, v2id->isai_type),
+			enum_show(&ikev2_idtype_names, hik),
 			idbuf);
 	} else {
 		DBG(DBG_OPPO, DBG_log("IKEv2 mode peer ID is %s: '%s'",
-			enum_show(&ikev2_idtype_names, v2id->isai_type),
+			enum_show(&ikev2_idtype_names, hik),
 			idbuf));
 	}
 
@@ -2254,9 +2247,10 @@ static void log_stf_suspend(struct state *st, stf_status result)
 
 /* complete job started by the state-specific state transition function
  *
- * This routine requires a valid non-NULL *mdp unless result is STF_INLINE.
- * So, for example, it does not make sense for state transitions that are
- * not provoked by a packet.
+ * This routine requires a valid non-NULL *mdp.
+ *
+ * So, for example, it does not make sense for state transitions that
+ * are not provoked by a packet.
  *
  * This routine will not release_any_md(mdp).  It is expected that its
  * caller will do this.  In fact, it will zap *mdp to NULL if it thinks
@@ -2305,9 +2299,6 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		*mdp = NULL;    /* take md away from parent */
 		return;
 
-	case STF_INLINE:	/* all done, including release_any_md */
-		*mdp = NULL;	/* take md away from parent */
-		/* FALL THROUGH */
 	case STF_IGNORE:
 		DBG(DBG_CONTROL,
 		    DBG_log("complete v2 state transition with %s",
@@ -2373,24 +2364,6 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		DBG(DBG_CONTROL,
 		    DBG_log("state transition function for %s had internal error",
 			    from_state_name));
-		break;
-
-	case STF_TOOMUCHCRYPTO:
-		passert(st != NULL);
-		unset_suspended(st);
-		pexpect(!st->st_calculating);
-		libreswan_log("message in state %s ignored due to cryptographic overload",
-			      from_state_name);
-		log_crypto_workers();
-		/*
-		 * ??? this used to FALL THROUGH to case STF_FATAL.
-		 *
-		 * Effectively we ignore this state transition
-		 * but keep the original state.
-		 *
-		 * ??? Perhaps we have half-computed crypto and perhaps
-		 * that is a problem if we try to advance the state later.
-		 */
 		break;
 
 	case STF_DROP:
@@ -2506,13 +2479,13 @@ v2_notification_t accept_v2_nonce(struct msg_digest *md,
  * Separate from this is IKE role ORIGINAL_INITIATOR or ORIGINAL_RESPONDER
  * RFC 7296 2.2
  */
-bool is_msg_response(struct msg_digest *md)
+bool is_msg_response(const struct msg_digest *md)
 {
 	return (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) != 0;
 }
 
 /* message is a request */
-bool is_msg_request(struct msg_digest *md)
+bool is_msg_request(const struct msg_digest *md)
 {
 	return !is_msg_response(md);
 }

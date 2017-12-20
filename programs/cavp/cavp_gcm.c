@@ -79,7 +79,9 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_4 = {
 		.officname = "aes_gcm",
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.fips =        TRUE,
-		.nss_mechanism = CKM_AES_GCM,
+	},
+	.nss = {
+		.mechanism = CKM_AES_GCM,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
 	.pad_to_blocksize = FALSE,
@@ -96,7 +98,9 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_13 = {
 		.officname = "aes_gcm",
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.fips =        TRUE,
-		.nss_mechanism = CKM_AES_GCM,
+	},
+	.nss = {
+		.mechanism = CKM_AES_GCM,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
 	.pad_to_blocksize = FALSE,
@@ -113,7 +117,9 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_14 = {
 		.officname = "aes_gcm",
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.fips =        TRUE,
-		.nss_mechanism = CKM_AES_GCM,
+	},
+	.nss = {
+		.mechanism = CKM_AES_GCM,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
 	.pad_to_blocksize = FALSE,
@@ -130,7 +136,9 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_15 = {
 		.officname = "aes_gcm",
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.fips =        TRUE,
-		.nss_mechanism = CKM_AES_GCM,
+	},
+	.nss = {
+		.mechanism = CKM_AES_GCM,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
 	.pad_to_blocksize = FALSE,
@@ -183,10 +191,10 @@ static void decrypt(void)
 		return;
 	}
 
-	PK11SymKey *gcm_key = symkey_from_symkey_bytes("GCM key", DBG_CRYPT,
-						       &gcm_alg->common,
-						       0, sizeof_symkey(key),
-						       key);
+	PK11SymKey *gcm_key = encrypt_key_from_symkey_bytes("GCM key", DBG_CRYPT,
+							    gcm_alg,
+							    0, sizeof_symkey(key),
+							    key);
 
 	chunk_t text_and_tag = concat_chunk_chunk("text-and-tag", ct, tag);
 

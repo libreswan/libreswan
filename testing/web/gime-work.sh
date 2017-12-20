@@ -5,7 +5,7 @@ if test $# -lt 1; then
 
 Usage:
 
-    $0 <summarydir> [ <repodir> ]
+    $0 <summarydir> [ <repodir> [ <start-hash> ] ]
 
 Print an untested commit hash on stdout.  If HEAD is already tested,
 then commit to test is selected according to git-interesting.sh.
@@ -17,13 +17,26 @@ EOF
 fi
 
 webdir=$(cd $(dirname $0) && pwd)
-summarydir=$(cd $1 && pwd) ; shift
+
+# <summarydir>
 if test $# -gt 0 ; then
-    cd $1
-    shift
+    summarydir=$(cd $1 && pwd) ; shift
+else
+    echo "Missing <summarydir>" 1>&2
+    exit 1
 fi
 
-start_hash=$(${webdir}/earliest-commit.sh ${summarydir})
+# <repodir>
+if test $# -gt 0 ; then
+    cd $1 ; shift
+fi
+
+# <start-hash>
+if test $# -gt 0 ; then
+    start_hash=$1 ; shift
+else
+    start_hash=$(${webdir}/earliest-commit.sh ${summarydir})
+fi
 
 print_selected() {
     echo selecting $1 at $2 1>&2

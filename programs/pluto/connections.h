@@ -10,7 +10,7 @@
  * Copyright (C) 2013 Kim Heino <b@bbbs.net>
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -251,6 +251,7 @@ struct connection {
 	bool initial_contact;		/* Send INITIAL_CONTACT (RFC-2407) payload? */
 	bool cisco_unity;		/* Send Unity VID for cisco compatibility */
 	bool fake_strongswan;		/* Send the unversioned strongswan VID */
+	bool mobike;			/* Allow MOBIKE */
 	bool send_vendorid;		/* Send our vendorid? Security vs Debugging help */
 	bool sha2_truncbug;
 	enum ikev1_natt_policy ikev1_natt; /* whether or not to send IKEv1 draft/rfc NATT VIDs */

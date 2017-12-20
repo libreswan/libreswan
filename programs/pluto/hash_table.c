@@ -20,8 +20,15 @@
 #include "defs.h"
 #include "hash_table.h"
 
-struct list_entry *hash_table_slot_by_hash(struct hash_table *table,
-					   unsigned long hash)
+void init_hash_table(struct hash_table *table)
+{
+	for (unsigned i = 0; i < table->nr_slots; i++) {
+		init_list(&table->info, &table->slots[i]);
+	}
+}
+
+struct list_head *hash_table_slot_by_hash(struct hash_table *table,
+					  unsigned long hash)
 {
 	/* let caller do logging */
 	return &table->slots[hash % table->nr_slots];
@@ -30,16 +37,16 @@ struct list_entry *hash_table_slot_by_hash(struct hash_table *table,
 void add_hash_table_entry(struct hash_table *table,
 			  void *data, struct list_entry *entry)
 {
-	entry->data = data;
-	struct list_entry *slot =
+	*entry = list_entry(&table->info, data);
+	struct list_head *slot =
 		hash_table_slot_by_hash(table, table->hash(data));
 	table->nr_entries++;
-	insert_list_entry(&table->info, slot, entry);
+	insert_list_entry(slot, entry);
 }
 
 void del_hash_table_entry(struct hash_table *table,
 			  struct list_entry *entry)
 {
 	table->nr_entries--;
-	remove_list_entry(&table->info, entry);
+	remove_list_entry(entry);
 }

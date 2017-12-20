@@ -161,9 +161,7 @@ static void test_enums(char *enumname, enum_names *enum_test)
 		} else if (i <= first) {
 			printf("enum %d <= first %d\n", i, first);
 		}
-		if (last < 0) {
-			last = i;
-		} else if (i <= last) {
+		if (i <= last) {
 			printf("enum %d <= last %d\n", i, last);
 		}
 		last = i;
@@ -208,6 +206,7 @@ static void test_enum_enum(const char *title, enum_enum_names *een,
 	LSWBUF(buf) {
 		printf(PREFIX "lswlog_enum_enum %lu %lu: ", table, val);
 		lswlog_enum_enum(buf, een, table, val);
+		/* ??? clang says that name might be NULL */
 		if (val_ok && streq(buf->array, name)) {
 			printf("OK\n");
 		} else if (strlen(buf->array) > 0) {

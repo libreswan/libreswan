@@ -1105,8 +1105,10 @@ static bool do_file_authentication(struct state *st, const char *name,
  * method to verify the user/password
  */
 
+static xauth_callback_t ikev1_xauth_callback;	/* type assertion */
+
 static void ikev1_xauth_callback(struct state *st, const char *name,
-				 bool aborted UNUSED, bool results)
+				 bool results)
 {
 	/*
 	 * If XAUTH authentication failed, should we soft fail or hard fail?
@@ -1148,17 +1150,16 @@ static void ikev1_xauth_callback(struct state *st, const char *name,
  * It should be possible to eliminate this event hop entirely; later.
  */
 
-struct xauth_immediate {
+struct xauth_immediate_context {
 	bool success;
 	so_serial_t serialno;
 	char *name;
-	void (*callback)(struct state *st, const char *name,
-			 bool aborted, bool success);
+	xauth_callback_t *callback;
 };
 
 static void xauth_immediate_callback(void *arg)
 {
-	struct xauth_immediate *xauth = (struct xauth_immediate*)arg;
+	struct xauth_immediate_context *xauth = (struct xauth_immediate_context *)arg;
 	struct state *st = state_with_serialno(xauth->serialno);
 	if (st == NULL) {
 		libreswan_log("XAUTH: #%lu: state destroyed for user '%s'",
@@ -1168,23 +1169,19 @@ static void xauth_immediate_callback(void *arg)
 		libreswan_log("XAUTH: #%lu: completed for user '%s' with status %s",
 			      xauth->serialno, xauth->name,
 			      xauth->success ? "SUCCESSS" : "FAILURE");
-		xauth->callback(st, xauth->name, false, xauth->success);
+		xauth->callback(st, xauth->name, xauth->success);
 		reset_cur_state();
 	}
 	pfree(xauth->name);
 	pfree(xauth);
 }
 
-static void xauth_immediate(const char *name, so_serial_t serialno, bool success,
-			    void (*callback)(struct state *st,
-					     const char *name,
-					     bool aborted,
-					     bool success))
+static void xauth_immediate(const char *name, const struct state *st, bool success)
 {
-	struct xauth_immediate *xauth = alloc_thing(struct xauth_immediate, "xauth next");
+	struct xauth_immediate_context *xauth = alloc_thing(struct xauth_immediate_context, "xauth next");
 	xauth->success = success;
-	xauth->serialno = serialno;
-	xauth->callback = callback;
+	xauth->serialno = st->st_serialno;
+	xauth->callback = ikev1_xauth_callback;
 	xauth->name = clone_str(name, "xauth next name");
 	pluto_event_now("xauth immediate", xauth_immediate_callback, xauth);
 }
@@ -1194,18 +1191,18 @@ static void xauth_immediate(const char *name, so_serial_t serialno, bool success
  * @param st State Structure
  * @param name Username
  * @param password Password
- * @param connname connnection name, from ipsec.conf
  */
 static int xauth_launch_authent(struct state *st,
 				chunk_t *name,
-				chunk_t *password,
-				const char *connname)
+				chunk_t *password)
 {
 	/*
 	 * XAUTH somehow already in progress?
 	 */
+#ifdef XAUTH_HAVE_PAM
 	if (st->st_xauth != NULL)
 		return 0;
+#endif
 
 	char *arg_name = alloc_bytes(name->len + 1, "XAUTH Name");
 	memcpy(arg_name, name->ptr, name->len);
@@ -1227,12 +1224,8 @@ static int xauth_launch_authent(struct state *st,
 	case XAUTHBY_PAM:
 		libreswan_log("XAUTH: PAM authentication method requested to authenticate user '%s'",
 			      arg_name);
-		xauth_start_pam_thread(&st->st_xauth,
+		xauth_start_pam_thread(st,
 				       arg_name, arg_password,
-				       connname,
-				       &st->st_remoteaddr,
-				       st->st_serialno,
-				       st->st_connection->instance_serial,
 				       "XAUTH",
 				       ikev1_xauth_callback);
 		event_schedule_s(EVENT_PAM_TIMEOUT, EVENT_PAM_TIMEOUT_DELAY, st);
@@ -1241,15 +1234,13 @@ static int xauth_launch_authent(struct state *st,
 	case XAUTHBY_FILE:
 		libreswan_log("XAUTH: password file authentication method requested to authenticate user '%s'",
 			      arg_name);
-		bool success = do_file_authentication(st, arg_name, arg_password, connname);
-		xauth_immediate(arg_name, st->st_serialno,
-				success, ikev1_xauth_callback);
+		bool success = do_file_authentication(st, arg_name, arg_password, st->st_connection->name);
+		xauth_immediate(arg_name, st, success);
 		break;
 	case XAUTHBY_ALWAYSOK:
 		libreswan_log("XAUTH: authentication method 'always ok' requested to authenticate user '%s'",
 			      arg_name);
-		xauth_immediate(arg_name, st->st_serialno,
-				true, ikev1_xauth_callback);
+		xauth_immediate(arg_name, st, true);
 		break;
 	default:
 		libreswan_log("XAUTH: unknown authentication method requested to authenticate user '%s'",
@@ -1280,11 +1271,9 @@ static void log_bad_attr(const char *kind, enum_names *ed, unsigned val)
  * @param md Message Digest
  * @return stf_status
  */
-stf_status xauth_inR0(struct msg_digest *md)
+stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 {
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
-
-	struct state *const st = md->st;
 
 	/*
 	 * There are many ways out of this routine
@@ -1417,10 +1406,10 @@ stf_status xauth_inR0(struct msg_digest *md)
 			return stat == STF_OK ? STF_FAIL : stat;
 		}
 	} else {
-		xauth_launch_authent(st, &name, &password, st->st_connection->name);
+		xauth_launch_authent(st, &name, &password);
 		set_suspended(st, md);
+		return STF_IGNORE;
 	}
-	return STF_IGNORE;
 }
 
 /*
@@ -1431,10 +1420,8 @@ stf_status xauth_inR0(struct msg_digest *md)
  * @param md Message Digest
  * @return stf_status
  */
-stf_status xauth_inR1(struct msg_digest *md)
+stf_status xauth_inR1(struct state *st, struct msg_digest *md UNUSED)
 {
-	struct state *const st = md->st;
-
 	libreswan_log("XAUTH: xauth_inR1(STF_OK)");
 	/* Back to where we were */
 	st->st_oakley.doing_xauth = FALSE;
@@ -1476,9 +1463,8 @@ stf_status xauth_inR1(struct msg_digest *md)
  * @param md Message Digest
  * @return stf_status
  */
-stf_status modecfg_inR0(struct msg_digest *md)
+stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 {
-	struct state *const st = md->st;
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 	lset_t resp = LEMPTY;
@@ -1720,9 +1706,8 @@ static char *cisco_stringify(pb_stream *pbs, const char *attr_name)
  * @param md Message Digest
  * @return stf_status
  */
-stf_status modecfg_inR1(struct msg_digest *md)
+stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 {
-	struct state *const st = md->st;
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 	lset_t resp = LEMPTY;
@@ -2297,9 +2282,8 @@ static stf_status xauth_client_resp(struct state *st,
  * @param md Message Digest
  * @return stf_status
  */
-stf_status xauth_inI0(struct msg_digest *md)
+stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 {
-	struct state *const st = md->st;
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 	lset_t xauth_resp = LEMPTY;
@@ -2576,9 +2560,8 @@ static stf_status xauth_client_ackstatus(struct state *st,
  * @param md Message Digest
  * @return stf_status
  */
-stf_status xauth_inI1(struct msg_digest *md)
+stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 {
-	struct state *const st = md->st;
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 	bool got_status = FALSE;
@@ -2656,7 +2639,7 @@ stf_status xauth_inI1(struct msg_digest *md)
 		libreswan_log(
 			"did not get status attribute in xauth_inI1, looking for new challenge.");
 		change_state(st, STATE_XAUTH_I0);
-		return xauth_inI0(md);
+		return xauth_inI0(st, md);
 	}
 
 	/* ACK whatever it was that we got */

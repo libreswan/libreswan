@@ -32,15 +32,26 @@
 #include "lswalloc.h"
 
 struct oakley_group_desc;
+struct state;
 
-PK11SymKey *calc_dh_shared(chunk_t g,	/* converted to SECItem */
-			   /*const*/ SECKEYPrivateKey *privk,	/* NSS doesn't do const */
-			   const struct oakley_group_desc *group,
-			   const SECKEYPublicKey *local_pubk);
+/*
+ * The DH secret (opaque, but we all know it is implemented using
+ * NSS).
+ */
+struct dh_secret;
 
+struct dh_secret *calc_dh_secret(const struct oakley_group_desc *group,
+				 chunk_t *ke);
 
-struct pluto_crypto_req;
+PK11SymKey *calc_dh_shared(struct dh_secret *secret,
+			   chunk_t remote_ke);
 
-void calc_dh(struct pluto_crypto_req *r);
+void transfer_dh_secret_to_state(const char *helper, struct dh_secret **secret,
+				 struct state *st);
+
+void transfer_dh_secret_to_helper(struct state *st,
+				  const char *helper, struct dh_secret **secret);
+
+void free_dh_secret(struct dh_secret **secret);
 
 #endif

@@ -423,7 +423,7 @@ static void liveness_check(struct state *st)
 			liveness_action(c, st->st_ikev2);
 			return;
 		} else {
-			stf_status ret = ikev2_send_informational(st);
+			stf_status ret = ikev2_send_livenss_probe(st);
 
 			DBG(DBG_DPD,
 				DBG_log("#%lu liveness_check - peer %s is missing - giving them some time to come back",
@@ -576,6 +576,11 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		st->st_event = NULL;
 		break;
 
+	case EVENT_v2_ADDR_CHANGE:
+		passert(st != NULL && st->st_addr_change_event == ev);
+		st->st_addr_change_event = NULL;
+		break;
+
 	case EVENT_v2_RELEASE_WHACK:
 		passert(st != NULL && st->st_rel_whack_event == ev);
 		DBG(DBG_CONTROL,
@@ -601,6 +606,11 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 
 	/* now do the actual event's work */
 	switch (type) {
+	case EVENT_v2_ADDR_CHANGE:
+		DBG(DBG_RETRANSMITS, DBG_log("#%lu IKEv2 local address change",
+					st->st_serialno));
+		ikev2_addr_change(st);
+		break;
 	case EVENT_REINIT_SECRET:
 		DBG(DBG_CONTROL,
 			DBG_log("event EVENT_REINIT_SECRET handled"));
@@ -841,6 +851,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		/* note: no md->st to clear */
 		break;
 
+#ifdef XAUTH_HAVE_PAM
 	case EVENT_PAM_TIMEOUT:
 		DBG(DBG_LIFECYCLE,
 				DBG_log("PAM thread timeout on state #%lu",
@@ -849,7 +860,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		 * This immediately invokes the callback passing in
 		 * ST.
 		 */
-		xauth_abort(st->st_serialno, &st->st_xauth, st);
+		xauth_pam_abort(st, TRUE);
 		/*
 		 * Removed this call, presumably it was needed because
 		 * the call back didn't fire until later?
@@ -858,6 +869,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		 */
 		/* note: no md->st to clear */
 		break;
+#endif
 
 	default:
 		bad_case(type);
@@ -912,13 +924,10 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 
 	ev->ev_type = type;
 	ev->ev_name = en;
+	ev->ev_state = st;
 
 	/* ??? ev_time lacks required precision */
 	ev->ev_time = monotimesum(mononow(), delay);
-
-	ev->ev_state = st;
-	ev->ev = timer_private_pluto_event_new(NULL_FD, EV_TIMEOUT,
-					       timer_event_cb, ev, delay);
 	link_pluto_event_list(ev); /* add to global ist to track */
 
 	/*
@@ -930,6 +939,13 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 	 */
 	if (st != NULL) {
 		switch (type) {
+
+
+		case EVENT_v2_ADDR_CHANGE:
+			passert(st->st_addr_change_event == NULL);
+			st->st_addr_change_event = ev;
+			break;
+
 		case EVENT_DPD:
 		case EVENT_DPD_TIMEOUT:
 			passert(st->st_dpd_event == NULL);
@@ -978,6 +994,10 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 					ev->ev_state->st_serialno);
 			}
 	}
+
+	timer_private_pluto_event_new(&ev->ev,
+				      NULL_FD, EV_TIMEOUT,
+				      timer_event_cb, ev, delay);
 }
 
 void event_schedule_s(enum event_type type, time_t delay_sec, struct state *st)

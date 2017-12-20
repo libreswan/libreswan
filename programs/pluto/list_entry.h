@@ -21,6 +21,7 @@
  */
 
 struct list_info {
+	lset_t debug;
 	const char *name;
 	size_t (*log)(struct lswlog *buf, void *data);
 };
@@ -43,28 +44,35 @@ struct list_entry {
 	struct list_entry *older;
 	struct list_entry *newer;
 	void *data;
+	const struct list_info *info;
 };
 
 /*
- * Insert (at front) or remove the object from the linked list.
+ * Double linked list HEAD.
+ */
+
+struct list_head {
+	struct list_entry head;
+};
+
+void init_list(const struct list_info *info, struct list_head *list);
+struct list_entry list_entry(const struct list_info *info, void *data);
+
+/*
+ * Insert (at front) or remove the object from the linked list.  The
+ * macros *OLD2NEW() and *NEW2OLD(), below, determine the apparent
+ * ordering.
  *
  * These operations are O(1).
  */
 
-void insert_list_entry(const struct list_info *info,
-		       struct list_entry *head,
+void insert_list_entry(struct list_head *list,
 		       struct list_entry *entry);
-
-void remove_list_entry(const struct list_info *info,
-		       struct list_entry *entry);
+bool remove_list_entry(struct list_entry *entry);
 
 /*
  * Iterate through all the entries in the list in either old-to-new or
  * new-to-old order.
- *
- * When the list is empty, HEAD's .newer and .older are both NULL and
- * the loop is skipped (DATA is not modified; XXX: should it be
- * explicitly set to NULL?).
  *
  * So that the current entry can be deleted, the E##entry pointer is
  * always on the next entry.
@@ -74,9 +82,10 @@ void remove_list_entry(const struct list_info *info,
  */
 
 #define FOR_EACH_LIST_ENTRY_(HEAD, DATA, NEXT)				\
-	/* at least one entry? this for executes at most once */	\
-	for (struct list_entry *DATA##entry = (HEAD)->NEXT;		\
-	     DATA##entry != NULL; DATA##entry = NULL)			\
+	/* head.NEXT is never NULL */					\
+	for (struct list_entry *DATA##entry = (HEAD)->head.NEXT;	\
+	     DATA##entry != &(HEAD)->head;				\
+	     DATA##entry = &(HEAD)->head)				\
 		/* DATA = ENTRY->data; ENTRY = ENTRY->NEXT */		\
 		for (DATA = (typeof(DATA))DATA##entry->data,		\
 			     DATA##entry = DATA##entry->NEXT;		\

@@ -122,19 +122,21 @@ static int whack_unroute_connection(struct connection *c,
 	const struct spd_route *sr;
 	int fail = 0;
 
+	passert(c != NULL);
 	set_cur_connection(c);
 
 	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		if (sr->routing >= RT_ROUTED_TUNNEL)
 			fail++;
 	}
-	if (fail > 0)
+	if (fail > 0) {
 		whack_log(RC_RTBUSY,
 			"cannot unroute: route busy");
-	else if (c->policy & POLICY_GROUP)
+	} else if (c->policy & POLICY_GROUP) {
 		unroute_group(c);
-	else
+	} else {
 		unroute_connection(c);
+	}
 
 	reset_cur_connection();
 	return 1;
@@ -150,7 +152,7 @@ static void do_whacklisten(void)
 #endif
 	libreswan_log("listening for IKE messages");
 	listening = TRUE;
-	find_ifaces();
+	find_ifaces(TRUE /* remove dead interfaces */);
 	load_preshared_secrets();
 	load_groups();
 #ifdef USE_SYSTEMD_WATCHDOG

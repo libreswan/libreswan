@@ -18,6 +18,7 @@
 #include <libreswan.h>
 
 #include "lswlog.h"
+#include "lswnss.h"
 #include "prmem.h"
 #include "prerror.h"
 
@@ -65,7 +66,7 @@ static bool ike_alg_nss_gcm(const struct encrypt_desc *alg,
 	unsigned int out_len = 0;
 
 	if (enc) {
-		SECStatus rv = PK11_Encrypt(sym_key, alg->common.nss_mechanism,
+		SECStatus rv = PK11_Encrypt(sym_key, alg->nss.mechanism,
 					    &param, out_buf, &out_len,
 					    text_and_tag_size,
 					    text_and_tag, text_size);
@@ -114,7 +115,7 @@ static bool ike_alg_nss_gcm(const struct encrypt_desc *alg,
 
 static void nss_gcm_check(const struct encrypt_desc *encrypt) {
 	const struct ike_alg *alg = &encrypt->common;
-	passert_ike_alg(alg, encrypt->common.nss_mechanism > 0);
+	passert_ike_alg(alg, encrypt->nss.mechanism > 0);
 }
 
 const struct encrypt_ops ike_alg_nss_gcm_encrypt_ops = {

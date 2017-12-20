@@ -300,7 +300,7 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 	static const int so_prio = 6; /* rumored maximum priority, might be 7 on linux? */
 
 	if (fd < 0) {
-		LOG_ERRNO(errno, "socket() in process_raw_ifaces()");
+		LOG_ERRNO(errno, "socket() in create_socket()");
 		return -1;
 	}
 
@@ -308,7 +308,9 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 	if ((fcntl_flags = fcntl(fd, F_GETFL)) >= 0) {
 		if (!(fcntl_flags & O_NONBLOCK)) {
 			fcntl_flags |= O_NONBLOCK;
-			fcntl(fd, F_SETFL, fcntl_flags);
+			if (fcntl(fd, F_SETFL, fcntl_flags) == -1) {
+				LOG_ERRNO(errno, "fcntl(,, O_NONBLOCK) in create_socket()");
+			}
 		}
 	}
 
@@ -442,7 +444,9 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 
 #if defined(HAVE_UDPFROMTO)
 	/* we are going to use udpfromto.c, so initialize it */
-	udpfromto_init(fd);
+	if (udpfromto_init(fd) == -1) {
+		LOG_ERRNO(errno, "udpfromto_init() returned an error - ignored");
+	}
 #endif
 
 	/* poke a hole for IKE messages in the IPsec layer */
@@ -513,15 +517,27 @@ void delete_pluto_event(struct pluto_event **evp)
 }
 
 /*
- * a wrapper for libevent's event_new + event_add; any error is fatal
- * If you're looking for how to set up a timer look at pluto_event_add
+ * A wrapper for libevent's event_new + event_add; any error is fatal.
+ *
+ * When setting up an event, this must be called last.  Else the event
+ * can fire before setting it up has finished.
  */
-static struct event *pluto_event_wraper(evutil_socket_t fd, short events,
-				     event_callback_fn cb, void *arg,
-				     const deltatime_t *delay)
+
+static void fire_event_photon_torpedo(struct event **evp,
+				      evutil_socket_t fd, short events,
+				      event_callback_fn cb, void *arg,
+				      const deltatime_t *delay)
 {
 	struct event *ev = event_new(pluto_eb, fd, events, cb, arg);
 	passert(ev != NULL);
+	/*
+	 * EV must be saved in its final destination before the event
+	 * is enabled.
+	 *
+	 * Otherwise the event on the main thread will try to use the
+	 * saved EV before it has been saved by the helper thread.
+	 */
+	*evp = ev;
 
 	int r;
 	if (delay == NULL) {
@@ -531,7 +547,6 @@ static struct event *pluto_event_wraper(evutil_socket_t fd, short events,
 		r = event_add(ev, &t);
 	}
 	passert(r >= 0);
-	return ev;
 }
 
 /*
@@ -559,7 +574,18 @@ static void schedule_event_now_cb(evutil_socket_t fd UNUSED,
 	struct now_event *ne = (struct now_event *)arg;
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("executing now-event %s", ne->ne_name));
+
+	/*
+	 * At one point, .ne_event was was being set after the event
+	 * was enabled.  With multiple threads this resulted in a race
+	 * where the event ran before .ne_event was set.  The
+	 * pexpect() followed by the passert() demonstrated this - the
+	 * pexpect() failed yet the passert() passed.
+	 */
+	pexpect(ne->ne_event != NULL);
 	ne->ne_cb(ne->ne_arg);
+	passert(ne->ne_event != NULL);
+
 	event_del(ne->ne_event);
 	pfree(ne);
 }
@@ -573,10 +599,14 @@ void pluto_event_now(const char *name, void (*cb)(void*), void*arg)
 	ne->ne_arg = arg;
 	ne->ne_name = name;
 	static const deltatime_t no_delay = DELTATIME(0);
-	/* use common code, not event_base_once() */
-	ne->ne_event = pluto_event_wraper(NULL_FD, EV_TIMEOUT,
-					  schedule_event_now_cb, ne,
-					  &no_delay);
+	/*
+	 * Everything set up; arm and fire torpedo.  Event may have
+	 * even run before the below function returns.
+	 */
+	fire_event_photon_torpedo(&ne->ne_event,
+				  NULL_FD, EV_TIMEOUT,
+				  schedule_event_now_cb, ne,
+				  &no_delay);
 }
 
 /*
@@ -584,13 +614,13 @@ void pluto_event_now(const char *name, void (*cb)(void*), void*arg)
  * looking for how to set up a timer, then don't look here and don't
  * look at timer.c.  Why?
  */
-struct event *timer_private_pluto_event_new(evutil_socket_t fd, short events,
-					    event_callback_fn cb, void *arg,
-					    deltatime_t delay)
+void timer_private_pluto_event_new(struct event **evp,
+				   evutil_socket_t fd, short events,
+				   event_callback_fn cb, void *arg,
+				   deltatime_t delay)
 {
-	return pluto_event_wraper(fd, events, cb, arg, &delay);
+	fire_event_photon_torpedo(evp, fd, events, cb, arg, &delay);
 }
-
 
 struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
 				    event_callback_fn cb, void *arg,
@@ -600,11 +630,11 @@ struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
 	struct pluto_event *e = alloc_thing(struct pluto_event, name);
 	e->ev_type = EVENT_NULL;
 	e->ev_name = name;
-	e->ev = pluto_event_wraper(fd, events, cb, arg, delay);
 	link_pluto_event_list(e);
 	if (delay != NULL) {
 		e->ev_time = monotimesum(mononow(), *delay);
 	}
+	fire_event_photon_torpedo(&e->ev, fd, events, cb, arg, delay);
 	return e; /* compaitable with pluto_event_new for the time being */
 }
 
@@ -654,11 +684,12 @@ void timer_list(void)
 	}
 }
 
-void find_ifaces(void)
+void find_ifaces(bool rm_dead)
 {
 	struct iface_port *ifp;
 
-	mark_ifaces_dead();
+	if (rm_dead)
+		mark_ifaces_dead();
 
 	if (kernel_ops->process_ifaces != NULL) {
 #if !defined(__CYGWIN32__)
@@ -668,7 +699,8 @@ void find_ifaces(void)
 		kernel_ops->process_ifaces(static_ifn);
 	}
 
-	free_dead_ifaces(); /* ditch remaining old entries */
+	if (rm_dead)
+		free_dead_ifaces(); /* ditch remaining old entries */
 
 	if (interfaces == NULL)
 		loglog(RC_LOG_SERIOUS, "no public interfaces found");
@@ -694,6 +726,17 @@ void find_ifaces(void)
 					ifp_str, ifp->fd);
 		}
 	}
+}
+
+struct iface_port *lookup_iface_ip(ip_address *ip, u_int16_t port)
+{
+	struct iface_port *p;
+	for (p = interfaces; p != NULL; p = p->next) {
+		if (sameaddr(ip, &p->ip_addr) && (p->port == port))
+			return p;
+	}
+
+	return NULL;
 }
 
 void show_ifaces_status(void)
@@ -785,10 +828,11 @@ static size_t hash_pid_entry(void *data)
 	return entry->pid;
 }
 
-static struct list_entry pid_entry_slots[23];
+static struct list_head pid_entry_slots[23];
 
 static struct hash_table pids_hash_table = {
 	.info = {
+		.debug = DBG_CONTROLMORE,
 		.name = "pid table",
 		.log = log_pid_entry,
 	},
@@ -892,7 +936,7 @@ static void childhandler_cb(int unused UNUSED, const short event UNUSED, void *a
 				log_status(buf, status);
 			}
 			struct pid_entry *pid_entry = NULL;
-			struct list_entry *head = hash_table_slot_by_hash(&pids_hash_table, child);
+			struct list_head *head = hash_table_slot_by_hash(&pids_hash_table, child);
 			FOR_EACH_LIST_ENTRY_OLD2NEW(head, pid_entry) {
 				passert(pid_entry->magic == PID_MAGIC);
 				if (pid_entry->pid == child) {
@@ -937,6 +981,8 @@ void init_event_base(void) {
  */
 void call_server(void)
 {
+	init_hash_table(&pids_hash_table);
+
 	/*
 	 * setup basic events, CTL and SIGNALs
 	 */

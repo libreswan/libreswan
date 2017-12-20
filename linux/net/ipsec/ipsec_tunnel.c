@@ -2038,7 +2038,11 @@ int ipsec_tunnel_init(struct net_device *dev)
 		    dev->name ? dev->name : "NULL");
 
 #ifdef ipsec_alloc_netdev
+# ifdef HAS_PRIV_DESTRUCTOR
+	dev->priv_destructor         = free_netdev;
+# else
 	dev->destructor         = free_netdev;
+# endif
 #endif
 
 #ifndef HAVE_NETDEV_PRIV

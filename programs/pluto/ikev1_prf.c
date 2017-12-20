@@ -146,10 +146,10 @@ static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf_desc,
 				       unsigned required_keymat)
 {
 	if (sizeof_symkey(skeyid_e) >= required_keymat) {
-		return symkey_from_symkey_bytes("keymat", DBG_CRYPT,
-						&encrypter->common,
-						0, required_keymat,
-						skeyid_e);
+		return encrypt_key_from_symkey_bytes("keymat", DBG_CRYPT,
+						     encrypter,
+						     0, required_keymat,
+						     skeyid_e);
 	}
 	/* K1 = prf(skeyid_e, 0) */
 	PK11SymKey *keymat;
@@ -175,10 +175,10 @@ static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf_desc,
 		old_k = new_k;
 	}
 	release_symkey(__func__, "old_k#final", &old_k);
-	PK11SymKey *cryptkey = symkey_from_symkey_bytes("cryptkey", DBG_CRYPT,
-							&encrypter->common,
-							0, required_keymat,
-							keymat);
+	PK11SymKey *cryptkey = encrypt_key_from_symkey_bytes("cryptkey", DBG_CRYPT,
+							     encrypter,
+							     0, required_keymat,
+							     keymat);
 	release_symkey(__func__, "keymat", &keymat);
 	return cryptkey;
 }
@@ -187,7 +187,7 @@ static PK11SymKey *appendix_b_keymat_e(const struct prf_desc *prf_desc,
  * See draft-ietf-ipsec-ike-01.txt 4.1
  */
 /* MUST BE THREAD-SAFE */
-static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
+static void calc_skeyids_iv(struct pcr_v1_dh *skq,
 			    /*const*/ PK11SymKey *shared,	/* NSS doesn't do const */
 			    const size_t keysize,	/* = st->st_oakley.enckeylen/BITS_PER_BYTE; */
 			    PK11SymKey **skeyid_out,	/* output */
@@ -280,22 +280,10 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 }
 
 /* MUST BE THREAD-SAFE */
-void calc_dh_iv(struct pluto_crypto_req *r)
+void calc_dh_iv(struct pcr_v1_dh *dh)
 {
-	/* copy the request, since the reply will re-use the memory of the r->pcr_d.dhq */
-	struct pcr_skeyid_q dhq;
-	memcpy(&dhq, &r->pcr_d.dhq, sizeof(r->pcr_d.dhq));
-
-	/* clear out the reply */
-	struct pcr_skeyid_r *const skr = &r->pcr_d.dhr;
-	zero(skr);	/* ??? pointer fields may not be NULLed */
-	INIT_WIRE_ARENA(*skr);
-
-	const struct oakley_group_desc *group = dhq.oakley_group;
+	const struct oakley_group_desc *group = dh->oakley_group;
 	passert(group != NULL);
-
-	SECKEYPrivateKey *ltsecret = dhq.secret;
-	SECKEYPublicKey *pubk = dhq.pubk;
 
 	/*
 	 * Now calculate the (g^x)(g^y).
@@ -303,30 +291,25 @@ void calc_dh_iv(struct pluto_crypto_req *r)
 	 */
 
 	chunk_t g;
-	setchunk_from_wire(g, &dhq,
-		dhq.role == ORIGINAL_RESPONDER ? &dhq.gi : &dhq.gr);
+	setchunk_from_wire(g, dh,
+		dh->role == ORIGINAL_RESPONDER ? &dh->gi : &dh->gr);
 
 	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
 
-	skr->shared = calc_dh_shared(g, ltsecret, group, pubk);
+	dh->shared = calc_dh_shared(dh->secret, g);
 
-	if (skr->shared != NULL) {
-		chunk_t new_iv = empty_chunk;
-
+	if (dh->shared != NULL) {
 		/* okay, so now calculate IV */
-		calc_skeyids_iv(&dhq,
-			skr->shared,
-			dhq.key_size,
+		calc_skeyids_iv(dh,
+			dh->shared,
+			dh->key_size,
 
-			&skr->skeyid,	/* output */
-			&skr->skeyid_d,	/* output */
-			&skr->skeyid_a,	/* output */
-			&skr->skeyid_e,	/* output */
-			&new_iv,	/* output */
-			&skr->enc_key	/* output */
+			&dh->skeyid,	/* output */
+			&dh->skeyid_d,	/* output */
+			&dh->skeyid_a,	/* output */
+			&dh->skeyid_e,	/* output */
+			&dh->new_iv,	/* output */
+			&dh->enc_key	/* output */
 			);
-
-		WIRE_CLONE_CHUNK(*skr, new_iv, new_iv);
-		freeanychunk(new_iv);
 	}
 }

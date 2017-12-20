@@ -181,12 +181,15 @@ enum event_type {
 	EVENT_v2_RELEASE_WHACK,		/* release the whack fd */
 	EVENT_v2_INITIATE_CHILD,	/* initiate a IPsec child */
 	EVENT_v2_SEND_NEXT_IKE,		/* send next IKE message using parent */
+	EVENT_v2_ADDR_CHANGE,		/* process IP address deletion */
 	EVENT_RETAIN,			/* don't change the previous event */
 };
 
 #define EVENT_REINIT_SECRET_DELAY	secs_per_hour
 #define EVENT_GIVEUP_ON_DNS_DELAY	(5 * secs_per_minute)
 #define EVENT_RELEASE_WHACK_DELAY	10	/* seconds */
+
+#define RTM_NEWADDR_ROUTE_DELAY		3 /* seconds */
 
 /*
  * an arbitrary milliseconds delay for responder. A workaround for iOS, iPhone.
@@ -216,7 +219,9 @@ enum crypto_importance {
 	pcim_ongoing_crypto,
 	pcim_local_crypto,
 	pcim_demand_crypto
+#define CRYPTO_IMPORTANCE_ROOF (pcim_demand_crypto + 1)
 };
+
 
 /* is pluto automatically switching busy state or set manually */
 enum ddos_mode {
@@ -248,13 +253,9 @@ enum seccomp_mode {
 
 typedef enum {
 	STF_IGNORE,             /* don't respond */
-	STF_INLINE,             /* set to this on second time through complete_state_trans */
 	STF_SUSPEND,            /* unfinished -- don't release resources */
 	STF_OK,                 /* success */
 	STF_INTERNAL_ERROR,     /* discard everything, we failed */
-	STF_TOOMUCHCRYPTO,      /* at this time, we can't do any more crypto,
-				 * so just ignore the message, and let them retransmit.
-				 */
 	STF_FATAL,              /* just stop. we can't continue. */
 	STF_DROP,               /* just stop, delete any state, and don't log or respond */
 	STF_FAIL,               /* discard everything, something failed.  notification_t added.
@@ -916,6 +917,7 @@ enum sa_policy_bits {
 	POLICY_IKE_FRAG_FORCE_IX,
 #define POLICY_IKE_FRAG_MASK	LRANGE(POLICY_IKE_FRAG_ALLOW_IX,POLICY_IKE_FRAG_FORCE_IX)
 	POLICY_NO_IKEPAD_IX,	/* pad ike packets to 4 bytes or not */
+	POLICY_MOBIKE_IX,	/* allow MOBIKE */
 	POLICY_ESN_NO_IX,		/* send/accept ESNno */
 	POLICY_ESN_YES_IX,		/* send/accept ESNyes */
 #define POLICY_IX_LAST	POLICY_ESN_YES_IX
@@ -956,6 +958,7 @@ enum sa_policy_bits {
 #define POLICY_IKE_FRAG_ALLOW	LELEM(POLICY_IKE_FRAG_ALLOW_IX)
 #define POLICY_IKE_FRAG_FORCE	LELEM(POLICY_IKE_FRAG_FORCE_IX)
 #define POLICY_NO_IKEPAD	LELEM(POLICY_NO_IKEPAD_IX)	/* pad ike packets to 4 bytes or not */
+#define POLICY_MOBIKE		LELEM(POLICY_MOBIKE_IX)	/* allow MOBIKE */
 #define POLICY_ESN_NO		LELEM(POLICY_ESN_NO_IX)	/* accept or request ESNno */
 #define POLICY_ESN_YES		LELEM(POLICY_ESN_YES_IX)	/* accept or request ESNyes */
 #define POLICY_DECAP_DSCP	LELEM(POLICY_DECAP_DSCP_IX)	/* decap ToS/DSCP bits */

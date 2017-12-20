@@ -25,7 +25,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <netinet/in.h>
-
+#include "linux/xfrm.h" /* local (if configured) or system copy */
 #include <libreswan.h>
 #include <libreswan/passert.h>
 
@@ -81,6 +81,20 @@ enum_names dpd_action_names = {
 	NULL
 };
 
+/* netkey SA direction names */
+static const char *const netkey_sa_dir_name[] = {
+	"XFRM_IN",
+	"XFRM_OUT",
+	"XFRM_FWD",
+};
+
+enum_names netkey_sa_dir_names = {
+	XFRM_POLICY_IN, XFRM_POLICY_FWD,
+	ARRAY_REF(netkey_sa_dir_name),
+	NULL, /* prefix */
+	NULL
+};
+
 /* systemd watchdog action names */
 static const char *const sd_action_name[] = {
 	"action: exit", /* daemon exiting */
@@ -127,6 +141,7 @@ static const char *const timer_event_name[] = {
 	"EVENT_v2_RELEASE_WHACK",
 	"EVENT_v2_INITIATE_CHILD",
 	"EVENT_v2_SEND_NEXT_IKE",
+	"EVENT_v2_ADDR_CHANGE",
 	"EVENT_RETAIN",
 };
 
@@ -344,11 +359,9 @@ enum_names routing_story = {
 
 static const char *const stfstatus_names[] = {
 	"STF_IGNORE",
-	"STF_INLINE",
 	"STF_SUSPEND",
 	"STF_OK",
 	"STF_INTERNAL_ERROR",
-	"STF_TOOMUCHCRYPTO",
 	"STF_FATAL",
 	"STF_DROP",
 	"STF_FAIL"
@@ -401,6 +414,7 @@ const char *const sa_policy_bit_names[] = {
 	"IKE_FRAG_ALLOW",
 	"IKE_FRAG_FORCE",
 	"NO_IKEPAD",
+	"MOBIKE",
 	"ESN_NO",
 	"ESN_YES",
 	NULL	/* end for bitnamesof() */
@@ -487,6 +501,7 @@ static const enum_names *pluto_enum_names_checklist[] = {
 	&pluto_cryptoimportance_names,
 	&routing_story,
 	&stfstatus_name,
+	&netkey_sa_dir_names,
 };
 
 void init_pluto_constants(void) {

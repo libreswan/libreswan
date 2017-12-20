@@ -734,8 +734,8 @@ static void dh_desc_check(const struct ike_alg *alg)
 	/* always implemented */
 	passert_ike_alg(alg, dh->dhmke_ops != NULL);
 	passert_ike_alg(alg, dh->dhmke_ops->check != NULL);
-	passert_ike_alg(alg, dh->dhmke_ops->calc_ke != NULL);
-	passert_ike_alg(alg, dh->dhmke_ops->calc_g_ir != NULL);
+	passert_ike_alg(alg, dh->dhmke_ops->calc_secret != NULL);
+	passert_ike_alg(alg, dh->dhmke_ops->calc_shared != NULL);
 	/* more? */
 	dh->dhmke_ops->check(dh);
 }

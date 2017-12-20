@@ -26,15 +26,13 @@ void lsw_passert_fail(const char *file,
 		      const char *fmt, ...)
 {
 	LSWBUF(buf) {
-		lswlog_log_prefix(buf);
-		lswlogs(buf, "ABORT: ASSERTION FAILED: ");
+		lswlog_passert_prefix(buf);
 		va_list ap;
 		va_start(ap, fmt);
 		lswlogvf(buf, fmt, ap);
 		va_end(ap);
-		lswlog_source_line(buf, func, file, line);
-		lswlog_to_error_stream(buf);
+		lswlog_passert_suffix(buf, func, file, line);
 	}
-	/* this needs to panic */
+	/* above will panic but compiler doesn't know this */
 	abort();
 }

@@ -9,7 +9,7 @@
  * Copyright (C) 2010 Bart Trojanowski <bart@jukie.net>
  * Copyright (C) 2010 Shinichi Furuso <Shinichi.Furuso@jp.sony.com>
  * Copyright (C) 2010,2013 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2017 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012 Philippe Vouters <Philippe.Vouters@laposte.net>
  * Copyright (C) 2012 Bram <bram-bcrafjna-erqzvar@spam.wizbit.be>
  * Copyright (C) 2013 Kim B. Heino <b@bbbs.net>
@@ -86,6 +86,7 @@
 #include "hostpair.h"
 #include "lswfips.h"
 #include "crypto.h"
+#include "kernel_netlink.h"
 
 struct connection *connections = NULL;
 
@@ -303,22 +304,7 @@ void delete_connection(struct connection *c, bool relations)
 	if (c->host_pair == NULL) {
 		list_rm(struct connection, hp_next, c, unoriented_connections);
 	} else {
-		struct host_pair *hp = c->host_pair;
-
-		list_rm(struct connection, hp_next, c, hp->connections);
-		c->host_pair = NULL; /* redundant, but safe */
-
-		/*
-		 * if there are no more connections with this host_pair
-		 * and we haven't even made an initial contact, let's delete
-		 * this guy in case we were created by an attempted DOS attack.
-		 */
-		if (hp->connections == NULL) {
-			/* ??? must deal with this! */
-			passert(hp->pending == NULL);
-			remove_host_pair(hp);
-			pfree(hp);
-		}
+		delete_oriented_hp(c);
 	}
 
 	/* any logging past this point is for the wrong connection */
@@ -985,7 +971,7 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 
 		switch (dst->host_type) {
 		case KH_IPHOSTNAME:
-			er = ttoaddr(dst->host_addr_name, 0, dst->host_addr.u.v4.sin_family,
+			er = ttoaddr(dst->host_addr_name, 0, addrtypeof(&dst->host_addr),
 				&dst->host_addr);
 
 			/* The above call wipes out the port, put it again */
@@ -1360,6 +1346,20 @@ void add_connection(const struct whack_message *wm)
 		if ((wm->policy & POLICY_IKEV2_PROPOSE) == LEMPTY) {
 			loglog(RC_FATAL, "Failed to add connection \"%s\": opportunistic connection MUST have ikev2=insist",
 				wm->name);
+			return;
+		}
+	}
+
+	if (wm->policy & POLICY_IKEV1_ALLOW) {
+		if (wm->policy & POLICY_MOBIKE) {
+			loglog(RC_LOG_SERIOUS, "MOBIKE requires ikev2=insist");
+			return;
+		}
+	}
+
+	if (wm->policy & POLICY_MOBIKE) {
+		if (!migrate_xfrm_sa_check()) {
+			loglog(RC_LOG_SERIOUS, "MOBIKE missing kernel support CONFIG_XFRM_MIGRATE && CONFIG_NET_KEY_MIGRATE");
 			return;
 		}
 	}
@@ -2273,6 +2273,7 @@ char *fmt_conn_instance(const struct connection *c, char buf[CONN_INST_BUF])
 			ipstr_buf b;
 
 			*p++ = ' ';
+			/* p not subsequently used */
 			p = jam_str(p, &buf[CONN_INST_BUF] - p,
 				sensitive_ipstr(&c->spd.that.host_addr, &b));
 		}
@@ -3028,7 +3029,8 @@ struct connection *refine_host_connection(const struct state *st,
 		int opl;
 		int ppl;
 
-		if (same_id(&c->spd.that.id, peer_id) &&
+		if ((same_id(&c->spd.that.id, peer_id) || (id_is_ipaddr(peer_id)
+			&& c->spd.that.host_type == KH_ANY)) &&
 		    peer_ca.ptr != NULL &&
 		    trusted_ca_nss(peer_ca, c->spd.that.ca, &ppl) &&
 		    ppl == 0 &&
@@ -3127,8 +3129,8 @@ struct connection *refine_host_connection(const struct state *st,
 	for (bool wcpip = FALSE;; wcpip = TRUE) {
 		for (; d != NULL; d = d->hp_next) {
 			int wildcards;
-			bool matching_peer_id = match_id(peer_id, &d->spd.that.id,
-					&wildcards);
+			bool matching_peer_id = match_id(peer_id, &d->spd.that.id, &wildcards) ||
+				(id_is_ipaddr(peer_id) && d->spd.that.host_type == KH_ANY);
 
 			int peer_pathlen;
 			bool matching_peer_ca = trusted_ca_nss(peer_ca, d->spd.that.ca,
@@ -3161,15 +3163,16 @@ struct connection *refine_host_connection(const struct state *st,
 
 			/* 'You Tarzan, me Jane' check based on received IDr */
 			if (!initiator && tarzan_id != NULL) {
-				char tarzan_str[IDTOA_BUF];
-				char us_str[IDTOA_BUF];
-
-				idtoa(tarzan_id, tarzan_str, sizeof(tarzan_str));
-				idtoa(&d->spd.this.id, us_str, sizeof(us_str));
-				DBG(DBG_CONTROL, DBG_log("Peer expects us to be %s (%s) according to its IDr payload",
-					tarzan_str, enum_show(&ike_idtype_names, tarzan_id->kind)));
-				DBG(DBG_CONTROL, DBG_log("This connection's local id is %s (%s)",
-					us_str, enum_show(&ike_idtype_names,d->spd.this.id.kind)));
+				DBG(DBG_CONTROL, {
+					char tarzan_str[IDTOA_BUF];
+					idtoa(tarzan_id, tarzan_str, sizeof(tarzan_str));
+					DBG_log("Peer expects us to be %s (%s) according to its IDr payload",
+						tarzan_str, enum_show(&ike_idtype_names, tarzan_id->kind));
+					char us_str[IDTOA_BUF];
+					idtoa(&d->spd.this.id, us_str, sizeof(us_str));
+					DBG_log("This connection's local id is %s (%s)",
+						us_str, enum_show(&ike_idtype_names,d->spd.this.id.kind));
+				});
 				if (!idr_wildmatch(d, tarzan_id)) {
 					DBG(DBG_CONTROL, DBG_log("Peer IDr payload does not match our expected ID, this connection will not do"));
 					continue;
@@ -3240,7 +3243,7 @@ struct connection *refine_host_connection(const struct state *st,
 				 * This also means, we have already sent out AUTH payload, so we cannot
 				 * switch away from previously used this.authby.
 				 */
-				pexpect(initiator == FALSE);
+				pexpect(!initiator);
 				if (this_authby != d->spd.that.authby) {
 					DBG(DBG_CONTROL, DBG_log("skipping because mismatched authby"));
 					continue;

@@ -2,6 +2,7 @@
  * IPSEC MAST code.
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2017 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -891,7 +892,11 @@ int ipsec_mast_probe(struct net_device *dev)
 	dev->neigh_setup        = ipsec_mast_neigh_setup_dev;
 #endif
 #ifdef ipsec_alloc_netdev
+# ifdef HAS_PRIV_DESTRUCTOR
+	dev->priv_destructor         = free_netdev;
+# else
 	dev->destructor         = free_netdev;
+# endif
 #endif
 
 #ifndef ipsec_alloc_netdev

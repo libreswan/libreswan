@@ -45,7 +45,9 @@ const struct encrypt_desc ike_alg_encrypt_3des_cbc =
 			[IKEv2_ALG_ID] = IKEv2_ENCR_3DES,
 		},
 		.fips =          TRUE,
-		.nss_mechanism = CKM_DES3_CBC,
+	},
+	.nss = {
+		.mechanism = CKM_DES3_CBC,
 	},
 	.enc_blocksize =    DES_CBC_BLOCK_SIZE,
 	.pad_to_blocksize = TRUE,

@@ -30,10 +30,10 @@
 #include "ike_alg_nss_modp.h"
 #include "crypt_symkey.h"
 
-static void nss_modp_calc_ke(const struct oakley_group_desc *group,
-			     SECKEYPrivateKey **privk,
-			     SECKEYPublicKey **pubk,
-			     u_int8_t *ke, size_t sizeof_ke)
+static void nss_modp_calc_secret(const struct oakley_group_desc *group,
+				 SECKEYPrivateKey **privk,
+				 SECKEYPublicKey **pubk,
+				 u_int8_t *ke, size_t sizeof_ke)
 {
 	passert(sizeof_ke == group->bytes);
 
@@ -71,8 +71,10 @@ static void nss_modp_calc_ke(const struct oakley_group_desc *group,
 		*privk = SECKEY_CreateDHPrivateKey(&dh_params, pubk,
 						   lsw_return_nss_password_file_info());
 		if (*pubk == NULL || *privk == NULL) {
-			PASSERT_FAIL("NSS: DH MODP private key creation failed (err %d)",
-				     PR_GetError());
+			LSWLOG_PASSERT(buf) {
+				lswlogs(buf, "NSS: DH MODP private key creation failed");
+				lswlog_nss_error(buf);
+			}
 		}
 	} while (group->bytes != (*pubk)->u.dh.publicValue.len);
 
@@ -82,11 +84,11 @@ static void nss_modp_calc_ke(const struct oakley_group_desc *group,
 	memcpy(ke, (*pubk)->u.dh.publicValue.data, group->bytes);
 }
 
-static PK11SymKey *nss_modp_calc_g_ir(const struct oakley_group_desc *group,
-				      SECKEYPrivateKey *local_privk,
-				      const SECKEYPublicKey *local_pubk,
-				      u_int8_t *remote_ke,
-				      size_t sizeof_remote_ke)
+static PK11SymKey *nss_modp_calc_shared(const struct oakley_group_desc *group,
+					SECKEYPrivateKey *local_privk,
+					const SECKEYPublicKey *local_pubk,
+					u_int8_t *remote_ke,
+					size_t sizeof_remote_ke)
 {
 	DBG(DBG_CRYPT,
 		DBG_log("Started DH shared-secret computation in NSS:"));
@@ -116,7 +118,7 @@ static PK11SymKey *nss_modp_calc_g_ir(const struct oakley_group_desc *group,
 					  CKM_CONCATENATE_DATA_AND_BASE,
 					  CKA_DERIVE, group->bytes,
 					  lsw_return_nss_password_file_info());
-	DBG(DBG_CRYPT, DBG_symkey(__func__, "new g_ir", g_ir));
+	DBG(DBG_CRYPT, DBG_symkey("    new ", "g_ir", g_ir));
 
 	return g_ir;
 }
@@ -130,6 +132,6 @@ static void nss_modp_check(const struct oakley_group_desc *dhmke)
 
 const struct dhmke_ops ike_alg_nss_modp_dhmke_ops = {
 	.check = nss_modp_check,
-	.calc_ke = nss_modp_calc_ke,
-	.calc_g_ir = nss_modp_calc_g_ir,
+	.calc_secret = nss_modp_calc_secret,
+	.calc_shared = nss_modp_calc_shared,
 };
