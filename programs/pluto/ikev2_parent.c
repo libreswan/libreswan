@@ -3267,9 +3267,9 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		}
 
 		if (cc->send_no_esp_tfc) {
+			notifies--;
 			int np = notifies != 0 ? ISAKMP_NEXT_v2N :
 				ISAKMP_NEXT_v2NONE;
-			notifies--;
 			if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
 					PROTO_v2_RESERVED,
 					&empty_chunk,
