@@ -738,9 +738,6 @@ static void quick_outI1_continue(struct state *st, struct msg_digest *md UNUSED,
 		DBG_log("quick_outI1_continue for #%lu: calculated ke+nonce, sending I1",
 			st->st_serialno));
 
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
-	st->st_calculating = FALSE;
-
 	passert(st != NULL);
 
 	unset_suspended(st);
@@ -773,8 +770,6 @@ stf_status quick_outI1(int whack_sock,
 	st->st_whack_sock = whack_sock;
 	st->st_connection = c;	/* safe: from duplicate_state */
 	passert(c != NULL);
-
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating == %s;", st->st_serialno, __FUNCTION__, __LINE__, st->st_calculating ? "TRUE" : "FALSE"));
 
 	set_cur_state(st); /* we must reset before exit */
 	st->st_policy = policy;
@@ -1506,9 +1501,6 @@ static void quick_inI1_outR1_cryptocontinue1(struct state *st, struct msg_digest
 			st->st_serialno));
 
 	passert(st->st_connection != NULL);
-
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
-	st->st_calculating = FALSE;
 	unset_suspended(st);
 
 	/* we always calculate a nonce */
@@ -1565,9 +1557,6 @@ static void quick_inI1_outR1_cryptocontinue2(struct state *st, struct msg_digest
 			st->st_serialno));
 
 	passert(st->st_connection != NULL);
-
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
-	st->st_calculating = FALSE;
 	unset_suspended(st);
 
 	e = quick_inI1_outR1_cryptotail(md, r);
@@ -1819,9 +1808,6 @@ static void quick_inR1_outI2_continue(struct state *st, struct msg_digest *md,
 			st->st_serialno));
 
 	passert(st->st_connection != NULL);
-
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
-	st->st_calculating = FALSE;
 	unset_suspended(st);
 
 	e = quick_inR1_outI2_cryptotail(md, r);

@@ -2015,8 +2015,6 @@ void fmt_state(struct state *st, const monotime_t n,
 		}
 	}
 
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating == %s;", st->st_serialno, __FUNCTION__, __LINE__, st->st_calculating ? "TRUE" : "FALSE"));
-
 	snprintf(state_buf, state_buf_len,
 		 "#%lu: \"%s\"%s:%u %s (%s); %s in %lds%s%s%s%s; %s; %s",
 		 st->st_serialno,

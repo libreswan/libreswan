@@ -892,9 +892,6 @@ static void main_inR1_outI2_continue(struct state *st, struct msg_digest *md,
 	passert(st->st_suspended_md == md);
 	unset_suspended(st); /* no longer connected or suspended */
 
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
-	st->st_calculating = FALSE;
-
 	e = main_inR1_outI2_tail(st, md, r);
 
 	passert(md != NULL);
@@ -1075,8 +1072,6 @@ static void main_inI2_outR2_continue(struct state *st, struct msg_digest *md,
 	passert(st->st_suspended_md == md);
 	unset_suspended(st); /* no longer connected or suspended */
 
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
-	st->st_calculating = FALSE;
 	e = main_inI2_outR2_tail(st, md, r);
 
 	passert(md != NULL);
@@ -1559,9 +1554,6 @@ static void main_inR2_outI3_cryptotail(struct state *st, struct msg_digest *md,
 
 	passert(st->st_suspended_md == md);
 	unset_suspended(st); /* no longer connected or suspended */
-
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
-	st->st_calculating = FALSE;
 
 	e = main_inR2_outI3_continue(md, r);
 

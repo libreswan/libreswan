@@ -116,9 +116,6 @@ static void aggr_inI1_outR1_continue2(struct state *st, struct msg_digest *md,
 	passert(st->st_suspended_md == md);
 	unset_suspended(st); /* no longer connected or suspended */
 
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
-	st->st_calculating = FALSE;
-
 	e = aggr_inI1_outR1_tail(md, r);
 
 	passert(md != NULL);
@@ -143,9 +140,6 @@ static void aggr_inI1_outR1_continue1(struct state *st, struct msg_digest *md,
 	    DBG_log("aggr inI1_outR1: calculated ke+nonce, calculating DH"));
 
 	unset_suspended(st); /* no longer connected or suspended */
-
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
-	st->st_calculating = FALSE;
 
 	/* unpack first calculation */
 	unpack_KE_from_helper(st, r, &st->st_gr);
@@ -686,9 +680,6 @@ static void aggr_inR1_outI2_crypto_continue(struct state *st, struct msg_digest 
 	passert(st->st_suspended_md == md);
 	unset_suspended(st); /* no longer connected or suspended */
 
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
-	st->st_calculating = FALSE;
-
 	if (!finish_dh_secretiv(st, r)) {
 		e = STF_FAIL + INVALID_KEY_INFORMATION;
 	} else {
@@ -1057,9 +1048,6 @@ static void aggr_outI1_continue(struct state *st, struct msg_digest *md,
 
 	passert(st->st_suspended_md == md);
 	unset_suspended(st); /* no longer connected or suspended */
-
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
-	st->st_calculating = FALSE;
 
 	e = aggr_outI1_tail(st, md, r);
 

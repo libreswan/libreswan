@@ -296,9 +296,6 @@ static void ikev2_crypto_continue(struct state *st, struct msg_digest *md,
 	passert(st->st_suspended_md == md);
 	unset_suspended(st); /* no longer connected or suspended */
 
-	st->st_calculating = FALSE;
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
-
 	switch (st->st_state) {
 
 	case STATE_PARENT_I1:
@@ -1453,9 +1450,6 @@ static void ikev2_parent_inI1outR1_continue(struct state *st, struct msg_digest 
 	passert(st->st_suspended_md == md);
 	unset_suspended(st); /* no longer connected or suspended */
 
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
-	st->st_calculating = FALSE;
-
 	stf_status e = ikev2_parent_inI1outR1_tail(st, md, r);
 
 	passert(md != NULL);
@@ -2009,9 +2003,6 @@ static void ikev2_parent_inR1outI2_continue(struct state *st, struct msg_digest 
 
 	passert(st->st_suspended_md == md);
 	unset_suspended(st); /* no longer connected or suspended */
-
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
-	st->st_calculating = FALSE;
 
 	e = ikev2_parent_inR1outI2_tail(st, md, r);
 
@@ -3442,9 +3433,6 @@ static void ikev2_parent_inI2outR2_continue(struct state *st, struct msg_digest 
 
 	passert(st->st_suspended_md == md);
 	unset_suspended(st); /* no longer connected or suspended */
-
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
-	st->st_calculating = FALSE;
 
 	e = ikev2_parent_inI2outR2_tail(st, md, r);
 
