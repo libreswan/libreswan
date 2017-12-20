@@ -82,6 +82,7 @@ OBJS += lswlog_bytes.o
 OBJS += lswlog_enum_lset_short.o
 OBJS += lswlog_realtime.o
 OBJS += lswlog_deltatime.o
+OBJS += lswlog_monotime.o
 OBJS += lswlog_ip.o
 OBJS += lswlog_to_file_stream.o
 OBJS += lswlog_pexpect.o

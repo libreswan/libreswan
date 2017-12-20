@@ -203,7 +203,10 @@ struct lswlog;
  * Similar to C99 snprintf() et.al., always return the untruncated
  * message length (the value can never be negative).
  *
- * XXX: is returning the length useful?
+ * These functions return the number of bytes that should have been
+ * written to the buffer (i.e., ignore truncation).  While probably
+ * not directly useful, it provides a sink for functions that insist
+ * on their return value being consumed.
  */
 
 size_t lswlogvf(struct lswlog *log, const char *format, va_list ap);
@@ -250,8 +253,9 @@ size_t lswlog_ip(struct lswlog *log, const ip_address*);
  * For tools, the log stream goes to STDERR when enabled; and the
  * debug stream goes to STDERR conditional on debug flags.
  *
- * Return size_t so that implementations have somewhere to send values
- * that should not be ignored; for instance fwrite() :-/
+ * Return size_t - the number of bytes written - so that
+ * implementations have somewhere to send values that should not be
+ * ignored; for instance fwrite() :-/
  */
 
 void lswlog_to_log_stream(struct lswlog *buf);
