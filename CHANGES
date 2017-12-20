@@ -2,6 +2,7 @@
 See also https://libreswan.org/
 
 v3.23 (unrelased)
+* IKEv2: MOBIKE support (RFC 45555) [Antony/Paul]
 * pluto: Fix DEFAULT_RUNDIR to be set so it is really configurable [Tuomo]
 * pluto: Add support IDr payload (You Tarzan, me Jane) [Paul]
 * pluto: pass state to send_crypto_helper_request() [Andrew]
@@ -13,10 +14,16 @@ v3.23 (unrelased)
 * pluto: Rework nic offload detection code [Aviv Heller]
 * pluto: Retry send on -EAGAIN in check_msg_errqueue() (upto 32x) [Paul/Hugh]
 * pluto: Pull latest kernel traffic counters before logging/deleting SA [Paul]
+* pluto: STF_INLINE, STF_TOOMUCHCRYPTO no longer needed in helpers [Andrew]
+* pluto: Replace socket queues with a simple queue and mutex+cont [Andrew]
+* XFRM: XFRM_MIGRATE support, used for MOBIKE [Antony]
+  (requires kernel 4.14, 4.15rc1+ for AES_GCM support)
+* XFRM: Listen to NETLINK_ROUTE messages from kernel for MOBIKE [Antony]
 * XFRM: Fix unique marks accidentally setting -1 instead of random [Paul]
 * XFRM: Only install IPv6 holes when system has configured IPv6 [Antony]
 * XFRM: Add support for decap-dscp=yes [Paul]
 * KLIPS: Support kernels 4.14+ with renamed dev->priv_destructor [Paul]
+* KLIPS: updown fixes for IPv6 default route and metric/mtu settings [Wolfgang]
 * SECCOMP: Update syscall whitelist for use of libunbound [Paul]
 * IKEv1: better handle ESP with no integrity vs unknown integrity [Andrew]
 * IKEv1: Fix packet retransmit code wrf timeouts vs duplucates [Andrew]
@@ -30,6 +37,10 @@ v3.23 (unrelased)
 * _updown: Fix POINTPOINT interfaces not to use nexthop [Tuomo]
 * Makefiles: Fix INC_MANDIR to be share/man and add FINALMANDIR [Tuomo]
 * packaging: Move debian/ to packaging ('make deb' still works) [Antony]
+* contrib: Added ipsec-dyndns to demonstrante how push an IPSECKEY [Paul]
+* Bugtracker bugs fixed:
+   #313: hangesource in updown_klips doesn't respect PLUTO_METRIC [Wolfgang]
+   #314: IPv6 default route is deleted by mistake [Wolfgang]
 
 v3.22 (October 22, 2017)
 * IKEv2: EXPERIMENTAL: unbound DNS server ipsecmod support [Opportunistic IPsec]
