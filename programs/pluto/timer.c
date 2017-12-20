@@ -395,16 +395,21 @@ static void liveness_check(struct state *st)
 		/* ensure that the very first liveness_check works out */
 		if (is_monotime_epoch(last_liveness)) {
 			pst->st_last_liveness = last_liveness = tm;
-			DBG(DBG_DPD, DBG_log("#%lu liveness initial timestamp set %ld",
-						st->st_serialno,
-						(long)tm.mono_secs));
+			LSWDBGP(DBG_DPD, buf) {
+				lswlogf(buf, "#%lu liveness initial timestamp set ",
+					st->st_serialno);
+				lswlog_monotime(buf, tm);
+			}
 		}
 
-		DBG(DBG_DPD,
-			DBG_log("#%lu liveness_check - last_liveness: %ld, tm: %ld parent #%lu",
-				st->st_serialno,
-				(long)last_liveness.mono_secs,
-				(long)tm.mono_secs, pst->st_serialno));
+		LSWDBGP(DBG_DPD, buf) {
+			lswlogf(buf, "#%lu liveness_check - last_liveness: ",
+				st->st_serialno);
+			lswlog_monotime(buf, last_liveness);
+			lswlogf(buf, ", now: ");
+			lswlog_monotime(buf, tm);
+			lswlogf(buf, " parent #%lu", pst->st_serialno);
+		}
 
 		deltatime_t timeout = deltatime_max(c->dpd_timeout,
 						    deltatime_mulu(c->dpd_delay, 3));
