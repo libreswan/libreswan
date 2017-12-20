@@ -514,8 +514,8 @@ stf_status send_crypto_helper_request(struct state *st,
 	/*
 	 * Save in case it needs to be cancelled.
 	 */
-	pexpect(st->st_work_order == NULL);
-	st->st_work_order = cn;
+	pexpect(st->st_offloaded_task == NULL);
+	st->st_offloaded_task = cn;
 
 	/*
 	 * do it all ourselves?
@@ -547,13 +547,13 @@ stf_status send_crypto_helper_request(struct state *st,
 void delete_cryptographic_continuation(struct state *st)
 {
 	passert(st->st_serialno != SOS_NOBODY);
-	struct pluto_crypto_req_cont *cn = st->st_work_order;
+	struct pluto_crypto_req_cont *cn = st->st_offloaded_task;
 	if (cn == NULL) {
 		return;
 	}
 	/* shut it down */
 	cn->pcrc_cancelled = true;
-	st->st_work_order = NULL;
+	st->st_offloaded_task = NULL;
 	/* remove it from any queue */
 	if (pc_workers != NULL) {
 		/* remove it from any queue */
@@ -632,7 +632,7 @@ static void handle_helper_answer(void *arg)
 		/* suppressed */
 		DBG(DBG_CONTROL, DBG_log("work-order %u state #%lu crypto result suppressed",
 					 cn->pcrc_id, cn->pcrc_serialno));
-		pexpect(st == NULL || st->st_work_order == NULL);
+		pexpect(st == NULL || st->st_offloaded_task == NULL);
 		pcr_release(&cn->pcrc_pcr);
 	} else if (st == NULL) {
 		/* oops, the state disappeared! */
@@ -642,7 +642,7 @@ static void handle_helper_answer(void *arg)
 		}
 		pcr_release(&cn->pcrc_pcr);
 	} else {
-		st->st_work_order = NULL;
+		st->st_offloaded_task = NULL;
 		st->st_calculating = false;
 		so_serial_t old_state = push_cur_state(st);
 		(*cn->pcrc_func)(st, cn->pcrc_md, &cn->pcrc_pcr);
