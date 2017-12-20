@@ -4223,22 +4223,19 @@ void show_one_connection(const struct connection *c)
 	}
 
 	/* slightly complicated stuff to avoid extra crap */
-	/* ??? real-world and DBG control flow mixed */
-	if (deltasecs(c->dpd_timeout) > 0 || DBGP(DBG_DPD)) {
-		whack_log(RC_COMMENT,
-			"\"%s\"%s:   dpd: %s; delay:%ld; timeout:%ld; nat-t: encaps:%s; nat_keepalive:%s; ikev1_natt:%s",
-			c->name, instance,
-			enum_name(&dpd_action_names, c->dpd_action),
-			(long) deltasecs(c->dpd_delay),
-			(long) deltasecs(c->dpd_timeout),
-			(c->encaps == encaps_auto) ? "auto" :
-			    bool_str(c->encaps == encaps_yes),
-			bool_str(c->nat_keepalive),
-			(c->ikev1_natt == natt_both) ? "both" :
-			 (c->ikev1_natt == natt_rfc) ? "rfc" :
-			 (c->ikev1_natt == natt_drafts) ? "drafts" : "none"
-			);
-	}
+	whack_log(RC_COMMENT,
+		"\"%s\"%s:   dpd: %s; delay:%ld; timeout:%ld; nat-t: encaps:%s; nat_keepalive:%s; ikev1_natt:%s",
+		c->name, instance,
+		enum_name(&dpd_action_names, c->dpd_action),
+		(long) deltasecs(c->dpd_delay),
+		(long) deltasecs(c->dpd_timeout),
+		(c->encaps == encaps_auto) ? "auto" :
+		    bool_str(c->encaps == encaps_yes),
+		bool_str(c->nat_keepalive),
+		(c->ikev1_natt == natt_both) ? "both" :
+		 (c->ikev1_natt == natt_rfc) ? "rfc" :
+		 (c->ikev1_natt == natt_drafts) ? "drafts" : "none"
+		);
 
 	if (!lmod_empty(c->extra_debugging)) {
 		LSWLOG_WHACK(RC_COMMENT, buf) {
