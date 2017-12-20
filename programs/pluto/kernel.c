@@ -3480,8 +3480,9 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 
 	p2->add_time = add_time;
 
-	passert(p2->our_lastused.mono_secs != 0);
-	passert(p2->peer_lastused.mono_secs != 0);
+	/* fied has been set? */
+	passert(!is_monotime_epoch(p2->our_lastused));
+	passert(!is_monotime_epoch(p2->peer_lastused));
 
 	if (inbound) {
 		if (bytes > p2->our_bytes) {
