@@ -655,8 +655,8 @@ void timer_list(void)
 
 	nw = mononow();
 
-	whack_log(RC_LOG, "It is now: %ld seconds since monotonic epoch",
-		(unsigned long)nw.mono_secs);
+	whack_log(RC_LOG, "It is now: %jd seconds since monotonic epoch",
+		  monosecs(nw));
 
 	while (ev != NULL) {
 		struct state *st = ev->ev_state;
@@ -664,8 +664,8 @@ void timer_list(void)
 
 		if (ev->ev_type != EVENT_NULL) {
 			snprintf(buf, sizeof(buf), "schd: %jd (in %jds)",
-					(intmax_t)ev->ev_time.mono_secs,
-					(intmax_t)deltasecs(monotimediff(ev->ev_time, nw)));
+				 monosecs(ev->ev_time),
+				 deltasecs(monotimediff(ev->ev_time, nw)));
 		}
 
 		if (st != NULL && st->st_connection != NULL) {

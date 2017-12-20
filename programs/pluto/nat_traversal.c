@@ -110,7 +110,7 @@ void init_nat_traversal(deltatime_t keep_alive_period)
 
 	DBG(DBG_NATT,
 	    DBG_log("init_nat_traversal() initialized with keep_alive=%jds",
-		    (intmax_t)deltasecs(keep_alive_period)));
+		    deltasecs(keep_alive_period)));
 	libreswan_log("NAT-Traversal support %s",
 		nat_traversal_enabled ? " [enabled]" : " [disabled]");
 

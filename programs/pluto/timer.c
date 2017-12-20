@@ -395,16 +395,21 @@ static void liveness_check(struct state *st)
 		/* ensure that the very first liveness_check works out */
 		if (is_monotime_epoch(last_liveness)) {
 			pst->st_last_liveness = last_liveness = tm;
-			DBG(DBG_DPD, DBG_log("#%lu liveness initial timestamp set %ld",
-						st->st_serialno,
-						(long)tm.mono_secs));
+			LSWDBGP(DBG_DPD, buf) {
+				lswlogf(buf, "#%lu liveness initial timestamp set ",
+					st->st_serialno);
+				lswlog_monotime(buf, tm);
+			}
 		}
 
-		DBG(DBG_DPD,
-			DBG_log("#%lu liveness_check - last_liveness: %ld, tm: %ld parent #%lu",
-				st->st_serialno,
-				(long)last_liveness.mono_secs,
-				(long)tm.mono_secs, pst->st_serialno));
+		LSWDBGP(DBG_DPD, buf) {
+			lswlogf(buf, "#%lu liveness_check - last_liveness: ",
+				st->st_serialno);
+			lswlog_monotime(buf, last_liveness);
+			lswlogf(buf, ", now: ");
+			lswlog_monotime(buf, tm);
+			lswlogf(buf, " parent #%lu", pst->st_serialno);
+		}
 
 		deltatime_t timeout = deltatime_max(c->dpd_timeout,
 						    deltatime_mulu(c->dpd_delay, 3));
@@ -458,9 +463,9 @@ static void ikev2_log_v2_sa_expired(struct state *st, enum event_type type)
 			/* because we cannot tell the difference sending out to a dead SA? */
 			if (get_sa_info(st, TRUE, &last_used_age)) {
 				snprintf(story, sizeof(story),
-					"last used %jds ago < %jd ",
-					(intmax_t)deltasecs(last_used_age),
-					(intmax_t)deltasecs(c->sa_rekey_margin));
+					 "last used %jds ago < %jd ",
+					 deltasecs(last_used_age),
+					 deltasecs(c->sa_rekey_margin));
 			} else {
 				snprintf(story, sizeof(story),
 					"unknown usage - get_sa_info() failed");
@@ -483,8 +488,8 @@ static void ikev2_expire_parent(struct state *st, deltatime_t last_used_age)
 	DBG(DBG_LIFECYCLE,
 		DBG_log("not replacing unused IPSEC SA #%lu: last used %jds ago > %jd let it and the parent #%lu expire",
 			st->st_serialno,
-			(intmax_t)deltasecs(last_used_age),
-			(intmax_t)deltasecs(c->sa_rekey_margin),
+			deltasecs(last_used_age),
+			deltasecs(c->sa_rekey_margin),
 			pst->st_serialno));
 
 	delete_event(pst);
@@ -754,8 +759,8 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 			DBG(DBG_LIFECYCLE, DBG_log(
 					"not replacing stale %s SA: inactive for %jds",
 					IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
-					(intmax_t)deltasecs(monotimediff(mononow(),
-						st->st_outbound_time))));
+					deltasecs(monotimediff(mononow(),
+							       st->st_outbound_time))));
 		} else {
 			ikev2_log_v2_sa_expired(st, type);
 			ipsecdoi_replace(st, LEMPTY, LEMPTY, 1);
@@ -829,8 +834,8 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		 * wrong.  See hack in insert_state().
 		 */
 		libreswan_log("deleting incomplete state after %jd.%03jd seconds",
-			      (intmax_t) deltasecs(c->r_timeout),
-			      (intmax_t) deltamillisecs(c->r_timeout) % 1000);
+			      deltasecs(c->r_timeout),
+			      deltamillisecs(c->r_timeout) % 1000);
 		delete_state(st);
 		break;
 	}
@@ -984,13 +989,13 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 			if (st == NULL) {
 				DBG_log("inserting event %s, timeout in %jd.%03jd seconds",
 					en,
-					(intmax_t) deltasecs(delay),
-					(intmax_t) (deltamillisecs(delay) % 1000));
+					deltasecs(delay),
+					(deltamillisecs(delay) % 1000));
 			} else {
 				DBG_log("inserting event %s, timeout in %jd.%03jd seconds for #%lu",
 					en,
-					(intmax_t) deltasecs(delay),
-					(intmax_t) (deltamillisecs(delay) % 1000),
+					deltasecs(delay),
+					(deltamillisecs(delay) % 1000),
 					ev->ev_state->st_serialno);
 			}
 	}

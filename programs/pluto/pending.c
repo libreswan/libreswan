@@ -337,8 +337,8 @@ bool pending_check_timeout(const struct connection *c)
 			DBG_log("checking connection \"%s\"%s for stuck phase 2s (waited %jd, patience 3*%jd)",
 				c->name,
 				fmt_conn_instance(c, cib),
-				(intmax_t) deltasecs(waited),
-				(intmax_t) deltasecs(c->dpd_timeout));
+				deltasecs(waited),
+				deltasecs(c->dpd_timeout));
 			});
 
 		if (deltasecs(c->dpd_timeout) > 0) {

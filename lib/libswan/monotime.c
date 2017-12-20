@@ -91,6 +91,11 @@ monotime_t mononow(void)
 	return mononow_fallback();
 }
 
+intmax_t monosecs(monotime_t m)
+{
+	return m.mono_secs;
+}
+
 monotime_t monotimesum(monotime_t t, deltatime_t d)
 {
 	monotime_t s = { t.mono_secs + deltasecs(d) };

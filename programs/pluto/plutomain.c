@@ -1846,7 +1846,7 @@ void show_setup_plutomain(void)
 		log_to_perpeer ? peerlog_basedir : "no",
 		bool_str(log_append),
 		bool_str(log_ip),
-                (intmax_t) deltasecs(pluto_shunt_lifetime),
+                deltasecs(pluto_shunt_lifetime),
                 (intmax_t) pluto_xfrmlifetime
 	);
 
@@ -1863,7 +1863,7 @@ void show_setup_plutomain(void)
 		pluto_sock_bufsize,
 		bool_str(pluto_sock_errqueue),
 		bool_str(crl_strict),
-                (intmax_t) deltasecs(crl_check_interval),
+                deltasecs(crl_check_interval),
 		pluto_listen != NULL ? pluto_listen : "<any>",
 		pluto_nflog_group
 		);

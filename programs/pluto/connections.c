@@ -1607,9 +1607,9 @@ void add_connection(const struct whack_message *wm)
 
 			libreswan_log("conn: %s, rekeymargin (%jds) >= salifetime (%jds); reducing rekeymargin to %jds seconds",
 				c->name,
-				(intmax_t) deltasecs(c->sa_rekey_margin),
-				(intmax_t) deltasecs(c->sa_ipsec_life_seconds),
-				(intmax_t) deltasecs(new_rkm));
+				deltasecs(c->sa_rekey_margin),
+				deltasecs(c->sa_ipsec_life_seconds),
+				deltasecs(new_rkm));
 
 			c->sa_rekey_margin = new_rkm;
 		}
@@ -1906,9 +1906,9 @@ void add_connection(const struct whack_message *wm)
 
 		DBG(DBG_CONTROL,
 			DBG_log("ike_life: %jds; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s%s",
-				(intmax_t) deltasecs(c->sa_ike_life_seconds),
-				(intmax_t) deltasecs(c->sa_ipsec_life_seconds),
-				(intmax_t) deltasecs(c->sa_rekey_margin),
+				deltasecs(c->sa_ike_life_seconds),
+				deltasecs(c->sa_ipsec_life_seconds),
+				deltasecs(c->sa_rekey_margin),
 				c->sa_rekey_fuzz,
 				c->sa_keying_tries,
 				c->sa_replay_window,
@@ -4113,10 +4113,10 @@ void show_one_connection(const struct connection *c)
 		"\"%s\"%s:   ike_life: %jds; ipsec_life: %jds; replay_window: %u; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu;",
 		c->name,
 		instance,
-		(intmax_t) deltasecs(c->sa_ike_life_seconds),
-		(intmax_t) deltasecs(c->sa_ipsec_life_seconds),
+		deltasecs(c->sa_ike_life_seconds),
+		deltasecs(c->sa_ipsec_life_seconds),
 		c->sa_replay_window,
-		(intmax_t) deltasecs(c->sa_rekey_margin),
+		deltasecs(c->sa_rekey_margin),
 		c->sa_rekey_fuzz,
 		c->sa_keying_tries);
 
@@ -4125,7 +4125,7 @@ void show_one_connection(const struct connection *c)
 		  c->name,
 		  instance,
 		  deltamillisecs(c->r_interval),
-		  (intmax_t) deltasecs(c->r_timeout));
+		  deltasecs(c->r_timeout));
 
 	whack_log(RC_COMMENT,
 		  "\"%s\"%s:   sha2-truncbug:%s; initial-contact:%s; cisco-unity:%s; fake-strongswan:%s; send-vendorid:%s; send-no-esp-tfc:%s;",
@@ -4223,22 +4223,19 @@ void show_one_connection(const struct connection *c)
 	}
 
 	/* slightly complicated stuff to avoid extra crap */
-	/* ??? real-world and DBG control flow mixed */
-	if (deltasecs(c->dpd_timeout) > 0 || DBGP(DBG_DPD)) {
-		whack_log(RC_COMMENT,
-			"\"%s\"%s:   dpd: %s; delay:%ld; timeout:%ld; nat-t: encaps:%s; nat_keepalive:%s; ikev1_natt:%s",
-			c->name, instance,
-			enum_name(&dpd_action_names, c->dpd_action),
-			(long) deltasecs(c->dpd_delay),
-			(long) deltasecs(c->dpd_timeout),
-			(c->encaps == encaps_auto) ? "auto" :
-			    bool_str(c->encaps == encaps_yes),
-			bool_str(c->nat_keepalive),
-			(c->ikev1_natt == natt_both) ? "both" :
-			 (c->ikev1_natt == natt_rfc) ? "rfc" :
-			 (c->ikev1_natt == natt_drafts) ? "drafts" : "none"
-			);
-	}
+	whack_log(RC_COMMENT,
+		"\"%s\"%s:   dpd: %s; delay:%ld; timeout:%ld; nat-t: encaps:%s; nat_keepalive:%s; ikev1_natt:%s",
+		c->name, instance,
+		enum_name(&dpd_action_names, c->dpd_action),
+		(long) deltasecs(c->dpd_delay),
+		(long) deltasecs(c->dpd_timeout),
+		(c->encaps == encaps_auto) ? "auto" :
+		    bool_str(c->encaps == encaps_yes),
+		bool_str(c->nat_keepalive),
+		(c->ikev1_natt == natt_both) ? "both" :
+		 (c->ikev1_natt == natt_rfc) ? "rfc" :
+		 (c->ikev1_natt == natt_drafts) ? "drafts" : "none"
+		);
 
 	if (!lmod_empty(c->extra_debugging)) {
 		LSWLOG_WHACK(RC_COMMENT, buf) {
