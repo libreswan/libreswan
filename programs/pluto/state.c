@@ -1993,7 +1993,7 @@ void fmt_state(struct state *st, const monotime_t n,
 			snprintf(dpdbuf, sizeof(dpdbuf),
 				 "; lastdpd=%jds(seq in:%u out:%u)",
 				 !is_monotime_epoch(st->st_last_dpd) ?
-					(intmax_t)deltasecs(monotimediff(mononow(), st->st_last_dpd)) : (intmax_t)-1,
+					deltasecs(monotimediff(mononow(), st->st_last_dpd)) : (intmax_t)-1,
 				 st->st_dpd_seqno,
 				 st->st_dpd_expectseqno);
 		} else if (dpd_active_locally(st) && st->st_ikev2) {
@@ -2005,7 +2005,7 @@ void fmt_state(struct state *st, const monotime_t n,
 					snprintf(dpdbuf, sizeof(dpdbuf),
 						"; lastlive=%jds",
 						 !is_monotime_epoch(pst->st_last_liveness) ?
-                                                 (intmax_t) deltasecs(monotimediff(mononow(), pst->st_last_liveness)) :
+                                                 deltasecs(monotimediff(mononow(), pst->st_last_liveness)) :
 						0);
 				}
 			}
@@ -2061,8 +2061,8 @@ void fmt_state(struct state *st, const monotime_t n,
 		    st->st_outbound_count != 0) {
 			snprintf(lastused, sizeof(lastused),
 				 " used %jds ago;",
-				 (intmax_t) deltasecs(monotimediff(mononow(),
-						  st->st_outbound_time)));
+				 deltasecs(monotimediff(mononow(),
+							st->st_outbound_time)));
 		}
 
 		mbcp = traffic_buf +

@@ -69,7 +69,7 @@ deltatime_t deltatime_mulu(deltatime_t a, unsigned scalar);
 deltatime_t deltatime_divu(deltatime_t a, unsigned scalar);
 
 intmax_t deltamillisecs(deltatime_t d);
-time_t deltasecs(deltatime_t d);
+intmax_t deltasecs(deltatime_t d);
 deltatime_t deltatimescale(int num, int denom, deltatime_t d);
 bool deltaless(deltatime_t a, deltatime_t b);
 bool deltaless_tv_dt(const struct timeval a, const deltatime_t b);

@@ -57,6 +57,7 @@ monotime_t mononow(void);
 monotime_t monotimesum(monotime_t t, deltatime_t d);
 bool monobefore(monotime_t a, monotime_t b);
 deltatime_t monotimediff(monotime_t a, monotime_t b);
+intmax_t monosecs(monotime_t m);
 
 /* output as "smart" seconds */
 size_t lswlog_monotime(struct lswlog *buf, monotime_t d);

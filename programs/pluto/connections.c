@@ -1607,9 +1607,9 @@ void add_connection(const struct whack_message *wm)
 
 			libreswan_log("conn: %s, rekeymargin (%jds) >= salifetime (%jds); reducing rekeymargin to %jds seconds",
 				c->name,
-				(intmax_t) deltasecs(c->sa_rekey_margin),
-				(intmax_t) deltasecs(c->sa_ipsec_life_seconds),
-				(intmax_t) deltasecs(new_rkm));
+				deltasecs(c->sa_rekey_margin),
+				deltasecs(c->sa_ipsec_life_seconds),
+				deltasecs(new_rkm));
 
 			c->sa_rekey_margin = new_rkm;
 		}
@@ -1906,9 +1906,9 @@ void add_connection(const struct whack_message *wm)
 
 		DBG(DBG_CONTROL,
 			DBG_log("ike_life: %jds; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s%s",
-				(intmax_t) deltasecs(c->sa_ike_life_seconds),
-				(intmax_t) deltasecs(c->sa_ipsec_life_seconds),
-				(intmax_t) deltasecs(c->sa_rekey_margin),
+				deltasecs(c->sa_ike_life_seconds),
+				deltasecs(c->sa_ipsec_life_seconds),
+				deltasecs(c->sa_rekey_margin),
 				c->sa_rekey_fuzz,
 				c->sa_keying_tries,
 				c->sa_replay_window,
@@ -4113,10 +4113,10 @@ void show_one_connection(const struct connection *c)
 		"\"%s\"%s:   ike_life: %jds; ipsec_life: %jds; replay_window: %u; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu;",
 		c->name,
 		instance,
-		(intmax_t) deltasecs(c->sa_ike_life_seconds),
-		(intmax_t) deltasecs(c->sa_ipsec_life_seconds),
+		deltasecs(c->sa_ike_life_seconds),
+		deltasecs(c->sa_ipsec_life_seconds),
 		c->sa_replay_window,
-		(intmax_t) deltasecs(c->sa_rekey_margin),
+		deltasecs(c->sa_rekey_margin),
 		c->sa_rekey_fuzz,
 		c->sa_keying_tries);
 
@@ -4125,7 +4125,7 @@ void show_one_connection(const struct connection *c)
 		  c->name,
 		  instance,
 		  deltamillisecs(c->r_interval),
-		  (intmax_t) deltasecs(c->r_timeout));
+		  deltasecs(c->r_timeout));
 
 	whack_log(RC_COMMENT,
 		  "\"%s\"%s:   sha2-truncbug:%s; initial-contact:%s; cisco-unity:%s; fake-strongswan:%s; send-vendorid:%s; send-no-esp-tfc:%s;",
