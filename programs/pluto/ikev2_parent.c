@@ -240,13 +240,11 @@ static stf_status add_st_send_list(struct state *st, struct state *pst)
 static crypto_req_cont_func ikev2_crypto_continue;
 
 static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
-		struct msg_digest *md)
+				       struct msg_digest *md)
 {
 
 	struct state *const st = md->st;
 	struct state *pst = state_with_serialno(st->st_clonedfrom);
-	stf_status e = STF_OK;
-
 
 	if (md->chain[ISAKMP_NEXT_v2KE] == NULL)
 		return STF_OK;
@@ -262,12 +260,13 @@ static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
 			return STF_FAIL;
 		}
 		/* initiate calculation of g^xy */
-		e = start_dh_v2(md, "DHv2 for child sa", role,
-				pst->st_skey_d_nss, /* only IKE has SK_d */
-				pst->st_oakley.ta_prf, /* for IKE/ESP/AH */
-				ikev2_crypto_continue);
+		start_dh_v2(md, "DHv2 for child sa", role,
+			    pst->st_skey_d_nss, /* only IKE has SK_d */
+			    pst->st_oakley.ta_prf, /* for IKE/ESP/AH */
+			    ikev2_crypto_continue);
+		return STF_SUSPEND;
 	}
-	return e;
+	return STF_OK;
 }
 
 /* redundant type assertion: static crypto_req_cont_func ikev2_crypto_continue; */
@@ -436,7 +435,6 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		break;
 	}
 
-	stf_status e;
 	switch (st->st_state) {
 	case STATE_PARENT_I1:
 		/* if we received INVALID_KE, msgid was incremented */
@@ -444,50 +442,50 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		st->st_msgid_lastrecv = v2_INVALID_MSGID;
 		st->st_msgid_nextuse = 0;
 		st->st_msgid = 0;
-		/* fall through */
+		request_ke_and_nonce(what, st, md,
+				     st->st_oakley.ta_dh, ci,
+				     ikev2_crypto_continue);
+		return STF_SUSPEND;
+
 	case STATE_V2_REKEY_IKE_R:
-		e = request_ke_and_nonce(what, st, md,
-					 st->st_oakley.ta_dh, ci,
-					 ikev2_crypto_continue);
-		break;
+		request_ke_and_nonce(what, st, md,
+				     st->st_oakley.ta_dh, ci,
+				     ikev2_crypto_continue);
+		return STF_SUSPEND;
 
 	case STATE_V2_CREATE_R:
 	case STATE_V2_REKEY_CHILD_R:
 		if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
-			e = request_ke_and_nonce(what, st, md,
-						 st->st_oakley.ta_dh, ci,
-						 ikev2_crypto_continue);
+			request_ke_and_nonce(what, st, md,
+					     st->st_oakley.ta_dh, ci,
+					     ikev2_crypto_continue);
 		} else {
-			e = request_nonce(what, st, md, ci,
-					  ikev2_crypto_continue);
+			request_nonce(what, st, md, ci,
+				      ikev2_crypto_continue);
 		}
-		break;
+		return STF_SUSPEND;
 
 	case STATE_V2_REKEY_CHILD_I0:
 	case STATE_V2_CREATE_I0:
 		if (st->st_pfs_group == NULL) {
-			e = request_nonce(what, st, md, ci,
-					  ikev2_crypto_continue);
+			request_nonce(what, st, md, ci,
+				      ikev2_crypto_continue);
 		} else {
-			e = request_ke_and_nonce(what, st, md,
-						 st->st_pfs_group, ci,
-						 ikev2_crypto_continue);
+			request_ke_and_nonce(what, st, md,
+					     st->st_pfs_group, ci,
+					     ikev2_crypto_continue);
 		}
-		break;
+		return STF_SUSPEND;
 
 	case STATE_V2_CREATE_I:
-		e = start_dh_v2(md, "ikev2 Child SA initiator pfs=yes",
-				ORIGINAL_INITIATOR, NULL, st->st_oakley.ta_prf,
-				ikev2_crypto_continue);
-		break;
+		start_dh_v2(md, "ikev2 Child SA initiator pfs=yes",
+			    ORIGINAL_INITIATOR, NULL, st->st_oakley.ta_prf,
+			    ikev2_crypto_continue);
+		return STF_SUSPEND;
 
 	default:
-		e = STF_OK;
-		break;
+		return STF_OK;
 	}
-
-	reset_globals();
-	return e;
 }
 
 /*
@@ -1427,12 +1425,11 @@ stf_status ikev2parent_inI1outR1(struct state *st, struct msg_digest *md)
 	}
 
 	/* calculate the nonce and the KE */
-	e = request_ke_and_nonce("ikev2_inI1outR1 KE", st, md,
-				 st->st_oakley.ta_dh,
-				 pcim_stranger_crypto,
-				 ikev2_parent_inI1outR1_continue);
-	reset_globals();
-	return e;
+	request_ke_and_nonce("ikev2_inI1outR1 KE", st, md,
+			     st->st_oakley.ta_dh,
+			     pcim_stranger_crypto,
+			     ikev2_parent_inI1outR1_continue);
+	return STF_SUSPEND;
 }
 
 /* redundant type assertion: static crypto_req_cont_func ikev2_parent_inI1outR1_continue; */
@@ -1986,8 +1983,9 @@ stf_status ikev2parent_inR1outI2(struct state *st, struct msg_digest *md)
 	}
 
 	/* initiate calculation of g^xy */
-	return start_dh_v2(md, "ikev2_inR1outI2 KE", ORIGINAL_INITIATOR, NULL,
-		NULL, ikev2_parent_inR1outI2_continue);
+	start_dh_v2(md, "ikev2_inR1outI2 KE", ORIGINAL_INITIATOR, NULL,
+		    NULL, ikev2_parent_inR1outI2_continue);
+	return STF_SUSPEND;
 }
 
 /* redundant type assertion: static crypto_req_cont_func ikev2_parent_inR1outI2_continue; */
@@ -3418,8 +3416,9 @@ stf_status ikev2parent_inI2outR2(struct state *st UNUSED, struct msg_digest *md)
 	    DBG_log("ikev2 parent inI2outR2: calculating g^{xy} in order to decrypt I2"));
 
 	/* initiate calculation of g^xy */
-	return start_dh_v2(md, "ikev2_inI2outR2 KE", ORIGINAL_RESPONDER, NULL,
-			NULL, ikev2_parent_inI2outR2_continue);
+	start_dh_v2(md, "ikev2_inI2outR2 KE", ORIGINAL_RESPONDER, NULL,
+		    NULL, ikev2_parent_inI2outR2_continue);
+	return STF_SUSPEND;
 }
 
 static void ikev2_parent_inI2outR2_continue(struct state *st, struct msg_digest *md,

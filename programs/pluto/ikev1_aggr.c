@@ -134,8 +134,6 @@ static crypto_req_cont_func aggr_inI1_outR1_continue1;	/* type assertion */
 static void aggr_inI1_outR1_continue1(struct state *st, struct msg_digest *md,
 				      struct pluto_crypto_req *r)
 {
-	stf_status e;
-
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("aggr inI1_outR1: calculated ke+nonce, calculating DH"));
 
@@ -150,22 +148,13 @@ static void aggr_inI1_outR1_continue1(struct state *st, struct msg_digest *md,
 	/* NOTE: the "r" reply will get freed by our caller */
 
 	/* set up second calculation */
-	{
-		struct pluto_crypto_req_cont *dh = new_pcrc(
-			aggr_inI1_outR1_continue2,
-			"aggr outR1 DH",
-			st, md);
+	struct pluto_crypto_req_cont *dh = new_pcrc(aggr_inI1_outR1_continue2,
+						    "aggr outR1 DH",
+						    st, md);
 
-		e = start_dh_secretiv(dh, st, st->st_import,
-				      ORIGINAL_RESPONDER,
-				      st->st_oakley.ta_dh);
-
-		if (e != STF_SUSPEND) {
-			passert(md != NULL);
-			complete_v1_state_transition(&md, e);
-			release_any_md(&md);
-		}
-	}
+	start_dh_secretiv(dh, st, st->st_import,
+			  ORIGINAL_RESPONDER,
+			  st->st_oakley.ta_dh);
 }
 
 /* STATE_AGGR_R0:
@@ -319,10 +308,11 @@ stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 	RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_ni, "Ni"));
 
 	/* calculate KE and Nonce */
-	return request_ke_and_nonce("outI2 KE", st, md,
-				    st->st_oakley.ta_dh,
-				    st->st_import,
-				    aggr_inI1_outR1_continue1);
+	request_ke_and_nonce("outI2 KE", st, md,
+			     st->st_oakley.ta_dh,
+			     st->st_import,
+			     aggr_inI1_outR1_continue1);
+	return STF_SUSPEND;
 }
 
 static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
@@ -653,16 +643,14 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	ikev1_natd_init(st, md);
 
 	/* set up second calculation */
-	{
-		struct pluto_crypto_req_cont *dh = new_pcrc(
-			aggr_inR1_outI2_crypto_continue,
-			"aggr outR1 DH",
-			st, md);
+	struct pluto_crypto_req_cont *dh = new_pcrc(aggr_inR1_outI2_crypto_continue,
+						    "aggr outR1 DH",
+						    st, md);
 
-		return start_dh_secretiv(dh, st, st->st_import,
-					 ORIGINAL_INITIATOR,
-					 st->st_oakley.ta_dh);
-	}
+	start_dh_secretiv(dh, st, st->st_import,
+			  ORIGINAL_INITIATOR,
+			  st->st_oakley.ta_dh);
+	return STF_SUSPEND;
 }
 
 /* redundant type assertion: static crypto_req_cont_func aggr_inR1_outI2_crypto_continue; */
@@ -1156,27 +1144,17 @@ stf_status aggr_outI1(int whack_sock,
 	 * Solution: build a fake one.  How much do we need to fake?
 	 * Note: almost identical code appears at the end of ikev2parent_outI1.
 	 */
-	{
-		struct msg_digest *fake_md = alloc_md("msg_digest by aggr_outI1");
-		stf_status e;
+	struct msg_digest *fake_md = alloc_md("msg_digest by aggr_outI1");
 
-		fake_md->st = st;
-		fake_md->smc = NULL;	/* ??? */
-		fake_md->from_state = STATE_UNDEFINED;	/* ??? */
+	fake_md->st = st;
+	fake_md->smc = NULL;	/* ??? */
+	fake_md->from_state = STATE_UNDEFINED;	/* ??? */
 
-		e = request_ke_and_nonce("aggr_outI1 KE + nonce",
-					 st, fake_md,
-					 st->st_oakley.ta_dh, importance,
-					 aggr_outI1_continue);
-
-		/*
-		 * ??? what exactly do we expect for e?
-		 * ??? Who frees ke? md?
-		 */
-
-		reset_globals();
-		return e;
-	}
+	request_ke_and_nonce("aggr_outI1 KE + nonce",
+			     st, fake_md,
+			     st->st_oakley.ta_dh, importance,
+			     aggr_outI1_continue);
+	return STF_SUSPEND;
 }
 
 static stf_status aggr_outI1_tail(struct state *st, struct msg_digest *md,

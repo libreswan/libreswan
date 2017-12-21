@@ -76,11 +76,11 @@ void cancelled_v1_dh(struct pcr_v1_dh *dh)
  *
  * Note: dh must be heap-allocated.
  */
-stf_status start_dh_secretiv(struct pluto_crypto_req_cont *dh,
-			     struct state *st,
-			     enum crypto_importance importance,
-			     enum original_role role,
-			     const struct oakley_group_desc *oakley_group2)
+void start_dh_secretiv(struct pluto_crypto_req_cont *dh,
+		       struct state *st,
+		       enum crypto_importance importance,
+		       enum original_role role,
+		       const struct oakley_group_desc *oakley_group2)
 {
 	const chunk_t *pss = get_preshared_secret(st->st_connection);
 
@@ -114,7 +114,7 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *dh,
 	       st->st_rcookie, COOKIE_SIZE);
 
 	passert(dhq->oakley_group != OAKLEY_GROUP_invalid);
-	return send_crypto_helper_request(st, dh);
+	send_crypto_helper_request(st, dh);
 }
 
 bool finish_dh_secretiv(struct state *st,
@@ -145,11 +145,11 @@ bool finish_dh_secretiv(struct state *st,
 	}
 }
 
-stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
-			   struct state *st,
-			   enum crypto_importance importance,
-			   enum original_role role,
-			   const struct oakley_group_desc *oakley_group2)
+void start_dh_secret(struct pluto_crypto_req_cont *cn,
+		     struct state *st,
+		     enum crypto_importance importance,
+		     enum original_role role,
+		     const struct oakley_group_desc *oakley_group2)
 {
 	const chunk_t *pss = get_preshared_secret(st->st_connection);
 
@@ -180,7 +180,7 @@ stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 	memcpy(WIRE_CHUNK_PTR(*dhq, rcookie),
 	       st->st_rcookie, COOKIE_SIZE);
 
-	return send_crypto_helper_request(st, cn);
+	send_crypto_helper_request(st, cn);
 }
 
 /* NOTE: if NSS refuses to calculate DH, skr->shared == NULL */

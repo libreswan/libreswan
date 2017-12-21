@@ -926,10 +926,11 @@ stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
 
 	set_nat_traversal(st, md);
 
-	return request_ke_and_nonce("outI2 KE", st, md,
-				    st->st_oakley.ta_dh,
-				    st->st_import,
-				    main_inR1_outI2_continue);
+	request_ke_and_nonce("outI2 KE", st, md,
+			     st->st_oakley.ta_dh,
+			     st->st_import,
+			     main_inR1_outI2_continue);
+	return STF_SUSPEND;
 }
 
 /*
@@ -1096,10 +1097,11 @@ stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
 
 	ikev1_natd_init(st, md);
 
-	return request_ke_and_nonce("inI2_outR2 KE", st, md,
-				    st->st_oakley.ta_dh,
-				    st->st_import,
-				    main_inI2_outR2_continue);
+	request_ke_and_nonce("inI2_outR2 KE", st, md,
+			     st->st_oakley.ta_dh,
+			     st->st_import,
+			     main_inI2_outR2_continue);
+	return STF_SUSPEND;
 }
 
 /*
@@ -1259,33 +1261,19 @@ stf_status main_inI2_outR2_tail(struct state *st, struct msg_digest *md,
 		struct pluto_crypto_req_cont *dh = new_pcrc(
 			main_inI2_outR2_calcdone, "main_inI2_outR2_tail",
 			st, NULL);
-		stf_status e;
-
 		passert(st->st_suspended_md == NULL);
 
 		DBG(DBG_CONTROLMORE,
 			DBG_log("main inI2_outR2: starting async DH calculation (group=%d)",
 				st->st_oakley.ta_dh->group));
 
-		e = start_dh_secretiv(dh, st, st->st_import,
-				      ORIGINAL_RESPONDER,
-				      st->st_oakley.ta_dh);
-
-		DBG(DBG_CONTROLMORE,
-			DBG_log("started dh_secretiv, returned: stf=%s",
-				enum_name(&stfstatus_name, e)));
-
-		if (e == STF_FAIL) {
-			loglog(RC_LOG_SERIOUS,
-				"failed to start async DH calculation, stf=%s",
-				enum_name(&stfstatus_name, e));
-			return e;
-		}
+		start_dh_secretiv(dh, st, st->st_import,
+				  ORIGINAL_RESPONDER,
+				  st->st_oakley.ta_dh);
 
 		/* we are calculating in the background, so it doesn't count */
 		DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
-		if (e == STF_SUSPEND)
-			st->st_v1_offloaded_task_in_background = true;
+		st->st_v1_offloaded_task_in_background = true;
 	}
 	return STF_OK;
 }
@@ -1574,10 +1562,11 @@ stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)
 	RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_nr, "Nr"));
 
 	dh = new_pcrc(main_inR2_outI3_cryptotail, "aggr outR1 DH",
-		st, md);
-	return start_dh_secretiv(dh, st, st->st_import,
-				 ORIGINAL_INITIATOR,
-				 st->st_oakley.ta_dh);
+		      st, md);
+	start_dh_secretiv(dh, st, st->st_import,
+			  ORIGINAL_INITIATOR,
+			  st->st_oakley.ta_dh);
+	return STF_SUSPEND;
 }
 
 /*

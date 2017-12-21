@@ -487,8 +487,8 @@ static void inline_worker(void *arg)
  *
  */
 
-stf_status send_crypto_helper_request(struct state *st,
-				      struct pluto_crypto_req_cont *cn)
+void send_crypto_helper_request(struct state *st,
+				struct pluto_crypto_req_cont *cn)
 {
 	/*
 	 * transitional: caller must have set pcrc_serialno.
@@ -542,7 +542,6 @@ stf_status send_crypto_helper_request(struct state *st,
 		}
 		pthread_mutex_unlock(&backlog_mutex);
 	}
-	return STF_SUSPEND;
 }
 
 void delete_cryptographic_continuation(struct state *st)

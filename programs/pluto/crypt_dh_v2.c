@@ -82,12 +82,12 @@ void cancelled_dh_v2(struct pcr_dh_v2 *dh)
 /*
  * invoke helper to do DH work.
  */
-stf_status start_dh_v2(struct msg_digest *md,
-		       const char *name,
-		       enum original_role role,
-		       PK11SymKey *skey_d_old, /* SKEYSEED IKE Rekey */
-		       const struct prf_desc *old_prf, /* IKE Rekey */
-		       crypto_req_cont_func pcrc_func)
+void start_dh_v2(struct msg_digest *md,
+		 const char *name,
+		 enum original_role role,
+		 PK11SymKey *skey_d_old, /* SKEYSEED IKE Rekey */
+		 const struct prf_desc *old_prf, /* IKE Rekey */
+		 crypto_req_cont_func pcrc_func)
 {
 	struct state *st = md->st;
 	struct pluto_crypto_req_cont *dh = new_pcrc(pcrc_func, name,
@@ -134,11 +134,7 @@ stf_status start_dh_v2(struct msg_digest *md,
 
 	passert(dhq->dh != OAKLEY_GROUP_invalid);
 
-	stf_status e = send_crypto_helper_request(st, dh);
-
-	reset_globals(); /* XXX suspicious - why was this deemed necessary? */
-
-	return e;
+	send_crypto_helper_request(st, dh);
 }
 
 bool finish_dh_v2(struct state *st,
