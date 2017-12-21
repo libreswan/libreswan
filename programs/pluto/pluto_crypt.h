@@ -234,7 +234,6 @@ struct pcr_dh_v2 {
 
 struct pluto_crypto_req {
 	enum pluto_crypto_requests pcr_type;
-	pcr_req_id pcr_id;
 	enum crypto_importance pcr_pcim;
 
 	union {
