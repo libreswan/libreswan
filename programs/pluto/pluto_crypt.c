@@ -517,6 +517,7 @@ stf_status send_crypto_helper_request(struct state *st,
 	 */
 	pexpect(st->st_offloaded_task == NULL);
 	st->st_offloaded_task = cn;
+	st->st_v1_offloaded_task_in_background = false;
 
 	/*
 	 * do it all ourselves?
@@ -529,7 +530,6 @@ stf_status send_crypto_helper_request(struct state *st,
 			    cn->pcrc_name, cn->pcrc_id,
 			    cn->pcrc_serialno,
 			    cn->pcrc_pcr.pcr_pcim));
-		st->st_calculating = TRUE;
 		delete_event(st);
 		event_schedule_s(EVENT_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, st);
 		/* add to backlog */
@@ -644,7 +644,7 @@ static void handle_helper_answer(void *arg)
 		pcr_release(&cn->pcrc_pcr);
 	} else {
 		st->st_offloaded_task = NULL;
-		st->st_calculating = false;
+		st->st_v1_offloaded_task_in_background = false;
 		so_serial_t old_state = push_cur_state(st);
 		(*cn->pcrc_func)(st, cn->pcrc_md, &cn->pcrc_pcr);
 		pop_cur_state(old_state);

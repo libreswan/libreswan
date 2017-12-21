@@ -1285,7 +1285,7 @@ stf_status main_inI2_outR2_tail(struct state *st, struct msg_digest *md,
 		/* we are calculating in the background, so it doesn't count */
 		DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 		if (e == STF_SUSPEND)
-			st->st_calculating = FALSE;
+			st->st_v1_offloaded_task_in_background = true;
 	}
 	return STF_OK;
 }

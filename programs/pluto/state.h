@@ -314,10 +314,6 @@ struct state {
 						 * freeing struct.
 						 */
 
-	struct msg_digest *st_suspended_md;     /* suspended state-transition */
-	const char        *st_suspended_md_func;
-	int st_suspended_md_line;
-
 	/* collected received fragments */
 	struct ike_frag *st_v1_rfrags;
 	struct v2_ike_rfrags *st_v2_rfrags;
@@ -514,16 +510,49 @@ struct state {
 					 */
 
 	/*
-	 * ST_OFFLOADED_TASK, when non-NULL, is is the task that has
-	 * been offloaded to a crypto helper (or for that matter a
-	 * child process or anything).
+	 * ST_OFFLOADED_TASK, when non-NULL, is the task that has been
+	 * offloaded to a crypto helper (or for that matter a child
+	 * process or anything).
 	 *
-	 * ST_CALCULATING indicates that the work is 'official', false
-	 * can either mean there is no work or the work is being done
-	 * in the background - look at the IKEv1 code.
+	 * ST_V1_OFFLOADED_TASK_IN_BACKGROUND is more complicated:
+	 *
+	 * In IKEv1, the responder in main mode state MAIN_R1, after
+	 * sending its KE+NONCE, will kick off the shared DH secret
+	 * calculation in the 'background' - that is before it has
+	 * received the first encrypted packet and actually needs the
+	 * shared DH secret.  The responder than transitions to state
+	 * MAIN_R2; and ST_SUSPENDED_MD will be left NULL and the
+	 * above is set to TRUE.
+	 *
+	 * Later, if the shared DH secret is still being calculated
+	 * when the responder receives the next, and encrypted,
+	 * packet, that packet will be saved in .st_suspended_md and
+	 * things will really suspend (instead of clearing
+	 * ST_V1_OFFLOADED_TASK_IN_BACKGROUND, ST_SUSPENDED_MD is used
+	 * as the state-busy marker).
+	 *
+	 * IKEv2 doesn't have this complexity and instead waits for
+	 * that encrypted packet before kicking off the shared DH
+	 * secret calculation.
+	 *
+	 * But wait, with ST_SUSPENDED_MD, there's more:
+	 *
+	 * The initial initiator (both IKEv1 and IKEv2), while
+	 * KE+NONCE is being calculated, in addition to setting
+	 * ST_OFFLOADED_TASK, will have ST_SUSPENDED_MD set to a
+	 * 'fake_md' (grep for it).  This is because the initial
+	 * initator can't have a real MD, and (presumably) faking one
+	 * stops a core dump - the MD contains a pointer to ST and
+	 * code likes to use that to find its state.  In the past
+	 * (before ST_OFFLOADED_TASK was added), its presence would
+	 * have also served as a state-is-busy marker.
 	 */
 	struct pluto_crypto_req_cont *st_offloaded_task;
-	bool st_calculating;
+	bool st_v1_offloaded_task_in_background;
+
+	struct msg_digest *st_suspended_md;     /* suspended state-transition */
+	const char        *st_suspended_md_func;
+	int st_suspended_md_line;
 
 	chunk_t st_p1isa;	/* Phase 1 initiator SA (Payload) for HASH */
 
