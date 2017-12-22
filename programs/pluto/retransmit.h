@@ -25,6 +25,7 @@ typedef struct {
 	deltatime_t delay;
 	deltatime_t timeout;
 	monotime_t start;
+	deltatime_t delays;
 	unsigned long nr_retransmits;
 	unsigned long nr_duplicate_replies;
 	unsigned long limit;
