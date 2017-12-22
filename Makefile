@@ -603,7 +603,9 @@ showobjdir:
 
 deb:
 	cp -r packaging/debian .
-	sed -i "s/@IPSECBASEVERSION@/`make -s showdebversion`/g" debian/changelog
+	grep "@IPSECBASEVERSION@" debian/changelog || \
+		echo "no @IPSECBASEVERSION@ in debian/changelog" && \
+		sed -i "s/@IPSECBASEVERSION@/`make -s showdebversion`/g" debian/changelog
 	debuild -i -us -uc -b
 	rm -fr debian
 	#debuild -S -sa
