@@ -19,7 +19,6 @@ DISTRO_REL ?= 27 	# default release
 
 DI_T ?= swanbase 	#docker image tag
 
-
 # end of configurable variables 
 
 DI = $(DISTRO)-$(DISTRO_REL)
@@ -61,6 +60,12 @@ ifeq ($(DISTRO), fedora)
 	endif
 endif
 
+BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
+TRAVIS_BANCH = $(call W1, $(BRANCH),'')
+ifeq ($(TRAVIS_BANCH), travis)
+	DISTRO =  $(call W2, $(BRANCH),fedora)
+	DISTRO_REL = $(call W3, $(BRANCH),27)
+endif
 
 PHONY: f22-missing-rpm
 f22-missing-rpm:
@@ -92,9 +97,6 @@ disable-seccomp:
 #
 
 .PHONY: travis-docker-image
-travis-docker-image: BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
-travis-docker-image: DISTRO =  $(call W2, $(BRANCH),fedora)
-travis-docker-image: DISTRO_REL = $(call W3, $(BRANCH),27)
 travis-docker-image:
 	$(MAKE) DISTRO=$(DISTRO) DISTRO_REL=$(DISTRO_REL) docker-image
 
