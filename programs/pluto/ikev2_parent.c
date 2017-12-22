@@ -273,6 +273,31 @@ static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
 	return STF_OK;
 }
 
+
+static struct msg_digest *fake_md(struct state *st)
+{
+	struct msg_digest *fake_md = alloc_md("fake IKEv2 msg_digest");
+	fake_md->st = st;
+	fake_md->from_state = STATE_IKEv2_BASE;
+	fake_md->msgid_received = v2_INVALID_MSGID;
+
+	switch (st->st_state) {
+	case STATE_PARENT_I1:
+	case STATE_V2_REKEY_CHILD_I0:
+		fake_md->svm = &ikev2_parent_firststate_microcode;
+		break;
+
+	case STATE_V2_CREATE_I0:
+		fake_md->svm = &ikev2_create_child_initiate_microcode;
+		break;
+
+	default:
+		bad_case(st->st_state);
+		break;
+	}
+	return fake_md;
+}
+
 /* redundant type assertion: static crypto_req_cont_func ikev2_crypto_continue; */
 static void ikev2_crypto_continue(struct state *st, struct msg_digest *md,
 				  struct pluto_crypto_req *r)
@@ -295,6 +320,10 @@ static void ikev2_crypto_continue(struct state *st, struct msg_digest *md,
 		}
 	}
 	passert(pst != NULL);
+
+	if (md == NULL) {
+		md = fake_md(st);
+	}
 
 	switch (st->st_state) {
 
@@ -361,37 +390,9 @@ static void ikev2_crypto_continue(struct state *st, struct msg_digest *md,
  * Note: almost identical code appears at the end of aggr_outI1.
  */
 
-static struct msg_digest *fake_md(struct state *st)
-{
-	struct msg_digest *fake_md = alloc_md("fake IKEv2 msg_digest");
-	fake_md->st = st;
-	fake_md->from_state = STATE_IKEv2_BASE;
-	fake_md->msgid_received = v2_INVALID_MSGID;
-
-	switch (st->st_state) {
-	case STATE_PARENT_I1:
-	case STATE_V2_REKEY_CHILD_I0:
-		fake_md->svm = &ikev2_parent_firststate_microcode;
-		break;
-
-	case STATE_V2_CREATE_I0:
-		fake_md->svm = &ikev2_create_child_initiate_microcode;
-		break;
-
-	default:
-		bad_case(st->st_state);
-		break;
-	}
-	return fake_md;
-}
-
 static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 {
 	char  *what = "";
-
-	if (md == NULL) {
-		md = fake_md(st);
-	}
 
 	switch (st->st_state) {
 	case STATE_PARENT_I1:
