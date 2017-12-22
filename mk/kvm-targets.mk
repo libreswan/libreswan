@@ -273,7 +273,7 @@ $(1): $$(KVM_KEYS) kvm-shutdown-local-domains web-test-prep
 		$$(if $$(KVM_WORKERS), --workers $$(KVM_WORKERS)) \
 		$$(if $$(WEB_RESULTSDIR), --publish-results $$(WEB_RESULTSDIR)) \
 		$$(if $$(WEB_SUMMARYDIR), --publish-status $$(WEB_SUMMARYDIR)/status.json) \
-		$$(2) $$(KVM_TEST_FLAGS) $$(STRIPPED_KVM_TESTS)
+		$(2) $$(KVM_TEST_FLAGS) $$(STRIPPED_KVM_TESTS)
 	$$(if $$(WEB_SUMMARYDIR),,@$(MAKE) -s web-pages-disabled)
 endef
 
