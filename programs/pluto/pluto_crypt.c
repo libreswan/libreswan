@@ -303,16 +303,17 @@ struct pcr_dh_v2 *pcr_dh_v2_init(struct pluto_crypto_req_cont *cn,
 
 static int crypto_helper_delay;
 
-static void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
+static void pluto_do_crypto_op(struct pluto_crypto_req_cont *cn, int helpernum)
 {
 	struct timeval tv0;
 	gettimeofday(&tv0, NULL);
+	struct pluto_crypto_req *r = &cn->pcrc_pcr;
 
 	DBG(DBG_CONTROL,
 	    DBG_log("crypto helper %d doing %s; request ID %u",
 		    helpernum,
 		    enum_show(&pluto_cryptoop_names, r->pcr_type),
-		    r->pcr_id));
+		    cn->pcrc_id));
 	if (crypto_helper_delay > 0) {
 		DBG_log("crypto helper is pausing for %u seconds",
 			crypto_helper_delay);
@@ -352,7 +353,7 @@ static void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 			DBG_log("crypto helper %d finished %s; request ID %u time elapsed %ld usec",
 					helpernum,
 					enum_show(&pluto_cryptoop_names, r->pcr_type),
-					r->pcr_id, tv_diff));
+					cn->pcrc_id, tv_diff));
 	}
 
 }
@@ -426,7 +427,7 @@ static void *pluto_crypto_helper_thread(void *arg)
 				    w->pcw_helpernum, w->pcw_pcrc_id,
 				    w->pcw_pcrc_serialno,
 				    cn->pcrc_pcr.pcr_pcim));
-			pluto_do_crypto_op(&cn->pcrc_pcr, w->pcw_helpernum);
+			pluto_do_crypto_op(cn, w->pcw_helpernum);
 		}
 		DBG(DBG_CONTROL,
 		    DBG_log("crypto helper %d sending results from work-order %u for state #%lu to event queue",
@@ -445,7 +446,7 @@ static void inline_worker(void *arg)
 {
 	struct pluto_crypto_req_cont *cn = arg;
 	if (!cn->pcrc_cancelled) {
-		pluto_do_crypto_op(&cn->pcrc_pcr, -1);
+		pluto_do_crypto_op(cn, -1);
 	}
 	handle_helper_answer(arg);
 }
@@ -486,8 +487,8 @@ static void inline_worker(void *arg)
  *
  */
 
-stf_status send_crypto_helper_request(struct state *st,
-				      struct pluto_crypto_req_cont *cn)
+void send_crypto_helper_request(struct state *st,
+				struct pluto_crypto_req_cont *cn)
 {
 	/*
 	 * transitional: caller must have set pcrc_serialno.
@@ -499,7 +500,7 @@ stf_status send_crypto_helper_request(struct state *st,
 
 	/* set up the id */
 	static pcr_req_id pcw_id;	/* counter for generating unique request IDs */
-	cn->pcrc_id = cn->pcrc_pcr.pcr_id = ++pcw_id;
+	cn->pcrc_id = ++pcw_id;
 
 	/* copy partially built reply stream to heap */
 	cn->pcrc_reply_stream = reply_stream;
@@ -514,8 +515,9 @@ stf_status send_crypto_helper_request(struct state *st,
 	/*
 	 * Save in case it needs to be cancelled.
 	 */
-	pexpect(st->st_work_order == NULL);
-	st->st_work_order = cn;
+	pexpect(st->st_offloaded_task == NULL);
+	st->st_offloaded_task = cn;
+	st->st_v1_offloaded_task_in_background = false;
 
 	/*
 	 * do it all ourselves?
@@ -528,7 +530,6 @@ stf_status send_crypto_helper_request(struct state *st,
 			    cn->pcrc_name, cn->pcrc_id,
 			    cn->pcrc_serialno,
 			    cn->pcrc_pcr.pcr_pcim));
-		st->st_calculating = TRUE;
 		delete_event(st);
 		event_schedule_s(EVENT_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, st);
 		/* add to backlog */
@@ -541,19 +542,18 @@ stf_status send_crypto_helper_request(struct state *st,
 		}
 		pthread_mutex_unlock(&backlog_mutex);
 	}
-	return STF_SUSPEND;
 }
 
 void delete_cryptographic_continuation(struct state *st)
 {
 	passert(st->st_serialno != SOS_NOBODY);
-	struct pluto_crypto_req_cont *cn = st->st_work_order;
+	struct pluto_crypto_req_cont *cn = st->st_offloaded_task;
 	if (cn == NULL) {
 		return;
 	}
 	/* shut it down */
 	cn->pcrc_cancelled = true;
-	st->st_work_order = NULL;
+	st->st_offloaded_task = NULL;
 	/* remove it from any queue */
 	if (pc_workers != NULL) {
 		/* remove it from any queue */
@@ -607,7 +607,7 @@ static void handle_helper_answer(void *arg)
 
 	DBG(DBG_CONTROL,
 		DBG_log("crypto helper %d replies to request ID %u",
-			cn->pcrc_helpernum, cn->pcrc_pcr.pcr_id));
+			cn->pcrc_helpernum, cn->pcrc_id));
 
 	passert(cn->pcrc_func != NULL);
 
@@ -632,7 +632,7 @@ static void handle_helper_answer(void *arg)
 		/* suppressed */
 		DBG(DBG_CONTROL, DBG_log("work-order %u state #%lu crypto result suppressed",
 					 cn->pcrc_id, cn->pcrc_serialno));
-		pexpect(st == NULL || st->st_work_order == NULL);
+		pexpect(st == NULL || st->st_offloaded_task == NULL);
 		pcr_release(&cn->pcrc_pcr);
 	} else if (st == NULL) {
 		/* oops, the state disappeared! */
@@ -642,8 +642,8 @@ static void handle_helper_answer(void *arg)
 		}
 		pcr_release(&cn->pcrc_pcr);
 	} else {
-		st->st_work_order = NULL;
-		st->st_calculating = false;
+		st->st_offloaded_task = NULL;
+		st->st_v1_offloaded_task_in_background = false;
 		so_serial_t old_state = push_cur_state(st);
 		(*cn->pcrc_func)(st, cn->pcrc_md, &cn->pcrc_pcr);
 		pop_cur_state(old_state);

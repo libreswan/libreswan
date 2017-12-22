@@ -1953,13 +1953,12 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 /*
  * odd fact: st cannot be const because we call get_sa_info on it
  */
-void fmt_state(struct state *st, const monotime_t n,
+void fmt_state(struct state *st, const monotime_t now,
 	       char *state_buf, const size_t state_buf_len,
 	       char *state_buf2, const size_t state_buf2_len)
 {
 	/* what the heck is interesting about a state? */
 	const struct connection *c = st->st_connection;
-	long delta;
 	char inst[CONN_INST_BUF];
 	char dpdbuf[128];
 	char traffic_buf[512], *mbcp;
@@ -1972,15 +1971,6 @@ void fmt_state(struct state *st, const monotime_t n,
 			 "; eroute owner" : "";
 
 	fmt_conn_instance(c, inst);
-
-	if (st->st_event != NULL) {
-		/* tricky: in case time_t/monotime_t is an unsigned type */
-		delta = monobefore(n, st->st_event->ev_time) ?
-			(long)(st->st_event->ev_time.mono_secs - n.mono_secs) :
-			-(long)(n.mono_secs - st->st_event->ev_time.mono_secs);
-	} else {
-		delta = -1;	/* ??? sort of odd signifier */
-	}
 
 	dpdbuf[0] = '\0';	/* default to empty string */
 	if (IS_IPSEC_SA_ESTABLISHED(st)) {
@@ -2015,10 +2005,15 @@ void fmt_state(struct state *st, const monotime_t n,
 		}
 	}
 
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating == %s;", st->st_serialno, __FUNCTION__, __LINE__, st->st_calculating ? "TRUE" : "FALSE"));
+	intmax_t delta;
+	if (st->st_event != NULL) {
+		delta = deltasecs(monotimediff(st->st_event->ev_time, now));
+	} else {
+		delta = -1;	/* ??? sort of odd signifier */
+	}
 
 	snprintf(state_buf, state_buf_len,
-		 "#%lu: \"%s\"%s:%u %s (%s); %s in %lds%s%s%s%s; %s; %s",
+		 "#%lu: \"%s\"%s:%u %s (%s); %s in %zds%s%s%s%s; %s; %s",
 		 st->st_serialno,
 		 c->name, inst,
 		 st->st_remoteport,
@@ -2028,7 +2023,8 @@ void fmt_state(struct state *st, const monotime_t n,
 			enum_name(&timer_event_names, st->st_event->ev_type),
 		 delta,
 		 np1, np2, eo, dpdbuf,
-		 st->st_calculating ? "crypto_calculating" :
+		 (st->st_offloaded_task != NULL && !st->st_v1_offloaded_task_in_background)
+		 ? "crypto_calculating" :
 			st->st_suspended_md != NULL ?  "crypto/dns-lookup" :
 			"idle",
 		 enum_name(&pluto_cryptoimportance_names, st->st_import));
@@ -2682,40 +2678,57 @@ void delete_my_family(struct state *pst, bool v2_responder_state)
 }
 
 /* if the state is too busy to process a packet, say so */
-bool state_busy(const struct state *st) {
-	if (st != NULL) {
-		/*
-		 * Ignore a packet if the state has a suspended state
-		 * transition.
-		 * Probably a duplicated packet but the original packet is
-		 * not yet recorded in st->st_rpacket, so duplicate checking
-		 * won't catch.
-		 * ??? Should the packet be recorded earlier to improve
-		 * diagnosis?
-		 */
-		if (st->st_suspended_md != NULL) {
-
-			LSWLOG_DEBUG(buf) {
-				lswlog_log_prefix(buf);
-				lswlogf(buf, "discarding packet received during asynchronous work (DNS or crypto) in %s",
-					st->st_state_name);
-			}
-			return TRUE;
-		}
-
-		/*
-		 * if this state is busy calculating in between state
-		 * transitions, (there will be no suspended state),
-		 * then we silently ignore the packet, as there is
-		 * nothing we can do right now.
-		 */
-		DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st != NULL && st->st_calculating == %s;", st->st_serialno, __FUNCTION__, __LINE__, st != NULL && st->st_calculating ? "TRUE" : "FALSE"));
-		if (st->st_calculating) {
-			libreswan_log("message received while calculating. Ignored.");
-			return TRUE;
-		}
+bool state_busy(const struct state *st)
+{
+	if (st == NULL) {
+		DBG(DBG_CONTROLMORE, DBG_log("#null state always idle"));
+		return false;
 	}
-	return FALSE;
+	/*
+	 * Ignore a packet if the state has a suspended state
+	 * transition.  Probably a duplicated packet but the original
+	 * packet is not yet recorded in st->st_rpacket, so duplicate
+	 * checking won't catch.
+	 *
+	 * ??? Should the packet be recorded earlier to improve
+	 * diagnosis?
+	 *
+	 * See comments in state.h.
+	 *
+	 * ST_SUSPENDED_MD acts as a poor proxy for indicating a busy
+	 * state.  For instance, the initial initiator (both IKEv1 and
+	 * IKEv2) doesn't have a suspended MD.  To get around this a
+	 * 'fake_md' MD is created.
+	 */
+	if (st->st_suspended_md != NULL) {
+		/* not whack */
+		LSWLOG_LOG(buf) {
+			lswlog_log_prefix(buf);
+			lswlogf(buf, "discarding packet received during asynchronous work (DNS or crypto) in %s",
+				st->st_state_name);
+		}
+		return true;
+	}
+	/*
+	 * If IKEv1 is doing something in the background then the
+	 * state isn't busy.
+	 */
+	if (st->st_v1_offloaded_task_in_background) {
+		pexpect(st->st_offloaded_task != NULL);
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("#%lu offloaded task in background", st->st_serialno));
+		return false;
+	}
+	/*
+	 * If this state is busy calculating.
+	 */
+	if (st->st_offloaded_task != NULL) {
+		libreswan_log("message received while calculating. Ignored.");
+		return true;
+	}
+	/* XXX: what about xauth? */
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu idle", st->st_serialno));
+	return false;
 }
 
 bool require_ddos_cookies(void)

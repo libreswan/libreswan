@@ -201,9 +201,6 @@ static void dpd_sched_timeout(struct state *p1st, monotime_t nw, deltatime_t tim
 static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 		     deltatime_t delay, deltatime_t timeout)
 {
-	monotime_t nw;
-	monotime_t last;
-	deltatime_t nextdelay;
 	u_int32_t seqno;
 
 	DBG(DBG_DPD, {
@@ -229,7 +226,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 	}
 
 	/* find out when now is */
-	nw = mononow();
+	monotime_t nw = mononow();
 
 	/*
 	 * pick least recent activity value, since with multiple phase 2s,
@@ -243,26 +240,26 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 	 *
 	 * ??? the code actually picks the most recent.  So much for comments.
 	 */
-	last = !monobefore(p1st->st_last_dpd, st->st_last_dpd) ?
+	monotime_t last = !monobefore(p1st->st_last_dpd, st->st_last_dpd) ?
 		p1st->st_last_dpd : st->st_last_dpd;
 
-	nextdelay = monotimediff(monotimesum(last, delay), nw);
+	monotime_t next_time = monotimesum(last, delay);
+	deltatime_t next_delay = monotimediff(next_time, nw);
 
 	/* has there been enough activity of late? */
-	if (deltasecs(nextdelay) > 0) {
+	if (deltatime_cmp(next_delay, deltatime(0)) > 0) {
 		/* Yes, just reschedule "phase 2" */
-		DBG(DBG_DPD,
-		    DBG_log("DPD: not yet time for dpd event: %ld < %ld",
-			    (long)nw.mono_secs,
-			    (long)(last.mono_secs + deltasecs(delay))));
-		event_schedule(EVENT_DPD, nextdelay, st);
+		LSWDBGP(DBG_DPD, buf) {
+			lswlogs(buf, "DPD: not yet time for dpd event: ");
+			lswlog_monotime(buf, nw);
+			lswlogs(buf, " < ");
+			lswlog_monotime(buf, next_time);
+		}
+		event_schedule(EVENT_DPD, next_delay, st);
 		return;
 	}
 
-	/* now plan next check time */
-	/* ??? this test is nuts: it will always succeed! */
-	if (deltasecs(nextdelay) < 1)
-		nextdelay = delay;
+	next_delay = delay;
 
 	/*
 	 * check the phase 2, if we are supposed to,
@@ -289,7 +286,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 			delete_dpd_event(p1st);
 		}
 
-		event_schedule(EVENT_DPD, nextdelay, st);
+		event_schedule(EVENT_DPD, next_delay, st);
 		return;
 	}
 
@@ -298,7 +295,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 		 * reschedule next event, since we cannot do it from the activity
 		 * routine.
 		 */
-		event_schedule(EVENT_DPD, nextdelay, st);
+		event_schedule(EVENT_DPD, next_delay, st);
 	}
 
 	if (p1st->st_dpd_seqno == 0) {
@@ -450,15 +447,16 @@ stf_status dpd_inI_outR(struct state *p1st,
 		p1st->st_dpd_rdupcount = 0;
 	}
 
-	DBG(DBG_DPD, {
+	LSWDBGP(DBG_DPD, buf) {
+		lswlogf(buf, "DPD: received R_U_THERE seq:%u monotime:",
+			seqno);
+		lswlog_monotime(buf, nw);
 		char cib[CONN_INST_BUF];
-		DBG_log("DPD: received R_U_THERE seq:%u monotime:%ld (state=#%lu name=\"%s\"%s)",
-			seqno,
-			(long)nw.mono_secs,
+		lswlogf(buf, " (state=#%lu name=\"%s\"%s)",
 			p1st->st_serialno,
 			p1st->st_connection->name,
 			fmt_conn_instance(p1st->st_connection, cib));
-	});
+	};
 
 	p1st->st_dpd_peerseqno = seqno;
 

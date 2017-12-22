@@ -179,10 +179,17 @@ bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md)
 {
 	struct state *st = md->st;
 	u_int8_t *rcookie = is_zero_cookie(st->st_rcookie) ? md->hdr.isa_rcookie : st->st_rcookie;
+	u_int16_t lport = st->st_localport;
+
+	/* if encapsulation=yes, force NAT-T detection by using wrong port for hash calc */
+	if (st->st_connection->encaps == encaps_yes) {
+		DBG(DBG_NATT, DBG_log("NAT-T: encapsulation=yes, so mangling hash to force NAT-T detection"));
+		lport = 0;
+	}
+
 	bool e = ikev2_out_natd(st, np, &st->st_localaddr,
-			st->st_localport, &st->st_remoteaddr,
-			st->st_remoteport,
-			rcookie, outs);
+			lport, &st->st_remoteaddr,
+			st->st_remoteport, rcookie, outs);
 	return e;
 }
 
@@ -333,6 +340,8 @@ static void natd_lookup_common(struct state *st,
 			DBG(DBG_NATT, DBG_log("NAT_TRAVERSAL this end is behind NAT"));
 			st->hidden_variables.st_nat_traversal |= LELEM(NATED_HOST);
 			st->hidden_variables.st_natd = *sender;
+		} else {
+			DBG(DBG_NATT, DBG_log("NAT_TRAVERSAL this end is NOT behind NAT"));
 		}
 
 		if (!found_him) {
@@ -343,6 +352,8 @@ static void natd_lookup_common(struct state *st,
 			});
 			st->hidden_variables.st_nat_traversal |= LELEM(NATED_PEER);
 			st->hidden_variables.st_natd = *sender;
+		} else {
+			DBG(DBG_NATT, DBG_log("NAT_TRAVERSAL that end is NOT behind NAT"));
 		}
 		break;
 
@@ -477,7 +488,7 @@ bool ikev1_nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 
 	if (st->st_connection->encaps == encaps_yes) {
 		DBG(DBG_NATT,
-			DBG_log("NAT-T: forceencaps=yes, so mangling hash to force NAT-T detection"));
+			DBG_log("NAT-T: encapsulation=yes, so mangling hash to force NAT-T detection"));
 		firstport = secondport = 0;
 	}
 

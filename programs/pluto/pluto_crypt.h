@@ -234,7 +234,6 @@ struct pcr_dh_v2 {
 
 struct pluto_crypto_req {
 	enum pluto_crypto_requests pcr_type;
-	pcr_req_id pcr_id;
 	enum crypto_importance pcr_pcim;
 
 	union {
@@ -299,8 +298,8 @@ extern struct pluto_crypto_req_cont *new_pcrc(
 
 extern void init_crypto_helpers(int nhelpers);
 
-extern stf_status send_crypto_helper_request(struct state *st,
-					     struct pluto_crypto_req_cont *cn);
+extern void send_crypto_helper_request(struct state *st,
+				       struct pluto_crypto_req_cont *cn);
 
 extern void log_crypto_workers(void);
 
@@ -310,16 +309,16 @@ extern void log_crypto_workers(void);
  * KE/NONCE
  */
 
-extern stf_status request_ke_and_nonce(const char *name,
-				       struct state *st, struct msg_digest *md,
-				       const struct oakley_group_desc *group,
-				       enum crypto_importance importance,
-				       crypto_req_cont_func *callback);
+extern void request_ke_and_nonce(const char *name,
+				 struct state *st, struct msg_digest *md,
+				 const struct oakley_group_desc *group,
+				 enum crypto_importance importance,
+				 crypto_req_cont_func *callback);
 
-extern stf_status request_nonce(const char *name,
-				struct state *st, struct msg_digest *md,
-				enum crypto_importance importance,
-				crypto_req_cont_func *callback);
+extern void request_nonce(const char *name,
+			  struct state *st, struct msg_digest *md,
+			  enum crypto_importance importance,
+			  crypto_req_cont_func *callback);
 
 extern void calc_ke(struct pcr_kenonce *kn);
 
@@ -334,20 +333,20 @@ extern void cancelled_ke_and_nonce(struct pcr_kenonce *kn);
 extern void compute_dh_shared(struct state *st, const chunk_t g,
 			      const struct oakley_group_desc *group);
 
-extern stf_status start_dh_secretiv(struct pluto_crypto_req_cont *dh,
-				    struct state *st,
-				    enum crypto_importance importance,
-				    enum original_role role,
-				    const struct oakley_group_desc *oakley_group2);
+extern void start_dh_secretiv(struct pluto_crypto_req_cont *dh,
+			      struct state *st,
+			      enum crypto_importance importance,
+			      enum original_role role,
+			      const struct oakley_group_desc *oakley_group2);
 
 extern bool finish_dh_secretiv(struct state *st,
 			       struct pluto_crypto_req *r);
 
-extern stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
-				  struct state *st,
-				  enum crypto_importance importance,
-				  enum original_role role,
-				  const struct oakley_group_desc *oakley_group2);
+extern void start_dh_secret(struct pluto_crypto_req_cont *cn,
+			    struct state *st,
+			    enum crypto_importance importance,
+			    enum original_role role,
+			    const struct oakley_group_desc *oakley_group2);
 
 extern void finish_dh_secret(struct state *st,
 			     struct pluto_crypto_req *r);
@@ -360,14 +359,14 @@ extern void cancelled_v1_dh(struct pcr_v1_dh *dh);
  * IKEv2 DH
  */
 
-extern stf_status start_dh_v2(struct msg_digest *md,
-			      const char *name,
-			      enum original_role role,
-			      PK11SymKey *skey_d_old,
-			      const struct prf_desc *old_prf,
-			      crypto_req_cont_func pcrc_func);
+extern void start_dh_v2(struct msg_digest *md,
+			const char *name,
+			enum original_role role,
+			PK11SymKey *skey_d_old,
+			const struct prf_desc *old_prf,
+			crypto_req_cont_func pcrc_func);
 
-extern stf_status start_child_dh_v2(struct msg_digest *md,
+extern void start_child_dh_v2(struct msg_digest *md,
 			      const char *name,
 			      enum original_role role,
 			      crypto_req_cont_func pcrc_func);

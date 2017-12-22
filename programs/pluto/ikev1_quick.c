@@ -738,9 +738,6 @@ static void quick_outI1_continue(struct state *st, struct msg_digest *md UNUSED,
 		DBG_log("quick_outI1_continue for #%lu: calculated ke+nonce, sending I1",
 			st->st_serialno));
 
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
-	st->st_calculating = FALSE;
-
 	passert(st != NULL);
 
 	unset_suspended(st);
@@ -773,8 +770,6 @@ stf_status quick_outI1(int whack_sock,
 	st->st_whack_sock = whack_sock;
 	st->st_connection = c;	/* safe: from duplicate_state */
 	passert(c != NULL);
-
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating == %s;", st->st_serialno, __FUNCTION__, __LINE__, st->st_calculating ? "TRUE" : "FALSE"));
 
 	set_cur_state(st); /* we must reset before exit */
 	st->st_policy = policy;
@@ -848,20 +843,16 @@ stf_status quick_outI1(int whack_sock,
 	/* save for post crytpo logging */
 	st->st_ipsec_pred = replacing;
 
-	stf_status e;
 	if (policy & POLICY_PFS) {
-		e = request_ke_and_nonce("quick_outI1 KE", st, NULL,
-					 st->st_pfs_group, st->st_import,
-					 quick_outI1_continue);
+		request_ke_and_nonce("quick_outI1 KE", st, NULL,
+				     st->st_pfs_group, st->st_import,
+				     quick_outI1_continue);
 	} else {
-		e = request_nonce("quick_outI1 KE", st, NULL,
-				  st->st_import,
-				  quick_outI1_continue);
+		request_nonce("quick_outI1 KE", st, NULL,
+			      st->st_import,
+			      quick_outI1_continue);
 	}
-
-	reset_globals();
-
-	return e;
+	return STF_SUSPEND;
 }
 
 static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
@@ -1479,18 +1470,17 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b)
 		if (ci < st->st_import)
 			ci = st->st_import;
 
-		stf_status e;
 		if (st->st_pfs_group != NULL) {
-			e = request_ke_and_nonce("quick_outI1 KE", st, md,
-						 st->st_pfs_group, ci,
-						 quick_inI1_outR1_cryptocontinue1);
+			request_ke_and_nonce("quick_outI1 KE", st, md,
+					     st->st_pfs_group, ci,
+					     quick_inI1_outR1_cryptocontinue1);
 		} else {
-			e = request_nonce("quick_outI1 KE", st, md, ci,
-					  quick_inI1_outR1_cryptocontinue1);
+			request_nonce("quick_outI1 KE", st, md, ci,
+				      quick_inI1_outR1_cryptocontinue1);
 		}
 
 		passert(st->st_connection != NULL);
-		return e;
+		return STF_SUSPEND;
 	}
 }
 
@@ -1506,9 +1496,6 @@ static void quick_inI1_outR1_cryptocontinue1(struct state *st, struct msg_digest
 			st->st_serialno));
 
 	passert(st->st_connection != NULL);
-
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
-	st->st_calculating = FALSE;
 	unset_suspended(st);
 
 	/* we always calculate a nonce */
@@ -1518,27 +1505,13 @@ static void quick_inI1_outR1_cryptocontinue1(struct state *st, struct msg_digest
 		/* PFS is on: do a new DH */
 		unpack_KE_from_helper(st, r, &st->st_gr);
 
-
 		struct pluto_crypto_req_cont *dh =
 			new_pcrc(quick_inI1_outR1_cryptocontinue2,
 				 "quick outR1 DH",
 				 st, md);
-
-		e = start_dh_secret(dh, st, st->st_import,
-				    ORIGINAL_RESPONDER,
-				    st->st_pfs_group);
-
-		/*
-		 * Ownership of DH is always transfered.
-		 *
-		 * But MD ownership is only transfered when
-		 * STF_SUSPEND.
-		 */
-		if (e != STF_SUSPEND) {
-			passert(md != NULL);	/* ??? when would this fail? */
-			complete_v1_state_transition(&md, e);
-			release_any_md(&md);
-		}
+		start_dh_secret(dh, st, st->st_import,
+				ORIGINAL_RESPONDER,
+				st->st_pfs_group);
 	} else {
 		/* but if PFS is off, we don't do a second DH, so just
 		 * call the continuation with NULL struct pluto_crypto_req *
@@ -1565,9 +1538,6 @@ static void quick_inI1_outR1_cryptocontinue2(struct state *st, struct msg_digest
 			st->st_serialno));
 
 	passert(st->st_connection != NULL);
-
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
-	st->st_calculating = FALSE;
 	unset_suspended(st);
 
 	e = quick_inI1_outR1_cryptotail(md, r);
@@ -1798,9 +1768,10 @@ stf_status quick_inR1_outI2(struct state *st, struct msg_digest *md)
 			quick_inR1_outI2_continue, "quick outI2 DH",
 			st, md);
 
-		return start_dh_secret(dh, st, st->st_import,
-				       ORIGINAL_INITIATOR,
-				       st->st_pfs_group);
+		start_dh_secret(dh, st, st->st_import,
+				ORIGINAL_INITIATOR,
+				st->st_pfs_group);
+		return STF_SUSPEND;
 	} else {
 		/* just call the tail function */
 		return quick_inR1_outI2_cryptotail(md, NULL);
@@ -1819,9 +1790,6 @@ static void quick_inR1_outI2_continue(struct state *st, struct msg_digest *md,
 			st->st_serialno));
 
 	passert(st->st_connection != NULL);
-
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
-	st->st_calculating = FALSE;
 	unset_suspended(st);
 
 	e = quick_inR1_outI2_cryptotail(md, r);

@@ -2274,9 +2274,6 @@ static void remember_received_packet(struct state *st, struct msg_digest *md)
 void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 {
 	struct msg_digest *md = *mdp;
-	enum state_kind from_state;
-	struct state *st;
-
 	passert(md != NULL);
 
 	/* handle oddball/meta results now */
@@ -2288,37 +2285,33 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		pstats(ike_stf, result);
 	}
 
+	DBG(DBG_CONTROL,
+	    DBG_log("complete v1 state transition with %s",
+		    result > STF_FAIL ?
+		    enum_name(&ikev1_notify_names, result - STF_FAIL) :
+		    enum_name(&stfstatus_name, result)));
+
 	switch (result) {
 	case STF_SUSPEND:
 		set_cur_state(md->st);	/* might have changed */
 		*mdp = NULL;	/* take md away from parent */
-		/* FALL THROUGH */
-	case STF_IGNORE:
-		DBG(DBG_CONTROL,
-		    DBG_log("complete v1 state transition with %s",
-			    enum_show(&stfstatus_name, result)));
 		return;
-
+	case STF_IGNORE:
+		return;
 	default:
 		break;
 	}
 
-	DBG(DBG_CONTROL,
-	    DBG_log("complete v1 state transition with %s",
-		result > STF_FAIL ?
-		    enum_name(&ikev1_notify_names, result - STF_FAIL) :
-		    enum_name(&stfstatus_name, result)));
-
 	/* safe to refer to *md */
 
-	from_state = md->from_state;
+	enum state_kind from_state = md->from_state;
 
-	st = md->st;
+	struct state *st = md->st;
 	set_cur_state(st); /* might have changed */
 
 	passert(st != NULL);
 
-	passert(!st->st_calculating);
+	pexpect(!state_busy(st));
 
 	switch (result) {
 	case STF_OK:
