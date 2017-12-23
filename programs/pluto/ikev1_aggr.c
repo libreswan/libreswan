@@ -1154,6 +1154,7 @@ stf_status aggr_outI1(int whack_sock,
 			     st, fake_md,
 			     st->st_oakley.ta_dh, importance,
 			     aggr_outI1_continue);
+	reset_globals();
 	return STF_SUSPEND;
 }
 
