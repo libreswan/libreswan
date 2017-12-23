@@ -189,7 +189,7 @@ static void log_processing(enum processing processing, bool current,
 struct connection *log_push_connection(struct connection *c, const char *func,
 				       const char *file, long line)
 {
-	bool current = (cur_state != NULL); /* not hidden? */
+	bool current = (cur_state == NULL); /* not hidden by state? */
 	if (cur_connection != NULL) {
 		log_processing(SUSPEND, current,
 			       NULL, cur_connection,
@@ -223,15 +223,16 @@ struct connection *log_push_connection(struct connection *c, const char *func,
 void log_pop_connection(struct connection *c, const char *func,
 			const char *file, long line)
 {
+	bool current = (cur_state == NULL); /* not hidden by state? */
 	if (cur_connection != NULL) {
-		log_processing(STOP, cur_state == NULL /* current? */,
+		log_processing(STOP, current /* current? */,
 			       NULL, cur_connection,
 			       func, file, line);
 	}
 	cur_connection = c;
 	update_debugging();
 	if (cur_connection != NULL) {
-		log_processing(RESUME, cur_state == NULL /* current? */,
+		log_processing(RESUME, current /* current? */,
 			       NULL, cur_connection,
 			       func, file, line);
 	}
