@@ -11,16 +11,16 @@ typedef stf_status crypto_transition_fn(struct state *st, struct msg_digest *md,
 
 extern void process_v2_packet(struct msg_digest **mdp);
 
-extern stf_status ikev2parent_outI1(int whack_sock,
-				    struct connection *c,
-				    struct state *predecessor,
-				    lset_t policy,
-				    unsigned long try,
-				    enum crypto_importance importance
+extern void ikev2parent_outI1(int whack_sock,
+			      struct connection *c,
+			      struct state *predecessor,
+			      lset_t policy,
+			      unsigned long try,
+			      enum crypto_importance importance
 #ifdef HAVE_LABELED_IPSEC
-				    , struct xfrm_user_sec_ctx_ike *uctx
+			      , struct xfrm_user_sec_ctx_ike *uctx
 #endif
-				    );
+			      );
 
 extern bool ikev2_delete_out(struct state *st);
 

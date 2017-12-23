@@ -1052,16 +1052,16 @@ static void aggr_outI1_continue(struct state *st, struct msg_digest *md,
  * RFC 2409 5.2: --> HDR, SA, [ HASH(1),] KE, <IDii_b>Pubkey_r, <Ni_b>Pubkey_r
  * RFC 2409 5.3: --> HDR, SA, [ HASH(1),] <Ni_b>Pubkey_r, <KE_b>Ke_i, <IDii_b>Ke_i [, <Cert-I_b>Ke_i ]
  */
-stf_status aggr_outI1(int whack_sock,
-		      struct connection *c,
-		      struct state *predecessor,
-		      lset_t policy,
-		      unsigned long try,
-		      enum crypto_importance importance
+void aggr_outI1(int whack_sock,
+		struct connection *c,
+		struct state *predecessor,
+		lset_t policy,
+		unsigned long try,
+		enum crypto_importance importance
 #ifdef HAVE_LABELED_IPSEC
-		      , struct xfrm_user_sec_ctx_ike *uctx
+		, struct xfrm_user_sec_ctx_ike *uctx
 #endif
-		      )
+		)
 {
 	struct state *st;
 	struct spd_route *sr;
@@ -1115,7 +1115,7 @@ stf_status aggr_outI1(int whack_sock,
 		loglog(RC_AGGRALGO,
 		       "no IKE proposal policy specified in config!  Cannot initiate aggressive mode.  A policy must be specified in the configuration and should contain at most one DH group (mod1024, mod1536, mod2048).  Only the first DH group will be honored.");
 		reset_globals();
-		return STF_FAIL;
+		return;
 	}
 
 	if (HAS_IPSEC_POLICY(policy))
@@ -1155,7 +1155,6 @@ stf_status aggr_outI1(int whack_sock,
 			     st->st_oakley.ta_dh, importance,
 			     aggr_outI1_continue);
 	reset_globals();
-	return STF_SUSPEND;
 }
 
 static stf_status aggr_outI1_tail(struct state *st, struct msg_digest *md,

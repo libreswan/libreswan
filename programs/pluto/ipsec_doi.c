@@ -272,11 +272,11 @@ void ipsecdoi_initiate(int whack_sock,
 		initiator_function *initiator = pick_initiator(c, policy);
 
 		if (initiator != NULL) {
-			(void) initiator(whack_sock, c, NULL, policy, try, importance
+			initiator(whack_sock, c, NULL, policy, try, importance
 #ifdef HAVE_LABELED_IPSEC
-					 , uctx
+				  , uctx
 #endif
-					 );
+				  );
 		} else {
 			/* fizzle: whack_sock will be unused */
 			close_any(whack_sock);
