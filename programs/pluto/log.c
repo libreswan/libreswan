@@ -88,15 +88,6 @@ static struct connection *cur_connection = NULL;       /* current connection, fo
 const ip_address *cur_from = NULL;              /* source of current current message */
 u_int16_t cur_from_port;                        /* host order */
 
-bool globals_are_reset(void)
-{
-	return  (whack_log_fd == NULL_FD
-		 && cur_state == NULL
-		 && cur_connection == NULL
-		 && cur_from == NULL
-		 && cur_debugging == base_debugging);
-}
-
 static void update_extra(const char *what, enum_names *names,
 			 lmod_t extra, lset_t mask)
 {
@@ -232,6 +223,42 @@ void log_reset_globals(const char *func, const char *file, long line)
 				cur_debugging);
 			lswlog_source_line(buf, func, file, line);
 		}
+		cur_debugging = base_debugging;
+	}
+}
+
+void log_pexpect_reset_globals(const char *func, const char *file, long line)
+{
+	if (whack_log_fd != NULL_FD) {
+		lsw_pexpect_log(file, line, func,
+				"processing: unexpected whack_log_fd %d should be %d",
+				whack_log_fd, NULL_FD);
+		whack_log_fd = NULL_FD;
+	}
+	if (cur_state != NULL) {
+		lsw_pexpect_log(file, line, func,
+				"processing: unexpected cur_state #%lu should be #0",
+				cur_state->st_serialno);
+		cur_state = NULL;
+	}
+	if (cur_connection != NULL) {
+		lsw_pexpect_log(file, line, func,
+				"processing: unexpected cur_connection %s should be NULL",
+				cur_connection->name);
+		cur_connection = NULL;
+	}
+	if (cur_from != NULL) {
+		ipstr_buf b;
+		lsw_pexpect_log(file, line, func,
+				"processing: unexpected cur_from %s:%u should be NULL",
+				sensitive_ipstr(cur_from, &b),
+				(unsigned)cur_from_port);
+		cur_from = NULL;
+	}
+	if (cur_debugging != base_debugging) {
+		lsw_pexpect_log(file, line, func,
+				"processing: unexpected cur_debugging %"PRIxLSET" should be %"PRIxLSET,
+				cur_debugging, base_debugging);
 		cur_debugging = base_debugging;
 	}
 }

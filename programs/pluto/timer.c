@@ -532,7 +532,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	    DBG_log("handling event %s%s",
 		    enum_show(&timer_event_names, type), statenum));
 
-	passert(globals_are_reset());
+	pexpect_reset_globals();
 
 	if (st != NULL)
 		set_cur_state(st);

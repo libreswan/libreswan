@@ -69,7 +69,8 @@ extern lset_t base_debugging;	/* bits selecting what to report */
 extern void log_reset_globals(const char *func, const char *file, long line);
 #define reset_globals() log_reset_globals(__func__, PASSERT_BASENAME, __LINE__)
 
-extern bool globals_are_reset(void);
+extern void log_pexpect_reset_globals(const char *func, const char *file, long line);
+#define pexpect_reset_globals() log_pexpect_reset_globals(__func__, PASSERT_BASENAME, __LINE__)
 
 struct connection *log_push_connection(struct connection *c, const char *func,
 				       const char *file, long line);
