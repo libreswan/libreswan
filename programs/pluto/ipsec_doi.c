@@ -307,12 +307,12 @@ void ipsecdoi_initiate(int whack_sock,
 			 * we already have it from when we negotiated the ISAKMP SA!
 			 * It isn't clear what to do with the error return.
 			 */
-			(void) quick_outI1(whack_sock, st, c, policy, try,
-					replacing
+			quick_outI1(whack_sock, st, c, policy, try,
+				    replacing
 #ifdef HAVE_LABELED_IPSEC
-					, uctx
+				    , uctx
 #endif
-					);
+				    );
 			}
 	}
 }
