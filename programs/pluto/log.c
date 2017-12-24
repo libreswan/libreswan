@@ -88,54 +88,6 @@ static struct connection *cur_connection = NULL;       /* current connection, fo
 const ip_address *cur_from = NULL;              /* source of current current message */
 u_int16_t cur_from_port;                        /* host order */
 
-/*
- * XXX:
- *
- * Given code should be using matching push/pop operations on each
- * field, this global 'blat' looks like some sort of - we've lost
- * track - hack.  Especially since the reset_globals() call is often
- * followed by passert(globals_are_reset()).
- *
- * Is this leaking the whack_log_fd?
- *
- * For instance, the IKEv1/IKEv2 specific initiate code calls
- * reset_globals() when it probably should be calling pop_cur_state().
- * Luckily, whack_log_fd isn't the real value (that seems to be stored
- * elsewhere?) and, for as long as the whack connection is up, code
- * keeps setting it back.
- *
- * Is this leaking cur_from?  See above.
- */
-void reset_globals(void)
-{
-	if (whack_log_fd != NULL_FD) {
-		DBG(DBG_MASK, DBG_log("processing: resetting whack log_fd (was %d)",
-			    whack_log_fd));
-		whack_log_fd = NULL_FD;
-	}
-	if (cur_state != NULL) {
-		pop_cur_state(SOS_NOBODY);
-	}
-	if (cur_connection != NULL) {
-		pop_cur_connection(NULL);
-	}
-	if (cur_debugging != base_debugging) {
-		DBG(DBG_MASK,
-		    DBG_log("processing: resetting cur_debugging (was %"PRIxLSET")",
-				      cur_debugging));
-		cur_debugging = base_debugging;
-	}
-	if (cur_from != NULL) {
-		/* peer's IP address */
-		ipstr_buf b;
-		DBG(DBG_MASK,
-		    DBG_log("processing: resetting cur_from (was %s:%u)",
-			    sensitive_ipstr(cur_from, &b),
-			    (unsigned)cur_from_port));
-		cur_from = NULL;
-	}
-}
-
 bool globals_are_reset(void)
 {
 	return  (whack_log_fd == NULL_FD
@@ -175,34 +127,34 @@ static void update_debugging(void)
 	}
 }
 
+/*
+ * if any debugging is on, make sure that we log the connection we are
+ * processing, because it may not be clear in later debugging.
+ */
+
 enum processing {
 	START = 1,
 	STOP,
 	RESTART,
 	SUSPEND,
 	RESUME,
+	RESET,
 };
 
-/*
- * if any debugging is on, make sure that we log the connection we are
- * processing, because it may not be clear in later debugging.
- */
 static void log_processing(enum processing processing, bool current,
 			   struct state *st, struct connection *c,
 			   const char *func, const char *file, long line)
 {
 	passert((st != NULL) != (c != NULL));
 	LSWDBGP(DBG_MASK, buf) {
-		if (!current) {
-			lswlogs(buf, "background ");
-		}
 		lswlogs(buf, "processing: ");
 		switch (processing) {
 		case START: lswlogs(buf, "start"); break;
 		case STOP: lswlogs(buf, "stop"); break;
-		case RESTART: lswlogs(buf, "restart"); break;
+		case RESTART: lswlogs(buf, "[RE]START"); break;
 		case SUSPEND: lswlogs(buf, "suspend"); break;
 		case RESUME: lswlogs(buf, "resume"); break;
+		case RESET: lswlogs(buf, "RESET"); break;
 		}
 		if (st != NULL) {
 			lswlogf(buf, " state #%lu", st->st_serialno);
@@ -218,7 +170,69 @@ static void log_processing(enum processing processing, bool current,
 			lswlogf(buf, " ");
 			lswlog_ip(buf, &st->st_remoteaddr);
 		}
+		if (!current) {
+			lswlogs(buf, " (BACKGROUND)");
+		}
 		lswlog_source_line(buf, func, file, line);
+	}
+}
+
+/*
+ * XXX:
+ *
+ * Given code should be using matching push/pop operations on each
+ * field, this global 'blat' looks like some sort of - we've lost
+ * track - hack.  Especially since the reset_globals() call is often
+ * followed by passert(globals_are_reset()).
+ *
+ * Is this leaking the whack_log_fd?
+ *
+ * For instance, the IKEv1/IKEv2 specific initiate code calls
+ * reset_globals() when it probably should be calling pop_cur_state().
+ * Luckily, whack_log_fd isn't the real value (that seems to be stored
+ * elsewhere?) and, for as long as the whack connection is up, code
+ * keeps setting it back.
+ *
+ * Is this leaking cur_from?  See above.
+ */
+void log_reset_globals(const char *func, const char *file, long line)
+{
+	if (whack_log_fd != NULL_FD) {
+		LSWDBGP(DBG_MASK, buf) {
+			lswlogf(buf, "processing: RESET whack log_fd (was %d)",
+				whack_log_fd);
+			lswlog_source_line(buf, func, file, line);
+		}
+		whack_log_fd = NULL_FD;
+	}
+	if (cur_state != NULL) {
+		log_processing(RESET, true, cur_state, NULL,
+			       func, file, line);
+		cur_state = NULL;
+	}
+	if (cur_connection != NULL) {
+		log_processing(RESET, true, NULL, cur_connection,
+			       func, file, line);
+		cur_connection = NULL;
+	}
+	if (cur_from != NULL) {
+		/* peer's IP address */
+		LSWDBGP(DBG_MASK, buf) {
+			ipstr_buf b;
+			lswlogf(buf, "processing: resetting cur_from (was %s:%u)",
+				sensitive_ipstr(cur_from, &b),
+				(unsigned)cur_from_port);
+			lswlog_source_line(buf, func, file, line);
+		}
+		cur_from = NULL;
+	}
+	if (cur_debugging != base_debugging) {
+		LSWDBGP(DBG_MASK, buf) {
+			lswlogf(buf, "processing: RESET cur_debugging (was %"PRIxLSET")",
+				cur_debugging);
+			lswlog_source_line(buf, func, file, line);
+		}
+		cur_debugging = base_debugging;
 	}
 }
 
@@ -266,7 +280,7 @@ void log_pop_connection(struct connection *c, const char *func,
 			       func, file, line);
 	} else {
 		LSWDBGP(DBG_MASK, buf) {
-			lswlogf(buf, "stop processing: connection NULL");
+			lswlogf(buf, "processing: STOP connection NULL");
 			lswlog_source_line(buf, func, file, line);
 		}
 	}
@@ -325,7 +339,7 @@ void log_pop_state(so_serial_t serialno, const char *func,
 			       func, file, line);
 	} else {
 		LSWDBGP(DBG_MASK, buf) {
-			lswlogf(buf, "skip stop processing: state #0");
+			lswlogf(buf, "processing: STOP state #0");
 			lswlog_source_line(buf, func, file, line);
 		}
 	}

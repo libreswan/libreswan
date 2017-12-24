@@ -66,7 +66,9 @@ extern void reset_debugging(void);
 
 extern lset_t base_debugging;	/* bits selecting what to report */
 
-extern void reset_globals(void);
+extern void log_reset_globals(const char *func, const char *file, long line);
+#define reset_globals() log_reset_globals(__func__, PASSERT_BASENAME, __LINE__)
+
 extern bool globals_are_reset(void);
 
 struct connection *log_push_connection(struct connection *c, const char *func,
