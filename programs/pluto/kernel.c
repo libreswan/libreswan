@@ -2545,7 +2545,7 @@ static void kernel_process_msg_cb(evutil_socket_t fd,
 
 	DBG(DBG_KERNEL, DBG_log(" %s process netlink message", __func__));
 	kernel_ops->process_msg(fd);
-	passert(globals_are_reset());
+	pexpect_reset_globals();
 }
 
 static event_callback_routine kernel_process_queue_cb;
@@ -2556,7 +2556,7 @@ static void kernel_process_queue_cb(evutil_socket_t fd UNUSED,
 	const struct kernel_ops *kernel_ops = arg;
 
 	kernel_ops->process_queue();
-	passert(globals_are_reset());
+	pexpect_reset_globals();
 
 }
 

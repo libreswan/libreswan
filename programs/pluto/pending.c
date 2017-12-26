@@ -264,13 +264,13 @@ void unpend(struct state *st, struct connection *cc)
 					       );
 
 			} else if (!st->st_ikev2) {
-				(void) quick_outI1(p->whack_sock, st, p->connection,
-						   p->policy,
-						   p->try, p->replacing
+				quick_outI1(p->whack_sock, st, p->connection,
+					    p->policy,
+					    p->try, p->replacing
 #ifdef HAVE_LABELED_IPSEC
-						   , p->uctx
+					    , p->uctx
 #endif
-						   );
+					    );
 			} else {
 				/*
 				 * IKEv2 AUTH negotiation include child.

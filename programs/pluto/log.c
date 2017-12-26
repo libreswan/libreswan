@@ -9,7 +9,7 @@
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013,2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -88,24 +88,6 @@ static struct connection *cur_connection = NULL;       /* current connection, fo
 const ip_address *cur_from = NULL;              /* source of current current message */
 u_int16_t cur_from_port;                        /* host order */
 
-void reset_globals(void)
-{
-	whack_log_fd = NULL_FD;
-	cur_state = NULL;
-	cur_from = NULL;
-	reset_cur_connection();
-}
-
-
-bool globals_are_reset(void)
-{
-	return  (whack_log_fd == NULL_FD
-		 && cur_state == NULL
-		 && cur_connection == NULL
-		 && cur_from == NULL
-		 && cur_debugging == base_debugging);
-}
-
 static void update_extra(const char *what, enum_names *names,
 			 lmod_t extra, lset_t mask)
 {
@@ -136,35 +118,35 @@ static void update_debugging(void)
 	}
 }
 
-enum processing {
-	START = 1,
-	SUSPEND,
-	RESUME,
-	STILL,
-	STOP,
-};
-
 /*
  * if any debugging is on, make sure that we log the connection we are
  * processing, because it may not be clear in later debugging.
  */
+
+enum processing {
+	START = 1,
+	STOP,
+	RESTART,
+	SUSPEND,
+	RESUME,
+	RESET,
+};
+
 static void log_processing(enum processing processing, bool current,
 			   struct state *st, struct connection *c,
 			   const char *func, const char *file, long line)
 {
 	passert((st != NULL) != (c != NULL));
 	LSWDBGP(DBG_MASK, buf) {
-		if (!current) {
-			lswlogs(buf, "(");
-		}
+		lswlogs(buf, "processing: ");
 		switch (processing) {
 		case START: lswlogs(buf, "start"); break;
-		case STILL: lswlogs(buf, "still"); break;
+		case STOP: lswlogs(buf, "stop"); break;
+		case RESTART: lswlogs(buf, "[RE]START"); break;
 		case SUSPEND: lswlogs(buf, "suspend"); break;
 		case RESUME: lswlogs(buf, "resume"); break;
-		case STOP: lswlogs(buf, "stop"); break;
+		case RESET: lswlogs(buf, "RESET"); break;
 		}
-		lswlogs(buf, " processing");
 		if (st != NULL) {
 			lswlogf(buf, " state #%lu", st->st_serialno);
 			c = st->st_connection;
@@ -179,44 +161,139 @@ static void log_processing(enum processing processing, bool current,
 			lswlogf(buf, " ");
 			lswlog_ip(buf, &st->st_remoteaddr);
 		}
-		lswlog_source_line(buf, func, file, line);
 		if (!current) {
-			lswlogs(buf, ")");
+			lswlogs(buf, " (BACKGROUND)");
 		}
+		lswlog_source_line(buf, func, file, line);
 	}
 }
 
-struct connection *log_push_connection(struct connection *c, const char *func,
+/*
+ * XXX:
+ *
+ * Given code should be using matching push/pop operations on each
+ * field, this global 'blat' looks like some sort of - we've lost
+ * track - hack.  Especially since the reset_globals() call is often
+ * followed by passert(globals_are_reset()).
+ *
+ * Is this leaking the whack_log_fd?
+ *
+ * For instance, the IKEv1/IKEv2 specific initiate code calls
+ * reset_globals() when it probably should be calling pop_cur_state().
+ * Luckily, whack_log_fd isn't the real value (that seems to be stored
+ * elsewhere?) and, for as long as the whack connection is up, code
+ * keeps setting it back.
+ *
+ * Is this leaking cur_from?  See above.
+ */
+void log_reset_globals(const char *func, const char *file, long line)
+{
+	if (whack_log_fd != NULL_FD) {
+		LSWDBGP(DBG_MASK, buf) {
+			lswlogf(buf, "processing: RESET whack log_fd (was %d)",
+				whack_log_fd);
+			lswlog_source_line(buf, func, file, line);
+		}
+		whack_log_fd = NULL_FD;
+	}
+	if (cur_state != NULL) {
+		log_processing(RESET, true, cur_state, NULL,
+			       func, file, line);
+		cur_state = NULL;
+	}
+	if (cur_connection != NULL) {
+		log_processing(RESET, true, NULL, cur_connection,
+			       func, file, line);
+		cur_connection = NULL;
+	}
+	if (cur_from != NULL) {
+		/* peer's IP address */
+		LSWDBGP(DBG_MASK, buf) {
+			ipstr_buf b;
+			lswlogf(buf, "processing: resetting cur_from (was %s:%u)",
+				sensitive_ipstr(cur_from, &b),
+				(unsigned)cur_from_port);
+			lswlog_source_line(buf, func, file, line);
+		}
+		cur_from = NULL;
+	}
+	if (cur_debugging != base_debugging) {
+		LSWDBGP(DBG_MASK, buf) {
+			lswlogf(buf, "processing: RESET cur_debugging (was %"PRIxLSET")",
+				cur_debugging);
+			lswlog_source_line(buf, func, file, line);
+		}
+		cur_debugging = base_debugging;
+	}
+}
+
+void log_pexpect_reset_globals(const char *func, const char *file, long line)
+{
+	if (whack_log_fd != NULL_FD) {
+		lsw_pexpect_log(file, line, func,
+				"processing: unexpected whack_log_fd %d should be %d",
+				whack_log_fd, NULL_FD);
+		whack_log_fd = NULL_FD;
+	}
+	if (cur_state != NULL) {
+		lsw_pexpect_log(file, line, func,
+				"processing: unexpected cur_state #%lu should be #0",
+				cur_state->st_serialno);
+		cur_state = NULL;
+	}
+	if (cur_connection != NULL) {
+		lsw_pexpect_log(file, line, func,
+				"processing: unexpected cur_connection %s should be NULL",
+				cur_connection->name);
+		cur_connection = NULL;
+	}
+	if (cur_from != NULL) {
+		ipstr_buf b;
+		lsw_pexpect_log(file, line, func,
+				"processing: unexpected cur_from %s:%u should be NULL",
+				sensitive_ipstr(cur_from, &b),
+				(unsigned)cur_from_port);
+		cur_from = NULL;
+	}
+	if (cur_debugging != base_debugging) {
+		lsw_pexpect_log(file, line, func,
+				"processing: unexpected cur_debugging %"PRIxLSET" should be %"PRIxLSET,
+				cur_debugging, base_debugging);
+		cur_debugging = base_debugging;
+	}
+}
+
+struct connection *log_push_connection(struct connection *new_connection, const char *func,
 				       const char *file, long line)
 {
 	bool current = (cur_state == NULL); /* not hidden by state? */
-	if (cur_connection != NULL) {
+	struct connection *old_connection = cur_connection;
+
+	if (old_connection != NULL &&
+	    old_connection != new_connection) {
 		log_processing(SUSPEND, current,
-			       NULL, cur_connection,
+			       NULL, old_connection,
 			       func, file, line);
 	}
-	struct connection *old_connection = cur_connection;
-	cur_connection = c;
+
+	cur_connection = new_connection;
 	update_debugging();
-	if (cur_connection == NULL) {
+
+	if (new_connection == NULL) {
 		LSWDBGP(DBG_MASK, buf) {
-			lswlogf(buf, "trying to processing NULL connection");
+			lswlogf(buf, "start processing: connection NULL");
 			lswlog_source_line(buf, func, file, line);
 		}
-	} else if (cur_connection == old_connection) {
-		log_processing(STILL, current,
-			       NULL, cur_connection,
+	} else if (old_connection == new_connection) {
+		log_processing(RESTART, current,
+			       NULL, new_connection,
 			       func, file, line);
 	} else {
 		log_processing(START, current,
-			       NULL, cur_connection,
+			       NULL, new_connection,
 			       func, file, line);
 	}
-	if (cur_state != NULL) {
-		log_processing(STILL, true /* must be current */,
-			       cur_state, NULL,
-			       func, file, line);
-	}
+
 	return old_connection;
 }
 
@@ -228,6 +305,11 @@ void log_pop_connection(struct connection *c, const char *func,
 		log_processing(STOP, current /* current? */,
 			       NULL, cur_connection,
 			       func, file, line);
+	} else {
+		LSWDBGP(DBG_MASK, buf) {
+			lswlogf(buf, "processing: STOP connection NULL");
+			lswlog_source_line(buf, func, file, line);
+		}
 	}
 	cur_connection = c;
 	update_debugging();
@@ -236,43 +318,43 @@ void log_pop_connection(struct connection *c, const char *func,
 			       NULL, cur_connection,
 			       func, file, line);
 	}
-	if (cur_state != NULL) {
-		log_processing(STILL, true /* must be current */,
-			       cur_state, NULL,
-			       func, file, line);
-	}
 }
 
-so_serial_t log_push_state(struct state *st, const char *func,
+so_serial_t log_push_state(struct state *new_state, const char *func,
 			   const char *file, long line)
 {
-	if (cur_state != NULL) {
-		log_processing(SUSPEND, true /* must be current */,
-			       cur_state, NULL,
-			       func, file, line);
-	} else if (cur_connection != NULL) {
-		log_processing(SUSPEND, true /* must be current */,
+	struct state *old_state = cur_state;
+
+	if (old_state != NULL) {
+		if (old_state != new_state) {
+			log_processing(SUSPEND, true /* must be current */,
+				       cur_state, NULL,
+				       func, file, line);
+		}
+	} else if (cur_connection != NULL && new_state != NULL) {
+		log_processing(SUSPEND, true /* current for now */,
 			       NULL, cur_connection,
 			       func, file, line);
 	}
-	so_serial_t old_serialno = (cur_state != NULL ? cur_state->st_serialno : SOS_NOBODY);
-	cur_state = st;
+
+	cur_state = new_state;
 	update_debugging();
-	if (cur_state == NULL) {
+
+	if (new_state == NULL) {
 		LSWDBGP(DBG_MASK, buf) {
-			lswlogf(buf, "trying to processing NULL state #0");
+			lswlogf(buf, "skip start processing: state #0");
 			lswlog_source_line(buf, func, file, line);
 		}
-	} else if (cur_state->st_serialno == old_serialno) {
-		log_processing(STILL, true /* must be current */,
-			       cur_state, NULL,
+	} else if (old_state == new_state) {
+		log_processing(RESTART, true /* must be current */,
+			       new_state, NULL,
 			       func, file, line);
 	} else {
 		log_processing(START, true /* must be current */,
-			       cur_state, NULL,
+			       new_state, NULL,
 			       func, file, line);
 	}
-	return old_serialno;
+	return old_state != NULL ? old_state->st_serialno : SOS_NOBODY;
 }
 
 void log_pop_state(so_serial_t serialno, const char *func,
@@ -284,7 +366,7 @@ void log_pop_state(so_serial_t serialno, const char *func,
 			       func, file, line);
 	} else {
 		LSWDBGP(DBG_MASK, buf) {
-			lswlogf(buf, "stop processing NULL state #0");
+			lswlogf(buf, "processing: STOP state #0");
 			lswlog_source_line(buf, func, file, line);
 		}
 	}

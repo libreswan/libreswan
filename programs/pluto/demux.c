@@ -251,7 +251,7 @@ static void process_dup(struct msg_digest *orig)
 	reset_cur_state();
 	reset_cur_connection();
 	cur_from = NULL;
-	passert(globals_are_reset());
+	pexpect_reset_globals();
 }
 
 static unsigned long replay_count;
@@ -378,7 +378,7 @@ static void comm_handle(const struct iface_port *ifp)
 	reset_cur_state();
 	reset_cur_connection();
 	cur_from = NULL;
-	passert(globals_are_reset());
+	pexpect_reset_globals();
 }
 
 /* read the message.
