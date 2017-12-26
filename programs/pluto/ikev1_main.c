@@ -91,7 +91,7 @@
  * --> HDR;SA
  * Note: this is not called from demux.c
  */
-stf_status main_outI1(int whack_sock,
+void main_outI1(int whack_sock,
 		struct connection *c,
 		struct state *predecessor,
 		lset_t policy,
@@ -180,7 +180,7 @@ stf_status main_outI1(int whack_sock,
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
 				&md.rbody)) {
 			reset_cur_state();
-			return STF_INTERNAL_ERROR;
+			return;
 		}
 	}
 
@@ -194,7 +194,7 @@ stf_status main_outI1(int whack_sock,
 				  st, TRUE, FALSE, np)) {
 			libreswan_log("outsa fail");
 			reset_cur_state();
-			return STF_INTERNAL_ERROR;
+			return;
 		}
 
 		/* no leak! (MUST be first time) */
@@ -212,7 +212,7 @@ stf_status main_outI1(int whack_sock,
 		if (!ikev1_out_generic_raw(np, &isakmp_vendor_id_desc, &md.rbody,
 					pluto_vendorid, strlen(pluto_vendorid), "Pluto Vendor ID")) {
 			reset_cur_state();	/* ??? was missing */
-			return STF_INTERNAL_ERROR;
+			return;
 		}
 	}
 
@@ -223,7 +223,7 @@ stf_status main_outI1(int whack_sock,
 
 		if (!out_vid(np, &md.rbody, VID_MISC_DPD)) {
 			reset_cur_state();
-			return STF_INTERNAL_ERROR;
+			return;
 		}
 	}
 
@@ -233,7 +233,7 @@ stf_status main_outI1(int whack_sock,
 
 		if (!out_vid(np, &md.rbody, VID_CISCO_UNITY)) {
 			reset_cur_state();
-			return STF_INTERNAL_ERROR;
+			return;
 		}
 	}
 
@@ -243,7 +243,7 @@ stf_status main_outI1(int whack_sock,
 
 		if (!out_vid(np, &md.rbody, VID_STRONGSWAN)) {
 			reset_cur_state();
-			return STF_INTERNAL_ERROR;
+			return;
 		}
 	}
 
@@ -254,7 +254,7 @@ stf_status main_outI1(int whack_sock,
 
 		if (!out_vid(np, &md.rbody, VID_IKE_FRAGMENTATION)) {
 			reset_cur_state();
-			return STF_INTERNAL_ERROR;
+			return;
 		}
 	}
 
@@ -265,7 +265,7 @@ stf_status main_outI1(int whack_sock,
 		/* Add supported NAT-Traversal VID */
 		if (!nat_traversal_insert_vid(np, &md.rbody, st)) {
 			reset_cur_state();
-			return STF_INTERNAL_ERROR;
+			return;
 		}
 	}
 
@@ -275,7 +275,7 @@ stf_status main_outI1(int whack_sock,
 
 		if (!out_vid(np, &md.rbody, VID_MISC_XAUTH)) {
 			reset_cur_state();
-			return STF_INTERNAL_ERROR;
+			return;
 		}
 	}
 
@@ -286,7 +286,7 @@ stf_status main_outI1(int whack_sock,
 			numvidtosend);
 
 	if (!close_message(&md.rbody, st))
-		return STF_INTERNAL_ERROR;
+		return;
 
 	close_output_pbs(&reply_stream);
 
@@ -309,7 +309,6 @@ stf_status main_outI1(int whack_sock,
 			st->st_state_name);
 	}
 	reset_cur_state();
-	return STF_OK;
 }
 
 /*

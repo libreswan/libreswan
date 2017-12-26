@@ -134,14 +134,17 @@ void start_retransmits(struct state *st, enum event_type type)
 		rt->timeout = c->r_timeout;
 	}
 	rt->start = mononow();
+	rt->delays = rt->delay;
 	event_schedule(rt->type, rt->delay, st);
 	LSWDBGP(DBG_RETRANSMITS, buf) {
+		lswlogs(buf, "retransmit: ");
 		lswlogf(buf, "#%ld %s: retransmits: first event in ",
 			st->st_serialno, st->st_state_name);
 		lswlog_deltatime(buf, rt->delay);
 		lswlogs(buf, " seconds; timeout in ");
 		lswlog_deltatime(buf, rt->timeout);
-		lswlogf(buf, " seconds; limit of %lu retransmits", rt->limit);
+		lswlogf(buf, " seconds; limit of %lu retransmits; current time is ", rt->limit);
+		lswlog_monotime(buf, rt->start);
 	}
 }
 
@@ -171,15 +174,48 @@ enum retransmit_status retransmit(struct state *st)
 
 	/*
 	 * Exceeded limits - timeout or number of retransmits?
+	 *
+	 * There seems to be a discrepancy between monotime() and
+	 * event-loop time that causes a 15s timer to expire after
+	 * only 14.964s!  Get around this by comparing both the
+	 * accumulated delays (aka deltatime) and the monotime
+	 * differeance against the timeout.
+	 *
+	 * One working theory as to the cause is that monotime uses
+	 * CLOCK_BOOTTIME (and/or CLOCK_MONOTONIC), while the
+	 * event-loop is still using gettimeofday.
 	 */
-	unsigned long nr_retransmits = retransmit_count(st);
-	bool too_many_retransmits = nr_retransmits >= rt->limit;
 	monotime_t now = mononow();
+	unsigned long nr_retransmits = retransmit_count(st);
+	bool retransmit_count_exceeded = nr_retransmits >= rt->limit;
+	bool deltatime_exceeds_limit = deltatime_cmp(rt->delays, rt->timeout) >= 0;
 	deltatime_t waited = monotimediff(now, rt->start);
-	if (too_many_retransmits || deltatime_cmp(waited, rt->timeout) >= 0) {
+	bool monotime_exceeds_limit = deltatime_cmp(waited, rt->timeout) >= 0;
+	LSWDBGP(DBG_RETRANSMITS, buf) {
+		lswlogs(buf, "retransmit: ");
+		lswlogs(buf, "current time ");
+		lswlog_monotime(buf, now);
+		/* number of packets so far */
+		lswlogf(buf, "; retransmit count %lu exceeds limit? %s", nr_retransmits,
+			retransmit_count_exceeded ? "YES" : "NO");
+		/* accumulated delay (ignores timewarp) */
+		lswlogs(buf, "; deltatime ");
+		lswlog_deltatime(buf, rt->delays);
+		lswlogf(buf, " exceeds limit? %s",
+			deltatime_exceeds_limit ? "YES" : "NO");
+		/* waittime, perhaps went to sleep but can warp */
+		lswlogs(buf, "; monotime ");
+		lswlog_deltatime(buf, waited);
+		lswlogf(buf, " exceeds limit? %s",
+			monotime_exceeds_limit ? "YES" : "NO");
+	}
+
+	if (retransmit_count_exceeded ||
+	    monotime_exceeds_limit ||
+	    deltatime_exceeds_limit) {
 		LSWLOG_LOG_WHACK(RC_NORETRANSMISSION, buf) {
 			lswlogf(buf, "%s: ", st->st_finite_state->fs_name);
-			if (too_many_retransmits) {
+			if (retransmit_count_exceeded) {
 				lswlogf(buf, "max number of retransmissions (%lu) reached after ",
 					nr_retransmits);
 				lswlog_deltatime(buf, waited);
@@ -220,6 +256,7 @@ enum retransmit_status retransmit(struct state *st)
 
 	double_delay(rt, nr_retransmits);
 	rt->nr_retransmits++;
+	rt->delays = deltatime_add(rt->delays, rt->delay);
 	event_schedule(rt->type, rt->delay, st);
 	LSWLOG_LOG_WHACK(RC_RETRANSMISSION, buf) {
 		lswlogf(buf, "%s: retransmission; will wait ",

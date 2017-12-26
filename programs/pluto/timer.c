@@ -417,10 +417,9 @@ static void liveness_check(struct state *st)
 		if (pst->st_pend_liveness &&
 		    deltatime_cmp(monotimediff(tm, last_liveness), timeout) >= 0) {
 			LSWLOG(buf) {
-				lswlogf(buf, "liveness_check - peer %s has not responded in ",
-					log_ip ? that_ip : "<ip address>");
-				lswlog_deltatime(buf, monotimediff(tm, last_liveness));
-				lswlogs(buf, " seconds, with a timeout of ");
+				lswlogf(buf, "liveness_check - peer %s has not responded in %zd seconds, with a timeout of ",
+					log_ip ? that_ip : "<ip address>",
+					deltasecs(monotimediff(tm, last_liveness)));
 				lswlog_deltatime(buf, timeout);
 				lswlogf(buf, ", taking %s",
 					enum_name(&dpd_action_names, c->dpd_action));
@@ -533,7 +532,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	    DBG_log("handling event %s%s",
 		    enum_show(&timer_event_names, type), statenum));
 
-	passert(globals_are_reset());
+	pexpect_reset_globals();
 
 	if (st != NULL)
 		set_cur_state(st);

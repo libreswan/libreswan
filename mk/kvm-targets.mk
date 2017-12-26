@@ -235,12 +235,15 @@ endif
 	:
 	false
 
+
+#
 # [re]run the testsuite.
 #
 # If the testsuite is being run a second time (for instance,
 # re-started or re-run) what should happen: run all tests regardless;
 # just run tests that have never been started; run tests that haven't
-# yet passed?  Since each alternative has merit, let the user decide.
+# yet passed?  Since each alternative has merit, let the user decide
+# by providing both kvm-test and kvm-retest.
 
 KVM_TESTS ?= testing/pluto
 
@@ -260,9 +263,17 @@ web-pages-disabled:
 	@echo To convert this result into a web page run: make web-page
 	@echo
 
+# Run the testsuite.
+#
+# - depends on kvm-keys and not $(KVM_KEYS) so that the check that the
+#   keys are up-to-date is run.
+#
+# - need local domains shutdown as, otherwise, test domains can refuse
+#   to boot because the domain they were cloned from is still running.
+
 define kvm-test
 .PHONY: $(1)
-$(1): $$(KVM_KEYS) kvm-shutdown-local-domains web-test-prep
+$(1): kvm-keys kvm-shutdown-local-domains web-test-prep
 	$$(if $$(WEB_SUMMARYDIR),,@$(MAKE) -s web-pages-disabled)
 	: kvm-test target=$(1) param=$(2)
 	$$(call check-kvm-qemu-directory)
@@ -273,7 +284,7 @@ $(1): $$(KVM_KEYS) kvm-shutdown-local-domains web-test-prep
 		$$(if $$(KVM_WORKERS), --workers $$(KVM_WORKERS)) \
 		$$(if $$(WEB_RESULTSDIR), --publish-results $$(WEB_RESULTSDIR)) \
 		$$(if $$(WEB_SUMMARYDIR), --publish-status $$(WEB_SUMMARYDIR)/status.json) \
-		$$(2) $$(KVM_TEST_FLAGS) $$(STRIPPED_KVM_TESTS)
+		$(2) $$(KVM_TEST_FLAGS) $$(STRIPPED_KVM_TESTS)
 	$$(if $$(WEB_SUMMARYDIR),,@$(MAKE) -s web-pages-disabled)
 endef
 

@@ -39,9 +39,9 @@ bool is_monotime_epoch(monotime_t t)
  */
 
 static monotime_t mononow_fallback(void) {
-	monotime_t m;
-	static time_t delta = 0,
-		last_time = 0;
+	static time_t delta = 0;
+	static time_t last_time = 0;
+
 	time_t n = time(NULL);	/* third best */
 
 	passert(n != (time_t)-1);
@@ -51,8 +51,12 @@ static monotime_t mononow_fallback(void) {
 		delta += last_time - n;
 	}
 	last_time = n;
-	m.mono_secs = n + delta;
-	return m;
+	return (monotime_t) {
+		.mt = {
+			.tv_sec = n,
+			.tv_usec = 0,
+		},
+	};
 }
 
 monotime_t mononow(void)
@@ -69,11 +73,13 @@ monotime_t mononow(void)
 
 	switch (r) {
 	case 0:
-	{
 		/* OK */
-		monotime_t m = { .mono_secs = t.tv_sec, };
-		return m;
-	}
+		return (monotime_t) {
+			.mt = {
+				.tv_sec = t.tv_sec,
+				.tv_usec = t.tv_nsec / 1000,
+			},
+		};
 	case EINVAL:
 		libreswan_log("Invalid clock method for clock_gettime() - possibly compiled with mismatched kernel and glibc-headers ");
 		break;
@@ -93,21 +99,26 @@ monotime_t mononow(void)
 
 intmax_t monosecs(monotime_t m)
 {
-	return m.mono_secs;
+	return m.mt.tv_sec;
 }
 
 monotime_t monotimesum(monotime_t t, deltatime_t d)
 {
-	monotime_t s = { t.mono_secs + deltasecs(d) };
+	intmax_t d_ms = deltamillisecs(d);
+	struct timeval dt = { d_ms / 1000, d_ms % 1000 };
+	monotime_t s = MONOTIME_EPOCH;
+	timeradd(&t.mt, &dt, &s.mt);
 	return s;
 }
 
 bool monobefore(monotime_t a, monotime_t b)
 {
-	return a.mono_secs < b.mono_secs;
+	return timercmp(&a.mt, &b.mt,<);
 }
 
 deltatime_t monotimediff(monotime_t a, monotime_t b)
 {
-	return deltatime(a.mono_secs - b.mono_secs);
+	struct timeval d;
+	timersub(&a.mt, &b.mt, &d);
+	return deltatime_ms((intmax_t)d.tv_sec * 1000 + d.tv_usec / 1000);
 }

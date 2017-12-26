@@ -8,6 +8,7 @@
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2013 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -754,24 +755,23 @@ static void quick_outI1_continue(struct state *st, struct msg_digest *md UNUSED,
 	}
 }
 
-stf_status quick_outI1(int whack_sock,
-		       struct state *isakmp_sa,
-		       struct connection *c,
-		       lset_t policy,
-		       unsigned long try,
-		       so_serial_t replacing
+void quick_outI1(int whack_sock,
+		 struct state *isakmp_sa,
+		 struct connection *c,
+		 lset_t policy,
+		 unsigned long try,
+		 so_serial_t replacing
 #ifdef HAVE_LABELED_IPSEC
-		       , struct xfrm_user_sec_ctx_ike *uctx
+		 , struct xfrm_user_sec_ctx_ike *uctx
 #endif
-		       )
+		 )
 {
 	struct state *st = duplicate_state(isakmp_sa, TRUE);
-
 	st->st_whack_sock = whack_sock;
 	st->st_connection = c;	/* safe: from duplicate_state */
 	passert(c != NULL);
 
-	set_cur_state(st); /* we must reset before exit */
+	so_serial_t old_state = push_cur_state(st); /* we must reset before exit */
 	st->st_policy = policy;
 	st->st_try = try;
 
@@ -852,7 +852,7 @@ stf_status quick_outI1(int whack_sock,
 			      st->st_import,
 			      quick_outI1_continue);
 	}
-	return STF_SUSPEND;
+	pop_cur_state(old_state);
 }
 
 static stf_status quick_outI1_tail(struct pluto_crypto_req *r,

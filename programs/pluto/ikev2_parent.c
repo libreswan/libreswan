@@ -691,23 +691,23 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
  * Note: this is not called from demux.c, but from ipsecdoi_initiate().
  *
  */
-stf_status ikev2parent_outI1(int whack_sock,
-			     struct connection *c,
-			     struct state *predecessor,
-			     lset_t policy,
-			     unsigned long try,
-			     enum crypto_importance importance
+void ikev2parent_outI1(int whack_sock,
+		       struct connection *c,
+		       struct state *predecessor,
+		       lset_t policy,
+		       unsigned long try,
+		       enum crypto_importance importance
 #ifdef HAVE_LABELED_IPSEC
-			     , struct xfrm_user_sec_ctx_ike *uctx
+		       , struct xfrm_user_sec_ctx_ike *uctx
 #endif
-			     )
+		       )
 {
 	struct state *st;
 
 	if (drop_new_exchanges()) {
 		/* Only drop outgoing opportunistic connections */
 		if (c->policy & POLICY_OPPORTUNISTIC) {
-			return STF_IGNORE;
+			return;
 		}
 	}
 
@@ -768,7 +768,7 @@ stf_status ikev2parent_outI1(int whack_sock,
 		stf_status ret = idr_ipseckey_fetch(st);
 		if (ret != STF_OK) {
 			reset_globals();
-			return ret;
+			return;
 		}
 	}
 
@@ -776,22 +776,19 @@ stf_status ikev2parent_outI1(int whack_sock,
 	 * Initialize st->st_oakley, including the group number.
 	 * Grab the DH group from the first configured proposal and build KE.
 	 */
-	{
-		ikev2_proposals_from_alg_info_ike(c->name,
-						  "initial initiator (selecting KE)",
-						  c->alg_info_ike,
-						  &c->ike_proposals);
-		passert(c->ike_proposals != NULL);
-		st->st_oakley.ta_dh = ikev2_proposals_first_modp(c->ike_proposals);
-		passert(st->st_oakley.ta_dh != NULL); /* known! */
+	ikev2_proposals_from_alg_info_ike(c->name,
+					  "initial initiator (selecting KE)",
+					  c->alg_info_ike,
+					  &c->ike_proposals);
+	passert(c->ike_proposals != NULL);
+	st->st_oakley.ta_dh = ikev2_proposals_first_modp(c->ike_proposals);
+	passert(st->st_oakley.ta_dh != NULL); /* known! */
 
-		/*
-		 * Calculate KE and Nonce.
-		 */
-		stf_status e = ikev2_crypto_start(NULL, st);
-		reset_globals();
-		return e;
-	}
+	/*
+	 * Calculate KE and Nonce.
+	 */
+	ikev2_crypto_start(NULL, st);
+	reset_globals();
 }
 
 /*
