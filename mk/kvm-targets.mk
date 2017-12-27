@@ -442,7 +442,7 @@ define install-kvm-test-network
   .PHONY: install-kvm-network-$(1)$(2)
   install-kvm-network-$(1)$(2): $$(KVM_LOCALDIR)/$(1)$(2).xml
   .PRECIOUS: $$(KVM_LOCALDIR)/$(1)$(2).xml
-  $$(KVM_LOCALDIR)/$(1)$(2).xml:
+  $$(KVM_LOCALDIR)/$(1)$(2).xml: | $$(KVM_LOCALDIR)
 	: install-kvm-test-network prefix=$(1) network=$(2)
 	$$(call destroy-kvm-network,$(1)$(2))
 	rm -f '$$@.tmp'
