@@ -301,8 +301,6 @@ extern void init_crypto_helpers(int nhelpers);
 extern void send_crypto_helper_request(struct state *st,
 				       struct pluto_crypto_req_cont *cn);
 
-extern void log_crypto_workers(void);
-
 /* actual helper functions */
 
 /*
