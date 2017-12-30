@@ -66,7 +66,6 @@
 #include "spdb.h"
 #include "nat_traversal.h"
 #include "vendor.h"
-#include "pluto_crypt.h"	/* just for log_crypto_workers() */
 
 #include "alg_info.h" /* for ike_info / esp_info */
 

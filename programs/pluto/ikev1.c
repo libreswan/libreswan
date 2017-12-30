@@ -154,7 +154,6 @@
 #include "vendor.h"
 #include "ikev1_dpd.h"
 #include "hostpair.h"
-#include "pluto_crypt.h"	/* just for log_crypto_workers() */
 
 #ifdef HAVE_NM
 #include "kernel.h"
