@@ -298,7 +298,8 @@ $(eval $(call kvm-test,kvm-retest kvm-recheck, --test-status "good" --skip passe
 # clean up; accept pretty much everything
 KVM_TEST_CLEAN_TARGETS = \
 	clean-kvm-check kvm-clean-check kvm-check-clean \
-	clean-kvm-test kvm-clean-test kvm-test-clean
+	clean-kvm-test kvm-clean-test kvm-test-clean \
+	clean-kvm-tests kvm-clean-tests kvm-tests-clean
 .PHONY: $(KVM_TEST_CLEAN_TARGETS)
 $(KVM_TEST_CLEAN_TARGETS):
 	find $(STRIPPED_KVM_TESTS) -name OUTPUT -type d -prune -print0 | xargs -0 -r rm -r
@@ -856,7 +857,7 @@ kvm-purge: kvm-clean kvm-test-clean kvm-keys-clean kvm-uninstall-test-networks k
 kvm-demolish: kvm-purge kvm-uninstall-base-network kvm-uninstall-base-domain
 
 .PHONY: kvm-clean clean-kvm
-kvm-clean clean-kvm: kvm-shutdown-local-domains kvm-keys-clean
+kvm-clean clean-kvm: kvm-shutdown-local-domains kvm-clean-keys kvm-clean-tests
 	: 'make kvm-DOMAIN-make-clean' to invoke clean on a DOMAIN
 	rm -rf $(KVM_OBJDIR)
 
