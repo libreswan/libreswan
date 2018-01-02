@@ -976,17 +976,14 @@ bool ikev1_ship_KE(struct state *st,
 static stf_status main_inR1_outI2_tail(struct state *st, struct msg_digest *md,
 				       struct pluto_crypto_req *r)
 {
-	/* Build output packet HDR;KE;Ni */
-	zero(&reply_buffer);	/* redundant */
-	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
-		"reply packet");
-
 	/*
 	 * HDR out.
 	 * We can't leave this to comm_handle() because the isa_np
 	 * depends on the type of Auth (eventually).
 	 */
-	ikev1_echo_hdr(md, FALSE, ISAKMP_NEXT_KE);
+	ikev1_init_out_pbs_echo_hdr(md, FALSE, ISAKMP_NEXT_KE,
+				    &reply_stream, reply_buffer, sizeof(reply_buffer),
+				    &md->rbody);
 
 	/* KE out */
 	if (!ikev1_ship_KE(st, r, &st->st_gi,
@@ -1159,7 +1156,9 @@ stf_status main_inI2_outR2_tail(struct state *st, struct msg_digest *md,
 		st->st_connection->spd.that.ca.ptr != NULL;
 
 	/* HDR out */
-	ikev1_echo_hdr(md, FALSE, ISAKMP_NEXT_KE);
+	ikev1_init_out_pbs_echo_hdr(md, FALSE, ISAKMP_NEXT_KE,
+				    &reply_stream, reply_buffer, sizeof(reply_buffer),
+				    &md->rbody);
 
 	/* KE out */
 	passert(ikev1_ship_KE(st, r, &st->st_gr,
@@ -1739,7 +1738,9 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	 * If auth were PKE_AUTH or RPKE_AUTH, ISAKMP_NEXT_HASH would
 	 * be first payload.
 	 */
-	ikev1_echo_hdr(md, TRUE, ISAKMP_NEXT_ID);
+	ikev1_init_out_pbs_echo_hdr(md, TRUE, ISAKMP_NEXT_ID,
+				    &reply_stream, reply_buffer, sizeof(reply_buffer),
+				    &md->rbody);
 
 	auth_payload = st->st_oakley.auth == OAKLEY_PRESHARED_KEY ?
 		ISAKMP_NEXT_HASH : ISAKMP_NEXT_SIG;
