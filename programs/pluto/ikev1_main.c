@@ -1541,6 +1541,10 @@ static void main_inR2_outI3_cryptotail(struct state *st, struct msg_digest *md,
 	passert(st->st_suspended_md == md);
 	unset_suspended(st); /* no longer connected or suspended */
 
+	ikev1_init_out_pbs_echo_hdr(md, TRUE, ISAKMP_NEXT_ID,
+				    &reply_stream, reply_buffer, sizeof(reply_buffer),
+				    &md->rbody);
+
 	e = main_inR2_outI3_continue(md, r);
 
 	passert(md != NULL);	/* ??? how would this fail? */
