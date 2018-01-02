@@ -2215,14 +2215,6 @@ void process_packet_tail(struct msg_digest **mdp)
 		/* note: st ought to be NULL from here on */
 	}
 
-	/* possibly fill in hdr */
-	if (smc->first_out_payload != ISAKMP_NEXT_NONE) {
-		ikev1_init_out_pbs_echo_hdr(md, (smc->flags & SMF_OUTPUT_ENCRYPTED) != 0,
-					    smc->first_out_payload,
-					    &reply_stream, reply_buffer, sizeof(reply_buffer),
-					    &md->rbody);
-	}
-
 	complete_v1_state_transition(mdp, smc->processor(st, md));
 	/* our caller will release_any_md(mdp); */
 }
