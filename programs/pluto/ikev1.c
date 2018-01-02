@@ -469,10 +469,9 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 	 * ??? it is legal to have multiple SAs, but we don't support it yet.
 	 */
 	{ STATE_QUICK_I1, STATE_QUICK_I2,
-	  SMF_ALL_AUTH | SMF_INITIATOR | SMF_ENCRYPTED | SMF_REPLY
-	  , P(HASH) | P(SA) | P(NONCE), /* P(SA) | */ P(KE) | P(ID) | P(
-		  NATOA_RFC), PT(HASH)
-	  , EVENT_SA_REPLACE, quick_inR1_outI2 },
+	  SMF_ALL_AUTH | SMF_INITIATOR | SMF_ENCRYPTED | SMF_REPLY,
+	  P(HASH) | P(SA) | P(NONCE), /* P(SA) | */ P(KE) | P(ID) | P(NATOA_RFC), PT(NONE),
+	  EVENT_SA_REPLACE, quick_inR1_outI2 },
 
 	/* STATE_QUICK_R1: HDR*, HASH(3) --> done
 	 * Installs outbound IPsec SAs, routing, etc.
