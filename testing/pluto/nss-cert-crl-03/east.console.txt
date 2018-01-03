@@ -40,6 +40,7 @@ Libreswan test CA for mainca - Libreswan CRL
 east #
  ipsec auto --listcrls | grep issuer
 000 issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
+000        issuer:  'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 east #
 east #
  ../bin/check-for-core.sh
