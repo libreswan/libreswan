@@ -100,7 +100,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 
 static int build_ikev2_version(void);
 
-static bool ikev2_out_hash_v2n(u_int8_t np, struct msg_digest *md, lset_t policy)
+static bool ikev2_out_hash_v2n(u_int8_t np, pb_stream *rbody, lset_t policy)
 {
 	u_int16_t hash_algo_to_send;
 	chunk_t hash;
@@ -115,9 +115,9 @@ static bool ikev2_out_hash_v2n(u_int8_t np, struct msg_digest *md, lset_t policy
 	}
 
 	if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
-				PROTO_v2_RESERVED, &empty_chunk,
-				v2N_SIGNATURE_HASH_ALGORITHMS,&hash,
-				&md->rbody))
+		      PROTO_v2_RESERVED, &empty_chunk,
+		      v2N_SIGNATURE_HASH_ALGORITHMS, &hash,
+		      rbody))
 		return FALSE;
 	return TRUE;
 }
@@ -860,6 +860,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	}
 
 	/* HDR out */
+	pb_stream rbody;
 	{
 		struct isakmp_hdr hdr;
 
@@ -880,7 +881,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		}
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
-				&md->rbody)) {
+				&rbody)) {
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
@@ -898,14 +899,14 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 			   ISAKMP_PAYLOAD_NONCRITICAL,
 			 PROTO_v2_RESERVED,
 			 &empty_chunk,
-			 v2N_COOKIE, &st->st_dcookie, &md->rbody))
+			 v2N_COOKIE, &st->st_dcookie, &rbody))
 		{
 			return STF_INTERNAL_ERROR;
 		}
 	}
 	/* SA out */
 	{
-		u_char *sa_start = md->rbody.cur;
+		u_char *sa_start = rbody.cur;
 
 		if (!DBGP(IMPAIR_SEND_IKEv2_KE)) {
 			ikev2_proposals_from_alg_info_ike(c->name, "initial initiator",
@@ -918,7 +919,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 			 * header and not the proposal.  Hence the
 			 * NULL SPIs.
 			 */
-			bool ret = ikev2_emit_sa_proposals(&md->rbody,
+			bool ret = ikev2_emit_sa_proposals(&rbody,
 							   c->ike_proposals,
 							   (chunk_t*)NULL,
 							   ISAKMP_NEXT_v2KE);
@@ -934,7 +935,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		if (st->st_p1isa.ptr == NULL) {
 			/* no leak! (MUST be first time) */
 			clonetochunk(st->st_p1isa, sa_start,
-				     md->rbody.cur - sa_start,
+				     rbody.cur - sa_start,
 				     "SA in ikev2_parent_outI1_common");
 		}
 	}
@@ -943,7 +944,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 
 	/* send KE */
 	if (!justship_v2KE(&st->st_gi, st->st_oakley.ta_dh,
-			   &md->rbody, ISAKMP_NEXT_v2Ni))
+			   &rbody, ISAKMP_NEXT_v2Ni))
 		return STF_INTERNAL_ERROR;
 
 	/* send NONCE */
@@ -960,7 +961,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 			in.isag_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
 		}
 
-		if (!out_struct(&in, &ikev2_nonce_desc, &md->rbody, &pb) ||
+		if (!out_struct(&in, &ikev2_nonce_desc, &rbody, &pb) ||
 		    !out_chunk(st->st_ni, &pb, "IKEv2 nonce"))
 			return STF_INTERNAL_ERROR;
 
@@ -973,7 +974,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		if (!ship_v2N(ISAKMP_NEXT_v2N, ISAKMP_PAYLOAD_NONCRITICAL,
 			      PROTO_v2_RESERVED, &empty_chunk,
 			      v2N_IKEV2_FRAGMENTATION_SUPPORTED, &empty_chunk,
-			      &md->rbody))
+			      &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -983,14 +984,14 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		if (!ship_v2N(ISAKMP_NEXT_v2N, ISAKMP_PAYLOAD_NONCRITICAL,
 				PROTO_v2_RESERVED, &empty_chunk,
 				v2N_USE_PPK, &empty_chunk,
-				&md->rbody))
+				&rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
 	/* Send SIGNATURE_HASH_ALGORITHMS Notify payload */
 	if (!DBGP(IMPAIR_OMIT_HASH_NOTIFY_REQUEST)) {
 		if (c->policy & POLICY_RSASIG) {
-			if (!ikev2_out_hash_v2n(ISAKMP_NEXT_v2N, md, POLICY_RSASIG))
+			if (!ikev2_out_hash_v2n(ISAKMP_NEXT_v2N, &rbody, POLICY_RSASIG))
 				return STF_INTERNAL_ERROR;
 		}
 	} else {
@@ -1000,7 +1001,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	/* Send NAT-T Notify payloads */
 	{
 		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
-		if (!ikev2_out_nat_v2n(np, &md->rbody, md))
+		if (!ikev2_out_nat_v2n(np, &rbody, md))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1009,7 +1010,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		vids--;
 		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 
-		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &md->rbody,
+		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &rbody,
 				     pluto_vendorid, strlen(pluto_vendorid),
 				     "VID_LIBRESWANSELF"))
 			return STF_INTERNAL_ERROR;
@@ -1019,7 +1020,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		vids--;
 		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 
-		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &md->rbody,
+		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &rbody,
 				     "strongSwan", strlen("strongSwan"),
 				     "VID_STRONGSWAN"))
 			return STF_INTERNAL_ERROR;
@@ -1029,7 +1030,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		vids--;
 		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 
-		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &md->rbody,
+		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &rbody,
 				     "Opportunistic IPsec", strlen("Opportunistic IPsec"),
 				     "VID_OPPORTUNISTIC"))
 			return STF_INTERNAL_ERROR;
@@ -1037,7 +1038,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 
 	passert(vids == 0); /* Ensure we built a valid chain */
 
-	if (!close_message(&md->rbody, st))
+	if (!close_message(&rbody, st))
 		return STF_INTERNAL_ERROR;
 
 	close_output_pbs(&reply_stream);
@@ -1474,7 +1475,7 @@ static stf_status ikev2_parent_inI1outR1_tail(struct state *st, struct msg_diges
 
 	/* make sure HDR is at start of a clean buffer */
 	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
-		 "reply packet");
+		     "reply packet");
 
 	/* remember how many VID's we are going to send */
 	if (c->policy & POLICY_AUTH_NULL)
@@ -1485,6 +1486,7 @@ static stf_status ikev2_parent_inI1outR1_tail(struct state *st, struct msg_diges
 		vids++;
 
 	/* HDR out */
+	pb_stream rbody;
 	{
 		struct isakmp_hdr hdr = md->hdr;
 
@@ -1499,7 +1501,7 @@ static stf_status ikev2_parent_inI1outR1_tail(struct state *st, struct msg_diges
 		}
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
-				&md->rbody))
+				&rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1520,7 +1522,7 @@ static stf_status ikev2_parent_inI1outR1_tail(struct state *st, struct msg_diges
 		 * part of the proposal.  Hence the NULL SPI.
 		 */
 		passert(st->st_accepted_ike_proposal != NULL);
-		if (!ikev2_emit_sa_proposal(&md->rbody, st->st_accepted_ike_proposal,
+		if (!ikev2_emit_sa_proposal(&rbody, st->st_accepted_ike_proposal,
 					    NULL, next_payload_type)) {
 			DBG(DBG_CONTROL, DBG_log("problem emitting accepted proposal"));
 			return STF_INTERNAL_ERROR;
@@ -1548,7 +1550,7 @@ static stf_status ikev2_parent_inI1outR1_tail(struct state *st, struct msg_diges
 	unpack_KE_from_helper(st, r, &st->st_gr);
 	if (!justship_v2KE(&st->st_gr,
 			   r->pcr_d.kn.group,
-			   &md->rbody, ISAKMP_NEXT_v2Nr)) {
+			   &rbody, ISAKMP_NEXT_v2Nr)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -1568,7 +1570,7 @@ static stf_status ikev2_parent_inI1outR1_tail(struct state *st, struct msg_diges
 			in.isag_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
 		}
 
-		if (!out_struct(&in, &ikev2_nonce_desc, &md->rbody, &pb) ||
+		if (!out_struct(&in, &ikev2_nonce_desc, &rbody, &pb) ||
 		    !out_chunk(st->st_nr, &pb, "IKEv2 nonce"))
 			return STF_INTERNAL_ERROR;
 
@@ -1587,7 +1589,7 @@ static stf_status ikev2_parent_inI1outR1_tail(struct state *st, struct msg_diges
 		if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
 			      PROTO_v2_RESERVED, &empty_chunk,
 			      v2N_IKEV2_FRAGMENTATION_SUPPORTED, &empty_chunk,
-			      &md->rbody))
+			      &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1598,14 +1600,14 @@ static stf_status ikev2_parent_inI1outR1_tail(struct state *st, struct msg_diges
 		if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
 				PROTO_v2_RESERVED, &empty_chunk,
 				v2N_USE_PPK, &empty_chunk,
-				&md->rbody))
+				&rbody))
 			return STF_INTERNAL_ERROR;
 	 }
 
 	/* Send SIGNATURE_HASH_ALGORITHMS notification only if we received one */
 	if (!DBGP(IMPAIR_IGNORE_HASH_NOTIFY_REQUEST)) {
 		if (st->st_seen_hashnotify && (c->policy & POLICY_RSASIG)) {
-			if (!ikev2_out_hash_v2n(ISAKMP_NEXT_v2N, md, POLICY_RSASIG))
+			if (!ikev2_out_hash_v2n(ISAKMP_NEXT_v2N, &rbody, POLICY_RSASIG))
 				return STF_INTERNAL_ERROR;
 		}
 	} else {
@@ -1620,7 +1622,7 @@ static stf_status ikev2_parent_inI1outR1_tail(struct state *st, struct msg_diges
 		zero(&in);	/* OK: no pointers */
 		in.isag_np = np;
 		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-		if (!ikev2_out_nat_v2n(np, &md->rbody, md))
+		if (!ikev2_out_nat_v2n(np, &rbody, md))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1628,7 +1630,7 @@ static stf_status ikev2_parent_inI1outR1_tail(struct state *st, struct msg_diges
 	if (send_certreq) {
 		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 		DBG(DBG_CONTROL, DBG_log("going to send a certreq"));
-		ikev2_send_certreq(st, md, ORIGINAL_RESPONDER, np, &md->rbody);
+		ikev2_send_certreq(st, md, ORIGINAL_RESPONDER, np, &rbody);
 	}
 
 	/* From here on, only payloads left are Vendor IDs */
@@ -1636,7 +1638,7 @@ static stf_status ikev2_parent_inI1outR1_tail(struct state *st, struct msg_diges
 		vids--;
 		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 
-		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &md->rbody,
+		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &rbody,
 				     pluto_vendorid, strlen(pluto_vendorid),
 				     "VID_LIBRESWANSELF"))
 			return STF_INTERNAL_ERROR;
@@ -1646,7 +1648,7 @@ static stf_status ikev2_parent_inI1outR1_tail(struct state *st, struct msg_diges
 		vids--;
 		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 
-		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &md->rbody,
+		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &rbody,
 				     "strongSwan", strlen("strongSwan"),
 				     "VID_STRONGSWAN"))
 			return STF_INTERNAL_ERROR;
@@ -1656,7 +1658,7 @@ static stf_status ikev2_parent_inI1outR1_tail(struct state *st, struct msg_diges
 		vids--;
 		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 
-		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &md->rbody,
+		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &rbody,
 				     "Opportunistic IPsec", strlen("Opportunistic IPsec"),
 				     "VID_OPPORTUNISTIC"))
 			return STF_INTERNAL_ERROR;
@@ -1664,7 +1666,7 @@ static stf_status ikev2_parent_inI1outR1_tail(struct state *st, struct msg_diges
 
 	passert(vids == 0); /* Ensure we built a valid chain */
 
-	if (!close_message(&md->rbody, st))
+	if (!close_message(&rbody, st))
 		return STF_INTERNAL_ERROR;
 
 	close_output_pbs(&reply_stream);
@@ -2861,11 +2863,12 @@ static stf_status ikev2_record_fragment(struct msg_digest *md,
 	authstart = frag_stream.cur;
 
 	/* HDR out */
+	pb_stream rbody;
 	{
 		hdr->isa_np = ISAKMP_NEXT_v2SKF;
 
 		if (!out_struct(hdr, &isakmp_hdr_desc, &frag_stream,
-				&md->rbody))
+				&rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -2875,7 +2878,7 @@ static stf_status ikev2_record_fragment(struct msg_digest *md,
 	e.isaskf_number = count;
 	e.isaskf_total = total;
 
-	if (!out_struct(&e, &ikev2_skf_desc, &md->rbody, &e_pbs))
+	if (!out_struct(&e, &ikev2_skf_desc, &rbody, &e_pbs))
 		return STF_INTERNAL_ERROR;
 
 	/* insert IV */
@@ -2912,7 +2915,7 @@ static stf_status ikev2_record_fragment(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&e_pbs);
-		close_output_pbs(&md->rbody);
+		close_output_pbs(&rbody);
 		close_output_pbs(&frag_stream);
 
 		ret = ikev2_encrypt_msg(st, authstart,
@@ -3127,8 +3130,9 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 	}
 
+	pb_stream rbody;
 	if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
-			&md->rbody))
+			&rbody))
 		return STF_INTERNAL_ERROR;
 
 	/* insert an Encryption payload header */
@@ -3143,7 +3147,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	pb_stream e_pbs;
 
-	if (!out_struct(&e, &ikev2_sk_desc, &md->rbody, &e_pbs))
+	if (!out_struct(&e, &ikev2_sk_desc, &rbody, &e_pbs))
 		return STF_INTERNAL_ERROR;
 
 	/* insert IV */
@@ -3475,7 +3479,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		return STF_INTERNAL_ERROR;
 
 	close_output_pbs(&e_pbs);
-	close_output_pbs(&md->rbody);
+	close_output_pbs(&rbody);
 	close_output_pbs(&reply_stream);
 
 	if (should_fragment_ike_msg(cst, pbs_offset(&reply_stream), TRUE)) {
@@ -3924,6 +3928,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 			 "reply packet");
 
 		/* HDR out */
+		pb_stream rbody;
 		{
 			hdr = md->hdr; /* grab cookies */
 
@@ -3940,7 +3945,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 			}
 
 			if (!out_struct(&hdr, &isakmp_hdr_desc,
-					&reply_stream, &md->rbody))
+					&reply_stream, &rbody))
 				return STF_INTERNAL_ERROR;
 		}
 
@@ -3951,7 +3956,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 		e.isag_np = (notifies != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2IDr;
 		e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 
-		if (!out_struct(&e, &ikev2_sk_desc, &md->rbody, &e_pbs))
+		if (!out_struct(&e, &ikev2_sk_desc, &rbody, &e_pbs))
 			return STF_INTERNAL_ERROR;
 
 		/* insert IV */
@@ -4146,7 +4151,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&e_pbs);
-		close_output_pbs(&md->rbody);
+		close_output_pbs(&rbody);
 		close_output_pbs(&reply_stream);
 
 		if (should_fragment_ike_msg(cst, pbs_offset(&reply_stream),
@@ -5405,6 +5410,7 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 	authstart = reply_stream.cur;
 
 	/* HDR out Start assembling respone message */
+	pb_stream rbody;
 	{
 		struct isakmp_hdr hdr;
 
@@ -5434,14 +5440,14 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 			md->hdr = hdr; /* fill it with fake header ??? */
 		}
 		if (!out_struct(&hdr, &isakmp_hdr_desc,
-				&reply_stream, &md->rbody))
+				&reply_stream, &rbody))
 			return STF_FATAL;
 	}
 
 	/* insert an Encryption payload header */
 	e.isag_np = ISAKMP_NEXT_v2SA;
 	e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-	if (!out_struct(&e, &ikev2_sk_desc, &md->rbody, &e_pbs))
+	if (!out_struct(&e, &ikev2_sk_desc, &rbody, &e_pbs))
 		return STF_INTERNAL_ERROR;
 
 	/* IV */
@@ -5496,7 +5502,7 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&e_pbs);
-		close_output_pbs(&md->rbody);
+		close_output_pbs(&rbody);
 		close_output_pbs(&reply_stream);
 		ret = ikev2_encrypt_msg(pst, authstart, iv, encstart,
 					authloc, &e_pbs_cipher);
@@ -5963,6 +5969,8 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 	unsigned char *encstart = NULL;	/* initialized to silence GCC */
 	unsigned char *authstart = reply_stream.cur;
 
+	pb_stream rbody;
+
 	if (responding) {
 		/* make sure HDR is at start of a clean buffer */
 		init_out_pbs(&reply_stream, reply_buffer,
@@ -5993,7 +6001,7 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 				hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 
 			if (!out_struct(&hdr, &isakmp_hdr_desc,
-					&reply_stream, &md->rbody))
+					&reply_stream, &rbody))
 				return STF_INTERNAL_ERROR;
 		}
 
@@ -6016,7 +6024,7 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 
 			e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 
-			if (!out_struct(&e, &ikev2_sk_desc, &md->rbody, &e_pbs))
+			if (!out_struct(&e, &ikev2_sk_desc, &rbody, &e_pbs))
 				return STF_INTERNAL_ERROR;
 		}
 
@@ -6219,7 +6227,7 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 			passert(authloc != NULL);
 
 			close_output_pbs(&e_pbs);
-			close_output_pbs(&md->rbody);
+			close_output_pbs(&rbody);
 			close_output_pbs(&reply_stream);
 
 			stf_status ret =
