@@ -35,6 +35,7 @@ v3.23 (unrelased)
 * PAM: Don't cancel pam threads (unsupported!) but drop results instead [Andrew]
 * _updown: Fix resolv.conf handling (github #130) [Tuomo]
 * _updown: Fix POINTPOINT interfaces not to use nexthop [Tuomo]
+* _updown.netkey: Add source ip to dev lo by default [Tuomo]
 * Makefiles: Fix INC_MANDIR to be share/man and add FINALMANDIR [Tuomo]
 * packaging: Move debian/ to packaging ('make deb' still works) [Antony]
 * contrib: Added ipsec-dyndns to demonstrante how push an IPSECKEY [Paul]
