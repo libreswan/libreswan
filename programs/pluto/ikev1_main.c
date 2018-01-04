@@ -103,7 +103,6 @@ void main_outI1(int whack_sock,
 	)
 {
 	struct state *st;
-	struct msg_digest md; /* use reply/rbody found inside */
 
 	int numvidtosend = 1; /* we always send DPD VID */
 
@@ -162,6 +161,7 @@ void main_outI1(int whack_sock,
 		"reply packet");
 
 	/* HDR out */
+	pb_stream rbody;
 	{
 		struct isakmp_hdr hdr;
 
@@ -178,7 +178,7 @@ void main_outI1(int whack_sock,
 		}
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
-				&md.rbody)) {
+				&rbody)) {
 			reset_cur_state();
 			return;
 		}
@@ -186,11 +186,11 @@ void main_outI1(int whack_sock,
 
 	/* SA out */
 	{
-		u_char *sa_start = md.rbody.cur;
+		u_char *sa_start = rbody.cur;
 		enum next_payload_types_ikev1 np =
 			numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
-		if (!ikev1_out_sa(&md.rbody, IKEv1_oakley_sadb(policy, c),
+		if (!ikev1_out_sa(&rbody, IKEv1_oakley_sadb(policy, c),
 				  st, TRUE, FALSE, np)) {
 			libreswan_log("outsa fail");
 			reset_cur_state();
@@ -201,7 +201,7 @@ void main_outI1(int whack_sock,
 		passert(st->st_p1isa.ptr == NULL);
 
 		/* save initiator SA for later HASH */
-		clonetochunk(st->st_p1isa, sa_start, md.rbody.cur - sa_start,
+		clonetochunk(st->st_p1isa, sa_start, rbody.cur - sa_start,
 			"sa in main_outI1");
 	}
 
@@ -209,7 +209,7 @@ void main_outI1(int whack_sock,
 		int np = --numvidtosend >0 ?
 			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
-		if (!ikev1_out_generic_raw(np, &isakmp_vendor_id_desc, &md.rbody,
+		if (!ikev1_out_generic_raw(np, &isakmp_vendor_id_desc, &rbody,
 					pluto_vendorid, strlen(pluto_vendorid), "Pluto Vendor ID")) {
 			reset_cur_state();	/* ??? was missing */
 			return;
@@ -221,7 +221,7 @@ void main_outI1(int whack_sock,
 		int np = --numvidtosend > 0 ?
 			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
-		if (!out_vid(np, &md.rbody, VID_MISC_DPD)) {
+		if (!out_vid(np, &rbody, VID_MISC_DPD)) {
 			reset_cur_state();
 			return;
 		}
@@ -231,7 +231,7 @@ void main_outI1(int whack_sock,
 		int np = --numvidtosend > 0 ?
 			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
-		if (!out_vid(np, &md.rbody, VID_CISCO_UNITY)) {
+		if (!out_vid(np, &rbody, VID_CISCO_UNITY)) {
 			reset_cur_state();
 			return;
 		}
@@ -241,7 +241,7 @@ void main_outI1(int whack_sock,
 		int np = --numvidtosend > 0 ?
 			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
-		if (!out_vid(np, &md.rbody, VID_STRONGSWAN)) {
+		if (!out_vid(np, &rbody, VID_STRONGSWAN)) {
 			reset_cur_state();
 			return;
 		}
@@ -252,7 +252,7 @@ void main_outI1(int whack_sock,
 		int np = --numvidtosend > 0 ?
 			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
-		if (!out_vid(np, &md.rbody, VID_IKE_FRAGMENTATION)) {
+		if (!out_vid(np, &rbody, VID_IKE_FRAGMENTATION)) {
 			reset_cur_state();
 			return;
 		}
@@ -263,7 +263,7 @@ void main_outI1(int whack_sock,
 			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
 		/* Add supported NAT-Traversal VID */
-		if (!nat_traversal_insert_vid(np, &md.rbody, st)) {
+		if (!nat_traversal_insert_vid(np, &rbody, st)) {
 			reset_cur_state();
 			return;
 		}
@@ -273,7 +273,7 @@ void main_outI1(int whack_sock,
 		int np = --numvidtosend > 0 ?
 			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
-		if (!out_vid(np, &md.rbody, VID_MISC_XAUTH)) {
+		if (!out_vid(np, &rbody, VID_MISC_XAUTH)) {
 			reset_cur_state();
 			return;
 		}
@@ -285,7 +285,7 @@ void main_outI1(int whack_sock,
 			"payload alignment problem please check the code in main_inR1_outR2 (num=%d)",
 			numvidtosend);
 
-	if (!close_message(&md.rbody, st))
+	if (!close_message(&rbody, st))
 		return;
 
 	close_output_pbs(&reply_stream);
