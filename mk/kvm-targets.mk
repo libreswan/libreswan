@@ -333,12 +333,16 @@ kvm-keys-up-to-date:
 # invoked by testing/pluto/Makefile which relies on old domain
 # configurations.
 #
-# Make certain everything is shutdown.
+# Make certain everything is shutdown.  Can't depend on the phony
+# target kvm-shutdown-local-domains as that triggers an unconditional
+# rebuild.  Instead invoke that rule inline.
 
-$(KVM_KEYS): testing/x509/dist_certs.py $(KVM_KEYS_SCRIPT) kvm-shutdown-local-domains # | $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
+$(KVM_KEYS): testing/x509/dist_certs.py $(KVM_KEYS_SCRIPT) # | $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
 	$(call check-kvm-domain,$(KVM_BUILD_DOMAIN))
 	$(call check-kvm-entropy)
 	$(call check-kvm-qemu-directory)
+	: invoke phony target to shut things down
+	$(MAKE) kvm-shutdown-local-domains
 	$(MAKE) kvm-keys-clean
 	$(KVM_KEYS_SCRIPT) $(KVM_BUILD_DOMAIN) testing/x509
 	: Also regenerate the DNSSEC keys -- uses host
