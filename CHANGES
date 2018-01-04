@@ -39,7 +39,7 @@ v3.23 (unrelased)
 * packaging: Move debian/ to packaging ('make deb' still works) [Antony]
 * contrib: Added ipsec-dyndns to demonstrante how push an IPSECKEY [Paul]
 * Bugtracker bugs fixed:
-   #313: hangesource in updown_klips doesn't respect PLUTO_METRIC [Wolfgang]
+   #313: changesource in updown_klips doesn't respect PLUTO_METRIC [Wolfgang]
    #314: IPv6 default route is deleted by mistake [Wolfgang]
 
 v3.22 (October 22, 2017)
