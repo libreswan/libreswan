@@ -1,7 +1,7 @@
 /*
  * Retransmits, for libreswan
  *
- * Copyright (C) 2017 Andrew Cagney
+ * Copyright (C) 2017-2018 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -27,7 +27,7 @@
 
 #include "log.h"
 
-static size_t prefix(struct lswlog *buf, struct state *st)
+size_t lswlog_retransmit_prefix(struct lswlog *buf, struct state *st)
 {
 	return lswlogf(buf, "#%ld %s: retransmits: ",
 		       st->st_serialno, st->st_state_name);
@@ -87,7 +87,7 @@ bool count_duplicate(struct state *st, unsigned long limit)
 		double_delay(rt, nr_retransmits);
 		rt->nr_duplicate_replies++;
 		LSWDBGP(DBG_RETRANSMITS, buf) {
-			prefix(buf, st);
+			lswlog_retransmit_prefix(buf, st);
 			lswlogf(buf, "duplicate reply %lu + retransmit %lu of duplicate limit %lu (retransmit limit %lu)",
 			       rt->nr_duplicate_replies, rt->nr_retransmits,
 			       limit, rt->limit);
@@ -95,7 +95,7 @@ bool count_duplicate(struct state *st, unsigned long limit)
 		return true;
 	} else {
 		LSWDBGP(DBG_RETRANSMITS, buf) {
-			prefix(buf, st);
+			lswlog_retransmit_prefix(buf, st);
 			lswlogf(buf, "total duplicate replies (%lu) + retransmits (%lu) exceeds duplicate limit %lu (retransmit limit %lu)",
 				rt->nr_duplicate_replies, +rt->nr_retransmits,
 				limit, rt->limit);
@@ -114,7 +114,7 @@ void clear_retransmits(struct state *st)
 	rt->start = monotime_epoch;
 	rt->timeout = deltatime(0);
 	LSWDBGP(DBG_RETRANSMITS, buf) {
-		prefix(buf, st);
+		lswlog_retransmit_prefix(buf, st);
 		lswlogs(buf, "cleared");
 	}
 }
@@ -165,7 +165,7 @@ void start_retransmits(struct state *st, enum event_type type)
 	rt->delays = rt->delay;
 	event_schedule(rt->type, rt->delay, st);
 	LSWDBGP(DBG_RETRANSMITS, buf) {
-		prefix(buf, st);
+		lswlog_retransmit_prefix(buf, st);
 		lswlogs(buf, "first event in ");
 		lswlog_deltatime(buf, rt->delay);
 		lswlogs(buf, " seconds; timeout in ");
