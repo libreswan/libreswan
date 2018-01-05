@@ -642,7 +642,6 @@ kvmplutotest    algo-pluto-07          good
 kvmplutotest    algo-pluto-08          good
 kvmplutotest    algo-pluto-09          good
 kvmplutotest    algo-pluto-10          good
-kvmplutotest    algo-pluto-11          good
 kvmplutotest    algo-pluto-12-aes-default	good
 kvmplutotest    algo-pluto-13-invalid-3des	good
 kvmplutotest    algo-pluto-14-aes_ctr	good
@@ -749,6 +748,7 @@ kvmplutotest	interop-ikev2-strongswan-11-nat-initiator	good
 kvmplutotest	interop-ikev2-strongswan-12-nat-responder	good
 kvmplutotest	interop-ikev2-strongswan-13-ah-initiator	good
 kvmplutotest	interop-ikev2-strongswan-14-delete-sa		good
+kvmplutotest	interop-ikev2-strongswan-14-delete-sa-shared	wip
 kvmplutotest	interop-ikev2-strongswan-15-child-sa		good
 kvmplutotest	interop-ikev2-strongswan-15-child-sa-responder  good
 kvmplutotest	interop-ikev2-strongswan-17-delete-sa-responder good

@@ -295,10 +295,9 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 	 *	    --> HDR*, HASH_I
 	 */
 	{ STATE_MAIN_I2, STATE_MAIN_I3,
-	  SMF_PSK_AUTH | SMF_DS_AUTH | SMF_INITIATOR | SMF_OUTPUT_ENCRYPTED |
-		SMF_REPLY
-	  , P(KE) | P(NONCE), P(VID) | P(CR) | P(NATD_RFC), PT(ID)
-	  , EVENT_v1_RETRANSMIT, main_inR2_outI3 },
+	  SMF_PSK_AUTH | SMF_DS_AUTH | SMF_INITIATOR | SMF_OUTPUT_ENCRYPTED | SMF_REPLY,
+	  P(KE) | P(NONCE), P(VID) | P(CR) | P(NATD_RFC), PT(NONE),
+	  EVENT_v1_RETRANSMIT, main_inR2_outI3 },
 
 	{ STATE_MAIN_I2, STATE_UNDEFINED,
 	  SMF_PKE_AUTH | SMF_INITIATOR | SMF_OUTPUT_ENCRYPTED | SMF_REPLY,
@@ -469,10 +468,9 @@ static const struct state_v1_microcode v1_state_microcode_table[] = {
 	 * ??? it is legal to have multiple SAs, but we don't support it yet.
 	 */
 	{ STATE_QUICK_I1, STATE_QUICK_I2,
-	  SMF_ALL_AUTH | SMF_INITIATOR | SMF_ENCRYPTED | SMF_REPLY
-	  , P(HASH) | P(SA) | P(NONCE), /* P(SA) | */ P(KE) | P(ID) | P(
-		  NATOA_RFC), PT(HASH)
-	  , EVENT_SA_REPLACE, quick_inR1_outI2 },
+	  SMF_ALL_AUTH | SMF_INITIATOR | SMF_ENCRYPTED | SMF_REPLY,
+	  P(HASH) | P(SA) | P(NONCE), /* P(SA) | */ P(KE) | P(ID) | P(NATOA_RFC), PT(NONE),
+	  EVENT_SA_REPLACE, quick_inR1_outI2 },
 
 	/* STATE_QUICK_R1: HDR*, HASH(3) --> done
 	 * Installs outbound IPsec SAs, routing, etc.
@@ -950,14 +948,19 @@ static stf_status informational(struct state *st UNUSED, struct msg_digest *md)
 	}
 }
 
-/* create output HDR as replica of input HDR - IKEv1 only */
-void ikev1_echo_hdr(struct msg_digest *md, bool enc, u_int8_t np)
+/*
+ * create output HDR as replica of input HDR - IKEv1 only; return the body
+ */
+void ikev1_init_out_pbs_echo_hdr(struct msg_digest *md, bool enc, u_int8_t np,
+				 pb_stream *output_stream, uint8_t *output_buffer,
+				 size_t sizeof_output_buffer,
+				 pb_stream *rbody)
 {
 	struct isakmp_hdr hdr = md->hdr; /* mostly same as incoming header */
 
 	/* make sure we start with a clean buffer */
-	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
-		 "reply packet");
+	init_out_pbs(output_stream, output_buffer, sizeof_output_buffer,
+		     "reply packet");
 
 	hdr.isa_flags = 0; /* zero all flags */
 	if (enc)
@@ -970,7 +973,7 @@ void ikev1_echo_hdr(struct msg_digest *md, bool enc, u_int8_t np)
 	/* there is only one IKEv1 version, and no new one will ever come - no need to set version */
 	hdr.isa_np = np;
 	/* surely must have room and be well-formed */
-	passert(out_struct(&hdr, &isakmp_hdr_desc, &reply_stream, &md->rbody));
+	passert(out_struct(&hdr, &isakmp_hdr_desc, output_stream, rbody));
 }
 
 /*
@@ -2213,9 +2216,12 @@ void process_packet_tail(struct msg_digest **mdp)
 	}
 
 	/* possibly fill in hdr */
-	if (smc->first_out_payload != ISAKMP_NEXT_NONE)
-		ikev1_echo_hdr(md, (smc->flags & SMF_OUTPUT_ENCRYPTED) != 0,
-			 smc->first_out_payload);
+	if (smc->first_out_payload != ISAKMP_NEXT_NONE) {
+		ikev1_init_out_pbs_echo_hdr(md, (smc->flags & SMF_OUTPUT_ENCRYPTED) != 0,
+					    smc->first_out_payload,
+					    &reply_stream, reply_buffer, sizeof(reply_buffer),
+					    &md->rbody);
+	}
 
 	complete_v1_state_transition(mdp, smc->processor(st, md));
 	/* our caller will release_any_md(mdp); */

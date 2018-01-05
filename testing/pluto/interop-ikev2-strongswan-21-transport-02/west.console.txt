@@ -26,7 +26,7 @@ west #
 134 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=sha1_96 prf=sha group=MODP2048}
 002 "westnet-eastnet-ikev2" #2: suppressing retransmit because IMPAIR_RETRANSMITS is set.
 002 "westnet-eastnet-ikev2" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
-002 "westnet-eastnet-ikev2" #2: local policy requires Transport Mode but peer requires required Tunnel Mode
+003 "westnet-eastnet-ikev2" #2: local policy requires Transport Mode but peer requires required Tunnel Mode
 214 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: v2N_NO_PROPOSAL_CHOSEN
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254

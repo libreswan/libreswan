@@ -1,4 +1,4 @@
-grep inline /tmp/pluto.log
+grep "done inline" /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

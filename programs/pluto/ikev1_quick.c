@@ -1570,7 +1570,9 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 	 */
 
 	/* HDR* out */
-	ikev1_echo_hdr(md, TRUE, ISAKMP_NEXT_HASH);
+	ikev1_init_out_pbs_echo_hdr(md, TRUE, ISAKMP_NEXT_HASH,
+				    &reply_stream, reply_buffer, sizeof(reply_buffer),
+				    &md->rbody);
 
 	/* HASH(2) out -- first pass */
 	START_HASH_PAYLOAD(md->rbody, ISAKMP_NEXT_SA);
@@ -1804,6 +1806,10 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 {
 	struct state *st = md->st;
 	struct connection *c = st->st_connection;
+
+	ikev1_init_out_pbs_echo_hdr(md, TRUE, ISAKMP_NEXT_HASH,
+				    &reply_stream, reply_buffer, sizeof(reply_buffer),
+				    &md->rbody);
 
 	if (st->st_pfs_group != NULL && r != NULL)
 		finish_dh_secret(st, r);

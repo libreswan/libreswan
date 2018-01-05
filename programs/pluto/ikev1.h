@@ -8,7 +8,10 @@
 
 extern void init_ikev1(void);
 
-extern void ikev1_echo_hdr(struct msg_digest *md, bool enc, u_int8_t np);
+void ikev1_init_out_pbs_echo_hdr(struct msg_digest *md, bool enc, u_int8_t np,
+				 pb_stream *output_stream, uint8_t *output_buffer,
+				 size_t sizeof_output_buffer,
+				 pb_stream *rbody);
 
 extern void complete_v1_state_transition(struct msg_digest **mdp,
 					 stf_status result);
