@@ -1,0 +1,192 @@
+/testing/guestbin/swan-prep
+west #
+ # confirm that the network is alive
+west #
+ ../../pluto/bin/wait-until-alive 192.1.2.23
+destination 192.1.2.23 is alive
+west #
+ # make sure that clear text does not get through
+west #
+ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
+west #
+ iptables -A INPUT -i eth1 -s 10.0.2.0/24 -j DROP
+west #
+ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ # remove this address from eth0. It will come back on vti
+west #
+ ip addr show dev eth0 | grep 192.0.1.254 && ip addr del 192.0.1.254/24 dev eth0
+    inet 192.0.1.254/24 brd 192.0.1.255 scope global eth0
+west #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec auto --add westnet-eastnet-vti-01
+002 added connection description "westnet-eastnet-vti-01"
+west #
+ ipsec auto --add westnet-eastnet-vti-02
+002 added connection description "westnet-eastnet-vti-02"
+west #
+ # remove the regular route for 192.0.2.0/24
+west #
+ ip route del 192.0.2.0/24
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up  westnet-eastnet-vti-01
+002 "westnet-eastnet-vti-01" #1: initiating v2 parent SA
+133 "westnet-eastnet-vti-01" #1: STATE_PARENT_I1: initiate
+133 "westnet-eastnet-vti-01" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+134 "westnet-eastnet-vti-01" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
+002 "westnet-eastnet-vti-01" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+002 "westnet-eastnet-vti-01" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "westnet-eastnet-vti-01" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+west #
+ ipsec auto --up  westnet-eastnet-vti-02
+139 "westnet-eastnet-vti-02" #3: STATE_V2_CREATE_I: sent IPsec Child req wait response
+002 "westnet-eastnet-vti-02" #3: negotiated connection [10.0.1.0-10.0.1.255:0-65535 0] -> [10.0.2.0-10.0.2.255:0-65535 0]
+004 "westnet-eastnet-vti-02" #3: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=passive}
+west #
+ ip tunnel add west-east mode vti remote 192.1.2.23 local 192.1.2.45 ikey 20 okey 21
+west #
+ ip link set west-east up
+west #
+ ip addr add 192.0.1.254 dev west-east
+west #
+ ip addr add 10.0.1.254 dev west-east
+west #
+ sysctl -w net.ipv4.conf.west-east.disable_policy=1
+net.ipv4.conf.west-east.disable_policy = 1
+west #
+ sysctl -w net.ipv4.conf.west-east.rp_filter=0
+net.ipv4.conf.west-east.rp_filter = 0
+west #
+ sysctl -w net.ipv4.conf.west-east.forwarding=1
+net.ipv4.conf.west-east.forwarding = 1
+west #
+ ip route add 192.0.2.0/24 dev west-east
+west #
+ ip route add 10.0.2.0/24 dev west-east
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ping -n -c 4 -I 10.0.1.254 10.0.2.254
+PING 10.0.2.254 (10.0.2.254) from 10.0.1.254 : 56(84) bytes of data.
+64 bytes from 10.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 10.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 10.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 10.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 10.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ipsec whack --trafficstatus
+006 #2: "westnet-eastnet-vti-01", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+006 #3: "westnet-eastnet-vti-02", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+west #
+ echo done
+done
+west #
+ grep -v -P "\t0$" /proc/net/xfrm_stat
+west #
+ ip addr show
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default 
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether 12:00:00:ab:cd:ff brd ff:ff:ff:ff:ff:ff
+3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether 12:00:00:64:64:45 brd ff:ff:ff:ff:ff:ff
+    inet 192.1.2.45/24 brd 192.1.2.255 scope global eth1
+       valid_lft forever preferred_lft forever
+4: eth2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether 12:00:00:32:64:45 brd ff:ff:ff:ff:ff:ff
+    inet 192.9.4.45/24 brd 192.9.4.255 scope global eth2
+       valid_lft forever preferred_lft forever
+5: ip_vti0@NONE: <NOARP> mtu 1332 qdisc noop state DOWN group default 
+    link/ipip 0.0.0.0 brd 0.0.0.0
+6: west-east@NONE: <POINTOPOINT,NOARP,UP,LOWER_UP> mtu 1332 qdisc noqueue state UNKNOWN group default 
+    link/ipip 192.1.2.45 peer 192.1.2.23
+    inet 192.0.1.254/32 scope global west-east
+       valid_lft forever preferred_lft forever
+    inet 10.0.1.254/32 scope global west-east
+       valid_lft forever preferred_lft forever
+west #
+ ip link show
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default 
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP mode DEFAULT group default qlen 1000
+    link/ether 12:00:00:ab:cd:ff brd ff:ff:ff:ff:ff:ff
+3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP mode DEFAULT group default qlen 1000
+    link/ether 12:00:00:64:64:45 brd ff:ff:ff:ff:ff:ff
+4: eth2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP mode DEFAULT group default qlen 1000
+    link/ether 12:00:00:32:64:45 brd ff:ff:ff:ff:ff:ff
+5: ip_vti0@NONE: <NOARP> mtu 1332 qdisc noop state DOWN mode DEFAULT group default 
+    link/ipip 0.0.0.0 brd 0.0.0.0
+6: west-east@NONE: <POINTOPOINT,NOARP,UP,LOWER_UP> mtu 1332 qdisc noqueue state UNKNOWN mode DEFAULT group default 
+    link/ipip 192.1.2.45 peer 192.1.2.23
+west #
+ ip route show
+default via 192.1.2.254 dev eth1 
+10.0.2.0/24 dev west-east  scope link 
+192.0.2.0/24 dev west-east  scope link 
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45 
+192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45 
+west #
+ ip xfrm state
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	aead rfc4106(gcm(aes)) 0xKEY
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	aead rfc4106(gcm(aes)) 0xKEY
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	aead rfc4106(gcm(aes)) 0xKEY
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	aead rfc4106(gcm(aes)) 0xKEY
+west #
+ ip xfrm pol
+src 10.0.1.0/24 dst 10.0.2.0/24 
+	dir out priority 2344 ptype main 
+	mark 21/0xffffffff
+	tmpl src 192.1.2.45 dst 192.1.2.23
+src 10.0.2.0/24 dst 10.0.1.0/24 
+	dir fwd priority 2344 ptype main 
+	mark 20/0xffffffff
+	tmpl src 192.1.2.23 dst 192.1.2.45
+src 10.0.2.0/24 dst 10.0.1.0/24 
+	dir in priority 2344 ptype main 
+	mark 20/0xffffffff
+	tmpl src 192.1.2.23 dst 192.1.2.45
+src 192.0.1.0/24 dst 192.0.2.0/24 
+	dir out priority 2344 ptype main 
+	mark 21/0xffffffff
+	tmpl src 192.1.2.45 dst 192.1.2.23
+src 192.0.2.0/24 dst 192.0.1.0/24 
+	dir fwd priority 2344 ptype main 
+	mark 20/0xffffffff
+	tmpl src 192.1.2.23 dst 192.1.2.45
+src 192.0.2.0/24 dst 192.0.1.0/24 
+	dir in priority 2344 ptype main 
+	mark 20/0xffffffff
+	tmpl src 192.1.2.23 dst 192.1.2.45
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
