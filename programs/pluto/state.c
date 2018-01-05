@@ -2013,7 +2013,7 @@ void fmt_state(struct state *st, const monotime_t now,
 	}
 
 	snprintf(state_buf, state_buf_len,
-		 "#%lu: \"%s\"%s:%u %s (%s); %s in %zds%s%s%s%s; %s; %s",
+		 "#%lu: \"%s\"%s:%u %s (%s); %s in %jds%s%s%s%s; %s; %s",
 		 st->st_serialno,
 		 c->name, inst,
 		 st->st_remoteport,
