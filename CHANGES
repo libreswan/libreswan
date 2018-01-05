@@ -17,7 +17,6 @@ v3.23 (unrelased)
 * pluto: STF_INLINE, STF_TOOMUCHCRYPTO no longer needed in helpers [Andrew]
 * pluto: Replace socket queues with a simple queue and mutex+cont [Andrew]
 * XFRM: XFRM_MIGRATE support, used for MOBIKE [Antony]
-  (requires kernel 4.14, 4.15rc1+ for AES_GCM support)
 * XFRM: Listen to NETLINK_ROUTE messages from kernel for MOBIKE [Antony]
 * XFRM: Fix unique marks accidentally setting -1 instead of random [Paul]
 * XFRM: Only install IPv6 holes when system has configured IPv6 [Antony]
