@@ -111,7 +111,7 @@ static size_t log_backlog(struct lswlog *buf, void *data)
 		size += lswlogf(buf, "no work-order");
 	} else {
 		struct pluto_crypto_req_cont *cn = data;
-		size += lswlogf(buf, "work-order %zu", (uintmax_t)cn->pcrc_id);
+		size += lswlogf(buf, "work-order %ju", (uintmax_t)cn->pcrc_id);
 		if (cn->pcrc_serialno != SOS_NOBODY) {
 			size += lswlogf(buf, " state #%lu", cn->pcrc_serialno);
 		}

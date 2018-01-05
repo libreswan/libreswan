@@ -417,7 +417,7 @@ static void liveness_check(struct state *st)
 		if (pst->st_pend_liveness &&
 		    deltatime_cmp(monotimediff(tm, last_liveness), timeout) >= 0) {
 			LSWLOG(buf) {
-				lswlogf(buf, "liveness_check - peer %s has not responded in %zd seconds, with a timeout of ",
+				lswlogf(buf, "liveness_check - peer %s has not responded in %jd seconds, with a timeout of ",
 					log_ip ? that_ip : "<ip address>",
 					deltasecs(monotimediff(tm, last_liveness)));
 				lswlog_deltatime(buf, timeout);
