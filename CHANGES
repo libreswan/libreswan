@@ -16,6 +16,7 @@ v3.23 (unrelased)
 * pluto: Pull latest kernel traffic counters before logging/deleting SA [Paul]
 * pluto: STF_INLINE, STF_TOOMUCHCRYPTO no longer needed in helpers [Andrew]
 * pluto: Replace socket queues with a simple queue and mutex+cont [Andrew]
+* pluto: Do not send DPD/liveness probes for replaced inactive IPsec SAs [Paul]
 * XFRM: XFRM_MIGRATE support, used for MOBIKE [Antony]
 * XFRM: Listen to NETLINK_ROUTE messages from kernel for MOBIKE [Antony]
 * XFRM: Fix unique marks accidentally setting -1 instead of random [Paul]
