@@ -5943,20 +5943,17 @@ stf_status ikev2_send_informational(struct state *st, struct state *pst,
 	pb_stream rbody;
 	pb_stream reply_stream;
 
-	stf_status (*add_payloads)(struct state *st, pb_stream *pbs);
-
 	switch (v2N) {
 	case v2N_NOTHING_WRONG:
 		/* This is an empty informational exchange (A.K.A liveness check) */
 		e.isag_np = ISAKMP_NEXT_v2NONE;
-		add_payloads = NULL;
 		break;
 
 	case v2N_UPDATE_SA_ADDRESSES:
 		e.isag_np = ISAKMP_NEXT_v2N;
-		add_payloads = add_mobike_payloads;
 		break;
 
+	/* PAUL: We don't use this function for sending DELETE payloads? */
 	/*  e.isag_np = ISAKMP_NEXT_v2D; */
 
 	default:
@@ -6012,8 +6009,13 @@ stf_status ikev2_send_informational(struct state *st, struct state *pst,
 	e_pbs_cipher.cur = e_pbs.cur;
 	encstart = e_pbs_cipher.cur;
 
-	if (add_payloads != NULL)
-		add_payloads(st, &e_pbs_cipher);
+	if (v2N == v2N_UPDATE_SA_ADDRESSES) {
+		stf_status retmob = add_mobike_payloads(st, &e_pbs_cipher);
+
+		if (retmob != STF_OK) {
+			return  retmob;
+		}
+	}
 
 	if (!ikev2_padup_pre_encrypt(st, &e_pbs_cipher))
 		return STF_INTERNAL_ERROR;
