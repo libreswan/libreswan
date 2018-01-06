@@ -5706,10 +5706,8 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		 */
 		int pli = 0;	/* payload index */
 
-		for (p = md->chain[ISAKMP_NEXT_v2D]; p != NULL;
-		     p = p->next) {
-			struct ikev2_delete *v2del =
-				&p->payload.v2delete;
+		for (p = md->chain[ISAKMP_NEXT_v2D]; p != NULL; p = p->next) {
+			struct ikev2_delete *v2del = &p->payload.v2delete;
 
 			switch (v2del->isad_protoid) {
 			case PROTO_ISAKMP:
@@ -5911,7 +5909,7 @@ stf_status ikev2_send_livenss_probe(struct state *st)
 	return e;
 }
 
-static stf_status add_mobike_payloads(struct state *st UNUSED, pb_stream *pbs)
+static stf_status add_mobike_payloads(struct state *st, pb_stream *pbs)
 {
 	if (!ship_v2N(ISAKMP_NEXT_v2N, ISAKMP_PAYLOAD_NONCRITICAL,
 				PROTO_v2_RESERVED, &empty_chunk,
@@ -5933,7 +5931,7 @@ stf_status ikev2_send_informational(struct state *st, struct state *pst,
 {
 
 	/* buffer in which to marshal our informational message.
-	 * We don't use reply_buffer/reply_stream because they might be in use.
+	 * We don't use reply_buffer/reply_stream because it might be in use.
 	 */
 	u_char buffer[1024];	/* ??? large enough for any informational? */
 	unsigned char *authstart;
