@@ -5625,8 +5625,18 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		{
 			struct ikev2_generic e;
 
-			e.isag_np = (del_ike || ndp != 0) ? ISAKMP_NEXT_v2D :
-				send_mobike_resp ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE;
+			/*
+			 * IKE SA DELETE response is NONE
+			 * IPsec SA DELETE response is DELETE
+			 * Neither can mix with MOBIKE
+			 */
+			if (del_ike)
+				e.isag_np = ISAKMP_NEXT_v2NONE;
+			else if (ndp != 0)
+				e.isag_np = ISAKMP_NEXT_v2D;
+			else if (send_mobike_resp)
+				e.isag_np = ISAKMP_NEXT_v2N;
+			else e.isag_np = ISAKMP_NEXT_v2NONE;
 
 			e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 
