@@ -1,0 +1,144 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec auto --add west-east
+002 added connection description "west-east"
+west #
+ echo "initdone"
+initdone
+west #
+ #!/bin/sh
+west #
+ # we can transmit in the clear
+west #
+ ping -q -c 8 -n 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
+--- 192.1.2.23 ping statistics ---
+8 packets transmitted, 8 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ # bring up the tunnel
+west #
+ ipsec auto --up west-east
+002 "west-east" #1: initiating v2 parent SA
+133 "west-east" #1: STATE_PARENT_I1: initiate
+133 "west-east" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+134 "west-east" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
+002 "west-east" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+002 "west-east" #2: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
+004 "west-east" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=active}
+west #
+ # use the tunnel
+west #
+ ping -q -c 8 -n 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
+--- 192.1.2.23 ping statistics ---
+8 packets transmitted, 8 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ # show the tunnel!
+west #
+ echo "Tunnel should be up"
+Tunnel should be up
+west #
+ ipsec whack --trafficstatus
+006 #2: "west-east", type=ESP, add_time=1234567890, inBytes=672, outBytes=672, id='@east'
+west #
+ # Wait more then 15 seconds while ensuring there is traffic
+west #
+ sleep 1
+west #
+ ping -q -c 1 -n 192.1.2.23 >/dev/null
+west #
+ sleep 1
+west #
+ ping -q -c 1 -n 192.1.2.23 >/dev/null
+west #
+ sleep 1
+west #
+ ping -q -c 1 -n 192.1.2.23 >/dev/null
+west #
+ sleep 1
+west #
+ ping -q -c 1 -n 192.1.2.23 >/dev/null
+west #
+ sleep 1
+west #
+ ping -q -c 1 -n 192.1.2.23 >/dev/null
+west #
+ sleep 1
+west #
+ ping -q -c 1 -n 192.1.2.23 >/dev/null
+west #
+ sleep 1
+west #
+ ping -q -c 1 -n 192.1.2.23 >/dev/null
+west #
+ sleep 1
+west #
+ ping -q -c 1 -n 192.1.2.23 >/dev/null
+west #
+ sleep 1
+west #
+ ping -q -c 1 -n 192.1.2.23 >/dev/null
+west #
+ sleep 1
+west #
+ ping -q -c 1 -n 192.1.2.23 >/dev/null
+west #
+ # force a rekey
+west #
+ ipsec auto --up west-east
+139 "west-east" #3: STATE_V2_CREATE_I: sent IPsec Child req wait response
+002 "west-east" #3: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
+004 "west-east" #3: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 NATOA=none NATD=none DPD=active}
+west #
+ sleep 1
+west #
+ ping -q -c 1 -n 192.1.2.23 >/dev/null
+west #
+ sleep 1
+west #
+ ping -q -c 1 -n 192.1.2.23 >/dev/null
+west #
+ sleep 1
+west #
+ ping -q -c 1 -n 192.1.2.23 >/dev/null
+west #
+ sleep 1
+west #
+ ping -q -c 1 -n 192.1.2.23 >/dev/null
+west #
+ sleep 1
+west #
+ ping -q -c 1 -n 192.1.2.23 >/dev/null
+west #
+ sleep 1
+west #
+ ping -q -c 1 -n 192.1.2.23 >/dev/null
+west #
+ sleep 1
+west #
+ ping -q -c 1 -n 192.1.2.23 >/dev/null
+west #
+ sleep 1
+west #
+ ping -q -c 1 -n 192.1.2.23 >/dev/null
+west #
+ echo done
+done
+west #
+ # Confirm expired IPsec SA will not trigger a liveness probe
+west #
+ grep "liveness: no need to send"  /tmp/pluto.log
+| liveness: no need to send or schedule DPD for replaced IPsec SA
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
