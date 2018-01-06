@@ -5593,9 +5593,8 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 			 sizeof(reply_buffer),
 			 "information exchange reply packet");
 
-		DBG(DBG_CONTROLMORE | DBG_DPD,
-		    DBG_log("updating st_last_liveness, no pending_liveness"));
-
+		/* authenticated decrypted response - It's alive, alive! */
+		DBG(DBG_DPD, DBG_log("Received an INFORMATIONAL response, updating st_last_liveness, no pending_liveness"));
 		st->st_last_liveness = mononow();
 		st->st_pend_liveness = FALSE;
 
