@@ -5455,6 +5455,9 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 {
 	struct payload_digest *p;
 	bool send_mobike_resp = FALSE;
+	int ndp = 0;	/* number Delete payloads for IPsec protocols */
+	bool del_ike = FALSE;	/* any IKE SA Deletions? */
+
 	chunk_t cookie2 = empty_chunk;
 
 	/* Are we responding (as opposed to processing a response)? */
@@ -5486,19 +5489,24 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 	}
 
 	/*
-	 * Process NOTITY payloads
-	 * Since DELETE payloads should not be mixed with NOTIFY payloads,
-	 * we skip processing notify if we are deleting.
+	 * Process NOTITY payloads - ignore MOBIKE when deleting
 	 */
-	if (md->chain[ISAKMP_NEXT_v2D] != NULL &&
-		md->chain[ISAKMP_NEXT_v2N] != NULL) {
+	if (md->chain[ISAKMP_NEXT_v2D] == NULL) {
 
-		loglog(RC_LOG_SERIOUS, "Received INFORMATIONAL with both DELETE and NOTIFY payloads. Ignored notify payloads");
-	} else if (responding && process_mobike_req(md, &send_mobike_resp, &cookie2)) {
-		/* MOBIKE request processed */
-	} else if (!responding && process_mobike_resp(md)) {
-		/* lets migrage the kernel SA */
-	}
+		if (responding) {
+			if (process_mobike_req(md, &send_mobike_resp, &cookie2)) {
+				libreswan_log("MOBIKE request: updating IPsec SA by request");
+			} else {
+				DBG(DBG_CONTROL, DBG_log("MOBIKE request: not updating IPsec SA"));
+			}
+		} else {
+			if (process_mobike_resp(md)) {
+				libreswan_log("MOBIKE response: updating IPsec SA");
+			} else {
+				DBG(DBG_CONTROL, DBG_log("MOBIKE response: not updating IPsec SA"));
+			}
+		}
+	} else {
 
 	/*
 	 * RFC 7296 1.4.1 "Deleting an SA with INFORMATIONAL Exchanges"
@@ -5511,8 +5519,6 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 	 * - notice any IKE SA Delete Payload
 	 * - sanity checking
 	 */
-	int ndp = 0;	/* number Delete payloads for IPsec protocols */
-	bool del_ike = FALSE;	/* any IKE SA Deletions? */
 
 	for (p = md->chain[ISAKMP_NEXT_v2D]; p != NULL; p = p->next) {
 		struct ikev2_delete *v2del = &p->payload.v2delete;
@@ -5563,10 +5569,9 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 	if (del_ike && ndp != 0)
 		libreswan_log("Odd: INFORMATIONAL Exchange deletes IKE SA and yet also deletes some IPsec SA");
 
+	}
 	/*
-	 * response packet preparation
-	 *
-	 * We respond to the Informational with an Informational.
+	 * response packet preparation: DELETE or non-delete (eg MOBIKE/keepalive)
 	 *
 	 * There can be at most one Delete Payload for an IKE SA.
 	 * It means that this very SA is to be deleted.
