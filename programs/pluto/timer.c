@@ -381,6 +381,15 @@ static void liveness_check(struct state *st)
 	addrtot(&st->st_remoteaddr, 0, that_ip, sizeof(that_ip));
 
 	/*
+	 * If we are a lingering (replaced) IPsec SA, don't do liveness
+	 */
+	if (pst->st_connection->newest_ipsec_sa != st->st_serialno) {
+               DBG(DBG_DPD,
+                   DBG_log("liveness: no need to send or schedule DPD for replaced IPsec SA"));
+               return;
+       }
+
+	/*
 	 * don't bother sending the check and reset
 	 * liveness stats if there has been incoming traffic
 	 */
