@@ -240,20 +240,19 @@ downrule() {
 }
 
 updateresolvconf() {
-    if [ -n "$(pidof unbound)" ]; then
-	if [ -z "${PLUTO_PEER_DNS_INFO}" -o -z "${PLUTO_PEER_DOMAIN_INFO}" ]; then
-	   return 0
-	fi
-
+    local rc
+    rc=0
+    if [ -n "$(pidof unbound)" -a \
+	-n "${PLUTO_PEER_DNS_INFO}" -a \
+	-n "${PLUTO_PEER_DOMAIN_INFO}" ]
+    then
 	echo "updating local nameserver for ${PLUTO_PEER_DOMAIN_INFO} with ${PLUTO_PEER_DNS_INFO}"
 	/usr/sbin/unbound-control forward_add ${PLUTO_PEER_DOMAIN_INFO} \
 	    ${PLUTO_PEER_DNS_INFO}
 	/usr/sbin/unbound-control flush_zone ${PLUTO_PEER_DOMAIN_INFO}
 	/usr/sbin/unbound-control flush_requestlist
-	return 0
-    fi
-
-    if [ 0${PLUTO_NM_CONFIGURED} -eq 0 ]; then
+	rc=$?
+    elif [ 0${PLUTO_NM_CONFIGURED} -eq 0 ]; then
 	echo "updating resolvconf"
 
 	if [ ! -e "${ORIG_RESOLV_CONF}" ]; then
@@ -299,24 +298,24 @@ ${ORIG_NAMESERVER}"
 
 	rm -f -- "${ORIG_RESOLV_CONF}"
 	echo "${RESOLVE_CONF}" > "${ORIG_RESOLV_CONF}"
-	return $?
+	rc=$?
     fi
+    return ${rc}
 }
 
 restoreresolvconf() {
-    if [ -z "${PLUTO_PEER_DNS_INFO}" -o -z "${PLUTO_PEER_DOMAIN_INFO}" ]; then
-	return 0
-    fi
-
-    if [ -n "$(pidof unbound)" ]; then
+    local rc
+    rc=0
+    if [ -n "$(pidof unbound)" -a \
+	-n "${PLUTO_PEER_DNS_INFO}" -a \
+	-n "${PLUTO_PEER_DOMAIN_INFO}" ]
+    then
 	echo "flushing local nameserver of ${PLUTO_PEER_DOMAIN_INFO}"
 	/usr/sbin/unbound-control forward_remove ${PLUTO_PEER_DOMAIN_INFO}
 	/usr/sbin/unbound-control flush_zone ${PLUTO_PEER_DOMAIN_INFO}
 	/usr/sbin/unbound-control flush_requestlist
-	return 0
-    fi
-
-    if [ 0${PLUTO_NM_CONFIGURED} -eq 0 ]; then
+	rc=$?
+    elif [ 0${PLUTO_NM_CONFIGURED} -eq 0 ]; then
 	echo "restoring resolvconf"
 	if [ ! -e "${LIBRESWAN_RESOLV_CONF}" ]; then
 	    echo "Problem in restoring the resolv.conf, as there is no backup file"
@@ -330,8 +329,9 @@ restoreresolvconf() {
 	fi
 
 	rm -f -- "${LIBRESWAN_RESOLV_CONF}"
-	return 0
+	rc=0
     fi
+    return ${rc}
 }
 
 notifyNM() {
