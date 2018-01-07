@@ -14,4 +14,4 @@ is used. We need to turn that into an option.
 
 It then proceeds to phase 2.
 
-
+road tests to see if its resolv.conf is overwritten and restored properly
