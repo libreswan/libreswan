@@ -240,17 +240,21 @@ downrule() {
 }
 
 updateresolvconf() {
+    local domain
+    local resolver
     local rc
     rc=0
     if [ -n "$(pidof unbound)" -a \
 	-n "${PLUTO_PEER_DNS_INFO}" -a \
 	-n "${PLUTO_PEER_DOMAIN_INFO}" ]
     then
-	echo "updating local nameserver for ${PLUTO_PEER_DOMAIN_INFO} with ${PLUTO_PEER_DNS_INFO}"
-	/usr/sbin/unbound-control forward_add ${PLUTO_PEER_DOMAIN_INFO} \
-	    ${PLUTO_PEER_DNS_INFO}
-	/usr/sbin/unbound-control flush_zone ${PLUTO_PEER_DOMAIN_INFO}
-	/usr/sbin/unbound-control flush_requestlist
+	for domain in ${PLUTO_PEER_DOMAIN_INFO}; do
+	    echo "updating local nameserver for ${domain} with ${PLUTO_PEER_DNS_INFO}"
+	    unbound-control forward_add ${domain} \
+		${PLUTO_PEER_DNS_INFO}
+	    unbound-control flush_zone ${domain}
+	    unbound-control flush_requestlist
+	done
 	rc=$?
     elif [ 0${PLUTO_NM_CONFIGURED} -eq 0 ]; then
 	echo "updating resolvconf"
@@ -277,7 +281,7 @@ updateresolvconf() {
 	if [ -n "${PLUTO_PEER_DOMAIN_INFO}" ]; then
 	    if grep -q ^domain "${ORIG_RESOLV_CONF}"; then
 		RESOLVE_CONF="${RESOLVE_CONF}
-domain ${PLUTO_PEER_DOMAIN_INFO}
+domain ${PLUTO_PEER_DOMAIN_INFO% *}
 search ${PLUTO_PEER_DOMAIN_INFO}"
 	    else
 		RESOLVE_CONF="${RESOLVE_CONF}
@@ -304,16 +308,19 @@ ${ORIG_NAMESERVER}"
 }
 
 restoreresolvconf() {
+    local domain
     local rc
     rc=0
     if [ -n "$(pidof unbound)" -a \
 	-n "${PLUTO_PEER_DNS_INFO}" -a \
 	-n "${PLUTO_PEER_DOMAIN_INFO}" ]
     then
-	echo "flushing local nameserver of ${PLUTO_PEER_DOMAIN_INFO}"
-	/usr/sbin/unbound-control forward_remove ${PLUTO_PEER_DOMAIN_INFO}
-	/usr/sbin/unbound-control flush_zone ${PLUTO_PEER_DOMAIN_INFO}
-	/usr/sbin/unbound-control flush_requestlist
+	for domain in ${PLUTO_PEER_DOMAIN_INFO}; do
+	    echo "flushing local nameserver of ${domain}"
+	    unbound-control forward_remove ${domain}
+	    unbound-control flush_zone ${domain}
+	    unbound-control flush_requestlist
+	done
 	rc=$?
     elif [ 0${PLUTO_NM_CONFIGURED} -eq 0 ]; then
 	echo "restoring resolvconf"
