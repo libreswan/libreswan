@@ -240,11 +240,11 @@ downrule() {
 }
 
 updateresolvconf() {
-    if [ -z "${PLUTO_PEER_DNS_INFO}" -o -z "${PLUTO_PEER_DOMAIN_INFO}" ]; then
-	return 0
-    fi
-
     if [ -n "$(pidof unbound)" ]; then
+	if [ -z "${PLUTO_PEER_DNS_INFO}" -o -z "${PLUTO_PEER_DOMAIN_INFO}" ]; then
+	   return 0
+	fi
+
 	echo "updating local nameserver for ${PLUTO_PEER_DOMAIN_INFO} with ${PLUTO_PEER_DNS_INFO}"
 	/usr/sbin/unbound-control forward_add ${PLUTO_PEER_DOMAIN_INFO} \
 	    ${PLUTO_PEER_DNS_INFO}
