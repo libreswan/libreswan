@@ -84,11 +84,6 @@
 
 struct pluto_crypto_req_cont {
 	crypto_req_cont_func *pcrc_func;	/* function to continue with */
-	/*
-	 * Sponsoring message's msg_digest.
-	 * Used in most but not all continuations.
-	 */
-	struct msg_digest *pcrc_md;
 	struct list_entry pcrc_backlog;
 	so_serial_t pcrc_serialno;	/* sponsoring state's serial number */
 	bool pcrc_cancelled;
@@ -154,20 +149,17 @@ struct pluto_crypto_req_cont *new_pcrc(
 	r->pcrc_func = fn;
 	r->pcrc_serialno = st->st_serialno;
 	r->pcrc_cancelled = false;
-	r->pcrc_md = md;
 	r->pcrc_name = name;
 	r->pcrc_backlog = list_entry(&backlog_info, r);
-
-	passert(md == NULL || md->st == st);
-	passert(st->st_suspended_md == NULL);
 
 	/*
 	 * There is almost always a non-NULL md.
 	 * Exception: main_inI2_outR2_tail initiates DH calculation
 	 * in parallel with normal processing that needs the md exclusively.
 	 */
-	if (md != NULL)
+	if (md != NULL) {
 		set_suspended(st, md);
+	}
 	return r;
 }
 
@@ -623,7 +615,8 @@ static void handle_helper_answer(void *arg)
 		st->st_offloaded_task = NULL;
 		st->st_v1_offloaded_task_in_background = false;
 		so_serial_t old_state = push_cur_state(st);
-		(*cn->pcrc_func)(st, cn->pcrc_md, &cn->pcrc_pcr);
+		struct msg_digest *md = unsuspend_md(st);
+		(*cn->pcrc_func)(st, md, &cn->pcrc_pcr);
 		pop_cur_state(old_state);
 	}
 

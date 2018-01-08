@@ -292,9 +292,6 @@ static void ikev2_crypto_continue(struct state *st, struct msg_digest *md,
 	}
 	passert(pst != NULL);
 
-	passert(st->st_suspended_md == md);
-	unset_suspended(st); /* no longer connected or suspended */
-
 	switch (st->st_state) {
 
 	case STATE_PARENT_I1:
@@ -1434,19 +1431,12 @@ stf_status ikev2parent_inI1outR1(struct state *st, struct msg_digest *md)
 static void ikev2_parent_inI1outR1_continue(struct state *st, struct msg_digest *md,
 					    struct pluto_crypto_req *r)
 {
-	pexpect(st == md->st);
-	st = md->st;
-
 	DBG(DBG_CONTROL,
 		DBG_log("ikev2_parent_inI1outR1_continue for #%lu: calculated ke+nonce, sending R1",
 			st->st_serialno));
 
-	passert(st->st_suspended_md == md);
-	unset_suspended(st); /* no longer connected or suspended */
-
-	stf_status e = ikev2_parent_inI1outR1_tail(st, md, r);
-
 	passert(md != NULL);
+	stf_status e = ikev2_parent_inI1outR1_tail(st, md, r);
 	complete_v2_state_transition(&md, e);
 	release_any_md(&md);
 }
@@ -1990,18 +1980,12 @@ stf_status ikev2parent_inR1outI2(struct state *st, struct msg_digest *md)
 static void ikev2_parent_inR1outI2_continue(struct state *st, struct msg_digest *md,
 					    struct pluto_crypto_req *r)
 {
-	stf_status e;
-
 	DBG(DBG_CONTROL,
 		DBG_log("ikev2_parent_inR1outI2_continue for #%lu: calculating g^{xy}, sending I2",
 			st->st_serialno));
 
-	passert(st->st_suspended_md == md);
-	unset_suspended(st); /* no longer connected or suspended */
-
-	e = ikev2_parent_inR1outI2_tail(st, md, r);
-
 	passert(md != NULL);
+	stf_status e = ikev2_parent_inR1outI2_tail(st, md, r);
 	complete_v2_state_transition(&md, e);
 	release_any_md(&md);
 }
@@ -3400,9 +3384,7 @@ static xauth_callback_t ikev2_pam_continue;	/* type assertion */
 static void ikev2_pam_continue(struct state *st, const char *name UNUSED,
 			       bool success)
 {
-	struct msg_digest *md = st->st_suspended_md;
-
-	unset_suspended(md->st);
+	struct msg_digest *md = unsuspend_md(st);
 
 	stf_status stf;
 	if (success) {
@@ -3496,17 +3478,13 @@ stf_status ikev2parent_inI2outR2(struct state *st UNUSED, struct msg_digest *md)
 static void ikev2_parent_inI2outR2_continue(struct state *st, struct msg_digest *md,
 					    struct pluto_crypto_req *r)
 {
-	stf_status e;
-
 	DBG(DBG_CONTROL,
 		DBG_log("ikev2_parent_inI2outR2_continue for #%lu: calculating g^{xy}, sending R2",
 			st->st_serialno));
 
-	passert(st->st_suspended_md == md);
-	unset_suspended(st); /* no longer connected or suspended */
+	passert(md != NULL);
 
-	e = ikev2_parent_inI2outR2_tail(st, md, r);
-
+	stf_status e = ikev2_parent_inI2outR2_tail(st, md, r);
 	if (e > STF_FAIL) {
 		/* we do not send a notify because we are the initiator that could be responding to an error notification */
 		int v2_notify_num = e - STF_FAIL;
@@ -3533,7 +3511,6 @@ static void ikev2_parent_inI2outR2_continue(struct state *st, struct msg_digest 
 		send_v2_notification_from_state(st, v2N_AUTHENTICATION_FAILED, NULL);
 	}
 
-	passert(md != NULL);
 	complete_v2_state_transition(&md, e);
 	release_any_md(&md);
 }
@@ -5239,11 +5216,9 @@ stf_status ikev2_child_out_cont(struct state *st UNUSED, struct msg_digest *md,
 
 void ikev2_child_send_next(struct state *st)
 {
-	struct msg_digest *md = st->st_suspended_md;
-	stf_status e;
 	set_cur_state(st);
-	unset_suspended(st);
-	e = ikev2_child_out_tail(md);
+	struct msg_digest *md = unsuspend_md(st);
+	stf_status e = ikev2_child_out_tail(md);
 	complete_v2_state_transition(&md, e);
 	release_any_md(&md);
 	reset_globals();

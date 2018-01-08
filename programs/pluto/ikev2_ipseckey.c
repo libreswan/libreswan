@@ -549,12 +549,10 @@ static void idr_ipseckey_fetch_continue(struct p_dns_req *dnsr)
 
 static void idi_ipseckey_fetch_tail(struct state *st, bool err)
 {
-	struct msg_digest *md = st->st_suspended_md;
+	struct msg_digest *md = unsuspend_md(st);
 	stf_status stf;
 
 	passert(md !=  NULL && (st == md->st));
-
-	unset_suspended(md->st);
 
 	if (err) {
 		stf = STF_FAIL + v2N_AUTHENTICATION_FAILED;

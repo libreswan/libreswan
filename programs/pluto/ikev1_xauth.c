@@ -1130,7 +1130,7 @@ static void ikev1_xauth_callback(struct state *st, const char *name,
 		results = TRUE;
 	}
 
-	unset_suspended(st);
+	unsuspend_md(st);	/* XXX: where does this MD go? */
 
 	if (results) {
 		libreswan_log("XAUTH: User %s: Authentication Successful",
