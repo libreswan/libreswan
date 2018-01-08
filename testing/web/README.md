@@ -193,7 +193,7 @@ automate the below.
 - examine (and perhaps delete) any test runs where tests have
   'missing-output':
 
-      $ grep '"output-missing"' results/*-g*-*/results.json | cut -d/ -f1 | sort -u
+      $ grep '"output-missing"' results/*-g*-*/results.json | cut -d/ -f1-2 | sort -u
 
 - examine (and perhaps delete) test runs with no results.json:
 

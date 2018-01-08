@@ -121,8 +121,8 @@ static void help(void)
 		"	[--xauthserver | --xauthclient] \\\n"
 		"	[--modecfgserver | --modecfgclient] [--modecfgpull] \\\n"
 		"	[--addresspool <network range>] \\\n"
-		"	[--modecfgdns1 <ip-address>] [--modecfgdns2 <ip-address>] \\\n"
-		"	[--modecfgdomain <dns-domain>] \\\n"
+		"	[--modecfgdns <ip-address, ip-address>  \\\n"
+		"	[--modecfgdomains <dns-domain, dns-domain, ..>] \\\n"
 		"	[--modecfgbanner <login banner>] \\\n"
 		"	[--metric <metric>] \\\n"
 		"	[--nflog-group <groupnum>] \\\n"
@@ -371,9 +371,8 @@ enum option_enums {
 #   define CD_FIRST CD_TO	/* first connection description */
 	CD_TO,
 
-	CD_MODECFGDNS1,
-	CD_MODECFGDNS2,
-	CD_MODECFGDOMAIN,
+	CD_MODECFGDNS,
+	CD_MODECFGDOMAINS,
 	CD_MODECFGBANNER,
 	CD_METRIC,
 	CD_CONNMTU,
@@ -638,9 +637,8 @@ static const struct option long_opts[] = {
 	{ "modecfgserver", no_argument, NULL, END_MODECFGSERVER + OO },
 	{ "modecfgclient", no_argument, NULL, END_MODECFGCLIENT + OO },
 	{ "addresspool", required_argument, NULL, END_ADDRESSPOOL + OO },
-	{ "modecfgdns1", required_argument, NULL, CD_MODECFGDNS1 + OO },
-	{ "modecfgdns2", required_argument, NULL, CD_MODECFGDNS2 + OO },
-	{ "modecfgdomain", required_argument, NULL, CD_MODECFGDOMAIN + OO },
+	{ "modecfgdns", required_argument, NULL, CD_MODECFGDNS + OO },
+	{ "modecfgdomains", required_argument, NULL, CD_MODECFGDOMAINS + OO },
 	{ "modecfgbanner", required_argument, NULL, CD_MODECFGBANNER + OO },
 	{ "modeconfigserver", no_argument, NULL, END_MODECFGSERVER + OO },
 	{ "modeconfigclient", no_argument, NULL, END_MODECFGCLIENT + OO },
@@ -893,7 +891,8 @@ int main(int argc, char **argv)
 
 	msg.xauthby = XAUTHBY_FILE;
 	msg.xauthfail = XAUTHFAIL_HARD;
-	msg.modecfg_domain = NULL;
+	msg.modecfg_domains = NULL;
+	msg.modecfg_dns = NULL;
 	msg.modecfg_banner = NULL;
 
 	msg.nic_offload = nic_offload_auto;
@@ -1872,22 +1871,12 @@ int main(int argc, char **argv)
 					TRUE);
 			continue;
 
-		case CD_MODECFGDNS1:	/* --modecfgdns1 */
-			af_used_by = long_opts[long_index].name;
-			diagq(ttoaddr(optarg, 0, msg.addr_family,
-				      &msg.modecfg_dns1), optarg);
+		case CD_MODECFGDNS:	/* --modecfgdns */
+			msg.modecfg_dns = strdup(optarg);
 			continue;
-
-		case CD_MODECFGDNS2:	/* --modecfgdns2 */
-			af_used_by = long_opts[long_index].name;
-			diagq(ttoaddr(optarg, 0, msg.addr_family,
-				      &msg.modecfg_dns2), optarg);
+		case CD_MODECFGDOMAINS:	/* --modecfgdomains */
+			msg.modecfg_domains = strdup(optarg);
 			continue;
-
-		case CD_MODECFGDOMAIN:	/* --modecfgdomain */
-			msg.modecfg_domain = strdup(optarg);
-			continue;
-
 		case CD_MODECFGBANNER:	/* --modecfgbanner */
 			msg.modecfg_banner = strdup(optarg);
 			continue;

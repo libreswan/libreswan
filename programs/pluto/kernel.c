@@ -641,9 +641,9 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		secure_xauth_username_str,
 		srcip_str,
 		c->remotepeertype,
-		c->cisco_dns_info ? c->cisco_dns_info : "",
-		c->modecfg_domain ? c->modecfg_domain : "",
-		c->modecfg_banner ? c->modecfg_banner : "",
+		(st != NULL && st->st_seen_cfg_dns != NULL) ? st->st_seen_cfg_dns : "",
+		(st != NULL && st->st_seen_cfg_domains != NULL) ? st->st_seen_cfg_domains : "",
+		(st != NULL && st->st_seen_cfg_banner != NULL) ? st->st_seen_cfg_banner : "",
 #ifdef HAVE_NM
 		c->nmconfigured,
 #endif

@@ -18,7 +18,7 @@ west #
 000 "ipv4-psk-ikev2-transport":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "ipv4-psk-ikev2-transport":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "ipv4-psk-ikev2-transport":   our auth:secret, their auth:secret
-000 "ipv4-psk-ikev2-transport":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
+000 "ipv4-psk-ikev2-transport":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
 000 "ipv4-psk-ikev2-transport":   labeled_ipsec:no;
 000 "ipv4-psk-ikev2-transport":   policy_label:unset;
 000 "ipv4-psk-ikev2-transport":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
@@ -44,7 +44,7 @@ west #
 134 "ipv4-psk-ikev2-transport" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
 002 "ipv4-psk-ikev2-transport" #2: suppressing retransmit because IMPAIR_RETRANSMITS is set.
 002 "ipv4-psk-ikev2-transport" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
-002 "ipv4-psk-ikev2-transport" #2: local policy requires Transport Mode but peer requires required Tunnel Mode
+003 "ipv4-psk-ikev2-transport" #2: local policy requires Transport Mode but peer requires required Tunnel Mode
 214 "ipv4-psk-ikev2-transport" #2: STATE_PARENT_I2: v2N_NO_PROPOSAL_CHOSEN
 west #
  echo done

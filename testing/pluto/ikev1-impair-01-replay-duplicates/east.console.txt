@@ -109,7 +109,7 @@ east #
 000 "westnet-eastnet":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet":   our auth:rsasig, their auth:rsasig
-000 "westnet-eastnet":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
+000 "westnet-eastnet":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
 000 "westnet-eastnet":   labeled_ipsec:no;
 000 "westnet-eastnet":   policy_label:unset;
 000 "westnet-eastnet":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
@@ -174,33 +174,19 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
  grep 'duplicate packet' /tmp/pluto.log
-IMPAIR: duplicate packet 1 copy 1 of 3
+IMPAIR: start duplicate packet
 retransmitting in response to duplicate packet; already STATE_MAIN_R1
-IMPAIR: duplicate packet 1 copy 2 of 3
-retransmitting in response to duplicate packet; already STATE_MAIN_R1
-IMPAIR: duplicate packet 1 copy 3 of 3
-retransmitting in response to duplicate packet; already STATE_MAIN_R1
-IMPAIR: duplicate packet 2 copy 1 of 3
-| "westnet-eastnet" #1: discarding duplicate packet; already STATE_MAIN_R2
-IMPAIR: duplicate packet 2 copy 2 of 3
-| "westnet-eastnet" #1: discarding duplicate packet; already STATE_MAIN_R2
-IMPAIR: duplicate packet 2 copy 3 of 3
-| "westnet-eastnet" #1: discarding duplicate packet; already STATE_MAIN_R2
-IMPAIR: duplicate packet 3 copy 1 of 3
+IMPAIR: stop duplicate packet
+IMPAIR: start duplicate packet
+IMPAIR: stop duplicate packet
+IMPAIR: start duplicate packet
 "westnet-eastnet" #1: retransmitting in response to duplicate packet; already STATE_MAIN_R3
-IMPAIR: duplicate packet 3 copy 2 of 3
-"westnet-eastnet" #1: retransmitting in response to duplicate packet; already STATE_MAIN_R3
-IMPAIR: duplicate packet 3 copy 3 of 3
-"westnet-eastnet" #1: discarding duplicate packet -- exhausted retransmission; already STATE_MAIN_R3
-IMPAIR: duplicate packet 4 copy 1 of 3
-IMPAIR: duplicate packet 4 copy 2 of 3
-IMPAIR: duplicate packet 4 copy 3 of 3
-IMPAIR: duplicate packet 5 copy 1 of 3
+IMPAIR: stop duplicate packet
+IMPAIR: start duplicate packet
+IMPAIR: stop duplicate packet
+IMPAIR: start duplicate packet
 | "westnet-eastnet" #2: discarding duplicate packet; already STATE_QUICK_R2
-IMPAIR: duplicate packet 5 copy 2 of 3
-| "westnet-eastnet" #2: discarding duplicate packet; already STATE_QUICK_R2
-IMPAIR: duplicate packet 5 copy 3 of 3
-| "westnet-eastnet" #2: discarding duplicate packet; already STATE_QUICK_R2
+IMPAIR: stop duplicate packet
 east #
 east #
  ../bin/check-for-core.sh

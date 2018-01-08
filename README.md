@@ -87,7 +87,7 @@ If you want to build without creating and installing manual pages, run:
     sudo make install-base
 
 Note: The ipsec-tools package or setkey is not needed. Instead the iproute2
-pacakge (>= 2.6.8) is required. Run `ipsec verify` to determine if your
+packakge (>= 2.6.8) is required. Run `ipsec verify` to determine if your
 system misses any of the requirements. This will also tell you if any of
 the kernel sysctl values needs changing.
 

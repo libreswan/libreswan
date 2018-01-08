@@ -327,11 +327,10 @@ struct connection {
 	enum send_ca_policy send_ca;
 	char *dnshostname;
 
-	ip_address modecfg_dns1;
-	ip_address modecfg_dns2;
 	struct ip_pool *pool; /* IPv4 addresspool as a range, start end */
-	char *cisco_dns_info; /* scratchpad for writing IP addresses */
-	char *modecfg_domain;
+
+	char *modecfg_dns;
+	char *modecfg_domains;
 	char *modecfg_banner;
 
 	u_int8_t metric;	/* metric for tunnel routes */
@@ -539,4 +538,3 @@ extern void liveness_clear_connection(struct connection *c, char *v);
 extern void liveness_action(struct connection *c, const bool ikev2);
 
 extern bool idr_wildmatch(const struct connection *c, const struct id *b);
-

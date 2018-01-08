@@ -313,8 +313,8 @@ void delete_connection(struct connection *c, bool relations)
 	pfreeany(c->name);
 	pfreeany(c->connalias);
 	pfreeany(c->vti_iface);
-	pfreeany(c->cisco_dns_info);
-	pfreeany(c->modecfg_domain);
+	pfreeany(c->modecfg_dns);
+	pfreeany(c->modecfg_domains);
 	pfreeany(c->modecfg_banner);
 #ifdef HAVE_LABELED_IPSEC
 	pfreeany(c->policy_label);
@@ -772,10 +772,10 @@ static void unshare_connection(struct connection *c)
 {
 	c->name = clone_str(c->name, "connection name");
 
-	c->cisco_dns_info = clone_str(c->cisco_dns_info,
-				"connection cisco_dns_info");
-	c->modecfg_domain = clone_str(c->modecfg_domain,
-				"connection modecfg_domain");
+	c->modecfg_dns = clone_str(c->modecfg_dns,
+				"connection modecfg_dns");
+	c->modecfg_domains = clone_str(c->modecfg_domains,
+				"connection modecfg_domains");
 	c->modecfg_banner = clone_str(c->modecfg_banner,
 				"connection modecfg_banner");
 #ifdef HAVE_LABELED_IPSEC
@@ -1660,9 +1660,8 @@ void add_connection(const struct whack_message *wm)
 		c->xauthby = wm->xauthby;
 		c->xauthfail = wm->xauthfail;
 
-		c->modecfg_dns1 = wm->modecfg_dns1;
-		c->modecfg_dns2 = wm->modecfg_dns2;
-		c->modecfg_domain = wm->modecfg_domain;
+		c->modecfg_dns = wm->modecfg_dns;
+		c->modecfg_domains = wm->modecfg_domains;
 		c->modecfg_banner = wm->modecfg_banner;
 
 		/*
@@ -1818,7 +1817,6 @@ void add_connection(const struct whack_message *wm)
 		c->newest_isakmp_sa = SOS_NOBODY;
 		c->newest_ipsec_sa = SOS_NOBODY;
 		c->spd.eroute_owner = SOS_NOBODY;
-		c->cisco_dns_info = NULL; /* XXX: scratchpad - should be phased out */
 		/*
 		 * is spd.reqid necessary for all c? CK_INSTANCE or CK_PERMANENT
 		 * need one. Does CK_TEMPLATE need one?
@@ -3959,7 +3957,7 @@ static void show_one_sr(const struct connection *c,
 			const char *instance)
 {
 	char topo[CONN_BUF_LEN];
-	ipstr_buf thisipb, thatipb, dns1b, dns2b;
+	ipstr_buf thisipb, thatipb;
 
 	(void) format_connection(topo, sizeof(topo), c, sr);
 	whack_log(RC_COMMENT, "\"%s\"%s: %s; %s; eroute owner: #%lu",
@@ -4026,15 +4024,14 @@ static void show_one_sr(const struct connection *c,
 		enum_show_shortb(&ikev2_asym_auth_name,sr->that.authby, &auth2));
 
 	whack_log(RC_COMMENT,
-		"\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg policy:%s, dns1:%s, dns2:%s, domain:%s%s, cat:%s;",
+		"\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg policy:%s, dns:%s, domain:%s%s, cat:%s;",
 		c->name, instance,
 		COMBO(sr->this, modecfg_server, modecfg_client),
 		COMBO(sr->that, modecfg_server, modecfg_client),
 
 		(c->policy & POLICY_MODECFG_PULL) ? "pull" : "push",
-		isanyaddr(&c->modecfg_dns1) ? "unset" : ipstr(&c->modecfg_dns1, &dns1b),
-		isanyaddr(&c->modecfg_dns2) ? "unset" : ipstr(&c->modecfg_dns2, &dns2b),
-		(c->modecfg_domain == NULL) ? "unset" : c->modecfg_domain,
+		(c->modecfg_dns == NULL) ? "unset" : c->modecfg_dns,
+		(c->modecfg_domains == NULL) ? "unset" : c->modecfg_domains,
 		(c->modecfg_banner == NULL) ? ", banner:unset" : "",
 		sr->this.cat ? "set" : "unset");
 

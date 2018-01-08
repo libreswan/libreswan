@@ -665,9 +665,12 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 
 #endif
 
-	msg.modecfg_domain = conn->modecfg_domain;
-	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" modecfgdomain=%s",
-		conn->name, msg.modecfg_domain);
+	msg.modecfg_dns = conn->modecfg_dns;
+	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" modecfgdns=%s",
+		conn->name, msg.modecfg_dns);
+	msg.modecfg_domains = conn->modecfg_domains;
+	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" modecfgdomains=%s",
+		conn->name, msg.modecfg_domains);
 	msg.modecfg_banner = conn->modecfg_banner;
 	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" modecfgbanner=%s",
 		conn->name, msg.modecfg_banner);
@@ -694,23 +697,6 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		msg.xauthby = conn->options[KBF_XAUTHBY];
 	if (conn->options_set[KBF_XAUTHFAIL])
 		msg.xauthfail = conn->options[KBF_XAUTHFAIL];
-
-	if (conn->modecfg_dns1 != NULL) {
-		if (!tnatoaddr(conn->modecfg_dns1, 0, AF_INET,
-				&(msg.modecfg_dns1)) &&
-			!tnatoaddr(conn->modecfg_dns1, 0, AF_INET6,
-				&(msg.modecfg_dns1)))
-			starter_log(LOG_LEVEL_ERR,
-				"Ignoring modecfgdns1= entry, it is not a valid IPv4 or IPv6 address");
-	}
-	if (conn->modecfg_dns2 != NULL) {
-		if (!tnatoaddr(conn->modecfg_dns2, 0, AF_INET,
-				&(msg.modecfg_dns2)) &&
-			!tnatoaddr(conn->modecfg_dns2, 0, AF_INET6,
-				&(msg.modecfg_dns2)))
-			starter_log(LOG_LEVEL_ERR,
-				"Ignoring modecfgdns2= entry, it is not a valid IPv4 or IPv6 address");
-	}
 
 	set_whack_end("left",  &msg.left, &conn->left);
 	set_whack_end("right", &msg.right, &conn->right);

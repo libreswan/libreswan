@@ -358,6 +358,12 @@ static void p2_dpd_outI1(struct state *p2st)
 		return;
 	}
 
+	if (st->st_connection->newest_ipsec_sa != st->st_serialno) {
+		DBG(DBG_DPD,
+		    DBG_log("DPD: no need to send or schedule DPD for replaced IPsec SA"));
+		return;
+	}
+
 	dpd_outI(st, p2st, TRUE, delay, timeout);
 }
 

@@ -1146,6 +1146,11 @@ void delete_state(struct state *st)
 	wipe_any(st->st_xauth_password.ptr, st->st_xauth_password.len);
 #   undef wipe_any
 
+	/* st_username is an array on the state itself, not clone_str()'ed */
+	pfreeany(st->st_seen_cfg_dns);
+	pfreeany(st->st_seen_cfg_domains);
+	pfreeany(st->st_seen_cfg_banner);
+
 #ifdef HAVE_LABELED_IPSEC
 	pfreeany(st->sec_ctx);
 #endif
@@ -1472,8 +1477,17 @@ struct state *duplicate_state(struct state *st, sa_t sa_type)
 
 	}
 
-	jam_str(nst->st_username, sizeof(nst->st_username),
-		st->st_username);
+	/*
+	 * These are done because we need them in child st when
+	 * do_command() uses them to fill in our format string.
+	 * Maybe similarly to above for chunks, do this for all
+	 * strings on the state?
+	 */
+	jam_str(nst->st_username, sizeof(nst->st_username), st->st_username);
+
+	nst->st_seen_cfg_dns = clone_str(st->st_seen_cfg_dns, "child st_seen_cfg_dns");
+	nst->st_seen_cfg_domains = clone_str(st->st_seen_cfg_domains, "child st_seen_cfg_domains");
+	nst->st_seen_cfg_banner = clone_str(st->st_seen_cfg_banner, "child st_seen_cfg_banner");
 
 	return nst;
 }
@@ -2013,7 +2027,7 @@ void fmt_state(struct state *st, const monotime_t now,
 	}
 
 	snprintf(state_buf, state_buf_len,
-		 "#%lu: \"%s\"%s:%u %s (%s); %s in %zds%s%s%s%s; %s; %s",
+		 "#%lu: \"%s\"%s:%u %s (%s); %s in %jds%s%s%s%s; %s; %s",
 		 st->st_serialno,
 		 c->name, inst,
 		 st->st_remoteport,
@@ -2809,4 +2823,52 @@ void record_deladdr(ip_address *ip, char *a_type)
 	DBG(DBG_KERNEL, DBG_log("XFRM RTM_DELADDR %s %s",
 				ipstr(ip, &ip_str), a_type));
 	for_each_state(ikev2_record_deladdr, ip);
+}
+
+/*
+ * Moved from ikev1_xauth.c since IKEv2 code now also uses it
+ * Converted to store ephemeral data in the state, not connection
+ */
+void append_st_cfg_dns(struct state *st, const char *dnsip)
+{
+
+	if (st->st_seen_cfg_dns == NULL) {
+		st->st_seen_cfg_dns = clone_str(dnsip, "fresh append_st_cfg_dns");
+	} else {
+		/*
+		 * concatenate new IP address string on end of existing
+		 * string, separated by ' '.
+		 */
+		size_t sz_old = strlen(st->st_seen_cfg_dns);
+		size_t sz_added = strlen(dnsip) + 1;
+		char *new = alloc_bytes( sz_old + 1 + sz_added, "append_st_cfg_dns");
+
+		memcpy(new, st->st_seen_cfg_dns, sz_old);
+		*(new + sz_old) = ' ';
+		memcpy(new + sz_old + 1, dnsip, sz_added);
+		pfree(st->st_seen_cfg_dns);
+		st->st_seen_cfg_dns = new;
+	}
+}
+
+void append_st_cfg_domain(struct state *st, const char *domain)
+{
+
+	if (st->st_seen_cfg_domains == NULL) {
+		st->st_seen_cfg_domains = clone_str(domain, "fresh append_st_cfg_domain");
+	} else {
+		/*
+		 * concatenate new IP address string on end of existing
+		 * string, separated by ' '.
+		 */
+		size_t sz_old = strlen(st->st_seen_cfg_domains);
+		size_t sz_added = strlen(domain) + 1;
+		char *new = alloc_bytes( sz_old + 1 + sz_added, "append_st_cfg_domain");
+
+		memcpy(new, st->st_seen_cfg_domains, sz_old);
+		*(new + sz_old) = ' ';
+		memcpy(new + sz_old + 1, domain, sz_added);
+		pfree(st->st_seen_cfg_domains);
+		st->st_seen_cfg_domains = new;
+	}
 }

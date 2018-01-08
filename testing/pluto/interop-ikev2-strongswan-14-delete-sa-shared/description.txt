@@ -1,0 +1,7 @@
+This tests processing a DELETE request from strongswan interop
+
+This test is WIP, because it seems strongswan is broken. If you
+send a delete for a connection with shared IKE SA, it will
+actually delete the IKE SA and not the IPsec SA. So we cannot
+confirm that we properly receive the IPsec SA delete and reply
+with a DELETE payload and not an empty INFORMATIONAL payload.

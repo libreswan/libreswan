@@ -70,7 +70,7 @@
 #include "crypto.h"
 #include "ike_alg.h"
 #include "secrets.h"
-
+#include "ikev1.h"
 #include "ikev1_xauth.h"
 #include "virtual.h"	/* needs connections.h */
 #include "addresspool.h"
@@ -85,7 +85,6 @@ static stf_status xauth_client_ackstatus(struct state *st,
  */
 struct internal_addr {
 	ip_address ipaddr;
-	ip_address dns[2];
 };
 
 /* CISCO_SPLIT_INC example payload
@@ -180,11 +179,6 @@ static bool get_internal_addresses(
 		ia->ipaddr = c->spd.that.client.addr;
 	}
 
-	if (!isanyaddr(&c->modecfg_dns1))
-		ia->dns[0] = c->modecfg_dns1;
-	if (!isanyaddr(&c->modecfg_dns2))
-		ia->dns[1] = c->modecfg_dns2;
-
 	return TRUE;
 }
 
@@ -237,6 +231,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 	const unsigned char *byte_ptr;
 	unsigned int len;
 	bool ok = TRUE;
+	struct connection *c = st->st_connection;
 
 	/* ISAKMP attr out */
 	const struct isakmp_attribute attr = {
@@ -258,13 +253,13 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 
 	case INTERNAL_IP4_SUBNET:
 		len = addrbytesptr_read(
-			&st->st_connection->spd.this.client.addr, &byte_ptr);
+			&c->spd.this.client.addr, &byte_ptr);
 		if (!out_raw(byte_ptr, len, &attrval, "IP4_subnet"))
 			return STF_INTERNAL_ERROR;
 		/* FALL THROUGH */
 	case INTERNAL_IP4_NETMASK:
 	{
-		int m = st->st_connection->spd.this.client.maskbits;
+		int m = c->spd.this.client.maskbits;
 		u_int32_t mask = htonl(~(m == 32 ? (u_int32_t)0 : ~(u_int32_t)0 >> m));
 
 		ok = out_raw(&mask, sizeof(mask), &attrval, "IP4_submsk");
@@ -272,6 +267,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 	}
 
 	case INTERNAL_IP4_DNS:
+	{
 		/*
 		 * Emit one attribute per DNS IP.
 		 * (All other cases emit exactly one attribute.)
@@ -279,36 +275,49 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 		 * and the last's is finished at the end
 		 * so our loop structure is odd.
 		 */
-		for (unsigned i = 0; ; ) {
-			/* emit attribute's value */
-			len = addrbytesptr_read(&ia->dns[i], &byte_ptr);
-			ok = out_raw(byte_ptr, len, &attrval, "IP4_dns");
+		char *ipstr = strtok(c->modecfg_dns, ", ");
 
-			/* see if there's another DNS */
-			i++;
-			if (!ok || i >= elemsof(ia->dns) || isanyaddr(&ia->dns[i]))
-				break;
+		while (ipstr != NULL) {
+			ip_address dnsip;
+			err_t e = ttoaddr_num(ipstr, 0, AF_INET, &dnsip);
 
-			/* close attribute and start next */
-			close_output_pbs(&attrval);
+			if (e != NULL) {
+				loglog(RC_LOG_SERIOUS, "Invalid DNS IPv4 %s:%s", ipstr, e);
+				return STF_INTERNAL_ERROR;
+			} else {
+				/* emit attribute's value */
+				len = addrbytesptr_read(&dnsip, &byte_ptr);
+				ok = out_raw(byte_ptr, len, &attrval, "IP4_dns");
+				close_output_pbs(&attrval);
+			}
 
-			if (!out_struct(&attr,
+			ipstr = strtok(NULL, ", ");
+			if (ipstr != NULL) {
+				if (!out_struct(&attr,
 					&isakmp_xauth_attribute_desc,
 					strattr,
 					&attrval))
 				return STF_INTERNAL_ERROR;
+			}
 		}
 		break;
+	}
 
 	case MODECFG_DOMAIN:
-		ok = out_raw(st->st_connection->modecfg_domain,
-			     strlen(st->st_connection->modecfg_domain),
-			     &attrval, "");
+	{
+		/*
+		 * IKEv2 allows more then one, seperated by comma or space
+		 * We don't know if existing IKEv1 implementations support
+		 * more then one, so we just send the first one configured.
+		 */
+		char *first = strtok(c->modecfg_domains, ", ");
+		ok = out_raw(first, strlen(first), &attrval, "MODECFG_DOMAIN");
 		break;
+	}
 
 	case MODECFG_BANNER:
-		ok = out_raw(st->st_connection->modecfg_banner,
-			     strlen(st->st_connection->modecfg_banner),
+		ok = out_raw(c->modecfg_banner,
+			     strlen(c->modecfg_banner),
 			     &attrval, "");
 		break;
 
@@ -316,8 +325,8 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 	case CISCO_SPLIT_INC:
 	{
 		struct CISCO_split_item i = {
-			st->st_connection->spd.this.client.addr.u.v4.sin_addr,
-			bitstomask(st->st_connection->spd.this.client.maskbits)
+			c->spd.this.client.addr.u.v4.sin_addr,
+			bitstomask(c->spd.this.client.maskbits)
 		};
 
 		ok = out_struct(&i, &CISCO_split_desc, &attrval, NULL);
@@ -387,6 +396,7 @@ static stf_status modecfg_resp(struct state *st,
 		int attr_type;
 		struct internal_addr ia;
 		bool has_lease;
+		struct connection *c = st->st_connection;
 
 		{
 			struct isakmp_mode_attr attrh;
@@ -402,24 +412,22 @@ static stf_status modecfg_resp(struct state *st,
 			return STF_INTERNAL_ERROR;
 
 		/* If we got DNS addresses, answer with those */
-		if (!isanyaddr(&ia.dns[0]))
+		if (c->modecfg_dns != NULL)
 			resp |= LELEM(INTERNAL_IP4_DNS);
 		else
 			resp &= ~LELEM(INTERNAL_IP4_DNS);
 
 		if (use_modecfg_addr_as_client_addr) {
-			if (!sameaddr(&st->st_connection->spd.that.client.addr,
+			if (!sameaddr(&c->spd.that.client.addr,
 				&ia.ipaddr)) {
 				/* Make the Internal IP address and Netmask as
 				 * that client address
 				 */
-				st->st_connection->spd.that.client.addr =
-					ia.ipaddr;
-				st->st_connection->spd.that.client.maskbits =
-					32;
-				st->st_connection->spd.that.has_client = TRUE;
+				c->spd.that.client.addr = ia.ipaddr;
+				c->spd.that.client.maskbits = 32;
+				c->spd.that.has_client = TRUE;
 				if (has_lease)
-					st->st_connection->spd.that.has_lease = TRUE;
+					c->spd.that.has_lease = TRUE;
 			}
 		}
 
@@ -446,24 +454,24 @@ static stf_status modecfg_resp(struct state *st,
 		 * anyway.
 		 * ??? might we be sending them twice?
 		 */
-		if (st->st_connection->modecfg_domain != NULL) {
+		if (c->modecfg_domains != NULL) {
 			DBG(DBG_CONTROLMORE,
 				DBG_log("We are sending '%s' as domain",
-				st->st_connection->modecfg_domain));
+				strtok(c->modecfg_domains, ", ")));
 			isakmp_add_attr(&strattr, MODECFG_DOMAIN, &ia, st);
 		} else {
 			DBG(DBG_CONTROLMORE, DBG_log("We are not sending a domain"));
 		}
 
-		if (st->st_connection->modecfg_banner != NULL) {
+		if (c->modecfg_banner != NULL) {
 			DBG(DBG_CONTROLMORE, DBG_log("We are sending '%s' as banner",
-				st->st_connection->modecfg_banner));
+				c->modecfg_banner));
 			isakmp_add_attr(&strattr, MODECFG_BANNER, &ia, st);
 		} else {
 			DBG(DBG_CONTROLMORE, DBG_log("We are not sending a banner"));
 		}
 
-		if (isanyaddr(&st->st_connection->spd.this.client.addr)) {
+		if (isanyaddr(&c->spd.this.client.addr)) {
 			DBG(DBG_CONTROLMORE,
 				DBG_log("We are 0.0.0.0/0 so not sending CISCO_SPLIT_INC"));
 		} else {
@@ -1465,6 +1473,10 @@ stf_status xauth_inR1(struct state *st, struct msg_digest *md UNUSED)
  */
 stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 {
+	ikev1_init_out_pbs_echo_hdr(md, TRUE, ISAKMP_NEXT_HASH,
+				    &reply_stream, reply_buffer, sizeof(reply_buffer),
+				    &md->rbody);
+
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 	lset_t resp = LEMPTY;
@@ -1670,35 +1682,6 @@ static stf_status modecfg_inI2(struct msg_digest *md)
 	return STF_OK;
 }
 
-/* Auxiliary function for modecfg_inR1() */
-static char *cisco_stringify(pb_stream *pbs, const char *attr_name)
-{
-	char strbuf[500]; /* Cisco maximum unknown - arbitrary choice */
-	size_t len = pbs_left(pbs);
-
-	if (len > sizeof(strbuf) - 1)
-		len = sizeof(strbuf) - 1;
-
-	memcpy(strbuf, pbs->cur, len);
-	strbuf[len] = '\0';
-	/* ' is poison to the way this string will be used
-	 * in system() and hence shell.  Remove any.
-	 */
-	{
-		char *s = strbuf;
-
-		for (;; ) {
-			s = strchr(s, '\'');
-			if (s == NULL)
-				break;
-			*s = '?';
-		}
-	}
-	sanitize_string(strbuf, sizeof(strbuf));
-	loglog(RC_INFORMATIONAL, "Received %s: %s", attr_name, strbuf);
-	return clone_str(strbuf, attr_name);
-}
-
 /*
  * STATE_MODE_CFG_R1:
  * HDR*, HASH, ATTR(SET=IP) --> HDR*, HASH, ATTR(ACK,OK)
@@ -1708,6 +1691,10 @@ static char *cisco_stringify(pb_stream *pbs, const char *attr_name)
  */
 stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 {
+	ikev1_init_out_pbs_echo_hdr(md, TRUE, ISAKMP_NEXT_HASH,
+				    &reply_stream, reply_buffer, sizeof(reply_buffer),
+				    &md->rbody);
+
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 	lset_t resp = LEMPTY;
@@ -1836,7 +1823,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			case INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
 			{
 				ip_address a;
-				char caddr[SUBNETTOT_BUF];
+				char ipstr[SUBNETTOT_BUF];
 
 				u_int32_t *ap =
 					(u_int32_t *)(strattr.cur);
@@ -1844,41 +1831,11 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				memcpy(&a.u.v4.sin_addr.s_addr, ap,
 				       sizeof(a.u.v4.sin_addr.s_addr));
 
-				addrtot(&a, 0, caddr, sizeof(caddr));
+				addrtot(&a, 0, ipstr, sizeof(ipstr));
 				loglog(RC_INFORMATIONAL, "Received DNS server %s",
-					caddr);
+					ipstr);
 
-				{
-					struct connection *c =
-						st->st_connection;
-					char *old = c->cisco_dns_info;
-
-					if (old == NULL) {
-						c->cisco_dns_info =
-							clone_str(caddr,
-								"cisco_dns_info");
-					} else {
-						/*
-						 * concatenate new IP address
-						 * string on end of existing
-						 * string, separated by ' '.
-						 */
-						size_t sz_old = strlen(old);
-						size_t sz_added =
-							strlen(caddr) + 1;
-						char *new =
-							alloc_bytes(
-								sz_old + 1 + sz_added,
-								"cisco_dns_info+");
-
-						memcpy(new, old, sz_old);
-						*(new + sz_old) = ' ';
-						memcpy(new + sz_old + 1, caddr,
-							sz_added);
-						c->cisco_dns_info = new;
-						pfree(old);
-					}
-				}
+				append_st_cfg_dns(st, ipstr);
 
 				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 				break;
@@ -1886,19 +1843,13 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 
 			case MODECFG_DOMAIN | ISAKMP_ATTR_AF_TLV:
 			{
-				/* this is always done - irrespective of CFG request */
-				st->st_connection->modecfg_domain =
-					cisco_stringify(&strattr,
-							"Domain");
+				append_st_cfg_domain(st, cisco_stringify(&strattr, "Domain"));
 				break;
 			}
 
 			case MODECFG_BANNER | ISAKMP_ATTR_AF_TLV:
 			{
-				/* this is always done - irrespective of CFG request */
-				st->st_connection->modecfg_banner =
-					cisco_stringify(&strattr,
-							"Banner");
+				st->st_seen_cfg_banner = cisco_stringify(&strattr, "Banner");
 				break;
 			}
 
@@ -2284,6 +2235,10 @@ static stf_status xauth_client_resp(struct state *st,
  */
 stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 {
+	ikev1_init_out_pbs_echo_hdr(md, TRUE, ISAKMP_NEXT_HASH,
+				    &reply_stream, reply_buffer, sizeof(reply_buffer),
+				    &md->rbody);
+
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 	lset_t xauth_resp = LEMPTY;
@@ -2562,6 +2517,10 @@ static stf_status xauth_client_ackstatus(struct state *st,
  */
 stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 {
+	ikev1_init_out_pbs_echo_hdr(md, TRUE, ISAKMP_NEXT_HASH,
+				    &reply_stream, reply_buffer, sizeof(reply_buffer),
+				    &md->rbody);
+
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 	bool got_status = FALSE;

@@ -3,6 +3,7 @@ See also https://libreswan.org/
 
 v3.23 (unrelased)
 * IKEv2: MOBIKE support (RFC 45555) [Antony/Paul]
+* IKEv2: Add support for modecfgdns= and modecfgdomains= like for IKEv1 [Paul]
 * pluto: Fix DEFAULT_RUNDIR to be set so it is really configurable [Tuomo]
 * pluto: Add support IDr payload (You Tarzan, me Jane) [Paul]
 * pluto: pass state to send_crypto_helper_request() [Andrew]
@@ -16,8 +17,8 @@ v3.23 (unrelased)
 * pluto: Pull latest kernel traffic counters before logging/deleting SA [Paul]
 * pluto: STF_INLINE, STF_TOOMUCHCRYPTO no longer needed in helpers [Andrew]
 * pluto: Replace socket queues with a simple queue and mutex+cont [Andrew]
+* pluto: Do not send DPD/liveness probes for replaced inactive IPsec SAs [Paul]
 * XFRM: XFRM_MIGRATE support, used for MOBIKE [Antony]
-  (requires kernel 4.14, 4.15rc1+ for AES_GCM support)
 * XFRM: Listen to NETLINK_ROUTE messages from kernel for MOBIKE [Antony]
 * XFRM: Fix unique marks accidentally setting -1 instead of random [Paul]
 * XFRM: Only install IPv6 holes when system has configured IPv6 [Antony]
@@ -35,11 +36,12 @@ v3.23 (unrelased)
 * PAM: Don't cancel pam threads (unsupported!) but drop results instead [Andrew]
 * _updown: Fix resolv.conf handling (github #130) [Tuomo]
 * _updown: Fix POINTPOINT interfaces not to use nexthop [Tuomo]
+* _updown.netkey: Add source ip to dev lo by default [Tuomo]
 * Makefiles: Fix INC_MANDIR to be share/man and add FINALMANDIR [Tuomo]
 * packaging: Move debian/ to packaging ('make deb' still works) [Antony]
 * contrib: Added ipsec-dyndns to demonstrante how push an IPSECKEY [Paul]
 * Bugtracker bugs fixed:
-   #313: hangesource in updown_klips doesn't respect PLUTO_METRIC [Wolfgang]
+   #313: changesource in updown_klips doesn't respect PLUTO_METRIC [Wolfgang]
    #314: IPv6 default route is deleted by mistake [Wolfgang]
 
 v3.22 (October 22, 2017)

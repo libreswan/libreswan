@@ -401,6 +401,9 @@ struct state {
 
 	/** end of IKEv2-only things **/
 
+	char *st_seen_cfg_dns; /* obtained internal nameserver IP's */
+	char *st_seen_cfg_domains; /* obtained internal domain names */
+	char *st_seen_cfg_banner; /* obtained banner */
 
 	/* symmetric stuff */
 
@@ -756,5 +759,8 @@ bool shared_phase1_connection(const struct connection *c);
 
 extern void record_deladdr(ip_address *ip, char *a_type);
 extern void record_newaddr(ip_address *ip, char *a_type);
+
+extern void append_st_cfg_domain(struct state *st, const char *dnsip);
+extern void append_st_cfg_dns(struct state *st, const char *dnsip);
 
 #endif /* _STATE_H */

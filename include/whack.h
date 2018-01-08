@@ -300,10 +300,9 @@ struct whack_message {
 	/* for connalias string */
 	char *connalias;
 
-	/* for MODECFG */
-	ip_address modecfg_dns1;
-	ip_address modecfg_dns2;
-	char *modecfg_domain;
+	/* for IKEv1 MODECFG and IKEv2 CP */
+	char *modecfg_dns;
+	char *modecfg_domains;
 	char *modecfg_banner;
 
 	char *conn_mark_both;

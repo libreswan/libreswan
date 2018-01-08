@@ -298,7 +298,8 @@ $(eval $(call kvm-test,kvm-retest kvm-recheck, --test-status "good" --skip passe
 # clean up; accept pretty much everything
 KVM_TEST_CLEAN_TARGETS = \
 	clean-kvm-check kvm-clean-check kvm-check-clean \
-	clean-kvm-test kvm-clean-test kvm-test-clean
+	clean-kvm-test kvm-clean-test kvm-test-clean \
+	clean-kvm-tests kvm-clean-tests kvm-tests-clean
 .PHONY: $(KVM_TEST_CLEAN_TARGETS)
 $(KVM_TEST_CLEAN_TARGETS):
 	find $(STRIPPED_KVM_TESTS) -name OUTPUT -type d -prune -print0 | xargs -0 -r rm -r
@@ -332,17 +333,21 @@ kvm-keys-up-to-date:
 # invoked by testing/pluto/Makefile which relies on old domain
 # configurations.
 #
-# Make certain everything is shutdown.
+# Make certain everything is shutdown.  Can't depend on the phony
+# target kvm-shutdown-local-domains as that triggers an unconditional
+# rebuild.  Instead invoke that rule inline.
 
 $(KVM_KEYS): testing/x509/dist_certs.py $(KVM_KEYS_SCRIPT) # | $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
 	$(call check-kvm-domain,$(KVM_BUILD_DOMAIN))
 	$(call check-kvm-entropy)
 	$(call check-kvm-qemu-directory)
-	$(MAKE) kvm-keys-clean
+	: invoke phony target to shut things down
 	$(MAKE) kvm-shutdown-local-domains
+	$(MAKE) kvm-keys-clean
 	$(KVM_KEYS_SCRIPT) $(KVM_BUILD_DOMAIN) testing/x509
 	: Also regenerate the DNSSEC keys -- uses host
 	$(top_srcdir)/testing/baseconfigs/all/etc/bind/generate-dnssec.sh
+	$(KVMSH) --shutdown $(KVM_BUILD_DOMAIN)
 	touch $(KVM_KEYS)
 
 KVM_KEYS_CLEAN_TARGETS = clean-kvm-keys kvm-clean-keys kvm-keys-clean
@@ -442,7 +447,7 @@ define install-kvm-test-network
   .PHONY: install-kvm-network-$(1)$(2)
   install-kvm-network-$(1)$(2): $$(KVM_LOCALDIR)/$(1)$(2).xml
   .PRECIOUS: $$(KVM_LOCALDIR)/$(1)$(2).xml
-  $$(KVM_LOCALDIR)/$(1)$(2).xml:
+  $$(KVM_LOCALDIR)/$(1)$(2).xml: | $$(KVM_LOCALDIR)
 	: install-kvm-test-network prefix=$(1) network=$(2)
 	$$(call destroy-kvm-network,$(1)$(2))
 	rm -f '$$@.tmp'
@@ -490,11 +495,12 @@ $(foreach prefix, $(KVM_PREFIXES), \
 define upgrade-kvm-domain
 	: upgrade-kvm-domain domain=$(1)
 	$(if $(KVM_PACKAGES), \
-		$(KVMSH) --shutdown $(1) $(KVM_PACKAGE_INSTALL) $(KVM_PACKAGES))
+		$(KVMSH) $(1) $(KVM_PACKAGE_INSTALL) $(KVM_PACKAGES))
 	$(if $(KVM_INSTALL_RPM_LIST), \
-		$(KVMSH) --shutdown $(1) $(KVM_INSTALL_RPM_LIST))
+		$(KVMSH) $(1) $(KVM_INSTALL_RPM_LIST))
 	$(if $(KVM_DEBUGINFO), \
-		$(KVMSH) --shutdown $(1) $(KVM_DEBUGINFO_INSTALL) $(KVM_DEBUGINFO))
+		$(KVMSH) $(1) $(KVM_DEBUGINFO_INSTALL) $(KVM_DEBUGINFO))
+	$(KVMSH) --shutdown $(1)
 endef
 
 .PHONY: kvm-upgrade-base-domain
@@ -856,7 +862,7 @@ kvm-purge: kvm-clean kvm-test-clean kvm-keys-clean kvm-uninstall-test-networks k
 kvm-demolish: kvm-purge kvm-uninstall-base-network kvm-uninstall-base-domain
 
 .PHONY: kvm-clean clean-kvm
-kvm-clean clean-kvm: kvm-shutdown-local-domains kvm-keys-clean
+kvm-clean clean-kvm: kvm-shutdown-local-domains kvm-clean-keys kvm-clean-tests
 	: 'make kvm-DOMAIN-make-clean' to invoke clean on a DOMAIN
 	rm -rf $(KVM_OBJDIR)
 
@@ -881,11 +887,12 @@ kvm-clean clean-kvm: kvm-shutdown-local-domains kvm-keys-clean
 define kvm-DOMAIN-build
   #(info kvm-DOMAIN-build domain=$(1))
   .PHONY: kvm-$(1)-build
-  kvm-$(1)-build: kvm-shutdown-install-domains | $$(KVM_LOCALDIR)/$(1).xml
+  kvm-$(1)-build: kvm-shutdown-local-domains | $$(KVM_LOCALDIR)/$(1).xml
 	: kvm-DOMAIN-build domain=$(1)
 	$(call check-kvm-qemu-directory)
 	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; make OBJDIR=$$(KVM_OBJDIR) base'
 	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; make OBJDIR=$$(KVM_OBJDIR) module'
+	: install will run $$(KVMSH) --shutdown $(1)
 endef
 
 # this includes $(KVM_CLONE_DOMAIN)
@@ -913,10 +920,11 @@ kvm-build: kvm-$(KVM_BUILD_DOMAIN)-build
 define kvm-DOMAIN-install
   #(info kvm-DOMAIN-install domain=$(1))
   .PHONY: kvm-$(1)-install
-  kvm-$(1)-install: kvm-shutdown-install-domains kvm-$$(KVM_BUILD_DOMAIN)-build | $$(KVM_LOCALDIR)/$(1).xml
+  kvm-$(1)-install: kvm-shutdown-local-domains kvm-$$(KVM_BUILD_DOMAIN)-build | $$(KVM_LOCALDIR)/$(1).xml
 	: kvm-DOMAIN-install domain=$(1)
 	$(call check-kvm-qemu-directory)
-	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . --shutdown $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$$(KVM_OBJDIR)'
+	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$$(KVM_OBJDIR)'
+	$$(KVMSH) --shutdown $(1)
 endef
 
 # this includes $(KVM_CLONE_DOMAIN)

@@ -2576,14 +2576,15 @@ struct ikev2_payloads_summary ikev2_decrypt_msg(struct msg_digest *md, bool veri
 	return summary;
 }
 
-static stf_status ikev2_ship_cp_attr_ip4(u_int16_t type, ip_address *ip4,
+/* Misleading name, also used for NULL sized type's */
+static stf_status ikev2_ship_cp_attr_ip(u_int16_t type, ip_address *ip,
 		const char *story, pb_stream *outpbs)
 {
 	struct ikev2_cp_attribute attr;
 	pb_stream a_pbs;
 
 	attr.type = type;
-	attr.len = ip4 == NULL ? 0 : 4;	/* ??? is this redundant */
+	attr.len = (ip == NULL) ? 0 : addrtypeof(ip) == AF_INET ? 4 : 32;
 
 	if (!out_struct(&attr, &ikev2_cp_attribute_desc, outpbs,
 				&a_pbs))
@@ -2591,7 +2592,7 @@ static stf_status ikev2_ship_cp_attr_ip4(u_int16_t type, ip_address *ip4,
 
 	if (attr.len > 0) {
 		const unsigned char *byte_ptr;
-		addrbytesptr_read(ip4, &byte_ptr);
+		addrbytesptr_read(ip, &byte_ptr);
 		if (!out_raw(byte_ptr, attr.len, &a_pbs, story))
 			return STF_INTERNAL_ERROR;
 	}
@@ -2600,11 +2601,37 @@ static stf_status ikev2_ship_cp_attr_ip4(u_int16_t type, ip_address *ip4,
 	return STF_OK;
 }
 
-stf_status ikev2_send_cp(struct connection *c, enum next_payload_types_ikev2 np,
+static stf_status ikev2_ship_cp_attr_str(u_int16_t type, char *str,
+		const char *story, pb_stream *outpbs)
+{
+	struct ikev2_cp_attribute attr;
+	pb_stream a_pbs;
+
+	attr.type = type;
+	if (str == NULL)
+		attr.len = 0;
+	else
+		attr.len = strlen(str);
+
+	if (!out_struct(&attr, &ikev2_cp_attribute_desc, outpbs,
+				&a_pbs))
+		return STF_INTERNAL_ERROR;
+
+	if (attr.len > 0) {
+		if (!out_raw(str, attr.len, &a_pbs, story))
+			return STF_INTERNAL_ERROR;
+	}
+
+	close_output_pbs(&a_pbs);
+	return STF_OK;
+}
+
+stf_status ikev2_send_cp(struct state *st, enum next_payload_types_ikev2 np,
 				  pb_stream *outpbs)
 {
 	struct ikev2_cp cp;
 	pb_stream cp_pbs;
+	struct connection *c = st->st_connection;
 	bool cfg_reply = c->spd.that.has_lease;
 
 	DBG(DBG_CONTROLMORE, DBG_log("Send Configuration Payload %s ",
@@ -2617,21 +2644,64 @@ stf_status ikev2_send_cp(struct connection *c, enum next_payload_types_ikev2 np,
 	if (!out_struct(&cp, &ikev2_cp_desc, outpbs, &cp_pbs))
 		return STF_INTERNAL_ERROR;
 
-	ikev2_ship_cp_attr_ip4(IKEv2_INTERNAL_IP4_ADDRESS,
-			cfg_reply ? &c->spd.that.client.addr : NULL,
-			"IPV4 Address", &cp_pbs);
+	ikev2_ship_cp_attr_ip(addrtypeof(&c->spd.that.client.addr) == AF_INET ?
+		IKEv2_INTERNAL_IP4_ADDRESS : IKEv2_INTERNAL_IP6_ADDRESS,
+		&c->spd.that.client.addr,
+		"Internal IP Address", &cp_pbs);
 
 	if (cfg_reply) {
-		if (!isanyaddr(&c->modecfg_dns1)) {
-			ikev2_ship_cp_attr_ip4(IKEv2_INTERNAL_IP4_DNS, &c->modecfg_dns1,
-					"DNS 1", &cp_pbs);
+		if (c->modecfg_dns != NULL) {
+			char *ipstr;
+
+			ipstr = strtok(c->modecfg_dns, ", ");
+			while (ipstr != NULL) {
+				if (strchr(ipstr, '.') != NULL) {
+					ip_address ip;
+					err_t e  = ttoaddr_num(ipstr, 0, AF_INET, &ip);
+					if (e != NULL) {
+						loglog(RC_LOG_SERIOUS, "Ignored bogus DNS IP address '%s'", ipstr);
+					} else {
+						if (ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP4_DNS, &ip,
+							"IP4_DNS", &cp_pbs) != STF_OK)
+								return STF_INTERNAL_ERROR;
+					}
+				} else if (strchr(ipstr, ':') != NULL) {
+					ip_address ip;
+					err_t e  = ttoaddr_num(ipstr, 0, AF_INET6, &ip);
+					if (e != NULL) {
+						loglog(RC_LOG_SERIOUS, "Ignored bogus DNS IP address '%s'", ipstr);
+					} else {
+						if (ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP6_DNS, &ip,
+							"IP6_DNS", &cp_pbs) != STF_OK)
+								return STF_INTERNAL_ERROR;
+					}
+				} else {
+					loglog(RC_LOG_SERIOUS, "Ignored bogus DNS IP address '%s'", ipstr);
+				}
+				ipstr = strtok(NULL, ", ");
+			}
 		}
-		if (!isanyaddr(&c->modecfg_dns2)) {
-			ikev2_ship_cp_attr_ip4(IKEv2_INTERNAL_IP4_DNS, &c->modecfg_dns2,
-					"DNS 2", &cp_pbs);
+
+		if (c->modecfg_domains != NULL) {
+			char *domain;
+
+			domain = strtok(c->modecfg_domains, ", ");
+			while (domain != NULL) {
+				if (ikev2_ship_cp_attr_str(IKEv2_INTERNAL_DNS_DOMAIN, domain,
+					"IKEv2_INTERNAL_DNS_DOMAIN", &cp_pbs) != STF_OK)
+						return STF_INTERNAL_ERROR;
+				domain = strtok(NULL, ", ");
+			}
 		}
-	} else {
-		ikev2_ship_cp_attr_ip4(IKEv2_INTERNAL_IP4_DNS, NULL, "DNS", &cp_pbs);
+	} else { /* cfg request */
+		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP4_ADDRESS,
+			 NULL, "IPV4 Address", &cp_pbs);
+		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP4_DNS, NULL, "DNSv4", &cp_pbs);
+
+		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP6_ADDRESS,
+			 NULL, "IPV6 Address", &cp_pbs);
+		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP6_DNS, NULL, "DNSv6", &cp_pbs);
+		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_DNS_DOMAIN, NULL, "Domain", &cp_pbs);
 	}
 
 	close_output_pbs(&cp_pbs);
@@ -2910,18 +2980,16 @@ static stf_status ikev2_record_fragments(struct msg_digest *md,
 static int ikev2_np_cp_or_sa(struct connection *const pc, int np, const lset_t
 	   st_nat_traversal)
 {
-	int rnp = np;
-
 	if (pc->spd.this.modecfg_client) {
 		if (pc->spd.this.cat) {
 			if (LHAS(st_nat_traversal, NATED_HOST)) {
-				rnp = ISAKMP_NEXT_v2CP;
+				return ISAKMP_NEXT_v2CP;
 			}
 		} else {
-			rnp = ISAKMP_NEXT_v2CP;
+			return ISAKMP_NEXT_v2CP;
 		}
 	}
-	return rnp;
+	return np;
 }
 
 static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_digest *md,
@@ -3162,7 +3230,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	}
 
 	if (send_cp_r == ISAKMP_NEXT_v2CP) {
-		stf_status cpstat = ikev2_send_cp(pc, ISAKMP_NEXT_v2SA,
+		stf_status cpstat = ikev2_send_cp(pst, ISAKMP_NEXT_v2SA,
 				&e_pbs_cipher);
 
 		if (cpstat != STF_OK)
@@ -3184,6 +3252,8 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	{
 		lset_t policy = pc->policy;
 		int notifies = 0;
+		enum next_payload_types_ikev2 ia_np = (pc->modecfg_domains != NULL ||
+			pc->modecfg_dns != NULL) ?  ISAKMP_NEXT_v2CP : ISAKMP_NEXT_v2NONE;
 
 		/* child connection */
 		struct connection *cc = first_pending(pst, &policy, &cst->st_whack_sock);
@@ -3237,13 +3307,13 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		cst->st_ts_that = ikev2_end_to_ts(&cc->spd.that);
 
 		ikev2_calc_emit_ts(md, &e_pbs_cipher, ORIGINAL_INITIATOR, cc,
-			(notifies != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE);
+			(notifies != 0) ? ISAKMP_NEXT_v2N : ia_np);
 
 		if ((cc->policy & POLICY_TUNNEL) == LEMPTY) {
 			DBG(DBG_CONTROL, DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE"));
 			notifies--;
 			/* In v2, for parent, protoid must be 0 and SPI must be empty */
-			if (!ship_v2N((notifies != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE,
+			if (!ship_v2N((notifies != 0) ? ISAKMP_NEXT_v2N : ia_np,
 						ISAKMP_PAYLOAD_NONCRITICAL,
 						PROTO_v2_RESERVED,
 						&empty_chunk,
@@ -3254,8 +3324,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 		if (cc->send_no_esp_tfc) {
 			notifies--;
-			int np = notifies != 0 ? ISAKMP_NEXT_v2N :
-				ISAKMP_NEXT_v2NONE;
+			int np = notifies != 0 ? ISAKMP_NEXT_v2N : ia_np;
 			if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
 					PROTO_v2_RESERVED,
 					&empty_chunk,
@@ -3267,7 +3336,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 		if (LIN(POLICY_MOBIKE, cc->policy)) {
 			notifies--;
-			int np = notifies != 0 ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE;
+			int np = notifies != 0 ? ISAKMP_NEXT_v2N : ia_np;
 			cst->st_sent_mobike = pst->st_sent_mobike = TRUE;
 			if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
 					PROTO_v2_RESERVED,
@@ -3278,6 +3347,12 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		}
 
 		passert(notifies == 0);
+
+		/* send CP payloads */
+		if (pc->modecfg_domains != NULL || pc->modecfg_dns != NULL) {
+			ikev2_send_cp(pst, ISAKMP_NEXT_v2NONE,
+				&e_pbs_cipher);
+		}
 	}
 
 	const unsigned int len = pbs_offset(&e_pbs_cipher);
@@ -5455,6 +5530,9 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 {
 	struct payload_digest *p;
 	bool send_mobike_resp = FALSE;
+	int ndp = 0;	/* number Delete payloads for IPsec protocols */
+	bool del_ike = FALSE;	/* any IKE SA Deletions? */
+
 	chunk_t cookie2 = empty_chunk;
 
 	/* Are we responding (as opposed to processing a response)? */
@@ -5486,19 +5564,24 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 	}
 
 	/*
-	 * Process NOTITY payloads
-	 * Since DELETE payloads should not be mixed with NOTIFY payloads,
-	 * we skip processing notify if we are deleting.
+	 * Process NOTITY payloads - ignore MOBIKE when deleting
 	 */
-	if (md->chain[ISAKMP_NEXT_v2D] != NULL &&
-		md->chain[ISAKMP_NEXT_v2N] != NULL) {
+	if (md->chain[ISAKMP_NEXT_v2D] == NULL) {
 
-		loglog(RC_LOG_SERIOUS, "Received INFORMATIONAL with both DELETE and NOTIFY payloads. Ignored notify payloads");
-	} else if (responding && process_mobike_req(md, &send_mobike_resp, &cookie2)) {
-		/* MOBIKE request processed */
-	} else if (!responding && process_mobike_resp(md)) {
-		/* lets migrage the kernel SA */
-	}
+		if (responding) {
+			if (process_mobike_req(md, &send_mobike_resp, &cookie2)) {
+				libreswan_log("MOBIKE request: updating IPsec SA by request");
+			} else {
+				DBG(DBG_CONTROL, DBG_log("MOBIKE request: not updating IPsec SA"));
+			}
+		} else {
+			if (process_mobike_resp(md)) {
+				libreswan_log("MOBIKE response: updating IPsec SA");
+			} else {
+				DBG(DBG_CONTROL, DBG_log("MOBIKE response: not updating IPsec SA"));
+			}
+		}
+	} else {
 
 	/*
 	 * RFC 7296 1.4.1 "Deleting an SA with INFORMATIONAL Exchanges"
@@ -5511,8 +5594,6 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 	 * - notice any IKE SA Delete Payload
 	 * - sanity checking
 	 */
-	int ndp = 0;	/* number Delete payloads for IPsec protocols */
-	bool del_ike = FALSE;	/* any IKE SA Deletions? */
 
 	for (p = md->chain[ISAKMP_NEXT_v2D]; p != NULL; p = p->next) {
 		struct ikev2_delete *v2del = &p->payload.v2delete;
@@ -5563,10 +5644,9 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 	if (del_ike && ndp != 0)
 		libreswan_log("Odd: INFORMATIONAL Exchange deletes IKE SA and yet also deletes some IPsec SA");
 
+	}
 	/*
-	 * response packet preparation
-	 *
-	 * We respond to the Informational with an Informational.
+	 * response packet preparation: DELETE or non-delete (eg MOBIKE/keepalive)
 	 *
 	 * There can be at most one Delete Payload for an IKE SA.
 	 * It means that this very SA is to be deleted.
@@ -5593,9 +5673,8 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 			 sizeof(reply_buffer),
 			 "information exchange reply packet");
 
-		DBG(DBG_CONTROLMORE | DBG_DPD,
-		    DBG_log("updating st_last_liveness, no pending_liveness"));
-
+		/* authenticated decrypted response - It's alive, alive! */
+		DBG(DBG_DPD, DBG_log("Received an INFORMATIONAL response, updating st_last_liveness, no pending_liveness"));
 		st->st_last_liveness = mononow();
 		st->st_pend_liveness = FALSE;
 
@@ -5626,8 +5705,18 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		{
 			struct ikev2_generic e;
 
-			e.isag_np = (del_ike || ndp != 0) ? ISAKMP_NEXT_v2D :
-				send_mobike_resp ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE;
+			/*
+			 * IKE SA DELETE response is NONE
+			 * IPsec SA DELETE response is DELETE
+			 * Neither can mix with MOBIKE
+			 */
+			if (del_ike)
+				e.isag_np = ISAKMP_NEXT_v2NONE;
+			else if (ndp != 0)
+				e.isag_np = ISAKMP_NEXT_v2D;
+			else if (send_mobike_resp)
+				e.isag_np = ISAKMP_NEXT_v2N;
+			else e.isag_np = ISAKMP_NEXT_v2NONE;
 
 			e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 
@@ -5673,14 +5762,6 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		md->st = st = NULL;
 	} else if (!responding &&
 		   md->chain[ISAKMP_NEXT_v2D] == NULL) {
-		/* A liveness update response */
-		/* ??? why wouldn't any INFORMATIONAL count, even one that
-		 * is actually deleting SAs?
-		 */
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("Received an INFORMATIONAL response; updating liveness, no longer pending."));
-		st->st_last_liveness = mononow();
-		st->st_pend_liveness = FALSE;
 	} else if (del_ike) {
 		/*
 		 * If we are deleting the Parent SA, the Child SAs will be torn down as well,
@@ -5700,10 +5781,8 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		 */
 		int pli = 0;	/* payload index */
 
-		for (p = md->chain[ISAKMP_NEXT_v2D]; p != NULL;
-		     p = p->next) {
-			struct ikev2_delete *v2del =
-				&p->payload.v2delete;
+		for (p = md->chain[ISAKMP_NEXT_v2D]; p != NULL; p = p->next) {
+			struct ikev2_delete *v2del = &p->payload.v2delete;
 
 			switch (v2del->isad_protoid) {
 			case PROTO_ISAKMP:
@@ -5905,7 +5984,7 @@ stf_status ikev2_send_livenss_probe(struct state *st)
 	return e;
 }
 
-static stf_status add_mobike_payloads(struct state *st UNUSED, pb_stream *pbs)
+static stf_status add_mobike_payloads(struct state *st, pb_stream *pbs)
 {
 	if (!ship_v2N(ISAKMP_NEXT_v2N, ISAKMP_PAYLOAD_NONCRITICAL,
 				PROTO_v2_RESERVED, &empty_chunk,
@@ -5927,7 +6006,7 @@ stf_status ikev2_send_informational(struct state *st, struct state *pst,
 {
 
 	/* buffer in which to marshal our informational message.
-	 * We don't use reply_buffer/reply_stream because they might be in use.
+	 * We don't use reply_buffer/reply_stream because it might be in use.
 	 */
 	u_char buffer[1024];	/* ??? large enough for any informational? */
 	unsigned char *authstart;
@@ -5939,20 +6018,17 @@ stf_status ikev2_send_informational(struct state *st, struct state *pst,
 	pb_stream rbody;
 	pb_stream reply_stream;
 
-	stf_status (*add_payloads)(struct state *st, pb_stream *pbs);
-
 	switch (v2N) {
 	case v2N_NOTHING_WRONG:
 		/* This is an empty informational exchange (A.K.A liveness check) */
 		e.isag_np = ISAKMP_NEXT_v2NONE;
-		add_payloads = NULL;
 		break;
 
 	case v2N_UPDATE_SA_ADDRESSES:
 		e.isag_np = ISAKMP_NEXT_v2N;
-		add_payloads = add_mobike_payloads;
 		break;
 
+	/* PAUL: We don't use this function for sending DELETE payloads? */
 	/*  e.isag_np = ISAKMP_NEXT_v2D; */
 
 	default:
@@ -6008,8 +6084,13 @@ stf_status ikev2_send_informational(struct state *st, struct state *pst,
 	e_pbs_cipher.cur = e_pbs.cur;
 	encstart = e_pbs_cipher.cur;
 
-	if (add_payloads != NULL)
-		add_payloads(st, &e_pbs_cipher);
+	if (v2N == v2N_UPDATE_SA_ADDRESSES) {
+		stf_status retmob = add_mobike_payloads(st, &e_pbs_cipher);
+
+		if (retmob != STF_OK) {
+			return  retmob;
+		}
+	}
 
 	if (!ikev2_padup_pre_encrypt(st, &e_pbs_cipher))
 		return STF_INTERNAL_ERROR;

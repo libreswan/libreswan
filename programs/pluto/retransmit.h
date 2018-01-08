@@ -48,4 +48,6 @@ enum retransmit_status {
 
 enum retransmit_status retransmit(struct state *st);
 
+size_t lswlog_retransmit_prefix(struct lswlog *buf, struct state *st);
+
 #endif

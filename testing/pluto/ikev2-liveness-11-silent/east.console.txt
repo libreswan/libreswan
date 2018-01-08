@@ -1,0 +1,23 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add west-east
+002 added connection description "west-east"
+east #
+ echo "initdone"
+initdone
+east #
+ # Confirm expired IPsec SA will not trigger a liveness probe
+east #
+ grep "liveness: no need to send"  /tmp/pluto.log
+| liveness: no need to send or schedule DPD for replaced IPsec SA
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

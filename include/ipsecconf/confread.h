@@ -105,9 +105,8 @@ struct starter_conn {
 
 	char *esp;
 	char *ike;
-	char *modecfg_dns1;
-	char *modecfg_dns2;
-	char *modecfg_domain;
+	char *modecfg_dns;
+	char *modecfg_domains;
 	char *modecfg_banner;
 	char *policy_label;
 	char *conn_mark_both;

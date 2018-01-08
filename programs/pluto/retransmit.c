@@ -1,7 +1,7 @@
 /*
  * Retransmits, for libreswan
  *
- * Copyright (C) 2017 Andrew Cagney
+ * Copyright (C) 2017-2018 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -26,6 +26,12 @@
 #include "timer.h"
 
 #include "log.h"
+
+size_t lswlog_retransmit_prefix(struct lswlog *buf, struct state *st)
+{
+	return lswlogf(buf, "#%ld %s: retransmits: ",
+		       st->st_serialno, st->st_state_name);
+}
 
 unsigned long retransmit_count(struct state *st)
 {
@@ -80,18 +86,20 @@ bool count_duplicate(struct state *st, unsigned long limit)
 	if (nr_retransmits < limit) {
 		double_delay(rt, nr_retransmits);
 		rt->nr_duplicate_replies++;
-		DBG(DBG_RETRANSMITS,
-		    DBG_log("#%ld %s: retransmits: duplicate reply %lu + retransmit %lu of duplicate limit %lu (retransmit limit %lu)",
-			    st->st_serialno, st->st_state_name,
-			    rt->nr_duplicate_replies, rt->nr_retransmits,
-			    limit, rt->limit));
+		LSWDBGP(DBG_RETRANSMITS, buf) {
+			lswlog_retransmit_prefix(buf, st);
+			lswlogf(buf, "duplicate reply %lu + retransmit %lu of duplicate limit %lu (retransmit limit %lu)",
+			       rt->nr_duplicate_replies, rt->nr_retransmits,
+			       limit, rt->limit);
+		}
 		return true;
 	} else {
-		DBG(DBG_RETRANSMITS,
-		    DBG_log("#%ld %s: retransmits: total duplicate replies (%lu) + retransmits (%lu) exceeds duplicate limit %lu (retransmit limit %lu)",
-			    st->st_serialno, st->st_state_name,
-			    rt->nr_duplicate_replies, +rt->nr_retransmits,
-			    limit, rt->limit));
+		LSWDBGP(DBG_RETRANSMITS, buf) {
+			lswlog_retransmit_prefix(buf, st);
+			lswlogf(buf, "total duplicate replies (%lu) + retransmits (%lu) exceeds duplicate limit %lu (retransmit limit %lu)",
+				rt->nr_duplicate_replies, +rt->nr_retransmits,
+				limit, rt->limit);
+		}
 		return false;
 	}
 }
@@ -105,9 +113,10 @@ void clear_retransmits(struct state *st)
 	rt->delay = deltatime(0);
 	rt->start = monotime_epoch;
 	rt->timeout = deltatime(0);
-	DBG(DBG_RETRANSMITS,
-	    DBG_log("#%ld %s: retransmits: cleared",
-		    st->st_serialno, st->st_state_name));
+	LSWDBGP(DBG_RETRANSMITS, buf) {
+		lswlog_retransmit_prefix(buf, st);
+		lswlogs(buf, "cleared");
+	}
 }
 
 void start_retransmits(struct state *st, enum event_type type)
@@ -118,28 +127,46 @@ void start_retransmits(struct state *st, enum event_type type)
 	rt->nr_retransmits = 0;
 	rt->limit = MAXIMUM_RETRANSMITS_PER_EXCHANGE;
 	rt->type = type;
+	/* correct values */
+	rt->timeout = c->r_timeout;
 	rt->delay = c->r_interval;
 	if (IMPAIR(RETRANSMITS)) {
 		/*
-		 * Speed up impaired retransmits by using DELAY as the
-		 * timeout
+		 * Trigger a quick timeout by using INTERVAL (initial
+		 * delay) as the timeout.
+		 *
+		 * Use this to force code into taking the error path.
+		 * Would a timeout of 0 be better?
 		 */
+		rt->timeout = c->r_interval;
 		LSWLOG(buf) {
 			lswlogs(buf, "IMPAIR RETRANSMITS: scheduling timeout in ");
+			lswlog_deltatime(buf, rt->timeout);
+			lswlogs(buf, " seconds");
+		}
+	}
+	if (IMPAIR(SEND_NO_RETRANSMITS)) {
+		/*
+		 * Suppress retransmits by using the full TIMEOUT as
+		 * the delay.
+		 *
+		 * Use this to stop retransmits in the middle of an
+		 * operation that is expected to be slow (and the
+		 * network is assumed to be reliable).
+		 */
+		rt->delay = c->r_timeout;
+		LSWLOG(buf) {
+			lswlogs(buf, "IMPAIR: send-no-retransmits: scheduling timeout in ");
 			lswlog_deltatime(buf, rt->delay);
 			lswlogs(buf, " seconds");
 		}
-		rt->timeout = rt->delay;
-	} else {
-		rt->timeout = c->r_timeout;
 	}
 	rt->start = mononow();
 	rt->delays = rt->delay;
 	event_schedule(rt->type, rt->delay, st);
 	LSWDBGP(DBG_RETRANSMITS, buf) {
-		lswlogs(buf, "retransmit: ");
-		lswlogf(buf, "#%ld %s: retransmits: first event in ",
-			st->st_serialno, st->st_state_name);
+		lswlog_retransmit_prefix(buf, st);
+		lswlogs(buf, "first event in ");
 		lswlog_deltatime(buf, rt->delay);
 		lswlogs(buf, " seconds; timeout in ");
 		lswlog_deltatime(buf, rt->timeout);

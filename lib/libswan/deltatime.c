@@ -75,7 +75,7 @@ intmax_t deltamillisecs(deltatime_t d)
 	return d.ms;
 }
 
-time_t deltasecs(deltatime_t d)
+intmax_t deltasecs(deltatime_t d)
 {
 	return d.ms / 1000;
 }

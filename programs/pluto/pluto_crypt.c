@@ -111,7 +111,7 @@ static size_t log_backlog(struct lswlog *buf, void *data)
 		size += lswlogf(buf, "no work-order");
 	} else {
 		struct pluto_crypto_req_cont *cn = data;
-		size += lswlogf(buf, "work-order %zu", (uintmax_t)cn->pcrc_id);
+		size += lswlogf(buf, "work-order %ju", (uintmax_t)cn->pcrc_id);
 		if (cn->pcrc_serialno != SOS_NOBODY) {
 			size += lswlogf(buf, " state #%lu", cn->pcrc_serialno);
 		}
@@ -571,28 +571,6 @@ void delete_cryptographic_continuation(struct state *st)
 		if (cn != NULL) {
 			pcrc_release_request(cn);
 		}
-	}
-}
-
-void log_crypto_workers(void)
-{
-	static bool first_time = TRUE;
-
-	if (!first_time)
-		/* why? see callers, code dead */
-		return;
-
-	first_time = FALSE;
-
-	for (int i = 0; i < pc_workers_cnt; i++) {
-		struct pluto_crypto_worker *w = &pc_workers[i];
-		pthread_mutex_lock(&backlog_mutex);
-		so_serial_t serialno = w->pcw_pcrc_serialno;
-		int id = w->pcw_pcrc_id;
-		bool dead = w->pcw_dead;
-		pthread_mutex_unlock(&backlog_mutex);
-		libreswan_log("crypto queue: request ID %u for #%lu assigned to %scrypto helper %d",
-			      id, serialno, dead ? "dead " : "", i);
 	}
 }
 

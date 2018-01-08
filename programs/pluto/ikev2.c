@@ -11,7 +11,7 @@
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
- * Copyright (C) 2015-2017 Andrew Cagney
+ * Copyright (C) 2015-2018 Andrew Cagney
  * Copyright (C) 2016-2017 Antony Antony <appu@phenome.org>
  * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
  *
@@ -66,7 +66,6 @@
 #include "spdb.h"
 #include "nat_traversal.h"
 #include "vendor.h"
-#include "pluto_crypt.h"	/* just for log_crypto_workers() */
 
 #include "alg_info.h" /* for ike_info / esp_info */
 
@@ -992,16 +991,20 @@ static void process_recent_rtransmit(struct state *st,
         }
 
 	if (st->st_msgid_lastreplied != st->st_msgid_lastrecv) {
-		DBG(DBG_CONTROLMORE|DBG_RETRANSMITS,
-			DBG_log("cannot retransmit response for message ID: %u exchange %s lastreplied %u",
+		LSWDBGP(DBG_CONTROLMORE|DBG_RETRANSMITS, buf) {
+			lswlog_retransmit_prefix(buf, st);
+			lswlogf(buf, "cannot retransmit response for message ID: %u exchange %s lastreplied %u",
 				st->st_msgid_lastrecv,
 				enum_name(&ikev2_exchange_names, ix),
-				st->st_msgid_lastreplied));
+				st->st_msgid_lastreplied);
+		}
 	} else {
-		DBG(DBG_CONTROLMORE|DBG_RETRANSMITS,
-			DBG_log("retransmit response for message ID: %u exchange %s",
+		LSWDBGP(DBG_CONTROLMORE|DBG_RETRANSMITS, buf) {
+			lswlog_retransmit_prefix(buf, st);
+			lswlogf(buf, "retransmit response for message ID: %u exchange %s",
 				st->st_msgid_lastrecv,
-				enum_name(&ikev2_exchange_names, ix)));
+				enum_name(&ikev2_exchange_names, ix));
+		}
 		send_ike_msg(st, "ikev2-responder-retransmit");
 	}
 }
@@ -1098,14 +1101,17 @@ void process_v2_packet(struct msg_digest **mdp)
 		if (st != NULL && md->original_role == ORIGINAL_RESPONDER) {
 			if (st->st_msgid_lastrecv == md->msgid_received) {
 				/* this is a recent retransmit. */
-				set_cur_state(st);
-				DBG(DBG_CONTROLMORE|DBG_RETRANSMITS, DBG_log(
-					"duplicate IKE_INIT_I message received, retransmiting previous packet"));
+				so_serial_t old_state = push_cur_state(st);
 				if (st->st_suspended_md != NULL) {
 					libreswan_log("IKE_INIT_I retransmission ignored: we're still working on the previous one");
 				} else {
+					LSWDBGP(DBG_CONTROLMORE|DBG_RETRANSMITS, buf) {
+						lswlog_retransmit_prefix(buf, st);
+						lswlogf(buf, "duplicate IKE_INIT_I message received, retransmiting previous packet");
+					}
 					send_ike_msg(st, "ikev2-responder-retransmit IKE_INIT_I");
 				}
+				pop_cur_state(old_state);
 				return;
 			}
 			/* update lastrecv later on */
@@ -1171,11 +1177,12 @@ void process_v2_packet(struct msg_digest **mdp)
 				if (is_msg_response(md)) {
 					/* Response to our request */
 					if (st->st_msgid_lastack != v2_INVALID_MSGID &&
-					    st->st_msgid_lastack > md->msgid_received)
-					{
-						DBG(DBG_CONTROL|DBG_RETRANSMITS, DBG_log(
-							"dropping retransmitted response with msgid %u from peer - we already processed %u.",
-						    md->msgid_received, st->st_msgid_lastack));
+					    st->st_msgid_lastack > md->msgid_received) {
+						LSWDBGP(DBG_CONTROL|DBG_RETRANSMITS, buf) {
+							lswlog_retransmit_prefix(buf, st);
+							lswlogf(buf, "dropping retransmitted response with msgid %u from peer - we already processed %u.",
+								md->msgid_received, st->st_msgid_lastack);
+						}
 						return;
 					}
 					if (st->st_msgid_nextuse != v2_INVALID_MSGID &&

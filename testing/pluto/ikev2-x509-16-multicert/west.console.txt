@@ -39,7 +39,7 @@ west #
 006 #2: "other", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@othereast.other.libreswan.org'
 west #
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 
