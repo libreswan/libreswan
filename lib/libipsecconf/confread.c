@@ -1236,9 +1236,8 @@ static bool load_conn(
 #endif
 
 	str_to_conn(ike, KSCF_IKE);
-	str_to_conn(modecfg_dns1, KSCF_MODECFGDNS1);
-	str_to_conn(modecfg_dns2, KSCF_MODECFGDNS2);
-	str_to_conn(modecfg_domain, KSCF_MODECFGDOMAIN);
+	str_to_conn(modecfg_dns, KSCF_MODECFGDNS);
+	str_to_conn(modecfg_domains, KSCF_MODECFGDOMAINS);
 	str_to_conn(modecfg_banner, KSCF_MODECFGBANNER);
 
 	str_to_conn(conn_mark_both, KSCF_CONN_MARK_BOTH);
@@ -1408,9 +1407,8 @@ static void conn_default(struct starter_conn *conn,
 	conn->esp = clone_str(def->esp, "conn default esp");
 	conn->ike = clone_str(def->ike, "conn default ike");
 
-	conn->modecfg_dns1 = clone_str(def->modecfg_dns1, "conn default dns1");
-	conn->modecfg_dns2 = clone_str(def->modecfg_dns2, "conn default dns2");
-	conn->modecfg_domain = clone_str(def->modecfg_domain, "conn default domain");
+	conn->modecfg_dns = clone_str(def->modecfg_dns, "conn default dns");
+	conn->modecfg_domains = clone_str(def->modecfg_domains, "conn default domains");
 	conn->modecfg_banner = clone_str(def->modecfg_banner, "conn default banner");
 	conn->conn_mark_both = clone_str(def->conn_mark_both, "conn default conn_mark_both");
 	conn->conn_mark_in = clone_str(def->conn_mark_in, "conn default conn_mark_in");
@@ -1564,9 +1562,6 @@ static void confread_free_conn(struct starter_conn *conn)
 
 	pfreeany(conn->esp);
 	pfreeany(conn->ike);
-
-	pfreeany(conn->modecfg_dns1);
-	pfreeany(conn->modecfg_dns2);
 
 	pfreeany(conn->left.virt);
 	pfreeany(conn->right.virt);

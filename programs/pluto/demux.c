@@ -587,3 +587,32 @@ static bool read_packet(struct msg_digest *md)
 
 	return TRUE;
 }
+
+/* Auxiliary function for modecfg_inR1() */
+char *cisco_stringify(pb_stream *pbs, const char *attr_name)
+{
+	char strbuf[500]; /* Cisco maximum unknown - arbitrary choice */
+	size_t len = pbs_left(pbs);
+
+	if (len > sizeof(strbuf) - 1)
+		len = sizeof(strbuf) - 1;
+
+	memcpy(strbuf, pbs->cur, len);
+	strbuf[len] = '\0';
+	/* ' is poison to the way this string will be used
+	 * in system() and hence shell.  Remove any.
+	 */
+	{
+		char *s = strbuf;
+
+		for (;; ) {
+			s = strchr(s, '\'');
+			if (s == NULL)
+				break;
+			*s = '?';
+		}
+	}
+	sanitize_string(strbuf, sizeof(strbuf));
+	loglog(RC_INFORMATIONAL, "Received %s: %s", attr_name, strbuf);
+	return clone_str(strbuf, attr_name);
+}

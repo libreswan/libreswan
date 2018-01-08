@@ -128,7 +128,8 @@ err_t pack_whack_msg(struct whackpacker *wp)
 #ifdef HAVE_LABELED_IPSEC
 	    !pack_str(wp, &wp->msg->policy_label) ||		/* string 27 */
 #endif
-	    !pack_str(wp, &wp->msg->modecfg_domain) ||		/* string 28 */
+	    !pack_str(wp, &wp->msg->modecfg_dns) ||		/* string 28 */
+	    !pack_str(wp, &wp->msg->modecfg_domains) ||		/* string 28 */
 	    !pack_str(wp, &wp->msg->modecfg_banner) ||		/* string 29 */
 	    !pack_str(wp, &wp->msg->conn_mark_both) ||		/* string 30 */
 	    !pack_str(wp, &wp->msg->conn_mark_in) ||		/* string 31 */
@@ -196,7 +197,8 @@ err_t unpack_whack_msg(struct whackpacker *wp)
 #ifdef HAVE_LABELED_IPSEC
 	    !unpack_str(wp, &wp->msg->policy_label) ||		/* string 27 */
 #endif
-	    !unpack_str(wp, &wp->msg->modecfg_domain) ||	/* string 28 */
+	    !unpack_str(wp, &wp->msg->modecfg_dns) ||		/* string 28 */
+	    !unpack_str(wp, &wp->msg->modecfg_domains) ||	/* string 28 */
 	    !unpack_str(wp, &wp->msg->modecfg_banner) ||	/* string 29 */
 	    !unpack_str(wp, &wp->msg->conn_mark_both) ||	/* string 30 */
 	    !unpack_str(wp, &wp->msg->conn_mark_in) ||		/* string 31 */

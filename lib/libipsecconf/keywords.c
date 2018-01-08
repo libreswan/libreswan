@@ -581,14 +581,11 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "xauthby",  kv_conn,  kt_enum,  KBF_XAUTHBY,  &kw_xauthby, NULL, },
   { "xauthfail",  kv_conn,  kt_enum,  KBF_XAUTHFAIL,  &kw_xauthfail, NULL, },
   { "modecfgpull",  kv_conn,  kt_invertbool,  KBF_MODECONFIGPULL, NULL, NULL, },
-  /*
-   * these are really kt_ipaddr,  but we handle them as string
-   * until we load them into a whack message
-   */
-  { "modecfgdns1",  kv_conn,  kt_string,  KSCF_MODECFGDNS1, NULL, NULL, },
-  { "modecfgdns2",  kv_conn,  kt_string,  KSCF_MODECFGDNS2, NULL, NULL, },
-
-  { "modecfgdomain",  kv_conn,  kt_string,  KSCF_MODECFGDOMAIN, NULL, NULL, },
+  { "modecfgdns",  kv_conn,  kt_string,  KSCF_MODECFGDNS, NULL, NULL, },
+  { "modecfgdns1",  kv_conn,  kt_string | kv_alias, KSCF_MODECFGDNS, NULL, NULL, }, /* obsolete */
+  { "modecfgdns2",  kv_conn,  kt_string | kv_alias, KSCF_MODECFGDNS, NULL, NULL, }, /* obsolete */
+  { "modecfgdomains",  kv_conn,  kt_string,  KSCF_MODECFGDOMAINS, NULL, NULL, },
+  { "modecfgdomain",  kv_conn | kv_alias,  kt_string,  KSCF_MODECFGDOMAINS, NULL, NULL, }, /* obsolete */
   { "modecfgbanner",  kv_conn,  kt_string,  KSCF_MODECFGBANNER, NULL, NULL, },
   { "mark",  kv_conn,  kt_string,  KSCF_CONN_MARK_BOTH, NULL, NULL, },
   { "mark-in",  kv_conn,  kt_string,  KSCF_CONN_MARK_IN, NULL, NULL, },

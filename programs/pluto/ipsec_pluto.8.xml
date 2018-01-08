@@ -183,11 +183,9 @@
 
       <arg choice="opt">--modecfgclient</arg>
 
-      <arg choice="opt">--modecfgdns1 <replaceable>ip-address</replaceable></arg>
+      <arg choice="opt">--modecfgdns <replaceable>ip-address, ip-address, ...</replaceable></arg>
 
-      <arg choice="opt">--modecfgdns2 <replaceable>ip-address</replaceable></arg>
-
-      <arg choice="opt">--modecfgdomain <replaceable>DNS-domain</replaceable></arg>
+      <arg choice="opt">--modecfgdomains <replaceable>DNS-domain, DNS-domain, ...</replaceable></arg>
       <arg choice="opt">--modecfgbanner <replaceable>login-banner</replaceable></arg>
 
       <arg choice="opt">--dnskeyondemand</arg>
@@ -249,11 +247,9 @@
 
       <arg choice="opt">--modecfgclient</arg>
 
-      <arg choice="opt">--modecfgdns1 <replaceable>ip-address</replaceable></arg>
+      <arg choice="opt">--modecfgdns <replaceable>ip-address, ip-address, ...</replaceable></arg>
 
-      <arg choice="opt">--modecfgdns2 <replaceable>ip-address</replaceable></arg>
-
-      <arg choice="opt">--modecfgdomain <replaceable>DNS-domain</replaceable></arg>
+      <arg choice="opt">--modecfgdomains <replaceable>DNS-domain, DNS-domain, ...</replaceable></arg>
 
       <arg choice="opt">--dnskeyondemand</arg>
 
@@ -1581,18 +1577,18 @@
         </varlistentry>
 
         <varlistentry>
-          <term><option>--modecfgdns1</option></term>
+          <term><option>--modecfgdns</option></term>
 
           <listitem>
-            <para>The IP address of the first DNS server to pass along to the ModeConfig Client</para>
+            <para>A comma separated list of DNS server IP's to pass along to connecting clients</para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
-          <term><option>--modecfgdns2</option></term>
+          <term><option>--modecfgdomains</option></term>
 
           <listitem>
-            <para>The IP address of the second DNS server to pass along to the ModeConfig Client</para>
+            <para>A comma separated list of internal DNS domains to pass along to connecting clients</para>
           </listitem>
         </varlistentry>
 
