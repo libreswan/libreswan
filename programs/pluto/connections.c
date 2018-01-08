@@ -4024,7 +4024,7 @@ static void show_one_sr(const struct connection *c,
 		enum_show_shortb(&ikev2_asym_auth_name,sr->that.authby, &auth2));
 
 	whack_log(RC_COMMENT,
-		"\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg policy:%s, dns:%s, domain:%s%s, cat:%s;",
+		"\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg policy:%s, dns:%s, domains:%s%s, cat:%s;",
 		c->name, instance,
 		COMBO(sr->this, modecfg_server, modecfg_client),
 		COMBO(sr->that, modecfg_server, modecfg_client),
