@@ -3,6 +3,7 @@ See also https://libreswan.org/
 
 v3.23 (unrelased)
 * IKEv2: MOBIKE support (RFC 45555) [Antony/Paul]
+* IKEv2: Add support for modecfgdns= and modecfgdomains= like for IKEv1 [Paul]
 * pluto: Fix DEFAULT_RUNDIR to be set so it is really configurable [Tuomo]
 * pluto: Add support IDr payload (You Tarzan, me Jane) [Paul]
 * pluto: pass state to send_crypto_helper_request() [Andrew]
