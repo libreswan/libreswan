@@ -1009,23 +1009,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
  * --> HDR, SA, KE, Ni, IDii
  */
 
-static stf_status aggr_outI1_tail(struct state *st,
-				  struct pluto_crypto_req *r);
-
 static crypto_req_cont_func aggr_outI1_continue;	/* type assertion */
-
-static void aggr_outI1_continue(struct state *st, struct msg_digest *md,
-				struct pluto_crypto_req *r)
-{
-	DBG(DBG_CONTROL,
-		DBG_log("aggr_outI1_continue for #%lu: calculated ke+nonce, sending I1",
-			st->st_serialno));
-
-	passert(md != NULL);
-	stf_status e = aggr_outI1_tail(st, r);
-	complete_v1_state_transition(&md, e);
-	release_any_md(&md);
-}
 
 /* No initial state for aggr_outI1:
  * SMF_DS_AUTH (RFC 2409 5.1) and SMF_PSK_AUTH (RFC 2409 5.4):
@@ -1120,24 +1104,35 @@ void aggr_outI1(int whack_sock,
 
 	/*
 	 * Calculate KE and Nonce.
-	 *
-	 * We need an md because the crypto continuation mechanism requires one
-	 * but we don't have one because we are not responding to an
-	 * incoming packet.
-	 * Solution: build a fake one.  How much do we need to fake?
-	 * Note: almost identical code appears at the end of ikev2parent_outI1.
+	 */
+	request_ke_and_nonce("aggr_outI1 KE + nonce", st, NULL,
+			     st->st_oakley.ta_dh, importance,
+			     aggr_outI1_continue);
+	reset_globals();
+}
+
+static stf_status aggr_outI1_tail(struct state *st, struct pluto_crypto_req *r);
+
+static void aggr_outI1_continue(struct state *st, struct msg_digest *md,
+				struct pluto_crypto_req *r)
+{
+	DBG(DBG_CONTROL,
+		DBG_log("aggr_outI1_continue for #%lu: calculated ke+nonce, sending I1",
+			st->st_serialno));
+	passert(md == NULL);
+	stf_status e = aggr_outI1_tail(st, r); /* may return FAIL */
+
+	/*
+	 * XXX: The right fix is to stop
+	 * complete_v1_state_transition() assuming that there is an
+	 * MD.  This hacks around it.
 	 */
 	struct msg_digest *fake_md = alloc_md("msg_digest by aggr_outI1");
-
 	fake_md->st = st;
 	fake_md->smc = NULL;	/* ??? */
 	fake_md->from_state = STATE_UNDEFINED;	/* ??? */
 
-	request_ke_and_nonce("aggr_outI1 KE + nonce",
-			     st, fake_md,
-			     st->st_oakley.ta_dh, importance,
-			     aggr_outI1_continue);
-	reset_globals();
+	complete_v1_state_transition(&fake_md, e);
 }
 
 static stf_status aggr_outI1_tail(struct state *st,
@@ -1154,11 +1149,9 @@ static stf_status aggr_outI1_tail(struct state *st,
 		DBG_log("aggr_outI1_tail for #%lu",
 			st->st_serialno));
 
-	/* the MD is already set up by alloc_md() */
-
 	/* make sure HDR is at start of a clean buffer */
 	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
-		 "reply packet");
+		     "reply packet");
 
 	/* HDR out */
 	pb_stream rbody;
