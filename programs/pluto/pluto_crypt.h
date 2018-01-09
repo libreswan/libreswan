@@ -357,17 +357,13 @@ extern void cancelled_v1_dh(struct pcr_v1_dh *dh);
  * IKEv2 DH
  */
 
-extern void start_dh_v2(struct msg_digest *md,
+extern void start_dh_v2(struct state *st,
+			struct msg_digest *md,
 			const char *name,
 			enum original_role role,
 			PK11SymKey *skey_d_old,
 			const struct prf_desc *old_prf,
 			crypto_req_cont_func pcrc_func);
-
-extern void start_child_dh_v2(struct msg_digest *md,
-			      const char *name,
-			      enum original_role role,
-			      crypto_req_cont_func pcrc_func);
 
 extern bool finish_dh_v2(struct state *st,
 			 struct pluto_crypto_req *r, bool only_shared);

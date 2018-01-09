@@ -260,7 +260,7 @@ static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
 			return STF_FAIL;
 		}
 		/* initiate calculation of g^xy */
-		start_dh_v2(md, "DHv2 for child sa", role,
+		start_dh_v2(st, md, "DHv2 for child sa", role,
 			    pst->st_skey_d_nss, /* only IKE has SK_d */
 			    pst->st_oakley.ta_prf, /* for IKE/ESP/AH */
 			    ikev2_crypto_continue);
@@ -475,7 +475,7 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		return STF_SUSPEND;
 
 	case STATE_V2_CREATE_I:
-		start_dh_v2(md, "ikev2 Child SA initiator pfs=yes",
+		start_dh_v2(st, md, "ikev2 Child SA initiator pfs=yes",
 			    ORIGINAL_INITIATOR, NULL, st->st_oakley.ta_prf,
 			    ikev2_crypto_continue);
 		return STF_SUSPEND;
@@ -1971,7 +1971,8 @@ stf_status ikev2parent_inR1outI2(struct state *st, struct msg_digest *md)
 	}
 
 	/* initiate calculation of g^xy */
-	start_dh_v2(md, "ikev2_inR1outI2 KE", ORIGINAL_INITIATOR, NULL,
+	start_dh_v2(st, md, "ikev2_inR1outI2 KE",
+		    ORIGINAL_INITIATOR, NULL,
 		    NULL, ikev2_parent_inR1outI2_continue);
 	return STF_SUSPEND;
 }
@@ -3438,7 +3439,7 @@ static stf_status ikev2_start_pam_authorize(struct msg_digest *md)
 static crypto_req_cont_func ikev2_parent_inI2outR2_continue;
 static crypto_transition_fn ikev2_parent_inI2outR2_tail;
 
-stf_status ikev2parent_inI2outR2(struct state *st UNUSED, struct msg_digest *md)
+stf_status ikev2parent_inI2outR2(struct state *st, struct msg_digest *md)
 {
 	/* for testing only */
 	if (DBGP(IMPAIR_SEND_NO_IKEV2_AUTH)) {
@@ -3456,7 +3457,8 @@ stf_status ikev2parent_inI2outR2(struct state *st UNUSED, struct msg_digest *md)
 	    DBG_log("ikev2 parent inI2outR2: calculating g^{xy} in order to decrypt I2"));
 
 	/* initiate calculation of g^xy */
-	start_dh_v2(md, "ikev2_inI2outR2 KE", ORIGINAL_RESPONDER, NULL,
+	start_dh_v2(st, md, "ikev2_inI2outR2 KE",
+		    ORIGINAL_RESPONDER, NULL,
 		    NULL, ikev2_parent_inI2outR2_continue);
 	return STF_SUSPEND;
 }
