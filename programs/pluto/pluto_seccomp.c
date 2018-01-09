@@ -108,6 +108,8 @@ static void init_seccomp(uint32_t def_action, bool main)
 		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(socket), 0);
 		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(uname), 0);
 		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(unlink), 0);
+		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
+				SCMP_SYS(unlinkat), 0);
 	}
 
 	/* common to main and helpers */
