@@ -246,7 +246,6 @@ static crypto_req_cont_func ikev2_crypto_continue;	/* forward decl and type asse
 static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
 				       struct msg_digest *md)
 {
-
 	struct state *const st = md->st;
 	struct state *pst = state_with_serialno(st->st_clonedfrom);
 
@@ -264,7 +263,7 @@ static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
 			return STF_FAIL;
 		}
 		/* initiate calculation of g^xy */
-		start_dh_v2(st, md, "DHv2 for child sa", role,
+		start_dh_v2(st, "DHv2 for child sa", role,
 			    pst->st_skey_d_nss, /* only IKE has SK_d */
 			    pst->st_oakley.ta_prf, /* for IKE/ESP/AH */
 			    ikev2_crypto_continue);
@@ -439,13 +438,13 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		st->st_msgid_lastrecv = v2_INVALID_MSGID;
 		st->st_msgid_nextuse = 0;
 		st->st_msgid = 0;
-		request_ke_and_nonce(what, st, md,
+		request_ke_and_nonce(what, st,
 				     st->st_oakley.ta_dh,
 				     ikev2_crypto_continue);
 		return STF_SUSPEND;
 
 	case STATE_V2_REKEY_IKE_R:
-		request_ke_and_nonce(what, st, md,
+		request_ke_and_nonce(what, st,
 				     st->st_oakley.ta_dh,
 				     ikev2_crypto_continue);
 		return STF_SUSPEND;
@@ -453,11 +452,11 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 	case STATE_V2_CREATE_R:
 	case STATE_V2_REKEY_CHILD_R:
 		if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
-			request_ke_and_nonce(what, st, md,
+			request_ke_and_nonce(what, st,
 					     st->st_oakley.ta_dh,
 					     ikev2_crypto_continue);
 		} else {
-			request_nonce(what, st, md,
+			request_nonce(what, st,
 				      ikev2_crypto_continue);
 		}
 		return STF_SUSPEND;
@@ -465,17 +464,17 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 	case STATE_V2_REKEY_CHILD_I0:
 	case STATE_V2_CREATE_I0:
 		if (st->st_pfs_group == NULL) {
-			request_nonce(what, st, md,
+			request_nonce(what, st,
 				      ikev2_crypto_continue);
 		} else {
-			request_ke_and_nonce(what, st, md,
+			request_ke_and_nonce(what, st,
 					     st->st_pfs_group,
 					     ikev2_crypto_continue);
 		}
 		return STF_SUSPEND;
 
 	case STATE_V2_CREATE_I:
-		start_dh_v2(st, md, "ikev2 Child SA initiator pfs=yes",
+		start_dh_v2(st, "ikev2 Child SA initiator pfs=yes",
 			    ORIGINAL_INITIATOR, NULL, st->st_oakley.ta_prf,
 			    ikev2_crypto_continue);
 		return STF_SUSPEND;
@@ -978,7 +977,6 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 
 	/* Send USE_PPK Notify payload */
 	if (LIN(POLICY_PPK_ALLOW, c->policy)) {
-
 		if (!ship_v2N(ISAKMP_NEXT_v2N, ISAKMP_PAYLOAD_NONCRITICAL,
 				PROTO_v2_RESERVED, &empty_chunk,
 				v2N_USE_PPK, &empty_chunk,
@@ -1429,7 +1427,7 @@ stf_status ikev2parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	}
 
 	/* calculate the nonce and the KE */
-	request_ke_and_nonce("ikev2_inI1outR1 KE", st, md,
+	request_ke_and_nonce("ikev2_inI1outR1 KE", st,
 			     st->st_oakley.ta_dh,
 			     ikev2_parent_inI1outR1_continue);
 	return STF_SUSPEND;
@@ -2009,7 +2007,7 @@ stf_status ikev2parent_inR1outI2(struct state *st, struct msg_digest *md)
 	}
 
 	/* initiate calculation of g^xy */
-	start_dh_v2(st, md, "ikev2_inR1outI2 KE",
+	start_dh_v2(st, "ikev2_inR1outI2 KE",
 		    ORIGINAL_INITIATOR, NULL,
 		    NULL, ikev2_parent_inR1outI2_continue);
 	return STF_SUSPEND;
@@ -3570,7 +3568,7 @@ static stf_status ikev2_start_pam_authorize(struct msg_digest *md)
 static crypto_req_cont_func ikev2_parent_inI2outR2_continue;	/* type asssertion */
 static crypto_transition_fn ikev2_parent_inI2outR2_tail;	/* forward decl and type assertion */
 
-stf_status ikev2parent_inI2outR2(struct state *st, struct msg_digest *md)
+stf_status ikev2parent_inI2outR2(struct state *st, struct msg_digest *md UNUSED)
 {
 	/* for testing only */
 	if (DBGP(IMPAIR_SEND_NO_IKEV2_AUTH)) {
@@ -3588,7 +3586,7 @@ stf_status ikev2parent_inI2outR2(struct state *st, struct msg_digest *md)
 	    DBG_log("ikev2 parent inI2outR2: calculating g^{xy} in order to decrypt I2"));
 
 	/* initiate calculation of g^xy */
-	start_dh_v2(st, md, "ikev2_inI2outR2 KE",
+	start_dh_v2(st, "ikev2_inI2outR2 KE",
 		    ORIGINAL_RESPONDER, NULL,
 		    NULL, ikev2_parent_inI2outR2_continue);
 	return STF_SUSPEND;

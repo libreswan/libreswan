@@ -82,14 +82,13 @@ void cancelled_dh_v2(struct pcr_dh_v2 *dh)
 /*
  * invoke helper to do DH work.
  */
-void start_dh_v2(struct state *st, struct msg_digest *md,
+void start_dh_v2(struct state *st,
 		 const char *name, enum original_role role,
 		 PK11SymKey *skey_d_old, /* SKEYSEED IKE Rekey */
 		 const struct prf_desc *old_prf, /* IKE Rekey */
 		 crypto_req_cont_func pcrc_func)
 {
-	struct pluto_crypto_req_cont *dh = new_pcrc(pcrc_func, name,
-						    st, md);
+	struct pluto_crypto_req_cont *dh = new_pcrc(pcrc_func, name);
 	struct pcr_dh_v2 *const dhq = pcr_dh_v2_init(dh);
 
 	DBG(DBG_CONTROLMORE,

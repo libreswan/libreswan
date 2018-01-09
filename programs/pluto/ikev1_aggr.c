@@ -127,6 +127,7 @@ static crypto_req_cont_func aggr_inI1_outR1_continue1;	/* type assertion */
 static void aggr_inI1_outR1_continue1(struct state *st, struct msg_digest *md,
 				      struct pluto_crypto_req *r)
 {
+	struct msg_digest **mdp = &md; /* XXX: replace MD param with MDP */
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("aggr inI1_outR1: calculated ke+nonce, calculating DH"));
 
@@ -139,17 +140,14 @@ static void aggr_inI1_outR1_continue1(struct state *st, struct msg_digest *md,
 	/* NOTE: the "r" reply will get freed by our caller */
 
 	/* set up second calculation */
-	struct pluto_crypto_req_cont *dh = new_pcrc(aggr_inI1_outR1_continue2,
-						    "aggr outR1 DH",
-						    st, md);
-	start_dh_secretiv(dh, st, ORIGINAL_RESPONDER,
-			  st->st_oakley.ta_dh);
+	start_dh_v1_secretiv(aggr_inI1_outR1_continue2, "aggr outR1 DH",
+			     st, ORIGINAL_RESPONDER, st->st_oakley.ta_dh);
 	/*
 	 * XXX: Since more crypto has been requsted, MD needs to be re
 	 * suspended.  If the original crypto request did everything
 	 * this wouldn't be needed.
 	 */
-	suspend_md(st, &md);
+	suspend_md(st, mdp);
 }
 
 /* STATE_AGGR_R0:
@@ -303,7 +301,7 @@ stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 	RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_ni, "Ni"));
 
 	/* calculate KE and Nonce */
-	request_ke_and_nonce("outI2 KE", st, md,
+	request_ke_and_nonce("outI2 KE", st,
 			     st->st_oakley.ta_dh,
 			     aggr_inI1_outR1_continue1);
 	return STF_SUSPEND;
@@ -637,12 +635,8 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	ikev1_natd_init(st, md);
 
 	/* set up second calculation */
-	struct pluto_crypto_req_cont *dh = new_pcrc(aggr_inR1_outI2_crypto_continue,
-						    "aggr outR1 DH",
-						    st, md);
-
-	start_dh_secretiv(dh, st, ORIGINAL_INITIATOR,
-			  st->st_oakley.ta_dh);
+	start_dh_v1_secretiv(aggr_inR1_outI2_crypto_continue, "aggr outR1 DH",
+			     st, ORIGINAL_INITIATOR, st->st_oakley.ta_dh);
 	return STF_SUSPEND;
 }
 
@@ -1109,7 +1103,7 @@ void aggr_outI1(int whack_sock,
 	/*
 	 * Calculate KE and Nonce.
 	 */
-	request_ke_and_nonce("aggr_outI1 KE + nonce", st, NULL,
+	request_ke_and_nonce("aggr_outI1 KE + nonce", st,
 			     st->st_oakley.ta_dh,
 			     aggr_outI1_continue);
 	reset_globals();

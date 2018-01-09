@@ -840,11 +840,11 @@ void quick_outI1(int whack_sock,
 	st->st_ipsec_pred = replacing;
 
 	if (policy & POLICY_PFS) {
-		request_ke_and_nonce("quick_outI1 KE", st, NULL,
+		request_ke_and_nonce("quick_outI1 KE", st,
 				     st->st_pfs_group,
 				     quick_outI1_continue);
 	} else {
-		request_nonce("quick_outI1 KE", st, NULL,
+		request_nonce("quick_outI1 KE", st,
 			      quick_outI1_continue);
 	}
 	pop_cur_state(old_state);
@@ -1456,11 +1456,11 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b)
 		passert(st->st_connection != NULL);
 
 		if (st->st_pfs_group != NULL) {
-			request_ke_and_nonce("quick_outI1 KE", st, md,
+			request_ke_and_nonce("quick_outI1 KE", st,
 					     st->st_pfs_group,
 					     quick_inI1_outR1_cryptocontinue1);
 		} else {
-			request_nonce("quick_outI1 KE", st, md,
+			request_nonce("quick_outI1 KE", st,
 				      quick_inI1_outR1_cryptocontinue1);
 		}
 
@@ -1472,6 +1472,8 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b)
 static void quick_inI1_outR1_cryptocontinue1(struct state *st, struct msg_digest *md,
 					     struct pluto_crypto_req *r)
 {
+	struct msg_digest **mdp = &md; /* XXX: replace MD param with MDP */
+
 	DBG(DBG_CONTROL,
 		DBG_log("quick_inI1_outR1_cryptocontinue1 for #%lu: calculated ke+nonce, calculating DH",
 			st->st_serialno));
@@ -1484,19 +1486,14 @@ static void quick_inI1_outR1_cryptocontinue1(struct state *st, struct msg_digest
 	if (st->st_pfs_group != NULL) {
 		/* PFS is on: do a new DH */
 		unpack_KE_from_helper(st, r, &st->st_gr);
-
-		struct pluto_crypto_req_cont *dh =
-			new_pcrc(quick_inI1_outR1_cryptocontinue2,
-				 "quick outR1 DH",
-				 st, md);
-		start_dh_secret(dh, st, ORIGINAL_RESPONDER,
-				st->st_pfs_group);
+		start_dh_v1_secret(quick_inI1_outR1_cryptocontinue2, "quick outR1 DH",
+				   st, ORIGINAL_RESPONDER, st->st_pfs_group);
 		/*
 		 * XXX: Since more crypto has been requsted, MD needs
 		 * to be re suspended.  If the original crypto request
 		 * did everything this wouldn't be needed.
 		 */
-		suspend_md(st, &md);
+		suspend_md(st, mdp);
 	} else {
 		/* but if PFS is off, we don't do a second DH, so just
 		 * call the continuation with NULL struct pluto_crypto_req *
@@ -1746,12 +1743,8 @@ stf_status quick_inR1_outI2(struct state *st, struct msg_digest *md)
 
 	if (st->st_pfs_group != NULL) {
 		/* set up DH calculation */
-		struct pluto_crypto_req_cont *dh = new_pcrc(
-			quick_inR1_outI2_continue, "quick outI2 DH",
-			st, md);
-
-		start_dh_secret(dh, st, ORIGINAL_INITIATOR,
-				st->st_pfs_group);
+		start_dh_v1_secret(quick_inR1_outI2_continue, "quick outI2 DH",
+				   st, ORIGINAL_INITIATOR, st->st_pfs_group);
 		return STF_SUSPEND;
 	} else {
 		/* just call the tail function */

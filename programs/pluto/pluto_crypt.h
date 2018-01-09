@@ -289,11 +289,8 @@ typedef void crypto_req_cont_func(struct state *st, struct msg_digest *md,
 
 struct state;
 
-extern struct pluto_crypto_req_cont *new_pcrc(
-	crypto_req_cont_func fn,
-	const char *name,
-	struct state *st,
-	struct msg_digest *md);
+extern struct pluto_crypto_req_cont *new_pcrc(crypto_req_cont_func fn,
+					      const char *name);
 
 extern void init_crypto_helpers(int nhelpers);
 
@@ -307,12 +304,12 @@ extern void send_crypto_helper_request(struct state *st,
  */
 
 extern void request_ke_and_nonce(const char *name,
-				 struct state *st, struct msg_digest *md,
+				 struct state *st,
 				 const struct oakley_group_desc *group,
 				 crypto_req_cont_func *callback);
 
 extern void request_nonce(const char *name,
-			  struct state *st, struct msg_digest *md,
+			  struct state *st,
 			  crypto_req_cont_func *callback);
 
 extern void calc_ke(struct pcr_kenonce *kn);
@@ -328,18 +325,16 @@ extern void cancelled_ke_and_nonce(struct pcr_kenonce *kn);
 extern void compute_dh_shared(struct state *st, const chunk_t g,
 			      const struct oakley_group_desc *group);
 
-extern void start_dh_secretiv(struct pluto_crypto_req_cont *dh,
-			      struct state *st,
-			      enum original_role role,
-			      const struct oakley_group_desc *oakley_group2);
+extern void start_dh_v1_secretiv(crypto_req_cont_func fn, const char *name,
+				 struct state *st, enum original_role role,
+				 const struct oakley_group_desc *oakley_group2);
 
 extern bool finish_dh_secretiv(struct state *st,
 			       struct pluto_crypto_req *r);
 
-extern void start_dh_secret(struct pluto_crypto_req_cont *cn,
-			    struct state *st,
-			    enum original_role role,
-			    const struct oakley_group_desc *oakley_group2);
+extern void start_dh_v1_secret(crypto_req_cont_func fn, const char *name,
+			       struct state *st, enum original_role role,
+			       const struct oakley_group_desc *oakley_group2);
 
 extern void finish_dh_secret(struct state *st,
 			     struct pluto_crypto_req *r);
@@ -353,7 +348,6 @@ extern void cancelled_v1_dh(struct pcr_v1_dh *dh);
  */
 
 extern void start_dh_v2(struct state *st,
-			struct msg_digest *md,
 			const char *name,
 			enum original_role role,
 			PK11SymKey *skey_d_old,

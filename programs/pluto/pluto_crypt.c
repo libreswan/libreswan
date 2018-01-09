@@ -136,19 +136,16 @@ static int backlog_queue_len = 0;
 
 static void handle_helper_answer(void *arg);
 
-struct pluto_crypto_req_cont *new_pcrc(
-	crypto_req_cont_func fn,
-	const char *name,
-	struct state *st,
-	struct msg_digest *md UNUSED)
+struct pluto_crypto_req_cont *new_pcrc(crypto_req_cont_func fn,
+				       const char *name)
 {
+	passert(fn != NULL);
 	struct pluto_crypto_req_cont *r = alloc_thing(struct pluto_crypto_req_cont, name);
-
 	r->pcrc_func = fn;
-	r->pcrc_serialno = st->st_serialno;
 	r->pcrc_cancelled = false;
 	r->pcrc_name = name;
 	r->pcrc_backlog = list_entry(&backlog_info, r);
+	r->pcrc_serialno = SOS_NOBODY;
 	return r;
 }
 
@@ -464,13 +461,9 @@ static void inline_worker(void *arg)
 void send_crypto_helper_request(struct state *st,
 				struct pluto_crypto_req_cont *cn)
 {
-	/*
-	 * transitional: caller must have set pcrc_serialno.
-	 * It ought to match cur_state->st_serialno.
-	 */
-	passert(cn->pcrc_serialno == st->st_serialno);
 	passert(st->st_serialno != SOS_NOBODY);
-	passert(cn->pcrc_func != NULL);
+	passert(cn->pcrc_serialno == SOS_NOBODY);
+	cn->pcrc_serialno = st->st_serialno;
 
 	/* set up the id */
 	static pcr_req_id pcw_id;	/* counter for generating unique request IDs */

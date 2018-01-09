@@ -921,7 +921,7 @@ stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
 
 	set_nat_traversal(st, md);
 
-	request_ke_and_nonce("outI2 KE", st, md,
+	request_ke_and_nonce("outI2 KE", st,
 			     st->st_oakley.ta_dh,
 			     main_inR1_outI2_continue);
 	return STF_SUSPEND;
@@ -1083,7 +1083,7 @@ stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
 
 	ikev1_natd_init(st, md);
 
-	request_ke_and_nonce("inI2_outR2 KE", st, md,
+	request_ke_and_nonce("inI2_outR2 KE", st,
 			     st->st_oakley.ta_dh,
 			     main_inI2_outR2_continue);
 	return STF_SUSPEND;
@@ -1242,17 +1242,12 @@ stf_status main_inI2_outR2_tail(struct state *st, struct msg_digest *md,
 	 * retained.
 	 */
 	{
-		struct pluto_crypto_req_cont *dh = new_pcrc(
-			main_inI2_outR2_calcdone, "main_inI2_outR2_tail",
-			st, NULL);
-		passert(st->st_suspended_md == NULL);
-
 		DBG(DBG_CONTROLMORE,
 			DBG_log("main inI2_outR2: starting async DH calculation (group=%d)",
 				st->st_oakley.ta_dh->group));
 
-		start_dh_secretiv(dh, st, ORIGINAL_RESPONDER,
-				  st->st_oakley.ta_dh);
+		start_dh_v1_secretiv(main_inI2_outR2_calcdone, "main_inI2_outR2_tail",
+				     st, ORIGINAL_RESPONDER, st->st_oakley.ta_dh);
 
 		/* we are calculating in the background, so it doesn't count */
 		DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
@@ -1535,7 +1530,6 @@ static void main_inR2_outI3_cryptotail(struct state *st, struct msg_digest *md,
 
 stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)
 {
-	struct pluto_crypto_req_cont *dh;
 	/* KE in */
 	RETURN_STF_FAILURE(accept_KE(&st->st_gr, "Gr",
 				     st->st_oakley.ta_dh,
@@ -1543,11 +1537,8 @@ stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)
 
 	/* Nr in */
 	RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_nr, "Nr"));
-
-	dh = new_pcrc(main_inR2_outI3_cryptotail, "aggr outR1 DH",
-		      st, md);
-	start_dh_secretiv(dh, st, ORIGINAL_INITIATOR,
-			  st->st_oakley.ta_dh);
+	start_dh_v1_secretiv(main_inR2_outI3_cryptotail, "aggr outR1 DH",
+			     st, ORIGINAL_INITIATOR, st->st_oakley.ta_dh);
 	return STF_SUSPEND;
 }
 
