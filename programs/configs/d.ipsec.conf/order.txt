@@ -33,6 +33,7 @@ d.ipsec.conf/esn.xml
 d.ipsec.conf/decap-dscp.xml
 d.ipsec.conf/narrowing.xml
 d.ipsec.conf/sareftrack.xml
+d.ipsec.conf/nic-offload.xml
 d.ipsec.conf/leftid.xml
 d.ipsec.conf/leftrsasigkey.xml
 d.ipsec.conf/leftrsasigkey2.xml
