@@ -86,8 +86,8 @@ class Results(Counts):
         Counts.add(self, result.test.name, str(result))
         Counts.add(self, result.test.name, str(result), result.test.status)
         # details
-        for domain, issues in result.issues.items():
-            for issue in issues:
+        for issue in result.issues:
+            for domain in result.issues[issue]:
                 Counts.add(self, result.test.name, str(result),
                            result.test.status, issue, domain=domain)
 

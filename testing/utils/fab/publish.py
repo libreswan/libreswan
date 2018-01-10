@@ -187,8 +187,9 @@ def json_result(logger, args, result):
 
     # accumulate the summary
     _add(JSON_SUMMARY, "totals", result.test.kind, result.test.status, str(result.resolution))
-    for domain, issues in result.issues.items():
-        for issue in issues:
+    for issue in result.issues:
+        for domain in result.issues[issue]:
+            # count the number of times it occured
             _add(JSON_SUMMARY, "errors", issue)
     # extend the times
     _update_time(min, "start_time", json_result)
