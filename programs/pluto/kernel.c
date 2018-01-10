@@ -591,6 +591,8 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		"PLUTO_PEER_DNS_INFO='%s' "
 		"PLUTO_PEER_DOMAIN_INFO='%s' "
 		"PLUTO_PEER_BANNER='%s' "
+		"PLUTO_CFG_SERVER='%u' "
+		"PLUTO_CFG_CLIENT='%u' "
 #ifdef HAVE_NM
 		"PLUTO_NM_CONFIGURED='%u' "
 #endif
@@ -640,10 +642,12 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		(st != NULL && st->st_xauth_soft) ? 1 : 0,
 		secure_xauth_username_str,
 		srcip_str,
-		c->remotepeertype,
+		c->remotepeertype, /* kind of odd printing an enum */
 		(st != NULL && st->st_seen_cfg_dns != NULL) ? st->st_seen_cfg_dns : "",
 		(st != NULL && st->st_seen_cfg_domains != NULL) ? st->st_seen_cfg_domains : "",
 		(st != NULL && st->st_seen_cfg_banner != NULL) ? st->st_seen_cfg_banner : "",
+		sr->this.modecfg_server,
+		sr->this.modecfg_client,
 #ifdef HAVE_NM
 		c->nmconfigured,
 #endif
