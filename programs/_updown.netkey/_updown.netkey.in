@@ -34,8 +34,8 @@ export LC_ALL
 #
 #
 #	PLUTO_VERSION
-#		indicates  what	 version of this interface is being
-#		used.  This document describes version	1.1.   This
+#		indicates  what  version of this interface is being
+#		used.  This document describes version  1.1.   This
 #		is upwardly compatible with version 1.0.
 #
 #	PLUTO_VERB
@@ -122,6 +122,12 @@ export LC_ALL
 #
 #	PLUTO_PEER_PORT
 #		is the peer's port. Useful for firewalling.
+#
+#	PLUTO_CFG_CLIENT=0|1
+#		is MODECFG or IKEv2 Config client.
+#
+#	PLUTO_CFG_SERVER=0|1
+#		is MODECFG or IKEv2 Config server.
 #
 #	PLUTO_CONNECTION_TYPE
 #
@@ -247,6 +253,9 @@ updateresolvconf() {
     local orig_nameserver
     local rc
     rc=0
+    if [ 0${PLUTO_CFG_CLIENT} -eq 0 ]; then
+	return ${rc}
+    fi
     if [ -n "$(pidof unbound)" -a \
 	-n "${PLUTO_PEER_DNS_INFO}" -a \
 	-n "${PLUTO_PEER_DOMAIN_INFO}" ]
@@ -323,6 +332,9 @@ restoreresolvconf() {
     local domain
     local rc
     rc=0
+    if [ 0${PLUTO_CFG_CLIENT} -eq 0 ]; then
+	return ${rc}
+    fi
     if [ -n "$(pidof unbound)" -a \
 	-n "${PLUTO_PEER_DNS_INFO}" -a \
 	-n "${PLUTO_PEER_DOMAIN_INFO}" ]
