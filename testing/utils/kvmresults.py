@@ -208,10 +208,20 @@ def results(logger, tests, baseline, args, result_stats):
             publish.test_output_files(logger, args, result)
             publish.json_result(logger, args, result)
 
+            # Somethings should always be listed.
+            result_crash = False
+            for issue in result.issues:
+                if "CORE" in issue \
+                or "SETFAULT" in issue \
+                or "GPFAULT" in issue \
+                or "EXPECTATION" in issue \
+                or "ASSERTION" in issue:
+                    result_crash = True
+
             # If there is a baseline; limit what is printed to just
             # those where the result is different.  If both baseline
             # and this result fail differently then skip.
-            if baseline:
+            if not result_crash and baseline:
                 baseline_issue = False
                 for issue in result.issues:
                     if "baseline-passed" in issue \
@@ -220,6 +230,7 @@ def results(logger, tests, baseline, args, result_stats):
                         break
                 if not baseline_issue:
                     continue
+
             b = args.json and printer.JsonBuilder(sys.stdout) or printer.TextBuilder(sys.stdout)
             printer.build_result(logger, result, baseline, args, args.print, b)
 
