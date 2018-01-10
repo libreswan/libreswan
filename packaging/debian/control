@@ -59,6 +59,7 @@ Provides:
  ike-server,
 Conflicts:
  ike-server,
+ strongswan-libcharon,
  strongswan-starter,
 Replaces:
  ike-server,
