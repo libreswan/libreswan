@@ -3911,10 +3911,6 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 			return ret;
 		}
 	}
-
-	/* if the child failed, delete its state here - we sent the packet */
-	/* PAUL */
-	/* ??? what does that mean?  We cannot even reach here. */
 }
 
 static void ikev2_child_set_pfs(struct state *st)
