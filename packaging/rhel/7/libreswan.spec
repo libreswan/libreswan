@@ -22,7 +22,7 @@
     USE_XAUTHPAM=true \\\
 %{nil}
 
-%global prever rc2
+%global prever rc3
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
