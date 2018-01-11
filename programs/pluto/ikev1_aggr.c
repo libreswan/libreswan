@@ -1009,7 +1009,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
  * --> HDR, SA, KE, Ni, IDii
  */
 
-static stf_status aggr_outI1_tail(struct state *st, struct msg_digest *md,
+static stf_status aggr_outI1_tail(struct state *st,
 				  struct pluto_crypto_req *r);
 
 static crypto_req_cont_func aggr_outI1_continue;	/* type assertion */
@@ -1022,7 +1022,7 @@ static void aggr_outI1_continue(struct state *st, struct msg_digest *md,
 			st->st_serialno));
 
 	passert(md != NULL);
-	stf_status e = aggr_outI1_tail(st, md, r);
+	stf_status e = aggr_outI1_tail(st, r);
 	complete_v1_state_transition(&md, e);
 	release_any_md(&md);
 }
@@ -1140,7 +1140,7 @@ void aggr_outI1(int whack_sock,
 	reset_globals();
 }
 
-static stf_status aggr_outI1_tail(struct state *st, struct msg_digest *md,
+static stf_status aggr_outI1_tail(struct state *st,
 				  struct pluto_crypto_req *r)
 {
 	struct connection *c = st->st_connection;
@@ -1161,6 +1161,7 @@ static stf_status aggr_outI1_tail(struct state *st, struct msg_digest *md,
 		 "reply packet");
 
 	/* HDR out */
+	pb_stream rbody;
 	{
 		struct isakmp_hdr hdr;
 
@@ -1173,7 +1174,7 @@ static stf_status aggr_outI1_tail(struct state *st, struct msg_digest *md,
 		/* R-cookie, flags and MessageID are left zero */
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
-				&md->rbody)) {
+				&rbody)) {
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
@@ -1181,9 +1182,9 @@ static stf_status aggr_outI1_tail(struct state *st, struct msg_digest *md,
 
 	/* SA out */
 	{
-		u_char *sa_start = md->rbody.cur;
+		u_char *sa_start = rbody.cur;
 
-		if (!ikev1_out_sa(&md->rbody,
+		if (!ikev1_out_sa(&rbody,
 				  IKEv1_oakley_am_sadb(st->st_policy, c),
 				  st, TRUE, TRUE, ISAKMP_NEXT_KE)) {
 			reset_cur_state();
@@ -1192,17 +1193,17 @@ static stf_status aggr_outI1_tail(struct state *st, struct msg_digest *md,
 
 		/* save initiator SA for later HASH */
 		passert(st->st_p1isa.ptr == NULL); /* no leak! */
-		clonetochunk(st->st_p1isa, sa_start, md->rbody.cur - sa_start,
+		clonetochunk(st->st_p1isa, sa_start, rbody.cur - sa_start,
 			     "sa in aggr_outI1");
 	}
 
 	/* KE out */
 	if (!ikev1_ship_KE(st, r, &st->st_gi,
-		     &md->rbody, ISAKMP_NEXT_NONCE))
+		     &rbody, ISAKMP_NEXT_NONCE))
 		return STF_INTERNAL_ERROR;
 
 	/* Ni out */
-	if (!ikev1_ship_nonce(&st->st_ni, r, &md->rbody, ISAKMP_NEXT_ID, "Ni"))
+	if (!ikev1_ship_nonce(&st->st_ni, r, &rbody, ISAKMP_NEXT_ID, "Ni"))
 		return STF_INTERNAL_ERROR;
 
 	/* IDii out */
@@ -1214,7 +1215,7 @@ static stf_status aggr_outI1_tail(struct state *st, struct msg_digest *md,
 		build_id_payload(&id_hd, &id_b, &c->spd.this);
 		id_hd.isaiid_np = send_cr ? ISAKMP_NEXT_CR : ISAKMP_NEXT_VID;
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
-				&md->rbody, &id_pbs) ||
+				&rbody, &id_pbs) ||
 		    !out_chunk(id_b, &id_pbs, "my identity"))
 			return STF_INTERNAL_ERROR;
 
@@ -1226,7 +1227,7 @@ static stf_status aggr_outI1_tail(struct state *st, struct msg_digest *md,
 		libreswan_log("I am sending a certificate request");
 		if (!ikev1_build_and_ship_CR(mycert.ty,
 				       c->spd.that.ca,
-				       &md->rbody, ISAKMP_NEXT_VID))
+				       &rbody, ISAKMP_NEXT_VID))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1254,14 +1255,14 @@ static stf_status aggr_outI1_tail(struct state *st, struct msg_digest *md,
 	/* ALWAYS Announce our ability to do Dead Peer Detection to the peer */
 	{
 		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-		if (!out_vid(np, &md->rbody, VID_MISC_DPD))
+		if (!out_vid(np, &rbody, VID_MISC_DPD))
 			return STF_INTERNAL_ERROR;
 	}
 
 	if (nat_traversal_enabled && c->ikev1_natt != natt_none) {
 		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
-		if (!nat_traversal_insert_vid(np, &md->rbody, st)) {
+		if (!nat_traversal_insert_vid(np, &rbody, st)) {
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
@@ -1271,31 +1272,31 @@ static stf_status aggr_outI1_tail(struct state *st, struct msg_digest *md,
 
 	if (c->spd.this.xauth_client || c->spd.this.xauth_server) {
 		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-		if (!out_vid(np, &md->rbody, VID_MISC_XAUTH))
+		if (!out_vid(np, &rbody, VID_MISC_XAUTH))
 			return STF_INTERNAL_ERROR;
 	}
 
 	if (c->cisco_unity) {
 		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-		if (!out_vid(np, &md->rbody, VID_CISCO_UNITY))
+		if (!out_vid(np, &rbody, VID_CISCO_UNITY))
 			return STF_INTERNAL_ERROR;
 	}
 
 	if (c->fake_strongswan) {
 		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-		if (!out_vid(np, &md->rbody, VID_STRONGSWAN))
+		if (!out_vid(np, &rbody, VID_STRONGSWAN))
 			return STF_INTERNAL_ERROR;
 	}
 
 	if (c->send_vendorid) {
 		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-		if (!out_vid(np, &md->rbody, VID_LIBRESWANSELF))
+		if (!out_vid(np, &rbody, VID_LIBRESWANSELF))
 			return STF_INTERNAL_ERROR;
 	}
 
 	if (c->policy & POLICY_IKE_FRAG_ALLOW) {
 		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-		if (!out_vid(np, &md->rbody, VID_IKE_FRAGMENTATION))
+		if (!out_vid(np, &rbody, VID_IKE_FRAGMENTATION))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1306,7 +1307,7 @@ static stf_status aggr_outI1_tail(struct state *st, struct msg_digest *md,
 
 	/* finish message */
 
-	if (!close_message(&md->rbody, st))
+	if (!close_message(&rbody, st))
 		return STF_INTERNAL_ERROR;
 
 	close_output_pbs(&reply_stream);
