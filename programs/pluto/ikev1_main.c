@@ -882,18 +882,12 @@ static crypto_req_cont_func main_inR1_outI2_continue;	/* type assertion */
 static void main_inR1_outI2_continue(struct state *st, struct msg_digest *md,
 				     struct pluto_crypto_req *r)
 {
-	stf_status e;
-
 	DBG(DBG_CONTROL,
 		DBG_log("main_inR1_outI2_continue for #%lu: calculated ke+nonce, sending I2",
 			st->st_serialno));
 
-	passert(st->st_suspended_md == md);
-	unset_suspended(st); /* no longer connected or suspended */
-
-	e = main_inR1_outI2_tail(st, md, r);
-
 	passert(md != NULL);
+	stf_status e = main_inR1_outI2_tail(st, md, r);
 	complete_v1_state_transition(&md, e);
 	release_any_md(&md);
 }
@@ -1060,18 +1054,12 @@ static crypto_req_cont_func main_inI2_outR2_continue;	/* type assertion */
 static void main_inI2_outR2_continue(struct state *st, struct msg_digest *md,
 				     struct pluto_crypto_req *r)
 {
-	stf_status e;
-
 	DBG(DBG_CONTROL,
 		DBG_log("main_inI2_outR2_continue for #%lu: calculated ke+nonce, sending R2",
 			st->st_serialno));
 
-	passert(st->st_suspended_md == md);
-	unset_suspended(st); /* no longer connected or suspended */
-
-	e = main_inI2_outR2_tail(st, md, r);
-
 	passert(md != NULL);
+	stf_status e = main_inI2_outR2_tail(st, md, r);
 	complete_v1_state_transition(&md, e);
 	release_any_md(&md);
 }
@@ -1108,7 +1096,7 @@ stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
  */
 static crypto_req_cont_func main_inI2_outR2_calcdone;	/* type assertion */
 
-static void main_inI2_outR2_calcdone(struct state *st, struct msg_digest *md UNUSED,
+static void main_inI2_outR2_calcdone(struct state *st, struct msg_digest *md,
 				     struct pluto_crypto_req *r)
 {
 	DBG(DBG_CONTROL,
@@ -1125,12 +1113,8 @@ static void main_inI2_outR2_calcdone(struct state *st, struct msg_digest *md UNU
 	 * process it now.
 	 * Otherwise, the result awaits the packet.
 	 */
-	if (st->st_suspended_md != NULL) {
-		struct msg_digest *md = st->st_suspended_md;
-
-		unset_suspended(st);
+	if (md != NULL) {
 		process_packet_tail(&md);
-		release_any_md(&md);
 	}
 	reset_cur_state();
 }
@@ -1532,22 +1516,15 @@ static crypto_req_cont_func main_inR2_outI3_cryptotail;	/* type assertion */
 static void main_inR2_outI3_cryptotail(struct state *st, struct msg_digest *md,
 				       struct pluto_crypto_req *r)
 {
-	stf_status e;
-
 	DBG(DBG_CONTROL,
 		DBG_log("main_inR2_outI3_cryptotail for #%lu: calculated DH, sending R1",
 			st->st_serialno));
 
-	passert(st->st_suspended_md == md);
-	unset_suspended(st); /* no longer connected or suspended */
-
+	passert(md != NULL);	/* ??? how would this fail? */
 	ikev1_init_out_pbs_echo_hdr(md, TRUE, ISAKMP_NEXT_ID,
 				    &reply_stream, reply_buffer, sizeof(reply_buffer),
 				    &md->rbody);
-
-	e = main_inR2_outI3_continue(md, r);
-
-	passert(md != NULL);	/* ??? how would this fail? */
+	stf_status e = main_inR2_outI3_continue(md, r);
 	complete_v1_state_transition(&md, e);
 	release_any_md(&md);
 }

@@ -2758,6 +2758,12 @@ IETF registry enum_names:
          match IKEv2_TIMEOUT_PERIOD_FOR_LIVENESS_CHECK: OK
          short_name 24:  OK
          lswlog_enum_short 24: OK
+   25 -> IKEv2_INTERNAL_DNS_DOMAIN
+         lswlog_enum 25: OK
+         search IKEv2_INTERNAL_DNS_DOMAIN: OK
+         match IKEv2_INTERNAL_DNS_DOMAIN: OK
+         short_name 25:  OK
+         lswlog_enum_short 25: OK
 
   ppk_names:
     1 -> PPK_PSK

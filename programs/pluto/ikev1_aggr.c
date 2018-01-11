@@ -107,18 +107,12 @@ static crypto_req_cont_func aggr_inI1_outR1_continue2;	/* type assertion */
 static void aggr_inI1_outR1_continue2(struct state *st, struct msg_digest *md,
 				      struct pluto_crypto_req *r)
 {
-	stf_status e;
-
 	DBG(DBG_CONTROL,
 		DBG_log("aggr_inI1_outR1_continue2 for #%lu: calculated ke+nonce+DH, sending R1",
 			st->st_serialno));
 
-	passert(st->st_suspended_md == md);
-	unset_suspended(st); /* no longer connected or suspended */
-
-	e = aggr_inI1_outR1_tail(md, r);
-
 	passert(md != NULL);
+	stf_status e = aggr_inI1_outR1_tail(md, r);
 	complete_v1_state_transition(&md, e);
 	release_any_md(&md);
 }
@@ -136,8 +130,6 @@ static void aggr_inI1_outR1_continue1(struct state *st, struct msg_digest *md,
 {
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("aggr inI1_outR1: calculated ke+nonce, calculating DH"));
-
-	unset_suspended(st); /* no longer connected or suspended */
 
 	/* unpack first calculation */
 	unpack_KE_from_helper(st, r, &st->st_gr);
@@ -665,9 +657,6 @@ static void aggr_inR1_outI2_crypto_continue(struct state *st, struct msg_digest 
 
 	passert(st != NULL);
 
-	passert(st->st_suspended_md == md);
-	unset_suspended(st); /* no longer connected or suspended */
-
 	if (!finish_dh_secretiv(st, r)) {
 		e = STF_FAIL + INVALID_KEY_INFORMATION;
 	} else {
@@ -1028,18 +1017,12 @@ static crypto_req_cont_func aggr_outI1_continue;	/* type assertion */
 static void aggr_outI1_continue(struct state *st, struct msg_digest *md,
 				struct pluto_crypto_req *r)
 {
-	stf_status e;
-
 	DBG(DBG_CONTROL,
 		DBG_log("aggr_outI1_continue for #%lu: calculated ke+nonce, sending I1",
 			st->st_serialno));
 
-	passert(st->st_suspended_md == md);
-	unset_suspended(st); /* no longer connected or suspended */
-
-	e = aggr_outI1_tail(st, md, r);
-
 	passert(md != NULL);
+	stf_status e = aggr_outI1_tail(st, md, r);
 	complete_v1_state_transition(&md, e);
 	release_any_md(&md);
 }

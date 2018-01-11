@@ -239,12 +239,7 @@ struct hidden_variables {
 	ip_address st_natd;
 };
 
-#define unset_suspended(st) { \
-	(st)->st_suspended_md = NULL; \
-	(st)->st_suspended_md_func = __FUNCTION__; \
-	(st)->st_suspended_md_line = __LINE__; \
-    }
-
+struct msg_digest *unsuspend_md(struct state *st);
 #define set_suspended(st, md) { \
 	passert((st)->st_suspended_md == NULL); \
 	(st)->st_suspended_md = (md); \

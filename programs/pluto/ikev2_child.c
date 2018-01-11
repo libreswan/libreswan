@@ -1067,6 +1067,13 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	if (role == ORIGINAL_RESPONDER) {
 		struct payload_digest *ntfy;
 
+		/*
+		 * Paul: This is the second time we are processing NOTIFY's
+		 * I suspect we are only interested in those related to
+		 * the Child SA and mark those on the child state. But this
+		 * code is used in IKE_AUTH as well as CREATE_CHILD_SA, so
+		 * we end up double logging bad payloads on the responder.
+		 */
 		/* Process all NOTIFY payloads */
 		for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 			switch (ntfy->payload.v2n.isan_type) {

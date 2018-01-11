@@ -995,15 +995,13 @@ void delete_state(struct state *st)
 	delete_state_event(st, &st->st_send_xauth_event);
 	delete_state_event(st, &st->st_addr_change_event);
 
-
 	/* if there is a suspended state transition, disconnect us */
-	if (st->st_suspended_md != NULL) {
-		passert(st->st_suspended_md->st == st);
-		DBG(DBG_CONTROL, DBG_log("disconnecting state #%lu from md",
-					 st->st_serialno));
-		st->st_suspended_md->st = NULL;
-		unset_suspended(st);
-		/* ??? has md just leaked? */
+	struct msg_digest *md = unsuspend_md(st);
+	if (md != NULL) {
+		DBG(DBG_CONTROL,
+		    DBG_log("disconnecting state #%lu from md",
+			    st->st_serialno));
+		release_any_md(&md);
 	}
 
 	if (send_delete_check(st)) {
@@ -2691,7 +2689,23 @@ void delete_my_family(struct state *pst, bool v2_responder_state)
 	/* note: no md->st to clear */
 }
 
-/* if the state is too busy to process a packet, say so */
+/*
+ * if the state is too busy to process a packet, say so
+ *
+ * Two things indicate this - st_suspended_md is non-NULL or there's
+ * an offloaded task.
+ */
+
+struct msg_digest *unsuspend_md(struct state *st)
+{
+	/* don't assume it is non-NULL */
+	struct msg_digest *md = st->st_suspended_md;
+	st->st_suspended_md = NULL;
+	st->st_suspended_md_func = NULL;
+	st->st_suspended_md_line = 0;
+	return md;
+}
+
 bool state_busy(const struct state *st)
 {
 	if (st == NULL) {

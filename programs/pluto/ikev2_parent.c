@@ -292,9 +292,6 @@ static void ikev2_crypto_continue(struct state *st, struct msg_digest *md,
 	}
 	passert(pst != NULL);
 
-	passert(st->st_suspended_md == md);
-	unset_suspended(st); /* no longer connected or suspended */
-
 	switch (st->st_state) {
 
 	case STATE_PARENT_I1:
@@ -1404,6 +1401,7 @@ stf_status ikev2parent_inI1outR1(struct state *st, struct msg_digest *md)
 			/* These are not supposed to appear here */
 			case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
 			case v2N_USE_TRANSPORT_MODE:
+			case v2N_MOBIKE_SUPPORTED:
 				DBG(DBG_CONTROLMORE, DBG_log("Received unauthenticated %s notify in wrong exchange - ignored",
 					enum_name(&ikev2_notify_names,
 						ntfy->payload.v2n.isan_type)));
@@ -1434,19 +1432,12 @@ stf_status ikev2parent_inI1outR1(struct state *st, struct msg_digest *md)
 static void ikev2_parent_inI1outR1_continue(struct state *st, struct msg_digest *md,
 					    struct pluto_crypto_req *r)
 {
-	pexpect(st == md->st);
-	st = md->st;
-
 	DBG(DBG_CONTROL,
 		DBG_log("ikev2_parent_inI1outR1_continue for #%lu: calculated ke+nonce, sending R1",
 			st->st_serialno));
 
-	passert(st->st_suspended_md == md);
-	unset_suspended(st); /* no longer connected or suspended */
-
-	stf_status e = ikev2_parent_inI1outR1_tail(st, md, r);
-
 	passert(md != NULL);
+	stf_status e = ikev2_parent_inI1outR1_tail(st, md, r);
 	complete_v2_state_transition(&md, e);
 	release_any_md(&md);
 }
@@ -1990,18 +1981,12 @@ stf_status ikev2parent_inR1outI2(struct state *st, struct msg_digest *md)
 static void ikev2_parent_inR1outI2_continue(struct state *st, struct msg_digest *md,
 					    struct pluto_crypto_req *r)
 {
-	stf_status e;
-
 	DBG(DBG_CONTROL,
 		DBG_log("ikev2_parent_inR1outI2_continue for #%lu: calculating g^{xy}, sending I2",
 			st->st_serialno));
 
-	passert(st->st_suspended_md == md);
-	unset_suspended(st); /* no longer connected or suspended */
-
-	e = ikev2_parent_inR1outI2_tail(st, md, r);
-
 	passert(md != NULL);
+	stf_status e = ikev2_parent_inR1outI2_tail(st, md, r);
 	complete_v2_state_transition(&md, e);
 	release_any_md(&md);
 }
@@ -3400,9 +3385,7 @@ static xauth_callback_t ikev2_pam_continue;	/* type assertion */
 static void ikev2_pam_continue(struct state *st, const char *name UNUSED,
 			       bool success)
 {
-	struct msg_digest *md = st->st_suspended_md;
-
-	unset_suspended(md->st);
+	struct msg_digest *md = unsuspend_md(st);
 
 	stf_status stf;
 	if (success) {
@@ -3496,17 +3479,13 @@ stf_status ikev2parent_inI2outR2(struct state *st UNUSED, struct msg_digest *md)
 static void ikev2_parent_inI2outR2_continue(struct state *st, struct msg_digest *md,
 					    struct pluto_crypto_req *r)
 {
-	stf_status e;
-
 	DBG(DBG_CONTROL,
 		DBG_log("ikev2_parent_inI2outR2_continue for #%lu: calculating g^{xy}, sending R2",
 			st->st_serialno));
 
-	passert(st->st_suspended_md == md);
-	unset_suspended(st); /* no longer connected or suspended */
+	passert(md != NULL);
 
-	e = ikev2_parent_inI2outR2_tail(st, md, r);
-
+	stf_status e = ikev2_parent_inI2outR2_tail(st, md, r);
 	if (e > STF_FAIL) {
 		/* we do not send a notify because we are the initiator that could be responding to an error notification */
 		int v2_notify_num = e - STF_FAIL;
@@ -3533,7 +3512,6 @@ static void ikev2_parent_inI2outR2_continue(struct state *st, struct msg_digest 
 		send_v2_notification_from_state(st, v2N_AUTHENTICATION_FAILED, NULL);
 	}
 
-	passert(md != NULL);
 	complete_v2_state_transition(&md, e);
 	release_any_md(&md);
 }
@@ -3645,49 +3623,10 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 		return STF_FATAL;
 	}
 
-	{
-		struct payload_digest *ntfy;
-
-		for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
-			switch (ntfy->payload.v2n.isan_type) {
-			case v2N_NAT_DETECTION_SOURCE_IP:
-			case v2N_NAT_DETECTION_DESTINATION_IP:
-			case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
-			case v2N_COOKIE:
-				DBG(DBG_CONTROL, DBG_log("received %s which is not valid for current exchange",
-					enum_name(&ikev2_notify_names,
-						ntfy->payload.v2n.isan_type)));
-				break;
-			case v2N_USE_TRANSPORT_MODE:
-				DBG(DBG_CONTROL, DBG_log("received USE_TRANSPORT_MODE"));
-				st->st_seen_use_transport = TRUE;
-				break;
-			case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
-				DBG(DBG_CONTROL, DBG_log("received ESP_TFC_PADDING_NOT_SUPPORTED"));
-				st->st_seen_no_tfc = TRUE;
-				break;
-			case v2N_MOBIKE_SUPPORTED:
-				st->st_seen_mobike = TRUE;
-				{
-					char *respond = "do not respond to it";
-					if (LIN(POLICY_MOBIKE, c->policy) &&
-							c->spd.that.host_type == KH_ANY)
-						respond = "sent notifiy in response";
-					DBG(DBG_CONTROL, DBG_log("received v2N_MOBIKE_SUPPORTED %s",
-								respond));
-				}
-				break;
-			default:
-				DBG(DBG_CONTROL, DBG_log("received %s but ignoring it",
-					enum_name(&ikev2_notify_names,
-						ntfy->payload.v2n.isan_type)));
-			}
-		}
-	}
-
-	/* good. now create child state */
-	/* note: as we will switch to child state, we force the parent to the
-	 * new state now
+	/*
+	 * Now create child state.
+	 * As we will switch to child state, force the parent to the
+	 * new state now.
 	 */
 
 	ikev2_isakamp_established(st, md->svm, STATE_PARENT_R2,
@@ -3938,10 +3877,6 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 			return ret;
 		}
 	}
-
-	/* if the child failed, delete its state here - we sent the packet */
-	/* PAUL */
-	/* ??? what does that mean?  We cannot even reach here. */
 }
 
 static void ikev2_child_set_pfs(struct state *st)
@@ -4821,7 +4756,7 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 			(send_use_transport || cc->send_no_esp_tfc) ?
 			ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE);
 
-	if ((cc->policy & POLICY_TUNNEL) == LEMPTY) {
+	if (send_use_transport) {
 		DBG(DBG_CONTROL, DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE"));
 		/* In v2, for parent, protoid must be 0 and SPI must be empty */
 		if (!ship_v2N(cc->send_no_esp_tfc ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE,
@@ -5051,7 +4986,7 @@ stf_status ikev2_child_inIoutR(struct state *st /* child state */,
 	/* KE in with old(pst) and matching accepted_oakley from proposals */
 	RETURN_STF_FAILURE(accept_child_sa_KE(md, st, st->st_oakley));
 
-	/* check N_REKEY_SA in the negotation */
+	/* check N_REKEY_SA in the negotiation */
 	RETURN_STF_FAILURE_STATUS(ikev2_rekey_child(md));
 
 	if (st->st_ipsec_pred == SOS_NOBODY) {
@@ -5239,11 +5174,9 @@ stf_status ikev2_child_out_cont(struct state *st UNUSED, struct msg_digest *md,
 
 void ikev2_child_send_next(struct state *st)
 {
-	struct msg_digest *md = st->st_suspended_md;
-	stf_status e;
 	set_cur_state(st);
-	unset_suspended(st);
-	e = ikev2_child_out_tail(md);
+	struct msg_digest *md = unsuspend_md(st);
+	stf_status e = ikev2_child_out_tail(md);
 	complete_v2_state_transition(&md, e);
 	release_any_md(&md);
 	reset_globals();

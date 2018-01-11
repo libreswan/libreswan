@@ -733,17 +733,12 @@ static crypto_req_cont_func quick_outI1_continue;	/* type assertion */
 static void quick_outI1_continue(struct state *st, struct msg_digest *md UNUSED,
 				 struct pluto_crypto_req *r)
 {
-	stf_status e;
-
 	DBG(DBG_CONTROL,
 		DBG_log("quick_outI1_continue for #%lu: calculated ke+nonce, sending I1",
 			st->st_serialno));
 
 	passert(st != NULL);
-
-	unset_suspended(st);
-	e = quick_outI1_tail(r, st);
-
+	stf_status e = quick_outI1_tail(r, st);
 	/*
 	 * ??? this boilerplate code looks different from others.
 	 * Who frees md?
@@ -1489,14 +1484,11 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b)
 static void quick_inI1_outR1_cryptocontinue1(struct state *st, struct msg_digest *md,
 					     struct pluto_crypto_req *r)
 {
-	stf_status e;
-
 	DBG(DBG_CONTROL,
 		DBG_log("quick_inI1_outR1_cryptocontinue1 for #%lu: calculated ke+nonce, calculating DH",
 			st->st_serialno));
 
 	passert(st->st_connection != NULL);
-	unset_suspended(st);
 
 	/* we always calculate a nonce */
 	unpack_nonce(&st->st_nr, r);
@@ -1516,7 +1508,7 @@ static void quick_inI1_outR1_cryptocontinue1(struct state *st, struct msg_digest
 		/* but if PFS is off, we don't do a second DH, so just
 		 * call the continuation with NULL struct pluto_crypto_req *
 		 */
-		e = quick_inI1_outR1_cryptotail(md, NULL);
+		stf_status e = quick_inI1_outR1_cryptotail(md, NULL);
 		if (e == STF_OK) {
 			passert(md != NULL);	/* ??? when would this fail? */
 			complete_v1_state_transition(&md, e);
@@ -1531,17 +1523,13 @@ static void quick_inI1_outR1_cryptocontinue1(struct state *st, struct msg_digest
 static void quick_inI1_outR1_cryptocontinue2(struct state *st, struct msg_digest *md,
 					     struct pluto_crypto_req *r)
 {
-	stf_status e;
-
 	DBG(DBG_CONTROL,
 		DBG_log("quick_inI1_outR1_cryptocontinue2 for #%lu: calculated DH, sending R1",
 			st->st_serialno));
 
 	passert(st->st_connection != NULL);
-	unset_suspended(st);
-
-	e = quick_inI1_outR1_cryptotail(md, r);
 	passert(md != NULL);
+	stf_status e = quick_inI1_outR1_cryptotail(md, r);
 	complete_v1_state_transition(&md, e);
 	release_any_md(&md);
 }
@@ -1784,19 +1772,13 @@ stf_status quick_inR1_outI2(struct state *st, struct msg_digest *md)
 
 static void quick_inR1_outI2_continue(struct state *st, struct msg_digest *md,
 				      struct pluto_crypto_req *r)
-{
-	stf_status e;
-
-	DBG(DBG_CONTROL,
+{	DBG(DBG_CONTROL,
 		DBG_log("quick_inR1_outI2_continue for #%lu: calculated ke+nonce, calculating DH",
 			st->st_serialno));
 
 	passert(st->st_connection != NULL);
-	unset_suspended(st);
-
-	e = quick_inR1_outI2_cryptotail(md, r);
-
 	passert(md != NULL);
+	stf_status e = quick_inR1_outI2_cryptotail(md, r);
 	complete_v1_state_transition(&md, e);
 	release_any_md(&md);
 }
