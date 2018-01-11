@@ -4986,7 +4986,7 @@ stf_status ikev2_child_inIoutR(struct state *st /* child state */,
 	/* KE in with old(pst) and matching accepted_oakley from proposals */
 	RETURN_STF_FAILURE(accept_child_sa_KE(md, st, st->st_oakley));
 
-	/* check N_REKEY_SA in the negotation */
+	/* check N_REKEY_SA in the negotiation */
 	RETURN_STF_FAILURE_STATUS(ikev2_rekey_child(md));
 
 	if (st->st_ipsec_pred == SOS_NOBODY) {
