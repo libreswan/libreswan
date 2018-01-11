@@ -28,6 +28,7 @@ SRCDIR?=$(shell pwd)/
 
 # dummy default rule
 def help:
+	@echo
 	@echo "To build and install on a recent Linux kernel that has NETKEY:"
 	@echo
 	@echo "   make all && sudo make install"
@@ -41,6 +42,8 @@ def help:
 	@echo
 	@echo "To build debian packages: make deb"
 	@echo "To build fedora/rhel/centos rpms, see packaging/"
+	@echo
+	@false
 
 .PHONY: def help
 
