@@ -4756,7 +4756,7 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 			(send_use_transport || cc->send_no_esp_tfc) ?
 			ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE);
 
-	if ((cc->policy & POLICY_TUNNEL) == LEMPTY) {
+	if (send_use_transport) {
 		DBG(DBG_CONTROL, DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE"));
 		/* In v2, for parent, protoid must be 0 and SPI must be empty */
 		if (!ship_v2N(cc->send_no_esp_tfc ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE,
