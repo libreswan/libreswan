@@ -246,20 +246,17 @@ static struct msg_digest *dup_md(struct msg_digest *orig)
 static void process_dup(struct msg_digest *orig)
 {
 	/* not whack FD yet is expected to be reset! */
-	reset_cur_state();
-	reset_cur_connection();
-	cur_from = NULL;
 	pexpect_reset_globals();
 
 	struct msg_digest *md = dup_md(orig);
+	ip_address old_from = push_cur_from(md->sender);
 	process_packet(&md);
-	/* copy of comm_handle() tail */
+	pop_cur_from(old_from);
 	release_any_md(&md);
 
 	/* not whack FD */
 	reset_cur_state();
 	reset_cur_connection();
-	cur_from = NULL;
 	pexpect_reset_globals();
 }
 
@@ -374,14 +371,15 @@ static void comm_handle(const struct iface_port *ifp)
 		if (incoming_impaired()) {
 			impair_incoming(md);
 		} else {
+			ip_address old_from = push_cur_from(md->sender);
 			process_packet(&md);
+			pop_cur_from(old_from);
 		}
 		release_any_md(&md);
 	}
 
 	reset_cur_state();
 	reset_cur_connection();
-	cur_from = NULL;
 	pexpect_reset_globals();
 }
 
@@ -569,8 +567,6 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 
 	md->sender = sender;
 	md->sender_port = ntohs(portof(&sender));
-	/* XXX: cur_from points into the heap */
-	cur_from = &md->sender;
 
 	init_pbs(&md->packet_pbs
 		 , clone_bytes(_buffer, packet_len,

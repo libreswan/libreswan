@@ -86,7 +86,7 @@ int whack_log_fd = NULL_FD;                     /* only set during whack_handle(
  */
 static struct state *cur_state = NULL;                 /* current state, for diagnostics */
 static struct connection *cur_connection = NULL;       /* current connection, for diagnostics */
-const ip_address *cur_from = NULL;              /* source of current current message */
+static ip_address cur_from;				/* source of current current message */
 
 static void update_extra(const char *what, enum_names *names,
 			 lmod_t extra, lset_t mask)
@@ -134,9 +134,10 @@ enum processing {
 
 static void log_processing(enum processing processing, bool current,
 			   struct state *st, struct connection *c,
+			   const ip_address *from,
 			   const char *func, const char *file, long line)
 {
-	passert((st != NULL) != (c != NULL));
+	pexpect(((st != NULL) + (c != NULL) + (from != NULL)) == 1);	/* only 1 */
 	LSWDBGP(DBG_MASK, buf) {
 		lswlogs(buf, "processing: ");
 		switch (processing) {
@@ -161,6 +162,10 @@ static void log_processing(enum processing processing, bool current,
 			lswlogf(buf, " ");
 			lswlog_ip(buf, &st->st_remoteaddr);
 		}
+		if (from != NULL) {
+			lswlogf(buf, " from ");
+			lswlog_ip(buf, from);
+		}
 		if (!current) {
 			lswlogs(buf, " (BACKGROUND)");
 		}
@@ -183,8 +188,6 @@ static void log_processing(enum processing processing, bool current,
  * Luckily, whack_log_fd isn't the real value (that seems to be stored
  * elsewhere?) and, for as long as the whack connection is up, code
  * keeps setting it back.
- *
- * Is this leaking cur_from?  See above.
  */
 void log_reset_globals(const char *func, const char *file, long line)
 {
@@ -197,23 +200,20 @@ void log_reset_globals(const char *func, const char *file, long line)
 		whack_log_fd = NULL_FD;
 	}
 	if (cur_state != NULL) {
-		log_processing(RESET, true, cur_state, NULL,
+		log_processing(RESET, true, cur_state, NULL, NULL,
 			       func, file, line);
 		cur_state = NULL;
 	}
 	if (cur_connection != NULL) {
-		log_processing(RESET, true, NULL, cur_connection,
+		log_processing(RESET, true, NULL, cur_connection, NULL,
 			       func, file, line);
 		cur_connection = NULL;
 	}
-	if (cur_from != NULL) {
+	if (hportof(&cur_from) >= 0) {
 		/* peer's IP address */
-		LSWDBGP(DBG_MASK, buf) {
-			lswlogs(buf, "processing: resetting cur_from; was ");
-			lswlog_ip(buf, cur_from);
-			lswlog_source_line(buf, func, file, line);
-		}
-		cur_from = NULL;
+		log_processing(RESET, true, NULL, NULL, &cur_from,
+			       func, file, line);
+		zero(&cur_from);
 	}
 	if (cur_debugging != base_debugging) {
 		LSWDBGP(DBG_MASK, buf) {
@@ -248,13 +248,13 @@ void log_pexpect_reset_globals(const char *func, const char *file, long line)
 		}
 		cur_connection = NULL;
 	}
-	if (cur_from != NULL) {
+	if (hportof(&cur_from) >= 0) {
 		LSWLOG_PEXPECT_SOURCE(func, file, line, buf) {
 			lswlogs(buf, "processing: unexpected cur_from ");
-			lswlog_sensitive_ip(buf, cur_from);
+			lswlog_sensitive_ip(buf, &cur_from);
 			lswlogs(buf, " should be NULL");
 		}
-		cur_from = NULL;
+		zero(&cur_from);
 	}
 	if (cur_debugging != base_debugging) {
 		LSWLOG_PEXPECT_SOURCE(func, file, line, buf) {
@@ -274,7 +274,7 @@ struct connection *log_push_connection(struct connection *new_connection, const 
 	if (old_connection != NULL &&
 	    old_connection != new_connection) {
 		log_processing(SUSPEND, current,
-			       NULL, old_connection,
+			       NULL, old_connection, NULL,
 			       func, file, line);
 	}
 
@@ -288,11 +288,11 @@ struct connection *log_push_connection(struct connection *new_connection, const 
 		}
 	} else if (old_connection == new_connection) {
 		log_processing(RESTART, current,
-			       NULL, new_connection,
+			       NULL, new_connection, NULL,
 			       func, file, line);
 	} else {
 		log_processing(START, current,
-			       NULL, new_connection,
+			       NULL, new_connection, NULL,
 			       func, file, line);
 	}
 
@@ -305,7 +305,7 @@ void log_pop_connection(struct connection *c, const char *func,
 	bool current = (cur_state == NULL); /* not hidden by state? */
 	if (cur_connection != NULL) {
 		log_processing(STOP, current /* current? */,
-			       NULL, cur_connection,
+			       NULL, cur_connection, NULL,
 			       func, file, line);
 	} else {
 		LSWDBGP(DBG_MASK, buf) {
@@ -317,7 +317,7 @@ void log_pop_connection(struct connection *c, const char *func,
 	update_debugging();
 	if (cur_connection != NULL) {
 		log_processing(RESUME, current /* current? */,
-			       NULL, cur_connection,
+			       NULL, cur_connection, NULL,
 			       func, file, line);
 	}
 }
@@ -330,12 +330,12 @@ so_serial_t log_push_state(struct state *new_state, const char *func,
 	if (old_state != NULL) {
 		if (old_state != new_state) {
 			log_processing(SUSPEND, true /* must be current */,
-				       cur_state, NULL,
+				       cur_state, NULL, NULL,
 				       func, file, line);
 		}
 	} else if (cur_connection != NULL && new_state != NULL) {
 		log_processing(SUSPEND, true /* current for now */,
-			       NULL, cur_connection,
+			       NULL, cur_connection, NULL,
 			       func, file, line);
 	}
 
@@ -349,11 +349,11 @@ so_serial_t log_push_state(struct state *new_state, const char *func,
 		}
 	} else if (old_state == new_state) {
 		log_processing(RESTART, true /* must be current */,
-			       new_state, NULL,
+			       new_state, NULL, NULL,
 			       func, file, line);
 	} else {
 		log_processing(START, true /* must be current */,
-			       new_state, NULL,
+			       new_state, NULL, NULL,
 			       func, file, line);
 	}
 	return old_state != NULL ? old_state->st_serialno : SOS_NOBODY;
@@ -364,7 +364,7 @@ void log_pop_state(so_serial_t serialno, const char *func,
 {
 	if (cur_state != NULL) {
 		log_processing(STOP, true, /* must be current */
-			       cur_state, NULL,
+			       cur_state, NULL, NULL,
 			       func, file, line);
 	} else {
 		LSWDBGP(DBG_MASK, buf) {
@@ -376,14 +376,53 @@ void log_pop_state(so_serial_t serialno, const char *func,
 	update_debugging();
 	if (cur_state != NULL) {
 		log_processing(RESUME, true, /* must be current */
-			       cur_state, NULL,
+			       cur_state, NULL, NULL,
 			       func, file, line);
 	} else if (cur_connection != NULL) {
 		log_processing(RESUME, true, /* now current */
-			       NULL, cur_connection,
+			       NULL, cur_connection, NULL,
 			       func, file, line);
 	}
 }
+
+extern ip_address log_push_from(ip_address new_from,
+				const char *func,
+				const char *file, long line)
+{
+	bool current = (cur_state == NULL && cur_connection == NULL);
+	ip_address old_from = cur_from;
+	if (hportof(&old_from) >= 0) {
+		log_processing(SUSPEND, current,
+			       NULL, NULL, &old_from,
+			       func, file, line);
+	}
+	cur_from = new_from;
+	if (hportof(&cur_from) >= 0) {
+		log_processing(START, current,
+			       NULL, NULL, &cur_from,
+			       func, file, line);
+	}
+	return old_from;
+}
+
+extern void log_pop_from(ip_address old_from,
+			 const char *func,
+			 const char *file, long line)
+{
+	bool current = (cur_state == NULL && cur_connection == NULL);
+	if (hportof(&cur_from) >= 0) {
+		log_processing(STOP, current,
+			       NULL, NULL, &cur_from,
+			       func, file, line);
+	}
+	if (hportof(&old_from) >= 0) {
+		log_processing(RESUME, current,
+			       NULL, NULL, &old_from,
+			       func, file, line);
+	}
+	cur_from = old_from;
+}
+
 
 /*
  * Initialization.
@@ -520,7 +559,7 @@ static void lswlog_cur_prefix(struct lswlog *buf,
 			}
 		}
 		lswlogs(buf, ": ");
-	} else if (cur_from != NULL) {
+	} else if (cur_from != NULL && hportof(cur_from) >= 0) {
 		/* peer's IP address */
 		lswlogs(buf, "packet from ");
 		lswlog_sensitive_ip(buf, cur_from);
@@ -530,7 +569,7 @@ static void lswlog_cur_prefix(struct lswlog *buf,
 
 void lswlog_log_prefix(struct lswlog *buf)
 {
-	lswlog_cur_prefix(buf, cur_state, cur_connection, cur_from);
+	lswlog_cur_prefix(buf, cur_state, cur_connection, &cur_from);
 }
 
 /*
@@ -545,7 +584,7 @@ void log_prefix(struct lswlog *buf, bool debug,
 		lswlogs(buf, DEBUG_PREFIX);
 	}
 	if (!debug || DBGP(DBG_ADD_PREFIX)) {
-		lswlog_cur_prefix(buf, st, c, cur_from);
+		lswlog_cur_prefix(buf, st, c, &cur_from);
 	}
 }
 
