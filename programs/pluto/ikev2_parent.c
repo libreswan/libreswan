@@ -3645,14 +3645,10 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 				break;
 			case v2N_MOBIKE_SUPPORTED:
 				st->st_seen_mobike = TRUE;
-				{
-					char *respond = "do not respond to it";
-					if (LIN(POLICY_MOBIKE, c->policy) &&
-							c->spd.that.host_type == KH_ANY)
-						respond = "sent notifiy in response";
-					DBG(DBG_CONTROL, DBG_log("received v2N_MOBIKE_SUPPORTED %s",
-								respond));
-				}
+				DBG(DBG_CONTROL, DBG_log("received v2N_MOBIKE_SUPPORTED: %s",
+					(LIN(POLICY_MOBIKE, c->policy) && c->spd.that.host_type == KH_ANY) ?
+						"answering with MOBIKE confirmation" :
+						"ignored - connection not suitable for MOBIKE"));
 				break;
 			default:
 				DBG(DBG_CONTROL, DBG_log("received %s but ignoring it",
