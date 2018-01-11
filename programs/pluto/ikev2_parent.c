@@ -3623,45 +3623,10 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 		return STF_FATAL;
 	}
 
-	{
-		struct payload_digest *ntfy;
-
-		for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
-			switch (ntfy->payload.v2n.isan_type) {
-			case v2N_NAT_DETECTION_SOURCE_IP:
-			case v2N_NAT_DETECTION_DESTINATION_IP:
-			case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
-			case v2N_COOKIE:
-				DBG(DBG_CONTROL, DBG_log("received %s which is not valid for current exchange",
-					enum_name(&ikev2_notify_names,
-						ntfy->payload.v2n.isan_type)));
-				break;
-			case v2N_USE_TRANSPORT_MODE:
-				DBG(DBG_CONTROL, DBG_log("received USE_TRANSPORT_MODE"));
-				st->st_seen_use_transport = TRUE;
-				break;
-			case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
-				DBG(DBG_CONTROL, DBG_log("received ESP_TFC_PADDING_NOT_SUPPORTED"));
-				st->st_seen_no_tfc = TRUE;
-				break;
-			case v2N_MOBIKE_SUPPORTED:
-				st->st_seen_mobike = TRUE;
-				DBG(DBG_CONTROL, DBG_log("received v2N_MOBIKE_SUPPORTED: %s",
-					(LIN(POLICY_MOBIKE, c->policy) && c->spd.that.host_type == KH_ANY) ?
-						"answering with MOBIKE confirmation" :
-						"ignored - connection not suitable for MOBIKE"));
-				break;
-			default:
-				DBG(DBG_CONTROL, DBG_log("received %s but ignoring it",
-					enum_name(&ikev2_notify_names,
-						ntfy->payload.v2n.isan_type)));
-			}
-		}
-	}
-
-	/* good. now create child state */
-	/* note: as we will switch to child state, we force the parent to the
-	 * new state now
+	/*
+	 * Now create child state.
+	 * As we will switch to child state, force the parent to the
+	 * new state now.
 	 */
 
 	ikev2_isakamp_established(st, md->svm, STATE_PARENT_R2,
