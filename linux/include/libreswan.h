@@ -340,6 +340,7 @@ typedef struct {
 	char private_buf[ADDRTOT_BUF];
 } ipstr_buf;
 extern const char *ipstr(const ip_address *src, ipstr_buf *b);
+extern const char *sensitive_ipstr(const ip_address *src, ipstr_buf *b);
 extern err_t ttorange(const char *src, size_t srclen, int af, ip_range *dst,
 		bool non_zero);
 extern size_t rangetot(const ip_range *src, char format, char *dst, size_t dstlen);
