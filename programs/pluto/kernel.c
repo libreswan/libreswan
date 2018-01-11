@@ -560,50 +560,50 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		"PLUTO_INTERFACE='%s' "
 		"%s" /* possible PLUTO_NEXT_HOP */
 		"PLUTO_ME='%s' "
-		"PLUTO_MY_ID='%s' "
+		"PLUTO_MY_ID='%s' "	/* 5 */
 		"PLUTO_MY_CLIENT='%s' "
 		"PLUTO_MY_CLIENT_NET='%s' "
 		"PLUTO_MY_CLIENT_MASK='%s' "
 		"%s" /* VTI_IP */
 		"PLUTO_MY_PORT='%u' "
-		"PLUTO_MY_PROTOCOL='%u' "
+		"PLUTO_MY_PROTOCOL='%u' "	/* 10 */
 		"PLUTO_SA_REQID='%u' "
 		"PLUTO_SA_TYPE='%s' "
 		"PLUTO_PEER='%s' "
 		"PLUTO_PEER_ID='%s' "
-		"PLUTO_PEER_CLIENT='%s' "
+		"PLUTO_PEER_CLIENT='%s' "	/* 15 */
 		"PLUTO_PEER_CLIENT_NET='%s' "
 		"PLUTO_PEER_CLIENT_MASK='%s' "
 		"PLUTO_PEER_PORT='%u' "
 		"PLUTO_PEER_PROTOCOL='%u' "
-		"PLUTO_PEER_CA='%s' "
+		"PLUTO_PEER_CA='%s' "		/* 20 */
 		"PLUTO_STACK='%s' "
 		"%s"		/* optional metric */
 		"%s"		/* optional mtu */
 		"PLUTO_ADDTIME='%" PRIu64 "' "
-		"PLUTO_CONN_POLICY='%s%s' "
+		"PLUTO_CONN_POLICY='%s%s' "	/* 25,26 */
 		"PLUTO_CONN_KIND='%s' "
 		"PLUTO_CONN_ADDRFAMILY='ipv%d' "
 		"XAUTH_FAILED=%d "
-		"%s"		/* XAUTH username - if any */
+		"%s"		/* XAUTH username - if any */	/* 30 */
 		"%s"		/* PLUTO_MY_SRCIP - if any */
 		"PLUTO_IS_PEER_CISCO='%u' "
 		"PLUTO_PEER_DNS_INFO='%s' "
 		"PLUTO_PEER_DOMAIN_INFO='%s' "
-		"PLUTO_PEER_BANNER='%s' "
+		"PLUTO_PEER_BANNER='%s' "	/* 35 */
 		"PLUTO_CFG_SERVER='%u' "
 		"PLUTO_CFG_CLIENT='%u' "
 #ifdef HAVE_NM
 		"PLUTO_NM_CONFIGURED='%u' "
 #endif
 		"%s" /* traffic in stats - if any */
-		"%s" /* traffic out stats - if any */
+		"%s" /* traffic out stats - if any */	/* 40 */
 		"%s" /* nflog-group - if any */
 		"%s" /* conn-mark - if any */
 		"VTI_IFACE='%s' "
 		"VTI_ROUTING='%s' "
 		"VTI_SHARED='%s' "
-		"%s" /* CAT=yes if set */
+		"%s" /* CAT=yes if set */	/* 45 */
 		"SPI_IN=0x%x SPI_OUT=0x%x " /* SPI_IN SPI_OUT */
 
 		, c->name,
@@ -636,28 +636,28 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		connmtu_str,
 		st == NULL ? (u_int64_t)0 : st->st_esp.add_time,
 		prettypolicy(c->policy),	/* 25 */
-		NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "",
+		NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "",	/* 26 */
 		enum_show(&connection_kind_names, c->kind),
 		(c->addr_family == AF_INET) ? 4 : 6,
 		(st != NULL && st->st_xauth_soft) ? 1 : 0,
-		secure_xauth_username_str,
+		secure_xauth_username_str,	/* 30 */
 		srcip_str,
-		c->remotepeertype, /* kind of odd printing an enum */
+		c->remotepeertype, /* kind of odd printing an enum with %u */
 		(st != NULL && st->st_seen_cfg_dns != NULL) ? st->st_seen_cfg_dns : "",
 		(st != NULL && st->st_seen_cfg_domains != NULL) ? st->st_seen_cfg_domains : "",
-		(st != NULL && st->st_seen_cfg_banner != NULL) ? st->st_seen_cfg_banner : "",
+		(st != NULL && st->st_seen_cfg_banner != NULL) ? st->st_seen_cfg_banner : "",	/* 35 */
 		sr->this.modecfg_server,
 		sr->this.modecfg_client,
 #ifdef HAVE_NM
 		c->nmconfigured,
 #endif
 		traffic_in_str,
-		traffic_out_str,
+		traffic_out_str,	/* 40 */
 		nflogstr,
 		connmarkstr,
 		c->vti_iface ? c->vti_iface : "",
 		bool_str(c->vti_routing),
-		bool_str(c->vti_shared),
+		bool_str(c->vti_shared),	/* 45 */
 		catstr,
 		st == NULL ? 0 : st->st_esp.present ? ntohl(st->st_esp.attrs.spi) :
 			st->st_ah.present ? ntohl(st->st_ah.attrs.spi) :
