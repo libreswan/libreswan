@@ -11,7 +11,7 @@
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2014,2017 Antony Antony <antony@phenome.org>
- * Copyright (C) 2015-2017 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2018 Andrew Cagney
  * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -741,7 +741,7 @@ extern bool dpd_active_locally(const struct state *st);
 #define fake_state(st, new_state) log_state((st), (new_state))
 extern void change_state(struct state *st, enum state_kind new_state);
 
-extern bool state_busy(const struct state *st);
+extern bool verbose_state_busy(const struct state *st);
 extern bool drop_new_exchanges(void);
 extern bool require_ddos_cookies(void);
 extern void show_globalstate_status(void);

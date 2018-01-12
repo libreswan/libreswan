@@ -2706,7 +2706,7 @@ struct msg_digest *unsuspend_md(struct state *st)
 	return md;
 }
 
-bool state_busy(const struct state *st)
+bool verbose_state_busy(const struct state *st)
 {
 	if (st == NULL) {
 		DBG(DBG_CONTROLMORE, DBG_log("#null state always idle"));

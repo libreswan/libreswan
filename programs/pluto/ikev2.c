@@ -1471,7 +1471,7 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	md->st = st;
 
-	if (state_busy(st))
+	if (verbose_state_busy(st))
 		return;
 
 	DBG(DBG_CONTROL,
