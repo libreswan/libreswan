@@ -663,22 +663,6 @@ void lswlog_errno_suffix(struct lswlog *buf, int e)
 	lswlog_to_error_stream(buf);
 }
 
-void libreswan_log_errno(int e, const char *prefix, const char *message, ...)
-{
-	LSWBUF(buf) {
-		/* <prefix><state#N...><message>.Errno %d: <strerror> */
-		lswlogs(buf, prefix);
-		lswlog_log_prefix(buf);
-		va_list args;
-		va_start(args, message);
-		lswlogvf(buf, message, args);
-		va_end(args);
-		lswlogs(buf, ".");
-		lswlog_errno(buf, e);
-		lswlog_to_error_stream(buf);
-	}
-}
-
 void exit_log(const char *message, ...)
 {
 	LSWBUF(buf) {

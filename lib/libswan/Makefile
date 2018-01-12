@@ -71,6 +71,8 @@ OBJS += monotime.o
 OBJS += debug_enum_names.o
 OBJS += libreswan_DBG_dump.o
 OBJS += libreswan_DBG_log.o
+OBJS += libreswan_exit_log_errno.o
+OBJS += libreswan_log_errno.o
 
 OBJS += lswlog.o
 OBJS += lswlog_dbg.o

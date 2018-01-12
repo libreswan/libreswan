@@ -3,7 +3,7 @@
  * Copyright (C) 1998-2001,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2004 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017-2018 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -160,26 +160,34 @@ extern int libreswan_log(const char *fmt, ...) PRINTF_LIKE(1);
 
 /*
  * Wrap <message> in a prefix and suffix where the suffix contains
- * errno and message.  Since __VA_ARGS__ may alter ERRNO, it needs to
- * be saved.
+ * errno and message.
+ *
+ * Notes:
+ *
+ * Because __VA_ARGS__ may contain function calls that modify ERRNO,
+ * errno's value is first saved.
+ *
+ * While these common-case macros could be implemented directly using
+ * LSWLOG_ERRNO_() et.al. they are not, instead they are implemented
+ * as wrapper functions.  This is so that a crash will include the
+ * below functions _including_ the with MESSAGE parameter - makes
+ * debugging much easier.
  */
 
-void libreswan_log_errno(int e, const char *prefix,
-			 const char *message, ...) PRINTF_LIKE(3);
 void libreswan_exit(enum rc_type rc) NEVER_RETURNS;
+void libreswan_log_errno(int e, const char *message, ...) PRINTF_LIKE(2);
+void libreswan_exit_log_errno(int e, const char *message, ...) PRINTF_LIKE(2) NEVER_RETURNS;
 
-#define LOG_ERRNO(ERRNO, ...)						\
-	{								\
-		int log_errno = ERRNO; /* save the value */		\
-		libreswan_log_errno(log_errno, "ERROR: ", __VA_ARGS__);	\
+#define LOG_ERRNO(ERRNO, ...) {						\
+		int log_errno = ERRNO; /* save value across va args */	\
+		libreswan_log_errno(log_errno, __VA_ARGS__);		\
 	}
 
-#define EXIT_LOG_ERRNO(ERRNO, ...)					\
-	{								\
-		int exit_log_errno = ERRNO; /* save the value */	\
-		libreswan_log_errno(exit_log_errno, "FATAL ERROR: ", __VA_ARGS__); \
-		libreswan_exit(PLUTO_EXIT_FAIL);			\
+#define EXIT_LOG_ERRNO(ERRNO, ...) {					\
+		int exit_log_errno = ERRNO; /* save value across va args */ \
+		libreswan_exit_log_errno(exit_log_errno, __VA_ARGS__);	\
 	}
+
 
 /*
  * general utilities
@@ -494,7 +502,9 @@ void lswlog_passert_suffix(struct lswlog *buf, const char *func,
 
 
 /*
- * Both include ERRNO and send to ERROR stream.
+ * Wrap <message> in a prefix and suffix where the suffix contains
+ * errno and message.  Since calls may alter ERRNO, it needs to be
+ * saved.
  *
  * XXX: Is error stream really the right place for this?
  */
