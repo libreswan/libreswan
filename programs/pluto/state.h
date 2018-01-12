@@ -242,12 +242,23 @@ struct hidden_variables {
 };
 
 struct msg_digest *unsuspend_md(struct state *st);
-#define set_suspended(st, md) { \
-	passert((st)->st_suspended_md == NULL); \
-	(st)->st_suspended_md = (md); \
-	(st)->st_suspended_md_func = __FUNCTION__; \
-	(st)->st_suspended_md_line = __LINE__; \
-    }
+
+/*
+ * On entry to this macro, when crypto has been off loaded then
+ * st_offloaded_task is non-NULL.  However, with XAUTH immediate,
+ * there's nothing to check.
+ */
+#define suspend_md(ST, MDP) {						\
+		DBG(DBG_CONTROL,					\
+		    DBG_log("suspending state #%lu and saving MD",	\
+			    (ST)->st_serialno));			\
+		passert((ST)->st_suspended_md == NULL);			\
+		(ST)->st_suspended_md = *(MDP);				\
+		*(MDP) = NULL; /* take ownership */			\
+		(ST)->st_suspended_md_func = __FUNCTION__;		\
+		(ST)->st_suspended_md_line = __LINE__;			\
+		passert(state_is_busy(ST));				\
+	}
 
 /* IKEv2, this struct will be mapped into a ikev2_ts1 payload  */
 struct traffic_selector {

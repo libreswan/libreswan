@@ -930,7 +930,6 @@ stf_status idi_ipseckey_fetch(struct msg_digest *md)
 		/* all success */
 		st->ipseckey_dnsr = dnsr_idi;
 		st->ipseckey_fwd_dnsr = dnsr_a;
-		set_suspended(st, md);
 		ret = STF_SUSPEND;
 	}
 

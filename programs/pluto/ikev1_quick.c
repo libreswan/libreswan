@@ -1455,10 +1455,6 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b)
 
 		passert(st->st_connection != NULL);
 
-		/*
-		 * ??? this code did NOT have a set_suspended(st, md).
-		 * Now that is perfomed by new_pcrc.  Correct?
-		 */
 		if (st->st_pfs_group != NULL) {
 			request_ke_and_nonce("quick_outI1 KE", st, md,
 					     st->st_pfs_group,
@@ -1495,6 +1491,12 @@ static void quick_inI1_outR1_cryptocontinue1(struct state *st, struct msg_digest
 				 st, md);
 		start_dh_secret(dh, st, ORIGINAL_RESPONDER,
 				st->st_pfs_group);
+		/*
+		 * XXX: Since more crypto has been requsted, MD needs
+		 * to be re suspended.  If the original crypto request
+		 * did everything this wouldn't be needed.
+		 */
+		suspend_md(st, &md);
 	} else {
 		/* but if PFS is off, we don't do a second DH, so just
 		 * call the continuation with NULL struct pluto_crypto_req *

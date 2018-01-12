@@ -2303,8 +2303,19 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 
 	switch (result) {
 	case STF_SUSPEND:
+		if (*mdp != NULL) {
+			/*
+			 * If this transition was triggered by an
+			 * incoming packet, save it.
+			 *
+			 * XXX: some initiator code creates a fake MD
+			 * (there isn't a real one); save that as
+			 * well.
+			 */
+			suspend_md(md->st, mdp);
+			passert(*mdp == NULL); /* ownership transfered */
+		}
 		log_stf_suspend(md->st, result);
-		*mdp = NULL;    /* take md away from parent */
 		return;
 
 	case STF_IGNORE:

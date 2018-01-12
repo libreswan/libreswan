@@ -1416,8 +1416,7 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 		}
 	} else {
 		xauth_launch_authent(st, &name, &password);
-		set_suspended(st, md);
-		return STF_IGNORE;
+		return STF_SUSPEND;
 	}
 }
 

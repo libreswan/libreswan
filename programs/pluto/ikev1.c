@@ -1710,8 +1710,9 @@ void process_v1_packet(struct msg_digest **mdp)
 				(unsigned)hportof(&md->sender));
 		});
 
-		/* if there was a previous packet, let it go, and go with most
-		 * recent one.
+		/*
+		 * if there was a previous packet, let it go, and go
+		 * with most recent one.
 		 */
 		if (st->st_suspended_md != NULL) {
 			DBG(DBG_CONTROL,
@@ -1719,9 +1720,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				    st->st_suspended_md));
 			release_any_md(&st->st_suspended_md);
 		}
-
-		set_suspended(st, md);
-		*mdp = NULL;
+		suspend_md(st, mdp);
 		return;
 	}
 
@@ -2285,7 +2284,18 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	switch (result) {
 	case STF_SUSPEND:
 		set_cur_state(md->st);	/* might have changed */
-		*mdp = NULL;	/* take md away from parent */
+		if (*mdp != NULL) {
+			/*
+			 * If this transition was triggered by an
+			 * incoming packet, save it.
+			 *
+			 * XXX: some initiator code creates a fake MD
+			 * (there isn't a real one); save that as
+			 * well.
+			 */
+			suspend_md(md->st, mdp);
+			passert(*mdp == NULL); /* ownership transfered */
+		}
 		return;
 	case STF_IGNORE:
 		return;

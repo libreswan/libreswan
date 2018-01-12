@@ -336,8 +336,6 @@ static void ikev2_crypto_continue(struct state *st, struct msg_digest *md,
 			unpack_KE_from_helper(st, r, &st->st_gi);
 
 		e = add_st_send_list(st, pst);
-		if (e == STF_SUSPEND)
-			set_suspended(st, md);
 		break;
 
 	case STATE_V2_REKEY_IKE_I0:
@@ -3532,7 +3530,6 @@ static void ikev2_pam_continue(struct state *st, const char *name UNUSED,
 static stf_status ikev2_start_pam_authorize(struct msg_digest *md)
 {
 	struct state *st = md->st;
-	set_suspended(md->st, md);
 
 	char thatid[IDTOA_BUF];
 	idtoa(&st->st_connection->spd.that.id, thatid, sizeof(thatid));

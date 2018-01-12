@@ -142,9 +142,14 @@ static void aggr_inI1_outR1_continue1(struct state *st, struct msg_digest *md,
 	struct pluto_crypto_req_cont *dh = new_pcrc(aggr_inI1_outR1_continue2,
 						    "aggr outR1 DH",
 						    st, md);
-
 	start_dh_secretiv(dh, st, ORIGINAL_RESPONDER,
 			  st->st_oakley.ta_dh);
+	/*
+	 * XXX: Since more crypto has been requsted, MD needs to be re
+	 * suspended.  If the original crypto request did everything
+	 * this wouldn't be needed.
+	 */
+	suspend_md(st, &md);
 }
 
 /* STATE_AGGR_R0:

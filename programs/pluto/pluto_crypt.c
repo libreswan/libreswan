@@ -140,7 +140,7 @@ struct pluto_crypto_req_cont *new_pcrc(
 	crypto_req_cont_func fn,
 	const char *name,
 	struct state *st,
-	struct msg_digest *md)
+	struct msg_digest *md UNUSED)
 {
 	struct pluto_crypto_req_cont *r = alloc_thing(struct pluto_crypto_req_cont, name);
 
@@ -149,15 +149,6 @@ struct pluto_crypto_req_cont *new_pcrc(
 	r->pcrc_cancelled = false;
 	r->pcrc_name = name;
 	r->pcrc_backlog = list_entry(&backlog_info, r);
-
-	/*
-	 * There is almost always a non-NULL md.
-	 * Exception: main_inI2_outR2_tail initiates DH calculation
-	 * in parallel with normal processing that needs the md exclusively.
-	 */
-	if (md != NULL) {
-		set_suspended(st, md);
-	}
 	return r;
 }
 
