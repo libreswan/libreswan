@@ -2506,7 +2506,7 @@ static stf_status ikev2_verify_enc_payloads(struct msg_digest *md,
 	return STF_OK;
 }
 
-struct ikev2_payloads_summary ikev2_decrypt_msg(struct msg_digest *md, bool verify_pl)
+struct ikev2_payloads_summary ikev2_decrypt_msg(struct msg_digest *md)
 {
 	stf_status status;
 	chunk_t chunk;
@@ -2543,22 +2543,7 @@ struct ikev2_payloads_summary ikev2_decrypt_msg(struct msg_digest *md, bool veri
 		md->chain[ISAKMP_NEXT_v2SK]->payload.generic.isag_np :
 		md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf.isaskf_np;
 
-	struct ikev2_payloads_summary summary = ikev2_decode_payloads(md, &md->clr_pbs, np);
-	if (summary.status != STF_OK) {
-		return summary;
-	}
-
-	if (verify_pl) {
-		summary.status = ikev2_verify_enc_payloads(md, summary);
-		if (summary.status == STF_OK) {
-			struct state *pst = IS_CHILD_SA(md->st) ?
-				state_with_serialno(md->st->st_clonedfrom) : md->st;
-			/* going to switch to child st. before that update parent */
-			if (!LHAS(pst->hidden_variables.st_nat_traversal, NATED_HOST))
-				update_ike_endpoints(pst, md);
-		}
-	}
-	return summary;
+	return ikev2_decode_payloads(md, &md->clr_pbs, np);
 }
 
 /* Misleading name, also used for NULL sized type's */
@@ -3530,11 +3515,18 @@ static stf_status ikev2_parent_inI2outR2_tail(struct state *st, struct msg_diges
 
 	/* decrypt things. */
 	{
-		struct ikev2_payloads_summary ps = ikev2_decrypt_msg(md, TRUE);
-
+		struct ikev2_payloads_summary ps = ikev2_decrypt_msg(md);
+		if (ps.status != STF_OK)
+			return ps.status;
+		ps.status = ikev2_verify_enc_payloads(md, ps);
 		if (ps.status != STF_OK)
 			return ps.status;
 	}
+	struct state *pst = IS_CHILD_SA(md->st) ?
+		state_with_serialno(md->st->st_clonedfrom) : md->st;
+	/* going to switch to child st. before that update parent */
+	if (!LHAS(pst->hidden_variables.st_nat_traversal, NATED_HOST))
+		update_ike_endpoints(pst, md);
 
 	nat_traversal_change_port_lookup(md, st);
 

@@ -1,7 +1,7 @@
   <varlistentry>
   <term><emphasis remap='B'>ikev2</emphasis></term>
   <listitem>
-<para>IKEv2 (RFC4309) settings to be used. Currently the accepted values
+<para>IKEv2 (RFC 7296) settings to be used. Currently the accepted values
 are
 <emphasis remap='B'>permit</emphasis>,
 (the default)
