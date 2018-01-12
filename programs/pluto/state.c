@@ -2706,12 +2706,9 @@ struct msg_digest *unsuspend_md(struct state *st)
 	return md;
 }
 
-bool verbose_state_busy(const struct state *st)
+bool state_is_busy(const struct state *st)
 {
-	if (st == NULL) {
-		DBG(DBG_CONTROLMORE, DBG_log("#null state always idle"));
-		return false;
-	}
+	passert(st != NULL);
 	/*
 	 * Ignore a packet if the state has a suspended state
 	 * transition.  Probably a duplicated packet but the original
@@ -2727,14 +2724,12 @@ bool verbose_state_busy(const struct state *st)
 	 * state.  For instance, the initial initiator (both IKEv1 and
 	 * IKEv2) doesn't have a suspended MD.  To get around this a
 	 * 'fake_md' MD is created.
+	 *
+	 * XXX: what about xauth? It sets ST_SUSPENDED_MD.
 	 */
 	if (st->st_suspended_md != NULL) {
-		/* not whack */
-		LSWLOG_LOG(buf) {
-			lswlog_log_prefix(buf);
-			lswlogf(buf, "discarding packet received during asynchronous work (DNS or crypto) in %s",
-				st->st_state_name);
-		}
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("#%lu is busy; has a suspended MD", st->st_serialno));
 		return true;
 	}
 	/*
@@ -2744,19 +2739,43 @@ bool verbose_state_busy(const struct state *st)
 	if (st->st_v1_offloaded_task_in_background) {
 		pexpect(st->st_offloaded_task != NULL);
 		DBG(DBG_CONTROLMORE,
-		    DBG_log("#%lu offloaded task in background", st->st_serialno));
+		    DBG_log("#%lu is idle; has background offloaded task", st->st_serialno));
 		return false;
 	}
 	/*
 	 * If this state is busy calculating.
 	 */
 	if (st->st_offloaded_task != NULL) {
-		libreswan_log("message received while calculating. Ignored.");
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("#%lu is busy; has an offloaded task",
+			    st->st_serialno));
 		return true;
 	}
-	/* XXX: what about xauth? */
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu idle", st->st_serialno));
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu is idle", st->st_serialno));
 	return false;
+}
+
+bool verbose_state_busy(const struct state *st)
+{
+	if (st == NULL) {
+		DBG(DBG_CONTROLMORE, DBG_log("#null state always idle"));
+		return false;
+	}
+	if (!state_is_busy(st)) {
+		DBG(DBG_CONTROLMORE, DBG_log("#%lu idle", st->st_serialno));
+		return false;
+	}
+	if (st->st_suspended_md != NULL) {
+		/* not whack */
+		LSWLOG_LOG(buf) {
+			lswlog_log_prefix(buf);
+			lswlogf(buf, "discarding packet received during asynchronous work (DNS or crypto) in %s",
+				st->st_state_name);
+		}
+	} else if (st->st_offloaded_task != NULL) {
+		libreswan_log("message received while calculating. Ignored.");
+	}
+	return true;
 }
 
 bool require_ddos_cookies(void)
