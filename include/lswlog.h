@@ -438,12 +438,14 @@ void lswlog_pexpect_prefix(struct lswlog *buf);
 void lswlog_pexpect_suffix(struct lswlog *buf, const char *func,
 			   const char *file, unsigned long line);
 
-#define LSWLOG_PEXPECT(BUF)				   \
+#define LSWLOG_PEXPECT_SOURCE(FUNC, FILE, LINE, BUF)	   \
 	LSWLOG_(true, BUF,				   \
 		lswlog_pexpect_prefix(BUF),		   \
-		lswlog_pexpect_suffix(BUF, __func__,	   \
-				      PASSERT_BASENAME,	   \
-				      __LINE__))
+		lswlog_pexpect_suffix(BUF, FUNC, FILE, LINE))
+
+#define LSWLOG_PEXPECT(BUF)				   \
+	LSWLOG_PEXPECT_SOURCE(__func__, PASSERT_BASENAME, __LINE__, BUF)
+
 
 /*
  * Send an expectation failure to everwhere.
@@ -453,12 +455,13 @@ void lswlog_passert_prefix(struct lswlog *buf);
 void lswlog_passert_suffix(struct lswlog *buf, const char *func,
 			   const char *file, unsigned long line) NEVER_RETURNS;
 
-#define LSWLOG_PASSERT(BUF)				   \
+#define LSWLOG_PASSERT_SOURCE(FUNC, FILE, LINE, BUF)	   \
 	LSWLOG_(true, BUF,				   \
 		lswlog_passert_prefix(BUF),		   \
-		lswlog_passert_suffix(BUF, __func__,	   \
-				      PASSERT_BASENAME,	   \
-				      __LINE__))
+		lswlog_passert_suffix(BUF, FUNC, FILE, LINE))
+
+#define LSWLOG_PASSERT(BUF)			\
+	LSWLOG_PASSERT_SOURCE(__func__, PASSERT_BASENAME, __LINE__, BUF)
 
 /*
  * ARRAY, a previously allocated array, containing the accumulated
