@@ -434,6 +434,21 @@ void lswlog_log_prefix(struct lswlog *buf);
  * Send an expectation failure to everwhere.
  */
 
+
+/*
+ * Check/log a pexpect failure to the "panic" channel.
+ *
+ * Notes:
+ *
+ * According to C99, the expansion of PEXPECT_LOG(FMT) will include a
+ * stray comma vis: "pexpect_log(file, line, FMT,)".  Plenty of
+ * workarounds.
+ *
+ * "pexpect()" does use the shorter statement "if (!(pred))" in the
+ * below as it will suppresses -Wparen (i.e., assignment in if
+ * statement).
+ */
+
 void lswlog_pexpect_prefix(struct lswlog *buf);
 void lswlog_pexpect_suffix(struct lswlog *buf, const char *func,
 			   const char *file, unsigned long line);
@@ -446,9 +461,25 @@ void lswlog_pexpect_suffix(struct lswlog *buf, const char *func,
 #define LSWLOG_PEXPECT(BUF)				   \
 	LSWLOG_PEXPECT_SOURCE(__func__, PASSERT_BASENAME, __LINE__, BUF)
 
+/* old style */
+
+#define PEXPECT_LOG(FMT, ...)						\
+	LSWLOG_PEXPECT(pexpect_buf) {					\
+		lswlogf(pexpect_buf, FMT, __VA_ARGS__);			\
+	}
+
+#define pexpect(ASSERTION) {						\
+		/* wrapping ASSERTION in paren suppresses -Wparen */	\
+		bool assertion__ = ASSERTION; /* no paren */		\
+		if (!assertion__) {					\
+			LSWLOG_PEXPECT(pexpect_buf) {			\
+				lswlogf(pexpect_buf, "%s", #ASSERTION);	\
+			}						\
+		}							\
+	}
 
 /*
- * Send an expectation failure to everwhere.
+ * Send an assertion failure to everwhere.
  */
 
 void lswlog_passert_prefix(struct lswlog *buf);

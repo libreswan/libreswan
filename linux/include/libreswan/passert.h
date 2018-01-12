@@ -59,36 +59,6 @@ extern void lsw_passert_fail(const char *file_str,
 		}							\
 	}
 
-/*
- * Check/log a pexpect failure to the "panic" channel.
- *
- * Notes:
- *
- * According to C99, the expansion of PEXPECT_LOG(FMT) will include a
- * stray comma vis: "pexpect_log(file, line, FMT,)".  Plenty of
- * workarounds.
- *
- * "pexpect()" does use the shorter statement "if (!(pred))" in the
- * below as it will suppresses -Wparen (i.e., assignment in if
- * statement).
- */
-
-extern void lsw_pexpect_log(const char *file_str, unsigned long line_no,
-			    const char *func_str, const char *fmt, ...)
-	PRINTF_LIKE(4);
-
-#define PEXPECT_LOG(FMT, ...)					\
-	lsw_pexpect_log(PASSERT_BASENAME, __LINE__, __func__,	\
-			FMT,  __VA_ARGS__)
-
-#define pexpect(ASSERTION) {						\
-		/* wrapping ASSERTION in paren suppresses -Wparen */	\
-		bool assertion__ = ASSERTION; /* no paren */		\
-		if (!assertion__) {					\
-			PEXPECT_LOG("%s", #ASSERTION);			\
-		}							\
-	}
-
 /* evaluate x exactly once; assert that err_t result is NULL; */
 #define happy(x) {					\
 		err_t ugh = x;				\
