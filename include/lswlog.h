@@ -198,23 +198,26 @@ extern void sanitize_string(char *buf, size_t size);
 
 /*
  * A generic buffer for accumulating unbounded output.
+ *
+ * The buffer's contents can be directed to various logging streams.
  */
 
 struct lswlog;
 
 /*
- * Standard routines for appending output to the log buffer.
+ * Routines for accumulating output in the lswlog buffer.
  *
  * If there is insufficient space, the output is truncated and "..."
  * is appended.
  *
- * Similar to C99 snprintf() et.al., always return the untruncated
- * message length (the value can never be negative).
+ * Similar to C99 snprintf() et.al., these functions return the
+ * untruncated size of output that the call would append (the value
+ * can never be negative).
  *
- * These functions return the number of bytes that should have been
- * written to the buffer (i.e., ignore truncation).  While probably
- * not directly useful, it provides a sink for functions that insist
- * on their return value being consumed.
+ * While probably not directly useful, it provides a sink for code
+ * that needs to consume an otherwise ignored return value (the
+ * compiler attribute warn_unused_result can't be suppressed using a
+ * (void) cast).
  */
 
 size_t lswlogvf(struct lswlog *log, const char *format, va_list ap);
@@ -232,6 +235,7 @@ size_t lswlog_errno(struct lswlog *log, int e);
 /* <hex-byte>:<hex-byte>... */
 size_t lswlog_bytes(struct lswlog *log, const uint8_t *bytes,
 		    size_t sizeof_bytes);
+
 
 /*
  * The logging output streams used by libreswan.
@@ -271,52 +275,66 @@ void lswlog_to_log_whack_stream(struct lswlog *buf, enum rc_type rc);
 void lswlog_to_whack_stream(struct lswlog *buf);
 size_t lswlog_to_file_stream(struct lswlog *buf, FILE *file);
 
+
 /*
  * Code wrappers that cover up the details of allocating,
  * initializing, de-allocating (and possibly logging) a 'struct
  * lswlog' buffer.
  *
- * BUF (a C variable name) is declared locally as a pointer to the
- * 'struct lswlog' buffer.
+ * BUF (a C variable name) is declared locally as a pointer to a
+ * per-thread 'struct lswlog' buffer.
  *
  * Implementation notes:
  *
- * This implementation puts the 'struct lswlog' on the stack.  Could
- * just as easily use the heap.  BUF is a pointer so that this
- * implementation detail is hidden.
+ * This implementation stores the output in an array on the thread's
+ * stack.  It could just as easily use the heap (but that would
+ * involve memory overheads) or even a per-thread static variable.
+ * Since the BUF variable is a pointer the specifics of the
+ * implementation are hidden.
  *
  * This implementation, unlike DBG(), does not have a code block
- * parameter.  Instead it uses for-loops to set things up for a code
- * block.  This avoids problems with "," within macro parameters
- * confusing the parser.  It also permits a simple consistent
- * indentation style.
+ * parameter.  Instead it uses a sequence of for-loops to set things
+ * up for a code block.  This avoids problems with "," within macro
+ * parameters confusing the parser.  It also permits a simple
+ * consistent indentation style.
+ *
+ * The stack array is left largely uninitialized (just a few strategic
+ * entries are set).  This avoids the need to zero LOG_WITH bytes.
  *
  * Apparently chaining void function calls using a comma is valid C?
  */
 
+/* primitive to point the LSWBUF at and initialize ARRAY.  */
 #define LSWBUF_ARRAY_(ARRAY, SIZEOF_ARRAY, BUF)				\
-	for (struct lswlog lswlog = { .array = ARRAY, .len = 0, .bound = SIZEOF_ARRAY - 2, .roof = SIZEOF_ARRAY - 1, .dots = "...", }; \
+	/* point BUF at LSWLOG at ARRAY */				\
+	for (struct lswlog lswlog = { .array = ARRAY,			\
+				.len = 0,				\
+				.bound = SIZEOF_ARRAY - 2,		\
+				.roof = SIZEOF_ARRAY - 1,		\
+				.dots = "...", },			\
+		     *BUF = &lswlog;					\
 	     lswlog_p; lswlog_p = false)				\
-		for (struct lswlog *BUF = &lswlog;			\
-		     lswlog_p; lswlog_p = false)			\
-			for (BUF->array[BUF->len] = BUF->array[BUF->bound] = '\0', \
-				     BUF->array[BUF->roof] = LSWBUF_CANARY; \
-			     lswlog_p; lswlog_p = false)
+		/* initialize ARRAY */					\
+		for (ARRAY[lswlog.len] = ARRAY[lswlog.bound] = '\0',	\
+			     ARRAY[lswlog.roof] = LSWBUF_CANARY;	\
+		     lswlog_p; lswlog_p = false)
 
+/* primitive to construct an LSWBUF on the stack.  */
 #define LSWBUF_(BUF)							\
 	for (char lswbuf[LOG_WIDTH]; lswlog_p; lswlog_p = false)	\
 		LSWBUF_ARRAY_(lswbuf, sizeof(lswbuf), BUF)
 
 /*
- * Wrap an existing array so lswlog*() routines can be called.
+ * Create an LSWLOG using an existing array.
  *
- * For instance:
+ * Useful when a function passed an array wants to use lswlog routines
+ * or wants to capture the output for later use.  For instance:
  */
 
 #if 0
-void lswbuf_array(char *b, size_t sizeof_b)
+void lswbuf_array(char *array, size_t sizeof_array)
 {
-	LSWBUF_ARRAY(b, sizeof_b, buf) {
+	LSWBUF_ARRAY(array, sizeof_array, buf) {
 		lswlogf(buf, "written to the array");
 	}
 }
@@ -326,11 +344,15 @@ void lswbuf_array(char *b, size_t sizeof_b)
 	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
 		LSWBUF_ARRAY_(ARRAY, SIZEOF_ARRAY, BUF)
 
+
 /*
  * Scratch buffer for accumulating extra output.
  *
  * XXX: case should be expanded to illustrate how to stuff a truncated
  * version of the output into the LOG buffer.
+ *
+ * XXX: Is this one redundant?  Code can use LSWLOG_ARRAY() or
+ * LSWLOG_STRING().
  *
  * For instance:
  */
@@ -349,8 +371,19 @@ void lswbuf(struct lswlog *log)
 	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
 		LSWBUF_(BUF)
 
+
 /*
- * Various logging constructs all based on this template.
+ * Template for constructing logging output intended for a logger
+ * stream.
+ *
+ * The code is equivlaent to:
+ *
+ *   if (PREDICATE) {
+ *     LSWBUF(BUF) {
+ *       PREFIX;
+ *          BLOCK;
+ *       SUFFIX;
+ *    }
  */
 
 #define LSWLOG_(PREDICATE, BUF, PREFIX, SUFFIX)				\
@@ -380,11 +413,23 @@ void lswlog_file(FILE f)
 		lswlog_to_file_stream(BUF, FILE))
 
 /*
- * Save the output in a string.
+ * Capture LSWLOG into a heap allocated string.
  */
-#define LSWLOG_STRING(STRING, BUF)		\
-	LSWLOG_(true, BUF,			\
-		,				\
+
+#if 0
+char *lswlog_string(void)
+{
+	char *string;
+	LSWLOG_STRING(string, buf) {
+		lswlogf(buf, "written to string");
+	}
+	return string;
+}
+#endif
+
+#define LSWLOG_STRING(STRING, BUF)					\
+	LSWLOG_(true, BUF,						\
+		,							\
 		STRING = clone_str(BUF->array, "lswlog string"))
 
 /*
@@ -400,6 +445,7 @@ void lswlog_file(FILE f)
 		whack_log_pre(RC, BUF),					\
 		lswlog_to_whack_stream(BUF))
 
+
 /*
  * Send debug output to the logging streams (but not WHACK).
  */
@@ -414,6 +460,7 @@ void lswlog_dbg_pre(struct lswlog *buf);
 #define LSWDBGP(DEBUG, BUF) LSWDBG_(DBGP(DEBUG), BUF)
 #define LSWLOG_DEBUG(BUF) LSWDBG_(true, BUF)
 
+
 /*
  * Send log output the logging streams and WHACK (if connected).
  */
@@ -427,6 +474,7 @@ void lswlog_log_prefix(struct lswlog *buf);
 
 #define LSWLOG(BUF)  LSWLOG_LOG_WHACK(RC_LOG, BUF)
 
+
 /*
  * Send log output to the logging stream but not WHACK.
  */
@@ -435,10 +483,6 @@ void lswlog_log_prefix(struct lswlog *buf);
 	LSWLOG_(true, BUF,						\
 		lswlog_log_prefix(BUF),					\
 		lswlog_to_log_stream(BUF))
-
-/*
- * Send an expectation failure to everwhere.
- */
 
 
 /*
