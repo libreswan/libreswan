@@ -1352,14 +1352,14 @@ void add_connection(const struct whack_message *wm)
 
 	if (wm->policy & POLICY_IKEV1_ALLOW) {
 		if (wm->policy & POLICY_MOBIKE) {
-			loglog(RC_LOG_SERIOUS, "MOBIKE requires ikev2=insist");
+			loglog(RC_FATAL, "MOBIKE requires ikev2=insist");
 			return;
 		}
 	}
 
 	if (wm->policy & POLICY_MOBIKE) {
 		if (!migrate_xfrm_sa_check()) {
-			loglog(RC_LOG_SERIOUS, "MOBIKE missing kernel support CONFIG_XFRM_MIGRATE && CONFIG_NET_KEY_MIGRATE");
+			loglog(RC_FATAL, "MOBIKE missing kernel support CONFIG_XFRM_MIGRATE && CONFIG_NET_KEY_MIGRATE");
 			return;
 		}
 	}
