@@ -1302,7 +1302,7 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st, int af)
 	} else {
 		addrtosubnet(&ip, &c->spd.this.client);
 		setportof(0, &c->spd.this.client.addr); /* ??? redundant? */
-		/* ??? the following test seems obscure.  What's it about? */
+		/* only set sourceip= value if unset in configuration */
 		if (addrlenof(&c->spd.this.host_srcip) == 0 ||
 			isanyaddr(&c->spd.this.host_srcip)) {
 				DBG(DBG_CONTROL, DBG_log("setting host source IP address to %s",
