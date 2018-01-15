@@ -1755,8 +1755,8 @@ void add_connection(const struct whack_message *wm)
 		if (wm->right.pool_range.start.u.v4.sin_addr.s_addr != 0) {
 			/* there is address pool range add to the global list */
 			c->pool = install_addresspool(&wm->right.pool_range);
-			c->spd.that.modecfg_server = TRUE;
-			c->spd.this.modecfg_client = TRUE;
+			c->spd.that.modecfg_client = TRUE;
+			c->spd.this.modecfg_server = TRUE;
 		}
 
 		if (c->spd.this.xauth_server || c->spd.that.xauth_server)
