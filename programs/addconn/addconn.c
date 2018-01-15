@@ -75,10 +75,10 @@ static int verbose = 0;
 static
 void resolve_defaultroute(struct starter_conn *conn)
 {
-	if (resolve_defaultroute_one(&conn->left, &conn->right, verbose) == 1)
-		resolve_defaultroute_one(&conn->left, &conn->right, verbose);
-	if (resolve_defaultroute_one(&conn->right, &conn->left, verbose) == 1)
-		resolve_defaultroute_one(&conn->right, &conn->left, verbose);
+	if (resolve_defaultroute_one(&conn->left, &conn->right, verbose != 0) == 1)
+		resolve_defaultroute_one(&conn->left, &conn->right, verbose != 0);
+	if (resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0) == 1)
+		resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0);
 }
 
 #ifdef HAVE_SECCOMP
