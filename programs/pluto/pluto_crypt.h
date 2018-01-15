@@ -234,7 +234,6 @@ struct pcr_dh_v2 {
 
 struct pluto_crypto_req {
 	enum pluto_crypto_requests pcr_type;
-	enum crypto_importance pcr_pcim;
 
 	union {
 		struct pcr_kenonce kn;		/* query and result */
@@ -310,12 +309,10 @@ extern void send_crypto_helper_request(struct state *st,
 extern void request_ke_and_nonce(const char *name,
 				 struct state *st, struct msg_digest *md,
 				 const struct oakley_group_desc *group,
-				 enum crypto_importance importance,
 				 crypto_req_cont_func *callback);
 
 extern void request_nonce(const char *name,
 			  struct state *st, struct msg_digest *md,
-			  enum crypto_importance importance,
 			  crypto_req_cont_func *callback);
 
 extern void calc_ke(struct pcr_kenonce *kn);
@@ -333,7 +330,6 @@ extern void compute_dh_shared(struct state *st, const chunk_t g,
 
 extern void start_dh_secretiv(struct pluto_crypto_req_cont *dh,
 			      struct state *st,
-			      enum crypto_importance importance,
 			      enum original_role role,
 			      const struct oakley_group_desc *oakley_group2);
 
@@ -342,7 +338,6 @@ extern bool finish_dh_secretiv(struct state *st,
 
 extern void start_dh_secret(struct pluto_crypto_req_cont *cn,
 			    struct state *st,
-			    enum crypto_importance importance,
 			    enum original_role role,
 			    const struct oakley_group_desc *oakley_group2);
 
@@ -380,14 +375,11 @@ extern void unpack_KE_from_helper(struct state *st,
 
 void pcr_kenonce_init(struct pluto_crypto_req_cont *cn,
 		      enum pluto_crypto_requests pcr_type,
-		      enum crypto_importance pcr_pcim,
 		      const struct oakley_group_desc *dh);
 
 struct pcr_v1_dh *pcr_v1_dh_init(struct pluto_crypto_req_cont *cn,
-				 enum pluto_crypto_requests pcr_type,
-				 enum crypto_importance pcr_pcim);
+				 enum pluto_crypto_requests pcr_type);
 
-struct pcr_dh_v2 *pcr_dh_v2_init(struct pluto_crypto_req_cont *cn,
-				 enum crypto_importance pcr_pcim);
+struct pcr_dh_v2 *pcr_dh_v2_init(struct pluto_crypto_req_cont *cn);
 
 #endif /* _PLUTO_CRYPT_H */

@@ -90,7 +90,7 @@ void start_dh_v2(struct state *st, struct msg_digest *md,
 {
 	struct pluto_crypto_req_cont *dh = new_pcrc(pcrc_func, name,
 						    st, md);
-	struct pcr_dh_v2 *const dhq = pcr_dh_v2_init(dh, st->st_import);
+	struct pcr_dh_v2 *const dhq = pcr_dh_v2_init(dh);
 
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("calculating skeyseed using prf=%s integ=%s cipherkey=%s",

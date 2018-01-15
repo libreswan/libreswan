@@ -485,8 +485,9 @@ struct state {
 					 */
 	/* end of DH values */
 
-	enum crypto_importance st_import;       /* relative priority of crypto
-						 * operations
+	enum crypto_importance st_import;       /* relative priority
+						 * of crypto operations.
+						 * XXX: probably.
 						 */
 
 	/* In a Phase 1 state, preserve peer's public key after authentication */

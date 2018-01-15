@@ -144,8 +144,7 @@ static void aggr_inI1_outR1_continue1(struct state *st, struct msg_digest *md,
 						    "aggr outR1 DH",
 						    st, md);
 
-	start_dh_secretiv(dh, st, st->st_import,
-			  ORIGINAL_RESPONDER,
+	start_dh_secretiv(dh, st, ORIGINAL_RESPONDER,
 			  st->st_oakley.ta_dh);
 }
 
@@ -302,7 +301,6 @@ stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 	/* calculate KE and Nonce */
 	request_ke_and_nonce("outI2 KE", st, md,
 			     st->st_oakley.ta_dh,
-			     st->st_import,
 			     aggr_inI1_outR1_continue1);
 	return STF_SUSPEND;
 }
@@ -639,8 +637,7 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 						    "aggr outR1 DH",
 						    st, md);
 
-	start_dh_secretiv(dh, st, st->st_import,
-			  ORIGINAL_INITIATOR,
+	start_dh_secretiv(dh, st, ORIGINAL_INITIATOR,
 			  st->st_oakley.ta_dh);
 	return STF_SUSPEND;
 }
@@ -1106,7 +1103,7 @@ void aggr_outI1(int whack_sock,
 	 * Calculate KE and Nonce.
 	 */
 	request_ke_and_nonce("aggr_outI1 KE + nonce", st, NULL,
-			     st->st_oakley.ta_dh, importance,
+			     st->st_oakley.ta_dh,
 			     aggr_outI1_continue);
 	reset_globals();
 }

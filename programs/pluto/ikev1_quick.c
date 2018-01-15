@@ -840,11 +840,10 @@ void quick_outI1(int whack_sock,
 
 	if (policy & POLICY_PFS) {
 		request_ke_and_nonce("quick_outI1 KE", st, NULL,
-				     st->st_pfs_group, st->st_import,
+				     st->st_pfs_group,
 				     quick_outI1_continue);
 	} else {
 		request_nonce("quick_outI1 KE", st, NULL,
-			      st->st_import,
 			      quick_outI1_continue);
 	}
 	pop_cur_state(old_state);
@@ -1460,17 +1459,12 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b)
 		 * ??? this code did NOT have a set_suspended(st, md).
 		 * Now that is perfomed by new_pcrc.  Correct?
 		 */
-		/* ??? can ci calc be absorbed into build*nonce? */
-		enum crypto_importance ci = pcim_ongoing_crypto;
-		if (ci < st->st_import)
-			ci = st->st_import;
-
 		if (st->st_pfs_group != NULL) {
 			request_ke_and_nonce("quick_outI1 KE", st, md,
-					     st->st_pfs_group, ci,
+					     st->st_pfs_group,
 					     quick_inI1_outR1_cryptocontinue1);
 		} else {
-			request_nonce("quick_outI1 KE", st, md, ci,
+			request_nonce("quick_outI1 KE", st, md,
 				      quick_inI1_outR1_cryptocontinue1);
 		}
 
@@ -1501,8 +1495,7 @@ static void quick_inI1_outR1_cryptocontinue1(struct state *st, struct msg_digest
 			new_pcrc(quick_inI1_outR1_cryptocontinue2,
 				 "quick outR1 DH",
 				 st, md);
-		start_dh_secret(dh, st, st->st_import,
-				ORIGINAL_RESPONDER,
+		start_dh_secret(dh, st, ORIGINAL_RESPONDER,
 				st->st_pfs_group);
 	} else {
 		/* but if PFS is off, we don't do a second DH, so just
@@ -1758,8 +1751,7 @@ stf_status quick_inR1_outI2(struct state *st, struct msg_digest *md)
 			quick_inR1_outI2_continue, "quick outI2 DH",
 			st, md);
 
-		start_dh_secret(dh, st, st->st_import,
-				ORIGINAL_INITIATOR,
+		start_dh_secret(dh, st, ORIGINAL_INITIATOR,
 				st->st_pfs_group);
 		return STF_SUSPEND;
 	} else {

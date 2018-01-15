@@ -360,7 +360,6 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 {
 	struct msg_digest *fake_md = NULL;
 	char  *what = "";
-	enum crypto_importance ci = pcim_stranger_crypto;
 
 	if (md == NULL) {
 		fake_md = alloc_md("msg_digest by ikev2_crypto_start()");
@@ -391,38 +390,32 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		break;
 
 	case STATE_V2_REKEY_CHILD_I0:
-		ci = pcim_known_crypto;
 		what = (st->st_pfs_group == NULL) ? "Child Rekey Initiator nonce ni" :
 			"Child Rekey Initiator KE and nonce ni";
 		break;
 
 	case STATE_V2_REKEY_IKE_R:
-		ci = pcim_known_crypto;
 		what = "IKE rekey KE response gir";
 		break;
 
 	case STATE_V2_CREATE_R:
-		ci = pcim_known_crypto;
 		what = md->chain[ISAKMP_NEXT_v2KE] == NULL ?
 			"Child Responder nonce nr" :
 			"Child Responder KE and nonce nr";
 		break;
 
 	case STATE_V2_REKEY_CHILD_R:
-		ci = pcim_known_crypto;
 		what = md->chain[ISAKMP_NEXT_v2KE] == NULL ?
 			"Child Rekey Responder nonce nr" :
 			"Child Rekey Responder KE and nonce nr";
 		break;
 
 	case STATE_V2_CREATE_I0:
-		ci = pcim_known_crypto;
 		what = (st->st_pfs_group == NULL) ? "Child Initiator nonce ni" :
 			"Child Initiator KE and nonce ni";
 		break;
 
 	case STATE_V2_CREATE_I:
-		ci = pcim_known_crypto;
 		what = "ikev2 Child SA initiator pfs=yes";
 		/* DH will call its own new_pcrc */
 		break;
@@ -440,13 +433,13 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		st->st_msgid_nextuse = 0;
 		st->st_msgid = 0;
 		request_ke_and_nonce(what, st, md,
-				     st->st_oakley.ta_dh, ci,
+				     st->st_oakley.ta_dh,
 				     ikev2_crypto_continue);
 		return STF_SUSPEND;
 
 	case STATE_V2_REKEY_IKE_R:
 		request_ke_and_nonce(what, st, md,
-				     st->st_oakley.ta_dh, ci,
+				     st->st_oakley.ta_dh,
 				     ikev2_crypto_continue);
 		return STF_SUSPEND;
 
@@ -454,10 +447,10 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 	case STATE_V2_REKEY_CHILD_R:
 		if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
 			request_ke_and_nonce(what, st, md,
-					     st->st_oakley.ta_dh, ci,
+					     st->st_oakley.ta_dh,
 					     ikev2_crypto_continue);
 		} else {
-			request_nonce(what, st, md, ci,
+			request_nonce(what, st, md,
 				      ikev2_crypto_continue);
 		}
 		return STF_SUSPEND;
@@ -465,11 +458,11 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 	case STATE_V2_REKEY_CHILD_I0:
 	case STATE_V2_CREATE_I0:
 		if (st->st_pfs_group == NULL) {
-			request_nonce(what, st, md, ci,
+			request_nonce(what, st, md,
 				      ikev2_crypto_continue);
 		} else {
 			request_ke_and_nonce(what, st, md,
-					     st->st_pfs_group, ci,
+					     st->st_pfs_group,
 					     ikev2_crypto_continue);
 		}
 		return STF_SUSPEND;
@@ -1422,7 +1415,6 @@ stf_status ikev2parent_inI1outR1(struct state *st, struct msg_digest *md)
 	/* calculate the nonce and the KE */
 	request_ke_and_nonce("ikev2_inI1outR1 KE", st, md,
 			     st->st_oakley.ta_dh,
-			     pcim_stranger_crypto,
 			     ikev2_parent_inI1outR1_continue);
 	return STF_SUSPEND;
 }
