@@ -356,32 +356,37 @@ static void ikev2_crypto_continue(struct state *st, struct msg_digest *md,
  * Solution: build a fake one.  How much do we need to fake?
  * Note: almost identical code appears at the end of aggr_outI1.
  */
+
+static struct msg_digest *fake_md(struct state *st)
+{
+	struct msg_digest *fake_md = alloc_md("fake IKEv2 msg_digest");
+	fake_md->st = st;
+	fake_md->from_state = STATE_IKEv2_BASE;
+	fake_md->msgid_received = v2_INVALID_MSGID;
+
+	switch (st->st_state) {
+	case STATE_PARENT_I1:
+	case STATE_V2_REKEY_CHILD_I0:
+		fake_md->svm = &ikev2_parent_firststate_microcode;
+		break;
+
+	case STATE_V2_CREATE_I0:
+		fake_md->svm = &ikev2_create_child_initiate_microcode;
+		break;
+
+	default:
+		bad_case(st->st_state);
+		break;
+	}
+	return fake_md;
+}
+
 static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 {
-	struct msg_digest *fake_md = NULL;
 	char  *what = "";
 
 	if (md == NULL) {
-		fake_md = alloc_md("msg_digest by ikev2_crypto_start()");
-		fake_md->st = st;
-		fake_md->from_state = STATE_IKEv2_BASE;
-		fake_md->msgid_received = v2_INVALID_MSGID;
-		md = fake_md;
-
-		switch (st->st_state) {
-		case STATE_PARENT_I1:
-		case STATE_V2_REKEY_CHILD_I0:
-			fake_md->svm = &ikev2_parent_firststate_microcode;
-			break;
-
-		case STATE_V2_CREATE_I0:
-			fake_md->svm = &ikev2_create_child_initiate_microcode;
-			break;
-
-		default:
-			bad_case(st->st_state);
-			break;
-		}
+		md = fake_md(st);
 	}
 
 	switch (st->st_state) {
