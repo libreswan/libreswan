@@ -1055,10 +1055,9 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 static crypto_req_cont_func ikev2_parent_inI1outR1_continue;	/* type assertion */
 static crypto_transition_fn ikev2_parent_inI1outR1_tail;
 
-stf_status ikev2parent_inI1outR1(struct state *st, struct msg_digest *md)
+stf_status ikev2parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 {
-	pexpect(st == NULL);
-	pexpect(md->st == NULL);	/* ??? where would a state come from? Duplicate packet? */
+	passert(null_st == NULL);	/* initial responder -> no state */
 
 	struct payload_digest *seen_dcookie = NULL;
 	bool require_dcookie = require_ddos_cookies();
@@ -1333,83 +1332,79 @@ stf_status ikev2parent_inI1outR1(struct state *st, struct msg_digest *md)
 	 * We've committed to creating a state and, presumably,
 	 * dedicating real resources to the connection.
 	 */
-	st = md->st;
-	if (st == NULL) {
-		st = new_state();
-		/* set up new state */
-		memcpy(st->st_icookie, md->hdr.isa_icookie, COOKIE_SIZE);
-		/* initialize_new_state expects valid icookie/rcookie values, so create it now */
-		get_cookie(FALSE, st->st_rcookie, &md->sender);
-		initialize_new_state(st, c, policy, 0, NULL_FD,
-				     pcim_stranger_crypto);
-		update_ike_endpoints(st, md);
-		st->st_ikev2 = TRUE;
-		change_state(st, STATE_PARENT_R1);
-		st->st_original_role = ORIGINAL_RESPONDER;
-		st->st_msgid_lastack = v2_INVALID_MSGID;
-		st->st_msgid_nextuse = 0;
+	struct state *st = new_state();
+	/* set up new state */
+	memcpy(st->st_icookie, md->hdr.isa_icookie, COOKIE_SIZE);
+	/* initialize_new_state expects valid icookie/rcookie values, so create it now */
+	get_cookie(FALSE, st->st_rcookie, &md->sender);
+	initialize_new_state(st, c, policy, 0, NULL_FD,
+			     pcim_stranger_crypto);
+	update_ike_endpoints(st, md);
+	st->st_ikev2 = TRUE;
+	change_state(st, STATE_PARENT_R1);
+	st->st_original_role = ORIGINAL_RESPONDER;
+	st->st_msgid_lastack = v2_INVALID_MSGID;
+	st->st_msgid_nextuse = 0;
 
-		/* save the proposal information */
-		st->st_oakley = accepted_oakley;
-		st->st_accepted_ike_proposal = accepted_ike_proposal;
-		st->st_gi = accepted_gi;
+	/* save the proposal information */
+	st->st_oakley = accepted_oakley;
+	st->st_accepted_ike_proposal = accepted_ike_proposal;
+	st->st_gi = accepted_gi;
 
-		md->st = st;
-		md->from_state = STATE_IKEv2_BASE;
+	md->st = st;
+	md->from_state = STATE_IKEv2_BASE;
 
-		bool seen_nat = FALSE;
-		for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
-			switch(ntfy->payload.v2n.isan_type) {
+	bool seen_nat = FALSE;
+	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
+		switch(ntfy->payload.v2n.isan_type) {
 
-			case v2N_COOKIE:
-				/* already handled earlier */
-				break;
+		case v2N_COOKIE:
+			/* already handled earlier */
+			break;
 
-			case v2N_SIGNATURE_HASH_ALGORITHMS:
-				if (!DBGP(IMPAIR_IGNORE_HASH_NOTIFY_REQUEST)) {
-					if (st->st_seen_hashnotify) {
-						DBG(DBG_CONTROL, DBG_log("Ignoring duplicate Signature Hash Notify payload"));
-					} else {
-						st->st_seen_hashnotify = TRUE;
-						if (!negotiate_hash_algo_from_notification(ntfy, st))
-							return STF_FATAL;
-					}
+		case v2N_SIGNATURE_HASH_ALGORITHMS:
+			if (!DBGP(IMPAIR_IGNORE_HASH_NOTIFY_REQUEST)) {
+				if (st->st_seen_hashnotify) {
+					DBG(DBG_CONTROL,
+					    DBG_log("Ignoring duplicate Signature Hash Notify payload"));
 				} else {
-					libreswan_log("Impair: Ignoring the Signature hash notify in IKE_SA_INIT Request");
+					st->st_seen_hashnotify = TRUE;
+					if (!negotiate_hash_algo_from_notification(ntfy, st))
+						return STF_FATAL;
 				}
-				break;
-
-			case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
-				st->st_seen_fragvid = TRUE;
-				break;
-
-			case v2N_NAT_DETECTION_DESTINATION_IP:
-			case v2N_NAT_DETECTION_SOURCE_IP:
-				if (!seen_nat) {
-					ikev2_natd_lookup(md, zero_cookie);
-					seen_nat = TRUE; /* only do it once */
-				}
-				break;
-
-			/* These are not supposed to appear here */
-			case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
-			case v2N_USE_TRANSPORT_MODE:
-			case v2N_MOBIKE_SUPPORTED:
-				DBG(DBG_CONTROLMORE, DBG_log("Received unauthenticated %s notify in wrong exchange - ignored",
-					enum_name(&ikev2_notify_names,
-						ntfy->payload.v2n.isan_type)));
-				break;
-
-			default:
-				DBG(DBG_CONTROLMORE, DBG_log("Received unauthenticated %s notify - ignored",
-					enum_name(&ikev2_notify_names,
-						ntfy->payload.v2n.isan_type)));
+			} else {
+				libreswan_log("Impair: Ignoring the Signature hash notify in IKE_SA_INIT Request");
 			}
+			break;
+
+		case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
+			st->st_seen_fragvid = TRUE;
+			break;
+
+		case v2N_NAT_DETECTION_DESTINATION_IP:
+		case v2N_NAT_DETECTION_SOURCE_IP:
+			if (!seen_nat) {
+				ikev2_natd_lookup(md, zero_cookie);
+				seen_nat = TRUE; /* only do it once */
+			}
+			break;
+
+		case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
+		case v2N_USE_TRANSPORT_MODE:
+		case v2N_MOBIKE_SUPPORTED:
+			/* These are not supposed to appear here */
+			DBG(DBG_CONTROLMORE,
+			    DBG_log("Received unauthenticated %s notify in wrong exchange - ignored",
+				    enum_name(&ikev2_notify_names,
+					      ntfy->payload.v2n.isan_type)));
+			break;
+
+		default:
+			DBG(DBG_CONTROLMORE,
+			    DBG_log("Received unauthenticated %s notify - ignored",
+				    enum_name(&ikev2_notify_names,
+					      ntfy->payload.v2n.isan_type)));
 		}
-	} else {
-		loglog(RC_LOG_SERIOUS, "Incoming non-duplicate packet already has state?");
-		pexpect(st == NULL); /* fire an expect so test cases see it clearly */
-		/* ??? should st->st_connection be changed to c? */
 	}
 
 	/* calculate the nonce and the KE */
