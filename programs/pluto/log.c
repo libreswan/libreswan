@@ -86,7 +86,6 @@ int whack_log_fd = NULL_FD;                     /* only set during whack_handle(
 static struct state *cur_state = NULL;                 /* current state, for diagnostics */
 static struct connection *cur_connection = NULL;       /* current connection, for diagnostics */
 const ip_address *cur_from = NULL;              /* source of current current message */
-u_int16_t cur_from_port;                        /* host order */
 
 static void update_extra(const char *what, enum_names *names,
 			 lmod_t extra, lset_t mask)
@@ -209,10 +208,8 @@ void log_reset_globals(const char *func, const char *file, long line)
 	if (cur_from != NULL) {
 		/* peer's IP address */
 		LSWDBGP(DBG_MASK, buf) {
-			ipstr_buf b;
-			lswlogf(buf, "processing: resetting cur_from (was %s:%u)",
-				sensitive_ipstr(cur_from, &b),
-				(unsigned)cur_from_port);
+			lswlogs(buf, "processing: resetting cur_from; was ");
+			lswlog_ip(buf, cur_from);
 			lswlog_source_line(buf, func, file, line);
 		}
 		cur_from = NULL;
@@ -252,10 +249,9 @@ void log_pexpect_reset_globals(const char *func, const char *file, long line)
 	}
 	if (cur_from != NULL) {
 		LSWLOG_PEXPECT_SOURCE(func, file, line, buf) {
-			ipstr_buf b;
-			lswlogf(buf, "processing: unexpected cur_from %s:%u should be NULL",
-				sensitive_ipstr(cur_from, &b),
-				(unsigned)cur_from_port);
+			lswlogs(buf, "processing: unexpected cur_from ");
+			lswlog_sensitive_ip(buf, cur_from);
+			lswlogs(buf, " should be NULL");
 		}
 		cur_from = NULL;
 	}
@@ -497,7 +493,7 @@ static void whack_raw(struct lswlog *b, enum rc_type rc)
 static void lswlog_cur_prefix(struct lswlog *buf,
 			      struct state *cur_state,
 			      struct connection *cur_connection,
-			      const ip_address *cur_from, u_int16_t cur_from_port)
+			      const ip_address *cur_from)
 {
 	if (!pthread_equal(pthread_self(), main_thread)) {
 		return;
@@ -525,17 +521,15 @@ static void lswlog_cur_prefix(struct lswlog *buf,
 		lswlogs(buf, ": ");
 	} else if (cur_from != NULL) {
 		/* peer's IP address */
-		ipstr_buf b;
-		lswlogf(buf, "packet from %s:%u: ",
-			sensitive_ipstr(cur_from, &b),
-			(unsigned)cur_from_port);
+		lswlogs(buf, "packet from ");
+		lswlog_sensitive_ip(buf, cur_from);
+		lswlogs(buf, ": ");
 	}
 }
 
 void lswlog_log_prefix(struct lswlog *buf)
 {
-	lswlog_cur_prefix(buf, cur_state, cur_connection,
-			  cur_from, cur_from_port);
+	lswlog_cur_prefix(buf, cur_state, cur_connection, cur_from);
 }
 
 /*
@@ -550,7 +544,7 @@ void log_prefix(struct lswlog *buf, bool debug,
 		lswlogs(buf, DEBUG_PREFIX);
 	}
 	if (!debug || DBGP(DBG_ADD_PREFIX)) {
-		lswlog_cur_prefix(buf, st, c, cur_from, cur_from_port);
+		lswlog_cur_prefix(buf, st, c, cur_from);
 	}
 }
 

@@ -570,7 +570,6 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 	md->sender_port = ntohs(portof(&sender));
 	/* XXX: cur_from points into the heap */
 	cur_from = &md->sender;
-	cur_from_port = md->sender_port;
 
 	init_pbs(&md->packet_pbs
 		 , clone_bytes(_buffer, packet_len,

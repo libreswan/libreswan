@@ -48,7 +48,6 @@ extern char *pluto_stats_binary;
  */
 extern int whack_log_fd;                        /* only set during whack_handle() */
 extern const ip_address *cur_from;              /* source of current current message */
-extern u_int16_t cur_from_port;                 /* host order */
 
 extern bool whack_prompt_for(int whackfd,
 			     const char *prompt1,
