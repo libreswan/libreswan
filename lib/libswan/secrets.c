@@ -163,12 +163,12 @@ struct secret *lsw_get_defaultsecret(struct secret *secrets)
 {
 	struct secret *s, *s2;
 
-	/* Search for PPK_RSA pks */
+	/* Search for PKK_RSA pks */
 	s2 = secrets;
 	while (s2 != NULL) {
-		for (; s2 != NULL && s2->pks.kind == PPK_RSA; s2 = s2->next)
+		for (; s2 != NULL && s2->pks.kind == PKK_RSA; s2 = s2->next)
 			continue;
-		for (s = s2; s != NULL && s->pks.kind != PPK_RSA; s = s->next)
+		for (s = s2; s != NULL && s->pks.kind != PKK_RSA; s = s->next)
 			continue;
 		if (s != NULL) {
 			struct secret *tmp = s->next;
@@ -338,10 +338,10 @@ static int lsw_check_secret_byid(struct secret *secret UNUSED,
 
 	DBG(DBG_CONTROL,
 		DBG_log("searching for certificate %s:%s vs %s:%s",
-			enum_name(&ppk_names, pks->kind),
-			(pks->kind == PPK_RSA ?
+			enum_name(&pkk_names, pks->kind),
+			(pks->kind == PKK_RSA ?
 				pks->u.RSA_private_key.pub.keyid : "N/A"),
-			enum_name(&ppk_names, sb->kind),
+			enum_name(&pkk_names, sb->kind),
 			sb->my_public_key->u.rsa.keyid);
 		);
 	if (pks->kind == sb->kind &&
@@ -396,9 +396,9 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 		DBG(DBG_CONTROLMORE,
 			DBG_log("line %d: key type %s(%s) to type %s",
 				s->pks.line,
-				enum_name(&ppk_names, kind),
+				enum_name(&pkk_names, kind),
 				idme,
-				enum_name(&ppk_names, s->pks.kind));
+				enum_name(&pkk_names, s->pks.kind));
 			);
 
 		if (s->pks.kind == kind) {
@@ -492,17 +492,17 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					bool same = 0;
 
 					switch (kind) {
-					case PPK_NULL:
+					case PKK_NULL:
 							same = TRUE;
 						break;
-					case PPK_PSK:
+					case PKK_PSK:
 						same = s->pks.u.preshared_secret.len ==
 						       best->pks.u.preshared_secret.len &&
 						       memeq(s->pks.u.preshared_secret.ptr,
 							     best->pks.u.preshared_secret.ptr,
 							     s->pks.u.preshared_secret.len);
 						break;
-					case PPK_RSA:
+					case PKK_RSA:
 						/*
 						 * Dirty trick: since we have
 						 * code to compare RSA public
@@ -516,7 +516,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 							&s->pks.u.RSA_private_key.pub,
 							&best->pks.u.RSA_private_key.pub);
 						break;
-					case PPK_XAUTH:
+					case PKK_XAUTH:
 						/*
 						 * We don't support this yet,
 						 * but no need to die
@@ -573,7 +573,7 @@ bool lsw_has_private_rawkey(struct secret *secrets, struct pubkey *pk)
 		return FALSE;
 
 	for (s = secrets; s != NULL; s = s->next) {
-		if (s->pks.kind == PPK_RSA &&
+		if (s->pks.kind == PKK_RSA &&
 			same_RSA_public_key(&s->pks.u.RSA_private_key.pub,
 					&pk->u.rsa)) {
 			has_key = TRUE;
@@ -918,13 +918,13 @@ static void process_secret(struct secret **psecrets,
 	err_t ugh = NULL;
 
 	if (tokeqword("psk")) {
-		s->pks.kind = PPK_PSK;
+		s->pks.kind = PKK_PSK;
 		/* preshared key: quoted string or ttodata format */
 		ugh = !shift() ? "ERROR: unexpected end of record in PSK" :
 			lsw_process_psk_secret(&s->pks.u.preshared_secret);
 	} else if (tokeqword("xauth")) {
 		/* xauth key: quoted string or ttodata format */
-		s->pks.kind = PPK_XAUTH;
+		s->pks.kind = PKK_XAUTH;
 		ugh = !shift() ? "ERROR: unexpected end of record in PSK" :
 			lsw_process_xauth_secret(&s->pks.u.preshared_secret);
 	} else if (tokeqword("rsa")) {
@@ -932,7 +932,7 @@ static void process_secret(struct secret **psecrets,
 		 * RSA key: the fun begins.
 		 * A braced list of keyword and value pairs.
 		 */
-		s->pks.kind = PPK_RSA;
+		s->pks.kind = PKK_RSA;
 		if (!shift()) {
 			ugh = "ERROR: bad RSA key syntax";
 		} else if (tokeq("{")) {
@@ -945,7 +945,7 @@ static void process_secret(struct secret **psecrets,
 		}
 		if (ugh == NULL) {
 			libreswan_log("loaded private key for keyid: %s:%s",
-				enum_name(&ppk_names, s->pks.kind),
+				enum_name(&pkk_names, s->pks.kind),
 				s->pks.u.RSA_private_key.pub.keyid);
 		}
 	} else if (tokeqword("pin")) {
@@ -1040,7 +1040,7 @@ static void lsw_process_secret_records(struct secret **psecrets)
 			struct secret *s = alloc_thing(struct secret, "secret");
 
 			s->ids = NULL;
-			s->pks.kind = PPK_PSK;	/* default */
+			s->pks.kind = PKK_PSK;	/* default */
 			setchunk(s->pks.u.preshared_secret, NULL, 0);
 			s->pks.line = flp->lino;
 			s->next = NULL;
@@ -1093,7 +1093,7 @@ static void lsw_process_secret_records(struct secret **psecrets)
 					DBG(DBG_CONTROL,
 						DBG_log("id type added to secret(%p) %s: %s",
 							s,
-							enum_name(&ppk_names,
+							enum_name(&pkk_names,
 								s->pks.kind),
 							idb);
 						);
@@ -1192,13 +1192,13 @@ void lsw_free_preshared_secrets(struct secret **psecrets)
 				pfree(i);
 			}
 			switch (s->pks.kind) {
-			case PPK_PSK:
+			case PKK_PSK:
 				pfree(s->pks.u.preshared_secret.ptr);
 				break;
-			case PPK_XAUTH:
+			case PKK_XAUTH:
 				pfree(s->pks.u.preshared_secret.ptr);
 				break;
-			case PPK_RSA:
+			case PKK_RSA:
 				free_RSA_public_content(
 					&s->pks.u.RSA_private_key.pub);
 				break;
@@ -1503,7 +1503,7 @@ static const struct RSA_private_key *get_nss_cert_privkey(struct secret *secrets
 	}
 
 	for (s = secrets; s != NULL; s = s->next) {
-		if (s->pks.kind == PPK_RSA &&
+		if (s->pks.kind == PKK_RSA &&
 			same_RSA_public_key(&s->pks.u.RSA_private_key.pub,
 					    &pub->u.rsa)) {
 			priv = &s->pks.u.RSA_private_key;
@@ -1526,7 +1526,7 @@ err_t lsw_add_rsa_secret(struct secret **secrets, CERTCertificate *cert)
 		return NULL;
 	}
 	s = alloc_thing(struct secret, "secret");
-	s->pks.kind = PPK_RSA;
+	s->pks.kind = PKK_RSA;
 	s->pks.line = 0;
 
 	if ((ugh = lsw_extract_nss_cert_privkey(&s->pks.u.RSA_private_key,

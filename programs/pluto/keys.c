@@ -98,13 +98,13 @@ static int print_secrets(struct secret *secret,
 	struct id_list *ids;
 
 	switch (pks->kind) {
-	case PPK_PSK:
+	case PKK_PSK:
 		kind = "PSK";
 		break;
-	case PPK_RSA:
+	case PKK_RSA:
 		kind = "RSA";
 		break;
-	case PPK_XAUTH:
+	case PKK_XAUTH:
 		kind = "XAUTH";
 		break;
 	default:
@@ -537,10 +537,10 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	DBG(DBG_CONTROL,
 	    DBG_log("started looking for secret for %s->%s of kind %s",
 		    idme, idhim,
-		    enum_name(&ppk_names, kind)));
+		    enum_name(&pkk_names, kind)));
 
 	/* is there a certificate assigned to this connection? */
-	if (kind == PPK_RSA && c->spd.this.cert.ty == CERT_X509_SIGNATURE &&
+	if (kind == PKK_RSA && c->spd.this.cert.ty == CERT_X509_SIGNATURE &&
 			c->spd.this.cert.u.nss_cert != NULL) {
 		/* Must free MY_PUBLIC_KEY */
 		struct pubkey *my_public_key = allocate_RSA_public_key_nss(
@@ -598,7 +598,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		his_id = &rw_id;
 		idtoa(his_id, idhim2, IDTOA_BUF);
 	} else if ((c->policy & POLICY_PSK) &&
-		  (kind == PPK_PSK) &&
+		  (kind == PKK_PSK) &&
 		  (((c->kind == CK_TEMPLATE) &&
 		    (c->spd.that.id.kind == ID_NONE)) ||
 		   ((c->kind == CK_INSTANCE) &&
@@ -621,7 +621,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	DBG(DBG_CONTROL,
 	    DBG_log("actually looking for secret for %s->%s of kind %s",
 		    idme, idhim2,
-		    enum_name(&ppk_names, kind)));
+		    enum_name(&pkk_names, kind)));
 
 	best = lsw_find_secret_by_id(pluto_secrets,
 				     kind,
@@ -649,7 +649,7 @@ struct secret *lsw_get_xauthsecret(const struct connection *c UNUSED,
 	xa_id.name.len = strlen(xauthname);
 
 	best = lsw_find_secret_by_id(pluto_secrets,
-				     PPK_XAUTH,
+				     PKK_XAUTH,
 				     &xa_id, NULL, TRUE);
 
 	return best;
@@ -672,7 +672,7 @@ const chunk_t *get_preshared_secret(const struct connection *c)
 	struct secret *s = lsw_get_secret(c,
 					  &c->spd.this.id,
 					  &c->spd.that.id,
-					  PPK_PSK, FALSE);
+					  PKK_PSK, FALSE);
 	const struct private_key_stuff *pks = NULL;
 
 	if (c->policy & POLICY_AUTH_NULL) {
@@ -699,7 +699,7 @@ const struct RSA_private_key *get_RSA_private_key(const struct connection *c)
 {
 	struct secret *s = lsw_get_secret(c,
 					  &c->spd.this.id, &c->spd.that.id,
-					  PPK_RSA, TRUE);
+					  PKK_RSA, TRUE);
 	const struct private_key_stuff *pks = NULL;
 
 	if (s != NULL)

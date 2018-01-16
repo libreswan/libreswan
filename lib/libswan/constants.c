@@ -2026,17 +2026,17 @@ bool subnetisnone(const ip_subnet *sn)
 	return isanyaddr(&base) && subnetishost(sn);
 }
 
-static const char *const ppk_name[] = {
-	"PPK_PSK",
-	"PPK_RSA",
-	"PPK_XAUTH",
-	"PPK_NULL",
+static const char *const pkk_name[] = {
+	"PKK_PSK",
+	"PKK_RSA",
+	"PKK_XAUTH",
+	"PKK_NULL",
 };
 
-enum_names ppk_names = {
-	PPK_PSK,
-	PPK_NULL,
-	ARRAY_REF(ppk_name),
+enum_names pkk_names = {
+	PKK_PSK,
+	PKK_NULL,
+	ARRAY_REF(pkk_name),
 	NULL, /* prefix */
 	NULL
 };
@@ -2516,7 +2516,7 @@ static const enum_names *en_checklist[] = {
 	&ikev2_trans_type_esn_names,
 	&ikev2_trans_type_names,
 	&ikev2_trans_attr_descs,
-	&ppk_names,
+	&pkk_names,
 };
 
 void check_enum_names(enum_names *checklist[], size_t tl)

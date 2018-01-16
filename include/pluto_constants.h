@@ -1019,10 +1019,10 @@ enum dns_auth_level {
  */
 enum PrivateKeyKind {
 	/* start at one so accidental 0 will not match */
-	PPK_PSK = 1,
-	PPK_RSA,
-	PPK_XAUTH,
-	PPK_NULL,
+	PKK_PSK = 1,
+	PKK_RSA,
+	PKK_XAUTH,
+	PKK_NULL,
 };
 
 #define XAUTH_PROMPT_TRIES 3
