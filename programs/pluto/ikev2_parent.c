@@ -2137,7 +2137,7 @@ static unsigned char *ikev2_authloc(struct state *st,
 	return b12;
 }
 
-static stf_status ikev2_encrypt_msg(struct state *st,
+static stf_status ikev2_encrypt_msg(struct ike_sa *ike,
 				    uint8_t *auth_start,
 				    uint8_t *wire_iv_start,
 				    uint8_t *enc_start,
@@ -2147,45 +2147,42 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 	passert(wire_iv_start <= enc_start);
 	passert(enc_start <= integ_start);
 
-	struct state *pst = st;
-
-	/*
-	 * If this is a child (esp/ah) then set PST to the parent so
-	 * the parent's crypto-suite is used.
-	 */
-	if (IS_CHILD_SA(st))
-		pst = state_with_serialno(st->st_clonedfrom);
-
 	chunk_t salt;
 	PK11SymKey *cipherkey;
 	PK11SymKey *authkey;
-	if (pst->st_original_role == ORIGINAL_INITIATOR) {
-		cipherkey = pst->st_skey_ei_nss;
-		authkey = pst->st_skey_ai_nss;
-		salt = pst->st_skey_initiator_salt;
-	} else {
-		cipherkey = pst->st_skey_er_nss;
-		authkey = pst->st_skey_ar_nss;
-		salt = pst->st_skey_responder_salt;
+	/* encrypt with our end's key */
+	switch (ike->sa.st_original_role) {
+	case ORIGINAL_INITIATOR:
+		cipherkey = ike->sa.st_skey_ei_nss;
+		authkey = ike->sa.st_skey_ai_nss;
+		salt = ike->sa.st_skey_initiator_salt;
+		break;
+	case ORIGINAL_RESPONDER:
+		cipherkey = ike->sa.st_skey_er_nss;
+		authkey = ike->sa.st_skey_ar_nss;
+		salt = ike->sa.st_skey_responder_salt;
+		break;
+	default:
+		bad_case(ike->sa.st_original_role);
 	}
 
 	/* size of plain or cipher text.  */
 	size_t enc_size = integ_start - enc_start;
 
 	/* encrypt and authenticate the block */
-	if (ike_alg_enc_requires_integ(pst->st_oakley.ta_encrypt)) {
+	if (ike_alg_enc_requires_integ(ike->sa.st_oakley.ta_encrypt)) {
 		/* note: no iv is longer than MAX_CBC_BLOCK_SIZE */
 		unsigned char enc_iv[MAX_CBC_BLOCK_SIZE];
 		construct_enc_iv("encryption IV/starting-variable", enc_iv,
 				 wire_iv_start, salt,
-				 pst->st_oakley.ta_encrypt);
+				 ike->sa.st_oakley.ta_encrypt);
 
 		DBG(DBG_CRYPT,
 		    DBG_dump("data before encryption:", enc_start, enc_size));
 
 		/* now, encrypt */
-		pst->st_oakley.ta_encrypt->encrypt_ops
-			->do_crypt(pst->st_oakley.ta_encrypt,
+		ike->sa.st_oakley.ta_encrypt->encrypt_ops
+			->do_crypt(ike->sa.st_oakley.ta_encrypt,
 				   enc_start, enc_size,
 				   cipherkey,
 				   enc_iv, TRUE);
@@ -2196,7 +2193,7 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 
 		/* okay, authenticate from beginning of IV */
 		struct hmac_ctx ctx;
-		hmac_init(&ctx, pst->st_oakley.ta_integ->prf, authkey);
+		hmac_init(&ctx, ike->sa.st_oakley.ta_integ->prf, authkey);
 		hmac_update(&ctx, auth_start, integ_start - auth_start);
 		hmac_final(integ_start, &ctx);
 
@@ -2204,11 +2201,11 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 			    DBG_dump("data being hmac:", auth_start,
 				     integ_start - auth_start);
 			    DBG_dump("out calculated auth:", integ_start,
-				     pst->st_oakley.ta_integ->integ_output_size);
+				     ike->sa.st_oakley.ta_integ->integ_output_size);
 		    });
 	} else {
-		size_t wire_iv_size = pst->st_oakley.ta_encrypt->wire_iv_size;
-		size_t integ_size = pst->st_oakley.ta_encrypt->aead_tag_size;
+		size_t wire_iv_size = ike->sa.st_oakley.ta_encrypt->wire_iv_size;
+		size_t integ_size = ike->sa.st_oakley.ta_encrypt->aead_tag_size;
 		/*
 		 * Additional Authenticated Data - AAD - size.
 		 * RFC5282 says: The Initialization Vector and Ciphertext
@@ -2228,8 +2225,8 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 			     enc_start, enc_size);
 		    DBG_dump("integ before authenticated encryption:",
 			     integ_start, integ_size));
-		if (!pst->st_oakley.ta_encrypt->encrypt_ops
-		    ->do_aead(pst->st_oakley.ta_encrypt,
+		if (!ike->sa.st_oakley.ta_encrypt->encrypt_ops
+		    ->do_aead(ike->sa.st_oakley.ta_encrypt,
 			      salt.ptr, salt.len,
 			      wire_iv_start, wire_iv_size,
 			      aad_start, aad_size,
@@ -2908,7 +2905,7 @@ static stf_status ikev2_record_fragment(struct msg_digest *md,
 		close_output_pbs(&rbody);
 		close_output_pbs(&frag_stream);
 
-		stf_status ret = ikev2_encrypt_msg(st, frag_stream.start,
+		stf_status ret = ikev2_encrypt_msg(ike_sa(st), frag_stream.start,
 						   iv, encstart, authloc);
 		if (ret != STF_OK)
 			return ret;
@@ -3479,7 +3476,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		return ikev2_record_fragments(md, &hdr, &e, &payload,
 					   "reply fragment for ikev2_parent_outR1_I2");
 	} else {
-		stf_status ret = ikev2_encrypt_msg(pst, reply_stream.start,
+		stf_status ret = ikev2_encrypt_msg(ike_sa(pst), reply_stream.start,
 						   iv, encstart, authloc);
 
 		if (ret == STF_OK)
@@ -4183,7 +4180,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 			return ikev2_record_fragments(md, &hdr, &e, &payload,
 						   "reply fragment for ikev2_parent_inI2outR2_tail");
 		} else {
-			stf_status ret = ikev2_encrypt_msg(st, reply_stream.start,
+			stf_status ret = ikev2_encrypt_msg(ike_sa(st), reply_stream.start,
 							   iv, encstart, authloc);
 
 			if (ret == STF_OK) {
@@ -5351,7 +5348,7 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 		close_output_pbs(&e_pbs);
 		close_output_pbs(&rbody);
 		close_output_pbs(&reply_stream);
-		ret = ikev2_encrypt_msg(pst, reply_stream.start,
+		ret = ikev2_encrypt_msg(ike_sa(pst), reply_stream.start,
 					iv, encstart, authloc);
 
 		if (ret != STF_OK)
@@ -6077,7 +6074,7 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 			close_output_pbs(&reply_stream);
 
 			stf_status ret =
-				ikev2_encrypt_msg(st, reply_stream.start,
+				ikev2_encrypt_msg(ike_sa(st), reply_stream.start,
 						  iv, encstart, authloc);
 			if (ret != STF_OK)
 				return ret;
@@ -6254,7 +6251,7 @@ stf_status ikev2_send_informational(struct state *st, struct state *pst,
 		close_output_pbs(&rbody);
 		close_output_pbs(&reply_stream);
 
-		ret = ikev2_encrypt_msg(st, reply_stream.start,
+		ret = ikev2_encrypt_msg(ike_sa(st), reply_stream.start,
 					iv, encstart, authloc);
 		if (ret != STF_OK)
 			return STF_FATAL;
@@ -6398,7 +6395,7 @@ static bool ikev2_delete_out_guts(struct state *const st, struct state *const ps
 		close_output_pbs(&rbody);
 		close_output_pbs(&reply_stream);
 
-		ret = ikev2_encrypt_msg(st, reply_stream.start,
+		ret = ikev2_encrypt_msg(ike_sa(st), reply_stream.start,
 					iv, encstart, authloc);
 		if (ret != STF_OK)
 			return FALSE;
