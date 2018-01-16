@@ -1783,32 +1783,23 @@ stf_status ikev2parent_inR1BoutI1B(struct state *st, struct msg_digest *md)
 				/* wipe out any saved RCOOKIE */
 				DBG(DBG_CONTROLMORE, DBG_log("zeroing any RCOOKIE from unauthenticated INVALID_KE packet"));
 				rehash_state(st, NULL, zero_cookie);
-				struct msg_digest *deleted_md = md;
-				DBG(DBG_MASK, DBG_log("XXX: deleted md %p .st %p before release", deleted_md, deleted_md->st));
-				release_any_md(&md);
-				DBG(DBG_MASK, DBG_log("XXX: deleted md %p .st %p after release", deleted_md, deleted_md->st));
-				/* get a new KE */
-				stf_status e = ikev2_crypto_start(NULL, st);
 				/*
-				 * XXX:
+				 * get a new KE (and create a fake MD
+				 * when needed)
 				 *
-				 * Caller, which has no clue that MD
-				 * has been released, will pass its
-				 * local and still seemingly valid MD
-				 * pointer to
-				 * complete_v2_state_transition().
-				 * That function will then try to
-				 * obtain ST by accessing MD->st in
-				 * the deleted MD.
+				 * ikev2_crypto_start() returns
+				 * STF_SUSPEND but that will cause
+				 * complete v2 state transition() to
+				 * save the old MD.  STF_IGNORE
+				 * instead discards the packet.
 				 *
-				 * Luckily ikev2_crypt_start(),
-				 * assuming there are no-threads, will
-				 * allocate its FAKE_MD in the exact
-				 * same location as the above deleted
-				 * MD letting everything seem to work.
-				*/
-				DBG(DBG_MASK, DBG_log("XXX: deleted md %p .st %p after fake_md", deleted_md, deleted_md->st));
-				return e;
+				 * The state becomes suspended (crypto
+				 * in progress) as a side effect of
+				 * the call.
+				 */
+				(void) ikev2_crypto_start(NULL, st);
+				/* let caller delete current MD */
+				return STF_IGNORE;
 			} else {
 				DBG(DBG_CONTROLMORE, {
 					struct esb_buf esb;
