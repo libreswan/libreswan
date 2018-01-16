@@ -136,7 +136,6 @@ west #
  # test return code for --down when using aliases
 west #
  ipsec auto --down westnet-eastnet-subnets || echo "return code failed - should be 0"
-000 no such connection found, looking for all conns with alias='westnet-eastnet-subnets'
 002 "westnet-eastnet-subnets/2x2": terminating SAs using this connection
 002 "westnet-eastnet-subnets/2x2": IKE SA is shared - only terminating IPsec SA
 002 "westnet-eastnet-subnets/2x2" #5: deleting state (STATE_QUICK_I2) and sending notification
@@ -150,6 +149,7 @@ west #
 002 "westnet-eastnet-subnets/1x1": terminating SAs using this connection
 002 "westnet-eastnet-subnets/1x1" #2: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet-subnets/1x1" #2: ESP traffic information: in=0B out=0B
+000 terminated 4 connections from aliased connection "westnet-eastnet-subnets"
 west #
  ipsec status | grep westnet
 000 "westnet-eastnet-subnets/1x1": 192.0.1.0/28===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.16/28; prospective erouted; eroute owner: #0
