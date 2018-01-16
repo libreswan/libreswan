@@ -369,6 +369,10 @@ static void comm_handle(const struct iface_port *ifp)
 
 #endif /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
 
+	/*
+	 * XXX: should read_packet() allocate the MD _after_ it has
+	 * verified the packet?
+	 */
 	md = alloc_md("msg_digest in comm_handle");
 	md->iface = ifp;
 
@@ -417,7 +421,8 @@ static bool read_packet(struct msg_digest *md)
 	err_t from_ugh = NULL;
 	static const char undisclosed[] = "unknown source";
 
-	happy(anyaddr(addrtypeof(&ifp->ip_addr), &md->sender));
+	ip_address sender;
+	happy(anyaddr(addrtypeof(&ifp->ip_addr), &sender));
 	zero(&from.sa);
 
 #if defined(HAVE_UDPFROMTO)
@@ -458,18 +463,16 @@ static bool read_packet(struct msg_digest *md)
 				from_ugh = initaddr(
 					(void *) &from.sa_in4.sin_addr,
 					sizeof(from.sa_in4.sin_addr),
-					AF_INET, &md->sender);
-				setportof(from.sa_in4.sin_port, &md->sender);
-				md->sender_port = ntohs(from.sa_in4.sin_port);
+					AF_INET, &sender);
+				setportof(from.sa_in4.sin_port, &sender);
 				break;
 			case AF_INET6:
 				from_ugh = initaddr(
 					(void *) &from.sa_in6.sin6_addr,
 					sizeof(from.sa_in6.
 					       sin6_addr),
-					AF_INET6, &md->sender);
-				setportof(from.sa_in6.sin6_port, &md->sender);
-				md->sender_port = ntohs(from.sa_in6.sin6_port);
+					AF_INET6, &sender);
+				setportof(from.sa_in6.sin6_port, &sender);
 				break;
 			}
 		}
@@ -486,15 +489,17 @@ static bool read_packet(struct msg_digest *md)
 			libreswan_log(
 				"some IKE message we sent has been rejected with ECONNREFUSED (kernel supplied no details)");
 		} else if (from_ugh != NULL) {
-			LOG_ERRNO(errno,
-				  "recvfrom on %s failed; Pluto cannot decode source sockaddr in rejection: %s",
-				  ifp->ip_dev->id_rname, from_ugh);
+			LSWLOG_ERRNO(errno, buf) {
+				lswlogf(buf, "recvfrom on %s failed; Pluto cannot decode source sockaddr in rejection: %s",
+					ifp->ip_dev->id_rname, from_ugh);
+			}
 		} else {
-			ipstr_buf b;
-			LOG_ERRNO(errno, "recvfrom on %s from %s:%u failed",
-				  ifp->ip_dev->id_rname,
-				  ipstr(&md->sender, &b),
-				  (unsigned)md->sender_port);
+			LSWLOG_ERRNO(errno, buf) {
+				lswlogf(buf, "recvfrom on %s from ",
+					ifp->ip_dev->id_rname);
+				lswlog_ip(buf, &sender);
+				lswlogs(buf, " failed");
+			}
 		}
 
 		return FALSE;
@@ -504,49 +509,55 @@ static bool read_packet(struct msg_digest *md)
 			ifp->ip_dev->id_rname, from_ugh);
 		return FALSE;
 	}
-	cur_from = &md->sender;
-	cur_from_port = md->sender_port;
 
 	if (ifp->ike_float) {
 		u_int32_t non_esp;
 
 		if (packet_len < (int)sizeof(u_int32_t)) {
-			ipstr_buf b;
-
-			libreswan_log("recvfrom %s:%u too small packet (%d)",
-				      ipstr(cur_from, &b), (unsigned) cur_from_port,
-				      packet_len);
+			LSWLOG(buf) {
+				lswlogs(buf, "recvfrom ");
+				lswlog_ip(buf, &sender); /* sensitive? */
+				lswlogf(buf, " too small packet (%d)",
+					packet_len);
+			}
 			return FALSE;
 		}
 		memcpy(&non_esp, _buffer, sizeof(u_int32_t));
 		if (non_esp != 0) {
-			ipstr_buf b;
-
-			libreswan_log("recvfrom %s:%u has no Non-ESP marker",
-				      ipstr(cur_from, &b),
-				      (unsigned) cur_from_port);
+			LSWLOG(buf) {
+				lswlogs(buf, "recvfrom ");
+				lswlog_ip(buf, &sender);
+				lswlogs(buf, " has no Non-ESP marker");
+			}
 			return FALSE;
 		}
 		_buffer += sizeof(u_int32_t);
 		packet_len -= sizeof(u_int32_t);
 	}
 
-	/* Clone actual message contents
-	 * and set up md->packet_pbs to describe it.
+	/*
+	 * Clone actual message contents and set up md->packet_pbs to
+	 * describe it.
 	 */
+
+	md->sender = sender;
+	md->sender_port = ntohs(portof(&sender));
+	/* XXX: cur_from points into the heap */
+	cur_from = &md->sender;
+	cur_from_port = md->sender_port;
+
 	init_pbs(&md->packet_pbs
 		 , clone_bytes(_buffer, packet_len,
 			       "message buffer in read_packet()")
 		 , packet_len, "packet");
 
-	DBG(DBG_RAW | DBG_CRYPT | DBG_PARSING | DBG_CONTROL, {
-		ipstr_buf b;
-		DBG_log("*received %d bytes from %s:%u on %s (port=%d)",
-			(int) pbs_room(&md->packet_pbs),
-			ipstr(cur_from, &b), (unsigned) cur_from_port,
-			ifp->ip_dev->id_rname,
-			ifp->port);
-	});
+	LSWDBGP(DBG_RAW | DBG_CRYPT | DBG_PARSING | DBG_CONTROL, buf) {
+		lswlogf(buf, "*received %d bytes from ",
+			(int) pbs_room(&md->packet_pbs));
+		lswlog_ip(buf, &sender);
+		lswlogf(buf, " on %s (port=%d)",
+			ifp->ip_dev->id_rname, ifp->port);
+	};
 
 	DBG(DBG_RAW,
 	    DBG_dump("", md->packet_pbs.start, pbs_room(&md->packet_pbs)));
@@ -561,6 +572,14 @@ static bool read_packet(struct msg_digest *md)
 		static const u_int8_t non_ESP_marker[NON_ESP_MARKER_SIZE] =
 			{ 0x00, };
 
+		/*
+		 * XXX: shouldn't this check use _buffer and
+		 * packet_len and be performed before the MD gets
+		 * allocated and populated?
+		 */
+		pexpect((int)pbs_left(&md->packet_pbs) == packet_len);
+		pexpect(memeq(md->packet_pbs.cur, _buffer,
+			      min(packet_len, NON_ESP_MARKER_SIZE)));
 		if (md->iface->ike_float &&
 		    pbs_left(&md->packet_pbs) >= NON_ESP_MARKER_SIZE &&
 		    memeq(md->packet_pbs.cur, non_ESP_marker,
@@ -570,6 +589,12 @@ static bool read_packet(struct msg_digest *md)
 		}
 	}
 
+	/*
+	 * XXX: shouldn't this check use _buffer and packet_len and be
+	 * performed before the MD gets allocated and populated?
+	 */
+	pexpect((int)pbs_room(&md->packet_pbs) == packet_len);
+	pexpect(md->packet_pbs.start[0] == _buffer[0]);
 	if ((pbs_room(&md->packet_pbs) == 1) &&
 	    (md->packet_pbs.start[0] == 0xff)) {
 		/**
@@ -577,11 +602,10 @@ static bool read_packet(struct msg_digest *md)
 		 * layer. But boggus keep-alive packets (sent with a non-esp marker)
 		 * can reach this point. Complain and discard them.
 		 */
-		DBG(DBG_NATT, {
-			ipstr_buf b;
-			DBG_log("NAT-T keep-alive (boggus ?) should not reach this point. Ignored. Sender: %s:%u", ipstr(cur_from, &b),
-				(unsigned) cur_from_port);
-		});
+		LSWDBGP(DBG_NATT, buf) {
+			lswlogs(buf, "NAT-T keep-alive (boggus ?) should not reach this point. Ignored. Sender: ");
+			lswlog_ip(buf, &sender);
+		};
 		return FALSE;
 	}
 
