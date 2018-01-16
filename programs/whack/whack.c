@@ -84,7 +84,7 @@ static void help(void)
 		"	[--client <subnet> | --clientwithin <address range>] \\\n"
 		"	[--clientprotoport <protocol>/<port>] \\\n"
 		"	[--dnskeyondemand] [--updown <updown>] \\\n"
-		"	[--psk] | [--rsasig] | [ --auth-null] | [--auth-never] \\\n"
+		"	[--psk] | [--rsasig] | [--rsa-sha2] | [--rsa-sha2_256] | [--rsa-sha2_384 ] | [--rsa-sha2_512 ] | [ --auth-null] | [--auth-never] \\\n"
 		"	[--encrypt] [--authenticate] [--compress] \\\n"
 		"	[--overlapip] [--tunnel] [--pfs] \\\n"
 		"	[--pfsgroup modp1024 | modp1536 | modp2048 | \\\n"
@@ -421,8 +421,8 @@ enum option_enums {
 	CD_POLICY_LABEL,
 	CD_XAUTHBY,
 	CD_XAUTHFAIL,
-	CD_ESP,
 	CD_NIC_OFFLOAD,
+	CD_ESP,
 #   define CD_LAST CD_ESP	/* last connection description */
 
 /*

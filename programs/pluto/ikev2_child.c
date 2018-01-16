@@ -1081,6 +1081,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 			case v2N_NAT_DETECTION_DESTINATION_IP:
 			case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
 			case v2N_COOKIE:
+			case v2N_USE_PPK:
 				DBG(DBG_CONTROL, DBG_log("received %s which is not valid for current exchange",
 					enum_name(&ikev2_notify_names,
 						ntfy->payload.v2n.isan_type)));
@@ -1101,10 +1102,16 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 			case v2N_REKEY_SA:
 				DBG(DBG_CONTROL, DBG_log("received REKEY_SA already proceesd"));
 				break;
+			case v2N_PPK_IDENTITY:
+				DBG(DBG_CONTROL, DBG_log("received PPK_IDENTITY already processed"));
+				break;
+			case v2N_NO_PPK_AUTH:
+				DBG(DBG_CONTROL, DBG_log("received NO_PPK_AUTH already processed"));
+				break;
 			default:
-				DBG(DBG_CONTROL, DBG_log("received %s but ignoring it",
+				libreswan_log("received unsupported NOTIFY %s ",
 					enum_name(&ikev2_notify_names,
-						ntfy->payload.v2n.isan_type)));
+						ntfy->payload.v2n.isan_type));
 			}
 		}
 	}
@@ -1302,7 +1309,7 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st, int af)
 	} else {
 		addrtosubnet(&ip, &c->spd.this.client);
 		setportof(0, &c->spd.this.client.addr); /* ??? redundant? */
-		/* ??? the following test seems obscure.  What's it about? */
+		/* only set sourceip= value if unset in configuration */
 		if (addrlenof(&c->spd.this.host_srcip) == 0 ||
 			isanyaddr(&c->spd.this.host_srcip)) {
 				DBG(DBG_CONTROL, DBG_log("setting host source IP address to %s",

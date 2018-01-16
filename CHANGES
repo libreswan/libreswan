@@ -4,6 +4,8 @@ See also https://libreswan.org/
 v3.23 (unrelased)
 * IKEv2: MOBIKE support (RFC 45555) [Antony/Paul]
 * IKEv2: Add support for modecfgdns= and modecfgdomains= like for IKEv1 [Paul]
+* IKEv2: EXPERIMENTAL: Support for Postquantim Preshared Keys [Vukasin Karadzic]
+         based on draft-ietf-ipsecme-qr-ikev2-01 (using private use numbers)
 * pluto: Fix DEFAULT_RUNDIR to be set so it is really configurable [Tuomo]
 * pluto: Add support IDr payload (You Tarzan, me Jane) [Paul]
 * pluto: pass state to send_crypto_helper_request() [Andrew]

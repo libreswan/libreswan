@@ -525,11 +525,9 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	DBG(DBG_LIFECYCLE,
 	    DBG_log("%s: processing event@%p", __func__, ev));
 
-	enum event_type type;
-	struct state *st;
-
-	type = ev->ev_type;
-	st = ev->ev_state;
+	enum event_type type = ev->ev_type;
+	struct state *const st = ev->ev_state;	/* note: *st might be changed */
+	bool state_event = (st != NULL);
 
 	DBG(DBG_CONTROL,
 	    char statenum[64] = "";
@@ -543,7 +541,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 
 	pexpect_reset_globals();
 
-	if (st != NULL)
+	if (state_event)
 		set_cur_state(st);
 
 	/*
@@ -889,7 +887,8 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	}
 
 	delete_pluto_event(&ev);
-	reset_cur_state();
+	if (state_event)
+		reset_cur_state();
 }
 
 /*

@@ -1,0 +1,2 @@
+Testing static PPK, both allow with and without PPK, initiator is missing PPK ID of initiator.
+The connection should establish without PPK

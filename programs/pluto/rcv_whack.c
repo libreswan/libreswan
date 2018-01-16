@@ -500,16 +500,12 @@ void whack_process(int whackfd, const struct whack_message *const m)
 
 			if (c != NULL) {
 				whack_route_connection(c, NULL);
-			} else {
-				int count = 0;
-
-				count = foreach_connection_by_alias(m->name,
-								whack_route_connection,
-								NULL);
-				if (count == 0)
-					whack_log(RC_ROUTE,
-						"no connection or alias '%s'",
-						m->name);
+			} else if (0 == foreach_connection_by_alias(m->name,
+						whack_route_connection,
+						NULL)) {
+				whack_log(RC_ROUTE,
+					"no connection or alias '%s'",
+					m->name);
 			}
 		}
 	}
@@ -519,16 +515,12 @@ void whack_process(int whackfd, const struct whack_message *const m)
 
 		if (c != NULL) {
 			whack_unroute_connection(c, NULL);
-		} else {
-			int count = 0;
-
-			count = foreach_connection_by_alias(m->name,
-							whack_unroute_connection,
-							NULL);
-			if (count == 0)
-				whack_log(RC_ROUTE,
-					"no connection or alias '%s'",
-					m->name);
+		} else if (0 == foreach_connection_by_alias(m->name,
+						whack_unroute_connection,
+						NULL)) {
+			whack_log(RC_ROUTE,
+				"no connection or alias '%s'",
+				m->name);
 		}
 	}
 

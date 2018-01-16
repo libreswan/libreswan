@@ -226,6 +226,7 @@ size_t lswlog_bytes(struct lswlog *log, const uint8_t *bytes,
 		    size_t sizeof_bytes);
 /* ipstr() */
 size_t lswlog_ip(struct lswlog *log, const ip_address*);
+size_t lswlog_sensitive_ip(struct lswlog *log, const ip_address*);
 
 /*
  * The logging output streams used by libreswan.
@@ -434,31 +435,65 @@ void lswlog_log_prefix(struct lswlog *buf);
  * Send an expectation failure to everwhere.
  */
 
+
+/*
+ * Check/log a pexpect failure to the "panic" channel.
+ *
+ * Notes:
+ *
+ * According to C99, the expansion of PEXPECT_LOG(FMT) will include a
+ * stray comma vis: "pexpect_log(file, line, FMT,)".  Plenty of
+ * workarounds.
+ *
+ * "pexpect()" does use the shorter statement "if (!(pred))" in the
+ * below as it will suppresses -Wparen (i.e., assignment in if
+ * statement).
+ */
+
 void lswlog_pexpect_prefix(struct lswlog *buf);
 void lswlog_pexpect_suffix(struct lswlog *buf, const char *func,
 			   const char *file, unsigned long line);
 
-#define LSWLOG_PEXPECT(BUF)				   \
+#define LSWLOG_PEXPECT_SOURCE(FUNC, FILE, LINE, BUF)	   \
 	LSWLOG_(true, BUF,				   \
 		lswlog_pexpect_prefix(BUF),		   \
-		lswlog_pexpect_suffix(BUF, __func__,	   \
-				      PASSERT_BASENAME,	   \
-				      __LINE__))
+		lswlog_pexpect_suffix(BUF, FUNC, FILE, LINE))
+
+#define LSWLOG_PEXPECT(BUF)				   \
+	LSWLOG_PEXPECT_SOURCE(__func__, PASSERT_BASENAME, __LINE__, BUF)
+
+/* old style */
+
+#define PEXPECT_LOG(FMT, ...)						\
+	LSWLOG_PEXPECT(pexpect_buf) {					\
+		lswlogf(pexpect_buf, FMT, __VA_ARGS__);			\
+	}
+
+#define pexpect(ASSERTION) {						\
+		/* wrapping ASSERTION in paren suppresses -Wparen */	\
+		bool assertion__ = ASSERTION; /* no paren */		\
+		if (!assertion__) {					\
+			LSWLOG_PEXPECT(pexpect_buf) {			\
+				lswlogf(pexpect_buf, "%s", #ASSERTION);	\
+			}						\
+		}							\
+	}
 
 /*
- * Send an expectation failure to everwhere.
+ * Send an assertion failure to everwhere.
  */
 
 void lswlog_passert_prefix(struct lswlog *buf);
 void lswlog_passert_suffix(struct lswlog *buf, const char *func,
 			   const char *file, unsigned long line) NEVER_RETURNS;
 
-#define LSWLOG_PASSERT(BUF)				   \
+#define LSWLOG_PASSERT_SOURCE(FUNC, FILE, LINE, BUF)	   \
 	LSWLOG_(true, BUF,				   \
 		lswlog_passert_prefix(BUF),		   \
-		lswlog_passert_suffix(BUF, __func__,	   \
-				      PASSERT_BASENAME,	   \
-				      __LINE__))
+		lswlog_passert_suffix(BUF, FUNC, FILE, LINE))
+
+#define LSWLOG_PASSERT(BUF)			\
+	LSWLOG_PASSERT_SOURCE(__func__, PASSERT_BASENAME, __LINE__, BUF)
 
 /*
  * ARRAY, a previously allocated array, containing the accumulated

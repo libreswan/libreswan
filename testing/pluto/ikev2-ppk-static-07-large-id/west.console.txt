@@ -1,0 +1,105 @@
+/testing/guestbin/swan-prep
+west #
+ # confirm that newtwork is alive
+west #
+ ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+west #
+ # make sure that clear text does not get through
+west #
+ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
+west #
+ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ # confirm with a ping
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=1 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=2 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=3 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=4 
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 0 received, 100% packet loss, time XXXX
+west #
+ ipsec _stackmanager start
+west #
+ ipsec pluto --config /etc/ipsec.conf --leak-detective
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec auto --add westnet-eastnet-ipv4-psk-ppk
+002 added connection description "westnet-eastnet-ipv4-psk-ppk"
+west #
+ ipsec auto --status | grep westnet-eastnet-ipv4-psk-ppk
+000 "westnet-eastnet-ipv4-psk-ppk": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
+000 "westnet-eastnet-ipv4-psk-ppk":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "westnet-eastnet-ipv4-psk-ppk":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "westnet-eastnet-ipv4-psk-ppk":   our auth:secret, their auth:secret
+000 "westnet-eastnet-ipv4-psk-ppk":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
+000 "westnet-eastnet-ipv4-psk-ppk":   labeled_ipsec:no;
+000 "westnet-eastnet-ipv4-psk-ppk":   policy_label:unset;
+000 "westnet-eastnet-ipv4-psk-ppk":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ipv4-psk-ppk":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "westnet-eastnet-ipv4-psk-ppk":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "westnet-eastnet-ipv4-psk-ppk":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+PPK_ALLOW+PPK_INSIST+ESN_NO;
+000 "westnet-eastnet-ipv4-psk-ppk":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "westnet-eastnet-ipv4-psk-ppk":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+000 "westnet-eastnet-ipv4-psk-ppk":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+000 "westnet-eastnet-ipv4-psk-ppk":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
+000 "westnet-eastnet-ipv4-psk-ppk":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up westnet-eastnet-ipv4-psk-ppk
+002 "westnet-eastnet-ipv4-psk-ppk" #1: initiating v2 parent SA
+133 "westnet-eastnet-ipv4-psk-ppk" #1: STATE_PARENT_I1: initiate
+133 "westnet-eastnet-ipv4-psk-ppk" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "westnet-eastnet-ipv4-psk-ppk" #1: PPK AUTH calculated as initiator
+134 "westnet-eastnet-ipv4-psk-ppk" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
+002 "westnet-eastnet-ipv4-psk-ppk" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+002 "westnet-eastnet-ipv4-psk-ppk" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "westnet-eastnet-ipv4-psk-ppk" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ipsec whack --trafficstatus
+006 #2: "westnet-eastnet-ipv4-psk-ppk", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+west #
+ ipsec auto --down westnet-eastnet-ipv4-psk-ppk
+002 "westnet-eastnet-ipv4-psk-ppk": terminating SAs using this connection
+002 "westnet-eastnet-ipv4-psk-ppk" #2: deleting state (STATE_V2_IPSEC_I) and sending notification
+005 "westnet-eastnet-ipv4-psk-ppk" #2: ESP traffic information: in=336B out=336B
+002 "westnet-eastnet-ipv4-psk-ppk" #1: deleting state (STATE_PARENT_I3) and sending notification
+west #
+ ipsec auto --delete westnet-eastnet-ipv4-psk-ppk
+002 "westnet-eastnet-ipv4-psk-ppk": deleting non-instance connection
+west #
+ echo done
+done
+west #
+ # confirm PPK was used
+west #
+ grep "PPK AUTH calculated" /tmp/pluto.log
+"westnet-eastnet-ipv4-psk-ppk" #1: PPK AUTH calculated as initiator
+west #
+ ipsec whack --shutdown
+002 shutting down
+west #
+ grep leak /tmp/pluto.log
+leak-detective enabled
+leak detective found no leaks
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

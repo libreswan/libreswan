@@ -94,23 +94,19 @@ void cancelled_ke_and_nonce(struct pcr_kenonce *kn)
 void request_ke_and_nonce(const char *name,
 			  struct state *st, struct msg_digest *md,
 			  const struct oakley_group_desc *group,
-			  enum crypto_importance importance,
 			  crypto_req_cont_func *callback)
 {
 	struct pluto_crypto_req_cont *cn = new_pcrc(callback, name, st, md);
-	pcr_kenonce_init(cn, pcr_build_ke_and_nonce,
-			 importance, group);
+	pcr_kenonce_init(cn, pcr_build_ke_and_nonce, group);
 	send_crypto_helper_request(st, cn);
 }
 
 void request_nonce(const char *name,
 		   struct state *st, struct msg_digest *md,
-		   enum crypto_importance importance,
 		   crypto_req_cont_func *callback)
 {
 	struct pluto_crypto_req_cont *cn = new_pcrc(callback, name, st, md);
-	pcr_kenonce_init(cn, pcr_build_nonce,
-			 importance, NULL);
+	pcr_kenonce_init(cn, pcr_build_nonce, NULL);
 
 	send_crypto_helper_request(st, cn);
 }

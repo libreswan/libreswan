@@ -78,13 +78,12 @@ void cancelled_v1_dh(struct pcr_v1_dh *dh)
  */
 void start_dh_secretiv(struct pluto_crypto_req_cont *dh,
 		       struct state *st,
-		       enum crypto_importance importance,
 		       enum original_role role,
 		       const struct oakley_group_desc *oakley_group2)
 {
-	const chunk_t *pss = get_preshared_secret(st->st_connection);
+	const chunk_t *pss = get_psk(st->st_connection);
 
-	struct pcr_v1_dh *const dhq = pcr_v1_dh_init(dh, pcr_compute_dh_iv, importance);
+	struct pcr_v1_dh *const dhq = pcr_v1_dh_init(dh, pcr_compute_dh_iv);
 
 	/* convert appropriate data to dhq */
 	dhq->auth = st->st_oakley.auth;
@@ -147,13 +146,12 @@ bool finish_dh_secretiv(struct state *st,
 
 void start_dh_secret(struct pluto_crypto_req_cont *cn,
 		     struct state *st,
-		     enum crypto_importance importance,
 		     enum original_role role,
 		     const struct oakley_group_desc *oakley_group2)
 {
-	const chunk_t *pss = get_preshared_secret(st->st_connection);
+	const chunk_t *pss = get_psk(st->st_connection);
 
-	struct pcr_v1_dh *const dhq = pcr_v1_dh_init(cn, pcr_compute_dh, importance);
+	struct pcr_v1_dh *const dhq = pcr_v1_dh_init(cn, pcr_compute_dh);
 
 	/* convert appropriate data to dhq */
 	dhq->auth = st->st_oakley.auth;

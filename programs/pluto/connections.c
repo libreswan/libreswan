@@ -1173,7 +1173,7 @@ static bool preload_wm_cert_secret(const char *side, const char *pubkey,
 	 *
 	 * This could also fail because a needed secret is missing.
 	 * That case is handled by refine_host_connection /
-	 * get_preshared_secret.
+	 * get_psk.
 	 */
 	err_t ugh = load_nss_cert_secret(cert);
 	if (ugh != NULL) {
@@ -1352,14 +1352,14 @@ void add_connection(const struct whack_message *wm)
 
 	if (wm->policy & POLICY_IKEV1_ALLOW) {
 		if (wm->policy & POLICY_MOBIKE) {
-			loglog(RC_LOG_SERIOUS, "MOBIKE requires ikev2=insist");
+			loglog(RC_FATAL, "MOBIKE requires ikev2=insist");
 			return;
 		}
 	}
 
 	if (wm->policy & POLICY_MOBIKE) {
 		if (!migrate_xfrm_sa_check()) {
-			loglog(RC_LOG_SERIOUS, "MOBIKE missing kernel support CONFIG_XFRM_MIGRATE && CONFIG_NET_KEY_MIGRATE");
+			loglog(RC_FATAL, "MOBIKE missing kernel support CONFIG_XFRM_MIGRATE && CONFIG_NET_KEY_MIGRATE");
 			return;
 		}
 	}
@@ -1749,10 +1749,14 @@ void add_connection(const struct whack_message *wm)
 		if (wm->left.pool_range.start.u.v4.sin_addr.s_addr != 0) {
 			/* there is address pool range add to the global list */
 			c->pool = install_addresspool(&wm->left.pool_range);
+			c->spd.that.modecfg_server = TRUE;
+			c->spd.this.modecfg_client = TRUE;
 		}
 		if (wm->right.pool_range.start.u.v4.sin_addr.s_addr != 0) {
 			/* there is address pool range add to the global list */
 			c->pool = install_addresspool(&wm->right.pool_range);
+			c->spd.that.modecfg_client = TRUE;
+			c->spd.this.modecfg_server = TRUE;
 		}
 
 		if (c->spd.this.xauth_server || c->spd.that.xauth_server)
@@ -3063,7 +3067,7 @@ struct connection *refine_host_connection(const struct state *st,
 	{
 		switch (this_authby) {
 		case AUTH_PSK:
-			psk = get_preshared_secret(c);
+			psk = get_psk(c);
 			/*
 			 * It should be virtually impossible to fail to find
 			 * PSK: we just used it to decode the current message!
@@ -3276,7 +3280,7 @@ struct connection *refine_host_connection(const struct state *st,
 
 			if (this_authby == AUTH_PSK) {
 				/* secret must match the one we already used */
-				const chunk_t *dpsk = get_preshared_secret(d);
+				const chunk_t *dpsk = get_psk(d);
 
 				/*
 				 * We can change PSK mid-way in IKEv2 or aggressive mode.

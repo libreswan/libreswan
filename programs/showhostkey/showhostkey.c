@@ -107,7 +107,7 @@ static void print(struct private_key_stuff *pks,
 	}
 
 	char pskbuf[128] = "";
-	if (pks->kind == PPK_PSK || pks->kind == PPK_XAUTH) {
+	if (pks->kind == PKK_PSK || pks->kind == PKK_XAUTH) {
 		datatot(pks->u.preshared_secret.ptr,
 			pks->u.preshared_secret.len,
 			'x', pskbuf, sizeof(pskbuf));
@@ -122,13 +122,13 @@ static void print(struct private_key_stuff *pks,
 	}
 
 	switch (pks->kind) {
-	case PPK_PSK:
+	case PKK_PSK:
 		printf("PSK keyid: %s\n", idb);
 		if (disclose)
 			printf("    psk: \"%s\"\n", pskbuf);
 		break;
 
-	case PPK_RSA: {
+	case PKK_RSA: {
 		printf("RSA");
 		char *keyid = pks->u.RSA_private_key.pub.keyid;
 		printf(" keyid: %s", keyid[0] ? keyid : "<missing-pubkey>");
@@ -141,12 +141,16 @@ static void print(struct private_key_stuff *pks,
 		break;
 	}
 
-	case PPK_XAUTH:
+	case PKK_XAUTH:
 		printf("XAUTH keyid: %s\n", idb);
 		if (disclose)
 			printf("    xauth: \"%s\"\n", pskbuf);
 		break;
-	case PPK_NULL:
+
+	case PKK_PPK:
+		break;
+
+	case PKK_NULL:
 		/* can't happen but the compiler does not know that */
 		printf("NULL authentication -- cannot happen: %s\n", idb);
 		abort();
@@ -192,7 +196,7 @@ static int pick_by_rsaid(struct secret *secret UNUSED,
 {
 	char *rsaid = (char *)uservoid;
 
-	if (pks->kind == PPK_RSA && streq(pks->u.RSA_private_key.pub.keyid, rsaid)) {
+	if (pks->kind == PKK_RSA && streq(pks->u.RSA_private_key.pub.keyid, rsaid)) {
 		/* stop */
 		return 0;
 	} else {
@@ -206,7 +210,7 @@ static int pick_by_ckaid(struct secret *secret UNUSED,
 			 void *uservoid)
 {
 	char *start = (char *)uservoid;
-	if (pks->kind == PPK_RSA && ckaid_starts_with(pks->u.RSA_private_key.pub.ckaid, start)) {
+	if (pks->kind == PKK_RSA && ckaid_starts_with(pks->u.RSA_private_key.pub.ckaid, start)) {
 		/* stop */
 		return 0;
 	} else {
@@ -241,9 +245,9 @@ static int show_dnskey(struct private_key_stuff *pks,
 
 	gethostname(qname, sizeof(qname));
 
-	if (pks->kind != PPK_RSA) {
-		fprintf(stderr, "%s: wrong kind of key %s in show_dnskey. Expected PPK_RSA.\n",
-			progname, enum_name(&ppk_names, pks->kind));
+	if (pks->kind != PKK_RSA) {
+		fprintf(stderr, "%s: wrong kind of key %s in show_dnskey. Expected PKK_RSA.\n",
+			progname, enum_name(&pkk_names, pks->kind));
 		return 5;
 	}
 
@@ -277,19 +281,19 @@ static int show_dnskey(struct private_key_stuff *pks,
 static int show_confkey(struct private_key_stuff *pks,
 			char *side)
 {
-	if (pks->kind != PPK_RSA) {
+	if (pks->kind != PKK_RSA) {
 		char *enumstr = "gcc is crazy";
 		switch (pks->kind) {
-		case PPK_PSK:
-			enumstr = "PPK_PSK";
+		case PKK_PSK:
+			enumstr = "PKK_PSK";
 			break;
-		case PPK_XAUTH:
-			enumstr = "PPK_XAUTH";
+		case PKK_XAUTH:
+			enumstr = "PKK_XAUTH";
 			break;
 		default:
 			sscanf(enumstr, "UNKNOWN (%d)", (int *)pks->kind);
 		}
-		fprintf(stderr, "%s: wrong kind of key %s in show_confkey. Expected PPK_RSA.\n",
+		fprintf(stderr, "%s: wrong kind of key %s in show_confkey. Expected PKK_RSA.\n",
 			progname, enumstr);
 		return 5;
 	}

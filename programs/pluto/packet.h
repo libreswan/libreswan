@@ -812,6 +812,12 @@ struct ikev2_prop {
 
 extern struct_desc ikev2_prop_desc;
 
+/* draft-ietf-ipsecme-qr-ikev2-01 */
+struct ikev2_ppk_id {
+	u_int8_t isappkid_type;
+};
+extern struct_desc ikev2_ppk_id_desc;
+
 /* rfc4306, section 3.3.2 */
 struct ikev2_trans {
 	u_int8_t isat_lt;		/* Last transform or not */

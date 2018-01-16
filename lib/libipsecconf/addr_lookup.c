@@ -60,15 +60,13 @@
 # include "dnssec.h"
 #endif
 
-static int verbose;
-
 /*
  * Resolve interface's peer.
  * Return: 0 = ok, fill peer
  *         -1 = not found
  */
 static
-void resolve_ppp_peer(char *interface, sa_family_t family, char *peer)
+void resolve_ppp_peer(char *interface, sa_family_t family, char *peer, bool verbose)
 {
 	struct ifaddrs *ifap, *ifa;
 
@@ -291,7 +289,7 @@ ssize_t netlink_query(char **pmsgbuf, size_t bufsize)
  *  1: please call again: more to do
  */
 int resolve_defaultroute_one(struct starter_end *host,
-				struct starter_end *peer, int verbose_in)
+				struct starter_end *peer, bool verbose)
 {
 	/*
 	 * "left="         == host->addrtype and host->addr
@@ -303,8 +301,6 @@ int resolve_defaultroute_one(struct starter_end *host,
 	bool seeking_gateway = (host->nexttype == KH_DEFAULTROUTE);
 
 	bool has_peer = (peer->addrtype == KH_IPADDR || peer->addrtype == KH_IPHOSTNAME);
-
-	verbose = verbose_in;
 
 	if (verbose)
 		printf("\nseeking_src = %d, seeking_gateway = %d, has_peer = %d\n",
@@ -513,7 +509,7 @@ int resolve_defaultroute_one(struct starter_end *host,
 				 * on the interface.
 				 */
 				resolve_ppp_peer(r_interface, host->addr_family,
-						 r_gateway);
+						 r_gateway, verbose);
 			}
 			if (r_gateway[0] != '\0') {
 				err_t err = tnatoaddr(r_gateway, 0,

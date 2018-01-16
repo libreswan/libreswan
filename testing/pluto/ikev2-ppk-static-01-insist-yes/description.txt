@@ -1,0 +1,1 @@
+Testing static PPK, west (initiator) insists on it and east proposes it.

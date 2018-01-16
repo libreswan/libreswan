@@ -881,6 +881,34 @@ static field_desc ikev2id_fields[] = {
 struct_desc ikev2_id_desc = { "IKEv2 Identification Payload",
 			      ikev2id_fields, sizeof(struct ikev2_id) };
 
+/*
+ * IKEv2 - draft-ietf-ipsecme-qr-ikev2-01 (no ascii art provided in RFC)
+ * PPK_ID types
+ *                         1                   2                   3
+ *     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ *    +---------------+-----------------------------------------------+
+ *    | PPK Type      |                                               |
+ *    +---------------+         PPK Data                              +
+ *    ~                                                               ~
+ *    +---------------+-----------------------------------------------+
+ *
+ * PPK_ID Type               Value
+ * -----------               -----
+ * Reserved                  0
+ * PPK_ID_OPAQUE             1
+ * PPK_ID_FIXED              2
+ * Unassigned                3-127
+ * Reserved for private use  128-255
+ */
+static field_desc ikev2_ppk_id_fields[] = {
+	{ ft_enum, 8 / BITS_PER_BYTE, "PPK ID type", &ikev2_ppk_id_names },
+	{ ft_end,  0, NULL, NULL }
+};
+
+struct_desc ikev2_ppk_id_desc = { "IKEv2 PPK ID Payload",
+				  ikev2_ppk_id_fields, sizeof(struct ikev2_ppk_id) };
+
+
 static field_desc ikev2cp_fields[] = {
 	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
 	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },

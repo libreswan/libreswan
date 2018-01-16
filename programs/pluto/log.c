@@ -230,35 +230,40 @@ void log_reset_globals(const char *func, const char *file, long line)
 void log_pexpect_reset_globals(const char *func, const char *file, long line)
 {
 	if (whack_log_fd != NULL_FD) {
-		lsw_pexpect_log(file, line, func,
-				"processing: unexpected whack_log_fd %d should be %d",
+		LSWLOG_PEXPECT_SOURCE(func, file, line, buf) {
+			lswlogf(buf, "processing: unexpected whack_log_fd %d should be %d",
 				whack_log_fd, NULL_FD);
+		}
 		whack_log_fd = NULL_FD;
 	}
 	if (cur_state != NULL) {
-		lsw_pexpect_log(file, line, func,
-				"processing: unexpected cur_state #%lu should be #0",
+		LSWLOG_PEXPECT_SOURCE(func, file, line, buf) {
+			lswlogf(buf, "processing: unexpected cur_state #%lu should be #0",
 				cur_state->st_serialno);
+		}
 		cur_state = NULL;
 	}
 	if (cur_connection != NULL) {
-		lsw_pexpect_log(file, line, func,
-				"processing: unexpected cur_connection %s should be NULL",
+		LSWLOG_PEXPECT_SOURCE(func, file, line, buf) {
+			lswlogf(buf, "processing: unexpected cur_connection %s should be NULL",
 				cur_connection->name);
+		}
 		cur_connection = NULL;
 	}
 	if (cur_from != NULL) {
-		ipstr_buf b;
-		lsw_pexpect_log(file, line, func,
-				"processing: unexpected cur_from %s:%u should be NULL",
+		LSWLOG_PEXPECT_SOURCE(func, file, line, buf) {
+			ipstr_buf b;
+			lswlogf(buf, "processing: unexpected cur_from %s:%u should be NULL",
 				sensitive_ipstr(cur_from, &b),
 				(unsigned)cur_from_port);
+		}
 		cur_from = NULL;
 	}
 	if (cur_debugging != base_debugging) {
-		lsw_pexpect_log(file, line, func,
-				"processing: unexpected cur_debugging %"PRIxLSET" should be %"PRIxLSET,
+		LSWLOG_PEXPECT_SOURCE(func, file, line, buf) {
+			lswlogf(buf, "processing: unexpected cur_debugging %"PRIxLSET" should be %"PRIxLSET,
 				cur_debugging, base_debugging);
+		}
 		cur_debugging = base_debugging;
 	}
 }

@@ -9,6 +9,7 @@
  * Copyright (C) 2009-2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2015 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -107,6 +108,9 @@ static const struct fld RSA_private_field[] = {
 
 static err_t lsw_process_psk_secret(chunk_t *psk);
 static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak);
+static err_t lsw_process_ppk_static_secret(chunk_t *ppk, chunk_t *ppk_id);
+static err_t lsw_process_ppk_dynamic_secret(chunk_t *ppk, chunk_t *ppk_id, char **filename);
+static char *build_new_offset(int offset_len, int offset);
 static void lsw_process_secret_records(struct secret **psecrets);
 static void lsw_process_secrets_file(struct secret **psecrets,
 				const char *file_pat);
@@ -163,12 +167,12 @@ struct secret *lsw_get_defaultsecret(struct secret *secrets)
 {
 	struct secret *s, *s2;
 
-	/* Search for PPK_RSA pks */
+	/* Search for PKK_RSA pks */
 	s2 = secrets;
 	while (s2 != NULL) {
-		for (; s2 != NULL && s2->pks.kind == PPK_RSA; s2 = s2->next)
+		for (; s2 != NULL && s2->pks.kind == PKK_RSA; s2 = s2->next)
 			continue;
-		for (s = s2; s != NULL && s->pks.kind != PPK_RSA; s = s->next)
+		for (s = s2; s != NULL && s->pks.kind != PKK_RSA; s = s->next)
 			continue;
 		if (s != NULL) {
 			struct secret *tmp = s->next;
@@ -338,10 +342,10 @@ static int lsw_check_secret_byid(struct secret *secret UNUSED,
 
 	DBG(DBG_CONTROL,
 		DBG_log("searching for certificate %s:%s vs %s:%s",
-			enum_name(&ppk_names, pks->kind),
-			(pks->kind == PPK_RSA ?
+			enum_name(&pkk_names, pks->kind),
+			(pks->kind == PKK_RSA ?
 				pks->u.RSA_private_key.pub.keyid : "N/A"),
-			enum_name(&ppk_names, sb->kind),
+			enum_name(&pkk_names, sb->kind),
 			sb->my_public_key->u.rsa.keyid);
 		);
 	if (pks->kind == sb->kind &&
@@ -396,9 +400,9 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 		DBG(DBG_CONTROLMORE,
 			DBG_log("line %d: key type %s(%s) to type %s",
 				s->pks.line,
-				enum_name(&ppk_names, kind),
+				enum_name(&pkk_names, kind),
 				idme,
-				enum_name(&ppk_names, s->pks.kind));
+				enum_name(&pkk_names, s->pks.kind));
 			);
 
 		if (s->pks.kind == kind) {
@@ -492,17 +496,17 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					bool same = 0;
 
 					switch (kind) {
-					case PPK_NULL:
+					case PKK_NULL:
 							same = TRUE;
 						break;
-					case PPK_PSK:
+					case PKK_PSK:
 						same = s->pks.u.preshared_secret.len ==
 						       best->pks.u.preshared_secret.len &&
 						       memeq(s->pks.u.preshared_secret.ptr,
 							     best->pks.u.preshared_secret.ptr,
 							     s->pks.u.preshared_secret.len);
 						break;
-					case PPK_RSA:
+					case PKK_RSA:
 						/*
 						 * Dirty trick: since we have
 						 * code to compare RSA public
@@ -516,11 +520,18 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 							&s->pks.u.RSA_private_key.pub,
 							&best->pks.u.RSA_private_key.pub);
 						break;
-					case PPK_XAUTH:
+					case PKK_XAUTH:
 						/*
 						 * We don't support this yet,
 						 * but no need to die
 						 */
+						break;
+					case PKK_PPK:
+						same = s->pks.ppk.len ==
+						       best->pks.ppk.len &&
+						       memeq(s->pks.ppk.ptr,
+							     best->pks.ppk.ptr,
+							     s->pks.ppk.len);
 						break;
 					default:
 						bad_case(kind);
@@ -573,7 +584,7 @@ bool lsw_has_private_rawkey(struct secret *secrets, struct pubkey *pk)
 		return FALSE;
 
 	for (s = secrets; s != NULL; s = s->next) {
-		if (s->pks.kind == PPK_RSA &&
+		if (s->pks.kind == PKK_RSA &&
 			same_RSA_public_key(&s->pks.u.RSA_private_key.pub,
 					&pk->u.rsa)) {
 			has_key = TRUE;
@@ -618,6 +629,9 @@ bool lsw_has_private_rawkey(struct secret *secrets, struct pubkey *pk)
  * same names.
  *
  * For XAUTH passwords, use @username followed by ":XAUTH" followed by the password
+ *
+ * For Post-Quantum Preshared Keys, use the "PPKS" keyword if the PPK is static, or
+ * use the keyword "PPKF" if the PPK is dynamic.
  *
  * PIN for smartcard is no longer supported - use NSS with smartcards
  */
@@ -706,6 +720,241 @@ static err_t lsw_process_xauth_secret(chunk_t *xauth)
 		);
 
 	return ugh;
+}
+
+/* parse static PPK  */
+static err_t lsw_process_ppk_static_secret(chunk_t *ppk, chunk_t *ppk_id)
+{
+	err_t ugh = NULL;
+	if (*flp->tok == '"' || *flp->tok == '\'') {
+		size_t len = flp->cur - flp->tok - 2;
+
+		clonetochunk(*ppk_id, flp->tok + 1, len, "PPK ID");
+		(void) shift();
+	} else {
+		ugh = "No quotation marks found. PPK ID should be in quotation marks";
+		return ugh;
+	}
+	if (*flp->tok == '"' || *flp->tok == '\'') {
+		size_t len = flp->cur - flp->tok - 2;
+
+		clonetochunk(*ppk, flp->tok + 1, len, "PPK");
+		(void) shift();
+	} else {
+		char buf[RSA_MAX_ENCODING_BYTES];	/*
+							 * limit on size of
+							 * binary
+							 * representation
+							 * of key
+							 */
+		size_t sz;
+		char diag_space[TTODATAV_BUF];
+
+		ugh = ttodatav(flp->tok, flp->cur - flp->tok, 0, buf,
+			       sizeof(buf), &sz,
+			       diag_space, sizeof(diag_space),
+			       TTODATAV_SPACECOUNTS);
+		if (ugh != NULL) {
+			/* ttodata didn't like PPK data */
+			ugh = builddiag("PPK data malformed (%s): %s", ugh,
+					flp->tok);
+		} else {
+			clonetochunk(*ppk, buf, sz, "PPK");
+			(void) shift();
+		}
+	}
+
+	DBG(DBG_CONTROL,
+		DBG_log("Processing PPK at line %d: %s",
+			flp->lino, ugh == NULL ? "passed" : ugh);
+		);
+
+	return ugh;
+}
+
+/* parse dynamic PPK (one-time pad) */
+static err_t lsw_process_ppk_dynamic_secret(chunk_t *ppk, chunk_t *ppk_id, char **filename)
+{
+	err_t ugh = NULL;
+	if (*flp->tok == '"' || *flp->tok == '\'') {
+		size_t len = flp->cur - flp->tok - 2;
+
+		clonetochunk(*ppk_id, flp->tok + 1, len, "PPK ID");
+		(void) shift();
+	} else {
+		ugh = "No quotation marks found. PPK ID should be in quotation marks";
+		return ugh;
+	}
+	if (*flp->tok == '"' || *flp->tok == '\'') {
+		char fn[MAX_TOK_LEN];
+		size_t len = flp->cur - flp->tok - 2;
+		struct file_lex_position new_pos;
+
+		memcpy(&fn, flp->tok + 1, len);
+		fn[len] = '\0';
+		(void) shift();
+		if (lexopen(&new_pos, fn, FALSE)) {
+			int offset = 0;
+			DBG(DBG_CONTROL, DBG_log("OTP file opened succesfully"));
+
+			*filename = clone_bytes(&fn, len + 1, "Dynamic PPK filename");
+			DBG(DBG_CONTROL, DBG_log("Processing dynamic secret, saving filename as: %s", *filename));
+			flp->bdry = B_none;	/* eat the Record Boundary */
+			(void) shift();	/* get real first token */
+			if (*flp->tok == '"' || *flp->tok == '\'') {
+				char *offset_data = alloc_bytes(flp->cur - flp->tok - 2, "OTP offset");
+				memcpy(offset_data, flp->tok + 1, flp->cur - flp->tok - 2);
+				offset = (int) strtol(offset_data, NULL, 10);
+				pfree(offset_data);
+			}
+
+			DBG(DBG_CONTROL, DBG_log("Offset extracted: %d", offset));
+
+			(void) shift();
+			/* getting PPK */
+			if (*flp->tok == '"' || *flp->tok == '\'') {
+				clonetochunk(*ppk, flp->tok + 1 + offset, 21, "PPK");
+			} else {
+				if (*flp->tok++ == '0') {
+					int base;
+					size_t size;
+					switch (*flp->tok++) {
+					case 'x':
+					case 'X':
+						base = 16;
+						/* 42 hex digits transfer into 21 byte (the length of the key) */
+						size = 42;
+						break;
+					case 's':
+					case 'S':
+						base = 64;
+						/* 28 base64 chars transfer into 21 byte (the length of the key) */
+						size = 28;
+						break;
+					case 't':
+					case 'T':
+						base = 256;
+						/* 21 ASCII chars transfer into 21 byte (the length of the key) */
+						size = 21;
+						break;
+					default:
+						return "unknown format prefix";
+					}
+
+					char buf[RSA_MAX_ENCODING_BYTES];		/*
+											 * limit on size of
+											 * binary
+											 * represenation
+											 * of key
+											 */
+					char diag_space[TTODATAV_BUF];
+
+					ugh = ttodatav(flp->tok + offset, size, base,
+							buf, 21, NULL, diag_space, sizeof(diag_space),
+							TTODATAV_SPACECOUNTS);
+					if (ugh != NULL) {
+						/* ttodata didn't like PPK data from OTP */
+						ugh = builddiag("PPK data malformed (%s): %s", ugh, flp->tok);
+					} else {
+						clonetochunk(*ppk, buf, 21, "PPK");
+					}
+				} else {
+					return "input does not begin with format prefix";
+				}
+			}
+
+			(void) shift();
+			lexclose();
+		}
+	} else {
+		ugh = "Error, OTP pathname not in suitable format";
+	}
+	return ugh;
+}
+
+static char *build_new_offset(int offset_len, int offset)
+{
+	char *new = alloc_bytes(offset_len, "new offset for OTP");
+	int i = offset_len - 1;
+
+	new[offset_len] = '\0';
+	offset = offset + 21;
+	while (offset > 0 && i >= 0) {
+		int num = offset % 10;
+		new[i] = num + '0';
+		i--;
+		offset = offset / 10;
+	}
+	while (i >= 0) {
+		new[i] = '0';
+		i--;
+	}
+	DBG(DBG_CONTROL, DBG_log("built new offset: %s", new));
+	return new;
+}
+
+/* update dynamic PPK file */
+err_t lsw_update_dynamic_ppk_secret(char *fn)
+{
+	err_t ugh = NULL;
+	struct file_lex_position pos;
+	int offset_len = 0;
+	int offset = 0;
+
+	if (lexopen(&pos, fn, FALSE)) {
+		flp->bdry = B_none;	/* eat the Record Boundary */
+		(void) shift();	/* get real first token */
+		if (*flp->tok == '"' || *flp->tok == '\'') {
+			offset_len = flp->cur - flp->tok - 2;
+			char *offset_data = alloc_bytes(offset_len, "OTP offset");
+			memcpy(offset_data, flp->tok + 1, offset_len);
+			offset = (int) strtol(offset_data, NULL, 10);
+			pfree(offset_data);
+		} else {
+			ugh = "Error! Offset should be in quotes";
+			return ugh;
+		}
+		lexclose();
+	}
+
+	FILE *f = fopen(fn, "r+");
+	if (f == NULL) {
+		LOG_ERRNO(errno, "problem with secrets file \"%s\"", fn);
+		ugh = "Could not open OTP file for update";
+	} else {
+		int fd = fileno(f);
+		int file_sz = lseek(fd, 0, SEEK_END);
+
+		if (file_sz == -1) {
+			LOG_ERRNO(errno, "error while trying to overwrite offset in dynamic PPK secret \"%s\"", fn);
+			return "Error, see errno.";
+		}
+
+		if (offset + offset_len + 4 < file_sz) {
+			char *new_offset = build_new_offset(offset_len, offset);
+			lseek(fd, 1, SEEK_SET);
+			if (write(fd, new_offset, offset_len) == -1) {
+				LOG_ERRNO(errno, "error while trying to overwrite offset in dynamic PPK secret \"%s\"", fn);
+				return "Error, see errno.";
+			}
+		} else {
+			ugh = "No more space in OTP file to extract PPK";
+		}
+
+		fclose(f);
+	}
+	return ugh;
+}
+
+struct secret *lsw_get_ppk_by_id(struct secret *s, chunk_t ppk_id)
+{
+	while (s != NULL) {
+		struct private_key_stuff pks = s->pks;
+		if (pks.kind == PKK_PPK && same_chunk(pks.ppk_id, ppk_id))
+			return s;
+		s = s->next;
+	}
+	return NULL;
 }
 
 /*
@@ -918,13 +1167,13 @@ static void process_secret(struct secret **psecrets,
 	err_t ugh = NULL;
 
 	if (tokeqword("psk")) {
-		s->pks.kind = PPK_PSK;
+		s->pks.kind = PKK_PSK;
 		/* preshared key: quoted string or ttodata format */
 		ugh = !shift() ? "ERROR: unexpected end of record in PSK" :
 			lsw_process_psk_secret(&s->pks.u.preshared_secret);
 	} else if (tokeqword("xauth")) {
 		/* xauth key: quoted string or ttodata format */
-		s->pks.kind = PPK_XAUTH;
+		s->pks.kind = PKK_XAUTH;
 		ugh = !shift() ? "ERROR: unexpected end of record in PSK" :
 			lsw_process_xauth_secret(&s->pks.u.preshared_secret);
 	} else if (tokeqword("rsa")) {
@@ -932,7 +1181,7 @@ static void process_secret(struct secret **psecrets,
 		 * RSA key: the fun begins.
 		 * A braced list of keyword and value pairs.
 		 */
-		s->pks.kind = PPK_RSA;
+		s->pks.kind = PKK_RSA;
 		if (!shift()) {
 			ugh = "ERROR: bad RSA key syntax";
 		} else if (tokeq("{")) {
@@ -945,9 +1194,17 @@ static void process_secret(struct secret **psecrets,
 		}
 		if (ugh == NULL) {
 			libreswan_log("loaded private key for keyid: %s:%s",
-				enum_name(&ppk_names, s->pks.kind),
+				enum_name(&pkk_names, s->pks.kind),
 				s->pks.u.RSA_private_key.pub.keyid);
 		}
+	} else if (tokeqword("ppks")) {
+		s->pks.kind = PKK_PPK;
+		ugh = !shift() ? "ERROR: unexpected end of record in static PPK" :
+			lsw_process_ppk_static_secret(&s->pks.ppk, &s->pks.ppk_id);
+	} else if (tokeqword("ppkf")) {
+		s->pks.kind = PKK_PPK;
+		ugh = !shift() ? "ERROR: unexpected end of record in dynamic PPK" :
+			lsw_process_ppk_dynamic_secret(&s->pks.ppk, &s->pks.ppk_id, &s->pks.filename);
 	} else if (tokeqword("pin")) {
 		ugh = "ERROR: keyword 'pin' obsoleted, please use NSS for smartcard support";
 	} else {
@@ -1040,7 +1297,7 @@ static void lsw_process_secret_records(struct secret **psecrets)
 			struct secret *s = alloc_thing(struct secret, "secret");
 
 			s->ids = NULL;
-			s->pks.kind = PPK_PSK;	/* default */
+			s->pks.kind = PKK_PSK;	/* default */
 			setchunk(s->pks.u.preshared_secret, NULL, 0);
 			s->pks.line = flp->lino;
 			s->next = NULL;
@@ -1093,7 +1350,7 @@ static void lsw_process_secret_records(struct secret **psecrets)
 					DBG(DBG_CONTROL,
 						DBG_log("id type added to secret(%p) %s: %s",
 							s,
-							enum_name(&ppk_names,
+							enum_name(&pkk_names,
 								s->pks.kind),
 							idb);
 						);
@@ -1192,13 +1449,18 @@ void lsw_free_preshared_secrets(struct secret **psecrets)
 				pfree(i);
 			}
 			switch (s->pks.kind) {
-			case PPK_PSK:
+			case PKK_PSK:
 				pfree(s->pks.u.preshared_secret.ptr);
 				break;
-			case PPK_XAUTH:
+			case PKK_PPK:
+				pfree(s->pks.ppk.ptr);
+				pfree(s->pks.ppk_id.ptr);
+				pfreeany(s->pks.filename);
+				break;
+			case PKK_XAUTH:
 				pfree(s->pks.u.preshared_secret.ptr);
 				break;
-			case PPK_RSA:
+			case PKK_RSA:
 				free_RSA_public_content(
 					&s->pks.u.RSA_private_key.pub);
 				break;
@@ -1503,7 +1765,7 @@ static const struct RSA_private_key *get_nss_cert_privkey(struct secret *secrets
 	}
 
 	for (s = secrets; s != NULL; s = s->next) {
-		if (s->pks.kind == PPK_RSA &&
+		if (s->pks.kind == PKK_RSA &&
 			same_RSA_public_key(&s->pks.u.RSA_private_key.pub,
 					    &pub->u.rsa)) {
 			priv = &s->pks.u.RSA_private_key;
@@ -1526,7 +1788,7 @@ err_t lsw_add_rsa_secret(struct secret **secrets, CERTCertificate *cert)
 		return NULL;
 	}
 	s = alloc_thing(struct secret, "secret");
-	s->pks.kind = PPK_RSA;
+	s->pks.kind = PKK_RSA;
 	s->pks.line = 0;
 
 	if ((ugh = lsw_extract_nss_cert_privkey(&s->pks.u.RSA_private_key,

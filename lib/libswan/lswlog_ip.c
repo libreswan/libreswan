@@ -22,5 +22,11 @@
 size_t lswlog_ip(struct lswlog *buf, const ip_address *ip)
 {
 	ipstr_buf b;
-	return lswlogs(buf, ipstr(ip, &b));
+	size_t size = 0;
+	size += lswlogs(buf, ipstr(ip, &b));
+	int port = ntohs(portof(ip));
+	if (port != 0) {
+		size += lswlogf(buf, ":%d", port);
+	}
+	return size;
 }

@@ -130,6 +130,7 @@ enum keyword_numeric_config_field {
 	KBF_MODECONFIGPULL,
 	KBF_ENCAPS,
 	KBF_IKEv2,
+	KBF_PPK,
 	KBF_ESN,
 	KBF_DECAP_DSCP,
 	KBF_IKEv2_ALLOW_NARROWING,

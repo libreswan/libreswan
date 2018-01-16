@@ -216,12 +216,10 @@ static enum_names pluto_cryptoop_names = {
 /* initializers for pluto_crypto_request continuations */
 
 static void pcr_init(struct pluto_crypto_req *r,
-		     enum pluto_crypto_requests pcr_type,
-		     enum crypto_importance pcr_pcim)
+		     enum pluto_crypto_requests pcr_type)
 {
 	zero(r);
 	r->pcr_type = pcr_type;
-	r->pcr_pcim = pcr_pcim;
 }
 
 /*
@@ -258,31 +256,28 @@ static void pcrc_release_request(struct pluto_crypto_req_cont *cn)
 
 void pcr_kenonce_init(struct pluto_crypto_req_cont *cn,
 		      enum pluto_crypto_requests pcr_type,
-		      enum crypto_importance pcr_pcim,
 		      const struct oakley_group_desc *dh)
 {
 	struct pluto_crypto_req *r = &cn->pcrc_pcr;
-	pcr_init(r, pcr_type, pcr_pcim);
+	pcr_init(r, pcr_type);
 	r->pcr_d.kn.group = dh;
 }
 
 struct pcr_v1_dh *pcr_v1_dh_init(struct pluto_crypto_req_cont *cn,
-				 enum pluto_crypto_requests pcr_type,
-				 enum crypto_importance pcr_pcim)
+				 enum pluto_crypto_requests pcr_type)
 {
 	struct pluto_crypto_req *r = &cn->pcrc_pcr;
-	pcr_init(r, pcr_type, pcr_pcim);
+	pcr_init(r, pcr_type);
 
 	struct pcr_v1_dh *dhq = &r->pcr_d.v1_dh;
 	INIT_WIRE_ARENA(*dhq);
 	return dhq;
 }
 
-struct pcr_dh_v2 *pcr_dh_v2_init(struct pluto_crypto_req_cont *cn,
-				 enum crypto_importance pcr_pcim)
+struct pcr_dh_v2 *pcr_dh_v2_init(struct pluto_crypto_req_cont *cn)
 {
 	struct pluto_crypto_req *r = &cn->pcrc_pcr;
-	pcr_init(r, pcr_compute_dh_v2, pcr_pcim);
+	pcr_init(r, pcr_compute_dh_v2);
 	struct pcr_dh_v2 *dhq = &r->pcr_d.dh_v2;
 	INIT_WIRE_ARENA(*dhq);
 	return dhq;
@@ -415,10 +410,9 @@ static void *pluto_crypto_helper_thread(void *arg)
 		pthread_mutex_unlock(&backlog_mutex);
 		if (!cn->pcrc_cancelled) {
 			DBG(DBG_CONTROL,
-			    DBG_log("crypto helper %d starting work-order %u for state #%lu from queue %d",
+			    DBG_log("crypto helper %d starting work-order %u for state #%lu",
 				    w->pcw_helpernum, w->pcw_pcrc_id,
-				    w->pcw_pcrc_serialno,
-				    cn->pcrc_pcr.pcr_pcim));
+				    w->pcw_pcrc_serialno));
 			pluto_do_crypto_op(cn, w->pcw_helpernum);
 		}
 		DBG(DBG_CONTROL,
@@ -518,10 +512,9 @@ void send_crypto_helper_request(struct state *st,
 		pluto_event_now("inline crypto", inline_worker, cn);
 	} else {
 		DBG(DBG_CONTROLMORE,
-		    DBG_log("adding %s work-order %u for state #%lu to queue %d",
+		    DBG_log("adding %s work-order %u for state #%lu",
 			    cn->pcrc_name, cn->pcrc_id,
-			    cn->pcrc_serialno,
-			    cn->pcrc_pcr.pcr_pcim));
+			    cn->pcrc_serialno));
 		delete_event(st);
 		event_schedule_s(EVENT_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, st);
 		/* add to backlog */

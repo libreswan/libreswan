@@ -468,6 +468,7 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 			 (POLICY_AUTHENTICATE | POLICY_ENCRYPT));
 		lset_t shunt_policy = (conn->policy & POLICY_SHUNT_MASK);
 		lset_t ikev2_policy = (conn->policy & POLICY_IKEV2_MASK);
+		lset_t ppk_policy = (conn->policy & (POLICY_PPK_ALLOW | POLICY_PPK_INSIST));
 		lset_t ike_frag_policy = (conn->policy & POLICY_IKE_FRAG_MASK);
 		static const char *const noyes[2 /*bool*/] = {"no", "yes"};
 		/* short-cuts for writing out a field that is a policy bit.
@@ -560,6 +561,24 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 					break;
 				}
 				cwf("ikev2", v2ps);
+			}
+
+			/* ppk= */
+			{
+				const char *p_ppk = "UNKNOWN";
+
+				switch (ppk_policy) {
+				case LEMPTY:
+					p_ppk = "no";
+					break;
+				case POLICY_PPK_ALLOW:
+					p_ppk = "permit";
+					break;
+				case POLICY_PPK_INSIST:
+					p_ppk = "insist";
+					break;
+				}
+				cwf("ppk", p_ppk);
 			}
 
 			/* esn= */

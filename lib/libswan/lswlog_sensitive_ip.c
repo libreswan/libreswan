@@ -1,6 +1,6 @@
-/* expectation failure, for libreswan
+/* Output an IP address, for libreswan
  *
- * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,17 +19,14 @@
 
 #include "lswlog.h"
 
-void lsw_pexpect_log(const char *file,
-		     unsigned long line,
-		     const char *func,
-		     const char *fmt, ...)
+size_t lswlog_sensitive_ip(struct lswlog *buf, const ip_address *ip)
 {
-	LSWBUF(buf) {
-		lswlog_pexpect_prefix(buf);
-		va_list ap;
-		va_start(ap, fmt);
-		lswlogvf(buf, fmt, ap);
-		va_end(ap);
-		lswlog_pexpect_suffix(buf, func, file, line);
+	ipstr_buf b;
+	size_t size = 0;
+	size += lswlogs(buf, sensitive_ipstr(ip, &b));
+	int port = ntohs(portof(ip));
+	if (port != 0) {
+		size += lswlogf(buf, ":%d", port);
 	}
+	return size;
 }

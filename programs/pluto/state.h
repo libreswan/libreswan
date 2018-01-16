@@ -11,7 +11,9 @@
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2014,2017 Antony Antony <antony@phenome.org>
- * Copyright (C) 2015-2017 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2018 Andrew Cagney
+ * Copyright (C) 2015-2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -485,8 +487,9 @@ struct state {
 					 */
 	/* end of DH values */
 
-	enum crypto_importance st_import;       /* relative priority of crypto
-						 * operations
+	enum crypto_importance st_import;       /* relative priority
+						 * of crypto operations.
+						 * XXX: probably.
 						 */
 
 	/* In a Phase 1 state, preserve peer's public key after authentication */
@@ -572,6 +575,18 @@ struct state {
 	chunk_t st_skey_responder_salt;
 	chunk_t st_skey_chunk_SK_pi;
 	chunk_t st_skey_chunk_SK_pr;
+
+	/*
+	 * Post-quantum preshared key variables
+	 */
+	char *st_ppk_dynamic_filename;		/* Filename containing dynamic PPKs */
+	bool st_ppk_used;			/* both ends agreed on PPK ID and PPK */
+	bool st_seen_ppk;			/* does remote peer support PPK? */
+
+	chunk_t st_no_ppk_auth;
+	PK11SymKey *st_sk_d_no_ppk;
+	PK11SymKey *st_sk_pi_no_ppk;
+	PK11SymKey *st_sk_pr_no_ppk;
 
 	/* connection included in AUTH */
 	struct traffic_selector st_ts_this;
@@ -741,7 +756,8 @@ extern bool dpd_active_locally(const struct state *st);
 #define fake_state(st, new_state) log_state((st), (new_state))
 extern void change_state(struct state *st, enum state_kind new_state);
 
-extern bool state_busy(const struct state *st);
+extern bool state_is_busy(const struct state *st);
+extern bool verbose_state_busy(const struct state *st);
 extern bool drop_new_exchanges(void);
 extern bool require_ddos_cookies(void);
 extern void show_globalstate_status(void);

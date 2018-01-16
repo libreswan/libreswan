@@ -1665,7 +1665,7 @@ void process_v1_packet(struct msg_digest **mdp)
 		}
 	}
 
-	if (state_busy(st))
+	if (verbose_state_busy(st))
 		return;
 
 	/*
@@ -2299,8 +2299,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	set_cur_state(st); /* might have changed */
 
 	passert(st != NULL);
-
-	pexpect(!state_busy(st));
+	pexpect(!state_is_busy(st));
 
 	switch (result) {
 	case STF_OK:

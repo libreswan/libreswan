@@ -54,7 +54,6 @@ OBJS += addrtoa.o addrtot.o addrtypeof.o alg_info.o esp_info.o anyaddr.o \
 	secitem_chunk.o \
 	base64_rsa_pubkey.o \
 	lswnss.o \
-	lsw_pexpect_log.o \
 	lsw_passert_fail.o \
 	libreswan_log.o \
 	libreswan_loglog.o \
@@ -84,6 +83,7 @@ OBJS += lswlog_realtime.o
 OBJS += lswlog_deltatime.o
 OBJS += lswlog_monotime.o
 OBJS += lswlog_ip.o
+OBJS += lswlog_sensitive_ip.o
 OBJS += lswlog_to_file_stream.o
 OBJS += lswlog_pexpect.o
 OBJS += lswlog_passert.o

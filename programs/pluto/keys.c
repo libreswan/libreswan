@@ -11,6 +11,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -98,13 +99,13 @@ static int print_secrets(struct secret *secret,
 	struct id_list *ids;
 
 	switch (pks->kind) {
-	case PPK_PSK:
+	case PKK_PSK:
 		kind = "PSK";
 		break;
-	case PPK_RSA:
+	case PKK_RSA:
 		kind = "RSA";
 		break;
-	case PPK_XAUTH:
+	case PKK_XAUTH:
 		kind = "XAUTH";
 		break;
 	default:
@@ -325,7 +326,8 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 	return NULL;
 }
 
-/* Check signature against all RSA public keys we can find.
+/*
+ * Check signature against all RSA public keys we can find.
  * If we need keys from DNS KEY records, and they haven't been fetched,
  * return STF_SUSPEND to ask for asynch DNS lookup.
  *
@@ -513,7 +515,8 @@ stf_status RSA_check_signature_gen(struct state *st,
 	}
 }
 
-/* find the struct secret associated with the combination of
+/*
+ * find the struct secret associated with the combination of
  * me and the peer.  We match the Id (if none, the IP address).
  * Failure is indicated by a NULL.
  *
@@ -537,10 +540,10 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	DBG(DBG_CONTROL,
 	    DBG_log("started looking for secret for %s->%s of kind %s",
 		    idme, idhim,
-		    enum_name(&ppk_names, kind)));
+		    enum_name(&pkk_names, kind)));
 
 	/* is there a certificate assigned to this connection? */
-	if (kind == PPK_RSA && c->spd.this.cert.ty == CERT_X509_SIGNATURE &&
+	if (kind == PKK_RSA && c->spd.this.cert.ty == CERT_X509_SIGNATURE &&
 			c->spd.this.cert.u.nss_cert != NULL) {
 		/* Must free MY_PUBLIC_KEY */
 		struct pubkey *my_public_key = allocate_RSA_public_key_nss(
@@ -598,7 +601,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		his_id = &rw_id;
 		idtoa(his_id, idhim2, IDTOA_BUF);
 	} else if ((c->policy & POLICY_PSK) &&
-		  (kind == PPK_PSK) &&
+		  (kind == PKK_PSK) &&
 		  (((c->kind == CK_TEMPLATE) &&
 		    (c->spd.that.id.kind == ID_NONE)) ||
 		   ((c->kind == CK_INSTANCE) &&
@@ -621,7 +624,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	DBG(DBG_CONTROL,
 	    DBG_log("actually looking for secret for %s->%s of kind %s",
 		    idme, idhim2,
-		    enum_name(&ppk_names, kind)));
+		    enum_name(&pkk_names, kind)));
 
 	best = lsw_find_secret_by_id(pluto_secrets,
 				     kind,
@@ -649,30 +652,30 @@ struct secret *lsw_get_xauthsecret(const struct connection *c UNUSED,
 	xa_id.name.len = strlen(xauthname);
 
 	best = lsw_find_secret_by_id(pluto_secrets,
-				     PPK_XAUTH,
+				     PKK_XAUTH,
 				     &xa_id, NULL, TRUE);
 
 	return best;
 }
 
-/* check the existence of an RSA private key matching an RSA public
- */
+/* check the existence of an RSA private key matching an RSA public */
 static bool has_private_rawkey(struct pubkey *pk)
 {
 	return lsw_has_private_rawkey(pluto_secrets, pk);
 }
 
-/* find the appropriate preshared key (see get_secret).
+/*
+ * find the appropriate preshared key (see get_secret).
  * Failure is indicated by a NULL pointer.
  * Note: the result is not to be freed by the caller.
  * Note2: this seems to be called for connections using RSA too?
  */
-const chunk_t *get_preshared_secret(const struct connection *c)
+const chunk_t *get_psk(const struct connection *c)
 {
 	struct secret *s = lsw_get_secret(c,
 					  &c->spd.this.id,
 					  &c->spd.that.id,
-					  PPK_PSK, FALSE);
+					  PKK_PSK, FALSE);
 	const struct private_key_stuff *pks = NULL;
 
 	if (c->policy & POLICY_AUTH_NULL) {
@@ -692,14 +695,79 @@ const chunk_t *get_preshared_secret(const struct connection *c)
 	return s == NULL ? NULL : &pks->u.preshared_secret;
 }
 
-/* find the appropriate RSA private key (see get_secret).
+/*
+ * Return ppk, and store ppk_id in **ppk_id.
+ * Store OTP filename in fn if the PPK is dynamic.
+ *
+ * ??? conditionally sets *ppk_id and *fn.  Should this be unconditional?
+ */
+chunk_t *get_ppk(const struct connection *c, chunk_t **ppk_id, char **fn)
+{
+	struct secret *s = lsw_get_secret(c,
+					  &c->spd.this.id,
+					  &c->spd.that.id,
+					  PKK_PPK, FALSE);
+
+	if (s != NULL) {
+		struct private_key_stuff *pks = lsw_get_pks(s);
+		*ppk_id = &pks->ppk_id;
+		DBG(DBG_PRIVATE, {
+			DBG_log("Found PPK");
+			DBG_dump_chunk("PPK_ID:", **ppk_id);
+			DBG_dump_chunk("PPK:", pks->ppk);
+			});
+		*fn = pks->filename;
+		return &pks->ppk;
+	}
+
+	return NULL;
+}
+
+/*
+ * Find PPK, by its id (PPK_ID).
+ * Store OTP filename in fn if the PPK is dynamic
+ * Used by responder.
+ */
+const chunk_t *get_ppk_by_id(const chunk_t *ppk_id, char **fn)
+{
+	struct secret *s = lsw_get_ppk_by_id(pluto_secrets, *ppk_id);
+
+	if (s != NULL) {
+		const struct private_key_stuff *pks = lsw_get_pks(s);
+		DBG(DBG_PRIVATE, {
+			DBG_dump_chunk("Found PPK:", pks->ppk);
+			DBG_dump_chunk("with PPK_ID:", *ppk_id);
+		});
+		*fn = pks->filename;
+		DBG(DBG_CONTROL, DBG_log("In keys.c, checking OTP filename: %s", *fn));
+		return &pks->ppk;
+	}
+	DBG(DBG_CONTROL, {
+		DBG_log("No PPK found with given PPK_ID");
+	});
+	return NULL;
+}
+
+bool update_dynamic_ppk(char *fn)
+{
+	err_t ugh = lsw_update_dynamic_ppk_secret(fn);
+	if (ugh != NULL) {
+		DBG(DBG_CONTROL, DBG_log("ERROR: %s", ugh));
+		return FALSE;
+	} else {
+		return TRUE;
+	}
+}
+
+/*
+ * find the appropriate RSA private key (see get_secret).
  * Failure is indicated by a NULL pointer.
  */
 const struct RSA_private_key *get_RSA_private_key(const struct connection *c)
 {
 	struct secret *s = lsw_get_secret(c,
 					  &c->spd.this.id, &c->spd.that.id,
-					  PPK_RSA, TRUE);
+					  PKK_RSA, TRUE);
 	const struct private_key_stuff *pks = NULL;
 
 	if (s != NULL)
@@ -715,7 +783,8 @@ const struct RSA_private_key *get_RSA_private_key(const struct connection *c)
 	return s == NULL ? NULL : &pks->u.RSA_private_key;
 }
 
-/* public key machinery
+/*
+ * public key machinery
  * Note: caller must set dns_auth_level.
  */
 

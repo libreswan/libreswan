@@ -248,10 +248,11 @@ downrule() {
 updateresolvconf() {
     local domain
     local nameserver
+    local new_nameserver
     local new_resolv_conf
+    local new_search
     local orig_domain
     local orig_nameserver
-    local new_search
     local rc
     rc=0
     if [ 0${PLUTO_CFG_CLIENT} -eq 0 ]; then
@@ -296,8 +297,8 @@ updateresolvconf() {
 	orig_domain="$(grep ^domain "${ETC_RESOLV_CONF}" 2>/dev/null | \
 	    awk '{ print $2 }')"
 
-	orig_search="$(grep ^search "${ETC_RESOLV_CONF}" 2>/dev/null | \
-	    sed 's/^search[[:space:]]\+//;s/[[:space:]]*\#.*//')"
+	orig_search=$(grep ^search "${ETC_RESOLV_CONF}" 2>/dev/null | \
+	    sed 's/^search[[:space:]]\+//;s/[[:space:]]*\#.*//')
 
 	if [ -n "${orig_domain}" ]; then
 	    new_resolv_conf="${new_resolv_conf}
@@ -311,7 +312,11 @@ domain ${orig_domain}"
 	fi
 
 	if [ -n "${PLUTO_PEER_DOMAIN_INFO}" ]; then
-	    new_search="${new_search} ${PLUTO_PEER_DOMAIN_INFO}"
+	    if [ -n "${new_search}" ]; then
+		new_search=$(echo $(echo "${new_search} ${PLUTO_PEER_DOMAIN_INFO}" | tr [:space:] '\n' | awk '!a[$0]++'))
+	    else
+		new_search="${PLUTO_PEER_DOMAIN_INFO}"
+	    fi
 	fi
 
 	if [ -n "${new_search}" ]; then
@@ -319,18 +324,18 @@ domain ${orig_domain}"
 search ${new_search}"
 	fi
 
-	if [ -n "${PLUTO_PEER_DNS_INFO}" ]; then
-	    for nameserver in ${PLUTO_PEER_DNS_INFO}; do
-		new_resolv_conf="${new_resolv_conf}
-nameserver ${nameserver}"
-	    done
+	orig_nameserver=$(grep --max-count 1 ^nameserver "${ETC_RESOLV_CONF}" | \
+	    sed 's/^nameserver[[:space:]]\+//;s/[[:space:]]*\#.*//')
+	if [ -n "${orig_nameserver}" ]; then
+	    new_nameserver=$(echo $(echo "${PLUTO_PEER_DNS_INFO} ${orig_nameserver}" | tr [:space:] '\n' | awk '!a[$0]++'))
+	else
+	    new_nameserver="${PLUTO_PEER_DNS_INFO}"
 	fi
 
-	orig_nameserver=$(grep --max-count 1 ^nameserver "${ETC_RESOLV_CONF}")
-	if [ -n "${orig_nameserver}" ]; then
+	for nameserver in ${new_nameserver}; do
 	    new_resolv_conf="${new_resolv_conf}
-${orig_nameserver}"
-	fi
+nameserver ${nameserver}"
+	done
 
 	rm -f -- "${ETC_RESOLV_CONF}"
 	echo "${new_resolv_conf}" > "${ETC_RESOLV_CONF}"
