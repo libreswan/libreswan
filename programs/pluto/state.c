@@ -503,6 +503,22 @@ static char *humanize_number(uint64_t num,
 		}							\
 	})								\
 
+
+/*
+ * Get the IKE SA managing the security association.
+ */
+struct ike_sa *ike_sa(struct state *st)
+{
+	if (st == NULL) {
+		return NULL;
+	} else if (IS_CHILD_SA(st)) {
+		return (struct ike_sa*) state_by_serialno(st->st_clonedfrom);
+	} else {
+		return (struct ike_sa*) st;
+	}
+}
+
+
 /*
  * Get a state object.
  * Caller must schedule an event for this object so that it doesn't leak.
@@ -510,17 +526,15 @@ static char *humanize_number(uint64_t num,
  */
 struct state *new_state(void)
 {
-	/* initialized all to zero & NULL */
-	static const struct state blank_state = {
+	static so_serial_t next_so = SOS_FIRST;
+
+	struct ike_sa *ike = alloc_thing(struct ike_sa, "struct state in new_state()");
+	struct state *st = &ike->sa;
+	*st = (struct state) {
 		.st_whack_sock = NULL_FD,	/* note: not 0 */
 		.st_finite_state = &state_undefined,
+		.st_serialno = next_so++,
 	};
-
-	static so_serial_t next_so = SOS_FIRST;
-	struct state *st;
-
-	st = clone_const_thing(blank_state, "struct state in new_state()");
-	st->st_serialno = next_so++;
 	passert(next_so > SOS_FIRST);   /* overflow can't happen! */
 
 	anyaddr(AF_INET, &st->hidden_variables.st_nat_oa);
@@ -537,6 +551,7 @@ struct state *new_state(void)
 
 	return st;
 }
+
 struct state *new_rstate(struct msg_digest *md)
 {
 	struct state *st = new_state();

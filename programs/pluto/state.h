@@ -652,6 +652,32 @@ struct state {
 	u_int8_t st_reply_xchg;
 };
 
+/*
+ * The IKE and CHILD SAs.
+ *
+ * The terms IKE (parent, phase1) SA and CHILD * (phase2) SA are both
+ * taken from the IKEv2 RFC.
+ *
+ * For the moment, abuse the rule that says you can flip flop between
+ * a structure and a pointer to the structure's first entry.  Perhaps,
+ * one day, new_state() et.al. will be replaced with functions that
+ * return the correct SA.
+ *
+ * In code suggest:
+ *
+ *    struct ike_sa *ike; ike->sa.st_...
+ *    struct child_sa *child; child->sa.st_...
+ *
+ * The function ike_sa() returns the IKE SA that the struct state
+ * belongs to (an IKE SA belongs to its self).
+ */
+
+struct ike_sa { struct state sa; };
+struct ike_sa *ike_sa(struct state *st);
+#if 0
+struct child_sa { struct state sa; };
+#endif
+
 /* global variables */
 
 extern u_int16_t pluto_port;		/* Pluto's port */
