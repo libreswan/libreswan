@@ -1,0 +1,2 @@
+Testing static PPK, west (initiator) insists but east refuses.
+The connection should fail.
