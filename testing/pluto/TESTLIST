@@ -927,3 +927,15 @@ kvmplutotest	ipsec-hostkey-ckaid-01		good
 kvmplutotest	ipsec-hostkey-ckaid-02-fips	good
 kvmplutotest	ipsec-hostkey-ckaid-03-nsspw	good
 
+# PPK
+ikev2-ppk-dynamic-01
+ikev2-ppk-static-01-insist-yes
+ikev2-ppk-static-02-insist-insist
+ikev2-ppk-static-03-no-insist-fail
+ikev2-ppk-static-04-insist-no-fail
+ikev2-ppk-static-05-insist-nokey-insist-fail
+ikev2-ppk-static-06-insist-insist-nokey-fail
+ikev2-ppk-static-07-large-id
+ikev2-ppk-static-08-no_ppk-responder
+ikev2-ppk-static-09-no_ppk-initiator
+
