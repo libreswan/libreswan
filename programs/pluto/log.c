@@ -614,6 +614,21 @@ void close_log(void)
 	peerlog_close();
 }
 
+/* <prefix><state#N...><message>. Errno %d: <strerror> */
+
+void lswlog_errno_prefix(struct lswlog *buf, const char *prefix)
+{
+	lswlogs(buf, prefix);
+	lswlog_log_prefix(buf);
+}
+
+void lswlog_errno_suffix(struct lswlog *buf, int e)
+{
+	lswlogs(buf, ".");
+	lswlog_errno(buf, e);
+	lswlog_to_error_stream(buf);
+}
+
 void libreswan_log_errno(int e, const char *prefix, const char *message, ...)
 {
 	LSWBUF(buf) {
