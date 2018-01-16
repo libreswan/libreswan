@@ -19,11 +19,11 @@
 
 #include "lswlog.h"
 
-size_t lswlog_ip(struct lswlog *buf, const ip_address *ip)
+size_t lswlog_sensitive_ip(struct lswlog *buf, const ip_address *ip)
 {
 	ipstr_buf b;
 	size_t size = 0;
-	size += lswlogs(buf, ipstr(ip, &b));
+	size += lswlogs(buf, sensitive_ipstr(ip, &b));
 	int port = ntohs(portof(ip));
 	if (port != 0) {
 		size += lswlogf(buf, ":%d", port);

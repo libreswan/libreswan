@@ -226,6 +226,7 @@ size_t lswlog_bytes(struct lswlog *log, const uint8_t *bytes,
 		    size_t sizeof_bytes);
 /* ipstr() */
 size_t lswlog_ip(struct lswlog *log, const ip_address*);
+size_t lswlog_sensitive_ip(struct lswlog *log, const ip_address*);
 
 /*
  * The logging output streams used by libreswan.
