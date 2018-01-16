@@ -9,6 +9,7 @@
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2015, 2017 Andrew Cagney
+ * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -83,7 +84,7 @@ static bool ikev2_calculate_psk_sighash(bool verify, struct state *st,
 		enum_name(&ikev2_asym_auth_name, authby)));
 
 	if (authby != AUTH_NULL) {
-		pss = get_preshared_secret(c);
+		pss = get_psk(c);
 		if (pss == NULL) {
 			libreswan_log("No matching PSK found for connection:%s",
 			      st->st_connection->name);
@@ -235,7 +236,9 @@ static bool ikev2_calculate_psk_sighash(bool verify, struct state *st,
 bool ikev2_create_psk_auth(enum keyword_authby authby,
 			      struct state *st,
 			      unsigned char *idhash,
-			      pb_stream *a_pbs)
+			      pb_stream *a_pbs,
+			      bool calc_no_ppk_auth,
+			      chunk_t *no_ppk_auth)
 {
 	unsigned int hash_len = st->st_oakley.ta_prf->prf_output_size;
 	unsigned char signed_octets[hash_len];
@@ -250,10 +253,15 @@ bool ikev2_create_psk_auth(enum keyword_authby authby,
 	}
 
 	DBG(DBG_PRIVATE,
-	    DBG_dump("PSK auth octets", signed_octets, hash_len ));
+	    DBG_dump("PSK auth octets", signed_octets, hash_len));
 
-	if (!out_raw(signed_octets, hash_len, a_pbs, "PSK auth"))
-		return FALSE;
+	if (calc_no_ppk_auth == FALSE) {
+		if (!out_raw(signed_octets, hash_len, a_pbs, "PSK auth"))
+			return FALSE;
+	} else {
+		clonetochunk(*no_ppk_auth, signed_octets, hash_len, "NO_PPK_AUTH chunk");
+		DBG(DBG_CONTROL, DBG_dump_chunk("NO_PPK_AUTH payload", *no_ppk_auth));
+	}
 
 	return TRUE;
 }

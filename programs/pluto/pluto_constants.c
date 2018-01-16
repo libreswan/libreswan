@@ -415,6 +415,8 @@ const char *const sa_policy_bit_names[] = {
 	"IKE_FRAG_FORCE",
 	"NO_IKEPAD",
 	"MOBIKE",
+	"PPK_ALLOW",
+	"PPK_INSIST",
 	"ESN_NO",
 	"ESN_YES",
 	NULL	/* end for bitnamesof() */

@@ -528,6 +528,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "authby",  kv_conn,  kt_enum,  KBF_AUTHBY,  &kw_authby_list, NULL, },
   { "keyexchange",  kv_conn,  kt_enum,  KBF_KEYEXCHANGE,  &kw_keyexchange_list, NULL, },
   { "ikev2",  kv_conn | kv_processed,  kt_enum,  KBF_IKEv2,  &kw_fourvalued_list, NULL, },
+  { "ppk", kv_conn | kv_processed, kt_enum, KBF_PPK, &kw_fourvalued_list, NULL, },
   { "esn",  kv_conn | kv_processed,  kt_enum,  KBF_ESN,  &kw_esn_list, NULL, },
   { "decap-dscp",  kv_conn | kv_processed,  kt_bool,  KBF_DECAP_DSCP,  NULL, NULL, },
   { "ike_frag",  kv_conn | kv_processed | kv_alias,  kt_enum,  KBF_IKE_FRAG,  &kw_ynf_list, NULL, },  /* obsolete _ */

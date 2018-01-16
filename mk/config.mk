@@ -143,6 +143,10 @@ FINALNSSDIR?=/etc/ipsec.d
 #FINALNSSDIR?=/var/lib/ipsec
 NSSDIR?=$(DESTDIR)$(FINALNSSDIR)
 
+# where dynamic PPKs go, for now
+FINALPPKDIR?=$(FINALCONFDDIR)
+PPKDIR?=$(DESTDIR)$(FINALPPKDIR)
+
 # sample configuration files go into
 INC_DOCDIR?=share/doc
 FINALEXAMPLECONFDIR?=$(INC_USRLOCAL)/$(INC_DOCDIR)/libreswan
@@ -548,6 +552,7 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@IPSEC_CONFDDIR@:$(FINALCONFDDIR):g" \
 			-e "s:@IPSEC_RUNDIR@:$(FINALRUNDIR):g" \
 			-e "s:@IPSEC_NSSDIR@:$(FINALNSSDIR):g" \
+			-e "s:@IPSEC_PPKDIR@:$(FINALPPKDIR):g" \
 			-e "s:@IPSEC_DIR@:$(FINALBINDIR):g" \
 			-e "s:@IPSEC_EXECDIR@:$(FINALLIBEXECDIR):g" \
 			-e "s:@IPSEC_VARDIR@:$(FINALVARDIR):g" \

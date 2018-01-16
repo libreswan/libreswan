@@ -265,7 +265,7 @@ void calc_dh_v2(struct pluto_crypto_req *r)
 			 &sk->skey_chunk_SK_pr); /* output */
 }
 
-static PK11SymKey *ikev2_prfplus(const struct prf_desc *prf_desc,
+PK11SymKey *ikev2_prfplus(const struct prf_desc *prf_desc,
 				 PK11SymKey *key, PK11SymKey *seed,
 				 size_t required_keymat)
 {

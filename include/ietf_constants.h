@@ -10,6 +10,7 @@
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
+ * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1480,9 +1481,22 @@ typedef enum {
 	v2N_IKEV2_FRAGMENTATION_SUPPORTED = 16430, /* RFC-7383 */
 	v2N_SIGNATURE_HASH_ALGORITHMS = 16431, /* RFC-7427 */
 
+	v2N_USE_PPK = 40960,            /* draft-ietf-ipsecme-qr-ikev2-01 */
+	v2N_PPK_IDENTITY = 40961,       /* draft-ietf-ipsecme-qr-ikev2-01 */
+	v2N_NO_PPK_AUTH = 40962,        /* draft-ietf-ipsecme-qr-ikev2-01 */
+
 	/* 16432 - 40969 Unassigned */
 	/* 40960 - 65535 Private Use */
 } v2_notification_t;
+
+/* draft-ietf-ipsecme-qr-ikev2-01 created registry */
+enum ppk_id_type {
+	PPK_ID_OPAQUE = 1,
+	PPK_ID_FIXED = 2,
+
+	/* 3 - 127      Reserved for IANA */
+	/* 128 - 255    Private Use */
+};
 
 /* Public key algorithm number in IPSECKEY DNS RR. See RFC 4025 2.4 */
 enum pubkey_alg {

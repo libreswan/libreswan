@@ -7,6 +7,7 @@
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -118,6 +119,11 @@ struct private_key_stuff {
 		struct RSA_private_key RSA_private_key;
 		/* struct smartcard *smartcard; */
 	} u;
+
+	chunk_t ppk;
+	chunk_t ppk_id;
+
+	char *filename;
 };
 
 extern struct private_key_stuff *lsw_get_pks(struct secret *s);
@@ -224,6 +230,9 @@ extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					    const struct id *my_id,
 					    const struct id *his_id,
 					    bool asym);
+
+extern err_t lsw_update_dynamic_ppk_secret(char *fn);
+extern struct secret *lsw_get_ppk_by_id(struct secret *secrets, chunk_t ppk_id);
 
 extern void lock_certs_and_keys(const char *who);
 extern void unlock_certs_and_keys(const char *who);

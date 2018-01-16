@@ -214,7 +214,7 @@ OBJS += ikev2_ipseckey.o
 endif
 OBJS += ikev1.o ikev1_main.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_struct.o ikev1_msgid.o
 OBJS += ikev2.o ikev2_parent.o ikev2_child.o ikev2_spdb_struct.o
-OBJS += ikev2_rsa.o ikev2_psk.o ikev2_crypto.o
+OBJS += ikev2_rsa.o ikev2_psk.o ikev2_ppk.o ikev2_crypto.o
 OBJS += crypt_symkey.o crypt_prf.o ikev1_prf.o ikev2_prf.o
 OBJS += crypt_hash.o
 OBJS += kernel.o

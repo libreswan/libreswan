@@ -12,7 +12,8 @@
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -148,7 +149,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 		POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW |	/* ikev2=permit */
 		POLICY_SAREF_TRACK |         /* sareftrack=yes */
 		POLICY_IKE_FRAG_ALLOW |      /* ike_frag=yes */
-		POLICY_ESN_NO;      /* esn=no */
+		POLICY_ESN_NO;      	     /* esn=no */
 
 	cfg->conn_default.options[KBF_NIC_OFFLOAD] = nic_offload_auto;
 	cfg->conn_default.options[KBF_IKELIFETIME] = IKE_SA_LIFETIME_DEFAULT;
@@ -1276,6 +1277,30 @@ static bool load_conn(
 			break;
 		}
 		conn->policy = (conn->policy & ~POLICY_IKEV2_MASK) | pv2;
+	}
+
+	if (conn->options_set[KBF_PPK]) {
+		lset_t ppk = LEMPTY;
+
+		if (~(conn->policy & POLICY_IKEV1_ALLOW)) {
+			switch (conn->options[KBF_PPK]) {
+			case fo_propose:
+				ppk = POLICY_PPK_ALLOW;
+				break;
+
+			case fo_permit:
+				ppk = POLICY_PPK_ALLOW;
+				break;
+
+			case fo_insist:
+				ppk = POLICY_PPK_ALLOW | POLICY_PPK_INSIST;
+				break;
+
+			case fo_never:
+				break;
+			}
+		}
+		conn->policy = conn->policy | ppk;
 	}
 
 	if (conn->options_set[KBF_ESN]) {

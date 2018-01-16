@@ -18,6 +18,7 @@
  * Copyright (C) 2015-2017 Antony Antony <antony@phenome.org>
  * Copyright (C) 2015-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2017 Richard Guy Briggs <rgb@tricolour.ca>
+ * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -819,32 +820,33 @@ static void delete_state_log(struct state *st, struct state *cur_state)
 	if ((c->policy & POLICY_OPPORTUNISTIC) && !IS_IKE_SA_ESTABLISHED(st)) {
 		/* reduced logging of OE failures */
 		DBG(DBG_LIFECYCLE, {
-				char cib[CONN_INST_BUF];
-				DBG_log("deleting state #%lu (%s) \"%s\"%s%s",
-					st->st_serialno,
-					st->st_state_name,
-					c->name,
-					fmt_conn_instance(c, cib), send_inf);
-		});
-	} else if (cur_state != NULL && cur_state == st) {
-		/*
-		 * Don't log state and connection if it is the same as
-		 * the message prefix.
-		 */
-		libreswan_log("deleting state (%s)%s",
-				st->st_state_name, send_inf);
-	} else if (cur_state != NULL && cur_state->st_connection == st->st_connection) {
-		libreswan_log("deleting other state #%lu (%s)%s",
-				st->st_serialno,
-				st->st_state_name,
-				send_inf);
-	} else {
-		char cib[CONN_INST_BUF];
-		libreswan_log("deleting other state #%lu connection (%s) \"%s\"%s%s",
+			char cib[CONN_INST_BUF];
+
+			DBG_log("deleting state #%lu (%s) \"%s\"%s%s",
 				st->st_serialno,
 				st->st_state_name,
 				c->name,
 				fmt_conn_instance(c, cib), send_inf);
+	});
+	} else if (cur_state != NULL && cur_state == st) {
+		/*
+		* Don't log state and connection if it is the same as
+		* the message prefix.
+		*/
+		libreswan_log("deleting state (%s)%s",
+			st->st_state_name, send_inf);
+	} else if (cur_state != NULL && cur_state->st_connection == st->st_connection) {
+		libreswan_log("deleting other state #%lu (%s)%s",
+			st->st_serialno,
+			st->st_state_name,
+			send_inf);
+	} else {
+		char cib[CONN_INST_BUF];
+		libreswan_log("deleting other state #%lu connection (%s) \"%s\"%s%s",
+			st->st_serialno,
+			st->st_state_name,
+			c->name,
+			fmt_conn_instance(c, cib), send_inf);
 	}
 
 	DBG(DBG_CONTROLMORE, {
@@ -1122,6 +1124,11 @@ void delete_state(struct state *st)
 	free_any_nss_symkey(st->st_skey_pi_nss);
 	free_any_nss_symkey(st->st_skey_pr_nss);
 	free_any_nss_symkey(st->st_enc_key_nss);
+
+	free_any_nss_symkey(st->st_sk_d_no_ppk);
+	free_any_nss_symkey(st->st_sk_pi_no_ppk);
+	free_any_nss_symkey(st->st_sk_pr_no_ppk);
+
 #   undef free_any_nss_symkey
 
 	freeanychunk(st->st_skey_initiator_salt);
@@ -1148,6 +1155,8 @@ void delete_state(struct state *st)
 	pfreeany(st->st_seen_cfg_dns);
 	pfreeany(st->st_seen_cfg_domains);
 	pfreeany(st->st_seen_cfg_banner);
+
+	freeanychunk(st->st_no_ppk_auth);
 
 #ifdef HAVE_LABELED_IPSEC
 	pfreeany(st->sec_ctx);
@@ -1435,6 +1444,7 @@ struct state *duplicate_state(struct state *st, sa_t sa_type)
 	nst->st_original_role = st->st_original_role;
 	nst->st_seen_fragvid = st->st_seen_fragvid;
 	nst->st_seen_fragments = st->st_seen_fragments;
+	nst->st_seen_ppk = st->st_seen_ppk;
 	nst->st_event = NULL;
 
 
@@ -1450,6 +1460,10 @@ struct state *duplicate_state(struct state *st, sa_t sa_type)
 		clone_nss_symkey_field(st_skey_pi_nss);
 		clone_nss_symkey_field(st_skey_pr_nss);
 		clone_nss_symkey_field(st_enc_key_nss);
+
+		clone_nss_symkey_field(st_sk_d_no_ppk);
+		clone_nss_symkey_field(st_sk_pi_no_ppk);
+		clone_nss_symkey_field(st_sk_pr_no_ppk);
 #   undef clone_nss_symkey_field
 
 #   define clone_any_chunk(field) { \
