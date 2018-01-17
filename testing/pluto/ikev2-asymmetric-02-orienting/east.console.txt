@@ -21,7 +21,7 @@ east #
 002 adding interface eth1/eth1 192.1.2.24:4500
 002 forgetting secrets
 002 loading secrets from "/etc/ipsec.secrets"
-002 loaded private key for keyid: PPK_RSA:AQO9bJbr3
+002 loaded private key for keyid: PKK_RSA:AQO9bJbr3
 east #
  # should be oriented
 east #
