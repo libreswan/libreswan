@@ -79,7 +79,7 @@ void init_demux(void)
 }
 
 /* forward declarations */
-static bool read_packet(struct msg_digest *md);
+static struct msg_digest *read_packet(const struct iface_port *ifp);
 
 /* Reply messages are built in this buffer.
  * Only one state transition function can be using it at a time
@@ -351,8 +351,6 @@ static void impair_incoming(struct msg_digest *md)
  */
 static void comm_handle(const struct iface_port *ifp)
 {
-	struct msg_digest *md;
-
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
 	/* Even though select(2) says that there is a message,
 	 * it might only be a MSG_ERRQUEUE message.  At least
@@ -369,22 +367,16 @@ static void comm_handle(const struct iface_port *ifp)
 
 #endif /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
 
-	/*
-	 * XXX: should read_packet() allocate the MD _after_ it has
-	 * verified the packet?
-	 */
-	md = alloc_md("msg_digest in comm_handle");
-	md->iface = ifp;
 
-	if (read_packet(md)) {
+	struct msg_digest *md = read_packet(ifp);
+	if (md != NULL) {
 		if (incoming_impaired()) {
 			impair_incoming(md);
 		} else {
 			process_packet(&md);
 		}
+		release_any_md(&md);
 	}
-
-	release_any_md(&md);
 
 	reset_cur_state();
 	reset_cur_connection();
@@ -397,9 +389,8 @@ static void comm_handle(const struct iface_port *ifp)
  * an overly large buffer and then copy it to a
  * new, properly sized buffer.
  */
-static bool read_packet(struct msg_digest *md)
+static struct msg_digest *read_packet(const struct iface_port *ifp)
 {
-	const struct iface_port *ifp = md->iface;
 	int packet_len;
 	/* ??? this buffer seems *way* too big */
 	u_int8_t bigbuffer[MAX_INPUT_UDP_SIZE];
@@ -502,12 +493,12 @@ static bool read_packet(struct msg_digest *md)
 			}
 		}
 
-		return FALSE;
+		return NULL;
 	} else if (from_ugh != NULL) {
 		libreswan_log(
 			"recvfrom on %s returned malformed source sockaddr: %s",
 			ifp->ip_dev->id_rname, from_ugh);
-		return FALSE;
+		return NULL;
 	}
 
 	if (ifp->ike_float) {
@@ -520,7 +511,7 @@ static bool read_packet(struct msg_digest *md)
 				lswlogf(buf, " too small packet (%d)",
 					packet_len);
 			}
-			return FALSE;
+			return NULL;
 		}
 		memcpy(&non_esp, _buffer, sizeof(u_int32_t));
 		if (non_esp != 0) {
@@ -529,16 +520,51 @@ static bool read_packet(struct msg_digest *md)
 				lswlog_ip(buf, &sender);
 				lswlogs(buf, " has no Non-ESP marker");
 			}
-			return FALSE;
+			return NULL;
 		}
 		_buffer += sizeof(u_int32_t);
 		packet_len -= sizeof(u_int32_t);
 	}
 
+	/* We think that in 2013 Feb, Apple iOS Racoon
+	 * sometimes generates an extra useless buggy confusing
+	 * Non ESP Marker
+	 */
+	{
+		static const u_int8_t non_ESP_marker[NON_ESP_MARKER_SIZE] =
+			{ 0x00, };
+		if (ifp->ike_float &&
+		    packet_len >= NON_ESP_MARKER_SIZE &&
+		    memeq(_buffer, non_ESP_marker,
+			   NON_ESP_MARKER_SIZE)) {
+			LSWLOG(buf) {
+				lswlogs(buf, "Mangled packet with potential spurious non-esp marker ignored. Sender: ");
+				lswlog_ip(buf, &sender); /* sensitiv? */
+			}
+			return NULL;
+		}
+	}
+
+	if (packet_len == 1 && _buffer[0] == 0xff) {
+		/**
+		 * NAT-T Keep-alive packets should be discared by kernel ESPinUDP
+		 * layer. But boggus keep-alive packets (sent with a non-esp marker)
+		 * can reach this point. Complain and discard them.
+		 */
+		LSWDBGP(DBG_NATT, buf) {
+			lswlogs(buf, "NAT-T keep-alive (boggus ?) should not reach this point. Ignored. Sender: ");
+			lswlog_ip(buf, &sender);
+		};
+		return NULL;
+	}
+
+
 	/*
 	 * Clone actual message contents and set up md->packet_pbs to
 	 * describe it.
 	 */
+	struct msg_digest *md = alloc_md("msg_digest in read_packet");
+	md->iface = ifp;
 
 	md->sender = sender;
 	md->sender_port = ntohs(portof(&sender));
@@ -564,52 +590,7 @@ static bool read_packet(struct msg_digest *md)
 
 	pstats_ike_in_bytes += pbs_room(&md->packet_pbs);
 
-	/* We think that in 2013 Feb, Apple iOS Racoon
-	 * sometimes generates an extra useless buggy confusing
-	 * Non ESP Marker
-	 */
-	{
-		static const u_int8_t non_ESP_marker[NON_ESP_MARKER_SIZE] =
-			{ 0x00, };
-
-		/*
-		 * XXX: shouldn't this check use _buffer and
-		 * packet_len and be performed before the MD gets
-		 * allocated and populated?
-		 */
-		pexpect((int)pbs_left(&md->packet_pbs) == packet_len);
-		pexpect(memeq(md->packet_pbs.cur, _buffer,
-			      min(packet_len, NON_ESP_MARKER_SIZE)));
-		if (md->iface->ike_float &&
-		    pbs_left(&md->packet_pbs) >= NON_ESP_MARKER_SIZE &&
-		    memeq(md->packet_pbs.cur, non_ESP_marker,
-			   NON_ESP_MARKER_SIZE)) {
-				libreswan_log("Mangled packet with potential spurious non-esp marker ignored");
-				return FALSE;
-		}
-	}
-
-	/*
-	 * XXX: shouldn't this check use _buffer and packet_len and be
-	 * performed before the MD gets allocated and populated?
-	 */
-	pexpect((int)pbs_room(&md->packet_pbs) == packet_len);
-	pexpect(md->packet_pbs.start[0] == _buffer[0]);
-	if ((pbs_room(&md->packet_pbs) == 1) &&
-	    (md->packet_pbs.start[0] == 0xff)) {
-		/**
-		 * NAT-T Keep-alive packets should be discared by kernel ESPinUDP
-		 * layer. But boggus keep-alive packets (sent with a non-esp marker)
-		 * can reach this point. Complain and discard them.
-		 */
-		LSWDBGP(DBG_NATT, buf) {
-			lswlogs(buf, "NAT-T keep-alive (boggus ?) should not reach this point. Ignored. Sender: ");
-			lswlog_ip(buf, &sender);
-		};
-		return FALSE;
-	}
-
-	return TRUE;
+	return md;
 }
 
 /* Auxiliary function for modecfg_inR1() */
