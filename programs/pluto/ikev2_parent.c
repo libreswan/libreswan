@@ -3403,6 +3403,8 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 						v2N_USE_TRANSPORT_MODE, &empty_chunk,
 						&e_pbs_cipher))
 				return STF_INTERNAL_ERROR;
+		} else {
+			DBG(DBG_CONTROL, DBG_log("Initiator child policy is tunnel mode, NOT sending v2N_USE_TRANSPORT_MODE"));
 		}
 
 		if (cc->send_no_esp_tfc) {
@@ -3907,8 +3909,14 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 			}
 		}
 
+		if (LIN(POLICY_TUNNEL, c->policy) == LEMPTY && st->st_seen_use_transport) {
+			notifies++; /* send USE_TRANSPORT */
+		}
+		if (c->send_no_esp_tfc) {
+			notifies++; /* send ESP_TFC_PADDING_NOT_SUPPORTED */
+		}
 		if (st->st_ppk_used) {
-			notifies++;
+			notifies++; /* send USE_PPK */
 		}
 
 		/* make sure HDR is at start of a clean buffer */
@@ -3978,6 +3986,28 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 					PROTO_v2_RESERVED,
 					&empty_chunk,
 					v2N_PPK_IDENTITY, &empty_chunk,
+					&e_pbs_cipher))
+				return STF_INTERNAL_ERROR;
+		}
+
+		if (LIN(POLICY_TUNNEL, c->policy) == LEMPTY && st->st_seen_use_transport) {
+			notifies--;
+			if (!ship_v2N((notifies != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2IDr,
+					ISAKMP_PAYLOAD_NONCRITICAL,
+					PROTO_v2_RESERVED,
+					&empty_chunk,
+					v2N_USE_TRANSPORT_MODE, &empty_chunk,
+					&e_pbs_cipher))
+				return STF_INTERNAL_ERROR;
+		}
+
+		if (c->send_no_esp_tfc) {
+			notifies--;
+			if (!ship_v2N((notifies != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2IDr,
+					ISAKMP_PAYLOAD_NONCRITICAL,
+					PROTO_v2_RESERVED,
+					&empty_chunk,
+					v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &empty_chunk,
 					&e_pbs_cipher))
 				return STF_INTERNAL_ERROR;
 		}
@@ -4404,31 +4434,37 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 	if (md->hdr.isa_xchg != ISAKMP_v2_CREATE_CHILD_SA)
 		RETURN_STF_FAILURE_STATUS(ikev2_process_child_sa_pl(md, TRUE));
 
-	/* examine each notification payload */
+	/* examine notification payloads for Child SA properties */
 	{
-		struct payload_digest *p;
+		struct payload_digest *ntfy;
 
-		for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {
-			/* RFC 5996 */
-			/* Types in the range 0 - 16383 are intended for reporting errors.  An
+		for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
+			/*
+			 * https://tools.ietf.org/html/rfc7296#section-3.10.1
+			 *
+			 * Types in the range 0 - 16383 are intended for reporting errors.  An
 			 * implementation receiving a Notify payload with one of these types
 			 * that it does not recognize in a response MUST assume that the
 			 * corresponding request has failed entirely.  Unrecognized error types
 			 * in a request and status types in a request or response MUST be
 			 * ignored, and they should be logged.
+			 *
+			 * No known error notify would allow us to continue, so we can fail
+			 * whether the error notify is known or unknown.
 			 */
-			if (enum_name(&ikev2_notify_names,
-				      p->payload.v2n.isan_type) == NULL) {
-				if (p->payload.v2n.isan_type <
-				    v2N_INITIAL_CONTACT)
-					return STF_FAIL +
-					       p->payload.v2n.isan_type;
+			if (ntfy->payload.v2n.isan_type < v2N_INITIAL_CONTACT) {
+				loglog(RC_LOG_SERIOUS, "received ERROR NOTIFY (%d): %s ",
+					ntfy->payload.v2n.isan_type,
+					enum_name(&ikev2_notify_names, ntfy->payload.v2n.isan_type));
+				return STF_FATAL;
 			}
 
-			if (p->payload.v2n.isan_type ==
-			    v2N_USE_TRANSPORT_MODE) {
+			/* check for status notify messages */
+			switch (ntfy->payload.v2n.isan_type) {
+			case v2N_USE_TRANSPORT_MODE:
+			{
 				if (st->st_connection->policy & POLICY_TUNNEL) {
-					/* This means we did not send v2N_USE_TRANSPORT, however responder is sending it in now (inR2), seems incorrect */
+					/* This means we did not send v2N_USE_TRANSPORT, however responder is sending it in now, seems incorrect */
 					DBG(DBG_CONTROLMORE,
 					    DBG_log("Initiator policy is tunnel, responder sends v2N_USE_TRANSPORT_MODE notification in inR2, ignoring it"));
 				} else {
@@ -4443,6 +4479,19 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 							= ENCAPSULATION_MODE_TRANSPORT;
 					}
 				}
+				break;
+			}
+			case v2N_ESP_TFC_PADDING_NOT_SUPPORTED:
+			{
+				DBG(DBG_CONTROLMORE, DBG_log("Received ESP_TFC_PADDING_NOT_SUPPORTED - disabling TFC"));
+				st->st_seen_no_tfc = TRUE;
+				break;
+			}
+			default:
+				DBG(DBG_CONTROLMORE,
+					DBG_log("ignored received NOTIFY (%d): %s ",
+						ntfy->payload.v2n.isan_type,
+						enum_name(&ikev2_notify_names, ntfy->payload.v2n.isan_type)));
 			}
 		} /* for */
 	} /* notification block */
@@ -4505,6 +4554,8 @@ stf_status ikev2parent_inR2(struct state *st, struct msg_digest *md)
 			st->st_seen_no_tfc = TRUE; /* Technically, this should be only on the child sa */
 			break;
 		case v2N_USE_TRANSPORT_MODE:
+			DBG(DBG_CONTROLMORE, DBG_log("Received v2N_USE_TRANSPORT_MODE in IKE_AUTH reply"));
+			st->st_seen_use_transport = TRUE; /* might be useful at rekey time */
 			got_transport = TRUE;
 			break;
 		case v2N_MOBIKE_SUPPORTED:
@@ -5076,6 +5127,8 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 					v2N_USE_TRANSPORT_MODE, &empty_chunk,
 					outpbs))
 			return STF_INTERNAL_ERROR;
+	} else {
+		DBG(DBG_CONTROL, DBG_log("Initiator child policy is tunnel mode, NOT sending v2N_USE_TRANSPORT_MODE"));
 	}
 
 	if (cc->send_no_esp_tfc) {

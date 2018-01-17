@@ -993,11 +993,12 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	c = cst->st_connection;
 
 	/*
-	 * The notifies are read into the parent state even though it is
-	 * child state related
+	 * The notifies have not yet been processed here, so we cannot
+	 * look at st_seen_use_transport in either st or pst.
+	 * If we change to comply to RFC style transport mode
+	 * negotiation, reading ntfy's will have to be done here.
 	 */
-	send_use_transport = ( pst->st_seen_use_transport &&
-		 (c->policy & POLICY_TUNNEL) == LEMPTY);
+	send_use_transport = ((c->policy & POLICY_TUNNEL) == LEMPTY);
 
 	if (c->spd.that.has_lease &&
 			md->chain[ISAKMP_NEXT_v2CP] != NULL &&
