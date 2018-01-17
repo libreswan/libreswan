@@ -309,7 +309,9 @@ int resolve_defaultroute_one(struct starter_end *host,
 	if (!seeking_src && !seeking_gateway)
 		return 0;	/* this end already figured out */
 
+	/* msgbuf is dynamically allocated since the buffer may need to be grown */
 	char *msgbuf = alloc_bytes(RTNL_BUFSIZE, "netlink query");
+
 	bool has_dst = FALSE;
 	int query_again = 0;
 
@@ -374,6 +376,7 @@ int resolve_defaultroute_one(struct starter_end *host,
 			query_again = 1;
 		}
 	}
+
 	if (has_dst && host->addrtype == KH_IPADDR) {
 		/* SRC works only with DST */
 		netlink_query_add(msgbuf, RTA_SRC, &host->addr);
