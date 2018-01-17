@@ -50,7 +50,7 @@
 #include "lswlog.h"
 #include "whack.h"
 #include "id.h"
-
+#include "ip_address.h"
 
 static void update_ports(struct whack_message * m)
 {

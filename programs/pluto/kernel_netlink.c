@@ -86,6 +86,7 @@
 #include "ike_alg_twofish.h"
 #include "ike_alg_serpent.h"
 #include "ike_alg_cast.h"
+#include "ip_address.h"
 
 /* required for Linux 2.6.26 kernel and later */
 #ifndef XFRM_STATE_AF_UNSPEC

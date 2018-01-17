@@ -154,6 +154,7 @@
 #include "vendor.h"
 #include "ikev1_dpd.h"
 #include "hostpair.h"
+#include "ip_address.h"
 
 #ifdef HAVE_NM
 #include "kernel.h"

@@ -16,6 +16,7 @@
 #include "internal.h"
 #include "libreswan.h"
 #include "constants.h"
+#include "ip_address.h"
 
 /*
  * subnettot - convert subnet to text "addr/bitcount"

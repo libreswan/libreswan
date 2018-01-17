@@ -15,6 +15,7 @@
  */
 #include "internal.h"
 #include "libreswan.h"
+#include "ip_address.h"
 
 /*
  * portof - get the port field of an ip_address in network order.
@@ -85,4 +86,18 @@ size_t sockaddrlenof(const ip_address * src)
 	default:
 		return 0;
 	}
+}
+
+/*
+ * simplified interface to addrtot()
+ *
+ * Caller should allocate a buffer to hold the result as long
+ * as the resulting string is needed.  Usually just long enough
+ * to output.
+ */
+
+const char *ipstr(const ip_address *src, ipstr_buf *b)
+{
+	addrtot(src, 0, b->private_buf, sizeof(b->private_buf));
+	return b->private_buf;
 }

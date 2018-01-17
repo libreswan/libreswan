@@ -64,6 +64,7 @@
 #include "lsw_select.h"
 #include "alg_info.h"
 #include "kernel_alg.h"
+#include "ip_address.h"
 
 #define KLIPS_OP_MASK   0xFF
 #define KLIPS_OP_FLAG_SHIFT     8

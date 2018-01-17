@@ -18,6 +18,7 @@
 #include <stdarg.h>
 
 #include "lswlog.h"
+#include "ip_address.h"
 
 size_t lswlog_sensitive_ip(struct lswlog *buf, const ip_address *ip)
 {

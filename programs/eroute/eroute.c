@@ -46,7 +46,7 @@
 #include "lswlog.h"
 #include "pfkey_help.h"
 #include "libreswan/pfkey_debug.h"
-
+#include "ip_address.h"
 #include "lsw_select.h"
 
 const char *progname;

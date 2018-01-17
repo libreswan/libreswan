@@ -87,6 +87,7 @@
 #include "lswfips.h"
 #include "crypto.h"
 #include "kernel_netlink.h"
+#include "ip_address.h"
 
 struct connection *connections = NULL;
 

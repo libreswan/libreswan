@@ -81,6 +81,7 @@
 #include "ikev1_dpd.h"
 #include "pluto_x509.h"
 #include "alg_info.h"
+#include "ip_address.h"
 
 #include <blapit.h>
 

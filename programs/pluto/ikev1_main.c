@@ -85,6 +85,7 @@
 #include "pluto_x509.h"
 
 #include "lswfips.h"
+#include "ip_address.h"
 
 /*
  * Initiate an Oakley Main Mode exchange.

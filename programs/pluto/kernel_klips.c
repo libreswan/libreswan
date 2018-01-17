@@ -50,6 +50,7 @@
 
 #include "alg_info.h"
 #include "kernel_alg.h"
+#include "ip_address.h"
 
 static void klips_process_raw_ifaces(struct raw_iface *rifaces)
 {

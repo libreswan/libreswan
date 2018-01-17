@@ -50,6 +50,7 @@
 #include "lswlog.h"
 #include "defs.h"
 #include "whack.h"
+#include "ip_address.h"
 
 #include "ipsecconf/confread.h" /* for DEFAULT_UPDOWN */
 #include <net/if.h> /* for IFNAMSIZ */

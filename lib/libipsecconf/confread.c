@@ -35,6 +35,7 @@
 #include <sys/queue.h>
 
 #include "lswalloc.h"
+#include "ip_address.h"
 
 #include "ipsecconf/confread.h"
 #include "ipsecconf/starterlog.h"

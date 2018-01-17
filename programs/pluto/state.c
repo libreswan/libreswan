@@ -83,6 +83,7 @@
 
 #include "pluto_stats.h"
 #include "ikev2_ipseckey.h"
+#include "ip_address.h"
 
 static void update_state_stats(struct state *st, enum state_kind old_state,
 			       enum state_kind new_state);

@@ -66,6 +66,7 @@
 #include "spdb.h"
 #include "nat_traversal.h"
 #include "vendor.h"
+#include "ip_address.h"
 
 #include "alg_info.h" /* for ike_info / esp_info */
 

@@ -67,7 +67,7 @@
 #include "ikev2.h"
 #include "ike_alg_sha1.h"
 #include "crypt_hash.h"
-
+#include "ip_address.h"
 #include "cookie.h"
 #include "crypto.h"
 #include "vendor.h"

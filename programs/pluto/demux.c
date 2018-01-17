@@ -66,6 +66,7 @@
 #include "timer.h"
 #include "udpfromto.h"
 
+#include "ip_address.h"
 #include "pluto_stats.h"
 
 /* This file does basic header checking and demux of

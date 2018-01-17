@@ -27,6 +27,7 @@
 #include "constants.h"
 #include "lswlog.h"
 #include "lmod.h"
+#include "ip_address.h"
 
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"

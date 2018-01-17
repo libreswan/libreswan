@@ -65,6 +65,7 @@
 #include "pluto_crypt.h"
 #include "ikev1.h"
 #include "ikev1_continuations.h"
+#include "ip_address.h"
 
 #include "ikev1_xauth.h"
 

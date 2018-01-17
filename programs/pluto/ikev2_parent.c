@@ -75,7 +75,7 @@
 #include "xauth.h"
 #include "crypt_dh.h"
 #include "ietf_constants.h"
-
+#include "ip_address.h"
 #include "hostpair.h"
 
 #include "pluto_stats.h"
