@@ -1078,6 +1078,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			st = find_state_ikev1_init(md->hdr.isa_icookie,
 						   md->hdr.isa_msgid);
 			if (st != NULL) {
+				so_serial_t old_state = push_cur_state(st);
 				if (!ikev1_duplicate(st, md)) {
 					/*
 					 * Not a duplicate for the
@@ -1090,8 +1091,10 @@ void process_v1_packet(struct msg_digest **mdp)
 					libreswan_log("discarding initial packet; already %s",
 						      st->st_state_name);
 				}
+				pop_cur_state(old_state);
 				return;
 			}
+			passert(st == NULL); /* new state needed */
 			/* don't build a state until the message looks tasty */
 			from_state = (md->hdr.isa_xchg == ISAKMP_XCHG_IDPROT ?
 				      STATE_MAIN_R0 : STATE_AGGR_R0);
