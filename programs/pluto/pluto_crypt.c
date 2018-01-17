@@ -90,8 +90,6 @@ struct pluto_crypto_req_cont {
 	const char *pcrc_name;
 	struct pluto_crypto_req pcrc_pcr;
 	pcr_req_id pcrc_id;
-	pb_stream pcrc_reply_stream;	/* reply stream of suspended state transition */
-	u_int8_t *pcrc_reply_buffer;	/* saved buffer contents (if any) */
 	int pcrc_helpernum;
 };
 
@@ -250,7 +248,6 @@ static void pcrc_release_request(struct pluto_crypto_req_cont *cn)
 {
 	pcr_release(&cn->pcrc_pcr);
 	/* free the heap space */
-	pfreeany(cn->pcrc_reply_buffer);
 	pfree(cn);
 }
 
@@ -488,16 +485,6 @@ void send_crypto_helper_request(struct state *st,
 	static pcr_req_id pcw_id;	/* counter for generating unique request IDs */
 	cn->pcrc_id = ++pcw_id;
 
-	/* copy partially built reply stream to heap */
-	cn->pcrc_reply_stream = reply_stream;
-	if (pbs_offset(&reply_stream) == 0) {
-		cn->pcrc_reply_buffer = NULL;
-	} else {
-		cn->pcrc_reply_buffer = clone_bytes(reply_stream.start,
-						    pbs_offset(&reply_stream),
-						    "saved reply buffer");
-	}
-
 	/*
 	 * Save in case it needs to be cancelled.
 	 */
@@ -577,14 +564,6 @@ static void handle_helper_answer(void *arg)
 	DBG(DBG_CONTROL,
 		DBG_log("calling continuation function %p",
 			cn->pcrc_func));
-
-	reply_stream = cn->pcrc_reply_stream;
-	if (cn->pcrc_reply_buffer != NULL) {
-		memcpy(reply_stream.start, cn->pcrc_reply_buffer,
-		       pbs_offset(&reply_stream));
-		pfree(cn->pcrc_reply_buffer);
-	}
-	cn->pcrc_reply_buffer = NULL;
 
 	/*
 	 * call the continuation (skip if suppressed)
