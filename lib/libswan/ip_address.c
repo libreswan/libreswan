@@ -22,7 +22,8 @@
  *
  * Return -1 if ip_address isn't valid.
  */
-int portof(const ip_address * src)
+
+int nportof(const ip_address * src)
 {
 	switch (src->u.v4.sin_family) {
 	case AF_INET:
@@ -36,11 +37,22 @@ int portof(const ip_address * src)
 	}
 }
 
+int hportof(const ip_address *src)
+{
+	int nport = nportof(src);
+	if (nport >= 0) {
+		return ntohs(nport);
+	} else {
+		return -1;
+	}
+}
+
 /*
  * setportof - set the network ordered port field of an ip_address
  */
-void setportof(int port /* network order */,
-	       ip_address *dst)
+
+void nsetportof(int port /* network order */,
+		ip_address *dst)
 {
 	switch (dst->u.v4.sin_family) {
 	case AF_INET:
@@ -50,6 +62,12 @@ void setportof(int port /* network order */,
 		dst->u.v6.sin6_port = port;
 		break;
 	}
+}
+
+void hsetportof(int port /* host byte order */,
+		ip_address *dst)
+{
+	nsetportof(htons(port), dst);
 }
 
 /*
