@@ -69,7 +69,6 @@ struct msg_digest {
 	chunk_t raw_packet;			/* (v1) if encrypted, received packet before decryption */
 	const struct iface_port *iface;		/* interface on which message arrived */
 	ip_address sender;			/* where message came from (network order) */
-	u_int16_t sender_port;			/* host order */
 	pb_stream packet_pbs;			/* whole packet */
 	pb_stream message_pbs;			/* message to be processed */
 	pb_stream clr_pbs;			/* (v2) decrypted packet (within v2E payload) */

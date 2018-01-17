@@ -213,7 +213,6 @@ static struct msg_digest *dup_md(struct msg_digest *orig)
 	/* raw_packet */
 	dup->iface = orig->iface;
 	dup->sender = orig->sender;
-	dup->sender_port = orig->sender_port;
 	/* packet_pbs ... */
 	size_t packet_size = pbs_room(&orig->packet_pbs);
 	void *packet_bytes = clone_bytes(orig->packet_pbs.start, packet_size, "dup packet");
@@ -564,9 +563,7 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 	 */
 	struct msg_digest *md = alloc_md("msg_digest in read_packet");
 	md->iface = ifp;
-
 	md->sender = sender;
-	md->sender_port = ntohs(portof(&sender));
 
 	init_pbs(&md->packet_pbs
 		 , clone_bytes(_buffer, packet_len,

@@ -585,7 +585,7 @@ stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
 	/* random source ports are handled by find_host_connection */
 	c = find_host_connection(
 		&md->iface->ip_addr, pluto_port,
-		&md->sender, md->sender_port,
+		&md->sender, hportof(&md->sender),
 		POLICY_IKEV1_ALLOW, POLICY_AGGRESSIVE | POLICY_IKEV1_ALLOW);
 
 	if (c == NULL) {
@@ -613,7 +613,7 @@ stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
 		{
 			struct connection *d = find_host_connection(
 				&md->iface->ip_addr, pluto_port,
-				(ip_address *)NULL, md->sender_port,
+				(ip_address *)NULL, hportof(&md->sender),
 				policy, POLICY_XAUTH | POLICY_AGGRESSIVE | POLICY_IKEV1_ALLOW);
 
 			while (d != NULL) {
@@ -738,7 +738,7 @@ stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
 
 		libreswan_log("responding to Main Mode from unknown peer %s on port %u",
 			sensitive_ipstr(&c->spd.that.host_addr, &b),
-			md->sender_port);
+			hportof(&md->sender));
 		DBG(DBG_CONTROL, DBG_dump("  ICOOKIE-DUMP:", st->st_icookie, COOKIE_SIZE));
 	} else {
 		libreswan_log("responding to Main Mode");

@@ -1609,8 +1609,6 @@ void process_v1_packet(struct msg_digest **mdp)
 
 					whole_md->iface = frag->md->iface;
 					whole_md->sender = frag->md->sender;
-					whole_md->sender_port =
-						frag->md->sender_port;
 
 					/* Reassemble fragments in buffer */
 					frag = st->st_v1_rfrags;
@@ -1706,7 +1704,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			ipstr_buf b;
 			DBG_log("received encrypted packet from %s:%u but exponentiation still in progress",
 				ipstr(&md->sender, &b),
-				(unsigned)md->sender_port);
+				(unsigned)hportof(&md->sender));
 		});
 
 		/* if there was a previous packet, let it go, and go with most
@@ -1748,7 +1746,7 @@ void process_packet_tail(struct msg_digest **mdp)
 			ipstr_buf b;
 			DBG_log("received encrypted packet from %s:%u",
 				ipstr(&md->sender, &b),
-				(unsigned)md->sender_port);
+				(unsigned)hportof(&md->sender));
 		});
 
 		if (st == NULL) {

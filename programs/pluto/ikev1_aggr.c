@@ -176,12 +176,12 @@ stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 
 	struct connection *c = find_host_connection(
 		&md->iface->ip_addr, md->iface->port,
-		&md->sender, md->sender_port,
+		&md->sender, hportof(&md->sender),
 		policy, policy_exact_mask);
 
 	if (c == NULL) {
 		c = find_host_connection(&md->iface->ip_addr, pluto_port,
-					 (ip_address*)NULL, md->sender_port,
+					 (ip_address*)NULL, hportof(&md->sender),
 					 policy, policy_exact_mask);
 		if (c == NULL) {
 			ipstr_buf b;

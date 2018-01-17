@@ -1198,7 +1198,7 @@ stf_status ikev2parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	for (i=0; i < elemsof(policies); i++) {
 		policy = policies[i] | POLICY_IKEV2_ALLOW;
 		e = ikev2_find_host_connection(&c, &md->iface->ip_addr,
-				md->iface->port, &md->sender, md->sender_port,
+				md->iface->port, &md->sender, hportof(&md->sender),
 				policy);
 		if (e == STF_OK)
 			break;
@@ -1228,7 +1228,7 @@ stf_status ikev2parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	{
 		struct connection *tmp = find_host_pair_connections(
 			&md->iface->ip_addr, md->iface->port,
-			(ip_address *)NULL, md->sender_port);
+			(ip_address *)NULL, hportof(&md->sender));
 
 		for (; tmp != NULL; tmp = tmp->hp_next) {
 			if ((tmp->policy & POLICY_SHUNT_MASK) != LEMPTY &&
@@ -2282,7 +2282,7 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 				ipstr_buf b;
 				DBG_log("received encrypted packet from %s:%u  but no exponents for state #%lu to decrypt it",
 					ipstr(&md->sender, &b),
-					(unsigned)md->sender_port,
+					(unsigned)hportof(&md->sender),
 					st->st_serialno);
 				});
 		return STF_FAIL;
@@ -5591,7 +5591,7 @@ static void set_mobike_remote_addr(struct msg_digest *md, struct state *st)
 	 */
 
 	st->st_mobike_remoteaddr = md->sender;
-	st->st_mobike_remoteport = md->sender_port;
+	st->st_mobike_remoteport = hportof(&md->sender);
 	st->st_mobike_interface = md->iface;
 	/* local_addr and localport are not used in send_packet() ! */
 }
@@ -5764,7 +5764,7 @@ static void mobike_switch_remote(struct msg_digest *md, struct mobike *est_remot
 	if (mobike_check_established(st) &&
 			!LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
 		if (!sameaddr(&md->sender, &st->st_remoteaddr) ||
-				!(md->sender_port == st->st_remoteport)) {
+				!(hportof(&md->sender) == st->st_remoteport)) {
 
 			/* remember the established/old address and interface */
 			est_remote->remoteaddr = st->st_remoteaddr;
@@ -5773,7 +5773,7 @@ static void mobike_switch_remote(struct msg_digest *md, struct mobike *est_remot
 
 			/* set temp one and after the message sent reset it */
 			st->st_remoteaddr = md->sender;
-			st->st_remoteport = md->sender_port;
+			st->st_remoteport = hportof(&md->sender);
 			st->st_interface = md->iface;
 		}
 	}
