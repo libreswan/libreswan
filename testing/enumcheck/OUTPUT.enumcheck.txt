@@ -2765,31 +2765,37 @@ IETF registry enum_names:
          short_name 25:  OK
          lswlog_enum_short 25: OK
 
-  ppk_names:
-    1 -> PPK_PSK
+  pkk_names:
+    1 -> PKK_PSK
          lswlog_enum 1: OK
-         search PPK_PSK: OK
-         match PPK_PSK: OK
+         search PKK_PSK: OK
+         match PKK_PSK: OK
          short_name 1:  OK
          lswlog_enum_short 1: OK
-    2 -> PPK_RSA
+    2 -> PKK_RSA
          lswlog_enum 2: OK
-         search PPK_RSA: OK
-         match PPK_RSA: OK
+         search PKK_RSA: OK
+         match PKK_RSA: OK
          short_name 2:  OK
          lswlog_enum_short 2: OK
-    3 -> PPK_XAUTH
+    3 -> PKK_XAUTH
          lswlog_enum 3: OK
-         search PPK_XAUTH: OK
-         match PPK_XAUTH: OK
+         search PKK_XAUTH: OK
+         match PKK_XAUTH: OK
          short_name 3:  OK
          lswlog_enum_short 3: OK
-    4 -> PPK_NULL
+    4 -> PKK_PPK
          lswlog_enum 4: OK
-         search PPK_NULL: OK
-         match PPK_NULL: OK
+         search PKK_PPK: OK
+         match PKK_PPK: OK
          short_name 4:  OK
          lswlog_enum_short 4: OK
+    5 -> PKK_NULL
+         lswlog_enum 5: OK
+         search PKK_NULL: OK
+         match PKK_NULL: OK
+         short_name 5:  OK
+         lswlog_enum_short 5: OK
 
   enc_mode_names:
     1 -> ENCAPSULATION_MODE_TUNNEL
