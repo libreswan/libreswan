@@ -418,7 +418,7 @@ extern int isloopbackaddr(const ip_address *src);
 /* low-level grot */
 extern int portof(const ip_address *src);
 extern void setportof(int port, ip_address *dst);
-extern struct sockaddr *sockaddrof(ip_address *src);
+extern struct sockaddr *sockaddrof(const ip_address *src);
 extern size_t sockaddrlenof(const ip_address *src);
 
 /* PRNG */
