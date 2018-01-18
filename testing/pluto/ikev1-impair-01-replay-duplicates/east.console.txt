@@ -175,7 +175,7 @@ Certificate Nickname                                         Trust Attributes
 east #
  grep 'duplicate packet' /tmp/pluto.log
 IMPAIR: start duplicate packet
-retransmitting in response to duplicate packet; already STATE_MAIN_R1
+"westnet-eastnet" #1: retransmitting in response to duplicate packet; already STATE_MAIN_R1
 IMPAIR: stop duplicate packet
 IMPAIR: start duplicate packet
 IMPAIR: stop duplicate packet
