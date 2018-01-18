@@ -57,4 +57,19 @@ const char *sensitive_ipstr(const ip_address *src, ipstr_buf *b);
 size_t lswlog_ip(struct lswlog *buf, const ip_address *ip);
 size_t lswlog_sensitive_ip(struct lswlog *buf, const ip_address *ip);
 
+/*
+ * isvalidaddr(): true when ADDR contains some sort of IPv4 or IPv6
+ * address.
+ *
+ * The relationship !isvalidaddr() IFF ipstr()=="<invalid>" is ment to
+ * hold.  Both the *addrtot() (used by ipstr()) and *portof() seem to
+ * use the same check.  hportof() just happens to be an easy way to
+ * access it.
+ *
+ * The routine isanyaddr() isn't used as, in addition to "<invalid>"
+ * it includes magic "any" IPv4 and IPv6 addresses.
+ */
+
+#define isvalidaddr(ADDR) (hportof(ADDR) >= 0)
+
 #endif

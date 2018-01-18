@@ -25,8 +25,17 @@ size_t lswlog_ip(struct lswlog *buf, const ip_address *ip)
 	ipstr_buf b;
 	size_t size = 0;
 	size += lswlogs(buf, ipstr(ip, &b));
+	/*
+	 * From wikipedia: For TCP, port number 0 is reserved and
+	 * cannot be used, while for UDP, the source port is optional
+	 * and a value of zero means no port.
+	 *
+	 * Omit the port number when hportof() returns either -1
+	 * (address is invalid) or 0 (the port is either unset or
+	 * there is no port).
+	 */
 	int port = hportof(ip);
-	if (port >= 0) {
+	if (port > 0) {
 		size += lswlogf(buf, ":%d", port);
 	}
 	return size;
