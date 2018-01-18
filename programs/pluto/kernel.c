@@ -2094,6 +2094,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			DBG(DBG_KERNEL, DBG_log("Enabling Decap ToS/DSCP bits"));
 			said_next->decap_dscp = TRUE;
 		}
+		if (c->policy & POLICY_NOPMTUDISC) {
+			DBG(DBG_KERNEL, DBG_log("Disabling Path MTU Discovery"));
+			said_next->nopmtudisc = TRUE;
+		}
 
 		said_next->integ = ta->ta_integ;
 		if (said_next->integ == &ike_alg_integ_sha2_256 &&

@@ -1449,6 +1449,10 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 			DBG(DBG_KERNEL, DBG_log("netlink: enabling Decap DSCP"));
 			req.p.flags |= XFRM_STATE_DECAP_DSCP;
 		}
+		if (sa->nopmtudisc) {
+			DBG(DBG_KERNEL, DBG_log("netlink: disabling Path MTU Discovery"));
+			req.p.flags |= XFRM_STATE_NOPMTUDISC;
+		}
 
 		if (sa->replay_window <= 32 && !sa->esn) {
 			/* this only works up to 32, for > 32 and for ESN, we need struct xfrm_replay_state_esn */

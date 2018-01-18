@@ -33,6 +33,7 @@ d.ipsec.conf/ikev2.xml
 d.ipsec.conf/mobike.xml
 d.ipsec.conf/esn.xml
 d.ipsec.conf/decap-dscp.xml
+d.ipsec.conf/nopmtudisc.xml
 d.ipsec.conf/narrowing.xml
 d.ipsec.conf/sareftrack.xml
 d.ipsec.conf/nic-offload.xml
