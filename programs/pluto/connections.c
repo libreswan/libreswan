@@ -3673,7 +3673,7 @@ static struct connection *fc_try(const struct connection *c,
 	if (best == NULL) {
 		if (virtualwhy != NULL) {
 			libreswan_log(
-				"peer proposal was reject in a virtual connection policy: %s",
+				"peer proposal was rejected in a virtual connection policy: %s",
 				virtualwhy);
 		}
 	}
@@ -3825,6 +3825,7 @@ struct connection *find_client_connection(struct connection *const c,
 		const struct spd_route *sr;
 
 		for (sr = &c->spd; unrouted == NULL && sr != NULL;
+		     
 			sr = sr->spd_next) {
 			srnum++;
 
