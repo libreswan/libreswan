@@ -98,6 +98,7 @@ static void init_seccomp(uint32_t def_action, bool main)
 		rc |= S_RULE_ADD(pipe);
 		rc |= S_RULE_ADD(pipe2);
 		rc |= S_RULE_ADD(poll);
+		rc |= S_RULE_ADD(prctl);
 		rc |= S_RULE_ADD(readlink);
 		rc |= S_RULE_ADD(recvfrom);
 		rc |= S_RULE_ADD(recvmsg);
@@ -107,6 +108,7 @@ static void init_seccomp(uint32_t def_action, bool main)
 		rc |= S_RULE_ADD(set_robust_list);
 		rc |= S_RULE_ADD(setsockopt);
 		rc |= S_RULE_ADD(socket);
+		rc |= S_RULE_ADD(socketpair);
 		rc |= S_RULE_ADD(uname);
 		rc |= S_RULE_ADD(unlink);
 		rc |= S_RULE_ADD(unlinkat);
