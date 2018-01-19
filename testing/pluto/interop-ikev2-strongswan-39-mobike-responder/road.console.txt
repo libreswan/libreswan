@@ -39,6 +39,7 @@ road #
 134 "road-eastnet"[1] 192.1.2.23 #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_256 integ=sha256_128 prf=sha2_256 group=DH19}
 002 "road-eastnet"[1] 192.1.2.23 #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 002 "road-eastnet"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.3.1
+002 "road-eastnet"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.3.2
 002 "road-eastnet"[1] 192.1.2.23 #2: negotiated connection [192.0.3.1-192.0.3.1:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "road-eastnet"[1] 192.1.2.23 #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
 road #
@@ -91,9 +92,7 @@ road #
     link/ether 12:00:00:ab:cd:02 brd ff:ff:ff:ff:ff:ff
     inet 192.1.33.222/24 scope global eth0
        valid_lft forever preferred_lft forever
-    inet 192.0.3.1/32 scope global eth0
-       valid_lft forever preferred_lft forever
-3: ip_vti0@NONE: <NOARP> mtu 1332 qdisc noop state DOWN group default 
+3: ip_vti0@NONE: <NOARP> mtu 1332 qdisc noop state DOWN group default qlen 1000
     link/ipip 0.0.0.0 brd 0.0.0.0
 road #
  # let libreswan detect change and do a MOBIKE update
@@ -104,13 +103,17 @@ road #
 road #
  # note this end should be 192.1.33.222
 road #
- ping -W 1 -q -n -c 2 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-2 packets transmitted, 0 received, 100% packet loss, time XXXX
-road #
  ipsec whack --trafficstatus
 006 #2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east', lease=192.0.3.1/32
+road #
+ ping -W 1 -q -n -c 4 -I 192.0.3.1 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.3.1 : 56(84) bytes of data.
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+road #
+ ipsec whack --trafficstatus
+006 #2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east', lease=192.0.3.1/32
 road #
  echo done
 done
@@ -135,7 +138,7 @@ src 192.0.2.0/24 dst 192.0.3.1/32
 	tmpl src 192.1.2.23 dst 192.1.33.222
 road #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec whack --trafficstatus ; fi
-006 #2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east', lease=192.0.3.1/32
+006 #2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east', lease=192.0.3.1/32
 road #
  if [ -f /var/run/charon.pid ]; then strongswan status ; fi
 road #
