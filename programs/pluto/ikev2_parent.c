@@ -3776,8 +3776,13 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 			}
 			break;
 		}
+		case v2N_MOBIKE_SUPPORTED:
+			DBG(DBG_CONTROLMORE, DBG_log("received v2N_MOBIKE_SUPPORTED %s",
+						st->st_sent_mobike ?
+						"and sent" : "while it did not sent"));
+			st->st_seen_mobike = TRUE;
+			break;
 		default:
-			/* everything handled elsewhere already */
 			break;
 		}
 	}
@@ -4492,6 +4497,7 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 				st->st_seen_no_tfc = TRUE;
 				break;
 			}
+			/* MOBIKE check done in caller */
 			default:
 				DBG(DBG_CONTROLMORE,
 					DBG_log("ignored received NOTIFY (%d): %s ",
