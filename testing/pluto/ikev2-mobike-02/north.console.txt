@@ -103,24 +103,35 @@ north #
  ipsec whack --trafficstatus
 006 #2: "northnet-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='192.1.2.23'
 north #
- ip xfrm state
+ ipsec look
+north NOW
+XFRM state:
 src 192.1.2.23 dst 192.1.8.22
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPIXX reqid REQIDREQID mode tunnel
 	enc cbc(aes) 0xKEY
 src 192.1.8.22 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPIXX reqid REQIDREQID mode tunnel
 	enc cbc(aes) 0xKEY
-north #
- ip xfrm pol
-src 192.0.3.0/24 dst 192.0.2.0/24 
-	dir out priority 2344 ptype main 
-	tmpl src 192.1.8.22 dst 192.1.2.23
+XFRM policy:
 src 192.0.2.0/24 dst 192.0.3.0/24 
 	dir fwd priority 2344 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.8.22
 src 192.0.2.0/24 dst 192.0.3.0/24 
 	dir in priority 2344 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.8.22
+src 192.0.3.0/24 dst 192.0.2.0/24 
+	dir out priority 2344 ptype main 
+	tmpl src 192.1.8.22 dst 192.1.2.23
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.8.254 dev eth1 
+192.0.3.0/24 dev eth0 proto kernel scope link src 192.0.3.254 
+192.1.8.0/24 dev eth1 proto kernel scope link src 192.1.8.22 
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
 north #
 north #
  ../bin/check-for-core.sh

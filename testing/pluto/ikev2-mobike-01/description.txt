@@ -9,9 +9,13 @@ limitations to keep in mind:
 Initiator and Responder:
 NAT support need Linux Kernel 4.13 or xfrm migration patches from it.
 CONFIG_XFRM_MIGRATE=y should be enabled in the kernel
-esp=aes256-sha2 use AES CBC for now. AES GCMi (AEAD algs) fails to migrate.
+
+We explicitely avoid testing aes_gcm for esp since there is a known
+linux bug in v4.14 that forgets to copy some of the AEAD key material
+in XFRM_MIGRATE. That is tested in ikev2-mobike-05-gcm
 
 Initiator:
 On the initiator "that" 0.0.0.0/0 with IKEv2 CP may not work.
 server assigned address can't be used to rech "that".
 Moving betwween WiFi networks, the Network Manager may remove the CP address.
+(but we try to mark it with scope 50 on loopback so it won't be removed)

@@ -1,9 +1,8 @@
-ip xfrm state
-ip xfrm pol
+ipsec look
 ipsec whack --trafficstatus
 sleep 7
 : ==== cut ====
-then ipsec auto --status
+ipsec auto --status
 : ==== tuc ====
 ../bin/check-for-core.sh
 if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
