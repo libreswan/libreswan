@@ -1,6 +1,6 @@
 /* Output a sanitized string, for libreswan
  *
- * Copyright (C) 2017 Andrew Cagney
+ * Copyright (C) 2017-2018 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the

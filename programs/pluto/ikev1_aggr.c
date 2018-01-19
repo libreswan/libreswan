@@ -65,6 +65,7 @@
 #include "pluto_crypt.h"
 #include "ikev1.h"
 #include "ikev1_continuations.h"
+#include "ip_address.h"
 
 #include "ikev1_xauth.h"
 
@@ -175,12 +176,12 @@ stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 
 	struct connection *c = find_host_connection(
 		&md->iface->ip_addr, md->iface->port,
-		&md->sender, md->sender_port,
+		&md->sender, hportof(&md->sender),
 		policy, policy_exact_mask);
 
 	if (c == NULL) {
 		c = find_host_connection(&md->iface->ip_addr, pluto_port,
-					 (ip_address*)NULL, md->sender_port,
+					 (ip_address*)NULL, hportof(&md->sender),
 					 policy, policy_exact_mask);
 		if (c == NULL) {
 			ipstr_buf b;
@@ -379,6 +380,7 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 		 "reply packet");
 
 	/* HDR out */
+	pb_stream rbody;
 	{
 		struct isakmp_hdr hdr = md->hdr;
 
@@ -391,7 +393,7 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 		}
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
-				&md->rbody)) {
+				&rbody)) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
@@ -406,7 +408,7 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 		r_sa.isasa_doi = ISAKMP_DOI_IPSEC;
 
 		r_sa.isasa_np = ISAKMP_NEXT_KE;
-		if (!out_struct(&r_sa, &isakmp_sa_desc, &md->rbody,
+		if (!out_struct(&r_sa, &isakmp_sa_desc, &rbody,
 				&r_sa_pbs)) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
@@ -428,14 +430,13 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 	/************** build rest of output: KE, Nr, IDir, HASH_R/SIG_R ********/
 
 	/* KE */
-	if (!ikev1_justship_KE(&st->st_gr,
-			 &md->rbody, ISAKMP_NEXT_NONCE)) {
+	if (!ikev1_justship_KE(&st->st_gr, &rbody, ISAKMP_NEXT_NONCE)) {
 		free_auth_chain(auth_chain, chain_len);
 		return STF_INTERNAL_ERROR;
 	}
 
 	/* Nr */
-	if (!ikev1_justship_nonce(&st->st_nr, &md->rbody, ISAKMP_NEXT_ID,
+	if (!ikev1_justship_nonce(&st->st_nr, &rbody, ISAKMP_NEXT_ID,
 				  "Nr")) {
 		free_auth_chain(auth_chain, chain_len);
 		return STF_INTERNAL_ERROR;
@@ -451,7 +452,7 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 			(send_cert) ? ISAKMP_NEXT_CERT : auth_payload;
 
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
-				&md->rbody, &r_id_pbs) ||
+				&rbody, &r_id_pbs) ||
 		    !out_chunk(id_b, &r_id_pbs, "my identity")) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
@@ -471,7 +472,7 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 		cert_hd.isacert_type = mycert.ty;
 		if (!out_struct(&cert_hd,
 				&isakmp_ipsec_certificate_desc,
-				&md->rbody,
+				&rbody,
 				&cert_pbs)) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
@@ -490,7 +491,7 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 		libreswan_log("I am sending a certificate request");
 		if (!ikev1_build_and_ship_CR(mycert.ty,
 				       c->spd.that.ca,
-				       &md->rbody, ISAKMP_NEXT_SIG))
+				       &rbody, ISAKMP_NEXT_SIG))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -506,7 +507,7 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 			/* HASH_R out */
 			if (!ikev1_out_generic_raw(ISAKMP_NEXT_VID,
 					     &isakmp_hash_desc,
-					     &md->rbody,
+					     &rbody,
 					     hash_val,
 					     hash_len,
 					     "HASH_R"))
@@ -525,7 +526,7 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 
 			if (!ikev1_out_generic_raw(ISAKMP_NEXT_VID,
 					     &isakmp_signature_desc,
-					     &md->rbody, sig_val, sig_len,
+					     &rbody, sig_val, sig_len,
 					     "SIG_R"))
 				return STF_INTERNAL_ERROR;
 		}
@@ -536,34 +537,34 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 	 */
 
 	if (c->cisco_unity) {
-		if (!out_vid(ISAKMP_NEXT_VID, &md->rbody, VID_CISCO_UNITY))
+		if (!out_vid(ISAKMP_NEXT_VID, &rbody, VID_CISCO_UNITY))
 			return STF_INTERNAL_ERROR;
 	}
 	if (c->fake_strongswan) {
-		if (!out_vid(ISAKMP_NEXT_VID, &md->rbody, VID_STRONGSWAN))
+		if (!out_vid(ISAKMP_NEXT_VID, &rbody, VID_STRONGSWAN))
 			return STF_INTERNAL_ERROR;
 	}
 
 	if (st->hidden_variables.st_nat_traversal == LEMPTY) {
 		/* Always announce our ability to do RFC 3706 Dead Peer Detection to the peer */
-		if (!out_vid(ISAKMP_NEXT_NONE, &md->rbody, VID_MISC_DPD))
+		if (!out_vid(ISAKMP_NEXT_NONE, &rbody, VID_MISC_DPD))
 			return STF_INTERNAL_ERROR;
 	} else {
 		/* Always announce our ability to do RFC 3706 Dead Peer Detection to the peer */
-		if (!out_vid(ISAKMP_NEXT_VID, &md->rbody, VID_MISC_DPD))
+		if (!out_vid(ISAKMP_NEXT_VID, &rbody, VID_MISC_DPD))
 			return STF_INTERNAL_ERROR;
 
 		/* and a couple more NAT VIDs */
 		if (!out_vid(ISAKMP_NEXT_VID,
-			     &md->rbody,
+			     &rbody,
 			     md->quirks.qnat_traversal_vid))
 			return STF_INTERNAL_ERROR;
-		if (!ikev1_nat_traversal_add_natd(ISAKMP_NEXT_NONE, &md->rbody, md))
+		if (!ikev1_nat_traversal_add_natd(ISAKMP_NEXT_NONE, &rbody, md))
 			return STF_INTERNAL_ERROR;
 	}
 
 	/* finish message */
-	if (!close_message(&md->rbody, st))
+	if (!close_message(&rbody, st))
 		return STF_INTERNAL_ERROR;
 
 	return STF_OK;
@@ -730,6 +731,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 	/* make sure HDR is at start of a clean buffer */
 	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
+	pb_stream rbody;
 
 	/* HDR out */
 	{
@@ -745,7 +747,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 		}
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
-				&md->rbody)) {
+				&rbody)) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
@@ -765,7 +767,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 
 		if (!out_struct(&cert_hd,
 				&isakmp_ipsec_certificate_desc,
-				&md->rbody,
+				&rbody,
 				&cert_pbs)) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
@@ -782,7 +784,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 	}
 
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
-		if (!ikev1_nat_traversal_add_natd(auth_payload, &md->rbody, md)) {
+		if (!ikev1_nat_traversal_add_natd(auth_payload, &rbody, md)) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
@@ -812,7 +814,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 		if (auth_payload == ISAKMP_NEXT_HASH) {
 			/* HASH_I out */
 			if (!ikev1_out_generic_raw(ISAKMP_NEXT_NONE,
-					     &isakmp_hash_desc, &md->rbody,
+					     &isakmp_hash_desc, &rbody,
 					     hash_val, hash_len, "HASH_I"))
 				return STF_INTERNAL_ERROR;
 		} else {
@@ -830,7 +832,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 
 			if (!ikev1_out_generic_raw(ISAKMP_NEXT_NONE,
 					     &isakmp_signature_desc,
-					     &md->rbody, sig_val, sig_len,
+					     &rbody, sig_val, sig_len,
 					     "SIG_I"))
 				return STF_INTERNAL_ERROR;
 		}
@@ -840,7 +842,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 	/* RFC2408 says we must encrypt at this point */
 
 	/* st_new_iv was computed by generate_skeyids_iv (??? DOESN'T EXIST) */
-	if (!encrypt_message(&md->rbody, st))
+	if (!encrypt_message(&rbody, st))
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 
 	/* It seems as per Cisco implementation, XAUTH and MODECFG

@@ -77,7 +77,7 @@
 
 #include "packet.h"  /* for pb_stream in nat_traversal.h */
 #include "nat_traversal.h"
-
+#include "ip_address.h"
 #include "lswfips.h" /* for libreswan_fipsmode() */
 
 /* which kernel interface to use */
@@ -2093,6 +2093,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		if (c->policy & POLICY_DECAP_DSCP) {
 			DBG(DBG_KERNEL, DBG_log("Enabling Decap ToS/DSCP bits"));
 			said_next->decap_dscp = TRUE;
+		}
+		if (c->policy & POLICY_NOPMTUDISC) {
+			DBG(DBG_KERNEL, DBG_log("Disabling Path MTU Discovery"));
+			said_next->nopmtudisc = TRUE;
 		}
 
 		said_next->integ = ta->ta_integ;

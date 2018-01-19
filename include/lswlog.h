@@ -224,9 +224,6 @@ size_t lswlog_errno(struct lswlog *log, int e);
 /* <hex-byte>:<hex-byte>... */
 size_t lswlog_bytes(struct lswlog *log, const uint8_t *bytes,
 		    size_t sizeof_bytes);
-/* ipstr() */
-size_t lswlog_ip(struct lswlog *log, const ip_address*);
-size_t lswlog_sensitive_ip(struct lswlog *log, const ip_address*);
 
 /*
  * The logging output streams used by libreswan.
@@ -494,6 +491,29 @@ void lswlog_passert_suffix(struct lswlog *buf, const char *func,
 
 #define LSWLOG_PASSERT(BUF)			\
 	LSWLOG_PASSERT_SOURCE(__func__, PASSERT_BASENAME, __LINE__, BUF)
+
+
+/*
+ * Both include ERRNO and send to ERROR stream.
+ *
+ * XXX: Is error stream really the right place for this?
+ */
+
+void lswlog_errno_prefix(struct lswlog *buf, const char *prefix);
+void lswlog_errno_suffix(struct lswlog *buf, int e);
+
+#define LSWLOG_ERRNO_(PREFIX, ERRNO, BUF)				\
+	for (bool lswlog_p = true; lswlog_p; lswlog_p = false)		\
+		for (int lswlog_errno = ERRNO; lswlog_p; lswlog_p = false) \
+			LSWBUF_(BUF)					\
+				for (lswlog_errno_prefix(buf, PREFIX);	\
+				     lswlog_p;				\
+				     lswlog_p = false,			\
+					     lswlog_errno_suffix(buf, lswlog_errno))
+
+#define LSWLOG_ERRNO(ERRNO, BUF)					\
+	LSWLOG_ERRNO_("ERROR: ", ERRNO, BUF)
+
 
 /*
  * ARRAY, a previously allocated array, containing the accumulated

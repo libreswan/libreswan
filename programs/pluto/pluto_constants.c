@@ -389,6 +389,7 @@ const char *const sa_policy_bit_names[] = {
 	"PFS",
 	"DISABLEARRIVALCHECK",
 	"DECAP_DSCP",
+	"NOPMTUDISC",
 	"SHUNT0",
 	"SHUNT1",
 	"FAIL0",

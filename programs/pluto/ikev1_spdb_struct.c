@@ -55,6 +55,7 @@
 #include "lswfips.h" /* for libreswan_fipsmode */
 #include "crypt_prf.h"
 
+#include "ip_address.h"
 #include "nat_traversal.h"
 
 #ifdef HAVE_LABELED_IPSEC

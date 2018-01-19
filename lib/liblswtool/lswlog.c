@@ -51,6 +51,8 @@ void tool_init_log(const char *name)
 		setbuf(stderr, NULL);
 }
 
+/* <prefix><PROGNAME>: <message>. Errno N: <errmess> */
+
 void libreswan_log_errno(int e, const char *prefix, const char *message, ...)
 {
 	if (log_to_stderr) {
@@ -67,6 +69,22 @@ void libreswan_log_errno(int e, const char *prefix, const char *message, ...)
 			lswlog_errno(buf, e);
 			lswlogs(buf, "\n");
 		}
+	}
+}
+
+void lswlog_errno_prefix(struct lswlog *buf, const char *prefix)
+{
+	lswlogs(buf, prefix);
+	lswlogs(buf, progname);
+	lswlogs(buf, prog_suffix);
+}
+
+void lswlog_errno_suffix(struct lswlog *buf, int e)
+{
+	lswlogs(buf, ".");
+	lswlog_errno(buf, e);
+	if (log_to_stderr) {
+		lswlog_to_file_stream(buf, stderr);
 	}
 }
 

@@ -1,3 +1,5 @@
-IKEv2 mobike initiator migration using AES,GCM
+IKEv2 mobike using esp=aes_gcm
 
-This may hit a kernel bug likely fixed until 4.15 or 4.16
+On linux kernel v4.14 this leads to a kernel panic and/or failed
+XFRM migration.
+

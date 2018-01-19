@@ -47,7 +47,7 @@ OBJS += addrtoa.o addrtot.o addrtypeof.o alg_info.o esp_info.o anyaddr.o \
 	kernel_alg.o lex.o \
 	lswconf.o \
 	lswfips.o \
-	portof.o rangetosubnet.o sameaddr.o \
+	rangetosubnet.o sameaddr.o \
 	satot.o secrets.o subnetof.o subnettoa.o subnettot.o \
 	subnettypeof.o ttoaddr.o ttodata.o ttoprotoport.o \
 	ttorange.o ttosa.o ttosubnet.o ttoul.o ultot.o \
@@ -58,6 +58,8 @@ OBJS += addrtoa.o addrtot.o addrtypeof.o alg_info.o esp_info.o anyaddr.o \
 	libreswan_log.o \
 	libreswan_loglog.o \
 	alg_byname.o
+
+OBJS += ip_address.o
 
 OBJS += lmod.o
 OBJS += deltatime.o

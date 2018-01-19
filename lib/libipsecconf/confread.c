@@ -35,6 +35,7 @@
 #include <sys/queue.h>
 
 #include "lswalloc.h"
+#include "ip_address.h"
 
 #include "ipsecconf/confread.h"
 #include "ipsecconf/starterlog.h"
@@ -1221,6 +1222,7 @@ static bool load_conn(
 		       POLICY_IKEV2_PAM_AUTHORIZE);
 
 	KW_POLICY_FLAG(KBF_DECAP_DSCP, POLICY_DECAP_DSCP);
+	KW_POLICY_FLAG(KBF_NOPMTUDISC, POLICY_NOPMTUDISC);
 
 #	define str_to_conn(member, kscf) { \
 		if (conn->strings_set[kscf]) \
@@ -1368,7 +1370,7 @@ static bool load_conn(
 		/* remove IPsec related options */
 		conn->policy &= ~(POLICY_PFS | POLICY_COMPRESS | POLICY_ESN_NO |
 			POLICY_ESN_YES | POLICY_SAREF_TRACK | POLICY_DECAP_DSCP |
-			POLICY_SAREF_TRACK_CONNTRACK) &
+			POLICY_NOPMTUDISC | POLICY_SAREF_TRACK_CONNTRACK) &
 			/* remove IKE related options */
 			~(POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW |
 			POLICY_IKEV2_PROPOSE | POLICY_IKE_FRAG_ALLOW |

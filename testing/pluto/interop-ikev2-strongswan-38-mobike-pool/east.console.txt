@@ -31,7 +31,7 @@ src 192.0.3.10/32 dst 192.0.2.0/24
 	tmpl src 192.1.2.254 dst 192.1.2.23
 east #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec whack --trafficstatus ; fi
-006 #2: "eastnet-road"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='192.1.2.254', lease=192.0.3.10/32
+006 #2: "eastnet-road"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='192.1.2.254', lease=192.0.3.10/32
 east #
  if [ -f /var/run/charon.pid ]; then strongswan status ; fi
 east #

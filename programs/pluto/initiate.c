@@ -71,6 +71,7 @@
 #include "plutoalg.h"
 #include "ikev1_xauth.h"
 #include "nat_traversal.h"
+#include "ip_address.h"
 
 #include "virtual.h"	/* needs connections.h */
 

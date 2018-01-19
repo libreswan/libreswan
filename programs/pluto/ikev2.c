@@ -66,6 +66,7 @@
 #include "spdb.h"
 #include "nat_traversal.h"
 #include "vendor.h"
+#include "ip_address.h"
 
 #include "alg_info.h" /* for ike_info / esp_info */
 
@@ -961,7 +962,7 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 				fmt_conn_instance(pst->st_connection, ca),
 				pst->st_serialno,
 				what, why, ipstr(&md->sender, &b),
-				md->sender_port,
+				hportof(&md->sender),
 				st->st_connection->name,
 				fmt_conn_instance(st->st_connection, cb),
 				st->st_serialno,

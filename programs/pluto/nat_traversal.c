@@ -67,7 +67,7 @@
 #include "ikev2.h"
 #include "ike_alg_sha1.h"
 #include "crypt_hash.h"
-
+#include "ip_address.h"
 #include "cookie.h"
 #include "crypto.h"
 #include "vendor.h"
@@ -422,7 +422,7 @@ static void ikev1_natd_lookup(struct msg_digest *md)
 	 * The other with sender IP & port
 	 */
 	natd_hash(hasher, hash_him, st->st_icookie,
-		st->st_rcookie, &md->sender, md->sender_port);
+		st->st_rcookie, &md->sender, hportof(&md->sender));
 
 	DBG(DBG_NATT, {
 		DBG_dump("expected NAT-D(me):", hash_me, hl);
@@ -742,7 +742,7 @@ void ikev1_natd_init(struct state *st, struct msg_digest *md)
 		if (st->hidden_variables.st_nat_traversal != LEMPTY) {
 			nat_traversal_show_result(
 				st->hidden_variables.st_nat_traversal,
-				md->sender_port);
+				hportof(&md->sender));
 		}
 	}
 	if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_KA) {
@@ -1016,11 +1016,11 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 		 * If source port/address has changed, update (including other
 		 * states and established kernel SA)
 		 */
-		if (st->st_remoteport != md->sender_port ||
+		if (st->st_remoteport != hportof(&md->sender) ||
 			!sameaddr(&st->st_remoteaddr, &md->sender)) {
 
 			nat_traversal_new_mapping(st, &md->sender,
-						md->sender_port);
+						hportof(&md->sender));
 		}
 
 		/*
@@ -1197,7 +1197,7 @@ void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
 	 * The others with sender IP & port
 	 */
 	natd_hash(&ike_alg_hash_sha1, hash_him, st->st_icookie, rcookie,
-		  &md->sender, md->sender_port);
+		  &md->sender, hportof(&md->sender));
 
 	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {
 		if (pbs_left(&p->pbs) != IKEV2_NATD_HASH_SIZE)

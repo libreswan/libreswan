@@ -14,6 +14,16 @@ src 192.1.33.222 dst 192.1.2.23
 	enc cbc(aes) 0xKEY
 east #
  ip xfrm pol
+src 192.0.2.0/24 dst 192.0.3.2/32 
+	dir out priority 371327 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.33.222
+		proto esp spi 0xSPISPI reqid 1 mode tunnel
+src 192.0.3.2/32 dst 192.0.2.0/24 
+	dir fwd priority 371327 ptype main 
+	tmpl src 192.1.33.222 dst 192.1.2.23
+src 192.0.3.2/32 dst 192.0.2.0/24 
+	dir in priority 371327 ptype main 
+	tmpl src 192.1.33.222 dst 192.1.2.23
 src 192.0.2.0/24 dst 192.0.3.1/32 
 	dir out priority 371327 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.33.222
@@ -31,7 +41,7 @@ east #
 Security Associations (1 up, 0 connecting):
 roadnet-eastnet-ikev2[2]: ESTABLISHED XXX second ago, 192.1.2.23[east]...192.1.33.222[road]
 roadnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
-roadnet-eastnet-ikev2{1}:   192.0.2.0/24 === 192.0.3.1/32
+roadnet-eastnet-ikev2{1}:   192.0.2.0/24 === 192.0.3.1/32 192.0.3.2/32
 east #
  sleep 7
 east #

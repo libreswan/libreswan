@@ -32,6 +32,7 @@
 #include "id.h"
 #include "pluto_stats.h"
 #include "log.h"
+#include "ip_address.h"
 
 /* information for tracking xauth PAM work in flight */
 

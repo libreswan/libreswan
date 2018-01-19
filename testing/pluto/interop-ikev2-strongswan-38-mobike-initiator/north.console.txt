@@ -38,7 +38,6 @@ IKE_SA westnet-eastnet-ikev2[1] established between 192.1.3.33[north]...192.1.2.
 scheduling reauthentication in XXXs
 maximum IKE_SA lifetime XXXs
 CHILD_SA westnet-eastnet-ikev2{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.3.0/24 === 192.0.2.0/24
-peer supports MOBIKE
 connection 'westnet-eastnet-ikev2' established successfully
 north #
  ping -W 1 -q -n -c 2 -I 192.0.3.254 192.0.2.254

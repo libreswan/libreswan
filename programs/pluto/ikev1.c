@@ -154,6 +154,7 @@
 #include "vendor.h"
 #include "ikev1_dpd.h"
 #include "hostpair.h"
+#include "ip_address.h"
 
 #ifdef HAVE_NM
 #include "kernel.h"
@@ -1077,6 +1078,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			st = find_state_ikev1_init(md->hdr.isa_icookie,
 						   md->hdr.isa_msgid);
 			if (st != NULL) {
+				so_serial_t old_state = push_cur_state(st);
 				if (!ikev1_duplicate(st, md)) {
 					/*
 					 * Not a duplicate for the
@@ -1089,8 +1091,10 @@ void process_v1_packet(struct msg_digest **mdp)
 					libreswan_log("discarding initial packet; already %s",
 						      st->st_state_name);
 				}
+				pop_cur_state(old_state);
 				return;
 			}
+			passert(st == NULL); /* new state needed */
 			/* don't build a state until the message looks tasty */
 			from_state = (md->hdr.isa_xchg == ISAKMP_XCHG_IDPROT ?
 				      STATE_MAIN_R0 : STATE_AGGR_R0);
@@ -1608,8 +1612,6 @@ void process_v1_packet(struct msg_digest **mdp)
 
 					whole_md->iface = frag->md->iface;
 					whole_md->sender = frag->md->sender;
-					whole_md->sender_port =
-						frag->md->sender_port;
 
 					/* Reassemble fragments in buffer */
 					frag = st->st_v1_rfrags;
@@ -1705,7 +1707,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			ipstr_buf b;
 			DBG_log("received encrypted packet from %s:%u but exponentiation still in progress",
 				ipstr(&md->sender, &b),
-				(unsigned)md->sender_port);
+				(unsigned)hportof(&md->sender));
 		});
 
 		/* if there was a previous packet, let it go, and go with most
@@ -1747,7 +1749,7 @@ void process_packet_tail(struct msg_digest **mdp)
 			ipstr_buf b;
 			DBG_log("received encrypted packet from %s:%u",
 				ipstr(&md->sender, &b),
-				(unsigned)md->sender_port);
+				(unsigned)hportof(&md->sender));
 		});
 
 		if (st == NULL) {

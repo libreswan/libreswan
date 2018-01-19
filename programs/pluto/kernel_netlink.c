@@ -86,6 +86,7 @@
 #include "ike_alg_twofish.h"
 #include "ike_alg_serpent.h"
 #include "ike_alg_cast.h"
+#include "ip_address.h"
 
 /* required for Linux 2.6.26 kernel and later */
 #ifndef XFRM_STATE_AF_UNSPEC
@@ -1447,6 +1448,10 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		if (sa->decap_dscp) {
 			DBG(DBG_KERNEL, DBG_log("netlink: enabling Decap DSCP"));
 			req.p.flags |= XFRM_STATE_DECAP_DSCP;
+		}
+		if (sa->nopmtudisc) {
+			DBG(DBG_KERNEL, DBG_log("netlink: disabling Path MTU Discovery"));
+			req.p.flags |= XFRM_STATE_NOPMTUDISC;
 		}
 
 		if (sa->replay_window <= 32 && !sa->esn) {

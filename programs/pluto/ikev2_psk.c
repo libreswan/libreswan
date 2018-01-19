@@ -260,7 +260,7 @@ bool ikev2_create_psk_auth(enum keyword_authby authby,
 			return FALSE;
 	} else {
 		clonetochunk(*no_ppk_auth, signed_octets, hash_len, "NO_PPK_AUTH chunk");
-		DBG(DBG_CONTROL, DBG_dump_chunk("NO_PPK_AUTH payload", *no_ppk_auth));
+		DBG(DBG_PRIVATE, DBG_dump_chunk("NO_PPK_AUTH payload", *no_ppk_auth));
 	}
 
 	return TRUE;

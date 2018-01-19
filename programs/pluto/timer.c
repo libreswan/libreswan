@@ -61,6 +61,7 @@
 #include "kernel_pfkey.h" /* for pfkey_scan_shunts */
 #include "retransmit.h"
 #include "nat_traversal.h"
+#include "ip_address.h"
 
 #include "pluto_sd.h"
 

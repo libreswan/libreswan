@@ -99,6 +99,7 @@
 
 #include "pluto_stats.h"
 #include "hash_table.h"
+#include "ip_address.h"
 
 /*
  *  Server main loop and socket initialization routines.

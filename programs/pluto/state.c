@@ -83,6 +83,7 @@
 
 #include "pluto_stats.h"
 #include "ikev2_ipseckey.h"
+#include "ip_address.h"
 
 static void update_state_stats(struct state *st, enum state_kind old_state,
 			       enum state_kind new_state);
@@ -2471,7 +2472,7 @@ void update_ike_endpoints(struct state *st,
 	/* caller must ensure we are not behind NAT */
 
 	if (!sameaddr(&st->st_remoteaddr, &md->sender) ||
-		st->st_remoteport != md->sender_port) {
+		st->st_remoteport != hportof(&md->sender)) {
 		char oldip[ADDRTOT_BUF];
 		char newip[ADDRTOT_BUF];
 
@@ -2481,7 +2482,7 @@ void update_ike_endpoints(struct state *st,
 	} // why is below not part of this statement????
 
 	st->st_remoteaddr = md->sender;
-	st->st_remoteport = md->sender_port;
+	st->st_remoteport = hportof(&md->sender);
 	st->st_localaddr = md->iface->ip_addr;
 	st->st_localport = md->iface->port;
 	st->st_interface = md->iface;
@@ -2535,9 +2536,9 @@ bool update_mobike_endpoints(struct state *pst,
 		old_port = pst->st_remoteport;
 
 		cst->st_mobike_remoteaddr = md->sender;
-		cst->st_mobike_remoteport = md->sender_port;
+		cst->st_mobike_remoteport = hportof(&md->sender);
 		pst->st_mobike_remoteaddr = md->sender;
-		pst->st_mobike_remoteport = md->sender_port;
+		pst->st_mobike_remoteport = hportof(&md->sender);
 
 		new_addr = &pst->st_mobike_remoteaddr;
 		new_port = pst->st_mobike_remoteport;
@@ -2589,11 +2590,11 @@ bool update_mobike_endpoints(struct state *pst,
 	} else {
 		/* MOBIKE responder */
 		c->spd.that.host_addr = md->sender;
-		c->spd.that.host_port = md->sender_port;
+		c->spd.that.host_port = hportof(&md->sender);
 
 		/* for the consistency, correct output in ipsec status */
 		cst->st_remoteaddr = pst->st_remoteaddr = md->sender;
-		cst->st_remoteport = pst->st_remoteport = md->sender_port;
+		cst->st_remoteport = pst->st_remoteport = hportof(&md->sender);
 		cst->st_localaddr = pst->st_localaddr = md->iface->ip_addr;
 		cst->st_localport = pst->st_localport = md->iface->port;
 		cst->st_interface = pst->st_interface = md->iface;

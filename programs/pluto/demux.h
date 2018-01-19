@@ -69,7 +69,6 @@ struct msg_digest {
 	chunk_t raw_packet;			/* (v1) if encrypted, received packet before decryption */
 	const struct iface_port *iface;		/* interface on which message arrived */
 	ip_address sender;			/* where message came from (network order) */
-	u_int16_t sender_port;			/* host order */
 	pb_stream packet_pbs;			/* whole packet */
 	pb_stream message_pbs;			/* message to be processed */
 	pb_stream clr_pbs;			/* (v2) decrypted packet (within v2E payload) */
@@ -84,7 +83,6 @@ struct msg_digest {
 	enum original_role original_role;	/* (v2) */
 	msgid_t msgid_received;			/* (v2) - Host order! */
 
-	pb_stream rbody;			/* room for reply body (after header) */
 	notification_t note;			/* reason for failure */
 	bool dpd;				/* (v1) Peer supports RFC 3706 DPD */
 	bool ikev2;				/* Peer supports IKEv2 */

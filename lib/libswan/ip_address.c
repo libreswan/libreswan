@@ -15,13 +15,15 @@
  */
 #include "internal.h"
 #include "libreswan.h"
+#include "ip_address.h"
 
 /*
- * portof - get the port field of an ip_address
+ * portof - get the port field of an ip_address in network order.
+ *
+ * Return -1 if ip_address isn't valid.
  */
-int	/* network order */
-portof(src)
-const ip_address * src;
+
+int nportof(const ip_address * src)
 {
 	switch (src->u.v4.sin_family) {
 	case AF_INET:
@@ -31,16 +33,26 @@ const ip_address * src;
 		return src->u.v6.sin6_port;
 
 	default:
-		return -1;	/* "can't happen" */
+		return -1;
+	}
+}
+
+int hportof(const ip_address *src)
+{
+	int nport = nportof(src);
+	if (nport >= 0) {
+		return ntohs(nport);
+	} else {
+		return -1;
 	}
 }
 
 /*
- * setportof - set the port field of an ip_address
+ * setportof - set the network ordered port field of an ip_address
  */
-void setportof(port, dst)
-int port;	/* network order */
-ip_address *dst;
+
+void nsetportof(int port /* network order */,
+		ip_address *dst)
 {
 	switch (dst->u.v4.sin_family) {
 	case AF_INET:
@@ -52,11 +64,16 @@ ip_address *dst;
 	}
 }
 
+void hsetportof(int port /* host byte order */,
+		ip_address *dst)
+{
+	nsetportof(htons(port), dst);
+}
+
 /*
  * sockaddrof - get a pointer to the sockaddr hiding inside an ip_address
  */
-struct sockaddr *sockaddrof(src)
-ip_address *src;
+struct sockaddr *sockaddrof(const ip_address *src)
 {
 	switch (src->u.v4.sin_family) {
 	case AF_INET:
@@ -72,10 +89,10 @@ ip_address *src;
 
 /*
  * sockaddrlenof - get length of the sockaddr hiding inside an ip_address
+ *
+ * Return 0 on error.
  */
-size_t	/* 0 for error */
-sockaddrlenof(src)
-const ip_address * src;
+size_t sockaddrlenof(const ip_address * src)
 {
 	switch (src->u.v4.sin_family) {
 	case AF_INET:
@@ -87,4 +104,18 @@ const ip_address * src;
 	default:
 		return 0;
 	}
+}
+
+/*
+ * simplified interface to addrtot()
+ *
+ * Caller should allocate a buffer to hold the result as long
+ * as the resulting string is needed.  Usually just long enough
+ * to output.
+ */
+
+const char *ipstr(const ip_address *src, ipstr_buf *b)
+{
+	addrtot(src, 0, b->private_buf, sizeof(b->private_buf));
+	return b->private_buf;
 }

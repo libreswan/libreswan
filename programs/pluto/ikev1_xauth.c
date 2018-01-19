@@ -74,6 +74,7 @@
 #include "ikev1_xauth.h"
 #include "virtual.h"	/* needs connections.h */
 #include "addresspool.h"
+#include "ip_address.h"
 
 /* forward declarations */
 static stf_status xauth_client_ackstatus(struct state *st,
@@ -1473,9 +1474,10 @@ stf_status xauth_inR1(struct state *st, struct msg_digest *md UNUSED)
  */
 stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 {
+	pb_stream rbody;
 	ikev1_init_out_pbs_echo_hdr(md, TRUE, ISAKMP_NEXT_HASH,
 				    &reply_stream, reply_buffer, sizeof(reply_buffer),
-				    &md->rbody);
+				    &rbody);
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
@@ -1534,10 +1536,10 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 
 		{
 			stf_status stat = modecfg_resp(st, resp,
-					    &md->rbody,
-					    ISAKMP_CFG_REPLY,
-					    TRUE,
-					    ma->isama_identifier);
+						       &rbody,
+						       ISAKMP_CFG_REPLY,
+						       TRUE,
+						       ma->isama_identifier);
 
 			if (stat != STF_OK) {
 				/* notification payload - not exactly the right choice, but okay */
@@ -1563,7 +1565,7 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
  * @param md Message Digest
  * @return stf_status
  */
-static stf_status modecfg_inI2(struct msg_digest *md)
+static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 {
 	struct state *const st = md->st;
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
@@ -1658,10 +1660,10 @@ static stf_status modecfg_inI2(struct msg_digest *md)
 	/* ack things */
 	{
 		stf_status stat = modecfg_resp(st, resp,
-			    &md->rbody,
-			    ISAKMP_CFG_ACK,
-			    FALSE,
-			    isama_id);
+					       rbody,
+					       ISAKMP_CFG_ACK,
+					       FALSE,
+					       isama_id);
 
 		if (stat != STF_OK) {
 			/* notification payload - not exactly the right choice, but okay */
@@ -1691,9 +1693,10 @@ static stf_status modecfg_inI2(struct msg_digest *md)
  */
 stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 {
+	pb_stream rbody;
 	ikev1_init_out_pbs_echo_hdr(md, TRUE, ISAKMP_NEXT_HASH,
 				    &reply_stream, reply_buffer, sizeof(reply_buffer),
-				    &md->rbody);
+				    &rbody);
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
@@ -2235,9 +2238,10 @@ static stf_status xauth_client_resp(struct state *st,
  */
 stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 {
+	pb_stream rbody;
 	ikev1_init_out_pbs_echo_hdr(md, TRUE, ISAKMP_NEXT_HASH,
 				    &reply_stream, reply_buffer, sizeof(reply_buffer),
-				    &md->rbody);
+				    &rbody);
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
@@ -2250,7 +2254,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 	bool got_status = FALSE;
 
 	if (st->hidden_variables.st_xauth_client_done)
-		return modecfg_inI2(md);
+		return modecfg_inI2(md, &rbody);
 
 	DBG(DBG_CONTROLMORE, DBG_log("arrived in xauth_inI0"));
 
@@ -2379,7 +2383,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 
 	if (gotset && got_status) {
 		/* ACK whatever it was that we got */
-		stat = xauth_client_ackstatus(st, &md->rbody,
+		stat = xauth_client_ackstatus(st, &rbody,
 					      md->chain[
 						      ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute.isama_identifier);
 
@@ -2426,7 +2430,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 		}
 
 		stat = xauth_client_resp(st, xauth_resp,
-					 &md->rbody,
+					 &rbody,
 					 md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute.isama_identifier);
 	}
 
@@ -2517,9 +2521,10 @@ static stf_status xauth_client_ackstatus(struct state *st,
  */
 stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 {
+	pb_stream rbody;
 	ikev1_init_out_pbs_echo_hdr(md, TRUE, ISAKMP_NEXT_HASH,
 				    &reply_stream, reply_buffer, sizeof(reply_buffer),
-				    &md->rbody);
+				    &rbody);
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
@@ -2532,7 +2537,7 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 
 	if (st->hidden_variables.st_xauth_client_done) {
 		DBG(DBG_CONTROLMORE, DBG_log("st_xauth_client_done, moving into modecfg_inI2"));
-		return modecfg_inI2(md);
+		return modecfg_inI2(md, &rbody);
 	}
 	DBG(DBG_CONTROLMORE, DBG_log("Continuing with xauth_inI1"));
 
@@ -2602,7 +2607,7 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 	}
 
 	/* ACK whatever it was that we got */
-	stat = xauth_client_ackstatus(st, &md->rbody,
+	stat = xauth_client_ackstatus(st, &rbody,
 				      md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute.isama_identifier);
 
 	/* must have gotten a status */

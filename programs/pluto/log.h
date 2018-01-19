@@ -47,8 +47,6 @@ extern char *pluto_stats_binary;
  * should be copied to it -- see whack_log()
  */
 extern int whack_log_fd;                        /* only set during whack_handle() */
-extern const ip_address *cur_from;              /* source of current current message */
-extern u_int16_t cur_from_port;                 /* host order */
 
 extern bool whack_prompt_for(int whackfd,
 			     const char *prompt1,
@@ -90,6 +88,17 @@ void log_pop_state(so_serial_t serialno, const char *func,
 #define reset_cur_connection() pop_cur_connection(NULL)
 #define set_cur_state(ST) push_cur_state(ST)
 #define reset_cur_state() pop_cur_state(SOS_NOBODY)
+
+extern ip_address log_push_from(ip_address new_from, const char *func,
+				const char *file, long line);
+extern void log_pop_from(ip_address old_from, const char *func,
+			 const char *file, long line);
+
+#define push_cur_from(NEW)					\
+	log_push_from(NEW, __func__, PASSERT_BASENAME, __LINE__)
+#define pop_cur_from(OLD)						\
+	log_pop_from(OLD, __func__, PASSERT_BASENAME, __LINE__)
+
 
 /*
  * Log 'cur' directly (without setting it first).

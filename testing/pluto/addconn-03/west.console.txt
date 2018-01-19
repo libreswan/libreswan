@@ -619,7 +619,8 @@ dst 192.1.2.254 via  dev eth1 src 192.1.2.45 table 254
 set addr: 192.1.2.45
 seeking_src = 0, seeking_gateway = 0, has_peer = 1
 conn: "test" labeled_ipsec=0
-conn: "test" modecfgdomain=(null)
+conn: "test" modecfgdns=(null)
+conn: "test" modecfgdomains=(null)
 conn: "test" modecfgbanner=(null)
 conn: "test" mark=(null)
 conn: "test" mark-in=(null)

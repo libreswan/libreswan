@@ -43,7 +43,7 @@ west #
 002 "west-float": terminating SAs using this connection
 002 forgetting secrets
 002 loading secrets from "/etc/ipsec.secrets"
-002 loaded private key for keyid: PPK_RSA:AQOm9dY/4
+002 loaded private key for keyid: PKK_RSA:AQOm9dY/4
 west #
  ipsec auto --up float-east
 002 "float-east" #3: initiating Main Mode
@@ -70,7 +70,7 @@ west #
 002 "float-east": terminating SAs using this connection
 002 forgetting secrets
 002 loading secrets from "/etc/ipsec.secrets"
-002 loaded private key for keyid: PPK_RSA:AQOm9dY/4
+002 loaded private key for keyid: PKK_RSA:AQOm9dY/4
 west #
  ipsec auto --up west-float
 002 "west-float" #5: initiating Main Mode

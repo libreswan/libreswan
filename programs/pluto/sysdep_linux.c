@@ -58,6 +58,7 @@
 #include "server.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */
 #include "keys.h"
+#include "ip_address.h"
 
 #ifdef HAVE_BROKEN_POPEN
 /*

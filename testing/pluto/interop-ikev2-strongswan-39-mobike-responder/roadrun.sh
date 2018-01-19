@@ -15,6 +15,7 @@ ip addr show scope global
 sleep 10
 # both ends updated MOBIKE ping should work
 # note this end should be 192.1.33.222
-ping -W 1 -q -n -c 2 192.0.2.254
+ipsec whack --trafficstatus
+ping -W 1 -q -n -c 4 -I 192.0.3.1 192.0.2.254
 ipsec whack --trafficstatus
 echo done

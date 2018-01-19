@@ -81,6 +81,7 @@
 #include "ikev1_dpd.h"
 #include "pluto_x509.h"
 #include "alg_info.h"
+#include "ip_address.h"
 
 #include <blapit.h>
 
@@ -1551,19 +1552,20 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 	 */
 
 	/* HDR* out */
+	pb_stream rbody;
 	ikev1_init_out_pbs_echo_hdr(md, TRUE, ISAKMP_NEXT_HASH,
 				    &reply_stream, reply_buffer, sizeof(reply_buffer),
-				    &md->rbody);
+				    &rbody);
 
 	/* HASH(2) out -- first pass */
-	START_HASH_PAYLOAD(md->rbody, ISAKMP_NEXT_SA);
+	START_HASH_PAYLOAD(rbody, ISAKMP_NEXT_SA);
 
 	passert(st->st_connection != NULL);
 
 	zero(&sa);	/* OK: no pointer fields */
 	sa.isasa_doi = ISAKMP_DOI_IPSEC;
 	sa.isasa_np = ISAKMP_NEXT_NONCE;
-	if (!out_struct(&sa, &isakmp_sa_desc, &md->rbody, &r_sa_pbs))
+	if (!out_struct(&sa, &isakmp_sa_desc, &rbody, &r_sa_pbs))
 		return STF_INTERNAL_ERROR;
 
 	/* parse and accept body, this time recording our reply */
@@ -1615,7 +1617,7 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 			np = ISAKMP_NEXT_NONE;
 
 		/* Nr out */
-		if (!ikev1_justship_nonce(&st->st_nr, &md->rbody, np, "Nr"))
+		if (!ikev1_justship_nonce(&st->st_nr, &rbody, np, "Nr"))
 			return STF_INTERNAL_ERROR;
 
 #ifdef IMPAIR_UNALIGNED_R1_MSG
@@ -1640,7 +1642,7 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 				np = ISAKMP_NEXT_NONE;
 
 			if (!ikev1_out_generic(np,
-					 &isakmp_vendor_id_desc, &md->rbody,
+					 &isakmp_vendor_id_desc, &rbody,
 					 &vid_pbs))
 				return STF_INTERNAL_ERROR;
 
@@ -1655,7 +1657,7 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 	/* [ KE ] out (for PFS) */
 	if (st->st_pfs_group != NULL && r != NULL) {
 		if (!ikev1_justship_KE(&st->st_gr,
-				 &md->rbody,
+				 &rbody,
 				 id_pd != NULL ?
 					ISAKMP_NEXT_ID : ISAKMP_NEXT_NONE))
 			return STF_INTERNAL_ERROR;
@@ -1665,18 +1667,18 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 
 	/* [ IDci, IDcr ] out */
 	if (id_pd != NULL) {
-		struct isakmp_ipsec_id *p = (void *)md->rbody.cur; /* UGH! */
+		struct isakmp_ipsec_id *p = (void *)rbody.cur; /* UGH! */
 
 		if (!out_raw(id_pd->pbs.start, pbs_room(&id_pd->pbs),
-			     &md->rbody, "IDci"))
+			     &rbody, "IDci"))
 			return STF_INTERNAL_ERROR;
 
 		p->isaiid_np = ISAKMP_NEXT_ID;
 
-		p = (void *)md->rbody.cur; /* UGH! */
+		p = (void *)rbody.cur; /* UGH! */
 
 		if (!out_raw(id_pd->next->pbs.start,
-			     pbs_room(&id_pd->next->pbs), &md->rbody, "IDcr"))
+			     pbs_room(&id_pd->next->pbs), &rbody, "IDcr"))
 			return STF_INTERNAL_ERROR;
 
 		p->isaiid_np = ISAKMP_NEXT_NONE;
@@ -1684,7 +1686,7 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 
 
 	/* Compute reply HASH(2) and insert in output */
-	(void)quick_mode_hash12(r_hashval, r_hash_start, md->rbody.cur,
+	(void)quick_mode_hash12(r_hashval, r_hash_start, rbody.cur,
 				st, &st->st_msgid, TRUE);
 
 	/* Derive new keying material */
@@ -1700,7 +1702,7 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 
 	/* encrypt message, except for fixed part of header */
 
-	if (!encrypt_message(&md->rbody, st)) {
+	if (!encrypt_message(&rbody, st)) {
 		delete_ipsec_sa(st);
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
@@ -1781,9 +1783,10 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 	struct state *st = md->st;
 	struct connection *c = st->st_connection;
 
+	pb_stream rbody;
 	ikev1_init_out_pbs_echo_hdr(md, TRUE, ISAKMP_NEXT_HASH,
 				    &reply_stream, reply_buffer, sizeof(reply_buffer),
-				    &md->rbody);
+				    &rbody);
 
 	if (st->st_pfs_group != NULL && r != NULL)
 		finish_dh_secret(st, r);
@@ -1896,12 +1899,12 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 				libreswan_log(
 					"inserting fake VID payload of %u size",
 					padsize);
-				START_HASH_PAYLOAD_NO_R_HASH_START(md->rbody,
+				START_HASH_PAYLOAD_NO_R_HASH_START(rbody,
 								   ISAKMP_NEXT_VID);
 
 				if (!ikev1_out_generic(ISAKMP_NEXT_NONE,
 						 &isakmp_vendor_id_desc,
-						 &md->rbody, &vid_pbs))
+						 &rbody, &vid_pbs))
 					return STF_INTERNAL_ERROR;
 
 				if (!out_zero(padsize, &vid_pbs, "Filler VID"))
@@ -1909,12 +1912,12 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 
 				close_output_pbs(&vid_pbs);
 			} else {
-				START_HASH_PAYLOAD(md->rbody,
+				START_HASH_PAYLOAD(rbody,
 						   ISAKMP_NEXT_NONE);
 			}
 		}
 #else
-		START_HASH_PAYLOAD_NO_R_HASH_START(md->rbody,
+		START_HASH_PAYLOAD_NO_R_HASH_START(rbody,
 						   ISAKMP_NEXT_NONE);
 #endif
 
@@ -1935,7 +1938,7 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 
 	/* encrypt message, except for fixed part of header */
 
-	if (!encrypt_message(&md->rbody, st)) {
+	if (!encrypt_message(&rbody, st)) {
 		delete_ipsec_sa(st);
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}

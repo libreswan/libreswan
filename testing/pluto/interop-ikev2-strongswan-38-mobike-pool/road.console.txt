@@ -44,8 +44,8 @@ CHILD_SA road-east{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.3.10/
 peer supports MOBIKE
 connection 'road-east' established successfully
 road #
- ping -W 1 -q -n -c 2 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
+ ping -W 1 -q -n -c 2 -I 192.0.3.10 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.3.10 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 2 packets transmitted, 2 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -123,10 +123,14 @@ src 192.0.2.0/24 dst 192.0.3.10/32
 	dir in priority 371327 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.33.222
 road #
- ping -W 1 -q -n -c 2 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
+ ping -W 1 -q -n -c 2 -I 192.0.3.10 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.3.10 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
-2 packets transmitted, 0 received, 100% packet loss, time XXXX
+2 packets transmitted, 2 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+road #
+ grep "requesting address change using MOBIKE" /tmp/charon.log | sed "s/^.*road/road/"
+road-east|1> requesting address change using MOBIKE
 road #
  echo done
 done

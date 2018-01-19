@@ -342,6 +342,7 @@ kvmplutotest	netkey-tfc-02				good
 kvmplutotest	netkey-tfc-03				good
 
 kvmplutotest	netkey-decap-dscp-01			good
+kvmplutotest	netkey-nopmtudisc-01			good
 
 kvmplutotest	ikev2-43-init-retransmit		good
 

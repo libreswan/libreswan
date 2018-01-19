@@ -31,6 +31,7 @@ road #
 004 "modecfg-road-east" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=3des_cbc_192 integ=sha group=MODP2048}
 002 "modecfg-road-east" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 117 "modecfg-road-east" #2: STATE_QUICK_I1: initiate
+002 "modecfg-road-east" #2: up-client output: updating resolvconf
 004 "modecfg-road-east" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=192.1.2.23:4500 DPD=passive username=use3}
 road #
  ping -n -c 4 -I 192.0.2.100 192.0.2.254

@@ -43,6 +43,7 @@
 #include "ikev2_ipseckey.h"
 #include "keys.h"
 #include "secrets.h"
+#include "ip_address.h"
 
 struct p_dns_req;
 

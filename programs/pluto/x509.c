@@ -61,6 +61,7 @@
 #include "fetch.h"
 #include "hostpair.h" /* for find_host_pair_connections */
 #include "secrets.h"
+#include "ip_address.h"
 
 /* new NSS code */
 #include "pluto_x509.h"
@@ -440,7 +441,7 @@ generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 	generalName_t *top = NULL;
 	struct connection *d = find_host_pair_connections(
 		&md->iface->ip_addr, pluto_port,
-		(ip_address *)NULL, md->sender_port);
+		(ip_address *)NULL, hportof(&md->sender));
 
 	for (; d != NULL; d = d->hp_next) {
 		if (NEVER_NEGOTIATE(d->policy))

@@ -57,7 +57,7 @@
 #include "rnd.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "whack.h"
-
+#include "ip_address.h"
 #include "pending.h" /* for flush_pending_by_connection */
 
 #include "ikev1_dpd.h"

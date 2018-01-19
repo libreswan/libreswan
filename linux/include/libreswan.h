@@ -336,11 +336,6 @@ extern size_t inet_addrtot(int type, const void *src, int format, char *buf,
 extern size_t sin_addrtot(const void *sin, int format, char *dst, size_t dstlen);
 /* RFC 1886 old IPv6 reverse-lookup format is the bulkiest */
 #define ADDRTOT_BUF     (32 * 2 + 3 + 1 + 3 + 1 + 1)
-typedef struct {
-	char private_buf[ADDRTOT_BUF];
-} ipstr_buf;
-extern const char *ipstr(const ip_address *src, ipstr_buf *b);
-extern const char *sensitive_ipstr(const ip_address *src, ipstr_buf *b);
 extern err_t ttorange(const char *src, size_t srclen, int af, ip_range *dst,
 		bool non_zero);
 extern size_t rangetot(const ip_range *src, char format, char *dst, size_t dstlen);
@@ -414,12 +409,6 @@ extern bool samesubnettype(const ip_subnet *a, const ip_subnet *b);
 extern int isanyaddr(const ip_address *src);
 extern int isunspecaddr(const ip_address *src);
 extern int isloopbackaddr(const ip_address *src);
-
-/* low-level grot */
-extern int portof(const ip_address *src);
-extern void setportof(int port, ip_address *dst);
-extern struct sockaddr *sockaddrof(ip_address *src);
-extern size_t sockaddrlenof(const ip_address *src);
 
 /* PRNG */
 extern void prng_init(struct prng *prng, const unsigned char *key, size_t keylen);
