@@ -3673,7 +3673,7 @@ static struct connection *fc_try(const struct connection *c,
 	if (best == NULL) {
 		if (virtualwhy != NULL) {
 			libreswan_log(
-				"peer proposal was reject in a virtual connection policy: %s",
+				"peer proposal was rejected in a virtual connection policy: %s",
 				virtualwhy);
 		}
 	}
