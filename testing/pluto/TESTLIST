@@ -690,7 +690,7 @@ kvmplutotest	interop-ikev2-strongswan-26-ke-mismatch-responder	good
 kvmplutotest	interop-ikev1-strongswan-15-twofish		good
 kvmplutotest	interop-ikev1-strongswan-16-serpent		good
 kvmplutotest	interop-ikev2-strongswan-31-asymmetric-responder	good
-kvmplutotest	interop-ikev2-strongswan-32-ip-lease		wip
+kvmplutotest	interop-ikev2-strongswan-32-ip-lease		good
 kvmplutotest	interop-ikev1-strongswan-x509-aggr-12-san-dn-match	good
 kvmplutotest	interop-ikev1-strongswan-x509-aggr-13-san-dn-match-responder good
 
