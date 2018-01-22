@@ -29,6 +29,7 @@
 
 static void init_seccomp(uint32_t def_action, bool main)
 {
+#define S_RULE_ADD(x) seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(x), 0)
 	scmp_filter_ctx ctx = seccomp_init(def_action);
 	int rc = 0;
 
@@ -51,154 +52,86 @@ static void init_seccomp(uint32_t def_action, bool main)
 	 *    0.41    0.230820           6     37788      2877 open
 	 *    [...]
 	 */
-
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(read), 0);
+	rc |= S_RULE_ADD(read);
 	if (main)
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(wait4), 0);
+		rc |= S_RULE_ADD(wait4);
 
+	/* needed for pluto, not helpers */
 	if (main) {
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(accept), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(access), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(bind), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(brk), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(chdir), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(clock_gettime), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(clone), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(close), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(connect), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(dup), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(dup2), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(epoll_create), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(epoll_ctl), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(epoll_wait), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(execve), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(exit_group), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(faccessat), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(fadvise64), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(fcntl), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(getcwd), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(getdents), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(getegid), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(geteuid), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(getgid), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(getgroups), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(getpgrp), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(getpid), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(getppid), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(getrlimit), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(getsockname), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(getuid), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(ioctl), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(mkdir), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(munmap), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(newfstatat), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(open), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(openat), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(pipe), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(pipe2), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(poll), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(readlink), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(recvfrom), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(recvmsg), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(select), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(sendmsg), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(sendto), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(set_robust_list), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(setsockopt), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(socket), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(uname), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(unlink), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-				SCMP_SYS(unlinkat), 0);
+		rc |= S_RULE_ADD(accept);
+		rc |= S_RULE_ADD(access);
+		rc |= S_RULE_ADD(bind);
+		rc |= S_RULE_ADD(brk);
+		rc |= S_RULE_ADD(chdir);
+		rc |= S_RULE_ADD(clock_gettime);
+		rc |= S_RULE_ADD(clone);
+		rc |= S_RULE_ADD(close);
+		rc |= S_RULE_ADD(connect);
+		rc |= S_RULE_ADD(dup);
+		rc |= S_RULE_ADD(dup2);
+		rc |= S_RULE_ADD(epoll_create);
+		rc |= S_RULE_ADD(epoll_ctl);
+		rc |= S_RULE_ADD(epoll_wait);
+		rc |= S_RULE_ADD(execve);
+		rc |= S_RULE_ADD(exit_group);
+		rc |= S_RULE_ADD(faccessat);
+		rc |= S_RULE_ADD(fadvise64);
+		rc |= S_RULE_ADD(fcntl);
+		rc |= S_RULE_ADD(getcwd);
+		rc |= S_RULE_ADD(getdents);
+		rc |= S_RULE_ADD(getegid);
+		rc |= S_RULE_ADD(geteuid);
+		rc |= S_RULE_ADD(getgid);
+		rc |= S_RULE_ADD(getgroups);
+		rc |= S_RULE_ADD(getpgrp);
+		rc |= S_RULE_ADD(getpid);
+		rc |= S_RULE_ADD(getppid);
+		rc |= S_RULE_ADD(getrlimit);
+		rc |= S_RULE_ADD(getsockname);
+		rc |= S_RULE_ADD(getuid);
+		rc |= S_RULE_ADD(ioctl);
+		rc |= S_RULE_ADD(mkdir);
+		rc |= S_RULE_ADD(munmap);
+		rc |= S_RULE_ADD(newfstatat);
+		rc |= S_RULE_ADD(open);
+		rc |= S_RULE_ADD(openat);
+		rc |= S_RULE_ADD(pipe);
+		rc |= S_RULE_ADD(pipe2);
+		rc |= S_RULE_ADD(poll);
+		rc |= S_RULE_ADD(prctl);
+		rc |= S_RULE_ADD(readlink);
+		rc |= S_RULE_ADD(recvfrom);
+		rc |= S_RULE_ADD(recvmsg);
+		rc |= S_RULE_ADD(select);
+		rc |= S_RULE_ADD(sendmsg);
+		rc |= S_RULE_ADD(sendto);
+		rc |= S_RULE_ADD(set_robust_list);
+		rc |= S_RULE_ADD(setsockopt);
+		rc |= S_RULE_ADD(socket);
+		rc |= S_RULE_ADD(socketpair);
+		rc |= S_RULE_ADD(uname);
+		rc |= S_RULE_ADD(unlink);
+		rc |= S_RULE_ADD(unlinkat);
 	}
 
-	/* common to main and helpers */
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-			SCMP_SYS(arch_prctl), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-			SCMP_SYS(gettid), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-			SCMP_SYS(gettimeofday), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-			SCMP_SYS(fstat), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-			SCMP_SYS(futex), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-			SCMP_SYS(lseek), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-			SCMP_SYS(mmap), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-			SCMP_SYS(mprotect), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-			SCMP_SYS(nanosleep), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-			SCMP_SYS(rt_sigaction), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-			SCMP_SYS(rt_sigprocmask), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-			SCMP_SYS(rt_sigreturn), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-			SCMP_SYS(sched_setparam), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-			SCMP_SYS(set_tid_address), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-			SCMP_SYS(stat), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-			SCMP_SYS(statfs), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW,
-			SCMP_SYS(write), 0);
+	/* common to pluto and helpers */
+	rc |= S_RULE_ADD(arch_prctl);
+	rc |= S_RULE_ADD(gettid);
+	rc |= S_RULE_ADD(gettimeofday);
+	rc |= S_RULE_ADD(fstat);
+	rc |= S_RULE_ADD(futex);
+	rc |= S_RULE_ADD(lseek);
+	rc |= S_RULE_ADD(mmap);
+	rc |= S_RULE_ADD(mprotect);
+	rc |= S_RULE_ADD(nanosleep);
+	rc |= S_RULE_ADD(rt_sigaction);
+	rc |= S_RULE_ADD(rt_sigprocmask);
+	rc |= S_RULE_ADD(rt_sigreturn);
+	rc |= S_RULE_ADD(sched_setparam);
+	rc |= S_RULE_ADD(set_tid_address);
+	rc |= S_RULE_ADD(stat);
+	rc |= S_RULE_ADD(statfs);
+	rc |= S_RULE_ADD(write);
 
 	if (rc != 0) {
 		libreswan_log("seccomp_rule_add() failed!");
@@ -214,6 +147,7 @@ static void init_seccomp(uint32_t def_action, bool main)
 	}
 
 	libreswan_log("seccomp security enabled");
+#undef S_RULE_ADD
 }
 
 void init_seccomp_main(uint32_t def_action)
