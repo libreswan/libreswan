@@ -2151,12 +2151,16 @@ static unsigned char *ikev2_authloc(struct state *st,
 }
 
 static stf_status ikev2_encrypt_msg(struct state *st,
-				    unsigned char *auth_start,
-				    unsigned char *wire_iv_start,
-				    unsigned char *enc_start,
-				    unsigned char *integ_start,
+				    uint8_t *auth_start,
+				    uint8_t *wire_iv_start,
+				    uint8_t *enc_start,
+				    uint8_t *integ_start,
 				    pb_stream *e_pbs_cipher)
 {
+	passert(auth_start <= wire_iv_start);
+	passert(wire_iv_start <= enc_start);
+	passert(enc_start <= integ_start);
+
 	struct state *pst = st;
 
 	/*
@@ -3106,7 +3110,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	/* beginning of data going out */
 
-	unsigned char *const authstart = reply_stream.cur;
+	uint8_t *const authstart = reply_stream.cur;
 
 	/* make sure HDR is at start of a clean buffer */
 	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
@@ -3153,7 +3157,8 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	/* insert IV */
 
-	unsigned char *const iv = e_pbs.cur;
+	uint8_t *const iv = e_pbs.cur;
+	passert(authstart <= iv);
 
 	if (!emit_wire_iv(cst, &e_pbs))
 		return STF_INTERNAL_ERROR;
@@ -3166,7 +3171,8 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		 "cleartext");
 	e_pbs_cipher.container = &e_pbs;
 
-	unsigned char *const encstart = e_pbs_cipher.cur;
+	uint8_t *const encstart = e_pbs_cipher.cur;
+	passert(authstart <= iv && iv <= encstart);
 
 	/* decide whether to send CERT payload */
 
@@ -3474,10 +3480,10 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	close_output_pbs(&e_pbs_cipher);
 
-	unsigned char *const authloc = ikev2_authloc(cst, &e_pbs);
-
+	uint8_t *const authloc = ikev2_authloc(cst, &e_pbs);
 	if (authloc == NULL)
 		return STF_INTERNAL_ERROR;
+	passert(authstart <= iv && iv <= encstart && encstart <= authloc);
 
 	close_output_pbs(&e_pbs);
 	close_output_pbs(&rbody);
