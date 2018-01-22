@@ -3110,11 +3110,12 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	/* beginning of data going out */
 
-	uint8_t *const authstart = reply_stream.cur;
-
 	/* make sure HDR is at start of a clean buffer */
 	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		 "reply packet");
+
+	/* save authenticated but unencrypted data start */
+	uint8_t *const authstart = reply_stream.cur;
 
 	/* HDR out */
 
