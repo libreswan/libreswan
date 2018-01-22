@@ -20,8 +20,7 @@ east #
 east #
  (cd /tmp && xl2tpd -D 2>/tmp/xl2tpd.log 1>&2 ) &
 [B] PID
-east #
- echo done
+echo done
 done
 east #
  ipsec look

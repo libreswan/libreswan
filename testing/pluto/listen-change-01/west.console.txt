@@ -48,7 +48,7 @@ west #
 002 "west-east" #1: deleting state (STATE_MAIN_I4) and sending notification
 002 forgetting secrets
 002 loading secrets from "/etc/ipsec.secrets"
-002 loaded private key for keyid: PPK_RSA:AQOm9dY/4
+002 loaded private key for keyid: PKK_RSA:AQOm9dY/4
 west #
  sleep 30
 west #
