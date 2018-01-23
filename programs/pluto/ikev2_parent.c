@@ -241,7 +241,7 @@ static stf_status add_st_send_list(struct state *st, struct state *pst)
 }
 
 
-static crypto_req_cont_func ikev2_crypto_continue;
+static crypto_req_cont_func ikev2_crypto_continue;	/* forward decl and type assertion */
 
 static stf_status ikev2_rekey_dh_start(struct pluto_crypto_req *r,
 				       struct msg_digest *md)
@@ -298,7 +298,6 @@ static struct msg_digest *fake_md(struct state *st)
 	return fake_md;
 }
 
-/* redundant type assertion: static crypto_req_cont_func ikev2_crypto_continue; */
 static void ikev2_crypto_continue(struct state *st, struct msg_digest *md,
 				  struct pluto_crypto_req *r)
 {
@@ -1071,8 +1070,8 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
  * HDR, SAr1, KEr, Nr, [CERTREQ] -->
  */
 
-static crypto_req_cont_func ikev2_parent_inI1outR1_continue;	/* type assertion */
-static crypto_transition_fn ikev2_parent_inI1outR1_tail;
+static crypto_req_cont_func ikev2_parent_inI1outR1_continue;	/* forward decl and type assertion */
+static crypto_transition_fn ikev2_parent_inI1outR1_tail;	/* forward decl and type assertion */
 
 stf_status ikev2parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 {
@@ -1437,8 +1436,6 @@ stf_status ikev2parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 			     ikev2_parent_inI1outR1_continue);
 	return STF_SUSPEND;
 }
-
-/* redundant type assertion: static crypto_req_cont_func ikev2_parent_inI1outR1_continue; */
 
 static void ikev2_parent_inI1outR1_continue(struct state *st, struct msg_digest *md,
 					    struct pluto_crypto_req *r)
@@ -1875,8 +1872,8 @@ stf_status ikev2parent_inR1BoutI1B(struct state *st, struct msg_digest *md)
  *      TSi, TSr}      -->
  */
 
-static crypto_req_cont_func ikev2_parent_inR1outI2_continue;	/* type assertion */
-static crypto_transition_fn ikev2_parent_inR1outI2_tail;
+static crypto_req_cont_func ikev2_parent_inR1outI2_continue;	/* forward decl and type assertion */
+static crypto_transition_fn ikev2_parent_inR1outI2_tail;	/* forward decl and type assertion */
 
 stf_status ikev2parent_inR1outI2(struct state *st, struct msg_digest *md)
 {
@@ -2021,8 +2018,6 @@ stf_status ikev2parent_inR1outI2(struct state *st, struct msg_digest *md)
 		    NULL, ikev2_parent_inR1outI2_continue);
 	return STF_SUSPEND;
 }
-
-/* redundant type assertion: static crypto_req_cont_func ikev2_parent_inR1outI2_continue; */
 
 static void ikev2_parent_inR1outI2_continue(struct state *st, struct msg_digest *md,
 					    struct pluto_crypto_req *r)
@@ -3580,8 +3575,8 @@ static stf_status ikev2_start_pam_authorize(struct msg_digest *md)
  * [Parent SA established]
  */
 
-static crypto_req_cont_func ikev2_parent_inI2outR2_continue;
-static crypto_transition_fn ikev2_parent_inI2outR2_tail;
+static crypto_req_cont_func ikev2_parent_inI2outR2_continue;	/* type asssertion */
+static crypto_transition_fn ikev2_parent_inI2outR2_tail;	/* forward decl and type assertion */
 
 stf_status ikev2parent_inI2outR2(struct state *st, struct msg_digest *md)
 {
