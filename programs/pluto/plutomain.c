@@ -783,7 +783,7 @@ int main(int argc, char **argv)
 
 		case 'V':	/* --vendorid */
 			pfree(pluto_vendorid);
-			coredir = clone_str(optarg, "pluto_vendorid via getopt");
+			pluto_vendorid = clone_str(optarg, "pluto_vendorid via getopt");
 			continue;
 
 		case 'S':	/* --statsdir */
