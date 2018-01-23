@@ -1103,7 +1103,7 @@ int main(int argc, char **argv)
 			}
 
 			if (snprintf(pluto_lock, sizeof(pluto_lock),
-					"%s/pluto.lock", optarg) == -1) {
+					"%s/pluto.pid", optarg) == -1) {
 				ugh = "--rundir ctl_addr.sun_path is invalid for sun_path socket";
 				break;
 			}
