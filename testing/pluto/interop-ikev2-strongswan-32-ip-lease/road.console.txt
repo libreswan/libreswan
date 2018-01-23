@@ -24,7 +24,7 @@ IKE_SA client[1] established between 192.1.3.209[192.1.3.209]...192.1.2.23[192.1
 scheduling reauthentication in XXXs
 maximum IKE_SA lifetime XXXs
 installing DNS server 1.2.3.4 to /etc/strongswan/resolv.conf
-DNS server 1.2.3.4 already installed, increasing refcount
+installing DNS server 8.8.8.8 to /etc/strongswan/resolv.conf
 installing new virtual IP 192.0.1.254
 CHILD_SA client{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.254/32 === 192.0.2.0/24
 connection 'client' established successfully

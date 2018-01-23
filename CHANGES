@@ -6,6 +6,7 @@ v3.23 (unrelased)
 * IKEv2: Add support for modecfgdns= and modecfgdomains= like for IKEv1 [Paul]
 * IKEv2: EXPERIMENTAL: Support for Postquantim Preshared Keys [Vukasin Karadzic]
          based on draft-ietf-ipsecme-qr-ikev2-01 (using private use numbers)
+         new option: ppk=yes|no|insist (default no)
 * pluto: Fix DEFAULT_RUNDIR to be set so it is really configurable [Tuomo]
 * pluto: Add support IDr payload (You Tarzan, me Jane) [Paul]
 * pluto: pass state to send_crypto_helper_request() [Andrew]
@@ -20,11 +21,13 @@ v3.23 (unrelased)
 * pluto: STF_INLINE, STF_TOOMUCHCRYPTO no longer needed in helpers [Andrew]
 * pluto: Replace socket queues with a simple queue and mutex+cont [Andrew]
 * pluto: Do not send DPD/liveness probes for replaced inactive IPsec SAs [Paul]
+* pluto: crypto processing cleanup [Andrew]
 * XFRM: XFRM_MIGRATE support, used for MOBIKE [Antony]
 * XFRM: Listen to NETLINK_ROUTE messages from kernel for MOBIKE [Antony]
 * XFRM: Fix unique marks accidentally setting -1 instead of random [Paul]
 * XFRM: Only install IPv6 holes when system has configured IPv6 [Antony]
-* XFRM: Add support for decap-dscp=yes [Paul]
+* XFRM: Add support for decap-dscp=yes|no (default no) [Paul]
+* XFRM: Add support for nopmtudisc=yes|no (default no) [Paul]
 * KLIPS: Support kernels 4.14+ with renamed dev->priv_destructor [Paul]
 * KLIPS: updown fixes for IPv6 default route and metric/mtu settings [Wolfgang]
 * SECCOMP: Update syscall whitelist for use of libunbound [Paul]

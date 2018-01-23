@@ -41,7 +41,6 @@ scheduling reauthentication in XXXs
 maximum IKE_SA lifetime XXXs
 installing new virtual IP 192.0.3.10
 CHILD_SA road-east{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.3.10/32 === 192.0.2.0/24
-peer supports MOBIKE
 connection 'road-east' established successfully
 road #
  ping -W 1 -q -n -c 2 -I 192.0.3.10 192.0.2.254
@@ -135,25 +134,35 @@ road #
  echo done
 done
 road #
- ip xfrm state
+ ipsec look
+road NOW
+XFRM state:
 src 192.1.33.222 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPIXX reqid REQIDREQID mode tunnel
 	enc cbc(aes) 0xKEY
 src 192.1.2.23 dst 192.1.33.222
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPIXX reqid REQIDREQID mode tunnel
 	enc cbc(aes) 0xKEY
-road #
- ip xfrm pol
-src 192.0.3.10/32 dst 192.0.2.0/24 
-	dir out priority 371327 ptype main 
-	tmpl src 192.1.33.222 dst 192.1.2.23
-		proto esp spi 0xSPISPI reqid 1 mode tunnel
+XFRM policy:
 src 192.0.2.0/24 dst 192.0.3.10/32 
 	dir fwd priority 371327 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.33.222
 src 192.0.2.0/24 dst 192.0.3.10/32 
 	dir in priority 371327 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.33.222
+src 192.0.3.10/32 dst 192.0.2.0/24 
+	dir out priority 371327 ptype main 
+	tmpl src 192.1.33.222 dst 192.1.2.23
+		proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.33.254 dev eth0 
+192.1.33.0/24 dev eth0 proto kernel scope link src 192.1.33.222 
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
 road #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec whack --trafficstatus ; fi
 road #

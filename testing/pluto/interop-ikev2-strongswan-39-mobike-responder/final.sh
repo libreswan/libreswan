@@ -1,5 +1,4 @@
-ip xfrm state
-ip xfrm pol
+ipsec look
 if [ -f /var/run/pluto/pluto.pid ]; then ipsec whack --trafficstatus ; fi
 if [ -f /var/run/charon.pid ]; then strongswan status ; fi
 sleep 7

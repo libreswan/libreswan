@@ -52,7 +52,6 @@ sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
 parsed QUICK_MODE response 0123456789 [ HASH SA No ID ID ]
 CHILD_SA westnet-eastnet-ikev1{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
-generating QUICK_MODE request 0123456789 [ HASH ]
 connection 'westnet-eastnet-ikev1' established successfully
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254

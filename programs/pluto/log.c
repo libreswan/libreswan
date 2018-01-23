@@ -209,7 +209,7 @@ void log_reset_globals(const char *func, const char *file, long line)
 			       func, file, line);
 		cur_connection = NULL;
 	}
-	if (hportof(&cur_from) >= 0) {
+	if (isvalidaddr(&cur_from)) {
 		/* peer's IP address */
 		log_processing(RESET, true, NULL, NULL, &cur_from,
 			       func, file, line);
@@ -248,7 +248,7 @@ void log_pexpect_reset_globals(const char *func, const char *file, long line)
 		}
 		cur_connection = NULL;
 	}
-	if (hportof(&cur_from) >= 0) {
+	if (isvalidaddr(&cur_from)) {
 		LSWLOG_PEXPECT_SOURCE(func, file, line, buf) {
 			lswlogs(buf, "processing: unexpected cur_from ");
 			lswlog_sensitive_ip(buf, &cur_from);
@@ -391,13 +391,13 @@ extern ip_address log_push_from(ip_address new_from,
 {
 	bool current = (cur_state == NULL && cur_connection == NULL);
 	ip_address old_from = cur_from;
-	if (hportof(&old_from) >= 0) {
+	if (isvalidaddr(&old_from)) {
 		log_processing(SUSPEND, current,
 			       NULL, NULL, &old_from,
 			       func, file, line);
 	}
 	cur_from = new_from;
-	if (hportof(&cur_from) >= 0) {
+	if (isvalidaddr(&cur_from)) {
 		log_processing(START, current,
 			       NULL, NULL, &cur_from,
 			       func, file, line);
@@ -410,12 +410,12 @@ extern void log_pop_from(ip_address old_from,
 			 const char *file, long line)
 {
 	bool current = (cur_state == NULL && cur_connection == NULL);
-	if (hportof(&cur_from) >= 0) {
+	if (isvalidaddr(&cur_from)) {
 		log_processing(STOP, current,
 			       NULL, NULL, &cur_from,
 			       func, file, line);
 	}
-	if (hportof(&old_from) >= 0) {
+	if (isvalidaddr(&old_from)) {
 		log_processing(RESUME, current,
 			       NULL, NULL, &old_from,
 			       func, file, line);
@@ -559,7 +559,7 @@ static void lswlog_cur_prefix(struct lswlog *buf,
 			}
 		}
 		lswlogs(buf, ": ");
-	} else if (cur_from != NULL && hportof(cur_from) >= 0) {
+	} else if (cur_from != NULL && isvalidaddr(cur_from)) {
 		/* peer's IP address */
 		lswlogs(buf, "packet from ");
 		lswlog_sensitive_ip(buf, cur_from);

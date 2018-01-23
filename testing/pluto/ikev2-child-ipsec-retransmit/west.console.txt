@@ -1,0 +1,65 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec auto --add westnet-eastnet-ikev2a
+002 added connection description "westnet-eastnet-ikev2a"
+west #
+ ipsec auto --add westnet-eastnet-ikev2b
+002 added connection description "westnet-eastnet-ikev2b"
+west #
+ echo "initdone"
+initdone
+west #
+ # initial exchange
+west #
+ ipsec auto --up westnet-eastnet-ikev2a
+002 "westnet-eastnet-ikev2a" #1: initiating v2 parent SA
+133 "westnet-eastnet-ikev2a" #1: STATE_PARENT_I1: initiate
+133 "westnet-eastnet-ikev2a" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+134 "westnet-eastnet-ikev2a" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
+002 "westnet-eastnet-ikev2a" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+002 "westnet-eastnet-ikev2a" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "westnet-eastnet-ikev2a" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+west #
+ # creat-child-sa request. Expected to fail due to firewall
+west #
+ # we expect east to re-answer our retransmits
+west #
+ # drop silently to avoid race conditions of kernel log
+west #
+ iptables -I INPUT -p udp --dport 500 -j DROP
+west #
+ ipsec auto --up westnet-eastnet-ikev2b
+139 "westnet-eastnet-ikev2b" #3: STATE_V2_CREATE_I: sent IPsec Child req wait response
+010 "westnet-eastnet-ikev2b" #3: STATE_V2_CREATE_I: retransmission; will wait 0.5 seconds for response
+010 "westnet-eastnet-ikev2b" #3: STATE_V2_CREATE_I: retransmission; will wait 1 seconds for response
+010 "westnet-eastnet-ikev2b" #3: STATE_V2_CREATE_I: retransmission; will wait 2 seconds for response
+010 "westnet-eastnet-ikev2b" #3: STATE_V2_CREATE_I: retransmission; will wait 4 seconds for response
+010 "westnet-eastnet-ikev2b" #3: STATE_V2_CREATE_I: retransmission; will wait 8 seconds for response
+031 "westnet-eastnet-ikev2b" #3: STATE_V2_CREATE_I: 10 second timeout exceeded after 5 retransmits.  No response (or no acceptable response) to our IKEv2 message
+002 "westnet-eastnet-ikev2b" #3: deleting state (STATE_V2_CREATE_I)
+west #
+ echo done
+done
+west #
+ # should show retransmits on west and replies on east
+west #
+ grep sending /tmp/pluto.log |grep through
+| sending 780 bytes for STATE_IKEv2_BASE through eth1:500 to 192.1.2.23:500 (using #1)
+| sending 405 bytes for STATE_PARENT_I1 through eth1:500 to 192.1.2.23:500 (using #1)
+| sending 345 bytes for STATE_IKEv2_BASE through eth1:500 to 192.1.2.23:500 (using #1)
+| sending 345 bytes for EVENT_v2_RETRANSMIT through eth1:500 to 192.1.2.23:500 (using #1)
+| sending 345 bytes for EVENT_v2_RETRANSMIT through eth1:500 to 192.1.2.23:500 (using #1)
+| sending 345 bytes for EVENT_v2_RETRANSMIT through eth1:500 to 192.1.2.23:500 (using #1)
+| sending 345 bytes for EVENT_v2_RETRANSMIT through eth1:500 to 192.1.2.23:500 (using #1)
+| sending 345 bytes for EVENT_v2_RETRANSMIT through eth1:500 to 192.1.2.23:500 (using #1)
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

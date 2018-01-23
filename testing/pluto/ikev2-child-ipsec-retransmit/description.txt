@@ -1,0 +1,7 @@
+Test CREATE_CHILD_SA retransmit. This is USGv6 test Test IKEv2.EN.R.1.2.2.1
+and rhbz#1375776
+
+west and east setup a tunnel. west then initiates a second tunnel, using CREATE_CHILD_SA
+but blocks east replies via iptables. west should retransmit and east should re-answer.
+This is testing by checking the pluto logs.
+

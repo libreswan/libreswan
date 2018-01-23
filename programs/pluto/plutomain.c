@@ -783,7 +783,7 @@ int main(int argc, char **argv)
 
 		case 'V':	/* --vendorid */
 			pfree(pluto_vendorid);
-			coredir = clone_str(optarg, "pluto_vendorid via getopt");
+			pluto_vendorid = clone_str(optarg, "pluto_vendorid via getopt");
 			continue;
 
 		case 'S':	/* --statsdir */
@@ -1103,7 +1103,7 @@ int main(int argc, char **argv)
 			}
 
 			if (snprintf(pluto_lock, sizeof(pluto_lock),
-					"%s/pluto.lock", optarg) == -1) {
+					"%s/pluto.pid", optarg) == -1) {
 				ugh = "--rundir ctl_addr.sun_path is invalid for sun_path socket";
 				break;
 			}
