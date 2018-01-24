@@ -1200,10 +1200,9 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 					      struct pluto_crypto_req *r);
 
+static crypto_req_cont_func quick_inI1_outR1_cryptocontinue1;	/* forward decl and type assertion */
 
-static crypto_req_cont_func quick_inI1_outR1_cryptocontinue1;	/* type assertion */
-
-static crypto_req_cont_func quick_inI1_outR1_cryptocontinue2;	/* type assertion */
+static crypto_req_cont_func quick_inI1_outR1_cryptocontinue2;	/* forward decl and type assertion */
 
 static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b)
 {
@@ -1474,8 +1473,6 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b)
 	}
 }
 
-/* redundant type assertion: static crypto_req_cont_func quick_inI1_outR1_cryptocontinue1; */
-
 static void quick_inI1_outR1_cryptocontinue1(struct state *st, struct msg_digest *md,
 					     struct pluto_crypto_req *r)
 {
@@ -1511,8 +1508,6 @@ static void quick_inI1_outR1_cryptocontinue1(struct state *st, struct msg_digest
 	}
 	/* ??? why does our caller not care about e? */
 }
-
-/* redundant type assertion: static crypto_req_cont_func quick_inI1_outR1_cryptocontinue2; */
 
 static void quick_inI1_outR1_cryptocontinue2(struct state *st, struct msg_digest *md,
 					     struct pluto_crypto_req *r)
@@ -1720,7 +1715,7 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 static stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 					      struct pluto_crypto_req *r);
 
-static crypto_req_cont_func quick_inR1_outI2_continue;	/* type assertion */
+static crypto_req_cont_func quick_inR1_outI2_continue;	/* forward decl and type assertion */
 
 stf_status quick_inR1_outI2(struct state *st, struct msg_digest *md)
 {
@@ -1761,8 +1756,6 @@ stf_status quick_inR1_outI2(struct state *st, struct msg_digest *md)
 		return quick_inR1_outI2_cryptotail(md, NULL);
 	}
 }
-
-/* redundant type assertion: static crypto_req_cont_func quick_inR1_outI2_continue; */
 
 static void quick_inR1_outI2_continue(struct state *st, struct msg_digest *md,
 				      struct pluto_crypto_req *r)

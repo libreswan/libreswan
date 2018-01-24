@@ -138,12 +138,12 @@ static void xauth_pam_child_cleanup(int status, void *arg)
 		struct state *st = state_with_serialno(xauth->serialno);
 		passert(st != NULL);
 		st->st_xauth = NULL; /* all done */
-		set_cur_state(st);
+		so_serial_t old_state = push_cur_state(st);
 		libreswan_log("XAUTH: #%lu: completed for user '%s' with status %s",
 			      xauth->serialno, xauth->ptarg.name,
 			      success ? "SUCCESSS" : "FAILURE");
 		xauth->callback(st, xauth->ptarg.name, success);
-		reset_cur_state();
+		pop_cur_state(old_state);
 	}
 
 	pfree_xauth(xauth);

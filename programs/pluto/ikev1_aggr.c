@@ -97,8 +97,6 @@
 static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 				       struct pluto_crypto_req *r);
 
-static crypto_req_cont_func aggr_inR1_outI2_crypto_continue;
-
 /*
  * continuation from second calculation (the DH one)
  */
@@ -576,7 +574,7 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
  * SMF_DS_AUTH:  HDR, SA, KE, Nr, IDir, [CERT,] SIG_R
  *           --> HDR*, [CERT,] SIG_I
  */
-static stf_status aggr_inR1_outI2_tail(struct msg_digest *md); /* forward */
+static crypto_req_cont_func aggr_inR1_outI2_crypto_continue;	/* forward decl and type asssertion */
 
 stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 {
@@ -643,7 +641,7 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	return STF_SUSPEND;
 }
 
-/* redundant type assertion: static crypto_req_cont_func aggr_inR1_outI2_crypto_continue; */
+static stf_status aggr_inR1_outI2_tail(struct msg_digest *md); /* forward */
 
 static void aggr_inR1_outI2_crypto_continue(struct state *st, struct msg_digest *md,
 					    struct pluto_crypto_req *r)
@@ -654,6 +652,7 @@ static void aggr_inR1_outI2_crypto_continue(struct state *st, struct msg_digest 
 	    DBG_log("aggr inR1_outI2: calculated DH, sending I2"));
 
 	passert(st != NULL);
+	passert(md != NULL);
 
 	if (!finish_dh_secretiv(st, r)) {
 		e = STF_FAIL + INVALID_KEY_INFORMATION;
@@ -661,10 +660,11 @@ static void aggr_inR1_outI2_crypto_continue(struct state *st, struct msg_digest 
 		e = aggr_inR1_outI2_tail(md);
 	}
 
-	passert(md != NULL);
 	complete_v1_state_transition(&md, e);
 	release_any_md(&md);
 }
+
+/* Note: this is only called once.  Not really a tail. */
 
 static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 {

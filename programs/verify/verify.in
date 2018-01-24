@@ -364,7 +364,7 @@ def ipsecsecretcheck():
 			if line and "ERROR" in line:
 				print("  %s"%line)
 	elif "WARNING" in output:
-		print_result("WARNING","OBSOLETE")
+		print_result("WARN","OBSOLETE")
 		for line in output.split("\n"):
 			line = line.strip()
 			if line and "WARNING" in line:

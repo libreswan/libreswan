@@ -442,4 +442,4 @@ if [ ! -x "${path}" ]; then
     fi
 fi
 
-exec ${path} ${ADDSOCKET} $@
+exec "${path}" ${ADDSOCKET} "$@"
