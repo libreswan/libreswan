@@ -114,6 +114,7 @@ void init_seccomp_addconn(uint32_t def_action)
 	rc |= S_RULE_ADD(futex);
 	rc |= S_RULE_ADD(getdents);
 	rc |= S_RULE_ADD(getegid);
+	rc |= S_RULE_ADD(getpid);
 	rc |= S_RULE_ADD(getrlimit);
 	rc |= S_RULE_ADD(geteuid);
 	rc |= S_RULE_ADD(getgid);
