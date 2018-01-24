@@ -56,7 +56,7 @@ static void init_seccomp(uint32_t def_action, bool main)
 	if (main)
 		rc |= S_RULE_ADD(wait4);
 
-	/* needed for pluto, not helpers */
+	/* needed for pluto and updown, not helpers */
 	if (main) {
 		rc |= S_RULE_ADD(accept);
 		rc |= S_RULE_ADD(access);
@@ -72,8 +72,8 @@ static void init_seccomp(uint32_t def_action, bool main)
 		rc |= S_RULE_ADD(epoll_create);
 		rc |= S_RULE_ADD(epoll_ctl);
 		rc |= S_RULE_ADD(epoll_wait);
+		rc |= S_RULE_ADD(epoll_pwait);
 		rc |= S_RULE_ADD(execve);
-		rc |= S_RULE_ADD(exit_group);
 		rc |= S_RULE_ADD(faccessat);
 		rc |= S_RULE_ADD(fadvise64);
 		rc |= S_RULE_ADD(fcntl);
@@ -99,22 +99,25 @@ static void init_seccomp(uint32_t def_action, bool main)
 		rc |= S_RULE_ADD(pipe2);
 		rc |= S_RULE_ADD(poll);
 		rc |= S_RULE_ADD(prctl);
+		rc |= S_RULE_ADD(pread64);
+		rc |= S_RULE_ADD(prlimit64);
 		rc |= S_RULE_ADD(readlink);
 		rc |= S_RULE_ADD(recvfrom);
 		rc |= S_RULE_ADD(recvmsg);
 		rc |= S_RULE_ADD(select);
 		rc |= S_RULE_ADD(sendmsg);
-		rc |= S_RULE_ADD(sendto);
 		rc |= S_RULE_ADD(set_robust_list);
 		rc |= S_RULE_ADD(setsockopt);
 		rc |= S_RULE_ADD(socket);
 		rc |= S_RULE_ADD(socketpair);
+		rc |= S_RULE_ADD(sysinfo);
 		rc |= S_RULE_ADD(uname);
 		rc |= S_RULE_ADD(unlink);
 		rc |= S_RULE_ADD(unlinkat);
 	}
 
 	/* common to pluto and helpers */
+
 	rc |= S_RULE_ADD(arch_prctl);
 	rc |= S_RULE_ADD(gettid);
 	rc |= S_RULE_ADD(gettimeofday);
@@ -128,10 +131,12 @@ static void init_seccomp(uint32_t def_action, bool main)
 	rc |= S_RULE_ADD(rt_sigprocmask);
 	rc |= S_RULE_ADD(rt_sigreturn);
 	rc |= S_RULE_ADD(sched_setparam);
+	rc |= S_RULE_ADD(sendto);
 	rc |= S_RULE_ADD(set_tid_address);
 	rc |= S_RULE_ADD(stat);
 	rc |= S_RULE_ADD(statfs);
 	rc |= S_RULE_ADD(write);
+	rc |= S_RULE_ADD(exit_group);
 
 	if (rc != 0) {
 		libreswan_log("seccomp_rule_add() failed!");
