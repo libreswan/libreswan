@@ -54,7 +54,7 @@ north #
  # should be non-zero counters if l2tp worked
 north #
  ipsec whack --trafficstatus
-006 #2: "north-east-l2tp", type=ESP, add_time=1234567890, inBytes=585, outBytes=506, id='@east'
+006 #2: "north-east-l2tp", type=ESP, add_time=1234567890, inBytes=530, outBytes=544, id='@east'
 north #
 north #
  # testing passthrough of non-l2tp/ipsec traffic
