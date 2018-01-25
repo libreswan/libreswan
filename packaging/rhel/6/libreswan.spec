@@ -26,7 +26,7 @@
     USE_XAUTHPAM=true \\\
 %{nil}
 
-%global prever rc7
+%global prever dr1
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
@@ -211,5 +211,5 @@ fi
 %{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
 
 %changelog
-* Wed Aug  9 2017 Team Libreswan <team@libreswan.org> - IPSECBASEVERSION-1
+* Thu Jan 25 2018 Team Libreswan <team@libreswan.org> - 3.23-1
 - Automated build from release tar ball
