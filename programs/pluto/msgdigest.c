@@ -90,13 +90,6 @@ struct msg_digest *alloc_md(const char *mdname)
 	*md = blank_md;
 	md->digest_roof = md->digest;
 
-	/* note: although there may be multiple msg_digests at once
-	 * (due to suspended state transitions), there is a single
-	 * global reply_buffer.  It will need to be saved and restored.
-	 */
-	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
-		 "reply packet");
-
 	return md;
 }
 
