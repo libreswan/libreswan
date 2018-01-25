@@ -2848,10 +2848,7 @@ static stf_status ikev2_record_fragment(struct msg_digest *md,
 	struct state *st = IS_CHILD_SA(md->st) ?
 		state_with_serialno(md->st->st_clonedfrom) : md->st;
 	struct ikev2_skf e;
-	unsigned char *encstart;
 	pb_stream e_pbs, e_pbs_cipher;
-	unsigned char *iv;
-	unsigned char *authstart;
 	pb_stream frag_stream;
 	unsigned char frag_buffer[PMAX(MIN_MAX_UDP_DATA_v4, MIN_MAX_UDP_DATA_v6)];
 
@@ -2860,7 +2857,7 @@ static stf_status ikev2_record_fragment(struct msg_digest *md,
 		 "reply frag packet");
 
 	/* beginning of data going out */
-	authstart = frag_stream.cur;
+	uint8_t *authstart = frag_stream.cur;
 
 	/* HDR out */
 	pb_stream rbody;
@@ -2882,9 +2879,10 @@ static stf_status ikev2_record_fragment(struct msg_digest *md,
 		return STF_INTERNAL_ERROR;
 
 	/* insert IV */
-	iv = e_pbs.cur;
+	uint8_t *iv = e_pbs.cur;
 	if (!emit_wire_iv(st, &e_pbs))
 		return STF_INTERNAL_ERROR;
+	passert(authstart <= iv);
 
 	/* note where cleartext starts */
 	init_pbs(&e_pbs_cipher, e_pbs.cur, e_pbs.roof - e_pbs.cur,
@@ -2892,7 +2890,8 @@ static stf_status ikev2_record_fragment(struct msg_digest *md,
 	e_pbs_cipher.container = &e_pbs;
 	e_pbs_cipher.desc = NULL;
 	e_pbs_cipher.cur = e_pbs.cur;
-	encstart = e_pbs_cipher.cur;
+	uint8_t *encstart = e_pbs_cipher.cur;
+	passert(authstart <= iv && iv <= encstart);
 
 	if (!out_raw(payload->ptr, payload->len, &e_pbs_cipher,
 		     "cleartext fragment"))
@@ -2908,19 +2907,18 @@ static stf_status ikev2_record_fragment(struct msg_digest *md,
 	close_output_pbs(&e_pbs_cipher);
 
 	{
-		unsigned char *authloc = ikev2_authloc(st, &e_pbs);
-		int ret;
-
+		uint8_t *authloc = ikev2_authloc(st, &e_pbs);
 		if (authloc == NULL)
 			return STF_INTERNAL_ERROR;
+		passert(authstart <= iv && iv <= encstart && encstart <= authloc);
 
 		close_output_pbs(&e_pbs);
 		close_output_pbs(&rbody);
 		close_output_pbs(&frag_stream);
 
-		ret = ikev2_encrypt_msg(st, authstart,
-					iv, encstart, authloc,
-					&e_pbs_cipher);
+		stf_status ret = ikev2_encrypt_msg(st, authstart,
+						   iv, encstart, authloc,
+						   &e_pbs_cipher);
 		if (ret != STF_OK)
 			return ret;
 	}
@@ -3873,7 +3871,6 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 	struct state *const st = md->st;
 	struct connection *const c = st->st_connection;
 	unsigned char idhash_out[MAX_DIGEST_LEN];
-	unsigned char *authstart;
 	unsigned int np;
 
 	if (!pam_status) {
@@ -3898,12 +3895,8 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 	linux_audit_conn(st, LAK_PARENT_START);
 #endif
 
-	authstart = reply_stream.cur;
 	/* send response */
 	{
-		unsigned char *encstart;
-		unsigned char *iv;
-		unsigned char *authloc;
 		struct ikev2_generic e;
 		pb_stream e_pbs, e_pbs_cipher;
 		bool send_cert = FALSE;
@@ -3934,6 +3927,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 		/* make sure HDR is at start of a clean buffer */
 		init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 			 "reply packet");
+		uint8_t *authstart = reply_stream.cur;
 
 		/* HDR out */
 		pb_stream rbody;
@@ -3968,7 +3962,8 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 
 		/* insert IV */
-		iv = e_pbs.cur;
+		uint8_t *iv = e_pbs.cur;
+		passert(authstart <= iv);
 		if (!emit_wire_iv(st, &e_pbs))
 			return STF_INTERNAL_ERROR;
 
@@ -3978,7 +3973,8 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 		e_pbs_cipher.container = &e_pbs;
 		e_pbs_cipher.desc = NULL;
 		e_pbs_cipher.cur = e_pbs.cur;
-		encstart = e_pbs_cipher.cur;
+		uint8_t *encstart = e_pbs_cipher.cur;
+		passert(authstart <= iv && iv <= encstart);
 
 		/* send any NOTIFY payloads */
 		if (st->st_sent_mobike) {
@@ -4153,10 +4149,10 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 
 		close_output_pbs(&e_pbs_cipher);
 
-		authloc = ikev2_authloc(cst, &e_pbs);
-
+		uint8_t *authloc = ikev2_authloc(cst, &e_pbs);
 		if (authloc == NULL)
 			return STF_INTERNAL_ERROR;
+		passert(authstart <= iv && iv <= encstart && encstart <= authloc);
 
 		close_output_pbs(&e_pbs);
 		close_output_pbs(&rbody);
@@ -5402,9 +5398,6 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 {
 	struct state *st = md->st;
 	struct state *pst = state_with_serialno(st->st_clonedfrom);
-	unsigned char *authstart;
-	unsigned char *encstart;
-	unsigned char *iv;
 	struct ikev2_generic e;
 	pb_stream e_pbs, e_pbs_cipher;
 	stf_status ret;
@@ -5416,7 +5409,7 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 		ikev2_log_parentSA(st);
 
 	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer), "reply packet");
-	authstart = reply_stream.cur;
+	uint8_t *authstart = reply_stream.cur;
 
 	/* HDR out Start assembling respone message */
 	pb_stream rbody;
@@ -5460,9 +5453,10 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 		return STF_INTERNAL_ERROR;
 
 	/* IV */
-	iv = e_pbs.cur;
+	uint8_t *iv = e_pbs.cur;
 	if (!emit_wire_iv(pst, &e_pbs))
 		return STF_INTERNAL_ERROR;
+	passert(authstart <= iv);
 
 	/* note where cleartext starts */
 	init_pbs(&e_pbs_cipher, e_pbs.cur, e_pbs.roof - e_pbs.cur,
@@ -5471,7 +5465,8 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 	e_pbs_cipher.container = &e_pbs;
 	e_pbs_cipher.desc = NULL;
 	e_pbs_cipher.cur = e_pbs.cur;
-	encstart = e_pbs_cipher.cur;
+	uint8_t *encstart = e_pbs_cipher.cur;
+	passert(authstart <= iv && iv <= encstart);
 
 	if (st->st_state == STATE_V2_REKEY_IKE_R) {
 		ret = ikev2_child_add_ike_payloads(md, &e_pbs_cipher);
@@ -5505,10 +5500,10 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 	close_output_pbs(&e_pbs_cipher);
 
 	{
-		unsigned char *authloc = ikev2_authloc(pst, &e_pbs);
-
+		uint8_t *authloc = ikev2_authloc(pst, &e_pbs);
 		if (authloc == NULL)
 			return STF_INTERNAL_ERROR;
+		passert(authstart <= iv && iv <= encstart && encstart <= authloc);
 
 		close_output_pbs(&e_pbs);
 		close_output_pbs(&rbody);
