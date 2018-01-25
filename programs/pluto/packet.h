@@ -66,22 +66,26 @@ typedef const struct field_desc {
 	const void *desc;
 } field_desc;
 
-/* The formatting of input and output of packets is done
- * through packet_byte_stream objects.
- * These describe a stream of bytes in memory.
- * Several routines are provided to manipulate these objects
+/*
+ * The formatting of input and output of packets is done through
+ * packet_byte_stream objects.  These describe a stream of bytes in
+ * memory.  Several routines are provided to manipulate these objects.
  * Actual packet transfer is done elsewhere.
  */
 struct packet_byte_stream {
 	struct packet_byte_stream *container;	/* PBS of which we are part */
 	struct_desc *desc;
 	const char *name;			/* what does this PBS represent? */
-	u_int8_t
-		*start,
-		*cur,		/* current position in stream */
-		*roof;		/* byte after last in PBS (on output: just a limit) */
-	/* For an output PBS, the length field will be filled in later so
-	 * we need to record its particulars.  Note: it may not be aligned.
+	uint8_t *start;				/* public: where this stream starts */
+	uint8_t *cur;				/* public: current position (end) of stream */
+	uint8_t *roof;				/* byte after last in PBS (on output: just a limit) */
+	/*
+	 * For an output PBS some things need to be patched up.  For
+	 * instance, the PBS's length.
+	 *
+	 * Length field in the header will be filled in later so we
+	 * need to record its particulars.  Note: it may not be
+	 * aligned.
 	 */
 	u_int8_t *lenfld;
 	field_desc *lenfld_desc;
