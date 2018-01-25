@@ -1043,8 +1043,8 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 
 	/* save packet for later signing */
 	freeanychunk(st->st_firstpacket_me);
-	clonetochunk(st->st_firstpacket_me, reply_stream.start,
-		     pbs_offset(&reply_stream), "saved first packet");
+	st->st_firstpacket_me = chunk_clone(pbs_as_chunk(&reply_stream),
+					    "saved first packet");
 
 	/* Transmit */
 	record_outbound_ike_msg(st, &reply_stream, "reply packet for ikev2_parent_outI1_common");
@@ -1465,9 +1465,8 @@ static stf_status ikev2_parent_inI1outR1_tail(struct state *st, struct msg_diges
 	/* note that we don't update the state here yet */
 
 	/* record first packet for later checking of signature */
-	clonetochunk(st->st_firstpacket_him, md->message_pbs.start,
-		     pbs_offset(&md->message_pbs),
-		     "saved first received packet");
+	st->st_firstpacket_him = chunk_clone(pbs_as_chunk(&md->message_pbs),
+					     "saved first received packet");
 
 	/* make sure HDR is at start of a clean buffer */
 	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
@@ -1672,8 +1671,7 @@ static stf_status ikev2_parent_inI1outR1_tail(struct state *st, struct msg_diges
 
 	/* save packet for later signing */
 	freeanychunk(st->st_firstpacket_me);
-	clonetochunk(st->st_firstpacket_me, reply_stream.start,
-		     pbs_offset(&reply_stream), "saved first packet");
+	st->st_firstpacket_me = chunk_clone(pbs_as_chunk(&reply_stream), "saved first packet");
 
 	/* note: retransmission is driven by initiator, not us */
 
@@ -2920,8 +2918,7 @@ static stf_status ikev2_record_fragment(struct msg_digest *md,
 
 	*fragp = alloc_thing(struct v2_ike_tfrag, "v2_ike_tfrag");
 	(*fragp)->next = NULL;
-	clonetochunk((*fragp)->cipher, frag_stream.start,
-		     pbs_offset(&frag_stream), desc);
+	(*fragp)->cipher = chunk_clone(pbs_as_chunk(&frag_stream), desc);
 
 	return STF_OK;
 }
@@ -3092,9 +3089,8 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	change_state(pst, STATE_PARENT_I2);
 
 	/* record first packet for later checking of signature */
-	clonetochunk(pst->st_firstpacket_him, md->message_pbs.start,
-		     pbs_offset(&md->message_pbs),
-		     "saved first received packet");
+	pst->st_firstpacket_him = chunk_clone(pbs_as_chunk(&md->message_pbs),
+					      "saved first received packet");
 
 	/* beginning of data going out */
 

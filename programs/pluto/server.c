@@ -1781,7 +1781,7 @@ void record_outbound_ike_msg(struct state *st, pb_stream *pbs, const char *what)
 	passert(pbs_offset(pbs) != 0);
 	release_fragments(st);
 	freeanychunk(st->st_tpacket);
-	clonetochunk(st->st_tpacket, pbs->start, pbs_offset(pbs), what);
+	st->st_tpacket = chunk_clone(pbs_as_chunk(pbs), what);
 }
 
 bool send_ike_msg(struct state *st, const char *where)
@@ -1804,7 +1804,7 @@ bool send_ike_msg_without_recording(struct state *st, pb_stream *pbs, const char
 
 	st->st_v2_tfrags = NULL; /* assume notification and no fragments */
 
-	setchunk(st->st_tpacket, pbs->start, pbs_offset(pbs));
+	st->st_tpacket = pbs_as_chunk(pbs);
 	r = send_ike_msg(st, where);
 
 	/* restore the previous transmitted packet to st */

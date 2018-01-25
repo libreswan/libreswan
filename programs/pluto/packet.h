@@ -102,10 +102,12 @@ typedef struct packet_byte_stream pb_stream;
  *	pbs_offset is current size of stream.
  *	pbs_room is maximum size allowed.
  *	pbs_left is amount of space remaining
+ *      pbs_as_chunk is the current stream's contents as a chunk
  */
 #define pbs_offset(pbs) ((size_t)((pbs)->cur - (pbs)->start))
 #define pbs_room(pbs) ((size_t)((pbs)->roof - (pbs)->start))
 #define pbs_left(pbs) ((size_t)((pbs)->roof - (pbs)->cur))
+#define pbs_as_chunk(PBS) ((chunk_t){ .ptr = (PBS)->start, .len = pbs_offset(PBS), })
 
 extern void init_pbs(pb_stream *pbs, u_int8_t *start, size_t len,
 		     const char *name);
