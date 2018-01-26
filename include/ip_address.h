@@ -34,14 +34,15 @@ struct lswlog;
 
 /* network byte ordered */
 int nportof(const ip_address *src);
-void nsetportof(int port, ip_address *dst);
+ip_address nsetportof(int port, ip_address dst);
 
 /* host byte ordered */
 int hportof(const ip_address *src);
-void hsetportof(int port, ip_address *dst);
+ip_address hsetportof(int port, const ip_address dst);
 
-#define portof(SRC) nportof(SRC)	/* XXX: please use nportof() */
-#define setportof(PORT, DST) nsetportof(PORT, DST)	/* XXX: please use nsetportof() */
+/* XXX: compatibility */
+#define portof(SRC) nportof((SRC))
+#define setportof(PORT, DST) { *(DST) = nsetportof(PORT, *(DST)); }
 
 struct sockaddr *sockaddrof(const ip_address *src);
 size_t sockaddrlenof(const ip_address *src);

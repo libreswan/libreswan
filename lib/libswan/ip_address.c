@@ -13,9 +13,11 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
  * License for more details.
  */
+
 #include "internal.h"
 #include "libreswan.h"
 #include "ip_address.h"
+#include "lswlog.h"
 
 /*
  * portof - get the port field of an ip_address in network order.
@@ -51,23 +53,25 @@ int hportof(const ip_address *src)
  * setportof - set the network ordered port field of an ip_address
  */
 
-void nsetportof(int port /* network order */,
-		ip_address *dst)
+ip_address nsetportof(int port /* network order */, ip_address dst)
 {
-	switch (dst->u.v4.sin_family) {
+	switch (dst.u.v4.sin_family) {
 	case AF_INET:
-		dst->u.v4.sin_port = port;
+		dst.u.v4.sin_port = port;
 		break;
 	case AF_INET6:
-		dst->u.v6.sin6_port = port;
+		dst.u.v6.sin6_port = port;
 		break;
+	default:
+		/* not asserting, who knows what nonsense a user can generate */
+		libreswan_log("Will not set port on bogus address 0.0.0.0");
 	}
+	return dst;
 }
 
-void hsetportof(int port /* host byte order */,
-		ip_address *dst)
+ip_address hsetportof(int port /* host byte order */, ip_address dst)
 {
-	nsetportof(htons(port), dst);
+	return nsetportof(htons(port), dst);
 }
 
 /*
