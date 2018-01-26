@@ -932,8 +932,11 @@ err_t lsw_update_dynamic_ppk_secret(char *fn)
 
 		if (offset + offset_len + 4 < file_sz) {
 			char *new_offset = build_new_offset(offset_len, offset);
-			lseek(fd, 1, SEEK_SET);
-			if (write(fd, new_offset, offset_len) == -1) {
+			int file_sz = lseek(fd, 1, SEEK_SET);
+
+			if (file_sz == -1) {
+				LOG_ERRNO(errno, "error reading offset in file \"%s\"", fn);
+			} else if (write(fd, new_offset, offset_len) == -1) {
 				LOG_ERRNO(errno, "error while trying to overwrite offset in dynamic PPK secret \"%s\"", fn);
 				return "Error, see errno.";
 			}
