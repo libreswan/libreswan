@@ -34,8 +34,6 @@
 
 bool leak_detective = FALSE;	/* must not change after first alloc! */
 
-const chunk_t empty_chunk = { NULL, 0 };
-
 static exit_log_func_t exit_log_func = NULL;	/* allow for customer to customize */
 
 void set_alloc_exit_log_func(exit_log_func_t func)

@@ -29,7 +29,8 @@
 #define crypt_dh_h
 
 #include <pk11pub.h>
-#include "lswalloc.h"
+
+#include "chunk.h"
 
 struct oakley_group_desc;
 struct state;

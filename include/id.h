@@ -15,6 +15,8 @@
 #ifndef _ID_H
 #define _ID_H
 
+#include "chunk.h"
+
 struct id {
 	int kind;		/* ID_* value */
 	ip_address ip_addr;	/* ID_IPV4_ADDR, ID_IPV6_ADDR */

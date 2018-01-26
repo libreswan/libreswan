@@ -18,6 +18,7 @@
  */
 
 #include "realtime.h"
+#include "chunk.h"
 
 /* Defines some primitive ASN1 types */
 

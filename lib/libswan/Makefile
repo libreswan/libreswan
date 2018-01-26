@@ -59,6 +59,8 @@ OBJS += addrtoa.o addrtot.o addrtypeof.o alg_info.o esp_info.o anyaddr.o \
 	libreswan_loglog.o \
 	alg_byname.o
 
+OBJS += chunk.o
+
 OBJS += ip_address.o
 
 OBJS += lmod.o

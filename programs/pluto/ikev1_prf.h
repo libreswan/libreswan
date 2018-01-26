@@ -20,6 +20,8 @@
 #ifndef ikev1_prf_h
 #define ikev1_prf_h
 
+#include "chunk.h"
+
 struct prf_desc;
 
 /*

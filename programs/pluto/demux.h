@@ -21,6 +21,7 @@
 #include "server.h"
 #include "packet.h"
 #include "quirks.h"
+#include "chunk.h"
 
 struct state;   /* forward declaration of tag */
 

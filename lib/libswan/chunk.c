@@ -1,6 +1,6 @@
-/*
- * Copyright (C) 2014 Andrew Cagney <andrew.cagney@gmail.com>
- * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
+/* memory chunks, for libreswan
+ *
+ * Copyright (C) 2018 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -11,19 +11,14 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
+ *
  */
 
 #include "chunk.h"
 
-chunk_t decode_hex_to_chunk(const char *original, const char *string);
-chunk_t decode_to_chunk(const char *prefix, const char *string);
-bool verify_chunk(const char *desc,
-		   chunk_t expected,
-		   chunk_t actual);
-bool verify_chunk_data(const char *desc,
-		  chunk_t expected,
-		  u_char *actual);
+const chunk_t empty_chunk = { NULL, 0 };
 
-struct encrypt_desc;
-
-PK11SymKey *decode_to_key(const struct encrypt_desc *encrypt_desc, const char *string);
+chunk_t chunk(void *ptr, size_t len)
+{
+	return (chunk_t) { .ptr = ptr, .len = len, };
+}

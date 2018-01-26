@@ -22,6 +22,8 @@
 
 #include <pk11pub.h>
 
+#include "chunk.h"
+
 struct hash_desc;
 struct crypt_prf;
 

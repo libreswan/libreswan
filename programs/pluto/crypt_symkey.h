@@ -19,7 +19,8 @@
 
 #include <stdio.h>
 #include <pk11pub.h>
-#include "lswalloc.h"
+
+#include "chunk.h"
 
 struct ike_alg;
 struct hash_desc;

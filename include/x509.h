@@ -27,8 +27,9 @@
 #include <nss.h>
 #include <cert.h>
 
-#include "lswalloc.h"
 #include "deltatime.h"
+#include "chunk.h"
+#include "constants.h"
 
 typedef enum {
 LSW_CERT_NONE = 0,

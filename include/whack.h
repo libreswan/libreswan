@@ -26,6 +26,7 @@
 #include "ietf_constants.h"
 #include "lmod.h"
 #include "deltatime.h"
+#include "chunk.h"
 
 /* Since the message remains on one host, native representation is used.
  * Think of this as horizontal microcode: all selected operations are

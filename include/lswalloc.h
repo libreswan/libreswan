@@ -82,53 +82,6 @@ extern void report_leaks(void);
 
 #define replace(p, q) { pfreeany(p); (p) = (q); }
 
-/* chunk is a simple pointer-and-size abstraction */
-
-struct chunk {
-	u_char *ptr;
-	size_t len;
-};
-
-typedef struct chunk chunk_t;
-
-/* XXX: count can't have side effects. */
-#define alloc_chunk(COUNT, NAME) (struct chunk) {			\
-		.len = (COUNT),						\
-		.ptr = alloc_things(u_int8_t, (COUNT), NAME),		\
-	}
-
-#define setchunk(ch, addr, size) { (ch).ptr = (addr); (ch).len = (size); }
-
-/* NOTE: freeanychunk, unlike pfreeany, NULLs .ptr */
-#define freeanychunk(ch) { pfreeany((ch).ptr); (ch).ptr = NULL; }
-
-#define clonetochunk(ch, addr, size, name) \
-	{ (ch).ptr = clone_bytes((addr), (ch).len = (size), name); }
-
-#define chunk_clone(OLD, NAME) (chunk_t)			\
-	{							\
-		.ptr = clone_bytes((OLD).ptr, (OLD).len, NAME), \
-		.len = (OLD).len,				\
-	}
-
-#define clonereplacechunk(ch, addr, size, name) \
-	{ pfreeany((ch).ptr); clonetochunk(ch, addr, size, name); }
-
-/*
- * Concatenate the contents of a chunk onto a string.
- * The destination pointer is incremented by the length.
- * Pray that there is enough space.
- */
-#define catchunk(dst, chunk) { \
-		memcpy((dst), (chunk).ptr, (chunk).len); \
-		(dst) += (chunk).len; \
-	}
-
-#define same_chunk(a, b) \
-	((a).len == (b).len && memeq((a).ptr, (b).ptr, (b).len))
-
-extern const chunk_t empty_chunk;
-
 typedef void (*exit_log_func_t)(const char *message, ...);
 extern void set_alloc_exit_log_func(exit_log_func_t func);
 
