@@ -67,7 +67,7 @@
 #include "nat_traversal.h"
 #include "vendor.h"
 #include "ip_address.h"
-
+#include "ikev2_send.h"
 #include "alg_info.h" /* for ike_info / esp_info */
 
 #include "ietf_constants.h"
@@ -1006,7 +1006,7 @@ static void process_recent_rtransmit(struct state *st,
 				st->st_msgid_lastrecv,
 				enum_name(&ikev2_exchange_names, ix));
 		}
-		send_ike_msg(st, "ikev2-responder-retransmit");
+		send_recorded_v2_ike_msg(st, "ikev2-responder-retransmit");
 	}
 }
 
@@ -1110,7 +1110,7 @@ void process_v2_packet(struct msg_digest **mdp)
 						lswlog_retransmit_prefix(buf, st);
 						lswlogf(buf, "duplicate IKE_INIT_I message received, retransmiting previous packet");
 					}
-					send_ike_msg(st, "ikev2-responder-retransmit IKE_INIT_I");
+					send_recorded_v2_ike_msg(st, "ikev2-responder-retransmit IKE_INIT_I");
 				}
 				pop_cur_state(old_state);
 				return;
@@ -2135,7 +2135,7 @@ static void success_v2_state_transition(struct msg_digest *md)
 				    st->st_interface->port);
 		    });
 
-		send_ike_msg(pst, enum_name(&state_names, from_state));
+		send_recorded_v2_ike_msg(pst, enum_name(&state_names, from_state));
 	}
 
 	if (w == RC_SUCCESS) {

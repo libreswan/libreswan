@@ -78,6 +78,7 @@
 #include "ip_address.h"
 #include "hostpair.h"
 #include "send.h"
+#include "ikev2_send.h"
 #include "pluto_stats.h"
 
 #include "ipsecconf/confread.h"
@@ -6235,8 +6236,8 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		struct mobike mobike_remote;
 
 		mobike_switch_remote(md, &mobike_remote);
-		record_and_send_ike_msg(st, &reply_stream,
-			"reply packet for process_encrypted_informational_ikev2");
+		record_and_send_v2_ike_msg(st, &reply_stream,
+					   "reply packet for process_encrypted_informational_ikev2");
 		st->st_msgid_lastreplied = md->msgid_received;
 
 		mobike_reset_remote(st, &mobike_remote);
@@ -6414,8 +6415,8 @@ stf_status ikev2_send_informational(struct state *st, struct state *pst,
 	pst->st_msgid_nextuse += 1;
 
 	pst->st_pend_liveness = TRUE; /* we should only do this when dpd/liveness is active? */
-	record_and_send_ike_msg(st, &reply_stream,
-			"packet for ikev2_send_informational");
+	record_and_send_v2_ike_msg(st, &reply_stream,
+				   "packet for ikev2_send_informational");
 
 	return STF_OK;
 }
@@ -6555,8 +6556,8 @@ static bool ikev2_delete_out_guts(struct state *const st, struct state *const ps
 			return FALSE;
 	}
 
-	record_and_send_ike_msg(st, &reply_stream,
-		     "packet for ikev2_delete_out_guts");
+	record_and_send_v2_ike_msg(st, &reply_stream,
+				   "packet for ikev2_delete_out_guts");
 
 	/* increase message ID for next delete message */
 	/* ikev2_update_msgid_counters need an md */

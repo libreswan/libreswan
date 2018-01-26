@@ -62,7 +62,7 @@
 #include "retransmit.h"
 #include "nat_traversal.h"
 #include "ip_address.h"
-
+#include "ikev2_send.h"
 #include "pluto_sd.h"
 
 /*
@@ -225,7 +225,7 @@ static void retransmit_v2_msg(struct state *st)
 
 	switch (retransmit(st)) {
 	case RETRANSMIT_YES:
-		send_ike_msg(pst, "EVENT_v2_RETRANSMIT");
+		send_recorded_v2_ike_msg(pst, "EVENT_v2_RETRANSMIT");
 		return;
 	case RETRANSMIT_NO:
 		return;

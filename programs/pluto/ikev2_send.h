@@ -1,0 +1,26 @@
+/* IKEv1 send, for libreswan
+ *
+ * Copyright (C) 2018 Andrew Cagney
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * for more details.
+ */
+
+#ifndef IKEV2_SEND_H
+#define IKEV2_SEND_H
+
+#include "packet.h"
+
+bool record_and_send_v2_ike_msg(struct state *st, pb_stream *pbs,
+				const char *what);
+
+bool send_recorded_v2_ike_msg(struct state *st, const char *where);
+
+#endif
