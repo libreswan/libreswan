@@ -100,6 +100,7 @@
 #include "pluto_stats.h"
 #include "hash_table.h"
 #include "ip_address.h"
+#include "send.h"
 
 /*
  *  Server main loop and socket initialization routines.
@@ -1461,162 +1462,6 @@ void check_outgoing_msg_errqueue(const struct iface_port *ifp UNUSED,
 #endif  /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
 }
 
-
-/* send_ike_msg logic is broken into layers.
- * The rest of the system thinks it is simple.
- * We have three entrypoints that control options
- * for reporting write failure and actions on resending (fragment?):
- * send_ike_msg(), resend_ike_v1_msg(), and send_keepalive().
- *
- * The first two call send_or_resend_ike_msg().
- * That handles an IKE message.
- * It calls send_v1_frags() if the message needs to be fragmented.
- * Otherwise it calls send_packet() to send it in one gulp.
- *
- * send_v1_frags() breaks an IKE message into fragments and sends
- * them by send_packet().
- *
- * send_keepalive() calls send_packet() directly: uses a special
- * tiny packet; non-ESP marker does not apply; logging on write error
- * is suppressed.
- *
- * send_packet() sends a UDP packet, possibly prefixed by a non-ESP Marker
- * for NATT.  It accepts two chunks because this avoids double-copying.
- */
-
-static bool send_packet(struct state *st, const char *where,
-			bool just_a_keepalive,
-			const u_int8_t *aptr, size_t alen,
-			const u_int8_t *bptr, size_t blen)
-{
-	/* NOTE: on system with limited stack, buf could be made static */
-	u_int8_t buf[MAX_OUTPUT_UDP_SIZE];
-
-	/* Each fragment, if we are doing NATT, needs a non-ESP_Marker prefix.
-	 * natt_bonus is the size of the addition (0 if not needed).
-	 */
-	size_t natt_bonus;
-
-	if (st->st_interface == NULL) {
-		libreswan_log("Cannot send packet - interface vanished!");
-		return FALSE;
-	}
-
-	/* bandaid */
-	if (aptr == NULL) {
-		libreswan_log("Cannot send packet - aptr is NULL");
-		return FALSE;
-	}
-
-	if (isanyaddr(&st->st_remoteaddr)) {
-		/* not asserting, who knows what nonsense a user can generate */
-		libreswan_log("Will not send packet to bogus address 0.0.0.0");
-		return FALSE;
-	}
-
-	natt_bonus = !just_a_keepalive &&
-				  st->st_interface->ike_float ?
-				  NON_ESP_MARKER_SIZE : 0;
-
-	const u_int8_t *ptr;
-	size_t len = natt_bonus + alen + blen;
-	ssize_t wlen;
-
-	if (len > MAX_OUTPUT_UDP_SIZE) {
-		loglog(RC_LOG_SERIOUS, "send_ike_msg(): really too big %zu bytes", len);
-		return FALSE;
-	}
-
-	if (len != alen) {
-		/* copying required */
-
-		/* 1. non-ESP Marker (0x00 octets) */
-		memset(buf, 0x00, natt_bonus);
-
-		/* 2. chunk a */
-		memcpy(buf + natt_bonus, aptr, alen);
-
-		/* 3. chunk b */
-		memcpy(buf + natt_bonus + alen, bptr, blen);
-
-		ptr = buf;
-	} else {
-		ptr = aptr;
-	}
-
-	DBG(DBG_CONTROL | DBG_RAW, {
-		ipstr_buf b;
-		DBG_log("sending %zu bytes for %s through %s:%d to %s:%u (using #%lu)",
-			len,
-			where,
-			st->st_interface->ip_dev->id_rname,
-			st->st_interface->port,
-			sensitive_ipstr(&st->st_remoteaddr, &b),
-			st->st_remoteport,
-			st->st_serialno);
-	});
-	DBG(DBG_RAW, DBG_dump(NULL, ptr, len));
-
-	setportof(htons(st->st_remoteport), &st->st_remoteaddr);
-
-#if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
-	(void) check_msg_errqueue(st->st_interface, POLLOUT, "sending a packet");
-#endif  /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
-
-	wlen = sendto(st->st_interface->fd,
-		      ptr,
-		      len, 0,
-		      sockaddrof(&st->st_remoteaddr),
-		      sockaddrlenof(&st->st_remoteaddr));
-
-	if (wlen != (ssize_t)len) {
-		if (!just_a_keepalive) {
-			ipstr_buf b;
-			LOG_ERRNO(errno, "sendto on %s to %s:%u failed in %s",
-				  st->st_interface->ip_dev->id_rname,
-				  sensitive_ipstr(&st->st_remoteaddr, &b),
-				  st->st_remoteport,
-				  where);
-		}
-		return FALSE;
-	}
-
-	pstats_ike_out_bytes += len;
-
-	/* Send a duplicate packet when this impair is enabled - used for testing */
-	if (DBGP(IMPAIR_JACOB_TWO_TWO)) {
-		/* sleep for half a second, and second another packet */
-		usleep(500000);
-		ipstr_buf b;
-
-		DBG_log("JACOB 2-2: resending %zu bytes for %s through %s:%d to %s:%u:",
-			len,
-			where,
-			st->st_interface->ip_dev->id_rname,
-			st->st_interface->port,
-			ipstr(&st->st_remoteaddr, &b),
-			st->st_remoteport);
-
-		wlen = sendto(st->st_interface->fd,
-			      ptr,
-			      len, 0,
-			      sockaddrof(&st->st_remoteaddr),
-			      sockaddrlenof(&st->st_remoteaddr));
-		if (wlen != (ssize_t)len) {
-			if (!just_a_keepalive) {
-				LOG_ERRNO(errno,
-					  "sendto on %s to %s:%u failed in %s",
-					  st->st_interface->ip_dev->id_rname,
-					  ipstr(&st->st_remoteaddr, &b),
-					  st->st_remoteport,
-					  where);
-			}
-			return FALSE;
-		}
-	}
-	return TRUE;
-}
-
 /*
  * (IKE v1) send fragments of packet.
  *
@@ -1704,10 +1549,10 @@ static bool send_v1_frags(struct state *st, const char *where)
 			    fragnum,
 			    packet_remainder_len == data_len ? " (last)" : ""));
 
-		if (!send_packet(st, where, FALSE,
-				 frag_prefix, NSIZEOF_isakmp_hdr +
-				 NSIZEOF_isakmp_ikefrag,
-				 packet_cursor, data_len))
+		if (!send_chunks_using_state(st, where,
+					     chunk(frag_prefix,
+						   NSIZEOF_isakmp_hdr + NSIZEOF_isakmp_ikefrag),
+					     chunk(packet_cursor, data_len)))
 			return FALSE;
 
 		packet_remainder_len -= data_len;
@@ -1748,8 +1593,7 @@ bool should_fragment_ike_msg(struct state *st, size_t len, bool resending)
 static bool send_ikev2_frags(struct state *st, const char *where)
 {
 	for (struct v2_ike_tfrag *frag = st->st_v2_tfrags; frag != NULL; frag = frag->next)
-		if (!send_packet(st, where, FALSE,
-				 frag->cipher.ptr, frag->cipher.len, NULL, 0))
+		if (!send_chunk_using_state(st, where, frag->cipher))
 			return FALSE;
 
 	return TRUE;
@@ -1789,8 +1633,8 @@ static bool send_or_resend_ike_msg(struct state *st, const char *where,
 		{
 			return send_v1_frags(st, where);
 		} else {
-			return send_packet(st, where, FALSE, st->st_tpacket.ptr,
-					   st->st_tpacket.len, NULL, 0);
+			return send_chunk_using_state(st, where,
+						      st->st_tpacket);
 		}
 	}
 }
@@ -1853,10 +1697,13 @@ bool resend_ike_v1_msg(struct state *st, const char *where)
  */
 bool send_keepalive(struct state *st, const char *where)
 {
-	static const unsigned char ka_payload = 0xff;
+	static unsigned char ka_payload = 0xff;
 
-	return send_packet(st, where, TRUE, &ka_payload, sizeof(ka_payload),
-			   NULL, 0);
+	return send_chunks(where, TRUE,
+			   st->st_serialno, st->st_interface,
+			   hsetportof(st->st_remoteport, st->st_remoteaddr),
+			   chunk(&ka_payload, sizeof(ka_payload)),
+			   empty_chunk);
 }
 
 bool ev_before(struct pluto_event *pev, deltatime_t delay) {

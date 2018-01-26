@@ -47,6 +47,8 @@ include $(top_srcdir)/mk/config.mk
 
 OBJS =
 
+OBJS += send.o
+
 OBJS += state_db.o
 OBJS += show.o
 OBJS += retransmit.o
