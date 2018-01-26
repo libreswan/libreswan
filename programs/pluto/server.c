@@ -1168,7 +1168,7 @@ void call_server(void)
  */
 
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
-bool check_msg_errqueue(const struct iface_port *ifp, short interest, const char *before)
+static bool check_msg_errqueue(const struct iface_port *ifp, short interest, const char *before)
 {
 	struct pollfd pfd;
 	int again_count = 0;
@@ -1442,6 +1442,25 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest, const char
 	return (pfd.revents & interest) != 0;
 }
 #endif /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
+
+bool check_incoming_msg_errqueue(const struct iface_port *ifp UNUSED,
+				 const char *before UNUSED)
+{
+#if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
+       return check_msg_errqueue(ifp, POLLIN, before);
+#else
+       return true;
+#endif  /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
+}
+
+void check_outgoing_msg_errqueue(const struct iface_port *ifp UNUSED,
+				 const char *before UNUSED)
+{
+#if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
+       (void) check_msg_errqueue(ifp, POLLOUT, before);
+#endif  /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
+}
+
 
 /* send_ike_msg logic is broken into layers.
  * The rest of the system thinks it is simple.

@@ -120,7 +120,6 @@ extern void fmt_isakmp_sa_established(struct state *st,
 extern void free_md_pool(void);
 
 extern void process_packet(struct msg_digest **mdp);
-extern bool check_msg_errqueue(const struct iface_port *ifp, short interest, const char *before);
 
 extern char *cisco_stringify(pb_stream *pbs, const char *attr_name);
 

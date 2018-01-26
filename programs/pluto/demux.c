@@ -348,7 +348,6 @@ static void impair_incoming(struct msg_digest *md)
  */
 static void comm_handle(const struct iface_port *ifp)
 {
-#if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
 	/* Even though select(2) says that there is a message,
 	 * it might only be a MSG_ERRQUEUE message.  At least
 	 * sometimes that leads to a hanging recvfrom.  To avoid
@@ -359,11 +358,8 @@ static void comm_handle(const struct iface_port *ifp)
 	 * This is early enough that teardown isn't required:
 	 * just return on failure.
 	 */
-	if (!check_msg_errqueue(ifp, POLLIN, "read_packet"))
+	if (!check_incoming_msg_errqueue(ifp, "read_packet"))
 		return; /* no normal message to read */
-
-#endif /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
-
 
 	struct msg_digest *md = read_packet(ifp);
 	if (md != NULL) {
