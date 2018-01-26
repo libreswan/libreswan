@@ -2848,6 +2848,7 @@ static bool netlink_v6holes()
 			if (fgets(buf, sizeof(buf), f) !=  NULL) {
 				disable_ipv6 = atoi(buf);
 			}
+			(void) fclose(f);
 		} else {
 			LOG_ERRNO(errno, "\"%s\"", proc_f);
 		}
