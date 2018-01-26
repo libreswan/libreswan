@@ -3054,7 +3054,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 			libreswan_log("PPK AUTH calculated as initiator");
 		} else {
 			if (pc->policy & POLICY_PPK_INSIST) {
-				loglog(RC_LOG_SERIOUS,("connection requires PPK, but PPK_ID did not match any loaded PPK"));
+				loglog(RC_LOG_SERIOUS,("connection requires PPK, but we didn't find one"));
 				return STF_FATAL;
 			} else {
 				libreswan_log("failed to find PPK and PPK_ID, continuing without PPK");
