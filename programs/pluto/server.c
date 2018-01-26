@@ -100,7 +100,6 @@
 #include "pluto_stats.h"
 #include "hash_table.h"
 #include "ip_address.h"
-#include "send.h"
 
 /*
  *  Server main loop and socket initialization routines.
@@ -1462,105 +1461,6 @@ void check_outgoing_msg_errqueue(const struct iface_port *ifp UNUSED,
 #endif  /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
 }
 
-/*
- * (IKE v1) send fragments of packet.
- *
- * non-IETF magic voodoo we need to consider for interop:
- * - www.cisco.com/en/US/docs/ios/sec_secure_connectivity/configuration/guide/sec_fragment_ike_pack.html
- * - www.cisco.com/en/US/docs/ios-xml/ios/sec_conn_ikevpn/configuration/15-mt/sec-fragment-ike-pack.pdf
- * - msdn.microsoft.com/en-us/library/cc233452.aspx
- * - iOS/Apple racoon source ipsec-164.9 at www.opensource.apple.com (frak length 1280)
- * - stock racoon source (frak length 552)
- */
-
-static bool send_v1_frags(struct state *st, const char *where)
-{
-	unsigned int fragnum = 0;
-
-	/* Each fragment, if we are doing NATT, needs a non-ESP_Marker prefix.
-	 * natt_bonus is the size of the addition (0 if not needed).
-	 */
-	const size_t natt_bonus =
-		st->st_interface->ike_float ? NON_ESP_MARKER_SIZE : 0;
-
-	/* We limit fragment packets to ISAKMP_FRAG_MAXLEN octets.
-	 * max_data_len is the maximum data length that will fit within it.
-	 */
-	const size_t max_data_len =
-		((st->st_connection->addr_family ==
-		  AF_INET) ? ISAKMP_V1_FRAG_MAXLEN_IPv4 : ISAKMP_V1_FRAG_MAXLEN_IPv6)
-		-
-		(natt_bonus + NSIZEOF_isakmp_hdr +
-		 NSIZEOF_isakmp_ikefrag);
-
-	u_int8_t *packet_cursor = st->st_tpacket.ptr;
-	size_t packet_remainder_len = st->st_tpacket.len;
-
-	/* BUG: this code does not use the marshalling code
-	 * in packet.h to translate between wire and host format.
-	 * This is dangerous.  The following assertion should
-	 * fail in most cases where this cheat won't work.
-	 */
-	passert(sizeof(struct isakmp_hdr) == NSIZEOF_isakmp_hdr &&
-		sizeof(struct isakmp_ikefrag) == NSIZEOF_isakmp_ikefrag);
-
-	while (packet_remainder_len > 0) {
-		u_int8_t frag_prefix[NSIZEOF_isakmp_hdr +
-				     NSIZEOF_isakmp_ikefrag];
-		const size_t data_len = packet_remainder_len > max_data_len ?
-					max_data_len : packet_remainder_len;
-		const size_t fragpl_len = NSIZEOF_isakmp_ikefrag + data_len;
-		const size_t isakmppl_len = NSIZEOF_isakmp_hdr + fragpl_len;
-
-		fragnum++;
-
-		/* emit isakmp header derived from original */
-		{
-			struct isakmp_hdr *ih =
-				(struct isakmp_hdr*) frag_prefix;
-
-			memcpy(ih, st->st_tpacket.ptr, NSIZEOF_isakmp_hdr);
-			ih->isa_np = ISAKMP_NEXT_IKE_FRAGMENTATION; /* one octet */
-			/* Do we need to set any of ISAKMP_FLAGS_v1_ENCRYPTION?
-			 * Seems there might be disagreement between Cisco and Microsoft.
-			 * st->st_suspended_md->hdr.isa_flags; TODO must this be set?
-			 */
-			ih->isa_flags &= ~ISAKMP_FLAGS_v1_ENCRYPTION;
-			ih->isa_length = htonl(isakmppl_len);
-		}
-
-		/* Append the ike frag header */
-		{
-			struct isakmp_ikefrag *fh =
-				(struct isakmp_ikefrag*) (frag_prefix +
-							  NSIZEOF_isakmp_hdr);
-
-			fh->isafrag_np = 0;             /* must be zero */
-			fh->isafrag_reserved = 0;       /* reserved at this time, must be zero */
-			fh->isafrag_length = htons(fragpl_len);
-			fh->isafrag_id = htons(1);      /* In theory required to be unique, in practise not needed? */
-			fh->isafrag_number = fragnum;   /* one byte, no htons() call needed */
-			fh->isafrag_flags = packet_remainder_len == data_len ?
-					    ISAKMP_FRAG_LAST : 0;
-		}
-		DBG(DBG_CONTROL,
-		    DBG_log("sending IKE fragment id '%d', number '%u'%s",
-			    1, /* hard coded for now, seems to be what all the cool implementations do */
-			    fragnum,
-			    packet_remainder_len == data_len ? " (last)" : ""));
-
-		if (!send_chunks_using_state(st, where,
-					     chunk(frag_prefix,
-						   NSIZEOF_isakmp_hdr + NSIZEOF_isakmp_ikefrag),
-					     chunk(packet_cursor, data_len)))
-			return FALSE;
-
-		packet_remainder_len -= data_len;
-		packet_cursor += data_len;
-	}
-	return TRUE;
-}
-
 bool should_fragment_ike_msg(struct state *st, size_t len, bool resending)
 {
 	if (st->st_interface != NULL && st->st_interface->ike_float)
@@ -1588,79 +1488,6 @@ bool should_fragment_ike_msg(struct state *st, size_t len, bool resending)
 			st->st_seen_fragvid) ||
 		(st->st_connection->policy & POLICY_IKE_FRAG_FORCE) ||
 		st->st_seen_fragments   );
-}
-
-static bool send_ikev2_frags(struct state *st, const char *where)
-{
-	for (struct v2_ike_tfrag *frag = st->st_v2_tfrags; frag != NULL; frag = frag->next)
-		if (!send_chunk_using_state(st, where, frag->cipher))
-			return FALSE;
-
-	return TRUE;
-}
-
-static bool send_or_resend_ike_msg(struct state *st, const char *where,
-				   bool resending)
-{
-	if (st->st_interface == NULL) {
-		libreswan_log("Cannot send packet - interface vanished!");
-		return FALSE;
-	}
-
-	if (st->st_v2_tfrags != NULL) {
-		/* if a V2 packet needs fragmenting it would have already happened */
-		passert(st->st_ikev2);
-		passert(st->st_tpacket.ptr == NULL);
-		return send_ikev2_frags(st, where);
-	} else {
-		/*
-		 * Each fragment, if we are doing NATT, needs a non-ESP_Marker prefix.
-		 * natt_bonus is the size of the addition (0 if not needed).
-		 */
-		size_t natt_bonus = st->st_interface->ike_float ? NON_ESP_MARKER_SIZE : 0;
-		size_t len = st->st_tpacket.len;
-
-		passert(len != 0);
-
-		/*
-		 * Decide of whether we're to fragment.
-		 * Only for IKEv1 (V2 fragments earlier).
-		 * ??? why can't we fragment in STATE_MAIN_I1?
-		 */
-		if (!st->st_ikev2 &&
-		    st->st_state != STATE_MAIN_I1 &&
-		    should_fragment_ike_msg(st, len + natt_bonus, resending))
-		{
-			return send_v1_frags(st, where);
-		} else {
-			return send_chunk_using_state(st, where,
-						      st->st_tpacket);
-		}
-	}
-}
-
-bool send_ike_msg(struct state *st, const char *where)
-{
-	return send_or_resend_ike_msg(st, where, FALSE);
-}
-
-bool record_and_send_ike_msg(struct state *st, pb_stream *pbs, const char *what)
-{
-	record_outbound_ike_msg(st, pbs, what);
-	return send_ike_msg(st, what);
-}
-
-bool resend_ike_v1_msg(struct state *st, const char *where)
-{
-	bool ret = send_or_resend_ike_msg(st, where, TRUE);
-
-	if (st->st_state == STATE_XAUTH_R0 &&
-	    !LIN(POLICY_AGGRESSIVE, st->st_connection->policy)) {
-		/* Only for Main mode + XAUTH */
-		event_schedule(EVENT_v1_SEND_XAUTH, deltatime_ms(EVENT_v1_SEND_XAUTH_DELAY_MS), st);
-	}
-
-	return ret;
 }
 
 bool ev_before(struct pluto_event *pev, deltatime_t delay) {

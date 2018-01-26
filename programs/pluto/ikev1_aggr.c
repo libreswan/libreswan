@@ -56,7 +56,7 @@
 #include "whack.h"
 #include "fetch.h"
 #include "asn1.h"
-
+#include "ikev1_send.h"
 #include "crypto.h"
 
 #include "ike_alg.h"
@@ -1304,7 +1304,7 @@ static stf_status aggr_outI1_tail(struct state *st,
 	close_output_pbs(&reply_stream);
 
 	/* Transmit */
-	record_and_send_ike_msg(st, &reply_stream, "aggr_outI1");
+	record_and_send_v1_ike_msg(st, &reply_stream, "aggr_outI1");
 
 	/* Set up a retransmission event, half a minute hence */
 	delete_event(st);

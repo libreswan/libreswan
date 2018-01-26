@@ -75,7 +75,8 @@
 #include "virtual.h"	/* needs connections.h */
 #include "addresspool.h"
 #include "ip_address.h"
-#include "send.h"
+#include "send.h"		/* for send without recording */
+#include "ikev1_send.h"
 
 /* forward declarations */
 static stf_status xauth_client_ackstatus(struct state *st,
@@ -553,7 +554,7 @@ static stf_status modecfg_send_set(struct state *st)
 #undef MODECFG_SET_ITEM
 
 	/* Transmit */
-	record_and_send_ike_msg(st, &reply, "ModeCfg set");
+	record_and_send_v1_ike_msg(st, &reply, "ModeCfg set");
 
 	if (st->st_event->ev_type != EVENT_v1_RETRANSMIT &&
 	    st->st_event->ev_type != EVENT_NULL) {
@@ -669,7 +670,7 @@ stf_status xauth_send_request(struct state *st)
 	/* Transmit */
 	if (!DBGP(IMPAIR_SEND_NO_XAUTH_R0)) {
 		if (p_state == STATE_AGGR_R2) {
-			record_and_send_ike_msg(st, &reply, "XAUTH: req");
+			record_and_send_v1_ike_msg(st, &reply, "XAUTH: req");
 		} else {
 			/*
 			 * Main Mode responder: do not record XAUTH_R0 message.
@@ -805,7 +806,7 @@ stf_status modecfg_send_request(struct state *st)
 		return STF_INTERNAL_ERROR;
 
 	/* Transmit */
-	record_and_send_ike_msg(st, &reply, "modecfg: req");
+	record_and_send_v1_ike_msg(st, &reply, "modecfg: req");
 
 	if (st->st_event->ev_type != EVENT_v1_RETRANSMIT) {
 		delete_event(st);
@@ -899,7 +900,7 @@ static stf_status xauth_send_status(struct state *st, int status)
 	start_retransmits(st, EVENT_v1_RETRANSMIT);
 
 	/* Transmit */
-	record_and_send_ike_msg(st, &reply, "XAUTH: status");
+	record_and_send_v1_ike_msg(st, &reply, "XAUTH: status");
 
 	if (status != 0)
 		change_state(st, STATE_XAUTH_R1);

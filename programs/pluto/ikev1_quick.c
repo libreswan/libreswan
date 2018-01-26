@@ -58,7 +58,7 @@
 #include "whack.h"
 #include "fetch.h"
 #include "asn1.h"
-
+#include "ikev1_send.h"
 #include "crypto.h"
 #include "secrets.h"
 
@@ -1001,7 +1001,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 		return STF_INTERNAL_ERROR;
 	}
 
-	record_and_send_ike_msg(st, &reply_stream,
+	record_and_send_v1_ike_msg(st, &reply_stream,
 		"reply packet from quick_outI1");
 
 	delete_event(st);

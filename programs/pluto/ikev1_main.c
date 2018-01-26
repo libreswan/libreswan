@@ -87,6 +87,7 @@
 #include "lswfips.h"
 #include "ip_address.h"
 #include "send.h"
+#include "ikev1_send.h"
 
 /*
  * Initiate an Oakley Main Mode exchange.
@@ -293,7 +294,7 @@ void main_outI1(int whack_sock,
 	close_output_pbs(&reply_stream);
 
 	/* Transmit */
-	record_and_send_ike_msg(st, &reply_stream,
+	record_and_send_v1_ike_msg(st, &reply_stream,
 		"reply packet for main_outI1");
 
 	delete_event(st);

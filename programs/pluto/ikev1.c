@@ -148,6 +148,7 @@
 #include "whack.h"      /* requires connections.h */
 #include "server.h"
 #include "send.h"
+#include "ikev1_send.h"
 #include "ikev1_xauth.h"
 #include "retransmit.h"
 #include "nat_traversal.h"
@@ -993,7 +994,7 @@ static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
 				loglog(RC_RETRANSMISSION,
 				       "retransmitting in response to duplicate packet; already %s",
 				       st->st_state_name);
-				resend_ike_v1_msg(st, "retransmit in response to duplicate");
+				resend_recorded_v1_ike_msg(st, "retransmit in response to duplicate");
 			} else {
 				loglog(RC_LOG_SERIOUS,
 				       "discarding duplicate packet -- exhausted retransmission; already %s",
@@ -2441,7 +2442,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 					enum_name(&state_names, from_state));
 				libreswan_log("IMPAIR: Skipped sending STATE_MAIN_R2 response packet");
 			} else {
-				record_and_send_ike_msg(st, &reply_stream,
+				record_and_send_v1_ike_msg(st, &reply_stream,
 					enum_name(&state_names, from_state));
 			}
 		}
