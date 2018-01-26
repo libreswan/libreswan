@@ -4,7 +4,7 @@ See also https://libreswan.org/
 v3.24 (unreleased)
 
 v3.23 (January 25, 2018)
-* IKEv2: MOBIKE support (RFC 45555) [Antony/Paul]
+* IKEv2: MOBIKE support (RFC 4555) [Antony/Paul]
 * IKEv2: Add support for modecfgdns= and modecfgdomains= like for IKEv1 [Paul]
 * IKEv2: EXPERIMENTAL: Support for Postquantim Preshared Keys [Vukasin Karadzic]
          based on draft-ietf-ipsecme-qr-ikev2-01 (using private use numbers)
