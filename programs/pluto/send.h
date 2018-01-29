@@ -30,10 +30,15 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 		 ip_address remote_endpoint,
 		 chunk_t a, chunk_t b);
 
+bool send_chunk(const char *where, so_serial_t serialno, /* can be SOS_NOBODY */
+		const struct iface_port *interface,
+		ip_address remote_endpoint, chunk_t packet);
+
 bool send_chunks_using_state(struct state *st, const char *where,
 			     chunk_t a, chunk_t b);
 
-bool send_chunk_using_state(struct state *st, const char *where, chunk_t a);
+bool send_chunk_using_state(struct state *st, const char *where,
+			    chunk_t packet);
 
 bool send_ike_msg_without_recording(struct state *st, pb_stream *pbs,
 				    const char *where);

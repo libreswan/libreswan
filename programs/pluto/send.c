@@ -202,6 +202,15 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 	return TRUE;
 }
 
+bool send_chunk(const char *where, so_serial_t serialno, /* can be SOS_NOBODY */
+		const struct iface_port *interface,
+		ip_address remote_endpoint, chunk_t packet)
+{
+	return send_chunks(where, FALSE, serialno,
+			   interface, remote_endpoint,
+			   packet, empty_chunk);
+}
+
 bool send_chunks_using_state(struct state *st, const char *where,
 			     chunk_t a, chunk_t b)
 {
@@ -211,12 +220,9 @@ bool send_chunks_using_state(struct state *st, const char *where,
 			   a, b);
 }
 
-bool send_chunk_using_state(struct state *st, const char *where, chunk_t a)
+bool send_chunk_using_state(struct state *st, const char *where, chunk_t packet)
 {
-	return send_chunks(where, FALSE,
-			   st->st_serialno, st->st_interface,
-			   hsetportof(st->st_remoteport, st->st_remoteaddr),
-			   a, empty_chunk);
+	return send_chunks_using_state(st, where, packet, empty_chunk);
 }
 
 bool send_ike_msg_without_recording(struct state *st, pb_stream *pbs,
