@@ -109,6 +109,7 @@ static void init_seccomp(uint32_t def_action, bool main)
 		rc |= S_RULE_ADD(set_robust_list);
 		rc |= S_RULE_ADD(setsockopt);
 		rc |= S_RULE_ADD(socket);
+		rc |= S_RULE_ADD(socketcall);
 		rc |= S_RULE_ADD(socketpair);
 		rc |= S_RULE_ADD(sysinfo);
 		rc |= S_RULE_ADD(uname);
