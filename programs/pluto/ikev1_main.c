@@ -2301,9 +2301,6 @@ void send_notification_from_state(struct state *st, enum state_kind from_state,
 void send_notification_from_md(struct msg_digest *md, notification_t type)
 {
 	/*
-	 * Note: send_notification_from_md and send_v2_notification_from_md
-	 * share code (and bugs).  Any fix to one should be done to both.
-	 *
 	 * Create a fake state object to be able to use send_notification.
 	 * This is somewhat dangerous: the fake state must not be deleted
 	 * or have almost any other operation performed on it.

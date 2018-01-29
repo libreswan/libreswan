@@ -143,6 +143,33 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
 	return TRUE;
 }
 
+pb_stream open_v2_message(pb_stream *reply,
+			  uint8_t *icookie, uint8_t *rcookie, /* aka SPI */
+			  enum next_payload_types_ikev2 next_payload,
+			  enum isakmp_xchg_types exchange_type,
+			  lset_t flags, int message_id)
+{
+	struct isakmp_hdr hdr;
+
+	zero(&hdr);	/* OK: no pointer fields */
+	/* SPI: initial initiator will send 0 as responder's SPI */
+	if (rcookie != NULL)
+		memcpy(hdr.isa_rcookie, rcookie, COOKIE_SIZE);
+	memcpy(hdr.isa_icookie, icookie, COOKIE_SIZE);
+
+	hdr.isa_np = next_payload;
+	hdr.isa_version = build_ikev2_version();
+	hdr.isa_xchg = exchange_type;
+	hdr.isa_flags = flags;
+	if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+		hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
+	}
+	hdr.isa_msgid = message_id;
+	hdr.isa_length = 0; /* filled in when PBS is closed */
+
+	return open_output_pbs(&hdr, &isakmp_hdr_desc, reply);
+}
+
 /*
  *
  ***************************************************************
@@ -151,99 +178,114 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
  *
  */
 
-static void send_v2_notification(struct state *pst,
-				 v2_notification_t ntype,
-				 u_char *icookie,
-				 u_char *rcookie,
-				 chunk_t *n_data)
+void send_v2_notification_from_state(struct state *pst,
+				     v2_notification_t ntype,
+				     chunk_t *ndata)
 {
-	/*
-	 * buffer in which to marshal our notification.
-	 * We don't use reply_buffer/reply_stream because they might be in use.
-	 */
-	u_char buffer[1024];	/* ??? large enough for any notification? */
-	pb_stream rbody;
+	ipstr_buf b;
+	libreswan_log("sending unencrypted notification %s to %s:%u",
+		      enum_name(&ikev2_notify_names, ntype),
+		      sensitive_ipstr(&pst->st_remoteaddr, &b),
+		      pst->st_remoteport);
 
-	/*
-	 * TBD check which of these comments below is still true :)
-	 *
-	 * TBD accept HDR FLAGS as arg. default ISAKMP_FLAGS_v2_MSG_R
-	 * ^--- Is this notify in response to request packet? If so yes.
-	 *
-	 * TBD if we are the original initiator we must set the
-	 *     ISAKMP_FLAGS_v2_IKE_I flag. This is currently not done!
-	 *
-	 * TBD when there is a child SA use that SPI in the notify payload.
-	 * TBD support encrypted notifications payloads.
-	 * TBD accept Critical bit as an argument. default is set.
-	 * TBD accept exchange type as an arg, default is ISAKMP_v2_SA_INIT
-	 * do we need to send a notify with empty data?
-	 * do we need to support more Protocol ID? more than PROTO_ISAKMP
-	 */
-
-	{
-		ipstr_buf b;
-
-		libreswan_log("sending unencrypted notification %s to %s:%u",
-			      enum_name(&ikev2_notify_names, ntype),
-			      sensitive_ipstr(&pst->st_remoteaddr, &b),
-			      pst->st_remoteport);
-	}
-
-	init_out_pbs(&reply_stream, buffer, sizeof(buffer), "notification msg");
+	pb_stream *reply = open_reply_pbs("notification msg");
 
 	/* HDR out */
-	{
-		struct isakmp_hdr hdr;
 
-		zero(&hdr);	/* OK: no pointer fields */
-		hdr.isa_version = build_ikev2_version();
-		if (rcookie != NULL) /* some responses are with zero rSPI */
-			memcpy(hdr.isa_rcookie, rcookie, COOKIE_SIZE);
-		memcpy(hdr.isa_icookie, icookie, COOKIE_SIZE);
+	/* incomplete, probably bogus */
+	enum isakmp_xchg_types exchange_type;
+	switch (pst->st_state) {
+	case STATE_PARENT_R2:
+		exchange_type = ISAKMP_v2_AUTH;
+		break;
+	default:
+		/* default to old behaviour of hardcoding ISAKMP_v2_SA_INIT */
+		exchange_type = ISAKMP_v2_SA_INIT;
+		break;
+	}
+	if (pst->st_reply_xchg != 0)
+		exchange_type = pst->st_reply_xchg; /* use received exchange type */
 
-		/* incomplete */
-		switch (pst->st_state) {
-		case STATE_PARENT_R2:
-			hdr.isa_xchg = ISAKMP_v2_AUTH;
-			break;
-		default:
-			/* default to old behaviour of hardcoding ISAKMP_v2_SA_INIT */
-			hdr.isa_xchg = ISAKMP_v2_SA_INIT;
-			break;
-		}
-		if (pst->st_reply_xchg != 0)
-			hdr.isa_xchg = pst->st_reply_xchg; /* use received exchange type */
+	/*
+	 * XXX unconditionally clearing original initiator flag is
+	 * wrong?  XXX: Since this is a notify, must it always be a
+	 * reply?
+	 */
+	pb_stream rbody = open_v2_message(reply,
+					  pst->st_icookie, pst->st_rcookie,
+					  ISAKMP_NEXT_v2N, exchange_type,
+					  ISAKMP_FLAGS_v2_MSG_R,
+					  0/*WRONG MESSAGE ID*/);
+	if (!pbs_ok(&rbody)) {
+		libreswan_log("error initializing hdr for notify message");
+		return;
+	}
 
-		hdr.isa_np = ISAKMP_NEXT_v2N;
-		/* XXX unconditionally clearing original initiator flag is wrong */
+	if (!ship_v2N(ISAKMP_NEXT_v2NONE,
+		      DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG) ?
+		      (ISAKMP_PAYLOAD_NONCRITICAL | ISAKMP_PAYLOAD_LIBRESWAN_BOGUS) :
+		      ISAKMP_PAYLOAD_NONCRITICAL,
+		      IKEv2_SEC_PROTO_NONE, &empty_chunk, /* SPI */
+		      ntype, ndata, &rbody)) {
+		return;
+	}
 
-		/* add msg responder flag */
-		hdr.isa_flags = ISAKMP_FLAGS_v2_MSG_R;
-		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
-			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
-		}
+	close_output_pbs(&rbody);
+	close_output_pbs(reply);
 
-		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream, &rbody)) {
-			libreswan_log(
-				"error initializing hdr for notify message");
-			return;
-		}
+	/*
+	 * The notification is piggybacked on the existing parent
+	 * state.  This notification is fire-and-forget (not a proper
+	 * exchange, one with retrying).  So we need not preserve the
+	 * packet we are sending.
+	 */
+	send_chunk_using_state(pst, "v2 notify", pbs_as_chunk(reply));
+
+	pstats(ikev2_sent_notifies_e, ntype);
+}
+
+void send_v2_notification_from_md(struct msg_digest *md,
+				  v2_notification_t ntype,
+				  chunk_t *ndata)
+{
+	ipstr_buf b;
+	libreswan_log("sending unencrypted notification %s to %s:%u",
+		      enum_name(&ikev2_notify_names, ntype),
+		      sensitive_ipstr(&md->sender, &b),
+		      hportof(&md->sender));
+
+	pb_stream *reply = open_reply_pbs("notification msg");
+
+	/*
+	 * Only the initial responder (where there may not yet be a
+	 * state) will send an unencrypted notification.
+	 *
+	 * Hence INIT, MSG_R, and MSGID cal all be hardwired.
+	 */
+	pb_stream rbody = open_v2_message(reply,
+					  md->hdr.isa_icookie,
+					  md->hdr.isa_rcookie,
+					  ISAKMP_NEXT_v2N,
+					  ISAKMP_v2_SA_INIT,
+					  ISAKMP_FLAGS_v2_MSG_R,
+					  v2_INITIAL_MSGID);
+	if (!pbs_ok(&rbody)) {
+		libreswan_log("error initializing hdr for notify message");
+		return;
 	}
 
 	/* build and add v2N payload to the packet */
-	/* In v2, for parent, protoid must be 0 and SPI must be empty */
 	if (!ship_v2N(ISAKMP_NEXT_v2NONE,
-		 DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG) ?
-		   (ISAKMP_PAYLOAD_NONCRITICAL | ISAKMP_PAYLOAD_LIBRESWAN_BOGUS) :
-		   ISAKMP_PAYLOAD_NONCRITICAL,
-		 PROTO_v2_RESERVED,
-		 &empty_chunk,
-		 ntype, n_data, &rbody))
-		return;	/* ??? NO WAY TO SIGNAL INTERNAL ERROR */
+		      DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG) ?
+		      (ISAKMP_PAYLOAD_NONCRITICAL | ISAKMP_PAYLOAD_LIBRESWAN_BOGUS) :
+		      ISAKMP_PAYLOAD_NONCRITICAL,
+		      IKEv2_SEC_PROTO_NONE, &empty_chunk, /* SPI */
+		      ntype, ndata, &rbody)) {
+		return;
+	}
 
 	close_output_pbs(&rbody);
-	close_output_pbs(&reply_stream);
+	close_output_pbs(reply);
 
 	/*
 	 * The notification is piggybacked on the existing parent state.
@@ -251,61 +293,8 @@ static void send_v2_notification(struct state *pst,
 	 * one with retrying).  So we need not preserve the packet we
 	 * are sending.
 	 */
-	send_ike_msg_without_recording(pst, &reply_stream, "v2 notify");
-
-	if (ntype < v2N_ERROR_ROOF)
-		pstats(ikev2_sent_notifies_e, ntype);
-}
-
-void send_v2_notification_from_state(struct state *st,
-				     v2_notification_t ntype,
-				     chunk_t *data)
-{
-	send_v2_notification(st, ntype, st->st_icookie, st->st_rcookie,
-			     data);
-}
-
-void send_v2_notification_from_md(struct msg_digest *md,
-				  v2_notification_t ntype,
-				  chunk_t *data)
-{
-	/*
-	 * Note: send_notification_from_md and send_v2_notification_from_md
-	 * share code (and bugs).  Any fix to one should be done to both.
-	 *
-	 * Create a fake state object to be able to use send_notification.
-	 * This is somewhat dangerous: the fake state must not be deleted
-	 * or have almost any other operation performed on it.
-	 * Ditto for fake connection.
-	 *
-	 * ??? how can we be sure to have faked all salient fields correctly?
-	 *
-	 * Most details must be left blank (eg. pointers
-	 * set to NULL).  struct initialization is good at this.
-	 *
-	 * We need to set [??? we don't -- is this still true?]:
-	 *   st_connection->that.host_addr
-	 *   st_connection->that.host_port
-	 *   st_connection->interface
-	 */
-	struct connection fake_connection = {
-		.interface = md->iface,
-		.addr_family = addrtypeof(&md->sender),	/* for ikev2_record_fragments() */
-	};
-
-	struct state fake_state = {
-		.st_serialno = SOS_NOBODY,
-		.st_connection = &fake_connection,
-		.st_reply_xchg = md->hdr.isa_xchg,
-		.st_finite_state = finite_states[STATE_UNDEFINED],
-	};
-
-	passert(md != NULL);
-
-	update_ike_endpoints(&fake_state, md);
-
-	send_v2_notification(&fake_state, ntype,
-			     md->hdr.isa_icookie, md->hdr.isa_rcookie, data);
+	send_chunk("v2 notify", SOS_NOBODY, md->iface, md->sender,
+		   pbs_as_chunk(reply));
 
 	pstats(ikev2_sent_notifies_e, ntype);
 }

@@ -16,7 +16,11 @@
 #ifndef IKEV2_SEND_H
 #define IKEV2_SEND_H
 
-#include "packet.h"
+#include "chunk.h"
+
+#include "packet.h"		/* for pb_stream */
+
+struct msg_digest;
 
 struct msg_digest;
 struct oakley_group_desc;
@@ -35,6 +39,13 @@ void send_v2_notification_from_md(struct msg_digest *md,
 				  chunk_t *data);
 void send_v2_notification_invalid_ke(struct msg_digest *md,
 				     const struct oakley_group_desc *group);
+
+/* parameters in the same order has the packet */
+pb_stream open_v2_message(pb_stream *reply,
+			  uint8_t *icookie, uint8_t *rcookie, /* aka SPI */
+			  enum next_payload_types_ikev2 next_payload,
+			  enum isakmp_xchg_types exchange_type,
+			  lset_t flags, int message_id);
 
 /* XXX: should be local to ikev2_send.c? */
 bool ship_v2N(enum next_payload_types_ikev2 np,
