@@ -86,6 +86,7 @@
 
 #include "lswfips.h"
 #include "ip_address.h"
+#include "send.h"
 
 /*
  * Initiate an Oakley Main Mode exchange.

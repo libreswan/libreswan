@@ -75,6 +75,7 @@
 #include "virtual.h"	/* needs connections.h */
 #include "addresspool.h"
 #include "ip_address.h"
+#include "send.h"
 
 /* forward declarations */
 static stf_status xauth_client_ackstatus(struct state *st,

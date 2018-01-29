@@ -218,3 +218,10 @@ bool send_chunk_using_state(struct state *st, const char *where, chunk_t a)
 			   hsetportof(st->st_remoteport, st->st_remoteaddr),
 			   a, empty_chunk);
 }
+
+
+bool send_ike_msg_without_recording(struct state *st, pb_stream *pbs,
+				    const char *where)
+{
+	return send_chunk_using_state(st, where, pbs_as_chunk(pbs));
+}

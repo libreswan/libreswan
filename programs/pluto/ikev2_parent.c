@@ -77,7 +77,7 @@
 #include "ietf_constants.h"
 #include "ip_address.h"
 #include "hostpair.h"
-
+#include "send.h"
 #include "pluto_stats.h"
 
 #include "ipsecconf/confread.h"

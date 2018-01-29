@@ -19,6 +19,7 @@
 
 #include "chunk.h"
 #include "ip_address.h"
+#include "packet.h"		/* for pb_stream */
 
 struct iface_port;
 struct state;
@@ -33,5 +34,8 @@ bool send_chunks_using_state(struct state *st, const char *where,
 			     chunk_t a, chunk_t b);
 
 bool send_chunk_using_state(struct state *st, const char *where, chunk_t a);
+
+bool send_ike_msg_without_recording(struct state *st, pb_stream *pbs,
+				    const char *where);
 
 #endif

@@ -1658,25 +1658,6 @@ bool record_and_send_ike_msg(struct state *st, pb_stream *pbs, const char *what)
 	return send_ike_msg(st, what);
 }
 
-/* hack! Leaves st->st_tpacket and st->st_tfrags as it was found */
-bool send_ike_msg_without_recording(struct state *st, pb_stream *pbs, const char *where)
-{
-	chunk_t saved_tpacket = st->st_tpacket;
-	struct v2_ike_tfrag *saved_tfrags  = st->st_v2_tfrags;
-	bool r;
-
-	st->st_v2_tfrags = NULL; /* assume notification and no fragments */
-
-	st->st_tpacket = pbs_as_chunk(pbs);
-	r = send_ike_msg(st, where);
-
-	/* restore the previous transmitted packet to st */
-	st->st_tpacket = saved_tpacket;
-	st->st_v2_tfrags = saved_tfrags;
-
-	return r;
-}
-
 bool resend_ike_v1_msg(struct state *st, const char *where)
 {
 	bool ret = send_or_resend_ike_msg(st, where, TRUE);
