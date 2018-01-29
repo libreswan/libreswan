@@ -147,7 +147,7 @@
 #include "timer.h"
 #include "whack.h"      /* requires connections.h */
 #include "server.h"
-
+#include "send.h"
 #include "ikev1_xauth.h"
 #include "retransmit.h"
 #include "nat_traversal.h"

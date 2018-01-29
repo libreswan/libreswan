@@ -219,9 +219,32 @@ bool send_chunk_using_state(struct state *st, const char *where, chunk_t a)
 			   a, empty_chunk);
 }
 
-
 bool send_ike_msg_without_recording(struct state *st, pb_stream *pbs,
 				    const char *where)
 {
 	return send_chunk_using_state(st, where, pbs_as_chunk(pbs));
+}
+
+void record_outbound_ike_msg(struct state *st, pb_stream *pbs, const char *what)
+{
+	passert(pbs_offset(pbs) != 0);
+	release_fragments(st);
+	freeanychunk(st->st_tpacket);
+	st->st_tpacket = chunk_clone(pbs_as_chunk(pbs), what);
+}
+
+/*
+ * send keepalive is special in two ways:
+ * We don't want send errors logged (too noisy).
+ * We don't want the packet prefixed with a non-ESP Marker.
+ */
+bool send_keepalive(struct state *st, const char *where)
+{
+	static unsigned char ka_payload = 0xff;
+
+	return send_chunks(where, TRUE,
+			   st->st_serialno, st->st_interface,
+			   hsetportof(st->st_remoteport, st->st_remoteaddr),
+			   chunk(&ka_payload, sizeof(ka_payload)),
+			   empty_chunk);
 }
