@@ -3212,7 +3212,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		hmac_update(&id_ctx, id_start, id_len);
 		hmac_final(idhash, &id_ctx);
 
-		if (pst->st_sk_pi_no_ppk != NULL) {
+		if (pst->st_seen_ppk && !LIN(POLICY_PPK_INSIST, pc->policy)) {
 			struct hmac_ctx id_ctx_npa;
 
 			hmac_init(&id_ctx_npa, pst->st_oakley.ta_prf, pst->st_sk_pi_no_ppk);
@@ -3359,7 +3359,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 			notifies++;
 
 		if (pst->st_seen_ppk)
-			notifies++; /* used for two payloads */
+			notifies++; /* used for one or two payloads */
 
 		/* code does not support AH + ESP, not recommend rfc8221 section-4 */
 		struct ipsec_proto_info *proto_info
@@ -3425,21 +3425,24 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		}
 		if (pst->st_seen_ppk) {
 			chunk_t notify_data = create_unified_ppk_id(&ppk_id_p);
+			int np = LIN(POLICY_PPK_INSIST, cc->policy) ? ISAKMP_NEXT_v2NONE : ISAKMP_NEXT_v2N;
 
-			notifies--; /* used for 2 payloads */
-				if (!ship_v2N(ISAKMP_NEXT_v2N, ISAKMP_PAYLOAD_NONCRITICAL,
-						PROTO_v2_RESERVED, &empty_chunk,
-						v2N_PPK_IDENTITY, &notify_data,
-						&e_pbs_cipher))
-					return STF_INTERNAL_ERROR;
+			notifies--; /* used for one or two payloads */
+			if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
+					PROTO_v2_RESERVED, &empty_chunk,
+					v2N_PPK_IDENTITY, &notify_data,
+					&e_pbs_cipher))
+				return STF_INTERNAL_ERROR;
 			freeanychunk(notify_data);
 
-			ikev2_calc_no_ppk_auth(cc, pst, idhash_npa, &pst->st_no_ppk_auth);
-			if (!ship_v2N(ISAKMP_NEXT_v2NONE, ISAKMP_PAYLOAD_NONCRITICAL,
-				PROTO_v2_RESERVED, &empty_chunk,
-				v2N_NO_PPK_AUTH, &pst->st_no_ppk_auth,
-				&e_pbs_cipher))
-					return STF_INTERNAL_ERROR;
+			if (!LIN(POLICY_PPK_INSIST, cc->policy)) {
+				ikev2_calc_no_ppk_auth(cc, pst, idhash_npa, &pst->st_no_ppk_auth);
+				if (!ship_v2N(ISAKMP_NEXT_v2NONE, ISAKMP_PAYLOAD_NONCRITICAL,
+					PROTO_v2_RESERVED, &empty_chunk,
+					v2N_NO_PPK_AUTH, &pst->st_no_ppk_auth,
+					&e_pbs_cipher))
+						return STF_INTERNAL_ERROR;
+			}
 		}
 
 		passert(notifies == 0);
