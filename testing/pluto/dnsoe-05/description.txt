@@ -1,0 +1,7 @@
+This test will show that multiple IPSECKEY records all end up in the
+pluto cache. 
+
+The connection is using an alias ip for east on 192.1.2.66 which has
+five IPSECKEY records, and the middle one is the real one. This tests
+to see if all records are checked.
+

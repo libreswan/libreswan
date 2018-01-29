@@ -433,7 +433,9 @@ kvmplutotest	rawrsaoe-asymetric-01			good
 kvmplutotest	dnsoe-01				good
 kvmplutotest	dnsoe-02				good
 kvmplutotest	dnsoe-03				wip
-kvmplutotest	dnsoe-04				wip
+kvmplutotest	dnsoe-04				good
+kvmplutotest	dnsoe-05				good
+kvmplutotest	dnsoe-06				wip
 
 kvmplutotest	ikev2-initiate-template-01		good
 
