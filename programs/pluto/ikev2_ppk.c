@@ -113,7 +113,24 @@ stf_status ikev2_calc_no_ppk_auth(struct connection *c, struct state *st, unsign
 	enum keyword_authby authby = c->spd.this.authby;
 	switch (authby) {
 	case AUTH_RSASIG:
-		/* TODO */
+		if (ikev2_calculate_rsa_sha1(st, st->st_original_role, id_hash, NULL, TRUE, no_ppk_auth)) {
+			if (st->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA1) {
+				/* make blobs separately, and somehow combine them and no_ppk_auth
+				 * to get an actual no_ppk_auth */
+				int len = ASN1_LEN_ALGO_IDENTIFIER + ASN1_SHA1_RSA_OID_SIZE + no_ppk_auth->len;
+				u_char *blobs = alloc_bytes(len, "bytes for blobs for AUTH_DIGSIG NO_PPK_AUTH");
+				u_char *ret = blobs;
+				memcpy(blobs, len_sha1_rsa_oid_blob, ASN1_LEN_ALGO_IDENTIFIER);
+				blobs += ASN1_LEN_ALGO_IDENTIFIER;
+				memcpy(blobs, sha1_rsa_oid_blob, ASN1_SHA1_RSA_OID_SIZE);
+				blobs += ASN1_SHA1_RSA_OID_SIZE;
+				memcpy(blobs, no_ppk_auth->ptr, no_ppk_auth->len);
+				chunk_t release = *no_ppk_auth;
+				setchunk(*no_ppk_auth, ret, len);
+				freeanychunk(release);
+			}
+		}
+		return STF_OK;
 		break;
 	case AUTH_PSK:
 		if (ikev2_create_psk_auth(AUTH_PSK, st, id_hash, NULL, TRUE, no_ppk_auth))

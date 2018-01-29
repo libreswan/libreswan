@@ -2779,7 +2779,9 @@ static stf_status ikev2_send_auth(struct connection *c,
 
 	switch (a.isaa_type) {
 	case IKEv2_AUTH_RSA:
-		if (!ikev2_calculate_rsa_sha1(pst, role, idhash_out, &a_pbs)) {
+		if (!ikev2_calculate_rsa_sha1(pst, role, idhash_out, &a_pbs,
+			FALSE, /* store-only not set */
+			NULL /* store-only chunk unused */)) {
 			loglog(RC_LOG_SERIOUS, "Failed to find our RSA key");
 			return STF_FATAL;
 		}
@@ -2788,7 +2790,7 @@ static stf_status ikev2_send_auth(struct connection *c,
 	case IKEv2_AUTH_PSK:
 	case IKEv2_AUTH_NULL:
 		if (!ikev2_create_psk_auth(authby, pst, idhash_out, &a_pbs,
-			FALSE /* store-only not set */,
+			FALSE, /* store-only not set */
 			NULL /* store-only chunk unused */)) {
 			loglog(RC_LOG_SERIOUS, "Failed to find our PreShared Key");
 			return STF_FATAL;
@@ -2808,7 +2810,9 @@ static stf_status ikev2_send_auth(struct connection *c,
 					return STF_INTERNAL_ERROR;
 			}
 
-			if (!ikev2_calculate_rsa_sha1(pst, role, idhash_out, &a_pbs)) {
+			if (!ikev2_calculate_rsa_sha1(pst, role, idhash_out, &a_pbs,
+				FALSE, /* store-only not set */
+				NULL /* store-only chunk unused */)) {
 				loglog(RC_LOG_SERIOUS, "DigSig: failed to find our RSA key");
 				return STF_FATAL;
 			}

@@ -162,7 +162,9 @@ extern void ikev2_log_parentSA(struct state *st);
 extern bool ikev2_calculate_rsa_sha1(struct state *st,
 				     enum original_role role,
 				     unsigned char *idhash,
-				     pb_stream *a_pbs);
+				     pb_stream *a_pbs,
+				     bool calc_no_ppk_auth,
+				     chunk_t *no_ppk_auth);
 
 extern bool ikev2_create_psk_auth(enum keyword_authby authby,
 				     struct state *st,
