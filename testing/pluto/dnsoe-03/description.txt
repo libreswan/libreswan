@@ -1,0 +1,5 @@
+This test will show that pubkeys from cache are used before
+doing (or repeating) a DNSSEC request.
+
+road preloads the key of east, then performs OE to east. The
+connection should establish without any DNS lookups

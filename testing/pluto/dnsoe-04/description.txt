@@ -1,0 +1,5 @@
+This test will show that pubkeys from cache are used before
+doing (or repeating) a DNSSEC request. Multiple wrong keys
+in the cache should not prevent the real pubkey from being
+tried.
+
