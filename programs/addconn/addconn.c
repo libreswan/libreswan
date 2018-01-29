@@ -142,6 +142,7 @@ void init_seccomp_addconn(uint32_t def_action)
 	rc |= S_RULE_ADD(socket);
 	rc |= S_RULE_ADD(socketcall);
 	rc |= S_RULE_ADD(socketpair);
+	rc |= S_RULE_ADD(stat);
 	rc |= S_RULE_ADD(statfs);
 	rc |= S_RULE_ADD(uname);
 	rc |= S_RULE_ADD(write);
