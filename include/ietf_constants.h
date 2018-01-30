@@ -784,21 +784,27 @@ extern const char *const critical_names[];
 #define PROTO_IPSEC_ESP 3
 #define PROTO_IPCOMP 4 /* only in IKEv1 */
 
-/* ??? Are these really the same as enum ikev2_sec_proto_id? */
-#define PROTO_v2_RESERVED 0
-#define PROTO_v2_ISAKMP 1
-#define PROTO_v2_AH 2
-#define PROTO_v2_ESP 3
-
 /*
  * IKEv2 Security Protocol Identifiers - RFC 5996
+ *
  * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-18
+ *
+ * According to the IKEv2 RFC, these values are stored in 'Protocol
+ * ID' field of a payload (see: 3.3.1.  Proposal Substructure; 3.10.
+ * Notify Payload; 3.11.  Delete Payload).
+ *
+ * The value '0' is a little odd.  While IANA lists it as Reserved, a
+ * notify payload must use that value for notifications that do not
+ * include an SPI.  Hence 'NONE' is used.
  */
 enum ikev2_sec_proto_id {
-	/* 0 - Reserved */
+	IKEv2_SEC_PROTO_NONE = 0,
+#define PROTO_v2_RESERVED IKEv2_SEC_PROTO_NONE
 	IKEv2_SEC_PROTO_IKE = 1,
 	IKEv2_SEC_PROTO_AH = 2,
+#define PROTO_v2_AH IKEv2_SEC_PROTO_AH
 	IKEv2_SEC_PROTO_ESP = 3,
+#define PROTO_v2_ESP IKEv2_SEC_PROTO_ESP
 	IKEv2_SEC_FC_ESP_HEADER = 4, /* RFC 4595 */
 	IKEv2_SEC_FC_CT_AUTHENTICATION = 5, /* RFC 4595 */
 	/* 6 - 200 Unassigned */
