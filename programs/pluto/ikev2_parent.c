@@ -1035,9 +1035,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 
 	passert(vids == 0); /* Ensure we built a valid chain */
 
-	if (!close_message(&rbody, st))
-		return STF_INTERNAL_ERROR;
-
+	close_output_pbs(&rbody);
 	close_output_pbs(&reply_stream);
 
 	/* save packet for later signing */
@@ -1660,9 +1658,7 @@ static stf_status ikev2_parent_inI1outR1_tail(struct state *st, struct msg_diges
 
 	passert(vids == 0); /* Ensure we built a valid chain */
 
-	if (!close_message(&rbody, st))
-		return STF_INTERNAL_ERROR;
-
+	close_output_pbs(&rbody);
 	close_output_pbs(&reply_stream);
 
 	record_outbound_ike_msg(st, &reply_stream,
@@ -4834,9 +4830,7 @@ void send_v2_notification(struct state *pst,
 		 ntype, n_data, &rbody))
 		return;	/* ??? NO WAY TO SIGNAL INTERNAL ERROR */
 
-	if (!close_message(&rbody, pst))
-		return; /* ??? NO WAY TO SIGNAL INTERNAL ERROR */
-
+	close_output_pbs(&rbody);
 	close_output_pbs(&reply_stream);
 
 	/*
