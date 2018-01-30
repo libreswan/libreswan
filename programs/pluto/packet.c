@@ -4,7 +4,7 @@
  * Copyright (C) 1998-2001,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015,2018 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -2083,10 +2083,22 @@ bool out_zero(size_t len, pb_stream *outs, const char *name)
 	}
 }
 
+pb_stream open_output_pbs(const void *struct_ptr, struct_desc *sd,
+			  pb_stream *outs)
+{
+	pb_stream obj_pbs;
+	if (out_struct(struct_ptr, sd, outs, &obj_pbs)) {
+		return obj_pbs;
+	} else {
+		return empty_pbs;
+	}
+}
+
 /* Record current length.
  * Note: currently, this may be repeated any number of times;
  * the last one wins.
  */
+
 void close_output_pbs(pb_stream *pbs)
 {
 	if (pbs->lenfld != NULL) {

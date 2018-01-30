@@ -108,6 +108,7 @@ extern const pb_stream empty_pbs;
  *	pbs_left is amount of space remaining
  *      pbs_as_chunk is the current stream's contents as a chunk
  */
+#define pbs_ok(PBS) ((PBS)->start != NULL)
 #define pbs_offset(pbs) ((size_t)((pbs)->cur - (pbs)->start))
 #define pbs_room(pbs) ((size_t)((pbs)->roof - (pbs)->start))
 #define pbs_left(pbs) ((size_t)((pbs)->roof - (pbs)->cur))
@@ -148,6 +149,9 @@ extern bool out_zero(size_t len, pb_stream *outs, const char *name) MUST_USE_RES
 extern bool out_raw(const void *bytes, size_t len, pb_stream *outs,
 		    const char *name) MUST_USE_RESULT;
 #define out_chunk(ch, outs, name) out_raw((ch).ptr, (ch).len, (outs), (name))
+
+pb_stream open_output_pbs(const void *struct_ptr, struct_desc *sd,
+			  pb_stream *outs) MUST_USE_RESULT;
 extern void close_output_pbs(pb_stream *pbs);
 
 #define DBG_dump_pbs(pbs) DBG_dump((pbs)->name, (pbs)->start, pbs_offset(pbs))
