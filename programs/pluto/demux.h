@@ -28,9 +28,6 @@ struct state;   /* forward declaration of tag */
 extern void init_demux(void);
 extern event_callback_routine comm_handle_cb;
 
-extern pb_stream reply_stream;
-extern u_int8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
-
 /* State transition function infrastructure
  *
  * com_handle parses a message, decides what state object it applies to,

@@ -2094,6 +2094,41 @@ pb_stream open_output_pbs(const void *struct_ptr, struct_desc *sd,
 	}
 }
 
+
+/*
+ * Reply messages are built in this nasty evil global buffer.
+ *
+ * Only one packet can be built at a time.  That should be ok as
+ * packets are only built on the main thread and code and a packet is
+ * created using a single operation.
+ *
+ * In the good old days code would partially construct a packet,
+ * wonder off to do crypto and process other packets, and then assume
+ * things could be picked up where they were left off.  Code to make
+ * that work (saving restoring the buffer, re-initializing the buffer
+ * in strange places, ....) has all been removed.
+ *
+ * Something else that should go is global access to REPLY_STREAM.
+ * Instead all code should use open_reply_stream() and a reference
+ * with only local scope.  This should reduce the odds of code
+ * meddling in reply_stream on the sly.
+ *
+ * Another possibility is to move the buffer onto the stack.  However,
+ * the PBS is 64K and that isn't so good for small machines.  Then
+ * again the send.[hc] and demux[hc] code both allocate 64K stack
+ * buffers already.  Oops.
+ */
+
+pb_stream reply_stream;
+u_int8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
+
+pb_stream *open_reply_pbs(const char *name)
+{
+	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer), name);
+	return &reply_stream;
+}
+
+
 /* Record current length.
  * Note: currently, this may be repeated any number of times;
  * the last one wins.

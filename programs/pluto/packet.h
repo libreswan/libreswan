@@ -1073,4 +1073,12 @@ extern struct_desc suggested_group_desc;
 extern struct_desc sec_ctx_desc;
 #endif
 
+/*
+ * Nasty evil global packet buffer.
+ */
+
+extern pb_stream reply_stream;
+extern u_int8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
+pb_stream *open_reply_pbs(const char *name);
+
 #endif /* _PACKET_H */
