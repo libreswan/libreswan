@@ -4,7 +4,7 @@
  * Copyright (C) 1998-2001,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015,2018 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -29,6 +29,8 @@
 #include "lswlog.h"
 
 #include "packet.h"
+
+const pb_stream empty_pbs;
 
 /* ISAKMP Header: for all messages
  * layout from RFC 2408 "ISAKMP" section 3.1
@@ -2081,10 +2083,57 @@ bool out_zero(size_t len, pb_stream *outs, const char *name)
 	}
 }
 
+pb_stream open_output_pbs(const void *struct_ptr, struct_desc *sd,
+			  pb_stream *outs)
+{
+	pb_stream obj_pbs;
+	if (out_struct(struct_ptr, sd, outs, &obj_pbs)) {
+		return obj_pbs;
+	} else {
+		return empty_pbs;
+	}
+}
+
+
+/*
+ * Reply messages are built in this nasty evil global buffer.
+ *
+ * Only one packet can be built at a time.  That should be ok as
+ * packets are only built on the main thread and code and a packet is
+ * created using a single operation.
+ *
+ * In the good old days code would partially construct a packet,
+ * wonder off to do crypto and process other packets, and then assume
+ * things could be picked up where they were left off.  Code to make
+ * that work (saving restoring the buffer, re-initializing the buffer
+ * in strange places, ....) has all been removed.
+ *
+ * Something else that should go is global access to REPLY_STREAM.
+ * Instead all code should use open_reply_stream() and a reference
+ * with only local scope.  This should reduce the odds of code
+ * meddling in reply_stream on the sly.
+ *
+ * Another possibility is to move the buffer onto the stack.  However,
+ * the PBS is 64K and that isn't so good for small machines.  Then
+ * again the send.[hc] and demux[hc] code both allocate 64K stack
+ * buffers already.  Oops.
+ */
+
+pb_stream reply_stream;
+u_int8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
+
+pb_stream *open_reply_pbs(const char *name)
+{
+	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer), name);
+	return &reply_stream;
+}
+
+
 /* Record current length.
  * Note: currently, this may be repeated any number of times;
  * the last one wins.
  */
+
 void close_output_pbs(pb_stream *pbs)
 {
 	if (pbs->lenfld != NULL) {

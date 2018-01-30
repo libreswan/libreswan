@@ -82,16 +82,6 @@ void init_demux(void)
 /* forward declarations */
 static struct msg_digest *read_packet(const struct iface_port *ifp);
 
-/* Reply messages are built in this buffer.
- * Only one state transition function can be using it at a time
- * so suspended STFs must save and restore it.
- * It could be an auto variable of complete_state_transition except for the fact
- * that when a suspended STF resumes, its reply message buffer
- * must be at the same location -- there are pointers into it.
- */
-pb_stream reply_stream;
-u_int8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
-
 /* process an input packet, possibly generating a reply.
  *
  * If all goes well, this routine eventually calls a state-specific

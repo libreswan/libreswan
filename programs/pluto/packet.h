@@ -1,4 +1,5 @@
-/* parsing packets: formats and tools
+/* parsing packets: formats and tools, for libreswan
+ *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2001,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2005-2007 Michael Richardson <mcr@xelerance.com>
@@ -7,6 +8,7 @@
  * Copyright (C) 2011-2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
+ * Copyright (C) 2018 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -92,6 +94,8 @@ struct packet_byte_stream {
 };
 typedef struct packet_byte_stream pb_stream;
 
+extern const pb_stream empty_pbs;
+
 /*
  * For an input PBS:
  *	pbs_offset is amount of stream processed.
@@ -104,6 +108,7 @@ typedef struct packet_byte_stream pb_stream;
  *	pbs_left is amount of space remaining
  *      pbs_as_chunk is the current stream's contents as a chunk
  */
+#define pbs_ok(PBS) ((PBS)->start != NULL)
 #define pbs_offset(pbs) ((size_t)((pbs)->cur - (pbs)->start))
 #define pbs_room(pbs) ((size_t)((pbs)->roof - (pbs)->start))
 #define pbs_left(pbs) ((size_t)((pbs)->roof - (pbs)->cur))
@@ -144,6 +149,9 @@ extern bool out_zero(size_t len, pb_stream *outs, const char *name) MUST_USE_RES
 extern bool out_raw(const void *bytes, size_t len, pb_stream *outs,
 		    const char *name) MUST_USE_RESULT;
 #define out_chunk(ch, outs, name) out_raw((ch).ptr, (ch).len, (outs), (name))
+
+pb_stream open_output_pbs(const void *struct_ptr, struct_desc *sd,
+			  pb_stream *outs) MUST_USE_RESULT;
 extern void close_output_pbs(pb_stream *pbs);
 
 #define DBG_dump_pbs(pbs) DBG_dump((pbs)->name, (pbs)->start, pbs_offset(pbs))
@@ -1064,5 +1072,13 @@ extern struct_desc suggested_group_desc;
 #ifdef HAVE_LABELED_IPSEC
 extern struct_desc sec_ctx_desc;
 #endif
+
+/*
+ * Nasty evil global packet buffer.
+ */
+
+extern pb_stream reply_stream;
+extern u_int8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
+pb_stream *open_reply_pbs(const char *name);
 
 #endif /* _PACKET_H */
