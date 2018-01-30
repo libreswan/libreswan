@@ -74,7 +74,7 @@
 #include "send.h"
 #include "natt_defines.h"
 #include "nat_traversal.h"
-
+#include "ikev2_send.h"
 
 /* As per https://tools.ietf.org/html/rfc3948#section-4 */
 #define DEFAULT_KEEP_ALIVE_PERIOD  20

@@ -145,14 +145,6 @@ struct ipsec_proto_info *ikev2_esp_or_ah_proto_info(struct state *st, lset_t pol
 
 ipsec_spi_t ikev2_esp_or_ah_spi(const struct spd_route *spd_route, lset_t policy);
 
-extern void send_v2_notification_from_state(struct state *st,
-					    v2_notification_t type,
-					    chunk_t *data);
-
-extern void send_v2_notification_from_md(struct msg_digest *md,
-					 v2_notification_t type,
-					 chunk_t *data);
-
 extern stf_status ikev2_process_decrypted_payloads(struct msg_digest *md);
 
 extern bool ikev2_decode_peer_id_and_certs(struct msg_digest *md);
@@ -239,19 +231,6 @@ extern stf_status ikev2_resp_accept_child_ts(const struct msg_digest *md,
 extern void ikev2_update_msgid_counters(struct msg_digest *md);
 extern void ikev2_print_ts(struct traffic_selector *ts);
 
-extern void send_v2_notification(struct state *pst,
-				 v2_notification_t type,
-				 u_char *icookie,
-				 u_char *rcookie,
-				 chunk_t *data);
-
-extern bool ship_v2N(enum next_payload_types_ikev2 np,
-		     u_int8_t critical,
-		     u_int8_t protoid,
-		     const chunk_t *spi,
-		     v2_notification_t type,
-		     const chunk_t *n_data, pb_stream *rbody);
-
 extern deltatime_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 				       enum original_role role);
 
@@ -259,9 +238,6 @@ stf_status ikev2_send_cp(struct state *st, enum next_payload_types_ikev2 np,
 		pb_stream *outpbs);
 
 bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st);
-
-void send_v2_notification_invalid_ke(struct msg_digest *md,
-				     const struct oakley_group_desc *group);
 
 struct ikev2_payloads_summary {
 	stf_status status;

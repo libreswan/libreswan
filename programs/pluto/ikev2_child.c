@@ -65,6 +65,7 @@
 #include "addresspool.h"
 #include "rnd.h"
 #include "ip_address.h"
+#include "ikev2_send.h"
 
 void ikev2_print_ts(struct traffic_selector *ts)
 {
