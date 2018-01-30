@@ -130,5 +130,6 @@ extern bool ikev1_out_sa(pb_stream *outs,
 #endif
 
 bool ikev1_encrypt_message(pb_stream *pbs, struct state *st);
+bool ikev1_close_message(pb_stream *pbs, struct state *st);
 
 #endif

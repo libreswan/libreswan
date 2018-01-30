@@ -287,7 +287,7 @@ void main_outI1(int whack_sock,
 			"payload alignment problem please check the code in main_inR1_outR2 (num=%d)",
 			numvidtosend);
 
-	if (!close_message(&rbody, st))
+	if (!ikev1_close_message(&rbody, st))
 		return;
 
 	close_output_pbs(&reply_stream);
@@ -538,9 +538,49 @@ bool ikev1_encrypt_message(pb_stream *pbs, struct state *st)
 	update_iv(st);
 	DBG_cond_dump(DBG_CRYPT, "next IV:", st->st_iv, st->st_iv_len);
 
-	if (!close_message(pbs, st))
+	if (!ikev1_close_message(pbs, st))
 		return FALSE;
 
+	return TRUE;
+}
+
+/*
+ * In IKEv1, some implementations (including freeswan/openswan/libreswan)
+ * interpreted the RFC that the whole IKE message must padded to a multiple
+ * of 4 octets, but other implementations (i.e. Checkpoint in Aggressive Mode)
+ * drop padded IKE packets. Some of the text on this topic can be found in the
+ * IKEv1 RFC 2408 section 3.6 Transform Payload.
+ *
+ * The ikepad= option can be set to yes or no on a per-connection basis,
+ * and defaults to yes.
+ *
+ * In IKEv2, there is no padding specified in the RFC and some implementations
+ * will reject IKEv2 messages that are padded. As there are no known IKEv2
+ * clients that REQUIRE padding, padding is never done for IKEv2. If IKEv2
+ * clients are discovered in the wild, we will revisit this - please contact
+ * the libreswan developers if you find such an implementation.
+ * Therefore the ikepad= option has no effect on IKEv2 connections.
+ *
+ * @param pbs PB Stream
+ */
+bool ikev1_close_message(pb_stream *pbs, struct state *st)
+{
+	passert(!st->st_ikev2);
+	size_t padding = pad_up(pbs_offset(pbs), 4);
+
+	if (padding != 0 && st != NULL && st->st_connection != NULL &&
+	    (st->st_connection->policy & POLICY_NO_IKEPAD)) {
+		DBG(DBG_CONTROLMORE, DBG_log("IKEv1 message padding of %zu bytes skipped by policy",
+			padding));
+	} else if (padding != 0) {
+		DBG(DBG_CONTROLMORE, DBG_log("padding IKEv1 message with %zu bytes", padding));
+		if (!out_zero(padding, pbs, "message padding"))
+			return FALSE;
+	} else {
+		DBG(DBG_CONTROLMORE, DBG_log("no IKEv1 message padding required"));
+	}
+
+	close_output_pbs(pbs);
 	return TRUE;
 }
 
@@ -858,7 +898,7 @@ stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
 
 	passert(numvidtosend == 0);
 
-	if (!close_message(&rbody, st))
+	if (!ikev1_close_message(&rbody, st))
 		return STF_INTERNAL_ERROR;
 
 	/* save initiator SA for HASH */
@@ -1027,7 +1067,7 @@ static stf_status main_inR1_outI2_tail(struct state *st, struct msg_digest *md,
 	}
 
 	/* finish message */
-	if (!close_message(&rbody, st))
+	if (!ikev1_close_message(&rbody, st))
 		return STF_INTERNAL_ERROR;
 
 	/* Reinsert the state, using the responder cookie we just received */
@@ -1226,7 +1266,7 @@ stf_status main_inI2_outR2_tail(struct state *st, struct msg_digest *md,
 	}
 
 	/* finish message */
-	if (!close_message(&rbody, st))
+	if (!ikev1_close_message(&rbody, st))
 		return STF_INTERNAL_ERROR;
 
 	/*

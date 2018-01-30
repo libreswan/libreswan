@@ -565,7 +565,7 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 	}
 
 	/* finish message */
-	if (!close_message(&rbody, st))
+	if (!ikev1_close_message(&rbody, st))
 		return STF_INTERNAL_ERROR;
 
 	return STF_OK;
@@ -1298,7 +1298,7 @@ static stf_status aggr_outI1_tail(struct state *st,
 
 	/* finish message */
 
-	if (!close_message(&rbody, st))
+	if (!ikev1_close_message(&rbody, st))
 		return STF_INTERNAL_ERROR;
 
 	close_output_pbs(&reply_stream);
