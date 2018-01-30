@@ -101,7 +101,7 @@ class Issues:
     OUTPUT_WHITESPACE = "output-whitespace"
     OUTPUT_DIFFERENT = "output-different"
 
-    ABSEBT = "absent"
+    ABSENT = "absent"
 
     SANITIZER_FAILED = "sanitizer-failed"
 
