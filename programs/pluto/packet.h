@@ -1,4 +1,5 @@
-/* parsing packets: formats and tools
+/* parsing packets: formats and tools, for libreswan
+ *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2001,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2005-2007 Michael Richardson <mcr@xelerance.com>
@@ -7,6 +8,7 @@
  * Copyright (C) 2011-2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
+ * Copyright (C) 2018 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -91,6 +93,8 @@ struct packet_byte_stream {
 	field_desc *lenfld_desc;
 };
 typedef struct packet_byte_stream pb_stream;
+
+extern const pb_stream empty_pbs;
 
 /*
  * For an input PBS:

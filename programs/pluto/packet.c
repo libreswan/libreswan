@@ -30,6 +30,8 @@
 
 #include "packet.h"
 
+const pb_stream empty_pbs;
+
 /* ISAKMP Header: for all messages
  * layout from RFC 2408 "ISAKMP" section 3.1
  *                      1                   2                   3
