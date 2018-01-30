@@ -1,31 +1,52 @@
 #!/usr/bin/python
+#
+# Copyright (C) 2018 Paul Wouters <pwouters@redhat.com>
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
 
 import sys
-import base64
-import commands
+import subprocess
 
-log = ""
-
-status, myip = commands.getstatusoutput("ip -o route get 1.0.0.1")
+# Get my %defaultroute IP address
+myip = subprocess.check_output("ip -o route get 8.8.8.8", shell=True)
 myip = myip.split("src")[1].strip().split()[0]
 
 argv = sys.argv
-argc = len(sys.argv)
+ourself = argv.pop(0)
 
-#log += "Number or arguments is %d\n"%argc
-#if argc >= 4:
-#	log += "QNAME:%s\n"%argv[1]
-#	log += "TTL:%s\n"%argv[2]
-#	log += "IP:%s\n"%argv[3]
-#	log += "IPSECKEY:%s\n"%argv[4]
-#	rr = argv[4]
-#	pref, gwtype, algo, gw, pubkey = rr.split(" ")
-#log += "-----------------------------\n"
+try:
+    qname = argv.pop(0)
+    ttl = argv.pop(0)
+    ip = argv.pop(0)
+except:
+    sys.exit("Bad arguments to ipsec _unbound")
 
-cmdname = "@IPSEC_EXECDIR@/whack --keyid @%s --addkey --pubkeyrsa 0s%s"%(argv[1], pubkey)
-cmdip = "@IPSEC_EXECDIR@/whack --keyid %s --addkey --pubkeyrsa 0s%s"%(argv[3], pubkey)
-cmdoe = "@IPSEC_EXECDIR@/whack --oppohere %s --oppothere %s"%(myip, argv[3])
-ret, output = commands.getstatusoutput(cmdname)
-ret, output = commands.getstatusoutput(cmdip)
-ret, output = commands.getstatusoutput(cmdoe)
-ret, output = commands.getstatusoutput("@IPSEC_EXECDIR@ whack --trafficstatus")
+while (argv != []):
+    try:
+        gwprec = argv.pop(0)
+        gwtype = argv.pop(0)
+        gwalg = argv.pop(0)
+        gwid = argv.pop(0)
+        pubkey = argv.pop(0)
+        addkeyip = "ipsec whack --keyid @%s --addkey --pubkeyrsa 0s%s"%(ip, pubkey)
+        addkeyhostname = "ipsec whack --keyid @%s --addkey --pubkeyrsa 0s%s"%(qname, pubkey)
+        print("processing an IPSECKEY record for Opportunistic IPsec to %s(%s)"%(qname,ip))
+        print(subprocess.call(addkeyip, shell=True))
+        print(subprocess.call(addkeyhostname, shell=True))
+    except:
+        sys.exit("failed to process an IPSECKEY record for Opportunistic IPsec to %s(%s)"%(qname,ip))
+
+# done injecting all IPSECKEY records into pluto - try actual OE now
+cmdoeip = "ipsec whack --oppohere %s --oppothere %s"%(myip, ip)
+print(subprocess.check_output(cmdoeip, shell=True))
+#cmdoeqname = "ipsec whack --oppohere %s --oppothere %s"%(myip, qname)
+#ret, output = commands.getstatusoutput(cmdoeqname)
+print(subprocess.check_output("ipsec whack --trafficstatus", shell=True))
