@@ -996,7 +996,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 	init_phase2_iv(isakmp_sa, &st->st_msgid);
 	restore_new_iv(st, isakmp_sa->st_new_iv, isakmp_sa->st_new_iv_len);
 
-	if (!encrypt_message(&rbody, st)) {
+	if (!ikev1_encrypt_message(&rbody, st)) {
 		reset_cur_state();
 		return STF_INTERNAL_ERROR;
 	}
@@ -1696,7 +1696,7 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 
 	/* encrypt message, except for fixed part of header */
 
-	if (!encrypt_message(&rbody, st)) {
+	if (!ikev1_encrypt_message(&rbody, st)) {
 		delete_ipsec_sa(st);
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
@@ -1926,7 +1926,7 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 
 	/* encrypt message, except for fixed part of header */
 
-	if (!encrypt_message(&rbody, st)) {
+	if (!ikev1_encrypt_message(&rbody, st)) {
 		delete_ipsec_sa(st);
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}

@@ -76,7 +76,6 @@ extern notification_t accept_KE(chunk_t *dest, const char *val_name,
  * some additional functions are exported for xauth.c
  */
 extern bool close_message(pb_stream *pbs, struct state *st) MUST_USE_RESULT;
-extern bool encrypt_message(pb_stream *pbs, struct state *st) MUST_USE_RESULT;
 
 /* START_HASH_PAYLOAD_NO_HASH_START
  *

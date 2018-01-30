@@ -496,7 +496,7 @@ notification_t accept_v1_nonce(struct msg_digest *md, chunk_t *dest,
  * The theory is that there will be no "backing out", so we commit to IV.
  * We also close the pbs.
  */
-bool encrypt_message(pb_stream *pbs, struct state *st)
+bool ikev1_encrypt_message(pb_stream *pbs, struct state *st)
 {
 	const struct encrypt_desc *e = st->st_oakley.ta_encrypt;
 	u_int8_t *enc_start = pbs->start + sizeof(struct isakmp_hdr);
@@ -1503,7 +1503,7 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 	/* encrypt message, except for fixed part of header */
 
 	/* st_new_iv was computed by generate_skeyids_iv (??? DOESN'T EXIST) */
-	if (!encrypt_message(rbody, st))
+	if (!ikev1_encrypt_message(rbody, st))
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 
 	return STF_OK;
@@ -1813,7 +1813,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 
 	/* encrypt message, sans fixed part of header */
 
-	if (!encrypt_message(&rbody, st))
+	if (!ikev1_encrypt_message(&rbody, st))
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 
 	/* Last block of Phase 1 (R3), kept for Phase 2 IV generation */
@@ -2031,7 +2031,7 @@ stf_status send_isakmp_notification(struct state *st,
 		save_new_iv(st, old_new_iv, old_new_iv_len);
 
 		init_phase2_iv(st, &msgid);
-		if (!encrypt_message(&rbody, st))
+		if (!ikev1_encrypt_message(&rbody, st))
 			return STF_INTERNAL_ERROR;
 
 		send_ike_msg_without_recording(st, &reply_stream, "ISAKMP notify");
@@ -2213,7 +2213,7 @@ static void send_notification(struct state *sndst, notification_t type,
 			update_iv(encst);
 		}
 		init_phase2_iv(encst, &msgid);
-		passert(encrypt_message(&r_hdr_pbs, encst));
+		passert(ikev1_encrypt_message(&r_hdr_pbs, encst));
 
 		restore_iv(encst, old_iv, old_iv_len);
 	} else {
@@ -2462,7 +2462,7 @@ bool ikev1_delete_out(struct state *st)
 		save_iv(p1st, old_iv, old_iv_len);
 		init_phase2_iv(p1st, &msgid);
 
-		passert(encrypt_message(&r_hdr_pbs, p1st));
+		passert(ikev1_encrypt_message(&r_hdr_pbs, p1st));
 
 		send_ike_msg_without_recording(p1st, &reply_pbs, "delete notify");
 

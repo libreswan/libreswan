@@ -489,7 +489,7 @@ static stf_status modecfg_resp(struct state *st,
 	xauth_mode_cfg_hash(r_hashval, r_hash_start, rbody->cur, st);
 
 	if (!close_message(rbody, st) ||
-	    !encrypt_message(rbody, st))
+	    !ikev1_encrypt_message(rbody, st))
 		return STF_INTERNAL_ERROR;
 
 	return STF_OK;
@@ -663,7 +663,7 @@ stf_status xauth_send_request(struct state *st)
 
 	init_phase2_iv(st, &st->st_msgid_phase15);
 
-	if (!encrypt_message(&rbody, st))
+	if (!ikev1_encrypt_message(&rbody, st))
 		return STF_INTERNAL_ERROR;
 
 	/* Transmit */
@@ -801,7 +801,7 @@ stf_status modecfg_send_request(struct state *st)
 
 	init_phase2_iv(st, &st->st_msgid_phase15);
 
-	if (!encrypt_message(&rbody, st))
+	if (!ikev1_encrypt_message(&rbody, st))
 		return STF_INTERNAL_ERROR;
 
 	/* Transmit */
@@ -890,7 +890,7 @@ static stf_status xauth_send_status(struct state *st, int status)
 
 	init_phase2_iv(st, &st->st_msgid_phase15);
 
-	if (!encrypt_message(&rbody, st))
+	if (!ikev1_encrypt_message(&rbody, st))
 		return STF_INTERNAL_ERROR;
 
 	/* Set up a retransmission event, half a minute hence */
@@ -2216,7 +2216,7 @@ static stf_status xauth_client_resp(struct state *st,
 	xauth_mode_cfg_hash(r_hashval, r_hash_start, rbody->cur, st);
 
 	if (!close_message(rbody, st) ||
-	    !encrypt_message(rbody, st))
+	    !ikev1_encrypt_message(rbody, st))
 		return STF_INTERNAL_ERROR;
 
 	return STF_OK;
@@ -2506,7 +2506,7 @@ static stf_status xauth_client_ackstatus(struct state *st,
 	xauth_mode_cfg_hash(r_hashval, r_hash_start, rbody->cur, st);
 
 	if (!close_message(rbody, st) ||
-	    !encrypt_message(rbody, st))
+	    !ikev1_encrypt_message(rbody, st))
 		return STF_INTERNAL_ERROR;
 
 	return STF_OK;

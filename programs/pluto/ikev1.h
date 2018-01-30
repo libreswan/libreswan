@@ -129,4 +129,6 @@ extern bool ikev1_out_sa(pb_stream *outs,
 		enum next_payload_types_ikev1 np);
 #endif
 
+bool ikev1_encrypt_message(pb_stream *pbs, struct state *st);
+
 #endif
