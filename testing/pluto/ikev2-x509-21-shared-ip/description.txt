@@ -1,0 +1,8 @@
+east and west both have two certs/conns loaded. west initiates
+one connection as normal. West is then crashed/restarted, to
+emulate another client from the same IP using a different cert/conn
+to match the different conn on east. The connection should establish.
+On east, there should be two conns established.
+
+Note: this might not fully reproduce the situation where this causes
+a problem.
