@@ -94,8 +94,8 @@
  *	aggr_inI1_outR1_tail: aggr_inI1_outR1_continue2
  */
 
-static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
-				       struct pluto_crypto_req *r);
+static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
+						 struct pluto_crypto_req *r);
 
 /*
  * continuation from second calculation (the DH one)
@@ -111,7 +111,7 @@ static void aggr_inI1_outR1_continue2(struct state *st, struct msg_digest *md,
 			st->st_serialno));
 
 	passert(md != NULL);
-	stf_status e = aggr_inI1_outR1_tail(md, r);
+	stf_status e = aggr_inI1_outR1_continue2_tail(md, r);
 	complete_v1_state_transition(&md, e);
 	release_any_md(&md);
 }
@@ -307,8 +307,8 @@ stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 	return STF_SUSPEND;
 }
 
-static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
-				       struct pluto_crypto_req *r)
+static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
+						 struct pluto_crypto_req *r)
 {
 	struct state *st = md->st;
 	struct connection *c = st->st_connection;

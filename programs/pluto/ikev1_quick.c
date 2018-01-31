@@ -1200,9 +1200,9 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 					      struct pluto_crypto_req *r);
 
-static crypto_req_cont_func quick_inI1_outR1_cryptocontinue1;	/* forward decl and type assertion */
+static crypto_req_cont_func quick_inI1_outR1_continue1;	/* forward decl and type assertion */
 
-static crypto_req_cont_func quick_inI1_outR1_cryptocontinue2;	/* forward decl and type assertion */
+static crypto_req_cont_func quick_inI1_outR1_continue2;	/* forward decl and type assertion */
 
 static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b)
 {
@@ -1458,10 +1458,10 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b)
 		if (st->st_pfs_group != NULL) {
 			request_ke_and_nonce("quick_outI1 KE", st,
 					     st->st_pfs_group,
-					     quick_inI1_outR1_cryptocontinue1);
+					     quick_inI1_outR1_continue1);
 		} else {
 			request_nonce("quick_outI1 KE", st,
-				      quick_inI1_outR1_cryptocontinue1);
+				      quick_inI1_outR1_continue1);
 		}
 
 		passert(st->st_connection != NULL);
@@ -1469,8 +1469,8 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b)
 	}
 }
 
-static void quick_inI1_outR1_cryptocontinue1(struct state *st, struct msg_digest *md,
-					     struct pluto_crypto_req *r)
+static void quick_inI1_outR1_continue1(struct state *st, struct msg_digest *md,
+				       struct pluto_crypto_req *r)
 {
 	struct msg_digest **mdp = &md; /* XXX: replace MD param with MDP */
 
@@ -1486,7 +1486,7 @@ static void quick_inI1_outR1_cryptocontinue1(struct state *st, struct msg_digest
 	if (st->st_pfs_group != NULL) {
 		/* PFS is on: do a new DH */
 		unpack_KE_from_helper(st, r, &st->st_gr);
-		start_dh_v1_secret(quick_inI1_outR1_cryptocontinue2, "quick outR1 DH",
+		start_dh_v1_secret(quick_inI1_outR1_continue2, "quick outR1 DH",
 				   st, ORIGINAL_RESPONDER, st->st_pfs_group);
 		/*
 		 * XXX: Since more crypto has been requsted, MD needs
@@ -1508,8 +1508,8 @@ static void quick_inI1_outR1_cryptocontinue1(struct state *st, struct msg_digest
 	/* ??? why does our caller not care about e? */
 }
 
-static void quick_inI1_outR1_cryptocontinue2(struct state *st, struct msg_digest *md,
-					     struct pluto_crypto_req *r)
+static void quick_inI1_outR1_continue2(struct state *st, struct msg_digest *md,
+				       struct pluto_crypto_req *r)
 {
 	DBG(DBG_CONTROL,
 		DBG_log("quick_inI1_outR1_cryptocontinue2 for #%lu: calculated DH, sending R1",
@@ -1711,8 +1711,8 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
  * (see RFC 2409 "IKE" 5.5)
  * Installs inbound and outbound IPsec SAs, routing, etc.
  */
-static stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
-					      struct pluto_crypto_req *r);
+static stf_status quick_inR1_outI2_tail(struct msg_digest *md,
+					struct pluto_crypto_req *r);
 
 static crypto_req_cont_func quick_inR1_outI2_continue;	/* forward decl and type assertion */
 
@@ -1748,7 +1748,7 @@ stf_status quick_inR1_outI2(struct state *st, struct msg_digest *md)
 		return STF_SUSPEND;
 	} else {
 		/* just call the tail function */
-		return quick_inR1_outI2_cryptotail(md, NULL);
+		return quick_inR1_outI2_tail(md, NULL);
 	}
 }
 
@@ -1760,13 +1760,13 @@ static void quick_inR1_outI2_continue(struct state *st, struct msg_digest *md,
 
 	passert(st->st_connection != NULL);
 	passert(md != NULL);
-	stf_status e = quick_inR1_outI2_cryptotail(md, r);
+	stf_status e = quick_inR1_outI2_tail(md, r);
 	complete_v1_state_transition(&md, e);
 	release_any_md(&md);
 }
 
-stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
-				       struct pluto_crypto_req *r)
+stf_status quick_inR1_outI2_tail(struct msg_digest *md,
+				 struct pluto_crypto_req *r)
 {
 	struct state *st = md->st;
 	struct connection *c = st->st_connection;

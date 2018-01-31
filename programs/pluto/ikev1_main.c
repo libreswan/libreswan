@@ -1090,20 +1090,20 @@ static stf_status main_inR1_outI2_tail(struct state *st, struct msg_digest *md,
  *	    --> HDR, <Nr_b>PubKey_i, <KE_b>Ke_r, <IDr1_b>Ke_r
  */
 
-static stf_status main_inI2_outR2_tail(struct state *st, struct msg_digest *md,
-				       struct pluto_crypto_req *r);
+static stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *md,
+						struct pluto_crypto_req *r);
 
-static crypto_req_cont_func main_inI2_outR2_continue;	/* type assertion */
+static crypto_req_cont_func main_inI2_outR2_continue1;	/* type assertion */
 
-static void main_inI2_outR2_continue(struct state *st, struct msg_digest *md,
-				     struct pluto_crypto_req *r)
+static void main_inI2_outR2_continue1(struct state *st, struct msg_digest *md,
+				      struct pluto_crypto_req *r)
 {
 	DBG(DBG_CONTROL,
 		DBG_log("main_inI2_outR2_continue for #%lu: calculated ke+nonce, sending R2",
 			st->st_serialno));
 
 	passert(md != NULL);
-	stf_status e = main_inI2_outR2_tail(st, md, r);
+	stf_status e = main_inI2_outR2_continue1_tail(st, md, r);
 	complete_v1_state_transition(&md, e);
 	release_any_md(&md);
 }
@@ -1127,7 +1127,7 @@ stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
 
 	request_ke_and_nonce("inI2_outR2 KE", st,
 			     st->st_oakley.ta_dh,
-			     main_inI2_outR2_continue);
+			     main_inI2_outR2_continue1);
 	return STF_SUSPEND;
 }
 
@@ -1137,10 +1137,10 @@ stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
  * We are precomputing the DH.
  * This also means that it isn't good at reporting an NSS error.
  */
-static crypto_req_cont_func main_inI2_outR2_calcdone;	/* type assertion */
+static crypto_req_cont_func main_inI2_outR2_continue2;	/* type assertion */
 
-static void main_inI2_outR2_calcdone(struct state *st, struct msg_digest *md,
-				     struct pluto_crypto_req *r)
+static void main_inI2_outR2_continue2(struct state *st, struct msg_digest *md,
+				      struct pluto_crypto_req *r)
 {
 	DBG(DBG_CONTROL,
 		DBG_log("main_inI2_outR2_calcdone for #%lu: calculate DH finished",
@@ -1162,8 +1162,8 @@ static void main_inI2_outR2_calcdone(struct state *st, struct msg_digest *md,
 	reset_cur_state();
 }
 
-stf_status main_inI2_outR2_tail(struct state *st, struct msg_digest *md,
-				struct pluto_crypto_req *r)
+stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *md,
+					  struct pluto_crypto_req *r)
 {
 #ifdef FIPS_CHECK
 	if (libreswan_fipsmode() && st->st_oakley.ta_prf == NULL) {
@@ -1288,7 +1288,7 @@ stf_status main_inI2_outR2_tail(struct state *st, struct msg_digest *md,
 			DBG_log("main inI2_outR2: starting async DH calculation (group=%d)",
 				st->st_oakley.ta_dh->group));
 
-		start_dh_v1_secretiv(main_inI2_outR2_calcdone, "main_inI2_outR2_tail",
+		start_dh_v1_secretiv(main_inI2_outR2_continue2, "main_inI2_outR2_tail",
 				     st, ORIGINAL_RESPONDER, st->st_oakley.ta_dh);
 
 		/* we are calculating in the background, so it doesn't count */
@@ -1309,9 +1309,9 @@ stf_status main_inI2_outR2_tail(struct state *st, struct msg_digest *md,
  * SMF_RPKE_AUTH: HDR, <Nr_b>PubKey_i, <KE_b>Ke_r, <IDr1_b>Ke_r
  *	    --> HDR*, HASH_I
  */
-static stf_status main_inR2_outI3_continue(struct msg_digest *md,
-					   pb_stream *rbody,
-					   struct pluto_crypto_req *r)
+static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
+						pb_stream *rbody,
+						struct pluto_crypto_req *r)
 {
 	struct state *const st = md->st;
 	int auth_payload = st->st_oakley.auth == OAKLEY_PRESHARED_KEY ?
@@ -1550,9 +1550,9 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 	return STF_OK;
 }
 
-static crypto_req_cont_func main_inR2_outI3_cryptotail;	/* type assertion */
+static crypto_req_cont_func main_inR2_outI3_continue;	/* type assertion */
 
-static void main_inR2_outI3_cryptotail(struct state *st, struct msg_digest *md,
+static void main_inR2_outI3_continue(struct state *st, struct msg_digest *md,
 				       struct pluto_crypto_req *r)
 {
 	DBG(DBG_CONTROL,
@@ -1565,7 +1565,7 @@ static void main_inR2_outI3_cryptotail(struct state *st, struct msg_digest *md,
 	ikev1_init_out_pbs_echo_hdr(md, TRUE, ISAKMP_NEXT_ID,
 				    &reply_stream, reply_buffer, sizeof(reply_buffer),
 				    &rbody);
-	stf_status e = main_inR2_outI3_continue(md, &rbody, r);
+	stf_status e = main_inR2_outI3_continue_tail(md, &rbody, r);
 	complete_v1_state_transition(&md, e);
 	release_any_md(&md);
 }
@@ -1579,7 +1579,7 @@ stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)
 
 	/* Nr in */
 	RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_nr, "Nr"));
-	start_dh_v1_secretiv(main_inR2_outI3_cryptotail, "aggr outR1 DH",
+	start_dh_v1_secretiv(main_inR2_outI3_continue, "aggr outR1 DH",
 			     st, ORIGINAL_INITIATOR, st->st_oakley.ta_dh);
 	return STF_SUSPEND;
 }
