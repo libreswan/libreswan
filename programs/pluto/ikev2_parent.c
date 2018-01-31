@@ -1064,7 +1064,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
  */
 
 static crypto_req_cont_func ikev2_parent_inI1outR1_continue;	/* forward decl and type assertion */
-static crypto_transition_fn ikev2_parent_inI1outR1_tail;	/* forward decl and type assertion */
+static crypto_transition_fn ikev2_parent_inI1outR1_continue_tail;	/* forward decl and type assertion */
 
 stf_status ikev2parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 {
@@ -1438,7 +1438,7 @@ static void ikev2_parent_inI1outR1_continue(struct state *st, struct msg_digest 
 			st->st_serialno));
 
 	passert(md != NULL);
-	stf_status e = ikev2_parent_inI1outR1_tail(st, md, r);
+	stf_status e = ikev2_parent_inI1outR1_continue_tail(st, md, r);
 	complete_v2_state_transition(&md, e);
 	release_any_md(&md);
 }
@@ -1450,8 +1450,9 @@ static void ikev2_parent_inI1outR1_continue(struct state *st, struct msg_digest 
  *	ikev2parent_inI1outR1: if KE and Nonce were already calculated
  *	ikev2_parent_inI1outR1_continue: if they needed to be calculated
  */
-static stf_status ikev2_parent_inI1outR1_tail(struct state *st, struct msg_digest *md,
-					      struct pluto_crypto_req *r)
+static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
+						       struct msg_digest *md,
+						       struct pluto_crypto_req *r)
 {
 	struct connection *c = st->st_connection;
 	bool send_certreq = FALSE;
