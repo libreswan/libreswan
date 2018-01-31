@@ -103,17 +103,17 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 
 static crypto_req_cont_func aggr_inI1_outR1_continue2;	/* type assertion */
 
-static void aggr_inI1_outR1_continue2(struct state *st, struct msg_digest *md,
+static void aggr_inI1_outR1_continue2(struct state *st,
+				      struct msg_digest **mdp,
 				      struct pluto_crypto_req *r)
 {
 	DBG(DBG_CONTROL,
 		DBG_log("aggr_inI1_outR1_continue2 for #%lu: calculated ke+nonce+DH, sending R1",
 			st->st_serialno));
 
-	passert(md != NULL);
-	stf_status e = aggr_inI1_outR1_continue2_tail(md, r);
-	complete_v1_state_transition(&md, e);
-	release_any_md(&md);
+	passert(*mdp != NULL);
+	stf_status e = aggr_inI1_outR1_continue2_tail(*mdp, r);
+	complete_v1_state_transition(mdp, e);
 }
 
 /*
@@ -124,10 +124,10 @@ static void aggr_inI1_outR1_continue2(struct state *st, struct msg_digest *md,
 
 static crypto_req_cont_func aggr_inI1_outR1_continue1;	/* type assertion */
 
-static void aggr_inI1_outR1_continue1(struct state *st, struct msg_digest *md,
+static void aggr_inI1_outR1_continue1(struct state *st,
+				      struct msg_digest **mdp,
 				      struct pluto_crypto_req *r)
 {
-	struct msg_digest **mdp = &md; /* XXX: replace MD param with MDP */
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("aggr inI1_outR1: calculated ke+nonce, calculating DH"));
 
@@ -642,7 +642,8 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 
 static stf_status aggr_inR1_outI2_tail(struct msg_digest *md); /* forward */
 
-static void aggr_inR1_outI2_crypto_continue(struct state *st, struct msg_digest *md,
+static void aggr_inR1_outI2_crypto_continue(struct state *st,
+					    struct msg_digest **mdp,
 					    struct pluto_crypto_req *r)
 {
 	stf_status e;
@@ -651,16 +652,15 @@ static void aggr_inR1_outI2_crypto_continue(struct state *st, struct msg_digest 
 	    DBG_log("aggr inR1_outI2: calculated DH, sending I2"));
 
 	passert(st != NULL);
-	passert(md != NULL);
+	passert(*mdp != NULL);
 
 	if (!finish_dh_secretiv(st, r)) {
 		e = STF_FAIL + INVALID_KEY_INFORMATION;
 	} else {
-		e = aggr_inR1_outI2_tail(md);
+		e = aggr_inR1_outI2_tail(*mdp);
 	}
 
-	complete_v1_state_transition(&md, e);
-	release_any_md(&md);
+	complete_v1_state_transition(mdp, e);
 }
 
 /* Note: this is only called once.  Not really a tail. */
@@ -1111,13 +1111,15 @@ void aggr_outI1(int whack_sock,
 
 static stf_status aggr_outI1_tail(struct state *st, struct pluto_crypto_req *r);
 
-static void aggr_outI1_continue(struct state *st, struct msg_digest *md,
+static void aggr_outI1_continue(struct state *st,
+				struct msg_digest **mdp,
 				struct pluto_crypto_req *r)
 {
 	DBG(DBG_CONTROL,
 		DBG_log("aggr_outI1_continue for #%lu: calculated ke+nonce, sending I1",
 			st->st_serialno));
-	passert(md == NULL);
+
+	passert(*mdp == NULL); /* no packet */
 	stf_status e = aggr_outI1_tail(st, r); /* may return FAIL */
 
 	/*
@@ -1131,6 +1133,9 @@ static void aggr_outI1_continue(struct state *st, struct msg_digest *md,
 	fake_md->from_state = STATE_UNDEFINED;	/* ??? */
 
 	complete_v1_state_transition(&fake_md, e);
+	/*
+	 * XXX: If E==STF_FAIL, fake_md leaks?
+	 */
 }
 
 static stf_status aggr_outI1_tail(struct state *st,

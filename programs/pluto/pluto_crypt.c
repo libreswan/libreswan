@@ -577,12 +577,7 @@ static void handle_helper_answer(struct state *st,
 	} else {
 		st->st_offloaded_task = NULL;
 		st->st_v1_offloaded_task_in_background = false;
-		(*cn->pcrc_func)(st, *mdp, &cn->pcrc_pcr);
-		/*
-		 * XXX: since prcc_func() is responsible for disposing
-		 * of *MDP, kill the pointer.
-		 */
-		*mdp = NULL;
+		(*cn->pcrc_func)(st, mdp, &cn->pcrc_pcr);
 	}
 
 	/* now free up the continuation */

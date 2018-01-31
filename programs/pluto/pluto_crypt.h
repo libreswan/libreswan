@@ -262,14 +262,19 @@ struct pluto_crypto_req_cont;	/* forward reference */
  *	Before calling, the current global state context will have
  *	been set to this state, that is, don't call set_cur_state().
  *
- * struct msg_digest *md:
+ * struct msg_digest *mdp:
  *
- *      If applicable, the incomming packet that triggered the
- *      requested crypto.  Re-keying, for instance, will not have this
- *      packet?
+ *      If applicable, *MDP contains the incoming packet that
+ *      triggered the requested crypto.  The initiator, for instance
+ *      when initiating an initial connection or rekey, will not have
+ *      this packet.
  *
- *      This function is responsible for either releasing or
- *      transfering ownership of the MD.
+ *      XXX: should be true now but watch out for fake_md.
+ *
+ *      This routine will not release_any_md(MDP).  The caller will do
+ *      this.  In fact, it must zap *MDP to NULL if it thinks **MDP
+ *      should not be freed.  The the caller is prepared for *MDP
+ *      being set to NULL.
  *
  * struct pluto_crypto_req *r:
  *
@@ -282,7 +287,7 @@ struct pluto_crypto_req_cont;	/* forward reference */
  * See also the comments that prefix send_crypto_helper_request().
  */
 
-typedef void crypto_req_cont_func(struct state *st, struct msg_digest *md,
+typedef void crypto_req_cont_func(struct state *st, struct msg_digest **mdp,
 				  struct pluto_crypto_req *r);
 
 /* struct pluto_crypto_req_cont allocators */

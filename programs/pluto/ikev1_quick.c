@@ -731,19 +731,16 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 
 static crypto_req_cont_func quick_outI1_continue;	/* type assertion */
 
-static void quick_outI1_continue(struct state *st, struct msg_digest *md UNUSED,
+static void quick_outI1_continue(struct state *st, struct msg_digest **mdp UNUSED,
 				 struct pluto_crypto_req *r)
 {
 	DBG(DBG_CONTROL,
 		DBG_log("quick_outI1_continue for #%lu: calculated ke+nonce, sending I1",
 			st->st_serialno));
 
+	pexpect(*mdp == NULL); /* no packet */
 	passert(st != NULL);
 	stf_status e = quick_outI1_tail(r, st);
-	/*
-	 * ??? this boilerplate code looks different from others.
-	 * Who frees md?
-	 */
 	if (e == STF_INTERNAL_ERROR) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: quick_outI1_tail() failed with STF_INTERNAL_ERROR",
@@ -1473,11 +1470,10 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 	}
 }
 
-static void quick_inI1_outR1_continue1(struct state *st, struct msg_digest *md,
+static void quick_inI1_outR1_continue1(struct state *st,
+				       struct msg_digest **mdp,
 				       struct pluto_crypto_req *r)
 {
-	struct msg_digest **mdp = &md; /* XXX: replace MD param with MDP */
-
 	DBG(DBG_CONTROL,
 		DBG_log("quick_inI1_outR1_cryptocontinue1 for #%lu: calculated ke+nonce, calculating DH",
 			st->st_serialno));
@@ -1502,17 +1498,17 @@ static void quick_inI1_outR1_continue1(struct state *st, struct msg_digest *md,
 		/* but if PFS is off, we don't do a second DH, so just
 		 * call the continuation with NULL struct pluto_crypto_req *
 		 */
-		stf_status e = quick_inI1_outR1_continue12_tail(md, NULL);
+		stf_status e = quick_inI1_outR1_continue12_tail(*mdp, NULL);
 		if (e == STF_OK) {
-			passert(md != NULL);	/* ??? when would this fail? */
-			complete_v1_state_transition(&md, e);
-			release_any_md(&md);
+			passert(*mdp != NULL);	/* ??? when would this fail? */
+			complete_v1_state_transition(mdp, e);
 		}
 	}
 	/* ??? why does our caller not care about e? */
 }
 
-static void quick_inI1_outR1_continue2(struct state *st, struct msg_digest *md,
+static void quick_inI1_outR1_continue2(struct state *st,
+				       struct msg_digest **mdp,
 				       struct pluto_crypto_req *r)
 {
 	DBG(DBG_CONTROL,
@@ -1520,10 +1516,9 @@ static void quick_inI1_outR1_continue2(struct state *st, struct msg_digest *md,
 			st->st_serialno));
 
 	passert(st->st_connection != NULL);
-	passert(md != NULL);
-	stf_status e = quick_inI1_outR1_continue12_tail(md, r);
-	complete_v1_state_transition(&md, e);
-	release_any_md(&md);
+	passert(*mdp != NULL);
+	stf_status e = quick_inI1_outR1_continue12_tail(*mdp, r);
+	complete_v1_state_transition(mdp, e);
 }
 
 static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
@@ -1756,17 +1751,17 @@ stf_status quick_inR1_outI2(struct state *st, struct msg_digest *md)
 	}
 }
 
-static void quick_inR1_outI2_continue(struct state *st, struct msg_digest *md,
+static void quick_inR1_outI2_continue(struct state *st,
+				      struct msg_digest **mdp,
 				      struct pluto_crypto_req *r)
 {	DBG(DBG_CONTROL,
 		DBG_log("quick_inR1_outI2_continue for #%lu: calculated ke+nonce, calculating DH",
 			st->st_serialno));
 
 	passert(st->st_connection != NULL);
-	passert(md != NULL);
-	stf_status e = quick_inR1_outI2_tail(md, r);
-	complete_v1_state_transition(&md, e);
-	release_any_md(&md);
+	passert(*mdp != NULL);
+	stf_status e = quick_inR1_outI2_tail(*mdp, r);
+	complete_v1_state_transition(mdp, e);
 }
 
 stf_status quick_inR1_outI2_tail(struct msg_digest *md,

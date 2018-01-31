@@ -298,7 +298,8 @@ static struct msg_digest *fake_md(struct state *st)
 	return fake_md;
 }
 
-static void ikev2_crypto_continue(struct state *st, struct msg_digest *md,
+static void ikev2_crypto_continue(struct state *st,
+				  struct msg_digest **mdp,
 				  struct pluto_crypto_req *r)
 {
 	stf_status e = STF_OK;
@@ -320,8 +321,8 @@ static void ikev2_crypto_continue(struct state *st, struct msg_digest *md,
 	}
 	passert(pst != NULL);
 
-	if (md == NULL) {
-		md = fake_md(st);
+	if (*mdp == NULL) {
+		*mdp = fake_md(st);
 	}
 
 	switch (st->st_state) {
@@ -359,11 +360,11 @@ static void ikev2_crypto_continue(struct state *st, struct msg_digest *md,
 				e = STF_FAIL + v2N_INVALID_KE_PAYLOAD;
 		} else {
 			unpack_nonce(&st->st_nr, r);
-			if (md->chain[ISAKMP_NEXT_v2KE] != NULL &&
-					r->pcr_type == pcr_build_ke_and_nonce) {
+			if ((*mdp)->chain[ISAKMP_NEXT_v2KE] != NULL &&
+			    r->pcr_type == pcr_build_ke_and_nonce) {
 				unpack_KE_from_helper(st, r, &st->st_gr);
 			}
-			e = ikev2_rekey_dh_start(r,md); /* STF_SUSPEND | OK */
+			e = ikev2_rekey_dh_start(r, *mdp); /* STF_SUSPEND | OK */
 		}
 		break;
 	default :
@@ -371,12 +372,11 @@ static void ikev2_crypto_continue(struct state *st, struct msg_digest *md,
 	}
 
 	if (e == STF_OK) {
-		e = md->svm->crypto_end(st, md, r);
+		e = (*mdp)->svm->crypto_end(st, *mdp, r);
 	}
 
-	passert(md != NULL);
-	complete_v2_state_transition(&md, e);
-	release_any_md(&md);
+	passert(*mdp != NULL);
+	complete_v2_state_transition(mdp, e);
 }
 
 /*
@@ -1432,17 +1432,17 @@ stf_status ikev2parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	return STF_SUSPEND;
 }
 
-static void ikev2_parent_inI1outR1_continue(struct state *st, struct msg_digest *md,
+static void ikev2_parent_inI1outR1_continue(struct state *st,
+					    struct msg_digest **mdp,
 					    struct pluto_crypto_req *r)
 {
 	DBG(DBG_CONTROL,
 		DBG_log("ikev2_parent_inI1outR1_continue for #%lu: calculated ke+nonce, sending R1",
 			st->st_serialno));
 
-	passert(md != NULL);
-	stf_status e = ikev2_parent_inI1outR1_continue_tail(st, md, r);
-	complete_v2_state_transition(&md, e);
-	release_any_md(&md);
+	passert(*mdp != NULL);
+	stf_status e = ikev2_parent_inI1outR1_continue_tail(st, *mdp, r);
+	complete_v2_state_transition(mdp, e);
 }
 
 /*
@@ -2011,17 +2011,17 @@ stf_status ikev2parent_inR1outI2(struct state *st, struct msg_digest *md)
 	return STF_SUSPEND;
 }
 
-static void ikev2_parent_inR1outI2_continue(struct state *st, struct msg_digest *md,
+static void ikev2_parent_inR1outI2_continue(struct state *st,
+					    struct msg_digest **mdp,
 					    struct pluto_crypto_req *r)
 {
 	DBG(DBG_CONTROL,
 		DBG_log("ikev2_parent_inR1outI2_continue for #%lu: calculating g^{xy}, sending I2",
 			st->st_serialno));
 
-	passert(md != NULL);
-	stf_status e = ikev2_parent_inR1outI2_tail(st, md, r);
-	complete_v2_state_transition(&md, e);
-	release_any_md(&md);
+	passert(*mdp != NULL);
+	stf_status e = ikev2_parent_inR1outI2_tail(st, *mdp, r);
+	complete_v2_state_transition(mdp, e);
 }
 
 /*
@@ -3586,16 +3586,17 @@ stf_status ikev2parent_inI2outR2(struct state *st, struct msg_digest *md UNUSED)
 	return STF_SUSPEND;
 }
 
-static void ikev2_parent_inI2outR2_continue(struct state *st, struct msg_digest *md,
+static void ikev2_parent_inI2outR2_continue(struct state *st,
+					    struct msg_digest **mdp,
 					    struct pluto_crypto_req *r)
 {
 	DBG(DBG_CONTROL,
 		DBG_log("ikev2_parent_inI2outR2_continue for #%lu: calculating g^{xy}, sending R2",
 			st->st_serialno));
 
-	passert(md != NULL);
+	passert(*mdp != NULL);
 
-	stf_status e = ikev2_parent_inI2outR2_tail(st, md, r);
+	stf_status e = ikev2_parent_inI2outR2_tail(st, *mdp, r);
 	if (e > STF_FAIL) {
 		/* we do not send a notify because we are the initiator that could be responding to an error notification */
 		int v2_notify_num = e - STF_FAIL;
@@ -3622,8 +3623,7 @@ static void ikev2_parent_inI2outR2_continue(struct state *st, struct msg_digest 
 		send_v2_notification_from_state(st, v2N_AUTHENTICATION_FAILED, NULL);
 	}
 
-	complete_v2_state_transition(&md, e);
-	release_any_md(&md);
+	complete_v2_state_transition(mdp, e);
 }
 
 static stf_status ikev2_parent_inI2outR2_tail(struct state *st, struct msg_digest *md,
