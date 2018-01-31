@@ -14,5 +14,8 @@ ipsec restart
 # give OE policies time to load
 sleep 5
 ping -n -c 1 -I 192.1.3.209 192.1.2.23
-# a new tunnel should be established
+# give OE time to establish
+sleep 5
+# test the new tunnel works properly
+ping -n -c 3 -I 192.1.3.209 192.1.2.23
 echo done
