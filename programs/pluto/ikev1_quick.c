@@ -1036,14 +1036,15 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
  * - quick_inI1_outR1 starts the ball rolling.
  *   It checks and parses enough to learn the Phase 2 IDs
  *
- * - quick_inI1_outR1_authtail does the rest of the job
+ * - quick_inI1_outR1_tail does the rest of the job
+ *   XXX: why the function split?
  *
- * At the end of authtail, we have all the info we need, but we
+ * At the end of quick_inI1_outR1_tail, we have all the info we need, but we
  * haven't done any nonce generation or DH that we might need
  * to do, so that are two crypto continuations that do this work,
  * they are:
- *    quick_inI1_outR1_cryptocontinue1 -- called after NONCE/KE
- *    quick_inI1_outR1_cryptocontinue2 -- called after DH (if PFS)
+ *    quick_inI1_outR1_continue1 -- called after NONCE/KE
+ *    quick_inI1_outR1_continue2 -- called after DH (if PFS)
  *
  * we have to call nonce/ke and DH if we are doing PFS.
  */
@@ -1056,7 +1057,7 @@ struct p2id {
 };
 
 struct verify_oppo_bundle {
-	bool failure_ok;	/* if true, quick_inI1_outR1_authtail will try
+	bool failure_ok;	/* if true, quick_inI1_outR1_tail will try
 				 * other things on DNS failure
 				 */
 	struct msg_digest *md;
@@ -1066,7 +1067,7 @@ struct verify_oppo_bundle {
 	/* int whackfd; */	/* not needed because we are Responder */
 };
 
-static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b);
+static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b);
 
 stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 {
@@ -1192,19 +1193,19 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 	 * quick_inI1_outR1_start_query it saves a pointer to it before
 	 * a crypto (async op).
 	 */
-	return quick_inI1_outR1_authtail(&b);
+	return quick_inI1_outR1_tail(&b);
 }
 
 
 /* forward definitions */
-static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
-					      struct pluto_crypto_req *r);
+static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
+						   struct pluto_crypto_req *r);
 
 static crypto_req_cont_func quick_inI1_outR1_continue1;	/* forward decl and type assertion */
 
 static crypto_req_cont_func quick_inI1_outR1_continue2;	/* forward decl and type assertion */
 
-static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b)
+static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 {
 	struct msg_digest *md = b->md;
 	struct state *const p1st = md->st;
@@ -1433,8 +1434,11 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b)
 			/* parse and accept body, setting variables, but not forming
 			 * our reply. We'll make up the reply later on.
 			 *
-			 * note that we process the copy of the pbs, so that
-			 * we can process it again in the cryptotail().
+			 * note that we process the copy of the pbs,
+			 * so that we can process it again in the
+			 * tail(). XXX: Huh, this is the tail
+			 * function!
+			 *
 			 */
 			st->st_pfs_group = &unset_group;
 			RETURN_STF_FAILURE(parse_ipsec_sa_body(&in_pbs,
@@ -1498,7 +1502,7 @@ static void quick_inI1_outR1_continue1(struct state *st, struct msg_digest *md,
 		/* but if PFS is off, we don't do a second DH, so just
 		 * call the continuation with NULL struct pluto_crypto_req *
 		 */
-		stf_status e = quick_inI1_outR1_cryptotail(md, NULL);
+		stf_status e = quick_inI1_outR1_continue12_tail(md, NULL);
 		if (e == STF_OK) {
 			passert(md != NULL);	/* ??? when would this fail? */
 			complete_v1_state_transition(&md, e);
@@ -1517,13 +1521,13 @@ static void quick_inI1_outR1_continue2(struct state *st, struct msg_digest *md,
 
 	passert(st->st_connection != NULL);
 	passert(md != NULL);
-	stf_status e = quick_inI1_outR1_cryptotail(md, r);
+	stf_status e = quick_inI1_outR1_continue12_tail(md, r);
 	complete_v1_state_transition(&md, e);
 	release_any_md(&md);
 }
 
-static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
-					      struct pluto_crypto_req *r)
+static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
+						   struct pluto_crypto_req *r)
 {
 	struct state *st = md->st;
 	struct payload_digest *const id_pd = md->chain[ISAKMP_NEXT_ID];
