@@ -543,30 +543,6 @@ enum_names ikev1_protocol_names = {
 	NULL
 };
 
-static const char *const ikev2_protocol_name[] = {
-	"PROTO_v2_RESERVED",
-	"PROTO_v2_IKE",
-	"PROTO_v2_AH",
-	"PROTO_v2_ESP",
-};
-
-enum_names ikev2_protocol_names = {
-	PROTO_v2_RESERVED,
-	PROTO_v2_ESP,
-	ARRAY_REF(ikev2_protocol_name),
-	NULL, /* prefix */
-	NULL
-};
-
-/* subset of protocol names accepted by IKEv2 Delete */
-enum_names ikev2_del_protocol_names = {
-	PROTO_ISAKMP,
-	PROTO_IPSEC_ESP,
-	&ikev2_protocol_name[PROTO_ISAKMP], elemsof(ikev2_protocol_name) - PROTO_ISAKMP,
-	NULL, /* prefix */
-	NULL
-};
-
 /* IPsec ISAKMP transform values */
 static const char *const isakmp_transform_name[] = {
 	"KEY_IKE",
@@ -1905,23 +1881,56 @@ const char *const critical_names[] = {
 /*
  * IKEv2 Security Protocol Identifiers
  */
-static const char *const ikev2_sec_proto_id_name[] = {
-	/* 0 - Reserved */
+
+/* proposal payload allows IKE=1, AH=2, ESP=3 */
+
+static const char *const ikev2_proposal_protocol_id_name[] = {
 	"IKEv2_SEC_PROTO_IKE",
 	"IKEv2_SEC_PROTO_AH",
 	"IKEv2_SEC_PROTO_ESP",
-	"IKEv2_SEC_FC_ESP_HEADER",	/* RFC 4595 */
+	"IKEv2_SEC_FC_ESP_HEADER",		/* RFC 4595 */
 	"IKEv2_SEC_FC_CT_AUTHENTICATION",	/* RFC 4595 */
 	/* 6 - 200 Unassigned */
 	/* 201 - 255 Private use */
 };
 
-enum_names ikev2_sec_proto_id_names = {
+enum_names ikev2_proposal_protocol_id_names = {
 	IKEv2_SEC_PROTO_IKE,
 	IKEv2_SEC_FC_CT_AUTHENTICATION,
-	ARRAY_REF(ikev2_sec_proto_id_name),
-	"IKEv2_SEC_PROTO_", /* prefix */
-	NULL
+	ARRAY_REF(ikev2_proposal_protocol_id_name),
+	.en_prefix = "IKEv2_SEC_PROTO_", /* prefix */
+};
+
+/* delete payload allows IKE=1, AH=2, ESP=3 */
+
+static const char *const ikev2_delete_protocol_id_name[] = {
+	"IKEv2_SEC_PROTO_IKE",
+	"IKEv2_SEC_PROTO_AH",
+	"IKEv2_SEC_PROTO_ESP",
+};
+
+enum_names ikev2_delete_protocol_id_names = {
+	IKEv2_SEC_PROTO_IKE,
+	IKEv2_SEC_PROTO_ESP,
+	ARRAY_REF(ikev2_delete_protocol_id_name),
+	.en_prefix = "IKEv2_SEC_PROTO_", /* prefix */
+};
+
+/* notify payload allows NONE=0, (NO IKE,) AH=2, ESP=3 */
+
+static const char *const ikev2_protocol_id_notify_name[] = {
+#define E(V) [V] = #V
+	E(IKEv2_SEC_PROTO_NONE),
+	E(IKEv2_SEC_PROTO_AH),
+	E(IKEv2_SEC_PROTO_ESP),
+#undef E
+};
+
+enum_names ikev2_notify_protocol_id_names = {
+	IKEv2_SEC_PROTO_NONE,
+	IKEv2_SEC_PROTO_ESP,
+	ARRAY_REF(ikev2_protocol_id_notify_name),
+	.en_prefix = "IKEv2_SEC_PROTO_", /* prefix */
 };
 
 /* Transform-type Encryption */
@@ -2220,6 +2229,7 @@ const char *enum_name(enum_names *ed, unsigned long val)
 	for (p = ed; p != NULL; p = p->en_next_range) {
 		passert(p->en_last - p->en_first + 1 == p->en_checklen);
 		if (p->en_first <= val && val <= p->en_last)
+			/* can be NULL */
 			return p->en_names[val - p->en_first];
 	}
 
@@ -2478,8 +2488,6 @@ static const enum_names *en_checklist[] = {
 	&ikev1_exchange_names,
 	&exchange_names_ikev1orv2,
 	&ikev1_protocol_names,
-	&ikev2_protocol_names,
-	&ikev2_del_protocol_names,
 	&isakmp_transformid_names,
 	&ah_transformid_names,
 	&esp_transformid_names,
@@ -2510,7 +2518,9 @@ static const enum_names *en_checklist[] = {
 	&ikev2_notify_names,
 	&ikev2_ts_type_names,
 	&attr_msg_type_names,
-	&ikev2_sec_proto_id_names,
+	&ikev2_proposal_protocol_id_names,
+	&ikev2_delete_protocol_id_names,
+	&ikev2_notify_protocol_id_names,
 	&ikev2_trans_type_encr_names,
 	&ikev2_trans_type_prf_names,
 	&ikev2_trans_type_integ_names,

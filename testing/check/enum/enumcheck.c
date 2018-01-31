@@ -304,8 +304,6 @@ int main(int argc UNUSED, char *argv[])
 	test_enums("ikev2_exchange_names", &ikev2_exchange_names);
 	test_enums("exchange_names_ikev1orv2", &exchange_names_ikev1orv2);
 	test_enums("ikev1_protocol_names", &ikev1_protocol_names);
-	test_enums("ikev2_protocol_names", &ikev2_protocol_names);
-	test_enums("ikev2_del_protocol_names", &ikev2_del_protocol_names);
 	test_enums("isakmp_transformid_names", &isakmp_transformid_names);
 	test_enums("ah_transformid_names", &ah_transformid_names);
 	test_enums("esp_transformid_names", &esp_transformid_names);
@@ -329,7 +327,9 @@ int main(int argc UNUSED, char *argv[])
 	test_enums("xauth_type_names", &xauth_type_names);
 	test_enum_range("xauth_attr_names", &xauth_attr_names, 0, 256);
 	test_enums("attr_msg_type_names", &attr_msg_type_names);
-	test_enums("ikev2_sec_proto_id_names", &ikev2_sec_proto_id_names);
+	test_enums("ikev2_proposal_protocol_id_names", &ikev2_proposal_protocol_id_names);
+	test_enums("ikev2_delete_protocol_id_names", &ikev2_delete_protocol_id_names);
+	test_enums("ikev2_notify_protocol_id_names", &ikev2_notify_protocol_id_names);
 	test_enums("ikev2_auth_names", &ikev2_auth_names);
 	test_enum_range("ikev2_trans_type_encr_names", &ikev2_trans_type_encr_names, 0, 256);
 	test_enums("ikev2_trans_type_prf_names", &ikev2_trans_type_prf_names);

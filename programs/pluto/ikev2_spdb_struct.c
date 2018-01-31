@@ -302,7 +302,7 @@ static void jam_type_transform(jambuf_t *buf, enum ikev2_trans_type type,
 
 static const char *protoid_name(enum ikev2_sec_proto_id protoid)
 {
-	return enum_short_name(&ikev2_sec_proto_id_names, protoid);
+	return enum_short_name(&ikev2_proposal_protocol_id_names, protoid);
 }
 
 /* <TRANSFORM> { "+" <TRANSFORM> }+ */
@@ -1686,7 +1686,7 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 				     const struct encrypt_desc *encrypt,
 				     unsigned keylen)
 {
-	const char *protocol = enum_short_name(&ikev2_protocol_names, proposal->protoid);
+	const char *protocol = enum_short_name(&ikev2_proposal_protocol_id_names, proposal->protoid);
 	if (proposal->protoid == 0 || protocol == NULL) {
 		PEXPECT_LOG("%s", "IKEv2 ENCRYPT transform protocol unknown");
 		return FALSE;

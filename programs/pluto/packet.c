@@ -917,7 +917,7 @@ static field_desc ikev2prop_fields[] = {
 	{ ft_zig,  8 / BITS_PER_BYTE, "reserved", NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_nat,  8 / BITS_PER_BYTE, "prop #", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "proto ID", &ikev2_sec_proto_id_names },
+	{ ft_enum, 8 / BITS_PER_BYTE, "proto ID", &ikev2_proposal_protocol_id_names },
 	{ ft_nat,  8 / BITS_PER_BYTE, "spi size", NULL },
 	{ ft_nat,  8 / BITS_PER_BYTE, "# transforms", NULL },
 	{ ft_end,  0, NULL, NULL }
@@ -1289,7 +1289,7 @@ static field_desc ikev2_notify_fields[] = {
 	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
 	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "Protocol ID", &ikev2_protocol_names },
+	{ ft_enum, 8 / BITS_PER_BYTE, "Protocol ID", &ikev2_notify_protocol_id_names },
 	/* names used are v1 names may be we should use 4306 3.3.1 names */
 	{ ft_nat,  8 / BITS_PER_BYTE, "SPI size", NULL },
 	{ ft_loose_enum, 16 / BITS_PER_BYTE, "Notify Message Type",
@@ -1325,7 +1325,7 @@ static field_desc ikev2_delete_fields[] = {
 	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
 	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "protocol ID", &ikev2_del_protocol_names },
+	{ ft_enum, 8 / BITS_PER_BYTE, "protocol ID", &ikev2_delete_protocol_id_names },
 	{ ft_nat, 8 / BITS_PER_BYTE, "SPI size", NULL },
 	{ ft_nat, 16 / BITS_PER_BYTE, "number of SPIs", NULL },
 	{ ft_end, 0, NULL, NULL }

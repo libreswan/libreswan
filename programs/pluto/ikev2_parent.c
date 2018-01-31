@@ -3867,7 +3867,7 @@ static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 	 * find old state to rekey
 	 */
 	dbg("CREATE_CHILD_SA IPsec SA rekey Protocol %s",
-	    enum_show(&ikev2_protocol_names, rekey_notify->isan_protoid));
+	    enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid));
 
 	if (rekey_notify->isan_spisize != sizeof(ipsec_spi_t)) {
 		log_state(RC_LOG, &child->sa,
@@ -3898,7 +3898,7 @@ static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 	    rekey_notify->isan_protoid != PROTO_IPSEC_AH) {
 		log_state(RC_LOG, &child->sa,
 			  "CREATE_CHILD_SA IPsec SA rekey invalid Protocol ID %s",
-			  enum_show(&ikev2_protocol_names, rekey_notify->isan_protoid));
+			  enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid));
 		record_v2N_spi_response(child->sa.st_logger, ike, md,
 					rekey_notify->isan_protoid, &spi,
 					v2N_CHILD_SA_NOT_FOUND,
@@ -3908,7 +3908,7 @@ static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 
 	dbg("CREATE_CHILD_S to rekey IPsec SA(0x%08" PRIx32 ") Protocol %s",
 	    ntohl((uint32_t) spi),
-	    enum_show(&ikev2_protocol_names, rekey_notify->isan_protoid));
+	    enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid));
 
 	/*
 	 * From 1.3.3.  Rekeying Child SAs with the CREATE_CHILD_SA
@@ -3924,7 +3924,7 @@ static bool ikev2_rekey_child_resp(struct ike_sa *ike, struct child_sa *child,
 		log_state(RC_LOG, &child->sa,
 			  "CREATE_CHILD_SA no such IPsec SA to rekey SA(0x%08" PRIx32 ") Protocol %s",
 			  ntohl((uint32_t) spi),
-			  enum_show(&ikev2_protocol_names, rekey_notify->isan_protoid));
+			  enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid));
 		record_v2N_spi_response(child->sa.st_logger, ike, md,
 					rekey_notify->isan_protoid, &spi,
 					v2N_CHILD_SA_NOT_FOUND,
@@ -5429,7 +5429,7 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 						return STF_INTERNAL_ERROR;	/* cannot happen */
 
 					dbg("delete %s SA(0x%08" PRIx32 ")",
-					    enum_show(&ikev2_protocol_names,
+					    enum_show(&ikev2_delete_protocol_id_names,
 						      v2del->isad_protoid),
 					    ntohl((uint32_t) spi));
 
@@ -5453,11 +5453,12 @@ stf_status process_encrypted_informational_ikev2(struct ike_sa *ike,
 					if (dst == NULL) {
 						libreswan_log(
 						    "received delete request for %s SA(0x%08" PRIx32 ") but corresponding state not found",
-							    enum_show(&ikev2_protocol_names, v2del->isad_protoid),
-								ntohl((uint32_t)spi));
+							    enum_show(&ikev2_delete_protocol_id_names,
+								      v2del->isad_protoid),
+						    ntohl((uint32_t)spi));
 					} else {
 						dbg("our side SPI that needs to be deleted: %s SA(0x%08" PRIx32 ")",
-						    enum_show(&ikev2_protocol_names,
+						    enum_show(&ikev2_delete_protocol_id_names,
 							      v2del->isad_protoid), ntohl((uint32_t)spi));
 
 						/* we just received a delete, don't send another delete */
