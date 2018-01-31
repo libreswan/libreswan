@@ -89,12 +89,12 @@ int build_ikev2_version(void)
 
 /* add notify payload to the rbody */
 bool ship_v2N(enum next_payload_types_ikev2 np,
-	u_int8_t critical,
-	u_int8_t protoid,
-	const chunk_t *spi,
-	v2_notification_t type,
-	const chunk_t *n_data,
-	pb_stream *rbody)
+	      u_int8_t critical,
+	      enum ikev2_sec_proto_id protoid,
+	      const chunk_t *spi,
+	      v2_notification_t type,
+	      const chunk_t *n_data,
+	      pb_stream *rbody)
 {
 	struct ikev2_notify n;
 	pb_stream n_pbs;

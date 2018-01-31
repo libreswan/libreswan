@@ -39,7 +39,7 @@ void send_v2_notification_invalid_ke(struct msg_digest *md,
 /* XXX: should be local to ikev2_send.c? */
 bool ship_v2N(enum next_payload_types_ikev2 np,
 	      u_int8_t critical,
-	      u_int8_t protoid,
+	      enum ikev2_sec_proto_id protoid,
 	      const chunk_t *spi,
 	      v2_notification_t type,
 	      const chunk_t *n_data,
