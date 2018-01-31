@@ -735,6 +735,7 @@ void ikev1_natd_init(struct state *st, struct msg_digest *md)
 			 * Probably in FIPS trying MD5 ?
 			 * Nothing will get send, so just do nothing
 			 */
+			loglog(RC_LOG_SERIOUS, "Cannot compute NATD payloads without valid PRF");
 			return;
 		}
 		ikev1_natd_lookup(md);
