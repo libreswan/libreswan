@@ -2960,7 +2960,7 @@
 
       <para>When <emphasis remap="B">pluto</emphasis> is using one of these
       temporary connections and needs to find the preshared secret or RSA
-      private key in <emphasis remap="I">ipsec.secrets</emphasis>, and and the
+      private key in <emphasis remap="I">ipsec.secrets</emphasis>, and the
       connection specified no identity for the peer, <emphasis
       remap="B">%any</emphasis> is used as its identity. After all, the real
       IP address was apparently unknown to the configuration, so it is
@@ -2968,12 +2968,12 @@
 
       <para>Part way into the Phase 1 (Main Mode) negotiation using one of
       these temporary connection descriptions, <emphasis
-      remap="B">pluto</emphasis> will be receive an Identity Payload. At this
+      remap="B">pluto</emphasis> will receive an Identity Payload. At this
       point, <emphasis remap="B">pluto</emphasis> checks for a more
       appropriate connection, one with an identity for the peer that matches
-      the payload but which would use the same keys so-far used for
+      the payload but which would use the same keys so far used for
       authentication. If it finds one, it will switch to using this better
-      connection (or a temporary derived from this, if it has <emphasis
+      connection (or a temporary one derived from this, if it has <emphasis
       remap="B">%any</emphasis> for the peer's IP address). It may even turn
       out that no connection matches the newly discovered identity, including
       the current connection; if so, <emphasis remap="B">pluto</emphasis>
@@ -2983,8 +2983,8 @@
       the Identity Payload is encrypted using this secret, so the secret must
       be selected by the responder without knowing this payload. This limits
       there to being at most one preshared secret for all Road Warrior systems
-      connecting to a host. RSA Signature authentications does not require
-      that the responder know how to select the initiator's public key until
+      connecting to a host. RSA Signature authentication does not require
+      that the responder knows how to select the initiator's public key until
       after the initiator's Identity Payload is decoded (using the responder's
       private key, so that must be preselected).</para>
 
