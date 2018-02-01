@@ -403,7 +403,7 @@ err_t check_virtual_net_allowed(const struct connection *c,
 				private_net_excl_len))
 			return NULL;
 
-		why = "a private network virtual IP was required, but the proposed IP did not match our list (virtual-private=)";
+		why = "a private network virtual IP was required, but the proposed IP did not match our list (virtual-private=), or our list excludes their IP (e.g. %v4!...) since it is in use elsewhere";
 	}
 
 	if (virt->n_net != 0) {
