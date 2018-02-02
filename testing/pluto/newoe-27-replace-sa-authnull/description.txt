@@ -1,0 +1,4 @@
+A regular authenticated IPsec tunnel, is established. Then
+the initiator is crashed and restarted, and it is configured
+to do authnull. The responder should NOT replace the
+authenticated session with the anonymous session.
