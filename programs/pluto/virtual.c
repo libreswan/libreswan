@@ -104,7 +104,7 @@ static bool read_subnet(const char *src, size_t len,
 
 	ugh = ttosubnet(src, len, af, incl ? dst : dstexcl);
 	if (ugh != NULL) {
-		loglog(RC_LOG_SERIOUS, "virtual-private entry not proper subnet: %s", ugh);
+		loglog(RC_LOG_SERIOUS, "virtual-private entry is not a proper subnet: %s", ugh);
 		return FALSE;
 	}
 	if (isincl != NULL)
@@ -229,7 +229,7 @@ struct virtual_t *create_virtual(const struct connection *c, const char *string)
 	} else if (eat(str, "vnet:")) {
 		/* ??? do nothing? */
 	} else {
-		libreswan_log("virtual string \"%s\" missing prefix - virtual selection disabled for connection '%s'",
+		libreswan_log("virtual string \"%s\" is missing prefix - virtual selection is disabled for connection '%s'",
 			string, c->name);
 		return NULL;
 	}
@@ -261,7 +261,7 @@ struct virtual_t *create_virtual(const struct connection *c, const char *string)
 			str = NULL;
 		}
 		if (str != next) {
-			libreswan_log("invalid virtual string \"%s\" - virtual selection disabled for connection '%s'",
+			libreswan_log("invalid virtual string \"%s\" - virtual selection is disabled for connection '%s'",
 				string, c->name);
 			return NULL;
 		}
