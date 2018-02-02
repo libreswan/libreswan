@@ -101,6 +101,9 @@ void xauth_pam_abort(struct state *st, bool call_callback)
  * On the main thread; notify the state (if it is present) of the
  * xauth result, and then release everything.
  */
+
+static pluto_fork_cb xauth_pam_child_cleanup; /* type assertion */
+
 static void xauth_pam_child_cleanup(int status, void *arg)
 {
 	struct xauth *xauth = arg;
@@ -210,7 +213,8 @@ void xauth_start_pam_thread(struct state *st,
 	DBG(DBG_XAUTH,
 	    DBG_log("XAUTH: #%lu: main-process starting PAM-process for authenticating user '%s'",
 		    xauth->serialno, xauth->ptarg.name));
-	xauth->child = pluto_fork(xauth_child, xauth_pam_child_cleanup, xauth);
+	xauth->child = pluto_fork("xauth", xauth->serialno,
+				  xauth_child, xauth_pam_child_cleanup, xauth);
 	if (xauth->child < 0) {
 		libreswan_log("XAUTH: #%lu: creation of PAM-process for user '%s' failed",
 			      xauth->serialno, xauth->ptarg.name);

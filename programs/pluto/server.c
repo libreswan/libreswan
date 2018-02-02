@@ -562,10 +562,11 @@ static void fire_event_photon_torpedo(struct event **evp,
  */
 
 struct now_event {
-	void (*ne_cb)(void*);
-	void *ne_arg;
+	pluto_event_now_cb *ne_callback;
+	void *ne_context;
 	const char *ne_name;
 	struct event *ne_event;
+	so_serial_t ne_serialno;
 };
 
 static void schedule_event_now_cb(evutil_socket_t fd UNUSED,
@@ -574,7 +575,8 @@ static void schedule_event_now_cb(evutil_socket_t fd UNUSED,
 {
 	struct now_event *ne = (struct now_event *)arg;
 	DBG(DBG_CONTROLMORE,
-	    DBG_log("executing now-event %s", ne->ne_name));
+	    DBG_log("executing now-event %s for %lu",
+		    ne->ne_name, ne->ne_serialno));
 
 	/*
 	 * At one point, .ne_event was was being set after the event
@@ -584,26 +586,30 @@ static void schedule_event_now_cb(evutil_socket_t fd UNUSED,
 	 * pexpect() failed yet the passert() passed.
 	 */
 	pexpect(ne->ne_event != NULL);
-	ne->ne_cb(ne->ne_arg);
+	ne->ne_callback(ne->ne_context);
 	passert(ne->ne_event != NULL);
 
 	event_del(ne->ne_event);
 	pfree(ne);
 }
 
-void pluto_event_now(const char *name, void (*cb)(void*), void*arg)
+void pluto_event_now(const char *name, so_serial_t serialno,
+		     pluto_event_now_cb *callback, void *context)
 {
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("scheduling now-event %s", name));
 	struct now_event *ne = alloc_thing(struct now_event, name);
-	ne->ne_cb = cb;
-	ne->ne_arg = arg;
+	ne->ne_callback = callback;
+	ne->ne_context = context;
 	ne->ne_name = name;
-	static const deltatime_t no_delay = DELTATIME(0);
+	ne->ne_serialno = serialno;
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("scheduling now-event %s for #%lu",
+		    ne->ne_name, ne->ne_serialno));
+
 	/*
 	 * Everything set up; arm and fire torpedo.  Event may have
 	 * even run before the below function returns.
 	 */
+	static const deltatime_t no_delay = DELTATIME(0);
 	fire_event_photon_torpedo(&ne->ne_event,
 				  NULL_FD, EV_TIMEOUT,
 				  schedule_event_now_cb, ne,
@@ -808,7 +814,9 @@ struct pid_entry {
 	struct list_entry hash_entry;
 	pid_t pid;
 	void *context;
-	void (*callback)(int status, void *context);
+	pluto_fork_cb *callback;
+	so_serial_t serialno;
+	const char *name;
 };
 
 static size_t log_pid_entry(struct lswlog *buf, void *data)
@@ -818,7 +826,12 @@ static size_t log_pid_entry(struct lswlog *buf, void *data)
 	} else {
 		struct pid_entry *entry = (struct pid_entry*)data;
 		passert(entry->magic == PID_MAGIC);
-		return lswlogf(buf, "pid %d", entry->pid);
+		size_t size = 0;
+		if (entry->serialno != SOS_NOBODY) {
+			size += lswlogf(buf, "#%lu ", entry->serialno);
+		}
+		size += lswlogf(buf, "%s pid %d", entry->name, entry->pid);
+		return size;
 	}
 }
 
@@ -842,9 +855,8 @@ static struct hash_table pids_hash_table = {
 	.slots = pid_entry_slots,
 };
 
-static void add_pid(pid_t pid,
-		    void (*callback)(int status, void *context),
-		    void *context)
+static void add_pid(const char *name, so_serial_t serialno, pid_t pid,
+		    pluto_fork_cb *callback, void *context)
 {
 	DBG(DBG_CONTROL,
 	    DBG_log("forked child %d", pid));
@@ -853,13 +865,15 @@ static void add_pid(pid_t pid,
 	new_pid->pid = pid;
 	new_pid->callback = callback;
 	new_pid->context = context;
+	new_pid->serialno = serialno;
+	new_pid->name = name;
 	add_hash_table_entry(&pids_hash_table,
 			     new_pid, &new_pid->hash_entry);
 }
 
-int pluto_fork(int op(void *context),
-	       void (*callback)(int status, void *context),
-	       void *context)
+int pluto_fork(const char *name, so_serial_t serialno,
+	       int op(void *context),
+	       pluto_fork_cb *callback, void *context)
 {
 	pid_t pid = fork();
 	switch (pid) {
@@ -871,10 +885,12 @@ int pluto_fork(int op(void *context),
 		exit(op(context));
 		break;
 	default: /* parent */
-		add_pid(pid, callback, context);
+		add_pid(name, serialno, pid, callback, context);
 		return pid;
 	}
 }
+
+static pluto_fork_cb addconn_exited;
 
 static void addconn_exited(int status, void *context UNUSED)
 {
@@ -1096,7 +1112,8 @@ void call_server(void)
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("created addconn helper (pid:%d) using %s+execve",
 			    addconn_child_pid, USE_VFORK ? "vfork" : "fork"));
-		add_pid(addconn_child_pid, addconn_exited, NULL);
+		add_pid("addconn", SOS_NOBODY, addconn_child_pid,
+			addconn_exited, NULL);
 	}
 
 	/* parent continues */

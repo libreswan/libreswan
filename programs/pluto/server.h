@@ -88,7 +88,6 @@ extern void show_debug_status(void);
 extern void show_fips_status(void);
 extern void call_server(void);
 extern void init_event_base(void);
-extern void pluto_event_now(const char *name, void (*cb)(void*), void *arg);
 typedef void event_callback_routine(evutil_socket_t, const short, void *);
 extern void timer_private_pluto_event_new(struct event **evp,
 					  evutil_socket_t ft,
@@ -111,8 +110,15 @@ extern bool should_fragment_ike_msg(struct state *st, size_t len,
 
 extern struct event_base *get_pluto_event_base(void);
 
-extern int pluto_fork(int op(void *context),
-		      void (*callback)(int status, void *context),
+typedef void pluto_event_now_cb(void *context);
+extern void pluto_event_now(const char *name, so_serial_t serialno,
+			    pluto_event_now_cb *callback,
+			    void *context);
+
+typedef void pluto_fork_cb(int status, void *context);
+extern int pluto_fork(const char *name, so_serial_t serialno,
+		      int op(void *context),
+		      pluto_fork_cb *callback,
 		      void *context);
 
 bool check_incoming_msg_errqueue(const struct iface_port *ifp, const char *before);

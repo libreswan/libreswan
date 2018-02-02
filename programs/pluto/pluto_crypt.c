@@ -134,7 +134,7 @@ static int backlog_queue_len = 0;
  * Create the pluto crypto request object.
  */
 
-static void handle_helper_answer(void *arg);
+static pluto_event_now_cb handle_helper_answer;	/* type assertion */
 
 struct pluto_crypto_req_cont *new_pcrc(crypto_req_cont_func fn,
 				       const char *name)
@@ -404,7 +404,8 @@ static void *pluto_crypto_helper_thread(void *arg)
 		    DBG_log("crypto helper %d sending results from work-order %u for state #%lu to event queue",
 			    w->pcw_helpernum, w->pcw_pcrc_id,
 			    w->pcw_pcrc_serialno));
-		pluto_event_now("sending helper answer", handle_helper_answer, cn);
+		pluto_event_now("sending helper answer", w->pcw_pcrc_serialno,
+				handle_helper_answer, cn);
 	}
 	return NULL;
 }
@@ -412,6 +413,8 @@ static void *pluto_crypto_helper_thread(void *arg)
 /*
  * Do the work 'inline' which really means on the event queue.
  */
+
+static pluto_event_now_cb inline_worker; /* type assertion */
 
 static void inline_worker(void *arg)
 {
@@ -480,7 +483,8 @@ void send_crypto_helper_request(struct state *st,
 	 * do it all ourselves?
 	 */
 	if (pc_workers == NULL) {
-		pluto_event_now("inline crypto", inline_worker, cn);
+		pluto_event_now("inline crypto", st->st_serialno,
+				inline_worker, cn);
 	} else {
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("adding %s work-order %u for state #%lu",

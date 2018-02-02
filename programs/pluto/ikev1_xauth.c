@@ -1194,7 +1194,8 @@ static void xauth_immediate(const char *name, const struct state *st, bool succe
 	xauth->serialno = st->st_serialno;
 	xauth->callback = ikev1_xauth_callback;
 	xauth->name = clone_str(name, "xauth next name");
-	pluto_event_now("xauth immediate", xauth_immediate_callback, xauth);
+	pluto_event_now("xauth immediate", st->st_serialno,
+			xauth_immediate_callback, xauth);
 }
 
 /** Launch an authentication prompt
