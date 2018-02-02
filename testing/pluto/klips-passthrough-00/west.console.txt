@@ -14,7 +14,7 @@ PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
 4 packets transmitted, 0 received, 100% packet loss, time XXXX
 destination -I 192.1.2.45 192.1.2.23 is dead
 west #
- # make sure that clear text does not get through
+ # ensure that clear text does not get through
 west #
  iptables -A INPUT -i eth1 -s 192.1.2.23/32 -p icmp -j LOGDROP
 west #

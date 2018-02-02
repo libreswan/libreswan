@@ -4,7 +4,7 @@ north #
 north #
  iptables -F OUTPUT
 north #
- # make sure that clear text does not get through
+ # ensure that clear text does not get through
 north #
  # block port 22 via ipsec to confirm IPsec only covers 17/1701
 north #

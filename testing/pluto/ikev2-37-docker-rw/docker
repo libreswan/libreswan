@@ -55,7 +55,7 @@ docker exec -ti east-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37
 '
 docker exec -ti road-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;/testing/guestbin/swan-prep
 '
-docker exec -ti road-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;# make sure that clear text does not get through
+docker exec -ti road-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;# ensure that clear text does not get through
 '
 docker exec -ti road-ikev2-37-docker-rw /bin/bash -c 'cd /testing/pluto/ikev2-37-docker-rw;iptables -A INPUT -i eth0 -s 192.0.2.0/24 -j DROP
 '

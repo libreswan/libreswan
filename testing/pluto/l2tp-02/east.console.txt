@@ -8,7 +8,7 @@ east #
  ipsec auto --add any-east-l2tp
 002 added connection description "any-east-l2tp"
 east #
- # make sure that clear text does not get through
+ # ensure that clear text does not get through
 east #
  iptables -A INPUT  -i eth1 -d 192.1.2.23 -m policy --dir in --pol none -p udp --dport 1701 -j REJECT
 east #

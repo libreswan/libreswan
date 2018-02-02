@@ -5,7 +5,7 @@ north #
  ../../pluto/bin/wait-until-alive 192.1.2.23
 destination 192.1.2.23 is alive
 north #
- # make sure that clear text does not get through
+ # ensure that clear text does not get through
 north #
  iptables -A INPUT -i eth1 -s 192.1.2.23 -p tcp --sport 3 -j REJECT
 north #

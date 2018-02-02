@@ -14,7 +14,7 @@ PING 2001:db8:0:2::254(2001:db8:0:2::254) from 2001:db8:0:1::254 : 56 data bytes
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
- # make sure that clear text does not get through
+ # ensure that clear text does not get through
 west #
  ip6tables -A INPUT -i eth1 -s 2001:db8:0:2::254 -j DROP
 west #

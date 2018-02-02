@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep
 road #
-# make sure that clear text does not get through
+# ensure that clear text does not get through
 road #
 iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 road #

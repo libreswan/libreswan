@@ -3,7 +3,7 @@ north #
  /testing/guestbin/swan-prep --x509
 Preparing X.509 files
 north #
- # make sure that clear text does not get through
+ # ensure that clear text does not get through
 north #
  iptables -A INPUT -i eth0 -s 192.0.2.0/24 -j LOGDROP
 north #

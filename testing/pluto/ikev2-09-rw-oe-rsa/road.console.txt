@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep
 road #
-# make sure that clear text does not get through
+# ensure that clear text does not get through
 road #
 ipsec start
 Redirecting to: systemctl start ipsec.service
