@@ -33,6 +33,7 @@
 #include "pluto_stats.h"
 #include "log.h"
 #include "ip_address.h"
+#include "demux.h"
 
 /* information for tracking xauth PAM work in flight */
 
@@ -89,7 +90,9 @@ void xauth_pam_abort(struct state *st, bool call_callback)
 			DBG(DBG_XAUTH,
 			    DBG_log("XAUTH: #%lu: main-process: notifying callback for user '%s'",
 				    st->st_serialno, xauth->ptarg.name));
-			xauth->callback(st, xauth->ptarg.name, false);
+			struct msg_digest *md = unsuspend_md(st);
+			xauth->callback(st, &md, xauth->ptarg.name, false);
+			release_any_md(&md);
 		} else {
 			pfree_xauth(xauth);
 		}
@@ -104,7 +107,9 @@ void xauth_pam_abort(struct state *st, bool call_callback)
 
 static pluto_fork_cb xauth_pam_child_cleanup; /* type assertion */
 
-static void xauth_pam_child_cleanup(int status, void *arg)
+static void xauth_pam_child_cleanup(struct state *st,
+				    struct msg_digest **mdp,
+				    int status, void *arg)
 {
 	struct xauth *xauth = arg;
 
@@ -137,16 +142,19 @@ static void xauth_pam_child_cleanup(int status, void *arg)
 		/* ST may or may not exist, don't try */
 		libreswan_log("XAUTH: #%lu: aborted for user '%s'",
 			      xauth->serialno, xauth->ptarg.name);
+	} else if (st == NULL) {
+		/*
+		 * this should have been aborted
+		 */
+		PEXPECT_LOG("XAUTH: #%lu: missing state for user '%s'",
+			      xauth->serialno, xauth->ptarg.name);
 	} else {
-		struct state *st = state_with_serialno(xauth->serialno);
 		passert(st != NULL);
 		st->st_xauth = NULL; /* all done */
-		so_serial_t old_state = push_cur_state(st);
 		libreswan_log("XAUTH: #%lu: completed for user '%s' with status %s",
 			      xauth->serialno, xauth->ptarg.name,
 			      success ? "SUCCESSS" : "FAILURE");
-		xauth->callback(st, xauth->ptarg.name, success);
-		pop_cur_state(old_state);
+		xauth->callback(st, mdp, xauth->ptarg.name, success);
 	}
 
 	pfree_xauth(xauth);

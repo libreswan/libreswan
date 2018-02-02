@@ -16,13 +16,14 @@
 #include "constants.h"
 
 struct state;
+struct msg_digest;
 
 /* ??? needlessly used even if !XAUTH_HAVE_PAM */
 
-typedef void xauth_callback_t(
-		struct state *st,
-		const char *,
-		bool success);
+typedef void xauth_callback_t(struct state *st,
+			      struct msg_digest **mdp,
+			      const char *,
+			      bool success);
 
 #ifdef XAUTH_HAVE_PAM
 

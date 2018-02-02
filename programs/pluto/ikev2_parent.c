@@ -91,7 +91,9 @@ struct mobike {
 	const struct iface_port *interface;
 };
 
-static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md, bool pam_status);
+static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
+						   struct msg_digest *md,
+						   bool pam_status);
 
 static void ikev2_calc_dcookie(u_char *dcookie, chunk_t st_ni,
 			      const ip_address *addr, chunk_t spiI);
@@ -3494,25 +3496,23 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 static xauth_callback_t ikev2_pam_continue;	/* type assertion */
 
-static void ikev2_pam_continue(struct state *st, const char *name UNUSED,
+static void ikev2_pam_continue(struct state *st UNUSED,
+			       struct msg_digest **mdp,
+			       const char *name UNUSED,
 			       bool success)
 {
-	struct msg_digest *md = unsuspend_md(st);
-
 	stf_status stf;
 	if (success) {
 		/*
 		 * This is a hardcoded continue; convert this to micro
 		 * state.
 		 */
-		stf = ikev2_parent_inI2outR2_auth_tail(md, success);
+		stf = ikev2_parent_inI2outR2_auth_tail(st, *mdp, success);
 	} else {
 		stf = STF_FAIL + v2N_AUTHENTICATION_FAILED;
 	}
 
-	complete_v2_state_transition(&md, stf);
-	release_any_md(&md);
-	reset_globals();
+	complete_v2_state_transition(mdp, stf);
 }
 
 /*
@@ -3848,13 +3848,13 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 	if (st->st_connection->policy & POLICY_IKEV2_PAM_AUTHORIZE)
 		return ikev2_start_pam_authorize(st);
 #endif
-	return ikev2_parent_inI2outR2_auth_tail(md, TRUE);
+	return ikev2_parent_inI2outR2_auth_tail(st, md, TRUE);
 }
 
-static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
-		bool pam_status)
+static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
+						   struct msg_digest *md,
+						   bool pam_status)
 {
-	struct state *const st = md->st;
 	struct connection *const c = st->st_connection;
 	unsigned char idhash_out[MAX_DIGEST_LEN];
 	unsigned int np;

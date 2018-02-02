@@ -1118,8 +1118,9 @@ static bool do_file_authentication(struct state *st, const char *name,
 
 static xauth_callback_t ikev1_xauth_callback;	/* type assertion */
 
-static void ikev1_xauth_callback(struct state *st, const char *name,
-				 bool results)
+static void ikev1_xauth_callback(struct state *st,
+				 struct msg_digest **mdp UNUSED,
+				 const char *name, bool results)
 {
 	/*
 	 * If XAUTH authentication failed, should we soft fail or hard fail?
@@ -1132,8 +1133,6 @@ static void ikev1_xauth_callback(struct state *st, const char *name,
 		st->st_xauth_soft = TRUE; /* passed to updown for notification */
 		results = TRUE;
 	}
-
-	unsuspend_md(st);	/* XXX: where does this MD go? */
 
 	if (results) {
 		libreswan_log("XAUTH: User %s: Authentication Successful",
@@ -1168,20 +1167,19 @@ struct xauth_immediate_context {
 	xauth_callback_t *callback;
 };
 
-static void xauth_immediate_callback(void *arg)
+static void xauth_immediate_callback(struct state *st,
+				     struct msg_digest **mdp,
+				     void *arg)
 {
 	struct xauth_immediate_context *xauth = (struct xauth_immediate_context *)arg;
-	struct state *st = state_with_serialno(xauth->serialno);
 	if (st == NULL) {
 		libreswan_log("XAUTH: #%lu: state destroyed for user '%s'",
 			      xauth->serialno, xauth->name);
 	} else {
-		set_cur_state(st);
 		libreswan_log("XAUTH: #%lu: completed for user '%s' with status %s",
 			      xauth->serialno, xauth->name,
 			      xauth->success ? "SUCCESSS" : "FAILURE");
-		xauth->callback(st, xauth->name, xauth->success);
-		reset_cur_state();
+		xauth->callback(st, mdp, xauth->name, xauth->success);
 	}
 	pfree(xauth->name);
 	pfree(xauth);

@@ -586,9 +586,17 @@ static void schedule_event_now_cb(evutil_socket_t fd UNUSED,
 	 * pexpect() failed yet the passert() passed.
 	 */
 	pexpect(ne->ne_event != NULL);
-	ne->ne_callback(ne->ne_context);
+	struct state *st = state_with_serialno(ne->ne_serialno);
+	if (st == NULL) {
+		ne->ne_callback(NULL, NULL, ne->ne_context);
+	} else {
+		struct msg_digest *md = unsuspend_md(st);
+		so_serial_t old_state = push_cur_state(st);
+		ne->ne_callback(st, &md, ne->ne_context);
+		release_any_md(&md);
+		pop_cur_state(old_state);
+	}
 	passert(ne->ne_event != NULL);
-
 	event_del(ne->ne_event);
 	pfree(ne);
 }
@@ -890,9 +898,11 @@ int pluto_fork(const char *name, so_serial_t serialno,
 	}
 }
 
-static pluto_fork_cb addconn_exited;
+static pluto_fork_cb addconn_exited; /* type assertion */
 
-static void addconn_exited(int status, void *context UNUSED)
+static void addconn_exited(struct state *null_st UNUSED,
+			   struct msg_digest **null_mdp UNUSED,
+			   int status, void *context UNUSED)
 {
        DBG(DBG_CONTROLMORE,
            DBG_log("reaped addconn helper child (status %d)", status));
@@ -967,8 +977,27 @@ static void childhandler_cb(int unused UNUSED, const short event UNUSED, void *a
 					log_status(buf, status);
 				}
 			} else {
-				pid_entry->callback(status, pid_entry->context);
-				del_hash_table_entry(&pids_hash_table, &pid_entry->hash_entry);
+				struct state *st = state_with_serialno(pid_entry->serialno);
+				if (pid_entry->serialno == SOS_NOBODY) {
+					pid_entry->callback(NULL, NULL,
+							    status, pid_entry->context);
+				} else if (st == NULL) {
+					LSWDBGP(DBG_CONTROLMORE, buf) {
+						log_pid_entry(buf, pid_entry);
+						lswlogs(buf, " disappeared");
+					}
+					pid_entry->callback(NULL, NULL,
+							    status, pid_entry->context);
+				} else {
+					so_serial_t old_state = push_cur_state(st);
+					struct msg_digest *md = unsuspend_md(st);
+					pid_entry->callback(st, &md, status,
+							    pid_entry->context);
+					release_any_md(&md);
+					pop_cur_state(old_state);
+				}
+				del_hash_table_entry(&pids_hash_table,
+						     &pid_entry->hash_entry);
 				pfree(pid_entry);
 			}
 			break;

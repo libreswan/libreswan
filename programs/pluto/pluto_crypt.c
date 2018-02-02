@@ -416,13 +416,16 @@ static void *pluto_crypto_helper_thread(void *arg)
 
 static pluto_event_now_cb inline_worker; /* type assertion */
 
-static void inline_worker(void *arg)
+static void inline_worker(struct state *st,
+			  struct msg_digest **mdp,
+			  void *arg)
 {
 	struct pluto_crypto_req_cont *cn = arg;
 	if (!cn->pcrc_cancelled) {
+		pexpect(st != NULL);
 		pluto_do_crypto_op(cn, -1);
 	}
-	handle_helper_answer(arg);
+	handle_helper_answer(st, mdp, arg);
 }
 
 /*
@@ -539,7 +542,9 @@ void delete_cryptographic_continuation(struct state *st)
  * thread using the event loop.
  *
  */
-static void handle_helper_answer(void *arg)
+static void handle_helper_answer(struct state *st,
+				 struct msg_digest **mdp,
+				 void *arg)
 {
 	struct pluto_crypto_req_cont *cn = arg;
 
@@ -556,8 +561,6 @@ static void handle_helper_answer(void *arg)
 	/*
 	 * call the continuation (skip if suppressed)
 	 */
-	struct state *st = state_by_serialno(cn->pcrc_serialno);
-
 	if (cn->pcrc_cancelled) {
 		/* suppressed */
 		DBG(DBG_CONTROL, DBG_log("work-order %u state #%lu crypto result suppressed",
@@ -574,10 +577,12 @@ static void handle_helper_answer(void *arg)
 	} else {
 		st->st_offloaded_task = NULL;
 		st->st_v1_offloaded_task_in_background = false;
-		so_serial_t old_state = push_cur_state(st);
-		struct msg_digest *md = unsuspend_md(st);
-		(*cn->pcrc_func)(st, md, &cn->pcrc_pcr);
-		pop_cur_state(old_state);
+		(*cn->pcrc_func)(st, *mdp, &cn->pcrc_pcr);
+		/*
+		 * XXX: since prcc_func() is responsible for disposing
+		 * of *MDP, kill the pointer.
+		 */
+		*mdp = NULL;
 	}
 
 	/* now free up the continuation */

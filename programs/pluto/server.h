@@ -22,6 +22,9 @@
 #include <event2/event_struct.h>
 #include "timer.h"
 
+struct state;
+struct msg_digest;
+
 extern char *pluto_vendorid;
 
 extern int ctl_fd;                      /* file descriptor of control (whack) socket */
@@ -110,16 +113,56 @@ extern bool should_fragment_ike_msg(struct state *st, size_t len,
 
 extern struct event_base *get_pluto_event_base(void);
 
-typedef void pluto_event_now_cb(void *context);
-extern void pluto_event_now(const char *name, so_serial_t serialno,
-			    pluto_event_now_cb *callback,
-			    void *context);
+/*
+ * Schedule an event with no timeout.
+ *
+ * Typically used to resume processing of a state on the main thread.
+ * For instance, by a worker thread to transfer control back to the
+ * main thread (this is why so_serial_t and not struct state is the
+ * parameter); and by the main thread when faking STF_SUSPEND by
+ * scheduling a new event.
+ *
+ * On callback:
+ *
+ * ST either points at the state matching SERIALNO, or NULL (SERIALNO
+ * is either SOS_NOBODY or the state doesn't exist).  A CB expecting a
+ * state back MUST check ST before processing.  Caller sets CUR_STATE
+ * so don't play with that.
+ *
+ * MDP either points at the unsuspended contents of .st_suspended_md,
+ * or NULL.  On return, if *MDP is non-NULL, then it will be released.
+ */
 
-typedef void pluto_fork_cb(int status, void *context);
+typedef void pluto_event_now_cb(struct state *st, struct msg_digest **mdp,
+				void *context);
+extern void pluto_event_now(const char *name, so_serial_t serialno,
+			    pluto_event_now_cb *callback, void *context);
+
+/*
+ * Create a child process using fork()
+ *
+ * Typically used to perform a thread unfriendly operation, such as
+ * calling PAM.
+ *
+ * On callback:
+ *
+ * ST either points at the state matching SERIALNO, or NULL (SERIALNO
+ * is either SOS_NOBODY or the state doesn't exist).  A CB expecting a
+ * state back MUST check ST before processing.  Caller sets CUR_STATE
+ * so don't play with that.
+ *
+ * MDP either points at the unsuspended contents of .st_suspended_md,
+ * or NULL.  On return, if *MDP is non-NULL, then it will be released.
+ *
+ * STATUS is the child processes exit code as returned by things like
+ * waitpid().
+ */
+
+typedef void pluto_fork_cb(struct state *st, struct msg_digest **mdp,
+			   int status, void *context);
 extern int pluto_fork(const char *name, so_serial_t serialno,
 		      int op(void *context),
-		      pluto_fork_cb *callback,
-		      void *context);
+		      pluto_fork_cb *callback, void *context);
 
 bool check_incoming_msg_errqueue(const struct iface_port *ifp, const char *before);
 void check_outgoing_msg_errqueue(const struct iface_port *ifp, const char *before);
