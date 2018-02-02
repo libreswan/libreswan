@@ -7,11 +7,11 @@ see
 <citerefentry><refentrytitle>ipsec.secrets</refentrytitle><manvolnum>5</manvolnum></citerefentry>.)
 Its contents are not security-sensitive. Configurations can be
 added using this configuration file or by using ipsec whack directly. This means
-that technically, the ipsec.conf file is optional, but a few warning might show
+that technically, the ipsec.conf file is optional, but a few warnings might show
 up when this file is missing.
 </para>
 
-<para>The file is a text file, consisting of one or more
+<para><emphasis remap='I'>ipsec.conf</emphasis> is a text file, consisting of one or more
 <emphasis remap='I'>sections</emphasis>.
 White space followed by
 <emphasis remap='B'>#</emphasis>
@@ -25,7 +25,7 @@ and a file name, separated by white space,
 is replaced by the contents of that file,
 preceded and followed by empty lines.
 If the file name is not a full pathname,
-it is considered to be relative to the directory containing the
+it is considered to be relative to the directory which contains the
 including file.
 Such inclusions can be nested.
 Only a single filename may be supplied, and it may not contain white space,
@@ -47,7 +47,7 @@ Note also the
 and
 <emphasis remap='B'>alsoflip</emphasis>
 parameters (described below) which permit splitting a single logical section
-(e.g. a connection description) into several actual sections.</para>
+(e.g. a connection description) into several distinct sections.</para>
 
 <para>The first significant line of the file may specify a version
 of this specification for backwards compatibility with freeswan and openswan. It
