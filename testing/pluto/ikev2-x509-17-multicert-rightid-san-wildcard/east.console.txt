@@ -5,7 +5,9 @@ east #
 east #
  # add second identity/cert
 east #
- pk12util -W foobar -K '' -d sql:/etc/ipsec.d -i /testing/x509/pkcs12/otherca/othereast.p12
+ #pk12util -W foobar -K '' -d sql:/etc/ipsec.d -i /testing/x509/pkcs12/otherca/othereast.p12
+east #
+ pk12util -W foobar -K '' -d sql:/etc/ipsec.d -i /testing/x509/pkcs12/mainca/north.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 east #
  ipsec start
@@ -13,11 +15,11 @@ Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
- ipsec auto --add other
-002 added connection description "other"
+ ipsec auto --add main-east
+002 added connection description "main-east"
 east #
- ipsec auto --add main
-002 added connection description "main"
+ ipsec auto --add main-north
+002 added connection description "main-north"
 east #
  echo "initdone"
 initdone
@@ -25,7 +27,10 @@ east #
  # we should see conn other being up
 east #
  ipsec whack --trafficstatus
-006 #2: "other"[1] 192.1.2.45, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@otherwest.other.libreswan.org'
+006 #2: "main-east"[1] 192.1.2.45, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@west.testing.libreswan.org'
+east #
+ ipsec whack --shutdown
+002 shutting down
 east #
 east #
  ../bin/check-for-core.sh
