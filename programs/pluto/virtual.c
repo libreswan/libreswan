@@ -60,12 +60,12 @@ static int private_net_excl_len = 0;
 /*
  * Read a subnet (IPv4/IPv6)
  * inclusion form: %v4:x.x.x.x/y or %v6:xxxxxxxxx/yy
- * exclusion form: %v4:!x.x.x.x/y or %v6:xxxxxxxxx/yy
+ * exclusion form: %v4:!x.x.x.x/y or %v6:!xxxxxxxxx/yy
  *
  * @param src String in format (see above)
  * @param len Length of src string
  * @param dst out: IP Subnet * Destination
- * @param dstexcl out: IP Subnet * for ! form (required iff ! is to be accepted)
+ * @param dstexcl out: IP Subnet * for ! form (required if ! is to be accepted)
  * @param isincl out: bool * inclusive form or not
  * @return bool If the format string is valid.
  */
