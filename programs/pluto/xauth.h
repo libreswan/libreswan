@@ -30,7 +30,7 @@ typedef void xauth_callback_t(struct state *st,
 /*
  * XXX: Should XAUTH handle timeouts internally?
  */
-void xauth_pam_abort(struct state *st, bool call_callback);
+void xauth_pam_abort(struct state *st);
 
 void xauth_start_pam_thread(struct state *st,
 			    const char *name,

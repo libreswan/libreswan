@@ -869,18 +869,13 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		DBG(DBG_LIFECYCLE,
 				DBG_log("PAM thread timeout on state #%lu",
 					st->st_serialno));
+		xauth_pam_abort(st);
 		/*
-		 * This immediately invokes the callback passing in
-		 * ST.
-		 */
-		xauth_pam_abort(st, TRUE);
-		/*
-		 * Removed this call, presumably it was needed because
-		 * the call back didn't fire until later?
+		 * Things get cleaned up when the PAM process exits.
 		 *
-		 * event_schedule(EVENT_SA_EXPIRE, MAXIMUM_RESPONDER_WAIT, st);
+		 * Should this schedule an event for the case when the
+		 * child process (which is SIGKILLed) doesn't exit!?!
 		 */
-		/* note: no md->st to clear */
 		break;
 #endif
 

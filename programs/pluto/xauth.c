@@ -63,7 +63,7 @@ static void pfree_xauth(struct xauth *x)
  * the xauth request has already been deleted.  Need to pass in
  * st_callback, but only when it needs to notify an abort.
  */
-void xauth_pam_abort(struct state *st, bool call_callback)
+void xauth_pam_abort(struct state *st)
 {
 	struct xauth *xauth = st->st_xauth;
 
@@ -86,16 +86,11 @@ void xauth_pam_abort(struct state *st, bool call_callback)
 		 * has it blocked by libvent.
 		 */
 		kill(xauth->child, SIGKILL);
-		if (call_callback) {
-			DBG(DBG_XAUTH,
-			    DBG_log("XAUTH: #%lu: main-process: notifying callback for user '%s'",
-				    st->st_serialno, xauth->ptarg.name));
-			struct msg_digest *md = unsuspend_md(st);
-			xauth->callback(st, &md, xauth->ptarg.name, false);
-			release_any_md(&md);
-		} else {
-			pfree_xauth(xauth);
-		}
+		/*
+		 * xauth is deleted by xauth_pam_child_cleanup()
+		 * _after_ the process exits and the callback has been
+		 * called.
+		 */
 	}
 }
 
@@ -138,16 +133,9 @@ static void xauth_pam_child_cleanup(struct state *st,
 	 * Since this is running on the main thread, it and
 	 * Xauth_abort() can't get into a race.
 	 */
-	if (xauth->abort) {
-		/* ST may or may not exist, don't try */
-		libreswan_log("XAUTH: #%lu: aborted for user '%s'",
-			      xauth->serialno, xauth->ptarg.name);
-	} else if (st == NULL) {
-		/*
-		 * this should have been aborted
-		 */
-		PEXPECT_LOG("XAUTH: #%lu: missing state for user '%s'",
-			      xauth->serialno, xauth->ptarg.name);
+	if (st == NULL) {
+		DBG(DBG_XAUTH, DBG_log("XAUTH: #%lu: state for user '%s' disappeared",
+				       xauth->serialno, xauth->ptarg.name));
 	} else {
 		passert(st != NULL);
 		st->st_xauth = NULL; /* all done */

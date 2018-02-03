@@ -975,14 +975,9 @@ void delete_state(struct state *st)
 		}
 	}
 
-	/*
-	 * Resume st (even though it is about to be deleted), and then
-	 * cancel any XAUTH in progress.
-	 * ??? in what sense are we resuming st?
-	 */
 #ifdef XAUTH_HAVE_PAM
 	if (st->st_xauth != NULL) {
-		xauth_pam_abort(st, FALSE);
+		xauth_pam_abort(st);
 	}
 #endif
 
