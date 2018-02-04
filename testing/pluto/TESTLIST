@@ -387,6 +387,7 @@ kvmplutotest 	newoe-18-cop-block 			good
 kvmplutotest 	newoe-18-private-poc 			good
 kvmplutotest 	newoe-18-private-cop 			good
 kvmplutotest 	newoe-18-private-private 		good
+kvmplutotest 	newoe-18-private-private-32 		good
 kvmplutotest 	newoe-18-private-clear 			good
 kvmplutotest 	newoe-18-private-block 			good
 kvmplutotest 	newoe-18-clear-poc 			good
