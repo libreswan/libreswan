@@ -233,7 +233,7 @@ static stf_status add_st_send_list(struct state *st, struct state *pst)
 		}
 	}
 	DBG(DBG_CONTROLMORE,
-		DBG_log("#%lu %s using parent #%lu unacknowledged %u next message id=%u ike excange window %u",
+		DBG_log("#%lu %s using parent #%lu unacknowledged %u next message id=%u ike exchange window %u",
 			st->st_serialno,
 			what, pst->st_serialno, unack,
 			pst->st_msgid_nextuse,
@@ -6492,7 +6492,7 @@ void ikev2_child_outI(struct state *st)
 
 /*
  * if this connection has a newer Child SA than this state
- * this negotitation is not relevent any more.
+ * this negotitation is not relevant any more.
  * would this cover if there are multiple CREATE_CHILD_SA pending on
  * this IKE negotiation ???
  */

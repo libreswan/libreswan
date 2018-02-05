@@ -135,7 +135,7 @@ void transfer_dh_secret_to_state(const char *helper, struct dh_secret **secret,
 {
 	LSWDBGP(DBG_CRYPT, buf) {
 		lswlog_dh_secret(buf, *secret);
-		lswlogf(buf, "transfering ownership from helper %s to state #%lu",
+		lswlogf(buf, "transferring ownership from helper %s to state #%lu",
 			helper, st->st_serialno);
 	}
 	pexpect(st->st_dh_secret == NULL);
@@ -148,7 +148,7 @@ void transfer_dh_secret_to_helper(struct state *st,
 {
 	LSWDBGP(DBG_CRYPT, buf) {
 		lswlog_dh_secret(buf, st->st_dh_secret);
-		lswlogf(buf, "transfering ownership from state #%lu to helper %s",
+		lswlogf(buf, "transferring ownership from state #%lu to helper %s",
 			st->st_serialno, helper);
 	}
 	pexpect(*secret == NULL);

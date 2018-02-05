@@ -280,7 +280,7 @@ struct pluto_crypto_req_cont;	/* forward reference */
  *
  *	The results from the crypto operation.
  *
- *      This function is responsible for releasing or transfering the
+ *      This function is responsible for releasing or transferring the
  *      contents (and for "just knowing" the right contents in the
  *      union it should be using).
  *

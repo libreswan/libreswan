@@ -10,8 +10,8 @@ will use these received options to either update /etc/resolv.conf or the running
 server. When the connection is brought down, the previous DNS resolving state is restored.
 </para>
 <para>
-The modecfgdns option takes a comma or space seperated list of IP addresses that can be used
-for DNS resolution. The modecfgdomains option takes a comma or space seperated list of internal
+The modecfgdns option takes a comma or space separated list of IP addresses that can be used
+for DNS resolution. The modecfgdomains option takes a comma or space separated list of internal
 domain names that are reachable via the supplied modecfgdns DNS servers.
 </para>
 <para>The IKEv1 split tunnel directive will be sent automatically if the xauth server side has

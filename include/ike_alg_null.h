@@ -17,7 +17,7 @@
 extern const struct encrypt_desc ike_alg_encrypt_null;
 
 /*
- * IKEv2 RFC 7296 uses the term "NONE" when refering to no integrity.
+ * IKEv2 RFC 7296 uses the term "NONE" when referring to no integrity.
  * For instance: ... MUST either offer no integrity algorithm or a
  * single integrity algorithm of "NONE"
  */

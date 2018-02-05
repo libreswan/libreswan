@@ -1225,7 +1225,7 @@ def sent_virsh_cmd(args, all_hosts, c="shutdown"):
     tries = args.shutdownwait
     while len(running) and tries != 0:
         logging.info(
-            "Found %s guests [%s] running. Wait upto %d seconds to shutdown", len(
+            "Found %s guests [%s] running. Wait up to %d seconds to shutdown", len(
                 running),
             ' '.join(map(str, running)), tries)
 
@@ -2740,7 +2740,7 @@ def setup_result_dir(args, to_create):
         os.chdir(cwd)
         logging.debug("cd %s; %s ; IPSECVERSION %s", dn, cmd, ipsecversion)
     else:
-        logging.debug("IPSECVERSION %s was set in enviroment", ipsecversion)
+        logging.debug("IPSECVERSION %s was set in environment", ipsecversion)
 
     if ipsecversion and args.rerun:
         output_dir = output_dir + ipsecversion

@@ -132,7 +132,7 @@ while read hashes ; do
     fi
 
     # If this is a really interesting commit (branch, merge, tag),
-    # increment the bias so that earlier runs are prefered.  Do this
+    # increment the bias so that earlier runs are preferred.  Do this
     # before discarding tested commits so that nothing is missed.
     # This somewhat double counts as both merge and branch points are
     # considered.
@@ -155,7 +155,7 @@ while read hashes ; do
     # and not just a simple change).
     #
     # Keep processing as still need to determine the longest run.  The
-    # longest run may occure after this commit.  The only way to
+    # longest run may occur after this commit.  The only way to
     # determine that the longest run is before the first branch (say)
     # is to examining all commits.
 

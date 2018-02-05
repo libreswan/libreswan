@@ -472,7 +472,7 @@ static void add_whack_rc_prefix(struct lswlog *buf, enum rc_type rc)
 }
 
 /*
- * Wrap up the logic to decide if a particular output should occure.
+ * Wrap up the logic to decide if a particular output should occur.
  * The compiler will likely inline these.
  */
 

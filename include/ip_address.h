@@ -22,7 +22,7 @@ struct lswlog;
 
 /*
  * The type IP_ADDRESS is shared between KLIPS (kernel module) and
- * PLUTO.  Its definition is burried in the common include file
+ * PLUTO.  Its definition is buried in the common include file
  * "libreswan.h".
  *
  * This header contains declarations for userland specific extensions.

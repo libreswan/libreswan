@@ -125,7 +125,7 @@ enum smf2_flags {
 	 * The original responder, when it receives the encrypted AUTH
 	 * payload, isn't yet ready to decrypt it - receiving the
 	 * packet is what triggers the DH calculation needed before
-	 * encryption can occure.
+	 * encryption can occur.
 	 */
 	SMF2_SKIP_UNPACK_SK = LELEM(7),
 };
@@ -1318,7 +1318,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		passert(st != NULL);
 
 		/*
-		 * Since the encrypted payload appears plausable, deal
+		 * Since the encrypted payload appears plausible, deal
 		 * with fragmentation.
 		 */
 		if (encrypted_payload_summary.status == STF_ROOF) {

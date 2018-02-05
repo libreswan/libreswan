@@ -348,7 +348,7 @@ struct encrypt_desc {
 
 struct encrypt_ops {
 	/*
-	 * Delegate responsiblity for checking OPS specific fields.
+	 * Delegate responsibility for checking OPS specific fields.
 	 */
 	void (*const check)(const struct encrypt_desc *alg);
 
@@ -425,7 +425,7 @@ struct hash_context;
 
 struct hash_ops {
 	/*
-	 * Delegate responsiblity for checking OPS specific fields.
+	 * Delegate responsibility for checking OPS specific fields.
 	 */
 	void (*const check)(const struct hash_desc *alg);
 
@@ -514,7 +514,7 @@ struct prf_desc {
 
 struct prf_ops {
 	/*
-	 * Delegate responsiblity for checking OPS specific fields.
+	 * Delegate responsibility for checking OPS specific fields.
 	 */
 	void (*const check)(const struct prf_desc *alg);
 
@@ -665,7 +665,7 @@ struct oakley_group_desc {
 
 struct dhmke_ops {
 	/*
-	 * Delegate responsiblity for checking OPS specific fields.
+	 * Delegate responsibility for checking OPS specific fields.
 	 */
 	void (*const check)(const struct oakley_group_desc *alg);
 

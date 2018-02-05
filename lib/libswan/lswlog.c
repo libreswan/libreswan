@@ -183,7 +183,7 @@ static size_t append(struct lswlog *log, const char *format, va_list ap)
 	 * to the buffer.
 	 *
 	 * If N is negative than an "output error" (will that happen?)
-	 * occured (that or a very old, non-compliant, s*printf()
+	 * occurred (that or a very old, non-compliant, s*printf()
 	 * implementation that returns -1 instead of the required
 	 * size).
 	 */
