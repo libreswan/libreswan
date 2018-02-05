@@ -817,7 +817,7 @@ static int pluto_process_certs(struct state *st, chunk_t *certs,
 			break;
 
 		case ID_FROMCERT:
-			/* We are commited to accept any ID as long as the CERT verified */
+			/* We are committed to accept any ID as long as the CERT verified */
 			st->st_peer_alt_id = TRUE;
 			cont = LSW_CERT_ID_OK;
 			idtoa(&c->spd.that.id, namebuf, sizeof(namebuf));

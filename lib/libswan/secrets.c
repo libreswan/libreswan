@@ -795,7 +795,7 @@ static err_t lsw_process_ppk_dynamic_secret(chunk_t *ppk, chunk_t *ppk_id, char 
 		(void) shift();
 		if (lexopen(&new_pos, fn, FALSE)) {
 			int offset = 0;
-			DBG(DBG_CONTROL, DBG_log("OTP file opened succesfully"));
+			DBG(DBG_CONTROL, DBG_log("OTP file opened successfully"));
 
 			*filename = clone_bytes(&fn, len + 1, "Dynamic PPK filename");
 			DBG(DBG_CONTROL, DBG_log("Processing dynamic secret, saving filename as: %s", *filename));

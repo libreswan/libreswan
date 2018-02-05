@@ -41,7 +41,7 @@ static void test_enum(enum_names *enum_test, int i,
 
 	/*
 	 * So that it is easy to see what was tested, print something
-	 * for every comparision.
+	 * for every comparison.
 	 */
 
 	if (i < 0) {

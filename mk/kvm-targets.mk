@@ -785,7 +785,7 @@ $(foreach domain, $(KVM_LOCAL_DOMAINS), \
 # uninstall-kvm-domain-clone isn't run until all its dependencies,
 # such as uninstall-kvm-domain-build, have been run.  Using
 # kvm-uninstall-* rules leads to indirect dependencies and
-# out-of-order distruction.
+# out-of-order destruction.
 
 $(addprefix uninstall-kvm-domain-, $(KVM_CLONE_DOMAIN)): \
 	$(addprefix uninstall-kvm-domain-, $(KVM_CLONE_COPIES))
@@ -1115,7 +1115,7 @@ Configuration:
       $(call kvm-var-value,KVM_BASEDIR)$(if $(wildcard $(KVM_BASEDIR)),, [MISSING])
 
           for storing the shared base (master) VM; should be
-          relatively permenant storage
+          relatively permanent storage
 
       $(call kvm-var-value,KVM_LOCALDIR)$(if $(wildcard $(KVM_LOCALDIR)),, [MISSING])
 

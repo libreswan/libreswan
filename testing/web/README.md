@@ -157,7 +157,7 @@ above), the testing script is invoked as:
 
 From time to time the test results are seen to decay.  The symptom is
 an increasing number of test failures with a result of "unresolved"
-and an error of "output-missing".  The error occures because one or
+and an error of "output-missing".  The error occurs because one or
 more test domains fail to start in a timely manner (the test runner
 gives up after two minutes), hence, while the test is processed there
 is never any output.

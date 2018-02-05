@@ -1441,7 +1441,7 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 					 * behaviour can be restored?
 					 *
 					 * HACK: So that the logging
-					 * system doesn't accidently
+					 * system doesn't accidentally
 					 * include a prefix for the
 					 * wrong state et.al., switch
 					 * out everything but SENDER.

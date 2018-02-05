@@ -412,7 +412,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                         except pexpect.TIMEOUT as e:
                             # A test ending with a timeout gets
                             # treated as unresolved.  Timeouts
-                            # shouldn't occure so human intervention
+                            # shouldn't occur so human intervention
                             # is required.
                             logger.error("**** timeout out while running test script %s ****", script)
 

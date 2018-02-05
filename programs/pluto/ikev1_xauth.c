@@ -309,7 +309,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 	case MODECFG_DOMAIN:
 	{
 		/*
-		 * IKEv2 allows more then one, seperated by comma or space
+		 * IKEv2 allows more then one, separated by comma or space
 		 * We don't know if existing IKEv1 implementations support
 		 * more then one, so we just send the first one configured.
 		 */

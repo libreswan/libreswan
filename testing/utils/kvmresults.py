@@ -191,7 +191,7 @@ def results(logger, tests, baseline, args, result_stats):
             # be cheap (does OUTPUT/ exist?).  It isn't, instead a
             # full post-mortem analysis is performed.
             #
-            # This is noticable when printing static test value such
+            # This is noticeable when printing static test value such
             # as the test's name takes far longer than one would
             # expect.
             result = post.mortem(test, args,

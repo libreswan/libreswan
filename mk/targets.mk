@@ -49,7 +49,7 @@ define recursive-target
 
   # Force recursion before running the local target.  While this is
   # what make systems like autoconf do, pluto was for a very long time
-  # doing the oposite - doing the recursion last.
+  # doing the opposite - doing the recursion last.
 
   $(1): recursive-$(1)
 	@$$(MAKE) --no-print-directory local-$(1)

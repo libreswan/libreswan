@@ -96,7 +96,7 @@ OBJS += lswlog_passert.o
 
 # Crypto code:
 #
-# XXX: More is comming as it gets cleaned up and made more library
+# XXX: More is coming as it gets cleaned up and made more library
 # like.
 
 # not much left using this

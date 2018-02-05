@@ -70,7 +70,7 @@ class Resolution:
 #   contains a list (set?) of hosts
 #
 #   This is so that code can easily determine if a specific issue,
-#   regardless of the HOST, has occured.  All the programatic
+#   regardless of the HOST, has occurred.  All the programatic
 #   operators, such as __contains__(), are implemented based on this
 #   model.
 #
@@ -140,7 +140,7 @@ class Issues:
 
     # Programatic collections like interface.  This is indexed by
     # ISSUE so that it is easy to query Issues to see if an ISSUE
-    # occured on any host.
+    # occurred on any host.
 
     def __bool__(self):
         return len(self._issue_hosts) > 0

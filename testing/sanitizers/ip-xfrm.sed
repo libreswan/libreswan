@@ -1,5 +1,5 @@
 # this an aggressive sanitizer for "ip xfrm state" esp
-# carefull when mxixing this with "ipsec look"
+# careful when mxixing this with "ipsec look"
 # "ipsec look" sanitizer are similar
 /src 0.0.0.0\/0 dst 0.0.0.0\/0/d
 /socket \(in\|out\) priority 0 ptype main/d
