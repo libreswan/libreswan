@@ -514,32 +514,43 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *name)
 
 	CERTGeneralName *nameList = CERT_DecodeAltNameExtension(arena, &subAltName);
 
-	if (current == NULL) {
+	if (nameList == NULL) {
 		loglog(RC_LOG_SERIOUS, "certificate subjectAltName extension failed to decode");
 		PORT_FreeArena(arena, PR_FALSE);
 		return FALSE;
 	}
 
+	/*
+	 * nameList is a pointer into a non-empty circular linked list.
+	 * This loop visits each entry.
+	 * We have visited each when we come back to the start.
+	 * We test only at the end, after we advance, because we want to visit
+	 * the first entry the first time we see it but stop when we get to it
+	 * the second time.
+	 */
 	CERTGeneralName *current = nameList;
 	do {
 		switch (current->type) {
 		case certDNSName:
 		case certRFC822Name:
 		{
-			if (san_ip)
-				break;
-
+			/*
+			 * Match the parameter name with the name in the certificate.
+			 * The name in the cert may start with "*."; that will match
+			 * any initial component in name (up to the first '.').
+			 */
 			/* we need to cast because name.other.data is unsigned char * */
-			const char *c_ptr = (void *) current->name.other.data;
+			const char *c_ptr = (const void *) current->name.other.data;
 			size_t c_len =  current->name.other.len;
 
 			const char *n_ptr = name;
 			static const char wild[] = "*.";
+			const size_t wild_len = sizeof(wild) - 1;
 
-			if (c_len > strlen(wild) && startswith(c_ptr, wild)) {
+			if (c_len > wild_len && startswith(c_ptr, wild)) {
 				/* wildcard in cert: ignore first component of name */
-				c_ptr += strlen(wild);
-				c_len -= strlen(wild);
+				c_ptr += wild_len;
+				c_len -= wild_len;
 				n_ptr = strchr(n_ptr, '.');
 				if (n_ptr == NULL)
 					break;	/* cannot match */
