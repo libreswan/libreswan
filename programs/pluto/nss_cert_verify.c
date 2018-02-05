@@ -513,7 +513,12 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *name)
 	passert(arena != NULL);
 
 	CERTGeneralName *nameList = CERT_DecodeAltNameExtension(arena, &subAltName);
-	passert(nameList != NULL);
+
+	if (current == NULL) {
+		loglog(RC_LOG_SERIOUS, "certificate subjectAltName extension failed to decode");
+		PORT_FreeArena(arena, PR_FALSE);
+		return FALSE;
+	}
 
 	CERTGeneralName *current = nameList;
 	do {
