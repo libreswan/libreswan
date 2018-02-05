@@ -498,60 +498,67 @@ int verify_and_cache_chain(chunk_t *ders, int num_ders, CERTCertificate **ee_out
 
 bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *name)
 {
-	SECStatus rv;
 	SECItem	subAltName;
-	PLArenaPool *arena = NULL;
-	CERTGeneralName *nameList = NULL;
-	CERTGeneralName *current = NULL;
-	bool san_ip = FALSE;
-	unsigned int len = strlen(name);
-	ip_address myip;
-
-	rv = CERT_FindCertExtension(cert, SEC_OID_X509_SUBJECT_ALT_NAME,
+	SECStatus rv = CERT_FindCertExtension(cert, SEC_OID_X509_SUBJECT_ALT_NAME,
 			&subAltName);
 	if (rv != SECSuccess) {
 		DBG(DBG_X509, DBG_log("certificate contains no subjectAltName extension"));
 		return FALSE;
 	}
 
-	if (tnatoaddr(name, 0, AF_UNSPEC, &myip) == NULL)
-		san_ip = TRUE;
+	ip_address myip;
+	bool san_ip = (tnatoaddr(name, 0, AF_UNSPEC, &myip) == NULL);
 
-	arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
+	PLArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
 	passert(arena != NULL);
 
-	nameList = current = CERT_DecodeAltNameExtension(arena, &subAltName);
-	passert(current != NULL);
+	CERTGeneralName *nameList = CERT_DecodeAltNameExtension(arena, &subAltName);
+	passert(nameList != NULL);
 
-	do
-	{
+	CERTGeneralName *current = nameList;
+	do {
 		switch (current->type) {
 		case certDNSName:
 		case certRFC822Name:
+		{
 			if (san_ip)
 				break;
-			if (current->name.other.len == len) {
-				if (memcmp(current->name.other.data, name, len) == 0) {
-					DBG(DBG_X509, DBG_log("subjectAltname %s found in certificate", name));
-					PORT_FreeArena(arena, PR_FALSE);
-					return TRUE;
-				}
+
+			/* we need to cast because name.other.data is unsigned char * */
+			const char *c_ptr = (void *) current->name.other.data;
+			size_t c_len =  current->name.other.len;
+
+			const char *n_ptr = name;
+			static const char wild[] = "*.";
+
+			if (c_len > strlen(wild) && startswith(c_ptr, wild)) {
+				/* wildcard in cert: ignore first component of name */
+				c_ptr += strlen(wild);
+				c_len -= strlen(wild);
+				n_ptr = strchr(n_ptr, '.');
+				if (n_ptr == NULL)
+					break;	/* cannot match */
+
+				n_ptr++;	/* skip . */
 			}
 
-			if (current->name.other.len != 0 && current->name.other.len < IDTOA_BUF) {
-				char osan[IDTOA_BUF];
-
-				memcpy(osan,current->name.other.data, current->name.other.len);
-				osan[current->name.other.len] = '\0';
-				DBG(DBG_X509, DBG_log("subjectAltname (len=%d) %s not match %s", current->name.other.len, osan, name));
-			} else {
-				DBG(DBG_X509, DBG_log("subjectAltname <TOO BIG TO PRINT> does not match %s", name));
+			if (c_len == strlen(n_ptr) && strncaseeq(n_ptr, c_ptr, c_len)) {
+				/*
+				 * ??? if current->name.other.data contains bad characters,
+				 * what prevents them being logged?
+				 */
+				DBG(DBG_X509, DBG_log("subjectAltname %s matched %*s in certificate",
+					name, current->name.other.len, current->name.other.data));
+				PORT_FreeArena(arena, PR_FALSE);
+				return TRUE;
 			}
 			break;
+		}
 
 		case certIPAddress:
 			if (!san_ip)
 				break;
+
 			if ((current->name.other.len == 4) && (addrtypeof(&myip) == AF_INET)) {
 				if (memcmp(current->name.other.data, &myip.u.v4.sin_addr.s_addr, 4) == 0) {
 					DBG(DBG_X509, DBG_log("subjectAltname IPv4 matches %s", name));
@@ -572,7 +579,7 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *name)
 					break;
 				}
 			}
-			DBG(DBG_X509, DBG_log("subjectAltnamea IP address family mismatch for %s", name));
+			DBG(DBG_X509, DBG_log("subjectAltname IP address family mismatch for %s", name));
 			break;
 
 		default:
