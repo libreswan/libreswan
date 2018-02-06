@@ -1157,14 +1157,14 @@ static void ikev1_xauth_callback(struct state *st,
 /*
  * Schedule the XAUTH callback for NOW so it is (we hope) run next.
  *
- * It should be possible to eliminate this event hop entirely; later.
+ * This way all xauth mechanisms use the same code paths - suspend
+ * state and then finish things in ikev1_xauth_callback().
  */
 
 struct xauth_immediate_context {
 	bool success;
 	so_serial_t serialno;
 	char *name;
-	xauth_callback_t *callback;
 };
 
 static void xauth_immediate_callback(struct state *st,
@@ -1176,10 +1176,8 @@ static void xauth_immediate_callback(struct state *st,
 		libreswan_log("XAUTH: #%lu: state destroyed for user '%s'",
 			      xauth->serialno, xauth->name);
 	} else {
-		libreswan_log("XAUTH: #%lu: completed for user '%s' with status %s",
-			      xauth->serialno, xauth->name,
-			      xauth->success ? "SUCCESSS" : "FAILURE");
-		xauth->callback(st, mdp, xauth->name, xauth->success);
+		/* ikev1_xauth_callback() will log result */
+		ikev1_xauth_callback(st, mdp, xauth->name, xauth->success);
 	}
 	pfree(xauth->name);
 	pfree(xauth);
@@ -1190,7 +1188,6 @@ static void xauth_immediate(const char *name, const struct state *st, bool succe
 	struct xauth_immediate_context *xauth = alloc_thing(struct xauth_immediate_context, "xauth next");
 	xauth->success = success;
 	xauth->serialno = st->st_serialno;
-	xauth->callback = ikev1_xauth_callback;
 	xauth->name = clone_str(name, "xauth next name");
 	pluto_event_now("xauth immediate", st->st_serialno,
 			xauth_immediate_callback, xauth);
