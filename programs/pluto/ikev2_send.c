@@ -167,7 +167,7 @@ pb_stream open_v2_message(pb_stream *reply,
 	hdr.isa_msgid = message_id;
 	hdr.isa_length = 0; /* filled in when PBS is closed */
 
-	return open_output_pbs(&hdr, &isakmp_hdr_desc, reply);
+	return open_output_struct_pbs(reply, &hdr, &isakmp_hdr_desc);
 }
 
 /*
