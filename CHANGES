@@ -3,6 +3,8 @@ See also https://libreswan.org/
 
 v3.24 (unreleased)
 * IKEv2: PPK support for authby=rsasig [Vukasin Karadzic]
+* Bugtracker bugs fixed:
+   #318: vti interface gets down on previous initiator if roles switch [Tuomo]
 
 v3.23 (January 25, 2018)
 * IKEv2: MOBIKE support (RFC 4555) [Antony/Paul]
