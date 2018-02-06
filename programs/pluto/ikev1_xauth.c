@@ -1540,7 +1540,7 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 
 			if (stat != STF_OK) {
 				/* notification payload - not exactly the right choice, but okay */
-				md->note = CERTIFICATE_UNAVAILABLE;
+				md->v1_note = CERTIFICATE_UNAVAILABLE;
 				return stat;
 			}
 		}
@@ -1664,7 +1664,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 
 		if (stat != STF_OK) {
 			/* notification payload - not exactly the right choice, but okay */
-			md->note = CERTIFICATE_UNAVAILABLE;
+			md->v1_note = CERTIFICATE_UNAVAILABLE;
 			return stat;
 		}
 	}
@@ -2433,7 +2433,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 
 	if (stat != STF_OK) {
 		/* notification payload - not exactly the right choice, but okay */
-		md->note = CERTIFICATE_UNAVAILABLE;
+		md->v1_note = CERTIFICATE_UNAVAILABLE;
 		return stat;
 	}
 

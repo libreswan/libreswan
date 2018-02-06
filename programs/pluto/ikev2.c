@@ -2308,7 +2308,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		break;
 
 	case STF_INTERNAL_ERROR:
-		whack_log(RC_INTERNALERR + md->note, "%s: internal error",
+		whack_log(RC_INTERNALERR, "%s: internal error",
 			  from_state_name);
 
 		DBG(DBG_CONTROL,
@@ -2340,17 +2340,17 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		md->st = st = NULL;
 		break;
 
-	default: /* a shortcut to STF_FAIL, setting md->note */
-		passert(result > STF_FAIL);
-		md->note = result - STF_FAIL;
-		/* FALL THROUGH ... */
-	case STF_FAIL:
-		whack_log(RC_NOTIFICATION + md->note,
+	default:
+		passert(result >= STF_FAIL);
+		v2_notification_t notification = result > STF_FAIL ?
+			result - STF_FAIL : v2N_NOTHING_WRONG;
+		whack_log(RC_NOTIFICATION + notification,
 			  "%s: %s",
 			  from_state_name,
-			  enum_name(&ikev2_notify_names, md->note));
+			  enum_name(&ikev2_notify_names, notification));
 
-		if (md->note != NOTHING_WRONG) {
+		if (notification != v2N_NOTHING_WRONG) {
+			/* Only the responder sends a notification */
 			if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
 				struct state *pst = st;
 
@@ -2362,10 +2362,9 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 				}
 
 				if (st == NULL) {
-					send_v2_notification_from_md(md, md->note, NULL);
+					send_v2_notification_from_md(md, notification, NULL);
 				} else {
-					send_v2_notification_from_state(pst,
-							md->note, NULL);
+					send_v2_notification_from_state(pst, notification, NULL);
 					if (md->hdr.isa_xchg == ISAKMP_v2_SA_INIT) {
 						delete_state(st);
 					} else {
@@ -2381,9 +2380,9 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		DBG(DBG_CONTROL,
 		    DBG_log("state transition function for %s failed: %s",
 			    from_state_name,
-			    md->note == NOTHING_WRONG ?
+			    notification == v2N_NOTHING_WRONG ?
 				"<no reason given>" :
-				enum_name(&ikev2_notify_names, md->note)));
+				enum_name(&ikev2_notify_names, notification)));
 		break;
 	}
 

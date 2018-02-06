@@ -81,7 +81,7 @@ struct msg_digest {
 	enum original_role original_role;	/* (v2) */
 	msgid_t msgid_received;			/* (v2) - Host order! */
 
-	notification_t note;			/* reason for failure */
+	notification_t v1_note;			/* reason for failure */
 	bool dpd;				/* (v1) Peer supports RFC 3706 DPD */
 	bool ikev2;				/* Peer supports IKEv2 */
 	bool fragvid;				/* (v1) Peer supports FRAGMENTATION */

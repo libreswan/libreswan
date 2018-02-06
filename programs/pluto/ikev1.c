@@ -2756,7 +2756,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		/* update the previous packet history */
 		remember_received_packet(st, md);
 
-		whack_log(RC_INTERNALERR + md->note,
+		whack_log(RC_INTERNALERR + md->v1_note,
 			  "%s: internal error",
 			  st->st_state_name);
 
@@ -2789,7 +2789,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 	default:        /* a shortcut to STF_FAIL, setting md->note */
 		passert(result > STF_FAIL);
-		md->note = result - STF_FAIL;
+		md->v1_note = result - STF_FAIL;
 		/* FALL THROUGH */
 	case STF_FAIL:
 		/* As it is, we act as if this message never happened:
@@ -2800,17 +2800,17 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 * Perhaps because the message hasn't been authenticated?
 		 * But then then any duplicate would lose too, I would think.
 		 */
-		whack_log(RC_NOTIFICATION + md->note,
+		whack_log(RC_NOTIFICATION + md->v1_note,
 			  "%s: %s", st->st_state_name,
-			  enum_name(&ikev1_notify_names, md->note));
+			  enum_name(&ikev1_notify_names, md->v1_note));
 
-		if (md->note != NOTHING_WRONG)
-			SEND_NOTIFICATION(md->note);
+		if (md->v1_note != NOTHING_WRONG)
+			SEND_NOTIFICATION(md->v1_note);
 
 		DBG(DBG_CONTROL,
 		    DBG_log("state transition function for %s failed: %s",
 			    enum_name(&state_names, from_state),
-			    enum_name(&ikev1_notify_names, md->note)));
+			    enum_name(&ikev1_notify_names, md->v1_note)));
 
 #ifdef HAVE_NM
 		if (st->st_connection->remotepeertype == CISCO &&
