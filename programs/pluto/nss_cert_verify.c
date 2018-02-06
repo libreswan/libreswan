@@ -547,6 +547,9 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *name)
 			static const char wild[] = "*.";
 			const size_t wild_len = sizeof(wild) - 1;
 
+			if (san_ip)
+				break;
+
 			if (c_len > wild_len && startswith(c_ptr, wild)) {
 				/* wildcard in cert: ignore first component of name */
 				c_ptr += wild_len;
