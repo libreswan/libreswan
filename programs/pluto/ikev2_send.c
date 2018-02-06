@@ -248,29 +248,59 @@ void send_v2_notification_from_md(struct msg_digest *md,
 				  v2_notification_t ntype,
 				  chunk_t *ndata)
 {
-	ipstr_buf b;
-	libreswan_log("sending unencrypted notification %s to %s:%u",
-		      enum_name(&ikev2_notify_names, ntype),
-		      sensitive_ipstr(&md->sender, &b),
-		      hportof(&md->sender));
+	const char *const notify_name = enum_short_name(&ikev2_notify_names, ntype);
+	const unsigned message_id = md->msgid_received;
+	enum isakmp_xchg_types exchange_type = md->hdr.isa_xchg;
+	const char *const exchange_name = enum_short_name(&ikev2_exchange_names, exchange_type);
 
-	pb_stream *reply = open_reply_pbs("notification msg");
+	ipstr_buf b;
+	libreswan_log("responding to %s message (ID %u) from %s:%u with unencrypted %s notification",
+		      exchange_name, message_id,
+		      sensitive_ipstr(&md->sender, &b),
+		      hportof(&md->sender),
+		      notify_name);
 
 	/*
-	 * Only the initial responder (where there may not yet be a
-	 * state) will send an unencrypted notification.
-	 *
-	 * Hence INIT, MSG_R, and MSGID cal all be hardwired.
+	 * Since only the initial responder (where there may not yet
+	 * be a state) is allowed to reply with an unencrypted
+	 * notification, the MSG_R flag can be hardwired.
 	 */
+	lset_t flags = ISAKMP_FLAGS_v2_MSG_R;
+
+	/*
+	 * The MESSAGE ID can either be 0 (responding to SA_INIT) or 1
+	 * (responding to AUTH with failed encryption).
+	 */
+	if (message_id > 1) {
+		PEXPECT_LOG("message ID %u invalid for un-encrypted notification",
+			    message_id);
+		return;
+	}
+
+	/*
+	 * The EXCHANGE TYPE can either be INIT or AUTH.
+	 */
+	switch (exchange_type) {
+	case ISAKMP_v2_SA_INIT:
+	case ISAKMP_v2_AUTH:
+		break;
+	default:
+		PEXPECT_LOG("exchange type %s invalid for un-encrypted notification",
+			    exchange_name);
+		return;
+	}
+
+	pb_stream *reply = open_reply_pbs("unencrypted notification");
 	pb_stream rbody = open_v2_message(reply,
 					  md->hdr.isa_icookie,
 					  md->hdr.isa_rcookie,
 					  ISAKMP_NEXT_v2N,
-					  ISAKMP_v2_SA_INIT,
-					  ISAKMP_FLAGS_v2_MSG_R,
-					  v2_INITIAL_MSGID);
+					  exchange_type,
+					  flags,
+					  message_id);
 	if (!pbs_ok(&rbody)) {
-		libreswan_log("error initializing hdr for notify message");
+		PEXPECT_LOG("error building header for unencrypted %s %s notification with message ID %u",
+			    exchange_name, notify_name, message_id);
 		return;
 	}
 
@@ -281,6 +311,8 @@ void send_v2_notification_from_md(struct msg_digest *md,
 		      ISAKMP_PAYLOAD_NONCRITICAL,
 		      IKEv2_SEC_PROTO_NONE, &empty_chunk, /* SPI */
 		      ntype, ndata, &rbody)) {
+		PEXPECT_LOG("error building unencrypted %s %s notification with message ID %u",
+			    exchange_name, notify_name, message_id);
 		return;
 	}
 
