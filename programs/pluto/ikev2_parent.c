@@ -3560,7 +3560,6 @@ static stf_status ikev2_start_pam_authorize(struct state *st)
  */
 
 static crypto_req_cont_func ikev2_parent_inI2outR2_continue;	/* type asssertion */
-static crypto_transition_fn ikev2_parent_inI2outR2_tail;	/* forward decl and type assertion */
 
 stf_status ikev2parent_inI2outR2(struct state *st, struct msg_digest *md UNUSED)
 {
@@ -3586,6 +3585,9 @@ stf_status ikev2parent_inI2outR2(struct state *st, struct msg_digest *md UNUSED)
 	return STF_SUSPEND;
 }
 
+static stf_status ikev2_parent_inI2outR2_continue_tail(struct state *st,
+						       struct msg_digest *md);
+
 static void ikev2_parent_inI2outR2_continue(struct state *st,
 					    struct msg_digest **mdp,
 					    struct pluto_crypto_req *r)
@@ -3594,19 +3596,66 @@ static void ikev2_parent_inI2outR2_continue(struct state *st,
 		DBG_log("ikev2_parent_inI2outR2_continue for #%lu: calculating g^{xy}, sending R2",
 			st->st_serialno));
 
-	passert(*mdp != NULL);
+	passert(*mdp != NULL); /* AUTH request */
 
-	stf_status e = ikev2_parent_inI2outR2_tail(st, *mdp, r);
-	if (e > STF_FAIL) {
-		/* we do not send a notify because we are the initiator that could be responding to an error notification */
-		int v2_notify_num = e - STF_FAIL;
+	/* extract calculated values from r */
 
-		DBG_log("ikev2_parent_inI2outR2_tail returned STF_FAIL with %s",
-			enum_name(&ikev2_notify_names, v2_notify_num));
-	} else if (e != STF_OK) {
-		DBG_log("ikev2_parent_inI2outR2_tail returned %s",
-			enum_name(&stfstatus_name, e));
+	if (!finish_dh_v2(st, r, FALSE)) {
+		/*
+		 * Since dh failed, the channel isn't end-to-end
+		 * encrypted.  Send back a clear text notify and then
+		 * abandon the connection.
+		 */
+		DBG(DBG_CONTROL, DBG_log("aborting IKE SA: DH failed"));
+		send_v2_notification_from_md(*mdp, v2N_INVALID_SYNTAX, NULL);
+		complete_v2_state_transition(mdp, STF_FATAL);
+		return;
 	}
+
+	/* try to decrypt the packet */
+
+	struct ikev2_payloads_summary ps = ikev2_decrypt_msg(*mdp);
+	if (ps.status != STF_OK) {
+		/*
+		 * While our end things encryption is "up", things
+		 * clearly are not working.  Send an encrypted reply
+		 * and abandon the connection.
+		 *
+		 * Should this send back a cleartext notify.  Since we
+		 * can't decrypt their packets, chanse has it they
+		 * can't decrypt ours.
+		 */
+		DBG(DBG_CONTROL, DBG_log("aborting IKE SA: decryption failed"));
+		send_v2_notification_from_state(st, v2N_INVALID_SYNTAX, NULL);
+		complete_v2_state_transition(mdp, STF_FATAL);
+		return;
+	}
+
+	/* verify the payload contents */
+
+	stf_status e = ikev2_verify_enc_payloads(*mdp, ps);
+	if (e != STF_OK) {
+		/*
+		 * Something in the packet is bogus.  Drop everything.
+		 */
+		DBG(DBG_CONTROL, DBG_log("aborting IKE SA: invalid contents"));
+		send_v2_notification_from_state(st, v2N_INVALID_SYNTAX, NULL);
+		complete_v2_state_transition(mdp, STF_FATAL);
+		return;
+	}
+
+	/* The connection is "up", start authenticating it */
+
+	e = ikev2_parent_inI2outR2_continue_tail(st, *mdp);
+	DBG(DBG_CONTROL,
+	    if (e > STF_FAIL) {
+		    int v2_notify_num = e - STF_FAIL;
+		    DBG_log("ikev2_parent_inI2outR2_continue_tail returned STF_FAIL+%s",
+			    enum_name(&ikev2_notify_names, v2_notify_num));
+	    } else {
+		    DBG_log("ikev2_parent_inI2outR2_continue_tail returned %s",
+			    enum_name(&stfstatus_name, e));
+	    });
 
 	/*
 	 * if failed OE, delete state completly, no create_child_sa
@@ -3626,27 +3675,14 @@ static void ikev2_parent_inI2outR2_continue(struct state *st,
 	complete_v2_state_transition(mdp, e);
 }
 
-static stf_status ikev2_parent_inI2outR2_tail(struct state *st, struct msg_digest *md,
-					      struct pluto_crypto_req *r)
+static stf_status ikev2_parent_inI2outR2_continue_tail(struct state *st,
+						       struct msg_digest *md)
 {
 	stf_status ret = STF_OK;
 	enum ikev2_auth_method atype;
 
-	/* extract calculated values from r */
-	if (!finish_dh_v2(st, r, FALSE))
-		return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
-
 	ikev2_log_parentSA(st);
 
-	/* decrypt things. */
-	{
-		struct ikev2_payloads_summary ps = ikev2_decrypt_msg(md);
-		if (ps.status != STF_OK)
-			return ps.status;
-		ps.status = ikev2_verify_enc_payloads(md, ps);
-		if (ps.status != STF_OK)
-			return ps.status;
-	}
 	struct state *pst = IS_CHILD_SA(md->st) ?
 		state_with_serialno(md->st->st_clonedfrom) : md->st;
 	/* going to switch to child st. before that update parent */
