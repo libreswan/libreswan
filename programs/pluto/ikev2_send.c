@@ -38,6 +38,7 @@
 #include "ike_alg.h"
 #include "pluto_stats.h"
 #include "demux.h"	/* for struct msg_digest */
+#include "rnd.h"
 
 bool record_and_send_v2_ike_msg(struct state *st, pb_stream *pbs,
 				const char *what)
@@ -182,56 +183,68 @@ void send_v2_notification_from_state(struct state *pst,
 				     v2_notification_t ntype,
 				     chunk_t *ndata)
 {
+	const char *const notify_name = enum_short_name(&ikev2_notify_names, ntype);
+
+	/* XXX: while bogus, still less bogus the SA_INIT and message ID 0 */
+	const enum isakmp_xchg_types exchange_type = ISAKMP_v2_AUTH;
+	const char *const exchange_name = enum_short_name(&ikev2_exchange_names, exchange_type);
+	const unsigned message_id = 1;
+
 	ipstr_buf b;
-	libreswan_log("sending unencrypted notification %s to %s:%u",
-		      enum_name(&ikev2_notify_names, ntype),
+	libreswan_log("responding to %s message (ID %u) from %s:%u with encrypted notification %s",
+		      exchange_name, message_id,
 		      sensitive_ipstr(&pst->st_remoteaddr, &b),
-		      pst->st_remoteport);
-
-	pb_stream *reply = open_reply_pbs("notification msg");
-
-	/* HDR out */
-
-	/* incomplete, probably bogus */
-	enum isakmp_xchg_types exchange_type;
-	switch (pst->st_state) {
-	case STATE_PARENT_R2:
-		exchange_type = ISAKMP_v2_AUTH;
-		break;
-	default:
-		/* default to old behaviour of hardcoding ISAKMP_v2_SA_INIT */
-		exchange_type = ISAKMP_v2_SA_INIT;
-		break;
-	}
-	if (pst->st_reply_xchg != 0)
-		exchange_type = pst->st_reply_xchg; /* use received exchange type */
+		      pst->st_remoteport,
+		      notify_name);
 
 	/*
 	 * XXX unconditionally clearing original initiator flag is
-	 * wrong?  XXX: Since this is a notify, must it always be a
-	 * reply?
+	 * wrong!?! or is this only ever called by the original
+	 * responder?
+	 *
+	 * Since this is a notify, must it always be a response.
 	 */
+	lset_t flags = ISAKMP_FLAGS_v2_MSG_R;
+
+	pb_stream *reply = open_reply_pbs("encrypted notification msg");
+
 	pb_stream rbody = open_v2_message(reply,
 					  pst->st_icookie, pst->st_rcookie,
-					  ISAKMP_NEXT_v2N, exchange_type,
-					  ISAKMP_FLAGS_v2_MSG_R,
-					  0/*WRONG MESSAGE ID*/);
+					  ISAKMP_NEXT_v2SK, exchange_type,
+					  flags, message_id);
 	if (!pbs_ok(&rbody)) {
 		libreswan_log("error initializing hdr for notify message");
 		return;
 	}
+
+	struct v2sk_stream sk = ikev2_open_encrypted_payload(&rbody, ISAKMP_NEXT_v2NONE,
+							     ike_sa(pst), "notify");
+	if (!pbs_ok(&sk.payload)) {
+		return;
+	}
+
+	/* actual data */
 
 	if (!ship_v2N(ISAKMP_NEXT_v2NONE,
 		      DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG) ?
 		      (ISAKMP_PAYLOAD_NONCRITICAL | ISAKMP_PAYLOAD_LIBRESWAN_BOGUS) :
 		      ISAKMP_PAYLOAD_NONCRITICAL,
 		      IKEv2_SEC_PROTO_NONE, &empty_chunk, /* SPI */
-		      ntype, ndata, &rbody)) {
+		      ntype, ndata, &sk.payload)) {
 		return;
 	}
 
+	if (!ikev2_close_encrypted_payload(&sk)) {
+		return;
+	}
 	close_output_pbs(&rbody);
 	close_output_pbs(reply);
+
+	stf_status ret = ikev2_encrypt_payload(&sk);
+	if (ret != STF_OK) {
+		libreswan_log("error encrypting notify message");
+		return;
+	}
 
 	/*
 	 * The notification is piggybacked on the existing parent
@@ -240,7 +253,6 @@ void send_v2_notification_from_state(struct state *pst,
 	 * packet we are sending.
 	 */
 	send_chunk_using_state(pst, "v2 notify", pbs_as_chunk(reply));
-
 	pstats(ikev2_sent_notifies_e, ntype);
 }
 

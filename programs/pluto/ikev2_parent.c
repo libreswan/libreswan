@@ -6687,3 +6687,83 @@ void ikev2_addr_change(struct state *st)
 					sensitive_ipstr(&that.addr, &b)));
 	}
 }
+
+struct v2sk_stream ikev2_open_encrypted_payload(pb_stream *body,
+						enum next_payload_types_ikev2 next_payload,
+						struct ike_sa *ike,
+						const char *name)
+{
+	static const struct v2sk_stream empty_sk;
+	struct v2sk_stream sk = {
+		.ike = ike,
+		.name = name,
+	};
+
+	/* insert an Encryption payload header */
+
+	struct ikev2_generic e = {
+		.isag_np = next_payload,
+		.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL,
+		.isag_length = 0, /* filled in later */
+	};
+	if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
+		libreswan_log("setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP %s payload",
+			      sk.name);
+		e.isag_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
+	}
+	if (!out_struct(&e, &ikev2_sk_desc, body, &sk.payload)) {
+		libreswan_log("error initializing SK header for encrypted %s message",
+			      sk.name);
+		return empty_sk;
+	}
+
+	/* insert IV */
+
+	sk.iv = sk.payload.cur;
+	passert(sk.payload.cur <= sk.iv);
+	if (!emit_wire_iv(&ike->sa, &sk.payload)) {
+		libreswan_log("error initializing IV for encrypted %s message",
+			      sk.name);
+		return empty_sk;
+	}
+
+	/* save the start of cleartext proper */
+
+	sk.cleartext = sk.payload.cur;
+	passert(sk.iv <= sk.cleartext);
+
+	return sk;
+}
+
+bool ikev2_close_encrypted_payload(struct v2sk_stream *sk)
+{
+	/* padding + pad-length */
+
+	if (!ikev2_padup_pre_encrypt(&sk->ike->sa, &sk->payload)) {
+		libreswan_log("error initializing padding for encrypted %s payload",
+			      sk->name);
+		return false;
+	}
+
+	/* integrity checksum data */
+
+	sk->integrity = ikev2_authloc(&sk->ike->sa, &sk->payload);
+	passert(sk->cleartext <= sk->integrity);
+	if (sk->integrity == NULL) {
+		libreswan_log("error initializing integrity checksum for encrypted %s payload",
+			      sk->name);
+		return false;
+	}
+
+	/* close the SK payload */
+
+	close_output_pbs(&sk->payload);
+	return true;
+}
+
+stf_status ikev2_encrypt_payload(struct v2sk_stream *sk)
+{
+	return ikev2_encrypt_msg(sk->ike, sk->payload.container->start,
+				 sk->iv, sk->cleartext,
+				 sk->integrity);
+}

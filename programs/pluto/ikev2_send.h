@@ -21,8 +21,6 @@
 #include "packet.h"		/* for pb_stream */
 
 struct msg_digest;
-
-struct msg_digest;
 struct oakley_group_desc;
 
 bool record_and_send_v2_ike_msg(struct state *st, pb_stream *pbs,
@@ -46,6 +44,26 @@ pb_stream open_v2_message(pb_stream *reply,
 			  enum next_payload_types_ikev2 next_payload,
 			  enum isakmp_xchg_types exchange_type,
 			  lset_t flags, int message_id);
+
+typedef struct v2sk_stream {
+	struct ike_sa *ike;
+	pb_stream payload;
+	/* pointers into payload */
+	uint8_t *iv;
+	uint8_t *cleartext; /* where cleartext starts */
+	uint8_t *integrity;
+	const char *name;
+} v2sk_stream_t;
+
+v2sk_stream_t ikev2_open_encrypted_payload(pb_stream *container,
+					   enum next_payload_types_ikev2 np,
+					   struct ike_sa *st,
+					   const char *name);
+
+bool ikev2_close_encrypted_payload(v2sk_stream_t *sk);
+
+stf_status ikev2_encrypt_payload(v2sk_stream_t *sk);
+
 
 /* XXX: should be local to ikev2_send.c? */
 bool ship_v2N(enum next_payload_types_ikev2 np,
