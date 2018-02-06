@@ -3,6 +3,18 @@ See also https://libreswan.org/
 
 v3.24 (unreleased)
 * IKEv2: PPK support for authby=rsasig [Vukasin Karadzic]
+* addconn: Fix auto=route and auto=start processing [Paul]
+* IKEv2: IANA INTERNAL_DNSSEC_TA allocation added [Paul]
+* IKEv2: Add PPK support to authby=rsasig [Vukasin]
+* IKEv2: Don't calculate NO_PPK_AUTH when the POLICY is INSIST [Vukasin]
+* IKEv1: Cleanup packet send code [Andrew]
+* X509: Extend support for wildcard certs matching remote peer ID [Paul/Hugh]
+* pluto: Cleanup of state/md passing code [Andrew]
+* pluto: Allow switching back from wrong instance to template conn [Paul]
+* pluto: disentangle IKEv1 and IKEv2 packet sending code [Andrew]
+* _unbound-hook: Pass all IPSECKEY's to pluto, not just the first [Paul]
+* Bugtracker bugs fixed:
+   #318: vti interface gets down on previous initiator if roles switch [Tuomo]
 
 v3.23 (January 25, 2018)
 * IKEv2: MOBIKE support (RFC 4555) [Antony/Paul]

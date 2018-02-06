@@ -745,6 +745,7 @@ case "${PLUTO_VERB}" in
     up-client)
 	# connection to my client subnet coming up
 	# If you are doing a custom version, firewall commands go here.
+	addvtiiface
 	updateresolvconf
 	addcat
 	addsource

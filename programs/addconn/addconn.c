@@ -416,12 +416,11 @@ int main(int argc, char *argv[])
 		if (verbose)
 			printf("  Pass #1: Loading auto=add, auto=route and auto=start connections\n");
 
-		for (conn = cfg->conns.tqh_first;
-			conn != NULL;
-			conn = conn->link.tqe_next) {
+		for (conn = cfg->conns.tqh_first; conn != NULL; conn = conn->link.tqe_next) {
 			if (conn->desired_state == STARTUP_ADD ||
 				conn->desired_state == STARTUP_ONDEMAND ||
-				conn->desired_state == STARTUP_START) {
+				conn->desired_state == STARTUP_START)
+			{
 				if (verbose)
 					printf(" %s", conn->name);
 				resolve_defaultroute(conn);
@@ -436,30 +435,22 @@ int main(int argc, char *argv[])
 		starter_whack_listen(cfg);
 
 		if (verbose)
-			printf("  Pass #2: Routing auto=route and auto=start connections\n");
+			printf("  Pass #2: Routing auto=route connections\n");
 
-		for (conn = cfg->conns.tqh_first;
-			conn != NULL;
-			conn = conn->link.tqe_next) {
-			if (conn->desired_state == STARTUP_ADD ||
-				conn->desired_state == STARTUP_ONDEMAND ||
-				conn->desired_state == STARTUP_START) {
+		for (conn = cfg->conns.tqh_first; conn != NULL; conn = conn->link.tqe_next) {
+			if (conn->desired_state == STARTUP_ONDEMAND)
+			{
 				if (verbose)
 					printf(" %s", conn->name);
-				resolve_defaultroute(conn);
-				if (conn->desired_state == STARTUP_ONDEMAND ||
-				    conn->desired_state == STARTUP_START) {
+				if (conn->desired_state == STARTUP_ONDEMAND)
 					starter_whack_route_conn(cfg, conn);
-				}
 			}
 		}
 
 		if (verbose)
 			printf("  Pass #3: Initiating auto=start connections\n");
 
-		for (conn = cfg->conns.tqh_first;
-			conn != NULL;
-			conn = conn->link.tqe_next) {
+		for (conn = cfg->conns.tqh_first; conn != NULL; conn = conn->link.tqe_next) {
 			if (conn->desired_state == STARTUP_START) {
 				if (verbose)
 					printf(" %s", conn->name);

@@ -2083,8 +2083,8 @@ bool out_zero(size_t len, pb_stream *outs, const char *name)
 	}
 }
 
-pb_stream open_output_pbs(const void *struct_ptr, struct_desc *sd,
-			  pb_stream *outs)
+pb_stream open_output_struct_pbs(pb_stream *outs, const void *struct_ptr,
+				 struct_desc *sd)
 {
 	pb_stream obj_pbs;
 	if (out_struct(struct_ptr, sd, outs, &obj_pbs)) {
