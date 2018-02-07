@@ -948,3 +948,4 @@ kvmplutotest	ikev2-ppk-static-06-insist-insist-nokey-fail	good
 kvmplutotest	ikev2-ppk-static-07-large-id			good
 kvmplutotest	ikev2-ppk-static-08-no_ppk-responder		good
 kvmplutotest	ikev2-ppk-static-09-no_ppk-initiator		good
+kvmplutotest	ikev2-ppk-static-10-yes-no			good
