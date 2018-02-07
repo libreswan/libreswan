@@ -30,8 +30,6 @@ east #
  echo "initdone"
 initdone
 east #
- # TODO  put in a grep line confirming NO PPK usage
-east #
  ipsec whack --shutdown
 002 shutting down
 east #
