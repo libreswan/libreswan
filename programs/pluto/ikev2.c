@@ -1062,30 +1062,104 @@ void process_v2_packet(struct msg_digest **mdp)
 	}
 
 	/*
-	 * Find the corresponding state
+	 * Find the state that the packet is sent to.
+	 *
+	 * The only time there isn't a state is when the responder
+	 * first sees an SA_INIT request (or its forgotten that it has
+	 * seen it before).
 	 */
+
 	if (ix == ISAKMP_v2_SA_INIT) {
 		/*
-		 * For INIT messages, need to lookup using the ICOOKIE
-		 * and the expected state.  The RCOOKIE probably won't
-		 * match.
-		 *
-		 * An INIT-request has RCOOKIE=0.  In the case of a
-		 * re-transmit, where the original responder is in
-		 * state STATE_PARENT_R1 and has set its RCOOKIE to
-		 * something non-zero, that won't match.
-		 *
-		 * An INIT-response as RCOOKIE!=0 (lets ignore
-		 * INVALID_KE).  Since the original responder, which
-		 * is in state STATE_PARENT_i1, still has RCOOKIE=0
-		 * that won't match.
+		 * The message ID of the initial exchange is always
+		 * zero.
 		 */
-		enum state_kind expected_state = (sent_by_ike_initiator
-						  ? STATE_PARENT_R1
-						  : STATE_PARENT_I1);
-		st = ikev2_find_state_in_init(md->hdr.isa_icookie,
-						  expected_state);
-		if (st != NULL && md->original_role == ORIGINAL_INITIATOR) {
+		if (md->msgid_received != 0) {
+			libreswan_log("dropping IKE_SA_INIT packet containing non-zero message ID");
+			return;
+		}
+		/*
+		 * The initiator must send: IKE_I && !MSG_R
+		 * The responder must send: !IKE_I && MSG_R.
+		 */
+		if (sent_by_ike_initiator == msg_r) {
+			libreswan_log("dropping IKE_SA_INIT packet with conflicting initiator and responder flags");
+			return;
+		}
+		/*
+		 * Now try to find the state
+		 */
+		if (sent_by_ike_initiator) {
+			/*
+			 * Sent by the IKE initiator; look for the IKE
+			 * responder's state.
+			 *
+			 * If this is a new request, there will be no
+			 * state.  For a re-transmit, the request will
+			 * have RCOOKIE=0, but the state will have
+			 * RCOOKIE set for the previous reply so can't
+			 * match.  Hence, search the ICOOKIE table.
+			 *
+			 * XXX: Is this too strict?  If a a duplicate
+			 * appears after SA is established, the
+			 * duplicate will trigger a new IKE SA.
+			 */
+			st = ikev2_find_state_in_init(md->hdr.isa_icookie,
+						      STATE_PARENT_R1);
+			if (st != NULL) {
+				/*
+				 * Must be a duplicate!  Only question
+				 * is: should a re re-transmit be sent
+				 * back, or should it simply be
+				 * dropped.
+				 *
+				 * XXX: STATE_PARENT_R1 is unique in
+				 * that when the crypto finishes,
+				 * there isn't a state transition to
+				 * the next state.  For all other
+				 * cases, things go OLD -> OLD+BUSY ->
+				 * NEW?
+				 */
+				pexpect(st->st_msgid_lastrecv == 0); /* since state R1 */
+				so_serial_t old_state = push_cur_state(st);
+				if (state_is_busy(st)) {
+					libreswan_log("IKE_SA_INIT retransmission ignored: we're still working on the previous one");
+				} else {
+					/* XXX: Safe to assume there is a reply? */
+					LSWDBGP(DBG_CONTROLMORE|DBG_RETRANSMITS, buf) {
+						lswlog_retransmit_prefix(buf, st);
+						lswlogf(buf, "duplicate IKE_INIT_I message received, retransmiting previous packet");
+					}
+					send_recorded_v2_ike_msg(st, "ikev2-responder-retransmit IKE_SA_INIT");
+				}
+				pop_cur_state(old_state);
+				return;
+			}
+			/* update lastrecv later on */
+		} else {
+			/*
+			 * Sent by IKE responder; look for the IKE
+			 * initiator's state.
+			 *
+			 * An INIT-response contains an as yet unknown
+			 * non-zero RCOOKIE (lets ignore INVALID_KE)
+			 * so looking for it won't work.
+			 *
+			 * Search for the state in the ICOOKIE table
+			 * and require the initial initiator state.
+			 */
+			st = ikev2_find_state_in_init(md->hdr.isa_icookie,
+						      STATE_PARENT_I1);
+			if (st == NULL) {
+				/*
+				 * There should be a state matching
+				 * the original initiator's cookie.
+				 * Since there isn't someone's playing
+				 * games.  Drop the packet.
+				 */
+				libreswan_log("no matching state for IKE_SA_INIT response");
+				return;
+			}
 			/*
 			 * Responder provided a cookie, record it.
 			 *
@@ -1096,29 +1170,6 @@ void process_v2_packet(struct msg_digest **mdp)
 			 * all.
 			 */
 			rehash_state(st, NULL, md->hdr.isa_rcookie);
-		}
-
-		/*
-		 * We need to check if this IKE_INIT is a retransmit
-		 */
-		if (st != NULL && md->original_role == ORIGINAL_RESPONDER) {
-			if (st->st_msgid_lastrecv == md->msgid_received) {
-				/* this is a recent retransmit. */
-				so_serial_t old_state = push_cur_state(st);
-				if (st->st_suspended_md != NULL) {
-					libreswan_log("IKE_INIT_I retransmission ignored: we're still working on the previous one");
-				} else {
-					LSWDBGP(DBG_CONTROLMORE|DBG_RETRANSMITS, buf) {
-						lswlog_retransmit_prefix(buf, st);
-						lswlogf(buf, "duplicate IKE_INIT_I message received, retransmiting previous packet");
-					}
-					send_recorded_v2_ike_msg(st, "ikev2-responder-retransmit IKE_INIT_I");
-				}
-				pop_cur_state(old_state);
-				return;
-			}
-			/* update lastrecv later on */
-
 		}
 	} else if (!msg_r) {
 		/*
