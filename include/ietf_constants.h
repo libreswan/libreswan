@@ -1486,12 +1486,14 @@ typedef enum {
 	v2N_SENDER_REQUEST_ID = 16429, /* draft-yeung-g-ikev2 */
 	v2N_IKEV2_FRAGMENTATION_SUPPORTED = 16430, /* RFC-7383 */
 	v2N_SIGNATURE_HASH_ALGORITHMS = 16431, /* RFC-7427 */
+	v2N_CLONE_IKE_SA_SUPPORTED = 16432 /* RFC-7791 */
+	v2N_CLONE_IKE_SA = 16433 /* RFC-7791 */
+	v2N_PUZZLE = 16434 /* RFC-8019 */
+	v2N_USE_PPK = 16435, /* draft-ietf-ipsecme-qr-ikev2 */
+	v2N_PPK_IDENTITY = 16436, /* draft-ietf-ipsecme-qr-ikev2 */
+	v2N_NO_PPK_AUTH = 16437, /* draft-ietf-ipsecme-qr-ikev2 */
 
-	v2N_USE_PPK = 40960,            /* draft-ietf-ipsecme-qr-ikev2-01 */
-	v2N_PPK_IDENTITY = 40961,       /* draft-ietf-ipsecme-qr-ikev2-01 */
-	v2N_NO_PPK_AUTH = 40962,        /* draft-ietf-ipsecme-qr-ikev2-01 */
-
-	/* 16432 - 40969 Unassigned */
+	/* 16438 - 40969 Unassigned */
 	/* 40960 - 65535 Private Use */
 } v2_notification_t;
 

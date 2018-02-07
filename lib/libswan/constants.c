@@ -1634,20 +1634,6 @@ static enum_names ikev2_ppk_id_type_names = {
 };
 */
 
-static const char *const ikev2_notify_name_private[] = {
-	"v2N_USE_PPK",
-	"v2N_PPK_IDENTITY",
-	"v2N_NO_PPK_AUTH",
-};
-
-static enum_names ikev2_notify_names_private = {
-	v2N_USE_PPK,
-	v2N_NO_PPK_AUTH,
-	ARRAY_REF(ikev2_notify_name_private),
-	"v2N_", /* prefix */
-	NULL
-};
-
 /* http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-13 */
 static const char *const ikev2_notify_name_16384[] = {
 	"v2N_INITIAL_CONTACT",    /* 16384 */
@@ -1698,14 +1684,20 @@ static const char *const ikev2_notify_name_16384[] = {
 	"v2N_SENDER_REQUEST_ID",
 	"v2N_IKEV2_FRAGMENTATION_SUPPORTED",    /* 16430 */
 	"v2N_SIGNATURE_HASH_ALGORITHMS",
+	"v2N_CLONE_IKE_SA_SUPPORTED",
+	"v2N_CLONE_IKE_SA",
+	"v2N_PUZZLE",
+	"v2N_USE_PPK", /* 16435 */
+	"v2N_PPK_IDENTITY",
+	"v2N_NO_PPK_AUTH",
 };
 
 static enum_names ikev2_notify_names_16384 = {
 	v2N_INITIAL_CONTACT,
-	v2N_SIGNATURE_HASH_ALGORITHMS,
+	v2N_NO_PPK_AUTH,
 	ARRAY_REF(ikev2_notify_name_16384),
 	"v2N_", /* prefix */
-	&ikev2_notify_names_private
+	NULL
 };
 
 static const char *const ikev2_notify_name[] = {
