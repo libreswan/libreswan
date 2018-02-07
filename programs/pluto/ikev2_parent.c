@@ -3749,18 +3749,14 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 				break;
 			}
 
-			if (LIN(POLICY_PPK_ALLOW, policy)) {
-				no_ppk_auth = alloc_chunk(len, "NO_PPK_AUTH");
+			no_ppk_auth = alloc_chunk(len, "NO_PPK_AUTH");
 
-				if (!in_raw(no_ppk_auth.ptr, len, &pbs, "NO_PPK_AUTH extract")) {
-					loglog(RC_LOG_SERIOUS, "Failed to extract %zd bytes of NO_PPK_AUTH from Notify payload", len);
-					return STF_FATAL;
-				}
-				DBG(DBG_PRIVATE, DBG_dump_chunk("NO_PPK_AUTH:", no_ppk_auth));
-				st->st_no_ppk_auth = no_ppk_auth;
-			} else {
-				libreswan_log("ignored received NO_PPK_AUTH - connection does not allow PPK");
+			if (!in_raw(no_ppk_auth.ptr, len, &pbs, "NO_PPK_AUTH extract")) {
+				loglog(RC_LOG_SERIOUS, "Failed to extract %zd bytes of NO_PPK_AUTH from Notify payload", len);
+				return STF_FATAL;
 			}
+			DBG(DBG_PRIVATE, DBG_dump_chunk("NO_PPK_AUTH:", no_ppk_auth));
+			st->st_no_ppk_auth = no_ppk_auth;
 			break;
 		}
 		case v2N_MOBIKE_SUPPORTED:
@@ -3774,8 +3770,11 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 		}
 	}
 
-	/* if we found proper PPK ID, we should use that without fallback to no ppk */
-	if (found_ppk)
+	/*
+	 * If we found proper PPK ID and policy allows PPK, use that.
+	 * Otherwise use NO_PPK_AUTH
+	 */
+	if (found_ppk && LIN(POLICY_PPK_ALLOW, policy))
 		freeanychunk(st->st_no_ppk_auth);
 
 	if (!found_ppk && LIN(POLICY_PPK_INSIST, policy)) {
