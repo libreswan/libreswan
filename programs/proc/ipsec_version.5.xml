@@ -32,7 +32,7 @@ It is not supported on any other stack.</para>
 
 <refsect1 id='description'><title>DESCRIPTION</title>
 <para><filename>/proc/net/ipsec_version</filename>
-is a read-only file which lists the currently running KLIPS version
+is a read-only file that lists the currently running KLIPS version
 information.</para>
 
 </refsect1>

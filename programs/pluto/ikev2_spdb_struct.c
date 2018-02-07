@@ -1658,7 +1658,7 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 		 * algorithm database for anything matching the
 		 * encryption algorithm and marked as a default.
 		 *
-		 * Also muddying the waters is ESP which proposes a
+		 * Also muddying the waters is ESP that proposes a
 		 * smaller key in preference to a larger one.
 		 *
 		 * If one of these keys turns out to be 0 or a

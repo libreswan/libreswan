@@ -155,7 +155,7 @@ int ike_alg_enum_match(const struct ike_alg_type *type, enum ike_alg_key key,
  * suspect) SADB/KLIPS, the've gone off the rails.  Over time they've
  * picked up IKEv2 values making for general confusion.  Worse, as
  * noted above, CAMELLIA had the IKEv2 value 23 (IKEv1 is 22)
- * resulting in code never being sure if which it is dealing with.
+ * resulting in code never being sure of which it is dealing with.
  *
  * These values are not included in this table.
  *

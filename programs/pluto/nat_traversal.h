@@ -27,7 +27,7 @@
  */
 
 /**
- * NAT-Traversal methods which need NAT-D
+ * NAT-Traversal methods that need NAT-D
  */
 
 #if 0
@@ -39,14 +39,14 @@
 #endif
 
 /**
- * NAT-Traversal methods which need NAT-OA (Original Address)
+ * NAT-Traversal methods that need NAT-OA (Original Address)
  */
 #define NAT_T_WITH_NATOA \
 	( LELEM(NAT_TRAVERSAL_METHOD_IETF_02_03) | \
 	  LELEM(NAT_TRAVERSAL_METHOD_IETF_05) | \
 	  LELEM(NAT_TRAVERSAL_METHOD_IETF_RFC) )
 /**
- * NAT-Traversal methods which use NAT-KeepAlive
+ * NAT-Traversal methods that use NAT-KeepAlive
  */
 #define NAT_T_WITH_KA \
 	( LELEM(NAT_TRAVERSAL_METHOD_IETF_02_03) | \
@@ -54,13 +54,13 @@
 	  LELEM(NAT_TRAVERSAL_METHOD_IETF_RFC) )
 
 /**
- * NAT-Traversal methods which use officials values (RFC)
+ * NAT-Traversal methods that use officials values (RFC)
  */
 #define NAT_T_WITH_RFC_VALUES \
 	LELEM(NAT_TRAVERSAL_METHOD_IETF_RFC)
 
 /**
- * NAT-Traversal methods which use officials values (RFC) for encapsulation
+ * NAT-Traversal methods that use officials values (RFC) for encapsulation
  */
 #define NAT_T_WITH_ENCAPSULATION_RFC_VALUES \
 	( LELEM(NAT_TRAVERSAL_METHOD_IETF_RFC) )

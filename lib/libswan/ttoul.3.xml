@@ -134,7 +134,7 @@ under no circumstances are more than
 <varname role='parameter'>dstlen</varname>
 bytes written to
 <varname role='parameter'>dst</varname>.
-A result which will not fit is truncated.
+A result that will not fit is truncated.
 <emphasis remap='I'>Dstlen</emphasis>
 can be zero, in which case
 <varname role='parameter'>dst</varname>
@@ -216,7 +216,7 @@ see DIAGNOSTICS.
 returns
 <literal>0</literal>
 for a failure, and otherwise
-returns the size of buffer which would
+returns the size of buffer that would
 be needed to
 accommodate the full conversion result, including terminating NUL
 (it is the caller's responsibility to check this against the size of

@@ -33,9 +33,9 @@ versions. A replacement command still needs to be designed</para>
 
 <refsect1 id='description'><title>DESCRIPTION</title>
 <para><filename>/proc/net/ipsec/stats/trap_count</filename>
-is a read-only file. It contains a hexadecimal number which records the
-number of attempts to send PF_ACQUIRE messages. Only those recorded by
-trap_sendcount were actually successfully passed to userland. Note that the
+is a read-only file. It contains a hexadecimal number, the
+count of attempts to send PF_ACQUIRE messages.
+Only those successfully passed to userland are counted. Note that the
 userland may still have lost them on its own.</para>
 
 </refsect1>

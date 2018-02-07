@@ -58,7 +58,7 @@ include ${LIBRESWANSRCDIR}/mk/objdir.mk
 include ${LIBRESWANSRCDIR}/mk/defaults/${BUILDENV}.mk
 
 # Variables in this file with names starting with INC_ are not for use
-# by Makefiles which include it; they are subject to change without warning.
+# by Makefiles that include this file; they are subject to change without warning.
 #
 # "Final" and "finally" refer to where the files will end up on the
 # running IPsec system, as opposed to where they get installed by our
@@ -91,7 +91,7 @@ DESTDIR?=
 INC_USRLOCAL?=/usr/local
 
 # PUBDIR is where the "ipsec" command goes; beware, many things define PATH
-# settings which are assumed to include it (or at least, to include *some*
+# settings which are assumed to include PUBDIR (or at least, to include *some*
 # copy of the "ipsec" command).
 PUBDIR?=$(DESTDIR)$(INC_USRLOCAL)/sbin
 
@@ -165,7 +165,7 @@ LOGDIR?=$(DESTDIR)$(FINALLOGDIR)
 INITSYSTEM ?= $(shell $(SHELL) $(top_srcdir)/packaging/utils/lswan_detect.sh init)
 
 # An attempt is made to automatically figure out where boot/shutdown scripts
-# will finally go:  the first directory in INC_RCDIRS which exists gets them.
+# will finally go:  the first directory in INC_RCDIRS that exists gets them.
 # If none of those exists (or INC_RCDIRS is empty), INC_RCDEFAULT gets them.
 # With a non-null DESTDIR, INC_RCDEFAULT will be used unless one of the
 # INC_RCDIRS directories has been pre-created under DESTDIR.

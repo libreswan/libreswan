@@ -162,6 +162,7 @@ struct id_list *lsw_get_idlist(const struct secret *s)
 /*
  * This is a bad assumption, and fails when people put PSK
  * entries before the default RSA case, which most people do
+ * ??? what is a bad assumption?
  */
 struct secret *lsw_get_defaultsecret(struct secret *secrets)
 {

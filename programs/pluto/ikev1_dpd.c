@@ -111,7 +111,7 @@
  * The phase 2 dpd_init() will attempt to kill the phase 1 DPD_EVENT, if it
  * can, to reduce the amount of work.
  *
- * The st_last_dpd member which is used is always the one from the phase 1.
+ * The st_last_dpd member that is used is always the one from the phase 1.
  * So, if there are multiple phase 2s, then if any of them receive DPD data
  * they will update the st_last_dpd, so the test in #2 will avoid the traffic
  * for all by one phase 2.

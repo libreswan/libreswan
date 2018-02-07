@@ -899,7 +899,7 @@
       <para>No special requirements are necessary to use NETKEY - it ships
       with all modern versions of Linux 2.4 and 2.6. however, note that
       certain vendors or older distributions use old versions or backports of
-      NETKEY which are broken. If possible use a NETKEY version that is at
+      NETKEY that are broken. If possible use a NETKEY version that is at
       least based on, or backported from Linux 2.6.11 or newer.</para>
     </refsect2>
 
@@ -2008,8 +2008,8 @@
           <term><option>--checkpubkeys</option></term>
 
           <listitem>
-            <para>list all the loaded X.509 certificates which are about to
-            expire or have been expired.</para>
+            <para>list all the loaded X.509 certificates that are about to
+            expire or have expired.</para>
           </listitem>
         </varlistentry>
 
@@ -2971,7 +2971,7 @@
       remap="B">pluto</emphasis> will receive an Identity Payload. At this
       point, <emphasis remap="B">pluto</emphasis> checks for a more
       appropriate connection, one with an identity for the peer that matches
-      the payload but which would use the same keys so far used for
+      the payload and would use the same keys as so far used for
       authentication. If it finds one, it will switch to using this better
       connection (or a temporary one derived from this, if it has <emphasis
       remap="B">%any</emphasis> for the peer's IP address). It may even turn
@@ -3367,7 +3367,7 @@
       <para>Combine these three rules, and you can explain many apparently
       mysterious behaviours. In a <emphasis remap="B">pluto</emphasis> log,
       retrying isn't usually the interesting event. The critical thing is
-      either earlier (<emphasis remap="B">pluto</emphasis> got a message which
+      either earlier (<emphasis remap="B">pluto</emphasis> got a message that
       it didn't like and so ignored, so it was still awaiting an acceptable
       message and got impatient) or on the other system (<emphasis
       remap="B">pluto</emphasis> didn't send a reply because it wasn't happy

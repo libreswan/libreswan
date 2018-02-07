@@ -43,7 +43,7 @@ addresses separated by a
 delimiter.
 If there are four dots rather than three, the first is taken as
 part of the begin address,
-e.g. for a complete DNS name which ends with
+e.g. for a complete DNS name that ends with
 .B .
 to suppress completion attempts.
 The begin address of a range must be
@@ -77,7 +77,7 @@ The
 .I addrs
 parameter must point to a two-element array of
 .B "struct in_addr"
-which receives the results.
+that receives the results.
 The values stored into
 .BR *type ,
 and the corresponding values in the array, are:
@@ -102,7 +102,7 @@ under no circumstances are more than
 .I dstlen
 bytes written to
 .IR dst .
-A result which will not fit is truncated.
+A result that will not fit is truncated.
 .I Dstlen
 can be zero, in which case
 .I dst
@@ -137,7 +137,7 @@ see DIAGNOSTICS.
 returns
 .B 0
 for a failure, and otherwise
-always returns the size of buffer which would
+returns the size of buffer that would
 be needed to
 accommodate the full conversion result, including terminating NUL;
 it is the caller's responsibility to check this against the size of

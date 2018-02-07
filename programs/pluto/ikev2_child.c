@@ -1296,7 +1296,7 @@ static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st, int af)
 		if (sameaddr(&c->spd.this.client.addr, &ip)) {
 			/* The address we received is same as this side
 			 * should we also check the host_srcip */
-			DBG(DBG_CONTROL, DBG_log("#%lu %s[%lu] received NTERNAL_IP%s_ADDRESS which is same as this.client.addr %s. Will not add CAT iptable rules",
+			DBG(DBG_CONTROL, DBG_log("#%lu %s[%lu] received INTERNAL_IP%s_ADDRESS that is same as this.client.addr %s. Will not add CAT iptable rules",
 				st->st_serialno, c->name, c->instance_serial,
 				af == AF_INET ? "4" : "6",
 				ipstr(&ip, &ip_str)));

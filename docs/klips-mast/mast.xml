@@ -134,7 +134,7 @@ devices, but the flow of the packets that emerge do so in a uniform manner.
 <para>
 The first way is called the PPP method.
 A <application>mast</application> is considered to
-be portal to to which
+be portal to which
 packets that need a predefined kind of encapsulation may be sent.
 The <application>mast</application>
 acts as a point to point device - a virtual leased line - sending all packets

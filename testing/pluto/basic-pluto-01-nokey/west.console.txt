@@ -17,7 +17,7 @@ initdone
 west #
  ipsec whack --debug-all --impair retransmits
 west #
- # this is expected to fail to to our own misconfigured key
+ # this is expected to fail to our own misconfigured key
 west #
  ipsec auto --up  westnet-eastnet
 002 "westnet-eastnet" #1: initiating Main Mode

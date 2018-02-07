@@ -47,11 +47,11 @@ sadb_x_ipsecrequest
 from a human\-readable policy specification\&. The policy specification must be given as a C string, passed in the
 \fIpolicy\fR
 argument and the length of the string, given as
-\fIlen\fR\&. The ipsec_set_policy(); function returns pointer to a buffer which contains a properly formed IPsec policy specification structure\&. The buffer is dynamically allocated, and must be freed by using the
+\fIlen\fR\&. The ipsec_set_policy(); function returns pointer to a buffer that contains a properly formed IPsec policy specification structure\&. The buffer is dynamically allocated, and must be freed by using the
 \fBfree\fR(3)
 library function\&.
 .PP
-The ipsec_get_policylen(); function will returns the of the buffer which is needed when passing the specification structure to the
+The ipsec_get_policylen(); function will returns the address of the buffer that is needed when passing the specification structure to the
 \fBsetsockopt\fR(2)
 system call\&.
 .PP
@@ -107,7 +107,7 @@ means that matching packets are processed by IPsec\&.
 ipsec
 can be followed by one or more
 \fIrequest\fR
-string, which is formatted as:
+strings, each formatted as:
 .PP
 \fIprotocol\fR \fI \fR / \fImode\fR \fI \fR / \fIsrc\fR \fI \fR \- \fIdst\fR \fI \fR \fI/level\fR \fI \fR
 .RS 4

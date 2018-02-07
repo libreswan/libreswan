@@ -1368,7 +1368,7 @@ static enum ipsec_rcv_value ipsec_rcv_auth_decap(struct ipsec_rcv_state *irs)
 	/*
 	 *
 	 * XXX we should ONLY update pluto if the SA passes all checks,
-	 *     which we clearly do not now.
+	 *     which we clearly {do not know | don't do now}.
 	 */
 	if (irs->natt_type != 0 &&
 	    (irs->ipp->saddr !=

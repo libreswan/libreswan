@@ -112,7 +112,7 @@ is a comment and is ignored, as are empty lines.</para>
 
 <para>A connection in
 <filename>ipsec.conf</filename>
-which has
+that has
 <emphasis remap='B'>right=%group</emphasis>
 or
 <emphasis remap='B'>right=%opportunisticgroup</emphasis>

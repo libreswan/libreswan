@@ -202,7 +202,7 @@ All base64 numbers are entered as strings of base64 digits
  (0-9, A-Z, a-z, '+' and '/'), without spaces, preceded by '0s',
 where each hexadecimal digit represents 6 bits and '=' is used for padding.</para>
 
-<para>The deletion of an SA which has been grouped will result in the entire chain
+<para>The deletion of an SA that has been grouped will result in the entire chain
 being deleted.</para>
 
 <para>The form with no additional arguments lists the contents of

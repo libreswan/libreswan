@@ -108,7 +108,7 @@ YOU SHOULD NOT HAVE BOTH DES_RISC1 AND DES_RISC2 DEFINED !!!!!
  * They are only used if nothing else has been defined */
 #if !defined(DES_PTR) && !defined(DES_RISC1) && !defined(DES_RISC2) && \
 	!defined(DES_UNROLL)
-/* Special defines which change the way the code is built depending on the
+/* Special defines that change the way the code is built depending on the
    CPU and OS.  For SGI machines you can use _MIPS_SZLONG (32 or 64) to find
    even newer MIPS CPU's, but at the moment one size fits all for
    optimization options.  Older Sparc's work better with only UNROLL, but

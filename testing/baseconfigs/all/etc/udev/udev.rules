@@ -3,7 +3,7 @@
 #
 # %n the "kernel number" of the device.
 #    For example, 'sda3' has a "kernel number" of '3'
-# %e the smallest number for that name which does not matches an existing node
+# %e the smallest number for that name which does not match an existing node
 # %k the kernel name for the device.
 # %M the kernel major number for the device
 # %m the kernel minor number for the device

@@ -36,7 +36,7 @@
 
 <refsect1 id='description'><title>DESCRIPTION</title>
 <para><emphasis remap='I'>Rangetosubnet</emphasis>
-accepts two IP addresses which define an address range,
+accepts a pair of IP addresses to specify an address range,
 from
 <varname role='parameter'>start</varname>
 to

@@ -209,8 +209,8 @@
     hexadecimal numbers where '.' represents IPv4 and ':' stands for
     IPv6.</para>
 
-    <para>SAIDs are written as "protoafSPI@address". There are also 5 "magic"
-    SAIDs which have special meaning:</para>
+    <para>SAIDs are written as "protoafSPI@address". There are also five "magic"
+    SAIDs that have special meaning:</para>
 
     <variablelist remap="IP">
       <varlistentry>

@@ -142,8 +142,8 @@ and
 SPIs are prefixed hexadecimal numbers where the prefix '.' is for IPv4 and the prefix ':' is for IPv6</para>
 
 
-<para>SAIDs are written as "protoafSPI@edst".  There are also 5
-"magic" SAIDs which have special meaning:</para>
+<para>SAIDs are written as "protoafSPI@edst".  There are also five
+"magic" SAIDs that have special meaning:</para>
 <variablelist remap='IP'>
   <varlistentry>
   <term>+</term>
@@ -212,7 +212,7 @@ on the other end of the tunnel with a Security Association IDentifier of
 which means that it is a tunnel mode connection (4, IPPROTO_IPIP) with a
 Security Parameters Index of
 <literal>130</literal>
-in hexadecimal with no identies defined for either end.</para>
+in hexadecimal with no identities defined for either end.</para>
 
 <para><emphasis remap='B'>746     192.168.2.110/32:0  -&gt; 192.168.2.120/32:25   =&gt; esp0x130@192.168.2.120:6 </emphasis>
 <!-- .br -->

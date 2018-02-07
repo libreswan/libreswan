@@ -63,11 +63,13 @@ static bool pack_str(struct whackpacker *wp, char **p)
 }
 
 /**
- * Unpack a whack message into a string
+ * Unpack the next string from a whack message
  *
  * @param wp Whack Message
- * @param p a string into which you want the message to be placed into
- * @return bool True if operation successful
+ * @param p pointer to a string pointer; the string pointer will point to the next string in *wp.
+ * @return bool TRUE if operation successful
+ *
+ * Note that the string still resides in the whach message.
  */
 static bool unpack_str(struct whackpacker *wp, char **p)
 {

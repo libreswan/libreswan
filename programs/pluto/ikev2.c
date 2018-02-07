@@ -1033,7 +1033,7 @@ void process_v2_packet(struct msg_digest **mdp)
 	const struct state_v2_microcode *svm;
 	struct state *st = NULL;
 
-	/* Look for an state which matches the various things we know:
+	/* Look for an state that matches the various things we know:
 	 *
 	 * 1) exchange type received?
 	 * 2) is it initiator or not?

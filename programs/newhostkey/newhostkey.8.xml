@@ -157,7 +157,7 @@ amounts of CPU time.
 See <citerefentry><refentrytitle>ipsec_rsasigkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>
 .</para>
 
-<para>A higher-level tool which could handle the clerical details of changing
+<para>A higher-level tool that could handle the clerical details of changing
 to a new key would be helpful.</para>
 
 </refsect1>

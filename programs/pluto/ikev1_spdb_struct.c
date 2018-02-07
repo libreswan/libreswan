@@ -1108,7 +1108,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 
 	passert(c != NULL);
 
-	/* calculate the per-end policy which might apply */
+	/* calculate the per-end policy that might apply */
 	const struct spd_route *spd;
 
 	for (spd = &c->spd; spd != NULL; spd = spd->spd_next) {

@@ -46,7 +46,7 @@
 
     <para>The --rootdir option changes the programs idea of what "/" is when
     processing include directives. This is useful when validating a
-    configuration which is not installed on a target system yet.</para>
+    configuration that is not installed on a target system yet.</para>
 
   </refsect1>
 </refentry>

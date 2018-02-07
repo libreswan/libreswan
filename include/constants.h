@@ -32,7 +32,7 @@ struct lswlog;
  * This file was split into internal contants (Libreswan/pluto related),
  * and external constants (defined by IETF, etc.)
  *
- * Constants which are kernel/IPsec related are in appropriate
+ * Constants that are kernel/IPsec related are in appropriate
  * libreswan / *.h files.
  *
  */

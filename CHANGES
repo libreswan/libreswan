@@ -290,7 +290,7 @@ v3.19 (January 15, 2017)
 * pluto: Avoid adding duplicate bare shunts causing lockup [Paul]
 * pluto: drop modp1024 (DH2) from IKEv1 "ike=" default list [Andrew]
 * pluto: send_packet() now refuses to send a packet to 0.0.0.0 [Paul]
-* pluto: find_hostpair ignore CK_INSTANCES which are ID_NULL [Antony]
+* pluto: find_hostpair ignore CK_INSTANCES that are ID_NULL [Antony]
 * pluto: Fix ca name and generalName leak lsbz#276 [Bill Rios]
 * pluto: EXPERIMENTAL SECCOMP support (seccomp=enabled|tolerant|disabled) [Paul]
 * pluto: connection instances need their own reqid [Antony]

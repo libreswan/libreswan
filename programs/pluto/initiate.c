@@ -169,7 +169,7 @@ bool orient(struct connection *c)
 	}
 	/*
 	 * If we are oriented, update asymmetric policy into the symmetric one
-	 * which is used by various connection lookup functions.
+	 * that is used by various connection lookup functions.
 	 * add_connection() guaranteed there were no conflicts.
 	 */
 	if (!NEVER_NEGOTIATE(c->policy) && c->spd.this.authby != AUTH_UNSET) {

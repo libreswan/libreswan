@@ -131,7 +131,7 @@ to an IPv4 address is always complete and does not contain leading zeros.</para>
 <para>Use of hexadecimal addresses is
 <emphasis remap='B'>strongly discouraged</emphasis>;
 they are included only to save hassles when dealing with
-the handful of perverted programs which already print
+the handful of perverted programs that print
 network addresses in hexadecimal.</para>
 
 <para>An IPv6 address is specified in text with
@@ -258,7 +258,7 @@ under no circumstances are more than
 <varname role='parameter'>dstlen</varname>
 bytes written to
 <varname role='parameter'>dst</varname>.
-A result which will not fit is truncated.
+A result that will not fit is truncated.
 <emphasis remap='I'>Dstlen</emphasis>
 can be zero, in which case
 <varname role='parameter'>dst</varname>
@@ -308,7 +308,7 @@ see DIAGNOSTICS.
 The binary-to-text functions return
 <literal>0</literal>
 for a failure, and otherwise
-always return the size of buffer which would
+always return the size of buffer that would
 be needed to
 accommodate the full conversion result, including terminating NUL;
 it is the caller's responsibility to check this against the size of
@@ -392,7 +392,7 @@ conversion of an IPv6 address uses lowercase hexadecimal,
 not the uppercase used in RFC 2874's examples.
 It takes careful reading of RFCs 2874, 2673, and 2234 to realize
 that lowercase is technically legitimate here,
-and there may be software which botches this
+and there may be software that botches this
 and hence would have trouble with lowercase hex.</para>
 
 <para>Possibly
