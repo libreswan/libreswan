@@ -271,19 +271,6 @@ const struct state_v2_microcode ikev2_parent_firststate_microcode =
 	  .crypto_end = ikev2_parent_outI1_tail,
 	  .timeout_event = EVENT_v2_RETRANSMIT, };
 
-/* microcode to child IKE rekey initiator state: not associated with an input packet */
-const struct state_v2_microcode ikev2_rekey_ike_firststate_microcode =
-	/* no state:   --> REKEY_IKE_I
-	 * HDR, SAi1, KEi, Ni -->
-	 */
-	{ .story      = "Initiate CREATE_CHILD_SA IKE Rekey",
-	  .state      = STATE_V2_REKEY_IKE_I0,
-	  .next_state = STATE_V2_REKEY_IKE_I,
-	  .flags      = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
-	  .processor  = NULL,
-	  .crypto_end = ikev2_child_out_cont,
-	  .timeout_event = EVENT_v2_RETRANSMIT, };
-
 const struct state_v2_microcode ikev2_create_child_initiate_microcode =
 	/* no state:   --> CREATE IPsec Child Request
 	 * HDR, SAi1, {KEi,} Ni TSi TSr -->
