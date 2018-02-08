@@ -2764,6 +2764,12 @@ IETF registry enum_names:
          match IKEv2_INTERNAL_DNS_DOMAIN: OK
          short_name 25:  OK
          lswlog_enum_short 25: OK
+   26 -> IKEv2_INTERNAL_DNSSEC_TA
+         lswlog_enum 26: OK
+         search IKEv2_INTERNAL_DNSSEC_TA: OK
+         match IKEv2_INTERNAL_DNSSEC_TA: OK
+         short_name 26:  OK
+         lswlog_enum_short 26: OK
 
   pkk_names:
     1 -> PKK_PSK
@@ -4026,118 +4032,118 @@ IETF registry enum_names:
          short_name 0:  OK
          lswlog_enum_short 0: OK
          match raw [short]: OK
-    1 -> debug-crypt
+    1 -> debug-parsing
          lswlog_enum 1: OK
-         search debug-crypt: OK
-         match debug-crypt: OK
-         short_name 1:  OK
-         lswlog_enum_short 1: OK
-         match crypt [short]: OK
-    2 -> debug-parsing
-         lswlog_enum 2: OK
          search debug-parsing: OK
          match debug-parsing: OK
-         short_name 2:  OK
-         lswlog_enum_short 2: OK
+         short_name 1:  OK
+         lswlog_enum_short 1: OK
          match parsing [short]: OK
-    3 -> debug-emitting
-         lswlog_enum 3: OK
+    2 -> debug-emitting
+         lswlog_enum 2: OK
          search debug-emitting: OK
          match debug-emitting: OK
-         short_name 3:  OK
-         lswlog_enum_short 3: OK
+         short_name 2:  OK
+         lswlog_enum_short 2: OK
          match emitting [short]: OK
-    4 -> debug-control
-         lswlog_enum 4: OK
+    3 -> debug-control
+         lswlog_enum 3: OK
          search debug-control: OK
          match debug-control: OK
-         short_name 4:  OK
-         lswlog_enum_short 4: OK
+         short_name 3:  OK
+         lswlog_enum_short 3: OK
          match control [short]: OK
-    5 -> debug-lifecycle
-         lswlog_enum 5: OK
+    4 -> debug-lifecycle
+         lswlog_enum 4: OK
          search debug-lifecycle: OK
          match debug-lifecycle: OK
-         short_name 5:  OK
-         lswlog_enum_short 5: OK
+         short_name 4:  OK
+         lswlog_enum_short 4: OK
          match lifecycle [short]: OK
-    6 -> debug-kernel
-         lswlog_enum 6: OK
+    5 -> debug-kernel
+         lswlog_enum 5: OK
          search debug-kernel: OK
          match debug-kernel: OK
-         short_name 6:  OK
-         lswlog_enum_short 6: OK
+         short_name 5:  OK
+         lswlog_enum_short 5: OK
          match kernel [short]: OK
-    7 -> debug-dns
-         lswlog_enum 7: OK
+    6 -> debug-dns
+         lswlog_enum 6: OK
          search debug-dns: OK
          match debug-dns: OK
-         short_name 7:  OK
-         lswlog_enum_short 7: OK
+         short_name 6:  OK
+         lswlog_enum_short 6: OK
          match dns [short]: OK
-    8 -> debug-oppo
-         lswlog_enum 8: OK
+    7 -> debug-oppo
+         lswlog_enum 7: OK
          search debug-oppo: OK
          match debug-oppo: OK
-         short_name 8:  OK
-         lswlog_enum_short 8: OK
+         short_name 7:  OK
+         lswlog_enum_short 7: OK
          match oppo [short]: OK
-    9 -> debug-controlmore
-         lswlog_enum 9: OK
+    8 -> debug-controlmore
+         lswlog_enum 8: OK
          search debug-controlmore: OK
          match debug-controlmore: OK
-         short_name 9:  OK
-         lswlog_enum_short 9: OK
+         short_name 8:  OK
+         lswlog_enum_short 8: OK
          match controlmore [short]: OK
-   10 -> debug-pfkey
-         lswlog_enum 10: OK
+    9 -> debug-pfkey
+         lswlog_enum 9: OK
          search debug-pfkey: OK
          match debug-pfkey: OK
-         short_name 10:  OK
-         lswlog_enum_short 10: OK
+         short_name 9:  OK
+         lswlog_enum_short 9: OK
          match pfkey [short]: OK
-   11 -> debug-nattraversal
-         lswlog_enum 11: OK
+   10 -> debug-nattraversal
+         lswlog_enum 10: OK
          search debug-nattraversal: OK
          match debug-nattraversal: OK
-         short_name 11:  OK
-         lswlog_enum_short 11: OK
+         short_name 10:  OK
+         lswlog_enum_short 10: OK
          match nattraversal [short]: OK
-   12 -> debug-x509
-         lswlog_enum 12: OK
+   11 -> debug-x509
+         lswlog_enum 11: OK
          search debug-x509: OK
          match debug-x509: OK
-         short_name 12:  OK
-         lswlog_enum_short 12: OK
+         short_name 11:  OK
+         lswlog_enum_short 11: OK
          match x509 [short]: OK
-   13 -> debug-dpd
-         lswlog_enum 13: OK
+   12 -> debug-dpd
+         lswlog_enum 12: OK
          search debug-dpd: OK
          match debug-dpd: OK
-         short_name 13:  OK
-         lswlog_enum_short 13: OK
+         short_name 12:  OK
+         lswlog_enum_short 12: OK
          match dpd [short]: OK
-   14 -> debug-xauth
-         lswlog_enum 14: OK
+   13 -> debug-xauth
+         lswlog_enum 13: OK
          search debug-xauth: OK
          match debug-xauth: OK
-         short_name 14:  OK
-         lswlog_enum_short 14: OK
+         short_name 13:  OK
+         lswlog_enum_short 13: OK
          match xauth [short]: OK
-   15 -> debug-retransmits
-         lswlog_enum 15: OK
+   14 -> debug-retransmits
+         lswlog_enum 14: OK
          search debug-retransmits: OK
          match debug-retransmits: OK
-         short_name 15:  OK
-         lswlog_enum_short 15: OK
+         short_name 14:  OK
+         lswlog_enum_short 14: OK
          match retransmits [short]: OK
-   16 -> debug-oppoinfo
-         lswlog_enum 16: OK
+   15 -> debug-oppoinfo
+         lswlog_enum 15: OK
          search debug-oppoinfo: OK
          match debug-oppoinfo: OK
+         short_name 15:  OK
+         lswlog_enum_short 15: OK
+         match oppoinfo [short]: OK
+   16 -> debug-crypt
+         lswlog_enum 16: OK
+         search debug-crypt: OK
+         match debug-crypt: OK
          short_name 16:  OK
          lswlog_enum_short 16: OK
-         match oppoinfo [short]: OK
+         match crypt [short]: OK
    17 -> debug-whackwatch
          lswlog_enum 17: OK
          search debug-whackwatch: OK
@@ -4368,7 +4374,7 @@ IKEv2 transforms:
 lswlog_enum_lset_short:
 
   debug fffff:
-	<<raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+xauth+retransmits+oppoinfo+whackwatch+private+add-prefix>>
+	<<raw+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+xauth+retransmits+oppoinfo+crypt+whackwatch+private+add-prefix>>
   impair 7fffffff00000:
 	<<bust-mi2+bust-mr2+drop-i2+sa-creation+die-oninfo+jacob-two-two+allow-null-null+major-version-bump+minor-version-bump+retransmits+send-no-retransmits+send-bogus-payload-flag+send-bogus-isakmp-flag+send-ikev2-ke+send-no-delete+send-no-ikev2-auth+send-no-xauth-r0+drop-xauth-r0+send-no-main-r2+force-fips+send-key-size-check+send-zero-gx+send-bogus-dcookie+omit-hash-notify+ignore-hash-notify+ignore-hash-notify-resp+ikev2-exclude-integ-none+ikev2-include-integ-none+replay-duplicates+replay-forward+replay-backward>>
   debug+impair 4000000180001:
