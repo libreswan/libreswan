@@ -317,7 +317,6 @@ typedef enum {
 enum {
 	DBG_floor_IX = 0,
 	DBG_RAW_IX = DBG_floor_IX,		/* raw packet I/O */
-	DBG_CRYPT_IX,		/* encryption/decryption of messages */
 	DBG_PARSING_IX,		/* show decoding of messages */
 	DBG_EMITTING_IX,	/* show encoding of messages */
 	DBG_CONTROL_IX,		/* control flow within Pluto */
@@ -335,6 +334,8 @@ enum {
 	DBG_RETRANSMITS_IX,	/* Retransmitting packets */
 	DBG_OPPOINFO_IX,	/* log various informational things about oppo/%trap-keying */
 
+	/* below are excluded from debug=all */
+	DBG_CRYPT_IX,		/* encryption/decryption of messages */
 	DBG_WHACKWATCH_IX,	/* never let WHACK go */
 	DBG_PRIVATE_IX,		/* displays private information: DANGER! */
 	DBG_ADD_PREFIX_IX,	/* add the log+state prefix to debug lines */
@@ -346,12 +347,11 @@ enum {
 
 #define DBG_MASK	LRANGE(DBG_floor_IX, DBG_roof_IX - 1)
 #define DBG_NONE        0                                       /* no options on, including impairments */
-#define DBG_ALL         LRANGES(DBG_RAW, DBG_OPPOINFO)          /* all logging options on EXCEPT DBG_PRIVATE and DBG_WHACKWATCH */
+#define DBG_ALL         LRANGES(DBG_RAW, DBG_OPPOINFO)          /* all but some exceptions (see below) */
 
 /* singleton sets: must be kept in sync with the items! */
 
-#define DBG_RAW	LELEM(DBG_RAW_IX)
-#define DBG_CRYPT	LELEM(DBG_CRYPT_IX)
+#define DBG_RAW		LELEM(DBG_RAW_IX)
 #define DBG_PARSING	LELEM(DBG_PARSING_IX)
 #define DBG_EMITTING	LELEM(DBG_EMITTING_IX)
 #define DBG_CONTROL	LELEM(DBG_CONTROL_IX)
@@ -368,6 +368,8 @@ enum {
 #define DBG_RETRANSMITS	LELEM(DBG_RETRANSMITS_IX)
 #define DBG_OPPOINFO	LELEM(DBG_OPPOINFO_IX)
 
+/* These are not part of "all" debugging */
+#define DBG_CRYPT	LELEM(DBG_CRYPT_IX)
 #define DBG_WHACKWATCH	LELEM(DBG_WHACKWATCH_IX)
 #define DBG_PRIVATE	LELEM(DBG_PRIVATE_IX)
 #define DBG_ADD_PREFIX	LELEM(DBG_ADD_PREFIX_IX)

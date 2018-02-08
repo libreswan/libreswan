@@ -1,21 +1,21 @@
   <varlistentry>
   <term><emphasis remap='B'>plutodebug</emphasis></term>
   <listitem>
-<para>how much Pluto debugging output should be logged.
-An empty value,
-or the magic value
-<emphasis remap='B'>none</emphasis>,
-means no debugging output (the default).
-The magic value
-<emphasis remap='B'>all</emphasis>
-means full output.
-Otherwise only the specified types of output
-(a quoted list, names without the
-<option>--debug-</option>
-prefix,
+<para>how much Pluto debugging output should be logged. An empty value,
+or the magic value <emphasis remap='B'>none</emphasis>, means no debug
+output (the default).  The magic value <emphasis remap='B'>all</emphasis>
+means full output.  Otherwise only the specified types of output
+(a quoted list, names without the <option>--debug-</option> prefix,
 separated by white space) are enabled;
 for details on available debugging types, see
-<citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
-
+<citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+</para>
+<para>A few special debugging options are not included with  <emphasis remap='B'>all</emphasis>
+and must be specifically added to be enabled. These special values currently are
+<emphasis remap='B'>private</emphasis> (for sensitive key material),
+<emphasis remap='B'>crypt</emphasis> (for all crypto related operations),
+<emphasis remap='B'>whackwatch</emphasis> (to not release the whack when it normally would),
+and <emphasis remap='B'>add-prefix</emphasis> (for special prefix pre-pending)
+</para>
   </listitem>
   </varlistentry>
