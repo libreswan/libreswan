@@ -780,20 +780,10 @@ static void update_ports(struct whack_message *m)
 }
 
 static void check_end(struct whack_end *this, struct whack_end *that,
-		      bool default_nexthop, sa_family_t caf, sa_family_t taf)
+		      bool default_nexthop UNUSED, sa_family_t caf, sa_family_t taf)
 {
 	if (caf != addrtypeof(&this->host_addr))
 		diag("address family of host inconsistent");
-
-	if (default_nexthop) {
-		if (isanyaddr(&that->host_addr))
-			diag("our nexthop must be specified when other host is a %any or %opportunistic");
-
-		this->host_nexthop = that->host_addr;
-	}
-
-	if (caf != addrtypeof(&this->host_nexthop))
-		diag("address family of nexthop inconsistent");
 
 	if (this->has_client) {
 		if (taf != subnettypeof(&this->client))
@@ -2125,10 +2115,6 @@ int main(int argc, char **argv)
 
 		if (!LHAS(end_seen, END_HOST - END_FIRST))
 			diag("connection missing --host after --to");
-
-		if (isanyaddr(&msg.left.host_addr) &&
-		    isanyaddr(&msg.right.host_addr))
-			diag("hosts cannot both be 0.0.0.0 or 0::0");
 
 		if (msg.policy & POLICY_OPPORTUNISTIC) {
 			if ((msg.policy & (POLICY_PSK | POLICY_RSASIG)) !=
