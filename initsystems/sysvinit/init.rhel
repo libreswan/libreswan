@@ -148,6 +148,7 @@ start() {
 	failure
     fi
     echo
+    ipsec portexcludes
     return ${RETVAL}
 }
 

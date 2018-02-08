@@ -39,6 +39,7 @@ start() {
 	start-stop-daemon --start --pidfile "${PLUTO_PIDFILE}" \
 		--exec "${PLUTO_BINARY}" -- --config "${PLUTO_CONFFILE}" \
 	    -- ${PLUTO_OPTS}
+	ipsec portexcludes
 	eend $?
 }
 

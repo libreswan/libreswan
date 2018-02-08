@@ -142,6 +142,8 @@ start() {
 
 	ipsec _plutorun --config ${IPSEC_CONF} --nofork ${PLUTO_OPTIONS} &
 	RETVAL=$?
+	sleep 2
+	ipsec portexcludes
 	return $RETVAL
 }
 

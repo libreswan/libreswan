@@ -1485,6 +1485,10 @@ void add_connection(const struct whack_message *wm)
 		c->connalias = wm->connalias;
 		c->dnshostname = wm->dnshostname;
 		c->policy = wm->policy;
+		if (NEVER_NEGOTIATE(c->policy)) {
+			/* cleanup inherited default */
+			c->policy &= ~(POLICY_IKEV1_ALLOW|POLICY_IKEV2_ALLOW);
+		}
 
 #ifdef FIPS_CHECK
 		if (libreswan_fipsmode()) {
@@ -1799,7 +1803,7 @@ void add_connection(const struct whack_message *wm)
 
 		/*
 		 * force any wildcard host IP address, any wildcard subnet
-		 * or any wildcard ID to that end
+		 * or any wildcard ID to _that_ end
 		 */
 		if (isanyaddr(&c->spd.this.host_addr) ||
 		    c->spd.this.has_client_wildcard ||
@@ -1894,6 +1898,7 @@ void add_connection(const struct whack_message *wm)
 		unshare_connection(c);
 
 		(void)orient(c);
+
 		connect_to_host_pair(c);
 
 		/* log all about this connection */

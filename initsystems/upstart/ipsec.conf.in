@@ -22,7 +22,8 @@ script
     @FINALSBINDIR@/ipsec --checknss
     @FINALSBINDIR@/ipsec --checknflog
     @FINALSBINDIR@/ipsec _stackmanager start
-    exec @FINALLIBEXECDIR@/pluto --config @FINALCONFFILE@ --nofork $PLUTO_OPTIONS
+    @FINALLIBEXECDIR@/pluto --config @FINALCONFFILE@ --nofork $PLUTO_OPTIONS
+    exec @FINALLIBEXECDIR@/portexcludes
 end script
 
 pre-stop script
