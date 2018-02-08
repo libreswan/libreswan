@@ -1042,7 +1042,7 @@ void process_v2_packet(struct msg_digest **mdp)
 	md->msgid_received = ntohl(md->hdr.isa_msgid);
 	const enum isakmp_xchg_types ix = md->hdr.isa_xchg;
 	const bool msg_r = is_msg_response(md);
-	const bool ike_i = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) != 0;
+	const bool sent_by_ike_initiator = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) != 0;
 
 	DBG(DBG_CONTROL, {
 		if (msg_r)
@@ -1053,7 +1053,7 @@ void process_v2_packet(struct msg_digest **mdp)
 					enum_name(&ikev2_exchange_names, ix));
 	});
 
-	if (ike_i) {
+	if (sent_by_ike_initiator) {
 		DBG(DBG_CONTROL, DBG_log("I am the IKE SA Original Responder"));
 		md->original_role = ORIGINAL_RESPONDER;
 	} else {
@@ -1080,7 +1080,9 @@ void process_v2_packet(struct msg_digest **mdp)
 		 * is in state STATE_PARENT_i1, still has RCOOKIE=0
 		 * that won't match.
 		 */
-		enum state_kind expected_state = (ike_i ? STATE_PARENT_R1 : STATE_PARENT_I1);
+		enum state_kind expected_state = (sent_by_ike_initiator
+						  ? STATE_PARENT_R1
+						  : STATE_PARENT_I1);
 		st = ikev2_find_state_in_init(md->hdr.isa_icookie,
 						  expected_state);
 		if (st != NULL && md->original_role == ORIGINAL_INITIATOR) {
@@ -1252,19 +1254,21 @@ void process_v2_packet(struct msg_digest **mdp)
 		if (svm->recv_type != ix)
 			continue;
 		/*
-		 * Does the original initiator flag match?
+		 * Does the original [ike] initiator flag match?
 		 */
-		if (match_hdr_flag(svm->flags, SMF2_IKE_I_SET, !ike_i))
-				continue;
-		if (match_hdr_flag(svm->flags, SMF2_IKE_I_CLEAR, ike_i))
-				continue;
+		if (match_hdr_flag(svm->flags, SMF2_IKE_I_SET,
+				   !sent_by_ike_initiator))
+			continue;
+		if (match_hdr_flag(svm->flags, SMF2_IKE_I_CLEAR,
+				   sent_by_ike_initiator))
+			continue;
 		/*
 		 * Does the message reply flag match?
 		 */
 		if (match_hdr_flag(svm->flags, SMF2_MSG_R_SET, !msg_r))
-				continue;
+			continue;
 		if (match_hdr_flag(svm->flags, SMF2_MSG_R_CLEAR, msg_r))
-				continue;
+			continue;
 		/*
 		 * Since there's a state that, at least, looks like it
 		 * will accept the packet, unpack the clear payload
