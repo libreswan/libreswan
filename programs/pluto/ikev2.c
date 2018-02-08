@@ -1126,40 +1126,46 @@ void process_v2_packet(struct msg_digest **mdp)
 		 */
 		st = find_state_ikev2_parent(md->hdr.isa_icookie,
 					     md->hdr.isa_rcookie);
-		if (st != NULL) {
-			/*
-			 * XXX: This solution is broken. If two exchanges (after the
-			 * initial exchange) are interleaved, we ignore the first
-			 * This is https://bugs.libreswan.org/show_bug.cgi?id=185
-			 *
-			 * Beware of unsigned arrithmetic.
-			 */
-			if (st->st_msgid_lastrecv != v2_INVALID_MSGID &&
-			    st->st_msgid_lastrecv > md->msgid_received) {
-				/* this is an OLD retransmit. we can't do anything */
-				set_cur_state(st);
-				libreswan_log(
-					"received too old retransmit: %u < %u",
-					md->msgid_received,
-					st->st_msgid_lastrecv);
-				return;
-			}
-			if (st->st_msgid_lastrecv == md->msgid_received) {
-				/* this is a recent retransmit. */
-				process_recent_rtransmit(st, ix);
-				return;
-			}
-			/* update lastrecv later on */
+		if (st == NULL) {
+			/* could this be a log line instead? too much log with scans */
+			DBG(DBG_CONTROL, DBG_log("initiator packet has no matching state"));
+			return;
 		}
+		/*
+		 * XXX: This solution is broken. If two exchanges
+		 * (after the initial exchange) are interleaved, we
+		 * ignore the first This is
+		 * https://bugs.libreswan.org/show_bug.cgi?id=185
+		 *
+		 * Beware of unsigned arrithmetic.
+		 */
+		if (st->st_msgid_lastrecv != v2_INVALID_MSGID &&
+		    st->st_msgid_lastrecv > md->msgid_received) {
+			/* this is an OLD retransmit. we can't do anything */
+			set_cur_state(st);
+			libreswan_log("received too old retransmit: %u < %u",
+				      md->msgid_received,
+				      st->st_msgid_lastrecv);
+			return;
+		}
+		if (st->st_msgid_lastrecv == md->msgid_received) {
+			/* this is a recent retransmit. */
+			process_recent_rtransmit(st, ix);
+			return;
+		}
+		/* update lastrecv later on */
 	} else {
 		/*
-		 * A reply; find the child that made the request and
-		 * send it to that.
+		 * A response; find the child that made the request
+		 * and send it to that.
+		 *
+		 * XXX: which of these two lookups find the parent of
+		 * an AUTH exchange.  Hmm, perhaps, because the code
+		 * commits to creating a child early, it finds that.
 		 */
 		st = find_state_ikev2_child(md->hdr.isa_icookie,
-				md->hdr.isa_rcookie,
-				md->hdr.isa_msgid); /* message ID in NW order */
-
+					    md->hdr.isa_rcookie,
+					    md->hdr.isa_msgid); /* message ID in NW order */
 		if (st == NULL) {
 			/*
 			 * Didn't find a child waiting on that message
@@ -1167,41 +1173,39 @@ void process_v2_packet(struct msg_digest **mdp)
 			 */
 			st = find_state_ikev2_parent(md->hdr.isa_icookie,
 						     md->hdr.isa_rcookie);
-			if (st != NULL) {
-				/*
-				 * Check if it's an old packet being
-				 * returned, and if so, drop it.
-				 * NOTE: in_struct() changed the byte
-				 * order.  *
-				 *
-				 * Beware of unsigned arrithmetic.
-				 */
-
-				if (is_msg_response(md)) {
-					/* Response to our request */
-					if (st->st_msgid_lastack != v2_INVALID_MSGID &&
-					    st->st_msgid_lastack > md->msgid_received) {
-						LSWDBGP(DBG_CONTROL|DBG_RETRANSMITS, buf) {
-							lswlog_retransmit_prefix(buf, st);
-							lswlogf(buf, "dropping retransmitted response with msgid %u from peer - we already processed %u.",
-								md->msgid_received, st->st_msgid_lastack);
-						}
-						return;
+			if (st == NULL) {
+				/* could this be a log line instead? too much log with scans */
+				DBG(DBG_CONTROL, DBG_log("responder packet has no matching state"));
+				return;
+			}
+			/*
+			 * Check if it's an old packet being returned,
+			 * and if so, drop it.  NOTE: in_struct()
+			 * changed the byte order.
+			 *
+			 * Beware of unsigned arrithmetic.
+			 */
+			if (is_msg_response(md)) {
+				/* Response to our request */
+				if (st->st_msgid_lastack != v2_INVALID_MSGID &&
+				    st->st_msgid_lastack > md->msgid_received) {
+					LSWDBGP(DBG_CONTROL|DBG_RETRANSMITS, buf) {
+						lswlog_retransmit_prefix(buf, st);
+						lswlogf(buf, "dropping retransmitted response with msgid %u from peer - we already processed %u.",
+							md->msgid_received, st->st_msgid_lastack);
 					}
-					if (st->st_msgid_nextuse != v2_INVALID_MSGID &&
-					    md->msgid_received >= st->st_msgid_nextuse) {
-						/*
-						 * A reply for an unknown request.  Huh!
-						 */
-						DBG(DBG_CONTROL, DBG_log(
-							"dropping unasked response with msgid %u from peer (our last used msgid is %u)",
-						      md->msgid_received,
-						      st->st_msgid_nextuse - 1));
-						return;
-					}
-
-				} else {
-					/* We always need to respond to peer's request - else retransmits */
+					return;
+				}
+				if (st->st_msgid_nextuse != v2_INVALID_MSGID &&
+				    md->msgid_received >= st->st_msgid_nextuse) {
+					/*
+					 * A reply for an unknown request.  Huh!
+					 */
+					DBG(DBG_CONTROL, DBG_log(
+						    "dropping unasked response with msgid %u from peer (our last used msgid is %u)",
+						    md->msgid_received,
+						    st->st_msgid_nextuse - 1));
+					return;
 				}
 			}
 		}
