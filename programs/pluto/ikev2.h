@@ -62,8 +62,6 @@ extern void ikev2_child_send_next(struct state *st);
 
 extern const struct state_v2_microcode ikev2_parent_firststate_microcode;
 extern const struct state_v2_microcode ikev2_create_child_initiate_microcode;
-extern const struct state_v2_microcode ikev2_create_child_initiator_final_microcode;
-
 
 extern v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
 		const char *name);
