@@ -4125,9 +4125,8 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 
 		if (np == ISAKMP_NEXT_v2SA || np == ISAKMP_NEXT_v2CP) {
 			/* must have enough to build an CHILD_SA */
-			stf_status ret = ikev2_child_sa_respond(md, ORIGINAL_RESPONDER,
-						     &e_pbs_cipher,
-						     ISAKMP_v2_AUTH);
+			stf_status ret = ikev2_child_sa_respond(md, &e_pbs_cipher,
+								ISAKMP_v2_AUTH);
 
 			/* note: st: parent; md->st: child */
 
@@ -5318,8 +5317,8 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 				ISAKMP_v2_CREATE_CHILD_SA);
 	} else  {
 		RETURN_STF_FAILURE_STATUS(ikev2_rekey_child_copy_ts(md));
-		ret = ikev2_child_sa_respond(md, ORIGINAL_RESPONDER,
-				&e_pbs_cipher, ISAKMP_v2_CREATE_CHILD_SA);
+		ret = ikev2_child_sa_respond(md, &e_pbs_cipher,
+					     ISAKMP_v2_CREATE_CHILD_SA);
 	}
 
 	/* note: pst: parent; md->st: child */

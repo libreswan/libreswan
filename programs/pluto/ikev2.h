@@ -215,7 +215,6 @@ extern int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
 						  int *best_tsr_i);
 
 extern stf_status ikev2_child_sa_respond(struct msg_digest *md,
-					 enum original_role role,
 					 pb_stream *outpbs,
 					 enum isakmp_xchg_types isa_xchg);
 

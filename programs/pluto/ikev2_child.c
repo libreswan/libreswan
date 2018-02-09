@@ -961,10 +961,25 @@ static stf_status ikev2_cp_reply_state(const struct msg_digest *md,
 }
 
 stf_status ikev2_child_sa_respond(struct msg_digest *md,
-				  enum original_role role,
 				  pb_stream *outpbs,
 				  enum isakmp_xchg_types isa_xchg)
 {
+	/*
+	 * XXX: (original) role was a parameter yet all callers passed
+	 * in ORIGINAL_RESPONDER so just hardwire it.
+	 *
+	 * Notice how, with the value hard-wired, some of the code
+	 * below starts to look a little silly.
+	 *
+	 * This is all probably came about because, for an IKEv2 CHILD
+	 * SA, the crypto material is farmed out according to who is
+	 * initiating a CHILD_SA request, and not which end's IKE SA
+	 * is the original initiator or responder.  It just so happens
+	 * that the two are the same for CHILD SAs negotiated during
+	 * the initial exchange.
+	 */
+	const enum original_role role = ORIGINAL_RESPONDER;
+
 	struct state *cst;	/* child state */
 	struct state *pst;
 	struct connection *c = md->st->st_connection;
