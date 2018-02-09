@@ -1404,7 +1404,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			 * this loop?
 			 */
 			md->st = st;
-			encrypted_payload_summary = ikev2_decrypt_msg(md);
+			encrypted_payload_summary = ikev2_decrypt_msg(ike_sa(st), md);
 			if (encrypted_payload_status.status != STF_OK) {
 				md->st = NULL;
 				complete_v2_state_transition(mdp, encrypted_payload_summary.status);

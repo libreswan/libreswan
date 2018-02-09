@@ -2257,32 +2257,25 @@ static stf_status ikev2_encrypt_msg(struct ike_sa *ike,
  * the actual starting-variable (a.k.a. IV).
  */
 
-static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
+static stf_status ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
+						      struct msg_digest *md,
 						      chunk_t *chunk,
 						      unsigned int iv)
 {
-	/* caller should be passing in the original (parent) state. */
-	struct state *st = md->st;
-	struct state *pst = IS_CHILD_SA(st) ?
-		state_with_serialno(st->st_clonedfrom) : st;
-
-	if (st != NULL && !st->hidden_variables.st_skeyid_calculated)
-	{
-		DBG(DBG_CRYPT | DBG_CONTROL, {
-				ipstr_buf b;
-				DBG_log("received encrypted packet from %s:%u  but no exponents for state #%lu to decrypt it",
-					ipstr(&md->sender, &b),
-					(unsigned)hportof(&md->sender),
-					st->st_serialno);
-				});
-		return STF_FAIL;
+	if (!ike->sa.hidden_variables.st_skeyid_calculated) {
+		ipstr_buf b;
+		PEXPECT_LOG("received encrypted packet from %s:%u  but no exponents for state #%lu to decrypt it",
+			    ipstr(&md->sender, &b),
+			    (unsigned)hportof(&md->sender),
+			    ike->sa.st_serialno);
+		return STF_FATAL;
 	}
 
 	u_char *wire_iv_start = chunk->ptr + iv;
-	size_t wire_iv_size = pst->st_oakley.ta_encrypt->wire_iv_size;
-	size_t integ_size = (ike_alg_enc_requires_integ(pst->st_oakley.ta_encrypt)
-			     ? pst->st_oakley.ta_integ->integ_output_size
-			     : pst->st_oakley.ta_encrypt->aead_tag_size);
+	size_t wire_iv_size = ike->sa.st_oakley.ta_encrypt->wire_iv_size;
+	size_t integ_size = (ike_alg_enc_requires_integ(ike->sa.st_oakley.ta_encrypt)
+			     ? ike->sa.st_oakley.ta_integ->integ_output_size
+			     : ike->sa.st_oakley.ta_encrypt->aead_tag_size);
 
 	/*
 	 * check to see if length is plausible:
@@ -2314,8 +2307,8 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 	 * (originally this was being done between integrity and
 	 * decrypt).
 	 */
-	size_t enc_blocksize = pst->st_oakley.ta_encrypt->enc_blocksize;
-	bool pad_to_blocksize = pst->st_oakley.ta_encrypt->pad_to_blocksize;
+	size_t enc_blocksize = ike->sa.st_oakley.ta_encrypt->enc_blocksize;
+	bool pad_to_blocksize = ike->sa.st_oakley.ta_encrypt->pad_to_blocksize;
 	if (pad_to_blocksize) {
 		if (enc_size % enc_blocksize != 0) {
 			libreswan_log("discarding invalid packet: %zu octet payload length is not a multiple of encryption block-size (%zu)",
@@ -2327,18 +2320,25 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 	chunk_t salt;
 	PK11SymKey *cipherkey;
 	PK11SymKey *authkey;
-	if (md->original_role == ORIGINAL_INITIATOR) {
-		cipherkey = pst->st_skey_er_nss;
-		authkey = pst->st_skey_ar_nss;
-		salt = pst->st_skey_responder_salt;
-	} else {
-		cipherkey = pst->st_skey_ei_nss;
-		authkey = pst->st_skey_ai_nss;
-		salt = pst->st_skey_initiator_salt;
+	switch (ike->sa.st_original_role) {
+	case ORIGINAL_INITIATOR:
+		/* need responders key */
+		cipherkey = ike->sa.st_skey_er_nss;
+		authkey = ike->sa.st_skey_ar_nss;
+		salt = ike->sa.st_skey_responder_salt;
+		break;
+	case ORIGINAL_RESPONDER:
+		/* need initiators key */
+		cipherkey = ike->sa.st_skey_ei_nss;
+		authkey = ike->sa.st_skey_ai_nss;
+		salt = ike->sa.st_skey_initiator_salt;
+		break;
+	default:
+		bad_case(ike->sa.st_original_role);
 	}
 
 	/* authenticate and decrypt the block. */
-	if (ike_alg_enc_requires_integ(st->st_oakley.ta_encrypt)) {
+	if (ike_alg_enc_requires_integ(ike->sa.st_oakley.ta_encrypt)) {
 		/*
 		 * check authenticator.  The last INTEG_SIZE bytes are
 		 * the truncated digest.
@@ -2346,7 +2346,7 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 		unsigned char td[MAX_DIGEST_LEN];
 		struct hmac_ctx ctx;
 
-		hmac_init(&ctx, pst->st_oakley.ta_integ->prf, authkey);
+		hmac_init(&ctx, ike->sa.st_oakley.ta_integ->prf, authkey);
 		hmac_update(&ctx, auth_start, integ_start - auth_start);
 		hmac_final(td, &ctx);
 
@@ -2372,12 +2372,12 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 		unsigned char enc_iv[MAX_CBC_BLOCK_SIZE];
 		construct_enc_iv("decryption IV/starting-variable", enc_iv,
 				 wire_iv_start, salt,
-				 pst->st_oakley.ta_encrypt);
+				 ike->sa.st_oakley.ta_encrypt);
 
 		DBG(DBG_CRYPT,
 		    DBG_dump("payload before decryption:", enc_start, enc_size));
-		pst->st_oakley.ta_encrypt->encrypt_ops
-			->do_crypt(pst->st_oakley.ta_encrypt,
+		ike->sa.st_oakley.ta_encrypt->encrypt_ops
+			->do_crypt(ike->sa.st_oakley.ta_encrypt,
 				   enc_start, enc_size,
 				   cipherkey,
 				   enc_iv, FALSE);
@@ -2404,8 +2404,8 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 			     enc_start, enc_size);
 		    DBG_dump("integ before authenticated decryption:",
 			     integ_start, integ_size));
-		if (!pst->st_oakley.ta_encrypt->encrypt_ops
-		    ->do_aead(pst->st_oakley.ta_encrypt,
+		if (!ike->sa.st_oakley.ta_encrypt->encrypt_ops
+		    ->do_aead(ike->sa.st_oakley.ta_encrypt,
 			      salt.ptr, salt.len,
 			      wire_iv_start, wire_iv_size,
 			      aad_start, aad_size,
@@ -2479,8 +2479,8 @@ static stf_status ikev2_reassemble_fragments(struct msg_digest *md,
 		 * have been adjusted to just point at the data.
 		 */
 		setchunk(plain[i], frag->cipher.ptr, frag->cipher.len);
-		stf_status status = ikev2_verify_and_decrypt_sk_payload(
-			md, &plain[i], frag->iv);
+		stf_status status = ikev2_verify_and_decrypt_sk_payload(ike_sa(st), md,
+									&plain[i], frag->iv);
 		if (status != STF_OK) {
 			loglog(RC_LOG_SERIOUS, "fragment %u of %u invalid",
 			       i, st->st_v2_rfrags->total);
@@ -2539,7 +2539,8 @@ static stf_status ikev2_verify_enc_payloads(struct msg_digest *md,
 	return STF_OK;
 }
 
-struct ikev2_payloads_summary ikev2_decrypt_msg(struct msg_digest *md)
+struct ikev2_payloads_summary ikev2_decrypt_msg(struct ike_sa *ike,
+						struct msg_digest *md)
 {
 	stf_status status;
 	chunk_t chunk;
@@ -2553,8 +2554,8 @@ struct ikev2_payloads_summary ikev2_decrypt_msg(struct msg_digest *md)
 		setchunk(chunk, md->packet_pbs.start,
 			 e_pbs->roof - md->packet_pbs.start);
 
-		status = ikev2_verify_and_decrypt_sk_payload(
-			md, &chunk, e_pbs->cur - md->packet_pbs.start);
+		status = ikev2_verify_and_decrypt_sk_payload(ike, md, &chunk,
+							     e_pbs->cur - md->packet_pbs.start);
 	}
 
 	if (status != STF_OK) {
@@ -3608,7 +3609,7 @@ static void ikev2_parent_inI2outR2_continue(struct state *st,
 
 	/* try to decrypt the packet */
 
-	struct ikev2_payloads_summary ps = ikev2_decrypt_msg(*mdp);
+	struct ikev2_payloads_summary ps = ikev2_decrypt_msg(ike_sa(st), *mdp);
 	if (ps.status != STF_OK) {
 		/*
 		 * While our end things encryption is "up", things

@@ -246,7 +246,8 @@ struct ikev2_payloads_summary ikev2_decode_payloads(struct msg_digest *md,
 						    pb_stream *in_pbs,
 						    enum next_payload_types_ikev2 np);
 
-struct ikev2_payloads_summary ikev2_decrypt_msg(struct msg_digest *md);
+struct ikev2_payloads_summary ikev2_decrypt_msg(struct ike_sa *ike,
+						struct msg_digest *md);
 
 struct ikev2_payload_errors {
 	stf_status status;
