@@ -2026,8 +2026,9 @@ static void ikev2_child_emancipate(struct msg_digest *md)
 	st->st_msgid_lastrecv = v2_INVALID_MSGID;
 	st->st_msgid_nextuse = v2_INITIAL_MSGID;
 
-	ikev2_isakamp_established(st, md->svm, md->svm->next_state,
-			st->st_original_role);
+	/* child is now a parent */
+	ikev2_ike_sa_established(pexpect_ike_sa(st), md->svm,
+				 md->svm->next_state);
 }
 
 static void success_v2_state_transition(struct msg_digest *md)
@@ -2126,7 +2127,7 @@ static void success_v2_state_transition(struct msg_digest *md)
 
 			DBG(DBG_CONTROL, DBG_log("releasing whack and unpending for parent #%lu",
 				pst->st_serialno));
-			/* a better call unpend in ikev2_isakamp_established? */
+			/* a better call unpend in ikev2_ike_sa_established? */
 			unpend(pst, st->st_connection);
 			release_whack(pst);
 		}

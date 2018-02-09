@@ -297,10 +297,10 @@ struct ikev2_payload_errors ikev2_verify_payloads(struct ikev2_payloads_summary 
 void ikev2_log_payload_errors(struct ikev2_payload_errors errors,
 			      struct state *st);
 
-void ikev2_isakamp_established(struct state *st,
-				const struct state_v2_microcode
-				*svm, enum state_kind new_state,
-				enum original_role role);
+void ikev2_ike_sa_established(struct ike_sa *ike,
+			      const struct state_v2_microcode *svm,
+			      enum state_kind new_state);
+
 struct ikev2_ipseckey_dns;
 
 extern stf_status ikev2_process_child_sa_pl(struct msg_digest *md,

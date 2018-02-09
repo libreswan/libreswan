@@ -158,10 +158,11 @@ static bool negotiate_hash_algo_from_notification(struct payload_digest *p, stru
 	return TRUE;
 }
 
-void ikev2_isakamp_established(struct state *st, const struct state_v2_microcode *svm,
-		enum state_kind new_state, enum original_role role)
+void ikev2_ike_sa_established(struct ike_sa *ike,
+			      const struct state_v2_microcode *svm,
+			      enum state_kind new_state)
 {
-	struct connection *c = st->st_connection;
+	struct connection *c = ike->sa.st_connection;
 	/*
 	 * taking it current from current state I2/R1. The parent has advanced but not the svm???
 	 * Ideally this should be timeout of I3/R2 state svm. how to find that svm
@@ -173,15 +174,16 @@ void ikev2_isakamp_established(struct state *st, const struct state_v2_microcode
 	 * update the parent state to make sure that it knows we have
 	 * authenticated properly.
 	 */
-	change_state(st, new_state);
+	change_state(&ike->sa, new_state);
 
-	if (st->st_ike_pred != SOS_NOBODY) {
-		for_each_state(ikev2_repl_est_ipsec, &st->st_ike_pred);
+	if (ike->sa.st_ike_pred != SOS_NOBODY) {
+		for_each_state(ikev2_repl_est_ipsec, &ike->sa.st_ike_pred);
 	}
-	c->newest_isakmp_sa = st->st_serialno;
-	deltatime_t delay = ikev2_replace_delay(st, &kind, role);
-	delete_event(st);
-	event_schedule(kind, delay, st);
+	c->newest_isakmp_sa = ike->sa.st_serialno;
+	deltatime_t delay = ikev2_replace_delay(&ike->sa, &kind,
+						ike->sa.st_original_role);
+	delete_event(&ike->sa);
+	event_schedule(kind, delay, &ike->sa);
 }
 
 /*
@@ -3905,8 +3907,8 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 	 * new state now.
 	 */
 
-	ikev2_isakamp_established(st, md->svm, STATE_PARENT_R2,
-			md->original_role);
+	ikev2_ike_sa_established(pexpect_ike_sa(st), md->svm,
+				 STATE_PARENT_R2);
 
 #ifdef USE_LINUX_AUDIT
 	linux_audit_conn(st, LAK_PARENT_START);
@@ -4683,7 +4685,8 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 	 * update the parent state to make sure that it knows we have
 	 * authenticated properly.
 	 */
-	ikev2_isakamp_established(pst, md->svm, STATE_PARENT_I3, md->original_role);
+	ikev2_ike_sa_established(pexpect_ike_sa(pst), md->svm,
+				 STATE_PARENT_I3);
 
 #ifdef USE_LINUX_AUDIT
 	linux_audit_conn(st, LAK_PARENT_START);
