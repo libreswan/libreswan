@@ -2141,8 +2141,7 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 				    uint8_t *auth_start,
 				    uint8_t *wire_iv_start,
 				    uint8_t *enc_start,
-				    uint8_t *integ_start,
-				    pb_stream *e_pbs_cipher)
+				    uint8_t *integ_start)
 {
 	passert(auth_start <= wire_iv_start);
 	passert(wire_iv_start <= enc_start);
@@ -2171,7 +2170,7 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 	}
 
 	/* size of plain or cipher text.  */
-	size_t enc_size = e_pbs_cipher->cur - enc_start;
+	size_t enc_size = integ_start - enc_start;
 
 	/* encrypt and authenticate the block */
 	if (ike_alg_enc_requires_integ(pst->st_oakley.ta_encrypt)) {
@@ -2910,8 +2909,7 @@ static stf_status ikev2_record_fragment(struct msg_digest *md,
 		close_output_pbs(&frag_stream);
 
 		stf_status ret = ikev2_encrypt_msg(st, frag_stream.start,
-						   iv, encstart, authloc,
-						   &e_pbs_cipher);
+						   iv, encstart, authloc);
 		if (ret != STF_OK)
 			return ret;
 	}
@@ -3482,8 +3480,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 					   "reply fragment for ikev2_parent_outR1_I2");
 	} else {
 		stf_status ret = ikev2_encrypt_msg(pst, reply_stream.start,
-					iv, encstart, authloc,
-					&e_pbs_cipher);
+						   iv, encstart, authloc);
 
 		if (ret == STF_OK)
 			record_outbound_ike_msg(pst, &reply_stream,
@@ -4187,8 +4184,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 						   "reply fragment for ikev2_parent_inI2outR2_tail");
 		} else {
 			stf_status ret = ikev2_encrypt_msg(st, reply_stream.start,
-						iv, encstart, authloc,
-						&e_pbs_cipher);
+							   iv, encstart, authloc);
 
 			if (ret == STF_OK) {
 				record_outbound_ike_msg(st, &reply_stream,
@@ -5356,8 +5352,7 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 		close_output_pbs(&rbody);
 		close_output_pbs(&reply_stream);
 		ret = ikev2_encrypt_msg(pst, reply_stream.start,
-					iv, encstart,
-					authloc, &e_pbs_cipher);
+					iv, encstart, authloc);
 
 		if (ret != STF_OK)
 			return ret;
@@ -6083,8 +6078,7 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 
 			stf_status ret =
 				ikev2_encrypt_msg(st, reply_stream.start,
-						iv, encstart, authloc,
-						&e_pbs_cipher);
+						  iv, encstart, authloc);
 			if (ret != STF_OK)
 				return ret;
 		}
@@ -6261,8 +6255,7 @@ stf_status ikev2_send_informational(struct state *st, struct state *pst,
 		close_output_pbs(&reply_stream);
 
 		ret = ikev2_encrypt_msg(st, reply_stream.start,
-				iv, encstart, authloc,
-				&e_pbs_cipher);
+					iv, encstart, authloc);
 		if (ret != STF_OK)
 			return STF_FATAL;
 	}
@@ -6406,8 +6399,7 @@ static bool ikev2_delete_out_guts(struct state *const st, struct state *const ps
 		close_output_pbs(&reply_stream);
 
 		ret = ikev2_encrypt_msg(st, reply_stream.start,
-					iv, encstart, authloc,
-					&e_pbs_cipher);
+					iv, encstart, authloc);
 		if (ret != STF_OK)
 			return FALSE;
 	}
