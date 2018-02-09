@@ -411,7 +411,7 @@ enum_names ikev2_exchange_names = {
 	ISAKMP_v2_SA_INIT,
 	ISAKMP_v2_IKE_SESSION_RESUME,
 	ARRAY_REF(exchange_name_ikev2),
-	NULL, /* prefix */
+	"ISAKMP_v2_", /* prefix */
 	&exchange_names_private_use
 };
 
