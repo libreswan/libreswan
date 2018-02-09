@@ -507,17 +507,36 @@ static char *humanize_number(uint64_t num,
 /*
  * Get the IKE SA managing the security association.
  */
-struct ike_sa *ike_sa(struct state *st)
+
+static struct ike_sa *get_ike_sa(struct state *st, bool verbose)
 {
 	if (st == NULL) {
 		return NULL;
 	} else if (IS_CHILD_SA(st)) {
-		return (struct ike_sa*) state_by_serialno(st->st_clonedfrom);
+		struct state *pst = state_by_serialno(st->st_clonedfrom);
+		if (pst == NULL) {
+			PEXPECT_LOG("child state #%lu missing parent state #%lu",
+				    st->st_serialno, st->st_clonedfrom);
+			/* about to crash with an NPE */
+		} else if (verbose) {
+			PEXPECT_LOG("child state #%lu is not an IKE SA; parent is #%lu",
+				    st->st_serialno, st->st_clonedfrom);
+		}
+		return (struct ike_sa*) pst;
 	} else {
 		return (struct ike_sa*) st;
 	}
 }
 
+struct ike_sa *ike_sa(struct state *st)
+{
+	return get_ike_sa(st, false);
+}
+
+struct ike_sa *pexpect_ike_sa(struct state *st)
+{
+	return get_ike_sa(st, true);
+}
 
 /*
  * Get a state object.
