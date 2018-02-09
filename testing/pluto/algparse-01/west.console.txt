@@ -5,10 +5,14 @@ PATH/libexec/ipsec/algparse -v1 -t # algparse.v1.txt
 PATH/libexec/ipsec/algparse -v2 -t # algparse.v2.txt
 PATH/libexec/ipsec/algparse -v # algparse.v.txt
 west #
+ # start pluto
+west #
  ipsec start
 Redirecting to: systemctl start ipsec.service
 west #
  /testing/pluto/bin/wait-until-pluto-started
+west #
+ # check pluto in correct FIPS mode
 west #
  grep ^FIPS /tmp/pluto.log
 FIPS Product: NO
@@ -18,7 +22,9 @@ FIPS HMAC integrity support [enabled]
 FIPS mode disabled for pluto daemon
 FIPS HMAC integrity verification self-test passed
 west #
- sed -n -e '/^|/d' -e '/ algorithms:/ { :loop ; p ; n ; /^  / b loop }' /tmp/pluto.log
+ # check pluto algorithm list
+west #
+ sed -n -e '/^|/d' -e ':algs / algorithms:/ { :alg ; p ; n ; /^  / b alg ; b algs }' /tmp/pluto.log
 Encryption algorithms:
   AES_CCM_16          IKEv1:     ESP     IKEv2:     ESP     FIPS  {256,192,*128}  (aes_ccm aes_ccm_c)
   AES_CCM_12          IKEv1:     ESP     IKEv2:     ESP     FIPS  {256,192,*128}  (aes_ccm_b)
