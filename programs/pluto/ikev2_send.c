@@ -164,7 +164,7 @@ pb_stream open_v2_message(pb_stream *reply,
 	if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
 		hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 	}
-	hdr.isa_msgid = message_id;
+	hdr.isa_msgid = htonl(message_id);
 	hdr.isa_length = 0; /* filled in when PBS is closed */
 
 	return open_output_struct_pbs(reply, &hdr, &isakmp_hdr_desc);
