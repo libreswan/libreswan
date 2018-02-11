@@ -720,14 +720,14 @@ struct ikev2_payload_errors ikev2_verify_payloads(struct ikev2_payloads_summary 
 	lset_t opt_payloads = payloads->optional;
 
 	struct ikev2_payload_errors errors = {
-		.status = STF_OK,
+		.bad = false,
 		.excessive = summary.repeated & ~repeatable_payloads,
 		.missing = req_payloads & ~seen,
 		.unexpected = seen & ~req_payloads & ~opt_payloads & ~everywhere_payloads,
 	};
 
 	if ((errors.excessive | errors.missing | errors.unexpected) != LEMPTY) {
-		errors.status = STF_FAIL + v2N_INVALID_SYNTAX;
+		errors.bad = true;
 	}
 	return errors;
 }
@@ -1284,9 +1284,9 @@ void process_v2_packet(struct msg_digest **mdp)
 	passert((st == NULL) == (from_state == STATE_UNDEFINED));
 
 	struct ikev2_payloads_summary clear_payload_summary = { .status = STF_ROOF };
-	struct ikev2_payload_errors clear_payload_status = { .status = STF_OK };
+	struct ikev2_payload_errors clear_payload_status = { .bad = false };
 	struct ikev2_payloads_summary encrypted_payload_summary = { .status = STF_ROOF };
-	struct ikev2_payload_errors encrypted_payload_status = { .status = STF_OK };
+	struct ikev2_payload_errors encrypted_payload_status = { .bad = false };
 
 	for (svm = v2_state_microcode_table; svm->state != STATE_IKEv2_ROOF;
 	     svm++) {
@@ -1341,7 +1341,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		struct ikev2_payload_errors clear_payload_errors
 			= ikev2_verify_payloads(clear_payload_summary,
 						&expected_clear_payloads);
-		if (clear_payload_errors.status != STF_OK) {
+		if (clear_payload_errors.bad) {
 			/* Save this failure for later logging. */
 			clear_payload_status = clear_payload_errors;
 			continue;
@@ -1404,7 +1404,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			 */
 			md->st = st;
 			encrypted_payload_summary = ikev2_decrypt_msg(ike_sa(st), md);
-			if (encrypted_payload_status.status != STF_OK) {
+			if (encrypted_payload_status.bad) {
 				md->st = NULL;
 				complete_v2_state_transition(mdp, encrypted_payload_summary.status);
 				return;
@@ -1422,7 +1422,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		struct ikev2_payload_errors encrypted_payload_errors
 			= ikev2_verify_payloads(encrypted_payload_summary,
 						&expected_encrypted_payloads);
-		if (encrypted_payload_errors.status != STF_OK) {
+		if (encrypted_payload_errors.bad) {
 			/* Save this failure for later logging. */
 			encrypted_payload_status = encrypted_payload_errors;
 			continue;
@@ -1457,7 +1457,7 @@ void process_v2_packet(struct msg_digest **mdp)
 	if (svm->state == STATE_IKEv2_ROOF) {
 		DBG(DBG_CONTROL, DBG_log("no useful state microcode entry found"));
 		/* no useful state microcode entry */
-		if (clear_payload_status.status != STF_OK) {
+		if (clear_payload_status.bad) {
 			struct payload_digest *ntfy;
 
 			ikev2_log_payload_errors(clear_payload_status, st);
@@ -1469,12 +1469,10 @@ void process_v2_packet(struct msg_digest **mdp)
 				       enum_name(&ikev2_notify_names, ntfy->payload.v2n.isan_type));
 				pstats(ikev2_recv_notifies_e, ntfy->payload.v2n.isan_type);
 			}
-
-			complete_v2_state_transition(mdp, clear_payload_status.status);
-
-		} else if (encrypted_payload_status.status != STF_OK) {
+			complete_v2_state_transition(mdp, STF_FAIL + v2N_INVALID_SYNTAX);
+		} else if (encrypted_payload_status.bad) {
 			ikev2_log_payload_errors(encrypted_payload_status, st);
-			complete_v2_state_transition(mdp, encrypted_payload_status.status);
+			complete_v2_state_transition(mdp, STF_FAIL + v2N_INVALID_SYNTAX);
 		} else if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
 			/*
 			 * We are the responder to this message so

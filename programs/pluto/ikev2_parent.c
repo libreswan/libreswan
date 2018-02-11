@@ -2516,32 +2516,6 @@ static stf_status ikev2_reassemble_fragments(struct msg_digest *md,
 	return STF_OK;
 }
 
-static stf_status ikev2_verify_enc_payloads(struct msg_digest *md,
-					    struct ikev2_payloads_summary summary)
-{
-	const struct state_v2_microcode *svm = md->svm;
-
-	/*
-	 * XXX: hack until expected_encrypted_payloads is added to
-	 * struct state_v2_microcode or replacement.
-	 */
-	struct ikev2_expected_payloads expected_encrypted_payloads = {
-		.required = svm->req_enc_payloads,
-		.optional = svm->opt_enc_payloads,
-	};
-	struct ikev2_payload_errors errors = ikev2_verify_payloads(summary,
-								   &expected_encrypted_payloads);
-	if (errors.status != STF_OK) {
-		ikev2_log_payload_errors(errors, md->st);
-		return errors.status;
-	}
-
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu match encrypted payloads to svm %s",
-				md->st->st_serialno, svm->story));
-
-	return STF_OK;
-}
-
 struct ikev2_payloads_summary ikev2_decrypt_msg(struct ike_sa *ike,
 						struct msg_digest *md)
 {
@@ -3631,8 +3605,18 @@ static void ikev2_parent_inI2outR2_continue(struct state *st,
 
 	/* verify the payload contents */
 
-	stf_status e = ikev2_verify_enc_payloads(*mdp, ps);
-	if (e != STF_OK) {
+	/*
+	 * XXX: hack until expected_encrypted_payloads is added to
+	 * struct state_v2_microcode or replacement.
+	 */
+	const struct state_v2_microcode *svm = (*mdp)->svm;
+	struct ikev2_expected_payloads expected_encrypted_payloads = {
+		.required = svm->req_enc_payloads,
+		.optional = svm->opt_enc_payloads,
+	};
+	struct ikev2_payload_errors errors =
+		ikev2_verify_payloads(ps, &expected_encrypted_payloads);
+	if (errors.bad) {
 		/*
 		 * Something in the packet is bogus.  Drop everything.
 		 */
@@ -3644,7 +3628,7 @@ static void ikev2_parent_inI2outR2_continue(struct state *st,
 
 	/* The connection is "up", start authenticating it */
 
-	e = ikev2_parent_inI2outR2_continue_tail(st, *mdp);
+	stf_status e = ikev2_parent_inI2outR2_continue_tail(st, *mdp);
 	DBG(DBG_CONTROL,
 	    if (e > STF_FAIL) {
 		    int v2_notify_num = e - STF_FAIL;
