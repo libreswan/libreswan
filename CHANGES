@@ -270,7 +270,7 @@ v3.19 (January 15, 2017)
 * IKEv1: If a queued up DPD probe finds no IKE SA, create a new one [Paul]
 * IKEv1: accept_delete() check if IKE SA is shared before deleting [Paul]
 * IKEv1: Remove ADNS, DNS continuations and IKEv1 OE code [Paul/Antony]
-* IKEv1: Schedule IPsec SA REPLACE immediately when receiving DELETE [Antny]
+* IKEv1: Schedule IPsec SA REPLACE immediately when receiving DELETE [Antony]
 * IKEv1: Some IKE SA failure on initiator could lead to hanging whack [Paul]
 * KLIPS: fix for unregister_netdevice() for Linux 3.6.11 and up [Richard/Paul]
 * XFRM: EXPERIMENTAL Support for configuring IP address on the VTI device [Paul]
