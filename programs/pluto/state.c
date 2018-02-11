@@ -216,15 +216,18 @@ static unsigned total(void)
 	return total_ike() + total_ipsec() + cat_count[CAT_UNKNOWN];
 }
 
+/*
+ * When deleting, st->st_connection can be NULL, so we cannot look
+ * at the policy to determine anonimity. We therefor use a scratchpad
+ * at st->st_ikev2_anon which is copied from parent to child states
+ */
 static enum categories categorize_state(struct state *st,
 					       enum state_kind state)
 {
 	bool is_parent = IS_PARENT_SA(st);
-	bool opportunistic = (st->st_connection != NULL &&
-			      st->st_connection->policy & POLICY_OPPORTUNISTIC);
-	enum categories established_ike = opportunistic ?
+	enum categories established_ike = st->st_ikev2_anon ?
 		CAT_ANONYMOUS_IKE : CAT_AUTHENTICATED_IKE;
-	enum categories established_ipsec = opportunistic ?
+	enum categories established_ipsec = st->st_ikev2_anon ?
 		CAT_ANONYMOUS_IPSEC : CAT_AUTHENTICATED_IPSEC;
 
 	/*
@@ -257,12 +260,9 @@ static enum categories categorize_state(struct state *st,
 	case STATE_MAIN_R0:
 	case STATE_MAIN_I1:
 		/*
-		 * Count I1 as half-open too because with OE,
+		 * Count I1 as half-open too because with ondemand,
 		 * a plaintext packet (that is spoofed) will
 		 * trigger an outgoing IKE SA.
-		 *
-		 * We could do better and check
-		 * POLICY_OPPORTUNISTIC on I1's
 		 */
 		return CAT_HALF_OPEN_IKE;
 
@@ -287,12 +287,12 @@ static enum categories categorize_state(struct state *st,
 	case STATE_XAUTH_I1:
 	case STATE_XAUTH_R0:
 	case STATE_XAUTH_R1:
-	case STATE_V2_CREATE_I0:
-	case STATE_V2_CREATE_I:
+	case STATE_V2_CREATE_I0: /* isn't this an ipsec state */
+	case STATE_V2_CREATE_I: /* isn't this an ipsec state */
 	case STATE_V2_REKEY_IKE_I0:
 	case STATE_V2_REKEY_IKE_I:
-	case STATE_V2_REKEY_CHILD_I0:
-	case STATE_V2_REKEY_CHILD_I:
+	case STATE_V2_REKEY_CHILD_I0: /* isn't this an ipsec state */
+	case STATE_V2_REKEY_CHILD_I: /* isn't this an ipsec state */
 	case STATE_V2_CREATE_R:
 	case STATE_V2_REKEY_IKE_R:
 	case STATE_V2_REKEY_CHILD_R:
@@ -323,9 +323,9 @@ static enum categories categorize_state(struct state *st,
 	case STATE_IKESA_DEL:
 		return established_ike;
 
-	case STATE_QUICK_I1:
+	case STATE_QUICK_I1: /* this is not established yet? */
 	case STATE_QUICK_I2:
-	case STATE_QUICK_R0:
+	case STATE_QUICK_R0: /* shouldn't we cat_ignore this? */
 	case STATE_QUICK_R1:
 	case STATE_QUICK_R2:
 		/*
@@ -351,7 +351,7 @@ static enum categories categorize_state(struct state *st,
 		return CAT_INFORMATIONAL;
 
 	default:
-		/* ??? should never happen */
+		loglog(RC_LOG_SERIOUS, "Unexpected state in categorize_state");
 		return CAT_UNKNOWN;
 	}
 }
@@ -367,6 +367,8 @@ static void update_state_stats(struct state *st, enum state_kind old_state,
 	 * start and end in those states.
 	 */
 	if (old_category != CAT_IGNORE) {
+		pexpect(state_count[old_state] != 0);
+		pexpect(cat_count[old_category] != 0);
 		state_count[old_state]--;
 		cat_count[old_category]--;
 	}
@@ -1465,6 +1467,7 @@ struct state *duplicate_state(struct state *st, sa_t sa_type)
 	nst->st_clonedfrom = st->st_serialno;
 	nst->st_import = st->st_import;
 	nst->st_ikev2 = st->st_ikev2;
+	nst->st_ikev2_anon = st->st_ikev2_anon;
 	nst->st_original_role = st->st_original_role;
 	nst->st_seen_fragvid = st->st_seen_fragvid;
 	nst->st_seen_fragments = st->st_seen_fragments;

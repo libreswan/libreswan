@@ -581,6 +581,7 @@ static bool v2_check_auth(enum ikev2_auth_method atype,
 			libreswan_log("NULL Authentication failed: AUTH mismatch! (implementation bug?)");
 			return FALSE;
 		}
+		st->st_ikev2_anon = TRUE;
 		return TRUE;
 	}
 
