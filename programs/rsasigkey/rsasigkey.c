@@ -266,10 +266,7 @@ int main(int argc, char *argv[])
 /*
  * generate an RSA signature key
  *
- * e is fixed at 3, without discussion.  That would not be wise if these
- * keys were to be used for encryption, but for signatures there are some
- * real speed advantages.
- * See also: https://www.imperialviolet.org/2012/03/16/rsae.html
+ * e is fixed at F4.
  */
 void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco)
 {
@@ -285,15 +282,6 @@ void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco)
 		exit(1);
 	}
 
-#ifdef FIPS_CHECK
-	if (PK11_IsFIPS() && !FIPSCHECK_verify(NULL, NULL)) {
-		fprintf(stderr,
-			"FIPS HMAC integrity verification test failed.\n");
-		exit(1);
-	}
-#endif
-
-	/* Good for now but someone may want to use a hardware token */
 	slot = lsw_nss_get_authenticated_slot(err);
 	if (slot == NULL) {
 		fprintf(stderr, "%s: %s\n", progname, err);
