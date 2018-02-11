@@ -13,7 +13,7 @@ v3.24 (unreleased)
 * pluto: Cleanup of state/md passing code [Andrew]
 * pluto: Allow switching back from wrong instance to template conn [Paul]
 * pluto: disentangle IKEv1 and IKEv2 packet sending code [Andrew]
-
+* FIPS: Don't attempt HMAC integrity test on rsasigkey (rhbz#1544143 [Paul]
 * _unbound-hook: Pass all IPSECKEY's to pluto, not just the first [Paul]
 * Bugtracker bugs fixed:
    #318: vti interface gets down on previous initiator if roles switch [Tuomo]
