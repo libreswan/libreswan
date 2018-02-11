@@ -26,6 +26,10 @@ west #
 done
 west #
  grep -e INVALID_SYNTAX -e STF_FATAL /tmp/pluto.log
+|    Notify Message Type: v2N_INVALID_SYNTAX (0x7)
+packet from 192.1.2.23:500: Received v2N_INVALID_SYNTAX notify
+| #0 complete v2 state transition from STATE_UNDEFINED with v2N_INVALID_SYNTAX
+| state transition function for STATE_UNDEFINED failed: v2N_INVALID_SYNTAX
 west #
 west #
  ../bin/check-for-core.sh
