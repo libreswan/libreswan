@@ -149,14 +149,8 @@ void change_state(struct state *st, enum state_kind new_state)
 {
 	enum state_kind old_state = st->st_state;
 
-	/*
-	 * This always logs the state transition (even when nothing
-	 * happens), and the state category.
-	 * ??? why?
-	 */
-	update_state_stats(st, old_state, new_state);
-
 	if (new_state != old_state) {
+		update_state_stats(st, old_state, new_state);
 		log_state(st, new_state);
 		st->st_finite_state = finite_states[new_state];
 		passert(st->st_finite_state != NULL);
