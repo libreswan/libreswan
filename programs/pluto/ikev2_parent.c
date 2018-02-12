@@ -512,7 +512,7 @@ static stf_status ikev2_match_ke_group_and_proposal(struct msg_digest *md,
 }
 
 /*
- * Called by ikev2_parent_inI2outR2_tail() and ikev2parent_inR2()
+ * Called by ikev2_parent_inI2outR2_tail() and ikev2_parent_inR2()
  * Do the actual AUTH payload verification
  */
 static bool v2_check_auth(enum ikev2_auth_method atype,
@@ -689,7 +689,7 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
  * Note: this is not called from demux.c, but from ipsecdoi_initiate().
  *
  */
-void ikev2parent_outI1(int whack_sock,
+void ikev2_parent_outI1(int whack_sock,
 		       struct connection *c,
 		       struct state *predecessor,
 		       lset_t policy,
@@ -1069,7 +1069,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 static crypto_req_cont_func ikev2_parent_inI1outR1_continue;	/* forward decl and type assertion */
 static crypto_transition_fn ikev2_parent_inI1outR1_continue_tail;	/* forward decl and type assertion */
 
-stf_status ikev2parent_inI1outR1(struct state *null_st, struct msg_digest *md)
+stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 {
 	passert(null_st == NULL);	/* initial responder -> no state */
 
@@ -1450,7 +1450,7 @@ static void ikev2_parent_inI1outR1_continue(struct state *st,
  * ikev2_parent_inI1outR1_tail: do what's left after all the crypto
  *
  * Called from:
- *	ikev2parent_inI1outR1: if KE and Nonce were already calculated
+ *	ikev2_parent_inI1outR1: if KE and Nonce were already calculated
  *	ikev2_parent_inI1outR1_continue: if they needed to be calculated
  */
 static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
@@ -1688,7 +1688,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
  *                     <--  HDR, N(COOKIE)
  * HDR, N(COOKIE), SAi1, KEi, Ni -->
  */
-stf_status ikev2parent_inR1BoutI1B(struct state *st, struct msg_digest *md)
+stf_status ikev2_parent_inR1BoutI1B(struct state *st, struct msg_digest *md)
 {
 	struct connection *c = st->st_connection;
 
@@ -1868,7 +1868,7 @@ stf_status ikev2parent_inR1BoutI1B(struct state *st, struct msg_digest *md)
 static crypto_req_cont_func ikev2_parent_inR1outI2_continue;	/* forward decl and type assertion */
 static crypto_transition_fn ikev2_parent_inR1outI2_tail;	/* forward decl and type assertion */
 
-stf_status ikev2parent_inR1outI2(struct state *st, struct msg_digest *md)
+stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 {
 	struct connection *c = st->st_connection;
 	struct payload_digest *ntfy;
@@ -1977,7 +1977,7 @@ stf_status ikev2parent_inR1outI2(struct state *st, struct msg_digest *md)
 							  &st->st_accepted_ike_proposal,
 							  c->ike_proposals);
 		if (ret != STF_OK) {
-			DBG(DBG_CONTROLMORE, DBG_log("ikev2_parse_parent_sa_body() failed in ikev2parent_inR1outI2()"));
+			DBG(DBG_CONTROLMORE, DBG_log("ikev2_parse_parent_sa_body() failed in ikev2_parent_inR1outI2()"));
 			return ret;
 		}
 		passert(st->st_accepted_ike_proposal != NULL);
@@ -3557,7 +3557,7 @@ static stf_status ikev2_start_pam_authorize(struct state *st)
 
 static crypto_req_cont_func ikev2_parent_inI2outR2_continue;	/* type asssertion */
 
-stf_status ikev2parent_inI2outR2(struct state *st, struct msg_digest *md UNUSED)
+stf_status ikev2_parent_inI2outR2(struct state *st, struct msg_digest *md UNUSED)
 {
 	/* for testing only */
 	if (DBGP(IMPAIR_SEND_NO_IKEV2_AUTH)) {
@@ -4557,7 +4557,7 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
  * https://tools.ietf.org/html/rfc7296#section-2.21.2
  */
 
-stf_status ikev2parent_inR2(struct state *st, struct msg_digest *md)
+stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 {
 	unsigned char idhash_in[MAX_DIGEST_LEN];
 	struct payload_digest *ntfy;

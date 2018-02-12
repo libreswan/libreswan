@@ -181,7 +181,7 @@ static initiator_function *pick_initiator(struct connection *c,
 	    (policy & c->policy & POLICY_IKEV2_ALLOW) &&
 	    !c->failed_ikev2) {
 		/* we may try V2, and we haven't failed */
-		return ikev2parent_outI1;
+		return ikev2_parent_outI1;
 	} else if (policy & c->policy & POLICY_IKEV1_ALLOW) {
 		/* we may try V1; Aggressive or Main Mode? */
 		return (policy & POLICY_AGGRESSIVE) ? aggr_outI1 : main_outI1;

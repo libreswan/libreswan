@@ -296,7 +296,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
 	  .req_clear_payloads = P(N),
 	  .opt_clear_payloads = LEMPTY,
-	  .processor  = ikev2parent_inR1BoutI1B,
+	  .processor  = ikev2_parent_inR1BoutI1B,
 	  .recv_type  = ISAKMP_v2_SA_INIT,
 	  .timeout_event = EVENT_RETAIN, },
 
@@ -312,7 +312,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
 	  .req_clear_payloads = P(SA) | P(KE) | P(Nr),
 	  .opt_clear_payloads = P(CERTREQ),
-	  .processor  = ikev2parent_inR1outI2,
+	  .processor  = ikev2_parent_inR1outI2,
 	  .recv_type  = ISAKMP_v2_SA_INIT,
 	  .timeout_event = EVENT_v2_RETRANSMIT, },
 
@@ -328,7 +328,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDr) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(CERT)|P(CP),
-	  .processor  = ikev2parent_inR2,
+	  .processor  = ikev2_parent_inR2,
 	  .recv_type  = ISAKMP_v2_AUTH,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
@@ -341,7 +341,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .next_state = STATE_PARENT_R1,
 	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND,
 	  .req_clear_payloads = P(SA) | P(KE) | P(Ni),
-	  .processor  = ikev2parent_inI1outR1,
+	  .processor  = ikev2_parent_inI1outR1,
 	  .recv_type  = ISAKMP_v2_SA_INIT,
 	  .timeout_event = EVENT_v2_RESPONDER_TIMEOUT, },
 
@@ -361,7 +361,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDi) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(CERT) | P(CERTREQ) | P(IDr) | P(CP),
-	  .processor  = ikev2parent_inI2outR2,
+	  .processor  = ikev2_parent_inI2outR2,
 	  .recv_type  = ISAKMP_v2_AUTH,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
@@ -2321,13 +2321,13 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 	 *
 	 * One condition for null state is when a new connection request packet
 	 * arrives and there is no suitable matching configuration.  For example,
-	 * ikev2parent_inI1outR1() will return (STF_FAIL + NO_PROPOSAL_CHOSEN) but
+	 * ikev2_parent_inI1outR1() will return (STF_FAIL + NO_PROPOSAL_CHOSEN) but
 	 * no state in this case.  While other failures may be better caught before
 	 * this function is called, we should be graceful here.  And for this
 	 * particular case, and similar failure cases, we want SEND_NOTIFICATION
 	 * (below) to let the peer know why we've rejected the request.
 	 *
-	 * Another case of null state is return from ikev2parent_inR1BoutI1B
+	 * Another case of null state is return from ikev2_parent_inR1BoutI1B
 	 * which returns STF_IGNORE.
 	 *
 	 * Another case occurs when we finish an Informational Exchange message
