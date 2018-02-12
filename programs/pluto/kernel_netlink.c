@@ -51,8 +51,8 @@
 #include <linux/if_addr.h>
 #include <linux/if_link.h>
 
-#include "libreswan.h" /* before xfrm.h otherwise break on F22 */
 #include "linux/xfrm.h" /* local (if configured) or system copy */
+#include "libreswan.h" /* before xfrm.h otherwise break on F22 */
 
 #include "libreswan/pfkeyv2.h"
 #include "libreswan/pfkey.h"

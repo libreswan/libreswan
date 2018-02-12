@@ -63,7 +63,6 @@ static void init_seccomp(uint32_t def_action, bool main)
 		rc |= S_RULE_ADD(bind);
 		rc |= S_RULE_ADD(brk);
 		rc |= S_RULE_ADD(chdir);
-		rc |= S_RULE_ADD(clock_gettime);
 		rc |= S_RULE_ADD(clone);
 		rc |= S_RULE_ADD(close);
 		rc |= S_RULE_ADD(connect);
@@ -120,6 +119,7 @@ static void init_seccomp(uint32_t def_action, bool main)
 	/* common to pluto and helpers */
 
 	rc |= S_RULE_ADD(arch_prctl);
+	rc |= S_RULE_ADD(exit_group);
 	rc |= S_RULE_ADD(gettid);
 	rc |= S_RULE_ADD(gettimeofday);
 	rc |= S_RULE_ADD(fstat);
@@ -134,10 +134,12 @@ static void init_seccomp(uint32_t def_action, bool main)
 	rc |= S_RULE_ADD(sched_setparam);
 	rc |= S_RULE_ADD(sendto);
 	rc |= S_RULE_ADD(set_tid_address);
+	rc |= S_RULE_ADD(sigreturn);
 	rc |= S_RULE_ADD(stat);
 	rc |= S_RULE_ADD(statfs);
+	rc |= S_RULE_ADD(clock_gettime);
+	rc |= S_RULE_ADD(waitpid);
 	rc |= S_RULE_ADD(write);
-	rc |= S_RULE_ADD(exit_group);
 
 	if (rc != 0) {
 		libreswan_log("seccomp_rule_add() failed!");

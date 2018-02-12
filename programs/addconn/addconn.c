@@ -103,6 +103,7 @@ void init_seccomp_addconn(uint32_t def_action)
 	rc |= S_RULE_ADD(brk);
 	rc |= S_RULE_ADD(bind);
 	rc |= S_RULE_ADD(clone);
+	rc |= S_RULE_ADD(clock_gettime);
 	rc |= S_RULE_ADD(close);
 	rc |= S_RULE_ADD(connect);
 	rc |= S_RULE_ADD(epoll_create);
@@ -139,12 +140,14 @@ void init_seccomp_addconn(uint32_t def_action)
 	rc |= S_RULE_ADD(setsockopt);
 	rc |= S_RULE_ADD(set_robust_list);
 	rc |= S_RULE_ADD(set_tid_address);
+	rc |= S_RULE_ADD(sigreturn);
 	rc |= S_RULE_ADD(socket);
 	rc |= S_RULE_ADD(socketcall);
 	rc |= S_RULE_ADD(socketpair);
 	rc |= S_RULE_ADD(stat);
 	rc |= S_RULE_ADD(statfs);
 	rc |= S_RULE_ADD(uname);
+	rc |= S_RULE_ADD(waitpid);
 	rc |= S_RULE_ADD(write);
 
 	if (rc != 0) {
