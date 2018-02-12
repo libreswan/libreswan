@@ -11,7 +11,7 @@ typedef stf_status crypto_transition_fn(struct state *st, struct msg_digest *md,
 
 extern void process_v2_packet(struct msg_digest **mdp);
 
-extern void ikev2parent_outI1(int whack_sock,
+extern void ikev2_parent_outI1(int whack_sock,
 			      struct connection *c,
 			      struct state *predecessor,
 			      lset_t policy,
@@ -41,12 +41,11 @@ extern state_transition_fn ikev2_child_ike_inIoutR;
 extern state_transition_fn ikev2_child_inR;
 extern state_transition_fn ikev2_child_inIoutR;
 
-extern state_transition_fn ikev2parent_inI1outR1;
-extern state_transition_fn ikev2parent_inR1;
-extern state_transition_fn ikev2parent_inR1BoutI1B;
-extern state_transition_fn ikev2parent_inR1outI2;
-extern state_transition_fn ikev2parent_inI2outR2;
-extern state_transition_fn ikev2parent_inR2;
+extern state_transition_fn ikev2_parent_inI1outR1;
+extern state_transition_fn ikev2_parent_inR1BoutI1B;
+extern state_transition_fn ikev2_parent_inR1outI2;
+extern state_transition_fn ikev2_parent_inI2outR2;
+extern state_transition_fn ikev2_parent_inR2;
 extern crypto_transition_fn ikev2_child_out_cont;
 extern crypto_transition_fn ikev2_child_inR_tail;
 extern void ikev2_add_ipsec_child(int whack_sock, struct state *isakmp_sa,

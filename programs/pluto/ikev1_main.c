@@ -612,7 +612,7 @@ bool ikev1_close_message(pb_stream *pbs, struct state *st)
 
 stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
 {
-	/* ??? this code looks a lot like the middle of ikev2parent_inI1outR1 */
+	/* ??? this code looks a lot like the middle of ikev2_parent_inI1outR1 */
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
 	struct connection *c;
 	pb_stream r_sa_pbs;
