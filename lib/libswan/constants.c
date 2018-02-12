@@ -241,7 +241,7 @@ static const char *const payload_name_ikev2[] = {
 
 /* http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-2 */
 /* dual-use: for enum_name and for bitnamesof */
-const char *const payload_name_ikev2_main[] = {
+static const char *const payload_name_ikev2_main[] = {
 	"ISAKMP_NEXT_v2SA",	/* 33 */
 	"ISAKMP_NEXT_v2KE",
 	"ISAKMP_NEXT_v2IDi",
