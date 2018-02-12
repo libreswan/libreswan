@@ -3,7 +3,6 @@ See also https://libreswan.org/
 
 v3.24 (unreleased)
 * IKEv2: PPK support for authby=rsasig [Vukasin Karadzic]
-* addconn: Fix auto=route and auto=start processing [Paul]
 * IKEv2: IANA INTERNAL_DNSSEC_TA allocation added [Paul]
 * IKEv2: Add PPK support to authby=rsasig [Vukasin]
 * IKEv2: Don't calculate NO_PPK_AUTH when the POLICY is INSIST [Vukasin]
@@ -13,7 +12,9 @@ v3.24 (unreleased)
 * pluto: Cleanup of state/md passing code [Andrew]
 * pluto: Allow switching back from wrong instance to template conn [Paul]
 * pluto: disentangle IKEv1 and IKEv2 packet sending code [Andrew]
+* addconn: Fix auto=route and auto=start processing [Paul]
 * FIPS: Don't attempt HMAC integrity test on rsasigkey (rhbz#1544143 [Paul]
+* portexcludes: new command ipsec portexcludes (see portexcludes.conf) [Paul]
 * _unbound-hook: Pass all IPSECKEY's to pluto, not just the first [Paul]
 * Bugtracker bugs fixed:
    #318: vti interface gets down on previous initiator if roles switch [Tuomo]
