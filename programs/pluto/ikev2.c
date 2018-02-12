@@ -225,14 +225,9 @@ enum smf2_flags {
  *                            <--  HDR, SK {SA, Nr, KEr}
  */
 
-/*
- * Convert a payload type into a set index.
- */
-#define PINDEX(N) ((N) - ISAKMP_v2PAYLOAD_TYPE_BASE)
-
 /* Short forms for building payload type sets */
 
-#define P(N) LELEM(PINDEX(ISAKMP_NEXT_v2##N))
+#define P(N) LELEM(ISAKMP_NEXT_v2##N)
 
 /* From RFC 5996:
  *
@@ -647,9 +642,13 @@ struct ikev2_payloads_summary ikev2_decode_payloads(struct msg_digest *md,
 			continue;
 		}
 
-		passert(PINDEX(np) < LELEM_ROOF);
-		summary.repeated |= summary.seen & LELEM(PINDEX(np));
-		summary.seen |= LELEM(PINDEX(np));
+		if (np >= LELEM_ROOF) {
+			DBG(DBG_CONTROL, DBG_log("huge next-payload %u", np));
+			summary.status = STF_FAIL + v2N_INVALID_SYNTAX;
+			break;
+		}
+		summary.repeated |= summary.seen & LELEM(np);
+		summary.seen |= LELEM(np);
 
 		if (!in_struct(&pd->payload, sd, in_pbs, &pd->pbs)) {
 			loglog(RC_LOG_SERIOUS, "malformed payload in packet");
@@ -722,12 +721,12 @@ struct ikev2_payload_errors ikev2_verify_payloads(struct ikev2_payloads_summary 
 
 	struct ikev2_payload_errors errors = {
 		.status = STF_OK,
-		.bad_repeat = summary.repeated & ~repeatable_payloads,
+		.excessive = summary.repeated & ~repeatable_payloads,
 		.missing = req_payloads & ~seen,
 		.unexpected = seen & ~req_payloads & ~opt_payloads & ~everywhere_payloads,
 	};
 
-	if ((errors.bad_repeat | errors.missing | errors.unexpected) != LEMPTY) {
+	if ((errors.excessive | errors.missing | errors.unexpected) != LEMPTY) {
 		errors.status = STF_FAIL + v2N_INVALID_SYNTAX;
 	}
 	return errors;
@@ -751,23 +750,23 @@ void ikev2_log_payload_errors(struct ikev2_payload_errors errors, struct state *
 		}
 	}
 
-	if (errors.missing != LEMPTY) {
-		loglog(RC_LOG_SERIOUS,
-		       "missing payload(s) (%s). Message dropped.",
-		       bitnamesof(payload_name_ikev2_main,
-				  errors.missing));
-	}
-	if (errors.unexpected != LEMPTY) {
-		loglog(RC_LOG_SERIOUS,
-		       "payload(s) (%s) unexpected. Message dropped.",
-		       bitnamesof(payload_name_ikev2_main,
-				  errors.unexpected));
-	}
-	if (errors.bad_repeat != LEMPTY) {
-		loglog(RC_LOG_SERIOUS,
-		       "payload(s) (%s) unexpectedly repeated. Message dropped.",
-		       bitnamesof(payload_name_ikev2_main,
-				  errors.bad_repeat));
+	LSWLOG_LOG_WHACK(RC_LOG_SERIOUS, buf) {
+		lswlogs(buf, "Dropping message with payload errors.");
+		if (errors.missing != LEMPTY) {
+			lswlogf(buf, " missing: ");
+			lswlog_enum_lset_short(buf, &ikev2_payload_names, ",",
+					       errors.missing);
+		}
+		if (errors.unexpected != LEMPTY) {
+			lswlogf(buf, " unexpected: ");
+			lswlog_enum_lset_short(buf, &ikev2_payload_names, ",",
+					       errors.unexpected);
+		}
+		if (errors.excessive != LEMPTY) {
+			lswlogf(buf, " excessive: ");
+			lswlog_enum_lset_short(buf, &ikev2_payload_names, ",",
+					       errors.excessive);
+		}
 	}
 }
 

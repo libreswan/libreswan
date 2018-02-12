@@ -250,7 +250,7 @@ struct ikev2_payloads_summary ikev2_decrypt_msg(struct ike_sa *ike,
 
 struct ikev2_payload_errors {
 	stf_status status;
-	lset_t bad_repeat;
+	lset_t excessive;
 	lset_t missing;
 	lset_t unexpected;
 };

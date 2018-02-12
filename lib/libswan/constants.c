@@ -294,7 +294,7 @@ enum_names ikev2_payload_names = {
 	ISAKMP_NEXT_v2NONE,
 	ISAKMP_NEXT_v2NONE,
 	ARRAY_REF(payload_name_ikev2),
-	NULL, /* prefix */
+	"ISAKMP_NEXT_v2", /* prefix */
 	&payload_names_ikev2_main
 };
 
