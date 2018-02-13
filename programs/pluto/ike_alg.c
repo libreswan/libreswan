@@ -716,6 +716,9 @@ static const struct oakley_group_desc *dh_descriptors[] = {
 #endif
 	&oakley_group_dh23,
 	&oakley_group_dh24,
+#ifdef USE_DH31
+	&oakley_group_dh31,
+#endif
 };
 
 static void dh_desc_check(const struct ike_alg *alg)

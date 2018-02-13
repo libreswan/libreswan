@@ -309,3 +309,27 @@ const struct oakley_group_desc oakley_group_dh24 = {
 	.bytes = BYTES_FOR_BITS(2048),
 	.dhmke_ops = &ike_alg_nss_modp_dhmke_ops,
 };
+
+/* https://tools.ietf.org/html/rfc8031 */
+
+#ifdef USE_DH31
+const struct oakley_group_desc oakley_group_dh31 = {
+	.common = {
+		.algo_type = IKE_ALG_DH,
+		.name = "DH31",
+		.fqn = "DH31",
+		.names = { "dh31", "curve25519", },
+		.officname = "dh31",
+		.id = {
+			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_CURVE25519,
+			[IKEv1_ESP_ID] = -1,
+			[IKEv2_ALG_ID] = OAKLEY_GROUP_CURVE25519,
+		},
+		.fips = TRUE,
+	},
+	.group = OAKLEY_GROUP_CURVE25519,
+	.bytes = 32 /* octets */,
+	.nss_oid = SEC_OID_CURVE25519,
+	.dhmke_ops = &ike_alg_nss_ecp_dhmke_ops,
+};
+#endif
