@@ -1390,23 +1390,20 @@ void process_v2_packet(struct msg_digest **mdp)
 				break;
 			}
 			/*
-			 * "FALSE", passed to ikev2_decrypt_msg()
-			 * means don't also call verify_payloads() to
-			 * check that the payloads that were found
-			 * were expected.  That is done further down.
+			 * Since the SA is 'authenticated', should the
+			 * packet fail to decrypt, drop it.  Should
+			 * have already been logged.
 			 *
-			 * If the packet didn't decrypt drop it.
+			 * Should the connection also be abandoned?
 			 *
-			 * XXX: Setting/clearing md->st is to preserve
-			 * existing behaviour (what ever that was).
-			 * Can md->st instead be set before entering
-			 * this loop?
+			 * XXX: Setting/clearing md->st is to prop up
+			 * nested code needing ST but not having it as
+			 * a parameter.
 			 */
 			md->st = st;
 			encrypted_payload_summary = ikev2_decrypt_msg(ike_sa(st), md);
-			if (encrypted_payload_status.bad) {
-				md->st = NULL;
-				complete_v2_state_transition(mdp, encrypted_payload_summary.status);
+			if (encrypted_payload_summary.status != STF_OK) {
+				complete_v2_state_transition(mdp, STF_FAIL);
 				return;
 			}
 			md->st = NULL;
