@@ -7,6 +7,7 @@ Uploaders:
 Vcs-Browser: https://github.com/libreswan/libreswan
 Vcs-Git: https://github.com/libreswan/libreswan
 Standards-Version: 4.1.0
+Rules-Requires-Root: no
 # libunbound-dev (>= 1.6.5~)  # this is not yet
 Build-Depends:
  bison,
