@@ -15,7 +15,7 @@ systemctl status ipsec
 
 cp /usr/share/doc/libreswan/examples/oe-upgrade-authnull.conf /etc/ipsec.d/
 
-systemctl start ipsec
+systemctl start ipsec || true
 
 systemctl status ipsec
 
