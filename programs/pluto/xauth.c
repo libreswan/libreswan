@@ -69,13 +69,13 @@ void xauth_pam_abort(struct state *st)
 	struct xauth *xauth = st->st_xauth;
 
 	if (xauth == NULL) {
-		PEXPECT_LOG("XAUTH: #%lu: main-process: no process to abort (already aborted?)",
+		PEXPECT_LOG("PAM: #%lu: main-process: no process to abort (already aborted?)",
 			    st->st_serialno);
 	} else {
 		st->st_xauth = NULL; /* aborted */
 		pstats_xauth_aborted++;
 		passert(xauth->serialno == st->st_serialno);
-		libreswan_log("XAUTH: #%lu: main-process: aborting authentication PAM-process for '%s'",
+		libreswan_log("PAM: #%lu: main-process: aborting authentication PAM-process for '%s'",
 			      st->st_serialno, xauth->ptarg.name);
 		/*
 		 * Don't hold back.
@@ -110,7 +110,7 @@ static void pam_callback(struct state *st,
 
 	bool success = WIFEXITED(status) && WEXITSTATUS(status) == 0;
 	LSWDBGP(DBG_XAUTH, buf) {
-		lswlogf(buf, "XAUTH: #%lu: main-process cleaning up PAM-process for user '%s' result %s time elapsed ",
+		lswlogf(buf, "PAM: #%lu: main-process cleaning up PAM-process for user '%s' result %s time elapsed ",
 			xauth->serialno,
 			xauth->ptarg.name,
 			success ? "SUCCESS" : "FAILURE");
@@ -130,7 +130,7 @@ static void pam_callback(struct state *st,
 	 */
 	if (st != NULL) {
 		st->st_xauth = NULL; /* all done */
-		libreswan_log("XAUTH: #%lu: completed for user '%s' with status %s",
+		libreswan_log("PAM: #%lu: completed for user '%s' with status %s",
 			      xauth->serialno, xauth->ptarg.name,
 			      success ? "SUCCESSS" : "FAILURE");
 		xauth->callback(st, mdp, xauth->ptarg.name, success);
@@ -147,12 +147,12 @@ static int pam_child(void *arg)
 	struct xauth *xauth = arg;
 
 	DBG(DBG_XAUTH,
-	    DBG_log("XAUTH: #%lu: PAM-process authenticating user '%s'",
+	    DBG_log("PAM: #%lu: PAM-process authenticating user '%s'",
 		    xauth->serialno,
 		    xauth->ptarg.name));
 	bool success = do_pam_authentication(&xauth->ptarg);
 	DBG(DBG_XAUTH,
-	    DBG_log("XAUTH: #%lu: PAM-process completed for user '%s' with result %s",
+	    DBG_log("PAM: #%lu: PAM-process completed for user '%s' with result %s",
 		    xauth->serialno, xauth->ptarg.name,
 		    success ? "SUCCESS" : "FAILURE"));
 	return success ? 0 : 1;
@@ -190,12 +190,12 @@ void xauth_start_pam_thread(struct state *st,
 	xauth->ptarg.atype = atype;
 
 	DBG(DBG_XAUTH,
-	    DBG_log("XAUTH: #%lu: main-process starting PAM-process for authenticating user '%s'",
+	    DBG_log("PAM: #%lu: main-process starting PAM-process for authenticating user '%s'",
 		    xauth->serialno, xauth->ptarg.name));
 	xauth->child = pluto_fork("xauth", xauth->serialno,
 				  pam_child, pam_callback, xauth);
 	if (xauth->child < 0) {
-		libreswan_log("XAUTH: #%lu: creation of PAM-process for user '%s' failed",
+		libreswan_log("PAM: #%lu: creation of PAM-process for user '%s' failed",
 			      xauth->serialno, xauth->ptarg.name);
 		pfree_xauth(xauth);
 		return;
