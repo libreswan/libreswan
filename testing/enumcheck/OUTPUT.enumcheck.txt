@@ -249,138 +249,161 @@ IETF registry enum_names:
          match ISAKMP_NEXT_v2NONE: OK
          short_name 0:  OK
          lswlog_enum_short 0: OK
+         match NONE [short]: OK
    33 -> ISAKMP_NEXT_v2SA
          lswlog_enum 33: OK
          search ISAKMP_NEXT_v2SA: OK
          match ISAKMP_NEXT_v2SA: OK
          short_name 33:  OK
          lswlog_enum_short 33: OK
+         match SA [short]: OK
    34 -> ISAKMP_NEXT_v2KE
          lswlog_enum 34: OK
          search ISAKMP_NEXT_v2KE: OK
          match ISAKMP_NEXT_v2KE: OK
          short_name 34:  OK
          lswlog_enum_short 34: OK
+         match KE [short]: OK
    35 -> ISAKMP_NEXT_v2IDi
          lswlog_enum 35: OK
          search ISAKMP_NEXT_v2IDi: OK
          match ISAKMP_NEXT_v2IDi: OK
          short_name 35:  OK
          lswlog_enum_short 35: OK
+         match IDi [short]: OK
    36 -> ISAKMP_NEXT_v2IDr
          lswlog_enum 36: OK
          search ISAKMP_NEXT_v2IDr: OK
          match ISAKMP_NEXT_v2IDr: OK
          short_name 36:  OK
          lswlog_enum_short 36: OK
+         match IDr [short]: OK
    37 -> ISAKMP_NEXT_v2CERT
          lswlog_enum 37: OK
          search ISAKMP_NEXT_v2CERT: OK
          match ISAKMP_NEXT_v2CERT: OK
          short_name 37:  OK
          lswlog_enum_short 37: OK
+         match CERT [short]: OK
    38 -> ISAKMP_NEXT_v2CERTREQ
          lswlog_enum 38: OK
          search ISAKMP_NEXT_v2CERTREQ: OK
          match ISAKMP_NEXT_v2CERTREQ: OK
          short_name 38:  OK
          lswlog_enum_short 38: OK
+         match CERTREQ [short]: OK
    39 -> ISAKMP_NEXT_v2AUTH
          lswlog_enum 39: OK
          search ISAKMP_NEXT_v2AUTH: OK
          match ISAKMP_NEXT_v2AUTH: OK
          short_name 39:  OK
          lswlog_enum_short 39: OK
+         match AUTH [short]: OK
    40 -> ISAKMP_NEXT_v2Ni
          lswlog_enum 40: OK
          search ISAKMP_NEXT_v2Ni: OK
          match ISAKMP_NEXT_v2Ni: OK
          short_name 40:  OK
          lswlog_enum_short 40: OK
+         match Ni [short]: OK
    41 -> ISAKMP_NEXT_v2N
          lswlog_enum 41: OK
          search ISAKMP_NEXT_v2N: OK
          match ISAKMP_NEXT_v2N: OK
          short_name 41:  OK
          lswlog_enum_short 41: OK
+         match N [short]: OK
    42 -> ISAKMP_NEXT_v2D
          lswlog_enum 42: OK
          search ISAKMP_NEXT_v2D: OK
          match ISAKMP_NEXT_v2D: OK
          short_name 42:  OK
          lswlog_enum_short 42: OK
+         match D [short]: OK
    43 -> ISAKMP_NEXT_v2V
          lswlog_enum 43: OK
          search ISAKMP_NEXT_v2V: OK
          match ISAKMP_NEXT_v2V: OK
          short_name 43:  OK
          lswlog_enum_short 43: OK
+         match V [short]: OK
    44 -> ISAKMP_NEXT_v2TSi
          lswlog_enum 44: OK
          search ISAKMP_NEXT_v2TSi: OK
          match ISAKMP_NEXT_v2TSi: OK
          short_name 44:  OK
          lswlog_enum_short 44: OK
+         match TSi [short]: OK
    45 -> ISAKMP_NEXT_v2TSr
          lswlog_enum 45: OK
          search ISAKMP_NEXT_v2TSr: OK
          match ISAKMP_NEXT_v2TSr: OK
          short_name 45:  OK
          lswlog_enum_short 45: OK
+         match TSr [short]: OK
    46 -> ISAKMP_NEXT_v2SK
          lswlog_enum 46: OK
          search ISAKMP_NEXT_v2SK: OK
          match ISAKMP_NEXT_v2SK: OK
          short_name 46:  OK
          lswlog_enum_short 46: OK
+         match SK [short]: OK
    47 -> ISAKMP_NEXT_v2CP
          lswlog_enum 47: OK
          search ISAKMP_NEXT_v2CP: OK
          match ISAKMP_NEXT_v2CP: OK
          short_name 47:  OK
          lswlog_enum_short 47: OK
+         match CP [short]: OK
    48 -> ISAKMP_NEXT_v2EAP
          lswlog_enum 48: OK
          search ISAKMP_NEXT_v2EAP: OK
          match ISAKMP_NEXT_v2EAP: OK
          short_name 48:  OK
          lswlog_enum_short 48: OK
+         match EAP [short]: OK
    49 -> ISAKMP_NEXT_v2GSPM
          lswlog_enum 49: OK
          search ISAKMP_NEXT_v2GSPM: OK
          match ISAKMP_NEXT_v2GSPM: OK
          short_name 49:  OK
          lswlog_enum_short 49: OK
+         match GSPM [short]: OK
    50 -> ISAKMP_NEXT_v2IDG
          lswlog_enum 50: OK
          search ISAKMP_NEXT_v2IDG: OK
          match ISAKMP_NEXT_v2IDG: OK
          short_name 50:  OK
          lswlog_enum_short 50: OK
+         match IDG [short]: OK
    51 -> ISAKMP_NEXT_v2GSA
          lswlog_enum 51: OK
          search ISAKMP_NEXT_v2GSA: OK
          match ISAKMP_NEXT_v2GSA: OK
          short_name 51:  OK
          lswlog_enum_short 51: OK
+         match GSA [short]: OK
    52 -> ISAKMP_NEXT_v2KD
          lswlog_enum 52: OK
          search ISAKMP_NEXT_v2KD: OK
          match ISAKMP_NEXT_v2KD: OK
          short_name 52:  OK
          lswlog_enum_short 52: OK
+         match KD [short]: OK
    53 -> ISAKMP_NEXT_v2SKF
          lswlog_enum 53: OK
          search ISAKMP_NEXT_v2SKF: OK
          match ISAKMP_NEXT_v2SKF: OK
          short_name 53:  OK
          lswlog_enum_short 53: OK
+         match SKF [short]: OK
   132 -> ISAKMP_NEXT_v2IKE_FRAGMENTATION
          lswlog_enum 132: OK
          search ISAKMP_NEXT_v2IKE_FRAGMENTATION: OK
          match ISAKMP_NEXT_v2IKE_FRAGMENTATION: OK
          short_name 132:  OK
          lswlog_enum_short 132: OK
+         match IKE_FRAGMENTATION [short]: OK
 
   payload_names_ikev1orv2:
     0 -> ISAKMP_NEXT_NONE
