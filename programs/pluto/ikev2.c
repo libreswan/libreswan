@@ -581,7 +581,6 @@ struct ikev2_payloads_summary ikev2_decode_payloads(struct msg_digest *md,
 						    pb_stream    *in_pbs,
 						    enum next_payload_types_ikev2 np)
 {
-	struct payload_digest *pd = md->digest_roof;
 	struct ikev2_payloads_summary summary = {
 		.status = STF_OK,
 		.seen = LEMPTY,
@@ -598,13 +597,15 @@ struct ikev2_payloads_summary ikev2_decode_payloads(struct msg_digest *md,
 		    DBG_log("Now let's proceed with payload (%s)",
 			    enum_show(&ikev2_payload_names, np)));
 
-		if (pd == &md->digest[PAYLIMIT]) {
+		if (md->digest_roof >= elemsof(md->digest)) {
 			loglog(RC_LOG_SERIOUS,
-			       "more than %d payloads in message; ignored",
-			       PAYLIMIT);
+			       "more than %zu payloads in message; ignored",
+			       elemsof(md->digest));
 			summary.status = STF_FAIL + v2N_INVALID_SYNTAX;
 			break;
 		}
+		struct payload_digest *const pd = md->digest + md->digest_roof;
+
 		zero(pd);	/* ??? is this needed? */
 
 		struct_desc *sd = v2_payload_desc(np);
@@ -701,10 +702,9 @@ struct ikev2_payloads_summary ikev2_decode_payloads(struct msg_digest *md,
 			break;
 		}
 
-		pd++;
+		md->digest_roof++;
 	}
 
-	md->digest_roof = pd;
 	return summary;
 }
 

@@ -90,7 +90,7 @@ struct msg_digest {
 
 #   define PAYLIMIT 30
 	struct payload_digest digest[PAYLIMIT];
-	struct payload_digest *digest_roof;
+	unsigned digest_roof;
 
 	/*
 	 * Indexed by next-payload.  IKEv1 and IKEv2 use the same

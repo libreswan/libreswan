@@ -88,7 +88,7 @@ struct msg_digest *alloc_md(const char *mdname)
 		md_pool = md->next;
 
 	*md = blank_md;
-	md->digest_roof = md->digest;
+	md->digest_roof = 0;
 
 	return md;
 }

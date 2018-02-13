@@ -1847,7 +1847,6 @@ void process_packet_tail(struct msg_digest **mdp)
 	 * struct isakmp_hdr in packet.h.
 	 */
 	{
-		struct payload_digest *pd = md->digest;
 		enum next_payload_types_ikev1 np = md->hdr.isa_np;
 		lset_t needed = smc->req_payloads;
 		const char *excuse =
@@ -1860,13 +1859,14 @@ void process_packet_tail(struct msg_digest **mdp)
 		while (np != ISAKMP_NEXT_NONE) {
 			struct_desc *sd = v1_payload_desc(np);
 
-			if (pd == &md->digest[PAYLIMIT]) {
+			if (md->digest_roof >= elemsof(md->digest)) {
 				loglog(RC_LOG_SERIOUS,
-				       "more than %d payloads in message; ignored",
-				       PAYLIMIT);
+				       "more than %zu payloads in message; ignored",
+				       elemsof(md->digest));
 				SEND_NOTIFICATION(PAYLOAD_MALFORMED);
 				return;
 			}
+			struct payload_digest *const pd = md->digest + md->digest_roof;
 
 			/*
 			 * only do this in main mode. In aggressive mode, there
@@ -2028,7 +2028,7 @@ void process_packet_tail(struct msg_digest **mdp)
 			}
 
 			np = pd->payload.generic.isag_np;
-			pd++;
+			md->digest_roof++;
 
 			/* since we've digested one payload happily, it is probably
 			 * the case that any decryption worked.  So we will not suggest
@@ -2037,8 +2037,6 @@ void process_packet_tail(struct msg_digest **mdp)
 			 */
 			excuse = "";
 		}
-
-		md->digest_roof = pd;
 
 		DBG(DBG_PARSING, {
 			    if (pbs_left(&md->message_pbs) != 0)
