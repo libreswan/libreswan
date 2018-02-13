@@ -91,14 +91,29 @@ struct msg_digest {
 #   define PAYLIMIT 30
 	struct payload_digest digest[PAYLIMIT];
 	struct payload_digest *digest_roof;
-	/* ??? It seems unlikely that chain will need to store payloads numbered as high as these.
-	 * ISAKMP_NEXT_NATD_DRAFTS, ISAKMP_NEXT_NATOA_DRAFTS and
-	 * ISAKMP_NEXT_IKE_FRAGMENTATION/ISAKMP_NEXT_v2IKE_FRAGMENTATION
-	 * probably make no sense here.
-	 * Also a v1 and a v2 version might make sense and be smaller.
+
+	/*
+	 * Indexed by next-payload.  IKEv1 and IKEv2 use the same
+	 * array but different ranges.
+	 *
+	 * Regardless of the IKE version, the index is always less
+	 * than LELEM_ROOF.  This is because the next-payload
+	 * (converted to a bit map) is also stored in lset_t (lset_t
+	 * has LELEM_ROOF as its bound). Any larger value, such as
+	 * v2IKE_FRAGMENTATION, must have been droped before things
+	 * get this far.
+	 *
+	 * XXX: While the real upper bound is closer to 53 (vs 64)
+	 * there's no value in shaving those few extra bytes - this
+	 * structure is transient.
+	 *
+	 * XXX: Even though the IKEv2 values start at 33, they are not
+	 * biased to save space.  This is because it would break the
+	 * 1:1 correspondance between the wire-value, this array, and
+	 * the lset_t bit (at one point the lset_t values were biased,
+	 * the result was confusing custom mapping code everywhere).
 	 */
-	struct payload_digest
-		*chain[(unsigned)ISAKMP_NEXT_ROOF>(unsigned)ISAKMP_NEXT_v2ROOF ? ISAKMP_NEXT_ROOF : ISAKMP_NEXT_v2ROOF];
+	struct payload_digest *chain[LELEM_ROOF];
 	struct isakmp_quirks quirks;
 };
 

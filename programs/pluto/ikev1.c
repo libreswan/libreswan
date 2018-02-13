@@ -2012,6 +2012,12 @@ void process_packet_tail(struct msg_digest **mdp)
 
 			/* place this payload at the end of the chain for this type */
 			{
+				/*
+				 * Spell out that chain[] isn't
+				 * overflowing.  Above also asserts
+				 * NP<LELEM_ROOF.
+				 */
+				passert(np < elemsof(md->chain));
 				struct payload_digest **p;
 
 				for (p = &md->chain[np]; *p != NULL;

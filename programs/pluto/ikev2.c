@@ -663,6 +663,11 @@ struct ikev2_payloads_summary ikev2_decode_payloads(struct msg_digest *md,
 
 		/* place this payload at the end of the chain for this type */
 		{
+			/*
+			 * Spell out that chain[] isn't overflowing.
+			 * Above explicitly rejected large NP values.
+			 */
+			passert(np < elemsof(md->chain));
 			struct payload_digest **p;
 
 			for (p = &md->chain[np]; *p != NULL;
