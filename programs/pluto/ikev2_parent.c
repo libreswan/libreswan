@@ -2526,8 +2526,7 @@ static stf_status ikev2_reassemble_fragments(struct state *st,
  * Since the message fragments are stored in the recipient's ST
  * (either IKE or CHILD SA), it, and not the IKE SA is needed.
  */
-struct ikev2_payloads_summary ikev2_decrypt_msg(struct state *st,
-						struct msg_digest *md)
+stf_status ikev2_decrypt_msg(struct state *st, struct msg_digest *md)
 {
 	stf_status status;
 	chunk_t chunk;
@@ -2550,9 +2549,7 @@ struct ikev2_payloads_summary ikev2_decrypt_msg(struct state *st,
 	}
 
 	if (status != STF_OK) {
-		return (struct ikev2_payloads_summary) {
-			.status = status,
-		};
+		return status;
 	}
 
 	/* CLANG 3.5 mis-diagnoses that chunk is undefined */
@@ -2568,7 +2565,8 @@ struct ikev2_payloads_summary ikev2_decrypt_msg(struct state *st,
 		md->chain[ISAKMP_NEXT_v2SK]->payload.generic.isag_np :
 		md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf.isaskf_np;
 
-	return ikev2_decode_payloads(md, &md->clr_pbs, np);
+	 return ikev2_decode_payloads(md, &md->encrypted_payloads,
+				      &md->clr_pbs, np);
 }
 
 /* Misleading name, also used for NULL sized type's */
@@ -3600,8 +3598,8 @@ static void ikev2_parent_inI2outR2_continue(struct state *st,
 
 	/* try to decrypt the packet */
 
-	struct ikev2_payloads_summary ps = ikev2_decrypt_msg(st, *mdp);
-	if (ps.status != STF_OK) {
+	stf_status status = ikev2_decrypt_msg(st, *mdp);
+	if (status != STF_OK) {
 		/*
 		 * While our end things encryption is "up", things
 		 * clearly are not working.  Send an encrypted reply
@@ -3629,7 +3627,8 @@ static void ikev2_parent_inI2outR2_continue(struct state *st,
 		.optional = svm->opt_enc_payloads,
 	};
 	struct ikev2_payload_errors errors =
-		ikev2_verify_payloads(ps, &expected_encrypted_payloads);
+		ikev2_verify_payloads(&(*mdp)->encrypted_payloads,
+				      &expected_encrypted_payloads);
 	if (errors.bad) {
 		/*
 		 * Something in the packet is bogus.  Drop everything.

@@ -58,6 +58,11 @@ struct payload_digest {
 	struct payload_digest *next; /* of same kind */
 };
 
+struct payload_summary {
+	lset_t present;
+	lset_t repeated;
+};
+
 /* message digest
  * Note: raw_packet and packet_pbs are "owners" of space on heap.
  */
@@ -91,6 +96,9 @@ struct msg_digest {
 #   define PAYLIMIT 30
 	struct payload_digest digest[PAYLIMIT];
 	unsigned digest_roof;
+
+	struct payload_summary cleartext_payloads;	/* (v2) */
+	struct payload_summary encrypted_payloads;	/* (v2) */
 
 	/*
 	 * Indexed by next-payload.  IKEv1 and IKEv2 use the same

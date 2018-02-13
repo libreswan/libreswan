@@ -577,15 +577,12 @@ void init_ikev2(void)
 /*
  * split an incoming message into payloads
  */
-struct ikev2_payloads_summary ikev2_decode_payloads(struct msg_digest *md,
-						    pb_stream    *in_pbs,
-						    enum next_payload_types_ikev2 np)
+stf_status ikev2_decode_payloads(struct msg_digest *md,
+				 struct payload_summary *summary,
+				 pb_stream *in_pbs,
+				 enum next_payload_types_ikev2 np)
 {
-	struct ikev2_payloads_summary summary = {
-		.status = STF_OK,
-		.seen = LEMPTY,
-		.repeated = LEMPTY,
-	};
+	stf_status status = STF_OK;
 
 	/*
 	 * ??? zero out the digest descriptors -- might nuke
@@ -601,7 +598,7 @@ struct ikev2_payloads_summary ikev2_decode_payloads(struct msg_digest *md,
 			loglog(RC_LOG_SERIOUS,
 			       "more than %zu payloads in message; ignored",
 			       elemsof(md->digest));
-			summary.status = STF_FAIL + v2N_INVALID_SYNTAX;
+			status = STF_FAIL + v2N_INVALID_SYNTAX;
 			break;
 		}
 		struct payload_digest *const pd = md->digest + md->digest_roof;
@@ -619,7 +616,7 @@ struct ikev2_payloads_summary ikev2_decode_payloads(struct msg_digest *md,
 			 */
 			if (!in_struct(&pd->payload, &ikev2_generic_desc, in_pbs, &pd->pbs)) {
 				loglog(RC_LOG_SERIOUS, "malformed payload in packet");
-				summary.status = STF_FAIL + v2N_INVALID_SYNTAX;
+				status = STF_FAIL + v2N_INVALID_SYNTAX;
 				break;
 			}
 			if (pd->payload.v2gen.isag_critical & ISAKMP_PAYLOAD_CRITICAL) {
@@ -633,7 +630,7 @@ struct ikev2_payloads_summary ikev2_decode_payloads(struct msg_digest *md,
 				loglog(RC_LOG_SERIOUS,
 				       "critical payload (%s) was not understood. Message dropped.",
 				       enum_show(&ikev2_payload_names, np));
-				summary.status = STF_FAIL + v2N_UNSUPPORTED_CRITICAL_PAYLOAD;
+				status = STF_FAIL + v2N_UNSUPPORTED_CRITICAL_PAYLOAD;
 				break;
 			}
 			loglog(RC_COMMENT,
@@ -645,15 +642,15 @@ struct ikev2_payloads_summary ikev2_decode_payloads(struct msg_digest *md,
 
 		if (np >= LELEM_ROOF) {
 			DBG(DBG_CONTROL, DBG_log("huge next-payload %u", np));
-			summary.status = STF_FAIL + v2N_INVALID_SYNTAX;
+			status = STF_FAIL + v2N_INVALID_SYNTAX;
 			break;
 		}
-		summary.repeated |= summary.seen & LELEM(np);
-		summary.seen |= LELEM(np);
+		summary->repeated |= (summary->present & LELEM(np));
+		summary->present |= LELEM(np);
 
 		if (!in_struct(&pd->payload, sd, in_pbs, &pd->pbs)) {
 			loglog(RC_LOG_SERIOUS, "malformed payload in packet");
-			summary.status = STF_FAIL + v2N_INVALID_SYNTAX;
+			status = STF_FAIL + v2N_INVALID_SYNTAX;
 			break;
 		}
 
@@ -705,17 +702,17 @@ struct ikev2_payloads_summary ikev2_decode_payloads(struct msg_digest *md,
 		md->digest_roof++;
 	}
 
-	return summary;
+	return status;
 }
 
-struct ikev2_payload_errors ikev2_verify_payloads(struct ikev2_payloads_summary summary,
+struct ikev2_payload_errors ikev2_verify_payloads(const struct payload_summary *summary,
 						  const struct ikev2_expected_payloads *payloads)
 {
 	/*
 	 * Convert SKF onto SK for the comparison (but only when it is
 	 * on its own).
 	 */
-	lset_t seen = summary.seen;
+	lset_t seen = summary->present;
 	if ((seen & (P(SKF)|P(SK))) == P(SKF)) {
 		seen &= ~P(SKF);
 		seen |= P(SK);
@@ -726,7 +723,7 @@ struct ikev2_payload_errors ikev2_verify_payloads(struct ikev2_payloads_summary 
 
 	struct ikev2_payload_errors errors = {
 		.bad = false,
-		.excessive = summary.repeated & ~repeatable_payloads,
+		.excessive = summary->repeated & ~repeatable_payloads,
 		.missing = req_payloads & ~seen,
 		.unexpected = seen & ~req_payloads & ~opt_payloads & ~everywhere_payloads,
 	};
@@ -1288,9 +1285,9 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	passert((st == NULL) == (from_state == STATE_UNDEFINED));
 
-	struct ikev2_payloads_summary clear_payload_summary = { .status = STF_ROOF };
+	stf_status clear_payload_result = STF_ROOF;
 	struct ikev2_payload_errors clear_payload_status = { .bad = false };
-	struct ikev2_payloads_summary encrypted_payload_summary = { .status = STF_ROOF };
+	stf_status encrypted_payload_result = STF_ROOF;
 	struct ikev2_payload_errors encrypted_payload_status = { .bad = false };
 
 	for (svm = v2_state_microcode_table; svm->state != STATE_IKEv2_ROOF;
@@ -1320,12 +1317,14 @@ void process_v2_packet(struct msg_digest **mdp)
 		 * will accept the packet, unpack the clear payload
 		 * and continue matching.
 		 */
-		if (clear_payload_summary.status == STF_ROOF) {
+		if (clear_payload_result == STF_ROOF) {
 			DBG(DBG_CONTROL, DBG_log("Unpacking clear payload for svm: %s", svm->story));
-			clear_payload_summary = ikev2_decode_payloads(md, &md->message_pbs,
-								      md->hdr.isa_np);
-			if (clear_payload_summary.status != STF_OK) {
-				complete_v2_state_transition(mdp, clear_payload_summary.status);
+			clear_payload_result = ikev2_decode_payloads(md,
+								     &md->cleartext_payloads,
+								     &md->message_pbs,
+								     md->hdr.isa_np);
+			if (clear_payload_result != STF_OK) {
+				complete_v2_state_transition(mdp, clear_payload_result);
 				return;
 			}
 		}
@@ -1339,13 +1338,13 @@ void process_v2_packet(struct msg_digest **mdp)
 		 * XXX: hack until expected_clear_payloads is added to
 		 * struct state_v2_microcode or replacement.
 		 */
-		struct ikev2_expected_payloads expected_clear_payloads = {
+		struct ikev2_expected_payloads expected_cleartext_payloads = {
 			.required = svm->req_clear_payloads,
 			.optional = svm->opt_clear_payloads,
 		};
 		struct ikev2_payload_errors clear_payload_errors
-			= ikev2_verify_payloads(clear_payload_summary,
-						&expected_clear_payloads);
+			= ikev2_verify_payloads(&md->cleartext_payloads,
+						&expected_cleartext_payloads);
 		if (clear_payload_errors.bad) {
 			/* Save this failure for later logging. */
 			clear_payload_status = clear_payload_errors;
@@ -1358,7 +1357,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		 *
 		 * (.seen&(P(SK)|P(SKF))!=0 is equivalent.
 		 */
-		if (!(expected_clear_payloads.required & P(SK))) {
+		if (!(expected_cleartext_payloads.required & P(SK))) {
 			break;
 		}
 
@@ -1371,7 +1370,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		 * Since the encrypted payload appears plausible, deal
 		 * with fragmentation.
 		 */
-		if (encrypted_payload_summary.status == STF_ROOF) {
+		if (encrypted_payload_result == STF_ROOF) {
 			/*
 			 * Deal with fragmentation.  The function
 			 * returns FALSE both when there are more
@@ -1383,7 +1382,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			 * isn't always possible since the fragment
 			 * may be the trigger for DH.
 			 */
-			if ((clear_payload_summary.seen & P(SKF))
+			if ((md->cleartext_payloads.present & P(SKF))
 			    && !ikev2_collect_fragment(md, st)) {
 				return;
 			}
@@ -1401,8 +1400,8 @@ void process_v2_packet(struct msg_digest **mdp)
 			 *
 			 * Should the connection also be abandoned?
 			 */
-			encrypted_payload_summary = ikev2_decrypt_msg(st, md);
-			if (encrypted_payload_summary.status != STF_OK) {
+			encrypted_payload_result = ikev2_decrypt_msg(st, md);
+			if (encrypted_payload_result != STF_OK) {
 				/*
 				 * XXX: Setting/clearing md->st is to
 				 * prop up nested code needing ST but
@@ -1422,7 +1421,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			.optional = svm->opt_enc_payloads,
 		};
 		struct ikev2_payload_errors encrypted_payload_errors
-			= ikev2_verify_payloads(encrypted_payload_summary,
+			= ikev2_verify_payloads(&md->encrypted_payloads,
 						&expected_encrypted_payloads);
 		if (encrypted_payload_errors.bad) {
 			/* Save this failure for later logging. */
