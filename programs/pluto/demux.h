@@ -89,9 +89,8 @@ struct msg_digest {
 	bool event_already_set;			/* (v1) */
 
 #   define PAYLIMIT 30
-	struct payload_digest
-		digest[PAYLIMIT],
-		*digest_roof;
+	struct payload_digest digest[PAYLIMIT];
+	struct payload_digest *digest_roof;
 	/* ??? It seems unlikely that chain will need to store payloads numbered as high as these.
 	 * ISAKMP_NEXT_NATD_DRAFTS, ISAKMP_NEXT_NATOA_DRAFTS and
 	 * ISAKMP_NEXT_IKE_FRAGMENTATION/ISAKMP_NEXT_v2IKE_FRAGMENTATION
