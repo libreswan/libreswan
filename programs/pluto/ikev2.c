@@ -1333,7 +1333,6 @@ void process_v2_packet(struct msg_digest **mdp)
 	passert((st == NULL) == (from_state == STATE_UNDEFINED));
 
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
-	stf_status encrypted_payload_result = STF_ROOF;
 	struct ikev2_payload_errors encrypted_payload_status = { .bad = false };
 
 	for (svm = v2_state_microcode_table; svm->state != STATE_IKEv2_ROOF;
@@ -1436,7 +1435,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		 * Since the encrypted payload appears plausible, deal
 		 * with fragmentation.
 		 */
-		if (encrypted_payload_result == STF_ROOF) {
+		if (!md->encrypted_payloads.parsed) {
 			/*
 			 * Deal with fragmentation.  The function
 			 * returns FALSE both when there are more
@@ -1460,14 +1459,11 @@ void process_v2_packet(struct msg_digest **mdp)
 				break;
 			}
 			/*
-			 * Since the SA is 'authenticated', should the
-			 * packet fail to decrypt, drop it.  Should
-			 * have already been logged.
-			 *
-			 * Should the connection also be abandoned?
+			 * Decrypt the packet, checking it for
+			 * integrity.  Anything lacking integrity is
+			 * dropped.
 			 */
-			encrypted_payload_result = ikev2_decrypt_msg(st, md);
-			if (encrypted_payload_result != STF_OK) {
+			if (!ikev2_decrypt_msg(st, md)) {
 				/*
 				 * XXX: Setting/clearing md->st is to
 				 * prop up nested code needing ST but
@@ -1475,6 +1471,39 @@ void process_v2_packet(struct msg_digest **mdp)
 				 */
 				md->st = st;
 				complete_v2_state_transition(mdp, STF_FAIL);
+				return;
+			}
+			/*
+			 * Verify the contents.  If there's something
+			 * bad, then the connection is killed.  See
+			 * "2.21.2.  Error Handling in IKE_AUTH" and
+			 * "2.21.3.  Error Handling after IKE SA is
+			 * Authenticated".
+			 *
+			 * XXX: For UNSUPPORTED_CRITICAL_PAYLOAD,
+			 * while the RFC clearly states that for the
+			 * initial exchanges and an INFORMATIONAL
+			 * exchange immediately following, the
+			 * notification causes a delete, it says
+			 * nothing for exchanges that follow.  For
+			 * moment treat it the same ?!?!?!.  Given the
+			 * PAYLOAD ID isn't being returned this is a
+			 * minor issue.
+			 */
+			struct payload_digest *sk = md->chain[ISAKMP_NEXT_v2SK];
+			md->encrypted_payloads = ikev2_decode_payloads(md, &sk->pbs,
+								       sk->payload.generic.isag_np);
+			if (md->encrypted_payloads.n != v2N_NOTHING_WRONG) {
+				send_v2_notification_from_state(st, *mdp,
+								md->encrypted_payloads.n,
+								NULL);
+				/*
+				 * XXX: Setting/clearing md->st is to
+				 * prop up nested code needing ST but
+				 * not having it as a parameter.
+				 */
+				md->st = st;
+				complete_v2_state_transition(mdp, STF_FATAL);
 				return;
 			}
 		} /* else { go ahead } */

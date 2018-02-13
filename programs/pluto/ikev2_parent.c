@@ -2232,7 +2232,7 @@ static stf_status ikev2_encrypt_msg(struct ike_sa *ike,
 }
 
 /*
- * ikev2_decrypt_msg: decode the v2E payload.
+ * ikev2_decrypt_msg: decode the payload.
  * The result is stored in-place.
  * Calls ikev2_process_payloads to decode the payloads within.
  *
@@ -2525,7 +2525,7 @@ static bool ikev2_reassemble_fragments(struct state *st,
  * Since the message fragments are stored in the recipient's ST
  * (either IKE or CHILD SA), it, and not the IKE SA is needed.
  */
-stf_status ikev2_decrypt_msg(struct state *st, struct msg_digest *md)
+bool ikev2_decrypt_msg(struct state *st, struct msg_digest *md)
 {
 	bool ok;
 	if (md->chain[ISAKMP_NEXT_v2SKF] != NULL) {
@@ -2540,25 +2540,17 @@ stf_status ikev2_decrypt_msg(struct state *st, struct msg_digest *md)
 		chunk_t c = chunk(md->packet_pbs.start,
 				  e_pbs->roof - md->packet_pbs.start);
 		ok = ikev2_verify_and_decrypt_sk_payload(ike_sa(st), md, &c,
-							     e_pbs->cur - md->packet_pbs.start);
+							 e_pbs->cur - md->packet_pbs.start);
 		md->chain[ISAKMP_NEXT_v2SK]->pbs = chunk_as_pbs(c, "decrypted SK payload");
 	}
 
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu ikev2 %s decrypt %s",
-				     st->st_serialno,
-				     enum_name(&ikev2_exchange_names,
-					       md->hdr.isa_xchg),
-				     ok ? "success" : "failed"));
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("#%lu ikev2 %s decrypt %s",
+		    st->st_serialno,
+		    enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+		    ok ? "success" : "failed"));
 
-	if (!ok) {
-		return STF_FAIL;
-	}
-
-
-	struct payload_digest *sk = md->chain[ISAKMP_NEXT_v2SK];
-	md->encrypted_payloads = ikev2_decode_payloads(md, &sk->pbs, sk->payload.generic.isag_np);
-	return md->encrypted_payloads.n == v2N_NOTHING_WRONG ? STF_OK
-		: STF_FAIL + md->encrypted_payloads.n;
+	return ok;
 }
 
 /* Misleading name, also used for NULL sized type's */
@@ -3591,19 +3583,26 @@ static void ikev2_parent_inI2outR2_continue(struct state *st,
 
 	/* try to decrypt the packet */
 
-	stf_status status = ikev2_decrypt_msg(st, *mdp);
-	if (status != STF_OK) {
+	if (!ikev2_decrypt_msg(st, *mdp)) {
 		/*
-		 * While our end things encryption is "up", things
-		 * clearly are not working.  Send an encrypted reply
-		 * and abandon the connection.
-		 *
-		 * Should this send back a cleartext notify.  Since we
-		 * can't decrypt their packets, chanse has it they
-		 * can't decrypt ours.
+		 * The packet lacks integrity so drop it.  Don't send
+		 * back an encrypted response as that could confuse
+		 * the real initiator.
 		 */
-		DBG(DBG_CONTROL, DBG_log("aborting IKE SA: decryption failed"));
-		send_v2_notification_from_state(st, *mdp, v2N_INVALID_SYNTAX, NULL);
+		DBG(DBG_CONTROL, DBG_log("aborting IKE SA: DH failed"));
+		complete_v2_state_transition(mdp, STF_FAIL);
+		return;
+	}
+
+	/* check the decrypted contents */
+
+	struct payload_digest *sk = (*mdp)->chain[ISAKMP_NEXT_v2SK];
+	(*mdp)->encrypted_payloads = ikev2_decode_payloads(*mdp, &sk->pbs,
+							   sk->payload.generic.isag_np);
+	if ((*mdp)->encrypted_payloads.n != v2N_NOTHING_WRONG) {
+		send_v2_notification_from_state(st, *mdp,
+						(*mdp)->encrypted_payloads.n,
+						NULL);
 		complete_v2_state_transition(mdp, STF_FATAL);
 		return;
 	}
