@@ -325,7 +325,6 @@ const struct oakley_group_desc oakley_group_dh31 = {
 			[IKEv1_ESP_ID] = -1,
 			[IKEv2_ALG_ID] = OAKLEY_GROUP_CURVE25519,
 		},
-		.fips = TRUE,
 	},
 	.group = OAKLEY_GROUP_CURVE25519,
 	.bytes = 32 /* octets */,
