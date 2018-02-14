@@ -2465,10 +2465,14 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 	return STF_OK;
 }
 
-static stf_status ikev2_reassemble_fragments(struct msg_digest *md,
+/*
+ * Since the fragmented packet is intended for ST (either an IKE or
+ * CHILD SA), ST contains the fragments.
+ */
+static stf_status ikev2_reassemble_fragments(struct state *st,
+					     struct msg_digest *md,
 					     chunk_t *chunk)
 {
-	struct state *st = md->st;
 	passert(st->st_v2_rfrags != NULL);
 
 	chunk_t plain[MAX_IKE_FRAGMENTS + 1];
@@ -2516,14 +2520,24 @@ static stf_status ikev2_reassemble_fragments(struct msg_digest *md,
 	return STF_OK;
 }
 
-struct ikev2_payloads_summary ikev2_decrypt_msg(struct ike_sa *ike,
+/*
+ * Decrypt the, possibly fragmented message intended for ST.
+ *
+ * Since the message fragments are stored in the recipient's ST
+ * (either IKE or CHILD SA), it, and not the IKE SA is needed.
+ */
+struct ikev2_payloads_summary ikev2_decrypt_msg(struct state *st,
 						struct msg_digest *md)
 {
 	stf_status status;
 	chunk_t chunk;
 
 	if (md->chain[ISAKMP_NEXT_v2SKF] != NULL) {
-		status = ikev2_reassemble_fragments(md, &chunk);
+		/*
+		 * ST points at the state (parent or child) that has
+		 * all the fragments.
+		 */
+		status = ikev2_reassemble_fragments(st, md, &chunk);
 		/* note: if status is STF_OK, chunk is set */
 	} else {
 		pb_stream *e_pbs = &md->chain[ISAKMP_NEXT_v2SK]->pbs;
@@ -2531,7 +2545,7 @@ struct ikev2_payloads_summary ikev2_decrypt_msg(struct ike_sa *ike,
 		setchunk(chunk, md->packet_pbs.start,
 			 e_pbs->roof - md->packet_pbs.start);
 
-		status = ikev2_verify_and_decrypt_sk_payload(ike, md, &chunk,
+		status = ikev2_verify_and_decrypt_sk_payload(ike_sa(st), md, &chunk,
 							     e_pbs->cur - md->packet_pbs.start);
 	}
 
@@ -2545,10 +2559,10 @@ struct ikev2_payloads_summary ikev2_decrypt_msg(struct ike_sa *ike,
 	init_pbs(&md->clr_pbs, chunk.ptr, chunk.len, "cleartext");
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu ikev2 %s decrypt %s",
-				md->st->st_serialno,
-				enum_name(&ikev2_exchange_names,
-					md->hdr.isa_xchg),
-				status == STF_OK ? "success" : "failed"));
+				     st->st_serialno,
+				     enum_name(&ikev2_exchange_names,
+					       md->hdr.isa_xchg),
+				     status == STF_OK ? "success" : "failed"));
 
 	 enum next_payload_types_ikev2 np = md->chain[ISAKMP_NEXT_v2SK] ?
 		md->chain[ISAKMP_NEXT_v2SK]->payload.generic.isag_np :
@@ -3586,7 +3600,7 @@ static void ikev2_parent_inI2outR2_continue(struct state *st,
 
 	/* try to decrypt the packet */
 
-	struct ikev2_payloads_summary ps = ikev2_decrypt_msg(ike_sa(st), *mdp);
+	struct ikev2_payloads_summary ps = ikev2_decrypt_msg(st, *mdp);
 	if (ps.status != STF_OK) {
 		/*
 		 * While our end things encryption is "up", things

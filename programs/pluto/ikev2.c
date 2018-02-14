@@ -1400,18 +1400,18 @@ void process_v2_packet(struct msg_digest **mdp)
 			 * have already been logged.
 			 *
 			 * Should the connection also be abandoned?
-			 *
-			 * XXX: Setting/clearing md->st is to prop up
-			 * nested code needing ST but not having it as
-			 * a parameter.
 			 */
-			md->st = st;
-			encrypted_payload_summary = ikev2_decrypt_msg(ike_sa(st), md);
+			encrypted_payload_summary = ikev2_decrypt_msg(st, md);
 			if (encrypted_payload_summary.status != STF_OK) {
+				/*
+				 * XXX: Setting/clearing md->st is to
+				 * prop up nested code needing ST but
+				 * not having it as a parameter.
+				 */
+				md->st = st;
 				complete_v2_state_transition(mdp, STF_FAIL);
 				return;
 			}
-			md->st = NULL;
 		} /* else { go ahead } */
 		/*
 		 * XXX: hack until expected_encrypted_payloads is added
