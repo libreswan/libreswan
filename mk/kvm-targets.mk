@@ -405,7 +405,7 @@ define destroy-kvm-network
 endef
 
 #
-# Base network.
+# Base gateway.
 #
 
 KVM_BASE_GATEWAY_FILE = $(KVM_BASEDIR)/$(KVM_BASE_GATEWAY).xml
@@ -694,7 +694,9 @@ endif
 
 .PRECIOUS: $(foreach domain, $(KVM_LOCAL_DOMAINS), $(KVM_LOCALDIR)/$(domain).xml)
 
+#
 # Create the "clone" domain from the base domain.
+#
 
 $(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml: \
 		| \
@@ -709,7 +711,9 @@ $(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml: \
 .PHONY: install-kvm-domain-$(KVM_CLONE_DOMAIN)
 install-kvm-domain-$(KVM_CLONE_DOMAIN): $(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml
 
+#
 # Create the "build" domain (if unique)
+#
 
 ifneq ($(KVM_BUILD_COPIES),)
 $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml: | $(KVM_BASE_NETWORK_FILE) $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).qcow2
@@ -722,6 +726,7 @@ $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml: | $(KVM_BASE_NETWORK_FILE) $(KVM_LOCALD
 .PHONY: install-kvm-domain-$(KVM_BUILD_DOMAIN)
 install-kvm-domain-$(KVM_BUILD_DOMAIN): $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
 endif
+
 
 #
 # Create the test domains
@@ -1126,9 +1131,9 @@ Configuration:
 
     Two types of networks are used.
 
-    First there is the shared NATting gateway.  It is used by the base
-    (master) domain along with any local domains when internet access
-    is required:
+    First there is the shared NATting gateways.  They are used by the
+    base (master) domain along with any local domains when internet
+    access is required:
 
       $(call kvm-var-value,KVM_BASE_GATEWAY)
       $(call kvm-var-value,KVM_LOCAL_GATEWAY)
@@ -1140,7 +1145,7 @@ Configuration:
       $(call kvm-var-value,KVM_TEST_SUBNETS)
       $(call kvm-var-value,KVM_TEST_NETWORKS)
 
-  base domain:
+  Base domain:
 
     The (per OS) base domain is used as a shared starting point for
     creating all the other domains.
@@ -1151,8 +1156,8 @@ Configuration:
 
     - the image is shared between build trees
 
-    (instead the clone domain, below, is best suited for trialing new
-    packages and domain modifications).
+    (instead the clone domain, see below, is best suited for trialing
+    new packages and domain modifications).
 
     $(call kvm-var-value,KVM_OS)
     $(call kvm-var-value,KVM_KICKSTART_FILE)
@@ -1161,7 +1166,7 @@ Configuration:
     $(call kvm-var-value,KVM_BASE_GATEWAY)
     $(call kvm-var-value,KVM_BASEDIR)
 
-  clone domain:
+  Clone domain:
 
     The clone domain, made unique to the build tree by KVM_PREFIXES,
     is used as the local starting point for all test domains.
@@ -1177,7 +1182,24 @@ Configuration:
     $(call kvm-var-value,KVM_LOCAL_GATEWAY)
     $(call kvm-var-value,KVM_LOCALDIR)
 
-  test domains:
+  Build domain:
+
+    The build domain, made unique to the build tree by KVM_PREFIXES,
+    is used to build and install libreswan.  Test domains are then
+    created as a copy of this domain.
+
+    Since it is not shared across build trees, and has access to the
+    real world (via the default network) it is easy to modify or
+    rebuild.  For instance, experimental packages can be installed on
+    the clone domain (and then the test domains rebuilt) without
+    affecting other build trees.
+
+    $(call kvm-var-value,KVM_BUILD_HOST)
+    $(call kvm-var-value,KVM_BUILD_DOMAIN)
+    $(call kvm-var-value,KVM_LOCAL_GATEWAY)
+    $(call kvm-var-value,KVM_LOCALDIR)
+
+  Test domains:
 
     Groups of test domains, made unique to the build tree by
     KVM_PREFIXES, are used to run the tests in parallel.
@@ -1202,77 +1224,62 @@ Domains and networks:
 
   Domains:
 
-    kvm-install-test-domains
-        - create the test domains required by this directory
-        - if needed, create dependencies such as the build and base
-          domain, and test and base networks
-    kvm-install-build-domain
-        - create the build domain required by this directory
-        - if needed, create dependencies such as the and base
-          domain, and test and base networks
-    kvm-install-local-domains
-        - create all the domains required by this directory
-        - if needed, create dependencies such as the base domain and
+    kvm-install-base-domain (kvm-uninstall-base-domain)
+        - (un)install the base domain
+        - install dependencies: base gateway
+    kvm-install-clone-domain (kvm-uninstall-clone-domain)
+        - (un)install this directory's clone of the base domain
+        - install dependencies: base domain (soft), local gateway
+          (soft); once the clone domain is created the base domain can
+          be deleted
+    kvm-install-build-domain (kvm-uninstall-build-domain)
+        - (un)install this directory's build domain
+        - install dependencies: clone domain, local gateway, test
           networks
-    kvm-install-base-domain
-        - create the base domain
-        - if needed, create the prerequisite base network
-
-    kvm-uninstall-test-domains
-        - destroy the test domains required by this directory
-	- do not destroy any build or base domains
-    kvm-uninstall-build-domains
-        - destroy the build domain required by this directory
-	- do not destroy any base domains
-    kvm-uninstall-local-domains
-        - destroy the domains local to this directory
-    kvm-uninstall-base-domain
-        - destroy the base domain
-        - also destroy the derived clone domain and test domains
+    kvm-install-test-domains (kvm-uninstall-test-domains)
+        - (un)install this directory's test domains
+        - install dependencies: clone and build domains; test networks
+    kvm-install-local-domains (kvm-uninstall-local-domains)
+        - (un)install this directory's clone, build and test domains
+        - install dependencies: see above
 
   Networks:
 
-    kvm-install-local-networks
-        - create the networks required by this directory
-    kvm-install-base-network
-        - create the NATting base network shared by base and clone
-          domains
+    kvm-install-base-gateway (kvm-uninstall-base-gateway)
+        - (un)install the NATting base gateway used by the base domain
+          (by default, also used by clone and build domains)
+	- uninstall dependencies: base domain
+    kvm-install-local-networks (kvm-uninstall-local-networks)
+        - (un)install the local gateway and test networks used by this
+          directory's clone, build and test domains
+        - uninstall dependencies: clone, build, and test domains
 
-    kvm-uninstall-local-networks
-        - destroy all networks local to this directory
-        - also destroy the local domains that depend on those networks
-        - do not destroy the NATting base gateway
-    kvm-uninstall-base-network
-        - destroy the NATTing base network shared between base domains
-        - also destroy the base and clone domains that use the base
-          network
+Standard targets and operations:
 
   Try to delete (almost) everything:
 
     kvm-purge
-        - delete everything specific to this directory, i.e., clone
-          domain, test domains, test networks, test results, and test
-          build
+        - delete everything specific to this directory, i.e., clone,
+          build, and test domains, test networks, test results, and
+          test build
     kvm-demolish
-        - also delete the base domain and base network
-
-Standard targets and operations:
+        XXX use kvm-uninstall-base-domain for now, this delete's clone's gateway
+        - also delete the base domain and base gateway
 
   Upgrading domains:
 
     kvm-upgrade
     kvm-upgrade-local-domains
-        - upgrade the local domains
-          (do not modify the base domain)
+        - force just the local domains to be upgraded
+	- implemented by upgrading the local clone domain, while
+          deleting all the other local domains; the next kvm-install
+          et.al. will create the remaining domains
     kvm-upgrade-base-domain
-        - upgrade the base domain
-          (do not modify the local domains)
+        - force just the base base domain to be upgraded
 
-  Accessing (loging into) domains:
+  Manipulating and accessing (loging into) domains:
 
-    kvmsh-base
-    kvmsh-clone
-    kvmsh-build
+    kvmsh-base kvmsh-clone kvmsh-build
     kvmsh-HOST ($(filter-out build, $(KVM_TEST_HOSTS)))
         - use 'virsh console' to login to the given domain
 	- for HOST login to the first domain vis $(addprefix $(KVM_FIRST_PREFIX), HOST)
@@ -1281,32 +1288,29 @@ Standard targets and operations:
         - login to the specific domain
         - if necessary, create and boot the domain
 
-  Creating and deleting domains:
-
-    kvm-install-base-domain
-    kvm-uninstall-base-domain
-        - install/uninstall the $(KVM_OS) base domain
-    kvm-install-local-domains
-    kvm-uninstall-local-domains
-        - install/uninstall this directories domains
-        - if needed install the $(KVM_OS) base domain
+    kvm-shutdown
+        - shutdown all domains
 
   To build or delete the keys used when testing:
 
-    kvm-keys          - uses the build domain
-                        to create the test keys
-    kvm-keys-clean    - delete the test keys
-                        forcing them to be rebuilt
+    kvm-keys (kvm-clean-keys)
+        - use the local build domain to create the test keys
 
-  To install (or update) libreswan across all domains:
+  To set things up for a test run:
 
-    kvm-install       - set everything up ready for a test
-                        run using kvm-check, that is:
-                      - if needed, create domains and networks
-                      - build or rebuild libreswan using the
-                        domain $(KVM_BUILD_DOMAIN)
-                      - install libreswan into the test
-                        domains $(KVM_INSTALL_DOMAINS)
+    kvm-install (kvm-uninstall)
+       - (un)install (or update) libreswan on the test domains ready
+         for a test run, that is:
+         - build/install or rebuild libreswan on $(KVM_BUILD_DOMAIN)
+	 - clone $(KVM_BUILD_DOMAIN) creating the test domains
+       - uninstall cheats by deleting the build and test domains
+
+    kvm-clean
+       - deletes the build directory so that the next kvm-install
+         builds from scratch
+       - deletes the test keys so the next kvm-check builds fresh keys
+       - deletes the test results from the previous test run
+       - KVM domains are not touched
 
   To run the testsuite against libreswan installed on the test domains
   (see "make kvm-install" above):
@@ -1321,16 +1325,7 @@ Standard targets and operations:
                         passed during the previous kvm-check
     kvm-check-clean   - delete the test OUTPUT/ directories
 
-  To prepare for a fresh test run:
-
-    kvm-shutdown      - shutdown all domains
-    kvm-clean         - clean up the source tree
-                        both the kvm build and keys are deleted
-                        so that the next kvm-install kvm-test will
-                        rebuild them (the test OUTPUT/ is not deleted)
-    kvm-uninstall     - force a clean build and install by
-                        deleting all the test domains and networks
-    distclean         - scrubs the source tree
+    distclean         - scrubs the source tree (but don't touch the KVMS)
 
 endef
 
