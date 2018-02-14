@@ -67,7 +67,7 @@ size_t lswlog_nss_error(struct lswlog *buf)
 		}
 	}
 	if (error == 0) {
-		lswlogs(buf, "; 0 indicates NSS lost the error code");
+		size += lswlogs(buf, "; 0 indicates NSS lost the error code");
 	}
 	size += lswlogs(buf, ")");
 	return size;
