@@ -28,6 +28,7 @@
 #include "constants.h"
 #include "ike_alg.h"
 #include "ike_alg_nss_cbc.h"
+#include "lswnss.h"		/* for lswlog_nss_error() */
 
 static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 			    u_int8_t *in_buf, size_t in_buf_len, PK11SymKey *symkey,
@@ -55,10 +56,12 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 						enc ? CKA_ENCRYPT : CKA_DECRYPT,
 						symkey, secparam);
 	if (enccontext == NULL) {
-		PASSERT_FAIL("%s - PKCS11 context creation failure (err %d)",
-			     alg->common.name, PR_GetError());
+		LSWLOG_PASSERT(buf) {
+			lswlogf(buf, "NSS: %s: PKCS11 context creation failure",
+				alg->common.name);
+			lswlog_nss_error(buf);
+		}
 	}
-
 
 	/* Output buffer for transformed data.  */
 	u_int8_t *out_buf = PR_Malloc((PRUint32)in_buf_len);
@@ -67,8 +70,11 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 	SECStatus rv = PK11_CipherOp(enccontext, out_buf, &out_buf_len, in_buf_len,
 				     in_buf, in_buf_len);
 	if (rv != SECSuccess) {
-		PASSERT_FAIL("%s - PKCS11 operation failure (err %d)",
-			     alg->common.name, PR_GetError());
+		LSWLOG_PASSERT(buf) {
+			lswlogf(buf, "NSS: %s: PKCS11 operation failure",
+				alg->common.name);
+			lswlog_nss_error(buf);
+		}
 	}
 
 	PK11_DestroyContext(enccontext, PR_TRUE);
