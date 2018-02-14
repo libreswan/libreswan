@@ -152,75 +152,103 @@ above), the testing script is invoked as:
     $ tail -f nohup.out
 
 
-## Maintenance
+## Restarting and Maintenance
 
+The following things seem to go wrong:
 
-From time to time the test results are seen to decay.  The symptom is
-an increasing number of test failures with a result of "unresolved"
-and an error of "output-missing".  The error occurs because one or
-more test domains fail to start in a timely manner (the test runner
-gives up after two minutes), hence, while the test is processed there
-is never any output.
+- over time, the test results can get worse
 
-Per the below, the best workaround seems to be to stop the testing
-script and then re-build the test domains.  The alternative - rebuild
-the test domains from the base domain at the start of each new test
-run - is even less reliable!  Perhaps tester.sh should be modified to
-automate the below.
+  The symptom is an increasing number of "unresolved" test results
+  with an error of "output-missing".  It happens because the domain
+  took too long (more than 2 minutes!) to boot.
 
-- crash the existing runner, either:
+  tester.sh works around this by detecting the problem and then
+  rebuilding domains, but sometimes even that doesn't work so things
+  need to be cleaned up.
 
-  - delete the existing test domains domains (leaving the base domain,
-    this should crash the current test run):
+- the build fails so tester.sh, out of infinte caution, aborts
+
+  Since tester.sh can't easily tell the difference between something
+  harmless (such as a compilation error) and something more serious
+  (such as corrupt KVMs) that would lead to the results directory
+  filling with cascading failures, it aborts.
+
+  Luckily compilation failures are very rare.
+
+- the disk fills up
+
+  Test result directory can be pruned without a restart. Once the
+  current run finishes, runner.sh will re-build the web pages removing
+  the deleted directories (you just need to wait).
+
+  Included in the restart instructions below are suggests for how to
+  find directories that should be pruned.
+
+If a restart is required, the following are the recommended steps.
+
+If you're in a hurry, reboot the machine then skip all the way to the
+end with "restart":
+
+- if necessary, crash the existing runner.sh:
+
+  while killing runner.sh et.al. works, it is easier/quicker to just
+  crash it by running the following a few times:
 
       $ ( cd libreswan-web-slave && make kvm-uninstall )
 
-  - or (optional, but a good idea) upgrade and reboot the test
-    machine:
+- (recommended, but optional) upgrade and reboot the test machine:
 
       $ sudo dnf upgrade -y
       $ sudo reboot
 
-- (optional, but recommended) cleanup and update the slave:
+- (optional) cleanup and update the slave (tester.sh will do this
+  anyway)
 
       $ ( cd libreswan-web-slave && git clean -f )
       $ ( cd libreswan-web-slave && git pull --ff-only )
 
 - (optional) update the master repository:
 
+  Remember to first check for local changes:
+
+      $ ( cd libreswan-web-master && git status )
       $ ( cd libreswan-web-master && git pull --ff-only )
 
-- examine (and perhaps delete) any test runs where tests have
-  'missing-output':
+- (optional) examine (and perhaps delete) any test runs where tests
+  have 'missing-output':
 
       $ grep '"output-missing"' results/*-g*-*/results.json | cut -d/ -f1-2 | sort -u
 
-- examine (and perhaps delete) test runs with no results.json:
+- (optional) examine (and perhaps delete) test runs with no
+  results.json:
 
       $ ls -d results/*-g*-*/ | while read d ; do test -r $d/results.json || echo $d ; done
 
-- examine (and perhaps delete) a random selection of test runs:
+- (optional) examine (and perhaps delete) some test results:
 
-  - form a raw list of tested commits (gime-work.sh outputs, on
-    stderr, a line for each test run and how "interesting" it was):
+  - use gime-work.sh to create a file containing, among other things,
+    a list of test runs along with their commit and "interest" level
+    (see below):
 
         $ ./libreswan-web-master/testing/web/gime-work.sh results libreswan-web-slave 2>&1 | tee commits.tmp
 
-  - strip the raw list of everything but tested commits (and discard
-    the most recent tested commit):
+  - strip the raw list of everything but test runs; also exclude the
+    most recent test run (so the latest result isn't deleted):
 
         $ grep tested: commits.tmp | tail -n +2 | tee tested.tmp
 
-  - list, as delete candidates, the test runs for un-interesting
-    commits (for instance, a change that does not modify the code and
-    is not a merge); this occurs because the most recent HEAD is
-    always tested unconditionally:
+  - examine (and perhaps delete) the un-interesting (false) test runs
+
+    Un-interesting commits do not modify the C code and are not a
+    merge point. These are created when HEAD, which is tested
+    unconditionally, isn't that interesting.
 
         $ grep -e ' false$' tested.tmp | while read t h b ; do d=$(echo results/*-g$h-*) ; test -d "$d" && echo $d ; done
 
-  - list, as delete candidates, a random selection of more interesting
-    commits (for instance, a change that modifies the code but is not
-    a merge):
+  - examine (and perhaps delete), a selection of more interesting
+    (true) test runs
+
+    More interesting commits do modify the C code but are not a merge.
 
         $ grep -e ' true$' tested.tmp | while read t h b ; do d=$(echo results/*-g$h-*) ; test -d "$d" && echo $d ; done | shuf | tail -n +100
 
