@@ -1380,6 +1380,13 @@ void init_pbs(pb_stream *pbs, u_int8_t *start, size_t len, const char *name)
 	pbs->lenfld_desc = NULL;
 }
 
+pb_stream chunk_as_pbs(chunk_t chunk, const char *name)
+{
+	pb_stream pbs;
+	init_pbs(&pbs, chunk.ptr, chunk.len, name);
+	return pbs;
+}
+
 void init_out_pbs(pb_stream *pbs, u_int8_t *start, size_t len, const char *name)
 {
 	init_pbs(pbs, start, len, name);

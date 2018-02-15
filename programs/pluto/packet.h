@@ -24,6 +24,8 @@
 #ifndef _PACKET_H
 #define _PACKET_H
 
+#include "chunk.h"
+
 /* a struct_desc describes a structure for the struct I/O routines.
  * This requires arrays of field_desc values to describe struct fields.
  */
@@ -112,16 +114,23 @@ extern const pb_stream empty_pbs;
 #define pbs_offset(pbs) ((size_t)((pbs)->cur - (pbs)->start))
 #define pbs_room(pbs) ((size_t)((pbs)->roof - (pbs)->start))
 #define pbs_left(pbs) ((size_t)((pbs)->roof - (pbs)->cur))
-#define pbs_as_chunk(PBS) ((chunk_t){ .ptr = (PBS)->start, .len = pbs_offset(PBS), })
-
-extern void init_pbs(pb_stream *pbs, u_int8_t *start, size_t len,
-		     const char *name);
 
 /*
- * init_out_pbs:
- * Same as init_pbs except it scribbles on the buffer to prevent leakage.
- * Should be totally redundant.
+ * Map a pbs onto a chunk, and chunk onto a pbs.
  */
+pb_stream chunk_as_pbs(chunk_t chunk, const char *name);
+#define pbs_as_chunk(PBS) ((chunk_t){ .ptr = (PBS)->start, .len = pbs_offset(PBS), })
+
+/*
+ * Initializers; point PBS at a pre-allocated (or static) buffer.
+ *
+ * init_out_pbs(): Same as init_pbs() except it scribbles on the
+ * buffer to prevent leakage.  Should be totally redundant.
+ *
+ * XXX: should the buffer instead be allocated as part of the PBS?
+ */
+extern void init_pbs(pb_stream *pbs, u_int8_t *start, size_t len,
+		     const char *name);
 extern void init_out_pbs(pb_stream *pbs, u_int8_t *start, size_t len,
 		     const char *name);
 
