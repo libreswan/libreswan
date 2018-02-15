@@ -64,8 +64,7 @@ KVM_CONNECTION ?= qemu:///system
 
 VIRSH = sudo virsh --connect $(KVM_CONNECTION)
 
-VIRT_INSTALL = sudo virt-install --connect $(KVM_CONNECTION)
-
+VIRT_INSTALL ?= sudo virt-install --connect $(KVM_CONNECTION)
 VIRT_RND ?= --rng type=random,device=/dev/random
 VIRT_SECURITY ?= --security type=static,model=dac,label='$(KVM_USER):$(KVM_GROUP)',relabel=yes
 VIRT_BASE_GATEWAY ?= --network=network:$(KVM_BASE_GATEWAY),model=virtio
