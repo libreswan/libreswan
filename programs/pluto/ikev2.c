@@ -1285,8 +1285,8 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	passert((st == NULL) == (from_state == STATE_UNDEFINED));
 
-	stf_status clear_payload_result = STF_ROOF;
-	struct ikev2_payload_errors clear_payload_status = { .bad = false };
+	stf_status message_payload_result = STF_ROOF;
+	struct ikev2_payload_errors message_payload_status = { .bad = false };
 	stf_status encrypted_payload_result = STF_ROOF;
 	struct ikev2_payload_errors encrypted_payload_status = { .bad = false };
 
@@ -1317,14 +1317,14 @@ void process_v2_packet(struct msg_digest **mdp)
 		 * will accept the packet, unpack the clear payload
 		 * and continue matching.
 		 */
-		if (clear_payload_result == STF_ROOF) {
+		if (message_payload_result == STF_ROOF) {
 			DBG(DBG_CONTROL, DBG_log("Unpacking clear payload for svm: %s", svm->story));
-			clear_payload_result = ikev2_decode_payloads(md,
-								     &md->cleartext_payloads,
+			message_payload_result = ikev2_decode_payloads(md,
+								     &md->message_payloads,
 								     &md->message_pbs,
 								     md->hdr.isa_np);
-			if (clear_payload_result != STF_OK) {
-				complete_v2_state_transition(mdp, clear_payload_result);
+			if (message_payload_result != STF_OK) {
+				complete_v2_state_transition(mdp, message_payload_result);
 				return;
 			}
 		}
@@ -1338,16 +1338,16 @@ void process_v2_packet(struct msg_digest **mdp)
 		 * XXX: hack until expected_clear_payloads is added to
 		 * struct state_v2_microcode or replacement.
 		 */
-		struct ikev2_expected_payloads expected_cleartext_payloads = {
+		struct ikev2_expected_payloads expected_message_payloads = {
 			.required = svm->req_clear_payloads,
 			.optional = svm->opt_clear_payloads,
 		};
-		struct ikev2_payload_errors clear_payload_errors
-			= ikev2_verify_payloads(&md->cleartext_payloads,
-						&expected_cleartext_payloads);
-		if (clear_payload_errors.bad) {
+		struct ikev2_payload_errors message_payload_errors
+			= ikev2_verify_payloads(&md->message_payloads,
+						&expected_message_payloads);
+		if (message_payload_errors.bad) {
 			/* Save this failure for later logging. */
-			clear_payload_status = clear_payload_errors;
+			message_payload_status = message_payload_errors;
 			continue;
 		}
 
@@ -1357,7 +1357,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		 *
 		 * (.seen&(P(SK)|P(SKF))!=0 is equivalent.
 		 */
-		if (!(expected_cleartext_payloads.required & P(SK))) {
+		if (!(expected_message_payloads.required & P(SK))) {
 			break;
 		}
 
@@ -1382,7 +1382,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			 * isn't always possible since the fragment
 			 * may be the trigger for DH.
 			 */
-			if ((md->cleartext_payloads.present & P(SKF))
+			if ((md->message_payloads.present & P(SKF))
 			    && !ikev2_collect_fragment(md, st)) {
 				return;
 			}
@@ -1458,10 +1458,10 @@ void process_v2_packet(struct msg_digest **mdp)
 	if (svm->state == STATE_IKEv2_ROOF) {
 		DBG(DBG_CONTROL, DBG_log("no useful state microcode entry found"));
 		/* no useful state microcode entry */
-		if (clear_payload_status.bad) {
+		if (message_payload_status.bad) {
 			struct payload_digest *ntfy;
 
-			ikev2_log_payload_errors(clear_payload_status, st);
+			ikev2_log_payload_errors(message_payload_status, st);
 
 			/* we want to print and log the first notify payload */
 			ntfy = md->chain[ISAKMP_NEXT_v2N];

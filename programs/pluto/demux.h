@@ -72,9 +72,6 @@ struct msg_digest {
 	chunk_t raw_packet;			/* (v1) if encrypted, received packet before decryption */
 	const struct iface_port *iface;		/* interface on which message arrived */
 	ip_address sender;			/* where message came from (network order) */
-	pb_stream packet_pbs;			/* whole packet */
-	pb_stream message_pbs;			/* message to be processed */
-	pb_stream clr_pbs;			/* (v2) decrypted packet (within v2E payload) */
 	struct isakmp_hdr hdr;			/* message's header */
 	bool encrypted;				/* (v1) was it encrypted? */
 	enum state_kind from_state;		/* state we started in */
@@ -93,11 +90,25 @@ struct msg_digest {
 	bool nortel;				/* (v1) Peer requires Nortel specific workaround */
 	bool event_already_set;			/* (v1) */
 
+	/*
+	 * The packet PBS contains a message PBS and the message PBS
+	 * contains payloads one of which is the encrypted_pbs which
+	 * also contains payloads.
+	 *
+	 * Danger Will Robinson: since the digest contains a pbs
+	 * pointing at one of these PBS fields, and these fields point
+	 * at each other, their lifetime is the same as the
+	 * msg_digest.
+	 */
+	pb_stream packet_pbs;			/* whole packet */
+	pb_stream message_pbs;			/* message to be processed */
+	pb_stream encrypted_pbs;		/* (v2) encrypted (SK) payload (decrypted) */
+
 #   define PAYLIMIT 30
 	struct payload_digest digest[PAYLIMIT];
 	unsigned digest_roof;
 
-	struct payload_summary cleartext_payloads;	/* (v2) */
+	struct payload_summary message_payloads;	/* (v2) */
 	struct payload_summary encrypted_payloads;	/* (v2) */
 
 	/*

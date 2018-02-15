@@ -2548,25 +2548,25 @@ stf_status ikev2_decrypt_msg(struct state *st, struct msg_digest *md)
 							     e_pbs->cur - md->packet_pbs.start);
 	}
 
-	if (status != STF_OK) {
-		return status;
-	}
-
-	/* CLANG 3.5 mis-diagnoses that chunk is undefined */
-	init_pbs(&md->clr_pbs, chunk.ptr, chunk.len, "cleartext");
-
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu ikev2 %s decrypt %s",
 				     st->st_serialno,
 				     enum_name(&ikev2_exchange_names,
 					       md->hdr.isa_xchg),
 				     status == STF_OK ? "success" : "failed"));
 
+	if (status != STF_OK) {
+		return status;
+	}
+
+	/* CLANG 3.5 mis-diagnoses that chunk is undefined */
+	md->encrypted_pbs = chunk_as_pbs(chunk, "cleartext");
+
 	 enum next_payload_types_ikev2 np = md->chain[ISAKMP_NEXT_v2SK] ?
 		md->chain[ISAKMP_NEXT_v2SK]->payload.generic.isag_np :
 		md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf.isaskf_np;
 
 	 return ikev2_decode_payloads(md, &md->encrypted_payloads,
-				      &md->clr_pbs, np);
+				      &md->encrypted_pbs, np);
 }
 
 /* Misleading name, also used for NULL sized type's */
