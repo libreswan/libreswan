@@ -85,7 +85,7 @@ static void nss_ecp_calc_secret(const struct oakley_group_desc *group,
 	}
 
 	DBG(DBG_CRYPT,
-	    DBG_log("public keyType %d size %d publicValue %p %d",
+	    DBG_log("public keyType %d size %d publicValue@%p %d bytes",
 		    (*pubk)->keyType,
 		    (*pubk)->u.ec.size,
 		    (*pubk)->u.ec.publicValue.data,
@@ -93,18 +93,31 @@ static void nss_ecp_calc_secret(const struct oakley_group_desc *group,
 	    DBG_dump("public key", (*pubk)->u.ec.publicValue.data,
 		     (*pubk)->u.ec.publicValue.len));
 
-	passert((*pubk)->u.ec.publicValue.data[0] == EC_POINT_FORM_UNCOMPRESSED);
-	passert((*pubk)->u.ec.publicValue.len == group->bytes + 1);
-	memcpy(ke, (*pubk)->u.ec.publicValue.data + 1, group->bytes);
+#ifdef USE_DH31
+	if (group->nss_oid == SEC_OID_CURVE25519) {
+		/*
+		 * NSS returns the plain EC X-point (see documentation
+		 * in pk11_get_EC_PointLenInBytes(), and that is what
+		 * needs to go over the wire.
+		 */
+		passert((*pubk)->u.ec.publicValue.len == group->bytes);
+		DBG_log("putting NSS raw CURVE25519 public key blob on wire");
+		memcpy(ke, (*pubk)->u.ec.publicValue.data, group->bytes);
+	} else {
+#endif
+		passert((*pubk)->u.ec.publicValue.data[0] == EC_POINT_FORM_UNCOMPRESSED);
+		passert((*pubk)->u.ec.publicValue.len == group->bytes + 1);
+		memcpy(ke, (*pubk)->u.ec.publicValue.data + 1, group->bytes);
+#ifdef USE_DH31
+	}
+#endif
 }
 
-static PK11SymKey *nss_ecp_calc_shared(const struct oakley_group_desc *group UNUSED,
+static PK11SymKey *nss_ecp_calc_shared(const struct oakley_group_desc *group,
 				       SECKEYPrivateKey *local_privk,
-				       const SECKEYPublicKey *local_pubk UNUSED,
+				       const SECKEYPublicKey *local_pubk,
 				       uint8_t *remote_ke, size_t sizeof_remote_ke)
 {
-	passert(sizeof_remote_ke == group->bytes);
-	passert(sizeof_remote_ke == local_pubk->u.ec.publicValue.len - 1);
 	SECKEYPublicKey remote_pubk = {
 		.keyType = ecKey,
 		.u.ec = {
@@ -121,10 +134,30 @@ static PK11SymKey *nss_ecp_calc_shared(const struct oakley_group_desc *group UNU
 		},
 	};
 
+	/* Allocate same space for remote key as local key */
+	passert(sizeof_remote_ke == group->bytes);
 	SECITEM_AllocItem(NULL, &remote_pubk.u.ec.publicValue,
-			  sizeof_remote_ke + 1),
-	remote_pubk.u.ec.publicValue.data[0] = EC_POINT_FORM_UNCOMPRESSED;
-	memcpy(remote_pubk.u.ec.publicValue.data + 1, remote_ke, sizeof_remote_ke);
+			  local_pubk->u.ec.publicValue.len);
+
+#ifdef USE_DH31
+	if (group->nss_oid == SEC_OID_CURVE25519) {
+		/*
+		 * NSS returns the plain EC X-point (see documentation
+		 * in pk11_get_EC_PointLenInBytes(), and that is what
+		 * needs to go over the wire.
+		 */
+		passert(sizeof_remote_ke == local_pubk->u.ec.publicValue.len);
+		DBG_log("passing raw CURVE25519 public key blob to NSS");
+		memcpy(remote_pubk.u.ec.publicValue.data, remote_ke, sizeof_remote_ke);
+	} else {
+#endif
+		/* local has same keysize as remote */
+		passert(sizeof_remote_ke + 1 == local_pubk->u.ec.publicValue.len);
+		remote_pubk.u.ec.publicValue.data[0] = EC_POINT_FORM_UNCOMPRESSED;
+		memcpy(remote_pubk.u.ec.publicValue.data + 1, remote_ke, sizeof_remote_ke);
+#ifdef USE_DH31
+	}
+#endif
 
 	/*
 	 * XXX: The "result type" can be nearly everything.  Use
