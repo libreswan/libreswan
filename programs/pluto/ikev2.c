@@ -578,11 +578,14 @@ void init_ikev2(void)
  * split an incoming message into payloads
  */
 stf_status ikev2_decode_payloads(struct msg_digest *md,
-				 struct payload_summary *summary,
+				 struct payload_summary *summaryp,
 				 pb_stream *in_pbs,
 				 enum next_payload_types_ikev2 np)
 {
-	stf_status status = STF_OK;
+	struct payload_summary summary = {
+		.parsed = true,
+		.n = v2N_NOTHING_WRONG,
+	};
 
 	/*
 	 * ??? zero out the digest descriptors -- might nuke
@@ -598,7 +601,7 @@ stf_status ikev2_decode_payloads(struct msg_digest *md,
 			loglog(RC_LOG_SERIOUS,
 			       "more than %zu payloads in message; ignored",
 			       elemsof(md->digest));
-			status = STF_FAIL + v2N_INVALID_SYNTAX;
+			summary.n = v2N_INVALID_SYNTAX;
 			break;
 		}
 		struct payload_digest *const pd = md->digest + md->digest_roof;
@@ -616,7 +619,7 @@ stf_status ikev2_decode_payloads(struct msg_digest *md,
 			 */
 			if (!in_struct(&pd->payload, &ikev2_generic_desc, in_pbs, &pd->pbs)) {
 				loglog(RC_LOG_SERIOUS, "malformed payload in packet");
-				status = STF_FAIL + v2N_INVALID_SYNTAX;
+				summary.n = v2N_INVALID_SYNTAX;
 				break;
 			}
 			if (pd->payload.v2gen.isag_critical & ISAKMP_PAYLOAD_CRITICAL) {
@@ -630,7 +633,7 @@ stf_status ikev2_decode_payloads(struct msg_digest *md,
 				loglog(RC_LOG_SERIOUS,
 				       "critical payload (%s) was not understood. Message dropped.",
 				       enum_show(&ikev2_payload_names, np));
-				status = STF_FAIL + v2N_UNSUPPORTED_CRITICAL_PAYLOAD;
+				summary.n = v2N_UNSUPPORTED_CRITICAL_PAYLOAD;
 				break;
 			}
 			loglog(RC_COMMENT,
@@ -642,15 +645,15 @@ stf_status ikev2_decode_payloads(struct msg_digest *md,
 
 		if (np >= LELEM_ROOF) {
 			DBG(DBG_CONTROL, DBG_log("huge next-payload %u", np));
-			status = STF_FAIL + v2N_INVALID_SYNTAX;
+			summary.n = v2N_INVALID_SYNTAX;
 			break;
 		}
-		summary->repeated |= (summary->present & LELEM(np));
-		summary->present |= LELEM(np);
+		summary.repeated |= (summary.present & LELEM(np));
+		summary.present |= LELEM(np);
 
 		if (!in_struct(&pd->payload, sd, in_pbs, &pd->pbs)) {
 			loglog(RC_LOG_SERIOUS, "malformed payload in packet");
-			status = STF_FAIL + v2N_INVALID_SYNTAX;
+			summary.n = v2N_INVALID_SYNTAX;
 			break;
 		}
 
@@ -702,7 +705,9 @@ stf_status ikev2_decode_payloads(struct msg_digest *md,
 		md->digest_roof++;
 	}
 
-	return status;
+	*summaryp = summary;
+	return summary.n == v2N_NOTHING_WRONG ? STF_OK : STF_FAIL + summary.n;
+
 }
 
 struct ikev2_payload_errors ikev2_verify_payloads(const struct payload_summary *summary,
@@ -735,7 +740,8 @@ struct ikev2_payload_errors ikev2_verify_payloads(const struct payload_summary *
 }
 
 /* report problems - but less so when OE */
-void ikev2_log_payload_errors(struct ikev2_payload_errors errors, struct state *st)
+void ikev2_log_payload_errors(struct state *st, struct msg_digest *md,
+			      const struct ikev2_payload_errors *errors)
 {
 	if (!DBGP(DBG_OPPO)) {
 		/*
@@ -753,21 +759,31 @@ void ikev2_log_payload_errors(struct ikev2_payload_errors errors, struct state *
 	}
 
 	LSWLOG_LOG_WHACK(RC_LOG_SERIOUS, buf) {
-		lswlogs(buf, "Dropping message with payload errors.");
-		if (errors.missing != LEMPTY) {
-			lswlogf(buf, " missing: ");
+		lswlogs(buf, "Dropping message with payload errors");
+		if (md->message_payloads.parsed) {
+			lswlogf(buf, "; message payloads: ");
 			lswlog_enum_lset_short(buf, &ikev2_payload_names, ",",
-					       errors.missing);
+					       md->message_payloads.present);
 		}
-		if (errors.unexpected != LEMPTY) {
-			lswlogf(buf, " unexpected: ");
+		if (md->encrypted_payloads.parsed) {
+			lswlogf(buf, "; encrypted payloads: ");
 			lswlog_enum_lset_short(buf, &ikev2_payload_names, ",",
-					       errors.unexpected);
+					       md->encrypted_payloads.present);
 		}
-		if (errors.excessive != LEMPTY) {
-			lswlogf(buf, " excessive: ");
+		if (errors->missing != LEMPTY) {
+			lswlogf(buf, "; missing payloads: ");
 			lswlog_enum_lset_short(buf, &ikev2_payload_names, ",",
-					       errors.excessive);
+					       errors->missing);
+		}
+		if (errors->unexpected != LEMPTY) {
+			lswlogf(buf, "; unexpected payloads: ");
+			lswlog_enum_lset_short(buf, &ikev2_payload_names, ",",
+					       errors->unexpected);
+		}
+		if (errors->excessive != LEMPTY) {
+			lswlogf(buf, "; excessive payloads: ");
+			lswlog_enum_lset_short(buf, &ikev2_payload_names, ",",
+					       errors->excessive);
 		}
 	}
 }
@@ -1461,7 +1477,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		if (message_payload_status.bad) {
 			struct payload_digest *ntfy;
 
-			ikev2_log_payload_errors(message_payload_status, st);
+			ikev2_log_payload_errors(st, md, &message_payload_status);
 
 			/* we want to print and log the first notify payload */
 			ntfy = md->chain[ISAKMP_NEXT_v2N];
@@ -1472,7 +1488,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			}
 			complete_v2_state_transition(mdp, STF_FAIL + v2N_INVALID_SYNTAX);
 		} else if (encrypted_payload_status.bad) {
-			ikev2_log_payload_errors(encrypted_payload_status, st);
+			ikev2_log_payload_errors(st, md, &encrypted_payload_status);
 			complete_v2_state_transition(mdp, STF_FAIL + v2N_INVALID_SYNTAX);
 		} else if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
 			/*

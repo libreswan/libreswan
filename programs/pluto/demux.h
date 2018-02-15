@@ -59,6 +59,8 @@ struct payload_digest {
 };
 
 struct payload_summary {
+	bool parsed;
+	v2_notification_t n;
 	lset_t present;
 	lset_t repeated;
 };

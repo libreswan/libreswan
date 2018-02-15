@@ -288,8 +288,8 @@ void ikev2_copy_cookie_from_sa(struct state *st,
 struct ikev2_payload_errors ikev2_verify_payloads(const struct payload_summary *summary,
 						  const struct ikev2_expected_payloads *expected);
 
-void ikev2_log_payload_errors(struct ikev2_payload_errors errors,
-			      struct state *st);
+void ikev2_log_payload_errors(struct state *st, struct msg_digest *md,
+			      const struct ikev2_payload_errors *errors);
 
 void ikev2_ike_sa_established(struct ike_sa *ike,
 			      const struct state_v2_microcode *svm,
