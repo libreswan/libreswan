@@ -2643,6 +2643,10 @@ bool update_mobike_endpoints(struct state *pst,
 		cst->st_interface = pst->st_interface = md->iface;
 	}
 
+	/* reset liveness */
+	pst->st_pend_liveness = FALSE;
+	pst->st_last_liveness = monotime_epoch;
+
 	delete_oriented_hp(c); /* hp list may have changed */
 	if (!orient(c)) {
 		PEXPECT_LOG("%s after mobike failed", "orient");
