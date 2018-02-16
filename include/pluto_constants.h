@@ -587,30 +587,42 @@ enum state_kind {
 /* STATE_IKEv2_ROOF lurks in the code so leave space for it */
 #define STATE_IKE_ROOF (STATE_IKEv2_ROOF+1)	/* not a state! */
 
-
 /*
- * The IKEv2 (RFC 7296) original role - either the "original
- * initiator" or the "original responder" - as determined by the "I
- * (Initiator)" flag in the (ISAKMP_FLAGS_v2_IKE_I) in the payload
- * header.  The "original initiator" either sent: the initial INIT
- * packet; or, the CREATE_CHILD_SA rekey-ike request.
+ * The IKEv2 (RFC 7296) original role.  Either the "original
+ * initiator" or the "original responder" as identified by the I
+ * (Initiator flag).
  *
- * The bit is used to identify which keying material to use when
- * encrypting and decrypting SK payloads.
+ * The "original initiator" will set the I (Initiator) flag
+ * (ISAKMP_FLAGS_v2_IKE_I) when sending either the initial SA_INIT
+ * packet or CREATE_CHILD_SA rekey-ike request.  The original
+ * responder will see the I flag set in all packets it receives from
+ * the original initiator.
  *
- * Separate from this is the IKEv2 "R (Response)" flag
- * (ISAKMP_FLAGS_v2_MSG_R) in the payload header.  The response flag
- * that a message is a response to a previous request.  Since either
- * end can send requests, either end can also set the "R" flag.
+ * The original role is used to identify which SPI (cookie) to use in
+ * the header and which keying material to use when encrypting and
+ * decrypting SK payloads.
  *
  * The IKEv1 equivalent is the phase1 role.  It is identified by the
  * IKEv1 IS_PHASE1_INIT() macro.
  */
 enum original_role {
-	ORIGINAL_INITIATOR = 1,
-	ORIGINAL_RESPONDER = 2
+	ORIGINAL_INITIATOR = 1, /* IKE_I present */
+	ORIGINAL_RESPONDER = 2, /* IKE_I missing */
 };
 
+/*
+ * The IKEv2 message role.  Is this message a request, or a response
+ * (to a request) as determined by the IKEv2 "R (Response)" flag.
+
+ * Since either end can send requests, either end can also set the "R"
+ * flag when responding.  Do not use ORIGINAL_ROLE as a proxy for
+ * MESSAGE_ROLE, it is wrong.
+ */
+
+enum message_role {
+	MESSAGE_REQUEST = 1,
+	MESSAGE_RESPONSE = 2,
+};
 
 #define PHASE1_INITIATOR_STATES  (LELEM(STATE_MAIN_I1) | \
 				  LELEM(STATE_MAIN_I2) | \

@@ -1045,17 +1045,23 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	md->msgid_received = ntohl(md->hdr.isa_msgid);
 	const enum isakmp_xchg_types ix = md->hdr.isa_xchg;
-	const bool msg_r = is_msg_response(md);
+	md->message_role = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) ? MESSAGE_RESPONSE : MESSAGE_REQUEST;
 	const bool sent_by_ike_initiator = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) != 0;
 
 	DBG(DBG_CONTROL, {
-		if (msg_r)
-			DBG_log("I am receiving an IKEv2 Response %s",
+			switch (md->message_role) {
+			case MESSAGE_RESPONSE:
+				DBG_log("I am receiving an IKEv2 Response %s",
 					enum_name(&ikev2_exchange_names, ix));
-		else
-			DBG_log("I am receiving an IKEv2 Request %s",
+				break;
+			case MESSAGE_REQUEST:
+				DBG_log("I am receiving an IKEv2 Request %s",
 					enum_name(&ikev2_exchange_names, ix));
-	});
+				break;
+			default:
+				bad_case(md->message_role);
+			}
+		});
 
 	if (sent_by_ike_initiator) {
 		DBG(DBG_CONTROL, DBG_log("I am the IKE SA Original Responder"));
@@ -1086,8 +1092,12 @@ void process_v2_packet(struct msg_digest **mdp)
 		 * The initiator must send: IKE_I && !MSG_R
 		 * The responder must send: !IKE_I && MSG_R.
 		 */
-		if (sent_by_ike_initiator == msg_r) {
-			libreswan_log("dropping IKE_SA_INIT packet with conflicting initiator and responder flags");
+		if (sent_by_ike_initiator && md->message_role != MESSAGE_REQUEST) {
+			libreswan_log("dropping IKE_SA_INIT request with conflicting message response flag");
+			return;
+		}
+		if (!sent_by_ike_initiator && md->message_role != MESSAGE_RESPONSE) {
+			libreswan_log("dropping IKE_SA_INIT response with conflicting message response flag");
 			return;
 		}
 		/*
@@ -1175,7 +1185,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			 */
 			rehash_state(st, NULL, md->hdr.isa_rcookie);
 		}
-	} else if (!msg_r) {
+	} else if (md->message_role == MESSAGE_REQUEST) {
 		/*
 		 * A request; send it to the parent.
 		 */
@@ -1209,7 +1219,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			return;
 		}
 		/* update lastrecv later on */
-	} else {
+	} else if (md->message_role == MESSAGE_RESPONSE) {
 		/*
 		 * A response; find the child that made the request
 		 * and send it to that.
@@ -1264,6 +1274,8 @@ void process_v2_packet(struct msg_digest **mdp)
 				}
 			}
 		}
+	} else {
+		PASSERT_FAIL("message role %d invalid", md->message_role);
 	}
 
 	/* ISAKMP_v2_INFORMATIONAL & CREATE_CHILD_SA roles could flip */
@@ -1324,9 +1336,11 @@ void process_v2_packet(struct msg_digest **mdp)
 		/*
 		 * Does the message reply flag match?
 		 */
-		if (match_hdr_flag(svm->flags, SMF2_MSG_R_SET, !msg_r))
+		if (match_hdr_flag(svm->flags, SMF2_MSG_R_SET,
+				   md->message_role == MESSAGE_REQUEST))
 			continue;
-		if (match_hdr_flag(svm->flags, SMF2_MSG_R_CLEAR, msg_r))
+		if (match_hdr_flag(svm->flags, SMF2_MSG_R_CLEAR,
+				   md->message_role == MESSAGE_RESPONSE))
 			continue;
 		/*
 		 * Since there's a state that, at least, looks like it

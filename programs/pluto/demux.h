@@ -83,6 +83,7 @@ struct msg_digest {
 	struct state *st;			/* current state object */
 
 	enum original_role original_role;	/* (v2) */
+	enum message_role message_role;		/* (v2) */
 	msgid_t msgid_received;			/* (v2) - Host order! */
 
 	notification_t v1_note;			/* reason for failure */
