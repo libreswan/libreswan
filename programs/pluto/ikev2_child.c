@@ -965,18 +965,31 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 				  enum isakmp_xchg_types isa_xchg)
 {
 	/*
-	 * XXX: (original) role was a parameter yet all callers passed
-	 * in ORIGINAL_RESPONDER so just hardwire it.
+	 * XXX: This function was only called with ORIGINAL_ROLE set
+	 * to ORIGINAL_RESPONDER so it was hardwired.  Looking at the
+	 * calls:
 	 *
-	 * Notice how, with the value hard-wired, some of the code
-	 * below starts to look a little silly.
+	 * - in the original responder's AUTH code so
+         *   ORIGINAL_RESPONDER is correct
 	 *
-	 * This is all probably came about because, for an IKEv2 CHILD
-	 * SA, the crypto material is farmed out according to who is
-	 * initiating a CHILD_SA request, and not which end's IKE SA
-	 * is the original initiator or responder.  It just so happens
-	 * that the two are the same for CHILD SAs negotiated during
-	 * the initial exchange.
+	 * - CHILD_SA reply code (?), since either end can send such a
+         *   request, the end's original role may not be
+         *   ORIGINAL_RESPONDER.
+	 *
+	 * Looking at the code:
+	 *
+	 * - it isn't clear if the notification parsing checks need to
+	 *   be conditional on ORIGINAL_ROLE or message responder?
+	 *
+	 *   Does it need ORIGINAL_ROLE or MESSAGE_REQUEST?
+	 *
+	 * - since ikev2_derive_child_keys() needs the the
+	 *   ORIGINAL_ROLE when assigning keys it will get it wrong if
+	 *   the ORIGINAL_RESPONDER sends a CHILD_SA request.
+	 *
+	 *   Using ike_sa(cst).sa.st_original_role should fix this
+	 *   (caution with rekeying).
+	 *
 	 */
 	const enum original_role role = ORIGINAL_RESPONDER;
 
