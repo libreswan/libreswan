@@ -534,6 +534,21 @@ struct ike_sa *pexpect_ike_sa(struct state *st)
 	return get_ike_sa(st, true);
 }
 
+struct child_sa *pexpect_child_sa(struct state *st)
+{
+	if (st == NULL) {
+		return NULL;
+	} else if (IS_CHILD_SA(st)) {
+		return (struct child_sa*) st;
+	} else {
+		PEXPECT_LOG("expecting child SA but state #%lu is a parent",
+				    st->st_serialno);
+		return (struct child_sa*) st;
+	}
+}
+
+union sas { struct child_sa child; struct ike_sa ike; struct state st; };
+
 /*
  * Get a state object.
  * Caller must schedule an event for this object so that it doesn't leak.
@@ -543,8 +558,10 @@ struct state *new_state(void)
 {
 	static so_serial_t next_so = SOS_FIRST;
 
-	struct ike_sa *ike = alloc_thing(struct ike_sa, "struct state in new_state()");
-	struct state *st = &ike->sa;
+	union sas *sas = alloc_thing(union sas, "struct state in new_state()");
+	passert(&sas->st == &sas->child.sa);
+	passert(&sas->st == &sas->ike.sa);
+	struct state *st = &sas->st;
 	*st = (struct state) {
 		.st_whack_sock = NULL_FD,	/* note: not 0 */
 		.st_finite_state = &state_undefined,
