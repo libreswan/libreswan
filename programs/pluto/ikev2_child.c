@@ -981,15 +981,24 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	 * - it isn't clear if the notification parsing checks need to
 	 *   be conditional on ORIGINAL_ROLE or message responder?
 	 *
-	 *   Does it need ORIGINAL_ROLE or MESSAGE_REQUEST?
+	 *   Does it need the IKE SA ROLE, or the CHILD SA ROLE?
 	 *
-	 * - since ikev2_derive_child_keys() needs the the
-	 *   ORIGINAL_ROLE when assigning keys it will get it wrong if
-	 *   the ORIGINAL_RESPONDER sends a CHILD_SA request.
+	 * - The function ikev2_derive_child_keys() needs to know the
+	 *   initiator and responder when assigning keying material.
 	 *
-	 *   Using ike_sa(cst).sa.st_original_role should fix this
-	 *   (caution with rekeying).
+	 *   But who is the initiator and who is the responder?
 	 *
+	 *   Section 1.3.1 (Creating new Child SAs...) refers to the
+	 *   end sending the CHILD_SA request as the initiator (i.e.,
+	 *   as determined by the message_role), but Section 2.17
+	 *   (Generating Keying Material for Child SAs) could be read
+	 *   as refering to the original roles (I suspect it isn't).
+	 *
+	 *   So either ike_sa(cst) .sa .st_original_role or md
+	 *   .message_role should be used here?
+	 *
+	 *   Either way, something is wrong as this call hard-wires
+	 *   the responder but the second call is using ORIGINAL_ROLE!
 	 */
 	const enum original_role role = ORIGINAL_RESPONDER;
 
