@@ -415,7 +415,7 @@ kvmplutotest	newoe-25-cat-3-4-way			good
 kvmplutotest	newoe-25-cat-4				good
 kvmplutotest 	newoe-25-cat-5				good
 kvmplutotest 	newoe-26-poc-poc-host			good
-kvmplutotest 	newoe-27-replace-sa			good
+kvmplutotest 	newoe-27-replace-sa			wip
 kvmplutotest 	newoe-27-replace-sa-authnull		good
 
 
@@ -938,7 +938,7 @@ kvmplutotest	ipsec-hostkey-ckaid-02-fips	good
 kvmplutotest	ipsec-hostkey-ckaid-03-nsspw	good
 
 # PPK
-kvmplutotest	ikev2-ppk-dynamic-01				good
+kvmplutotest	ikev2-ppk-dynamic-01				wip
 kvmplutotest	ikev2-ppk-static-01-insist-yes			good
 kvmplutotest	ikev2-ppk-static-02-insist-insist		good
 kvmplutotest	ikev2-ppk-static-03-no-insist-fail		good
