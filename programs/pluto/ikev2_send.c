@@ -198,11 +198,10 @@ void send_v2_notification_from_state(struct state *pst,
 		      notify_name);
 
 	/*
-	 * XXX unconditionally clearing original initiator flag is
-	 * wrong!?! or is this only ever called by the original
-	 * responder?
+	 * Since this is a notification, it must always be a response.
 	 *
-	 * Since this is a notify, must it always be a response.
+	 * XXX: What about IKE_I, can't assume this is the original
+	 * responder.
 	 */
 	lset_t flags = ISAKMP_FLAGS_v2_MSG_R;
 
@@ -217,7 +216,7 @@ void send_v2_notification_from_state(struct state *pst,
 		return;
 	}
 
-	struct v2sk_stream sk = ikev2_open_encrypted_payload(&rbody, ISAKMP_NEXT_v2NONE,
+	struct v2sk_stream sk = ikev2_open_encrypted_payload(&rbody, ISAKMP_NEXT_v2N,
 							     ike_sa(pst), "notify");
 	if (!pbs_ok(&sk.payload)) {
 		return;
@@ -231,6 +230,10 @@ void send_v2_notification_from_state(struct state *pst,
 		      ISAKMP_PAYLOAD_NONCRITICAL,
 		      IKEv2_SEC_PROTO_NONE, &empty_chunk, /* SPI */
 		      ntype, ndata, &sk.payload)) {
+		/*
+		 * XXX: always omitting SPI but ESP/AH packets need
+		 * it!?!
+		 */
 		return;
 	}
 

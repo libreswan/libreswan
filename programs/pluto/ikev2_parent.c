@@ -6739,7 +6739,25 @@ bool ikev2_close_encrypted_payload(struct v2sk_stream *sk)
 {
 	/* padding + pad-length */
 
-	if (!ikev2_padup_pre_encrypt(&sk->ike->sa, &sk->payload)) {
+	size_t padding;
+	if (sk->ike->sa.st_oakley.ta_encrypt->pad_to_blocksize) {
+		const size_t blocksize = sk->ike->sa.st_oakley.ta_encrypt->enc_blocksize;
+		padding = pad_up(sk->payload.cur - sk->cleartext, blocksize);
+		if (padding == 0) {
+			padding = blocksize;
+		}
+	} else {
+		padding = 1;
+	}
+	DBG(DBG_EMITTING,
+	    DBG_log("adding %zd bytes of padding (including 1 byte padding-length)",
+		    padding));
+	char b[MAX_CBC_BLOCK_SIZE];
+	passert(sizeof(b) >= padding);
+	for (unsigned i = 0; i < padding; i++) {
+		b[i] = i;
+	}
+	if (!out_raw(b, padding, &sk->payload, "padding and length")) {
 		libreswan_log("error initializing padding for encrypted %s payload",
 			      sk->name);
 		return false;
