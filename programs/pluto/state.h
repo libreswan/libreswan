@@ -709,8 +709,10 @@ extern void delete_p2states_by_connection(struct connection *c);
 extern void rekey_p2states_by_connection(struct connection *c);
 extern void delete_my_family(struct state *pst, bool v2_responder_state);
 
+struct state *ikev1_duplicate_state(struct state *st, sa_t ipsec);
+struct state *ikev2_duplicate_state(struct ike_sa *st, sa_t ipsec);
+
 extern struct state
-	*duplicate_state(struct state *st, sa_t ipsec),
 	*state_with_serialno(so_serial_t sn),
 	*find_phase2_state_to_delete(const struct state *p1st, u_int8_t protoid,
 			     ipsec_spi_t spi, bool *bogus),

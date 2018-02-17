@@ -3052,7 +3052,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	ikev2_log_parentSA(pst);
 
 	/* XXX This is too early and many failures could lead to not needing a child state */
-	struct state *cst = duplicate_state(pst, IPSEC_SA);	/* child state */
+	struct state *cst = ikev2_duplicate_state(pexpect_ike_sa(pst), IPSEC_SA);	/* child state */
 
 	/* XXX because the early child state ends up with the try counter check, we need to copy it */
 	cst->st_try = pst->st_try;
@@ -6458,7 +6458,7 @@ void ikev2_initiate_child_sa(int whack_sock, struct ike_sa *ike,
 
 	passert(c != NULL);
 
-	st = duplicate_state(&ike->sa, IPSEC_SA);
+	st = ikev2_duplicate_state(ike, IPSEC_SA);
 	st->st_whack_sock = whack_sock;
 	st->st_connection = c;	/* safe: from duplicate_state */
 	passert(c != NULL);

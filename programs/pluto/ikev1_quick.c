@@ -759,7 +759,7 @@ void quick_outI1(int whack_sock,
 #endif
 		 )
 {
-	struct state *st = duplicate_state(isakmp_sa, TRUE);
+	struct state *st = ikev1_duplicate_state(isakmp_sa, TRUE);
 	st->st_whack_sock = whack_sock;
 	st->st_connection = c;	/* safe: from duplicate_state */
 	passert(c != NULL);
@@ -1368,7 +1368,7 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 
 	/* now that we are sure of our connection, create our new state */
 	{
-		struct state *const st = duplicate_state(p1st, IPSEC_SA);
+		struct state *const st = ikev1_duplicate_state(p1st, IPSEC_SA);
 
 		/* first: fill in missing bits of our new state object
 		 * note: we don't copy over st_peer_pubkey, the public key

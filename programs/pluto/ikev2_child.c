@@ -903,8 +903,14 @@ stf_status ikev2_resp_accept_child_ts(
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
 		update_state_connection(cst, b);
 	} else {
-		/* ??? is this only for AUTH exchange? */
-		cst = duplicate_state(cst, IPSEC_SA);
+		/*
+		 * ??? is this only for AUTH exchange?
+		 *
+		 * XXX: comments above clearly suggest CST is the
+		 * child, yet this code only works if CST is actually
+		 * a parent!!!
+		 */
+		cst = ikev2_duplicate_state(pexpect_ike_sa(cst), IPSEC_SA);
 		cst->st_connection = b;	/* safe: from duplicate_state */
 		insert_state(cst); /* needed for delete - we should never have duplicated before we were sure */
 	}
@@ -942,7 +948,7 @@ static stf_status ikev2_cp_reply_state(const struct msg_digest *md,
 		cst = md->st;
 		update_state_connection(cst, c);
 	} else {
-		cst = duplicate_state(md->st, IPSEC_SA);
+		cst = ikev2_duplicate_state(pexpect_ike_sa(md->st), IPSEC_SA);
 		cst->st_connection = c;	/* safe: from duplicate_state */
 		insert_state(cst); /* needed for delete - we should never have duplicated before we were sure */
 	}

@@ -1440,13 +1440,14 @@ void delete_states_by_peer(const ip_address *peer)
 
 /*
  * IKEv1: Duplicate a Phase 1 state object, to create a Phase 2 object.
- * IKEv2: Duplicate a Parent SA state object, to create an
- * IPSEC or an IKE SA object
+ *
+ * IKEv2: Duplicate an IKE SA state object, to create either a CHILD
+ * SA or IKE SA (rekeying parent) object.
  *
  * Caller must schedule an event for this object so that it doesn't leak.
  * Caller must insert_state().
  */
-struct state *duplicate_state(struct state *st, sa_t sa_type)
+static struct state *duplicate_state(struct state *st, sa_t sa_type)
 {
 	struct state *nst;
 	char cib[CONN_INST_BUF];
@@ -1546,6 +1547,16 @@ struct state *duplicate_state(struct state *st, sa_t sa_type)
 	nst->st_seen_cfg_banner = clone_str(st->st_seen_cfg_banner, "child st_seen_cfg_banner");
 
 	return nst;
+}
+
+struct state *ikev1_duplicate_state(struct state *st, sa_t sa_type)
+{
+	return duplicate_state(st, sa_type);
+}
+
+struct state *ikev2_duplicate_state(struct ike_sa *ike, sa_t sa_type)
+{
+	return duplicate_state(&ike->sa, sa_type);
 }
 
 void for_each_state(void (*f)(struct state *, void *data), void *data)
