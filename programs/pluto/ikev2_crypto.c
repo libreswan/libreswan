@@ -117,12 +117,7 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 	 *    For AES GCM (RFC 4106 Section 8,1) we need to add 4 bytes for
 	 *    salt (AES_GCM_SALT_BYTES)
 	 */
-	chunk_t ni;
-	chunk_t nr;
-	setchunk(ni, st->st_ni.ptr, st->st_ni.len);
-	setchunk(nr, st->st_nr.ptr, st->st_nr.len);
 	PK11SymKey *shared = NULL;
-
 	if (st->st_pfs_group != NULL) {
 		DBG(DBG_CRYPT, DBG_log("#%lu %s add g^ir to child key %p",
 					st->st_serialno,
@@ -133,7 +128,9 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 
 	PK11SymKey *keymat = ikev2_child_sa_keymat(st->st_oakley.ta_prf,
 						   st->st_skey_d_nss,
-						   shared, ni, nr,
+						   shared,
+						   st->st_ni,
+						   st->st_nr,
 						   ipi->keymat_len * 2);
 	PK11SymKey *ikey = key_from_symkey_bytes(keymat, 0, ipi->keymat_len);
 	ikeymat = chunk_from_symkey("initiator keys", DBG_CRYPT, ikey);
