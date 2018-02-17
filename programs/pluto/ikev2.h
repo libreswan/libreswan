@@ -171,8 +171,7 @@ extern stf_status ikev2_verify_psk_auth(enum keyword_authby authby,
 					unsigned char *idhash,
 					pb_stream *sig_pbs);
 
-extern void ikev2_derive_child_keys(struct state *st,
-				    enum original_role role);
+extern void ikev2_derive_child_keys(struct child_sa *child);
 
 extern struct traffic_selector ikev2_end_to_ts(const struct end *e);
 

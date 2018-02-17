@@ -1554,9 +1554,12 @@ struct state *ikev1_duplicate_state(struct state *st, sa_t sa_type)
 	return duplicate_state(st, sa_type);
 }
 
-struct state *ikev2_duplicate_state(struct ike_sa *ike, sa_t sa_type)
+struct state *ikev2_duplicate_state(struct ike_sa *ike,
+				    sa_t sa_type, enum sa_role role)
 {
-	return duplicate_state(&ike->sa, sa_type);
+	struct state *cst = duplicate_state(&ike->sa, sa_type);
+	cst->st_sa_role = role;
+	return cst;
 }
 
 void for_each_state(void (*f)(struct state *, void *data), void *data)

@@ -393,6 +393,7 @@ struct state {
 
 	/* Am I the original initator, or orignal responder (v2 IKE_I flag). */
 	enum original_role st_original_role;
+	enum sa_role st_sa_role;
 
 	/* message ID sequence for things we send (as initiator) */
 	msgid_t st_msgid_lastack;               /* last one peer acknowledged  - host order */
@@ -710,7 +711,8 @@ extern void rekey_p2states_by_connection(struct connection *c);
 extern void delete_my_family(struct state *pst, bool v2_responder_state);
 
 struct state *ikev1_duplicate_state(struct state *st, sa_t ipsec);
-struct state *ikev2_duplicate_state(struct ike_sa *st, sa_t ipsec);
+struct state *ikev2_duplicate_state(struct ike_sa *st, sa_t ipsec,
+				    enum sa_role sa_role);
 
 extern struct state
 	*state_with_serialno(so_serial_t sn),

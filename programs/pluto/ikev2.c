@@ -923,12 +923,14 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 		/* this a new IKE request and not a response */
 		if (md->from_state == STATE_V2_CREATE_R) {
 			what = "Child SA Request";
-			st = ikev2_duplicate_state(pexpect_ike_sa(pst), IPSEC_SA);
+			st = ikev2_duplicate_state(pexpect_ike_sa(pst), IPSEC_SA,
+						   SA_RESPONDER);
 			change_state(st, STATE_V2_CREATE_R);
 			insert_state(st); /* needed for delete - we are duplicating early */
 		} else {
 			what = "IKE Rekey Request";
-			st = ikev2_duplicate_state(pexpect_ike_sa(pst), IKE_SA);
+			st = ikev2_duplicate_state(pexpect_ike_sa(pst), IKE_SA,
+						   SA_RESPONDER);
 			change_state(st, STATE_V2_REKEY_IKE_R); /* start with this */
 			/* can not call insert_state yet. no IKE cookies yet */
 		}

@@ -58,8 +58,9 @@
 #include "ikev2_prf.h"
 #include "kernel.h"
 
-void ikev2_derive_child_keys(struct state *st, enum original_role role)
+void ikev2_derive_child_keys(struct child_sa *child)
 {
+	struct state *st = &child->sa;
 	chunk_t ikeymat, rkeymat;
 	/* ??? note assumption that AH and ESP cannot be combined */
 	struct ipsec_proto_info *ipi =
@@ -133,30 +134,49 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 						   st->st_nr,
 						   ipi->keymat_len * 2);
 	PK11SymKey *ikey = key_from_symkey_bytes(keymat, 0, ipi->keymat_len);
-	ikeymat = chunk_from_symkey("initiator keys", DBG_CRYPT, ikey);
+	ikeymat = chunk_from_symkey("initiator to responder keys",
+				    DBG_CRYPT, ikey);
 	release_symkey(__func__, "ikey", &ikey);
 
 	PK11SymKey *rkey = key_from_symkey_bytes(keymat, ipi->keymat_len,
 						 ipi->keymat_len);
-	rkeymat = chunk_from_symkey("responder keys:", DBG_CRYPT, rkey);
+	rkeymat = chunk_from_symkey("responder to initiator keys:",
+				    DBG_CRYPT, rkey);
 	release_symkey(__func__, "rkey", &rkey);
 
 	release_symkey(__func__, "keymat", &keymat);
 
-	if (role != ORIGINAL_INITIATOR) {
+	if (child->sa.st_sa_role == 0) {
+		PEXPECT_LOG("unset child sa in state #%lu",
+			    child->sa.st_serialno);
+		child->sa.st_sa_role = (ike_sa(&child->sa)->sa.st_original_role == ORIGINAL_INITIATOR)
+			? SA_INITIATOR : SA_RESPONDER;
+	}
+
+	/*
+	 * The initiator stores outgoing initiator-to-responder keymat
+	 * in PEER, and incomming responder-to-initiator keymat in
+	 * OUR.
+	 */
+	switch (child->sa.st_sa_role) {
+	case SA_RESPONDER:
 		DBG(DBG_PRIVATE, {
 			    DBG_dump_chunk("our  keymat", ikeymat);
 			    DBG_dump_chunk("peer keymat", rkeymat);
 		    });
 		ipi->our_keymat = ikeymat.ptr;
 		ipi->peer_keymat = rkeymat.ptr;
-	} else {
+		break;
+	case SA_INITIATOR:
 		DBG(DBG_PRIVATE, {
 			    DBG_dump_chunk("our  keymat", rkeymat);
 			    DBG_dump_chunk("peer keymat", ikeymat);
 		    });
 		ipi->peer_keymat = ikeymat.ptr;
 		ipi->our_keymat = rkeymat.ptr;
+		break;
+	default:
+		bad_case(child->sa.st_sa_role);
 	}
 
 }

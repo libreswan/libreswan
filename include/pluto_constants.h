@@ -604,6 +604,8 @@ enum state_kind {
  *
  * The IKEv1 equivalent is the phase1 role.  It is identified by the
  * IKEv1 IS_PHASE1_INIT() macro.
+ *
+ * The values are chosen such that no role has values that overlap.
  */
 enum original_role {
 	ORIGINAL_INITIATOR = 1, /* IKE_I present */
@@ -611,18 +613,43 @@ enum original_role {
 };
 
 /*
- * The IKEv2 message role.  Is this message a request, or a response
+ * The IKEv2 message role.  Is this message a request or a response
  * (to a request) as determined by the IKEv2 "R (Response)" flag.
-
- * Since either end can send requests, either end can also set the "R"
- * flag when responding.  Do not use ORIGINAL_ROLE as a proxy for
- * MESSAGE_ROLE, it is wrong.
+ *
+ * Since either end can initiate a request either end can set the
+ * R(Repsonse) flag.
+ *
+ * During a CHILD_SA exchange it is the request initiator (receives
+ * the MESSAGE_RESPONSE) and request responder (receives the
+ * MESSAGE_REQUEST), and not the original (IKE SA) initiator /
+ * responder that determine how crypto material is carved up.
+ *
+ * The values are chosen such that no role has values that overlap.
  */
 
 enum message_role {
-	MESSAGE_REQUEST = 1,
-	MESSAGE_RESPONSE = 2,
+	MESSAGE_REQUEST = 3, /* MSG_R missing */
+	MESSAGE_RESPONSE = 4, /* MSR_R present */
 };
+
+/*
+ * The SA role determined by who initiated the SA.
+ *
+ * For both an IKE and CHILD SA it is determined by who sent the
+ * request.
+ *
+ * The values are chosen such that no role has values that overlap.
+ *
+ * XXX: If IKEv2 code correctly used CHILD_SA and IKE_SA then
+ * ORIGINAL_ROLE, above is probably be redundant - An IKE SA's SA_ROLE
+ * should be consistent with its ORIGINAL_ROLE.  Currently code isn't
+ * consistent, so both are used/defined.
+ */
+enum sa_role {
+	SA_INITIATOR = 5,
+	SA_RESPONDER = 6,
+};
+
 
 #define PHASE1_INITIATOR_STATES  (LELEM(STATE_MAIN_I1) | \
 				  LELEM(STATE_MAIN_I2) | \

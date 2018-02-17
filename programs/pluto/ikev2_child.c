@@ -910,7 +910,10 @@ stf_status ikev2_resp_accept_child_ts(
 		 * child, yet this code only works if CST is actually
 		 * a parent!!!
 		 */
-		cst = ikev2_duplicate_state(pexpect_ike_sa(cst), IPSEC_SA);
+		cst = ikev2_duplicate_state(pexpect_ike_sa(cst), IPSEC_SA,
+					    md->message_role == MESSAGE_REQUEST ? SA_RESPONDER :
+					    md->message_role == MESSAGE_RESPONSE ? SA_INITIATOR :
+					    0);
 		cst->st_connection = b;	/* safe: from duplicate_state */
 		insert_state(cst); /* needed for delete - we should never have duplicated before we were sure */
 	}
@@ -948,7 +951,10 @@ static stf_status ikev2_cp_reply_state(const struct msg_digest *md,
 		cst = md->st;
 		update_state_connection(cst, c);
 	} else {
-		cst = ikev2_duplicate_state(pexpect_ike_sa(md->st), IPSEC_SA);
+		cst = ikev2_duplicate_state(pexpect_ike_sa(md->st), IPSEC_SA,
+					    md->message_role == MESSAGE_REQUEST ? SA_RESPONDER :
+					    md->message_role == MESSAGE_RESPONSE ? SA_INITIATOR :
+					    0);
 		cst->st_connection = c;	/* safe: from duplicate_state */
 		insert_state(cst); /* needed for delete - we should never have duplicated before we were sure */
 	}
@@ -1232,7 +1238,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		}
 	}
 
-	ikev2_derive_child_keys(cst, role);
+	ikev2_derive_child_keys(pexpect_child_sa(cst));
 
 	/* Check to see if we need to release an old instance */
        ISAKMP_SA_established(pst->st_connection, pst->st_serialno);
