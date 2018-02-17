@@ -48,13 +48,13 @@ extern state_transition_fn ikev2_parent_inI2outR2;
 extern state_transition_fn ikev2_parent_inR2;
 extern crypto_transition_fn ikev2_child_out_cont;
 extern crypto_transition_fn ikev2_child_inR_tail;
-extern void ikev2_add_ipsec_child(int whack_sock, struct state *isakmp_sa,
-		struct connection *c, lset_t policy, unsigned long try,
-		so_serial_t replacing
+extern void ikev2_initiate_child_sa(int whack_sock, struct ike_sa *ike,
+				    struct connection *c, lset_t policy, unsigned long try,
+				    so_serial_t replacing
 #ifdef HAVE_LABELED_IPSEC
-		, struct xfrm_user_sec_ctx_ike *uctx
+				    , struct xfrm_user_sec_ctx_ike *uctx
 #endif
-		);
+				    );
 
 extern void ikev2_child_outI(struct state *st);
 extern void ikev2_child_send_next(struct state *st);

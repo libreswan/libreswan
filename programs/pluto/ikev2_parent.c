@@ -6441,24 +6441,24 @@ bool ikev2_delete_out(struct state *st)
 	return res;
 }
 
-void ikev2_add_ipsec_child(int whack_sock, struct state *isakmp_sa,
-                       struct connection *c, lset_t policy,
-                       unsigned long try, so_serial_t replacing
+void ikev2_initiate_child_sa(int whack_sock, struct ike_sa *ike,
+			     struct connection *c, lset_t policy,
+			     unsigned long try, so_serial_t replacing
 #ifdef HAVE_LABELED_IPSEC
-                       , struct xfrm_user_sec_ctx_ike *uctx
+			     , struct xfrm_user_sec_ctx_ike *uctx
 #endif
-                       )
+			     )
 {
 	struct state *st;
 	char replacestr[32];
-	if (find_pending_phase2(isakmp_sa->st_serialno,
+	if (find_pending_phase2(ike->sa.st_serialno,
 				c, IPSECSA_PENDING_STATES)) {
 		return;
 	}
 
 	passert(c != NULL);
 
-	st = duplicate_state(isakmp_sa, IPSEC_SA);
+	st = duplicate_state(&ike->sa, IPSEC_SA);
 	st->st_whack_sock = whack_sock;
 	st->st_connection = c;	/* safe: from duplicate_state */
 	passert(c != NULL);
@@ -6502,7 +6502,7 @@ void ikev2_add_ipsec_child(int whack_sock, struct state *isakmp_sa,
 			st->st_serialno,
 			prettypolicy(policy),
 			replacestr,
-			isakmp_sa->st_serialno,
+			ike->sa.st_serialno,
 			pfsgroupname);
 	});
 	delete_event(st);

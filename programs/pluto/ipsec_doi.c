@@ -249,12 +249,14 @@ void ipsecdoi_initiate(int whack_sock,
 #endif
 				    );
 		} else if (st->st_ikev2) {
-			ikev2_add_ipsec_child(whack_sock, st, c, policy, try,
-					replacing
+			ikev2_initiate_child_sa(whack_sock,
+						pexpect_ike_sa(st),
+						c, policy, try,
+						replacing
 #ifdef HAVE_LABELED_IPSEC
-					, uctx
+						, uctx
 #endif
-					);
+				);
 		} else {
 			/* ??? we assume that peer_nexthop_sin isn't important:
 			 * we already have it from when we negotiated the ISAKMP SA!

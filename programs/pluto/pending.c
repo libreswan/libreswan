@@ -256,13 +256,14 @@ void unpend(struct state *st, struct connection *cc)
 
 			p->pend_time = mononow();
 			if (st->st_ikev2 && cc != p->connection) {
-				ikev2_add_ipsec_child(p->whack_sock, st,
-						p->connection, p->policy,
-						p->try, p->replacing
+				ikev2_initiate_child_sa(p->whack_sock,
+							pexpect_ike_sa(st),
+							p->connection, p->policy,
+							p->try, p->replacing
 #ifdef HAVE_LABELED_IPSEC
-						, p->uctx
+							, p->uctx
 #endif
-					       );
+					);
 
 			} else if (!st->st_ikev2) {
 				quick_outI1(p->whack_sock, st, p->connection,
