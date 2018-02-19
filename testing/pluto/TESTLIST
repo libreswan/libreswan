@@ -207,6 +207,7 @@ kvmplutotest	ikev2-algo-sha2-08			good
 kvmplutotest	ikev2-nat-pluto-03			good
 
 # dh tests
+kvmplutotest	ikev1-algo-ike-dh-ecp-01		good
 kvmplutotest	ikev2-algo-ike-dh-ecp-01		good
 
 kvmplutotest	klips-ikev2-algo-sha2-07		good
