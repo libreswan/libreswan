@@ -74,6 +74,15 @@
 
 #include "pluto_stats.h"
 
+#if __GNUC__ >= 7
+	/*
+	 * GCC 7+ warns about the following calls that truncate a string using
+	 * snprintf().  But here we are truncating the log message for a reason.
+	 */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-truncation"
+#endif
+
 static bool log_to_audit = FALSE;		/* audit log messages for kernel */
 
 void linux_audit_init(void)
@@ -300,3 +309,6 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			AUDIT_CRYPTO_IPSEC_SA : AUDIT_CRYPTO_IKE_SA,
 		audit_str, raddr, AUDIT_RESULT_OK);
 }
+#if __GNUC__ >= 7
+#pragma GCC diagnostic pop
+#endif
