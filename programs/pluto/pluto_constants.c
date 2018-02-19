@@ -478,7 +478,7 @@ const char *prettypolicy(lset_t policy)
 				     policy &
 				     ~(POLICY_SHUNT_MASK | POLICY_FAIL_MASK),
 				     pbitnamesbuf, sizeof(pbitnamesbuf));
-	static char buf[200]; /* NOT RE-ENTRANT!  I hope that it is big enough! */
+	static char buf[512]; /* NOT RE-ENTRANT!  I hope that it is big enough! */
 	lset_t shunt = (policy & POLICY_SHUNT_MASK) >> POLICY_SHUNT_SHIFT;
 	lset_t fail = (policy & POLICY_FAIL_MASK) >> POLICY_FAIL_SHIFT;
 
