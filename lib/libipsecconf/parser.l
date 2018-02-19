@@ -160,7 +160,9 @@ static int parser_y_nextglobfile(struct ic_inputsource *iis)
 		char ebuf[128];
 
 		snprintf(ebuf, sizeof(ebuf),
-			"cannot open include filename: '%s': %s",
+			(strstr(iis->filename, "crypto-policies/back-ends/libreswan.config") == NULL) ?
+				"cannot open include filename: '%s': %s" :
+				"ignored loading default system-wide crypto-policies file '%s': %s",
 			iis->fileglob.gl_pathv[fcnt],
 			strerror(errno));
 		yyerror(ebuf);
