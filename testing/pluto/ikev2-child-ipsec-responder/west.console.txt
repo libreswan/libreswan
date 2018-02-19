@@ -54,12 +54,17 @@ west #
 west #
  ping -n -c 4 -I 192.0.100.254 192.0.200.254
 PING 192.0.200.254 (192.0.200.254) from 192.0.100.254 : 56(84) bytes of data.
+64 bytes from 192.0.200.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.200.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.200.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.200.254: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.0.200.254 ping statistics ---
-4 packets transmitted, 0 received, 100% packet loss, time XXXX
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ipsec whack --trafficstatus
 006 #2: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
-006 #3: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=0, outBytes=336, id='@east'
+006 #3: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
 west #
  echo done
 done
