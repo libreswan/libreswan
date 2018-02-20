@@ -5695,7 +5695,11 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 	 * get parent
 	 *
 	 * ??? shouldn't st always be the parent?
+	 *
+	 * XXX: what about when the remote end sends the wrong msgid
+	 * and it matches one of the child requests?
 	 */
+	struct ike_sa *ike = pexpect_ike_sa(st);
 	pexpect(!IS_CHILD_SA(st));	/* ??? why would st be a child? */
 
 	if (IS_CHILD_SA(st)) {
@@ -5842,7 +5846,7 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 			hdr.isa_msgid = htonl(md->msgid_received);
 
 			hdr.isa_flags = ISAKMP_FLAGS_v2_MSG_R;
-			if (md->original_role == ORIGINAL_INITIATOR)
+			if (ike->sa.st_sa_role == SA_INITIATOR)
 				hdr.isa_flags |= ISAKMP_FLAGS_v2_IKE_I;
 			if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG))
 				hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
