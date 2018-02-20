@@ -6267,8 +6267,14 @@ stf_status ikev2_send_informational(struct state *st, struct state *pst,
  * Deleting an IKE SA is a bigger deal than deleting an IPsec SA.
  */
 
-static bool ikev2_delete_out_guts(struct state *const st, struct state *const pst)
+bool ikev2_delete_out(struct state *const st)
 {
+	struct ike_sa *ike = ike_sa(st);
+	if (ike == NULL) {
+		/* ike_sa() will have already complained loudly */
+		return false;
+	}
+
 	pb_stream e_pbs, e_pbs_cipher;
 	pb_stream rbody;
 	struct ikev2_generic e;
@@ -6285,15 +6291,21 @@ static bool ikev2_delete_out_guts(struct state *const st, struct state *const ps
 
 		zero(&hdr);	/* OK: no pointer fields */
 		hdr.isa_version = build_ikev2_version();
-		memcpy(hdr.isa_rcookie, pst->st_rcookie, COOKIE_SIZE);
-		memcpy(hdr.isa_icookie, pst->st_icookie, COOKIE_SIZE);
+		memcpy(hdr.isa_rcookie, ike->sa.st_rcookie, COOKIE_SIZE);
+		memcpy(hdr.isa_icookie, ike->sa.st_icookie, COOKIE_SIZE);
 		hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
 		hdr.isa_np = ISAKMP_NEXT_v2SK;
-		hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
+		hdr.isa_msgid = htonl(ike->sa.st_msgid_nextuse);
 
 		/* set Initiator flag if we are the IKE Original Initiator */
-		if (pst->st_original_role == ORIGINAL_INITIATOR) {
+		switch (ike->sa.st_sa_role) {
+		case SA_INITIATOR:
 			hdr.isa_flags |= ISAKMP_FLAGS_v2_IKE_I;
+			break;
+		case SA_RESPONDER:
+			break;
+		default:
+			bad_case(ike->sa.st_sa_role);
 		}
 
 		/* we are sending a request, so ISAKMP_FLAGS_v2_MSG_R is unset */
@@ -6397,37 +6409,10 @@ static bool ikev2_delete_out_guts(struct state *const st, struct state *const ps
 	/* increase message ID for next delete message */
 	/* ikev2_update_msgid_counters need an md */
 
-	pst->st_msgid_nextuse++;
-        st->st_msgid =  htonl(pst->st_msgid_nextuse);
+	ike->sa.st_msgid_nextuse++;
+        st->st_msgid = htonl(ike->sa.st_msgid_nextuse);
 
 	return TRUE;
-}
-
-bool ikev2_delete_out(struct state *st)
-{
-	bool res;
-
-	if (IS_CHILD_SA(st)) {
-		/* child SA */
-		struct state *pst = state_with_serialno(st->st_clonedfrom);
-
-		pexpect(pst != NULL);
-		if (pst == NULL) {
-			/* ??? surely this can only happen if there is a bug in our code */
-			DBG(DBG_CONTROL,
-			    DBG_log("IKE SA does not exist for the child SA that we are deleting"));
-			DBG(DBG_CONTROL,
-			    DBG_log("INFORMATIONAL exchange cannot be sent, deleting state"));
-			res = FALSE;
-		} else {
-			res = ikev2_delete_out_guts(st, pst);
-		}
-	} else {
-		/* Parent SA */
-		res = ikev2_delete_out_guts(st, st);
-	}
-
-	return res;
 }
 
 void ikev2_initiate_child_sa(int whack_sock, struct ike_sa *ike,
