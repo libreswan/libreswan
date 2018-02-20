@@ -1280,13 +1280,39 @@ void process_v2_packet(struct msg_digest **mdp)
 		PASSERT_FAIL("message role %d invalid", md->message_role);
 	}
 
-	/* ISAKMP_v2_INFORMATIONAL & CREATE_CHILD_SA roles could flip */
-	if (st != NULL && st->st_original_role != md->original_role &&
-			(ix == ISAKMP_v2_SA_INIT || ix == ISAKMP_v2_AUTH)) {
-		/* could this be a log line instead? too much log with scans */
-		DBG(DBG_CONTROL,
-		    DBG_log("state and md roles conflict; dropping packet"));
+	/*
+	 * Check ST's IKE SA's role against the I(Initiator) flag in
+	 * the headers.
+	 *
+	 * ST!=NULL IFF IKE!=NULL, and ike_sa(NULL) handles this.
+	 */
+	struct ike_sa *const ike = ike_sa(st);
+	if (st != NULL && ike == NULL) {
+		PEXPECT_LOG("lost IKE SA for #%lu; dropping packet", st->st_serialno);
+		/* XXX: should state be deleted? */
 		return;
+	}
+	if (st != NULL) {
+		switch (ike->sa.st_sa_role) {
+		case SA_INITIATOR:
+			if (sent_by_ike_initiator) {
+				/* could this be a log line instead? too much log with scans */
+				DBG(DBG_CONTROL,
+				    DBG_log("IKE SA initiator received a message with I(Initiator) flag set; dropping packet"));
+				return;
+			}
+			break;
+		case SA_RESPONDER:
+			if (!sent_by_ike_initiator) {
+				/* could this be a log line instead? too much log with scans */
+				DBG(DBG_CONTROL,
+				    DBG_log("IKE SA responder received a message with I(Initiator) flag clear; dropping packet"));
+				return;
+			}
+			break;
+		default:
+			bad_case(ike->sa.st_sa_role);
+		}
 	}
 
 	if (ix == ISAKMP_v2_CREATE_CHILD_SA && st == NULL) {
