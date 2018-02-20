@@ -719,6 +719,7 @@ void ikev2_parent_outI1(int whack_sock,
 	st->st_ikev2 = TRUE;
 	change_state(st, STATE_PARENT_I1);
 	st->st_original_role = ORIGINAL_INITIATOR;
+	st->st_sa_role = SA_INITIATOR;
 	st->st_msgid_lastack = v2_INVALID_MSGID;
 	st->st_msgid_lastrecv = v2_INVALID_MSGID;
 	st->st_msgid_nextuse = 0;
@@ -1359,6 +1360,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	st->st_ikev2 = TRUE;
 	change_state(st, STATE_PARENT_R1);
 	st->st_original_role = ORIGINAL_RESPONDER;
+	st->st_sa_role = SA_RESPONDER;
 	st->st_msgid_lastack = v2_INVALID_MSGID;
 	st->st_msgid_nextuse = 0;
 
