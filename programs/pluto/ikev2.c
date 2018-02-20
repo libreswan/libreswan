@@ -78,23 +78,18 @@
 
 enum smf2_flags {
 	/*
-	 * Check the value of the IKE_I flag in the header.
+	 * Check the value of the I(Initiator) (IKE_I) flag in the
+	 * header.
 	 *
-	 * The original initiator receives packets with the IKE_I bit
-	 * clear, while the original resonder receives packets with
-	 * the bit set.  Confused?
+	 * The original initiator receives packets with the
+	 * I(Initiator) bit clear, while the original resonder
+	 * receives packets with the I(Initiator) bit set.
 	 *
-	 * The initial IKE_I value should also be saved in "struct
-	 * state" so it can be later validated.  Unfortunately there
-	 * is no such field so, instead, the value is implicitly
-	 * verified by the by the state machine being split into
-	 * original initiator and original responder halves.
-	 *
-	 * Don't assume this flag is present.  If initiator and
-	 * responder share states then this value will absent.
-	 *
-	 * Do not use this to determine ORIGINAL_INITIATOR vs ORIGINAL_RESPONDER.
-	 * Instead use either md->original_role or st->st_original_role field.
+	 * The bit is used to identify the IKE SA initiator and
+	 * responder SPIs (cookies) in the header (see 2.6. IKE SA
+	 * SPIs and Cookies).  For incoming messages, the I(Initiator)
+	 * flag in the header is used; for outgoing messages, the
+	 * I(Initiator) flag is set according to ike.sa.st_sa_role.
 	 *
 	 * Arguably, this could be made a separate 3 state variable.
 	 */
@@ -1067,10 +1062,8 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	if (sent_by_ike_initiator) {
 		DBG(DBG_CONTROL, DBG_log("I am the IKE SA Original Responder"));
-		md->original_role = ORIGINAL_RESPONDER;
 	} else {
 		DBG(DBG_CONTROL, DBG_log("I am the IKE SA Original Initiator"));
-		md->original_role = ORIGINAL_INITIATOR;
 	}
 
 	/*
