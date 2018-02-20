@@ -180,8 +180,7 @@ void ikev2_ike_sa_established(struct ike_sa *ike,
 		for_each_state(ikev2_repl_est_ipsec, &ike->sa.st_ike_pred);
 	}
 	c->newest_isakmp_sa = ike->sa.st_serialno;
-	deltatime_t delay = ikev2_replace_delay(&ike->sa, &kind,
-						ike->sa.st_original_role);
+	deltatime_t delay = ikev2_replace_delay(&ike->sa, &kind);
 	delete_event(&ike->sa);
 	event_schedule(kind, delay, &ike->sa);
 }
@@ -3052,7 +3051,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	delete_event(pst);
 	{
 		enum event_type x = md->svm->timeout_event;
-		deltatime_t delay = ikev2_replace_delay(pst, &x, ORIGINAL_INITIATOR);
+		deltatime_t delay = ikev2_replace_delay(pst, &x);
 		event_schedule(x, delay, pst);
 	}
 
