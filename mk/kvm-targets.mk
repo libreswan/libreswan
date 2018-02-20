@@ -1,6 +1,6 @@
 # KVM make targets, for Libreswan
 #
-# Copyright (C) 2015-2017 Andrew Cagney
+# Copyright (C) 2015-2018 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -68,8 +68,7 @@ add-all-domain-prefixes = \
 # (there's a rumour that libreswan's main testing machine has this
 # problem) define a dedicated swandefault gateway.
 
-KVM_BASE_GATEWAY ?= swandefault
-KVM_LOCAL_GATEWAY = $(KVM_BASE_GATEWAY)
+KVM_GATEWAY ?= swandefault
 
 # The alternative is qemu:///session and it doesn't require root.
 # However, it has never been used, and the python tools all assume
@@ -86,8 +85,7 @@ VIRT_INSTALL ?= sudo virt-install --connect $(KVM_CONNECTION)
 VIRT_CPU ?= --cpu host-passthrough
 VIRT_RND ?= --rng type=random,device=/dev/random
 VIRT_SECURITY ?= --security type=static,model=dac,label='$(KVM_USER):$(KVM_GROUP)',relabel=yes
-VIRT_BASE_GATEWAY ?= --network=network:$(KVM_BASE_GATEWAY),model=virtio
-VIRT_LOCAL_GATEWAY ?= --network=network:$(KVM_LOCAL_GATEWAY),model=virtio
+VIRT_GATEWAY ?= --network=network:$(KVM_GATEWAY),model=virtio
 VIRT_SOURCEDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_SOURCEDIR),target=swansource
 VIRT_TESTINGDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_TESTINGDIR),target=testing
 KVM_OS_VARIANT ?= $(KVM_OS)
@@ -434,26 +432,26 @@ endef
 # Base gateway.
 #
 
-KVM_BASE_GATEWAY_FILE = $(KVM_BASEDIR)/$(KVM_BASE_GATEWAY).xml
-.PHONY: install-kvm-network-$(KVM_BASE_GATEWAY)
-install-kvm-network-$(KVM_BASE_GATEWAY): $(KVM_BASE_GATEWAY_FILE)
-$(KVM_BASE_GATEWAY_FILE): | testing/libvirt/net/$(KVM_BASE_GATEWAY) $(KVM_BASEDIR)
-	$(call destroy-kvm-network,$(KVM_BASE_GATEWAY))
-	cp testing/libvirt/net/$(KVM_BASE_GATEWAY) $@.tmp
-	$(call create-kvm-network,$(KVM_BASE_GATEWAY),$@.tmp)
+KVM_GATEWAY_FILE = $(KVM_BASEDIR)/$(KVM_GATEWAY).xml
+.PHONY: install-kvm-network-$(KVM_GATEWAY)
+install-kvm-network-$(KVM_GATEWAY): $(KVM_GATEWAY_FILE)
+$(KVM_GATEWAY_FILE): | testing/libvirt/net/$(KVM_GATEWAY) $(KVM_BASEDIR)
+	$(call destroy-kvm-network,$(KVM_GATEWAY))
+	cp testing/libvirt/net/$(KVM_GATEWAY) $@.tmp
+	$(call create-kvm-network,$(KVM_GATEWAY),$@.tmp)
 	mv $@.tmp $@
 
-.PHONY: uninstall-kvm-network-$(KVM_BASE_GATEWAY)
-uninstall-kvm-network-$(KVM_BASE_GATEWAY):
-	rm -f $(KVM_BASE_GATEWAY_FILE)
-	$(call destroy-kvm-network,$(KVM_BASE_GATEWAY))
+.PHONY: uninstall-kvm-network-$(KVM_GATEWAY)
+uninstall-kvm-network-$(KVM_GATEWAY):
+	rm -f $(KVM_GATEWAY_FILE)
+	$(call destroy-kvm-network,$(KVM_GATEWAY))
 
 # zap dependent domains
 
-uninstall-kvm-network-$(KVM_BASE_GATEWAY): uninstall-kvm-domain-$(KVM_BASE_DOMAIN)
-uninstall-kvm-network-$(KVM_BASE_GATEWAY): uninstall-kvm-domain-$(KVM_CLONE_DOMAIN)
+uninstall-kvm-network-$(KVM_GATEWAY): uninstall-kvm-domain-$(KVM_BASE_DOMAIN)
+uninstall-kvm-network-$(KVM_GATEWAY): uninstall-kvm-domain-$(KVM_CLONE_DOMAIN)
 ifneq ($(KVM_BUILD_COPIES),)
-uninstall-kvm-network-$(KVM_BASE_GATEWAY): uninstall-kvm-domain-$(KVM_BUILD_DOMAIN)
+uninstall-kvm-network-$(KVM_GATEWAY): uninstall-kvm-domain-$(KVM_BUILD_DOMAIN)
 endif
 
 #
@@ -575,7 +573,7 @@ define create-kvm-domain
 		--nographics \
 		--disk cache=writeback,path=$(KVM_LOCALDIR)/$(1).qcow2 \
 		$(VIRT_CPU) \
-		$(VIRT_LOCAL_GATEWAY) \
+		$(VIRT_GATEWAY) \
 		$(VIRT_RND) \
 		$(VIRT_SECURITY) \
 		$(VIRT_SOURCEDIR) \
@@ -630,7 +628,7 @@ endef
 # disk-image in an incomplete state is avoided.
 
 .PRECIOUS: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
-$(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_BASE_GATEWAY_FILE) $(KVM_BASEDIR)
+$(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_GATEWAY_FILE) $(KVM_BASEDIR)
 	$(call check-kvm-qemu-directory)
 	$(call destroy-kvm-domain,$(KVM_BASE_DOMAIN))
 	: delete any old disk and let virt-install create the image
@@ -646,7 +644,7 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_B
 		--nographics \
 		--disk size=8,cache=writeback,path=$(basename $@).qcow2 \
 		$(VIRT_CPU) \
-		$(VIRT_BASE_GATEWAY) \
+		$(VIRT_GATEWAY) \
 		$(VIRT_RND) \
 		--location=$(KVM_ISO) \
 		--initrd-inject=$(KVM_KICKSTART_FILE) \
@@ -721,7 +719,7 @@ endif
 $(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml: \
 		| \
 		$(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).qcow2 \
-		$(KVM_BASE_GATEWAY_FILE) \
+		$(KVM_GATEWAY_FILE) \
 		$(KVM_LOCALDIR)
 	$(call check-kvm-qemu-directory)
 	$(call destroy-kvm-domain,$(KVM_CLONE_DOMAIN))
@@ -865,7 +863,7 @@ $(eval $(call kvm-hosts-domains,shutdown))
 
 
 .PHONY: kvm-install-base-network
-kvm-install-base-network: $(addprefix install-kvm-network-, $(KVM_BASE_GATEWAY))
+kvm-install-base-network: $(addprefix install-kvm-network-, $(KVM_GATEWAY))
 
 .PHONY: kvm-install-test-networks
 kvm-install-test-networks: $(addprefix install-kvm-network-,$(KVM_TEST_NETWORKS))
@@ -877,7 +875,7 @@ kvm-install-local-networks: kvm-install-test-networks
 kvm-uninstall-test-networks: $(addprefix uninstall-kvm-network-, $(KVM_TEST_NETWORKS))
 
 .PHONY: kvm-uninstall-base-network
-kvm-uninstall-base-network: $(addprefix uninstall-kvm-network-, $(KVM_BASE_GATEWAY))
+kvm-uninstall-base-network: $(addprefix uninstall-kvm-network-, $(KVM_GATEWAY))
 
 .PHONY: kvm-uninstall-local-networks
 kvm-uninstall-local-networks:  kvm-uninstall-test-networks
@@ -1161,12 +1159,11 @@ Configuration:
 
     Two types of networks are used.
 
-    First there is the shared NATting gateways.  They are used by the
+    First there is the shared NATting gateway.  It is used by the
     base (master) domain along with any local domains when internet
     access is required:
 
-      $(call kvm-var-value,KVM_BASE_GATEWAY)
-      $(call kvm-var-value,KVM_LOCAL_GATEWAY)
+      $(call kvm-var-value,KVM_GATEWAY)
 
     Second there are the local test networks used to interconnect the
     test domains.  Using $$(KVM_PREFIXES), test group is assigned
@@ -1193,7 +1190,7 @@ Configuration:
     $(call kvm-var-value,KVM_KICKSTART_FILE)
     $(call kvm-var-value,KVM_BASE_HOST)
     $(call kvm-var-value,KVM_BASE_DOMAIN)
-    $(call kvm-var-value,KVM_BASE_GATEWAY)
+    $(call kvm-var-value,KVM_GATEWAY)
     $(call kvm-var-value,KVM_BASEDIR)
 
   Clone domain:
@@ -1209,7 +1206,6 @@ Configuration:
 
     $(call kvm-var-value,KVM_CLONE_HOST)
     $(call kvm-var-value,KVM_CLONE_DOMAIN)
-    $(call kvm-var-value,KVM_LOCAL_GATEWAY)
     $(call kvm-var-value,KVM_LOCALDIR)
 
   Build domain:
@@ -1226,7 +1222,6 @@ Configuration:
 
     $(call kvm-var-value,KVM_BUILD_HOST)
     $(call kvm-var-value,KVM_BUILD_DOMAIN)
-    $(call kvm-var-value,KVM_LOCAL_GATEWAY)
     $(call kvm-var-value,KVM_LOCALDIR)
 
   Test domains:
@@ -1293,8 +1288,7 @@ Standard targets and operations:
           build, and test domains, test networks, test results, and
           test build
     kvm-demolish
-        XXX use kvm-uninstall-base-domain for now, this delete's clone's gateway
-        - also delete the base domain and base gateway
+        - also delete the base domain
 
   Upgrading domains:
 
