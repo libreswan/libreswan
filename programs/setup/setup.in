@@ -2,7 +2,7 @@
 # IPsec startup and shutdown command
 # Copyright (C) 1998, 1999, 2001  Henry Spencer.
 # Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2013, 2017 Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2013-2018 Tuomo Soini <tis@foobar.fi>
 # Copyright (C) 2016 Kim B. Heino <b@bbbs.net>
 #
 # This program is free software; you can redistribute it and/or modify it
@@ -145,20 +145,11 @@ case "$1" in
 	exit 0
 	;;
     restart|--restart)
-	# assumes preparations for running have already been done, as service should be running now
+	# assumes preparations for running have already been done,
+	# as service should be running now
 	if [ ${initsystem} = systemd ]; then
-	    systemctl status ipsec.service > /dev/null
-	    RETVAL=$?
-	    if [ $RETVAL -ne 0 ]; then
-		echo "systemd: ipsec service is not running"
-		exit 1
-	    else
-		# do not use 'restart' because systemd is overly "smart"
-		# and will refuse the restart when stopped.
-		echo "Redirecting to: systemctl stop+start ipsec.service"
-		systemctl stop ipsec.service
-		exec systemctl start ipsec.service
-	    fi
+	    echo "Redirecting to: systemctl restart ipsec.service"
+	    exec systemctl restart ipsec.service
 	elif [ ${initsystem} = rhsysv ]; then
 	    echo "Redirecting to: service ipsec restart"
 	    exec service ipsec restart
