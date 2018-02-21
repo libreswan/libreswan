@@ -269,7 +269,7 @@ ipsec_checknss() {
 	shift
     done
 
-    if [ -d "${IPSEC_NSSDIR}" ]; then
+    if [ -d "${IPSEC_NSSDIR}" -a -w "${IPSEC_NSSDIR}" ]; then
 	IPSEC_NSSDIR_SQL="sql:${IPSEC_NSSDIR}"
 	# if we have old database
 	if [ -f "${IPSEC_NSSDIR}/cert8.db" -o \
@@ -373,7 +373,7 @@ ipsec_checknss() {
 	fi
 	exit 0
     else
-	echo "ERROR: destination directory \"${IPSEC_NSSDIR}\" is missing" >&2
+	echo "ERROR: destination directory \"${IPSEC_NSSDIR}\" is missing or permission denied" >&2
 	exit 1
     fi
 }
