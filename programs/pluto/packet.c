@@ -2004,16 +2004,6 @@ void out_modify_previous_np(u_int8_t np, pb_stream *outs)
 	}
 }
 
-bool ikev2_out_generic(u_int8_t np, struct_desc *sd,
-		 pb_stream *outs, pb_stream *obj_pbs)
-{
-	struct ikev2_generic gen;
-
-	passert(sd->fields == ikev2generic_fields);
-	gen.isag_np = np;
-	return out_struct(&gen, sd, outs, obj_pbs);
-}
-
 bool ikev1_out_generic(u_int8_t np, struct_desc *sd,
 		 pb_stream *outs, pb_stream *obj_pbs)
 {
@@ -2024,19 +2014,6 @@ bool ikev1_out_generic(u_int8_t np, struct_desc *sd,
 	return out_struct(&gen, sd, outs, obj_pbs);
 }
 
-bool ikev2_out_generic_raw(u_int8_t np, struct_desc *sd,
-		     pb_stream *outs, const void *bytes, size_t len,
-		     const char *name)
-{
-	pb_stream pbs;
-
-	if (!ikev2_out_generic(np, sd, outs, &pbs) ||
-	    !out_raw(bytes, len, &pbs, name))
-		return FALSE;
-
-	close_output_pbs(&pbs);
-	return TRUE;
-}
 bool ikev1_out_generic_raw(u_int8_t np, struct_desc *sd,
 		     pb_stream *outs, const void *bytes, size_t len,
 		     const char *name)

@@ -64,8 +64,10 @@ bool ikev2_close_encrypted_payload(v2sk_stream_t *sk);
 
 stf_status ikev2_encrypt_payload(v2sk_stream_t *sk);
 
-
-/* XXX: should be local to ikev2_send.c? */
+/*
+ * XXX: Is the name ship_v2*() for where a function writes an entire
+ * payload into the PBS.
+ */
 bool ship_v2N(enum next_payload_types_ikev2 np,
 	      u_int8_t critical,
 	      enum ikev2_sec_proto_id protoid,
@@ -73,6 +75,10 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
 	      v2_notification_t type,
 	      const chunk_t *n_data,
 	      pb_stream *rbody);
+bool ship_v2V(pb_stream *outs, enum next_payload_types_ikev2 np,
+	      const char *string);
+
+/* XXX: should be local to ikev2_send.c? */
 int build_ikev2_version(void);
 
 #endif

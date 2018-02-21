@@ -1010,20 +1010,14 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	if (c->send_vendorid) {
 		vids--;
 		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
-
-		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &rbody,
-				     pluto_vendorid, strlen(pluto_vendorid),
-				     "VID_LIBRESWANSELF"))
+		if (!ship_v2V(&rbody, np, pluto_vendorid))
 			return STF_INTERNAL_ERROR;
 	}
 
 	if (c->fake_strongswan) {
 		vids--;
 		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
-
-		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &rbody,
-				     "strongSwan", strlen("strongSwan"),
-				     "VID_STRONGSWAN"))
+		if (!ship_v2V(&rbody, np, "strongSwan"))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1031,9 +1025,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		vids--;
 		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 
-		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &rbody,
-				     "Opportunistic IPsec", strlen("Opportunistic IPsec"),
-				     "VID_OPPORTUNISTIC"))
+		if (!ship_v2V(&rbody, np, "Opportunistic IPsec"))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1635,30 +1627,21 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	if (c->send_vendorid) {
 		vids--;
 		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
-
-		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &rbody,
-				     pluto_vendorid, strlen(pluto_vendorid),
-				     "VID_LIBRESWANSELF"))
+		if (!ship_v2V(&rbody, np, pluto_vendorid))
 			return STF_INTERNAL_ERROR;
 	}
 
 	if (c->fake_strongswan) {
 		vids--;
 		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
-
-		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &rbody,
-				     "strongSwan", strlen("strongSwan"),
-				     "VID_STRONGSWAN"))
+		if (!ship_v2V(&rbody, np, "strongSwan"))
 			return STF_INTERNAL_ERROR;
 	}
 
 	if (c->policy & POLICY_AUTH_NULL) {
 		vids--;
 		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
-
-		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &rbody,
-				     "Opportunistic IPsec", strlen("Opportunistic IPsec"),
-				     "VID_OPPORTUNISTIC"))
+		if (!ship_v2V(&rbody, np, "Opportunistic IPsec"))
 			return STF_INTERNAL_ERROR;
 	}
 
