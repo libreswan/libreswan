@@ -2017,10 +2017,10 @@ bool ikev2_out_generic(u_int8_t np, struct_desc *sd,
 bool ikev1_out_generic(u_int8_t np, struct_desc *sd,
 		 pb_stream *outs, pb_stream *obj_pbs)
 {
-	struct isakmp_generic gen;
-
 	passert(sd->fields == isag_fields);
-	gen.isag_np = np;
+	struct isakmp_generic gen = {
+		.isag_np = np,
+	};
 	return out_struct(&gen, sd, outs, obj_pbs);
 }
 
