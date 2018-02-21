@@ -167,7 +167,7 @@ void init_seccomp_addconn(uint32_t def_action)
 #endif
 
 static const char *usage_string = ""
-	"Usage: addconn [--config file] [--rootdir dir] [--ctlsocket socketfile]\n"
+	"Usage: addconn [--config file] [--ctlsocket socketfile]\n"
 	"               [--varprefix prefix] [--noexport]\n"
 	"               [--verbose]\n"
 	"               [--configsetup]\n"
@@ -200,7 +200,6 @@ static const struct option longopts[] =
 	{ "varprefix", required_argument, NULL, 'P' },
 	{ "ctlsocket", required_argument, NULL, 'c' },
 	{ "ctlbase", required_argument, NULL, 'c' }, /* backwards compatibility */
-	{ "rootdir", required_argument, NULL, 'R' },
 	{ "configsetup", no_argument, NULL, 'T' },
 	{ "liststack", no_argument, NULL, 'S' },
 	{ "checkconfig", no_argument, NULL, 'K' },
@@ -243,8 +242,6 @@ int main(int argc, char *argv[])
 	EF_PROTECT_BELOW = 1;
 	EF_PROTECT_FREE = 1;
 #endif
-
-	rootdir[0] = '\0';
 
 	tool_init_log(argv[0]);
 
@@ -316,11 +313,6 @@ int main(int argc, char *argv[])
 
 		case 'P':
 			varprefix = optarg;
-			break;
-
-		case 'R':
-			printf("setting rootdir=%s\n", optarg);
-			jam_str(rootdir, sizeof(rootdir), optarg);
 			break;
 
 		case 'd':
