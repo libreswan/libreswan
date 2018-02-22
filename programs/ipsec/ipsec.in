@@ -111,7 +111,7 @@ ipsec_help() {
     echo "where {command} is one of:"
     echo ""
     GOTTWO=""
-    for f in start stop restart status import initnss checknss checknflog \
+    for f in start stop restart status trafficstatus globalstatus shuntstatus import initnss checknss checknflog \
 	$(ls "${IPSEC_EXECDIR}" | egrep -v -i "${DONTMENTION}"); do
 	if [ -z "${GOTTWO}" ]; then
 	    # first of two entries
@@ -406,6 +406,21 @@ while [ ${#} -gt 0 ]; do
 	status|--status)
 	    cmd="whack"
 	    whackoptions="--status"
+	    shift
+	    ;;
+	trafficstatus|--trafficstatus)
+	    cmd="whack"
+	    whackoptions="--trafficstatus"
+	    shift
+	    ;;
+	globalstatus|--globalstatus)
+	    cmd="whack"
+	    whackoptions="--globalstatus"
+	    shift
+	    ;;
+	shuntstatus|--shuntstatus)
+	    cmd="whack"
+	    whackoptions="--shuntstatus"
 	    shift
 	    ;;
 	start|--start)
