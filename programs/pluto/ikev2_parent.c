@@ -3595,7 +3595,7 @@ static void ikev2_parent_inI2outR2_continue(struct state *st,
 		 * can't decrypt ours.
 		 */
 		DBG(DBG_CONTROL, DBG_log("aborting IKE SA: decryption failed"));
-		send_v2_notification_from_state(st, v2N_INVALID_SYNTAX, NULL);
+		send_v2_notification_from_state(st, *mdp, v2N_INVALID_SYNTAX, NULL);
 		complete_v2_state_transition(mdp, STF_FATAL);
 		return;
 	}
@@ -3619,7 +3619,7 @@ static void ikev2_parent_inI2outR2_continue(struct state *st,
 		 * Something in the packet is bogus.  Drop everything.
 		 */
 		DBG(DBG_CONTROL, DBG_log("aborting IKE SA: invalid contents"));
-		send_v2_notification_from_state(st, v2N_INVALID_SYNTAX, NULL);
+		send_v2_notification_from_state(st, *mdp, v2N_INVALID_SYNTAX, NULL);
 		complete_v2_state_transition(mdp, STF_FATAL);
 		return;
 	}
@@ -3649,7 +3649,7 @@ static void ikev2_parent_inI2outR2_continue(struct state *st,
 		DBG(DBG_OPPO,
 			DBG_log("Deleting opportunistic Parent with no Child SA"));
 		e = STF_FATAL;
-		send_v2_notification_from_state(st, v2N_AUTHENTICATION_FAILED, NULL);
+		send_v2_notification_from_state(st, *mdp, v2N_AUTHENTICATION_FAILED, NULL);
 	}
 
 	complete_v2_state_transition(mdp, e);
@@ -3841,8 +3841,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 			st, ORIGINAL_RESPONDER, idhash_in, &pbs_no_ppk_auth,
 			st->st_connection->spd.that.authby))
 		{
-			/* TODO: This should really be an encrypted message! */
-			send_v2_notification_from_state(st, v2N_AUTHENTICATION_FAILED, NULL);
+			send_v2_notification_from_state(st, md, v2N_AUTHENTICATION_FAILED, NULL);
 			return STF_FATAL;
 		}
 		DBG(DBG_CONTROL, DBG_log("NO_PPK_AUTH verified"));
@@ -3851,8 +3850,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 			st, ORIGINAL_RESPONDER, idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
 			st->st_connection->spd.that.authby))
 		{
-			/* TODO: This should really be an encrypted message! */
-			send_v2_notification_from_state(st, v2N_AUTHENTICATION_FAILED, NULL);
+			send_v2_notification_from_state(st, md, v2N_AUTHENTICATION_FAILED, NULL);
 			return STF_FATAL;
 		}
 	}
@@ -3879,7 +3877,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		 * TBD: send this notification encrypted because the
 		 * AUTH payload succeed
 		 */
-		send_v2_notification_from_state(st, v2N_AUTHENTICATION_FAILED, NULL);
+		send_v2_notification_from_state(st, md, v2N_AUTHENTICATION_FAILED, NULL);
 		return STF_FATAL;
 	}
 
@@ -4600,7 +4598,7 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 	} else {
 		if (LIN(POLICY_PPK_INSIST, c->policy)) {
 			loglog(RC_LOG_SERIOUS, "Failed to receive PPK confirmation and connection has ppk=insist");
-			send_v2_notification_from_state(st, v2N_AUTHENTICATION_FAILED, NULL);
+			send_v2_notification_from_state(st, md, v2N_AUTHENTICATION_FAILED, NULL);
 			return STF_FATAL;
 		}
 	}

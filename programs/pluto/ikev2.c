@@ -1534,7 +1534,9 @@ void process_v2_packet(struct msg_digest **mdp)
 			 * pretty bogus.
 			 */
 			if (st != NULL)
-				send_v2_notification_from_state(st, v2N_INVALID_IKE_SPI, NULL);
+				send_v2_notification_from_state(st, md,
+								v2N_INVALID_IKE_SPI,
+								NULL);
 			else
 				send_v2_notification_from_md(md, v2N_INVALID_IKE_SPI, NULL);
 		}
@@ -2463,7 +2465,8 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 				if (st == NULL) {
 					send_v2_notification_from_md(md, notification, NULL);
 				} else {
-					send_v2_notification_from_state(pst, notification, NULL);
+					send_v2_notification_from_state(pst, md,
+									notification, NULL);
 					if (md->hdr.isa_xchg == ISAKMP_v2_SA_INIT) {
 						delete_state(st);
 					} else {

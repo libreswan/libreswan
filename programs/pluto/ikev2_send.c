@@ -169,28 +169,96 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
 }
 
 pb_stream open_v2_message(pb_stream *reply,
-			  uint8_t *icookie, uint8_t *rcookie, /* aka SPI */
+			  struct ike_sa *ike, struct msg_digest *md,
 			  enum next_payload_types_ikev2 next_payload,
-			  enum isakmp_xchg_types exchange_type,
-			  lset_t flags, int message_id)
+			  enum isakmp_xchg_types exchange_type)
 {
-	struct isakmp_hdr hdr;
+	/* at least one, possibly both */
+	passert(ike != NULL || md != NULL);
 
-	zero(&hdr);	/* OK: no pointer fields */
-	/* SPI: initial initiator will send 0 as responder's SPI */
-	if (rcookie != NULL)
-		memcpy(hdr.isa_rcookie, rcookie, COOKIE_SIZE);
-	memcpy(hdr.isa_icookie, icookie, COOKIE_SIZE);
+	struct isakmp_hdr hdr = {
+		.isa_np = next_payload,
+		.isa_flags = IMPAIR(SEND_BOGUS_ISAKMP_FLAG) ? ISAKMP_FLAGS_RESERVED_BIT6 : LEMPTY,
+		.isa_version = build_ikev2_version(),
+		.isa_xchg = exchange_type,
+		.isa_length = 0, /* filled in when PBS is closed */
+	};
 
-	hdr.isa_np = next_payload;
-	hdr.isa_version = build_ikev2_version();
-	hdr.isa_xchg = exchange_type;
-	hdr.isa_flags = flags;
-	if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
-		hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
+	/*
+	 * I(Initiator) flag
+	 *
+	 * If there was no IKE SA then this must be the initial
+	 * responder - the only time that pluto sends a packet with no
+	 * state is when replying to an SA_INIT request with an error
+	 * (oh and that edge case case of replying to an AUTH request
+	 * with an unencrypted error).  Either way, the I(Initiator)
+	 * flag is clear.
+	 */
+	if (ike != NULL) {
+		switch (ike->sa.st_sa_role) {
+		case SA_INITIATOR:
+			hdr.isa_flags |= ISAKMP_FLAGS_v2_IKE_I;
+			break;
+		case SA_RESPONDER:
+			break;
+		default:
+			bad_case(ike->sa.st_sa_role);
+		}
 	}
-	hdr.isa_msgid = htonl(message_id);
-	hdr.isa_length = 0; /* filled in when PBS is closed */
+
+	/*
+	 * R(Responder) flag
+	 *
+	 * If there's a message digest (MD) (presumably containing a
+	 * message request) then this must be a response.
+	 */
+	if (md != NULL) {
+		hdr.isa_flags |= ISAKMP_FLAGS_v2_MSG_R;
+	}
+
+	/*
+	 * SPI (aka cookies).
+	 */
+	if (ike != NULL) {
+		/*
+		 * Note that when the original initiator sends the
+		 * SA_INIT request, the still zero RCOOKIE will be
+		 * copied.
+		 */
+		memcpy(hdr.isa_icookie, ike->sa.st_icookie, COOKIE_SIZE);
+		memcpy(hdr.isa_rcookie, ike->sa.st_rcookie, COOKIE_SIZE);
+	} else {
+		/*
+		 * Not that when responding to an SA_INIT with an
+		 * error notification (hence no state), the copied
+		 * RCOOKIE will (should be?).
+		 */
+		passert(md != NULL);
+		memcpy(hdr.isa_icookie, md->hdr.isa_icookie, COOKIE_SIZE);
+		memcpy(hdr.isa_rcookie, md->hdr.isa_rcookie, COOKIE_SIZE);
+	}
+
+	/*
+	 * Message ID
+	 *
+	 * If there's a message digest (MD) (presumably containing a
+	 * message request) then this must be a response - use the
+	 * message digest's message ID.  A better choice should be
+	 * .st_msgid_lastrecv (or .st_msgid_lastrecv+1), but it isn't
+	 * clear if/when that value is updated.
+	 *
+	 * If it isn't a response then use the IKE SA's
+	 * .st_msgid_nextuse.  The caller still needs to both
+	 * increment .st_msgid_nextuse (can't do this until the packet
+	 * is finished) and update .st_msgid (only caller knows if
+	 * this is for the IKE SA or a CHILD SA).
+	 */
+	if (md != NULL) {
+		hdr.isa_msgid = htonl(md->msgid_received);
+	} else {
+		passert(ike != NULL);
+		hdr.isa_msgid = htonl(ike->sa.st_msgid_nextuse);
+	}
 
 	return open_output_struct_pbs(reply, &hdr, &isakmp_hdr_desc);
 }
@@ -203,40 +271,41 @@ pb_stream open_v2_message(pb_stream *reply,
  *
  */
 
-void send_v2_notification_from_state(struct state *pst,
+void send_v2_notification_from_state(struct state *pst, struct msg_digest *md,
 				     v2_notification_t ntype,
 				     chunk_t *ndata)
 {
+	passert(md != NULL); /* always a reply */
 	const char *const notify_name = enum_short_name(&ikev2_notify_names, ntype);
 
-	/* XXX: while bogus, still less bogus the SA_INIT and message ID 0 */
-	const enum isakmp_xchg_types exchange_type = ISAKMP_v2_AUTH;
+	enum isakmp_xchg_types exchange_type = md->hdr.isa_xchg;
 	const char *const exchange_name = enum_short_name(&ikev2_exchange_names, exchange_type);
-	const unsigned message_id = 1;
 
 	ipstr_buf b;
 	libreswan_log("responding to %s message (ID %u) from %s:%u with encrypted notification %s",
-		      exchange_name, message_id,
+		      exchange_name, md->msgid_received,
 		      sensitive_ipstr(&pst->st_remoteaddr, &b),
 		      pst->st_remoteport,
 		      notify_name);
 
 	/*
-	 * Since this is a notification, it must always be a response.
-	 *
-	 * XXX: What about IKE_I, can't assume this is the original
-	 * responder.
+	 * For encrypted messages, the EXCHANGE TYPE can't be SA_INIT.
 	 */
-	lset_t flags = ISAKMP_FLAGS_v2_MSG_R;
+	switch (exchange_type) {
+	case ISAKMP_v2_SA_INIT:
+		PEXPECT_LOG("exchange type %s invalid for encrypted notification",
+			    exchange_name);
+		return;
+	default:
+		break;
+	}
 
-	pb_stream *reply = open_reply_pbs("encrypted notification msg");
+	pb_stream *reply = open_reply_pbs("encrypted notification");
 
-	pb_stream rbody = open_v2_message(reply,
-					  pst->st_icookie, pst->st_rcookie,
-					  ISAKMP_NEXT_v2SK, exchange_type,
-					  flags, message_id);
+	pb_stream rbody = open_v2_message(reply, ike_sa(pst), md,
+					  ISAKMP_NEXT_v2SK, exchange_type);
 	if (!pbs_ok(&rbody)) {
-		libreswan_log("error initializing hdr for notify message");
+		libreswan_log("error initializing hdr for encrypted notification");
 		return;
 	}
 
@@ -288,58 +357,39 @@ void send_v2_notification_from_md(struct msg_digest *md,
 				  chunk_t *ndata)
 {
 	const char *const notify_name = enum_short_name(&ikev2_notify_names, ntype);
-	const unsigned message_id = md->msgid_received;
+
+	passert(md != NULL); /* always a response */
 	enum isakmp_xchg_types exchange_type = md->hdr.isa_xchg;
 	const char *const exchange_name = enum_short_name(&ikev2_exchange_names, exchange_type);
 
 	ipstr_buf b;
 	libreswan_log("responding to %s message (ID %u) from %s:%u with unencrypted notification %s",
-		      exchange_name, message_id,
+		      exchange_name, md->msgid_received,
 		      sensitive_ipstr(&md->sender, &b),
 		      hportof(&md->sender),
 		      notify_name);
 
 	/*
-	 * Since only the initial responder (where there may not yet
-	 * be a state) is allowed to reply with an unencrypted
-	 * notification, the MSG_R flag can be hardwired.
-	 */
-	lset_t flags = ISAKMP_FLAGS_v2_MSG_R;
-
-	/*
-	 * The MESSAGE ID can either be 0 (responding to SA_INIT) or 1
-	 * (responding to AUTH with failed encryption).
-	 */
-	if (message_id > 1) {
-		PEXPECT_LOG("message ID %u invalid for un-encrypted notification",
-			    message_id);
-		return;
-	}
-
-	/*
-	 * The EXCHANGE TYPE can either be INIT or AUTH.
+	 * For unencrypted messages, the EXCHANGE TYPE can only be
+	 * INIT or AUTH (if DH fails, AUTH gets an unencrypted
+	 * response).
 	 */
 	switch (exchange_type) {
 	case ISAKMP_v2_SA_INIT:
 	case ISAKMP_v2_AUTH:
 		break;
 	default:
-		PEXPECT_LOG("exchange type %s invalid for un-encrypted notification",
+		PEXPECT_LOG("exchange type %s invalid for unencrypted notification",
 			    exchange_name);
 		return;
 	}
 
 	pb_stream *reply = open_reply_pbs("unencrypted notification");
-	pb_stream rbody = open_v2_message(reply,
-					  md->hdr.isa_icookie,
-					  md->hdr.isa_rcookie,
-					  ISAKMP_NEXT_v2N,
-					  exchange_type,
-					  flags,
-					  message_id);
+	pb_stream rbody = open_v2_message(reply, NULL, md,
+					  ISAKMP_NEXT_v2N, exchange_type);
 	if (!pbs_ok(&rbody)) {
 		PEXPECT_LOG("error building header for unencrypted %s %s notification with message ID %u",
-			    exchange_name, notify_name, message_id);
+			    exchange_name, notify_name, md->msgid_received);
 		return;
 	}
 
@@ -351,7 +401,7 @@ void send_v2_notification_from_md(struct msg_digest *md,
 		      IKEv2_SEC_PROTO_NONE, &empty_chunk, /* SPI */
 		      ntype, ndata, &rbody)) {
 		PEXPECT_LOG("error building unencrypted %s %s notification with message ID %u",
-			    exchange_name, notify_name, message_id);
+			    exchange_name, notify_name, md->msgid_received);
 		return;
 	}
 

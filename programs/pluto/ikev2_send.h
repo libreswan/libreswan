@@ -22,6 +22,7 @@
 
 struct msg_digest;
 struct oakley_group_desc;
+struct ike_sa;
 
 bool record_and_send_v2_ike_msg(struct state *st, pb_stream *pbs,
 				const char *what);
@@ -29,7 +30,7 @@ bool record_and_send_v2_ike_msg(struct state *st, pb_stream *pbs,
 bool send_recorded_v2_ike_msg(struct state *st, const char *where);
 
 
-void send_v2_notification_from_state(struct state *st,
+void send_v2_notification_from_state(struct state *st, struct msg_digest *md,
 				     v2_notification_t type,
 				     chunk_t *data);
 void send_v2_notification_from_md(struct msg_digest *md,
@@ -38,12 +39,10 @@ void send_v2_notification_from_md(struct msg_digest *md,
 void send_v2_notification_invalid_ke(struct msg_digest *md,
 				     const struct oakley_group_desc *group);
 
-/* parameters in the same order has the packet */
 pb_stream open_v2_message(pb_stream *reply,
-			  uint8_t *icookie, uint8_t *rcookie, /* aka SPI */
+			  struct ike_sa *ike, struct msg_digest *md,
 			  enum next_payload_types_ikev2 next_payload,
-			  enum isakmp_xchg_types exchange_type,
-			  lset_t flags, int message_id);
+			  enum isakmp_xchg_types exchange_type);
 
 typedef struct v2sk_stream {
 	struct ike_sa *ike;
