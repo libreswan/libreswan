@@ -180,8 +180,7 @@ void ikev2_ike_sa_established(struct ike_sa *ike,
 		for_each_state(ikev2_repl_est_ipsec, &ike->sa.st_ike_pred);
 	}
 	c->newest_isakmp_sa = ike->sa.st_serialno;
-	deltatime_t delay = ikev2_replace_delay(&ike->sa, &kind,
-						ike->sa.st_original_role);
+	deltatime_t delay = ikev2_replace_delay(&ike->sa, &kind);
 	delete_event(&ike->sa);
 	event_schedule(kind, delay, &ike->sa);
 }
@@ -1010,20 +1009,14 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	if (c->send_vendorid) {
 		vids--;
 		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
-
-		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &rbody,
-				     pluto_vendorid, strlen(pluto_vendorid),
-				     "VID_LIBRESWANSELF"))
+		if (!ship_v2V(&rbody, np, pluto_vendorid))
 			return STF_INTERNAL_ERROR;
 	}
 
 	if (c->fake_strongswan) {
 		vids--;
 		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
-
-		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &rbody,
-				     "strongSwan", strlen("strongSwan"),
-				     "VID_STRONGSWAN"))
+		if (!ship_v2V(&rbody, np, "strongSwan"))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1031,9 +1024,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		vids--;
 		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 
-		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &rbody,
-				     "Opportunistic IPsec", strlen("Opportunistic IPsec"),
-				     "VID_OPPORTUNISTIC"))
+		if (!ship_v2V(&rbody, np, "Opportunistic IPsec"))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1635,30 +1626,21 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	if (c->send_vendorid) {
 		vids--;
 		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
-
-		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &rbody,
-				     pluto_vendorid, strlen(pluto_vendorid),
-				     "VID_LIBRESWANSELF"))
+		if (!ship_v2V(&rbody, np, pluto_vendorid))
 			return STF_INTERNAL_ERROR;
 	}
 
 	if (c->fake_strongswan) {
 		vids--;
 		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
-
-		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &rbody,
-				     "strongSwan", strlen("strongSwan"),
-				     "VID_STRONGSWAN"))
+		if (!ship_v2V(&rbody, np, "strongSwan"))
 			return STF_INTERNAL_ERROR;
 	}
 
 	if (c->policy & POLICY_AUTH_NULL) {
 		vids--;
 		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
-
-		if (!ikev2_out_generic_raw(np, &ikev2_vendor_id_desc, &rbody,
-				     "Opportunistic IPsec", strlen("Opportunistic IPsec"),
-				     "VID_OPPORTUNISTIC"))
+		if (!ship_v2V(&rbody, np, "Opportunistic IPsec"))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -2729,7 +2711,7 @@ static stf_status ikev2_send_auth(struct connection *c,
 	}
 
 	/* ??? isn't c redundant? */
-	pexpect(c == st->st_connection)
+	pexpect(c == st->st_connection);
 
 	a.isaa_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 	if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
@@ -3069,7 +3051,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	delete_event(pst);
 	{
 		enum event_type x = md->svm->timeout_event;
-		deltatime_t delay = ikev2_replace_delay(pst, &x, ORIGINAL_INITIATOR);
+		deltatime_t delay = ikev2_replace_delay(pst, &x);
 		event_schedule(x, delay, pst);
 	}
 

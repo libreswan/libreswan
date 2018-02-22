@@ -225,8 +225,8 @@ extern stf_status ikev2_resp_accept_child_ts(const struct msg_digest *md,
 extern void ikev2_update_msgid_counters(struct msg_digest *md);
 extern void ikev2_print_ts(struct traffic_selector *ts);
 
-extern deltatime_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
-				       enum original_role role);
+extern deltatime_t ikev2_replace_delay(struct state *st,
+				       enum event_type *pkind);
 
 stf_status ikev2_send_cp(struct state *st, enum next_payload_types_ikev2 np,
 		pb_stream *outpbs);

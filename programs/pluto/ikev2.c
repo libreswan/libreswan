@@ -1947,8 +1947,7 @@ void ikev2_update_msgid_counters(struct msg_digest *md)
 
 }
 
-deltatime_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
-				enum original_role role)
+deltatime_t ikev2_replace_delay(struct state *st, enum event_type *pkind)
 {
 	enum event_type kind = *pkind;
 	time_t delay;   /* unwrapped deltatime_t */
@@ -2007,12 +2006,17 @@ deltatime_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 		/* unwrapped deltatime_t */
 		time_t marg = deltasecs(c->sa_rekey_margin);
 
-		if (role == ORIGINAL_INITIATOR) {
+		switch (st->st_sa_role) {
+		case SA_INITIATOR:
 			marg += marg *
 				c->sa_rekey_fuzz / 100.E0 *
 				(rand() / (RAND_MAX + 1.E0));
-		} else {
+			break;
+		case SA_RESPONDER:
 			marg /= 2;
+			break;
+		default:
+			bad_case(st->st_sa_role);
 		}
 
 		if (delay > marg) {
@@ -2200,8 +2204,7 @@ static void success_v2_state_transition(struct msg_digest *md)
 				event_schedule_s(EVENT_v2_RELEASE_WHACK,
 						 EVENT_RELEASE_WHACK_DELAY, st);
 				kind = EVENT_SA_REPLACE;
-				deltatime_t delay = ikev2_replace_delay(st, &kind,
-									st->st_original_role);
+				deltatime_t delay = ikev2_replace_delay(st, &kind);
 				DBG(DBG_LIFECYCLE,
 				    DBG_log("ikev2 case EVENT_v2_RETRANSMIT: for %jdms",
 					    deltamillisecs(delay)));
@@ -2217,7 +2220,7 @@ static void success_v2_state_transition(struct msg_digest *md)
 			break;
 		case EVENT_SA_REPLACE: /* IKE or Child SA replacement event */
 		{
-			deltatime_t delay = ikev2_replace_delay(st, &kind, st->st_original_role);
+			deltatime_t delay = ikev2_replace_delay(st, &kind);
 			DBG(DBG_LIFECYCLE,
 			    DBG_log("ikev2 case EVENT_SA_REPLACE for %s state for %jdms",
 				    IS_IKE_SA(st) ? "parent" : "child", deltamillisecs(delay)));

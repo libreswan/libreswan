@@ -68,6 +68,30 @@ bool send_recorded_v2_ike_msg(struct state *st, const char *where)
 }
 
 /*
+ * Send the STRING out as a V2 Vendor payload.
+ *
+ * XXX: Perhaps someday STRING will be replaced by enum
+ * known_vendorid.
+ */
+bool ship_v2V(pb_stream *outs, enum next_payload_types_ikev2 np,
+	      const char *string)
+{
+	struct ikev2_generic gen = {
+		.isag_np = np,
+	};
+	pb_stream pbs = open_output_struct_pbs(outs, &gen,
+					       &ikev2_vendor_id_desc);
+	if (!pbs_ok(&pbs)) {
+		return false;
+	}
+	if (!out_raw(string, strlen(string), &pbs, string)) {
+		return false;
+	}
+	close_output_pbs(&pbs);
+	return true;
+}
+
+/*
  * Determine the IKE version we will use for the IKE packet
  * Normally, this is "2.0", but in the future we might need to
  * change that. Version used is the minimum 2.x version both

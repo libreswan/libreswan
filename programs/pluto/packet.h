@@ -148,11 +148,6 @@ extern bool ikev1_out_generic(u_int8_t np, struct_desc *sd,
 extern bool ikev1_out_generic_raw(u_int8_t np, struct_desc *sd,
 			    pb_stream *outs, const void *bytes, size_t len,
 			    const char *name) MUST_USE_RESULT;
-extern bool ikev2_out_generic(u_int8_t np, struct_desc *sd,
-			pb_stream *outs, pb_stream *obj_pbs) MUST_USE_RESULT;
-extern bool ikev2_out_generic_raw(u_int8_t np, struct_desc *sd,
-			    pb_stream *outs, const void *bytes, size_t len,
-			    const char *name) MUST_USE_RESULT;
 extern void out_modify_previous_np(u_int8_t np, pb_stream *outs);
 
 #define ikev1_out_generic_chunk(np, sd, outs, ch, name) \
