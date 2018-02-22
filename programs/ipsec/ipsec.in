@@ -388,6 +388,17 @@ if [ -z "${1}" ]; then
     ipsec_usage
 fi
 
+# Whack command is special because --ctlsocket is a whack cmdline option
+# We need to make sure we don't give it twice
+if [ "${1}" = "whack" ]; then
+    shift
+    if echo "${@}" | grep -q -- --ctlsocket; then
+	exec "${IPSEC_EXECDIR}/whack" "${@}"
+    else
+	exec "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" "${@}"
+    fi
+fi
+
 while [ ${#} -gt 0 ]; do
     case "${1}" in
 	--rundir)
@@ -405,7 +416,7 @@ while [ ${#} -gt 0 ]; do
 	    ;;
 	status|--status)
 	    cmd="whack"
-	    whackoptions="--status"
+	    whackoption="--status"
 	    shift
 	    ;;
 	start|--start)
@@ -459,7 +470,7 @@ while [ ${#} -gt 0 ]; do
 	    ;;
 	secrets)
 	    cmd="whack"
-	    whackoptions="--rereadsecrets"
+	    whackoption="--rereadsecrets"
 	    shift
 	    ;;
 	rereadcrls|--rereadcrls)
@@ -468,37 +479,13 @@ while [ ${#} -gt 0 ]; do
 	    ;;
 	crls|fetchcrls)
 	    cmd="whack"
-	    whackoptions="--fetchcrls"
+	    whackoption="--fetchcrls"
 	    shift
 	    ;;
 	unbound|--unbound)
 	    # activate the unbound ipsec module
 	    unbound-control set_option ipsecmod-enabled: yes
 	    exit $?
-	    ;;
-	whack)
-	    # Unfortunately we did errorously accept --ctlsocket option
-	    # as option for for ipsec command.
-	    # So now we need to parse whack options to remove
-	    # possibly duplicate option
-	    shift
-	    while [ ${#} -gt 0 ]; do
-		case "${1}" in
-		    --ctlsocket)
-			CTLSOCKET="${2}"
-			shift; shift
-			;;
-		    *)
-		        if [ -z "${whackoptions}" ]; then
-			    whackoptions="${1}"
-			else
-			    whackoptions="${whackoptions} ${1}"
-			fi
-			shift
-			;;
-		esac
-	    done
-	    exec ${IPSEC_EXECDIR}/whack --ctlsocket="${CTLSOCKET}" "${whackoptions}"
 	    ;;
 	--*)
 	    printf "%s: unknown option \"%s\" (perhaps command name was omitted?)\n" "${0}" "${1}" >&2
@@ -522,6 +509,6 @@ case "${cmd}" in
 	exec "${IPSEC_EXECDIR}/setup" "${setupoptions}"
 	;;
     whack)
-	exec "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" "${whackoptions}"
+	exec "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" "${whackoption}"
 	;;
 esac
