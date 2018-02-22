@@ -388,17 +388,6 @@ if [ -z "${1}" ]; then
     ipsec_usage
 fi
 
-# Whack command is special because --ctlsocket is a whack cmdline option
-# We need to make sure we don't give it twice
-if [ "${1}" = "whack" ]; then
-    shift
-    if echo "${@}" | grep -q -- --ctlsocket; then
-	exec "${IPSEC_EXECDIR}/whack" "${@}"
-    else
-	exec "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" "${@}"
-    fi
-fi
-
 while [ ${#} -gt 0 ]; do
     case "${1}" in
 	--rundir)
@@ -413,6 +402,17 @@ while [ ${#} -gt 0 ]; do
 	    export CTLSOCKET
 	    shift;
 	    shift;
+	    ;;
+	whack)
+	    # Whack command is special because --ctlsocket is a whack cmdline option
+	    # We need to make sure we don't give it twice
+	    shift
+	    if echo "${@}" | grep -q -- --ctlsocket; then
+		exec "${IPSEC_EXECDIR}/whack" "${@}"
+	    else
+		exec "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" "${@}"
+	    fi
+	    exit 0
 	    ;;
 	status|--status)
 	    cmd="whack"
