@@ -2711,7 +2711,7 @@ static stf_status ikev2_send_auth(struct connection *c,
 	}
 
 	/* ??? isn't c redundant? */
-	pexpect(c == st->st_connection)
+	pexpect(c == st->st_connection);
 
 	a.isaa_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 	if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {

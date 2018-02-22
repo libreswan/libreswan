@@ -332,7 +332,7 @@ static enum categories categorize_state(struct state *st,
 		 * IKEv1: QUICK is for child connections children.
 		 * Probably won't occur as a parent?
 		 */
-		pexpect(!is_parent)
+		pexpect(!is_parent);
 		return established_ipsec;
 
 	case STATE_MODE_CFG_I1:
