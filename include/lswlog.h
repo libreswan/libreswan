@@ -442,17 +442,7 @@ void lswlog_log_prefix(struct lswlog *buf);
 
 
 /*
- * Check/log a pexpect failure to the "panic" channel.
- *
- * Notes:
- *
- * According to C99, the expansion of PEXPECT_LOG(FMT) will include a
- * stray comma vis: "pexpect_log(file, line, FMT,)".  Plenty of
- * workarounds.
- *
- * "pexpect()" does use the shorter statement "if (!(pred))" in the
- * below as it will suppresses -Wparen (i.e., assignment in if
- * statement).
+ * Log an expectation failure to the "panic" channel.
  */
 
 void lswlog_pexpect_prefix(struct lswlog *buf);
@@ -467,12 +457,10 @@ void lswlog_pexpect_suffix(struct lswlog *buf, const char *func,
 #define LSWLOG_PEXPECT(BUF)				   \
 	LSWLOG_PEXPECT_SOURCE(__func__, PASSERT_BASENAME, __LINE__, BUF)
 
-/* old style */
-
-#define PEXPECT_LOG(FMT, ...)						\
-	LSWLOG_PEXPECT(pexpect_buf) {					\
-		lswlogf(pexpect_buf, FMT, __VA_ARGS__);			\
-	}
+/*
+ * "pexpect()" does not wrap ASSERTION in paren as doing that
+ * suppresses -Wparen (i.e., assignment in if statement).
+ */
 
 #define pexpect(ASSERTION) {						\
 		/* wrapping ASSERTION in paren suppresses -Wparen */	\
@@ -483,6 +471,23 @@ void lswlog_pexpect_suffix(struct lswlog *buf, const char *func,
 			}						\
 		}							\
 	}
+
+/*
+ * Old style
+ *
+ * According to C99, the expansion of PEXPECT_LOG(FMT) will include a
+ * stray comma vis: "pexpect_log(file, line, FMT,)".  Plenty of
+ * workarounds.
+ */
+
+void libreswan_pexpect_log(const char *func,
+			   const char *file, unsigned long line,
+			   const char *message, ...) PRINTF_LIKE(4);
+
+#define PEXPECT_LOG(FMT, ...)						\
+	libreswan_pexpect_log(__func__,					\
+			      PASSERT_BASENAME, __LINE__,		\
+			      FMT, __VA_ARGS__)
 
 /*
  * Send an assertion failure to everwhere.
