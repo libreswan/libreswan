@@ -518,21 +518,31 @@ char *lswlog_string(void)
 
 
 /*
- * Log an expectation failure message to the main log and whack log.
+ * Log an expectation failure message to the error streams.  That is
+ * the main log (level LOG_ERR) and whack log (level RC_LOG_SERIOUS).
  *
- * "pexpect()" does not wrap ASSERTION in paren as doing that
- * suppresses -Wparen (i.e., assignment in if statement).
+ * Note that, for pexpect(EXPRESSION), the expanded ASSERTION is not
+ * wrapped in parenthesis as doing that suppresses the warning -Wparen
+ * (i.e., assignment in an expression).
  */
 
-#define pexpect(ASSERTION) {						\
-		/* wrapping ASSERTION in paren suppresses -Wparen */	\
-		bool assertion__ = ASSERTION; /* no paren */		\
-		if (!assertion__) {					\
-			LSWLOG_PEXPECT(pexpect_buf) {			\
-				lswlogf(pexpect_buf, "%s", #ASSERTION);	\
-			}						\
-		}							\
+#if 0
+void lswlog_pexpect(void *p)
+{
+	if (!pexpect(p != NULL)) {
+		return;
 	}
+}
+#endif
+
+bool libreswan_pexpect(const char *func,
+		       const char *file, unsigned long line,
+		       const char *assertion);
+
+#define pexpect(ASSERTION)						\
+	(ASSERTION ? true : libreswan_pexpect(__func__,			\
+					      PASSERT_BASENAME, __LINE__, \
+					      #ASSERTION))
 
 void lswlog_pexpect_prefix(struct lswlog *buf);
 void lswlog_pexpect_suffix(struct lswlog *buf, const char *func,
