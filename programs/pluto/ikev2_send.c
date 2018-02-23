@@ -293,7 +293,7 @@ void send_v2_notification_from_md(struct msg_digest *md,
 	const char *const exchange_name = enum_short_name(&ikev2_exchange_names, exchange_type);
 
 	ipstr_buf b;
-	libreswan_log("responding to %s message (ID %u) from %s:%u with unencrypted %s notification",
+	libreswan_log("responding to %s message (ID %u) from %s:%u with unencrypted notification %s",
 		      exchange_name, message_id,
 		      sensitive_ipstr(&md->sender, &b),
 		      hportof(&md->sender),
