@@ -572,10 +572,9 @@ void init_ikev2(void)
 /*
  * split an incoming message into payloads
  */
-stf_status ikev2_decode_payloads(struct msg_digest *md,
-				 struct payload_summary *summaryp,
-				 pb_stream *in_pbs,
-				 enum next_payload_types_ikev2 np)
+struct payload_summary ikev2_decode_payloads(struct msg_digest *md,
+					     pb_stream *in_pbs,
+					     enum next_payload_types_ikev2 np)
 {
 	struct payload_summary summary = {
 		.parsed = true,
@@ -603,7 +602,8 @@ stf_status ikev2_decode_payloads(struct msg_digest *md,
 
 		zero(pd);	/* ??? is this needed? */
 
-		struct_desc *sd = v2_payload_desc(np);
+		/* map the payload onto a way to decode it */
+		const struct_desc *sd = v2_payload_desc(np);
 
 		if (sd == NULL) {
 			/*
@@ -700,9 +700,7 @@ stf_status ikev2_decode_payloads(struct msg_digest *md,
 		md->digest_roof++;
 	}
 
-	*summaryp = summary;
-	return summary.n == v2N_NOTHING_WRONG ? STF_OK : STF_FAIL + summary.n;
-
+	return summary;
 }
 
 struct ikev2_payload_errors ikev2_verify_payloads(const struct payload_summary *summary,
@@ -1334,7 +1332,6 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	passert((st == NULL) == (from_state == STATE_UNDEFINED));
 
-	stf_status message_payload_result = STF_ROOF;
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
 	stf_status encrypted_payload_result = STF_ROOF;
 	struct ikev2_payload_errors encrypted_payload_status = { .bad = false };
@@ -1363,19 +1360,37 @@ void process_v2_packet(struct msg_digest **mdp)
 		if (match_hdr_flag(svm->flags, SMF2_MSG_R_CLEAR,
 				   md->message_role == MESSAGE_RESPONSE))
 			continue;
+
 		/*
-		 * Since there's a state that, at least, looks like it
-		 * will accept the packet, unpack the clear payload
-		 * and continue matching.
+		 * Since there is a state transition that looks like
+		 * it might accept the packet, parse the clear payload
+		 * and then continue matching.
 		 */
-		if (message_payload_result == STF_ROOF) {
+		if (!md->message_payloads.parsed) {
 			DBG(DBG_CONTROL, DBG_log("Unpacking clear payload for svm: %s", svm->story));
-			message_payload_result = ikev2_decode_payloads(md,
-								     &md->message_payloads,
+			md->message_payloads = ikev2_decode_payloads(md,
 								     &md->message_pbs,
 								     md->hdr.isa_np);
-			if (message_payload_result != STF_OK) {
-				complete_v2_state_transition(mdp, message_payload_result);
+			if (md->message_payloads.n != v2N_NOTHING_WRONG) {
+				/*
+				 * Only respond if the message is an
+				 * SA_INIT request.
+				 *
+				 * An SA_INIT response, like any other
+				 * response, should never trigger a
+				 * further response (ignoring an
+				 * exception that doesn't apply here).
+				 *
+				 * For any other request (AUTH,
+				 * CHILD_SA, ..), since this end is
+				 * only allowed to respond after the
+				 * SK payload has been verified,
+				 * things must simply be dropped.
+				 */
+				if (ix == ISAKMP_v2_SA_INIT && md->message_role == MESSAGE_REQUEST) {
+					send_v2_notification_from_md(md, md->message_payloads.n, NULL);
+				}
+				complete_v2_state_transition(mdp, STF_FAIL);
 				return;
 			}
 		}

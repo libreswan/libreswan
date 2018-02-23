@@ -233,10 +233,9 @@ stf_status ikev2_send_cp(struct state *st, enum next_payload_types_ikev2 np,
 
 bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st);
 
-stf_status ikev2_decode_payloads(struct msg_digest *md,
-				 struct payload_summary *summary,
-				 pb_stream *in_pbs,
-				 enum next_payload_types_ikev2 np);
+struct payload_summary ikev2_decode_payloads(struct msg_digest *md,
+					     pb_stream *in_pbs,
+					     enum next_payload_types_ikev2 np);
 
 stf_status ikev2_decrypt_msg(struct state *st, struct msg_digest *md);
 

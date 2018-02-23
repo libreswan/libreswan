@@ -2545,12 +2545,13 @@ stf_status ikev2_decrypt_msg(struct state *st, struct msg_digest *md)
 	/* CLANG 3.5 mis-diagnoses that chunk is undefined */
 	md->encrypted_pbs = chunk_as_pbs(chunk, "cleartext");
 
-	 enum next_payload_types_ikev2 np = md->chain[ISAKMP_NEXT_v2SK] ?
+	enum next_payload_types_ikev2 np = md->chain[ISAKMP_NEXT_v2SK] ?
 		md->chain[ISAKMP_NEXT_v2SK]->payload.generic.isag_np :
 		md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf.isaskf_np;
 
-	 return ikev2_decode_payloads(md, &md->encrypted_payloads,
-				      &md->encrypted_pbs, np);
+	md->encrypted_payloads = ikev2_decode_payloads(md, &md->encrypted_pbs, np);
+	return md->encrypted_payloads.n == v2N_NOTHING_WRONG ? STF_OK
+		: STF_FAIL + md->encrypted_payloads.n;
 }
 
 /* Misleading name, also used for NULL sized type's */
