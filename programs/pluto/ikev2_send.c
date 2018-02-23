@@ -187,12 +187,11 @@ pb_stream open_v2_message(pb_stream *reply,
 	/*
 	 * I(Initiator) flag
 	 *
-	 * If there was no IKE SA then this must be the initial
-	 * responder - the only time that pluto sends a packet with no
-	 * state is when replying to an SA_INIT request with an error
-	 * (oh and that edge case case of replying to an AUTH request
-	 * with an unencrypted error).  Either way, the I(Initiator)
-	 * flag is clear.
+	 * If there was no IKE SA then this must be the original
+	 * responder (the only time that pluto constructs a packet
+	 * with no state is when replying to an SA_INIT or AUTH
+	 * request with an unencrypted response), else just use the
+	 * IKE SA's role.
 	 */
 	if (ike != NULL) {
 		switch (ike->sa.st_sa_role) {
@@ -209,11 +208,26 @@ pb_stream open_v2_message(pb_stream *reply,
 	/*
 	 * R(Responder) flag
 	 *
-	 * If there's a message digest (MD) (presumably containing a
-	 * message request) then this must be a response.
+	 * If there's no MD, then this must be a new request -
+	 * R(Responder) flag clear.
+	 *
+	 * If there is an MD, and it contains a message request, then
+	 * this end must be sending a response - R(Responder) flag
+	 * set.
+	 *
+	 * If there is an MD, and it contains a message response, then
+	 * the caller is trying to respond to a response (or someone's
+	 * been faking MDs), which is pretty messed up.
 	 */
 	if (md != NULL) {
-		hdr.isa_flags |= ISAKMP_FLAGS_v2_MSG_R;
+		switch (md->message_role) {
+		case MESSAGE_REQUEST:
+			hdr.isa_flags |= ISAKMP_FLAGS_v2_MSG_R;
+			break;
+		case MESSAGE_RESPONSE:
+		default:
+			bad_case(MESSAGE_RESPONSE);
+		}
 	}
 
 	/*
