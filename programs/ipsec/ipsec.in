@@ -421,32 +421,32 @@ while [ ${#} -gt 0 ]; do
 	    ;;
 	trafficstatus|--trafficstatus)
 	    cmd="whack"
-	    whackoptions="--trafficstatus"
+	    whackoption="--trafficstatus"
 	    shift
 	    ;;
 	globalstatus|--globalstatus)
 	    cmd="whack"
-	    whackoptions="--globalstatus"
+	    whackoption="--globalstatus"
 	    shift
 	    ;;
 	shuntstatus|--shuntstatus)
 	    cmd="whack"
-	    whackoptions="--shuntstatus"
+	    whackoption="--shuntstatus"
 	    shift
 	    ;;
 	start|--start)
 	    cmd="setup"
-	    setupoptions="--start"
+	    setupoption="--start"
 	    shift
 	    ;;
 	stop|--stop)
 	    cmd="setup"
-	    setupoptions="--stop"
+	    setupoption="--stop"
 	    shift
 	    ;;
 	restart|--restart)
 	    cmd="setup"
-	    setupoptions="--restart"
+	    setupoption="--restart"
 	    shift
 	    ;;
 	help|--help)
@@ -521,7 +521,7 @@ done
 
 case "${cmd}" in
     setup)
-	exec "${IPSEC_EXECDIR}/setup" "${setupoptions}"
+	exec "${IPSEC_EXECDIR}/setup" "${setupoption}"
 	;;
     whack)
 	exec "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" "${whackoption}"
