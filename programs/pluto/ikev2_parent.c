@@ -3600,9 +3600,11 @@ static void ikev2_parent_inI2outR2_continue(struct state *st,
 	(*mdp)->encrypted_payloads = ikev2_decode_payloads(*mdp, &sk->pbs,
 							   sk->payload.generic.isag_np);
 	if ((*mdp)->encrypted_payloads.n != v2N_NOTHING_WRONG) {
+		chunk_t data = chunk((*mdp)->message_payloads.data,
+				     (*mdp)->message_payloads.data_size);
 		send_v2_notification_from_state(st, *mdp,
 						(*mdp)->encrypted_payloads.n,
-						NULL);
+						&data);
 		complete_v2_state_transition(mdp, STF_FATAL);
 		return;
 	}

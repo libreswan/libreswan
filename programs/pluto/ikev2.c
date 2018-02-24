@@ -1387,7 +1387,10 @@ void process_v2_packet(struct msg_digest **mdp)
 				 * things must simply be dropped.
 				 */
 				if (ix == ISAKMP_v2_SA_INIT && md->message_role == MESSAGE_REQUEST) {
-					send_v2_notification_from_md(md, md->message_payloads.n, NULL);
+					chunk_t data = chunk(md->message_payloads.data,
+							     md->message_payloads.data_size);
+					send_v2_notification_from_md(md, md->message_payloads.n,
+								     &data);
 				}
 				complete_v2_state_transition(mdp, STF_FAIL);
 				return;
@@ -1494,9 +1497,11 @@ void process_v2_packet(struct msg_digest **mdp)
 			md->encrypted_payloads = ikev2_decode_payloads(md, &sk->pbs,
 								       sk->payload.generic.isag_np);
 			if (md->encrypted_payloads.n != v2N_NOTHING_WRONG) {
+				chunk_t data = chunk(md->message_payloads.data,
+						     md->message_payloads.data_size);
 				send_v2_notification_from_state(st, *mdp,
 								md->encrypted_payloads.n,
-								NULL);
+								&data);
 				/*
 				 * XXX: Setting/clearing md->st is to
 				 * prop up nested code needing ST but

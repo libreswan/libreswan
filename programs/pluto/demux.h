@@ -63,6 +63,9 @@ struct payload_summary {
 	v2_notification_t n;
 	lset_t present;
 	lset_t repeated;
+	/* for response, can't use pointers */
+	uint8_t data[1];
+	size_t data_size;
 };
 
 /* message digest
