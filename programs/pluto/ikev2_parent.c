@@ -2244,10 +2244,10 @@ static stf_status ikev2_encrypt_msg(struct ike_sa *ike,
  * the actual starting-variable (a.k.a. IV).
  */
 
-static stf_status ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
-						      struct msg_digest *md,
-						      chunk_t *chunk,
-						      unsigned int iv)
+static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
+						struct msg_digest *md,
+						chunk_t *chunk,
+						unsigned int iv)
 {
 	if (!ike->sa.hidden_variables.st_skeyid_calculated) {
 		ipstr_buf b;
@@ -2255,7 +2255,7 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 			    ipstr(&md->sender, &b),
 			    (unsigned)hportof(&md->sender),
 			    ike->sa.st_serialno);
-		return STF_FATAL;
+		return false;
 	}
 
 	u_char *wire_iv_start = chunk->ptr + iv;
@@ -2275,7 +2275,7 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 	if (payload_end < (wire_iv_start + wire_iv_size + 1 + integ_size)) {
 		libreswan_log("encrypted payload impossibly short (%tu)",
 			      payload_end - wire_iv_start);
-		return STF_FAIL;
+		return false;
 	}
 
 	u_char *auth_start = chunk->ptr;
@@ -2300,7 +2300,7 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 		if (enc_size % enc_blocksize != 0) {
 			libreswan_log("discarding invalid packet: %zu octet payload length is not a multiple of encryption block-size (%zu)",
 				      enc_size, enc_blocksize);
-			return STF_FAIL;
+			return false;
 		}
 	}
 
@@ -2348,7 +2348,7 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 
 		if (!memeq(td, integ_start, integ_size)) {
 			libreswan_log("failed to match authenticator");
-			return STF_FAIL;
+			return false;
 		}
 
 		DBG(DBG_PARSING, DBG_log("authenticator matched"));
@@ -2398,7 +2398,7 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 			      aad_start, aad_size,
 			      enc_start, enc_size, integ_size,
 			      cipherkey, FALSE)) {
-			return STF_FAIL; /* sub-code? */
+			return false;
 		}
 		DBG(DBG_CRYPT,
 		    DBG_dump("data after authenticated decryption:",
@@ -2421,7 +2421,7 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 	if (padlen > enc_size) {
 		libreswan_log("discarding invalid packet: padding-length %u (octet 0x%02x) is larger than %zu octet payload length",
 			      padlen, padlen - 1, enc_size);
-		return STF_FAIL;
+		return false;
 	}
 	if (pad_to_blocksize) {
 		if (padlen > enc_blocksize) {
@@ -2446,17 +2446,27 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 	DBG(DBG_CRYPT, DBG_log("stripping %u octets as pad", padlen));
 	setchunk(*chunk, enc_start, enc_size - padlen);
 
-	return STF_OK;
+	return true;
 }
 
 /*
  * Since the fragmented packet is intended for ST (either an IKE or
  * CHILD SA), ST contains the fragments.
  */
-static stf_status ikev2_reassemble_fragments(struct state *st,
-					     struct msg_digest *md,
-					     chunk_t *chunk)
+static bool ikev2_reassemble_fragments(struct state *st,
+				       struct msg_digest *md)
 {
+	if (md->chain[ISAKMP_NEXT_v2SK] != NULL) {
+		PEXPECT_LOG("state #%lu has both SK ans SKF payloads",
+			    st->st_serialno);
+		return false;
+	}
+
+	if (md->digest_roof >= elemsof(md->digest)) {
+		libreswan_log("packet contains too many payloads; discarded");
+		return false;
+	}
+
 	passert(st->st_v2_rfrags != NULL);
 
 	chunk_t plain[MAX_IKE_FRAGMENTS + 1];
@@ -2469,24 +2479,21 @@ static stf_status ikev2_reassemble_fragments(struct state *st,
 		 * decrypt in-place.  After the decryption, PLAIN will
 		 * have been adjusted to just point at the data.
 		 */
-		setchunk(plain[i], frag->cipher.ptr, frag->cipher.len);
-		stf_status status = ikev2_verify_and_decrypt_sk_payload(ike_sa(st), md,
-									&plain[i], frag->iv);
-		if (status != STF_OK) {
+		plain[i] = frag->cipher;
+		if (!ikev2_verify_and_decrypt_sk_payload(ike_sa(st), md,
+							 &plain[i], frag->iv)) {
 			loglog(RC_LOG_SERIOUS, "fragment %u of %u invalid",
 			       i, st->st_v2_rfrags->total);
 			release_fragments(st);
-			return status;
+			return false;
 		}
 		size += plain[i].len;
 	}
 
-	/* We have all the fragments */
-
-	/* ???? What is this doing? */
-	md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf.isaskf_np = st->st_v2_rfrags->first_np;
-
-	/* Reassemble fragments in buffer */
+	/*
+	 * All the fragments have been disassembled, re-assemble them
+	 * into the .raw_packet buffer.
+	 */
 	pexpect(md->raw_packet.ptr == NULL); /* empty */
 	md->raw_packet = alloc_chunk(size, "IKEv2 fragments buffer");
 	unsigned int offset = 0;
@@ -2497,11 +2504,19 @@ static stf_status ikev2_reassemble_fragments(struct state *st,
 		offset += plain[i].len;
 	}
 
+	/*
+	 * Fake up an SK payload, and then kill the SKF payload list
+	 * and fragments.
+	 */
+	struct payload_digest *sk = &md->digest[md->digest_roof++];
+	md->chain[ISAKMP_NEXT_v2SK] = sk;
+	sk->payload.generic.isag_np = st->st_v2_rfrags->first_np;
+	sk->pbs = chunk_as_pbs(md->raw_packet, "decrypted SFK payloads");
+
+	md->chain[ISAKMP_NEXT_v2SKF] = NULL;
 	release_fragments(st);
 
-	setchunk(*chunk, md->raw_packet.ptr, size);
-
-	return STF_OK;
+	return true;
 }
 
 /*
@@ -2512,44 +2527,36 @@ static stf_status ikev2_reassemble_fragments(struct state *st,
  */
 stf_status ikev2_decrypt_msg(struct state *st, struct msg_digest *md)
 {
-	stf_status status;
-	chunk_t chunk;
-
+	bool ok;
 	if (md->chain[ISAKMP_NEXT_v2SKF] != NULL) {
 		/*
 		 * ST points at the state (parent or child) that has
 		 * all the fragments.
 		 */
-		status = ikev2_reassemble_fragments(st, md, &chunk);
-		/* note: if status is STF_OK, chunk is set */
+		ok = ikev2_reassemble_fragments(st, md);
 	} else {
 		pb_stream *e_pbs = &md->chain[ISAKMP_NEXT_v2SK]->pbs;
 
-		setchunk(chunk, md->packet_pbs.start,
-			 e_pbs->roof - md->packet_pbs.start);
-
-		status = ikev2_verify_and_decrypt_sk_payload(ike_sa(st), md, &chunk,
+		chunk_t c = chunk(md->packet_pbs.start,
+				  e_pbs->roof - md->packet_pbs.start);
+		ok = ikev2_verify_and_decrypt_sk_payload(ike_sa(st), md, &c,
 							     e_pbs->cur - md->packet_pbs.start);
+		md->chain[ISAKMP_NEXT_v2SK]->pbs = chunk_as_pbs(c, "decrypted SK payload");
 	}
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu ikev2 %s decrypt %s",
 				     st->st_serialno,
 				     enum_name(&ikev2_exchange_names,
 					       md->hdr.isa_xchg),
-				     status == STF_OK ? "success" : "failed"));
+				     ok ? "success" : "failed"));
 
-	if (status != STF_OK) {
-		return status;
+	if (!ok) {
+		return STF_FAIL;
 	}
 
-	/* CLANG 3.5 mis-diagnoses that chunk is undefined */
-	md->encrypted_pbs = chunk_as_pbs(chunk, "cleartext");
 
-	enum next_payload_types_ikev2 np = md->chain[ISAKMP_NEXT_v2SK] ?
-		md->chain[ISAKMP_NEXT_v2SK]->payload.generic.isag_np :
-		md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf.isaskf_np;
-
-	md->encrypted_payloads = ikev2_decode_payloads(md, &md->encrypted_pbs, np);
+	struct payload_digest *sk = md->chain[ISAKMP_NEXT_v2SK];
+	md->encrypted_payloads = ikev2_decode_payloads(md, &sk->pbs, sk->payload.generic.isag_np);
 	return md->encrypted_payloads.n == v2N_NOTHING_WRONG ? STF_OK
 		: STF_FAIL + md->encrypted_payloads.n;
 }

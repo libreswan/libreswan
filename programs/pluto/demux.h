@@ -94,7 +94,7 @@ struct msg_digest {
 
 	/*
 	 * The packet PBS contains a message PBS and the message PBS
-	 * contains payloads one of which is the encrypted_pbs which
+	 * contains payloads one of which (for IKEv2) is the SK which
 	 * also contains payloads.
 	 *
 	 * Danger Will Robinson: since the digest contains a pbs
@@ -104,7 +104,6 @@ struct msg_digest {
 	 */
 	pb_stream packet_pbs;			/* whole packet */
 	pb_stream message_pbs;			/* message to be processed */
-	pb_stream encrypted_pbs;		/* (v2) encrypted (SK) payload (decrypted) */
 
 #   define PAYLIMIT 30
 	struct payload_digest digest[PAYLIMIT];
