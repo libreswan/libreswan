@@ -663,18 +663,9 @@ static const char *parser_alg_info_add(struct parser_context *p_ctx,
 		return err_buf;
 	}
 
-	if (p_ctx->protocol->alg_info_add == NULL) {
-		return merge_default_proposals(p_ctx->policy,
-					       alg_info, &proposal,
-					       err_buf, err_buf_len);
-	}
-
-	return p_ctx->protocol->alg_info_add(p_ctx->policy,
-					  alg_info,
-					  proposal.encrypt, proposal.enckeylen,
-					  proposal.prf, proposal.integ,
-					  proposal.dh,
-					  err_buf, err_buf_len);
+	return merge_default_proposals(p_ctx->policy,
+				       alg_info, &proposal,
+				       err_buf, err_buf_len);
 }
 
 /*

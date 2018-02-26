@@ -86,64 +86,7 @@ struct parser_protocol {
 	 * agnostic.
 	 */
 	unsigned protoid;
-	/*
-	 * Add the algorithm to the alg_info.
-	 *
-	 * If things go wrong, return a non-null error string
-	 * (possibly snprintf'd into ERR_BUF).
-	 *
-	 * NOTE:
-	 *
-	 * The callback .alg_info_add() is passed NULL to identify an
-	 * unspecified algorithm (in keeping with the C tradition of
-	 * 'no value'), and either 'alg_info_integ_null' or
-	 * 'ike_alg_encrypt_null' to identify an explicitly specified
-	 * 'null' algorithm.
-	 *
-	 * Only when the algorithm is NULL (unspecified or missing) should
-	 * .alg_info_add() consider adding in defaults.  For instance: in
-	 * esp=aes, neither the integrity nor DH algorithm were specified so
-	 * both would be NULL; however in esp=aes_gcm-null, integrity was
-	 * specified as 'null' so 'ike_alg_integ_null' is used, but DH would
-	 * still be NULL.
-	 *
-	 * WARNING:
-	 *
-	 * As of 2017-08-10, pluto proper doesn't always follow this
-	 * convention.  Instead of 'ike_alg_integ_null', NULL is used
-	 * for 'null' integrity (encryption does use
-	 * 'ike_alg_encrypt_null' it seems).  This affects the
-	 * following fields in pluto:
-	 *
-	 * - struct trans_attrs .integ, which is populated by the
-	 *   proposal code and used by the crypto and kernel code
-	 *
-	 * - struct kernel_alg .integ, populated and used by the
-	 *   kernel code
-	 *
-	 * But if pluto proper uses NULL for 'null' why not make the
-	 * parser consistent instead use 'ike_alg_*_unspecified' for
-	 * unspecified algorithms and NULL for 'null', say?  Several
-	 * reasons come to mind:
-	 *
-	 * - NULL is C's universal identifier of 'no value', not the
-	 *   'null' algorithm
-	 *
-	 * - having having lots of 'ike_alg_*_unspecified' structs
-	 *   quickly gets really messy (it was tried)
-	 *
-	 * - pluto is the one that is, arguably, messed up here, it
-	 *   isn't even consistent w.r.t. 'null' encryption vs
-	 *   integrity, and the result is 'integ==NULL' checks
-	 *   litering the code
-	 */
-	const char *(*alg_info_add)(const struct parser_policy *const policy,
-                                    struct alg_info *alg_info,
-				    const struct encrypt_desc *encrypt, int ek_bits,
-				    const struct prf_desc *prf,
-				    const struct integ_desc *integ,
-				    const struct oakley_group_desc *dh_group,
-                                    char *err_buf, size_t err_buf_len);
+
 	/*
 	 * This lookup functions must set err and return null if NAME
 	 * isn't valid.
