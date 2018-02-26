@@ -801,26 +801,52 @@ void alg_info_delref(struct alg_info *alg_info)
 size_t lswlog_proposal_info(struct lswlog *log,
 			    const struct proposal_info *proposal)
 {
-	size_t size = 0;
-	const char *sep = "";
+ 	size_t size = 0;
+ 	const char *sep = "";
+
 	if (proposal->encrypt != NULL) {
-		size += lswlogf(log, "%s%s", sep, proposal->encrypt->common.fqn);
-		sep = "-";
+		size += lswlogs(log, sep); sep = "-";
+		size += lswlogs(log, proposal->encrypt->common.fqn);
 		if (proposal->enckeylen != 0) {
 			size += lswlogf(log, "_%zd", proposal->enckeylen);
 		}
+	} else if (IMPAIR(ALGORITHM_PARSER)) {
+		size += lswlogs(log, sep); sep = "-";
+		size += lswlogs(log, "[ENCRYPT]");
 	}
+
 	if (proposal->prf != NULL) {
-		size += lswlogf(log, "%s%s", sep, proposal->prf->common.fqn);
-		sep = "-";
-	} else if (proposal->integ != NULL) {
-		size += lswlogf(log, "%s%s", sep, proposal->integ->common.fqn);
-		sep = "-";
+		size += lswlogs(log, sep); sep = "-";
+		size += lswlogs(log, proposal->prf->common.fqn);
+	} else if (IMPAIR(ALGORITHM_PARSER)) {
+		size += lswlogs(log, sep); sep = "-";
+		size += lswlogs(log, "[PRF]");
 	}
+
+	if (proposal->integ != NULL && proposal->prf == NULL) {
+		size += lswlogs(log, sep); sep = "-";
+		size += lswlogs(log, proposal->integ->common.fqn);
+	} else if (!(proposal->integ == &ike_alg_integ_none && ike_alg_is_aead(proposal->encrypt)) &&
+		   proposal->integ != NULL && proposal->integ->prf != proposal->prf) {
+		size += lswlogs(log, sep); sep = "-";
+		size += lswlogs(log, proposal->integ->common.fqn);
+	} else if (IMPAIR(ALGORITHM_PARSER)) {
+		size += lswlogs(log, sep); sep = "-";
+		if (proposal->integ != NULL) {
+			size += lswlogs(log, proposal->integ->common.fqn);
+		} else {
+			size += lswlogs(log, "[INTEG]");
+		}
+	}
+
 	if (proposal->dh != NULL) {
-		size += lswlogf(log, "%s%s", sep, proposal->dh->common.fqn);
-		sep = "-";	/* sep not subsequently used */
+		size += lswlogs(log, sep); sep = "-";
+		size += lswlogs(log, proposal->dh->common.fqn);
+	} else if (IMPAIR(ALGORITHM_PARSER)) {
+		size += lswlogs(log, sep); sep = "-";
+		size += lswlogs(log, "[DH]");
 	}
+
 	return size;
 }
 

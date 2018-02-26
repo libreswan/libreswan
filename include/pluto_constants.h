@@ -336,8 +336,10 @@ enum {
 
 	/* below are excluded from debug=all */
 	DBG_CRYPT_IX,		/* encryption/decryption of messages */
-	DBG_WHACKWATCH_IX,	/* never let WHACK go */
 	DBG_PRIVATE_IX,		/* displays private information: DANGER! */
+	DBG_ALGORITHM_PARSER_IX,	/* parsing ike=... et.al. */
+
+	DBG_WHACKWATCH_IX,	/* never let WHACK go */
 	DBG_ADD_PREFIX_IX,	/* add the log+state prefix to debug lines */
 
 	DBG_roof_IX,		/* first unassigned DBG is assigned to IMPAIR! */
@@ -370,8 +372,10 @@ enum {
 
 /* These are not part of "all" debugging */
 #define DBG_CRYPT	LELEM(DBG_CRYPT_IX)
-#define DBG_WHACKWATCH	LELEM(DBG_WHACKWATCH_IX)
 #define DBG_PRIVATE	LELEM(DBG_PRIVATE_IX)
+#define DBG_ALGORITHM_PARSER	LELEM(DBG_ALGORITHM_PARSER_IX)
+
+#define DBG_WHACKWATCH	LELEM(DBG_WHACKWATCH_IX)
 #define DBG_ADD_PREFIX	LELEM(DBG_ADD_PREFIX_IX)
 
 /*
@@ -413,6 +417,7 @@ enum {
 	IMPAIR_REPLAY_DUPLICATES_IX,		/* replay duplicates of each incoming packet */
 	IMPAIR_REPLAY_FORWARD_IX,		/* replay all earlier packets old-to-new */
 	IMPAIR_REPLAY_BACKWARD_IX,		/* replay all earlier packets new-to-old */
+	IMPAIR_ALGORITHM_PARSER_IX,		/* impair algorithm parser - what you see is what you get */
 
 	IMPAIR_roof_IX	/* first unassigned IMPAIR */
 };
@@ -454,6 +459,7 @@ enum {
 #define IMPAIR_REPLAY_DUPLICATES 	LELEM(IMPAIR_REPLAY_DUPLICATES_IX)
 #define IMPAIR_REPLAY_FORWARD	 	LELEM(IMPAIR_REPLAY_FORWARD_IX)
 #define IMPAIR_REPLAY_BACKWARD 		LELEM(IMPAIR_REPLAY_BACKWARD_IX)
+#define IMPAIR_ALGORITHM_PARSER 	LELEM(IMPAIR_ALGORITHM_PARSER_IX)
 
 /* State of exchanges
  *

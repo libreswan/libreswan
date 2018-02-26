@@ -47,6 +47,7 @@ static const char *debug_strings[] = {
 	D(DBG_WHACKWATCH, "debug-whackwatch"),
 	D(DBG_PRIVATE, "debug-private"),
 	D(DBG_ADD_PREFIX, "debug-add-prefix"),
+	D(DBG_ALGORITHM_PARSER, "debug-algorithm-parser"),
 };
 
 const struct enum_names debug_names = {
@@ -103,6 +104,7 @@ static const char *impair_strings[] = {
 	I(IMPAIR_REPLAY_DUPLICATES, "impair-replay-duplicates"),
 	I(IMPAIR_REPLAY_FORWARD, "impair-replay-forward"),
 	I(IMPAIR_REPLAY_BACKWARD, "impair-replay-backward"),
+	I(IMPAIR_ALGORITHM_PARSER, "impair-algorithm-parser"),
 };
 
 const struct enum_names impair_names = {
