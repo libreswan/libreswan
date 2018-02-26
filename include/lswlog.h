@@ -533,8 +533,10 @@ void libreswan_pexpect_log(const char *func,
 			      PASSERT_BASENAME, __LINE__,		\
 			      FMT, __VA_ARGS__)
 
+
 /*
- * Send an assertion failure to everwhere.
+ * Log an assertion failure to the main log, and the whack log; and
+ * then call abort().
  */
 
 void lswlog_passert_prefix(struct lswlog *buf);
@@ -548,6 +550,14 @@ void lswlog_passert_suffix(struct lswlog *buf, const char *func,
 
 #define LSWLOG_PASSERT(BUF)			\
 	LSWLOG_PASSERT_SOURCE(__func__, PASSERT_BASENAME, __LINE__, BUF)
+
+/* for a switch statement */
+
+void libreswan_bad_case(long n, const char *string, const char *func,
+			const char *file, unsigned long line) NEVER_RETURNS;
+
+#define bad_case(N)							\
+	libreswan_bad_case((N), #N, __func__, PASSERT_BASENAME, __LINE__)
 
 
 /*
