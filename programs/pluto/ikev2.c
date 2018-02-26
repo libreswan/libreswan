@@ -1180,13 +1180,13 @@ void process_v2_packet(struct msg_digest **mdp)
 		}
 	} else if (md->message_role == MESSAGE_REQUEST) {
 		/*
-		 * A request; send it to the parent.
+		 * A request; send it to the IKE SA.
 		 */
 		st = find_state_ikev2_parent(md->hdr.isa_icookie,
 					     md->hdr.isa_rcookie);
 		if (st == NULL) {
-			/* could this be a log line instead? too much log with scans */
-			DBG(DBG_CONTROL, DBG_log("initiator packet has no matching state"));
+			rate_log("%s message request has no corresponding IKE SA",
+				 enum_short_name(&ikev2_exchange_names, ix));
 			return;
 		}
 		/*
@@ -1232,8 +1232,8 @@ void process_v2_packet(struct msg_digest **mdp)
 			st = find_state_ikev2_parent(md->hdr.isa_icookie,
 						     md->hdr.isa_rcookie);
 			if (st == NULL) {
-				/* could this be a log line instead? too much log with scans */
-				DBG(DBG_CONTROL, DBG_log("responder packet has no matching state"));
+				rate_log("%s message response has no matching IKE SA",
+					 enum_name(&ikev2_exchange_names, ix));
 				return;
 			}
 			/*
@@ -1287,17 +1287,13 @@ void process_v2_packet(struct msg_digest **mdp)
 		switch (ike->sa.st_sa_role) {
 		case SA_INITIATOR:
 			if (sent_by_ike_initiator) {
-				/* could this be a log line instead? too much log with scans */
-				DBG(DBG_CONTROL,
-				    DBG_log("IKE SA initiator received a message with I(Initiator) flag set; dropping packet"));
+				rate_log("IKE SA initiator received a message with I(Initiator) flag set; dropping packet");
 				return;
 			}
 			break;
 		case SA_RESPONDER:
 			if (!sent_by_ike_initiator) {
-				/* could this be a log line instead? too much log with scans */
-				DBG(DBG_CONTROL,
-				    DBG_log("IKE SA responder received a message with I(Initiator) flag clear; dropping packet"));
+				rate_log("IKE SA responder received a message with I(Initiator) flag clear; dropping packet");
 				return;
 			}
 			break;

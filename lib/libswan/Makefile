@@ -76,6 +76,8 @@ OBJS += libreswan_log_errno.o
 OBJS += libreswan_pexpect_log.o
 OBJS += libreswan_bad_case.o
 
+OBJS += rate_log.o
+
 OBJS += lswlog.o
 OBJS += lswlog_dbg.o
 OBJS += lswlog_nss_error.o
