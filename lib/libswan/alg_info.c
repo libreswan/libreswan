@@ -843,3 +843,148 @@ size_t lswlog_alg_info(struct lswlog *log, const struct alg_info *alg_info)
 	}
 	return size;
 }
+
+/*
+ * Pluto only accepts one ESP/AH DH algorithm and it must come at the
+ * end and be separated with a ';'.  Enforce this (even though the
+ * parer is far more forgiving).
+ */
+
+struct alg_info_esp *alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,
+						     const char *alg_str,
+						     char *err_buf, size_t err_buf_len)
+{
+	if (aie == NULL) {
+		return NULL;
+	}
+
+	/*
+	 * Find the first and last proposal, if present (never know,
+	 * there could be no algorithms).
+	 */
+	struct proposal_info *first = NULL;
+	FOR_EACH_ESP_INFO(aie, esp_info) {
+		first = esp_info;
+		break;
+	}
+	struct proposal_info *last = NULL;
+	FOR_EACH_ESP_INFO(aie, esp_info) {
+		last = esp_info;
+	}
+	if (last == NULL) {
+		/* let caller deal with this. */
+		return aie;
+	}
+
+	/*
+	 * Make certain that either all algorithms have the same DH or
+	 * all are NULL (with the exception of the last).
+	 *
+	 * For instance, aes-modp1024,aes-modp2048 isn't allowed
+	 * because pluto assumes only one PFS group.
+	 */
+	FOR_EACH_ESP_INFO(aie, esp_info) {
+		if (esp_info == last) {
+			continue;
+		}
+		if (first->dh != esp_info->dh) {
+			snprintf(err_buf, err_buf_len,
+				 "%s DH algorithm '%s' must be specified last",
+				 esp_info->protocol->name,
+				 (first->dh != NULL ? first->dh : esp_info->dh)->common.fqn);
+			alg_info_free(&aie->ai);
+			return NULL;
+		}
+		if (esp_info->dh != NULL && last->dh == NULL) {
+			snprintf(err_buf, err_buf_len,
+				 "%s DH algorithm '%s' must be specified last",
+				 esp_info->protocol->name,
+				 esp_info->dh->common.fqn);
+			alg_info_free(&aie->ai);
+			return NULL;
+		}
+		if (esp_info->dh != NULL && esp_info->dh != last->dh) {
+			snprintf(err_buf, err_buf_len,
+				 "%s DH algorithm must be specified once",
+				 esp_info->protocol->name);
+			alg_info_free(&aie->ai);
+			return NULL;
+		}
+	}
+
+	/*
+	 * Restrict the DH separator character to ';' and the last
+	 * proposal.
+	 *
+	 * While the parser allows both "...;modp1024" and
+	 * "...-modp1024", pluto only admits to the former - so that
+	 * it stands out as something not part of the individual
+	 * proposals.
+	 *
+	 * Why? Because this is how it worked in the past.  Presumably
+	 * ';' makes it clear that it applies to all algorithms?
+	 *
+	 * Conversely, if all proposals include DH don't allow any
+	 * ';'.
+	 */
+	if (last->dh != NULL) {
+		char *last_dash = strrchr(alg_str, '-');
+		char *last_semi = strrchr(alg_str, ';');
+		char *last_comma = strrchr(alg_str, ',');
+		if (first != last && first->dh == NULL) {
+			/* reject missing ';'. */
+			if (last_semi == NULL) {
+				snprintf(err_buf, err_buf_len,
+					 "%s DH algorithm '%s' must be separated using a ';'",
+					 last->protocol->name,
+					 last->dh->common.fqn);
+				alg_info_free(&aie->ai);
+				return NULL;
+			}
+			/* reject xxx;DH,yyy */
+			if (last_comma != NULL && last_semi < last_comma) {
+				snprintf(err_buf, err_buf_len,
+					 "%s DH algorithm must appear after last proposal",
+					 last->protocol->name);
+				alg_info_free(&aie->ai);
+				return NULL;
+			}
+			/* reject yyy,xxx-DH */
+			if (last_dash != NULL && last_semi < last_dash) {
+				snprintf(err_buf, err_buf_len,
+					 "%s DH algorithm must be at end of proposal",
+					 last->protocol->name);
+				alg_info_free(&aie->ai);
+				return NULL;
+			}
+		} else if (first != last && first->dh != NULL) {
+			/* reject ...;... */
+			if (last_semi != NULL) {
+				snprintf(err_buf, err_buf_len,
+					 "%s DH algorithm must appear once after last proposal",
+					 last->protocol->name);
+				alg_info_free(&aie->ai);
+				return NULL;
+			}
+		}
+	}
+
+	/*
+	 * Now go through and force all DHs to a consistent value.
+	 *
+	 * This way, something printing an individual proposal will
+	 * include the common DH; and for IKEv2 it can just pick up
+	 * that DH.
+	 */
+	FOR_EACH_ESP_INFO(aie, esp_info) {
+		esp_info->dh = last->dh;
+	}
+
+	/*
+	 * Use last's DH for PFS.  Could be NULL but that is ok.
+	 *
+	 * Since DH is set uniformly, could use first.DH instead.
+	 */
+	aie->esp_pfsgroup = last->dh;
+	return aie;
+}

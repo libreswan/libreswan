@@ -23,7 +23,6 @@ OBJS += $(PROGRAM).o
 # What, if anything, should be moved to libswan or another library?
 #
 PLUTOOBJS += $(patsubst %.c,%.o,$(notdir $(wildcard $(top_srcdir)/programs/pluto/ike_alg*.c)))
-PLUTOOBJS += ike_info.o
 PLUTOOBJS += crypt_symkey.o
 PLUTOOBJS += crypt_hash.o
 PLUTOOBJS += test_buffer.o

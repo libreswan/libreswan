@@ -141,9 +141,6 @@ ifeq ($(USE_UNBOUND_EVENT_H_COPY),true)
 CFLAGS+=-I${LIBRESWANSRCDIR}/include/unbound
 endif
 
-# XXX: hack until ike_alg gets a library
-OBJS += ike_info.o
-
 OBJS += ike_alg_nss_modp.o
 OBJS += ike_alg_nss_ecp.o
 OBJS += ike_alg_nss_cbc.o

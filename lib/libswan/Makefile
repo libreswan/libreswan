@@ -38,7 +38,7 @@ LIB = libswan.a
 
 OBJS += x509dn.o asn1.o oid.o
 
-OBJS += addrtoa.o addrtot.o addrtypeof.o alg_info.o esp_info.o anyaddr.o \
+OBJS += addrtoa.o addrtot.o addrtypeof.o anyaddr.o \
 	constants.o datatot.o \
 	alloc.o diag.o \
 	goodmask.o id.o initaddr.o initsaid.o initsubnet.o \
@@ -58,6 +58,8 @@ OBJS += addrtoa.o addrtot.o addrtypeof.o alg_info.o esp_info.o anyaddr.o \
 	libreswan_log.o \
 	libreswan_loglog.o \
 	alg_byname.o
+
+OBJS += alg_info.o esp_info.o ike_info.o ah_info.o
 
 OBJS += chunk.o
 
