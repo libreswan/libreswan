@@ -7,3 +7,4 @@ ldsaref - SAref example implementation
 lucent - interop hacking with some proprietary lucent gateway
 patching - klips patching scripts from/between klips trees (unused)
 scripts - perl scripts for emulating ipsec eroute output when using NETKEY
+python-swan - python module to determine if traffic to a destination would get encrypted
