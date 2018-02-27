@@ -118,6 +118,7 @@ const struct proposal_protocol ike_proposal_protocol = {
 	.proposal_ok = ike_proposal_ok,
 	.encrypt_alg_byname = encrypt_alg_byname,
 	.prf_alg_byname = prf_alg_byname,
+	.integ_alg_byname = integ_alg_byname,
 	.dh_alg_byname = dh_alg_byname,
 };
 
