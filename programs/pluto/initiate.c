@@ -609,8 +609,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 	struct spd_route *sr;
 	char ours[ADDRTOT_BUF];
 	char his[ADDRTOT_BUF];
-	int ourport;
-	int hisport;
+	int ourport, hisport;
 	char demandbuf[256];
 	bool loggedit = FALSE;
 
@@ -783,31 +782,74 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 
 
 
+			/*
+			 * KLIPS always has shunts without protoports.
+			 * XFRM always has shunts with protoports, even when no *protoport= settings in conn
+			 */
 			if (b->negotiation_shunt != SPI_HOLD ||
 				(b->transport_proto != 0 ||
-				portof(&b->our_client) != 0 ||
-				portof(&b->peer_client) != 0))
+				ourport != 0 ||
+				hisport != 0))
 			{
 				const char *const delmsg = "delete bare kernel shunt - was replaced with  negotiationshunt";
 				const char *const addwidemsg = "oe-negotiating";
 				ip_subnet this_client, that_client;
+				int shunt_proto = b->transport_proto;
 
 				happy(addrtosubnet(&b->our_client, &this_client));
 				happy(addrtosubnet(&b->peer_client, &that_client));
-				/* negotiationshunt must be wider than bare shunt, esp on NETKEY */
-				setportof(0, &this_client.addr);
-				setportof(0, &that_client.addr);
+				/* OLD: negotiationshunt must be wider than bare shunt, esp on NETKEY */
+				/* if the connection we found has protoports, match those for the shunt */
+
+
+				setportof(0, &this_client.addr); /* always catch all ephemeral to dest */
+				setportof(0, &that_client.addr); /* default unless connection says otherwise */
+				if (b->transport_proto != 0) {
+					if (c->spd.that.protocol == 0) {
+						DBG(DBG_OPPO, DBG_log("shunt widened for protoports since conn does not limit protocols"));
+						shunt_proto = 0;
+						ourport = 0;
+						hisport =0;
+					} else {
+						if (hisport != 0) {
+							if (c->spd.that.port != 0) {
+								if (c->spd.that.port != hisport) {
+									loglog(RC_LOG_SERIOUS, "Dragons! connection port %d mismatches shunt dest port %d",
+										c->spd.that.port, hisport);
+								} else {
+									hsetportof(hisport, that_client.addr);
+									DBG(DBG_OPPO, DBG_log("bare shunt destination port set to %d", hisport));
+								}
+							} else {
+								DBG(DBG_OPPO, DBG_log("not really expecting a shunt for dport 0 ?"));
+							}
+						} else {
+							DBG(DBG_OPPO, DBG_log("KLIPS might not support these shunts with protoport"));
+						}
+					}
+
+				} else {
+					DBG(DBG_OPPO, DBG_log("shunt not widened for oppo because no protoport received from the kernel for the shunt"));
+				}
 
 				DBG(DBG_OPPO,
 					DBG_log("going to initiate opportunistic, first installing %s negotiationshunt",
 						enum_short_name(&spi_names, b->negotiation_shunt)));
 
 				// PAUL: should this use shunt_eroute() instead of API violation into raw_eroute()
+				/* if we have protoport= set, narrow to it. zero out ephemeral port */
+				if (shunt_proto != 0) {
+					if (c->spd.this.port != 0)
+						setportof(portof(&b->our_client), &this_client.addr);
+					if (c->spd.that.port != 0)
+						setportof(portof(&b->peer_client), &that_client.addr);
+				}
+
 				if (!raw_eroute(&b->our_client, &this_client,
 					&b->peer_client, &that_client,
 					htonl(SPI_HOLD), /* kernel induced */
 					htonl(b->negotiation_shunt),
-					SA_INT, 0, /* transport_proto */
+					SA_INT, shunt_proto,
 					ET_INT, null_proto_info,
 					deltatime(SHUNT_PATIENCE),
 					DEFAULT_IPSEC_SA_PRIORITY,
@@ -820,12 +862,12 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 				{
 					libreswan_log("adding bare wide passthrough negotiationshunt failed");
 				} else {
-					DBG(DBG_OPPO, DBG_log("added bare wide passthrough negotiationshunt succeeded (violating API)"));
-					add_bare_shunt(&this_client, &that_client, 0 /* broadened transport_proto */, SPI_HOLD, addwidemsg);
+					DBG(DBG_OPPO, DBG_log("added bare (possibly wided) passthrough negotiationshunt succeeded (violating API)"));
+					add_bare_shunt(&this_client, &that_client, shunt_proto, SPI_HOLD, addwidemsg);
 				}
-				/* now delete the (obsoleted) narrow bare kernel shunt - we have a broadened negotiationshunt replacement installed */
+				/* now delete the (obsoleted) narrow bare kernel shunt - we have a (possibly broadened) negotiationshunt replacement installed */
 				if (!delete_bare_shunt(&b->our_client, &b->peer_client,
-					b->transport_proto, SPI_HOLD /* kernel dictated */, delmsg))
+					shunt_proto, SPI_HOLD /* kernel dictated */, delmsg))
 				{
 					libreswan_log("Failed to: %s", delmsg);
 				} else {
@@ -879,8 +921,25 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 					     LELEM(RT_ROUTED_PROSPECTIVE),
 					     c->spd.routing));
 				if (b->held) {
+					/* if we have protoport= set, narrow to it. zero out ephemeral port */
+					if (b->transport_proto != 0) {
+						if (c->spd.this.port != 0) {
+							setportof(htons(c->spd.this.port), &b->our_client);
+						}
+						if (c->spd.that.port != 0) {
+							setportof(htons(c->spd.that.port), &b->peer_client);
+						}
+					}
 					/* packet triggered - not whack triggered */
 					DBG(DBG_OPPO, DBG_log("assigning negotiation_shunt to connection"));
+					/* if we have protoport= set, narrow to it. zero out ephemeral port */
+					/* warning: we know ports in this_client/that_client are 0 so far */
+					if (c->spd.this.protocol != 0) {
+						if (c->spd.this.port != 0)
+							setportof(portof(&b->our_client), &c->spd.this.client.addr);
+						if (c->spd.that.port != 0)
+							setportof(portof(&b->peer_client), &c->spd.that.client.addr);
+					}
 					if (assign_holdpass(c, &c->spd,
 						   b->transport_proto,
 						   b->negotiation_shunt,
@@ -944,6 +1003,7 @@ void initiate_ondemand(const ip_address *our_client,
 	b.negotiation_shunt = SPI_HOLD; /* until we found connection policy */
 	b.failure_shunt = SPI_HOLD; /* until we found connection policy */
 	b.whackfd = whackfd;
+
 	initiate_ondemand_body(&b
 #ifdef HAVE_LABELED_IPSEC
 				, uctx

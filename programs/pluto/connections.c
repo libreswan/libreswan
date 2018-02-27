@@ -1938,7 +1938,8 @@ void add_connection(const struct whack_message *wm)
  * Returns name of new connection.  NULL on failure (duplicated name).
  * Caller is responsible for pfreeing name.
  */
-char *add_group_instance(struct connection *group, const ip_subnet *target)
+char *add_group_instance(struct connection *group, const ip_subnet *target,
+			 u_int8_t proto , u_int16_t sport , u_int16_t dport)
 {
 	passert(group->kind == CK_GROUP);
 	passert(oriented(*group));
@@ -1954,7 +1955,12 @@ char *add_group_instance(struct connection *group, const ip_subnet *target)
 		char targetbuf[SUBNETTOT_BUF];
 
 		subnettot(target, 0, targetbuf, sizeof(targetbuf));
-		snprintf(namebuf, sizeof(namebuf), "%s#%s", group->name, targetbuf);
+		if (proto == 0) {
+			snprintf(namebuf, sizeof(namebuf), "%s#%s", group->name, targetbuf);
+		} else {
+			snprintf(namebuf, sizeof(namebuf), "%s#%s-%d--%d--%d", group->name,
+				targetbuf, sport, proto, dport);
+		}
 	}
 
 	if (conn_by_name(namebuf, FALSE, FALSE) != NULL) {
@@ -1980,6 +1986,13 @@ char *add_group_instance(struct connection *group, const ip_subnet *target)
 		unshare_connection(t);
 
 		t->spd.that.client = *target;
+		if (proto != 0) {
+			/* if foodgroup entry specifies protoport, override protoport= settings */
+			t->spd.this.protocol = proto;
+			t->spd.that.protocol = proto;
+			t->spd.this.port = sport;
+			t->spd.that.port = dport;
+		}
 		t->policy &= ~(POLICY_GROUP | POLICY_GROUTED);
 		t->policy |= POLICY_GROUPINSTANCE; /* mark as group instance for later */
 		t->kind = isanyaddr(&t->spd.that.host_addr) &&

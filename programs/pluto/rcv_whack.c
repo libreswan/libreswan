@@ -72,6 +72,7 @@
 #include "server.h" /* for pluto_seccomp */
 #include "kernel_alg.h"
 #include "ike_alg.h"
+#include "ip_address.h" /* for setportof() */
 
 #include "pluto_sd.h"
 
@@ -559,7 +560,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 				  "need --listen before opportunistic initiation");
 		} else {
 			initiate_ondemand(&m->oppo_my_client,
-						&m->oppo_peer_client, 0,
+						&m->oppo_peer_client, m->oppo_proto,
 						FALSE,
 						m->whack_async ?
 						  NULL_FD :

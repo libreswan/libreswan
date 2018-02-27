@@ -142,7 +142,7 @@ static void help(void)
 		"	[--username <name>] [--xauthpass <pass>]\n"
 		"\n"
 		"opportunistic initiation: whack [--tunnelipv4 | --tunnelipv6] \\\n"
-		"	--oppohere <ip-address> --oppothere <ip-address>\n"
+		"	--oppohere <ip-address> --oppothere <ip-address> [-oppotproto <protocol>]\n"
 		"\n"
 		"delete: whack --delete --name <connection_name>\n"
 		"\n"
@@ -304,8 +304,10 @@ enum option_enums {
 
 	OPT_OPPO_HERE,
 	OPT_OPPO_THERE,
+	OPT_OPPO_PROTO,
+	OPT_OPPO_DPORT,
 
-#   define OPT_LAST1 OPT_OPPO_THERE	/* last "normal" option, range 1 */
+#   define OPT_LAST1 OPT_OPPO_DPORT	/* last "normal" option, range 1 */
 
 #define OPT_FIRST2  OPT_ASYNC	/* first normal option, range 2 */
 
@@ -535,6 +537,8 @@ static const struct option long_opts[] = {
 
 	{ "oppohere", required_argument, NULL, OPT_OPPO_HERE + OO },
 	{ "oppothere", required_argument, NULL, OPT_OPPO_THERE + OO },
+	{ "oppoproto", required_argument, NULL, OPT_OPPO_PROTO + OO },
+	{ "oppodport", required_argument, NULL, OPT_OPPO_DPORT + OO },
 
 	{ "asynchronous", no_argument, NULL, OPT_ASYNC + OO },
 
@@ -842,6 +846,7 @@ int main(int argc, char **argv)
 	int xauthpasslen = 0;
 	bool gotusername = FALSE, gotxauthpass = FALSE;
 	const char *ugh;
+	int oppo_dport = 0;
 
 	/* check division of numbering space */
 	assert(OPTION_OFFSET + OPTION_ENUMS_LAST < NUMERIC_ARG);
@@ -1256,7 +1261,7 @@ int main(int argc, char **argv)
 			}
 			continue;
 
-		case OPT_OPPO_THERE:	/* --oppohere <ip-address> */
+		case OPT_OPPO_THERE:	/* --oppothere <ip-address> */
 			tunnel_af_used_by = long_opts[long_index].name;
 			diagq(ttoaddr(optarg, 0, msg.tunnel_addr_family,
 				      &msg.oppo_peer_client), optarg);
@@ -1264,6 +1269,14 @@ int main(int argc, char **argv)
 				diagq("0.0.0.0 or 0::0 isn't a valid client address",
 					optarg);
 			}
+			continue;
+
+		case OPT_OPPO_PROTO:	/* --oppoproto <protocol> */
+			msg.oppo_proto = strtol(optarg, NULL, 0);
+			continue;
+
+		case OPT_OPPO_DPORT:	/* --oppodport <port> */
+			oppo_dport = strtol(optarg, NULL, 0);
 			continue;
 
 		case OPT_ASYNC:
@@ -2077,6 +2090,10 @@ int main(int argc, char **argv)
 		}
 		break;
 	}
+
+
+	if (oppo_dport != 0)
+		setportof(htons(oppo_dport), &msg.oppo_peer_client);
 
 	if (optind != argc) {
 		/*

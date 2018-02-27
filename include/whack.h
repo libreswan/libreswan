@@ -253,6 +253,7 @@ struct whack_message {
 	/* for WHACK_OPINITIATE */
 	bool whack_oppo_initiate;
 	ip_address oppo_my_client, oppo_peer_client;
+	int oppo_proto, oppo_dport;
 
 	/* for WHACK_TERMINATE: */
 	bool whack_terminate;

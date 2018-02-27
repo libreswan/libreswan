@@ -1107,29 +1107,15 @@ static bool load_conn(
 	if (conn->options_set[KBF_TYPE]) {
 		switch ((enum keyword_satype)conn->options[KBF_TYPE]) {
 		case KS_TUNNEL:
-			if (conn->options_set[KBF_AUTHBY] &&
-				conn->options[KBF_AUTHBY] == POLICY_AUTH_NEVER) {
-					*perr = "connection type=tunnel must not specify authby=never";
-					return TRUE;
-			}
 			conn->policy |= POLICY_TUNNEL;
 			conn->policy &= ~POLICY_SHUNT_MASK;
 			break;
 
 		case KS_TRANSPORT:
-			if (conn->options_set[KBF_AUTHBY] &&
-				conn->options[KBF_AUTHBY] == POLICY_AUTH_NEVER) {
-					*perr = "connection type=transport must not specify authby=never";
-					return TRUE;
-			}
 			conn->policy &= ~POLICY_TUNNEL & ~POLICY_SHUNT_MASK;
 			break;
 
 		case KS_PASSTHROUGH:
-			if (!conn->options_set[KBF_AUTHBY] ||
-				conn->options[KBF_AUTHBY] != POLICY_AUTH_NEVER) {
-					*perr = "connection type=passthrough must specify authby=never";
-			}
 			conn->policy &=
 				~(POLICY_ENCRYPT | POLICY_AUTHENTICATE |
 				  POLICY_TUNNEL | POLICY_RSASIG) &
@@ -1138,10 +1124,6 @@ static bool load_conn(
 			break;
 
 		case KS_DROP:
-			if (!conn->options_set[KBF_AUTHBY] ||
-				conn->options[KBF_AUTHBY] != POLICY_AUTH_NEVER) {
-					*perr = "connection type=drop must specify authby=never";
-			}
 			conn->policy &=
 				~(POLICY_ENCRYPT | POLICY_AUTHENTICATE |
 				  POLICY_TUNNEL | POLICY_RSASIG) &
@@ -1150,10 +1132,6 @@ static bool load_conn(
 			break;
 
 		case KS_REJECT:
-			if (!conn->options_set[KBF_AUTHBY] ||
-				conn->options[KBF_AUTHBY] != POLICY_AUTH_NEVER) {
-					*perr = "connection type=drop must specify authby=never";
-			}
 			conn->policy &=
 				~(POLICY_ENCRYPT | POLICY_AUTHENTICATE |
 				  POLICY_TUNNEL | POLICY_RSASIG) &

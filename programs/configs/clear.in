@@ -1,3 +1,14 @@
-# This file defines the set of CIDRs (network/mask-length) to which
-# communication should always be in the clear. One IPv4 or IPv6 CIDR per line.
-
+# This file defines the set of network destinations for which
+# communication should always be in the clear.
+#
+# One IPv4 or IPv6 CIDR per line, optionally specifying a further
+# narrowing of protocol, source port and destination port
+#
+# examples:
+# 10.0.1.0/24
+# 2a03:6000:1004:1::/64
+#
+# dont IPsec encrypt ssh to a range
+#  10.0.1.0/24  tcp  0  22
+# don't IPsec encrypt any incoming ssh
+#  0.0.0.0/0  tcp  22  0

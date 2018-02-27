@@ -387,7 +387,11 @@ extern void suppress_delete(struct connection *c);
 extern void delete_connections_by_name(const char *name, bool strict);
 extern void delete_every_connection(void);
 extern char *add_group_instance(struct connection *group,
-				const ip_subnet *target);
+				const ip_subnet *target,
+				u_int8_t proto,
+				u_int16_t sport,
+				u_int16_t dport);
+
 extern void remove_group_instance(const struct connection *group,
 				  const char *name);
 extern void release_dead_interfaces(void);

@@ -1064,8 +1064,11 @@ static bool shunt_eroute(const struct connection *c,
 			enum pluto_sadb_operations op,
 			const char *opname)
 {
-	DBG(DBG_CONTROL, DBG_log("shunt_eroute() called for connection '%s' to '%s' for rt_kind '%s'",
-			c->name, opname, enum_name(&routing_story, rt_kind)));
+	DBG(DBG_CONTROL, DBG_log("shunt_eroute() called for connection '%s' to '%s' for rt_kind '%s' using protoports %d--%d->-%d",
+		c->name, opname, enum_name(&routing_story, rt_kind),
+                sr->this.protocol, ntohs(portof(&sr->this.client.addr)),
+                ntohs(portof(&sr->that.client.addr))));
+
 	if (kernel_ops->shunt_eroute != NULL) {
 		return kernel_ops->shunt_eroute(c, sr, rt_kind, op, opname);
 	}
@@ -1129,7 +1132,8 @@ void set_text_said(char *text_said, const ip_address *dst,
  * this allows the entry to be deleted.
  */
 struct bare_shunt **bare_shunt_ptr(const ip_subnet *ours, const ip_subnet *his,
-				int transport_proto)
+				   int transport_proto)
+
 {
 	struct bare_shunt *p, **pp;
 
@@ -1593,8 +1597,7 @@ bool assign_holdpass(const struct connection *c,
 
 		if (old == NULL) {
 			/* ??? should this happen?  It does. */
-			DBG(DBG_CONTROL,
-				DBG_log("assign_holdpass() no bare shunt to remove"));
+			libreswan_log("assign_holdpass() no bare shunt to remove? - mismatch?");
 		} else {
 			/* ??? should this happen? */
 			DBG(DBG_CONTROL,
@@ -2859,6 +2862,12 @@ bool route_and_eroute(struct connection *c,
 		firewall_notified = FALSE,
 		route_installed = FALSE;
 
+	DBG(DBG_CONTROLMORE, DBG_log("route_and_eroute() for proto %d, and source port %d dest port %d",
+                sr->this.protocol, sr->this.port, sr->that.port));
+	setportof(htons(sr->this.port), &sr->this.client.addr);
+	setportof(htons(sr->that.port), &sr->that.client.addr);
+
+
 #ifdef IPSEC_CONNECTION_LIMIT
 	bool new_eroute = FALSE;
 #endif
@@ -2879,9 +2888,11 @@ bool route_and_eroute(struct connection *c,
 
 	/* look along the chain of policies for same one */
 
+	/* we should look for dest port as well? */
+	/* ports are now switched to the ones in this.client / that.client ??????? */
+	/* but port set is sr->this.port and sr.that.port ! */
 	struct bare_shunt **bspp = (ero == NULL) ?
-		bare_shunt_ptr(&sr->this.client, &sr->that.client,
-			sr->this.protocol) :
+		bare_shunt_ptr(&sr->this.client, &sr->that.client, sr->this.protocol) :
 		NULL;
 
 	/* install the eroute */
@@ -3100,7 +3111,7 @@ bool route_and_eroute(struct connection *c,
 						bs->said.spi,         /* unused? network order */
 						bs->said.spi,         /* network order */
 						SA_INT,               /* proto */
-						0,                    /* transport_proto */
+						sr->this.protocol,    /* transport_proto */
 						ET_INT,
 						null_proto_info,
 						deltatime(SHUNT_PATIENCE),
@@ -3526,8 +3537,8 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 	}
 
 	DBG(DBG_CONTROL,
-		DBG_log("orphan_holdpass() called for %s with transport_proto '%d'",
-			c->name, transport_proto));
+		DBG_log("orphan_holdpass() called for %s with transport_proto '%d' and sport %d and dport %d",
+			c->name, transport_proto, sr->this.port, sr->that.port));
 
 	passert(LHAS(LELEM(CK_PERMANENT) | LELEM(CK_INSTANCE) |
 				LELEM(CK_GOING_AWAY), c->kind));
@@ -3560,6 +3571,8 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 
 	{
 		/* are we replacing a bare shunt ? */
+		setportof(htons(sr->this.port), &sr->this.client.addr);
+		setportof(htons(sr->that.port), &sr->that.client.addr);
 		struct bare_shunt **old = bare_shunt_ptr(&sr->this.client, &sr->that.client, sr->this.protocol);
 
 		if (old != NULL) {
@@ -3589,13 +3602,17 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 		DBG_bare_shunt("add", bs);
 
 		/* update kernel policy if needed */
+		/* This really causes the name to remain "oe-failing", we should be able to update only only the name of the shunt */
 		if (negotiation_shunt != failure_shunt ) {
+			DBG(DBG_CONTROL, DBG_log("replacing negotiation_shunt with failure_shunt"));
 			if (!replace_bare_shunt(&sr->this.host_addr, &sr->that.host_addr, bs->policy_prio,
 				negotiation_shunt, failure_shunt, bs->transport_proto,
 				"oe-failed"))
 			{
 				libreswan_log("assign_holdpass() failed to update shunt policy");
 			}
+		} else {
+			DBG(DBG_CONTROL, DBG_log("No need to replace negotiation_shunt with failure_shunt - they are the same"));
 		}
 	}
 
@@ -3610,7 +3627,7 @@ void expire_bare_shunts(void)
 {
 	struct bare_shunt **bspp;
 
-	DBG(DBG_OPPO, DBG_log("expiring aged bare shunts"));
+	DBG(DBG_OPPO, DBG_log("expiring aged bare shunts from shunt table"));
 	for (bspp = &bare_shunts; *bspp != NULL; ) {
 		struct bare_shunt *bsp = *bspp;
 		time_t age = deltasecs(monotimediff(mononow(), bsp->last_activity));

@@ -946,7 +946,7 @@ void delete_state(struct state *st)
 			enum_short_name(&spi_names, failure_shunt),
 			enum_short_name(&spi_names, nego_shunt)));
 
-		if (!orphan_holdpass(c, &c->spd, 0 /* transport_proto */, failure_shunt)) {
+		if (!orphan_holdpass(c, &c->spd, c->spd.this.protocol, failure_shunt)) {
 			loglog(RC_LOG_SERIOUS, "orphan_holdpass() failure ignored");
 		}
 	}

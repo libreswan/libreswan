@@ -442,6 +442,11 @@ kvmplutotest	dnsoe-04				good
 kvmplutotest	dnsoe-05				good
 kvmplutotest	dnsoe-06				wip
 
+# protoport OE
+kvmplutotest	newoe-18-poc-cop-port22-whack		good
+kvmplutotest	newoe-18-poc-cop-port22			good
+kvmplutotest	newoe-18-poc-cop-port22-transport	good
+
 kvmplutotest	ikev2-initiate-template-01		good
 
 kvmplutotest	ikev2-asymmetric-01-parsing		good
