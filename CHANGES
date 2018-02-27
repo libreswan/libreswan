@@ -18,6 +18,7 @@ v3.24 (unreleased)
 * portexcludes: new command ipsec portexcludes (see portexcludes.conf) [Paul]
 * _unbound-hook: Pass all IPSECKEY's to pluto, not just the first [Paul]
 * contrib/python-swan: module to check if trafic get be encrypted [Kim]
+* building: added USE_GLIBC_KERN_FLIP_HEADERS (default off) [Paul]
 * Bugtracker bugs fixed:
    #318: vti interface gets down on previous initiator if roles switch [Tuomo]
 
