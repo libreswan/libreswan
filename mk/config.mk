@@ -261,6 +261,11 @@ NSS_REQ_AVA_COPY?=true
 # is currently true for basically all distro's
 USE_XFRM_HEADER_COPY?=true
 
+# Some systems have a bogus combination of glibc and kernel-headers which
+# causes a conflict in the IPv6 defines. Try enabling this option as a workaround
+# when you see errors related to 'struct in6_addr'
+USE_GLIBC_KERN_FLIP_HEADERS?=false
+
 # Enable NIC IPsec hardware offloading API. Introduced in Linux Kernel 4.12
 USE_NIC_OFFLOAD?=true
 

@@ -51,10 +51,15 @@
 #include <linux/if_addr.h>
 #include <linux/if_link.h>
 
-/* the order of these 3 are very sensitive - do not change */
-#include <netinet/in.h>
-#include "linux/xfrm.h" /* local (if configured) or system copy */
-#include "libreswan.h"
+/* work around weird combo's of glibc and kernel header conflicts */
+#ifndef GLIBC_KERN_FLIP_HEADERS
+# include <netinet/in.h>
+# include "linux/xfrm.h" /* local (if configured) or system copy */
+# include "libreswan.h"
+#else
+# include "libreswan.h"
+# include "linux/xfrm.h" /* local (if configured) or system copy */
+#endif
 
 #include "libreswan/pfkeyv2.h"
 #include "libreswan/pfkey.h"

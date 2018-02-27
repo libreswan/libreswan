@@ -59,6 +59,11 @@ OBJS += retransmit.o
 ifeq ($(USE_XFRM_HEADER_COPY),true)
 CFLAGS+=-I ${LIBRESWANSRCDIR}/programs/pluto/linux-copy
 endif
+
+ifeq ($(USE_GLIBC_KERN_FLIP_HEADERS),true)
+CFLAGS+=-DGLIBC_KERN_FLIP_HEADERS
+endif
+
 # where to find klips headers and Libreswan headers
 HDRDIRS +=-I${LIBRESWANSRCDIR}/include -I$(LIBRESWANSRCDIR)/lib/libcrypto -I$(KLIPSINC)
 
