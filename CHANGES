@@ -12,6 +12,7 @@ v3.24 (unreleased)
 * pluto: Cleanup of state/md passing code [Andrew]
 * pluto: Allow switching back from wrong instance to template conn [Paul]
 * pluto: disentangle IKEv1 and IKEv2 packet sending code [Andrew]
+* pluto: Support for protoport based Opportunistic IPsec [Paul]
 * addconn: Fix auto=route and auto=start processing [Paul]
 * FIPS: Don't attempt HMAC integrity test on rsasigkey (rhbz#1544143 [Paul]
 * portexcludes: new command ipsec portexcludes (see portexcludes.conf) [Paul]
