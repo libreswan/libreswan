@@ -3,7 +3,7 @@
 [esp]
 	AES_CBC-HMAC_SHA1_96
 [esp=]
-	ERROR: String ended with invalid char, just after "" (state=ST_INI_EA)
+	ERROR: String ended with invalid char, just after ""
 [esp=aes_gcm_a-128-null]
 	AES_GCM_8_128-NONE
 [esp=3des-sha1;modp1024]
@@ -221,9 +221,9 @@
 [esp=aes128-sha2_128]
 	ERROR: ESP integrity algorithm 'sha2_128' is not recognized
 [esp=aes256-sha2_256-4096]
-	ERROR: Invalid modulus, just after "aes256-sha2_256-" (state=ST_AA_END)
+	ERROR: ESP DH algorithm '4096' is not recognized
 [esp=aes256-sha2_256-128]
-	ERROR: Invalid modulus, just after "aes256-sha2_256-" (state=ST_AA_END)
+	ERROR: ESP DH algorithm '128' is not recognized
 [esp=vanitycipher]
 	ERROR: ESP encryption algorithm 'vanitycipher' is not recognized
 [esp=ase-sah]
@@ -255,7 +255,7 @@
 [ah]
 	HMAC_SHA1_96
 [ah=]
-	ERROR: String ended with invalid char, just after "" (state=ST_INI_AA)
+	ERROR: String ended with invalid char, just after ""
 [ah=md5]
 	HMAC_MD5_96
 [ah=sha]
@@ -287,7 +287,7 @@
 [ah=vanityhash1]
 	ERROR: AH integrity algorithm 'vanityhash1' is not recognized
 [ah=aes_gcm_c-256]
-	ERROR: Invalid modulus, just after "aes_gcm_c-" (state=ST_AA_END)
+	ERROR: AH integrity algorithm 'aes_gcm_c' is not recognized
 [ah=id3]
 	ERROR: AH integrity algorithm 'id3' is not recognized
 [ah=3des]
@@ -316,7 +316,7 @@
 	3DES_CBC-HMAC_SHA2_512-MODP1536
 	3DES_CBC-HMAC_SHA1-MODP1536
 [ike=]
-	ERROR: String ended with invalid char, just after "" (state=ST_INI_EA)
+	ERROR: String ended with invalid char, just after ""
 [ike=3des-sha1]
 	3DES_CBC-HMAC_SHA1-MODP2048
 	3DES_CBC-HMAC_SHA1-MODP1536
