@@ -105,15 +105,18 @@ struct alg_info_esp *alg_info_esp_create_from_str(const struct parser_policy *po
 	 */
 	struct alg_info_esp *alg_info_esp = alloc_thing(struct alg_info_esp,
 							"alg_info_esp");
-	/*
-	 * These calls can free alg_info_esp!
-	 */
-	alg_info_esp = (struct alg_info_esp *)
-		alg_info_parse_str(policy,
-				   &alg_info_esp->ai,
-				   alg_str,
-				   err_buf, err_buf_len,
-				   &esp_parser_protocol);
+
+	alg_info_parse_str(policy,
+			   &alg_info_esp->ai,
+			   alg_str,
+			   err_buf, err_buf_len,
+			   &esp_parser_protocol);
+	if (err_buf[0] != '\0') {
+		alg_info_free(&alg_info_esp->ai);
+		return NULL;
+	}
+
+	/* This call can free ALG_INFO_ESP. */
 	alg_info_esp = alg_info_discover_pfsgroup_hack(alg_info_esp, alg_str,
 						       err_buf, err_buf_len);
 	return alg_info_esp;

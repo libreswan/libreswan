@@ -193,8 +193,7 @@ size_t lswlog_alg_info(struct lswlog *log, const struct alg_info *alg_info);
 	FOR_EACH_PROPOSAL_INFO(&((ALG_INFO)->ai), IKE_INFO)
 
 /*
- * on success: returns alg_info
- * on failure: pfree(alg_info) and return NULL;
+ * Error indicated by err_buf[0] != '\0'.
  *
  * POLICY should be used to guard algorithm supported checks.  For
  * instance: if POLICY=IKEV1, then IKEv1 support is required (IKEv2 is
@@ -208,11 +207,11 @@ size_t lswlog_alg_info(struct lswlog *log, const struct alg_info *alg_info);
  * Parsing with POLICY='0' is allowed. It will accept the algorithms
  * unconditionally (spi.c seems to need this).
  */
-struct alg_info *alg_info_parse_str(const struct parser_policy *policy,
-				    struct alg_info *alg_info,
-				    const char *alg_str,
-				    char *err_buf, size_t err_buf_len,
-				    const struct parser_protocol *protocol);
+void alg_info_parse_str(const struct parser_policy *policy,
+			struct alg_info *alg_info,
+			const char *alg_str,
+			char *err_buf, size_t err_buf_len,
+			const struct parser_protocol *protocol);
 
 /*
  * Check that encrypt==AEAD and/or integ==none don't contradict.

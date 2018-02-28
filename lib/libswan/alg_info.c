@@ -669,15 +669,11 @@ static void parser_alg_info_add(struct parser_context *p_ctx,
 				err_buf, err_buf_len);
 }
 
-/*
- * on success: returns alg_info
- * on failure: alg_info_free(alg_info) and return NULL;
- */
-struct alg_info *alg_info_parse_str(const struct parser_policy *policy,
-				    struct alg_info *alg_info,
-				    const char *alg_str,
-				    char *err_buf, size_t err_buf_len,
-				    const struct parser_protocol *protocol)
+void alg_info_parse_str(const struct parser_policy *policy,
+			struct alg_info *alg_info,
+			const char *alg_str,
+			char *err_buf, size_t err_buf_len,
+			const struct parser_protocol *protocol)
 {
 	DBG(DBG_CONTROL,
 	    DBG_log("parsing '%s' for %s", alg_str, protocol->name));
@@ -699,7 +695,7 @@ struct alg_info *alg_info_parse_str(const struct parser_policy *policy,
 		merge_default_proposals(ctx.policy,
 					alg_info, &proposal,
 					err_buf, err_buf_len);
-		return alg_info;
+		return;
 	}
 
 	ptr = alg_str;
@@ -713,8 +709,7 @@ struct alg_info *alg_info_parse_str(const struct parser_policy *policy,
 					 pm_ugh,
 					 (int)(ptr - alg_str - 1), alg_str,
 					 parser_state_name(ctx.state));
-				alg_info_free(alg_info);
-				return NULL;
+				return;
 			}
 		}
 		ret = ctx.state;
@@ -725,8 +720,7 @@ struct alg_info *alg_info_parse_str(const struct parser_policy *policy,
 					    err_buf, err_buf_len,
 					    alg_info);
 			if (err_buf[0] != '\0') {
-				alg_info_free(alg_info);
-				return NULL;
+				return;
 			}
 			/* zero out for next run (ST_END) */
 			parser_init(&ctx, policy, protocol);
@@ -738,7 +732,6 @@ struct alg_info *alg_info_parse_str(const struct parser_policy *policy,
 				break;
 		}
 	} while (ret < ST_EOF);
-	return alg_info;
 }
 
 bool proposal_aead_none_ok(const struct proposal_info *proposal,

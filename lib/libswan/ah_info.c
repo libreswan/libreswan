@@ -100,15 +100,17 @@ struct alg_info_esp *alg_info_ah_create_from_str(const struct parser_policy *pol
 	 */
 	struct alg_info_esp *alg_info_ah = alloc_thing(struct alg_info_esp, "alg_info_ah");
 
-	/*
-	 * These calls can free ALG_INFO_AH.
-	 */
-	alg_info_ah = (struct alg_info_esp *)
-		alg_info_parse_str(policy,
-				   &alg_info_ah->ai,
-				   alg_str,
-				   err_buf, err_buf_len,
-				   &ah_parser_protocol);
+	alg_info_parse_str(policy,
+			   &alg_info_ah->ai,
+			   alg_str,
+			   err_buf, err_buf_len,
+			   &ah_parser_protocol);
+	if (err_buf[0] != '\0') {
+		alg_info_free(&alg_info_ah->ai);
+		return NULL;
+	}
+
+	/* This call can free ALG_INFO_AH. */
 	alg_info_ah = alg_info_discover_pfsgroup_hack(alg_info_ah, alg_str,
 						      err_buf, err_buf_len);
 	return alg_info_ah;

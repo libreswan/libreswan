@@ -133,10 +133,15 @@ struct alg_info_ike *alg_info_ike_create_from_str(const struct parser_policy *po
 	 */
 	struct alg_info_ike *alg_info_ike = alloc_thing(struct alg_info_ike, "alg_info_ike");
 
-	return (struct alg_info_ike *)
-		alg_info_parse_str(policy,
-				   &alg_info_ike->ai,
-				   alg_str,
-				   err_buf, err_buf_len,
-				   &ike_parser_protocol);
+	alg_info_parse_str(policy,
+			   &alg_info_ike->ai,
+			   alg_str,
+			   err_buf, err_buf_len,
+			   &ike_parser_protocol);
+	if (err_buf[0] != '\0') {
+		alg_info_free(&alg_info_ike->ai);
+		return NULL;
+	}
+
+	return alg_info_ike;
 }
