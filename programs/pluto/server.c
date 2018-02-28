@@ -771,9 +771,17 @@ void show_ifaces_status(void)
 void show_debug_status(void)
 {
 	LSWLOG_WHACK(RC_COMMENT, buf) {
-		lswlogs(buf, "debug ");
-		lswlog_enum_lset_short(buf, &debug_and_impair_names,
-				       "+", cur_debugging);
+		lswlogs(buf, "debug:");
+		if (cur_debugging & DBG_MASK) {
+			lswlogs(buf, " ");
+			lswlog_enum_lset_short(buf, &debug_names,
+					       "+", cur_debugging & DBG_MASK);
+		}
+		if (cur_debugging & IMPAIR_MASK) {
+			lswlogs(buf, " impair: ");
+			lswlog_enum_lset_short(buf, &impair_names,
+					       "+", cur_debugging & IMPAIR_MASK);
+		}
 	}
 }
 
