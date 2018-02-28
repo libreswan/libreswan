@@ -379,62 +379,66 @@ enum {
 #define DBG_ADD_PREFIX	LELEM(DBG_ADD_PREFIX_IX)
 
 /*
- * Index of IMPAIR set elements.  These set at the end of the DBG
- * elements.
+ * Index of IMPAIR set elements.
+ *
+ * see impair.c (libswan) for a definition of each of these fields.
+ *
+ * XXX: For now, these share the same lset_t as the DBG elements
+ * above.
  */
 
 enum {
 	IMPAIR_floor_IX = DBG_roof_IX,
-	IMPAIR_BUST_MI2_IX = IMPAIR_floor_IX,	/* make MI2 really large */
-	IMPAIR_BUST_MR2_IX,			/* make MR2 really large */
-	IMPAIR_DROP_I2_IX,			/* drop second initiator packet */
-	IMPAIR_SA_CREATION_IX,			/* fail all SA creation */
-	IMPAIR_JACOB_TWO_TWO_IX,		/* cause pluto to send all messages twice. */
-						/* cause pluto to send all messages twice. */
-	IMPAIR_ALLOW_NULL_NONE_IX,		/* cause pluto to allow esp=null-none and ah=none for testing */
-	IMPAIR_MAJOR_VERSION_BUMP_IX,		/* cause pluto to send an IKE major version that's higher then we support. */
-	IMPAIR_MINOR_VERSION_BUMP_IX,		/* cause pluto to send an IKE minor version that's higher then we support. */
+	IMPAIR_BUST_MI2_IX = IMPAIR_floor_IX,
+	IMPAIR_BUST_MR2_IX,
+	IMPAIR_DROP_I2_IX,
+	IMPAIR_SA_CREATION_IX,
+	IMPAIR_JACOB_TWO_TWO_IX,
 
-	IMPAIR_RETRANSMITS_IX,			/* causes pluto to timeout on first retransmit */
-	IMPAIR_TIMEOUT_ON_RETRANSMIT_IX,		/* causes pluto to "retry" (switch protocol) on the first retransmit */
-	IMPAIR_DELETE_ON_RETRANSMIT_IX,		/* causes pluto to fail on the first retransmit */
-	IMPAIR_SUPPRESS_RETRANSMITS_IX,		/* causes pluto to never send retransmits (wait the full timeout) */
+	IMPAIR_ALLOW_NULL_NONE_IX,
+	IMPAIR_MAJOR_VERSION_BUMP_IX,
+	IMPAIR_MINOR_VERSION_BUMP_IX,
 
-	IMPAIR_SEND_BOGUS_PAYLOAD_FLAG_IX,	/* causes pluto to set a RESERVED PAYLOAD flag to test ignoring/zeroing it */
-	IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX,	/* causes pluto to set a RESERVED ISAKMP flag to test ignoring/zeroing it */
-	IMPAIR_SEND_IKEv2_KE_IX,		/* causes pluto to omit sending the KE payload in IKEv2 */
-	IMPAIR_SEND_NO_DELETE_IX,		/* causes pluto to omit sending Notify/Delete messages */
-	IMPAIR_SEND_NO_IKEV2_AUTH_IX,		/* causes pluto to omit sending an IKEv2 IKE_AUTH packet */
-	IMPAIR_SEND_NO_XAUTH_R0_IX,		/* causes pluto to omit sending an XAUTH user/passwd request */
-	IMPAIR_DROP_XAUTH_R0_IX,		/* causes pluto to drop an XAUTH user/passwd request on IKE initiator */
-	IMPAIR_SEND_NO_MAIN_R2_IX,		/* causes pluto to omit sending an last Main Mode response packet */
-	IMPAIR_FORCE_FIPS_IX,			/* causes pluto to believe we are in fips mode, NSS needs its own hack */
-	IMPAIR_SEND_KEY_SIZE_CHECK_IX,		/* causes pluto to omit checking configured ESP key sizes for testing */
-	IMPAIR_SEND_ZERO_GX_IX,			/* causes pluto to send a g^x that is zero, breaking DH calculation */
-	IMPAIR_SEND_BOGUS_DCOOKIE_IX,		/* causes pluto to send a a bogus IKEv2 DCOOKIE */
-	IMPAIR_OMIT_HASH_NOTIFY_REQUEST_IX,	/* causes pluto to omit sending hash notify in IKE_SA_INIT Request */
-	IMPAIR_IGNORE_HASH_NOTIFY_REQUEST_IX,	/* causes pluto to ignore incoming hash notify from IKE_SA_INIT Request */
-	IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE_IX,	/* causes pluto to ignore incoming hash notify from IKE_SA_INIT Response*/
-	IMPAIR_IKEv2_EXCLUDE_INTEG_NONE_IX,	/* lets pluto exclude integrity 'none' in proposals */
-	IMPAIR_IKEv2_INCLUDE_INTEG_NONE_IX,	/* lets pluto include integrity 'none' in proposals */
+	IMPAIR_RETRANSMITS_IX,
+	IMPAIR_TIMEOUT_ON_RETRANSMIT_IX,
+	IMPAIR_DELETE_ON_RETRANSMIT_IX,
+	IMPAIR_SUPPRESS_RETRANSMITS_IX,
 
-	IMPAIR_REPLAY_DUPLICATES_IX,		/* replay duplicates of each incoming packet */
-	IMPAIR_REPLAY_FORWARD_IX,		/* replay all earlier packets old-to-new */
-	IMPAIR_REPLAY_BACKWARD_IX,		/* replay all earlier packets new-to-old */
+	IMPAIR_SEND_BOGUS_PAYLOAD_FLAG_IX,
+	IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX,
+	IMPAIR_SEND_IKEv2_KE_IX,
+	IMPAIR_SEND_NO_DELETE_IX,
+	IMPAIR_SEND_NO_IKEV2_AUTH_IX,
+	IMPAIR_SEND_NO_XAUTH_R0_IX,
+	IMPAIR_DROP_XAUTH_R0_IX,
+	IMPAIR_SEND_NO_MAIN_R2_IX,
+	IMPAIR_FORCE_FIPS_IX,
+	IMPAIR_SEND_KEY_SIZE_CHECK_IX,
+	IMPAIR_SEND_ZERO_GX_IX,
+	IMPAIR_SEND_BOGUS_DCOOKIE_IX,
+	IMPAIR_OMIT_HASH_NOTIFY_REQUEST_IX,
+	IMPAIR_IGNORE_HASH_NOTIFY_REQUEST_IX,
+	IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE_IX,
+	IMPAIR_IKEv2_EXCLUDE_INTEG_NONE_IX,
+	IMPAIR_IKEv2_INCLUDE_INTEG_NONE_IX,
 
-	IMPAIR_REPLAY_ENCRYPTED_IX,		/* replay encrypted packets */
-	IMPAIR_CORRUPT_ENCRYPTED_IX,		/* corrupts the encrypted packet so that the decryption fails */
+	IMPAIR_REPLAY_DUPLICATES_IX,
+	IMPAIR_REPLAY_FORWARD_IX,
+	IMPAIR_REPLAY_BACKWARD_IX,
 
-	IMPAIR_PROPOSAL_PARSER_IX,		/* impair algorithm parser - what you see is what you get */
+	IMPAIR_REPLAY_ENCRYPTED_IX,
+	IMPAIR_CORRUPT_ENCRYPTED_IX,
 
-	IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_SA_INIT_IX,	/* add a payload with an unknown type to SA_INIT */
-	IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_AUTH_IX,		/* add a payload with an unknown type to AUTH */
-	IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK_IX,	/* add a payload with an unknown type to AUTH's SK payload */
-	IMPAIR_UNKNOWN_PAYLOAD_CRITICAL_IX,		/* mark the unknown payload as critical */
+	IMPAIR_PROPOSAL_PARSER_IX,
 
-	IMPAIR_ALLOW_DNS_INSECURE_IX,		/* allow IPSECKEY lookups without DNSSEC protection */
+	IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_SA_INIT_IX,
+	IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_AUTH_IX,
+	IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK_IX,
+	IMPAIR_UNKNOWN_PAYLOAD_CRITICAL_IX,
 
-	IMPAIR_SEND_PKCS7_THINGIE_IX,		/* send certificates as a PKCS7 thingie */
+	IMPAIR_ALLOW_DNS_INSECURE_IX,
+
+	IMPAIR_SEND_PKCS7_THINGIE_IX,
 
 	IMPAIR_roof_IX	/* first unassigned IMPAIR */
 };
