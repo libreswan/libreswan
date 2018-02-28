@@ -53,7 +53,6 @@
 
 /* work around weird combo's of glibc and kernel header conflicts */
 #ifndef GLIBC_KERN_FLIP_HEADERS
-# include <netinet/in.h>
 # include "linux/xfrm.h" /* local (if configured) or system copy */
 # include "libreswan.h"
 #else
