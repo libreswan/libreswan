@@ -333,6 +333,7 @@ static void usage(void)
 		"  -v2: only IKEv2 algorithms\n"
 		"  -fips: put NSS in FIPS mode\n"
 		"  -v: more verbose\n"
+		"  -impair: disable all algorithm parser checks\n"
 		"  -t: run testsuite\n"
 		"  <protocol>: the protocol, one of 'ike', 'esp', or 'ah'\n"
 		"  <proposals>: a comma separated list of proposals to parse\n"
@@ -363,6 +364,8 @@ int main(int argc, char *argv[])
 	};
 	bool run_tests = false;
 	bool verbose = false;
+	bool debug = false;
+	bool impair = false;
 
 	char **argp = argv + 1;
 	for (; *argp != NULL; argp++) {
@@ -390,6 +393,10 @@ int main(int argc, char *argv[])
 			lsw_set_fips_mode(LSW_FIPS_UNKNOWN);
 		} else if (streq(arg, "v")) {
 			verbose = true;
+		} else if (streq(arg, "debug")) {
+			debug = true;
+		} else if (streq(arg, "impair")) {
+			impair = true;
 		} else {
 			fprintf(stderr, "unknown option: %s\n", *argp);
 			exit(1);
@@ -407,12 +414,23 @@ int main(int argc, char *argv[])
 	}
 
 	/*
-	 * Only be verbose after NSS has started.  Otherwize fake and
+	 * Only be verbose after NSS has started.  Otherwise fake and
 	 * real FIPS modes give different results.
 	 */
 	log_to_stderr = verbose;
 
 	ike_alg_init();
+
+	/*
+	 * Only enabling debugging and impairing after things have
+	 * started.  Otherwise there's just TMI.
+	 */
+	if (debug) {
+		cur_debugging |= DBG_ALGORITHM_PARSER;
+	}
+	if (impair) {
+		cur_debugging |= IMPAIR_ALGORITHM_PARSER;
+	}
 
 	if (*argp) {
 		if (run_tests) {
