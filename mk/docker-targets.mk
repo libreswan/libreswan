@@ -60,7 +60,7 @@ ifeq ($(DISTRO), fedora)
 	endif
 endif
 
-BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
+BRANCH = $(shell test -d .git && test -f /usr/bin/git -o -f /usr/local/bin/git && git rev-parse --abbrev-ref HEAD)
 TRAVIS_BANCH = $(call W1, $(BRANCH),'')
 ifeq ($(TRAVIS_BANCH), travis)
 	DISTRO =  $(call W2, $(BRANCH),fedora)
