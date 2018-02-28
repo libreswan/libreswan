@@ -13,7 +13,6 @@ extern enum_names sd_action_names;
 extern enum_names pluto_cryptoimportance_names;
 extern enum_names stfstatus_name;
 extern enum_names ikev2_asym_auth_name;
-extern const enum_names debug_and_impair_names;
 extern const enum_names debug_names;
 extern const struct lmod_info debug_lmod_info;
 extern const enum_names impair_names;

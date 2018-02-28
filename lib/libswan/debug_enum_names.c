@@ -119,15 +119,3 @@ const struct lmod_info impair_lmod_info = {
 	.all = IMPAIR_MASK,
 	.mask = IMPAIR_MASK,
 };
-
-const struct enum_names debug_and_impair_names = {
-	DBG_floor_IX, DBG_roof_IX - 1,
-	ARRAY_REF(debug_strings),
-	/*
-	 * For this enum_names, "short" names will always use the
-	 * "debug-" prefix.  The "impair-" prefix in impair_names will
-	 * be ignored.
-	 */
-	"debug-",
-	&impair_names,
-};
