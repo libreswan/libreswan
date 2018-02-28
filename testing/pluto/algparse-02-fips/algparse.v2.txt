@@ -7,9 +7,9 @@
 [esp=aes_gcm_a-128-null]
 	AES_GCM_8_128-NONE
 [esp=3des-sha1;modp1024]
-	ERROR: ESP DH algorithm 'modp1024' is not supported, enc_alg="3des"(0), auth_alg="sha1", modp="modp1024"
+	ERROR: ESP DH algorithm 'modp1024' is not supported
 [esp=3des-sha1;modp1536]
-	ERROR: ESP DH algorithm 'modp1536' is not supported, enc_alg="3des"(0), auth_alg="sha1", modp="modp1536"
+	ERROR: ESP DH algorithm 'modp1536' is not supported
 [esp=3des-sha1;modp2048]
 	3DES_CBC-HMAC_SHA1_96-MODP2048
 [esp=3des-sha1;dh21]
@@ -23,7 +23,7 @@
 [esp=3des-sha1]
 	3DES_CBC-HMAC_SHA1_96
 [esp=null-sha1]
-	ERROR: ESP encryption algorithm 'null' is not supported, enc_alg="null"(0), auth_alg="sha1", modp=""
+	ERROR: ESP encryption algorithm 'null' is not supported
 [esp=aes]
 	AES_CBC-HMAC_SHA1_96
 [esp=aes_cbc]
@@ -59,13 +59,13 @@
 [esp=aes256-sha2_512]
 	AES_CBC_256-HMAC_SHA2_512_256
 [esp=camellia]
-	ERROR: ESP encryption algorithm 'camellia' is not supported, enc_alg="camellia"(0), auth_alg="", modp=""
+	ERROR: ESP encryption algorithm 'camellia' is not supported
 [esp=camellia128]
-	ERROR: ESP encryption algorithm 'camellia' is not supported, enc_alg="camellia"(128), auth_alg="", modp=""
+	ERROR: ESP encryption algorithm 'camellia' is not supported
 [esp=camellia192]
-	ERROR: ESP encryption algorithm 'camellia' is not supported, enc_alg="camellia"(192), auth_alg="", modp=""
+	ERROR: ESP encryption algorithm 'camellia' is not supported
 [esp=camellia256]
-	ERROR: ESP encryption algorithm 'camellia' is not supported, enc_alg="camellia"(256), auth_alg="", modp=""
+	ERROR: ESP encryption algorithm 'camellia' is not supported
 [esp=aes_ccm]
 	AES_CCM_16-NONE
 [esp=aes_ccm_a-128-null]
@@ -177,13 +177,13 @@
 [esp=aes_ctr256]
 	AES_CTR_256-HMAC_SHA1_96
 [esp=serpent]
-	ERROR: ESP encryption algorithm 'serpent' is not supported, enc_alg="serpent"(0), auth_alg="", modp=""
+	ERROR: ESP encryption algorithm 'serpent' is not supported
 [esp=twofish]
-	ERROR: ESP encryption algorithm 'twofish' is not supported, enc_alg="twofish"(0), auth_alg="", modp=""
+	ERROR: ESP encryption algorithm 'twofish' is not supported
 [esp=camellia_cbc_256-hmac_sha2_512_256;modp8192]
-	ERROR: ESP encryption algorithm 'camellia_cbc' is not supported, enc_alg="camellia_cbc"(256), auth_alg="hmac_sha2_512_256", modp="modp8192"
+	ERROR: ESP encryption algorithm 'camellia_cbc' is not supported
 [esp=null_auth_aes_gmac_256-null;modp8192]
-	ERROR: ESP encryption algorithm 'null_auth_aes_gmac' is not supported, enc_alg="null_auth_aes_gmac"(256), auth_alg="null", modp="modp8192"
+	ERROR: ESP encryption algorithm 'null_auth_aes_gmac' is not supported
 [esp=3des-sha1;modp8192]
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 [esp=3des-sha1-modp8192]
@@ -199,53 +199,53 @@
 
 ---- ESP tests that should fail----
 [esp=3des168-sha1]
-	ERROR: 3DES does not take variable key lengths, enc_alg="3des"(168), auth_alg="sha1", modp=""
+	ERROR: 3DES does not take variable key lengths
 [esp=3des-null]
-	ERROR: non-AEAD ESP encryption algorithm '3des_cbc' cannot have 'none' as the integrity algorithm, enc_alg="3des"(0), auth_alg="null", modp=""
+	ERROR: non-AEAD ESP encryption algorithm '3des_cbc' cannot have 'none' as the integrity algorithm
 [esp=aes128-null]
-	ERROR: non-AEAD ESP encryption algorithm 'aes' cannot have 'none' as the integrity algorithm, enc_alg="aes"(128), auth_alg="null", modp=""
+	ERROR: non-AEAD ESP encryption algorithm 'aes' cannot have 'none' as the integrity algorithm
 [esp=aes224-sha1]
-	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes"(224), auth_alg="sha1", modp=""
+	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256
 [esp=aes512-sha1]
-	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes"(512), auth_alg="sha1", modp=""
+	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256
 [esp=aes-sha1555]
-	ERROR: ESP integrity algorithm 'sha1555' is not recognized, enc_alg="aes"(0), auth_alg="sha1555", modp=""
+	ERROR: ESP integrity algorithm 'sha1555' is not recognized
 [esp=camellia666-sha1]
-	ERROR: ESP encryption algorithm 'camellia' is not supported, enc_alg="camellia"(666), auth_alg="sha1", modp=""
+	ERROR: ESP encryption algorithm 'camellia' is not supported
 [esp=blowfish]
-	ERROR: ESP encryption algorithm 'blowfish' is not supported, enc_alg="blowfish"(0), auth_alg="", modp=""
+	ERROR: ESP encryption algorithm 'blowfish' is not supported
 [esp=des-sha1]
-	ERROR: ESP encryption algorithm 'des' is not supported, enc_alg="des"(0), auth_alg="sha1", modp=""
+	ERROR: ESP encryption algorithm 'des' is not supported
 [esp=aes_ctr666]
-	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes_ctr"(666), auth_alg="", modp=""
+	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256
 [esp=aes128-sha2_128]
-	ERROR: ESP integrity algorithm 'sha2_128' is not recognized, enc_alg="aes"(128), auth_alg="sha2_128", modp=""
+	ERROR: ESP integrity algorithm 'sha2_128' is not recognized
 [esp=aes256-sha2_256-4096]
 	ERROR: Invalid modulus, just after "aes256-sha2_256-" (state=ST_AA_END)
 [esp=aes256-sha2_256-128]
 	ERROR: Invalid modulus, just after "aes256-sha2_256-" (state=ST_AA_END)
 [esp=vanitycipher]
-	ERROR: ESP encryption algorithm 'vanitycipher' is not recognized, enc_alg="vanitycipher"(0), auth_alg="", modp=""
+	ERROR: ESP encryption algorithm 'vanitycipher' is not recognized
 [esp=ase-sah]
-	ERROR: ESP encryption algorithm 'ase' is not recognized, enc_alg="ase"(0), auth_alg="sah", modp=""
+	ERROR: ESP encryption algorithm 'ase' is not recognized
 [esp=aes-sah1]
-	ERROR: ESP integrity algorithm 'sah1' is not recognized, enc_alg="aes"(0), auth_alg="sah1", modp=""
+	ERROR: ESP integrity algorithm 'sah1' is not recognized
 [esp=id3]
-	ERROR: ESP encryption algorithm 'id' is not recognized, enc_alg="id"(3), auth_alg="", modp=""
+	ERROR: ESP encryption algorithm 'id' is not recognized
 [esp=aes-id3]
-	ERROR: ESP integrity algorithm 'id3' is not recognized, enc_alg="aes"(0), auth_alg="id3", modp=""
+	ERROR: ESP integrity algorithm 'id3' is not recognized
 [esp=aes_gcm-md5]
-	ERROR: ESP integrity algorithm 'md5' is not recognized, enc_alg="aes_gcm"(0), auth_alg="md5", modp=""
+	ERROR: ESP integrity algorithm 'md5' is not recognized
 [esp=mars]
-	ERROR: ESP encryption algorithm 'mars' is not supported, enc_alg="mars"(0), auth_alg="", modp=""
+	ERROR: ESP encryption algorithm 'mars' is not supported
 [esp=aes_gcm-16]
-	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes_gcm"(16), auth_alg="", modp=""
+	ERROR: wrong encryption key length - key size must be 128 (default), 192 or 256
 [esp=aes_gcm-0]
-	ERROR: encryption key length is zero, enc_alg="aes_gcm"(0), auth_alg="", modp=""
+	ERROR: encryption key length is zero
 [esp=aes_gcm-123456789012345]
-	ERROR: encryption key length '123456789012345' WAY too big, enc_alg="aes_gcm"(123456789012345), auth_alg="", modp=""
+	ERROR: encryption key length '123456789012345' WAY too big
 [esp=3des-sha1;dh22]
-	ERROR: ESP DH algorithm 'dh22' is not supported, enc_alg="3des"(0), auth_alg="sha1", modp="dh22"
+	ERROR: ESP DH algorithm 'dh22' is not supported
 [esp=3des-sha1;modp8192,3des-sha2]
 	ERROR: ESP DH algorithm 'MODP8192' must be specified last
 [esp=3des-sha1-modp8192,3des-sha2;modp8192]
@@ -257,7 +257,7 @@
 [ah=]
 	ERROR: String ended with invalid char, just after "" (state=ST_INI_AA)
 [ah=md5]
-	ERROR: AH integrity algorithm 'md5' is not recognized, enc_alg=""(0), auth_alg="md5", modp=""
+	ERROR: AH integrity algorithm 'md5' is not recognized
 [ah=sha]
 	HMAC_SHA1_96
 [ah=sha1]
@@ -283,23 +283,23 @@
 
 ---- AH tests that should fail ----
 [ah=aes-sha1]
-	ERROR: AH integrity algorithm 'aes' is not recognized, enc_alg=""(0), auth_alg="aes", modp="sha1"
+	ERROR: AH integrity algorithm 'aes' is not recognized
 [ah=vanityhash1]
-	ERROR: AH integrity algorithm 'vanityhash1' is not recognized, enc_alg=""(0), auth_alg="vanityhash1", modp=""
+	ERROR: AH integrity algorithm 'vanityhash1' is not recognized
 [ah=aes_gcm_c-256]
 	ERROR: Invalid modulus, just after "aes_gcm_c-" (state=ST_AA_END)
 [ah=id3]
-	ERROR: AH integrity algorithm 'id3' is not recognized, enc_alg=""(0), auth_alg="id3", modp=""
+	ERROR: AH integrity algorithm 'id3' is not recognized
 [ah=3des]
-	ERROR: AH integrity algorithm '3des' is not recognized, enc_alg=""(0), auth_alg="3des", modp=""
+	ERROR: AH integrity algorithm '3des' is not recognized
 [ah=null]
-	ERROR: AH cannot have 'none' as the integrity algorithm, enc_alg=""(0), auth_alg="null", modp=""
+	ERROR: AH cannot have 'none' as the integrity algorithm
 [ah=aes_gcm]
-	ERROR: AH integrity algorithm 'aes_gcm' is not recognized, enc_alg=""(0), auth_alg="aes_gcm", modp=""
+	ERROR: AH integrity algorithm 'aes_gcm' is not recognized
 [ah=aes_ccm]
-	ERROR: AH integrity algorithm 'aes_ccm' is not recognized, enc_alg=""(0), auth_alg="aes_ccm", modp=""
+	ERROR: AH integrity algorithm 'aes_ccm' is not recognized
 [ah=ripemd]
-	ERROR: AH integrity algorithm 'ripemd' is not recognized, enc_alg=""(0), auth_alg="ripemd", modp=""
+	ERROR: AH integrity algorithm 'ripemd' is not recognized
 
 ---- IKE tests that should succeed ----
 [ike]
@@ -316,7 +316,7 @@
 [ike=3des-sha1]
 	3DES_CBC-HMAC_SHA1-MODP2048
 [ike=3des-sha1;modp1536]
-	ERROR: IKE DH algorithm 'modp1536' is not supported, enc_alg="3des"(0), auth_alg="sha1", modp="modp1536"
+	ERROR: IKE DH algorithm 'modp1536' is not supported
 [ike=3des-sha1;dh21]
 	3DES_CBC-HMAC_SHA1-DH21
 [ike=3des-sha1-ecp_521]
@@ -330,8 +330,8 @@
 
 ---- IKE tests that should fail ----
 [ike=id2]
-	ERROR: IKE encryption algorithm 'id' is not recognized, enc_alg="id"(2), auth_alg="", modp=""
+	ERROR: IKE encryption algorithm 'id' is not recognized
 [ike=3des-id2]
-	ERROR: IKE PRF algorithm 'id2' is not recognized, enc_alg="3des"(0), auth_alg="id2", modp=""
+	ERROR: IKE PRF algorithm 'id2' is not recognized
 [ike=aes_ccm]
-	ERROR: IKE encryption algorithm 'aes_ccm' is not supported, enc_alg="aes_ccm"(0), auth_alg="", modp=""
+	ERROR: IKE encryption algorithm 'aes_ccm' is not supported
