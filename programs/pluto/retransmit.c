@@ -198,6 +198,10 @@ enum retransmit_status retransmit(struct state *st)
 		libreswan_log("suppressing retransmit because IMPAIR_RETRANSMITS is set");
 		return RETRANSMITS_TIMED_OUT;
 	}
+	if (IMPAIR(DELETE_ON_RETRANSMIT)) {
+		libreswan_log("IMPAIR: delete-on-retransmit: retransmit so deleting state");
+		return DELETE_ON_RETRANSMIT;
+	}
 
 	/*
 	 * Exceeded limits - timeout or number of retransmits?

@@ -42,6 +42,7 @@ void clear_retransmits(struct state *st);
 
 enum retransmit_status {
 	RETRANSMITS_TIMED_OUT = 1,
+	DELETE_ON_RETRANSMIT,
 	RETRANSMIT_NO,
 	RETRANSMIT_YES,
 };
