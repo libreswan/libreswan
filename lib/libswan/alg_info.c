@@ -242,7 +242,7 @@ static err_t parser_machine(struct parser_context *p_ctx)
 			 * Only allow modpXXXX string if we have
 			 * a modp_getbyname method
 			 */
-			if (p_ctx->protocol->dh_alg_byname != NULL && isalpha(ch)) {
+			if (p_ctx->protocol->dh_alg_byname != NULL) {
 				parser_set_state(p_ctx, ST_MODP);
 				continue;
 			}
@@ -705,10 +705,9 @@ void alg_info_parse_str(const struct parser_policy *policy,
 			err_t pm_ugh = parser_machine(&ctx);
 			if (pm_ugh != NULL) {
 				snprintf(err_buf, err_buf_len,
-					 "%s, just after \"%.*s\" (state=%s)",
+					 "%s, just after \"%.*s\"",
 					 pm_ugh,
-					 (int)(ptr - alg_str - 1), alg_str,
-					 parser_state_name(ctx.state));
+					 (int)(ptr - alg_str - 1), alg_str);
 				return;
 			}
 		}
