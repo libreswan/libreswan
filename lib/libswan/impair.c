@@ -59,6 +59,9 @@ static const char *impair_strings[] = {
 	I(IMPAIR_REPLAY_FORWARD, "impair-replay-forward"),
 	I(IMPAIR_REPLAY_BACKWARD, "impair-replay-backward"),
 	I(IMPAIR_ALGORITHM_PARSER, "impair-algorithm-parser"),
+
+	I(IMPAIR_SEND_BOGUS_SA_INIT_PAYLOAD, "impair-send-bogus-sa-init-payload"),
+	I(IMPAIR_BOGUS_PAYLOAD_CRITICAL, "impair-bogus-payload-critical"),
 };
 
 const struct enum_names impair_names = {

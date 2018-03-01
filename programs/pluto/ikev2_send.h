@@ -67,6 +67,9 @@ stf_status ikev2_encrypt_payload(v2sk_stream_t *sk);
  * XXX: Is the name ship_v2*() for where a function writes an entire
  * payload into the PBS.
  */
+bool ship_v2(pb_stream *outs, enum next_payload_types_ikev2 np,
+	     uint8_t critical, chunk_t *data, const char *name);
+
 bool ship_v2N(enum next_payload_types_ikev2 np,
 	      u_int8_t critical,
 	      enum ikev2_sec_proto_id protoid,
@@ -79,5 +82,9 @@ bool ship_v2V(pb_stream *outs, enum next_payload_types_ikev2 np,
 
 /* XXX: should be local to ikev2_send.c? */
 int build_ikev2_version(void);
+
+#define  ikev2_critical(CRITICAL) (					\
+		(CRITICAL ? ISAKMP_PAYLOAD_CRITICAL : ISAKMP_PAYLOAD_NONCRITICAL) | \
+		(IMPAIR(SEND_BOGUS_PAYLOAD_FLAG) ? ISAKMP_PAYLOAD_LIBRESWAN_BOGUS : 0))
 
 #endif

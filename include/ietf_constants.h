@@ -572,6 +572,13 @@ enum next_payload_types_ikev2 {
 #define ISAKMP_v2PAYLOAD_TYPE_BASE	ISAKMP_NEXT_v2SA	/* lowest value of a v2 payload type */
 
 /*
+ * This bogus value both fills the 8-bit next payload type field, and,
+ * when converted to an lset_t, overflows (code uses lset_t to track
+ * payload types.
+ */
+#define ISAKMP_NEXT_v2BOGUS		255
+
+/*
  * These values are to be used within the Type field of an Attribute (14)
  * ISAKMP payload.
  */

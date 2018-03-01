@@ -419,6 +419,9 @@ enum {
 	IMPAIR_REPLAY_BACKWARD_IX,		/* replay all earlier packets new-to-old */
 	IMPAIR_ALGORITHM_PARSER_IX,		/* impair algorithm parser - what you see is what you get */
 
+	IMPAIR_SEND_BOGUS_SA_INIT_PAYLOAD_IX,	/* include a bogus payload to SA_INIT */
+	IMPAIR_BOGUS_PAYLOAD_CRITICAL_IX,	/* mark the bogus payload as critical SA_INIT */
+
 	IMPAIR_roof_IX	/* first unassigned IMPAIR */
 };
 
@@ -460,6 +463,9 @@ enum {
 #define IMPAIR_REPLAY_FORWARD	 	LELEM(IMPAIR_REPLAY_FORWARD_IX)
 #define IMPAIR_REPLAY_BACKWARD 		LELEM(IMPAIR_REPLAY_BACKWARD_IX)
 #define IMPAIR_ALGORITHM_PARSER 	LELEM(IMPAIR_ALGORITHM_PARSER_IX)
+
+#define IMPAIR_SEND_BOGUS_SA_INIT_PAYLOAD	LELEM(IMPAIR_SEND_BOGUS_SA_INIT_PAYLOAD_IX)
+#define IMPAIR_BOGUS_PAYLOAD_CRITICAL		LELEM(IMPAIR_BOGUS_PAYLOAD_CRITICAL_IX)
 
 /* State of exchanges
  *

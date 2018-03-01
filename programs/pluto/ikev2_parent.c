@@ -1000,9 +1000,20 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 
 	/* Send NAT-T Notify payloads */
 	{
-		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
+		int np = IMPAIR(SEND_BOGUS_SA_INIT_PAYLOAD) ? ISAKMP_NEXT_v2BOGUS :
+			(vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 		if (!ikev2_out_nat_v2n(np, &rbody, md))
 			return STF_INTERNAL_ERROR;
+	}
+
+	/* something the other end won't like */
+
+	if (IMPAIR(SEND_BOGUS_SA_INIT_PAYLOAD)) {
+		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
+		uint8_t critical = ikev2_critical(IMPAIR(BOGUS_PAYLOAD_CRITICAL));
+		if (!ship_v2(&rbody, np, critical, NULL, NULL)) {
+			return STF_INTERNAL_ERROR;
+		}
 	}
 
 	/* From here on, only payloads left are Vendor IDs */
@@ -1606,13 +1617,25 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	/* Send NAT-T Notify payloads */
 	{
 		struct ikev2_generic in;
-		int np = send_certreq ? ISAKMP_NEXT_v2CERTREQ :
+		int np = IMPAIR(SEND_BOGUS_SA_INIT_PAYLOAD) ? ISAKMP_NEXT_v2BOGUS :
+			send_certreq ? ISAKMP_NEXT_v2CERTREQ :
                         (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 		zero(&in);	/* OK: no pointers */
 		in.isag_np = np;
 		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		if (!ikev2_out_nat_v2n(np, &rbody, md))
 			return STF_INTERNAL_ERROR;
+	}
+
+	/* something the other end won't like */
+
+	if (IMPAIR(SEND_BOGUS_SA_INIT_PAYLOAD)) {
+		int np = send_certreq ? ISAKMP_NEXT_v2CERTREQ :
+                        (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
+		uint8_t critical = ikev2_critical(IMPAIR(BOGUS_PAYLOAD_CRITICAL));
+		if (!ship_v2(&rbody, np, critical, NULL, NULL)) {
+			return STF_INTERNAL_ERROR;
+		}
 	}
 
 	/* send CERTREQ  */
