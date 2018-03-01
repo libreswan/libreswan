@@ -1328,6 +1328,16 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	passert((st == NULL) == (from_state == STATE_UNDEFINED));
 
+	/*
+	 * If there's a state, attribute all further logging to that
+	 * state.
+	 */
+	if (st != NULL) {
+		set_cur_state(st);
+		/* XXX: why? And why on top of (after) state? */
+		set_cur_connection(st->st_connection);
+	}
+
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
 	struct ikev2_payload_errors encrypted_payload_status = { .bad = false };
 
@@ -1605,11 +1615,6 @@ void process_v2_packet(struct msg_digest **mdp)
 
 		/* switch from parent state to child state */
 		st = cst;
-	}
-
-	if (st != NULL) {
-		set_cur_state(st);
-		set_cur_connection(st->st_connection);
 	}
 
 	md->st = st;
