@@ -3667,7 +3667,7 @@ static void ikev2_parent_inI2outR2_continue(struct state *st,
 static stf_status ikev2_parent_inI2outR2_continue_tail(struct state *st,
 						       struct msg_digest *md)
 {
-	stf_status ret = STF_OK;
+	stf_status ret;
 	enum ikev2_auth_method atype;
 
 	ikev2_log_parentSA(st);
@@ -3691,11 +3691,7 @@ static stf_status ikev2_parent_inI2outR2_continue_tail(struct state *st,
 			return ret;
 	}
 
-	if (ret == STF_OK) {
-		ret = ikev2_parent_inI2outR2_id_tail(md);
-	}
-
-	return ret;
+	return ikev2_parent_inI2outR2_id_tail(md);
 }
 
 stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
