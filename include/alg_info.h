@@ -219,9 +219,9 @@ void alg_info_parse_str(const struct parser_policy *policy,
 bool proposal_aead_none_ok(const struct proposal_info *proposal,
 			   char *err_buf, size_t err_buf_len);
 
-struct alg_info_esp *alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,
-						     const char *alg_str,
-						     char *err_buf, size_t err_buf_len);
+void alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,
+				     const char *alg_str,
+				     char *err_buf, size_t err_buf_len);
 
 bool alg_unimpaired(char *err);
 

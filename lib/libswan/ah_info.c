@@ -111,7 +111,12 @@ struct alg_info_esp *alg_info_ah_create_from_str(const struct parser_policy *pol
 	}
 
 	/* This call can free ALG_INFO_AH. */
-	alg_info_ah = alg_info_discover_pfsgroup_hack(alg_info_ah, alg_str,
-						      err_buf, err_buf_len);
+	alg_info_discover_pfsgroup_hack(alg_info_ah, alg_str,
+					err_buf, err_buf_len);
+	if (err_buf[0] != '\0') {
+		alg_info_free(&alg_info_ah->ai);
+		return NULL;
+	}
+
 	return alg_info_ah;
 }

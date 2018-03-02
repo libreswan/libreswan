@@ -860,14 +860,10 @@ size_t lswlog_alg_info(struct lswlog *log, const struct alg_info *alg_info)
  * parer is far more forgiving).
  */
 
-struct alg_info_esp *alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,
-						     const char *alg_str,
-						     char *err_buf, size_t err_buf_len)
+void alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,
+				     const char *alg_str,
+				     char *err_buf, size_t err_buf_len)
 {
-	if (aie == NULL) {
-		return NULL;
-	}
-
 	/*
 	 * Find the first and last proposal, if present (never know,
 	 * there could be no algorithms).
@@ -883,7 +879,7 @@ struct alg_info_esp *alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,
 	}
 	if (last == NULL) {
 		/* let caller deal with this. */
-		return aie;
+		return;
 	}
 
 	/*
@@ -902,23 +898,20 @@ struct alg_info_esp *alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,
 				 "%s DH algorithm '%s' must be specified last",
 				 esp_info->protocol->name,
 				 (first->dh != NULL ? first->dh : esp_info->dh)->common.fqn);
-			alg_info_free(&aie->ai);
-			return NULL;
+			return;
 		}
 		if (esp_info->dh != NULL && last->dh == NULL) {
 			snprintf(err_buf, err_buf_len,
 				 "%s DH algorithm '%s' must be specified last",
 				 esp_info->protocol->name,
 				 esp_info->dh->common.fqn);
-			alg_info_free(&aie->ai);
-			return NULL;
+			return;
 		}
 		if (esp_info->dh != NULL && esp_info->dh != last->dh) {
 			snprintf(err_buf, err_buf_len,
 				 "%s DH algorithm must be specified once",
 				 esp_info->protocol->name);
-			alg_info_free(&aie->ai);
-			return NULL;
+			return;
 		}
 	}
 
@@ -948,24 +941,21 @@ struct alg_info_esp *alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,
 					 "%s DH algorithm '%s' must be separated using a ';'",
 					 last->protocol->name,
 					 last->dh->common.fqn);
-				alg_info_free(&aie->ai);
-				return NULL;
+				return;
 			}
 			/* reject xxx;DH,yyy */
 			if (last_comma != NULL && last_semi < last_comma) {
 				snprintf(err_buf, err_buf_len,
 					 "%s DH algorithm must appear after last proposal",
 					 last->protocol->name);
-				alg_info_free(&aie->ai);
-				return NULL;
+				return;
 			}
 			/* reject yyy,xxx-DH */
 			if (last_dash != NULL && last_semi < last_dash) {
 				snprintf(err_buf, err_buf_len,
 					 "%s DH algorithm must be at end of proposal",
 					 last->protocol->name);
-				alg_info_free(&aie->ai);
-				return NULL;
+				return;
 			}
 		} else if (first != last && first->dh != NULL) {
 			/* reject ...;... */
@@ -973,8 +963,7 @@ struct alg_info_esp *alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,
 				snprintf(err_buf, err_buf_len,
 					 "%s DH algorithm must appear once after last proposal",
 					 last->protocol->name);
-				alg_info_free(&aie->ai);
-				return NULL;
+				return;
 			}
 		}
 	}
@@ -996,5 +985,4 @@ struct alg_info_esp *alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,
 	 * Since DH is set uniformly, could use first.DH instead.
 	 */
 	aie->esp_pfsgroup = last->dh;
-	return aie;
 }
