@@ -1,0 +1,13 @@
+iptables -t nat -F
+nic #
+ iptables -F
+nic #
+ # Authentication should be AUTH_NULL
+nic #
+ hostname | grep nic > /dev/null || grep Authenticated /tmp/pluto.log
+nic #
+nic #
+ ../bin/check-for-core.sh
+nic #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

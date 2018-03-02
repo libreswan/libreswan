@@ -61,6 +61,10 @@ road #
 |    auth method: IKEv2_AUTH_NULL (0xd)
 |    auth method: IKEv2_AUTH_RSA (0x1)
 road #
+ # no ipsec tunnel should be up
+road #
+ ipsec whack --trafficstatus
+road #
 road #
  ../bin/check-for-core.sh
 road #

@@ -1,0 +1,76 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+road #
+ certutil -D -n east -d sql:/etc/ipsec.d
+road #
+ cp road-ikev2-oe.conf /etc/ipsec.d/ikev2-oe.conf
+road #
+ cp policies/* /etc/ipsec.d/policies/
+road #
+ echo "192.1.2.23/32"  >> /etc/ipsec.d/policies/private-or-clear
+road #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+road #
+ /testing/pluto/bin/wait-until-pluto-started
+road #
+ # ensure for tests acquires expire before our failureshunt=2m
+road #
+ echo 30 > /proc/sys/net/core/xfrm_acq_expires
+road #
+ # give OE policies time to load
+road #
+ sleep 5
+road #
+ ipsec status | grep "our auth" | grep private
+000 "clear-or-private":   our auth:rsasig, their auth:rsasig
+000 "private":   our auth:rsasig, their auth:rsasig
+000 "private-or-clear":   our auth:rsasig, their auth:rsasig
+000 "private-or-clear#192.1.2.23/32":   our auth:rsasig, their auth:rsasig
+000 "private-or-clear-all":   our auth:rsasig, their auth:rsasig
+road #
+ echo "initdone"
+initdone
+road #
+ # one packet, which gets eaten by XFRM, so east does not initiate
+road #
+ ping -n -c 1 -I 192.1.3.209 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
+--- 192.1.2.23 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time XXXX
+road #
+ # wait on OE to establish
+road #
+ sleep 2
+road #
+ # should show established tunnel and no bare shunts
+road #
+ ipsec whack --trafficstatus
+006 #2: "private-or-clear#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='192.1.2.23'
+road #
+ # ping should succeed through tunnel
+road #
+ ping -n -c 2 -I 192.1.3.209 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
+64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
+--- 192.1.2.23 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+road #
+ ipsec whack --trafficstatus
+006 #2: "private-or-clear#192.1.2.23/32"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='192.1.2.23'
+road #
+ echo done
+done
+road #
+ # Authentication should be AUTHNULL
+road #
+ hostname | grep nic > /dev/null || grep Authenticated /tmp/pluto.log
+"private-or-clear#192.1.2.23/32"[1] ...192.1.2.23 #2: Authenticated using authby=null
+road #
+road #
+ ../bin/check-for-core.sh
+road #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
