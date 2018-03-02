@@ -46,23 +46,6 @@
 #include "list_entry.h"
 #include "retransmit.h"
 
-/* Message ID mechanism.
- *
- * A Message ID is contained in each IKE message header.
- * For Phase 1 exchanges (Main and Aggressive), it will be zero.
- * For other exchanges, which must be under the protection of an
- * ISAKMP SA, the Message ID must be unique within that ISAKMP SA.
- * Effectively, this labels the message as belonging to a particular
- * exchange.
- *
- * RFC2408 "ISAKMP" 3.1 "ISAKMP Header Format" (near end) states that
- * the Message ID must be unique.  We interpret this to be "unique within
- * one ISAKMP SA".
- *
- * BTW, we feel this uniqueness allows rekeying to be somewhat simpler
- * than specified by draft-jenkins-ipsec-rekeying-06.txt.
- */
-
 /* msgid_t defined in defs.h */
 
 #define v1_MAINMODE_MSGID  ((msgid_t) 0)	/* network and host order */
