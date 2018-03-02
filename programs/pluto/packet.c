@@ -1260,63 +1260,6 @@ static field_desc ikev2skf_fields[] = {
 struct_desc ikev2_skf_desc = { "IKEv2 Encrypted Fragment",
 			      ikev2skf_fields, sizeof(struct ikev2_skf) };
 
-/* descriptor for each V1 payload type
- *
- * There is a slight problem in that some payloads differ, depending
- * on the mode.  Since this is table only used for top-level payloads,
- * Proposal and Transform payloads need not be handled.
- * That leaves only Identification payloads as a problem.
- * We make all these entries NULL
- */
-static struct_desc *const v1_payload_descs[] = {
-	NULL,                           /* 0 ISAKMP_NEXT_NONE (No other payload following) */
-	&isakmp_sa_desc,                /* 1 ISAKMP_NEXT_SA (Security Association) */
-	NULL,                           /* 2 ISAKMP_NEXT_P (Proposal) */
-	NULL,                           /* 3 ISAKMP_NEXT_T (Transform) */
-	&isakmp_keyex_desc,             /* 4 ISAKMP_NEXT_KE (Key Exchange) */
-	NULL,                           /* 5 ISAKMP_NEXT_ID (Identification) */
-	&isakmp_ipsec_certificate_desc, /* 6 ISAKMP_NEXT_CERT (Certificate) */
-	&isakmp_ipsec_cert_req_desc,    /* 7 ISAKMP_NEXT_CR (Certificate Request) */
-	&isakmp_hash_desc,              /* 8 ISAKMP_NEXT_HASH (Hash) */
-	&isakmp_signature_desc,         /* 9 ISAKMP_NEXT_SIG (Signature) */
-	&isakmp_nonce_desc,             /* 10 ISAKMP_NEXT_NONCE (Nonce) */
-	&isakmp_notification_desc,      /* 11 ISAKMP_NEXT_N (Notification) */
-	&isakmp_delete_desc,            /* 12 ISAKMP_NEXT_D (Delete) */
-	&isakmp_vendor_id_desc,         /* 13 ISAKMP_NEXT_VID (Vendor ID) */
-	&isakmp_attr_desc,              /* 14 ISAKMP_NEXT_MCFG_ATTR (ModeCfg)  */
-	NULL,                           /* 15 */
-	NULL,                           /* 16 */
-	NULL,                           /* 17 */
-	NULL,                           /* 18 */
-	NULL,                           /* 19 */
-	&isakmp_nat_d,                  /* 20=130 ISAKMP_NEXT_NATD_RFC=ISAKMP_NEXT_NATD_DRAFTS (NAT-D) */
-	&isakmp_nat_oa,                 /* 21=131 ISAKMP_NEXT_NATOA_RFC=ISAKMP_NEXT_NATOA_DRAFTS (NAT-OA) */
-};
-
-static struct_desc *const v2_payload_descs[] = {
-	&ikev2_sa_desc,                 /* 33 ISAKMP_NEXT_v2SA */
-	&ikev2_ke_desc,                 /* 34 ISAKMP_NEXT_v2KE */
-	&ikev2_id_desc,			/* 35 ISAKMP_NEXT_v2IDi */
-	&ikev2_id_desc,			/* 36 ISAKMP_NEXT_v2IDr */
-	&ikev2_certificate_desc,        /* 37 ISAKMP_NEXT_v2CERT */
-	&ikev2_certificate_req_desc,    /* 38 ISAKMP_NEXT_v2CERTREQ */
-	&ikev2_a_desc,                  /* 39 ISAKMP_NEXT_v2AUTH */
-	&ikev2_nonce_desc,              /* 40 ISAKMP_NEXT_v2Ni / ISAKMP_NEXT_v2Nr */
-	&ikev2_notify_desc,             /* 41 ISAKMP_NEXT_v2N */
-	&ikev2_delete_desc,             /* 42 ISAKMP_NEXT_v2D */
-	&ikev2_vendor_id_desc,          /* 43 ISAKMP_NEXT_v2V */
-	&ikev2_ts_desc,			/* 44 ISAKMP_NEXT_v2TSi */
-	&ikev2_ts_desc,			/* 45 ISAKMP_NEXT_v2TSr */
-	&ikev2_sk_desc,                 /* 46 ISAKMP_NEXT_v2SK */
-	&ikev2_cp_desc,			/* 47 ISAKMP_NEXT_v2CP */
-	NULL,				/* 48 */
-	NULL,				/* 49 */
-	NULL,				/* 50 */
-	NULL,				/* 51 */
-	NULL,				/* 52 */
-	&ikev2_skf_desc,                /* 53 ISAKMP_NEXT_v2SKF */
-};
-
 static field_desc suggested_group_fields[] = {
 	{ ft_enum, 16 / BITS_PER_BYTE, "suggested DH Group", &oakley_group_names },
 	{ ft_end,  0, NULL, NULL }
@@ -1352,13 +1295,69 @@ struct_desc sec_ctx_desc = {
 
 #endif
 
+/*
+ * descriptor for each V1 payload type
+ *
+ * There is a slight problem in that some payloads differ, depending
+ * on the mode.  Since this is table only used for top-level payloads,
+ * Proposal and Transform payloads need not be handled.  That leaves
+ * only Identification payloads as a problem.  We make all these
+ * entries NULL
+ */
 struct_desc *v1_payload_desc(unsigned p)
 {
+	static struct_desc *const v1_payload_descs[] = {
+		NULL,                           /* 0 ISAKMP_NEXT_NONE (No other payload following) */
+		&isakmp_sa_desc,                /* 1 ISAKMP_NEXT_SA (Security Association) */
+		NULL,                           /* 2 ISAKMP_NEXT_P (Proposal) */
+		NULL,                           /* 3 ISAKMP_NEXT_T (Transform) */
+		&isakmp_keyex_desc,             /* 4 ISAKMP_NEXT_KE (Key Exchange) */
+		NULL,                           /* 5 ISAKMP_NEXT_ID (Identification) */
+		&isakmp_ipsec_certificate_desc, /* 6 ISAKMP_NEXT_CERT (Certificate) */
+		&isakmp_ipsec_cert_req_desc,    /* 7 ISAKMP_NEXT_CR (Certificate Request) */
+		&isakmp_hash_desc,              /* 8 ISAKMP_NEXT_HASH (Hash) */
+		&isakmp_signature_desc,         /* 9 ISAKMP_NEXT_SIG (Signature) */
+		&isakmp_nonce_desc,             /* 10 ISAKMP_NEXT_NONCE (Nonce) */
+		&isakmp_notification_desc,      /* 11 ISAKMP_NEXT_N (Notification) */
+		&isakmp_delete_desc,            /* 12 ISAKMP_NEXT_D (Delete) */
+		&isakmp_vendor_id_desc,         /* 13 ISAKMP_NEXT_VID (Vendor ID) */
+		&isakmp_attr_desc,              /* 14 ISAKMP_NEXT_MCFG_ATTR (ModeCfg)  */
+		NULL,                           /* 15 */
+		NULL,                           /* 16 */
+		NULL,                           /* 17 */
+		NULL,                           /* 18 */
+		NULL,                           /* 19 */
+		&isakmp_nat_d,                  /* 20=130 ISAKMP_NEXT_NATD_RFC=ISAKMP_NEXT_NATD_DRAFTS (NAT-D) */
+		&isakmp_nat_oa,                 /* 21=131 ISAKMP_NEXT_NATOA_RFC=ISAKMP_NEXT_NATOA_DRAFTS (NAT-OA) */
+	};
 	return p < elemsof(v1_payload_descs) ? v1_payload_descs[p] : NULL;
 }
 
 struct_desc *v2_payload_desc(unsigned p)
 {
+	static struct_desc *const v2_payload_descs[] = {
+		&ikev2_sa_desc,                 /* 33 ISAKMP_NEXT_v2SA */
+		&ikev2_ke_desc,                 /* 34 ISAKMP_NEXT_v2KE */
+		&ikev2_id_desc,			/* 35 ISAKMP_NEXT_v2IDi */
+		&ikev2_id_desc,			/* 36 ISAKMP_NEXT_v2IDr */
+		&ikev2_certificate_desc,        /* 37 ISAKMP_NEXT_v2CERT */
+		&ikev2_certificate_req_desc,    /* 38 ISAKMP_NEXT_v2CERTREQ */
+		&ikev2_a_desc,                  /* 39 ISAKMP_NEXT_v2AUTH */
+		&ikev2_nonce_desc,              /* 40 ISAKMP_NEXT_v2Ni / ISAKMP_NEXT_v2Nr */
+		&ikev2_notify_desc,             /* 41 ISAKMP_NEXT_v2N */
+		&ikev2_delete_desc,             /* 42 ISAKMP_NEXT_v2D */
+		&ikev2_vendor_id_desc,          /* 43 ISAKMP_NEXT_v2V */
+		&ikev2_ts_desc,			/* 44 ISAKMP_NEXT_v2TSi */
+		&ikev2_ts_desc,			/* 45 ISAKMP_NEXT_v2TSr */
+		&ikev2_sk_desc,                 /* 46 ISAKMP_NEXT_v2SK */
+		&ikev2_cp_desc,			/* 47 ISAKMP_NEXT_v2CP */
+		NULL,				/* 48 */
+		NULL,				/* 49 */
+		NULL,				/* 50 */
+		NULL,				/* 51 */
+		NULL,				/* 52 */
+		&ikev2_skf_desc,                /* 53 ISAKMP_NEXT_v2SKF */
+	};
 	if (p < ISAKMP_v2PAYLOAD_TYPE_BASE) {
 		return NULL;
 	}
