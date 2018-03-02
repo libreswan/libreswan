@@ -1000,7 +1000,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 
 	/* Send NAT-T Notify payloads */
 	{
-		int np = IMPAIR(SEND_BOGUS_SA_INIT_PAYLOAD) ? ISAKMP_NEXT_v2BOGUS :
+		int np = IMPAIR(ADD_BOGUS_PAYLOAD_TO_SA_INIT) ? ISAKMP_NEXT_v2BOGUS :
 			(vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 		if (!ikev2_out_nat_v2n(np, &rbody, md))
 			return STF_INTERNAL_ERROR;
@@ -1008,9 +1008,11 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 
 	/* something the other end won't like */
 
-	if (IMPAIR(SEND_BOGUS_SA_INIT_PAYLOAD)) {
+	if (IMPAIR(ADD_BOGUS_PAYLOAD_TO_SA_INIT)) {
+		libreswan_log("IMPAIR: adding a bogus playload of type %d to SA_INIT request",
+			      ISAKMP_NEXT_v2BOGUS);
 		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
-		uint8_t critical = ikev2_critical(IMPAIR(BOGUS_PAYLOAD_CRITICAL));
+		uint8_t critical = build_ikev2_critical(false, IMPAIR(BOGUS_PAYLOAD_CRITICAL));
 		if (!ship_v2(&rbody, np, critical, NULL, NULL)) {
 			return STF_INTERNAL_ERROR;
 		}
@@ -1617,7 +1619,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	/* Send NAT-T Notify payloads */
 	{
 		struct ikev2_generic in;
-		int np = IMPAIR(SEND_BOGUS_SA_INIT_PAYLOAD) ? ISAKMP_NEXT_v2BOGUS :
+		int np = IMPAIR(ADD_BOGUS_PAYLOAD_TO_SA_INIT) ? ISAKMP_NEXT_v2BOGUS :
 			send_certreq ? ISAKMP_NEXT_v2CERTREQ :
                         (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 		zero(&in);	/* OK: no pointers */
@@ -1629,10 +1631,12 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 
 	/* something the other end won't like */
 
-	if (IMPAIR(SEND_BOGUS_SA_INIT_PAYLOAD)) {
+	if (IMPAIR(ADD_BOGUS_PAYLOAD_TO_SA_INIT)) {
+		libreswan_log("IMPAIR: adding a bogus payload of type %d to SA_INIT reply",
+			      ISAKMP_NEXT_v2BOGUS);
 		int np = send_certreq ? ISAKMP_NEXT_v2CERTREQ :
                         (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
-		uint8_t critical = ikev2_critical(IMPAIR(BOGUS_PAYLOAD_CRITICAL));
+		uint8_t critical = build_ikev2_critical(false, IMPAIR(BOGUS_PAYLOAD_CRITICAL));
 		if (!ship_v2(&rbody, np, critical, NULL, NULL)) {
 			return STF_INTERNAL_ERROR;
 		}

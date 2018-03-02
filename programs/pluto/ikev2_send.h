@@ -81,10 +81,7 @@ bool ship_v2V(pb_stream *outs, enum next_payload_types_ikev2 np,
 	      const char *string);
 
 /* XXX: should be local to ikev2_send.c? */
-int build_ikev2_version(void);
-
-#define  ikev2_critical(CRITICAL) (					\
-		(CRITICAL ? ISAKMP_PAYLOAD_CRITICAL : ISAKMP_PAYLOAD_NONCRITICAL) | \
-		(IMPAIR(SEND_BOGUS_PAYLOAD_FLAG) ? ISAKMP_PAYLOAD_LIBRESWAN_BOGUS : 0))
+uint8_t build_ikev2_version(void);
+uint8_t build_ikev2_critical(bool critical, bool impair);
 
 #endif

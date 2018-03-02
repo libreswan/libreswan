@@ -61,7 +61,7 @@ static const char *impair_strings[] = {
 	I(IMPAIR_REPLAY_BACKWARD, "impair-replay-backward"),
 	I(IMPAIR_ALGORITHM_PARSER, "impair-algorithm-parser"),
 
-	I(IMPAIR_SEND_BOGUS_SA_INIT_PAYLOAD, "impair-send-bogus-sa-init-payload"),
+	I(IMPAIR_ADD_BOGUS_PAYLOAD_TO_SA_INIT, "impair-add-bogus-payload-to-sa-init"),
 	I(IMPAIR_BOGUS_PAYLOAD_CRITICAL, "impair-bogus-payload-critical"),
 };
 

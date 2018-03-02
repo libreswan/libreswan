@@ -129,12 +129,38 @@ bool ship_v2V(pb_stream *outs, enum next_payload_types_ikev2 np,
  *
  * top 4 bits are major version, lower 4 bits are minor version
  */
-int build_ikev2_version(void)
+uint8_t build_ikev2_version(void)
 {
 	/* TODO: if bumping, we should also set the Version flag in the ISAKMP header */
 	return ((IKEv2_MAJOR_VERSION + (DBGP(IMPAIR_MAJOR_VERSION_BUMP) ? 1 : 0))
 			<< ISA_MAJ_SHIFT) |
 	       (IKEv2_MINOR_VERSION + (DBGP(IMPAIR_MINOR_VERSION_BUMP) ? 1 : 0));
+}
+
+uint8_t build_ikev2_critical(bool critical, bool impair)
+{
+	uint8_t octet = 0;
+	if (impair) {
+		/* flip the expected bit */
+		if (critical) {
+			libreswan_log("IMPAIR: clearing (should be on) critical payload bit");
+			octet = ISAKMP_PAYLOAD_NONCRITICAL;
+		} else {
+			libreswan_log("IMPAIR: setting (should be off) critical payload bit");
+			octet = ISAKMP_PAYLOAD_CRITICAL;
+		}
+	} else {
+		octet = critical ? ISAKMP_PAYLOAD_CRITICAL : ISAKMP_PAYLOAD_NONCRITICAL;
+	}
+	if (IMPAIR(SEND_BOGUS_PAYLOAD_FLAG)) {
+#if 0
+		libreswan_log("IMPAIR: adding bogus bit to critical octet");
+#else
+		libreswan_log(" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
+#endif
+		octet |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
+	}
+	return octet;
 }
 
 /* add notify payload to the rbody */
