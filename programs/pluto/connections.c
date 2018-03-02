@@ -1771,14 +1771,14 @@ void add_connection(const struct whack_message *wm)
 		default_end(&c->spd.that, &c->spd.this.host_addr);
 
 		/*
-		 * If both left/rightauth is unset, fill it in with symmetric policy
+		 * If both left/rightauth is unset, fill it in with (prefered) symmetric policy
 		 */
 		if (wm->left.authby == AUTH_UNSET && wm->right.authby == AUTH_UNSET) {
 			if (c->policy & POLICY_RSASIG)
 				c->spd.this.authby = c->spd.that.authby = AUTH_RSASIG;
-			if (c->policy & POLICY_PSK)
+			else if (c->policy & POLICY_PSK)
 				c->spd.this.authby = c->spd.that.authby = AUTH_PSK;
-			if (c->policy & POLICY_AUTH_NULL)
+			else if (c->policy & POLICY_AUTH_NULL)
 				c->spd.this.authby = c->spd.that.authby = AUTH_NULL;
 		}
 
