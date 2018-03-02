@@ -62,6 +62,7 @@ static const char *impair_strings[] = {
 	I(IMPAIR_ALGORITHM_PARSER, "impair-algorithm-parser"),
 
 	I(IMPAIR_ADD_BOGUS_PAYLOAD_TO_SA_INIT, "impair-add-bogus-payload-to-sa-init"),
+	I(IMPAIR_ADD_BOGUS_PAYLOAD_TO_AUTH, "impair-add-bogus-payload-to-auth"),
 	I(IMPAIR_BOGUS_PAYLOAD_CRITICAL, "impair-bogus-payload-critical"),
 };
 

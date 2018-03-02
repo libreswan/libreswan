@@ -3122,7 +3122,8 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	/* XXX it should pick the cookies from the parent state! */
 	memcpy(hdr.isa_icookie, cst->st_icookie, COOKIE_SIZE);
 	memcpy(hdr.isa_rcookie, cst->st_rcookie, COOKIE_SIZE);
-	hdr.isa_np = ISAKMP_NEXT_v2SK;
+	hdr.isa_np = IMPAIR(ADD_BOGUS_PAYLOAD_TO_AUTH) ?
+		ISAKMP_NEXT_v2BOGUS : ISAKMP_NEXT_v2SK;
 	hdr.isa_version = build_ikev2_version();
 	hdr.isa_xchg = ISAKMP_v2_AUTH;
 	/* XXX same here, use parent */
@@ -3147,6 +3148,16 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		libreswan_log(
 			" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
 		e.isag_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
+	}
+
+	if (IMPAIR(ADD_BOGUS_PAYLOAD_TO_AUTH)) {
+		libreswan_log("IMPAIR: adding a bogus payload of type %d to AUTH request",
+			      ISAKMP_NEXT_v2BOGUS);
+		int np = ISAKMP_NEXT_v2SK;
+		uint8_t critical = build_ikev2_critical(false, IMPAIR(BOGUS_PAYLOAD_CRITICAL));
+		if (!ship_v2(&rbody, np, critical, NULL, NULL)) {
+			return STF_INTERNAL_ERROR;
+		}
 	}
 
 	pb_stream e_pbs;
@@ -4039,7 +4050,8 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 			hdr = md->hdr; /* grab cookies */
 
 			hdr.isa_version = build_ikev2_version();
-			hdr.isa_np = ISAKMP_NEXT_v2SK;
+			hdr.isa_np = IMPAIR(ADD_BOGUS_PAYLOAD_TO_AUTH) ?
+				ISAKMP_NEXT_v2BOGUS : ISAKMP_NEXT_v2SK;
 			hdr.isa_xchg = ISAKMP_v2_AUTH;
 			memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 			memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
@@ -4053,6 +4065,16 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 			if (!out_struct(&hdr, &isakmp_hdr_desc,
 					&reply_stream, &rbody))
 				return STF_INTERNAL_ERROR;
+		}
+
+		if (IMPAIR(ADD_BOGUS_PAYLOAD_TO_AUTH)) {
+			libreswan_log("IMPAIR: adding a bogus payload of type %d to AUTH reply",
+				      ISAKMP_NEXT_v2BOGUS);
+			int np = ISAKMP_NEXT_v2SK;
+			uint8_t critical = build_ikev2_critical(false, IMPAIR(BOGUS_PAYLOAD_CRITICAL));
+			if (!ship_v2(&rbody, np, critical, NULL, NULL)) {
+				return STF_INTERNAL_ERROR;
+			}
 		}
 
 		/* decide to send CERT payload before we generate IDr */

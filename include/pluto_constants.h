@@ -421,6 +421,7 @@ enum {
 	IMPAIR_ALGORITHM_PARSER_IX,		/* impair algorithm parser - what you see is what you get */
 
 	IMPAIR_ADD_BOGUS_PAYLOAD_TO_SA_INIT_IX,	/* add a bogus payload to SA_INIT */
+	IMPAIR_ADD_BOGUS_PAYLOAD_TO_AUTH_IX,	/* add a bogus payload to AUTH */
 	IMPAIR_BOGUS_PAYLOAD_CRITICAL_IX,	/* mark the bogus payload as critical SA_INIT */
 
 	IMPAIR_roof_IX	/* first unassigned IMPAIR */
@@ -467,6 +468,7 @@ enum {
 #define IMPAIR_ALGORITHM_PARSER 	LELEM(IMPAIR_ALGORITHM_PARSER_IX)
 
 #define IMPAIR_ADD_BOGUS_PAYLOAD_TO_SA_INIT	LELEM(IMPAIR_ADD_BOGUS_PAYLOAD_TO_SA_INIT_IX)
+#define IMPAIR_ADD_BOGUS_PAYLOAD_TO_AUTH	LELEM(IMPAIR_ADD_BOGUS_PAYLOAD_TO_AUTH_IX)
 #define IMPAIR_BOGUS_PAYLOAD_CRITICAL		LELEM(IMPAIR_BOGUS_PAYLOAD_CRITICAL_IX)
 
 /* State of exchanges
