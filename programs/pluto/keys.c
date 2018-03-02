@@ -460,8 +460,10 @@ stf_status RSA_check_signature_gen(struct state *st,
 					continue; /* continue with next public key */
 				}
 
-				if (take_a_crack(&s, key, "preloaded key"))
+				if (take_a_crack(&s, key, "preloaded key")) {
+					loglog(RC_LOG_SERIOUS, "Authenticated using RSA");
 					return STF_OK;
+				}
 			}
 			pp = &p->next;
 		}

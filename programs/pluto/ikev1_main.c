@@ -1417,7 +1417,7 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 		struct isakmp_ipsec_id id_hd;
 		chunk_t id_b;
 
-		build_id_payload(&id_hd, &id_b, &st->st_connection->spd.this);
+		build_id_payload(&id_hd, &id_b, &st->st_connection->spd.this, FALSE);
 		id_hd.isaiid_np =
 			(send_cert) ? ISAKMP_NEXT_CERT : auth_payload;
 		if (!out_struct(&id_hd,
@@ -1773,7 +1773,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 		struct isakmp_ipsec_id id_hd;
 		chunk_t id_b;
 
-		build_id_payload(&id_hd, &id_b, &st->st_connection->spd.this);
+		build_id_payload(&id_hd, &id_b, &st->st_connection->spd.this, FALSE);
 		id_hd.isaiid_np =
 			(send_cert) ? ISAKMP_NEXT_CERT : auth_payload;
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,

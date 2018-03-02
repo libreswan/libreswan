@@ -158,8 +158,8 @@ extern bool ikev2_create_psk_auth(enum keyword_authby authby,
 				     struct state *st,
 				     unsigned char *idhash,
 				     pb_stream *a_pbs,
-				     bool calc_no_ppk_auth,
-				     chunk_t *no_ppk_auth);
+				     bool calc_additional_auth,
+				     chunk_t *additional_auth);
 
 extern stf_status ikev2_verify_rsa_sha1(struct state *st,
 					enum original_role role,

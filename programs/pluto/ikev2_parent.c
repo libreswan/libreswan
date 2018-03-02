@@ -528,7 +528,7 @@ static bool v2_check_auth(enum ikev2_auth_method atype,
 	switch (atype) {
 	case IKEv2_AUTH_RSA:
 	{
-		if (that_authby != AUTH_RSASIG) {
+		if (!LIN(POLICY_RSASIG, st->st_connection->policy) &&  that_authby != AUTH_RSASIG) {
 			libreswan_log("Peer attempted RSA authentication but we want %s",
 				enum_name(&ikev2_asym_auth_name, that_authby));
 			return FALSE;
@@ -549,14 +549,14 @@ static bool v2_check_auth(enum ikev2_auth_method atype,
 
 	case IKEv2_AUTH_PSK:
 	{
-		if (that_authby != AUTH_PSK) {
+		if (!LIN(POLICY_PSK, st->st_connection->policy) &&  that_authby != AUTH_PSK) {
 			libreswan_log("Peer attempted PSK authentication but we want %s",
 				enum_name(&ikev2_asym_auth_name, that_authby));
 			return FALSE;
 		}
 
                stf_status authstat = ikev2_verify_psk_auth(
-                               that_authby, st, idhash_in,
+                               AUTH_PSK, st, idhash_in,
                                pbs);
 
                if (authstat != STF_OK) {
@@ -568,14 +568,14 @@ static bool v2_check_auth(enum ikev2_auth_method atype,
 
 	case IKEv2_AUTH_NULL:
 	{
-		if (that_authby != AUTH_NULL) {
+		if (!LIN(POLICY_AUTH_NULL, st->st_connection->policy) &&  that_authby != AUTH_NULL) {
 			libreswan_log("Peer attempted NULL authentication but we want %s",
 				enum_name(&ikev2_asym_auth_name, that_authby));
 			return FALSE;
 		}
 
 		stf_status authstat = ikev2_verify_psk_auth(
-				that_authby, st, idhash_in,
+				AUTH_NULL, st, idhash_in,
 				pbs);
 
 		if (authstat != STF_OK) {
@@ -588,7 +588,7 @@ static bool v2_check_auth(enum ikev2_auth_method atype,
 
 	case IKEv2_AUTH_DIGSIG:
 	{
-		if (that_authby != AUTH_RSASIG) {
+		if (!LIN(POLICY_RSASIG, st->st_connection->policy) &&  that_authby != AUTH_RSASIG) {
 			libreswan_log("Peer attempted Authentication through Digital Signature but we want %s",
 				enum_name(&ikev2_asym_auth_name, that_authby));
 			return FALSE;
@@ -2714,7 +2714,8 @@ static stf_status ikev2_send_auth(struct connection *c,
 				  enum original_role role,
 				  enum next_payload_types_ikev2 np,
 				  unsigned char *idhash_out,
-				  pb_stream *outpbs)
+				  pb_stream *outpbs,
+				  chunk_t *null_auth)
 {
 	struct ikev2_a a;
 	pb_stream a_pbs;
@@ -2722,12 +2723,16 @@ static stf_status ikev2_send_auth(struct connection *c,
 		state_with_serialno(st->st_clonedfrom) : st;
 	enum keyword_authby authby = c->spd.this.authby;
 
-	if (authby == AUTH_UNSET) {
+	if (st->st_peer_wants_null) {
+		/* we allow authby=null and IDr payload told us to use it */
+		authby = AUTH_NULL;
+	} else if (authby == AUTH_UNSET) {
 		/* asymmetric policy unset, pick up from symmetric policy */
-		if (c->policy & POLICY_PSK) {
-			authby = AUTH_PSK;
-		} else if (c->policy & POLICY_RSASIG) {
+		/* in order of preference! */
+		if (c->policy & POLICY_RSASIG) {
 			authby = AUTH_RSASIG;
+		} else if (c->policy & POLICY_PSK) {
+			authby = AUTH_PSK;
 		} else if (c->policy & POLICY_AUTH_NULL) {
 			authby = AUTH_NULL;
 		}
@@ -2811,6 +2816,20 @@ static stf_status ikev2_send_auth(struct connection *c,
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 		break;
+	}
+
+	/* we sent normal IKEv2_AUTH_RSA but if the policy also allows
+	 * AUTH_NULL, we will send a Notify with NULL_AUTH in separate
+	 * chunk. This is only done on the initiator in IKE_AUTH, and
+	 * not repeated in rekeys. We already changed state to STATE_PARENT_I2.
+	 */
+	if (pst->st_state == STATE_PARENT_I2 && authby == AUTH_RSASIG && c->policy & POLICY_AUTH_NULL) {
+		if (!ikev2_create_psk_auth(AUTH_NULL, pst, idhash_out, &a_pbs,
+			TRUE, /* only store it */
+			null_auth /* store it here */)) {
+			loglog(RC_LOG_SERIOUS, "Failed to calculate additional NULL_AUTH");
+			return STF_FATAL;
+		}
 	}
 
 	close_output_pbs(&a_pbs);
@@ -2998,6 +3017,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	struct connection *const pc = pst->st_connection;	/* parent connection */
 	int send_cp_r = 0;
 	struct ppk_id_payload ppk_id_p;
+	chunk_t null_auth;	setchunk(null_auth, NULL, 0);	/* additional NULL_AUTH payload */
 
 	if (!finish_dh_v2(pst, r, FALSE))
 		return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
@@ -3153,8 +3173,9 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	/* it should use parent not child state */
 	bool send_cert = ikev2_send_cert_decision(cst);
-	bool send_idr = pc->spd.that.id.name.len != 0; /* me tarzan, you jane */
 	bool ic =  pc->initial_contact && (pst->st_ike_pred == SOS_NOBODY);
+	bool send_idr = ((pc->spd.that.id.kind != ID_NULL && pc->spd.that.id.name.len != 0) ||
+				pc->spd.that.id.kind == ID_NULL); /* me tarzan, you jane */
 
 	DBG(DBG_CONTROL, DBG_log("IDr payload will %sbe sent", send_idr ? "" : "NOT "));
 
@@ -3171,7 +3192,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 		hmac_init(&id_ctx, pst->st_oakley.ta_prf, pst->st_skey_pi_nss);
 		build_id_payload((struct isakmp_ipsec_id *)&r_id, &id_b,
-				 &pc->spd.this);
+				 &pc->spd.this, FALSE);
 		r_id.isai_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
 			libreswan_log(
@@ -3249,6 +3270,9 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		case ID_KEY_ID:
 			r_id.isai_type = ID_KEY_ID;
 			break;
+		case ID_NULL:
+			r_id.isai_type = ID_NULL;
+			break;
 		default:
 			DBG(DBG_CONTROL, DBG_log("Not sending IDr payload for remote ID type %s",
 				enum_show(&ike_idtype_names, pc->spd.that.id.kind)));
@@ -3258,7 +3282,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		if (r_id.isai_type != ID_NONE) {
 			build_id_payload((struct isakmp_ipsec_id *)&r_id,
 				 &id_b,
-				 &pc->spd.that);
+				 &pc->spd.that, FALSE);
 			r_id.isai_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 			r_id.isai_np = ic ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2AUTH;
 
@@ -3289,7 +3313,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 				pst->hidden_variables.st_nat_traversal);
 
 		stf_status authstat = ikev2_send_auth(pc, cst, ORIGINAL_INITIATOR, np,
-				idhash, &e_pbs_cipher);
+				idhash, &e_pbs_cipher, &null_auth);
 
 		if (authstat != STF_OK)
 			return authstat;
@@ -3353,6 +3377,9 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 		if (pst->st_seen_ppk)
 			notifies++; /* used for one or two payloads */
+
+		if (null_auth.ptr != NULL)
+			notifies++;
 
 		/* code does not support AH + ESP, not recommend rfc8221 section-4 */
 		struct ipsec_proto_info *proto_info
@@ -3418,7 +3445,8 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		}
 		if (pst->st_seen_ppk) {
 			chunk_t notify_data = create_unified_ppk_id(&ppk_id_p);
-			int np = LIN(POLICY_PPK_INSIST, cc->policy) ? ISAKMP_NEXT_v2NONE : ISAKMP_NEXT_v2N;
+			int np = LIN(POLICY_PPK_INSIST, cc->policy) && null_auth.ptr == NULL ?
+				ISAKMP_NEXT_v2NONE : ISAKMP_NEXT_v2N;
 
 			notifies--; /* used for one or two payloads */
 			if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
@@ -3428,14 +3456,25 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 				return STF_INTERNAL_ERROR;
 			freeanychunk(notify_data);
 
+			np = null_auth.ptr == NULL ? ISAKMP_NEXT_v2NONE : ISAKMP_NEXT_v2N;
 			if (!LIN(POLICY_PPK_INSIST, cc->policy)) {
 				ikev2_calc_no_ppk_auth(cc, pst, idhash_npa, &pst->st_no_ppk_auth);
-				if (!ship_v2N(ISAKMP_NEXT_v2NONE, ISAKMP_PAYLOAD_NONCRITICAL,
+				if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
 					PROTO_v2_RESERVED, &empty_chunk,
 					v2N_NO_PPK_AUTH, &pst->st_no_ppk_auth,
 					&e_pbs_cipher))
 						return STF_INTERNAL_ERROR;
 			}
+		}
+
+		if (null_auth.ptr != NULL) {
+			notifies--;
+			if (!ship_v2N(ISAKMP_NEXT_v2NONE, ISAKMP_PAYLOAD_NONCRITICAL,
+				PROTO_v2_RESERVED, &empty_chunk,
+				v2N_NULL_AUTH, &null_auth,
+				&e_pbs_cipher))
+					return STF_INTERNAL_ERROR;
+			freeanychunk(null_auth);
 		}
 
 		passert(notifies == 0);
@@ -3725,6 +3764,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 	bool found_ppk = FALSE;
 	bool ppkid_seen = FALSE;
 	bool noppk_seen = FALSE;
+	chunk_t null_auth;	setchunk(null_auth, NULL, 0);
 	struct payload_digest *ntfy;
 
 	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
@@ -3809,6 +3849,17 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 						"and sent" : "while it did not sent"));
 			st->st_seen_mobike = TRUE;
 			break;
+		case v2N_NULL_AUTH:
+		{
+			pb_stream pbs = ntfy->pbs;
+			size_t len = pbs_left(&pbs);
+
+			DBG(DBG_CONTROL, DBG_log("received v2N_NULL_AUTH"));
+			null_auth = alloc_chunk(len, "NULL_AUTH");
+			if (!in_raw(null_auth.ptr, len, &pbs, "NULL_AUTH extract")) {
+				loglog(RC_LOG_SERIOUS, "Failed to extract %zd bytes of NULL_AUTH from Notify payload", len);
+			}
+		}
 		default:
 			break;
 		}
@@ -3856,9 +3907,8 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 		/*
 		 * we didn't recalculate keys with PPK, but we found NO_PPK_AUTH
 		 * (meaning that initiator did use PPK) so we try to verify NO_PPK_AUTH.
-		 * Otherwise check AUTH normally
 		 */
-		DBG(DBG_CONTROL, DBG_log("We are going to try to use NO_PPK_AUTH."));
+		DBG(DBG_CONTROL, DBG_log("going to try to verify NO_PPK_AUTH."));
 		/* making a dummy pb_stream so we could pass it to v2_check_auth */
 		pb_stream pbs_no_ppk_auth;
 		pb_stream pbs = md->chain[ISAKMP_NEXT_v2AUTH]->pbs;
@@ -3874,12 +3924,36 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 		}
 		DBG(DBG_CONTROL, DBG_log("NO_PPK_AUTH verified"));
 	} else {
-		if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type,
-			st, ORIGINAL_RESPONDER, idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
-			st->st_connection->spd.that.authby))
-		{
+		bool policy_null = LIN(POLICY_AUTH_NULL, st->st_connection->policy);
+		bool policy_rsasig = LIN(POLICY_RSASIG, st->st_connection->policy);
+
+		/* if received NULL_AUTH in Notify payload and we only allow NULL Authentication,
+		 * proceed with verifying that payload, else verify AUTH normally */
+		if (null_auth.ptr != NULL && policy_null && !policy_rsasig) {
+			/* making a dummy pb_stream so we could pass it to v2_check_auth */
+			pb_stream pbs_null_auth;
+			size_t len = null_auth.len;
+
+			DBG(DBG_CONTROL, DBG_log("going to try to verify NULL_AUTH from Notify payload"));
+			init_pbs(&pbs_null_auth, null_auth.ptr, len, "pb_stream for verifying NULL_AUTH");
+			if (!v2_check_auth(IKEv2_AUTH_NULL,
+				st, ORIGINAL_RESPONDER, idhash_in, &pbs_null_auth,
+				AUTH_NULL))
+			{
+				/* TODO: This should really be an encrypted message! */
+				send_v2_notification_from_state(st, md, v2N_AUTHENTICATION_FAILED, NULL);
+				return STF_FATAL;
+			}
+			DBG(DBG_CONTROL, DBG_log("NULL_AUTH verified"));
+		} else {
+			if (!v2_check_auth(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type,
+				st, ORIGINAL_RESPONDER, idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
+				st->st_connection->spd.that.authby))
+			{
+			/* TODO: This should really be an encrypted message! */
 			send_v2_notification_from_state(st, md, v2N_AUTHENTICATION_FAILED, NULL);
 			return STF_FATAL;
+			}
 		}
 	}
 
@@ -4062,7 +4136,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 			hmac_init(&id_ctx, st->st_oakley.ta_prf, st->st_skey_pr_nss);
 			build_id_payload((struct isakmp_ipsec_id *)&r_id,
 					 &id_b,
-					 &c->spd.this);
+					 &c->spd.this, st->st_peer_wants_null);
 			r_id.isai_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 			r_id.isai_np = send_cert ?
 				ISAKMP_NEXT_v2CERT : ISAKMP_NEXT_v2AUTH;
@@ -4128,7 +4202,8 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 			stf_status authstat = ikev2_send_auth(c, st,
 							      ORIGINAL_RESPONDER, np,
 							      idhash_out,
-							      &e_pbs_cipher);
+							      &e_pbs_cipher, NULL);
+							      /* ??? NULL - don't calculate additional NULL_AUTH ??? */
 
 			if (authstat != STF_OK)
 				return authstat;

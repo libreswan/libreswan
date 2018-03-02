@@ -1501,7 +1501,10 @@ typedef enum {
 	v2N_NO_PPK_AUTH = 16437, /* draft-ietf-ipsecme-qr-ikev2 */
 
 	/* 16438 - 40969 Unassigned */
-	/* 40960 - 65535 Private Use */
+
+	v2N_NULL_AUTH = 40960,
+
+	/* 40961 - 65535 Private Use */
 } v2_notification_t;
 
 /* draft-ietf-ipsecme-qr-ikev2-01 created registry */
