@@ -3215,10 +3215,11 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 			r_id.isai_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
 		}
 
-		r_id.isai_np = send_cert ?  ISAKMP_NEXT_v2CERT :
+		r_id.isai_np = IMPAIR(ADD_BOGUS_PAYLOAD_TO_AUTH_SK) ? ISAKMP_NEXT_v2BOGUS :
+			send_cert ?  ISAKMP_NEXT_v2CERT :
 			send_idr ? ISAKMP_NEXT_v2IDr :
-				ic ? ISAKMP_NEXT_v2N :
-					ISAKMP_NEXT_v2AUTH;
+			ic ? ISAKMP_NEXT_v2N :
+			ISAKMP_NEXT_v2AUTH;
 
 		/* HASH of ID is not done over common header */
 		unsigned char *const id_start =
@@ -3248,6 +3249,19 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 			/* ID payload that we've build is the same */
 			hmac_update(&id_ctx_npa, id_start, id_len);
 			hmac_final(idhash_npa, &id_ctx_npa);
+		}
+	}
+
+	if (IMPAIR(ADD_BOGUS_PAYLOAD_TO_AUTH_SK)) {
+		libreswan_log("IMPAIR: adding a bogus playload of type %d to AUTH's SK request",
+			      ISAKMP_NEXT_v2BOGUS);
+		int np = send_cert ?  ISAKMP_NEXT_v2CERT :
+			send_idr ? ISAKMP_NEXT_v2IDr :
+			ic ? ISAKMP_NEXT_v2N :
+			ISAKMP_NEXT_v2AUTH;
+		uint8_t critical = build_ikev2_critical(false, IMPAIR(BOGUS_PAYLOAD_CRITICAL));
+		if (!ship_v2(&e_pbs_cipher, np, critical, NULL, NULL)) {
+			return STF_INTERNAL_ERROR;
 		}
 	}
 
@@ -4081,7 +4095,9 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		send_cert = ikev2_send_cert_decision(st);
 
 		/* insert an Encryption payload header */
-		e.isag_np = (notifies != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2IDr;
+		e.isag_np = IMPAIR(ADD_BOGUS_PAYLOAD_TO_AUTH_SK) ? ISAKMP_NEXT_v2BOGUS :
+			(notifies != 0) ? ISAKMP_NEXT_v2N :
+			ISAKMP_NEXT_v2IDr;
 		e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 
 		if (!out_struct(&e, &ikev2_sk_desc, &rbody, &e_pbs))
@@ -4101,6 +4117,17 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		e_pbs_cipher.cur = e_pbs.cur;
 		uint8_t *encstart = e_pbs_cipher.cur;
 		passert(reply_stream.start <= iv && iv <= encstart);
+
+		if (IMPAIR(ADD_BOGUS_PAYLOAD_TO_AUTH_SK)) {
+			libreswan_log("IMPAIR: adding a bogus playload of type %d to AUTH's SK reply",
+				      ISAKMP_NEXT_v2BOGUS);
+			int np = (notifies != 0) ? ISAKMP_NEXT_v2N :
+				ISAKMP_NEXT_v2IDr;
+			uint8_t critical = build_ikev2_critical(false, IMPAIR(BOGUS_PAYLOAD_CRITICAL));
+			if (!ship_v2(&e_pbs_cipher, np, critical, NULL, NULL)) {
+				return STF_INTERNAL_ERROR;
+			}
+		}
 
 		/* send any NOTIFY payloads */
 		if (st->st_sent_mobike) {

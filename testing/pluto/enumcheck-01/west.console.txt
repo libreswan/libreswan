@@ -2,4 +2,15 @@
 west #
  PATH/libexec/ipsec/enumcheck | diff -u ../../enumcheck/OUTPUT.enumcheck.txt -
 enumcheck: leak detective found no leaks
+--- ../../enumcheck/OUTPUT.enumcheck.txt	2018-02-28 11:10:30.785950488 -0500
++++ -	2018-03-03 19:25:31.065310860 -0500
+@@ -4075,6 +4075,6 @@
+ 
+   debug 1fffff:
+ 	<<raw+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+xauth+retransmits+oppoinfo+crypt+private+algorithm-parser+whackwatch+add-prefix>>
+-  impair 1fffffffe00000:
+-	<<bust-mi2+bust-mr2+drop-i2+sa-creation+die-oninfo+jacob-two-two+allow-null-null+major-version-bump+minor-version-bump+retransmits+send-no-retransmits+send-bogus-payload-flag+send-bogus-isakmp-flag+send-ikev2-ke+send-no-delete+send-no-ikev2-auth+send-no-xauth-r0+drop-xauth-r0+send-no-main-r2+force-fips+send-key-size-check+send-zero-gx+send-bogus-dcookie+omit-hash-notify+ignore-hash-notify+ignore-hash-notify-resp+ikev2-exclude-integ-none+ikev2-include-integ-none+replay-duplicates+replay-forward+replay-backward+algorithm-parser>>
++  impair 3ffffffffe00000:
++	<<bust-mi2+bust-mr2+drop-i2+sa-creation+die-oninfo+jacob-two-two+allow-null-null+major-version-bump+minor-version-bump+retransmits+delete-on-retransmit+send-no-retransmits+send-bogus-payload-flag+send-bogus-isakmp-flag+send-ikev2-ke+send-no-delete+send-no-ikev2-auth+send-no-xauth-r0+drop-xauth-r0+send-no-main-r2+force-fips+send-key-size-check+send-zero-gx+send-bogus-dcookie+omit-hash-notify+ignore-hash-notify+ignore-hash-notify-resp+ikev2-exclude-integ-none+ikev2-include-integ-none+replay-duplicates+replay-forward+replay-backward+algorithm-parser+add-bogus-payload-to-sa-init+add-bogus-payload-to-auth+add-bogus-payload-to-auth-sk+bogus-payload-critical>>
+ 
 
