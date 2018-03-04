@@ -41,7 +41,6 @@ void send_v2_notification_invalid_ke(struct msg_digest *md,
 
 pb_stream open_v2_message(pb_stream *reply,
 			  struct ike_sa *ike, struct msg_digest *md,
-			  enum next_payload_types_ikev2 next_payload,
 			  enum isakmp_xchg_types exchange_type);
 
 typedef struct v2sk_stream {
@@ -54,10 +53,9 @@ typedef struct v2sk_stream {
 	const char *name;
 } v2sk_stream_t;
 
-v2sk_stream_t ikev2_open_encrypted_payload(pb_stream *container,
-					   enum next_payload_types_ikev2 np,
-					   struct ike_sa *st,
-					   const char *name);
+v2sk_stream_t open_v2_encrypted_payload(pb_stream *container,
+					struct ike_sa *st,
+					const char *name);
 
 bool ikev2_close_encrypted_payload(v2sk_stream_t *sk);
 
@@ -77,6 +75,9 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
 	      v2_notification_t type,
 	      const chunk_t *n_data,
 	      pb_stream *rbody);
+bool out_v2N(pb_stream *rbody,
+	     v2_notification_t ntype,
+	     const chunk_t *ndata);
 bool ship_v2V(pb_stream *outs, enum next_payload_types_ikev2 np,
 	      const char *string);
 

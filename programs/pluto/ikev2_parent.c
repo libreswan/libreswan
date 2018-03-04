@@ -6789,10 +6789,9 @@ void ikev2_addr_change(struct state *st)
 	}
 }
 
-struct v2sk_stream ikev2_open_encrypted_payload(pb_stream *body,
-						enum next_payload_types_ikev2 next_payload,
-						struct ike_sa *ike,
-						const char *name)
+struct v2sk_stream open_v2_encrypted_payload(pb_stream *body,
+					     struct ike_sa *ike,
+					     const char *name)
 {
 	static const struct v2sk_stream empty_sk;
 	struct v2sk_stream sk = {
@@ -6803,7 +6802,6 @@ struct v2sk_stream ikev2_open_encrypted_payload(pb_stream *body,
 	/* insert an Encryption payload header */
 
 	struct ikev2_generic e = {
-		.isag_np = next_payload,
 		.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL,
 		.isag_length = 0, /* filled in later */
 	};
