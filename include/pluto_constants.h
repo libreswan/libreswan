@@ -1115,3 +1115,15 @@ enum pluto_exit_code {
 #define SWAN_MAX_DOMAIN_LEN 256 /* includes nul termination */
 
 extern void init_pluto_constants(void);
+
+/*
+ * Automatic IPsec SA SPD policy priorities.
+ * manual by user	0 - 65535
+ * static conn		65536 - 131071
+ * opportunistic	131072 - 262143
+ * oe-anonymous		262144 - 524287
+ */
+#define PLUTO_SPD_MANUAL_MAX 65535
+#define PLUTO_SPD_STATIC_MAX 131071
+#define PLUTO_SPD_OPPO_MAX 262143
+#define PLUTO_SPD_OPPO_ANON_MAX  524287
