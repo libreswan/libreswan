@@ -99,9 +99,6 @@
 #define XFRM_STATE_AF_UNSPEC 32
 #endif
 
-/* Minimum priority number in SPD used by pluto. */
-#define MIN_SPD_PRIORITY 1024
-
 static int nl_send_fd = NULL_FD; /* to send to NETLINK_XFRM */
 static int nl_xfrm_fd = NULL_FD; /* listen to NETLINK_XFRM broadcast */
 static int nl_route_fd = NULL_FD; /* listen to NETLINK_ROUTE broadcast */
@@ -690,7 +687,6 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
 
 	const int family = addrtypeof(&that_client->addr);
-	const int shift = (family == AF_INET) ? 5 : 7;
 
 	req.u.p.sel.sport = portof(&this_client->addr);
 	req.u.p.sel.dport = portof(&that_client->addr);
@@ -735,32 +731,11 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		req.n.nlmsg_type = XFRM_MSG_DELPOLICY;
 		req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.u.id)));
 	} else {
-		int src, dst;
-
 		req.u.p.dir = dir;
 
-		src = req.u.p.sel.prefixlen_s;
-		dst = req.u.p.sel.prefixlen_d;
-		if (dir != XFRM_POLICY_OUT) {
-			src = req.u.p.sel.prefixlen_d;
-			dst = req.u.p.sel.prefixlen_s;
-		}
-
-		/*
-		 * if the user did not specify a priority, calculate one based
-		 * on 'more specific' getting a higher priority
-		 */
-		if (sa_priority != 0) {
-			req.u.p.priority = sa_priority;
-		} else {
-			req.u.p.priority = MIN_SPD_PRIORITY -
-				((policy == IPSEC_POLICY_NONE) ? 512 : 0) +
-				(((2 << shift) - src) << shift) +
-				(2 << shift) - dst - ((transport_proto) ? 64 :
-						0) -
-				((req.u.p.sel.sport) ? 32 : 0) -
-				((req.u.p.sel.sport) ? 32 : 0);
-		}
+		/* * The caller should have set the proper priority by now */
+		req.u.p.priority = sa_priority;
+		DBG(DBG_KERNEL, DBG_log("IPsec Sa SPD priority set to %d", req.u.p.priority));
 
 		req.u.p.action = XFRM_POLICY_ALLOW;
 		if (policy == IPSEC_POLICY_DISCARD)
@@ -2278,7 +2253,7 @@ static bool netlink_sag_eroute(const struct state *st, const struct spd_route *s
 
 	return eroute_connection(sr, inner_spi, inner_spi, inner_proto,
 				inner_esatype, proto_info + i,
-				c->sa_priority, &c->sa_marks, op, opname
+				calculate_sa_prio(c), &c->sa_marks, op, opname
 #ifdef HAVE_LABELED_IPSEC
 				, st->st_connection->policy_label
 #endif
@@ -2408,7 +2383,7 @@ static bool netlink_shunt_eroute(const struct connection *c,
 					ET_INT,
 					null_proto_info,
 					deltatime(0),
-					c->sa_priority,
+					calculate_sa_prio(c),
 					&c->sa_marks,
 					op, buf2
 #ifdef HAVE_LABELED_IPSEC
@@ -2444,7 +2419,7 @@ static bool netlink_shunt_eroute(const struct connection *c,
 					ET_INT,
 					null_proto_info,
 					deltatime(0),
-					c->sa_priority,
+					calculate_sa_prio(c),
 					&c->sa_marks,
 					op, buf2
 #ifdef HAVE_LABELED_IPSEC

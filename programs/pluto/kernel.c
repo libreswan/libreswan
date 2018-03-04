@@ -1409,7 +1409,7 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 			SA_INT, transport_proto,
 			ET_INT, null_proto_info,
 			deltatime(SHUNT_PATIENCE),
-			DEFAULT_IPSEC_SA_PRIORITY,
+			0, /* we don't know connection for priority yet */
 			NULL, /* sa_marks */
 			op, why
 #ifdef HAVE_LABELED_IPSEC
@@ -1633,7 +1633,7 @@ bool assign_holdpass(const struct connection *c,
 						htonl(negotiation_shunt),
 						SA_INT, ET_INT,
 						null_proto_info,
-						DEFAULT_IPSEC_SA_PRIORITY,
+						calculate_sa_prio(c),
 						NULL,
 						op,
 						reason
@@ -2385,7 +2385,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				esatype,		/* esatype */
 				proto_info,		/* " */
 				deltatime(0),		/* lifetime */
-				c->sa_priority,		/* IPsec SA prio */
+				calculate_sa_prio(c),	/* priority */
 				&c->sa_marks,		/* IPsec SA marks */
 				ERO_ADD_INBOUND,	/* op */
 				"add inbound"		/* opname */
@@ -2484,7 +2484,8 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 					ET_ESP : ET_UNSPEC,
 					null_proto_info,
 					deltatime(0),
-					c->sa_priority, &c->sa_marks,
+					calculate_sa_prio(c),
+					&c->sa_marks,
 					ERO_DEL_INBOUND,
 					"delete inbound"
 #ifdef HAVE_LABELED_IPSEC
@@ -3115,7 +3116,7 @@ bool route_and_eroute(struct connection *c,
 						ET_INT,
 						null_proto_info,
 						deltatime(SHUNT_PATIENCE),
-						DEFAULT_IPSEC_SA_PRIORITY,
+						calculate_sa_prio(c),
 						NULL,
 						ERO_REPLACE,
 						"restore"

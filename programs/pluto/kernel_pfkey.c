@@ -1371,7 +1371,7 @@ bool pfkey_shunt_eroute(const struct connection *c,
 					ET_INT,
 					null_proto_info,
 					deltatime(0),
-					c->sa_priority,
+					calculate_sa_prio(c),
 					&c->sa_marks,
 					op, buf2
 #ifdef HAVE_LABELED_IPSEC
@@ -1464,7 +1464,7 @@ bool pfkey_sag_eroute(const struct state *st, const struct spd_route *sr,
 	return eroute_connection(sr,
 				 inner_spi, inner_spi, inner_proto,
 				 inner_esatype, proto_info + i,
-				 DEFAULT_IPSEC_SA_PRIORITY, NULL, op, opname
+				 0 /* KLIPS does not support priority */, NULL, op, opname
 #ifdef HAVE_LABELED_IPSEC
 				 , NULL
 #endif

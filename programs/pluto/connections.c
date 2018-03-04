@@ -4565,3 +4565,47 @@ bool idr_wildmatch(const struct connection *c, const struct id *idr)
                 /* literal case */
                 wl == il && strncaseeq(wp, ip, wl);
 }
+
+/* sa priority and type should really go into kernel_sa */
+uint32_t calculate_sa_prio(const struct connection *c)
+{
+
+	int bits, base, src, dst, prio = 0;
+
+	if (c->sa_priority != 0) {
+		DBG(DBG_CONTROL, DBG_log("priority calculation of connection \"%s\" overruled by connection specifiction of %d",
+			c->name, c->sa_priority));
+		return c->sa_priority;
+	}
+
+	if (LIN(POLICY_GROUP, c->policy)) {
+		DBG(DBG_CONTROL, DBG_log("priority calculation of connection \"%s\" skipped - group template does not install SPDs",
+			c->name));
+		return 0;
+	}
+
+	bits = (c->spd.this.port != 0 && c->spd.this.port != 0 ) ? 3 :
+		(c->spd.this.port != 0 || c->spd.this.port != 0 ) ? 2 :
+		(c->spd.this.protocol != 0) ? 1 : 0;
+
+	if (LIN(POLICY_GROUPINSTANCE, c->policy)) {
+		if (LIN(POLICY_AUTH_NULL, c->policy))
+			base =  PLUTO_SPD_OPPO_ANON_MAX;
+		else
+			base =  PLUTO_SPD_OPPO_MAX;
+	} else {
+		base =  PLUTO_SPD_STATIC_MAX;
+	}
+
+	if (!LIN(POLICY_TUNNEL, c->policy)) {
+		src = dst = c->addr_family == AF_INET ? 32 : 128;
+	} else {
+		src = c->spd.this.client.maskbits;
+		dst = c->spd.that.client.maskbits;
+	}
+	prio = base - ((2<<16) + (bits << 14) + (src << 7) + (dst));
+
+	DBG(DBG_CONTROL, DBG_log("priority calculation of connection \"%s\" is %d",
+		c->name, prio));
+	return prio;
+}

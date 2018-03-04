@@ -543,3 +543,5 @@ extern void liveness_clear_connection(struct connection *c, char *v);
 extern void liveness_action(struct connection *c, const bool ikev2);
 
 extern bool idr_wildmatch(const struct connection *c, const struct id *b);
+
+extern uint32_t calculate_sa_prio(const struct connection *c);
