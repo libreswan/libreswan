@@ -447,7 +447,8 @@ kvmplutotest	dnsoe-06				wip
 kvmplutotest	newoe-18-poc-cop-port22-whack		good
 kvmplutotest	newoe-18-poc-cop-port22			good
 kvmplutotest	newoe-18-poc-cop-port22-transport	good
-kvmplutotest	newoe-18-poc-cop-port22-both		wip
+kvmplutotest	newoe-18-poc-cop-port22-both		good
+kvmplutotest	newoe-18-poc-cop-port22-both-reorder	wip
 
 kvmplutotest	mixoe-01-authanon-authanon		good
 kvmplutotest	mixoe-02-anon-authanon			good

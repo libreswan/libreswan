@@ -5,5 +5,8 @@ values.
 
 (we use 22 so we can echo something and get closed connection)
 
-See newoe-18-poc-cop-port22-both-reorder where the order of clear-or-private
-entries is reversed, and east has to switch connections in IKE_AUTH
+Compared to newoe-18-poc-cop-port22-both, the order of the clear-or-private
+policies on east is reversed. This causes east to initiately pick the
+wrong clear-or-private group to instantiate, and it needs to switch
+during IKE_AUTH
+
