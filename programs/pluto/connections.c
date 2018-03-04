@@ -2477,12 +2477,16 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
  * that we need to instantiate an opportunistic connection.
  */
 struct connection *build_outgoing_opportunistic_connection(const ip_address *our_client,
-						const ip_address *peer_client)
+						const ip_address *peer_client, const int transport_proto)
 {
 	struct connection *best = NULL;
 	struct spd_route *bestsr = NULL;	/* initialization not necessary */
+	int our_port, peer_port;
 
 	passert(!isanyaddr(our_client) && !isanyaddr(peer_client));
+
+	our_port = hportof(our_client);
+	peer_port = hportof(peer_client);
 
 	struct iface_port *p;
 
@@ -2508,10 +2512,15 @@ struct connection *build_outgoing_opportunistic_connection(const ip_address *our
 			struct spd_route *sr;
 
 			/* for each sr of c, see if we have a new best */
+			/* Paul: while this code can reject unmatched conns, it does not find the most narrow match! */
 			for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 				if (!routed(sr->routing) ||
 				    !addrinsubnet(our_client, &sr->this.client) ||
-				    !addrinsubnet(peer_client, &sr->that.client))
+				    !addrinsubnet(peer_client, &sr->that.client) ||
+				    ((sr->this.protocol != 0) && transport_proto != 0 && sr->this.protocol != transport_proto) ||
+				    ((sr->this.protocol != 0) && sr->that.port != 0 && peer_port != sr->that.port) ||
+				    ((sr->this.protocol != 0) && sr->this.port != 0 && our_port != sr->this.port)
+				   )
 				{
 					/*  sr does not work for these clients */
 				} else if (best == NULL ||

@@ -878,7 +878,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 
 			c = build_outgoing_opportunistic_connection(
 				&b->our_client,
-				&b->peer_client);
+				&b->peer_client,
+				b->transport_proto);
 
 			if (c == NULL) {
 				/* We cannot seem to instantiate a suitable connection:

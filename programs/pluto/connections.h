@@ -463,7 +463,8 @@ extern struct connection *oppo_instantiate(struct connection *c,
 
 extern struct connection *build_outgoing_opportunistic_connection(
 		const ip_address *our_client,
-		const ip_address *peer_client);
+		const ip_address *peer_client,
+		const int transport_proto);
 
 /* worst case: "[" serial "] " myclient "=== ..." peer "===" hisclient '\0' */
 #define CONN_INST_BUF \
