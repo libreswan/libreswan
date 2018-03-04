@@ -2144,92 +2144,6 @@ struct connection *rw_instantiate(struct connection *c,
 	return d;
 }
 
-struct connection *oppo_instantiate(struct connection *c,
-				const ip_address *him,
-				const struct id *his_id,
-				const ip_address *our_client,
-				const ip_address *peer_client)
-{
-	struct connection *d = instantiate(c, him, his_id);
-
-	DBG(DBG_CONTROL,
-		DBG_log("oppo instantiate d=\"%s\" from c=\"%s\" with c->routing %s, d->routing %s",
-			d->name, c->name,
-			enum_name(&routing_story, c->spd.routing),
-			enum_name(&routing_story, d->spd.routing)));
-	DBG(DBG_CONTROL, {
-			char instbuf[512];
-			format_connection(instbuf, sizeof(instbuf), d, &d->spd);
-			DBG_log("new oppo instance: %s", instbuf);
-		});
-
-	passert(d->spd.spd_next == NULL);
-
-	/* fill in our client side */
-	if (d->spd.this.has_client) {
-		/*
-		 * There was a client in the abstract connection so we demand
-		 * that the required client is within that subnet, * or that
-		 * it is our private ip in case we are behind a port forward
-		 */
-		passert(addrinsubnet(our_client, &d->spd.this.client) || sameaddr(our_client, &d->spd.this.host_addr));
-
-		if (addrinsubnet(our_client, &d->spd.this.client))
-			happy(addrtosubnet(our_client, &d->spd.this.client));
-
-		/* opportunistic connections do not use port selectors */
-		setportof(0, &d->spd.this.client.addr);
-	} else {
-		/*
-		 * There was no client in the abstract connection
-		 * so we demand that the required client be the host.
-		 */
-		passert(sameaddr(our_client, &d->spd.this.host_addr));
-	}
-
-	/*
-	 * Fill in peer's client side.
-	 * If the client is the peer, excise the client from the connection.
-	 */
-	passert(d->policy & POLICY_OPPORTUNISTIC);
-	passert(addrinsubnet(peer_client, &d->spd.that.client));
-	happy(addrtosubnet(peer_client, &d->spd.that.client));
-
-	/* opportunistic connections do not use port selectors */
-	setportof(0, &d->spd.that.client.addr);
-
-	if (sameaddr(peer_client, &d->spd.that.host_addr))
-		d->spd.that.has_client = FALSE;
-
-	/*
-	 * Adjust routing if something is eclipsing c.
-	 * It must be a %hold for us (hard to passert this).
-	 * If there was another instance eclipsing, we'd be using it.
-	 */
-	if (c->spd.routing == RT_ROUTED_ECLIPSED)
-		d->spd.routing = RT_ROUTED_PROSPECTIVE;
-
-	/*
-	 * Remember if the template is routed:
-	 * if so, this instance applies for initiation
-	 * even if it is created for responding.
-	 */
-	if (routed(c->spd.routing))
-		d->instance_initiation_ok = TRUE;
-
-	DBG(DBG_CONTROL, {
-			char topo[CONN_BUF_LEN];
-			char inst[CONN_INST_BUF];
-
-			(void) format_connection(topo, sizeof(topo), d,
-						&d->spd);
-			DBG_log("oppo_instantiate() instantiated \"%s\"%s: %s",
-				fmt_conn_instance(d, inst), d->name,
-				topo);
-		});
-	return d;
-}
-
 /* priority formatting */
 void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF])
 {
@@ -2451,6 +2365,92 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 	});
 
 	return best;
+}
+
+static struct connection *oppo_instantiate(struct connection *c,
+				const ip_address *him,
+				const struct id *his_id,
+				const ip_address *our_client,
+				const ip_address *peer_client)
+{
+	struct connection *d = instantiate(c, him, his_id);
+
+	DBG(DBG_CONTROL,
+		DBG_log("oppo instantiate d=\"%s\" from c=\"%s\" with c->routing %s, d->routing %s",
+			d->name, c->name,
+			enum_name(&routing_story, c->spd.routing),
+			enum_name(&routing_story, d->spd.routing)));
+	DBG(DBG_CONTROL, {
+			char instbuf[512];
+			format_connection(instbuf, sizeof(instbuf), d, &d->spd);
+			DBG_log("new oppo instance: %s", instbuf);
+		});
+
+	passert(d->spd.spd_next == NULL);
+
+	/* fill in our client side */
+	if (d->spd.this.has_client) {
+		/*
+		 * There was a client in the abstract connection so we demand
+		 * that the required client is within that subnet, * or that
+		 * it is our private ip in case we are behind a port forward
+		 */
+		passert(addrinsubnet(our_client, &d->spd.this.client) || sameaddr(our_client, &d->spd.this.host_addr));
+
+		if (addrinsubnet(our_client, &d->spd.this.client))
+			happy(addrtosubnet(our_client, &d->spd.this.client));
+
+		/* opportunistic connections do not use port selectors */
+		setportof(0, &d->spd.this.client.addr);
+	} else {
+		/*
+		 * There was no client in the abstract connection
+		 * so we demand that the required client be the host.
+		 */
+		passert(sameaddr(our_client, &d->spd.this.host_addr));
+	}
+
+	/*
+	 * Fill in peer's client side.
+	 * If the client is the peer, excise the client from the connection.
+	 */
+	passert(d->policy & POLICY_OPPORTUNISTIC);
+	passert(addrinsubnet(peer_client, &d->spd.that.client));
+	happy(addrtosubnet(peer_client, &d->spd.that.client));
+
+	/* opportunistic connections do not use port selectors */
+	setportof(0, &d->spd.that.client.addr);
+
+	if (sameaddr(peer_client, &d->spd.that.host_addr))
+		d->spd.that.has_client = FALSE;
+
+	/*
+	 * Adjust routing if something is eclipsing c.
+	 * It must be a %hold for us (hard to passert this).
+	 * If there was another instance eclipsing, we'd be using it.
+	 */
+	if (c->spd.routing == RT_ROUTED_ECLIPSED)
+		d->spd.routing = RT_ROUTED_PROSPECTIVE;
+
+	/*
+	 * Remember if the template is routed:
+	 * if so, this instance applies for initiation
+	 * even if it is created for responding.
+	 */
+	if (routed(c->spd.routing))
+		d->instance_initiation_ok = TRUE;
+
+	DBG(DBG_CONTROL, {
+			char topo[CONN_BUF_LEN];
+			char inst[CONN_INST_BUF];
+
+			(void) format_connection(topo, sizeof(topo), d,
+						&d->spd);
+			DBG_log("oppo_instantiate() instantiated \"%s\"%s: %s",
+				fmt_conn_instance(d, inst), d->name,
+				topo);
+		});
+	return d;
 }
 
 /*

@@ -455,12 +455,6 @@ extern struct connection *instantiate(struct connection *c,
 				      const ip_address *him,
 				      const struct id *his_id);
 
-extern struct connection *oppo_instantiate(struct connection *c,
-					   const ip_address *him,
-					   const struct id *his_id,
-					   const ip_address *our_client,
-					   const ip_address *peer_client);
-
 extern struct connection *build_outgoing_opportunistic_connection(
 		const ip_address *our_client,
 		const ip_address *peer_client,
