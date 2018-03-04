@@ -1955,12 +1955,14 @@ char *add_group_instance(struct connection *group, const ip_subnet *target,
 		char targetbuf[SUBNETTOT_BUF];
 
 		subnettot(target, 0, targetbuf, sizeof(targetbuf));
+
 		if (proto == 0) {
 			snprintf(namebuf, sizeof(namebuf), "%s#%s", group->name, targetbuf);
 		} else {
-			snprintf(namebuf, sizeof(namebuf), "%s#%s-%d--%d--%d", group->name,
+			snprintf(namebuf, sizeof(namebuf), "%s#%s-(%d--%d--%d)", group->name,
 				targetbuf, sport, proto, dport);
 		}
+
 	}
 
 	if (conn_by_name(namebuf, FALSE, FALSE) != NULL) {
