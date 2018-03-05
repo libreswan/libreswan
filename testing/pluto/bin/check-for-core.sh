@@ -21,10 +21,20 @@ ls ${DIR}/core* 2>/dev/null | while read core ; do
 	prog=""
     fi
 
+    # send to stdout
     if test -n "${prog}" ; then
 	echo
 	gdb -ex bt  -q -batch  ${prog} ${core}
 	echo
+    fi
+
+    # send to pluto's log file
+    if test "${exe}" = "pluto" -a -n "${prog}"; then
+	(
+	    echo
+	    gdb -ex bt  -q -batch  ${prog} ${core}
+	    echo
+	) >> /tmp/pluto.log
     fi
 
     mv -f $core OUTPUT/
