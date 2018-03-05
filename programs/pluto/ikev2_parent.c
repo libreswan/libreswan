@@ -2563,6 +2563,19 @@ bool ikev2_decrypt_msg(struct state *st, struct msg_digest *md)
 		ok = ikev2_reassemble_fragments(st, md);
 	} else {
 		pb_stream *e_pbs = &md->chain[ISAKMP_NEXT_v2SK]->pbs;
+		/*
+		 * If so impaired, clone the encrypted message before
+		 * it gets decrypted in-place (but only once).
+		 */
+		if (IMPAIR(REPLAY_ENCRYPTED) && !md->clone) {
+			libreswan_log("IMPAIR: cloning original encrypted message and scheduling replay");
+			schedule_md_event("replay encrypted message",
+					  clone_md(md, "copy of encrypted message"));
+		}
+		if (IMPAIR(CORRUPT_ENCRYPTED) && !md->clone) {
+			libreswan_log("IMPAIR: corrupting original encrypted payload's first byte");
+			*e_pbs->cur = ~(*e_pbs->cur);
+		}
 
 		chunk_t c = chunk(md->packet_pbs.start,
 				  e_pbs->roof - md->packet_pbs.start);

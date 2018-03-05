@@ -541,6 +541,23 @@ static void impair_incoming(struct msg_digest **mdp)
 	release_any_md(mdp);
 }
 
+static pluto_event_now_cb handle_md_event; /* type assertion */
+static void handle_md_event(struct state *st, struct msg_digest **mdp,
+			    void *context)
+{
+	passert(st == NULL);
+	passert(mdp == NULL); /* suspended md from state */
+	struct msg_digest *md = context;
+	process_md(&md);
+	pexpect(md == NULL);
+	pexpect_reset_globals();
+}
+
+void schedule_md_event(const char *name, struct msg_digest *md)
+{
+	pluto_event_now(name, SOS_NOBODY, handle_md_event, md);
+}
+
 /* Auxiliary function for modecfg_inR1() */
 char *cisco_stringify(pb_stream *pbs, const char *attr_name)
 {

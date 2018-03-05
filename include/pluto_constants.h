@@ -404,9 +404,14 @@ enum {
 	IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE_IX,	/* causes pluto to ignore incoming hash notify from IKE_SA_INIT Response*/
 	IMPAIR_IKEv2_EXCLUDE_INTEG_NONE_IX,	/* lets pluto exclude integrity 'none' in proposals */
 	IMPAIR_IKEv2_INCLUDE_INTEG_NONE_IX,	/* lets pluto include integrity 'none' in proposals */
+
 	IMPAIR_REPLAY_DUPLICATES_IX,		/* replay duplicates of each incoming packet */
 	IMPAIR_REPLAY_FORWARD_IX,		/* replay all earlier packets old-to-new */
 	IMPAIR_REPLAY_BACKWARD_IX,		/* replay all earlier packets new-to-old */
+
+	IMPAIR_REPLAY_ENCRYPTED_IX,		/* replay encrypted packets */
+	IMPAIR_CORRUPT_ENCRYPTED_IX,		/* corrupts the encrypted packet so that the decryption fails */
+
 	IMPAIR_ALGORITHM_PARSER_IX,		/* impair algorithm parser - what you see is what you get */
 
 	IMPAIR_ADD_BOGUS_PAYLOAD_TO_SA_INIT_IX,	/* add a bogus payload to SA_INIT */
@@ -455,6 +460,10 @@ enum {
 #define IMPAIR_REPLAY_DUPLICATES 	LELEM(IMPAIR_REPLAY_DUPLICATES_IX)
 #define IMPAIR_REPLAY_FORWARD	 	LELEM(IMPAIR_REPLAY_FORWARD_IX)
 #define IMPAIR_REPLAY_BACKWARD 		LELEM(IMPAIR_REPLAY_BACKWARD_IX)
+
+#define IMPAIR_REPLAY_ENCRYPTED			LELEM(IMPAIR_REPLAY_ENCRYPTED_IX)
+#define IMPAIR_CORRUPT_ENCRYPTED		LELEM(IMPAIR_CORRUPT_ENCRYPTED_IX)
+
 #define IMPAIR_ALGORITHM_PARSER 	LELEM(IMPAIR_ALGORITHM_PARSER_IX)
 
 #define IMPAIR_ADD_BOGUS_PAYLOAD_TO_SA_INIT	LELEM(IMPAIR_ADD_BOGUS_PAYLOAD_TO_SA_INIT_IX)

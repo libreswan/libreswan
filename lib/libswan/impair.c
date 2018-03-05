@@ -59,6 +59,10 @@ static const char *impair_strings[] = {
 	I(IMPAIR_REPLAY_DUPLICATES, "impair-replay-duplicates"),
 	I(IMPAIR_REPLAY_FORWARD, "impair-replay-forward"),
 	I(IMPAIR_REPLAY_BACKWARD, "impair-replay-backward"),
+
+	I(IMPAIR_REPLAY_ENCRYPTED, "impair-replay-encrypted"),
+	I(IMPAIR_CORRUPT_ENCRYPTED, "impair-corrupt-encrypted"),
+
 	I(IMPAIR_ALGORITHM_PARSER, "impair-algorithm-parser"),
 
 	I(IMPAIR_ADD_BOGUS_PAYLOAD_TO_SA_INIT, "impair-add-bogus-payload-to-sa-init"),

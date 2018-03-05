@@ -145,6 +145,7 @@ extern struct msg_digest *alloc_md(const char *mdname);
 struct msg_digest *clone_md(struct msg_digest *md, const char *name);
 extern void release_md(struct msg_digest *md);
 extern void release_any_md(struct msg_digest **mdp);
+void schedule_md_event(const char *name, struct msg_digest *md);
 
 typedef stf_status state_transition_fn(struct state *st, struct msg_digest *md);
 
