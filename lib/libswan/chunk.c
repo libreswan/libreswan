@@ -15,10 +15,24 @@
  */
 
 #include "chunk.h"
+#include "lswalloc.h"
 
 const chunk_t empty_chunk = { NULL, 0 };
 
 chunk_t chunk(void *ptr, size_t len)
 {
 	return (chunk_t) { .ptr = ptr, .len = len, };
+}
+
+chunk_t clone_chunk(chunk_t chunk, const char *name)
+{
+	if (chunk.ptr == NULL) {
+		return empty_chunk;
+	} else {
+		chunk_t clone = {
+			.ptr = clone_bytes(chunk.ptr, chunk.len, name),
+			.len = chunk.len,
+		};
+		return clone;
+	}
 }

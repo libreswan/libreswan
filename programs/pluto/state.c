@@ -1511,26 +1511,16 @@ static struct state *duplicate_state(struct state *st, sa_t sa_type)
 		clone_nss_symkey_field(st_sk_pr_no_ppk);
 #   undef clone_nss_symkey_field
 
-#   define clone_any_chunk(field) { \
-		if (st->field.ptr == NULL) { \
-			nst->field.ptr = NULL; \
-			nst->field.len = 0; \
-		} else { \
-			clonetochunk(nst->field, st->field.ptr, st->field.len, \
-				#field " in duplicate state"); \
-		} \
-	}
-		clone_any_chunk(st_skey_initiator_salt);
-		clone_any_chunk(st_skey_responder_salt);
-#    undef clone_any_chunk
+		/* v2 duplication of state */
+#   define state_clone_chunk(CHUNK) \
+		nst->CHUNK = clone_chunk(st->CHUNK, #CHUNK " in duplicate state")
 
-	/* v2 duplication of state */
-#   define clone_chunk(ch, name) \
-	clonetochunk(nst->ch, st->ch.ptr, st->ch.len, name)
+		state_clone_chunk(st_ni);
+		state_clone_chunk(st_nr);
+		state_clone_chunk(st_skey_initiator_salt);
+		state_clone_chunk(st_skey_responder_salt);
 
-		clone_chunk(st_ni, "st_ni in duplicate_state");
-		clone_chunk(st_nr, "st_nr in duplicate_state");
-#   undef clone_chunk
+#   undef state_clone_chunk
 
 	}
 

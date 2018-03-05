@@ -48,11 +48,7 @@ chunk_t chunk(void *ptr, size_t len);
 #define clonetochunk(ch, addr, size, name) \
 	{ (ch).ptr = clone_bytes((addr), (ch).len = (size), name); }
 
-#define chunk_clone(OLD, NAME) (chunk_t)			\
-	{							\
-		.ptr = clone_bytes((OLD).ptr, (OLD).len, NAME), \
-		.len = (OLD).len,				\
-	}
+chunk_t clone_chunk(chunk_t old, const char *name);
 
 #define clonereplacechunk(ch, addr, size, name) \
 	{ pfreeany((ch).ptr); clonetochunk(ch, addr, size, name); }

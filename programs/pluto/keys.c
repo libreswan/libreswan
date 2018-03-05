@@ -262,8 +262,8 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 	publicKey->pkcs11ID = CK_INVALID_HANDLE;
 
 	/* make a local copy.  */
-	chunk_t n = chunk_clone(k->n, "n");
-	chunk_t e = chunk_clone(k->e, "e");
+	chunk_t n = clone_chunk(k->n, "n");
+	chunk_t e = clone_chunk(k->e, "e");
 
 	/* Converting n and e to nss_n and nss_e */
 	nss_n.data = n.ptr;
@@ -800,8 +800,8 @@ struct pubkey *public_key_from_rsa(const struct RSA_public_key *k)
 
 	memcpy(p->u.rsa.keyid, k->keyid, sizeof(p->u.rsa.keyid));
 	p->u.rsa.k = k->k;
-	p->u.rsa.e = chunk_clone(k->e, "e");
-	p->u.rsa.n = chunk_clone(k->n, "n");
+	p->u.rsa.e = clone_chunk(k->e, "e");
+	p->u.rsa.n = clone_chunk(k->n, "n");
 
 	/* note that we return a 1 reference count upon creation:
 	 * invariant: recount > 0.
