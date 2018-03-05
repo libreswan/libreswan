@@ -42,7 +42,7 @@ extern state_transition_fn ikev2_child_inR;
 extern state_transition_fn ikev2_child_inIoutR;
 
 extern state_transition_fn ikev2_parent_inI1outR1;
-extern state_transition_fn ikev2_parent_inR1BoutI1B;
+extern state_transition_fn ikev2_sa_init_process_reply_notification;
 extern state_transition_fn ikev2_parent_inR1outI2;
 extern state_transition_fn ikev2_parent_inI2outR2;
 extern state_transition_fn ikev2_parent_inR2;

@@ -1698,18 +1698,17 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
  *
  */
 /* STATE_PARENT_I1: R1B --> I1B
- *                     <--  HDR, N(COOKIE)
+ *                     <--  HDR, N
  * HDR, N(COOKIE), SAi1, KEi, Ni -->
  */
-stf_status ikev2_parent_inR1BoutI1B(struct state *st, struct msg_digest *md)
+stf_status ikev2_sa_init_process_reply_notification(struct state *st,
+						    struct msg_digest *md)
 {
 	struct connection *c = st->st_connection;
 
 	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 		if (ntfy->payload.v2n.isan_spisize != 0) {
-			DBG(DBG_CONTROLMORE, DBG_log(
-				"Notify payload for IKE must have zero length SPI - message dropped"
-			));
+			rate_log("Notify payload for IKE must have zero length SPI - message dropped");
 			return STF_IGNORE;
 		}
 
@@ -1736,7 +1735,7 @@ stf_status ikev2_parent_inR1BoutI1B(struct state *st, struct msg_digest *md)
 			 */
 			if (ntfy->payload.v2n.isan_length > IKEv2_MAX_COOKIE_SIZE) {
 				DBG(DBG_CONTROL, DBG_log("v2N_COOKIE notify payload too big - packet dropped"));
-				return STF_IGNORE; /* avoid DDOS / reflection attacks */
+				return STF_IGNORE;
 			}
 
 			if (ntfy->next != NULL) {
@@ -1765,7 +1764,7 @@ stf_status ikev2_parent_inR1BoutI1B(struct state *st, struct msg_digest *md)
 			md->msgid_received = v2_INVALID_MSGID;
 			st->st_msgid_nextuse = 0;
 			*/
-
+			/* re-send the SA_INIT request with cookies added */
 			return ikev2_parent_outI1_common(md, st);
 		}
 		case v2N_INVALID_KE_PAYLOAD:
@@ -1845,27 +1844,18 @@ stf_status ikev2_parent_inR1BoutI1B(struct state *st, struct msg_digest *md)
 			}
 		}
 
-		case v2N_NO_PROPOSAL_CHOSEN:
-			DBG(DBG_CONTROL, DBG_log("Received NO_PROPOSAL_CHOSEN"));
-			/* FALLTHROUGH */
 		default:
 			/*
-			 * ??? At least NO_PROPOSAL_CHOSEN
-			 * is legal and should keep us in this state.
-			 *
-			 * Note initial child SA might have failed but an incoming
-			 * CREATE_CHILD_SA for another range might succeed, so do not
-			 * delete childless parent state.
-			 *
-			 * The responder SPI ought to have been 0 (but might not be).
-			 * See rfc5996bis-04 2.6.
+			 * For things like v2N_NO_PROPOSAL_CHOSEN and
+			 * v2N_UNKNOWN_CRITICIAL_PAYLOAD, because they
+			 * were part of the unprotected SA_INIT
+			 * message, they really can't be trusted.
+			 * Just log and forget.
 			 */
-			if (DBGP(DBG_OPPO) || (st->st_connection->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-				libreswan_log("%s: received unauthenticated %s - ignored",
-					st->st_state_name,
-					enum_name(&ikev2_notify_names,
-						ntfy->payload.v2n.isan_type));
-			}
+			rate_log("%s: received unauthenticated %s - ignored",
+				 st->st_state_name,
+				 enum_name(&ikev2_notify_names,
+					   ntfy->payload.v2n.isan_type));
 		}
 	}
 	return STF_IGNORE;
