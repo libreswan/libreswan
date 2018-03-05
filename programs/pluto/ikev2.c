@@ -227,13 +227,21 @@ enum smf2_flags {
 /* From RFC 5996:
  *
  * 3.10 "Notify Payload": N payload may appear in any message
- *	??? should encryption be required?
+ *
+ *      During the initial exchange (SA_INIT) (i.e., DH has been
+ *      established) the notify payload can't be encrypted.  For all
+ *      other exchanges it should be part of the SK (encrypted)
+ *      payload (but beware the DH failure exception).
  *
  * 3.11 "Delete Payload": multiple D payloads may appear in an
  *	Informational exchange
  *
  * 3.12 "Vendor ID Payload": (multiple) may appear in any message
- *	??? should encryption be required?
+ *
+ *      During the initial exchange (SA_INIT) (i.e., DH has been
+ *      established) the vendor payload can't be encrypted.  For all
+ *      other exchanges it should be part of the SK (encrypted)
+ *      payload (but beware the DH failure exception).
  *
  * 3.15 "Configuration Payload":
  * 1.4 "The INFORMATIONAL Exchange": (multiple) Configuration Payloads
