@@ -94,6 +94,7 @@ struct msg_digest {
 	bool fragvid;				/* (v1) Peer supports FRAGMENTATION */
 	bool nortel;				/* (v1) Peer requires Nortel specific workaround */
 	bool event_already_set;			/* (v1) */
+	bool clone;				/* was cloned from an original message */
 
 	/*
 	 * The packet PBS contains a message PBS and the message PBS
@@ -141,6 +142,7 @@ struct msg_digest {
 };
 
 extern struct msg_digest *alloc_md(const char *mdname);
+struct msg_digest *clone_md(struct msg_digest *md, const char *name);
 extern void release_md(struct msg_digest *md);
 extern void release_any_md(struct msg_digest **mdp);
 

@@ -93,6 +93,20 @@ struct msg_digest *alloc_md(const char *mdname)
 	return md;
 }
 
+struct msg_digest *clone_md(struct msg_digest *md, const char *name)
+{
+	struct msg_digest *clone = alloc_md(name);
+	clone->clone = true;
+	/* raw_packet */
+	clone->iface = md->iface; /* copy reference */
+	clone->sender = md->sender; /* copy value */
+	/* packet_pbs ... */
+	size_t packet_size = pbs_room(&md->packet_pbs);
+	void *packet_bytes = clone_bytes(md->packet_pbs.start, packet_size, name);
+	init_pbs(&clone->packet_pbs, packet_bytes, packet_size, name);
+	return clone;
+}
+
 void release_md(struct msg_digest *md)
 {
 	freeanychunk(md->raw_packet);
