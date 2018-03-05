@@ -52,7 +52,7 @@ extern int id_count_wildcards(const struct id *id);
 
 struct isakmp_ipsec_id;	/* forward declaration of tag (defined in packet.h) */
 extern void build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl,
-			     struct end *end);
+			     struct end *end, bool nullid);
 
 extern void duplicate_id(struct id *dst, const struct id *src);
 extern bool same_dn_any_order(chunk_t a, chunk_t b);

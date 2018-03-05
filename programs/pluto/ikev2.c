@@ -1792,9 +1792,16 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 				    !same_id(&c->spd.that.id, &peer_id) &&
 				    c->spd.that.id.kind != ID_FROMCERT)
 				{
-					libreswan_log("Peer ID '%s' mismatched on first found connection and no better connection found",
+					if (LIN(POLICY_AUTH_NULL, c->policy) && tarzan_pld != NULL && tarzan_id.kind == ID_NULL) {
+						libreswan_log("Peer ID '%s' expects us to have ID_NULL and connection allows AUTH_NULL - allowing",
 							buf);
-					return FALSE;
+						md->st->st_peer_wants_null = TRUE;
+						r = c;
+					} else {
+						libreswan_log("Peer ID '%s' mismatched on first found connection and no better connection found",
+							buf);
+						return FALSE;
+					}
 				} else {
 					DBG(DBG_CONTROL, DBG_log("Peer ID matches and no better connection found - continuing with existing connection"));
 					r = c;

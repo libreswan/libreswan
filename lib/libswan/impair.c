@@ -37,6 +37,7 @@ static const char *impair_strings[] = {
 	I(IMPAIR_MAJOR_VERSION_BUMP, "impair-major-version-bump"),
 	I(IMPAIR_MINOR_VERSION_BUMP, "impair-minor-version-bump"),
 	I(IMPAIR_RETRANSMITS, "impair-retransmits"),
+	I(IMPAIR_DELETE_ON_RETRANSMIT, "impair-delete-on-retransmit"),
 	I(IMPAIR_SEND_NO_RETRANSMITS, "impair-send-no-retransmits"),
 	I(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG, "impair-send-bogus-payload-flag"),
 	I(IMPAIR_SEND_BOGUS_ISAKMP_FLAG, "impair-send-bogus-isakmp-flag"),
@@ -60,7 +61,9 @@ static const char *impair_strings[] = {
 	I(IMPAIR_REPLAY_BACKWARD, "impair-replay-backward"),
 	I(IMPAIR_ALGORITHM_PARSER, "impair-algorithm-parser"),
 
-	I(IMPAIR_SEND_BOGUS_SA_INIT_PAYLOAD, "impair-send-bogus-sa-init-payload"),
+	I(IMPAIR_ADD_BOGUS_PAYLOAD_TO_SA_INIT, "impair-add-bogus-payload-to-sa-init"),
+	I(IMPAIR_ADD_BOGUS_PAYLOAD_TO_AUTH, "impair-add-bogus-payload-to-auth"),
+	I(IMPAIR_ADD_BOGUS_PAYLOAD_TO_AUTH_SK, "impair-add-bogus-payload-to-auth-sk"),
 	I(IMPAIR_BOGUS_PAYLOAD_CRITICAL, "impair-bogus-payload-critical"),
 };
 

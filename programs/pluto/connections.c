@@ -1771,14 +1771,14 @@ void add_connection(const struct whack_message *wm)
 		default_end(&c->spd.that, &c->spd.this.host_addr);
 
 		/*
-		 * If both left/rightauth is unset, fill it in with symmetric policy
+		 * If both left/rightauth is unset, fill it in with (prefered) symmetric policy
 		 */
 		if (wm->left.authby == AUTH_UNSET && wm->right.authby == AUTH_UNSET) {
 			if (c->policy & POLICY_RSASIG)
 				c->spd.this.authby = c->spd.that.authby = AUTH_RSASIG;
-			if (c->policy & POLICY_PSK)
+			else if (c->policy & POLICY_PSK)
 				c->spd.this.authby = c->spd.that.authby = AUTH_PSK;
-			if (c->policy & POLICY_AUTH_NULL)
+			else if (c->policy & POLICY_AUTH_NULL)
 				c->spd.this.authby = c->spd.that.authby = AUTH_NULL;
 		}
 
@@ -1955,12 +1955,14 @@ char *add_group_instance(struct connection *group, const ip_subnet *target,
 		char targetbuf[SUBNETTOT_BUF];
 
 		subnettot(target, 0, targetbuf, sizeof(targetbuf));
+
 		if (proto == 0) {
 			snprintf(namebuf, sizeof(namebuf), "%s#%s", group->name, targetbuf);
 		} else {
-			snprintf(namebuf, sizeof(namebuf), "%s#%s-%d--%d--%d", group->name,
+			snprintf(namebuf, sizeof(namebuf), "%s#%s-(%d--%d--%d)", group->name,
 				targetbuf, sport, proto, dport);
 		}
+
 	}
 
 	if (conn_by_name(namebuf, FALSE, FALSE) != NULL) {
@@ -2139,92 +2141,6 @@ struct connection *rw_instantiate(struct connection *c,
 			d->name, fmt_conn_instance(d, inst),
 			ipstr(him, &b));
 	});
-	return d;
-}
-
-struct connection *oppo_instantiate(struct connection *c,
-				const ip_address *him,
-				const struct id *his_id,
-				const ip_address *our_client,
-				const ip_address *peer_client)
-{
-	struct connection *d = instantiate(c, him, his_id);
-
-	DBG(DBG_CONTROL,
-		DBG_log("oppo instantiate d=\"%s\" from c=\"%s\" with c->routing %s, d->routing %s",
-			d->name, c->name,
-			enum_name(&routing_story, c->spd.routing),
-			enum_name(&routing_story, d->spd.routing)));
-	DBG(DBG_CONTROL, {
-			char instbuf[512];
-			format_connection(instbuf, sizeof(instbuf), d, &d->spd);
-			DBG_log("new oppo instance: %s", instbuf);
-		});
-
-	passert(d->spd.spd_next == NULL);
-
-	/* fill in our client side */
-	if (d->spd.this.has_client) {
-		/*
-		 * There was a client in the abstract connection so we demand
-		 * that the required client is within that subnet, * or that
-		 * it is our private ip in case we are behind a port forward
-		 */
-		passert(addrinsubnet(our_client, &d->spd.this.client) || sameaddr(our_client, &d->spd.this.host_addr));
-
-		if (addrinsubnet(our_client, &d->spd.this.client))
-			happy(addrtosubnet(our_client, &d->spd.this.client));
-
-		/* opportunistic connections do not use port selectors */
-		setportof(0, &d->spd.this.client.addr);
-	} else {
-		/*
-		 * There was no client in the abstract connection
-		 * so we demand that the required client be the host.
-		 */
-		passert(sameaddr(our_client, &d->spd.this.host_addr));
-	}
-
-	/*
-	 * Fill in peer's client side.
-	 * If the client is the peer, excise the client from the connection.
-	 */
-	passert(d->policy & POLICY_OPPORTUNISTIC);
-	passert(addrinsubnet(peer_client, &d->spd.that.client));
-	happy(addrtosubnet(peer_client, &d->spd.that.client));
-
-	/* opportunistic connections do not use port selectors */
-	setportof(0, &d->spd.that.client.addr);
-
-	if (sameaddr(peer_client, &d->spd.that.host_addr))
-		d->spd.that.has_client = FALSE;
-
-	/*
-	 * Adjust routing if something is eclipsing c.
-	 * It must be a %hold for us (hard to passert this).
-	 * If there was another instance eclipsing, we'd be using it.
-	 */
-	if (c->spd.routing == RT_ROUTED_ECLIPSED)
-		d->spd.routing = RT_ROUTED_PROSPECTIVE;
-
-	/*
-	 * Remember if the template is routed:
-	 * if so, this instance applies for initiation
-	 * even if it is created for responding.
-	 */
-	if (routed(c->spd.routing))
-		d->instance_initiation_ok = TRUE;
-
-	DBG(DBG_CONTROL, {
-			char topo[CONN_BUF_LEN];
-			char inst[CONN_INST_BUF];
-
-			(void) format_connection(topo, sizeof(topo), d,
-						&d->spd);
-			DBG_log("oppo_instantiate() instantiated \"%s\"%s: %s",
-				fmt_conn_instance(d, inst), d->name,
-				topo);
-		});
 	return d;
 }
 
@@ -2451,6 +2367,92 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 	return best;
 }
 
+static struct connection *oppo_instantiate(struct connection *c,
+				const ip_address *him,
+				const struct id *his_id,
+				const ip_address *our_client,
+				const ip_address *peer_client)
+{
+	struct connection *d = instantiate(c, him, his_id);
+
+	DBG(DBG_CONTROL,
+		DBG_log("oppo instantiate d=\"%s\" from c=\"%s\" with c->routing %s, d->routing %s",
+			d->name, c->name,
+			enum_name(&routing_story, c->spd.routing),
+			enum_name(&routing_story, d->spd.routing)));
+	DBG(DBG_CONTROL, {
+			char instbuf[512];
+			format_connection(instbuf, sizeof(instbuf), d, &d->spd);
+			DBG_log("new oppo instance: %s", instbuf);
+		});
+
+	passert(d->spd.spd_next == NULL);
+
+	/* fill in our client side */
+	if (d->spd.this.has_client) {
+		/*
+		 * There was a client in the abstract connection so we demand
+		 * that the required client is within that subnet, * or that
+		 * it is our private ip in case we are behind a port forward
+		 */
+		passert(addrinsubnet(our_client, &d->spd.this.client) || sameaddr(our_client, &d->spd.this.host_addr));
+
+		if (addrinsubnet(our_client, &d->spd.this.client))
+			happy(addrtosubnet(our_client, &d->spd.this.client));
+
+		/* opportunistic connections do not use port selectors */
+		setportof(0, &d->spd.this.client.addr);
+	} else {
+		/*
+		 * There was no client in the abstract connection
+		 * so we demand that the required client be the host.
+		 */
+		passert(sameaddr(our_client, &d->spd.this.host_addr));
+	}
+
+	/*
+	 * Fill in peer's client side.
+	 * If the client is the peer, excise the client from the connection.
+	 */
+	passert(d->policy & POLICY_OPPORTUNISTIC);
+	passert(addrinsubnet(peer_client, &d->spd.that.client));
+	happy(addrtosubnet(peer_client, &d->spd.that.client));
+
+	/* opportunistic connections do not use port selectors */
+	setportof(0, &d->spd.that.client.addr);
+
+	if (sameaddr(peer_client, &d->spd.that.host_addr))
+		d->spd.that.has_client = FALSE;
+
+	/*
+	 * Adjust routing if something is eclipsing c.
+	 * It must be a %hold for us (hard to passert this).
+	 * If there was another instance eclipsing, we'd be using it.
+	 */
+	if (c->spd.routing == RT_ROUTED_ECLIPSED)
+		d->spd.routing = RT_ROUTED_PROSPECTIVE;
+
+	/*
+	 * Remember if the template is routed:
+	 * if so, this instance applies for initiation
+	 * even if it is created for responding.
+	 */
+	if (routed(c->spd.routing))
+		d->instance_initiation_ok = TRUE;
+
+	DBG(DBG_CONTROL, {
+			char topo[CONN_BUF_LEN];
+			char inst[CONN_INST_BUF];
+
+			(void) format_connection(topo, sizeof(topo), d,
+						&d->spd);
+			DBG_log("oppo_instantiate() instantiated \"%s\"%s: %s",
+				fmt_conn_instance(d, inst), d->name,
+				topo);
+		});
+	return d;
+}
+
 /*
  * Find and instantiate a connection for an outgoing Opportunistic connection.
  * We've already discovered its gateway.
@@ -2475,12 +2477,16 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
  * that we need to instantiate an opportunistic connection.
  */
 struct connection *build_outgoing_opportunistic_connection(const ip_address *our_client,
-						const ip_address *peer_client)
+						const ip_address *peer_client, const int transport_proto)
 {
 	struct connection *best = NULL;
 	struct spd_route *bestsr = NULL;	/* initialization not necessary */
+	int our_port, peer_port;
 
 	passert(!isanyaddr(our_client) && !isanyaddr(peer_client));
+
+	our_port = hportof(our_client);
+	peer_port = hportof(peer_client);
 
 	struct iface_port *p;
 
@@ -2506,10 +2512,15 @@ struct connection *build_outgoing_opportunistic_connection(const ip_address *our
 			struct spd_route *sr;
 
 			/* for each sr of c, see if we have a new best */
+			/* Paul: while this code can reject unmatched conns, it does not find the most narrow match! */
 			for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 				if (!routed(sr->routing) ||
 				    !addrinsubnet(our_client, &sr->this.client) ||
-				    !addrinsubnet(peer_client, &sr->that.client))
+				    !addrinsubnet(peer_client, &sr->that.client) ||
+				    ((sr->this.protocol != 0) && transport_proto != 0 && sr->this.protocol != transport_proto) ||
+				    ((sr->this.protocol != 0) && sr->that.port != 0 && peer_port != sr->that.port) ||
+				    ((sr->this.protocol != 0) && sr->this.port != 0 && our_port != sr->this.port)
+				   )
 				{
 					/*  sr does not work for these clients */
 				} else if (best == NULL ||
@@ -4553,4 +4564,48 @@ bool idr_wildmatch(const struct connection *c, const struct id *idr)
                 wl-1 <= il && strncaseeq(wp+1, ip+il-(wl-1), wl-1) :
                 /* literal case */
                 wl == il && strncaseeq(wp, ip, wl);
+}
+
+/* sa priority and type should really go into kernel_sa */
+uint32_t calculate_sa_prio(const struct connection *c)
+{
+
+	int bits, base, src, dst, prio = 0;
+
+	if (c->sa_priority != 0) {
+		DBG(DBG_CONTROL, DBG_log("priority calculation of connection \"%s\" overruled by connection specifiction of %d",
+			c->name, c->sa_priority));
+		return c->sa_priority;
+	}
+
+	if (LIN(POLICY_GROUP, c->policy)) {
+		DBG(DBG_CONTROL, DBG_log("priority calculation of connection \"%s\" skipped - group template does not install SPDs",
+			c->name));
+		return 0;
+	}
+
+	bits = (c->spd.this.port != 0 && c->spd.this.port != 0 ) ? 3 :
+		(c->spd.this.port != 0 || c->spd.this.port != 0 ) ? 2 :
+		(c->spd.this.protocol != 0) ? 1 : 0;
+
+	if (LIN(POLICY_GROUPINSTANCE, c->policy)) {
+		if (LIN(POLICY_AUTH_NULL, c->policy))
+			base =  PLUTO_SPD_OPPO_ANON_MAX;
+		else
+			base =  PLUTO_SPD_OPPO_MAX;
+	} else {
+		base =  PLUTO_SPD_STATIC_MAX;
+	}
+
+	if (!LIN(POLICY_TUNNEL, c->policy)) {
+		src = dst = c->addr_family == AF_INET ? 32 : 128;
+	} else {
+		src = c->spd.this.client.maskbits;
+		dst = c->spd.that.client.maskbits;
+	}
+	prio = base - ((2<<16) + (bits << 14) + (src << 7) + (dst));
+
+	DBG(DBG_CONTROL, DBG_log("priority calculation of connection \"%s\" is %d",
+		c->name, prio));
+	return prio;
 }

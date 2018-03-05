@@ -26,7 +26,6 @@ east #
 east #
  ipsec status | grep road-east | sed 's/"road-east-ikev2".*/"road-east-ikev2" --- cut ---/' | grep "#"
 000 #1: "road-east-ikev2" --- cut ---
-000 #1: "road-east-ikev2" --- cut ---
 000 #2: "road-east-ikev2" --- cut ---
 000 #2: "road-east-ikev2" --- cut ---
 east #

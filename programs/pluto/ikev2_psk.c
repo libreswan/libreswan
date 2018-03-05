@@ -237,8 +237,8 @@ bool ikev2_create_psk_auth(enum keyword_authby authby,
 			      struct state *st,
 			      unsigned char *idhash,
 			      pb_stream *a_pbs,
-			      bool calc_no_ppk_auth,
-			      chunk_t *no_ppk_auth)
+			      bool calc_additional_auth,
+			      chunk_t *additional_auth)
 {
 	unsigned int hash_len = st->st_oakley.ta_prf->prf_output_size;
 	unsigned char signed_octets[hash_len];
@@ -255,12 +255,14 @@ bool ikev2_create_psk_auth(enum keyword_authby authby,
 	DBG(DBG_PRIVATE,
 	    DBG_dump("PSK auth octets", signed_octets, hash_len));
 
-	if (calc_no_ppk_auth == FALSE) {
+	if (calc_additional_auth == FALSE) {
 		if (!out_raw(signed_octets, hash_len, a_pbs, "PSK auth"))
 			return FALSE;
 	} else {
-		clonetochunk(*no_ppk_auth, signed_octets, hash_len, "NO_PPK_AUTH chunk");
-		DBG(DBG_PRIVATE, DBG_dump_chunk("NO_PPK_AUTH payload", *no_ppk_auth));
+		char *chunk_n = (authby == AUTH_PSK) ? "NO_PPK_AUTH chunk" : "NULL_AUTH chunk";
+		clonetochunk(*additional_auth, signed_octets, hash_len, chunk_n);
+		char *auth_n = (authby == AUTH_PSK) ? "NO_PPK_AUTH payload" : "NULL_AUTH payload";
+		DBG(DBG_PRIVATE, DBG_dump_chunk(auth_n, *additional_auth));
 	}
 
 	return TRUE;
@@ -298,9 +300,11 @@ stf_status ikev2_verify_psk_auth(enum keyword_authby authby,
 	    DBG_dump("Calculated PSK auth octets", calc_hash, hash_len));
 
 	if (memeq(sig_pbs->cur, calc_hash, hash_len) ) {
+		loglog(RC_LOG_SERIOUS, "Authenticated using %s",
+			authby == AUTH_NULL ? "authby=null" : "authby=secret");
 		return STF_OK;
 	} else {
-		libreswan_log("AUTH mismatch: Received AUTH != computed AUTH");
+		loglog(RC_LOG_SERIOUS, "AUTH mismatch: Received AUTH != computed AUTH");
 		return STF_FAIL;
 	}
 }

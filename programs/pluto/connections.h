@@ -455,15 +455,10 @@ extern struct connection *instantiate(struct connection *c,
 				      const ip_address *him,
 				      const struct id *his_id);
 
-extern struct connection *oppo_instantiate(struct connection *c,
-					   const ip_address *him,
-					   const struct id *his_id,
-					   const ip_address *our_client,
-					   const ip_address *peer_client);
-
 extern struct connection *build_outgoing_opportunistic_connection(
 		const ip_address *our_client,
-		const ip_address *peer_client);
+		const ip_address *peer_client,
+		const int transport_proto);
 
 /* worst case: "[" serial "] " myclient "=== ..." peer "===" hisclient '\0' */
 #define CONN_INST_BUF \
@@ -542,3 +537,5 @@ extern void liveness_clear_connection(struct connection *c, char *v);
 extern void liveness_action(struct connection *c, const bool ikev2);
 
 extern bool idr_wildmatch(const struct connection *c, const struct id *b);
+
+extern uint32_t calculate_sa_prio(const struct connection *c);

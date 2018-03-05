@@ -448,14 +448,6 @@ extern void add_bare_shunt(const ip_subnet *ours, const ip_subnet *his,
 		int transport_proto, ipsec_spi_t shunt_spi,
 		const char *why);
 
-/*
- * Used to pass default priority from kernel_ops-> functions.
- * Our priority is based on an unsigned long int, with the
- * lower number being the highest priority, but this
- * might need to be translated depending on the IPsec stack.
- */
-#define DEFAULT_IPSEC_SA_PRIORITY 0
-
 // TEMPORARY
 extern bool raw_eroute(const ip_address *this_host,
 		       const ip_subnet *this_client,

@@ -396,6 +396,7 @@ enum {
 	IMPAIR_MAJOR_VERSION_BUMP_IX,		/* cause pluto to send an IKE major version that's higher then we support. */
 	IMPAIR_MINOR_VERSION_BUMP_IX,		/* cause pluto to send an IKE minor version that's higher then we support. */
 	IMPAIR_RETRANSMITS_IX,			/* causes pluto to timeout on first retransmit */
+	IMPAIR_DELETE_ON_RETRANSMIT_IX,		/* causes pluto to stop establishing a connection on the first retransmit */
 	IMPAIR_SEND_NO_RETRANSMITS_IX,		/* causes pluto to never send retransmits */
 	IMPAIR_SEND_BOGUS_PAYLOAD_FLAG_IX,	/* causes pluto to set a RESERVED PAYLOAD flag to test ignoring/zeroing it */
 	IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX,	/* causes pluto to set a RESERVED ISAKMP flag to test ignoring/zeroing it */
@@ -419,7 +420,9 @@ enum {
 	IMPAIR_REPLAY_BACKWARD_IX,		/* replay all earlier packets new-to-old */
 	IMPAIR_ALGORITHM_PARSER_IX,		/* impair algorithm parser - what you see is what you get */
 
-	IMPAIR_SEND_BOGUS_SA_INIT_PAYLOAD_IX,	/* include a bogus payload to SA_INIT */
+	IMPAIR_ADD_BOGUS_PAYLOAD_TO_SA_INIT_IX,	/* add a bogus payload to SA_INIT */
+	IMPAIR_ADD_BOGUS_PAYLOAD_TO_AUTH_IX,	/* add a bogus payload to AUTH */
+	IMPAIR_ADD_BOGUS_PAYLOAD_TO_AUTH_SK_IX,	/* add a bogus payload to AUTH's SK payload */
 	IMPAIR_BOGUS_PAYLOAD_CRITICAL_IX,	/* mark the bogus payload as critical SA_INIT */
 
 	IMPAIR_roof_IX	/* first unassigned IMPAIR */
@@ -441,6 +444,7 @@ enum {
 #define IMPAIR_MAJOR_VERSION_BUMP	LELEM(IMPAIR_MAJOR_VERSION_BUMP_IX)
 #define IMPAIR_MINOR_VERSION_BUMP	LELEM(IMPAIR_MINOR_VERSION_BUMP_IX)
 #define IMPAIR_RETRANSMITS	LELEM(IMPAIR_RETRANSMITS_IX)
+#define IMPAIR_DELETE_ON_RETRANSMIT	LELEM(IMPAIR_DELETE_ON_RETRANSMIT_IX)
 #define IMPAIR_SEND_NO_RETRANSMITS	LELEM(IMPAIR_SEND_NO_RETRANSMITS_IX)
 #define IMPAIR_SEND_BOGUS_PAYLOAD_FLAG	LELEM(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG_IX)
 #define IMPAIR_SEND_BOGUS_ISAKMP_FLAG	LELEM(IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX)
@@ -464,7 +468,9 @@ enum {
 #define IMPAIR_REPLAY_BACKWARD 		LELEM(IMPAIR_REPLAY_BACKWARD_IX)
 #define IMPAIR_ALGORITHM_PARSER 	LELEM(IMPAIR_ALGORITHM_PARSER_IX)
 
-#define IMPAIR_SEND_BOGUS_SA_INIT_PAYLOAD	LELEM(IMPAIR_SEND_BOGUS_SA_INIT_PAYLOAD_IX)
+#define IMPAIR_ADD_BOGUS_PAYLOAD_TO_SA_INIT	LELEM(IMPAIR_ADD_BOGUS_PAYLOAD_TO_SA_INIT_IX)
+#define IMPAIR_ADD_BOGUS_PAYLOAD_TO_AUTH	LELEM(IMPAIR_ADD_BOGUS_PAYLOAD_TO_AUTH_IX)
+#define IMPAIR_ADD_BOGUS_PAYLOAD_TO_AUTH_SK	LELEM(IMPAIR_ADD_BOGUS_PAYLOAD_TO_AUTH_SK_IX)
 #define IMPAIR_BOGUS_PAYLOAD_CRITICAL		LELEM(IMPAIR_BOGUS_PAYLOAD_CRITICAL_IX)
 
 /* State of exchanges
@@ -1111,3 +1117,15 @@ enum pluto_exit_code {
 #define SWAN_MAX_DOMAIN_LEN 256 /* includes nul termination */
 
 extern void init_pluto_constants(void);
+
+/*
+ * Automatic IPsec SA SPD policy priorities.
+ * manual by user	0 - 65535
+ * static conn		65536 - 131071
+ * opportunistic	131072 - 262143
+ * oe-anonymous		262144 - 524287
+ */
+#define PLUTO_SPD_MANUAL_MAX 65535
+#define PLUTO_SPD_STATIC_MAX 131071
+#define PLUTO_SPD_OPPO_MAX 262143
+#define PLUTO_SPD_OPPO_ANON_MAX  524287

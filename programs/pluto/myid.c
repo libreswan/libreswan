@@ -66,7 +66,7 @@
 #define DISCARD_CONST(vartype, varname) ((vartype)(uintptr_t)(varname))
 #endif
 
-void build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl, struct end *end)
+void build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl, struct end *end, bool nullid)
 {
 	const struct id *id = &end->id;
 	const unsigned char *p;
@@ -74,6 +74,14 @@ void build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl, struct end *end)
 	zero(hd);	/* OK: no pointer fields */
 	*tl = empty_chunk;
 	hd->isaiid_idtype = id->kind;
+
+	if (nullid) {
+		hd->isaiid_idtype = ID_NULL;
+		tl->len = 0;
+		tl->ptr = NULL;
+		return;
+	}
+
 	switch (id->kind) {
 	case ID_NONE:
 		hd->isaiid_idtype =

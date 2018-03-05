@@ -129,12 +129,38 @@ bool ship_v2V(pb_stream *outs, enum next_payload_types_ikev2 np,
  *
  * top 4 bits are major version, lower 4 bits are minor version
  */
-int build_ikev2_version(void)
+uint8_t build_ikev2_version(void)
 {
 	/* TODO: if bumping, we should also set the Version flag in the ISAKMP header */
 	return ((IKEv2_MAJOR_VERSION + (DBGP(IMPAIR_MAJOR_VERSION_BUMP) ? 1 : 0))
 			<< ISA_MAJ_SHIFT) |
 	       (IKEv2_MINOR_VERSION + (DBGP(IMPAIR_MINOR_VERSION_BUMP) ? 1 : 0));
+}
+
+uint8_t build_ikev2_critical(bool critical, bool impair)
+{
+	uint8_t octet = 0;
+	if (impair) {
+		/* flip the expected bit */
+		if (critical) {
+			libreswan_log("IMPAIR: clearing (should be on) critical payload bit");
+			octet = ISAKMP_PAYLOAD_NONCRITICAL;
+		} else {
+			libreswan_log("IMPAIR: setting (should be off) critical payload bit");
+			octet = ISAKMP_PAYLOAD_CRITICAL;
+		}
+	} else {
+		octet = critical ? ISAKMP_PAYLOAD_CRITICAL : ISAKMP_PAYLOAD_NONCRITICAL;
+	}
+	if (IMPAIR(SEND_BOGUS_PAYLOAD_FLAG)) {
+#if 0
+		libreswan_log("IMPAIR: adding bogus bit to critical octet");
+#else
+		libreswan_log(" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
+#endif
+		octet |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
+	}
+	return octet;
 }
 
 /* add notify payload to the rbody */
@@ -193,20 +219,36 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
 	return TRUE;
 }
 
+bool out_v2N(pb_stream *rbody, v2_notification_t ntype, const chunk_t *ndata)
+{
+	return ship_v2N(0, build_ikev2_critical(false, false),
+			IKEv2_SEC_PROTO_NONE, &empty_chunk, /* SPI */
+			ntype, ndata, rbody);
+}
+
+
+/*
+ * Open an IKEv2 message.
+ *
+ * At least one of the IKE SA and/or MD must be specified.
+ *
+ * The opened PBS is put into next-payload back-patch mode so
+ * containing payloads should not specify their payload-type.  It will
+ * instead be taken from the payload struct descriptor.
+ */
 pb_stream open_v2_message(pb_stream *reply,
 			  struct ike_sa *ike, struct msg_digest *md,
-			  enum next_payload_types_ikev2 next_payload,
 			  enum isakmp_xchg_types exchange_type)
 {
 	/* at least one, possibly both */
 	passert(ike != NULL || md != NULL);
 
 	struct isakmp_hdr hdr = {
-		.isa_np = next_payload,
 		.isa_flags = IMPAIR(SEND_BOGUS_ISAKMP_FLAG) ? ISAKMP_FLAGS_RESERVED_BIT6 : LEMPTY,
 		.isa_version = build_ikev2_version(),
 		.isa_xchg = exchange_type,
 		.isa_length = 0, /* filled in when PBS is closed */
+		.isa_np = 0, /* filled in when next payload is added */
 	};
 
 	/*
@@ -342,26 +384,20 @@ void send_v2_notification_from_state(struct state *pst, struct msg_digest *md,
 	pb_stream *reply = open_reply_pbs("encrypted notification");
 
 	pb_stream rbody = open_v2_message(reply, ike_sa(pst), md,
-					  ISAKMP_NEXT_v2SK, exchange_type);
+					  exchange_type);
 	if (!pbs_ok(&rbody)) {
 		libreswan_log("error initializing hdr for encrypted notification");
 		return;
 	}
 
-	struct v2sk_stream sk = ikev2_open_encrypted_payload(&rbody, ISAKMP_NEXT_v2N,
-							     ike_sa(pst), "notify");
+	struct v2sk_stream sk = open_v2_encrypted_payload(&rbody, ike_sa(pst), "notify");
 	if (!pbs_ok(&sk.payload)) {
 		return;
 	}
 
 	/* actual data */
 
-	if (!ship_v2N(ISAKMP_NEXT_v2NONE,
-		      DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG) ?
-		      (ISAKMP_PAYLOAD_NONCRITICAL | ISAKMP_PAYLOAD_LIBRESWAN_BOGUS) :
-		      ISAKMP_PAYLOAD_NONCRITICAL,
-		      IKEv2_SEC_PROTO_NONE, &empty_chunk, /* SPI */
-		      ntype, ndata, &sk.payload)) {
+	if (!out_v2N(&sk.payload, ntype, ndata)) {
 		/*
 		 * XXX: always omitting SPI but ESP/AH packets need
 		 * it!?!
@@ -424,8 +460,7 @@ void send_v2_notification_from_md(struct msg_digest *md,
 	}
 
 	pb_stream *reply = open_reply_pbs("unencrypted notification");
-	pb_stream rbody = open_v2_message(reply, NULL, md,
-					  ISAKMP_NEXT_v2N, exchange_type);
+	pb_stream rbody = open_v2_message(reply, NULL, md, exchange_type);
 	if (!pbs_ok(&rbody)) {
 		PEXPECT_LOG("error building header for unencrypted %s %s notification with message ID %u",
 			    exchange_name, notify_name, md->msgid_received);
@@ -433,12 +468,7 @@ void send_v2_notification_from_md(struct msg_digest *md,
 	}
 
 	/* build and add v2N payload to the packet */
-	if (!ship_v2N(ISAKMP_NEXT_v2NONE,
-		      DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG) ?
-		      (ISAKMP_PAYLOAD_NONCRITICAL | ISAKMP_PAYLOAD_LIBRESWAN_BOGUS) :
-		      ISAKMP_PAYLOAD_NONCRITICAL,
-		      IKEv2_SEC_PROTO_NONE, &empty_chunk, /* SPI */
-		      ntype, ndata, &rbody)) {
+	if (!out_v2N(&rbody, ntype, ndata)) {
 		PEXPECT_LOG("error building unencrypted %s %s notification with message ID %u",
 			    exchange_name, notify_name, md->msgid_received);
 		return;

@@ -1263,6 +1263,9 @@ bool ikev2_send_cert_decision(struct state *st)
 
 	DBG(DBG_X509, DBG_log("IKEv2 CERT: send a certificate?"));
 
+	if (st->st_peer_wants_null)
+		return FALSE;
+
 	if (!(c->policy & POLICY_RSASIG)) {
 		DBG(DBG_X509,
 			DBG_log("IKEv2 CERT: policy does not have RSASIG: %s",

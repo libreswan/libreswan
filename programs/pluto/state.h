@@ -635,6 +635,7 @@ struct state {
 	bool st_seen_nonats;			/* did we receive NO_NATS_ALLOWED */
 	generalName_t *st_requested_ca;		/* collected certificate requests */
 	u_int8_t st_reply_xchg;
+	bool st_peer_wants_null;		/* We received IDr payload of type ID_NULL (and we allow POLICY_AUTH_NULL */
 };
 
 /*

@@ -117,6 +117,10 @@ static void retransmit_v1_msg(struct state *st)
 		return;
 	case RETRANSMITS_TIMED_OUT:
 		break;
+	case DELETE_ON_RETRANSMIT:
+		/* disable re-key code */
+		try = 0;
+		break;
 	}
 
 	/*
@@ -231,6 +235,10 @@ static void retransmit_v2_msg(struct state *st)
 	case RETRANSMIT_NO:
 		return;
 	case RETRANSMITS_TIMED_OUT:
+		break;
+	case DELETE_ON_RETRANSMIT:
+		/* disable re-key code */
+		try = 0;
 		break;
 	}
 

@@ -34,6 +34,7 @@ typedef const struct struct_desc {
 	const char *name;
 	const struct field_desc *fields;
 	size_t size;
+	int np; /* actually this payload type */
 } struct_desc;
 
 /* Note: if an ft_af_enum field has the ISAKMP_ATTR_AF_TV bit set,
@@ -46,6 +47,8 @@ enum field_type {
 	ft_zig,			/* zero (ignore violations) */
 	ft_nat,			/* natural number (may be 0) */
 	ft_len,			/* length of this struct and any following crud */
+	ft_mnp,			/* message's next payload field */
+	ft_pnp,			/* payload's next payload field */
 	ft_lv,			/* length/value field of attribute */
 	ft_enum,		/* value from an enumeration */
 	ft_loose_enum,		/* value from an enumeration with only some names known */
@@ -93,6 +96,12 @@ struct packet_byte_stream {
 	 */
 	u_int8_t *lenfld;
 	field_desc *lenfld_desc;
+	/*
+	 * For next payload backpatch
+	 */
+	uint8_t *previous_np;
+	field_desc *previous_np_field;
+	struct_desc *previous_np_struct;
 };
 typedef struct packet_byte_stream pb_stream;
 

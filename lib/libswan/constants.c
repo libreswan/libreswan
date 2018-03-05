@@ -1634,6 +1634,18 @@ static enum_names ikev2_ppk_id_type_names = {
 };
 */
 
+static const char *const ikev2_notify_name_private[] = {
+	"v2N_NULL_AUTH",	/* 40960, used for mixed OE */
+};
+
+static enum_names ikev2_notify_names_private = {
+	v2N_NULL_AUTH,
+	v2N_NULL_AUTH,
+	ARRAY_REF(ikev2_notify_name_private),
+	"v2N_", /* prefix */
+	NULL
+};
+
 /* http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-13 */
 static const char *const ikev2_notify_name_16384[] = {
 	"v2N_INITIAL_CONTACT",    /* 16384 */
@@ -1697,7 +1709,7 @@ static enum_names ikev2_notify_names_16384 = {
 	v2N_NO_PPK_AUTH,
 	ARRAY_REF(ikev2_notify_name_16384),
 	"v2N_", /* prefix */
-	NULL
+	&ikev2_notify_names_private
 };
 
 static const char *const ikev2_notify_name[] = {

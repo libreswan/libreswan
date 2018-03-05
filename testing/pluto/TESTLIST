@@ -267,6 +267,7 @@ kvmplutotest	ikev2-invalid-ke-03-default-initiator	good
 kvmplutotest	ikev2-invalid-ke-04-default-responder	good
 kvmplutotest	ikev1-impair-gx-01			good
 kvmplutotest	ikev1-impair-gx-02			good
+kvmplutotest	ikev2-impair-01-bogus-sa-init-payload	good
 
 kvmplutotest	ikev1-x509-05-san-firstemail-match	good
 kvmplutotest	ikev1-x509-06-san-email-mismatch	good
@@ -435,6 +436,7 @@ kvmplutotest	certoe-10-symetric-cert-whack		good
 kvmplutotest	certoe-11-symetric-cert-nat		good
 kvmplutotest	rawrsaoe-asymetric-nat			good
 kvmplutotest	rawrsaoe-asymetric-01			good
+
 kvmplutotest	dnsoe-01				good
 kvmplutotest	dnsoe-02				good
 kvmplutotest	dnsoe-03				wip
@@ -442,10 +444,15 @@ kvmplutotest	dnsoe-04				good
 kvmplutotest	dnsoe-05				good
 kvmplutotest	dnsoe-06				wip
 
-# protoport OE
 kvmplutotest	newoe-18-poc-cop-port22-whack		good
 kvmplutotest	newoe-18-poc-cop-port22			good
 kvmplutotest	newoe-18-poc-cop-port22-transport	good
+kvmplutotest	newoe-18-poc-cop-port22-both		good
+kvmplutotest	newoe-18-poc-cop-port22-both-reorder	wip
+
+kvmplutotest	mixoe-01-authanon-authanon		good
+kvmplutotest	mixoe-02-anon-authanon			good
+kvmplutotest	mixoe-03-authanon-anon			good
 
 kvmplutotest	ikev2-initiate-template-01		good
 

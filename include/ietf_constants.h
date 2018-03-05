@@ -572,9 +572,13 @@ enum next_payload_types_ikev2 {
 #define ISAKMP_v2PAYLOAD_TYPE_BASE	ISAKMP_NEXT_v2SA	/* lowest value of a v2 payload type */
 
 /*
- * This bogus value both fills the 8-bit next payload type field, and,
- * when converted to an lset_t, overflows (code uses lset_t to track
- * payload types.
+ * Value to use when sending a bogus payload:
+ *
+ * - fills the entire 8-bit field (so signed vs unsigned overflows)
+ *
+ * - too big to fill in an lset_t (so would overflow that code)
+ *
+ * - seemingly unknown by pluto (so enum name lookups fail)
  */
 #define ISAKMP_NEXT_v2BOGUS		255
 
@@ -1501,7 +1505,10 @@ typedef enum {
 	v2N_NO_PPK_AUTH = 16437, /* draft-ietf-ipsecme-qr-ikev2 */
 
 	/* 16438 - 40969 Unassigned */
-	/* 40960 - 65535 Private Use */
+
+	v2N_NULL_AUTH = 40960,
+
+	/* 40961 - 65535 Private Use */
 } v2_notification_t;
 
 /* draft-ietf-ipsecme-qr-ikev2-01 created registry */

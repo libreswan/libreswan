@@ -1,0 +1,4 @@
+mixed deployment OE
+
+In this case both east and road allow CERT and AUTHNULL, and
+a connection should establish authenticated with CERTs
