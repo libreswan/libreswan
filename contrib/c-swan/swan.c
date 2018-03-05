@@ -156,10 +156,10 @@ bool addr_in_mask(char *address_str, char *mask_str)
 
 	err = ttoaddr(address_str, 0, AF_UNSPEC, &address);
 	if (err)
-		return FALSE;
+		return false;
 	err = ttosubnet(mask_str, 0, AF_UNSPEC, &mask);
 	if (err)
-		return FALSE;
+		return false;
 	return addrinsubnet(&address, &mask);
 }
 
@@ -181,7 +181,7 @@ char *get_policy_list(void)
 }
 
 /* Parse xfrm policy list */
-int parse_policy_list(char *source, char *destination, char *xfrm, int debug)
+bool parse_policy_list(char *source, char *destination, char *xfrm, int debug)
 {
 	struct {
 		char src[128];
@@ -191,7 +191,7 @@ int parse_policy_list(char *source, char *destination, char *xfrm, int debug)
 		char proto[128];
 		char reqid[128];
 	} parsed;
-	int encrypted = 0;
+	bool encrypted = false;
 	int priority = 65536;
 	char *keyword, *p;
 
@@ -291,11 +291,11 @@ void connect_to(char *destination, int port, int timeout)
 }
 
 /* Is connection encrypted? */
-int is_encrypted(char *destination, int port, char *source, int timeout,
+bool is_encrypted(char *destination, int port, char *source, int timeout,
 		int debug)
 {
 	if (*source == 0 && get_source_ip(destination, source) == -1)
-		return 0;
+		return false;
 	if (debug)
 		printf("Checking %s to %s port %d\n", source, destination,
 			port);
@@ -303,7 +303,7 @@ int is_encrypted(char *destination, int port, char *source, int timeout,
 		connect_to(destination, port, timeout);
 
 	char *xfrm = get_policy_list();
-	int ret = parse_policy_list(source, destination, xfrm, debug);
+	bool ret = parse_policy_list(source, destination, xfrm, debug);
 	free(xfrm);
 	return ret;
 }
