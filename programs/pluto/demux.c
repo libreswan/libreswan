@@ -383,6 +383,19 @@ void process_packet(struct msg_digest **mdp)
 	}
 }
 
+/*
+ * Deal with state changes.
+ */
+static void process_md(struct msg_digest **mdp)
+{
+	ip_address old_from = push_cur_from((*mdp)->sender);
+	process_packet(mdp);
+	pop_cur_from(old_from);
+	release_any_md(mdp);
+	reset_cur_state();
+	reset_cur_connection();
+}
+
 /* wrapper for read_packet and process_packet
  *
  * The main purpose of this wrapper is to factor out teardown code
@@ -398,7 +411,7 @@ void process_packet(struct msg_digest **mdp)
  */
 
 static bool incoming_impaired(void);
-static void impair_incoming(struct msg_digest *md);
+static void impair_incoming(struct msg_digest **mdp);
 
 static void comm_handle(const struct iface_port *ifp)
 {
@@ -418,17 +431,12 @@ static void comm_handle(const struct iface_port *ifp)
 	struct msg_digest *md = read_packet(ifp);
 	if (md != NULL) {
 		if (incoming_impaired()) {
-			impair_incoming(md);
+			impair_incoming(&md);
 		} else {
-			ip_address old_from = push_cur_from(md->sender);
-			process_packet(&md);
-			pop_cur_from(old_from);
+			process_md(&md);
 		}
-		release_any_md(&md);
+		pexpect(md == NULL);
 	}
-
-	reset_cur_state();
-	reset_cur_connection();
 	pexpect_reset_globals();
 }
 
@@ -452,16 +460,9 @@ static void process_md_clone(struct msg_digest *orig, const char *name)
 {
 	/* not whack FD yet is expected to be reset! */
 	pexpect_reset_globals();
-
 	struct msg_digest *md = clone_md(orig, name);
-	ip_address old_from = push_cur_from(md->sender);
-	process_packet(&md);
-	pop_cur_from(old_from);
-	release_any_md(&md);
-
-	/* not whack FD */
-	reset_cur_state();
-	reset_cur_connection();
+	process_md(&md);
+	pexpect(md == NULL);
 	pexpect_reset_globals();
 }
 
@@ -503,16 +504,16 @@ static bool incoming_impaired(void)
 		DBGP(IMPAIR_REPLAY_BACKWARD));
 }
 
-static void impair_incoming(struct msg_digest *md)
+static void impair_incoming(struct msg_digest **mdp)
 {
 	/* save this packet */
 	init_list(&replay_info, &replay_packets);
-	struct replay_entry *e = replay_entry(md);
+	struct replay_entry *e = replay_entry(*mdp);
 	insert_list_entry(&replay_packets, &e->entry);
 	/* now behave per enabled impair */
 	if (IMPAIR(REPLAY_DUPLICATES)) {
 		/* MD is the most recent entry */
-		process_md_clone(md, "original");
+		process_md_clone(*mdp, "original");
 		libreswan_log("IMPAIR: start duplicate packet");
 		process_md_clone(e->md, "replay-duplicates");
 		libreswan_log("IMPAIR: stop duplicate packet");
@@ -537,6 +538,7 @@ static void impair_incoming(struct msg_digest *md)
 				      e->nr, replay_count);
 		}
 	}
+	release_any_md(mdp);
 }
 
 /* Auxiliary function for modecfg_inR1() */
