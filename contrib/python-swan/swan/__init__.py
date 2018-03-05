@@ -79,9 +79,10 @@ def is_encrypted(destination, port=None, source=None, timeout=1.0,
         # Is it our line?
         if not (
                 parsed['dir'] == 'out' and
+                parsed['proto'] == 'esp' and
+                priority > int(parsed['priority']) and
                 source in ipaddress.ip_network(parsed['src']) and
-                destination in ipaddress.ip_network(parsed['dst']) and
-                priority > int(parsed['priority'])
+                destination in ipaddress.ip_network(parsed['dst'])
         ):
             continue
 
@@ -89,8 +90,6 @@ def is_encrypted(destination, port=None, source=None, timeout=1.0,
         if debug:
             print(line)
         priority = int(parsed['priority'])
-        encrypted = (
-            parsed['reqid'] not in (None, '0') and
-            parsed['proto'] == 'esp')
+        encrypted = parsed['reqid'] not in (None, '0')
 
     return encrypted
