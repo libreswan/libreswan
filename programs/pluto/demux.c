@@ -79,265 +79,13 @@ void init_demux(void)
 	init_ikev2();
 }
 
-/* forward declarations */
-static struct msg_digest *read_packet(const struct iface_port *ifp);
-
-/* process an input packet, possibly generating a reply.
- *
- * If all goes well, this routine eventually calls a state-specific
- * transition function.
- *
- * This routine will not release_any_md(mdp).  It is expected that its
- * caller will do this.  In fact, it will zap *mdp to NULL if it thinks
- * **mdp should not be freed.  So the caller should be prepared for
- * *mdp being set to NULL.
- */
-void process_packet(struct msg_digest **mdp)
-{
-	struct msg_digest *md = *mdp;
-	int vmaj, vmin;
-
-	if (!in_struct(&md->hdr, &isakmp_hdr_desc, &md->packet_pbs,
-		       &md->message_pbs)) {
-		/* The packet was very badly mangled. We can't be sure of any
-		 * content - not even to look for major version number!
-		 * So we'll just drop it.
-		 */
-		libreswan_log("Received packet with mangled IKE header - dropped");
-		send_notification_from_md(md, PAYLOAD_MALFORMED);
-		return;
-	}
-
-	if (md->packet_pbs.roof > md->message_pbs.roof) {
-		/* Some (old?) versions of the Cisco VPN client send an additional
-		 * 16 bytes of zero bytes - Complain but accept it
-		 */
-		DBG(DBG_CONTROL, {
-			DBG_log(
-			"size (%u) in received packet is larger than the size specified in ISAKMP HDR (%u) - ignoring extraneous bytes",
-			(unsigned) pbs_room(&md->packet_pbs),
-			md->hdr.isa_length);
-			DBG_dump("extraneous bytes:", md->message_pbs.roof,
-				md->packet_pbs.roof - md->message_pbs.roof);
-		});
-	}
-
-	vmaj = md->hdr.isa_version >> ISA_MAJ_SHIFT;
-	vmin = md->hdr.isa_version & ISA_MIN_MASK;
-
-	switch (vmaj) {
-	case ISAKMP_MAJOR_VERSION: /* IKEv1 */
-		if (vmin > ISAKMP_MINOR_VERSION) {
-			/* RFC2408 3.1 ISAKMP Header Format:
-			 *
-			 * Minor Version (4 bits) - indicates the minor
-			 * version of the ISAKMP protocol in use.
-			 * Implementations based on this version of the
-			 * ISAKMP Internet-Draft MUST set the Minor
-			 * Version to 0.  Implementations based on
-			 * previous versions of ISAKMP Internet- Drafts
-			 * MUST set the Minor Version to 1.
-			 * Implementations SHOULD never accept packets
-			 * with a minor version number larger than its
-			 * own, given the major version numbers are
-			 * identical.
-			 */
-			libreswan_log("ignoring packet with IKEv1 minor version number %d greater than %d", vmin, ISAKMP_MINOR_VERSION);
-			send_notification_from_md(md, INVALID_MINOR_VERSION);
-			return;
-		}
-		DBG(DBG_CONTROL,
-		    DBG_log(" processing version=%u.%u packet with exchange type=%s (%d)",
-			    vmaj, vmin,
-			    enum_name(&exchange_names_ikev1orv2, md->hdr.isa_xchg),
-			    md->hdr.isa_xchg));
-		process_v1_packet(mdp);
-		/* our caller will release_any_md(mdp) */
-		break;
-
-	case IKEv2_MAJOR_VERSION: /* IKEv2 */
-		if (vmin != IKEv2_MINOR_VERSION) {
-			/* Unlike IKEv1, for IKEv2 we are supposed to try to
-			 * continue on unknown minors
-			 */
-			libreswan_log("Ignoring unknown IKEv2 minor version number %d", vmin);
-		}
-		DBG(DBG_CONTROL,
-		    DBG_log(" processing version=%u.%u packet with exchange type=%s (%d)",
-			    vmaj, vmin,
-			    enum_name(&exchange_names_ikev1orv2, md->hdr.isa_xchg),
-			    md->hdr.isa_xchg));
-		process_v2_packet(mdp);
-		/* our caller will release_any_md(mdp) */
-		break;
-
-	default:
-		libreswan_log("Unexpected IKE major '%d'", vmaj);
-		send_notification_from_md(md, INVALID_MAJOR_VERSION);
-		return;
-	}
-}
-
-static void comm_handle(const struct iface_port *ifp);
-
-void comm_handle_cb(evutil_socket_t fd UNUSED, const short event UNUSED, void *arg)
-{
-	comm_handle((const struct iface_port *) arg);
-}
-
-
 /*
- * Impair pluto by replaying packets.
+ * read the message.
  *
- * To make things easier, all packets received are saved, in-order, in
- * a list and then various impair operations iterate over this list.
- *
- * For instance, IKEv1 sends back-to-back packets (see XAUTH).  By
- * replaying them (and everything else) this can simulate what happens
- * when the remote starts re-transmitting them.
+ * Since we don't know its size, we read it into an overly large
+ * buffer and then copy it to a new, properly sized buffer.
  */
 
-static void process_md_clone(struct msg_digest *orig, const char *name)
-{
-	/* not whack FD yet is expected to be reset! */
-	pexpect_reset_globals();
-
-	struct msg_digest *md = clone_md(orig, name);
-	ip_address old_from = push_cur_from(md->sender);
-	process_packet(&md);
-	pop_cur_from(old_from);
-	release_any_md(&md);
-
-	/* not whack FD */
-	reset_cur_state();
-	reset_cur_connection();
-	pexpect_reset_globals();
-}
-
-static unsigned long replay_count;
-
-struct replay_entry {
-	struct list_entry entry;
-	struct msg_digest *md;
-	unsigned long nr;
-};
-
-static size_t log_replay_entry(struct lswlog *buf, void *data)
-{
-	struct replay_entry *r = (struct replay_entry*)data;
-	return lswlogf(buf, "replay packet %lu", r == NULL ? 0L : r->nr);
-}
-
-static struct list_head replay_packets;
-
-static struct list_info replay_info = {
-	.debug = DBG_CONTROLMORE,
-	.name = "replay list",
-	.log = log_replay_entry,
-};
-
-static struct replay_entry *replay_entry(struct msg_digest *md)
-{
-	struct replay_entry *e = alloc_thing(struct replay_entry, "replay");
-	e->md = clone_md(md, "copy of real message");
-	e->nr = ++replay_count; /* yes; pre-increment */
-	e->entry = list_entry(&replay_info, e); /* back-link */
-	return e;
-}
-
-static bool incoming_impaired(void)
-{
-	return (DBGP(IMPAIR_REPLAY_DUPLICATES) ||
-		DBGP(IMPAIR_REPLAY_FORWARD) ||
-		DBGP(IMPAIR_REPLAY_BACKWARD));
-}
-
-static void impair_incoming(struct msg_digest *md)
-{
-	/* save this packet */
-	init_list(&replay_info, &replay_packets);
-	struct replay_entry *e = replay_entry(md);
-	insert_list_entry(&replay_packets, &e->entry);
-	/* now behave per enabled impair */
-	if (IMPAIR(REPLAY_DUPLICATES)) {
-		/* MD is the most recent entry */
-		process_md_clone(md, "original");
-		libreswan_log("IMPAIR: start duplicate packet");
-		process_md_clone(e->md, "replay-duplicates");
-		libreswan_log("IMPAIR: stop duplicate packet");
-	}
-	if (IMPAIR(REPLAY_FORWARD)) {
-		struct replay_entry *e = NULL;
-		FOR_EACH_LIST_ENTRY_OLD2NEW(&replay_packets, e) {
-			libreswan_log("IMPAIR: start replay forward: packet %lu of %lu",
-				      e->nr, replay_count);
-			process_md_clone(e->md, "replay-forward");
-			libreswan_log("IMPAIR: stop replay forward: packet %lu of %lu",
-				      e->nr, replay_count);
-		}
-	}
-	if (IMPAIR(REPLAY_BACKWARD)) {
-		struct replay_entry *e = NULL;
-		FOR_EACH_LIST_ENTRY_NEW2OLD(&replay_packets, e) {
-			libreswan_log("IMPAIR: start replay backward: packet %lu of %lu",
-				      e->nr, replay_count);
-			process_md_clone(e->md, "replay-backward");
-			libreswan_log("IMPAIR: stop replay backward: packet %lu of %lu",
-				      e->nr, replay_count);
-		}
-	}
-}
-
-/* wrapper for read_packet and process_packet
- *
- * The main purpose of this wrapper is to factor out teardown code
- * from the many return points in process_packet.  This amounts to
- * releasing the msg_digest and resetting global variables.
- *
- * When processing of a packet is suspended (STF_SUSPEND),
- * process_packet sets md to NULL to prevent the msg_digest being freed.
- * Someone else must ensure that msg_digest is freed eventually.
- *
- * read_packet is broken out to minimize the lifetime of the
- * enormous input packet buffer, an auto.
- */
-static void comm_handle(const struct iface_port *ifp)
-{
-	/* Even though select(2) says that there is a message,
-	 * it might only be a MSG_ERRQUEUE message.  At least
-	 * sometimes that leads to a hanging recvfrom.  To avoid
-	 * what appears to be a kernel bug, check_msg_errqueue
-	 * uses poll(2) and tells us if there is anything for us
-	 * to read.
-	 *
-	 * This is early enough that teardown isn't required:
-	 * just return on failure.
-	 */
-	if (!check_incoming_msg_errqueue(ifp, "read_packet"))
-		return; /* no normal message to read */
-
-	struct msg_digest *md = read_packet(ifp);
-	if (md != NULL) {
-		if (incoming_impaired()) {
-			impair_incoming(md);
-		} else {
-			ip_address old_from = push_cur_from(md->sender);
-			process_packet(&md);
-			pop_cur_from(old_from);
-		}
-		release_any_md(&md);
-	}
-
-	reset_cur_state();
-	reset_cur_connection();
-	pexpect_reset_globals();
-}
-
-/* read the message.
- * Since we don't know its size, we read it into
- * an overly large buffer and then copy it to a
- * new, properly sized buffer.
- */
 static struct msg_digest *read_packet(const struct iface_port *ifp)
 {
 	int packet_len;
@@ -535,6 +283,260 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 	pstats_ike_in_bytes += pbs_room(&md->packet_pbs);
 
 	return md;
+}
+
+/*
+ * process an input packet, possibly generating a reply.
+ *
+ * If all goes well, this routine eventually calls a state-specific
+ * transition function.
+ *
+ * This routine will not release_any_md(mdp).  It is expected that its
+ * caller will do this.  In fact, it will zap *mdp to NULL if it
+ * thinks **mdp should not be freed.  So the caller should be prepared
+ * for *mdp being set to NULL.
+ */
+
+void process_packet(struct msg_digest **mdp)
+{
+	struct msg_digest *md = *mdp;
+	int vmaj, vmin;
+
+	if (!in_struct(&md->hdr, &isakmp_hdr_desc, &md->packet_pbs,
+		       &md->message_pbs)) {
+		/* The packet was very badly mangled. We can't be sure of any
+		 * content - not even to look for major version number!
+		 * So we'll just drop it.
+		 */
+		libreswan_log("Received packet with mangled IKE header - dropped");
+		send_notification_from_md(md, PAYLOAD_MALFORMED);
+		return;
+	}
+
+	if (md->packet_pbs.roof > md->message_pbs.roof) {
+		/* Some (old?) versions of the Cisco VPN client send an additional
+		 * 16 bytes of zero bytes - Complain but accept it
+		 */
+		DBG(DBG_CONTROL, {
+			DBG_log(
+			"size (%u) in received packet is larger than the size specified in ISAKMP HDR (%u) - ignoring extraneous bytes",
+			(unsigned) pbs_room(&md->packet_pbs),
+			md->hdr.isa_length);
+			DBG_dump("extraneous bytes:", md->message_pbs.roof,
+				md->packet_pbs.roof - md->message_pbs.roof);
+		});
+	}
+
+	vmaj = md->hdr.isa_version >> ISA_MAJ_SHIFT;
+	vmin = md->hdr.isa_version & ISA_MIN_MASK;
+
+	switch (vmaj) {
+	case ISAKMP_MAJOR_VERSION: /* IKEv1 */
+		if (vmin > ISAKMP_MINOR_VERSION) {
+			/* RFC2408 3.1 ISAKMP Header Format:
+			 *
+			 * Minor Version (4 bits) - indicates the minor
+			 * version of the ISAKMP protocol in use.
+			 * Implementations based on this version of the
+			 * ISAKMP Internet-Draft MUST set the Minor
+			 * Version to 0.  Implementations based on
+			 * previous versions of ISAKMP Internet- Drafts
+			 * MUST set the Minor Version to 1.
+			 * Implementations SHOULD never accept packets
+			 * with a minor version number larger than its
+			 * own, given the major version numbers are
+			 * identical.
+			 */
+			libreswan_log("ignoring packet with IKEv1 minor version number %d greater than %d", vmin, ISAKMP_MINOR_VERSION);
+			send_notification_from_md(md, INVALID_MINOR_VERSION);
+			return;
+		}
+		DBG(DBG_CONTROL,
+		    DBG_log(" processing version=%u.%u packet with exchange type=%s (%d)",
+			    vmaj, vmin,
+			    enum_name(&exchange_names_ikev1orv2, md->hdr.isa_xchg),
+			    md->hdr.isa_xchg));
+		process_v1_packet(mdp);
+		/* our caller will release_any_md(mdp) */
+		break;
+
+	case IKEv2_MAJOR_VERSION: /* IKEv2 */
+		if (vmin != IKEv2_MINOR_VERSION) {
+			/* Unlike IKEv1, for IKEv2 we are supposed to try to
+			 * continue on unknown minors
+			 */
+			libreswan_log("Ignoring unknown IKEv2 minor version number %d", vmin);
+		}
+		DBG(DBG_CONTROL,
+		    DBG_log(" processing version=%u.%u packet with exchange type=%s (%d)",
+			    vmaj, vmin,
+			    enum_name(&exchange_names_ikev1orv2, md->hdr.isa_xchg),
+			    md->hdr.isa_xchg));
+		process_v2_packet(mdp);
+		/* our caller will release_any_md(mdp) */
+		break;
+
+	default:
+		libreswan_log("Unexpected IKE major '%d'", vmaj);
+		send_notification_from_md(md, INVALID_MAJOR_VERSION);
+		return;
+	}
+}
+
+/* wrapper for read_packet and process_packet
+ *
+ * The main purpose of this wrapper is to factor out teardown code
+ * from the many return points in process_packet.  This amounts to
+ * releasing the msg_digest and resetting global variables.
+ *
+ * When processing of a packet is suspended (STF_SUSPEND),
+ * process_packet sets md to NULL to prevent the msg_digest being freed.
+ * Someone else must ensure that msg_digest is freed eventually.
+ *
+ * read_packet is broken out to minimize the lifetime of the
+ * enormous input packet buffer, an auto.
+ */
+
+static bool incoming_impaired(void);
+static void impair_incoming(struct msg_digest *md);
+
+static void comm_handle(const struct iface_port *ifp)
+{
+	/* Even though select(2) says that there is a message,
+	 * it might only be a MSG_ERRQUEUE message.  At least
+	 * sometimes that leads to a hanging recvfrom.  To avoid
+	 * what appears to be a kernel bug, check_msg_errqueue
+	 * uses poll(2) and tells us if there is anything for us
+	 * to read.
+	 *
+	 * This is early enough that teardown isn't required:
+	 * just return on failure.
+	 */
+	if (!check_incoming_msg_errqueue(ifp, "read_packet"))
+		return; /* no normal message to read */
+
+	struct msg_digest *md = read_packet(ifp);
+	if (md != NULL) {
+		if (incoming_impaired()) {
+			impair_incoming(md);
+		} else {
+			ip_address old_from = push_cur_from(md->sender);
+			process_packet(&md);
+			pop_cur_from(old_from);
+		}
+		release_any_md(&md);
+	}
+
+	reset_cur_state();
+	reset_cur_connection();
+	pexpect_reset_globals();
+}
+
+void comm_handle_cb(evutil_socket_t fd UNUSED, const short event UNUSED, void *arg)
+{
+	comm_handle((const struct iface_port *) arg);
+}
+
+/*
+ * Impair pluto by replaying packets.
+ *
+ * To make things easier, all packets received are saved, in-order, in
+ * a list and then various impair operations iterate over this list.
+ *
+ * For instance, IKEv1 sends back-to-back packets (see XAUTH).  By
+ * replaying them (and everything else) this can simulate what happens
+ * when the remote starts re-transmitting them.
+ */
+
+static void process_md_clone(struct msg_digest *orig, const char *name)
+{
+	/* not whack FD yet is expected to be reset! */
+	pexpect_reset_globals();
+
+	struct msg_digest *md = clone_md(orig, name);
+	ip_address old_from = push_cur_from(md->sender);
+	process_packet(&md);
+	pop_cur_from(old_from);
+	release_any_md(&md);
+
+	/* not whack FD */
+	reset_cur_state();
+	reset_cur_connection();
+	pexpect_reset_globals();
+}
+
+static unsigned long replay_count;
+
+struct replay_entry {
+	struct list_entry entry;
+	struct msg_digest *md;
+	unsigned long nr;
+};
+
+static size_t log_replay_entry(struct lswlog *buf, void *data)
+{
+	struct replay_entry *r = (struct replay_entry*)data;
+	return lswlogf(buf, "replay packet %lu", r == NULL ? 0L : r->nr);
+}
+
+static struct list_head replay_packets;
+
+static struct list_info replay_info = {
+	.debug = DBG_CONTROLMORE,
+	.name = "replay list",
+	.log = log_replay_entry,
+};
+
+static struct replay_entry *replay_entry(struct msg_digest *md)
+{
+	struct replay_entry *e = alloc_thing(struct replay_entry, "replay");
+	e->md = clone_md(md, "copy of real message");
+	e->nr = ++replay_count; /* yes; pre-increment */
+	e->entry = list_entry(&replay_info, e); /* back-link */
+	return e;
+}
+
+static bool incoming_impaired(void)
+{
+	return (DBGP(IMPAIR_REPLAY_DUPLICATES) ||
+		DBGP(IMPAIR_REPLAY_FORWARD) ||
+		DBGP(IMPAIR_REPLAY_BACKWARD));
+}
+
+static void impair_incoming(struct msg_digest *md)
+{
+	/* save this packet */
+	init_list(&replay_info, &replay_packets);
+	struct replay_entry *e = replay_entry(md);
+	insert_list_entry(&replay_packets, &e->entry);
+	/* now behave per enabled impair */
+	if (IMPAIR(REPLAY_DUPLICATES)) {
+		/* MD is the most recent entry */
+		process_md_clone(md, "original");
+		libreswan_log("IMPAIR: start duplicate packet");
+		process_md_clone(e->md, "replay-duplicates");
+		libreswan_log("IMPAIR: stop duplicate packet");
+	}
+	if (IMPAIR(REPLAY_FORWARD)) {
+		struct replay_entry *e = NULL;
+		FOR_EACH_LIST_ENTRY_OLD2NEW(&replay_packets, e) {
+			libreswan_log("IMPAIR: start replay forward: packet %lu of %lu",
+				      e->nr, replay_count);
+			process_md_clone(e->md, "replay-forward");
+			libreswan_log("IMPAIR: stop replay forward: packet %lu of %lu",
+				      e->nr, replay_count);
+		}
+	}
+	if (IMPAIR(REPLAY_BACKWARD)) {
+		struct replay_entry *e = NULL;
+		FOR_EACH_LIST_ENTRY_NEW2OLD(&replay_packets, e) {
+			libreswan_log("IMPAIR: start replay backward: packet %lu of %lu",
+				      e->nr, replay_count);
+			process_md_clone(e->md, "replay-backward");
+			libreswan_log("IMPAIR: stop replay backward: packet %lu of %lu",
+				      e->nr, replay_count);
+		}
+	}
 }
 
 /* Auxiliary function for modecfg_inR1() */
