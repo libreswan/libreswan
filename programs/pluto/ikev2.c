@@ -1320,6 +1320,21 @@ void process_v2_packet(struct msg_digest **mdp)
 	}
 
 	/*
+	 * If the state is busy, presumably doing something like
+	 * crypto, skip further processing.
+	 *
+	 * For re-transmits, they should have been handled by the code
+	 * above.
+	 *
+	 * For fragments, things only go busy once all fragments have
+	 * been received (and re-transmitted fragments are ignored).
+	 * If this changes then a lot more than this code will need to
+	 * be moved.
+	 */
+	if (verbose_state_busy(st))
+		return;
+
+	/*
 	 * There is no "struct state" object if-and-only-if we're in
 	 * the start-state (STATE_UNDEFINED).  The start-state
 	 * transition will, likely, create the object.
@@ -1633,9 +1648,6 @@ void process_v2_packet(struct msg_digest **mdp)
 	}
 
 	md->st = st;
-
-	if (verbose_state_busy(st))
-		return;
 
 	DBG(DBG_CONTROL,
 	    DBG_log("Now lets proceed with state specific processing"));
