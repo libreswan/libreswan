@@ -173,7 +173,7 @@ static const char *usage_string = ""
 	"               [--configsetup]\n"
 	"               [--liststack]\n"
 	"               [--checkconfig]\n"
-	"               [--addall] [--autoall]\n"
+	"               [--autoall]\n"
 	"               [--listall] [--listadd] [--listroute] [--liststart]\n"
 	"               [--listignore]\n"
 	"               names\n";
@@ -190,7 +190,7 @@ static const struct option longopts[] =
 	{ "config", required_argument, NULL, 'C' },
 	{ "debug", no_argument, NULL, 'D' },
 	{ "verbose", no_argument, NULL, 'D' },
-	{ "addall", no_argument, NULL, 'a' },
+	{ "addall", no_argument, NULL, 'a' }, /* alias, backwards compat */
 	{ "autoall", no_argument, NULL, 'a' },
 	{ "listall", no_argument, NULL, 'A' },
 	{ "listadd", no_argument, NULL, 'L' },
