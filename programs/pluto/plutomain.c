@@ -91,6 +91,8 @@
 #define IPSECDIR "/etc/ipsec.d"
 #endif
 
+#include "whack.h"
+
 #include <nss.h>
 #include <nspr.h>
 

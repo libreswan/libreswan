@@ -1131,15 +1131,7 @@ void call_server(void)
 		if (addconn_child_pid == 0) {
 			/*
 			 * Child
-			 *
-			 * Note: when vfork() is used, calls
-			 * like sleep() and DBG_log() are not valid
-			 * before the exec* call.
 			 */
-#if USE_FORK
-			/* XXX: Why the sleep?  See 1987ac98f8.  Hack! */
-			sleep(1);
-#endif
 			execve(addconn_path_space, newargv, newenv);
 			_exit(42);
 		}

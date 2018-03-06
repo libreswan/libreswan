@@ -28,6 +28,15 @@
 #include "deltatime.h"
 #include "chunk.h"
 
+#ifndef DEFAULT_RUNDIR
+# define DEFAULT_RUNDIR "/run/pluto/"
+#endif
+
+#ifndef DEFAULT_CTL_SOCKET
+# define DEFAULT_CTL_SOCKET DEFAULT_RUNDIR "/pluto.ctl"
+#endif
+
+
 /* Since the message remains on one host, native representation is used.
  * Think of this as horizontal microcode: all selected operations are
  * to be done (in the order declared here).

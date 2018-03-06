@@ -22,20 +22,9 @@
  *
  */
 
-/* Control and lock pathnames */
-
-#ifndef DEFAULT_RUNDIR
-# define DEFAULT_RUNDIR "/run/pluto/"
-#endif
-
-#ifndef DEFAULT_CTL_SOCKET
-# define DEFAULT_CTL_SOCKET DEFAULT_RUNDIR "/pluto.ctl"
-#endif
-
 # ifndef DEFAULT_DNSSEC_ROOTKEY_FILE
 #  define DEFAULT_DNSSEC_ROOTKEY_FILE "<unused>"
 # endif
-
 
 /*
  * IETF has no recommendations

@@ -325,6 +325,29 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	if (autoall) {
+		/* pluto forks us, we might have to wait on it to create the socket */
+		struct stat sb;
+		int ws = 5; /* somewhat arbitrary */
+
+		while (ws > 0) {
+			int ret = stat(ctlsocket == NULL ? DEFAULT_CTL_SOCKET :
+				ctlsocket, &sb);
+
+			if (ret == -1) {
+				sleep(1);
+			} else {
+				break;
+			}
+			ws--;
+		}
+		if (ws == 0) {
+			printf("ipsec addconn: timeout waiting on pluto socket %s - aborted\n",
+				ctlsocket);
+			exit(3);
+		}
+	}
+
 	/* if nothing to add, then complain */
 	if (optind == argc && !autoall && !dolist && !configsetup &&
 		!checkconfig)
