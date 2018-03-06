@@ -1017,12 +1017,6 @@ static void process_recent_rtransmit(struct state *st,
 	}
 }
 
-static bool match_hdr_flag(lset_t svm_flags, enum smf2_flags smf2_flag,
-		const bool md_flag)
-{
-	return (svm_flags & smf2_flag) && md_flag;
-}
-
 /*
  * process an input packet, possibly generating a reply.
  *
@@ -1363,21 +1357,29 @@ void process_v2_packet(struct msg_digest **mdp)
 		/*
 		 * Does the original [ike] initiator flag match?
 		 */
-		if (match_hdr_flag(svm->flags, SMF2_IKE_I_SET,
-				   !sent_by_ike_initiator))
-			continue;
-		if (match_hdr_flag(svm->flags, SMF2_IKE_I_CLEAR,
-				   sent_by_ike_initiator))
-			continue;
+		if (svm->flags & SMF2_IKE_I_SET) {
+			if ((md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) == 0)
+				/* opps, clear */
+				continue;
+		}
+		if (svm->flags & SMF2_IKE_I_CLEAR) {
+			if ((md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) != 0)
+				/* opps, set */
+				continue;
+		}
 		/*
 		 * Does the message reply flag match?
 		 */
-		if (match_hdr_flag(svm->flags, SMF2_MSG_R_SET,
-				   md->message_role == MESSAGE_REQUEST))
-			continue;
-		if (match_hdr_flag(svm->flags, SMF2_MSG_R_CLEAR,
-				   md->message_role == MESSAGE_RESPONSE))
-			continue;
+		if (svm->flags & SMF2_MSG_R_SET) {
+			if ((md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) == 0)
+				/* oops, clear */
+				continue;
+		}
+		if (svm->flags & SMF2_MSG_R_CLEAR) {
+			if ((md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) != 0)
+				/* opps, set */
+				continue;
+		}
 
 		/*
 		 * Since there is a state transition that looks like
