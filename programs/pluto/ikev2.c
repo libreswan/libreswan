@@ -1280,6 +1280,21 @@ void process_v2_packet(struct msg_digest **mdp)
 	}
 
 	/*
+	 * If there's a state, attribute all further logging to that
+	 * state.
+	 */
+	if (st != NULL) {
+		DBG(DBG_CONTROL,
+		    DBG_log("found state #%lu", st->st_serialno));
+		set_cur_state(st);
+		/*
+		 * XXX: why redundantly set cur connection? And why
+		 * set it after (over the top of) state.
+		 */
+		set_cur_connection(st->st_connection);
+	}
+
+	/*
 	 * Check ST's IKE SA's role against the I(Initiator) flag in
 	 * the headers.
 	 *
@@ -1324,22 +1339,9 @@ void process_v2_packet(struct msg_digest **mdp)
 	const enum state_kind from_state =
 		st == NULL ? STATE_UNDEFINED : st->st_state;
 	DBG(DBG_CONTROL,
-	    if (st != NULL) {
-		    DBG_log("found state #%lu", st->st_serialno);
-	    }
 	    DBG_log("from_state is %s", enum_name(&state_names, from_state)));
 
 	passert((st == NULL) == (from_state == STATE_UNDEFINED));
-
-	/*
-	 * If there's a state, attribute all further logging to that
-	 * state.
-	 */
-	if (st != NULL) {
-		set_cur_state(st);
-		/* XXX: why? And why on top of (after) state? */
-		set_cur_connection(st->st_connection);
-	}
 
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
 	struct ikev2_payload_errors encrypted_payload_status = { .bad = false };
