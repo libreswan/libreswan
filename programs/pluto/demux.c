@@ -372,7 +372,7 @@ void process_packet(struct msg_digest **mdp)
 			    vmaj, vmin,
 			    enum_name(&exchange_names_ikev1orv2, md->hdr.isa_xchg),
 			    md->hdr.isa_xchg));
-		process_v2_packet(mdp);
+		ikev2_process_packet(mdp);
 		/* our caller will release_any_md(mdp) */
 		break;
 

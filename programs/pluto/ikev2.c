@@ -1028,11 +1028,9 @@ static void process_recent_rtransmit(struct state *st,
  * **mdp should not be freed.  So the caller should be prepared for
  * *mdp being set to NULL.
  */
-void process_v2_packet(struct msg_digest **mdp)
+void ikev2_process_packet(struct msg_digest **mdp)
 {
 	struct msg_digest *md = *mdp;
-	const struct state_v2_microcode *svm;
-	struct state *st = NULL;
 
 	/* Look for an state that matches the various things we know:
 	 *
@@ -1074,6 +1072,7 @@ void process_v2_packet(struct msg_digest **mdp)
 	 * seen it before).
 	 */
 
+	struct state *st;
 	if (ix == ISAKMP_v2_SA_INIT) {
 		/*
 		 * The message ID of the initial exchange is always
@@ -1334,6 +1333,13 @@ void process_v2_packet(struct msg_digest **mdp)
 	if (verbose_state_busy(st))
 		return;
 
+	ikev2_process_state_packet(st, mdp);
+}
+
+void ikev2_process_state_packet(struct state *st, struct msg_digest **mdp)
+{
+	struct msg_digest *md = *mdp;
+
 	/*
 	 * There is no "struct state" object if-and-only-if we're in
 	 * the start-state (STATE_UNDEFINED).  The start-state
@@ -1355,6 +1361,9 @@ void process_v2_packet(struct msg_digest **mdp)
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
 	struct ikev2_payload_errors encrypted_payload_status = { .bad = false };
 
+	const enum isakmp_xchg_types ix = (*mdp)->hdr.isa_xchg;
+
+	const struct state_v2_microcode *svm;
 	for (svm = v2_state_microcode_table; svm->state != STATE_IKEv2_ROOF;
 	     svm++) {
 		if (svm->state != from_state && ix != ISAKMP_v2_CREATE_CHILD_SA)

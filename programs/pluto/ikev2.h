@@ -9,7 +9,8 @@
 typedef stf_status crypto_transition_fn(struct state *st, struct msg_digest *md,
 					struct pluto_crypto_req *r);
 
-extern void process_v2_packet(struct msg_digest **mdp);
+void ikev2_process_packet(struct msg_digest **mdp);
+void ikev2_process_state_packet(struct state *st, struct msg_digest **mdp);
 
 extern void ikev2_parent_outI1(int whack_sock,
 			      struct connection *c,
