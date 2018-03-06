@@ -1348,6 +1348,14 @@ void process_v2_packet(struct msg_digest **mdp)
 	     svm++) {
 		if (svm->state != from_state && ix != ISAKMP_v2_CREATE_CHILD_SA)
 			continue;
+		if (svm->state != from_state && ix == ISAKMP_v2_CREATE_CHILD_SA) {
+			/*
+			 * XXX: search should have stopped, log that
+			 * it didn't.  Is this due to a missing state
+			 * transition or what?
+			 */
+			DBG(DBG_CONTROL, DBG_log("forcing state to continue searching fsm because ix is CREATE_CHILD_SA"));
+		}
 		if (svm->recv_type != ix)
 			continue;
 		/*
