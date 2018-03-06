@@ -183,9 +183,6 @@ void ikev2_ike_sa_established(struct ike_sa *ike,
 	deltatime_t delay = ikev2_replace_delay(&ike->sa, &kind);
 	delete_event(&ike->sa);
 	event_schedule(kind, delay, &ike->sa);
-	/* reset liveness counter */
-	ike->sa.st_last_liveness = mononow();
-	ike->sa.st_pend_liveness = FALSE;
 }
 
 /*
