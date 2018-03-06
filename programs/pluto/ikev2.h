@@ -10,7 +10,8 @@ typedef stf_status crypto_transition_fn(struct state *st, struct msg_digest *md,
 					struct pluto_crypto_req *r);
 
 void ikev2_process_packet(struct msg_digest **mdp);
-void ikev2_process_state_packet(struct state *st, struct msg_digest **mdp);
+void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
+				struct msg_digest **mdp);
 
 extern void ikev2_parent_outI1(int whack_sock,
 			      struct connection *c,
@@ -44,8 +45,9 @@ extern state_transition_fn ikev2_child_inIoutR;
 
 extern state_transition_fn ikev2_parent_inI1outR1;
 extern state_transition_fn ikev2_sa_init_process_reply_notification;
+extern state_transition_fn ikev2_ike_sa_process_auth_request_no_skeyid;
+extern state_transition_fn ikev2_ike_sa_process_auth_request;
 extern state_transition_fn ikev2_parent_inR1outI2;
-extern state_transition_fn ikev2_parent_inI2outR2;
 extern state_transition_fn ikev2_parent_inR2;
 extern crypto_transition_fn ikev2_child_out_cont;
 extern crypto_transition_fn ikev2_child_inR_tail;

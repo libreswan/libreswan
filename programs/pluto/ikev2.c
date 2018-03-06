@@ -122,7 +122,7 @@ enum smf2_flags {
 	 * packet is what triggers the DH calculation needed before
 	 * encryption can occur.
 	 */
-	SMF2_SKIP_UNPACK_SK = LELEM(7),
+	SMF2_NO_SKEYID = LELEM(7),
 };
 
 /*
@@ -352,14 +352,24 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	 *
 	 * [Parent SA established]
 	 */
-	{ .story      = "respond to IKE_AUTH",
+	{ .story      = "Responder: process AUTH request (no SKEYID)",
+	  .state      = STATE_PARENT_R1,
+	  .next_state = STATE_PARENT_R1,
+	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND | SMF2_NO_SKEYID,
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = LEMPTY,
+	  .opt_enc_payloads = LEMPTY,
+	  .processor  = ikev2_ike_sa_process_auth_request_no_skeyid,
+	  .recv_type  = ISAKMP_v2_AUTH,
+	  .timeout_event = EVENT_SA_REPLACE, },
+	{ .story      = "Responder: process AUTH request",
 	  .state      = STATE_PARENT_R1,
 	  .next_state = STATE_V2_IPSEC_R,
-	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND | SMF2_SKIP_UNPACK_SK,
+	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDi) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(CERT) | P(CERTREQ) | P(IDr) | P(CP),
-	  .processor  = ikev2_parent_inI2outR2,
+	  .processor  = ikev2_ike_sa_process_auth_request,
 	  .recv_type  = ISAKMP_v2_AUTH,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
@@ -1333,10 +1343,11 @@ void ikev2_process_packet(struct msg_digest **mdp)
 	if (verbose_state_busy(st))
 		return;
 
-	ikev2_process_state_packet(st, mdp);
+	ikev2_process_state_packet(ike, st, mdp);
 }
 
-void ikev2_process_state_packet(struct state *st, struct msg_digest **mdp)
+void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
+				struct msg_digest **mdp)
 {
 	struct msg_digest *md = *mdp;
 
@@ -1486,25 +1497,58 @@ void ikev2_process_state_packet(struct state *st, struct msg_digest **mdp)
 		if (!md->encrypted_payloads.parsed) {
 			/*
 			 * Deal with fragmentation.  The function
-			 * returns FALSE both when there are more
-			 * fragments and when the fragment is corrupt.
-			 * Either way stop processing.
+			 * returns FALSE either when there are more
+			 * fragments, the fragment is corrupt, the
+			 * fragment is a duplicate, or the fragment
+			 * count changed (it also drops all
+			 * fragments).  Either way stop processing.
 			 *
-			 * XXX: This should also check that the
-			 * fragment can be decrypted; however that
-			 * isn't always possible since the fragment
-			 * may be the trigger for DH.
+			 * Only upon _first_ arrival of the last
+			 * fragment, does the function return TRUE.
+			 * The the processing flow below can then
+			 * continue to the SKEYID check.
+			 *
+			 * However, if SKEYID (g^{xy}) needed to be
+			 * computed then this code will be re-entered
+			 * with all fragments present (so "the"
+			 * function should not be called).
 			 */
-			if ((md->message_payloads.present & P(SKF))
-			    && !ikev2_collect_fragment(md, st)) {
-				return;
+			bool have_all_fragments =
+				(st->st_v2_rfrags != NULL &&
+				 st->st_v2_rfrags->count == st->st_v2_rfrags->total);
+			/*
+			 * XXX: Because fragments are only checked
+			 * all-at-once after they have all arrived, a
+			 * single corrupt fragment will cause all
+			 * fragments being thrown away, and the entire
+			 * process re-start (Is this tested?)
+			 *
+			 * XXX: This code should instead check
+			 * fragments as they arrive.  That means
+			 * kicking off the g^{xy} calculation in the
+			 * background (if it were in the forground,
+			 * the fragments would be dropped).  Later.
+			 */
+			if (md->message_payloads.present & P(SKF)) {
+				if (have_all_fragments) {
+					DBG(DBG_CONTROL,
+					    DBG_log("already have all fragments, skipping fragment collection"));
+				} else if (!ikev2_collect_fragment(md, st)) {
+					return;
+				}
 			}
 			/*
-			 * If the SK payload can't be decrypted assume
-			 * a match.
+			 * For this state transition, does it only
+			 * apply when there's no SKEYID?  If so, and
+			 * SKEYID is missing, then things match; else
+			 * things can't match.
 			 */
-			if (svm->flags & SMF2_SKIP_UNPACK_SK) {
-				break;
+			if (svm->flags & SMF2_NO_SKEYID) {
+				if (ike->sa.hidden_variables.st_skeyid_calculated) {
+					continue;
+				} else {
+					break;
+				}
 			}
 			/*
 			 * Decrypt the packet, checking it for

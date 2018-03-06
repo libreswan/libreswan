@@ -3622,9 +3622,10 @@ static stf_status ikev2_start_pam_authorize(struct state *st)
  * [Parent SA established]
  */
 
-static crypto_req_cont_func ikev2_parent_inI2outR2_continue;	/* type asssertion */
+static crypto_req_cont_func ikev2_ike_sa_process_auth_request_no_skeyid_continue;	/* type asssertion */
 
-stf_status ikev2_parent_inI2outR2(struct state *st, struct msg_digest *md UNUSED)
+stf_status ikev2_ike_sa_process_auth_request_no_skeyid(struct state *st,
+						       struct msg_digest *md UNUSED)
 {
 	/* for testing only */
 	if (DBGP(IMPAIR_SEND_NO_IKEV2_AUTH)) {
@@ -3644,16 +3645,13 @@ stf_status ikev2_parent_inI2outR2(struct state *st, struct msg_digest *md UNUSED
 	/* initiate calculation of g^xy */
 	start_dh_v2(st, "ikev2_inI2outR2 KE",
 		    ORIGINAL_RESPONDER, NULL,
-		    NULL, ikev2_parent_inI2outR2_continue);
+		    NULL, ikev2_ike_sa_process_auth_request_no_skeyid_continue);
 	return STF_SUSPEND;
 }
 
-static stf_status ikev2_parent_inI2outR2_continue_tail(struct state *st,
-						       struct msg_digest *md);
-
-static void ikev2_parent_inI2outR2_continue(struct state *st,
-					    struct msg_digest **mdp,
-					    struct pluto_crypto_req *r)
+static void ikev2_ike_sa_process_auth_request_no_skeyid_continue(struct state *st,
+								 struct msg_digest **mdp,
+								 struct pluto_crypto_req *r)
 {
 	DBG(DBG_CONTROL,
 		DBG_log("ikev2_parent_inI2outR2_continue for #%lu: calculating g^{xy}, sending R2",
@@ -3675,61 +3673,18 @@ static void ikev2_parent_inI2outR2_continue(struct state *st,
 		return;
 	}
 
-	/* try to decrypt the packet */
+	ikev2_process_state_packet(pexpect_ike_sa(st), st, mdp);
+}
 
-	if (!ikev2_decrypt_msg(st, *mdp)) {
-		/*
-		 * The packet lacks integrity so drop it.  Don't send
-		 * back an encrypted response as that could confuse
-		 * the real initiator.
-		 */
-		DBG(DBG_CONTROL, DBG_log("aborting IKE SA: DH failed"));
-		complete_v2_state_transition(mdp, STF_FAIL);
-		return;
-	}
+static stf_status ikev2_parent_inI2outR2_continue_tail(struct state *st,
+						       struct msg_digest *md);
 
-	/* check the decrypted contents */
-
-	struct payload_digest *sk = (*mdp)->chain[ISAKMP_NEXT_v2SK];
-	(*mdp)->encrypted_payloads = ikev2_decode_payloads(*mdp, &sk->pbs,
-							   sk->payload.generic.isag_np);
-	if ((*mdp)->encrypted_payloads.n != v2N_NOTHING_WRONG) {
-		chunk_t data = chunk((*mdp)->message_payloads.data,
-				     (*mdp)->message_payloads.data_size);
-		send_v2_notification_from_state(st, *mdp,
-						(*mdp)->encrypted_payloads.n,
-						&data);
-		complete_v2_state_transition(mdp, STF_FATAL);
-		return;
-	}
-
-	/* verify the payload contents */
-
-	/*
-	 * XXX: hack until expected_encrypted_payloads is added to
-	 * struct state_v2_microcode or replacement.
-	 */
-	const struct state_v2_microcode *svm = (*mdp)->svm;
-	struct ikev2_expected_payloads expected_encrypted_payloads = {
-		.required = svm->req_enc_payloads,
-		.optional = svm->opt_enc_payloads,
-	};
-	struct ikev2_payload_errors errors =
-		ikev2_verify_payloads(&(*mdp)->encrypted_payloads,
-				      &expected_encrypted_payloads);
-	if (errors.bad) {
-		/*
-		 * Something in the packet is bogus.  Drop everything.
-		 */
-		DBG(DBG_CONTROL, DBG_log("aborting IKE SA: invalid contents"));
-		send_v2_notification_from_state(st, *mdp, v2N_INVALID_SYNTAX, NULL);
-		complete_v2_state_transition(mdp, STF_FATAL);
-		return;
-	}
-
+stf_status ikev2_ike_sa_process_auth_request(struct state *st,
+					     struct msg_digest *md)
+{
 	/* The connection is "up", start authenticating it */
 
-	stf_status e = ikev2_parent_inI2outR2_continue_tail(st, *mdp);
+	stf_status e = ikev2_parent_inI2outR2_continue_tail(st, md);
 	DBG(DBG_CONTROL,
 	    if (e > STF_FAIL) {
 		    int v2_notify_num = e - STF_FAIL;
@@ -3752,10 +3707,10 @@ static void ikev2_parent_inI2outR2_continue(struct state *st,
 		DBG(DBG_OPPO,
 			DBG_log("Deleting opportunistic Parent with no Child SA"));
 		e = STF_FATAL;
-		send_v2_notification_from_state(st, *mdp, v2N_AUTHENTICATION_FAILED, NULL);
+		send_v2_notification_from_state(st, md, v2N_AUTHENTICATION_FAILED, NULL);
 	}
 
-	complete_v2_state_transition(mdp, e);
+	return e;
 }
 
 static stf_status ikev2_parent_inI2outR2_continue_tail(struct state *st,
