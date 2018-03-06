@@ -1317,7 +1317,7 @@ Standard targets and operations:
 
     kvm-check         - run all GOOD tests against the
                         previously installed libreswan
-    kvm-check KVM_TESTS=testing/pluto/basic-pluto-0[0-1]
+    kvm-check KVM_TESTS+=testing/pluto/basic-pluto-0[0-1]
                       - run test matching the pattern
     kvm-check KVM_TEST_FLAGS='--test-status "good|wip"'
                       - run both good and wip tests
