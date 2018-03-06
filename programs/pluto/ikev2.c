@@ -1755,29 +1755,6 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			     enum_short_name(&state_names, svm->next_state));
 		}
 
-		if (ix == ISAKMP_v2_CREATE_CHILD_SA) {
-			/*
-			 * XXX: Can this be moved to outside of the
-			 * lookup loop?  (It was originally buried in
-			 * a function checking encrypted payloads.
-			 *
-			 * XXX: Setting/clearing md->st is to preserve
-			 * existing behaviour (what ever that was).
-			 * Can md->st instead be set before entering
-			 * this loop?
-			 */
-			md->st = st;
-			struct state *pst = IS_CHILD_SA(md->st) ?
-				state_with_serialno(md->st->st_clonedfrom) : md->st;
-			DBGF(DBG_CONTROL,
-			     "calling update_ike_endpoints(pst, md) from FSM loop for #%lu (parent #%lul)",
-			     st->st_serialno, pst->st_serialno);
-			/* going to switch to child st. before that update parent */
-			if (!LHAS(pst->hidden_variables.st_nat_traversal, NATED_HOST))
-				update_ike_endpoints(pst, md);
-			md->st = NULL;
-		}
-
 		/* must be the right state machine entry */
 		break;
 	}
@@ -1819,8 +1796,28 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 	md->from_state = svm->state;
 	md->svm = svm;
 
-	/* bit further processing of create CREATE_CHILD_SA exchange */
 	if (ix == ISAKMP_v2_CREATE_CHILD_SA) {
+
+		/*
+		 * XXX: This code was embedded in the end of the FSM
+		 * search loop.  Since it was always executed when the
+		 * state matches, move it out of the loop.  Suspect
+		 * this, and the code below, really belong in the
+		 * state transition function proper.
+		 *
+		 * XXX: Setting/clearing md->st is to preserve
+		 * existing behaviour (what ever that was).
+		 */
+		md->st = st;
+		struct state *pst = IS_CHILD_SA(md->st) ?
+			state_with_serialno(md->st->st_clonedfrom) : md->st;
+		/* going to switch to child st. before that update parent */
+		if (!LHAS(pst->hidden_variables.st_nat_traversal, NATED_HOST))
+			update_ike_endpoints(pst, md);
+		md->st = NULL;
+
+		/* bit further processing of create CREATE_CHILD_SA exchange */
+
 		/* lets get a child state either new or existing to proceed */
 		struct state *cst = process_v2_child_ix(md, st);
 		if (cst == NULL) {
