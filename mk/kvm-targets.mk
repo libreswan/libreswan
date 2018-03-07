@@ -34,6 +34,7 @@ KVM_PREFIXES ?= $(if $(KVM_PREFIX), $(KVM_PREFIX), '')
 KVM_WORKERS ?= 1
 KVM_USER ?= $(shell id -u)
 KVM_GROUP ?= $(shell id -g qemu)
+KVM_MAKEFLAGS ?= EFENCE=-lefence
 
 #
 # Generate local names using prefixes
@@ -894,8 +895,9 @@ define kvm-DOMAIN-build
   kvm-$(1)-build: kvm-shutdown-local-domains | $$(KVM_LOCALDIR)/$(1).xml
 	: kvm-DOMAIN-build domain=$(1)
 	$(call check-kvm-qemu-directory)
-	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; make OBJDIR=$$(KVM_OBJDIR) base'
-	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; make OBJDIR=$$(KVM_OBJDIR) module'
+	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'export OBJDIR=$$(KVM_OBJDIR)'
+	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'make OBJDIR=$$(KVM_OBJDIR) $$(KVM_MAKEFLAGS) base'
+	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'make OBJDIR=$$(KVM_OBJDIR) $$(KVM_MAKEFLAGS) module'
 	: install will run $$(KVMSH) --shutdown $(1)
 endef
 
@@ -927,7 +929,7 @@ define kvm-DOMAIN-install
   kvm-$(1)-install: kvm-shutdown-local-domains kvm-$$(KVM_BUILD_DOMAIN)-build | $$(KVM_LOCALDIR)/$(1).xml
 	: kvm-DOMAIN-install domain=$(1)
 	$(call check-kvm-qemu-directory)
-	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) 'export OBJDIR=$$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$$(KVM_OBJDIR)'
+	$$(KVMSH) $$(KVMSH_FLAGS) --chdir . $(1) './testing/guestbin/swan-install OBJDIR=$$(KVM_OBJDIR) $$(KVM_MAKEFLAGS)'
 	$$(KVMSH) --shutdown $(1)
 endef
 
@@ -1107,6 +1109,7 @@ Configuration:
     $(call kvm-var-value,KVM_USER)
     $(call kvm-var-value,KVM_GROUP)
     $(call kvm-var-value,KVM_CONNECTION)
+    $(call kvm-var-value,KVM_MAKEFLAGS)
 
   Directories:
 
