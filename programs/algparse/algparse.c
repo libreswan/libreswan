@@ -121,7 +121,7 @@ static void test(const struct parser_policy policy)
 	 * esp=
 	 */
 
-	printf("\n---- ESP tests that should succeed ----\n");
+	/* ESP tests that should succeed */
 
 	esp(policy, NULL);
 	esp(policy, "");
@@ -237,7 +237,7 @@ static void test(const struct parser_policy policy)
 	 * esp(policy, "modp1536");
 	 */
 
-	printf("\n---- ESP tests that should fail----\n");
+	/* ESP tests that should fail */
 
 	esp(policy, "3des168-sha1"); /* should get rejected */
 	esp(policy, "3des-null"); /* should get rejected */
@@ -270,7 +270,7 @@ static void test(const struct parser_policy policy)
 	 * ah=
 	 */
 
-	printf("\n---- AH tests that should succeed ----\n");
+	/* AH tests that should succeed */
 
 	ah(policy, NULL);
 	ah(policy, "");
@@ -287,7 +287,7 @@ static void test(const struct parser_policy policy)
 	ah(policy, "aes_xcbc");
 	ah(policy, "sha1-modp8192,sha1-modp8192,sha1-modp8192"); /* suppress duplicates */
 
-	printf("\n---- AH tests that should fail ----\n");
+	/* AH tests that should fail */
 
 	ah(policy, "aes-sha1");
 	ah(policy, "vanityhash1");
@@ -303,7 +303,7 @@ static void test(const struct parser_policy policy)
 	 * ike=
 	 */
 
-	printf("\n---- IKE tests that should succeed ----\n");
+	/* IKE tests that should succeed */
 
 	ike(policy, NULL);
 	ike(policy, "");
@@ -315,7 +315,7 @@ static void test(const struct parser_policy policy)
 	ike(policy, "aes_gcm");
 	ike(policy, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192"); /* suppress duplicates */
 
-	printf("\n---- IKE tests that should fail ----\n");
+	/* IKE tests that should fail */
 
 	ike(policy, "id2"); /* should be rejected; idXXX removed */
 	ike(policy, "3des-id2"); /* should be rejected; idXXX removed */

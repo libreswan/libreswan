@@ -1,5 +1,3 @@
-
----- ESP tests that should succeed ----
 [esp]
 	AES_CBC-HMAC_SHA1_96
 [esp=]
@@ -196,8 +194,6 @@
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 [esp=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192]
 	AES_CBC-HMAC_SHA1_96-MODP8192
-
----- ESP tests that should fail----
 [esp=3des168-sha1]
 	ERROR: 3DES does not take variable key lengths
 [esp=3des-null]
@@ -250,8 +246,6 @@
 	ERROR: ESP DH algorithm 'MODP8192' must be specified last
 [esp=3des-sha1-modp8192,3des-sha2;modp8192]
 	ERROR: ESP DH algorithm must appear once after last proposal
-
----- AH tests that should succeed ----
 [ah]
 	HMAC_SHA1_96
 [ah=]
@@ -280,8 +274,6 @@
 	AES_XCBC_96
 [ah=sha1-modp8192,sha1-modp8192,sha1-modp8192]
 	HMAC_SHA1_96-MODP8192
-
----- AH tests that should fail ----
 [ah=aes-sha1]
 	ERROR: AH integrity algorithm 'aes' is not recognized
 [ah=vanityhash1]
@@ -300,8 +292,6 @@
 	ERROR: AH integrity algorithm 'aes_ccm' is not recognized
 [ah=ripemd]
 	ERROR: AH integrity algorithm 'ripemd' is not recognized
-
----- IKE tests that should succeed ----
 [ike]
 	AES_CBC-HMAC_SHA2_256-MODP2048
 	AES_CBC-HMAC_SHA2_512-MODP2048
@@ -325,8 +315,6 @@
 	ERROR: IKE encryption algorithm 'aes_gcm' is not supported by IKEv1
 [ike=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192]
 	AES_CBC-HMAC_SHA1-MODP8192
-
----- IKE tests that should fail ----
 [ike=id2]
 	ERROR: IKE encryption algorithm 'id' is not recognized
 [ike=3des-id2]
