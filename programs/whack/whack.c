@@ -2195,7 +2195,7 @@ int main(int argc, char **argv)
 		if (!LHAS(opts1_seen, OPT_NAME))
 			diag("missing --name <connection_name>");
 	} else if (msg.whack_options == LEMPTY) {
-		if (LHAS(opts1_seen, OPT_NAME))
+		if (LHAS(opts1_seen, OPT_NAME)  && !LELEM(OPT_TRAFFIC_STATUS))
 			diag("no reason for --name");
 	}
 

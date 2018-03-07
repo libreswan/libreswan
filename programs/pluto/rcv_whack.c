@@ -585,7 +585,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 		clear_pluto_stats();
 
 	if (m->whack_traffic_status)
-		show_traffic_status();
+		show_traffic_status(m->name);
 
 	if (m->whack_shunt_status)
 		show_shunt_status();

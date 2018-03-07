@@ -2338,24 +2338,50 @@ static struct state **sort_states(int (*sort_fn)(const void *, const void *))
 	return array;
 }
 
-void show_traffic_status(void)
+static int log_trafic_state(struct connection *c, void *arg UNUSED)
+{
+	char state_buf[LOG_WIDTH];
+	struct state *st = state_by_serialno(c->newest_ipsec_sa);
+
+	if (st == NULL)
+		return 0;
+
+	fmt_list_traffic(st, state_buf, sizeof(state_buf));
+	if (state_buf[0] != '\0')
+		whack_log(RC_INFORMATIONAL_TRAFFIC, "%s", state_buf);
+
+	return 1;
+}
+
+void show_traffic_status(const char *name)
 {
 
-	struct state **array = sort_states(state_compare_serial);
+	if (name == NULL) {
+		struct state **array = sort_states(state_compare_serial);
 
-	/* now print sorted results */
-	if (array != NULL) {
-		int i;
-		for (i = 0; array[i] != NULL; i++) {
-			struct state *st = array[i];
-
-			char state_buf[LOG_WIDTH];
-			fmt_list_traffic(st, state_buf, sizeof(state_buf));
-			if (state_buf[0] != '\0')
-				whack_log(RC_INFORMATIONAL_TRAFFIC,
-					  "%s", state_buf);
+		/* now print sorted results */
+		if (array != NULL) {
+			int i;
+			for (i = 0; array[i] != NULL; i++) {
+				char state_buf[LOG_WIDTH];
+				fmt_list_traffic(array[i], state_buf, sizeof(state_buf));
+				if (state_buf[0] != '\0')
+					whack_log(RC_INFORMATIONAL_TRAFFIC, "%s", state_buf);
+			}
+			pfree(array);
 		}
-		pfree(array);
+	} else {
+		struct connection *c = conn_by_name(name, TRUE, TRUE);
+
+		if (c != NULL) {
+			(void) log_trafic_state(c, NULL);
+		} else {
+			int count = foreach_connection_by_alias(name, log_trafic_state, NULL);
+
+			if (count == 0)
+				loglog(RC_UNKNOWN_NAME,
+					"no such connection or aliased connection named \"%s\"", name);
+		}
 	}
 }
 

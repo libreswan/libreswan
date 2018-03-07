@@ -743,9 +743,8 @@ extern void initialize_new_state(struct state *st,
 				 int whack_sock,
 				 enum crypto_importance importance);
 
-extern void show_traffic_status(void);
+extern void show_traffic_status(const char *name);
 extern void show_states_status(void);
-
 
 extern void ikev2_repl_est_ipsec(struct state *st, void *data);
 extern void ikev2_inherit_ipsec_sa(so_serial_t osn, so_serial_t nsn,
