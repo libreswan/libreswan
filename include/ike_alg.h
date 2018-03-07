@@ -3,6 +3,7 @@
 
 #include <nss.h>
 #include <pk11pub.h>
+#include "shunk.h"
 
 struct ike_alg;
 enum ike_alg_key;
@@ -89,9 +90,10 @@ const char *ike_alg_key_name(enum ike_alg_key key);
  * intended as a way to identify algorithms defined by IETF but not
  * supported here.
  */
-const struct ike_alg *ike_alg_byname(const struct ike_alg_type *type, const char *name);
+const struct ike_alg *ike_alg_byname(const struct ike_alg_type *type,
+				     shunk_t name);
 int ike_alg_enum_match(const struct ike_alg_type *type, enum ike_alg_key key,
-		       const char *name);
+		       shunk_t name);
 
 /*
  * Common prefix for struct encrypt_desc and struct hash_desc (struct

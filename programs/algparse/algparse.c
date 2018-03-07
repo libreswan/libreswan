@@ -20,7 +20,7 @@ static int failures = 0;
 
 enum expect { PASS = 1, FAIL, IGNORE, };
 
-static struct parser_policy policy = {
+static struct proposal_policy policy = {
 	.ikev1 = false,
 	.ikev2 = false,
 };
@@ -86,25 +86,25 @@ static bool kernel_alg_is_ok(const struct ike_alg *alg)
 	}
 }
 
-static void esp(struct parser_policy policy, enum expect expected, const char *algstr)
+static void esp(struct proposal_policy policy, enum expect expected, const char *algstr)
 {
 	policy.alg_is_ok = kernel_alg_is_ok;
 	CHECK(esp, esp);
 }
 
-static void ah(struct parser_policy policy, enum expect expected, const char *algstr)
+static void ah(struct proposal_policy policy, enum expect expected, const char *algstr)
 {
 	policy.alg_is_ok = kernel_alg_is_ok;
 	CHECK(esp, ah);
 }
 
-static void ike(struct parser_policy policy, enum expect expected, const char *algstr)
+static void ike(struct proposal_policy policy, enum expect expected, const char *algstr)
 {
 	policy.alg_is_ok = ike_alg_is_ike;
 	CHECK(ike, ike);
 }
 
-typedef void (protocol_t)(struct parser_policy policy, enum expect expected, const char *);
+typedef void (protocol_t)(struct proposal_policy policy, enum expect expected, const char *);
 
 struct protocol {
 	const char *name;
@@ -117,7 +117,7 @@ const struct protocol protocols[] = {
 	{ "esp", esp, },
 };
 
-static void all(const struct parser_policy policy, const char *algstr)
+static void all(const struct proposal_policy policy, const char *algstr)
 {
 	for (const struct protocol *protocol = protocols;
 	     protocol < protocols + elemsof(protocols);
@@ -126,7 +126,7 @@ static void all(const struct parser_policy policy, const char *algstr)
 	}
 }
 
-static void test_proposal(const struct parser_policy policy, const char *arg)
+static void test_proposal(const struct proposal_policy policy, const char *arg)
 {
 	const char *eq = strchr(arg, '=');
 	for (const struct protocol *protocol = protocols;
@@ -149,7 +149,7 @@ static void test_proposal(const struct parser_policy policy, const char *arg)
 	all(policy, arg);
 }
 
-static void test(const struct parser_policy policy)
+static void test(const struct proposal_policy policy)
 {
 	/*
 	 * esp=

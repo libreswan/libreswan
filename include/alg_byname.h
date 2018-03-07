@@ -14,9 +14,15 @@
  * for more details.
  */
 
+#ifndef ALG_BYNAME_H
+#define ALG_BYNAME_H
+
+#include <shunk.h>
+
 struct parser_protocol;
 struct parser_policy;
 struct ike_alg;
+struct proposal_parser;
 
 /*
  * Filter function to accept/reject an algorithm.
@@ -26,32 +32,23 @@ struct ike_alg;
  * messages better align with the input files.
  */
 
-bool alg_byname_ok(const struct parser_protocol *protocol,
-		   const struct parser_policy *const policy,
-		   const struct ike_alg *alg,
-		   const char *name,
-		   char *err_buf, size_t err_buf_len);
+bool alg_byname_ok(const struct proposal_parser *parser,
+		   const struct ike_alg *alg, shunk_t name);
 
 /*
  * Helper functions to implement most of the lookup.
  */
 
-const struct ike_alg *encrypt_alg_byname(const struct parser_protocol *protocol,
-					 const struct parser_policy *const policy,
-					 char *err_buf, size_t err_buf_len,
-					 const char *name, size_t key_bit_length);
+const struct ike_alg *encrypt_alg_byname(const struct proposal_parser *parser,
+					 shunk_t name, size_t key_bit_length);
 
-const struct ike_alg *prf_alg_byname(const struct parser_protocol *protocol,
-				     const struct parser_policy *const policy,
-				     char *err_buf, size_t err_buf_len,
-				     const char *name, size_t key_bit_length);
+const struct ike_alg *prf_alg_byname(const struct proposal_parser *parser,
+				     shunk_t name, size_t key_bit_length);
 
-const struct ike_alg *integ_alg_byname(const struct parser_protocol *protocol,
-				       const struct parser_policy *const policy,
-				       char *err_buf, size_t err_buf_len,
-				       const char *name, size_t key_bit_length);
+const struct ike_alg *integ_alg_byname(const struct proposal_parser *parser,
+				       shunk_t name, size_t key_bit_length);
 
-const struct ike_alg *dh_alg_byname(const struct parser_protocol *protocol,
-				    const struct parser_policy *const policy,
-				    char *err_buf, size_t err_buf_len,
-				    const char *name, size_t key_bit_length);
+const struct ike_alg *dh_alg_byname(const struct proposal_parser *parser,
+				    shunk_t name, size_t key_bit_length);
+
+#endif

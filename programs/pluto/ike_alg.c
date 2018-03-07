@@ -181,13 +181,14 @@ const struct oakley_group_desc **next_oakley_group(const struct oakley_group_des
 }
 
 const struct ike_alg *ike_alg_byname(const struct ike_alg_type *type,
-				     const char *name)
+				     shunk_t name)
 {
 	passert(type != NULL);
 	for (const struct ike_alg **alg = next_alg(type, NULL);
 	     alg != NULL; alg = next_alg(type, alg)) {
 		FOR_EACH_IKE_ALG_NAMEP(*alg, namep) {
-			if (strcaseeq(name, *namep)) {
+			if (strlen(*namep) == name.len &&
+			    strncaseeq(*namep, name.ptr, name.len)) {
 				return *alg;
 			}
 		}
@@ -197,7 +198,7 @@ const struct ike_alg *ike_alg_byname(const struct ike_alg_type *type,
 
 int ike_alg_enum_match(const struct ike_alg_type *type,
 		       enum ike_alg_key key,
-		       const char *name)
+		       shunk_t name)
 {
 	passert(type != NULL);
 	passert(key < IKE_ALG_KEY_ROOF);

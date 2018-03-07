@@ -1305,7 +1305,7 @@ void add_connection(const struct whack_message *wm)
 	if (!LIN(POLICY_AUTH_NEVER, wm->policy) && wm->ike != NULL) {
 		char err_buf[256] = "";	/* ??? big enough? */
 
-		struct parser_policy parser_policy = {
+		struct proposal_policy proposal_policy = {
 			.ikev1 = LIN(POLICY_IKEV1_ALLOW, wm->policy),
 			/*
 			 * logic needs to match pick_initiator()
@@ -1320,7 +1320,7 @@ void add_connection(const struct whack_message *wm)
 			.alg_is_ok = ike_alg_is_ike,
 		};
 
-		alg_info_ike = alg_info_ike_create_from_str(&parser_policy, wm->ike,
+		alg_info_ike = alg_info_ike_create_from_str(&proposal_policy, wm->ike,
 							    err_buf, sizeof(err_buf));
 
 		if (alg_info_ike == NULL) {
@@ -1527,7 +1527,7 @@ void add_connection(const struct whack_message *wm)
 			DBG(DBG_CONTROL,
 			    DBG_log("from whack: got --esp=%s", wm->esp));
 
-			struct parser_policy parser_policy = {
+			struct proposal_policy proposal_policy = {
 				.ikev1 = LIN(POLICY_IKEV1_ALLOW, wm->policy),
 				/*
 				 * logic needs to match pick_initiator()
@@ -1543,11 +1543,11 @@ void add_connection(const struct whack_message *wm)
 			};
 
 			if (c->policy & POLICY_ENCRYPT)
-				c->alg_info_esp = alg_info_esp_create_from_str(&parser_policy,
+				c->alg_info_esp = alg_info_esp_create_from_str(&proposal_policy,
 					wm->esp, err_buf, sizeof(err_buf));
 
 			if (c->policy & POLICY_AUTHENTICATE)
-				c->alg_info_esp = alg_info_ah_create_from_str(&parser_policy,
+				c->alg_info_esp = alg_info_ah_create_from_str(&proposal_policy,
 					wm->esp,  err_buf, sizeof(err_buf));
 
 			if (c->alg_info_esp == NULL) {

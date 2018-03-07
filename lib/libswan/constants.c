@@ -2295,7 +2295,7 @@ int enum_search(enum_names *ed, const char *str)
 	return -1;
 }
 
-int enum_match(enum_names *ed, const char *string)
+int enum_match(enum_names *ed, shunk_t string)
 {
 	enum_names  *p;
 
@@ -2313,16 +2313,17 @@ int enum_match(enum_names *ed, const char *string)
 			passert(en <= INT_MAX);
 
 			/*
-			 * Try matching the entire name including any
-			 * prefix.  If needed, ignore any trailing
-			 * '(...)'
+-			 * Try matching the entire name including any
+-			 * prefix.  If needed, ignore any trailing
+-			 * '(...)'
 			 */
-			if (strcaseeq(name, string)) {
+			if (strlen(name) == string.len &&
+			    strncaseeq(name, string.ptr, string.len)) {
 				return en;
 			}
-			if (strncaseeq(name, string, strlen(string))
-			    && name[strlen(string)] == '('
-			    && name[strlen(name) - 1] == ')') {
+			if (strcspn(name, "(") == string.len &&
+			    name[strlen(name) - 1] == ')' &&
+			    strncaseeq(name, string.ptr, string.len)) {
 				return en;
 			}
 
@@ -2337,12 +2338,14 @@ int enum_match(enum_names *ed, const char *string)
 			if (short_name == name) {
 				continue;
 			}
-			if (strcaseeq(short_name, string)) {
+
+			if (strlen(short_name) == string.len &&
+			    strncaseeq(short_name, string.ptr, string.len)) {
 				return en;
 			}
-			if (strncaseeq(short_name, string, strlen(string))
-			    && short_name[strlen(string)] == '('
-			    && short_name[strlen(short_name) - 1] == ')') {
+			if (strcspn(short_name, "(") == string.len &&
+			    short_name[strlen(short_name) - 1] == ')' &&
+			    strncaseeq(short_name, string.ptr, string.len)) {
 				return en;
 			}
 

@@ -404,7 +404,7 @@ static bool kernel_alg_proc_read(void)
  * are valid.
  */
 
-const struct parser_policy policy = {
+const struct proposal_policy policy = {
 	.ikev1 = false,
 	.ikev2 = false,
 	.alg_is_ok = kernel_alg_is_ok,

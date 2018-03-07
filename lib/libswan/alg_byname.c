@@ -22,28 +22,27 @@
 #include "ike_alg.h"
 #include "ike_alg_null.h"
 
-bool alg_byname_ok(const struct parser_protocol *protocol,
-		   const struct parser_policy *const policy,
-		   const struct ike_alg *alg,
-		   const char *name,
-		   char *err_buf, size_t err_buf_len)
+bool alg_byname_ok(const struct proposal_parser *parser,
+		   const struct ike_alg *alg, shunk_t name)
 {
+	const struct proposal_protocol *protocol = parser->protocol;
+	const struct proposal_policy *policy = parser->policy;
 	/*
 	 * If the connection is IKEv1|IKEv2 then this code will
 	 * exclude anything not supported by both protocols.
 	 */
 	if (policy->ikev1 && alg->id[protocol->ikev1_alg_id] < 0) {
-		snprintf(err_buf, err_buf_len,
-			 "%s %s algorithm '%s' is not supported by IKEv1",
+		snprintf(parser->err_buf, parser->err_buf_len,
+			 "%s %s algorithm '"PRISHUNK"' is not supported by IKEv1",
 			 protocol->name, ike_alg_type_name(alg->algo_type),
-			 name);
+			 SHUNKF(name));
 		return false;
 	}
 	if (policy->ikev2 && alg->id[IKEv2_ALG_ID] < 0) {
-		snprintf(err_buf, err_buf_len,
-			 "%s %s algorithm '%s' is not supported by IKEv2",
+		snprintf(parser->err_buf, parser->err_buf_len,
+			 "%s %s algorithm '"PRISHUNK"' is not supported by IKEv2",
 			 protocol->name, ike_alg_type_name(alg->algo_type),
-			 name);
+			 SHUNKF(name));
 		return false;
 	}
 	/*
@@ -56,10 +55,10 @@ bool alg_byname_ok(const struct parser_protocol *protocol,
 	 */
 	passert(policy->alg_is_ok != NULL);
 	if (!policy->alg_is_ok(alg)) {
-		snprintf(err_buf, err_buf_len,
-			 "%s %s algorithm '%s' is not supported",
+		snprintf(parser->err_buf, parser->err_buf_len,
+			 "%s %s algorithm '"PRISHUNK"' is not supported",
 			 protocol->name, ike_alg_type_name(alg->algo_type),
-			 name);
+			 SHUNKF(name));
 		return false;
 	}
 	/*
@@ -71,21 +70,20 @@ bool alg_byname_ok(const struct parser_protocol *protocol,
 	 * Since it likely involves a lookup, it is left until last.
 	 */
 	if (!ike_alg_is_valid(alg)) {
-		snprintf(err_buf, err_buf_len,
-			 "%s %s algorithm '%s' is not valid",
+		snprintf(parser->err_buf, parser->err_buf_len,
+			 "%s %s algorithm '"PRISHUNK"' is not valid",
 			 protocol->name, ike_alg_type_name(alg->algo_type),
-			 name);
+			 SHUNKF(name));
 		return false;
 	}
 	return true;
 }
 
-static const struct ike_alg *alg_byname(const struct parser_protocol *protocol,
-					const struct parser_policy *const policy,
+static const struct ike_alg *alg_byname(const struct proposal_parser *parser,
 					const struct ike_alg_type *type,
-					char *err_buf, size_t err_buf_len,
-					const char *name)
+					shunk_t name)
 {
+	const struct proposal_protocol *protocol = parser->protocol;
 	const struct ike_alg *alg = ike_alg_byname(type, name);
 	if (alg == NULL) {
 		/*
@@ -94,13 +92,15 @@ static const struct ike_alg *alg_byname(const struct parser_protocol *protocol,
 		 */
 		if (ike_alg_enum_match(type, protocol->ikev1_alg_id, name) >= 0
 		    || ike_alg_enum_match(type, IKEv2_ALG_ID, name) >= 0) {
-			snprintf(err_buf, err_buf_len,
-				 "%s %s algorithm '%s' is not supported",
-				 protocol->name, ike_alg_type_name(type), name);
+			snprintf(parser->err_buf, parser->err_buf_len,
+				 "%s %s algorithm '"PRISHUNK"' is not supported",
+				 protocol->name, ike_alg_type_name(type),
+				 SHUNKF(name));
 		} else {
-			snprintf(err_buf, err_buf_len,
-				 "%s %s algorithm '%s' is not recognized",
-				 protocol->name, ike_alg_type_name(type), name);
+			snprintf(parser->err_buf, parser->err_buf_len,
+				 "%s %s algorithm '"PRISHUNK"' is not recognized",
+				 protocol->name, ike_alg_type_name(type),
+				 SHUNKF(name));
 		}
 		return NULL;
 	}
@@ -108,29 +108,25 @@ static const struct ike_alg *alg_byname(const struct parser_protocol *protocol,
 	/*
 	 * Does it pass muster?
 	 */
-	if (!alg_byname_ok(protocol, policy, alg, name,
-			   err_buf, err_buf_len)) {
-		passert(err_buf[0] != '\0');
+	if (!alg_byname_ok(parser, alg, name)) {
+		passert(parser->err_buf[0] != '\0');
 		return NULL;
 	}
 
 	return alg;
 }
 
-const struct ike_alg *encrypt_alg_byname(const struct parser_protocol *protocol,
-					 const struct parser_policy *const policy,
-					 char *err_buf, size_t err_buf_len,
-					 const char *name, size_t key_bit_length)
+const struct ike_alg *encrypt_alg_byname(const struct proposal_parser *parser,
+					 shunk_t name, size_t key_bit_length)
 {
-	const struct ike_alg *alg = alg_byname(protocol, policy, IKE_ALG_ENCRYPT,
-					       err_buf, err_buf_len, name);
+	const struct ike_alg *alg = alg_byname(parser, IKE_ALG_ENCRYPT, name);
 	if (alg == NULL) {
 		return NULL;
 	}
 	const struct encrypt_desc *encrypt = encrypt_desc(alg);
 	if (!DBGP(IMPAIR_SEND_KEY_SIZE_CHECK) && key_bit_length > 0) {
 		if (encrypt->keylen_omitted) {
-			snprintf(err_buf, err_buf_len,
+			snprintf(parser->err_buf, parser->err_buf_len,
 				 "%s does not take variable key lengths",
 				 enum_short_name(&ikev2_trans_type_encr_names,
 						 encrypt->common.id[IKEv2_ALG_ID]));
@@ -142,7 +138,7 @@ const struct ike_alg *encrypt_alg_byname(const struct parser_protocol *protocol,
 			 * should instead generate a real list from
 			 * encrypt.
 			 */
-			snprintf(err_buf, err_buf_len,
+			snprintf(parser->err_buf, parser->err_buf_len,
 				 "wrong encryption key length - key size must be 128 (default), 192 or 256");
 			return NULL;
 		}
@@ -150,35 +146,20 @@ const struct ike_alg *encrypt_alg_byname(const struct parser_protocol *protocol,
 	return alg;
 }
 
-const struct ike_alg *prf_alg_byname(const struct parser_protocol *protocol,
-				     const struct parser_policy *const policy,
-				     char *err_buf, size_t err_buf_len,
-				     const char *name,
-				     size_t key_bit_length UNUSED)
+const struct ike_alg *prf_alg_byname(const struct proposal_parser *parser,
+				     shunk_t name, size_t key_bit_length UNUSED)
 {
-	return alg_byname(protocol, policy, IKE_ALG_PRF,
-			  err_buf, err_buf_len,
-			  name);
+	return alg_byname(parser, IKE_ALG_PRF, name);
 }
 
-const struct ike_alg *integ_alg_byname(const struct parser_protocol *protocol,
-				       const struct parser_policy *const policy,
-				       char *err_buf, size_t err_buf_len,
-				       const char *name,
-				       size_t key_bit_length UNUSED)
+const struct ike_alg *integ_alg_byname(const struct proposal_parser *parser,
+				       shunk_t name, size_t key_bit_length UNUSED)
 {
-	return alg_byname(protocol, policy, IKE_ALG_INTEG,
-			  err_buf, err_buf_len,
-			  name);
+	return alg_byname(parser, IKE_ALG_INTEG, name);
 }
 
-const struct ike_alg *dh_alg_byname(const struct parser_protocol *protocol,
-				    const struct parser_policy *const policy,
-				    char *err_buf, size_t err_buf_len,
-				    const char *name,
-				    size_t key_bit_length UNUSED)
+const struct ike_alg *dh_alg_byname(const struct proposal_parser *parser,
+				    shunk_t name, size_t key_bit_length UNUSED)
 {
-	return alg_byname(protocol, policy, IKE_ALG_DH,
-			  err_buf, err_buf_len,
-			  name);
+	return alg_byname(parser, IKE_ALG_DH, name);
 }

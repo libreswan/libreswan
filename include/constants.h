@@ -24,9 +24,10 @@
 #ifndef _CONSTANTS_H_
 #define _CONSTANTS_H_
 
-struct lswlog;
-
 #include <stddef.h> /* for size_t */
+#include "shunk.h"
+
+struct lswlog;
 
 /*
  * This file was split into internal contants (Libreswan/pluto related),
@@ -268,11 +269,11 @@ extern int enum_search(enum_names *ed, const char *string);
  * found.
  *
  * Unlike enum_search() this compares strings both with and without
- * any prefixes and suffixes.  For instance, and assuming "ESP_" is
- * the prefix discarded by enum_short_name(), "blowfish" will match
- * "ESP_BLOWFISH(OBSOLETE)" while enum_search() will not.
+ * any prefix or suffix.  For instance, given the enum_name entry
+ * "ESP_BLOWFISH(OBSOLETE)" with prefix "ESP_", any of
+ * "esp_blowfish(obsolete)", "esp_blowfish" and "blowfish" will match.
  */
-extern int enum_match(enum_names *ed, const char *string);
+extern int enum_match(enum_names *ed, shunk_t string);
 
 /*
  * Printing enum enums.

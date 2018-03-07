@@ -48,9 +48,8 @@ enum parser_state {
 /* XXX:jjo to implement different parser for ESP and IKE */
 #define ALG_SIZE 30
 struct parser_context {
+	const struct proposal_parser *parser;
 	unsigned state;
-	const struct parser_protocol *protocol;
-	const struct parser_policy *policy;
 	char ealg_buf[ALG_SIZE];
 	char eklen_buf[ALG_SIZE];
 	char aalg_buf[ALG_SIZE];
@@ -89,13 +88,11 @@ static inline void parser_set_state(struct parser_context *p_ctx,
 }
 
 static void parser_init(struct parser_context *ctx,
-			const struct parser_policy *policy,
-			const struct parser_protocol *protocol)
+			const struct proposal_parser *parser)
 {
 	*ctx = (struct parser_context) {
-		.protocol = protocol,
-		.policy = policy,
-		.state = (protocol->encrypt_alg_byname
+		.parser = parser,
+		.state = (parser->protocol->encrypt_alg_byname != NULL
 			  ? ST_INI_EA
 			  : ST_INI_AA),
 		/*
@@ -242,7 +239,7 @@ static err_t parser_machine(struct parser_context *p_ctx)
 			 * Only allow modpXXXX string if we have
 			 * a modp_getbyname method
 			 */
-			if (p_ctx->protocol->dh_alg_byname != NULL) {
+			if (p_ctx->parser->protocol->dh_alg_byname != NULL) {
 				parser_set_state(p_ctx, ST_MODP);
 				continue;
 			}
@@ -298,21 +295,18 @@ static struct proposal_info merge_integ_default(struct proposal_info proposal,
 	return proposal;
 }
 
-static void add_proposal_defaults(const struct parser_policy *policy,
+static bool add_proposal_defaults(const struct proposal_parser *parser,
 				  const struct proposal_defaults *defaults,
 				  struct alg_info *alg_info,
-				  const struct proposal_info *proposal,
-				  char *err_buf, size_t err_buf_len);
+				  const struct proposal_info *proposal);
 
-
-static void add_alg_defaults(const struct parser_policy *policy,
+static bool add_alg_defaults(const struct proposal_parser *parser,
 			     const struct proposal_defaults *defaults,
 			     struct alg_info *alg_info,
 			     const struct proposal_info *proposal,
 			     const struct ike_alg_type *type,
 			     const struct ike_alg **default_algs,
-			     merge_alg_default_t *merge_alg_default,
-			     char *err_buf, size_t err_buf_len)
+			     merge_alg_default_t *merge_alg_default)
 {
 	/*
 	 * Use VALID_ALG to add the valid algorithms into VALID_ALGS.
@@ -320,11 +314,12 @@ static void add_alg_defaults(const struct parser_policy *policy,
 	for (const struct ike_alg **default_alg = default_algs;
 	     *default_alg; default_alg++) {
 		const struct ike_alg *alg = *default_alg;
-		char buf[LOG_WIDTH] = "";
-		if (!alg_byname_ok(proposal->protocol, policy, alg,
-				   alg->name, buf, sizeof(buf))) {
+		if (!alg_byname_ok(parser, alg,
+				   shunk1(alg->name))) {
 			DBG(DBG_CONTROL|DBG_CRYPT,
-			    DBG_log("skipping default %s", buf));
+			    DBG_log("skipping default %s",
+				    parser->err_buf));
+			parser->err_buf[0] = '\0';
 			continue;
 		}
 		/* add it */
@@ -334,13 +329,13 @@ static void add_alg_defaults(const struct parser_policy *policy,
 			    alg->name));
 		struct proposal_info merged_proposal = merge_alg_default(*proposal,
 									 *default_alg);
-		add_proposal_defaults(policy, defaults,
-				      alg_info, &merged_proposal,
-				      err_buf, err_buf_len);
-		if (err_buf[0] != '\0') {
-			return;
+		if (!add_proposal_defaults(parser, defaults,
+					   alg_info, &merged_proposal)) {
+			passert(parser->err_buf[0] != '\0');
+			return false;
 		}
 	}
+	return true;
 }
 
 /*
@@ -348,11 +343,10 @@ static void add_alg_defaults(const struct parser_policy *policy,
  * there are defaults, add them.
  */
 
-static void add_proposal_defaults(const struct parser_policy *policy,
+static bool add_proposal_defaults(const struct proposal_parser *parser,
 				  const struct proposal_defaults *defaults,
 				  struct alg_info *alg_info,
-				  const struct proposal_info *proposal,
-				  char *err_buf, size_t err_buf_len)
+				  const struct proposal_info *proposal)
 {
 	/*
 	 * Note that the order in which things are recursively added -
@@ -361,25 +355,22 @@ static void add_proposal_defaults(const struct parser_policy *policy,
 	 */
 	if (proposal->dh == NULL &&
 	    defaults != NULL && defaults->dh != NULL) {
-		return add_alg_defaults(policy, defaults,
+		return add_alg_defaults(parser, defaults,
 					alg_info, proposal,
 					&ike_alg_dh, defaults->dh,
-					merge_dh_default,
-					err_buf, err_buf_len);
+					merge_dh_default);
 	} else if (proposal->encrypt == NULL &&
 		   defaults != NULL && defaults->encrypt != NULL) {
-		return add_alg_defaults(policy, defaults,
+		return add_alg_defaults(parser, defaults,
 					alg_info, proposal,
 					&ike_alg_encrypt, defaults->encrypt,
-					merge_encrypt_default,
-					err_buf, err_buf_len);
+					merge_encrypt_default);
 	} else if (proposal->prf == NULL &&
 		   defaults != NULL && defaults->prf != NULL) {
-		return add_alg_defaults(policy, defaults,
+		return add_alg_defaults(parser, defaults,
 					alg_info, proposal,
 					&ike_alg_prf, defaults->prf,
-					merge_prf_default,
-					err_buf, err_buf_len);
+					merge_prf_default);
 	} else if (proposal->integ == NULL &&
 		   proposal->encrypt != NULL && ike_alg_is_aead(proposal->encrypt)) {
 		/*
@@ -387,16 +378,14 @@ static void add_proposal_defaults(const struct parser_policy *policy,
 		 */
 		struct proposal_info merged_proposal = *proposal;
 		merged_proposal.integ = &ike_alg_integ_none;
-		return add_proposal_defaults(policy, defaults,
-					     alg_info, &merged_proposal,
-					     err_buf, err_buf_len);
+		return add_proposal_defaults(parser, defaults,
+					     alg_info, &merged_proposal);
 	} else if (proposal->integ == NULL &&
 		   defaults != NULL && defaults->integ != NULL) {
-		return add_alg_defaults(policy, defaults,
+		return add_alg_defaults(parser, defaults,
 					alg_info, proposal,
 					&ike_alg_integ, defaults->integ,
-					merge_integ_default,
-					err_buf, err_buf_len);
+					merge_integ_default);
 	} else if (proposal->integ == NULL &&
 		   proposal->prf != NULL &&
 		   proposal->encrypt != NULL && !ike_alg_is_aead(proposal->encrypt)) {
@@ -414,15 +403,14 @@ static void add_proposal_defaults(const struct parser_policy *policy,
 			}
 		}
 		if (merged_proposal.integ == NULL) {
-			snprintf(err_buf, err_buf_len,
+			snprintf(parser->err_buf, parser->err_buf_len,
 				 "%s integrity derived from PRF '%s' is not supported",
 				 proposal->protocol->name,
 				 proposal->prf->common.name);
-			return;
+			return false;
 		}
-		return add_proposal_defaults(policy, defaults,
-					     alg_info, &merged_proposal,
-					     err_buf, err_buf_len);
+		return add_proposal_defaults(parser, defaults,
+					     alg_info, &merged_proposal);
 	} else {
 
 		/* duplicate? */
@@ -448,34 +436,35 @@ static void add_proposal_defaults(const struct parser_policy *policy,
 					    proposal->prf != NULL ? proposal->prf->common.name : "n/a",
 					    proposal->integ != NULL ? proposal->integ->common.name : "n/a",
 					    proposal->dh != NULL ? proposal->dh->common.name : "n/a"));
-				return;
+				return true;
 			}
 		}
 
 		/* Overflow? */
 		if ((unsigned)alg_info->alg_info_cnt >= elemsof(alg_info->proposals)) {
-			snprintf(err_buf, err_buf_len,
+			snprintf(parser->err_buf, parser->err_buf_len,
 				 "more than %zu %s algorithms specified",
 				 elemsof(alg_info->proposals),
 				 proposal->protocol->name);
 			/* drop it like a rock */
-			return;
+			return false;
 		}
 
 		/* back end? */
-		if (!proposal->protocol->proposal_ok(proposal, err_buf, err_buf_len)) {
-			passert(err_buf[0] != '\0');
-			return;
+		if (!proposal->protocol->proposal_ok(proposal, parser->err_buf,
+						     parser->err_buf_len)) {
+			passert(parser->err_buf[0] != '\0');
+			return false;
 		}
 
 		alg_info->proposals[alg_info->alg_info_cnt++] = *proposal;
 	}
+	return true;
 }
 
-static void merge_default_proposals(const struct parser_policy *policy,
+static bool merge_default_proposals(const struct proposal_parser *parser,
 				    struct alg_info *alg_info,
-				    const struct proposal_info *proposal,
-				    char *err_buf, size_t err_buf_len)
+				    const struct proposal_info *proposal)
 {
 	/*
 	 * If there's a hint of IKEv1 being enabled then prefer its
@@ -487,46 +476,38 @@ static void merge_default_proposals(const struct parser_policy *policy,
 	 * has ikev2=never then, in aggressive mode, things don't
 	 * work.
 	 */
-	const struct proposal_defaults *defaults = (policy->ikev1
+	const struct proposal_defaults *defaults = (parser->policy->ikev1
 						    ? proposal->protocol->ikev1_defaults
 						    : proposal->protocol->ikev2_defaults);
-	add_proposal_defaults(policy, defaults,
-			      alg_info, proposal,
-			      err_buf, err_buf_len);
+	return add_proposal_defaults(parser, defaults,
+				     alg_info, proposal);
 }
 
-static const struct ike_alg *lookup_byname(struct parser_context *p_ctx,
-					   char *err_buf, size_t err_buf_len,
-					   const struct ike_alg *(alg_byname)(const struct parser_protocol *protocol,
-									      const struct parser_policy *const policy,
-									      char *err_buf, size_t err_buf_len,
-									      const char *name,
-									      size_t key_bit_length),
-					   const char *name,
+static const struct ike_alg *lookup_byname(const struct proposal_parser *parser,
+					   alg_byname_fn *alg_byname,
+					   shunk_t name,
 					   size_t key_bit_length,
 					   const char *what)
 {
-	err_buf[0] = '\0';
-	if (name[0] != '\0') {
+	if (name.len > 0) {
 		if (alg_byname != NULL) {
-			const struct ike_alg *alg = alg_byname(p_ctx->protocol,
-							       p_ctx->policy,
-							       err_buf, err_buf_len,
-							       name, key_bit_length);
+			const struct ike_alg *alg = alg_byname(parser, name, key_bit_length);
 			if (alg == NULL) {
 				DBG(DBG_CONTROLMORE,
-				    DBG_log("%s_byname('%s') failed: %s",
-					    what, name, err_buf));
-				passert(err_buf[0]);
+				    DBG_log("%s_byname('"PRISHUNK"') failed: %s",
+					    what, SHUNKF(name),
+					    parser->err_buf));
+				passert(parser->err_buf[0] != '\0');
 				return NULL;
 			}
 			DBG(DBG_CONTROLMORE,
-			    DBG_log("%s_byname('%s') returned '%s'",
-				    what, name, alg->name));
+			    DBG_log("%s_byname('"PRISHUNK"') returned '%s'",
+				    what, SHUNKF(name), alg->name));
 			return alg;
 		} else {
 			DBG(DBG_CONTROLMORE,
-			    DBG_log("ignoring %s '%s'", what, name));
+			    DBG_log("ignoring %s '"PRISHUNK"'",
+				    what, SHUNKF(name)));
 			return NULL;
 		}
 	}
@@ -534,14 +515,21 @@ static const struct ike_alg *lookup_byname(struct parser_context *p_ctx,
 }
 
 static int parse_eklen(char *err_buf, size_t err_buf_len,
-			const char *eklen_buf)
+		       shunk_t buf)
 {
 	/* convert -<eklen> if present */
-	long eklen = strtol(eklen_buf, NULL, 10);
+	char *end = NULL;
+	long eklen = strtol(buf.ptr, &end, 10);
+	if (buf.ptr + buf.len != end) {
+		snprintf(err_buf, err_buf_len,
+			 "encryption key length '"PRISHUNK"' contains a non-numeric character",
+			 SHUNKF(buf));
+		return 0;
+	}
 	if (eklen >= INT_MAX) {
 		snprintf(err_buf, err_buf_len,
-			 "encryption key length '%s' WAY too big",
-			 eklen_buf);
+			 "encryption key length '"PRISHUNK"' WAY too big",
+			 SHUNKF(buf));
 		return 0;
 	}
 	if (eklen == 0) {
@@ -552,7 +540,7 @@ static int parse_eklen(char *err_buf, size_t err_buf_len,
 	return eklen;
 }
 
-static void parser_alg_info_add(struct parser_context *p_ctx,
+static bool parser_alg_info_add(struct parser_context *p_ctx,
 				struct proposal_info proposal,
 				char *err_buf, size_t err_buf_len,
 				struct alg_info *alg_info)
@@ -572,24 +560,25 @@ static void parser_alg_info_add(struct parser_context *p_ctx,
 	 */
 	if (p_ctx->eklen_buf[0] != '\0') {
 		/* convert -<eklen> if present */
-		int enckeylen = parse_eklen(err_buf, err_buf_len, p_ctx->eklen_buf);
+		int enckeylen = parse_eklen(err_buf, err_buf_len,
+					    shunk1(p_ctx->eklen_buf));
 		if (enckeylen <= 0) {
 			passert(err_buf[0] != '\0');
-			return;
+			return false;
 		}
 		proposal.enckeylen = enckeylen;
 	}
 	proposal.encrypt =
-		encrypt_desc(lookup_byname(p_ctx, err_buf, err_buf_len,
-					   p_ctx->protocol->encrypt_alg_byname,
-					   p_ctx->ealg_buf, proposal.enckeylen,
+		encrypt_desc(lookup_byname(p_ctx->parser,
+					   p_ctx->parser->protocol->encrypt_alg_byname,
+					   shunk1(p_ctx->ealg_buf), proposal.enckeylen,
 					   "encryption"));
 	if (err_buf[0] != '\0') {
 		/* Was <ealg>-<eklen> rejected? */
 		if (proposal.enckeylen > 0) {
 			passert(p_ctx->eklen_buf[0] != '\0');
 			passert(err_buf[0] != '\0');
-			return;
+			return false;
 		}
 		passert(p_ctx->eklen_buf[0] == '\0');
 		/* Could it be <ealg><eklen>? */
@@ -597,7 +586,7 @@ static void parser_alg_info_add(struct parser_context *p_ctx,
 		if (!isdigit(*end)) {
 			/* <eklen> was rejected */
 			passert(err_buf[0] != '\0');
-			return;
+			return false;
 		}
 		/*
 		 * Trailing digit so assume that <ealg> is really
@@ -608,18 +597,19 @@ static void parser_alg_info_add(struct parser_context *p_ctx,
 			if (end == p_ctx->ealg_buf) {
 				/* <ealg> missing */
 				passert(err_buf[0] != '\0');
-				return;
+				return false;
 			}
 			end--;
 		} while (isdigit(*end));
 		/* save for logging */
 		jam_str(p_ctx->eklen_buf, sizeof(p_ctx->eklen_buf), end + 1);
 
-		int enckeylen = parse_eklen(err_buf, err_buf_len, end + 1);
+		int enckeylen = parse_eklen(err_buf, err_buf_len,
+					    shunk1(end + 1));
 
 		if (enckeylen <= 0) {
 			passert(err_buf[0] != '\0');
-			return;
+			return false;
 		}
 		proposal.enckeylen = enckeylen;
 		/*
@@ -631,49 +621,49 @@ static void parser_alg_info_add(struct parser_context *p_ctx,
 		/* truncate and try again */
 		end[1] = '\0';
 		err_buf[0] = '\0';
-		proposal.encrypt = encrypt_desc(lookup_byname(p_ctx, err_buf, err_buf_len,
-							      p_ctx->protocol->encrypt_alg_byname,
-							      p_ctx->ealg_buf, proposal.enckeylen,
+		proposal.encrypt = encrypt_desc(lookup_byname(p_ctx->parser,
+							      p_ctx->parser->protocol->encrypt_alg_byname,
+							      shunk1(p_ctx->ealg_buf), proposal.enckeylen,
 							      "encryption"));
 		if (err_buf[0] != '\0') {
-			return;
+			return false;
 		}
 	}
 
-	proposal.prf = prf_desc(lookup_byname(p_ctx, err_buf, err_buf_len,
-					      p_ctx->protocol->prf_alg_byname,
-					      p_ctx->aalg_buf, 0,
+	proposal.prf = prf_desc(lookup_byname(p_ctx->parser,
+					      p_ctx->parser->protocol->prf_alg_byname,
+					      shunk1(p_ctx->aalg_buf), 0,
 					      "PRF"));
 	if (err_buf[0] != '\0') {
-		return;
+		return false;
 	}
 
-	proposal.integ = integ_desc(lookup_byname(p_ctx, err_buf, err_buf_len,
-						  p_ctx->protocol->integ_alg_byname,
-						  p_ctx->aalg_buf, 0,
+	proposal.integ = integ_desc(lookup_byname(p_ctx->parser,
+						  p_ctx->parser->protocol->integ_alg_byname,
+						  shunk1(p_ctx->aalg_buf), 0,
 						  "integrity"));
 	if (err_buf[0] != '\0') {
-		return;
+		return false;
 	}
 
-	proposal.dh = oakley_group_desc(lookup_byname(p_ctx, err_buf, err_buf_len,
-						      p_ctx->protocol->dh_alg_byname,
-						      p_ctx->modp_buf, 0,
+	proposal.dh = oakley_group_desc(lookup_byname(p_ctx->parser,
+						      p_ctx->parser->protocol->dh_alg_byname,
+						      shunk1(p_ctx->modp_buf), 0,
 						      "group"));
 	if (err_buf[0] != '\0') {
-		return;
+		return false;
 	}
 
-	merge_default_proposals(p_ctx->policy,
-				alg_info, &proposal,
-				err_buf, err_buf_len);
+	return merge_default_proposals(p_ctx->parser,
+				       alg_info, &proposal);
 }
 
-void alg_info_parse_str(const struct parser_policy *policy,
+
+bool alg_info_parse_str(const struct proposal_policy *policy,
 			struct alg_info *alg_info,
 			const char *alg_str,
 			char *err_buf, size_t err_buf_len,
-			const struct parser_protocol *protocol)
+			const struct proposal_protocol *protocol)
 {
 	DBG(DBG_CONTROL,
 	    DBG_log("parsing '%s' for %s", alg_str, protocol->name));
@@ -684,7 +674,14 @@ void alg_info_parse_str(const struct parser_policy *policy,
 
 	err_buf[0] = '\0';
 
-	parser_init(&ctx, policy, protocol);
+	const struct proposal_parser parser = {
+		.policy = policy,
+		.protocol = protocol,
+		.err_buf = err_buf,
+		.err_buf_len = err_buf_len,
+	};
+
+	parser_init(&ctx, &parser);
 
 	const struct proposal_info proposal = {
 		.protocol = protocol,
@@ -692,10 +689,7 @@ void alg_info_parse_str(const struct parser_policy *policy,
 
 	/* use default if no (NULL) string */
 	if (alg_str == NULL) {
-		merge_default_proposals(ctx.policy,
-					alg_info, &proposal,
-					err_buf, err_buf_len);
-		return;
+		return merge_default_proposals(&parser, alg_info, &proposal);
 	}
 
 	ptr = alg_str;
@@ -708,7 +702,7 @@ void alg_info_parse_str(const struct parser_policy *policy,
 					 "%s, just after \"%.*s\"",
 					 pm_ugh,
 					 (int)(ptr - alg_str - 1), alg_str);
-				return;
+				return false;
 			}
 		}
 		ret = ctx.state;
@@ -719,10 +713,10 @@ void alg_info_parse_str(const struct parser_policy *policy,
 					    err_buf, err_buf_len,
 					    alg_info);
 			if (err_buf[0] != '\0') {
-				return;
+				return false;
 			}
 			/* zero out for next run (ST_END) */
-			parser_init(&ctx, policy, protocol);
+			parser_init(&ctx, &parser);
 			break;
 
 		default:
@@ -731,6 +725,7 @@ void alg_info_parse_str(const struct parser_policy *policy,
 				break;
 		}
 	} while (ret < ST_EOF);
+	return true;
 }
 
 bool proposal_aead_none_ok(const struct proposal_info *proposal,

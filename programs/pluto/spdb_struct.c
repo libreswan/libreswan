@@ -89,7 +89,7 @@ static struct db_sa *oakley_alg_mergedb(struct alg_info_ike *ai,
 
 static struct alg_info_ike *ikev1_default_ike_info(void)
 {
-	static const struct parser_policy policy = {
+	static const struct proposal_policy policy = {
 		.ikev1 = TRUE,
 		.alg_is_ok = ike_alg_is_ike,
 	};

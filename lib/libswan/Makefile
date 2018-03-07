@@ -62,6 +62,7 @@ OBJS += addrtoa.o addrtot.o addrtypeof.o anyaddr.o \
 OBJS += alg_info.o esp_info.o ike_info.o ah_info.o
 
 OBJS += chunk.o
+OBJS += shunk.o
 
 OBJS += ip_address.o
 

@@ -23,18 +23,24 @@
 
 #include "constants.h"
 #include "ike_alg.h"
+#include "shunk.h"
 
 struct parser_context;
 struct alg_info;
 struct lswlog;
-struct parser_protocol;
+struct proposal_protocol;
 struct proposal_info;
+struct proposal_policy;
+struct proposal_parser;
+
+typedef const struct ike_alg *(alg_byname_fn)(const struct proposal_parser *parser,
+					      shunk_t name, size_t key_bit_length);
 
 /*
  * Parameters to tune the parser.
  */
 
-struct parser_policy {
+struct proposal_policy {
 	bool ikev1;
 	bool ikev2;
 	/*
@@ -62,7 +68,7 @@ struct proposal_defaults {
  * Parameters to set the parser's basic behaviour - ESP/AH/IKE.
  */
 
-struct parser_protocol {
+struct proposal_protocol {
 	const char *name;
 	enum ike_alg_key ikev1_alg_id;
 
@@ -91,22 +97,21 @@ struct parser_protocol {
 	 * This lookup functions must set err and return null if NAME
 	 * isn't valid.
 	 */
-	const struct ike_alg *(*encrypt_alg_byname)(const struct parser_protocol *protocol,
-						    const struct parser_policy *const policy,
-						    char *err_buf, size_t err_buf_len,
-						    const char *name, size_t bit_length);
-	const struct ike_alg *(*prf_alg_byname)(const struct parser_protocol *protocol,
-						const struct parser_policy *const policy,
-						char *err_buf, size_t err_buf_len,
-						const char *name, size_t key_bit_length);
-	const struct ike_alg *(*integ_alg_byname)(const struct parser_protocol *protocol,
-						  const struct parser_policy *const policy,
-						  char *err_buf, size_t err_buf_len,
-						  const char *name, size_t key_bit_length);
-	const struct ike_alg *(*dh_alg_byname)(const struct parser_protocol *protocol,
-					       const struct parser_policy *const policy,
-					       char *err_buf, size_t err_buf_len,
-					       const char *name, size_t key_bit_length);
+	alg_byname_fn *encrypt_alg_byname;
+	alg_byname_fn *prf_alg_byname;
+	alg_byname_fn *integ_alg_byname;
+	alg_byname_fn *dh_alg_byname;
+};
+
+/*
+ * Everything combined.
+ */
+struct proposal_parser {
+	const struct proposal_protocol *protocol;
+	const struct proposal_param *param;
+	const struct proposal_policy *policy;
+	char *err_buf;
+	size_t err_buf_len;
 };
 
 /*
@@ -134,7 +139,7 @@ struct proposal_info {
 	/*
 	 * Which protocol is this proposal intended for?
 	 */
-	const struct parser_protocol *protocol;
+	const struct proposal_protocol *protocol;
 };
 
 /* common prefix of struct alg_info_esp and struct alg_info_ike */
@@ -157,15 +162,15 @@ extern void alg_info_free(struct alg_info *alg_info);
 extern void alg_info_addref(struct alg_info *alg_info);
 extern void alg_info_delref(struct alg_info *alg_info);
 
-extern struct alg_info_ike *alg_info_ike_create_from_str(const struct parser_policy *policy,
+extern struct alg_info_ike *alg_info_ike_create_from_str(const struct proposal_policy *policy,
 							 const char *alg_str,
 							 char *err_buf, size_t err_buf_len);
 
-extern struct alg_info_esp *alg_info_esp_create_from_str(const struct parser_policy *policy,
+extern struct alg_info_esp *alg_info_esp_create_from_str(const struct proposal_policy *policy,
 							 const char *alg_str,
 							 char *err_buf, size_t err_buf_len);
 
-extern struct alg_info_esp *alg_info_ah_create_from_str(const struct parser_policy *policy,
+extern struct alg_info_esp *alg_info_ah_create_from_str(const struct proposal_policy *policy,
 							const char *alg_str,
 							char *err_buf, size_t err_buf_len);
 
@@ -207,11 +212,11 @@ size_t lswlog_alg_info(struct lswlog *log, const struct alg_info *alg_info);
  * Parsing with POLICY='0' is allowed. It will accept the algorithms
  * unconditionally (spi.c seems to need this).
  */
-void alg_info_parse_str(const struct parser_policy *policy,
+bool alg_info_parse_str(const struct proposal_policy *policy,
 			struct alg_info *alg_info,
 			const char *alg_str,
 			char *err_buf, size_t err_buf_len,
-			const struct parser_protocol *protocol);
+			const struct proposal_protocol *protocol);
 
 /*
  * Check that encrypt==AEAD and/or integ==none don't contradict.

@@ -71,7 +71,7 @@ static void test_enum(enum_names *enum_test, int i,
 
 	{
 		printf(PREFIX "match %s: ", name);
-		int e = enum_match(enum_test, name);
+		int e = enum_match(enum_test, shunk1(name));
 		if (e != i) {
 			printf("%d ERROR\n", e);
 		} else {
@@ -80,11 +80,14 @@ static void test_enum(enum_names *enum_test, int i,
 	}
 
 	if (strchr(name, '(') != NULL) {
-		char *trunc_name = clone_str(name, "trunc_name");
-		*strchr(trunc_name, '(') = '\0';
-		printf(PREFIX "match %s [trunc]: ", trunc_name);
+		char *clone = clone_str(name, "trunc_name");
+		shunk_t trunc_name = shunk2(clone, strcspn(clone, "("));
+		passert(clone[trunc_name.len] == '(');
+		clone[trunc_name.len] = '*';
+		printf(PREFIX "match "PRISHUNK" [trunc]: ",
+		       SHUNKF(trunc_name));
 		int e = enum_match(enum_test, trunc_name);
-		pfree(trunc_name);
+		pfree(clone);
 		if (e != i) {
 			printf("%d ERROR\n", e);
 		} else {
@@ -118,7 +121,7 @@ static void test_enum(enum_names *enum_test, int i,
 
 	{
 		printf(PREFIX "match %s [short]: ", short_name);
-		int e = enum_match(enum_test, short_name);
+		int e = enum_match(enum_test, shunk1(short_name));
 		if (e != i) {
 			printf("%d ERROR\n", e);
 		} else {
@@ -130,7 +133,7 @@ static void test_enum(enum_names *enum_test, int i,
 		char *trunc_short_name = clone_str(short_name, "trunc_short_name");
 		*strchr(trunc_short_name, '(') = '\0';
 		printf(PREFIX "match %s [short+trunc]: ", trunc_short_name);
-		int e = enum_match(enum_test, trunc_short_name);
+		int e = enum_match(enum_test, shunk1(trunc_short_name));
 		pfree(trunc_short_name);
 		if (e != i) {
 			printf("%d ERROR\n", e);

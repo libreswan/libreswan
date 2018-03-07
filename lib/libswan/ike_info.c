@@ -110,7 +110,7 @@ const struct proposal_defaults ikev2_ike_defaults = {
 	.prf = default_ike_aalgs,
 };
 
-const struct parser_protocol ike_parser_protocol = {
+const struct proposal_protocol ike_proposal_protocol = {
 	.name = "IKE",
 	.ikev1_alg_id = IKEv1_OAKLEY_ID,
 	.protoid = PROTO_ISAKMP,
@@ -122,7 +122,7 @@ const struct parser_protocol ike_parser_protocol = {
 	.dh_alg_byname = dh_alg_byname,
 };
 
-struct alg_info_ike *alg_info_ike_create_from_str(const struct parser_policy *policy,
+struct alg_info_ike *alg_info_ike_create_from_str(const struct proposal_policy *policy,
 						  const char *alg_str,
 						  char *err_buf, size_t err_buf_len)
 {
@@ -133,12 +133,12 @@ struct alg_info_ike *alg_info_ike_create_from_str(const struct parser_policy *po
 	 */
 	struct alg_info_ike *alg_info_ike = alloc_thing(struct alg_info_ike, "alg_info_ike");
 
-	alg_info_parse_str(policy,
-			   &alg_info_ike->ai,
-			   alg_str,
-			   err_buf, err_buf_len,
-			   &ike_parser_protocol);
-	if (err_buf[0] != '\0') {
+	if (!alg_info_parse_str(policy,
+				&alg_info_ike->ai,
+				alg_str,
+				err_buf, err_buf_len,
+				&ike_proposal_protocol)) {
+		passert(err_buf[0] != '\0');
 		alg_info_free(&alg_info_ike->ai);
 		return NULL;
 	}

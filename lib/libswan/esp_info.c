@@ -66,7 +66,7 @@ const struct proposal_defaults esp_defaults = {
 	.integ = default_esp_integ,
 };
 
-const struct parser_protocol esp_parser_protocol = {
+const struct proposal_protocol esp_proposal_protocol = {
 	.name = "ESP",
 	.ikev1_alg_id = IKEv1_ESP_ID,
 	.protoid = PROTO_IPSEC_ESP,
@@ -94,7 +94,7 @@ const struct parser_protocol esp_parser_protocol = {
  */
 
 /* This function is tested in testing/algparse/algparse.c */
-struct alg_info_esp *alg_info_esp_create_from_str(const struct parser_policy *policy,
+struct alg_info_esp *alg_info_esp_create_from_str(const struct proposal_policy *policy,
 						  const char *alg_str,
 						  char *err_buf, size_t err_buf_len)
 {
@@ -106,12 +106,12 @@ struct alg_info_esp *alg_info_esp_create_from_str(const struct parser_policy *po
 	struct alg_info_esp *alg_info_esp = alloc_thing(struct alg_info_esp,
 							"alg_info_esp");
 
-	alg_info_parse_str(policy,
-			   &alg_info_esp->ai,
-			   alg_str,
-			   err_buf, err_buf_len,
-			   &esp_parser_protocol);
-	if (err_buf[0] != '\0') {
+	if (!alg_info_parse_str(policy,
+				&alg_info_esp->ai,
+				alg_str,
+				err_buf, err_buf_len,
+				&esp_proposal_protocol)) {
+		passert(err_buf[0] != '\0');
 		alg_info_free(&alg_info_esp->ai);
 		return NULL;
 	}
