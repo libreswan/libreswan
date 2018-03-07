@@ -14,7 +14,7 @@ west #
 whack error: unexpected argument "all"
 west #
  ipsec auto --add westnet-eastnet-aes256
-036 Failed to add connection "westnet-eastnet-aes256", esp="3des333-sha1" is invalid: 3DES does not take variable key lengths, enc_alg="3des"(333), auth_alg="sha1", modp=""
+036 Failed to add connection "westnet-eastnet-aes256", esp="3des333-sha1" is invalid: 3DES does not take variable key lengths
 west #
  ipsec auto --status | grep westnet-eastnet-aes256
 west #

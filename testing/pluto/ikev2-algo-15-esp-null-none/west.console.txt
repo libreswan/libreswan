@@ -33,7 +33,7 @@ west #
  # should fail
 west #
  ipsec auto --add westnet-eastnet-esp-null
-036 Failed to add connection "westnet-eastnet-esp-null", esp="null-none" is invalid: non-AEAD ESP encryption algorithm 'null' cannot have 'none' as the integrity algorithm, enc_alg="null"(0), auth_alg="none", modp=""
+036 Failed to add connection "westnet-eastnet-esp-null", esp="null-none" is invalid: non-AEAD ESP encryption algorithm 'null' cannot have 'none' as the integrity algorithm
 west #
  # enable impair
 west #
