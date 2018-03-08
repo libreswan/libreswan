@@ -6000,8 +6000,7 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 	 * If responding, build the body of the response.
 	 */
 
-	if (!responding &&
-	    st->st_state == STATE_IKESA_DEL) {
+	if (!responding && st->st_state == STATE_IKESA_DEL) {
 		/*
 		 * this must be a response to our IKE SA delete request
 		 * Even if there are are other Delete Payloads,
@@ -6009,13 +6008,11 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		 */
 		delete_my_family(st, TRUE);
 		md->st = st = NULL;
-	} else if (!responding &&
-		   md->chain[ISAKMP_NEXT_v2D] == NULL) {
+	} else if (!responding && md->chain[ISAKMP_NEXT_v2D] == NULL) {
 		/*
 		 * A liveness update response is handled here
 		 */
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("Received an INFORMATIONAL response; updating liveness, no longer pending."));
+		DBG(DBG_DPD, DBG_log("Received an INFORMATIONAL response; updating liveness, no longer pending."));
 		st->st_last_liveness = mononow();
 		st->st_pend_liveness = FALSE;
 	} else if (del_ike) {
