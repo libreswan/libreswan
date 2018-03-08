@@ -1,0 +1,10 @@
+Test an unknown (bogus) payload in an AUTH's SK payload.
+
+In the first exchange both east and west include unknown but
+non-critical payloads inside the AUTH SK payload.  Since the payloads
+are ignored, the connection establishes.
+
+In the second exchange, west includes a critical unknown payload in
+its AUTH SK payload.  East then responds with UNSUPPORTED CRITICAL
+PAYLOAD inside the AUTH SK response, and the IKE SA is promptly
+deleted.
