@@ -6011,6 +6011,14 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		md->st = st = NULL;
 	} else if (!responding &&
 		   md->chain[ISAKMP_NEXT_v2D] == NULL) {
+		/* A liveness update response */
+		/* ??? why wouldn't any INFORMATIONAL count, even one that
+		 * is actually deleting SAs?
+		 */
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("Received an INFORMATIONAL response; updating liveness, no longer pending."));
+		st->st_last_liveness = mononow();
+		st->st_pend_liveness = FALSE;
 	} else if (del_ike) {
 		/*
 		 * If we are deleting the Parent SA, the Child SAs will be torn down as well,
