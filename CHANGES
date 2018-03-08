@@ -10,6 +10,7 @@ v3.24 (unreleased)
 * IKEv2: Support for protoport based Opportunistic IPsec [Paul]
 * IKEv2: Support multiple authby values (eg authby=rsasig,null) [Paul]
 * IKEv2: Support for AUTHNULL fallback via private use Notify [Vukasin]
+* IKEv2: Fix v3.23 regression causing liveness check to always fail [Tuomo]
 * IKEv1: Cleanup packet send code [Andrew]
 * X509: Extend support for wildcard certs matching remote peer ID [Paul/Hugh]
 * pluto: Cleanup of state/md passing code [Andrew]
