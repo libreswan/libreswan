@@ -908,7 +908,6 @@ enum sa_policy_bits {
 
 #define POLICY_ID_AUTH_MASK	LRANGE(POLICY_PSK_IX, POLICY_AUTH_NULL_IX)
 
-	/* Quick Mode (IPSEC) attributes */
 	POLICY_ENCRYPT_IX,	/* must be first of IPSEC policies */
 	POLICY_AUTHENTICATE_IX,	/* must be second */
 	POLICY_COMPRESS_IX,	/* must be third */
@@ -917,6 +916,7 @@ enum sa_policy_bits {
 	POLICY_DISABLEARRIVALCHECK_IX,	/* suppress tunnel egress address checking */
 	POLICY_DECAP_DSCP_IX,	/* decapsulate ToS/DSCP bits */
 	POLICY_NOPMTUDISC_IX,
+	POLICY_MSDH_DOWNGRADE_IX, /* allow IKEv2 rekey to downgrade DH group - Microsoft bug */
 
 #define POLICY_IPSEC_SHIFT	POLICY_ENCRYPT_IX
 #define POLICY_IPSEC_MASK	LRANGE(POLICY_ENCRYPT_IX, POLICY_DISABLEARRIVALCHECK_IX)
@@ -1000,6 +1000,7 @@ enum sa_policy_bits {
 #define POLICY_DISABLEARRIVALCHECK	LELEM(POLICY_DISABLEARRIVALCHECK_IX)	/* suppress tunnel egress address checking */
 #define POLICY_DECAP_DSCP	LELEM(POLICY_DECAP_DSCP_IX)	/* decap ToS/DSCP bits */
 #define POLICY_NOPMTUDISC	LELEM(POLICY_NOPMTUDISC_IX)
+#define POLICY_MSDH_DOWNGRADE	LELEM(POLICY_MSDH_DOWNGRADE_IX)
 #define POLICY_SHUNT0	LELEM(POLICY_SHUNT0_IX)
 #define POLICY_SHUNT1	LELEM(POLICY_SHUNT1_IX)
 #define POLICY_FAIL0	LELEM(POLICY_FAIL0_IX)

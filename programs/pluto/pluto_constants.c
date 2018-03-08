@@ -390,6 +390,7 @@ const char *const sa_policy_bit_names[] = {
 	"DISABLEARRIVALCHECK",
 	"DECAP_DSCP",
 	"NOPMTUDISC",
+	"MSDH_DOWNGRADE",
 	"SHUNT0",
 	"SHUNT1",
 	"FAIL0",

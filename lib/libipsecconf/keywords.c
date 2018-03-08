@@ -3,7 +3,7 @@
  * Copyright (C) 2003-2006 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2007-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2013-2016 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013-2016 Antony Antony <antony@phenome.org>
@@ -542,6 +542,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "send-vendorid",  kv_conn,  kt_bool,  KBF_SEND_VENDORID, NULL, NULL, },
   { "sha2_truncbug",  kv_conn | kv_alias,  kt_bool,  KBF_SHA2_TRUNCBUG, NULL, NULL, },  /* obsolete _ */
   { "sha2-truncbug",  kv_conn,  kt_bool,  KBF_SHA2_TRUNCBUG, NULL, NULL, },
+  { "ms-dh-downgrade",  kv_conn,  kt_bool,  KBF_MSDH_DOWNGRADE, NULL, NULL, },
   { "keylife",  kv_conn | kv_alias,  kt_time,  KBF_SALIFETIME, NULL, NULL, },
   { "lifetime",  kv_conn | kv_alias,  kt_time,  KBF_SALIFETIME, NULL, NULL, },
   { "salifetime",  kv_conn,  kt_time,  KBF_SALIFETIME, NULL, NULL, },

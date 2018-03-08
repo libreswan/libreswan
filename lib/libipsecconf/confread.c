@@ -6,7 +6,7 @@
  * Copyright (C) 2006-2012 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2010 Michael Smith <msmith@cbnco.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
@@ -1201,6 +1201,7 @@ static bool load_conn(
 
 	KW_POLICY_FLAG(KBF_DECAP_DSCP, POLICY_DECAP_DSCP);
 	KW_POLICY_FLAG(KBF_NOPMTUDISC, POLICY_NOPMTUDISC);
+	KW_POLICY_FLAG(KBF_MSDH_DOWNGRADE, POLICY_MSDH_DOWNGRADE);
 
 #	define str_to_conn(member, kscf) { \
 		if (conn->strings_set[kscf]) \
