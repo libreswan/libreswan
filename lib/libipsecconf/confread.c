@@ -127,8 +127,6 @@ void ipsecconf_default_values(struct starter_config *cfg)
 
 	cfg->conn_default.options[KBF_REMOTEPEERTYPE] = NON_CISCO;
 
-	cfg->conn_default.options[KBF_SHA2_TRUNCBUG] = FALSE;
-
 	cfg->conn_default.options[KBF_IKEPAD] = TRUE;
 
 	cfg->conn_default.options[KBF_IKEV1_NATT] = natt_both;
@@ -1202,6 +1200,7 @@ static bool load_conn(
 	KW_POLICY_FLAG(KBF_DECAP_DSCP, POLICY_DECAP_DSCP);
 	KW_POLICY_FLAG(KBF_NOPMTUDISC, POLICY_NOPMTUDISC);
 	KW_POLICY_FLAG(KBF_MSDH_DOWNGRADE, POLICY_MSDH_DOWNGRADE);
+	KW_POLICY_FLAG(KBF_SHA2_TRUNCBUG, POLICY_SHA2_TRUNCBUG);
 
 #	define str_to_conn(member, kscf) { \
 		if (conn->strings_set[kscf]) \

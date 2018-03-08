@@ -86,7 +86,7 @@ static void help(void)
 		"	[--clientprotoport <protocol>/<port>] \\\n"
 		"	[--dnskeyondemand] [--updown <updown>] \\\n"
 		"	[--psk] | [--rsasig] | [--rsa-sha2] | [--rsa-sha2_256] | [--rsa-sha2_384 ] | [--rsa-sha2_512 ] | [ --auth-null] | [--auth-never] \\\n"
-		"	[--encrypt] [--authenticate] [--compress] [-- sha2_truncbug] [--msdh-downgrade] \\\n"
+		"	[--encrypt] [--authenticate] [--compress] [--sha2-truncbug] [--msdh-downgrade] \\\n"
 		"	[--overlapip] [--tunnel] [--pfs] \\\n"
 		"	[--pfsgroup modp1024 | modp1536 | modp2048 | \\\n"
 		"		modp3072 | modp4096 | modp6144 | modp8192 \\\n"
@@ -594,7 +594,8 @@ static const struct option long_opts[] = {
 	{ "tunnelipv6", no_argument, NULL, CD_TUNNELIPV6 + OO },
 	PS("pfs", PFS),
 	PS("msdh-downgrade", MSDH_DOWNGRADE),
-	{ "sha2_truncbug", no_argument, NULL, CD_SHA2_TRUNCBUG + OO },
+	PS("sha2-truncbug", SHA2_TRUNCBUG),
+	PS("sha2_truncbug", SHA2_TRUNCBUG), /* backwards compatibility */
 	PS("aggressive", AGGRESSIVE),
 	PS("aggrmode", AGGRESSIVE), /*  backwards compatibility */
 
@@ -875,8 +876,6 @@ int main(int argc, char **argv)
 	msg.pfsgroup = NULL;
 
 	msg.remotepeertype = NON_CISCO;
-
-	msg.sha2_truncbug = FALSE;
 
 	/* Network Manager support */
 #ifdef HAVE_NM
@@ -1762,10 +1761,6 @@ int main(int argc, char **argv)
 				msg.remotepeertype = CISCO;
 			else
 				msg.remotepeertype = NON_CISCO;
-			continue;
-
-		case CD_SHA2_TRUNCBUG:	/* --sha2_truncbug */
-			msg.sha2_truncbug = TRUE;
 			continue;
 
 #ifdef HAVE_NM

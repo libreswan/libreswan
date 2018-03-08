@@ -1650,8 +1650,6 @@ void add_connection(const struct whack_message *wm)
 		/* Cisco interop: remote peer type */
 		c->remotepeertype = wm->remotepeertype;
 
-		c->sha2_truncbug = wm->sha2_truncbug;
-
 		c->metric = wm->metric;
 		c->connmtu = wm->connmtu;
 		c->encaps = wm->encaps;
@@ -4157,9 +4155,8 @@ void show_one_connection(const struct connection *c)
 		  deltasecs(c->r_timeout));
 
 	whack_log(RC_COMMENT,
-		  "\"%s\"%s:   sha2-truncbug:%s; initial-contact:%s; cisco-unity:%s; fake-strongswan:%s; send-vendorid:%s; send-no-esp-tfc:%s;",
+		  "\"%s\"%s:   initial-contact:%s; cisco-unity:%s; fake-strongswan:%s; send-vendorid:%s; send-no-esp-tfc:%s;",
 		  c->name, instance,
-		  bool_str(c->sha2_truncbug),
 		  bool_str(c->initial_contact),
 		  bool_str(c->cisco_unity),
 		  bool_str(c->fake_strongswan),
