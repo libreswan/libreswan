@@ -122,7 +122,7 @@ enum smf2_flags {
 	 * packet is what triggers the DH calculation needed before
 	 * encryption can occur.
 	 */
-	SMF2_NO_SKEYID = LELEM(7),
+	SMF2_NO_SKEYSEED = LELEM(7),
 };
 
 /*
@@ -352,10 +352,10 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	 *
 	 * [Parent SA established]
 	 */
-	{ .story      = "Responder: process AUTH request (no SKEYID)",
+	{ .story      = "Responder: process AUTH request (no SKEYSEED)",
 	  .state      = STATE_PARENT_R1,
 	  .next_state = STATE_PARENT_R1,
-	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND | SMF2_NO_SKEYID,
+	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND | SMF2_NO_SKEYSEED,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = LEMPTY,
 	  .opt_enc_payloads = LEMPTY,
@@ -1514,9 +1514,9 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 * Only upon _first_ arrival of the last
 			 * fragment, does the function return TRUE.
 			 * The the processing flow below can then
-			 * continue to the SKEYID check.
+			 * continue to the SKEYSEED check.
 			 *
-			 * However, if SKEYID (g^{xy}) needed to be
+			 * However, if SKEYSEED (g^{xy}) needed to be
 			 * computed then this code will be re-entered
 			 * with all fragments present (so "the"
 			 * function should not be called).
@@ -1547,11 +1547,11 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			}
 			/*
 			 * For this state transition, does it only
-			 * apply when there's no SKEYID?  If so, and
-			 * SKEYID is missing, then things match; else
+			 * apply when there's no SKEYSEED?  If so, and
+			 * SKEYSEED is missing, then things match; else
 			 * things can't match.
 			 */
-			if (svm->flags & SMF2_NO_SKEYID) {
+			if (svm->flags & SMF2_NO_SKEYSEED) {
 				if (ike->sa.hidden_variables.st_skeyid_calculated) {
 					continue;
 				} else {
