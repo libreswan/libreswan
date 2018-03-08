@@ -6,7 +6,7 @@
  * Copyright (C) 2006-2012 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2010 Michael Smith <msmith@cbnco.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
@@ -126,8 +126,6 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.options[KBF_SEND_VENDORID] = FALSE;
 
 	cfg->conn_default.options[KBF_REMOTEPEERTYPE] = NON_CISCO;
-
-	cfg->conn_default.options[KBF_SHA2_TRUNCBUG] = FALSE;
 
 	cfg->conn_default.options[KBF_IKEPAD] = TRUE;
 
@@ -1201,6 +1199,8 @@ static bool load_conn(
 
 	KW_POLICY_FLAG(KBF_DECAP_DSCP, POLICY_DECAP_DSCP);
 	KW_POLICY_FLAG(KBF_NOPMTUDISC, POLICY_NOPMTUDISC);
+	KW_POLICY_FLAG(KBF_MSDH_DOWNGRADE, POLICY_MSDH_DOWNGRADE);
+	KW_POLICY_FLAG(KBF_SHA2_TRUNCBUG, POLICY_SHA2_TRUNCBUG);
 
 #	define str_to_conn(member, kscf) { \
 		if (conn->strings_set[kscf]) \

@@ -642,9 +642,6 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	if (conn->options_set[KBF_REMOTEPEERTYPE])
 		msg.remotepeertype = conn->options[KBF_REMOTEPEERTYPE];
 
-	if (conn->options_set[KBF_SHA2_TRUNCBUG])
-		msg.sha2_truncbug = conn->options[KBF_SHA2_TRUNCBUG];
-
 #ifdef HAVE_NM
 	/* Network Manager support */
 	if (conn->options_set[KBF_NMCONFIGURED])

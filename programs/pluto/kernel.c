@@ -2104,7 +2104,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 		said_next->integ = ta->ta_integ;
 		if (said_next->integ == &ike_alg_integ_sha2_256 &&
-			st->st_connection->sha2_truncbug) {
+			LIN(POLICY_SHA2_TRUNCBUG, c->policy)) {
 			if (kernel_ops->sha2_truncbug_support) {
 #ifdef FIPS_CHECK
 				if (libreswan_fipsmode() == 1) {

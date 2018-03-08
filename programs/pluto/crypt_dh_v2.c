@@ -92,7 +92,7 @@ void start_dh_v2(struct state *st,
 	struct pcr_dh_v2 *const dhq = pcr_dh_v2_init(dh);
 
 	DBG(DBG_CONTROLMORE,
-	    DBG_log("calculating skeyseed using prf=%s integ=%s cipherkey=%s",
+	    DBG_log("offloading IKEv2 SKEYSEED using prf=%s integ=%s cipherkey=%s",
 		    st->st_oakley.ta_prf->common.fqn,
 		    st->st_oakley.ta_integ->common.fqn,
 		    st->st_oakley.ta_encrypt->common.fqn));

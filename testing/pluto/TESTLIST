@@ -202,7 +202,7 @@ kvmplutotest	ikev2-algo-sha2-04			good
 kvmplutotest	ikev2-algo-sha2-05			good
 kvmplutotest	ikev1-algo-esp-sha2-05			good
 kvmplutotest	ikev2-algo-sha2-06			good
-kvmplutotest	ikev2-algo-sha2-08			good
+kvmplutotest	ikev2-algo-sha2-08-truncbug		good
 
 kvmplutotest	ikev2-nat-pluto-03			good
 

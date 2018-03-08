@@ -201,8 +201,6 @@ struct whack_message {
 	/* send our own libreswan vendorid or not */
 	bool send_vendorid;
 
-	bool sha2_truncbug;
-
 	/* Checking if this connection is configured by Network Manager */
 	bool nmconfigured;
 

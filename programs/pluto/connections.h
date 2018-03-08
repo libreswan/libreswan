@@ -253,7 +253,6 @@ struct connection {
 	bool fake_strongswan;		/* Send the unversioned strongswan VID */
 	bool mobike;			/* Allow MOBIKE */
 	bool send_vendorid;		/* Send our vendorid? Security vs Debugging help */
-	bool sha2_truncbug;
 	enum ikev1_natt_policy ikev1_natt; /* whether or not to send IKEv1 draft/rfc NATT VIDs */
 	enum encaps_options encaps; /* encapsulation mode of auto/yes/no - formerly forceencaps=yes/no */
 
