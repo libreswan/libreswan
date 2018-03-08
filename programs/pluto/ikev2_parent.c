@@ -1701,8 +1701,8 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
  *                     <--  HDR, N
  * HDR, N(COOKIE), SAi1, KEi, Ni -->
  */
-stf_status ikev2_sa_init_process_reply_notification(struct state *st,
-						    struct msg_digest *md)
+stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
+							      struct msg_digest *md)
 {
 	struct connection *c = st->st_connection;
 
@@ -1858,6 +1858,42 @@ stf_status ikev2_sa_init_process_reply_notification(struct state *st,
 					   ntfy->payload.v2n.isan_type));
 		}
 	}
+	return STF_IGNORE;
+}
+
+stf_status ikev2_IKE_SA_process_AUTH_response_notification(struct state *st UNUSED,
+							   struct msg_digest *md)
+{
+	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
+		if (ntfy->payload.v2n.isan_spisize != 0) {
+			/* invalid-syntax, but can't do anything about it */
+			libreswan_log("AUTH message notification contains a non-zero length SPI; deleting state");
+			return STF_FATAL;
+		}
+
+		if ((ntfy->payload.v2n.isan_type < v2N_ERROR_ROOF) &&
+		    (ntfy->payload.v2n.isan_type > v2N_NOTHING_WRONG)) {
+			pstats(ikev2_recv_notifies_e, ntfy->payload.v2n.isan_type);
+		}
+
+		switch (ntfy->payload.v2n.isan_type) {
+
+		case v2N_UNSUPPORTED_CRITICAL_PAYLOAD:
+			libreswan_log("AUTH message contains an unsupported critical payload notification");
+			return STF_FATAL;
+
+		case v2N_INVALID_SYNTAX:
+			libreswan_log("AUTH message contains an invalid syntax notification");
+			return STF_FATAL;
+
+		}
+	}
+
+	/*
+	 * just log anything else; should all notifications result in
+	 * a packet drop.
+	 */
+	rate_log("ignoring authenticated notification");
 	return STF_IGNORE;
 }
 
