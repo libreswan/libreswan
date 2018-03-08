@@ -1298,6 +1298,14 @@ void ikev2_process_packet(struct msg_digest **mdp)
 	}
 
 	/*
+	 * Now that cur-state has been set for logging, log if this
+	 * packet is really bogus.
+	 */
+	if (md->fake) {
+		libreswan_log("IMPAIR: processing a fake (cloned) message");
+	}
+
+	/*
 	 * Check ST's IKE SA's role against the I(Initiator) flag in
 	 * the headers.
 	 *
@@ -1556,13 +1564,14 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			 * dropped.
 			 */
 			if (!ikev2_decrypt_msg(st, md)) {
+				rate_log("encrypted payload seems to be corrupt; dropping packet");
 				/*
 				 * XXX: Setting/clearing md->st is to
 				 * prop up nested code needing ST but
 				 * not having it as a parameter.
 				 */
 				md->st = st;
-				complete_v2_state_transition(mdp, STF_FAIL);
+				complete_v2_state_transition(mdp, STF_IGNORE);
 				return;
 			}
 			/*

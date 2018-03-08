@@ -2557,13 +2557,13 @@ bool ikev2_decrypt_msg(struct state *st, struct msg_digest *md)
 		 * If so impaired, clone the encrypted message before
 		 * it gets decrypted in-place (but only once).
 		 */
-		if (IMPAIR(REPLAY_ENCRYPTED) && !md->clone) {
-			libreswan_log("IMPAIR: cloning original encrypted message and scheduling replay");
+		if (IMPAIR(REPLAY_ENCRYPTED) && !md->fake) {
+			libreswan_log("IMPAIR: cloning incoming encrypted message and scheduling its replay");
 			schedule_md_event("replay encrypted message",
 					  clone_md(md, "copy of encrypted message"));
 		}
-		if (IMPAIR(CORRUPT_ENCRYPTED) && !md->clone) {
-			libreswan_log("IMPAIR: corrupting original encrypted payload's first byte");
+		if (IMPAIR(CORRUPT_ENCRYPTED) && !md->fake) {
+			libreswan_log("IMPAIR: corrupting incoming encrypted message's SK payload's first byte");
 			*e_pbs->cur = ~(*e_pbs->cur);
 		}
 

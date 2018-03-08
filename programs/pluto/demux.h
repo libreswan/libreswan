@@ -94,7 +94,7 @@ struct msg_digest {
 	bool fragvid;				/* (v1) Peer supports FRAGMENTATION */
 	bool nortel;				/* (v1) Peer requires Nortel specific workaround */
 	bool event_already_set;			/* (v1) */
-	bool clone;				/* was cloned from an original message */
+	bool fake;				/* is this a fake (clone) message */
 
 	/*
 	 * The packet PBS contains a message PBS and the message PBS
