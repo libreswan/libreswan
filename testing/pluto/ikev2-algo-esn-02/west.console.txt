@@ -27,6 +27,7 @@ west #
 002 "replay" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set.
 134 "replay" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
 002 "replay" #2: suppressing retransmit because IMPAIR_RETRANSMITS is set.
+002 "replay" #2: ignoring authenticated notification
 west #
  echo done
 done
