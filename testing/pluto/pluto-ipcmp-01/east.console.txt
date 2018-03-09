@@ -41,22 +41,22 @@ src 192.1.2.23 dst 192.1.2.45
 	proto 4 spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
 XFRM policy:
-src 192.0.1.0/24 dst 192.0.2.0/24 
-	dir fwd priority 2344 ptype main 
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir fwd priority 4294964199 ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto comp reqid REQID mode tunnel
-		level use 
+		level use
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
-src 192.0.1.0/24 dst 192.0.2.0/24 
-	dir in priority 2344 ptype main 
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir in priority 4294964199 ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto comp reqid REQID mode tunnel
-		level use 
+		level use
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
-src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir out priority 2344 ptype main 
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir out priority 4294964199 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto comp reqid REQID mode tunnel
 	tmpl src 0.0.0.0 dst 0.0.0.0

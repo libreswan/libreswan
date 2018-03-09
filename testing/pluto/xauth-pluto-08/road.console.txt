@@ -70,16 +70,16 @@ src 192.1.3.209 dst 192.1.2.23
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 XFRM policy:
-src 192.0.2.0/24 dst 192.0.2.209/32 
-	dir fwd priority 2088 ptype main 
+src 192.0.2.0/24 dst 192.0.2.209/32
+	dir fwd priority 4294963175 ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
 		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.2.209/32 
-	dir in priority 2088 ptype main 
+src 192.0.2.0/24 dst 192.0.2.209/32
+	dir in priority 4294963175 ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
 		proto esp reqid REQID mode tunnel
-src 192.0.2.209/32 dst 192.0.2.0/24 
-	dir out priority 2088 ptype main 
+src 192.0.2.209/32 dst 192.0.2.0/24
+	dir out priority 4294963175 ptype main
 	tmpl src 192.1.3.209 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 XFRM done
