@@ -40,8 +40,7 @@ north #
  killall -9 pluto
 north #
  ipsec restart
-Redirecting to: systemctl stop ipsec.service
-Redirecting to: systemctl start ipsec.service
+Redirecting to: systemctl restart ipsec.service
 north #
  /testing/pluto/bin/wait-until-pluto-started
 north #
