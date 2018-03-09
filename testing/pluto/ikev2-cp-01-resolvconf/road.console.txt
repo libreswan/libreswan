@@ -23,6 +23,7 @@ road #
 133 "eastnet-any"[1] 192.1.2.23 #1: STATE_PARENT_I1: sent v2I1, expected v2R1
 134 "eastnet-any"[1] 192.1.2.23 #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
 002 "eastnet-any"[1] 192.1.2.23 #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "eastnet-any"[1] 192.1.2.23 #2: Authenticated using authby=secret
 002 "eastnet-any"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 100.64.13.2
 002 "eastnet-any"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 1.2.3.4
 002 "eastnet-any"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 5.6.7.8

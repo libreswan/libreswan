@@ -17,6 +17,7 @@ west #
 106 "westnet-east-sourceip" #1: STATE_MAIN_I2: sent MI2, expecting MR2
 108 "westnet-east-sourceip" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "westnet-east-sourceip" #1: Peer ID is ID_FQDN: '@east'
+003 "westnet-east-sourceip" #1: Authenticated using RSA
 004 "westnet-east-sourceip" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha2_256 group=MODP2048}
 002 "westnet-east-sourceip" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 117 "westnet-east-sourceip" #2: STATE_QUICK_I1: initiate

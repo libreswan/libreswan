@@ -22,6 +22,7 @@ west #
 133 "westnet-eastnet-propnum" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
 134 "westnet-eastnet-propnum" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=3des_cbc_192 integ=md5_96 prf=md5 group=MODP2048}
 002 "westnet-eastnet-propnum" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "westnet-eastnet-propnum" #2: Authenticated using RSA
 002 "westnet-eastnet-propnum" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-propnum" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #

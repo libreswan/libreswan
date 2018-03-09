@@ -23,6 +23,7 @@ road #
 108 "road-east" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "road-east" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 002 "road-east" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+003 "road-east" #1: Authenticated using RSA
 004 "road-east" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha2_256 group=MODP2048}
 041 "road-east" #1: road-east prompt for Username:
 040 "road-east" #1: road-east prompt for Password:
