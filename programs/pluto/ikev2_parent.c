@@ -332,10 +332,6 @@ static void ikev2_crypto_continue(struct state *st,
 
 	switch (st->st_state) {
 
-	case STATE_PARENT_I1:
-		/* tail function will extract crypto results */
-		break;
-
 	case STATE_V2_CREATE_I0:
 		unpack_nonce(&st->st_ni, r);
 		if (r->pcr_type == pcr_build_ke_and_nonce)
@@ -402,16 +398,6 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 {
 
 	switch (st->st_state) {
-	case STATE_PARENT_I1:
-		/* if we received INVALID_KE, msgid was incremented */
-		st->st_msgid_lastack = v2_INVALID_MSGID;
-		st->st_msgid_lastrecv = v2_INVALID_MSGID;
-		st->st_msgid_nextuse = 0;
-		st->st_msgid = 0;
-		request_ke_and_nonce("ikev2_outI1 KE", st,
-				     st->st_oakley.ta_dh,
-				     ikev2_crypto_continue);
-		return STF_SUSPEND;
 
 	case STATE_V2_REKEY_IKE_R:
 		request_ke_and_nonce("IKE rekey KE response gir", st,
@@ -678,6 +664,8 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
  * Note: this is not called from demux.c, but from ipsecdoi_initiate().
  *
  */
+static crypto_req_cont_func ikev2_parent_outI1_continue;
+
 void ikev2_parent_outI1(int whack_sock,
 		       struct connection *c,
 		       struct state *predecessor,
@@ -780,10 +768,9 @@ void ikev2_parent_outI1(int whack_sock,
 	/*
 	 * Calculate KE and Nonce.
 	 */
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("Calling ikev2_crypto_start() from %s in state %s",
-		    __func__, st->st_state_name));
-	ikev2_crypto_start(NULL, st);
+	request_ke_and_nonce("ikev2_outI1 KE", st,
+			     st->st_oakley.ta_dh,
+			     ikev2_parent_outI1_continue);
 	reset_globals();
 }
 
@@ -817,6 +804,22 @@ bool justship_v2KE(chunk_t *g, const struct oakley_group_desc *group,
 	return TRUE;
 }
 
+void ikev2_parent_outI1_continue(struct state *st, struct msg_digest **mdp,
+				 struct pluto_crypto_req *r)
+{
+	DBG(DBG_CONTROL,
+		DBG_log("ikev2_parent_outI1_tail for #%lu",
+			st->st_serialno));
+
+	unpack_KE_from_helper(st, r, &st->st_gi);
+	unpack_nonce(&st->st_ni, r);
+	/* needed by complete state transition */
+	if (*mdp == NULL) {
+		*mdp = fake_md(st);
+	}
+	complete_v2_state_transition(mdp, ikev2_parent_outI1_common(*mdp, st));
+}
+
 stf_status ikev2_parent_outI1_tail(struct state *st, struct msg_digest *md,
 				   struct pluto_crypto_req *r)
 {
@@ -829,7 +832,7 @@ stf_status ikev2_parent_outI1_tail(struct state *st, struct msg_digest *md,
 	return ikev2_parent_outI1_common(md, st);
 }
 
-static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
+static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 					    struct state *st)
 {
 	struct connection *c = st->st_connection;
@@ -1815,23 +1818,16 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 				DBG(DBG_CONTROLMORE, DBG_log("zeroing any RCOOKIE from unauthenticated INVALID_KE packet"));
 				rehash_state(st, NULL, zero_cookie);
 				/*
-				 * get a new KE (and create a fake MD
-				 * when needed)
-				 *
-				 * ikev2_crypto_start() returns
-				 * STF_SUSPEND but that will cause
-				 * complete v2 state transition() to
-				 * save the old MD.  STF_IGNORE
-				 * instead discards the packet.
-				 *
-				 * The state becomes suspended (crypto
-				 * in progress) as a side effect of
-				 * the call.
+				 * get a new KE
 				 */
-				DBG(DBG_CONTROLMORE,
-				    DBG_log("Calling ikev2_crypto_start() from %s in state %s",
-					    __func__, st->st_state_name));
-				(void) ikev2_crypto_start(NULL, st);
+				/* if we received INVALID_KE, msgid was incremented */
+				st->st_msgid_lastack = v2_INVALID_MSGID;
+				st->st_msgid_lastrecv = v2_INVALID_MSGID;
+				st->st_msgid_nextuse = 0;
+				st->st_msgid = 0;
+				request_ke_and_nonce("rekey outI", st,
+						     st->st_oakley.ta_dh,
+						     ikev2_parent_outI1_continue);
 				/* let caller delete current MD */
 				return STF_IGNORE;
 			} else {
