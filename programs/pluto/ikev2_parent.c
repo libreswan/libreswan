@@ -386,6 +386,12 @@ static void ikev2_crypto_continue(struct state *st,
  * incoming packet.
  * Solution: build a fake one.  How much do we need to fake?
  * Note: almost identical code appears at the end of aggr_outI1.
+ *
+ * XXX: This code does a crypto continue using an indirect dispatch
+ * through the FSM.  Beyond making the code flow confusing is this
+ * useful?  For instance, since SA_INIT has only one code path, it can
+ * directly request ke and nonce with its dedicated continue function
+ * - no need to jump through all these hoops.
  */
 
 static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
@@ -787,6 +793,9 @@ void ikev2_parent_outI1(int whack_sock,
 	/*
 	 * Calculate KE and Nonce.
 	 */
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("Calling ikev2_crypto_start() from %s in state %s",
+		    __func__, st->st_state_name));
 	ikev2_crypto_start(NULL, st);
 	reset_globals();
 }
@@ -1830,6 +1839,9 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 				 * in progress) as a side effect of
 				 * the call.
 				 */
+				DBG(DBG_CONTROLMORE,
+				    DBG_log("Calling ikev2_crypto_start() from %s in state %s",
+					    __func__, st->st_state_name));
 				(void) ikev2_crypto_start(NULL, st);
 				/* let caller delete current MD */
 				return STF_IGNORE;
@@ -5310,6 +5322,9 @@ stf_status ikev2_child_inR(struct state *st, struct msg_digest *md)
 
 	RETURN_STF_FAILURE(accept_child_sa_KE(md, st, st->st_oakley));
 
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("Calling ikev2_crypto_start() from %s in state %s",
+		    __func__, st->st_state_name));
 	e = ikev2_crypto_start(md, st);
 
 	return e;
@@ -5343,6 +5358,9 @@ stf_status ikev2_child_inIoutR(struct state *st /* child state */,
 					ISAKMP_v2_CREATE_CHILD_SA));
 	}
 
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("Calling ikev2_crypto_start() from %s in state %s",
+		    __func__, st->st_state_name));
 	stf_status e = ikev2_crypto_start(md, st);
 	return e;
 }
@@ -5366,6 +5384,9 @@ stf_status ikev2_child_ike_inIoutR(struct state *st /* child state */,
 
 	RETURN_STF_FAILURE_STATUS(process_ike_rekey_sa_pl(md, pst,st));
 
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("Calling ikev2_crypto_start() from %s in state %s",
+		    __func__, st->st_state_name));
 	return ikev2_crypto_start(md, st);
 }
 
@@ -6639,6 +6660,9 @@ void ikev2_initiate_child_sa(int whack_sock, struct ike_sa *ike,
 
 void ikev2_child_outI(struct state *st)
 {
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("Calling ikev2_crypto_start() from %s in state %s",
+		    __func__, st->st_state_name));
 	ikev2_crypto_start(NULL, st);
 }
 

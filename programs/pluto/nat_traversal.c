@@ -177,6 +177,22 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
  */
 bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md)
 {
+	/*
+	 * XXX: This seems to be a very convoluted way of comming up
+	 * with the RCOOKIE.
+	 *
+	 * When building an SA_INIT request, both ST's rcookie and
+	 * MD's rcookie are zero (MD is fake, it really should be
+	 * null).
+	 *
+	 * When building an SA_INIT response, MD is valid and should
+	 * contain the correct rcookie.  ST may also contain that
+	 * cookie, but it really depends on when it is updated.
+	 *
+	 * Either way, it would probably be easier to just pass in the
+	 * RCOOKIE - the callers know which case they are dealing
+	 * with.
+	 */
 	struct state *st = md->st;
 	u_int8_t *rcookie = is_zero_cookie(st->st_rcookie) ? md->hdr.isa_rcookie : st->st_rcookie;
 	u_int16_t lport = st->st_localport;
