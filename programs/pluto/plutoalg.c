@@ -270,7 +270,13 @@ void kernel_alg_show_connection(const struct connection *c, const char *instance
 	const char *pfsbuf;
 
 	if (c->policy & POLICY_PFS) {
-		const struct oakley_group_desc *dh = child_dh(c);
+		/*
+		 * Get the DH algorthm specified for the child (ESP or AH).
+		 *
+		 * If this is NULL and PFS is required then callers fall back to using
+		 * the parent's DH algorithm.
+		 */
+		const struct oakley_group_desc *dh = c->alg_info_esp != NULL ? c->alg_info_esp->esp_pfsgroup : NULL;
 		if (dh != NULL) {
 			pfsbuf = dh->common.fqn;
 		} else {

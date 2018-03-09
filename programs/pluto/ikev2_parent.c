@@ -4344,7 +4344,14 @@ static void ikev2_child_set_pfs(struct state *st)
 	struct connection *c = st->st_connection;
 
 	if ((c->policy & POLICY_PFS) != LEMPTY) {
-		st->st_pfs_group = child_dh(c);
+		/*
+		 * Get the DH algorthm specified for the child (ESP or
+		 * AH).
+		 *
+		 * If this is NULL and PFS is required then callers
+		 * fall back to using the parent's DH algorithm.
+		 */
+		st->st_pfs_group = c->alg_info_esp != NULL ? c->alg_info_esp->esp_pfsgroup : NULL;
 		if (st->st_pfs_group == NULL) {
 			struct state *pst = state_with_serialno(st->st_clonedfrom);
 			st->st_pfs_group = pst->st_oakley.ta_dh;

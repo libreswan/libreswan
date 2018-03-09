@@ -802,8 +802,7 @@ void quick_outI1(int whack_sock,
 		 * use that group.
 		 * if not, fallback to old use-same-as-P1 behaviour
 		 */
-		st->st_pfs_group = child_dh(st->st_connection);
-
+		st->st_pfs_group = c->alg_info_esp != NULL ? c->alg_info_esp->esp_pfsgroup : NULL;
 		/* otherwise, use the same group as during Phase 1:
 		 * since no negotiation is possible, we pick one that is
 		 * very likely supported.
