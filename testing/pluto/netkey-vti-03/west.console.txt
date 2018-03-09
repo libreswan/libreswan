@@ -153,6 +153,24 @@ src 192.1.2.45 dst 192.1.2.23
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 XFRM policy:
+src 10.0.1.0/24 dst 10.0.2.0/24
+	dir out priority 4294964199 ptype main
+	mark 2/0xffffffff
+src 10.0.2.0/24 dst 10.0.1.0/24
+	dir fwd priority 4294964199 ptype main
+	mark 2/0xffffffff
+src 10.0.2.0/24 dst 10.0.1.0/24
+	dir in priority 4294964199 ptype main
+	mark 2/0xffffffff
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out priority 4294964199 ptype main
+	mark 2/0xffffffff
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir fwd priority 4294964199 ptype main
+	mark 2/0xffffffff
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir in priority 4294964199 ptype main
+	mark 2/0xffffffff
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
 	tmpl src 192.1.2.23 dst 192.1.2.45
@@ -165,24 +183,6 @@ XFRM policy:
 		proto esp reqid REQID mode tunnel
 	tmpl src 192.1.2.45 dst 192.1.2.24
 		proto esp reqid REQID mode tunnel
-src 10.0.1.0/24 dst 10.0.2.0/24 
-	dir out priority 2344 ptype main 
-	mark 2/0xffffffff
-src 10.0.2.0/24 dst 10.0.1.0/24 
-	dir fwd priority 2344 ptype main 
-	mark 2/0xffffffff
-src 10.0.2.0/24 dst 10.0.1.0/24 
-	dir in priority 2344 ptype main 
-	mark 2/0xffffffff
-src 192.0.1.0/24 dst 192.0.2.0/24 
-	dir out priority 2344 ptype main 
-	mark 2/0xffffffff
-src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir fwd priority 2344 ptype main 
-	mark 2/0xffffffff
-src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir in priority 2344 ptype main 
-	mark 2/0xffffffff
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES

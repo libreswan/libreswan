@@ -21,14 +21,14 @@ src 192.1.2.23 dst 192.1.2.254
 	proto esp spi 0xSPISPIXX reqid REQIDREQID mode tunnel
 	enc cbc(aes) 0xKEY
 XFRM policy:
-src 192.0.2.0/24 dst 192.0.3.10/32 
-	dir out priority 2336 ptype main 
+src 192.0.2.0/24 dst 192.0.3.10/32
+	dir out priority 4294964191 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.254
-src 192.0.3.10/32 dst 192.0.2.0/24 
-	dir fwd priority 2336 ptype main 
+src 192.0.3.10/32 dst 192.0.2.0/24
+	dir fwd priority 4294964191 ptype main
 	tmpl src 192.1.2.254 dst 192.1.2.23
-src 192.0.3.10/32 dst 192.0.2.0/24 
-	dir in priority 2336 ptype main 
+src 192.0.3.10/32 dst 192.0.2.0/24
+	dir in priority 4294964191 ptype main
 	tmpl src 192.1.2.254 dst 192.1.2.23
 XFRM done
 IPSEC mangle TABLES
