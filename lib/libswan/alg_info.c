@@ -743,14 +743,23 @@ size_t lswlog_alg_info(struct lswlog *log, const struct alg_info *alg_info)
 }
 
 /*
- * Pluto only accepts one ESP/AH DH algorithm and it must come at the
- * end and be separated with a ';'.  Enforce this (even though the
- * parer is far more forgiving).
+ * For IKEv1, pluto handles at most one pre-determined ESP/AH DH
+ * algorithm.  The code doesn't handle any negotiation.
+ *
+ * When "PFS", either no algorithm is specifed and the IKE SA's DH is
+ * used, or a single DH algorithm is specified at the end of the line
+ * and be separated using ";".
+ *
+ * When "no-PFS", this should probably log and discard the DH
+ * algorithm.  Later, if ever.
+ *
+ * Because the parser is far more liberal, this gets enforced after
+ * the event.
  */
 
-bool alg_info_discover_pfsgroup_hack(const struct proposal_parser *parser,
-				     struct alg_info_esp *aie,
-				     const char *alg_str)
+bool ikev1_one_alg_info_dh_hack(const struct proposal_parser *parser,
+				struct alg_info_esp *aie,
+				const char *alg_str)
 {
 	if (aie->ai.alg_info_cnt <= 0) {
 		/* let caller deal with no proposals. */
@@ -852,6 +861,60 @@ bool alg_info_discover_pfsgroup_hack(const struct proposal_parser *parser,
 		}
 	}
 
+	return true;
+}
+
+/*
+ * For IKEv2, because pluto's CHILD SA code doesn't implement INVALID
+ * KE, at most one DH algorithm can be specified.  However, unlike
+ * IKEv1, DH+NONE is permitted and the requirement that it appear last
+ * is not enforced.
+ *
+ * PFS makes things messy: a line like esp=aes,aes;dh22 can be
+ * interpreted as esp=aes;PFS,aes;dh22 (invalid) or
+ * esp=ah;none-ah;dh22 (ok).
+ */
+
+bool ikev2_one_alg_info_dh_hack(const struct proposal_parser *parser,
+				struct alg_info_esp *aie)
+{
+	if (aie->ai.alg_info_cnt <= 0) {
+		/* let caller deal with no proposals. */
+		return true;
+	}
+
+	const struct oakley_group_desc *dh = &unset_group; /* dummy */
+	const bool pfs = parser->policy->pfs;
+	FOR_EACH_ESP_INFO(aie, alg) {
+		/*
+		 * Always allow 'none'; and when no PFS DH=NULL gets
+		 * interpreted as 'none'.
+		 */
+		if (alg->dh == &ike_alg_dh_none ||
+		    (!pfs && alg->dh == NULL)) {
+			continue;
+		}
+		/*
+		 * Save the first real DH (when PFS, this includes
+		 * NULL), and from then on check it is consistent.
+		 */
+		if (dh == &unset_group) {
+			dh = alg->dh;
+		} else if (alg->dh != dh) {
+			if (alg->dh != NULL && dh != NULL) {
+				snprintf(parser->err_buf, parser->err_buf_len,
+					 "multiple conflicting DH algorithms (%s, %s) are not supported",
+					 dh->common.fqn, alg->dh->common.fqn);
+			} else {
+				pexpect(pfs);
+				snprintf(parser->err_buf, parser->err_buf_len,
+					 "combining PFS (use IKE SA's DH algorithm) with an explicit DH algorithm (%s) is not supported",
+					 dh != NULL ? dh->common.fqn :
+					 alg->dh != NULL ? alg->dh->common.fqn : "???");
+			}
+			return false;
+		}
+	}
 	return true;
 }
 

@@ -43,6 +43,7 @@ typedef const struct ike_alg *(alg_byname_fn)(const struct proposal_parser *pars
 struct proposal_policy {
 	bool ikev1;
 	bool ikev2;
+	bool pfs; /* For CHILD SA, use DH from IKE SA */
 	/*
 	 * According to current policy, is the algorithm ok
 	 * (supported)?  If it isn't return FALSE.
@@ -226,9 +227,12 @@ bool alg_info_parse_str(const struct proposal_parser *parser,
 bool proposal_aead_none_ok(const struct proposal_parser *parser,
 			   const struct proposal_info *proposal);
 
-bool alg_info_discover_pfsgroup_hack(const struct proposal_parser *parser,
-				     struct alg_info_esp *aie,
-				     const char *alg_str);
+bool ikev1_one_alg_info_dh_hack(const struct proposal_parser *parser,
+				struct alg_info_esp *aie,
+				const char *alg_str);
+
+bool ikev2_one_alg_info_dh_hack(const struct proposal_parser *parser,
+				struct alg_info_esp *aie);
 
 #if 0
 /* return true if it really is an error (when impaired return false) */
