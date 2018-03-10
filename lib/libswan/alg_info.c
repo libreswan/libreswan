@@ -989,12 +989,6 @@ bool alg_info_discover_pfsgroup_hack(const struct proposal_parser *parser,
 		}
 	}
 
-	/*
-	 * Use last's DH for PFS.  Could be NULL but that is ok.
-	 *
-	 * Since DH is set uniformly, could use first.DH instead.
-	 */
-	aie->esp_pfsgroup = last->dh;
 	return true;
 }
 

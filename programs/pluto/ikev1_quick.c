@@ -85,6 +85,17 @@
 
 #include <blapit.h>
 
+const struct oakley_group_desc *ikev1_quick_pfs(struct alg_info_esp *aie)
+{
+	if (aie == NULL) {
+		return NULL;
+	}
+	if (aie->ai.alg_info_cnt == 0) {
+		return NULL;
+	}
+	return aie->ai.proposals[0].dh;
+}
+
 /* accept_PFS_KE
  *
  * Check and accept optional Quick Mode KE payload for PFS.
@@ -802,7 +813,7 @@ void quick_outI1(int whack_sock,
 		 * use that group.
 		 * if not, fallback to old use-same-as-P1 behaviour
 		 */
-		st->st_pfs_group = c->alg_info_esp != NULL ? c->alg_info_esp->esp_pfsgroup : NULL;
+		st->st_pfs_group = ikev1_quick_pfs(c->alg_info_esp);
 		/* otherwise, use the same group as during Phase 1:
 		 * since no negotiation is possible, we pick one that is
 		 * very likely supported.

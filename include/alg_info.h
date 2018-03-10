@@ -151,7 +151,6 @@ struct alg_info {
 
 struct alg_info_esp {
 	struct alg_info ai;	/* common prefix */
-	const struct oakley_group_desc *esp_pfsgroup;
 };
 
 struct alg_info_ike {
