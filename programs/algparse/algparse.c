@@ -462,10 +462,10 @@ int main(int argc, char *argv[])
 	 * started.  Otherwise there's just TMI.
 	 */
 	if (debug) {
-		cur_debugging |= DBG_ALGORITHM_PARSER;
+		cur_debugging |= DBG_PROPOSAL_PARSER;
 	}
 	if (impair) {
-		cur_debugging |= IMPAIR_ALGORITHM_PARSER;
+		cur_debugging |= IMPAIR_PROPOSAL_PARSER;
 	}
 
 	if (*argp) {

@@ -47,7 +47,7 @@ static const char *debug_strings[] = {
 	D(DBG_WHACKWATCH, "debug-whackwatch"),
 	D(DBG_PRIVATE, "debug-private"),
 	D(DBG_ADD_PREFIX, "debug-add-prefix"),
-	D(DBG_ALGORITHM_PARSER, "debug-algorithm-parser"),
+	D(DBG_PROPOSAL_PARSER, "debug-proposal-parser"),
 };
 
 const struct enum_names debug_names = {

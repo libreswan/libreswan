@@ -326,7 +326,7 @@ enum {
 	/* below are excluded from debug=all */
 	DBG_CRYPT_IX,		/* encryption/decryption of messages */
 	DBG_PRIVATE_IX,		/* displays private information: DANGER! */
-	DBG_ALGORITHM_PARSER_IX,	/* parsing ike=... et.al. */
+	DBG_PROPOSAL_PARSER_IX,	/* parsing ike=... et.al. */
 
 	DBG_WHACKWATCH_IX,	/* never let WHACK go */
 	DBG_ADD_PREFIX_IX,	/* add the log+state prefix to debug lines */
@@ -362,7 +362,7 @@ enum {
 /* These are not part of "all" debugging */
 #define DBG_CRYPT	LELEM(DBG_CRYPT_IX)
 #define DBG_PRIVATE	LELEM(DBG_PRIVATE_IX)
-#define DBG_ALGORITHM_PARSER	LELEM(DBG_ALGORITHM_PARSER_IX)
+#define DBG_PROPOSAL_PARSER	LELEM(DBG_PROPOSAL_PARSER_IX)
 
 #define DBG_WHACKWATCH	LELEM(DBG_WHACKWATCH_IX)
 #define DBG_ADD_PREFIX	LELEM(DBG_ADD_PREFIX_IX)
@@ -412,7 +412,7 @@ enum {
 	IMPAIR_REPLAY_ENCRYPTED_IX,		/* replay encrypted packets */
 	IMPAIR_CORRUPT_ENCRYPTED_IX,		/* corrupts the encrypted packet so that the decryption fails */
 
-	IMPAIR_ALGORITHM_PARSER_IX,		/* impair algorithm parser - what you see is what you get */
+	IMPAIR_PROPOSAL_PARSER_IX,		/* impair algorithm parser - what you see is what you get */
 
 	IMPAIR_ADD_BOGUS_PAYLOAD_TO_SA_INIT_IX,	/* add a bogus payload to SA_INIT */
 	IMPAIR_ADD_BOGUS_PAYLOAD_TO_AUTH_IX,	/* add a bogus payload to AUTH */
@@ -464,7 +464,7 @@ enum {
 #define IMPAIR_REPLAY_ENCRYPTED			LELEM(IMPAIR_REPLAY_ENCRYPTED_IX)
 #define IMPAIR_CORRUPT_ENCRYPTED		LELEM(IMPAIR_CORRUPT_ENCRYPTED_IX)
 
-#define IMPAIR_ALGORITHM_PARSER 	LELEM(IMPAIR_ALGORITHM_PARSER_IX)
+#define IMPAIR_PROPOSAL_PARSER 			LELEM(IMPAIR_PROPOSAL_PARSER_IX)
 
 #define IMPAIR_ADD_BOGUS_PAYLOAD_TO_SA_INIT	LELEM(IMPAIR_ADD_BOGUS_PAYLOAD_TO_SA_INIT_IX)
 #define IMPAIR_ADD_BOGUS_PAYLOAD_TO_AUTH	LELEM(IMPAIR_ADD_BOGUS_PAYLOAD_TO_AUTH_IX)

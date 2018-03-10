@@ -124,7 +124,7 @@ const struct ike_alg *encrypt_alg_byname(const struct proposal_parser *parser,
 		return NULL;
 	}
 	const struct encrypt_desc *encrypt = encrypt_desc(alg);
-	if (!DBGP(IMPAIR_SEND_KEY_SIZE_CHECK) && key_bit_length > 0) {
+	if (!IMPAIR(SEND_KEY_SIZE_CHECK) && key_bit_length > 0) {
 		if (encrypt->keylen_omitted) {
 			snprintf(parser->err_buf, parser->err_buf_len,
 				 "%s does not take variable key lengths",

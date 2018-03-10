@@ -139,7 +139,7 @@ static err_t parser_machine(struct parser_context *p_ctx)
 	}
 
 	for (;;) {
-		DBG(DBG_CONTROLMORE,
+		DBG(DBG_PROPOSAL_PARSER,
 		    DBG_log("state=%s ealg_buf='%s' eklen_buf='%s' aalg_buf='%s' modp_buf='%s'",
 			    parser_state_name(p_ctx->state),
 			    p_ctx->ealg_buf,
@@ -316,14 +316,14 @@ static bool add_alg_defaults(const struct proposal_parser *parser,
 		const struct ike_alg *alg = *default_alg;
 		if (!alg_byname_ok(parser, alg,
 				   shunk1(alg->name))) {
-			DBG(DBG_CONTROL|DBG_CRYPT,
+			DBG(DBG_PROPOSAL_PARSER,
 			    DBG_log("skipping default %s",
 				    parser->err_buf));
 			parser->err_buf[0] = '\0';
 			continue;
 		}
 		/* add it */
-		DBG(DBG_CONTROL|DBG_CRYPT,
+		DBG(DBG_PROPOSAL_PARSER,
 		    DBG_log("adding default %s %s",
 			    ike_alg_type_name(type),
 			    alg->name));
@@ -428,7 +428,7 @@ static bool add_proposal_defaults(const struct proposal_parser *parser,
 			    (existing_proposal->enckeylen == proposal->enckeylen ||
 			     existing_proposal->enckeylen == 0 ||
 			     proposal->enckeylen == 0)) {
-				DBG(DBG_CRYPT,
+				DBG(DBG_PROPOSAL_PARSER,
 				    DBG_log("discarding duplicate %s proposal encrypt=%s enckeylen=%zu prf=%s integ=%s dh=%s",
 					    proposal->protocol->name,
 					    proposal->encrypt != NULL ? proposal->encrypt->common.name : "n/a",
@@ -493,19 +493,19 @@ static const struct ike_alg *lookup_byname(const struct proposal_parser *parser,
 		if (alg_byname != NULL) {
 			const struct ike_alg *alg = alg_byname(parser, name, key_bit_length);
 			if (alg == NULL) {
-				DBG(DBG_CONTROLMORE,
+				DBG(DBG_PROPOSAL_PARSER,
 				    DBG_log("%s_byname('"PRISHUNK"') failed: %s",
 					    what, SHUNKF(name),
 					    parser->err_buf));
 				passert(parser->err_buf[0] != '\0');
 				return NULL;
 			}
-			DBG(DBG_CONTROLMORE,
+			DBG(DBG_PROPOSAL_PARSER,
 			    DBG_log("%s_byname('"PRISHUNK"') returned '%s'",
 				    what, SHUNKF(name), alg->name));
 			return alg;
 		} else {
-			DBG(DBG_CONTROLMORE,
+			DBG(DBG_PROPOSAL_PARSER,
 			    DBG_log("ignoring %s '"PRISHUNK"'",
 				    what, SHUNKF(name)));
 			return NULL;
@@ -545,7 +545,7 @@ static bool parser_alg_info_add(struct parser_context *p_ctx,
 				char *err_buf, size_t err_buf_len,
 				struct alg_info *alg_info)
 {
-	DBG(DBG_CONTROLMORE,
+	DBG(DBG_PROPOSAL_PARSER,
 	    DBG_log("add ealg_buf='%s' eklen_buf='%s' aalg_buf='%s' modp_buf='%s'",
 		    p_ctx->ealg_buf,
 		    p_ctx->eklen_buf,
@@ -665,7 +665,7 @@ bool alg_info_parse_str(const struct proposal_policy *policy,
 			char *err_buf, size_t err_buf_len,
 			const struct proposal_protocol *protocol)
 {
-	DBG(DBG_CONTROL,
+	DBG(DBG_PROPOSAL_PARSER,
 	    DBG_log("parsing '%s' for %s", alg_str, protocol->name));
 
 	struct parser_context ctx;
@@ -797,7 +797,7 @@ size_t lswlog_proposal_info(struct lswlog *log,
 		if (proposal->enckeylen != 0) {
 			size += lswlogf(log, "_%zd", proposal->enckeylen);
 		}
-	} else if (IMPAIR(ALGORITHM_PARSER)) {
+	} else if (IMPAIR(PROPOSAL_PARSER)) {
 		size += lswlogs(log, sep); sep = "-";
 		size += lswlogs(log, "[ENCRYPT]");
 	}
@@ -805,7 +805,7 @@ size_t lswlog_proposal_info(struct lswlog *log,
 	if (proposal->prf != NULL) {
 		size += lswlogs(log, sep); sep = "-";
 		size += lswlogs(log, proposal->prf->common.fqn);
-	} else if (IMPAIR(ALGORITHM_PARSER)) {
+	} else if (IMPAIR(PROPOSAL_PARSER)) {
 		size += lswlogs(log, sep); sep = "-";
 		size += lswlogs(log, "[PRF]");
 	}
@@ -817,7 +817,7 @@ size_t lswlog_proposal_info(struct lswlog *log,
 		   proposal->integ != NULL && proposal->integ->prf != proposal->prf) {
 		size += lswlogs(log, sep); sep = "-";
 		size += lswlogs(log, proposal->integ->common.fqn);
-	} else if (IMPAIR(ALGORITHM_PARSER)) {
+	} else if (IMPAIR(PROPOSAL_PARSER)) {
 		size += lswlogs(log, sep); sep = "-";
 		if (proposal->integ != NULL) {
 			size += lswlogs(log, proposal->integ->common.fqn);
@@ -829,7 +829,7 @@ size_t lswlog_proposal_info(struct lswlog *log,
 	if (proposal->dh != NULL) {
 		size += lswlogs(log, sep); sep = "-";
 		size += lswlogs(log, proposal->dh->common.fqn);
-	} else if (IMPAIR(ALGORITHM_PARSER)) {
+	} else if (IMPAIR(PROPOSAL_PARSER)) {
 		size += lswlogs(log, sep); sep = "-";
 		size += lswlogs(log, "[DH]");
 	}
