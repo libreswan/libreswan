@@ -1876,10 +1876,14 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 stf_status ikev2_IKE_SA_process_AUTH_response_notification(struct state *st UNUSED,
 							   struct msg_digest *md)
 {
+	stf_status e = STF_IGNORE;
+
 	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 		if (ntfy->payload.v2n.isan_spisize != 0) {
 			/* invalid-syntax, but can't do anything about it */
-			libreswan_log("AUTH message notification contains a non-zero length SPI; deleting state");
+			libreswan_log("received an encrypted %s notification with an unexpected non-empty SPI; deleting IKE SA",
+				      enum_name(&ikev2_notify_names,
+						ntfy->payload.v2n.isan_type));
 			return STF_FATAL;
 		}
 
@@ -1891,22 +1895,27 @@ stf_status ikev2_IKE_SA_process_AUTH_response_notification(struct state *st UNUS
 		switch (ntfy->payload.v2n.isan_type) {
 
 		case v2N_UNSUPPORTED_CRITICAL_PAYLOAD:
-			libreswan_log("AUTH message contains an unsupported critical payload notification");
-			return STF_FATAL;
-
 		case v2N_INVALID_SYNTAX:
-			libreswan_log("AUTH message contains an invalid syntax notification");
-			return STF_FATAL;
+		case v2N_AUTHENTICATION_FAILED:
+			libreswan_log("received an encrypted %s notification; deleting IKE SA",
+				      enum_name(&ikev2_notify_names,
+						ntfy->payload.v2n.isan_type));
+			e = STF_FATAL;
+			break;
+
+		default:
+			/*
+			 * just log anything else; should all
+			 * notifications result in a packet drop.
+			 */
+			rate_log("ignoring encrypted %s notification",
+				 enum_name(&ikev2_notify_names,
+					   ntfy->payload.v2n.isan_type));
 
 		}
 	}
 
-	/*
-	 * just log anything else; should all notifications result in
-	 * a packet drop.
-	 */
-	rate_log("ignoring authenticated notification");
-	return STF_IGNORE;
+	return e;
 }
 
 /* STATE_PARENT_I1: R1 --> I2
