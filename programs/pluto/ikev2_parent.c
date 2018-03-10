@@ -69,6 +69,7 @@
 #include "key.h" /* for SECKEY_DestroyPublicKey */
 #include "vendor.h"
 #include "ike_alg_sha2.h"
+#include "ike_alg_none.h"
 #include "crypt_hash.h"
 #include "ikev2_ipseckey.h"
 #include "ikev2_ppk.h"
@@ -4395,7 +4396,9 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 		} else {
 			what = "ESP/AH responder matching remote proposals";
 		}
-		default_dh = (c->policy & POLICY_PFS) != LEMPTY ? ike->sa.st_oakley.ta_dh : NULL;
+		default_dh = (c->policy & POLICY_PFS) != LEMPTY
+			? ike->sa.st_oakley.ta_dh
+			: &ike_alg_dh_none;
 	} else if (expect_accepted) {
 		what = "IKE SA initiator accepting remote ESP/AH proposal";
 		default_dh = &unset_group; /* no DH */
@@ -6685,8 +6688,9 @@ void ikev2_initiate_child_sa(int whack_sock, struct ike_sa *ike,
 	 */
 	free_ikev2_proposals(&c->esp_or_ah_proposals);
 
-	const struct oakley_group_desc *default_dh =
-		((c->policy & POLICY_PFS) != LEMPTY) ? ike->sa.st_oakley.ta_dh : NULL;
+	const struct oakley_group_desc *default_dh = ((c->policy & POLICY_PFS) != LEMPTY)
+		? ike->sa.st_oakley.ta_dh
+		: &ike_alg_dh_none;
 	ikev2_proposals_from_alg_info_esp(c->name, "ESP/AH initiator emitting proposals",
 					  c->alg_info_esp,
 					  c->policy, default_dh,

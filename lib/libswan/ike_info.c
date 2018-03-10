@@ -60,6 +60,13 @@ static bool ike_proposal_ok(const struct proposal_parser *parser,
 
 	impaired_passert(PROPOSAL_PARSER, proposal->dh != NULL);
 	passert(proposal->dh == NULL || ike_alg_is_ike(&(proposal->dh->common)));
+	if (proposal->dh == &ike_alg_dh_none) {
+		snprintf(parser->err_buf, parser->err_buf_len,
+			 "IKE DH algorithm 'none' not permitted");
+		if (!impair_proposal_errors(parser)) {
+			return false;
+		}
+	}
 
 	return true;
 }
