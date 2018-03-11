@@ -237,10 +237,6 @@ stf_status ikev2_send_cp(struct state *st, enum next_payload_types_ikev2 np,
 
 bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st);
 
-struct payload_summary ikev2_decode_payloads(struct msg_digest *md,
-					     pb_stream *in_pbs,
-					     enum next_payload_types_ikev2 np);
-
 bool ikev2_decrypt_msg(struct state *st, struct msg_digest *md);
 
 struct ikev2_payload_errors {
@@ -285,12 +281,6 @@ struct state_v2_microcode {
 
 void ikev2_copy_cookie_from_sa(struct state *st,
 		                struct ikev2_proposal *accepted_ike_proposal);
-
-struct ikev2_payload_errors ikev2_verify_payloads(const struct payload_summary *summary,
-						  const struct ikev2_expected_payloads *expected);
-
-void ikev2_log_payload_errors(struct state *st, struct msg_digest *md,
-			      const struct ikev2_payload_errors *errors);
 
 void ikev2_ike_sa_established(struct ike_sa *ike,
 			      const struct state_v2_microcode *svm,

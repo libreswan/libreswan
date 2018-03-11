@@ -600,9 +600,9 @@ void init_ikev2(void)
 /*
  * split an incoming message into payloads
  */
-struct payload_summary ikev2_decode_payloads(struct msg_digest *md,
-					     pb_stream *in_pbs,
-					     enum next_payload_types_ikev2 np)
+static struct payload_summary ikev2_decode_payloads(struct msg_digest *md,
+						    pb_stream *in_pbs,
+						    enum next_payload_types_ikev2 np)
 {
 	struct payload_summary summary = {
 		.parsed = true,
@@ -731,8 +731,8 @@ struct payload_summary ikev2_decode_payloads(struct msg_digest *md,
 	return summary;
 }
 
-struct ikev2_payload_errors ikev2_verify_payloads(const struct payload_summary *summary,
-						  const struct ikev2_expected_payloads *payloads)
+static struct ikev2_payload_errors ikev2_verify_payloads(const struct payload_summary *summary,
+							 const struct ikev2_expected_payloads *payloads)
 {
 	/*
 	 * Convert SKF onto SK for the comparison (but only when it is
@@ -761,8 +761,8 @@ struct ikev2_payload_errors ikev2_verify_payloads(const struct payload_summary *
 }
 
 /* report problems - but less so when OE */
-void ikev2_log_payload_errors(struct state *st, struct msg_digest *md,
-			      const struct ikev2_payload_errors *errors)
+static void ikev2_log_payload_errors(struct state *st, struct msg_digest *md,
+				     const struct ikev2_payload_errors *errors)
 {
 	if (!DBGP(DBG_OPPO)) {
 		/*
