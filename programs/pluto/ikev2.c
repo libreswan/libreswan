@@ -337,7 +337,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	 * HDR, SAr1, KEr, Nr, [CERTREQ] -->
 	 */
 	{ .story      = "Respond to IKE_SA_INIT",
-	  .state      = STATE_UNDEFINED,
+	  .state      = STATE_PARENT_R0,
 	  .next_state = STATE_PARENT_R1,
 	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND,
 	  .req_clear_payloads = P(SA) | P(KE) | P(Ni),
@@ -1373,7 +1373,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 	 * constants can be used to generate cookies on the fly.
 	 */
 	const struct finite_state *from_state =
-		st == NULL ? finite_states[STATE_UNDEFINED] : st->st_finite_state;
+		st == NULL ? finite_states[STATE_PARENT_R0] : st->st_finite_state;
 	DBGF(DBG_CONTROL, "#%lu in state %s: %s",
 	     st != NULL ? st->st_serialno : 0,
 	     from_state->fs_short_name, from_state->fs_story);
@@ -2510,6 +2510,8 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 	/* safe to refer to *md */
 
 	st = md->st;
+
+	/* XXX; When would state be NULL? */
 	from_state_name = enum_name(&state_names,
 		st == NULL ? STATE_UNDEFINED : st->st_state);
 
