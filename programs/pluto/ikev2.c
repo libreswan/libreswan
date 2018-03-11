@@ -563,10 +563,6 @@ void init_ikev2(void)
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("Processing IKEv2 state %s (microcode %s)",
 			    name, t->story));
-		if (t->state == STATE_UNDEFINED) {
-			t++;
-			continue;
-		}
 		passert(STATE_IKEv2_FLOOR <= t->state &&
 			t->state < STATE_IKEv2_ROOF);
 		struct finite_state *fs = &v2_states[t->state - STATE_IKEv2_FLOOR];
@@ -593,35 +589,31 @@ void init_ikev2(void)
 		 * structure (aka microcode), is for the target
 		 * state, .next_state is used.
 		 */
-		if (t->next_state != STATE_UNDEFINED) {
-			passert(STATE_IKEv2_BASE <= t->next_state &&
-				t->next_state < STATE_IKEv2_ROOF);
-			struct finite_state *fs = &v2_states[t->next_state - STATE_IKEv2_BASE];
-			if (fs->fs_timeout_event == 0) {
-				fs->fs_timeout_event = t->timeout_event;
-			} else if (fs->fs_timeout_event != t->timeout_event) {
-				/*
-				 * Annoyingly, a state can seemingly
-				 * have multiple and inconsistent
-				 * timeout_events.
-				 *
-				 * For instance, EVENT_RETAIN is used
-				 * to indicate that the previously
-				 * scheduled event should be left in
-				 * place.  Arguably this is a bug;
-				 * instead a flag should mark this,
-				 * and the code check that
-				 * before/after states are identical.
-				 */
-				LSWDBGP(DBG_CONTROLMORE, buf) {
-					lswlogs(buf, "ignoring microcode for ");
-					lswlog_finite_state(buf, finite_states[t->state]);
-					lswlogs(buf, " -> ");
-					lswlog_finite_state(buf, fs);
-					lswlogs(buf, " with event ");
-					lswlog_enum_short(buf, &timer_event_names,
-							  t->timeout_event);
-				}
+		passert(STATE_IKEv2_BASE <= t->next_state &&
+			t->next_state < STATE_IKEv2_ROOF);
+		struct finite_state *fs = &v2_states[t->next_state - STATE_IKEv2_BASE];
+		if (fs->fs_timeout_event == 0) {
+			fs->fs_timeout_event = t->timeout_event;
+		} else if (fs->fs_timeout_event != t->timeout_event) {
+			/*
+			 * Annoyingly, a state can seemingly have
+			 * multiple and inconsistent timeout_events.
+			 *
+			 * For instance, EVENT_RETAIN is used to
+			 * indicate that the previously scheduled
+			 * event should be left in place.  Arguably
+			 * this is a bug; instead a flag should mark
+			 * this, and the code check that before/after
+			 * states are identical.
+			 */
+			LSWDBGP(DBG_CONTROLMORE, buf) {
+				lswlogs(buf, "ignoring microcode for ");
+				lswlog_finite_state(buf, finite_states[t->state]);
+				lswlogs(buf, " -> ");
+				lswlog_finite_state(buf, fs);
+				lswlogs(buf, " with event ");
+				lswlog_enum_short(buf, &timer_event_names,
+						  t->timeout_event);
 			}
 		}
 		/*
