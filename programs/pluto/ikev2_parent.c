@@ -1882,8 +1882,8 @@ stf_status ikev2_IKE_SA_process_AUTH_response_notification(struct state *st UNUS
 		if (ntfy->payload.v2n.isan_spisize != 0) {
 			/* invalid-syntax, but can't do anything about it */
 			libreswan_log("received an encrypted %s notification with an unexpected non-empty SPI; deleting IKE SA",
-				      enum_name(&ikev2_notify_names,
-						ntfy->payload.v2n.isan_type));
+				      enum_short_name(&ikev2_notify_names,
+						      ntfy->payload.v2n.isan_type));
 			return STF_FATAL;
 		}
 
@@ -1898,8 +1898,8 @@ stf_status ikev2_IKE_SA_process_AUTH_response_notification(struct state *st UNUS
 		case v2N_INVALID_SYNTAX:
 		case v2N_AUTHENTICATION_FAILED:
 			libreswan_log("received an encrypted %s notification; deleting IKE SA",
-				      enum_name(&ikev2_notify_names,
-						ntfy->payload.v2n.isan_type));
+				      enum_short_name(&ikev2_notify_names,
+						      ntfy->payload.v2n.isan_type));
 			e = STF_FATAL;
 			break;
 
@@ -1909,8 +1909,8 @@ stf_status ikev2_IKE_SA_process_AUTH_response_notification(struct state *st UNUS
 			 * notifications result in a packet drop.
 			 */
 			rate_log("ignoring encrypted %s notification",
-				 enum_name(&ikev2_notify_names,
-					   ntfy->payload.v2n.isan_type));
+				 enum_short_name(&ikev2_notify_names,
+						 ntfy->payload.v2n.isan_type));
 
 		}
 	}
