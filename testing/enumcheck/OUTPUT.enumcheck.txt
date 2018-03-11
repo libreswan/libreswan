@@ -4074,7 +4074,7 @@ IKEv2 transforms:
 lswlog_enum_lset_short:
 
   debug 1fffff:
-	<<raw+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+xauth+retransmits+oppoinfo+crypt+private+algorithm-parser+whackwatch+add-prefix>>
+	<<raw+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+xauth+retransmits+oppoinfo+crypt+private+proposal-parser+whackwatch+add-prefix>>
   impair fffffffffe00000:
-	<<bust-mi2+bust-mr2+drop-i2+sa-creation+die-oninfo+jacob-two-two+allow-null-null+major-version-bump+minor-version-bump+retransmits+delete-on-retransmit+send-no-retransmits+send-bogus-payload-flag+send-bogus-isakmp-flag+send-ikev2-ke+send-no-delete+send-no-ikev2-auth+send-no-xauth-r0+drop-xauth-r0+send-no-main-r2+force-fips+send-key-size-check+send-zero-gx+send-bogus-dcookie+omit-hash-notify+ignore-hash-notify+ignore-hash-notify-resp+ikev2-exclude-integ-none+ikev2-include-integ-none+replay-duplicates+replay-forward+replay-backward+replay-encrypted+corrupt-encrypted+algorithm-parser+add-bogus-payload-to-sa-init+add-bogus-payload-to-auth+add-bogus-payload-to-auth-sk+bogus-payload-critical>>
+	<<bust-mi2+bust-mr2+drop-i2+sa-creation+die-oninfo+jacob-two-two+allow-null-null+major-version-bump+minor-version-bump+retransmits+delete-on-retransmit+send-no-retransmits+send-bogus-payload-flag+send-bogus-isakmp-flag+send-ikev2-ke+send-no-delete+send-no-ikev2-auth+send-no-xauth-r0+drop-xauth-r0+send-no-main-r2+force-fips+send-key-size-check+send-zero-gx+send-bogus-dcookie+omit-hash-notify+ignore-hash-notify+ignore-hash-notify-resp+ikev2-exclude-integ-none+ikev2-include-integ-none+replay-duplicates+replay-forward+replay-backward+replay-encrypted+corrupt-encrypted+proposal-parser+add-bogus-payload-to-sa-init+add-bogus-payload-to-auth+add-bogus-payload-to-auth-sk+bogus-payload-critical>>
 
