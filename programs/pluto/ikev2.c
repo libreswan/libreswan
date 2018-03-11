@@ -274,7 +274,7 @@ const struct state_v2_microcode ikev2_ike_sa_initiate_microcode =
 	  .timeout_event = EVENT_v2_RETRANSMIT, };
 
 /* microcode for input packet processing */
-static const struct state_v2_microcode v2_state_microcode_table[] = {
+static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 
 	/* STATE_PARENT_I1: R1B --> I1B
 	 *                     <--  HDR, N
@@ -512,7 +512,7 @@ void init_ikev2(void)
 	 * Check that table is in order -- catch coding errors.
 	 * For what it's worth, this routine is idempotent.
 	 */
-	const struct state_v2_microcode *t = v2_state_microcode_table;
+	/*const*/ struct state_v2_microcode *t = v2_state_microcode_table;
 	do {
 		const char *name = enum_short_name(&state_names, t->state);
 		DBG(DBG_CONTROLMORE,
@@ -538,12 +538,16 @@ void init_ikev2(void)
 	} while (t->state < STATE_IKEv2_ROOF);
 
 	/*
-	 * Try to fill in .fs_timeout_event.
-	 *
-	 * Since the timeout event, stored in the edge structure (aka
-	 * microcode), is for the target state, .next_state is used.
+	 * Try to fill in some missing fields.
 	 */
 	for (t = v2_state_microcode_table; t->state < STATE_IKEv2_ROOF; t++) {
+		/*
+		 * .fs_timeout_event.
+		 *
+		 * Since the timeout event, stored in the edge
+		 * structure (aka microcode), is for the target
+		 * state, .next_state is used.
+		 */
 		if (t->next_state != STATE_UNDEFINED) {
 			passert(STATE_IKEv2_BASE <= t->next_state &&
 				t->next_state < STATE_IKEv2_ROOF);
@@ -574,6 +578,23 @@ void init_ikev2(void)
 							  t->timeout_event);
 				}
 			}
+		}
+		/*
+		 * Pack expected payloads et.al. into a structure.
+		 *
+		 * XXX: should be adding everywhere payloads here?!?
+		 */
+		if (t->req_clear_payloads != LEMPTY) {
+			t->message_payloads.required = t->req_clear_payloads;
+		}
+		if (t->opt_clear_payloads != LEMPTY) {
+			t->message_payloads.optional = t->opt_clear_payloads;
+		}
+		if (t->req_enc_payloads != LEMPTY) {
+			t->encrypted_payloads.required = t->req_enc_payloads;
+		}
+		if (t->opt_enc_payloads != LEMPTY) {
+			t->encrypted_payloads.optional = t->opt_enc_payloads;
 		}
 	}
 
@@ -1463,21 +1484,11 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		}
 
 		/*
-		 * XXX: Should some packets be dropped immediately
-		 * (for instance both SKF and SK, or a .bad_repeat)?
-		 * As things stand, they probably result in a NOTIFY
-		 * when there shouldn't be one.
-		 *
-		 * XXX: hack until expected_clear_payloads is added to
-		 * struct state_v2_microcode or replacement.
+		 * Check the message payloads are as expected.
 		 */
-		struct ikev2_expected_payloads expected_message_payloads = {
-			.required = svm->req_clear_payloads,
-			.optional = svm->opt_clear_payloads,
-		};
 		struct ikev2_payload_errors message_payload_errors
 			= ikev2_verify_payloads(&md->message_payloads,
-						&expected_message_payloads);
+						&svm->message_payloads);
 		if (message_payload_errors.bad) {
 			/* Save this failure for later logging. */
 			message_payload_status = message_payload_errors;
@@ -1490,7 +1501,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		 *
 		 * (.seen&(P(SK)|P(SKF))!=0 is equivalent.
 		 */
-		if (!(expected_message_payloads.required & P(SK))) {
+		if (!(svm->message_payloads.required & P(SK))) {
 			break;
 		}
 
@@ -1611,17 +1622,9 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 				return;
 			}
 		} /* else { go ahead } */
-		/*
-		 * XXX: hack until expected_encrypted_payloads is added
-		 * to struct state_v2_microcode or replacement.
-		 */
-		struct ikev2_expected_payloads expected_encrypted_payloads = {
-			.required = svm->req_enc_payloads,
-			.optional = svm->opt_enc_payloads,
-		};
 		struct ikev2_payload_errors encrypted_payload_errors
 			= ikev2_verify_payloads(&md->encrypted_payloads,
-						&expected_encrypted_payloads);
+						&svm->encrypted_payloads);
 		if (encrypted_payload_errors.bad) {
 			/* Save this failure for later logging. */
 			encrypted_payload_status = encrypted_payload_errors;
