@@ -335,6 +335,27 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	 *                               SAr2, TSi, TSr}
 	 * [Parent SA established]
 	 */
+	{ .story      = "Initiator: process INVALID_SYNTAX AUTH notification",
+	  .state      = STATE_PARENT_I2, .next_state = STATE_PARENT_I2,
+	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
+	  .message_payloads = { .required = P(SK), },
+	  .encrypted_payloads = { .required = P(N), .notification = v2N_INVALID_SYNTAX, },
+	  .processor  = ikev2_IKE_SA_process_AUTH_response_notification,
+	  .recv_type  = ISAKMP_v2_AUTH, },
+	{ .story      = "Initiator: process AUTHENTICATION_FAILED AUTH notification",
+	  .state      = STATE_PARENT_I2, .next_state = STATE_PARENT_I2,
+	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
+	  .message_payloads = { .required = P(SK), },
+	  .encrypted_payloads = { .required = P(N), .notification = v2N_AUTHENTICATION_FAILED, },
+	  .processor  = ikev2_IKE_SA_process_AUTH_response_notification,
+	  .recv_type  = ISAKMP_v2_AUTH, },
+	{ .story      = "Initiator: process UNSUPPORTED_CRITICAL_PAYLOAD AUTH notification",
+	  .state      = STATE_PARENT_I2, .next_state = STATE_PARENT_I2,
+	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
+	  .message_payloads = { .required = P(SK), },
+	  .encrypted_payloads = { .required = P(N), .notification = v2N_UNSUPPORTED_CRITICAL_PAYLOAD, },
+	  .processor  = ikev2_IKE_SA_process_AUTH_response_notification,
+	  .recv_type  = ISAKMP_v2_AUTH, },
 	{ .story      = "Initiator: process IKE_AUTH response",
 	  .state      = STATE_PARENT_I2,
 	  .next_state = STATE_V2_IPSEC_I,
@@ -343,16 +364,6 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_enc_payloads = P(IDr) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(CERT)|P(CP),
 	  .processor  = ikev2_parent_inR2,
-	  .recv_type  = ISAKMP_v2_AUTH,
-	  .timeout_event = EVENT_SA_REPLACE, },
-	{ .story      = "Initiator: process IKE_AUTH response notification",
-	  .state      = STATE_PARENT_I2,
-	  .next_state = STATE_V2_IPSEC_I,
-	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
-	  .req_clear_payloads = P(SK),
-	  .req_enc_payloads = P(N),
-	  .opt_enc_payloads = LEMPTY,
-	  .processor  = ikev2_IKE_SA_process_AUTH_response_notification,
 	  .recv_type  = ISAKMP_v2_AUTH,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
@@ -768,7 +779,8 @@ static struct payload_summary ikev2_decode_payloads(struct msg_digest *md,
 	return summary;
 }
 
-static struct ikev2_payload_errors ikev2_verify_payloads(const struct payload_summary *summary,
+static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
+							 const struct payload_summary *summary,
 							 const struct ikev2_expected_payloads *payloads)
 {
 	/*
@@ -794,6 +806,22 @@ static struct ikev2_payload_errors ikev2_verify_payloads(const struct payload_su
 	if ((errors.excessive | errors.missing | errors.unexpected) != LEMPTY) {
 		errors.bad = true;
 	}
+
+	if (payloads->notification != v2N_NOTHING_WRONG) {
+		bool found = true;
+		for (struct payload_digest *pd = md->chain[ISAKMP_NEXT_v2N];
+		     pd != NULL; pd = pd->next) {
+			if (pd->payload.v2n.isan_type == payloads->notification) {
+				found = true;
+				break;
+			}
+		}
+		if (!found) {
+			errors.bad = true;
+			errors.notification = payloads->notification;
+		}
+	}
+
 	return errors;
 }
 
@@ -842,6 +870,11 @@ static void ikev2_log_payload_errors(struct state *st, struct msg_digest *md,
 			lswlogf(buf, "; excessive payloads: ");
 			lswlog_enum_lset_short(buf, &ikev2_payload_names, ",",
 					       errors->excessive);
+		}
+		if (errors->notification != v2N_NOTHING_WRONG) {
+			lswlogs(buf, "; missing notification ");
+			lswlog_enum_short(buf, &ikev2_notify_names,
+					  errors->notification);
 		}
 	}
 }
@@ -1511,7 +1544,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		 * Check the message payloads are as expected.
 		 */
 		struct ikev2_payload_errors message_payload_errors
-			= ikev2_verify_payloads(&md->message_payloads,
+			= ikev2_verify_payloads(md, &md->message_payloads,
 						&svm->message_payloads);
 		if (message_payload_errors.bad) {
 			/* Save this failure for later logging. */
@@ -1647,7 +1680,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			}
 		} /* else { go ahead } */
 		struct ikev2_payload_errors encrypted_payload_errors
-			= ikev2_verify_payloads(&md->encrypted_payloads,
+			= ikev2_verify_payloads(md, &md->encrypted_payloads,
 						&svm->encrypted_payloads);
 		if (encrypted_payload_errors.bad) {
 			/* Save this failure for later logging. */
