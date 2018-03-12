@@ -228,6 +228,4 @@ void alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,
 				     const char *alg_str,
 				     char *err_buf, size_t err_buf_len);
 
-bool alg_unimpaired(char *err);
-
 #endif /* ALG_INFO_H */

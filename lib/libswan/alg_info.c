@@ -339,6 +339,71 @@ static bool add_alg_defaults(const struct proposal_parser *parser,
 }
 
 /*
+ * Validate the proposal and, suppressing duplicates, add it to the
+ * proposal list.
+ */
+
+static bool add_proposal(const struct proposal_parser *parser,
+			 struct alg_info *alg_info,
+			 const struct proposal_info *proposal)
+{
+	/* duplicate? */
+	FOR_EACH_PROPOSAL_INFO(alg_info, existing_proposal) {
+		/*
+		 * key length 0 is like a wild-card (it actually means
+		 * propose default and strongest key lengths) so if
+		 * either is zero just treat it as a match.
+		 */
+		if (existing_proposal->encrypt == proposal->encrypt &&
+		    existing_proposal->prf == proposal->prf &&
+		    existing_proposal->integ == proposal->integ &&
+		    existing_proposal->dh == proposal->dh &&
+		    (existing_proposal->enckeylen == proposal->enckeylen ||
+		     existing_proposal->enckeylen == 0 ||
+		     proposal->enckeylen == 0)) {
+			if (IMPAIR(PROPOSAL_PARSER)) {
+				libreswan_log("IMPAIR: including duplicate %s proposal encrypt=%s enckeylen=%zu prf=%s integ=%s dh=%s",
+					      proposal->protocol->name,
+					      proposal->encrypt != NULL ? proposal->encrypt->common.name : "n/a",
+					      proposal->enckeylen,
+					      proposal->prf != NULL ? proposal->prf->common.name : "n/a",
+					      proposal->integ != NULL ? proposal->integ->common.name : "n/a",
+					      proposal->dh != NULL ? proposal->dh->common.name : "n/a");
+			} else {
+				DBG(DBG_CRYPT,
+				    DBG_log("discarding duplicate %s proposal encrypt=%s enckeylen=%zu prf=%s integ=%s dh=%s",
+					    proposal->protocol->name,
+					    proposal->encrypt != NULL ? proposal->encrypt->common.name : "n/a",
+					    proposal->enckeylen,
+					    proposal->prf != NULL ? proposal->prf->common.name : "n/a",
+					    proposal->integ != NULL ? proposal->integ->common.name : "n/a",
+					    proposal->dh != NULL ? proposal->dh->common.name : "n/a"));
+				return true;
+			}
+		}
+	}
+
+	/* Overflow? */
+	if ((unsigned)alg_info->alg_info_cnt >= elemsof(alg_info->proposals)) {
+		snprintf(parser->err_buf, parser->err_buf_len,
+			 "more than %zu %s algorithms specified",
+			 elemsof(alg_info->proposals),
+			 proposal->protocol->name);
+		/* drop it like a rock */
+		return false;
+	}
+
+	/* back end? */
+	if (!proposal->protocol->proposal_ok(proposal, parser->err_buf,
+					     parser->err_buf_len)) {
+		return false;
+	}
+
+	alg_info->proposals[alg_info->alg_info_cnt++] = *proposal;
+	return true;
+}
+
+/*
  * For all the algorithms, when an algorithm is missing (NULL), and
  * there are defaults, add them.
  */
@@ -412,54 +477,8 @@ static bool add_proposal_defaults(const struct proposal_parser *parser,
 		return add_proposal_defaults(parser, defaults,
 					     alg_info, &merged_proposal);
 	} else {
-
-		/* duplicate? */
-		FOR_EACH_PROPOSAL_INFO(alg_info, existing_proposal) {
-			/*
-			 * key length 0 is like a wild-card (it actually means
-			 * propose default and strongest key lengths)
-			 * so if either is zero just treat it as a
-			 * match.
-			 */
-			if (existing_proposal->encrypt == proposal->encrypt &&
-			    existing_proposal->prf == proposal->prf &&
-			    existing_proposal->integ == proposal->integ &&
-			    existing_proposal->dh == proposal->dh &&
-			    (existing_proposal->enckeylen == proposal->enckeylen ||
-			     existing_proposal->enckeylen == 0 ||
-			     proposal->enckeylen == 0)) {
-				DBG(DBG_PROPOSAL_PARSER,
-				    DBG_log("discarding duplicate %s proposal encrypt=%s enckeylen=%zu prf=%s integ=%s dh=%s",
-					    proposal->protocol->name,
-					    proposal->encrypt != NULL ? proposal->encrypt->common.name : "n/a",
-					    proposal->enckeylen,
-					    proposal->prf != NULL ? proposal->prf->common.name : "n/a",
-					    proposal->integ != NULL ? proposal->integ->common.name : "n/a",
-					    proposal->dh != NULL ? proposal->dh->common.name : "n/a"));
-				return true;
-			}
-		}
-
-		/* Overflow? */
-		if ((unsigned)alg_info->alg_info_cnt >= elemsof(alg_info->proposals)) {
-			snprintf(parser->err_buf, parser->err_buf_len,
-				 "more than %zu %s algorithms specified",
-				 elemsof(alg_info->proposals),
-				 proposal->protocol->name);
-			/* drop it like a rock */
-			return false;
-		}
-
-		/* back end? */
-		if (!proposal->protocol->proposal_ok(proposal, parser->err_buf,
-						     parser->err_buf_len)) {
-			passert(parser->err_buf[0] != '\0');
-			return false;
-		}
-
-		alg_info->proposals[alg_info->alg_info_cnt++] = *proposal;
+		return add_proposal(parser, alg_info, proposal);
 	}
-	return true;
 }
 
 static bool merge_default_proposals(const struct proposal_parser *parser,
