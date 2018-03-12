@@ -787,8 +787,13 @@ void ikev2_parent_outI1(int whack_sock,
 					  c->alg_info_ike,
 					  &c->ike_proposals);
 	passert(c->ike_proposals != NULL);
-	st->st_oakley.ta_dh = ikev2_proposals_first_modp(c->ike_proposals);
-	passert(st->st_oakley.ta_dh != NULL); /* known! */
+	st->st_oakley.ta_dh = ikev2_proposals_first_dh(c->ike_proposals);
+	if (st->st_oakley.ta_dh == NULL) {
+		st->st_oakley.ta_dh = ikev2_get_dh_desc(OAKLEY_GROUP_MODP2048);
+		passert(st->st_oakley.ta_dh != NULL);
+		PEXPECT_LOG("No valid MODP (DH) transform found, using %s",
+			    st->st_oakley.ta_dh->common.name);
+	}
 
 	/*
 	 * Calculate KE and Nonce.

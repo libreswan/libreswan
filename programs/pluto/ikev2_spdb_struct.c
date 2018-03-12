@@ -2180,9 +2180,9 @@ ipsec_spi_t ikev2_esp_or_ah_spi(const struct spd_route *spd_route, lset_t policy
 }
 
 /*
- * Return the first valid MODP proposal that is supported.
+ * Return the first valid DH proposal that is supported.
  */
-const struct oakley_group_desc *ikev2_proposals_first_modp(struct ikev2_proposals *proposals)
+const struct oakley_group_desc *ikev2_proposals_first_dh(struct ikev2_proposals *proposals)
 {
 	int propnum;
 	struct ikev2_proposal *proposal;
@@ -2200,18 +2200,13 @@ const struct oakley_group_desc *ikev2_proposals_first_modp(struct ikev2_proposal
 				 * rather than crash, continue looking
 				 * for a valid group.
 				 */
-				DBG(DBG_CONTROL, DBG_log("proposals include unsupported group %d", groupnum));
+				PEXPECT_LOG("proposals include unsupported group %d", groupnum);
 			} else {
 				return group;
 			}
 		}
 	}
-	DBG(DBG_CONTROL, DBG_log("No valid MODP (DH) transform found"));
-	/* return something that should be supported.  */
-	const struct oakley_group_desc *group =
-		ikev2_get_dh_desc(OAKLEY_GROUP_MODP2048);
-	passert(group != NULL);
-	return group;
+	return NULL;
 }
 
 /*
