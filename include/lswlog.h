@@ -292,6 +292,7 @@ extern lset_t cur_debugging;	/* current debugging level */
 #define DEBUG_PREFIX "| "
 
 #define DBG(cond, action)	{ if (DBGP(cond)) { action; } }
+#define DBGF(cond, ...) { if (DBGP(cond)) { DBG_log(__VA_ARGS__); } }
 
 /* signature needs to match printf() */
 #define DBG_log libreswan_DBG_log

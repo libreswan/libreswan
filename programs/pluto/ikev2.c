@@ -1370,9 +1370,9 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 	struct msg_digest *md = *mdp;
 
 	/*
-	 * There is no "struct state" object if-and-only-if we're in
-	 * the start-state (STATE_UNDEFINED).  The start-state
-	 * transition will, likely, create the object.
+	 * There is no "struct state" object if-and-only-if we're
+	 * responding to a shiny new SA_INIT message.  The start-state
+	 * transition will (probably) create the object.
 	 *
 	 * But what about when pluto, as the initial responder, is
 	 * fending of an attack attack by sending back and requiring
@@ -1380,12 +1380,11 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 	 * According to the RFC: no.  Instead a small table of
 	 * constants can be used to generate cookies on the fly.
 	 */
-	const enum state_kind from_state =
-		st == NULL ? STATE_UNDEFINED : st->st_state;
-	DBG(DBG_CONTROL,
-	    DBG_log("from_state is %s", enum_name(&state_names, from_state)));
-
-	passert((st == NULL) == (from_state == STATE_UNDEFINED));
+	const struct finite_state *from_state =
+		st == NULL ? finite_states[STATE_UNDEFINED] : st->st_finite_state;
+	DBGF(DBG_CONTROL, "#%lu in state %s: %s",
+	     st != NULL ? st->st_serialno : 0,
+	     from_state->fs_short_name, from_state->fs_story);
 
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
 	struct ikev2_payload_errors encrypted_payload_status = { .bad = false };
@@ -1395,9 +1394,9 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 	const struct state_v2_microcode *svm;
 	for (svm = v2_state_microcode_table; svm->state != STATE_IKEv2_ROOF;
 	     svm++) {
-		if (svm->state != from_state && ix != ISAKMP_v2_CREATE_CHILD_SA)
+		if (svm->state != from_state->fs_state && ix != ISAKMP_v2_CREATE_CHILD_SA)
 			continue;
-		if (svm->state != from_state && ix == ISAKMP_v2_CREATE_CHILD_SA) {
+		if (svm->state != from_state->fs_state && ix == ISAKMP_v2_CREATE_CHILD_SA) {
 			/*
 			 * XXX: search should have stopped, log that
 			 * it didn't.  Is this due to a missing state
