@@ -153,70 +153,72 @@ enum_names timer_event_names = {
 };
 
 /* State of exchanges */
+#define S(STATE) [STATE] = #STATE
 static const char *const state_name[] = {
-	"STATE_UNDEFINED",
-	"STATE_UNUSED_1",
-	"STATE_UNUSED_2",
-	"STATE_MAIN_R0",
-	"STATE_MAIN_I1",
-	"STATE_MAIN_R1",
-	"STATE_MAIN_I2",
-	"STATE_MAIN_R2",
-	"STATE_MAIN_I3",
-	"STATE_MAIN_R3",
-	"STATE_MAIN_I4",
+	S(STATE_UNDEFINED),
+	S(STATE_UNUSED_1),
+	S(STATE_UNUSED_2),
+	S(STATE_MAIN_R0),
+	S(STATE_MAIN_I1),
+	S(STATE_MAIN_R1),
+	S(STATE_MAIN_I2),
+	S(STATE_MAIN_R2),
+	S(STATE_MAIN_I3),
+	S(STATE_MAIN_R3),
+	S(STATE_MAIN_I4),
 
-	"STATE_AGGR_R0",
-	"STATE_AGGR_I1",
-	"STATE_AGGR_R1",
-	"STATE_AGGR_I2",
-	"STATE_AGGR_R2",
+	S(STATE_AGGR_R0),
+	S(STATE_AGGR_I1),
+	S(STATE_AGGR_R1),
+	S(STATE_AGGR_I2),
+	S(STATE_AGGR_R2),
 
-	"STATE_QUICK_R0",
-	"STATE_QUICK_I1",
-	"STATE_QUICK_R1",
-	"STATE_QUICK_I2",
-	"STATE_QUICK_R2",
+	S(STATE_QUICK_R0),
+	S(STATE_QUICK_I1),
+	S(STATE_QUICK_R1),
+	S(STATE_QUICK_I2),
+	S(STATE_QUICK_R2),
 
-	"STATE_INFO",
-	"STATE_INFO_PROTECTED",
+	S(STATE_INFO),
+	S(STATE_INFO_PROTECTED),
 
-	"STATE_XAUTH_R0",
-	"STATE_XAUTH_R1",
-	"STATE_MODE_CFG_R0",
-	"STATE_MODE_CFG_R1",
-	"STATE_MODE_CFG_R2",
+	S(STATE_XAUTH_R0),
+	S(STATE_XAUTH_R1),
+	S(STATE_MODE_CFG_R0),
+	S(STATE_MODE_CFG_R1),
+	S(STATE_MODE_CFG_R2),
 
-	"STATE_MODE_CFG_I1",
+	S(STATE_MODE_CFG_I1),
 
-	"STATE_XAUTH_I0",
-	"STATE_XAUTH_I1",
+	S(STATE_XAUTH_I0),
+	S(STATE_XAUTH_I1),
 
-	"STATE_IKEv1_ROOF",
+	S(STATE_IKEv1_ROOF),
 
 	/* v2 */
-	"STATE_IKEv2_BASE",
-	"STATE_PARENT_I1",
-	"STATE_PARENT_I2",
-	"STATE_PARENT_I3",
-	"STATE_PARENT_R1",
-	"STATE_PARENT_R2",
-	"STATE_V2_CREATE_I0",
-	"STATE_V2_CREATE_I",
-	"STATE_V2_REKEY_IKE_I0",
-	"STATE_V2_REKEY_IKE_I",
-	"STATE_V2_REKEY_CHILD_I0",
-	"STATE_V2_REKEY_CHILD_I",
-	"STATE_V2_CREATE_R",
-	"STATE_V2_REKEY_IKE_R",
-	"STATE_V2_REKEY_CHILD_R",
-	"STATE_V2_IPSEC_I",
-	"STATE_V2_IPSEC_R",
-	"STATE_IKESA_DEL",
-	"STATE_CHILDSA_DEL",
+	S(STATE_IKEv2_BASE),
+	S(STATE_PARENT_I1),
+	S(STATE_PARENT_I2),
+	S(STATE_PARENT_I3),
+	S(STATE_PARENT_R1),
+	S(STATE_PARENT_R2),
+	S(STATE_V2_CREATE_I0),
+	S(STATE_V2_CREATE_I),
+	S(STATE_V2_REKEY_IKE_I0),
+	S(STATE_V2_REKEY_IKE_I),
+	S(STATE_V2_REKEY_CHILD_I0),
+	S(STATE_V2_REKEY_CHILD_I),
+	S(STATE_V2_CREATE_R),
+	S(STATE_V2_REKEY_IKE_R),
+	S(STATE_V2_REKEY_CHILD_R),
+	S(STATE_V2_IPSEC_I),
+	S(STATE_V2_IPSEC_R),
+	S(STATE_IKESA_DEL),
+	S(STATE_CHILDSA_DEL),
 
-	"STATE_IKEv2_ROOF",
+	S(STATE_IKEv2_ROOF),
 };
+#undef S
 
 enum_names state_names = {
 	STATE_UNDEFINED, STATE_IKEv2_ROOF,
@@ -228,67 +230,69 @@ enum_names state_names = {
 /* story for state */
 
 static const char *const state_story[] = {
-	"not defined and probably dead (internal)",             /* STATE_UNDEFINED */
-	"STATE_UNUSED_1",
-	"STATE_UNUSED_2",
-	"expecting MI1",                                        /* STATE_MAIN_R0 */
-	"sent MI1, expecting MR1",                              /* STATE_MAIN_I1 */
-	"sent MR1, expecting MI2",                              /* STATE_MAIN_R1 */
-	"sent MI2, expecting MR2",                              /* STATE_MAIN_I2 */
-	"sent MR2, expecting MI3",                              /* STATE_MAIN_R2 */
-	"sent MI3, expecting MR3",                              /* STATE_MAIN_I3 */
-	"sent MR3, ISAKMP SA established",                      /* STATE_MAIN_R3 */
-	"ISAKMP SA established",                                /* STATE_MAIN_I4 */
+	[STATE_UNDEFINED] = "not defined and probably dead (internal)",
+	[STATE_UNUSED_1] = "STATE_UNUSED_1",
+	[STATE_UNUSED_2] = "STATE_UNUSED_2",
+	[STATE_MAIN_R0] = "expecting MI1",
+	[STATE_MAIN_I1] = "sent MI1, expecting MR1",
+	[STATE_MAIN_R1] = "sent MR1, expecting MI2",
+	[STATE_MAIN_I2] = "sent MI2, expecting MR2",
+	[STATE_MAIN_R2] = "sent MR2, expecting MI3",
+	[STATE_MAIN_I3] = "sent MI3, expecting MR3",
+	[STATE_MAIN_R3] = "sent MR3, ISAKMP SA established",
+	[STATE_MAIN_I4] = "ISAKMP SA established",
 
-	"expecting AI1",                                        /* STATE_AGGR_R0 */
-	"sent AI1, expecting AR1",                              /* STATE_AGGR_I1 */
-	"sent AR1, expecting AI2",                              /* STATE_AGGR_R1 */
-	"sent AI2, ISAKMP SA established",                      /* STATE_AGGR_I2 */
-	"ISAKMP SA established",                                /* STATE_AGGR_R2 */
+	[STATE_AGGR_R0] = "expecting AI1",
+	[STATE_AGGR_I1] = "sent AI1, expecting AR1",
+	[STATE_AGGR_R1] = "sent AR1, expecting AI2",
+	[STATE_AGGR_I2] = "sent AI2, ISAKMP SA established",
+	[STATE_AGGR_R2] = "ISAKMP SA established",
 
-	"expecting QI1",                                        /* STATE_QUICK_R0 */
-	"sent QI1, expecting QR1",                              /* STATE_QUICK_I1 */
-	"sent QR1, inbound IPsec SA installed, expecting QI2",  /* STATE_QUICK_R1 */
-	"sent QI2, IPsec SA established",                       /* STATE_QUICK_I2 */
-	"IPsec SA established",                                 /* STATE_QUICK_R2 */
+	[STATE_QUICK_R0] = "expecting QI1",
+	[STATE_QUICK_I1] = "sent QI1, expecting QR1",
+	[STATE_QUICK_R1] = "sent QR1, inbound IPsec SA installed, expecting QI2",
+	[STATE_QUICK_I2] = "sent QI2, IPsec SA established",
+	[STATE_QUICK_R2] = "IPsec SA established",
 
-	"got Informational Message in clear",                   /* STATE_INFO */
-	"got encrypted Informational Message",                  /* STATE_INFO_PROTECTED */
+	[STATE_INFO] = "got Informational Message in clear",
+	[STATE_INFO_PROTECTED] = "got encrypted Informational Message",
 
-	"XAUTH responder - optional CFG exchange",              /* STATE_XAUTH_R0 */
-	"XAUTH status sent, expecting Ack",                     /* STATE_XAUTH_R1 */
-	"ModeCfg Reply sent",                           /* STATE_MODE_CFG_R0 */
-	"ModeCfg Set sent, expecting Ack",              /* STATE_MODE_CFG_R1 */
-	"ModeCfg R2",                                   /* STATE_MODE_CFG_R2 */
+	[STATE_XAUTH_R0] = "XAUTH responder - optional CFG exchange",
+	[STATE_XAUTH_R1] = "XAUTH status sent, expecting Ack",
+	[STATE_MODE_CFG_R0] = "ModeCfg Reply sent",
+	[STATE_MODE_CFG_R1] = "ModeCfg Set sent, expecting Ack",
+	[STATE_MODE_CFG_R2] = "ModeCfg R2",
 
-	"ModeCfg inititator - awaiting CFG_reply",      /* STATE_MODE_CFG_I1 */
+	[STATE_MODE_CFG_I1] = "ModeCfg inititator - awaiting CFG_reply",
 
-	"XAUTH client - possibly awaiting CFG_request",          /* MODE_XAUTH_I0 */
-	"XAUTH client - possibly awaiting CFG_set",              /* MODE_XAUTH_I1 */
-	"invalid state - IKE roof",
-	"invalid state - IKEv2 base",
-	"sent v2I1, expected v2R1",             /* STATE_PARENT_I1 */
-	"sent v2I2, expected v2R2",		/* STATE_PARENT_I2 */
-	"PARENT SA established",		/* STATE_PARENT_I3 */
-	"received v2I1, sent v2R1",		/* STATE_PARENT_R1 */
-	"received v2I2, PARENT SA established",	/* STATE_PARENT_R2 */
-	"STATE_V2_CREATE_I0",
-	"sent IPsec Child req wait response",
-	"STATE_V2_REKEY_IKE_I0",
-	"STATE_V2_REKEY_IKE_I",
-	"STATE_V2_REKEY_CHILD_I0",
-	"STATE_V2_REKEY_CHILD_I",
-	"STATE_V2_CREATE_R",
-	"STATE_V2_REKEY_IKE_R",
-	"STATE_V2_REKEY_CHILD_R",
-	"IPsec SA established",		/* STATE_V2_IPSEC_I */
-	"IPsec SA established",		/* STATE_V2_IPSEC_R */
+	[STATE_XAUTH_I0] = "XAUTH client - possibly awaiting CFG_request",
+	[STATE_XAUTH_I1] = "XAUTH client - possibly awaiting CFG_set",
+
+	[STATE_IKEv1_ROOF] = "invalid state - IKE roof",
+	[STATE_IKEv2_FLOOR] = "invalid state - IKEv2 base",
+
+	[STATE_PARENT_I1] = "sent v2I1, expected v2R1",
+	[STATE_PARENT_I2] = "sent v2I2, expected v2R2",
+	[STATE_PARENT_I3] = "PARENT SA established",
+	[STATE_PARENT_R1] = "received v2I1, sent v2R1",
+	[STATE_PARENT_R2] = "received v2I2, PARENT SA established",
+	[STATE_V2_CREATE_I0] = "STATE_V2_CREATE_I0",
+	[STATE_V2_CREATE_I] = "sent IPsec Child req wait response",
+	[STATE_V2_REKEY_IKE_I0] = "STATE_V2_REKEY_IKE_I0",
+	[STATE_V2_REKEY_IKE_I] = "STATE_V2_REKEY_IKE_I",
+	[STATE_V2_REKEY_CHILD_I0] = "STATE_V2_REKEY_CHILD_I0",
+	[STATE_V2_REKEY_CHILD_I] = "STATE_V2_REKEY_CHILD_I",
+	[STATE_V2_CREATE_R] = "STATE_V2_CREATE_R",
+	[STATE_V2_REKEY_IKE_R] = "STATE_V2_REKEY_IKE_R",
+	[STATE_V2_REKEY_CHILD_R] = "STATE_V2_REKEY_CHILD_R",
+	[STATE_V2_IPSEC_I] = "IPsec SA established",
+	[STATE_V2_IPSEC_R] = "IPsec SA established",
 
 	/* ??? better story needed for these */
-	"STATE_IKESA_DEL",	/* STATE_IKESA_DEL */
-	"STATE_CHILDSA_DEL",	/* STATE_CHILDSA_DEL */
+	[STATE_IKESA_DEL] = "STATE_IKESA_DEL",
+	[STATE_CHILDSA_DEL] = "STATE_CHILDSA_DEL",
 
-	"invalid state - IKEv2 roof",	/* STATE_IKEv2_ROOF */
+	[STATE_IKEv2_ROOF] = "invalid state - IKEv2 roof",
 };
 
 enum_names state_stories = {
