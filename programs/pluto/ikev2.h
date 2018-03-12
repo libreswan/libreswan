@@ -67,7 +67,6 @@ extern void ikev2_child_send_next(struct state *st);
  * XXX: These look like hacks, I'm guessing to avoid having to add
  * them to the state machine?
  */
-extern const struct state_v2_microcode ikev2_ike_sa_initiate_microcode;
 extern const struct state_v2_microcode ikev2_rekey_child_initiate_microcode;
 extern const struct state_v2_microcode ikev2_child_sa_initiate_microcode;
 

@@ -197,6 +197,7 @@ static const char *const state_name[] = {
 
 	/* v2 */
 	S(STATE_IKEv2_BASE),
+	S(STATE_PARENT_I0),
 	S(STATE_PARENT_I1),
 	S(STATE_PARENT_I2),
 	S(STATE_PARENT_I3),
@@ -272,6 +273,7 @@ static const char *const state_story[] = {
 	[STATE_IKEv1_ROOF] = "invalid state - IKE roof",
 	[STATE_IKEv2_FLOOR] = "invalid state - IKEv2 base",
 
+	[STATE_PARENT_I0] = "waiting for KE to finish",
 	[STATE_PARENT_I1] = "sent v2I1, expected v2R1",
 	[STATE_PARENT_I2] = "sent v2I2, expected v2R2",
 	[STATE_PARENT_I3] = "PARENT SA established",
