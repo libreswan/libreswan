@@ -678,37 +678,26 @@ static bool parser_alg_info_add(struct parser_context *p_ctx,
 }
 
 
-bool alg_info_parse_str(const struct proposal_policy *policy,
+bool alg_info_parse_str(const struct proposal_parser *parser,
 			struct alg_info *alg_info,
-			const char *alg_str,
-			char *err_buf, size_t err_buf_len,
-			const struct proposal_protocol *protocol)
+			const char *alg_str)
 {
 	DBG(DBG_PROPOSAL_PARSER,
-	    DBG_log("parsing '%s' for %s", alg_str, protocol->name));
+	    DBG_log("parsing '%s' for %s", alg_str, parser->protocol->name));
 
 	struct parser_context ctx;
 	int ret;
 	const char *ptr;
 
-	err_buf[0] = '\0';
-
-	const struct proposal_parser parser = {
-		.policy = policy,
-		.protocol = protocol,
-		.err_buf = err_buf,
-		.err_buf_len = err_buf_len,
-	};
-
-	parser_init(&ctx, &parser);
+	parser_init(&ctx, parser);
 
 	const struct proposal_info proposal = {
-		.protocol = protocol,
+		.protocol = parser->protocol,
 	};
 
 	/* use default if no (NULL) string */
 	if (alg_str == NULL) {
-		return merge_default_proposals(&parser, alg_info, &proposal);
+		return merge_default_proposals(parser, alg_info, &proposal);
 	}
 
 	ptr = alg_str;
@@ -717,7 +706,7 @@ bool alg_info_parse_str(const struct proposal_policy *policy,
 		{
 			err_t pm_ugh = parser_machine(&ctx);
 			if (pm_ugh != NULL) {
-				snprintf(err_buf, err_buf_len,
+				snprintf(parser->err_buf, parser->err_buf_len,
 					 "%s, just after \"%.*s\"",
 					 pm_ugh,
 					 (int)(ptr - alg_str - 1), alg_str);
@@ -729,13 +718,13 @@ bool alg_info_parse_str(const struct proposal_policy *policy,
 		case ST_END:
 		case ST_EOF:
 			parser_alg_info_add(&ctx, proposal,
-					    err_buf, err_buf_len,
+					    parser->err_buf, parser->err_buf_len,
 					    alg_info);
-			if (err_buf[0] != '\0') {
+			if (parser->err_buf[0] != '\0') {
 				return false;
 			}
 			/* zero out for next run (ST_END) */
-			parser_init(&ctx, &parser);
+			parser_init(&ctx, parser);
 			break;
 
 		default:
@@ -745,6 +734,20 @@ bool alg_info_parse_str(const struct proposal_policy *policy,
 		}
 	} while (ret < ST_EOF);
 	return true;
+}
+
+struct proposal_parser proposal_parser(const struct proposal_policy *policy,
+				       const struct proposal_protocol *protocol,
+				       char *err_buf, size_t err_buf_len)
+{
+	const struct proposal_parser parser = {
+		.policy = policy,
+		.protocol = protocol,
+		.err_buf = err_buf,
+		.err_buf_len = err_buf_len,
+	};
+	err_buf[0] = '\0';
+	return parser;
 }
 
 bool proposal_aead_none_ok(const struct proposal_info *proposal,
@@ -874,110 +877,93 @@ size_t lswlog_alg_info(struct lswlog *log, const struct alg_info *alg_info)
  * parer is far more forgiving).
  */
 
-void alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,
-				     const char *alg_str,
-				     char *err_buf, size_t err_buf_len)
+bool alg_info_discover_pfsgroup_hack(const struct proposal_parser *parser,
+				     struct alg_info_esp *aie,
+				     const char *alg_str)
 {
-	/*
-	 * Find the first and last proposal, if present (never know,
-	 * there could be no algorithms).
-	 */
+	if (aie->ai.alg_info_cnt <= 0) {
+		/* let caller deal with no proposals. */
+		return true;
+	}
+
+	/* find any DH */
 	struct proposal_info *first = NULL;
-	FOR_EACH_ESP_INFO(aie, esp_info) {
-		first = esp_info;
-		break;
+	FOR_EACH_ESP_INFO(aie, alg) {
+		if (alg->dh != NULL) {
+			first = alg;
+			break;
+		}
 	}
-	struct proposal_info *last = NULL;
-	FOR_EACH_ESP_INFO(aie, esp_info) {
-		last = esp_info;
+	if (first == NULL) {
+		return true;
 	}
-	if (last == NULL) {
-		/* let caller deal with this. */
-		return;
+
+	struct proposal_info *last = &aie->ai.proposals[aie->ai.alg_info_cnt-1];
+
+	char *first_semi = alg_str != NULL ? strchr(alg_str, ';') : NULL;
+	char *last_comma = alg_str != NULL ? strrchr(alg_str, ',') : NULL;
+
+	/*
+	 * Can't have ;DH,... - as ;DH must appear last.
+	 *
+	 * Use a character check as esp=aes-sha1;dh21,aes-sha1-dh21
+	 * will be reduced to just esp=aes-sha1;dh21.
+	 */
+	if (first_semi != NULL && last_comma != NULL && first_semi < last_comma) {
+		snprintf(parser->err_buf, parser->err_buf_len,
+			 "%s DH algorithm '%s' must be specified last",
+			 parser->protocol->name,
+			 first->dh->common.fqn);
+		return false;
 	}
 
 	/*
-	 * Make certain that either all algorithms have the same DH or
-	 * all are NULL (with the exception of the last).
+	 * Can't have -DH,..;DH - as ;DH must be the only proposal.
 	 *
-	 * For instance, aes-modp1024,aes-modp2048 isn't allowed
-	 * because pluto assumes only one PFS group.
+	 * Because duplicates like esp=aes-sha1-dh21,aes-sha1;dh21 get
+	 * reduced to just esp=aes-sha1;dh21, this isn't 100%
+	 * reliable.
 	 */
-	FOR_EACH_ESP_INFO(aie, esp_info) {
-		if (esp_info == last) {
-			continue;
-		}
-		if (first->dh != esp_info->dh) {
-			snprintf(err_buf, err_buf_len,
-				 "%s DH algorithm '%s' must be specified last",
-				 esp_info->protocol->name,
-				 (first->dh != NULL ? first->dh : esp_info->dh)->common.fqn);
-			return;
-		}
-		if (esp_info->dh != NULL && last->dh == NULL) {
-			snprintf(err_buf, err_buf_len,
-				 "%s DH algorithm '%s' must be specified last",
-				 esp_info->protocol->name,
-				 esp_info->dh->common.fqn);
-			return;
-		}
-		if (esp_info->dh != NULL && esp_info->dh != last->dh) {
-			snprintf(err_buf, err_buf_len,
-				 "%s DH algorithm must be specified once",
-				 esp_info->protocol->name);
-			return;
-		}
+	if (first_semi != NULL && first != last) {
+		snprintf(parser->err_buf, parser->err_buf_len,
+			 "%s DH algorithm must appear once after last proposal",
+			 first->protocol->name);
+		return false;
 	}
 
 	/*
-	 * Restrict the DH separator character to ';' and the last
-	 * proposal.
-	 *
-	 * While the parser allows both "...;modp1024" and
-	 * "...-modp1024", pluto only admits to the former - so that
-	 * it stands out as something not part of the individual
-	 * proposals.
-	 *
-	 * Why? Because this is how it worked in the past.  Presumably
-	 * ';' makes it clear that it applies to all algorithms?
-	 *
-	 * Conversely, if all proposals include DH don't allow any
-	 * ';'.
+	 * All the DH entries must match last (since first!=NULL there
+	 * is at least one before last).
 	 */
-	if (last->dh != NULL) {
-		char *last_dash = strrchr(alg_str, '-');
-		char *last_semi = strrchr(alg_str, ';');
-		char *last_comma = strrchr(alg_str, ',');
-		if (first != last && first->dh == NULL) {
-			/* reject missing ';'. */
-			if (last_semi == NULL) {
-				snprintf(err_buf, err_buf_len,
-					 "%s DH algorithm '%s' must be separated using a ';'",
-					 last->protocol->name,
-					 last->dh->common.fqn);
-				return;
-			}
-			/* reject xxx;DH,yyy */
-			if (last_comma != NULL && last_semi < last_comma) {
-				snprintf(err_buf, err_buf_len,
-					 "%s DH algorithm must appear after last proposal",
-					 last->protocol->name);
-				return;
-			}
-			/* reject yyy,xxx-DH */
-			if (last_dash != NULL && last_semi < last_dash) {
-				snprintf(err_buf, err_buf_len,
-					 "%s DH algorithm must be at end of proposal",
-					 last->protocol->name);
-				return;
-			}
-		} else if (first != last && first->dh != NULL) {
-			/* reject ...;... */
-			if (last_semi != NULL) {
-				snprintf(err_buf, err_buf_len,
-					 "%s DH algorithm must appear once after last proposal",
-					 last->protocol->name);
-				return;
+	if (first != last && last->dh == NULL) {
+		/* esp=aes-sha1-dh21,aes-sha1 */
+		snprintf(parser->err_buf, parser->err_buf_len,
+			 "%s DH algorithm '%s' must be specified last",
+			 parser->protocol->name,
+			 first->dh->common.fqn);
+		if (!impair_proposal_errors(parser)) {
+			return false;
+		}
+	}
+	if (first != last && last->dh != NULL) {
+		/* esp=aes-sha1-dh21,aes-sha1-dh22 */
+		FOR_EACH_ESP_INFO(aie, alg) {
+			if (alg->dh != last->dh) {
+				if (alg->dh == NULL) {
+					snprintf(parser->err_buf, parser->err_buf_len,
+						 "%s DH algorithm must appear once after last proposal",
+						 first->protocol->name);
+				} else {
+					snprintf(parser->err_buf, parser->err_buf_len,
+						 "%s DH algorithm '%s' must be specified last",
+						 parser->protocol->name,
+						 first->dh->common.fqn);
+				}
+				if (!impair_proposal_errors(parser)) {
+					return false;
+				} else {
+					break; /* report first */
+				}
 			}
 		}
 	}
@@ -989,8 +975,10 @@ void alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,
 	 * include the common DH; and for IKEv2 it can just pick up
 	 * that DH.
 	 */
-	FOR_EACH_ESP_INFO(aie, esp_info) {
-		esp_info->dh = last->dh;
+	if (!IMPAIR(PROPOSAL_PARSER)) {
+		FOR_EACH_ESP_INFO(aie, esp_info) {
+			esp_info->dh = last->dh;
+		}
 	}
 
 	/*
@@ -999,4 +987,18 @@ void alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,
 	 * Since DH is set uniformly, could use first.DH instead.
 	 */
 	aie->esp_pfsgroup = last->dh;
+	return true;
+}
+
+bool impair_proposal_errors(const struct proposal_parser *parser)
+{
+	pexpect(parser->err_buf[0] != '\0');
+	if (IMPAIR(PROPOSAL_PARSER)) {
+		libreswan_log("IMPAIR: ignoring proposal error: %s",
+			      parser->err_buf);
+		parser->err_buf[0] = '\0';
+		return true;
+	} else {
+		return false;
+	}
 }

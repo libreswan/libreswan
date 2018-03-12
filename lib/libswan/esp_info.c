@@ -105,21 +105,19 @@ struct alg_info_esp *alg_info_esp_create_from_str(const struct proposal_policy *
 	 */
 	struct alg_info_esp *alg_info_esp = alloc_thing(struct alg_info_esp,
 							"alg_info_esp");
+	const struct proposal_parser parser = proposal_parser(policy,
+							      &esp_proposal_protocol,
+							      err_buf, err_buf_len);
 
-	if (!alg_info_parse_str(policy,
-				&alg_info_esp->ai,
-				alg_str,
-				err_buf, err_buf_len,
-				&esp_proposal_protocol)) {
+	if (!alg_info_parse_str(&parser, &alg_info_esp->ai, alg_str)) {
 		passert(err_buf[0] != '\0');
 		alg_info_free(&alg_info_esp->ai);
 		return NULL;
 	}
 
 	/* This call can free ALG_INFO_ESP. */
-	alg_info_discover_pfsgroup_hack(alg_info_esp, alg_str,
-					err_buf, err_buf_len);
-	if (err_buf[0] != '\0') {
+	if (!alg_info_discover_pfsgroup_hack(&parser, alg_info_esp, alg_str)) {
+		passert(err_buf[0] != '\0');
 		alg_info_free(&alg_info_esp->ai);
 		return NULL;
 	}

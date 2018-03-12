@@ -132,12 +132,11 @@ struct alg_info_ike *alg_info_ike_create_from_str(const struct proposal_policy *
 	 *      transform count in advance.
 	 */
 	struct alg_info_ike *alg_info_ike = alloc_thing(struct alg_info_ike, "alg_info_ike");
+	const struct proposal_parser parser = proposal_parser(policy,
+							      &ike_proposal_protocol,
+							      err_buf, err_buf_len);
 
-	if (!alg_info_parse_str(policy,
-				&alg_info_ike->ai,
-				alg_str,
-				err_buf, err_buf_len,
-				&ike_proposal_protocol)) {
+	if (!alg_info_parse_str(&parser, &alg_info_ike->ai, alg_str)) {
 		passert(err_buf[0] != '\0');
 		alg_info_free(&alg_info_ike->ai);
 		return NULL;

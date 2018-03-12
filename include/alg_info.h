@@ -212,11 +212,14 @@ size_t lswlog_alg_info(struct lswlog *log, const struct alg_info *alg_info);
  * Parsing with POLICY='0' is allowed. It will accept the algorithms
  * unconditionally (spi.c seems to need this).
  */
-bool alg_info_parse_str(const struct proposal_policy *policy,
+
+struct proposal_parser proposal_parser(const struct proposal_policy *policy,
+				       const struct proposal_protocol *protocol,
+				       char *err_buf, size_t err_buf_len);
+
+bool alg_info_parse_str(const struct proposal_parser *parser,
 			struct alg_info *alg_info,
-			const char *alg_str,
-			char *err_buf, size_t err_buf_len,
-			const struct proposal_protocol *protocol);
+			const char *alg_str);
 
 /*
  * Check that encrypt==AEAD and/or integ==none don't contradict.
@@ -224,8 +227,10 @@ bool alg_info_parse_str(const struct proposal_policy *policy,
 bool proposal_aead_none_ok(const struct proposal_info *proposal,
 			   char *err_buf, size_t err_buf_len);
 
-void alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,
-				     const char *alg_str,
-				     char *err_buf, size_t err_buf_len);
+bool alg_info_discover_pfsgroup_hack(const struct proposal_parser *parser,
+				     struct alg_info_esp *aie,
+				     const char *alg_str);
+
+bool impair_proposal_errors(const struct proposal_parser *parser);
 
 #endif /* ALG_INFO_H */
