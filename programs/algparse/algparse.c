@@ -18,7 +18,7 @@ static bool ikev2 = false;
 static bool fips = false;
 static int failures = 0;
 
-enum expect { PASS = 1, FAIL, IGNORE, };
+enum expect { FAIL = false, PASS = true, IGNORE, };
 
 static struct proposal_policy policy = {
 	.ikev1 = false,
@@ -155,10 +155,19 @@ static void test(const struct proposal_policy policy)
 	 * esp=
 	 */
 
-	/* ESP tests that should succeed */
-
 	esp(policy, true, NULL);
 	esp(policy, false, "");
+
+	esp(policy, true, "aes");
+	esp(policy, true, "aes");
+	esp(policy, true, "aes-sha1");
+	esp(policy, true, "aes-sha1");
+	esp(policy, true, "aes-sha1-modp2048");
+	esp(policy, true, "aes-128");
+	esp(policy, true, "aes-128-sha1");
+	esp(policy, true, "aes-128-sha1");
+	esp(policy, true, "aes-128-sha1-modp2048");
+
 	esp(policy, true, "aes_gcm_a-128-null");
 	esp(policy, !fips, "3des-sha1;modp1024");
 	esp(policy, !fips, "3des-sha1;modp1536");
@@ -169,7 +178,7 @@ static void test(const struct proposal_policy policy)
 	esp(policy, true, "3des-sha1;dh24");
 	esp(policy, true, "3des-sha1");
 	esp(policy, !fips, "null-sha1");
-	esp(policy, true, "aes");
+
 	esp(policy, true, "aes_cbc");
 	esp(policy, true, "aes-sha");
 	esp(policy, true, "aes-sha1");
@@ -265,6 +274,9 @@ static void test(const struct proposal_policy policy)
 	esp(policy, true, "aes-sha1,3des-sha1;modp8192"); /* set modp8192 on all algs */
 	esp(policy, true, "aes-sha1-modp8192,3des-sha1-modp8192"); /* silly */
 	esp(policy, true, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192"); /* suppress duplicates */
+#if 0
+	esp(policy, true, "3des;modp8192");
+#endif
 
 	/*
 	 * should this be supported - for now man page says not
@@ -297,10 +309,23 @@ static void test(const struct proposal_policy policy)
 	esp(policy, false, "aes_gcm-0"); /* invalid keylen */
 	esp(policy, false, "aes_gcm-123456789012345"); /* huge keylen */
 	esp(policy, false, "3des-sha1;dh22"); /* support for dh22 removed */
+
 	esp(policy, false, "3des-sha1;modp8192,3des-sha2"); /* ;DH must be last */
-	esp(policy, false, "3des-sha1-modp8192,3des-sha2;modp8192"); /* ;DH confusion */
+	esp(policy, impair, "3des-sha1-modp8192,3des-sha2"); /* -DH must be last */
+
+	esp(policy, true, "3des-sha1-modp8192,3des-sha2-modp8192"); /* ok */
+	esp(policy, false, "3des-sha1-modp8192,3des-sha2;modp8192"); /* ;DH must be last */
+	esp(policy, false, "3des-sha1;modp8192,3des-sha2;modp8192"); /* ;DH must be last */
+	esp(policy, false, "3des-sha1;modp8192,3des-sha2;modp8192"); /* ;DH must be last */
+	esp(policy, impair, "3des-sha1-modp8192,3des-sha2-ecp_521"); /* ;DH must match */
+
+	esp(policy, false, "3des-sha1;modp8192,3des-sha1-modp8192"); /* ;DH must be last when dup */
+	esp(policy, false, "3des-sha1;modp8192,3des-sha1;modp8192"); /* ;DH must be last when dup */
+
 #if 0
 	esp(policy, false, "3des-sha1-modp8192-sha2");
+	esp(policy, false, "aes-128-sha1-modp8192-sha0");
+	esp(policy, false, "1-2-3-4-5-6-7-9-0");
 #endif
 
 	/*
@@ -335,8 +360,11 @@ static void test(const struct proposal_policy policy)
 	ah(policy, false, "aes_gcm");
 	ah(policy, false, "aes_ccm");
 	ah(policy, false, "ripemd"); /* support removed */
+
 #if 0
 	ah(policy, false, "sha1-modp8192-sha2");
+	ah(policy, false, "sha1-modp8192-sha0");
+	ah(policy, false, "1-2-3-4-5-6-7-9-0");
 #endif
 
 	/*
@@ -360,8 +388,11 @@ static void test(const struct proposal_policy policy)
 	ike(policy, false, "id2"); /* should be rejected; idXXX removed */
 	ike(policy, false, "3des-id2"); /* should be rejected; idXXX removed */
 	ike(policy, false, "aes_ccm"); /* ESP/AH only */
+
 #if 0
-	ike(policy, false, "aes-sha1-sha2-modp8192-sha2");
+	ike(policy, false, "aes-128-sha1-sha2-modp8192");
+	ike(policy, false, "aes-128-sha1-sha2-modp8192-sha0");
+	ike(policy, false, "1-2-3-4-5-6-7-9-0");
 #endif
 }
 
