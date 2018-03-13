@@ -92,7 +92,8 @@ void start_dh_v1_secretiv(crypto_req_cont_func fn, const char *name,
 	dhq->key_size = st->st_oakley.enckeylen / BITS_PER_BYTE;
 	dhq->salt_size = st->st_oakley.ta_encrypt->salt_size;
 
-	passert(dhq->oakley_group != OAKLEY_GROUP_invalid);
+	passert(dhq->oakley_group != NULL && dhq->oakley_group != &unset_group);
+
 	if (pss != NULL)
 		WIRE_CLONE_CHUNK(*dhq, pss, *pss);
 	WIRE_CLONE_CHUNK(*dhq, ni, st->st_ni);
@@ -110,7 +111,6 @@ void start_dh_v1_secretiv(crypto_req_cont_func fn, const char *name,
 	memcpy(WIRE_CHUNK_PTR(*dhq, rcookie),
 	       st->st_rcookie, COOKIE_SIZE);
 
-	passert(dhq->oakley_group != OAKLEY_GROUP_invalid);
 	send_crypto_helper_request(st, dh);
 }
 

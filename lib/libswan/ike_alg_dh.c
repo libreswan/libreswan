@@ -38,7 +38,7 @@
 
 /* magic signifier */
 const struct oakley_group_desc unset_group = {
-	.group = OAKLEY_GROUP_invalid,
+	.group = 65535, /* Reserved for private use */
 };
 
 const struct oakley_group_desc oakley_group_modp1024 = {

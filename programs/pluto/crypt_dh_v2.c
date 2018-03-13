@@ -106,7 +106,7 @@ void start_dh_v2(struct state *st,
 	dhq->key_size = st->st_oakley.enckeylen / BITS_PER_BYTE;
 	dhq->salt_size = st->st_oakley.ta_encrypt->salt_size;
 
-	passert(dhq->dh != OAKLEY_GROUP_invalid);
+	passert(dhq->dh != NULL && dhq->dh != &unset_group);
 
 	dhq->old_prf = old_prf;
 	dhq->skey_d_old = reference_symkey(__func__, "skey_d_old", skey_d_old);
@@ -128,8 +128,6 @@ void start_dh_v2(struct state *st,
 	ALLOC_WIRE_CHUNK(*dhq, rcookie, COOKIE_SIZE);
 	memcpy(WIRE_CHUNK_PTR(*dhq, rcookie),
 	       st->st_rcookie, COOKIE_SIZE);
-
-	passert(dhq->dh != OAKLEY_GROUP_invalid);
 
 	send_crypto_helper_request(st, dh);
 }

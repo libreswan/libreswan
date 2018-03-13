@@ -1270,7 +1270,7 @@ typedef enum ike_trans_type_dh oakley_group_t;
 /* https://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-10 */
 /* http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-8 */
 enum ike_trans_type_dh {
-	OAKLEY_GROUP_invalid = 0,	/* not in standard */
+	OAKLEY_GROUP_NONE = 0,	/* RFC 7296 */
 	OAKLEY_GROUP_MODP768 = 1,
 	OAKLEY_GROUP_MODP1024 = 2,
 	OAKLEY_GROUP_GP155 = 3, /* IKEv2 reserved */
