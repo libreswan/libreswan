@@ -273,30 +273,6 @@ const struct state_v2_microcode ikev2_ike_sa_initiate_microcode =
 	  .crypto_end = ikev2_parent_outI1_tail,
 	  .timeout_event = EVENT_v2_RETRANSMIT, };
 
-const struct state_v2_microcode ikev2_rekey_child_initiate_microcode =
-	/* no state:   --> I1
-	 * HDR, SAi1, KEi, Ni -->
-	 */
-	{ .story      = "initiate rekey",
-	  .state      = STATE_UNDEFINED,
-	  .next_state = STATE_PARENT_I1,
-	  .flags      = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
-	  .processor  = NULL,
-	  .crypto_end = ikev2_parent_outI1_tail,
-	  .timeout_event = EVENT_v2_RETRANSMIT, };
-
-const struct state_v2_microcode ikev2_child_sa_initiate_microcode =
-	/* no state:   --> CREATE IPsec Child Request
-	 * HDR, SAi1, {KEi,} Ni TSi TSr -->
-	 */
-	{ .story      = "Initiate CREATE_CHILD_SA IPsec SA",
-	  .state      = STATE_V2_CREATE_I0,
-	  .next_state = STATE_V2_CREATE_I,
-	  .flags =      SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
-	  .processor  = NULL,
-	  .crypto_end = ikev2_child_out_cont,
-	  .timeout_event = EVENT_v2_RETRANSMIT, };
-
 /* microcode for input packet processing */
 static const struct state_v2_microcode v2_state_microcode_table[] = {
 

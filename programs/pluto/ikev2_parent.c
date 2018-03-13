@@ -288,12 +288,34 @@ static struct msg_digest *fake_md(struct state *st)
 		break;
 
 	case STATE_V2_REKEY_CHILD_I0:
+	{
+		static const struct state_v2_microcode ikev2_rekey_child_initiate_microcode =
+		/* no state:   --> I1
+		 * HDR, SAi1, KEi, Ni -->
+		 */
+			{ .story      = "initiate rekey",
+			  .state      = STATE_UNDEFINED,
+			  .next_state = STATE_PARENT_I1,
+			  .crypto_end = ikev2_parent_outI1_tail,
+			  .timeout_event = EVENT_v2_RETRANSMIT, };
 		fake_md->svm = &ikev2_rekey_child_initiate_microcode;
 		break;
+	}
 
 	case STATE_V2_CREATE_I0:
+	{
+		static const struct state_v2_microcode ikev2_child_sa_initiate_microcode =
+		/* no state:   --> CREATE IPsec Child Request
+		 * HDR, SAi1, {KEi,} Ni TSi TSr -->
+		 */
+			{ .story      = "Initiate CREATE_CHILD_SA IPsec SA",
+			  .state      = STATE_V2_CREATE_I0,
+			  .next_state = STATE_V2_CREATE_I,
+			  .crypto_end = ikev2_child_out_cont,
+			  .timeout_event = EVENT_v2_RETRANSMIT, };
 		fake_md->svm = &ikev2_child_sa_initiate_microcode;
 		break;
+	}
 
 	default:
 		bad_case(st->st_state);
