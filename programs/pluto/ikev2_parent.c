@@ -284,12 +284,15 @@ static struct msg_digest *fake_md(struct state *st)
 
 	switch (st->st_state) {
 	case STATE_PARENT_I1:
+		fake_md->svm = &ikev2_ike_sa_initiate_microcode;
+		break;
+
 	case STATE_V2_REKEY_CHILD_I0:
-		fake_md->svm = &ikev2_parent_firststate_microcode;
+		fake_md->svm = &ikev2_rekey_child_initiate_microcode;
 		break;
 
 	case STATE_V2_CREATE_I0:
-		fake_md->svm = &ikev2_create_child_initiate_microcode;
+		fake_md->svm = &ikev2_child_sa_initiate_microcode;
 		break;
 
 	default:
@@ -1769,7 +1772,7 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 				libreswan_log("Received anti-DDOS COOKIE, resending I1 with cookie payload");
 			}
 
-			md->svm = &ikev2_parent_firststate_microcode;
+			md->svm = &ikev2_ike_sa_initiate_microcode;
 
 			change_state(st, STATE_PARENT_I1);
 			/* AA_2016 why do we need to mess with st_msgid_nextuse

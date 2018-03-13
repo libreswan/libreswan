@@ -63,8 +63,13 @@ extern void ikev2_initiate_child_sa(int whack_sock, struct ike_sa *ike,
 extern void ikev2_child_outI(struct state *st);
 extern void ikev2_child_send_next(struct state *st);
 
-extern const struct state_v2_microcode ikev2_parent_firststate_microcode;
-extern const struct state_v2_microcode ikev2_create_child_initiate_microcode;
+/*
+ * XXX: These look like hacks, I'm guessing to avoid having to add
+ * them to the state machine?
+ */
+extern const struct state_v2_microcode ikev2_ike_sa_initiate_microcode;
+extern const struct state_v2_microcode ikev2_rekey_child_initiate_microcode;
+extern const struct state_v2_microcode ikev2_child_sa_initiate_microcode;
 
 extern v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
 		const char *name);

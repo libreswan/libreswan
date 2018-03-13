@@ -256,8 +256,12 @@ enum smf2_flags {
 static const lset_t everywhere_payloads = P(N) | P(V);	/* can appear in any packet */
 static const lset_t repeatable_payloads = P(N) | P(D) | P(CP) | P(V) | P(CERT) | P(CERTREQ);	/* if one can appear, many can appear */
 
-/* microcode to parent first initiator state: not associated with an input packet */
-const struct state_v2_microcode ikev2_parent_firststate_microcode =
+/*
+ * microcode to parent first initiator state: not associated with an
+ * input packet
+ */
+
+const struct state_v2_microcode ikev2_ike_sa_initiate_microcode =
 	/* no state:   --> I1
 	 * HDR, SAi1, KEi, Ni -->
 	 */
@@ -269,7 +273,19 @@ const struct state_v2_microcode ikev2_parent_firststate_microcode =
 	  .crypto_end = ikev2_parent_outI1_tail,
 	  .timeout_event = EVENT_v2_RETRANSMIT, };
 
-const struct state_v2_microcode ikev2_create_child_initiate_microcode =
+const struct state_v2_microcode ikev2_rekey_child_initiate_microcode =
+	/* no state:   --> I1
+	 * HDR, SAi1, KEi, Ni -->
+	 */
+	{ .story      = "initiate rekey",
+	  .state      = STATE_UNDEFINED,
+	  .next_state = STATE_PARENT_I1,
+	  .flags      = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
+	  .processor  = NULL,
+	  .crypto_end = ikev2_parent_outI1_tail,
+	  .timeout_event = EVENT_v2_RETRANSMIT, };
+
+const struct state_v2_microcode ikev2_child_sa_initiate_microcode =
 	/* no state:   --> CREATE IPsec Child Request
 	 * HDR, SAi1, {KEi,} Ni TSi TSr -->
 	 */
