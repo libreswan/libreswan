@@ -399,48 +399,6 @@ static void ikev2_crypto_continue(struct state *st,
 
 static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 {
-	char  *what = "";
-
-	switch (st->st_state) {
-	case STATE_PARENT_I1:
-		what = "ikev2_outI1 KE";
-		break;
-
-	case STATE_V2_REKEY_CHILD_I0:
-		what = (st->st_pfs_group == NULL) ? "Child Rekey Initiator nonce ni" :
-			"Child Rekey Initiator KE and nonce ni";
-		break;
-
-	case STATE_V2_REKEY_IKE_R:
-		what = "IKE rekey KE response gir";
-		break;
-
-	case STATE_V2_CREATE_R:
-		what = md->chain[ISAKMP_NEXT_v2KE] == NULL ?
-			"Child Responder nonce nr" :
-			"Child Responder KE and nonce nr";
-		break;
-
-	case STATE_V2_REKEY_CHILD_R:
-		what = md->chain[ISAKMP_NEXT_v2KE] == NULL ?
-			"Child Rekey Responder nonce nr" :
-			"Child Rekey Responder KE and nonce nr";
-		break;
-
-	case STATE_V2_CREATE_I0:
-		what = (st->st_pfs_group == NULL) ? "Child Initiator nonce ni" :
-			"Child Initiator KE and nonce ni";
-		break;
-
-	case STATE_V2_CREATE_I:
-		what = "ikev2 Child SA initiator pfs=yes";
-		/* DH will call its own new_pcrc */
-		break;
-
-	default:
-		bad_case(st->st_state);
-		break;
-	}
 
 	switch (st->st_state) {
 	case STATE_PARENT_I1:
@@ -449,37 +407,57 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		st->st_msgid_lastrecv = v2_INVALID_MSGID;
 		st->st_msgid_nextuse = 0;
 		st->st_msgid = 0;
-		request_ke_and_nonce(what, st,
+		request_ke_and_nonce("ikev2_outI1 KE", st,
 				     st->st_oakley.ta_dh,
 				     ikev2_crypto_continue);
 		return STF_SUSPEND;
 
 	case STATE_V2_REKEY_IKE_R:
-		request_ke_and_nonce(what, st,
+		request_ke_and_nonce("IKE rekey KE response gir", st,
 				     st->st_oakley.ta_dh,
 				     ikev2_crypto_continue);
 		return STF_SUSPEND;
 
 	case STATE_V2_CREATE_R:
-	case STATE_V2_REKEY_CHILD_R:
 		if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
-			request_ke_and_nonce(what, st,
-					     st->st_oakley.ta_dh,
+			request_ke_and_nonce("Child Responder KE and nonce nr",
+					     st, st->st_oakley.ta_dh,
 					     ikev2_crypto_continue);
 		} else {
-			request_nonce(what, st,
-				      ikev2_crypto_continue);
+			request_nonce("Child Responder nonce nr",
+				      st, ikev2_crypto_continue);
+		}
+		return STF_SUSPEND;
+
+	case STATE_V2_REKEY_CHILD_R:
+		if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
+			request_ke_and_nonce("Child Rekey Responder KE and nonce nr",
+					     st, st->st_oakley.ta_dh,
+					     ikev2_crypto_continue);
+		} else {
+			request_nonce("Child Rekey Responder nonce nr",
+				      st, ikev2_crypto_continue);
 		}
 		return STF_SUSPEND;
 
 	case STATE_V2_REKEY_CHILD_I0:
+		if (st->st_pfs_group == NULL) {
+			request_nonce("Child Rekey Initiator nonce ni",
+				      st, ikev2_crypto_continue);
+		} else {
+			request_ke_and_nonce("Child Rekey Initiator KE and nonce ni",
+					     st, st->st_pfs_group,
+					     ikev2_crypto_continue);
+		}
+		return STF_SUSPEND;
+
 	case STATE_V2_CREATE_I0:
 		if (st->st_pfs_group == NULL) {
-			request_nonce(what, st,
-				      ikev2_crypto_continue);
+			request_nonce("Child Initiator nonce ni",
+				      st, ikev2_crypto_continue);
 		} else {
-			request_ke_and_nonce(what, st,
-					     st->st_pfs_group,
+			request_ke_and_nonce("Child Initiator KE and nonce ni",
+					     st, st->st_pfs_group,
 					     ikev2_crypto_continue);
 		}
 		return STF_SUSPEND;
@@ -491,7 +469,7 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		return STF_SUSPEND;
 
 	default:
-		return STF_OK;
+		bad_case(st->st_state);
 	}
 }
 
