@@ -1704,7 +1704,7 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct proposal_info *info,
 								enum ikev2_sec_proto_id protoid,
 								struct ikev2_proposals *proposals,
-								const struct oakley_group_desc *dh)
+								const struct oakley_group_desc *default_dh)
 {
 	/*
 	 * Both initialize and empty this proposal (might
@@ -1752,8 +1752,15 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 
 	/*
 	 * DH.
+	 *
+	 * DEFAULT_DH==UNSET_DH signals that DH should be excluded (as
+	 * happens during the AUTH exchange).  Otherwise use either
+	 * the proposed or default DH.
 	 */
-	/* const struct oakley_group_desc *dh = info->dh; */
+	const struct oakley_group_desc *dh =
+		default_dh == &unset_group ? NULL
+		: info->dh != NULL ? info->dh
+		: default_dh;
 	if (dh != NULL) {
 		append_transform(proposal, IKEv2_TRANS_TYPE_DH,
 				 dh->common.id[IKEv2_ALG_ID], 0);
@@ -1925,7 +1932,7 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 		passert(proposals->roof < proposals_roof);
 		struct ikev2_proposal *proposal =
 			ikev2_proposal_from_proposal_info(ike_info, IKEv2_SEC_PROTO_IKE,
-							  proposals, ike_info->dh);
+							  proposals, NULL);
 		if (proposal != NULL) {
 			DBG(DBG_CONTROL,
 			    DBG_log_ikev2_proposal("... ", proposal));
@@ -2027,18 +2034,10 @@ static void add_esn_transforms(struct ikev2_proposal *proposal, lset_t policy)
 	}
 }
 
-static void add_pfs_group_to_proposal(struct ikev2_proposal *proposal,
-		const struct oakley_group_desc *pfs_group)
-{
-	if (pfs_group != NULL)
-		append_transform(proposal, IKEv2_TRANS_TYPE_DH, pfs_group->group, 0);
-}
-
 void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 				       struct alg_info_esp *alg_info_esp,
 				       lset_t policy,
-				       const struct oakley_group_desc
-						*pfs_group,
+				       const struct oakley_group_desc *default_dh,
 				       struct ikev2_proposals **result)
 {
 	if (*result != NULL) {
@@ -2079,7 +2078,15 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 		struct ikev2_proposal *proposal;
 		FOR_EACH_PROPOSAL(propnum, proposal, proposals) {
 			add_esn_transforms(proposal, policy);
-			add_pfs_group_to_proposal(proposal, pfs_group);
+		}
+		if (default_dh != NULL && default_dh != &unset_group) {
+			DBGF(DBG_CONTROL, "adding dh %s to default proposals",
+			     default_dh->common.name);
+			FOR_EACH_PROPOSAL(propnum, proposal, proposals) {
+				append_transform(proposal,
+						 IKEv2_TRANS_TYPE_DH,
+						 default_dh->group, 0);
+			}
 		}
 		*result = proposals;
 
@@ -2092,9 +2099,16 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 		return;
 	}
 
-	DBG(DBG_CONTROL, DBG_log("constructing ESP/AH proposals %sfor %s",
-				(pfs_group == NULL) ? "": "with pfsgroup ",
-				what));
+	if (default_dh == NULL) {
+		DBGF(DBG_CONTROL, "constructing ESP/AH proposals with no default DH for %s",
+		     what);
+	} else if (default_dh == &unset_group) {
+		DBGF(DBG_CONTROL, "constructing ESP/AH proposals with all DH removed for %s",
+		     what);
+	} else {
+		DBGF(DBG_CONTROL, "constructing ESP/AH proposals with default DH %s for %s",
+		     default_dh->common.name, what);
+	}
 
 	struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals, "proposals");
 	int proposals_roof = alg_info_esp->ai.alg_info_cnt + 1;
@@ -2127,7 +2141,7 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 		passert(proposals->roof < proposals_roof);
 		struct ikev2_proposal *proposal =
 			ikev2_proposal_from_proposal_info(esp_info, protoid,
-							  proposals, pfs_group);
+							  proposals, default_dh);
 		if (proposal != NULL) {
 			add_esn_transforms(proposal, policy);
 

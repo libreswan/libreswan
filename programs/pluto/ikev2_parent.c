@@ -3464,10 +3464,16 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
 			 sizeof(proto_info->our_spi));
 
+		/*
+		 * UNSET_GROUP means strip DH from the proposal. A
+		 * CHILD_SA established during an AUTH exchange does
+		 * not propose DH - the IKE SA's SKEYSEED is always
+		 * used.
+		 */
 		free_ikev2_proposals(&cc->esp_or_ah_proposals);
 		ikev2_proposals_from_alg_info_esp(cc->name, "initiator",
 						  cc->alg_info_esp,
-						  cc->policy, NULL, /* pfs=no */
+						  cc->policy, &unset_group,
 						  &cc->esp_or_ah_proposals);
 		passert(cc->esp_or_ah_proposals != NULL);
 
@@ -4334,66 +4340,44 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 	}
 }
 
-static void ikev2_child_set_pfs(struct state *st)
-{
-	struct connection *c = st->st_connection;
-
-	if ((c->policy & POLICY_PFS) != LEMPTY) {
-		/*
-		 * Get the DH algorthm specified for the child (ESP or
-		 * AH).
-		 *
-		 * If this is NULL and PFS is required then callers
-		 * fall back to using the parent's DH algorithm.
-		 */
-		st->st_pfs_group = c->alg_info_esp != NULL ? c->alg_info_esp->esp_pfsgroup : NULL;
-		if (st->st_pfs_group == NULL) {
-			struct state *pst = state_with_serialno(st->st_clonedfrom);
-			st->st_pfs_group = pst->st_oakley.ta_dh;
-			DBG(DBG_CONTROL,
-			    DBG_log("#%lu no phase2 MODP group specified on this connection %s use seletected IKE MODP group %s from #%lu",
-				    st->st_serialno,
-				    c->name,
-				    st->st_pfs_group->common.name,
-				    pst->st_serialno));
-		}
-	}
-}
-
 stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 		bool expect_accepted)
 {
 	struct state *st = md->st;
+	struct ike_sa *ike = ike_sa(st);
 	struct connection *c = st->st_connection;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	enum isakmp_xchg_types isa_xchg = md->hdr.isa_xchg;
 	struct ipsec_proto_info *proto_info = ikev2_esp_or_ah_proto_info(st,
 			c->policy);
 	stf_status ret;
-	char *what;
 
+	char *what;
+	const struct oakley_group_desc *default_dh;
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
 		if (st->st_state == STATE_V2_CREATE_I) {
 			what = "ESP/AH initiator Child";
 		} else {
-			ikev2_child_set_pfs(st);
 			what = "ESP/AH responder Child";
 		}
+		default_dh = (c->policy & POLICY_PFS) != LEMPTY ? ike->sa.st_oakley.ta_dh : NULL;
 	} else {
 		what = "ESP/AH responder AUTH Child";
+		default_dh = &unset_group; /* no DH */
 	}
+
 	if (!expect_accepted) {
 		/* preparing to initiate or parse a request flush old ones */
 		free_ikev2_proposals(&c->esp_or_ah_proposals);
 	}
 
 	ikev2_proposals_from_alg_info_esp(c->name, what,
-			c->alg_info_esp,
-			c->policy,
-			st->st_pfs_group,
-			&c->esp_or_ah_proposals);
-
+					  c->alg_info_esp,
+					  c->policy,
+					  default_dh,
+					  &c->esp_or_ah_proposals);
 	passert(c->esp_or_ah_proposals != NULL);
+	st->st_pfs_group = ikev2_proposals_first_dh(c->esp_or_ah_proposals);
 
 	ret = ikev2_process_sa_payload(what,
 			&sa_pd->pbs,
@@ -5074,12 +5058,6 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 	setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
 			sizeof(proto_info->our_spi));
 
-	ikev2_proposals_from_alg_info_esp(cc->name, "initiator",
-			cc->alg_info_esp,
-			cc->policy, cst->st_pfs_group,
-			&cc->esp_or_ah_proposals);
-	passert(cc->esp_or_ah_proposals != NULL);
-
 	ikev2_emit_sa_proposals(outpbs, cc->esp_or_ah_proposals,
 			&local_spi, np);
 
@@ -5468,7 +5446,6 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 	if (st->st_state == STATE_V2_REKEY_IKE_R) {
 		ret = ikev2_child_add_ike_payloads(md, &e_pbs_cipher);
 	} else if (st->st_state == STATE_V2_CREATE_I0) {
-		free_ikev2_proposals(&st->st_connection->esp_or_ah_proposals);
 		ret = ikev2_child_add_ipsec_payloads(md, &e_pbs_cipher,
 				ISAKMP_v2_CREATE_CHILD_SA);
 	} else  {
@@ -6640,9 +6617,22 @@ void ikev2_initiate_child_sa(int whack_sock, struct ike_sa *ike,
 
 	passert(st->st_connection != NULL);
 
-	st->st_pfs_group = NULL;
-	if ((policy & POLICY_PFS) != LEMPTY)
-		ikev2_child_set_pfs(st);
+	/*
+	 * Because the proposal generated during AUTH won't contan DH,
+	 * always force the proposal to be re-generated here.  Not the
+	 * most efficient, fix probably means moving the proposals to
+	 * the state object.
+	 */
+	free_ikev2_proposals(&c->esp_or_ah_proposals);
+
+	const struct oakley_group_desc *default_dh =
+		((c->policy & POLICY_PFS) != LEMPTY) ? ike->sa.st_oakley.ta_dh : NULL;
+	ikev2_proposals_from_alg_info_esp(c->name, "initiator",
+					  c->alg_info_esp,
+					  c->policy, default_dh,
+					  &c->esp_or_ah_proposals);
+	passert(c->esp_or_ah_proposals != NULL);
+	st->st_pfs_group = ikev2_proposals_first_dh(c->esp_or_ah_proposals);
 
 	DBG(DBG_CONTROLMORE, {
 		const char *pfsgroupname = st->st_pfs_group == NULL ?

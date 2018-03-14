@@ -113,8 +113,7 @@ void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
 void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 				       struct alg_info_esp *alg_info_esp,
 				       lset_t policy,
-				       const struct oakley_group_desc
-						*pfs_group,
+				       const struct oakley_group_desc *default_dh,
 				       struct ikev2_proposals **proposals);
 
 bool ikev2_emit_sa_proposal(pb_stream *pbs,
