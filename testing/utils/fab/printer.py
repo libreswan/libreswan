@@ -86,10 +86,12 @@ class JsonBuilder:
 
 class TextBuilder:
     def __init__(self, stream=sys.stdout):
+        self.eol = False
         self.sep = ""
         self.stream = stream
     def prefix(self, key, value):
         self.stream.write(value)
+        self.eol = True
     def add(self, *keyval, string=lambda s, sep: s and sep + str(s) or ""):
         # default is to print value as a string when it is "not
         # false".
@@ -97,10 +99,13 @@ class TextBuilder:
         value = keyval[-1]
         self.stream.write(string(value, self.sep))
         self.sep = " "
+        self.eol = True
     def flush(self):
-        self.stream.write("\n")
+        if self.eol:
+            self.stream.write("\n")
         self.stream.flush()
         self.sep = ""
+        self.eol = False
 
 
 def build_result(logger, result, baseline, args, what_to_print, b):
