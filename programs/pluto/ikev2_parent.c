@@ -4396,39 +4396,32 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 
 	passert(st->st_accepted_esp_or_ah_proposal != NULL);
 
-	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA && st->st_pfs_group != NULL) {
-		struct trans_attrs accepted_oakley;
-
-		if (!ikev2_proposal_to_trans_attrs(st->st_accepted_esp_or_ah_proposal,
-					&accepted_oakley)) {
-			loglog(RC_LOG_SERIOUS, "%s responder accepted an unsupported algorithm", what);
-			ret = STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-		}
-
-		/* ESP/AH use use IKE negotiated PRF */
-		accepted_oakley.ta_prf = st->st_oakley.ta_prf;
-		st->st_oakley = accepted_oakley;
-
-		if (!ikev2_proposal_to_trans_attrs(st->st_accepted_esp_or_ah_proposal,
-					&accepted_oakley)) {
-			loglog(RC_LOG_SERIOUS, "%s responder accepted an unsupported algorithm", what);
-			ret = STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-		}
-	}
-
 	DBG(DBG_CONTROL, DBG_log_ikev2_proposal(what, st->st_accepted_esp_or_ah_proposal));
 	if (!ikev2_proposal_to_proto_info(st->st_accepted_esp_or_ah_proposal, proto_info)) {
 		loglog(RC_LOG_SERIOUS, "%s proposed/accepted a proposal we don't actually support!", what);
 		ret =  STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 	}
 
-	if (ret != STF_OK) {
-		/*
-		 * leave it on st for reporting or clean?
-		 * it will get freed with st object
-		 * free_ikev2_proposal(&st->st_accepted_esp_or_ah_proposal);
-		 */
+	/*
+	 * Update the state's st_oakley parameters from the proposal,
+	 * but retain the previous PRF.  A CHILD_SA always uses the
+	 * PRF negotiated when creating initial IKE SA.
+	 *
+	 * XXX: The mystery is, why is .st_oakley even being updated?
+	 * Perhaps it is to prop up code getting the CHILD_SA's PRF
+	 * from the child when that code should use the CHILD_SA's IKE
+	 * SA; or perhaps it is getting things ready for an IKE SA
+	 * re-key?
+	 */
+	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA && st->st_pfs_group != NULL) {
+		DBGF(DBG_CONTROLMORE, "updating #%lu's .st_oakley with preserved PRF, but why update?",
+			st->st_serialno);
+		struct trans_attrs accepted_oakley = proto_info->attrs.transattrs;
+		pexpect(accepted_oakley.ta_prf == NULL);
+		accepted_oakley.ta_prf = st->st_oakley.ta_prf;
+		st->st_oakley = accepted_oakley;
 	}
+
 	return ret;
 }
 
