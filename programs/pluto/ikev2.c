@@ -845,7 +845,21 @@ static void ikev2_log_payload_errors(struct state *st, struct msg_digest *md,
 	}
 
 	LSWLOG_LOG_WHACK(RC_LOG_SERIOUS, buf) {
-		lswlogs(buf, "Dropping message with payload errors");
+		const enum isakmp_xchg_types ix = md->hdr.isa_xchg;
+		lswlogs(buf, "dropping unexpected ");
+		lswlog_enum_short(buf, &ikev2_exchange_names, ix);
+		lswlogs(buf, " message");
+		/* we want to print and log the first notify payload */
+		struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N];
+		if (ntfy != NULL) {
+			lswlogs(buf, " containing ");
+			lswlog_enum_short(buf, &ikev2_notify_names,
+					  ntfy->payload.v2n.isan_type);
+			if (ntfy->next != NULL) {
+				lswlogs(buf, "...");
+			}
+			lswlogs(buf, " notification");
+		}
 		if (md->message_payloads.parsed) {
 			lswlogf(buf, "; message payloads: ");
 			lswlog_enum_lset_short(buf, &ikev2_payload_names, ",",
@@ -1714,21 +1728,16 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 
 	DBG(DBG_CONTROL, DBG_log("selected state microcode %s", svm->story));
 
+	/* no useful state microcode entry? */
 	if (svm->state == STATE_IKEv2_ROOF) {
 		DBG(DBG_CONTROL, DBG_log("no useful state microcode entry found"));
-		/* no useful state microcode entry */
+		/* count all the error notifications */
+		for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N];
+		     ntfy != NULL; ntfy = ntfy->next) {
+			pstats(ikev2_recv_notifies_e, ntfy->payload.v2n.isan_type);
+		}
 		if (message_payload_status.bad) {
-			struct payload_digest *ntfy;
-
 			ikev2_log_payload_errors(st, md, &message_payload_status);
-
-			/* we want to print and log the first notify payload */
-			ntfy = md->chain[ISAKMP_NEXT_v2N];
-			if (ntfy != NULL) {
-				loglog(RC_LOG_SERIOUS, "Received %s notify",
-				       enum_name(&ikev2_notify_names, ntfy->payload.v2n.isan_type));
-				pstats(ikev2_recv_notifies_e, ntfy->payload.v2n.isan_type);
-			}
 			complete_v2_state_transition(mdp, STF_FAIL + v2N_INVALID_SYNTAX);
 		} else if (encrypted_payload_status.bad) {
 			ikev2_log_payload_errors(st, md, &encrypted_payload_status);
