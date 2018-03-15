@@ -4,8 +4,8 @@
 	ERROR: String ended with invalid char, just after ""
 [esp=aes]
 	AES_CBC-HMAC_SHA1_96
-[esp=aes]
-	AES_CBC-HMAC_SHA1_96
+[esp=aes;modp2048]
+	AES_CBC-HMAC_SHA1_96-MODP2048
 [esp=aes-sha1]
 	AES_CBC-HMAC_SHA1_96
 [esp=aes-sha1]
@@ -291,6 +291,8 @@
 	HMAC_MD5_96
 [ah=sha]
 	HMAC_SHA1_96
+[ah=sha;modp2048]
+	HMAC_SHA1_96-MODP2048
 [ah=sha1]
 	HMAC_SHA1_96
 [ah=sha2]
@@ -352,6 +354,10 @@
 	3DES_CBC-HMAC_SHA1-MODP1536
 [ike=3des-sha1;modp1536]
 	3DES_CBC-HMAC_SHA1-MODP1536
+[ike=3des;dh21]
+	3DES_CBC-HMAC_SHA2_256-DH21
+	3DES_CBC-HMAC_SHA2_512-DH21
+	3DES_CBC-HMAC_SHA1-DH21
 [ike=3des-sha1;dh21]
 	3DES_CBC-HMAC_SHA1-DH21
 [ike=3des-sha1-ecp_521]
