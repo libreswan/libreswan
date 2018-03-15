@@ -590,6 +590,16 @@ void libreswan_bad_case(long n, const char *string, const char *func,
 #define bad_case(N)							\
 	libreswan_bad_case((N), #N, __func__, PASSERT_BASENAME, __LINE__)
 
+#define impaired_passert(BEHAVIOUR, ASSERTION) {			\
+		if (IMPAIR(BEHAVIOUR)) {				\
+			bool assertion_ = ASSERTION;			\
+			if (!assertion_) {				\
+				libreswan_log("IMPAIRED: assertion '%s' failed", #ASSERTION); \
+			}						\
+		} else {						\
+			passert(ASSERTION);				\
+		}							\
+	}
 
 /*
  * Wrap <message> in a prefix and suffix where the suffix contains
