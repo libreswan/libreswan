@@ -34,22 +34,23 @@
 #include "ike_alg_aes.h"
 #include "ike_alg_sha1.h"
 
-static bool ah_proposal_ok(const struct proposal_info *proposal,
-			   char *err_buf, size_t err_buf_len)
+static bool ah_proposal_ok(const struct proposal_parser *parser,
+			   const struct proposal_info *proposal)
 {
-	passert(proposal->encrypt == NULL);
-	passert(proposal->prf == NULL);
-	passert(proposal->integ != NULL);
-
-	if (DBGP(IMPAIR_ALLOW_NULL_NULL))
-		return true;
+	impaired_passert(PROPOSAL_PARSER, proposal->encrypt == NULL);
+	impaired_passert(PROPOSAL_PARSER, proposal->prf == NULL);
+	impaired_passert(PROPOSAL_PARSER, proposal->integ != NULL);
 
 	/* ah=null is invalid */
-	if (proposal->integ == &ike_alg_integ_none) {
-		snprintf(err_buf, err_buf_len,
+	if (!IMPAIR(ALLOW_NULL_NULL) &&
+	    proposal->integ == &ike_alg_integ_none) {
+		snprintf(parser->err_buf, parser->err_buf_len,
 			 "AH cannot have 'none' as the integrity algorithm");
-		return false;
+		if (!impair_proposal_errors(parser)) {
+			return false;
+		}
 	}
+
 	return true;
 }
 

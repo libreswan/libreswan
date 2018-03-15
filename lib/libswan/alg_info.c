@@ -394,8 +394,7 @@ static bool add_proposal(const struct proposal_parser *parser,
 	}
 
 	/* back end? */
-	if (!proposal->protocol->proposal_ok(proposal, parser->err_buf,
-					     parser->err_buf_len)) {
+	if (!proposal->protocol->proposal_ok(parser, proposal)) {
 		return false;
 	}
 
@@ -564,6 +563,7 @@ static bool parser_alg_info_add(struct parser_context *p_ctx,
 				char *err_buf, size_t err_buf_len,
 				struct alg_info *alg_info)
 {
+	const struct proposal_parser *parser = p_ctx->parser;
 	DBG(DBG_PROPOSAL_PARSER,
 	    DBG_log("add ealg_buf='%s' eklen_buf='%s' aalg_buf='%s' modp_buf='%s'",
 		    p_ctx->ealg_buf,
@@ -673,8 +673,11 @@ static bool parser_alg_info_add(struct parser_context *p_ctx,
 		return false;
 	}
 
-	return merge_default_proposals(p_ctx->parser,
-				       alg_info, &proposal);
+	if (IMPAIR(PROPOSAL_PARSER)) {
+		return add_proposal(parser, alg_info, &proposal);
+	} else {
+		return merge_default_proposals(parser, alg_info, &proposal);
+	}
 }
 
 
@@ -750,15 +753,19 @@ struct proposal_parser proposal_parser(const struct proposal_policy *policy,
 	return parser;
 }
 
-bool proposal_aead_none_ok(const struct proposal_info *proposal,
-			   char *err_buf, size_t err_buf_len)
+bool proposal_aead_none_ok(const struct proposal_parser *parser,
+			   const struct proposal_info *proposal)
 {
+	if (IMPAIR(ALLOW_NULL_NULL)) {
+		return true;
+	}
+
 	if (proposal->encrypt != NULL && ike_alg_is_aead(proposal->encrypt)
 	    && proposal->integ != NULL && proposal->integ != &ike_alg_integ_none) {
 		/*
 		 * For instance, esp=aes_gcm-sha1" is invalid.
 		 */
-		snprintf(err_buf, err_buf_len,
+		snprintf(parser->err_buf, parser->err_buf_len,
 			 "AEAD %s encryption algorithm '%s' must have 'none' as the integrity algorithm",
 			 proposal->protocol->name,
 			 proposal->encrypt->common.name);
@@ -770,12 +777,13 @@ bool proposal_aead_none_ok(const struct proposal_info *proposal,
 		/*
 		 * For instance, esp=aes_cbc-none" is invalid.
 		 */
-		snprintf(err_buf, err_buf_len,
+		snprintf(parser->err_buf, parser->err_buf_len,
 			 "non-AEAD %s encryption algorithm '%s' cannot have 'none' as the integrity algorithm",
 			 proposal->protocol->name,
 			 proposal->encrypt->common.name);
 		return false;
 	}
+
 	return true;
 }
 

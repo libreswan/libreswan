@@ -84,8 +84,8 @@ struct proposal_protocol {
 	 * This is the final check, if this succeeds then the proposal
 	 * is added.
 	 */
-	bool (*proposal_ok)(const struct proposal_info *proposal,
-			    char *err_buf, size_t err_buf_len);
+	bool (*proposal_ok)(const struct proposal_parser *parser,
+			    const struct proposal_info *proposal);
 
 	/*
 	 * XXX: Is the proto-id needed?  Parser should be protocol
@@ -224,12 +224,18 @@ bool alg_info_parse_str(const struct proposal_parser *parser,
 /*
  * Check that encrypt==AEAD and/or integ==none don't contradict.
  */
-bool proposal_aead_none_ok(const struct proposal_info *proposal,
-			   char *err_buf, size_t err_buf_len);
+bool proposal_aead_none_ok(const struct proposal_parser *parser,
+			   const struct proposal_info *proposal);
 
 bool alg_info_discover_pfsgroup_hack(const struct proposal_parser *parser,
 				     struct alg_info_esp *aie,
 				     const char *alg_str);
+
+#if 0
+/* return true if it really is an error (when impaired return false) */
+bool proposal_error(const struct proposal_parser *parser,
+		    const char *message, ...) PRINTF_LIKE(2);
+#endif
 
 bool impair_proposal_errors(const struct proposal_parser *parser);
 

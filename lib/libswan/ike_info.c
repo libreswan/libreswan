@@ -31,17 +31,18 @@
 #include "ike_alg_null.h"
 #include "alg_info.h"
 
-static bool ike_proposal_ok(const struct proposal_info *proposal,
-			    char *err_buf, size_t err_buf_len)
+static bool ike_proposal_ok(const struct proposal_parser *parser,
+			    const struct proposal_info *proposal)
 {
-	if (!DBGP(IMPAIR_ALLOW_NULL_NULL) &&
-	    !proposal_aead_none_ok(proposal, err_buf, err_buf_len)) {
-		return false;
+	if (!proposal_aead_none_ok(parser, proposal)) {
+		if (!impair_proposal_errors(parser)) {
+			return false;
+		}
 	}
 
-	passert(proposal->encrypt != NULL);
-	passert(proposal->prf != NULL);
-	passert(proposal->integ != NULL);
+	impaired_passert(PROPOSAL_PARSER, proposal->encrypt != NULL);
+	impaired_passert(PROPOSAL_PARSER, proposal->prf != NULL);
+	impaired_passert(PROPOSAL_PARSER, proposal->integ != NULL);
 
 	/*
 	 * Check that the ALG_INFO spec is implemented.
