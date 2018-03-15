@@ -68,7 +68,6 @@ extern void ikev2_child_send_next(struct state *st);
  * them to the state machine?
  */
 extern const struct state_v2_microcode ikev2_rekey_child_initiate_microcode;
-extern const struct state_v2_microcode ikev2_child_sa_initiate_microcode;
 
 extern v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
 		const char *name);
@@ -260,7 +259,7 @@ struct ikev2_expected_payloads {
 };
 
 struct state_v2_microcode {
-	const char *const story;
+	const char *const story;	/* state transition story (not state_story[]) */
 	enum state_kind state, next_state;
 	enum isakmp_xchg_types recv_type;
 	lset_t flags;

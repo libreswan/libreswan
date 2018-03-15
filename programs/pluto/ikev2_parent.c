@@ -292,7 +292,7 @@ static struct msg_digest *fake_md(struct state *st)
 		break;
 
 	case STATE_V2_CREATE_I0:
-		fake_md->svm = &ikev2_child_sa_initiate_microcode;
+		fake_md->svm = finite_states[STATE_V2_CREATE_I0]->fs_microcode;
 		break;
 
 	default:

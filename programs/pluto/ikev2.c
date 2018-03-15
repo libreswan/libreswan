@@ -259,6 +259,8 @@ static const lset_t repeatable_payloads = P(N) | P(D) | P(CP) | P(V) | P(CERT) |
 /*
  * microcode to parent first initiator state: not associated with an
  * input packet
+ *
+ * Is this reachable?
  */
 
 const struct state_v2_microcode ikev2_rekey_child_initiate_microcode =
@@ -273,7 +275,19 @@ const struct state_v2_microcode ikev2_rekey_child_initiate_microcode =
 	  .crypto_end = ikev2_parent_outI1_tail,
 	  .timeout_event = EVENT_v2_RETRANSMIT, };
 
-const struct state_v2_microcode ikev2_child_sa_initiate_microcode =
+/*
+ * IKEv2 State transitions (aka microcodes).
+ *
+ * This table contains all possible state transitions, some of which
+ * involve a message.
+ *
+ * During initialization this table parsed populating the
+ * corresponding IKEv2 finite states.  While not the most efficient,
+ * it seems to work.
+ */
+
+static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
+
 	/* no state:   --> CREATE IPsec Child Request
 	 * HDR, SAi1, {KEi,} Ni TSi TSr -->
 	 */
@@ -283,14 +297,7 @@ const struct state_v2_microcode ikev2_child_sa_initiate_microcode =
 	  .flags =      SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
 	  .processor  = NULL,
 	  .crypto_end = ikev2_child_out_cont,
-	  .timeout_event = EVENT_v2_RETRANSMIT, };
-
-/*
- * microcodes (aka state transitions), some are not associated with a
- * packet.
- */
-
-static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
+	  .timeout_event = EVENT_v2_RETRANSMIT, },
 
 	/* no state:   --> I1
 	 * HDR, SAi1, KEi, Ni -->
