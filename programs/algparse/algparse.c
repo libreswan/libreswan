@@ -285,16 +285,19 @@ static void test(const struct proposal_policy policy)
 
 	/* ESP tests that should fail */
 
-	esp(policy, false, "3des168-sha1"); /* should get rejected */
-	esp(policy, false, "3des-null"); /* should get rejected */
-	esp(policy, false, "aes128-null"); /* should get rejected */
-	esp(policy, false, "aes224-sha1"); /* should get rejected */
-	esp(policy, false, "aes512-sha1"); /* should get rejected */
-	esp(policy, false, "aes-sha1555"); /* should get rejected */
-	esp(policy, false, "camellia666-sha1"); /* should get rejected */
+	esp(policy, impair, "3des168-sha1"); /* wrong keylen */
+	esp(policy, impair, "3des-null"); /* non-null integ */
+	esp(policy, impair, "aes128-null"); /* non-null-integ */
+	esp(policy, impair, "aes224-sha1"); /* wrong keylen */
+	esp(policy, impair, "aes-224-sha1"); /* wrong keylen */
+	esp(policy, false, "aes0-sha1"); /* wrong keylen */
+	esp(policy, false, "aes-0-sha1"); /* wrong keylen */
+	esp(policy, impair, "aes512-sha1"); /* wrong keylen */
+	esp(policy, false, "aes-sha1555"); /* unknown integ */
+	esp(policy, impair, "camellia666-sha1"); /* wrong keylen */
 	esp(policy, false, "blowfish"); /* obsoleted */
 	esp(policy, false, "des-sha1"); /* obsoleted */
-	esp(policy, false, "aes_ctr666"); /* bad key size */
+	esp(policy, impair, "aes_ctr666"); /* bad key size */
 	esp(policy, false, "aes128-sha2_128"); /* _128 does not exist */
 	esp(policy, false, "aes256-sha2_256-4096"); /* double keysize */
 	esp(policy, false, "aes256-sha2_256-128"); /* now what?? */
@@ -303,9 +306,9 @@ static void test(const struct proposal_policy policy)
 	esp(policy, false, "aes-sah1"); /* should get rejected */
 	esp(policy, false, "id3"); /* should be rejected; idXXX removed */
 	esp(policy, false, "aes-id3"); /* should be rejected; idXXX removed */
-	esp(policy, false, "aes_gcm-md5"); /* AEAD must have auth null */
+	esp(policy, impair, "aes_gcm-md5"); /* AEAD must have auth null */
 	esp(policy, false, "mars"); /* support removed */
-	esp(policy, false, "aes_gcm-16"); /* don't parse as aes_gcm_16 */
+	esp(policy, impair, "aes_gcm-16"); /* don't parse as aes_gcm_16 */
 	esp(policy, false, "aes_gcm-0"); /* invalid keylen */
 	esp(policy, false, "aes_gcm-123456789012345"); /* huge keylen */
 	esp(policy, false, "3des-sha1;dh22"); /* support for dh22 removed */
@@ -321,12 +324,6 @@ static void test(const struct proposal_policy policy)
 
 	esp(policy, false, "3des-sha1;modp8192,3des-sha1-modp8192"); /* ;DH must be last when dup */
 	esp(policy, false, "3des-sha1;modp8192,3des-sha1;modp8192"); /* ;DH must be last when dup */
-
-#if 0
-	esp(policy, false, "3des-sha1-modp8192-sha2");
-	esp(policy, false, "aes-128-sha1-modp8192-sha0");
-	esp(policy, false, "1-2-3-4-5-6-7-9-0");
-#endif
 
 	/*
 	 * ah=
@@ -351,21 +348,15 @@ static void test(const struct proposal_policy policy)
 
 	/* AH tests that should fail */
 
-	ah(policy, false, "aes-sha1");
+	ah(policy, impair, "aes-sha1");
 	ah(policy, false, "vanityhash1");
-	ah(policy, false, "aes_gcm_c-256");
+	ah(policy, impair, "aes_gcm_c-256");
 	ah(policy, false, "id3"); /* should be rejected; idXXX removed */
-	ah(policy, false, "3des");
-	ah(policy, false, "null");
-	ah(policy, false, "aes_gcm");
-	ah(policy, false, "aes_ccm");
+	ah(policy, impair, "3des");
+	ah(policy, impair, "null");
+	ah(policy, impair, "aes_gcm");
+	ah(policy, impair, "aes_ccm");
 	ah(policy, false, "ripemd"); /* support removed */
-
-#if 0
-	ah(policy, false, "sha1-modp8192-sha2");
-	ah(policy, false, "sha1-modp8192-sha0");
-	ah(policy, false, "1-2-3-4-5-6-7-9-0");
-#endif
 
 	/*
 	 * ike=
@@ -378,6 +369,9 @@ static void test(const struct proposal_policy policy)
 	ike(policy, true, "3des-sha1");
 	ike(policy, true, "3des-sha1");
 	ike(policy, !fips, "3des-sha1;modp1536");
+#if 0
+	ike(policy, true, "3des;dh21");
+#endif
 	ike(policy, true, "3des-sha1;dh21");
 	ike(policy, true, "3des-sha1-ecp_521");
 	ike(policy, !ikev1, "aes_gcm");
@@ -388,12 +382,6 @@ static void test(const struct proposal_policy policy)
 	ike(policy, false, "id2"); /* should be rejected; idXXX removed */
 	ike(policy, false, "3des-id2"); /* should be rejected; idXXX removed */
 	ike(policy, false, "aes_ccm"); /* ESP/AH only */
-
-#if 0
-	ike(policy, false, "aes-128-sha1-sha2-modp8192");
-	ike(policy, false, "aes-128-sha1-sha2-modp8192-sha0");
-	ike(policy, false, "1-2-3-4-5-6-7-9-0");
-#endif
 }
 
 static void usage(void)

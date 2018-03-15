@@ -130,7 +130,9 @@ const struct ike_alg *encrypt_alg_byname(const struct proposal_parser *parser,
 				 "%s does not take variable key lengths",
 				 enum_short_name(&ikev2_trans_type_encr_names,
 						 encrypt->common.id[IKEv2_ALG_ID]));
-			return NULL;
+			if (!impair_proposal_errors(parser)) {
+				return NULL;
+			}
 		}
 		if (!encrypt_has_key_bit_length(encrypt, key_bit_length)) {
 			/*
@@ -140,7 +142,9 @@ const struct ike_alg *encrypt_alg_byname(const struct proposal_parser *parser,
 			 */
 			snprintf(parser->err_buf, parser->err_buf_len,
 				 "wrong encryption key length - key size must be 128 (default), 192 or 256");
-			return NULL;
+			if (!impair_proposal_errors(parser)) {
+				return NULL;
+			}
 		}
 	}
 	return alg;

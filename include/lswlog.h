@@ -594,7 +594,7 @@ void libreswan_bad_case(long n, const char *string, const char *func,
 		if (IMPAIR(BEHAVIOUR)) {				\
 			bool assertion_ = ASSERTION;			\
 			if (!assertion_) {				\
-				libreswan_log("IMPAIRED: assertion '%s' failed", #ASSERTION); \
+				libreswan_log("IMPAIR: assertion '%s' failed", #ASSERTION); \
 			}						\
 		} else {						\
 			passert(ASSERTION);				\

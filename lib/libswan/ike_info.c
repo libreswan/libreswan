@@ -40,28 +40,26 @@ static bool ike_proposal_ok(const struct proposal_parser *parser,
 		}
 	}
 
-	impaired_passert(PROPOSAL_PARSER, proposal->encrypt != NULL);
-	impaired_passert(PROPOSAL_PARSER, proposal->prf != NULL);
-	impaired_passert(PROPOSAL_PARSER, proposal->integ != NULL);
-
 	/*
 	 * Check that the ALG_INFO spec is implemented.
 	 */
-	passert(ike_alg_is_ike(&(proposal->encrypt->common)));
-	passert(proposal->enckeylen == 0 ||
+
+	impaired_passert(PROPOSAL_PARSER, proposal->encrypt != NULL);
+	passert(proposal->encrypt == NULL || ike_alg_is_ike(&(proposal->encrypt->common)));
+	passert(IMPAIR(PROPOSAL_PARSER) || proposal->enckeylen == 0 ||
 		encrypt_has_key_bit_length(proposal->encrypt,
 					   proposal->enckeylen));
-	passert(ike_alg_is_ike(&(proposal->prf->common)));
 
-	/*
-	 * This is a little loose.
-	 */
-	passert(proposal->integ != &ike_alg_integ_none ||
-		ike_alg_is_aead(proposal->encrypt));
+	impaired_passert(PROPOSAL_PARSER, proposal->prf != NULL);
+	passert(proposal->prf == NULL || ike_alg_is_ike(&(proposal->prf->common)));
+
+	impaired_passert(PROPOSAL_PARSER, proposal->integ != NULL);
 	passert(proposal->integ == &ike_alg_integ_none ||
+		proposal->integ == NULL ||
 		ike_alg_is_ike(&proposal->integ->common));
 
-	passert(ike_alg_is_ike(&(proposal->dh->common)));
+	impaired_passert(PROPOSAL_PARSER, proposal->dh != NULL);
+	passert(proposal->dh == NULL || ike_alg_is_ike(&(proposal->dh->common)));
 
 	return true;
 }
