@@ -362,7 +362,7 @@ static void lswlog_chosen_proposal(struct lswlog *buf,
 {
 	lswlogs(buf, "proposal ");
 	print_proposal(buf, best_proposal->propnum, best_proposal);
-	lswlogs(buf, " chosen from: ");
+	lswlogs(buf, " chosen from remote proposals ");
 	lswlogl(buf, proposals);
 }
 
@@ -1135,7 +1135,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 			 * error reason will have already been logged.
 			 */
 			LSWLOG(buf) {
-				lswlogs(buf, "partial list of proposals:");
+				lswlogs(buf, "partial list of remote proposals: ");
 				lswlogl(buf, remote_print_buf);
 			}
 			status = -matching_local_propnum;
@@ -1143,13 +1143,13 @@ stf_status ikev2_process_sa_payload(const char *what,
 			/* no luck */
 			if (expect_accepted) {
 				LSWLOG(buf) {
-					lswlogs(buf, "accepted proposal invalid:");
+					lswlogs(buf, "remote accepted the invalid proposal ");
 					lswlogl(buf, remote_print_buf);
 				}
 				status = STF_FAIL;
 			} else {
 				LSWLOG(buf) {
-					lswlogs(buf, "no proposal chosen from:");
+					lswlogs(buf, "no local proposal matches remote proposals ");
 					lswlogl(buf, remote_print_buf);
 				}
 				status = STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
@@ -1159,9 +1159,8 @@ stf_status ikev2_process_sa_payload(const char *what,
 				pexpect(matching_local_propnum == best_proposal->propnum);
 				/* don't log on initiator's end - redundant */
 				LSWDBGP(DBG_CONTROL, buf) {
-					lswlogs(buf, "proposal ");
+					lswlogs(buf, "remote accepted the proposal ");
 					lswlogl(buf, remote_print_buf);
-					lswlogs(buf, " was accepted");
 				}
 			} else {
 				if (opportunistic) {
@@ -1893,57 +1892,58 @@ static struct ikev2_proposals default_ikev2_ike_proposals = {
  * If alg_info_ike includes unknown algorithms those get dropped,
  * which can lead to no proposals.
  */
-void ikev2_proposals_from_alg_info_ike(const char *name, const char *what,
+void ikev2_proposals_from_alg_info_ike(const char *connection_name,
+				       const char *why,
 				       struct alg_info_ike *alg_info_ike,
 				       struct ikev2_proposals **result)
 {
 	if (*result != NULL) {
-		DBG(DBG_CONTROL, DBG_log("already determined IKE proposals for %s", what));
+		DBGF(DBG_CONTROL, "already determined local IKE proposals for %s (%s)",
+		     connection_name, why);
 		return;
 	}
 
+	const char *notes;
 	if (alg_info_ike == NULL) {
-		DBG(DBG_CONTROL, DBG_log("selecting default IKE proposals for %s", what));
+		DBGF(DBG_CONTROL, "selecting default local IKE proposals for %s (%s)",
+		     connection_name, why);
 		*result = &default_ikev2_ike_proposals;
+		notes = " (default)";
+	} else {
+		DBGF(DBG_CONTROL, "constructing local IKE proposals for %s (%s)",
+		     connection_name, why);
+		struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals, "proposals");
+		int proposals_roof = alg_info_ike->ai.alg_info_cnt + 1;
+		proposals->proposal = alloc_things(struct ikev2_proposal, proposals_roof, "propsal");
+		proposals->on_heap = TRUE;
+		proposals->roof = 1;
 
-		LSWLOG(buf) {
-			lswlogf(buf, "%s IKE proposals for %s: ", name, what);
-			print_proposals(buf, *result);
-			lswlogf(buf, " (default)");
+		FOR_EACH_IKE_INFO(alg_info_ike, ike_info) {
+			LSWDBGP(DBG_CONTROL, buf) {
+				lswlogs(buf, "converting ike_info ");
+				lswlog_proposal_info(buf, ike_info);
+				lswlogs(buf, " to ikev2 ...");
+			}
+
+			passert(proposals->roof < proposals_roof);
+			struct ikev2_proposal *proposal =
+				ikev2_proposal_from_proposal_info(ike_info, IKEv2_SEC_PROTO_IKE,
+								  proposals, NULL);
+			if (proposal != NULL) {
+				DBG(DBG_CONTROL,
+				    DBG_log_ikev2_proposal("... ", proposal));
+				proposals->roof++;
+			}
 		}
-
-		return;
+		*result = proposals;
+		notes = "";
 	}
-
-	DBG(DBG_CONTROL, DBG_log("constructing IKE proposals for %s", what));
-	struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals, "proposals");
-	int proposals_roof = alg_info_ike->ai.alg_info_cnt + 1;
-	proposals->proposal = alloc_things(struct ikev2_proposal, proposals_roof, "propsal");
-	proposals->on_heap = TRUE;
-	proposals->roof = 1;
-
-	FOR_EACH_IKE_INFO(alg_info_ike, ike_info) {
-		LSWDBGP(DBG_CONTROL, buf) {
-			lswlogs(buf, "converting ike_info ");
-			lswlog_proposal_info(buf, ike_info);
-			lswlogs(buf, " to ikev2 ...");
-		}
-
-		passert(proposals->roof < proposals_roof);
-		struct ikev2_proposal *proposal =
-			ikev2_proposal_from_proposal_info(ike_info, IKEv2_SEC_PROTO_IKE,
-							  proposals, NULL);
-		if (proposal != NULL) {
-			DBG(DBG_CONTROL,
-			    DBG_log_ikev2_proposal("... ", proposal));
-			proposals->roof++;
-		}
-	}
-	*result = proposals;
 
 	LSWLOG(buf) {
-		lswlogf(buf, "%s IKE proposals for %s: ", name, what);
+		lswlogf(buf, "local IKE proposals for %s (%s): ",
+			connection_name, why);
 		print_proposals(buf, *result);
+		lswlogs(buf, notes);
 	}
 }
 
@@ -2034,19 +2034,23 @@ static void add_esn_transforms(struct ikev2_proposal *proposal, lset_t policy)
 	}
 }
 
-void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
+void ikev2_proposals_from_alg_info_esp(const char *connection_name,
+				       const char *why,
 				       struct alg_info_esp *alg_info_esp,
 				       lset_t policy,
 				       const struct oakley_group_desc *default_dh,
 				       struct ikev2_proposals **result)
 {
 	if (*result != NULL) {
-		DBG(DBG_CONTROL, DBG_log("already determined ESP/AH proposals for %s", what));
+		DBGF(DBG_CONTROL, "already determined local ESP/AH proposals for %s (%s)",
+		     connection_name, why);
 		return;
 	}
 
+	const char *notes;
 	if (alg_info_esp == NULL) {
-		DBG(DBG_CONTROL, DBG_log("selecting default ESP/AH proposals for %s", what));
+		DBGF(DBG_CONTROL, "selecting default local ESP/AH proposals for %s (%s)",
+		     connection_name, why);
 		lset_t esp_ah = policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE);
 		struct ikev2_proposals *default_proposals_missing_esn;
 		switch (esp_ah) {
@@ -2089,77 +2093,73 @@ void ikev2_proposals_from_alg_info_esp(const char *name, const char *what,
 			}
 		}
 		*result = proposals;
-
-		LSWLOG(buf) {
-			lswlogf(buf, "%s ESP/AH proposals for %s: ", name, what);
-			print_proposals(buf, *result);
-			lswlogf(buf, " (default)");
-		}
-
-		return;
-	}
-
-	if (default_dh == NULL) {
-		DBGF(DBG_CONTROL, "constructing ESP/AH proposals with no default DH for %s",
-		     what);
-	} else if (default_dh == &unset_group) {
-		DBGF(DBG_CONTROL, "constructing ESP/AH proposals with all DH removed for %s",
-		     what);
+		notes = " (default)";
 	} else {
-		DBGF(DBG_CONTROL, "constructing ESP/AH proposals with default DH %s for %s",
-		     default_dh->common.name, what);
-	}
 
-	struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals, "proposals");
-	int proposals_roof = alg_info_esp->ai.alg_info_cnt + 1;
-	proposals->proposal = alloc_things(struct ikev2_proposal, proposals_roof, "propsal");
-	proposals->on_heap = TRUE;
-	proposals->roof = 1;
-
-	enum ikev2_sec_proto_id protoid;
-	switch (policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
-	case POLICY_ENCRYPT:
-		protoid = IKEv2_SEC_PROTO_ESP;
-		break;
-	case POLICY_AUTHENTICATE:
-		protoid = IKEv2_SEC_PROTO_AH;
-		break;
-	default:
-		bad_case(policy);
-	}
-
-	FOR_EACH_ESP_INFO(alg_info_esp, esp_info) {
-		LSWDBGP(DBG_CONTROL, log) {
-			lswlogf(log, "converting proposal ");
-			lswlog_proposal_info(log, esp_info);
-			lswlogf(log, " to ikev2 ...");
+		LSWDBGP(DBG_CONTROL, buf) {
+			lswlogs(buf, "constructing ESP/AH proposals with ");
+			if (default_dh == NULL) {
+				lswlogs(buf, "no default DH");
+			} else if (default_dh == &unset_group) {
+				lswlogs(buf, "all DH removed");
+			} else {
+				lswlogf(buf, "default DH %s", default_dh->common.name);
+			}
+			lswlogf(buf, "  for %s (%s)", connection_name, why);
 		}
 
-		/*
-		 * Get the next proposal with the basics filled in.
-		 */
-		passert(proposals->roof < proposals_roof);
-		struct ikev2_proposal *proposal =
-			ikev2_proposal_from_proposal_info(esp_info, protoid,
-							  proposals, default_dh);
-		if (proposal != NULL) {
-			add_esn_transforms(proposal, policy);
+		struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals, "proposals");
+		int proposals_roof = alg_info_esp->ai.alg_info_cnt + 1;
+		proposals->proposal = alloc_things(struct ikev2_proposal, proposals_roof, "propsal");
+		proposals->on_heap = TRUE;
+		proposals->roof = 1;
 
-			DBG(DBG_CONTROL,
-			    DBG_log_ikev2_proposal("... ", proposal));
-			proposals->roof++;
+		enum ikev2_sec_proto_id protoid;
+		switch (policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
+		case POLICY_ENCRYPT:
+			protoid = IKEv2_SEC_PROTO_ESP;
+			break;
+		case POLICY_AUTHENTICATE:
+			protoid = IKEv2_SEC_PROTO_AH;
+			break;
+		default:
+			bad_case(policy);
 		}
-	}
 
-	*result = proposals;
+		FOR_EACH_ESP_INFO(alg_info_esp, esp_info) {
+			LSWDBGP(DBG_CONTROL, log) {
+				lswlogf(log, "converting proposal ");
+				lswlog_proposal_info(log, esp_info);
+				lswlogf(log, " to ikev2 ...");
+			}
+
+			/*
+			 * Get the next proposal with the basics filled in.
+			 */
+			passert(proposals->roof < proposals_roof);
+			struct ikev2_proposal *proposal =
+				ikev2_proposal_from_proposal_info(esp_info, protoid,
+								  proposals, default_dh);
+			if (proposal != NULL) {
+				add_esn_transforms(proposal, policy);
+
+				DBG(DBG_CONTROL,
+				    DBG_log_ikev2_proposal("... ", proposal));
+				proposals->roof++;
+			}
+		}
+
+		*result = proposals;
+		notes = "";
+	}
 
 	LSWLOG(buf) {
-		lswlogf(buf, "%s ESP/AH proposals for %s: ",
-			name, what);
+		lswlogf(buf, "local ESP/AH proposals for %s (%s): ",
+			connection_name, why);
 		print_proposals(buf, *result);
+		lswlogs(buf, notes);
 	}
 }
-
 
 struct ipsec_proto_info *ikev2_esp_or_ah_proto_info(struct state *st, lset_t policy)
 {

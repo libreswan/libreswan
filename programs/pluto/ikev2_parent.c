@@ -764,7 +764,7 @@ void ikev2_parent_outI1(int whack_sock,
 	 * Grab the DH group from the first configured proposal and build KE.
 	 */
 	ikev2_proposals_from_alg_info_ike(c->name,
-					  "initial initiator (selecting KE)",
+					  "IKE SA initiator selecting KE",
 					  c->alg_info_ike,
 					  &c->ike_proposals);
 	passert(c->ike_proposals != NULL);
@@ -905,7 +905,8 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		u_char *sa_start = rbody.cur;
 
 		if (!DBGP(IMPAIR_SEND_IKEv2_KE)) {
-			ikev2_proposals_from_alg_info_ike(c->name, "initial initiator",
+			ikev2_proposals_from_alg_info_ike(c->name,
+							  "IKE SA initiator emitting local proposals",
 							  c->alg_info_ike,
 							  &c->ike_proposals);
 			passert(c->ike_proposals != NULL);
@@ -1264,7 +1265,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	}
 
 	/* Get the proposals ready.  */
-	ikev2_proposals_from_alg_info_ike(c->name, "initial responder",
+	ikev2_proposals_from_alg_info_ike(c->name, "IKE SA responder matching remote proposals",
 					  c->alg_info_ike,
 					  &c->ike_proposals);
 	passert(c->ike_proposals != NULL);
@@ -1785,7 +1786,7 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 			pstats(invalidke_recv_u, st->st_oakley.ta_dh->group);
 
 			ikev2_proposals_from_alg_info_ike(c->name,
-							  "initial initiator (validating suggested KE)",
+							  "IKE SA initiator validating remote's suggested KE",
 							  c->alg_info_ike,
 							  &c->ike_proposals);
 			passert(c->ike_proposals != NULL);
@@ -2009,7 +2010,8 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 		/* SA body in and out */
 		struct payload_digest *const sa_pd =
 			md->chain[ISAKMP_NEXT_v2SA];
-		ikev2_proposals_from_alg_info_ike(c->name, "initial initiator (accepting)",
+		ikev2_proposals_from_alg_info_ike(c->name,
+						  "IKE SA initiator accepting remote proposal",
 						  c->alg_info_ike,
 						  &c->ike_proposals);
 		passert(c->ike_proposals != NULL);
@@ -3471,7 +3473,8 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		 * used.
 		 */
 		free_ikev2_proposals(&cc->esp_or_ah_proposals);
-		ikev2_proposals_from_alg_info_esp(cc->name, "initiator",
+		ikev2_proposals_from_alg_info_esp(cc->name,
+						  "IKE SA initiator emitting ESP/AH proposals",
 						  cc->alg_info_esp,
 						  cc->policy, &unset_group,
 						  &cc->esp_or_ah_proposals);
@@ -4356,13 +4359,13 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 	const struct oakley_group_desc *default_dh;
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
 		if (st->st_state == STATE_V2_CREATE_I) {
-			what = "ESP/AH initiator Child";
+			what = "ESP/AH initiator accepting remote proposal";
 		} else {
-			what = "ESP/AH responder Child";
+			what = "ESP/AH responder matching remote proposals";
 		}
 		default_dh = (c->policy & POLICY_PFS) != LEMPTY ? ike->sa.st_oakley.ta_dh : NULL;
 	} else {
-		what = "ESP/AH responder AUTH Child";
+		what = "IKE SA responder matching remote ESP/AH proposals";
 		default_dh = &unset_group; /* no DH */
 	}
 
@@ -5142,7 +5145,7 @@ static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
 
 		free_ikev2_proposals(&c->ike_proposals);
 		ikev2_proposals_from_alg_info_ike(c->name,
-				"ike rekey initiating child",
+				"IKE SA initiating rekey",
 				c->alg_info_ike,
 				&c->ike_proposals);
 
@@ -5216,9 +5219,9 @@ static notification_t process_ike_rekey_sa_pl(struct msg_digest *md, struct stat
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 
 	/* Get the proposals ready.  */
-	ikev2_proposals_from_alg_info_ike(c->name, "CREATE_CHILD_SA IKE rekey responder",
-						c->alg_info_ike,
-						&c->ike_proposals);
+	ikev2_proposals_from_alg_info_ike(c->name, "IKE SA responding to rekey",
+					  c->alg_info_ike,
+					  &c->ike_proposals);
 	passert(c->ike_proposals != NULL);
 	stf_status ret = ikev2_process_sa_payload("IKE Rekey responder child",
 			&sa_pd->pbs,
@@ -6620,7 +6623,7 @@ void ikev2_initiate_child_sa(int whack_sock, struct ike_sa *ike,
 
 	const struct oakley_group_desc *default_dh =
 		((c->policy & POLICY_PFS) != LEMPTY) ? ike->sa.st_oakley.ta_dh : NULL;
-	ikev2_proposals_from_alg_info_esp(c->name, "initiator",
+	ikev2_proposals_from_alg_info_esp(c->name, "ESP/AH initiator emitting proposals",
 					  c->alg_info_esp,
 					  c->policy, default_dh,
 					  &c->esp_or_ah_proposals);
