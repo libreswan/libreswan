@@ -101,7 +101,7 @@ west #
 west #
  # integ=none excluded
 west #
- grep 'proposal .* chosen from:' /tmp/pluto.log | sed -e 's/SPI=[^;]*/SPI=X/'
+ grep 'proposal .* chosen from' /tmp/pluto.log | sed -e 's/SPI=[^;]*/SPI=X/'
 west #
  # west shows what came back, expect two lines for each of the three
 west #
@@ -109,13 +109,13 @@ west #
 west #
  # excluded
 west #
- grep 'proposal .* was accepted' /tmp/pluto.log
-| proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;DH=MODP2048[first-match] was accepted
-| proposal 1:ESP:ENCR=AES_GCM_C_128;ESN=DISABLED[first-match] was accepted
-| proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;INTEG=NONE;DH=MODP2048[first-match] was accepted
-| proposal 1:ESP:ENCR=AES_GCM_C_128;INTEG=NONE;ESN=DISABLED[first-match] was accepted
-| proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;DH=MODP2048[first-match] was accepted
-| proposal 1:ESP:ENCR=AES_GCM_C_128;ESN=DISABLED[first-match] was accepted
+ grep 'remote accepted' /tmp/pluto.log
+| remote accepted the proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;DH=MODP2048[first-match]
+| remote accepted the proposal 1:ESP:ENCR=AES_GCM_C_128;ESN=DISABLED[first-match]
+| remote accepted the proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;INTEG=NONE;DH=MODP2048[first-match]
+| remote accepted the proposal 1:ESP:ENCR=AES_GCM_C_128;INTEG=NONE;ESN=DISABLED[first-match]
+| remote accepted the proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;DH=MODP2048[first-match]
+| remote accepted the proposal 1:ESP:ENCR=AES_GCM_C_128;ESN=DISABLED[first-match]
 west #
  ../bin/check-for-core.sh
 west #
