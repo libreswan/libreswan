@@ -1480,16 +1480,12 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 	const struct state_v2_microcode *svm;
 	for (svm = v2_state_microcode_table; svm->state != STATE_IKEv2_ROOF;
 	     svm++) {
+		/*
+		 * For CREATE_CHILD_SA exchanges, the from_state is
+		 * ignored.  See further down.
+		 */
 		if (svm->state != from_state->fs_state && ix != ISAKMP_v2_CREATE_CHILD_SA)
 			continue;
-		if (svm->state != from_state->fs_state && ix == ISAKMP_v2_CREATE_CHILD_SA) {
-			/*
-			 * XXX: search should have stopped, log that
-			 * it didn't.  Is this due to a missing state
-			 * transition or what?
-			 */
-			DBG(DBG_CONTROL, DBG_log("forcing state to continue searching fsm because ix is CREATE_CHILD_SA"));
-		}
 		if (svm->recv_type != ix)
 			continue;
 		/*
@@ -1704,6 +1700,25 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			continue;
 		}
 
+		if (svm->state != from_state->fs_state && ix == ISAKMP_v2_CREATE_CHILD_SA) {
+			/*
+			 * The IKE SA is receiving a CREATE_CHILD_SA
+			 * request.  Unlike STATE_PARENT_R0 (and the
+			 * initial responder) the R0 state isn't
+			 * obvious - rekey IKE SA, rekey CHILD SA, and
+			 * create CHILD SA are all slightly different.
+			 *
+			 * The code deals with this by ignoring the
+			 * from_state, and then later, forcing MD's
+			 * from state to values in the table.
+			 */
+			DBGF(DBG_CONTROL,
+			     "state #%lu forced to match CREATE_CHILD_SA from %s->%s by ignoring from state",
+			     st->st_serialno,
+			     enum_short_name(&state_names, svm->state),
+			     enum_short_name(&state_names, svm->next_state));
+		}
+
 		if (ix == ISAKMP_v2_CREATE_CHILD_SA) {
 			/*
 			 * XXX: Can this be moved to outside of the
@@ -1718,6 +1733,9 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			md->st = st;
 			struct state *pst = IS_CHILD_SA(md->st) ?
 				state_with_serialno(md->st->st_clonedfrom) : md->st;
+			DBGF(DBG_CONTROL,
+			     "calling update_ike_endpoints(pst, md) from FSM loop for #%lu (parent #%lul)",
+			     st->st_serialno, pst->st_serialno);
 			/* going to switch to child st. before that update parent */
 			if (!LHAS(pst->hidden_variables.st_nat_traversal, NATED_HOST))
 				update_ike_endpoints(pst, md);
@@ -1774,6 +1792,11 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 			complete_v2_state_transition(mdp, STF_FAIL);
 			return;
 		}
+
+		DBGF(DBG_CONTROL,
+		     "switching from parent? #%lu to child #%lu in FSM processor",
+		     st->st_serialno, cst->st_serialno);
+
 		md->st = st;
 		ikev2_update_msgid_counters(md);
 
