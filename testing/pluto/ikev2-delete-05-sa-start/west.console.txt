@@ -5,14 +5,13 @@ Redirecting to: systemctl start ipsec.service
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
- # ipsec auto --add westnet-eastnet-auto
-west #
  echo "initdone"
 initdone
 west #
- # wait for east to initiate to us
+ # wait for the connection to come up
 west #
- sleep 20
+ ../../pluto/bin/grep-for-ipsec-whack-trafficstatus.sh --timeout 30 westnet-eastnet-auto
+006 #2: "westnet-eastnet-auto", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
 west #
  # ensure that clear text does not get through
 west #
@@ -20,7 +19,9 @@ west #
 west #
  iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 west #
- # We expect ping to be encrypted and work
+ # We expect ping to be encrypted and work; we should see non-zero
+west #
+ # traffic counters
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -31,8 +32,6 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
-west #
- # we should see non-zero traffic counters
 west #
  ipsec whack --trafficstatus
 006 #2: "westnet-eastnet-auto", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
@@ -45,14 +44,14 @@ west #
 005 "westnet-eastnet-auto" #2: ESP traffic information: in=336B out=336B
 002 "westnet-eastnet-auto" #1: deleting state (STATE_PARENT_R2) and sending notification
 west #
- # give Delete/Notify some time
+ # give Delete/Notify some time; traffic counters on the new IPsec SA
 west #
- sleep 5
+ # should be 0
 west #
- # traffic counters on the new IPsec SA should be 0
-west #
- ipsec whack --trafficstatus
+ ../../pluto/bin/grep-for-ipsec-whack-trafficstatus.sh --timeout 5 'westnet-eastnet-auto.*inBytes=0'
 006 #4: "westnet-eastnet-auto", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+west #
+ # A new IPsec SA should be established (older versions would be dead for 30 seconds)
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -63,13 +62,6 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
-west #
- # A new IPsec SA should be established (older versions would be dead for 30 seconds)
-west #
- ipsec whack --trafficstatus
-006 #4: "westnet-eastnet-auto", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
-west #
- sleep 20
 west #
  ipsec whack --trafficstatus
 006 #4: "westnet-eastnet-auto", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
