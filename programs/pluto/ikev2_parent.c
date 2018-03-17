@@ -4364,6 +4364,9 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 			what = "ESP/AH responder matching remote proposals";
 		}
 		default_dh = (c->policy & POLICY_PFS) != LEMPTY ? ike->sa.st_oakley.ta_dh : NULL;
+	} else if (expect_accepted) {
+		what = "IKE SA initiator accepting remote ESP/AH proposal";
+		default_dh = &unset_group; /* no DH */
 	} else {
 		what = "IKE SA responder matching remote ESP/AH proposals";
 		default_dh = &unset_group; /* no DH */
@@ -4380,7 +4383,6 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 					  default_dh,
 					  &c->esp_or_ah_proposals);
 	passert(c->esp_or_ah_proposals != NULL);
-	st->st_pfs_group = ikev2_proposals_first_dh(c->esp_or_ah_proposals);
 
 	ret = ikev2_process_sa_payload(what,
 			&sa_pd->pbs,
@@ -4402,7 +4404,36 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 	DBG(DBG_CONTROL, DBG_log_ikev2_proposal(what, st->st_accepted_esp_or_ah_proposal));
 	if (!ikev2_proposal_to_proto_info(st->st_accepted_esp_or_ah_proposal, proto_info)) {
 		loglog(RC_LOG_SERIOUS, "%s proposed/accepted a proposal we don't actually support!", what);
-		ret =  STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+	}
+
+	/*
+	 * Update/check the PFS.
+	 *
+	 * For the responder, go with what ever was negotiated.  For
+	 * the initiator, check what was negotiated against what was
+	 * sent.
+	 */
+	const struct oakley_group_desc *accepted_dh = proto_info->attrs.transattrs.ta_dh;
+	switch (st->st_sa_role) {
+	case SA_INITIATOR:
+		pexpect(expect_accepted);
+		if (accepted_dh != st->st_pfs_group) {
+			loglog(RC_LOG_SERIOUS,
+			       "expecting %s but remote's accepted proposal includes %s",
+			       st->st_pfs_group == NULL ? "no DH" : st->st_pfs_group->common.fqn,
+			       accepted_dh == NULL ? "no DH" : accepted_dh->common.fqn);
+			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+		}
+		break;
+	case SA_RESPONDER:
+		pexpect(!expect_accepted);
+		pexpect(st->st_sa_role == SA_RESPONDER);
+		pexpect(st->st_pfs_group == NULL);
+		st->st_pfs_group = accepted_dh;
+		break;
+	default:
+		bad_case(st->st_sa_role);
 	}
 
 	/*
