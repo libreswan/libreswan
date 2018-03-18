@@ -377,7 +377,7 @@ static void set_whack_end(char *lr,
 		/* ??? is this a crude way of seting client to anyaddr? */
 		w->client.addr.u.v4.sin_family = l->addr_family;
 	}
-	w->updown = l->strings[KSCF_UPDOWN];
+
 	w->host_port = IKE_UDP_PORT; /* XXX starter should support (nat)-ike-port */
 	w->has_client_wildcard = l->has_client_wildcard;
 	w->has_port_wildcard = l->has_port_wildcard;

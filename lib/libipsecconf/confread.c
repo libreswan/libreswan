@@ -1429,6 +1429,11 @@ static void conn_default(struct starter_conn *conn,
 	conn->right.id = clone_str(def->right.id, "conn default rightid");
 	conn->right.rsakey1 = clone_str(def->right.rsakey1, "conn default right rsakey1");
 	conn->right.rsakey2 = clone_str(def->right.rsakey2, "conn default right rsakey2");
+#define C(LR,F) conn->LR.F = clone_str(def->LR.F, "conn default " #LR " " #F)
+#define CLR(F) C(left,F); C(right,F)
+	CLR(updown);
+#undef CLR
+#undef C
 
 	for (i = 0; i < KSCF_MAX; i++) {
 		conn->left.strings[i] = clone_str(def->left.strings[i], "conn default left item");
