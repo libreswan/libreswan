@@ -145,7 +145,7 @@ void start_retransmits(struct state *st, enum event_type type)
 			lswlogs(buf, " seconds");
 		}
 	}
-	if (IMPAIR(SEND_NO_RETRANSMITS)) {
+	if (IMPAIR(SUPPRESS_RETRANSMITS)) {
 		/*
 		 * Suppress retransmits by using the full TIMEOUT as
 		 * the delay.
@@ -156,7 +156,7 @@ void start_retransmits(struct state *st, enum event_type type)
 		 */
 		rt->delay = c->r_timeout;
 		LSWLOG(buf) {
-			lswlogs(buf, "IMPAIR: send-no-retransmits: scheduling timeout in ");
+			lswlogs(buf, "IMPAIR: suppressing retransmits; scheduling timeout in ");
 			lswlog_deltatime(buf, rt->delay);
 			lswlogs(buf, " seconds");
 		}
@@ -198,8 +198,12 @@ enum retransmit_status retransmit(struct state *st)
 		libreswan_log("suppressing retransmit because IMPAIR_RETRANSMITS is set");
 		return RETRANSMITS_TIMED_OUT;
 	}
+	if (IMPAIR(TIMEOUT_ON_RETRANSMIT)) {
+		libreswan_log("IMPAIR: retransmit so timing out SA (may retry)");
+		return RETRANSMITS_TIMED_OUT;
+	}
 	if (IMPAIR(DELETE_ON_RETRANSMIT)) {
-		libreswan_log("IMPAIR: delete-on-retransmit: retransmit so deleting state");
+		libreswan_log("IMPAIR: retransmit so deleting SA");
 		return DELETE_ON_RETRANSMIT;
 	}
 

@@ -36,9 +36,6 @@ static const char *impair_strings[] = {
 	I(IMPAIR_ALLOW_NULL_NULL, "impair-allow-null-null"),
 	I(IMPAIR_MAJOR_VERSION_BUMP, "impair-major-version-bump"),
 	I(IMPAIR_MINOR_VERSION_BUMP, "impair-minor-version-bump"),
-	I(IMPAIR_RETRANSMITS, "impair-retransmits"),
-	I(IMPAIR_DELETE_ON_RETRANSMIT, "impair-delete-on-retransmit"),
-	I(IMPAIR_SEND_NO_RETRANSMITS, "impair-send-no-retransmits"),
 	I(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG, "impair-send-bogus-payload-flag"),
 	I(IMPAIR_SEND_BOGUS_ISAKMP_FLAG, "impair-send-bogus-isakmp-flag"),
 	I(IMPAIR_SEND_IKEv2_KE, "impair-send-ikev2-ke"),
@@ -56,6 +53,12 @@ static const char *impair_strings[] = {
 	I(IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE, "impair-ignore-hash-notify-resp"),
 	I(IMPAIR_IKEv2_EXCLUDE_INTEG_NONE, "impair-ikev2-exclude-integ-none"),
 	I(IMPAIR_IKEv2_INCLUDE_INTEG_NONE, "impair-ikev2-include-integ-none"),
+
+	I(IMPAIR_RETRANSMITS, "impair-retransmits"),
+	I(IMPAIR_TIMEOUT_ON_RETRANSMIT, "impair-timeout-on-retransmit"),
+	I(IMPAIR_DELETE_ON_RETRANSMIT, "impair-delete-on-retransmit"),
+	I(IMPAIR_SUPPRESS_RETRANSMITS, "impair-suppress-retransmits"),
+
 	I(IMPAIR_REPLAY_DUPLICATES, "impair-replay-duplicates"),
 	I(IMPAIR_REPLAY_FORWARD, "impair-replay-forward"),
 	I(IMPAIR_REPLAY_BACKWARD, "impair-replay-backward"),

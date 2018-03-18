@@ -384,9 +384,12 @@ enum {
 	IMPAIR_ALLOW_NULL_NULL_IX,			/* cause pluto to allow esp=null-null and ah=null for testing */
 	IMPAIR_MAJOR_VERSION_BUMP_IX,		/* cause pluto to send an IKE major version that's higher then we support. */
 	IMPAIR_MINOR_VERSION_BUMP_IX,		/* cause pluto to send an IKE minor version that's higher then we support. */
+
 	IMPAIR_RETRANSMITS_IX,			/* causes pluto to timeout on first retransmit */
-	IMPAIR_DELETE_ON_RETRANSMIT_IX,		/* causes pluto to stop establishing a connection on the first retransmit */
-	IMPAIR_SEND_NO_RETRANSMITS_IX,		/* causes pluto to never send retransmits */
+	IMPAIR_TIMEOUT_ON_RETRANSMIT_IX,		/* causes pluto to "retry" (switch protocol) on the first retransmit */
+	IMPAIR_DELETE_ON_RETRANSMIT_IX,		/* causes pluto to fail on the first retransmit */
+	IMPAIR_SUPPRESS_RETRANSMITS_IX,		/* causes pluto to never send retransmits (wait the full timeout) */
+
 	IMPAIR_SEND_BOGUS_PAYLOAD_FLAG_IX,	/* causes pluto to set a RESERVED PAYLOAD flag to test ignoring/zeroing it */
 	IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX,	/* causes pluto to set a RESERVED ISAKMP flag to test ignoring/zeroing it */
 	IMPAIR_SEND_IKEv2_KE_IX,		/* causes pluto to omit sending the KE payload in IKEv2 */
@@ -437,9 +440,12 @@ enum {
 #define IMPAIR_ALLOW_NULL_NULL	LELEM(IMPAIR_ALLOW_NULL_NULL_IX)
 #define IMPAIR_MAJOR_VERSION_BUMP	LELEM(IMPAIR_MAJOR_VERSION_BUMP_IX)
 #define IMPAIR_MINOR_VERSION_BUMP	LELEM(IMPAIR_MINOR_VERSION_BUMP_IX)
+
 #define IMPAIR_RETRANSMITS	LELEM(IMPAIR_RETRANSMITS_IX)
+#define IMPAIR_TIMEOUT_ON_RETRANSMIT	LELEM(IMPAIR_TIMEOUT_ON_RETRANSMIT_IX)
 #define IMPAIR_DELETE_ON_RETRANSMIT	LELEM(IMPAIR_DELETE_ON_RETRANSMIT_IX)
-#define IMPAIR_SEND_NO_RETRANSMITS	LELEM(IMPAIR_SEND_NO_RETRANSMITS_IX)
+#define IMPAIR_SUPPRESS_RETRANSMITS	LELEM(IMPAIR_SUPPRESS_RETRANSMITS_IX)
+
 #define IMPAIR_SEND_BOGUS_PAYLOAD_FLAG	LELEM(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG_IX)
 #define IMPAIR_SEND_BOGUS_ISAKMP_FLAG	LELEM(IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX)
 #define IMPAIR_SEND_IKEv2_KE	LELEM(IMPAIR_SEND_IKEv2_KE_IX)
@@ -457,6 +463,7 @@ enum {
 #define IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE	LELEM(IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE_IX)
 #define IMPAIR_IKEv2_EXCLUDE_INTEG_NONE LELEM(IMPAIR_IKEv2_EXCLUDE_INTEG_NONE_IX)
 #define IMPAIR_IKEv2_INCLUDE_INTEG_NONE LELEM(IMPAIR_IKEv2_INCLUDE_INTEG_NONE_IX)
+
 #define IMPAIR_REPLAY_DUPLICATES 	LELEM(IMPAIR_REPLAY_DUPLICATES_IX)
 #define IMPAIR_REPLAY_FORWARD	 	LELEM(IMPAIR_REPLAY_FORWARD_IX)
 #define IMPAIR_REPLAY_BACKWARD 		LELEM(IMPAIR_REPLAY_BACKWARD_IX)
