@@ -30,7 +30,7 @@ west #
 133 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: STATE_PARENT_I1: initiate
 002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: IMPAIR: suppressing retransmits; scheduling timeout in 10 seconds
 002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: IMPAIR: suppressing retransmits; scheduling timeout in 10 seconds
-002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: received an encrypted AUTHENTICATION_FAILED notification; deleting IKE SA
+002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: IKE SA authentication request rejected: AUTHENTICATION_FAILED
 036 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: encountered fatal error in state STATE_PARENT_I2
 west #
  echo done
