@@ -1861,49 +1861,78 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 	return STF_IGNORE;
 }
 
-stf_status ikev2_IKE_SA_process_AUTH_response_notification(struct state *st UNUSED,
-							   struct msg_digest *md)
+stf_status ikev2_auth_initiator_process_failure_notification(struct state *st UNUSED,
+							     struct msg_digest *md)
 {
-	stf_status e = STF_IGNORE;
+	v2_notification_t n = md->svm->encrypted_payloads.notification;
+	pstat(ikev2_recv_notifies_e, n);
+	/*
+	 * Always log the notification error and fail;
+	 * but do it in slightly different ways so it
+	 * is possible to figure out which code path
+	 * was taken.
+	 */
+	libreswan_log("IKE SA authentication request rejected: %s",
+		      enum_short_name(&ikev2_notify_names, n));
+	/*
+	 * 2.21.2.  Error Handling in IKE_AUTH
+	 *
+	 *             ...  If the error occurred on the responder, the
+	 *   notification is returned in the protected response, and is usually
+	 *   the only payload in that response.  Although the IKE_AUTH messages
+	 *   are encrypted and integrity protected, if the peer receiving this
+	 *   notification has not authenticated the other end yet, that peer needs
+	 *   to treat the information with caution.
+	 *
+	 * Killing the connection isn't being cautious!
+	 */
+	return STF_FATAL;
+}
 
+stf_status ikev2_auth_initiator_process_unknown_notification(struct state *st UNUSED,
+							     struct msg_digest *md)
+{
+	/*
+	 * 3.10.1.  Notify Message Types:
+	 *
+	 *   Types in the range 0 - 16383 are intended for reporting errors.  An
+	 *   implementation receiving a Notify payload with one of these types
+	 *   that it does not recognize in a response MUST assume that the
+	 *   corresponding request has failed entirely.  Unrecognized error types
+	 *   in a request and status types in a request or response MUST be
+	 *   ignored, and they should be logged.
+	 */
+
+	stf_status e = STF_IGNORE;
 	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
+		v2_notification_t n = ntfy->payload.v2n.isan_type;
+		const char *name = enum_short_name(&ikev2_notify_names, n);
+
 		if (ntfy->payload.v2n.isan_spisize != 0) {
 			/* invalid-syntax, but can't do anything about it */
-			libreswan_log("received an encrypted %s notification with an unexpected non-empty SPI; deleting IKE SA",
-				      enum_short_name(&ikev2_notify_names,
-						      ntfy->payload.v2n.isan_type));
+			rate_log("received an encrypted %s notification with an unexpected non-empty SPI; deleting IKE SA",
+				 name);
 			return STF_FATAL;
 		}
 
-		if (ntfy->payload.v2n.isan_type >= v2N_STATUS_FLOOR) {
-			pstat(ikev2_recv_notifies_s, ntfy->payload.v2n.isan_type);
+		if (n >= v2N_STATUS_FLOOR) {
+			/* just log */
+			pstat(ikev2_recv_notifies_s, n);
+			if (name == NULL) {
+				rate_log("AUTH response contained an unknown status notification (%d)", n);
+			} else {
+				rate_log("AUTH response contained the status notification %s", name);
+			}
 		} else {
-			pstat(ikev2_recv_notifies_e, ntfy->payload.v2n.isan_type);
-		}
-
-		switch (ntfy->payload.v2n.isan_type) {
-
-		case v2N_UNSUPPORTED_CRITICAL_PAYLOAD:
-		case v2N_INVALID_SYNTAX:
-		case v2N_AUTHENTICATION_FAILED:
-			libreswan_log("received an encrypted %s notification; deleting IKE SA",
-				      enum_short_name(&ikev2_notify_names,
-						      ntfy->payload.v2n.isan_type));
+			pstat(ikev2_recv_notifies_e, n);
 			e = STF_FATAL;
-			break;
-
-		default:
-			/*
-			 * just log anything else; should all
-			 * notifications result in a packet drop.
-			 */
-			rate_log("ignoring encrypted %s notification",
-				 enum_short_name(&ikev2_notify_names,
-						 ntfy->payload.v2n.isan_type));
-
+			if (name == NULL) {
+				libreswan_log("AUTH response contained an unknown error notification (%d)", n);
+			} else {
+				libreswan_log("AUTH response contained the error notification %s", name);
+			}
 		}
 	}
-
 	return e;
 }
 
