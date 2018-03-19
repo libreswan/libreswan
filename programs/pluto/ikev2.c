@@ -662,6 +662,22 @@ static struct payload_summary ikev2_decode_payloads(struct msg_digest *md,
 	/*
 	 * ??? zero out the digest descriptors -- might nuke
 	 * ISAKMP_NEXT_v2SK digest!
+	 *
+	 * XXX: and v2SKF? Safer to leave them as is and just use new
+	 * ones - always add to MD, never take away.
+	 */
+
+	/*
+	 * XXX: Currently, when a message containing an SK payload is
+	 * decoded, the encrypted payloads get appended to the
+	 * previously decoded non-encrypted payloads.  For instance,
+	 * given a message containing two notifications:
+	 *
+	 *     N(1), SK{ N(2) }
+	 *
+	 * The notification digest would contain both the unencrypted
+	 * N(1) and encrypted N(2).  Since the unencrypted value is
+	 * protected, while not very good, isn't really dangerous.
 	 */
 
 	while (np != ISAKMP_NEXT_v2NONE) {
@@ -678,7 +694,7 @@ static struct payload_summary ikev2_decode_payloads(struct msg_digest *md,
 		}
 		struct payload_digest *const pd = md->digest + md->digest_roof;
 
-		zero(pd);	/* ??? is this needed? */
+		zero(pd);	/* ??? is this needed? XXX: probably not */
 
 		/* map the payload onto a way to decode it */
 		const struct_desc *sd = v2_payload_desc(np);
@@ -730,6 +746,10 @@ static struct payload_summary ikev2_decode_payloads(struct msg_digest *md,
 			break;
 		}
 
+		/*
+		 * XXX: payload is a union, and this assumes that
+		 * isag_length doesn't move around.
+		 */
 		DBG(DBG_PARSING,
 		    DBG_log("processing payload: %s (len=%u)",
 			    enum_show(&ikev2_payload_names, np),
@@ -751,6 +771,15 @@ static struct payload_summary ikev2_decode_payloads(struct msg_digest *md,
 			pd->next = NULL;
 		}
 
+		/*
+		 * XXX: should this do 'deeper' analysis of packets.
+		 * For instance checking the SPI of a notification
+		 * payload?  Probably not as the value may be ignored.
+		 */
+
+		/*
+		 * Advance next payload.
+		 */
 		switch (np) {
 		case ISAKMP_NEXT_v2SK:
 		case ISAKMP_NEXT_v2SKF:
@@ -810,7 +839,7 @@ static struct ikev2_payload_errors ikev2_verify_payloads(struct msg_digest *md,
 	}
 
 	if (payloads->notification != v2N_NOTHING_WRONG) {
-		bool found = true;
+		bool found = false;
 		for (struct payload_digest *pd = md->chain[ISAKMP_NEXT_v2N];
 		     pd != NULL; pd = pd->next) {
 			if (pd->payload.v2n.isan_type == payloads->notification) {
