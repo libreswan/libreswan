@@ -1410,6 +1410,11 @@ typedef enum {
 	/* IKEv2 */
 	/* 0-8191 Reserved, ExpertReview */
 	v2N_NOTHING_WRONG = 0, /* Unofficial! Must be zero to match default C initial value. */
+
+	/*
+	 * Error notifications.
+	 */
+	v2N_ERROR_FLOOR = 1,
 	v2N_UNSUPPORTED_CRITICAL_PAYLOAD = 1,
 	/* Reserved = 2, */
 	/* Reserved = 3, */
@@ -1444,7 +1449,12 @@ typedef enum {
 	v2N_INVALID_GROUP_ID = 45, /* draft-yeung-g-ikev2 */
 	v2N_AUTHORIZATION_FAILED = 46, /* draft-yeung-g-ikev2 */
 
-	v2N_ERROR_ROOF, /* used to cap statistics array */
+	v2N_STATISTICS_ERROR_ROOF, /* used to cap error statistics array */
+
+	/*
+	 * Status notifications.
+	 */
+	v2N_STATUS_FLOOR = 16384,
 
 	/* old IKEv1 entries - might be in private use for IKEv2N */
 	v2N_INITIAL_CONTACT = 16384,
@@ -1503,6 +1513,8 @@ typedef enum {
 	v2N_USE_PPK = 16435, /* draft-ietf-ipsecme-qr-ikev2 */
 	v2N_PPK_IDENTITY = 16436, /* draft-ietf-ipsecme-qr-ikev2 */
 	v2N_NO_PPK_AUTH = 16437, /* draft-ietf-ipsecme-qr-ikev2 */
+
+	v2N_STATISTICS_STATUS_ROOF, /* used to cap status statistics array */
 
 	/* 16438 - 40969 Unassigned */
 

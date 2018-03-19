@@ -60,8 +60,6 @@ unsigned long pstats_ike_in_bytes;	/* total incoming IPsec traffic */
 unsigned long pstats_ike_out_bytes;	/* total outgoing IPsec traffic */
 unsigned long pstats_ikev1_sent_notifies_e[v1N_ERROR_ROOF]; /* types of NOTIFY ERRORS */
 unsigned long pstats_ikev1_recv_notifies_e[v1N_ERROR_ROOF]; /* types of NOTIFY ERRORS */
-unsigned long pstats_ikev2_sent_notifies_e[v2N_ERROR_ROOF]; /* types of NOTIFY ERRORS */
-unsigned long pstats_ikev2_recv_notifies_e[v2N_ERROR_ROOF]; /* types of NOTIFY ERRORS */
 unsigned long pstats_ike_stf[10];	/* count state transitions */ /* ??? what is 10? */
 unsigned long pstats_ipsec_esp;
 unsigned long pstats_ipsec_ah;
@@ -76,6 +74,54 @@ unsigned long pstats_ike_dpd_replied;
 unsigned long pstats_xauth_started;
 unsigned long pstats_xauth_stopped;
 unsigned long pstats_xauth_aborted;
+
+#define PLUTO_STAT(TYPE, NAMES, WHAT, FLOOR, ROOF)			\
+	static unsigned long pstats_##TYPE##_count[ROOF-FLOOR +1/*overflow*/]; \
+	const struct pluto_stat pstats_##TYPE = {			\
+		.names = NAMES,						\
+		.what = WHAT,						\
+		.floor = FLOOR,						\
+		.roof = ROOF,						\
+		.count = pstats_##TYPE##_count,				\
+	};
+
+PLUTO_STAT(ikev2_sent_notifies_e, &ikev2_notify_names,
+	    "ikev2.sent.notifies.error",
+	    v2N_ERROR_FLOOR, v2N_STATISTICS_ERROR_ROOF);
+PLUTO_STAT(ikev2_recv_notifies_e, &ikev2_notify_names,
+	   "ikev2.recv.notifies.error",
+	   v2N_ERROR_FLOOR, v2N_STATISTICS_ERROR_ROOF);
+
+PLUTO_STAT(ikev2_sent_notifies_s, &ikev2_notify_names,
+	    "ikev2.sent.notifies.status",
+	   v2N_STATUS_FLOOR, v2N_STATISTICS_STATUS_ROOF);
+PLUTO_STAT(ikev2_recv_notifies_s, &ikev2_notify_names,
+	   "ikev2.recv.notifies.status",
+	   v2N_STATUS_FLOOR, v2N_STATISTICS_STATUS_ROOF);
+
+static void whack_pluto_stat(const struct pluto_stat *stat)
+{
+	unsigned long other = stat->count[stat->roof - stat->floor];
+	for (unsigned long e = stat->floor; e < stat->roof; e++)
+	{
+		const char *nm = enum_short_name(stat->names, e);
+		unsigned long count = stat->count[e - stat->floor];
+		/* not logging "UNUSED" */
+		if (nm != NULL && strstr(nm, "UNUSED") == NULL) {
+			whack_log_comment("total.%s.%s=%lu",
+					  stat->what, nm, count);
+		} else {
+			other += count;
+		}
+	}
+	whack_log_comment("total.%s.other=%lu",
+			  stat->what, other);
+}
+
+static void clear_pluto_stat(const struct pluto_stat *stat)
+{
+	memset(stat->count, 0, stat->roof - stat->floor + 1);
+}
 
 static void enum_stats(enum_names *en, unsigned long lwb, unsigned long upb, const char *what, unsigned long count[])
 {
@@ -149,8 +195,10 @@ void show_pluto_stats()
 	enum_stats(&auth_alg_names, AUTH_ALGORITHM_HMAC_MD5, AUTH_ALGORITHM_ROOF-1, "ipsec.integ", pstats_ipsec_integ);
 	enum_stats(&ikev1_notify_names, 1, v1N_ERROR_ROOF-1, "ikev1.sent.notifies.error", pstats_ikev1_sent_notifies_e);
 	enum_stats(&ikev1_notify_names, 1, v1N_ERROR_ROOF-1, "ikev1.recv.notifies.error", pstats_ikev1_recv_notifies_e);
-	enum_stats(&ikev2_notify_names, 1, v2N_ERROR_ROOF-1, "ikev2.sent.notifies.error", pstats_ikev2_sent_notifies_e);
-	enum_stats(&ikev2_notify_names, 1, v2N_ERROR_ROOF-1, "ikev2.recv.notifies.error", pstats_ikev2_recv_notifies_e);
+	whack_pluto_stat(&pstats_ikev2_sent_notifies_e);
+	whack_pluto_stat(&pstats_ikev2_recv_notifies_e);
+	whack_pluto_stat(&pstats_ikev2_sent_notifies_s);
+	whack_pluto_stat(&pstats_ikev2_recv_notifies_s);
 }
 
 void clear_pluto_stats()
@@ -180,7 +228,9 @@ void clear_pluto_stats()
 	memset(pstats_invalidke_sent_u, 0, sizeof pstats_invalidke_sent_u);
 	memset(pstats_invalidke_recv_u, 0, sizeof pstats_invalidke_recv_u);
 	memset(pstats_ikev1_sent_notifies_e, 0, sizeof pstats_ikev1_sent_notifies_e);
-	memset(pstats_ikev2_sent_notifies_e, 0, sizeof pstats_ikev2_sent_notifies_e);
-	memset(pstats_ikev2_recv_notifies_e, 0, sizeof pstats_ikev2_recv_notifies_e);
+	clear_pluto_stat(&pstats_ikev2_sent_notifies_e);
+	clear_pluto_stat(&pstats_ikev2_recv_notifies_e);
+	clear_pluto_stat(&pstats_ikev2_sent_notifies_s);
+	clear_pluto_stat(&pstats_ikev2_recv_notifies_s);
 	memset(pstats_ikev1_recv_notifies_e, 0, sizeof pstats_ikev1_recv_notifies_e);
 }

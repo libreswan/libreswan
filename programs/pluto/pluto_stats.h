@@ -17,6 +17,14 @@
 #ifndef _PLUTO_STATS_H
 #define _PLUTO_STATS_H
 
+struct pluto_stat {
+	const enum_names *names;
+	const char *what;
+	unsigned long floor;
+	unsigned long roof; /* ceil+1 */
+	unsigned long *count;
+};
+
 /* All statistics are totals since pluto daemon startup */
 extern unsigned long pstats_ipsec_sa;
 extern unsigned long pstats_ikev1_sa;
@@ -41,8 +49,10 @@ extern unsigned long pstats_ike_in_bytes;	/* total incoming IPsec traffic */
 extern unsigned long pstats_ike_out_bytes;	/* total outgoing IPsec traffic */
 extern unsigned long pstats_ikev1_sent_notifies_e[v1N_ERROR_ROOF]; /* types of NOTIFY ERRORS */
 extern unsigned long pstats_ikev1_recv_notifies_e[v1N_ERROR_ROOF]; /* types of NOTIFY ERRORS */
-extern unsigned long pstats_ikev2_sent_notifies_e[v2N_ERROR_ROOF]; /* types of NOTIFY ERRORS */
-extern unsigned long pstats_ikev2_recv_notifies_e[v2N_ERROR_ROOF]; /* types of NOTIFY ERRORS */
+extern const struct pluto_stat pstats_ikev2_sent_notifies_e; /* types of NOTIFY ERRORS */
+extern const struct pluto_stat pstats_ikev2_recv_notifies_e; /* types of NOTIFY ERRORS */
+extern const struct pluto_stat pstats_ikev2_sent_notifies_s; /* types of NOTIFY STATUS */
+extern const struct pluto_stat pstats_ikev2_recv_notifies_s; /* types of NOTIFY STATUS */
 extern unsigned long pstats_ike_stf[10];	/* count state transitions */
 extern unsigned long pstats_ipsec_esp;
 extern unsigned long pstats_ipsec_ah;
@@ -69,12 +79,24 @@ extern void clear_pluto_stats();
  * "unsigned" forces negative values to large positive ones,
  * presumably INDEX fits in "unsigned".  Is size_t better?
  */
+
 #define pstats(TYPE,INDEX) {						\
 		const unsigned __pstat = (INDEX);			\
 		if (__pstat < elemsof(pstats_##TYPE)) {			\
 			pstats_##TYPE[__pstat]++;			\
 		} else if (DBGP(DBG_CONTROLMORE)) {			\
 			DBG_log("pstats %s %d", #TYPE, __pstat);	\
+		}							\
+	}
+
+#define pstat(TYPE,INDEX)						\
+	{								\
+		const unsigned pstat_ = (INDEX);			\
+		const struct pluto_stat *ps_ = &pstats_##TYPE;		\
+		if (pstat_ < ps_->floor || pstat_ >= ps_->roof) {	\
+			ps_->count[ps_->roof - ps_->floor]++;		\
+		} else {						\
+			ps_->count[pstat_-ps_->floor]++;		\
 		}							\
 	}
 

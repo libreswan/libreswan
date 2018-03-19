@@ -1783,7 +1783,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 		/* count all the error notifications */
 		for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N];
 		     ntfy != NULL; ntfy = ntfy->next) {
-			pstats(ikev2_recv_notifies_e, ntfy->payload.v2n.isan_type);
+			pstat(ikev2_recv_notifies_e, ntfy->payload.v2n.isan_type);
 		}
 		if (message_payload_status.bad) {
 			ikev2_log_payload_errors(st, md, &message_payload_status);

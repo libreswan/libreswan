@@ -1708,9 +1708,10 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 			return STF_IGNORE;
 		}
 
-		if ((ntfy->payload.v2n.isan_type < v2N_ERROR_ROOF) &&
-		    (ntfy->payload.v2n.isan_type > v2N_NOTHING_WRONG)) {
-			pstats(ikev2_recv_notifies_e, ntfy->payload.v2n.isan_type);
+		if (ntfy->payload.v2n.isan_type >= v2N_STATUS_FLOOR) {
+			pstat(ikev2_recv_notifies_s, ntfy->payload.v2n.isan_type);
+		} else {
+			pstat(ikev2_recv_notifies_e, ntfy->payload.v2n.isan_type);
 		}
 
 		switch (ntfy->payload.v2n.isan_type) {
@@ -1874,9 +1875,10 @@ stf_status ikev2_IKE_SA_process_AUTH_response_notification(struct state *st UNUS
 			return STF_FATAL;
 		}
 
-		if ((ntfy->payload.v2n.isan_type < v2N_ERROR_ROOF) &&
-		    (ntfy->payload.v2n.isan_type > v2N_NOTHING_WRONG)) {
-			pstats(ikev2_recv_notifies_e, ntfy->payload.v2n.isan_type);
+		if (ntfy->payload.v2n.isan_type >= v2N_STATUS_FLOOR) {
+			pstat(ikev2_recv_notifies_s, ntfy->payload.v2n.isan_type);
+		} else {
+			pstat(ikev2_recv_notifies_e, ntfy->payload.v2n.isan_type);
 		}
 
 		switch (ntfy->payload.v2n.isan_type) {
@@ -1933,9 +1935,10 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 
 	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 
-		if ((ntfy->payload.v2n.isan_type < v2N_ERROR_ROOF) &&
-		    (ntfy->payload.v2n.isan_type > v2N_NOTHING_WRONG)) {
-			pstats(ikev2_recv_notifies_e, ntfy->payload.v2n.isan_type);
+		if (ntfy->payload.v2n.isan_type >= v2N_STATUS_FLOOR) {
+			pstat(ikev2_recv_notifies_s, ntfy->payload.v2n.isan_type);
+		} else {
+			pstat(ikev2_recv_notifies_e, ntfy->payload.v2n.isan_type);
 		}
 
 		switch (ntfy->payload.v2n.isan_type) {

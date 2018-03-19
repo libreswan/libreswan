@@ -424,7 +424,7 @@ void send_v2_notification_from_state(struct state *pst, struct msg_digest *md,
 	 * packet we are sending.
 	 */
 	send_chunk_using_state(pst, "v2 notify", pbs_as_chunk(reply));
-	pstats(ikev2_sent_notifies_e, ntype);
+	pstat(ikev2_sent_notifies_e, ntype);
 }
 
 void send_v2_notification_from_md(struct msg_digest *md,
@@ -486,7 +486,7 @@ void send_v2_notification_from_md(struct msg_digest *md,
 	send_chunk("v2 notify", SOS_NOBODY, md->iface, md->sender,
 		   pbs_as_chunk(reply));
 
-	pstats(ikev2_sent_notifies_e, ntype);
+	pstat(ikev2_sent_notifies_e, ntype);
 }
 
 void send_v2_notification_invalid_ke(struct msg_digest *md,
