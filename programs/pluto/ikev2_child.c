@@ -895,7 +895,7 @@ stf_status ikev2_resp_accept_child_ts(
 		if (role == ORIGINAL_INITIATOR)
 			return STF_FAIL;
 		else
-			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+			return STF_FAIL + v2N_TS_UNACCEPTABLE;
 	}
 
 	struct state *cst = md->st;	/* child state */
