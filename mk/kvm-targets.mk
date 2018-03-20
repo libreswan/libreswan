@@ -136,6 +136,8 @@ endif
 
 KVMSH ?= $(abs_top_srcdir)/testing/utils/kvmsh.py
 KVMRUNNER ?= $(abs_top_srcdir)/testing/utils/kvmrunner.py
+KVMRESULTS ?= $(abs_top_srcdir)/testing/utils/kvmresults.py
+KVMTEST ?= $(abs_top_srcdir)/testing/utils/kvmtest.py
 
 KVM_OBJDIR = OBJ.kvm
 
@@ -304,6 +306,12 @@ KVM_TEST_CLEAN_TARGETS = \
 $(KVM_TEST_CLEAN_TARGETS):
 	find $(STRIPPED_KVM_TESTS) -name OUTPUT -type d -prune -print0 | xargs -0 -r rm -r
 
+.PHONY: kvm-results
+kvm-results:
+	$(KVMRESULTS) $(KVM_TEST_FLAGS) $(STRIPPED_KVM_TESTS)
+.PHONY: kvm-diffs
+kvm-diffs:
+	$(KVMRESULTS) $(KVM_TEST_FLAGS) $(STRIPPED_KVM_TESTS) --print diffs
 
 #
 # Build the KVM keys using the KVM.
@@ -1329,6 +1337,11 @@ Standard targets and operations:
     kvm-check-clean   - delete the test OUTPUT/ directories
 
     distclean         - scrubs the source tree (but don't touch the KVMS)
+
+  To analyze test results:
+
+    kvm-results       list the tests and their results
+    kvm-diffs         list the tests and their differences
 
 endef
 
