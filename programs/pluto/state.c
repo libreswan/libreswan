@@ -643,13 +643,12 @@ void v1_delete_state_by_username(struct state *st, void *name)
 	}
 }
 
-static bool eq_pst_msgid_kind(struct state *st,
-		so_serial_t psn, msgid_t st_msgid,
-		enum state_kind expected_state)
+static bool ikev2_child_eq_pst_msgid(const struct state *st,
+		so_serial_t psn, msgid_t st_msgid)
 {
 	if (st->st_clonedfrom == psn &&
 			st->st_msgid == st_msgid &&
-			st->st_state == expected_state) {
+			IS_CHILD_IPSECSA_RESPONSE(st)) {
 		return TRUE;
 	}
 	return FALSE;
@@ -693,19 +692,17 @@ struct state *resp_state_with_msgid(so_serial_t psn, msgid_t st_msgid)
  *	parent duplicated from
  *	expected state
  */
-struct state *state_with_parent_msgid_expect(so_serial_t psn, msgid_t st_msgid,
-		enum state_kind expected_state)
+struct state *state_with_parent_msgid(so_serial_t psn, msgid_t st_msgid)
 {
 	passert(psn >= SOS_FIRST);
 
 	FOR_EACH_COOKIED_STATE(st, {
-		if (eq_pst_msgid_kind(st, psn, st_msgid, expected_state))
+		if (ikev2_child_eq_pst_msgid(st, psn, st_msgid))
 			return st;
 	});
 	DBG(DBG_CONTROL,
-		DBG_log("no waiting child state matching pst #%lu msg id %u expected state %s",
-			psn, ntohs(st_msgid),
-			 enum_name(&state_names, expected_state)));
+		DBG_log("no waiting child state matching pst #%lu msg id %u",
+			psn, ntohs(st_msgid)));
 	return NULL;
 }
 
@@ -852,8 +849,12 @@ static void flush_pending_child(struct state *pst, struct state *st)
 		if (IS_IPSEC_SA_ESTABLISHED(st))
 			return;
 
+		so_serial_t newest_sa = c->newest_ipsec_sa;
+		if (IS_IKE_REKEY_INITIATOR(st))
+			newest_sa = c->newest_isakmp_sa;
+
 		delete_event(st);
-		if (st->st_serialno > c->newest_ipsec_sa &&
+		if (st->st_serialno > newest_sa &&
 				(c->policy & POLICY_UP) &&
 				(c->policy & POLICY_DONT_REKEY) == LEMPTY)
 		{
@@ -1973,25 +1974,29 @@ bool find_pending_phase2(const so_serial_t psn,
 }
 
 /*
- *a viable parent must be around for while.
- *max(PARENT_MIN_LIFE, st_margin)
+ * to initiate a new IPsec SA or to rekey IPsec
+ * the IKE SA must be around for while. If IKE rekeying itself no new IPsec SA.
  */
-static bool ikev2_viable_parent(const struct state *st)
+bool ikev2_viable_parent(const struct ike_sa *ike)
 {
 	/* this check is defied only for an IKEv2 parent */
-	if (!st->st_ikev2)
+	if (!ike->sa.st_ikev2)
 		return TRUE;
 
 	monotime_t now = mononow();
-	const struct pluto_event *ev = st->st_event;
+	const struct pluto_event *ev = ike->sa.st_event;
 	long lifetime = monobefore(now, ev->ev_time) ?
 				deltasecs(monotimediff(ev->ev_time, now)) :
 				-1 * deltasecs(monotimediff(now, ev->ev_time));
 
 	if (lifetime > PARENT_MIN_LIFE)
 		/* incase st_margin == 0, insist minium life */
-		if (lifetime > deltasecs(st->st_margin))
+		if (lifetime > deltasecs(ike->sa.st_margin))
 			return TRUE;
+
+		loglog(RC_LOG_SERIOUS, "no new CREATE_CHILD_SA exchange using #%lu. Parent lifetime %ld < st_margin %jd",
+				ike->sa.st_serialno, lifetime,
+				deltasecs(ike->sa.st_margin));
 
 	return FALSE;
 }
@@ -2006,7 +2011,6 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 
 	FOR_EACH_COOKIED_STATE(st, {
 		if (LHAS(ok_states, st->st_state) &&
-		    ikev2_viable_parent(st) &&
 		    st->st_ikev2 == is_ikev2 &&
 		    c->host_pair == st->st_connection->host_pair &&
 		    same_peer_ids(c, st->st_connection, NULL) &&
@@ -3032,7 +3036,7 @@ static void log_newest_sa_change(const char *f, so_serial_t old_ipsec_sa,
 				f, st->st_connection->name,
 				st->st_connection->instance_serial,
 				st->st_ikev2 ? "IKEv2" : "IKEv1",
-				st->st_serialno, old_ipsec_sa,
+				st->st_connection->newest_ipsec_sa, old_ipsec_sa,
 				st->st_connection->spd.eroute_owner,
 				st->st_clonedfrom));
 }

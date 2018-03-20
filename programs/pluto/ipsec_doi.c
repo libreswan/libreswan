@@ -83,6 +83,7 @@
 #include "ip_address.h"
 #include "pluto_stats.h"
 #include "chunk.h"
+#include "pending.h"
 
 /*
  * Process KE values.
@@ -250,14 +251,17 @@ void ipsecdoi_initiate(int whack_sock,
 #endif
 				    );
 		} else if (st->st_ikev2) {
-			ikev2_initiate_child_sa(whack_sock,
-						pexpect_ike_sa(st),
-						c, policy, try,
-						replacing
+			struct pending p;
+			p.whack_sock = whack_sock;
+			p.isakmp_sa = st;
+			p.connection = c;
+			p.try = try;
+			p.policy = policy;
+			p.replacing = replacing;
 #ifdef HAVE_LABELED_IPSEC
-						, uctx
+			p.uctx = uctx;
 #endif
-				);
+			ikev2_initiate_child_sa(&p);
 		} else {
 			/* ??? we assume that peer_nexthop_sin isn't important:
 			 * we already have it from when we negotiated the ISAKMP SA!
@@ -290,7 +294,15 @@ void ipsecdoi_replace(struct state *st,
 	int whack_sock = dup_any(st->st_whack_sock);
 	lset_t policy = st->st_policy;
 
-	if (IS_IKE_SA(st)) {
+	if (IS_PARENT_SA_ESTABLISHED(st) &&
+			!LIN(POLICY_REAUTH, st->st_connection->policy) &&
+			ikev2_rekey_ike_start(st)) {
+		libreswan_log("initiate rekey of IKEv2 CREATE_CHILD_SA IKE Rekey");
+	} else if (IS_IKE_SA(st)) {
+		if (IS_PARENT_SA_ESTABLISHED(st) &&
+				LIN(POLICY_REAUTH, st->st_connection->policy)) {
+			libreswan_log("initiate reauthentication of IKE SA");
+		}
 		struct connection *c = st->st_connection;
 		policy = (c->policy & ~POLICY_IPSEC_MASK &
 				~policy_del) | policy_add;

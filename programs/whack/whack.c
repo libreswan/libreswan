@@ -1563,6 +1563,9 @@ int main(int argc, char **argv)
 		/* --donotrekey */
 		case CDP_SINGLETON + POLICY_DONT_REKEY_IX:
 
+		/* --reauth */
+		case CDP_SINGLETON + POLICY_REAUTH_IX:
+
 		/* --modecfgpull */
 		case CDP_SINGLETON + POLICY_MODECFG_PULL_IX:
 		/* --aggrmode */

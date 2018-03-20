@@ -257,25 +257,6 @@ static const lset_t everywhere_payloads = P(N) | P(V);	/* can appear in any pack
 static const lset_t repeatable_payloads = P(N) | P(D) | P(CP) | P(V) | P(CERT) | P(CERTREQ);	/* if one can appear, many can appear */
 
 /*
- * microcode to parent first initiator state: not associated with an
- * input packet
- *
- * Is this reachable?
- */
-
-const struct state_v2_microcode ikev2_rekey_child_initiate_microcode =
-	/* no state:   --> I1
-	 * HDR, SAi1, KEi, Ni -->
-	 */
-	{ .story      = "initiate rekey",
-	  .state      = STATE_UNDEFINED,
-	  .next_state = STATE_PARENT_I1,
-	  .flags      = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
-	  .processor  = NULL,
-	  .crypto_end = ikev2_parent_outI1_tail,
-	  .timeout_event = EVENT_v2_RETRANSMIT, };
-
-/*
  * IKEv2 State transitions (aka microcodes).
  *
  * This table contains all possible state transitions, some of which
@@ -287,6 +268,29 @@ const struct state_v2_microcode ikev2_rekey_child_initiate_microcode =
  */
 
 static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
+
+	/* no state:   --> CREATE_CHILD IKE Rekey Request
+	 * HDR, SAi, KEi, Ni -->
+	 */
+
+	{ .story      = "Initiate CREATE_CHILD_SA IKE Rekey",
+	  .state      = STATE_V2_REKEY_IKE_I0,
+	  .next_state = STATE_V2_REKEY_IKE_I,
+	  .flags      = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
+	  .processor  = NULL,
+	  .crypto_end = ikev2_child_out_cont,
+	  .timeout_event = EVENT_v2_RETRANSMIT, },
+
+	/* no state:   --> CREATE IPsec Rekey Request
+	 * HDR, SAi1, N(REKEY_SA), {KEi,} Ni TSi TSr -->
+	 */
+	{ .story      = "Initiate CREATE_CHILD_SA IPsec Rekey SA",
+          .state      = STATE_V2_REKEY_CHILD_I0,
+          .next_state = STATE_V2_REKEY_CHILD_I,
+          .flags =      SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
+          .processor  = NULL,
+          .crypto_end = ikev2_child_out_cont,
+          .timeout_event = EVENT_v2_RETRANSMIT, },
 
 	/* no state:   --> CREATE IPsec Child Request
 	 * HDR, SAi1, {KEi,} Ni TSi TSr -->
@@ -454,6 +458,18 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .crypto_end = ikev2_child_out_cont,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE },
+
+	{ .story      = "Process CREATE_CHILD_SA IKE Rekey Response",
+	  .state      = STATE_V2_REKEY_IKE_I,
+	  .next_state = STATE_PARENT_I3,
+	  .flags      = SMF2_MSG_R_SET,
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = P(SA) | P(Ni) |  P(KE),
+	  .opt_enc_payloads = P(N),
+	  .processor  = ikev2_child_ike_inR,
+	  .crypto_end = ikev2_child_ike_rekey_tail,
+	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
+	  .timeout_event = EVENT_SA_REPLACE, },
 
 	{ .story      = "Process CREATE_CHILD_SA IPsec SA Response",
 	  .state      = STATE_V2_CREATE_I,
@@ -1102,9 +1118,8 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 	} else  {
 		/* this a response */
 		what = "Child SA Response";
-		st = state_with_parent_msgid_expect(pst->st_serialno,
-				htonl(md->msgid_received),
-				md->from_state);
+		st = state_with_parent_msgid(pst->st_serialno,
+				htonl(md->msgid_received));
 		if (st == NULL) {
 			switch (md->from_state) {
 			case STATE_V2_CREATE_I:
@@ -2226,6 +2241,8 @@ void ikev2_update_msgid_counters(struct msg_digest *md)
 	/* update when sending a request */
 	if (is_msg_request(md) &&
 			(st->st_state == STATE_PARENT_I1 ||
+			 st->st_state == STATE_V2_REKEY_IKE_I ||
+			 st->st_state == STATE_V2_REKEY_CHILD_I ||
 			 st->st_state == STATE_V2_CREATE_I)) {
 		ikesa->st_msgid_nextuse += 1;
 		/* an informational exchange does its own increment */
@@ -2402,7 +2419,9 @@ static void ikev2_child_emancipate(struct msg_digest *md)
 	ikev2_inherit_ipsec_sa(osn, st->st_serialno, st->st_icookie,
 			st->st_rcookie);
 
+
 	/* initialze the the new IKE SA. reset and message ID */
+	st->st_msgid_lastack = v2_INVALID_MSGID;
 	st->st_msgid_lastrecv = v2_INVALID_MSGID;
 	st->st_msgid_nextuse = v2_INITIAL_MSGID;
 
@@ -2429,7 +2448,8 @@ static void success_v2_state_transition(struct msg_digest *md)
 	}
 
 
-	if (from_state == STATE_V2_REKEY_IKE_R) {
+	if (from_state == STATE_V2_REKEY_IKE_R ||
+	    from_state == STATE_V2_REKEY_IKE_I) {
 		ikev2_update_msgid_counters(md);
 		ikev2_child_emancipate(md);
 	} else  {

@@ -182,7 +182,9 @@ enum event_type {
 
 #define RTM_NEWADDR_ROUTE_DELAY		3 /* seconds */
 
-#define PARENT_MIN_LIFE			1 /* sedond */
+#define PARENT_MIN_LIFE			1 /* second */
+#define EXPIRE_OLD_SA			1 /* second */
+#define REPLACE_ORPHAN			1 /* second */
 
 /*
  * an arbitrary milliseconds delay for responder. A workaround for iOS, iPhone.
@@ -797,6 +799,14 @@ enum sa_role {
 #define IS_PARENT_STATE(s) ((s) >= STATE_PARENT_I1 && (s) <= STATE_IKESA_DEL)
 #define IS_IKE_STATE(s) (IS_PHASE1(s) || IS_PHASE15(s) || IS_PARENT_STATE(s))
 
+#define IS_CHILD_SA_INITIATOR(st) \
+	((st)->st_state == STATE_V2_CREATE_I0 || \
+	  (st)->st_state == STATE_V2_REKEY_CHILD_I0)
+
+#define IS_IKE_REKEY_INITIATOR(st) \
+	((st)->st_state == STATE_V2_REKEY_IKE_I0 || \
+	 (st)->st_state == STATE_V2_REKEY_IKE_I)
+
 #define IS_CHILD_SA_RESPONDER(st) \
 	((st)->st_state == STATE_V2_REKEY_IKE_R || \
 	  (st)->st_state == STATE_V2_CREATE_R || \
@@ -982,6 +992,7 @@ enum sa_policy_bits {
 	 */
 	POLICY_NEGO_PASS_IX,	/* install %pass instead of %hold during initial IKE */
 	POLICY_DONT_REKEY_IX,	/* don't rekey state either Phase */
+	POLICY_REAUTH_IX,	/* IKEv2 only initiate re-authentication */
 	POLICY_OPPORTUNISTIC_IX,	/* is this opportunistic? */
 	POLICY_GROUP_IX,	/* is this a group template? */
 	POLICY_GROUTED_IX,	/* do we want this group routed? */
@@ -1041,6 +1052,7 @@ enum sa_policy_bits {
 #define POLICY_FAIL1	LELEM(POLICY_FAIL1_IX)
 #define POLICY_NEGO_PASS	LELEM(POLICY_NEGO_PASS_IX)	/* install %pass during initial IKE */
 #define POLICY_DONT_REKEY	LELEM(POLICY_DONT_REKEY_IX)	/* don't rekey state either Phase */
+#define POLICY_REAUTH	LELEM(POLICY_REAUTH_IX)	/* IKEv2 initiate reauthentication instead of rekey */
 #define POLICY_OPPORTUNISTIC	LELEM(POLICY_OPPORTUNISTIC_IX)	/* is this opportunistic? */
 #define POLICY_GROUP	LELEM(POLICY_GROUP_IX)	/* is this a group template? */
 #define POLICY_GROUTED	LELEM(POLICY_GROUTED_IX)	/* do we want this group routed? */
