@@ -427,14 +427,17 @@ void show_pending_phase2(const struct connection *c, const struct state *st)
 		if (p->isakmp_sa == st) {
 			/* connection-name state-number [replacing state-number] */
 			char cip[CONN_INST_BUF];
-
 			fmt_conn_instance(p->connection, cip);
-			whack_log(RC_COMMENT,
-				  "#%lu: pending Phase 2 for \"%s\"%s replacing #%lu",
-				  p->isakmp_sa->st_serialno,
-				  p->connection->name,
-				  cip,
-				  p->replacing);
+
+			LSWLOG_WHACK(RC_COMMENT, buf) {
+				lswlogf(buf, "#%lu: pending ", p->isakmp_sa->st_serialno);
+				lswlogs(buf, st->st_ikev2 ? "CHILD SA" : "Phase 2");
+				lswlogf(buf, " for \"%s\"%s", p->connection->name,
+					cip);
+				if (p->replacing != SOS_NOBODY) {
+					lswlogf(buf, " replacing #%lu", p->replacing);
+				}
+			}
 		}
 	}
 }
