@@ -1,0 +1,10 @@
+Attempt to create CHILD SA after a failed attempt - it hangs
+
+- first attempt has proposal mismatch so should fail
+
+- second attempt should be ok but, instead, hangs
+
+Once this is fixed, ikev2-child-01-dh-pfs=no-downgrade=no and
+ikev2-child-02-dh-pfs=yes-downgrade=yes should be updated to include
+all cases (and this test deleted).
+
