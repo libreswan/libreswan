@@ -7,7 +7,7 @@
  * Copyright (C) 2012-2013,2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2015-2017 Andrew Cagney
+ * Copyright (C) 2015-2018 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -2161,7 +2161,7 @@ void ikev2_proposals_from_alg_info_esp(const char *connection_name,
 	}
 }
 
-struct ipsec_proto_info *ikev2_esp_or_ah_proto_info(struct state *st, lset_t policy)
+struct ipsec_proto_info *ikev2_child_sa_proto_info(struct state *st, lset_t policy)
 {
 	/* ??? this code won't support AH + ESP */
 	switch (policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
@@ -2175,7 +2175,7 @@ struct ipsec_proto_info *ikev2_esp_or_ah_proto_info(struct state *st, lset_t pol
 	}
 }
 
-ipsec_spi_t ikev2_esp_or_ah_spi(const struct spd_route *spd_route, lset_t policy)
+ipsec_spi_t ikev2_child_sa_spi(const struct spd_route *spd_route, lset_t policy)
 {
 	int ipprotoid;
 	switch (policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {

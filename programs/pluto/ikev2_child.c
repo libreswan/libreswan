@@ -1070,12 +1070,12 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 		/* ??? this code won't support AH + ESP */
 		struct ipsec_proto_info *proto_info
-			= ikev2_esp_or_ah_proto_info(cst, c->policy);
+			= ikev2_child_sa_proto_info(cst, c->policy);
 
 		if (isa_xchg != ISAKMP_v2_CREATE_CHILD_SA)  {
 			RETURN_STF_FAILURE_STATUS(ikev2_process_child_sa_pl(md, FALSE));
 		}
-		proto_info->our_spi = ikev2_esp_or_ah_spi(&c->spd, c->policy);
+		proto_info->our_spi = ikev2_child_sa_spi(&c->spd, c->policy);
 		chunk_t local_spi;
 		setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
 				sizeof(proto_info->our_spi));

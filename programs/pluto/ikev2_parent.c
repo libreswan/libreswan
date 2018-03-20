@@ -3492,8 +3492,8 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 		/* code does not support AH + ESP, not recommend rfc8221 section-4 */
 		struct ipsec_proto_info *proto_info
-			= ikev2_esp_or_ah_proto_info(cst, cc->policy);
-		proto_info->our_spi = ikev2_esp_or_ah_spi(&cc->spd, cc->policy);
+			= ikev2_child_sa_proto_info(cst, cc->policy);
+		proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy);
 		chunk_t local_spi;
 		setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
 			 sizeof(proto_info->our_spi));
@@ -4383,8 +4383,8 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 	struct connection *c = st->st_connection;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	enum isakmp_xchg_types isa_xchg = md->hdr.isa_xchg;
-	struct ipsec_proto_info *proto_info = ikev2_esp_or_ah_proto_info(st,
-			c->policy);
+	struct ipsec_proto_info *proto_info =
+		ikev2_child_sa_proto_info(st, c->policy);
 	stf_status ret;
 
 	char *what;
@@ -5111,8 +5111,8 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 
 	/* ??? this code won't support AH + ESP */
 	struct ipsec_proto_info *proto_info
-		= ikev2_esp_or_ah_proto_info(cst, cc->policy);
-	proto_info->our_spi = ikev2_esp_or_ah_spi(&cc->spd, cc->policy);
+		= ikev2_child_sa_proto_info(cst, cc->policy);
+	proto_info->our_spi = ikev2_child_sa_spi(&cc->spd, cc->policy);
 	chunk_t local_spi;
 	setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
 			sizeof(proto_info->our_spi));

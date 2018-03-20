@@ -146,9 +146,9 @@ bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *chosen,
 				   struct trans_attrs  *);
 
-struct ipsec_proto_info *ikev2_esp_or_ah_proto_info(struct state *st, lset_t policy);
+struct ipsec_proto_info *ikev2_child_sa_proto_info(struct state *st, lset_t policy);
 
-ipsec_spi_t ikev2_esp_or_ah_spi(const struct spd_route *spd_route, lset_t policy);
+ipsec_spi_t ikev2_child_sa_spi(const struct spd_route *spd_route, lset_t policy);
 
 extern stf_status ikev2_process_decrypted_payloads(struct msg_digest *md);
 
