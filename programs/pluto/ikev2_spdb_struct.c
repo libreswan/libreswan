@@ -2065,8 +2065,18 @@ void ikev2_proposals_from_alg_info_esp(const char *connection_name,
 			 * For moment this function does not support
 			 * AH+ESP.  Assert the assumption.
 			 */
-			bad_case(policy);
+			bad_case(esp_ah);
 		}
+
+		/*
+		 * Should all the proposals be duplicated minus DH so
+		 * that an MSDH interop works? Not needed when PFS is
+		 * off and/or this is the AUTH exchange and DH is
+		 * excluded by &unset_group.
+		 */
+		bool add_empty_msdh_duplicates = (policy & POLICY_MSDH_DOWNGRADE) &&
+			default_dh != NULL && default_dh != &unset_group;
+
 		/*
 		 * Clone the default proposal and add the missing ESN.
 		 */
@@ -2074,9 +2084,23 @@ void ikev2_proposals_from_alg_info_esp(const char *connection_name,
 								"cloned ESP/AH proposals");
 		proposals->on_heap = TRUE;
 		proposals->roof = default_proposals_missing_esn->roof;
-		proposals->proposal = clone_bytes(default_proposals_missing_esn->proposal,
-						  sizeof(default_proposals_missing_esn->proposal[0]) * default_proposals_missing_esn->roof,
-						  "ESP/AH proposals");
+		if (add_empty_msdh_duplicates) {
+			/* add space for duplicates, minus the empty first proposal */
+			proposals->roof += default_proposals_missing_esn->roof - 1;
+		}
+		proposals->proposal = alloc_things(struct ikev2_proposal, proposals->roof,
+						   "ESP/AH proposals");
+		memcpy(proposals->proposal, default_proposals_missing_esn->proposal,
+		       sizeof(proposals->proposal[0]) * default_proposals_missing_esn->roof);
+		if (add_empty_msdh_duplicates) {
+			/*
+			 * Append duplicates but discarding
+			 * proposal[0] which is filler.
+			 */
+			memcpy(proposals->proposal + default_proposals_missing_esn->roof,
+			       default_proposals_missing_esn->proposal + 1, /* skip "0" */
+			       sizeof(proposals->proposal[0]) * (default_proposals_missing_esn->roof - 1));
+		}
 
 		int propnum;
 		struct ikev2_proposal *proposal;
@@ -2090,6 +2114,9 @@ void ikev2_proposals_from_alg_info_esp(const char *connection_name,
 				append_transform(proposal,
 						 IKEv2_TRANS_TYPE_DH,
 						 default_dh->group, 0);
+				if (propnum >= default_proposals_missing_esn->roof)
+					/* don't add to MSDH duplicates */
+					break;
 			}
 		}
 		*result = proposals;
@@ -2108,9 +2135,25 @@ void ikev2_proposals_from_alg_info_esp(const char *connection_name,
 			lswlogf(buf, "  for %s (%s)", connection_name, why);
 		}
 
-		struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals, "proposals");
+		/*
+		 * If enabled, convert every proposal twice with the
+		 * second pass stripped of DH.
+		 *
+		 * Even when DEFAULT_DH is NULL, DH may be added
+		 * (found in alg-info).  Deal with that below.
+		 */
+		bool add_empty_msdh_duplicates = (policy & POLICY_MSDH_DOWNGRADE) &&
+			default_dh != &unset_group;
+
+		struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals,
+								"ESP/AH proposals");
 		int proposals_roof = alg_info_esp->ai.alg_info_cnt + 1;
-		proposals->proposal = alloc_things(struct ikev2_proposal, proposals_roof, "propsal");
+		if (add_empty_msdh_duplicates) {
+			/* make space for everything duplicated */
+			proposals_roof += alg_info_esp->ai.alg_info_cnt;
+		}
+		proposals->proposal = alloc_things(struct ikev2_proposal, proposals_roof,
+						   "ESP/AH proposal");
 		proposals->on_heap = TRUE;
 		proposals->roof = 1;
 
@@ -2126,26 +2169,35 @@ void ikev2_proposals_from_alg_info_esp(const char *connection_name,
 			bad_case(policy);
 		}
 
-		FOR_EACH_ESP_INFO(alg_info_esp, esp_info) {
-			LSWDBGP(DBG_CONTROL, log) {
-				lswlogf(log, "converting proposal ");
-				lswlog_proposal_info(log, esp_info);
-				lswlogf(log, " to ikev2 ...");
-			}
+		for (int dup = 0; dup < (add_empty_msdh_duplicates ? 2 : 1); dup++) {
+			FOR_EACH_ESP_INFO(alg_info_esp, esp_info) {
+				LSWDBGP(DBG_CONTROL, log) {
+					lswlogf(log, "converting proposal ");
+					lswlog_proposal_info(log, esp_info);
+					lswlogf(log, " to ikev2 ...");
+				}
 
-			/*
-			 * Get the next proposal with the basics filled in.
-			 */
-			passert(proposals->roof < proposals_roof);
-			struct ikev2_proposal *proposal =
-				ikev2_proposal_from_proposal_info(esp_info, protoid,
-								  proposals, default_dh);
-			if (proposal != NULL) {
-				add_esn_transforms(proposal, policy);
-
-				DBG(DBG_CONTROL,
-				    DBG_log_ikev2_proposal("... ", proposal));
-				proposals->roof++;
+				/*
+				 * Get the next proposal with the
+				 * basics filled in.
+				 */
+				passert(proposals->roof < proposals_roof);
+				if (dup && default_dh == NULL && esp_info->dh == NULL) {
+					/*
+					 * First pass didn't include DH.
+					 */
+					continue;
+				}
+				struct ikev2_proposal *proposal =
+					ikev2_proposal_from_proposal_info(esp_info, protoid,
+									  proposals,
+									  dup ? &unset_group : default_dh);
+				if (proposal != NULL) {
+					add_esn_transforms(proposal, policy);
+					DBG(DBG_CONTROL,
+					    DBG_log_ikev2_proposal("... ", proposal));
+					proposals->roof++;
+				}
 			}
 		}
 
