@@ -35,7 +35,7 @@ DOLLAR_GROUP = "dollar"
 # Patterns for each part of the above prompt
 USERNAME_PATTERN = "[-\.a-z0-9]+"
 HOSTNAME_PATTERN = "[-a-z0-9]+"
-BASENAME_PATTERN = "[-\.a-z0-9A-Z_~]+"
+BASENAME_PATTERN = "[-+=:,\.a-z0-9A-Z_~]+"
 STATUS_PATTERN = "| [0-9]+"
 DOLLAR_PATTERN = "[#\$]"
 
