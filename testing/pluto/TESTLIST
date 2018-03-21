@@ -502,6 +502,8 @@ kvmplutotest	ikev2-liveness-09	good
 kvmplutotest	ikev2-liveness-10	wip
 kvmplutotest	ikev2-liveness-11-silent	good
 kvmplutotest	ikev2-child-00-dh-hang		wip
+kvmplutotest	ikev2-child-01-pfs-no-downgrade-no	good
+kvmplutotest	ikev2-child-02-pfs-yes-downgrade-yes	good
 kvmplutotest	ikev2-child-ipsec	good
 kvmplutotest	ikev2-child-ipsec-pfs	good
 kvmplutotest	ikev2-child-ipsec-pfs-nhelpers-0 good
