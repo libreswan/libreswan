@@ -159,7 +159,7 @@ static void test(const struct proposal_policy policy)
 	esp(policy, false, "");
 
 	esp(policy, true, "aes");
-	esp(policy, true, "aes");
+	esp(policy, true, "aes;modp2048");
 	esp(policy, true, "aes-sha1");
 	esp(policy, true, "aes-sha1");
 	esp(policy, true, "aes-sha1-modp2048");
@@ -274,9 +274,6 @@ static void test(const struct proposal_policy policy)
 	esp(policy, true, "aes-sha1,3des-sha1;modp8192"); /* set modp8192 on all algs */
 	esp(policy, true, "aes-sha1-modp8192,3des-sha1-modp8192"); /* silly */
 	esp(policy, true, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192"); /* suppress duplicates */
-#if 0
-	esp(policy, true, "3des;modp8192");
-#endif
 
 	/*
 	 * should this be supported - for now man page says not
@@ -335,6 +332,7 @@ static void test(const struct proposal_policy policy)
 	ah(policy, false, "");
 	ah(policy, !fips, "md5");
 	ah(policy, true, "sha");
+	ah(policy, true, "sha;modp2048");
 	ah(policy, true, "sha1");
 	ah(policy, true, "sha2");
 	ah(policy, true, "sha256");
@@ -369,9 +367,7 @@ static void test(const struct proposal_policy policy)
 	ike(policy, true, "3des-sha1");
 	ike(policy, true, "3des-sha1");
 	ike(policy, !fips, "3des-sha1;modp1536");
-#if 0
 	ike(policy, true, "3des;dh21");
-#endif
 	ike(policy, true, "3des-sha1;dh21");
 	ike(policy, true, "3des-sha1-ecp_521");
 	ike(policy, !ikev1, "aes_gcm");
