@@ -214,6 +214,7 @@ OBJS += foodgroups.o log.o state.o plutomain.o plutoalg.o server.o
 OBJS += peerlog.o
 OBJS += hash_table.o list_entry.o
 OBJS += timer.o hmac.o hostpair.o
+OBJS += retry.o
 OBJS += myid.o ipsec_doi.o
 ifeq ($(USE_DNSSEC),true)
 OBJS += ikev2_ipseckey.o
