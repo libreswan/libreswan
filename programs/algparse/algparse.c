@@ -20,14 +20,12 @@ static int failures = 0;
 
 enum expect { FAIL = false, PASS = true, IGNORE, };
 
-static struct proposal_policy policy = {
-	.ikev1 = false,
-	.ikev2 = false,
-};
-
-#define CHECK(TYPE,PARSE) {						\
-		policy.ikev1 = ikev1;					\
-		policy.ikev2 = ikev2;					\
+#define CHECK(TYPE,PARSE,OK) {						\
+		struct proposal_policy policy = {			\
+			.ikev1 = ikev1,					\
+			.ikev2 = ikev2,					\
+			.alg_is_ok = OK,				\
+		};							\
 		if (algstr == NULL) {					\
 			printf("[%s]\n", #PARSE);			\
 		} else {						\
@@ -86,25 +84,22 @@ static bool kernel_alg_is_ok(const struct ike_alg *alg)
 	}
 }
 
-static void esp(struct proposal_policy policy, enum expect expected, const char *algstr)
+static void esp(enum expect expected, const char *algstr)
 {
-	policy.alg_is_ok = kernel_alg_is_ok;
-	CHECK(esp, esp);
+	CHECK(esp, esp, kernel_alg_is_ok);
 }
 
-static void ah(struct proposal_policy policy, enum expect expected, const char *algstr)
+static void ah(enum expect expected, const char *algstr)
 {
-	policy.alg_is_ok = kernel_alg_is_ok;
-	CHECK(esp, ah);
+	CHECK(esp, ah, kernel_alg_is_ok);
 }
 
-static void ike(struct proposal_policy policy, enum expect expected, const char *algstr)
+static void ike(enum expect expected, const char *algstr)
 {
-	policy.alg_is_ok = ike_alg_is_ike;
-	CHECK(ike, ike);
+	CHECK(ike, ike, ike_alg_is_ike);
 }
 
-typedef void (protocol_t)(struct proposal_policy policy, enum expect expected, const char *);
+typedef void (protocol_t)(enum expect expected, const char *);
 
 struct protocol {
 	const char *name;
@@ -117,28 +112,28 @@ const struct protocol protocols[] = {
 	{ "esp", esp, },
 };
 
-static void all(const struct proposal_policy policy, const char *algstr)
+static void all(const char *algstr)
 {
 	for (const struct protocol *protocol = protocols;
 	     protocol < protocols + elemsof(protocols);
 	     protocol++) {
-		protocol->parser(policy, IGNORE, algstr);
+		protocol->parser(IGNORE, algstr);
 	}
 }
 
-static void test_proposal(const struct proposal_policy policy, const char *arg)
+static void test_proposal(const char *arg)
 {
 	const char *eq = strchr(arg, '=');
 	for (const struct protocol *protocol = protocols;
 	     protocol < protocols + elemsof(protocols);
 	     protocol++) {
 		if (streq(arg, protocol->name)) {
-			protocol->parser(policy, IGNORE, NULL);
+			protocol->parser(IGNORE, NULL);
 			return;
 		}
 		if (startswith(arg, protocol->name)
 		    && arg + strlen(protocol->name) == eq) {
-			protocol->parser(policy, IGNORE, eq + 1);
+			protocol->parser(IGNORE, eq + 1);
 			return;
 		}
 	}
@@ -146,181 +141,181 @@ static void test_proposal(const struct proposal_policy policy, const char *arg)
 		fprintf(stderr, "unrecognized PROTOCOL in '%s'", arg);
 		exit(1);
 	}
-	all(policy, arg);
+	all(arg);
 }
 
-static void test(const struct proposal_policy policy)
+static void test(void)
 {
 	/*
 	 * esp=
 	 */
 
-	esp(policy, true, NULL);
-	esp(policy, false, "");
+	esp(true, NULL);
+	esp(false, "");
 
-	esp(policy, true, "aes");
-	esp(policy, true, "aes;modp2048");
-	esp(policy, true, "aes-sha1");
-	esp(policy, true, "aes-sha1");
-	esp(policy, true, "aes-sha1-modp2048");
-	esp(policy, true, "aes-128");
-	esp(policy, true, "aes-128-sha1");
-	esp(policy, true, "aes-128-sha1");
-	esp(policy, true, "aes-128-sha1-modp2048");
+	esp(true, "aes");
+	esp(true, "aes;modp2048");
+	esp(true, "aes-sha1");
+	esp(true, "aes-sha1");
+	esp(true, "aes-sha1-modp2048");
+	esp(true, "aes-128");
+	esp(true, "aes-128-sha1");
+	esp(true, "aes-128-sha1");
+	esp(true, "aes-128-sha1-modp2048");
 
-	esp(policy, true, "aes_gcm_a-128-null");
-	esp(policy, !fips, "3des-sha1;modp1024");
-	esp(policy, !fips, "3des-sha1;modp1536");
-	esp(policy, true, "3des-sha1;modp2048");
-	esp(policy, !ikev1, "3des-sha1;dh21");
-	esp(policy, !ikev1, "3des-sha1;ecp_521");
-	esp(policy, true, "3des-sha1;dh23");
-	esp(policy, true, "3des-sha1;dh24");
-	esp(policy, true, "3des-sha1");
-	esp(policy, !fips, "null-sha1");
+	esp(true, "aes_gcm_a-128-null");
+	esp(!fips, "3des-sha1;modp1024");
+	esp(!fips, "3des-sha1;modp1536");
+	esp(true, "3des-sha1;modp2048");
+	esp(!ikev1, "3des-sha1;dh21");
+	esp(!ikev1, "3des-sha1;ecp_521");
+	esp(true, "3des-sha1;dh23");
+	esp(true, "3des-sha1;dh24");
+	esp(true, "3des-sha1");
+	esp(!fips, "null-sha1");
 
-	esp(policy, true, "aes_cbc");
-	esp(policy, true, "aes-sha");
-	esp(policy, true, "aes-sha1");
-	esp(policy, true, "aes-sha2");
-	esp(policy, true, "aes-sha256");
-	esp(policy, true, "aes-sha384");
-	esp(policy, true, "aes-sha512");
-	esp(policy, true, "aes128-sha1");
-	esp(policy, true, "aes128-aes_xcbc");
-	esp(policy, true, "aes192-sha1");
-	esp(policy, true, "aes256-sha1");
-	esp(policy, true, "aes256-sha");
-	esp(policy, true, "aes256-sha2");
-	esp(policy, true, "aes256-sha2_256");
-	esp(policy, true, "aes256-sha2_384");
-	esp(policy, true, "aes256-sha2_512");
-	esp(policy, !fips, "camellia");
-	esp(policy, !fips, "camellia128");
-	esp(policy, !fips, "camellia192");
-	esp(policy, !fips, "camellia256");
+	esp(true, "aes_cbc");
+	esp(true, "aes-sha");
+	esp(true, "aes-sha1");
+	esp(true, "aes-sha2");
+	esp(true, "aes-sha256");
+	esp(true, "aes-sha384");
+	esp(true, "aes-sha512");
+	esp(true, "aes128-sha1");
+	esp(true, "aes128-aes_xcbc");
+	esp(true, "aes192-sha1");
+	esp(true, "aes256-sha1");
+	esp(true, "aes256-sha");
+	esp(true, "aes256-sha2");
+	esp(true, "aes256-sha2_256");
+	esp(true, "aes256-sha2_384");
+	esp(true, "aes256-sha2_512");
+	esp(!fips, "camellia");
+	esp(!fips, "camellia128");
+	esp(!fips, "camellia192");
+	esp(!fips, "camellia256");
 
 	/* this checks the bit sizes as well */
-	esp(policy, true, "aes_ccm");
-	esp(policy, true, "aes_ccm_a-128-null");
-	esp(policy, true, "aes_ccm_a-192-null");
-	esp(policy, true, "aes_ccm_a-256-null");
-	esp(policy, true, "aes_ccm_b-128-null");
-	esp(policy, true, "aes_ccm_b-192-null");
-	esp(policy, true, "aes_ccm_b-256-null");
-	esp(policy, true, "aes_ccm_c-128-null");
-	esp(policy, true, "aes_ccm_c-192-null");
-	esp(policy, true, "aes_ccm_c-256-null");
-	esp(policy, true, "aes_gcm");
-	esp(policy, true, "aes_gcm_a-128-null");
-	esp(policy, true, "aes_gcm_a-192-null");
-	esp(policy, true, "aes_gcm_a-256-null");
-	esp(policy, true, "aes_gcm_b-128-null");
-	esp(policy, true, "aes_gcm_b-192-null");
-	esp(policy, true, "aes_gcm_b-256-null");
-	esp(policy, true, "aes_gcm_c-128-null");
-	esp(policy, true, "aes_gcm_c-192-null");
-	esp(policy, true, "aes_gcm_c-256-null");
+	esp(true, "aes_ccm");
+	esp(true, "aes_ccm_a-128-null");
+	esp(true, "aes_ccm_a-192-null");
+	esp(true, "aes_ccm_a-256-null");
+	esp(true, "aes_ccm_b-128-null");
+	esp(true, "aes_ccm_b-192-null");
+	esp(true, "aes_ccm_b-256-null");
+	esp(true, "aes_ccm_c-128-null");
+	esp(true, "aes_ccm_c-192-null");
+	esp(true, "aes_ccm_c-256-null");
+	esp(true, "aes_gcm");
+	esp(true, "aes_gcm_a-128-null");
+	esp(true, "aes_gcm_a-192-null");
+	esp(true, "aes_gcm_a-256-null");
+	esp(true, "aes_gcm_b-128-null");
+	esp(true, "aes_gcm_b-192-null");
+	esp(true, "aes_gcm_b-256-null");
+	esp(true, "aes_gcm_c-128-null");
+	esp(true, "aes_gcm_c-192-null");
+	esp(true, "aes_gcm_c-256-null");
 
-	esp(policy, true, "aes_ccm_a-null");
-	esp(policy, true, "aes_ccm_b-null");
-	esp(policy, true, "aes_ccm_c-null");
-	esp(policy, true, "aes_gcm_a-null");
-	esp(policy, true, "aes_gcm_b-null");
-	esp(policy, true, "aes_gcm_c-null");
+	esp(true, "aes_ccm_a-null");
+	esp(true, "aes_ccm_b-null");
+	esp(true, "aes_ccm_c-null");
+	esp(true, "aes_gcm_a-null");
+	esp(true, "aes_gcm_b-null");
+	esp(true, "aes_gcm_c-null");
 
-	esp(policy, true, "aes_ccm-null");
-	esp(policy, true, "aes_gcm-null");
+	esp(true, "aes_ccm-null");
+	esp(true, "aes_gcm-null");
 
-	esp(policy, true, "aes_ccm-256-null");
-	esp(policy, true, "aes_gcm-192-null");
+	esp(true, "aes_ccm-256-null");
+	esp(true, "aes_gcm-192-null");
 
-	esp(policy, true, "aes_ccm_256-null");
-	esp(policy, true, "aes_gcm_192-null");
+	esp(true, "aes_ccm_256-null");
+	esp(true, "aes_gcm_192-null");
 
-	esp(policy, true, "aes_ccm_8-null");
-	esp(policy, true, "aes_ccm_12-null");
-	esp(policy, true, "aes_ccm_16-null");
-	esp(policy, true, "aes_gcm_8-null");
-	esp(policy, true, "aes_gcm_12-null");
-	esp(policy, true, "aes_gcm_16-null");
+	esp(true, "aes_ccm_8-null");
+	esp(true, "aes_ccm_12-null");
+	esp(true, "aes_ccm_16-null");
+	esp(true, "aes_gcm_8-null");
+	esp(true, "aes_gcm_12-null");
+	esp(true, "aes_gcm_16-null");
 
-	esp(policy, true, "aes_ccm_8-128-null");
-	esp(policy, true, "aes_ccm_12-192-null");
-	esp(policy, true, "aes_ccm_16-256-null");
-	esp(policy, true, "aes_gcm_8-128-null");
-	esp(policy, true, "aes_gcm_12-192-null");
-	esp(policy, true, "aes_gcm_16-256-null");
+	esp(true, "aes_ccm_8-128-null");
+	esp(true, "aes_ccm_12-192-null");
+	esp(true, "aes_ccm_16-256-null");
+	esp(true, "aes_gcm_8-128-null");
+	esp(true, "aes_gcm_12-192-null");
+	esp(true, "aes_gcm_16-256-null");
 
-	esp(policy, true, "aes_ccm_8_128-null");
-	esp(policy, true, "aes_ccm_12_192-null");
-	esp(policy, true, "aes_ccm_16_256-null");
-	esp(policy, true, "aes_gcm_8_128-null");
-	esp(policy, true, "aes_gcm_12_192-null");
-	esp(policy, true, "aes_gcm_16_256-null");
+	esp(true, "aes_ccm_8_128-null");
+	esp(true, "aes_ccm_12_192-null");
+	esp(true, "aes_ccm_16_256-null");
+	esp(true, "aes_gcm_8_128-null");
+	esp(true, "aes_gcm_12_192-null");
+	esp(true, "aes_gcm_16_256-null");
 
 	/* other */
-	esp(policy, true, "aes_ctr");
-	esp(policy, true, "aesctr");
-	esp(policy, true, "aes_ctr128");
-	esp(policy, true, "aes_ctr192");
-	esp(policy, true, "aes_ctr256");
-	esp(policy, !fips, "serpent");
-	esp(policy, !fips, "twofish");
-	esp(policy, !fips, "camellia_cbc_256-hmac_sha2_512_256;modp8192"); /* long */
-	esp(policy, !fips, "null_auth_aes_gmac_256-null;modp8192"); /* long */
-	esp(policy, true, "3des-sha1;modp8192"); /* allow ';' when unambigious */
-	esp(policy, true, "3des-sha1-modp8192"); /* allow '-' when unambigious */
-	esp(policy, true, "aes-sha1,3des-sha1;modp8192"); /* set modp8192 on all algs */
-	esp(policy, true, "aes-sha1-modp8192,3des-sha1-modp8192"); /* silly */
-	esp(policy, true, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192"); /* suppress duplicates */
+	esp(true, "aes_ctr");
+	esp(true, "aesctr");
+	esp(true, "aes_ctr128");
+	esp(true, "aes_ctr192");
+	esp(true, "aes_ctr256");
+	esp(!fips, "serpent");
+	esp(!fips, "twofish");
+	esp(!fips, "camellia_cbc_256-hmac_sha2_512_256;modp8192"); /* long */
+	esp(!fips, "null_auth_aes_gmac_256-null;modp8192"); /* long */
+	esp(true, "3des-sha1;modp8192"); /* allow ';' when unambigious */
+	esp(true, "3des-sha1-modp8192"); /* allow '-' when unambigious */
+	esp(true, "aes-sha1,3des-sha1;modp8192"); /* set modp8192 on all algs */
+	esp(true, "aes-sha1-modp8192,3des-sha1-modp8192"); /* silly */
+	esp(true, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192"); /* suppress duplicates */
 
 	/*
 	 * should this be supported - for now man page says not
-	 * esp(policy, "modp1536");
+	 * esp("modp1536");
 	 */
 
 	/* ESP tests that should fail */
 
-	esp(policy, impair, "3des168-sha1"); /* wrong keylen */
-	esp(policy, impair, "3des-null"); /* non-null integ */
-	esp(policy, impair, "aes128-null"); /* non-null-integ */
-	esp(policy, impair, "aes224-sha1"); /* wrong keylen */
-	esp(policy, impair, "aes-224-sha1"); /* wrong keylen */
-	esp(policy, false, "aes0-sha1"); /* wrong keylen */
-	esp(policy, false, "aes-0-sha1"); /* wrong keylen */
-	esp(policy, impair, "aes512-sha1"); /* wrong keylen */
-	esp(policy, false, "aes-sha1555"); /* unknown integ */
-	esp(policy, impair, "camellia666-sha1"); /* wrong keylen */
-	esp(policy, false, "blowfish"); /* obsoleted */
-	esp(policy, false, "des-sha1"); /* obsoleted */
-	esp(policy, impair, "aes_ctr666"); /* bad key size */
-	esp(policy, false, "aes128-sha2_128"); /* _128 does not exist */
-	esp(policy, false, "aes256-sha2_256-4096"); /* double keysize */
-	esp(policy, false, "aes256-sha2_256-128"); /* now what?? */
-	esp(policy, false, "vanitycipher");
-	esp(policy, false, "ase-sah"); /* should get rejected */
-	esp(policy, false, "aes-sah1"); /* should get rejected */
-	esp(policy, false, "id3"); /* should be rejected; idXXX removed */
-	esp(policy, false, "aes-id3"); /* should be rejected; idXXX removed */
-	esp(policy, impair, "aes_gcm-md5"); /* AEAD must have auth null */
-	esp(policy, false, "mars"); /* support removed */
-	esp(policy, impair, "aes_gcm-16"); /* don't parse as aes_gcm_16 */
-	esp(policy, false, "aes_gcm-0"); /* invalid keylen */
-	esp(policy, false, "aes_gcm-123456789012345"); /* huge keylen */
-	esp(policy, false, "3des-sha1;dh22"); /* support for dh22 removed */
+	esp(impair, "3des168-sha1"); /* wrong keylen */
+	esp(impair, "3des-null"); /* non-null integ */
+	esp(impair, "aes128-null"); /* non-null-integ */
+	esp(impair, "aes224-sha1"); /* wrong keylen */
+	esp(impair, "aes-224-sha1"); /* wrong keylen */
+	esp(false, "aes0-sha1"); /* wrong keylen */
+	esp(false, "aes-0-sha1"); /* wrong keylen */
+	esp(impair, "aes512-sha1"); /* wrong keylen */
+	esp(false, "aes-sha1555"); /* unknown integ */
+	esp(impair, "camellia666-sha1"); /* wrong keylen */
+	esp(false, "blowfish"); /* obsoleted */
+	esp(false, "des-sha1"); /* obsoleted */
+	esp(impair, "aes_ctr666"); /* bad key size */
+	esp(false, "aes128-sha2_128"); /* _128 does not exist */
+	esp(false, "aes256-sha2_256-4096"); /* double keysize */
+	esp(false, "aes256-sha2_256-128"); /* now what?? */
+	esp(false, "vanitycipher");
+	esp(false, "ase-sah"); /* should get rejected */
+	esp(false, "aes-sah1"); /* should get rejected */
+	esp(false, "id3"); /* should be rejected; idXXX removed */
+	esp(false, "aes-id3"); /* should be rejected; idXXX removed */
+	esp(impair, "aes_gcm-md5"); /* AEAD must have auth null */
+	esp(false, "mars"); /* support removed */
+	esp(impair, "aes_gcm-16"); /* don't parse as aes_gcm_16 */
+	esp(false, "aes_gcm-0"); /* invalid keylen */
+	esp(false, "aes_gcm-123456789012345"); /* huge keylen */
+	esp(false, "3des-sha1;dh22"); /* support for dh22 removed */
 
-	esp(policy, false, "3des-sha1;modp8192,3des-sha2"); /* ;DH must be last */
-	esp(policy, impair, "3des-sha1-modp8192,3des-sha2"); /* -DH must be last */
+	esp(false, "3des-sha1;modp8192,3des-sha2"); /* ;DH must be last */
+	esp(impair, "3des-sha1-modp8192,3des-sha2"); /* -DH must be last */
 
-	esp(policy, true, "3des-sha1-modp8192,3des-sha2-modp8192"); /* ok */
-	esp(policy, false, "3des-sha1-modp8192,3des-sha2;modp8192"); /* ;DH must be last */
-	esp(policy, false, "3des-sha1;modp8192,3des-sha2;modp8192"); /* ;DH must be last */
-	esp(policy, false, "3des-sha1;modp8192,3des-sha2;modp8192"); /* ;DH must be last */
-	esp(policy, impair, "3des-sha1-modp8192,3des-sha2-ecp_521"); /* ;DH must match */
+	esp(true, "3des-sha1-modp8192,3des-sha2-modp8192"); /* ok */
+	esp(false, "3des-sha1-modp8192,3des-sha2;modp8192"); /* ;DH must be last */
+	esp(false, "3des-sha1;modp8192,3des-sha2;modp8192"); /* ;DH must be last */
+	esp(false, "3des-sha1;modp8192,3des-sha2;modp8192"); /* ;DH must be last */
+	esp(impair, "3des-sha1-modp8192,3des-sha2-ecp_521"); /* ;DH must match */
 
-	esp(policy, false, "3des-sha1;modp8192,3des-sha1-modp8192"); /* ;DH must be last when dup */
-	esp(policy, false, "3des-sha1;modp8192,3des-sha1;modp8192"); /* ;DH must be last when dup */
+	esp(false, "3des-sha1;modp8192,3des-sha1-modp8192"); /* ;DH must be last when dup */
+	esp(false, "3des-sha1;modp8192,3des-sha1;modp8192"); /* ;DH must be last when dup */
 
 	/*
 	 * ah=
@@ -328,33 +323,33 @@ static void test(const struct proposal_policy policy)
 
 	/* AH tests that should succeed */
 
-	ah(policy, true, NULL);
-	ah(policy, false, "");
-	ah(policy, !fips, "md5");
-	ah(policy, true, "sha");
-	ah(policy, true, "sha;modp2048");
-	ah(policy, true, "sha1");
-	ah(policy, true, "sha2");
-	ah(policy, true, "sha256");
-	ah(policy, true, "sha384");
-	ah(policy, true, "sha512");
-	ah(policy, true, "sha2_256");
-	ah(policy, true, "sha2_384");
-	ah(policy, true, "sha2_512");
-	ah(policy, true, "aes_xcbc");
-	ah(policy, true, "sha1-modp8192,sha1-modp8192,sha1-modp8192"); /* suppress duplicates */
+	ah(true, NULL);
+	ah(false, "");
+	ah(!fips, "md5");
+	ah(true, "sha");
+	ah(true, "sha;modp2048");
+	ah(true, "sha1");
+	ah(true, "sha2");
+	ah(true, "sha256");
+	ah(true, "sha384");
+	ah(true, "sha512");
+	ah(true, "sha2_256");
+	ah(true, "sha2_384");
+	ah(true, "sha2_512");
+	ah(true, "aes_xcbc");
+	ah(true, "sha1-modp8192,sha1-modp8192,sha1-modp8192"); /* suppress duplicates */
 
 	/* AH tests that should fail */
 
-	ah(policy, impair, "aes-sha1");
-	ah(policy, false, "vanityhash1");
-	ah(policy, impair, "aes_gcm_c-256");
-	ah(policy, false, "id3"); /* should be rejected; idXXX removed */
-	ah(policy, impair, "3des");
-	ah(policy, impair, "null");
-	ah(policy, impair, "aes_gcm");
-	ah(policy, impair, "aes_ccm");
-	ah(policy, false, "ripemd"); /* support removed */
+	ah(impair, "aes-sha1");
+	ah(false, "vanityhash1");
+	ah(impair, "aes_gcm_c-256");
+	ah(false, "id3"); /* should be rejected; idXXX removed */
+	ah(impair, "3des");
+	ah(impair, "null");
+	ah(impair, "aes_gcm");
+	ah(impair, "aes_ccm");
+	ah(false, "ripemd"); /* support removed */
 
 	/*
 	 * ike=
@@ -362,22 +357,22 @@ static void test(const struct proposal_policy policy)
 
 	/* IKE tests that should succeed */
 
-	ike(policy, true, NULL);
-	ike(policy, false, "");
-	ike(policy, true, "3des-sha1");
-	ike(policy, true, "3des-sha1");
-	ike(policy, !fips, "3des-sha1;modp1536");
-	ike(policy, true, "3des;dh21");
-	ike(policy, true, "3des-sha1;dh21");
-	ike(policy, true, "3des-sha1-ecp_521");
-	ike(policy, !ikev1, "aes_gcm");
-	ike(policy, true, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192"); /* suppress duplicates */
+	ike(true, NULL);
+	ike(false, "");
+	ike(true, "3des-sha1");
+	ike(true, "3des-sha1");
+	ike(!fips, "3des-sha1;modp1536");
+	ike(true, "3des;dh21");
+	ike(true, "3des-sha1;dh21");
+	ike(true, "3des-sha1-ecp_521");
+	ike(!ikev1, "aes_gcm");
+	ike(true, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192"); /* suppress duplicates */
 
 	/* IKE tests that should fail */
 
-	ike(policy, false, "id2"); /* should be rejected; idXXX removed */
-	ike(policy, false, "3des-id2"); /* should be rejected; idXXX removed */
-	ike(policy, false, "aes_ccm"); /* ESP/AH only */
+	ike(false, "id2"); /* should be rejected; idXXX removed */
+	ike(false, "3des-id2"); /* should be rejected; idXXX removed */
+	ike(false, "aes_ccm"); /* ESP/AH only */
 }
 
 static void usage(void)
@@ -489,10 +484,10 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 		for (; *argp != NULL; argp++) {
-			test_proposal(policy, *argp);
+			test_proposal(*argp);
 		}
 	} else if (run_tests) {
-		test(policy);
+		test();
 	}
 
 	report_leaks();
