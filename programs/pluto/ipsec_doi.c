@@ -65,7 +65,7 @@
 #include "secrets.h"
 #include "crypt_dh.h"
 #include "ike_alg.h"
-#include "ike_alg_null.h"
+#include "ike_alg_none.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
 #include "pluto_crypt.h"

@@ -28,7 +28,7 @@
 #include "ike_alg_3des.h"
 #include "ike_alg_sha1.h"
 #include "ike_alg_sha2.h"
-#include "ike_alg_null.h"
+#include "ike_alg_none.h"
 #include "alg_info.h"
 
 static bool ike_proposal_ok(const struct proposal_parser *parser,

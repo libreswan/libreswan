@@ -1,5 +1,5 @@
 /*
- * NULL, for libreswan.
+ * NONE, for libreswan.
  *
  * Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
  *
@@ -14,6 +14,9 @@
  * for more details.
  */
 
+/*
+ * This probably belongs in something like ike_alg_encrypt.h?
+ */
 extern const struct encrypt_desc ike_alg_encrypt_null;
 
 /*
@@ -22,3 +25,9 @@ extern const struct encrypt_desc ike_alg_encrypt_null;
  * single integrity algorithm of "NONE"
  */
 extern const struct integ_desc ike_alg_integ_none;
+
+/*
+ * IKEv2 RFC 7296 uses the term "NONE" when referring to no DH
+ * algorithm.
+ */
+extern const struct oakley_group_desc ike_alg_dh_none;

@@ -38,7 +38,7 @@
 #include "ietf_constants.h"
 
 #include "ike_alg.h"
-#include "ike_alg_null.h"
+#include "ike_alg_none.h"
 #include "ike_alg_aes.h"
 
 /*

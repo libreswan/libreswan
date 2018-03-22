@@ -20,7 +20,8 @@
 #include "libreswan.h"
 #include "constants.h"
 #include "ike_alg.h"
-#include "ike_alg_null.h"
+#include "ike_alg_none.h"
+#include "ike_alg_nss_modp.h"
 
 /*
  * References for NULL.
@@ -51,7 +52,7 @@ const struct encrypt_desc ike_alg_encrypt_null =
 };
 
 /*
- * This doesn't really exist, yet life is easier if it does.
+ * This gets negotiated and can ever go across the wire.
  */
 const struct integ_desc ike_alg_integ_none = {
        .common = {
@@ -86,4 +87,27 @@ const struct integ_desc ike_alg_integ_none = {
 		*/
 	       .fips = true,
        },
+};
+
+/*
+ * Blame RFC7296!
+ */
+const struct oakley_group_desc ike_alg_dh_none = {
+	.common = {
+		.name = "NONE",
+		.fqn = "NONE",
+		.names = { "none", "null", "dh0", },
+		.officname = "none",
+		.algo_type = IKE_ALG_DH,
+		.id = {
+			[IKEv1_OAKLEY_ID] = -1,
+			[IKEv1_ESP_ID] = -1,
+			[IKEv2_ALG_ID] = OAKLEY_GROUP_NONE,
+		},
+	},
+	.group = OAKLEY_GROUP_NONE,
+	/*
+	 * While patently untrue, this does keep things happy.
+	 */
+	.dhmke_ops = &ike_alg_nss_modp_dhmke_ops,
 };

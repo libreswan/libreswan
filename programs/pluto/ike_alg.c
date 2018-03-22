@@ -43,7 +43,7 @@
 #include "ike_alg_nss_modp.h"
 #include "ike_alg_nss_ecp.h"
 
-#include "ike_alg_null.h"
+#include "ike_alg_none.h"
 #ifdef USE_TWOFISH
 #include "ike_alg_twofish.h"
 #endif

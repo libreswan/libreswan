@@ -122,7 +122,7 @@ OBJS += ike_alg_cast.o
 endif
 OBJS += ike_alg_dh.o
 OBJS += ike_alg_md5.o
-OBJS += ike_alg_null.o
+OBJS += ike_alg_none.o
 ifeq ($(USE_RIPEMD),true)
 OBJS += ike_alg_ripemd.o
 endif

@@ -1831,6 +1831,13 @@ IETF registry enum_names:
          match SHA2_512 [short]: OK
 
   oakley_group_names:
+    0 -> OAKLEY_GROUP_NONE
+         lswlog_enum 0: OK
+         search OAKLEY_GROUP_NONE: OK
+         match OAKLEY_GROUP_NONE: OK
+         short_name 0:  OK
+         lswlog_enum_short 0: OK
+         match NONE [short]: OK
     1 -> OAKLEY_GROUP_MODP768
          lswlog_enum 1: OK
          search OAKLEY_GROUP_MODP768: OK

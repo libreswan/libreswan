@@ -1426,7 +1426,8 @@ enum_names ikev2_auth_names = {
 
 /* these string names map via a lookup function to configuration sttrings */
 static const char *const oakley_group_name[] = {
-	"OAKLEY_GROUP_MODP768", /* 1 */
+	"OAKLEY_GROUP_NONE", /* 0! RFC 7296 */
+	"OAKLEY_GROUP_MODP768",
 	"OAKLEY_GROUP_MODP1024",
 	"OAKLEY_GROUP_GP155(UNUSED)",
 	"OAKLEY_GROUP_GP185(UNUSED)",
@@ -1463,7 +1464,7 @@ static const char *const oakley_group_name[] = {
 };
 
 enum_names oakley_group_names = {
-	OAKLEY_GROUP_MODP768,
+	OAKLEY_GROUP_NONE,
 	OAKLEY_GROUP_CURVE448,
 	ARRAY_REF(oakley_group_name),
 	"OAKLEY_GROUP_", /* prefix */

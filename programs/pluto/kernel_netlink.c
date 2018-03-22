@@ -83,7 +83,7 @@
 #include "ike_alg.h"
 #include "ike_alg_aes.h"
 #include "ike_alg_md5.h"
-#include "ike_alg_null.h"
+#include "ike_alg_none.h"
 #include "ike_alg_sha1.h"
 #include "ike_alg_sha2.h"
 #include "ike_alg_ripemd.h"
