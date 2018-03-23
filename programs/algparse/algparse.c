@@ -272,6 +272,12 @@ static void test(void)
 	esp(true, "aes-sha1-modp8192,3des-sha1-modp8192"); /* silly */
 	esp(true, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192"); /* suppress duplicates */
 
+	esp(!fips && !ikev1, "aes;none");
+	esp(!fips && !ikev1, "aes;none,aes");
+	esp(!fips && !ikev1, "aes;none,aes;modp2048");
+	esp(!fips && !ikev1, "aes-sha1-none");
+	esp(!fips && !ikev1, "aes-sha1;none");
+
 	/*
 	 * should this be supported - for now man page says not
 	 * esp("modp1536");
@@ -339,6 +345,8 @@ static void test(void)
 	ah(true, "sha2_384");
 	ah(true, "sha2_512");
 	ah(true, "aes_xcbc");
+	ah(!fips && !ikev1, "sha2-none");
+	ah(!fips && !ikev1, "sha2;none");
 	ah(true, "sha1-modp8192,sha1-modp8192,sha1-modp8192"); /* suppress duplicates */
 
 	/* AH tests that should fail */
@@ -369,6 +377,7 @@ static void test(void)
 	ike(true, "3des-sha1-ecp_521");
 	ike(!ikev1, "aes_gcm");
 	ike(true, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192"); /* suppress duplicates */
+	ike(false, "aes;none");
 
 	/* IKE tests that should fail */
 

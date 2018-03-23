@@ -209,6 +209,18 @@
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 [esp=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192]
 	AES_CBC-HMAC_SHA1_96-MODP8192
+[esp=aes;none]
+	AES_CBC-HMAC_SHA1_96-NONE
+[esp=aes;none,aes]
+	AES_CBC-HMAC_SHA1_96-NONE
+	AES_CBC-HMAC_SHA1_96
+[esp=aes;none,aes;modp2048]
+	AES_CBC-HMAC_SHA1_96-NONE
+	AES_CBC-HMAC_SHA1_96-MODP2048
+[esp=aes-sha1-none]
+	AES_CBC-HMAC_SHA1_96-NONE
+[esp=aes-sha1;none]
+	AES_CBC-HMAC_SHA1_96-NONE
 [esp=3des168-sha1]
 	ERROR: 3DES does not take variable key lengths
 [esp=3des-null]
@@ -313,6 +325,10 @@
 	HMAC_SHA2_512_256
 [ah=aes_xcbc]
 	AES_XCBC_96
+[ah=sha2-none]
+	HMAC_SHA2_256_128-NONE
+[ah=sha2;none]
+	HMAC_SHA2_256_128-NONE
 [ah=sha1-modp8192,sha1-modp8192,sha1-modp8192]
 	HMAC_SHA1_96-MODP8192
 [ah=aes-sha1]
@@ -362,6 +378,8 @@
 	AES_GCM_16-HMAC_SHA1-MODP2048
 [ike=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192]
 	AES_CBC-HMAC_SHA1-MODP8192
+[ike=aes;none]
+	ERROR: IKE DH algorithm 'none' not permitted
 [ike=id2]
 	ERROR: IKE encryption algorithm 'id' is not recognized
 [ike=3des-id2]

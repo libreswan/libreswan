@@ -520,13 +520,8 @@ static const struct integ_desc *integ_descriptors[] = {
 static void integ_desc_check(const struct ike_alg *alg)
 {
 	const struct integ_desc *integ = integ_desc(alg);
-	if (integ == &ike_alg_integ_none) {
-		passert_ike_alg(alg, integ->integ_keymat_size == 0);
-		passert_ike_alg(alg, integ->integ_output_size == 0);
-	} else {
-		passert_ike_alg(alg, integ->integ_keymat_size > 0);
-		passert_ike_alg(alg, integ->integ_output_size > 0);
-	}
+	passert_ike_alg(alg, integ->integ_keymat_size > 0);
+	passert_ike_alg(alg, integ->integ_output_size > 0);
 	if (integ->prf != NULL) {
 		passert_ike_alg(alg, integ->integ_keymat_size == integ->prf->prf_key_size);
 		passert_ike_alg(alg, integ->integ_output_size <= integ->prf->prf_output_size);
@@ -702,6 +697,7 @@ const struct ike_alg_type ike_alg_encrypt = {
  */
 
 static const struct oakley_group_desc *dh_descriptors[] = {
+	&ike_alg_dh_none,
 	&oakley_group_modp1024,
 	&oakley_group_modp1536,
 	&oakley_group_modp2048,
@@ -729,12 +725,6 @@ static void dh_desc_check(const struct ike_alg *alg)
 	passert_ike_alg(alg, dh->bytes > 0);
 	passert_ike_alg(alg, dh->common.id[IKEv2_ALG_ID] == dh->group);
 	passert_ike_alg(alg, dh->common.id[IKEv1_OAKLEY_ID] == dh->group);
-	/* IKEv1 supports MODP groups but not ECC. */
-	passert_ike_alg(alg, (dh->dhmke_ops == &ike_alg_nss_modp_dhmke_ops
-			      ? dh->common.id[IKEv1_ESP_ID] == dh->group
-			      : dh->dhmke_ops == &ike_alg_nss_ecp_dhmke_ops
-			      ? dh->common.id[IKEv1_ESP_ID] < 0
-			      : FALSE));
 	/* always implemented */
 	passert_ike_alg(alg, dh->dhmke_ops != NULL);
 	passert_ike_alg(alg, dh->dhmke_ops->check != NULL);
@@ -742,6 +732,12 @@ static void dh_desc_check(const struct ike_alg *alg)
 	passert_ike_alg(alg, dh->dhmke_ops->calc_shared != NULL);
 	/* more? */
 	dh->dhmke_ops->check(dh);
+	/* IKEv1 supports MODP groups but not ECC. */
+	passert_ike_alg(alg, (dh->dhmke_ops == &ike_alg_nss_modp_dhmke_ops
+			      ? dh->common.id[IKEv1_ESP_ID] == dh->group
+			      : dh->dhmke_ops == &ike_alg_nss_ecp_dhmke_ops
+			      ? dh->common.id[IKEv1_ESP_ID] < 0
+			      : FALSE));
 }
 
 static bool dh_desc_is_ike(const struct ike_alg *alg)
@@ -828,10 +824,10 @@ static void check_algorithm_table(const struct ike_alg_type *type)
                 /*
 		 * Don't allow 0 as an algorithm ID.
 		 *
-		 * The exception is integrity where the NULL algorithm
-		 * really is 0.
+		 * Don't even try to check 'none' algorithms.
 		 */
-		if (alg != &ike_alg_integ_none.common) {
+		if (alg != &ike_alg_integ_none.common
+		    && alg != &ike_alg_dh_none.common) {
 			for (enum ike_alg_key key = IKE_ALG_KEY_FLOOR;
 			     key < IKE_ALG_KEY_ROOF; key++) {
 				passert_ike_alg(alg, alg->id[key] != 0);
@@ -839,9 +835,12 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 		}
 
 		/*
-		 * Only NULL integrity is allowed the value 0.
+		 * Check the IDs have all been set.
+		 *
+		 * Don't even try to check 'none' algorithms.
 		 */
-		if (alg != &ike_alg_integ_none.common) {
+		if (alg != &ike_alg_integ_none.common
+		    && alg != &ike_alg_dh_none.common) {
 			pexpect_ike_alg(alg, alg->id[IKEv1_OAKLEY_ID] != 0);
 			pexpect_ike_alg(alg, alg->id[IKEv1_ESP_ID] != 0);
 			pexpect_ike_alg(alg, alg->id[IKEv2_ALG_ID] != 0);
@@ -856,8 +855,8 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 		 * entries.
 		 *
 		 * struct ike_alg_encrypt_aes_ccm_8 et.al. do not
-		 * define the IKEv1 field "common.id[IKEv1_OAKLEY_ID]" so need to
-		 * handle that.
+		 * define the IKEv1 field "common.id[IKEv1_OAKLEY_ID]"
+		 * so need to handle that.
 		 */
 		bool at_least_one_valid_id = FALSE;
 		for (enum ike_alg_key key = IKE_ALG_KEY_FLOOR;
@@ -903,9 +902,14 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 
 		/*
 		 * Extra algorithm specific checks.
+		 *
+		 * Don't even try to check 'none' algorithms.
 		 */
-		passert_ike_alg(alg, type->desc_check != NULL);
-		type->desc_check(alg);
+		if (alg != &ike_alg_integ_none.common &&
+		    alg != &ike_alg_dh_none.common) {
+			passert_ike_alg(alg, type->desc_check != NULL);
+			type->desc_check(alg);
+		}
 	}
 
         /*

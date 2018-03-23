@@ -1,0 +1,3 @@
+Create CHILD SAs with east's pfs=yes and esp=aes,aes;none
+
+West tries pfs={yes,no} X esp=aes,aes[;none].  All should interop.

@@ -251,10 +251,13 @@ void ike_alg_show_status(void)
 	for (const struct oakley_group_desc **gdescp = next_oakley_group(NULL);
 	     gdescp != NULL; gdescp = next_oakley_group(gdescp)) {
 		const struct oakley_group_desc *gdesc = *gdescp;
-		whack_log(RC_COMMENT,
-			  "algorithm IKE DH Key Exchange: name=%s, bits=%d",
-			  gdesc->common.name,
-			  (int)gdesc->bytes * BITS_PER_BYTE);
+		if (gdesc->bytes > 0) {
+			/* nothing crazy like 'none' */
+			whack_log(RC_COMMENT,
+				  "algorithm IKE DH Key Exchange: name=%s, bits=%d",
+				  gdesc->common.name,
+				  (int)gdesc->bytes * BITS_PER_BYTE);
+		}
 	}
 
 	whack_log(RC_COMMENT, " "); /* spacer */

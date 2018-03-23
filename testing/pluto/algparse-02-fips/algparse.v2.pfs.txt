@@ -209,6 +209,16 @@
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 [esp=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192]
 	AES_CBC-HMAC_SHA1_96-MODP8192
+[esp=aes;none]
+	ERROR: ESP DH algorithm 'none' is not supported
+[esp=aes;none,aes]
+	ERROR: ESP DH algorithm 'none' is not supported
+[esp=aes;none,aes;modp2048]
+	ERROR: ESP DH algorithm 'none' is not supported
+[esp=aes-sha1-none]
+	ERROR: ESP DH algorithm 'none' is not supported
+[esp=aes-sha1;none]
+	ERROR: ESP DH algorithm 'none' is not supported
 [esp=3des168-sha1]
 	ERROR: 3DES does not take variable key lengths
 [esp=3des-null]
@@ -313,6 +323,10 @@
 	HMAC_SHA2_512_256
 [ah=aes_xcbc]
 	AES_XCBC_96
+[ah=sha2-none]
+	ERROR: AH DH algorithm 'none' is not supported
+[ah=sha2;none]
+	ERROR: AH DH algorithm 'none' is not supported
 [ah=sha1-modp8192,sha1-modp8192,sha1-modp8192]
 	HMAC_SHA1_96-MODP8192
 [ah=aes-sha1]
@@ -362,6 +376,8 @@
 	AES_GCM_16-HMAC_SHA1-MODP2048
 [ike=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192]
 	AES_CBC-HMAC_SHA1-MODP8192
+[ike=aes;none]
+	ERROR: IKE DH algorithm 'none' is not supported
 [ike=id2]
 	ERROR: IKE encryption algorithm 'id' is not recognized
 [ike=3des-id2]

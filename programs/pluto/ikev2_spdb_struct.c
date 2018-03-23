@@ -189,8 +189,8 @@ struct ikev2_proposal {
 struct ikev2_proposal_match {
 	/*
 	 * Set of local transform types to expect in the remote
-	 * proposal.  Because of INTEG=NULL some are OPTIONAL and some
-	 * are REQUIRED.
+	 * proposal.  Because of INTEG=NONE and DH=NONE some are
+	 * OPTIONAL and some are REQUIRED.
 	 */
 	lset_t required_local_transform_types;
 	lset_t optional_local_transform_types;
@@ -485,13 +485,13 @@ static int process_transforms(pb_stream *prop_pbs, struct lswlog *remote_print_b
 					 * types.
 					 *
 					 * However, when the local
-					 * transform has INTEG=null,
-					 * exclude that from the
-					 * REQUIRED set, adding it to
-					 * the OPTIONAL - it is
+					 * transform has INTEG=none or
+					 * DH=none, exclude that from
+					 * the REQUIRED set, adding it
+					 * to the OPTIONAL - it is
 					 * optional.
 					 */
-					if (type == IKEv2_TRANS_TYPE_INTEG
+					if ((type == IKEv2_TRANS_TYPE_INTEG || type == IKEv2_TRANS_TYPE_DH)
 					    && sentinel_transform->id == 0) {
 						matching_local_proposal->optional_local_transform_types |= LELEM(type);
 					} else {
@@ -1222,26 +1222,26 @@ static bool emit_transform(pb_stream *r_proposal_pbs,
  * It's assumed the caller knows what they are doing.  For instance
  * passing the correct value/size in for the SPI.
  */
-static bool emit_proposal(pb_stream *sa_pbs, struct ikev2_proposal *proposal,
-			  unsigned propnum, chunk_t *local_spi,
-			  enum ikev2_last_proposal last_proposal,
-			  bool exclude_integrity_none)
+static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
+			   struct ikev2_proposal *proposal,
+			   unsigned propnum,
+			   bool exclude_transform_none)
 {
-	int numtrans = 0;
-	enum ikev2_trans_type type;
-	struct ikev2_transforms *transforms;
-
+	const char *what = proposal_pbs != NULL ? "payload" : "count";
 	/*
 	 * Total up the number of transforms that will go across the
 	 * wire.  Make allowance for INTEGRITY which might be
 	 * excluded.
 	 */
+	int trans_nr = 0;
+	enum ikev2_trans_type type;
+	struct ikev2_transforms *transforms;
 	FOR_EACH_TRANSFORMS_TYPE(type, transforms, proposal) {
 		struct ikev2_transform *transform;
 		FOR_EACH_TRANSFORM(transform, transforms) {
 			/*
 			 * When pluto initiates with an AEAD proposal,
-			 * integ=none is excluded (as recommended by
+			 * INTEG=NONE is excluded (as recommended by
 			 * the RFC).  However, when pluto receives an
 			 * AEAD proposal that includes integ=none, the
 			 * it needs to include it (as also recommended
@@ -1254,18 +1254,61 @@ static bool emit_proposal(pb_stream *sa_pbs, struct ikev2_proposal *proposal,
 			if (type == IKEv2_TRANS_TYPE_INTEG &&
 			    transform->id == IKEv2_AUTH_NONE) {
 				if (DBGP(IMPAIR_IKEv2_INCLUDE_INTEG_NONE)) {
-					libreswan_log("IMPAIR: for proposal %d include integ=none in count",
-						      propnum);
+					libreswan_log("IMPAIR: for proposal %d include integ=none in %s",
+						      propnum, what);
 				} else if (DBGP(IMPAIR_IKEv2_EXCLUDE_INTEG_NONE)) {
-					libreswan_log("IMPAIR: for proposal %d exclude integ=none in count",
-						      propnum);
+					libreswan_log("IMPAIR: for proposal %d exclude integ=none in %s",
+						      propnum, what);
 					continue;
-				} else if (exclude_integrity_none) {
+				} else if (exclude_transform_none) {
 					continue;
 				}
 			}
-			numtrans++;
+			/*
+			 * Since DH=NONE is omitted, don't include
+			 * it in the count.
+			 *
+			 * XXX: DH=NONE can only be excluded when it
+			 * is the only algorithm.  Fortunately that is
+			 * all that is supported.
+			 */
+			if (type == IKEv2_TRANS_TYPE_DH &&
+			    transform->id == OAKLEY_GROUP_NONE) {
+				DBGF(DBG_CONTROL, "discarding DH=NONE");
+				continue;
+#if 0
+				if (DBGP(IMPAIR_IKEv2_INCLUDE_DH_NONE)) {
+					libreswan_log("IMPAIR: for proposal %d include DH=NONE in %s",
+						      propnum, what);
+				} else if (DBGP(IMPAIR_IKEv2_EXCLUDE_DH_NONE)) {
+					libreswan_log("IMPAIR: for proposal %d exclude DH=NONE in %s",
+						      propnum, what);
+					continue;
+				} else if (exclude_transform_none) {
+					continue;
+				}
+#endif
+			}
+
+			trans_nr++;
+			bool last = trans_nr == nr_trans;
+			if (proposal_pbs != NULL &&
+			    !emit_transform(proposal_pbs, type, last, transform))
+				return -1;
 		}
+	}
+	return trans_nr;
+}
+
+static bool emit_proposal(pb_stream *sa_pbs, struct ikev2_proposal *proposal,
+			  unsigned propnum, chunk_t *local_spi,
+			  enum ikev2_last_proposal last_proposal,
+			  bool exclude_transform_none)
+{
+	int numtrans = walk_transforms(NULL, -1, proposal, propnum,
+				       exclude_transform_none);
+	if (numtrans < 0) {
+		return false;
 	}
 
 	struct ikev2_prop prop = {
@@ -1278,7 +1321,7 @@ static bool emit_proposal(pb_stream *sa_pbs, struct ikev2_proposal *proposal,
 
 	pb_stream proposal_pbs;
 	if (!out_struct(&prop, &ikev2_prop_desc, sa_pbs, &proposal_pbs)) {
-		return FALSE;
+		return false;
 	}
 
 	if (local_spi != NULL) {
@@ -1288,33 +1331,13 @@ static bool emit_proposal(pb_stream *sa_pbs, struct ikev2_proposal *proposal,
 			return FALSE;
 	}
 
-	FOR_EACH_TRANSFORMS_TYPE(type, transforms, proposal) {
-		struct ikev2_transform *transform;
-		FOR_EACH_TRANSFORM(transform, transforms) {
-			/*
-			 * Since INTEG=NONE is omitted, don't include
-			 * it in the count.
-			 */
-			if (type == IKEv2_TRANS_TYPE_INTEG &&
-			    transform->id == IKEv2_AUTH_NONE) {
-				if (DBGP(IMPAIR_IKEv2_INCLUDE_INTEG_NONE)) {
-					libreswan_log("IMPAIR: for proposal %d include integ=none in payload",
-						      propnum);
-				} else if (DBGP(IMPAIR_IKEv2_EXCLUDE_INTEG_NONE)) {
-					libreswan_log("IMPAIR: for proposal %d exclude integ=none in payload",
-						      propnum);
-					continue;
-				} else if (exclude_integrity_none) {
-					continue;
-				}
-			}
-			bool last = --numtrans == 0;
-			if (!emit_transform(&proposal_pbs, type, last, transform))
-				return FALSE;
-		}
+	if (walk_transforms(&proposal_pbs, numtrans, proposal, propnum,
+			    exclude_transform_none) < 0) {
+		return false;
 	}
+
 	close_output_pbs(&proposal_pbs);
-	return TRUE;
+	return true;
 }
 
 bool ikev2_emit_sa_proposals(pb_stream *pbs,
@@ -1757,10 +1780,14 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 	 * the proposed or default DH.
 	 */
 	const struct oakley_group_desc *dh =
-		default_dh == &unset_group ? NULL
+		default_dh == &unset_group ? &ike_alg_dh_none
 		: info->dh != NULL ? info->dh
 		: default_dh;
 	if (dh != NULL) {
+		/*
+		 * WHILE DH=NONE is included in the proposal it is
+		 * omitted when emitted.
+		 */
 		append_transform(proposal, IKEv2_TRANS_TYPE_DH,
 				 dh->common.id[IKEv2_ALG_ID], 0);
 	}
@@ -2267,6 +2294,8 @@ const struct oakley_group_desc *ikev2_proposals_first_dh(struct ikev2_proposals 
 				 * for a valid group.
 				 */
 				PEXPECT_LOG("proposals include unsupported group %d", groupnum);
+			} else if (group == &ike_alg_dh_none) {
+				DBGF(DBG_CONTROL, "ignoring DH=none when looking for first DH");
 			} else {
 				return group;
 			}
