@@ -35,6 +35,7 @@
 #include <blapit.h>
 
 #include "ike_alg_encrypt_nss_cbc_ops.h"
+#include "ike_alg_encrypt_nss_ctr_ops.h"
 #include "ike_alg_encrypt_nss_gcm_ops.h"
 #include "ike_alg_aes.h"
 
@@ -63,83 +64,6 @@ const struct encrypt_desc ike_alg_encrypt_aes_cbc = {
 	.encrypt_ops = &ike_alg_encrypt_nss_cbc_ops,
 };
 
-static void do_aes_ctr(const struct encrypt_desc *alg UNUSED,
-		       u_int8_t *buf, size_t buf_len, PK11SymKey *sym_key,
-		       u_int8_t *counter_block, bool encrypt)
-{
-	DBG(DBG_CRYPT, DBG_log("do_aes_ctr: enter"));
-
-	passert(sym_key);
-	if (sym_key == NULL) {
-		PASSERT_FAIL("%s", "NSS derived enc key in NULL");
-	}
-
-	CK_AES_CTR_PARAMS counter_param;
-	counter_param.ulCounterBits = sizeof(u_int32_t) * 8;/* Per RFC 3686 */
-	memcpy(counter_param.cb, counter_block, sizeof(counter_param.cb));
-	SECItem param;
-	param.type = siBuffer;
-	param.data = (void*)&counter_param;
-	param.len = sizeof(counter_param);
-
-	/* Output buffer for transformed data.  */
-	u_int8_t *out_buf = PR_Malloc((PRUint32)buf_len);
-	unsigned int out_len = 0;
-
-	if (encrypt) {
-		SECStatus rv = PK11_Encrypt(sym_key, CKM_AES_CTR, &param,
-					    out_buf, &out_len, buf_len,
-					    buf, buf_len);
-		if (rv != SECSuccess) {
-			PASSERT_FAIL("PK11_Encrypt failure (err %d)", PR_GetError());
-		}
-	} else {
-		SECStatus rv = PK11_Decrypt(sym_key, CKM_AES_CTR, &param,
-					    out_buf, &out_len, buf_len,
-					    buf, buf_len);
-		if (rv != SECSuccess) {
-			PASSERT_FAIL("PK11_Decrypt failure (err %d)", PR_GetError());
-		}
-	}
-
-	memcpy(buf, out_buf, buf_len);
-	PR_Free(out_buf);
-
-	/*
-	 * Finally update the counter located at the end of the
-	 * counter_block. It is incremented by 1 for every full or
-	 * partial block encoded/decoded.
-	 *
-	 * There's a portability assumption here that the IV buffer is
-	 * at least sizeof(u_int32_t) (4-byte) aligned.
-	 */
-	u_int32_t *counter = (u_int32_t*)(counter_block + AES_BLOCK_SIZE
-					  - sizeof(u_int32_t));
-	u_int32_t old_counter = ntohl(*counter);
-	size_t increment = (buf_len + AES_BLOCK_SIZE - 1) / AES_BLOCK_SIZE;
-	u_int32_t new_counter = old_counter + increment;
-	DBG(DBG_CRYPT, DBG_log("do_aes_ctr: counter-block updated from 0x%lx to 0x%lx for %zd bytes",
-			       (unsigned long)old_counter, (unsigned long)new_counter, buf_len));
-	if (new_counter < old_counter) {
-		/* Wrap ... */
-		loglog(RC_LOG_SERIOUS,
-		       "do_aes_ctr: counter wrapped");
-		/* what next??? */
-	}
-	*counter = htonl(new_counter);
-
-	DBG(DBG_CRYPT, DBG_log("do_aes_ctr: exit"));
-}
-
-static void ctr_check(const struct encrypt_desc *alg UNUSED)
-{
-}
-
-static const struct encrypt_ops aes_ctr_encrypt_ops = {
-	.check = ctr_check,
-	.do_crypt = do_aes_ctr,
-};
-
 const struct encrypt_desc ike_alg_encrypt_aes_ctr =
 {
 	.common = {
@@ -164,7 +88,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_ctr =
 	.salt_size = 4,
 	.keydeflen =    AES_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
-	.encrypt_ops = &aes_ctr_encrypt_ops,
+	.encrypt_ops = &ike_alg_encrypt_nss_ctr_ops,
 };
 
 const struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
