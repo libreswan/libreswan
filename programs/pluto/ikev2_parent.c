@@ -81,7 +81,7 @@
 #include "send.h"
 #include "ikev2_send.h"
 #include "pluto_stats.h"
-
+#include "retry.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/addr_lookup.h"
 
@@ -1862,7 +1862,7 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 	return STF_IGNORE;
 }
 
-stf_status ikev2_auth_initiator_process_failure_notification(struct state *st UNUSED,
+stf_status ikev2_auth_initiator_process_failure_notification(struct state *st,
 							     struct msg_digest *md)
 {
 	v2_notification_t n = md->svm->encrypted_payloads.notification;
@@ -1885,9 +1885,13 @@ stf_status ikev2_auth_initiator_process_failure_notification(struct state *st UN
 	 *   notification has not authenticated the other end yet, that peer needs
 	 *   to treat the information with caution.
 	 *
-	 * Killing the connection isn't being cautious!
+	 * So assume MITM and schedule a retry.
 	 */
-	return STF_FATAL;
+	if (ikev2_schedule_retry(st)) {
+		return STF_IGNORE; /* drop packet */
+	} else {
+		return STF_FATAL;
+	}
 }
 
 stf_status ikev2_auth_initiator_process_unknown_notification(struct state *st UNUSED,
@@ -1904,7 +1908,7 @@ stf_status ikev2_auth_initiator_process_unknown_notification(struct state *st UN
 	 *   ignored, and they should be logged.
 	 */
 
-	stf_status e = STF_IGNORE;
+	bool ignore = true;
 	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 		v2_notification_t n = ntfy->payload.v2n.isan_type;
 		const char *name = enum_short_name(&ikev2_notify_names, n);
@@ -1926,7 +1930,7 @@ stf_status ikev2_auth_initiator_process_unknown_notification(struct state *st UN
 			}
 		} else {
 			pstat(ikev2_recv_notifies_e, n);
-			e = STF_FATAL;
+			ignore = false;
 			if (name == NULL) {
 				libreswan_log("AUTH response contained an unknown error notification (%d)", n);
 			} else {
@@ -1934,7 +1938,26 @@ stf_status ikev2_auth_initiator_process_unknown_notification(struct state *st UN
 			}
 		}
 	}
-	return e;
+	if (ignore) {
+		return STF_IGNORE;
+	}
+	/*
+	 * 2.21.2.  Error Handling in IKE_AUTH
+	 *
+	 *             ...  If the error occurred on the responder, the
+	 *   notification is returned in the protected response, and is usually
+	 *   the only payload in that response.  Although the IKE_AUTH messages
+	 *   are encrypted and integrity protected, if the peer receiving this
+	 *   notification has not authenticated the other end yet, that peer needs
+	 *   to treat the information with caution.
+	 *
+	 * So assume MITM and schedule a retry.
+	 */
+	if (ikev2_schedule_retry(st)) {
+		return STF_IGNORE; /* drop packet */
+	} else {
+		return STF_FATAL;
+	}
 }
 
 /* STATE_PARENT_I1: R1 --> I2
