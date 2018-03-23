@@ -20,6 +20,6 @@ ipsec auto --delete westnet-eastnet-ikev2-dh19
 ipsec auto --up westnet-eastnet-ikev2-dh20-fallback
 ipsec auto --delete westnet-eastnet-ikev2-dh20-fallback
 # the last one is no longer in the default list and should fail
-ipsec whack --debug-all --impair retransmits
+ipsec whack --impair retransmits
 ipsec auto --up westnet-eastnet-ikev2-modp1536
 echo done

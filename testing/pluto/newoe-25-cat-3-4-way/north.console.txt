@@ -11,7 +11,7 @@ Redirecting to: systemctl start ipsec.service
 north #
  /testing/pluto/bin/wait-until-pluto-started
 north #
- ipsec whack --debug-all --impair retransmits
+ ipsec whack --impair retransmits
 north #
  ipsec auto --status
 000 using kernel interface: netkey

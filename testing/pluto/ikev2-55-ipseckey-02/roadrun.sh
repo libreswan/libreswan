@@ -11,7 +11,7 @@ ipsec stop
 sleep 2
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
-ipsec whack --debug-all --impair retransmits
+ipsec whack --impair retransmits
 ipsec auto --add road-east-2
 ipsec auto --up road-east-2
 ping -n -c 4 -I 192.1.3.209 192.1.2.23

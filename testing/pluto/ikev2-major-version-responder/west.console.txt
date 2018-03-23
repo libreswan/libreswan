@@ -13,7 +13,7 @@ west #
  ipsec auto --add westnet-eastnet-ikev2-major
 002 added connection description "westnet-eastnet-ikev2-major"
 west #
- ipsec whack --debug-all --impair retransmits
+ ipsec whack --impair retransmits
 west #
  echo "initdone"
 initdone

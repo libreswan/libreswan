@@ -6,7 +6,7 @@ Redirecting to: systemctl start ipsec.service
 road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
- ipsec whack --debug-all --impair retransmits
+ ipsec whack --impair retransmits
 road #
  ipsec auto --add road
 002 added connection description "road"

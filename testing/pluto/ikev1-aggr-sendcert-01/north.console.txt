@@ -14,7 +14,7 @@ initdone
 north #
  # temp while the test still fails
 north #
- ipsec whack --debug-all --impair retransmits
+ ipsec whack --impair retransmits
 north #
  ipsec auto --up north-east
 002 "north-east" #1: initiating Aggressive Mode

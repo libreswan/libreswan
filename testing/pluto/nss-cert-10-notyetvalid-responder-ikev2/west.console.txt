@@ -14,7 +14,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec whack --debug-all --impair retransmits
+ ipsec whack --impair retransmits
 west #
  # This is expected to fail because remote cert is not yet valid.
 west #

@@ -15,7 +15,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec whack --debug-all --impair retransmits
+ ipsec whack --impair retransmits
 west #
  # this is expected to fail to our own misconfigured key
 west #

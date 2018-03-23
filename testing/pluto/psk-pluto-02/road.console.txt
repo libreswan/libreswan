@@ -5,7 +5,7 @@ Redirecting to: systemctl start ipsec.service
 road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
- ipsec whack --debug-all --impair retransmits
+ ipsec whack --impair retransmits
 road #
  ipsec auto --add road-eastnet-psk
 002 added connection description "road-eastnet-psk"
@@ -32,7 +32,7 @@ road #
  echo "initdone"
 initdone
 road #
- ipsec whack --debug-all --impair retransmits
+ ipsec whack --impair retransmits
 road #
  ipsec auto --up road-eastnet-psk
 003 "road-eastnet-psk": IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's

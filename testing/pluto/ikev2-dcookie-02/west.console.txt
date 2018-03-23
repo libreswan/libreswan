@@ -5,7 +5,7 @@ Redirecting to: systemctl start ipsec.service
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
- ipsec whack --debug-all --impair send-bogus-dcookie
+ ipsec whack --impair send-bogus-dcookie
 west #
  ipsec auto --add westnet-eastnet-ikev2
 002 added connection description "westnet-eastnet-ikev2"

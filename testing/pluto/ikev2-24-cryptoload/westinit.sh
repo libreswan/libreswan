@@ -2,5 +2,5 @@
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add multi
-#ipsec whack --debug-all --impair retransmits
+#ipsec whack --impair retransmits
 echo "initdone"

@@ -9,7 +9,7 @@ east #
  ipsec auto --add westnet-eastnet-ikev2
 002 added connection description "westnet-eastnet-ikev2"
 east #
- ipsec whack --debug-all --impair ignore-hash-notify
+ ipsec whack --impair ignore-hash-notify
 east #
  echo "initdone"
 initdone

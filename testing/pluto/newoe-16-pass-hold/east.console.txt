@@ -13,7 +13,7 @@ east #
 east #
  sleep 5
 east #
- ipsec whack --debug-all --impair send-no-ikev2-auth
+ ipsec whack --impair send-no-ikev2-auth
 east #
  echo "initdone"
 initdone

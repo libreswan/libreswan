@@ -8,7 +8,7 @@ killall -9 pluto
 ipsec restart
 /testing/pluto/bin/wait-until-pluto-started
 # temp while the test still fails
-ipsec whack --debug-all --impair retransmits
+ipsec whack --impair retransmits
 ipsec auto --add north-east
 ipsec auto --up north-east
 echo done

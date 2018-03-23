@@ -10,7 +10,7 @@ Redirecting to: systemctl start ipsec.service
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
- ipsec whack --debug-all --impair major-version-bump --impair retransmits
+ ipsec whack --impair major-version-bump --impair retransmits
 west #
  ipsec auto --add westnet-eastnet-ikev2-major
 002 added connection description "westnet-eastnet-ikev2-major"

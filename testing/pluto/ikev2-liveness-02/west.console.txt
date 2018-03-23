@@ -59,7 +59,7 @@ west #
 west #
  sleep 30
 west #
- ipsec whack --debug-all --impair send-no-delete
+ ipsec whack --impair send-no-delete
 west #
  ipsec auto --delete westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2": deleting non-instance connection

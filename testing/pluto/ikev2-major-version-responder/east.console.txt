@@ -5,7 +5,7 @@ Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
- ipsec whack --debug-all --impair major-version-bump
+ ipsec whack --impair major-version-bump
 east #
  ipsec auto --add westnet-eastnet-ikev2-major
 002 added connection description "westnet-eastnet-ikev2-major"

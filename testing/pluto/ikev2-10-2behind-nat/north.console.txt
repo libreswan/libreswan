@@ -10,7 +10,7 @@ north #
 north #
  sleep 10
 north #
- ipsec whack --debug-all --impair retransmits
+ ipsec whack --impair retransmits
 north #
  ipsec auto --add north
 002 added connection description "north"

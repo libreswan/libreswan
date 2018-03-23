@@ -13,7 +13,7 @@ Redirecting to: systemctl start ipsec.service
 road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
- ipsec whack --debug-all --impair retransmits
+ ipsec whack --impair retransmits
 road #
  ipsec auto --status
 000 using kernel interface: netkey

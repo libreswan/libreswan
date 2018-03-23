@@ -13,7 +13,7 @@ east #
 east #
  # do not answer CREATE_CHILD_SA requests
 east #
- ###ipsec whack --debug-all --impair send-no-ikev2-cc-resp
+ ###ipsec whack --impair send-no-ikev2-cc-resp
 east #
  echo "initdone"
 initdone

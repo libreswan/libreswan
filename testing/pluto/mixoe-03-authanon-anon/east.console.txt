@@ -11,7 +11,7 @@ Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
- ipsec whack --debug-all --impair retransmits
+ ipsec whack --impair retransmits
 east #
  # give OE policies time to load
 east #
