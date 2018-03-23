@@ -1318,6 +1318,7 @@ void add_connection(const struct whack_message *wm)
 			.ikev2 = ((wm->policy & POLICY_IKEV2_PROPOSE)
 				  && (wm->policy & POLICY_IKEV2_ALLOW)),
 			.alg_is_ok = ike_alg_is_ike,
+			.pfs = (wm->policy & POLICY_PFS) != LEMPTY,
 		};
 
 		alg_info_ike = alg_info_ike_create_from_str(&proposal_policy, wm->ike,
@@ -1540,6 +1541,7 @@ void add_connection(const struct whack_message *wm)
 				.ikev2 = ((wm->policy & POLICY_IKEV2_PROPOSE)
 					  && (wm->policy & POLICY_IKEV2_ALLOW)),
 				.alg_is_ok = kernel_alg_is_ok,
+				.pfs = (wm->policy & POLICY_PFS) != LEMPTY,
 			};
 
 			if (c->policy & POLICY_ENCRYPT)

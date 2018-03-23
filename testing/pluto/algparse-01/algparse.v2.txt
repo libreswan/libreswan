@@ -203,7 +203,7 @@
 [esp=3des-sha1-modp8192]
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 [esp=aes-sha1,3des-sha1;modp8192]
-	AES_CBC-HMAC_SHA1_96-MODP8192
+	AES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 [esp=aes-sha1-modp8192,3des-sha1-modp8192]
 	AES_CBC-HMAC_SHA1_96-MODP8192
@@ -265,24 +265,29 @@
 [esp=3des-sha1;dh22]
 	ERROR: ESP DH algorithm 'dh22' is not supported
 [esp=3des-sha1;modp8192,3des-sha2]
-	ERROR: ESP DH algorithm 'MODP8192' must be specified last
+	3DES_CBC-HMAC_SHA1_96-MODP8192
+	3DES_CBC-HMAC_SHA2_256_128
 [esp=3des-sha1-modp8192,3des-sha2]
-	ERROR: ESP DH algorithm 'MODP8192' must be specified last
+	3DES_CBC-HMAC_SHA1_96-MODP8192
+	3DES_CBC-HMAC_SHA2_256_128
 [esp=3des-sha1-modp8192,3des-sha2-modp8192]
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 	3DES_CBC-HMAC_SHA2_256_128-MODP8192
 [esp=3des-sha1-modp8192,3des-sha2;modp8192]
-	ERROR: ESP DH algorithm must appear once after last proposal
+	3DES_CBC-HMAC_SHA1_96-MODP8192
+	3DES_CBC-HMAC_SHA2_256_128-MODP8192
 [esp=3des-sha1;modp8192,3des-sha2;modp8192]
-	ERROR: ESP DH algorithm 'MODP8192' must be specified last
+	3DES_CBC-HMAC_SHA1_96-MODP8192
+	3DES_CBC-HMAC_SHA2_256_128-MODP8192
 [esp=3des-sha1;modp8192,3des-sha2;modp8192]
-	ERROR: ESP DH algorithm 'MODP8192' must be specified last
+	3DES_CBC-HMAC_SHA1_96-MODP8192
+	3DES_CBC-HMAC_SHA2_256_128-MODP8192
 [esp=3des-sha1-modp8192,3des-sha2-ecp_521]
-	ERROR: ESP DH algorithm 'MODP8192' must be specified last
+	ERROR: multiple conflicting DH algorithms (MODP8192, DH21) are not supported
 [esp=3des-sha1;modp8192,3des-sha1-modp8192]
-	ERROR: ESP DH algorithm 'MODP8192' must be specified last
+	3DES_CBC-HMAC_SHA1_96-MODP8192
 [esp=3des-sha1;modp8192,3des-sha1;modp8192]
-	ERROR: ESP DH algorithm 'MODP8192' must be specified last
+	3DES_CBC-HMAC_SHA1_96-MODP8192
 [ah]
 	HMAC_SHA1_96
 [ah=]

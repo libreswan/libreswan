@@ -16,6 +16,7 @@ static bool impair = false;
 static bool ikev1 = false;
 static bool ikev2 = false;
 static bool fips = false;
+static bool pfs = false;
 static int failures = 0;
 
 enum expect { FAIL = false, PASS = true, IGNORE, };
@@ -25,6 +26,7 @@ enum expect { FAIL = false, PASS = true, IGNORE, };
 			.ikev1 = ikev1,					\
 			.ikev2 = ikev2,					\
 			.alg_is_ok = OK,				\
+			.pfs = pfs,					\
 		};							\
 		if (algstr == NULL) {					\
 			printf("[%s]\n", #PARSE);			\
@@ -266,7 +268,7 @@ static void test(void)
 	esp(!fips, "null_auth_aes_gmac_256-null;modp8192"); /* long */
 	esp(true, "3des-sha1;modp8192"); /* allow ';' when unambigious */
 	esp(true, "3des-sha1-modp8192"); /* allow '-' when unambigious */
-	esp(true, "aes-sha1,3des-sha1;modp8192"); /* set modp8192 on all algs */
+	esp(ikev1 || (ikev2 && !pfs), "aes-sha1,3des-sha1;modp8192"); /* set modp8192 on all algs */
 	esp(true, "aes-sha1-modp8192,3des-sha1-modp8192"); /* silly */
 	esp(true, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192"); /* suppress duplicates */
 
@@ -305,17 +307,17 @@ static void test(void)
 	esp(false, "aes_gcm-123456789012345"); /* huge keylen */
 	esp(false, "3des-sha1;dh22"); /* support for dh22 removed */
 
-	esp(false, "3des-sha1;modp8192,3des-sha2"); /* ;DH must be last */
-	esp(impair, "3des-sha1-modp8192,3des-sha2"); /* -DH must be last */
+	esp(ikev2 && !pfs, "3des-sha1;modp8192,3des-sha2"); /* ;DH must be last */
+	esp(impair || (ikev2 && !pfs), "3des-sha1-modp8192,3des-sha2"); /* -DH must be last */
 
 	esp(true, "3des-sha1-modp8192,3des-sha2-modp8192"); /* ok */
-	esp(false, "3des-sha1-modp8192,3des-sha2;modp8192"); /* ;DH must be last */
-	esp(false, "3des-sha1;modp8192,3des-sha2;modp8192"); /* ;DH must be last */
-	esp(false, "3des-sha1;modp8192,3des-sha2;modp8192"); /* ;DH must be last */
+	esp(ikev2, "3des-sha1-modp8192,3des-sha2;modp8192"); /* ;DH must be last */
+	esp(ikev2, "3des-sha1;modp8192,3des-sha2;modp8192"); /* ;DH must be last */
+	esp(ikev2, "3des-sha1;modp8192,3des-sha2;modp8192"); /* ;DH must be last */
 	esp(impair, "3des-sha1-modp8192,3des-sha2-ecp_521"); /* ;DH must match */
 
-	esp(false, "3des-sha1;modp8192,3des-sha1-modp8192"); /* ;DH must be last when dup */
-	esp(false, "3des-sha1;modp8192,3des-sha1;modp8192"); /* ;DH must be last when dup */
+	esp(ikev2, "3des-sha1;modp8192,3des-sha1-modp8192"); /* ;DH must be last when dup */
+	esp(ikev2, "3des-sha1;modp8192,3des-sha1;modp8192"); /* ;DH must be last when dup */
 
 	/*
 	 * ah=
@@ -429,6 +431,10 @@ int main(int argc, char *argv[])
 			ikev1 = true;
 		} else if (streq(arg, "v2")) {
 			ikev2 = true;
+		} else if (streq(arg, "pfs") || streq(arg, "pfs=yes") || streq(arg, "pfs=on")) {
+			pfs = true;
+		} else if (streq(arg, "pfs=no") || streq(arg, "pfs=off")) {
+			pfs = false;
 		} else if (streq(arg, "fips") || streq(arg, "fips=yes") || streq(arg, "fips=on")) {
 			lsw_set_fips_mode(LSW_FIPS_ON);
 		} else if (streq(arg, "fips=no") || streq(arg, "fips=off")) {

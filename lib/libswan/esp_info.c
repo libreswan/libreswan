@@ -117,10 +117,19 @@ struct alg_info_esp *alg_info_esp_create_from_str(const struct proposal_policy *
 	}
 
 	/* This call can free ALG_INFO_ESP. */
-	if (!alg_info_discover_pfsgroup_hack(&parser, alg_info_esp, alg_str)) {
-		passert(err_buf[0] != '\0');
-		alg_info_free(&alg_info_esp->ai);
-		return NULL;
+	if (policy->ikev1) {
+		if (!ikev1_one_alg_info_dh_hack(&parser, alg_info_esp, alg_str)) {
+			passert(err_buf[0] != '\0');
+			alg_info_free(&alg_info_esp->ai);
+			return NULL;
+		}
+	}
+	if (policy->ikev2) {
+		if (!ikev2_one_alg_info_dh_hack(&parser, alg_info_esp)) {
+			passert(err_buf[0] != '\0');
+			alg_info_free(&alg_info_esp->ai);
+			return NULL;
+		}
 	}
 
 	return alg_info_esp;

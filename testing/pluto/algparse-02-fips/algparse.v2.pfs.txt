@@ -203,8 +203,7 @@
 [esp=3des-sha1-modp8192]
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 [esp=aes-sha1,3des-sha1;modp8192]
-	AES_CBC-HMAC_SHA1_96
-	3DES_CBC-HMAC_SHA1_96-MODP8192
+	ERROR: combining PFS (use IKE SA's DH algorithm) with an explicit DH algorithm (MODP8192) is not supported
 [esp=aes-sha1-modp8192,3des-sha1-modp8192]
 	AES_CBC-HMAC_SHA1_96-MODP8192
 	3DES_CBC-HMAC_SHA1_96-MODP8192
@@ -265,11 +264,9 @@
 [esp=3des-sha1;dh22]
 	ERROR: ESP DH algorithm 'dh22' is not supported
 [esp=3des-sha1;modp8192,3des-sha2]
-	3DES_CBC-HMAC_SHA1_96-MODP8192
-	3DES_CBC-HMAC_SHA2_256_128
+	ERROR: combining PFS (use IKE SA's DH algorithm) with an explicit DH algorithm (MODP8192) is not supported
 [esp=3des-sha1-modp8192,3des-sha2]
-	3DES_CBC-HMAC_SHA1_96-MODP8192
-	3DES_CBC-HMAC_SHA2_256_128
+	ERROR: combining PFS (use IKE SA's DH algorithm) with an explicit DH algorithm (MODP8192) is not supported
 [esp=3des-sha1-modp8192,3des-sha2-modp8192]
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 	3DES_CBC-HMAC_SHA2_256_128-MODP8192
