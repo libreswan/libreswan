@@ -53,8 +53,8 @@ west #
 002 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: adding a bogus playload of type 255 to AUTH's SK request
 002 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: setting (should be off) critical payload bit
 134 "westnet-eastnet-ipv4-psk-ikev2" #4: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
-002 "westnet-eastnet-ipv4-psk-ikev2" #4: received an encrypted UNSUPPORTED_CRITICAL_PAYLOAD notification; deleting IKE SA
-036 "westnet-eastnet-ipv4-psk-ikev2" #4: encountered fatal error in state STATE_PARENT_I2
+002 "westnet-eastnet-ipv4-psk-ikev2" #4: IKE SA authentication request rejected: UNSUPPORTED_CRITICAL_PAYLOAD
+000 "westnet-eastnet-ipv4-psk-ikev2" #4: scheduling retry attempt 1 of an unlimited number, but releasing whack
 west #
  echo done
 done
