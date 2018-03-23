@@ -20,11 +20,9 @@
 #include "state.h"
 #include "connections.h"
 #include "retransmit.h"
-
 #include "monotime.h"
 #include "deltatime.h"
-#include "timer.h"
-
+#include "server.h"
 #include "log.h"
 
 size_t lswlog_retransmit_prefix(struct lswlog *buf, struct state *st)
@@ -113,6 +111,7 @@ void clear_retransmits(struct state *st)
 	rt->delay = deltatime(0);
 	rt->start = monotime_epoch;
 	rt->timeout = deltatime(0);
+	rt->type = EVENT_NULL; /*0*/
 	LSWDBGP(DBG_RETRANSMITS, buf) {
 		lswlog_retransmit_prefix(buf, st);
 		lswlogs(buf, "cleared");
@@ -227,7 +226,7 @@ enum retransmit_status retransmit(struct state *st)
 	deltatime_t waited = monotimediff(now, rt->start);
 	bool monotime_exceeds_limit = deltatime_cmp(waited, rt->timeout) >= 0;
 	LSWDBGP(DBG_RETRANSMITS, buf) {
-		lswlogs(buf, "retransmit: ");
+		lswlogs(buf, "retransmits: ");
 		lswlogs(buf, "current time ");
 		lswlog_monotime(buf, now);
 		/* number of packets so far */
@@ -291,7 +290,7 @@ enum retransmit_status retransmit(struct state *st)
 
 	double_delay(rt, nr_retransmits);
 	rt->nr_retransmits++;
-	rt->delays = deltatime_add(rt->delays, rt->delay);
+ 	rt->delays = deltatime_add(rt->delays, rt->delay);
 	event_schedule(rt->type, rt->delay, st);
 	LSWLOG_LOG_WHACK(RC_RETRANSMISSION, buf) {
 		lswlogf(buf, "%s: retransmission; will wait ",
@@ -300,4 +299,44 @@ enum retransmit_status retransmit(struct state *st)
 		lswlogs(buf, " seconds for response");
 	}
 	return RETRANSMIT_YES;
+}
+
+void suppress_retransmits(struct state *st)
+{
+	retransmit_t *rt = &st->st_retransmit;
+	if (rt->type == EVENT_NULL) {
+		LSWDBGP(DBG_CONTROL, buf) {
+			lswlog_retransmit_prefix(buf, st);
+			lswlogs(buf, "no retransmits to suppress");
+		}
+		return;
+	}
+	if (IMPAIR(RETRANSMITS)) {
+		LSWDBGP(DBG_CONTROL, buf) {
+			lswlogs(buf, "IMPAIR: ");
+			lswlog_retransmit_prefix(buf, st);
+			lswlogs(buf, "can't suppress retransmits as --impair retransmits scheduled EVENT_SA_REPLACE(?)");
+		}
+		return;
+	}
+
+	monotime_t now = mononow();
+	rt->delay = monotimediff(monotimesum(rt->start, rt->timeout), now);
+ 	rt->delays = deltatime_add(rt->delays, rt->delay);
+	/*
+	 * XXX: Can't call delete_event() because that calls
+	 * clear_retransmits().  However, got to wonder why
+	 * event_schedule() doesn't just wipe the old event
+	 * automatically?
+	 */
+	if (st->st_event != NULL) {
+		delete_pluto_event(&st->st_event);
+	}
+	event_schedule(rt->type, rt->delay, st);
+	LSWLOG_LOG_WHACK(RC_RETRANSMISSION, buf) {
+		lswlogf(buf, "%s: suppressing retransmits; will wait ",
+			st->st_finite_state->fs_name);
+		lswlog_deltatime(buf, rt->delay);
+		lswlogs(buf, " seconds for retry");
+	}
 }

@@ -289,3 +289,40 @@ void retransmit_v2_msg(struct state *st)
 
 	/* note: no md->st to clear */
 }
+
+bool ikev2_schedule_retry(struct state *st)
+{
+	struct connection *c = st->st_connection;
+	unsigned long try = st->st_try;
+	unsigned long try_limit = c->sa_keying_tries;
+	if (try_limit > 0 && try >= try_limit) {
+		DBGF(DBG_CONTROL|DBG_RETRANSMITS,
+		     "maximum number of retries reached - deleting state");
+		return false;
+	}
+	LSWLOG_LOG_WHACK(RC_COMMENT, buf) {
+		lswlogf(buf, "scheduling retry attempt %ld of ", try);
+		if (try_limit == 0) {
+			lswlogs(buf, "an unlimited number");
+		} else {
+			lswlogf(buf, "at most %ld", try_limit);
+		}
+		if (st->st_whack_sock != NULL_FD) {
+			lswlogs(buf, ", but releasing whack");
+		}
+	}
+
+	/*
+	 * XXX: Need to release both the parent and the child!  Why?
+	 */
+	release_pending_whacks(st, "scheduling a retry");
+	struct state *pst = IS_CHILD_SA(st) ? state_with_serialno(st->st_clonedfrom) : st;
+	release_whack(pst);
+
+	/*
+	 * XXX: Should the parent or child get re-scheduled?  Does it
+	 * flip to the parent when the child's timer expires?
+	 */
+	suppress_retransmits(st);
+	return true;
+}
