@@ -83,7 +83,7 @@ struct dh_secret *calc_dh_secret(const struct oakley_group_desc *group,
 	chunk_t ke = alloc_chunk(group->bytes, "local ke");
 	SECKEYPrivateKey *privk;
 	SECKEYPublicKey *pubk;
-	group->dhmke_ops->calc_secret(group, &privk, &pubk,
+	group->dh_ops->calc_secret(group, &privk, &pubk,
 				      ke.ptr, ke.len);
 	passert(privk != NULL);
 	passert(pubk != NULL);
@@ -109,10 +109,10 @@ PK11SymKey *calc_dh_shared(struct dh_secret *secret,
 			   chunk_t remote_ke)
 {
 	PK11SymKey *dhshared =
-		secret->group->dhmke_ops->calc_shared(secret->group,
-						      secret->privk,
-						      secret->pubk,
-						      remote_ke.ptr, remote_ke.len);
+		secret->group->dh_ops->calc_shared(secret->group,
+						   secret->privk,
+						   secret->pubk,
+						   remote_ke.ptr, remote_ke.len);
 	/*
 	 * The IKEv2 documentation, even for ECP, refers to "g^ir".
 	 */

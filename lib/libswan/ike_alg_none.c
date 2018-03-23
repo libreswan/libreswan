@@ -21,7 +21,7 @@
 #include "constants.h"
 #include "ike_alg.h"
 #include "ike_alg_none.h"
-#include "ike_alg_nss_modp.h"
+#include "ike_alg_dh_nss_modp_ops.h"
 
 /*
  * References for NULL.
@@ -109,5 +109,5 @@ const struct oakley_group_desc ike_alg_dh_none = {
 	/*
 	 * While patently untrue, this does keep things happy.
 	 */
-	.dhmke_ops = &ike_alg_nss_modp_dhmke_ops,
+	.dh_ops = &ike_alg_dh_nss_modp_ops,
 };

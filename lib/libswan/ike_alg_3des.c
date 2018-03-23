@@ -29,7 +29,7 @@
 #include "lswlog.h"
 #include "ike_alg.h"
 #include "ike_alg_3des.h"
-#include "ike_alg_nss_cbc.h"
+#include "ike_alg_encrypt_nss_cbc_ops.h"
 
 const struct encrypt_desc ike_alg_encrypt_3des_cbc =
 {
@@ -55,5 +55,5 @@ const struct encrypt_desc ike_alg_encrypt_3des_cbc =
 	.keylen_omitted = TRUE,
 	.keydeflen =        DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE,
 	.key_bit_lengths = { DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE, },
-	.encrypt_ops = &ike_alg_nss_cbc_encrypt_ops,
+	.encrypt_ops = &ike_alg_encrypt_nss_cbc_ops,
 };

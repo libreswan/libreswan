@@ -36,7 +36,7 @@
 #include "lswlog.h"
 
 #include "ike_alg.h"
-#include "ike_alg_nss_ecp.h"
+#include "ike_alg_dh_nss_ecp_ops.h"
 #include "crypt_symkey.h"
 
 static void nss_ecp_calc_secret(const struct oakley_group_desc *group,
@@ -202,7 +202,7 @@ static void nss_ecp_check(const struct oakley_group_desc *dhmke)
 	passert_ike_alg(alg, dhmke->nss_oid > 0);
 }
 
-const struct dhmke_ops ike_alg_nss_ecp_dhmke_ops = {
+const struct dh_ops ike_alg_dh_nss_ecp_ops = {
 	.check = nss_ecp_check,
 	.calc_secret = nss_ecp_calc_secret,
 	.calc_shared = nss_ecp_calc_shared,

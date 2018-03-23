@@ -22,7 +22,7 @@
 #include "ike_alg_sha1.h"
 #include "ike_alg_sha2.h"
 #include "ike_alg_aes.h"
-#include "ike_alg_nss_gcm.h"
+#include "ike_alg_encrypt_nss_gcm_ops.h"
 #include "crypt_symkey.h"
 
 #include "cavp.h"
@@ -89,7 +89,7 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_4 = {
 	.salt_size = AES_GCM_SALT_BYTES,
 	.keydeflen = AES_GCM_KEY_DEF_LEN,
 	.aead_tag_size = 4,
-	.encrypt_ops = &ike_alg_nss_gcm_encrypt_ops,
+	.encrypt_ops = &ike_alg_encrypt_nss_gcm_ops,
 };
 
 static struct encrypt_desc ike_alg_encrypt_aes_gcm_13 = {
@@ -108,7 +108,7 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_13 = {
 	.salt_size = AES_GCM_SALT_BYTES,
 	.keydeflen = AES_GCM_KEY_DEF_LEN,
 	.aead_tag_size = 13,
-	.encrypt_ops = &ike_alg_nss_gcm_encrypt_ops,
+	.encrypt_ops = &ike_alg_encrypt_nss_gcm_ops,
 };
 
 static struct encrypt_desc ike_alg_encrypt_aes_gcm_14 = {
@@ -127,7 +127,7 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_14 = {
 	.salt_size = AES_GCM_SALT_BYTES,
 	.keydeflen = AES_GCM_KEY_DEF_LEN,
 	.aead_tag_size = 14,
-	.encrypt_ops = &ike_alg_nss_gcm_encrypt_ops,
+	.encrypt_ops = &ike_alg_encrypt_nss_gcm_ops,
 };
 
 static struct encrypt_desc ike_alg_encrypt_aes_gcm_15 = {
@@ -146,7 +146,7 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_15 = {
 	.salt_size = AES_GCM_SALT_BYTES,
 	.keydeflen = AES_GCM_KEY_DEF_LEN,
 	.aead_tag_size = 15,
-	.encrypt_ops = &ike_alg_nss_gcm_encrypt_ops,
+	.encrypt_ops = &ike_alg_encrypt_nss_gcm_ops,
 };
 
 static const struct encrypt_desc *encrypts[] = {

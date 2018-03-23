@@ -198,7 +198,7 @@ static void hmac_prf_check(const struct prf_desc *prf)
 	passert_ike_alg(alg, prf->hasher != NULL);
 }
 
-const struct prf_ops ike_alg_hmac_prf_ops = {
+const struct prf_ops ike_alg_prf_hmac_ops = {
 	hmac_prf_check,
 	init_symkey,
 	init_bytes,

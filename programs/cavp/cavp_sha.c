@@ -21,7 +21,7 @@
 #include "ike_alg.h"
 #include "ike_alg_sha1.h"
 #include "ike_alg_sha2.h"
-#include "ike_alg_nss_hash_ops.h"
+#include "ike_alg_hash_nss_ops.h"
 
 #include "crypt_symkey.h"
 #include "ikev2_prf.h"
@@ -46,7 +46,7 @@ struct hash_desc ike_alg_hash_sha2_224 = {
 	},
 	.hash_digest_len = 28, /* 224/8 */
 	.hash_block_size = 64, /* from RFC 4868 */
-	.hash_ops = &ike_alg_nss_hash_ops,
+	.hash_ops = &ike_alg_hash_nss_ops,
 };
 
 static const struct hash_desc *hashes[] = {

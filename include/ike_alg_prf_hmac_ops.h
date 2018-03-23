@@ -12,4 +12,4 @@
  * for more details.
  */
 
-extern const struct prf_ops ike_alg_hmac_prf_ops;
+extern const struct prf_ops ike_alg_prf_hmac_ops;

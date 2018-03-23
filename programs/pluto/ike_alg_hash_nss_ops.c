@@ -123,7 +123,7 @@ static void nss_hash_check(const struct hash_desc *hash)
 	passert_ike_alg(alg, hash->nss.derivation_mechanism > 0);
 }
 
-const struct hash_ops ike_alg_nss_hash_ops = {
+const struct hash_ops ike_alg_hash_nss_ops = {
 	nss_hash_check,
 	init,
 	digest_symkey,

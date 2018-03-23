@@ -36,12 +36,12 @@
 #include "lswalloc.h"
 #include "ike_alg.h"
 #include "alg_info.h"
-#include "ike_alg_hmac_prf_ops.h"
-#include "ike_alg_nss_prf_ops.h"
-#include "ike_alg_nss_hash_ops.h"
+#include "ike_alg_prf_hmac_ops.h"
+#include "ike_alg_prf_nss_ops.h"
+#include "ike_alg_hash_nss_ops.h"
 #include "ike_alg_dh.h"
-#include "ike_alg_nss_modp.h"
-#include "ike_alg_nss_ecp.h"
+#include "ike_alg_dh_nss_modp_ops.h"
+#include "ike_alg_dh_nss_ecp_ops.h"
 
 #include "ike_alg_none.h"
 #ifdef USE_TWOFISH
@@ -726,16 +726,16 @@ static void dh_desc_check(const struct ike_alg *alg)
 	passert_ike_alg(alg, dh->common.id[IKEv2_ALG_ID] == dh->group);
 	passert_ike_alg(alg, dh->common.id[IKEv1_OAKLEY_ID] == dh->group);
 	/* always implemented */
-	passert_ike_alg(alg, dh->dhmke_ops != NULL);
-	passert_ike_alg(alg, dh->dhmke_ops->check != NULL);
-	passert_ike_alg(alg, dh->dhmke_ops->calc_secret != NULL);
-	passert_ike_alg(alg, dh->dhmke_ops->calc_shared != NULL);
+	passert_ike_alg(alg, dh->dh_ops != NULL);
+	passert_ike_alg(alg, dh->dh_ops->check != NULL);
+	passert_ike_alg(alg, dh->dh_ops->calc_secret != NULL);
+	passert_ike_alg(alg, dh->dh_ops->calc_shared != NULL);
 	/* more? */
-	dh->dhmke_ops->check(dh);
+	dh->dh_ops->check(dh);
 	/* IKEv1 supports MODP groups but not ECC. */
-	passert_ike_alg(alg, (dh->dhmke_ops == &ike_alg_nss_modp_dhmke_ops
+	passert_ike_alg(alg, (dh->dh_ops == &ike_alg_dh_nss_modp_ops
 			      ? dh->common.id[IKEv1_ESP_ID] == dh->group
-			      : dh->dhmke_ops == &ike_alg_nss_ecp_dhmke_ops
+			      : dh->dh_ops == &ike_alg_dh_nss_ecp_ops
 			      ? dh->common.id[IKEv1_ESP_ID] < 0
 			      : FALSE));
 }
@@ -743,7 +743,7 @@ static void dh_desc_check(const struct ike_alg *alg)
 static bool dh_desc_is_ike(const struct ike_alg *alg)
 {
 	const struct oakley_group_desc *dh = oakley_group_desc(alg);
-	return dh->dhmke_ops != NULL;
+	return dh->dh_ops != NULL;
 }
 
 static struct algorithm_table dh_algorithms = ALGORITHM_TABLE(dh_descriptors);

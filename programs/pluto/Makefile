@@ -141,14 +141,15 @@ ifeq ($(USE_UNBOUND_EVENT_H_COPY),true)
 CFLAGS+=-I${LIBRESWANSRCDIR}/include/unbound
 endif
 
-OBJS += ike_alg_nss_modp.o
-OBJS += ike_alg_nss_ecp.o
-OBJS += ike_alg_nss_cbc.o
-OBJS += ike_alg_nss_hash_ops.o
-OBJS += ike_alg_hmac_prf_ops.o
-OBJS += ike_alg_nss_prf_ops.o
-OBJS += ike_alg_nss_gcm.o
-OBJS += ike_alg.o db_ops.o
+OBJS += ike_alg.o
+OBJS += ike_alg_dh_nss_ecp_ops.o
+OBJS += ike_alg_dh_nss_modp_ops.o
+OBJS += ike_alg_encrypt_nss_gcm_ops.o
+OBJS += ike_alg_hash_nss_ops.o
+OBJS += ike_alg_prf_hmac_ops.o
+OBJS += ike_alg_prf_nss_ops.o
+
+OBJS += db_ops.o
 
 # libefence is a free memory allocation debugger
 # Solaris 2 needs -lsocket -lnsl

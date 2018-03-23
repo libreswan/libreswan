@@ -34,8 +34,8 @@
 #include "lswalloc.h"
 #include "ike_alg.h"
 #include "ike_alg_md5.h"
-#include "ike_alg_nss_hash_ops.h"
-#include "ike_alg_hmac_prf_ops.h"
+#include "ike_alg_hash_nss_ops.h"
+#include "ike_alg_prf_hmac_ops.h"
 
 const struct hash_desc ike_alg_hash_md5 = {
 	.common = {
@@ -56,7 +56,7 @@ const struct hash_desc ike_alg_hash_md5 = {
 	},
 	.hash_digest_len = MD5_DIGEST_SIZE,
 	.hash_block_size = 64,	/* B from RFC 2104 */
-	.hash_ops = &ike_alg_nss_hash_ops,
+	.hash_ops = &ike_alg_hash_nss_ops,
 };
 
 
@@ -76,7 +76,7 @@ const struct prf_desc ike_alg_prf_md5 = {
 	.prf_key_size = MD5_DIGEST_SIZE,
 	.prf_output_size = MD5_DIGEST_SIZE,
 	.hasher = &ike_alg_hash_md5,
-	.prf_ops = &ike_alg_hmac_prf_ops,
+	.prf_ops = &ike_alg_prf_hmac_ops,
 };
 
 const struct integ_desc ike_alg_integ_md5 = {

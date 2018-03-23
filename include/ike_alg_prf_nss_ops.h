@@ -12,4 +12,4 @@
  * for more details.
  */
 
-extern const struct hash_ops ike_alg_nss_hash_ops;
+extern const struct prf_ops ike_alg_prf_nss_ops;

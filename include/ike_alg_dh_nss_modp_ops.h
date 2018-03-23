@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2017 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -12,4 +12,4 @@
  * for more details.
  */
 
-extern const struct encrypt_ops ike_alg_nss_gcm_encrypt_ops;
+extern const struct dh_ops ike_alg_dh_nss_modp_ops;

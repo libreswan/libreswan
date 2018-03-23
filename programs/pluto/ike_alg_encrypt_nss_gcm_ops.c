@@ -24,7 +24,7 @@
 
 #include "constants.h"
 #include "ike_alg.h"
-#include "ike_alg_nss_gcm.h"
+#include "ike_alg_encrypt_nss_gcm_ops.h"
 #include "crypt_symkey.h"
 
 static bool ike_alg_nss_gcm(const struct encrypt_desc *alg,
@@ -118,7 +118,7 @@ static void nss_gcm_check(const struct encrypt_desc *encrypt) {
 	passert_ike_alg(alg, encrypt->nss.mechanism > 0);
 }
 
-const struct encrypt_ops ike_alg_nss_gcm_encrypt_ops = {
+const struct encrypt_ops ike_alg_encrypt_nss_gcm_ops = {
 	.check = nss_gcm_check,
 	.do_aead = ike_alg_nss_gcm,
 };

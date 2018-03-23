@@ -34,8 +34,8 @@
 #include <prerror.h>
 #include <blapit.h>
 
-#include "ike_alg_nss_cbc.h"
-#include "ike_alg_nss_gcm.h"
+#include "ike_alg_encrypt_nss_cbc_ops.h"
+#include "ike_alg_encrypt_nss_gcm_ops.h"
 #include "ike_alg_aes.h"
 
 const struct encrypt_desc ike_alg_encrypt_aes_cbc = {
@@ -60,7 +60,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_cbc = {
 	.wire_iv_size =       AES_CBC_BLOCK_SIZE,
 	.keydeflen =    AES_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
-	.encrypt_ops = &ike_alg_nss_cbc_encrypt_ops,
+	.encrypt_ops = &ike_alg_encrypt_nss_cbc_ops,
 };
 
 static void do_aes_ctr(const struct encrypt_desc *alg UNUSED,
@@ -193,7 +193,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
 	.keydeflen =    AES_GCM_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.aead_tag_size = 8,
-	.encrypt_ops = &ike_alg_nss_gcm_encrypt_ops,
+	.encrypt_ops = &ike_alg_encrypt_nss_gcm_ops,
 };
 
 const struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
@@ -221,7 +221,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
 	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.aead_tag_size = 12,
-	.encrypt_ops = &ike_alg_nss_gcm_encrypt_ops,
+	.encrypt_ops = &ike_alg_encrypt_nss_gcm_ops,
 };
 
 const struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
@@ -250,7 +250,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
 	.keydeflen =    AEAD_AES_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.aead_tag_size = 16,
-	.encrypt_ops = &ike_alg_nss_gcm_encrypt_ops,
+	.encrypt_ops = &ike_alg_encrypt_nss_gcm_ops,
 };
 
 /*

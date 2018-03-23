@@ -26,7 +26,7 @@
 
 #include "constants.h"
 #include "ike_alg.h"
-#include "ike_alg_nss_prf_ops.h"
+#include "ike_alg_prf_nss_ops.h"
 #include "crypt_symkey.h"
 
 struct prf_context {
@@ -194,7 +194,7 @@ static void nss_prf_check(const struct prf_desc *prf)
 	passert_ike_alg(alg, prf->nss.mechanism > 0);
 }
 
-const struct prf_ops ike_alg_nss_prf_ops = {
+const struct prf_ops ike_alg_prf_nss_ops = {
 	nss_prf_check,
 	init_symkey,
 	init_bytes,

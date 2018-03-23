@@ -27,7 +27,7 @@
 
 #include "constants.h"
 #include "ike_alg.h"
-#include "ike_alg_nss_cbc.h"
+#include "ike_alg_encrypt_nss_cbc_ops.h"
 #include "lswnss.h"		/* for lswlog_nss_error() */
 
 static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
@@ -116,7 +116,7 @@ static void nss_cbc_check(const struct encrypt_desc *encrypt)
 	passert_ike_alg(alg, encrypt->nss.mechanism > 0);
 }
 
-const struct encrypt_ops ike_alg_nss_cbc_encrypt_ops = {
+const struct encrypt_ops ike_alg_encrypt_nss_cbc_ops = {
 	.check = nss_cbc_check,
 	.do_crypt = ike_alg_nss_cbc,
 };

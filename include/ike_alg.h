@@ -663,10 +663,10 @@ struct oakley_group_desc {
 	 */
 	SECOidTag nss_oid;
 
-	const struct dhmke_ops *dhmke_ops;
+	const struct dh_ops *dh_ops;
 };
 
-struct dhmke_ops {
+struct dh_ops {
 	/*
 	 * Delegate responsibility for checking OPS specific fields.
 	 */
