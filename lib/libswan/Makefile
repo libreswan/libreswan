@@ -112,6 +112,7 @@ OBJS += lswlog_passert.o
 # not much left using this
 CFLAGS += -I$(top_srcdir)/lib/libcrypto
 
+OBJS += ike_alg_test.o
 OBJS += ike_alg_desc.o
 ifeq ($(USE_3DES),true)
 OBJS += ike_alg_3des.o

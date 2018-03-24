@@ -606,6 +606,7 @@ extern bool ike_alg_is_aead(const struct encrypt_desc *enc_desc);
 #define ike_alg_enc_requires_integ(ALG) (!ike_alg_is_aead(ALG))
 
 void ike_alg_init(void);
+void ike_alg_test(void);
 
 /*
  * Iterate over all enabled algorithms.

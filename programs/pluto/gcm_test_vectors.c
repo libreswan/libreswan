@@ -20,7 +20,7 @@
 
 #include "ike_alg.h"
 #include "test_buffer.h"
-#include "gcm_test_vectors.h"
+#include "ike_alg_test_gcm.h"
 
 #include "nss.h"
 #include "pk11pub.h"

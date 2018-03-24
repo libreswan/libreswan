@@ -83,9 +83,7 @@
 #include "virtual.h"	/* needs connections.h */
 #include "state_db.h"	/* for init_state_db() */
 #include "nat_traversal.h"
-
-#include "cbc_test_vectors.h"
-#include "ctr_test_vectors.h"
+#include "ike_alg.h"
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -1726,7 +1724,8 @@ int main(int argc, char **argv)
 	init_secret();
 	init_states();
 	init_connections();
-	init_crypto();
+	ike_alg_init();
+	ike_alg_test();
 	init_crypto_helpers(nhelpers);
 	init_demux();
 	init_kernel();

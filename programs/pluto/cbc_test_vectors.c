@@ -21,7 +21,7 @@
 
 #include "ike_alg.h"
 #include "test_buffer.h"
-#include "cbc_test_vectors.h"
+#include "ike_alg_test_cbc.h"
 
 #include "nss.h"
 #include "pk11pub.h"
