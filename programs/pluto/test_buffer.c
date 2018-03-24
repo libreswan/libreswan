@@ -136,6 +136,20 @@ bool verify_chunk(const char *desc,
 	return verify_chunk_data(desc, expected, actual.ptr);
 }
 
+/* verify that expected is the same as actual */
+bool verify_symkey(const char *desc, chunk_t expected, PK11SymKey *actual)
+{
+	if (expected.len != sizeof_symkey(actual)) {
+		DBGF(DBG_CRYPT, "%s: expected length %zd but got %zd",
+		     desc, expected.len, sizeof_symkey(actual));
+		return FALSE;
+	}
+	chunk_t chunk = chunk_from_symkey(desc, DBG_CRYPT, actual);
+	bool ok = verify_chunk_data(desc, expected, chunk.ptr);
+	freeanychunk(chunk);
+	return ok;
+}
+
 /*
  * Turn the raw key into SymKey.
  */
