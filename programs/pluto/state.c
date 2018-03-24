@@ -839,7 +839,7 @@ void ikev2_expire_unused_parent(struct state *pst)
 	}
 }
 
-static void flush_pending_ipsec(struct state *pst, struct state *st)
+static void flush_pending_child(struct state *pst, struct state *st)
 {
 
 	if (!IS_IKE_SA(pst))
@@ -857,17 +857,19 @@ static void flush_pending_ipsec(struct state *pst, struct state *st)
 				(c->policy & POLICY_UP) &&
 				(c->policy & POLICY_DONT_REKEY) == LEMPTY)
 		{
-			loglog(RC_LOG_SERIOUS, "reschedule pending Phase 2 of "
-					"connection\"%s\"%s state #%lu: - the parent is going away",
-					c->name, fmt_conn_instance(c, cib),
-					st->st_serialno);
+			loglog(RC_LOG_SERIOUS, "reschedule pending child #%lu %s of "
+					"connection \"%s\"%s - the parent is going away",
+					st->st_serialno, st->st_state_name,
+					c->name, fmt_conn_instance(c, cib));
 
+			c->failed_ikev2 = FALSE; /* give it a fresh start */
+			st->st_policy = c->policy; /* for pick_initiator */
 			event_schedule_s(EVENT_SA_REPLACE, 0, st);
 		} else {
-			loglog(RC_LOG_SERIOUS, "expire pending Phase 2 of "
-					"connection\"%s\"%s state #%lu: - the parent is going away",
-					c->name, fmt_conn_instance(c, cib),
-					st->st_serialno);
+			loglog(RC_LOG_SERIOUS, "expire pending child #%lu %s of "
+					"connection \"%s\"%s - the parent is going away",
+					st->st_serialno, st->st_state_name,
+					c->name, fmt_conn_instance(c, cib));
 
 			event_schedule_s(EVENT_SA_EXPIRE, 0, st);
 		}
@@ -876,14 +878,16 @@ static void flush_pending_ipsec(struct state *pst, struct state *st)
 
 static void flush_pending_children(struct state *pst)
 {
-	struct state *st;
-	/* AA_2016 check is it st or pst ? */
-	FOR_EACH_STATE_WITH_COOKIES(st, pst->st_icookie, pst->st_rcookie, {
-		if (st->st_clonedfrom == pst->st_serialno) {
-			flush_pending_ipsec(pst, st);
-			delete_cryptographic_continuation(st);
-		}
-	});
+
+	if (IS_CHILD_SA(pst))
+		return;
+
+	FOR_EACH_COOKIED_STATE(st, {
+			if (st->st_clonedfrom == pst->st_serialno) {
+				flush_pending_child(pst, st);
+				delete_cryptographic_continuation(st);
+			}
+		});
 }
 
 static bool send_delete_check(const struct state *st)
