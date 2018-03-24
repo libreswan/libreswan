@@ -481,6 +481,7 @@ int main(int argc, char *argv[])
 	log_to_stderr = verbose;
 
 	ike_alg_init();
+	ike_alg_test();
 
 	/*
 	 * Only enabling debugging and impairing after things have

@@ -26,6 +26,9 @@ PLUTOOBJS += $(filter-out ike_alg_test.o, $(patsubst %.c,%.o,$(notdir $(wildcard
 PLUTOOBJS += crypt_symkey.o
 PLUTOOBJS += crypt_hash.o
 PLUTOOBJS += test_buffer.o
+PLUTOOBJS += cbc_test_vectors.o
+PLUTOOBJS += ctr_test_vectors.o
+PLUTOOBJS += gcm_test_vectors.o
 # Need absolute path as 'make' (check dependencies) and 'ld' (do link)
 # are run from different directories.
 OBJS += $(addprefix $(abs_top_builddir)/programs/pluto/, $(PLUTOOBJS))
