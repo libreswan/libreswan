@@ -138,6 +138,7 @@ endif
 ifeq ($(USE_DH31),true)
 USERLAND_CFLAGS+=-DUSE_DH31
 endif
+USE_XCBC?=true
 ifeq ($(USE_XCBC),true)
 USERLAND_CFLAGS+=-DUSE_XCBC
 endif
