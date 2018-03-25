@@ -378,6 +378,11 @@ chunk_t chunk_from_symkey(const char *name, lset_t debug,
 PK11SymKey *symkey_from_bytes(const char *name, lset_t debug,
 			      const u_int8_t *bytes, size_t sizeof_bytes)
 {
+	if (sizeof_bytes == 0) {
+		/* hopefully caller knows what they are doing */
+		return NULL;
+	}
+
 	PK11SymKey *scratch = ephemeral_symkey(debug);
 	PK11SymKey *tmp = merge_symkey_bytes(name, debug, scratch, bytes, sizeof_bytes,
 					     CKM_CONCATENATE_DATA_AND_BASE,

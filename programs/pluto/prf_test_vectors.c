@@ -132,7 +132,7 @@ static bool test_prf_vector(const struct prf_desc *prf,
 
 	chunk_t chunk_key = decode_to_chunk(__func__, test->key);
 	passert(chunk_key.len == test->key_size);
-	chunk_t message = (test->message != NULL)
+	chunk_t chunk_message = (test->message != NULL)
 		? decode_to_chunk(__func__, test->message)
 		: alloc_chunk(test->message_size, __func__);
 	chunk_t prf_output = decode_to_chunk(__func__, test->prf_output);
@@ -141,7 +141,7 @@ static bool test_prf_vector(const struct prf_desc *prf,
 	/* chunk interface */
 	struct crypt_prf *chunk_prf = crypt_prf_init_chunk(__func__, debug,
 							   prf, "key", chunk_key);
-	crypt_prf_update_chunk(__func__, chunk_prf, message);
+	crypt_prf_update_chunk(__func__, chunk_prf, chunk_message);
 	chunk_t chunk_output = crypt_prf_final_chunk(&chunk_prf);
 	DBG(debug, DBG_dump_chunk("chunk output", chunk_output));
 	bool ok = verify_chunk(test->description, prf_output, chunk_output);
@@ -151,7 +151,9 @@ static bool test_prf_vector(const struct prf_desc *prf,
 	PK11SymKey *symkey_key = symkey_from_chunk("key symkey", DBG_CRYPT, chunk_key);
 	struct crypt_prf *symkey_prf = crypt_prf_init_symkey(__func__, debug,
 							    prf, "key symkey", symkey_key);
-	crypt_prf_update_chunk(__func__, symkey_prf, message);
+	PK11SymKey *symkey_message = symkey_from_chunk("message symkey", DBG_CRYPT,
+						       chunk_message);
+	crypt_prf_update_symkey(__func__, symkey_prf, symkey_message);
 	PK11SymKey *symkey_output = crypt_prf_final_symkey(&symkey_prf);
 	DBG(debug, DBG_symkey("output", "symkey", symkey_output));
 	ok = verify_symkey(test->description, prf_output, symkey_output);
@@ -159,10 +161,12 @@ static bool test_prf_vector(const struct prf_desc *prf,
 			   test->description, ok ? "passed" : "failed"));
 	release_symkey(__func__, "symkey", &symkey_output);
 
+	freeanychunk(chunk_message);
 	freeanychunk(chunk_key);
-	release_symkey(__func__, "key", &symkey_key);
-
 	freeanychunk(chunk_output);
+
+	release_symkey(__func__, "message", &symkey_message);
+	release_symkey(__func__, "key", &symkey_key);
 	release_symkey(__func__, "output", &symkey_output);
 
 	freeanychunk(prf_output);
