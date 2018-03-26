@@ -1100,7 +1100,7 @@ static void strip_nonfips(const struct ike_alg_type *type)
 	type->algorithms->end = end;
 }
 
-void ike_alg_init(void)
+void init_ike_alg(void)
 {
 	bool fips = libreswan_fipsmode();
 

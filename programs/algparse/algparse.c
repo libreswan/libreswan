@@ -9,7 +9,8 @@
 #include "ike_alg.h"
 #include "alg_info.h"
 
-static bool run_tests = false;
+static bool test_proposals = false;
+static bool test_algs = false;
 static bool verbose = false;
 static bool debug = false;
 static bool impair = false;
@@ -434,8 +435,10 @@ int main(int argc, char *argv[])
 		if (streq(arg, "?") || streq(arg, "h")) {
 			usage();
 			exit(0);
-		} else if (streq(arg, "t")) {
-			run_tests = true;
+		} else if (streq(arg, "t") || streq(arg, "tp")) {
+			test_proposals = true;
+		} else if (streq(arg, "ta")) {
+			test_algs = true;
 		} else if (streq(arg, "v1")) {
 			ikev1 = true;
 		} else if (streq(arg, "v2")) {
@@ -480,7 +483,7 @@ int main(int argc, char *argv[])
 	 */
 	log_to_stderr = verbose;
 
-	ike_alg_init();
+	init_ike_alg();
 
 	/*
 	 * Only enabling debugging and impairing after things have
@@ -493,17 +496,19 @@ int main(int argc, char *argv[])
 		cur_debugging |= IMPAIR_PROPOSAL_PARSER;
 	}
 
-	ike_alg_test();
+	if (test_algs) {
+		test_ike_alg();
+	}
 
 	if (*argp) {
-		if (run_tests) {
+		if (test_proposals) {
 			fprintf(stderr, "-t conflicts with algorithm list\n");
 			exit(1);
 		}
 		for (; *argp != NULL; argp++) {
 			test_proposal(*argp);
 		}
-	} else if (run_tests) {
+	} else if (test_proposals) {
 		test();
 	}
 

@@ -1724,8 +1724,8 @@ int main(int argc, char **argv)
 	init_secret();
 	init_states();
 	init_connections();
-	ike_alg_init();
-	ike_alg_test();
+	init_ike_alg();
+	test_ike_alg();
 	init_crypto_helpers(nhelpers);
 	init_demux();
 	init_kernel();

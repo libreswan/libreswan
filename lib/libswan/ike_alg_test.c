@@ -23,7 +23,7 @@
 #include "ike_alg_test_gcm.h"
 #include "ike_alg_test_prf.h"
 
-void ike_alg_test(void)
+void test_ike_alg(void)
 {
 	passert(test_cbc_vectors(&ike_alg_encrypt_camellia_cbc,
 				 camellia_cbc_tests));

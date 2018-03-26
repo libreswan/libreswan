@@ -412,7 +412,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	ike_alg_init();
+	init_ike_alg();
 
 	cavp_parser();
 
