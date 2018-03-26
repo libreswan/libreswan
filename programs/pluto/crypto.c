@@ -193,10 +193,8 @@ void ike_alg_show_status(void)
 		const struct prf_desc *alg = (*algp);
 		if (ike_alg_is_ike(&(alg)->common)) {
 			whack_log(RC_COMMENT,
-				  "algorithm IKE hash: id=%d, name=%s, hashlen=%zu",
-				  alg->common.ikev1_oakley_id,
-				  enum_name(&oakley_hash_names, alg->common.ikev1_oakley_id),
-				  alg->prf_output_size);
+				  "algorithm IKE PRF: name=%s, hashlen=%zu",
+				  alg->common.fqn, alg->prf_output_size);
 		}
 	}
 
