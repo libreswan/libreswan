@@ -2,6 +2,7 @@
 west #
  ../bin/algparse.sh PATH/libexec/ipsec/algparse algparse*.txt
 PATH/libexec/ipsec/algparse -v1 -t # algparse.v1.txt
+PATH/libexec/ipsec/algparse -v2 -pfs -t # algparse.v2.pfs.txt
 PATH/libexec/ipsec/algparse -v2 -t # algparse.v2.txt
 PATH/libexec/ipsec/algparse -v # algparse.v.txt
 west #
@@ -61,10 +62,11 @@ Integrity algorithms:
   HMAC_SHA2_512_256   IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha512 sha2_512 hmac_sha2_512)
   HMAC_SHA2_384_192   IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha384 sha2_384 hmac_sha2_384)
   HMAC_SHA2_256_128   IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha2 sha256 sha2_256 hmac_sha2_256)
-  AES_XCBC_96         IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_xcbc)
+  AES_XCBC_96         IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_xcbc aes128_xcbc aes128_xcbc_96)
   AES_CMAC_96         IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_cmac)
   NONE                IKEv1:     ESP     IKEv2:     ESP     FIPS  (null)
 DH algorithms:
+  NONE                IKEv1:             IKEv2: IKE ESP AH        (null dh0)
   MODP1024            IKEv1: IKE ESP AH  IKEv2: IKE ESP AH        (dh2)
   MODP1536            IKEv1: IKE ESP AH  IKEv2: IKE ESP AH        (dh5)
   MODP2048            IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (dh14)
