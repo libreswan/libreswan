@@ -324,7 +324,8 @@ enum {
 	DBG_OPPOINFO_IX,	/* log various informational things about oppo/%trap-keying */
 
 	/* below are excluded from debug=all */
-	DBG_CRYPT_IX,		/* encryption/decryption of messages */
+	DBG_CRYPT_IX,		/* high-level encryption/decryption of messages */
+	DBG_CRYPT_LOW_IX,	/* low-level encryption/decryption implementation details */
 	DBG_PRIVATE_IX,		/* displays private information: DANGER! */
 	DBG_PROPOSAL_PARSER_IX,	/* parsing ike=... et.al. */
 
@@ -361,6 +362,7 @@ enum {
 
 /* These are not part of "all" debugging */
 #define DBG_CRYPT	LELEM(DBG_CRYPT_IX)
+#define DBG_CRYPT_LOW	LELEM(DBG_CRYPT_LOW_IX)
 #define DBG_PRIVATE	LELEM(DBG_PRIVATE_IX)
 #define DBG_PROPOSAL_PARSER	LELEM(DBG_PROPOSAL_PARSER_IX)
 

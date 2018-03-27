@@ -56,7 +56,7 @@ void fprint_chunk(FILE *file, const char *prefix, chunk_t chunk, size_t binlen)
 
 void fprint_symkey(FILE *file, const char *prefix, PK11SymKey *key, size_t binlen)
 {
-	chunk_t chunk = chunk_from_symkey(prefix, DBG_CRYPT, key);
+	chunk_t chunk = chunk_from_symkey(prefix, key);
 	fprint_chunk(file, prefix, chunk, binlen);
 	freeanychunk(chunk);
 }

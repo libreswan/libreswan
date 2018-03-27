@@ -31,7 +31,6 @@
 
 struct prf_context {
 	const char *name;
-	lset_t debug;
 	const struct prf_desc *desc;
 	PK11Context *context;
 };
@@ -41,7 +40,7 @@ struct prf_context {
  */
 
 static struct prf_context *init(const struct prf_desc *prf_desc,
-				const char *name, lset_t debug,
+				const char *name,
 				const char *key_name, PK11SymKey *key)
 
 {
@@ -62,11 +61,9 @@ static struct prf_context *init(const struct prf_desc *prf_desc,
 		}
 		return NULL;
 	}
-	if (DBGP(debug)) {
-		DBG_log("%s prf: created %s context %p from %s-key@%p",
-			name, prf_desc->common.name,
-			context, key_name, key);
-	}
+	DBGF(DBG_CRYPT_LOW, "%s prf: created %s context %p from %s-key@%p",
+	     name, prf_desc->common.name,
+	     context, key_name, key);
 
 	SECStatus rc = PK11_DigestBegin(context);
 	if (rc) {
@@ -75,15 +72,12 @@ static struct prf_context *init(const struct prf_desc *prf_desc,
 		PK11_DestroyContext(context, PR_TRUE);
 		return NULL;
 	}
-	if (DBGP(debug)) {
-		DBG_log("%s prf: begin %s with context %p from %s-key@%p",
-			name, prf_desc->common.name,
-			context, key_name, key);
-	}
+	DBGF(DBG_CRYPT_LOW, "%s prf: begin %s with context %p from %s-key@%p",
+	     name, prf_desc->common.name,
+	     context, key_name, key);
 
 	struct prf_context *prf = alloc_thing(struct prf_context, name);
 	*prf = (struct prf_context) {
-		.debug = debug,
 		.name = name,
 		.desc = prf_desc,
 		.context = context,
@@ -92,7 +86,7 @@ static struct prf_context *init(const struct prf_desc *prf_desc,
 }
 
 static struct prf_context *init_symkey(const struct prf_desc *prf_desc,
-				       const char *name, lset_t debug,
+				       const char *name,
 				       const char *key_name, PK11SymKey *key)
 {
 	/*
@@ -100,18 +94,17 @@ static struct prf_context *init_symkey(const struct prf_desc *prf_desc,
 	 *
 	 * This key has both the mechanism and flags set.
 	 */
-	PK11SymKey *clone = prf_key_from_symkey_bytes("clone", debug,
-						      prf_desc,
+	PK11SymKey *clone = prf_key_from_symkey_bytes("clone", prf_desc,
 						      0, sizeof_symkey(key),
 						      key);
-	struct prf_context *prf = init(prf_desc, name, debug,
+	struct prf_context *prf = init(prf_desc, name,
 				       key_name, clone);
 	release_symkey(name, "clone", &clone);
 	return prf;
 }
 
 static struct prf_context *init_bytes(const struct prf_desc *prf_desc,
-				      const char *name, lset_t debug,
+				      const char *name,
 				      const char *key_name,
 				      const u_int8_t *key, size_t sizeof_key)
 {
@@ -120,10 +113,9 @@ static struct prf_context *init_bytes(const struct prf_desc *prf_desc,
 	 *
 	 * This key has both the mechanism and flags set.
 	 */
-	PK11SymKey *clone = prf_key_from_bytes(key_name, DBG_CRYPT,
-					       prf_desc,
+	PK11SymKey *clone = prf_key_from_bytes(key_name, prf_desc,
 					       key, sizeof_key);
-	struct prf_context *prf = init(prf_desc, name, debug,
+	struct prf_context *prf = init(prf_desc, name,
 				       key_name, clone);
 	release_symkey(name, "clone", &clone);
 	return prf ;
@@ -145,8 +137,7 @@ static void digest_symkey(struct prf_context *prf,
 	SECStatus rc = PK11_DigestKey(prf->context, symkey);
 	fprintf(stderr, "symkey update %x\n", rc);
 #endif
-	chunk_t chunk = chunk_from_symkey("nss hmac digest hack", prf->debug,
-					  symkey);
+	chunk_t chunk = chunk_from_symkey("nss hmac digest hack", symkey);
 	SECStatus rc = PK11_DigestOp(prf->context, chunk.ptr, chunk.len);
 	freeanychunk(chunk);
 	passert(rc == SECSuccess);
@@ -182,8 +173,7 @@ static PK11SymKey *final_symkey(struct prf_context **prf)
 	size_t sizeof_bytes = (*prf)->desc->prf_output_size;
 	u_int8_t *bytes = alloc_things(u_int8_t, sizeof_bytes, "bytes");
 	final(*prf, bytes, sizeof_bytes);
-	PK11SymKey *final = symkey_from_bytes("final", (*prf)->debug,
-					      bytes, sizeof_bytes);
+	PK11SymKey *final = symkey_from_bytes("final", bytes, sizeof_bytes);
 	pfree(bytes);
 	pfree(*prf); *prf = NULL;
 	return final;

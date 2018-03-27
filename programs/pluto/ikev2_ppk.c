@@ -150,7 +150,7 @@ void ppk_recalculate(const chunk_t *ppk, const struct prf_desc *prf_desc,
 			PK11SymKey *sk_pr_no_ppk)
 {
 	PK11SymKey *new_sk_pi, *new_sk_pr, *new_sk_d;
-	PK11SymKey *ppk_key = symkey_from_chunk("PPK Keying material", DBG_CRYPT, *ppk);
+	PK11SymKey *ppk_key = symkey_from_chunk("PPK Keying material", *ppk);
 
 	DBG(DBG_CRYPT, DBG_log("Starting to recalculate SK_d, SK_pi, SK_pr");
 			 DBG_dump_chunk("PPK:", *ppk));
@@ -166,9 +166,9 @@ void ppk_recalculate(const chunk_t *ppk, const struct prf_desc *prf_desc,
 
 	if (DBGP(DBG_PRIVATE)) {
 		/* declaring chunks for dumping them beneath */
-		chunk_t chunk_sk_d = chunk_from_symkey("chunk_SK_d", DBG_CRYPT, *sk_d);
-		chunk_t chunk_sk_pi = chunk_from_symkey("chunk_SK_pi", DBG_CRYPT, *sk_pi);
-		chunk_t chunk_sk_pr = chunk_from_symkey("chunk_SK_pr", DBG_CRYPT, *sk_pr);
+		chunk_t chunk_sk_d = chunk_from_symkey("chunk_SK_d", *sk_d);
+		chunk_t chunk_sk_pi = chunk_from_symkey("chunk_SK_pi", *sk_pi);
+		chunk_t chunk_sk_pr = chunk_from_symkey("chunk_SK_pr", *sk_pr);
 
 		DBG(DBG_PRIVATE,
 		    DBG_log("PPK Finished recalculating SK_d, SK_pi, SK_pr");

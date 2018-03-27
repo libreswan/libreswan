@@ -191,8 +191,7 @@ static void decrypt(void)
 		return;
 	}
 
-	PK11SymKey *gcm_key = encrypt_key_from_symkey_bytes("GCM key", DBG_CRYPT,
-							    gcm_alg,
+	PK11SymKey *gcm_key = encrypt_key_from_symkey_bytes("GCM key", gcm_alg,
 							    0, sizeof_symkey(key),
 							    key);
 
