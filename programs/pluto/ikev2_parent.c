@@ -6822,7 +6822,13 @@ void ikev2_record_deladdr(struct state *st, void *arg_ip)
 		st->st_deleted_local_addr = st->st_localaddr;
 		struct state *cst = state_with_serialno(st->st_connection->newest_ipsec_sa);
 		migration_down(cst->st_connection, cst);
-		 unroute_connection(st->st_connection);
+		unroute_connection(st->st_connection);
+
+		if (cst->st_liveness_event != NULL) {
+			delete_liveness_event(cst);
+			cst->st_liveness_event = NULL;
+		}
+
 		if (st->st_addr_change_event == NULL) {
 			event_schedule_s(EVENT_v2_ADDR_CHANGE, 0, st);
 		} else {

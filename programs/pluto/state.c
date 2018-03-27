@@ -2684,6 +2684,11 @@ bool update_mobike_endpoints(struct state *pst,
 	if (msg_r) {
 		/* MOBIKE initiator */
 		migration_up(cst->st_connection, cst);
+		if (dpd_active_locally(cst) && cst->st_liveness_event == NULL) {
+			DBG(DBG_DPD, DBG_log("dpd re-enabled after mobike, scheduling ikev2 liveness checks"));
+			deltatime_t delay = deltatime_max(cst->st_connection->dpd_delay, deltatime(MIN_LIVENESS));
+			event_schedule(EVENT_v2_LIVENESS, delay, cst);
+		}
 	}
 
 	return TRUE;
