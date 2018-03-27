@@ -301,17 +301,44 @@ PK11SymKey *ikev2_prfplus(const struct prf_desc *prf_desc,
 
 /*
  * SKEYSEED = prf(Ni | Nr, g^ir)
+ *
+ *
  */
 PK11SymKey *ikev2_ike_sa_skeyseed(const struct prf_desc *prf_desc,
 				  const chunk_t Ni, const chunk_t Nr,
 				  PK11SymKey *dh_secret)
 {
-	/* key = Ni|Nr */
-	chunk_t key = concat_chunk_chunk("key = Ni|Nr", Ni, Nr);
-	struct crypt_prf *prf = crypt_prf_init_chunk("ike sa SKEYSEED",
-						     DBG_CRYPT,
-						     prf_desc,
-						     "Ni|Nr", key);
+	/*
+	 * 2.14.  Generating Keying Material for the IKE SA
+	 *
+	 *                Ni and Nr are the nonces, stripped of any headers.  For
+	 *   historical backward-compatibility reasons, there are two PRFs that
+	 *   are treated specially in this calculation.  If the negotiated PRF is
+	 *   AES-XCBC-PRF-128 [AESXCBCPRF128] or AES-CMAC-PRF-128 [AESCMACPRF128],
+	 *   only the first 64 bits of Ni and the first 64 bits of Nr are used in
+	 *   calculating SKEYSEED, but all the bits are used for input to the prf+
+	 *   function.
+	 */
+	chunk_t key;
+	const char *key_name;
+	switch (prf_desc->common.id[IKEv2_ALG_ID]) {
+	case IKEv2_PRF_AES128_CMAC:
+	case IKEv2_PRF_AES128_XCBC:
+	{
+		chunk_t Ni64 = chunk(Ni.ptr, BYTES_FOR_BITS(64));
+		chunk_t Nr64 = chunk(Nr.ptr, BYTES_FOR_BITS(64));
+		key = concat_chunk_chunk("key = Ni|Nr", Ni64, Nr64);
+		key_name = "Ni[0:63] | Nr[0:63]";
+		break;
+	}
+	default:
+		key = concat_chunk_chunk("key = Ni|Nr", Ni, Nr);
+		key_name = "Ni | Nr";
+		break;
+	}
+	struct crypt_prf *prf = crypt_prf_init_chunk("SKEYSEED = prf(Ni | Nr, g^ir)",
+						     DBG_CRYPT, prf_desc,
+						     key_name, key);
 	freeanychunk(key);
 	if (prf == NULL) {
 		libreswan_log("failed to create IKEv2 PRF for computing SKEYSEED = prf(Ni | Nr, g^ir)");
