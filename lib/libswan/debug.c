@@ -29,6 +29,7 @@
 static const char *debug_strings[] = {
 	D(DBG_RAW, "debug-raw"),
 	D(DBG_CRYPT, "debug-crypt"),
+	D(DBG_CRYPT_LOW, "debug-crypt-low"),
 	D(DBG_PARSING, "debug-parsing"),
 	D(DBG_EMITTING, "debug-emitting"),
 	D(DBG_CONTROL, "debug-control"),
