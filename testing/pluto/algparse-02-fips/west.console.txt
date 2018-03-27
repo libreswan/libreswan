@@ -7,6 +7,25 @@ PATH/libexec/ipsec/algparse -v1 -t # algparse.v1.txt
 PATH/libexec/ipsec/algparse -v2 -pfs -t # algparse.v2.pfs.txt
 PATH/libexec/ipsec/algparse -v2 -t # algparse.v2.txt
 PATH/libexec/ipsec/algparse -v # algparse.v.txt
+--- algparse.v.txt	2018-03-24 14:20:49.229156167 -0400
++++ -	2018-03-27 12:22:58.386441197 -0400
+@@ -8,6 +8,7 @@
+ algparse: Encryption algorithm NULL disabled; not FIPS compliant
+ algparse: Hash algorithm MD5 disabled; not FIPS compliant
+ algparse: PRF algorithm HMAC_MD5 disabled; not FIPS compliant
++algparse: PRF algorithm AES_XCBC disabled; not FIPS compliant
+ algparse: Integrity algorithm HMAC_MD5_96 disabled; not FIPS compliant
+ algparse: DH algorithm NONE disabled; not FIPS compliant
+ algparse: DH algorithm MODP1024 disabled; not FIPS compliant
+@@ -37,7 +38,7 @@
+ algparse:   HMAC_SHA2_512_256   IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha512 sha2_512 hmac_sha2_512)
+ algparse:   HMAC_SHA2_384_192   IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha384 sha2_384 hmac_sha2_384)
+ algparse:   HMAC_SHA2_256_128   IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha2 sha256 sha2_256 hmac_sha2_256)
+-algparse:   AES_XCBC_96         IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_xcbc aes128_xcbc aes128_xcbc_96)
++algparse:   AES_XCBC_96         IKEv1:     ESP AH  IKEv2: IKE ESP AH  FIPS  (aes_xcbc aes128_xcbc aes128_xcbc_96)
+ algparse:   AES_CMAC_96         IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_cmac)
+ algparse:   NONE                IKEv1:     ESP     IKEv2:     ESP     FIPS  (null)
+ algparse: FIPS DH algorithms:
 west #
  # start pluto
 west #
@@ -58,7 +77,7 @@ FIPS Integrity algorithms:
   HMAC_SHA2_512_256   IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha512 sha2_512 hmac_sha2_512)
   HMAC_SHA2_384_192   IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha384 sha2_384 hmac_sha2_384)
   HMAC_SHA2_256_128   IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha2 sha256 sha2_256 hmac_sha2_256)
-  AES_XCBC_96         IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_xcbc aes128_xcbc aes128_xcbc_96)
+  AES_XCBC_96         IKEv1:     ESP AH  IKEv2: IKE ESP AH  FIPS  (aes_xcbc aes128_xcbc aes128_xcbc_96)
   AES_CMAC_96         IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_cmac)
   NONE                IKEv1:     ESP     IKEv2:     ESP     FIPS  (null)
 FIPS DH algorithms:

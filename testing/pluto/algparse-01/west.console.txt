@@ -5,6 +5,24 @@ PATH/libexec/ipsec/algparse -v1 -t # algparse.v1.txt
 PATH/libexec/ipsec/algparse -v2 -pfs -t # algparse.v2.pfs.txt
 PATH/libexec/ipsec/algparse -v2 -t # algparse.v2.txt
 PATH/libexec/ipsec/algparse -v # algparse.v.txt
+--- algparse.v.txt	2018-03-24 14:20:49.229156167 -0400
++++ -	2018-03-27 12:22:32.031048602 -0400
+@@ -28,13 +28,14 @@
+ algparse:   HMAC_SHA2_256       IKEv1: IKE         IKEv2: IKE         FIPS  (sha2 sha256 sha2_256)
+ algparse:   HMAC_SHA2_384       IKEv1: IKE         IKEv2: IKE         FIPS  (sha384 sha2_384)
+ algparse:   HMAC_SHA2_512       IKEv1: IKE         IKEv2: IKE         FIPS  (sha512 sha2_512)
++algparse:   AES_XCBC            IKEv1:             IKEv2: IKE               (aes128_xcbc)
+ algparse: Integrity algorithms:
+ algparse:   HMAC_MD5_96         IKEv1: IKE ESP AH  IKEv2: IKE ESP AH        (md5 hmac_md5)
+ algparse:   HMAC_SHA1_96        IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha sha1 sha1_96 hmac_sha1)
+ algparse:   HMAC_SHA2_512_256   IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha512 sha2_512 hmac_sha2_512)
+ algparse:   HMAC_SHA2_384_192   IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha384 sha2_384 hmac_sha2_384)
+ algparse:   HMAC_SHA2_256_128   IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha2 sha256 sha2_256 hmac_sha2_256)
+-algparse:   AES_XCBC_96         IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_xcbc aes128_xcbc aes128_xcbc_96)
++algparse:   AES_XCBC_96         IKEv1:     ESP AH  IKEv2: IKE ESP AH  FIPS  (aes_xcbc aes128_xcbc aes128_xcbc_96)
+ algparse:   AES_CMAC_96         IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_cmac)
+ algparse:   NONE                IKEv1:     ESP     IKEv2:     ESP     FIPS  (null)
+ algparse: DH algorithms:
 west #
  # start pluto
 west #
@@ -56,13 +74,14 @@ PRF algorithms:
   HMAC_SHA2_256       IKEv1: IKE         IKEv2: IKE         FIPS  (sha2 sha256 sha2_256)
   HMAC_SHA2_384       IKEv1: IKE         IKEv2: IKE         FIPS  (sha384 sha2_384)
   HMAC_SHA2_512       IKEv1: IKE         IKEv2: IKE         FIPS  (sha512 sha2_512)
+  AES_XCBC            IKEv1:             IKEv2: IKE               (aes128_xcbc)
 Integrity algorithms:
   HMAC_MD5_96         IKEv1: IKE ESP AH  IKEv2: IKE ESP AH        (md5 hmac_md5)
   HMAC_SHA1_96        IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha sha1 sha1_96 hmac_sha1)
   HMAC_SHA2_512_256   IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha512 sha2_512 hmac_sha2_512)
   HMAC_SHA2_384_192   IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha384 sha2_384 hmac_sha2_384)
   HMAC_SHA2_256_128   IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha2 sha256 sha2_256 hmac_sha2_256)
-  AES_XCBC_96         IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_xcbc aes128_xcbc aes128_xcbc_96)
+  AES_XCBC_96         IKEv1:     ESP AH  IKEv2: IKE ESP AH  FIPS  (aes_xcbc aes128_xcbc aes128_xcbc_96)
   AES_CMAC_96         IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_cmac)
   NONE                IKEv1:     ESP     IKEv2:     ESP     FIPS  (null)
 DH algorithms:
