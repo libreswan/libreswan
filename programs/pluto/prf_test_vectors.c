@@ -148,10 +148,10 @@ static bool test_prf_vector(const struct prf_desc *prf,
 	freeanychunk(chunk_output);
 
 	/* symkey interface */
-	PK11SymKey *symkey_key = symkey_from_chunk("key symkey", DBG_CRYPT, chunk_key);
+	PK11SymKey *symkey_key = symkey_from_chunk("key symkey", chunk_key);
 	struct crypt_prf *symkey_prf = crypt_prf_init_symkey(__func__, debug,
 							    prf, "key symkey", symkey_key);
-	PK11SymKey *symkey_message = symkey_from_chunk("message symkey", DBG_CRYPT,
+	PK11SymKey *symkey_message = symkey_from_chunk("message symkey",
 						       chunk_message);
 	crypt_prf_update_symkey(__func__, symkey_prf, symkey_message);
 	PK11SymKey *symkey_output = crypt_prf_final_symkey(&symkey_prf);

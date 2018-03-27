@@ -432,7 +432,7 @@ struct hash_ops {
 	void (*const check)(const struct hash_desc *alg);
 
 	struct hash_context *(*init)(const struct hash_desc *hash_desc,
-				     const char *name, lset_t debug);
+				     const char *name);
 	void (*digest_symkey)(struct hash_context *hash,
 			      const char *name, PK11SymKey *symkey);
 	void (*digest_bytes)(struct hash_context *hash,
@@ -442,7 +442,7 @@ struct hash_ops {
 			    u_int8_t *bytes, size_t sizeof_bytes);
 	/* FIPS short cuts */
 	PK11SymKey *(*symkey_to_symkey)(const struct hash_desc *hash_desc,
-					const char *name, lset_t debug,
+					const char *name,
 					const char *symkey_name, PK11SymKey *symkey);
 };
 
@@ -521,10 +521,10 @@ struct prf_ops {
 	void (*const check)(const struct prf_desc *alg);
 
 	struct prf_context *(*init_symkey)(const struct prf_desc *prf_desc,
-					   const char *name, lset_t debug,
+					   const char *name,
 					   const char *key_name, PK11SymKey *key);
 	struct prf_context *(*init_bytes)(const struct prf_desc *prf_desc,
-					  const char *name, lset_t debug,
+					  const char *name,
 					  const char *key_name,
 					  const u_int8_t *bytes, size_t sizeof_bytes);
 	void (*digest_symkey)(struct prf_context *prf,

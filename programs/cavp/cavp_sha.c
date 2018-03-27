@@ -96,7 +96,7 @@ static void msg_run(void)
 	passert((len == 0 && msg.len <= 1)
 		|| (len == msg.len * BITS_PER_BYTE));
 	print_chunk("Msg", msg, 0);
-	struct hash_context *hash = hash_alg->hash_ops->init(hash_alg, "sha", DBG_CRYPT);
+	struct hash_context *hash = hash_alg->hash_ops->init(hash_alg, "sha");
 	/* See above, use LEN, not MSG.LEN */
 	hash_alg->hash_ops->digest_bytes(hash, "msg", msg.ptr, len / BITS_PER_BYTE);
 	chunk_t bytes = alloc_chunk(l, "bytes");
@@ -153,7 +153,7 @@ static void monte_run(void)
 			memcpy(Mi.ptr + seed.len * 2, MDi_1.ptr, seed.len);
 			// MDi = SHA(Mi);
 			struct hash_context *hash = hash_alg->hash_ops->init(hash_alg,
-									     "sha", DBG_CRYPT);
+									     "sha");
 			hash_alg->hash_ops->digest_bytes(hash, "msg", Mi.ptr, Mi.len);
 			hash_alg->hash_ops->final_bytes(&hash, seed.ptr, seed.len);
 			// printf("%d ", i);

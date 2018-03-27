@@ -156,40 +156,40 @@ static void calc_skeyseed_v2(struct pcr_dh_v2 *sk,
 	next_byte += integ_size;
 
 	/* The encryption key and salt are extracted together. */
-	SK_ei_k = encrypt_key_from_symkey_bytes("SK_ei_k", DBG_CRYPT,
+	SK_ei_k = encrypt_key_from_symkey_bytes("SK_ei_k",
 						encrypter,
 						next_byte, key_size,
 						finalkey);
 	next_byte += key_size;
 	PK11SymKey *initiator_salt_key = key_from_symkey_bytes(finalkey, next_byte,
 							       salt_size);
-	initiator_salt = chunk_from_symkey("initiator salt", DBG_CRYPT,
+	initiator_salt = chunk_from_symkey("initiator salt",
 					   initiator_salt_key);
 	release_symkey(__func__, "initiator-salt-key", &initiator_salt_key);
 
 	next_byte += salt_size;
 
 	/* The encryption key and salt are extracted together. */
-	SK_er_k = encrypt_key_from_symkey_bytes("SK_er_k", DBG_CRYPT,
+	SK_er_k = encrypt_key_from_symkey_bytes("SK_er_k",
 						encrypter,
 						next_byte, key_size,
 						finalkey);
 	next_byte += key_size;
 	PK11SymKey *responder_salt_key = key_from_symkey_bytes(finalkey, next_byte,
 							       salt_size);
-	responder_salt = chunk_from_symkey("responder salt", DBG_CRYPT,
+	responder_salt = chunk_from_symkey("responder salt",
 					   responder_salt_key);
 	release_symkey(__func__, "responder-salt-key", &responder_salt_key);
 	next_byte += salt_size;
 
 	SK_pi_k = key_from_symkey_bytes(finalkey, next_byte, skp_bytes);
 	/* store copy of SK_pi_k for later use in authnull */
-	chunk_SK_pi = chunk_from_symkey("chunk_SK_pi", DBG_CRYPT, SK_pi_k);
+	chunk_SK_pi = chunk_from_symkey("chunk_SK_pi", SK_pi_k);
 	next_byte += skp_bytes;
 
 	SK_pr_k = key_from_symkey_bytes(finalkey, next_byte, skp_bytes);
 	/* store copy of SK_pr_k for later use in authnull */
-	chunk_SK_pr = chunk_from_symkey("chunk_SK_pr", DBG_CRYPT, SK_pr_k);
+	chunk_SK_pr = chunk_from_symkey("chunk_SK_pr", SK_pr_k);
 	next_byte += skp_bytes;	/* next_byte not subsequently used */
 
 	DBG(DBG_CRYPT,
@@ -357,7 +357,7 @@ PK11SymKey *ikev2_ike_sa_keymat(const struct prf_desc *prf_desc,
 				const chunk_t SPIi, const chunk_t SPIr,
 				size_t required_bytes)
 {
-	PK11SymKey *data = symkey_from_chunk("data", DBG_CRYPT, Ni);
+	PK11SymKey *data = symkey_from_chunk("data", Ni);
 	append_symkey_chunk(&data, Nr);
 	append_symkey_chunk(&data, SPIi);
 	append_symkey_chunk(&data, SPIr);
@@ -379,7 +379,7 @@ PK11SymKey *ikev2_child_sa_keymat(const struct prf_desc *prf_desc,
 {
 	PK11SymKey *data;
 	if (new_dh_secret == NULL) {
-		data = symkey_from_chunk("data", DBG_CRYPT, Ni);
+		data = symkey_from_chunk("data", Ni);
 		append_symkey_chunk(&data, Nr);
 	} else {
 		data = concat_symkey_chunk(new_dh_secret, Ni);

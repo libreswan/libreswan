@@ -24,7 +24,6 @@
 
 struct prf_context {
 	const char *name;
-	lset_t debug;
 	const struct prf_desc *desc;
 	/* intermediate values */
 	PK11SymKey *key;
@@ -47,11 +46,10 @@ static void replace_key(struct prf_context *prf, PK11SymKey *key)
  */
 
 static struct prf_context *prf_init(const struct prf_desc *prf_desc,
-				    const char *name, lset_t debug)
+				    const char *name)
 {
 	struct prf_context *prf = alloc_thing(struct prf_context, name);
 	*prf = (struct prf_context) {
-		.debug = debug,
 		.name = name,
 		.desc = prf_desc,
 	};
@@ -59,22 +57,22 @@ static struct prf_context *prf_init(const struct prf_desc *prf_desc,
 }
 
 static struct prf_context *init_bytes(const struct prf_desc *prf_desc,
-				      const char *name, lset_t debug,
+				      const char *name,
 				      const char *key_name UNUSED,
 				      const u_int8_t *key, size_t sizeof_key)
 {
-	struct prf_context *prf = prf_init(prf_desc, name, debug);
+	struct prf_context *prf = prf_init(prf_desc, name);
 	/* XXX: use an untyped key */
-	prf->key = symkey_from_bytes(name, debug, key, sizeof_key);
+	prf->key = symkey_from_bytes(name, key, sizeof_key);
 	prf_update(prf);
 	return prf;
 }
 
 static struct prf_context *init_symkey(const struct prf_desc *prf_desc,
-				       const char *name, lset_t debug,
+				       const char *name,
 				       const char *key_name UNUSED, PK11SymKey *key)
 {
-	struct prf_context *prf = prf_init(prf_desc, name, debug);
+	struct prf_context *prf = prf_init(prf_desc, name);
 	prf->key = reference_symkey(name, "key", key);
 	prf_update(prf);
 	return prf;
@@ -93,7 +91,7 @@ static void prf_update(struct prf_context *prf)
 	/* If the key is too big, re-hash it down to size. */
 	if (sizeof_symkey(prf->key) > prf->desc->hasher->hash_block_size) {
 		replace_key(prf, crypt_hash_symkey(prf->desc->hasher,
-						   "prf hash to size:", DBG_CRYPT,
+						   "prf hash to size:", DBG_CRYPT_LOW,
 						   "raw key", prf->key));
 	}
 
@@ -143,7 +141,7 @@ static PK11SymKey *compute_outer(struct prf_context *prf)
 	passert(prf->inner != NULL);
 	/* run that through hasher */
 	PK11SymKey *hashed_inner = crypt_hash_symkey(prf->desc->hasher,
-						     "prf inner hash:", DBG_CRYPT,
+						     "prf inner hash:", DBG_CRYPT_LOW,
 						     "inner", prf->inner);
 	release_symkey(prf->name, "inner", &prf->inner);
 
@@ -166,10 +164,11 @@ static PK11SymKey *final_symkey(struct prf_context **prfp)
 	PK11SymKey *outer = compute_outer(*prfp);
 	/* Finally hash that */
 	PK11SymKey *hashed_outer = crypt_hash_symkey((*prfp)->desc->hasher,
-						     "prf outer hash", DBG_CRYPT,
+						     "prf outer hash",
+						     DBG_CRYPT_LOW,
 						     "outer", outer);
 	release_symkey((*prfp)->name, "outer", &outer);
-	DBG(DBG_CRYPT, DBG_symkey("    ", " hashed-outer", hashed_outer));
+	DBG(DBG_CRYPT_LOW, DBG_symkey("    ", " hashed-outer", hashed_outer));
 	pfree(*prfp);
 	*prfp = NULL;
 	return hashed_outer;
@@ -183,11 +182,11 @@ static void final_bytes(struct prf_context **prfp,
 	/* Finally hash that */
 	struct crypt_hash *hash = crypt_hash_init((*prfp)->desc->hasher,
 						  "prf outer hash",
-						  (*prfp)->debug);
+						  DBG_CRYPT_LOW);
 	crypt_hash_digest_symkey(hash, "outer", outer);
 	crypt_hash_final_bytes(&hash, bytes, sizeof_bytes);
 	release_symkey((*prfp)->name, "outer", &outer);
-	DBG(DBG_CRYPT, DBG_dump("prf final bytes", bytes, sizeof_bytes));
+	DBG(DBG_CRYPT_LOW, DBG_dump("prf final bytes", bytes, sizeof_bytes));
 	pfree(*prfp);
 	*prfp = NULL;
 }

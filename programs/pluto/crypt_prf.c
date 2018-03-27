@@ -98,7 +98,7 @@ struct crypt_prf *crypt_prf_init_chunk(const char *name, lset_t debug,
 			   name, prf_desc->common.name,
 			   chunk_name, chunk.ptr, chunk.len));
 	return wrap(prf_desc, debug, name,
-		    prf_desc->prf_ops->init_bytes(prf_desc, name, debug,
+		    prf_desc->prf_ops->init_bytes(prf_desc, name,
 						  chunk_name, chunk.ptr, chunk.len));
 }
 
@@ -110,7 +110,7 @@ struct crypt_prf *crypt_prf_init_symkey(const char *name, lset_t debug,
 			   name, prf_desc->common.name,
 			   key_name, key, sizeof_symkey(key)));
 	return wrap(prf_desc, debug, name,
-		    prf_desc->prf_ops->init_symkey(prf_desc, name, debug,
+		    prf_desc->prf_ops->init_symkey(prf_desc, name,
 						   key_name, key));
 }
 

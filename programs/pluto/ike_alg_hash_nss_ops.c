@@ -27,27 +27,22 @@
  * These probably fail in FIPS mode.
  */
 struct hash_context {
-	lset_t debug;
 	const char *name;
 	PK11Context *context;
 	const struct hash_desc *desc;
 };
 
 static struct hash_context *init(const struct hash_desc *hash_desc,
-				 const char *name, lset_t debug)
+				 const char *name)
 {
 	struct hash_context *hash = alloc_thing(struct hash_context, "hasher");
 	*hash = (struct hash_context) {
 		.context = PK11_CreateDigestContext(hash_desc->nss.oid_tag),
 		.name = name,
-		.debug = debug,
 		.desc = hash_desc,
 	};
-	if (DBGP(hash->debug)) {
-		DBG_log("%s %s hasher: context %p",
-			name, hash_desc->common.name,
-			hash->context);
-	}
+	DBGF(DBG_CRYPT_LOW, "%s %s hasher: context %p",
+	     name, hash_desc->common.name, hash->context);
 	passert(hash->context);
 	SECStatus rc = PK11_DigestBegin(hash->context);
 	passert(rc == SECSuccess);
@@ -83,13 +78,13 @@ static void final_bytes(struct hash_context **hashp,
 	passert(rc == SECSuccess);
 	passert(out_len <= sizeof_bytes);
 	PK11_DestroyContext((*hashp)->context, PR_TRUE);
-	DBG(DBG_CRYPT, DBG_dump((*hashp)->name, bytes, sizeof_bytes));
+	DBG(DBG_CRYPT_LOW, DBG_dump((*hashp)->name, bytes, sizeof_bytes));
 	pfree(*hashp);
 	*hashp = NULL;
 }
 
 static PK11SymKey *symkey_to_symkey(const struct hash_desc *hash_desc,
-				    const char *name, lset_t debug,
+				    const char *name,
 				    const char *symkey_name, PK11SymKey *symkey)
 {
 	CK_MECHANISM_TYPE derive = hash_desc->nss.derivation_mechanism;
@@ -98,7 +93,7 @@ static PK11SymKey *symkey_to_symkey(const struct hash_desc *hash_desc,
 	CK_ATTRIBUTE_TYPE operation = CKA_DERIVE;
 	int key_size = 0;
 
-	if (DBGP(debug)) {
+	if DBGP(DBG_CRYPT_LOW) {
 		LSWLOG_DEBUG(buf) {
 			lswlogf(buf, "%s hash(%s) symkey %s(%p) to symkey - derive:",
 				name, hash_desc->common.name,
@@ -109,9 +104,7 @@ static PK11SymKey *symkey_to_symkey(const struct hash_desc *hash_desc,
 	}
 	PK11SymKey *result = PK11_Derive(symkey, derive, param, target,
 					 operation, key_size);
-	if (DBGP(debug)) {
-		DBG_symkey("    result: ", name, result);
-	}
+	DBG(DBG_CRYPT_LOW, DBG_symkey("    result: ", name, result));
 	return result;
 }
 

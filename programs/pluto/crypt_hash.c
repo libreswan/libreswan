@@ -36,7 +36,7 @@ struct crypt_hash *crypt_hash_init(const struct hash_desc *hash_desc,
 	DBG(debug, DBG_log("%s hash %s init",
 			   name, hash_desc->common.name));
 	struct hash_context *context =
-		hash_desc->hash_ops->init(hash_desc, name, debug);
+		hash_desc->hash_ops->init(hash_desc, name);
 	if (context == NULL) {
 		return NULL;
 	}
@@ -121,6 +121,6 @@ PK11SymKey *crypt_hash_symkey(const struct hash_desc *hash_desc,
 	DBG(debug, DBG_log("%s hash %s %s-key@%p (size %zu)",
 			   name, hash_desc->common.name,
 			   symkey_name, symkey, sizeof_symkey(symkey)));
-	return hash_desc->hash_ops->symkey_to_symkey(hash_desc, name, debug,
+	return hash_desc->hash_ops->symkey_to_symkey(hash_desc, name,
 						     symkey_name, symkey);
 }
