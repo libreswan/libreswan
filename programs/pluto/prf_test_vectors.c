@@ -24,6 +24,7 @@
 #include "ike_alg_test_prf.h"
 #include "ike_alg_aes.h"
 
+#include "lswfips.h"
 #include "nss.h"
 #include "pk11pub.h"
 #include "crypt_prf.h"
@@ -175,6 +176,9 @@ static bool test_prf_vector(const struct prf_desc *prf,
 
 bool test_prf_vectors(const struct prf_test_vectors *tests)
 {
+	if (libreswan_fipsmode() && !tests->prf->common.fips) {
+		return true;
+	}
 	bool ok = TRUE;
 	for (const struct prf_test_vector *test = tests->tests;
 	     test->description != NULL; test++) {
