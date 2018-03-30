@@ -910,19 +910,19 @@ stf_status idi_ipseckey_fetch(struct msg_digest *md)
 		return ret_idi;
 	}
 
-#ifdef NOT_YET /* this is the forward extra check */
-	/* struct id id = st->st_connection->spd.that.id; move this line up */
-	if (id.kind == ID_FQDN) { /* PAUL add extra option for this check */
-		dnsr_a = qry_st_init(st, LDNS_RR_TYPE_A, "A", idi_a_fetch_continue);
+	if (LIN(st->st_connection->policy, POLICY_DNS_MATCH_ID)) {
+		/* struct id id = st->st_connection->spd.that.id; move this line up */
+		if (id.kind == ID_FQDN) {
+			dnsr_a = qry_st_init(st, LDNS_RR_TYPE_A, "A", idi_a_fetch_continue);
 
-		if (dnsr_a == NULL) {
-			free_ipseckey_dns(dnsr_idi);
-			return ret;
+			if (dnsr_a == NULL) {
+				free_ipseckey_dns(dnsr_idi);
+				return ret;
+			}
+
+			ret_a = dns_qry_start(dnsr_a);
 		}
-
-		ret_a = dns_qry_start(dnsr_a);
 	}
-#endif  /* this is the forward extra check */
 
 	if (ret_a != STF_SUSPEND && ret_a != STF_OK) {
 		free_ipseckey_dns(dnsr_idi);

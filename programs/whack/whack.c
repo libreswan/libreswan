@@ -87,7 +87,7 @@ static void help(void)
 		"	[--dnskeyondemand] [--updown <updown>] \\\n"
 		"	[--psk] | [--rsasig] | [--rsa-sha2] | [--rsa-sha2_256] | [--rsa-sha2_384 ] | [--rsa-sha2_512 ] | [ --auth-null] | [--auth-never] \\\n"
 		"	[--encrypt] [--authenticate] [--compress] [--sha2-truncbug] [--msdh-downgrade] \\\n"
-		"	[--overlapip] [--tunnel] [--pfs] \\\n"
+		"	[--overlapip] [--tunnel] [--pfs] [--dns-match-id] \\\n"
 		"	[--pfsgroup modp1024 | modp1536 | modp2048 | \\\n"
 		"		modp3072 | modp4096 | modp6144 | modp8192 \\\n"
 		"		dh22 | dh23 | dh24] \\\n"
@@ -110,7 +110,7 @@ static void help(void)
 		"	[--nm-configured] \\\n"
 #endif
 #ifdef HAVE_LABELED_IPSEC
-		"	[--labeledipsec] [--policylabel <label>] [--msdh-downgrade] \\\n"
+		"	[--labeledipsec] [--policylabel <label>] \\\n"
 #endif
 		"	[--xauthby file|pam|alwaysok] [--xauthfail hard|soft] \\\n"
 		"	[--dontrekey] [--aggressive] \\\n"
@@ -594,6 +594,7 @@ static const struct option long_opts[] = {
 	{ "tunnelipv6", no_argument, NULL, CD_TUNNELIPV6 + OO },
 	PS("pfs", PFS),
 	PS("msdh-downgrade", MSDH_DOWNGRADE),
+	PS("dns-match-id", DNS_MATCH_ID),
 	PS("sha2-truncbug", SHA2_TRUNCBUG),
 	PS("sha2_truncbug", SHA2_TRUNCBUG), /* backwards compatibility */
 	PS("aggressive", AGGRESSIVE),
@@ -707,6 +708,7 @@ static const struct option long_opts[] = {
 	PS("decap-dscp", DECAP_DSCP),
 	PS("nopmtudisc", NOPMTUDISC),
 	PS("msdh-downgrade", MSDH_DOWNGRADE),
+	PS("dns-match-id", DNS_MATCH_ID),
 #undef PS
 
 
@@ -1593,6 +1595,8 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_NOPMTUDISC_IX:
 		/* --msdh-downgrade */
 		case CDP_SINGLETON + POLICY_MSDH_DOWNGRADE_IX:
+		/* --dns-match-id */
+		case CDP_SINGLETON + POLICY_DNS_MATCH_ID_IX:
 
 			msg.policy |= LELEM(c - CDP_SINGLETON);
 			continue;

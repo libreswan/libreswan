@@ -543,6 +543,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "sha2_truncbug",  kv_conn | kv_alias,  kt_bool,  KBF_SHA2_TRUNCBUG, NULL, NULL, },  /* obsolete _ */
   { "sha2-truncbug",  kv_conn,  kt_bool,  KBF_SHA2_TRUNCBUG, NULL, NULL, },
   { "ms-dh-downgrade",  kv_conn,  kt_bool,  KBF_MSDH_DOWNGRADE, NULL, NULL, },
+  { "dns-match-id,",  kv_conn,  kt_bool,  KBF_DNS_MATCH_ID, NULL, NULL, },
   { "keylife",  kv_conn | kv_alias,  kt_time,  KBF_SALIFETIME, NULL, NULL, },
   { "lifetime",  kv_conn | kv_alias,  kt_time,  KBF_SALIFETIME, NULL, NULL, },
   { "salifetime",  kv_conn,  kt_time,  KBF_SALIFETIME, NULL, NULL, },
