@@ -72,6 +72,7 @@ static const char *impair_strings[] = {
 	I(IMPAIR_ADD_BOGUS_PAYLOAD_TO_AUTH, "impair-add-bogus-payload-to-auth"),
 	I(IMPAIR_ADD_BOGUS_PAYLOAD_TO_AUTH_SK, "impair-add-bogus-payload-to-auth-sk"),
 	I(IMPAIR_BOGUS_PAYLOAD_CRITICAL, "impair-bogus-payload-critical"),
+	I(IMPAIR_ALLOW_DNS_INSECURE, "impair-allow-dns-insecure"),
 };
 
 const struct enum_names impair_names = {

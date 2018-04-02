@@ -423,7 +423,10 @@ static err_t process_dns_resp(struct p_dns_req *dnsr)
 	}
 
 	if (dnsr->secure == UB_EVENT_INSECURE) {
-		/* PAUL add impair here */
+		if (IMPAIR(ALLOW_DNS_INSECURE)) {
+			DBG(DBG_DNS, DBG_log("Allowing insecure DNS response due to impair"));
+			return parse_rr(dnsr, ldnspkt);
+		}
 		return "unbound returned INSECURE response - ignored";
 	}
 
