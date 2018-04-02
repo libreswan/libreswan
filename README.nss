@@ -138,12 +138,12 @@ Below, we will be using the nss tools to generate certificates
 
 * To create a certificate authority (CA certficate):
 
-	certutil -S -k rsa -n "ExampleCA" -s "CN=Example CA Inc" -w 12 \
+	certutil -S -k rsa -n "ExampleCA" -s "CN=Example CA Inc" -v 12 \
 		-t "CT,," -x -d sql:/etc/ipsec.d
 
 It creates a certificate with RSA keys (-k rsa) with the nick name
 "ExampleCA", and with common name "Example CA Inc". The option
-"-w" specifies the certificates validy period. "-t" specifies the attributes
+"-v" specifies the certificates validy period. "-t" specifies the attributes
 of the certificate. "C" is required for creating a CA certificate. "-x" mean
 self signed. "-d" specifies the path of the database directory. The directory
 path should be prefixed with 'sql:' in order to use the SQLite format.
@@ -154,7 +154,7 @@ certificate can be obtained from anywhere in the world.
 * To create a user certificate signed by the above CA
 
 	certutil -S -k rsa -c "ExampleCA" -n "user1" -s "CN=User Common Name" \
-		-w 12 -t "u,u,u" -d sql:/etc/ipsec.d
+		-v 12 -t "u,u,u" -d sql:/etc/ipsec.d
 
 It creates a user cert with nick name "user1" with attributes
 "u,u,u" signed by the CA cert "ExampleCA".
