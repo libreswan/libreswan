@@ -565,7 +565,7 @@ static void idi_ipseckey_fetch_tail(struct state *st, bool err)
 	release_any_md(&md);
 	reset_globals();
 }
-#ifdef NOT_YET
+
 static void idi_a_fetch_continue(struct p_dns_req *dnsr)
 {
 	struct state *st = state_with_serialno(dnsr->so_serial_t);
@@ -629,7 +629,6 @@ static void idi_a_fetch_continue(struct p_dns_req *dnsr)
 
 	idi_ipseckey_fetch_tail(st, err);
 }
-#endif /* NOT_YET */
 
 static void idi_ipseckey_fetch_continue(struct p_dns_req *dnsr)
 {
@@ -911,7 +910,7 @@ stf_status idi_ipseckey_fetch(struct msg_digest *md)
 	}
 
 	if (LIN(st->st_connection->policy, POLICY_DNS_MATCH_ID)) {
-		/* struct id id = st->st_connection->spd.that.id; move this line up */
+		struct id id = st->st_connection->spd.that.id;
 		if (id.kind == ID_FQDN) {
 			dnsr_a = qry_st_init(st, LDNS_RR_TYPE_A, "A", idi_a_fetch_continue);
 
