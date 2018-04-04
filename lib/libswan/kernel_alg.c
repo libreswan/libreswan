@@ -283,7 +283,7 @@ void kernel_encrypt_add(const struct encrypt_desc *encrypt)
 {
 	int sadb_ealg = find_sadb_id(encrypt_sadb_ids, &encrypt->common);
 	if (sadb_ealg < 0) {
-		PEXPECT_LOG("Integrity algorithm %s has no matching SADB ID",
+		PEXPECT_LOG("Encryption algorithm %s has no matching SADB ID",
 			    encrypt->common.fqn);
 		return;
 	}
