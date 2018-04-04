@@ -221,10 +221,11 @@ static stf_status add_st_send_list(struct state *st, struct state *pst)
 
 		what = "wait sending, add to send next list";
 		delete_event(st);
-		event_schedule_s(EVENT_SA_REPLACE,
-				 MAXIMUM_RESPONDER_WAIT,
-				 st);
-
+		event_schedule_s(EVENT_SA_REPLACE, MAXIMUM_RESPONDER_WAIT, st);
+		loglog(RC_LOG_SERIOUS, "message id deadlock? %s using parent #%lu unacknowledged %u next message id=%u ike exchange window %u",
+			what, pst->st_serialno, unack,
+			pst->st_msgid_nextuse,
+			pst->st_connection->ike_window);
 		for (p = pst->send_next_ix; (p != NULL && p->next != NULL);
 				p = p->next) {
 		}
