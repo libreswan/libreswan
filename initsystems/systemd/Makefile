@@ -25,6 +25,9 @@ installsystemdservice: local-base
 	@if test $(SYSTEMDDIR) = $(UNITDIR) ; then \
 		systemctl --system daemon-reload ; \
 	fi
+	@if test -f $(DESTDIR)/$(FINALLIBEXECDIR)/portexcludes; then \
+		sed -Ei 's@^# (.*/portexcludes)$$@\1@' $(SYSTEMDDIR)/$(SYSTEMDFILE); \
+	fi
 
 oldinitdcheck: installsystemdservice
 	@if test -f $(DESTDIR)/etc/init.d/ipsec* ; then \

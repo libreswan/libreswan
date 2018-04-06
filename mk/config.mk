@@ -274,6 +274,10 @@ USE_NIC_OFFLOAD?=true
 # this file as shipped with libreswan. The copy is taken from unbound 1.6.0.
 USE_UNBOUND_EVENT_H_COPY?=true
 
+# Install the portexclude service for policies/portexcludes.conf policies
+# Disabled per default for now because it requires python[23]
+USE_PORTEXCLUDES?=false
+
 # The default DNSSEC root key location is set to /var/lib/unbound/root.key
 # DEFAULT_DNSSEC_ROOTKEY_FILE=/var/lib/unbound/root.key
 
