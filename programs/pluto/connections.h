@@ -220,6 +220,7 @@ struct sa_marks {
 
 struct connection {
 	char *name;
+	char *foodgroup;
 	char *connalias;
 	lset_t policy;
 	deltatime_t sa_ike_life_seconds;

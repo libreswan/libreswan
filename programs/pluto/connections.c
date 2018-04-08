@@ -16,7 +16,7 @@
  * Copyright (C) 2013,2017 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
- * Copyright (C) 2015-2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2015-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2016-2017 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -312,6 +312,7 @@ void delete_connection(struct connection *c, bool relations)
 	pop_cur_connection(old_cur_connection);
 
 	pfreeany(c->name);
+	pfreeany(c->foodgroup);
 	pfreeany(c->connalias);
 	pfreeany(c->vti_iface);
 	pfreeany(c->modecfg_dns);
@@ -772,6 +773,8 @@ void unshare_connection_end(struct end *e)
 static void unshare_connection(struct connection *c)
 {
 	c->name = clone_str(c->name, "connection name");
+
+	c->foodgroup = clone_str(c->foodgroup, "connection foodgroup");
 
 	c->modecfg_dns = clone_str(c->modecfg_dns,
 				"connection modecfg_dns");
@@ -1973,6 +1976,7 @@ char *add_group_instance(struct connection *group, const ip_subnet *target,
 	} else {
 		struct connection *t = clone_thing(*group, "group instance");
 
+		t->foodgroup = clone_str(t->name, "cloned from groupname"); /* not set in group template */
 		t->name = namebuf;	/* trick: unsharing will clone this for us */
 
 		/* suppress virt before unsharing */

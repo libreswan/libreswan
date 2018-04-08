@@ -3,7 +3,7 @@
  * Copyright (C) 2009-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2011-2012 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012,2016-2017 Antony Antony <appu@phenome.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2014-2015 Andrew cagney <cagney@gnu.org>
@@ -762,7 +762,7 @@ stf_status ikev2_resp_accept_child_ts(
 	 * nested loop structure but not what it actually does.
 	 */
 
-	struct connection *b = c;	/* best connection so far */
+	struct connection *best = c;	/* best connection so far */
 	const struct host_pair *hp = NULL;
 
 	for (sra = &c->spd; hp == NULL && sra != NULL;
@@ -793,6 +793,7 @@ stf_status ikev2_resp_accept_child_ts(
 		struct connection *d;
 
 		for (d = hp->connections; d != NULL; d = d->hp_next) {
+			/* groups are templates instantiated as GROUPINSTANCE */
 			if (d->policy & POLICY_GROUP)
 				continue;
 
@@ -817,8 +818,11 @@ stf_status ikev2_resp_accept_child_ts(
 			      trusted_ca_nss(c->spd.that.ca,
 					 d->spd.that.ca, &pathlen)))
 			{
+				DBG(DBG_CONTROLMORE, DBG_log("connection \"%s\" does not match IDs or CA of current connection \"%s\"",
+					d->name, c->name));
 				continue;
 			}
+			DBG(DBG_CONTROLMORE, DBG_log("investigating connection \"%s\" as a better match", d->name));
 
 			const struct spd_route *sr;
 
@@ -863,7 +867,7 @@ stf_status ikev2_resp_accept_child_ts(
 
 							bestfit_p = bfit_p;
 							bestfit_n = newfit;
-							b = d;
+							best = d;
 							bsr = sr;
 						} else {
 							DBG(DBG_CONTROLMORE,
@@ -885,23 +889,57 @@ stf_status ikev2_resp_accept_child_ts(
 		}
 	}
 
-	/* b is now the best connection (if there is one!) */
+	if (best == c) {
+		DBG(DBG_CONTROLMORE, DBG_log("we did not switch connection"));
+	}
 
 	if (bsr == NULL) {
-		/* ??? why do we act differently based on role?
-		 * Paul: that's wrong. prob the idea was to not
-		 * send a notify if we are message initiator
-		 */
-		if (role == ORIGINAL_INITIATOR)
-			return STF_FAIL;
-		else
-			return STF_FAIL + v2N_TS_UNACCEPTABLE;
+		DBG(DBG_CONTROLMORE, DBG_log("failed to find anything, can we instantiate another template?"));
+
+		for (struct connection *t = connections; t != NULL; t = t->ac_next) {
+
+			if (LIN(POLICY_GROUPINSTANCE, t->policy) && (t->kind == CK_TEMPLATE)) {
+				if ((!streq(t->foodgroup, best->foodgroup)) ||
+					(streq(best->name, t->name)) ||
+					(!subnetinsubnet(&best->spd.that.client, &t->spd.that.client)) ||
+					(!sameaddr(&best->spd.this.client.addr, &t->spd.this.client.addr)))
+						continue;
+
+				DBG(DBG_CONTROLMORE, DBG_log("investigate %s which is another group instance of %s with different protoports", t->name, t->foodgroup));
+				int t_sport = tsi[0].startport == tsi[0].endport ? tsi[0].startport :
+						tsi[0].startport == 0 && tsi[0].endport == 65535 ? 0 : -1;
+				int t_dport = tsr[0].startport == tsr[0].endport ? tsr[0].startport :
+						tsr[0].startport == 0 && tsr[0].endport == 65535 ? 0 : -1;
+
+				if (t_sport == -1 || t_dport == -1)
+					continue;
+
+				if ((t->spd.that.protocol != tsi[0].ipprotoid) ||
+					(best->spd.this.port != t_sport) ||
+					(best->spd.that.port != t_dport))
+						continue;
+
+				DBG(DBG_CONTROLMORE, DBG_log("updating connection of group instance for protoports"));
+				best->spd.that.protocol = t->spd.that.protocol;
+				best->spd.this.port = t->spd.this.port;
+				best->spd.that.port = t->spd.that.port;
+				pfreeany(best->name);
+				best->name = clone_str(t->name, "hidden switch template name update");
+				bsr = &best->spd;
+				break;
+			}
+		}
+
+		if (bsr == NULL) {
+			/* nothing to instantiate from other group templates either */
+				return STF_FAIL + v2N_TS_UNACCEPTABLE;
+		}
 	}
 
 	struct state *cst = md->st;	/* child state */
 
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
-		update_state_connection(cst, b);
+		update_state_connection(cst, best);
 	} else {
 		/*
 		 * ??? is this only for AUTH exchange?
@@ -914,7 +952,7 @@ stf_status ikev2_resp_accept_child_ts(
 					    md->message_role == MESSAGE_REQUEST ? SA_RESPONDER :
 					    md->message_role == MESSAGE_RESPONSE ? SA_INITIATOR :
 					    0);
-		cst->st_connection = b;	/* safe: from duplicate_state */
+		cst->st_connection = best;	/* safe: from duplicate_state */
 		insert_state(cst); /* needed for delete - we should never have duplicated before we were sure */
 	}
 
