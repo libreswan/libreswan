@@ -678,7 +678,7 @@ stf_status ikev2_resp_accept_child_ts(
 {
 	struct connection *c = md->st->st_connection;
 
-	/* ??? is 16 an undocumented limit? */
+	/* ??? is 16 an undocumented limit - IKEv2 has no limit */
 	struct traffic_selector tsi[16], tsr[16];
 	const int tsi_n = ikev2_parse_ts(md->chain[ISAKMP_NEXT_v2TSi],
 		tsi, elemsof(tsi));
