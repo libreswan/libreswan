@@ -1,0 +1,5 @@
+VTI test both side subnets are 0/0 pluto will not add any routes.
+To test when no route is added will clear text packets flow.
+This test is to compare behaviour of xfrmi, noticed by @lucize 
+https://github.com/libreswan/libreswan/issues/278
+

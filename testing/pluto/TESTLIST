@@ -1,3 +1,19 @@
+kvmplutotest 	ikev2-xfrmi-01		good
+kvmplutotest 	ikev2-xfrmi-02		good
+kvmplutotest 	ikev2-xfrmi-03		good
+kvmplutotest 	ikev2-xfrmi-04		good
+kvmplutotest 	ikev2-xfrmi-05-remote-access-client	good
+kvmplutotest 	ikev2-xfrmi-06		good
+kvmplutotest 	ikev2-xfrmi-07		good
+kvmplutotest 	ikev2-xfrmi-08		good
+kvmplutotest 	ikev2-xfrmi-09-systemd-networkd wip
+kvmplutotest 	ikev2-xfrmi-10		good
+kvmplutotest 	ikev2-xfrmi-11-default-manual-route good
+kvmplutotest	ikev2-xfrmi-11-vti-default-route good
+kvmplutotest	ikev2-xfrmi-11-default-route	good
+kvmplutotest	ikev2-xfrmi-12-two-default-routes good
+
+
 #
 # This isn't actually a shell script. It just looks like one.
 # Some tools other than /bin/sh process it.
@@ -194,6 +210,7 @@ kvmplutotest	ikev2-04-basic-x509-nsspw		good
 
 kvmplutotest	ikev2-10-2behind-nat	good
 
+
 # modp tests for checking if we deal with sending different KE's
 kvmplutotest	ikev2-algo-01-modp2048-initiator	good
 kvmplutotest	ikev2-algo-02-modp2048-responder	good
@@ -255,6 +272,7 @@ kvmplutotest	ikev2-algo-esn-04			good
 kvmplutotest	ikev2-algo-esn-05			good
 kvmplutotest	ikev2-algo-esn-06			good
 kvmplutotest	interop-ikev2-strongswan-30-esn		good
+
 
 
 # Various corner case tests for IKEv2

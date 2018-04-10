@@ -1,0 +1,2 @@
+
+This test is copied from ikev2-cp-01-resolvconf but uses xfrmi interfaces on both sides

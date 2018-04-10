@@ -1,0 +1,3 @@
+ipv6 addresspool west is the client.
+Currently client side can only do IKE negotation.
+_updown script need fixing. up-client-v6 does not install address or route yet.

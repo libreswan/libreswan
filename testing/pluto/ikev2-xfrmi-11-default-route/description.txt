@@ -1,0 +1,6 @@
+both side subnets are 0/0 pluto will not add any routes.
+before adding the routes you loose connectivity to the other side.
+
+once admins add route manually or ospf add route it will reachable.
+
+this show OSPF routed VPN may need more specific tunnels for OSPF end points.

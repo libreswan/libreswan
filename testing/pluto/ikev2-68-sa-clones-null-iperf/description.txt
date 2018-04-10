@@ -1,0 +1,3 @@
+Install N per CPU Child SAs + one catch all SA, host-to-host tunnel.
+
+This test need kernel/xfrm support to distribute traffic N CPU, using N per CPU sub SAs.
