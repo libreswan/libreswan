@@ -5785,7 +5785,8 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 	record_outbound_ike_msg(pst, &reply_stream,
 				"packet from ikev2_child_out_cont");
 
-	pst->st_msgid_lastreplied = md->msgid_received;
+	if (IS_CHILD_SA_RESPONDER(st))
+		pst->st_msgid_lastreplied = md->msgid_received;
 
 	if (st->st_state == STATE_V2_CREATE_R ||
 			st->st_state == STATE_V2_REKEY_CHILD_R) {

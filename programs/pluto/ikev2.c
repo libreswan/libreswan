@@ -1096,8 +1096,7 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 	pst = IS_CHILD_SA(pst) ? state_with_serialno(pst->st_clonedfrom) : pst;
 
 	if (is_msg_request(md)) {
-		/* this a new IKE request and not a response */
-
+		/* this an IKE request and not a response */
 		if (resp_state_with_msgid(pst->st_serialno,
 					  htonl(md->msgid_received)) != NULL) {
 			what = "CREATE_CHILD_SA Request retransmission ignored";
@@ -1107,12 +1106,14 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 			st = ikev2_duplicate_state(pexpect_ike_sa(pst), IPSEC_SA,
 						   SA_RESPONDER);
 			change_state(st, STATE_V2_CREATE_R);
+			st->st_msgid = htonl(md->msgid_received);
 			insert_state(st); /* needed for delete - we are duplicating early */
 		} else {
 			what = "IKE Rekey Request";
 			st = ikev2_duplicate_state(pexpect_ike_sa(pst), IKE_SA,
 						   SA_RESPONDER);
 			change_state(st, STATE_V2_REKEY_IKE_R); /* start with this */
+			st->st_msgid = htonl(md->msgid_received);
 			/* can not call insert_state yet. no IKE cookies yet */
 		}
 	} else  {
@@ -1123,11 +1124,18 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 		if (st == NULL) {
 			switch (md->from_state) {
 			case STATE_V2_CREATE_I:
+				what = "IPsec Child Response";
 				why = "no matching IPsec child state for this response";
 				break;
+
 			case STATE_V2_REKEY_IKE_I:
 				what = "IKE Rekey Response";
-				why = "no matching local IKE Rekey state found";
+				why = "no matching IKE Rekey state for this response";
+				break;
+
+			case STATE_V2_REKEY_CHILD_I:
+				what = "IPsec Child Rekey Response";
+				why = "no matching rekey child state for this response";
 				break;
 			default:
 				/* ??? can this happen? */
@@ -1137,13 +1145,16 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 	}
 
 	if (st == NULL) {
-		libreswan_log("rejecting %s CREATE_CHILD_SA %s", what, why);
+		libreswan_log("rejecting %s CREATE_CHILD_SA %s msgid_received: %u st_msgid_lastrecv %u",
+				what, why,
+				md->msgid_received,
+				pst->st_msgid_lastrecv);
 	} else {
 		DBG(DBG_CONTROLMORE, {
 			ipstr_buf b;
 			char ca[CONN_INST_BUF];
 			char cb[CONN_INST_BUF];
-			DBG_log("\"%s\"%s #%lu received %s CREATE_CHILD_SA %s from %s:%u Child \"%s\"%s #%lu in %s will process it further",
+			DBG_log("\"%s\"%s #%lu received %s CREATE_CHILD_SA %s from %s:%u Child \"%s\"%s #%lu in %s %s",
 				pst->st_connection->name,
 				fmt_conn_instance(pst->st_connection, ca),
 				pst->st_serialno,
@@ -1152,19 +1163,20 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 				st->st_connection->name,
 				fmt_conn_instance(st->st_connection, cb),
 				st->st_serialno,
-				st->st_state_name);
+				st->st_state_name, " will process it further");
 		});
         }
+
         return st;
 }
 
-static void process_recent_rtransmit(struct state *st,
+static bool process_recent_rtransmit(struct state *st,
 		const enum isakmp_xchg_types ix)
 {
 	set_cur_state(st);
 	if (st->st_suspended_md != NULL) {
 		libreswan_log("retransmission ignored: we're still working on the previous one");
-		return;
+		return 0;
 	}
 
 	/* this should never happen */
@@ -1174,7 +1186,7 @@ static void process_recent_rtransmit(struct state *st,
 			st->st_msgid_lastrecv,
 			enum_name(&ikev2_exchange_names, ix),
 			st->st_msgid_lastreplied);
-		return;
+		return 0;
         }
 
 	if (st->st_msgid_lastreplied != st->st_msgid_lastrecv) {
@@ -1185,6 +1197,19 @@ static void process_recent_rtransmit(struct state *st,
 				enum_name(&ikev2_exchange_names, ix),
 				st->st_msgid_lastreplied);
 		}
+		struct state *cst =  resp_state_with_msgid(st->st_serialno,
+				htonl(st->st_msgid_lastrecv));
+		if (cst == NULL)
+			return 1; /* process the re-transtmited message */
+
+		LSWDBGP(DBG_CONTROLMORE|DBG_RETRANSMITS, buf) {
+			lswlog_retransmit_prefix(buf, st);
+			lswlogf(buf, "state #%lu %s is working on message ID: %u %s, retransmission ignored",
+					cst->st_serialno,
+					st->st_state_name,
+					st->st_msgid_lastrecv,
+					enum_name(&ikev2_exchange_names, ix));
+		}
 	} else {
 		LSWDBGP(DBG_CONTROLMORE|DBG_RETRANSMITS, buf) {
 			lswlog_retransmit_prefix(buf, st);
@@ -1194,6 +1219,8 @@ static void process_recent_rtransmit(struct state *st,
 		}
 		send_recorded_v2_ike_msg(st, "ikev2-responder-retransmit");
 	}
+
+	return 0;
 }
 
 /*
@@ -1391,8 +1418,8 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		}
 		if (st->st_msgid_lastrecv == md->msgid_received) {
 			/* this is a recent retransmit. */
-			process_recent_rtransmit(st, ix);
-			return;
+			if (!process_recent_rtransmit(st, ix))
+				return;
 		}
 		/* update lastrecv later on */
 	} else if (md->message_role == MESSAGE_RESPONSE) {

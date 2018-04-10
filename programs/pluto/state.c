@@ -667,9 +667,9 @@ static bool ikev2_child_resp_eq_pst_msgid(const struct state *st,
 
 /*
  * Find the state object that match the following:
- *      st_msgid (IKEv2 Child responder state)
- *      parent duplicated from
- *      expected state
+ *	st_msgid (IKEv2 Child responder state)
+ *	parent duplicated from
+ *	expected state
  */
 
 struct state *resp_state_with_msgid(so_serial_t psn, msgid_t st_msgid)
@@ -677,12 +677,12 @@ struct state *resp_state_with_msgid(so_serial_t psn, msgid_t st_msgid)
 	passert(psn >= SOS_FIRST);
 
 	FOR_EACH_COOKIED_STATE(st, {
-			if (ikev2_child_resp_eq_pst_msgid(st, psn, st_msgid))
+		if (ikev2_child_resp_eq_pst_msgid(st, psn, st_msgid))
 			return st;
-			});
+	});
 	DBG(DBG_CONTROL,
-			DBG_log("no waiting child state matching pst #%lu msg id %u",
-				psn, ntohs(st_msgid)));
+		DBG_log("no waiting child state matching pst #%lu msg id %u",
+			psn, ntohs(st_msgid)));
 	return NULL;
 }
 
