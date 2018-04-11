@@ -159,6 +159,39 @@ static bool negotiate_hash_algo_from_notification(struct payload_digest *p, stru
 	return TRUE;
 }
 
+/*
+ * If client sent INITIAL_CONTACT, delete old states of this specific
+ * connection. Don't do this for AUTH_NULL or AUTH_PSK, as different
+ * entities use the same ID (eg group id)
+ */
+static void process_initial_contact(struct state *pst)
+{
+	const struct connection *c = pst->st_connection;
+	struct connection *candidate;
+
+	if (pst->st_seen_initialc &&
+		c->spd.that.authby != AUTH_PSK &&
+		c->spd.that.authby != AUTH_NULL) {
+
+		for (candidate = connections; candidate != NULL; candidate = candidate->ac_next) {
+			if (candidate == c) /* self */
+				continue;
+			if (candidate->kind != CK_INSTANCE)
+				continue;
+			if (!streq(candidate->name,c->name)) /* different conn */
+				continue;
+			if (!same_id(&candidate->spd.that.id, &c->spd.that.id))
+				continue;
+			DBG(DBG_CONTROL, DBG_log("deleting previous connection of this client ID as per INITIAL_CONTACT notify"));
+			delete_connection(candidate, FALSE);
+			break; /* There can only be one old one */
+		}
+		if (candidate == NULL) {
+			DBG(DBG_CONTROL, DBG_log("No old connection found to delete"));
+		}
+	}
+}
+
 void ikev2_ike_sa_established(struct ike_sa *ike,
 			      const struct state_v2_microcode *svm,
 			      enum state_kind new_state)
@@ -4380,6 +4413,8 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		close_output_pbs(&e_pbs);
 		close_output_pbs(&rbody);
 		close_output_pbs(&reply_stream);
+
+		process_initial_contact(st);
 
 		if (should_fragment_ike_msg(cst, pbs_offset(&reply_stream),
 						TRUE)) {

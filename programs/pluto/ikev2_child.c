@@ -1189,6 +1189,10 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 				DBG(DBG_CONTROL, DBG_log("received v2N_MOBIKE_SUPPORTED"));
 				cst->st_seen_mobike = pst->st_seen_mobike = TRUE;
 				break;
+			case v2N_INITIAL_CONTACT:
+				DBG(DBG_CONTROL, DBG_log("received v2N_INITIAL_CONTACT"));
+				cst->st_seen_initialc = pst->st_seen_initialc = TRUE;
+				break;
 			case v2N_REKEY_SA:
 				DBG(DBG_CONTROL, DBG_log("received REKEY_SA already proceesd"));
 				break;
