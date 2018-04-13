@@ -7,7 +7,7 @@
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2010,2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi
- * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012-2017 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013-2016 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
@@ -3983,7 +3983,9 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 			null_auth = alloc_chunk(len, "NULL_AUTH");
 			if (!in_raw(null_auth.ptr, len, &pbs, "NULL_AUTH extract")) {
 				loglog(RC_LOG_SERIOUS, "Failed to extract %zd bytes of NULL_AUTH from Notify payload", len);
+				return STF_FATAL;
 			}
+			break;
 		}
 		case v2N_INITIAL_CONTACT:
 			DBG(DBG_CONTROLMORE, DBG_log("received v2N_INITIAL_CONTACT"));
