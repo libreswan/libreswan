@@ -13,6 +13,7 @@ v3.24 (unreleased)
 * IKEv2: Fix v3.23 regression causing liveness check to always fail [Tuomo]
 * IKEv2: Support for Microsoft rekey bug: ms-dh-downgrade=yes|no [Andrew/Paul]
 * IKEv2: Allow switching between OE instances with different protoports [Paul]
+* IKEv2: process INITIAL_CONTACT and delete old states from a connection [Paul]
 * IKEv1: Cleanup packet send code [Andrew]
 * X509: Extend support for wildcard certs matching remote peer ID [Paul/Hugh]
 * pluto: Cleanup of state/md passing code [Andrew]
