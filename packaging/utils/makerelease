@@ -48,7 +48,7 @@ git archive --format=tar --prefix=libreswan-$VERSION/ HEAD | gzip > release/libr
 	sed -i "s/(unreleased)/(`C= LOCALE= LANG= date +"%B %d, %Y"`)/" CHANGES
 	for file in `find packaging -type f | xargs grep IPSECBASEVERSION |sed "s/:.*$//"`
 	do
-		sed -i "s/IPSECBASEVERSION/$VERSION/" $file
+		sed -i "s/@IPSECBASEVERSION@/$VERSION/" $file
 	done
 	cd ..
 	tar zcf libreswan-$VERSION.tar.gz libreswan-$VERSION
