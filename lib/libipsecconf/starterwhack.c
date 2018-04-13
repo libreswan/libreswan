@@ -372,6 +372,9 @@ static void set_whack_end(char *lr,
 	if (subnet_is_specified(&l->vti_ip))
 		w->host_vtiip = l->vti_ip;
 
+	if (!isanyaddr(&l->ifaceip.addr))
+		w->ifaceip = l->ifaceip;
+
 	w->has_client = l->has_client;
 	if (l->has_client) {
 		w->client = l->subnet;
@@ -549,6 +552,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.sa_rekey_fuzz = conn->options[KNCF_REKEYFUZZ];
 	msg.sa_keying_tries = conn->options[KNCF_KEYINGTRIES];
 	msg.sa_replay_window = conn->options[KNCF_REPLAY_WINDOW];
+	msg.xfrm_if_id = conn->options[KNCF_XFRM_IF_ID];
 
 	msg.r_interval = deltatime_ms(conn->options[KNCF_RETRANSMIT_INTERVAL_MS]);
 	msg.r_timeout = deltatime(conn->options[KNCF_RETRANSMIT_TIMEOUT]);

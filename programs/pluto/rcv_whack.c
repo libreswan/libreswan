@@ -77,6 +77,10 @@
 #include "pluto_sd.h"
 #include "initiate.h"
 
+#ifdef USE_XFRM_INTERFACE
+# include "xfrm_interface.h"
+#endif
+
 #include "pluto_stats.h"
 
 /* bits loading keys from asynchronous DNS */
@@ -157,6 +161,9 @@ static void do_whacklisten(void)
 	libreswan_log("listening for IKE messages");
 	listening = TRUE;
 	find_ifaces(TRUE /* remove dead interfaces */);
+#ifdef USE_XFRM_INTERFACE
+	stale_xfrmi_interfaces();
+#endif
 	load_preshared_secrets();
 	load_groups();
 #ifdef USE_SYSTEMD_WATCHDOG

@@ -909,6 +909,7 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 		      deltatime_t use_lifetime UNUSED,
 		      uint32_t sa_priority UNUSED,
 		      const struct sa_marks *sa_marks UNUSED,
+		      const uint32_t xfrm_if_id UNUSED,
 		      enum pluto_sadb_operations op,
 		      const char *text_said,
 		      const char *policy_label UNUSED)
@@ -1382,6 +1383,7 @@ bool pfkey_shunt_eroute(const struct connection *c,
 					deltatime(0),
 					calculate_sa_prio(c, false),
 					&c->sa_marks,
+					0 /* xfrm_if_id */,
 					op, buf2,
 					c->policy_label);
 	}
@@ -1469,7 +1471,9 @@ bool pfkey_sag_eroute(const struct state *st, const struct spd_route *sr,
 	return eroute_connection(sr,
 				 inner_spi, inner_spi, inner_proto,
 				 inner_esatype, proto_info + i,
-				 0 /* KLIPS does not support priority */, NULL, op, opname,
+				 0 /* KLIPS does not support priority */, NULL, 
+				 0 /* xfrm_if_id */,
+				 op, opname,
 				 NULL /* KLIPS does not support secure labels */);
 }
 

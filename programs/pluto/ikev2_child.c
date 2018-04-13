@@ -61,6 +61,9 @@
 #include "ikev2_message.h"
 #include "ikev2_ts.h"
 #include "ip_info.h"
+#ifdef USE_XFRM_INTERFACE
+# include "xfrm_interface.h"
+#endif
 
 static struct child_sa *ikev2_cp_reply_state(struct ike_sa *ike,
 					     const struct msg_digest *md,
@@ -412,6 +415,11 @@ stf_status ikev2_child_sa_respond(struct ike_sa *ike,
 		/* skip check for rekey */
 		ike->sa.st_connection->newest_isakmp_sa = ike->sa.st_serialno;
 	} else {
+#ifdef USE_XFRM_INTERFACE
+		if (c->xfrmi != NULL && c->xfrmi->if_id != yn_no)
+			if (add_xfrmi(c))
+				return STF_FATAL;
+#endif
 		ISAKMP_SA_established(&ike->sa);
 	}
 

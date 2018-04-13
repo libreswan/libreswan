@@ -162,6 +162,9 @@ static const char compile_time_interop_options[] = ""
 #ifdef NETKEY_SUPPORT
 	" XFRM(netkey)"
 #endif
+#ifdef USE_XFRM_INTERFACE
+	" XFRMI"
+#endif
 #ifdef KLIPS
 	" KLIPS"
 #endif

@@ -83,6 +83,7 @@
 #include "ike_alg_encrypt.h"
 #include "ip_address.h"
 #include "ip_info.h"
+# include "xfrm_interface.h"
 
 /* required for Linux 2.6.26 kernel and later */
 #ifndef XFRM_STATE_AF_UNSPEC
@@ -133,6 +134,12 @@ static sparse_names rtm_type_names = {
 	{ 0, sparse_end }
 };
 #undef NE
+
+#define RTA_TAIL(rta) ((struct rtattr *) (((void *) (rta)) + \
+                                    RTA_ALIGN((rta)->rta_len)))
+
+#define NLMSG_TAIL(nmsg) \
+        ((struct rtattr *) (((void *) (nmsg)) + NLMSG_ALIGN((nmsg)->nlmsg_len)))
 
 /* Compress Algs */
 static sparse_names calg_list = {
@@ -484,6 +491,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			deltatime_t use_lifetime UNUSED,
 			uint32_t sa_priority,
 			const struct sa_marks *sa_marks,
+			const uint32_t xfrm_if_id,
 			enum pluto_sadb_operations sadb_op,
 			const char *text_said,
 			const char *policy_label)
@@ -708,6 +716,24 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 				req.n.nlmsg_len += mark_attr->rta_len;
 			}
 		}
+               if (xfrm_if_id > 0) {
+#ifdef USE_XFRM_INTERFACE
+			struct rtattr *attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
+			DBG(DBG_KERNEL, DBG_log("%s netlink: XFRMA_IF_ID  %" PRIu32 " req.n.nlmsg_type=%" PRIu32, __func__, xfrm_if_id, req.n.nlmsg_type));
+			attr->rta_type = XFRMA_IF_ID;
+			attr->rta_len = RTA_LENGTH(sizeof(uint32_t));
+			memcpy(RTA_DATA(attr), &xfrm_if_id, sizeof(uint32_t));
+			req.n.nlmsg_len += attr->rta_len;
+
+			/* XFRMA_SET_MARK =  XFRMA_IF_ID/0xffffffff */
+			attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
+			attr->rta_type = XFRMA_SET_MARK;
+			attr->rta_len = RTA_LENGTH(sizeof(uint32_t));
+			memcpy(RTA_DATA(attr), &xfrm_if_id, sizeof(uint32_t));
+			req.n.nlmsg_len += attr->rta_len;
+#endif
+	       }
+
 	}
 
 	if (policy_label != NULL) {
@@ -1490,6 +1516,24 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
 
+	if (sa->xfrm_if_id > 0) {
+#ifdef USE_XFRM_INTERFACE
+		DBG(DBG_KERNEL, DBG_log("%s netlink: XFRMA_IF_ID %" PRIu32 " req.n.nlmsg_type=%" PRIu32, __func__, sa->xfrm_if_id, req.n.nlmsg_type));
+		attr->rta_type = XFRMA_IF_ID;
+		attr->rta_len = RTA_LENGTH(sizeof(uint32_t));
+		memcpy(RTA_DATA(attr), &sa->xfrm_if_id, sizeof(uint32_t));
+		req.n.nlmsg_len += attr->rta_len;
+		attr = (struct rtattr *)((char *)attr + attr->rta_len);
+
+		/* XFRMA_SET_MARK =  XFRMA_IF_ID/0xffffffff */
+		attr->rta_type = XFRMA_SET_MARK;
+		attr->rta_len = RTA_LENGTH(sizeof(uint32_t));
+		memcpy(RTA_DATA(attr), &sa->xfrm_if_id, sizeof(uint32_t));
+		req.n.nlmsg_len += attr->rta_len;
+		attr = (struct rtattr *)((char *)attr + attr->rta_len);
+#endif
+	}
+
 	if (sa->nic_offload_dev) {
 		struct xfrm_user_offload xuo = {
 			.flags = (sa->inbound ? XFRM_OFFLOAD_INBOUND : 0) |
@@ -2129,10 +2173,13 @@ static bool netlink_sag_eroute(const struct state *st, const struct spd_route *s
 			proto_info[j].encapsulation =
 				ENCAPSULATION_MODE_TRANSPORT;
 	}
+	
+	uint32_t xfrm_if_id = c->xfrmi != NULL ?  c->xfrmi->if_id : 0;
 
 	return eroute_connection(sr, inner_spi, inner_spi, inner_proto,
 				inner_esatype, proto_info + i,
-				calculate_sa_prio(c, FALSE), &c->sa_marks, op, opname,
+				calculate_sa_prio(c, FALSE), &c->sa_marks,
+				xfrm_if_id, op, opname,
 				st->st_connection->policy_label);
 }
 
@@ -2271,6 +2318,7 @@ static bool netlink_shunt_eroute(const struct connection *c,
 				deltatime(0),
 				calculate_sa_prio(c, FALSE),
 				&c->sa_marks,
+				0 /* xfrm_if_id needed for shunt? */,
 				op, buf2,
 				c->policy_label))
 		return FALSE;
@@ -2298,6 +2346,7 @@ static bool netlink_shunt_eroute(const struct connection *c,
 				  deltatime(0),
 				  calculate_sa_prio(c, FALSE),
 				  &c->sa_marks,
+				  0, /* xfrm_if_id needed for shunt? */
 				  op, buf2,
 				  c->policy_label);
 }

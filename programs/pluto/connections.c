@@ -89,6 +89,7 @@
 #include "ip_info.h"
 #include "keyhi.h" /* for SECKEY_DestroyPublicKey */
 #include "state_db.h"
+# include "xfrm_interface.h"
 
 struct connection *connections = NULL;
 
@@ -232,6 +233,9 @@ static void discard_connection(struct connection *c,
 
 	if (c->pool != NULL)
 		unreference_addresspool(c);
+
+	if (IS_XFRMI && c->xfrmi != NULL)
+		unreference_xfrmi(c);
 
 	/* free up any logging resources */
 	perpeer_logfree(c);
@@ -710,6 +714,9 @@ static void unshare_connection(struct connection *c)
 
 	if (c->pool !=  NULL)
 		reference_addresspool(c);
+
+	if (IS_XFRMI && c->xfrmi != NULL)
+		reference_xfrmi(c);
 }
 
 static int extract_end(struct end *dst, const struct whack_end *src,
@@ -771,7 +778,7 @@ static int extract_end(struct end *dst, const struct whack_end *src,
 	dst->host_srcip = src->host_srcip;
 	dst->host_vtiip = src->host_vtiip;
 	dst->client = src->client;
-
+	dst->ifaceip = src->ifaceip;
 	dst->modecfg_server = src->modecfg_server;
 	dst->modecfg_client = src->modecfg_client;
 	dst->cat = src->cat;
@@ -1577,6 +1584,18 @@ static bool extract_connection(const struct whack_message *wm, struct connection
 		c->vti_iface = clone_str(wm->vti_iface, "connection vti_iface");
 		c->vti_routing = wm->vti_routing;
 		c->vti_shared = wm->vti_shared;
+#ifdef USE_XFRM_INTERFACE
+		if (wm->xfrm_if_id != yn_no) {
+			err_t err = xfrm_iface_supported();
+			if (err == NULL) {
+				if (setup_xfrm_interface(c, wm->xfrm_if_id))
+					return false;
+			} else {
+				libreswan_log_rc(RC_FATAL, "ipsec-interface=%u not supported. %s", wm->xfrm_if_id, err);
+				return false;
+			}
+		}
+#endif
 	}
 
 #ifdef HAVE_NM

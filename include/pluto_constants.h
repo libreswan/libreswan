@@ -68,6 +68,8 @@ enum ike_version {
 
 #define IKE_BUF_AUTO 0 /* use system values for IKE socket buffer size */
 
+#define DEFAULT_XFRM_IF_NAME "ipsec1"
+
 enum kernel_interface {
 	NO_KERNEL = 1,
 	USE_KLIPS = 2,
@@ -906,6 +908,11 @@ enum ynf_options {
 	ynf_no   = 0,
 	ynf_yes  = 1,
 	ynf_force = 2,
+};
+
+enum yn_options {
+	yn_no = 0,
+	yn_yes = 1,
 };
 
 enum yna_options {

@@ -87,6 +87,10 @@
 #include "ikev1.h"		/* for complete_v1_state_transition() */
 #include "ikev2.h"		/* for complete_v2_state_transition() */
 
+#ifdef USE_XFRM_INTERFACE
+#include "xfrm_interface.h"
+#endif
+
 #include "nat_traversal.h"
 
 #include "lswfips.h"
@@ -279,6 +283,9 @@ void free_ifaces(void)
 {
 	mark_ifaces_dead();
 	free_dead_ifaces();
+#ifdef USE_XFRM_INTERFACE
+	free_xfrmi_ipsec1();
+#endif
 }
 
 struct raw_iface *static_ifn = NULL;

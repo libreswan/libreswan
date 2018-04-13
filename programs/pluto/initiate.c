@@ -850,7 +850,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 					ET_INT, null_proto_info,
 					deltatime(SHUNT_PATIENCE),
 					calculate_sa_prio(c, LIN(POLICY_OPPORTUNISTIC, c->policy) ? TRUE : FALSE),
-					NULL,
+					NULL, 0 /* xfrm-if-id */,
 					ERO_ADD, addwidemsg,
 					NULL))
 				{

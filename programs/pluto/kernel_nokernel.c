@@ -56,6 +56,7 @@ static bool nokernel_raw_eroute(const ip_address *this_host UNUSED,
 			       deltatime_t use_lifetime UNUSED,
 			       uint32_t sa_priority UNUSED,
 			       const struct sa_marks *sa_marks UNUSED,
+			       const uint32_t xfrm_if_id UNUSED,
 			       unsigned int op UNUSED,
 			       const char *text_said UNUSED,
 			       const char *policy_label UNUSED

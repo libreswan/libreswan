@@ -84,6 +84,10 @@
 #include "ikev2_ts.h"
 #include "ikev2_msgid.h"
 #include "state_db.h"
+#ifdef USE_XFRM_INTERFACE
+# include "xfrm_interface.h"
+#endif
+
 #include "crypt_symkey.h" /* for release_symkey */
 #include "ip_info.h"
 
@@ -3650,6 +3654,14 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 
 	ikev2_derive_child_keys(child);
 
+#ifdef USE_XFRM_INTERFACE
+	/* before calling do_command() */
+	if (st->st_state->kind != STATE_V2_REKEY_CHILD_I)
+		if (st->st_connection->xfrmi != NULL &&
+				st->st_connection->xfrmi->if_id != yn_no)
+			if (add_xfrmi(st->st_connection))
+				return STF_FATAL;
+#endif
 	/* now install child SAs */
 	if (!install_ipsec_sa(st, TRUE))
 		return STF_FATAL; /* does this affect/kill the IKE SA ? */

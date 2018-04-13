@@ -80,6 +80,7 @@
 #include "ip_address.h"
 #include "ip_info.h"
 #include "lswfips.h" /* for libreswan_fipsmode() */
+# include "xfrm_interface.h"
 
 /* which kernel interface to use */
 enum kernel_interface kern_interface = USE_NETKEY;
@@ -389,11 +390,21 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 {
 	ip_address ta;
 
+	char *id_vname = NULL;
+
+	if (c->xfrmi != NULL && c->xfrmi->name != NULL)
+		id_vname = c->xfrmi->name;
+	else if (c->interface != NULL)
+		id_vname = c->interface->ip_dev->id_vname;
+	else
+		id_vname = "NULL";
+
 	/* change VERSION when interface spec changes */
 	jam(buf, "PLUTO_VERSION='2.0' ");
 	jam(buf, "PLUTO_CONNECTION='%s' ", c->name);
-	jam(buf, "PLUTO_INTERFACE='%s' ", (c->interface == NULL ? "NULL" :
-					  c->interface->ip_dev->id_vname));
+	jam(buf, "PLUTO_VIRT_INTERFACE='%s' ", id_vname);
+	jam(buf, "PLUTO_INTERFACE='%s' ", c->interface == NULL ? "NULL" : c->interface->ip_dev->id_rname);
+	jam(buf, "PLUTO_XFRMI_ROUTE='%s' ",  (c->xfrmi != NULL && c->xfrmi->if_id > 0) ? "yes" : "");
 
 	if (address_is_specified(&sr->this.host_nexthop)) {
 		jam(buf, "PLUTO_NEXT_HOP='");
@@ -425,6 +436,12 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 	if (subnet_is_specified(&sr->this.host_vtiip)) {
 		jam(buf, "VTI_IP='");
 		jam_subnet(buf, &sr->this.host_vtiip);
+		jam(buf, "' ");
+	}
+
+	if (!isanyaddr(&sr->this.ifaceip.addr)) {
+		jam(buf, "IFACE_IP='");
+		jam_subnet(buf, &sr->this.ifaceip);
 		jam(buf, "' ");
 	}
 
@@ -538,7 +555,21 @@ static void jam_common_shell_out(jambuf_t *buf, const struct connection *c,
 		jam(buf, "CONNMARK_OUT=%" PRIu32 "/%#08" PRIx32 " ",
 		    c->sa_marks.out.val, c->sa_marks.out.mask);
 	}
-
+	if (c->xfrmi != NULL && c->xfrmi->if_id > 0) {
+		if (addrinsubnet(&sr->that.host_addr, &sr->that.client)) {
+			jam(buf, "PLUTO_XFRMI_FWMARK='%" PRIu32 "/0xffffffff' ",
+					c->xfrmi->if_id);
+		} else {
+			ipstr_buf bpeer;
+			char peerclient_str[SUBNETTOT_BUF];
+			subnettot(&sr->that.client, 0, peerclient_str,
+					sizeof(peerclient_str));
+			jam(buf, "PLUTO_XFRMI_FWMARK='' ");
+			dbg("not adding PLUTO_XFRMI_FWMARK. PLUTO_PEER=%s is not inside PLUTO_PEER_CLIENT=%s",
+					ipstr(&sr->that.host_addr, &bpeer),
+					peerclient_str);
+		}
+	}
 	jam(buf, "VTI_IFACE='%s' ", c->vti_iface ? c->vti_iface : "");
 	jam(buf, "VTI_ROUTING='%s' ", bool_str(c->vti_routing));
 	jam(buf, "VTI_SHARED='%s' ", bool_str(c->vti_shared));
@@ -1158,6 +1189,7 @@ bool raw_eroute(const ip_address *this_host,
 		deltatime_t use_lifetime,
 		uint32_t sa_priority,
 		const struct sa_marks *sa_marks,
+		const uint32_t xfrm_if_id,
 		enum pluto_sadb_operations op,
 		const char *opname,
 		const char *policy_label)
@@ -1209,9 +1241,9 @@ bool raw_eroute(const ip_address *this_host,
 					cur_spi, new_spi, sa_proto,
 					transport_proto,
 					esatype, proto_info,
-					use_lifetime, sa_priority, sa_marks, op, text_said,
+					use_lifetime, sa_priority, sa_marks,
+					xfrm_if_id, op, text_said,
 					policy_label);
-
 	DBG(DBG_CONTROL | DBG_KERNEL, DBG_log("raw_eroute result=%s",
 		result ? "success" : "failed"));
 
@@ -1335,6 +1367,8 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 			deltatime(SHUNT_PATIENCE),
 			0, /* we don't know connection for priority yet */
 			NULL, /* sa_marks */
+			0 /* xfrm interface id */,
+
 			op, why, NULL))
 	{
 		struct bare_shunt **bs_pp = bare_shunt_ptr(
@@ -1418,7 +1452,9 @@ bool eroute_connection(const struct spd_route *sr,
 		const struct pfkey_proto_info *proto_info,
 		uint32_t sa_priority,
 		const struct sa_marks *sa_marks,
-		unsigned int op, const char *opname,
+		const uint32_t xfrm_if_id,
+		unsigned int op,
+	       	const char *opname,
 		const char *policy_label)
 {
 	ip_address peer = sr->that.host_addr;
@@ -1443,7 +1479,9 @@ bool eroute_connection(const struct spd_route *sr,
 				esatype,
 				proto_info,
 				deltatime(0),
-				sa_priority, sa_marks, op, buf2,
+				sa_priority, sa_marks, 
+				xfrm_if_id,
+				op, buf2,
 				policy_label);
 		if (!t)
 			libreswan_log("CAT: failed to eroute additional Client Address Translation policy");
@@ -1460,7 +1498,9 @@ bool eroute_connection(const struct spd_route *sr,
 			esatype,
 			proto_info,
 			deltatime(0),
-			sa_priority, sa_marks, op, buf2,
+			sa_priority, sa_marks,
+			xfrm_if_id,
+		       	op, buf2,
 			policy_label);
 }
 
@@ -1545,7 +1585,7 @@ bool assign_holdpass(const struct connection *c,
 						SA_INT, ET_INT,
 						null_proto_info,
 						calculate_sa_prio(c, FALSE),
-						NULL,
+						NULL, 0 /* xfrm_if_id */,
 						op,
 						reason,
 						c->policy_label))
@@ -1993,6 +2033,9 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		DBG(DBG_KERNEL, DBG_log("setting IPsec SA replay-window to %d",
 			c->sa_replay_window));
 
+		if (c->xfrmi != NULL)
+			said_next->xfrm_if_id = c->xfrmi->if_id;
+
 		if (!inbound && c->sa_tfcpad != 0 && !st->st_seen_no_tfc) {
 			DBG(DBG_KERNEL, DBG_log("Enabling TFC at %d bytes (up to PMTU)", c->sa_tfcpad));
 			said_next->tfcpad = c->sa_tfcpad;
@@ -2269,6 +2312,9 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 					ENCAPSULATION_MODE_TRANSPORT;
 		}
 
+		uint32_t xfrm_if_id = c->xfrmi != NULL ?
+			c->xfrmi->if_id : 0;
+
 		/* MCR - should be passed a spd_eroute structure here */
 		/* note: this and that are intentionally reversed */
 		if (!raw_eroute(&c->spd.that.host_addr,		/* this_host */
@@ -2284,6 +2330,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				deltatime(0),		/* lifetime */
 				calculate_sa_prio(c, FALSE),	/* priority */
 				&c->sa_marks,		/* IPsec SA marks */
+				xfrm_if_id,
 				ERO_ADD_INBOUND,	/* op */
 				"add inbound",		/* opname */
 				st->st_connection->policy_label))
@@ -2395,6 +2442,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 				deltatime(0),
 				calculate_sa_prio(c, FALSE),
 				&c->sa_marks,
+				0, /* xfrm_if_id. needed to tear down? */
 				ERO_DEL_INBOUND,
 				"delete inbound",
 				c->policy_label))
@@ -2510,11 +2558,10 @@ void init_kernel(void)
 #if defined(NETKEY_SUPPORT)
 	case USE_NETKEY:
 		if (stat("/proc/sys/net/core/xfrm_acq_expires", &buf) != 0) {
-			libreswan_log("No XFRM kernel interface detected");
+			libreswan_log("No XFRM kernel support detected, missing /proc/sys/net/core/xfrm_acq_expires");
 			exit_pluto(PLUTO_EXIT_KERNEL_FAIL);
 		}
-		libreswan_log(
-			"Using Linux XFRM/NETKEY IPsec interface code on %s",
+		libreswan_log("Using Linux XFRM/NETKEY IPsec kernel support code on %s",
 			kversion);
 		kernel_ops = &netkey_kernel_ops;
 		break;
@@ -3003,6 +3050,7 @@ bool route_and_eroute(struct connection *c,
 						deltatime(SHUNT_PATIENCE),
 						calculate_sa_prio(c, FALSE),
 						NULL,
+						0,
 						ERO_REPLACE,
 						"restore",
 						NULL)) /* bare shunt are not associated with any connection so no security label */

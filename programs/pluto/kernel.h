@@ -148,6 +148,7 @@ struct kernel_sa {
 	const char *text_said;
 	struct xfrm_user_sec_ctx_ike *sec_ctx;
 	const char *nic_offload_dev;
+	uint32_t xfrm_if_id;
 
 	deltatime_t sa_lifetime; /* number of seconds until SA expires */
 	/*
@@ -207,6 +208,7 @@ struct kernel_ops {
 			   deltatime_t use_lifetime,
 			   uint32_t sa_priority,
 			   const struct sa_marks *sa_marks,
+			   const uint32_t xfrm_if_id,
 			   enum pluto_sadb_operations op,
 			   const char *text_said,
 			   const char *policy_label);
@@ -417,9 +419,9 @@ extern bool eroute_connection(const struct spd_route *sr,
 			      const struct pfkey_proto_info *proto_info,
 			      uint32_t sa_priority,
 			      const struct sa_marks *sa_marks,
+			      const uint32_t xfrm_if_id,
 			      unsigned int op, const char *opname,
 			      const char *policy_label);
-
 static inline bool compatible_overlapping_connections(const struct connection *a,
 						      const struct connection *b)
 {
@@ -461,6 +463,7 @@ extern bool raw_eroute(const ip_address *this_host,
 		       deltatime_t use_lifetime,
 		       uint32_t sa_priority,
 		       const struct sa_marks *sa_marks,
+		       const uint32_t xfrm_if_id,
 		       enum pluto_sadb_operations op,
 		       const char *opname,
 		       const char *policy_label);

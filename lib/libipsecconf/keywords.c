@@ -100,6 +100,13 @@ static const struct keyword_enum_value kw_ynf_values[] = {
 
 static const struct keyword_enum_values kw_ynf_list = VALUES_INITIALIZER(kw_ynf_values);
 
+/* Values for no/yes, used by ipsec-interface */
+static const struct keyword_enum_value kw_yn_values[] = {
+	{ "yes",	yn_yes  },
+	{ "no",		yn_no },
+};
+static const struct keyword_enum_values kw_yn_list = VALUES_INITIALIZER(kw_yn_values);
+
 /* Values for yes/no/auto, used by encapsulation and nic-offload */
 static const struct keyword_enum_value kw_yna_values[] = {
 	{ "yes",	yna_yes  },
@@ -497,6 +504,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "subnet",  kv_conn | kv_leftright | kv_processed,  kt_subnet,  KSCF_SUBNET, NULL, NULL, },
   { "subnets",  kv_conn | kv_leftright,  kt_appendlist,  KSCF_SUBNETS, NULL, NULL, },
   { "sourceip",  kv_conn | kv_leftright,  kt_ipaddr,  KSCF_SOURCEIP, NULL, NULL, },
+  { "iface-ip", kv_conn | kv_leftright ,  kt_subnet, KSCF_IFACE_IP, NULL, NULL, },
   { "vti",  kv_conn | kv_leftright | kv_processed,  kt_subnet,  KSCF_VTI_IP, NULL, NULL, },
   { "nexthop",  kv_conn | kv_leftright,  kt_ipaddr,  KSCF_NEXTHOP, NULL, NULL, },
   { "updown",  kv_conn | kv_leftright,  kt_filename,  KSCF_UPDOWN, NULL, NULL, },
@@ -607,6 +615,9 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "vti-interface",  kv_conn,  kt_string,  KSCF_VTI_IFACE, NULL, NULL, },
   { "vti-routing",  kv_conn,  kt_bool,  KNCF_VTI_ROUTING, NULL, NULL, },
   { "vti-shared",  kv_conn,  kt_bool,  KNCF_VTI_SHARED, NULL, NULL, },
+#ifdef USE_XFRM_INTERFACE
+  { "ipsec-interface", kv_conn, kt_loose_enum, KNCF_XFRM_IF_ID, &kw_yn_list, NULL, },
+#endif
 
   { "modecfgwins1",  kv_conn,  kt_obsolete,  KNCF_WARNIGNORE, NULL, NULL, },
   { "modecfgwins2",  kv_conn,  kt_obsolete,  KNCF_WARNIGNORE, NULL, NULL, },
