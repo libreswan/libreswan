@@ -2004,42 +2004,54 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 
 				case ft_mnp:
 					pexpect(fp->size == 1);
-					if (n == 0) {
-						DBG(DBG_PARSING,
-						    DBG_log("Saving message NP location %s %s",
-							    sd->name, fp->name));
-						outs->previous_np = cur;
-						outs->previous_np_struct = sd;
-						outs->previous_np_field = fp;
-					}
 					last_enum = n;
+					DBGF(DBG_PARSING, "next payload type: saving message location '%s' '%s'",
+					     sd->name, fp->name);
+					outs->previous_np = cur;
+					outs->previous_np_struct = sd;
+					outs->previous_np_field = fp;
 					break;
 
 				case ft_pnp:
 					pexpect(fp->size == 1);
-					/* find the containg pbs */
-					pb_stream *container;
-					for (container = outs;
-					     container->container != NULL;
-					     container = container->container);
-					if (container->previous_np != NULL) {
-						DBG(DBG_PARSING,
-						    DBG_log("Setting previous NP location %s %s to %s (%d)",
+					last_enum = n;
+					/* find the containing pbs */
+					pb_stream *container = outs;
+					while (container->container != NULL) {
+						container = container->container;
+					}
+					passert(container->previous_np != NULL);
+					passert(container->previous_np_struct != NULL);
+					passert(container->previous_np_field != NULL);
+					/* update previous struct's next payload type field */
+					if (sd->np != 0 && *container->previous_np == 0) {
+						/* new way */
+						DBGF(DBG_PARSING, "next payload type: setting '%s' '%s' to %s (%d:%s)",
+						     container->previous_np_struct->name,
+						     container->previous_np_field->name,
+						     sd->name, sd->np, enum_name(fp->desc, sd->np));
+						*container->previous_np = sd->np;
+					} else if (sd->np != 0 && *container->previous_np == sd->np) {
+						/* old cross-check */
+						DBGF(DBG_PARSING, "next payload type: previous '%s' '%s' matches '%s' (%d:%s)",
+						     container->previous_np_struct->name,
+						     container->previous_np_field->name,
+						     sd->name, sd->np, enum_name(fp->desc, sd->np));
+					} else {
+						PEXPECT_LOG("next payload type: previous '%s' '%s' (%d:%s) and/or current '%s' (%d:%s) invalid",
 							    container->previous_np_struct->name,
 							    container->previous_np_field->name,
-							    enum_name(fp->desc, sd->np), sd->np));
-						pexpect(sd->np != 0);
-						pexpect(*container->previous_np == 0);
-						*container->previous_np = sd->np;
-						/* save */
-						DBG(DBG_PARSING,
-						    DBG_log("Saving payload NP location %s %s",
-							    sd->name, fp->name));
-						container->previous_np = cur;
-						container->previous_np_struct = sd;
-						container->previous_np_field = fp;
+							    *container->previous_np,
+							    enum_name(container->previous_np_field->desc, *container->previous_np),
+							    sd->name, sd->np, enum_name(fp->desc, sd->np));
+						return false;
 					}
-					last_enum = n;
+					/* save */
+					DBGF(DBG_PARSING, "next payload type: saving payload location '%s' '%s'",
+					     sd->name, fp->name);
+					container->previous_np = cur;
+					container->previous_np_struct = sd;
+					container->previous_np_field = fp;
 					break;
 
 				case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
