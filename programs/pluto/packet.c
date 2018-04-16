@@ -886,8 +886,19 @@ static field_desc ikev2id_fields[] = {
 	{ ft_end,  0, NULL, NULL },
 };
 
-struct_desc ikev2_id_desc = { "IKEv2 Identification Payload",
-			      ikev2id_fields, sizeof(struct ikev2_id), 0, };
+struct_desc ikev2_id_i_desc = {
+	.name ="IKEv2 Identification - Initiator - Payload",
+	.fields = ikev2id_fields,
+	.size = sizeof(struct ikev2_id),
+	.np = ISAKMP_NEXT_v2IDi,
+};
+
+struct_desc ikev2_id_r_desc = {
+	.name ="IKEv2 Identification - Responder - Payload",
+	.fields = ikev2id_fields,
+	.size = sizeof(struct ikev2_id),
+	.np = ISAKMP_NEXT_v2IDr,
+};
 
 /*
  * IKEv2 - draft-ietf-ipsecme-qr-ikev2-01 (no ascii art provided in RFC)
@@ -1352,8 +1363,8 @@ struct_desc *v2_payload_desc(unsigned p)
 	static struct_desc *const v2_payload_descs[] = {
 		&ikev2_sa_desc,                 /* 33 ISAKMP_NEXT_v2SA */
 		&ikev2_ke_desc,                 /* 34 ISAKMP_NEXT_v2KE */
-		&ikev2_id_desc,			/* 35 ISAKMP_NEXT_v2IDi */
-		&ikev2_id_desc,			/* 36 ISAKMP_NEXT_v2IDr */
+		&ikev2_id_i_desc,		/* 35 ISAKMP_NEXT_v2IDi */
+		&ikev2_id_r_desc,		/* 36 ISAKMP_NEXT_v2IDr */
 		&ikev2_certificate_desc,        /* 37 ISAKMP_NEXT_v2CERT */
 		&ikev2_certificate_req_desc,    /* 38 ISAKMP_NEXT_v2CERTREQ */
 		&ikev2_a_desc,                  /* 39 ISAKMP_NEXT_v2AUTH */

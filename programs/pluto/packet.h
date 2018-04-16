@@ -884,7 +884,8 @@ struct ikev2_id {
 	u_int8_t isai_res1;
 	u_int16_t isai_res2;
 };
-extern struct_desc ikev2_id_desc;
+extern struct_desc ikev2_id_i_desc;
+extern struct_desc ikev2_id_r_desc;
 
 /* rfc4306, section 3.8 */
 struct ikev2_a {

@@ -3334,7 +3334,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	unsigned char idhash_npa[MAX_DIGEST_LEN];	/* idhash for NO_PPK_AUTH (npa) */
 
 	{
-		struct ikev2_id r_id;
+		struct ikev2_id r_id; /* XXX: i_id? */
 		pb_stream r_id_pbs;
 		chunk_t id_b;
 		struct hmac_ctx id_ctx;
@@ -3360,7 +3360,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 			e_pbs_cipher.cur + NSIZEOF_isakmp_generic;
 
 		if (!out_struct(&r_id,
-				&ikev2_id_desc,
+				&ikev2_id_i_desc,
 				&e_pbs_cipher,
 				&r_id_pbs) ||
 		    !out_chunk(id_b, &r_id_pbs, "my identity"))
@@ -3449,7 +3449,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 			r_id.isai_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 			r_id.isai_np = ic ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2AUTH;
 
-			if (!out_struct(&r_id, &ikev2_id_desc, &e_pbs_cipher,
+			if (!out_struct(&r_id, &ikev2_id_r_desc, &e_pbs_cipher,
 				&r_id_pbs) || !out_chunk(id_b, &r_id_pbs, "IDr"))
 				return STF_INTERNAL_ERROR;
 
@@ -4301,7 +4301,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 
 			id_start = e_pbs_cipher.cur + NSIZEOF_isakmp_generic;
 
-			if (!out_struct(&r_id, &ikev2_id_desc, &e_pbs_cipher,
+			if (!out_struct(&r_id, &ikev2_id_r_desc, &e_pbs_cipher,
 					&r_id_pbs) ||
 			    !out_chunk(id_b, &r_id_pbs, "my identity"))
 				return STF_INTERNAL_ERROR;
