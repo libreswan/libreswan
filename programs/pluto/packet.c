@@ -834,7 +834,7 @@ struct_desc ikev2_trans_attr_desc = {
  *
  */
 static field_desc ikev2ke_fields[] = {
-	{ ft_loose_enum, 8 / BITS_PER_BYTE, "IKEv2 next payload type", &ikev2_payload_names },
+	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
 	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 16 / BITS_PER_BYTE, "DH group", &oakley_group_names },
@@ -877,7 +877,7 @@ struct_desc ikev2_ke_desc = { "IKEv2 Key Exchange Payload",
  */
 
 static field_desc ikev2id_fields[] = {
-	{ ft_loose_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
+	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
 	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "ID type", &ikev2_idtype_names },
@@ -918,7 +918,7 @@ struct_desc ikev2_ppk_id_desc = { "IKEv2 PPK ID Payload",
 
 
 static field_desc ikev2cp_fields[] = {
-	{ ft_loose_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
+	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
 	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "ikev2_cfg_type", &ikev2_cp_type_names },
@@ -957,7 +957,7 @@ struct_desc ikev2_cp_attribute_desc = { "IKEv2 Configuration Payload Attribute",
  *
  */
 static field_desc ikev2_cert_fields[] = {
-	{ ft_loose_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
+	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
 	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "ikev2 cert encoding",
@@ -986,7 +986,7 @@ struct_desc ikev2_certificate_desc =
  */
 
 static field_desc ikev2_cert_req_fields[] = {
-	{ ft_loose_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
+	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
 	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "ikev2 cert encoding",
@@ -1017,7 +1017,7 @@ struct_desc ikev2_certificate_req_desc =
  *
  */
 static field_desc ikev2a_fields[] = {
-	{ ft_loose_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
+	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
 	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "auth method", &ikev2_auth_names },
@@ -1110,7 +1110,7 @@ struct_desc ikev2_notify_desc = {
  */
 
 static field_desc ikev2_delete_fields[] = {
-	{ ft_loose_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
+	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
 	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "protocol ID", &ikev2_del_protocol_names },
@@ -1165,7 +1165,7 @@ struct_desc ikev2_vendor_id_desc = { "IKEv2 Vendor ID Payload",
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 static field_desc ikev2ts_fields[] = {
-	{ ft_loose_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
+	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
 	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_nat,  8 / BITS_PER_BYTE, "number of TS", NULL },
@@ -1261,7 +1261,7 @@ struct_desc ikev2_sk_desc = {
  *                         Encrypted Fragment Payload
  */
 static field_desc ikev2skf_fields[] = {
-	{ ft_loose_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
+	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
 	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_nat, 16 / BITS_PER_BYTE, "fragment number", NULL },
