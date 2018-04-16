@@ -1408,16 +1408,16 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 	DBG(DBG_CONTROL, DBG_log("converting proposal to internal trans attrs"));
 
 	/*
-	 * blank TA_OUT, and only update it on success.
-	 */
-	zero(ta_out);
-
-	/*
 	 * Start with an empty TA.
 	 */
 	struct trans_attrs ta = {
 		.ta_encrypt = NULL,
 	};
+
+	/*
+	 * blank TA_OUT, and only update it on success.
+	 */
+	*ta_out = ta;
 
 	enum ikev2_trans_type type;
 	struct ikev2_transforms *transforms;

@@ -942,27 +942,13 @@ static void  set_migration_attr(const struct kernel_sa *sa,
 static void create_xfrm_migrate_sa(struct state *st, const int dir,
 		struct kernel_sa *ret_sa, char *text_said)
 {
+	const struct connection *const c = st->st_connection;
 
-	struct kernel_sa sa;
-	char reqid_buf[ULTOT_BUF + 32];
-	u_int8_t natt_type = 0;
-	u_int16_t natt_sport = 0, natt_dport = 0;
-	const ip_address *src, *dst;
-	const ip_subnet *src_client, *dst_client;
-	struct ipsec_proto_info *p2;
-	ipstr_buf ra;
+	const u_int8_t natt_type = (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) ?
+		ESPINUDP_WITH_NON_ESP : 0;
+
 	u_int proto;
-	u_int16_t old_port;
-	u_int16_t new_port;
-	ip_address *new_addr;
-	const struct connection *c = st->st_connection;
-
-	if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) {
-		natt_type = ESPINUDP_WITH_NON_ESP;
-	}
-
-	zero(&sa);
-
+	struct ipsec_proto_info *p2;
 	if (st->st_esp.present) {
 		proto = SA_ESP;
 		p2 = &st->st_esp;
@@ -973,11 +959,17 @@ static void create_xfrm_migrate_sa(struct state *st, const int dir,
 		return;
 	}
 
-	char *n;
+	struct kernel_sa sa = empty_sa;
+	ip_address *new_addr;
+	u_int16_t old_port;
+	u_int16_t new_port;
+	u_int16_t natt_sport = 0;
+	u_int16_t natt_dport = 0;
+	const ip_address *src, *dst;
+	const ip_subnet *src_client, *dst_client;
 
 	if (st->st_mobike_localport > 0) {
-		jam_str(text_said, SAMIGTOT_BUF, "initiator migrate kernel SA ");
-		n = text_said + strlen(text_said);
+		char *n = jam_str(text_said, SAMIGTOT_BUF, "initiator migrate kernel SA ");
 		passert((SAMIGTOT_BUF - strlen(text_said)) > SATOT_BUF);
 		old_port = st->st_localport;
 		new_port = st->st_mobike_localport;
@@ -1010,11 +1002,8 @@ static void create_xfrm_migrate_sa(struct state *st, const int dir,
 				natt_dport = st->st_remoteport;
 			}
 		}
-
-
 	} else {
-		jam_str(text_said, SAMIGTOT_BUF, "responder migrate kernel SA ");
-		n = text_said + strlen(text_said);
+		char *n = jam_str(text_said, SAMIGTOT_BUF, "responder migrate kernel SA ");
 		passert((SAMIGTOT_BUF - strlen(text_said)) > SATOT_BUF);
 		old_port = st->st_remoteport;
 		new_port = st->st_mobike_remoteport;
@@ -1065,6 +1054,8 @@ static void create_xfrm_migrate_sa(struct state *st, const int dir,
 	sa.natt_dport = natt_dport;
 	sa.natt_type = natt_type;
 
+	char reqid_buf[ULTOT_BUF + 32];
+	ipstr_buf ra;
 	snprintf(reqid_buf, sizeof(reqid_buf), ":%u to %s:%u reqid=%u %s",
 			old_port,
 			ipstr(new_addr, &ra), new_port,

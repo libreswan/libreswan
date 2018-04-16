@@ -373,7 +373,9 @@ struct config_parsed *parser_load_conf(const char *file, err_t *perr)
 		snprintf(parser_errstring, ERRSTRING_LEN, "can't allocate memory");
 		goto err;
 	}
-	zero(cfg);	/* ??? pointer fields may not be NULLed */
+
+	static const struct config_parsed empty_config_parsed;	/* zero or null everywhere */
+	*cfg = empty_config_parsed;
 
 	FILE *f = streq(file, "-") ?
 		fdopen(STDIN_FILENO, "r") : fopen(file, "r");

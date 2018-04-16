@@ -80,6 +80,8 @@
 #include "ip_address.h"
 #include "lswfips.h" /* for libreswan_fipsmode() */
 
+const struct kernel_sa empty_sa;	/* zero or null in all the right places */
+
 /* which kernel interface to use */
 enum kernel_interface kern_interface = USE_NETKEY;
 
@@ -1698,13 +1700,13 @@ static bool del_spi(ipsec_spi_t spi, int proto,
 		const ip_address *src, const ip_address *dest)
 {
 	char text_said[SATOT_BUF];
-	struct kernel_sa sa;
 
 	set_text_said(text_said, dest, spi, proto);
 
 	DBG(DBG_KERNEL, DBG_log("delete %s", text_said));
 
-	zero(&sa);
+	struct kernel_sa sa = empty_sa;
+
 	sa.spi = spi;
 	sa.proto = proto;
 	sa.src = src;
@@ -1759,7 +1761,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	/* SPIs, saved for spigrouping or undoing, if necessary */
 	struct kernel_sa said[EM_MAXRELSPIS];
 	struct kernel_sa *said_next = said;
-	struct kernel_sa said_boilerplate;
 
 	char text_ipip[SATOT_BUF];
 	char text_ipcomp[SATOT_BUF];
@@ -1806,7 +1807,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	c->encapsulation = encapsulation;
 	encap_oneshot = encapsulation;
 
-	zero(&said_boilerplate);
+	struct kernel_sa said_boilerplate = empty_sa;
+
 	said_boilerplate.src = &src.addr;
 	said_boilerplate.dst = &dst.addr;
 	said_boilerplate.src_client = &src_client;
@@ -3450,20 +3452,15 @@ const char *kernel_if_name(void)
  */
 bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 {
-	char text_said[SATOT_BUF];
-	u_int proto;
-	uint64_t bytes;
-	uint64_t add_time;
-	ipsec_spi_t spi;
-	const ip_address *src, *dst;
-	struct kernel_sa sa;
-	struct ipsec_proto_info *p2;
 
-	const struct connection *c = st->st_connection;
+	const struct connection *const c = st->st_connection;
 
 	if (kernel_ops->get_sa == NULL || (!st->st_esp.present && !st->st_ah.present)) {
 		return FALSE;
 	}
+
+	u_int proto;
+	struct ipsec_proto_info *p2;
 
 	if (st->st_esp.present) {
 		proto = SA_ESP;
@@ -3475,6 +3472,9 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 		return FALSE;
 	}
 
+	const ip_address *src, *dst;
+	ipsec_spi_t spi;
+
 	if (inbound) {
 		src = &c->spd.that.host_addr;
 		dst = &c->spd.this.host_addr;
@@ -3484,9 +3484,13 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 		dst = &c->spd.that.host_addr;
 		spi = p2->attrs.spi;
 	}
+
+	char text_said[SATOT_BUF];
+
 	set_text_said(text_said, dst, spi, proto);
 
-	zero(&sa);
+	struct kernel_sa sa = empty_sa;
+
 	sa.spi = spi;
 	sa.proto = proto;
 	sa.src = src;
@@ -3495,6 +3499,10 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 
 	DBG(DBG_KERNEL,
 		DBG_log("get_sa_info %s", text_said));
+
+	uint64_t bytes;
+	uint64_t add_time;
+
 	if (!kernel_ops->get_sa(&sa, &bytes, &add_time))
 		return FALSE;
 

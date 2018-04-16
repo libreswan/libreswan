@@ -770,13 +770,6 @@ void ikev1_natd_init(struct state *st, struct msg_digest *md)
 
 int nat_traversal_espinudp_socket(int sk, const char *fam)
 {
-	int r;
-#if defined(KLIPS)
-	struct ifreq ifr;
-	int *fdp = (int *) &ifr.ifr_data;
-	const char *ifn;
-#endif
-
 #if defined(NETKEY_SUPPORT) || defined(BSD_KAME)
 	if (kern_interface == USE_NETKEY || kern_interface == USE_BSDKAME) {
 		DBG(DBG_NATT, DBG_log("NAT-Traversal: Trying sockopt style NAT-T"));
@@ -787,7 +780,7 @@ int nat_traversal_espinudp_socket(int sk, const char *fam)
 		if (USE_BSDKAME)
 			os_opt = UDP_ENCAP_ESPINUDP; /* defined as 2 */
 #endif
-		r = setsockopt(sk, SOL_UDP, os_opt, &type, sizeof(type));
+		int r = setsockopt(sk, SOL_UDP, os_opt, &type, sizeof(type));
 		if (r == -1) {
 			DBG(DBG_NATT,
 				DBG_log("NAT-Traversal: ESPINUDP(%d) setup failed for sockopt style NAT-T family %s (errno=%d)",
@@ -809,13 +802,15 @@ int nat_traversal_espinudp_socket(int sk, const char *fam)
 
 #if defined(KLIPS)
 	if (kern_interface == USE_KLIPS || kern_interface == USE_MASTKLIPS) {
+		struct ifreq ifr;
+		int *fdp = (int *) &ifr.ifr_data;
 		DBG(DBG_NATT, DBG_log("NAT-Traversal: Trying old ioctl style NAT-T"));
 		zero(&ifr);
-		ifn = "ipsec0"; /* mast must use ipsec0 too */
+		const char *const ifn = "ipsec0"; /* mast must use ipsec0 too */
 		fill_and_terminate(ifr.ifr_name, ifn, sizeof(ifr.ifr_name));
 		fdp[0] = sk;
 		fdp[1] = ESPINUDP_WITH_NON_ESP; /* no longer support non-ike or non-floating */
-		r = ioctl(sk, IPSEC_UDP_ENCAP_CONVERT, &ifr); /* private to KLIPS only */
+		int r = ioctl(sk, IPSEC_UDP_ENCAP_CONVERT, &ifr); /* private to KLIPS only */
 		if (r == -1) {
 			DBG(DBG_NATT,
 				DBG_log("NAT-Traversal: ESPINUDP(%d) setup failed for old ioctl style NAT-T family %s (errno=%d)",

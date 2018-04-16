@@ -111,8 +111,8 @@ struct db_sa {
  *
  * am == aggressive mode
  */
-extern struct db_sa *IKEv1_oakley_sadb(lset_t x, struct connection *c);
-extern struct db_sa *IKEv1_oakley_am_sadb(lset_t x, struct connection *c);
+extern struct db_sa *IKEv1_oakley_sadb(lset_t x, const struct connection *c);
+extern struct db_sa *IKEv1_oakley_am_sadb(lset_t x, const struct connection *c);
 
 /* The ipsec sadb is subscripted by a bitset with members
  * from POLICY_ENCRYPT, POLICY_AUTHENTICATE, POLICY_COMPRESS
@@ -136,7 +136,7 @@ extern struct db_sa ipsec_sadb[1 << 3];
 #define AD_PC(x) .props = (x), .prop_cnt = elemsof(x)
 
 extern bool ikev1_out_sa(pb_stream *outs,
-		   struct db_sa *sadb,
+		   const struct db_sa *sadb,
 		   struct state *st,
 		   bool oakley_mode,
 		   bool aggressive_mode,

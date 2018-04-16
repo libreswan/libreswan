@@ -699,9 +699,15 @@ static struct payload_summary ikev2_decode_payloads(struct msg_digest *md,
 			summary.n = v2N_INVALID_SYNTAX;
 			break;
 		}
-		struct payload_digest *const pd = md->digest + md->digest_roof;
 
-		zero(pd);	/* ??? is this needed? XXX: probably not */
+		/*
+		 * *pd is the payload digest for this payload.
+		 * It has three fields:
+		 *	pbs is filled in by in_struct
+		 *	payload is filled in by in_struct
+		 *	next is filled in by list linking logic
+		 */
+		struct payload_digest *const pd = md->digest + md->digest_roof;
 
 		/* map the payload onto a way to decode it */
 		const struct_desc *sd = v2_payload_desc(np);
@@ -722,9 +728,11 @@ static struct payload_summary ikev2_decode_payloads(struct msg_digest *md,
 				/*
 				 * It was critical.  See RFC 5996 1.5
 				 * "Version Numbers and Forward
-				 * Compatibility" ??? we are supposed
-				 * to send the offending np byte back
-				 * in the notify payload.
+				 * Compatibility"
+				 */
+				/*
+				 * ??? we are supposed to send the offending
+				 * np byte back in the notify payload.
 				 */
 				loglog(RC_LOG_SERIOUS,
 				       "critical payload (%s) was not understood. Message dropped.",

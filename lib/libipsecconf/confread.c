@@ -71,7 +71,8 @@
  */
 void ipsecconf_default_values(struct starter_config *cfg)
 {
-	zero(cfg);	/* ??? pointer fields might not be NULLed */
+	static const struct starter_config empty_starter_config;	/* zero or null everywhere */
+	*cfg = empty_starter_config;
 
 	TAILQ_INIT(&cfg->conns);
 

@@ -147,6 +147,8 @@ struct kernel_sa {
 	 */
 };
 
+extern const struct kernel_sa empty_sa;	/* zero or null in all the right places */
+
 struct raw_iface {
 	ip_address addr;
 	char name[IFNAMSIZ + 20]; /* what would be a safe size? */

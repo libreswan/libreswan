@@ -335,7 +335,7 @@ static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
 	new_vfy_log(&vfy_log2);
 
 	CERTRevocationFlags rev;
-	zero(&rev);	/* ??? are there pointer fields? */
+	zero(&rev);	/* ??? are there pointer fields?  YES, and different for different union members! */
 
 	PRUint64 revFlagsLeaf[2] = { 0, 0 };
 	PRUint64 revFlagsChain[2] = { 0, 0 };
@@ -346,8 +346,8 @@ static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
 	int in_idx = 0;
 	CERTValInParam cvin[7];
 	CERTValOutParam cvout[3];
-	zero(&cvin);	/* ??? are there pointer fields? */
-	zero(&cvout);	/* ??? are there pointer fields? */
+	zero(&cvin);	/* ??? are there pointer fields?  YES, and different for different union members! */
+	zero(&cvout);	/* ??? are there pointer fields?  YES, and different for different union members! */
 
 	cvin[in_idx].type = cert_pi_revocationFlags;
 	cvin[in_idx++].value.pointer.revocation = &rev;

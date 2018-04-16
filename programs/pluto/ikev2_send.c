@@ -181,7 +181,7 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
 
 	DBG(DBG_CONTROLMORE, DBG_log("Adding a v2N Payload"));
 
-	zero(&n);
+	zero(&n);	/* OK: no pointer fields */
 
 	n.isan_np = np;
 	n.isan_critical = critical;

@@ -124,7 +124,7 @@ void doi_log_cert_thinking(u_int16_t auth,
 
 #if 0	/* not yet disentangled from spdb.h */
 extern bool ikev1_out_sa(pb_stream *outs,
-		struct db_sa *sadb,
+		const struct db_sa *sadb,
 		struct state *st,
 		bool oakley_mode,
 		bool aggressive_mode,

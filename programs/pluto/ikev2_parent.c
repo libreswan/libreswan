@@ -5193,7 +5193,7 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 		struct ikev2_generic in;
 		pb_stream pb_nr;
 
-		zero(&in);      /* OK: no pointer fields */
+		zero(&in);	/* OK: no pointer fields */
 		in.isag_np =  (cst->st_pfs_group != NULL) ? ISAKMP_NEXT_v2KE :
 			ISAKMP_NEXT_v2TSi;
 		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
@@ -6914,47 +6914,66 @@ static const struct iface_port *ikev2_src_iface(struct state *st,
 
 void ikev2_addr_change(struct state *st)
 {
-	struct starter_end this;
-	struct starter_end that;
-
-	zero(&this);
-	zero(&that);
-
 	if (!mobike_check_established(st))
 		return;
 
 	/* lets re-discover local address */
-	this.addrtype = KH_DEFAULTROUTE;
-	this.nexttype = KH_DEFAULTROUTE;
-	this.addr_family = st->st_remoteaddr.u.v4.sin_family;
 
-	that.addrtype = KH_IPADDR;
-	that.addr_family = st->st_remoteaddr.u.v4.sin_family;
-	that.addr = st->st_remoteaddr;
+	struct starter_end this = {
+		.addrtype = KH_DEFAULTROUTE,
+		.nexttype = KH_DEFAULTROUTE,
+		.addr_family = st->st_remoteaddr.u.v4.sin_family
+	};
+
+	struct starter_end that = {
+		.addrtype = KH_IPADDR,
+		.addr_family = st->st_remoteaddr.u.v4.sin_family,
+		.addr = st->st_remoteaddr
+	};
 
 	/*
 	 * mobike need two lookups. one for the gateway and
 	 * the one for the source address
 	 */
-	if (resolve_defaultroute_one(&this, &that, 3) == 1) {
-		if (resolve_defaultroute_one(&this, &that, 3) == 0) {
-			const struct iface_port *iface = ikev2_src_iface(st, &this);
-			if (iface != NULL)
-				initiate_mobike_probe(st, &this, iface);
-			else
-				return;
-		} else {
+	switch (resolve_defaultroute_one(&this, &that, 3)) {
+	case -1:	/* failure */
+		/* keep this DEBUG, if a libreswan log, too many false +ve */
+		DBG(DBG_CONTROL, {
+			ipstr_buf b;
+			DBG_log("#%lu no local gatway to reach %s",
+					st->st_serialno,
+					sensitive_ipstr(&that.addr, &b));
+		});
+		break;
+
+	case 0:	/* success */
+		/* cannot happen */
+		bad_case(0);
+
+	case 1: /* please call again: more to do */
+		switch (resolve_defaultroute_one(&this, &that, 3)) {
+		case -1:	/* failure */
+		{
 			ipstr_buf g, b;
 			libreswan_log("no local source address to reach remote %s, local gateway %s",
 					sensitive_ipstr(&that.addr, &b),
 					ipstr(&this.nexthop, &g));
+			break;
 		}
-	} else {
-		ipstr_buf b;
-		/* keep this DEBUG, if a libreswan log, too many false +ve */
-		DBG(DBG_CONTROL, DBG_log("#%lu no local gatway to reach %s",
-					st->st_serialno,
-					sensitive_ipstr(&that.addr, &b)));
+
+		case 0:	/* success */
+		{
+			const struct iface_port *iface = ikev2_src_iface(st, &this);
+			if (iface != NULL)
+				initiate_mobike_probe(st, &this, iface);
+			break;
+		}
+
+		case 1: /* please call again: more to do */
+			/* cannot happen */
+			bad_case(1);
+		}
+		break;
 	}
 }
 

@@ -286,7 +286,7 @@ ssize_t netlink_query(char **pmsgbuf, size_t bufsize)
  *
  * Returns:
  * -1: failure
- *  0: done
+ *  0: success
  *  1: please call again: more to do
  */
 int resolve_defaultroute_one(struct starter_end *host,
