@@ -727,8 +727,12 @@ struct_desc ikev2_bogus_desc = {
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
  */
-struct_desc ikev2_sa_desc = { "IKEv2 Security Association Payload",
-			      ikev2generic_fields, sizeof(struct ikev2_sa), 0, };
+struct_desc ikev2_sa_desc = {
+	.name = "IKEv2 Security Association Payload",
+	.fields = ikev2generic_fields,
+	.size = sizeof(struct ikev2_sa),
+	.np = ISAKMP_NEXT_v2SA,
+};
 
 /* IKEv2 - Proposal sub-structure
  *
@@ -762,8 +766,11 @@ static field_desc ikev2prop_fields[] = {
 	{ ft_end,  0, NULL, NULL }
 };
 
-struct_desc ikev2_prop_desc = { "IKEv2 Proposal Substructure Payload",
-				ikev2prop_fields, sizeof(struct ikev2_prop), 0, };
+struct_desc ikev2_prop_desc = {
+	.name = "IKEv2 Proposal Substructure Payload",
+	.fields = ikev2prop_fields,
+	.size = sizeof(struct ikev2_prop),
+};
 
 /*
  * 3.3.2.  Transform Substructure
@@ -792,9 +799,11 @@ static field_desc ikev2trans_fields[] = {
 	{ ft_end,  0, NULL, NULL }
 };
 
-struct_desc ikev2_trans_desc = { "IKEv2 Transform Substructure Payload",
-				 ikev2trans_fields,
-				 sizeof(struct ikev2_trans), 0, };
+struct_desc ikev2_trans_desc = {
+	.name = "IKEv2 Transform Substructure Payload",
+	.fields = ikev2trans_fields,
+	.size = sizeof(struct ikev2_trans),
+};
 
 /*
  * 3.3.5.   [Transform] Attribute substructure
@@ -817,8 +826,10 @@ static field_desc ikev2_trans_attr_fields[] = {
 };
 
 struct_desc ikev2_trans_attr_desc = {
-	"IKEv2 Attribute Substructure Payload",
-	ikev2_trans_attr_fields, sizeof(struct ikev2_trans_attr), 0, };
+	.name = "IKEv2 Attribute Substructure Payload",
+	.fields = ikev2_trans_attr_fields,
+	.size = sizeof(struct ikev2_trans_attr),
+};
 
 /* 3.4.  Key Exchange Payload
  *
@@ -937,8 +948,11 @@ static field_desc ikev2_ppk_id_fields[] = {
 	{ ft_end,  0, NULL, NULL }
 };
 
-struct_desc ikev2_ppk_id_desc = { "IKEv2 PPK ID Payload",
-				  ikev2_ppk_id_fields, sizeof(struct ikev2_ppk_id), 0, };
+struct_desc ikev2_ppk_id_desc = {
+	.name = "IKEv2 PPK ID Payload",
+	.fields = ikev2_ppk_id_fields,
+	.size = sizeof(struct ikev2_ppk_id),
+};
 
 
 static field_desc ikev2cp_fields[] = {
@@ -951,8 +965,12 @@ static field_desc ikev2cp_fields[] = {
 	{ ft_end,  0, NULL, NULL }
 };
 
-struct_desc ikev2_cp_desc = { "IKEv2 Configuration Payload",
-			      ikev2cp_fields, sizeof(struct ikev2_cp), 0, };
+struct_desc ikev2_cp_desc = {
+	.name = "IKEv2 Configuration Payload",
+	.fields = ikev2cp_fields,
+	.size = sizeof(struct ikev2_cp),
+	.np = ISAKMP_NEXT_v2CP,
+};
 
 static field_desc ikev2_cp_attrbute_fields[] = {
 	{ ft_enum, 16 / BITS_PER_BYTE, "Attribute Type",
@@ -961,9 +979,11 @@ static field_desc ikev2_cp_attrbute_fields[] = {
 	{ ft_end,  0, NULL, NULL }
 };
 
-struct_desc ikev2_cp_attribute_desc = { "IKEv2 Configuration Payload Attribute",
-				       ikev2_cp_attrbute_fields,
-				       sizeof(struct ikev2_cp_attribute), 0, };
+struct_desc ikev2_cp_attribute_desc = {
+	.name = "IKEv2 Configuration Payload Attribute",
+	.fields = ikev2_cp_attrbute_fields,
+	.size = sizeof(struct ikev2_cp_attribute),
+};
 
 /* section 3.6
  * The Certificate Payload is defined as follows:
@@ -989,8 +1009,12 @@ static field_desc ikev2_cert_fields[] = {
 	{ ft_end,  0, NULL, NULL }
 };
 
-struct_desc ikev2_certificate_desc =
-	{ "IKEv2 Certificate Payload", ikev2_cert_fields, IKEV2_CERT_SIZE, 0, };
+struct_desc ikev2_certificate_desc = {
+	.name = "IKEv2 Certificate Payload",
+	.fields = ikev2_cert_fields,
+	.size = IKEV2_CERT_SIZE,
+	.np = ISAKMP_NEXT_v2CERT,
+};
 
 /* section 3.7
  *
@@ -1018,9 +1042,12 @@ static field_desc ikev2_cert_req_fields[] = {
 	{ ft_end,  0, NULL, NULL }
 };
 
-struct_desc ikev2_certificate_req_desc =
-	{ "IKEv2 Certificate Request Payload", ikev2_cert_req_fields,
-	  IKEV2_CERT_SIZE, 0, };
+struct_desc ikev2_certificate_req_desc = {
+	.name = "IKEv2 Certificate Request Payload",
+	.fields = ikev2_cert_req_fields,
+	.size = IKEV2_CERT_SIZE,
+	.np = ISAKMP_NEXT_v2CERTREQ,
+};
 
 /*
  * 3.8.  Authentication Payload
@@ -1050,8 +1077,12 @@ static field_desc ikev2a_fields[] = {
 	{ ft_end,  0, NULL, NULL }
 };
 
-struct_desc ikev2_a_desc = { "IKEv2 Authentication Payload",
-			     ikev2a_fields, sizeof(struct ikev2_a), 0, };
+struct_desc ikev2_a_desc = {
+	.name = "IKEv2 Authentication Payload",
+	.fields = ikev2a_fields,
+	.size = sizeof(struct ikev2_a),
+	.np = ISAKMP_NEXT_v2AUTH,
+};
 
 /*
  * 3.9.  Nonce Payload
@@ -1075,9 +1106,12 @@ struct_desc ikev2_a_desc = { "IKEv2 Authentication Payload",
  *
  *                 Figure 15:  Nonce Payload Format
  */
-struct_desc ikev2_nonce_desc = { "IKEv2 Nonce Payload",
-				 ikev2generic_fields,
-				 sizeof(struct ikev2_generic), 0, };
+struct_desc ikev2_nonce_desc = {
+	.name = "IKEv2 Nonce Payload",
+	.fields = ikev2generic_fields,
+	.size = sizeof(struct ikev2_generic),
+	.np = ISAKMP_NEXT_v2Ni, /*==ISAKMP_NEXT_v2Nr*/
+};
 
 /*    3.10 Notify Payload
  *
@@ -1143,9 +1177,12 @@ static field_desc ikev2_delete_fields[] = {
 	{ ft_end, 0, NULL, NULL }
 };
 
-struct_desc ikev2_delete_desc = { "IKEv2 Delete Payload",
-				  ikev2_delete_fields,
-				  sizeof(struct ikev2_delete), 0, };
+struct_desc ikev2_delete_desc = {
+	.name = "IKEv2 Delete Payload",
+	.fields = ikev2_delete_fields,
+	.size = sizeof(struct ikev2_delete),
+	.np = ISAKMP_NEXT_v2D,
+};
 
 /*
  * 3.12.  Vendor ID Payload
@@ -1163,9 +1200,12 @@ struct_desc ikev2_delete_desc = { "IKEv2 Delete Payload",
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
  */
-struct_desc ikev2_vendor_id_desc = { "IKEv2 Vendor ID Payload",
-				     ikev2generic_fields,
-				     sizeof(struct ikev2_generic), 0, };
+struct_desc ikev2_vendor_id_desc = {
+	.name = "IKEv2 Vendor ID Payload",
+	.fields = ikev2generic_fields,
+	.size = sizeof(struct ikev2_generic),
+	.np = ISAKMP_NEXT_v2V,
+};
 
 /*
  * 3.13.  Traffic Selector Payload
@@ -1239,8 +1279,11 @@ static field_desc ikev2ts1_fields[] = {
 	{ ft_nat, 16 / BITS_PER_BYTE, "end port", NULL },
 	{ ft_end,  0, NULL, NULL }
 };
-struct_desc ikev2_ts1_desc = { "IKEv2 Traffic Selector",
-			       ikev2ts1_fields, sizeof(struct ikev2_ts1), 0, };
+struct_desc ikev2_ts1_desc = {
+	.name = "IKEv2 Traffic Selector",
+	.fields = ikev2ts1_fields,
+	.size = sizeof(struct ikev2_ts1),
+};
 
 /*
  * 3.14.  Encrypted Payload
@@ -1302,9 +1345,12 @@ static field_desc ikev2skf_fields[] = {
 	{ ft_nat, 16 / BITS_PER_BYTE, "total fragments", NULL },
 	{ ft_end,  0, NULL, NULL }
 };
-
-struct_desc ikev2_skf_desc = { "IKEv2 Encrypted Fragment",
-			      ikev2skf_fields, sizeof(struct ikev2_skf), 0, };
+struct_desc ikev2_skf_desc = {
+	.name = "IKEv2 Encrypted Fragment",
+	.fields = ikev2skf_fields,
+	.size = sizeof(struct ikev2_skf),
+	.np = ISAKMP_NEXT_v2SKF,
+};
 
 static field_desc suggested_group_fields[] = {
 	{ ft_enum, 16 / BITS_PER_BYTE, "suggested DH Group", &oakley_group_names },
