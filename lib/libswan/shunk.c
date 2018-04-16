@@ -21,10 +21,37 @@ const shunk_t empty_shunk;
 
 shunk_t shunk1(const char *ptr)
 {
-	return shunk2(ptr, strlen(ptr));
+	if (ptr == NULL) {
+		return empty_shunk;
+	} else {
+		return shunk2(ptr, strlen(ptr));
+	}
 }
 
 shunk_t shunk2(const char *ptr, int len)
 {
+	/*
+	 * Since a zero length string and a NULL string pointer are
+	 * considered to be different, don't convert the former into
+	 * an empty_chunk.
+	 */
 	return (shunk_t) { .ptr = ptr, .len = len, };
+}
+
+shunk_t shunk_token(shunk_t *shunk, const char *delim)
+{
+	shunk_t token = shunk2(shunk->ptr, 0);
+	while (shunk->len > 0) {
+		if (strchr(delim, *shunk->ptr) != NULL) {
+			/* discard delim */
+			shunk->ptr++;
+			shunk->len--;
+			return token;
+		}
+		/* advance, transfering the char */
+		token.len++;
+		shunk->ptr++;
+		shunk->len--;
+	}
+	return token;
 }

@@ -219,7 +219,7 @@ struct proposal_parser proposal_parser(const struct proposal_policy *policy,
 
 bool alg_info_parse_str(const struct proposal_parser *parser,
 			struct alg_info *alg_info,
-			const char *alg_str);
+			shunk_t alg_str);
 
 /*
  * Check that encrypt==AEAD and/or integ==none don't contradict.

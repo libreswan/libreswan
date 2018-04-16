@@ -5,6 +5,7 @@
  * Copyright (C) 1998-2001, 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2017 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -38,6 +39,9 @@ extern const shunk_t empty_shunk;
 
 shunk_t shunk1(const char *ptr); /* strlen() implied */
 shunk_t shunk2(const char *ptr, int len);
+
+/* like strsep()/strtok() */
+shunk_t shunk_token(shunk_t *shunk, const char *delim);
 
 /*
  * To print, use: printf(PRISHUNK, SHUNKF(shunk));

@@ -143,7 +143,7 @@ struct alg_info_ike *alg_info_ike_create_from_str(const struct proposal_policy *
 							      &ike_proposal_protocol,
 							      err_buf, err_buf_len);
 
-	if (!alg_info_parse_str(&parser, &alg_info_ike->ai, alg_str)) {
+	if (!alg_info_parse_str(&parser, &alg_info_ike->ai, shunk1(alg_str))) {
 		passert(err_buf[0] != '\0');
 		alg_info_free(&alg_info_ike->ai);
 		return NULL;

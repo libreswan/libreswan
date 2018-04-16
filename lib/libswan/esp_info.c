@@ -99,6 +99,11 @@ struct alg_info_esp *alg_info_esp_create_from_str(const struct proposal_policy *
 						  const char *alg_str,
 						  char *err_buf, size_t err_buf_len)
 {
+	shunk_t string = shunk1(alg_str);
+	const struct proposal_parser parser = proposal_parser(policy,
+							      &esp_proposal_protocol,
+							      err_buf, err_buf_len);
+
 	/*
 	 * alg_info storage should be sized dynamically
 	 * but this may require two passes to know
@@ -106,11 +111,7 @@ struct alg_info_esp *alg_info_esp_create_from_str(const struct proposal_policy *
 	 */
 	struct alg_info_esp *alg_info_esp = alloc_thing(struct alg_info_esp,
 							"alg_info_esp");
-	const struct proposal_parser parser = proposal_parser(policy,
-							      &esp_proposal_protocol,
-							      err_buf, err_buf_len);
-
-	if (!alg_info_parse_str(&parser, &alg_info_esp->ai, alg_str)) {
+	if (!alg_info_parse_str(&parser, &alg_info_esp->ai, string)) {
 		passert(err_buf[0] != '\0');
 		alg_info_free(&alg_info_esp->ai);
 		return NULL;

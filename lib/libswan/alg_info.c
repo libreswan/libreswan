@@ -538,40 +538,38 @@ static bool parser_alg_info_add(const struct proposal_parser *parser,
 
 bool alg_info_parse_str(const struct proposal_parser *parser,
 			struct alg_info *alg_info,
-			const char *alg_str)
+			shunk_t alg_str)
 {
 	DBG(DBG_PROPOSAL_PARSER,
-	    DBG_log("parsing '%s' for %s", alg_str, parser->protocol->name));
+	    DBG_log("parsing '"PRISHUNK"' for %s",
+		    SHUNKF(alg_str), parser->protocol->name));
 
 	/* use default if no string */
-	if (alg_str == NULL) {
+	if (alg_str.ptr == NULL) {
 		const struct proposal_info proposal = {
 			.protocol = parser->protocol,
 		};
 		return merge_default_proposals(parser, alg_info, &proposal);
 	}
 
-	if (strlen(alg_str) == 0) {
+	if (alg_str.len == 0) {
 		/* XXX: hack to keep testsuite happy */
 		snprintf(parser->err_buf, parser->err_buf_len,
 			 "String ended with invalid char, just after \"\"");
 		return false;
 	}
 
-	/*
-	 * Unlike strtok() this leaves the nul in place.
-	 */
-	const char *ptr = alg_str;
-	const char *end = ptr + strlen(ptr);
-	while (true) {
+	shunk_t prop_ptr = alg_str;
+	do {
 		/* find the next proposal */
-		shunk_t prop = shunk2(ptr, strcspn(ptr, ","));
+		shunk_t prop = shunk_token(&prop_ptr, ",");
 		/* parse it */
 		struct token tokens[8];
 		zero(&tokens);
 		struct token *token = tokens;
 		char last_sep = '\0';
-		while (true) {
+		shunk_t alg_ptr = prop;
+		do {
 			if (token + 1 >= tokens+elemsof(tokens)) {
 				/* space for NULL? */
 				snprintf(parser->err_buf, parser->err_buf_len,
@@ -579,15 +577,13 @@ bool alg_info_parse_str(const struct proposal_parser *parser,
 				return false;
 			}
 			/* find the next alg */
-			shunk_t alg = shunk2(ptr, strcspn(ptr, "-;,"));
+			shunk_t alg = shunk_token(&alg_ptr, "-;,");
 			*token++ = (struct token) {
 				.alg = alg,
 				.sep = last_sep,
 			};
-			if (alg.ptr+alg.len >= prop.ptr+prop.len) break;
 			last_sep = alg.ptr[alg.len]; /* save separator */
-			ptr = alg.ptr + alg.len + 1; /* skip separator */
-		}
+		} while (alg_ptr.len > 0);
 		struct proposal_info proposal = {
 			.protocol = parser->protocol,
 		};
@@ -596,9 +592,7 @@ bool alg_info_parse_str(const struct proposal_parser *parser,
 			passert(parser->err_buf[0] != '\0');
 			return false;
 		}
-		if (prop.ptr+prop.len >= end) break;
-		ptr = prop.ptr+prop.len + 1; /* skip separator */
-	}
+	} while (prop_ptr.len > 0);
 	return true;
 }
 
