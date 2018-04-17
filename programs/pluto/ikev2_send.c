@@ -71,15 +71,14 @@ bool send_recorded_v2_ike_msg(struct state *st, const char *where)
  * Send a payload.
  */
 
-bool ship_v2(pb_stream *outs, enum next_payload_types_ikev2 np,
-	     uint8_t critical, chunk_t *chunk, const char *name)
+bool ship_v2BOGUS(pb_stream *outs, enum next_payload_types_ikev2 np,
+		  uint8_t critical, chunk_t *chunk, const char *name)
 {
 	struct ikev2_generic gen = {
 		.isag_np = np,
 		.isag_critical = critical,
 	};
-	pb_stream pbs = open_output_struct_pbs(outs, &gen,
-					       &ikev2_generic_desc);
+	pb_stream pbs = open_output_struct_pbs(outs, &gen, &ikev2_bogus_desc);
 	if (chunk != NULL) {
 		if (!out_chunk(*chunk, &pbs, name)) {
 			return false;

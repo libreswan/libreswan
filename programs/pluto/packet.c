@@ -697,9 +697,18 @@ static field_desc ikev2generic_fields[] = {
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_end,  0, NULL, NULL }
 };
-struct_desc ikev2_generic_desc = { "IKEv2 Generic Payload",
-				   ikev2generic_fields,
-				   sizeof(struct ikev2_generic), 0, };
+struct_desc ikev2_generic_desc = {
+	.name = "IKEv2 Generic Payload",
+	.fields = ikev2generic_fields,
+	.size = sizeof(struct ikev2_generic),
+	.np = 0, /* only for reading */
+};
+struct_desc ikev2_bogus_desc = {
+	.name = "IKEv2 Bogus Payload",
+	.fields = ikev2generic_fields,
+	.size = sizeof(struct ikev2_generic),
+	.np = ISAKMP_NEXT_v2BOGUS,
+};
 
 /*
  * IKEv2 - Security Association Payload

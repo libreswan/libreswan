@@ -818,6 +818,7 @@ struct ikev2_generic {
 	u_int16_t isag_length;
 };
 extern struct_desc ikev2_generic_desc;
+extern struct_desc ikev2_bogus_desc;
 
 struct ikev2_sa {
 	u_int8_t isasa_np;		/* Next payload */

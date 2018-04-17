@@ -62,11 +62,12 @@ bool ikev2_close_encrypted_payload(v2sk_stream_t *sk);
 stf_status ikev2_encrypt_payload(v2sk_stream_t *sk);
 
 /*
- * XXX: Is the name ship_v2*() for where a function writes an entire
- * payload into the PBS.
+ * XXX: Where does the name ship_v2*() come from?  Is for when a
+ * function writes an entire payload into the PBS?  emit_v2*() might
+ * be more meaningful?
  */
-bool ship_v2(pb_stream *outs, enum next_payload_types_ikev2 np,
-	     uint8_t critical, chunk_t *data, const char *name);
+bool ship_v2BOGUS(pb_stream *outs, enum next_payload_types_ikev2 np,
+		  uint8_t critical, chunk_t *data, const char *name);
 
 bool ship_v2N(enum next_payload_types_ikev2 np,
 	      u_int8_t critical,
