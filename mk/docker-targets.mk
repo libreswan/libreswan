@@ -36,6 +36,9 @@ TWEAKS=
 ifeq ($(DISTRO), ubuntu)
 	DOCKERFILE_PKG=$(D)/Dockerfile-debian-min-packages
 	TWEAKS = dcokerfile-ubuntu-cmd
+	ifeq ($(DISTRO_REL), xenial)
+		TWEAKS = flip-glibc-kern-headers
+	endif
 endif
 
 ifeq ($(DISTRO), debian)
@@ -90,6 +93,11 @@ disable-dsnssec:
 .PHONY: disable-seccomp
 disable-seccomp:
 	$(shell (grep "^USE_SECCOMP=" Makefile.inc.local || echo "USE_SECCOMP=false" >> Makefile.inc.local))
+
+.PHONY: flip-glibc-kern-headers
+flip-glibc-kern-headers:
+	$(shell (grep "^USE_GLIBC_KERN_FLIP_HEADERS=" Makefile.inc.local || echo "USE_GLIBC_KERN_FLIP_HEADERS=true" >> Makefile.inc.local))
+
 
 
 #
