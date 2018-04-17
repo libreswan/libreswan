@@ -842,8 +842,12 @@ static field_desc ikev2ke_fields[] = {
 	{ ft_end,  0, NULL, NULL },
 };
 
-struct_desc ikev2_ke_desc = { "IKEv2 Key Exchange Payload",
-			      ikev2ke_fields, sizeof(struct ikev2_ke), 0, };
+struct_desc ikev2_ke_desc = {
+	.name = "IKEv2 Key Exchange Payload",
+	.fields = ikev2ke_fields,
+	.size = sizeof(struct ikev2_ke),
+	.np = ISAKMP_NEXT_v2KE,
+};
 
 /*
  * 3.5.  Identification Payloads

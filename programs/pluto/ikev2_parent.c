@@ -939,31 +939,26 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 	}
 	/* SA out */
 	{
+		ikev2_proposals_from_alg_info_ike(c->name,
+						  "IKE SA initiator emitting local proposals",
+						  c->alg_info_ike,
+						  &c->ike_proposals);
+		passert(c->ike_proposals != NULL);
+		/*
+		 * Since this is an initial IKE exchange, the SPI is
+		 * emitted as is part of the packet header and not the
+		 * proposal.  Hence the NULL SPIs.
+		 */
 		u_char *sa_start = rbody.cur;
-
-		if (!DBGP(IMPAIR_SEND_IKEv2_KE)) {
-			ikev2_proposals_from_alg_info_ike(c->name,
-							  "IKE SA initiator emitting local proposals",
-							  c->alg_info_ike,
-							  &c->ike_proposals);
-			passert(c->ike_proposals != NULL);
-			/*
-			 * Since this is an initial IKE exchange, the
-			 * SPI is emitted as is part of the packet
-			 * header and not the proposal.  Hence the
-			 * NULL SPIs.
-			 */
-			bool ret = ikev2_emit_sa_proposals(&rbody,
-							   c->ike_proposals,
-							   (chunk_t*)NULL,
-							   ISAKMP_NEXT_v2KE);
-			if (!ret) {
-				libreswan_log("outsa fail");
-				reset_cur_state();
-				return STF_INTERNAL_ERROR;
-			}
-		} else {
-			libreswan_log("SKIPPED sending KE payload because impair-send-ikev2-ke was set");
+		enum next_payload_types_ikev2 np =
+			IMPAIR(SEND_IKEv2_KE) ? ISAKMP_NEXT_v2Ni : ISAKMP_NEXT_v2KE;
+		bool ret = ikev2_emit_sa_proposals(&rbody,
+						   c->ike_proposals,
+						   (chunk_t*)NULL, np);
+		if (!ret) {
+			libreswan_log("outsa fail");
+			reset_cur_state();
+			return STF_INTERNAL_ERROR;
 		}
 		/* save initiator SA for later HASH */
 		if (st->st_p1isa.ptr == NULL) {
@@ -976,10 +971,14 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 
 	/* ??? from here on, this looks a lot like the end of ikev2_parent_inI1outR1_tail */
 
-	/* send KE */
-	if (!justship_v2KE(&st->st_gi, st->st_oakley.ta_dh,
-			   &rbody, ISAKMP_NEXT_v2Ni))
-		return STF_INTERNAL_ERROR;
+	if (IMPAIR(SEND_IKEv2_KE)) {
+		libreswan_log("SKIPPED sending KE payload because impair-send-ikev2-ke was set");
+	} else {
+		/* send KE */
+		if (!justship_v2KE(&st->st_gi, st->st_oakley.ta_dh,
+				   &rbody, ISAKMP_NEXT_v2Ni))
+			return STF_INTERNAL_ERROR;
+	}
 
 	/* send NONCE */
 	{
