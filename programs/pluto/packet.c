@@ -1188,8 +1188,18 @@ static field_desc ikev2ts_fields[] = {
 	{ ft_zig, 16 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_end,  0, NULL, NULL }
 };
-struct_desc ikev2_ts_desc = { "IKEv2 Traffic Selector Payload",
-			      ikev2ts_fields, sizeof(struct ikev2_ts), 0, };
+struct_desc ikev2_ts_i_desc = {
+	.name = "IKEv2 Traffic Selector - Initiator - Payload",
+	.fields = ikev2ts_fields,
+	.size = sizeof(struct ikev2_ts),
+	.np = ISAKMP_NEXT_v2TSi,
+};
+struct_desc ikev2_ts_r_desc = {
+	.name = "IKEv2 Traffic Selector - Responder - Payload",
+	.fields = ikev2ts_fields,
+	.size = sizeof(struct ikev2_ts),
+	.np = ISAKMP_NEXT_v2TSr,
+};
 
 /*
  * 3.13.1.  Traffic Selector
@@ -1376,8 +1386,8 @@ struct_desc *v2_payload_desc(unsigned p)
 		&ikev2_notify_desc,             /* 41 ISAKMP_NEXT_v2N */
 		&ikev2_delete_desc,             /* 42 ISAKMP_NEXT_v2D */
 		&ikev2_vendor_id_desc,          /* 43 ISAKMP_NEXT_v2V */
-		&ikev2_ts_desc,			/* 44 ISAKMP_NEXT_v2TSi */
-		&ikev2_ts_desc,			/* 45 ISAKMP_NEXT_v2TSr */
+		&ikev2_ts_i_desc,		/* 44 ISAKMP_NEXT_v2TSi */
+		&ikev2_ts_r_desc,		/* 45 ISAKMP_NEXT_v2TSr */
 		&ikev2_sk_desc,                 /* 46 ISAKMP_NEXT_v2SK */
 		&ikev2_cp_desc,			/* 47 ISAKMP_NEXT_v2CP */
 		NULL,				/* 48 */

@@ -139,22 +139,21 @@ struct traffic_selector ikev2_end_to_ts(const struct end *e)
 	return ts;
 }
 
-static stf_status ikev2_emit_ts(struct msg_digest *md UNUSED,
-			 pb_stream *outpbs,
-			 unsigned int lt,
-			 struct traffic_selector *ts,
-			 enum original_role role UNUSED)
+static stf_status ikev2_emit_ts(pb_stream *outpbs,
+				const struct_desc *ts_desc,
+				struct traffic_selector *ts,
+				enum next_payload_types_ikev2 np)
 {
 	struct ikev2_ts its;
 	struct ikev2_ts1 its1;
 	pb_stream ts_pbs;
 	pb_stream ts_pbs2;
 
-	its.isat_lt = lt;
+	its.isat_lt = np; /* LT is IKEv1 name? */
 	its.isat_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 	its.isat_num = 1;
 
-	if (!out_struct(&its, &ikev2_ts_desc, outpbs, &ts_pbs))
+	if (!out_struct(&its, ts_desc, outpbs, &ts_pbs))
 		return STF_INTERNAL_ERROR;
 
 	switch (ts->ts_type) {
@@ -215,34 +214,52 @@ static stf_status ikev2_emit_ts(struct msg_digest *md UNUSED,
 	return STF_OK;
 }
 
-stf_status ikev2_calc_emit_ts(struct msg_digest *md,
-			      pb_stream *outpbs,
-			      const enum original_role role,
-			      const struct connection *c0,
-			      const enum next_payload_types_ikev2 np)
+stf_status ikev2_emit_ts_payloads(struct child_sa *child, pb_stream *outpbs,
+				  enum sa_role role,
+				  const struct connection *c0,
+				  const enum next_payload_types_ikev2 np)
 {
-	struct state *st = md->st;
 	struct traffic_selector *ts_i, *ts_r;
 
-	if (role == ORIGINAL_INITIATOR) {
-		ts_i = &st->st_ts_this;
-		ts_r = &st->st_ts_that;
-	} else {
-		ts_i = &st->st_ts_that;
-		ts_r = &st->st_ts_this;
+	switch (role) {
+	case SA_INITIATOR:
+		ts_i = &child->sa.st_ts_this;
+		ts_r = &child->sa.st_ts_that;
+		break;
+	case SA_RESPONDER:
+		ts_i = &child->sa.st_ts_that;
+		ts_r = &child->sa.st_ts_this;
+		break;
+	default:
+		bad_case(role);
 	}
 
-	const struct spd_route *sr;
+	/*
+	 * XXX: this looks wrong
+	 *
+	 * - instead of emitting two traffic selector payloads (TSi
+	 *   TSr) each containg all the corresponding traffic
+	 *   selectors, it is emitting a sequence of traffic selector
+	 *   payloads each containg just one traffic selector
+	 *
+	 * - should multiple initiator (responder) traffic selector
+	 *   payloads be emitted then they will all contain the same
+	 *   value - the loop control variable SR is never referenced
+	 *
+	 * - should multiple traffic selector payload be emitted then
+         *   the next payload type for all but the last v2TSr payload
+         *   will be wrong - it is always set to the type of the
+         *   payload after these
+	 */
 
-	for (sr = &c0->spd; sr != NULL; sr = sr->spd_next) {
-		stf_status ret = ikev2_emit_ts(md, outpbs, ISAKMP_NEXT_v2TSr,
-				    ts_i, ORIGINAL_INITIATOR);
+	for (const struct spd_route *sr = &c0->spd; sr != NULL;
+	     sr = sr->spd_next) {
+		stf_status ret = ikev2_emit_ts(outpbs, &ikev2_ts_i_desc, ts_i,
+					       ISAKMP_NEXT_v2TSr);
 
 		if (ret != STF_OK)
 			return ret;
-
-		ret = ikev2_emit_ts(md, outpbs, np, ts_r, ORIGINAL_RESPONDER);
-
+		ret = ikev2_emit_ts(outpbs, &ikev2_ts_r_desc, ts_r, np);
 		if (ret != STF_OK)
 			return ret;
 	}
@@ -1049,6 +1066,9 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	 *
 	 *   Either way, something is wrong as this call hard-wires
 	 *   the responder but the second call is using ORIGINAL_ROLE!
+	 *
+	 * Consequently 'role' should be deleted and code should
+	 * instead be passed SA_RESPONDER.
 	 */
 	const enum original_role role = ORIGINAL_RESPONDER;
 
@@ -1227,8 +1247,14 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 			}
 		}
 
-		stf_status ret = ikev2_calc_emit_ts(md, outpbs, role, c,
-			send_ntfy ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE);
+		/*
+		 * XXX: see above notes on 'role' - this must be the
+		 * SA_RESPONDER.
+		 */
+		stf_status ret = ikev2_emit_ts_payloads(pexpect_child_sa(cst), outpbs,
+							SA_RESPONDER, c,
+							(send_ntfy ? ISAKMP_NEXT_v2N
+							 : ISAKMP_NEXT_v2NONE));
 
 		if (ret != STF_OK)
 			return ret;	/* should we delete_state cst? */

@@ -985,7 +985,8 @@ struct ikev2_ts1 {
 	u_int16_t isat1_startport;
 	u_int16_t isat1_endport;
 };
-extern struct_desc ikev2_ts_desc;
+extern struct_desc ikev2_ts_i_desc;
+extern struct_desc ikev2_ts_r_desc;
 extern struct_desc ikev2_ts1_desc;
 
 /* rfc4306, section 3.14, encrypted payload, uses generic header */
