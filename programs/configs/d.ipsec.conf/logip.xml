@@ -7,7 +7,8 @@
 that this only affects regular logging. Any enabled debugging via <emphasis remap='B'>plutodebug=</emphasis>
 will still contain IP addresses of peers. This option is mostly meant for servers that want to avoid
 logging IP addresses of incoming clients. Other identifiable information might still be logged, such as
-ID payloads and X.509 certificate details. Most deployments will not want to change this from the default.
+ID payloads and X.509 certificate details. When using ID of type IP address, this option will not hide
+the actual IP address as part of the ID. Most deployments will not want to change this from the default.
 </para>
   </listitem>
   </varlistentry>
