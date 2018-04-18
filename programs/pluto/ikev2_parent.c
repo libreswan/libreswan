@@ -1044,8 +1044,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 		libreswan_log("IMPAIR: adding a bogus playload of type %d to SA_INIT request",
 			      ISAKMP_NEXT_v2BOGUS);
 		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
-		uint8_t critical = build_ikev2_critical(false, IMPAIR(BOGUS_PAYLOAD_CRITICAL));
-		if (!ship_v2BOGUS(&rbody, np, critical, NULL, NULL)) {
+		if (!ship_v2BOGUS(&rbody, np)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -1668,8 +1667,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 			      ISAKMP_NEXT_v2BOGUS);
 		int np = send_certreq ? ISAKMP_NEXT_v2CERTREQ :
                         (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
-		uint8_t critical = build_ikev2_critical(false, IMPAIR(BOGUS_PAYLOAD_CRITICAL));
-		if (!ship_v2BOGUS(&rbody, np, critical, NULL, NULL)) {
+		if (!ship_v2BOGUS(&rbody, np)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -3287,8 +3285,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		libreswan_log("IMPAIR: adding a bogus payload of type %d to AUTH request",
 			      ISAKMP_NEXT_v2BOGUS);
 		int np = ISAKMP_NEXT_v2SK;
-		uint8_t critical = build_ikev2_critical(false, IMPAIR(BOGUS_PAYLOAD_CRITICAL));
-		if (!ship_v2BOGUS(&rbody, np, critical, NULL, NULL)) {
+		if (!ship_v2BOGUS(&rbody, np)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -3392,8 +3389,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 			send_idr ? ISAKMP_NEXT_v2IDr :
 			ic ? ISAKMP_NEXT_v2N :
 			ISAKMP_NEXT_v2AUTH;
-		uint8_t critical = build_ikev2_critical(false, IMPAIR(BOGUS_PAYLOAD_CRITICAL));
-		if (!ship_v2BOGUS(&e_pbs_cipher, np, critical, NULL, NULL)) {
+		if (!ship_v2BOGUS(&e_pbs_cipher, np)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -4189,8 +4185,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 			libreswan_log("IMPAIR: adding a bogus payload of type %d to AUTH reply",
 				      ISAKMP_NEXT_v2BOGUS);
 			int np = ISAKMP_NEXT_v2SK;
-			uint8_t critical = build_ikev2_critical(false, IMPAIR(BOGUS_PAYLOAD_CRITICAL));
-			if (!ship_v2BOGUS(&rbody, np, critical, NULL, NULL)) {
+			if (!ship_v2BOGUS(&rbody, np)) {
 				return STF_INTERNAL_ERROR;
 			}
 		}
@@ -4227,8 +4222,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 				      ISAKMP_NEXT_v2BOGUS);
 			int np = (notifies != 0) ? ISAKMP_NEXT_v2N :
 				ISAKMP_NEXT_v2IDr;
-			uint8_t critical = build_ikev2_critical(false, IMPAIR(BOGUS_PAYLOAD_CRITICAL));
-			if (!ship_v2BOGUS(&e_pbs_cipher, np, critical, NULL, NULL)) {
+			if (!ship_v2BOGUS(&e_pbs_cipher, np)) {
 				return STF_INTERNAL_ERROR;
 			}
 		}

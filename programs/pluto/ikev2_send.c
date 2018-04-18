@@ -40,6 +40,8 @@
 #include "demux.h"	/* for struct msg_digest */
 #include "rnd.h"
 
+static uint8_t build_ikev2_critical(bool critical, bool impair);	/* forward */
+
 bool record_and_send_v2_ike_msg(struct state *st, pb_stream *pbs,
 				const char *what)
 {
@@ -71,19 +73,13 @@ bool send_recorded_v2_ike_msg(struct state *st, const char *where)
  * Send a payload.
  */
 
-bool ship_v2BOGUS(pb_stream *outs, enum next_payload_types_ikev2 np,
-		  uint8_t critical, chunk_t *chunk, const char *name)
+bool ship_v2BOGUS(pb_stream *outs, enum next_payload_types_ikev2 np)
 {
 	struct ikev2_generic gen = {
 		.isag_np = np,
-		.isag_critical = critical,
+		.isag_critical = build_ikev2_critical(false, IMPAIR(BOGUS_PAYLOAD_CRITICAL)),
 	};
 	pb_stream pbs = open_output_struct_pbs(outs, &gen, &ikev2_bogus_desc);
-	if (chunk != NULL) {
-		if (!out_chunk(*chunk, &pbs, name)) {
-			return false;
-		}
-	}
 	if (!pbs_ok(&pbs)) {
 		return false;
 	}
@@ -136,7 +132,7 @@ uint8_t build_ikev2_version(void)
 	       (IKEv2_MINOR_VERSION + (DBGP(IMPAIR_MINOR_VERSION_BUMP) ? 1 : 0));
 }
 
-uint8_t build_ikev2_critical(bool critical, bool impair)
+static uint8_t build_ikev2_critical(bool critical, bool impair)
 {
 	uint8_t octet = 0;
 	if (impair) {
