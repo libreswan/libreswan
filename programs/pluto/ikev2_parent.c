@@ -164,30 +164,30 @@ static bool negotiate_hash_algo_from_notification(struct payload_digest *p, stru
  * connection. Don't do this for AUTH_NULL or AUTH_PSK, as different
  * entities use the same ID (eg group id)
  */
-static void process_initial_contact(struct state *pst)
+static void process_initial_contact(const struct state *pst)
 {
 	const struct connection *c = pst->st_connection;
-	struct connection *candidate;
 
 	if (pst->st_seen_initialc &&
-		c->spd.that.authby != AUTH_PSK &&
-		c->spd.that.authby != AUTH_NULL) {
-
-		for (candidate = connections; candidate != NULL; candidate = candidate->ac_next) {
-			if (candidate == c) /* self */
-				continue;
-			if (candidate->kind != CK_INSTANCE)
-				continue;
-			if (!streq(candidate->name,c->name)) /* different conn */
-				continue;
-			if (!same_id(&candidate->spd.that.id, &c->spd.that.id))
-				continue;
-			DBG(DBG_CONTROL, DBG_log("deleting previous connection of this client ID as per INITIAL_CONTACT notify"));
-			delete_connection(candidate, FALSE);
-			break; /* There can only be one old one */
+	    c->spd.that.authby != AUTH_PSK &&
+	    c->spd.that.authby != AUTH_NULL)
+	{
+		bool none = TRUE;
+		for (struct connection *candidate = connections; candidate != NULL; ) {
+			struct connection *nc = candidate = candidate->ac_next;
+			if (candidate != c && /* self */
+			    candidate->kind == CK_INSTANCE &&
+			    streq(candidate->name,c->name) && /* same conn */
+			    same_id(&candidate->spd.that.id, &c->spd.that.id))
+			{
+				DBG(DBG_CONTROL, DBG_log("deleting previous connection of this client ID as per INITIAL_CONTACT notify"));
+				delete_connection(candidate, FALSE);
+				none = FALSE;
+			}
+			candidate = nc;
 		}
-		if (candidate == NULL) {
-			DBG(DBG_CONTROL, DBG_log("No old connection found to delete"));
+		if (none) {
+			DBG(DBG_CONTROL, DBG_log("INITIAL_CONTACT received but no old connection found to delete"));
 		}
 	}
 }
