@@ -1,11 +1,32 @@
 Basic pluto with IKEv2 on the initiator (west), and on the responder.
 
-However, this test checks to see if the responder accepts a more
-narrowed down proposal as per http://tools.ietf.org/html/rfc5996#section-2.9
+Per https://tools.ietf.org/html/rfc7296#section-2.9 (Traffic Selector
+Negotiation) this test checks to see if the responder accepts a more
+narrowed down proposal.
 
-The initiator asks for all protocols and ports. The responder only allows
-all protocols and port 1234.
+The initiator, configured with narrowing=no and a traffic selector
+specifying all protocols and ports, requests a CHILD SA.
 
-Because narrowing=yes on the responder, it will allow and suggest its
-narrowed proposal. Because the initiator has narrowing=no, it should reject it.
+The responder, configured with narrowing=yes and a traffic selector
+specifying all protocols but only port 1234, responds with a narrowed
+response.
 
+Because the initiator has narrowing=no, it should reject the CHILD_SA.
+
+Per https://tools.ietf.org/html/rfc7296#section-2.21.2 (Error Handling
+in IKE_AUTH):
+
+- the initiator authenticates the responder
+
+  If that fails the response can't be trusted and the IKE SA is
+  deleted using a further exchange, a new IKE SA can then be
+  initiated.
+
+  Here, this should succeed.
+
+- the initiator checks the CHILD SA response
+
+  If that fails the child sa is deleted using a further exchange, the
+  IKE SA may also be deleted based on policy.
+
+  XXX: Not sure what pluto is doing; it isn't this.
