@@ -66,7 +66,7 @@ stf_status ikev2_encrypt_payload(v2sk_stream_t *sk);
  * function writes an entire payload into the PBS?  emit_v2*() might
  * be more meaningful?
  */
-bool ship_v2BOGUS(pb_stream *outs, enum next_payload_types_ikev2 np, const char *victim);
+bool ship_v2BOGUS(pb_stream *outs, const char *victim);
 
 bool ship_v2N(enum next_payload_types_ikev2 np,
 	      u_int8_t critical,

@@ -73,12 +73,12 @@ bool send_recorded_v2_ike_msg(struct state *st, const char *where)
  * Send a payload.
  */
 
-bool ship_v2BOGUS(pb_stream *outs, enum next_payload_types_ikev2 np, const char *victim)
+bool ship_v2BOGUS(pb_stream *outs, const char *victim)
 {
 	libreswan_log("IMPAIR: adding a bogus playload of type %d to %s",
 		      ISAKMP_NEXT_v2BOGUS, victim);
 	struct ikev2_generic gen = {
-		.isag_np = np,
+		.isag_np = 0,
 		.isag_critical = build_ikev2_critical(false, IMPAIR(BOGUS_PAYLOAD_CRITICAL)),
 	};
 	pb_stream pbs = open_output_struct_pbs(outs, &gen, &ikev2_bogus_desc);
