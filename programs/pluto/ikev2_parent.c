@@ -1041,10 +1041,8 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 	/* something the other end won't like */
 
 	if (IMPAIR(ADD_BOGUS_PAYLOAD_TO_SA_INIT)) {
-		libreswan_log("IMPAIR: adding a bogus playload of type %d to SA_INIT request",
-			      ISAKMP_NEXT_v2BOGUS);
 		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
-		if (!ship_v2BOGUS(&rbody, np)) {
+		if (!ship_v2BOGUS(&rbody, np, "SA_INIT request")) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -1663,11 +1661,9 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	/* something the other end won't like */
 
 	if (IMPAIR(ADD_BOGUS_PAYLOAD_TO_SA_INIT)) {
-		libreswan_log("IMPAIR: adding a bogus payload of type %d to SA_INIT reply",
-			      ISAKMP_NEXT_v2BOGUS);
 		int np = send_certreq ? ISAKMP_NEXT_v2CERTREQ :
                         (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
-		if (!ship_v2BOGUS(&rbody, np)) {
+		if (!ship_v2BOGUS(&rbody, np, "SA_INIT reply")) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -3282,10 +3278,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	}
 
 	if (IMPAIR(ADD_BOGUS_PAYLOAD_TO_AUTH)) {
-		libreswan_log("IMPAIR: adding a bogus payload of type %d to AUTH request",
-			      ISAKMP_NEXT_v2BOGUS);
-		int np = ISAKMP_NEXT_v2SK;
-		if (!ship_v2BOGUS(&rbody, np)) {
+		if (!ship_v2BOGUS(&rbody, ISAKMP_NEXT_v2SK, "AUTH request")) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -3383,13 +3376,11 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	}
 
 	if (IMPAIR(ADD_BOGUS_PAYLOAD_TO_AUTH_SK)) {
-		libreswan_log("IMPAIR: adding a bogus playload of type %d to AUTH's SK request",
-			      ISAKMP_NEXT_v2BOGUS);
 		int np = send_cert ?  ISAKMP_NEXT_v2CERT :
 			send_idr ? ISAKMP_NEXT_v2IDr :
 			ic ? ISAKMP_NEXT_v2N :
 			ISAKMP_NEXT_v2AUTH;
-		if (!ship_v2BOGUS(&e_pbs_cipher, np)) {
+		if (!ship_v2BOGUS(&e_pbs_cipher, np, "AUTH's SK request")) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -4182,10 +4173,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		}
 
 		if (IMPAIR(ADD_BOGUS_PAYLOAD_TO_AUTH)) {
-			libreswan_log("IMPAIR: adding a bogus payload of type %d to AUTH reply",
-				      ISAKMP_NEXT_v2BOGUS);
-			int np = ISAKMP_NEXT_v2SK;
-			if (!ship_v2BOGUS(&rbody, np)) {
+			if (!ship_v2BOGUS(&rbody, ISAKMP_NEXT_v2SK, "AUTH reply")) {
 				return STF_INTERNAL_ERROR;
 			}
 		}
@@ -4218,11 +4206,9 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		passert(reply_stream.start <= iv && iv <= encstart);
 
 		if (IMPAIR(ADD_BOGUS_PAYLOAD_TO_AUTH_SK)) {
-			libreswan_log("IMPAIR: adding a bogus playload of type %d to AUTH's SK reply",
-				      ISAKMP_NEXT_v2BOGUS);
 			int np = (notifies != 0) ? ISAKMP_NEXT_v2N :
 				ISAKMP_NEXT_v2IDr;
-			if (!ship_v2BOGUS(&e_pbs_cipher, np)) {
+			if (!ship_v2BOGUS(&e_pbs_cipher, np, "AUTH's SK reply")) {
 				return STF_INTERNAL_ERROR;
 			}
 		}
