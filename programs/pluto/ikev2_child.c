@@ -403,7 +403,7 @@ int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
 	int tsi_ni;
 	int bestfit_pr = -1;
 	const struct end *ei, *er;
-	int narrowing = (d->policy & POLICY_IKEV2_ALLOW_NARROWING);
+	bool narrowing = (d->policy & POLICY_IKEV2_ALLOW_NARROWING);
 
 	if (role == ORIGINAL_INITIATOR) {
 		ei = &sr->this;
@@ -510,7 +510,7 @@ int ikev2_evaluate_connection_port_fit(const struct connection *d,
 	int tsi_ni;
 	int bestfit_p = -1;
 	const struct end *ei, *er;
-	int narrowing = (d->policy & POLICY_IKEV2_ALLOW_NARROWING);
+	bool narrowing = (d->policy & POLICY_IKEV2_ALLOW_NARROWING);
 
 	if (role == ORIGINAL_INITIATOR) {
 		ei = &sr->this;
