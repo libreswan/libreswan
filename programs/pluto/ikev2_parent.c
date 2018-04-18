@@ -6914,7 +6914,13 @@ void ikev2_addr_change(struct state *st)
 	 * mobike need two lookups. one for the gateway and
 	 * the one for the source address
 	 */
-	switch (resolve_defaultroute_one(&this, &that, 3)) {
+	switch (resolve_defaultroute_one(&this, &that, TRUE)) {
+	case 0:	/* success */
+		/* cannot happen */
+		/* ??? original code treated this as failure */
+		/* bad_case(0); */
+		libreswan_log("unexpected SUCCESS from first resolve_defaultroute_one");
+		/* FALL THROUGH */
 	case -1:	/* failure */
 		/* keep this DEBUG, if a libreswan log, too many false +ve */
 		DBG(DBG_CONTROL, {
@@ -6925,12 +6931,14 @@ void ikev2_addr_change(struct state *st)
 		});
 		break;
 
-	case 0:	/* success */
-		/* cannot happen */
-		bad_case(0);
-
 	case 1: /* please call again: more to do */
-		switch (resolve_defaultroute_one(&this, &that, 3)) {
+		switch (resolve_defaultroute_one(&this, &that, TRUE)) {
+		case 1: /* please call again: more to do */
+			/* cannot happen */
+			/* ??? original code treated this as failure */
+			/* bad_case(1); */
+			libreswan_log("unexpected TRY AGAIN from second resolve_defaultroute_one");
+			/* FALL THROUGH */
 		case -1:	/* failure */
 		{
 			ipstr_buf g, b;
@@ -6948,9 +6956,6 @@ void ikev2_addr_change(struct state *st)
 			break;
 		}
 
-		case 1: /* please call again: more to do */
-			/* cannot happen */
-			bad_case(1);
 		}
 		break;
 	}
