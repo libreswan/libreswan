@@ -4566,12 +4566,21 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 
 		/* Check TSi/TSr http://tools.ietf.org/html/rfc5996#section-2.9 */
 		DBG(DBG_CONTROLMORE,
-		    DBG_log(" check narrowing - we are responding to I2"));
+		    DBG_log("TS: check narrowing - we are responding to I2"));
 
+
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("TS: parse initiator traffic selectors"));
 		struct payload_digest *const tsi_pd = md->chain[ISAKMP_NEXT_v2TSi];
-		struct payload_digest *const tsr_pd = md->chain[ISAKMP_NEXT_v2TSr];
-		struct traffic_selector tsi[16], tsr[16];
+		/* ??? is 16 an undocumented limit - IKEv2 has no limit */
+		struct traffic_selector tsi[16];
 		const int tsi_n = ikev2_parse_ts(tsi_pd, tsi, elemsof(tsi));
+
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("TS: parse responder traffic selectors"));
+		struct payload_digest *const tsr_pd = md->chain[ISAKMP_NEXT_v2TSr];
+		/* ??? is 16 an undocumented limit - IKEv2 has no limit */
+		struct traffic_selector tsr[16];
 		const int tsr_n = ikev2_parse_ts(tsr_pd, tsr, elemsof(tsr));
 
 		if (tsi_n < 0 || tsr_n < 0)

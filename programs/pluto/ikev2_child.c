@@ -274,8 +274,12 @@ int ikev2_parse_ts(struct payload_digest *const ts_pd,
 {
 	unsigned int i;
 
-	if (ts_pd->payload.v2ts.isat_num >= array_roof)
+	if (ts_pd->payload.v2ts.isat_num >= array_roof) {
+		DBGF(DBG_CONTROLMORE,
+		     "TS contains %d entries which exceeds hardwired max of %d",
+		     ts_pd->payload.v2ts.isat_num, array_roof);
 		return -1;	/* won't fit in array */
+	}
 
 	for (i = 0; i < ts_pd->payload.v2ts.isat_num; i++) {
 		pb_stream addr;
@@ -695,12 +699,19 @@ stf_status ikev2_resp_accept_child_ts(
 {
 	struct connection *c = md->st->st_connection;
 
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("TS: parse initiator traffic selectors"));
 	/* ??? is 16 an undocumented limit - IKEv2 has no limit */
-	struct traffic_selector tsi[16], tsr[16];
+	struct traffic_selector tsi[16];
 	const int tsi_n = ikev2_parse_ts(md->chain[ISAKMP_NEXT_v2TSi],
-		tsi, elemsof(tsi));
+					 tsi, elemsof(tsi));
+
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("TS: parse responder traffic selectors"));
+	/* ??? is 16 an undocumented limit - IKEv2 has no limit */
+	struct traffic_selector tsr[16];
 	const int tsr_n = ikev2_parse_ts(md->chain[ISAKMP_NEXT_v2TSr],
-		tsr, elemsof(tsr));
+					 tsr, elemsof(tsr));
 
 	/* best so far */
 	int bestfit_n = -1;
