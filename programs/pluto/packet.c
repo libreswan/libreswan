@@ -2038,13 +2038,15 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 						     container->previous_np_field->name,
 						     sd->name, sd->np, enum_name(fp->desc, sd->np));
 					} else {
-						PEXPECT_LOG("next payload type: previous '%s' '%s' (%d:%s) and/or current '%s' (%d:%s) invalid",
-							    container->previous_np_struct->name,
-							    container->previous_np_field->name,
-							    *container->previous_np,
-							    enum_name(container->previous_np_field->desc, *container->previous_np),
-							    sd->name, sd->np, enum_name(fp->desc, sd->np));
-						return false;
+						/* dump everything; could be bad */
+						DBGF(DBG_PARSING,
+						     "next payload type: TODO: previous '%s' '%s' (%d:%s); current '%s' (%d:%s)",
+						     container->previous_np_struct->name,
+						     container->previous_np_field->name,
+						     *container->previous_np,
+						     enum_name(container->previous_np_field->desc, *container->previous_np),
+						     sd->name, sd->np, enum_name(fp->desc, sd->np));
+						/* but stumble on */
 					}
 					/* save */
 					DBGF(DBG_PARSING, "next payload type: saving payload location '%s' '%s'",
