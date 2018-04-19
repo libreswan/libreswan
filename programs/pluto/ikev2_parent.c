@@ -523,44 +523,22 @@ static stf_status ikev2_match_ke_group_and_proposal(struct msg_digest *md,
  * Called by ikev2_parent_inI2outR2_tail() and ikev2_parent_inR2()
  * Do the actual AUTH payload verification
  */
-
-static bool v2_auth_allowed(struct state *st, const char *peer_attempted,
-			    lset_t required_policy,
-			    const enum keyword_authby that_authby,
-			    const enum keyword_authby required_authby)
-{
-	if (!LIN(required_policy, st->st_connection->policy)) {
-		char buf[100];
-		libreswan_log("Peer attempted %s authentication but it requires %s policy",
-			      peer_attempted,
-			      bitnamesofb(sa_policy_bit_names, required_policy,
-					  buf, sizeof(buf)));
-		return false;
-	}
-	if (that_authby != required_authby) {
-		libreswan_log("Peer attempted %s authentication but we want %s",
-			      peer_attempted,
-			      enum_name(&ikev2_asym_auth_name, that_authby));
-		return false;
-	}
-	return true;
-}
-
 static bool v2_check_auth(enum ikev2_auth_method atype,
-			  struct state *st,
-			  const enum original_role role,
-			  unsigned char idhash_in[MAX_DIGEST_LEN],
-			  pb_stream *pbs,
-			  const enum keyword_authby that_authby)
+	struct state *st,
+	const enum original_role role,
+	unsigned char idhash_in[MAX_DIGEST_LEN],
+	pb_stream *pbs,
+	const enum keyword_authby that_authby)
 {
 	unsigned char check_rsa_sha1_blob[ASN1_SHA1_RSA_OID_SIZE] = {0x0};
 	unsigned char check_length_rsa_sha1_blob[ASN1_LEN_ALGO_IDENTIFIER]= {0};
 	switch (atype) {
 	case IKEv2_AUTH_RSA:
 	{
-		if (!v2_auth_allowed(st, "RSA", POLICY_RSASIG,
-				     that_authby, AUTH_RSASIG)) {
-			return false;
+		if (!LIN(POLICY_RSASIG, st->st_connection->policy) &&  that_authby != AUTH_RSASIG) {
+			libreswan_log("Peer attempted RSA authentication but we want %s",
+				enum_name(&ikev2_asym_auth_name, that_authby));
+			return FALSE;
 		}
 
 		stf_status authstat = ikev2_verify_rsa_sha1(
@@ -578,9 +556,10 @@ static bool v2_check_auth(enum ikev2_auth_method atype,
 
 	case IKEv2_AUTH_PSK:
 	{
-		if (!v2_auth_allowed(st, "PSK", POLICY_PSK,
-				     that_authby, AUTH_PSK)) {
-			return false;
+		if (!LIN(POLICY_PSK, st->st_connection->policy) &&  that_authby != AUTH_PSK) {
+			libreswan_log("Peer attempted PSK authentication but we want %s",
+				enum_name(&ikev2_asym_auth_name, that_authby));
+			return FALSE;
 		}
 
                stf_status authstat = ikev2_verify_psk_auth(
@@ -596,9 +575,10 @@ static bool v2_check_auth(enum ikev2_auth_method atype,
 
 	case IKEv2_AUTH_NULL:
 	{
-		if (!v2_auth_allowed(st, "NULL", POLICY_AUTH_NULL,
-				     that_authby, AUTH_NULL)) {
-			return false;
+		if (!LIN(POLICY_AUTH_NULL, st->st_connection->policy) &&  that_authby != AUTH_NULL) {
+			libreswan_log("Peer attempted NULL authentication but we want %s",
+				enum_name(&ikev2_asym_auth_name, that_authby));
+			return FALSE;
 		}
 
 		stf_status authstat = ikev2_verify_psk_auth(
@@ -615,9 +595,10 @@ static bool v2_check_auth(enum ikev2_auth_method atype,
 
 	case IKEv2_AUTH_DIGSIG:
 	{
-		if (!v2_auth_allowed(st, "Authentication through Digital Signature",
-				     POLICY_RSASIG, that_authby, AUTH_RSASIG)) {
-			return false;
+		if (!LIN(POLICY_RSASIG, st->st_connection->policy) &&  that_authby != AUTH_RSASIG) {
+			libreswan_log("Peer attempted Authentication through Digital Signature but we want %s",
+				enum_name(&ikev2_asym_auth_name, that_authby));
+			return FALSE;
 		}
 		if (!in_raw(check_length_rsa_sha1_blob, ASN1_LEN_ALGO_IDENTIFIER, pbs,
 				"Algorithm Identifier length"))
