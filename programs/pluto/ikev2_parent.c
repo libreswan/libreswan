@@ -5082,6 +5082,8 @@ static stf_status ikev2_rekey_child(const struct msg_digest *md)
 				ikev2_print_ts(&rst->st_ts_this);
 				ikev2_print_ts(&rst->st_ts_that);
 
+				st->st_connection = rst->st_connection;
+
 				ret = STF_OK;
 			}
 
