@@ -895,17 +895,20 @@ bool ikev2_one_alg_info_dh_hack(const struct proposal_parser *parser,
 		if (dh == &unset_group) {
 			dh = alg->dh;
 		} else if (alg->dh != dh) {
+			const char *first;
+			const char *second;
 			if (alg->dh != NULL && dh != NULL) {
-				snprintf(parser->err_buf, parser->err_buf_len,
-					 "multiple conflicting DH algorithms (%s, %s) are not supported",
-					 dh->common.fqn, alg->dh->common.fqn);
+				first = dh->common.fqn;
+				second = alg->dh->common.fqn;
 			} else {
 				pexpect(pfs);
-				snprintf(parser->err_buf, parser->err_buf_len,
-					 "combining PFS (use IKE SA's DH algorithm) with an explicit DH algorithm (%s) is not supported",
-					 dh != NULL ? dh->common.fqn :
-					 alg->dh != NULL ? alg->dh->common.fqn : "???");
+				first = "PFS defaulting to IKE SA's DH";
+				second = (dh != NULL ? dh->common.fqn :
+					  alg->dh != NULL ? alg->dh->common.fqn : "???");
 			}
+			snprintf(parser->err_buf, parser->err_buf_len,
+				 "multiple %s DH algorithms (%s + %s) would require unimplemented CHILD_SA INVALID_KE",
+				 parser->protocol->name, first, second);
 			return false;
 		}
 	}
