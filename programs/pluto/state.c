@@ -639,6 +639,39 @@ static bool eq_pst_msgid_kind(struct state *st,
 	}
 	return FALSE;
 }
+
+static bool ikev2_child_resp_eq_pst_msgid(const struct state *st,
+		so_serial_t psn, msgid_t st_msgid)
+{
+	if (st->st_clonedfrom == psn &&
+			st->st_msgid == st_msgid &&
+			IS_CHILD_SA_RESPONDER(st)) {
+		return TRUE;
+	}
+	return FALSE;
+}
+
+/*
+ * Find the state object that match the following:
+ *      st_msgid (IKEv2 Child responder state)
+ *      parent duplicated from
+ *      expected state
+ */
+
+struct state *resp_state_with_msgid(so_serial_t psn, msgid_t st_msgid)
+{
+	passert(psn >= SOS_FIRST);
+
+	FOR_EACH_COOKIED_STATE(st, {
+			if (ikev2_child_resp_eq_pst_msgid(st, psn, st_msgid))
+			return st;
+			});
+	DBG(DBG_CONTROL,
+			DBG_log("no waiting child state matching pst #%lu msg id %u",
+				psn, ntohs(st_msgid)));
+	return NULL;
+}
+
 /*
  * Find the state object that match the following:
  *	st_msgid (IKE/IPsec initiator state)
