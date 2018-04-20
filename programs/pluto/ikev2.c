@@ -1150,6 +1150,7 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 				md->msgid_received,
 				pst->st_msgid_lastrecv);
 	} else {
+		bool st_busy = st->st_suspended_md != NULL || st->st_suspended_md != NULL;
 		DBG(DBG_CONTROLMORE, {
 			ipstr_buf b;
 			char ca[CONN_INST_BUF];
@@ -1163,9 +1164,15 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 				st->st_connection->name,
 				fmt_conn_instance(st->st_connection, cb),
 				st->st_serialno,
-				st->st_state_name, " will process it further");
+				st->st_state_name,
+				st_busy ? "is busy processing a response drop this message" :
+				" will process it further");
 		});
-        }
+
+		if (st_busy)
+			st = NULL; /* in the previous message */
+	}
+
 
         return st;
 }
