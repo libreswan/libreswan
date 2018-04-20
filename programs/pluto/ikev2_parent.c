@@ -4494,13 +4494,15 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 	return ret;
 }
 
-static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
+static stf_status ikev2_process_cp_respnse(struct msg_digest *md)
 {
-	int cp_r;
 	struct state *st = md->st;
 	struct connection *c = st->st_connection;
+	int cp_r = ikev2_np_cp_or_sa(c, 0, st->hidden_variables.st_nat_traversal);
 
-	cp_r = ikev2_np_cp_or_sa(c, 0, st->hidden_variables.st_nat_traversal);
+	if (st->st_state == STATE_V2_REKEY_CHILD_I)
+		return STF_OK; /* CP response is  not allowed in a REKEY response */
+
 	/* are we expecting a v2CP (RESP) ?  */
 	if (cp_r == ISAKMP_NEXT_v2CP) {
 		if (md->chain[ISAKMP_NEXT_v2CP] == NULL) {
@@ -4520,6 +4522,14 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 	}
+
+	return STF_OK;
+}
+/* check TS payloads, response */
+static stf_status ikev2_process_ts_respnse(struct msg_digest *md)
+{
+	struct state *st = md->st;
+	struct connection *c = st->st_connection;
 
 	/* check TS payloads */
 	{
@@ -4653,6 +4663,16 @@ static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
 			return STF_FAIL + v2N_TS_UNACCEPTABLE;
 		}
 	} /* end of TS check block */
+
+	return STF_OK;
+}
+
+static stf_status ikev2_process_ts_and_rest(struct msg_digest *md)
+{
+	struct state *st = md->st;
+
+	RETURN_STF_FAILURE_STATUS(ikev2_process_cp_respnse(md));
+	RETURN_STF_FAILURE_STATUS(ikev2_process_ts_respnse(md));
 
 	/* examin and accpept SA ESP/AH proposals */
 	if (md->hdr.isa_xchg != ISAKMP_v2_CREATE_CHILD_SA)
