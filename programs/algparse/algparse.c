@@ -29,10 +29,20 @@ enum expect { FAIL = false, PASS = true, IGNORE, };
 			.alg_is_ok = OK,				\
 			.pfs = pfs,					\
 		};							\
+		printf("algparse ");					\
+		if (ikev1) {						\
+			printf("-v1 ");					\
+		}							\
+		if (ikev2) {						\
+			printf("-v2 ");					\
+		}							\
+		if (pfs) {						\
+			printf("-pfs ");				\
+		}							\
 		if (algstr == NULL) {					\
-			printf("[%s]\n", #PARSE);			\
+			printf("'%s'\n", #PARSE);			\
 		} else {						\
-			printf("[%s=%s]\n", #PARSE, algstr);		\
+			printf("'%s=%s'\n", #PARSE, algstr);		\
 		}							\
 		fflush(NULL);						\
 		char err_buf[512] = "";	/* ??? big enough? */		\
