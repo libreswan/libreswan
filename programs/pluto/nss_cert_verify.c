@@ -1,7 +1,7 @@
 /* pluto NSS certificate verification routines
  *
- * Copyright (C) 2015 Matt Rogers <mrogers@libreswan.org>
- * Copyright (C) 2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2015,2018 Matt Rogers <mrogers@libreswan.org>
+ * Copyright (C) 2017-2018 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -31,10 +31,12 @@
 #include "lswlog.h"
 #include "x509.h"
 #include "nss_cert_verify.h"
+#include "lswfips.h" /* for libreswan_fipsmode() */
 #include "nss_err.h"
 #include <secder.h>
 #include <secerr.h>
 #include <certdb.h>
+#include <nss3/keyhi.h>
 
 /*
  * set up the slot/handle/trust things that NSS needs
@@ -181,6 +183,9 @@ static int crt_tmp_import(CERTCertDBHandle *handle, CERTCertificate ***chain,
 
 	int i;
 	int nonroot = 0;
+#ifdef FIPS_CHECK
+	SECKEYPublicKey *pk = NULL;
+#endif /* FIPS_CHECK */
 
 	for (i = 0; i < der_cnt; i++) {
 		if (!CERT_IsRootDERCert(&ders[i]))
@@ -203,6 +208,22 @@ static int crt_tmp_import(CERTCertDBHandle *handle, CERTCertificate ***chain,
 			for (cc = *chain; fin_count < nonroot && *cc != NULL; cc++) {
 				DBG(DBG_X509, DBG_log("decoded %s",
 					(*cc)->subjectName));
+#ifdef FIPS_CHECK
+				if (libreswan_fipsmode()) {
+					pk = CERT_ExtractPublicKey(*cc);
+					passert(pk != NULL);
+					if (pk->u.rsa.modulus.len < FIPS_MIN_RSA_KEY_SIZE) {
+						libreswan_log("FIPS: Rejecting cert with key size under %d",
+							FIPS_MIN_RSA_KEY_SIZE);
+						fin_count = 0;
+						PORT_Free(derlist);
+						SECKEY_DestroyPublicKey(pk);
+						return 0;
+					}
+					SECKEY_DestroyPublicKey(pk);
+					pk = NULL;
+				}
+#endif /* FIPS_CHECK */
 				fin_count++;
 			}
 		}

@@ -14,7 +14,7 @@
  * Copyright (C) 2012 Bram <bram-bcrafjna-erqzvar@spam.wizbit.be>
  * Copyright (C) 2013 Kim B. Heino <b@bbbs.net>
  * Copyright (C) 2013,2017 Antony Antony <antony@phenome.org>
- * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
+ * Copyright (C) 2013,2018 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  * Copyright (C) 2015-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2016-2017 Andrew Cagney
@@ -49,6 +49,7 @@
 #include "sysdep.h"
 #include "constants.h"
 #include "lswalloc.h"
+#include "lswconf.h"
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
@@ -88,6 +89,7 @@
 #include "crypto.h"
 #include "kernel_netlink.h"
 #include "ip_address.h"
+#include "key.h" /* for SECKEY_DestroyPublicKey */
 
 struct connection *connections = NULL;
 
@@ -825,6 +827,21 @@ static void load_end_nss_certificate(const char *which, CERTCertificate *cert,
 		d_end->id.kind = ID_NONE;
 		return;
 	}
+
+#ifdef FIPS_CHECK
+	if (libreswan_fipsmode()) {
+		SECKEYPublicKey *pk = CERT_ExtractPublicKey(cert);
+		passert(pk != NULL);
+		if (pk->u.rsa.modulus.len < FIPS_MIN_RSA_KEY_SIZE) {
+			whack_log(RC_FATAL,
+				"FIPS: Rejecting cert with key size under %d",
+				FIPS_MIN_RSA_KEY_SIZE);
+			SECKEY_DestroyPublicKey(pk);
+			return;
+		}
+		SECKEY_DestroyPublicKey(pk);
+	}
+#endif /* FIPS_CHECK */
 
 	select_nss_cert_id(cert, &d_end->id);
 

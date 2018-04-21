@@ -36,6 +36,7 @@
 #define IPSEC_SA_LIFETIME_DEFAULT secs_per_hour * 8
 #define IPSEC_SA_LIFETIME_MAXIMUM secs_per_day
 #define FIPS_IPSEC_SA_LIFETIME_MAXIMUM secs_per_hour * 8
+#define FIPS_MIN_RSA_KEY_SIZE 3072
 
 #define PLUTO_SHUNT_LIFE_DURATION_DEFAULT (15 * secs_per_minute)
 #define PLUTO_HALFOPEN_SA_LIFE (secs_per_minute )
