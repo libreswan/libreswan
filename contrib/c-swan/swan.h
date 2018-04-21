@@ -18,8 +18,6 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include <stdbool.h>
-
 #define IPLEN		100	/* Max length for IP address/mask string */
 
 bool is_encrypted(char *destination, int port, char *source, int timeout,

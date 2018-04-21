@@ -30,8 +30,8 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netdb.h>
-#include "swan.h"
 #include "libreswan.h"
+#include "swan.h"
 
 #define COMMAND_BUFFER	65536	/* Max length of "ip xfrm" output */
 
@@ -42,7 +42,7 @@ int libreswan_log(const char *fmt, ...)
 }
 
 /* Run external command and return it's output, NUL terminated. */
-char *run_command(char **params)
+static char *run_command(char **params)
 {
 	int link[2];
 	pid_t pid;
@@ -76,7 +76,7 @@ char *run_command(char **params)
 }
 
 /* Split command output to NUL terminated words. */
-char *split_words(char *command_output)
+static char *split_words(char *command_output)
 {
 	char *buffer, *from, *to;
 
@@ -118,7 +118,7 @@ char *split_words(char *command_output)
 }
 
 /* Get my source IP address */
-int get_source_ip(char *destination, char *source)
+static int get_source_ip(char *destination, char *source)
 {
 	char *output, *p;
 	char *params[8];
@@ -148,7 +148,7 @@ int get_source_ip(char *destination, char *source)
 }
 
 /* Is address inside subnet+mask? */
-bool addr_in_mask(char *address_str, char *mask_str)
+static bool addr_in_mask(char *address_str, char *mask_str)
 {
 	ip_address address;
 	ip_subnet mask;
@@ -164,7 +164,7 @@ bool addr_in_mask(char *address_str, char *mask_str)
 }
 
 /* Get "ip xfrm" output */
-char *get_policy_list(void)
+static char *get_policy_list(void)
 {
 	char *output;
 	char *params[8];
@@ -181,7 +181,7 @@ char *get_policy_list(void)
 }
 
 /* Parse xfrm policy list */
-bool parse_policy_list(char *source, char *destination, char *xfrm, int debug)
+static bool parse_policy_list(char *source, char *destination, char *xfrm, int debug)
 {
 	struct {
 		char src[128];
@@ -251,7 +251,7 @@ bool parse_policy_list(char *source, char *destination, char *xfrm, int debug)
 }
 
 /* Connect to dest:port, ignore errors */
-void connect_to(char *destination, int port, int timeout)
+static void connect_to(char *destination, int port, int timeout)
 {
 	struct addrinfo hints;
 	struct addrinfo *result, *rp;
