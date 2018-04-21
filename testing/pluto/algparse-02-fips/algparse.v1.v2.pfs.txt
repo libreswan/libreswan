@@ -203,6 +203,7 @@ algparse -fips -v1 -v2 -pfs 'esp=3des-sha1;modp8192'
 algparse -fips -v1 -v2 -pfs 'esp=3des-sha1-modp8192'
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 algparse -fips -v1 -v2 -pfs 'esp=aes-sha1,3des-sha1;modp8192'
+UNEXPECTED PASS: esp=aes-sha1,3des-sha1;modp8192
 	AES_CBC-HMAC_SHA1_96-MODP8192
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 algparse -fips -v1 -v2 -pfs 'esp=aes-sha1-modp8192,3des-sha1-modp8192'
@@ -380,3 +381,4 @@ algparse -fips -v1 -v2 -pfs 'ike=3des-id2'
 	ERROR: IKE PRF algorithm 'id2' is not recognized
 algparse -fips -v1 -v2 -pfs 'ike=aes_ccm'
 	ERROR: IKE encryption algorithm 'aes_ccm' is not supported by IKEv1
+1 FAILURES

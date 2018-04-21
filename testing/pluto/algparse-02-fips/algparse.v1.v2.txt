@@ -5,13 +5,13 @@ algparse -fips -v1 -v2 'esp='
 algparse -fips -v1 -v2 'esp=aes'
 	AES_CBC-HMAC_SHA1_96
 algparse -fips -v1 -v2 'esp=aes;modp2048'
-	AES_CBC-HMAC_SHA1_96-MODP2048
+	ERROR: ESP DH algorithm MODP2048 invalid as PFS disabled
 algparse -fips -v1 -v2 'esp=aes-sha1'
 	AES_CBC-HMAC_SHA1_96
 algparse -fips -v1 -v2 'esp=aes-sha1'
 	AES_CBC-HMAC_SHA1_96
 algparse -fips -v1 -v2 'esp=aes-sha1-modp2048'
-	AES_CBC-HMAC_SHA1_96-MODP2048
+	ERROR: ESP DH algorithm MODP2048 invalid as PFS disabled
 algparse -fips -v1 -v2 'esp=aes-128'
 	AES_CBC_128-HMAC_SHA1_96
 algparse -fips -v1 -v2 'esp=aes-128-sha1'
@@ -19,7 +19,7 @@ algparse -fips -v1 -v2 'esp=aes-128-sha1'
 algparse -fips -v1 -v2 'esp=aes-128-sha1'
 	AES_CBC_128-HMAC_SHA1_96
 algparse -fips -v1 -v2 'esp=aes-128-sha1-modp2048'
-	AES_CBC_128-HMAC_SHA1_96-MODP2048
+	ERROR: ESP DH algorithm MODP2048 invalid as PFS disabled
 algparse -fips -v1 -v2 'esp=aes_gcm_a-128-null'
 	AES_GCM_8_128-NONE
 algparse -fips -v1 -v2 'esp=3des-sha1;modp1024'
@@ -27,15 +27,15 @@ algparse -fips -v1 -v2 'esp=3des-sha1;modp1024'
 algparse -fips -v1 -v2 'esp=3des-sha1;modp1536'
 	ERROR: ESP DH algorithm 'modp1536' is not supported
 algparse -fips -v1 -v2 'esp=3des-sha1;modp2048'
-	3DES_CBC-HMAC_SHA1_96-MODP2048
+	ERROR: ESP DH algorithm MODP2048 invalid as PFS disabled
 algparse -fips -v1 -v2 'esp=3des-sha1;dh21'
 	ERROR: ESP DH algorithm 'dh21' is not supported by IKEv1
 algparse -fips -v1 -v2 'esp=3des-sha1;ecp_521'
 	ERROR: ESP DH algorithm 'ecp_521' is not supported by IKEv1
 algparse -fips -v1 -v2 'esp=3des-sha1;dh23'
-	3DES_CBC-HMAC_SHA1_96-DH23
+	ERROR: ESP DH algorithm DH23 invalid as PFS disabled
 algparse -fips -v1 -v2 'esp=3des-sha1;dh24'
-	3DES_CBC-HMAC_SHA1_96-DH24
+	ERROR: ESP DH algorithm DH24 invalid as PFS disabled
 algparse -fips -v1 -v2 'esp=3des-sha1'
 	3DES_CBC-HMAC_SHA1_96
 algparse -fips -v1 -v2 'esp=null-sha1'
@@ -199,17 +199,15 @@ algparse -fips -v1 -v2 'esp=camellia_cbc_256-hmac_sha2_512_256;modp8192'
 algparse -fips -v1 -v2 'esp=null_auth_aes_gmac_256-null;modp8192'
 	ERROR: ESP encryption algorithm 'null_auth_aes_gmac' is not supported
 algparse -fips -v1 -v2 'esp=3des-sha1;modp8192'
-	3DES_CBC-HMAC_SHA1_96-MODP8192
+	ERROR: ESP DH algorithm MODP8192 invalid as PFS disabled
 algparse -fips -v1 -v2 'esp=3des-sha1-modp8192'
-	3DES_CBC-HMAC_SHA1_96-MODP8192
+	ERROR: ESP DH algorithm MODP8192 invalid as PFS disabled
 algparse -fips -v1 -v2 'esp=aes-sha1,3des-sha1;modp8192'
-	AES_CBC-HMAC_SHA1_96-MODP8192
-	3DES_CBC-HMAC_SHA1_96-MODP8192
+	ERROR: ESP DH algorithm MODP8192 invalid as PFS disabled
 algparse -fips -v1 -v2 'esp=aes-sha1-modp8192,3des-sha1-modp8192'
-	AES_CBC-HMAC_SHA1_96-MODP8192
-	3DES_CBC-HMAC_SHA1_96-MODP8192
+	ERROR: ESP DH algorithm MODP8192 invalid as PFS disabled
 algparse -fips -v1 -v2 'esp=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192'
-	AES_CBC-HMAC_SHA1_96-MODP8192
+	ERROR: ESP DH algorithm MODP8192 invalid as PFS disabled
 algparse -fips -v1 -v2 'esp=aes;none'
 	ERROR: ESP DH algorithm 'none' is not supported
 algparse -fips -v1 -v2 'esp=aes;none,aes'
@@ -275,24 +273,23 @@ algparse -fips -v1 -v2 'esp=aes_gcm-123456789012345'
 algparse -fips -v1 -v2 'esp=3des-sha1;dh22'
 	ERROR: ESP DH algorithm 'dh22' is not supported
 algparse -fips -v1 -v2 'esp=3des-sha1;modp8192,3des-sha2'
-	ERROR: ESP DH algorithm 'MODP8192' must be specified last
+	ERROR: ESP DH algorithm MODP8192 invalid as PFS disabled
 algparse -fips -v1 -v2 'esp=3des-sha1-modp8192,3des-sha2'
-	ERROR: ESP DH algorithm 'MODP8192' must be specified last
+	ERROR: ESP DH algorithm MODP8192 invalid as PFS disabled
 algparse -fips -v1 -v2 'esp=3des-sha1-modp8192,3des-sha2-modp8192'
-	3DES_CBC-HMAC_SHA1_96-MODP8192
-	3DES_CBC-HMAC_SHA2_256_128-MODP8192
+	ERROR: ESP DH algorithm MODP8192 invalid as PFS disabled
 algparse -fips -v1 -v2 'esp=3des-sha1-modp8192,3des-sha2;modp8192'
-	ERROR: ESP DH algorithm must appear once after last proposal
+	ERROR: ESP DH algorithm MODP8192 invalid as PFS disabled
 algparse -fips -v1 -v2 'esp=3des-sha1;modp8192,3des-sha2;modp8192'
-	ERROR: ESP DH algorithm 'MODP8192' must be specified last
+	ERROR: ESP DH algorithm MODP8192 invalid as PFS disabled
 algparse -fips -v1 -v2 'esp=3des-sha1;modp8192,3des-sha2;modp8192'
-	ERROR: ESP DH algorithm 'MODP8192' must be specified last
+	ERROR: ESP DH algorithm MODP8192 invalid as PFS disabled
 algparse -fips -v1 -v2 'esp=3des-sha1-modp8192,3des-sha2-ecp_521'
 	ERROR: ESP DH algorithm 'ecp_521' is not supported by IKEv1
 algparse -fips -v1 -v2 'esp=3des-sha1;modp8192,3des-sha1-modp8192'
-	ERROR: ESP DH algorithm 'MODP8192' must be specified last
+	ERROR: ESP DH algorithm MODP8192 invalid as PFS disabled
 algparse -fips -v1 -v2 'esp=3des-sha1;modp8192,3des-sha1;modp8192'
-	ERROR: ESP DH algorithm 'MODP8192' must be specified last
+	ERROR: ESP DH algorithm MODP8192 invalid as PFS disabled
 algparse -fips -v1 -v2 'ah'
 	HMAC_SHA1_96
 algparse -fips -v1 -v2 'ah='
@@ -302,7 +299,7 @@ algparse -fips -v1 -v2 'ah=md5'
 algparse -fips -v1 -v2 'ah=sha'
 	HMAC_SHA1_96
 algparse -fips -v1 -v2 'ah=sha;modp2048'
-	HMAC_SHA1_96-MODP2048
+	ERROR: AH DH algorithm MODP2048 invalid as PFS disabled
 algparse -fips -v1 -v2 'ah=sha1'
 	HMAC_SHA1_96
 algparse -fips -v1 -v2 'ah=sha2'
@@ -326,7 +323,7 @@ algparse -fips -v1 -v2 'ah=sha2-none'
 algparse -fips -v1 -v2 'ah=sha2;none'
 	ERROR: AH DH algorithm 'none' is not supported
 algparse -fips -v1 -v2 'ah=sha1-modp8192,sha1-modp8192,sha1-modp8192'
-	HMAC_SHA1_96-MODP8192
+	ERROR: AH DH algorithm MODP8192 invalid as PFS disabled
 algparse -fips -v1 -v2 'ah=aes-sha1'
 	ERROR: AH integrity algorithm 'aes' is not recognized
 algparse -fips -v1 -v2 'ah=vanityhash1'

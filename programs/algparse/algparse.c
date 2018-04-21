@@ -170,23 +170,23 @@ static void test(void)
 	esp(false, "");
 
 	esp(true, "aes");
-	esp(true, "aes;modp2048");
+	esp(pfs, "aes;modp2048");
 	esp(true, "aes-sha1");
 	esp(true, "aes-sha1");
-	esp(true, "aes-sha1-modp2048");
+	esp(pfs, "aes-sha1-modp2048");
 	esp(true, "aes-128");
 	esp(true, "aes-128-sha1");
 	esp(true, "aes-128-sha1");
-	esp(true, "aes-128-sha1-modp2048");
+	esp(pfs, "aes-128-sha1-modp2048");
 
 	esp(true, "aes_gcm_a-128-null");
-	esp(!fips, "3des-sha1;modp1024");
-	esp(!fips, "3des-sha1;modp1536");
-	esp(true, "3des-sha1;modp2048");
-	esp(!ikev1, "3des-sha1;dh21");
-	esp(!ikev1, "3des-sha1;ecp_521");
-	esp(true, "3des-sha1;dh23");
-	esp(true, "3des-sha1;dh24");
+	esp(pfs && !fips, "3des-sha1;modp1024");
+	esp(pfs && !fips, "3des-sha1;modp1536");
+	esp(pfs, "3des-sha1;modp2048");
+	esp(pfs && !ikev1, "3des-sha1;dh21");
+	esp(pfs && !ikev1, "3des-sha1;ecp_521");
+	esp(pfs, "3des-sha1;dh23");
+	esp(pfs, "3des-sha1;dh24");
 	esp(true, "3des-sha1");
 	esp(!fips, "null-sha1");
 
@@ -278,19 +278,19 @@ static void test(void)
 	esp(true, "aes_ctr256");
 	esp(!fips, "serpent");
 	esp(!fips, "twofish");
-	esp(!fips, "camellia_cbc_256-hmac_sha2_512_256;modp8192"); /* long */
-	esp(!fips, "null_auth_aes_gmac_256-null;modp8192"); /* long */
-	esp(true, "3des-sha1;modp8192"); /* allow ';' when unambigious */
-	esp(true, "3des-sha1-modp8192"); /* allow '-' when unambigious */
-	esp(ikev1 || (ikev2 && !pfs), "aes-sha1,3des-sha1;modp8192"); /* set modp8192 on all algs */
-	esp(true, "aes-sha1-modp8192,3des-sha1-modp8192"); /* silly */
-	esp(true, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192"); /* suppress duplicates */
+	esp(pfs && !fips, "camellia_cbc_256-hmac_sha2_512_256;modp8192"); /* long */
+	esp(pfs && !fips, "null_auth_aes_gmac_256-null;modp8192"); /* long */
+	esp(pfs, "3des-sha1;modp8192"); /* allow ';' when unambigious */
+	esp(pfs, "3des-sha1-modp8192"); /* allow '-' when unambigious */
+	esp(pfs && !ikev2, "aes-sha1,3des-sha1;modp8192"); /* set modp8192 on all algs */
+	esp(pfs, "aes-sha1-modp8192,3des-sha1-modp8192"); /* silly */
+	esp(pfs, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192"); /* suppress duplicates */
 
-	esp(!fips && !ikev1, "aes;none");
-	esp(!fips && !ikev1, "aes;none,aes");
-	esp(!fips && !ikev1, "aes;none,aes;modp2048");
-	esp(!fips && !ikev1, "aes-sha1-none");
-	esp(!fips && !ikev1, "aes-sha1;none");
+	esp(pfs && !fips && !ikev1, "aes;none");
+	esp(pfs && !fips && !ikev1, "aes;none,aes");
+	esp(pfs && !fips && !ikev1, "aes;none,aes;modp2048");
+	esp(pfs && !fips && !ikev1, "aes-sha1-none");
+	esp(pfs && !fips && !ikev1, "aes-sha1;none");
 
 	/*
 	 * should this be supported - for now man page says not
@@ -330,14 +330,14 @@ static void test(void)
 	esp(!ikev1 && ikev2 && !pfs, "3des-sha1;modp8192,3des-sha2"); /* ;DH must be last */
 	esp(impair || (!ikev1 && ikev2 && !pfs), "3des-sha1-modp8192,3des-sha2"); /* -DH must be last */
 
-	esp(true, "3des-sha1-modp8192,3des-sha2-modp8192"); /* ok */
-	esp(!ikev1 && ikev2, "3des-sha1-modp8192,3des-sha2;modp8192"); /* ;DH must be last */
-	esp(!ikev1 && ikev2, "3des-sha1;modp8192,3des-sha2;modp8192"); /* ;DH must be last */
-	esp(!ikev1 && ikev2, "3des-sha1;modp8192,3des-sha2;modp8192"); /* ;DH must be last */
+	esp(pfs, "3des-sha1-modp8192,3des-sha2-modp8192"); /* ok */
+	esp(pfs && !ikev1 && ikev2, "3des-sha1-modp8192,3des-sha2;modp8192"); /* ;DH must be last */
+	esp(pfs && !ikev1 && ikev2, "3des-sha1;modp8192,3des-sha2;modp8192"); /* ;DH must be last */
+	esp(pfs && !ikev1 && ikev2, "3des-sha1;modp8192,3des-sha2;modp8192"); /* ;DH must be last */
 	esp(impair, "3des-sha1-modp8192,3des-sha2-ecp_521"); /* ;DH must match */
 
-	esp(!ikev1 && ikev2, "3des-sha1;modp8192,3des-sha1-modp8192"); /* ;DH must be last when dup */
-	esp(!ikev1 && ikev2, "3des-sha1;modp8192,3des-sha1;modp8192"); /* ;DH must be last when dup */
+	esp(pfs && !ikev1 && ikev2, "3des-sha1;modp8192,3des-sha1-modp8192"); /* ;DH must be last when dup */
+	esp(pfs && !ikev1 && ikev2, "3des-sha1;modp8192,3des-sha1;modp8192"); /* ;DH must be last when dup */
 
 	/*
 	 * ah=
@@ -349,7 +349,7 @@ static void test(void)
 	ah(false, "");
 	ah(!fips, "md5");
 	ah(true, "sha");
-	ah(true, "sha;modp2048");
+	ah(pfs, "sha;modp2048");
 	ah(true, "sha1");
 	ah(true, "sha2");
 	ah(true, "sha256");
@@ -360,8 +360,8 @@ static void test(void)
 	ah(true, "sha2_512");
 	ah(true, "aes_xcbc");
 	ah(!fips && !ikev1, "sha2-none");
-	ah(!fips && !ikev1, "sha2;none");
-	ah(true, "sha1-modp8192,sha1-modp8192,sha1-modp8192"); /* suppress duplicates */
+	ah(pfs && !fips && !ikev1, "sha2;none");
+	ah(pfs, "sha1-modp8192,sha1-modp8192,sha1-modp8192"); /* suppress duplicates */
 
 	/* AH tests that should fail */
 

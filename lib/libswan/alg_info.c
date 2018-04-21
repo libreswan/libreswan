@@ -737,6 +737,26 @@ size_t lswlog_alg_info(struct lswlog *log, const struct alg_info *alg_info)
 }
 
 /*
+ * When no-PFS don't silently ignore explicit DH.
+ */
+static bool dh_requires_pfs(const struct proposal_parser *parser,
+			    struct alg_info_esp *aie)
+{
+	FOR_EACH_ESP_INFO(aie, alg) {
+		if (alg->dh != NULL) {
+			snprintf(parser->err_buf, parser->err_buf_len,
+				 "%s DH algorithm %s invalid as PFS disabled",
+				 parser->protocol->name,
+				 alg->dh->common.fqn);
+			if (!impair_proposal_errors(parser)) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+/*
  * For IKEv1, pluto handles at most one pre-determined ESP/AH DH
  * algorithm.  The code doesn't handle any negotiation.
  *
@@ -770,6 +790,10 @@ bool ikev1_one_alg_info_dh_hack(const struct proposal_parser *parser,
 	}
 	if (first == NULL) {
 		return true;
+	}
+
+	if (!parser->policy->pfs) {
+		return dh_requires_pfs(parser, aie);
 	}
 
 	struct proposal_info *last = &aie->ai.proposals[aie->ai.alg_info_cnt-1];
@@ -875,6 +899,10 @@ bool ikev2_one_alg_info_dh_hack(const struct proposal_parser *parser,
 	if (aie->ai.alg_info_cnt <= 0) {
 		/* let caller deal with no proposals. */
 		return true;
+	}
+
+	if (!parser->policy->pfs) {
+		return dh_requires_pfs(parser, aie);
 	}
 
 	const struct oakley_group_desc *dh = &unset_group; /* dummy */
