@@ -213,7 +213,7 @@ algparse -v2 'esp=aes;none'
 algparse -v2 'esp=aes;none,aes'
 	ERROR: ESP DH algorithm NONE invalid as PFS disabled
 algparse -v2 'esp=aes;none,aes;modp2048'
-	ERROR: ESP DH algorithm NONE invalid as PFS disabled
+	ERROR: ESP DH algorithm MODP2048 invalid as PFS disabled
 algparse -v2 'esp=aes-sha1-none'
 	ERROR: ESP DH algorithm NONE invalid as PFS disabled
 algparse -v2 'esp=aes-sha1;none'

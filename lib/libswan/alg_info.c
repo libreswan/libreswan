@@ -737,22 +737,64 @@ size_t lswlog_alg_info(struct lswlog *log, const struct alg_info *alg_info)
 }
 
 /*
- * When no-PFS don't silently ignore explicit DH.
+ * When PFS=no reject any DH, and when PFS=yes reject mixing implict
+ * and explicit DH.
  */
-static bool dh_requires_pfs(const struct proposal_parser *parser,
-			    struct alg_info_esp *aie)
+static bool alg_info_pfs_vs_dh_check(const struct proposal_parser *parser,
+				     struct alg_info_esp *aie)
 {
+	if (aie->ai.alg_info_cnt <= 0) {
+		/* let caller deal with no proposals. */
+		return true;
+	}
+
+	/* scrape the proposals for dh algorithms */
+	struct proposal_info *first_null = NULL;
+	struct proposal_info *first_dh = NULL;
+	struct proposal_info *second_dh = NULL;
+	struct proposal_info *first_none = NULL;
 	FOR_EACH_ESP_INFO(aie, alg) {
-		if (alg->dh != NULL) {
+		if (alg->dh == NULL) {
+			if (first_null == NULL) {
+				first_null = alg;
+			}
+		} else if (alg->dh == &ike_alg_dh_none) {
+			if (first_none == NULL) {
+				first_none = alg;
+			}
+		} else if (first_dh == NULL) {
+			first_dh = alg;
+		} else if (second_dh == NULL && first_dh->dh != alg->dh) {
+			second_dh = alg;
+		}
+	}
+
+	/* no DH always ok */
+	if (first_dh == NULL && first_none == NULL) {
+		return true;
+	}
+	passert(first_dh != NULL || first_none != NULL);
+
+	if (parser->policy->pfs) {
+		/* PFS=YES don't allow implicit/explict DH */
+		if (first_null != NULL) {
 			snprintf(parser->err_buf, parser->err_buf_len,
-				 "%s DH algorithm %s invalid as PFS disabled",
-				 parser->protocol->name,
-				 alg->dh->common.fqn);
+				 "PFS enabled, either all or no proposals should specify DH");
 			if (!impair_proposal_errors(parser)) {
 				return false;
 			}
 		}
+	} else {
+		/* PFS=NO don't silently ignore DH */
+		snprintf(parser->err_buf, parser->err_buf_len,
+			 "%s DH algorithm %s invalid as PFS disabled",
+			 parser->protocol->name,
+			 first_dh != NULL ? first_dh->dh->common.fqn : "NONE");
+		if (!impair_proposal_errors(parser)) {
+			return false;
+		}
 	}
+
 	return true;
 }
 
@@ -793,7 +835,7 @@ bool ikev1_one_alg_info_dh_hack(const struct proposal_parser *parser,
 	}
 
 	if (!parser->policy->pfs) {
-		return dh_requires_pfs(parser, aie);
+	  return alg_info_pfs_vs_dh_check(parser, aie);
 	}
 
 	struct proposal_info *last = &aie->ai.proposals[aie->ai.alg_info_cnt-1];
@@ -902,7 +944,7 @@ bool ikev2_one_alg_info_dh_hack(const struct proposal_parser *parser,
 	}
 
 	if (!parser->policy->pfs) {
-		return dh_requires_pfs(parser, aie);
+		return alg_info_pfs_vs_dh_check(parser, aie);
 	}
 
 	const struct oakley_group_desc *dh = &unset_group; /* dummy */
