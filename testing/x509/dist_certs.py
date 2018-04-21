@@ -292,13 +292,13 @@ def create_mainca_end_certs(mainca_end_certs):
 	for name in mainca_end_certs:
 		# put special cert handling here
 		print " - creating %s" % name
-		if name == 'bigkey':
+		if name == 'smallkey':
 			keysize = 2048
 		else:
 			if name == 'key4096':
 				keysize = 4096
 			else:
-				keysize = 1024
+				keysize = 3072
 
 		if name == 'notyetvalid':
 			startdate = dates['FUTURE']
