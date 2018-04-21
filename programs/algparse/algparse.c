@@ -30,6 +30,9 @@ enum expect { FAIL = false, PASS = true, IGNORE, };
 			.pfs = pfs,					\
 		};							\
 		printf("algparse ");					\
+		if (fips) {						\
+			printf("-fips ");				\
+		}							\
 		if (ikev1) {						\
 			printf("-v1 ");					\
 		}							\
