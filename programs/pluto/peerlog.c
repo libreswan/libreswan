@@ -28,7 +28,8 @@
 #include <errno.h>
 #include <syslog.h>
 #include <sys/stat.h>
-#include <stdbool.h>
+
+#include <libreswan.h>
 
 #include "sysdep.h"
 #include "connections.h"

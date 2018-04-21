@@ -13,7 +13,6 @@
  * License for more details.
  */
 
-#include <stdbool.h>
 #include <inttypes.h>
 
 #include "constants.h"

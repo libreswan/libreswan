@@ -26,7 +26,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <dirent.h>
-#include <stdbool.h>
 #include <time.h>
 #include <limits.h>
 #include <sys/types.h>

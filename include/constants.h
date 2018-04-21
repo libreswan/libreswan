@@ -92,16 +92,20 @@ struct lswlog;
  * <libreswan.h> defines err_t for this return type.
  */
 
-/* you'd think this should be builtin to compiler... */
+/*
+ * Libreswan was written before <stdbool.h> was standardized.
+ * We continue to use TRUE and FALSE because we think that they are clearer
+ * than true or false.
+ */
 
 #include <stdbool.h> /* for 'bool' */
 
 #ifndef TRUE
-#  define TRUE 1
+#  define TRUE true
 #endif
 
 #ifndef FALSE
-#  define FALSE 0
+#  define FALSE false
 #endif
 
 #define NULL_FD (-1)	/* NULL file descriptor */

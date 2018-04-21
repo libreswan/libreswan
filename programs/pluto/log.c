@@ -25,7 +25,6 @@
 
 #include <pthread.h>    /* Must be the first include file; XXX: why? */
 
-#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>

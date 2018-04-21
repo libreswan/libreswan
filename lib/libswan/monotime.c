@@ -15,12 +15,11 @@
  * for more details.
  */
 
-#include <stdbool.h>
 #include <unistd.h>	/* for _POSIX_MONOTONIC_CLOCK */
 #include <errno.h>
 
-#include "monotime.h"
 #include "lswlog.h"
+#include "monotime.h"
 
 const monotime_t monotime_epoch = MONOTIME_EPOCH;
 

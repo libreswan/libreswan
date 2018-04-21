@@ -17,8 +17,6 @@
 #ifndef _DEFS_H
 #define _DEFS_H
 
-#include <stdbool.h>
-
 #include "lswalloc.h"
 #include "realtime.h"
 

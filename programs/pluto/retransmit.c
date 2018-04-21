@@ -14,8 +14,6 @@
  * for more details.
  */
 
-#include <stdbool.h>
-
 #include "defs.h"
 #include "state.h"
 #include "connections.h"

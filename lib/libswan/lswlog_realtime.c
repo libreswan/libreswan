@@ -11,7 +11,8 @@
  */
 
 #include <stdio.h>
-#include <stdbool.h>
+
+#include "libreswan.h"
 
 #include "realtime.h"
 

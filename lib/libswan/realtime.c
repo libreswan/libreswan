@@ -15,8 +15,6 @@
  *
  */
 
-#include <stdbool.h>
-
 #include "constants.h"
 #include "realtime.h"
 

@@ -17,20 +17,22 @@
 #ifndef _LIBRESWAN_H
 #define _LIBRESWAN_H    /* seen it, no need to see it again */
 
-/* linux has 'typedef _bool bool' in KERNEL/include/types.h */
+/*
+ * Libreswan was written before <stdbool.h> was standardized.
+ * We continue to use TRUE and FALSE because we think that they are clearer
+ * than true or false.
+ */
 
 #ifndef __KERNEL__
 # include <stdbool.h> /* for 'bool' */
 #endif
 
-/* you'd think this should be builtin to compiler... */
-
 #ifndef TRUE
-# define TRUE 1
+# define TRUE true
 #endif
 
 #ifndef FALSE
-# define FALSE 0
+# define FALSE false
 #endif
 
 #include <stddef.h>
