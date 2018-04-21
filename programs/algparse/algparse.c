@@ -324,17 +324,17 @@ static void test(void)
 	esp(false, "aes_gcm-123456789012345"); /* huge keylen */
 	esp(false, "3des-sha1;dh22"); /* support for dh22 removed */
 
-	esp(ikev2 && !pfs, "3des-sha1;modp8192,3des-sha2"); /* ;DH must be last */
-	esp(impair || (ikev2 && !pfs), "3des-sha1-modp8192,3des-sha2"); /* -DH must be last */
+	esp(!ikev1 && ikev2 && !pfs, "3des-sha1;modp8192,3des-sha2"); /* ;DH must be last */
+	esp(impair || (!ikev1 && ikev2 && !pfs), "3des-sha1-modp8192,3des-sha2"); /* -DH must be last */
 
 	esp(true, "3des-sha1-modp8192,3des-sha2-modp8192"); /* ok */
-	esp(ikev2, "3des-sha1-modp8192,3des-sha2;modp8192"); /* ;DH must be last */
-	esp(ikev2, "3des-sha1;modp8192,3des-sha2;modp8192"); /* ;DH must be last */
-	esp(ikev2, "3des-sha1;modp8192,3des-sha2;modp8192"); /* ;DH must be last */
+	esp(!ikev1 && ikev2, "3des-sha1-modp8192,3des-sha2;modp8192"); /* ;DH must be last */
+	esp(!ikev1 && ikev2, "3des-sha1;modp8192,3des-sha2;modp8192"); /* ;DH must be last */
+	esp(!ikev1 && ikev2, "3des-sha1;modp8192,3des-sha2;modp8192"); /* ;DH must be last */
 	esp(impair, "3des-sha1-modp8192,3des-sha2-ecp_521"); /* ;DH must match */
 
-	esp(ikev2, "3des-sha1;modp8192,3des-sha1-modp8192"); /* ;DH must be last when dup */
-	esp(ikev2, "3des-sha1;modp8192,3des-sha1;modp8192"); /* ;DH must be last when dup */
+	esp(!ikev1 && ikev2, "3des-sha1;modp8192,3des-sha1-modp8192"); /* ;DH must be last when dup */
+	esp(!ikev1 && ikev2, "3des-sha1;modp8192,3des-sha1;modp8192"); /* ;DH must be last when dup */
 
 	/*
 	 * ah=
