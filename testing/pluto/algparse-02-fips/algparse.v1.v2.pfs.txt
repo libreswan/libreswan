@@ -203,7 +203,7 @@ algparse -fips -v1 -v2 -pfs 'esp=3des-sha1;modp8192'
 algparse -fips -v1 -v2 -pfs 'esp=3des-sha1-modp8192'
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 algparse -fips -v1 -v2 -pfs 'esp=aes-sha1,3des-sha1;modp8192'
-	ERROR: PFS enabled, either all or no proposals can specify DH
+	ERROR: either all or no ESP proposals should specify DH
 algparse -fips -v1 -v2 -pfs 'esp=aes-sha1-modp8192,3des-sha1-modp8192'
 	AES_CBC-HMAC_SHA1_96-MODP8192
 	3DES_CBC-HMAC_SHA1_96-MODP8192
@@ -274,9 +274,9 @@ algparse -fips -v1 -v2 -pfs 'esp=aes_gcm-123456789012345'
 algparse -fips -v1 -v2 -pfs 'esp=3des-sha1;dh22'
 	ERROR: ESP DH algorithm 'dh22' is not supported
 algparse -fips -v1 -v2 -pfs 'esp=3des-sha1;modp8192,3des-sha2'
-	ERROR: PFS enabled, either all or no proposals can specify DH
+	ERROR: either all or no ESP proposals should specify DH
 algparse -fips -v1 -v2 -pfs 'esp=3des-sha1-modp8192,3des-sha2'
-	ERROR: PFS enabled, either all or no proposals can specify DH
+	ERROR: either all or no ESP proposals should specify DH
 algparse -fips -v1 -v2 -pfs 'esp=3des-sha1-modp8192,3des-sha2-modp8192'
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 	3DES_CBC-HMAC_SHA2_256_128-MODP8192
@@ -290,7 +290,7 @@ algparse -fips -v1 -v2 -pfs 'esp=3des-sha1;modp8192,3des-sha2;modp8192'
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 	3DES_CBC-HMAC_SHA2_256_128-MODP8192
 algparse -fips -v1 -v2 -pfs 'esp=3des-sha1-modp8192,3des-sha2-modp2048'
-	ERROR: for IKEv1, multiple ESP DH algorithms (MODP8192, MODP2048) are not allowed in quick mode
+	ERROR: more than one IKEv1 ESP DH algorithm (MODP8192, MODP2048) is not allowed in quick mode
 algparse -fips -v1 -v2 -pfs 'ah'
 	HMAC_SHA1_96
 algparse -fips -v1 -v2 -pfs 'ah='

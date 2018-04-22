@@ -357,7 +357,7 @@ static void test(void)
 	ah(true, "sha2_384");
 	ah(true, "sha2_512");
 	ah(true, "aes_xcbc");
-	ah(!fips && !ikev1, "sha2-none");
+	ah(pfs && !fips && !ikev1, "sha2-none");
 	ah(pfs && !fips && !ikev1, "sha2;none");
 	ah(pfs, "sha1-modp8192,sha1-modp8192,sha1-modp8192"); /* suppress duplicates */
 

@@ -3,7 +3,7 @@
  * Author: JuanJo Ciarlante <jjo-ipsec@mendoza.gov.ar>
  *
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2015-2017 Andrew Cagney
+ * Copyright (C) 2015-2018 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -769,36 +769,73 @@ bool alg_info_pfs_vs_dh_check(const struct proposal_parser *parser,
 		}
 	}
 
-	/* no DH always ok */
 	if (first_dh == NULL && first_none == NULL) {
+		/* no DH is always ok */
 		return true;
 	}
-	passert(first_dh != NULL || first_none != NULL);
 
-	if (parser->policy->pfs) {
-		/* PFS=YES don't allow implicit/explict DH */
-		if (first_null != NULL) {
-			snprintf(parser->err_buf, parser->err_buf_len,
-				 "PFS enabled, either all or no proposals can specify DH");
-			if (!impair_proposal_errors(parser)) {
-				return false;
-			}
-		}
-	} else {
-		/* PFS=NO don't silently ignore DH */
+	/*
+	 * Try to generate very specific errors first.  For instance,
+	 * given PFS=no esp=aes,aes;dh21, an error stating that dh21
+	 * is not valid because of PFS is more helpful than an error
+	 * saying that all or no proposals need PFS.
+	 */
+
+	/*
+	 * PFS=NO overrides any DH so don't silently ignore it.  Check
+	 * this early so that PFS=no code gets this error and not an
+	 * error about adding DH to all proposals.
+	 *
+	 * ;none is handled below.
+	 */
+	if (!parser->policy->pfs && first_dh != NULL) {
 		snprintf(parser->err_buf, parser->err_buf_len,
-			 "%s DH algorithm %s invalid as PFS disabled",
+			 "%s DH algorithm %s is invalid as PFS policy is disabled",
 			 parser->protocol->name,
-			 first_dh != NULL ? first_dh->dh->common.fqn : "NONE");
+			 first_dh->dh->common.fqn);
 		if (!impair_proposal_errors(parser)) {
 			return false;
 		}
 	}
 
+	/*
+	 * IKEv1 doesn't support ";none" (the lookup should have
+	 * failed).  IKEv2 does support ;none and when when compbined
+	 * with !PFS ambiguous.  However, for now, still reject it.
+	 */
+	if (!parser->policy->pfs && first_none != NULL) {
+		snprintf(parser->err_buf, parser->err_buf_len,
+			 "%s DH algorithm 'none' is is invalid as PFS policy is disabled",
+			 parser->protocol->name);
+		if (!impair_proposal_errors(parser)) {
+			return false;
+		}
+	}
+
+	/*
+	 * Since at least one proposal included DH, all proposals
+	 * should.  A proposal without DH is an error.
+	 *
+	 * (The converse, no proposals including DH was handled right
+	 * at the start).
+	 */
+	if (first_null != NULL) {
+		/* DH was specified */
+		snprintf(parser->err_buf, parser->err_buf_len,
+			 "either all or no %s proposals should specify DH",
+			 parser->protocol->name);
+		if (!impair_proposal_errors(parser)) {
+			return false;
+		}
+	}
+
+	/*
+	 * IKEv1 only allows one DH algorithm.
+	 */
 	if (parser->policy->ikev1) {
 		if (first_dh != NULL && second_dh != NULL) {
 			snprintf(parser->err_buf, parser->err_buf_len,
-				 "for IKEv1, multiple %s DH algorithms (%s, %s) are not allowed in quick mode",
+				 "more than one IKEv1 %s DH algorithm (%s, %s) is not allowed in quick mode",
 				 parser->protocol->name,
 				 first_dh->dh->common.fqn,
 				 second_dh->dh->common.fqn);
@@ -807,10 +844,14 @@ bool alg_info_pfs_vs_dh_check(const struct proposal_parser *parser,
 			}
 		}
 	}
+
+	/*
+	 * IKEv2, only implements one DH algorithm.
+	 */
 	if (parser->policy->ikev2) {
 		if (first_dh != NULL && second_dh != NULL) {
 			snprintf(parser->err_buf, parser->err_buf_len,
-				 "for IKEv2, multiple %s DH algorithms (%s, %s) would require unimplemented CHILD_SA INVALID_KE",
+				 "more than one IKEv2 %s DH algorithm (%s, %s) requires unimplemented CHILD_SA INVALID_KE",
 				 parser->protocol->name,
 				 first_dh->dh->common.fqn,
 				 second_dh->dh->common.fqn);
