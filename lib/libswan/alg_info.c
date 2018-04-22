@@ -740,8 +740,8 @@ size_t lswlog_alg_info(struct lswlog *log, const struct alg_info *alg_info)
  * When PFS=no reject any DH, and when PFS=yes reject mixing implict
  * and explicit DH.
  */
-static bool alg_info_pfs_vs_dh_check(const struct proposal_parser *parser,
-				     struct alg_info_esp *aie)
+bool alg_info_pfs_vs_dh_check(const struct proposal_parser *parser,
+			      struct alg_info_esp *aie)
 {
 	if (aie->ai.alg_info_cnt <= 0) {
 		/* let caller deal with no proposals. */
@@ -779,7 +779,7 @@ static bool alg_info_pfs_vs_dh_check(const struct proposal_parser *parser,
 		/* PFS=YES don't allow implicit/explict DH */
 		if (first_null != NULL) {
 			snprintf(parser->err_buf, parser->err_buf_len,
-				 "PFS enabled, either all or no proposals should specify DH");
+				 "PFS enabled, either all or no proposals can specify DH");
 			if (!impair_proposal_errors(parser)) {
 				return false;
 			}
@@ -795,193 +795,31 @@ static bool alg_info_pfs_vs_dh_check(const struct proposal_parser *parser,
 		}
 	}
 
-	return true;
-}
-
-/*
- * For IKEv1, pluto handles at most one pre-determined ESP/AH DH
- * algorithm.  The code doesn't handle any negotiation.
- *
- * When "PFS", either no algorithm is specifed and the IKE SA's DH is
- * used, or a single DH algorithm is specified at the end of the line
- * and be separated using ";".
- *
- * When "no-PFS", this should probably log and discard the DH
- * algorithm.  Later, if ever.
- *
- * Because the parser is far more liberal, this gets enforced after
- * the event.
- */
-
-bool ikev1_one_alg_info_dh_hack(const struct proposal_parser *parser,
-				struct alg_info_esp *aie,
-				const char *alg_str)
-{
-	if (aie->ai.alg_info_cnt <= 0) {
-		/* let caller deal with no proposals. */
-		return true;
-	}
-
-	/* find any DH */
-	struct proposal_info *first = NULL;
-	FOR_EACH_ESP_INFO(aie, alg) {
-		if (alg->dh != NULL) {
-			first = alg;
-			break;
-		}
-	}
-	if (first == NULL) {
-		return true;
-	}
-
-	if (!parser->policy->pfs) {
-	  return alg_info_pfs_vs_dh_check(parser, aie);
-	}
-
-	struct proposal_info *last = &aie->ai.proposals[aie->ai.alg_info_cnt-1];
-
-	char *first_semi = alg_str != NULL ? strchr(alg_str, ';') : NULL;
-	char *last_comma = alg_str != NULL ? strrchr(alg_str, ',') : NULL;
-
-	/*
-	 * Can't have ;DH,... - as ;DH must appear last.
-	 *
-	 * Use a character check as esp=aes-sha1;dh21,aes-sha1-dh21
-	 * will be reduced to just esp=aes-sha1;dh21.
-	 */
-	if (first_semi != NULL && last_comma != NULL && first_semi < last_comma) {
-		snprintf(parser->err_buf, parser->err_buf_len,
-			 "%s DH algorithm '%s' must be specified last",
-			 parser->protocol->name,
-			 first->dh->common.fqn);
-		return false;
-	}
-
-	/*
-	 * Can't have -DH,..;DH - as ;DH must be the only proposal.
-	 *
-	 * Because duplicates like esp=aes-sha1-dh21,aes-sha1;dh21 get
-	 * reduced to just esp=aes-sha1;dh21, this isn't 100%
-	 * reliable.
-	 */
-	if (first_semi != NULL && first != last) {
-		snprintf(parser->err_buf, parser->err_buf_len,
-			 "%s DH algorithm must appear once after last proposal",
-			 first->protocol->name);
-		return false;
-	}
-
-	/*
-	 * All the DH entries must match last (since first!=NULL there
-	 * is at least one before last).
-	 */
-	if (first != last && last->dh == NULL) {
-		/* esp=aes-sha1-dh21,aes-sha1 */
-		snprintf(parser->err_buf, parser->err_buf_len,
-			 "%s DH algorithm '%s' must be specified last",
-			 parser->protocol->name,
-			 first->dh->common.fqn);
-		if (!impair_proposal_errors(parser)) {
-			return false;
-		}
-	}
-	if (first != last && last->dh != NULL) {
-		/* esp=aes-sha1-dh21,aes-sha1-dh22 */
-		FOR_EACH_ESP_INFO(aie, alg) {
-			if (alg->dh != last->dh) {
-				if (alg->dh == NULL) {
-					snprintf(parser->err_buf, parser->err_buf_len,
-						 "%s DH algorithm must appear once after last proposal",
-						 first->protocol->name);
-				} else {
-					snprintf(parser->err_buf, parser->err_buf_len,
-						 "%s DH algorithm '%s' must be specified last",
-						 parser->protocol->name,
-						 first->dh->common.fqn);
-				}
-				if (!impair_proposal_errors(parser)) {
-					return false;
-				} else {
-					break; /* report first */
-				}
-			}
-		}
-	}
-
-	/*
-	 * Now go through and force all DHs to a consistent value.
-	 *
-	 * This way, something printing an individual proposal will
-	 * include the common DH; and for IKEv2 it can just pick up
-	 * that DH.
-	 */
-	if (!IMPAIR(PROPOSAL_PARSER)) {
-		FOR_EACH_ESP_INFO(aie, esp_info) {
-			esp_info->dh = last->dh;
-		}
-	}
-
-	return true;
-}
-
-/*
- * For IKEv2, because pluto's CHILD SA code doesn't implement INVALID
- * KE, at most one DH algorithm can be specified.  However, unlike
- * IKEv1, DH+NONE is permitted and the requirement that it appear last
- * is not enforced.
- *
- * PFS makes things messy: a line like esp=aes,aes;dh22 can be
- * interpreted as esp=aes;PFS,aes;dh22 (invalid) or
- * esp=ah;none-ah;dh22 (ok).
- */
-
-bool ikev2_one_alg_info_dh_hack(const struct proposal_parser *parser,
-				struct alg_info_esp *aie)
-{
-	if (aie->ai.alg_info_cnt <= 0) {
-		/* let caller deal with no proposals. */
-		return true;
-	}
-
-	if (!parser->policy->pfs) {
-		return alg_info_pfs_vs_dh_check(parser, aie);
-	}
-
-	const struct oakley_group_desc *dh = &unset_group; /* dummy */
-	const bool pfs = parser->policy->pfs;
-	FOR_EACH_ESP_INFO(aie, alg) {
-		/*
-		 * Always allow 'none'; and when no PFS DH=NULL gets
-		 * interpreted as 'none'.
-		 */
-		if (alg->dh == &ike_alg_dh_none ||
-		    (!pfs && alg->dh == NULL)) {
-			continue;
-		}
-		/*
-		 * Save the first real DH (when PFS, this includes
-		 * NULL), and from then on check it is consistent.
-		 */
-		if (dh == &unset_group) {
-			dh = alg->dh;
-		} else if (alg->dh != dh) {
-			const char *first;
-			const char *second;
-			if (alg->dh != NULL && dh != NULL) {
-				first = dh->common.fqn;
-				second = alg->dh->common.fqn;
-			} else {
-				pexpect(pfs);
-				first = "PFS defaulting to IKE SA's DH";
-				second = (dh != NULL ? dh->common.fqn :
-					  alg->dh != NULL ? alg->dh->common.fqn : "???");
-			}
+	if (parser->policy->ikev1) {
+		if (first_dh != NULL && second_dh != NULL) {
 			snprintf(parser->err_buf, parser->err_buf_len,
-				 "multiple %s DH algorithms (%s + %s) would require unimplemented CHILD_SA INVALID_KE",
-				 parser->protocol->name, first, second);
-			return false;
+				 "for IKEv1, multiple %s DH algorithms (%s, %s) are not allowed in quick mode",
+				 parser->protocol->name,
+				 first_dh->dh->common.fqn,
+				 second_dh->dh->common.fqn);
+			if (!impair_proposal_errors(parser)) {
+				return false;
+			}
 		}
 	}
+	if (parser->policy->ikev2) {
+		if (first_dh != NULL && second_dh != NULL) {
+			snprintf(parser->err_buf, parser->err_buf_len,
+				 "for IKEv2, multiple %s DH algorithms (%s, %s) would require unimplemented CHILD_SA INVALID_KE",
+				 parser->protocol->name,
+				 first_dh->dh->common.fqn,
+				 second_dh->dh->common.fqn);
+			if (!impair_proposal_errors(parser)) {
+				return false;
+			}
+		}
+	}
+
 	return true;
 }
 
