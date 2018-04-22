@@ -203,8 +203,7 @@ algparse -fips -v1 -pfs 'esp=3des-sha1;modp8192'
 algparse -fips -v1 -pfs 'esp=3des-sha1-modp8192'
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 algparse -fips -v1 -pfs 'esp=aes-sha1,3des-sha1;modp8192'
-	AES_CBC-HMAC_SHA1_96-MODP8192
-	3DES_CBC-HMAC_SHA1_96-MODP8192
+	ERROR: PFS enabled, either all or no proposals can specify DH
 algparse -fips -v1 -pfs 'esp=aes-sha1-modp8192,3des-sha1-modp8192'
 	AES_CBC-HMAC_SHA1_96-MODP8192
 	3DES_CBC-HMAC_SHA1_96-MODP8192
@@ -275,24 +274,23 @@ algparse -fips -v1 -pfs 'esp=aes_gcm-123456789012345'
 algparse -fips -v1 -pfs 'esp=3des-sha1;dh22'
 	ERROR: ESP DH algorithm 'dh22' is not supported
 algparse -fips -v1 -pfs 'esp=3des-sha1;modp8192,3des-sha2'
-	ERROR: ESP DH algorithm 'MODP8192' must be specified last
+	ERROR: PFS enabled, either all or no proposals can specify DH
 algparse -fips -v1 -pfs 'esp=3des-sha1-modp8192,3des-sha2'
-	ERROR: ESP DH algorithm 'MODP8192' must be specified last
+	ERROR: PFS enabled, either all or no proposals can specify DH
 algparse -fips -v1 -pfs 'esp=3des-sha1-modp8192,3des-sha2-modp8192'
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 	3DES_CBC-HMAC_SHA2_256_128-MODP8192
 algparse -fips -v1 -pfs 'esp=3des-sha1-modp8192,3des-sha2;modp8192'
-	ERROR: ESP DH algorithm must appear once after last proposal
+	3DES_CBC-HMAC_SHA1_96-MODP8192
+	3DES_CBC-HMAC_SHA2_256_128-MODP8192
+algparse -fips -v1 -pfs 'esp=3des-sha1;modp8192,3des-sha2-modp8192'
+	3DES_CBC-HMAC_SHA1_96-MODP8192
+	3DES_CBC-HMAC_SHA2_256_128-MODP8192
 algparse -fips -v1 -pfs 'esp=3des-sha1;modp8192,3des-sha2;modp8192'
-	ERROR: ESP DH algorithm 'MODP8192' must be specified last
-algparse -fips -v1 -pfs 'esp=3des-sha1;modp8192,3des-sha2;modp8192'
-	ERROR: ESP DH algorithm 'MODP8192' must be specified last
-algparse -fips -v1 -pfs 'esp=3des-sha1-modp8192,3des-sha2-ecp_521'
-	ERROR: ESP DH algorithm 'ecp_521' is not supported by IKEv1
-algparse -fips -v1 -pfs 'esp=3des-sha1;modp8192,3des-sha1-modp8192'
-	ERROR: ESP DH algorithm 'MODP8192' must be specified last
-algparse -fips -v1 -pfs 'esp=3des-sha1;modp8192,3des-sha1;modp8192'
-	ERROR: ESP DH algorithm 'MODP8192' must be specified last
+	3DES_CBC-HMAC_SHA1_96-MODP8192
+	3DES_CBC-HMAC_SHA2_256_128-MODP8192
+algparse -fips -v1 -pfs 'esp=3des-sha1-modp8192,3des-sha2-modp2048'
+	ERROR: for IKEv1, multiple ESP DH algorithms (MODP8192, MODP2048) are not allowed in quick mode
 algparse -fips -v1 -pfs 'ah'
 	HMAC_SHA1_96
 algparse -fips -v1 -pfs 'ah='

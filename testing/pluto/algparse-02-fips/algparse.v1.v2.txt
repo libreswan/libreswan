@@ -280,15 +280,11 @@ algparse -fips -v1 -v2 'esp=3des-sha1-modp8192,3des-sha2-modp8192'
 	ERROR: ESP DH algorithm MODP8192 invalid as PFS disabled
 algparse -fips -v1 -v2 'esp=3des-sha1-modp8192,3des-sha2;modp8192'
 	ERROR: ESP DH algorithm MODP8192 invalid as PFS disabled
-algparse -fips -v1 -v2 'esp=3des-sha1;modp8192,3des-sha2;modp8192'
+algparse -fips -v1 -v2 'esp=3des-sha1;modp8192,3des-sha2-modp8192'
 	ERROR: ESP DH algorithm MODP8192 invalid as PFS disabled
 algparse -fips -v1 -v2 'esp=3des-sha1;modp8192,3des-sha2;modp8192'
 	ERROR: ESP DH algorithm MODP8192 invalid as PFS disabled
-algparse -fips -v1 -v2 'esp=3des-sha1-modp8192,3des-sha2-ecp_521'
-	ERROR: ESP DH algorithm 'ecp_521' is not supported by IKEv1
-algparse -fips -v1 -v2 'esp=3des-sha1;modp8192,3des-sha1-modp8192'
-	ERROR: ESP DH algorithm MODP8192 invalid as PFS disabled
-algparse -fips -v1 -v2 'esp=3des-sha1;modp8192,3des-sha1;modp8192'
+algparse -fips -v1 -v2 'esp=3des-sha1-modp8192,3des-sha2-modp2048'
 	ERROR: ESP DH algorithm MODP8192 invalid as PFS disabled
 algparse -fips -v1 -v2 'ah'
 	HMAC_SHA1_96

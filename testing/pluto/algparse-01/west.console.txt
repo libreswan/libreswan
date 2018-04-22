@@ -1,7 +1,10 @@
 ../../guestbin/swan-prep
 west #
  ../bin/algparse.sh PATH/libexec/ipsec/algparse algparse*.txt
+PATH/libexec/ipsec/algparse -v1 -pfs -t # algparse.v1.pfs.txt
 PATH/libexec/ipsec/algparse -v1 -t # algparse.v1.txt
+PATH/libexec/ipsec/algparse -v1 -v2 -pfs -t # algparse.v1.v2.pfs.txt
+PATH/libexec/ipsec/algparse -v1 -v2 -t # algparse.v1.v2.txt
 PATH/libexec/ipsec/algparse -v2 -pfs -t # algparse.v2.pfs.txt
 PATH/libexec/ipsec/algparse -v2 -t # algparse.v2.txt
 PATH/libexec/ipsec/algparse -v # algparse.v.txt
