@@ -278,16 +278,17 @@ static void test(void)
 	esp(true, "aes_ctr256");
 	esp(!fips, "serpent");
 	esp(!fips, "twofish");
+
 	esp(pfs && !fips, "camellia_cbc_256-hmac_sha2_512_256;modp8192"); /* long */
 	esp(pfs && !fips, "null_auth_aes_gmac_256-null;modp8192"); /* long */
 	esp(pfs, "3des-sha1;modp8192"); /* allow ';' when unambigious */
 	esp(pfs, "3des-sha1-modp8192"); /* allow '-' when unambigious */
-	esp(pfs && !ikev2, "aes-sha1,3des-sha1;modp8192"); /* set modp8192 on all algs */
+	esp(false, "aes-sha1,3des-sha1;modp8192");
 	esp(pfs, "aes-sha1-modp8192,3des-sha1-modp8192"); /* silly */
 	esp(pfs, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192"); /* suppress duplicates */
 
 	esp(pfs && !fips && !ikev1, "aes;none");
-	esp(pfs && !fips && !ikev1, "aes;none,aes");
+	esp(false, "aes;none,aes");
 	esp(pfs && !fips && !ikev1, "aes;none,aes;modp2048");
 	esp(pfs && !fips && !ikev1, "aes-sha1-none");
 	esp(pfs && !fips && !ikev1, "aes-sha1;none");
@@ -327,17 +328,14 @@ static void test(void)
 	esp(false, "aes_gcm-123456789012345"); /* huge keylen */
 	esp(false, "3des-sha1;dh22"); /* support for dh22 removed */
 
-	esp(!ikev1 && ikev2 && !pfs, "3des-sha1;modp8192,3des-sha2"); /* ;DH must be last */
-	esp(impair || (!ikev1 && ikev2 && !pfs), "3des-sha1-modp8192,3des-sha2"); /* -DH must be last */
+	esp(impair, "3des-sha1;modp8192,3des-sha2"); /* ;DH must be last */
+	esp(impair, "3des-sha1-modp8192,3des-sha2"); /* -DH must be last */
 
-	esp(pfs, "3des-sha1-modp8192,3des-sha2-modp8192"); /* ok */
-	esp(pfs && !ikev1 && ikev2, "3des-sha1-modp8192,3des-sha2;modp8192"); /* ;DH must be last */
-	esp(pfs && !ikev1 && ikev2, "3des-sha1;modp8192,3des-sha2;modp8192"); /* ;DH must be last */
-	esp(pfs && !ikev1 && ikev2, "3des-sha1;modp8192,3des-sha2;modp8192"); /* ;DH must be last */
-	esp(impair, "3des-sha1-modp8192,3des-sha2-ecp_521"); /* ;DH must match */
-
-	esp(pfs && !ikev1 && ikev2, "3des-sha1;modp8192,3des-sha1-modp8192"); /* ;DH must be last when dup */
-	esp(pfs && !ikev1 && ikev2, "3des-sha1;modp8192,3des-sha1;modp8192"); /* ;DH must be last when dup */
+	esp(pfs, "3des-sha1-modp8192,3des-sha2-modp8192");
+	esp(pfs, "3des-sha1-modp8192,3des-sha2;modp8192");
+	esp(pfs, "3des-sha1;modp8192,3des-sha2-modp8192");
+	esp(pfs, "3des-sha1;modp8192,3des-sha2;modp8192");
+	esp(impair, "3des-sha1-modp8192,3des-sha2-modp2048");
 
 	/*
 	 * ah=

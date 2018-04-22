@@ -273,24 +273,18 @@ algparse -fips -v2 'esp=aes_gcm-123456789012345'
 algparse -fips -v2 'esp=3des-sha1;dh22'
 	ERROR: ESP DH algorithm 'dh22' is not supported
 algparse -fips -v2 'esp=3des-sha1;modp8192,3des-sha2'
-UNEXPECTED FAIL: esp=3des-sha1;modp8192,3des-sha2
 	ERROR: ESP DH algorithm MODP8192 invalid as PFS disabled
 algparse -fips -v2 'esp=3des-sha1-modp8192,3des-sha2'
-UNEXPECTED FAIL: esp=3des-sha1-modp8192,3des-sha2
 	ERROR: ESP DH algorithm MODP8192 invalid as PFS disabled
 algparse -fips -v2 'esp=3des-sha1-modp8192,3des-sha2-modp8192'
 	ERROR: ESP DH algorithm MODP8192 invalid as PFS disabled
 algparse -fips -v2 'esp=3des-sha1-modp8192,3des-sha2;modp8192'
 	ERROR: ESP DH algorithm MODP8192 invalid as PFS disabled
-algparse -fips -v2 'esp=3des-sha1;modp8192,3des-sha2;modp8192'
+algparse -fips -v2 'esp=3des-sha1;modp8192,3des-sha2-modp8192'
 	ERROR: ESP DH algorithm MODP8192 invalid as PFS disabled
 algparse -fips -v2 'esp=3des-sha1;modp8192,3des-sha2;modp8192'
 	ERROR: ESP DH algorithm MODP8192 invalid as PFS disabled
-algparse -fips -v2 'esp=3des-sha1-modp8192,3des-sha2-ecp_521'
-	ERROR: ESP DH algorithm MODP8192 invalid as PFS disabled
-algparse -fips -v2 'esp=3des-sha1;modp8192,3des-sha1-modp8192'
-	ERROR: ESP DH algorithm MODP8192 invalid as PFS disabled
-algparse -fips -v2 'esp=3des-sha1;modp8192,3des-sha1;modp8192'
+algparse -fips -v2 'esp=3des-sha1-modp8192,3des-sha2-modp2048'
 	ERROR: ESP DH algorithm MODP8192 invalid as PFS disabled
 algparse -fips -v2 'ah'
 	HMAC_SHA1_96
@@ -381,4 +375,3 @@ algparse -fips -v2 'ike=3des-id2'
 	ERROR: IKE PRF algorithm 'id2' is not recognized
 algparse -fips -v2 'ike=aes_ccm'
 	ERROR: IKE encryption algorithm 'aes_ccm' is not supported
-2 FAILURES

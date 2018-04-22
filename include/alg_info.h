@@ -227,12 +227,8 @@ bool alg_info_parse_str(const struct proposal_parser *parser,
 bool proposal_aead_none_ok(const struct proposal_parser *parser,
 			   const struct proposal_info *proposal);
 
-bool ikev1_one_alg_info_dh_hack(const struct proposal_parser *parser,
-				struct alg_info_esp *aie,
-				const char *alg_str);
-
-bool ikev2_one_alg_info_dh_hack(const struct proposal_parser *parser,
-				struct alg_info_esp *aie);
+bool alg_info_pfs_vs_dh_check(const struct proposal_parser *parser,
+			      struct alg_info_esp *aie);
 
 #if 0
 /* return true if it really is an error (when impaired return false) */

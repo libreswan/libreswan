@@ -112,20 +112,10 @@ struct alg_info_esp *alg_info_ah_create_from_str(const struct proposal_policy *p
 		return NULL;
 	}
 
-	/* This call can free ALG_INFO_AH. */
-	if (policy->ikev1) {
-		if (!ikev1_one_alg_info_dh_hack(&parser, alg_info_ah, alg_str)) {
-			passert(err_buf[0] != '\0');
-			alg_info_free(&alg_info_ah->ai);
-			return NULL;
-		}
-	}
-	if (policy->ikev2) {
-		if (!ikev2_one_alg_info_dh_hack(&parser, alg_info_ah)) {
-			passert(err_buf[0] != '\0');
-			alg_info_free(&alg_info_ah->ai);
-			return NULL;
-		}
+	if (!alg_info_pfs_vs_dh_check(&parser, alg_info_ah)) {
+		passert(err_buf[0] != '\0');
+		alg_info_free(&alg_info_ah->ai);
+		return NULL;
 	}
 
 	return alg_info_ah;
