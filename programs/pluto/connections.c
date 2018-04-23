@@ -1377,6 +1377,10 @@ void add_connection(const struct whack_message *wm)
 			loglog(RC_FATAL, "MOBIKE requires ikev2=insist");
 			return;
 		}
+		if (wm->policy & POLICY_IKEV2_ALLOW_NARROWING) {
+			loglog(RC_FATAL, "narrowing=yes requires ikev2=insist");
+			return;
+		}
 	}
 
 	if (wm->policy & POLICY_MOBIKE) {
