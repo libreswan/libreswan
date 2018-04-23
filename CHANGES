@@ -2,6 +2,8 @@
 See also https://libreswan.org/
 
 v3.24 (unreleased)
+* IKEv2: MOBIKE Initiator support (RFC 4555) [Antony]
+* IKEv2: No longer allow contradicting esp= and pfs= options [Andrew]
 * IKEv2: PPK support for authby=rsasig [Vukasin Karadzic]
 * IKEv2: IANA INTERNAL_DNSSEC_TA allocation added [Paul]
 * IKEv2: Add PPK support to authby=rsasig [Vukasin]
@@ -21,6 +23,7 @@ v3.24 (unreleased)
 * pluto: disentangle IKEv1 and IKEv2 packet sending code [Andrew]
 * addconn: Fix auto=route and auto=start processing [Paul]
 * FIPS: Don't attempt HMAC integrity test on rsasigkey (rhbz#1544143) [Paul]
+* FIPS: Don't allow RSA keys < 3072 [Matt/Paul]
 * portexcludes: new command ipsec portexcludes (see portexcludes.conf) [Paul]
 * _unbound-hook: Pass all IPSECKEY's to pluto, not just the first [Paul]
 * contrib/python-swan: module to check if trafic get be encrypted [Kim]
@@ -30,7 +33,7 @@ v3.24 (unreleased)
    #318: vti interface gets down on previous initiator if roles switch [Tuomo]
 
 v3.23 (January 25, 2018)
-* IKEv2: MOBIKE support (RFC 4555) [Antony/Paul]
+* IKEv2: MOBIKE Responder support (RFC 4555) [Antony/Paul]
 * IKEv2: Add support for modecfgdns= and modecfgdomains= like for IKEv1 [Paul]
 * IKEv2: EXPERIMENTAL: Support for Postquantim Preshared Keys [Vukasin Karadzic]
          based on draft-ietf-ipsecme-qr-ikev2-01 (using private use numbers)
