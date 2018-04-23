@@ -17,6 +17,7 @@ v3.24 (unreleased)
 * IKEv2: Allow switching between OE instances with different protoports [Paul]
 * IKEv2: process INITIAL_CONTACT and delete old states from a connection [Paul]
 * IKEv1: Cleanup packet send code [Andrew]
+* IKEv1: Prevent crashes with IKEv1 mistakenly allowing narrowing=yes [Paul]
 * X509: Extend support for wildcard certs matching remote peer ID [Paul/Hugh]
 * pluto: Cleanup of state/md passing code [Andrew]
 * pluto: Allow switching back from wrong instance to template conn [Paul]
