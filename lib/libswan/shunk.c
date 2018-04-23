@@ -14,8 +14,9 @@
  *
  */
 
+#include <string.h>
+
 #include "shunk.h"
-#include "lswalloc.h"
 
 const shunk_t empty_shunk;
 
