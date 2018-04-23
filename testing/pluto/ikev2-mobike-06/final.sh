@@ -1,7 +1,5 @@
-ipsec look
+ip xfrm state
 ipsec whack --trafficstatus
-grep "MOBIKE " /tmp/pluto.log
-sleep 7
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

@@ -1,10 +1,9 @@
-IKEv2 mobike initiator support. road is the initiator and migrates sa.
+IKEv2 mobike initiator support. road is the initiator, like closing and opening the lid.
 
-Road has one IP addresses when it start. Remove the ip adddress
-after the IPsec connection is established. Pluto will detect address change
+Road has one IP addresses when at the start. Establish IPsec tunnel.
+Remove the ip adddress. Pluto will detect address change
 and, fail to find an alternative source adddress.
 
-Later on a new address is added. Pluto will detect new address and 
-send MOBIKE probe.  When the mobike response arrive migrate the SA.
+Later add the same address back. It should still initiate MOBIKE exchange.
+The responder may see NAT change, or just port change
 
-The right subnet on road is 0/0

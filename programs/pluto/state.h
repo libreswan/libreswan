@@ -343,6 +343,7 @@ struct state {
 	ip_address st_deleted_local_addr;	/* kernel deleted address */
 	ip_address st_mobike_localaddr;		/* new address to initiate MOBIKE */
 	u_int16_t st_mobike_localport;		/* is this necessary ? */
+	ip_address st_mobike_host_nexthop;	/* for updown script */
 
 	/** IKEv1-only things **/
 

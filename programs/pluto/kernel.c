@@ -1092,6 +1092,44 @@ static bool sag_eroute(const struct state *st,
 	return FALSE;
 }
 
+void migration_up(struct connection *c,  struct state *st)
+{
+	struct spd_route *sr;
+
+	for (sr = &c->spd; sr; sr = sr->spd_next) {
+#ifdef IPSEC_CONNECTION_LIMIT
+		num_ipsec_eroute++;
+#endif
+		sr->routing = RT_ROUTED_TUNNEL; /* do now so route_owner won't find us */
+		(void) do_command(c, sr, "up", st);
+		(void) do_command(c, sr, "route", st);
+	}
+}
+
+void migration_down(struct connection *c,  struct state *st)
+{
+	struct spd_route *sr;
+
+	for (sr = &c->spd; sr; sr = sr->spd_next) {
+		enum routing_t cr = sr->routing;
+
+		if (erouted(cr)) {
+#ifdef IPSEC_CONNECTION_LIMIT
+			num_ipsec_eroute--;
+#endif
+		}
+
+		sr->routing = RT_UNROUTED; /* do now so route_owner won't find us */
+
+		/* only unroute if no other connection shares it */
+		if (routed(cr) && route_owner(c, sr, NULL, NULL, NULL) == NULL) {
+			(void) do_command(c, sr, "down", st);
+			(void) do_command(c, sr, "unroute", st);
+		}
+	}
+}
+
+
 /* delete any eroute for a connection and unroute it if route isn't shared */
 void unroute_connection(struct connection *c)
 {

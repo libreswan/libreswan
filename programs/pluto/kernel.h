@@ -360,6 +360,8 @@ extern void init_kernel(void);
 struct connection;      /* forward declaration of tag */
 extern bool trap_connection(struct connection *c);
 extern void unroute_connection(struct connection *c);
+extern void migration_up(struct connection *c,  struct state *st);
+extern void migration_down(struct connection *c,  struct state *st);
 
 extern bool has_bare_hold(const ip_address *src, const ip_address *dst,
 			  int transport_proto);
