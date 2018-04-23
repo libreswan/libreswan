@@ -36,7 +36,7 @@
 #include <secder.h>
 #include <secerr.h>
 #include <certdb.h>
-#include <nss3/keyhi.h>
+#include <keyhi.h>
 
 /*
  * set up the slot/handle/trust things that NSS needs
