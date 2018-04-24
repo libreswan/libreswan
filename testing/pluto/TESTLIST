@@ -146,7 +146,6 @@ kvmplutotest	ikev2-49-hub-spoke			good
 kvmplutotest	ikev2-50-propnum			good
 kvmplutotest	ikev2-51-rw-nat-ikeport			good
 kvmplutotest	ikev2-53-clean-pending			good
-kvmplutotest	ikev2-54-replace-leave-old		good
 kvmplutotest	ikev2-59-multiple-acquires-alias	wip
 kvmplutotest	ikev2-59-alias-ondemand			wip
 kvmplutotest	ikev2-59-alias-retransmit		wip
@@ -371,7 +370,6 @@ kvmplutotest	newoe-05-hold-pass			good
 kvmplutotest	newoe-06-prio				good
 kvmplutotest	newoe-07-ike-replace-initiator		good
 kvmplutotest	newoe-07-ike-replace-initiator-esp	good
-kvmplutotest	newoe-08-ike-replace-responder		good
 kvmplutotest	newoe-08-restart			good
 kvmplutotest	newoe-09-mutual				good
 kvmplutotest	newoe-09-mutual-transport		good
