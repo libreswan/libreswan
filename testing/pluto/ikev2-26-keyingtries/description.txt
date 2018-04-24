@@ -1,0 +1,4 @@
+
+A misconfiguration. West should keep on trying since it has keyingtries=0
+
+This test fails on 3.23 but only with default retransmit timers
