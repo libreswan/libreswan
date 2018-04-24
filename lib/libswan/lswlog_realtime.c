@@ -10,12 +10,7 @@
  * for more details.
  */
 
-#include <stdio.h>
-
-#include "libreswan.h"
-
 #include "realtime.h"
-
 #include "lswlog.h"
 
 static const char *months[] = {

@@ -15,13 +15,13 @@
  *
  */
 
-#ifndef _REALTIME_H
-#define _REALTIME_H    /* seen it, no need to see it again */
+#ifndef REALTIME_H
+#define REALTIME_H    /* seen it, no need to see it again */
 
-#include <sys/time.h>
-#include <time.h>
+#include <sys/time.h>		/* for struct timeval */
+#include <time.h>		/* for time_t and struct tm */
 
-#include "deltatime.h"
+#include "deltatime.h"		/* for deltatime_t */
 
 struct lswlog;
 

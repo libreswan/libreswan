@@ -15,11 +15,11 @@
  *
  */
 
-#ifndef _MONOTIME_H
-#define _MONOTIME_H    /* seen it, no need to see it again */
+#ifndef MONOTIME_H
+#define MONOTIME_H    /* seen it, no need to see it again */
 
-#include <sys/time.h>
-#include <time.h>
+#include <sys/time.h>		/* for struct timeval */
+#include <stdbool.h>		/* for bool */
 
 #include "deltatime.h"
 
