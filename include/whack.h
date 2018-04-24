@@ -24,6 +24,7 @@
 #define _WHACK_H
 
 #include "ietf_constants.h"
+#include "lset.h"
 #include "lmod.h"
 #include "deltatime.h"
 #include "chunk.h"

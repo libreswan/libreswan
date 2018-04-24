@@ -24,9 +24,10 @@
 #include <stdio.h>		/* for FILE */
 #include <stddef.h>		/* for size_t */
 
-/* moved common code to library file */
+#include "lset.h"
+
 #include "libreswan/passert.h"
-#include "constants.h"		/* for lset_t ... */
+#include "constants.h"		/* for DBG_... */
 
 /* Build up a diagnostic in a static buffer -- NOT RE-ENTRANT.
  * Although this would be a generally useful function, it is very

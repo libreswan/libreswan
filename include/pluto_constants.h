@@ -22,6 +22,8 @@
  *
  */
 
+#include "lset.h"
+
 # ifndef DEFAULT_DNSSEC_ROOTKEY_FILE
 #  define DEFAULT_DNSSEC_ROOTKEY_FILE "<unused>"
 # endif

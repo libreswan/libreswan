@@ -16,7 +16,7 @@
 #ifndef _LMOD_H_
 #define _LMOD_H_
 
-/* #include "lset.h" */
+#include "lset.h"
 
 /*
  * lmod_t is for modifying an lset_t.

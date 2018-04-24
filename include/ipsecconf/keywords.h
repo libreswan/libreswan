@@ -27,6 +27,8 @@
 #ifndef _KEYWORDS_H_
 #define _KEYWORDS_H_
 
+#include "lset.h"
+
 #ifndef _LIBRESWAN_H
 #include "libreswan.h"
 #include "constants.h"
