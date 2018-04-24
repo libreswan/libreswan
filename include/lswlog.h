@@ -20,14 +20,13 @@
 #ifndef _LSWLOG_H_
 #define _LSWLOG_H_
 
-#include <libreswan.h>
 #include <stdarg.h>
-#include <stdio.h>
-#include <stddef.h>
+#include <stdio.h>		/* for FILE */
+#include <stddef.h>		/* for size_t */
 
 /* moved common code to library file */
 #include "libreswan/passert.h"
-#include "constants.h"
+#include "constants.h"		/* for lset_t ... */
 
 /* Build up a diagnostic in a static buffer -- NOT RE-ENTRANT.
  * Although this would be a generally useful function, it is very
