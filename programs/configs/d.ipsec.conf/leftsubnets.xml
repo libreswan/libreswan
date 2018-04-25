@@ -3,7 +3,7 @@
   <listitem>
 <para>specify multiple private subnets behind the left participant, expressed as
 {
-<emphasis remap='I'>networkA</emphasis><emphasis remap='B'>/</emphasis><emphasis remap='I'>netmaskA</emphasis>
+<emphasis remap='I'>networkA</emphasis><emphasis remap='B'>/</emphasis><emphasis remap='I'>netmaskA</emphasis>,
 <emphasis remap='I'>networkB</emphasis><emphasis remap='B'>/</emphasis><emphasis remap='I'>netmaskB</emphasis>
 <emphasis remap='I'>[...]</emphasis>
 }
