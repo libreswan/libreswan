@@ -28,11 +28,15 @@ east #
 |    fragment number: 6 (0x6)
 |    total fragments: 6 (0x6)
 |    fragment number: 1 (0x1)
-|    total fragments: 3 (0x3)
+|    total fragments: 5 (0x5)
 |    fragment number: 2 (0x2)
-|    total fragments: 3 (0x3)
+|    total fragments: 5 (0x5)
 |    fragment number: 3 (0x3)
-|    total fragments: 3 (0x3)
+|    total fragments: 5 (0x5)
+|    fragment number: 4 (0x4)
+|    total fragments: 5 (0x5)
+|    fragment number: 5 (0x5)
+|    total fragments: 5 (0x5)
 east #
 east #
  ../bin/check-for-core.sh
