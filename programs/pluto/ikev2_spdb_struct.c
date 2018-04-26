@@ -757,18 +757,20 @@ static int process_transforms(pb_stream *prop_pbs, struct lswlog *remote_print_b
 				   local_propnum_base, local_propnum_bound) {
 		struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_propnum];
 		LSWDBGP(DBG_CONTROLMORE, log) {
-			lswlogf(log, "comparing remote proposal %u and local proposal %d transforms: required: ",
-				remote_propnum, local_propnum);
-			lswlog_trans_types(log, matching_local_proposal->
-					   matched_transform_types);
-			lswlogf(log, "; optional: ");
+			lswlogf(log, "comparing remote proposal %u containing ",
+				remote_propnum);
+			lswlog_trans_types(log, proposed_remote_transform_types);
+			lswlogf(log, " transforms to local proposal %d",
+				local_propnum);
+			lswlogf(log, "; required: ");
 			lswlog_trans_types(log, matching_local_proposal->
 					   required_transform_types);
-			lswlogf(log, "; proposed: ");
+			lswlogf(log, "; optional: ");
 			lswlog_trans_types(log, matching_local_proposal->
 					   optional_transform_types);
 			lswlogf(log, "; matched: ");
-			lswlog_trans_types(log, proposed_remote_transform_types);
+			lswlog_trans_types(log, matching_local_proposal->
+					   matched_transform_types);
 		}
 		/*
 		 * Using the set relationships:
