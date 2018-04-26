@@ -1052,15 +1052,15 @@ static bool check_connection_end(const struct whack_end *this,
 		}
 	}
 
-	if (subnettypeof(&this->client) != subnettypeof(&that->client)) {
-		/*
-		 * This should have been diagnosed by whack, so we need not
-		 * be clear.
-		 * !!! overloaded use of RC_CLASH
-		 */
-		loglog(RC_CLASH,
-			"address family inconsistency in this/that connection");
-		return FALSE;
+	if (!isanyaddr(&this->client.addr) && !isanyaddr(&that->client.addr)) {
+		if (subnettypeof(&this->client) != subnettypeof(&that->client)) {
+			/*
+			 * !!! overloaded use of RC_CLASH
+			 */
+			loglog(RC_CLASH,
+				"address family inconsistency in this/that connection");
+			return FALSE;
+		}
 	}
 
 	/* MAKE this more sane in the face of unresolved IP addresses */
