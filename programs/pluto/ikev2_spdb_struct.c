@@ -189,18 +189,27 @@ struct ikev2_proposal {
 struct ikev2_proposal_match {
 	/*
 	 * Set of local transform types to expect in the remote
-	 * proposal.  Because of INTEG=NONE and DH=NONE some are
-	 * OPTIONAL and some are REQUIRED.
+	 * proposal.
+	 *
+	 * If the local proposal includes INTEG=NONE and/or DH=NONE
+	 * then including INTEG and/or DH transforms in the remote
+	 * proposal is OPTIONAL.  When the transform is missing, NONE
+	 * is implied.
 	 */
-	lset_t required_local_transform_types;
-	lset_t optional_local_transform_types;
+	lset_t required_transform_types;
+	lset_t optional_transform_types;
+	/*
+	 * Location of the sentinel transform for each transform type.
+	 * MATCHING_TRANSFORMS starts out with this value.
+	 */
+	struct ikev2_transform *sentinel_transform[IKEv2_TRANS_TYPE_ROOF];
 	/*
 	 * Set of transform types in the remote proposal that matched
 	 * at least one local transform of the same type.
 	 *
 	 * Note: MATCHED <= REQUIRED | OPTIONAL
 	 */
-	lset_t matched_local_transform_types;
+	lset_t matched_transform_types;
 	/*
 	 * Pointer to the best matched transform within the local
 	 * proposal, or the (invalid) sentinel transform.
@@ -465,9 +474,9 @@ static int process_transforms(pb_stream *prop_pbs, struct lswlog *remote_print_b
 			struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_propnum];
 			enum ikev2_trans_type type;
 			struct ikev2_transforms *local_transforms;
-			matching_local_proposal->required_local_transform_types = LEMPTY;
-			matching_local_proposal->matched_local_transform_types = LEMPTY;
-			matching_local_proposal->optional_local_transform_types = LEMPTY;
+			matching_local_proposal->required_transform_types = LEMPTY;
+			matching_local_proposal->matched_transform_types = LEMPTY;
+			matching_local_proposal->optional_transform_types = LEMPTY;
 			FOR_EACH_TRANSFORMS_TYPE(type, local_transforms, local_proposal) {
 				/*
 				 * Find the sentinel transform for
@@ -493,14 +502,14 @@ static int process_transforms(pb_stream *prop_pbs, struct lswlog *remote_print_b
 					 */
 					if ((type == IKEv2_TRANS_TYPE_INTEG || type == IKEv2_TRANS_TYPE_DH)
 					    && sentinel_transform->id == 0) {
-						matching_local_proposal->optional_local_transform_types |= LELEM(type);
+						matching_local_proposal->optional_transform_types |= LELEM(type);
 					} else {
-						matching_local_proposal->required_local_transform_types |= LELEM(type);
+						matching_local_proposal->required_transform_types |= LELEM(type);
 					}
 				}
 				passert(!sentinel_transform->valid);
 				/* a transform type can't be both */
-				passert(!(matching_local_proposal->required_local_transform_types & matching_local_proposal->optional_local_transform_types));
+				passert(!(matching_local_proposal->required_transform_types & matching_local_proposal->optional_transform_types));
 				/* save the sentinel */
 				matching_local_proposal->matching_transform[type] = sentinel_transform;
 				DBG(DBG_CONTROLMORE,
@@ -512,10 +521,10 @@ static int process_transforms(pb_stream *prop_pbs, struct lswlog *remote_print_b
 				lswlogf(buf, "local proposal %d transforms: required: ",
 					local_propnum);
 				lswlog_trans_types(buf, matching_local_proposal->
-						   required_local_transform_types);
+						   required_transform_types);
 				lswlogf(buf, "; optional: ");
 				lswlog_trans_types(buf, matching_local_proposal->
-						   optional_local_transform_types);
+						   optional_transform_types);
 			}
 		}
 	}
@@ -697,7 +706,7 @@ static int process_transforms(pb_stream *prop_pbs, struct lswlog *remote_print_b
 						 * matched.
 						 */
 						matched_remote_transform_types |= LELEM(type);
-						matching_local_proposal->matched_local_transform_types |= LELEM(type);
+						matching_local_proposal->matched_transform_types |= LELEM(type);
 						break;
 					}
 				}
@@ -751,13 +760,13 @@ static int process_transforms(pb_stream *prop_pbs, struct lswlog *remote_print_b
 			lswlogf(log, "comparing remote proposal %u and local proposal %d transforms: required: ",
 				remote_propnum, local_propnum);
 			lswlog_trans_types(log, matching_local_proposal->
-					   matched_local_transform_types);
+					   matched_transform_types);
 			lswlogf(log, "; optional: ");
 			lswlog_trans_types(log, matching_local_proposal->
-					   required_local_transform_types);
+					   required_transform_types);
 			lswlogf(log, "; proposed: ");
 			lswlog_trans_types(log, matching_local_proposal->
-					   optional_local_transform_types);
+					   optional_transform_types);
 			lswlogf(log, "; matched: ");
 			lswlog_trans_types(log, proposed_remote_transform_types);
 		}
@@ -777,7 +786,7 @@ static int process_transforms(pb_stream *prop_pbs, struct lswlog *remote_print_b
 		 */
 		lset_t unmatched =
 			(proposed_remote_transform_types
-			 & ~matching_local_proposal->matched_local_transform_types);
+			 & ~matching_local_proposal->matched_transform_types);
 		/*
 		 *   missing = required_local - matched_local
 		 *
@@ -787,8 +796,8 @@ static int process_transforms(pb_stream *prop_pbs, struct lswlog *remote_print_b
 		 *     Optional transforms are not included.
 		 */
 		lset_t missing =
-			(matching_local_proposal->required_local_transform_types
-			 & ~matching_local_proposal->matched_local_transform_types);
+			(matching_local_proposal->required_transform_types
+			 & ~matching_local_proposal->matched_transform_types);
 		/*
 		 * vis:
 		 *
