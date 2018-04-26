@@ -439,60 +439,14 @@ static int process_transforms(pb_stream *prop_pbs, struct lswlog *remote_print_b
 		FOR_EACH_PROPOSAL_IN_RANGE(local_propnum, local_proposal, local_proposals,
 					   local_propnum_base, local_propnum_bound) {
 			struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_propnum];
-			enum ikev2_trans_type type;
-			const struct ikev2_transforms *local_transforms;
-			matching_local_proposal->required_transform_types = LEMPTY;
+			/* clear matched */
 			matching_local_proposal->matched_transform_types = LEMPTY;
-			matching_local_proposal->optional_transform_types = LEMPTY;
-			FOR_EACH_TRANSFORMS_TYPE(type, local_transforms, local_proposal) {
-				/*
-				 * Find the sentinel transform for
-				 * this transform-type.
-				 */
-				const struct ikev2_transform *sentinel_transform;
-				FOR_EACH_TRANSFORM(sentinel_transform, local_transforms) {
-					/*
-					 * Since the local proposal
-					 * contains at least one
-					 * transform of this type, the
-					 * remote proposal is expected
-					 * to also contain at least
-					 * one of these transform
-					 * types.
-					 *
-					 * However, when the local
-					 * transform has INTEG=none or
-					 * DH=none, exclude that from
-					 * the REQUIRED set, adding it
-					 * to the OPTIONAL - it is
-					 * optional.
-					 */
-					if ((type == IKEv2_TRANS_TYPE_INTEG || type == IKEv2_TRANS_TYPE_DH)
-					    && sentinel_transform->id == 0) {
-						matching_local_proposal->optional_transform_types |= LELEM(type);
-					} else {
-						matching_local_proposal->required_transform_types |= LELEM(type);
-					}
-				}
-				passert(!sentinel_transform->valid);
-				/* a transform type can't be both */
-				passert(!(matching_local_proposal->required_transform_types & matching_local_proposal->optional_transform_types));
-				/* save the sentinel */
-				matching_local_proposal->matching_transform[type] = sentinel_transform;
-				DBG(DBG_CONTROLMORE,
-				    DBG_log("local proposal %d type %s has %td transforms",
-					    local_propnum, trans_type_name(type),
-					    sentinel_transform - local_transforms->transform));
-			}
-			LSWDBGP(DBG_CONTROLMORE, buf) {
-				lswlogf(buf, "local proposal %d transforms: required: ",
-					local_propnum);
-				lswlog_trans_types(buf, matching_local_proposal->
-						   required_transform_types);
-				lswlogf(buf, "; optional: ");
-				lswlog_trans_types(buf, matching_local_proposal->
-						   optional_transform_types);
-			}
+			/* start with the sentinels */
+			passert(sizeof(matching_local_proposal->matching_transform) ==
+				sizeof(matching_local_proposal->sentinel_transform));
+			memcpy(matching_local_proposal->matching_transform,
+			       matching_local_proposal->sentinel_transform,
+			       sizeof(matching_local_proposal->sentinel_transform));
 		}
 	}
 
@@ -855,20 +809,93 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 				   struct lswlog *remote_print_buf)
 {
 	/*
-	 * Array to track best proposals/transforms.
+	 * An array to track the best proposals/transforms found so
+	 * far.
+	 *
+	 * The MATCHING_LOCAL_PROPOSALS table contains one entry per
+	 * local proposal, and each entry contains a pointer best
+	 * matching transform, or the sentinel transform.
+	 *
+	 * The required, optional, and sentinal fields are initialized
+	 * here.  The remaining fields are initialized each time a
+	 * remote proposal is parsed.
 	 *
 	 * Must be freed.
 	 */
-	struct ikev2_proposal_match *matching_local_proposals;
-	matching_local_proposals = alloc_things(struct ikev2_proposal_match, local_proposals->roof,
-						"matching_local_proposals");
+	struct ikev2_proposal_match *matching_local_proposals =
+		alloc_things(struct ikev2_proposal_match, local_proposals->roof,
+			     "matching_local_proposals");
+	{
+		int local_propnum;
+		struct ikev2_proposal *local_proposal;
+		FOR_EACH_PROPOSAL(local_propnum, local_proposal, local_proposals) {
+			struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_propnum];
+			enum ikev2_trans_type type;
+			struct ikev2_transforms *local_transforms;
+			lset_t all_transform_types = LEMPTY;
+			lset_t optional_transform_types = LEMPTY;
+			FOR_EACH_TRANSFORMS_TYPE(type, local_transforms, local_proposal) {
+				/*
+				 * Find the sentinel transform for
+				 * this transform-type.
+				 */
+				struct ikev2_transform *sentinel_transform;
+				FOR_EACH_TRANSFORM(sentinel_transform, local_transforms) {
+					all_transform_types |= LELEM(type);
+					/*
+					 * When INTEG=NONE and/or
+					 * DH=NONE is included in a
+					 * local proposal, the
+					 * transform is optional and,
+					 * when missing from a remote
+					 * proposal, NONE is implied.
+					 */
+					if ((type == IKEv2_TRANS_TYPE_INTEG &&
+					     sentinel_transform->id == IKEv2_AUTH_NONE) ||
+					    (type == IKEv2_TRANS_TYPE_DH &&
+					     sentinel_transform->id == OAKLEY_GROUP_NONE)) {
+						optional_transform_types |= LELEM(type);
+					}
+				}
+				/* save the sentinel */
+				passert(!sentinel_transform->valid);
+				matching_local_proposal->sentinel_transform[type] = sentinel_transform;
+				DBG(DBG_CONTROLMORE,
+				    DBG_log("local proposal %d type %s has %td transforms",
+					    local_propnum, trans_type_name(type),
+					    sentinel_transform - local_transforms->transform));
+			}
+			/*
+			 * A proposal's transform type can't be both
+			 * required an optional.
+			 *
+			 * Since a proposal containing DH=NONE +
+			 * DH=MODP2048 is valid, REQUIRED gets
+			 * computed (INTEG=NONE + INTEG=SHA1 isn't
+			 * valid but that should only happen when
+			 * impaired).
+			 */
+			matching_local_proposal->optional_transform_types = optional_transform_types;
+			matching_local_proposal->required_transform_types = all_transform_types & ~optional_transform_types;
+			LSWDBGP(DBG_CONTROLMORE, buf) {
+				lswlogf(buf, "local proposal %d transforms: required: ",
+					local_propnum);
+				lswlog_trans_types(buf, matching_local_proposal->
+						   required_transform_types);
+				lswlogf(buf, "; optional: ");
+				lswlog_trans_types(buf, matching_local_proposal->
+						   optional_transform_types);
+
+			}
+		}
+	}
 
 	/*
 	 * This loop contains no "return" statements.  Instead it
 	 * always enters at the top and exits at the bottom.  This
 	 * simplfies the dealing with buffers allocated above.
 	 *
-	 * On loop exit, the result is one of:
+	 * On loop exit, MATCHING_LOCAL_PROPNUM contains one of:
 	 *
 	 *    -ve - the STF_FAIL status
 	 *    0: no proposal matched
