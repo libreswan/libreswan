@@ -4457,8 +4457,14 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 	 * For the responder, go with what ever was negotiated.  For
 	 * the initiator, check what was negotiated against what was
 	 * sent.
+	 *
+	 * Because code expects .st_pfs_group to use NULL, and not
+	 * &ike_alg_dh_none, to indicate no-DH algorithm, the value
+	 * returned by the proposal parser needs to be patched up.
 	 */
-	const struct oakley_group_desc *accepted_dh = proto_info->attrs.transattrs.ta_dh;
+	const struct oakley_group_desc *accepted_dh =
+		proto_info->attrs.transattrs.ta_dh == &ike_alg_dh_none ? NULL
+		: proto_info->attrs.transattrs.ta_dh;
 	switch (st->st_sa_role) {
 	case SA_INITIATOR:
 		pexpect(expect_accepted);
