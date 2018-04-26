@@ -548,10 +548,10 @@ static int process_transforms(pb_stream *prop_pbs, struct lswlog *remote_print_b
 
 	/*
 	 * Track the first integrity transform's transID.  Needed to
-	 * check for a mixup of NULL and non-NULL integrity
+	 * check for a mixup of NONE and non-NONE integrity
 	 * transforms.
 	 *
-	 * Since 0 (NULL) is a valid integrity transID value, start
+	 * Since 0 (NONE) is a valid integrity transID value, start
 	 * with -1.
 	 */
 	int first_integrity_transid = -1;
@@ -801,37 +801,37 @@ static int process_transforms(pb_stream *prop_pbs, struct lswlog *remote_print_b
 		/*
 		 * vis:
 		 *
-		 *         Local Proposal: ENCR=AEAD+INTEG=NULL
+		 *         Local Proposal: ENCR=AEAD+INTEG=NONE
 		 *     required_local = ENCR; optional_local = INTEG
 		 *     unmatched = proposed_remote - matched_local
 		 *     missing = ENCR - matched_local
 		 *
 		 *      Remote            Matched     Unmatched  Missing Accept
-		 *   INTEG=NULL           INTEG       -          ENCR
-		 *   INTEG!NULL           -           INTEG      ENCR
+		 *   INTEG=NONE           INTEG       -          ENCR
+		 *   INTEG!NONE           -           INTEG      ENCR
 		 *   ENCR=AEAD            ENCR        -          -       Yes
 		 *   ENCR!AEAD            -           ENCR       ENCR
-		 *   ENCR=AEAD+INTEG=NULL ENCR+INTEG  -          -       Yes
-		 *   ENCR!AEAD+INTEG=NULL INTEG       ENCR       ENCR
-		 *   ENCR=AEAD+INTEG!NULL ENCR        INTEG      -
-		 *   ENCR!AEAD+INTEG!NULL -           ENCR+INTEG ENCR
+		 *   ENCR=AEAD+INTEG=NONE ENCR+INTEG  -          -       Yes
+		 *   ENCR!AEAD+INTEG=NONE INTEG       ENCR       ENCR
+		 *   ENCR=AEAD+INTEG!NONE ENCR        INTEG      -
+		 *   ENCR!AEAD+INTEG!NONE -           ENCR+INTEG ENCR
 		 *   ENCR=AEAD+ESP=NO     ENCR        ESP        -
 		 *   ENCR!AEAD+ESP=NO     -           ESP+ENCR   ENCR
 		 *
-		 *          Local Proposal: ENCR!AEAD+INTEG!NULL
+		 *          Local Proposal: ENCR!AEAD+INTEG!NONE
 		 *     required_local = ENCR+INTEG; optional_local =
 		 *     unmatched = proposed_remote - matched_local
 		 *     missing = ENCR+INTEG - matched_local
 		 *
 		 *   Remote Proposal      Matched    Unmatched  Missing    Accept
-		 *   INTEG=NULL           -          INTEG      ENCR+INTEG
-		 *   INTEG!NULL           INTEG      -          ENCR
+		 *   INTEG=NONE           -          INTEG      ENCR+INTEG
+		 *   INTEG!NONE           INTEG      -          ENCR
 		 *   ENCR=AEAD            -          ENCR       ENCR+INTEG
 		 *   ENCR!AEAD            ENCR       -          INTEG
-		 *   ENCR=AEAD+INTEG=NULL -          ENCR+INTEG ENCR+INTEG
-		 *   ENCR!AEAD+INTEG=NULL ENCR       INTEG      INTEG
-		 *   ENCR=AEAD+INTEG!NULL INTEG      ENCR       ENCR
-		 *   ENCR!AEAD+INTEG!NULL ENCR+INTEG -          -          Yes
+		 *   ENCR=AEAD+INTEG=NONE -          ENCR+INTEG ENCR+INTEG
+		 *   ENCR!AEAD+INTEG=NONE ENCR       INTEG      INTEG
+		 *   ENCR=AEAD+INTEG!NONE INTEG      ENCR       ENCR
+		 *   ENCR!AEAD+INTEG!NONE ENCR+INTEG -          -          Yes
 		 *   ENCR=AEAD+ESP=NO     -          ENCR+ESP   ENCR+INTEG
 		 *   ENCR!AEAD+ESP=NO     ENCR       INTEG+ESP  INTEG
 		 */
@@ -1535,7 +1535,7 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 	 * Patch up integrity.
 	 */
 	if (ike_alg_is_aead(ta.ta_encrypt) && ta.ta_integ == NULL) {
-		DBG(DBG_CONTROL, DBG_log("since AEAD, setting NULL integ to 'null'"));
+		DBGF(DBG_CONTROL, "since AEAD, forcing NULL integ to 'NONE'");
 		ta.ta_integ = &ike_alg_integ_none;
 	}
 
@@ -1839,7 +1839,7 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 	{ .protoid = 0, },	/* proposal 0 is ignored.  */
 	/*
 	 * AES_GCM_16/C[256]
-	 * NULL
+	 * NONE
 	 * SHA2_512, SHA2_256, SHA1 - SHA1 is MUST- in RFC 8247
 	 * MODP2048, MODP3072, MODP4096, MODP8192, DH_ECP256
 	 *
@@ -1858,7 +1858,7 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 	},
         /*
 	 * AES_GCM_16/C[128]
-	 * NULL
+	 * NONE
 	 * SHA2_512, SHA2_256, SHA1 - SHA1 is MUST- in RFC 8247
 	 * MODP2048, DH_MODP3072, MODP4096, MODP8192, DH_ECP256
 	 *
