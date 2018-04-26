@@ -111,6 +111,11 @@ struct ikev2_transform {
 	 */
 	unsigned attr_keylen;
 	/*
+	 * Marker to indicate that the transform was implied rather
+	 * than valid.
+	 */
+	bool implied;
+	/*
 	 * Marker to indicate that the transform is valid.  The first
 	 * invalid transform acts as a sentinel.
 	 *
@@ -1037,17 +1042,47 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 				.protoid = remote_proposal.isap_protoid,
 				.remote_spi = remote_spi,
 			};
+			/*
+			 * store the matching transforms in the very
+			 * first transform entry of BEST_TRANSFORMS
+			 */
 			enum ikev2_trans_type type;
 			struct ikev2_transforms *best_transforms;
+			struct ikev2_proposal_match *matching_local_proposal =
+				&matching_local_proposals[matching_local_propnum];
 			FOR_EACH_TRANSFORMS_TYPE(type, best_transforms, best_proposal) {
-				struct ikev2_transform *matching_transform = matching_local_proposals[matching_local_propnum].matching_transform[type];
+				struct ikev2_transform *matching_transform = matching_local_proposal->matching_transform[type];
 				passert(matching_transform != NULL);
-				/*
-				 * This includes invalid (or
-				 * unmatched) transform types which is
-				 * ok.
-				 */
-				*best_transforms->transform = *matching_transform;
+				if (!matching_transform->valid &&
+				    (matching_local_proposal->optional_transform_types & LELEM(type))) {
+					/*
+					 * DH=NONE and/or INTEG=NONE
+					 * is implied.
+					 */
+					unsigned id;
+					switch (type) {
+					case IKEv2_TRANS_TYPE_INTEG:
+						id = IKEv2_AUTH_NONE;
+						break;
+					case IKEv2_TRANS_TYPE_DH:
+						id = OAKLEY_GROUP_NONE;
+						break;
+					default:
+						bad_case(type);
+					}
+					best_transforms->transform[0] = (struct ikev2_transform) {
+						.id = id,
+						.valid = false,
+						.implied = true,
+					};
+				} else {
+					/*
+					 * When no match, this will
+					 * copy the sentinel transform
+					 * setting !valid.
+					 */
+					best_transforms->transform[0] = *matching_transform;
+				}
 			}
 		}
 	} while (remote_proposal.isap_lp == v2_PROPOSAL_NON_LAST);
@@ -1400,9 +1435,13 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 	enum ikev2_trans_type type;
 	struct ikev2_transforms *transforms;
 	FOR_EACH_TRANSFORMS_TYPE(type, transforms, proposal) {
+		/*
+		 * Accepted transform is in [0] valid proposals would
+		 * be in [1...].
+		 */
 		pexpect(!transforms->transform[1].valid); /* zero or 1 */
-		if (transforms->transform[0].valid) {
-			struct ikev2_transform *transform = transforms->transform;
+		struct ikev2_transform *transform = &transforms->transform[0];
+		if (transform->valid || transform->implied) {
 			switch (type) {
 			case IKEv2_TRANS_TYPE_ENCR: {
 				const struct encrypt_desc *encrypt =
@@ -1498,14 +1537,6 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 				return FALSE;
 			}
 		}
-	}
-
-	/*
-	 * Patch up integrity.
-	 */
-	if (ike_alg_is_aead(ta.ta_encrypt) && ta.ta_integ == NULL) {
-		DBGF(DBG_CONTROL, "since AEAD, forcing NULL integ to 'NONE'");
-		ta.ta_integ = &ike_alg_integ_none;
 	}
 
 	*ta_out = ta;
