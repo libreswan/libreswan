@@ -79,7 +79,7 @@ fixversion() {
     version="${version}${stack} on $(uname -r)"
 }
 
-set_db_trusts() {
+set_nss_db_trusts() {
     # has to handle a NSS nick with spaces
     certutil -L -d "${IPSEC_NSSDIR_SQL}" | \
 	grep -E -v '(Trust Attributes|SSL,S/MIME,JAR/XPI|^)$' | \
@@ -238,7 +238,7 @@ ipsec_import() {
 
 	pk12util -i "${pkcs12bundle}" -d "${IPSEC_NSSDIR_SQL}"
 	# check and correct trust bits
-	set_db_trusts
+	set_nss_db_trusts
 	exit 0
     else
 	echo "ERROR: destination directory \"${IPSEC_NSSDIR}\" is missing or permission denied" >&2
@@ -254,6 +254,9 @@ ipsec_checknss() {
 		;;
 	    --initnss|initnss)
 		cmd=initnss
+		;;
+	    --settrusts)
+	        set_trusts=yes
 		;;
 	    --configdir)
 		echo "ipsec ${cmd} warning: --configdir is obsoleted, use --nssdir" >&2
@@ -363,6 +366,9 @@ ipsec_checknss() {
 		echo "To wipe the old NSS database, issue: rm ${IPSEC_NSSDIR}/*.db"
 		exit 42
 	    else
+		if [ "${set_trusts}" = "yes" ]; then
+		    set_nss_db_trusts
+		fi
 		exit 0
 	    fi
 	fi

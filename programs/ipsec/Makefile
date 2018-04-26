@@ -17,6 +17,7 @@ PROGRAMDIR=${SBINDIR}
 # Do not prefix $(PROGRAM) man page with "ipsec_"
 MANPROGPREFIX=
 
+MANPAGES += ipsec_checknss.8
 MANPAGES += ipsec_initnss.8
 MANPAGES += ipsec_import.8
 

@@ -9,7 +9,7 @@
 <refmeta>
 <refentrytitle>IPSEC</refentrytitle>
 <manvolnum>8</manvolnum>
-<refmiscinfo class='date'>17 March 2014</refmiscinfo>
+<refmiscinfo class='date'>27 April 2018</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
@@ -85,7 +85,7 @@ to stdout for debugging</para>
 
 <para><userinput>ipsec initnss</userinput> initialises the NSS database that contains all the X.509 certificate information and private RSA keys</para>
 
-<para><userinput>ipsec checknss</userinput> is ussed to check the NSS database and initialize it when it is not present.</para>
+<para><userinput>ipsec checknss [--settrusts]</userinput> is used to check the NSS database and initialize it when it is not present and optionally set trust bits for CA certificates.</para>
 
 <para><userinput>ipsec import</userinput> is used to import PKCS#12 X.509 files into the NSS database</para>
 
@@ -107,12 +107,14 @@ may in fact exit with an error code after the fork. </para>
 </refsect1>
 
 <refsect1 id='see_also'><title>SEE ALSO</title>
-<para>ipsec.<citerefentry><refentrytitle>conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>, ipsec.<citerefentry><refentrytitle>secrets</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+<para>
+<citerefentry><refentrytitle>ipsec.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>ipsec.secrets</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>ipsec_auto</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>ipsec_checknss</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>ipsec_initnss</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>ipsec_setup</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>ipsec_showhostkey</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
-
+<citerefentry><refentrytitle>ipsec_showhostkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+</para>
 </refsect1>
-
 </refentry>
-
