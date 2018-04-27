@@ -24,6 +24,7 @@ v3.24 (unreleased)
 * pluto: disentangle IKEv1 and IKEv2 packet sending code [Andrew]
 * pluto: Allow rightsubnets= without leftsubnet(s)= [Paul]
 * addconn: Fix auto=route and auto=start processing [Paul]
+* whack/auto: Ensure all status and list commands return no error code [Paul]
 * FIPS: Don't attempt HMAC integrity test on rsasigkey (rhbz#1544143) [Paul]
 * FIPS: Don't allow RSA keys < 3072 [Matt/Paul]
 * portexcludes: new command ipsec portexcludes (see portexcludes.conf) [Paul]
