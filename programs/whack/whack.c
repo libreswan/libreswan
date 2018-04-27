@@ -852,6 +852,7 @@ int main(int argc, char **argv)
 	bool gotusername = FALSE, gotxauthpass = FALSE;
 	const char *ugh;
 	int oppo_dport = 0;
+	bool ignore_errors = FALSE;
 
 	/* check division of numbering space */
 	assert(OPTION_OFFSET + OPTION_ENUMS_LAST < NUMERIC_ARG);
@@ -1222,10 +1223,12 @@ int main(int argc, char **argv)
 
 		case OPT_STATUS:	/* --status */
 			msg.whack_status = TRUE;
+			ignore_errors = TRUE;
 			continue;
 
 		case OPT_GLOBAL_STATUS:	/* --global-status */
 			msg.whack_global_status = TRUE;
+			ignore_errors = TRUE;
 			continue;
 
 		case OPT_CLEAR_STATS:	/* --clearstats */
@@ -1234,14 +1237,17 @@ int main(int argc, char **argv)
 
 		case OPT_TRAFFIC_STATUS:	/* --trafficstatus */
 			msg.whack_traffic_status = TRUE;
+			ignore_errors = TRUE;
 			continue;
 
 		case OPT_SHUNT_STATUS:	/* --shuntstatus */
 			msg.whack_shunt_status = TRUE;
+			ignore_errors = TRUE;
 			continue;
 
 		case OPT_FIPS_STATUS:	/* --fipsstatus */
 			msg.whack_fips_status = TRUE;
+			ignore_errors = TRUE;
 			continue;
 
 #ifdef HAVE_SECCOMP
@@ -1299,15 +1305,18 @@ int main(int argc, char **argv)
 		case LST_PSKS:	/* --listpsks */
 		case LST_EVENTS:	/* --listevents */
 			msg.whack_list |= LELEM(c - LST_PUBKEYS);
+			ignore_errors = TRUE;
 			continue;
 
 		case LST_CHECKPUBKEYS:	/* --checkpubkeys */
 			msg.whack_list |= LELEM(LST_PUBKEYS - LST_PUBKEYS);
 			msg.whack_check_pub_keys = TRUE;
+			ignore_errors = TRUE;
 			continue;
 
 		case LST_ALL:	/* --listall */
 			msg.whack_list = LIST_ALL;
+			ignore_errors = TRUE;
 			continue;
 
 		/* Connection Description options */
@@ -2455,6 +2464,9 @@ int main(int argc, char **argv)
 			ls = le;
 		}
 	}
+
+	if (ignore_errors)
+		return 0;
 
 	return exit_status;
 }
