@@ -31,6 +31,7 @@ v3.24 (unreleased)
 * contrib/python-swan: module to check if trafic get be encrypted [Kim]
 * contrib/c-swan: example code to check if trafic get be encrypted [Kim]
 * building: added USE_GLIBC_KERN_FLIP_HEADERS (default off) [Paul]
+* ipsec: add checknss option --settrusts to reset CA trusts in nss db [Tuomo]
 * Bugtracker bugs fixed:
    #318: vti interface gets down on previous initiator if roles switch [Tuomo]
 
