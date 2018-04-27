@@ -9,7 +9,6 @@ algparse: Encryption algorithm NULL disabled; not FIPS compliant
 algparse: Hash algorithm MD5 disabled; not FIPS compliant
 algparse: PRF algorithm HMAC_MD5 disabled; not FIPS compliant
 algparse: Integrity algorithm HMAC_MD5_96 disabled; not FIPS compliant
-algparse: DH algorithm NONE disabled; not FIPS compliant
 algparse: DH algorithm MODP1024 disabled; not FIPS compliant
 algparse: DH algorithm MODP1536 disabled; not FIPS compliant
 algparse: FIPS Encryption algorithms:
@@ -42,6 +41,7 @@ algparse:   AES_XCBC_96         IKEv1:     ESP AH  IKEv2: IKE ESP AH  FIPS  (aes
 algparse:   AES_CMAC_96         IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_cmac)
 algparse:   NONE                IKEv1:     ESP     IKEv2:     ESP     FIPS  (null)
 algparse: FIPS DH algorithms:
+algparse:   NONE                IKEv1:             IKEv2: IKE ESP AH  FIPS  (null dh0)
 algparse:   MODP2048            IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (dh14)
 algparse:   MODP3072            IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (dh15)
 algparse:   MODP4096            IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (dh16)

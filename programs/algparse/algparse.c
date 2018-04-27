@@ -289,11 +289,11 @@ static void test(void)
 	esp(pfs, "aes-sha1-modp8192,3des-sha1-modp8192"); /* silly */
 	esp(pfs, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192"); /* suppress duplicates */
 
-	esp(pfs && !fips && !ikev1, "aes;none");
+	esp(pfs && !ikev1, "aes;none");
 	esp(false, "aes;none,aes");
-	esp(pfs && !fips && !ikev1, "aes;none,aes;modp2048");
-	esp(pfs && !fips && !ikev1, "aes-sha1-none");
-	esp(pfs && !fips && !ikev1, "aes-sha1;none");
+	esp(pfs && !ikev1, "aes;none,aes;modp2048");
+	esp(pfs && !ikev1, "aes-sha1-none");
+	esp(pfs && !ikev1, "aes-sha1;none");
 
 	/*
 	 * should this be supported - for now man page says not
@@ -359,8 +359,8 @@ static void test(void)
 	ah(true, "sha2_384");
 	ah(true, "sha2_512");
 	ah(true, "aes_xcbc");
-	ah(pfs && !fips && !ikev1, "sha2-none");
-	ah(pfs && !fips && !ikev1, "sha2;none");
+	ah(pfs && !ikev1, "sha2-none");
+	ah(pfs && !ikev1, "sha2;none");
 	ah(pfs, "sha1-modp8192,sha1-modp8192,sha1-modp8192"); /* suppress duplicates */
 
 	/* AH tests that should fail */

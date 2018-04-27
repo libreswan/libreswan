@@ -104,6 +104,15 @@ const struct oakley_group_desc ike_alg_dh_none = {
 			[IKEv1_ESP_ID] = -1,
 			[IKEv2_ALG_ID] = OAKLEY_GROUP_NONE,
 		},
+		/*
+		 * IKEv2, during the initial exchanges, negotiates a
+		 * child SA without DH (or if screwing with the RFC,
+		 * DH=NONE).  Either way, the result is a child state
+		 * with .ta_dh == &ike_alg_dh_none.
+		 *
+		 * Other code gets the job of rejecting "none".
+		 */
+		.fips = true,
 	},
 	.group = OAKLEY_GROUP_NONE,
 	/*

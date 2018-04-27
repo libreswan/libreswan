@@ -210,15 +210,15 @@ algparse -fips -v1 -v2 -pfs 'esp=aes-sha1-modp8192,3des-sha1-modp8192'
 algparse -fips -v1 -v2 -pfs 'esp=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192'
 	AES_CBC-HMAC_SHA1_96-MODP8192
 algparse -fips -v1 -v2 -pfs 'esp=aes;none'
-	ERROR: ESP DH algorithm 'none' is not supported
+	ERROR: ESP DH algorithm 'none' is not supported by IKEv1
 algparse -fips -v1 -v2 -pfs 'esp=aes;none,aes'
-	ERROR: ESP DH algorithm 'none' is not supported
+	ERROR: ESP DH algorithm 'none' is not supported by IKEv1
 algparse -fips -v1 -v2 -pfs 'esp=aes;none,aes;modp2048'
-	ERROR: ESP DH algorithm 'none' is not supported
+	ERROR: ESP DH algorithm 'none' is not supported by IKEv1
 algparse -fips -v1 -v2 -pfs 'esp=aes-sha1-none'
-	ERROR: ESP DH algorithm 'none' is not supported
+	ERROR: ESP DH algorithm 'none' is not supported by IKEv1
 algparse -fips -v1 -v2 -pfs 'esp=aes-sha1;none'
-	ERROR: ESP DH algorithm 'none' is not supported
+	ERROR: ESP DH algorithm 'none' is not supported by IKEv1
 algparse -fips -v1 -v2 -pfs 'esp=3des168-sha1'
 	ERROR: 3DES does not take variable key lengths
 algparse -fips -v1 -v2 -pfs 'esp=3des-null'
@@ -320,9 +320,9 @@ algparse -fips -v1 -v2 -pfs 'ah=sha2_512'
 algparse -fips -v1 -v2 -pfs 'ah=aes_xcbc'
 	AES_XCBC_96
 algparse -fips -v1 -v2 -pfs 'ah=sha2-none'
-	ERROR: AH DH algorithm 'none' is not supported
+	ERROR: AH DH algorithm 'none' is not supported by IKEv1
 algparse -fips -v1 -v2 -pfs 'ah=sha2;none'
-	ERROR: AH DH algorithm 'none' is not supported
+	ERROR: AH DH algorithm 'none' is not supported by IKEv1
 algparse -fips -v1 -v2 -pfs 'ah=sha1-modp8192,sha1-modp8192,sha1-modp8192'
 	HMAC_SHA1_96-MODP8192
 algparse -fips -v1 -v2 -pfs 'ah=aes-sha1'
@@ -371,7 +371,7 @@ algparse -fips -v1 -v2 -pfs 'ike=aes_gcm'
 algparse -fips -v1 -v2 -pfs 'ike=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192'
 	AES_CBC-HMAC_SHA1-MODP8192
 algparse -fips -v1 -v2 -pfs 'ike=aes;none'
-	ERROR: IKE DH algorithm 'none' is not supported
+	ERROR: IKE DH algorithm 'none' is not supported by IKEv1
 algparse -fips -v1 -v2 -pfs 'ike=id2'
 	ERROR: IKE encryption algorithm 'id' is not recognized
 algparse -fips -v1 -v2 -pfs 'ike=3des-id2'

@@ -209,15 +209,15 @@ algparse -fips -v1 'esp=aes-sha1-modp8192,3des-sha1-modp8192'
 algparse -fips -v1 'esp=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192'
 	ERROR: ESP DH algorithm MODP8192 is invalid as PFS policy is disabled
 algparse -fips -v1 'esp=aes;none'
-	ERROR: ESP DH algorithm 'none' is not supported
+	ERROR: ESP DH algorithm 'none' is not supported by IKEv1
 algparse -fips -v1 'esp=aes;none,aes'
-	ERROR: ESP DH algorithm 'none' is not supported
+	ERROR: ESP DH algorithm 'none' is not supported by IKEv1
 algparse -fips -v1 'esp=aes;none,aes;modp2048'
-	ERROR: ESP DH algorithm 'none' is not supported
+	ERROR: ESP DH algorithm 'none' is not supported by IKEv1
 algparse -fips -v1 'esp=aes-sha1-none'
-	ERROR: ESP DH algorithm 'none' is not supported
+	ERROR: ESP DH algorithm 'none' is not supported by IKEv1
 algparse -fips -v1 'esp=aes-sha1;none'
-	ERROR: ESP DH algorithm 'none' is not supported
+	ERROR: ESP DH algorithm 'none' is not supported by IKEv1
 algparse -fips -v1 'esp=3des168-sha1'
 	ERROR: 3DES does not take variable key lengths
 algparse -fips -v1 'esp=3des-null'
@@ -315,9 +315,9 @@ algparse -fips -v1 'ah=sha2_512'
 algparse -fips -v1 'ah=aes_xcbc'
 	AES_XCBC_96
 algparse -fips -v1 'ah=sha2-none'
-	ERROR: AH DH algorithm 'none' is not supported
+	ERROR: AH DH algorithm 'none' is not supported by IKEv1
 algparse -fips -v1 'ah=sha2;none'
-	ERROR: AH DH algorithm 'none' is not supported
+	ERROR: AH DH algorithm 'none' is not supported by IKEv1
 algparse -fips -v1 'ah=sha1-modp8192,sha1-modp8192,sha1-modp8192'
 	ERROR: AH DH algorithm MODP8192 is invalid as PFS policy is disabled
 algparse -fips -v1 'ah=aes-sha1'
@@ -366,7 +366,7 @@ algparse -fips -v1 'ike=aes_gcm'
 algparse -fips -v1 'ike=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192'
 	AES_CBC-HMAC_SHA1-MODP8192
 algparse -fips -v1 'ike=aes;none'
-	ERROR: IKE DH algorithm 'none' is not supported
+	ERROR: IKE DH algorithm 'none' is not supported by IKEv1
 algparse -fips -v1 'ike=id2'
 	ERROR: IKE encryption algorithm 'id' is not recognized
 algparse -fips -v1 'ike=3des-id2'
