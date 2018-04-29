@@ -715,7 +715,9 @@ extern bool find_pending_phase2(const so_serial_t psn,
 					const struct connection *c,
 					lset_t ok_states);
 
-struct state *state_with_parent_msgid_expect(so_serial_t psn, msgid_t st_msgid,
+extern struct state *resp_state_with_msgid(so_serial_t psn, msgid_t st_msgid);
+
+extern struct state *state_with_parent_msgid_expect(so_serial_t psn, msgid_t st_msgid,
 		                enum state_kind expected_state);
 
 extern struct state *find_state_ikev2_parent(const u_char *icookie,

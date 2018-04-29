@@ -1072,7 +1072,12 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 
 	if (is_msg_request(md)) {
 		/* this a new IKE request and not a response */
-		if (md->from_state == STATE_V2_CREATE_R) {
+
+		if (resp_state_with_msgid(pst->st_serialno,
+					  htonl(md->msgid_received)) != NULL) {
+			what = "CREATE_CHILD_SA Request retransmission ignored";
+			st = NULL;
+		} else if (md->from_state == STATE_V2_CREATE_R) {
 			what = "Child SA Request";
 			st = ikev2_duplicate_state(pexpect_ike_sa(pst), IPSEC_SA,
 						   SA_RESPONDER);
