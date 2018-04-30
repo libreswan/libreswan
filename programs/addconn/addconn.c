@@ -61,8 +61,8 @@
 #endif
 
 #ifdef HAVE_SECCOMP
-# include <seccomp.h>
-# define EXIT_SECCOMP_FAIL 8
+#define LSW_SECCOMP_EXIT_FAIL 8
+#include "lswseccomp.h"
 #endif
 
 const char *progname;
@@ -82,87 +82,77 @@ void resolve_defaultroute(struct starter_conn *conn)
 }
 
 #ifdef HAVE_SECCOMP
-static
-void init_seccomp_addconn(uint32_t def_action)
+static void init_seccomp_addconn(uint32_t def_action)
 {
-#define S_RULE_ADD(x) seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(x), 0)
 	scmp_filter_ctx ctx = seccomp_init(def_action);
-	int rc = 0;
-
 	if (ctx == NULL) {
-			printf("seccomp_init_addconn() failed!");
-			exit(EXIT_SECCOMP_FAIL);
+		fprintf(stderr, "seccomp_init_addconn() failed!");
+		exit(LSW_SECCOMP_EXIT_FAIL);
 	}
 
 	/*
-	 * because on bootup, addconn is started by pluto, any syscall
-	 * here MUST also appear in the syscall list for "main" inside pluto
+	 * Because on bootup, addconn is started by pluto, any syscall
+	 * here MUST also appear in the syscall list for "main" inside
+	 * pluto
 	 */
-	rc |= S_RULE_ADD(access);
-	rc |= S_RULE_ADD(arch_prctl);
-	rc |= S_RULE_ADD(brk);
-	rc |= S_RULE_ADD(bind);
-	rc |= S_RULE_ADD(clone);
-	rc |= S_RULE_ADD(clock_gettime);
-	rc |= S_RULE_ADD(close);
-	rc |= S_RULE_ADD(connect);
-	rc |= S_RULE_ADD(epoll_create);
-	rc |= S_RULE_ADD(epoll_ctl);
-	rc |= S_RULE_ADD(epoll_wait);
-	rc |= S_RULE_ADD(epoll_pwait);
-	rc |= S_RULE_ADD(exit_group);
-	rc |= S_RULE_ADD(fcntl);
-	rc |= S_RULE_ADD(fstat);
-	rc |= S_RULE_ADD(futex);
-	rc |= S_RULE_ADD(getdents);
-	rc |= S_RULE_ADD(getegid);
-	rc |= S_RULE_ADD(getpid);
-	rc |= S_RULE_ADD(getrlimit);
-	rc |= S_RULE_ADD(geteuid);
-	rc |= S_RULE_ADD(getgid);
-	rc |= S_RULE_ADD(getrandom);
-	rc |= S_RULE_ADD(getuid);
-	rc |= S_RULE_ADD(ioctl);
-	rc |= S_RULE_ADD(mmap);
-	rc |= S_RULE_ADD(lseek);
-	rc |= S_RULE_ADD(munmap);
-	rc |= S_RULE_ADD(mprotect);
-	rc |= S_RULE_ADD(open);
-	rc |= S_RULE_ADD(openat);
-	rc |= S_RULE_ADD(poll);
-	rc |= S_RULE_ADD(prctl);
-	rc |= S_RULE_ADD(read);
-	rc |= S_RULE_ADD(readlink);
-	rc |= S_RULE_ADD(recvfrom);
-	rc |= S_RULE_ADD(rt_sigaction);
-	rc |= S_RULE_ADD(rt_sigprocmask);
-	rc |= S_RULE_ADD(sendto);
-	rc |= S_RULE_ADD(setsockopt);
-	rc |= S_RULE_ADD(set_robust_list);
-	rc |= S_RULE_ADD(set_tid_address);
-	rc |= S_RULE_ADD(sigreturn);
-	rc |= S_RULE_ADD(socket);
-	rc |= S_RULE_ADD(socketcall);
-	rc |= S_RULE_ADD(socketpair);
-	rc |= S_RULE_ADD(stat);
-	rc |= S_RULE_ADD(statfs);
-	rc |= S_RULE_ADD(uname);
-	rc |= S_RULE_ADD(waitpid);
-	rc |= S_RULE_ADD(write);
+	LSW_SECCOMP_ADD(ctx, access);
+	LSW_SECCOMP_ADD(ctx, arch_prctl);
+	LSW_SECCOMP_ADD(ctx, brk);
+	LSW_SECCOMP_ADD(ctx, bind);
+	LSW_SECCOMP_ADD(ctx, clone);
+	LSW_SECCOMP_ADD(ctx, clock_gettime);
+	LSW_SECCOMP_ADD(ctx, close);
+	LSW_SECCOMP_ADD(ctx, connect);
+	LSW_SECCOMP_ADD(ctx, epoll_create);
+	LSW_SECCOMP_ADD(ctx, epoll_ctl);
+	LSW_SECCOMP_ADD(ctx, epoll_wait);
+	LSW_SECCOMP_ADD(ctx, epoll_pwait);
+	LSW_SECCOMP_ADD(ctx, exit_group);
+	LSW_SECCOMP_ADD(ctx, fcntl);
+	LSW_SECCOMP_ADD(ctx, fstat);
+	LSW_SECCOMP_ADD(ctx, futex);
+	LSW_SECCOMP_ADD(ctx, getdents);
+	LSW_SECCOMP_ADD(ctx, getegid);
+	LSW_SECCOMP_ADD(ctx, getpid);
+	LSW_SECCOMP_ADD(ctx, getrlimit);
+	LSW_SECCOMP_ADD(ctx, geteuid);
+	LSW_SECCOMP_ADD(ctx, getgid);
+	LSW_SECCOMP_ADD(ctx, getrandom);
+	LSW_SECCOMP_ADD(ctx, getuid);
+	LSW_SECCOMP_ADD(ctx, ioctl);
+	LSW_SECCOMP_ADD(ctx, mmap);
+	LSW_SECCOMP_ADD(ctx, lseek);
+	LSW_SECCOMP_ADD(ctx, munmap);
+	LSW_SECCOMP_ADD(ctx, mprotect);
+	LSW_SECCOMP_ADD(ctx, open);
+	LSW_SECCOMP_ADD(ctx, openat);
+	LSW_SECCOMP_ADD(ctx, poll);
+	LSW_SECCOMP_ADD(ctx, prctl);
+	LSW_SECCOMP_ADD(ctx, read);
+	LSW_SECCOMP_ADD(ctx, readlink);
+	LSW_SECCOMP_ADD(ctx, recvfrom);
+	LSW_SECCOMP_ADD(ctx, rt_sigaction);
+	LSW_SECCOMP_ADD(ctx, rt_sigprocmask);
+	LSW_SECCOMP_ADD(ctx, sendto);
+	LSW_SECCOMP_ADD(ctx, setsockopt);
+	LSW_SECCOMP_ADD(ctx, set_robust_list);
+	LSW_SECCOMP_ADD(ctx, set_tid_address);
+	LSW_SECCOMP_ADD(ctx, sigreturn);
+	LSW_SECCOMP_ADD(ctx, socket);
+	LSW_SECCOMP_ADD(ctx, socketcall);
+	LSW_SECCOMP_ADD(ctx, socketpair);
+	LSW_SECCOMP_ADD(ctx, stat);
+	LSW_SECCOMP_ADD(ctx, statfs);
+	LSW_SECCOMP_ADD(ctx, uname);
+	LSW_SECCOMP_ADD(ctx, waitpid);
+	LSW_SECCOMP_ADD(ctx, write);
 
-	if (rc != 0) {
-		printf("seccomp_rule_add() failed!");
-		seccomp_release(ctx);
-		exit(EXIT_SECCOMP_FAIL);
-	}
-
-	rc = seccomp_load(ctx);
+	int rc = seccomp_load(ctx);
 	if (rc < 0) {
 		printf("seccomp_load() failed!");
 		seccomp_release(ctx);
-		exit(EXIT_SECCOMP_FAIL);
+		exit(LSW_SECCOMP_EXIT_FAIL);
 	}
-#undef S_RULE_ADD
 }
 #endif
 
