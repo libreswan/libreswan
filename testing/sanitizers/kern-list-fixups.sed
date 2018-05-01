@@ -112,3 +112,4 @@ s/ LEN=[0-9]* / LEN=XXXX /g
 /^.*audit_printk.*$/d
 /^.*audit: type=.*$/d
 /^.*SELinux: unrecognized netlink message.*$/d
+/^.*clocksource.*$/d
