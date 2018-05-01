@@ -174,7 +174,7 @@ static void process_initial_contact(const struct state *pst)
 	{
 		bool none = TRUE;
 		for (struct connection *candidate = connections; candidate != NULL; ) {
-			struct connection *nc = candidate = candidate->ac_next;
+			struct connection *nc = candidate->ac_next;
 			if (candidate != c && /* self */
 			    candidate->kind == CK_INSTANCE &&
 			    streq(candidate->name,c->name) && /* same conn */
