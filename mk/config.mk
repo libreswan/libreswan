@@ -287,10 +287,6 @@ GCC?=gcc
 
 MAKE?=make
 
-# You can compile using Electric Fence - this is used for running the test suite
-# EFENCE=-lefence
-EFENCE?=
-
 # Enable AddressSanitizer - see https://libreswan.org/wiki/Compiling_with_AddressSanitizer
 # requires clang or gcc >= 4.8 and libasan. Do not combine with Electric Fence and do not
 # run pluto with --leak-detective
@@ -305,7 +301,7 @@ KLIPSCOMPILE?=-O2 -DCONFIG_KLIPS_ALG -DDISABLE_UDP_CHECKSUM
 #export MALLOC_PERTURB_=$(($RANDOM % 255 + 1))
 
 # extra link flags
-USERLINK?=-Wl,-z,relro,-z,now -g -pie ${EFENCE} ${ASAN}
+USERLINK?=-Wl,-z,relro,-z,now -g -pie $(EFENCE_LDFLAGS) ${ASAN}
 
 PORTINCLUDE?=
 

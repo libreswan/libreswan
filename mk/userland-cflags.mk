@@ -44,6 +44,17 @@ USERCOMPILE= -fstack-protector-all -fno-strict-aliasing -fPIE -DPIE
 endif
 USERLAND_CFLAGS+=$(USERCOMPILE)
 
+# Build/link against the more pedantic ElectricFence memory allocator;
+# used when testing.
+USE_EFENCE ?= false
+ifeq ($(USE_EFENCE),true)
+USERLAND_CFLAGS+=-DUSE_EFENCE
+EFENCE_LDFLAGS ?= -lefence
+endif
+ifneq ($(EFENCE),)
+$(warning EFENCE=$(EFENCE) replaced by USE_EFENCE=true)
+endif
+
 ifeq ($(USE_DNSSEC),true)
 USERLAND_CFLAGS+=-DUSE_DNSSEC
 UNBOUND_LDFLAGS ?= -lunbound -lldns
