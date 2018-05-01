@@ -57,6 +57,10 @@ static void init_seccomp(uint32_t def_action, bool main)
 		LSW_SECCOMP_ADD(ctx, wait4);
 	}
 
+#ifdef USE_EFENCE
+	LSW_SECCOMP_ADD(ctx, madvise);
+#endif
+
 	/* needed for pluto and updown, not helpers */
 	if (main) {
 		LSW_SECCOMP_ADD(ctx, accept);

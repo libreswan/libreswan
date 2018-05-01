@@ -147,6 +147,10 @@ static void init_seccomp_addconn(uint32_t def_action)
 	LSW_SECCOMP_ADD(ctx, waitpid);
 	LSW_SECCOMP_ADD(ctx, write);
 
+#ifdef USE_EFENCE
+	LSW_SECCOMP_ADD(ctx, madvise);
+#endif
+
 	int rc = seccomp_load(ctx);
 	if (rc < 0) {
 		printf("seccomp_load() failed!");
