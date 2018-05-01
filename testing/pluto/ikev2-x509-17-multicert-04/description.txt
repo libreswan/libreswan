@@ -1,0 +1,2 @@
+As ikev2-x509-17-multicert-03 but the load order on east is switched,
+so that the other code path for connection switching is tested.

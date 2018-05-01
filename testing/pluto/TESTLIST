@@ -308,6 +308,8 @@ kvmplutotest	ikev2-x509-14-san-dn-mismatch		good
 kvmplutotest	ikev2-x509-15-san-dn-mismatch-responder	good
 kvmplutotest	ikev2-x509-16-multicert			good
 kvmplutotest	ikev2-x509-17-multicert-02		good
+kvmplutotest	ikev2-x509-17-multicert-03		wip
+kvmplutotest	ikev2-x509-17-multicert-04		wip
 kvmplutotest	ikev2-x509-18-multicert-rightid		good
 kvmplutotest	ikev2-x509-19-multicert-rightid-san	good
 kvmplutotest	ikev2-x509-20-multicert-rightid-san-wildcard	good

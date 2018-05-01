@@ -1,0 +1,6 @@
+As ikev2-x509-17-multicert-02 but now another conn is loaded on east to
+verify propery (or not) connection switching.
+
+This case where no IDr is received causes a wrong connection switching
+upto libreswan 3.23. It also shows that %sameca is not enforced via NSS
+and needs additional code in libreswan
