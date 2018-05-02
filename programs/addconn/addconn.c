@@ -545,7 +545,7 @@ int main(int argc, char *argv[])
 			}
 
 			if (conn == NULL) {
-				exit_status++;
+				exit_status += RC_UNKNOWN_NAME; /* cause non-zero exit code */
 				if (!verbose) {
 					printf("conn '%s': not found (tried aliases)\n",
 						connname);
@@ -698,5 +698,11 @@ int main(int argc, char *argv[])
 #ifdef USE_DNSSEC
 	unbound_ctx_free();
 #endif
+	/*
+	 * Only RC_ codes between RC_DUPNAME and RC_NEW_STATE are errors
+	 * Some starter code above can also return -1 which is not a valid RC_ code
+	 */
+	if (exit_status > 0 && (exit_status < RC_DUPNAME || exit_status >= RC_NEW_STATE))
+		exit_status = 0;
 	exit(exit_status);
 }

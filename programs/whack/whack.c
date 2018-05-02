@@ -2456,6 +2456,9 @@ int main(int argc, char **argv)
 				break;
 
 			default:
+				/* Only RC_ codes between RC_DUPNAME and RC_NEW_STATE are errors */
+				if (s > 0 && (s < RC_DUPNAME || s >= RC_NEW_STATE))
+					s = 0;
 				exit_status = msg.whack_async ?
 					0 : s;
 				break;
