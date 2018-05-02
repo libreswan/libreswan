@@ -400,13 +400,24 @@ struct config_parsed *parser_load_conf(const char *file, err_t *perr)
 		}
 		save_errors = FALSE;
 		do {} while (yyparse() != 0);
-	} else if (parser_errstring[0] == '\0') {
-		/**
-		 * Config valid
-		 */
-		return cfg;
+		goto err;
 	}
-	/* falls through on error */
+
+	/* check all are kv_config */
+	for (const struct kw_list *kw = parser_cfg->config_setup;
+	     kw; kw = kw->next) {
+		if (!(kw->keyword.keydef->validity & kv_config)) {
+			snprintf(parser_errstring, sizeof(parser_errstring),
+				 "unexpected keyword '%s' in section 'config setup'",
+				 kw->keyword.keydef->keyname);
+			goto err;
+		}
+	}
+
+	/**
+	 * Config valid
+	 */
+	return cfg;
 
 err:
 	if (perr != NULL)
