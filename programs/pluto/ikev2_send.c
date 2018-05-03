@@ -289,6 +289,8 @@ pb_stream open_v2_message(pb_stream *reply,
 			hdr.isa_flags |= ISAKMP_FLAGS_v2_MSG_R;
 			break;
 		case MESSAGE_RESPONSE:
+			PEXPECT_LOG("trying to respond to a message response%s", "");
+			return empty_pbs;
 		default:
 			bad_case(MESSAGE_RESPONSE);
 		}
