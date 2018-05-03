@@ -1032,7 +1032,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 
 	/* Send NAT-T Notify payloads */
 	{
-		int np = IMPAIR(ADD_BOGUS_PAYLOAD_TO_SA_INIT) ? ISAKMP_NEXT_v2BOGUS :
+		int np = IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_SA_INIT) ? ISAKMP_NEXT_v2UNKNOWN :
 			(vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 		if (!ikev2_out_nat_v2n(np, &rbody, md))
 			return STF_INTERNAL_ERROR;
@@ -1040,8 +1040,8 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 
 	/* something the other end won't like */
 
-	if (IMPAIR(ADD_BOGUS_PAYLOAD_TO_SA_INIT)) {
-		if (!ship_v2BOGUS(&rbody, "SA_INIT request")) {
+	if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_SA_INIT)) {
+		if (!ship_v2UNKNOWN(&rbody, "SA_INIT request")) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -1647,7 +1647,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	/* Send NAT-T Notify payloads */
 	{
 		struct ikev2_generic in;
-		int np = IMPAIR(ADD_BOGUS_PAYLOAD_TO_SA_INIT) ? ISAKMP_NEXT_v2BOGUS :
+		int np = IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_SA_INIT) ? ISAKMP_NEXT_v2UNKNOWN :
 			send_certreq ? ISAKMP_NEXT_v2CERTREQ :
                         (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 		zero(&in);	/* OK: no pointers */
@@ -1659,8 +1659,8 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 
 	/* something the other end won't like */
 
-	if (IMPAIR(ADD_BOGUS_PAYLOAD_TO_SA_INIT)) {
-		if (!ship_v2BOGUS(&rbody, "SA_INIT reply")) {
+	if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_SA_INIT)) {
+		if (!ship_v2UNKNOWN(&rbody, "SA_INIT reply")) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -3246,8 +3246,8 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	/* XXX it should pick the cookies from the parent state! */
 	memcpy(hdr.isa_icookie, cst->st_icookie, COOKIE_SIZE);
 	memcpy(hdr.isa_rcookie, cst->st_rcookie, COOKIE_SIZE);
-	hdr.isa_np = IMPAIR(ADD_BOGUS_PAYLOAD_TO_AUTH) ?
-		ISAKMP_NEXT_v2BOGUS : ISAKMP_NEXT_v2SK;
+	hdr.isa_np = IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH) ?
+		ISAKMP_NEXT_v2UNKNOWN : ISAKMP_NEXT_v2SK;
 	hdr.isa_version = build_ikev2_version();
 	hdr.isa_xchg = ISAKMP_v2_AUTH;
 	/* XXX same here, use parent */
@@ -3274,8 +3274,8 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		e.isag_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
 	}
 
-	if (IMPAIR(ADD_BOGUS_PAYLOAD_TO_AUTH)) {
-		if (!ship_v2BOGUS(&rbody, "AUTH request")) {
+	if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH)) {
+		if (!ship_v2UNKNOWN(&rbody, "AUTH request")) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -3335,7 +3335,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 			r_id.isai_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
 		}
 
-		r_id.isai_np = IMPAIR(ADD_BOGUS_PAYLOAD_TO_AUTH_SK) ? ISAKMP_NEXT_v2BOGUS :
+		r_id.isai_np = IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK) ? ISAKMP_NEXT_v2UNKNOWN :
 			send_cert ?  ISAKMP_NEXT_v2CERT :
 			send_idr ? ISAKMP_NEXT_v2IDr :
 			ic ? ISAKMP_NEXT_v2N :
@@ -3372,8 +3372,8 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		}
 	}
 
-	if (IMPAIR(ADD_BOGUS_PAYLOAD_TO_AUTH_SK)) {
-		if (!ship_v2BOGUS(&e_pbs_cipher, "AUTH's SK request")) {
+	if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK)) {
+		if (!ship_v2UNKNOWN(&e_pbs_cipher, "AUTH's SK request")) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -4148,8 +4148,8 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 			hdr = md->hdr; /* grab cookies */
 
 			hdr.isa_version = build_ikev2_version();
-			hdr.isa_np = IMPAIR(ADD_BOGUS_PAYLOAD_TO_AUTH) ?
-				ISAKMP_NEXT_v2BOGUS : ISAKMP_NEXT_v2SK;
+			hdr.isa_np = IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH) ?
+				ISAKMP_NEXT_v2UNKNOWN : ISAKMP_NEXT_v2SK;
 			hdr.isa_xchg = ISAKMP_v2_AUTH;
 			memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 			memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
@@ -4165,8 +4165,8 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 				return STF_INTERNAL_ERROR;
 		}
 
-		if (IMPAIR(ADD_BOGUS_PAYLOAD_TO_AUTH)) {
-			if (!ship_v2BOGUS(&rbody, "AUTH reply")) {
+		if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH)) {
+			if (!ship_v2UNKNOWN(&rbody, "AUTH reply")) {
 				return STF_INTERNAL_ERROR;
 			}
 		}
@@ -4175,7 +4175,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		send_cert = ikev2_send_cert_decision(st);
 
 		/* insert an Encryption payload header */
-		e.isag_np = IMPAIR(ADD_BOGUS_PAYLOAD_TO_AUTH_SK) ? ISAKMP_NEXT_v2BOGUS :
+		e.isag_np = IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK) ? ISAKMP_NEXT_v2UNKNOWN :
 			(notifies != 0) ? ISAKMP_NEXT_v2N :
 			ISAKMP_NEXT_v2IDr;
 		e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
@@ -4198,8 +4198,8 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		uint8_t *encstart = e_pbs_cipher.cur;
 		passert(reply_stream.start <= iv && iv <= encstart);
 
-		if (IMPAIR(ADD_BOGUS_PAYLOAD_TO_AUTH_SK)) {
-			if (!ship_v2BOGUS(&e_pbs_cipher, "AUTH's SK reply")) {
+		if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK)) {
+			if (!ship_v2UNKNOWN(&e_pbs_cipher, "AUTH's SK reply")) {
 				return STF_INTERNAL_ERROR;
 			}
 		}

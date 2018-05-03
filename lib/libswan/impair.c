@@ -68,10 +68,11 @@ static const char *impair_strings[] = {
 
 	I(IMPAIR_PROPOSAL_PARSER, "impair-proposal-parser"),
 
-	I(IMPAIR_ADD_BOGUS_PAYLOAD_TO_SA_INIT, "impair-add-bogus-payload-to-sa-init"),
-	I(IMPAIR_ADD_BOGUS_PAYLOAD_TO_AUTH, "impair-add-bogus-payload-to-auth"),
-	I(IMPAIR_ADD_BOGUS_PAYLOAD_TO_AUTH_SK, "impair-add-bogus-payload-to-auth-sk"),
-	I(IMPAIR_BOGUS_PAYLOAD_CRITICAL, "impair-bogus-payload-critical"),
+	I(IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_SA_INIT, "impair-add-unknown-payload-to-sa-init"),
+	I(IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_AUTH, "impair-add-unknown-payload-to-auth"),
+	I(IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK, "impair-add-unknown-payload-to-auth-sk"),
+	I(IMPAIR_UNKNOWN_PAYLOAD_CRITICAL, "impair-unknown-payload-critical"),
+
 	I(IMPAIR_ALLOW_DNS_INSECURE, "impair-allow-dns-insecure"),
 };
 

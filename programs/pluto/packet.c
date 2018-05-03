@@ -703,11 +703,11 @@ struct_desc ikev2_generic_desc = {
 	.size = sizeof(struct ikev2_generic),
 	.np = 0, /* only for reading */
 };
-struct_desc ikev2_bogus_desc = {
+struct_desc ikev2_unknown_payload_desc = {
 	.name = "IKEv2 Bogus Payload",
 	.fields = ikev2generic_fields,
 	.size = sizeof(struct ikev2_generic),
-	.np = ISAKMP_NEXT_v2BOGUS,
+	.np = ISAKMP_NEXT_v2UNKNOWN,
 };
 
 /*

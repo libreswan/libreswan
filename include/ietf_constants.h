@@ -572,15 +572,19 @@ enum next_payload_types_ikev2 {
 #define ISAKMP_v2PAYLOAD_TYPE_BASE	ISAKMP_NEXT_v2SA	/* lowest value of a v2 payload type */
 
 /*
- * Value to use when sending a bogus payload:
+ * Value to use when emitting a payload that the other end won't
+ * recognize forcing it down the unknown (and not just unsupported)
+ * payload code path:
  *
  * - fills the entire 8-bit field (so signed vs unsigned overflows)
  *
- * - too big to fill in an lset_t (so would overflow that code)
+ * - too big to fit in an lset_t (so would overflow that code)
  *
- * - seemingly unknown by pluto (so enum name lookups fail)
+ * - not "known" by pluto (so enum name lookups fail)
+ *
+ * - since it isn't known, it is also, by definition unsupported
  */
-#define ISAKMP_NEXT_v2BOGUS		255
+#define ISAKMP_NEXT_v2UNKNOWN		255
 
 /*
  * These values are to be used within the Type field of an Attribute (14)
