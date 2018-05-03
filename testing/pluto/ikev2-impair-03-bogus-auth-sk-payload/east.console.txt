@@ -5,7 +5,7 @@ Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
- ipsec whack --impair add-bogus-payload-to-auth-sk
+ ipsec whack --impair add-unknown-payload-to-auth-sk
 east #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
