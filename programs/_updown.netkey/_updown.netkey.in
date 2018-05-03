@@ -519,10 +519,20 @@ doproxyarp() {
 }
 
 doroute() {
-    local st
     local cmd
-    st=0
+    local oops
+    local st
     cmd=${1}
+    st=0
+    if [ ${cmd} != del ]; then
+	oops="$(eval ip route get ${PLUTO_PEER_CLIENT} 2>&1)"
+	case "${oops}" in
+	    'RTNETLINK answers: No route to host'*)
+		# Routing is mandatory for IPsec
+		ROUTE=yes
+		;;
+	esac
+    fi
     # skip routing if it's not enabled or necessary
     if [ -z "${PLUTO_MY_SOURCEIP}" -a \
 	-z "${PLUTO_MTU}" -a \
