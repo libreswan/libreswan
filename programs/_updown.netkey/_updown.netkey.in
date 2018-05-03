@@ -485,6 +485,8 @@ delsource() {
 }
 
 doproxyarp() {
+    local cmd
+    cmd=${1}
     # Check if client has a single ip only client net
     if [ ${PLUTO_PEER_CLIENT#*/} = ${MAX_CIDR} ]; then
 	# Skip OE special connections
@@ -502,9 +504,12 @@ doproxyarp() {
 	    fi
 	    # add/remove arp entry for the client on ethernet devices only
 	    if [ -n "${macaddr}" ]; then
-		if [ "$1" = add ]; then
+		if [ "${cmd}" = "add" ]; then
 		    ip neigh add proxy ${PLUTO_PEER_CLIENT_NET} dev ${iface} \
 			lladdr ${macaddr} nud permanent
+		    # Force routing, required for proxyarp to work
+		    ROUTE=yes
+		    export ROUTE
 		else
 		    ip neigh del proxy ${PLUTO_PEER_CLIENT_NET} dev ${iface}
 		fi
@@ -514,11 +519,16 @@ doproxyarp() {
 }
 
 doroute() {
+    local st
+    local cmd
     st=0
+    cmd=${1}
     # skip routing if it's not enabled or necessary
     if [ -z "${PLUTO_MY_SOURCEIP}" -a \
 	-z "${PLUTO_MTU}" -a \
-	"${ROUTE}" != yes ]; then
+	"${ROUTE}" != "yes" -a \
+	"${cmd}" != "del" ]
+    then
 	return 0
     fi
     parms="${PLUTO_PEER_CLIENT}"
@@ -533,7 +543,7 @@ doroute() {
 	parms2="via ${PLUTO_NEXT_HOP}"
     fi
     # route via proper interface according to routing table
-    if [ "${1}" = "del" ]; then
+    if [ "${cmd}" = "del" ]; then
 	peer_interface=$(ip -o route get ${PLUTO_PEER_CLIENT} | \
 	    sed "s/^.*dev \([^ ]*\) .*/\1/")
     else
@@ -550,7 +560,7 @@ doroute() {
     parms2="${parms2} dev ${peer_interface%:*}${PLUTO_MTU:+ mtu ${PLUTO_MTU}}${PLUTO_METRIC:+ metric ${PLUTO_METRIC}} $IPROUTEARGS"
 
     # make sure whe have sourceip locally in this machine
-    if [ "$1" = "replace" -a -n "${PLUTO_MY_SOURCEIP}" ]; then
+    if [ "${cmd}" = "replace" -a -n "${PLUTO_MY_SOURCEIP}" ]; then
 	addsource
 	# use sourceip as route default source
 	parms2="${parms2} src ${PLUTO_MY_SOURCEIP}"
@@ -560,10 +570,10 @@ doroute() {
 	"0.0.0.0/0")
 	    # need to provide route that eclipses default, without
 	    # replacing it.
-	    it="ip route $1 0.0.0.0/1 ${parms2} && ip route $1 128.0.0.0/1 ${parms2}"
+	    it="ip route ${cmd} 0.0.0.0/1 ${parms2} && ip route ${cmd} 128.0.0.0/1 ${parms2}"
 	    ;;
 	*)
-	    it="ip route $1 ${parms} ${parms2}"
+	    it="ip route ${cmd} ${parms} ${parms2}"
 	    ;;
     esac
     oops="$(eval ${it} 2>&1)"
