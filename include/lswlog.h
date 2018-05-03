@@ -593,11 +593,12 @@ void lswlog_passert_suffix(struct lswlog *buf, const char *func,
 
 /* for a switch statement */
 
-void libreswan_bad_case(long n, const char *string, const char *func,
-			const char *file, unsigned long line) NEVER_RETURNS;
+void libreswan_bad_case(const char *expression, long value,
+			const char *func, const char *file,
+			unsigned long line) NEVER_RETURNS;
 
-#define bad_case(N)							\
-	libreswan_bad_case((N), #N, __func__, PASSERT_BASENAME, __LINE__)
+#define bad_case(N)	libreswan_bad_case(#N, (N), __func__, \
+					   PASSERT_BASENAME, __LINE__)
 
 #define impaired_passert(BEHAVIOUR, ASSERTION) {			\
 		if (IMPAIR(BEHAVIOUR)) {				\
