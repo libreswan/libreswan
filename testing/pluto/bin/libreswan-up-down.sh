@@ -23,7 +23,14 @@ bindir=$(dirname $0)
 config=$1 ; shift
 
 ipsec auto --add ${config}
-ipsec auto --up ${config}
-${bindir}/wait-until-alive "$@"
-ipsec auto --down ${config}
-ipsec auto --delete ${config}
+
+# can't trust exit code; for moment preserve old behaviour - should be
+# always deleting
+
+if ipsec auto --up ${config} && ipsec whack --trafficstatus | grep "${config}" >/dev/null; then
+    ${bindir}/wait-until-alive "$@"
+    ipsec auto --down ${config}
+    ipsec auto --delete ${config}
+else
+    ipsec auto --delete ${config} > /dev/null # silent for now
+fi
