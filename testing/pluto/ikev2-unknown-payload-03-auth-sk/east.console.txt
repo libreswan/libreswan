@@ -13,6 +13,9 @@ east #
  echo "initdone"
 initdone
 east #
+ grep 'Notify data  ff$' /tmp/pluto.log
+| Notify data  ff
+east #
  ipsec look
 east NOW
 XFRM state:
