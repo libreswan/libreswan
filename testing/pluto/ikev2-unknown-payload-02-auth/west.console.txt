@@ -60,6 +60,8 @@ west #
  echo done
 done
 west #
+ grep 'Notify data  ff$' /tmp/pluto.log
+west #
  ipsec look
 west NOW
 XFRM state:

@@ -730,10 +730,6 @@ static struct payload_summary ikev2_decode_payloads(struct msg_digest *md,
 				 * "Version Numbers and Forward
 				 * Compatibility"
 				 */
-				/*
-				 * ??? we are supposed to send the offending
-				 * np byte back in the notify payload.
-				 */
 				const char *role;
 				switch (md->message_role) {
 				case MESSAGE_REQUEST:
@@ -749,6 +745,8 @@ static struct payload_summary ikev2_decode_payloads(struct msg_digest *md,
 				       "message %s contained an unknown critical payload type (%s)",
 				       role, enum_show(&ikev2_payload_names, np));
 				summary.n = v2N_UNSUPPORTED_CRITICAL_PAYLOAD;
+				summary.data[0] = np;
+				summary.data_size = 1;
 				break;
 			}
 			loglog(RC_COMMENT,
@@ -1752,8 +1750,8 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 				switch (md->message_role) {
 				case MESSAGE_REQUEST:
 				{
-					chunk_t data = chunk(md->message_payloads.data,
-							     md->message_payloads.data_size);
+					chunk_t data = chunk(md->encrypted_payloads.data,
+							     md->encrypted_payloads.data_size);
 					send_v2_notification_from_state(st, *mdp,
 									md->encrypted_payloads.n,
 									&data);
