@@ -734,9 +734,20 @@ static struct payload_summary ikev2_decode_payloads(struct msg_digest *md,
 				 * ??? we are supposed to send the offending
 				 * np byte back in the notify payload.
 				 */
+				const char *role;
+				switch (md->message_role) {
+				case MESSAGE_REQUEST:
+					role = "request";
+					break;
+				case MESSAGE_RESPONSE:
+					role = "response";
+					break;
+				default:
+					bad_case(md->message_role);
+				}
 				loglog(RC_LOG_SERIOUS,
-				       "critical payload (%s) was not understood. Message dropped.",
-				       enum_show(&ikev2_payload_names, np));
+				       "message %s contained an unknown critical payload type (%s)",
+				       role, enum_show(&ikev2_payload_names, np));
 				summary.n = v2N_UNSUPPORTED_CRITICAL_PAYLOAD;
 				break;
 			}
@@ -1705,31 +1716,55 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 				return;
 			}
 			/*
-			 * Verify the contents.  If there's something
-			 * bad, then the connection is killed.  See
-			 * "2.21.2.  Error Handling in IKE_AUTH" and
-			 * "2.21.3.  Error Handling after IKE SA is
-			 * Authenticated".
+			 * Unpack the protected (but possibly not
+			 * authenticated) contents.
 			 *
-			 * XXX: For UNSUPPORTED_CRITICAL_PAYLOAD,
-			 * while the RFC clearly states that for the
-			 * initial exchanges and an INFORMATIONAL
-			 * exchange immediately following, the
-			 * notification causes a delete, it says
-			 * nothing for exchanges that follow.  For
-			 * moment treat it the same ?!?!?!.  Given the
-			 * PAYLOAD ID isn't being returned this is a
-			 * minor issue.
+			 * When unpacking an AUTH packet, the other
+			 * end hasn't yet been authenticated (and an
+			 * INFORMATIONAL exchange immediately
+			 * following AUTH be due to failed
+			 * authentication).
+			 *
+			 * If there's something wrong, then the IKE SA
+			 * gets abandoned, but a new new one may be
+			 * initiated.
+			 *
+			 * See "2.21.2.  Error Handling in IKE_AUTH"
+			 * and "2.21.3.  Error Handling after IKE SA
+			 * is Authenticated".
+			 *
+			 * For UNSUPPORTED_CRITICAL_PAYLOAD, while the
+			 * RFC clearly states that for the initial
+			 * exchanges and an INFORMATIONAL exchange
+			 * immediately following, the notification
+			 * causes a delete, it says nothing for
+			 * exchanges that follow.
+			 *
+			 * For moment treat it the same ?!?!?!.  Given
+			 * the PAYLOAD ID that should identify the
+			 * problem isn't being returned this is the
+			 * least of our problems.
 			 */
 			struct payload_digest *sk = md->chain[ISAKMP_NEXT_v2SK];
 			md->encrypted_payloads = ikev2_decode_payloads(md, &sk->pbs,
 								       sk->payload.generic.isag_np);
 			if (md->encrypted_payloads.n != v2N_NOTHING_WRONG) {
-				chunk_t data = chunk(md->message_payloads.data,
-						     md->message_payloads.data_size);
-				send_v2_notification_from_state(st, *mdp,
-								md->encrypted_payloads.n,
-								&data);
+				switch (md->message_role) {
+				case MESSAGE_REQUEST:
+				{
+					chunk_t data = chunk(md->message_payloads.data,
+							     md->message_payloads.data_size);
+					send_v2_notification_from_state(st, *mdp,
+									md->encrypted_payloads.n,
+									&data);
+					break;
+				}
+				case MESSAGE_RESPONSE:
+					/* drop packet */
+					break;
+				default:
+					bad_case(md->message_role);
+				}
 				/*
 				 * XXX: Setting/clearing md->st is to
 				 * prop up nested code needing ST but
