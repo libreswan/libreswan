@@ -489,9 +489,12 @@ doproxyarp() {
     cmd=${1}
     # Check if client has a single ip only client net
     if [ ${PLUTO_PEER_CLIENT#*/} = ${MAX_CIDR} ]; then
-	# Skip OE special connections
-	if [ ${PLUTO_PEER_CLIENT_NET} = 0.0.0.0 -o \
-	    ${PLUTO_PEER_CLIENT_NET} = "::" ]; then
+	# Skip OE special connections and direct host-host connections
+	if [ "${PLUTO_PEER_CLIENT_NET}" = "0.0.0.0" -o \
+	    "${PLUTO_PEER_CLIENT_NET}" = "::" -o \
+	    "${PLUTO_PEER_CLIENT_NET}" = "${PLUTO_PEER}" -o \
+	    "${PLUTO_MY_CLIENT_NET}" = "${PLUTO_ME}" ]
+	then
 	    return 0
 	fi
 	# check if client is routeable
