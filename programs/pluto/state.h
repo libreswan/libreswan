@@ -806,4 +806,7 @@ extern void record_newaddr(ip_address *ip, char *a_type);
 extern void append_st_cfg_domain(struct state *st, const char *dnsip);
 extern void append_st_cfg_dns(struct state *st, const char *dnsip);
 
+extern bool uniqueIDs;  /* --uniqueids? */
+extern void ISAKMP_SA_established(const struct state *pst);
+
 #endif /* _STATE_H */

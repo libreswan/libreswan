@@ -85,6 +85,8 @@
 #include "ikev2_ipseckey.h"
 #include "ip_address.h"
 
+bool uniqueIDs = FALSE;
+
 static void update_state_stats(struct state *st, enum state_kind old_state,
 			       enum state_kind new_state);
 
@@ -3036,5 +3038,78 @@ void append_st_cfg_domain(struct state *st, const char *domain)
 		memcpy(new + sz_old + 1, domain, sz_added);
 		pfree(st->st_seen_cfg_domains);
 		st->st_seen_cfg_domains = new;
+	}
+}
+
+/*
+ * an ISAKMP SA has been established.
+ * Note the serial number, and release any connections with
+ * the same peer ID but different peer IP address.
+ *
+ * Called by IKEv1 and IKEv2 when the IKE SA is established.
+ * It checks if the freshly established connection needs is
+ * replacing an established version of itself.
+ *
+ * The use of uniqueIDs is mostly historic and might be removed
+ * in a future version. It is ignored for PSK based connections,
+ * which only act based on being a "server using PSK".
+ *
+ * IKEv1 code does not send or process INITIAL_CONTACT
+ * IKEv2 codes does so we take it into account.
+ */
+void ISAKMP_SA_established(const struct state *pst)
+{
+	struct connection *c = pst->st_connection;
+	so_serial_t serial = pst->st_serialno;
+
+	c->newest_isakmp_sa = serial;
+
+	/* NULL authentication can never replaced - it is all anonnymous */
+	if (LIN(POLICY_AUTH_NULL, c->policy) ||
+	   (c->spd.that.authby == AUTH_NULL || c->spd.this.authby == AUTH_NULL)) {
+
+		DBG(DBG_CONTROL, DBG_log("NULL Authentication - all clients appear identical"));
+		return;
+	}
+
+	/*
+	 * If we are a server and use PSK, all clients use the same group ID
+	 * Note that "xauth_server" also refers to IKEv2 CP
+	 */
+	if (c->spd.this.xauth_server && LIN(POLICY_PSK, c->policy)) {
+		DBG(DBG_CONTROL, DBG_log("We are a server using PSK and clients are using a group ID"));
+		return;
+	}
+
+	if (!uniqueIDs) {
+		DBG(DBG_CONTROL, DBG_log("uniqueIDs disabled, not contemplating releasing older self"));
+		return;
+	}
+
+	/* We don't send or process INITIAL_CONTACT for IKEv1, preserve old behaviour */
+	if (pst->st_ikev2 && !pst->st_seen_initialc) {
+		DBG(DBG_CONTROL, DBG_log("No INITIAL_CONTACT received, not contemplating releasing older self"));
+		return;
+	}
+
+	/*
+	 * for all existing connections: if the same Phase 1 IDs are used,
+	 * unorient that (old) connection - This is a replacement.
+	 */
+	struct connection *d;
+
+	for (d = connections; d != NULL; ) {
+		/* might move underneath us */
+		struct connection *next = d->ac_next;
+
+		if (c != d && c->kind == d->kind && streq(c->name, d->name) &&
+		    (same_id(&c->spd.this.id, &d->spd.this.id) &&
+		     same_id(&c->spd.that.id, &d->spd.that.id)))
+		{
+		  DBG(DBG_CONTROL, DBG_log("Unorienting old connection with same IDs"));
+		  suppress_delete(d); /* don't send a delete */
+		  release_connection(d, FALSE);
+		}
+		d = next;
 	}
 }
