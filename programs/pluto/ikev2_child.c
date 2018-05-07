@@ -1319,18 +1319,20 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 	ikev2_derive_child_keys(pexpect_child_sa(cst));
 
+	/*
+	 * Check to see if we need to release an old instance
+	 * Note that this will call delete on the old connection
+	 * we should do this after installing ipsec_sa, but that will
+	 * give us a "eroute in use" error.
+	 */
+       ISAKMP_SA_established(pst);
+
 	/* install inbound and outbound SPI info */
 	if (!install_ipsec_sa(cst, TRUE))
 		return STF_FATAL;
 
 	/* mark the connection as now having an IPsec SA associated with it. */
 	set_newest_ipsec_sa(enum_name(&ikev2_exchange_names, isa_xchg), cst);
-
-	/*
-	 * Check to see if we need to release an old instance
-	 * Note that this will call delete on the old connection
-	 */
-       ISAKMP_SA_established(pst);
 
 	return STF_OK;
 }

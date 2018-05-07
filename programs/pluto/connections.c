@@ -3212,8 +3212,10 @@ struct connection *refine_host_connection(const struct state *st,
 					matching_peer_id && matching_peer_ca && matching_requested_ca,
 					matching_peer_id, matching_peer_ca, matching_requested_ca);});
 
+			/* Ignore template from which we instantiated - this should never happen */
 			if (c->kind == CK_INSTANCE && d->kind == CK_TEMPLATE && streq(c->name, d->name)) {
-				DBG(DBG_CONTROLMORE, DBG_log("template conn fits better than instance of it - different client on same IP/port requires new instance"));
+				libreswan_log("Warning: not switching back to template of current instance (FIXME)");
+				continue;
 			}
 
 			/* 'You Tarzan, me Jane' check based on received IDr */
