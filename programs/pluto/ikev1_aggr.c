@@ -886,7 +886,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 	set_ph1_iv_from_new(st);
 	DBG(DBG_CONTROL, DBG_log("phase 1 complete"));
 
-	ISAKMP_SA_established(c, st->st_serialno);
+	ISAKMP_SA_established(st);
 
 #ifdef USE_LINUX_AUDIT
 	linux_audit_conn(st, LAK_PARENT_START);
@@ -994,7 +994,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	set_ph1_iv_from_new(st);
 	DBG(DBG_CONTROL, DBG_log("phase 1 complete"));
 
-	ISAKMP_SA_established(st->st_connection, st->st_serialno);
+	ISAKMP_SA_established(st);
 
 #ifdef USE_LINUX_AUDIT
 	linux_audit_conn(st, LAK_PARENT_START);

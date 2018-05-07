@@ -137,6 +137,7 @@ extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
 #include <sys/queue.h>
 #include "id.h"    /* for struct id */
 #include "lmod.h"
+#include "state.h"
 
 struct virtual_t;
 
@@ -405,7 +406,7 @@ extern struct connection *shunt_owner(const ip_subnet *ours,
 				      const ip_subnet *his);
 
 extern bool uniqueIDs;  /* --uniqueids? */
-extern void ISAKMP_SA_established(struct connection *c, so_serial_t serial);
+extern void ISAKMP_SA_established(const struct state *pst);
 
 #define his_id_was_instantiated(c) ((c)->kind == CK_INSTANCE \
 				    && (id_is_ipaddr(&(c)->spd.that.id) ? \

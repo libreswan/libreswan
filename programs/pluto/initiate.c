@@ -1027,9 +1027,15 @@ bool uniqueIDs = FALSE; /* --uniqueids? */
  * The use of uniqueIDs is mostly historic and might be removed
  * in a future version. It is ignored for PSK based connections,
  * which only act based on being a "server using PSK".
+ *
+ * IKEv1 code does not send or process INITIAL_CONTACT
+ * IKEv2 codes does so we take it into account.
  */
-void ISAKMP_SA_established(struct connection *c, so_serial_t serial)
+void ISAKMP_SA_established(const struct state *pst)
 {
+	struct connection *c = pst->st_connection;
+	so_serial_t serial = pst->st_serialno;
+
 	c->newest_isakmp_sa = serial;
 
 	/* NULL authentication can never replaced - it is all anonnymous */
@@ -1051,6 +1057,12 @@ void ISAKMP_SA_established(struct connection *c, so_serial_t serial)
 
 	if (!uniqueIDs) {
 		DBG(DBG_CONTROL, DBG_log("uniqueIDs disabled, not contemplating releasing older self"));
+		return;
+	}
+
+	/* We don't send or process INITIAL_CONTACT for IKEv1, preserve old behaviour */
+	if (pst->st_ikev2 && !pst->st_seen_initialc) {
+		DBG(DBG_CONTROL, DBG_log("No INITIAL_CONTACT received, not contemplating releasing older self"));
 		return;
 	}
 
