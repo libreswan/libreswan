@@ -1282,7 +1282,7 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
 						      struct state *st,
 						      struct connection *c))
 {
-	int pass;
+	struct pbs_reply_backup *reply_pbs_backup = NULL;
 
 	/* this kludge avoids an n^2 algorithm */
 
@@ -1291,7 +1291,7 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
 	 * ?? We could probably double the performance by caching any
 	 * ISAKMP SA states found in the first pass, avoiding a second.
 	 */
-	for (pass = 0; pass != 2; pass++) {
+	for (int pass = 0; pass != 2; pass++) {
 		DBG(DBG_CONTROL, DBG_log("pass %d", pass));
 		FOR_EACH_COOKIED_STATE(this, {
 			DBG(DBG_CONTROL,
@@ -1305,6 +1305,9 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
 
 			/* call comparison function */
 			if ((*comparefunc)(this, c)) {
+				if (reply_pbs_backup == NULL) {
+					reply_pbs_backup = save_reply_pbs();
+				}
 				/*
 				 * XXX: this simingly redundant
 				 * push/pop has the side effect
@@ -1316,6 +1319,9 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
 				pop_cur_state(old_serialno);
 			}
 		});
+	}
+	if (reply_pbs_backup != NULL) {
+		restore_reply_pbs(&reply_pbs_backup);
 	}
 }
 

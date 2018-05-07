@@ -1098,4 +1098,12 @@ extern pb_stream reply_stream;
 extern u_int8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
 pb_stream *open_reply_pbs(const char *name);
 
+struct pbs_reply_backup {
+	pb_stream stream;
+	uint8_t *buffer;
+};
+
+struct pbs_reply_backup *save_reply_pbs(void);
+void restore_reply_pbs(struct pbs_reply_backup **);
+
 #endif /* _PACKET_H */
