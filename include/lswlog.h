@@ -68,7 +68,7 @@ extern void tool_init_log(const char *name);
 
 enum rc_type {
 	RC_COMMENT,		/* non-commital utterance (does not affect exit status) */
-	RC_WHACK_PROBLEM,	/* whack-detected problem */
+	RC_UNUSED,		/* just to keep the numbering the same */
 	RC_LOG,			/* message aimed at log (does not affect exit status) */
 	RC_LOG_SERIOUS,		/* serious message aimed at log (does not affect exit status) */
 	RC_SUCCESS,		/* success (exit status 0) */
@@ -92,6 +92,7 @@ enum rc_type {
 	RC_INITSHUNT,		/* cannot initiate a shunt-oly connection */
 	RC_WILDCARD,		/* cannot initiate when ID has wildcards */
 	RC_CRLERROR,		/* CRL fetching disabled or obsolete reread cmd */
+	RC_WHACK_PROBLEM,	/* whack-detected problem */
 
 	/* permanent failure */
 	RC_BADWHACKMESSAGE = 30,
