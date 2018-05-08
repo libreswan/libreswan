@@ -58,7 +58,7 @@ extern state_transition_fn
  * forward
  */
 struct oakley_group_desc;
-extern bool send_delete(struct state *st);
+extern void send_delete(struct state *st);
 extern bool accept_delete(struct msg_digest *md,
 			  struct payload_digest *p);
 extern void accept_self_delete(struct msg_digest *md);

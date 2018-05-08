@@ -6492,12 +6492,12 @@ stf_status ikev2_send_informational(struct state *st, struct state *pst,
  * Deleting an IKE SA is a bigger deal than deleting an IPsec SA.
  */
 
-bool ikev2_delete_out(struct state *const st)
+void send_v2_delete(struct state *const st)
 {
 	struct ike_sa *ike = ike_sa(st);
 	if (ike == NULL) {
 		/* ike_sa() will have already complained loudly */
-		return false;
+		return;
 	}
 
 	pb_stream e_pbs, e_pbs_cipher;
@@ -6543,7 +6543,7 @@ bool ikev2_delete_out(struct state *const st)
 				&reply_stream, &rbody)) {
 			libreswan_log(
 				"error initializing hdr for informational message");
-			return FALSE;
+			return;
 		}
 	}
 
@@ -6552,12 +6552,12 @@ bool ikev2_delete_out(struct state *const st)
 	e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 
 	if (!out_struct(&e, &ikev2_sk_desc, &rbody, &e_pbs))
-		return FALSE;
+		return;
 
 	/* insert IV */
 	iv = e_pbs.cur;
 	if (!emit_wire_iv(st, &e_pbs))
-		return FALSE;
+		return;
 
 	/* note where cleartext starts */
 	init_pbs(&e_pbs_cipher, e_pbs.cur, e_pbs.roof - e_pbs.cur,
@@ -6592,14 +6592,14 @@ bool ikev2_delete_out(struct state *const st)
 		/* Emit delete payload header out */
 		if (!out_struct(&v2del_tmp, &ikev2_delete_desc,
 				&e_pbs_cipher, &del_pbs))
-			return FALSE;
+			return;
 
 		/* Emit values of spi to be sent to the peer */
 		if (IS_CHILD_SA(st)) {
 			if (!out_raw((u_char *)&st->st_esp.our_spi,
 				     sizeof(ipsec_spi_t), &del_pbs,
 				     "local spis"))
-				return FALSE;
+				return;
 		}
 
 		close_output_pbs(&del_pbs);
@@ -6607,7 +6607,7 @@ bool ikev2_delete_out(struct state *const st)
 
 	if (!ikev2_padup_pre_encrypt(st, &e_pbs_cipher)) {
 		libreswan_log("error padding before encryption in delete payload");
-		return FALSE;
+		return;
 	}
 
 	close_output_pbs(&e_pbs_cipher);
@@ -6625,7 +6625,7 @@ bool ikev2_delete_out(struct state *const st)
 		ret = ikev2_encrypt_msg(ike_sa(st), reply_stream.start,
 					iv, encstart, authloc);
 		if (ret != STF_OK)
-			return FALSE;
+			return;
 	}
 
 	record_and_send_v2_ike_msg(st, &reply_stream,
@@ -6636,8 +6636,6 @@ bool ikev2_delete_out(struct state *const st)
 
 	ike->sa.st_msgid_nextuse++;
         st->st_msgid = htonl(ike->sa.st_msgid_nextuse);
-
-	return TRUE;
 }
 
 void ikev2_initiate_child_sa(int whack_sock, struct ike_sa *ike,

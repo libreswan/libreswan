@@ -2344,7 +2344,7 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
  *
  * @param st State struct (we hope it has some SA's related to it)
  */
-bool ikev1_delete_out(struct state *st)
+void send_v1_delete(struct state *st)
 {
 	/* buffer in which to marshal our deletion notification.
 	 * We don't use reply_buffer/reply_stream because they might be in use.
@@ -2369,9 +2369,8 @@ bool ikev1_delete_out(struct state *st)
 		p1st = find_phase1_state(st->st_connection,
 					ISAKMP_SA_ESTABLISHED_STATES);
 		if (p1st == NULL) {
-			DBG(DBG_CONTROL,
-				DBG_log("no Phase 1 state for Delete"));
-			return FALSE;
+			DBGF(DBG_CONTROL, "no Phase 1 state for Delete");
+			return;
 		}
 
 		if (st->st_ah.present) {
@@ -2393,7 +2392,7 @@ bool ikev1_delete_out(struct state *st)
 		p1st = st;
 		isakmp_sa = TRUE;
 	} else {
-		return TRUE; /* nothing to do */
+		return; /* nothing to do */
 	}
 
 	msgid = generate_msgid(p1st);
@@ -2508,7 +2507,6 @@ bool ikev1_delete_out(struct state *st)
 		/* get back old IV for this state */
 		restore_iv(p1st, old_iv, old_iv_len);
 	}
-	return TRUE;
 }
 
 /*

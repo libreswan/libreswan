@@ -38,6 +38,7 @@ void send_v2_notification_from_md(struct msg_digest *md,
 				  chunk_t *data);
 void send_v2_notification_invalid_ke(struct msg_digest *md,
 				     const struct oakley_group_desc *group);
+void send_v2_delete(struct state *st);
 
 pb_stream open_v2_message(pb_stream *reply,
 			  struct ike_sa *ike, struct msg_digest *md,

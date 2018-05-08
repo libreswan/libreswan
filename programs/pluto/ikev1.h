@@ -72,7 +72,7 @@ extern void aggr_outI1(int whack_sock,
 #endif
 		       );
 
-extern bool ikev1_delete_out(struct state *st);
+extern void send_v1_delete(struct state *st);
 
 extern bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
 			   bool aggrmode);

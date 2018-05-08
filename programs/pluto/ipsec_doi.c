@@ -72,7 +72,7 @@
 #include "ikev1.h"
 #include "ikev1_continuations.h"
 #include "ikev2.h"
-
+#include "ikev2_send.h"
 #include "ikev1_xauth.h"
 
 #include "vendor.h"
@@ -504,18 +504,16 @@ void initialize_new_state(struct state *st,
 	set_cur_state(st);
 }
 
-bool send_delete(struct state *st)
+void send_delete(struct state *st)
 {
 	if (DBGP(IMPAIR_SEND_NO_DELETE)) {
-		DBG(DBG_CONTROL,
-			DBG_log("send_delete(): impair-send-no-delete set - not sending Delete/Notify"));
-		return TRUE;
+		DBGF(DBG_CONTROL, "IMPAIR: impair-send-no-delete set - not sending Delete/Notify");
+	} else {
+		DBGF(DBG_CONTROL, "#%lu send %s delete notification for %s",
+		     st->st_serialno, st->st_ikev2 ? "IKEv2": "IKEv1",
+		     st->st_state_name);
+		st->st_ikev2 ? send_v2_delete(st) : send_v1_delete(st);
 	}
-	DBG(DBG_CONTROL, DBG_log("#%lu send %s detlete notification for %s",
-			st->st_serialno, st->st_ikev2 ? "IKEv2": "IKEv1",
-			st->st_state_name));
-
-	return st->st_ikev2 ? ikev2_delete_out(st) : ikev1_delete_out(st);
 }
 
 static void pstats_sa(bool nat, bool tfc, bool esn)
