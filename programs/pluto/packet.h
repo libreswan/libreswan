@@ -142,6 +142,7 @@ extern void init_pbs(pb_stream *pbs, u_int8_t *start, size_t len,
 		     const char *name);
 extern void init_out_pbs(pb_stream *pbs, u_int8_t *start, size_t len,
 		     const char *name);
+pb_stream open_out_pbs(const char *name, uint8_t *buffer, size_t sizeof_buffer);
 
 extern bool in_struct(void *struct_ptr, struct_desc *sd,
 		      pb_stream *ins, pb_stream *obj_pbs) MUST_USE_RESULT;
@@ -1096,7 +1097,6 @@ extern struct_desc sec_ctx_desc;
 
 extern pb_stream reply_stream;
 extern u_int8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
-pb_stream *open_reply_pbs(const char *name);
 
 struct pbs_reply_backup {
 	pb_stream stream;

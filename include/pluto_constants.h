@@ -270,6 +270,7 @@ typedef enum {
 #define MAXIMUM_MALFORMED_NOTIFY             16
 
 #define MAX_INPUT_UDP_SIZE             65536
+#define MIN_OUTPUT_UDP_SIZE		1024
 #define MAX_OUTPUT_UDP_SIZE            65536
 
 #define MAX_IKE_FRAGMENTS       16

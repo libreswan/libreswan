@@ -1486,6 +1486,14 @@ void init_out_pbs(pb_stream *pbs, u_int8_t *start, size_t len, const char *name)
 	memset(start, 0xFA, len);	/* value likely to be unpleasant */
 }
 
+
+pb_stream open_out_pbs(const char *name, uint8_t *buffer, size_t sizeof_buffer)
+{
+	pb_stream out_pbs;
+	init_out_pbs(&out_pbs, buffer, sizeof_buffer, name);
+	return out_pbs;
+}
+
 static err_t enum_enum_checker(
 	const char *struct_name,
 	const field_desc *fp,
@@ -2262,12 +2270,6 @@ pb_stream open_output_struct_pbs(pb_stream *outs, const void *struct_ptr,
 
 pb_stream reply_stream;
 u_int8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
-
-pb_stream *open_reply_pbs(const char *name)
-{
-	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer), name);
-	return &reply_stream;
-}
 
 /*
  * Turns out that while the above was correct, the reply_stream still

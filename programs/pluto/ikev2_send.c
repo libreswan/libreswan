@@ -380,9 +380,11 @@ void send_v2_notification_from_state(struct state *pst, struct msg_digest *md,
 		break;
 	}
 
-	pb_stream *reply = open_reply_pbs("encrypted notification");
+	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
+	pb_stream reply = open_out_pbs("encrypted notification",
+				       buf, sizeof(buf));
 
-	pb_stream rbody = open_v2_message(reply, ike_sa(pst), md,
+	pb_stream rbody = open_v2_message(&reply, ike_sa(pst), md,
 					  exchange_type);
 	if (!pbs_ok(&rbody)) {
 		libreswan_log("error initializing hdr for encrypted notification");
@@ -408,7 +410,7 @@ void send_v2_notification_from_state(struct state *pst, struct msg_digest *md,
 		return;
 	}
 	close_output_pbs(&rbody);
-	close_output_pbs(reply);
+	close_output_pbs(&reply);
 
 	stf_status ret = ikev2_encrypt_payload(&sk);
 	if (ret != STF_OK) {
@@ -422,7 +424,7 @@ void send_v2_notification_from_state(struct state *pst, struct msg_digest *md,
 	 * exchange, one with retrying).  So we need not preserve the
 	 * packet we are sending.
 	 */
-	send_chunk_using_state(pst, "v2 notify", pbs_as_chunk(reply));
+	send_chunk_using_state(pst, "v2 notify", pbs_as_chunk(&reply));
 	pstat(ikev2_sent_notifies_e, ntype);
 }
 
@@ -458,8 +460,10 @@ void send_v2_notification_from_md(struct msg_digest *md,
 		return;
 	}
 
-	pb_stream *reply = open_reply_pbs("unencrypted notification");
-	pb_stream rbody = open_v2_message(reply, NULL, md, exchange_type);
+	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
+	pb_stream reply = open_out_pbs("unencrypted notification",
+				       buf, sizeof(buf));
+	pb_stream rbody = open_v2_message(&reply, NULL, md, exchange_type);
 	if (!pbs_ok(&rbody)) {
 		PEXPECT_LOG("error building header for unencrypted %s %s notification with message ID %u",
 			    exchange_name, notify_name, md->msgid_received);
@@ -474,7 +478,7 @@ void send_v2_notification_from_md(struct msg_digest *md,
 	}
 
 	close_output_pbs(&rbody);
-	close_output_pbs(reply);
+	close_output_pbs(&reply);
 
 	/*
 	 * The notification is piggybacked on the existing parent state.
@@ -483,7 +487,7 @@ void send_v2_notification_from_md(struct msg_digest *md,
 	 * are sending.
 	 */
 	send_chunk("v2 notify", SOS_NOBODY, md->iface, md->sender,
-		   pbs_as_chunk(reply));
+		   pbs_as_chunk(&reply));
 
 	pstat(ikev2_sent_notifies_e, ntype);
 }
