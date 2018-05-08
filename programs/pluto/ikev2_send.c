@@ -507,6 +507,98 @@ void send_v2_notification_invalid_ke(struct msg_digest *md,
 	send_v2_notification_from_md(md, v2N_INVALID_KE_PAYLOAD, &nd);
 }
 
+/*
+ * Send an Informational Exchange announcing a deletion.
+ *
+ * CURRENTLY SUPPRESSED:
+ * If we fail to send the deletion, we just go ahead with deleting the state.
+ * The code in delete_state would break if we actually did this.
+ *
+ * Deleting an IKE SA is a bigger deal than deleting an IPsec SA.
+ */
+
+void send_v2_delete(struct state *const st)
+{
+	struct ike_sa *ike = ike_sa(st);
+	if (ike == NULL) {
+		/* ike_sa() will have already complained loudly */
+		return;
+	}
+
+	/* make sure HDR is at start of a clean buffer */
+	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
+	pb_stream packet = open_out_pbs("informational exchange delete request",
+					buf, sizeof(buf));
+	pb_stream rbody = open_v2_message(&packet, ike, NULL,
+					  ISAKMP_v2_INFORMATIONAL);
+	if (!pbs_ok(&packet)) {
+		return;
+	}
+
+	struct v2sk_payload sk = open_v2sk_payload(&rbody, ike);
+	if (!pbs_ok(&sk.pbs)) {
+		return;
+	}
+
+	{
+		pb_stream del_pbs;
+		struct ikev2_delete v2del_tmp;
+		/*
+		 * u_int16_t i, j=0;
+		 * u_char *spi;
+		 * char spi_buf[1024];
+		 */
+
+		zero(&v2del_tmp);	/* OK: no pointer fields */
+		v2del_tmp.isad_np = ISAKMP_NEXT_v2NONE;
+
+		if (IS_CHILD_SA(st)) {
+			v2del_tmp.isad_protoid = PROTO_IPSEC_ESP;
+			v2del_tmp.isad_spisize = sizeof(ipsec_spi_t);
+			v2del_tmp.isad_nrspi = 1;
+		} else {
+			v2del_tmp.isad_protoid = PROTO_ISAKMP;
+			v2del_tmp.isad_spisize = 0;
+			v2del_tmp.isad_nrspi = 0;
+		}
+
+		/* Emit delete payload header out */
+		if (!out_struct(&v2del_tmp, &ikev2_delete_desc,
+				&sk.pbs, &del_pbs))
+			return;
+
+		/* Emit values of spi to be sent to the peer */
+		if (IS_CHILD_SA(st)) {
+			if (!out_raw((u_char *)&st->st_esp.our_spi,
+				     sizeof(ipsec_spi_t), &del_pbs,
+				     "local spis"))
+				return;
+		}
+
+		close_output_pbs(&del_pbs);
+	}
+
+	if (!close_v2sk_payload(&sk)) {
+		return;
+	}
+	close_output_pbs(&rbody);
+	close_output_pbs(&packet);
+
+	stf_status ret = encrypt_v2sk_payload(&sk);
+	if (ret != STF_OK) {
+		libreswan_log("error encrypting notify message");
+		return;
+	}
+
+	record_and_send_v2_ike_msg(st, &packet,
+				   "packet for ikev2 delete informational");
+
+	/* increase message ID for next delete message */
+	/* ikev2_update_msgid_counters need an md */
+	ike->sa.st_msgid_nextuse++;
+        st->st_msgid = htonl(ike->sa.st_msgid_nextuse);
+}
+
 struct v2sk_payload open_v2sk_payload(pb_stream *container,
 				      struct ike_sa *ike)
 {
