@@ -44,23 +44,20 @@ pb_stream open_v2_message(pb_stream *reply,
 			  struct ike_sa *ike, struct msg_digest *md,
 			  enum isakmp_xchg_types exchange_type);
 
-typedef struct v2sk_stream {
+typedef struct v2sk_payload {
 	struct ike_sa *ike;
-	pb_stream payload;
-	/* pointers into payload */
+	pb_stream pbs;
+	/* pointers into payload buffer (not .payload) */
 	uint8_t *iv;
 	uint8_t *cleartext; /* where cleartext starts */
 	uint8_t *integrity;
-	const char *name;
-} v2sk_stream_t;
+} v2sk_payload_t;
 
-v2sk_stream_t open_v2_encrypted_payload(pb_stream *container,
-					struct ike_sa *st,
-					const char *name);
+v2sk_payload_t open_v2sk_payload(pb_stream *container,
+				 struct ike_sa *st);
+bool close_v2sk_payload(v2sk_payload_t *sk);
 
-bool ikev2_close_encrypted_payload(v2sk_stream_t *sk);
-
-stf_status ikev2_encrypt_payload(v2sk_stream_t *sk);
+stf_status encrypt_v2sk_payload(v2sk_payload_t *sk);
 
 /*
  * XXX: Where does the name ship_v2*() come from?  Is for when a
@@ -82,7 +79,17 @@ bool out_v2N(pb_stream *rbody,
 bool ship_v2V(pb_stream *outs, enum next_payload_types_ikev2 np,
 	      const char *string);
 
-/* XXX: should be local to ikev2_send.c? */
+/*
+ * XXX: should be local to ikev2_send.c
+ */
 uint8_t build_ikev2_version(void);
+bool emit_wire_iv(const struct state *st, pb_stream *pbs);
+uint8_t *ikev2_authloc(struct state *st,
+		       pb_stream *e_pbs);
+stf_status ikev2_encrypt_msg(struct ike_sa *ike,
+			     uint8_t *auth_start,
+			     uint8_t *wire_iv_start,
+			     uint8_t *enc_start,
+			     uint8_t *integ_start);
 
 #endif

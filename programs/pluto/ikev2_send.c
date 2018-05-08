@@ -40,7 +40,7 @@
 #include "demux.h"	/* for struct msg_digest */
 #include "rnd.h"
 
-static uint8_t build_ikev2_critical(bool critical, bool impair);	/* forward */
+static uint8_t build_ikev2_critical(bool critical, bool impair);
 
 bool record_and_send_v2_ike_msg(struct state *st, pb_stream *pbs,
 				const char *what)
@@ -134,7 +134,7 @@ uint8_t build_ikev2_version(void)
 	       (IKEv2_MINOR_VERSION + (DBGP(IMPAIR_MINOR_VERSION_BUMP) ? 1 : 0));
 }
 
-static uint8_t build_ikev2_critical(bool critical, bool impair)
+uint8_t build_ikev2_critical(bool critical, bool impair)
 {
 	uint8_t octet = 0;
 	if (impair) {
@@ -391,14 +391,14 @@ void send_v2_notification_from_state(struct state *pst, struct msg_digest *md,
 		return;
 	}
 
-	struct v2sk_stream sk = open_v2_encrypted_payload(&rbody, ike_sa(pst), "notify");
-	if (!pbs_ok(&sk.payload)) {
+	struct v2sk_payload sk = open_v2sk_payload(&rbody, ike_sa(pst));
+	if (!pbs_ok(&sk.pbs)) {
 		return;
 	}
 
 	/* actual data */
 
-	if (!out_v2N(&sk.payload, ntype, ndata)) {
+	if (!out_v2N(&sk.pbs, ntype, ndata)) {
 		/*
 		 * XXX: always omitting SPI but ESP/AH packets need
 		 * it!?!
@@ -406,13 +406,13 @@ void send_v2_notification_from_state(struct state *pst, struct msg_digest *md,
 		return;
 	}
 
-	if (!ikev2_close_encrypted_payload(&sk)) {
+	if (!close_v2sk_payload(&sk)) {
 		return;
 	}
 	close_output_pbs(&rbody);
 	close_output_pbs(&reply);
 
-	stf_status ret = ikev2_encrypt_payload(&sk);
+	stf_status ret = encrypt_v2sk_payload(&sk);
 	if (ret != STF_OK) {
 		libreswan_log("error encrypting notify message");
 		return;
@@ -505,4 +505,94 @@ void send_v2_notification_invalid_ke(struct msg_digest *md,
 	setchunk(nd, (void*)&gr, sizeof(gr));
 
 	send_v2_notification_from_md(md, v2N_INVALID_KE_PAYLOAD, &nd);
+}
+
+struct v2sk_payload open_v2sk_payload(pb_stream *container,
+				      struct ike_sa *ike)
+{
+	static const struct v2sk_payload empty_sk;
+	struct v2sk_payload sk = {
+		.ike = ike,
+	};
+
+	/* insert an Encryption payload header */
+
+	struct ikev2_generic e = {
+		.isag_length = 0, /* filled in later */
+		.isag_critical = build_ikev2_critical(false, false),
+	};
+	if (!out_struct(&e, &ikev2_sk_desc, container, &sk.pbs)) {
+		libreswan_log("error initializing SK header for encrypted %s message",
+			      container->name);
+		return empty_sk;
+	}
+
+	/* insert IV */
+
+	sk.iv = sk.pbs.cur;
+	passert(sk.pbs.cur <= sk.iv);
+	if (!emit_wire_iv(&ike->sa, &sk.pbs)) {
+		libreswan_log("error initializing IV for encrypted %s message",
+			      container->name);
+		return empty_sk;
+	}
+
+	/* save the start of cleartext proper */
+
+	sk.cleartext = sk.pbs.cur;
+	passert(sk.iv <= sk.cleartext);
+	passert(sk.pbs.container->name == container->name);
+
+	return sk;
+}
+
+bool close_v2sk_payload(struct v2sk_payload *sk)
+{
+	/* padding + pad-length */
+
+	size_t padding;
+	if (sk->ike->sa.st_oakley.ta_encrypt->pad_to_blocksize) {
+		const size_t blocksize = sk->ike->sa.st_oakley.ta_encrypt->enc_blocksize;
+		padding = pad_up(sk->pbs.cur - sk->cleartext, blocksize);
+		if (padding == 0) {
+			padding = blocksize;
+		}
+	} else {
+		padding = 1;
+	}
+	DBG(DBG_EMITTING,
+	    DBG_log("adding %zd bytes of padding (including 1 byte padding-length)",
+		    padding));
+	char b[MAX_CBC_BLOCK_SIZE];
+	passert(sizeof(b) >= padding);
+	for (unsigned i = 0; i < padding; i++) {
+		b[i] = i;
+	}
+	if (!out_raw(b, padding, &sk->pbs, "padding and length")) {
+		libreswan_log("error initializing padding for encrypted %s payload",
+			      sk->pbs.container->name);
+		return false;
+	}
+
+	/* integrity checksum data */
+
+	sk->integrity = ikev2_authloc(&sk->ike->sa, &sk->pbs);
+	passert(sk->cleartext <= sk->integrity);
+	if (sk->integrity == NULL) {
+		libreswan_log("error initializing integrity checksum for encrypted %s payload",
+			      sk->pbs.container->name);
+		return false;
+	}
+
+	/* close the SK payload */
+
+	close_output_pbs(&sk->pbs);
+	return true;
+}
+
+stf_status encrypt_v2sk_payload(struct v2sk_payload *sk)
+{
+	return ikev2_encrypt_msg(sk->ike, sk->pbs.container->start,
+				 sk->iv, sk->cleartext,
+				 sk->integrity);
 }
