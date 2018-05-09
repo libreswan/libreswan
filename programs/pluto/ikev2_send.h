@@ -40,6 +40,12 @@ void send_v2_notification_invalid_ke(struct msg_digest *md,
 				     const struct oakley_group_desc *group);
 void send_v2_delete(struct state *st);
 
+extern stf_status send_v2_informational_request(const char *name,
+						struct state *st,
+						struct ike_sa *ike,
+						stf_status (*payloads)(struct state *st,
+								       pb_stream *pbs));
+
 pb_stream open_v2_message(pb_stream *reply,
 			  struct ike_sa *ike, struct msg_digest *md,
 			  enum isakmp_xchg_types exchange_type);

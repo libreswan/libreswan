@@ -607,6 +607,69 @@ void send_v2_delete(struct state *const st)
 	st->st_msgid = htonl(ike->sa.st_msgid_nextuse);
 }
 
+/*
+ * Construct and send an informational request.
+ *
+ * XXX: This and send_v2_delete() should be merged.  However, there
+ * are annoying differences.  For instance, send_v2_delete() updates
+ * st->st_msgid but the below doesn't.
+ */
+stf_status send_v2_informational_request(const char *name,
+					 struct state *st,
+					 struct ike_sa *ike,
+					 stf_status (*payloads)(struct state *st,
+								pb_stream *pbs))
+{
+	/*
+	 * Buffer in which to marshal our informational message.  We
+	 * don't use reply_buffer/reply_stream because it might be in
+	 * use.
+	 */
+	u_char buffer[MIN_OUTPUT_UDP_SIZE];	/* ??? large enough for any informational? */
+	pb_stream packet = open_out_pbs(name, buffer, sizeof(buffer));
+	if (!pbs_ok(&packet)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	pb_stream message = open_v2_message(&packet, ike, NULL,
+					    ISAKMP_v2_INFORMATIONAL);
+	if (!pbs_ok(&message)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	struct v2sk_payload sk = open_v2sk_payload(&message, ike);
+	if (!pbs_ok(&sk.pbs)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	if (payloads != NULL) {
+		stf_status e = payloads(st, &sk.pbs);
+		if (e != STF_OK) {
+			return  e;
+		}
+	}
+
+	if (!close_v2sk_payload(&sk)) {
+		return STF_INTERNAL_ERROR;
+	}
+	close_output_pbs(&message);
+	close_output_pbs(&packet);
+
+	stf_status ret = encrypt_v2sk_payload(&sk);
+	if (ret != STF_OK) {
+		return ret;
+	}
+
+	/* cannot use ikev2_update_msgid_counters - no md here */
+	/* But we know we are the initiator for thie exchange */
+	ike->sa.st_msgid_nextuse += 1;
+
+	ike->sa.st_pend_liveness = TRUE; /* we should only do this when dpd/liveness is active? */
+	record_and_send_v2_ike_msg(st, &packet, name);
+
+	return STF_OK;
+}
+
 struct v2sk_payload open_v2sk_payload(pb_stream *container,
 				      struct ike_sa *ike)
 {

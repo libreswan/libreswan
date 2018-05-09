@@ -6104,9 +6104,6 @@ static stf_status add_mobike_response_payloads(int np, chunk_t *cookie2,
  *   <--  HDR, SK {[N,] [D,] [CP], ...}
  */
 
-static stf_status ikev2_send_informational(struct state *st, struct state *pst,
-					   v2_notification_t v2N);
-
 stf_status process_encrypted_informational_ikev2(struct state *st,
 						 struct msg_digest *md)
 {
@@ -6551,20 +6548,22 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 
 stf_status ikev2_send_livenss_probe(struct state *st)
 {
-	struct state *pst = st;
-
-	if (IS_CHILD_SA(st)) {
-		pst = state_with_serialno(st->st_clonedfrom);
-		if (pst == NULL) {
-			DBG(DBG_CONTROL,
-			    DBG_log("IKE SA does not exist for this child SA - should not happen"));
-			DBG(DBG_CONTROL,
-			    DBG_log("INFORMATIONAL exchange cannot be sent"));
-			return STF_IGNORE;
-		}
+	struct ike_sa *ike = ike_sa(st);
+	if (ike == NULL) {
+		DBG(DBG_CONTROL,
+		    DBG_log("IKE SA does not exist for this child SA - should not happen"));
+		DBG(DBG_CONTROL,
+		    DBG_log("INFORMATIONAL exchange cannot be sent"));
+		return STF_IGNORE;
 	}
 
-	stf_status e = ikev2_send_informational(st, pst, 0);
+	/*
+	 * XXX: What does it mean to send a liveness probe for a CHILD
+	 * SA?  Since the packet contents are empty there's nothing to
+	 * identify the CHILD, just the IKE SA!?!
+	 */
+	stf_status e = send_v2_informational_request("liveness probe informational request",
+						     st, ike, NULL);
 
 	pstats_ike_dpd_sent++;
 
@@ -6584,126 +6583,6 @@ static stf_status add_mobike_payloads(struct state *st, pb_stream *pbs)
 				&st->st_remoteaddr, st->st_remoteport,
 				st->st_rcookie, pbs))
 		return STF_INTERNAL_ERROR;
-
-	return STF_OK;
-}
-
-static stf_status ikev2_send_informational(struct state *st, struct state *pst,
-		v2_notification_t v2N)
-{
-
-	/* buffer in which to marshal our informational message.
-	 * We don't use reply_buffer/reply_stream because it might be in use.
-	 */
-	u_char buffer[1024];	/* ??? large enough for any informational? */
-	unsigned char *encstart;
-	unsigned char *iv;
-
-	struct ikev2_generic e;
-	pb_stream e_pbs, e_pbs_cipher;
-	pb_stream rbody;
-	pb_stream reply_stream;
-
-	switch (v2N) {
-	case v2N_NOTHING_WRONG:
-		/* This is an empty informational exchange (A.K.A liveness check) */
-		e.isag_np = ISAKMP_NEXT_v2NONE;
-		break;
-
-	case v2N_UPDATE_SA_ADDRESSES:
-		e.isag_np = ISAKMP_NEXT_v2N;
-		break;
-
-	/* PAUL: We don't use this function for sending DELETE payloads? */
-	/*  e.isag_np = ISAKMP_NEXT_v2D; */
-
-	default:
-		bad_case(v2N);
-
-	}
-
-	init_out_pbs(&reply_stream, buffer, sizeof(buffer),
-			"informational exchange request packet");
-
-	/* HDR out */
-	{
-		struct isakmp_hdr hdr;
-
-		zero(&hdr);	/* OK: no pointer fields */
-		hdr.isa_version = build_ikev2_version();
-		memcpy(hdr.isa_rcookie, pst->st_rcookie, COOKIE_SIZE);
-		memcpy(hdr.isa_icookie, pst->st_icookie, COOKIE_SIZE);
-		hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
-		hdr.isa_np = ISAKMP_NEXT_v2SK;
-		hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
-
-		/* encryption role based on original state not md state */
-		if (pst->st_original_role == ORIGINAL_INITIATOR)
-			hdr.isa_flags = ISAKMP_FLAGS_v2_IKE_I;
-
-		/* not setting message responder flag */
-
-		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG))
-			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
-
-		if (!out_struct(&hdr, &isakmp_hdr_desc,
-					&reply_stream, &rbody))
-			return STF_FATAL;
-	}
-
-	/* insert an Encryption payload header */
-	e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-	if (!out_struct(&e, &ikev2_sk_desc, &rbody, &e_pbs))
-		return STF_FATAL;
-
-	/* IV */
-	iv = e_pbs.cur;
-	if (!emit_wire_iv(st, &e_pbs))
-		return STF_INTERNAL_ERROR;
-
-	/* note where cleartext starts */
-	init_pbs(&e_pbs_cipher, e_pbs.cur, e_pbs.roof - e_pbs.cur,
-			"cleartext");
-	e_pbs_cipher.container = &e_pbs;
-	e_pbs_cipher.desc = NULL;
-	e_pbs_cipher.cur = e_pbs.cur;
-	encstart = e_pbs_cipher.cur;
-
-	if (v2N == v2N_UPDATE_SA_ADDRESSES) {
-		stf_status retmob = add_mobike_payloads(st, &e_pbs_cipher);
-
-		if (retmob != STF_OK) {
-			return  retmob;
-		}
-	}
-
-	if (!ikev2_padup_pre_encrypt(st, &e_pbs_cipher))
-		return STF_INTERNAL_ERROR;
-
-	close_output_pbs(&e_pbs_cipher);
-
-	{
-		stf_status ret;
-		unsigned char *authloc = ikev2_authloc(pst, &e_pbs);
-
-		passert(authloc != NULL);
-
-		close_output_pbs(&e_pbs);
-		close_output_pbs(&rbody);
-		close_output_pbs(&reply_stream);
-
-		ret = ikev2_encrypt_msg(ike_sa(st), reply_stream.start,
-					iv, encstart, authloc);
-		if (ret != STF_OK)
-			return STF_FATAL;
-	}
-	/* cannot use ikev2_update_msgid_counters - no md here */
-	/* But we know we are the initiator for thie exchange */
-	pst->st_msgid_nextuse += 1;
-
-	pst->st_pend_liveness = TRUE; /* we should only do this when dpd/liveness is active? */
-	record_and_send_v2_ike_msg(st, &reply_stream,
-				   "packet for ikev2_send_informational");
 
 	return STF_OK;
 }
@@ -6957,7 +6836,8 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 	const struct iface_port *o_iface = st->st_interface;
 	st->st_interface = iface;
 
-	ikev2_send_informational(st, st, v2N_UPDATE_SA_ADDRESSES);
+	send_v2_informational_request("mobike informational request",
+				      st, ike_sa(st), add_mobike_payloads);
 
 	st->st_interface = o_iface;
 }
