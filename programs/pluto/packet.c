@@ -1486,11 +1486,11 @@ void init_out_pbs(pb_stream *pbs, u_int8_t *start, size_t len, const char *name)
 	memset(start, 0xFA, len);	/* value likely to be unpleasant */
 }
 
-
 pb_stream open_out_pbs(const char *name, uint8_t *buffer, size_t sizeof_buffer)
 {
 	pb_stream out_pbs;
 	init_out_pbs(&out_pbs, buffer, sizeof_buffer, name);
+	DBGF(DBG_EMITTING, "Opening output PBS %s", name);
 	return out_pbs;
 }
 

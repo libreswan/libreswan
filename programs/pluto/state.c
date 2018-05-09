@@ -1282,8 +1282,6 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
 						      struct state *st,
 						      struct connection *c))
 {
-	struct pbs_reply_backup *reply_pbs_backup = NULL;
-
 	/* this kludge avoids an n^2 algorithm */
 
 	/* We take two passes so that we delete any ISAKMP SAs last.
@@ -1305,9 +1303,6 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
 
 			/* call comparison function */
 			if ((*comparefunc)(this, c)) {
-				if (reply_pbs_backup == NULL) {
-					reply_pbs_backup = save_reply_pbs();
-				}
 				/*
 				 * XXX: this simingly redundant
 				 * push/pop has the side effect
@@ -1319,9 +1314,6 @@ static void foreach_state_by_connection_func_delete(struct connection *c,
 				pop_cur_state(old_serialno);
 			}
 		});
-	}
-	if (reply_pbs_backup != NULL) {
-		restore_reply_pbs(&reply_pbs_backup);
 	}
 }
 
