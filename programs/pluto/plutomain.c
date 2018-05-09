@@ -1209,7 +1209,11 @@ int main(int argc, char **argv)
 			crl_check_interval = deltatime(
 				cfg->setup.options[KBF_CRL_CHECKINTERVAL]);
 			uniqueIDs = cfg->setup.options[KBF_UNIQUEIDS];
+#ifdef USE_DNSSEC
 			do_dnssec = cfg->setup.options[KBF_DO_DNSSEC];
+#else
+			do_dnssec = FALSE;
+#endif
 			/*
 			 * We don't check interfaces= here because that part
 			 * has been dealt with in _stackmanager before we
@@ -1835,15 +1839,11 @@ void show_setup_plutomain(void)
 
 	whack_log(RC_COMMENT,
 		"nhelpers=%d, uniqueids=%s, "
-#ifdef USE_DNSSEC
 		"dnssec-enable=%s, "
-#endif
 		"perpeerlog=%s, logappend=%s, logip=%s, shuntlifetime=%jds, xfrmlifetime=%jds",
 		nhelpers,
 		bool_str(uniqueIDs),
-#ifdef USE_DNSSEC
 		bool_str(do_dnssec),
-#endif
 		log_to_perpeer ? peerlog_basedir : "no",
 		bool_str(log_append),
 		bool_str(log_ip),
