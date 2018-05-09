@@ -8,12 +8,9 @@ the left participant
 should be identified for authentication;
 defaults to
 <emphasis remap='B'>left</emphasis>.
-Can be an IP address (in any
-<citerefentry><refentrytitle>ipsec_ttoaddr</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-syntax)
-or a fully-qualified domain name which will be resolved. If preceded by
-<emphasis remap='B'>@</emphasis>, the value is used as a literal string
-and will not be resolved.
+Can be an IP address or a fully-qualified domain name which will be resolved.
+If preceded by <emphasis remap='B'>@</emphasis>, the value is used as
+a literal string and will not be resolved.
 
 To support opaque identifiers (usually of type ID_KEY_ID, such as used by
 Cisco to specify Group Name, use square brackets, eg <emphasis remap='B'>rightid=@[GroupName]</emphasis>.

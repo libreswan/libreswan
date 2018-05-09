@@ -3,8 +3,7 @@
   <listitem>
 <para>(required)
 the IP address of the left participant's public-network interface,
-in any form accepted by
-<citerefentry><refentrytitle>ipsec_ttoaddr</refentrytitle><manvolnum>3</manvolnum></citerefentry>. Currently, IPv4 and IPv6 IP addresses are supported.
+Currently, IPv4 and IPv6 IP addresses are supported.
 There are several magic values.  If it is
 <emphasis remap='B'>%defaultroute</emphasis>,
 and
