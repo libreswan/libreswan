@@ -119,8 +119,9 @@ u_int16_t pluto_xfrmlifetime = 300;
  */
 struct finite_state state_undefined = {
 	.fs_state = STATE_UNDEFINED,
+	.fs_name = "STATE_UNDEFINED",
 	.fs_short_name = "UNDEFINED",
-	.fs_story = "not defined and probably dead (internal)",
+	.fs_story = "not defined - either very new or dead (internal)",
 };
 
 const struct finite_state *finite_states[STATE_IKE_ROOF] = {
@@ -361,6 +362,15 @@ static enum categories categorize_state(struct state *st,
 static void update_state_stats(struct state *st, enum state_kind old_state,
 			enum state_kind new_state)
 {
+	/*
+	 * "??? this seems expensive: on each state change we do this
+	 * whole rigamarole."
+	 *
+	 * XXX: Part of the problem is with categorize_state().  It
+	 * doesn't implement a simple mapping from state to category.
+	 * If there was, struct finite_state' could be used to do the
+	 * mapping.
+	 */
 	enum categories old_category = categorize_state(st, old_state);
 	enum categories new_category = categorize_state(st, new_state);
 
@@ -379,7 +389,10 @@ static void update_state_stats(struct state *st, enum state_kind old_state,
 		cat_count[new_category]++;
 	}
 
-	/* ??? this seems expensive: on each state change we do this whole rigamarole */
+	/*
+	 * ??? this seems expensive: on each state change we do this
+	 * whole rigamarole.
+	 */
 	DBG(DBG_CONTROLMORE, {
 		DBG_log("%s state #%lu: %s(%s) => %s(%s)",
 			IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
