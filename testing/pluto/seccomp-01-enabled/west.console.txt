@@ -11,7 +11,7 @@ west #
  service auditd start
 Redirecting to /bin/systemctl start  auditd.service
 west #
- mkdir /var/run/pluto
+ mkdir -p /var/run/pluto
 west #
  ipsec pluto --config /etc/ipsec.conf
 west #
