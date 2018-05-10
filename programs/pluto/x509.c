@@ -895,33 +895,39 @@ static lsw_cert_ret pluto_process_certs(struct state *st, chunk_t *certs,
 lsw_cert_ret ike_decode_cert(struct msg_digest *md)
 {
 	struct state *st = md->st;
-	struct payload_digest *p;
 	chunk_t der_list[32] = { {NULL, 0} };
 	int der_num = 0;
 	int np = st->st_ikev2 ? ISAKMP_NEXT_v2CERT : ISAKMP_NEXT_CERT;
 
 	DBG(DBG_X509, DBG_log("checking for CERT payloads"));
-	for (p = md->chain[np]; p != NULL; p = p->next) {
-		struct isakmp_cert *cert;
-		struct ikev2_cert *v2cert;
-
-		if (st->st_ikev2)
-			v2cert = &p->payload.v2cert;
-		else
-			cert = &p->payload.cert;
-
-		if ((!st->st_ikev2 && cert->isacert_type == CERT_X509_SIGNATURE) ||
-		    (st->st_ikev2 && v2cert->isac_enc == CERT_X509_SIGNATURE))
-		{
-			chunk_t blob;
-
-			clonetochunk(blob, p->pbs.cur, pbs_left(&p->pbs), "cert chain blob");
-			der_list[der_num++] = blob;
+	for (struct payload_digest *p = md->chain[np]; p != NULL; p = p->next) {
+		enum ike_cert_type cert_type;
+		enum_names *cert_type_names;
+		if (st->st_ikev2) {
+			cert_type_names = &ikev2_cert_type_names;
+			cert_type = p->payload.v2cert.isac_enc;
 		} else {
+			cert_type_names = &ike_cert_type_names;
+			cert_type = p->payload.cert.isacert_type;
+		}
+
+		switch (cert_type) {
+		case CERT_X509_SIGNATURE:
+		{
+			struct esb_buf ctb;
+			DBGF(DBG_X509, "saving certificate %d: %s", der_num,
+			     enum_showb(cert_type_names, cert_type, &ctb));
+			chunk_t blob = chunk(p->pbs.cur, pbs_left(&p->pbs));
+			der_list[der_num++] = blob;
+			break;
+		}
+		default:
+		{
+			struct esb_buf ctb;
 			loglog(RC_LOG_SERIOUS, "ignoring %s certificate payload",
-				!st->st_ikev2 ? enum_show(&ike_cert_type_names, cert->isacert_type)
-					: enum_show(&ikev2_cert_type_names, v2cert->isac_enc)
-				);
+			       enum_showb(cert_type_names, cert_type, &ctb));
+			break;
+		}
 		}
 	}
 
@@ -942,9 +948,6 @@ lsw_cert_ret ike_decode_cert(struct msg_digest *md)
 		default:
 			bad_case(ret);
 		}
-
-		while (der_num-- > 0)
-			freeanychunk(der_list[der_num]);
 	}
 
 	return ret;
