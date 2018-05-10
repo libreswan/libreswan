@@ -13,7 +13,7 @@
  * Copyright (C) 2012 Philippe Vouters <philippe.vouters@laposte.net>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
- * Copyright (C) 2013-2017 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2013-2018 Antony Antony <antony@phenome.org>
  * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it

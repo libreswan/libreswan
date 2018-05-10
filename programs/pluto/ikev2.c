@@ -12,7 +12,7 @@
  * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2015-2018 Andrew Cagney
- * Copyright (C) 2016-2017 Antony Antony <appu@phenome.org>
+ * Copyright (C) 2016-2018 Antony Antony <appu@phenome.org>
  * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
