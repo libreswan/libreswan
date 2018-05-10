@@ -5,21 +5,15 @@ Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
- ipsec auto --add west-east
-002 added connection description "west-east"
-east #
- ipsec auto --add westnet-eastnet
-002 added connection description "westnet-eastnet"
-east #
  echo "initdone"
 initdone
 east #
  sleep 1
 east #
- # Expectine the IKE SA of west-east and the IPsec SA of westnet-eastnet
+ # Expecting the IKE SA of west-east and the IPsec SA of westnet-eastnet
 east #
  ipsec status |grep STATE
-000 #1: "westnet-eastnet":500 STATE_MAIN_R3 (sent MR3, ISAKMP SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle; import:not set
+000 #1: "west-east":500 STATE_MAIN_R3 (sent MR3, ISAKMP SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle; import:not set
 000 #3: "westnet-eastnet":500 STATE_QUICK_R2 (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#1; idle; import:not set
 east #
 east #

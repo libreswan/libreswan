@@ -80,7 +80,7 @@ done
 west #
  sleep 1
 west #
- # Expectine the IKE SA of west-east and the IPsec SA of westnet-eastnet
+ # Expecting the IKE SA of west-east and the IPsec SA of westnet-eastnet
 west #
  ipsec status |grep STATE
 000 #1: "west-east":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle; import:admin initiate
