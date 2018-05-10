@@ -722,22 +722,14 @@ static bool find_fetch_dn(SECItem *dn, struct connection *c,
 }
 #endif
 
-/*
- * WARNING: This function's bool return case is not what you expect!
- *
- * returns FALSE for a REVOKED cert or internal failure. returns
- * TRUE for a good cert or a failed verify (for continuing with
- * connection refining)
- */
-
-static int pluto_process_certs(struct state *st, chunk_t *certs,
-						  int num_certs)
+static lsw_cert_ret pluto_process_certs(struct state *st, chunk_t *certs,
+					int num_certs)
 {
 	struct connection *c = st->st_connection;
 #if defined(LIBCURL) || defined(LIBLDAP)
 	SECItem fdn = { siBuffer, NULL, 0 };
 #endif
-	int cont = LSW_CERT_BAD;
+	lsw_cert_ret cont = LSW_CERT_BAD;
 	bool rev_opts[RO_SZ];
 	char namebuf[IDTOA_BUF];
 	char ipstr[IDTOA_BUF];
@@ -752,7 +744,6 @@ static int pluto_process_certs(struct state *st, chunk_t *certs,
 
 	int ret = verify_and_cache_chain(certs, num_certs, &end_cert,
 						       rev_opts);
-
 	if (ret == -1) {
 		libreswan_log("cert verify failed with internal error");
 		return LSW_CERT_BAD;
@@ -901,12 +892,12 @@ static int pluto_process_certs(struct state *st, chunk_t *certs,
  *  contain a single certificate.
  *
  */
-int ike_decode_cert(struct msg_digest *md)
+lsw_cert_ret ike_decode_cert(struct msg_digest *md)
 {
 	struct state *st = md->st;
 	struct payload_digest *p;
 	chunk_t der_list[32] = { {NULL, 0} };
-	int ret = LSW_CERT_NONE;
+	lsw_cert_ret ret = LSW_CERT_NONE;
 	int der_num = 0;
 	int np = st->st_ikev2 ? ISAKMP_NEXT_v2CERT : ISAKMP_NEXT_CERT;
 
