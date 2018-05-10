@@ -15,19 +15,19 @@ west #
 000  
 000 List of RSA Public Keys:
 000  
-000 TIMESTAMP, 1024 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
+000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
 000        ID_DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'
 000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 TIMESTAMP, 1024 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
+000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
 000        ID_USER_FQDN 'user-west@testing.libreswan.org'
 000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 TIMESTAMP, 1024 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
+000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
 000        ID_FQDN '@west.testing.libreswan.org'
 000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 TIMESTAMP, 1024 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
+000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
 000        ID_USER_FQDN 'west@testing.libreswan.org'
 000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 TIMESTAMP, 1024 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
+000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
 000        ID_IPV4_ADDR '192.1.2.45'
 000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000  
@@ -42,35 +42,35 @@ west #
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
 000   not after: TIMESTAMP
-000   1024 bit RSA: has private key
+000   3072 bit RSA: has private key
 000  
 000 End certificate "road" - SN: 0xXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
 000   not after: TIMESTAMP
-000   1024 bit RSA
+000   3072 bit RSA
 000  
 000 End certificate "north" - SN: 0xXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
 000   not after: TIMESTAMP
-000   1024 bit RSA
+000   3072 bit RSA
 000  
 000 End certificate "hashsha2" - SN: 0xXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=hashsha2.testing.libreswan.org, E=user-hashsha2@testing.libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
 000   not after: TIMESTAMP
-000   1024 bit RSA
+000   3072 bit RSA
 000  
 000 End certificate "nic" - SN: 0xXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=nic.testing.libreswan.org, E=user-nic@testing.libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
 000   not after: TIMESTAMP
-000   1024 bit RSA
+000   3072 bit RSA
 000  
 000 List of X.509 CA Certificates:
 000  
@@ -145,34 +145,34 @@ west #
 000  
 000 List of RSA Public Keys:
 000  
-000 TIMESTAMP, 1024 RSA Key AwXXXXXXX (no private key), until TIMESTAMP ok
+000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (no private key), until TIMESTAMP ok
 000        ID_DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 TIMESTAMP, 1024 RSA Key AwXXXXXXX (no private key), until TIMESTAMP ok
+000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (no private key), until TIMESTAMP ok
 000        ID_USER_FQDN 'user-east@testing.libreswan.org'
 000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 TIMESTAMP, 1024 RSA Key AwXXXXXXX (no private key), until TIMESTAMP ok
+000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (no private key), until TIMESTAMP ok
 000        ID_FQDN '@east.testing.libreswan.org'
 000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 TIMESTAMP, 1024 RSA Key AwXXXXXXX (no private key), until TIMESTAMP ok
+000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (no private key), until TIMESTAMP ok
 000        ID_USER_FQDN 'east@testing.libreswan.org'
 000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 TIMESTAMP, 1024 RSA Key AwXXXXXXX (no private key), until TIMESTAMP ok
+000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (no private key), until TIMESTAMP ok
 000        ID_IPV4_ADDR '192.1.2.23'
 000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 TIMESTAMP, 1024 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
+000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
 000        ID_DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'
 000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 TIMESTAMP, 1024 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
+000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
 000        ID_USER_FQDN 'user-west@testing.libreswan.org'
 000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 TIMESTAMP, 1024 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
+000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
 000        ID_FQDN '@west.testing.libreswan.org'
 000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 TIMESTAMP, 1024 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
+000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
 000        ID_USER_FQDN 'west@testing.libreswan.org'
 000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 TIMESTAMP, 1024 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
+000 TIMESTAMP, 3072 RSA Key AwXXXXXXX (has private key), until TIMESTAMP ok
 000        ID_IPV4_ADDR '192.1.2.45'
 000        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000  
@@ -187,35 +187,35 @@ west #
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
 000   not after: TIMESTAMP
-000   1024 bit RSA: has private key
+000   3072 bit RSA: has private key
 000  
 000 End certificate "road" - SN: 0xXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
 000   not after: TIMESTAMP
-000   1024 bit RSA
+000   3072 bit RSA
 000  
 000 End certificate "north" - SN: 0xXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
 000   not after: TIMESTAMP
-000   1024 bit RSA
+000   3072 bit RSA
 000  
 000 End certificate "hashsha2" - SN: 0xXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=hashsha2.testing.libreswan.org, E=user-hashsha2@testing.libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
 000   not after: TIMESTAMP
-000   1024 bit RSA
+000   3072 bit RSA
 000  
 000 End certificate "nic" - SN: 0xXX
 000   subject: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=nic.testing.libreswan.org, E=user-nic@testing.libreswan.org
 000   issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 000   not before: TIMESTAMP
 000   not after: TIMESTAMP
-000   1024 bit RSA
+000   3072 bit RSA
 000  
 000 List of X.509 CA Certificates:
 000  

@@ -5,12 +5,6 @@ Redirecting to: systemctl start ipsec.service
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
- ipsec auto --add west-east-auto
-002 added connection description "west-east-auto"
-west #
- ipsec auto --add west-east-auto2
-002 added connection description "west-east-auto2"
-west #
  echo "initdone"
 initdone
 west #
@@ -19,21 +13,22 @@ west #
  sleep 30
 west #
  ipsec whack --trafficstatus
-006 #4: "west-east-auto", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
-006 #3: "west-east-auto2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+006 #3: "west-east-auto", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+006 #2: "west-east-auto2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
 west #
  # delete instead of down so it won't re-establish due to east auto=start
 west #
  ipsec auto --delete west-east-auto
 002 "west-east-auto": deleting non-instance connection
-002 "west-east-auto" #4: deleting state (STATE_QUICK_R2) and sending notification
-005 "west-east-auto" #4: ESP traffic information: in=0B out=0B
+002 "west-east-auto" #3: deleting state (STATE_QUICK_R2) and sending notification
+005 "west-east-auto" #3: ESP traffic information: in=0B out=0B
+002 "west-east-auto" #1: deleting state (STATE_MAIN_R3) and sending notification
 west #
  # We should still have the ISAKMP SA for west-east-auto2
 west #
  ipsec status |grep west-east | grep STATE_
-000 #2: "west-east-auto2":500 STATE_MAIN_R3 (sent MR3, ISAKMP SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle; import:not set
-000 #3: "west-east-auto2":500 STATE_QUICK_R2 (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#2; idle; import:not set
+000 #2: "west-east-auto2":500 STATE_QUICK_R2 (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#1; idle; import:not set
+000 #4: "west-east-auto2":500 STATE_MAIN_R2 (sent MR2, expecting MI3); EVENT_v1_RETRANSMIT in  XXs; lastdpd=-1s(seq in:0 out:0); idle; import:not set
 west #
  # one IPsec SA should be up and one ISAKMP SA should be there
 west #
@@ -42,11 +37,11 @@ west #
  # should be an attempt for the deleted IPsec SA to be restarted
 west #
  ipsec whack --trafficstatus
-006 #3: "west-east-auto2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+006 #2: "west-east-auto2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
 west #
  ipsec status |grep west-east |grep STATE_
-000 #2: "west-east-auto2":500 STATE_MAIN_R3 (sent MR3, ISAKMP SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle; import:not set
-000 #3: "west-east-auto2":500 STATE_QUICK_R2 (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#2; idle; import:not set
+000 #2: "west-east-auto2":500 STATE_QUICK_R2 (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#1; idle; import:not set
+000 #4: "west-east-auto2":500 STATE_MAIN_R3 (sent MR3, ISAKMP SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle; import:not set
 west #
 west #
  ../bin/check-for-core.sh

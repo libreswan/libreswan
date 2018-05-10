@@ -53,7 +53,6 @@ north #
 002 "north-east-x509-pluto-02" #1: I am sending my cert
 002 "north-east-x509-pluto-02" #1: I am sending a certificate request
 108 "north-east-x509-pluto-02" #1: STATE_MAIN_I3: sent MI3, expecting MR3
-010 "north-east-x509-pluto-02" #1: STATE_MAIN_I3: retransmission; will wait 0.5 seconds for response
 002 "north-east-x509-pluto-02" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 002 "north-east-x509-pluto-02" #1: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 003 "north-east-x509-pluto-02" #1: Authenticated using RSA

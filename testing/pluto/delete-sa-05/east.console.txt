@@ -17,12 +17,12 @@ east #
  # should be an attempt for the deleted IPsec SA to be restarted
 east #
  ipsec whack --trafficstatus
-006 #5: "west-east-auto2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@west'
+006 #2: "west-east-auto2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@west'
 east #
  ipsec status |grep west-east |grep STATE_
-000 #4: "west-east-auto":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle; import:admin initiate
-000 #7: "west-east-auto":500 STATE_QUICK_I1 (sent QI1, expecting QR1); EVENT_v1_RETRANSMIT in  XXs; lastdpd=-1s(seq in:0 out:0); idle; import:admin initiate
-000 #5: "west-east-auto2":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#4; idle; import:admin initiate
+000 #5: "west-east-auto":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle; import:admin initiate
+000 #6: "west-east-auto":500 STATE_QUICK_I1 (sent QI1, expecting QR1); EVENT_v1_RETRANSMIT in  XXs; lastdpd=-1s(seq in:0 out:0); idle; import:admin initiate
+000 #2: "west-east-auto2":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
 east #
 east #
  ../bin/check-for-core.sh
