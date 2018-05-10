@@ -1,5 +1,4 @@
-/*
- * IKEv2 parent SA creation routines, for Libreswan
+/* IKEv2 packet send routines, for Libreswan
  *
  * Copyright (C) 2007-2008 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2008-2011 Paul Wouters <paul@xelerance.com>

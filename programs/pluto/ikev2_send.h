@@ -1,4 +1,4 @@
-/* IKEv1 send, for libreswan
+/* IKEv2 send packet routines, for Libreswan
  *
  * Copyright (C) 2018 Andrew Cagney
  *
