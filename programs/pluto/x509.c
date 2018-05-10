@@ -749,9 +749,10 @@ static lsw_cert_ret pluto_process_certs(struct state *st,
 	if (ret == -1) {
 		libreswan_log("cert verify failed with internal error");
 		return LSW_CERT_BAD;
-	}
-
-	if (ret & VERIFY_RET_SKIP) {
+	} else if (ret == 0) {
+		/* nothing found?!? */
+		return LSW_CERT_NONE;
+	} else if (ret & VERIFY_RET_SKIP) {
 		libreswan_log("No CA, certificate verified skipped");
 		return LSW_CERT_ID_OK;
 	} else if ((ret & VERIFY_RET_OK) && end_cert != NULL) {
@@ -929,7 +930,7 @@ lsw_cert_ret ike_decode_cert(struct msg_digest *md)
 		if (cert_name == NULL) {
 			loglog(RC_LOG_SERIOUS, "ignoring certificate with unknown type %d",
 			       cert_type);
-		} else if (cert_type == CERT_X509_SIGNATURE) {
+		} else {
 			DBGF(DBG_X509, "saving certificate of type '%s' in %d",
 			     cert_name, nr_certs);
 			certs[nr_certs++] = (struct cert_payload) {
@@ -937,9 +938,6 @@ lsw_cert_ret ike_decode_cert(struct msg_digest *md)
 				.name = cert_name,
 				.payload = chunk(p->pbs.cur, pbs_left(&p->pbs)),
 			};
-		} else {
-			loglog(RC_LOG_SERIOUS, "ignoring %s certificate payload",
-			       cert_name);
 		}
 	}
 
@@ -950,6 +948,9 @@ lsw_cert_ret ike_decode_cert(struct msg_digest *md)
 		     nr_certs);
 		ret = pluto_process_certs(st, certs, nr_certs);
 		switch (ret) {
+		case LSW_CERT_NONE:
+			DBGF(DBG_X509, "X509: all certs discarded");
+			break;
 		case LSW_CERT_BAD:
 			libreswan_log("X509: Certificate rejected for this connection");
 			break;

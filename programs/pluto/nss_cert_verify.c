@@ -438,6 +438,7 @@ static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
 		}
 		break;
 	}
+	pexpect(fin != 0);
 
 	CERT_DestroyCertList(trustcl);
 	PORT_FreeArena(vfy_log.arena, PR_FALSE);
@@ -455,8 +456,16 @@ static unsigned cert_payloads_to_si_ders(struct cert_payload *certs, unsigned nr
 {
 	unsigned nr_si_ders = 0;
 	for (unsigned i = 0; i < nr_certs && i < max_i; i++) {
-		items[nr_si_ders++] = same_chunk_as_secitem(certs[i].payload,
-							    siDERCertBuffer);
+		switch (certs[i].type) {
+		case CERT_X509_SIGNATURE:
+			items[nr_si_ders++] = same_chunk_as_secitem(certs[i].payload,
+								    siDERCertBuffer);
+			break;
+		default:
+			loglog(RC_LOG_SERIOUS, "ignoring %s certificate payload",
+			       certs[i].name);
+			break;
+		}
 	}
 	return nr_si_ders;
 }
@@ -512,6 +521,7 @@ int verify_and_cache_chain(struct cert_payload *certs, unsigned nr_certs,
 
 	ret |= vfy_chain_pkix(cert_chain, chain_len, ee_out, rev_opts);
 
+	pexpect(ret != 0);
 	return ret;
 }
 
