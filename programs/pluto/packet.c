@@ -705,7 +705,7 @@ struct_desc ikev2_generic_desc = {
 	.np = 0, /* only for reading */
 };
 struct_desc ikev2_unknown_payload_desc = {
-	.name = "IKEv2 Bogus Payload",
+	.name = "IKEv2 Unknown Payload",
 	.fields = ikev2generic_fields,
 	.size = sizeof(struct ikev2_generic),
 	.np = ISAKMP_NEXT_v2UNKNOWN,
