@@ -897,7 +897,6 @@ lsw_cert_ret ike_decode_cert(struct msg_digest *md)
 	struct state *st = md->st;
 	struct payload_digest *p;
 	chunk_t der_list[32] = { {NULL, 0} };
-	lsw_cert_ret ret = LSW_CERT_NONE;
 	int der_num = 0;
 	int np = st->st_ikev2 ? ISAKMP_NEXT_v2CERT : ISAKMP_NEXT_CERT;
 
@@ -926,23 +925,22 @@ lsw_cert_ret ike_decode_cert(struct msg_digest *md)
 		}
 	}
 
+	lsw_cert_ret ret = LSW_CERT_NONE;
 	if (der_num > 0) {
-		DBG(DBG_X509, DBG_log("found at last one CERT payload, calling pluto_process_certs()"));
-		switch (pluto_process_certs(st, der_list, der_num)) {
+		DBGF(DBG_X509, "CERT payloads found: %d; calling pluto_process_certs()", der_num);
+		ret = pluto_process_certs(st, der_list, der_num);
+		switch (ret) {
 		case LSW_CERT_BAD:
 			libreswan_log("X509: Certificate rejected for this connection");
-			ret = LSW_CERT_BAD;
 			break;
 		case LSW_CERT_MISMATCHED_ID:
 			libreswan_log("Peer public key SubjectAltName does not match peer ID for this connection");
-			ret = LSW_CERT_MISMATCHED_ID;
 			break;
 		case LSW_CERT_ID_OK:
 			DBG(DBG_X509, DBG_log("Peer public key SubjectAltName matches peer ID for this connection"));
-			ret = LSW_CERT_ID_OK;
 			break;
 		default:
-			passert(FALSE);
+			bad_case(ret);
 		}
 
 		while (der_num-- > 0)
