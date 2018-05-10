@@ -2035,26 +2035,31 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 					/* update previous struct's next payload type field */
 					if (sd->np != 0 && *container->previous_np == 0) {
 						/* new way */
+						struct esb_buf npb;
 						DBGF(DBG_PARSING, "next payload type: setting '%s' '%s' to %s (%d:%s)",
 						     container->previous_np_struct->name,
 						     container->previous_np_field->name,
-						     sd->name, sd->np, enum_name(fp->desc, sd->np));
+						     sd->name, sd->np, enum_showb(fp->desc, sd->np, &npb));
 						*container->previous_np = sd->np;
 					} else if (sd->np != 0 && *container->previous_np == sd->np) {
 						/* old cross-check */
+						struct esb_buf npb;
 						DBGF(DBG_PARSING, "next payload type: previous '%s' '%s' matches '%s' (%d:%s)",
 						     container->previous_np_struct->name,
 						     container->previous_np_field->name,
-						     sd->name, sd->np, enum_name(fp->desc, sd->np));
+						     sd->name, sd->np, enum_showb(fp->desc, sd->np, &npb));
 					} else {
 						/* dump everything; could be bad */
+						struct esb_buf npb;
+						struct esb_buf pnpb;
 						DBGF(DBG_PARSING,
 						     "next payload type: TODO: previous '%s' '%s' (%d:%s); current '%s' (%d:%s)",
 						     container->previous_np_struct->name,
 						     container->previous_np_field->name,
 						     *container->previous_np,
-						     enum_name(container->previous_np_field->desc, *container->previous_np),
-						     sd->name, sd->np, enum_name(fp->desc, sd->np));
+						     enum_showb(container->previous_np_field->desc,
+								*container->previous_np, &pnpb),
+						     sd->name, sd->np, enum_showb(fp->desc, sd->np, &npb));
 						/* but stumble on */
 					}
 					/* save */
