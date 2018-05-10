@@ -38,6 +38,7 @@ extern state_transition_fn process_encrypted_informational_ikev2;
 
 extern crypto_transition_fn ikev2_parent_outI1_tail;
 extern state_transition_fn ikev2_child_ike_inIoutR;
+extern state_transition_fn ikev2_child_ike_inR;
 extern state_transition_fn ikev2_child_inR;
 extern state_transition_fn ikev2_child_inIoutR;
 
@@ -51,13 +52,10 @@ extern state_transition_fn ikev2_parent_inR1outI2;
 extern state_transition_fn ikev2_parent_inR2;
 extern crypto_transition_fn ikev2_child_out_cont;
 extern crypto_transition_fn ikev2_child_inR_tail;
-extern void ikev2_initiate_child_sa(int whack_sock, struct ike_sa *ike,
-				    struct connection *c, lset_t policy, unsigned long try,
-				    so_serial_t replacing
-#ifdef HAVE_LABELED_IPSEC
-				    , struct xfrm_user_sec_ctx_ike *uctx
-#endif
-				    );
+extern crypto_transition_fn ikev2_child_ike_rekey_tail;
+extern void ikev2_initiate_child_sa(struct pending *p);
+
+bool ikev2_rekey_ike_start(struct state *st);
 
 extern void ikev2_child_outI(struct state *st);
 extern void ikev2_child_send_next(struct state *st);
@@ -67,6 +65,10 @@ extern void ikev2_child_send_next(struct state *st);
  * them to the state machine?
  */
 extern const struct state_v2_microcode ikev2_rekey_child_initiate_microcode;
+extern const struct state_v2_microcode ikev2_parent_firststate_microcode;
+extern const struct state_v2_microcode ikev2_rekey_ike_firststate_microcode;
+extern const struct state_v2_microcode ikev2_create_child_initiate_microcode;
+extern const struct state_v2_microcode ikev2_create_ipsec_rekey_initiate_microcode;
 
 extern v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
 		const char *name);
@@ -287,8 +289,8 @@ struct state_v2_microcode {
 	crypto_transition_fn *crypto_end;
 };
 
-void ikev2_copy_cookie_from_sa(struct state *st,
-		                struct ikev2_proposal *accepted_ike_proposal);
+void ikev2_copy_cookie_from_sa(struct ikev2_proposal *accepted_ike_proposal,
+				u_int8_t *cookie);
 
 void ikev2_ike_sa_established(struct ike_sa *ike,
 			      const struct state_v2_microcode *svm,

@@ -6,7 +6,7 @@
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2011 Anthony Tong <atong@TrustedCS.com>
- * Copyright (C) 2017 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2017-2018 Antony Antony <antony@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -51,26 +51,6 @@
 #include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "ip_address.h"
-
-/* struct pending, the structure representing IPsec SA
- * negotiations delayed until a Keying Channel has been negotiated.
- * Essentially, a pending call to quick_outI1.
- */
-
-struct pending {
-	int whack_sock;
-	struct state *isakmp_sa;
-	struct connection *connection;
-	lset_t policy;
-	unsigned long try;
-	so_serial_t replacing;
-	monotime_t pend_time;
-#ifdef HAVE_LABELED_IPSEC
-	struct xfrm_user_sec_ctx_ike *uctx;
-#endif
-
-	struct pending *next;
-};
 
 /*
  * queue an IPsec SA negotiation pending completion of a
@@ -256,14 +236,7 @@ void unpend(struct state *st, struct connection *cc)
 
 			p->pend_time = mononow();
 			if (st->st_ikev2 && cc != p->connection) {
-				ikev2_initiate_child_sa(p->whack_sock,
-							pexpect_ike_sa(st),
-							p->connection, p->policy,
-							p->try, p->replacing
-#ifdef HAVE_LABELED_IPSEC
-							, p->uctx
-#endif
-					);
+				ikev2_initiate_child_sa(p);
 
 			} else if (!st->st_ikev2) {
 				quick_outI1(p->whack_sock, st, p->connection,

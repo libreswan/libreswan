@@ -1,0 +1,8 @@
+Test IPsec SA & IKE SA rekey. Three IPsec SAs share the same IKE SA.
+
+West has three connections to east. All three share the same IKE SA.
+
+on west:
+salifetime=29
+ikelifetime=59
+rekeymargin=6

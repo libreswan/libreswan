@@ -599,6 +599,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "cat",  kv_conn | kv_leftright,  kt_bool,  KNCF_CAT, NULL, NULL, },
 
   { "overlapip",  kv_conn,  kt_bool,  KBF_OVERLAPIP, NULL, NULL, },
+  { "reauth",  kv_conn,  kt_bool,  KBF_REAUTH, NULL, NULL, },
   { "rekey",  kv_conn,  kt_bool,  KBF_REKEY, NULL, NULL, },
   { "rekeymargin",  kv_conn,  kt_time,  KBF_REKEYMARGIN, NULL, NULL, },
   { "rekeyfuzz",  kv_conn,  kt_percent,  KBF_REKEYFUZZ, NULL, NULL, },

@@ -1,5 +1,5 @@
 Interop with strongswan, original responder, rekey Child SA with pfs=yes.
-Fllowed by Reauthentical, create new IKE + Child SA from the libreswan.
+Fllowed by libreswan rekey.
 
 West, Strongswan IPsec/Child SA rekey is triggered on byte count; ~7 ping.
 East create new IKE + Child SA after this.

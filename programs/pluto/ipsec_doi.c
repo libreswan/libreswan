@@ -11,6 +11,7 @@
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2014,2017 Andrew Cagney <cagney@gmail.com>
+ * Copyright (C) 2017-2018 Antony Antony <antony@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -83,6 +84,7 @@
 #include "ip_address.h"
 #include "pluto_stats.h"
 #include "chunk.h"
+#include "pending.h"
 
 /*
  * Process KE values.
@@ -250,14 +252,17 @@ void ipsecdoi_initiate(int whack_sock,
 #endif
 				    );
 		} else if (st->st_ikev2) {
-			ikev2_initiate_child_sa(whack_sock,
-						pexpect_ike_sa(st),
-						c, policy, try,
-						replacing
+			struct pending p;
+			p.whack_sock = whack_sock;
+			p.isakmp_sa = st;
+			p.connection = c;
+			p.try = try;
+			p.policy = policy;
+			p.replacing = replacing;
 #ifdef HAVE_LABELED_IPSEC
-						, uctx
+			p.uctx = uctx;
 #endif
-				);
+			ikev2_initiate_child_sa(&p);
 		} else {
 			/* ??? we assume that peer_nexthop_sin isn't important:
 			 * we already have it from when we negotiated the ISAKMP SA!
@@ -290,11 +295,15 @@ void ipsecdoi_replace(struct state *st,
 	int whack_sock = dup_any(st->st_whack_sock);
 	lset_t policy = st->st_policy;
 
-	/*
-	 * this is an improvement when an initiator does not get R2.
-	 * when we support CREATE_CHILD_SA revisit this code.
-	 */
-	if (IS_IKE_SA(st) || !HAS_IPSEC_POLICY(policy)) {
+	if (IS_PARENT_SA_ESTABLISHED(st) &&
+			!LIN(POLICY_REAUTH, st->st_connection->policy) &&
+			ikev2_rekey_ike_start(st)) {
+		libreswan_log("initiate rekey of IKEv2 CREATE_CHILD_SA IKE Rekey");
+	} else if (IS_IKE_SA(st)) {
+		if (IS_PARENT_SA_ESTABLISHED(st) &&
+				LIN(POLICY_REAUTH, st->st_connection->policy)) {
+			libreswan_log("initiate reauthentication of IKE SA");
+		}
 		struct connection *c = st->st_connection;
 		policy = (c->policy & ~POLICY_IPSEC_MASK &
 				~policy_del) | policy_add;
@@ -340,7 +349,8 @@ void ipsecdoi_replace(struct state *st,
 				policy |= POLICY_TUNNEL;
 		}
 
-		passert(HAS_IPSEC_POLICY(policy));
+		if (!st->st_ikev2)
+			passert(HAS_IPSEC_POLICY(policy));
 		ipsecdoi_initiate(whack_sock, st->st_connection, policy, try,
 				  st->st_serialno, st->st_import
 #ifdef HAVE_LABELED_IPSEC

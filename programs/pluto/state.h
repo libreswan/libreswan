@@ -371,7 +371,7 @@ struct state {
 	/* end of IKEv1-only things */
 
 	/** IKEv2-only things **/
-
+	bool st_viable_parent;	/* can initiate new CERAET_CHILD_SA */
 	struct ikev2_proposal *st_accepted_ike_proposal;
 	struct ikev2_proposal *st_accepted_esp_or_ah_proposal;
 
@@ -717,8 +717,7 @@ extern bool find_pending_phase2(const so_serial_t psn,
 
 extern struct state *resp_state_with_msgid(so_serial_t psn, msgid_t st_msgid);
 
-extern struct state *state_with_parent_msgid_expect(so_serial_t psn, msgid_t st_msgid,
-		                enum state_kind expected_state);
+extern struct state *state_with_parent_msgid(so_serial_t psn, msgid_t st_msgid);
 
 extern struct state *find_state_ikev2_parent(const u_char *icookie,
 					     const u_char *rcookie);
@@ -726,9 +725,10 @@ extern struct state *find_state_ikev2_parent(const u_char *icookie,
 extern struct state *ikev2_find_state_in_init(const u_char *icookie,
 						  enum state_kind expected_state);
 
-extern struct state *find_state_ikev2_child(const u_char *icookie,
+extern struct state *find_state_ikev2_child(const enum isakmp_xchg_types ix,
+					    const u_char *icookie,
 					    const u_char *rcookie,
-					    msgid_t msgid);
+					    const msgid_t msgid);
 
 extern struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
 						      const u_char *rcookie,
@@ -805,6 +805,7 @@ extern void record_newaddr(ip_address *ip, char *a_type);
 
 extern void append_st_cfg_domain(struct state *st, const char *dnsip);
 extern void append_st_cfg_dns(struct state *st, const char *dnsip);
+extern bool ikev2_viable_parent(const struct ike_sa *ike);
 
 extern bool uniqueIDs;  /* --uniqueids? */
 extern void ISAKMP_SA_established(const struct state *pst);

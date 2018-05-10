@@ -12,7 +12,7 @@
  * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2015-2018 Andrew Cagney
- * Copyright (C) 2016-2017 Antony Antony <appu@phenome.org>
+ * Copyright (C) 2016-2018 Antony Antony <appu@phenome.org>
  * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -257,25 +257,6 @@ static const lset_t everywhere_payloads = P(N) | P(V);	/* can appear in any pack
 static const lset_t repeatable_payloads = P(N) | P(D) | P(CP) | P(V) | P(CERT) | P(CERTREQ);	/* if one can appear, many can appear */
 
 /*
- * microcode to parent first initiator state: not associated with an
- * input packet
- *
- * Is this reachable?
- */
-
-const struct state_v2_microcode ikev2_rekey_child_initiate_microcode =
-	/* no state:   --> I1
-	 * HDR, SAi1, KEi, Ni -->
-	 */
-	{ .story      = "initiate rekey",
-	  .state      = STATE_UNDEFINED,
-	  .next_state = STATE_PARENT_I1,
-	  .flags      = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
-	  .processor  = NULL,
-	  .crypto_end = ikev2_parent_outI1_tail,
-	  .timeout_event = EVENT_v2_RETRANSMIT, };
-
-/*
  * IKEv2 State transitions (aka microcodes).
  *
  * This table contains all possible state transitions, some of which
@@ -287,6 +268,29 @@ const struct state_v2_microcode ikev2_rekey_child_initiate_microcode =
  */
 
 static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
+
+	/* no state:   --> CREATE_CHILD IKE Rekey Request
+	 * HDR, SAi, KEi, Ni -->
+	 */
+
+	{ .story      = "Initiate CREATE_CHILD_SA IKE Rekey",
+	  .state      = STATE_V2_REKEY_IKE_I0,
+	  .next_state = STATE_V2_REKEY_IKE_I,
+	  .flags      = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
+	  .processor  = NULL,
+	  .crypto_end = ikev2_child_out_cont,
+	  .timeout_event = EVENT_v2_RETRANSMIT, },
+
+	/* no state:   --> CREATE IPsec Rekey Request
+	 * HDR, SAi1, N(REKEY_SA), {KEi,} Ni TSi TSr -->
+	 */
+	{ .story      = "Initiate CREATE_CHILD_SA IPsec Rekey SA",
+          .state      = STATE_V2_REKEY_CHILD_I0,
+          .next_state = STATE_V2_REKEY_CHILD_I,
+          .flags =      SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
+          .processor  = NULL,
+          .crypto_end = ikev2_child_out_cont,
+          .timeout_event = EVENT_v2_RETRANSMIT, },
 
 	/* no state:   --> CREATE IPsec Child Request
 	 * HDR, SAi1, {KEi,} Ni TSi TSr -->
@@ -454,6 +458,18 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .crypto_end = ikev2_child_out_cont,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE },
+
+	{ .story      = "Process CREATE_CHILD_SA IKE Rekey Response",
+	  .state      = STATE_V2_REKEY_IKE_I,
+	  .next_state = STATE_PARENT_I3,
+	  .flags      = SMF2_MSG_R_SET,
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = P(SA) | P(Ni) |  P(KE),
+	  .opt_enc_payloads = P(N),
+	  .processor  = ikev2_child_ike_inR,
+	  .crypto_end = ikev2_child_ike_rekey_tail,
+	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
+	  .timeout_event = EVENT_SA_REPLACE, },
 
 	{ .story      = "Process CREATE_CHILD_SA IPsec SA Response",
 	  .state      = STATE_V2_CREATE_I,
@@ -1080,8 +1096,7 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 	pst = IS_CHILD_SA(pst) ? state_with_serialno(pst->st_clonedfrom) : pst;
 
 	if (is_msg_request(md)) {
-		/* this a new IKE request and not a response */
-
+		/* this an IKE request and not a response */
 		if (resp_state_with_msgid(pst->st_serialno,
 					  htonl(md->msgid_received)) != NULL) {
 			what = "CREATE_CHILD_SA Request retransmission ignored";
@@ -1091,28 +1106,36 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 			st = ikev2_duplicate_state(pexpect_ike_sa(pst), IPSEC_SA,
 						   SA_RESPONDER);
 			change_state(st, STATE_V2_CREATE_R);
+			st->st_msgid = htonl(md->msgid_received);
 			insert_state(st); /* needed for delete - we are duplicating early */
 		} else {
 			what = "IKE Rekey Request";
 			st = ikev2_duplicate_state(pexpect_ike_sa(pst), IKE_SA,
 						   SA_RESPONDER);
 			change_state(st, STATE_V2_REKEY_IKE_R); /* start with this */
+			st->st_msgid = htonl(md->msgid_received);
 			/* can not call insert_state yet. no IKE cookies yet */
 		}
 	} else  {
 		/* this a response */
 		what = "Child SA Response";
-		st = state_with_parent_msgid_expect(pst->st_serialno,
-				htonl(md->msgid_received),
-				md->from_state);
+		st = state_with_parent_msgid(pst->st_serialno,
+				htonl(md->msgid_received));
 		if (st == NULL) {
 			switch (md->from_state) {
 			case STATE_V2_CREATE_I:
+				what = "IPsec Child Response";
 				why = "no matching IPsec child state for this response";
 				break;
+
 			case STATE_V2_REKEY_IKE_I:
 				what = "IKE Rekey Response";
-				why = "no matching local IKE Rekey state found";
+				why = "no matching IKE Rekey state for this response";
+				break;
+
+			case STATE_V2_REKEY_CHILD_I:
+				what = "IPsec Child Rekey Response";
+				why = "no matching rekey child state for this response";
 				break;
 			default:
 				/* ??? can this happen? */
@@ -1122,13 +1145,17 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 	}
 
 	if (st == NULL) {
-		libreswan_log("rejecting %s CREATE_CHILD_SA %s", what, why);
+		libreswan_log("rejecting %s CREATE_CHILD_SA %s msgid_received: %u st_msgid_lastrecv %u",
+				what, why,
+				md->msgid_received,
+				pst->st_msgid_lastrecv);
 	} else {
+		bool st_busy = st->st_suspended_md != NULL || st->st_suspended_md != NULL;
 		DBG(DBG_CONTROLMORE, {
 			ipstr_buf b;
 			char ca[CONN_INST_BUF];
 			char cb[CONN_INST_BUF];
-			DBG_log("\"%s\"%s #%lu received %s CREATE_CHILD_SA %s from %s:%u Child \"%s\"%s #%lu in %s will process it further",
+			DBG_log("\"%s\"%s #%lu received %s CREATE_CHILD_SA %s from %s:%u Child \"%s\"%s #%lu in %s %s",
 				pst->st_connection->name,
 				fmt_conn_instance(pst->st_connection, ca),
 				pst->st_serialno,
@@ -1137,19 +1164,26 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 				st->st_connection->name,
 				fmt_conn_instance(st->st_connection, cb),
 				st->st_serialno,
-				st->st_state_name);
+				st->st_state_name,
+				st_busy ? "is busy processing a response drop this message" :
+				" will process it further");
 		});
-        }
+
+		if (st_busy)
+			st = NULL; /* in the previous message */
+	}
+
+
         return st;
 }
 
-static void process_recent_rtransmit(struct state *st,
+static bool process_recent_rtransmit(struct state *st,
 		const enum isakmp_xchg_types ix)
 {
 	set_cur_state(st);
 	if (st->st_suspended_md != NULL) {
 		libreswan_log("retransmission ignored: we're still working on the previous one");
-		return;
+		return 0;
 	}
 
 	/* this should never happen */
@@ -1159,7 +1193,7 @@ static void process_recent_rtransmit(struct state *st,
 			st->st_msgid_lastrecv,
 			enum_name(&ikev2_exchange_names, ix),
 			st->st_msgid_lastreplied);
-		return;
+		return 0;
         }
 
 	if (st->st_msgid_lastreplied != st->st_msgid_lastrecv) {
@@ -1170,6 +1204,19 @@ static void process_recent_rtransmit(struct state *st,
 				enum_name(&ikev2_exchange_names, ix),
 				st->st_msgid_lastreplied);
 		}
+		struct state *cst =  resp_state_with_msgid(st->st_serialno,
+				htonl(st->st_msgid_lastrecv));
+		if (cst == NULL)
+			return 1; /* process the re-transtmited message */
+
+		LSWDBGP(DBG_CONTROLMORE|DBG_RETRANSMITS, buf) {
+			lswlog_retransmit_prefix(buf, st);
+			lswlogf(buf, "state #%lu %s is working on message ID: %u %s, retransmission ignored",
+					cst->st_serialno,
+					st->st_state_name,
+					st->st_msgid_lastrecv,
+					enum_name(&ikev2_exchange_names, ix));
+		}
 	} else {
 		LSWDBGP(DBG_CONTROLMORE|DBG_RETRANSMITS, buf) {
 			lswlog_retransmit_prefix(buf, st);
@@ -1179,6 +1226,8 @@ static void process_recent_rtransmit(struct state *st,
 		}
 		send_recorded_v2_ike_msg(st, "ikev2-responder-retransmit");
 	}
+
+	return 0;
 }
 
 /*
@@ -1376,8 +1425,8 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		}
 		if (st->st_msgid_lastrecv == md->msgid_received) {
 			/* this is a recent retransmit. */
-			process_recent_rtransmit(st, ix);
-			return;
+			if (!process_recent_rtransmit(st, ix))
+				return;
 		}
 		/* update lastrecv later on */
 	} else if (md->message_role == MESSAGE_RESPONSE) {
@@ -1389,9 +1438,10 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		 * an AUTH exchange.  Hmm, perhaps, because the code
 		 * commits to creating a child early, it finds that.
 		 */
-		st = find_state_ikev2_child(md->hdr.isa_icookie,
-					    md->hdr.isa_rcookie,
-					    md->hdr.isa_msgid); /* message ID in NW order */
+		st = find_state_ikev2_child(ix, md->hdr.isa_icookie,
+				md->hdr.isa_rcookie,
+				md->hdr.isa_msgid); /* message ID in NW order */
+
 		if (st == NULL) {
 			/*
 			 * Didn't find a child waiting on that message
@@ -2225,6 +2275,8 @@ void ikev2_update_msgid_counters(struct msg_digest *md)
 	/* update when sending a request */
 	if (is_msg_request(md) &&
 			(st->st_state == STATE_PARENT_I1 ||
+			 st->st_state == STATE_V2_REKEY_IKE_I ||
+			 st->st_state == STATE_V2_REKEY_CHILD_I ||
 			 st->st_state == STATE_V2_CREATE_I)) {
 		ikesa->st_msgid_nextuse += 1;
 		/* an informational exchange does its own increment */
@@ -2401,7 +2453,9 @@ static void ikev2_child_emancipate(struct msg_digest *md)
 	ikev2_inherit_ipsec_sa(osn, st->st_serialno, st->st_icookie,
 			st->st_rcookie);
 
+
 	/* initialze the the new IKE SA. reset and message ID */
+	st->st_msgid_lastack = v2_INVALID_MSGID;
 	st->st_msgid_lastrecv = v2_INVALID_MSGID;
 	st->st_msgid_nextuse = v2_INITIAL_MSGID;
 
@@ -2428,7 +2482,8 @@ static void success_v2_state_transition(struct msg_digest *md)
 	}
 
 
-	if (from_state == STATE_V2_REKEY_IKE_R) {
+	if (from_state == STATE_V2_REKEY_IKE_R ||
+	    from_state == STATE_V2_REKEY_IKE_I) {
 		ikev2_update_msgid_counters(md);
 		ikev2_child_emancipate(md);
 	} else  {

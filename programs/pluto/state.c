@@ -15,7 +15,7 @@
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  * Copyright (C) 2015-2017 Andrew Cagney
- * Copyright (C) 2015-2017 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2015-2018 Antony Antony <antony@phenome.org>
  * Copyright (C) 2015-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2017 Richard Guy Briggs <rgb@tricolour.ca>
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
@@ -643,13 +643,12 @@ void v1_delete_state_by_username(struct state *st, void *name)
 	}
 }
 
-static bool eq_pst_msgid_kind(struct state *st,
-		so_serial_t psn, msgid_t st_msgid,
-		enum state_kind expected_state)
+static bool ikev2_child_eq_pst_msgid(const struct state *st,
+		so_serial_t psn, msgid_t st_msgid)
 {
 	if (st->st_clonedfrom == psn &&
 			st->st_msgid == st_msgid &&
-			st->st_state == expected_state) {
+			IS_CHILD_IPSECSA_RESPONSE(st)) {
 		return TRUE;
 	}
 	return FALSE;
@@ -668,9 +667,9 @@ static bool ikev2_child_resp_eq_pst_msgid(const struct state *st,
 
 /*
  * Find the state object that match the following:
- *      st_msgid (IKEv2 Child responder state)
- *      parent duplicated from
- *      expected state
+ *	st_msgid (IKEv2 Child responder state)
+ *	parent duplicated from
+ *	expected state
  */
 
 struct state *resp_state_with_msgid(so_serial_t psn, msgid_t st_msgid)
@@ -678,12 +677,12 @@ struct state *resp_state_with_msgid(so_serial_t psn, msgid_t st_msgid)
 	passert(psn >= SOS_FIRST);
 
 	FOR_EACH_COOKIED_STATE(st, {
-			if (ikev2_child_resp_eq_pst_msgid(st, psn, st_msgid))
+		if (ikev2_child_resp_eq_pst_msgid(st, psn, st_msgid))
 			return st;
-			});
+	});
 	DBG(DBG_CONTROL,
-			DBG_log("no waiting child state matching pst #%lu msg id %u",
-				psn, ntohs(st_msgid)));
+		DBG_log("no waiting child state matching pst #%lu msg id %u",
+			psn, ntohs(st_msgid)));
 	return NULL;
 }
 
@@ -693,19 +692,17 @@ struct state *resp_state_with_msgid(so_serial_t psn, msgid_t st_msgid)
  *	parent duplicated from
  *	expected state
  */
-struct state *state_with_parent_msgid_expect(so_serial_t psn, msgid_t st_msgid,
-		enum state_kind expected_state)
+struct state *state_with_parent_msgid(so_serial_t psn, msgid_t st_msgid)
 {
 	passert(psn >= SOS_FIRST);
 
 	FOR_EACH_COOKIED_STATE(st, {
-		if (eq_pst_msgid_kind(st, psn, st_msgid, expected_state))
+		if (ikev2_child_eq_pst_msgid(st, psn, st_msgid))
 			return st;
 	});
 	DBG(DBG_CONTROL,
-		DBG_log("no waiting child state matching pst #%lu msg id %u expected state %s",
-			psn, ntohs(st_msgid),
-			 enum_name(&state_names, expected_state)));
+		DBG_log("no waiting child state matching pst #%lu msg id %u",
+			psn, ntohs(st_msgid)));
 	return NULL;
 }
 
@@ -839,7 +836,7 @@ void ikev2_expire_unused_parent(struct state *pst)
 	}
 }
 
-static void flush_pending_ipsec(struct state *pst, struct state *st)
+static void flush_pending_child(struct state *pst, struct state *st)
 {
 
 	if (!IS_IKE_SA(pst))
@@ -852,22 +849,28 @@ static void flush_pending_ipsec(struct state *pst, struct state *st)
 		if (IS_IPSEC_SA_ESTABLISHED(st))
 			return;
 
+		so_serial_t newest_sa = c->newest_ipsec_sa;
+		if (IS_IKE_REKEY_INITIATOR(st))
+			newest_sa = c->newest_isakmp_sa;
+
 		delete_event(st);
-		if (st->st_serialno > c->newest_ipsec_sa &&
+		if (st->st_serialno > newest_sa &&
 				(c->policy & POLICY_UP) &&
 				(c->policy & POLICY_DONT_REKEY) == LEMPTY)
 		{
-			loglog(RC_LOG_SERIOUS, "reschedule pending Phase 2 of "
-					"connection\"%s\"%s state #%lu: - the parent is going away",
-					c->name, fmt_conn_instance(c, cib),
-					st->st_serialno);
+			loglog(RC_LOG_SERIOUS, "reschedule pending child #%lu %s of "
+					"connection \"%s\"%s - the parent is going away",
+					st->st_serialno, st->st_state_name,
+					c->name, fmt_conn_instance(c, cib));
 
+			c->failed_ikev2 = FALSE; /* give it a fresh start */
+			st->st_policy = c->policy; /* for pick_initiator */
 			event_schedule_s(EVENT_SA_REPLACE, 0, st);
 		} else {
-			loglog(RC_LOG_SERIOUS, "expire pending Phase 2 of "
-					"connection\"%s\"%s state #%lu: - the parent is going away",
-					c->name, fmt_conn_instance(c, cib),
-					st->st_serialno);
+			loglog(RC_LOG_SERIOUS, "expire pending child #%lu %s of "
+					"connection \"%s\"%s - the parent is going away",
+					st->st_serialno, st->st_state_name,
+					c->name, fmt_conn_instance(c, cib));
 
 			event_schedule_s(EVENT_SA_EXPIRE, 0, st);
 		}
@@ -876,14 +879,16 @@ static void flush_pending_ipsec(struct state *pst, struct state *st)
 
 static void flush_pending_children(struct state *pst)
 {
-	struct state *st;
-	/* AA_2016 check is it st or pst ? */
-	FOR_EACH_STATE_WITH_COOKIES(st, pst->st_icookie, pst->st_rcookie, {
-		if (st->st_clonedfrom == pst->st_serialno) {
-			flush_pending_ipsec(pst, st);
-			delete_cryptographic_continuation(st);
-		}
-	});
+
+	if (IS_CHILD_SA(pst))
+		return;
+
+	FOR_EACH_COOKIED_STATE(st, {
+			if (st->st_clonedfrom == pst->st_serialno) {
+				flush_pending_child(pst, st);
+				delete_cryptographic_continuation(st);
+			}
+		});
 }
 
 static bool send_delete_check(const struct state *st)
@@ -1737,14 +1742,43 @@ struct state *ikev2_find_state_in_init(const u_char *icookie,
 /*
  * Find a state object for an IKEv2 state, a response that includes a msgid.
  */
-struct state *find_state_ikev2_child(const u_char *icookie,
+
+static bool ikev2_ix_state_match(const struct state *st,
+		const enum isakmp_xchg_types ix)
+{
+	bool ret = FALSE;
+
+	switch (ix) {
+	case ISAKMP_v2_SA_INIT:
+	case ISAKMP_v2_AUTH:
+	case ISAKMP_v2_INFORMATIONAL:
+		ret = TRUE; /* good enough, strict check could be double work */
+		break;
+
+	case ISAKMP_v2_CREATE_CHILD_SA:
+		if (IS_CHILD_IPSECSA_RESPONSE(st))
+			ret = TRUE;
+		break;
+
+	default:
+		DBG(DBG_CONTROLMORE, DBG_log("unsolicited response? did we send %s request? ",
+					enum_name(&ikev2_exchange_names, ix)));
+		break;
+	}
+
+	return ret;
+}
+
+struct state *find_state_ikev2_child(const enum isakmp_xchg_types ix,
+				     const u_char *icookie,
 				     const u_char *rcookie,
-				     msgid_t msgid)
+				     const msgid_t msgid)
 {
 	struct state *st;
 	FOR_EACH_STATE_WITH_COOKIES(st, icookie, rcookie, {
 		if (st->st_ikev2 &&
-		    st->st_msgid == msgid) {
+		    st->st_msgid == msgid &&
+		    ikev2_ix_state_match(st, ix)) {
 			DBG(DBG_CONTROL,
 			    DBG_log("v2 peer, cookies and msgid match on #%lu",
 				    st->st_serialno));
@@ -1937,6 +1971,34 @@ bool find_pending_phase2(const so_serial_t psn,
 	}
 
 	return best != NULL;
+}
+
+/*
+ * to initiate a new IPsec SA or to rekey IPsec
+ * the IKE SA must be around for while. If IKE rekeying itself no new IPsec SA.
+ */
+bool ikev2_viable_parent(const struct ike_sa *ike)
+{
+	/* this check is defied only for an IKEv2 parent */
+	if (!ike->sa.st_ikev2)
+		return TRUE;
+
+	monotime_t now = mononow();
+	const struct pluto_event *ev = ike->sa.st_event;
+	long lifetime = monobefore(now, ev->ev_time) ?
+				deltasecs(monotimediff(ev->ev_time, now)) :
+				-1 * deltasecs(monotimediff(now, ev->ev_time));
+
+	if (lifetime > PARENT_MIN_LIFE)
+		/* incase st_margin == 0, insist minium life */
+		if (lifetime > deltasecs(ike->sa.st_margin))
+			return TRUE;
+
+		loglog(RC_LOG_SERIOUS, "no new CREATE_CHILD_SA exchange using #%lu. Parent lifetime %ld < st_margin %jd",
+				ike->sa.st_serialno, lifetime,
+				deltasecs(ike->sa.st_margin));
+
+	return FALSE;
 }
 
 /*
@@ -2974,7 +3036,7 @@ static void log_newest_sa_change(const char *f, so_serial_t old_ipsec_sa,
 				f, st->st_connection->name,
 				st->st_connection->instance_serial,
 				st->st_ikev2 ? "IKEv2" : "IKEv1",
-				st->st_serialno, old_ipsec_sa,
+				st->st_connection->newest_ipsec_sa, old_ipsec_sa,
 				st->st_connection->spd.eroute_owner,
 				st->st_clonedfrom));
 }
