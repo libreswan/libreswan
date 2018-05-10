@@ -1208,14 +1208,15 @@ void ikev2_process_packet(struct msg_digest **mdp)
 	const bool sent_by_ike_initiator = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) != 0;
 
 	DBG(DBG_CONTROL, {
+			struct esb_buf ixb;
 			switch (md->message_role) {
 			case MESSAGE_RESPONSE:
 				DBG_log("I am receiving an IKEv2 Response %s",
-					enum_name(&ikev2_exchange_names, ix));
+					enum_showb(&ikev2_exchange_names, ix, &ixb));
 				break;
 			case MESSAGE_REQUEST:
 				DBG_log("I am receiving an IKEv2 Request %s",
-					enum_name(&ikev2_exchange_names, ix));
+					enum_showb(&ikev2_exchange_names, ix, &ixb));
 				break;
 			default:
 				bad_case(md->message_role);
@@ -1350,8 +1351,10 @@ void ikev2_process_packet(struct msg_digest **mdp)
 		st = find_state_ikev2_parent(md->hdr.isa_icookie,
 					     md->hdr.isa_rcookie);
 		if (st == NULL) {
+			struct esb_buf ixb;
 			rate_log("%s message request has no corresponding IKE SA",
-				 enum_short_name(&ikev2_exchange_names, ix));
+				 enum_show_shortb(&ikev2_exchange_names,
+						  ix, &ixb));
 			return;
 		}
 		/*
