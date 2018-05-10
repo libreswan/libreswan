@@ -5,7 +5,7 @@ east #
 east #
  ipsec _stackmanager start
 east #
- mkdir /var/run/pluto
+ mkdir -p /var/run/pluto
 east #
  # set a time in the future so notyetvalid and west certs are valid
 east #
