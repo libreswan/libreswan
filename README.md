@@ -25,9 +25,9 @@ version 2; see the LICENSE and CREDIT.* files. Some smaller parts have
 a different license.
 
 ## Requirements
-A recent Linux distribution based on either kernel 2.4.x, 2.6.x or 3.x
-are the currently supported platforms. Libreswan has been ported to
-Win2k/BSD/OSX as well.
+Cecent Linux distributions based on kernel 2.x, 3.x or 4.x
+are supported platforms. Libreswan has been ported to
+Win2k/BSD/OSX in the past as well.
 
 Most distributions have native packaged support for Libreswan. Libreswan is
 available for RHEL, Fedora, Ubuntu, Debian, Arch, OpenWrt and more.
