@@ -642,7 +642,7 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_B
 		$(VIRT_RND) \
 		--location=$(KVM_ISO) \
 		--initrd-inject=$(KVM_KICKSTART_FILE) \
-		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$(notdir $(KVM_KICKSTART_FILE)) console=tty0 console=ttyS0,115200" \
+		--extra-args="swanname=$(KVM_BASE_DOMAIN) ks=file:/$(notdir $(KVM_KICKSTART_FILE)) console=tty0 console=ttyS0,115200 net.ifnames=0 biosdevname=0" \
 		--noreboot
 	: the reboot message from virt-install can be ignored
 	$(call upgrade-kvm-domain, $(KVM_BASE_DOMAIN))

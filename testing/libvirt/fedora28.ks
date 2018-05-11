@@ -12,7 +12,7 @@ firewall --disable
 selinux --enforcing
 timezone --utc America/New_York
 #firstboot --disable
-bootloader --location=mbr --append="console=tty0 console=ttyS0,115200 rd_NO_PLYMOUTH"
+bootloader --location=mbr --append="console=tty0 console=ttyS0,115200 rd_NO_PLYMOUTH net.ifnames=0 biosdevname=0"
 zerombr
 clearpart --all --initlabel
 part / --asprimary --grow
