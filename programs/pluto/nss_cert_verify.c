@@ -38,6 +38,7 @@
 #include <secerr.h>
 #include <certdb.h>
 #include <keyhi.h>
+#include <secpkcs7.h>
 
 /*
  * set up the slot/handle/trust things that NSS needs
@@ -165,73 +166,6 @@ static int nss_err_to_revfail(CERTVerifyLogNode *node)
 	}
 
 	return ret;
-}
-
-/*
- * Does a temporary import, which decodes the entire chain and allows
- * CERT_VerifyCert to verify the chain when passed the end certificate
- */
-static int crt_tmp_import(CERTCertDBHandle *handle, CERTCertificate ***chain,
-						      SECItem *ders,
-						      int der_cnt)
-{
-	if (der_cnt < 1) {
-		DBG(DBG_X509, DBG_log("nothing to decode"));
-		return 0;
-	}
-
-	SECItem **derlist = PORT_Alloc(sizeof(SECItem *) * der_cnt);
-
-	int i;
-	int nonroot = 0;
-#ifdef FIPS_CHECK
-	SECKEYPublicKey *pk = NULL;
-#endif /* FIPS_CHECK */
-
-	for (i = 0; i < der_cnt; i++) {
-		if (!CERT_IsRootDERCert(&ders[i]))
-			derlist[nonroot++] = &ders[i];
-	}
-
-	int fin_count = 0;
-
-	if (nonroot < 1) {
-		DBG(DBG_X509, DBG_log("nothing to decode"));
-	} else {
-		SECStatus rv = CERT_ImportCerts(handle, 0, nonroot, derlist,
-						chain, PR_FALSE, PR_FALSE, NULL);
-		if (rv != SECSuccess || *chain == NULL) {
-			DBG(DBG_X509, DBG_log("NSS error decoding certs: %s",
-					       nss_err_str(PORT_GetError())));
-		} else {
-			CERTCertificate **cc;
-
-			for (cc = *chain; fin_count < nonroot && *cc != NULL; cc++) {
-				DBG(DBG_X509, DBG_log("decoded %s",
-					(*cc)->subjectName));
-#ifdef FIPS_CHECK
-				if (libreswan_fipsmode()) {
-					pk = CERT_ExtractPublicKey(*cc);
-					passert(pk != NULL);
-					if (pk->u.rsa.modulus.len < FIPS_MIN_RSA_KEY_SIZE) {
-						libreswan_log("FIPS: Rejecting cert with key size under %d",
-							FIPS_MIN_RSA_KEY_SIZE);
-						fin_count = 0;
-						PORT_Free(derlist);
-						SECKEY_DestroyPublicKey(pk);
-						return 0;
-					}
-					SECKEY_DestroyPublicKey(pk);
-					pk = NULL;
-				}
-#endif /* FIPS_CHECK */
-				fin_count++;
-			}
-		}
-	}
-
-	PORT_Free(derlist);
-	return fin_count;
 }
 
 static void new_vfy_log(CERTVerifyLog *log)
@@ -451,47 +385,148 @@ static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
 	return fin;
 }
 
-static unsigned cert_payloads_to_si_ders(struct cert_payload *certs, unsigned nr_certs,
-					 SECItem *items, unsigned max_i)
+/*
+ * Does a temporary import, which decodes the entire chain and allows
+ * CERT_VerifyCert to verify the chain when passed the end certificate
+ */
+static bool import_der_cert(CERTCertDBHandle *handle,
+			    CERTCertificate *certs[MAX_CA_PATH_LEN],
+			    unsigned *nr_certs,
+			    SECItem der_cert)
 {
-	unsigned nr_si_ders = 0;
-	for (unsigned i = 0; i < nr_certs && i < max_i; i++) {
-		switch (certs[i].type) {
+	if (*nr_certs >= MAX_CA_PATH_LEN) {
+		loglog(RC_LOG_SERIOUS, "to many certificates");
+		return false;
+	}
+	/*
+	 * Reject root certificates.
+	 *
+	 * XXX: Since NSS implements this by decoding
+	 * (CERT_DecodeDERCertificate()), examining, and then deleting
+	 * the certificate it isn't the most efficient (it means
+	 * decoding the certificate twice).  On the other hand it does
+	 * keep the certificate well away from the certificate
+	 * database (although it isn't clear if this is really a
+	 * problem?).
+	 */
+	if (CERT_IsRootDERCert(&der_cert)) {
+		DBGF(DBG_X509, "ignoring root certificate");
+		return true;
+	}
+
+	/*
+	 * Import the cert.
+	 *
+	 * For an existing certificate, CERT_ImportCerts() should
+	 * return a reference to the earlier certificate (certificates
+	 * are reference counted).
+	 *
+	 * Rather than constructing an array of pointers to SECItems
+	 * pointing at CERT_DERs and importing things en-mass, keep
+	 * memory management simple and import each certificate
+	 * individually
+	 *
+	 * Since the PKCS7 interface returns an internal pointer to
+	 * the CERT_DERs the code would be forced to duplicate those
+	 * CERT_DERs when constructing the array.  The only overhead
+	 * of individual imports is the alloc/free of the CHAIN array.
+	 *
+	 * XXX: CERT_ImportCerts(keepCerts=false) performs two
+	 * operations: create a temp cert from the CERT_DER using
+	 * CERT_NewTempCertificate(); and hashing
+	 * SubjectKeyIDExtension using an internal function.  If the
+	 * second operation isn't required (?!?) then the below call
+	 * could be reduced to just CERT_NewTempCertificate()).
+	 * Anyone?
+	 */
+	SECItem *derlist[1] = { &der_cert, };
+	CERTCertificate **chain;
+	SECStatus rv = CERT_ImportCerts(handle, 0, 1, derlist,
+					&chain, PR_FALSE, PR_FALSE, NULL);
+	if (rv != SECSuccess || *chain == NULL) {
+		DBG(DBG_X509, DBG_log("NSS error decoding certs: %s",
+				      nss_err_str(PORT_GetError())));
+		return true;
+	}
+	CERTCertificate *cert = *chain;
+	PORT_Free(chain);
+	DBGF(DBG_X509, "decoded %s", cert->subjectName);
+
+	/* extra verification */
+#ifdef FIPS_CHECK
+	if (libreswan_fipsmode()) {
+		SECKEYPublicKey *pk = CERT_ExtractPublicKey(cert);
+		passert(pk != NULL);
+		if (pk->u.rsa.modulus.len < FIPS_MIN_RSA_KEY_SIZE) {
+			libreswan_log("FIPS: Rejecting cert with key size under %d",
+				      FIPS_MIN_RSA_KEY_SIZE);
+			SECKEY_DestroyPublicKey(pk);
+			/*
+			 * XXX: Since the certificate isn't added to
+			 * the CERT array, should this also call
+			 * CERT_DestroyCertificate()?
+			 */
+			return false;
+		}
+		SECKEY_DestroyPublicKey(pk);
+	}
+#endif /* FIPS_CHECK */
+
+	/*
+	 * Append the certificate to the CERTS array.
+	 *
+	 * XXX: Caller doesn't seem to delete the reference to the
+	 * certificate (or at least the imported intermediate
+	 * certificates, for the end certificate things are less clear
+	 * as it escapes to x509.c only to then be leaked)?  Perhaps
+	 * that's the intend?  Over time accumulate a pool of imported
+	 * certificates in NSS's certificate database?
+	 */
+	certs[(*nr_certs)++] = cert;
+
+	return true;
+}
+
+static bool import_cert_payloads(CERTCertDBHandle *handle,
+				 struct cert_payload *cert_payloads,
+				 const unsigned nr_cert_payloads,
+				 CERTCertificate *certs[MAX_CA_PATH_LEN],
+				 unsigned *nr_certs)
+{
+	for (unsigned i = 0; i < nr_cert_payloads; i++) {
+		switch (cert_payloads[i].type) {
 		case CERT_X509_SIGNATURE:
-			items[nr_si_ders++] = same_chunk_as_secitem(certs[i].payload,
-								    siDERCertBuffer);
+			if (!import_der_cert(handle, certs, nr_certs,
+					     same_chunk_as_secitem(cert_payloads[i].payload,
+								   siDERCertBuffer))) {
+				return false;
+			}
 			break;
 		default:
 			loglog(RC_LOG_SERIOUS, "ignoring %s certificate payload",
-			       certs[i].name);
+			       cert_payloads[i].name);
 			break;
 		}
 	}
-	return nr_si_ders;
+	return true;
 }
 
 /*
  * Decode and verify the chain received by pluto.
  * ee_out is the resulting end cert
  */
-int verify_and_cache_chain(struct cert_payload *certs, unsigned nr_certs,
+int verify_and_cache_chain(struct cert_payload *cert_payloads, unsigned nr_cert_payloads,
 			   CERTCertificate **ee_out, bool *rev_opts)
 {
-	if (!pexpect(nr_certs > 0)) {
+	if (!pexpect(nr_cert_payloads > 0)) {
 		return -1;
-	}
-
-	SECItem si_ders[MAX_CA_PATH_LEN] = { {siBuffer, NULL, 0} };
-
-	unsigned nr_si_ders = cert_payloads_to_si_ders(certs, nr_certs, si_ders, MAX_CA_PATH_LEN);
-	if (nr_si_ders == 0) {
-		return 0;
 	}
 
 	PK11SlotInfo *slot = NULL;
 	CERTCertDBHandle *handle = NULL;
 	if (!prepare_nss_import(&slot, &handle))
 		return -1;
+
 	/*
 	 * In order for NSS to verify an entire chain, down to a
 	 * CA loaded permanently into the NSS db, a temporary import
@@ -499,18 +534,30 @@ int verify_and_cache_chain(struct cert_payload *certs, unsigned nr_certs,
 	 * cache. When CERT_VerifyCert is called against the end
 	 * certificate both permanent and in-memory cache are used
 	 * together to try to complete the chain.
+	 *
+	 * This routine populates certs[] with the imported
+	 * certificates.  For details read CERT_ImportCerts().
+	 *
+	 * XXX: What seems to be missing is anything to release the
+	 * certs.  One (EE_OUT) gets returned but the rest seem to be
+	 * left floating around in NSS's memory cache?
 	 */
-	CERTCertificate **cert_chain = NULL;
-	int chain_len = crt_tmp_import(handle, &cert_chain, si_ders, nr_si_ders);
+	CERTCertificate *certs[MAX_CA_PATH_LEN];
+	unsigned nr_certs = 0;
+	if (!import_cert_payloads(handle, cert_payloads, nr_cert_payloads,
+				  certs, &nr_certs)) {
+		/* what about the certs? */
+		return 0;
+	}
 
-	if (chain_len < 1) {
+	if (nr_certs < 1) {
 		libreswan_log("X509: temporary cert import operation failed");
 		return -1;
 	}
 
 	int ret = 0;
 
-	if (crl_update_check(handle, cert_chain, chain_len)) {
+	if (crl_update_check(handle, certs, nr_certs)) {
 		if (rev_opts[RO_CRL_S]) {
 			libreswan_log("missing or expired CRL in strict mode, failing pending update");
 			return VERIFY_RET_FAIL | VERIFY_RET_CRL_NEED;
@@ -519,7 +566,7 @@ int verify_and_cache_chain(struct cert_payload *certs, unsigned nr_certs,
 		ret |= VERIFY_RET_CRL_NEED;
 	}
 
-	ret |= vfy_chain_pkix(cert_chain, chain_len, ee_out, rev_opts);
+	ret |= vfy_chain_pkix(certs, nr_certs, ee_out, rev_opts);
 
 	pexpect(ret != 0);
 	return ret;
