@@ -155,6 +155,7 @@ OBJS += db_ops.o
 # libefence is a free memory allocation debugger
 # Solaris 2 needs -lsocket -lnsl
 LDFLAGS += $(SECCOMP_LDFLAGS)
+LDFLAGS += $(NSS_SMIME_LDFLAGS)
 LDFLAGS += $(NSS_LDFLAGS)
 LDFLAGS += $(NSPR_LDFLAGS)
 

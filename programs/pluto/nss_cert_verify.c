@@ -502,6 +502,32 @@ static bool import_cert_payloads(CERTCertDBHandle *handle,
 				return false;
 			}
 			break;
+		case CERT_PKCS7_WRAPPED_X509:
+		{
+			SECItem der = same_chunk_as_secitem(cert_payloads[i].payload,
+							    siDERCertBuffer);
+			SEC_PKCS7ContentInfo *contents = SEC_PKCS7DecodeItem(&der, NULL, NULL, NULL, NULL,
+									     NULL, NULL, NULL);
+			if (contents == NULL) {
+				loglog(RC_LOG_SERIOUS, "Wrapped PKCS7 certificate payload could not be decoded");
+				continue;
+			}
+			if (!SEC_PKCS7ContainsCertsOrCrls(contents)) {
+				loglog(RC_LOG_SERIOUS, "Wrapped PKCS7 certificate payload did not contain any certificates");
+				SEC_PKCS7DestroyContentInfo(contents);
+				continue;
+			}
+			for (SECItem **cert_list = SEC_PKCS7GetCertificateList(contents);
+			     *cert_list; cert_list++) {
+				if (!import_der_cert(handle, certs, nr_certs,
+						     **cert_list)) {
+					SEC_PKCS7DestroyContentInfo(contents);
+					return false;
+				}
+			}
+			SEC_PKCS7DestroyContentInfo(contents);
+			break;
+		}
 		default:
 			loglog(RC_LOG_SERIOUS, "ignoring %s certificate payload",
 			       cert_payloads[i].name);
