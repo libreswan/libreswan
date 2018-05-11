@@ -25,7 +25,7 @@ RUN yum install -y ElectricFence audit-libs-devel bind-utils bison \
  redhat-rpm-config rpm-build screen strace strongswan tcpdump \
  telnet traceroute trousers unbound unbound-devel unbound-libs valgrind \
  vim-enhanced wget xl2tpd xmlto;
-RUN yum-builddep -y libreswan
+# RUN yum-builddep -y libreswan
 RUN mkdir -p /home/build/libreswan
 RUN wget -O libreswan.spec https://raw.githubusercontent.com/libreswan/libreswan/master/packaging/rhel/7/libreswan.spec
 RUN yum-builddep -y ./libreswan.spec
