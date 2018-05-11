@@ -1,7 +1,8 @@
-/* pluto NSS certificate verification routines
+/* NSS certificate verification routines for libreswan
  *
  * Copyright (C) 2015,2018 Matt Rogers <mrogers@libreswan.org>
  * Copyright (C) 2017-2018 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2018 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -449,37 +450,34 @@ static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
 	return fin;
 }
 
-static void chunks_to_si(chunk_t *chunks, SECItem *items, int chunk_n,
-							  int max_i)
+static unsigned cert_payloads_to_si_ders(struct cert_payload *certs, unsigned nr_certs,
+					 SECItem *items, unsigned max_i)
 {
-	int i;
-
-	for (i = 0; i < chunk_n && i < max_i; i++) {
-		items[i] = same_chunk_as_dercert_secitem(chunks[i]);
+	unsigned nr_si_ders = 0;
+	for (unsigned i = 0; i < nr_certs && i < max_i; i++) {
+		items[nr_si_ders++] = same_chunk_as_secitem(certs[i].payload,
+							    siDERCertBuffer);
 	}
+	return nr_si_ders;
 }
-
-#define VFY_INVALID_USE(d, n) (d == NULL || \
-			       d[0].ptr == NULL || \
-			       d[0].len < 1 || \
-			       n < 1 || \
-			       n > MAX_CA_PATH_LEN)
 
 /*
  * Decode and verify the chain received by pluto.
  * ee_out is the resulting end cert
  */
-int verify_and_cache_chain(chunk_t *ders, int num_ders, CERTCertificate **ee_out,
-							bool *rev_opts)
+int verify_and_cache_chain(struct cert_payload *certs, unsigned nr_certs,
+			   CERTCertificate **ee_out, bool *rev_opts)
 {
-	if (VFY_INVALID_USE(ders, num_ders)) {
-		libreswan_log("X509: Invalid certificate (self-signed EE-cert attempted or MAX_CA_PATH_LEN reached");
+	if (!pexpect(nr_certs > 0)) {
 		return -1;
 	}
 
 	SECItem si_ders[MAX_CA_PATH_LEN] = { {siBuffer, NULL, 0} };
 
-	chunks_to_si(ders, si_ders, num_ders, MAX_CA_PATH_LEN);
+	unsigned nr_si_ders = cert_payloads_to_si_ders(certs, nr_certs, si_ders, MAX_CA_PATH_LEN);
+	if (nr_si_ders == 0) {
+		return 0;
+	}
 
 	PK11SlotInfo *slot = NULL;
 	CERTCertDBHandle *handle = NULL;
@@ -494,7 +492,7 @@ int verify_and_cache_chain(chunk_t *ders, int num_ders, CERTCertificate **ee_out
 	 * together to try to complete the chain.
 	 */
 	CERTCertificate **cert_chain = NULL;
-	int chain_len = crt_tmp_import(handle, &cert_chain, si_ders, num_ders);
+	int chain_len = crt_tmp_import(handle, &cert_chain, si_ders, nr_si_ders);
 
 	if (chain_len < 1) {
 		libreswan_log("X509: temporary cert import operation failed");
