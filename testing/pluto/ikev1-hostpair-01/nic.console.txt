@@ -1,0 +1,63 @@
+iptables -t nat -F
+nic #
+ iptables -F
+nic #
+ # NAT
+nic #
+ iptables -t nat -A POSTROUTING --source 192.1.3.209/32 --destination 0.0.0.0/0 -j SNAT --to-source 192.1.2.254
+nic #
+ iptables -t nat -A POSTROUTING --source 192.1.3.210/32 --destination 0.0.0.0/0 -j SNAT --to-source 192.1.2.63
+nic #
+ # make sure that we never acidentially let ESP through.
+nic #
+ iptables -N LOGDROP
+nic #
+ iptables -A LOGDROP -j LOG
+nic #
+ iptables -A LOGDROP -j DROP
+nic #
+ #
+nic #
+ iptables -I FORWARD 1 --proto 50 -j LOGDROP
+nic #
+ iptables -I FORWARD 2 --destination 192.0.2.0/24 -j LOGDROP
+nic #
+ iptables -I FORWARD 3 --source 192.0.2.0/24 -j LOGDROP
+nic #
+ # route
+nic #
+ iptables -I INPUT 1 --destination 192.0.2.0/24 -j LOGDROP
+nic #
+ # Display the table, so we know it is correct.
+nic #
+ iptables -t nat -L -n
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination         
+SNAT       all  --  192.1.3.209          0.0.0.0/0            to:192.1.2.254
+SNAT       all  --  192.1.3.210          0.0.0.0/0            to:192.1.2.63
+nic #
+ iptables -L -n
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+LOGDROP    all  --  0.0.0.0/0            192.0.2.0/24        
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+LOGDROP    esp  --  0.0.0.0/0            0.0.0.0/0           
+LOGDROP    all  --  0.0.0.0/0            192.0.2.0/24        
+LOGDROP    all  --  192.0.2.0/24         0.0.0.0/0           
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+Chain LOGDROP (4 references)
+target     prot opt source               destination         
+LOG        all  --  0.0.0.0/0            0.0.0.0/0            LOG flags 0 level 4
+DROP       all  --  0.0.0.0/0            0.0.0.0/0           
+nic #
+ echo "initdone"
+initdone
+
