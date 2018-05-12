@@ -60,7 +60,6 @@ KVM_PACKAGES = \
     rpm-build \
     screen \
     strace \
-    strongswan \
     systemd-devel \
     tar \
     tcpdump \
@@ -72,7 +71,9 @@ KVM_PACKAGES = \
     vim-enhanced \
     wget \
     xl2tpd \
-    xmlto
+    xmlto \
+    https://download.nohats.ca/strongswan/strongswan-5.6.0-1.fc22.x86_64.rpm \
+    https://download.nohats.ca/libfaketime/libfaketime-0.9.6-4.fc22.x86_64.rpm
 
 KVM_DEBUGINFO = \
     ElectricFence \
