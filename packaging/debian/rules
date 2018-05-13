@@ -25,6 +25,7 @@ override_dh_auto_build:
 		INC_USRLOCAL=/usr \
 		FINALLIBEXECDIR=/usr/lib/ipsec \
 		PUBDIR=/usr/sbin \
+		INC_MANDIR=share/man \
 		FINALNSSDIR=/var/lib/ipsec/nss \
 		USE_LDAP=true \
 		USE_LIBCURL=true \
@@ -40,6 +41,7 @@ override_dh_auto_install-arch:
 	$(MAKE) install \
 		INC_USRLOCAL=/usr \
 		FINALLIBEXECDIR=/usr/lib/ipsec \
+		INC_MANDIR=share/man \
 		FINALNSSDIR=/var/lib/ipsec/nss \
 		PUBDIR=$(CURDIR)/debian/libreswan/usr/sbin \
 		USE_KLIPS=false \

@@ -112,7 +112,7 @@ SBINDIR?=$(DESTDIR)$(FINALSBINDIR)
 
 # where the appropriate manpage tree is located
 # location within INC_USRLOCAL
-INC_MANDIR?=share/man
+INC_MANDIR?=man
 FINALMANDIR=$(INC_USRLOCAL)/$(INC_MANDIR)
 # the full pathname
 MANTREE?=$(DESTDIR)$(FINALMANDIR)
