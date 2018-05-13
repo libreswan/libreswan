@@ -1,4 +1,5 @@
-/* Support of X.509 certificates and CRLs
+/* Support of X.509 certificates and CRLs for libreswan
+ *
  * Copyright (C) 2000 Andreas Hess, Patric Lichtsteiner, Roger Wegmann
  * Copyright (C) 2001 Marco Bertossa, Andreas Schleiss
  * Copyright (C) 2002 Mario Strasser
@@ -11,6 +12,7 @@
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 Kim B. Heino <b@bbbs.net>
+ * Copyright (C) 2018 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -722,8 +724,9 @@ static bool find_fetch_dn(SECItem *dn, struct connection *c,
 }
 #endif
 
-static lsw_cert_ret pluto_process_certs(struct state *st, chunk_t *certs,
-					int num_certs)
+static lsw_cert_ret pluto_process_certs(struct state *st,
+					struct cert_payload *certs,
+					unsigned nr_certs)
 {
 	struct connection *c = st->st_connection;
 #if defined(LIBCURL) || defined(LIBLDAP)
@@ -741,15 +744,15 @@ static lsw_cert_ret pluto_process_certs(struct state *st, chunk_t *certs,
 
 	CERTCertificate *end_cert = NULL;
 
-
-	int ret = verify_and_cache_chain(certs, num_certs, &end_cert,
-						       rev_opts);
+	int ret = verify_and_cache_chain(certs, nr_certs,
+					 &end_cert, rev_opts);
 	if (ret == -1) {
 		libreswan_log("cert verify failed with internal error");
 		return LSW_CERT_BAD;
-	}
-
-	if (ret & VERIFY_RET_SKIP) {
+	} else if (ret == 0) {
+		/* nothing found?!? */
+		return LSW_CERT_NONE;
+	} else if (ret & VERIFY_RET_SKIP) {
 		libreswan_log("No CA, certificate verified skipped");
 		return LSW_CERT_ID_OK;
 	} else if ((ret & VERIFY_RET_OK) && end_cert != NULL) {
@@ -895,47 +898,59 @@ static lsw_cert_ret pluto_process_certs(struct state *st, chunk_t *certs,
 lsw_cert_ret ike_decode_cert(struct msg_digest *md)
 {
 	struct state *st = md->st;
-	chunk_t der_list[32] = { {NULL, 0} };
-	int der_num = 0;
-	int np = st->st_ikev2 ? ISAKMP_NEXT_v2CERT : ISAKMP_NEXT_CERT;
+	const int np = st->st_ikev2 ? ISAKMP_NEXT_v2CERT : ISAKMP_NEXT_CERT;
 
-	DBG(DBG_X509, DBG_log("checking for CERT payloads"));
+	/* count the total cert paylaods */
+	unsigned nr_cert_payloads = 0;
+	for (struct payload_digest *p = md->chain[np];
+	     p != NULL; p = p->next) {
+		nr_cert_payloads++;
+	}
+	if (nr_cert_payloads == 0) {
+		return LSW_CERT_NONE;
+	}
+
+	/* accumulate the known certificates */
+	DBGF(DBG_X509, "checking for known CERT payloads");
+	struct cert_payload *certs = alloc_things(struct cert_payload,
+						  nr_cert_payloads,
+						  "cert payloads");
+	unsigned nr_certs = 0;
 	for (struct payload_digest *p = md->chain[np]; p != NULL; p = p->next) {
 		enum ike_cert_type cert_type;
-		enum_names *cert_type_names;
+		const char *cert_name;
 		if (st->st_ikev2) {
-			cert_type_names = &ikev2_cert_type_names;
 			cert_type = p->payload.v2cert.isac_enc;
+			cert_name = enum_name(&ikev2_cert_type_names, cert_type);
 		} else {
-			cert_type_names = &ike_cert_type_names;
 			cert_type = p->payload.cert.isacert_type;
+			cert_name = enum_name(&ike_cert_type_names, cert_type);
 		}
 
-		switch (cert_type) {
-		case CERT_X509_SIGNATURE:
-		{
-			struct esb_buf ctb;
-			DBGF(DBG_X509, "saving certificate %d: %s", der_num,
-			     enum_showb(cert_type_names, cert_type, &ctb));
-			chunk_t blob = chunk(p->pbs.cur, pbs_left(&p->pbs));
-			der_list[der_num++] = blob;
-			break;
-		}
-		default:
-		{
-			struct esb_buf ctb;
-			loglog(RC_LOG_SERIOUS, "ignoring %s certificate payload",
-			       enum_showb(cert_type_names, cert_type, &ctb));
-			break;
-		}
+		if (cert_name == NULL) {
+			loglog(RC_LOG_SERIOUS, "ignoring certificate with unknown type %d",
+			       cert_type);
+		} else {
+			DBGF(DBG_X509, "saving certificate of type '%s' in %d",
+			     cert_name, nr_certs);
+			certs[nr_certs++] = (struct cert_payload) {
+				.type = cert_type,
+				.name = cert_name,
+				.payload = chunk(p->pbs.cur, pbs_left(&p->pbs)),
+			};
 		}
 	}
 
+	/* Process the known certificates */
 	lsw_cert_ret ret = LSW_CERT_NONE;
-	if (der_num > 0) {
-		DBGF(DBG_X509, "CERT payloads found: %d; calling pluto_process_certs()", der_num);
-		ret = pluto_process_certs(st, der_list, der_num);
+	if (nr_certs > 0) {
+		DBGF(DBG_X509, "CERT payloads found: %d; calling pluto_process_certs()",
+		     nr_certs);
+		ret = pluto_process_certs(st, certs, nr_certs);
 		switch (ret) {
+		case LSW_CERT_NONE:
+			DBGF(DBG_X509, "X509: all certs discarded");
+			break;
 		case LSW_CERT_BAD:
 			libreswan_log("X509: Certificate rejected for this connection");
 			break;
@@ -950,6 +965,7 @@ lsw_cert_ret ike_decode_cert(struct msg_digest *md)
 		}
 	}
 
+	pfree(certs);
 	return ret;
 }
 

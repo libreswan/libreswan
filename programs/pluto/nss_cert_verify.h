@@ -1,6 +1,7 @@
-/* pluto NSS certificate verification routines
+/* NSS certificate verification routines for libreswan
  *
  * Copyright (C) 2015 Matt Rogers <mrogers@libreswan.org>
+ * Copyright (C) 2018 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -13,16 +14,24 @@
  * for more details.
  *
  */
-#ifndef _NSS_CERT_VFY_H
-#define _NSS_CERT_VFY_H
+#ifndef NSS_CERT_VFY_H
+#define NSS_CERT_VFY_H
 
-#include <libreswan.h>
-#include "lswalloc.h"
 #include <cert.h>
 
-extern int verify_and_cache_chain(chunk_t *ders, int num_ders,
-						 CERTCertificate **ee_out,
-						 bool *rev_opts);
+#include "defs.h"
+#include "chunk.h"
+
+struct cert_payload {
+	enum ike_cert_type type;
+	chunk_t payload;
+	const char *name;
+};
+
+extern int verify_and_cache_chain(struct cert_payload *certs,
+				  unsigned nr_certs,
+				  CERTCertificate **ee_out,
+				  bool *rev_opts);
 
 extern bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *name);
 
@@ -39,4 +48,4 @@ extern bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *n
 
 #define VERIFY_RET_CRL_NEED 0x1000
 
-#endif /* _NSS_CERT_VFY_H */
+#endif /* NSS_CERT_VFY_H */
