@@ -3159,11 +3159,22 @@ void ISAKMP_SA_established(const struct state *pst)
 		return;
 	}
 
-	/* We don't send or process INITIAL_CONTACT for IKEv1, preserve old behaviour */
+	/*
+	 * Ideally, we would return here for IKEv2 when we would have not seen INITIAL CONTACT,
+	 * but our code currently does not handle this properly. Especially addresspool based
+	 * connections would end up with two connection instances competing for a single IPsec SA.
+	 * We can re-instate this check once we can detect the current conn is replacing the existing
+	 * conn and is not a second conn for a different IPsec which only shares the IKE SA.
+	 *
+	 * For IKEv1, we leave our legacy behaviour intact to maintain interoperability, and we
+	 * always ignore INITIAL CONTACT.
+	 */
+#if 0
 	if (pst->st_ikev2 && !pst->st_seen_initialc) {
 		DBG(DBG_CONTROL, DBG_log("No INITIAL_CONTACT received, not contemplating releasing older self"));
 		return;
 	}
+#endif
 
 	/*
 	 * for all existing connections: if the same Phase 1 IDs are used,
