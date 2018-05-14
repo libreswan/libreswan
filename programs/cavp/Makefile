@@ -57,6 +57,7 @@ OBJS += $(LIBSERPENT)
 OBJS += $(LIBTWOFISH)
 
 LDFLAGS += $(NSS_LDFLAGS)
+LDFLAGS += $(NSPR_LDFLAGS)
 
 default: check
 .PHONY: check default

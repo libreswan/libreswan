@@ -45,6 +45,7 @@ OBJS += $(LIBSERPENT)
 OBJS += $(LIBTWOFISH)
 
 LDFLAGS += $(NSS_LDFLAGS)
+LDFLAGS += $(NSPR_LDFLAGS)
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk

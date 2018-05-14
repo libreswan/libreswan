@@ -156,6 +156,7 @@ OBJS += db_ops.o
 # Solaris 2 needs -lsocket -lnsl
 LDFLAGS += $(SECCOMP_LDFLAGS)
 LDFLAGS += $(NSS_LDFLAGS)
+LDFLAGS += $(NSPR_LDFLAGS)
 
 # For avoiding implicit DSO linking
 LDFLAGS += -lpthread
