@@ -23,6 +23,7 @@ v3.24 (unreleased)
 * pluto: Allow switching back from wrong instance to template conn [Paul]
 * pluto: disentangle IKEv1 and IKEv2 packet sending code [Andrew]
 * pluto: Allow rightsubnets= without leftsubnet(s)= [Paul]
+* pluto: don't share IP leases for authby=secret [Paul]
 * addconn: Fix auto=route and auto=start processing [Paul]
 * whack/auto: Ensure all status and list commands return no error code [Paul]
 * FIPS: Don't attempt HMAC integrity test on rsasigkey (rhbz#1544143) [Paul]
