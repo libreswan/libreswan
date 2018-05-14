@@ -921,10 +921,10 @@ lsw_cert_ret ike_decode_cert(struct msg_digest *md)
 		const char *cert_name;
 		if (st->st_ikev2) {
 			cert_type = p->payload.v2cert.isac_enc;
-			cert_name = enum_name(&ikev2_cert_type_names, cert_type);
+			cert_name = enum_short_name(&ikev2_cert_type_names, cert_type);
 		} else {
 			cert_type = p->payload.cert.isacert_type;
-			cert_name = enum_name(&ike_cert_type_names, cert_type);
+			cert_name = enum_short_name(&ike_cert_type_names, cert_type);
 		}
 
 		if (cert_name == NULL) {

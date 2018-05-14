@@ -717,7 +717,7 @@ enum_names ike_cert_type_names = {
 	CERT_PKCS7_WRAPPED_X509, CERT_X509_ATTRIBUTE,
 	/* only first part of ike_cert_type_name */
 	ike_cert_type_name, CERT_X509_ATTRIBUTE - CERT_PKCS7_WRAPPED_X509 + 1,
-	NULL, /* prefix */
+	"CERT_", /* prefix */
 	NULL
 };
 
@@ -726,7 +726,7 @@ static enum_names ikev2_cert_type_names_2 = {
 	CERT_KERBEROS_TOKENS, CERT_RAW_PUBLIC_KEY,
 	&ike_cert_type_name[CERT_KERBEROS_TOKENS-CERT_PKCS7_WRAPPED_X509],
 	CERT_RAW_PUBLIC_KEY-CERT_KERBEROS_TOKENS+1,
-	NULL, /* prefix */
+	"CERT_", /* prefix */
 	NULL
 };
 
@@ -734,7 +734,7 @@ enum_names ikev2_cert_type_names = {
 	CERT_PKCS7_WRAPPED_X509, CERT_X509_SIGNATURE,
 	ike_cert_type_name,
 	CERT_X509_SIGNATURE-CERT_PKCS7_WRAPPED_X509+1,
-	NULL, /* prefix */
+	"CERT_", /* prefix */
 	&ikev2_cert_type_names_2
 };
 
