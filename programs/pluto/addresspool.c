@@ -60,10 +60,7 @@ struct ip_pool {
 /*
  * A lease is an assignment of a single address from a particular pool.
  *
- * Leases are shared between appropriate connections.  Appropriate means
- * ones with the same thatid, as long as it isn't
- * ID_NULL or (ID_NONE and uniqueIDs)
- * is in force.  could_share_lease captures this distinction.
+ * Leases are shared between appropriate connections.
  *
  * Because leases are shared, they are reference-counted.
  * (Since we don't (yet?) free leases that could be shared,
@@ -87,7 +84,29 @@ struct ip_pool {
  *   ??? This constitutes a leak.
  */
 
-#define	could_share_lease(c) ((c)->spd.that.id.kind != ID_NULL || (ID_NONE && uniqueIDs))
+static bool can_share_lease(const struct connection *c)
+{
+	/*
+	 * Cannot share with PSK - it either uses GroupID or
+	 * a non-unique ID_IP due to clients using pre-NAT IP address
+	 */
+	if (((c->policy & POLICY_PSK) != LEMPTY) || c->spd.that.authby == AUTH_PSK)
+		return FALSE;
+
+	/* Cannot share with NULL authentication */
+	if (((c->policy & POLICY_AUTH_NULL) != LEMPTY) || c->spd.that.authby == AUTH_NULL)
+		return FALSE;
+
+	/* Cannot share NULL ID */
+	if (c->spd.that.id.kind == ID_NULL || c->spd.that.id.kind == ID_NONE)
+		return FALSE;
+
+	/* If uniqueids=false - this can mean multiple clients on the same ID & CERT */
+	if (!uniqueIDs)
+		return FALSE;
+
+	return TRUE;
+}
 
 struct lease_addr {
 	u_int32_t index;	/* range start + index == IP address */
@@ -194,7 +213,7 @@ void rel_lease_addr(struct connection *c)
 
 		p = *pp;
 
-		if (could_share_lease(c)) {
+		if (can_share_lease(c)) {
 			/* we could share, so leave lease lingering */
 			story = "left (shared)";
 			passert(p->refcnt > 0);
@@ -235,7 +254,6 @@ void rel_lease_addr(struct connection *c)
 
 /*
  * return previous lease if there is one lingering for the same ID
- * but only if uniqueIDs, and ID_NONE does not count.
  */
 static bool share_lease(const struct connection *c,
 			u_int32_t *index /*result*/)
@@ -243,7 +261,7 @@ static bool share_lease(const struct connection *c,
 	struct lease_addr *p;
 	bool r = FALSE;
 
-	if (!could_share_lease(c))
+	if (!can_share_lease(c))
 		return FALSE;
 
 	for (p = c->pool->leases; p != NULL; p = p->next) {
