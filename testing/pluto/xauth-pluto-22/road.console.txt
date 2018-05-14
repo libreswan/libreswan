@@ -10,6 +10,10 @@ road #
  ipsec auto --add road-east
 002 added connection description "road-east"
 road #
+ # give north time to establish first so we always get the same IP later
+road #
+ sleep 10
+road #
  echo initdone
 initdone
 road #
