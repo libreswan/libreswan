@@ -1360,8 +1360,8 @@ stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 	return STF_OK;
 }
 
-static bool ikev2_send_certreq_INIT_decision(struct state *st,
-					     enum original_role role)
+bool ikev2_send_certreq_INIT_decision(struct state *st,
+				      enum original_role role)
 {
 	DBG(DBG_X509, DBG_log("IKEv2 CERTREQ: send a cert request?"));
 
@@ -1398,20 +1398,16 @@ static bool ikev2_send_certreq_INIT_decision(struct state *st,
 }
 
 /* Send v2 CERT and possible CERTREQ (which should be separated eventually)  */
-stf_status ikev2_send_cert(struct state *st, struct msg_digest *md,
-			   enum original_role role,
-			   pb_stream *outpbs)
+stf_status ikev2_send_cert(struct state *st, pb_stream *outpbs)
 {
 	struct ikev2_cert certhdr = {
 		.isac_np = ISAKMP_NEXT_v2NONE,
 	};
-	struct connection *c = st->st_connection;
 	cert_t mycert = st->st_connection->spd.this.cert;
 	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
 	int chain_len = 0;
 	bool send_authcerts = st->st_connection->send_ca != CA_SEND_NONE;
 	bool send_full_chain = send_authcerts && st->st_connection->send_ca == CA_SEND_ALL;
-	bool send_certreq = ikev2_send_certreq_INIT_decision(st, role);
 
 	if (send_authcerts) {
 		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN,
@@ -1491,16 +1487,6 @@ stf_status ikev2_send_cert(struct state *st, struct msg_digest *md,
 			close_output_pbs(&cert_pbs);
 		}
 		free_auth_chain(auth_chain, chain_len);
-	}
-
-
-	/* send CERTREQ  */
-	if (send_certreq) {
-		char buf[IDTOA_BUF];
-		dntoa(buf, IDTOA_BUF, c->spd.that.ca);
-		DBG(DBG_X509,
-		    DBG_log("Sending [CERTREQ] of %s", buf));
-		ikev2_send_certreq(st, md, outpbs);
 	}
 	return STF_OK;
 }

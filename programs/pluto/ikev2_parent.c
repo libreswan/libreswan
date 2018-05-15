@@ -3380,11 +3380,19 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	/* send [CERT,] payload RFC 4306 3.6, 1.2) */
 	if (send_cert) {
-		stf_status certstat = ikev2_send_cert(cst, md,
-						      ORIGINAL_INITIATOR,
-						      &e_pbs_cipher);
+		stf_status certstat = ikev2_send_cert(cst, &e_pbs_cipher);
 		if (certstat != STF_OK)
 			return certstat;
+
+		/* send CERTREQ  */
+		bool send_certreq = ikev2_send_certreq_INIT_decision(cst, ORIGINAL_INITIATOR);
+		if (send_certreq) {
+			char buf[IDTOA_BUF];
+			dntoa(buf, IDTOA_BUF, cst->st_connection->spd.that.ca);
+			DBG(DBG_X509,
+			    DBG_log("Sending [CERTREQ] of %s", buf));
+			ikev2_send_certreq(cst, md, &e_pbs_cipher);
+		}
 	}
 
 	/* you Tarzan, me Jane support */
@@ -4290,9 +4298,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		 * but ultimately should go into the CERT decision
 		 */
 		if (send_cert) {
-			stf_status certstat = ikev2_send_cert(st, md,
-							      ORIGINAL_RESPONDER,
-							      &e_pbs_cipher);
+			stf_status certstat = ikev2_send_cert(st, &e_pbs_cipher);
 			if (certstat != STF_OK)
 				return certstat;
 		}

@@ -60,8 +60,9 @@ extern bool ikev2_send_cert_decision(struct state *st);
 extern stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 				     pb_stream *outpbs);
 
-stf_status ikev2_send_cert(struct state *st, struct msg_digest *md,
-			   enum original_role role,
-			   pb_stream *outpbs);
+stf_status ikev2_send_cert(struct state *st, pb_stream *outpbs);
+
+bool ikev2_send_certreq_INIT_decision(struct state *st,
+				      enum original_role role);
 
 #endif /* _PLUTO_X509_H */
