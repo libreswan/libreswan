@@ -3325,22 +3325,22 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	unsigned char idhash_npa[MAX_DIGEST_LEN];	/* idhash for NO_PPK_AUTH (npa) */
 
 	{
-		struct ikev2_id r_id; /* XXX: i_id? */
-		pb_stream r_id_pbs;
+		struct ikev2_id i_id;
+		pb_stream i_id_pbs;
 		chunk_t id_b;
 		struct hmac_ctx id_ctx;
 
 		hmac_init(&id_ctx, pst->st_oakley.ta_prf, pst->st_skey_pi_nss);
-		build_id_payload((struct isakmp_ipsec_id *)&r_id, &id_b,
+		build_id_payload((struct isakmp_ipsec_id *)&i_id, &id_b,
 				 &pc->spd.this, FALSE);
-		r_id.isai_critical = ISAKMP_PAYLOAD_NONCRITICAL;
+		i_id.isai_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
 			libreswan_log(
 				" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
-			r_id.isai_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
+			i_id.isai_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
 		}
 
-		r_id.isai_np = IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK) ? ISAKMP_NEXT_v2UNKNOWN :
+		i_id.isai_np = IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK) ? ISAKMP_NEXT_v2UNKNOWN :
 			send_cert ?  ISAKMP_NEXT_v2CERT :
 			send_idr ? ISAKMP_NEXT_v2IDr :
 			ic ? ISAKMP_NEXT_v2N :
@@ -3350,14 +3350,14 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		unsigned char *const id_start =
 			e_pbs_cipher.cur + NSIZEOF_isakmp_generic;
 
-		if (!out_struct(&r_id,
+		if (!out_struct(&i_id,
 				&ikev2_id_i_desc,
 				&e_pbs_cipher,
-				&r_id_pbs) ||
-		    !out_chunk(id_b, &r_id_pbs, "my identity"))
+				&i_id_pbs) ||
+		    !out_chunk(id_b, &i_id_pbs, "my identity"))
 			return STF_INTERNAL_ERROR;
 
-		close_output_pbs(&r_id_pbs);
+		close_output_pbs(&i_id_pbs);
 
 		/* calculate hash of IDi for AUTH below */
 
