@@ -3577,60 +3577,70 @@ IETF registry enum_names:
          match CERT_PKCS7_WRAPPED_X509: OK
          short_name 1:  OK
          lswlog_enum_short 1: OK
+         match PKCS7_WRAPPED_X509 [short]: OK
     2 -> CERT_PGP
          lswlog_enum 2: OK
          search CERT_PGP: OK
          match CERT_PGP: OK
          short_name 2:  OK
          lswlog_enum_short 2: OK
+         match PGP [short]: OK
     3 -> CERT_DNS_SIGNED_KEY
          lswlog_enum 3: OK
          search CERT_DNS_SIGNED_KEY: OK
          match CERT_DNS_SIGNED_KEY: OK
          short_name 3:  OK
          lswlog_enum_short 3: OK
+         match DNS_SIGNED_KEY [short]: OK
     4 -> CERT_X509_SIGNATURE
          lswlog_enum 4: OK
          search CERT_X509_SIGNATURE: OK
          match CERT_X509_SIGNATURE: OK
          short_name 4:  OK
          lswlog_enum_short 4: OK
+         match X509_SIGNATURE [short]: OK
     5 -> CERT_X509_KEY_EXCHANGE
          lswlog_enum 5: OK
          search CERT_X509_KEY_EXCHANGE: OK
          match CERT_X509_KEY_EXCHANGE: OK
          short_name 5:  OK
          lswlog_enum_short 5: OK
+         match X509_KEY_EXCHANGE [short]: OK
     6 -> CERT_KERBEROS_TOKENS
          lswlog_enum 6: OK
          search CERT_KERBEROS_TOKENS: OK
          match CERT_KERBEROS_TOKENS: OK
          short_name 6:  OK
          lswlog_enum_short 6: OK
+         match KERBEROS_TOKENS [short]: OK
     7 -> CERT_CRL
          lswlog_enum 7: OK
          search CERT_CRL: OK
          match CERT_CRL: OK
          short_name 7:  OK
          lswlog_enum_short 7: OK
+         match CRL [short]: OK
     8 -> CERT_ARL
          lswlog_enum 8: OK
          search CERT_ARL: OK
          match CERT_ARL: OK
          short_name 8:  OK
          lswlog_enum_short 8: OK
+         match ARL [short]: OK
     9 -> CERT_SPKI
          lswlog_enum 9: OK
          search CERT_SPKI: OK
          match CERT_SPKI: OK
          short_name 9:  OK
          lswlog_enum_short 9: OK
+         match SPKI [short]: OK
    10 -> CERT_X509_ATTRIBUTE
          lswlog_enum 10: OK
          search CERT_X509_ATTRIBUTE: OK
          match CERT_X509_ATTRIBUTE: OK
          short_name 10:  OK
          lswlog_enum_short 10: OK
+         match X509_ATTRIBUTE [short]: OK
 
   ikev2_cert_type_names:
     1 -> CERT_PKCS7_WRAPPED_X509
@@ -3639,84 +3649,98 @@ IETF registry enum_names:
          match CERT_PKCS7_WRAPPED_X509: OK
          short_name 1:  OK
          lswlog_enum_short 1: OK
+         match PKCS7_WRAPPED_X509 [short]: OK
     2 -> CERT_PGP
          lswlog_enum 2: OK
          search CERT_PGP: OK
          match CERT_PGP: OK
          short_name 2:  OK
          lswlog_enum_short 2: OK
+         match PGP [short]: OK
     3 -> CERT_DNS_SIGNED_KEY
          lswlog_enum 3: OK
          search CERT_DNS_SIGNED_KEY: OK
          match CERT_DNS_SIGNED_KEY: OK
          short_name 3:  OK
          lswlog_enum_short 3: OK
+         match DNS_SIGNED_KEY [short]: OK
     4 -> CERT_X509_SIGNATURE
          lswlog_enum 4: OK
          search CERT_X509_SIGNATURE: OK
          match CERT_X509_SIGNATURE: OK
          short_name 4:  OK
          lswlog_enum_short 4: OK
+         match X509_SIGNATURE [short]: OK
     6 -> CERT_KERBEROS_TOKENS
          lswlog_enum 6: OK
          search CERT_KERBEROS_TOKENS: OK
          match CERT_KERBEROS_TOKENS: OK
          short_name 6:  OK
          lswlog_enum_short 6: OK
+         match KERBEROS_TOKENS [short]: OK
     7 -> CERT_CRL
          lswlog_enum 7: OK
          search CERT_CRL: OK
          match CERT_CRL: OK
          short_name 7:  OK
          lswlog_enum_short 7: OK
+         match CRL [short]: OK
     8 -> CERT_ARL
          lswlog_enum 8: OK
          search CERT_ARL: OK
          match CERT_ARL: OK
          short_name 8:  OK
          lswlog_enum_short 8: OK
+         match ARL [short]: OK
     9 -> CERT_SPKI
          lswlog_enum 9: OK
          search CERT_SPKI: OK
          match CERT_SPKI: OK
          short_name 9:  OK
          lswlog_enum_short 9: OK
+         match SPKI [short]: OK
    10 -> CERT_X509_ATTRIBUTE
          lswlog_enum 10: OK
          search CERT_X509_ATTRIBUTE: OK
          match CERT_X509_ATTRIBUTE: OK
          short_name 10:  OK
          lswlog_enum_short 10: OK
+         match X509_ATTRIBUTE [short]: OK
    11 -> CERT_RAW_RSA
          lswlog_enum 11: OK
          search CERT_RAW_RSA: OK
          match CERT_RAW_RSA: OK
          short_name 11:  OK
          lswlog_enum_short 11: OK
+         match RAW_RSA [short]: OK
    12 -> CERT_X509_CERT_URL
          lswlog_enum 12: OK
          search CERT_X509_CERT_URL: OK
          match CERT_X509_CERT_URL: OK
          short_name 12:  OK
          lswlog_enum_short 12: OK
+         match X509_CERT_URL [short]: OK
    13 -> CERT_X509_BUNDLE_URL
          lswlog_enum 13: OK
          search CERT_X509_BUNDLE_URL: OK
          match CERT_X509_BUNDLE_URL: OK
          short_name 13:  OK
          lswlog_enum_short 13: OK
+         match X509_BUNDLE_URL [short]: OK
    14 -> CERT_OCSP_CONTENT
          lswlog_enum 14: OK
          search CERT_OCSP_CONTENT: OK
          match CERT_OCSP_CONTENT: OK
          short_name 14:  OK
          lswlog_enum_short 14: OK
+         match OCSP_CONTENT [short]: OK
    15 -> CERT_RAW_PUBLIC_KEY
          lswlog_enum 15: OK
          search CERT_RAW_PUBLIC_KEY: OK
          match CERT_RAW_PUBLIC_KEY: OK
          short_name 15:  OK
          lswlog_enum_short 15: OK
+         match RAW_PUBLIC_KEY [short]: OK
 
   modecfg_attr_names:
     1 -> INTERNAL_IP4_ADDRESS
