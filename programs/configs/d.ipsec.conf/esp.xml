@@ -1,7 +1,7 @@
   <varlistentry>
   <term><emphasis remap='B'>esp</emphasis></term>
   <listitem>
-<para>This option is obsolete. Please use <emphasis remap='B'>phase2alg</emphasis>
+<para>This option is alias to <emphasis remap='B'>phase2alg</emphasis>
 instead.</para>
   </listitem>
   </varlistentry>
