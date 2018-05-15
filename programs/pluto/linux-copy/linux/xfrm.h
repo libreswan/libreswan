@@ -2,7 +2,7 @@
 #ifndef _LINUX_XFRM_H
 #define _LINUX_XFRM_H
 
-#include <linux/in6.h>
+/* #include <linux/in6.h> some linux version don't need this header file*/
 #include <linux/types.h>
 
 /* All of the structures in this file may not change size as they are
