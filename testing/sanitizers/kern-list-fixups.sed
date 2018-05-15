@@ -113,3 +113,4 @@ s/ LEN=[0-9]* / LEN=XXXX /g
 /^.*audit: type=.*$/d
 /^.*SELinux: unrecognized netlink message.*$/d
 /^.*clocksource.*$/d
+/qlen 1000$/d
