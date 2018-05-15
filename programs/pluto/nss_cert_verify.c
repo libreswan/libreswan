@@ -43,7 +43,7 @@
 /*
  * set up the slot/handle/trust things that NSS needs
  */
-static bool prepare_nss_import(PK11SlotInfo **slot, CERTCertDBHandle **handle)
+static bool prepare_nss_import(PK11SlotInfo **slot)
 {
 	/*
 	 * possibly need to handle passworded db case here
@@ -55,15 +55,6 @@ static bool prepare_nss_import(PK11SlotInfo **slot, CERTCertDBHandle **handle)
 				nss_err_str(PORT_GetError())));
 		return FALSE;
 	}
-
-	*handle = CERT_GetDefaultCertDB();
-	if (*handle == NULL) {
-		    DBG(DBG_X509,
-			DBG_log("NSS error getting DB handle: %s",
-				nss_err_str(PORT_GetError())));
-		return FALSE;
-	}
-
 	return TRUE;
 }
 
@@ -549,9 +540,17 @@ int verify_and_cache_chain(struct cert_payload *cert_payloads, unsigned nr_cert_
 	}
 
 	PK11SlotInfo *slot = NULL;
-	CERTCertDBHandle *handle = NULL;
-	if (!prepare_nss_import(&slot, &handle))
+	if (!prepare_nss_import(&slot))
 		return -1;
+
+	/*
+	 * CERT_GetDefaultCertDB() simply returns the contents of a
+	 * static variable set by NSS_Initialize().  It doesn't check
+	 * the value and doesn't set PR error.  Short of calling
+	 * CERT_SetDefaultCertDB(NULL), the value can never be NULL.
+	 */
+	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
+	passert(handle != NULL);
 
 	/*
 	 * In order for NSS to verify an entire chain, down to a

@@ -254,12 +254,14 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 		return TRUE;
 	}
 
+	/*
+	 * CERT_GetDefaultCertDB() simply returns the contents of a
+	 * static variable set by NSS_Initialize().  It doesn't check
+	 * the value and doesn't set PR error.  Short of calling
+	 * CERT_SetDefaultCertDB(NULL), the value can never be NULL.
+	 */
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
-
-	if (handle == NULL) {
-		libreswan_log("trusted_ca_nss handle failure");
-		return FALSE;
-	}
+	passert(handle != NULL);
 
 	/* CA a might be a subordinate CA of b */
 
@@ -648,11 +650,20 @@ int get_auth_chain(chunk_t *out_chain, int chain_max, CERTCertificate *end_cert,
 	if (end_cert == NULL)
 		return 0;
 
+	/*
+	 * CERT_GetDefaultCertDB() simply returns the contents of a
+	 * static variable set by NSS_Initialize().  It doesn't check
+	 * the value and doesn't set PR error.  Short of calling
+	 * CERT_SetDefaultCertDB(NULL), the value can never be NULL.
+	 */
+	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
+	passert(handle != NULL);
+
 	if (!full_chain) {
 		/*
 		 * just the issuer unless it's a root
 		 */
-		CERTCertificate *is = CERT_FindCertByName(CERT_GetDefaultCertDB(),
+		CERTCertificate *is = CERT_FindCertByName(handle,
 					&end_cert->derIssuer);
 		if (is == NULL || is->isRoot)
 			return 0;
@@ -1198,6 +1209,15 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 			     pb_stream *outs,
 			     enum next_payload_types_ikev2 np)
 {
+	/*
+	 * CERT_GetDefaultCertDB() simply returns the contents of a
+	 * static variable set by NSS_Initialize().  It doesn't check
+	 * the value and doesn't set PR error.  Short of calling
+	 * CERT_SetDefaultCertDB(NULL), the value can never be NULL.
+	 */
+	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
+	passert(handle != NULL);
+
 	pb_stream cr_pbs;
 	struct ikev2_certreq cr_hd;
 
@@ -1230,7 +1250,7 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 		SECItem caname = same_chunk_as_dercert_secitem(ca);
 
 		CERTCertificate *cacert =
-			CERT_FindCertByName(CERT_GetDefaultCertDB(), &caname);
+			CERT_FindCertByName(handle, &caname);
 
 		if (cacert != NULL && CERT_IsCACert(cacert, NULL)) {
 			DBG(DBG_X509, DBG_log("located CA cert %s for CERTREQ",
@@ -1680,13 +1700,17 @@ static void crl_detail_to_whacklog(CERTCrl *crl)
 
 static void crl_detail_list(void)
 {
+	/*
+	 * CERT_GetDefaultCertDB() simply returns the contents of a
+	 * static variable set by NSS_Initialize().  It doesn't check
+	 * the value and doesn't set PR error.  Short of calling
+	 * CERT_SetDefaultCertDB(NULL), the value can never be NULL.
+	 */
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
+	passert(handle != NULL);
 
 	whack_log(RC_COMMENT, " ");
 	whack_log(RC_COMMENT, "List of CRLs:");
-
-	if (handle == NULL)
-		return;
 
 	CERTCrlHeadNode *crl_list = NULL;
 
@@ -1757,10 +1781,14 @@ static void cert_detail_list(show_cert_t type)
 #if defined(LIBCURL) || defined(LIBLDAP)
 void check_crls(void)
 {
+	/*
+	 * CERT_GetDefaultCertDB() simply returns the contents of a
+	 * static variable set by NSS_Initialize().  It doesn't check
+	 * the value and doesn't set PR error.  Short of calling
+	 * CERT_SetDefaultCertDB(NULL), the value can never be NULL.
+	 */
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
-
-	if (handle == NULL)
-		return;
+	passert(handle != NULL);
 
 	CERTCrlHeadNode *crl_list = NULL;
 

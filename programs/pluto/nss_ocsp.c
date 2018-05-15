@@ -29,13 +29,15 @@ bool init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 			int cache_min, int cache_max, bool ocsp_post)
 {
 	SECStatus rv;
-	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
 
-	if (handle == NULL) {
-		loglog(RC_LOG_SERIOUS, "NSS error getting DB handle: %s",
-				       nss_err_str(PORT_GetError()));
-		return FALSE;
-	}
+	/*
+	 * CERT_GetDefaultCertDB() simply returns the contents of a
+	 * static variable set by NSS_Initialize().  It doesn't check
+	 * the value and doesn't set PR error.  Short of calling
+	 * CERT_SetDefaultCertDB(NULL), the value can never be NULL.
+	 */
+	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
+	passert(handle != NULL);
 
 	rv = CERT_EnableOCSPChecking(handle);
 	if (rv != SECSuccess) {
