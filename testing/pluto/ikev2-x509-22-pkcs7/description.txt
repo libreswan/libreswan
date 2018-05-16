@@ -1,0 +1,13 @@
+Basic pluto X.509 test, with send_cr.
+
+East does *NOT* have West's X.509 Cert locally.
+west is FORCED to send it. And visa versa.
+
+Note: ATM receiving a IKEv2 CERTREQ will be ignored:
+
+--
+| has a v2CERTREQ payload going to decode it
+| CR  70 19 0f 7c  ad 44 d7 59  29 6b aa 24  b6 82 03 d1
+| CR  19 87 de 5b
+|   cert blob content is not binary ASN.1
+--
