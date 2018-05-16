@@ -1206,8 +1206,7 @@ bool ikev1_build_and_ship_CR(enum ike_cert_type type,
 
 bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 			     chunk_t ca,
-			     pb_stream *outs,
-			     enum next_payload_types_ikev2 np)
+			     pb_stream *outs)
 {
 	/*
 	 * CERT_GetDefaultCertDB() simply returns the contents of a
@@ -1219,10 +1218,11 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 	passert(handle != NULL);
 
 	pb_stream cr_pbs;
-	struct ikev2_certreq cr_hd;
+	struct ikev2_certreq cr_hd = {
+		.isacertreq_np = ISAKMP_NEXT_v2NONE,
+	};
 
 	cr_hd.isacertreq_critical =  ISAKMP_PAYLOAD_NONCRITICAL;
-	cr_hd.isacertreq_np = np;
 	cr_hd.isacertreq_enc = type;
 
 	/* build CR header */
@@ -1322,9 +1322,7 @@ bool ikev2_send_cert_decision(struct state *st)
 }
 
 stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
-				     enum original_role role UNUSED,
-				     enum next_payload_types_ikev2 np,
-				     pb_stream *outpbs)
+			      pb_stream *outpbs)
 {
 	if (st->st_connection->kind == CK_PERMANENT) {
 		DBG(DBG_X509,
@@ -1332,7 +1330,7 @@ stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 
 		if (!ikev2_build_and_ship_CR(CERT_X509_SIGNATURE,
 					     st->st_connection->spd.that.ca,
-					     outpbs, np))
+					     outpbs))
 			return STF_INTERNAL_ERROR;
 	} else {
 		generalName_t *ca = NULL;
@@ -1346,9 +1344,7 @@ stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 
 			for (ca = gn; ca != NULL; ca = ca->next) {
 				if (!ikev2_build_and_ship_CR(CERT_X509_SIGNATURE,
-						       ca->name, outpbs,
-						       ca->next == NULL ? np :
-							 ISAKMP_NEXT_v2CERTREQ))
+							     ca->name, outpbs))
 					return STF_INTERNAL_ERROR;
 			}
 			free_generalNames(ca, FALSE);
@@ -1357,7 +1353,7 @@ stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 			    DBG_log("Not a roadwarrior instance, sending empty CA in CERTREQ"));
 			if (!ikev2_build_and_ship_CR(CERT_X509_SIGNATURE,
 					       empty_chunk,
-					       outpbs, np))
+					       outpbs))
 				return STF_INTERNAL_ERROR;
 		}
 	}
@@ -1404,10 +1400,11 @@ static bool ikev2_send_certreq_INIT_decision(struct state *st,
 /* Send v2 CERT and possible CERTREQ (which should be separated eventually)  */
 stf_status ikev2_send_cert(struct state *st, struct msg_digest *md,
 			   enum original_role role,
-			   enum next_payload_types_ikev2 np,
 			   pb_stream *outpbs)
 {
-	struct ikev2_cert certhdr;
+	struct ikev2_cert certhdr = {
+		.isac_np = ISAKMP_NEXT_v2NONE,
+	};
 	struct connection *c = st->st_connection;
 	cert_t mycert = st->st_connection->spd.this.cert;
 	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
@@ -1457,17 +1454,6 @@ stf_status ikev2_send_cert(struct state *st, struct msg_digest *md,
 		DBG(DBG_X509, DBG_log("Sending [CERT] of certificate: %s",
 					mycert.u.nss_cert->subjectName));
 
-		if (send_authcerts) {
-			DBG(DBG_X509, DBG_log("next payload is [CERT]"));
-			certhdr.isac_np = ISAKMP_NEXT_v2CERT;
-		} else if (send_certreq) {
-			DBG(DBG_X509, DBG_log("next payload is [CERTREQ]"));
-			certhdr.isac_np = ISAKMP_NEXT_v2CERTREQ;
-		} else {
-			DBG(DBG_X509, DBG_log("next payload is neither CERT or CERTREQ"));
-			certhdr.isac_np = np;
-		}
-
 		if (!out_struct(&certhdr, &ikev2_certificate_desc,
 				outpbs, &cert_pbs)) {
 			free_auth_chain(auth_chain, chain_len);
@@ -1490,9 +1476,6 @@ stf_status ikev2_send_cert(struct state *st, struct msg_digest *md,
 			pb_stream cert_pbs;
 
 			DBG(DBG_X509, DBG_log("Sending an authcert"));
-
-			certhdr.isac_np = (i == chain_len - 1) ? (send_certreq ? ISAKMP_NEXT_v2CERTREQ : np)
-				: ISAKMP_NEXT_v2CERT;
 
 			if (!out_struct(&certhdr, &ikev2_certificate_desc,
 				outpbs, &cert_pbs))
@@ -1517,7 +1500,7 @@ stf_status ikev2_send_cert(struct state *st, struct msg_digest *md,
 		dntoa(buf, IDTOA_BUF, c->spd.that.ca);
 		DBG(DBG_X509,
 		    DBG_log("Sending [CERTREQ] of %s", buf));
-		ikev2_send_certreq(st, md, role, np, outpbs);
+		ikev2_send_certreq(st, md, outpbs);
 	}
 	return STF_OK;
 }

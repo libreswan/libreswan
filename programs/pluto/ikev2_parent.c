@@ -1672,9 +1672,8 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 
 	/* send CERTREQ  */
 	if (send_certreq) {
-		int np = (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 		DBG(DBG_CONTROL, DBG_log("going to send a certreq"));
-		ikev2_send_certreq(st, md, ORIGINAL_RESPONDER, np, &rbody);
+		ikev2_send_certreq(st, md, &rbody);
 	}
 
 	/* From here on, only payloads left are Vendor IDs */
@@ -3325,7 +3324,9 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	unsigned char idhash_npa[MAX_DIGEST_LEN];	/* idhash for NO_PPK_AUTH (npa) */
 
 	{
-		struct ikev2_id i_id;
+		struct ikev2_id i_id = {
+			.isai_np = ISAKMP_NEXT_v2NONE,
+		};
 		pb_stream i_id_pbs;
 		chunk_t id_b;
 		struct hmac_ctx id_ctx;
@@ -3339,12 +3340,6 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 				" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
 			i_id.isai_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
 		}
-
-		i_id.isai_np = IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK) ? ISAKMP_NEXT_v2UNKNOWN :
-			send_cert ?  ISAKMP_NEXT_v2CERT :
-			send_idr ? ISAKMP_NEXT_v2IDr :
-			ic ? ISAKMP_NEXT_v2N :
-			ISAKMP_NEXT_v2AUTH;
 
 		/* HASH of ID is not done over common header */
 		unsigned char *const id_start =
@@ -3385,14 +3380,9 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	/* send [CERT,] payload RFC 4306 3.6, 1.2) */
 	if (send_cert) {
-		enum next_payload_types_ikev2 np = send_idr ?
-			ISAKMP_NEXT_v2IDr : ic ?
-				ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2AUTH;
-
 		stf_status certstat = ikev2_send_cert(cst, md,
 						      ORIGINAL_INITIATOR,
-						      np, &e_pbs_cipher);
-
+						      &e_pbs_cipher);
 		if (certstat != STF_OK)
 			return certstat;
 	}
@@ -4259,7 +4249,9 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 
 		/* send out the IDr payload */
 		{
-			struct ikev2_id r_id;
+			struct ikev2_id r_id = {
+				.isai_np = ISAKMP_NEXT_v2NONE,
+			};
 			pb_stream r_id_pbs;
 			chunk_t id_b;
 			struct hmac_ctx id_ctx;
@@ -4271,8 +4263,6 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 					 &id_b,
 					 &c->spd.this, st->st_peer_wants_null);
 			r_id.isai_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-			r_id.isai_np = send_cert ?
-				ISAKMP_NEXT_v2CERT : ISAKMP_NEXT_v2AUTH;
 
 			id_start = e_pbs_cipher.cur + NSIZEOF_isakmp_generic;
 
@@ -4302,9 +4292,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		if (send_cert) {
 			stf_status certstat = ikev2_send_cert(st, md,
 							      ORIGINAL_RESPONDER,
-							      ISAKMP_NEXT_v2AUTH,
 							      &e_pbs_cipher);
-
 			if (certstat != STF_OK)
 				return certstat;
 		}
