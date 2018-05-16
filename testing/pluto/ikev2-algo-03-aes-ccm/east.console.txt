@@ -138,11 +138,11 @@ east #
 east NOW
 XFRM state:
 src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	aead rfc4309(ccm(aes)) 0xENCAUTHKEY 64
 src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	aead rfc4309(ccm(aes)) 0xENCAUTHKEY 64
 XFRM policy:

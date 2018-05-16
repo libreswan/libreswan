@@ -19,13 +19,13 @@ transmitted test
 east NOW
 XFRM state:
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
-	proto esp spi 0xSPISPIXX reqid REQID mode transport
+	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 32 
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 proto udp sport 1701 dport 1701 
 src 2001:db8:1:2::23 dst 2001:db8:1:2::45
-	proto esp spi 0xSPISPIXX reqid REQID mode transport
+	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 32 
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY

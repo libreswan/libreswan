@@ -61,16 +61,16 @@ default via 192.1.2.254 dev eth1
 east #
  ip xfrm state
 src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	aead rfc4106(gcm(aes)) 0xKEY
 src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	aead rfc4106(gcm(aes)) 0xKEY
 src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	aead rfc4106(gcm(aes)) 0xKEY
 src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	aead rfc4106(gcm(aes)) 0xKEY
 east #
  ip xfrm pol

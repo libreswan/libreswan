@@ -16,10 +16,10 @@ east #
 east NOW
 XFRM state:
 src 192.1.33.209 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQIDREQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQIDREQID mode tunnel
 	enc cbc(aes) 0xKEY
 src 192.1.2.23 dst 192.1.33.209
-	proto esp spi 0xSPISPIXX reqid REQIDREQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQIDREQID mode tunnel
 	enc cbc(aes) 0xKEY
 XFRM policy:
 src 0.0.0.0/0 dst 192.0.3.10/32

@@ -55,10 +55,10 @@ north #
 north #
  ip xfrm state
 src 192.1.2.23 dst 192.1.3.33
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	aead rfc4106(gcm(aes)) 0xKEY
 src 192.1.3.33 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	aead rfc4106(gcm(aes)) 0xKEY
 north #
  ip xfrm pol
@@ -108,10 +108,10 @@ north #
 north #
  ip xfrm state
 src 192.1.2.23 dst 192.1.8.22
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	aead rfc4106(gcm(aes)) 0xKEY
 src 192.1.8.22 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	aead rfc4106(gcm(aes)) 0xKEY
 north #
  ip xfrm pol

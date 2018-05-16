@@ -62,11 +62,11 @@ west #
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
-	proto ah spi 0xSPISPIXX reqid REQID mode tunnel
+	proto ah spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec align4
 	auth-trunc hmac(sha512) 0xHASHKEY 256
 src 192.1.2.45 dst 192.1.2.23
-	proto ah spi 0xSPISPIXX reqid REQID mode tunnel
+	proto ah spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec align4
 	auth-trunc hmac(sha512) 0xHASHKEY 256
 XFRM policy:
