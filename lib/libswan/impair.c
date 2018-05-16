@@ -74,6 +74,8 @@ static const char *impair_strings[] = {
 	I(IMPAIR_UNKNOWN_PAYLOAD_CRITICAL, "impair-unknown-payload-critical"),
 
 	I(IMPAIR_ALLOW_DNS_INSECURE, "impair-allow-dns-insecure"),
+
+	I(IMPAIR_SEND_PKCS7_THINGIE, "impair-send-pkcs7-thingie"),
 };
 
 const struct enum_names impair_names = {

@@ -432,6 +432,8 @@ enum {
 
 	IMPAIR_ALLOW_DNS_INSECURE_IX,		/* allow IPSECKEY lookups without DNSSEC protection */
 
+	IMPAIR_SEND_PKCS7_THINGIE_IX,		/* send certificates as a PKCS7 thingie */
+
 	IMPAIR_roof_IX	/* first unassigned IMPAIR */
 };
 
@@ -489,6 +491,8 @@ enum {
 #define IMPAIR_UNKNOWN_PAYLOAD_CRITICAL		LELEM(IMPAIR_UNKNOWN_PAYLOAD_CRITICAL_IX)
 
 #define IMPAIR_ALLOW_DNS_INSECURE		LELEM(IMPAIR_ALLOW_DNS_INSECURE_IX)
+
+#define IMPAIR_SEND_PKCS7_THINGIE		LELEM(IMPAIR_SEND_PKCS7_THINGIE_IX)
 
 /* State of exchanges
  *
