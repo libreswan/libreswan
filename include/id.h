@@ -15,13 +15,17 @@
 #ifndef _ID_H
 #define _ID_H
 
+#include "ietf_constants.h"	/* for enum ike_id_type */
 #include "chunk.h"
 
 struct id {
-	int kind;		/* ID_* value */
-	ip_address ip_addr;	/* ID_IPV4_ADDR, ID_IPV6_ADDR */
-	chunk_t name;		/* ID_FQDN, ID_USER_FQDN (with @) */
-				/* ID_KEY_ID, ID_DER_ASN_DN */
+	enum ike_id_type kind;
+
+	/* used for ID_IPV4_ADDR, ID_IPV6_ADDR */
+	ip_address ip_addr;
+
+	/* used for ID_FQDN, ID_USER_FQDN, ID_KEY_ID, ID_DER_ASN_DN */
+	chunk_t name;
 };
 
 struct id_list {
