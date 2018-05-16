@@ -83,6 +83,7 @@ bool ship_v2V(pb_stream *outs, enum next_payload_types_ikev2 np,
  * XXX: should be local to ikev2_send.c
  */
 uint8_t build_ikev2_version(void);
+uint8_t build_ikev2_critical(bool critical, bool impair);
 bool emit_wire_iv(const struct state *st, pb_stream *pbs);
 uint8_t *ikev2_authloc(struct state *st,
 		       pb_stream *e_pbs);

@@ -64,6 +64,7 @@
 #include "hostpair.h" /* for find_host_pair_connections */
 #include "secrets.h"
 #include "ip_address.h"
+#include "ikev2_send.h"		/* for build_ikev2_critical() */
 
 /* new NSS code */
 #include "pluto_x509.h"
@@ -1400,9 +1401,6 @@ bool ikev2_send_certreq_INIT_decision(struct state *st,
 /* Send v2 CERT and possible CERTREQ (which should be separated eventually)  */
 stf_status ikev2_send_cert(struct state *st, pb_stream *outpbs)
 {
-	struct ikev2_cert certhdr = {
-		.isac_np = ISAKMP_NEXT_v2NONE,
-	};
 	cert_t mycert = st->st_connection->spd.this.cert;
 	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
 	int chain_len = 0;
@@ -1428,20 +1426,12 @@ stf_status ikev2_send_cert(struct state *st, pb_stream *outpbs)
 		send_cert,
 		send_authcerts);
 #endif
-	certhdr.isac_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-	if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
-		libreswan_log(
-			" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
-		certhdr.isac_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
-	}
 
-	certhdr.isac_enc = mycert.ty;
-	certhdr.isac_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-
-	if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
-		libreswan_log(" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
-		certhdr.isac_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
-	}
+	const struct ikev2_cert certhdr = {
+		.isac_np = ISAKMP_NEXT_v2NONE,
+		.isac_critical = build_ikev2_critical(false, false),
+		.isac_enc = mycert.ty,
+	};
 
 	/*   send own (Initiator CERT) */
 	{

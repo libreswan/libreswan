@@ -39,8 +39,6 @@
 #include "demux.h"	/* for struct msg_digest */
 #include "rnd.h"
 
-static uint8_t build_ikev2_critical(bool critical, bool impair);
-
 bool record_and_send_v2_ike_msg(struct state *st, pb_stream *pbs,
 				const char *what)
 {
