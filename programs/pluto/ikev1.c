@@ -693,7 +693,8 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 		pb_stream *const n_pbs = &n_pld->pbs;
 		struct isakmp_notification *const n =
 			&n_pld->payload.notification;
-		struct state *st = md->st;    /* may be NULL */
+		pexpect(st == md->st);
+		st = md->st;    /* may be NULL */
 
 		/* Switch on Notification Type (enum) */
 		/* note that we _can_ get notification payloads unencrypted
