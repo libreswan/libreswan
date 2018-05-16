@@ -684,7 +684,7 @@ static stf_status unexpected(struct state *st, struct msg_digest *md UNUSED)
  *  #   Initiator  Direction Responder  NOTE
  * (1)  HDR*; N/D     =>                Error Notification or Deletion
  */
-static stf_status informational(struct state *st UNUSED, struct msg_digest *md)
+static stf_status informational(struct state *st, struct msg_digest *md)
 {
 	struct payload_digest *const n_pld = md->chain[ISAKMP_NEXT_N];
 
