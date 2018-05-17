@@ -1125,17 +1125,17 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 			switch (md->from_state) {
 			case STATE_V2_CREATE_I:
 				what = "IPsec Child Response";
-				why = "no matching IPsec child state for this response";
+				why = " no matching IPsec child state for this response";
 				break;
 
 			case STATE_V2_REKEY_IKE_I:
 				what = "IKE Rekey Response";
-				why = "no matching IKE Rekey state for this response";
+				why = " no matching IKE Rekey state for this response";
 				break;
 
 			case STATE_V2_REKEY_CHILD_I:
 				what = "IPsec Child Rekey Response";
-				why = "no matching rekey child state for this response";
+				why = " no matching rekey child state for this response";
 				break;
 			default:
 				/* ??? can this happen? */
@@ -1145,7 +1145,7 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 	}
 
 	if (st == NULL) {
-		libreswan_log("rejecting %s CREATE_CHILD_SA %s msgid_received: %u st_msgid_lastrecv %u",
+		libreswan_log("rejecting %s CREATE_CHILD_SA%s msgid_received: %u st_msgid_lastrecv %u",
 				what, why,
 				md->msgid_received,
 				pst->st_msgid_lastrecv);
@@ -1155,7 +1155,7 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 			ipstr_buf b;
 			char ca[CONN_INST_BUF];
 			char cb[CONN_INST_BUF];
-			DBG_log("\"%s\"%s #%lu received %s CREATE_CHILD_SA %s from %s:%u Child \"%s\"%s #%lu in %s %s",
+			DBG_log("\"%s\"%s #%lu received %s CREATE_CHILD_SA%s from %s:%u Child \"%s\"%s #%lu in %s %s",
 				pst->st_connection->name,
 				fmt_conn_instance(pst->st_connection, ca),
 				pst->st_serialno,
@@ -1166,13 +1166,12 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 				st->st_serialno,
 				st->st_state_name,
 				st_busy ? "is busy processing a response drop this message" :
-				" will process it further");
+					"will process it further");
 		});
 
 		if (st_busy)
 			st = NULL; /* in the previous message */
 	}
-
 
         return st;
 }
