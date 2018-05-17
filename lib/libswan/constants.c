@@ -2574,7 +2574,7 @@ static const enum_names *en_checklist[] = {
 	&ikev2_trans_type_names,
 	&ikev2_trans_attr_descs,
 	&pkk_names,
-	&ikev2_ppk_id_types_names,
+	&ikev2_ppk_id_type_names,
 };
 
 void check_enum_names(enum_names *checklist[], size_t tl)
