@@ -514,7 +514,7 @@ static err_t default_end(struct end *e, ip_address *dflt_nexthop)
 		ugh = addrtosubnet(&e->host_addr, &e->client);
 
 	if (e->sendcert == 0)
-		e->sendcert = cert_sendifasked;
+		e->sendcert = CERT_SENDIFASKED;
 
 	return ugh;
 }
@@ -687,13 +687,13 @@ size_t format_end(char *buf,
 			const char *send_cert = "+UNKNOWN";
 
 			switch (this->sendcert) {
-			case cert_neversend:
+			case CERT_NEVERSEND:
 				send_cert = "+S-C";
 				break;
-			case cert_sendifasked:
+			case CERT_SENDIFASKED:
 				send_cert = "+S?C";
 				break;
-			case cert_alwayssend:
+			case CERT_ALWAYSSEND:
 				send_cert = "+S=C";
 				break;
 			}
@@ -4258,8 +4258,8 @@ void show_one_connection(const struct connection *c)
 		  bool_str(c->vti_shared)
 #ifdef USE_NIC_OFFLOAD
 		  ,
-		  (c->nic_offload == nic_offload_auto) ? "auto" :
-			bool_str(c->nic_offload == nic_offload_yes)
+		  (c->nic_offload == yna_auto) ? "auto" :
+			bool_str(c->nic_offload == yna_yes)
 #endif
 	);
 
@@ -4284,12 +4284,12 @@ void show_one_connection(const struct connection *c)
 		enum_name(&dpd_action_names, c->dpd_action),
 		(long) deltasecs(c->dpd_delay),
 		(long) deltasecs(c->dpd_timeout),
-		(c->encaps == encaps_auto) ? "auto" :
-		    bool_str(c->encaps == encaps_yes),
+		(c->encaps == yna_auto) ? "auto" :
+		    bool_str(c->encaps == yna_yes),
 		bool_str(c->nat_keepalive),
-		(c->ikev1_natt == natt_both) ? "both" :
-		 (c->ikev1_natt == natt_rfc) ? "rfc" :
-		 (c->ikev1_natt == natt_drafts) ? "drafts" : "none"
+		(c->ikev1_natt == NATT_BOTH) ? "both" :
+		 (c->ikev1_natt == NATT_RFC) ? "rfc" :
+		 (c->ikev1_natt == NATT_DRAFTS) ? "drafts" : "none"
 		);
 
 	if (!lmod_empty(c->extra_debugging)) {

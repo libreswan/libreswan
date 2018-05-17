@@ -564,8 +564,8 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 				    c->spd.that.host_port));
 
 		DBG(DBG_NATT, DBG_log("NAT-T: encaps is '%s'",
-			    c->encaps == encaps_auto ? "auto" :
-				bool_str(c->encaps == encaps_yes)));
+			    c->encaps == yna_auto ? "auto" :
+				bool_str(c->encaps == yna_yes)));
 
 		snprintf(b, sad_len - (b - sadetails),
 			 "%sESP%s%s%s=>0x%08lx <0x%08lx xfrm=%s_%d-%s",

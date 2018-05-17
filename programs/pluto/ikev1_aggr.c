@@ -345,9 +345,10 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 	 */
 	send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
 		    mycert.ty != CERT_NONE && mycert.u.nss_cert != NULL &&
-		    ((c->spd.this.sendcert == cert_sendifasked &&
+		    ((c->spd.this.sendcert == CERT_SENDIFASKED &&
 		      st->hidden_variables.st_got_certrequest) ||
-		     c->spd.this.sendcert == cert_alwayssend);
+		     c->spd.this.sendcert == CERT_ALWAYSSEND
+		     );
 
 	send_authcerts = (send_cert && c->send_ca != CA_SEND_NONE);
 
@@ -702,9 +703,9 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 	send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
 		    mycert.ty != CERT_NONE && mycert.u.nss_cert != NULL &&
 		    ((c->spd.this.sendcert ==
-			cert_sendifasked &&
+			CERT_SENDIFASKED &&
 		      st->hidden_variables.st_got_certrequest) ||
-		     c->spd.this.sendcert == cert_alwayssend);
+		     c->spd.this.sendcert == CERT_ALWAYSSEND);
 
 	send_authcerts = (send_cert && c->send_ca != CA_SEND_NONE);
 
@@ -1145,8 +1146,8 @@ static stf_status aggr_outI1_tail(struct state *st,
 	cert_t mycert = c->spd.this.cert;
 	bool send_cr = mycert.ty != CERT_NONE && mycert.u.nss_cert != NULL &&
 			!has_preloaded_public_key(st) &&
-		    (c->spd.this.sendcert == cert_sendifasked ||
-		     c->spd.this.sendcert == cert_alwayssend);
+		    (c->spd.this.sendcert == CERT_SENDIFASKED ||
+		     c->spd.this.sendcert == CERT_ALWAYSSEND);
 
 	DBG(DBG_CONTROL,
 		DBG_log("aggr_outI1_tail for #%lu",
@@ -1233,7 +1234,7 @@ static stf_status aggr_outI1_tail(struct state *st,
 	if (c->spd.this.xauth_client || c->spd.this.xauth_server)
 		numvidtosend++;
 
-	if (nat_traversal_enabled && c->ikev1_natt != natt_none)
+	if (nat_traversal_enabled && c->ikev1_natt != NATT_NONE)
 		numvidtosend++;
 
 	if (c->cisco_unity)
@@ -1255,7 +1256,7 @@ static stf_status aggr_outI1_tail(struct state *st,
 			return STF_INTERNAL_ERROR;
 	}
 
-	if (nat_traversal_enabled && c->ikev1_natt != natt_none) {
+	if (nat_traversal_enabled && c->ikev1_natt != NATT_NONE) {
 		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
 		if (!nat_traversal_insert_vid(np, &rbody, st)) {

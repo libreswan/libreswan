@@ -742,16 +742,16 @@ enum_names ikev2_cert_type_names = {
  * certificate request payload policy
  */
 static const char *const certpolicy_type_name[] = {
-	"cert_neversend",
-	"cert_sendifasked",
-	"cert_alwayssend",
+	"CERT_NEVERSEND",
+	"CERT_SENDIFASKED",
+	"CERT_ALWAYSSEND",
 };
 
 enum_names certpolicy_type_names = {
-	cert_neversend,
-	cert_alwayssend,
+	CERT_NEVERSEND,
+	CERT_ALWAYSSEND,
 	ARRAY_REF(certpolicy_type_name),
-	NULL, /* prefix */
+	"CERT_", /* prefix */
 	NULL
 };
 

@@ -2423,7 +2423,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		/* in aggressive mode, there will be no reply packet in transition
 		 * from STATE_AGGR_R1 to STATE_AGGR_R2
 		 */
-		if (nat_traversal_enabled && st->st_connection->ikev1_natt != natt_none) {
+		if (nat_traversal_enabled && st->st_connection->ikev1_natt != NATT_NONE) {
 			/* adjust our destination port if necessary */
 			nat_traversal_change_port_lookup(md, st);
 		}
@@ -3111,7 +3111,7 @@ void doi_log_cert_thinking(u_int16_t auth,
 		} else if (certtype == CERT_NONE) {
 			DBG(DBG_CONTROL,
 				DBG_log("I did not send a certificate because I do not have one."));
-		} else if (policy == cert_sendifasked) {
+		} else if (policy == CERT_SENDIFASKED) {
 			DBG(DBG_CONTROL,
 				DBG_log("I did not send my certificate because I was not asked to."));
 		}

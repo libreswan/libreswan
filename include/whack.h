@@ -167,7 +167,7 @@ struct whack_message {
 	unsigned long sa_replay_window;
 	deltatime_t r_timeout; /* in secs */
 	deltatime_t r_interval; /* in msec */
-	enum nic_offload_options nic_offload;
+	enum yna_options nic_offload;
 
 	/* For IKEv1 RFC 3706 - Dead Peer Detection */
 	deltatime_t dpd_delay;
@@ -179,7 +179,7 @@ struct whack_message {
 	enum keyword_remotepeertype remotepeertype;
 
 	/* Force the use of NAT-T on a connection */
-	enum encaps_options encaps;
+	enum yna_options encaps;
 
 	/* Option to allow per-conn setting of sending of NAT-T keepalives - default is enabled  */
 	bool nat_keepalive;

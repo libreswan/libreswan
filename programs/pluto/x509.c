@@ -1309,9 +1309,9 @@ bool ikev2_send_cert_decision(struct state *st)
 		return FALSE;
 	}
 
-	if ((c->spd.this.sendcert != cert_sendifasked ||
+	if ((c->spd.this.sendcert != CERT_SENDIFASKED ||
 	      !st->hidden_variables.st_got_certrequest) &&
-			c->spd.this.sendcert != cert_alwayssend)
+			c->spd.this.sendcert != CERT_ALWAYSSEND)
 	{
 		DBG(DBG_X509,
 			DBG_log("IKEv2 CERT: no cert requested or told not to send"));

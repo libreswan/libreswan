@@ -130,8 +130,8 @@ void ipsecconf_default_values(struct starter_config *cfg)
 
 	cfg->conn_default.options[KBF_IKEPAD] = TRUE;
 
-	cfg->conn_default.options[KBF_IKEV1_NATT] = natt_both;
-	cfg->conn_default.options[KBF_ENCAPS] = encaps_auto;
+	cfg->conn_default.options[KBF_IKEV1_NATT] = NATT_BOTH;
+	cfg->conn_default.options[KBF_ENCAPS] = yna_auto;
 
 	/* Network Manager support */
 #ifdef HAVE_NM
@@ -153,7 +153,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 		POLICY_IKE_FRAG_ALLOW |      /* ike_frag=yes */
 		POLICY_ESN_NO;      	     /* esn=no */
 
-	cfg->conn_default.options[KBF_NIC_OFFLOAD] = nic_offload_auto;
+	cfg->conn_default.options[KBF_NIC_OFFLOAD] = yna_auto;
 	cfg->conn_default.options[KBF_IKELIFETIME] = IKE_SA_LIFETIME_DEFAULT;
 
 	cfg->conn_default.options[KBF_REPLAY_WINDOW] = IPSEC_SA_DEFAULT_REPLAY_WINDOW;
@@ -1290,16 +1290,16 @@ static bool load_conn(
 		conn->policy &= ~(POLICY_ESN_NO | POLICY_ESN_YES);
 
 		switch (conn->options[KBF_ESN]) {
-		case esn_yes:
+		case ESN_YES:
 			conn->policy |= POLICY_ESN_YES;
 			break;
 
-		case esn_no:
+		case ESN_NO:
 			/* this is the default for now */
 			conn->policy |= POLICY_ESN_NO;
 			break;
 
-		case esn_either:
+		case ESN_EITHER:
 			conn->policy |= POLICY_ESN_NO | POLICY_ESN_YES;
 			break;
 		}
@@ -1328,17 +1328,17 @@ static bool load_conn(
 		conn->policy &= ~(POLICY_SAREF_TRACK | POLICY_SAREF_TRACK_CONNTRACK);
 
 		switch (conn->options[KBF_SAREFTRACK]) {
-		case sat_yes:
+		case SAT_YES:
 			/* this is the default */
 			conn->policy |= POLICY_SAREF_TRACK;
 			break;
 
-		case sat_conntrack:
+		case SAT_CONNTRACK:
 			conn->policy |= POLICY_SAREF_TRACK |
 					POLICY_SAREF_TRACK_CONNTRACK;
 			break;
 
-		case sat_no:
+		case SAT_NO:
 			break;
 		}
 	}
