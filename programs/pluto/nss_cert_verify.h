@@ -48,4 +48,6 @@ extern bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *n
 
 #define VERIFY_RET_CRL_NEED 0x1000
 
+extern SECItem *nss_pkcs7_blob(CERTCertificate *cert, bool send_full_chain);
+
 #endif /* NSS_CERT_VFY_H */

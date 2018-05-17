@@ -83,7 +83,6 @@
 #include <secerr.h>
 #include <secder.h>
 #include <ocsp.h>
-#include <secpkcs7.h>
 #include "ike_alg_sha1.h"
 #include "crypt_hash.h"
 
@@ -1410,22 +1409,11 @@ stf_status ikev2_send_cert(struct state *st, pb_stream *outpbs)
 
 	if (IMPAIR(SEND_PKCS7_THINGIE)) {
 		libreswan_log("IMPAIR: sending cert as PKCS7 blob");
-		/*
-		 * CERT_GetDefaultCertDB() simply returns the contents
-		 * of a static variable set by NSS_Initialize().  It
-		 * doesn't check the value and doesn't set PR error.
-		 * Short of calling CERT_SetDefaultCertDB(NULL), the
-		 * value can never be NULL.
-		 */
-		CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
-		passert(handle != NULL);
-		SEC_PKCS7ContentInfo *content
-			= SEC_PKCS7CreateCertsOnly(mycert.u.nss_cert,
-						   send_full_chain ? PR_TRUE : PR_FALSE,
-						   handle);
-		SECItem *pkcs7 = SEC_PKCS7EncodeItem(NULL, NULL, content,
-						     NULL, NULL, NULL);
-
+		SECItem *pkcs7 = nss_pkcs7_blob(mycert.u.nss_cert,
+						send_full_chain);
+		if (!pexpect(pkcs7 != NULL)) {
+			return STF_INTERNAL_ERROR;
+		}
 		struct ikev2_cert pkcs7_hdr = {
 			.isac_np = ISAKMP_NEXT_v2NONE,
 			.isac_critical = build_ikev2_critical(false, false),
@@ -1434,18 +1422,14 @@ stf_status ikev2_send_cert(struct state *st, pb_stream *outpbs)
 		pb_stream cert_pbs;
 		if (!out_struct(&pkcs7_hdr, &ikev2_certificate_desc,
 				outpbs, &cert_pbs)) {
-			SEC_PKCS7DestroyContentInfo(content);
 			SECITEM_FreeItem(pkcs7, PR_TRUE);
 			return STF_INTERNAL_ERROR;
 		}
 		if (!out_chunk(same_secitem_as_chunk(*pkcs7), &cert_pbs, "PKCS7")) {
-			SEC_PKCS7DestroyContentInfo(content);
 			SECITEM_FreeItem(pkcs7, PR_TRUE);
 			return STF_INTERNAL_ERROR;
 		}
 		close_output_pbs(&cert_pbs);
-
-		SEC_PKCS7DestroyContentInfo(content);
 		SECITEM_FreeItem(pkcs7, PR_TRUE);
 		return STF_OK;
 	}

@@ -714,3 +714,23 @@ bool cert_VerifySubjectAltName(const CERTCertificate *cert, const char *name)
 	return FALSE;
 }
 
+SECItem *nss_pkcs7_blob(CERTCertificate *cert, bool send_full_chain)
+{
+	/*
+	 * CERT_GetDefaultCertDB() simply returns the contents of a
+	 * static variable set by NSS_Initialize().  It doesn't check
+	 * the value and doesn't set PR error.  Short of calling
+	 * CERT_SetDefaultCertDB(NULL), the value can never be NULL.
+	 */
+	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
+	passert(handle != NULL);
+	SEC_PKCS7ContentInfo *content
+		= SEC_PKCS7CreateCertsOnly(cert,
+					   send_full_chain ? PR_TRUE : PR_FALSE,
+					   handle);
+	SECItem *pkcs7 = SEC_PKCS7EncodeItem(NULL, NULL, content,
+					     NULL, NULL, NULL);
+	SEC_PKCS7DestroyContentInfo(content);
+	return pkcs7;
+}
+
