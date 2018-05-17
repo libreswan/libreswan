@@ -1183,7 +1183,7 @@ static bool process_recent_rtransmit(struct state *st,
 	set_cur_state(st);
 	if (st->st_suspended_md != NULL) {
 		libreswan_log("retransmission ignored: we're still working on the previous one");
-		return 0;
+		return FALSE;
 	}
 
 	/* this should never happen */
@@ -1193,7 +1193,7 @@ static bool process_recent_rtransmit(struct state *st,
 			st->st_msgid_lastrecv,
 			enum_name(&ikev2_exchange_names, ix),
 			st->st_msgid_lastreplied);
-		return 0;
+		return FALSE;
         }
 
 	if (st->st_msgid_lastreplied != st->st_msgid_lastrecv) {
@@ -1207,7 +1207,7 @@ static bool process_recent_rtransmit(struct state *st,
 		struct state *cst =  resp_state_with_msgid(st->st_serialno,
 				htonl(st->st_msgid_lastrecv));
 		if (cst == NULL)
-			return 1; /* process the re-transtmited message */
+			return TRUE; /* process the re-transtmited message */
 
 		LSWDBGP(DBG_CONTROLMORE|DBG_RETRANSMITS, buf) {
 			lswlog_retransmit_prefix(buf, st);
@@ -1227,7 +1227,7 @@ static bool process_recent_rtransmit(struct state *st,
 		send_recorded_v2_ike_msg(st, "ikev2-responder-retransmit");
 	}
 
-	return 0;
+	return FALSE;
 }
 
 /*
