@@ -88,6 +88,7 @@
 #include "ip_address.h"
 #include "send.h"
 #include "ikev1_send.h"
+#include "nss_cert_verify.h"
 
 /*
  * Initiate an Oakley Main Mode exchange.
@@ -1433,7 +1434,21 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 	}
 
 	/* CERT out */
-	if (send_cert) {
+	if (send_cert && IMPAIR(SEND_PKCS7_THINGIE)) {
+		libreswan_log("IMPAIR: sending cert as pkcs7 blob");
+		enum next_payload_types_ikev1 np =
+			send_cr ? ISAKMP_NEXT_CR : ISAKMP_NEXT_SIG;
+		SECItem *pkcs7 = nss_pkcs7_blob(mycert.u.nss_cert, send_authcerts);
+		if (!pexpect(pkcs7 != NULL)) {
+			return STF_INTERNAL_ERROR;
+		}
+		if (!ikev1_ship_CERT(CERT_PKCS7_WRAPPED_X509,
+				     same_secitem_as_chunk(*pkcs7),
+				     rbody, np)) {
+			SECITEM_FreeItem(pkcs7, PR_TRUE);
+			return STF_INTERNAL_ERROR;
+		}
+	} else if (send_cert) {
 		u_int8_t np;
 
 		if (!send_cr && !send_authcerts)
@@ -1787,7 +1802,20 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	}
 
 	/* CERT out, if we have one */
-	if (send_cert) {
+	if (send_cert && IMPAIR(SEND_PKCS7_THINGIE)) {
+		libreswan_log("IMPAIR: sending cert as pkcs7 blob");
+		enum next_payload_types_ikev1 np = ISAKMP_NEXT_SIG;
+		SECItem *pkcs7 = nss_pkcs7_blob(mycert.u.nss_cert, send_authcerts);
+		if (!pexpect(pkcs7 != NULL)) {
+			return STF_INTERNAL_ERROR;
+		}
+		if (!ikev1_ship_CERT(CERT_PKCS7_WRAPPED_X509,
+				     same_secitem_as_chunk(*pkcs7),
+				     &rbody, np)) {
+			SECITEM_FreeItem(pkcs7, PR_TRUE);
+			return STF_INTERNAL_ERROR;
+		}
+	} else if (send_cert) {
 		u_int8_t npp = send_authcerts ? ISAKMP_NEXT_CERT :
 						ISAKMP_NEXT_SIG;
 
