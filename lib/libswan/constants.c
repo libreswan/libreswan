@@ -2079,7 +2079,7 @@ enum_names pkk_names = {
 /*
  * IKEv2 PPK ID types - draft-ietf-ipsecme-qr-ikev2-01
  */
-static const char *const ikev2_ppk_id_name[] = {
+static const char *const ikev2_ppk_id_type_name[] = {
 	/* 0 - Reserved */
 	"PPK_ID_OPAQUE",
 	"PPK_ID_FIXED",
@@ -2087,10 +2087,10 @@ static const char *const ikev2_ppk_id_name[] = {
 	/* 128 - 255 Private Use */
 };
 
-enum_names ikev2_ppk_id_names = {
+enum_names ikev2_ppk_id_type_names = {
 	PPK_ID_OPAQUE,
 	PPK_ID_FIXED,
-	ARRAY_REF(ikev2_ppk_id_name),
+	ARRAY_REF(ikev2_ppk_id_type_name),
 	"PPK_ID_", /* prefix */
 	NULL
 };
@@ -2574,7 +2574,7 @@ static const enum_names *en_checklist[] = {
 	&ikev2_trans_type_names,
 	&ikev2_trans_attr_descs,
 	&pkk_names,
-	&ikev2_ppk_id_names,
+	&ikev2_ppk_id_types_names,
 };
 
 void check_enum_names(enum_names *checklist[], size_t tl)
