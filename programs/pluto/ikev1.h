@@ -123,4 +123,18 @@ extern bool ikev1_out_sa(pb_stream *outs,
 bool ikev1_encrypt_message(pb_stream *pbs, struct state *st);
 bool ikev1_close_message(pb_stream *pbs, struct state *st);
 
+typedef stf_status ikev1_state_transition_fn(struct state *st, struct msg_digest *md);
+extern ikev1_state_transition_fn main_inI1_outR1;
+extern ikev1_state_transition_fn main_inR1_outI2;
+extern ikev1_state_transition_fn main_inI2_outR2;
+extern ikev1_state_transition_fn main_inR2_outI3;
+extern ikev1_state_transition_fn main_inI3_outR3;
+extern ikev1_state_transition_fn main_inR3;
+extern ikev1_state_transition_fn aggr_inI1_outR1;
+extern ikev1_state_transition_fn aggr_inR1_outI2;
+extern ikev1_state_transition_fn aggr_inI2;
+extern ikev1_state_transition_fn quick_inI1_outR1;
+extern ikev1_state_transition_fn quick_inR1_outI2;
+extern ikev1_state_transition_fn quick_inI2;
+
 #endif

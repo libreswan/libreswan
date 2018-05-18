@@ -179,7 +179,7 @@ struct state_v1_microcode {
 	lset_t req_payloads;    /* required payloads (allows just one) */
 	lset_t opt_payloads;    /* optional payloads (any mumber) */
 	enum event_type timeout_event;
-	state_transition_fn *processor;
+	ikev1_state_transition_fn *processor;
 };
 
 /* State Microcode Flags, in several groups */
@@ -215,9 +215,8 @@ struct state_v1_microcode {
 
 /* end of flags */
 
-static state_transition_fn      /* forward declaration */
-	unexpected,
-	informational;
+static ikev1_state_transition_fn unexpected;      /* forward declaration */
+static ikev1_state_transition_fn informational;      /* forward declaration */
 
 /*
  * v1_state_microcode_table is a table of all state_v1_microcode

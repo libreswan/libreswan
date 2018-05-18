@@ -1932,7 +1932,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
  *
  */
 
-static state_transition_fn main_inR3_tail;
+static ikev1_state_transition_fn main_inR3_tail;
 
 stf_status main_inR3(struct state *st, struct msg_digest *md)
 {

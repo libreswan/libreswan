@@ -32,21 +32,24 @@ extern void complete_v2_state_transition(struct msg_digest **mdp,
 
 extern stf_status ikev2_send_livenss_probe(struct state *st);
 
-extern state_transition_fn process_encrypted_informational_ikev2;
+typedef stf_status ikev2_state_transition_fn(struct state *st, struct msg_digest *md);
 
-extern state_transition_fn ikev2_child_ike_inIoutR;
-extern state_transition_fn ikev2_child_ike_inR;
-extern state_transition_fn ikev2_child_inR;
-extern state_transition_fn ikev2_child_inIoutR;
+extern ikev2_state_transition_fn process_encrypted_informational_ikev2;
 
-extern state_transition_fn ikev2_parent_inI1outR1;
-extern state_transition_fn ikev2_IKE_SA_process_SA_INIT_response_notification;
-extern state_transition_fn ikev2_auth_initiator_process_failure_notification;
-extern state_transition_fn ikev2_auth_initiator_process_unknown_notification;
-extern state_transition_fn ikev2_ike_sa_process_auth_request_no_skeyid;
-extern state_transition_fn ikev2_ike_sa_process_auth_request;
-extern state_transition_fn ikev2_parent_inR1outI2;
-extern state_transition_fn ikev2_parent_inR2;
+extern ikev2_state_transition_fn ikev2_child_ike_inIoutR;
+extern ikev2_state_transition_fn ikev2_child_ike_inR;
+extern ikev2_state_transition_fn ikev2_child_inR;
+extern ikev2_state_transition_fn ikev2_child_inIoutR;
+
+extern ikev2_state_transition_fn ikev2_parent_inI1outR1;
+extern ikev2_state_transition_fn ikev2_IKE_SA_process_SA_INIT_response_notification;
+extern ikev2_state_transition_fn ikev2_auth_initiator_process_failure_notification;
+extern ikev2_state_transition_fn ikev2_auth_initiator_process_unknown_notification;
+extern ikev2_state_transition_fn ikev2_ike_sa_process_auth_request_no_skeyid;
+extern ikev2_state_transition_fn ikev2_ike_sa_process_auth_request;
+extern ikev2_state_transition_fn ikev2_parent_inR1outI2;
+extern ikev2_state_transition_fn ikev2_parent_inR2;
+
 extern crypto_transition_fn ikev2_child_out_cont;
 extern crypto_transition_fn ikev2_child_inR_tail;
 extern crypto_transition_fn ikev2_child_ike_rekey_tail;
@@ -270,7 +273,7 @@ struct state_v2_microcode {
 	struct ikev2_expected_payloads encrypted_payloads;
 
 	enum event_type timeout_event;
-	state_transition_fn *processor;
+	ikev2_state_transition_fn *processor;
 	crypto_transition_fn *crypto_end;
 };
 

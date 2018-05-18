@@ -42,16 +42,6 @@ extern void ipsecdoi_replace(struct state *st, unsigned long try);
 
 extern void init_phase2_iv(struct state *st, const msgid_t *msgid);
 
-extern state_transition_fn
-	main_inI1_outR1,
-	main_inR1_outI2,
-	main_inI2_outR2,
-	main_inR2_outI3,
-	main_inI3_outR3,
-	main_inR3,
-	aggr_inI1_outR1,
-	aggr_inR1_outI2,
-	aggr_inI2;
 /*
  * forward
  */
