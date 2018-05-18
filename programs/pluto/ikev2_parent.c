@@ -846,7 +846,7 @@ void ikev2_parent_outI1_continue(struct state *st, struct msg_digest **mdp,
 				 struct pluto_crypto_req *r)
 {
 	DBG(DBG_CONTROL,
-		DBG_log("ikev2_parent_outI1_tail for #%lu",
+		DBG_log("ikev2_parent_outI1_continue for #%lu",
 			st->st_serialno));
 
 	unpack_KE_from_helper(st, r, &st->st_gi);
@@ -856,18 +856,6 @@ void ikev2_parent_outI1_continue(struct state *st, struct msg_digest **mdp,
 		*mdp = fake_md(st);
 	}
 	complete_v2_state_transition(mdp, ikev2_parent_outI1_common(*mdp, st));
-}
-
-stf_status ikev2_parent_outI1_tail(struct state *st, struct msg_digest *md,
-				   struct pluto_crypto_req *r)
-{
-	DBG(DBG_CONTROL,
-		DBG_log("ikev2_parent_outI1_tail for #%lu",
-			st->st_serialno));
-
-	unpack_KE_from_helper(st, r, &st->st_gi);
-	unpack_nonce(&st->st_ni, r);
-	return ikev2_parent_outI1_common(md, st);
 }
 
 static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,

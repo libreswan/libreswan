@@ -311,7 +311,6 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	  .next_state = STATE_PARENT_I1,
 	  .flags      = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
 	  .processor  = NULL,
-	  .crypto_end = ikev2_parent_outI1_tail,
 	  .timeout_event = EVENT_v2_RETRANSMIT, },
 
 	/* STATE_PARENT_I1: R1B --> I1B

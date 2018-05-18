@@ -36,7 +36,6 @@ extern stf_status ikev2_send_informational(struct state *st, struct state *pst,
 
 extern state_transition_fn process_encrypted_informational_ikev2;
 
-extern crypto_transition_fn ikev2_parent_outI1_tail;
 extern state_transition_fn ikev2_child_ike_inIoutR;
 extern state_transition_fn ikev2_child_ike_inR;
 extern state_transition_fn ikev2_child_inR;
