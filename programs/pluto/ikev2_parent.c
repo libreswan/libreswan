@@ -3662,15 +3662,19 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		chunk_t payload;
 
 		setchunk(payload, e_pbs_cipher.start, len);
-		return ikev2_record_fragments(md, &hdr, &e, &payload,
+		stf_status ret = ikev2_record_fragments(md, &hdr, &e, &payload,
 					   "reply fragment for ikev2_parent_outR1_I2");
+		pst->st_msgid_lastreplied = md->msgid_received;
+		return ret;
 	} else {
 		stf_status ret = ikev2_encrypt_msg(ike_sa(pst), reply_stream.start,
 						   iv, encstart, authloc);
 
-		if (ret == STF_OK)
+		if (ret == STF_OK) {
 			record_outbound_ike_msg(pst, &reply_stream,
 				"reply packet for ikev2_parent_inR1outI2_tail");
+			pst->st_msgid_lastreplied = md->msgid_received;
+		}
 		return ret;
 	}
 }
@@ -4390,8 +4394,10 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 			chunk_t payload;
 
 			setchunk(payload, e_pbs_cipher.start, len);
-			return ikev2_record_fragments(md, &hdr, &e, &payload,
+			stf_status ret = ikev2_record_fragments(md, &hdr, &e, &payload,
 						   "reply fragment for ikev2_parent_inI2outR2_tail");
+			st->st_msgid_lastreplied = md->msgid_received;
+			return ret;
 		} else {
 			stf_status ret = ikev2_encrypt_msg(ike_sa(st), reply_stream.start,
 							   iv, encstart, authloc);
