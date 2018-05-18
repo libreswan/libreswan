@@ -239,6 +239,7 @@ static enum categories categorize_state(struct state *st,
 	 */
 	switch (state) {
 	case STATE_UNDEFINED:
+	case STATE_IKEv2_BASE:
 		/*
 		 * When a state object is created by new_state()
 		 * it starts out in STATE_UNDEFINED.
@@ -246,13 +247,13 @@ static enum categories categorize_state(struct state *st,
 		 */
 		return CAT_IGNORE;
 
-	case STATE_IKEv2_BASE:
+	case STATE_PARENT_I0:
 		/*
-		 * IKEv2 initiators, while the INIT packet is being
-		 * constructed, are in STATE_IKEv2_BASE.  Only when
-		 * the packet is sent out do they transition into
-		 * STATE_PARENT_I1 and start being counted as
-		 * half-open.
+		 * IKEv2 IKE SA initiator, while the the SA_INIT
+		 * packet is being constructed, are in state.  Only
+		 * once the packet has been sent out does it
+		 * transition to STATE_PARENT_I1 and start being
+		 * counted as half-open.
 		 */
 		return CAT_IGNORE;
 
