@@ -253,7 +253,8 @@ struct ikev2_expected_payloads {
 
 struct state_v2_microcode {
 	const char *const story;	/* state transition story (not state_story[]) */
-	enum state_kind state, next_state;
+	enum state_kind state;
+	enum state_kind next_state;
 	enum isakmp_xchg_types recv_type;
 	lset_t flags;
 
