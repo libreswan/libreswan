@@ -86,7 +86,7 @@ bool extract_ppk_id(pb_stream *pbs, struct ppk_id_payload *payl)
 	}
 
 	DBG(DBG_CONTROL, DBG_log("received PPK_ID type: %s",
-		enum_name(&ikev2_ppk_id_names, dst[0])));
+		enum_name(&ikev2_ppk_id_type_names, dst[0])));
 
 	idtype = (int)dst[0];
 	switch (idtype) {
@@ -97,7 +97,7 @@ bool extract_ppk_id(pb_stream *pbs, struct ppk_id_payload *payl)
 	case PPK_ID_OPAQUE:
 	default:
 		loglog(RC_LOG_SERIOUS, "PPK_ID type %d (%s) not supported",
-			idtype, enum_name(&ikev2_ppk_id_names, idtype));
+			idtype, enum_name(&ikev2_ppk_id_type_names, idtype));
 		return FALSE;
 	}
 

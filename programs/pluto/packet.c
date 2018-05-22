@@ -945,7 +945,7 @@ struct_desc ikev2_id_r_desc = {
  * Reserved for private use  128-255
  */
 static field_desc ikev2_ppk_id_fields[] = {
-	{ ft_enum, 8 / BITS_PER_BYTE, "PPK ID type", &ikev2_ppk_id_names },
+	{ ft_enum, 8 / BITS_PER_BYTE, "PPK ID type", &ikev2_ppk_id_type_names },
 	{ ft_end,  0, NULL, NULL }
 };
 

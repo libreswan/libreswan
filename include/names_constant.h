@@ -128,7 +128,7 @@ extern const struct af_info
 extern const struct af_info *aftoinfo(int af);
 
 extern enum_names pkk_names;
-extern enum_names ikev2_ppk_id_names;
+extern enum_names ikev2_ppk_id_type_names;
 
 extern enum_names spi_names;
 
