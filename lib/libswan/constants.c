@@ -1620,21 +1620,6 @@ enum_names ikev1_notify_names = {
 	&ikev1_notify_status_names
 };
 
-/*
-static const char *const ikev2_ppk_id_type_name[] = {
-	"PPK_ID_OPAQUE",
-	"PPK_ID_FIXED",
-};
-
-static enum_names ikev2_ppk_id_type_names = {
-	PPK_ID_OPAQUE,
-	PPK_ID_FIXED,
-	ARRAY_REF(ikev2_ppk_id_type_name),
-	NULL,
-	NULL
-};
-*/
-
 static const char *const ikev2_notify_name_private[] = {
 	"v2N_NULL_AUTH",	/* 40960, used for mixed OE */
 };
