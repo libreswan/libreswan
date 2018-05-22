@@ -223,7 +223,6 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
  grep 'duplicate packet' /tmp/pluto.log
-| "westnet-eastnet" #1: discarding duplicate packet; already STATE_MAIN_I2
 | "westnet-eastnet" #1: discarding duplicate packet; already STATE_MAIN_I4
 west #
 west #
