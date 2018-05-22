@@ -55,7 +55,7 @@ west #
 134 "westnet-eastnet-ipv4-psk-ikev2" #4: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev2" #4: IMPAIR: retransmit so deleting SA
 002 "westnet-eastnet-ipv4-psk-ikev2" #3: deleting state (STATE_PARENT_I2)
-003 "westnet-eastnet-ipv4-psk-ikev2" #3: reschedule pending Phase 2 of connection"westnet-eastnet-ipv4-psk-ikev2" state #4: - the parent is going away
+003 "westnet-eastnet-ipv4-psk-ikev2" #3: reschedule pending child #4 STATE_PARENT_I2 of connection "westnet-eastnet-ipv4-psk-ikev2" - the parent is going away
 west #
  echo done
 done
