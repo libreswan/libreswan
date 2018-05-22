@@ -818,7 +818,6 @@ kvmplutotest	interop-ikev2-strongswan-33-ike-algo-responder	good
 kvmplutotest	interop-ikev2-strongswan-35-ipsec-rekey		good
 kvmplutotest	interop-ikev2-strongswan-35-rekey-pfs		good
 kvmplutotest	interop-ikev2-strongswan-35-rekey-reauth	good
-kvmplutotest	interop-ikev2-strongswan-35-rekey-responder	wip
 kvmplutotest	interop-ikev2-strongswan-35-responder-rekey-pfs good
 kvmplutotest	interop-ikev2-strongswan-36-esp-gmac-responder	good
 kvmplutotest	interop-ikev2-strongswan-37-initiator-digsig	good
