@@ -1,0 +1,8 @@
+Spray east with retransmitted fragments; it should re-transmit the AUTH response once
+
+East is impaired with replay-forward.  This causes all early packets
+to be replayed before processing the new packet.
+
+Consequently, before processing the delete informational, east will
+see replay of the AUTH request fragments.  This causes east to
+retransmit of the AUTH response fragments (but only once).

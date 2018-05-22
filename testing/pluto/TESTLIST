@@ -364,6 +364,7 @@ kvmplutotest	ikev2-43-init-retransmit		good
 
 kvmplutotest	ikev2-frag-01				good
 kvmplutotest	ikev2-frag-02-ipv6			good
+kvmplutotest	ikev2-frag-03-retrans			good
 
 kvmplutotest	dynamic-iface-01			good
 
