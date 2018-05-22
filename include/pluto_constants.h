@@ -859,19 +859,19 @@ enum routing_t {
 #define shunt_erouted(rs) (erouted(rs) && (rs) != RT_ROUTED_TUNNEL)
 
 enum certpolicy {
-	cert_neversend   = 1,
-	cert_sendifasked = 2,   /* the default */
-	cert_alwayssend  = 3,
+	CERT_NEVERSEND   = 1,
+	CERT_SENDIFASKED = 2,   /* the default */
+	CERT_ALWAYSSEND  = 3,
 };
 
 /* this is the default setting. */
-#define cert_defaultcertpolicy cert_alwayssend
+#define cert_defaultcertpolicy CERT_ALWAYSSEND
 
 enum ikev1_natt_policy {
-	natt_both = 0, /* the default */
-	natt_rfc = 1,
-	natt_drafts = 2, /* Workaround for Cisco NAT-T bug */
-	natt_none = 3 /* Workaround for forcing non-encaps */
+	NATT_BOTH = 0, /* the default */
+	NATT_RFC = 1,
+	NATT_DRAFTS = 2, /* Workaround for Cisco NAT-T bug */
+	NATT_NONE = 3 /* Workaround for forcing non-encaps */
 };
 
 enum four_options {
@@ -881,34 +881,28 @@ enum four_options {
 	fo_insist  = 3          /* propose, and only accept if peer agrees */
 };
 
-enum esn_options {
-	esn_no = 1, /* default */
-	esn_yes = 2,
-	esn_either = 3,
-};
-
-enum encaps_options {
-	encaps_auto = 1, /* default */
-	encaps_no = 2,
-	encaps_yes = 3,
-};
-
-enum nic_offload_options {
-	nic_offload_no = 1,
-	nic_offload_yes = 2,
-	nic_offload_auto = 3,
-};
-
 enum ynf_options {
 	ynf_no   = 0,
 	ynf_yes  = 1,
 	ynf_force = 2,
 };
 
+enum yna_options {
+	yna_auto = 1, /* default */
+	yna_no = 2,
+	yna_yes = 3,
+};
+
+enum esn_options {
+	ESN_NO = 1, /* default */
+	ESN_YES = 2,
+	ESN_EITHER = 3,
+};
+
 enum saref_tracking {
-	sat_yes = 0,            /* SAref tracking via _updown - the default */
-	sat_no = 1,             /* no SAref tracking - third party will handle this */
-	sat_conntrack = 2,      /* Saref tracking using connmark optimizations */
+	SAT_YES = 0,            /* SAref tracking via _updown - the default */
+	SAT_NO = 1,             /* no SAref tracking - third party will handle this */
+	SAT_CONNTRACK = 2,      /* Saref tracking using connmark optimizations */
 };
 
 /* Policies for establishing an SA
