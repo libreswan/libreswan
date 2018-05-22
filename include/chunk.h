@@ -5,6 +5,7 @@
  * Copyright (C) 1998-2001, 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2018 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -42,8 +43,12 @@ chunk_t chunk(void *ptr, size_t len);
 
 #define setchunk(ch, addr, size) { (ch).ptr = (addr); (ch).len = (size); }
 
-/* NOTE: freeanychunk, unlike pfreeany, NULLs .ptr */
-#define freeanychunk(ch) { pfreeany((ch).ptr); (ch).ptr = NULL; }
+/* NOTE: freeanychunk, unlike pfreeany, NULLs .ptr and zeros .len */
+#define freeanychunk(CH) {					\
+		chunk_t *chp_ = &(CH); /*eval once */		\
+		pfreeany(chp_->ptr);				\
+		*chp_ = (chunk_t) { .len = 0, .ptr = NULL, };	\
+	}
 
 #define clonetochunk(ch, addr, size, name) \
 	{ (ch).ptr = clone_bytes((addr), (ch).len = (size), name); }
