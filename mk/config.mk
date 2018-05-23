@@ -73,11 +73,6 @@ include ${LIBRESWANSRCDIR}/mk/defaults/${BUILDENV}.mk
 # Note: Variables here are for Makefiles and build system only.
 # IPSEC_ prefixed variables are to be used in source code
 
-
-### boilerplate, do not change, various scripts use extended BASH syntax!
-SHELL=/bin/bash
-export SHELL
-
 ### install pathnames
 
 # DESTDIR can be used to supply a prefix to all install targets.
@@ -162,7 +157,7 @@ FINALLOGDIR?=$(FINALVARDIR)/log
 LOGDIR?=$(DESTDIR)$(FINALLOGDIR)
 
 # Note: this variable gets passed in, as in "make INITSYSTEM=systemd"
-INITSYSTEM ?= $(shell $(SHELL) $(top_srcdir)/packaging/utils/lswan_detect.sh init)
+INITSYSTEM ?= $(shell $(top_srcdir)/packaging/utils/lswan_detect.sh init)
 
 # An attempt is made to automatically figure out where boot/shutdown scripts
 # will finally go:  the first directory in INC_RCDIRS that exists gets them.
