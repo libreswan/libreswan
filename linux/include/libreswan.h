@@ -102,19 +102,9 @@ enum {
 #define ESPINUDP_WITH_NON_ESP   2       /* draft-ietf-ipsec-nat-t-ike-02    */
 #endif
 
-/*
- * Basic data types for the address-handling functions.
- * ip_address and ip_subnet are supposed to be opaque types; do not
- * use their definitions directly, they are subject to change!
- */
+#include "ip_address.h"
 
 /* then the main types */
-typedef struct {
-	union {
-		struct sockaddr_in v4;
-		struct sockaddr_in6 v6;
-	} u;
-} ip_address;
 typedef struct {
 	ip_address addr;
 	int maskbits;
@@ -233,8 +223,6 @@ extern size_t addrtot(const ip_address *src, int format, char *buf, size_t bufle
 extern size_t inet_addrtot(int type, const void *src, int format, char *buf,
 		    size_t buflen);
 extern size_t sin_addrtot(const void *sin, int format, char *dst, size_t dstlen);
-/* RFC 1886 old IPv6 reverse-lookup format is the bulkiest */
-#define ADDRTOT_BUF     (32 * 2 + 3 + 1 + 3 + 1 + 1)
 extern err_t ttorange(const char *src, size_t srclen, int af, ip_range *dst,
 		bool non_zero);
 extern size_t rangetot(const ip_range *src, char format, char *dst, size_t dstlen);
