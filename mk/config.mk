@@ -385,9 +385,6 @@ ifeq ($(USE_MAST),true)
 USE_KLIPS=true
 endif
 
-# MAST is generally a prerequisite for SAREF support in applications
-USE_SAREF_KERNEL?=false
-
 # Build support for Linux NETKEY (XFRM) kernel level IPsec support for
 # pluto (aka "native", "kame")
 USE_NETKEY?=true
