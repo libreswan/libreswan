@@ -70,6 +70,8 @@ OBJS += ultot.o
 
 OBJS += alg_info.o esp_info.o ike_info.o ah_info.o
 
+OBJS += ckaid.o
+
 OBJS += chunk.o
 OBJS += shunk.o
 

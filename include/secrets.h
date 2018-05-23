@@ -30,16 +30,10 @@
 #include "id.h"
 #include "err.h"
 #include "realtime.h"
+#include "ckaid.h"
 
 struct state;	/* forward declaration */
 struct secret;	/* opaque definition, private to secrets.c */
-
-/*
- * For rationale behind *_t? Blame chunk_t.
- */
-typedef struct {
-	SECItem *nss;
-} ckaid_t;
 
 struct RSA_public_key {
 	char keyid[KEYID_BUF];	/* see ipsec_keyblobtoid(3) */
@@ -171,13 +165,6 @@ extern void delete_public_keys(struct pubkey_list **head,
 			       const struct id *id,
 			       enum pubkey_alg alg);
 extern void form_keyid(chunk_t e, chunk_t n, char *keyid, unsigned *keysize);
-
-bool ckaid_starts_with(ckaid_t ckaid, const char *start);
-char *ckaid_as_string(ckaid_t ckaid);
-err_t form_ckaid_rsa(chunk_t modulus, ckaid_t *ckaid);
-err_t form_ckaid_nss(const SECItem *const nss_ckaid, ckaid_t *ckaid);
-void freeanyckaid(ckaid_t *ckaid);
-void DBG_log_ckaid(const char *prefix, ckaid_t ckaid);
 
 extern struct pubkey *reference_key(struct pubkey *pk);
 extern void unreference_key(struct pubkey **pkp);
