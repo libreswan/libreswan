@@ -18,18 +18,14 @@
 #ifndef IP_ADDRESS_H
 #define IP_ADDRESS_H
 
-#if !defined(__KERNEL__)
 #include "chunk.h"
-#endif
 
 /*
  * Hack around this file being sucked into linux kernel module builds.
  */
-#if !defined(__KERNEL__)
 #include <netinet/in.h>		/* for struct sockaddr_in */
 #ifdef HAVE_INET6_IN6_H
 #include <netinet6/in6.h>	/* for struct sockaddr_in6 */
-#endif
 #endif
 
 struct lswlog;
@@ -109,8 +105,6 @@ size_t lswlog_sensitive_ip(struct lswlog *buf, const ip_address *ip);
  * XXX: chunk_t doesn't do const so this strips off the constiness of
  * address :-(
  */
-#if !defined(__KERNEL__)
 chunk_t same_ip_address_as_chunk(const ip_address *address);
-#endif
 
 #endif

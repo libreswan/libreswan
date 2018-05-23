@@ -19,15 +19,15 @@
 
 #include "err.h"
 
+#include <stdint.h>
+#include <stdbool.h> /* for 'bool' */
+
 /*
  * Libreswan was written before <stdbool.h> was standardized.
- * We continue to use TRUE and FALSE because we think that they are clearer
- * than true or false.
+ *
+ * (Contradicting the kernel coding style) TRUE and FALSE continue to
+ * be used because some think that it is clearer than true or false.
  */
-
-#ifndef __KERNEL__
-# include <stdbool.h> /* for 'bool' */
-#endif
 
 #ifndef TRUE
 # define TRUE true
@@ -58,24 +58,6 @@ enum {
 # endif
 #endif
 
-/*
- * We've just got to have some datatypes defined...  And annoyingly, just
- * where we get them depends on whether we're in userland or not.
- */
-/* things that need to come from one place or the other, depending */
-#if defined(__KERNEL__)
-#include <linux/types.h>
-#include <linux/socket.h>
-#include <linux/in.h>
-#include <linux/in6.h>
-#include <linux/string.h>
-#include <linux/ctype.h>
-#include <libreswan/ipsec_kversion.h>
-#include <libreswan/ipsec_param.h>
-#define user_assert(foo)  { } /* nothing */
-
-#else /* NOT in (linux) kernel */
-
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <string.h>
@@ -84,8 +66,6 @@ enum {
 #define user_assert(foo) assert(foo)
 #include <stdio.h>
 #include <stdint.h>
-
-#endif  /* (linux) kernel */
 
 #define DEBUG_NO_STATIC static
 
@@ -148,11 +128,8 @@ typedef struct {
 	 ((a)->u.v4.sin_addr.s_addr == 0))
 
 /* and the SA ID stuff */
-#ifdef __KERNEL__
-typedef __u32 ipsec_spi_t;
-#else
-typedef u_int32_t ipsec_spi_t;
-#endif
+typedef uint32_t ipsec_spi_t;
+
 typedef struct {                                /* to identify an SA, we need: */
 	ip_address dst;                         /* A. destination host */
 	ipsec_spi_t spi;                        /* B. 32-bit SPI, assigned by dest. host */
@@ -315,9 +292,7 @@ extern void prng_final(struct prng *prng);
 extern const char *ipsec_version_code(void);
 extern const char *ipsec_version_vendorid(void);
 extern const char *ipsec_version_string(void);
-#ifndef __KERNEL__
 extern const char libreswan_vendorid[];
-#endif
 
 /*
  * obsolete functions, to be deleted eventually
