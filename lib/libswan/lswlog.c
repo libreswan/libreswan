@@ -101,9 +101,9 @@ static struct dest dest(struct lswlog *log)
  * The output needs to be truncated, overwrite the end of the buffer
  * with DOTS.
  */
-static void truncate(struct lswlog *log)
+static void truncate_buf(struct lswlog *log)
 {
-	lswlog_debugf("truncate(.log=%p)\n", log);
+	lswlog_debugf("truncate_buf(.log=%p)\n", log);
 	lswlog_debugf("\tblen=%zu\n", log->len);
 	lswlog_debugf("\tbbound=%zu\n", log->bound);
 	lswlog_debugf("\tbdots=%s\n", log->dots);
@@ -165,7 +165,7 @@ static size_t concat(struct lswlog *log, const char *string)
 		/*
 		 * ... and then go back and blat the end with DOTS.
 		 */
-		truncate(log);
+		truncate_buf(log);
 	}
 	/* already overflowed */
 
@@ -217,7 +217,7 @@ static size_t append(struct lswlog *log, const char *format, va_list ap)
 		/*
 		 * ... and then mark the buffer as truncated.
 		 */
-		truncate(log);
+		truncate_buf(log);
 	}
 	/* already overflowed */
 
