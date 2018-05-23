@@ -3,7 +3,7 @@
 # Copyright (C) 2001, 2002  Henry Spencer.
 # Copyright (C) 2003-2006   Xelerance Corporation
 # Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2015,2017 Andrew Cagney
+# Copyright (C) 2015,2017-2018 Andrew Cagney
 # Copyright (C) 2015-2016 Tuomo Soini <tis@foobar.fi>
 #
 # This program is free software; you can redistribute it and/or modify it
@@ -408,21 +408,6 @@ USE_BSDKAME?=false
 ifeq ($(USE_BSDKAME),true)
 USE_NETKEY=false
 USE_KLIPS=false
-endif
-
-# include PAM support for XAUTH when available on the platform
-
-ifeq ($(OSDEP),linux)
-USE_XAUTHPAM?=true
-endif
-ifeq ($(OSDEP),bsd)
-USE_XAUTHPAM?=true
-endif
-ifeq ($(OSDEP),darwin)
-USE_XAUTHPAM?=true
-endif
-ifeq ($(OSDEP),sunos)
-USE_XAUTHPAM?=true
 endif
 
 # Build support for integrity check for libreswan on startup

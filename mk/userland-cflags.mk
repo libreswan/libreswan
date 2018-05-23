@@ -109,11 +109,14 @@ ifeq ($(USE_NM),true)
 USERLAND_CFLAGS+=-DHAVE_NM
 endif
 
-# if we use pam for password checking then add it too
+# include PAM support for XAUTH when available on the platform
+
+USE_XAUTHPAM?=true
 ifeq ($(USE_XAUTHPAM),true)
 USERLAND_CFLAGS += -DXAUTH_HAVE_PAM
 XAUTHPAM_LDFLAGS ?= -lpam
 endif
+
 
 ifeq ($(USE_SAREF_KERNEL),true)
 USERLAND_CFLAGS+=-DSAREF_SUPPORTED
