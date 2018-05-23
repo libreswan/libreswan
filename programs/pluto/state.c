@@ -430,14 +430,14 @@ static void update_state_stats(struct state *st, enum state_kind old_state,
 }
 
 /*
- * Humanize_number: make large numbers clearer by expressing them as KB or MB,
+ * readable_humber: make large numbers clearer by expressing them as KB or MB,
  * as appropriate.
  * The prefix is literally copied into the output.
  * Tricky representation: if the prefix starts with !, the number
  * is taken as kilobytes.  Thus the caller does not scaling, with the attendant
  * risk of overflow.  The ! is not printed.
  */
-static char *humanize_number(uint64_t num,
+static char *readable_humber(uint64_t num,
 			     char *buf,
 			     const char *buf_roof,
 			     const char *prefix)
@@ -1019,12 +1019,12 @@ void delete_state(struct state *st)
 		 */
 		if (st->st_esp.present) {
 			char statebuf[1024];
-			char *sbcp = humanize_number(st->st_esp.peer_bytes,
+			char *sbcp = readable_humber(st->st_esp.peer_bytes,
 					       statebuf,
 					       statebuf + sizeof(statebuf),
 					       "ESP traffic information: in=");
 
-			(void)humanize_number(st->st_esp.our_bytes,
+			(void)readable_humber(st->st_esp.our_bytes,
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
@@ -1038,12 +1038,12 @@ void delete_state(struct state *st)
 
 		if (st->st_ah.present) {
 			char statebuf[1024];
-			char *sbcp = humanize_number(st->st_ah.peer_bytes,
+			char *sbcp = readable_humber(st->st_ah.peer_bytes,
 					       statebuf,
 					       statebuf + sizeof(statebuf),
 					       "AH traffic information: in=");
 
-			(void)humanize_number(st->st_ah.our_bytes,
+			(void)readable_humber(st->st_ah.our_bytes,
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
@@ -1057,12 +1057,12 @@ void delete_state(struct state *st)
 
 		if (st->st_ipcomp.present) {
 			char statebuf[1024];
-			char *sbcp = humanize_number(st->st_ipcomp.peer_bytes,
+			char *sbcp = readable_humber(st->st_ipcomp.peer_bytes,
 					       statebuf,
 					       statebuf + sizeof(statebuf),
 					       " IPCOMP traffic information: in=");
 
-			(void)humanize_number(st->st_ipcomp.our_bytes,
+			(void)readable_humber(st->st_ipcomp.our_bytes,
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
@@ -2252,7 +2252,7 @@ void fmt_state(struct state *st, const monotime_t now,
 			add_said(&c->spd.that.host_addr, st->st_ah.attrs.spi,
 				 SA_AH);
 			if (get_sa_info(st, FALSE, NULL)) {
-				mbcp = humanize_number(st->st_ah.peer_bytes,
+				mbcp = readable_humber(st->st_ah.peer_bytes,
 						       mbcp,
 						       traffic_buf +
 							  sizeof(traffic_buf),
@@ -2261,13 +2261,13 @@ void fmt_state(struct state *st, const monotime_t now,
 			add_said(&c->spd.this.host_addr, st->st_ah.our_spi,
 				 SA_AH);
 			if (get_sa_info(st, TRUE, NULL)) {
-				mbcp = humanize_number(st->st_ah.our_bytes,
+				mbcp = readable_humber(st->st_ah.our_bytes,
 						       mbcp,
 						       traffic_buf +
 							 sizeof(traffic_buf),
 						       " AHin=");
 			}
-			mbcp = humanize_number(
+			mbcp = readable_humber(
 					(u_long)st->st_ah.attrs.life_kilobytes,
 					mbcp,
 					traffic_buf +
@@ -2278,7 +2278,7 @@ void fmt_state(struct state *st, const monotime_t now,
 			add_said(&c->spd.that.host_addr, st->st_esp.attrs.spi,
 				 SA_ESP);
 			if (get_sa_info(st, TRUE, NULL)) {
-				mbcp = humanize_number(st->st_esp.our_bytes,
+				mbcp = readable_humber(st->st_esp.our_bytes,
 						       mbcp,
 						       traffic_buf +
 							 sizeof(traffic_buf),
@@ -2287,14 +2287,14 @@ void fmt_state(struct state *st, const monotime_t now,
 			add_said(&c->spd.this.host_addr, st->st_esp.our_spi,
 				 SA_ESP);
 			if (get_sa_info(st, FALSE, NULL)) {
-				mbcp = humanize_number(st->st_esp.peer_bytes,
+				mbcp = readable_humber(st->st_esp.peer_bytes,
 						       mbcp,
 						       traffic_buf +
 							 sizeof(traffic_buf),
 						       " ESPout=");
 			}
 
-			mbcp = humanize_number(
+			mbcp = readable_humber(
 					(u_long)st->st_esp.attrs.life_kilobytes,
 					mbcp,
 					traffic_buf +
@@ -2305,7 +2305,7 @@ void fmt_state(struct state *st, const monotime_t now,
 			add_said(&c->spd.that.host_addr,
 				 st->st_ipcomp.attrs.spi, SA_COMP);
 			if (get_sa_info(st, FALSE, NULL)) {
-				mbcp = humanize_number(
+				mbcp = readable_humber(
 						st->st_ipcomp.peer_bytes,
 						mbcp,
 						traffic_buf +
@@ -2315,7 +2315,7 @@ void fmt_state(struct state *st, const monotime_t now,
 			add_said(&c->spd.this.host_addr, st->st_ipcomp.our_spi,
 				 SA_COMP);
 			if (get_sa_info(st, TRUE, NULL)) {
-				mbcp = humanize_number(
+				mbcp = readable_humber(
 						st->st_ipcomp.our_bytes,
 						mbcp,
 						traffic_buf +
@@ -2324,7 +2324,7 @@ void fmt_state(struct state *st, const monotime_t now,
 			}
 
 			/* mbcp not subsequently used */
-			mbcp = humanize_number(
+			mbcp = readable_humber(
 					(u_long)st->st_ipcomp.attrs.life_kilobytes,
 					mbcp,
 					traffic_buf + sizeof(traffic_buf),
