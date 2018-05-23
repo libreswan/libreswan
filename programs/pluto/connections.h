@@ -140,6 +140,7 @@ extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
 #include "id.h"    /* for struct id */
 #include "lmod.h"
 #include "reqid.h"
+#include "err.h"
 #include "state.h"
 
 struct virtual_t;

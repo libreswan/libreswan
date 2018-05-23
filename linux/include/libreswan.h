@@ -17,6 +17,8 @@
 #ifndef _LIBRESWAN_H
 #define _LIBRESWAN_H    /* seen it, no need to see it again */
 
+#include "err.h"
+
 /*
  * Libreswan was written before <stdbool.h> was standardized.
  * We continue to use TRUE and FALSE because we think that they are clearer
@@ -255,7 +257,6 @@ typedef struct {                                /* to identify an SA, we need: *
 } ip_said;
 
 /* misc */
-typedef const char *err_t;      /* error message, or NULL for success */
 struct prng {                   /* pseudo-random-number-generator guts */
 	unsigned char sbox[256];
 	int i, j;

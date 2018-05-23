@@ -29,6 +29,7 @@
 
 #include "deltatime.h"
 #include "chunk.h"
+#include "err.h"
 #include "constants.h"
 
 typedef enum {

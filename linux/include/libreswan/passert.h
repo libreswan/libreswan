@@ -18,6 +18,7 @@
  */
 
 #include <signal.h>	/* for sig_atomic_t */
+#include "err.h"
 #include "libreswan.h"
 
 #ifndef _LIBRESWAN_PASSERT_H

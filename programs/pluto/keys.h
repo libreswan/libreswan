@@ -26,6 +26,7 @@
 
 #include "x509.h"
 #include "certs.h"
+#include "err.h"
 
 struct connection;
 struct RSA_private_key;

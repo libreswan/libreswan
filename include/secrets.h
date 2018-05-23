@@ -22,11 +22,12 @@
 #ifndef _SECRETS_H
 #define _SECRETS_H
 
-#include "id.h"
-
 #include <nss.h>
 #include <pk11pub.h>
+
 #include "x509.h"
+#include "id.h"
+#include "err.h"
 #include "realtime.h"
 
 struct state;	/* forward declaration */

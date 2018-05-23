@@ -21,6 +21,7 @@
 #include <event2/event.h>	/* from libevent devel */
 #include <event2/event_struct.h>
 #include "timer.h"
+#include "err.h"
 
 struct state;
 struct msg_digest;

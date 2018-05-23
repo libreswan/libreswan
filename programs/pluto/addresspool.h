@@ -18,6 +18,8 @@
 #ifndef _ADDRESSPOOL_H
 #define _ADDRESSPOOL_H
 
+#include "err.h"
+
 struct ip_pool;	/* forward declaration; definition is local to addresspool.c */
 
 extern struct ip_pool *install_addresspool(const ip_range *pool_range);

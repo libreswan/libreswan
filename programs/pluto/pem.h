@@ -18,5 +18,7 @@
  */
 
 #include "certs.h"
+#include "err.h"
+#include "chunk.h"
 
 extern err_t pemtobin(chunk_t *blob);

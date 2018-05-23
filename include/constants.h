@@ -85,15 +85,6 @@ struct lswlog;
 #define PMIN(x,y) ((x) <= (y) ? (x) : (y))
 #define PMAX(x,y) ((x) >= (y) ? (x) : (y))
 
-/* Many routines return only success or failure, but wish to describe
- * the failure in a message.  We use the convention that they return
- * a NULL on success and a pointer to constant string on failure.
- * The fact that the string is a constant is limiting, but it
- * avoids storage management issues: the recipient is allowed to assume
- * that the string will live "long enough" (usually forever).
- * <libreswan.h> defines err_t for this return type.
- */
-
 /*
  * Libreswan was written before <stdbool.h> was standardized.
  * We continue to use TRUE and FALSE because we think that they are clearer
