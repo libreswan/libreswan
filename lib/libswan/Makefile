@@ -163,9 +163,6 @@ OBJS += pfkey_v2_build.o pfkey_v2_ext_bits.o pfkey_v2_parse.o
 OBJS += pfkey_v2_debug.o
 endif
 
-CFLAGS+=-I${LIBRESWANSRCDIR}/lib/libcrypto/libsha2
-CFLAGS+=-I${LIBRESWANSRCDIR}/lib/libcrypto/libaes_xcbc
-
 KLIPSSRCDIR?=${LIBRESWANSRCDIR}/linux/net/ipsec
 
 VPATH+= ${KLIPSSRCDIR}
