@@ -28,6 +28,7 @@
 #include "lmod.h"
 #include "deltatime.h"
 #include "chunk.h"
+#include "reqid.h"
 
 #ifndef DEFAULT_RUNDIR
 # define DEFAULT_RUNDIR "/run/pluto/"

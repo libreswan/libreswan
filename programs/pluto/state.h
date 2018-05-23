@@ -37,6 +37,7 @@
 
 #include "deltatime.h"
 #include "monotime.h"
+#include "reqid.h"
 
 #include <nss.h>
 #include <pk11pub.h>
