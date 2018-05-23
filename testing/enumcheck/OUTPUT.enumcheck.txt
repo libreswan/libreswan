@@ -33,22 +33,22 @@ pluto enum_names:
          lswlog_enum_short 4: OK
 
   certpolicy_type_names:
-    1 -> cert_neversend
+    1 -> CERT_NEVERSEND
          lswlog_enum 1: OK
-         search cert_neversend: OK
-         match cert_neversend: OK
+         search CERT_NEVERSEND: OK
+         match CERT_NEVERSEND: OK
          short_name 1:  OK
          lswlog_enum_short 1: OK
-    2 -> cert_sendifasked
+    2 -> CERT_SENDIFASKED
          lswlog_enum 2: OK
-         search cert_sendifasked: OK
-         match cert_sendifasked: OK
+         search CERT_SENDIFASKED: OK
+         match CERT_SENDIFASKED: OK
          short_name 2:  OK
          lswlog_enum_short 2: OK
-    3 -> cert_alwayssend
+    3 -> CERT_ALWAYSSEND
          lswlog_enum 3: OK
-         search cert_alwayssend: OK
-         match cert_alwayssend: OK
+         search CERT_ALWAYSSEND: OK
+         match CERT_ALWAYSSEND: OK
          short_name 3:  OK
          lswlog_enum_short 3: OK
 

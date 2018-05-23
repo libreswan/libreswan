@@ -896,7 +896,7 @@ int main(int argc, char **argv)
 	msg.modecfg_dns = NULL;
 	msg.modecfg_banner = NULL;
 
-	msg.nic_offload = nic_offload_auto;
+	msg.nic_offload = yna_auto;
 	msg.sa_ike_life_seconds = deltatime(IKE_SA_LIFETIME_DEFAULT);
 	msg.sa_ipsec_life_seconds = deltatime(IPSEC_SA_LIFETIME_DEFAULT);
 	msg.sa_rekey_margin = deltatime(SA_REPLACEMENT_MARGIN_DEFAULT);
@@ -1407,12 +1407,12 @@ int main(int argc, char **argv)
 
 		case END_SENDCERT:
 			if (streq(optarg, "yes") || streq(optarg, "always")) {
-				msg.right.sendcert = cert_alwayssend;
+				msg.right.sendcert = CERT_ALWAYSSEND;
 			} else if (streq(optarg,
 					 "no") || streq(optarg, "never")) {
-				msg.right.sendcert = cert_neversend;
+				msg.right.sendcert = CERT_NEVERSEND;
 			} else if (streq(optarg, "ifasked")) {
-				msg.right.sendcert = cert_sendifasked;
+				msg.right.sendcert = CERT_SENDIFASKED;
 			} else {
 				diagq("whack sendcert value is not legal",
 				      optarg);
@@ -1684,27 +1684,27 @@ int main(int argc, char **argv)
 
 		/* backwards compatibility */
 		case CD_FORCEENCAPS:
-			msg.encaps = encaps_yes;
+			msg.encaps = yna_yes;
 			continue;
 
 		case CD_ENCAPS:
 			if (streq(optarg, "auto"))
-				msg.encaps = encaps_auto;
+				msg.encaps = yna_auto;
 			else if (streq(optarg, "yes"))
-				msg.encaps = encaps_yes;
+				msg.encaps = yna_yes;
 			else if (streq(optarg, "no"))
-				msg.encaps = encaps_no;
+				msg.encaps = yna_no;
 			else
 				diag("--encaps options are 'auto', 'yes' or 'no'");
 			continue;
 
 		case CD_NIC_OFFLOAD:  /* --nic-offload */
 			if (streq(optarg, "no"))
-				msg.nic_offload = nic_offload_no;
+				msg.nic_offload = yna_no;
 			else if (streq(optarg, "yes"))
-				msg.nic_offload = nic_offload_yes;
+				msg.nic_offload = yna_yes;
 			else if (streq(optarg, "auto"))
-				msg.nic_offload = nic_offload_auto;
+				msg.nic_offload = yna_auto;
 			else
 				diag("--nic-offload options are 'no', 'yes' or 'auto'");
 			continue;
@@ -1715,11 +1715,11 @@ int main(int argc, char **argv)
 
 		case CD_IKEV1_NATT:	/* --ikev1_natt */
 			if (streq(optarg, "both"))
-				msg.ikev1_natt = natt_both;
+				msg.ikev1_natt = NATT_BOTH;
 			else if (streq(optarg, "rfc"))
-				msg.ikev1_natt = natt_rfc;
+				msg.ikev1_natt = NATT_RFC;
 			else if (streq(optarg, "drafts"))
-				msg.ikev1_natt = natt_drafts;
+				msg.ikev1_natt = NATT_DRAFTS;
 			else
 				diag("--ikev1-natt options are 'both', 'rfc' or 'drafts'");
 			continue;

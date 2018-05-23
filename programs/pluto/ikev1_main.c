@@ -116,7 +116,7 @@ void main_outI1(int whack_sock,
 	if (c->policy & POLICY_IKE_FRAG_ALLOW)
 		numvidtosend++;
 
-	if (nat_traversal_enabled && c->ikev1_natt != natt_none)
+	if (nat_traversal_enabled && c->ikev1_natt != NATT_NONE)
 		numvidtosend++;
 
 	if (c->cisco_unity) {
@@ -262,7 +262,7 @@ void main_outI1(int whack_sock,
 		}
 	}
 
-	if (nat_traversal_enabled && c->ikev1_natt != natt_none) {
+	if (nat_traversal_enabled && c->ikev1_natt != NATT_NONE) {
 		int np = --numvidtosend > 0 ?
 			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
@@ -1344,9 +1344,9 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 	 */
 	send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
 		mycert.ty != CERT_NONE && mycert.u.nss_cert != NULL &&
-		((st->st_connection->spd.this.sendcert == cert_sendifasked &&
+		((st->st_connection->spd.this.sendcert == CERT_SENDIFASKED &&
 		  st->hidden_variables.st_got_certrequest) ||
-		 st->st_connection->spd.this.sendcert == cert_alwayssend);
+		 st->st_connection->spd.this.sendcert == CERT_ALWAYSSEND);
 
 	send_authcerts = (send_cert &&
 			  st->st_connection->send_ca != CA_SEND_NONE);
@@ -1729,9 +1729,9 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 
 	send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
 		mycert.ty != CERT_NONE && mycert.u.nss_cert != NULL &&
-		((st->st_connection->spd.this.sendcert == cert_sendifasked &&
+		((st->st_connection->spd.this.sendcert == CERT_SENDIFASKED &&
 		  st->hidden_variables.st_got_certrequest) ||
-		 st->st_connection->spd.this.sendcert == cert_alwayssend);
+		 st->st_connection->spd.this.sendcert == CERT_ALWAYSSEND);
 
 	send_authcerts = (send_cert &&
 			  st->st_connection->send_ca != CA_SEND_NONE);
@@ -2651,7 +2651,7 @@ bool accept_delete(struct msg_digest *md,
 				/* note: this code is cloned for handling self_delete */
 				loglog(RC_LOG_SERIOUS, "received Delete SA payload: deleting ISAKMP State #%lu",
 					dst->st_serialno);
-				if (nat_traversal_enabled && dst->st_connection->ikev1_natt != natt_none)
+				if (nat_traversal_enabled && dst->st_connection->ikev1_natt != NATT_NONE)
 					nat_traversal_change_port_lookup(md, dst);
 				delete_state(dst);
 			}
@@ -2689,7 +2689,7 @@ bool accept_delete(struct msg_digest *md,
 				struct connection *rc = dst->st_connection;
 				struct connection *oldc = push_cur_connection(rc);
 
-				if (nat_traversal_enabled && dst->st_connection->ikev1_natt != natt_none)
+				if (nat_traversal_enabled && dst->st_connection->ikev1_natt != NATT_NONE)
 					nat_traversal_change_port_lookup(md, dst);
 
 				if (rc->newest_ipsec_sa == dst->st_serialno &&
@@ -2762,7 +2762,7 @@ void accept_self_delete(struct msg_digest *md)
 	/* note: this code is cloned from handling ISAKMP non-self_delete */
 	loglog(RC_LOG_SERIOUS, "received Delete SA payload: self-deleting ISAKMP State #%lu",
 		st->st_serialno);
-	if (nat_traversal_enabled && st->st_connection->ikev1_natt != natt_none)
+	if (nat_traversal_enabled && st->st_connection->ikev1_natt != NATT_NONE)
 		nat_traversal_change_port_lookup(md, st);
 	delete_state(st);
 	md->st = st = NULL;

@@ -1759,12 +1759,12 @@ static bool del_spi(ipsec_spi_t spi, int proto,
 static void setup_esp_nic_offload(struct kernel_sa *sa, struct connection *c,
 		bool *nic_offload_fallback)
 {
-	if (c->nic_offload == nic_offload_no ||
+	if (c->nic_offload == yna_no ||
 	    c->interface == NULL || c->interface->ip_dev == NULL ||
 	    c->interface->ip_dev->id_rname == NULL)
 		return;
 
-	if (c->nic_offload == nic_offload_auto) {
+	if (c->nic_offload == yna_auto) {
 		if (!c->interface->ip_dev->id_nic_offload)
 			return;
 

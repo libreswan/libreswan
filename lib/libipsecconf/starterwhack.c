@@ -394,7 +394,7 @@ static void set_whack_end(char *lr,
 	if (l->options_set[KNCF_SENDCERT])
 		w->sendcert = l->options[KNCF_SENDCERT];
 	else
-		w->sendcert = cert_alwayssend;
+		w->sendcert = CERT_ALWAYSSEND;
 
 	if (l->options_set[KNCF_AUTH])
 		w->authby = l->options[KNCF_AUTH];
@@ -610,7 +610,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	if (conn->options_set[KBF_ENCAPS])
                msg.encaps = conn->options[KBF_ENCAPS];
 	else
-               msg.encaps = encaps_auto;
+               msg.encaps = yna_auto;
 
 	if (conn->options_set[KBF_NAT_KEEPALIVE])
 		msg.nat_keepalive = conn->options[KBF_NAT_KEEPALIVE];
@@ -620,7 +620,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	if (conn->options_set[KBF_IKEV1_NATT])
 		msg.ikev1_natt = conn->options[KBF_IKEV1_NATT];
 	else
-		msg.ikev1_natt = natt_both;
+		msg.ikev1_natt = NATT_BOTH;
 
 
 	/* Activate sending out own vendorid */

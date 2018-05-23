@@ -243,7 +243,7 @@ struct connection {
 	deltatime_t r_timeout; /* max time (in secs) for one packet exchange attempt */
 	reqid_t sa_reqid;
 	int encapsulation;
-	enum nic_offload_options nic_offload;
+	enum yna_options nic_offload;
 
 	/* RFC 3706 DPD */
 	deltatime_t dpd_delay;		/* time between checks */
@@ -257,7 +257,7 @@ struct connection {
 	bool mobike;			/* Allow MOBIKE */
 	bool send_vendorid;		/* Send our vendorid? Security vs Debugging help */
 	enum ikev1_natt_policy ikev1_natt; /* whether or not to send IKEv1 draft/rfc NATT VIDs */
-	enum encaps_options encaps; /* encapsulation mode of auto/yes/no - formerly forceencaps=yes/no */
+	enum yna_options encaps; /* encapsulation mode of auto/yes/no - formerly forceencaps=yes/no */
 
 	/* Network Manager support */
 #ifdef HAVE_NM
