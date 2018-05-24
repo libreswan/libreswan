@@ -414,11 +414,6 @@ endif
 USE_FIPSCHECK?=false
 FIPSPRODUCTCHECK?=/etc/system-fips
 
-# Build support for the Linux Audit system
-ifeq ($(OSDEP),linux)
-USE_LINUX_AUDIT?=false
-endif
-
 # Enable Labeled IPsec Functionality (requires SElinux)
 USE_LABELED_IPSEC?=false
 

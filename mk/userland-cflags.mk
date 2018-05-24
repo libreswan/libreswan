@@ -90,8 +90,11 @@ USERLAND_CFLAGS+=-DLIBCURL
 CURL_LDFLAGS ?= -lcurl
 endif
 
+# Build support for the Linux Audit system
+
+USE_LINUX_AUDIT ?= false
 ifeq ($(USE_LINUX_AUDIT),true)
-USERLAND_CFLAGS+=-DUSE_LINUX_AUDIT
+USERLAND_CFLAGS += -DUSE_LINUX_AUDIT
 LINUX_AUDIT_LDFLAGS ?= -laudit
 endif
 
