@@ -332,6 +332,7 @@ kvmplutotest	ikev1-switchnat-01			good
 kvmplutotest	ikev1-hub-spoke 			good
 
 kvmplutotest	ikev1-hostpair-01			good
+kvmplutotest	ikev1-hostpair-02			wip
 kvmplutotest	ikev2-hostpair-01			bad
 kvmplutotest	ikev2-hostpair-02			wip
 
