@@ -141,6 +141,11 @@ static bool send_or_resend_v1_ike_msg_from_state(struct state *st,
 		libreswan_log("Cannot send packet - interface vanished!");
 		return FALSE;
 	}
+	/* another bandaid */
+	if (st->st_tpacket.ptr == NULL) {
+		libreswan_log("Cannot send packet - st_tpacket.ptr is NULL");
+		return false;
+	}
 	passert(st->st_v2_tfrags == NULL);
 	/*
 	 * Each fragment, if we are doing NATT, needs a non-ESP_Marker
