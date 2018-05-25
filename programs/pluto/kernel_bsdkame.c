@@ -868,7 +868,11 @@ static bool bsdkame_sag_eroute(const struct state *st,
 		proto = IPPROTO_ESP;
 	else if (st->st_ipcomp.present)
 		proto = IPPROTO_COMP;
-	setup_client_ports(sr);
+
+	if (!sr->this.has_port_wildcard)
+		setportof(htons(sr->this.port), &sr->this.client.addr);
+	if (!sr->that.has_port_wildcard)
+		setportof(htons(sr->that.port), &sr->that.client.addr);
 
 	return bsdkame_raw_eroute(&sr->this.host_addr,
 				  &sr->this.client,

@@ -518,8 +518,6 @@ void connection_check_ddns(void);
 void connection_check_phase2(void);
 void init_connections(void);
 
-extern void setup_client_ports(struct spd_route *sr);
-
 extern int foreach_connection_by_alias(const char *alias,
 				       int (*f)(struct connection *c,
 						void *arg),

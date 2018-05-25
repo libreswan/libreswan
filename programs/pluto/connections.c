@@ -1013,14 +1013,6 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 	return same_ca;
 }
 
-void setup_client_ports(struct spd_route *sr)
-{
-	if (!sr->this.has_port_wildcard)
-		setportof(htons(sr->this.port), &sr->this.client.addr);
-	if (!sr->that.has_port_wildcard)
-		setportof(htons(sr->that.port), &sr->that.client.addr);
-}
-
 static bool check_connection_end(const struct whack_end *this,
 				const struct whack_end *that,
 				const struct whack_message *wm)
