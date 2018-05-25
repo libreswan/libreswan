@@ -13,8 +13,6 @@
  * for more details.
  */
 
-#ifdef XAUTH_HAVE_PAM
-
 #include <stdlib.h>
 
 #include "constants.h"
@@ -200,5 +198,3 @@ void xauth_start_pam_thread(struct state *st,
 	st->st_xauth = xauth;
 	pstats_xauth_started++;
 }
-
-#endif

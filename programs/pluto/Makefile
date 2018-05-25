@@ -112,10 +112,15 @@ ifeq ($(USE_IPSEC_CONNECTION_LIMIT),true)
 CFLAGS += -DIPSEC_CONNECTION_LIMIT=$(IPSEC_CONNECTION_LIMIT)
 endif
 
-OBJS += ikev1_xauth.o addresspool.o
-OBJS += $(call if-enabled, USE_XAUTHPAM, pam_conv.o)
+OBJS += addresspool.o
+
+OBJS += ikev1_xauth.o
+ifeq ($(USE_XAUTHPAM),true)
 OBJS += xauth.o
+OBJS += pam_conv.o
+endif
 LDFLAGS += $(XAUTHPAM_LDFLAGS)
+
 ifneq ($(BUILDENV), darwin)
 LDFLAGS += -lcrypt
 endif
