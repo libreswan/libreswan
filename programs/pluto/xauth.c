@@ -15,8 +15,6 @@
 
 #ifdef XAUTH_HAVE_PAM
 
-#include <pthread.h> /* Must be the first include file */
-
 #include <stdlib.h>
 
 #include "constants.h"
@@ -167,8 +165,6 @@ void xauth_start_pam_thread(struct state *st,
 	so_serial_t serialno = st->st_serialno;
 
 	/* now start the xauth child process */
-
-	passert(pthread_equal(main_thread, pthread_self()));
 
 	struct xauth *xauth = alloc_thing(struct xauth, "xauth arg");
 
