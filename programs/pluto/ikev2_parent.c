@@ -528,7 +528,7 @@ static stf_status ikev2_match_ke_group_and_proposal(struct msg_digest *md,
  * Called by ikev2_parent_inI2outR2_tail() and ikev2_parent_inR2()
  * Do the actual AUTH payload verification
  */
-static bool v2_check_auth(enum ikev2_auth_method atype,
+static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 	struct state *st,
 	const enum original_role role,
 	unsigned char idhash_in[MAX_DIGEST_LEN],
@@ -537,10 +537,11 @@ static bool v2_check_auth(enum ikev2_auth_method atype,
 {
 	unsigned char check_rsa_sha1_blob[ASN1_SHA1_RSA_OID_SIZE] = {0x0};
 	unsigned char check_length_rsa_sha1_blob[ASN1_LEN_ALGO_IDENTIFIER]= {0};
-	switch (atype) {
+
+	switch (recv_auth) {
 	case IKEv2_AUTH_RSA:
 	{
-		if (!LIN(POLICY_RSASIG, st->st_connection->policy) &&  that_authby != AUTH_RSASIG) {
+		if (that_authby != AUTH_RSASIG) {
 			libreswan_log("Peer attempted RSA authentication but we want %s",
 				enum_name(&ikev2_asym_auth_name, that_authby));
 			return FALSE;
@@ -561,26 +562,25 @@ static bool v2_check_auth(enum ikev2_auth_method atype,
 
 	case IKEv2_AUTH_PSK:
 	{
-		if (!LIN(POLICY_PSK, st->st_connection->policy) &&  that_authby != AUTH_PSK) {
+		if (that_authby != AUTH_PSK) {
 			libreswan_log("Peer attempted PSK authentication but we want %s",
 				enum_name(&ikev2_asym_auth_name, that_authby));
 			return FALSE;
 		}
 
-               stf_status authstat = ikev2_verify_psk_auth(
-                               AUTH_PSK, st, idhash_in,
-                               pbs);
+		stf_status authstat = ikev2_verify_psk_auth(
+			AUTH_PSK, st, idhash_in, pbs);
 
-               if (authstat != STF_OK) {
-                       libreswan_log("PSK Authentication failed: AUTH mismatch!");
-                       return FALSE;
-               }
-               return TRUE;
+		if (authstat != STF_OK) {
+			libreswan_log("PSK Authentication failed: AUTH mismatch!");
+			return FALSE;
+		}
+		return TRUE;
 	}
 
 	case IKEv2_AUTH_NULL:
 	{
-		if (!LIN(POLICY_AUTH_NULL, st->st_connection->policy) &&  that_authby != AUTH_NULL) {
+		if (that_authby != AUTH_NULL) {
 			libreswan_log("Peer attempted NULL authentication but we want %s",
 				enum_name(&ikev2_asym_auth_name, that_authby));
 			return FALSE;
@@ -600,7 +600,7 @@ static bool v2_check_auth(enum ikev2_auth_method atype,
 
 	case IKEv2_AUTH_DIGSIG:
 	{
-		if (!LIN(POLICY_RSASIG, st->st_connection->policy) &&  that_authby != AUTH_RSASIG) {
+		if (that_authby != AUTH_RSASIG) {
 			libreswan_log("Peer attempted Authentication through Digital Signature but we want %s",
 				enum_name(&ikev2_asym_auth_name, that_authby));
 			return FALSE;
@@ -633,7 +633,7 @@ static bool v2_check_auth(enum ikev2_auth_method atype,
 	default:
 	{
 		libreswan_log("authentication method: %s not supported",
-				enum_name(&ikev2_auth_names, atype));
+				enum_name(&ikev2_auth_names, recv_auth));
 		return FALSE;
 	}
 
