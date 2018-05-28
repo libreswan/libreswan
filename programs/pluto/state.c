@@ -434,7 +434,7 @@ static void update_state_stats(struct state *st, enum state_kind old_state,
  * as appropriate.
  * The prefix is literally copied into the output.
  * Tricky representation: if the prefix starts with !, the number
- * is taken as kilobytes.  Thus the caller does not scaling, with the attendant
+ * is taken as kilobytes.  Thus the caller can avoid scaling, with its
  * risk of overflow.  The ! is not printed.
  */
 static char *readable_humber(uint64_t num,
