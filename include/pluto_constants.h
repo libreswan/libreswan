@@ -388,7 +388,6 @@ enum {
 	IMPAIR_BUST_MR2_IX,			/* make MR2 really large */
 	IMPAIR_DROP_I2_IX,			/* drop second initiator packet */
 	IMPAIR_SA_CREATION_IX,			/* fail all SA creation */
-	IMPAIR_DIE_ONINFO_IX,			/* cause state to be deleted upon receipt of information payload */
 	IMPAIR_JACOB_TWO_TWO_IX,		/* cause pluto to send all messages twice. */
 						/* cause pluto to send all messages twice. */
 	IMPAIR_ALLOW_NULL_NULL_IX,			/* cause pluto to allow esp=null-null and ah=null for testing */
@@ -449,7 +448,6 @@ enum {
 #define IMPAIR_BUST_MR2	LELEM(IMPAIR_BUST_MR2_IX)
 #define IMPAIR_DROP_I2	LELEM(IMPAIR_DROP_I2_IX)
 #define IMPAIR_SA_CREATION	LELEM(IMPAIR_SA_CREATION_IX)
-#define IMPAIR_DIE_ONINFO	LELEM(IMPAIR_DIE_ONINFO_IX)
 #define IMPAIR_JACOB_TWO_TWO	LELEM(IMPAIR_JACOB_TWO_TWO_IX)
 #define IMPAIR_ALLOW_NULL_NULL	LELEM(IMPAIR_ALLOW_NULL_NULL_IX)
 #define IMPAIR_MAJOR_VERSION_BUMP	LELEM(IMPAIR_MAJOR_VERSION_BUMP_IX)

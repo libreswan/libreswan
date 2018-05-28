@@ -31,7 +31,6 @@ static const char *impair_strings[] = {
 	I(IMPAIR_BUST_MR2, "impair-bust-mr2"),
 	I(IMPAIR_DROP_I2, "impair-drop-i2"),
 	I(IMPAIR_SA_CREATION, "impair-sa-creation"),
-	I(IMPAIR_DIE_ONINFO, "impair-die-oninfo"),
 	I(IMPAIR_JACOB_TWO_TWO, "impair-jacob-two-two"),
 	I(IMPAIR_ALLOW_NULL_NULL, "impair-allow-null-null"),
 	I(IMPAIR_MAJOR_VERSION_BUMP, "impair-major-version-bump"),

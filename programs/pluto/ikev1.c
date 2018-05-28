@@ -922,16 +922,6 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 			}
 			return STF_IGNORE;
 		default:
-			if (st != NULL &&
-			    (lmod_is_set(st->st_connection->extra_impairing,
-					 IMPAIR_DIE_ONINFO))) {
-				loglog(RC_LOG_SERIOUS,
-				       "received unhandled informational notification payload %d: '%s'",
-				       n->isan_type,
-				       enum_name(&ikev1_notify_names,
-						 n->isan_type));
-				return STF_FATAL;
-			}
 			loglog(RC_LOG_SERIOUS,
 			       "received and ignored informational message");
 			return STF_IGNORE;
@@ -2174,16 +2164,6 @@ void process_packet_tail(struct msg_digest **mdp)
 					       st->st_msgid,
 					       p->payload.notification.isan_length);
 					DBG_dump_pbs(&p->pbs);
-				}
-				if (st != NULL &&
-				    lmod_is_set(st->st_connection->extra_impairing,
-						IMPAIR_DIE_ONINFO)) {
-					loglog(RC_LOG_SERIOUS,
-					       "received and failed on unknown informational message");
-					complete_v1_state_transition(mdp,
-								     STF_FATAL);
-					/* our caller will release_any_md(mdp); */
-					return;
 				}
 			}
 			DBG_cond_dump(DBG_PARSING, "info:", p->pbs.cur, pbs_left(
