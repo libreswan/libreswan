@@ -174,7 +174,7 @@ struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval func,
 
 	SECKEYPrivateKeyListNode *node;
 	for (node = PRIVKEY_LIST_HEAD(list);
-             !PRIVKEY_LIST_END(node, list);
+	     !PRIVKEY_LIST_END(node, list);
 	     node = PRIVKEY_LIST_NEXT(node)) {
 
 		if (SECKEY_GetPrivateKeyType(node->key) != rsaKey) {

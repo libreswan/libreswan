@@ -814,7 +814,7 @@ void release_fragments(struct state *st)
 
 void ikev2_expire_unused_parent(struct state *pst)
 {
-        struct state *st;
+	struct state *st;
 
 	if (pst == NULL || !IS_PARENT_SA_ESTABLISHED(pst))
 		return; /* only deal with established parent SA */
@@ -2177,7 +2177,7 @@ void fmt_state(struct state *st, const monotime_t now,
 					snprintf(dpdbuf, sizeof(dpdbuf),
 						"; lastlive=%jds",
 						 !is_monotime_epoch(pst->st_last_liveness) ?
-                                                 deltasecs(monotimediff(mononow(), pst->st_last_liveness)) :
+						 deltasecs(monotimediff(mononow(), pst->st_last_liveness)) :
 						0);
 				}
 			}

@@ -904,7 +904,7 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 	 * On loop exit, the result is one of:
 	 *
 	 *    -ve - the STF_FAIL status
-         *    0: no proposal matched
+	 *    0: no proposal matched
 	 *    [1..LOCAL_PROPOSALS->ROOF): best match so far
 	 */
 	int matching_local_propnum = 0;
@@ -1858,7 +1858,7 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP4096, DH_MODP8192, DH_ECP256),
 		},
 	},
-        /*
+	/*
 	 * AES_GCM_16/C[128]
 	 * NONE
 	 * SHA2_512, SHA2_256, SHA1 - SHA1 is MUST- in RFC 8247
@@ -1877,7 +1877,7 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP4096, DH_MODP8192, DH_ECP256),
 		},
 	},
-        /*
+	/*
 	 * AES_CBC[256]
 	 * SHA2_512, SHA2_256, SHA1 - SHA1 is MUST- in RFC 8247
 	 * SHA2_512, SHA2_256, SHA1
@@ -1896,7 +1896,7 @@ static struct ikev2_proposal default_ikev2_ike_proposal[] = {
 			[IKEv2_TRANS_TYPE_DH] = TR(DH_MODP2048, DH_MODP3072, DH_MODP4096, DH_MODP8192, DH_ECP256),
 		},
 	},
-        /*
+	/*
 	 * AES_CBC[128]
 	 * SHA2_512, SHA2_256, SHA1 - SHA1 is MUST- in RFC 8247
 	 * SHA2_512, SHA2_256, SHA1 - SHA1 is MUST- in RFC 8247

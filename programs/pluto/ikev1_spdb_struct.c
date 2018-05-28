@@ -1782,7 +1782,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	const struct db_trans *trans = &prop->trans[0];
 
 	passert(trans->attr_cnt == 4 || trans->attr_cnt == 5);
-	
+
 	const struct db_attr *enc  = &trans->attrs[0];
 	const struct db_attr *hash = &trans->attrs[1];
 	const struct db_attr *auth = &trans->attrs[2];

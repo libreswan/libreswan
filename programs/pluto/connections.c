@@ -4577,11 +4577,11 @@ bool idr_wildmatch(const struct connection *c, const struct id *idr)
 	const char *wp = (const char *) wild->name.ptr;
 	const char *ip = (const char *) idr->name.ptr;
 
-        return  wl > 0 && wp[0] == '*' ?
-                /* wildcard case */
-                wl-1 <= il && strncaseeq(wp+1, ip+il-(wl-1), wl-1) :
-                /* literal case */
-                wl == il && strncaseeq(wp, ip, wl);
+	return  wl > 0 && wp[0] == '*' ?
+		/* wildcard case */
+		wl-1 <= il && strncaseeq(wp+1, ip+il-(wl-1), wl-1) :
+		/* literal case */
+		wl == il && strncaseeq(wp, ip, wl);
 }
 
 /* sa priority and type should really go into kernel_sa */

@@ -604,7 +604,7 @@ void send_v2_delete(struct state *const st)
 	/* increase message ID for next delete message */
 	/* ikev2_update_msgid_counters need an md */
 	ike->sa.st_msgid_nextuse++;
-        st->st_msgid = htonl(ike->sa.st_msgid_nextuse);
+	st->st_msgid = htonl(ike->sa.st_msgid_nextuse);
 }
 
 struct v2sk_payload open_v2sk_payload(pb_stream *container,

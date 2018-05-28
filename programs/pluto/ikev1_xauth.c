@@ -1870,7 +1870,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 
 					if (!in_struct(&i, &CISCO_split_desc, &strattr, NULL)) {
 						loglog(RC_INFORMATIONAL,
-                                                    "ignoring malformed CISCO_SPLIT_INC payload");
+						    "ignoring malformed CISCO_SPLIT_INC payload");
 						break;
 					}
 

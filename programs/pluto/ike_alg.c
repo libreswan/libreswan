@@ -824,7 +824,7 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 		passert_ike_alg(alg, alg->officname != NULL);
 		passert_ike_alg(alg, alg->algo_type == type);
 
-                /*
+		/*
 		 * Don't allow 0 as an algorithm ID.
 		 *
 		 * Don't even try to check 'none' algorithms.
@@ -915,7 +915,7 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 		}
 	}
 
-        /*
+	/*
 	 * Log the final list as a pretty table.
 	 *
 	 * If FIPS, scream about.  This way grepping for FIPS shows up

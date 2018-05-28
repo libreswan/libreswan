@@ -88,7 +88,7 @@ static chunk_t xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
 	/*
 	 * (3)  For each block M[i], where i = 1 ... n-1:
 	 *      XOR M[i] with E[i-1], then encrypt the result with Key K1,
-         *      yielding E[i].
+	 *      yielding E[i].
 	 */
 	chunk_t t = alloc_chunk(prf->prf_key_size, "t");
 	int n = (bytes.len + prf->prf_key_size - 1) / prf->prf_key_size;

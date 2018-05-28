@@ -59,9 +59,9 @@ const struct enum_names debug_names = {
 };
 
 struct lmod_compat debug_compat[] = {
-       { "klips",    DBG_KERNEL },
-       { "netkey",    DBG_KERNEL },
-       { NULL, LEMPTY, },
+	{ "klips",    DBG_KERNEL },
+	{ "netkey",    DBG_KERNEL },
+	{ NULL, LEMPTY, },
 };
 
 const struct lmod_info debug_lmod_info = {

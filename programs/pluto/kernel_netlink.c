@@ -133,7 +133,7 @@ static sparse_names xfrm_type_names = {
 	NE(XFRM_MSG_MAX),
 
 	{ 0, sparse_end }
-}; 
+};
 
 static sparse_names rtm_type_names = {
 	NE(RTM_BASE),

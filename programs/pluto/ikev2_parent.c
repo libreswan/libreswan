@@ -1642,7 +1642,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 		struct ikev2_generic in;
 		int np = IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_SA_INIT) ? ISAKMP_NEXT_v2UNKNOWN :
 			send_certreq ? ISAKMP_NEXT_v2CERTREQ :
-                        (vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
+			(vids != 0) ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 		zero(&in);	/* OK: no pointers */
 		in.isag_np = np;
 		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
@@ -2032,7 +2032,7 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 			break;
 		case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
 			st->st_seen_fragvid = TRUE;
-                        break;
+			break;
 
 		case v2N_USE_PPK:
 			st->st_seen_ppk = TRUE;
@@ -5128,16 +5128,16 @@ static bool ikev2_rekey_child_req(struct state *st, chunk_t *spi)
 
 static stf_status ikev2_rekey_child_resp(const struct msg_digest *md)
 {
-        struct state *st = md->st;  /* new child state */
-        struct state *rst = NULL; /* old child state being rekeyed */
-        struct payload_digest *ntfy;
-        struct state *pst = state_with_serialno(st->st_clonedfrom);
-        stf_status ret = STF_OK; /* no v2N_REKEY_SA return OK */
+	struct state *st = md->st;  /* new child state */
+	struct state *rst = NULL; /* old child state being rekeyed */
+	struct payload_digest *ntfy;
+	struct state *pst = state_with_serialno(st->st_clonedfrom);
+	stf_status ret = STF_OK; /* no v2N_REKEY_SA return OK */
 
-        for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
+	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 		char cib[CONN_INST_BUF];
 
-                switch (ntfy->payload.v2n.isan_type) {
+		switch (ntfy->payload.v2n.isan_type) {
 
 		case v2N_REKEY_SA:
 			DBG(DBG_CONTROL, DBG_log("received v2N_REKEY_SA "));
@@ -5231,7 +5231,7 @@ static stf_status ikev2_rekey_child_copy_ts(const struct msg_digest *md)
 
 /* once done use the same function in ikev2_parent_inR1outI2_tail too */
 static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
-                                  pb_stream *outpbs,
+				  pb_stream *outpbs,
 				  enum isakmp_xchg_types isa_xchg)
 {
 	bool send_use_transport;
@@ -5332,7 +5332,7 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 }
 
 static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
-                                  pb_stream *outpbs)
+				  pb_stream *outpbs)
 {
 	struct state *st = md->st;
 	struct connection *c = st->st_connection;
@@ -5463,8 +5463,8 @@ static notification_t process_ike_rekey_sa_pl_response(struct msg_digest *md,
 	}
 
 	 /* KE in */
-        RETURN_STF_FAILURE(accept_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
-                                     &md->chain[ISAKMP_NEXT_v2KE]->pbs));
+	RETURN_STF_FAILURE(accept_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
+				     &md->chain[ISAKMP_NEXT_v2KE]->pbs));
 
 	ikev2_copy_cookie_from_sa(st->st_accepted_ike_proposal, st->st_rcookie);
 	rehash_state(st, st->st_icookie, st->st_rcookie);
@@ -5545,14 +5545,14 @@ static notification_t process_ike_rekey_sa_pl(struct msg_digest *md, struct stat
 
 /* initiator received Rekey IKE SA (RFC 7296 1.3.3) response */
 stf_status ikev2_child_ike_inR(struct state *st /* child state */,
-                                   struct msg_digest *md)
+				   struct msg_digest *md)
 {
 	struct state *pst = state_with_serialno(st->st_clonedfrom);
 
 	passert(pst != NULL);
 
 	/* Ni in */
-        RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_nr, "Nr"));
+	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_nr, "Nr"));
 	RETURN_STF_FAILURE_STATUS(process_ike_rekey_sa_pl_response(md, pst,st));
 
 	DBG(DBG_CONTROLMORE,

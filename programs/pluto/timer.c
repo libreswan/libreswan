@@ -135,10 +135,10 @@ static void liveness_check(struct state *st)
 	 * If we are a lingering (replaced) IPsec SA, don't do liveness
 	 */
 	if (pst->st_connection->newest_ipsec_sa != st->st_serialno) {
-               DBG(DBG_DPD,
-                   DBG_log("liveness: no need to send or schedule DPD for replaced IPsec SA"));
-               return;
-       }
+		DBG(DBG_DPD,
+		   DBG_log("liveness: no need to send or schedule DPD for replaced IPsec SA"));
+		return;
+	}
 
 	/*
 	 * don't bother sending the check and reset
@@ -260,7 +260,7 @@ static void ikev2_expire_parent(struct state *st, deltatime_t last_used_age)
  */
 void delete_state_event(struct state *st, struct pluto_event **evp)
 {
-        struct pluto_event *ev = *evp;
+	struct pluto_event *ev = *evp;
 	DBG(DBG_DPD | DBG_CONTROL,
 	    const char *en = ev ? enum_name(&timer_event_names, ev->ev_type) : "N/A";
 	    DBG_log("state #%lu requesting %s-pe@%p be deleted",

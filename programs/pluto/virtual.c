@@ -114,7 +114,7 @@ static bool read_subnet(const char *src, size_t len,
 
 void free_virtual_ip(void)
 {
-       /* These might be NULL if empty in ipsec.conf */
+	/* These might be NULL if empty in ipsec.conf */
 	private_net_incl_len = 0;
 	pfreeany(private_net_incl);
 

@@ -317,7 +317,7 @@ void select_nss_cert_id(CERTCertificate *cert, struct id *end_id)
 {
 	if (end_id->kind == ID_FROMCERT) {
 		DBG(DBG_X509,
-                    DBG_log("setting ID to ID_DER_ASN1_DN: \'%s\'", cert->subjectName));
+		    DBG_log("setting ID to ID_DER_ASN1_DN: \'%s\'", cert->subjectName));
 		end_id->name = same_secitem_as_chunk(cert->derSubject);
 		end_id->kind = ID_DER_ASN1_DN;
 	}

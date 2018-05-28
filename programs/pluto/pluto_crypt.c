@@ -349,7 +349,7 @@ static void *pluto_crypto_helper_thread(void *arg)
 		bad_case(pluto_seccomp_mode);
 	}
 #else
-        libreswan_log("seccomp security for crypto helper not supported");
+	libreswan_log("seccomp security for crypto helper not supported");
 #endif
 
 	/* OS X does not have pthread_setschedprio */

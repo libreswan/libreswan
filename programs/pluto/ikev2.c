@@ -285,12 +285,12 @@ static /*const*/ struct state_v2_microcode v2_state_microcode_table[] = {
 	 * HDR, SAi1, N(REKEY_SA), {KEi,} Ni TSi TSr -->
 	 */
 	{ .story      = "Initiate CREATE_CHILD_SA IPsec Rekey SA",
-          .state      = STATE_V2_REKEY_CHILD_I0,
-          .next_state = STATE_V2_REKEY_CHILD_I,
-          .flags =      SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
-          .processor  = NULL,
-          .crypto_end = ikev2_child_out_cont,
-          .timeout_event = EVENT_v2_RETRANSMIT, },
+	  .state      = STATE_V2_REKEY_CHILD_I0,
+	  .next_state = STATE_V2_REKEY_CHILD_I,
+	  .flags =      SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
+	  .processor  = NULL,
+	  .crypto_end = ikev2_child_out_cont,
+	  .timeout_event = EVENT_v2_RETRANSMIT, },
 
 	/* no state:   --> CREATE IPsec Child Request
 	 * HDR, SAi1, {KEi,} Ni TSi TSr -->
@@ -1172,7 +1172,7 @@ static struct state *process_v2_child_ix(struct msg_digest *md,
 			st = NULL; /* in the previous message */
 	}
 
-        return st;
+	return st;
 }
 
 /*
@@ -1224,7 +1224,7 @@ static bool processed_retransmit(struct state *st,
 			    enum_name(&ikev2_exchange_names, ix),
 			    st->st_msgid_lastreplied);
 		return true;
-        }
+	}
 
 	if (st->st_msgid_lastreplied != st->st_msgid_lastrecv) {
 		LSWDBGP(DBG_CONTROLMORE|DBG_RETRANSMITS, buf) {

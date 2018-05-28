@@ -330,7 +330,7 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 
 	if (setsockopt(fd, SOL_SOCKET, SO_PRIORITY,
 			(const void *)&so_prio, sizeof(so_prio)) < 0) {
-                LOG_ERRNO(errno, "setsockopt(SO_PRIORITY) in find_raw_ifaces4()");
+		LOG_ERRNO(errno, "setsockopt(SO_PRIORITY) in find_raw_ifaces4()");
 		/* non-fatal */
 	}
 
@@ -509,10 +509,10 @@ void link_pluto_event_list(struct pluto_event *e) {
 
 void delete_pluto_event(struct pluto_event **evp)
 {
-        if (*evp == NULL) {
-                DBG(DBG_CONTROLMORE, DBG_log("%s cannot delete NULL event", __func__));
-                return;
-        }
+	if (*evp == NULL) {
+		DBG(DBG_CONTROLMORE, DBG_log("%s cannot delete NULL event", __func__));
+		return;
+	}
 
 	unlink_pluto_event_list(evp);
 }
@@ -912,9 +912,9 @@ static void addconn_exited(struct state *null_st UNUSED,
 			   struct msg_digest **null_mdp UNUSED,
 			   int status, void *context UNUSED)
 {
-       DBG(DBG_CONTROLMORE,
-           DBG_log("reaped addconn helper child (status %d)", status));
-       addconn_child_pid = 0;
+	DBG(DBG_CONTROLMORE,
+	   DBG_log("reaped addconn helper child (status %d)", status));
+	addconn_child_pid = 0;
 }
 
 static void log_status(struct lswlog *buf, int status)
@@ -1493,18 +1493,18 @@ bool check_incoming_msg_errqueue(const struct iface_port *ifp UNUSED,
 				 const char *before UNUSED)
 {
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
-       return check_msg_errqueue(ifp, POLLIN, before);
+	return check_msg_errqueue(ifp, POLLIN, before);
 #else
-       return true;
-#endif  /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
+	return true;
+#endif	/* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
 }
 
 void check_outgoing_msg_errqueue(const struct iface_port *ifp UNUSED,
 				 const char *before UNUSED)
 {
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
-       (void) check_msg_errqueue(ifp, POLLOUT, before);
-#endif  /* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
+	(void) check_msg_errqueue(ifp, POLLOUT, before);
+#endif	/* defined(IP_RECVERR) && defined(MSG_ERRQUEUE) */
 }
 
 bool should_fragment_ike_msg(struct state *st, size_t len, bool resending)

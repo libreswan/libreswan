@@ -1068,8 +1068,8 @@ static bool shunt_eroute(const struct connection *c,
 {
 	DBG(DBG_CONTROL, DBG_log("shunt_eroute() called for connection '%s' to '%s' for rt_kind '%s' using protoports %d--%d->-%d",
 		c->name, opname, enum_name(&routing_story, rt_kind),
-                sr->this.protocol, ntohs(portof(&sr->this.client.addr)),
-                ntohs(portof(&sr->that.client.addr))));
+		sr->this.protocol, ntohs(portof(&sr->this.client.addr)),
+		ntohs(portof(&sr->that.client.addr))));
 
 	if (kernel_ops->shunt_eroute != NULL) {
 		return kernel_ops->shunt_eroute(c, sr, rt_kind, op, opname);
@@ -2904,7 +2904,7 @@ bool route_and_eroute(struct connection *c,
 		route_installed = FALSE;
 
 	DBG(DBG_CONTROLMORE, DBG_log("route_and_eroute() for proto %d, and source port %d dest port %d",
-                sr->this.protocol, sr->this.port, sr->that.port));
+		sr->this.protocol, sr->this.port, sr->that.port));
 	setportof(htons(sr->this.port), &sr->this.client.addr);
 	setportof(htons(sr->that.port), &sr->that.client.addr);
 

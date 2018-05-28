@@ -247,9 +247,9 @@ stf_status ikev2_emit_ts_payloads(struct child_sa *child, pb_stream *outpbs,
 	 *   value - the loop control variable SR is never referenced
 	 *
 	 * - should multiple traffic selector payload be emitted then
-         *   the next payload type for all but the last v2TSr payload
-         *   will be wrong - it is always set to the type of the
-         *   payload after these
+	 *   the next payload type for all but the last v2TSr payload
+	 *   will be wrong - it is always set to the type of the
+	 *   payload after these
 	 */
 
 	for (const struct spd_route *sr = &c0->spd; sr != NULL;
@@ -1048,11 +1048,11 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	 * calls:
 	 *
 	 * - in the original responder's AUTH code so
-         *   ORIGINAL_RESPONDER is correct
+	 *   ORIGINAL_RESPONDER is correct
 	 *
 	 * - CHILD_SA reply code (?), since either end can send such a
-         *   request, the end's original role may not be
-         *   ORIGINAL_RESPONDER.
+	 *   request, the end's original role may not be
+	 *   ORIGINAL_RESPONDER.
 	 *
 	 * Looking at the code:
 	 *
@@ -1325,7 +1325,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	 * we should do this after installing ipsec_sa, but that will
 	 * give us a "eroute in use" error.
 	 */
-       ISAKMP_SA_established(pst);
+	ISAKMP_SA_established(pst);
 
 	/* install inbound and outbound SPI info */
 	if (!install_ipsec_sa(cst, TRUE))
@@ -1476,7 +1476,7 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
 		loglog(RC_LOG_SERIOUS, "ERROR expected IKEv2_CP_CFG_REQUEST got a %s",
 			enum_name(&ikev2_cp_type_names,cp->isacp_type));
 		return FALSE;
-       }
+	}
 
 	while (pbs_left(attrs) > 0) {
 		struct ikev2_cp_attribute cp_a;

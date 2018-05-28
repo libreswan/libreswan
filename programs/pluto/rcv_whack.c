@@ -149,7 +149,7 @@ static void do_whacklisten(void)
 	fflush(stdout);
 	peerlog_close();    /* close any open per-peer logs */
 #ifdef USE_SYSTEMD_WATCHDOG
-        pluto_sd(PLUTO_SD_RELOADING, SD_REPORT_NO_STATUS);
+	pluto_sd(PLUTO_SD_RELOADING, SD_REPORT_NO_STATUS);
 #endif
 	libreswan_log("listening for IKE messages");
 	listening = TRUE;
@@ -157,7 +157,7 @@ static void do_whacklisten(void)
 	load_preshared_secrets();
 	load_groups();
 #ifdef USE_SYSTEMD_WATCHDOG
-        pluto_sd(PLUTO_SD_READY, SD_REPORT_NO_STATUS);
+	pluto_sd(PLUTO_SD_READY, SD_REPORT_NO_STATUS);
 #endif
 }
 
@@ -296,7 +296,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 				LSWDBGP(DBG_CONTROL, buf) {
 					lswlogs(buf, "old debugging ");
 					lswlog_enum_lset_short(buf, &debug_names,
-							        "+", old_debugging);
+							       "+", old_debugging);
 					lswlogs(buf, " + ");
 					lswlog_lmod(buf, &debug_names,
 						    "+", m->debugging);
