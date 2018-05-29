@@ -2394,10 +2394,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		/* Delete IKE fragments */
 		release_fragments(st);
 
-		/* update the previous packet history */
-		remember_received_packet(st, md);
-
-		/* free previous transmit packet */
+		/* scrub the previous packet exchange */
+		freeanychunk(st->st_rpacket);
 		freeanychunk(st->st_tpacket);
 
 		/* in aggressive mode, there will be no reply packet in transition
@@ -2410,6 +2408,11 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 		/* if requested, send the new reply packet */
 		if (smc->flags & SMF_REPLY) {
+			/*
+			 * Since replying, save previous packet so
+			 * that re-transmits can deal with it.
+			 */
+			remember_received_packet(st, md);
 			DBG(DBG_CONTROL, {
 				ipstr_buf b;
 				DBG_log("sending reply packet to %s:%u (from port %u)",
