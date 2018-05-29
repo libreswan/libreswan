@@ -164,31 +164,35 @@ size_t lswlog_to_file_stream(struct lswlog *buf, FILE *file);
 
 
 /*
- * Log to the main log and, at level RC, to the whack log.
+ * Log to the default stream(s):
+ *
+ * - for pluto this means 'syslog', and when connected, whack.
+ *
+ * - for standalone tools, this means stderr, but only when enabled.
+ *
+ * There are two variants, the first specify the RC (prefix sent to
+ * whack), while the second default RC to RC_LOG.
+ *
+ * XXX: even though the the name loglog() gives the impression that
+ * it, and not plog(), needs to be used when double logging (to both
+ * 'syslog' and whack), it does not.  Hence LSWLOG_RC().
  */
 
-#define loglog	libreswan_loglog
-extern void libreswan_loglog(enum rc_type, const char *fmt, ...) PRINTF_LIKE(2);
+void lswlog_log_prefix(struct lswlog *buf);
 
-#define LSWLOG_LOG_WHACK(RC, BUF)					\
+extern void libreswan_loglog(enum rc_type, const char *fmt, ...) PRINTF_LIKE(2);
+#define loglog	libreswan_loglog
+
+#define LSWLOG_RC(RC, BUF)						\
 	LSWLOG_(true, BUF,						\
 		lswlog_log_prefix(BUF),					\
 		lswlog_to_log_whack_stream(BUF, RC))
 
-
-/*
- * Log to the main log, and at level RC_LOG, to the whack log.
- */
-
-#define plog	libreswan_log
 /* signature needs to match printf() */
 extern int libreswan_log(const char *fmt, ...) PRINTF_LIKE(1);
+#define plog	libreswan_log
 
-void lswlog_log_prefix(struct lswlog *buf);
-
-#define LSWLOG(BUF)				\
-	LSWLOG_LOG_WHACK(RC_LOG, BUF)
-
+#define LSWLOG(BUF) LSWLOG_RC(RC_LOG, BUF)
 
 /*
  * Log to the main log stream, but _not_ the whack log stream.

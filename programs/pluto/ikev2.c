@@ -914,7 +914,7 @@ static void ikev2_log_payload_errors(struct state *st, struct msg_digest *md,
 		}
 	}
 
-	LSWLOG_LOG_WHACK(RC_LOG_SERIOUS, buf) {
+	LSWLOG_RC(RC_LOG_SERIOUS, buf) {
 		const enum isakmp_xchg_types ix = md->hdr.isa_xchg;
 		lswlogs(buf, "dropping unexpected ");
 		lswlog_enum_short(buf, &ikev2_exchange_names, ix);

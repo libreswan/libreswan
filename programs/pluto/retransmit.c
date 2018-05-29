@@ -245,7 +245,7 @@ enum retransmit_status retransmit(struct state *st)
 	if (retransmit_count_exceeded ||
 	    monotime_exceeds_limit ||
 	    deltatime_exceeds_limit) {
-		LSWLOG_LOG_WHACK(RC_NORETRANSMISSION, buf) {
+		LSWLOG_RC(RC_NORETRANSMISSION, buf) {
 			lswlogf(buf, "%s: ", st->st_finite_state->fs_name);
 			if (retransmit_count_exceeded) {
 				lswlogf(buf, "max number of retransmissions (%lu) reached after ",
@@ -290,7 +290,7 @@ enum retransmit_status retransmit(struct state *st)
 	rt->nr_retransmits++;
  	rt->delays = deltatime_add(rt->delays, rt->delay);
 	event_schedule(rt->type, rt->delay, st);
-	LSWLOG_LOG_WHACK(RC_RETRANSMISSION, buf) {
+	LSWLOG_RC(RC_RETRANSMISSION, buf) {
 		lswlogf(buf, "%s: retransmission; will wait ",
 			st->st_finite_state->fs_name);
 		lswlog_deltatime(buf, rt->delay);
@@ -331,7 +331,7 @@ void suppress_retransmits(struct state *st)
 		delete_pluto_event(&st->st_event);
 	}
 	event_schedule(rt->type, rt->delay, st);
-	LSWLOG_LOG_WHACK(RC_RETRANSMISSION, buf) {
+	LSWLOG_RC(RC_RETRANSMISSION, buf) {
 		lswlogf(buf, "%s: suppressing retransmits; will wait ",
 			st->st_finite_state->fs_name);
 		lswlog_deltatime(buf, rt->delay);

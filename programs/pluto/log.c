@@ -78,7 +78,7 @@ int whack_log_fd = NULL_FD;                     /* only set during whack_handle(
  * resetting CUR_STATE will re-expose CUR_CONNECTION.
  *
  * Surely it would be easier to explicitly specify the context with
- * something like LSWLOG_LOG_WHACK_STATE()?
+ * something like LSWLOG_RC_STATE()?
  *
  * Global variables: must be carefully adjusted at transaction
  * boundaries!

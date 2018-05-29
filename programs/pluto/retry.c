@@ -300,7 +300,7 @@ bool ikev2_schedule_retry(struct state *st)
 		     "maximum number of retries reached - deleting state");
 		return false;
 	}
-	LSWLOG_LOG_WHACK(RC_COMMENT, buf) {
+	LSWLOG_RC(RC_COMMENT, buf) {
 		lswlogf(buf, "scheduling retry attempt %ld of ", try);
 		if (try_limit == 0) {
 			lswlogs(buf, "an unlimited number");
