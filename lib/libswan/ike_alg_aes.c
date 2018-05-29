@@ -272,6 +272,7 @@ const struct prf_desc ike_alg_prf_aes_xcbc = {
 			[IKEv1_ESP_ID] = -1,
 			[IKEv2_ALG_ID] = IKEv2_PRF_AES128_XCBC,
 		},
+		.fips = true,
 	},
 	.nss = {
 		.mechanism = CKM_AES_ECB,
