@@ -49,7 +49,7 @@
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <sys/resource.h>
-#include <sys/wait.h>
+#include <sys/wait.h>		/* for wait() and WIFEXITED() et.al. */
 #include <resolv.h>
 
 #include <event2/event.h>

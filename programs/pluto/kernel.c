@@ -29,7 +29,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <sys/wait.h>
+#include <sys/wait.h>		/* for WIFEXITED() et.al. */
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/utsname.h>

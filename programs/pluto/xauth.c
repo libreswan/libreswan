@@ -14,6 +14,7 @@
  */
 
 #include <stdlib.h>
+#include <sys/wait.h>		/* for WIFEXITED() et.al. */
 
 #include "constants.h"
 #include "lswlog.h"

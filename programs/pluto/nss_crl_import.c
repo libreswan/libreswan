@@ -22,8 +22,9 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include "lswlog.h"
-#include <sys/wait.h>
+#include <sys/wait.h>		/* for WIFEXITED() et.al. */
 #include <cert.h>
+
 #include "nss_crl_import.h"
 #include <certdb.h>
 #include "defs.h"
