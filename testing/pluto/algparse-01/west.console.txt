@@ -1,5 +1,7 @@
 ../../guestbin/swan-prep
 west #
+ # run the parser tests
+west #
  ../bin/algparse.sh PATH/libexec/ipsec/algparse algparse*.txt
 PATH/libexec/ipsec/algparse -v1 -pfs -t # algparse.v1.pfs.txt
 PATH/libexec/ipsec/algparse -v1 -t # algparse.v1.txt
@@ -8,15 +10,28 @@ PATH/libexec/ipsec/algparse -v1 -v2 -t # algparse.v1.v2.txt
 PATH/libexec/ipsec/algparse -v2 -pfs -t # algparse.v2.pfs.txt
 PATH/libexec/ipsec/algparse -v2 -t # algparse.v2.txt
 PATH/libexec/ipsec/algparse -v # algparse.v.txt
+--- algparse.v.txt	2018-05-15 12:20:52.593183327 -0400
++++ -	2018-05-29 13:11:11.998043603 -0400
+@@ -28,7 +28,7 @@
+ algparse:   HMAC_SHA2_256       IKEv1: IKE         IKEv2: IKE         FIPS  (sha2 sha256 sha2_256)
+ algparse:   HMAC_SHA2_384       IKEv1: IKE         IKEv2: IKE         FIPS  (sha384 sha2_384)
+ algparse:   HMAC_SHA2_512       IKEv1: IKE         IKEv2: IKE         FIPS  (sha512 sha2_512)
+-algparse:   AES_XCBC            IKEv1:             IKEv2: IKE               (aes128_xcbc)
++algparse:   AES_XCBC            IKEv1:             IKEv2: IKE         FIPS  (aes128_xcbc)
+ algparse: Integrity algorithms:
+ algparse:   HMAC_MD5_96         IKEv1: IKE ESP AH  IKEv2: IKE ESP AH        (md5 hmac_md5)
+ algparse:   HMAC_SHA1_96        IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha sha1 sha1_96 hmac_sha1)
 west #
- # start pluto
+ # run the algorithm tests
+west #
+ PATH/libexec/ipsec/algparse -ta
+west #
+ # check pluto is starting in the correct mode
 west #
  ipsec start
 Redirecting to: systemctl start ipsec.service
 west #
  /testing/pluto/bin/wait-until-pluto-started
-west #
- # check pluto in correct FIPS mode
 west #
  grep ^FIPS /tmp/pluto.log
 FIPS Product: NO
@@ -59,7 +74,7 @@ PRF algorithms:
   HMAC_SHA2_256       IKEv1: IKE         IKEv2: IKE         FIPS  (sha2 sha256 sha2_256)
   HMAC_SHA2_384       IKEv1: IKE         IKEv2: IKE         FIPS  (sha384 sha2_384)
   HMAC_SHA2_512       IKEv1: IKE         IKEv2: IKE         FIPS  (sha512 sha2_512)
-  AES_XCBC            IKEv1:             IKEv2: IKE               (aes128_xcbc)
+  AES_XCBC            IKEv1:             IKEv2: IKE         FIPS  (aes128_xcbc)
 Integrity algorithms:
   HMAC_MD5_96         IKEv1: IKE ESP AH  IKEv2: IKE ESP AH        (md5 hmac_md5)
   HMAC_SHA1_96        IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha sha1 sha1_96 hmac_sha1)

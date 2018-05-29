@@ -1,12 +1,14 @@
 ../../guestbin/swan-prep --fips
 
+# run the parser tests
 ../bin/algparse.sh /usr/local/libexec/ipsec/algparse algparse*.txt
 
-# start pluto
+# run the algorithm tests
+/usr/local/libexec/ipsec/algparse -ta
+
+# check pluto is starting in the correct mode
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
-
-# check pluto in correct FIPS mode
 grep ^FIPS /tmp/pluto.log
 
 # check pluto algorithm list
