@@ -28,7 +28,7 @@ algparse:   HMAC_SHA1           IKEv1: IKE         IKEv2: IKE         FIPS  (sha
 algparse:   HMAC_SHA2_256       IKEv1: IKE         IKEv2: IKE         FIPS  (sha2 sha256 sha2_256)
 algparse:   HMAC_SHA2_384       IKEv1: IKE         IKEv2: IKE         FIPS  (sha384 sha2_384)
 algparse:   HMAC_SHA2_512       IKEv1: IKE         IKEv2: IKE         FIPS  (sha512 sha2_512)
-algparse:   AES_XCBC            IKEv1:             IKEv2: IKE               (aes128_xcbc)
+algparse:   AES_XCBC            IKEv1:             IKEv2: IKE         FIPS  (aes128_xcbc)
 algparse: Integrity algorithms:
 algparse:   HMAC_MD5_96         IKEv1: IKE ESP AH  IKEv2: IKE ESP AH        (md5 hmac_md5)
 algparse:   HMAC_SHA1_96        IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha sha1 sha1_96 hmac_sha1)
