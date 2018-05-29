@@ -628,7 +628,7 @@ void lswlog_to_log_stream(struct lswlog *buf)
 	/* not whack */
 }
 
-void lswlog_to_log_whack_stream(struct lswlog *buf, enum rc_type rc)
+void lswlog_to_default_streams(struct lswlog *buf, enum rc_type rc)
 {
 	log_raw(buf, LOG_WARNING);
 	whack_raw(buf, rc);
