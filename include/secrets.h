@@ -25,6 +25,7 @@
 #include <nss.h>
 #include <pk11pub.h>
 
+#include "lswcdefs.h"
 #include "x509.h"
 #include "id.h"
 #include "err.h"

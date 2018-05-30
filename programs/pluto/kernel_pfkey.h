@@ -14,6 +14,8 @@
  * for more details.
  */
 
+#include "lswcdefs.h"
+
 #ifdef PFKEY
 extern void init_pfkey(void);
 #ifdef KLIPS

@@ -24,6 +24,7 @@
 #ifndef _PACKET_H
 #define _PACKET_H
 
+#include "lswcdefs.h"
 #include "chunk.h"
 
 /* a struct_desc describes a structure for the struct I/O routines.

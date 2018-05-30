@@ -21,6 +21,7 @@
 #ifndef ALG_INFO_H
 #define ALG_INFO_H
 
+#include "lswcdefs.h"
 #include "constants.h"
 #include "ike_alg.h"
 #include "shunk.h"

@@ -25,6 +25,7 @@
 #include <stddef.h>		/* for size_t */
 
 #include "lset.h"
+#include "lswcdefs.h"
 
 #include "libreswan/passert.h"
 #include "constants.h"		/* for DBG_... */

@@ -24,6 +24,7 @@
 #ifndef _KEYS_H
 #define _KEYS_H
 
+#include "lswcdefs.h"
 #include "x509.h"
 #include "certs.h"
 #include "err.h"

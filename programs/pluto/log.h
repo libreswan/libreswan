@@ -21,6 +21,7 @@
 
 #include <libreswan.h>
 
+#include "lswcdefs.h"
 #include "lswlog.h"
 
 struct state;

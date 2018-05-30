@@ -19,6 +19,7 @@
 #ifndef _DEFS_H
 #define _DEFS_H
 
+#include "lswcdefs.h"
 #include "lswalloc.h"
 #include "realtime.h"
 

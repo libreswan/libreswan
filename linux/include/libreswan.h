@@ -287,27 +287,7 @@ typedef uint32_t IPsecSAref_t;
 /* Not representable as an nfmark */
 #define IPSEC_SAREF_NA   ((IPsecSAref_t)0xffff0001)
 
-/* GCC magic for use in function definitions! */
-#ifdef GCC_LINT
-# define PRINTF_LIKE(n) __attribute__ ((format(printf, n, n + 1)))
-# define STRFTIME_LIKE(n) __attribute__ ((format (strftime, n, 0)))
-# define NEVER_RETURNS __attribute__ ((noreturn))
-# define UNUSED __attribute__ ((unused))
-# define MUST_USE_RESULT  __attribute__ ((warn_unused_result))
-#else
-# define PRINTF_LIKE(n) /* ignore */
-# define STRFTIME_LIKE(n) /* ignore */
-# define NEVER_RETURNS  /* ignore */
-# define UNUSED         /* ignore */
-# define MUST_USE_RESULT	/* ignore */
-#endif
-
-#ifdef COMPILER_HAS_NO_PRINTF_LIKE
-# undef PRINTF_LIKE
-# define PRINTF_LIKE(n) /* ignore */
-# undef STRFTIME_LIKE
-# define STRFTIME_LIKE(n) /* ignore */
-#endif
+#include "lswcdefs.h"
 
 /*
  * function to log stuff from libraries that may be used in multiple
