@@ -1845,14 +1845,14 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 	}
 
 	/* some failure got us here: report it */
-	libreswan_loglog(RC_LOG_SERIOUS, "%s", ugh);
+	libreswan_log_rc(RC_LOG_SERIOUS, "%s", ugh);
 	return FALSE;
 }
 
 bool in_raw(void *bytes, size_t len, pb_stream *ins, const char *name)
 {
 	if (pbs_left(ins) < len) {
-		libreswan_loglog(RC_LOG_SERIOUS,
+		libreswan_log_rc(RC_LOG_SERIOUS,
 				 "not enough bytes left to get %s from %s",
 				 name, ins->name);
 		return FALSE;

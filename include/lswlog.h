@@ -182,8 +182,8 @@ size_t lswlog_to_file_stream(struct lswlog *buf, FILE *file);
 
 void lswlog_log_prefix(struct lswlog *buf);
 
-extern void libreswan_loglog(enum rc_type, const char *fmt, ...) PRINTF_LIKE(2);
-#define loglog	libreswan_loglog
+extern void libreswan_log_rc(enum rc_type, const char *fmt, ...) PRINTF_LIKE(2);
+#define loglog	libreswan_log_rc
 
 #define LSWLOG_RC(RC, BUF)						\
 	LSWLOG_(true, BUF,						\

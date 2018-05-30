@@ -54,8 +54,6 @@ OBJS += constants.o \
 	base64_rsa_pubkey.o \
 	lswnss.o \
 	lsw_passert_fail.o \
-	libreswan_log.o \
-	libreswan_loglog.o \
 	alg_byname.o
 
 # These get pulled in from the klips kernel code.
@@ -94,6 +92,9 @@ OBJS += libreswan_pexpect_log.o
 OBJS += libreswan_bad_case.o
 
 OBJS += rate_log.o
+
+OBJS += libreswan_log.o
+OBJS += libreswan_log_rc.o
 
 OBJS += lswlog.o
 OBJS += lswlog_dbg.o
