@@ -276,9 +276,7 @@ bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, const struct state *
 			return FALSE;
 		/* FALL THROUGH */
 	case NATT_DRAFTS:
-		if (st->st_connection->ikev1_natt == NATT_DRAFTS) {
-			DBG(DBG_NATT, DBG_log("skipping VID_NATT_RFC"));
-		}
+		DBG(DBG_NATT, DBG_log("skipping VID_NATT_RFC"));
 		if (!out_vid(ISAKMP_NEXT_VID, outs, VID_NATT_IETF_03))
 			return FALSE;
 		if (!out_vid(ISAKMP_NEXT_VID, outs, VID_NATT_IETF_02_N))
