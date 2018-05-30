@@ -1720,6 +1720,8 @@ int main(int argc, char **argv)
 				msg.ikev1_natt = NATT_RFC;
 			else if (streq(optarg, "drafts"))
 				msg.ikev1_natt = NATT_DRAFTS;
+			else if (streq(optarg, "none"))
+				msg.ikev1_natt = NATT_NONE;
 			else
 				diag("--ikev1-natt options are 'both', 'rfc' or 'drafts'");
 			continue;
