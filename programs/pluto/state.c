@@ -3171,14 +3171,14 @@ void ISAKMP_SA_established(const struct state *pst)
 			struct state *old_p2 = state_by_serialno(c->newest_ipsec_sa);
 
 			old_p2->st_suppress_del_notify = TRUE;
-			event_delete(old_p2);
+			delete_event(old_p2);
 			event_schedule_s(EVENT_SA_EXPIRE, 0, old_p2);
 		}
 		if (c->newest_isakmp_sa != SOS_NOBODY &&
 			c->newest_isakmp_sa != pst->st_serialno) {
 			struct state *old_p1 = state_by_serialno(c->newest_isakmp_sa);
 			old_p1->st_suppress_del_notify = TRUE;
-			event_delete(old_p1);
+			delete_event(old_p1);
 			event_schedule_s(EVENT_SA_EXPIRE, 0, old_p1);
 		}
 	}
