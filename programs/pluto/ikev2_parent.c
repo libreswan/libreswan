@@ -6432,7 +6432,7 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 									v2del->isad_protoid),
 								ntohl((uint32_t)spi)));
 						/* we just received a delete, don't send another delete */
-						dst->st_ikev2_no_del = TRUE;
+						dst->st_suppress_del_notify = TRUE;
 						passert(dst != st);	/* st is a parent */
 						if (!del_ike && responding) {
 							struct ipsec_proto_info *pr =

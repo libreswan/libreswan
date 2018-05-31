@@ -894,7 +894,7 @@ static void flush_pending_children(struct state *pst)
 static bool send_delete_check(const struct state *st)
 {
 
-	if (st->st_ikev2_no_del)
+	if (st->st_suppress_del_notify)
 		return FALSE;
 
 	if (IS_IPSEC_SA_ESTABLISHED(st) ||
@@ -3133,67 +3133,55 @@ void append_st_cfg_domain(struct state *st, const char *domain)
 void ISAKMP_SA_established(const struct state *pst)
 {
 	struct connection *c = pst->st_connection;
-	so_serial_t serial = pst->st_serialno;
 
-	c->newest_isakmp_sa = serial;
-
-	/* NULL authentication can never replaced - it is all anonnymous */
+	/* NULL authentication can never replaced - it is all anonymous */
 	if (LIN(POLICY_AUTH_NULL, c->policy) ||
 	   (c->spd.that.authby == AUTH_NULL || c->spd.this.authby == AUTH_NULL)) {
 
 		DBG(DBG_CONTROL, DBG_log("NULL Authentication - all clients appear identical"));
-		return;
-	}
-
-	/*
-	 * If we are a server and use PSK, all clients use the same group ID
-	 * Note that "xauth_server" also refers to IKEv2 CP
-	 */
-	if (c->spd.this.xauth_server && LIN(POLICY_PSK, c->policy)) {
+	} else if (c->spd.this.xauth_server && LIN(POLICY_PSK, c->policy)) {
+		/*
+		 * If we are a server and use PSK, all clients use the same group ID
+		 * Note that "xauth_server" also refers to IKEv2 CP
+		 */
 		DBG(DBG_CONTROL, DBG_log("We are a server using PSK and clients are using a group ID"));
-		return;
-	}
-
-	if (!uniqueIDs) {
+	} else if (!uniqueIDs) {
 		DBG(DBG_CONTROL, DBG_log("uniqueIDs disabled, not contemplating releasing older self"));
-		return;
-	}
+	} else {
+		/*
+		 * for all existing connections: if the same Phase 1 IDs are used,
+		 * unorient the (old) connection (if different from current connection)
+		 */
+		for (struct connection *d = connections; d != NULL; ) {
+			/* might move underneath us */
+			struct connection *next = d->ac_next;
 
-	/*
-	 * Ideally, we would return here for IKEv2 when we would have not seen INITIAL CONTACT,
-	 * but our code currently does not handle this properly. Especially addresspool based
-	 * connections would end up with two connection instances competing for a single IPsec SA.
-	 * We can re-instate this check once we can detect the current conn is replacing the existing
-	 * conn and is not a second conn for a different IPsec which only shares the IKE SA.
-	 *
-	 * For IKEv1, we leave our legacy behaviour intact to maintain interoperability, and we
-	 * always ignore INITIAL CONTACT.
-	 */
-#if 0
-	if (pst->st_ikev2 && !pst->st_seen_initialc) {
-		DBG(DBG_CONTROL, DBG_log("No INITIAL_CONTACT received, not contemplating releasing older self"));
-		return;
-	}
-#endif
-
-	/*
-	 * for all existing connections: if the same Phase 1 IDs are used,
-	 * unorient that (old) connection - This is a replacement.
-	 */
-	struct connection *d;
-
-	for (d = connections; d != NULL; ) {
-		/* might move underneath us */
-		struct connection *next = d->ac_next;
-
-		if (c != d && c->kind == d->kind && streq(c->name, d->name) &&
-		    (same_id(&c->spd.this.id, &d->spd.this.id) &&
-		     same_id(&c->spd.that.id, &d->spd.that.id)))
-		{
-		  DBG(DBG_CONTROL, DBG_log("Unorienting old connection with same IDs"));
-		  suppress_delete(d); /* don't send a delete */
-		  release_connection(d, FALSE);
+			if (c != d && c->kind == d->kind && streq(c->name, d->name) &&
+			    (same_id(&c->spd.this.id, &d->spd.this.id) &&
+			     same_id(&c->spd.that.id, &d->spd.that.id)))
+			{
+				DBG(DBG_CONTROL, DBG_log("Unorienting old connection with same IDs"));
+				suppress_delete(d); /* don't send a delete */
+				release_connection(d, FALSE); /* this deletes the states */
+			}
+			d = next;
 		}
-		d = next;
+
+		if (c->newest_ipsec_sa != SOS_NOBODY) {
+			struct state *old_p2 = state_by_serialno(c->newest_ipsec_sa);
+
+			old_p2->st_suppress_del_notify = TRUE;
+			event_delete(old_p2);
+			event_schedule_s(EVENT_SA_EXPIRE, 0, old_p2);
+		}
+		if (c->newest_isakmp_sa != SOS_NOBODY &&
+			c->newest_isakmp_sa != pst->st_serialno) {
+			struct state *old_p1 = state_by_serialno(c->newest_isakmp_sa);
+			old_p1->st_suppress_del_notify = TRUE;
+			event_delete(old_p1);
+			event_schedule_s(EVENT_SA_EXPIRE, 0, old_p1);
+		}
 	}
+
+	c->newest_isakmp_sa = pst->st_serialno;
 }
