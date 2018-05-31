@@ -1225,8 +1225,7 @@ void connection_check_phase2(void)
 				if (c->dnshostname != NULL) {
 					restart_connections_by_peer(c);
 				} else {
-					delete_event(p1st);
-					event_schedule_s(EVENT_SA_REPLACE, 0, p1st);
+					event_force(EVENT_SA_REPLACE, p1st);
 				}
 			} else {
 				/* start a new connection. Something wanted it up */

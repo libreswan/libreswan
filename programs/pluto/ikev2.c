@@ -2285,8 +2285,7 @@ static void sechdule_next_send(struct state *st)
 		p = st->send_next_ix;
 		cst = state_with_serialno(p->st_serialno);
 		if (cst != NULL) {
-			delete_event(cst);
-			event_schedule_s(EVENT_v2_SEND_NEXT_IKE, 0, cst);
+			event_force(EVENT_v2_SEND_NEXT_IKE, cst);
 			DBG(DBG_CONTROLMORE,
 				DBG_log("#%lu send next using parent #%lu next message id=%u, waiting to send %d",
 					cst->st_serialno, st->st_serialno,

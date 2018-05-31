@@ -831,8 +831,7 @@ void ikev2_expire_unused_parent(struct state *pst)
 		loglog(RC_INFORMATIONAL, "expire unused parent SA #%lu \"%s\"%s",
 				pst->st_serialno, c->name,
 				fmt_conn_instance(c, cib));
-		delete_event(pst);
-		event_schedule_s(EVENT_SA_EXPIRE, 0, pst);
+		event_force(EVENT_SA_EXPIRE, pst);
 	}
 }
 
@@ -853,7 +852,6 @@ static void flush_pending_child(struct state *pst, struct state *st)
 		if (IS_IKE_REKEY_INITIATOR(st))
 			newest_sa = c->newest_isakmp_sa;
 
-		delete_event(st);
 		if (st->st_serialno > newest_sa &&
 				(c->policy & POLICY_UP) &&
 				(c->policy & POLICY_DONT_REKEY) == LEMPTY)
@@ -865,14 +863,14 @@ static void flush_pending_child(struct state *pst, struct state *st)
 
 			c->failed_ikev2 = FALSE; /* give it a fresh start */
 			st->st_policy = c->policy; /* for pick_initiator */
-			event_schedule_s(EVENT_SA_REPLACE, 0, st);
+			event_force(EVENT_SA_REPLACE, st);
 		} else {
 			loglog(RC_LOG_SERIOUS, "expire pending child #%lu %s of "
 					"connection \"%s\"%s - the parent is going away",
 					st->st_serialno, st->st_state_name,
 					c->name, fmt_conn_instance(c, cib));
 
-			event_schedule_s(EVENT_SA_EXPIRE, 0, st);
+			event_force(EVENT_SA_EXPIRE, st);
 		}
 	}
 }
@@ -1480,9 +1478,7 @@ void delete_states_by_peer(const ip_address *peer)
 					ipsecdoi_replace(this, LEMPTY,
 							 LEMPTY, 1);
 				} else {
-					delete_event(this);
-					event_schedule_s(EVENT_SA_REPLACE,
-							 0, this);
+					event_force(EVENT_SA_REPLACE, this);
 				}
 			}
 		});
@@ -2851,8 +2847,7 @@ void ikev2_repl_est_ipsec(struct state *st, void *data)
 	enum event_type ev_type = st->st_event->ev_type;
 
 	passert(st->st_event != NULL);
-	delete_event(st);
-	event_schedule_s(ev_type, 0, st);
+	event_force(ev_type, st);
 }
 
 void ikev2_inherit_ipsec_sa(so_serial_t osn, so_serial_t nsn,
@@ -3171,15 +3166,13 @@ void ISAKMP_SA_established(const struct state *pst)
 			struct state *old_p2 = state_by_serialno(c->newest_ipsec_sa);
 
 			old_p2->st_suppress_del_notify = TRUE;
-			delete_event(old_p2);
-			event_schedule_s(EVENT_SA_EXPIRE, 0, old_p2);
+			event_force(EVENT_SA_EXPIRE, old_p2);
 		}
 		if (c->newest_isakmp_sa != SOS_NOBODY &&
 			c->newest_isakmp_sa != pst->st_serialno) {
 			struct state *old_p1 = state_by_serialno(c->newest_isakmp_sa);
 			old_p1->st_suppress_del_notify = TRUE;
-			delete_event(old_p1);
-			event_schedule_s(EVENT_SA_EXPIRE, 0, old_p1);
+			event_force(EVENT_SA_EXPIRE, old_p1);
 		}
 	}
 

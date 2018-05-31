@@ -5856,8 +5856,7 @@ static void delete_or_replace_state(struct state *st) {
 		/* ??? why is this treated specially.  Can we not delete_state()? */
 		loglog(RC_LOG_SERIOUS, "received Delete SA payload: expire IPSEC State #%lu now",
 				st->st_serialno);
-		delete_event(st);
-		event_schedule_s(EVENT_SA_EXPIRE, 0, st);
+		event_force(EVENT_SA_EXPIRE, st);
 	} else if ((c->newest_ipsec_sa == st->st_serialno && (c->policy & POLICY_UP))
 		&& ((st->st_event->ev_type == EVENT_SA_REPLACE) ||
 		    (st->st_event->ev_type == EVENT_v2_SA_REPLACE_IF_USED))) {
@@ -5867,9 +5866,8 @@ static void delete_or_replace_state(struct state *st) {
 		 */
 		loglog(RC_LOG_SERIOUS, "received Delete SA payload: replace IPSEC State #%lu now",
 				st->st_serialno);
-		delete_event(st);
 		st->st_margin = deltatime(0);
-		event_schedule_s(EVENT_SA_REPLACE, 0, st);
+		event_force(EVENT_SA_REPLACE, st);
 	} else {
 		loglog(RC_LOG_SERIOUS, "received Delete SA payload: delete IPSEC State #%lu now",
 				st->st_serialno);
@@ -6860,8 +6858,7 @@ void ikev2_initiate_child_sa(struct pending *p)
 				});
 	}
 
-	delete_event(st);
-	event_schedule_s(EVENT_v2_INITIATE_CHILD, 0, st);
+	event_force(EVENT_v2_INITIATE_CHILD, st);
 	reset_globals();
 }
 

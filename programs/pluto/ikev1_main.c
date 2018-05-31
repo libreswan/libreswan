@@ -2003,8 +2003,7 @@ static stf_status main_inR3_tail(struct state *st, struct msg_digest *md)
 			/* schedule an event to do this as soon as possible */
 			md->event_already_set = TRUE;
 			st->st_rekeytov2 = TRUE;
-			delete_event(st);
-			event_schedule_s(EVENT_SA_REPLACE, 0, st);
+			event_force(EVENT_SA_REPLACE, st);
 		}
 	}
 
@@ -2724,8 +2723,7 @@ bool accept_delete(struct msg_digest *md,
 							"received Delete SA payload: replace IPSEC State #%lu now",
 							dst->st_serialno);
 						dst->st_margin = deltatime(0);
-						delete_event(dst);
-						event_schedule_s(EVENT_SA_REPLACE, 0, dst);
+						event_force(EVENT_SA_REPLACE, dst);
 					}
 				} else {
 					loglog(RC_LOG_SERIOUS,

@@ -251,8 +251,7 @@ static void ikev2_expire_parent(struct state *st, deltatime_t last_used_age)
 			deltasecs(c->sa_rekey_margin),
 			pst->st_serialno));
 
-	delete_event(pst);
-	event_schedule_s(EVENT_SA_EXPIRE, 0, pst);
+	event_force(EVENT_SA_EXPIRE, pst);
 }
 
 /*
@@ -486,8 +485,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 					deltaless(c->sa_rekey_margin, last_used_age))
 				{
 					delete_liveness_event(cst);
-					delete_event(cst);
-					event_schedule_s(EVENT_SA_EXPIRE, 0, cst);
+					event_force(EVENT_SA_EXPIRE, cst);
 					ikev2_expire_parent(cst, last_used_age);
 					break;
 				} else {
@@ -761,5 +759,12 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 void event_schedule_s(enum event_type type, time_t delay_sec, struct state *st)
 {
 	deltatime_t delay = deltatime(delay_sec);
+	event_schedule(type, delay, st);
+}
+
+void event_force(enum event_type type, struct state *st)
+{
+	delete_event(st);
+	deltatime_t delay = deltatime(0);
 	event_schedule(type, delay, st);
 }
