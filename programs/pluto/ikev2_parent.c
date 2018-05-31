@@ -5846,23 +5846,19 @@ void ikev2_child_send_next(struct state *st)
 static void delete_or_replace_state(struct state *st) {
 	struct connection *c = st->st_connection;
 
-	if (st->st_event == NULL) { /* this could be an assert/except? */
+	if (st->st_event == NULL) {
+		/* ??? should this be an assert/expect? */
 		loglog(RC_LOG_SERIOUS, "received Delete SA payload: delete IPSEC State #%lu. st_event == NULL",
 				st->st_serialno);
 		delete_state(st);
-		return;
-	}
-
-	if (st->st_event->ev_type == EVENT_SA_EXPIRE) {
-		/* this state  was going to  EXPIRE just let it now*/
-		delete_event(st);
-		event_schedule_s(EVENT_SA_EXPIRE, 0, st);
+	} else if (st->st_event->ev_type == EVENT_SA_EXPIRE) {
+		/* this state  was going to EXPIRE: hurry it along */
+		/* ??? why is this treated specially.  Can we not delete_state()? */
 		loglog(RC_LOG_SERIOUS, "received Delete SA payload: expire IPSEC State #%lu now",
 				st->st_serialno);
-		return;
-	}
-
-	if ((c->newest_ipsec_sa == st->st_serialno && (c->policy & POLICY_UP))
+		delete_event(st);
+		event_schedule_s(EVENT_SA_EXPIRE, 0, st);
+	} else if ((c->newest_ipsec_sa == st->st_serialno && (c->policy & POLICY_UP))
 		&& ((st->st_event->ev_type == EVENT_SA_REPLACE) ||
 		    (st->st_event->ev_type == EVENT_v2_SA_REPLACE_IF_USED))) {
 		/*
