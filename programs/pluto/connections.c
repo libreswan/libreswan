@@ -3204,11 +3204,7 @@ struct connection *refine_host_connection(const struct state *st,
 					matching_peer_id && matching_peer_ca && matching_requested_ca,
 					matching_peer_id, matching_peer_ca, matching_requested_ca);});
 
-			/* Ignore template from which we instantiated - this should never happen */
-			if (c->kind == CK_INSTANCE && d->kind == CK_TEMPLATE && streq(c->name, d->name)) {
-				libreswan_log("Warning: not switching back to template of current instance (FIXME)");
-				continue;
-			}
+			DBG(DBG_CONTROL, DBG_log("Warning: not switching back to template of current instance"));
 
 			/* 'You Tarzan, me Jane' check based on received IDr */
 			if (!initiator && tarzan_id != NULL) {
