@@ -1,13 +1,8 @@
-/* long set constants, for libreswan
+/* long set constants
  *
- * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2004-2008  Michael Richardson <mcr@xelerance.com>
- * Copyright (C) 2004-2009  Paul Wouters <paul@xelerance.com>
- * Copyright (C) 2008 Antony Antony <antony@xelerance.com>
- * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2018 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -18,6 +13,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
+ *
  */
 
 #ifndef LSET_H
