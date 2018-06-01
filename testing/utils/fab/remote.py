@@ -221,8 +221,7 @@ def shutdown(domain, console=None, shutdown_timeout=SHUTDOWN_TIMEOUT):
 def _reboot_to_login_prompt(domain, console):
 
     # Drain any existing output.
-    domain.logger.debug("draining any existing output")
-    console.expect(pexpect.TIMEOUT, timeout=0)
+    console.drain()
 
     # The reboot pattern needs to match all the output up to the point
     # where the machine is reset.  That way, the next pattern below
