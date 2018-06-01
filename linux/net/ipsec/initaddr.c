@@ -59,10 +59,10 @@ ip_address *dst;
 		memset(&dst->u.v4, '\0', sizeof(dst->u.v4));
 #endif
 		dst->u.v4.sin_family = af;
-		dst->u.v4.sin_port = 0;
 #ifdef NEED_SIN_LEN
 		dst->u.v4.sin_len = sizeof(struct sockaddr_in);
 #endif
+		dst->u.v4.sin_port = 0;
 		memcpy((char *)&dst->u.v4.sin_addr.s_addr, src, srclen);
 		break;
 	case AF_INET6:
@@ -73,11 +73,11 @@ ip_address *dst;
 		memset(&dst->u.v6, '\0', sizeof(dst->u.v6));
 #endif
 		dst->u.v6.sin6_family = af;
-		dst->u.v6.sin6_flowinfo = 0;            /* unused */
-		dst->u.v6.sin6_port = 0;
 #ifdef NEED_SIN_LEN
 		dst->u.v6.sin6_len = sizeof(struct sockaddr_in6);
 #endif
+		dst->u.v6.sin6_flowinfo = 0;            /* unused */
+		dst->u.v6.sin6_port = 0;
 		memcpy((char *)&dst->u.v6.sin6_addr, src, srclen);
 		break;
 	default:

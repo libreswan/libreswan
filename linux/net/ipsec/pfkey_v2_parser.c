@@ -1902,6 +1902,12 @@ DEBUG_NO_STATIC int pfkey_x_addflow_parse(struct sock *sk,
 		dstflow.u.v6.sin6_family = AF_INET6;
 		srcmask.u.v6.sin6_family = AF_INET6;
 		dstmask.u.v6.sin6_family = AF_INET6;
+#ifdef NEED_SIN_LEN
+		srcflow.u.v4.sin6_len = sizeof(struct sockaddr_in6);
+		dstflow.u.v4.sin6_len = sizeof(struct sockaddr_in6);
+		srcmask.u.v4.sin6_len = sizeof(struct sockaddr_in6);
+		dstmask.u.v4.sin6_len = sizeof(struct sockaddr_in6);
+#endif
 
 		srcflow.u.v6.sin6_addr = extr->eroute->er_eaddr.sen_ip6_src;
 		dstflow.u.v6.sin6_addr = extr->eroute->er_eaddr.sen_ip6_dst;
@@ -1912,6 +1918,12 @@ DEBUG_NO_STATIC int pfkey_x_addflow_parse(struct sock *sk,
 		dstflow.u.v4.sin_family = AF_INET;
 		srcmask.u.v4.sin_family = AF_INET;
 		dstmask.u.v4.sin_family = AF_INET;
+#ifdef NEED_SIN_LEN
+		srcflow.u.v4.sin_len = sizeof(struct sockaddr_in);
+		dstflow.u.v4.sin_len = sizeof(struct sockaddr_in);
+		srcmask.u.v4.sin_len = sizeof(struct sockaddr_in);
+		dstmask.u.v4.sin_len = sizeof(struct sockaddr_in);
+#endif
 
 		srcflow.u.v4.sin_addr = extr->eroute->er_eaddr.sen_ip_src;
 		dstflow.u.v4.sin_addr = extr->eroute->er_eaddr.sen_ip_dst;
@@ -2192,6 +2204,12 @@ DEBUG_NO_STATIC int pfkey_x_delflow_parse(struct sock *sk,
 			dstflow.u.v6.sin6_family = AF_INET6;
 			srcmask.u.v6.sin6_family = AF_INET6;
 			dstmask.u.v6.sin6_family = AF_INET6;
+#ifdef NEED_SIN_LEN
+			srcflow.u.v4.sin6_len = sizeof(struct sockaddr_in6);
+			dstflow.u.v4.sin6_len = sizeof(struct sockaddr_in6);
+			srcmask.u.v4.sin6_len = sizeof(struct sockaddr_in6);
+			dstmask.u.v4.sin6_len = sizeof(struct sockaddr_in6);
+#endif
 
 			srcflow.u.v6.sin6_addr =
 				extr->eroute->er_eaddr.sen_ip6_src;
@@ -2206,6 +2224,12 @@ DEBUG_NO_STATIC int pfkey_x_delflow_parse(struct sock *sk,
 			dstflow.u.v4.sin_family = AF_INET;
 			srcmask.u.v4.sin_family = AF_INET;
 			dstmask.u.v4.sin_family = AF_INET;
+#ifdef NEED_SIN_LEN
+			srcflow.u.v4.sin_len = sizeof(struct sockaddr_in);
+			dstflow.u.v4.sin_len = sizeof(struct sockaddr_in);
+			srcmask.u.v4.sin_len = sizeof(struct sockaddr_in);
+			dstmask.u.v4.sin_len = sizeof(struct sockaddr_in);
+#endif
 
 			srcflow.u.v4.sin_addr =
 				extr->eroute->er_eaddr.sen_ip_src;

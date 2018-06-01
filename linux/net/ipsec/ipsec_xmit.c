@@ -1483,11 +1483,17 @@ static int create_hold_eroute(struct ipsec_xmit_state *ixs)
 		struct in6_addr addr6_any = IN6ADDR_ANY_INIT;
 		hold_said.dst.u.v6.sin6_addr = addr6_any;
 		hold_said.dst.u.v6.sin6_family = AF_INET6;
+#ifdef NEED_SIN_LEN
+		hold_said.dst.u.v4.sin6_len = sizeof(struct sockaddr_in6);
+#endif
 	} else
 #endif
 	{
 		hold_said.dst.u.v4.sin_addr.s_addr = INADDR_ANY;
 		hold_said.dst.u.v4.sin_family = AF_INET;
+#ifdef NEED_SIN_LEN
+		hold_said.dst.u.v4.sin_len = sizeof(struct sockaddr_in);
+#endif
 	}
 
 	hold_eroute.er_eaddr.sen_len = sizeof(struct sockaddr_encap);
@@ -1764,6 +1770,10 @@ enum ipsec_xmit_value ipsec_xmit_init1(struct ipsec_xmit_state *ixs)
 				memset(&dst, 0, sizeof(dst));
 				src.sin6_family = AF_INET6;
 				dst.sin6_family = AF_INET6;
+#ifdef NEED_SIN_LEN
+				src.sin6_len = sizeof(struct sockaddr_in6);
+				dst.sin6_len = sizeof(struct sockaddr_in6);
+#endif
 				src.sin6_addr = lsw_ip6_hdr(ixs)->saddr;
 				dst.sin6_addr = lsw_ip6_hdr(ixs)->daddr;
 
@@ -1905,6 +1915,10 @@ enum ipsec_xmit_value ipsec_xmit_init1(struct ipsec_xmit_state *ixs)
 				memset(&dst, 0, sizeof(dst));
 				src.sin_family = AF_INET;
 				dst.sin_family = AF_INET;
+#ifdef NEED_SIN_LEN
+				src.sin_len = sizeof(struct sockaddr_in);
+				dst.sin_len = sizeof(struct sockaddr_in);
+#endif
 				src.sin_addr.s_addr = lsw_ip4_hdr(ixs)->saddr;
 				dst.sin_addr.s_addr = lsw_ip4_hdr(ixs)->daddr;
 
