@@ -175,8 +175,13 @@ ln -s /testing/guestbin/swan-install /usr/bin/swan-install
 ln -s /testing/guestbin/swan-update /usr/bin/swan-update
 ln -s /testing/guestbin/swan-run /usr/bin/swan-run
 
-# add easy names so we can jump from vm to vm
+# F28 and later to support X509 Certificates, signed with SHA1
+/usr/bin/update-crypto-policies --set LEGACY
 
+# > F24  keep eth0 naming : "Disabling Consistent Network Device Naming"
+ln -s /dev/null /etc/udev/rules.d/80-net-name-slot.rules
+
+# add easy names so we can jump from vm to vm
 cat << EOD >> /etc/hosts
 
 192.0.1.254 west
