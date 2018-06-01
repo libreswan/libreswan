@@ -15,8 +15,6 @@ USE_BSDKAME=true
 # build modules, etc. for KLIPS.
 BUILD_KLIPS=false
 
-CFLAGS+=-DHAVE_SETPROCTITLE
-
 USERLINK=-L/usr/local/lib -lcrypt
 
 RANLIB=ranlib
