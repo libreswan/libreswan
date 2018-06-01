@@ -169,10 +169,6 @@ void ipsecconf_default_values(struct starter_config *cfg)
 
 	cfg->conn_default.options[KBF_CONNADDRFAMILY] = AF_INET;
 
-	/* set default updown script */
-	cfg->conn_default.left.updown = clone_str(DEFAULT_UPDOWN, "default updown str");
-	cfg->conn_default.right.updown = clone_str(DEFAULT_UPDOWN, "default updown str");
-
 	cfg->conn_default.left.addr_family = AF_INET;
 	anyaddr(AF_INET, &cfg->conn_default.left.addr);
 	cfg->conn_default.left.nexttype = KH_NOTSET;
@@ -685,10 +681,10 @@ static bool validate_end(struct starter_conn *conn_st,
 	if (end->strings_set[KSCF_CA])
 		end->ca = clone_str(end->strings[KSCF_CA], "KSCF_CA");
 
-	if (end->strings_set[KSCF_UPDOWN])
+	if (end->strings_set[KSCF_UPDOWN]) {
+		pfreeany(end->updown);
 		end->updown = clone_str(end->strings[KSCF_UPDOWN], "KSCF_UPDOWN");
-	else
-		end->updown = clone_str(DEFAULT_UPDOWN, "KSCF_UPDOWN default");
+	}
 
 	if (end->strings_set[KSCF_PROTOPORT]) {
 		err_t ugh;
@@ -1432,7 +1428,7 @@ static void conn_default(struct starter_conn *conn,
 	conn->right.id = clone_str(def->right.id, "conn default rightid");
 	conn->right.rsakey1 = clone_str(def->right.rsakey1, "conn default right rsakey1");
 	conn->right.rsakey2 = clone_str(def->right.rsakey2, "conn default right rsakey2");
-#define C(LR,F) conn->LR.F = clone_str(def->LR.F, "conn default " #LR " " #F)
+#define C(LR,F) conn->LR.F = clone_str(DEFAULT_UPDOWN, "conn default " #LR " " #F)
 #define CLR(F) C(left,F); C(right,F)
 	CLR(updown);
 #undef CLR

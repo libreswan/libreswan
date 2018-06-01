@@ -30,3 +30,4 @@ testing/baseconfigs/all/etc/bind/signed/*.signed
 testing/baseconfigs/all/etc/bind/keys/*.key
 testing/baseconfigs/all/etc/bind/keys/*.private
 testing/baseconfigs/all/etc/bind/dsset/dsset*
+.vscode/settings.json
