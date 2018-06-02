@@ -804,7 +804,7 @@ bool shared_phase1_connection(const struct connection *c);
 extern void record_deladdr(ip_address *ip, char *a_type);
 extern void record_newaddr(ip_address *ip, char *a_type);
 
-extern void append_st_cfg_domain(struct state *st, const char *dnsip);
+extern void append_st_cfg_domain(struct state *st, char *dnsip);
 extern void append_st_cfg_dns(struct state *st, const char *dnsip);
 extern bool ikev2_viable_parent(const struct ike_sa *ike);
 

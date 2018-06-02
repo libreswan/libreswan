@@ -3061,6 +3061,19 @@ void record_deladdr(ip_address *ip, char *a_type)
 	for_each_state(ikev2_record_deladdr, ip);
 }
 
+static void append_word(char **sentence, const char *word)
+{
+	size_t sl = strlen(*sentence);
+	size_t wl = strlen(word);
+	char *ns = alloc_bytes(sl + 1 + wl + 1, "sentence");
+
+	memcpy(ns, *sentence, sl);
+	ns[sl] = ' ';
+	memcpy(&ns[sl + 1], word, wl+1);	/* includes NUL */
+	pfree(*sentence);
+	*sentence = ns;
+}
+
 /*
  * Moved from ikev1_xauth.c since IKEv2 code now also uses it
  * Converted to store ephemeral data in the state, not connection
@@ -3071,41 +3084,18 @@ void append_st_cfg_dns(struct state *st, const char *dnsip)
 	if (st->st_seen_cfg_dns == NULL) {
 		st->st_seen_cfg_dns = clone_str(dnsip, "fresh append_st_cfg_dns");
 	} else {
-		/*
-		 * concatenate new IP address string on end of existing
-		 * string, separated by ' '.
-		 */
-		size_t sz_old = strlen(st->st_seen_cfg_dns);
-		size_t sz_added = strlen(dnsip) + 1;
-		char *new = alloc_bytes( sz_old + 1 + sz_added, "append_st_cfg_dns");
-
-		memcpy(new, st->st_seen_cfg_dns, sz_old);
-		*(new + sz_old) = ' ';
-		memcpy(new + sz_old + 1, dnsip, sz_added);
-		pfree(st->st_seen_cfg_dns);
-		st->st_seen_cfg_dns = new;
+		append_word(&st->st_seen_cfg_dns, dnsip);
 	}
 }
 
-void append_st_cfg_domain(struct state *st, const char *domain)
+void append_st_cfg_domain(struct state *st, char *domain)
 {
-
+	/* note: we are responsible to ensure domain is freed */
 	if (st->st_seen_cfg_domains == NULL) {
-		st->st_seen_cfg_domains = clone_str(domain, "fresh append_st_cfg_domain");
+		st->st_seen_cfg_domains = domain;
 	} else {
-		/*
-		 * concatenate new IP address string on end of existing
-		 * string, separated by ' '.
-		 */
-		size_t sz_old = strlen(st->st_seen_cfg_domains);
-		size_t sz_added = strlen(domain) + 1;
-		char *new = alloc_bytes( sz_old + 1 + sz_added, "append_st_cfg_domain");
-
-		memcpy(new, st->st_seen_cfg_domains, sz_old);
-		*(new + sz_old) = ' ';
-		memcpy(new + sz_old + 1, domain, sz_added);
-		pfree(st->st_seen_cfg_domains);
-		st->st_seen_cfg_domains = new;
+		append_word(&st->st_seen_cfg_domains, domain);
+		pfree(domain);
 	}
 }
 

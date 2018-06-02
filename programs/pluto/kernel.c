@@ -644,7 +644,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		(st != NULL && st->st_xauth_soft) ? 1 : 0,
 		secure_xauth_username_str,	/* 30 */
 		srcip_str,
-		c->remotepeertype, /* kind of odd printing an enum with %u */
+		c->remotepeertype, /* ??? kind of odd printing an enum with %u */
 		(st != NULL && st->st_seen_cfg_dns != NULL) ? st->st_seen_cfg_dns : "",
 		(st != NULL && st->st_seen_cfg_domains != NULL) ? st->st_seen_cfg_domains : "",
 		(st != NULL && st->st_seen_cfg_banner != NULL) ? st->st_seen_cfg_banner : "",	/* 35 */
