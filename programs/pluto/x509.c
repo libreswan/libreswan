@@ -324,63 +324,34 @@ void select_nss_cert_id(CERTCertificate *cert, struct id *end_id)
 
 }
 
-static char *make_crl_uri_str(chunk_t *uri)
-{
-	if (uri == NULL || uri->ptr == NULL || uri->len < 1)
-		return NULL;
-
-	char *uri_str = alloc_bytes(uri->len + 1, "uri str");
-
-	memcpy(uri_str, uri->ptr, uri->len);
-	uri_str[uri->len] = '\0';
-
-	return uri_str;
-}
-
 static void dbg_crl_import_err(int err)
 {
 	libreswan_log("NSS CRL import error: %s", nss_err_str((PRInt32)err));
 }
 
-bool insert_crl_nss(chunk_t *blob, chunk_t *crl_uri, char *nss_uri)
+/* Note: insert_crl_nss frees *blob */
+bool insert_crl_nss(chunk_t *blob, const chunk_t *crl_uri)
 {
-	bool ret;
-	char *uri_str;
-	int r;
-
-	if (blob == NULL || blob->ptr == NULL || blob->len < 1)
-		return FALSE;
-
 	/* for CRL use the name passed to helper for the uri */
-	if (nss_uri == NULL && crl_uri != NULL) {
-		uri_str = make_crl_uri_str(crl_uri);
-		if (uri_str == NULL) {
-			DBG(DBG_X509,
-			    DBG_log("no CRL URI available"));
-			return FALSE;
+	bool ret = FALSE;
+	char *uri_str = str_from_chunk(*crl_uri, "URI str");
+
+	if (uri_str == NULL) {
+		DBG(DBG_X509,
+		    DBG_log("no CRL URI available"));
+	} else {
+		int r = send_crl_to_import(blob->ptr, blob->len, uri_str);
+		if (r == -1) {
+			libreswan_log("_import_crl internal error");
+		} else if (r != 0) {
+			dbg_crl_import_err(r);
+		} else {
+			DBG(DBG_X509, DBG_log("CRL imported"));
+			ret = TRUE;
 		}
-	} else {
-		uri_str = nss_uri;
 	}
 
-	if (uri_str == NULL)
-		return FALSE;
-
-	r = send_crl_to_import(blob->ptr, blob->len, uri_str);
-	if (r == -1) {
-		libreswan_log("_import_crl internal error");
-		ret = FALSE;
-	} else if (r != 0) {
-		dbg_crl_import_err(r);
-		ret = FALSE;
-	} else {
-		DBG(DBG_X509, DBG_log("CRL imported"));
-		ret = TRUE;
-	}
-
-	if (nss_uri == NULL && crl_uri != NULL)
-		pfree(uri_str);
-
+	pfreeany(uri_str);
 	freeanychunk(*blob);
 	return ret;
 }

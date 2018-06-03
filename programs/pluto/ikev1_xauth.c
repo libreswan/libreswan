@@ -1211,10 +1211,8 @@ static int xauth_launch_authent(struct state *st,
 		return 0;
 #endif
 
-	char *arg_name = alloc_bytes(name->len + 1, "XAUTH Name");
-	memcpy(arg_name, name->ptr, name->len);
-	char *arg_password = alloc_bytes(password->len + 1, "XAUTH Name");
-	memcpy(arg_password, password->ptr, password->len);
+	char *arg_name = str_from_chunk(*name, "XAUTH Name");
+	char *arg_password = str_from_chunk(*password, "XAUTH Name");
 
 	/*
 	 * For XAUTH, we're flipping between retransmitting the packet
@@ -1255,8 +1253,8 @@ static int xauth_launch_authent(struct state *st,
 		bad_case(st->st_connection->xauthby);
 	}
 
-	pfree(arg_name);
-	pfree(arg_password);
+	pfreeany(arg_name);
+	pfreeany(arg_password);
 
 	return 0;
 }

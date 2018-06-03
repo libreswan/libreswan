@@ -36,3 +36,16 @@ chunk_t clone_chunk(chunk_t chunk, const char *name)
 		return clone;
 	}
 }
+
+/* note: the caller must free the result */
+char *str_from_chunk(chunk_t c, const char *name)
+{
+	if (c.len == 0)
+		return NULL;
+
+	char *s = alloc_bytes(c.len + 1, name);
+
+	memcpy(s, c.ptr, c.len);
+	s[c.len] = '\0';	/* redundant */
+	return s;
+}

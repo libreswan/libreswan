@@ -164,10 +164,8 @@ static err_t fetch_curl(chunk_t url LIBCURL_UNUSED,
 	CURL *curl = curl_easy_init();
 
 	if (curl != NULL) {
-		/* we need a null terminated string for curl */
-		uri = alloc_bytes(url.len + 1, "null terminated url");
-		memcpy(uri, url.ptr, url.len);
-		*(uri + url.len) = '\0';
+		/* we need a NUL-terminated string for curl */
+		uri = str_from_chunk(url, "NUL-terminated url");
 
 		if (curl_timeout > 0)
 			timeout = curl_timeout;
@@ -197,7 +195,7 @@ static err_t fetch_curl(chunk_t url LIBCURL_UNUSED,
 			     errorbuffer);
 		}
 		curl_easy_cleanup(curl);
-		pfree(uri);
+		pfreeany(uri);
 
 		if (response.ptr != NULL)
 			free(response.ptr);	/* allocated via realloc(3) */
@@ -272,15 +270,13 @@ static err_t fetch_ldap_url(chunk_t url, chunk_t *blob)
 	int msgid;
 	int rc;
 
-	char *ldap_url = alloc_bytes(url.len + 1, "ldap query");
-
-	snprintf(ldap_url, url.len + 1, "%.*s", (int)url.len, url.ptr);
+	char *ldap_url = str_from_chunk(url, "ldap query");
 
 	DBG(DBG_X509,
 	    DBG_log("Trying LDAP URL '%s'", ldap_url));
 
 	rc = ldap_url_parse(ldap_url, &lurl);
-	pfree(ldap_url);
+	pfreeany(ldap_url);
 
 	if (rc == LDAP_SUCCESS) {
 		LDAP *ldap = ldap_init(lurl->lud_host, lurl->lud_port);
@@ -354,35 +350,36 @@ static err_t fetch_ldap_url(chunk_t url UNUSED,
 
 /*
  * fetch an ASN.1 blob coded in PEM or DER format from a URL
+ * Returns error message or NULL.
+ * Iff no error, *blob contains fetched ASN.1 blob (to be freed by caller).
  */
 static err_t fetch_asn1_blob(chunk_t url, chunk_t *blob)
 {
 	err_t ugh = NULL;
 
-	if (url.len >= 4 && strncaseeq((const char *)url.ptr, "ldap", 4))
+	*blob = empty_chunk;
+	if (url.len >= 5 && strncaseeq((const char *)url.ptr, "ldap:", 5))
 		ugh = fetch_ldap_url(url, blob);
 	else
 		ugh = fetch_curl(url, blob);
-	if (ugh != NULL)
-		return ugh;
-
-	if (is_asn1(*blob)) {
+	if (ugh != NULL) {
+	} else if (is_asn1(*blob)) {
 		DBG(DBG_PARSING,
 		    DBG_log("  fetched blob coded in DER format"));
 	} else {
 		ugh = pemtobin(blob);
-		if (ugh == NULL) {
-			if (is_asn1(*blob)) {
-				DBG(DBG_PARSING,
-				    DBG_log("  fetched blob coded in PEM format"));
-			} else {
-				ugh = "Blob coded in unknown format";
-				pfreeany(blob->ptr);
-			}
+		if (ugh != NULL) {
+		} else if (is_asn1(*blob)) {
+			DBG(DBG_PARSING,
+			    DBG_log("  fetched blob coded in PEM format"));
 		} else {
-			pfreeany(blob->ptr);
+			ugh = "Blob coded in unknown format (within PEM)";
 		}
 	}
+	if (ugh == NULL && blob->len == 0)
+		ugh = "empty ASN.1 blob";
+	if (ugh != NULL)
+		freeanychunk(*blob);
 	return ugh;
 }
 
@@ -391,19 +388,14 @@ static err_t fetch_asn1_blob(chunk_t url, chunk_t *blob)
  */
 static void fetch_crls(void)
 {
-	fetch_req_t *req;
-	fetch_req_t **reqp;
-
 	lock_crl_fetch_list("fetch_crls");
-	req  =  crl_fetch_reqs;
-	reqp = &crl_fetch_reqs;
 
-	while (req != NULL) {
+	for (fetch_req_t **reqp = &crl_fetch_reqs; *reqp != NULL; ) {
+		fetch_req_t *req = *reqp;
 		bool valid_crl = FALSE;
-		chunk_t blob = empty_chunk;
-		generalName_t *gn = req->distributionPoints;
 
-		while (gn != NULL) {
+		for (generalName_t *gn = req->distributionPoints; gn != NULL; ) {
+			chunk_t blob;
 			err_t ugh = fetch_asn1_blob(gn->name, &blob);
 
 			if (ugh != NULL) {
@@ -413,28 +405,24 @@ static void fetch_crls(void)
 				chunk_t crl_uri;
 				clonetochunk(crl_uri, gn->name.ptr,
 					     gn->name.len, "crl uri");
-				if (insert_crl_nss(&blob, &crl_uri, NULL)) {
+				if (insert_crl_nss(&blob, &crl_uri)) {
 					DBG(DBG_X509,
 					    DBG_log("we have a valid crl"));
 					valid_crl = TRUE;
 					break;
 				}
 			}
-			gn = gn->next;
 		}
 
 		if (valid_crl) {
 			/* delete fetch request */
-			fetch_req_t *req_free = req;
-
-			req   = req->next;
-			*reqp = req;
-			free_fetch_request(req_free);
+			*reqp = req->next;	/* remove from list */
+			free_fetch_request(req);
+			/* reqp unchanged in this iteration */
 		} else {
-			/* try again next time */
+			/* retain fetch request for next time */
 			req->trials++;
 			reqp = &req->next;
-			req  =  req->next;
 		}
 	}
 	unlock_crl_fetch_list("fetch_crls");
