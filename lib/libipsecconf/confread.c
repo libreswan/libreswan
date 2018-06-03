@@ -1265,7 +1265,7 @@ static bool load_conn(
 	if (conn->options_set[KBF_PPK]) {
 		lset_t ppk = LEMPTY;
 
-		if (~(conn->policy & POLICY_IKEV1_ALLOW)) {
+		if (!(conn->policy & POLICY_IKEV1_ALLOW)) {
 			switch (conn->options[KBF_PPK]) {
 			case fo_propose:
 				ppk = POLICY_PPK_ALLOW;
