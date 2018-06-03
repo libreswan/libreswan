@@ -25,9 +25,7 @@ static void log_entry(const char *op, struct list_entry *entry)
 	passert(entry != NULL);
 	LSWDBGP(entry->info->debug, buf) {
 		lswlogf(buf, "%s: %s ", entry->info->name, op);
-		if (entry == NULL) {
-			lswlogs(buf, "entry is NULL");
-		} else if (entry->data == NULL) {
+		if (entry->data == NULL) {
 			lswlogf(buf, "entry %p is HEAD (older %p newer %p)",
 				entry, entry->older, entry->newer);
 		} else {
