@@ -109,8 +109,6 @@ static const struct fld RSA_private_field[] = {
 static err_t lsw_process_psk_secret(chunk_t *psk);
 static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak);
 static err_t lsw_process_ppk_static_secret(chunk_t *ppk, chunk_t *ppk_id);
-static err_t lsw_process_ppk_dynamic_secret(chunk_t *ppk, chunk_t *ppk_id, char **filename);
-static char *build_new_offset(int offset_len, int offset);
 static void lsw_process_secret_records(struct secret **psecrets);
 static void lsw_process_secrets_file(struct secret **psecrets,
 				const char *file_pat);
@@ -631,8 +629,7 @@ bool lsw_has_private_rawkey(struct secret *secrets, struct pubkey *pk)
  *
  * For XAUTH passwords, use @username followed by ":XAUTH" followed by the password
  *
- * For Post-Quantum Preshared Keys, use the "PPKS" keyword if the PPK is static, or
- * use the keyword "PPKF" if the PPK is dynamic.
+ * For Post-Quantum Preshared Keys, use the "PPKS" keyword if the PPK is static.
  *
  * PIN for smartcard is no longer supported - use NSS with smartcards
  */
@@ -770,183 +767,6 @@ static err_t lsw_process_ppk_static_secret(chunk_t *ppk, chunk_t *ppk_id)
 			flp->lino, ugh == NULL ? "passed" : ugh);
 		);
 
-	return ugh;
-}
-
-/* parse dynamic PPK (one-time pad) */
-static err_t lsw_process_ppk_dynamic_secret(chunk_t *ppk, chunk_t *ppk_id, char **filename)
-{
-	err_t ugh = NULL;
-	if (*flp->tok == '"' || *flp->tok == '\'') {
-		size_t len = flp->cur - flp->tok - 2;
-
-		clonetochunk(*ppk_id, flp->tok + 1, len, "PPK ID");
-		(void) shift();
-	} else {
-		ugh = "No quotation marks found. PPK ID should be in quotation marks";
-		return ugh;
-	}
-	if (*flp->tok == '"' || *flp->tok == '\'') {
-		char fn[MAX_TOK_LEN];
-		size_t len = flp->cur - flp->tok - 2;
-		struct file_lex_position new_pos;
-
-		memcpy(&fn, flp->tok + 1, len);
-		fn[len] = '\0';
-		(void) shift();
-		if (lexopen(&new_pos, fn, FALSE)) {
-			int offset = 0;
-			DBG(DBG_CONTROL, DBG_log("OTP file opened successfully"));
-
-			*filename = clone_bytes(&fn, len + 1, "Dynamic PPK filename");
-			DBG(DBG_CONTROL, DBG_log("Processing dynamic secret, saving filename as: %s", *filename));
-			flp->bdry = B_none;	/* eat the Record Boundary */
-			(void) shift();	/* get real first token */
-			if (*flp->tok == '"' || *flp->tok == '\'') {
-				char *offset_data = alloc_bytes(flp->cur - flp->tok - 2, "OTP offset");
-				memcpy(offset_data, flp->tok + 1, flp->cur - flp->tok - 2);
-				offset = (int) strtol(offset_data, NULL, 10);
-				pfree(offset_data);
-			}
-
-			DBG(DBG_CONTROL, DBG_log("Offset extracted: %d", offset));
-
-			(void) shift();
-			/* getting PPK */
-			if (*flp->tok == '"' || *flp->tok == '\'') {
-				clonetochunk(*ppk, flp->tok + 1 + offset, 21, "PPK");
-			} else {
-				if (*flp->tok++ == '0') {
-					int base;
-					size_t size;
-					switch (*flp->tok++) {
-					case 'x':
-					case 'X':
-						base = 16;
-						/* 42 hex digits transfer into 21 byte (the length of the key) */
-						size = 42;
-						break;
-					case 's':
-					case 'S':
-						base = 64;
-						/* 28 base64 chars transfer into 21 byte (the length of the key) */
-						size = 28;
-						break;
-					case 't':
-					case 'T':
-						base = 256;
-						/* 21 ASCII chars transfer into 21 byte (the length of the key) */
-						size = 21;
-						break;
-					default:
-						return "unknown format prefix";
-					}
-
-					char buf[RSA_MAX_ENCODING_BYTES];		/*
-											 * limit on size of
-											 * binary
-											 * represenation
-											 * of key
-											 */
-					char diag_space[TTODATAV_BUF];
-
-					ugh = ttodatav(flp->tok + offset, size, base,
-							buf, 21, NULL, diag_space, sizeof(diag_space),
-							TTODATAV_SPACECOUNTS);
-					if (ugh != NULL) {
-						/* ttodata didn't like PPK data from OTP */
-						ugh = builddiag("PPK data malformed (%s): %s", ugh, flp->tok);
-					} else {
-						clonetochunk(*ppk, buf, 21, "PPK");
-					}
-				} else {
-					return "input does not begin with format prefix";
-				}
-			}
-
-			(void) shift();
-			lexclose();
-		}
-	} else {
-		ugh = "Error, OTP pathname not in suitable format";
-	}
-	return ugh;
-}
-
-static char *build_new_offset(int offset_len, int offset)
-{
-	char *new = alloc_bytes(offset_len, "new offset for OTP");
-	int i = offset_len - 1;
-
-	new[offset_len] = '\0';
-	offset = offset + 21;
-	while (offset > 0 && i >= 0) {
-		int num = offset % 10;
-		new[i] = num + '0';
-		i--;
-		offset = offset / 10;
-	}
-	while (i >= 0) {
-		new[i] = '0';
-		i--;
-	}
-	DBG(DBG_CONTROL, DBG_log("built new offset: %s", new));
-	return new;
-}
-
-/* update dynamic PPK file */
-err_t lsw_update_dynamic_ppk_secret(char *fn)
-{
-	err_t ugh = NULL;
-	struct file_lex_position pos;
-	int offset_len = 0;
-	int offset = 0;
-
-	if (lexopen(&pos, fn, FALSE)) {
-		flp->bdry = B_none;	/* eat the Record Boundary */
-		(void) shift();	/* get real first token */
-		if (*flp->tok == '"' || *flp->tok == '\'') {
-			offset_len = flp->cur - flp->tok - 2;
-			char *offset_data = alloc_bytes(offset_len, "OTP offset");
-			memcpy(offset_data, flp->tok + 1, offset_len);
-			offset = (int) strtol(offset_data, NULL, 10);
-			pfree(offset_data);
-		} else {
-			ugh = "Error! Offset should be in quotes";
-			return ugh;
-		}
-		lexclose();
-	}
-
-	FILE *f = fopen(fn, "r+");
-	if (f == NULL) {
-		LOG_ERRNO(errno, "problem with secrets file \"%s\"", fn);
-		ugh = "Could not open OTP file for update";
-	} else {
-		int fd = fileno(f);
-		int file_sz = lseek(fd, 0, SEEK_END);
-
-		if (file_sz == -1) {
-			LOG_ERRNO(errno, "error while trying to overwrite offset in dynamic PPK secret \"%s\"", fn);
-			return "Error, see errno.";
-		}
-
-		if (offset + offset_len + 4 < file_sz) {
-			char *new_offset = build_new_offset(offset_len, offset);
-			int file_sz = lseek(fd, 1, SEEK_SET);
-
-			if (file_sz == -1) {
-				LOG_ERRNO(errno, "error reading offset in file \"%s\"", fn);
-			} else if (write(fd, new_offset, offset_len) == -1) {
-				LOG_ERRNO(errno, "error while trying to overwrite offset in dynamic PPK secret \"%s\"", fn);
-				return "Error, see errno.";
-			}
-		} else {
-			ugh = "No more space in OTP file to extract PPK";
-		}
-
-		fclose(f);
-	}
 	return ugh;
 }
 
@@ -1205,10 +1025,6 @@ static void process_secret(struct secret **psecrets,
 		s->pks.kind = PKK_PPK;
 		ugh = !shift() ? "ERROR: unexpected end of record in static PPK" :
 			lsw_process_ppk_static_secret(&s->pks.ppk, &s->pks.ppk_id);
-	} else if (tokeqword("ppkf")) {
-		s->pks.kind = PKK_PPK;
-		ugh = !shift() ? "ERROR: unexpected end of record in dynamic PPK" :
-			lsw_process_ppk_dynamic_secret(&s->pks.ppk, &s->pks.ppk_id, &s->pks.filename);
 	} else if (tokeqword("pin")) {
 		ugh = "ERROR: keyword 'pin' obsoleted, please use NSS for smartcard support";
 	} else {
@@ -1459,7 +1275,6 @@ void lsw_free_preshared_secrets(struct secret **psecrets)
 			case PKK_PPK:
 				pfree(s->pks.ppk.ptr);
 				pfree(s->pks.ppk_id.ptr);
-				pfreeany(s->pks.filename);
 				break;
 			case PKK_XAUTH:
 				pfree(s->pks.u.preshared_secret.ptr);

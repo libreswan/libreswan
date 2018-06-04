@@ -3148,8 +3148,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	 */
 	if (LIN(POLICY_PPK_ALLOW, pc->policy) && pst->st_seen_ppk) {
 		chunk_t *ppk_id;
-		chunk_t *ppk = get_ppk(pst->st_connection, &ppk_id,
-				       &pst->st_ppk_dynamic_filename);
+		chunk_t *ppk = get_ppk(pst->st_connection, &ppk_id);
 
 		if (ppk != NULL) {
 			DBG(DBG_CONTROL, DBG_log("found PPK and PPK_ID for our connection"));
@@ -3172,17 +3171,6 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 						pst->st_sk_d_no_ppk,
 						pst->st_sk_pi_no_ppk,
 						pst->st_sk_pr_no_ppk);
-			if (pst->st_ppk_dynamic_filename != NULL) {
-				DBG(DBG_CONTROL, DBG_log("PPK is dynamic, with OTP filename: %s",
-							pst->st_ppk_dynamic_filename));
-				if (!update_dynamic_ppk(pst->st_ppk_dynamic_filename)) {
-					/* should we die? how do we prevent accidental re-use? */
-					loglog(RC_LOG_SERIOUS, "OTP could not be updated");
-					return STF_FATAL;
-				} else {
-					DBG(DBG_CONTROL, DBG_log("OTP updated"));
-				}
-			}
 			libreswan_log("PPK AUTH calculated as initiator");
 		} else {
 			if (pc->policy & POLICY_PPK_INSIST) {
@@ -3884,7 +3872,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 				return STF_FATAL;
 			}
 
-			const chunk_t *ppk = get_ppk_by_id(&payl.ppk_id, &st->st_ppk_dynamic_filename);
+			const chunk_t *ppk = get_ppk_by_id(&payl.ppk_id);
 			freeanychunk(payl.ppk_id);
 			if (ppk != NULL)
 				found_ppk = TRUE;
@@ -3898,16 +3886,6 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 						st->st_skey_pi_nss,
 						st->st_skey_pr_nss);
 				st->st_ppk_used = TRUE;
-				if (st->st_ppk_dynamic_filename != NULL) {
-					DBG(DBG_CONTROL, DBG_log("PPK is dynamic, with OTP filename: %s",
-									st->st_ppk_dynamic_filename));
-					if (!update_dynamic_ppk(st->st_ppk_dynamic_filename)) {
-						/* should we die? how do we prevent accidental re-use? */
-						loglog(RC_LOG_SERIOUS, "OTP could not be updated");
-					} else {
-						DBG(DBG_CONTROL, DBG_log("OTP updated"));
-					}
-				}
 				libreswan_log("PPK AUTH calculated as responder");
 			} else {
 				libreswan_log("ignored received PPK_IDENTITY - connection does not require PPK or PPKID not found");

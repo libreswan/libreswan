@@ -122,8 +122,6 @@ struct private_key_stuff {
 
 	chunk_t ppk;
 	chunk_t ppk_id;
-
-	char *filename;
 };
 
 extern struct private_key_stuff *lsw_get_pks(struct secret *s);
@@ -231,7 +229,6 @@ extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					    const struct id *his_id,
 					    bool asym);
 
-extern err_t lsw_update_dynamic_ppk_secret(char *fn);
 extern struct secret *lsw_get_ppk_by_id(struct secret *secrets, chunk_t ppk_id);
 
 extern void lock_certs_and_keys(const char *who);

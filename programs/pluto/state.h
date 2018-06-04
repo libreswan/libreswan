@@ -577,7 +577,6 @@ struct state {
 	/*
 	 * Post-quantum preshared key variables
 	 */
-	char *st_ppk_dynamic_filename;		/* Filename containing dynamic PPKs */
 	bool st_ppk_used;			/* both ends agreed on PPK ID and PPK */
 	bool st_seen_ppk;			/* does remote peer support PPK? */
 

@@ -47,9 +47,8 @@ extern void list_public_keys(bool utc, bool check_pub_keys);
 extern void list_psks(void);
 
 extern const chunk_t *get_psk(const struct connection *c);
-extern chunk_t *get_ppk(const struct connection *c, chunk_t **ppk_id, char **fn);
-extern const chunk_t *get_ppk_by_id(const chunk_t *ppk_id, char **fn);
-extern bool update_dynamic_ppk(char *fn);
+extern chunk_t *get_ppk(const struct connection *c, chunk_t **ppk_id);
+extern const chunk_t *get_ppk_by_id(const chunk_t *ppk_id);
 
 extern void load_preshared_secrets(void);
 extern void free_preshared_secrets(void);
