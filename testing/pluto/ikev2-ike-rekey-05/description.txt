@@ -1,0 +1,4 @@
+Test rekey from both ends. Three IPsec SAs share the same IKE SA same rekey timers.
+
+ikelifetime and  other timings in the configuration file are carefulty crafted.
+Do not mess with it.
