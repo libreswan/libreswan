@@ -6750,6 +6750,8 @@ void ikev2_initiate_child_sa(struct pending *p)
 	freeanychunk(st->st_ni); /* this is from the parent. */
 	freeanychunk(st->st_nr); /* this is from the parent. */
 
+	st->st_original_role = ORIGINAL_INITIATOR;
+
 	if (ipsec_sa) {
 		const struct state *rst = state_with_serialno(p->replacing);
 
