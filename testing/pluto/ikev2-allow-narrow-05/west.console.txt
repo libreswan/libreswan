@@ -63,15 +63,15 @@ src 192.1.2.45 dst 192.1.2.23
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 XFRM policy:
 src 192.0.1.0/24 dst 192.0.2.0/24 proto tcp
-	dir out priority 4294947815 ptype main
+	dir out priority 976871 ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 src 192.0.2.0/24 dst 192.0.1.0/24 proto tcp
-	dir fwd priority 4294947815 ptype main
+	dir fwd priority 976871 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
 src 192.0.2.0/24 dst 192.0.1.0/24 proto tcp
-	dir in priority 4294947815 ptype main
+	dir in priority 976871 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
 XFRM done

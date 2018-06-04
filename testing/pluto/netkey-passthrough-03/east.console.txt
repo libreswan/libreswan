@@ -40,27 +40,27 @@ src 192.1.2.23 dst 192.1.2.45
 	enc cbc(aes) 0xENCKEY
 XFRM policy:
 src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 222
-	dir out priority 4294914015 ptype main
+	dir out priority 843743 ptype main
 src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 222
-	dir fwd priority 4294914015 ptype main
+	dir fwd priority 843743 ptype main
 src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 222
-	dir in priority 4294914015 ptype main
+	dir in priority 843743 ptype main
 src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp dport 222
-	dir out priority 4294946783 ptype main
+	dir out priority 843743 ptype main
 src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp sport 222
-	dir fwd priority 4294946783 ptype main
+	dir fwd priority 843743 ptype main
 src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp sport 222
-	dir in priority 4294946783 ptype main
+	dir in priority 843743 ptype main
 src 192.1.2.23/32 dst 192.1.2.45/32
-	dir out priority 4294963167 ptype main
+	dir out priority 1040351 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
 src 192.1.2.45/32 dst 192.1.2.23/32
-	dir fwd priority 4294963167 ptype main
+	dir fwd priority 1040351 ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 src 192.1.2.45/32 dst 192.1.2.23/32
-	dir in priority 4294963167 ptype main
+	dir in priority 1040351 ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 XFRM done

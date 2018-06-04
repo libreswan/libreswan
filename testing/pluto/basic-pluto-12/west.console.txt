@@ -67,24 +67,24 @@ src 192.1.2.45 dst 192.1.2.23
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 XFRM policy:
-src 192.0.1.0/24 dst 192.0.2.0/24 proto tcp dport 22
-	dir out priority 4294946783 ptype main
-src 192.0.2.0/24 dst 192.0.1.0/24 proto tcp sport 22
-	dir fwd priority 4294946783 ptype main
-src 192.0.2.0/24 dst 192.0.1.0/24 proto tcp sport 22
-	dir in priority 4294946783 ptype main
 src 192.0.1.0/24 dst 192.0.2.0/24
-	dir out priority 4294964199 ptype main
+	dir out priority 1042407 ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 src 192.0.2.0/24 dst 192.0.1.0/24
-	dir fwd priority 4294964199 ptype main
+	dir fwd priority 1042407 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
 src 192.0.2.0/24 dst 192.0.1.0/24
-	dir in priority 4294964199 ptype main
+	dir in priority 1042407 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
+src 192.0.1.0/24 dst 192.0.2.0/24 proto tcp dport 22
+	dir out priority 843743 ptype main
+src 192.0.2.0/24 dst 192.0.1.0/24 proto tcp sport 22
+	dir fwd priority 843743 ptype main
+src 192.0.2.0/24 dst 192.0.1.0/24 proto tcp sport 22
+	dir in priority 843743 ptype main
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
