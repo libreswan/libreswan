@@ -733,7 +733,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	} else {
 		req.u.p.dir = dir;
 
-		/* * The caller should have set the proper priority by now */
+		/* The caller should have set the proper priority by now */
 		req.u.p.priority = sa_priority;
 		DBG(DBG_KERNEL, DBG_log("IPsec Sa SPD priority set to %d", req.u.p.priority));
 

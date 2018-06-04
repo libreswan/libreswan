@@ -4201,7 +4201,7 @@ void show_one_connection(const struct connection *c)
 		strcpy(mtustr, "unset");
 
 	if (c->sa_priority != 0)
-		snprintf(sapriostr, sizeof(sapriostr), "%u", c->sa_priority);
+		snprintf(sapriostr, sizeof(sapriostr), "%#" PRIx32, c->sa_priority);
 	else
 		strcpy(sapriostr, "auto");
 
@@ -4584,11 +4584,8 @@ bool idr_wildmatch(const struct connection *c, const struct id *idr)
 /* sa priority and type should really go into kernel_sa */
 uint32_t calculate_sa_prio(const struct connection *c)
 {
-
-	int bits, base, src, dst, prio = 0;
-
 	if (c->sa_priority != 0) {
-		DBG(DBG_CONTROL, DBG_log("priority calculation of connection \"%s\" overruled by connection specifiction of %d",
+		DBG(DBG_CONTROL, DBG_log("priority calculation of connection \"%s\" overruled by connection specification of %#" PRIx32,
 			c->name, c->sa_priority));
 		return c->sa_priority;
 	}
@@ -4599,28 +4596,31 @@ uint32_t calculate_sa_prio(const struct connection *c)
 		return 0;
 	}
 
-	bits = (c->spd.this.port != 0 && c->spd.this.port != 0 ) ? 3 :
-		(c->spd.this.port != 0 || c->spd.this.port != 0 ) ? 2 :
-		(c->spd.this.protocol != 0) ? 1 : 0;
+	uint32_t pmax =
+		(LIN(POLICY_GROUPINSTANCE, c->policy)) ?
+			(LIN(POLICY_AUTH_NULL, c->policy)) ?
+				PLUTO_SPD_OPPO_ANON_MAX :
+				PLUTO_SPD_OPPO_MAX :
+			PLUTO_SPD_STATIC_MAX;
 
-	if (LIN(POLICY_GROUPINSTANCE, c->policy)) {
-		if (LIN(POLICY_AUTH_NULL, c->policy))
-			base =  PLUTO_SPD_OPPO_ANON_MAX;
-		else
-			base =  PLUTO_SPD_OPPO_MAX;
+	uint32_t portsw = /* max 2 (2 bits) */
+		(c->spd.this.port == 0 ? 0 : 1) +
+		(c->spd.that.port == 0 ? 0 : 1);
+
+	uint32_t protow = c->spd.this.protocol == 0 ? 0 : 1;	/* (1 bit) */
+
+	uint32_t srcw, dstw;	/* each max 128 (8 bits) */
+
+	if (LIN(POLICY_TUNNEL, c->policy)) {
+		srcw = c->spd.this.client.maskbits;
+		dstw = c->spd.that.client.maskbits;
 	} else {
-		base =  PLUTO_SPD_STATIC_MAX;
+		srcw = dstw = c->addr_family == AF_INET ? 32 : 128;
 	}
 
-	if (!LIN(POLICY_TUNNEL, c->policy)) {
-		src = dst = c->addr_family == AF_INET ? 32 : 128;
-	} else {
-		src = c->spd.this.client.maskbits;
-		dst = c->spd.that.client.maskbits;
-	}
-	prio = base - ((2<<16) + (bits << 14) + (src << 7) + (dst));
+	uint32_t prio = pmax - (portsw << 17 | protow << 16 | srcw << 8 | dstw);
 
-	DBG(DBG_CONTROL, DBG_log("priority calculation of connection \"%s\" is %d",
+	DBG(DBG_CONTROL, DBG_log("priority calculation of connection \"%s\" is %#" PRIx32,
 		c->name, prio));
 	return prio;
 }

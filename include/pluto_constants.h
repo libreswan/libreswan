@@ -1162,13 +1162,15 @@ enum pluto_exit_code {
 extern void init_pluto_constants(void);
 
 /*
- * Automatic IPsec SA SPD policy priorities.
- * manual by user	0 - 65535
- * static conn		65536 - 131071
- * opportunistic	131072 - 262143
- * oe-anonymous		262144 - 524287
+ * IPsec SA SPD policy priorities.
+ * A smaller value is a higher priority.
+ * The bands we use must have 2<<19 distinct values.
+ * manual by user	[0 * 1<<19, 1 * 1<<19)
+ * static conn		[1 * 1<<19, 2 * 1<<19)
+ * opportunistic	[2 * 1<<19, 3 * 1<<19)
+ * oe-anonymous		[3 * 1<<19, 4 * 1<<19)
  */
-#define PLUTO_SPD_MANUAL_MAX 65535
-#define PLUTO_SPD_STATIC_MAX 131071
-#define PLUTO_SPD_OPPO_MAX 262143
-#define PLUTO_SPD_OPPO_ANON_MAX  524287
+#define PLUTO_SPD_MANUAL_MAX	(1u * (1u << 19) - 1u)	/* not yet used */
+#define PLUTO_SPD_STATIC_MAX	(2u * (1u << 19) - 1u)
+#define PLUTO_SPD_OPPO_MAX	(3u * (1u << 19) - 1u)
+#define PLUTO_SPD_OPPO_ANON_MAX	(4u * (1u << 19) - 1u)
