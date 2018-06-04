@@ -8,5 +8,3 @@ IPv6 over IPv4 (both sides NETKEY):
 4) west initiates connection "westnet-eastnet-6in4"; east responds
 5) west ping6's from its westnet ip to the eastnet ip
 
-Current issue: Step 5 does not succeed, but ESP traffic appears over v4 tunnel
-** selinux disabled to work around test system avcs
