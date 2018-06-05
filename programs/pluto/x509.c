@@ -855,6 +855,8 @@ static lsw_cert_ret pluto_process_certs(struct state *st,
 			add_crl_fetch_request_nss(&fdn, end_cert_dp);
 			wake_fetch_thread(__FUNCTION__);
 		}
+		DBGF(DBG_X509, "releasing end_cert_dp sent to crl fetch");
+		free_generalNames(end_cert_dp, false/*shallow*/);
 	}
 #endif
 
