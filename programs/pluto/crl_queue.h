@@ -36,6 +36,6 @@ struct crl_fetch_request *crl_fetch_request(SECItem *issuer, generalName_t *end_
 void free_crl_fetch_requests(struct crl_fetch_request **request);
 
 void add_crl_fetch_requests(struct crl_fetch_request *requests);
-struct crl_fetch_request *get_crl_fetch_requests(deltatime_t delay);
+struct crl_fetch_request *get_crl_fetch_requests(void);
 
 #endif

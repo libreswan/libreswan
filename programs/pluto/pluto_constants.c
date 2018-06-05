@@ -120,6 +120,7 @@ static const char *const timer_event_name[] = {
 	"EVENT_PENDING_DDNS",
 	"EVENT_SD_WATCHDOG",
 	"EVENT_PENDING_PHASE2",
+	"EVENT_CHECK_CRLS",
 
 	"EVENT_SO_DISCARD",
 	"EVENT_v1_RETRANSMIT",

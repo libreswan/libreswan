@@ -62,6 +62,7 @@
 #include "nat_traversal.h"
 #include "pluto_sd.h"
 #include "retry.h"
+#include "fetch.h"		/* for check_crls() */
 
 /*
  * This file has the event handling routines. Events are
@@ -309,6 +310,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	case EVENT_PENDING_PHASE2:
 	case EVENT_SD_WATCHDOG:
 	case EVENT_NAT_T_KEEPALIVE:
+	case EVENT_CHECK_CRLS:
 		passert(st == NULL);
 		break;
 
@@ -404,6 +406,10 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 
 	case EVENT_NAT_T_KEEPALIVE:
 		nat_traversal_ka_event();
+		break;
+
+	case EVENT_CHECK_CRLS:
+		check_crls();
 		break;
 
 	case EVENT_v2_RELEASE_WHACK:

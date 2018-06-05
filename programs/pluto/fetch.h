@@ -19,6 +19,7 @@ extern void list_crl_fetch_requests(bool utc);
 
 extern void init_fetch(void);
 extern void free_crl_fetch(void);
+void check_crls(void);
 
 extern char *curl_iface;
 extern long curl_timeout;

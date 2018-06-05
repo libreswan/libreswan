@@ -127,25 +127,15 @@ void add_crl_fetch_requests(struct crl_fetch_request *requests)
 	DBGF(DBG_X509, "crl fetch request sent");
 }
 
-struct crl_fetch_request *get_crl_fetch_requests(deltatime_t delay)
+struct crl_fetch_request *get_crl_fetch_requests(void)
 {
-	/*
-	 * XXX: this assumes that CRL_QUEUE_COND's clock is
-	 * CLOCK_REALTIME (same assumption was made by code this
-	 * replaced).
-	 */
-	realtime_t timeout = realtimesum(realnow(), delay);
-	struct timespec ts  = {
-		.tv_sec = timeout.rt.tv_sec,
-	};
 	struct crl_fetch_request *requests = NULL;
 	pthread_mutex_lock(&crl_queue_mutex);
 	{
 		while (crl_fetch_requests == NULL) {
 			DBGF(DBG_X509, "waiting for crl_queue to fill");
-			int status = pthread_cond_timedwait(&crl_queue_cond,
-							    &crl_queue_mutex,
-							    &ts);
+			int status = pthread_cond_wait(&crl_queue_cond,
+							    &crl_queue_mutex);
 			if (status != 0) {
 				break;
 			} /* else ? */

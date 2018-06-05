@@ -1,8 +1,10 @@
-/* Dynamic fetching of X.509 CRLs
+/* Dynamic fetching of X.509 CRLs, for libreswan
+ *
  * Copyright (C) 2002 Stephane Laroche <stephane.laroche@colubris.com>
  * Copyright (C) 2002-2004 Andreas Steffen, Zuercher Hochschule Winterthur
  * Copyright (C) 2003-2008 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2018 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -52,6 +54,7 @@
 #include "nss_err.h"
 #include "keys.h"
 #include "crl_queue.h"
+#include "timer.h"
 
 #ifdef LIBCURL
 #define LIBCURL_UNUSED
@@ -439,8 +442,19 @@ static void fetch_crls(void)
 	unlock_crl_fetch_list("fetch_crls");
 }
 
-static void check_crls(void)
+/*
+ * Create a possibly duplicate list of all known CRLS and send them
+ * off to fetch_crls() for a refresh.
+ *
+ * Any duplicates will be eliminated by fetch_crls() when it merges
+ * these requests with any still unprocessed requests.
+ *
+ * Similarly, if check_crls() is called more frequently then
+ * fetch_crls() can process, redundant fetches will be merged.
+ */
+void check_crls(void)
 {
+	event_schedule(EVENT_CHECK_CRLS, crl_check_interval, NULL);
 	struct crl_fetch_request *requests = NULL;
 
 	/*
@@ -521,33 +535,18 @@ static void merge_crl_fetch_request(struct crl_fetch_request *);
 
 static void *fetch_thread(void *arg UNUSED)
 {
-	deltatime_t interval = DELTATIME(5); /* First fetch interval, then regular */
-
 	DBG(DBG_X509,
 	    DBG_log("fetch thread started"));
 
 	for (;;) {
-		DBG(DBG_X509,
-		    DBG_log("next regular crl check in %ld seconds",
-			    (long)deltasecs(interval)));
-		struct crl_fetch_request *requests = get_crl_fetch_requests(interval);
-
-		if (requests == NULL) {
-			DBG(DBG_X509, {
-				    DBG_log(" ");
-				    DBG_log("*time to check crls");
-			    });
-			check_crls();
-			interval = crl_check_interval;
-		} else {
-			DBG(DBG_X509,
-			    DBG_log("fetch thread was woken up"));
-			for (struct crl_fetch_request *request = requests;
-			     request != NULL; request = request->next) {
-				merge_crl_fetch_request(request);
-			}
-			free_crl_fetch_requests(&requests);
+		DBGF(DBG_X509, "fetching crl requests");
+		struct crl_fetch_request *requests = get_crl_fetch_requests();
+		DBGF(DBG_X509, "fetch thread was woken up");
+		for (struct crl_fetch_request *request = requests;
+		     request != NULL; request = request->next) {
+			merge_crl_fetch_request(request);
 		}
+		free_crl_fetch_requests(&requests);
 		/*
 		 * This also re-tries any requests that previously
 		 * failed.
@@ -577,6 +576,7 @@ void init_fetch(void)
 			libreswan_log(
 				"could not start thread for fetching certificate, status = %d",
 				status);
+		event_schedule(EVENT_CHECK_CRLS, deltatime(5), NULL);
 	}
 }
 
