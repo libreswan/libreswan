@@ -73,6 +73,7 @@
 #include "state.h"
 #include "ipsec_doi.h"	/* needs demux.h and state.h */
 #include "fetch.h"
+#include "crl_queue.h"
 #include "timer.h"
 #include "ipsecconf/confread.h"
 #include "xauth.h"

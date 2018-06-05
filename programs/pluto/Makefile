@@ -107,6 +107,7 @@ endif
 
 OBJS += x509.o
 OBJS += fetch.o
+OBJS += crl_queue.o
 
 ifeq ($(USE_IPSEC_CONNECTION_LIMIT),true)
 CFLAGS += -DIPSEC_CONNECTION_LIMIT=$(IPSEC_CONNECTION_LIMIT)

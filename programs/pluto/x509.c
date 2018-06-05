@@ -84,6 +84,7 @@
 #include <ocsp.h>
 #include "ike_alg_sha1.h"
 #include "crypt_hash.h"
+#include "crl_queue.h"
 
 bool crl_strict = FALSE;
 bool ocsp_strict = FALSE;
@@ -819,8 +820,7 @@ static lsw_cert_ret pluto_process_certs(struct state *st,
 			end_cert_dp = gndp_from_nss_cert(end_cert);
 		}
 		if (find_fetch_dn(&fdn, c, end_cert)) {
-			add_crl_fetch_request_nss(&fdn, end_cert_dp);
-			wake_fetch_thread(__FUNCTION__);
+			add_crl_fetch_requests(crl_fetch_request(&fdn, end_cert_dp, NULL));
 		}
 		DBGF(DBG_X509, "releasing end_cert_dp sent to crl fetch");
 		free_generalNames(end_cert_dp, false/*shallow*/);

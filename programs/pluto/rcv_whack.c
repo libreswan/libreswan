@@ -73,7 +73,7 @@
 #include "kernel_alg.h"
 #include "ike_alg.h"
 #include "ip_address.h" /* for setportof() */
-
+#include "crl_queue.h"
 #include "pluto_sd.h"
 
 #include "pluto_stats.h"
@@ -465,7 +465,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 
 #if defined(LIBCURL) || defined(LIBLDAP)
 	if (m->whack_reread & REREAD_FETCH)
-			wake_fetch_thread("whack command");
+		add_crl_fetch_requests(NULL);
 #endif
 
 	if (m->whack_list & LIST_PSKS)
