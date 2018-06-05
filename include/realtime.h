@@ -1,7 +1,8 @@
-/* time objects and functions, for libreswan
+/* realtime objects and functions, for libreswan
  *
  * Copyright (C) 1998, 1999, 2000  Henry Spencer.
  * Copyright (C) 1999, 2000, 2001  Richard Guy Briggs
+ * Copyright (C) 2017, 2018  Andrew Cagney
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
@@ -20,6 +21,7 @@
 
 #include <sys/time.h>		/* for struct timeval */
 #include <time.h>		/* for time_t and struct tm */
+#include <stdbool.h>		/* for bool */
 
 #include "deltatime.h"		/* for deltatime_t */
 
@@ -65,5 +67,8 @@ struct realtm {
 struct realtm local_realtime(realtime_t t);
 struct realtm utc_realtime(realtime_t t);
 
-#endif
+/* for pthread_cond_timedwait() */
+clockid_t realtime_clockid(void);
+struct timespec realtime_as_timespec(realtime_t);
 
+#endif

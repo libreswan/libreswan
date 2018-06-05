@@ -2,6 +2,7 @@
  *
  * Copyright (C) 1998, 1999, 2000  Henry Spencer.
  * Copyright (C) 1999, 2000, 2001  Richard Guy Briggs
+ * Copyright (C) 2017-2018  Andrew Cagney
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
@@ -61,5 +62,9 @@ intmax_t monosecs(monotime_t m);
 
 /* output as "smart" seconds */
 size_t lswlog_monotime(struct lswlog *buf, monotime_t d);
+
+/* for pthread_cond_timedwait() */
+clockid_t monotime_clockid(void);
+struct timespec monotime_as_timespec(monotime_t);
 
 #endif

@@ -29,7 +29,7 @@ bool is_monotime_epoch(monotime_t t)
 	return memeq(&t, &monotime_epoch, sizeof(monotime_t));
 }
 
-static clockid_t monotime_clockid(void)
+clockid_t monotime_clockid(void)
 {
 #ifdef CLOCK_BOOTTIME
 	return CLOCK_BOOTTIME;	/* best */
@@ -53,6 +53,15 @@ monotime_t mononow(void)
 			.tv_usec = t.tv_nsec / 1000,
 		},
 	};
+}
+
+struct timespec monotime_as_timespec(monotime_t t)
+{
+	struct timespec ts =  {
+		.tv_sec = t.mt.tv_sec,
+		.tv_nsec = t.mt.tv_usec * 1000,
+	};
+	return ts;
 }
 
 intmax_t monosecs(monotime_t m)

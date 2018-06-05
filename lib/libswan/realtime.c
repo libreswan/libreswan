@@ -54,7 +54,7 @@ deltatime_t realtimediff(realtime_t a, realtime_t b)
 	return deltatime_ms((intmax_t)d.tv_sec * 1000 + d.tv_usec / 1000);
 }
 
-static clockid_t realtime_clockid(void)
+clockid_t realtime_clockid(void)
 {
 	return CLOCK_REALTIME;
 }
@@ -74,6 +74,15 @@ realtime_t realnow(void)
 		},
 	};
 	return t;
+}
+
+struct timespec realtime_as_timespec(realtime_t t)
+{
+	struct timespec ts =  {
+		.tv_sec = t.rt.tv_sec,
+		.tv_nsec = t.rt.tv_usec * 1000,
+	};
+	return ts;
 }
 
 struct realtm local_realtime(realtime_t t)
