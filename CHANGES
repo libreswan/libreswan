@@ -25,6 +25,8 @@ v3.24 (unreleased)
 * IKEv1: Prevent crashes with IKEv1 mistakenly allowing narrowing=yes [Paul]
 * X509: Extend support for wildcard certs matching remote peer ID [Paul/Hugh]
 * X509: Support PKCS7 for Microsoft interop with intermediate certs [Andrew]
+* pluto: Obsoleted connaddrfamily= (fixes 6in4 and 4in6) [Paul]
+* pluto: New hostaddrfamily= and clientaddrfamily= (only needed w DNS) [Paul]
 * pluto: Cleanup of state/md passing code [Andrew]
 * pluto: Allow switching back from wrong instance to template conn [Paul]
 * pluto: disentangle IKEv1 and IKEv2 packet sending code [Andrew]
