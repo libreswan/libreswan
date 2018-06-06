@@ -63,15 +63,15 @@ static bool crl_is_current(CERTSignedCrl *crl)
 	return SEC_CheckCrlTimes(&crl->crl, PR_Now()) != secCertTimeExpired;
 }
 
-static CERTSignedCrl *get_issuer_crl(CERTCertDBHandle *handle,
-				     CERTCertificate *cert)
+static bool cert_issuer_has_current_crl(CERTCertDBHandle *handle,
+					CERTCertificate *cert)
 {
 	if (handle == NULL || cert == NULL)
-		return NULL;
+		return false;
 
-	DBG(DBG_X509,
-	    DBG_log("%s : looking for a CRL issued by %s", __FUNCTION__,
-							   cert->issuerName));
+	DBGF(DBG_X509, "%s : looking for a CRL issued by %s",
+	     __FUNCTION__, cert->issuerName);
+
 	/*
 	 * Use SEC_LookupCrls method instead of SEC_FindCrlByName.
 	 * For some reason, SEC_FindCrlByName was giving out bad pointers!
@@ -81,44 +81,26 @@ static CERTSignedCrl *get_issuer_crl(CERTCertDBHandle *handle,
 	CERTCrlHeadNode *crl_list = NULL;
 
 	if (SEC_LookupCrls(handle, &crl_list, SEC_CRL_TYPE) != SECSuccess) {
-		return NULL;
+		return false;
 	}
 
-	CERTCrlNode *crl_node = crl_list->first;
 	CERTSignedCrl *crl = NULL;
 
-	while (crl_node != NULL) {
+	for (CERTCrlNode *crl_node = crl_list->first; crl_node != NULL;
+	     crl_node = crl_node->next) {
 		if (crl_node->crl != NULL &&
 				SECITEM_ItemsAreEqual(&cert->derIssuer,
 						 &crl_node->crl->crl.derName)) {
 			crl = crl_node->crl;
-			DBG(DBG_X509,
-			    DBG_log("%s : CRL found", __FUNCTION__));
+			DBGF(DBG_X509, "%s : CRL found", __FUNCTION__);
 			break;
 		}
-		crl_node = crl_node->next;
 	}
 
-	if (crl == NULL) {
-		PORT_FreeArena(crl_list->arena, PR_FALSE);
-	}
-
-	return crl;
-}
-
-static bool cert_issuer_has_current_crl(CERTCertDBHandle *handle,
-				 CERTCertificate *cert)
-{
-	bool res = FALSE;
-	CERTSignedCrl *crl = get_issuer_crl(handle, cert);
-
-	if (crl != NULL) {
-		res = crl_is_current(crl);
-		if (crl->arena != NULL) {
-			PORT_FreeArena(crl->arena, PR_FALSE);
-		}
-	}
-
+	bool res = crl != NULL && crl_is_current(crl);
+	DBGF(DBG_X509, "releasing crl list in %s with result %s",
+	     __func__, res ? "true" : "false");
+	PORT_FreeArena(crl_list->arena, PR_FALSE);
 	return res;
 }
 
