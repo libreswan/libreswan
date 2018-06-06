@@ -41,6 +41,12 @@ east #
 "nss-cert-ocsp" #1: certificate revoked!
 east #
 east #
+ ipsec stop
+Redirecting to: systemctl stop ipsec.service
+east #
+ ipsec status
+whack: Pluto is not running (no "/run/pluto/pluto.ctl")
+east #
  ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

@@ -39,6 +39,12 @@ east #
  hostname |grep nic && journalctl /sbin/ocspd --no-pager | tail -n 20 |grep TRYLATER
 east #
 east #
+ ipsec stop
+Redirecting to: systemctl stop ipsec.service
+east #
+ ipsec status
+whack: Pluto is not running (no "/run/pluto/pluto.ctl")
+east #
  ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
