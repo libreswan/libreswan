@@ -470,6 +470,8 @@ static void check_crls(void)
 		}
 		crl_node = crl_node->next;
 	}
+	DBGF(DBG_X509, "releasing crl list in %s", __func__);
+	PORT_FreeArena(crl_list->arena, PR_FALSE);
 
 	/* add the pubkeys distribution points to fetch list */
 

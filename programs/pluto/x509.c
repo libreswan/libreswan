@@ -1676,14 +1676,14 @@ static void crl_detail_list(void)
 	if (SEC_LookupCrls(handle, &crl_list, SEC_CRL_TYPE) != SECSuccess)
 		return;
 
-	CERTCrlNode *crl_node = crl_list->first;
-
-	while (crl_node != NULL) {
-		if (crl_node->crl != NULL)
+	for (CERTCrlNode *crl_node = crl_list->first; crl_node != NULL;
+	     crl_node = crl_node->next) {
+		if (crl_node->crl != NULL) {
 			crl_detail_to_whacklog(&crl_node->crl->crl);
-
-		crl_node = crl_node->next;
+		}
 	}
+	DBGF(DBG_X509, "releasing crl list in %s", __func__);
+	PORT_FreeArena(crl_list->arena, PR_FALSE);
 }
 
 CERTCertList *get_all_certificates(void)
