@@ -1,0 +1,11 @@
+  <varlistentry>
+  <term><emphasis remap='B'>clientaddrfamily</emphasis></term>
+  <listitem>
+<para>the address family of the clients (subnets); currently the accepted
+values are <emphasis remap='B'>ipv4</emphasis> and
+<emphasis remap='B'>ipv6</emphasis>. The default is to detect this based on the
+network IP addresses specified or the network IP addresses resolved, so this option is not needed,
+unless you specify names that resolve to both IPv4 and IPv6.
+</para>
+  </listitem>
+  </varlistentry>

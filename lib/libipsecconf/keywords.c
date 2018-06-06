@@ -185,9 +185,9 @@ static const struct keyword_enum_value kw_auto_values[] = {
 static const struct keyword_enum_values kw_auto_list = VALUES_INITIALIZER(kw_auto_values);
 
 /*
- * Values for connaddrfamily={ipv4,ipv6}
+ * Values for addrfamily={ipv4,ipv6}
  */
-static const struct keyword_enum_value kw_connaddrfamily_values[] = {
+static const struct keyword_enum_value kw_addrfamily_values[] = {
 	{ "ipv4",  AF_INET },
 	{ "ipv6",  AF_INET6 },
 	/* aliases - undocumented on purpose */
@@ -197,7 +197,7 @@ static const struct keyword_enum_value kw_connaddrfamily_values[] = {
 	{ "inet6", AF_INET6 },
 };
 
-static const struct keyword_enum_values kw_connaddrfamily_list = VALUES_INITIALIZER(kw_connaddrfamily_values);
+static const struct keyword_enum_values kw_addrfamily_list = VALUES_INITIALIZER(kw_addrfamily_values);
 
 /*
  * Values for type={tunnel,transport,etc}
@@ -507,7 +507,9 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "auto",  kv_conn | kv_duplicateok,  kt_enum,  KBF_AUTO,  &kw_auto_list, NULL, },
   { "also",  kv_conn,  kt_appendstring,  KSCF_ALSO, NULL, NULL, },
   { "alsoflip",  kv_conn,  kt_string,  KSCF_ALSOFLIP, NULL, NULL, },
-  { "connaddrfamily",  kv_conn,  kt_enum,  KBF_CONNADDRFAMILY,  &kw_connaddrfamily_list, NULL, },
+  { "hostaddrfamily",  kv_conn,  kt_enum,  KBF_HOSTADDRFAMILY,  &kw_addrfamily_list, NULL, },
+  { "clientaddrfamily",  kv_conn,  kt_enum,  KBF_CLIENTADDRFAMILY,  &kw_addrfamily_list, NULL, },
+  { "connaddrfamily",  kv_conn, kt_obsolete, KBF_WARNIGNORE, NULL, NULL, }, /* obsolete */
   { "type",  kv_conn,  kt_enum,  KBF_TYPE,  &kw_type_list, NULL, },
   { "authby",  kv_conn,  kt_string,  KSCF_AUTHBY, NULL, NULL, },
   { "keyexchange",  kv_conn,  kt_enum,  KBF_KEYEXCHANGE,  &kw_keyexchange_list, NULL, },

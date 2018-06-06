@@ -1,7 +1,7 @@
 /*
  * information about connections between hosts and clients
  *
- * Copyright (C) 1998-2002,2010,2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 1998-2002,2010,2013,2018 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2008 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2011 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
@@ -992,7 +992,8 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 
 		switch (dst->host_type) {
 		case KH_IPHOSTNAME:
-			er = ttoaddr(dst->host_addr_name, 0, AF_UNSPEC, &dst->host_addr);
+			er = ttoaddr(dst->host_addr_name, 0, addrtypeof(&dst->host_addr),
+				&dst->host_addr);
 
 			/* The above call wipes out the port, put it again */
 			port = htons(dst->port);
