@@ -35,37 +35,37 @@ src 2001:db8:1:2::23 dst 2001:db8:1:3::209
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 XFRM policy:
 src 2001:db8:1:2::23/128 dst 2001:db8:1:2::254/128
-	dir out priority 114559 ptype main
+	dir out priority 1539967 ptype main
 src 2001:db8:1:2::23/128 dst 2001:db8:1:3::254/128
-	dir out priority 114559 ptype main
+	dir out priority 1539967 ptype main
 src 2001:db8:1:2::23/128 dst fe80::/10
-	dir out priority 114559 ptype main
+	dir out priority 1539967 ptype main
 src 2001:db8:1:2::254/128 dst 2001:db8:1:2::23/128
-	dir fwd priority 114559 ptype main
+	dir fwd priority 1539967 ptype main
 src 2001:db8:1:2::254/128 dst 2001:db8:1:2::23/128
-	dir in priority 114559 ptype main
+	dir in priority 1539967 ptype main
 src 2001:db8:1:3::254/128 dst 2001:db8:1:2::23/128
-	dir fwd priority 114559 ptype main
+	dir fwd priority 1539967 ptype main
 src 2001:db8:1:3::254/128 dst 2001:db8:1:2::23/128
-	dir in priority 114559 ptype main
+	dir in priority 1539967 ptype main
 src fe80::/10 dst 2001:db8:1:2::23/128
-	dir fwd priority 114559 ptype main
+	dir fwd priority 1539967 ptype main
 src fe80::/10 dst 2001:db8:1:2::23/128
-	dir in priority 114559 ptype main
+	dir in priority 1539967 ptype main
 src 2001:db8:1:2::23/128 dst 2001:db8:1:3::209/128
-	dir out priority 376703 ptype main
+	dir out priority 2064255 ptype main
 	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:3::209
 		proto esp reqid REQID mode tunnel
 src 2001:db8:1:3::209/128 dst 2001:db8:1:2::23/128
-	dir fwd priority 376703 ptype main
+	dir fwd priority 2064255 ptype main
 	tmpl src 2001:db8:1:3::209 dst 2001:db8:1:2::23
 		proto esp reqid REQID mode tunnel
 src 2001:db8:1:3::209/128 dst 2001:db8:1:2::23/128
-	dir in priority 376703 ptype main
+	dir in priority 2064255 ptype main
 	tmpl src 2001:db8:1:3::209 dst 2001:db8:1:2::23
 		proto esp reqid REQID mode tunnel
 src 2001:db8:1:2::23/128 dst 2001:db8:1:3::/64
-	dir out priority 376767 ptype main
+	dir out priority 2064319 ptype main
 	tmpl src :: dst ::
 		proto esp reqid REQID mode transport
 src ::/0 dst ::/0 proto ipv6-icmp type 135
