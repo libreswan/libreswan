@@ -119,6 +119,7 @@ static int num_ipsec_eroute = 0;
 
 static void DBG_bare_shunt(const char *op, const struct bare_shunt *bs)
 {
+	/* same as log_bare_shunt but goes to debug log */
 	DBG(DBG_KERNEL, {
 		int ourport = ntohs(portof(&bs->ours.addr));
 		int hisport = ntohs(portof(&bs->his.addr));
@@ -140,7 +141,7 @@ static void DBG_bare_shunt(const char *op, const struct bare_shunt *bs)
 
 static void log_bare_shunt(const char *op, const struct bare_shunt *bs)
 {
-	/* same as DBG_bare_shunt but goe to real log */
+	/* same as DBG_bare_shunt but goes to real log */
 	int ourport = ntohs(portof(&bs->ours.addr));
 	int hisport = ntohs(portof(&bs->his.addr));
 	char ourst[SUBNETTOT_BUF];
