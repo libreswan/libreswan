@@ -657,7 +657,7 @@ struct state {
  *    struct child_sa *child; child->sa.st_...
  *
  * The function ike_sa() returns the IKE SA that the struct state
- * belongs to (an IKE SA belongs to its self).
+ * belongs to (an IKE SA belongs to itself).
  *
  * pexpect_ike_sa() is similar, except it complains loudly when ST
  * isn't an IKE SA.

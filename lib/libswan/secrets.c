@@ -426,7 +426,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 						/*
 						 * match any will automatically
 						 * match me and him so treat it
-						 * as it's own match type so
+						 * as its own match type so
 						 * that specific matches get
 						 * a higher "match" value and
 						 * are used in preference to
