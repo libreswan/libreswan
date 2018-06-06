@@ -1656,7 +1656,7 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 	} else if (encrypt->keylen_omitted) {
 		/*
 		 * 3DES and NULL do not expect the key length
-		 * attribute - its redundant as there is only one
+		 * attribute - it's redundant as there is only one
 		 * valid key length.
 		 */
 		DBG(DBG_CONTROL, DBG_log("omitting IKEv2 %s %s ENCRYPT transform key-length",

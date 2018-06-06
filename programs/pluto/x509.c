@@ -159,8 +159,8 @@ bool match_requested_ca(generalName_t *requested_ca, chunk_t our_ca,
 	return *our_pathlen <= MAX_CA_PATH_LEN;
 }
 
-static void convert_nss_gn_to_pluto_gn(CERTGeneralName *nss_gn,
-				generalName_t *pluto_gn)
+static void same_nss_gn_as_pluto_gn(CERTGeneralName *nss_gn,
+				    generalName_t *pluto_gn)
 {
 	switch (nss_gn->type) {
 	case certOtherName:
@@ -400,7 +400,7 @@ generalName_t *gndp_from_nss_cert(CERTCertificate *cert)
 					/* Add single point to return list */
 					gndp = alloc_thing(generalName_t,
 							"converted gn");
-					convert_nss_gn_to_pluto_gn(name, gndp);
+					same_nss_gn_as_pluto_gn(name, gndp);
 					gndp->next = gndp_list;
 					gndp_list = gndp;
 				}
@@ -506,7 +506,7 @@ static void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn
 
 			DBG(DBG_X509, DBG_log("%s: allocated pluto_gn %p",
 						__FUNCTION__, pluto_gn));
-			convert_nss_gn_to_pluto_gn(cur_nss_gn, pluto_gn);
+			same_nss_gn_as_pluto_gn(cur_nss_gn, pluto_gn);
 			pluto_gn->next = pgn_list;
 			pgn_list = pluto_gn;
 			/*
@@ -855,6 +855,8 @@ static lsw_cert_ret pluto_process_certs(struct state *st,
 			add_crl_fetch_request_nss(&fdn, end_cert_dp);
 			wake_fetch_thread(__FUNCTION__);
 		}
+		DBGF(DBG_X509, "releasing end_cert_dp sent to crl fetch");
+		free_generalNames(end_cert_dp, false/*shallow*/);
 	}
 #endif
 
@@ -1674,17 +1676,17 @@ static void crl_detail_list(void)
 	if (SEC_LookupCrls(handle, &crl_list, SEC_CRL_TYPE) != SECSuccess)
 		return;
 
-	CERTCrlNode *crl_node = crl_list->first;
-
-	while (crl_node != NULL) {
-		if (crl_node->crl != NULL)
+	for (CERTCrlNode *crl_node = crl_list->first; crl_node != NULL;
+	     crl_node = crl_node->next) {
+		if (crl_node->crl != NULL) {
 			crl_detail_to_whacklog(&crl_node->crl->crl);
-
-		crl_node = crl_node->next;
+		}
 	}
+	DBGF(DBG_X509, "releasing crl list in %s", __func__);
+	PORT_FreeArena(crl_list->arena, PR_FALSE);
 }
 
-static CERTCertList *get_all_certificates()
+CERTCertList *get_all_certificates(void)
 {
 	PK11SlotInfo *slot = PK11_GetInternalKeySlot();
 
@@ -1734,79 +1736,6 @@ static void cert_detail_list(show_cert_t type)
 
 	CERT_DestroyCertList(certs);
 }
-
-#if defined(LIBCURL) || defined(LIBLDAP)
-void check_crls(void)
-{
-	/*
-	 * CERT_GetDefaultCertDB() simply returns the contents of a
-	 * static variable set by NSS_Initialize().  It doesn't check
-	 * the value and doesn't set PR error.  Short of calling
-	 * CERT_SetDefaultCertDB(NULL), the value can never be NULL.
-	 */
-	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
-	passert(handle != NULL);
-
-	CERTCrlHeadNode *crl_list = NULL;
-
-	if (SEC_LookupCrls(handle, &crl_list, SEC_CRL_TYPE) != SECSuccess)
-		return;
-
-	CERTCrlNode *crl_node = crl_list->first;
-
-	while (crl_node != NULL) {
-		if (crl_node->crl != NULL) {
-			SECItem *issuer = &crl_node->crl->crl.derName;
-
-			if (crl_node->crl->url == NULL) {
-				add_crl_fetch_request_nss(issuer, NULL);
-			} else {
-				generalName_t end_dp = {
-					.kind = GN_URI,
-					.name = {
-						.ptr = (u_char *)crl_node->crl->url,
-						.len = strlen(crl_node->crl->url)
-					},
-					.next = NULL
-				};
-				add_crl_fetch_request_nss(issuer, &end_dp);
-			}
-		}
-		crl_node = crl_node->next;
-	}
-
-	/* add the pubkeys distribution points to fetch list */
-
-	struct pubkey_list *pubkeys = pluto_pubkeys;
-	struct pubkey *key;
-
-	while (pubkeys != NULL) {
-		key = pubkeys->key;
-		if (key != NULL) {
-			SECItem issuer = same_chunk_as_dercert_secitem(key->issuer);
-			add_crl_fetch_request_nss(&issuer, NULL);
-		}
-		pubkeys = pubkeys->next;
-	}
-
-	/*
-	 * Iterate all X.509 certificates in database. This is needed to
-	 * process middle and end certificates.
-	 */
-	CERTCertList *certs = get_all_certificates();
-
-	if (certs != NULL) {
-		CERTCertListNode *node;
-
-		for (node = CERT_LIST_HEAD(certs);
-		     !CERT_LIST_END(node, certs);
-		     node = CERT_LIST_NEXT(node))
-			add_crl_fetch_request_nss(&node->cert->derSubject,
-						NULL);
-		CERT_DestroyCertList(certs);
-	}
-}
-#endif
 
 void list_crls(void)
 {

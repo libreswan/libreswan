@@ -1,0 +1,13 @@
+  <varlistentry>
+  <term><emphasis remap='B'>hostaddrfamily</emphasis></term>
+  <listitem>
+<para>the address family of the hosts; currently the accepted
+values are <emphasis remap='B'>ipv4</emphasis> and
+<emphasis remap='B'>ipv6</emphasis>. The default is to detect this based on the
+IP addresses specified or the IP addresses resolved, so this option is not needed,
+unless you specify hostnames that resolve to both IPv4 and IPv6. This option used
+to be named connaddrfamily but its use was broken so it was obsoleted in favour
+or using the new hostaddrfamily and clientaddrfamily.
+</para>
+  </listitem>
+  </varlistentry>

@@ -252,7 +252,7 @@ YOU SHOULD NOT HAVE BOTH DES_RISC1 AND DES_RISC2 DEFINED !!!!!
 #define ROTATE(a, n)     (((a) >> (n)) + ((a) << (32 - (n))))
 
 /* Don't worry about the LOAD_DATA() stuff, that is used by
- * fcrypt() to add it's little bit to the front */
+ * fcrypt() to add its little bit to the front */
 
 #ifdef DES_FCRYPT
 

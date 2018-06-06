@@ -11,7 +11,7 @@
  * Copyright (C) 2012 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
- * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2013,2018 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  *
@@ -167,7 +167,8 @@ void ipsecconf_default_values(struct starter_config *cfg)
 
 	cfg->conn_default.options[KBF_KEYINGTRIES] = SA_REPLACEMENT_RETRIES_DEFAULT;
 
-	cfg->conn_default.options[KBF_CONNADDRFAMILY] = AF_INET;
+	cfg->conn_default.options[KBF_HOSTADDRFAMILY] = AF_UNSPEC;
+	cfg->conn_default.options[KBF_CLIENTADDRFAMILY] = AF_UNSPEC;
 
 	cfg->conn_default.left.addr_family = AF_INET;
 	anyaddr(AF_INET, &cfg->conn_default.left.addr);
@@ -411,7 +412,7 @@ static bool validate_end(struct starter_conn *conn_st,
 {
 	err_t er = NULL;
 	char *err_str = NULL;
-	int family = conn_st->options[KBF_CONNADDRFAMILY];
+	int hostfam = conn_st->options[KBF_HOSTADDRFAMILY];
 	bool err = FALSE;
 
 #  define ERR_FOUND(...) { error_append(&err_str, __VA_ARGS__); err = TRUE; }
@@ -420,12 +421,12 @@ static bool validate_end(struct starter_conn *conn_st,
 		conn_st->state = STATE_INCOMPLETE;
 
 	end->addrtype = end->options[KNCF_IP];
-	end->addr_family = family;
+	end->addr_family = hostfam;
 
 	/* validate the KSCF_IP/KNCF_IP */
 	switch (end->addrtype) {
 	case KH_ANY:
-		anyaddr(family, &end->addr);
+		anyaddr(hostfam, &end->addr);
 		break;
 
 	case KH_IFACE:
@@ -439,7 +440,7 @@ static bool validate_end(struct starter_conn *conn_st,
 		if (end->strings[KSCF_IP][0] == '%') {
 			pfree(end->iface);
 			end->iface = clone_str(end->strings[KSCF_IP], "KH_IPADDR end->iface");
-			if (!starter_iface_find(end->iface, family,
+			if (!starter_iface_find(end->iface, hostfam,
 					       &end->addr,
 					       &end->nexthop))
 				conn_st->state = STATE_INVALID;
@@ -448,11 +449,13 @@ static bool validate_end(struct starter_conn *conn_st,
 			break;
 		}
 
-		er = ttoaddr_num(end->strings[KNCF_IP], 0, family,
-				&end->addr);
+		er = ttoaddr_num(end->strings[KNCF_IP], 0, hostfam, &end->addr);
 		if (er != NULL) {
-			/* not numeric, so set the type to the string type */
+			/* not an IP address, so set the type to the string */
 			end->addrtype = KH_IPHOSTNAME;
+		} else {
+			if (hostfam == AF_UNSPEC)
+				hostfam = end->addr_family = addrtypeof(&end->addr);
 		}
 
 		if (end->id == NULL) {
@@ -539,7 +542,7 @@ static bool validate_end(struct starter_conn *conn_st,
 	}
 
 	/* set nexthop address to something consistent, by default */
-	anyaddr(family, &end->nexthop);
+	anyaddr(hostfam, &end->nexthop);
 	anyaddr(addrtypeof(&end->addr), &end->nexthop);
 
 	/* validate the KSCF_NEXTHOP */
@@ -575,7 +578,7 @@ static bool validate_end(struct starter_conn *conn_st,
 			end->nexttype = KH_IPADDR;
 		}
 	} else {
-		anyaddr(family, &end->nexthop);
+		anyaddr(hostfam, &end->nexthop);
 
 		if (end->addrtype == KH_DEFAULTROUTE) {
 			end->nexttype = KH_DEFAULTROUTE;
@@ -1396,10 +1399,6 @@ static bool load_conn(
 	 * verify both ends are using the same inet family, if one end
 	 * is "%any" or "%defaultroute", then perhaps adjust it.
 	 * ensource this for left,leftnexthop,right,rightnexthop
-	 * Ideally, phase out connaddrfamily= which now wrongly assumes
-	 * left,leftnextop,leftsubnet are the same inet family
-	 * Currently, these tests are implicitely done, and wrongly
-	 * in case of 6in4 and 4in6 tunnels
 	 */
 
 	if (conn->options_set[KBF_AUTO])

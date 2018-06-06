@@ -725,7 +725,7 @@ install-kvm-domain-$(KVM_CLONE_DOMAIN): $(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml
 #
 
 ifneq ($(KVM_BUILD_COPIES),)
-$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml: | $(KVM_BASE_NETWORK_FILE) $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).qcow2
+$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml: | $(KVM_BASE_GATEWAY_FILE) $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).qcow2
 	: build-domain $@
 	$(call check-kvm-qemu-directory)
 	$(call destroy-kvm-domain,$(KVM_BUILD_DOMAIN))

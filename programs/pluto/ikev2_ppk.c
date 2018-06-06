@@ -62,7 +62,7 @@ chunk_t create_unified_ppk_id(struct ppk_id_payload *payl)
 
 /*
  * used by responder, for extracting PPK_ID from IKEv2 Notify
- * PPK_ID Payload, we store PPK_ID and it's type in payl
+ * PPK_ID Payload, we store PPK_ID and its type in payl
  */
 bool extract_ppk_id(pb_stream *pbs, struct ppk_id_payload *payl)
 {

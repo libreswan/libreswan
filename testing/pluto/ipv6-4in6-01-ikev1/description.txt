@@ -1,0 +1,4 @@
+Basic pluto test using IPv6 (and NETKEY):
+
+000 "westnet-eastnet-4in6": 192.0.1.0/24===2001:db8:1:2::45<2001:db8:1:2::45>[@west]...2001:db8:1:2::23<2001:db8:1:2::23>[@east]===192.0.2.0/24
+

@@ -42,6 +42,18 @@ east #
 000 issuer: C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 east #
 east #
+ ipsec stop
+Redirecting to: systemctl stop ipsec.service
+east #
+ ipsec status
+whack: Pluto is not running (no "/run/pluto/pluto.ctl")
+east #
+ grep '^leak' /tmp/pluto.log
+leak-detective enabled
+leak: crl uri, item size: 44
+leak: converted gn, item size: 32
+leak detective found 2 leaks, total size 76
+east #
  ../bin/check-for-core.sh
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

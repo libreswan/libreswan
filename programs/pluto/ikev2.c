@@ -1339,7 +1339,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 	 * Find the state that the packet is sent to.
 	 *
 	 * The only time there isn't a state is when the responder
-	 * first sees an SA_INIT request (or its forgotten that it has
+	 * first sees an SA_INIT request (or it's forgotten that it has
 	 * seen it before).
 	 */
 

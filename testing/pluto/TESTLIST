@@ -759,8 +759,14 @@ kvmplutotest	sourceip-01			good
 #################################################################
 # IPv6 tests
 #################################################################
+kvmplutotest	ipv6-6in4-01-ikev1			good
+kvmplutotest	ipv6-6in4-02-ikev2			good
+kvmplutotest	ipv6-6in6-01-ikev1			good
+kvmplutotest	ipv6-6in6-02-ikev2			good
+kvmplutotest	ipv6-4in6-01-ikev1			good
+kvmplutotest	ipv6-4in6-02-ikev2			good
+
 kvmplutotest	ipv6-v6-through-v6-klips-klips		good
-kvmplutotest	ipv6-v6-through-v6-netkey-netkey	wip
 kvmplutotest	ipv6-v6-through-v6-klips-netkey		wip
 kvmplutotest	ipv6-v4-through-v6-klips-klips		wip
 kvmplutotest	ipv6-v6-through-v4-klips-klips		wip

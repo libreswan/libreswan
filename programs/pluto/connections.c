@@ -1,7 +1,7 @@
 /*
  * information about connections between hosts and clients
  *
- * Copyright (C) 1998-2002,2010,2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 1998-2002,2010,2013,2018 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2008 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2011 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>

@@ -1,0 +1,10 @@
+IPv6 over IPv4 (both sides NETKEY):
+
+"westnet-eastnet-6in4": 2001:db8:0:1::/64===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===2001:db8:0:2::/64
+
+1) west ping6's from its westnet ip to the eastnet ip
+2) west adds an ip6table rule to block plaintext from eastnet
+3) west pings again, but pong should be dropped by rule
+4) west initiates connection "westnet-eastnet-6in4"; east responds
+5) west ping6's from its westnet ip to the eastnet ip
+

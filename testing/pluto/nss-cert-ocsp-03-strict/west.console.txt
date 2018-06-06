@@ -55,6 +55,16 @@ west #
 done
 west #
 west #
+ ipsec stop
+Redirecting to: systemctl stop ipsec.service
+west #
+ ipsec status
+whack: Pluto is not running (no "/run/pluto/pluto.ctl")
+west #
+ grep '^leak' /tmp/pluto.log
+leak-detective enabled
+leak detective found no leaks
+west #
  ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

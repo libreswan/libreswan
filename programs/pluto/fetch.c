@@ -23,6 +23,9 @@
 #include <sys/time.h>
 #include <string.h>
 
+#include <cert.h>
+#include <certdb.h>
+
 #ifdef LIBCURL
 #include <curl/curl.h>	/* from libcurl devel */
 #endif
@@ -45,6 +48,7 @@
 #include "fetch.h"
 #include "secrets.h"
 #include "nss_err.h"
+#include "keys.h"
 
 #ifdef LIBCURL
 #define LIBCURL_UNUSED
@@ -426,6 +430,79 @@ static void fetch_crls(void)
 		}
 	}
 	unlock_crl_fetch_list("fetch_crls");
+}
+
+static void check_crls(void)
+{
+	/*
+	 * CERT_GetDefaultCertDB() simply returns the contents of a
+	 * static variable set by NSS_Initialize().  It doesn't check
+	 * the value and doesn't set PR error.  Short of calling
+	 * CERT_SetDefaultCertDB(NULL), the value can never be NULL.
+	 */
+	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
+	passert(handle != NULL);
+
+	CERTCrlHeadNode *crl_list = NULL;
+
+	if (SEC_LookupCrls(handle, &crl_list, SEC_CRL_TYPE) != SECSuccess)
+		return;
+
+	CERTCrlNode *crl_node = crl_list->first;
+
+	while (crl_node != NULL) {
+		if (crl_node->crl != NULL) {
+			SECItem *issuer = &crl_node->crl->crl.derName;
+
+			if (crl_node->crl->url == NULL) {
+				add_crl_fetch_request_nss(issuer, NULL);
+			} else {
+				generalName_t end_dp = {
+					.kind = GN_URI,
+					.name = {
+						.ptr = (u_char *)crl_node->crl->url,
+						.len = strlen(crl_node->crl->url)
+					},
+					.next = NULL
+				};
+				add_crl_fetch_request_nss(issuer, &end_dp);
+			}
+		}
+		crl_node = crl_node->next;
+	}
+	DBGF(DBG_X509, "releasing crl list in %s", __func__);
+	PORT_FreeArena(crl_list->arena, PR_FALSE);
+
+	/* add the pubkeys distribution points to fetch list */
+
+	struct pubkey_list *pubkeys = pluto_pubkeys;
+	struct pubkey *key;
+
+	while (pubkeys != NULL) {
+		key = pubkeys->key;
+		if (key != NULL) {
+			SECItem issuer = same_chunk_as_dercert_secitem(key->issuer);
+			add_crl_fetch_request_nss(&issuer, NULL);
+		}
+		pubkeys = pubkeys->next;
+	}
+
+	/*
+	 * Iterate all X.509 certificates in database. This is needed to
+	 * process middle and end certificates.
+	 */
+	CERTCertList *certs = get_all_certificates();
+
+	if (certs != NULL) {
+		CERTCertListNode *node;
+
+		for (node = CERT_LIST_HEAD(certs);
+		     !CERT_LIST_END(node, certs);
+		     node = CERT_LIST_NEXT(node))
+			add_crl_fetch_request_nss(&node->cert->derSubject,
+						NULL);
+		CERT_DestroyCertList(certs);
+	}
 }
 
 static void *fetch_thread(void *arg UNUSED)

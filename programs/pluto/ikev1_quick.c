@@ -804,7 +804,7 @@ void quick_outI1(int whack_sock,
 	if (policy & POLICY_PFS ) {
 		/*
 		 * Old code called ike_alg_pfsgroup() and that first
-		 * checked st->st_policy for POLICY_PFS.  Its assumed
+		 * checked st->st_policy for POLICY_PFS.  It's assumed
 		 * the check was redundant.
 		 */
 		pexpect((st->st_policy & POLICY_PFS));
