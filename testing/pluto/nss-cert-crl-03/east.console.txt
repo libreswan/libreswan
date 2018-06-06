@@ -46,7 +46,7 @@ east #
 Redirecting to: systemctl stop ipsec.service
 east #
  ipsec status
-whack: is Pluto running?  connect() for "/run/pluto/pluto.ctl" failed (111 Connection refused)
+whack: Pluto is not running (no "/run/pluto/pluto.ctl")
 east #
  ../bin/check-for-core.sh
 east #
