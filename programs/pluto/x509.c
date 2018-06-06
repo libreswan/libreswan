@@ -159,8 +159,8 @@ bool match_requested_ca(generalName_t *requested_ca, chunk_t our_ca,
 	return *our_pathlen <= MAX_CA_PATH_LEN;
 }
 
-static void convert_nss_gn_to_pluto_gn(CERTGeneralName *nss_gn,
-				generalName_t *pluto_gn)
+static void same_nss_gn_as_pluto_gn(CERTGeneralName *nss_gn,
+				    generalName_t *pluto_gn)
 {
 	switch (nss_gn->type) {
 	case certOtherName:
@@ -400,7 +400,7 @@ generalName_t *gndp_from_nss_cert(CERTCertificate *cert)
 					/* Add single point to return list */
 					gndp = alloc_thing(generalName_t,
 							"converted gn");
-					convert_nss_gn_to_pluto_gn(name, gndp);
+					same_nss_gn_as_pluto_gn(name, gndp);
 					gndp->next = gndp_list;
 					gndp_list = gndp;
 				}
@@ -506,7 +506,7 @@ static void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn
 
 			DBG(DBG_X509, DBG_log("%s: allocated pluto_gn %p",
 						__FUNCTION__, pluto_gn));
-			convert_nss_gn_to_pluto_gn(cur_nss_gn, pluto_gn);
+			same_nss_gn_as_pluto_gn(cur_nss_gn, pluto_gn);
 			pluto_gn->next = pgn_list;
 			pgn_list = pluto_gn;
 			/*
