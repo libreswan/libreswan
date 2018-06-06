@@ -120,12 +120,6 @@ conn westnet-eastnet-sourceip
 	leftsourceip=192.0.1.254
 	also=westnet-eastnet
 
-# also processing split in two parts messes up with connaddrfamily checking
-# rewrite this now as work around as to not break ALL test cases :)
-#conn westnet-eastnet-6in4
-#   also=west-east-base-ipv4
-#   also=westnet-eastnet-ipv6
-
 conn westnet-eastnet-6in4
 	also=west-east-base-id-nss
 	left=192.1.2.45
@@ -134,16 +128,6 @@ conn westnet-eastnet-6in4
 	#rightnexthop=192.1.2.45
         leftsubnet=2001:db8:0:1::/64
         rightsubnet=2001:db8:0:2::/64
-        connaddrfamily=ipv6
-
-# Same issue for this conn
-#conn westnet-eastnet-4in6
-#	also=west-east-base-id-nss
-#	also=west-east-base-ipv6
-#	#connaddrfamily=ipv6
-#	also=westnet-ipv4
-#	also=eastnet-ipv4
-#	auto=ignore
 
 conn westnet-eastnet-4in6
 	also=west-east-base-id-nss
@@ -152,7 +136,6 @@ conn westnet-eastnet-4in6
 	#leftnexthop=2001:db8:1:2::23
 	right=2001:db8:1:2::23
 	#rightnexthop=2001:db8:1:2::45
-	#connaddrfamily=ipv6
 	leftsubnet=192.0.1.0/24
 	rightsubnet=192.0.2.0/24
 	auto=ignore
@@ -219,7 +202,6 @@ conn westnet-eastnet-fqdn
 conn westnet-eastnet-ipv6
 	leftsubnet=2001:db8:0:1::/64
 	rightsubnet=2001:db8:0:2::/64
-	connaddrfamily=ipv6
 	#auto=start
 
 conn northnet-eastnet-ipv6
@@ -322,21 +304,18 @@ conn west-east-base-ipv4
 	rightnexthop=192.1.2.45
 
 conn west-east-base-ipv6
-	connaddrfamily=ipv6
 	left=2001:db8:1:2::45
 	leftnexthop=2001:db8:1:2::23
 	right=2001:db8:1:2::23
 	rightnexthop=2001:db8:1:2::45
 
 conn road-east-base-ipv6
-	connaddrfamily=ipv6
 	left=2001:db8:1:3::209
 	leftnexthop=2001:db8:1:3::254
 	right=2001:db8:1:2::23
 	rightnexthop=2001:db8:1:2::45
 
 conn north-east-base-ipv6
-	connaddrfamily=ipv6
 	left=2001:db8:1:3::33
 	leftnexthop=2001:db8:1:3::254
 	right=2001:db8:1:2::23
