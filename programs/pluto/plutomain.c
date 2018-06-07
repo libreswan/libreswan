@@ -1756,6 +1756,8 @@ int main(int argc, char **argv)
 	return -1;	/* Shouldn't ever reach this */
 }
 
+volatile bool exiting_pluto = false;
+
 /*
  * leave pluto, with status.
  * Once child is launched, parent must not exit this way because
@@ -1767,6 +1769,17 @@ int main(int argc, char **argv)
  */
 void exit_pluto(int status)
 {
+	/*
+	 * Tell the world, well actually all the threads, that pluto
+	 * is exiting and they should quit.  Even if pthread_cancel()
+	 * weren't buggy, using it correctly would be hard, so use
+	 * this instead.
+	 *
+	 * XXX: All threads need to be told to quit before things like
+	 * NSS can be closed.  So a TODO is to join those threads.
+	 */
+	exiting_pluto = true;
+
 	/* needed because we may be called in odd state */
 	reset_globals();
  #ifdef USE_SYSTEMD_WATCHDOG

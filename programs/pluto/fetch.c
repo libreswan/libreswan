@@ -407,7 +407,8 @@ static void fetch_crls(void)
 {
 	lock_crl_fetch_list("fetch_crls");
 
-	for (fetch_req_t **reqp = &crl_fetch_reqs; *reqp != NULL; ) {
+	for (fetch_req_t **reqp = &crl_fetch_reqs;
+	     *reqp != NULL && !exiting_pluto; ) {
 		fetch_req_t *req = *reqp;
 		bool valid_crl = FALSE;
 
@@ -538,7 +539,7 @@ static void *fetch_thread(void *arg UNUSED)
 	DBG(DBG_X509,
 	    DBG_log("fetch thread started"));
 
-	for (;;) {
+	while (!exiting_pluto) {
 		DBGF(DBG_X509, "fetching crl requests (may block)");
 		struct crl_fetch_request *requests = get_crl_fetch_requests();
 
@@ -569,6 +570,7 @@ static void *fetch_thread(void *arg UNUSED)
 		 */
 		fetch_crls();
 	}
+	DBGF(DBG_X509, "shutting down crl fetch thread");
 	return NULL;
 }
 
