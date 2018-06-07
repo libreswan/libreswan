@@ -415,6 +415,22 @@ static bool validate_end(struct starter_conn *conn_st,
 	int hostfam = conn_st->options[KBF_HOSTADDRFAMILY];
 	bool err = FALSE;
 
+	/*
+	 * TODO:
+	 * The address family default should come in either via
+	 * a config setup option, or via gai.conf / RFC3484
+	 * For now, %defaultroute and %any means IPv4 only
+	 */
+	if (hostfam == AF_UNSPEC)
+		hostfam = AF_INET;
+		if (end->strings[KNCF_IP] != NULL &&
+			(strchr(end->strings[KSCF_IP], ':') != NULL ||
+			 strstr(end->strings[KSCF_IP], "%defaultroute6") != NULL ||
+			 strstr(end->strings[KSCF_IP], "%any6") != NULL))
+		{
+				hostfam = AF_INET6;
+		}
+
 #  define ERR_FOUND(...) { error_append(&err_str, __VA_ARGS__); err = TRUE; }
 
 	if (!end->options_set[KNCF_IP])
@@ -454,8 +470,7 @@ static bool validate_end(struct starter_conn *conn_st,
 			/* not an IP address, so set the type to the string */
 			end->addrtype = KH_IPHOSTNAME;
 		} else {
-			if (hostfam == AF_UNSPEC)
-				hostfam = end->addr_family = addrtypeof(&end->addr);
+			hostfam = end->addr_family = addrtypeof(&end->addr);
 		}
 
 		if (end->id == NULL) {
@@ -484,6 +499,8 @@ static bool validate_end(struct starter_conn *conn_st,
 		break;
 
 	case KH_DEFAULTROUTE:
+		end->addr_family = hostfam;
+
 		starter_log(LOG_LEVEL_DEBUG,
 			    "starter: %s is KH_DEFAULTROUTE", leftright);
 		break;
