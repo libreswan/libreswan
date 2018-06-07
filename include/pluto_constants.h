@@ -1111,17 +1111,16 @@ enum keyword_host {
 };
 
 /*
- * reltated libunbound enumerated types
+ * related(???) libunbound enumerated types
  *
  * How authenticated is info that might have come from DNS?
  * In order of increasing confidence.
  */
 enum dns_auth_level {
-	DNSSEC_UNKNOWN,		/* didn't come from DNS like source */
-	DNSSEC_BOGUS,           /* UB returned BOGUS */
-	DNSSEC_INSECURE,        /* UB returned INSECURE */
-	PUBKEY_LOCAL,           /* came from local source, whack, plugin etc */
-	DNSSEC_SECURE,          /* UB returned SECURE */
+	/* 0 is reserved so uninitialized values are meaningless */
+	PUBKEY_LOCAL = 1,	/* came from local source, whack, plugin etc */
+	DNSSEC_INSECURE,	/* UB returned INSECURE */
+	DNSSEC_SECURE,		/* UB returned SECURE */
 
 	DNSSEC_ROOF
 };

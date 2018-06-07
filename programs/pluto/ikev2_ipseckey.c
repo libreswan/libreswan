@@ -195,7 +195,6 @@ static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf,
 	struct id keyid = st->st_connection->spd.that.id;
 	chunk_t keyval = empty_chunk;
 	err_t ugh = NULL;
-	enum dns_auth_level al;
 	char thatidbuf[IDTOA_BUF];
 	char ttl_buf[ULTOT_BUF + 32]; /* 32 is aribitary */
 	u_int32_t ttl_used;
@@ -227,11 +226,8 @@ static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf,
 		dnsr->delete_exisiting_keys = FALSE;
 	}
 
-	if (dnsr->secure == UB_EVNET_SECURE) {
-		al = DNSSEC_SECURE;
-	} else {
-		al = DNSSEC_INSECURE;
-	}
+	enum dns_auth_level al = dnsr->secure == UB_EVNET_SECURE ?
+		DNSSEC_SECURE : DNSSEC_INSECURE;
 
 	if (keyid.kind == ID_FQDN) {
 		DBG(DBG_DNS, DBG_log("add IPSECKEY pluto as publickey %s %s %s",

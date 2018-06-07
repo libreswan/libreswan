@@ -773,29 +773,7 @@ const struct RSA_private_key *get_RSA_private_key(const struct connection *c)
 
 /*
  * public key machinery
- * Note: caller must set dns_auth_level.
  */
-
-struct pubkey *public_key_from_rsa(const struct RSA_public_key *k)
-{
-	struct pubkey *p = alloc_thing(struct pubkey, "pubkey");
-
-	p->id = empty_id; /* don't know, doesn't matter */
-	p->issuer = empty_chunk;
-	p->alg = PUBKEY_ALG_RSA;
-
-	memcpy(p->u.rsa.keyid, k->keyid, sizeof(p->u.rsa.keyid));
-	p->u.rsa.k = k->k;
-	p->u.rsa.e = clone_chunk(k->e, "e");
-	p->u.rsa.n = clone_chunk(k->n, "n");
-
-	/* note that we return a 1 reference count upon creation:
-	 * invariant: recount > 0.
-	 */
-	p->refcnt = 1;
-	p->installed_time = realnow();
-	return p;
-}
 
 /* root of chained public key list */
 

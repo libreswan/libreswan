@@ -160,24 +160,8 @@ struct pubkey_list {
 	struct pubkey_list *next;
 };
 
-/* struct used to prompt for a secret passphrase
- * from a console with file descriptor fd
- */
-#define MAX_PROMPT_PASS_TRIALS	5
-#define PROMPT_PASS_LEN		64
-
-typedef void (*pass_prompt_func)(int mess_no, const char *message,
-				 ...) PRINTF_LIKE (2);
-
-typedef struct {
-	char secret[PROMPT_PASS_LEN];
-	pass_prompt_func prompt;
-	int fd;
-} prompt_pass_t;
-
 extern struct pubkey_list *pubkeys;	/* keys from ipsec.conf */
 
-extern struct pubkey *public_key_from_rsa(const struct RSA_public_key *k);
 extern struct pubkey_list *free_public_keyentry(struct pubkey_list *p);
 extern void free_public_keys(struct pubkey_list **keys);
 extern void free_remembered_public_keys(void);
