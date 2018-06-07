@@ -390,11 +390,11 @@ static err_t fetch_asn1_blob(chunk_t url, chunk_t *blob)
 }
 
 /* Note: insert_crl_nss frees *blob */
-static bool insert_crl_nss(chunk_t *blob, const chunk_t *crl_uri)
+static bool insert_crl_nss(chunk_t *blob, const chunk_t crl_uri)
 {
 	/* for CRL use the name passed to helper for the uri */
 	bool ret = FALSE;
-	char *uri_str = str_from_chunk(*crl_uri, "URI str");
+	char *uri_str = str_from_chunk(crl_uri, "URI str");
 
 	if (uri_str == NULL) {
 		DBGF(DBG_X509, "no CRL URI available");
@@ -435,10 +435,7 @@ static void fetch_crls(void)
 				DBG(DBG_X509,
 					DBG_log("fetch failed:  %s", ugh));
 			} else {
-				chunk_t crl_uri =
-					clone_chunk(gn->name,
-						    "fetch_crls: general name name");
-				if (insert_crl_nss(&blob, &crl_uri)) {
+				if (insert_crl_nss(&blob, gn->name)) {
 					DBG(DBG_X509,
 					    DBG_log("we have a valid crl"));
 					valid_crl = TRUE;
