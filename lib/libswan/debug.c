@@ -51,7 +51,7 @@ static const char *debug_strings[] = {
 	D(DBG_PROPOSAL_PARSER, "debug-proposal-parser"),
 };
 
-const struct enum_names debug_names = {
+const enum_names debug_names = {
 	DBG_floor_IX, DBG_roof_IX - 1,
 	ARRAY_REF(debug_strings),
 	"debug-",

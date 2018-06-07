@@ -77,7 +77,7 @@ static const char *impair_strings[] = {
 	I(IMPAIR_SEND_PKCS7_THINGIE, "impair-send-pkcs7-thingie"),
 };
 
-const struct enum_names impair_names = {
+const enum_names impair_names = {
 	IMPAIR_floor_IX, IMPAIR_roof_IX - 1,
 	ARRAY_REF(impair_strings),
 	"impair-",
