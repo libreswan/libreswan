@@ -298,7 +298,7 @@ int resolve_defaultroute_one(struct starter_end *host,
 	 */
 
 	/* What kind of result are we seeking? */
-	bool seeking_src = (host->addrtype != KH_IPADDR && host->addrtype != KH_IPHOSTNAME);
+	bool seeking_src = (host->addrtype == KH_DEFAULTROUTE);
 	bool seeking_gateway = (host->nexttype == KH_DEFAULTROUTE);
 
 	bool has_peer = (peer->addrtype == KH_IPADDR || peer->addrtype == KH_IPHOSTNAME);

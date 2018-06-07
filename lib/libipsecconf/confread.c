@@ -421,15 +421,17 @@ static bool validate_end(struct starter_conn *conn_st,
 	 * a config setup option, or via gai.conf / RFC3484
 	 * For now, %defaultroute and %any means IPv4 only
 	 */
-	if (hostfam == AF_UNSPEC)
+	if (hostfam == AF_UNSPEC) {
 		hostfam = AF_INET;
+
 		if (end->strings[KNCF_IP] != NULL &&
 			(strchr(end->strings[KSCF_IP], ':') != NULL ||
-			 strstr(end->strings[KSCF_IP], "%defaultroute6") != NULL ||
-			 strstr(end->strings[KSCF_IP], "%any6") != NULL))
+			streq(end->strings[KSCF_IP], "%defaultroute6") ||
+			streq(end->strings[KSCF_IP], "%any6")))
 		{
-				hostfam = AF_INET6;
+			hostfam = AF_INET6;
 		}
+	}
 
 #  define ERR_FOUND(...) { error_append(&err_str, __VA_ARGS__); err = TRUE; }
 
