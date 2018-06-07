@@ -70,7 +70,6 @@
 #include "pluto_x509.h"
 #include "nss_cert_load.h"
 #include "nss_cert_verify.h"
-#include "nss_crl_import.h"
 #include "nss_err.h"
 
 /* NSS */
@@ -322,38 +321,6 @@ void select_nss_cert_id(CERTCertificate *cert, struct id *end_id)
 		end_id->kind = ID_DER_ASN1_DN;
 	}
 
-}
-
-static void dbg_crl_import_err(int err)
-{
-	libreswan_log("NSS CRL import error: %s", nss_err_str((PRInt32)err));
-}
-
-/* Note: insert_crl_nss frees *blob */
-bool insert_crl_nss(chunk_t *blob, const chunk_t *crl_uri)
-{
-	/* for CRL use the name passed to helper for the uri */
-	bool ret = FALSE;
-	char *uri_str = str_from_chunk(*crl_uri, "URI str");
-
-	if (uri_str == NULL) {
-		DBG(DBG_X509,
-		    DBG_log("no CRL URI available"));
-	} else {
-		int r = send_crl_to_import(blob->ptr, blob->len, uri_str);
-		if (r == -1) {
-			libreswan_log("_import_crl internal error");
-		} else if (r != 0) {
-			dbg_crl_import_err(r);
-		} else {
-			DBG(DBG_X509, DBG_log("CRL imported"));
-			ret = TRUE;
-		}
-	}
-
-	pfreeany(uri_str);
-	freeanychunk(*blob);
-	return ret;
 }
 
 generalName_t *gndp_from_nss_cert(CERTCertificate *cert)

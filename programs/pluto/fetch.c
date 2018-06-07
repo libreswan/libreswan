@@ -48,6 +48,8 @@
 #include "fetch.h"
 #include "secrets.h"
 #include "nss_err.h"
+#include "nss_crl_import.h"
+#include "nss_err.h"
 #include "keys.h"
 
 #ifdef LIBCURL
@@ -385,6 +387,33 @@ static err_t fetch_asn1_blob(chunk_t url, chunk_t *blob)
 	if (ugh != NULL)
 		freeanychunk(*blob);
 	return ugh;
+}
+
+/* Note: insert_crl_nss frees *blob */
+static bool insert_crl_nss(chunk_t *blob, const chunk_t *crl_uri)
+{
+	/* for CRL use the name passed to helper for the uri */
+	bool ret = FALSE;
+	char *uri_str = str_from_chunk(*crl_uri, "URI str");
+
+	if (uri_str == NULL) {
+		DBGF(DBG_X509, "no CRL URI available");
+	} else {
+		int r = send_crl_to_import(blob->ptr, blob->len, uri_str);
+		if (r == -1) {
+			libreswan_log("_import_crl internal error");
+		} else if (r != 0) {
+			libreswan_log("NSS CRL import error: %s",
+				      nss_err_str((PRInt32)r));
+		} else {
+			DBGF(DBG_X509, "CRL imported");
+			ret = TRUE;
+		}
+	}
+
+	pfreeany(uri_str);
+	freeanychunk(*blob);
+	return ret;
 }
 
 /*
