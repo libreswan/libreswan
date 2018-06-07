@@ -82,6 +82,13 @@ struct crl_fetch_request *crl_fetch_request(SECItem *issuer_dn,
 	}
 	CERT_DestroyCertificate(ca);
 
+	/*
+	 * Prepend the new request - keeping new requests ordered
+	 * newest-to-oldest.
+	 *
+	 * When the requests are merged into the fetch queue proper,
+	 * their order gets re-reversed putting oldest first.
+	 */
 	struct crl_fetch_request *request = alloc_thing(struct crl_fetch_request, "crl_queue: request");
 	*request = (struct crl_fetch_request) {
 		.request_time = realnow(),
@@ -105,6 +112,13 @@ void free_crl_fetch_requests(struct crl_fetch_request **requests)
 	*requests = NULL;
 }
 
+/*
+ * Prepend the new request[s], keeping the list ordered
+ * newest-to-oldest.
+ *
+ * When the requests are merged into the fetch queue, their order gets
+ * re-reversed putting oldest first.
+ */
 void add_crl_fetch_requests(struct crl_fetch_request *requests)
 {
 	struct crl_fetch_request *end = requests;

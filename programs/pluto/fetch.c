@@ -539,17 +539,33 @@ static void *fetch_thread(void *arg UNUSED)
 	    DBG_log("fetch thread started"));
 
 	for (;;) {
-		DBGF(DBG_X509, "fetching crl requests");
+		DBGF(DBG_X509, "fetching crl requests (may block)");
 		struct crl_fetch_request *requests = get_crl_fetch_requests();
-		DBGF(DBG_X509, "fetch thread was woken up");
+
+		/*
+		 * Merge in the next batch of newest-to-oldest ordered
+		 * requests.
+		 *
+		 * If a request isn't present, then it will be
+		 * prepended, and since the oldest request is
+		 * processed last, it is put right at the front.
+		 */
+
+		DBGF(DBG_X509, "merging new fetch requests");
 		for (struct crl_fetch_request *request = requests;
 		     request != NULL; request = request->next) {
 			merge_crl_fetch_request(request);
 		}
 		free_crl_fetch_requests(&requests);
+
 		/*
-		 * This also re-tries any requests that previously
-		 * failed.
+		 * Process all outstanding requests.
+		 *
+		 * Any brand new requests, prepended by the above, get
+		 * processed first (and due to the double reversal) in
+		 * the order they were submitted.
+		 *
+		 * Old requests then get processed at the end.
 		 */
 		fetch_crls();
 	}
