@@ -395,11 +395,10 @@ generalName_t *gndp_from_nss_cert(CERTCertificate *cert)
 			first_name = name = point->distPoint.fullName;
 			do {
 				if (name->type == certURI) {
-					generalName_t *gndp;
-
 					/* Add single point to return list */
-					gndp = alloc_thing(generalName_t,
-							"converted gn");
+					generalName_t *gndp =
+						alloc_thing(generalName_t,
+							    "gndp_from_nss_cert: general name");
 					same_nss_gn_as_pluto_gn(name, gndp);
 					gndp->next = gndp_list;
 					gndp_list = gndp;
@@ -502,8 +501,9 @@ static void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn
 		CERTGeneralName *cur_nss_gn = first_nss_gn;
 
 		do {
-			generalName_t *pluto_gn = alloc_thing(generalName_t, "converted gn");
-
+			generalName_t *pluto_gn =
+				alloc_thing(generalName_t,
+					    "get_pluto_gn_from_nss_cert: converted gn");
 			DBG(DBG_X509, DBG_log("%s: allocated pluto_gn %p",
 						__FUNCTION__, pluto_gn));
 			same_nss_gn_as_pluto_gn(cur_nss_gn, pluto_gn);

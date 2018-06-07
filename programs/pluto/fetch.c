@@ -406,9 +406,9 @@ static void fetch_crls(void)
 				DBG(DBG_X509,
 					DBG_log("fetch failed:  %s", ugh));
 			} else {
-				chunk_t crl_uri;
-				clonetochunk(crl_uri, gn->name.ptr,
-					     gn->name.len, "crl uri");
+				chunk_t crl_uri =
+					clone_chunk(gn->name,
+						    "fetch_crls: general name name");
 				if (insert_crl_nss(&blob, &crl_uri)) {
 					DBG(DBG_X509,
 					    DBG_log("we have a valid crl"));
@@ -603,10 +603,8 @@ void add_distribution_points(const generalName_t *newPoints,
 				 * Clone additional distribution point.
 				 */
 				generalName_t *ngn = clone_const_thing(*newPoints, "generalName");
-				clonetochunk(ngn->name, newPoints->name.ptr,
-					     newPoints->name.len,
-					     "crl uri");
-
+				ngn->name = clone_chunk(newPoints->name,
+							"add_distribution_points: general name name");
 				/* insert additional CRL distribution point */
 				ngn->next = *distributionPoints;
 				*distributionPoints = ngn;
