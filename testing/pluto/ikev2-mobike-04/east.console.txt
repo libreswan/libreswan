@@ -1,5 +1,4 @@
 /testing/guestbin/swan-prep
-conflicting files /testing/pluto/ikev2-mobike-04/ipsec.conf /testing/pluto/ikev2-mobike-04/east.conf
 east #
  ipsec start
 Redirecting to: systemctl start ipsec.service
@@ -48,10 +47,15 @@ east #
 006 #2: "east-any"[1] 192.1.33.209, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='192.1.3.209', lease=192.0.3.10/32
 east #
  grep "MOBIKE " /tmp/pluto.log
-Apr 22 08:36:24.268539: | #2 pst=#1 MOBIKE update remote address 192.1.3.209:500 -> 192.1.33.209:500
-Apr 22 08:36:24.268951: "east-any"[1] 192.1.3.209 #1:  success MOBIKE update remote address 192.1.3.209:500 -> 192.1.33.209:500
-Apr 22 08:36:24.269334: "east-any"[1] 192.1.33.209 #1: MOBIKE request: updating IPsec SA by request
-Apr 22 08:36:24.270531: | adding NATD  payloads to MOBIKE response
+| ignore EAGAIN in qry_xfrm_mirgrate_support assume MOBIKE migration is supported
+| #2 pst=#1 MOBIKE update remote address 192.1.3.209:500 -> 192.1.33.209:500
+"east-any"[1] 192.1.3.209 #1:  success MOBIKE update remote address 192.1.3.209:500 -> 192.1.33.209:500
+"east-any"[1] 192.1.33.209 #1: MOBIKE request: updating IPsec SA by request
+| adding NATD  payloads to MOBIKE response
+| #2 pst=#1 MOBIKE update remote address 192.1.33.209:500 -> 192.1.33.209:500
+"east-any"[1] 192.1.33.209 #1: MOBIKE success no change to kernel SA same IP address ad port  192.1.33.209:500
+"east-any"[1] 192.1.33.209 #1: MOBIKE request: updating IPsec SA by request
+| adding NATD  payloads to MOBIKE response
 east #
  sleep 7
 east #

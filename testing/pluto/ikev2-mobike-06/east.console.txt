@@ -1,5 +1,4 @@
 /testing/guestbin/swan-prep
-conflicting files /testing/pluto/ikev2-mobike-06/ipsec.conf /testing/pluto/ikev2-mobike-06/east.conf
 east #
  ipsec start
 Redirecting to: systemctl start ipsec.service
