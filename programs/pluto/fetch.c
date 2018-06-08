@@ -412,7 +412,8 @@ static void fetch_crls(void)
 		fetch_req_t *req = *reqp;
 		bool valid_crl = FALSE;
 
-		for (generalName_t *gn = req->distributionPoints; gn != NULL; ) {
+		for (generalName_t *gn = req->distributionPoints;
+		     gn != NULL; gn = gn->next) {
 			chunk_t blob;
 			err_t ugh = fetch_asn1_blob(gn->name, &blob);
 
