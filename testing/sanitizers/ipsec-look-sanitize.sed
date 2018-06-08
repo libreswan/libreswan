@@ -11,3 +11,5 @@ s/ah\.[a-z0-9]\{1,8\}@/ah.AHSPIi@/g
 s/comp\.[a-z0-9]\{1,8\}@/comp.COMPSPIi@/g
 #this is a workaround until F25, which removed extra white spaces
 s/\(eth[0-9]\)  proto kernel  scope link  src/\1 proto kernel scope link src/g
+# due to a kernel difference? Just ignore the error code in the routing table
+s/metric 1024  error -.*/metric 1024  error -XXX/g
