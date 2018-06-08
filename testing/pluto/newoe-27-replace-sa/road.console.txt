@@ -120,8 +120,7 @@ road #
  killall -9 pluto
 road #
  ipsec restart
-Redirecting to: systemctl stop ipsec.service
-Redirecting to: systemctl start ipsec.service
+Redirecting to: systemctl restart ipsec.service
 road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
