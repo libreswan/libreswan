@@ -69,7 +69,7 @@ src 192.1.2.23/32 dst 192.1.2.0/24
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 src 192.1.2.23/32 dst 7.0.0.0/8
-	dir out priority 389111 ptype main
+	dir out priority 2088951 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 XFRM done
