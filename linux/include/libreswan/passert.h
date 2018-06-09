@@ -46,8 +46,8 @@ extern void lsw_passert_fail(const char *file_str,
 			 __func__, FMT, __VA_ARGS__)
 
 #define passert(ASSERTION) {						\
-		/* wrapping ASSERTION in paren suppresses -Wparen */	\
-		bool assertion__ = ASSERTION; /* no paren */		\
+		/* wrapping ASSERTION in parens suppresses -Wparen */	\
+		bool assertion__ = ASSERTION; /* no parens */		\
 		if (!assertion__) {					\
 			PASSERT_FAIL("%s", #ASSERTION);			\
 		}							\

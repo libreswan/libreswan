@@ -521,10 +521,6 @@ char *lswlog_string(void)
 /*
  * Log an expectation failure message to the error streams.  That is
  * the main log (level LOG_ERR) and whack log (level RC_LOG_SERIOUS).
- *
- * Note that, for pexpect(EXPRESSION), the expanded ASSERTION is not
- * wrapped in parenthesis as doing that suppresses the warning -Wparen
- * (i.e., assignment in an expression).
  */
 
 #if 0
@@ -536,14 +532,32 @@ void lswlog_pexpect(void *p)
 }
 #endif
 
-bool libreswan_pexpect(const char *func,
+void libreswan_pexpect_fail(const char *func,
 		       const char *file, unsigned long line,
 		       const char *assertion);
 
+#if defined(__GNUC__)
+/*
+ * Do not wrap ASSERTION in parentheses as it will suppress the
+ * warning for 'foo = bar'.
+ * Using it as an initializer, without parentheses is mostly safe.
+ * We use GCC's "statement expression" extension
+ * https://gcc.gnu.org/onlinedocs/gcc/Statement-Exprs.html#Statement-Exprs
+ */
 #define pexpect(ASSERTION)						\
-	(ASSERTION ? true : libreswan_pexpect(__func__,			\
-					      PASSERT_BASENAME, __LINE__, \
-					      #ASSERTION))
+	({								\
+		bool assertion__ = ASSERTION;				\
+		if (!assertion__)					\
+			libreswan_pexpect_fail(__func__,		\
+			      PASSERT_BASENAME, __LINE__, #ASSERTION);	\
+		assertion__; /* result */				\
+	})
+#else
+#define pexpect(ASSERTION)							\
+	((ASSERTION) ? true : (libreswan_pexpect_fail(__func__,			\
+					      PASSERT_BASENAME, __LINE__,	\
+					      #ASSERTION), false))
+#endif
 
 void lswlog_pexpect_prefix(struct lswlog *buf);
 void lswlog_pexpect_suffix(struct lswlog *buf, const char *func,

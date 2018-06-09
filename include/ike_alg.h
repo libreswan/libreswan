@@ -11,11 +11,11 @@ enum ike_alg_key;
 /*
  * More meaningful passert.
  *
- * Do not wrap ASSERTION in parenthesis as it will suppress the
+ * Do not wrap ASSERTION in parentheses as it will suppress the
  * warning for 'foo = bar'.
  */
 #define passert_ike_alg(ALG, ASSERTION) {				\
-		/* wrapping ASSERTION in paren suppresses -Wparen */	\
+		/* wrapping ASSERTION in parens suppresses -Wparen */	\
 		bool assertion__ = ASSERTION; /* no paren */		\
 		if (!assertion__) {					\
 			PASSERT_FAIL("IKE_ALG %s algorithm '%s' fails: %s", \
@@ -27,7 +27,7 @@ enum ike_alg_key;
 	}
 
 #define pexpect_ike_alg(ALG, ASSERTION) {				\
-		/* wrapping ASSERTION in paren suppresses -Wparen */	\
+		/* wrapping ASSERTION in parens suppresses -Wparen */	\
 		bool assertion__ = ASSERTION; /* no paren */		\
 		if (!assertion__) {					\
 			PEXPECT_LOG("IKE_ALG %s algorithm '%s' fails: %s", \
