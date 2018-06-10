@@ -6,7 +6,7 @@ ping -n -c 2 -I 192.1.3.209 192.1.2.23
 # should show established tunnel and no bare shunts
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus
-ipsec look
+../../pluto/bin/ipsec-look.sh
 iptables -t nat -L -n
 ipsec stop
 conntrack -L -n | sed -e "s/id=[0-9]*/id=XXXX/g" -e "s/icmp     1 [0-9]*/icmp     1 XX/" | sort
@@ -20,7 +20,7 @@ sleep 1
 ping -n -c 2 -I 192.1.3.209 192.1.2.23
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus
-ipsec look
+../../pluto/bin/ipsec-look.sh
 iptables -t nat -L -n
 conntrack -L -n | sed -e "s/id=[0-9]*/id=XXXX/g" -e "s/icmp     1 [0-9]*/icmp     1 XX/" | sort
 killall ip > /dev/null 2> /dev/null

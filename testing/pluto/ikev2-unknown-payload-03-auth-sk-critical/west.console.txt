@@ -26,7 +26,7 @@ done
 west #
  grep 'Notify data  ff$' /tmp/pluto.log
 west #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45

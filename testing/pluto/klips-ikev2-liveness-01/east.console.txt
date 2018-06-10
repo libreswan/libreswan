@@ -21,7 +21,7 @@ east #
  echo "initdone"
 initdone
 east #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 east NOW
 ipsec0->eth1 mtu=16260(9999)->1500
 ROUTING TABLES

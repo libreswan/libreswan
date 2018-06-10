@@ -42,7 +42,7 @@ road #
  echo done
 done
 road #
- if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
 road #
  if [ -f /var/run/charon.pid ]; then strongswan status ; fi
 Security Associations (1 up, 0 connecting):

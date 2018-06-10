@@ -1,6 +1,6 @@
 ipsec whack --trafficstatus
 ipsec status |grep STATE_
-ipsec look
+../../pluto/bin/ipsec-look.sh
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

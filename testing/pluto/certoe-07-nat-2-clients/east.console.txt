@@ -47,7 +47,7 @@ east #
 006 #2: "clear-or-private#192.1.2.0/24"[1] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL', lease=10.0.10.1/32
 006 #4: "clear-or-private#192.1.2.0/24"[2] ...192.1.2.254===10.0.10.2/32, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL', lease=10.0.10.2/32
 east #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 east NOW
 XFRM state:
 src 192.1.2.254 dst 192.1.2.23

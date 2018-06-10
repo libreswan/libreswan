@@ -1,7 +1,7 @@
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus
-ipsec look
-ipsec look
+../../pluto/bin/ipsec-look.sh
+../../pluto/bin/ipsec-look.sh
 grep "message ID:" /tmp/pluto.log
 # grep on east
 hostname |grep west > /dev/null || grep -A 1 "has not responded in" /tmp/pluto.log

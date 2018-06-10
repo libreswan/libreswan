@@ -3,7 +3,7 @@ east #
  echo "initdone"
 initdone
 east #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 east NOW
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES

@@ -67,7 +67,7 @@ IKE_AUTH response with message ID 0 processing failed
 #\[root@west ]#  timedout send line: strongswan up westnet-eastnet-ikev2
 echo done
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
 done
 west #
  if [ -f /var/run/charon.pid ]; then strongswan statusall ; fi

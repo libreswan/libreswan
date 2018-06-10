@@ -107,7 +107,7 @@ done
 west #
  grep -v -P "\t0$" /proc/net/xfrm_stat
 west #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45

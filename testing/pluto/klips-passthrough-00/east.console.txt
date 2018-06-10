@@ -35,7 +35,7 @@ east #
  echo "initdone"
 initdone
 east #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 PLAINTEXT FROM WEST
 east NOW
 192.1.2.23/32      -> 192.1.2.45/32      => tun0xIPIP@192.1.2.45 esp0xESPSPI@192.1.2.45

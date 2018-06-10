@@ -135,7 +135,7 @@ road #
  echo done
 done
 road #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.33.222 dst 192.1.2.23

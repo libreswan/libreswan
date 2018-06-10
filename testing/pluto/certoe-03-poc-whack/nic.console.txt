@@ -2,7 +2,7 @@ iptables -t nat -F
 nic #
  iptables -F
 nic #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 -bash: ipsec: command not found
 nic #
  ipsec whack --trafficstatus

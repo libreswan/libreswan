@@ -1,4 +1,4 @@
-if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
+if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
 if [ -f /var/run/pluto/pluto.pid ]; then grep "message ID:" /tmp/pluto.log  ; fi
 if [ -f /var/run/charon.pid ]; then strongswan status ; fi
 : ==== cut ====

@@ -1,5 +1,5 @@
 grep PKCS7 /tmp/pluto.log
-ipsec look
+../../pluto/bin/ipsec-look.sh
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

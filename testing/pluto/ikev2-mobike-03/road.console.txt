@@ -102,7 +102,7 @@ road #
  ipsec whack --trafficstatus
 006 #2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='192.1.2.23', lease=192.0.3.10/32
 road #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.33.222

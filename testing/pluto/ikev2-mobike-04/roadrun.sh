@@ -1,6 +1,6 @@
 ipsec auto --up road-eastnet
 # note this end should be 192.1.3.209
-ipsec look
+../../pluto/bin/ipsec-look.sh
 ping -W 1 -q -n -c 2 -I 192.0.3.10 192.0.2.254
 ipsec whack --trafficstatus
 sleep 5

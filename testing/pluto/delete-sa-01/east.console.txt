@@ -14,7 +14,7 @@ east #
  ipsec whack --name SAwest-east --encrypt --tunnel --pfs --rsasig --host "192.1.2.23"  --nexthop "192.1.2.45" --updown "ipsec _updown" --id "@east" --to --host "%any" --nexthop "%direct" --updown "ipsec _updown" --id "@west" --ipseclifetime "28800" --rekeymargin "540" --keyingtries "1"
 002 added connection description "SAwest-east"
 east #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 east NOW
 XFRM state:
 XFRM policy:

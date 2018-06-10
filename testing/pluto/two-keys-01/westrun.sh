@@ -1,3 +1,3 @@
 ipsec auto --up  westnet-eastnet
 
-ipsec look
+../../pluto/bin/ipsec-look.sh

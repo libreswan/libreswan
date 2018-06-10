@@ -57,7 +57,7 @@ north #
  echo done
 done
 north #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 north NOW
 192.0.3.0/24       -> 192.0.2.0/24       => tun0xIPIP@192.1.2.23 esp0xESPSPI@192.1.2.23
 ipsec0->eth1 mtu=16260(9999)->1500

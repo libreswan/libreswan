@@ -1,4 +1,4 @@
-ipsec look
+../../pluto/bin/ipsec-look.sh
 ipsec setup stop
 : ==== cut ====
 od -x /var/tmp/east.record | sed 3q

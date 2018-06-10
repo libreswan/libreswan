@@ -3,7 +3,7 @@ ping -n -c 4 192.1.2.23
 # jacob two two for east?
 ipsec whack --trafficstatus 
 ipsec whack --trafficstatus 
-ipsec look
+../../pluto/bin/ipsec-look.sh
 # you should see both RSA and NULL
 grep IKEv2_AUTH_ /tmp/pluto.log 
 : ==== cut ====

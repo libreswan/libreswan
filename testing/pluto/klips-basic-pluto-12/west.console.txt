@@ -43,7 +43,7 @@ west #
 117 "westnet-eastnet" #2: STATE_QUICK_I1: initiate
 004 "westnet-eastnet" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 west NOW
 192.0.1.0/24       -> 192.0.2.0/24       => tun0xIPIP@192.1.2.23 esp0xESPSPI@192.1.2.23
 192.0.1.0/24       -> 192.0.2.0/24:22    => %pass:6
@@ -71,7 +71,7 @@ west #
  echo done
 done
 west #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 west NOW
 192.0.1.0/24       -> 192.0.2.0/24       => tun0xIPIP@192.1.2.23 esp0xESPSPI@192.1.2.23
 192.0.1.0/24       -> 192.0.2.0/24:22    => %pass:6

@@ -36,7 +36,7 @@ OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
 OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
 OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
 east #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 east NOW
 XFRM state:
 src 192.1.2.45 dst 192.1.2.23

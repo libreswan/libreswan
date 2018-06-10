@@ -22,7 +22,7 @@ east #
  echo "initdone"
 initdone
 east #
- if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
 east NOW
 ipsec0->eth1 mtu=16260(9999)->1500
 ROUTING TABLES

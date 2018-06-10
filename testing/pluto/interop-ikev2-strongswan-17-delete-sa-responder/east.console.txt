@@ -21,7 +21,7 @@ east #
 east #
  #
 east #
- if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
 east NOW
 XFRM state:
 XFRM policy:

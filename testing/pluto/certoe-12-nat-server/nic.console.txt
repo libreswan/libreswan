@@ -54,7 +54,7 @@ nic #
  ipsec whack --trafficstatus
 -bash: ipsec: command not found
 nic #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 -bash: ipsec: command not found
 nic #
  # you should see both RSA and NULL

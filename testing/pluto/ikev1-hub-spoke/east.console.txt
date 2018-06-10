@@ -156,7 +156,7 @@ east #
 006 #2: "northnet-westnet-ipv4-psk", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@north'
 006 #4: "westnet-northnet-ipv4-psk", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@west'
 east #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 east NOW
 XFRM state:
 src 192.1.2.45 dst 192.1.2.23

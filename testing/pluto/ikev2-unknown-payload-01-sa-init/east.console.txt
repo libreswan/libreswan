@@ -16,7 +16,7 @@ east #
  grep 'Notify data  ff$' /tmp/pluto.log
 | Notify data  ff
 east #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 east NOW
 XFRM state:
 XFRM policy:

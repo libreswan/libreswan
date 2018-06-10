@@ -14,7 +14,7 @@ east #
  echo "initdone"
 initdone
 east #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 transmitted test
 east NOW
 XFRM state:

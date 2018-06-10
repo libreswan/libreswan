@@ -40,7 +40,7 @@ road #
 road #
  # no tunnel and no bare shunts expected
 road #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 road NOW
 XFRM state:
 XFRM policy:
@@ -99,7 +99,7 @@ road #
  echo done
 done
 road #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 road NOW
 XFRM state:
 XFRM policy:

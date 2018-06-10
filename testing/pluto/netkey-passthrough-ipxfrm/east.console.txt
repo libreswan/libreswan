@@ -20,7 +20,7 @@ east #
  echo "initdone"
 initdone
 east #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 PLAINTEXT FROM WEST
 east NOW
 XFRM state:

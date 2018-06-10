@@ -1,4 +1,4 @@
-if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
+if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
 if [ -f /var/run/charon.pid ]; then strongswan status && grep "invalid X509 hash length" /tmp/charon.log ; fi
 : ==== cut ====
 if [ -f /var/run/pluto/pluto.pid ]; then ipsec auto --status ; fi

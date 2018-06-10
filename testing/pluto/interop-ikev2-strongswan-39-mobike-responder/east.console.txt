@@ -5,7 +5,7 @@ east #
  echo "initdone"
 initdone
 east #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 east NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.33.222

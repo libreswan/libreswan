@@ -27,7 +27,7 @@ east #
 | #1 STATE_PARENT_R2: retransmits: ignoring retransmit of message ID 1 exchange ISAKMP_v2_AUTH fragment 5
 | #1 STATE_PARENT_R2: retransmits: retransmit response for message ID: 2 exchange ISAKMP_v2_INFORMATIONAL
 east #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 east NOW
 XFRM state:
 XFRM policy:

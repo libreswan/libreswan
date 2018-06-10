@@ -21,7 +21,7 @@ ping -n -c 2 -I 192.1.3.33 192.1.2.23
 # should show established tunnel and no bare shunts
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus
-ipsec look
+../../pluto/bin/ipsec-look.sh
 iptables -t nat -L -n
 echo done
 echo "initdone"

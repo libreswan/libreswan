@@ -39,7 +39,7 @@ west #
 |    cert encoding: CERT_PKCS7_WRAPPED_X509 (0x1)
 | saving certificate of type 'PKCS7_WRAPPED_X509' in 0
 west #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45

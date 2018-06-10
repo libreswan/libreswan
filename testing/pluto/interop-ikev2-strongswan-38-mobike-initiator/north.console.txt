@@ -103,7 +103,7 @@ north #
  echo done
 done
 north #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 north NOW
 XFRM state:
 src 192.1.3.34 dst 192.1.2.23
