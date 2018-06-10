@@ -102,6 +102,11 @@ bool remove_list_entry(struct list_entry *entry)
 		entry->older = NULL;
 		entry->newer = NULL;
 		newer->older = older;
+		/*
+		 * ??? static analysis suggests either older or newer might be NULL.
+		 * (But not both.)
+		 * Perhaps an undocumented invariant saves us.
+		 */
 		older->newer = newer;
 		if (older == newer) {
 			DBG(entry->info->debug, DBG_log("%s: empty", entry->info->name));

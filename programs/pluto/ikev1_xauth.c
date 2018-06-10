@@ -2008,7 +2008,6 @@ static stf_status xauth_client_resp(struct state *st,
 	/* MCFG_ATTR out */
 	{
 		pb_stream strattr;
-		int attr_type;
 
 		{
 			struct isakmp_mode_attr attrh;
@@ -2020,12 +2019,11 @@ static stf_status xauth_client_resp(struct state *st,
 				return STF_INTERNAL_ERROR;
 		}
 
-		attr_type = XAUTH_TYPE;
+		/* lset_t xauth_resp is used as a secondary index variable */
 
-		while (xauth_resp != LEMPTY) {
+		for (int attr_type = XAUTH_TYPE; xauth_resp != LEMPTY; attr_type++) {
 			if (xauth_resp & 1) {
 				/* ISAKMP attr out */
-				bool password_read_from_prompt = FALSE;
 				struct isakmp_attribute attr;
 				pb_stream attrval;
 
@@ -2129,6 +2127,13 @@ static stf_status xauth_client_resp(struct state *st,
 						}
 					}
 
+					/*
+					 * If we don't already have a password,
+					 * try to ask for one through whack.
+					 * We'll discard this password after use.
+					 */
+					bool discard_pw = FALSE;
+
 					if (st->st_xauth_password.ptr == NULL) {
 						char xauth_password[XAUTH_MAX_PASS_LENGTH];
 
@@ -2164,26 +2169,22 @@ static stf_status xauth_client_resp(struct state *st,
 							xauth_password,
 							strlen(xauth_password),
 							"XAUTH password");
-						password_read_from_prompt =
-							TRUE;
+						discard_pw = TRUE;
 					}
 
 					if (!out_chunk(st->st_xauth_password,
-						     &attrval,
-						     "XAUTH password"))
+						       &attrval,
+						       "XAUTH password")) {
+						if (discard_pw) {
+							freeanychunk(
+								st->st_xauth_password);
+						}
 						return STF_INTERNAL_ERROR;
+					}
 
-					/*
-					 * Do not store the password read from the prompt. The password
-					 * could have been read from a one-time token device (like SecureID)
-					 * or the password could have been entereted wrong,
-					 */
-					if (password_read_from_prompt) {
+					if (discard_pw) {
 						freeanychunk(
 							st->st_xauth_password);
-						st->st_xauth_password.len = 0;
-						password_read_from_prompt =
-							FALSE;	/* ??? never used? */
 					}
 					close_output_pbs(&attrval);
 					break;
@@ -2197,7 +2198,6 @@ static stf_status xauth_client_resp(struct state *st,
 				}
 			}
 
-			attr_type++;
 			xauth_resp >>= 1;
 		}
 

@@ -651,7 +651,7 @@ enum next_payload_types_ikev2 {
 #define HYBRID_AUTH_INIT_DSS 64223
 #define HYBRID_AUTH_RESP_DSS 64224
 
-/* XAUTH attribute values */
+/* XAUTH attribute values (draft-ietf-ipsec-isakmp-xauth-06 4.2) */
 #define XAUTH_TYPE 16520
 #define XAUTH_USER_NAME 16521
 #define XAUTH_USER_PASSWORD 16522

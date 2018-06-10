@@ -414,7 +414,6 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 	const struct state *pst = state_with_serialno(st->st_clonedfrom);
 
 	switch (st->st_state) {
-
 	case STATE_V2_REKEY_IKE_R:
 		request_ke_and_nonce("IKE rekey KE response gir", st,
 				     st->st_oakley.ta_dh,
@@ -422,6 +421,10 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		return STF_SUSPEND;
 
 	case STATE_V2_CREATE_R:
+		/*
+		 * ??? if we don't have an md (see above) why are we referencing it?
+		 * ??? clang 6.0.0 warns md might be NULL
+		 */
 		if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
 			request_ke_and_nonce("Child Responder KE and nonce nr",
 					     st, st->st_oakley.ta_dh,
@@ -433,6 +436,10 @@ static stf_status ikev2_crypto_start(struct msg_digest *md, struct state *st)
 		return STF_SUSPEND;
 
 	case STATE_V2_REKEY_CHILD_R:
+		/*
+		 * ??? if we don't have an md (see above) why are we referencing it?
+		 * ??? clang 6.0.0 warns md might be NULL
+		 */
 		if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
 			request_ke_and_nonce("Child Rekey Responder KE and nonce nr",
 					     st, st->st_oakley.ta_dh,

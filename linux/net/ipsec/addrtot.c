@@ -180,7 +180,7 @@ size_t dstlen;
 	if (dstlen > 0) {
 		if (dstlen < n)
 			p[dstlen - 1] = '\0';
-		strcpy(dst, p);
+		strcpy(dst, p);	/* clang 6.0.0 mistakenly thinks p is undefined */
 	}
 	return n;
 }

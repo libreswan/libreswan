@@ -210,7 +210,9 @@ static void test_enum_enum(const char *title, enum_enum_names *een,
 		printf(PREFIX "lswlog_enum_enum %lu %lu: ", table, val);
 		lswlog_enum_enum(buf, een, table, val);
 		/* ??? clang says that name might be NULL */
-		if (val_ok && streq(buf->array, name)) {
+		if (val_ok && name == NULL) {
+			printf("name == NULL\n");
+		} else if (val_ok && streq(buf->array, name)) {
 			printf("OK\n");
 		} else if (strlen(buf->array) > 0) {
 			printf("OK\n");

@@ -892,7 +892,7 @@ static bool netlink_get_sa_policy(const struct kernel_sa *sa,
 	req.n.nlmsg_type = XFRM_MSG_GETPOLICY;
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
 
-	req.id.dir = sa->nk_dir;
+	req.id.dir = sa->nk_dir;	/* clang 6.0.0 thinks RHS is garbage or undefined */
 	req.id.sel.family = sa->src->u.v4.sin_family;
 
 	ip2xfrm(&sa->src_client->addr, &req.id.sel.saddr);
@@ -939,7 +939,7 @@ static void  set_migration_attr(const struct kernel_sa *sa,
 	m->old_family = m->new_family = sa->src->u.v4.sin_family;
 }
 
-static void create_xfrm_migrate_sa(struct state *st, const int dir,
+static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 		struct kernel_sa *ret_sa, char *text_said)
 {
 	const struct connection *const c = st->st_connection;
@@ -948,15 +948,16 @@ static void create_xfrm_migrate_sa(struct state *st, const int dir,
 		ESPINUDP_WITH_NON_ESP : 0;
 
 	u_int proto;
-	struct ipsec_proto_info *p2;
+	struct ipsec_proto_info *proto_info;
+
 	if (st->st_esp.present) {
 		proto = SA_ESP;
-		p2 = &st->st_esp;
+		proto_info = &st->st_esp;
 	} else if (st->st_ah.present) {
 		proto = SA_AH;
-		p2 = &st->st_ah;
+		proto_info = &st->st_ah;
 	} else {
-		return;
+		return FALSE;
 	}
 
 	struct kernel_sa sa = empty_sa;
@@ -982,7 +983,7 @@ static void create_xfrm_migrate_sa(struct state *st, const int dir,
 			dst_client = &c->spd.this.client;
 			sa.nsrc = src;
 			sa.ndst = &st->st_mobike_localaddr;
-			sa.spi = p2->our_spi;
+			sa.spi = proto_info->our_spi;
 			set_text_said(n, dst, sa.spi, proto);
 			if (natt_type != 0) {
 				natt_sport = st->st_remoteport;
@@ -995,7 +996,7 @@ static void create_xfrm_migrate_sa(struct state *st, const int dir,
 			dst_client = &c->spd.that.client;
 			sa.nsrc = &st->st_mobike_localaddr;
 			sa.ndst = dst;
-			sa.spi = p2->attrs.spi;
+			sa.spi = proto_info->attrs.spi;
 			set_text_said(n, src, sa.spi, proto);
 			if (natt_type != 0) {
 				natt_sport = st->st_mobike_localport;
@@ -1016,7 +1017,7 @@ static void create_xfrm_migrate_sa(struct state *st, const int dir,
 			dst_client = &c->spd.this.client;
 			sa.nsrc = &st->st_mobike_remoteaddr;
 			sa.ndst = &c->spd.this.host_addr;
-			sa.spi = p2->our_spi;
+			sa.spi = proto_info->our_spi;
 			set_text_said(n, src, sa.spi, proto);
 			if (natt_type != 0) {
 				natt_sport = st->st_mobike_remoteport;
@@ -1030,7 +1031,7 @@ static void create_xfrm_migrate_sa(struct state *st, const int dir,
 			dst_client = &c->spd.that.client;
 			sa.nsrc = &c->spd.this.host_addr;
 			sa.ndst = &st->st_mobike_remoteaddr;
-			sa.spi = p2->attrs.spi;
+			sa.spi = proto_info->attrs.spi;
 			set_text_said(n, dst, sa.spi, proto);
 
 			if (natt_type != 0) {
@@ -1066,6 +1067,7 @@ static void create_xfrm_migrate_sa(struct state *st, const int dir,
 	DBG(DBG_KERNEL, DBG_log("%s", text_said));
 
 	*ret_sa = sa;
+	return TRUE;
 }
 
 static bool migrate_xfrm_sa(const struct kernel_sa *sa)
@@ -1140,20 +1142,15 @@ static bool netlink_migrate_sa(struct state *st)
 	struct kernel_sa sa;
 	char mig_said[SAMIGTOT_BUF];
 
-	create_xfrm_migrate_sa(st, XFRM_POLICY_OUT, &sa, mig_said);
-	if (!migrate_xfrm_sa(&sa))
-		return FALSE;
+	return
+		create_xfrm_migrate_sa(st, XFRM_POLICY_OUT, &sa, mig_said) &&
+		migrate_xfrm_sa(&sa) &&
 
-	create_xfrm_migrate_sa(st, XFRM_POLICY_IN, &sa, mig_said);
-	if (!migrate_xfrm_sa(&sa))
-		return FALSE;
+		create_xfrm_migrate_sa(st, XFRM_POLICY_IN, &sa, mig_said) &&
+		migrate_xfrm_sa(&sa) &&
 
-	create_xfrm_migrate_sa(st, XFRM_POLICY_FWD, &sa, mig_said);
-	if (!migrate_xfrm_sa(&sa))
-		return FALSE;
-
-	return TRUE;
-
+		create_xfrm_migrate_sa(st, XFRM_POLICY_FWD, &sa, mig_said) &&
+		migrate_xfrm_sa(&sa);
 }
 
 
@@ -1632,6 +1629,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 			sa->sec_ctx->sec_ctx_value, len);
 
 		req.n.nlmsg_len += attr->rta_len;
+
 		/* attr not subsequently used */
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}

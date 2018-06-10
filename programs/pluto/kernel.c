@@ -2490,7 +2490,6 @@ fail:
 	}
 }
 
-/* teardown_ipsec_sa is a canibalized version of setup_ipsec_sa */
 static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 {
 	/*
@@ -2510,27 +2509,25 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 
 	/* ??? CLANG 3.5 thinks that c might be NULL */
 	if (kernel_ops->inbound_eroute && inbound &&
-		c->spd.eroute_owner == SOS_NOBODY) {
+	    c->spd.eroute_owner == SOS_NOBODY) {
 		if (!raw_eroute(&c->spd.that.host_addr,
-					&c->spd.that.client,
-					&c->spd.this.host_addr,
-					&c->spd.this.client,
-					SPI_PASS, SPI_PASS,
-					c->encapsulation ==
-					ENCAPSULATION_MODE_TRANSPORT ?
+				&c->spd.that.client,
+				&c->spd.this.host_addr,
+				&c->spd.this.client,
+				SPI_PASS, SPI_PASS,
+				c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ?
 					SA_ESP : IPSEC_PROTO_ANY,
-					c->spd.this.protocol,
-					c->encapsulation ==
-					ENCAPSULATION_MODE_TRANSPORT ?
+				c->spd.this.protocol,
+				c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ?
 					ET_ESP : ET_UNSPEC,
-					null_proto_info,
-					deltatime(0),
-					calculate_sa_prio(c),
-					&c->sa_marks,
-					ERO_DEL_INBOUND,
-					"delete inbound"
+				null_proto_info,
+				deltatime(0),
+				calculate_sa_prio(c),
+				&c->sa_marks,
+				ERO_DEL_INBOUND,
+				"delete inbound"
 #ifdef HAVE_LABELED_IPSEC
-					, c->policy_label
+				, c->policy_label
 #endif
 				)) {
 			libreswan_log("raw_eroute in teardown_half_ipsec_sa() failed to delete inbound");

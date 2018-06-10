@@ -2600,10 +2600,9 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 				 */
 				stf_status s = dpd_init(st);
 
-				pexpect(s != STF_FAIL);
-				if (s == STF_FAIL)
+				if (!pexpect(s != STF_FAIL))
 					result = STF_FAIL; /* ??? fall through !?! */
-				/* ??? result not subsequently used */
+				/* ??? result not subsequently used. Looks bad! */
 			}
 		}
 

@@ -238,12 +238,13 @@ static void read_foodgroup(struct fg_groups *g)
 							break;
 
 						if (proto == (*pp)->proto && sport == (*pp)->sport && dport == (*pp)->dport) {
+							/* ??? we know that r == 0: why set it again? */
 							r = 0;
 							break;
 						} else {
+							/* ??? since we are looping, r's value won't be used */
 							r = 1;
 						}
-
 					}
 
 					if (r == 0) {
@@ -354,7 +355,7 @@ void load_groups(void)
 				r = op->proto - np->proto;
 			if (r == 0)
 				r = op->sport - np->sport;
-			if ( r == 0)
+			if (r == 0)
 				r = op->dport - np->dport;
 
 			if (r == 0 && op->group == np->group) {
@@ -382,7 +383,6 @@ void load_groups(void)
 		}
 		for (; op != NULL; op = op->next)
 			remove_group_instance(op->group->connection, op->name);
-
 
 		for (; np != NULL; np = np->next) {
 			np->name = add_group_instance(np->group->connection,

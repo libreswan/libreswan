@@ -714,10 +714,10 @@ size_t lswlog_proposal_info(struct lswlog *log,
 	}
 
 	if (proposal->dh != NULL) {
-		size += lswlogs(log, sep); sep = "-";
+		size += lswlogs(log, sep); sep = "-";	/* sep not subsequently used */
 		size += lswlogs(log, proposal->dh->common.fqn);
 	} else if (IMPAIR(PROPOSAL_PARSER)) {
-		size += lswlogs(log, sep); sep = "-";
+		size += lswlogs(log, sep); sep = "-";	/* sep not subsequently used */
 		size += lswlogs(log, "[DH]");
 	}
 

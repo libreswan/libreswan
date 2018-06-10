@@ -745,7 +745,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 			loggedit = TRUE;	/* loggedit not subsequently used */
 		}
 
-
 		ipsecdoi_initiate(b->whackfd, c, c->policy, 1,
 				  SOS_NOBODY, pcim_local_crypto
 #ifdef HAVE_LABELED_IPSEC

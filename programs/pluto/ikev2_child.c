@@ -927,15 +927,28 @@ stf_status ikev2_resp_accept_child_ts(
 		for (struct connection *t = connections; t != NULL; t = t->ac_next) {
 
 			if (LIN(POLICY_GROUPINSTANCE, t->policy) && (t->kind == CK_TEMPLATE)) {
-				if ((!streq(t->foodgroup, best->foodgroup)) ||
-					(streq(best->name, t->name)) ||
-					(!subnetinsubnet(&best->spd.that.client, &t->spd.that.client)) ||
-					(!sameaddr(&best->spd.this.client.addr, &t->spd.this.client.addr)))
-						continue;
+				/* ??? clang 6.0.0 thinks best might be NULL but I don't see how */
+				if (!streq(t->foodgroup, best->foodgroup) ||
+				    streq(best->name, t->name) ||
+				    !subnetinsubnet(&best->spd.that.client, &t->spd.that.client) ||
+				    !sameaddr(&best->spd.this.client.addr, &t->spd.this.client.addr))
+					continue;
 
-				DBG(DBG_CONTROLMORE, DBG_log("investigate %s which is another group instance of %s with different protoports", t->name, t->foodgroup));
+				/* ??? why require best->name and t->name to be different */
+
+				DBG(DBG_CONTROLMORE,
+					DBG_log("investigate %s which is another group instance of %s with different protoports",
+						t->name, t->foodgroup));
+				/*
+				 * ??? this code seems to assume that tsi and tsr contain exactly one element.
+				 * Any fewer and the code references an uninitialized value.
+				 * Any more would be ignored, and that's surely wrong.
+				 * It would be nice if the purpose of this block of code were documented.
+				 */
+				pexpect(tsi_n == 1);
 				int t_sport = tsi[0].startport == tsi[0].endport ? tsi[0].startport :
 						tsi[0].startport == 0 && tsi[0].endport == 65535 ? 0 : -1;
+				pexpect(tsr_n == 1);
 				int t_dport = tsr[0].startport == tsr[0].endport ? tsr[0].startport :
 						tsr[0].startport == 0 && tsr[0].endport == 65535 ? 0 : -1;
 
