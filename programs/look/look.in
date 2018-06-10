@@ -77,24 +77,25 @@ if [ -f /proc/net/pfkey ]; then
     ip xfrm state
     echo "XFRM policy:"
     # Force the order by feeding sort with lines prefixed by
-    # '[46]|TYPE|PRIORITY|'.  After sorting, the prefix is stripped
+    # '[46] TYPE PRIORITY |'.  After sorting, the prefix is stripped
     # off; along with any blank lines and trailing spaces.
     ip -o xfrm policy \
 	| grep -v "socket" \
-	| sed -e 's/^\(.* priority \([0-9][0-9]*\)\)/\2|\1/; t epriority' \
+	| sed -e 's/^/ | /' \
+	      -e 's/^\(.* priority \([0-9][0-9]*\)\)/\2|\1/; t end_priority' \
 	      -e '  s/^/0|/' \
-	      -e ':epriority' \
-	      -e 's/^\(.*:.* type \([0-9][0-9]*\)\)/\2|\1/; t etype' \
+	      -e ':end_priority' \
+	      -e 's/^\(.*:.* type \([0-9][0-9]*\)\)/\2|\1/; t end_type' \
 	      -e '  s/^/0|/' \
-	      -e ':etype' \
-	      -e 's/^\(.*:\)/6|\1/; t eprotocol' \
+	      -e ':end_type' \
+	      -e 's/^\(.*:\)/6|\1/; t end_protocol' \
 	      -e '  s/^/4|/' \
-	      -e ':eprotocol' \
-	| sort -n \
-	| sed -e 's/^[0-9|]*//' \
+	      -e ':end_protocol' \
+	| sort -k1,3n -k5n \
+	| sed -e 's/^.* | //' \
 	      -e 's/\s*\\/\\/g' \
-	      -e 's/\s*$//g' \
 	      -e 's/\\\\/\\/g' \
+	      -e 's/[\\]*\s*$//g' \
 	| tr '\\' '\012'
     echo "XFRM done"
 fi
