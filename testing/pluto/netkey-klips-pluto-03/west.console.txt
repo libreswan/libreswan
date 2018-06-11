@@ -79,11 +79,11 @@ src 192.1.2.45 dst 192.1.2.23
 	enc cbc(aes) 0xENCKEY
 XFRM policy:
 src 192.0.1.0/24 dst 192.0.2.0/24 proto icmp
-	dir out priority 843743 ptype main
+	dir out priority 974815 ptype main
 src 192.0.2.0/24 dst 192.0.1.0/24 proto icmp
-	dir fwd priority 843743 ptype main
+	dir fwd priority 974815 ptype main
 src 192.0.2.0/24 dst 192.0.1.0/24 proto icmp
-	dir in priority 843743 ptype main
+	dir in priority 974815 ptype main
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority 1042407 ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
