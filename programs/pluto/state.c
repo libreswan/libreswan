@@ -1017,12 +1017,12 @@ void delete_state(struct state *st)
 		 */
 		if (st->st_esp.present) {
 			char statebuf[1024];
-			char *sbcp = readable_humber(st->st_esp.peer_bytes,
+			char *sbcp = readable_humber(st->st_esp.our_bytes,
 					       statebuf,
 					       statebuf + sizeof(statebuf),
 					       "ESP traffic information: in=");
 
-			(void)readable_humber(st->st_esp.our_bytes,
+			(void)readable_humber(st->st_esp.peer_bytes,
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
@@ -1030,8 +1030,8 @@ void delete_state(struct state *st)
 				statebuf,
 				(st->st_username[0] != '\0') ? " XAUTHuser=" : "",
 				st->st_username);
-			pstats_ipsec_in_bytes += st->st_esp.peer_bytes;
-			pstats_ipsec_out_bytes += st->st_esp.our_bytes;
+			pstats_ipsec_in_bytes += st->st_esp.our_bytes;
+			pstats_ipsec_out_bytes += st->st_esp.peer_bytes;
 		}
 
 		if (st->st_ah.present) {
