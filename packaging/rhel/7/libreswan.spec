@@ -56,6 +56,7 @@ BuildRequires: libevent-devel
 %if 0%{with_dnssec}
 BuildRequires: ldns-devel
 BuildRequires: unbound-devel >= 1.6.0
+Requires: unbound-libs >= 1.6.0
 %global USE_DNSSEC true
 %else
 %global USE_DNSSEC false
