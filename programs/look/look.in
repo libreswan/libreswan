@@ -103,9 +103,11 @@ if [ -f /proc/net/pfkey ]; then
 	    -e 's/^/4 /' \
 	    -e 's/^4 \(.*:\)/6 \1/'
     } | {
-	# sort numerically by prefixes then, numerically, by the
-	# entire line
-	sort -k1,3n -k5n
+	# sort by each of the prefixes individually, and then by the
+	# rest of the line.  Shorter forms like -n and -k1,3n don't do
+	# what is wanted.  XXX: Should add 'V' so .24. is before
+	# .200.?
+	sort -b -k1,1n -k2,2n -k3,3n -k5
     } | {
 	# strip the sort prefixes
 	sed -e 's/^.* | //'
