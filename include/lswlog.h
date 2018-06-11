@@ -536,13 +536,12 @@ void libreswan_pexpect_fail(const char *func,
 		       const char *file, unsigned long line,
 		       const char *assertion);
 
-#if defined(__GNUC__)
 /*
  * Do not wrap ASSERTION in parentheses as it will suppress the
  * warning for 'foo = bar'.
- * Using it as an initializer, without parentheses is mostly safe.
- * We use GCC's "statement expression" extension
- * https://gcc.gnu.org/onlinedocs/gcc/Statement-Exprs.html#Statement-Exprs
+ *
+ * Because static analizer tools are easily confused, explicitly
+ * return the assertion result.
  */
 #define pexpect(ASSERTION)						\
 	({								\
@@ -552,12 +551,6 @@ void libreswan_pexpect_fail(const char *func,
 			      PASSERT_BASENAME, __LINE__, #ASSERTION);	\
 		assertion__; /* result */				\
 	})
-#else
-#define pexpect(ASSERTION)							\
-	((ASSERTION) ? true : (libreswan_pexpect_fail(__func__,			\
-					      PASSERT_BASENAME, __LINE__,	\
-					      #ASSERTION), false))
-#endif
 
 void lswlog_pexpect_prefix(struct lswlog *buf);
 void lswlog_pexpect_suffix(struct lswlog *buf, const char *func,
