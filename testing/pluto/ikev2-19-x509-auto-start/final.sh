@@ -1,6 +1,6 @@
 ipsec whack --trafficstatus
 : ==== cut ====
-../../pluto/bin/ipsec-look.sh
+ipsec look # ../../pluto/bin/ipsec-look.sh
 ipsec auto --status
 : ==== tuc ====
 ../bin/check-for-core.sh
