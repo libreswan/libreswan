@@ -7,12 +7,8 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # confirm that clear text is dead
 west #
- ! ../../pluto/bin/wait-until-alive -I 192.1.2.45 192.1.2.23
-ping -n -c 1 -w 4 -I 192.1.2.45 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 0 received, 100% packet loss, time XXXX
-destination -I 192.1.2.45 192.1.2.23 is dead
+ ! ../../pluto/bin/one-ping.sh -I 192.1.2.45 192.1.2.23
+down
 west #
  # ensure that clear text does not get through
 west #
@@ -22,10 +18,8 @@ west #
 west #
  # confirm with a ping
 west #
- ping -n -c 4 -I 192.1.2.45 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 0 received, 100% packet loss, time XXXX
+ ! ../../pluto/bin/one-ping.sh -I 192.1.2.45 192.1.2.23
+down
 west #
  ipsec start
 [ 00.00] registered KLIPS /proc/sys/net
