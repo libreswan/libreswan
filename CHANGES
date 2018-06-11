@@ -34,6 +34,7 @@ v3.24 (unreleased)
 * pluto: don't share IP leases for authby=secret [Paul]
 * pluto: Parser bug prevented 4in6 config [mhuntxu at github, Daniel M. Weeks]
 * pluto: Find and delete old connection/states with same ID [Paul/Hugh]
+* pluto: traffic log line had inBytes / outBytes swapped [Paul/Tuomo]
 * addconn: Fix auto=route and auto=start processing [Paul]
 * whack/auto: Ensure all status and list commands return no error code [Paul]
 * FIPS: Don't attempt HMAC integrity test on rsasigkey (rhbz#1544143) [Paul]
