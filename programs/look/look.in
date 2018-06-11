@@ -76,11 +76,15 @@ if [ -f /proc/net/pfkey ]; then
     echo "XFRM state:"
     ip xfrm state
     echo "XFRM policy:"
-    # Force the order by feeding sort with lines prefixed by
-    # '[46] TYPE PRIORITY |'.  After sorting, the prefix is stripped
-    # off; along with any blank lines and trailing spaces.
-    ip -o xfrm policy  | {
-	grep -v "socket"
+    # Force the order by feeding sort with lines prefixed by '[46]
+    # TYPE PRIORITY |'.
+    ip -o xfrm policy | {
+	# clean up the input: drop socket lines; strip trailing white
+	# space (either end of line or before \\); strip double \\s
+	sed -e '/socket/d' \
+	    -e 's/\s*\\/\\/g' \
+	    -e 's/\\\\/\\/g' \
+	    -e 's/[\\]*\s*$//g'
     } | {
 	# Build the '<[46]> <type> <priority> |' prefix ready for
 	# sorting.  For each field, start with the assumption that the
@@ -103,10 +107,8 @@ if [ -f /proc/net/pfkey ]; then
 	# entire line
 	sort -k1,3n -k5n
     } | {
-	sed -e 's/^.* | //' \
-	    -e 's/\s*\\/\\/g' \
-	    -e 's/\\\\/\\/g' \
-	    -e 's/[\\]*\s*$//g'
+	# strip the sort prefixes
+	sed -e 's/^.* | //'
     } | {
 	# convert \ into line breaks
 	tr '\\' '\012'
