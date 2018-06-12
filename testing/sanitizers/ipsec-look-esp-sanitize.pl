@@ -43,7 +43,7 @@ while(<>) {
     print STDERR "inlook:$inlook ineroute:$ineroute intncfg: $intncfg inspigrp: $inspigrp inroute: $inroute\nProcessing $_\n";
   }
 
-  if(!$inlook && / ipsec look/) {
+  if(!$inlook && (/ ipsec look/ || /ipsec-look.sh/)) {
     $inlook=1;
 
     # also reset tunnel list.
