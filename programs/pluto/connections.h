@@ -106,8 +106,8 @@
  * - a whole number
  * - larger is more important
  * - three subcomponents.  In order of decreasing significance:
- *   + length of source subnet mask (8 bits)
- *   + length of destination subnet mask (8 bits)
+ *   + length of source subnet mask (9 bits)
+ *   + length of destination subnet mask (9 bits)
  *   + bias (8 bit)
  * - a bias of 1 is added to allow prio BOTTOM_PRIO to be less than all
  *   normal priorities
@@ -116,12 +116,14 @@
  * - priority is inherited -- an instance of a policy has the same priority
  *   as the original policy, even though its subnets might be smaller.
  * - display format: n,m
+ *
+ * ??? These are NOT the same as sa_priorities but eventually they should be aligned.
  */
 typedef uint32_t policy_prio_t;
 #define BOTTOM_PRIO   ((policy_prio_t)0)        /* smaller than any real prio */
 
 #define set_policy_prio(c) { (c)->prio = \
-		  ((policy_prio_t)(c)->spd.this.client.maskbits << 16) \
+		  ((policy_prio_t)(c)->spd.this.client.maskbits << 17) \
 		| ((policy_prio_t)(c)->spd.that.client.maskbits << 8) \
 		|  (policy_prio_t)1; }
 
