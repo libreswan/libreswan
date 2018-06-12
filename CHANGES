@@ -21,7 +21,6 @@ v3.24 (unreleased)
 * IKEv2: process INITIAL_CONTACT and delete old states from a connection [Paul]
 * IKEv2: Only retransmit on the first fragment [Andrew]
 * IKEv2: when sending fragments, also update st_msgid_lastreplied [Paul]
-* IKEv1: Cleanup packet send code [Andrew]
 * IKEv1: Prevent crashes with IKEv1 mistakenly allowing narrowing=yes [Paul]
 * X509: Extend support for wildcard certs matching remote peer ID [Paul/Hugh]
 * X509: Support PKCS7 for Microsoft interop with intermediate certs [Andrew]
@@ -30,6 +29,7 @@ v3.24 (unreleased)
 * pluto: Cleanup of state/md passing code [Andrew]
 * pluto: Allow switching back from wrong instance to template conn [Paul]
 * pluto: disentangle IKEv1 and IKEv2 packet sending code [Andrew]
+* pluto: encrypt IKEv2 notification payloads [Andrew]
 * pluto: Allow rightsubnets= without leftsubnet(s)= [Paul]
 * pluto: don't share IP leases for authby=secret [Paul]
 * pluto: Parser bug prevented 4in6 config [mhuntxu at github, Daniel M. Weeks]
@@ -49,9 +49,11 @@ v3.24 (unreleased)
 * ipsec: add checknss option --settrusts to reset CA trusts in nss db [Tuomo]
 * _updown.netkey: force routing when necessary for IPsec to work [Tuomo]
 * _updown.netkey: do not proxyarp for host-host tunnels [Tuomo]
+* look: sort XFRM output by priority [Andrew]
 * Bugtracker bugs fixed:
    #318: vti interface gets down on previous initiator if roles switch [Tuomo]
    #328: Addcon crash on duplicit "left" or "leftid" keys in conn config [Stepan Broz]
+   #311: segfault in crl fetching git master f5b17dc [Andrew, Tuomo]
 
 v3.23 (January 25, 2018)
 * IKEv2: MOBIKE Responder support (RFC 4555) [Antony/Paul]
