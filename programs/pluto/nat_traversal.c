@@ -990,7 +990,7 @@ static void nat_traversal_find_new_mapp_state(struct state *st, void *data)
 	}
 }
 
-static int nat_traversal_new_mapping(struct state *st,
+static void nat_traversal_new_mapping(struct state *st,
 				const ip_address *nsrc,
 				u_int16_t nsrcport)
 {
@@ -1009,8 +1009,6 @@ static int nat_traversal_new_mapping(struct state *st,
 	nfo.port  = nsrcport;
 
 	for_each_state(nat_traversal_find_new_mapp_state, &nfo);
-
-	return 0;
 }
 
 /* this should only be called after packet has been verified/authenticated! */
@@ -1027,8 +1025,7 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 		 * states and established kernel SA)
 		 */
 		if (st->st_remoteport != hportof(&md->sender) ||
-			!sameaddr(&st->st_remoteaddr, &md->sender)) {
-
+		    !sameaddr(&st->st_remoteaddr, &md->sender)) {
 			nat_traversal_new_mapping(st, &md->sender,
 						hportof(&md->sender));
 		}
