@@ -1,3 +1,10 @@
+USERLAND_CFLAGS += -DTimeZoneOffset=timezone
+USERLAND_CFLAGS += -Du8='unsigned char'
+USERLAND_CFLAGS += -Ds6_addr16=__u6_addr.__u6_addr16
+USERLAND_CFLAGS += -Ds6_addr32=__u6_addr.__u6_addr32
+USERLAND_CFLAGS += -DNEED_SIN_LEN
+USERLAND_CFLAGS += -D__APPLE_USE_RFC_3542
+
 CC=gcc
 PORTINCLUDE=-I${LIBRESWANSRCDIR}/ports/darwin/include -I/opt/local/include
 USERLINK=-L/usr/local/lib -L/opt/local/lib
