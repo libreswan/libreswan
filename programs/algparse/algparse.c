@@ -501,20 +501,14 @@ int main(int argc, char *argv[])
 	 * Need to ensure that NSS is initialized before calling
 	 * ike_alg_init().  Sanity checks and algorithm testing
 	 * require a working NSS.
+	 *
+	 * When testing the algorithms in FIPS mode (i.e., executing
+	 * crypto code) NSS needs to be pointed at a real FIPS mode
+	 * NSS directory.
 	 */
 	lsw_nss_buf_t err;
-	bool nss_ok;
-	if (fips && test_algs) {
-		/*
-		 * When testing the algorithms in FIPS mode (i.e.,
-		 * executing crypto code) NSS needs to be pointed at a
-		 * real FIPS mode NSS directory.
-		 */
-		const struct lsw_conf_options *lco = lsw_init_options();
-		nss_ok = lsw_nss_setup(lco->nssdir, 0, lsw_nss_get_password, err);
-	} else {
-		nss_ok = lsw_nss_setup(NULL, 0, NULL, err);
-	}
+	bool nss_ok = lsw_nss_setup((fips && test_algs) ? lsw_init_options()->nssdir : NULL,
+				    LSW_NSS_READONLY, lsw_nss_get_password, err);
 	if (!nss_ok) {
 		fprintf(stderr, "unexpected %s\n", err);
 		exit(1);
