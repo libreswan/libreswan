@@ -30,3 +30,13 @@ RANLIB=ranlib
 
 # Darwin apparently doesn't have setschedprio
 USE_PTHREAD_SETSCHEDPRIO=false
+
+USE_LIBCAP_NG=false
+USE_NM=false
+
+# On MAC OSX use different backup file suffix.
+#
+# This assumes that when cross compiling for darwin, a cross installer
+# is being used.
+INSTBINFLAGS=-D -b -B .old
+INSTSUIDFLAGS=--mode=u+rxs,g+rx,o+rx --group=root -b -B .old

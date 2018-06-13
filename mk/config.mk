@@ -419,15 +419,9 @@ USE_SECCOMP?=false
 
 # Support for LIBCAP-NG to drop unneeded capabilities for the pluto daemon
 USE_LIBCAP_NG?=true
-ifeq ($(OSDEP),darwin)
-USE_LIBCAP_NG=false
-endif
 
 # Support for Network Manager
 USE_NM?=true
-ifeq ($(OSDEP),darwin)
-USE_NM=false
-endif
 
 # Include LDAP support (currently used for fetching CRLs)
 USE_LDAP?=false
@@ -469,14 +463,6 @@ ifndef IPSECVIDVERSION
 # VID is a somewhat shortened version, eg "3.5" or "3.5-xxx"
 IPSECVIDVERSION:=$(shell echo ${IPSECVERSION} | sed 's/^\([^-]*\)-\([^-]*\)-.*/\1-\2/')
 export IPSECVIDVERSION
-endif
-
-# On MAC OSX , we have to use YACC and not BISON. And use different backup
-# file suffix.
-ifeq ($(BUILDENV),"darwin")
-USE_YACC?=true
-INSTBINFLAGS=-D -b -B .old
-INSTSUIDFLAGS=--mode=u+rxs,g+rx,o+rx --group=root -b -B .old
 endif
 
 OBJDIRTOP?=${LIBRESWANSRCDIR}/${OBJDIR}
