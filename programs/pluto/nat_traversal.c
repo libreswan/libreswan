@@ -1103,13 +1103,13 @@ struct new_klips_mapp_nfo {
 
 static void nat_t_new_klips_mapp(struct state *st, void *data)
 {
-	struct connection *c = st->st_connection;
 	struct new_klips_mapp_nfo *nfo = (struct new_klips_mapp_nfo *)data;
 
-	if (c != NULL && st->st_esp.present &&
+	if (st->st_esp.present &&
 	    sameaddr(&st->st_remoteaddr, &nfo->src) &&
-	    st->st_esp.our_spi == nfo->sa->sadb_sa_spi)
+	    st->st_esp.our_spi == nfo->sa->sadb_sa_spi) {
 		nat_traversal_new_mapping(st, &nfo->dst, nfo->dport);
+	}
 }
 
 void process_pfkey_nat_t_new_mapping(
