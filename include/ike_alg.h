@@ -4,6 +4,7 @@
 #include <nss.h>
 #include <pk11pub.h>
 #include "shunk.h"
+#include "ietf_constants.h"
 
 struct ike_alg;
 enum ike_alg_key;
