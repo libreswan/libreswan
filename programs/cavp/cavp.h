@@ -14,6 +14,9 @@
  * for more details.
  */
 
+#include "chunk.h"
+#include "lswnss.h"
+
 struct hash_desc;
 
 struct cavp_entry {

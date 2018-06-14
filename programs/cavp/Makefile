@@ -1,6 +1,6 @@
 # cavp Makefile, for libreswan
 #
-# Copyright (C) 2017 Andrew Cagney
+# Copyright (C) 2017-2018 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -23,6 +23,8 @@ PROGRAM_MANPAGE =
 OBJS += cavp.o
 OBJS += cavps.o
 OBJS += cavp_print.o
+OBJS += cavp_parser.o
+
 OBJS += cavp_ikev1.o
 OBJS += cavp_ikev2.o
 OBJS += cavp_sha.o
