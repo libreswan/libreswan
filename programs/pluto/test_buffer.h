@@ -13,6 +13,9 @@
  * for more details.
  */
 
+#include <stdbool.h>
+#include <pk11pub.h>
+
 #include "chunk.h"
 
 chunk_t decode_hex_to_chunk(const char *original, const char *string);
