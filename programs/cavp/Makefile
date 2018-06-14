@@ -71,7 +71,6 @@ check: ikev2.cavp ikev1_dsa.cavp ikev1_psk.cavp
 .PRECIOUS: %.out
 %.out: %.fax $(PROGRAM)
 	$(builddir)/cavp \
-		-fips \
 		$(builddir)/$*.fax \
 		> $(builddir)/$*.tmp
 	mv  $(builddir)/$*.tmp  $(builddir)/$*.out
