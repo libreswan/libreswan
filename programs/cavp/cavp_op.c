@@ -21,16 +21,14 @@
 void op_entry(struct cavp_entry *entry,
 	      const char *value UNUSED)
 {
+	passert(entry->entry != NULL);
 	*(entry->entry) = entry;
 }
 
 void op_chunk(struct cavp_entry *entry,
 	      const char *value)
 {
-	if (entry->chunk == NULL) {
-		fprintf(stderr, "missing chunk for '%s'\n", entry->key);
-		exit(1);
-	}
+	passert(entry->chunk != NULL);
 	freeanychunk(*(entry->chunk));
 	*(entry->chunk) = decode_hex_to_chunk(entry->key, value);
 }
@@ -38,6 +36,7 @@ void op_chunk(struct cavp_entry *entry,
 void op_symkey(struct cavp_entry *entry,
 	       const char *value)
 {
+	passert(entry->symkey != NULL);
 	release_symkey(__func__, "entry", entry->symkey);
 	*(entry->symkey) = decode_hex_to_symkey(entry->key, value);
 }
@@ -45,12 +44,14 @@ void op_symkey(struct cavp_entry *entry,
 void op_signed_long(struct cavp_entry *entry,
 		    const char *value)
 {
+	passert(entry->signed_long != NULL);
 	*(entry->signed_long) = strtol(value, NULL, 10);
 }
 
 void op_unsigned_long(struct cavp_entry *entry,
 		      const char *value)
 {
+	passert(entry->unsigned_long != NULL);
 	*(entry->unsigned_long) = strtoul(value, NULL, 10);
 }
 
