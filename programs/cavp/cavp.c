@@ -23,6 +23,7 @@
 #include "cavp.h"
 #include "cavps.h"
 #include "cavp_parser.h"
+#include "acvp.h"
 
 static void usage(void)
 {
@@ -54,57 +55,105 @@ int main(int argc, char *argv[])
 		usage();
 		exit(1);
 	}
-	char **argp = argv + 1;
 
-	/* a -XXX option? */
 	struct cavp *cavp = NULL;
-	while ((*argp)[0] == '-') {
-		if (strcmp(*argp, "--") == 0) {
+	struct acvp p = { .use = false, };
+
+	char **argp = argv + 1;
+	for (; *argp != NULL; argp++) {
+		const char *arg = *argp;
+		/* end options? */
+		if (strcmp(arg, "--") == 0) {
 			argp++;
 			break;
-		} else if (strcmp(*argp, "-fips") == 0) {
-			argp++;
+		}
+		/* read from stdin? */
+		if (strcmp(arg, "-") == 0) {
+			break;
+		}
+		/* assume file? */
+		if (*arg != '-') {
+			break;
+		}
+
+		/* strip leading '-' */
+		do {
+			arg++;
+		} while (arg[0] == '-');
+
+		/* First try non-arg options */
+
+		struct cavp **cavpp;
+		for (cavpp = cavps; *cavpp != NULL; cavpp++) {
+			if (strcmp(arg, (*cavpp)->alias) == 0) {
+				cavp = *cavpp;
+				fprintf(stderr, "test: %s\n", cavp->description);
+				break;
+			}
+		}
+		if (*cavpp != NULL) {
+			continue;
+		}
+
+		if (strcmp(arg, "fips") == 0) {
 			lsw_set_fips_mode(LSW_FIPS_ON);
+		} else if (argp[1] == NULL) {
+			fprintf(stderr, "missing argument for option '%s'\n", *argp);
+			return 0;
+		} else if (strcmp(arg, "g") == 0 || strcmp(arg, "gir") == 0) {
+			p.g_ir = *++argp;
+			p.use = true;
+		} else if (strcmp(arg, "n") == 0 || strcmp(arg, "girnew") == 0) {
+			p.g_ir_new = *++argp;
+			p.use = true;
+		} else if (strcmp(arg, "a") == 0 || strcmp(arg, "ni") == 0) {
+			p.ni = *++argp;
+			p.use = true;
+		} else if (strcmp(arg, "b") == 0 || strcmp(arg, "nr") == 0) {
+			p.nr = *++argp;
+			p.use = true;
+		} else if (strcmp(arg, "c") == 0 || strcmp(arg, "spii") == 0) {
+			p.spi_i = *++argp;
+			p.use = true;
+		} else if (strcmp(arg, "d") == 0 || strcmp(arg, "spir") == 0) {
+			p.spi_r = *++argp;
+			p.use = true;
+		} else if (strcmp(arg, "l") == 0 || strcmp(arg, "dkmlen") == 0) {
+			p.dkm_length = *++argp;
+			p.use = true;
+		} else if (strcmp(arg, "h") == 0 || strcmp(arg, "hash") == 0) {
+			p.prf = *++argp;
+			p.use = true;
 		} else {
-			struct cavp **cavpp;
-			for (cavpp = cavps; *cavpp != NULL; cavpp++) {
-				if (strcmp(argv[1]+1, (*cavpp)->alias) == 0) {
-					cavp = *cavpp;
-					fprintf(stderr, "test: %s\n", cavp->description);
-					break;
-				}
-			}
-			if (cavp == NULL) {
-				fprintf(stderr, "Unknown test %s\n", argv[1]);
-				usage();
-				exit(1);
-			}
-			argp++;
+			fprintf(stderr, "option '%s' not recognized\n",
+				*argp);
 		}
 	}
-	if (cavp == NULL) {
+
+	if (!p.use && cavp == NULL) {
 		fprintf(stderr, "Guessing test type ...\n");
 	}
 
-	if (*argp == NULL) {
+	if (p.use) {
+		fprintf(stderr, "Using CMVP\n");
+	} else if (*argp == NULL) {
 		fprintf(stderr, "missing test file\n");
 		usage();
 		exit(1);
-	}
-	if (strcmp(*argp, "-") == 0) {
+	} else if (strcmp(*argp, "-") == 0) {
 		fprintf(stderr, "Reading from stdin\n");
+		argp++;
 	} else {
-		fprintf(stderr, "reading from %s\n", *argp);
+		fprintf(stderr, "Reading from %s\n", *argp);
 		if (freopen(*argp, "r", stdin) == NULL) {
 			perror("freopen");
 			exit(1);
 		}
+		argp++;
 	}
-	argp++;
 
 	if (*argp != NULL) {
-		fprintf(stderr, "unexpected %s", *argp);
-		usage();
+		fprintf(stderr, "unexpected option '%s'\n", *argp);
 		exit(1);
 	}
 
@@ -118,7 +167,11 @@ int main(int argc, char *argv[])
 
 	init_ike_alg();
 
-	cavp_parser(cavp);
+	if (p.use) {
+		acvp(&p);
+	} else {
+		cavp_parser(cavp);
+	}
 
 	lsw_nss_shutdown();
 	exit(0);

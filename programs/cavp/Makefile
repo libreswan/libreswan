@@ -32,6 +32,8 @@ OBJS += cavp_sha.o
 OBJS += cavp_hmac.o
 OBJS += cavp_gcm.o
 
+OBJS += acvp.o
+
 #
 # XXX: For the moment build things by pulling in chunks of pluto.
 # What, if anything, should be moved to libswan or another library?
