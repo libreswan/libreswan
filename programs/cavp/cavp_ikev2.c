@@ -27,11 +27,64 @@
 #include "cavp_print.h"
 #include "cavp_ikev2.h"
 
+void cavp_acvp_ikev2(const struct prf_desc *prf,
+		     chunk_t ni, chunk_t nr,
+		     PK11SymKey *g_ir, PK11SymKey *g_ir_new,
+		     chunk_t spi_i, chunk_t spi_r,
+		     signed long nr_ike_sa_dkm_bytes,
+		     signed long nr_child_sa_dkm_bytes)
+{
+	/* SKEYSEED = prf(Ni | Nr, g^ir) */
+	PK11SymKey *skeyseed = ikev2_ike_sa_skeyseed(prf,
+						     ni, nr,
+						     g_ir);
+	print_symkey("SKEYSEED", skeyseed, 0);
+	if (skeyseed == NULL) {
+		print_line("failure in SKEYSEED = prf(Ni | Nr, g^ir)");
+		exit(1);
+	}
+
+	/* prf+(SKEYSEED, Ni | Nr | SPIi | SPIr) */
+	PK11SymKey *dkm = ikev2_ike_sa_keymat(prf, skeyseed,
+					      ni, nr,
+					      spi_i, spi_r,
+					      nr_ike_sa_dkm_bytes);
+	print_symkey("DKM", dkm, nr_ike_sa_dkm_bytes);
+
+	/* prf+(SK_d, Ni | Nr) */
+	PK11SymKey *SK_d = key_from_symkey_bytes(dkm, 0, prf->prf_key_size);
+	PK11SymKey *child_sa_dkm = ikev2_child_sa_keymat(prf, SK_d, NULL,
+							 ni, nr, nr_child_sa_dkm_bytes);
+	print_symkey("DKM(Child SA)", child_sa_dkm, nr_child_sa_dkm_bytes);
+
+	/* prf+(SK_d, g^ir (new) | Ni | Nr) */
+	PK11SymKey *child_sa_dkm_dh = ikev2_child_sa_keymat(prf, SK_d,
+							    g_ir_new, ni, nr,
+							    nr_child_sa_dkm_bytes);
+	print_symkey("DKM(Child SA D-H)", child_sa_dkm_dh, nr_child_sa_dkm_bytes);
+
+	/* SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr) */
+	PK11SymKey *skeyseed_rekey = ikev2_ike_sa_rekey_skeyseed(prf, SK_d, g_ir_new,
+								 ni, nr);
+	print_symkey("SKEYSEED(Rekey)", skeyseed_rekey, 0);
+	if (skeyseed_rekey == NULL) {
+		print_line("failure in SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr)");
+		exit(1);
+	}
+
+	release_symkey(__func__, "skeyseed", &skeyseed);
+	release_symkey(__func__, "dkm", &dkm);
+	release_symkey(__func__, "SK_d", &SK_d);
+	release_symkey(__func__, "child_sa_dkm", &child_sa_dkm);
+	release_symkey(__func__, "child_sa_dkm_dh", &child_sa_dkm_dh);
+	release_symkey(__func__, "skeyseed_rekey", &skeyseed_rekey);
+}
+
 static long int g_ir_length;
 static long int ni_length;
 static long int nr_length;
-static long int dkm_length;
-static long int child_sa_dkm_length;
+static signed long nr_ike_sa_dkm_bits;
+static signed long nr_child_sa_dkm_bits;
 static struct cavp_entry *prf_entry;
 
 static struct cavp_entry config_entries[] = {
@@ -43,8 +96,8 @@ static struct cavp_entry config_entries[] = {
 	{ .key = "SHA-512", .op = op_entry, .entry = &prf_entry, .prf = &ike_alg_prf_sha2_512, },
 	{ .key = "Ni length", .op = op_signed_long, .signed_long = &ni_length },
 	{ .key = "Nr length", .op = op_signed_long, .signed_long = &nr_length },
-	{ .key = "DKM length", .op = op_signed_long, .signed_long = &dkm_length },
-	{ .key = "Child SA DKM length", .op = op_signed_long, .signed_long = &child_sa_dkm_length },
+	{ .key = "DKM length", .op = op_signed_long, .signed_long = &nr_ike_sa_dkm_bits },
+	{ .key = "Child SA DKM length", .op = op_signed_long, .signed_long = &nr_child_sa_dkm_bits },
 	{ .key = NULL }
 };
 
@@ -52,10 +105,10 @@ static void ikev2_config(void)
 {
 	config_number("g^ir length", g_ir_length);
 	config_key(prf_entry->key);
-	config_number("Ni length",ni_length);
-	config_number("Nr length",nr_length);
-	config_number("DKM length",dkm_length);
-	config_number("Child SA DKM length",child_sa_dkm_length);
+	config_number("Ni length", ni_length);
+	config_number("Nr length", nr_length);
+	config_number("DKM length", nr_ike_sa_dkm_bits);
+	config_number("Child SA DKM length", nr_child_sa_dkm_bits);
 }
 
 static long int count;
@@ -98,49 +151,10 @@ static void run_ikev2(void)
 		return;
 	}
 
-	/* SKEYSEED = prf(Ni | Nr, g^ir) */
-	PK11SymKey *skeyseed = ikev2_ike_sa_skeyseed(prf_entry->prf,
-						     ni, nr,
-						     g_ir);
-	print_symkey("SKEYSEED", skeyseed, 0);
-	if (skeyseed == NULL) {
-		print_line("failure in SKEYSEED = prf(Ni | Nr, g^ir)");
-		exit(1);
-	}
-
-	/* prf+(SKEYSEED, Ni | Nr | SPIi | SPIr) */
-	PK11SymKey *dkm =
-		ikev2_ike_sa_keymat(prf_entry->prf, skeyseed,
-				    ni, nr, spi_i, spi_r, dkm_length / 8);
-	print_symkey("DKM", dkm, dkm_length / 8);
-
-	/* prf+(SK_d, Ni | Nr) */
-	PK11SymKey *SK_d = key_from_symkey_bytes(dkm, 0, prf_entry->prf->prf_key_size);
-	PK11SymKey *child_sa_dkm =
-		ikev2_child_sa_keymat(prf_entry->prf, SK_d, NULL, ni, nr, child_sa_dkm_length / 8);
-	print_symkey("DKM(Child SA)", child_sa_dkm, child_sa_dkm_length / 8);
-
-	/* prf+(SK_d, g^ir (new) | Ni | Nr) */
-	PK11SymKey *child_sa_dkm_dh =
-		ikev2_child_sa_keymat(prf_entry->prf, SK_d, g_ir_new, ni, nr,
-				      child_sa_dkm_length / 8);
-	print_symkey("DKM(Child SA D-H)", child_sa_dkm_dh, child_sa_dkm_length / 8);
-
-	/* SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr) */
-	PK11SymKey *skeyseed_rekey =
-		ikev2_ike_sa_rekey_skeyseed(prf_entry->prf, SK_d, g_ir_new, ni, nr);
-	print_symkey("SKEYSEED(Rekey)", skeyseed_rekey, 0);
-	if (skeyseed_rekey == NULL) {
-		print_line("failure in SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr)");
-		exit(1);
-	}
-
-	release_symkey(__func__, "skeyseed", &skeyseed);
-	release_symkey(__func__, "dkm", &dkm);
-	release_symkey(__func__, "SK_d", &SK_d);
-	release_symkey(__func__, "child_sa_dkm", &child_sa_dkm);
-	release_symkey(__func__, "child_sa_dkm_dh", &child_sa_dkm_dh);
-	release_symkey(__func__, "skeyseed_rekey", &skeyseed_rekey);
+	cavp_acvp_ikev2(prf_entry->prf, ni, nr,
+			g_ir, g_ir_new, spi_i, spi_r,
+			nr_ike_sa_dkm_bits / 8,
+			nr_child_sa_dkm_bits / 8);
 }
 
 struct cavp cavp_ikev2 = {
