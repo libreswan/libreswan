@@ -12,7 +12,6 @@ KVM_INSTALL_RPM_LIST = 'rpm -aq > /var/tmp/rpm-qa-fedora-updates.log'
 # /etc/rc.d/rc.local This slows down installation. If you 7 prefixes
 # it could cost 40 min:)
 KVM_F26_HACK=$(KVMSH) --shutdown $(1)$(2) '/testing/guestbin/swan-transmogrify'
-KVM_UDEV_HACK=$(KVMSH) --shutdown $(1)$(2) 'ln -s /dev/null /etc/udev/rules.d/80-net-name-slot.rules'
 
 KVM_PACKAGES = \
     ElectricFence \
