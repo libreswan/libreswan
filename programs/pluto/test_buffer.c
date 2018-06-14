@@ -99,6 +99,14 @@ chunk_t decode_to_chunk(const char *prefix, const char *original)
 	return chunk;
 }
 
+PK11SymKey *decode_hex_to_symkey(const char *prefix, const char *string)
+{
+	chunk_t chunk = decode_hex_to_chunk(prefix, string);
+	PK11SymKey *symkey = symkey_from_chunk(prefix, chunk);
+	freeanychunk(chunk);
+	return symkey;
+}
+
 /*
  * Verify that the chunk's data is the same as actual.
  * Note that it is assumed that there is enough data in actual.

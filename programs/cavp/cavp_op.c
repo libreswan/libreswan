@@ -39,9 +39,7 @@ void op_symkey(struct cavp_entry *entry,
 	       const char *value)
 {
 	release_symkey(__func__, "entry", entry->symkey);
-	chunk_t chunk = decode_hex_to_chunk(entry->key, value);
-	*(entry->symkey) = symkey_from_chunk("symkey", chunk);
-	freeanychunk(chunk);
+	*(entry->symkey) = decode_hex_to_symkey(entry->key, value);
 }
 
 void op_signed_long(struct cavp_entry *entry,

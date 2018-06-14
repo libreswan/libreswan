@@ -20,6 +20,8 @@
 
 chunk_t decode_hex_to_chunk(const char *original, const char *string);
 chunk_t decode_to_chunk(const char *prefix, const char *string);
+PK11SymKey *decode_hex_to_symkey(const char *prefix, const char *string);
+
 bool verify_chunk(const char *desc,
 		   chunk_t expected,
 		   chunk_t actual);
