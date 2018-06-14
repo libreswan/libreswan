@@ -29,23 +29,8 @@
 #include "test_buffer.h"
 
 #include "cavp.h"
+#include "cavps.h"
 #include "cavp_print.h"
-#include "cavp_ikev1.h"
-#include "cavp_ikev2.h"
-#include "cavp_sha.h"
-#include "cavp_hmac.h"
-#include "cavp_gcm.h"
-
-struct cavp *cavps[] = {
-	&cavp_ikev1_sig,
-	&cavp_ikev1_psk,
-	&cavp_ikev2,
-	&cavp_sha_msg,
-	&cavp_sha_monte,
-	&cavp_hmac,
-	&cavp_gcm,
-	NULL
-};
 
 static struct cavp_entry *lookup_entry(struct cavp_entry *entries, const char *key)
 {
