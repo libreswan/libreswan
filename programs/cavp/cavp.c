@@ -17,56 +17,12 @@
 
 #include "lswtool.h"
 #include "lswfips.h"
+#include "lswnss.h"
 #include "ike_alg.h"
-#include "test_buffer.h"
-#include "crypt_symkey.h"
 
 #include "cavp.h"
 #include "cavps.h"
 #include "cavp_parser.h"
-
-void op_entry(struct cavp_entry *entry,
-	      const char *value UNUSED)
-{
-	*(entry->entry) = entry;
-}
-
-void op_chunk(struct cavp_entry *entry,
-	      const char *value)
-{
-	if (entry->chunk == NULL) {
-		fprintf(stderr, "missing chunk for '%s'\n", entry->key);
-		exit(1);
-	}
-	freeanychunk(*(entry->chunk));
-	*(entry->chunk) = decode_hex_to_chunk(entry->key, value);
-}
-
-void op_symkey(struct cavp_entry *entry,
-	       const char *value)
-{
-	release_symkey(__func__, "entry", entry->symkey);
-	chunk_t chunk = decode_hex_to_chunk(entry->key, value);
-	*(entry->symkey) = symkey_from_chunk("symkey", chunk);
-	freeanychunk(chunk);
-}
-
-void op_signed_long(struct cavp_entry *entry,
-		    const char *value)
-{
-	*(entry->signed_long) = strtol(value, NULL, 10);
-}
-
-void op_unsigned_long(struct cavp_entry *entry,
-		      const char *value)
-{
-	*(entry->unsigned_long) = strtoul(value, NULL, 10);
-}
-
-void op_ignore(struct cavp_entry *entry UNUSED,
-	       const char *value UNUSED)
-{
-}
 
 static void usage(void)
 {

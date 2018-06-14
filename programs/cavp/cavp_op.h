@@ -1,6 +1,6 @@
-/* CAVP algorithm, for libreswan
+/* parse operations, for libreswan (CAVP)
  *
- * Copyright (C) 2015-2016,2018, Andrew Cagney
+ * Copyright (C) 2018, Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -13,14 +13,10 @@
  * for more details.
  */
 
-struct cavp_entry;
-
-struct cavp {
-	const char *alias;
-	const char *description;
-	void (*print_config)(void);
-	void (*run)(void);
-	struct cavp_entry *config;
-	struct cavp_entry *data;
-	const char *match[];
-};
+void op_entry(struct cavp_entry *entry, const char *value);
+void op_ignore(struct cavp_entry *entry, const char *value);
+void op_chunk(struct cavp_entry *entry, const char *value);
+void op_symkey(struct cavp_entry *entry, const char *value);
+void op_signed_long(struct cavp_entry *entry, const char *value);
+void op_unsigned_long(struct cavp_entry *entry, const char *value);
+void op_boolean(struct cavp_entry *entry, const char *value);

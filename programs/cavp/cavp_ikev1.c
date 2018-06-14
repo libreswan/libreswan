@@ -14,8 +14,6 @@
  * for more details.
  */
 
-#include <pk11pub.h>
-
 #include "lswalloc.h"
 #include "ike_alg.h"
 
@@ -26,6 +24,7 @@
 #include "crypt_symkey.h"
 
 #include "cavp.h"
+#include "cavp_entry.h"
 #include "cavp_print.h"
 #include "cavp_ikev1.h"
 

@@ -14,8 +14,6 @@
  * for more details.
  */
 
-#include <pk11pub.h>
-
 #include "lswalloc.h"
 #include "lswlog.h"
 #include "ike_alg.h"
@@ -27,6 +25,7 @@
 #include "ikev2_prf.h"
 
 #include "cavp.h"
+#include "cavp_entry.h"
 #include "cavp_print.h"
 #include "cavp_sha.h"
 

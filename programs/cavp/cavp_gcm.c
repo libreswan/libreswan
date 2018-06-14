@@ -26,6 +26,7 @@
 #include "crypt_symkey.h"
 
 #include "cavp.h"
+#include "cavp_entry.h"
 #include "cavp_print.h"
 #include "cavp_gcm.h"
 

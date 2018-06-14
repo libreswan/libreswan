@@ -24,6 +24,7 @@
 
 #include "cavp.h"
 #include "cavps.h"
+#include "cavp_entry.h"
 #include "cavp_print.h"
 #include "cavp_parser.h"
 
