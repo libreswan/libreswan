@@ -25,26 +25,65 @@
 #include "cavp_parser.h"
 #include "acvp.h"
 
-static void usage(void)
+#define I "  "
+#define II I I
+#define OPT1 II"-%-8s  %s\n"
+#define OPT2V II"-%s <value>, -%s <value>\n"II"           %s\n"
+#define OPT3V II"-%s <value>, -%s <value>, -%s <value>\n"II"           %s\n"
+
+static void help(void)
 {
-	fprintf(stderr, "Usage:\n\n");
-	fprintf(stderr, "    cavp [ -TEST ] <test-vector>|-\n\n");
-	fprintf(stderr, "Where -TEST specifies the test type:\n\n");
+#define USAGE_HELP "cavp -?|-h|-help"
+	printf("Usage: "USAGE_HELP"\n");
+	printf("\n");
+	printf(I"print this help message\n");
+	printf("\n");
+
+#define USAGE_FILE "cavp [-fips] [-<algorithm>] <test-file>|-"
+	printf("Usage: "USAGE_FILE"\n");
+	printf("\n");
+	printf(I"Test <algorithm> using test vectors from <test-file> ('-' for stdin).\n");
+	printf("\n");
+	printf(OPT1, "fips", "force FIPS mode (else determined by machine configuration)");
+	printf("\n");
 	for (struct cavp **cavpp = cavps; *cavpp != NULL; cavpp++) {
-		fprintf(stderr, "    -%-8s %s\n",
-			(*cavpp)->alias,
-			(*cavpp)->description);
+		printf(OPT1, (*cavpp)->alias, (*cavpp)->description);
 	}
-	fprintf(stderr, "\n");
-	fprintf(stderr, "If -TEST is omitted then the test type is determined from the\n");
-	fprintf(stderr, "file header by matching one of the patterns:\n\n");
+	printf("\n");
+	printf(I"If -<algorithm> is omitted then it will be determined by matching one\n");
+	printf(I"the <test-file> header with one of the following patterns:\n");
+	printf("\n");
 	for (struct cavp **cavpp = cavps; *cavpp != NULL; cavpp++) {
-		const char *sep = (*cavpp)->alias;
 		for (const char **matchp = (*cavpp)->match; *matchp; matchp++) {
-			fprintf(stderr, "    %-8s  '%s'\n", sep, *matchp);
-			sep = "";
+			printf(OPT1, (*cavpp)->alias, *matchp);
 		}
 	}
+	printf("\n");
+
+#define USAGE_PARAM "cavp -<param> <value> ..."
+	printf("Usage: "USAGE_PARAM"\n");
+	printf("\n");
+	printf(OPT2V, "gir", "g", "shared secret from IKE DH exchange (g^ir)");
+	printf(OPT2V, "girnew", "n", "shared secret from child DH exchange (g^ir (new))");
+	printf(OPT2V, "ni", "a", "initiator nonce (Ni)");
+	printf(OPT2V, "nr", "b", "responder nonce (Nr)");
+	printf(OPT2V, "spii", "c", "initiator security parameter index (SPIi");
+	printf(OPT2V, "spir", "d", "responder security parameter index (SPIr)");
+	printf(OPT2V, "dkmlen", "l", "size of derived keying material in bytes");
+	printf(OPT3V, "prf", "p", "hash", "pseudo-random-function used to implement PRF+");
+}
+
+#undef OPT1
+#undef OPT2V
+#undef OPT3V
+#undef II
+#undef I
+
+static void usage(void)
+{
+	printf("Usage: "USAGE_HELP"\n");
+	printf("       "USAGE_FILE"\n");
+	printf("       "USAGE_PARAM"\n");
 }
 
 int main(int argc, char *argv[])
@@ -94,9 +133,11 @@ int main(int argc, char *argv[])
 		if (*cavpp != NULL) {
 			continue;
 		}
-
 		if (strcmp(arg, "fips") == 0) {
 			lsw_set_fips_mode(LSW_FIPS_ON);
+		} else if (strcmp(arg, "help") == 0 || strcmp(arg, "?") == 0 || strcmp(arg, "h") == 0) {
+			help();
+			return 0;
 		} else if (argp[1] == NULL) {
 			fprintf(stderr, "missing argument for option '%s'\n", *argp);
 			return 0;
@@ -121,7 +162,7 @@ int main(int argc, char *argv[])
 		} else if (strcmp(arg, "l") == 0 || strcmp(arg, "dkmlen") == 0) {
 			p.dkm_length = *++argp;
 			p.use = true;
-		} else if (strcmp(arg, "h") == 0 || strcmp(arg, "hash") == 0) {
+		} else if (strcmp(arg, "p") == 0 || strcmp(arg, "prf") == 0 || strcmp(arg, "hash") == 0) {
 			p.prf = *++argp;
 			p.use = true;
 		} else {
