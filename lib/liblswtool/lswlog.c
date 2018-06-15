@@ -33,6 +33,7 @@
 #include <libreswan.h>
 
 #include "constants.h"
+#include "lswtool.h"
 #include "lswlog.h"
 
 bool log_to_stderr = TRUE;	/* should log go to stderr? */

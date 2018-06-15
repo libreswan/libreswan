@@ -5,6 +5,7 @@
 #include "constants.h"
 #include "lswlog.h"
 #include "lswalloc.h"
+#include "lswtool.h"
 
 #define PREFIX "         "
 

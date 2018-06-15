@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include "lswlog.h"
+#include "lswtool.h"
 #include "lswalloc.h"
 #include "lswnss.h"
 #include "lswfips.h"

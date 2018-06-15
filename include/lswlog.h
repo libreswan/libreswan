@@ -50,13 +50,6 @@ extern bool log_to_stderr;          /* should log go to stderr? */
 
 
 /*
- * For stand-alone tools.
- */
-extern const char *progname;
-extern void tool_init_log(const char *name);
-
-
-/*
  * Codes for status messages returned to whack.
  *
  * These are 3 digit decimal numerals.  The structure is inspired by

@@ -60,6 +60,7 @@
 #include <libreswan/pfkey_debug.h> /* PF_KEY_DEBUG_PARSE_MAX */
 
 #include "lswlog.h"
+#include "lswtool.h"
 #include "alg_info.h"
 #include "kernel_alg.h"
 #include "pfkey_help.h"

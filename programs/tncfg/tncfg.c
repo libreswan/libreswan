@@ -35,6 +35,7 @@
 #include <errno.h>
 #include <getopt.h>
 #include "socketwrapper.h"
+#include "lswtool.h"
 #include "lswlog.h"
 
 #include "libreswan/pfkey.h"

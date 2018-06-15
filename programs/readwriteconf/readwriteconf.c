@@ -47,6 +47,7 @@
 #include "lswalloc.h"
 #include "lswconf.h"
 #include "lswlog.h"
+#include "lswtool.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
 #include "ipsecconf/starterlog.h"

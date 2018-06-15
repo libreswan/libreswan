@@ -56,6 +56,7 @@
 #include "constants.h"
 #include "lswalloc.h"
 #include "lswlog.h"
+#include "lswtool.h"
 #include "lswconf.h"
 #include "lswnss.h"
 

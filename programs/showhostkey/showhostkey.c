@@ -53,6 +53,7 @@
 #include "lswconf.h"
 #include "secrets.h"
 #include "lswnss.h"
+#include "lswtool.h"
 
 #include <nss.h>
 #include <keyhi.h>
