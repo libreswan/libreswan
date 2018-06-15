@@ -14,5 +14,20 @@
  * for more details.
  */
 
+#include <pk11pub.h>
+#include "chunk.h"
+
+struct prf_desc;
+
 extern struct cavp cavp_ikev1_sig;
 extern struct cavp cavp_ikev1_psk;
+
+void cavp_acvp_ikev1_sig(const struct prf_desc *prf,
+			 chunk_t ni, chunk_t nr,
+			 chunk_t cky_i, chunk_t cky_r,
+			 PK11SymKey *g_xy);
+void cavp_acvp_ikev1_psk(const struct prf_desc *prf,
+			 chunk_t ni, chunk_t nr,
+			 chunk_t cky_i, chunk_t cky_r,
+			 chunk_t psk,
+			 PK11SymKey *g_xy);
