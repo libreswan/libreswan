@@ -1,7 +1,6 @@
-/*
- * Parse IKEv1 CAVP test functions, for libreswan
+/* Parse ACVP options, for libreswan (CAVP)
  *
- * Copyright (C) 2015,2017 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2018, Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -14,4 +13,6 @@
  * for more details.
  */
 
-extern struct cavp cavp_ikev2;
+struct cavp;
+
+void acvp_parser(struct cavp *cavp, const char *arg, const char **argp);

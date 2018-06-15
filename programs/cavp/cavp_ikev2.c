@@ -27,12 +27,12 @@
 #include "cavp_print.h"
 #include "cavp_ikev2.h"
 
-void cavp_acvp_ikev2(const struct prf_desc *prf,
-		     chunk_t ni, chunk_t nr,
-		     PK11SymKey *g_ir, PK11SymKey *g_ir_new,
-		     chunk_t spi_i, chunk_t spi_r,
-		     signed long nr_ike_sa_dkm_bytes,
-		     signed long nr_child_sa_dkm_bytes)
+static void cavp_acvp_ikev2(const struct prf_desc *prf,
+			    chunk_t ni, chunk_t nr,
+			    PK11SymKey *g_ir, PK11SymKey *g_ir_new,
+			    chunk_t spi_i, chunk_t spi_r,
+			    signed long nr_ike_sa_dkm_bytes,
+			    signed long nr_child_sa_dkm_bytes)
 {
 	/* SKEYSEED = prf(Ni | Nr, g^ir) */
 	PK11SymKey *skeyseed = ikev2_ike_sa_skeyseed(prf,
@@ -121,12 +121,12 @@ static chunk_t spi_r;
 
 static struct cavp_entry data_entries[] = {
 	{ .key = "COUNT", .op = op_signed_long, .signed_long = &count },
-	{ .key = "g^ir", .op = op_symkey, .symkey = &g_ir },
-	{ .key = "g^ir (new)", .op = op_symkey, .symkey = &g_ir_new },
-	{ .key = "Ni", .op = op_chunk, .chunk = &ni },
-	{ .key = "Nr", .op = op_chunk, .chunk = &nr },
-	{ .key = "SPIi", .op = op_chunk, .chunk = &spi_i },
-	{ .key = "SPIr", .op = op_chunk, .chunk = &spi_r },
+	{ .key = "g^ir", .opt = {"gir","g"}, .op = op_symkey, .symkey = &g_ir },
+	{ .key = "g^ir (new)", .opt = {"girNew","n"}, .op = op_symkey, .symkey = &g_ir_new },
+	{ .key = "Ni", .opt = {"nInit", "ni", "a"}, .op = op_chunk, .chunk = &ni },
+	{ .key = "Nr", .opt = {"nResp", "nr","b"}, .op = op_chunk, .chunk = &nr },
+	{ .key = "SPIi", .opt = {"spiInit", "spii","c"}, .op = op_chunk, .chunk = &spi_i },
+	{ .key = "SPIr", .opt = {"spiResp", "spir","d"}, .op = op_chunk, .chunk = &spi_r },
 	{ .key = "SKEYSEED", .op = op_ignore },
 	{ .key = "DKM", .op = op_ignore },
 	{ .key = "DKM(Child SA)", .op = op_ignore },

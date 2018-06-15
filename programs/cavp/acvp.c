@@ -15,8 +15,12 @@
 
 #include <string.h>
 
+#include "lswlog.h"
+
 #include "acvp.h"
 
+#include "cavp.h"
+#include "cavp_entry.h"
 #include "cavp_ikev2.h"
 
 #include "ike_alg_sha1.h"
@@ -38,23 +42,74 @@ static const struct acvp_prf acvp_prfs[] = {
 	{ .prf = NULL, },
 };
 
-void acvp(struct acvp *p)
+static bool table_entry(struct cavp_entry *entries, const char *opt, const char *param)
 {
-	const struct prf_desc *prf = NULL;
-	for (const struct acvp_prf *acvp_prf = acvp_prfs;
-	     acvp_prf->prf != NULL; acvp_prf++) {
-		if (strcmp(acvp_prf->name, p->prf) == 0) {
-			prf = acvp_prf->prf;
-			break;
+	for (struct cavp_entry *entry = entries; entry->key != NULL; entry++) {
+		for (unsigned i = 0; i < elemsof(entry->opt); i++) {
+			if (entry->opt[i] != NULL && strcasecmp(entry->opt[i], opt) == 0) {
+				entry->op(entry, param);
+				return true;
+			}
 		}
 	}
-	chunk_t ni = decode_hex_to_chunk("ni", p->ni);
-	chunk_t nr = decode_hex_to_chunk("nr", p->nr);
-	PK11SymKey *g_ir = decode_hex_to_symkey("g^ir", p->g_ir);
-	PK11SymKey *g_ir_new = decode_hex_to_symkey("g^ir(new)", p->g_ir_new);
-	chunk_t spi_i = decode_hex_to_chunk("SPI I", p->spi_i);
-	chunk_t spi_r = decode_hex_to_chunk("SPI R", p->spi_r);
-	signed long nr_dkm_bytes = strtol(p->dkm_length, NULL, 10);
-	cavp_acvp_ikev2(prf, ni, nr, g_ir, g_ir_new, spi_i, spi_r,
-			nr_dkm_bytes, nr_dkm_bytes);
+	return false;
+}
+
+bool acvp_option(struct cavp *cavp, const char *opt, const char *param)
+{
+	/* try the config table */
+	if (table_entry(cavp->config, opt, param)) {
+		return true;
+	}
+	/* try the data table */
+	if (table_entry(cavp->data, opt, param)) {
+		return true;
+	}
+	/* try some PRF magic */
+	if (strcasecmp(opt, ACVP_PRF_OPTION) == 0 ||
+	    /* compat */ strcasecmp(opt, "hash") == 0 ||
+	    /* compat */ strcasecmp(opt, "h") == 0) {
+		const struct prf_desc *prf = NULL;
+		/* map number to PRF? */
+		for (const struct acvp_prf *p = acvp_prfs; p->prf != NULL; p++) {
+			if (strcmp(p->name, param) == 0) {
+				prf = p->prf;
+				break;
+			}
+		}
+		/* by name */
+		for (struct cavp_entry *entry = cavp->config; entry->key != NULL; entry++) {
+			if (entry->prf != NULL) {
+				if (entry->prf == prf ||
+				    strcasecmp(entry->key, param)) {
+					entry->op(entry, param);
+					return true;
+				}
+			}
+		}
+		fprintf(stderr, "-prf option invalid in this context\n");
+		return false;
+	}
+	/* try some dmklen magic */
+	long dkmlen_in_bits = -1;
+
+	if (strcasecmp(opt, ACVP_DKM_OPTION) == 0) {
+		dkmlen_in_bits = strtoul(param, NULL, 10);
+	}
+	if (/* compat */ strcasecmp(opt, "dkmlen") == 0 ||
+	    /* compat */ strcmp(opt, "l") == 0) {
+		dkmlen_in_bits = strtoul(param, NULL, 10) * 8;
+	}
+	if (dkmlen_in_bits >= 0) {
+		for (struct cavp_entry *entry = cavp->config; entry->key != NULL; entry++) {
+			if (strstr(entry->key, "DKM") != NULL) {
+				*entry->signed_long =  dkmlen_in_bits;
+				return true;
+			}
+		}
+		fprintf(stderr, "-dkmlen option invalid in this context\n");
+		return false;
+	}
+	/* else unknown */
+	return false;
 }

@@ -18,18 +18,20 @@
 #include "lswtool.h"
 #include "lswfips.h"
 #include "lswnss.h"
+#include "lswlog.h"
 #include "ike_alg.h"
 
 #include "cavp.h"
 #include "cavps.h"
 #include "cavp_parser.h"
+#include "cavp_entry.h"
 #include "acvp.h"
 
 #define I "  "
 #define II I I
-#define OPT1 II"-%-8s  %s\n"
-#define OPT2V II"-%s <value>, -%s <value>\n"II"           %s\n"
-#define OPT3V II"-%s <value>, -%s <value>, -%s <value>\n"II"           %s\n"
+#define III I I I
+#define IOPT "        "
+#define OPT "-%-7s  %s\n"
 
 static void help(void)
 {
@@ -39,43 +41,76 @@ static void help(void)
 	printf(I"print this help message\n");
 	printf("\n");
 
-#define USAGE_FILE "cavp [-fips] [-<algorithm>] <test-file>|-"
+#define USAGE_FILE "cavp [-fips] [-<test>] <test-file>|-"
 	printf("Usage: "USAGE_FILE"\n");
 	printf("\n");
-	printf(I"Test <algorithm> using test vectors from <test-file> ('-' for stdin).\n");
+	printf(I"Run <test> using test vectors from <test-file> ('-' for stdin).\n");
 	printf("\n");
-	printf(OPT1, "fips", "force FIPS mode (else determined by machine configuration)");
+	printf(II""OPT, "fips", "force FIPS mode (else determined from machine configuration)");
 	printf("\n");
 	for (struct cavp **cavpp = cavps; *cavpp != NULL; cavpp++) {
-		printf(OPT1, (*cavpp)->alias, (*cavpp)->description);
+		printf(II""OPT, (*cavpp)->alias, (*cavpp)->description);
 	}
 	printf("\n");
-	printf(I"If -<algorithm> is omitted then it will be determined by matching one\n");
+	printf(I"If -<algorithm> is omitted then it is determined by matching\n");
 	printf(I"the <test-file> header with one of the following patterns:\n");
 	printf("\n");
 	for (struct cavp **cavpp = cavps; *cavpp != NULL; cavpp++) {
 		for (const char **matchp = (*cavpp)->match; *matchp; matchp++) {
-			printf(OPT1, (*cavpp)->alias, *matchp);
+			printf(II""OPT, (*cavpp)->alias, *matchp);
 		}
 	}
 	printf("\n");
 
-#define USAGE_PARAM "cavp -<param> <value> ..."
+#define USAGE_PARAM "cavp [-fips] -<test> -<acvp-key> <acvp-value> ..."
 	printf("Usage: "USAGE_PARAM"\n");
 	printf("\n");
-	printf(OPT2V, "gir", "g", "shared secret from IKE DH exchange (g^ir)");
-	printf(OPT2V, "girnew", "n", "shared secret from child DH exchange (g^ir (new))");
-	printf(OPT2V, "ni", "a", "initiator nonce (Ni)");
-	printf(OPT2V, "nr", "b", "responder nonce (Nr)");
-	printf(OPT2V, "spii", "c", "initiator security parameter index (SPIi");
-	printf(OPT2V, "spir", "d", "responder security parameter index (SPIr)");
-	printf(OPT2V, "dkmlen", "l", "size of derived keying material in bytes");
-	printf(OPT3V, "prf", "p", "hash", "pseudo-random-function used to implement PRF+");
+	printf(I"Specify test using command line options (options names from ACVP)\n");
+	printf("\n");
+	for (struct cavp **cavpp = cavps; *cavpp != NULL; cavpp++) {
+		printf(II""OPT, (*cavpp)->alias, (*cavpp)->description);
+		bool supported = false;
+		/* PRF? */
+		const char *sep = NULL;
+		for (struct cavp_entry *config = (*cavpp)->config; config->key != NULL; config++) {
+			if (config->prf != NULL) {
+				supported = true;
+				if (sep == NULL) {
+					printf(III"-"ACVP_PRF_OPTION" <prf>\n");
+					sep = III""IOPT"<prf>: ";
+				}
+				printf("%s%s", sep, config->key);
+				sep = "|";
+			}
+		}
+		if (sep != NULL) {
+			printf("\n");
+		}
+		/* keylen */
+		for (struct cavp_entry *config = (*cavpp)->config; config->key != NULL; config++) {
+			if (strstr(config->key, "DKM") != NULL) {
+				supported = true;
+				printf(III"-"ACVP_DKM_OPTION" <length>\n");
+				printf(III""IOPT"<length>: key deriviation length in bits\n");
+				break;
+			}
+		}
+		/* data */
+		for (struct cavp_entry *entry = (*cavpp)->data; entry->key != NULL; entry++) {
+			if (entry->opt[0] != NULL) {
+				supported = true;
+				printf(III"-%s <data>\n", entry->opt[0]);
+				printf(III""IOPT"%s\n", entry->key);
+			}
+		}
+		if (!supported) {
+			printf(III"Not supported\n");
+		}
+	}
 }
 
-#undef OPT1
-#undef OPT2V
-#undef OPT3V
+#undef OPT
+#undef III
 #undef II
 #undef I
 
@@ -96,7 +131,7 @@ int main(int argc, char *argv[])
 	}
 
 	struct cavp *cavp = NULL;
-	struct acvp p = { .use = false, };
+	bool use_acvp = false;
 
 	char **argp = argv + 1;
 
@@ -142,7 +177,7 @@ int main(int argc, char *argv[])
 			arg++;
 		} while (arg[0] == '-');
 
-		/* First try non-arg options */
+		/* First: try non-arg options */
 
 		struct cavp **cavpp;
 		for (cavpp = cavps; *cavpp != NULL; cavpp++) {
@@ -156,44 +191,28 @@ int main(int argc, char *argv[])
 			continue;
 		}
 
+		/* Second: try options with args */
+
 		if (argp[1] == NULL) {
 			fprintf(stderr, "missing argument for option '%s'\n", *argp);
 			return 0;
-		} else if (strcmp(arg, "g") == 0 || strcmp(arg, "gir") == 0) {
-			p.g_ir = *++argp;
-			p.use = true;
-		} else if (strcmp(arg, "n") == 0 || strcmp(arg, "girnew") == 0) {
-			p.g_ir_new = *++argp;
-			p.use = true;
-		} else if (strcmp(arg, "a") == 0 || strcmp(arg, "ni") == 0) {
-			p.ni = *++argp;
-			p.use = true;
-		} else if (strcmp(arg, "b") == 0 || strcmp(arg, "nr") == 0) {
-			p.nr = *++argp;
-			p.use = true;
-		} else if (strcmp(arg, "c") == 0 || strcmp(arg, "spii") == 0) {
-			p.spi_i = *++argp;
-			p.use = true;
-		} else if (strcmp(arg, "d") == 0 || strcmp(arg, "spir") == 0) {
-			p.spi_r = *++argp;
-			p.use = true;
-		} else if (strcmp(arg, "l") == 0 || strcmp(arg, "dkmlen") == 0) {
-			p.dkm_length = *++argp;
-			p.use = true;
-		} else if (strcmp(arg, "p") == 0 || strcmp(arg, "prf") == 0 || strcmp(arg, "hash") == 0 || strcmp(arg, "h") == 0) {
-			p.prf = *++argp;
-			p.use = true;
+		}
+
+		if (cavp != NULL && acvp_option(cavp, arg, argp[1])) {
+			argp++;
+			use_acvp = true;
+			continue;
 		} else {
-			fprintf(stderr, "option '%s' not recognized\n",
-				*argp);
+			fprintf(stderr, "option '%s' not recognized\n", *argp);
+			return 0;
 		}
 	}
 
-	if (!p.use && cavp == NULL) {
+	if (!use_acvp && cavp == NULL) {
 		fprintf(stderr, "Guessing test type ...\n");
 	}
 
-	if (p.use) {
+	if (use_acvp) {
 		fprintf(stderr, "Using CMVP\n");
 	} else if (*argp == NULL) {
 		fprintf(stderr, "missing test file\n");
@@ -220,8 +239,9 @@ int main(int argc, char *argv[])
 
 	init_ike_alg();
 
-	if (p.use) {
-		acvp(&p);
+	if (use_acvp) {
+		passert(cavp != NULL);
+		cavp->run_test();
 	} else {
 		cavp_parser(cavp);
 	}

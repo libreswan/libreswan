@@ -15,16 +15,10 @@
 
 #include <stdbool.h>
 
-struct acvp {
-	const char *g_ir;
-	const char *g_ir_new;
-	const char *ni;
-	const char *nr;
-	const char *spi_i;
-	const char *spi_r;
-	const char *dkm_length;
-	const char *prf;
-	bool use;
-};
+struct cavp;
 
-void acvp(struct acvp *);
+bool acvp_option(struct cavp *cavp, const char *arg, const char *param);
+
+#define ACVP_DKM_OPTION "derivedKeyingMaterialLength"
+#define ACVP_PRF_OPTION "hashAlg"
+

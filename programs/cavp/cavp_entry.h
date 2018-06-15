@@ -23,6 +23,7 @@ struct hash_desc;
 
 struct cavp_entry {
 	const char *key;
+	const char *opt[3];
 	void (*op)(struct cavp_entry *key, const char *value);
 	/* set by the below */
 	chunk_t *chunk;
