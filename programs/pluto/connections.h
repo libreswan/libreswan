@@ -155,7 +155,9 @@ struct end {
 		host_addr,
 		host_nexthop,
 		host_srcip;
-	ip_subnet client, host_vtiip;
+	ip_subnet
+		client,
+		host_vtiip;
 
 	bool key_from_DNS_on_demand;
 	bool has_client;
