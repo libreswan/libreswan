@@ -99,6 +99,28 @@ int main(int argc, char *argv[])
 	struct acvp p = { .use = false, };
 
 	char **argp = argv + 1;
+
+	/* help must be at the front! */
+	if (strcmp(*argp, "-help") == 0 || strcmp(*argp, "--help") == 0 ||
+	    strcmp(*argp, "-?") == 0 || strcmp(*argp, "--?") == 0 ||
+	    strcmp(*argp, "-h") == 0 || strcmp(*argp, "--h") == 0) {
+		help();
+		return 0;
+	}
+
+	/* -fips must come first! */
+	if (strcmp(*argp, "-fips") == 0 || strcmp(*argp, "--fips") == 0) {
+		lsw_set_fips_mode(LSW_FIPS_ON);
+		argp++;
+	}
+
+	/* start NSS so crypto works while args are being parsed */
+	lsw_nss_buf_t err;
+	if (!lsw_nss_setup(NULL, 0, NULL, err)) {
+		fprintf(stderr, "unexpected %s\n", err);
+		return 1;
+	}
+
 	for (; *argp != NULL; argp++) {
 		const char *arg = *argp;
 		/* end options? */
@@ -133,12 +155,8 @@ int main(int argc, char *argv[])
 		if (*cavpp != NULL) {
 			continue;
 		}
-		if (strcmp(arg, "fips") == 0) {
-			lsw_set_fips_mode(LSW_FIPS_ON);
-		} else if (strcmp(arg, "help") == 0 || strcmp(arg, "?") == 0 || strcmp(arg, "h") == 0) {
-			help();
-			return 0;
-		} else if (argp[1] == NULL) {
+
+		if (argp[1] == NULL) {
 			fprintf(stderr, "missing argument for option '%s'\n", *argp);
 			return 0;
 		} else if (strcmp(arg, "g") == 0 || strcmp(arg, "gir") == 0) {
@@ -162,7 +180,7 @@ int main(int argc, char *argv[])
 		} else if (strcmp(arg, "l") == 0 || strcmp(arg, "dkmlen") == 0) {
 			p.dkm_length = *++argp;
 			p.use = true;
-		} else if (strcmp(arg, "p") == 0 || strcmp(arg, "prf") == 0 || strcmp(arg, "hash") == 0) {
+		} else if (strcmp(arg, "p") == 0 || strcmp(arg, "prf") == 0 || strcmp(arg, "hash") == 0 || strcmp(arg, "h") == 0) {
 			p.prf = *++argp;
 			p.use = true;
 		} else {
@@ -199,12 +217,6 @@ int main(int argc, char *argv[])
 	}
 
 	setbuf(stdout, NULL);
-
-	lsw_nss_buf_t err;
-	if (!lsw_nss_setup(NULL, 0, NULL, err)) {
-		fprintf(stderr, "unexpected %s\n", err);
-		exit(1);
-	}
 
 	init_ike_alg();
 
