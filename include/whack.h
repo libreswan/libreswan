@@ -68,7 +68,7 @@
  * version number.
  */
 enum whack_pubkey_type {
-	WHACK_PUBKEY_NONE,
+	WHACK_PUBKEY_NONE = 0,	/* must be zero (to make it default) */
 	WHACK_PUBKEY_CERTIFICATE_NICKNAME,
 	WHACK_PUBKEY_CKAID,
 };
