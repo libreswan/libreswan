@@ -81,7 +81,7 @@ bool acvp_option(struct cavp *cavp, const char *opt, const char *param)
 		for (struct cavp_entry *entry = cavp->config; entry->key != NULL; entry++) {
 			if (entry->prf != NULL) {
 				if (entry->prf == prf ||
-				    strcasecmp(entry->key, param)) {
+				    strcasecmp(entry->key, param) == 0) {
 					entry->op(entry, param);
 					return true;
 				}
