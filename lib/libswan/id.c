@@ -294,35 +294,6 @@ void escape_metachar(const char *src, char *dst, size_t dstlen)
 }
 
 /*
- * Remove all shell metacharacters ', \, ", `, and $ in a character string
- */
-void remove_metachar(const char *src, char *dst, size_t dstlen)
-{
-	bool changed = FALSE;
-
-	passert(dstlen >= 1);
-	while (*src != '\0' && dstlen > 1) {
-		if ((*src >= '0' && *src <= '9') ||
-			(*src >= 'a' && *src <= 'z') ||
-			(*src >= 'A' && *src <= 'Z') ||
-			*src == '_' || *src == '-' ||
-			*src == '.') {
-			*dst++ = *src;
-			dstlen--;
-		} else {
-			changed = TRUE;
-		}
-		src++;
-	}
-	*dst = '\0';
-	if (changed) {
-		libreswan_log(
-			"Warning: XAUTH username changed from '%s' to '%s'",
-			src, dst);
-	}
-}
-
-/*
  * Make private copy of string in struct id.
  * This is needed if the result of atoid is to be kept.
  */

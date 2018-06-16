@@ -400,6 +400,35 @@ static void fmt_traffic_str(struct state *st, char *istr, size_t istr_len, char 
 }
 
 /*
+ * Remove all characters but [-_.0-9a-zA-Z] from a character string.
+ * Truncates the result if it would be too long.
+ */
+static void clean_xauth_username(const char *src, char *dst, size_t dstlen)
+{
+	bool changed = FALSE;
+
+	passert(dstlen >= 1);
+	while (*src != '\0' && dstlen > 1) {
+		if ((*src >= '0' && *src <= '9') ||
+		    (*src >= 'a' && *src <= 'z') ||
+		    (*src >= 'A' && *src <= 'Z') ||
+		    *src == '_' || *src == '-' || *src == '.') {
+			*dst++ = *src;
+			dstlen--;
+		} else {
+			changed = TRUE;
+		}
+		src++;
+	}
+	*dst = '\0';
+	if (changed || *src != '\0') {
+		libreswan_log(
+			"Warning: XAUTH username changed from '%s' to '%s'",
+			src, dst);
+	}
+}
+
+/*
  * form the command string
  *
  * note: this mutates *st by calling fmt_traffic_str
@@ -492,7 +521,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 				sizeof(secure_xauth_username_str),
 				"PLUTO_USERNAME='");
 
-		remove_metachar(st->st_username,
+		clean_xauth_username(st->st_username,
 				p,
 				sizeof(secure_xauth_username_str) -
 				(p - secure_xauth_username_str) - 2);
