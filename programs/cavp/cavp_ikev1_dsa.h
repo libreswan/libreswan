@@ -1,7 +1,7 @@
 /*
  * Parse IKEv1 CAVP test functions, for libreswan
  *
- * Copyright (C) 2015-2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015, 2017 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -14,12 +14,4 @@
  * for more details.
  */
 
-#include <pk11pub.h>
-#include <chunk.h>
-
-struct prf_desc;
-
-void cavp_ikev1_skeyid_alphabet(const struct prf_desc *prf,
-				PK11SymKey *g_xy,
-				chunk_t cky_i, chunk_t cky_r,
-				PK11SymKey *skeyid);
+extern struct cavp cavp_ikev1_dsa;

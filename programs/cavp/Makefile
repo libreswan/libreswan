@@ -27,6 +27,8 @@ OBJS += cavp_parser.o
 OBJS += cavp_entry.o
 
 OBJS += cavp_ikev1.o
+OBJS += cavp_ikev1_psk.o
+OBJS += cavp_ikev1_dsa.o
 OBJS += cavp_ikev2.o
 OBJS += cavp_sha.o
 OBJS += cavp_hmac.o

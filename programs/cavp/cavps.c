@@ -17,14 +17,15 @@
 #include <stddef.h>	/* for NULL */
 
 #include "cavps.h"
-#include "cavp_ikev1.h"
+#include "cavp_ikev1_dsa.h"
+#include "cavp_ikev1_psk.h"
 #include "cavp_ikev2.h"
 #include "cavp_sha.h"
 #include "cavp_hmac.h"
 #include "cavp_gcm.h"
 
 struct cavp *cavps[] = {
-	&cavp_ikev1_sig,
+	&cavp_ikev1_dsa,
 	&cavp_ikev1_psk,
 	&cavp_ikev2,
 	&cavp_sha_msg,
