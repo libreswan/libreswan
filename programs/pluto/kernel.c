@@ -403,7 +403,7 @@ static void fmt_traffic_str(struct state *st, char *istr, size_t istr_len, char 
  * Remove all characters but [-_.0-9a-zA-Z] from a character string.
  * Truncates the result if it would be too long.
  */
-static void clean_xauth_username(const char *src, char *dst, size_t dstlen)
+static char *clean_xauth_username(const char *src, char *dst, size_t dstlen)
 {
 	bool changed = FALSE;
 
@@ -426,6 +426,7 @@ static void clean_xauth_username(const char *src, char *dst, size_t dstlen)
 			"Warning: XAUTH username changed from '%s' to '%s'",
 			src, dst);
 	}
+	return dst;
 }
 
 /*
@@ -521,12 +522,13 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 				sizeof(secure_xauth_username_str),
 				"PLUTO_USERNAME='");
 
-		clean_xauth_username(st->st_username,
+		p = clean_xauth_username(st->st_username,
 				p,
 				sizeof(secure_xauth_username_str) -
 				(p - secure_xauth_username_str) - 2);
-		add_str(secure_xauth_username_str,
-			sizeof(secure_xauth_username_str), p, "' ");
+		passert(p - secure_xauth_username_str + 2 <
+			(ptrdiff_t)sizeof(secure_xauth_username_str));
+		strcpy(p, "' ");	/* 2 extra chars */
 	}
 	fmt_traffic_str(st, traffic_in_str, sizeof(traffic_in_str), traffic_out_str, sizeof(traffic_out_str));
 
