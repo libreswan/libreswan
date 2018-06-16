@@ -101,7 +101,7 @@ static void ikev1_dsa_run_test(void)
 }
 
 struct cavp cavp_ikev1_dsa = {
-	.alias = "v1sig",
+	.alias = "v1dsa",
 	.description = "IKE v1 Digital Signature Authentication",
 	.print_config = ikev1_dsa_print_config,
 	.print_test = ikev1_dsa_print_test,
