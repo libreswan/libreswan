@@ -148,7 +148,6 @@ struct host_pair;	/* opaque type */
 
 struct end {
 	struct id id;
-	bool left;
 
 	enum keyword_host host_type;
 	char *host_addr_name;	/* string version from whack */

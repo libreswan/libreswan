@@ -1746,13 +1746,6 @@ void add_connection(const struct whack_message *wm)
 		c->tunnel_addr_family = wm->tunnel_addr_family;
 		c->sa_reqid = wm->sa_reqid;
 
-		/*
-		 * Set this up so that we can log which end is which after
-		 * orient
-		 */
-		c->spd.this.left = TRUE;
-		c->spd.that.left = FALSE;
-
 		same_leftca = extract_end(&c->spd.this, &wm->left, "left");
 		same_rightca = extract_end(&c->spd.that, &wm->right, "right");
 
