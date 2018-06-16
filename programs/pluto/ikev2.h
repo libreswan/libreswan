@@ -31,9 +31,6 @@ extern void complete_v2_state_transition(struct msg_digest **mdp,
 
 extern stf_status ikev2_send_livenss_probe(struct state *st);
 
-extern stf_status ikev2_send_informational(struct state *st, struct state *pst,
-					   v2_notification_t v2N);
-
 extern state_transition_fn process_encrypted_informational_ikev2;
 
 extern state_transition_fn ikev2_child_ike_inIoutR;
@@ -89,7 +86,6 @@ struct ikev2_proposal;
 struct ikev2_proposals;
 
 void DBG_log_ikev2_proposal(const char *prefix, struct ikev2_proposal *proposal);
-void DBG_log_ikev2_proposals(const char *prefix, struct ikev2_proposals *proposals);
 
 void free_ikev2_proposal(struct ikev2_proposal **proposal);
 void free_ikev2_proposals(struct ikev2_proposals **proposals);
@@ -138,8 +134,6 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *chosen,
 struct ipsec_proto_info *ikev2_child_sa_proto_info(struct state *st, lset_t policy);
 
 ipsec_spi_t ikev2_child_sa_spi(const struct spd_route *spd_route, lset_t policy);
-
-extern stf_status ikev2_process_decrypted_payloads(struct msg_digest *md);
 
 extern bool ikev2_decode_peer_id_and_certs(struct msg_digest *md);
 

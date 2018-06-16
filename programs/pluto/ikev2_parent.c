@@ -6098,6 +6098,9 @@ static stf_status add_mobike_response_payloads(int np, chunk_t *cookie2,
  *   <--  HDR, SK {[N,] [D,] [CP], ...}
  */
 
+static stf_status ikev2_send_informational(struct state *st, struct state *pst,
+					   v2_notification_t v2N);
+
 stf_status process_encrypted_informational_ikev2(struct state *st,
 						 struct msg_digest *md)
 {
@@ -6582,7 +6585,7 @@ static stf_status add_mobike_payloads(struct state *st, pb_stream *pbs)
 	return STF_OK;
 }
 
-stf_status ikev2_send_informational(struct state *st, struct state *pst,
+static stf_status ikev2_send_informational(struct state *st, struct state *pst,
 		v2_notification_t v2N)
 {
 

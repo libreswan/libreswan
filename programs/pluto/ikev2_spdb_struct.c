@@ -271,11 +271,6 @@ struct ikev2_proposals {
 	     (PROPNUM) < (BOUND) && (PROPNUM) < (PROPOSALS)->roof;	\
 	     (PROPNUM)++, (PROPOSAL)++)
 
-static void print_name_value(struct lswlog *log, const char *name, int value)
-{
-	lswlogf(log, "%s(%d)", name, value);
-}
-
 /*
  * Print <TRANSFORM> to the buffer.
  */
@@ -394,37 +389,6 @@ static void print_proposals(struct lswlog *buf, struct ikev2_proposals *proposal
 		lswlogs(buf, proposal_sep);
 		proposal_sep = " ";
 		print_proposal(buf, propnum, proposal);
-	}
-}
-
-void DBG_log_ikev2_proposals(const char *prefix,
-			     struct ikev2_proposals *proposals)
-{
-	DBG_log("%s ikev2_proposals:", prefix);
-	DBG_log("  allocation: %s", (proposals->on_heap ? "heap" : "static"));
-	passert(proposals->proposal[0].protoid == 0);
-	int propnum;
-	const struct ikev2_proposal *proposal;
-	FOR_EACH_PROPOSAL(propnum, proposal, proposals) {
-		if (proposal->propnum != 0) {
-			DBG_log("  proposal: %d (%d)", propnum, proposal->propnum);
-		} else {
-			DBG_log("  proposal: %d", propnum);
-		}
-		LSWLOG_DEBUG(buf) {
-			lswlogf(buf, "    ");
-			lswlogs(buf, "protoid=");
-			print_name_value(buf, protoid_name(proposal->protoid),
-					 proposal->protoid);
-		}
-		enum ikev2_trans_type type;
-		const struct ikev2_transforms *transforms;
-		FOR_EACH_TRANSFORMS_TYPE(type, transforms, proposal) {
-			LSWLOG_DEBUG(buf) {
-				lswlogf(buf, "    ");
-				print_type_transforms(buf, type, transforms);
-			}
-		}
 	}
 }
 
