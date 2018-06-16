@@ -61,7 +61,7 @@ static const struct prf_desc *prfs[] = {
 
 static const struct prf_desc *prf_alg;
 
-static void print_config(void)
+static void hmac_print_config(void)
 {
 	for (int i = 0; prfs[i]; i++) {
 		if (prfs[i]->prf_output_size == l) {
@@ -93,7 +93,7 @@ static struct cavp_entry data[] = {
 	{ .key = NULL, },
 };
 
-static void run(void)
+static void hmac_print_test(void)
 {
 	print_number("Count", count);
 	print_number("Klen", key.len);
@@ -103,6 +103,10 @@ static void run(void)
 	if (prf_alg == NULL) {
 		return;
 	}
+}
+
+static void hmac_run_test(void)
+{
 	struct crypt_prf *prf = crypt_prf_init_chunk("run", DBG_CRYPT,
 						     prf_alg, "key", key);
 	crypt_prf_update_chunk("msg", prf, msg);
@@ -115,8 +119,9 @@ static void run(void)
 struct cavp cavp_hmac = {
 	.alias = "hmac",
 	.description = "HMAC PRF",
-	.print_config = print_config,
-	.run = run,
+	.print_config = hmac_print_config,
+	.print_test = hmac_print_test,
+	.run_test = hmac_run_test,
 	.config = config,
 	.data = data,
 	.match = {

@@ -94,11 +94,13 @@ static void next_state(struct cavp *cavp, enum what what)
 		case DATA:
 			break;
 		case BLANK:
-			cavp->run();
+			cavp->print_test();
+			cavp->run_test();
 			state = IDLE;
 			break;
 		case END:
-			cavp->run();
+			cavp->print_test();
+			cavp->run_test();
 			state = END;
 			break;
 		default:

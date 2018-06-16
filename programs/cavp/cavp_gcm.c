@@ -46,7 +46,7 @@ static struct cavp_entry config[] = {
 	{ .key = NULL, },
 };
 
-static void print_config(void)
+static void gcm_print_config(void)
 {
 	config_number("Keylen", keylen);
 	config_number("IVlen", ivlen);
@@ -176,7 +176,7 @@ static chunk_t salt = {
 	.len = 0,
 };
 
-static void decrypt(void)
+static void gcm_print_test(void)
 {
 	print_number("Count", count);
 	print_symkey("Key", key, 0);
@@ -184,14 +184,16 @@ static void decrypt(void)
 	print_chunk("CT", ct, 0);
 	print_chunk("AAD", aad, 0);
 	print_chunk("Tag", tag, 0);
+}
 
+static void gcm_run_test(void)
+{
 	const struct encrypt_desc *gcm_alg = lookup_by_taglen();
 	if (gcm_alg == NULL) {
 		fprintf(stderr, "taglen %lu not supported\n",
 			taglen);
 		return;
 	}
-
 	PK11SymKey *gcm_key = encrypt_key_from_symkey_bytes("GCM key", gcm_alg,
 							    0, sizeof_symkey(key),
 							    key);
@@ -224,8 +226,9 @@ static void decrypt(void)
 struct cavp cavp_gcm = {
 	.alias = "gcm",
 	.description = "GCM",
-	.print_config = print_config,
-	.run = decrypt,
+	.print_config = gcm_print_config,
+	.print_test = gcm_print_test,
+	.run_test = gcm_run_test,
 	.config = config,
 	.data = data,
 	.match = {

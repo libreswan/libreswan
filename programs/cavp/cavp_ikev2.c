@@ -101,7 +101,7 @@ static struct cavp_entry config_entries[] = {
 	{ .key = NULL }
 };
 
-static void ikev2_config(void)
+static void ikev2_print_config(void)
 {
 	config_number("g^ir length", g_ir_length);
 	config_key(prf_entry->key);
@@ -135,7 +135,7 @@ static struct cavp_entry data_entries[] = {
 	{ .op = NULL }
 };
 
-static void run_ikev2(void)
+static void ikev2_print_test(void)
 {
 	print_number("COUNT", count);
 	print_chunk("Ni", ni, 0);
@@ -150,7 +150,10 @@ static void run_ikev2(void)
 		print_line(prf_entry->key);
 		return;
 	}
+}
 
+static void ikev2_run_test(void)
+{
 	cavp_acvp_ikev2(prf_entry->prf, ni, nr,
 			g_ir, g_ir_new, spi_i, spi_r,
 			nr_ike_sa_dkm_bits / 8,
@@ -160,8 +163,9 @@ static void run_ikev2(void)
 struct cavp cavp_ikev2 = {
 	.alias = "v2",
 	.description = "IKE v2",
-	.print_config = ikev2_config,
-	.run = run_ikev2,
+	.print_config = ikev2_print_config,
+	.print_test = ikev2_print_test,
+	.run_test = ikev2_run_test,
 	.config = config_entries,
 	.data = data_entries,
 	.match = {

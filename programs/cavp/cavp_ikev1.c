@@ -117,7 +117,7 @@ static struct cavp_entry data_entries[] = {
 	{ .op = NULL }
 };
 
-static void print_sig_config(void)
+static void ikev1_sig_print_config(void)
 {
 	config_number("g^xy length", g_xy_length);
 	config_key(prf_entry->key);
@@ -125,7 +125,7 @@ static void print_sig_config(void)
 	config_number("Nr length", nr_length);
 }
 
-static void run_sig(void)
+static void ikev1_sig_print_test(void)
 {
 	print_number("COUNT", count);
 	print_chunk("CKY_I", cky_i, 0);
@@ -138,14 +138,19 @@ static void run_sig(void)
 		print_line(prf_entry->key);
 		return;
 	}
+}
+
+static void ikev1_sig_run_test(void)
+{
 	cavp_acvp_ikev1_sig(prf_entry->prf, ni, nr, cky_i, cky_r, g_xy);
 }
 
 struct cavp cavp_ikev1_sig = {
 	.alias = "v1sig",
 	.description = "IKE v1 Digital Signature Authentication",
-	.print_config = print_sig_config,
-	.run = run_sig,
+	.print_config = ikev1_sig_print_config,
+	.print_test = ikev1_sig_print_test,
+	.run_test = ikev1_sig_run_test,
 	.config = config_entries,
 	.data = data_entries,
 	.match = {
@@ -154,7 +159,7 @@ struct cavp cavp_ikev1_sig = {
 	},
 };
 
-static void print_psk_config(void)
+static void ikev1_psk_print_config(void)
 {
 	config_number("g^xy length", g_xy_length);
 	config_key(prf_entry->key);
@@ -163,7 +168,7 @@ static void print_psk_config(void)
 	config_number("pre-shared-key length", psk_length);
 }
 
-static void run_psk(void)
+static void ikev1_psk_print_test(void)
 {
 	print_number("COUNT", count);
 	print_chunk("CKY_I", cky_i, 0);
@@ -177,14 +182,19 @@ static void run_psk(void)
 		print_line(prf_entry->key);
 		return;
 	}
+}
+
+static void ikev1_psk_run_test(void)
+{
 	cavp_acvp_ikev1_psk(prf_entry->prf, ni, nr, cky_i, cky_r, psk, g_xy);
 }
 
 struct cavp cavp_ikev1_psk = {
 	.alias = "v1psk",
 	.description = "IKE v1 Pre-shared Key Authentication",
-	.print_config = print_psk_config,
-	.run = run_psk,
+	.print_config = ikev1_psk_print_config,
+	.print_test = ikev1_psk_print_test,
+	.run_test = ikev1_psk_run_test,
 	.config = config_entries,
 	.data = data_entries,
 	.match = {
