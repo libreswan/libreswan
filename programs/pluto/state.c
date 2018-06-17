@@ -3136,6 +3136,7 @@ void ISAKMP_SA_established(const struct state *pst)
 		/*
 		 * for all existing connections: if the same Phase 1 IDs are used,
 		 * unorient the (old) connection (if different from current connection)
+		 * Only do this for connections with the same name (can be shared ike sa)
 		 */
 		for (struct connection *d = connections; d != NULL; ) {
 			/* might move underneath us */
@@ -3152,17 +3153,14 @@ void ISAKMP_SA_established(const struct state *pst)
 			d = next;
 		}
 
-		if (c->newest_ipsec_sa != SOS_NOBODY) {
-			struct state *old_p2 = state_by_serialno(c->newest_ipsec_sa);
-
-			old_p2->st_suppress_del_notify = TRUE;
-			event_force(EVENT_SA_EXPIRE, old_p2);
-		}
 		if (c->newest_isakmp_sa != SOS_NOBODY &&
 			c->newest_isakmp_sa != pst->st_serialno) {
-			struct state *old_p1 = state_by_serialno(c->newest_isakmp_sa);
-			old_p1->st_suppress_del_notify = TRUE;
-			event_force(EVENT_SA_EXPIRE, old_p1);
+				struct state *old_p1 = state_by_serialno(c->newest_isakmp_sa);
+
+				DBG(DBG_CONTROL, DBG_log("deleting replaced IKE state for %s",
+					old_p1->st_connection->name));
+				old_p1->st_suppress_del_notify = TRUE;
+				event_force(EVENT_SA_EXPIRE, old_p1);
 		}
 	}
 
