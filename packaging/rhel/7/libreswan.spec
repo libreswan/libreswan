@@ -167,7 +167,7 @@ export NSS_DISABLE_HW_GCM=1
 %{buildroot}%{_libexecdir}/ipsec/cavp -v2 ikev2.fax | \
     diff -u ikev2.fax - > /dev/null
 : starting CAVS test for IKEv1 RSASIG
-%{buildroot}%{_libexecdir}/ipsec/cavp -v1sig ikev1_dsa.fax | \
+%{buildroot}%{_libexecdir}/ipsec/cavp -v1dsa ikev1_dsa.fax | \
     diff -u ikev1_dsa.fax - > /dev/null
 : starting CAVS test for IKEv1 PSK
 %{buildroot}%{_libexecdir}/ipsec/cavp -v1psk ikev1_psk.fax | \
