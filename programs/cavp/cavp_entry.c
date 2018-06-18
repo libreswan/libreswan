@@ -59,3 +59,27 @@ void op_ignore(const struct cavp_entry *entry UNUSED,
 	       const char *value UNUSED)
 {
 }
+
+const struct cavp_entry *cavp_entry_by_key(const struct cavp_entry *entries,
+						  const char *key)
+{
+	const struct cavp_entry *entry;
+	for (entry = entries; entry->key != NULL; entry++) {
+		if (strcmp(entry->key, key) == 0) {
+			return entry;
+		}
+	}
+	return NULL;
+}
+
+const struct cavp_entry *cavp_entry_by_opt(const struct cavp_entry *entries, const char *opt)
+{
+	for (const struct cavp_entry *entry = entries; entry->key != NULL; entry++) {
+		for (unsigned i = 0; i < elemsof(entry->opt); i++) {
+			if (entry->opt[i] != NULL && strcasecmp(entry->opt[i], opt) == 0) {
+				return entry;
+			}
+		}
+	}
+	return NULL;
+}

@@ -28,17 +28,6 @@
 #include "cavp_print.h"
 #include "cavp_parser.h"
 
-static const struct cavp_entry *lookup_entry(const struct cavp_entry *entries, const char *key)
-{
-	const struct cavp_entry *entry;
-	for (entry = entries; entry->key != NULL; entry++) {
-		if (strcmp(entry->key, key) == 0) {
-			break;
-		}
-	}
-	return entry;
-}
-
 enum what { HEADER, BODY, BLANK, CONFIG, DATA, IDLE, END } state = HEADER;
 
 const char *const whats[] = {
@@ -227,8 +216,8 @@ void cavp_parser(const struct cavp *cavp)
 			char *rparen = strchr(line, ']');
 			*rparen = '\0';
 			struct fields fields = parse_fields(line + 1);
-			const struct cavp_entry *entry = lookup_entry(cavp->config, fields.key);
-			if (entry->key == NULL) {
+			const struct cavp_entry *entry = cavp_entry_by_key(cavp->config, fields.key);
+			if (entry == NULL) {
 				fprintf(stderr, "unknown config entry: ['%s' = '%s']\n",
 					fields.key, fields.value);
 				exit(1);
@@ -241,8 +230,8 @@ void cavp_parser(const struct cavp *cavp)
 		} else {
 			next_state(cavp, DATA);
 			struct fields fields = parse_fields(line);
-			const struct cavp_entry *entry = lookup_entry(cavp->data, fields.key);
-			if (entry->key == NULL) {
+			const struct cavp_entry *entry = cavp_entry_by_key(cavp->data, fields.key);
+			if (entry == NULL) {
 				fprintf(stderr, "unknown data entry: '%s' = '%s'\n",
 					fields.key, fields.value);
 				exit(1);

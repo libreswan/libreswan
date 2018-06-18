@@ -46,3 +46,6 @@ void op_symkey(const struct cavp_entry *entry, const char *value);
 void op_signed_long(const struct cavp_entry *entry, const char *value);
 void op_unsigned_long(const struct cavp_entry *entry, const char *value);
 void op_boolean(const struct cavp_entry *entry, const char *value);
+
+const struct cavp_entry *cavp_entry_by_key(const struct cavp_entry *entries, const char *key);
+const struct cavp_entry *cavp_entry_by_opt(const struct cavp_entry *entries, const char *opt);

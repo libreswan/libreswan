@@ -44,15 +44,13 @@ static const struct acvp_prf acvp_prfs[] = {
 
 static bool table_entry(const struct cavp_entry *entries, const char *opt, const char *param)
 {
-	for (const struct cavp_entry *entry = entries; entry->key != NULL; entry++) {
-		for (unsigned i = 0; i < elemsof(entry->opt); i++) {
-			if (entry->opt[i] != NULL && strcasecmp(entry->opt[i], opt) == 0) {
-				entry->op(entry, param);
-				return true;
-			}
-		}
+	const struct cavp_entry *entry = cavp_entry_by_opt(entries, opt);
+	if (entry != NULL) {
+		entry->op(entry, param);
+		return true;
+	} else {
+		return false;
 	}
-	return false;
 }
 
 bool acvp_option(const struct cavp *cavp, const char *opt, const char *param)
