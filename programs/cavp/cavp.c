@@ -34,50 +34,43 @@
 #define IOPT " " "       " "  "
 #define OPT  "-%-7s  %s\n"
 
-#define USAGE_GLOBAL "[-fips] [-json] [-v]"
-
-static void help_global()
-{
-	printf(II""OPT, "fips", "force FIPS mode; must be the first option");
-	printf(II""IOPT"default: let NSS determine FIPS mode\n"); 
-	printf(II""OPT, "json", "format output as json like records");
-	printf(II""OPT, "v", "verbose output");
-}
-
 static void help(void)
 {
-#define USAGE_HELP "cavp -?|-h|-help"
-	printf("Usage: "USAGE_HELP"\n");
+#define HELP_OPTIONS "-?|-h|-help"
+#define GLOBAL_OPTIONS "[-fips] [-json] [-v]"
+	printf("Usage: cavp ["HELP_OPTIONS"] " GLOBAL_OPTIONS " <test-option> ...\n");
 	printf("\n");
-	printf(I"print this help message\n");
+	printf(I"Run CAVP/ACVP tests as specified either in a file or from the\n");
+	printf(I"command line:\n");
 	printf("\n");
+	printf(II""OPT, "fips", "force FIPS mode; must be the first option");
+	printf(II""IOPT"by default NSS determines FIPS mode\n"); 
+	printf(II""OPT, "json", "output each test result as a json record");
+	printf(II""OPT, "v", "verbose output");
+	printf(II"-h, -help, -?\n"II""IOPT"Print this help message\n");
 
-#define USAGE_FILE "cavp " USAGE_GLOBAL " [-<test>] <test-file>|-"
-	printf("Usage: "USAGE_FILE"\n");
+#define USAGE_FILE "cavp " GLOBAL_OPTIONS " [-<test>] <test-file>|-"
+	printf("\n");
+	printf("File mode: "USAGE_FILE"\n");
 	printf("\n");
 	printf(I"Run <test> using test vectors from <test-file> ('-' for stdin).\n");
+	printf(I"If -<test> is omitted then the <test> is determined by pattern\n");
+	printf(I"matching the <test-file> header:\n");
 	printf("\n");
-	help_global();
 	for (const struct cavp **cavpp = cavps; *cavpp != NULL; cavpp++) {
 		printf(II""OPT, (*cavpp)->alias, (*cavpp)->description);
-	}
-	printf("\n");
-	printf(I"If -<algorithm> is omitted then it is determined by matching\n");
-	printf(I"the <test-file> header with one of the following patterns:\n");
-	printf("\n");
-	for (const struct cavp **cavpp = cavps; *cavpp != NULL; cavpp++) {
 		for (const char *const *matchp = (*cavpp)->match; *matchp; matchp++) {
-			printf(II""OPT, (*cavpp)->alias, *matchp);
+			printf(II""IOPT"Match: %s\n", *matchp);
 		}
 	}
-	printf("\n");
 
-#define USAGE_PARAM "cavp " USAGE_GLOBAL " -<test> -<acvp-key> <acvp-value> ..."
-	printf("Usage: "USAGE_PARAM"\n");
+#define USAGE_PARAM "cavp " GLOBAL_OPTIONS " -<test> -<acvp-key> <acvp-value> ..."
 	printf("\n");
-	printf(I"Specify test using command line options (options names from ACVP)\n");
+	printf("Command mode: "USAGE_PARAM"\n");
 	printf("\n");
-	help_global();
+	printf(I"Run <test> using <acvp-key>-<acvp-value> pairs specified on the\n");
+	printf(I"command line:\n");
+	printf("\n");
 	for (const struct cavp **cavpp = cavps; *cavpp != NULL; cavpp++) {
 		printf(II""OPT, (*cavpp)->alias, (*cavpp)->description);
 		bool supported = false;
@@ -87,8 +80,8 @@ static void help(void)
 			if (config->prf != NULL) {
 				supported = true;
 				if (sep == NULL) {
-					printf(III"-"ACVP_PRF_OPTION" <prf>\n");
-					sep = III""IOPT"<prf>: ";
+					printf(III"-"ACVP_PRF_OPTION" ");
+					sep = "";
 				}
 				printf("%s%s", sep, config->key);
 				sep = "|";
@@ -101,8 +94,7 @@ static void help(void)
 		for (const struct cavp_entry *config = (*cavpp)->config; config->key != NULL; config++) {
 			if (strstr(config->key, "DKM") != NULL) {
 				supported = true;
-				printf(III"-"ACVP_DKM_OPTION" <length>\n");
-				printf(III""IOPT"<length>: key deriviation length in bits\n");
+				printf(III"-"ACVP_DKM_OPTION" <length-in-bits>\n");
 				break;
 			}
 		}
@@ -110,8 +102,7 @@ static void help(void)
 		for (const struct cavp_entry *entry = (*cavpp)->data; entry->key != NULL; entry++) {
 			if (entry->opt[0] != NULL) {
 				supported = true;
-				printf(III"-%s <data>\n", entry->opt[0]);
-				printf(III""IOPT"%s\n", entry->key);
+				printf(III"-%s <%s>\n", entry->opt[0], entry->key);
 			}
 		}
 		if (!supported) {
@@ -127,7 +118,7 @@ static void help(void)
 
 static void usage(void)
 {
-	printf("Usage: "USAGE_HELP"\n");
+	printf("Usage: cavp "HELP_OPTIONS"\n");
 	printf("       "USAGE_FILE"\n");
 	printf("       "USAGE_PARAM"\n");
 }
