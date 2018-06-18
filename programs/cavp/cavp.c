@@ -31,15 +31,17 @@
 #define I "  "
 #define II I I
 #define III I I I
-#define IOPT "        "
-#define OPT "-%-7s  %s\n"
+#define IOPT " " "       " "  "
+#define OPT  "-%-7s  %s\n"
 
-#define USAGE_GLOBAL "[-fips] [-json]"
+#define USAGE_GLOBAL "[-fips] [-json] [-v]"
 
 static void help_global()
 {
-	printf(II""OPT, "fips", "force FIPS mode (else determined from machine configuration)");
+	printf(II""OPT, "fips", "force FIPS mode; must be the first option");
+	printf(II""IOPT"default: let NSS determine FIPS mode\n"); 
 	printf(II""OPT, "json", "format output as json like records");
+	printf(II""OPT, "v", "verbose output");
 }
 
 static void help(void)
@@ -132,6 +134,7 @@ static void usage(void)
 
 int main(int argc, char *argv[])
 {
+	log_to_stderr = false;
 	tool_init_log(argv[0]);
 
 	if (argc <= 1) {
@@ -141,6 +144,7 @@ int main(int argc, char *argv[])
 
 	const struct cavp *cavp = NULL;
 	bool use_acvp = false;
+	bool verbose = false;
 
 	char **argp = argv + 1;
 
@@ -204,6 +208,14 @@ int main(int argc, char *argv[])
 			cavp_print_json = true;
 			continue;
 		}
+		if (strcmp(arg, "v") == 0) {
+			verbose = true;
+			continue;
+		}
+		if (strcmp(arg, "fips") == 0) {
+			fprintf(stderr, "option '%s' must appear first\n", *argp);
+			return 0;
+		}
 
 		/* Second: try options with args */
 
@@ -217,20 +229,19 @@ int main(int argc, char *argv[])
 			use_acvp = true;
 			continue;
 		} else {
-			fprintf(stderr, "option '%s' not recognized\n", *argp);
+			fprintf(stderr, "option '%s' not recognized or invalid\n", *argp);
 			return 0;
 		}
 	}
 
 	if (!use_acvp && cavp == NULL) {
-		fprintf(stderr, "Guessing test type ...\n");
+		libreswan_log("Guessing test type ...");
 	}
 
 	if (use_acvp) {
-		fprintf(stderr, "Using CMVP\n");
+		libreswan_log("Using CMVP");
 	} else if (*argp == NULL) {
 		fprintf(stderr, "missing test file\n");
-		usage();
 		exit(1);
 	} else if (strcmp(*argp, "-") == 0) {
 		fprintf(stderr, "Reading from stdin\n");
@@ -251,6 +262,7 @@ int main(int argc, char *argv[])
 
 	setbuf(stdout, NULL);
 
+	log_to_stderr = verbose;
 	init_ike_alg();
 
 	if (use_acvp) {
