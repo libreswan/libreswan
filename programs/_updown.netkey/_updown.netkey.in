@@ -719,7 +719,7 @@ delvti() {
 		ip route del ${PLUTO_PEER_CLIENT} dev ${VTI_IFACE} \
 			src ${PLUTO_MY_SOURCEIP} ||:
 	fi
-	if [ "${VTI_SHARED}" = no -a "${PLUTO_CONN_KIND}" != CK_INSTANCE ]; then
+	if [ "${VTI_SHARED}" = no -a "${PLUTO_CONN_KIND}" != CK_INSTANCE -a "${PLUTO_CONN_KIND}" != CK_PERMANENT ]; then
 		ip tun del ${VTI_IFACE} ||:
 	fi
    fi
@@ -779,6 +779,9 @@ case "${PLUTO_VERB}" in
 	# If you are doing a custom version, firewall commands go here.
 	addvtiiface
 	updateresolvconf
+	addvti
+	uproute
+	addnflog
 	addcat
 	addsource
 	notifyNM connect
