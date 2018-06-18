@@ -42,6 +42,7 @@ v3.24 (unreleased)
 * FIPS: Don't attempt HMAC integrity test on rsasigkey (rhbz#1544143) [Paul]
 * FIPS: Don't allow RSA keys < 3072 [Matt/Paul]
 * FIPS: Enable our PRF aes_xcbc wrapper on NSS hash code in FIPS mode [Andrew]
+* CAVP: Add -<acvp-key> <acvp-value> and -json(output) options to CAVP [Andrew]
 * portexcludes: new command ipsec portexcludes (see portexcludes.conf) [Paul]
 *  _updown.netkey: fix deleting routes when half routes are used [Tuomo]
 * _unbound-hook: Pass all IPSECKEY's to pluto, not just the first [Paul]
