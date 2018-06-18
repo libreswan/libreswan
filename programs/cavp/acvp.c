@@ -98,26 +98,6 @@ bool acvp_option(const struct cavp *cavp, const char *opt, const char *param)
 		fprintf(stderr, "-prf option invalid in this context\n");
 		return false;
 	}
-	/* try some dmklen magic */
-	/* XXX: simplify this?  call table_entry with the global DKM value ...? */
-	long dkmlen_in_bits = -1;
-	if (strcasecmp(opt, ACVP_DKM_OPTION) == 0) {
-		dkmlen_in_bits = strtoul(param, NULL, 10);
-	}
-	if (/* compat */ strcasecmp(opt, "dkmlen") == 0 ||
-	    /* compat */ strcmp(opt, "l") == 0) {
-		dkmlen_in_bits = strtoul(param, NULL, 10) * 8;
-	}
-	if (dkmlen_in_bits >= 0) {
-		for (const struct cavp_entry *entry = cavp->config; entry->key != NULL; entry++) {
-			if (strstr(entry->key, "DKM") != NULL) {
-				*entry->signed_long =  dkmlen_in_bits;
-				return true;
-			}
-		}
-		fprintf(stderr, "-dkmlen option invalid in this context\n");
-		return false;
-	}
 	/* else unknown */
 	return false;
 }

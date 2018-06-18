@@ -100,7 +100,7 @@ static const struct cavp_entry config_entries[] = {
 	{ .key = "SHA-512", .op = op_entry, .entry = &prf_entry, .prf = &ike_alg_prf_sha2_512, },
 	{ .key = "Ni length", .op = op_signed_long, .signed_long = &ni_length },
 	{ .key = "Nr length", .op = op_signed_long, .signed_long = &nr_length },
-	{ .key = "DKM length", .op = op_signed_long, .signed_long = &nr_ike_sa_dkm_bits },
+	{ .key = "DKM length", .opt = {ACVP_DKM_OPTION,}, .op = op_signed_long, .signed_long = &nr_ike_sa_dkm_bits },
 	{ .key = "Child SA DKM length", .op = op_signed_long, .signed_long = &nr_child_sa_dkm_bits },
 	{ .key = NULL }
 };
@@ -157,7 +157,9 @@ static void ikev2_run_test(void)
 	cavp_acvp_ikev2(prf_entry->prf, ni, nr,
 			g_ir, g_ir_new, spi_i, spi_r,
 			nr_ike_sa_dkm_bits / 8,
-			nr_child_sa_dkm_bits / 8);
+			(nr_child_sa_dkm_bits > 0
+			 ? nr_child_sa_dkm_bits
+			 : nr_ike_sa_dkm_bits) / 8);
 }
 
 const struct cavp cavp_ikev2 = {
