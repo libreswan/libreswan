@@ -69,27 +69,42 @@ LDFLAGS += $(NSPR_LDFLAGS)
 
 default: check
 .PHONY: check default
-check: ikev2.cavp ikev1_dsa.cavp ikev1_psk.cavp
+
+check: test.cavp.ikev2.ok test.cavp.ikev1_dsa.ok test.cavp.ikev1_psk.ok
 
 .PRECIOUS: %.fax
-%.fax: | $(builddir)
-	curl -o $(builddir)/$@.bz2 https://download.libreswan.org/cavs/$@.bz2
+test.cavp.%.fax: | $(builddir)
+	echo $@ $*
+	curl -o $(builddir)/$@.bz2 https://download.libreswan.org/cavs/$*.fax.bz2
 	bunzip2 $(builddir)/$@.bz2
 
 .PRECIOUS: %.out
-%.out: %.fax $(PROGRAM)
+test.cavp.%.out: test.cavp.%.fax $(PROGRAM)
 	$(builddir)/cavp \
-		$(builddir)/$*.fax \
-		> $(builddir)/$*.tmp
-	mv  $(builddir)/$*.tmp  $(builddir)/$*.out
+		$(builddir)/test.cavp.$*.fax \
+		> $(builddir)/test.cavp.$*.tmp
+	mv  $(builddir)/test.cavp.$*.tmp  $(builddir)/test.cavp.$*.out
 
-%.cavp: %.out
-	diff -u $(builddir)/$*.fax $(builddir)/$*.out
-	touch $(builddir)/$*.cavp
+test.cavp.%.ok: test.cavp.%.out test.cavp.%.fax
+	diff -u $(builddir)/test.cavp.$*.fax $(builddir)/test.cavp.$*.out
+	touch $(builddir)/$@
+
+check: test.acvp.ikev2.ok test.acvp.ikev1_dsa.ok test.acvp.ikev1_psk.ok
+
+.PRECIOUS: %.out
+test.acvp.%.out: test.acvp.%.run $(PROGRAM)
+	CAVP=$(builddir)/cavp \
+		$(srcdir)/test.acvp.$*.run \
+		> $(builddir)/test.acvp.$*.tmp
+	mv $(builddir)/test.acvp.$*.tmp $(builddir)/test.acvp.$*.out
+
+test.acvp.%.ok: test.acvp.%.json test.acvp.%.out
+	diff -u $(srcdir)/test.acvp.$*.json $(builddir)/test.acvp.$*.out
+	touch $(builddir)/$@
 
 clean: clean.cavp
 clean.cavp:
-	rm -f $(builddir)/*.cavp
+	rm -f $(builddir)/*.ok
 	rm -f $(builddir)/*.fax
 	rm -f $(builddir)/*.fax.bz2
 	rm -f $(builddir)/*.out

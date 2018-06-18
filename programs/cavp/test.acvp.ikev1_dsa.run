@@ -1,0 +1,26 @@
+exec ${CAVP:-cavp} -json -v1dsa \
+     \
+     -hashAlg SHA-1 \
+     \
+     -tcId 100 \
+     -gxy 8ba4cbc73c0187301dc19a975823854dbd641c597f637f8d053a83b9514673eb \
+     -nInit 69a62284195f1680 \
+     -nResp 80c94ba25c8abda5 \
+     -ckyInit 8c3bcd3a69831d7f \
+     -ckyResp d2d9a7ff4fbe95a7
+
+g^xy length = 256]
+[SHA-1]
+[Ni length = 64]
+[Nr length = 64]
+
+COUNT = 0
+CKY_I = 8c3bcd3a69831d7f
+CKY_R = d2d9a7ff4fbe95a7
+Ni = 69a62284195f1680
+Nr = 80c94ba25c8abda5
+g^xy = 8ba4cbc73c0187301dc19a975823854dbd641c597f637f8d053a83b9514673eb
+SKEYID = 707197817fb2d90cf54d1842606bdea59b9f4823
+SKEYID_d = 384be709a8a5e63c3ed160cfe3921c4b37d5b32d
+SKEYID_a = 48b327575abe3adba0f279849e289022a13e2b47
+SKEYID_e = a4a415c8e0c38c0da847c356cc61c24df8025560
