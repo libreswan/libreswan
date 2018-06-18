@@ -110,10 +110,10 @@ Most of the libreswan configuration is stored in /etc/ipsec.conf and
 /etc/ipsec.secrets. Include files may be present in /etc/ipsec.d/
 See the respective man pages for more information.
 
-## NSS initialisation
+## NSS initialization
 Libreswan uses NSS to store private keys and X.509 certificates. The NSS
-database should have been initialised by the package installer. If not,
-the NSS database can be initialised using:
+database should have been initialized by the package installer. If not,
+the NSS database can be initialized using:
 
     ipsec initnss
 
@@ -171,7 +171,7 @@ Libreswan can join the development mailing list "swan-dev" or talk to the
 development team on IRC in #swan on irc.freenode.net
 
 For those who want to track things a bit more closely, the
-swan-commits@lists.libreswan.org mailinglist will mail all the commit
+swan-commits@lists.libreswan.org mailing list will mail all the commit
 messages when they happen. This list is quite busy during active
 development periods.
 
