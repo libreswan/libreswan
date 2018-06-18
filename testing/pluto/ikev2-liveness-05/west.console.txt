@@ -73,13 +73,12 @@ west #
 000 Bare Shunt list:
 000  
 west #
- # no packets should be caught in firewall and no icmp replies should happen
+ # packets should be caught in firewall and no icmp replies should happen
 west #
  ping -w 2 -q -n -c 3 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-[ 00.00] IN= OUT=eth1 SRC=192.0.1.254 DST=192.0.2.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXX DF PROTO=ICMP TYPE=8 CODE=0 ID=XXXX SEQ=1 
-[ 00.00] IN= OUT=eth1 SRC=192.0.1.254 DST=192.0.2.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXX DF PROTO=ICMP TYPE=8 CODE=0 ID=XXXX SEQ=1 
-[ 00.00] IN= OUT=eth1 SRC=192.0.1.254 DST=192.0.2.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXX DF PROTO=ICMP TYPE=8 CODE=0 ID=XXXX SEQ=1 
+[ 00.00] IN= OUT=eth1 SRC=192.0.1.254 DST=192.0.2.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXX DF PROTO ICMP TYPE=8 CODE=0 ID=XXXX SEQ=1 
+[ 00.00] IN= OUT=eth1 SRC=192.0.1.254 DST=192.0.2.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXX DF PROTO ICMP TYPE=8 CODE=0 ID=XXXX SEQ=1 
 --- 192.0.2.254 ping statistics ---
 0 packets transmitted, 0 received
 west #
@@ -89,33 +88,35 @@ west #
 west #
  iptables -D OUTPUT -d 192.1.2.23/32 -s 0/0 -j DROP
 west #
- # Sleep 90
+ # trigger traffic
 west #
- sleep 60
+ ping -W 1 -w 1 -q -n -c 1 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+[ 00.00] IN= OUT=eth1 SRC=192.0.1.254 DST=192.0.2.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXX DF PROTO ICMP TYPE=8 CODE=0 ID=XXXX SEQ=1 
+--- 192.0.2.254 ping statistics ---
+0 packets transmitted, 0 received
 west #
- sleep 30
+ sleep 2
+west #
+ ping -W 1 -w 4 -q -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+[ 00.00] IN= OUT=eth1 SRC=192.0.1.254 DST=192.0.2.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXX DF PROTO ICMP TYPE=8 CODE=0 ID=XXXX SEQ=1 
+[ 00.00] IN= OUT=eth1 SRC=192.0.1.254 DST=192.0.2.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXX DF PROTO ICMP TYPE=8 CODE=0 ID=XXXX SEQ=1 
+[ 00.00] IN= OUT=eth1 SRC=192.0.1.254 DST=192.0.2.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXX DF PROTO ICMP TYPE=8 CODE=0 ID=XXXX SEQ=1 
+[ 00.00] IN= OUT=eth1 SRC=192.0.1.254 DST=192.0.2.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXX DF PROTO ICMP TYPE=8 CODE=0 ID=XXXX SEQ=1 
+--- 192.0.2.254 ping statistics ---
+0 packets transmitted, 0 received
 west #
  # Tunnel should be back up now even without triggering traffic
+west #
+ echo done
+done
 west #
  ipsec whack --trafficstatus
 west #
  ipsec whack --shuntstatus
 000 Bare Shunt list:
 000  
-west #
- # ping should reply
-west #
- ping -W 1 -w 4 -q -n -c 4 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-[ 00.00] IN= OUT=eth1 SRC=192.0.1.254 DST=192.0.2.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXX DF PROTO=ICMP TYPE=8 CODE=0 ID=XXXX SEQ=1 
-[ 00.00] IN= OUT=eth1 SRC=192.0.1.254 DST=192.0.2.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXX DF PROTO=ICMP TYPE=8 CODE=0 ID=XXXX SEQ=1 
-[ 00.00] IN= OUT=eth1 SRC=192.0.1.254 DST=192.0.2.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXX DF PROTO=ICMP TYPE=8 CODE=0 ID=XXXX SEQ=1 
-[ 00.00] IN= OUT=eth1 SRC=192.0.1.254 DST=192.0.2.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXX DF PROTO=ICMP TYPE=8 CODE=0 ID=XXXX SEQ=1 
---- 192.0.2.254 ping statistics ---
-0 packets transmitted, 0 received
-west #
- echo done
-done
 west #
 west #
  ../bin/check-for-core.sh

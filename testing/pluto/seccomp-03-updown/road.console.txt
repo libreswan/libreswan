@@ -57,7 +57,6 @@ road #
 002 "westnet-eastnet-ipv4-psk-ikev2" #2: down-client output: ok
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting state (STATE_PARENT_I3) and sending notification
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: deleting connection "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 instance with peer 192.1.2.23
-002 "westnet-eastnet-ipv4-psk-ikev2": unroute-client output: need at least a destination address
 road #
  # try some things to trigger new syscalls
 road #
