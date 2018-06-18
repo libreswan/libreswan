@@ -34,14 +34,6 @@ struct acvp_prf {
 	const struct prf_desc *prf;
 };
 
-static const struct acvp_prf acvp_prfs[] = {
-	{ "2", &ike_alg_prf_sha1, },
-	{ "5", &ike_alg_prf_sha2_256, },
-	{ "6", &ike_alg_prf_sha2_384, },
-	{ "7", &ike_alg_prf_sha2_512, },
-	{ .prf = NULL, },
-};
-
 static bool table_entry(const struct cavp_entry *entries, const char *opt, const char *param)
 {
 	const struct cavp_entry *entry = cavp_entry_by_opt(entries, opt);
@@ -63,10 +55,28 @@ bool acvp_option(const struct cavp *cavp, const char *opt, const char *param)
 	if (table_entry(cavp->data, opt, param)) {
 		return true;
 	}
-	/* try some PRF magic */
-	if (strcasecmp(opt, ACVP_PRF_OPTION) == 0 ||
-	    /* compat */ strcasecmp(opt, "hash") == 0 ||
+	/* map PRF option onto config */
+	if (strcasecmp(opt, ACVP_PRF_OPTION) == 0) {
+		/* boldly assume PARAM matches a config option */
+		const struct cavp_entry *entry = cavp_entry_by_key(cavp->config, param);
+		if (entry == NULL) {
+			return false;
+		}
+		entry->op(entry, NULL);
+		return true;
+	}
+	/*
+	 * STRONGSWAN compat magic.  Delete?
+	 */
+	if (/* compat */ strcasecmp(opt, "hash") == 0 ||
 	    /* compat */ strcasecmp(opt, "h") == 0) {
+		static const struct acvp_prf acvp_prfs[] = {
+			{ "2", &ike_alg_prf_sha1, },
+			{ "5", &ike_alg_prf_sha2_256, },
+			{ "6", &ike_alg_prf_sha2_384, },
+			{ "7", &ike_alg_prf_sha2_512, },
+			{ .prf = NULL, },
+		};
 		const struct prf_desc *prf = NULL;
 		/* map number to PRF? */
 		for (const struct acvp_prf *p = acvp_prfs; p->prf != NULL; p++) {
@@ -75,22 +85,22 @@ bool acvp_option(const struct cavp *cavp, const char *opt, const char *param)
 				break;
 			}
 		}
+		if (prf == NULL) {
+			return false;
+		}
 		/* by name */
 		for (const struct cavp_entry *entry = cavp->config; entry->key != NULL; entry++) {
-			if (entry->prf != NULL) {
-				if (entry->prf == prf ||
-				    strcasecmp(entry->key, param) == 0) {
-					entry->op(entry, param);
-					return true;
-				}
+			if (entry->prf == prf) {
+				entry->op(entry, param);
+				return true;
 			}
 		}
 		fprintf(stderr, "-prf option invalid in this context\n");
 		return false;
 	}
 	/* try some dmklen magic */
+	/* XXX: simplify this?  call table_entry with the global DKM value ...? */
 	long dkmlen_in_bits = -1;
-
 	if (strcasecmp(opt, ACVP_DKM_OPTION) == 0) {
 		dkmlen_in_bits = strtoul(param, NULL, 10);
 	}
