@@ -245,11 +245,12 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 	if (packet_len == 1 && _buffer[0] == 0xff) {
 		/**
 		 * NAT-T Keep-alive packets should be discared by kernel ESPinUDP
-		 * layer. But boggus keep-alive packets (sent with a non-esp marker)
+		 * layer. But bogus keep-alive packets (sent with a non-esp marker)
 		 * can reach this point. Complain and discard them.
+		 * Possibly too if the NAT mapping vanished on the initiator NAT gw ?
 		 */
 		LSWDBGP(DBG_NATT, buf) {
-			lswlogs(buf, "NAT-T keep-alive (boggus ?) should not reach this point. Ignored. Sender: ");
+			lswlogs(buf, "NAT-T keep-alive (bogus ?) should not reach this point. Ignored. Sender: ");
 			lswlog_ip(buf, &sender);
 		};
 		return NULL;
