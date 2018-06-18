@@ -19,7 +19,6 @@ struct cavp {
 	const char *alias;
 	const char *description;
 	void (*print_config)(void);
-	void (*print_test)(void);
 	void (*run_test)(void);
 	const struct cavp_entry *config;
 	const struct cavp_entry *data;

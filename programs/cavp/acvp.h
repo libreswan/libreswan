@@ -19,6 +19,7 @@ struct cavp;
 
 bool acvp_option(const struct cavp *cavp, const char *arg, const char *param);
 
+#define ACVP_TCID "tcId"
 #define ACVP_DKM_OPTION "derivedKeyingMaterialLength"
 #define ACVP_PRF_OPTION "hashAlg"
 

@@ -39,7 +39,6 @@
 static void help_global()
 {
 	printf(II""OPT, "fips", "force FIPS mode (else determined from machine configuration)");
-	printf("\n");
 	printf(II""OPT, "json", "format output as json like records");
 }
 
@@ -57,7 +56,6 @@ static void help(void)
 	printf(I"Run <test> using test vectors from <test-file> ('-' for stdin).\n");
 	printf("\n");
 	help_global();
-	printf("\n");
 	for (const struct cavp **cavpp = cavps; *cavpp != NULL; cavpp++) {
 		printf(II""OPT, (*cavpp)->alias, (*cavpp)->description);
 	}
@@ -78,7 +76,6 @@ static void help(void)
 	printf(I"Specify test using command line options (options names from ACVP)\n");
 	printf("\n");
 	help_global();
-	printf("\n");
 	for (const struct cavp **cavpp = cavps; *cavpp != NULL; cavpp++) {
 		printf(II""OPT, (*cavpp)->alias, (*cavpp)->description);
 		bool supported = false;

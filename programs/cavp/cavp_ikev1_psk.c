@@ -28,6 +28,7 @@
 #include "cavp_print.h"
 #include "cavp_ikev1.h"
 #include "cavp_ikev1_psk.h"
+#include "acvp.h"
 
 static long int ni_length;
 static long int nr_length;
@@ -57,7 +58,7 @@ static chunk_t cky_r;
 static PK11SymKey *g_xy;
 
 static const struct cavp_entry data_entries[] = {
-	{ .key = "COUNT", .op = op_signed_long, .signed_long = &count },
+	{ .key = "COUNT", .opt = {ACVP_TCID,}, .op = op_signed_long, .signed_long = &count },
 	{ .key = "g^xy", .opt = { "gxy", }, .op = op_symkey, .symkey = &g_xy },
 	{ .key = "Ni", .opt = { "nInit", }, .op = op_chunk, .chunk = &ni },
 	{ .key = "Nr", .opt = { "nResp", }, .op = op_chunk, .chunk = &nr },
@@ -81,9 +82,9 @@ static void ikev1_psk_print_config(void)
 	config_number("pre-shared-key length", psk_length);
 }
 
-static void ikev1_psk_print_test(void)
+static void ikev1_psk_run_test(void)
 {
-	print_number("COUNT", NULL, count);
+	print_number("COUNT", ACVP_TCID, count);
 	print_chunk("CKY_I", NULL, cky_i, 0);
 	print_chunk("CKY_R", NULL, cky_r, 0);
 	print_chunk("Ni", NULL, ni, 0);
@@ -95,10 +96,6 @@ static void ikev1_psk_print_test(void)
 		print_line(prf_entry->key);
 		return;
 	}
-}
-
-static void ikev1_psk_run_test(void)
-{
 	const struct prf_desc *prf = prf_entry->prf;
 	PK11SymKey *skeyid = ikev1_pre_shared_key_skeyid(prf, psk, ni, nr);
 	cavp_ikev1_skeyid_alphabet(prf, g_xy, cky_i, cky_r, skeyid);
@@ -109,7 +106,6 @@ const struct cavp cavp_ikev1_psk = {
 	.alias = "v1psk",
 	.description = "IKE v1 Pre-shared Key Authentication",
 	.print_config = ikev1_psk_print_config,
-	.print_test = ikev1_psk_print_test,
 	.run_test = ikev1_psk_run_test,
 	.config = config_entries,
 	.data = data_entries,

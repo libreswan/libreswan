@@ -86,7 +86,7 @@ static struct cavp_entry msg_data[] = {
 	{ .key = NULL, },
 };
 
-static void msg_print_test(void)
+static void msg_run_test(void)
 {
 	print_number("Len", NULL, len);
 	/* byte aligned */
@@ -95,10 +95,6 @@ static void msg_print_test(void)
 	passert((len == 0 && msg.len <= 1)
 		|| (len == msg.len * BITS_PER_BYTE));
 	print_chunk("Msg", NULL, msg, 0);
-}
-
-static void msg_run_test(void)
-{
 	struct hash_context *hash = hash_alg->hash_ops->init(hash_alg, "sha");
 	/* See above, use LEN, not MSG.LEN */
 	hash_alg->hash_ops->digest_bytes(hash, "msg", msg.ptr, len / BITS_PER_BYTE);
@@ -113,7 +109,6 @@ const struct cavp cavp_sha_msg = {
 	.description = "SHA Algorithms (message digest)",
 	.config = config,
 	.print_config = print_config,
-	.print_test = msg_print_test,
 	.run_test = msg_run_test,
 	.data = msg_data,
 	.match = {
@@ -132,13 +127,9 @@ static struct cavp_entry monte_data[] = {
 	{ .key = NULL, },
 };
 
-static void monte_print_test(void)
-{
-	print_chunk("Seed", NULL, seed, 0);
-}
-
 static void monte_run_test(void)
 {
+	print_chunk("Seed", NULL, seed, 0);
 	chunk_t MDi_3 = alloc_chunk(seed.len, "MDi_3");
 	chunk_t MDi_2 = alloc_chunk(seed.len, "MDi_2");
 	chunk_t MDi_1 = alloc_chunk(seed.len, "MDi_1");
@@ -186,7 +177,6 @@ const struct cavp cavp_sha_monte = {
 	.description = "SHA Algorithms (monte carlo)",
 	.config = config,
 	.print_config = print_config,
-	.print_test = monte_print_test,
 	.run_test = monte_run_test,
 	.data = monte_data,
 	.match = {

@@ -176,7 +176,7 @@ static chunk_t salt = {
 	.len = 0,
 };
 
-static void gcm_print_test(void)
+static void gcm_run_test(void)
 {
 	print_number("Count", NULL, count);
 	print_symkey("Key", NULL, key, 0);
@@ -184,10 +184,6 @@ static void gcm_print_test(void)
 	print_chunk("CT", NULL, ct, 0);
 	print_chunk("AAD", NULL, aad, 0);
 	print_chunk("Tag", NULL, tag, 0);
-}
-
-static void gcm_run_test(void)
-{
 	const struct encrypt_desc *gcm_alg = lookup_by_taglen();
 	if (gcm_alg == NULL) {
 		fprintf(stderr, "taglen %lu not supported\n",
@@ -227,7 +223,6 @@ const struct cavp cavp_gcm = {
 	.alias = "gcm",
 	.description = "GCM",
 	.print_config = gcm_print_config,
-	.print_test = gcm_print_test,
 	.run_test = gcm_run_test,
 	.config = config,
 	.data = data,

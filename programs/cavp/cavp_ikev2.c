@@ -26,6 +26,7 @@
 #include "cavp_entry.h"
 #include "cavp_print.h"
 #include "cavp_ikev2.h"
+#include "acvp.h"
 
 static void cavp_acvp_ikev2(const struct prf_desc *prf,
 			    chunk_t ni, chunk_t nr,
@@ -123,7 +124,7 @@ static chunk_t spi_i;
 static chunk_t spi_r;
 
 static const struct cavp_entry data_entries[] = {
-	{ .key = "COUNT", .op = op_signed_long, .signed_long = &count },
+	{ .key = "COUNT", .opt = {ACVP_TCID,}, .op = op_signed_long, .signed_long = &count },
 	{ .key = "g^ir", .opt = {"gir","g"}, .op = op_symkey, .symkey = &g_ir },
 	{ .key = "g^ir (new)", .opt = {"girNew","n"}, .op = op_symkey, .symkey = &g_ir_new },
 	{ .key = "Ni", .opt = {"nInit", "ni", "a"}, .op = op_chunk, .chunk = &ni },
@@ -138,9 +139,9 @@ static const struct cavp_entry data_entries[] = {
 	{ .op = NULL }
 };
 
-static void ikev2_print_test(void)
+static void ikev2_run_test(void)
 {
-	print_number("COUNT", NULL, count);
+	print_number("COUNT", ACVP_TCID, count);
 	print_chunk("Ni", NULL, ni, 0);
 	print_chunk("Nr", NULL, nr, 0);
 	print_symkey("g^ir", NULL, g_ir, 0);
@@ -153,10 +154,6 @@ static void ikev2_print_test(void)
 		print_line(prf_entry->key);
 		return;
 	}
-}
-
-static void ikev2_run_test(void)
-{
 	cavp_acvp_ikev2(prf_entry->prf, ni, nr,
 			g_ir, g_ir_new, spi_i, spi_r,
 			nr_ike_sa_dkm_bits / 8,
@@ -167,7 +164,6 @@ const struct cavp cavp_ikev2 = {
 	.alias = "v2",
 	.description = "IKE v2",
 	.print_config = ikev2_print_config,
-	.print_test = ikev2_print_test,
 	.run_test = ikev2_run_test,
 	.config = config_entries,
 	.data = data_entries,

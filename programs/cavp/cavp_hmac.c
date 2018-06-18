@@ -93,7 +93,7 @@ static struct cavp_entry data[] = {
 	{ .key = NULL, },
 };
 
-static void hmac_print_test(void)
+static void hmac_run_test(void)
 {
 	print_number("Count", NULL, count);
 	print_number("Klen", NULL, key.len);
@@ -103,10 +103,6 @@ static void hmac_print_test(void)
 	if (prf_alg == NULL) {
 		return;
 	}
-}
-
-static void hmac_run_test(void)
-{
 	struct crypt_prf *prf = crypt_prf_init_chunk("run", DBG_CRYPT,
 						     prf_alg, "key", key);
 	crypt_prf_update_chunk("msg", prf, msg);
@@ -120,7 +116,6 @@ const struct cavp cavp_hmac = {
 	.alias = "hmac",
 	.description = "HMAC PRF",
 	.print_config = hmac_print_config,
-	.print_test = hmac_print_test,
 	.run_test = hmac_run_test,
 	.config = config,
 	.data = data,
