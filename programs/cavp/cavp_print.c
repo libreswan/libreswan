@@ -29,6 +29,14 @@ bool cavp_print_json = false;
  */
 static const char crlf[] = "\r\n";
 
+/*
+ * When printing JSON separate records using this.
+ */
+#define JSON_KV_SEP ",\n  "
+#define JSON_BEGIN_SEP "  "
+#define JSON_END_SEP ",\n}"
+static const char *json_sep = JSON_BEGIN_SEP;
+
 void config_key(const char *key)
 {
 	fputs("[", stdout);
@@ -48,7 +56,8 @@ void fprint_number(FILE *file, const char *prefix, const char *json,
 	if (!cavp_print_json) {
 		fprintf(file, "%s = %d%s", prefix, number, crlf);
 	} else if (json != NULL) {
-		fprintf(file, "\"%s\": %d\n", json, number);
+		fprintf(file, "%s\"%s\": %d", json_sep, json, number);
+		json_sep = JSON_KV_SEP;
 	}
 }
 
@@ -65,14 +74,15 @@ void fprint_chunk(FILE *file, const char *prefix, const char *json,
 		}
 		fprintf(file, "%s", crlf);
 	} else if (json != NULL) {
-		fprintf(file, "\"%s\": \"", json);
+		fprintf(file, "%s\"%s\": \"", json_sep, json);
 		size_t len = binlen == 0 ? chunk.len
 			: binlen < chunk.len ? binlen
 			: chunk.len;
 		for (size_t i = 0; i < len; i++) {
 			fprintf(file, "%02x", chunk.ptr[i]);
 		}
-		fprintf(file, "\"\n");
+		fprintf(file, "\"");
+		json_sep = JSON_KV_SEP;
 	}
 }
 
@@ -91,6 +101,22 @@ void fprint_line(FILE *file, const char *line)
 		fputs(crlf, file);
 	} else {
 		fputs("\n", file);
+	}
+}
+
+void fprint_begin(FILE *file)
+{
+	if (cavp_print_json) {
+		fputs("{", file);
+		json_sep = "\n  ";
+	}
+}
+
+void fprint_end(FILE *file)
+{
+	if (cavp_print_json) {
+		fputs("\n}\n", file);
+		json_sep = "";
 	}
 }
 
@@ -115,4 +141,14 @@ void print_number(const char *prefix, const char *json,
 void print_line(const char *line)
 {
 	fprint_line(stdout, line);
+}
+
+void print_begin(void)
+{
+	fprint_begin(stdout);
+}
+
+void print_end()
+{
+	fprint_end(stdout);
 }

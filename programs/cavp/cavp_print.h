@@ -29,6 +29,8 @@ void fprint_symkey(FILE *, const char *prefix, const char *json,
 void fprint_number(FILE *, const char *prefix, const char *json,
 		   int number);
 void fprint_line(FILE *, const char *line);
+void fprint_begin(FILE *);
+void fprint_end(FILE *);
 
 void print_chunk(const char *prefix, const char *json,
 		 chunk_t chunk, size_t binlen);
@@ -36,5 +38,6 @@ void print_symkey(const char *prefix, const char *json,
 		 PK11SymKey *key, size_t binlen);
 void print_number(const char *prefix, const char *json,
 		  int number);
-
 void print_line(const char *line);
+void print_begin(void);
+void print_end(void);

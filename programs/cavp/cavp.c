@@ -255,7 +255,9 @@ int main(int argc, char *argv[])
 
 	if (use_acvp) {
 		passert(cavp != NULL);
+		print_begin();
 		cavp->run_test();
+		print_end();
 	} else {
 		cavp_parser(cavp);
 	}
