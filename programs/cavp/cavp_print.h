@@ -14,15 +14,27 @@
  * for more details.
  */
 
+#include <stdio.h>
+#include <stdbool.h>
+
+extern bool cavp_print_json;
+
 void config_number(const char *prefix, int number);
 void config_key(const char *key);
 
-void fprint_chunk(FILE *, const char *prefix, chunk_t chunk, size_t binlen);
-void fprint_symkey(FILE *, const char *prefix, PK11SymKey *key, size_t binlen);
-void fprint_number(FILE *, const char *prefix, int number);
+void fprint_chunk(FILE *, const char *prefix, const char *json,
+		  chunk_t chunk, size_t binlen);
+void fprint_symkey(FILE *, const char *prefix, const char *json,
+		   PK11SymKey *key, size_t binlen);
+void fprint_number(FILE *, const char *prefix, const char *json,
+		   int number);
 void fprint_line(FILE *, const char *line);
 
-void print_chunk(const char *prefix, chunk_t chunk, size_t binlen);
-void print_symkey(const char *prefix, PK11SymKey *key, size_t binlen);
-void print_number(const char *prefix, int number);
+void print_chunk(const char *prefix, const char *json,
+		 chunk_t chunk, size_t binlen);
+void print_symkey(const char *prefix, const char *json,
+		 PK11SymKey *key, size_t binlen);
+void print_number(const char *prefix, const char *json,
+		  int number);
+
 void print_line(const char *line);

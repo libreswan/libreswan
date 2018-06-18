@@ -95,11 +95,11 @@ static struct cavp_entry data[] = {
 
 static void hmac_print_test(void)
 {
-	print_number("Count", count);
-	print_number("Klen", key.len);
-	print_number("Tlen", tlen);
-	print_chunk("Key", key, 0);
-	print_chunk("Msg", msg, 0);
+	print_number("Count", NULL, count);
+	print_number("Klen", NULL, key.len);
+	print_number("Tlen", NULL, tlen);
+	print_chunk("Key", NULL, key, 0);
+	print_chunk("Msg", NULL, msg, 0);
 	if (prf_alg == NULL) {
 		return;
 	}
@@ -112,7 +112,7 @@ static void hmac_run_test(void)
 	crypt_prf_update_chunk("msg", prf, msg);
 	chunk_t bytes = alloc_chunk(prf_alg->prf_output_size, "bytes");
 	crypt_prf_final_bytes(&prf, bytes.ptr, bytes.len);
-	print_chunk("Mac", bytes, tlen);
+	print_chunk("Mac", NULL, bytes, tlen);
 	freeanychunk(bytes);
 }
 

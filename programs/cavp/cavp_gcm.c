@@ -178,12 +178,12 @@ static chunk_t salt = {
 
 static void gcm_print_test(void)
 {
-	print_number("Count", count);
-	print_symkey("Key", key, 0);
-	print_chunk("IV", iv, 0);
-	print_chunk("CT", ct, 0);
-	print_chunk("AAD", aad, 0);
-	print_chunk("Tag", tag, 0);
+	print_number("Count", NULL, count);
+	print_symkey("Key", NULL, key, 0);
+	print_chunk("IV", NULL, iv, 0);
+	print_chunk("CT", NULL, ct, 0);
+	print_chunk("AAD", NULL, aad, 0);
+	print_chunk("Tag", NULL, tag, 0);
 }
 
 static void gcm_run_test(void)
@@ -215,7 +215,7 @@ static void gcm_run_test(void)
 			.ptr = text_and_tag.ptr,
 			.len = ct.len,
 		};
-		print_chunk("PT", pt, 0);
+		print_chunk("PT", NULL, pt, 0);
 	} else {
 		print_line("FAIL");
 	}

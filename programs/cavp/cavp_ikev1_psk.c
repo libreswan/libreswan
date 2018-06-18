@@ -83,13 +83,13 @@ static void ikev1_psk_print_config(void)
 
 static void ikev1_psk_print_test(void)
 {
-	print_number("COUNT", count);
-	print_chunk("CKY_I", cky_i, 0);
-	print_chunk("CKY_R", cky_r, 0);
-	print_chunk("Ni", ni, 0);
-	print_chunk("Nr", nr, 0);
-	print_symkey("g^xy", g_xy, 0);
-	print_chunk("pre-shared-key", psk, 0);
+	print_number("COUNT", NULL, count);
+	print_chunk("CKY_I", NULL, cky_i, 0);
+	print_chunk("CKY_R", NULL, cky_r, 0);
+	print_chunk("Ni", NULL, ni, 0);
+	print_chunk("Nr", NULL, nr, 0);
+	print_symkey("g^xy", NULL, g_xy, 0);
+	print_chunk("pre-shared-key", NULL, psk, 0);
 	if (prf_entry->prf == NULL) {
 		/* not supported, ignore */
 		print_line(prf_entry->key);
@@ -101,7 +101,6 @@ static void ikev1_psk_run_test(void)
 {
 	const struct prf_desc *prf = prf_entry->prf;
 	PK11SymKey *skeyid = ikev1_pre_shared_key_skeyid(prf, psk, ni, nr);
-	print_symkey("SKEYID", skeyid, 0);
 	cavp_ikev1_skeyid_alphabet(prf, g_xy, cky_i, cky_r, skeyid);
 	release_symkey(__func__, "skeyid", &skeyid);
 }

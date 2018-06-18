@@ -25,6 +25,7 @@
 #include "cavps.h"
 #include "cavp_parser.h"
 #include "cavp_entry.h"
+#include "cavp_print.h"
 #include "acvp.h"
 
 #define I "  "
@@ -32,6 +33,15 @@
 #define III I I I
 #define IOPT "        "
 #define OPT "-%-7s  %s\n"
+
+#define USAGE_GLOBAL "[-fips] [-json]"
+
+static void help_global()
+{
+	printf(II""OPT, "fips", "force FIPS mode (else determined from machine configuration)");
+	printf("\n");
+	printf(II""OPT, "json", "format output as json like records");
+}
 
 static void help(void)
 {
@@ -41,12 +51,12 @@ static void help(void)
 	printf(I"print this help message\n");
 	printf("\n");
 
-#define USAGE_FILE "cavp [-fips] [-<test>] <test-file>|-"
+#define USAGE_FILE "cavp " USAGE_GLOBAL " [-<test>] <test-file>|-"
 	printf("Usage: "USAGE_FILE"\n");
 	printf("\n");
 	printf(I"Run <test> using test vectors from <test-file> ('-' for stdin).\n");
 	printf("\n");
-	printf(II""OPT, "fips", "force FIPS mode (else determined from machine configuration)");
+	help_global();
 	printf("\n");
 	for (const struct cavp **cavpp = cavps; *cavpp != NULL; cavpp++) {
 		printf(II""OPT, (*cavpp)->alias, (*cavpp)->description);
@@ -62,10 +72,12 @@ static void help(void)
 	}
 	printf("\n");
 
-#define USAGE_PARAM "cavp [-fips] -<test> -<acvp-key> <acvp-value> ..."
+#define USAGE_PARAM "cavp " USAGE_GLOBAL " -<test> -<acvp-key> <acvp-value> ..."
 	printf("Usage: "USAGE_PARAM"\n");
 	printf("\n");
 	printf(I"Specify test using command line options (options names from ACVP)\n");
+	printf("\n");
+	help_global();
 	printf("\n");
 	for (const struct cavp **cavpp = cavps; *cavpp != NULL; cavpp++) {
 		printf(II""OPT, (*cavpp)->alias, (*cavpp)->description);
@@ -188,6 +200,11 @@ int main(int argc, char *argv[])
 			}
 		}
 		if (*cavpp != NULL) {
+			continue;
+		}
+
+		if (strcmp(arg, "json") == 0) {
+			cavp_print_json = true;
 			continue;
 		}
 

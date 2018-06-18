@@ -88,13 +88,13 @@ static struct cavp_entry msg_data[] = {
 
 static void msg_print_test(void)
 {
-	print_number("Len", len);
+	print_number("Len", NULL, len);
 	/* byte aligned */
 	passert(len == (len & -4));
 	/* when len==0, msg may contain one byte :-/ */
 	passert((len == 0 && msg.len <= 1)
 		|| (len == msg.len * BITS_PER_BYTE));
-	print_chunk("Msg", msg, 0);
+	print_chunk("Msg", NULL, msg, 0);
 }
 
 static void msg_run_test(void)
@@ -104,7 +104,7 @@ static void msg_run_test(void)
 	hash_alg->hash_ops->digest_bytes(hash, "msg", msg.ptr, len / BITS_PER_BYTE);
 	chunk_t bytes = alloc_chunk(l, "bytes");
 	hash_alg->hash_ops->final_bytes(&hash, bytes.ptr, bytes.len);
-	print_chunk("MD", bytes, 0);
+	print_chunk("MD", NULL, bytes, 0);
 	freeanychunk(bytes);
 }
 
@@ -134,7 +134,7 @@ static struct cavp_entry monte_data[] = {
 
 static void monte_print_test(void)
 {
-	print_chunk("Seed", seed, 0);
+	print_chunk("Seed", NULL, seed, 0);
 }
 
 static void monte_run_test(void)
@@ -168,10 +168,10 @@ static void monte_run_test(void)
 			// print_chunk("MDi", seed, 0);
 		}
 		print_line("");
-		print_number("COUNT", j);
+		print_number("COUNT", NULL, j);
 		// MDj = Seed = MD1002;
 		// OUTPUT: MDj; (aka seed)
-		print_chunk("MD", seed, 0);
+		print_chunk("MD", NULL, seed, 0);
 	}
 	freeanychunk(MDi_3);
 	freeanychunk(MDi_2);

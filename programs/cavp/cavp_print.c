@@ -22,6 +22,8 @@
 #include "crypt_symkey.h"
 #include "cavp_print.h"
 
+bool cavp_print_json = false;
+
 /*
  * The test vectors are CR-LF terminated, mimic this.
  */
@@ -40,51 +42,74 @@ void config_number(const char *key, int number)
 	printf("[%s = %d]%s", key, number, crlf);
 }
 
-void fprint_chunk(FILE *file, const char *prefix, chunk_t chunk, size_t binlen)
+void fprint_number(FILE *file, const char *prefix, const char *json,
+		   int number)
 {
-	fprintf(file, "%s = ", prefix);
-	size_t len = binlen == 0 ? chunk.len
-		: binlen < chunk.len ? binlen
-		: chunk.len;
-
-	size_t i = 0;
-	for (i = 0; i < len; i++) {
-		fprintf(file, "%02x", chunk.ptr[i]);
+	if (!cavp_print_json) {
+		fprintf(file, "%s = %d%s", prefix, number, crlf);
+	} else if (json != NULL) {
+		fprintf(file, "\"%s\": %d\n", json, number);
 	}
-	fprintf(file, "%s", crlf);
 }
 
-void fprint_symkey(FILE *file, const char *prefix, PK11SymKey *key, size_t binlen)
+void fprint_chunk(FILE *file, const char *prefix, const char *json,
+		  chunk_t chunk, size_t binlen)
+{
+	if (!cavp_print_json) {
+		fprintf(file, "%s = ", prefix);
+		size_t len = binlen == 0 ? chunk.len
+			: binlen < chunk.len ? binlen
+			: chunk.len;
+		for (size_t i = 0; i < len; i++) {
+			fprintf(file, "%02x", chunk.ptr[i]);
+		}
+		fprintf(file, "%s", crlf);
+	} else if (json != NULL) {
+		fprintf(file, "\"%s\": \"", json);
+		size_t len = binlen == 0 ? chunk.len
+			: binlen < chunk.len ? binlen
+			: chunk.len;
+		for (size_t i = 0; i < len; i++) {
+			fprintf(file, "%02x", chunk.ptr[i]);
+		}
+		fprintf(file, "\"\n");
+	}
+}
+
+void fprint_symkey(FILE *file, const char *prefix, const char *json,
+		   PK11SymKey *key, size_t binlen)
 {
 	chunk_t chunk = chunk_from_symkey(prefix, key);
-	fprint_chunk(file, prefix, chunk, binlen);
+	fprint_chunk(file, prefix, json, chunk, binlen);
 	freeanychunk(chunk);
-}
-
-void fprint_number(FILE *file, const char *prefix, int number)
-{
-	fprintf(file, "%s = %d%s", prefix, number, crlf);
 }
 
 void fprint_line(FILE *file, const char *line)
 {
 	fputs(line, file);
-	fputs(crlf, file);
+	if (!cavp_print_json) {
+		fputs(crlf, file);
+	} else {
+		fputs("\n", file);
+	}
 }
 
-void print_chunk(const char *prefix, chunk_t chunk, size_t binlen)
+void print_chunk(const char *prefix, const char *json,
+		 chunk_t chunk, size_t binlen)
 {
-	fprint_chunk(stdout, prefix, chunk, binlen);
+	fprint_chunk(stdout, prefix, json, chunk, binlen);
 }
 
-void print_symkey(const char *prefix, PK11SymKey *key, size_t binlen)
+void print_symkey(const char *prefix, const char *json,
+		  PK11SymKey *key, size_t binlen)
 {
-	fprint_symkey(stdout, prefix, key, binlen);
+	fprint_symkey(stdout, prefix, json, key, binlen);
 }
 
-void print_number(const char *prefix, int number)
+void print_number(const char *prefix, const char *json,
+		  int number)
 {
-	fprint_number(stdout, prefix, number);
+	fprint_number(stdout, prefix, json, number);
 }
 
 void print_line(const char *line)
