@@ -223,7 +223,7 @@ static void gcm_run_test(void)
 	freeanychunk(text_and_tag);
 }
 
-struct cavp cavp_gcm = {
+const struct cavp cavp_gcm = {
 	.alias = "gcm",
 	.description = "GCM",
 	.print_config = gcm_print_config,

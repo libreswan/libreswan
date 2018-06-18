@@ -24,13 +24,13 @@ struct hash_desc;
 struct cavp_entry {
 	const char *key;
 	const char *opt[3];
-	void (*op)(struct cavp_entry *key, const char *value);
+	void (*op)(const struct cavp_entry *key, const char *value);
 	/* set by the below */
 	chunk_t *chunk;
 	PK11SymKey **symkey;
 	signed long *signed_long;
 	unsigned long *unsigned_long;
-	struct cavp_entry **entry;
+	const struct cavp_entry **entry;
 	/* constant values */
 	int value;
 	const struct encrypt_desc *encrypt;
@@ -39,10 +39,10 @@ struct cavp_entry {
 	const struct integ_desc *integ;
 };
 
-void op_entry(struct cavp_entry *entry, const char *value);
-void op_ignore(struct cavp_entry *entry, const char *value);
-void op_chunk(struct cavp_entry *entry, const char *value);
-void op_symkey(struct cavp_entry *entry, const char *value);
-void op_signed_long(struct cavp_entry *entry, const char *value);
-void op_unsigned_long(struct cavp_entry *entry, const char *value);
-void op_boolean(struct cavp_entry *entry, const char *value);
+void op_entry(const struct cavp_entry *entry, const char *value);
+void op_ignore(const struct cavp_entry *entry, const char *value);
+void op_chunk(const struct cavp_entry *entry, const char *value);
+void op_symkey(const struct cavp_entry *entry, const char *value);
+void op_signed_long(const struct cavp_entry *entry, const char *value);
+void op_unsigned_long(const struct cavp_entry *entry, const char *value);
+void op_boolean(const struct cavp_entry *entry, const char *value);

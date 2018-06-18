@@ -24,7 +24,7 @@
 #include "cavp_hmac.h"
 #include "cavp_gcm.h"
 
-struct cavp *cavps[] = {
+const struct cavp *cavps[] = {
 	&cavp_ikev1_dsa,
 	&cavp_ikev1_psk,
 	&cavp_ikev2,

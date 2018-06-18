@@ -14,4 +14,4 @@
  * for more details.
  */
 
-extern struct cavp cavp_ikev1_dsa;
+extern const struct cavp cavp_ikev1_dsa;

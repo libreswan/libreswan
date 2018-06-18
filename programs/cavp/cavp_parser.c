@@ -28,9 +28,9 @@
 #include "cavp_print.h"
 #include "cavp_parser.h"
 
-static struct cavp_entry *lookup_entry(struct cavp_entry *entries, const char *key)
+static const struct cavp_entry *lookup_entry(const struct cavp_entry *entries, const char *key)
 {
-	struct cavp_entry *entry;
+	const struct cavp_entry *entry;
 	for (entry = entries; entry->key != NULL; entry++) {
 		if (strcmp(entry->key, key) == 0) {
 			break;
@@ -53,7 +53,7 @@ static void error_state(enum what state, enum what what,
 	exit(1);
 }
 
-static void next_state(struct cavp *cavp, enum what what)
+static void next_state(const struct cavp *cavp, enum what what)
 {
 	switch (state) {
 	case HEADER:
@@ -159,7 +159,7 @@ static struct fields parse_fields(char *line)
 	return fields;
 }
 
-void cavp_parser(struct cavp *cavp)
+void cavp_parser(const struct cavp *cavp)
 {
 	/* size is arbitrary */
 	char line[65536] = "";
@@ -199,10 +199,10 @@ void cavp_parser(struct cavp *cavp)
 		} else if (line[0] == '#') {
 			/* # .... comment */
 			if (cavp == NULL) {
-				for (struct cavp **cavpp = cavps;
+				for (const struct cavp **cavpp = cavps;
 				     cavp == NULL && *cavpp != NULL;
 				     cavpp++) {
-					for (const char **match = (*cavpp)->match;
+					for (const char *const *match = (*cavpp)->match;
 					     cavp == NULL && *match != NULL;
 					     match++) {
 						regex_t regex;
@@ -227,7 +227,7 @@ void cavp_parser(struct cavp *cavp)
 			char *rparen = strchr(line, ']');
 			*rparen = '\0';
 			struct fields fields = parse_fields(line + 1);
-			struct cavp_entry *entry = lookup_entry(cavp->config, fields.key);
+			const struct cavp_entry *entry = lookup_entry(cavp->config, fields.key);
 			if (entry->key == NULL) {
 				fprintf(stderr, "unknown config entry: ['%s' = '%s']\n",
 					fields.key, fields.value);
@@ -241,7 +241,7 @@ void cavp_parser(struct cavp *cavp)
 		} else {
 			next_state(cavp, DATA);
 			struct fields fields = parse_fields(line);
-			struct cavp_entry *entry = lookup_entry(cavp->data, fields.key);
+			const struct cavp_entry *entry = lookup_entry(cavp->data, fields.key);
 			if (entry->key == NULL) {
 				fprintf(stderr, "unknown data entry: '%s' = '%s'\n",
 					fields.key, fields.value);

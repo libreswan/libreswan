@@ -17,13 +17,13 @@
 #include "crypt_symkey.h"
 #include "cavp_entry.h"
 
-void op_entry(struct cavp_entry *entry,
+void op_entry(const struct cavp_entry *entry,
 	      const char *value UNUSED)
 {
 	*(entry->entry) = entry;
 }
 
-void op_chunk(struct cavp_entry *entry,
+void op_chunk(const struct cavp_entry *entry,
 	      const char *value)
 {
 	if (entry->chunk == NULL) {
@@ -34,7 +34,7 @@ void op_chunk(struct cavp_entry *entry,
 	*(entry->chunk) = decode_hex_to_chunk(entry->key, value);
 }
 
-void op_symkey(struct cavp_entry *entry,
+void op_symkey(const struct cavp_entry *entry,
 	       const char *value)
 {
 	release_symkey(__func__, "entry", entry->symkey);
@@ -43,19 +43,19 @@ void op_symkey(struct cavp_entry *entry,
 	freeanychunk(chunk);
 }
 
-void op_signed_long(struct cavp_entry *entry,
+void op_signed_long(const struct cavp_entry *entry,
 		    const char *value)
 {
 	*(entry->signed_long) = strtol(value, NULL, 10);
 }
 
-void op_unsigned_long(struct cavp_entry *entry,
+void op_unsigned_long(const struct cavp_entry *entry,
 		      const char *value)
 {
 	*(entry->unsigned_long) = strtoul(value, NULL, 10);
 }
 
-void op_ignore(struct cavp_entry *entry UNUSED,
+void op_ignore(const struct cavp_entry *entry UNUSED,
 	       const char *value UNUSED)
 {
 }

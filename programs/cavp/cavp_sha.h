@@ -14,6 +14,6 @@
  * for more details.
  */
 
-extern struct cavp cavp_sha_msg;
-extern struct cavp cavp_sha_monte;
+extern const struct cavp cavp_sha_msg;
+extern const struct cavp cavp_sha_monte;
 extern struct hash_desc ike_alg_hash_sha2_224;

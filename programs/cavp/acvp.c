@@ -42,9 +42,9 @@ static const struct acvp_prf acvp_prfs[] = {
 	{ .prf = NULL, },
 };
 
-static bool table_entry(struct cavp_entry *entries, const char *opt, const char *param)
+static bool table_entry(const struct cavp_entry *entries, const char *opt, const char *param)
 {
-	for (struct cavp_entry *entry = entries; entry->key != NULL; entry++) {
+	for (const struct cavp_entry *entry = entries; entry->key != NULL; entry++) {
 		for (unsigned i = 0; i < elemsof(entry->opt); i++) {
 			if (entry->opt[i] != NULL && strcasecmp(entry->opt[i], opt) == 0) {
 				entry->op(entry, param);
@@ -55,7 +55,7 @@ static bool table_entry(struct cavp_entry *entries, const char *opt, const char 
 	return false;
 }
 
-bool acvp_option(struct cavp *cavp, const char *opt, const char *param)
+bool acvp_option(const struct cavp *cavp, const char *opt, const char *param)
 {
 	/* try the config table */
 	if (table_entry(cavp->config, opt, param)) {
@@ -78,7 +78,7 @@ bool acvp_option(struct cavp *cavp, const char *opt, const char *param)
 			}
 		}
 		/* by name */
-		for (struct cavp_entry *entry = cavp->config; entry->key != NULL; entry++) {
+		for (const struct cavp_entry *entry = cavp->config; entry->key != NULL; entry++) {
 			if (entry->prf != NULL) {
 				if (entry->prf == prf ||
 				    strcasecmp(entry->key, param) == 0) {
@@ -101,7 +101,7 @@ bool acvp_option(struct cavp *cavp, const char *opt, const char *param)
 		dkmlen_in_bits = strtoul(param, NULL, 10) * 8;
 	}
 	if (dkmlen_in_bits >= 0) {
-		for (struct cavp_entry *entry = cavp->config; entry->key != NULL; entry++) {
+		for (const struct cavp_entry *entry = cavp->config; entry->key != NULL; entry++) {
 			if (strstr(entry->key, "DKM") != NULL) {
 				*entry->signed_long =  dkmlen_in_bits;
 				return true;

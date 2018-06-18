@@ -32,9 +32,9 @@
 static long int ni_length;
 static long int nr_length;
 static long int g_xy_length;
-static struct cavp_entry *prf_entry;
+static const struct cavp_entry *prf_entry;
 
-static struct cavp_entry config_entries[] = {
+static const struct cavp_entry config_entries[] = {
 	{ .key = "SHA-1", .op = op_entry, .entry = &prf_entry, .prf = &ike_alg_prf_sha1, },
 	{ .key = "SHA-224", .op = op_entry, .entry = &prf_entry, .prf = NULL, },
 	{ .key = "SHA-256", .op = op_entry, .entry = &prf_entry, .prf = &ike_alg_prf_sha2_256, },
@@ -53,7 +53,7 @@ static chunk_t cky_i;
 static chunk_t cky_r;
 static PK11SymKey *g_xy;
 
-static struct cavp_entry data_entries[] = {
+static const struct cavp_entry data_entries[] = {
 	{ .key = "COUNT", .op = op_signed_long, .signed_long = &count },
 	{ .key = "g^xy", .opt = { "gxy", }, .op = op_symkey, .symkey = &g_xy },
 	{ .key = "Ni", .opt = { "nInit", }, .op = op_chunk, .chunk = &ni },
@@ -100,7 +100,7 @@ static void ikev1_dsa_run_test(void)
 	release_symkey(__func__, "skeyid", &skeyid);
 }
 
-struct cavp cavp_ikev1_dsa = {
+const struct cavp cavp_ikev1_dsa = {
 	.alias = "v1dsa",
 	.description = "IKE v1 Digital Signature Authentication",
 	.print_config = ikev1_dsa_print_config,

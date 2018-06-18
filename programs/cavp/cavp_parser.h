@@ -15,4 +15,4 @@
 
 struct cavp;
 
-void cavp_parser(struct cavp *cavp);
+void cavp_parser(const struct cavp *cavp);

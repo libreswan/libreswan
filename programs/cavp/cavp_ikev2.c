@@ -85,9 +85,9 @@ static long int ni_length;
 static long int nr_length;
 static signed long nr_ike_sa_dkm_bits;
 static signed long nr_child_sa_dkm_bits;
-static struct cavp_entry *prf_entry;
+static const struct cavp_entry *prf_entry;
 
-static struct cavp_entry config_entries[] = {
+static const struct cavp_entry config_entries[] = {
 	{ .key = "g^ir length", .op = op_signed_long, .signed_long = &g_ir_length },
 	{ .key = "SHA-1", .op = op_entry, .entry = &prf_entry, .prf = &ike_alg_prf_sha1, },
 	{ .key = "SHA-224", .op = op_entry, .entry = &prf_entry, .prf = NULL, },
@@ -119,7 +119,7 @@ static PK11SymKey *g_ir_new;
 static chunk_t spi_i;
 static chunk_t spi_r;
 
-static struct cavp_entry data_entries[] = {
+static const struct cavp_entry data_entries[] = {
 	{ .key = "COUNT", .op = op_signed_long, .signed_long = &count },
 	{ .key = "g^ir", .opt = {"gir","g"}, .op = op_symkey, .symkey = &g_ir },
 	{ .key = "g^ir (new)", .opt = {"girNew","n"}, .op = op_symkey, .symkey = &g_ir_new },
@@ -160,7 +160,7 @@ static void ikev2_run_test(void)
 			nr_child_sa_dkm_bits / 8);
 }
 
-struct cavp cavp_ikev2 = {
+const struct cavp cavp_ikev2 = {
 	.alias = "v2",
 	.description = "IKE v2",
 	.print_config = ikev2_print_config,

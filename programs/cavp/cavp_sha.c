@@ -108,7 +108,7 @@ static void msg_run_test(void)
 	freeanychunk(bytes);
 }
 
-struct cavp cavp_sha_msg = {
+const struct cavp cavp_sha_msg = {
 	.alias = "sha",
 	.description = "SHA Algorithms (message digest)",
 	.config = config,
@@ -181,7 +181,7 @@ static void monte_run_test(void)
 	exit(0);
 }
 
-struct cavp cavp_sha_monte = {
+const struct cavp cavp_sha_monte = {
 	.alias = "sha",
 	.description = "SHA Algorithms (monte carlo)",
 	.config = config,

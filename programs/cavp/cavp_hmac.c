@@ -116,7 +116,7 @@ static void hmac_run_test(void)
 	freeanychunk(bytes);
 }
 
-struct cavp cavp_hmac = {
+const struct cavp cavp_hmac = {
 	.alias = "hmac",
 	.description = "HMAC PRF",
 	.print_config = hmac_print_config,

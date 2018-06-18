@@ -14,5 +14,5 @@
  * for more details.
  */
 
-extern struct cavp cavp_gcm;
+extern const struct cavp cavp_gcm;
 

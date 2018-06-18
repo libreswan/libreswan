@@ -13,6 +13,4 @@
  * for more details.
  */
 
-struct cavp;
-
-extern struct cavp *cavps[];
+extern const struct cavp *cavps[];

@@ -48,15 +48,15 @@ static void help(void)
 	printf("\n");
 	printf(II""OPT, "fips", "force FIPS mode (else determined from machine configuration)");
 	printf("\n");
-	for (struct cavp **cavpp = cavps; *cavpp != NULL; cavpp++) {
+	for (const struct cavp **cavpp = cavps; *cavpp != NULL; cavpp++) {
 		printf(II""OPT, (*cavpp)->alias, (*cavpp)->description);
 	}
 	printf("\n");
 	printf(I"If -<algorithm> is omitted then it is determined by matching\n");
 	printf(I"the <test-file> header with one of the following patterns:\n");
 	printf("\n");
-	for (struct cavp **cavpp = cavps; *cavpp != NULL; cavpp++) {
-		for (const char **matchp = (*cavpp)->match; *matchp; matchp++) {
+	for (const struct cavp **cavpp = cavps; *cavpp != NULL; cavpp++) {
+		for (const char *const *matchp = (*cavpp)->match; *matchp; matchp++) {
 			printf(II""OPT, (*cavpp)->alias, *matchp);
 		}
 	}
@@ -67,12 +67,12 @@ static void help(void)
 	printf("\n");
 	printf(I"Specify test using command line options (options names from ACVP)\n");
 	printf("\n");
-	for (struct cavp **cavpp = cavps; *cavpp != NULL; cavpp++) {
+	for (const struct cavp **cavpp = cavps; *cavpp != NULL; cavpp++) {
 		printf(II""OPT, (*cavpp)->alias, (*cavpp)->description);
 		bool supported = false;
 		/* PRF? */
 		const char *sep = NULL;
-		for (struct cavp_entry *config = (*cavpp)->config; config->key != NULL; config++) {
+		for (const struct cavp_entry *config = (*cavpp)->config; config->key != NULL; config++) {
 			if (config->prf != NULL) {
 				supported = true;
 				if (sep == NULL) {
@@ -87,7 +87,7 @@ static void help(void)
 			printf("\n");
 		}
 		/* keylen */
-		for (struct cavp_entry *config = (*cavpp)->config; config->key != NULL; config++) {
+		for (const struct cavp_entry *config = (*cavpp)->config; config->key != NULL; config++) {
 			if (strstr(config->key, "DKM") != NULL) {
 				supported = true;
 				printf(III"-"ACVP_DKM_OPTION" <length>\n");
@@ -96,7 +96,7 @@ static void help(void)
 			}
 		}
 		/* data */
-		for (struct cavp_entry *entry = (*cavpp)->data; entry->key != NULL; entry++) {
+		for (const struct cavp_entry *entry = (*cavpp)->data; entry->key != NULL; entry++) {
 			if (entry->opt[0] != NULL) {
 				supported = true;
 				printf(III"-%s <data>\n", entry->opt[0]);
@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	struct cavp *cavp = NULL;
+	const struct cavp *cavp = NULL;
 	bool use_acvp = false;
 
 	char **argp = argv + 1;
@@ -179,7 +179,7 @@ int main(int argc, char *argv[])
 
 		/* First: try non-arg options */
 
-		struct cavp **cavpp;
+		const struct cavp **cavpp;
 		for (cavpp = cavps; *cavpp != NULL; cavpp++) {
 			if (strcmp(arg, (*cavpp)->alias) == 0) {
 				cavp = *cavpp;
