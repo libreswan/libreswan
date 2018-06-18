@@ -719,9 +719,11 @@ delvti() {
 		ip route del ${PLUTO_PEER_CLIENT} dev ${VTI_IFACE} \
 			src ${PLUTO_MY_SOURCEIP} ||:
 	fi
-	if [ "${VTI_SHARED}" = no -a "${PLUTO_CONN_KIND}" != CK_INSTANCE ]; then
-		ip tun del ${VTI_IFACE} ||:
-	fi
+	# TODO: we can't delete vti interface because we don't have proper reference
+	# counting.
+	#if [ "${VTI_SHARED}" = no -a "${PLUTO_CONN_KIND}" != CK_INSTANCE ]; then
+	#	ip tun del ${VTI_IFACE} ||:
+	#fi
    fi
 }
 
