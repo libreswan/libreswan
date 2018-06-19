@@ -192,29 +192,3 @@ $(abs_builddir)/version.c: ${KLIPSSRCDIR}/version.in.c $(top_srcdir)/Makefile.ve
 	    ${KLIPSSRCDIR}/version.in.c \
 	    > $@.tmp
 	mv $@.tmp $@
-
-# developer-only stuff
-
-test-%: %.c
-	${CC} ${CFLAGS} -D`echo $* | tr 'a-z' 'A-Z'`_MAIN $*.c -o test-$*
-
-l:
-	$(MAKE) $(LIB) ARFLAGS=crv CFLAGS=-O
-	$(RANLIB) $(LIB)
-
-t:	$(LIB)
-	ln -f -s ${KLIPSSRCDIR}/ttosubnet.c try1a.c
-	${CC} ${CFLAGS} -DTTOSUBNET_MAIN try1a.c $(LIB) -o try1a
-	./try1a -r
-	ln -f -s ${KLIPSSRCDIR}/ttodata.c try2.c
-	${CC} ${CFLAGS} -DTTODATA_MAIN try2.c $(LIB) -o try2
-	./try2 -r
-	ln -f -s ${KLIPSSRCDIR}/ttosa.c try4a.c
-	${CC} ${CFLAGS} -DTTOSA_MAIN try4a.c $(LIB) -o try4a
-	./try4a -r
-	ln -f -s ${KLIPSSRCDIR}/rangetosubnet.c try6.c
-	${CC} ${CFLAGS} -DRANGETOSUBNET_MAIN try6.c $(LIB) -o try6
-	./try6 -r
-	ln -f -s ${KLIPSSRCDIR}/addrtot.c try7.c
-	${CC} ${CFLAGS} -DADDRTOT_MAIN try7.c $(LIB) -o try7
-	./try7 -r
