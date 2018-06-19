@@ -41,6 +41,7 @@
 #include <arpa/inet.h>
 #include <getopt.h>
 #include <assert.h>
+#include <limits.h>	/* for INT_MAX */
 
 #include <libreswan.h>
 
