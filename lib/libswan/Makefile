@@ -163,12 +163,8 @@ OBJS += pfkey_v2_build.o pfkey_v2_ext_bits.o pfkey_v2_parse.o
 OBJS += pfkey_v2_debug.o
 endif
 
-KLIPSSRCDIR?=${LIBRESWANSRCDIR}/linux/net/ipsec
-
-VPATH+= ${KLIPSSRCDIR}
-
 # Original flags; this is a mess.
-CFLAGS+=${PORTINCLUDE} -I. -I${KLIPSSRCDIR} -I${KLIPSINC}
+CFLAGS+=${PORTINCLUDE} -I. -I${KLIPSINC}
 CFLAGS+=-I${LIBRESWANSRCDIR}
 CFLAGS+= $(NSSFLAGS)
 CFLAGS+=-I${LIBRESWANSRCDIR}/include ${PORTINCLUDE}
@@ -185,6 +181,7 @@ OBJS += $(abs_builddir)/version.o
 include $(top_srcdir)/mk/library.mk
 
 # build version.c using version number from Makefile.ver
+KLIPSSRCDIR?=${LIBRESWANSRCDIR}/linux/net/ipsec
 $(abs_builddir)/version.c: ${KLIPSSRCDIR}/version.in.c $(top_srcdir)/Makefile.ver
 	rm -f $@.tmp
 	sed -e '/"/s/@IPSECVERSION@/$(IPSECVERSION)/' \
