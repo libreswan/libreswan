@@ -75,10 +75,8 @@ const struct cavp_entry *cavp_entry_by_key(const struct cavp_entry *entries,
 const struct cavp_entry *cavp_entry_by_opt(const struct cavp_entry *entries, const char *opt)
 {
 	for (const struct cavp_entry *entry = entries; entry->key != NULL; entry++) {
-		for (unsigned i = 0; i < elemsof(entry->opt); i++) {
-			if (entry->opt[i] != NULL && strcasecmp(entry->opt[i], opt) == 0) {
-				return entry;
-			}
+		if (entry->opt != NULL && strcasecmp(entry->opt, opt) == 0) {
+			return entry;
 		}
 	}
 	return NULL;

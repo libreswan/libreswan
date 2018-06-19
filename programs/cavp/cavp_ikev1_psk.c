@@ -58,13 +58,13 @@ static chunk_t cky_r;
 static PK11SymKey *g_xy;
 
 static const struct cavp_entry data_entries[] = {
-	{ .key = "COUNT", .opt = {ACVP_TCID,}, .op = op_signed_long, .signed_long = &count },
-	{ .key = "g^xy", .opt = { "gxy", }, .op = op_symkey, .symkey = &g_xy },
-	{ .key = "Ni", .opt = { "nInit", }, .op = op_chunk, .chunk = &ni },
-	{ .key = "Nr", .opt = { "nResp", }, .op = op_chunk, .chunk = &nr },
-	{ .key = "CKY_I", .opt = { "ckyInit", }, .op = op_chunk, .chunk = &cky_i },
-	{ .key = "CKY_R", .opt = { "ckyResp", }, .op = op_chunk, .chunk = &cky_r },
-	{ .key = "pre-shared-key", .opt = { "preSharedKey", }, .op = op_chunk, .chunk = &psk },
+	{ .key = "COUNT", .opt = ACVP_TCID, .op = op_signed_long, .signed_long = &count },
+	{ .key = "g^xy", .opt =  "gxy", .op = op_symkey, .symkey = &g_xy },
+	{ .key = "Ni", .opt =  "nInit", .op = op_chunk, .chunk = &ni },
+	{ .key = "Nr", .opt =  "nResp", .op = op_chunk, .chunk = &nr },
+	{ .key = "CKY_I", .opt =  "ckyInit" , .op = op_chunk, .chunk = &cky_i },
+	{ .key = "CKY_R", .opt =  "ckyResp", .op = op_chunk, .chunk = &cky_r },
+	{ .key = "pre-shared-key", .opt =  "preSharedKey", .op = op_chunk, .chunk = &psk },
 	{ .key = "SKEYID", .op = op_ignore },
 	{ .key = "SKEYID_d", .op = op_ignore },
 	{ .key = "SKEYID_a", .op = op_ignore },

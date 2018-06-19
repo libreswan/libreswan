@@ -29,11 +29,6 @@
 #include "test_buffer.h"
 #include "crypt_symkey.h"
 
-struct acvp_prf {
-	const char *name;
-	const struct prf_desc *prf;
-};
-
 static bool table_entry(const struct cavp_entry *entries, const char *opt, const char *param)
 {
 	const struct cavp_entry *entry = cavp_entry_by_opt(entries, opt);
@@ -64,39 +59,6 @@ bool acvp_option(const struct cavp *cavp, const char *opt, const char *param)
 		}
 		entry->op(entry, NULL);
 		return true;
-	}
-	/*
-	 * STRONGSWAN compat magic.  Delete?
-	 */
-	if (/* compat */ strcasecmp(opt, "hash") == 0 ||
-	    /* compat */ strcasecmp(opt, "h") == 0) {
-		static const struct acvp_prf acvp_prfs[] = {
-			{ "2", &ike_alg_prf_sha1, },
-			{ "5", &ike_alg_prf_sha2_256, },
-			{ "6", &ike_alg_prf_sha2_384, },
-			{ "7", &ike_alg_prf_sha2_512, },
-			{ .prf = NULL, },
-		};
-		const struct prf_desc *prf = NULL;
-		/* map number to PRF? */
-		for (const struct acvp_prf *p = acvp_prfs; p->prf != NULL; p++) {
-			if (strcmp(p->name, param) == 0) {
-				prf = p->prf;
-				break;
-			}
-		}
-		if (prf == NULL) {
-			return false;
-		}
-		/* by name */
-		for (const struct cavp_entry *entry = cavp->config; entry->key != NULL; entry++) {
-			if (entry->prf == prf) {
-				entry->op(entry, param);
-				return true;
-			}
-		}
-		fprintf(stderr, "-prf option invalid in this context\n");
-		return false;
 	}
 	/* else unknown */
 	return false;

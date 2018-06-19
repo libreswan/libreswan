@@ -100,9 +100,9 @@ static void help(void)
 		}
 		/* data */
 		for (const struct cavp_entry *entry = (*cavpp)->data; entry->key != NULL; entry++) {
-			if (entry->opt[0] != NULL) {
+			if (entry->opt != NULL) {
 				supported = true;
-				printf(III"-%s <%s>\n", entry->opt[0], entry->key);
+				printf(III"-%s <%s>\n", entry->opt, entry->key);
 			}
 		}
 		if (!supported) {

@@ -23,7 +23,7 @@ struct hash_desc;
 
 struct cavp_entry {
 	const char *key;
-	const char *opt[3];
+	const char *opt; /* name from ACVP json */
 	void (*op)(const struct cavp_entry *key, const char *value);
 	/* set by the below */
 	chunk_t *chunk;
