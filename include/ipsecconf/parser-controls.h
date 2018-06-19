@@ -16,6 +16,8 @@
 
 /* things from parser.l */
 
+#include <limits.h>		/* for PATH_MAX */
+
 extern int lex_verbosity;	/* how much tracing output to show */
 
 extern char rootdir[PATH_MAX];	/* when evaluating paths, prefix this to them */
