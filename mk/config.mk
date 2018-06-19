@@ -476,7 +476,6 @@ export OBJDIRTOP
 
 KLIPSINC=${LIBRESWANSRCDIR}/linux/include
 KLIPSSRCDIR=${LIBRESWANSRCDIR}/linux/net/ipsec
-#KLIPSSRCDIR=/mara1/git/klips/net/ipsec
 
 LIBSWANDIR=${LIBRESWANSRCDIR}/lib/libswan
 

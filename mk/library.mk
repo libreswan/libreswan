@@ -8,14 +8,7 @@ include $(top_srcdir)/mk/config.mk
 include $(top_srcdir)/mk/version.mk
 include $(top_srcdir)/mk/targets.mk
 
-KLIPSD=${LIBRESWANSRCDIR}/linux/include
-KLIPSSRCDIR=${LIBRESWANSRCDIR}/linux/net/ipsec
-
-VPATH+= ${KLIPSSRCDIR}
-OSDEP?=$(shell uname -s | tr 'A-Z' 'a-z')
-
-# Original flags
-INCLUDES+=-I. -I${KLIPSSRCDIR} -I${KLIPSD}
+INCLUDES+=-I${KLIPSINC}
 INCLUDES+=-I${LIBRESWANSRCDIR}/include
 # nss
 INCLUDES+=${NSSFLAGS}

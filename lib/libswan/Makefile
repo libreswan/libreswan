@@ -38,19 +38,18 @@ LIB = libswan.a
 
 OBJS += x509dn.o asn1.o oid.o
 
-OBJS += addrtoa.o addrtot.o addrtypeof.o anyaddr.o \
-	constants.o datatot.o \
+OBJS += constants.o \
 	alloc.o diag.o \
-	goodmask.o id.o initaddr.o initsaid.o initsubnet.o \
+	id.o initaddr.o initsaid.o initsubnet.o \
 	iprange.o \
         keyblobtoid.o \
 	kernel_alg.o lex.o \
 	lswconf.o \
 	lswfips.o \
 	rangetosubnet.o sameaddr.o \
-	satot.o secrets.o subnetof.o subnettoa.o subnettot.o \
+	secrets.o subnettot.o \
 	subnettypeof.o ttoaddr.o ttodata.o ttoprotoport.o \
-	ttorange.o ttosa.o ttosubnet.o ttoul.o ultot.o \
+	ttorange.o ttosa.o ttosubnet.o ttoul.o \
 	secitem_chunk.o \
 	base64_rsa_pubkey.o \
 	lswnss.o \
@@ -58,6 +57,16 @@ OBJS += addrtoa.o addrtot.o addrtypeof.o anyaddr.o \
 	libreswan_log.o \
 	libreswan_loglog.o \
 	alg_byname.o
+
+# These get pulled in from the klips kernel code.
+VPATH += ${KLIPSSRCDIR}
+OBJS += addrtot.o
+OBJS += addrtypeof.o
+OBJS += anyaddr.o
+OBJS += datatot.o
+OBJS += goodmask.o
+OBJS += satot.o
+OBJS += ultot.o
 
 OBJS += alg_info.o esp_info.o ike_info.o ah_info.o
 
@@ -181,7 +190,6 @@ OBJS += $(abs_builddir)/version.o
 include $(top_srcdir)/mk/library.mk
 
 # build version.c using version number from Makefile.ver
-KLIPSSRCDIR?=${LIBRESWANSRCDIR}/linux/net/ipsec
 $(abs_builddir)/version.c: ${KLIPSSRCDIR}/version.in.c $(top_srcdir)/Makefile.ver
 	rm -f $@.tmp
 	sed -e '/"/s/@IPSECVERSION@/$(IPSECVERSION)/' \
