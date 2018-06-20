@@ -7,7 +7,7 @@ include /usr/share/dpkg/default.mk
 
 # this should track the definition of USERCOMPILE in mk/userland.mk:46
 # but without -fstack-protector-all for arches that lack stack-protector
-ifneq (,$(filter $(DEB_HOST_ARCH), hppa alpha))
+ifneq (,$(filter $(DEB_HOST_ARCH), hppa alpha ia64))
 export USERCOMPILE = -fexceptions -fno-strict-aliasing -fPIE -DPIE
 endif
 
