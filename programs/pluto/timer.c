@@ -212,6 +212,29 @@ static void liveness_check(struct state *st)
 	event_schedule(EVENT_v2_LIVENESS, delay, st);
 }
 
+static void ikev2_log_initiate_child_fail(const struct state *st)
+{
+	const struct state *pst = state_with_serialno(st->st_clonedfrom);
+
+	if (pst == NULL)
+		return;
+
+	msgid_t unack = pst->st_msgid_nextuse - pst->st_msgid_lastack - 1;
+
+	if (st->st_state == STATE_V2_REKEY_IKE_I0 ||
+			st->st_state == STATE_V2_REKEY_CHILD_I0 ||
+			st->st_state == STATE_V2_CREATE_I0) {
+
+		if (unack < st->st_connection->ike_window) {
+			loglog(RC_LOG_SERIOUS, "expiring %s state. Possible message id dealock? parent #%lu unacknowledged %u next message id=%u ike exchange window %u",
+					st->st_state_name,
+					pst->st_serialno, unack,
+					pst->st_msgid_nextuse,
+					pst->st_connection->ike_window);
+		}
+	}
+}
+
 static void ikev2_log_v2_sa_expired(struct state *st, enum event_type type)
 {
 	DBG(DBG_LIFECYCLE, {
@@ -523,10 +546,10 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 					deltasecs(monotimediff(mononow(),
 							       st->st_outbound_time))));
 		} else {
+			ikev2_log_initiate_child_fail(st);
 			ikev2_log_v2_sa_expired(st, type);
 			ipsecdoi_replace(st, 1);
 		}
-
 
 		delete_liveness_event(st);
 		delete_dpd_event(st);
