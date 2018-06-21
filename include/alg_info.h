@@ -25,9 +25,7 @@
 #include "ike_alg.h"
 #include "shunk.h"
 
-struct parser_context;
 struct alg_info;
-struct lswlog;
 struct proposal_protocol;
 struct proposal_info;
 struct proposal_policy;

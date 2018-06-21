@@ -19,8 +19,6 @@
 
 #include <shunk.h>
 
-struct parser_protocol;
-struct parser_policy;
 struct ike_alg;
 struct proposal_parser;
 
