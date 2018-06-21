@@ -38,20 +38,23 @@ struct lswlog;
 /*
  * deltatime_t: relative time between events.  Presumed continuous.
  *
- * It seems that some compilers don't like the static constructor
- * DELTATIME() being strongly typed (that is using a cast like
- * (deltatime_t) {{...}}).  Get around this by providing both
- * DELTATIME() and deltatime(); and DELTATIME_MS() and deltatime_ms().
+ * A struct initializer cannot be cast or be the result of a function call
+ * so DELTATIME avoids this.  Because it lacks the cast, this macro should
+ * not be used in other contexts.
  * Sigh.
  */
 
 typedef struct { intmax_t ms; } deltatime_t;
 
 #define DELTATIME(S) { (intmax_t)((S) * 1000) }
-deltatime_t deltatime(time_t secs);
 
-#define DELTATIME_MS(MS) { (MS) }
-deltatime_t deltatime_ms(intmax_t ms);
+static inline deltatime_t deltatime(time_t secs) {
+	return (deltatime_t) DELTATIME(secs);
+}
+
+static inline deltatime_t deltatime_ms(intmax_t ms) {
+	return (deltatime_t) { ms };
+}
 
 /* sign(a - b) */
 int deltatime_cmp(deltatime_t a, deltatime_t b);
