@@ -36,12 +36,10 @@ struct id_list {
 extern const struct id empty_id;	/* ID_NONE */
 
 extern err_t atoid(char *src, struct id *id, bool oe_only);
-extern void iptoid(const ip_address *ip, struct id *id);
 extern unsigned char *temporary_cyclic_buffer(void);
 extern int idtoa(const struct id *id, char *dst, size_t dstlen);
 #define IDTOA_BUF	512
 extern void escape_metachar(const char *src, char *dst, size_t dstlen);
-struct end;	/* forward declaration of tag (defined in connections.h) */
 extern void unshare_id_content(struct id *id);
 extern void free_id_content(struct id *id);
 extern bool any_id(const struct id *a);
@@ -53,12 +51,12 @@ extern int id_count_wildcards(const struct id *id);
 			  ID_IPV6_ADDR)
 
 struct isakmp_ipsec_id;	/* forward declaration of tag (defined in packet.h) */
+struct end;	/* forward declaration of tag (defined in connections.h) */
 extern void build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl,
 			     struct end *end, bool nullid);
 
 extern void duplicate_id(struct id *dst, const struct id *src);
 extern bool same_dn_any_order(chunk_t a, chunk_t b);
-extern bool match_dn_any_order_wild(chunk_t a, chunk_t b, int *wildcards);
 
 #endif /* _ID_H */
 
