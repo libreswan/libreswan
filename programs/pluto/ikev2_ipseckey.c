@@ -414,19 +414,21 @@ static err_t process_dns_resp(struct p_dns_req *dnsr)
 		return "DNS response contains no answer";
 	}
 
-	if (dnsr->secure == UB_EVENT_BOGUS) {
+	switch (dnsr->secure) {
+	default:	/* treat as bogus */
+	case UB_EVENT_BOGUS:
 		return "unbound returned BOGUS response - ignored";
-	}
 
-	if (dnsr->secure == UB_EVENT_INSECURE) {
+	case UB_EVENT_INSECURE:
 		if (IMPAIR(ALLOW_DNS_INSECURE)) {
 			DBG(DBG_DNS, DBG_log("Allowing insecure DNS response due to impair"));
 			return parse_rr(dnsr, ldnspkt);
 		}
 		return "unbound returned INSECURE response - ignored";
-	}
 
-	return parse_rr(dnsr, ldnspkt);
+	case UB_EVNET_SECURE:
+		return parse_rr(dnsr, ldnspkt);
+	}
 }
 
 void  free_ipseckey_dns(struct p_dns_req *d)
@@ -499,13 +501,18 @@ static void ipseckey_dbg_dns_resp(struct p_dns_req *dnsr)
 			(unsigned long)served_delta.tv_sec,
 			(unsigned long)(served_delta.tv_usec * 1000000)));
 
-	DBG(DBG_DNS, DBG_log("DNSSEC=%s %s MSG SIZE %d bytes",
-				(dnsr->secure == UB_EVNET_SECURE) ? "SECURE" :
-					(dnsr->secure == UB_EVENT_INSECURE) ?
-						"INSECURE" : "BOGUS",
-				(dnsr->secure == UB_EVENT_BOGUS) ?
-				dnsr->why_bogus : "",
-				dnsr->wire_len));
+	DBG(DBG_DNS, {
+		const enum lswub_resolve_event_secure_kind k = dnsr->secure;
+
+		DBG_log("DNSSEC=%s %s MSG SIZE %d bytes",
+			k == UB_EVNET_SECURE ? "SECURE"
+			: k == UB_EVENT_INSECURE ? "INSECURE"
+			: k == UB_EVENT_BOGUS ? "BOGUS"
+			: "invalid lswub_resolve_event_secure_kind",
+
+			k == UB_EVENT_BOGUS ? dnsr->why_bogus : "",
+			dnsr->wire_len);
+	});
 }
 
 static void idr_ipseckey_fetch_continue(struct p_dns_req *dnsr)
