@@ -26,12 +26,13 @@
 #include "cavp.h"
 #include "cavp_entry.h"
 #include "cavp_print.h"
-#include "cavp_ikev1.h"
-#include "cavp_ikev1_dsa.h"
+#include "test_ikev1.h"
+#include "test_ikev1_psk.h"
 #include "acvp.h"
 
 static long int ni_length;
 static long int nr_length;
+static long int psk_length;
 static long int g_xy_length;
 static const struct cavp_entry *prf_entry;
 
@@ -43,11 +44,13 @@ static const struct cavp_entry config_entries[] = {
 	{ .key = "SHA-512", .op = op_entry, .entry = &prf_entry, .prf = &ike_alg_prf_sha2_512, },
 	{ .key = "Ni length", .op = op_signed_long, .signed_long = &ni_length, },
 	{ .key = "Nr length", .op = op_signed_long, .signed_long = &nr_length, },
+	{ .key = "pre-shared-key length", .op = op_signed_long, .signed_long = &psk_length, },
 	{ .key = "g^xy length", .op = op_signed_long, .signed_long = &g_xy_length, },
 	{ .key = NULL }
 };
 
 static long int count;
+static chunk_t psk;
 static chunk_t ni;
 static chunk_t nr;
 static chunk_t cky_i;
@@ -61,6 +64,7 @@ static const struct cavp_entry data_entries[] = {
 	{ .key = "Nr", .opt =  "nResp", .op = op_chunk, .chunk = &nr },
 	{ .key = "CKY_I", .opt =  "ckyInit" , .op = op_chunk, .chunk = &cky_i },
 	{ .key = "CKY_R", .opt =  "ckyResp", .op = op_chunk, .chunk = &cky_r },
+	{ .key = "pre-shared-key", .opt =  "preSharedKey", .op = op_chunk, .chunk = &psk },
 	{ .key = "SKEYID", .op = op_ignore },
 	{ .key = "SKEYID_d", .op = op_ignore },
 	{ .key = "SKEYID_a", .op = op_ignore },
@@ -69,15 +73,16 @@ static const struct cavp_entry data_entries[] = {
 	{ .op = NULL }
 };
 
-static void ikev1_dsa_print_config(void)
+static void ikev1_psk_print_config(void)
 {
 	config_number("g^xy length", g_xy_length);
 	config_key(prf_entry->key);
 	config_number("Ni length", ni_length);
 	config_number("Nr length", nr_length);
+	config_number("pre-shared-key length", psk_length);
 }
 
-static void ikev1_dsa_run_test(void)
+static void ikev1_psk_run_test(void)
 {
 	print_number("COUNT", ACVP_TCID, count);
 	print_chunk("CKY_I", NULL, cky_i, 0);
@@ -85,26 +90,27 @@ static void ikev1_dsa_run_test(void)
 	print_chunk("Ni", NULL, ni, 0);
 	print_chunk("Nr", NULL, nr, 0);
 	print_symkey("g^xy", NULL, g_xy, 0);
+	print_chunk("pre-shared-key", NULL, psk, 0);
 	if (prf_entry->prf == NULL) {
 		/* not supported, ignore */
 		print_line(prf_entry->key);
 		return;
 	}
 	const struct prf_desc *prf = prf_entry->prf;
-	PK11SymKey *skeyid = ikev1_signature_skeyid(prf, ni, nr, g_xy);
+	PK11SymKey *skeyid = ikev1_pre_shared_key_skeyid(prf, psk, ni, nr);
 	cavp_ikev1_skeyid_alphabet(prf, g_xy, cky_i, cky_r, skeyid);
 	release_symkey(__func__, "skeyid", &skeyid);
 }
 
-const struct cavp cavp_ikev1_dsa = {
-	.alias = "v1dsa",
-	.description = "IKE v1 Digital Signature Authentication",
-	.print_config = ikev1_dsa_print_config,
-	.run_test = ikev1_dsa_run_test,
+const struct cavp test_ikev1_psk = {
+	.alias = "v1psk",
+	.description = "IKE v1 Pre-shared Key Authentication",
+	.print_config = ikev1_psk_print_config,
+	.run_test = ikev1_psk_run_test,
 	.config = config_entries,
 	.data = data_entries,
 	.match = {
-		"IKE v1 Digital Signature Authentication",
+		"IKE v1 Pre-shared Key Authentication",
 		NULL,
 	},
 };

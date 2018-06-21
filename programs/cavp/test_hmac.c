@@ -27,8 +27,8 @@
 #include "cavp.h"
 #include "cavp_entry.h"
 #include "cavp_print.h"
-#include "cavp_hmac.h"
-#include "cavp_sha.h"
+#include "test_hmac.h"
+#include "test_sha.h"
 
 static long unsigned l;
 
@@ -112,7 +112,7 @@ static void hmac_run_test(void)
 	freeanychunk(bytes);
 }
 
-const struct cavp cavp_hmac = {
+const struct cavp test_hmac = {
 	.alias = "hmac",
 	.description = "HMAC PRF",
 	.print_config = hmac_print_config,

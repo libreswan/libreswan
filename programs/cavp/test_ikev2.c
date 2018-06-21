@@ -25,7 +25,7 @@
 #include "cavp.h"
 #include "cavp_entry.h"
 #include "cavp_print.h"
-#include "cavp_ikev2.h"
+#include "test_ikev2.h"
 #include "acvp.h"
 
 static void cavp_acvp_ikev2(const struct prf_desc *prf,
@@ -162,7 +162,7 @@ static void ikev2_run_test(void)
 			 : nr_ike_sa_dkm_bits) / 8);
 }
 
-const struct cavp cavp_ikev2 = {
+const struct cavp test_ikev2 = {
 	.alias = "v2",
 	.description = "IKE v2",
 	.print_config = ikev2_print_config,

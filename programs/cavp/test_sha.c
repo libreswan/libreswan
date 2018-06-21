@@ -27,7 +27,7 @@
 #include "cavp.h"
 #include "cavp_entry.h"
 #include "cavp_print.h"
-#include "cavp_sha.h"
+#include "test_sha.h"
 
 static unsigned long l;
 
@@ -104,7 +104,7 @@ static void msg_run_test(void)
 	freeanychunk(bytes);
 }
 
-const struct cavp cavp_sha_msg = {
+const struct cavp test_sha_msg = {
 	.alias = "sha",
 	.description = "SHA Algorithms (message digest)",
 	.config = config,
@@ -172,7 +172,7 @@ static void monte_run_test(void)
 	exit(0);
 }
 
-const struct cavp cavp_sha_monte = {
+const struct cavp test_sha_monte = {
 	.alias = "sha",
 	.description = "SHA Algorithms (monte carlo)",
 	.config = config,

@@ -14,7 +14,7 @@
  * for more details.
  */
 
-#include "cavp_ikev1.h"
+#include "test_ikev1.h"
 #include "cavp_print.h"
 #include "ikev1_prf.h"
 #include "crypt_symkey.h"

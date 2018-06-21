@@ -26,13 +26,13 @@ OBJS += cavp_print.o
 OBJS += cavp_parser.o
 OBJS += cavp_entry.o
 
-OBJS += cavp_ikev1.o
-OBJS += cavp_ikev1_psk.o
-OBJS += cavp_ikev1_dsa.o
-OBJS += cavp_ikev2.o
-OBJS += cavp_sha.o
-OBJS += cavp_hmac.o
-OBJS += cavp_gcm.o
+OBJS += test_ikev1.o
+OBJS += test_ikev1_psk.o
+OBJS += test_ikev1_dsa.o
+OBJS += test_ikev2.o
+OBJS += test_sha.o
+OBJS += test_hmac.o
+OBJS += test_gcm.o
 
 OBJS += acvp.o
 

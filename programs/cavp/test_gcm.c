@@ -28,7 +28,7 @@
 #include "cavp.h"
 #include "cavp_entry.h"
 #include "cavp_print.h"
-#include "cavp_gcm.h"
+#include "test_gcm.h"
 
 
 static unsigned long keylen;
@@ -219,7 +219,7 @@ static void gcm_run_test(void)
 	freeanychunk(text_and_tag);
 }
 
-const struct cavp cavp_gcm = {
+const struct cavp test_gcm = {
 	.alias = "gcm",
 	.description = "GCM",
 	.print_config = gcm_print_config,

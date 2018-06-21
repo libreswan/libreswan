@@ -1,5 +1,5 @@
 /*
- * CAVP GCM test functions, for libreswan
+ * Parse DRBG CAVP test functions, for libreswan
  *
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  *
@@ -14,5 +14,5 @@
  * for more details.
  */
 
-extern const struct cavp cavp_gcm;
+extern const struct cavp test_hmac;
 

@@ -17,20 +17,20 @@
 #include <stddef.h>	/* for NULL */
 
 #include "cavps.h"
-#include "cavp_ikev1_dsa.h"
-#include "cavp_ikev1_psk.h"
-#include "cavp_ikev2.h"
-#include "cavp_sha.h"
-#include "cavp_hmac.h"
-#include "cavp_gcm.h"
+#include "test_ikev1_dsa.h"
+#include "test_ikev1_psk.h"
+#include "test_ikev2.h"
+#include "test_sha.h"
+#include "test_hmac.h"
+#include "test_gcm.h"
 
 const struct cavp *cavps[] = {
-	&cavp_ikev1_dsa,
-	&cavp_ikev1_psk,
-	&cavp_ikev2,
-	&cavp_sha_msg,
-	&cavp_sha_monte,
-	&cavp_hmac,
-	&cavp_gcm,
+	&test_ikev1_dsa,
+	&test_ikev1_psk,
+	&test_ikev2,
+	&test_sha_msg,
+	&test_sha_monte,
+	&test_hmac,
+	&test_gcm,
 	NULL
 };
