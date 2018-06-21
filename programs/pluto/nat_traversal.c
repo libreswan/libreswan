@@ -81,7 +81,7 @@
 
 bool nat_traversal_enabled = TRUE; /* can get disabled if kernel lacks support */
 
-static deltatime_t nat_kap = DELTATIME(DEFAULT_KEEP_ALIVE_PERIOD);	/* keep-alive period */
+static deltatime_t nat_kap = DELTATIME_INIT(DEFAULT_KEEP_ALIVE_PERIOD);	/* keep-alive period */
 static bool nat_kap_event = FALSE;
 
 #define IKEV2_NATD_HASH_SIZE	SHA1_DIGEST_SIZE

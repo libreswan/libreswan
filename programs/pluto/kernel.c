@@ -2645,7 +2645,7 @@ static void kernel_process_queue_cb(evutil_socket_t fd UNUSED,
 static char kversion[256];
 
 const struct kernel_ops *kernel_ops = NULL;
-deltatime_t bare_shunt_interval = DELTATIME(SHUNT_SCAN_INTERVAL);
+deltatime_t bare_shunt_interval = DELTATIME_INIT(SHUNT_SCAN_INTERVAL);
 
 
 void init_kernel(void)
@@ -2767,7 +2767,7 @@ void init_kernel(void)
 		 * call process_queue periodically.  Does the order
 		 * matter?
 		 */
-		static const deltatime_t delay = DELTATIME(KERNEL_PROCESS_Q_PERIOD);
+		static const deltatime_t delay = DELTATIME_INIT(KERNEL_PROCESS_Q_PERIOD);
 
 		/* Note: kernel_ops is read-only but pluto_event_add cannot know that */
 		pluto_event_add(NULL_FD, EV_TIMEOUT | EV_PERSIST,

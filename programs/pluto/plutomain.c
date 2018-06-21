@@ -440,7 +440,7 @@ static bool pluto_init_nss(char *nssdir)
 }
 
 /* 0 is special and default: do not check crls dynamically */
-deltatime_t crl_check_interval = DELTATIME(0);
+deltatime_t crl_check_interval = DELTATIME_INIT(0);
 
 #ifdef HAVE_LABELED_IPSEC
 /*
@@ -706,7 +706,7 @@ int main(int argc, char **argv)
 	pluto_dnssec_rootfile = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "root.key file");
 #endif
 
-	deltatime_t keep_alive = DELTATIME(0);
+	deltatime_t keep_alive = DELTATIME_INIT(0);
 
 	/* Overridden by virtual_private= in ipsec.conf */
 	char *virtual_private = NULL;

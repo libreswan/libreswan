@@ -201,7 +201,7 @@ enum seccomp_mode pluto_seccomp_mode = SECCOMP_DISABLED;
 #endif
 unsigned int pluto_max_halfopen = DEFAULT_MAXIMUM_HALFOPEN_IKE_SA;
 unsigned int pluto_ddos_threshold = DEFAULT_IKE_SA_DDOS_THRESHOLD;
-deltatime_t pluto_shunt_lifetime = DELTATIME(PLUTO_SHUNT_LIFE_DURATION_DEFAULT);
+deltatime_t pluto_shunt_lifetime = DELTATIME_INIT(PLUTO_SHUNT_LIFE_DURATION_DEFAULT);
 
 unsigned int pluto_sock_bufsize = IKE_BUF_AUTO; /* use system values */
 bool pluto_sock_errqueue = TRUE; /* Enable MSG_ERRQUEUE on IKE socket */
@@ -617,7 +617,7 @@ void pluto_event_now(const char *name, so_serial_t serialno,
 	 * Everything set up; arm and fire torpedo.  Event may have
 	 * even run before the below function returns.
 	 */
-	static const deltatime_t no_delay = DELTATIME(0);
+	static const deltatime_t no_delay = DELTATIME_INIT(0);
 	fire_event_photon_torpedo(&ne->ne_event,
 				  NULL_FD, EV_TIMEOUT,
 				  schedule_event_now_cb, ne,

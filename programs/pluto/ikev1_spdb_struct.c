@@ -1908,7 +1908,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 	*attrs = (struct ipsec_trans_attrs) {
 		.spi = 0,                                               /* spi */
-		.life_seconds = DELTATIME(IPSEC_SA_LIFETIME_DEFAULT),	/* life_seconds */
+		.life_seconds = DELTATIME_INIT(IPSEC_SA_LIFETIME_DEFAULT),	/* life_seconds */
 		.life_kilobytes = SA_LIFE_DURATION_K_DEFAULT,           /* life_kilobytes */
 		.encapsulation = ENCAPSULATION_MODE_UNSPECIFIED,        /* encapsulation */
 	};
