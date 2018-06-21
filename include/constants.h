@@ -335,8 +335,6 @@ struct keyword_enum_values {
 	size_t valuesize;
 };
 
-extern struct keyword_enum_values kw_host_list;
-
 extern const char *keyword_name(struct keyword_enum_values *kevs,
 				unsigned int value);
 

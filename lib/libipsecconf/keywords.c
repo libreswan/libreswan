@@ -287,6 +287,21 @@ static const struct keyword_enum_values kw_xauthfail = VALUES_INITIALIZER(kw_xau
  * Values for right= and left=
  */
 
+static struct keyword_enum_value kw_host_values[] = {
+	{ "%defaultroute",  KH_DEFAULTROUTE },
+	{ "%any",           KH_ANY },
+	{ "%",              KH_IFACE },
+	{ "%oppo",          KH_OPPO },
+	{ "%opportunistic", KH_OPPO },
+	{ "%opportunisticgroup", KH_OPPOGROUP },
+	{ "%oppogroup",     KH_OPPOGROUP },
+	{ "%group",         KH_GROUP },
+	{ "%hostname",      KH_IPHOSTNAME }, /* makes no sense on input */
+};
+
+static struct keyword_enum_values kw_host_list =
+	{ kw_host_values, elemsof(kw_host_values) };
+
 static const struct keyword_enum_value kw_klipsdebug_values[] = {
 	{ "all",      LRANGE(KDF_XMIT, KDF_COMP) },
 	{ "none",     0 },

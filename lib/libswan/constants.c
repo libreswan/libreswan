@@ -2097,24 +2097,6 @@ enum_names spi_names = {
 };
 
 /*
- * Values for right= and left=
- */
-static struct keyword_enum_value kw_host_values[] = {
-	{ "%defaultroute",  KH_DEFAULTROUTE },
-	{ "%any",           KH_ANY },
-	{ "%",              KH_IFACE },
-	{ "%oppo",          KH_OPPO },
-	{ "%opportunistic", KH_OPPO },
-	{ "%opportunisticgroup", KH_OPPOGROUP },
-	{ "%oppogroup",     KH_OPPOGROUP },
-	{ "%group",         KH_GROUP },
-	{ "%hostname",      KH_IPHOSTNAME }, /* makes no sense on input */
-};
-
-struct keyword_enum_values kw_host_list =
-	{ kw_host_values, elemsof(kw_host_values) };
-
-/*
  * Iterate over the enum_names returning all the valid indexes.
  *
  * Use -1 as the starting point / sentinel.
