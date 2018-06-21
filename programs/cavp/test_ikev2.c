@@ -150,7 +150,7 @@ static void ikev2_run_test(void)
 	print_chunk("SPIr", NULL, spi_r, 0);
 
 	if (prf_entry->prf == NULL) {
-		/* not supported, ignore */
+		fprintf(stderr, "WARNING: ignoring test with PRF %s\n", prf_entry->key);
 		print_line(prf_entry->key);
 		return;
 	}

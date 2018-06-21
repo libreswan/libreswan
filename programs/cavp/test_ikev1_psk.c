@@ -93,6 +93,7 @@ static void ikev1_psk_run_test(void)
 	print_chunk("pre-shared-key", NULL, psk, 0);
 	if (prf_entry->prf == NULL) {
 		/* not supported, ignore */
+		fprintf(stderr, "WARNING: ignoring test with PRF %s\n", prf_entry->key);
 		print_line(prf_entry->key);
 		return;
 	}

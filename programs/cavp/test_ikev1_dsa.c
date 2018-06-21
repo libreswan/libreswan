@@ -87,6 +87,7 @@ static void ikev1_dsa_run_test(void)
 	print_symkey("g^xy", NULL, g_xy, 0);
 	if (prf_entry->prf == NULL) {
 		/* not supported, ignore */
+		fprintf(stderr, "WARNING: ignoring test with PRF %s\n", prf_entry->key);
 		print_line(prf_entry->key);
 		return;
 	}
