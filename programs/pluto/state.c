@@ -914,38 +914,41 @@ static bool send_delete_check(const struct state *st)
 static void delete_state_log(struct state *st, struct state *cur_state)
 {
 	struct connection *const c = st->st_connection;
-	char *send_inf = send_delete_check(st) ? " and sending notification" : "";
+	bool del_notify = !IMPAIR(SEND_NO_DELETE) && send_delete_check(st);
 
 	if ((c->policy & POLICY_OPPORTUNISTIC) && !IS_IKE_SA_ESTABLISHED(st)) {
 		/* reduced logging of OE failures */
 		DBG(DBG_LIFECYCLE, {
 			char cib[CONN_INST_BUF];
 
-			DBG_log("deleting state #%lu (%s) \"%s\"%s%s",
+			DBG_log("deleting state #%lu (%s) \"%s\"%s and %ssending notification",
 				st->st_serialno,
 				st->st_state_name,
 				c->name,
-				fmt_conn_instance(c, cib), send_inf);
+				fmt_conn_instance(c, cib),
+				del_notify ? "" : "NOT ");
 	});
 	} else if (cur_state != NULL && cur_state == st) {
 		/*
 		* Don't log state and connection if it is the same as
 		* the message prefix.
 		*/
-		libreswan_log("deleting state (%s)%s",
-			st->st_state_name, send_inf);
+		libreswan_log("deleting state (%s) and %ssending notification",
+			st->st_state_name,
+			del_notify ? "" : "NOT ");
 	} else if (cur_state != NULL && cur_state->st_connection == st->st_connection) {
-		libreswan_log("deleting other state #%lu (%s)%s",
+		libreswan_log("deleting other state #%lu (%s) and %ssending notification",
 			st->st_serialno,
 			st->st_state_name,
-			send_inf);
+			del_notify ? "" : "NOT ");
 	} else {
 		char cib[CONN_INST_BUF];
-		libreswan_log("deleting other state #%lu connection (%s) \"%s\"%s%s",
+		libreswan_log("deleting other state #%lu connection (%s) \"%s\"%s and %ssending notification",
 			st->st_serialno,
 			st->st_state_name,
 			c->name,
-			fmt_conn_instance(c, cib), send_inf);
+			fmt_conn_instance(c, cib),
+			del_notify ? "" : "NOT ");
 	}
 
 	DBG(DBG_CONTROLMORE, {
