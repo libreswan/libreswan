@@ -777,7 +777,7 @@ _capi_hmac_hash(struct ipsec_alg_auth *alg, __u8 *key_a, const __u8 *dat, int le
 		return -1;
 
 	ahash_request_set_callback(req, 0, NULL, NULL);
-	ahash_request_set_crypt(req, &sg, hash_buf, 2);
+	ahash_request_set_crypt(req, &sg, hash_buf, len);
 	ret = crypto_ahash_digest(req);
 #else
 	memset(&desc, 0, sizeof(desc));
