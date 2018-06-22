@@ -582,6 +582,7 @@ typedef struct ctl_table ctl_table;
 
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 6, 0)
 # define HAS_AHASH
+# define HAS_SKCIPHER
 #endif
 
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 1, 14)
