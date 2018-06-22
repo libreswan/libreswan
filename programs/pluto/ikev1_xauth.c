@@ -2383,7 +2383,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 						      ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute.isama_identifier);
 
 		/* must have gotten a status */
-		if (status && stat == STF_OK) {
+		if (status != XAUTH_STATUS_FAIL && stat == STF_OK) {
 			st->hidden_variables.st_xauth_client_done =
 				TRUE;
 			loglog(RC_LOG,"XAUTH: Successfully Authenticated");
