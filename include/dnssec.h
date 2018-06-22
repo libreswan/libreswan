@@ -15,16 +15,16 @@ extern bool unbound_event_init(struct event_base *eb, bool do_dnssec,
 extern bool unbound_resolve(char *src, size_t srclen, int af,
 				ip_address *ipaddr);
 
-extern struct ub_ctx * get_unbound_ctx(void);
+extern struct ub_ctx *get_unbound_ctx(void);
 
 /*
  * returned in callback of ub_resolve_event
  * with sec: 0 if insecure, 1 if bogus, 2 if DNSSEC secure.
- * note these constants are only for ub_resolve_event. other resolv functions
- * my have different values for secure.
+ * Note these constants are only for ub_resolve_event.
+ * Other resolve functions may have different values for secure.
  * Pluto locally use DNSSEC_SECURE et el..
  *
- *  Seperate from this is ub_result.secure, which is true or false,
+ *  Separate from this is ub_result.secure, which is true or false,
  *  returned by ub_resolve or ub_resove_async
  */
 enum lswub_resolve_event_secure_kind {

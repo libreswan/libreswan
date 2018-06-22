@@ -7,4 +7,4 @@ ipsec setup restart
 
 ipsec auto --add westnet-eastnet
 grep 'TPM enabled' /tmp/pluto.log
-ipsec whack --debug-control --debug-controlmore --debug-crypt
+ipsec whack --debug none --debug control --debug controlmore --debug crypt

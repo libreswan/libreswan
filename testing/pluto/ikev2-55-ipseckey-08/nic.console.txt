@@ -1,0 +1,4 @@
+/testing/guestbin/swan-prep --dnssec
+Failed to stop ipsec.service: Unit ipsec.service not loaded.
+nic #
+

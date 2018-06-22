@@ -1,3 +1,14 @@
-# This file defines the set of CIDRs (network/mask-length) to which
-# communication should never be allowed. One IPv4 or IPv6 CIDR per line.
-
+# This file defines the set of network destinations for which
+# communication should never be allowed.
+#
+# One IPv4 or IPv6 CIDR per line, optionally specifying a further
+# narrowing of protocol, source port and destination port
+#
+# examples:
+# 10.0.1.0/24
+# 2a03:6000:1004:1::/64
+#
+# block some outgoing ssh to range
+#  10.0.1.0/24  tcp  0  22
+# block all incoming ssh
+#  0.0.0.0/0  tcp  22  0

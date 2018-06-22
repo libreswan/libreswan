@@ -55,69 +55,58 @@
 #include "lswnss.h"
 #include "test_buffer.h"
 #include "ike_alg.h"
+#include "crypt_dh.h"
 
 /* MUST BE THREAD-SAFE */
-void calc_ke(struct pluto_crypto_req *r)
+void calc_ke(struct pcr_kenonce *kn)
 {
-	struct pcr_kenonce *kn = &r->pcr_d.kn;
 	const struct oakley_group_desc *group = kn->group;
 
-	ALLOC_WIRE_CHUNK(*kn, gi, group->bytes);
-	u_int8_t *ke = WIRE_CHUNK_PTR(*kn, gi);
-
-	group->dhmke_ops->calc_ke(group, &kn->secret, &kn->pubk,
-				  ke, group->bytes);
+	kn->secret = calc_dh_secret(kn->group, &kn->gi);
 
 	DBG(DBG_CRYPT,
-	    DBG_log("NSS: Local DH %s public value (pointer): %p",
-		    group->common.name, kn->pubk);
 	    DBG_log("NSS: Local DH %s secret (pointer): %p",
 		    group->common.name, kn->secret);
-	    DBG_dump("NSS: Public DH wire value:",
-		     ke, group->bytes));
+	    DBG_dump_chunk("NSS: Public DH wire value:",
+			   kn->gi));
 }
 
 /* MUST BE THREAD-SAFE */
-void calc_nonce(struct pluto_crypto_req *r)
+void calc_nonce(struct pcr_kenonce *kn)
 {
-	struct pcr_kenonce *kn = &r->pcr_d.kn;
-
-	ALLOC_WIRE_CHUNK(*kn, n, DEFAULT_NONCE_SIZE);
-	get_rnd_bytes(WIRE_CHUNK_PTR(*kn, n), DEFAULT_NONCE_SIZE);
+	kn->n = alloc_chunk(DEFAULT_NONCE_SIZE, "n");
+	get_rnd_bytes(kn->n.ptr, kn->n.len);
 
 	DBG(DBG_CRYPT,
-	    DBG_dump("Generated nonce:",
-		     WIRE_CHUNK_PTR(*kn, n),
-		     DEFAULT_NONCE_SIZE));
+	    DBG_dump_chunk("Generated nonce:", kn->n));
+}
+
+void cancelled_ke_and_nonce(struct pcr_kenonce *kn)
+{
+	if (kn->secret != NULL) {
+		free_dh_secret(&kn->secret);
+	}
+	freeanychunk(kn->n);
+	freeanychunk(kn->gi);
 }
 
 /* Note: not all cn's are the same subtype */
-stf_status build_ke_and_nonce(
-	struct pluto_crypto_req_cont *cn,
-	const struct oakley_group_desc *group,
-	enum crypto_importance importance)
+void request_ke_and_nonce(const char *name,
+			  struct state *st,
+			  const struct oakley_group_desc *group,
+			  crypto_req_cont_func *callback)
 {
-	struct pluto_crypto_req rd;
 
-	/*
-	 * tricky assertion uses indirection for speed:
-	 * The only way to get the state from the cn is to look up
-	 * cn->pcrc_serialno but that is a bit expensive.
-	 * We exploit the fact(?) that cur_state is right (we hope and check).
-	 */
-	passert(cur_state->st_serialno == cn->pcrc_serialno && !cur_state->st_sec_in_use);
-	pcr_nonce_init(&rd, pcr_build_ke_and_nonce, importance);
-	rd.pcr_d.kn.group = group;
-
-	return send_crypto_helper_request(&rd, cn);
+	struct pluto_crypto_req_cont *cn = new_pcrc(callback, name);
+	pcr_kenonce_init(cn, pcr_build_ke_and_nonce, group);
+	send_crypto_helper_request(st, cn);
 }
 
-stf_status build_nonce(struct pluto_crypto_req_cont *cn,
-		       enum crypto_importance importance)
+void request_nonce(const char *name,
+		   struct state *st,
+		   crypto_req_cont_func *callback)
 {
-	struct pluto_crypto_req rd;
-
-	pcr_nonce_init(&rd, pcr_build_nonce, importance);
-
-	return send_crypto_helper_request(&rd, cn);
+	struct pluto_crypto_req_cont *cn = new_pcrc(callback, name);
+	pcr_kenonce_init(cn, pcr_build_nonce, NULL);
+	send_crypto_helper_request(st, cn);
 }

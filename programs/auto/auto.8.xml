@@ -264,7 +264,7 @@ but that may change.)</para>
        ipsec.conf(5). To see all certificates in the NSS database, use <option>certutil -d @IPSEC_NSSDIR@ -L</option>.
 </para>
 <para>      The  <option>--checkpubkeys</option>  operation  lists  all loaded X.509 certificates
-       which are about to expire or have been expired.
+	that are about to expire or have expired.
 </para>
 <para>       The  <option>--listcacerts</option>  operation  lists  all  X.509 CA certificates contained in
 	the NSS database.
@@ -354,7 +354,7 @@ tears only one end of the connection down
 <emphasis remap='B'>passthrough</emphasis>
 connections.</para>
 
-<para>A connection description which uses
+<para>A connection description that uses
 <emphasis remap='B'>%defaultroute</emphasis>
 for one of its
 <emphasis remap='B'>nexthop</emphasis>

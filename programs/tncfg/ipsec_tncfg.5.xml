@@ -35,7 +35,7 @@ bound to physical interfaces </para>
 
 <refsect1 id='description'><title>DESCRIPTION</title>
 <para><filename>/proc/net/ipsec_tncfg</filename>
-is a read-only file which lists which IPSEC virtual interfaces are
+is a read-only file that lists which IPSEC virtual interfaces are
 attached to which real interfaces, through which packets will be
 forwarded once processed by IPSEC.</para>
 

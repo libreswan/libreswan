@@ -1,0 +1,45 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec auto --add westnet-eastnet-aggr
+002 added connection description "westnet-eastnet-aggr"
+west #
+ echo "initdone"
+initdone
+west #
+ # create a partial state on east, don't hold the hack for retransmit
+west #
+ ipsec whack --impair impair-drop-i2 --impair retransmits
+west #
+ ipsec auto --up  westnet-eastnet-aggr
+002 "westnet-eastnet-aggr" #1: initiating Aggressive Mode
+002 "westnet-eastnet-aggr" #1: IMPAIR RETRANSMITS: scheduling timeout in 0.5 seconds
+112 "westnet-eastnet-aggr" #1: STATE_AGGR_I1: initiate
+002 "westnet-eastnet-aggr" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set
+002 "westnet-eastnet-aggr" #1: IMPAIR RETRANSMITS: suppressing re-key
+002 "westnet-eastnet-aggr" #1: deleting state (STATE_AGGR_I1)
+west #
+ # we are waiting for east to expire the partial IKE state in 1+1+2+4+8+16+32 secs
+west #
+ sleep 30
+west #
+ sleep 30
+west #
+ sleep 10
+west #
+ echo done
+done
+west #
+ # on east, we should see no more partial state
+west #
+ ipsec status | grep STATE_
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

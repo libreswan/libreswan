@@ -140,6 +140,7 @@ const struct kernel_ops win2k_kernel_ops = {
 	.inbound_eroute = TRUE,
 	.policy_lifetime = TRUE,
 	.async_fdp = &win2k_bcast_fd,
+	.route_fdp = NULL,
 	.replay_window = 32,
 
 	.init = win2k_init,
@@ -158,4 +159,5 @@ const struct kernel_ops win2k_kernel_ops = {
 	.opname = "win2k",
 	.overlap_supported = FALSE,
 	.sha2_truncbug_support = FALSE,
+	.v6holes = NULL,
 };

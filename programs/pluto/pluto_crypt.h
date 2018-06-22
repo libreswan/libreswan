@@ -41,6 +41,9 @@
 #include "crypto.h"
 #include "libreswan/passert.h"
 
+struct state;
+struct msg_digest;
+
 /*
  * cryptographic helper operations.
  */
@@ -148,29 +151,26 @@ extern void wire_clone_chunk(wire_arena_t *arena,
 
 /* query and response */
 struct pcr_kenonce {
-	/* input, then output */
-	DECLARE_WIRE_ARENA(KENONCE_SIZE);
-
 	/* inputs */
 	const struct oakley_group_desc *group;
 
 	/* outputs */
-	SECKEYPrivateKey *secret;
-	SECKEYPublicKey *pubk;
-	wire_chunk_t gi;
-	wire_chunk_t n;
+	struct dh_secret *secret;
+	chunk_t gi;
+	chunk_t n;
 };
 
 #define DHCALC_SIZE 2560
 
-/* query */
-struct pcr_skeyid_q {
+struct pcr_v1_dh {
 	DECLARE_WIRE_ARENA(DHCALC_SIZE);
 
+	/* query */
 	const struct oakley_group_desc *oakley_group;
 	oakley_auth_t auth; /*IKEv1 AUTH*/
 	const struct integ_desc *integ;
 	const struct prf_desc *prf;
+	const struct encrypt_desc *encrypter;
 	enum original_role role;
 	size_t key_size; /* of encryptor, in bytes */
 	size_t salt_size; /* of IV salt, in bytes */
@@ -181,31 +181,43 @@ struct pcr_skeyid_q {
 	wire_chunk_t nr;
 	wire_chunk_t icookie;
 	wire_chunk_t rcookie;
-	SECKEYPrivateKey *secret;
-	const struct encrypt_desc *encrypter;
-	SECKEYPublicKey *pubk;
+	struct dh_secret *secret;
 	PK11SymKey *skey_d_old;
 	const struct prf_desc *old_prf;
-};
 
-/* response */
-struct pcr_skeyid_r {
-	DECLARE_WIRE_ARENA(DHCALC_SIZE);
-
+	/* response */
 	PK11SymKey *shared;
 	PK11SymKey *skeyid;
 	PK11SymKey *skeyid_d;
 	PK11SymKey *skeyid_a;
 	PK11SymKey *skeyid_e;
 	PK11SymKey *enc_key;
-
-	wire_chunk_t new_iv;
+	chunk_t new_iv;
 };
 
 /* response */
-struct pcr_skeycalc_v2_r {
+struct pcr_dh_v2 {
+	/* incoming */
 	DECLARE_WIRE_ARENA(DHCALC_SIZE);
 
+	const struct oakley_group_desc *dh;
+	const struct integ_desc *integ;
+	const struct prf_desc *prf;
+	const struct encrypt_desc *encrypt;
+	enum original_role role;
+	size_t key_size; /* of encryptor, in bytes */
+	size_t salt_size; /* of IV salt, in bytes */
+	wire_chunk_t gi;
+	wire_chunk_t gr;
+	wire_chunk_t ni;
+	wire_chunk_t nr;
+	wire_chunk_t icookie;
+	wire_chunk_t rcookie;
+	struct dh_secret *secret;
+	PK11SymKey *skey_d_old;
+	const struct prf_desc *old_prf;
+
+	/* outgoing */
 	PK11SymKey *shared;
 	PK11SymKey *skeyid_d;
 	PK11SymKey *skeyid_ai;
@@ -221,17 +233,12 @@ struct pcr_skeycalc_v2_r {
 };
 
 struct pluto_crypto_req {
-	size_t pcr_len;	/* MUST BE FIRST FIELD IN STRUCT */
 	enum pluto_crypto_requests pcr_type;
-	pcr_req_id pcr_id;
-	enum crypto_importance pcr_pcim;
 
 	union {
-		struct pcr_kenonce kn;	/* query and result */
-
-		struct pcr_skeyid_q dhq;	/* query v1 and v2 */
-		struct pcr_skeyid_r dhr;	/* response v1 */
-		struct pcr_skeycalc_v2_r dhv2;	/* response v2 */
+		struct pcr_kenonce kn;		/* query and result */
+		struct pcr_dh_v2 dh_v2;		/* query and response v2 */
+		struct pcr_v1_dh v1_dh;		/* query and response v1 */
 	} pcr_d;
 };
 
@@ -241,179 +248,137 @@ struct pluto_crypto_req_cont;	/* forward reference */
 /*
  * pluto_crypto_req_cont_func:
  *
- * A function that continues a state transition after
- * an asynchronous cryptographic calculation completes.
+ * A function that resumes a state transition after an asynchronous
+ * cryptographic calculation completes.
  *
- * See also comments prefixing send_crypto_helper_request.
+ * It is passed:
  *
- * It is passed a pointer to each of the two structures.
+ * struct state *st:
  *
- * struct pluto_crypto_req_cont:
- *	Information back from helper process.
- *	Notionally sent across the wire.
+ *      The always non-NULL SA (aka state) that requested the crypto.
+ *      If, on completion of the crypto, the requesting state has been
+ *      deleted, this function IS NOT called.
  *
- * struct pluto_crypto_req:
- *	Bookkeeping information to resume the computation.
- *	Never sent across wire but perhaps copied.
- *	For example, it includes a struct msg_digest *
- *	in the cases where that is appropriate
+ *	Before calling, the current global state context will have
+ *	been set to this state, that is, don't call set_cur_state().
+ *
+ * struct msg_digest *mdp:
+ *
+ *      If applicable, *MDP contains the incoming packet that
+ *      triggered the requested crypto.  The initiator, for instance
+ *      when initiating an initial connection or rekey, will not have
+ *      this packet.
+ *
+ *      XXX: should be true now but watch out for fake_md.
+ *
+ *      This routine will not release_any_md(MDP).  The caller will do
+ *      this.  In fact, it must zap *MDP to NULL if it thinks **MDP
+ *      should not be freed.  The the caller is prepared for *MDP
+ *      being set to NULL.
+ *
+ * struct pluto_crypto_req *r:
+ *
+ *	The results from the crypto operation.
+ *
+ *      This function is responsible for releasing or transferring the
+ *      contents (and for "just knowing" the right contents in the
+ *      union it should be using).
+ *
+ * See also the comments that prefix send_crypto_helper_request().
  */
-typedef void crypto_req_cont_func(struct pluto_crypto_req_cont *,
-				struct pluto_crypto_req *);
 
-/*
- * The crypto continuation structure
- *
- * Pluto is an event-driven transaction system.
- * Each transaction must take a very small slice of time.
- * Those that cannot, must be broken into multiple
- * transactions and the state carried between them
- * cannot be on the stack or in simple global variables.
- * A continuation is used to hold such state.
- *
- * A struct pluto_crypto_req_cont is heap-allocated
- * by code that wants to delegate cryptographic work.  It fills
- * in parts of the struct, and "fires and forgets" the work.
- * Unless the firing fails, a case that must be handled.
- * This struct stays on the master side: it isn't sent to the helper.
- * It is used to keep track of in-process work and what to do
- * when the work is complete.
- *
- * Used for:
- *	IKEv1 Quick Mode Key Exchange
- *	Other Key Exchange
- *	Diffie-Hellman computation
- */
-struct pluto_crypto_req_cont {
-	crypto_req_cont_func *pcrc_func;	/* function to continue with */
-	/*
-	 * Sponsoring state's serial number and state pointer.
-	 * Currently a mish-mash but will transition
-	 * to central management by send_crypto_helper_request
-	 * and friends.
-	 */
-	so_serial_t pcrc_serialno;
+typedef void crypto_req_cont_func(struct state *st, struct msg_digest **mdp,
+				  struct pluto_crypto_req *r);
 
-	/*
-	 * Sponsoring message's msg_digest.
-	 * Used in most but not all continuations.
-	 */
-	struct msg_digest *pcrc_md;
-
-	const char *pcrc_name;
-
-	/*
-	 * For IKEv1 Quick Mode Key Exchange:
-	 * pcrc_replacing identifies the state object that
-	 * the exchange will be replacing.
-	 */
-	so_serial_t pcrc_replacing;
-
-	/* the rest of these fields are private to pluto_crypt.c */
-
-	TAILQ_ENTRY(pluto_crypto_req_cont) pcrc_list;
-	struct pluto_crypto_req *pcrc_pcr;	/* owner iff on backlog queue */
-	pcr_req_id pcrc_id;
-	pb_stream pcrc_reply_stream;	/* reply stream of suspended state transition */
-	u_int8_t *pcrc_reply_buffer;	/* saved buffer contents (if any) */
-#ifdef IPSEC_PLUTO_PCRC_DEBUG
-	char *pcrc_function;
-	char *pcrc_filep;
-	int pcrc_line;
-#endif
-};
 /* struct pluto_crypto_req_cont allocators */
 
 struct state;
 
-extern struct pluto_crypto_req_cont *new_pcrc(
-	crypto_req_cont_func fn,
-	const char *name,
-	struct state *st,
-	struct msg_digest *md);
-
-extern struct pluto_crypto_req_cont *new_pcrc_repl(
-	crypto_req_cont_func fn,
-	const char *name,
-	struct state *st,
-	struct msg_digest *md,
-	so_serial_t replacing);
-
+extern struct pluto_crypto_req_cont *new_pcrc(crypto_req_cont_func fn,
+					      const char *name);
 
 extern void init_crypto_helpers(int nhelpers);
 
-extern stf_status send_crypto_helper_request(struct pluto_crypto_req *r,
-					struct pluto_crypto_req_cont *cn);
-
-extern void enumerate_crypto_helper_response_sockets(lsw_fd_set *readfds);
-
-extern int pluto_crypto_helper_response_ready(lsw_fd_set *readfds);
-
-extern void log_crypto_workers(void);
+extern void send_crypto_helper_request(struct state *st,
+				       struct pluto_crypto_req_cont *cn);
 
 /* actual helper functions */
-extern stf_status build_child_dh_v2( struct pluto_crypto_req_cont *cn,
-		const struct oakley_group_desc *group,
-		enum crypto_importance importance);
 
-extern stf_status build_ke_and_nonce(struct pluto_crypto_req_cont *cn,
-			   const struct oakley_group_desc *group,
-			   enum crypto_importance importance);
+/*
+ * KE/NONCE
+ */
 
-extern void calc_ke(struct pluto_crypto_req *r);
+extern void request_ke_and_nonce(const char *name,
+				 struct state *st,
+				 const struct oakley_group_desc *group,
+				 crypto_req_cont_func *callback);
 
-extern stf_status build_nonce(struct pluto_crypto_req_cont *cn,
-			      enum crypto_importance importance);
+extern void request_nonce(const char *name,
+			  struct state *st,
+			  crypto_req_cont_func *callback);
 
-extern void calc_nonce(struct pluto_crypto_req *r);
+extern void calc_ke(struct pcr_kenonce *kn);
+
+extern void calc_nonce(struct pcr_kenonce *kn);
+
+extern void cancelled_ke_and_nonce(struct pcr_kenonce *kn);
+
+/*
+ * IKEv1 DH
+ */
 
 extern void compute_dh_shared(struct state *st, const chunk_t g,
 			      const struct oakley_group_desc *group);
 
-extern stf_status start_dh_secretiv(struct pluto_crypto_req_cont *dh,
-				    struct state *st,
-				    enum crypto_importance importance,
-				    enum original_role role,
-				    const struct oakley_group_desc *oakley_group2);
+extern void start_dh_v1_secretiv(crypto_req_cont_func fn, const char *name,
+				 struct state *st, enum original_role role,
+				 const struct oakley_group_desc *oakley_group2);
 
 extern bool finish_dh_secretiv(struct state *st,
 			       struct pluto_crypto_req *r);
 
-extern stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
-				  struct state *st,
-				  enum crypto_importance importance,
-				  enum original_role role,
-				  const struct oakley_group_desc *oakley_group2);
+extern void start_dh_v1_secret(crypto_req_cont_func fn, const char *name,
+			       struct state *st, enum original_role role,
+			       const struct oakley_group_desc *oakley_group2);
 
 extern void finish_dh_secret(struct state *st,
 			     struct pluto_crypto_req *r);
 
-extern stf_status start_dh_v2(struct msg_digest *md,
-			      const char *name,
-			      enum original_role role,
-			      PK11SymKey *skey_d_old,
-			      const struct prf_desc *old_prf,
-			      crypto_req_cont_func pcrc_func);
+extern void calc_dh(struct pcr_v1_dh *dh);
 
-extern stf_status start_child_dh_v2(struct msg_digest *md,
-			      const char *name,
-			      enum original_role role,
-			      crypto_req_cont_func pcrc_func);
+extern void cancelled_v1_dh(struct pcr_v1_dh *dh);
+
+/*
+ * IKEv2 DH
+ */
+
+extern void start_dh_v2(struct state *st,
+			const char *name,
+			enum original_role role,
+			PK11SymKey *skey_d_old,
+			const struct prf_desc *old_prf,
+			crypto_req_cont_func pcrc_func);
 
 extern bool finish_dh_v2(struct state *st,
-			 const struct pluto_crypto_req *r, bool only_shared);
+			 struct pluto_crypto_req *r, bool only_shared);
 
-extern void unpack_KE_from_helper(
-	struct state *st,
-	const struct pluto_crypto_req *r,
-	chunk_t *g);
+extern void cancelled_dh_v2(struct pcr_dh_v2 *dh);
 
-extern void pcr_nonce_init(struct pluto_crypto_req *r,
-			    enum pluto_crypto_requests pcr_type,
-			    enum crypto_importance pcr_pcim);
+/*
+ * KE and NONCE
+ */
 
-extern void pcr_dh_init(struct pluto_crypto_req *r,
-			enum pluto_crypto_requests pcr_type,
-			enum crypto_importance pcr_pcim);
+extern void unpack_KE_from_helper(struct state *st,
+				  struct pluto_crypto_req *r,
+				  chunk_t *g);
+
+void pcr_kenonce_init(struct pluto_crypto_req_cont *cn,
+		      enum pluto_crypto_requests pcr_type,
+		      const struct oakley_group_desc *dh);
+
+struct pcr_v1_dh *pcr_v1_dh_init(struct pluto_crypto_req_cont *cn,
+				 enum pluto_crypto_requests pcr_type);
+
+struct pcr_dh_v2 *pcr_dh_v2_init(struct pluto_crypto_req_cont *cn);
 
 #endif /* _PLUTO_CRYPT_H */

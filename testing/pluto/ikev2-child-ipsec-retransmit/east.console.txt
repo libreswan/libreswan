@@ -1,0 +1,37 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-ikev2a
+002 added connection description "westnet-eastnet-ikev2a"
+east #
+ ipsec auto --add westnet-eastnet-ikev2b
+002 added connection description "westnet-eastnet-ikev2b"
+east #
+ # do not answer CREATE_CHILD_SA requests
+east #
+ ###ipsec whack --impair send-no-ikev2-cc-resp
+east #
+ echo "initdone"
+initdone
+east #
+ # should show retransmits on west and replies on east
+east #
+ grep sending /tmp/pluto.log |grep through
+| sending 432 bytes for STATE_IKEv2_BASE through eth1:500 to 192.1.2.45:500 (using #1)
+| sending 225 bytes for STATE_PARENT_R1 through eth1:500 to 192.1.2.45:500 (using #1)
+| sending 177 bytes for STATE_V2_CREATE_R through eth1:500 to 192.1.2.45:500 (using #1)
+| sending 177 bytes for ikev2-responder-retransmit through eth1:500 to 192.1.2.45:500 (using #1)
+| sending 177 bytes for ikev2-responder-retransmit through eth1:500 to 192.1.2.45:500 (using #1)
+| sending 177 bytes for ikev2-responder-retransmit through eth1:500 to 192.1.2.45:500 (using #1)
+| sending 177 bytes for ikev2-responder-retransmit through eth1:500 to 192.1.2.45:500 (using #1)
+| sending 177 bytes for ikev2-responder-retransmit through eth1:500 to 192.1.2.45:500 (using #1)
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

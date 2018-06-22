@@ -1,9 +1,0 @@
-This tests using a remote ID_FQDN ID when requiring a connection switch
-The nss-cert-wrong connection answers, verifies the cert, and then based on ID
-it switches to nss-cert-correct
-
-This variant tests oddly ordered DNs with wildcards
-
-
-NOTE: This test case now fails because the ID CN=signedbyother.testing.libreswan.org
-is getting rejected

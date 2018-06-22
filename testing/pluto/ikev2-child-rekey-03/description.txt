@@ -1,0 +1,4 @@
+Test CREATE_CHILD_SA IPsec SA rekey by IKE initiator with dpd enabled.
+
+First rekey between 20 - 40 seconds
+Second rekey this in 40 - 80 seconds.

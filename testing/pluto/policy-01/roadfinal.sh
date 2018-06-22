@@ -1,5 +1,5 @@
 : ==== cut ====
 cat /tmp/pluto.log
-ipsec look
+../../pluto/bin/ipsec-look.sh
 : ==== tuc ====
 

@@ -1,0 +1,43 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec _stackmanager start
+east #
+ ipsec pluto --config /etc/ipsec.conf --leak-detective
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-ipv4-psk-ppk
+002 added connection description "westnet-eastnet-ipv4-psk-ppk"
+east #
+ ipsec auto --status | grep westnet-eastnet-ipv4-psk-ppk
+000 "westnet-eastnet-ipv4-psk-ppk": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; unrouted; eroute owner: #0
+000 "westnet-eastnet-ipv4-psk-ppk":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "westnet-eastnet-ipv4-psk-ppk":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "westnet-eastnet-ipv4-psk-ppk":   our auth:secret, their auth:secret
+000 "westnet-eastnet-ipv4-psk-ppk":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
+000 "westnet-eastnet-ipv4-psk-ppk":   labeled_ipsec:no;
+000 "westnet-eastnet-ipv4-psk-ppk":   policy_label:unset;
+000 "westnet-eastnet-ipv4-psk-ppk":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ipv4-psk-ppk":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "westnet-eastnet-ipv4-psk-ppk":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "westnet-eastnet-ipv4-psk-ppk":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW+PPK_ALLOW+PPK_INSIST+ESN_NO;
+000 "westnet-eastnet-ipv4-psk-ppk":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "westnet-eastnet-ipv4-psk-ppk":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+000 "westnet-eastnet-ipv4-psk-ppk":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
+000 "westnet-eastnet-ipv4-psk-ppk":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
+000 "westnet-eastnet-ipv4-psk-ppk":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec whack --shutdown
+002 shutting down
+east #
+ grep leak /tmp/pluto.log
+leak-detective enabled
+leak detective found no leaks
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

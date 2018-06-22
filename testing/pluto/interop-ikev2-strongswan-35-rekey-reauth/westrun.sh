@@ -4,7 +4,7 @@ ipsec whack --trafficstatus
 ping -s 512 -n -c  15 -I 192.0.1.254 192.0.2.254
 #Child #3 with traffic
 ipsec whack --trafficstatus
-echo "sleep 60  seconds, east reauthenticate IKE and Child SA"
+echo "sleep 60  seconds, east rekey IKE"
 sleep 30
 sleep 30
 # it should have IKE #4 Child #5 and also IKE #1 and Child #3

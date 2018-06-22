@@ -1,0 +1,4 @@
+Testing dynamic PPK, west (initiator) insists on it and east proposes it.
+The OTP files should be checked and updated from time to time. 
+Right permissions should be set for westotp1.txt and eastotp1.txt so they could be
+written to.

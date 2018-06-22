@@ -87,7 +87,7 @@ void starter_use_log(bool debug, bool console, bool mysyslog)
 	log_to_console = console;
 	if (mysyslog != log_to_syslog) {
 		if (mysyslog)
-			openlog("ipsec_starter", LOG_PID, LOG_USER);
+			openlog("libipsecconf", LOG_PID, LOG_USER);
 		else
 			closelog();
 		log_to_syslog = mysyslog;

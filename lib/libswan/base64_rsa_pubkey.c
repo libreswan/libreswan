@@ -130,8 +130,8 @@ err_t rfc_resource_record_to_rsa_pubkey(chunk_t rr, chunk_t *e, chunk_t *n)
 	/*
 	 * Step 2: all looks good, clone the bits
 	 */
-	*e = chunk_clone(exponent, "e");
-	*n = chunk_clone(modulus, "n");
+	*e = clone_chunk(exponent, "e");
+	*n = clone_chunk(modulus, "n");
 	return NULL;
 }
 

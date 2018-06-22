@@ -28,7 +28,6 @@
 #include <sys/ioctl.h>
 #include <sys/utsname.h>
 #include <sys/types.h>
-#include <sys/wait.h>
 
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -51,7 +50,7 @@
 #include "kernel.h"
 #include "kernel_netlink.h"
 #include "kernel_pfkey.h"
-#include "kernel_noklips.h"
+#include "kernel_nokernel.h"
 #include "packet.h"
 #include "x509.h"
 #include "log.h"
@@ -95,21 +94,17 @@
  * They are useful for adjusting a firewall.
  */
 
-#ifndef DEFAULT_UPDOWN
-# define DEFAULT_UPDOWN "ipsec _updown"
-#endif
-
 static const char *pluto_ifn[10];
 static int pluto_ifn_roof = 0;
 
 struct raw_iface *find_raw_ifaces4(void)
 {
-	static const int on = TRUE;	/* by-reference parameter; constant, we hope */
 	int j;	/* index into buf */
 	struct ifconf ifconf;
 	struct ifreq *buf = NULL;	/* for list of interfaces -- arbitrary limit */
 	struct raw_iface *rifaces = NULL;
 	int master_sock = safe_socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);	/* Get a UDP socket */
+	static const int on = TRUE;     /* by-reference parameter; constant, we hope */
 
 	/*
 	 * Current upper bound on number of interfaces.
@@ -123,9 +118,13 @@ struct raw_iface *find_raw_ifaces4(void)
 	if (master_sock == -1)
 		EXIT_LOG_ERRNO(errno, "socket() failed in find_raw_ifaces4()");
 
+	/*
+	 * Without SO_REUSEADDR, bind() of master_sock will cause
+	 * 'address already in use?
+	 */
 	if (setsockopt(master_sock, SOL_SOCKET, SO_REUSEADDR,
-		       (const void *)&on, sizeof(on)) < 0)
-		EXIT_LOG_ERRNO(errno, "setsockopt() in find_raw_ifaces4()");
+			(const void *)&on, sizeof(on)) < 0)
+		EXIT_LOG_ERRNO(errno, "setsockopt(SO_REUSEADDR) in find_raw_ifaces4()");
 
 	/* bind the socket */
 	{

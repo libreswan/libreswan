@@ -1,0 +1,39 @@
+/testing/guestbin/swan-prep
+east #
+ cp policies/* /etc/ipsec.d/policies/
+east #
+ echo "192.1.3.0/24"  >> /etc/ipsec.d/policies/private-or-clear
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ # give OE policies time to load
+east #
+ sleep 5
+east #
+ echo "initdone"
+initdone
+east #
+ # both ends should only show 1 tunnel`
+east #
+ ipsec whack --trafficstatus
+006 #2: "private-or-clear#192.1.3.0/24"[1] ...192.1.3.209, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL'
+006 #4: "private-or-clear#192.1.3.0/24"[1] ...192.1.3.209, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='ID_NULL'
+east #
+ # check for a counting bug where total SA's is wrong on east
+east #
+ ipsec status | grep 'authenticated'
+000 IKE SAs: total(2), half-open(0), open(0), authenticated(0), anonymous(2)
+000 IPsec SAs: total(2), authenticated(0), anonymous(2)
+east #
+ # verify no packets were dropped due to missing SPD policies
+east #
+ grep -v -P "\t0$" /proc/net/xfrm_stat
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

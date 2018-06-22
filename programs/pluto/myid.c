@@ -5,8 +5,7 @@
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
- *
+ * Copyright (C) 2013, 2017 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -44,117 +43,6 @@
 #include "packet.h"
 #include "whack.h"
 
-enum myid_state myid_state = MYID_UNKNOWN;
-struct id myids[MYID_SPECIFIED + 1];    /* %myid */
-char *myid_str[MYID_SPECIFIED + 1];     /* string form of IDs */
-
-const struct id *resolve_myid(const struct id *id)
-{
-	// char tmpid[IDTOA_BUF];
-
-	// idtoa(id, tmpid, sizeof(tmpid));
-	// loglog(RC_LOG_SERIOUS,"resolve_myid() called for id:%s",tmpid);
-
-	if ((id)->kind == ID_MYID) {
-		return &myids[myid_state];
-	} else {
-		return id;
-	}
-}
-
-void show_myid_status(void)
-{
-	char idstr[IDTOA_BUF];
-
-	(void)idtoa(&myids[myid_state], idstr, sizeof(idstr));
-	whack_log(RC_COMMENT, "myid = %s", idstr);
-}
-
-/* Fills in myid from environment variable IPSECmyid or defaultrouteaddr
- */
-void init_id(void)
-{
-	passert(empty_id.kind == ID_NONE);
-	myid_state = MYID_UNKNOWN;
-	{
-		enum myid_state s;
-
-		for (s = MYID_UNKNOWN; s <= MYID_SPECIFIED; s++) {
-			myids[s] = empty_id;
-			myid_str[s] = NULL;
-		}
-	}
-	set_myFQDN();
-}
-
-static void calc_myid_str(enum myid_state s)
-{
-	/* preformat the ID name */
-	char buf[IDTOA_BUF];
-
-	idtoa(&myids[s], buf, IDTOA_BUF);
-	/* replace() uses pfreeany() */
-	replace(myid_str[s], clone_str(buf, "myid string"));
-}
-
-void set_myid(enum myid_state s, char *idstr)
-{
-	if (idstr != NULL) {
-		struct id id;
-		err_t ugh = atoid(idstr, &id, FALSE, FALSE);
-
-		if (ugh != NULL) {
-			loglog(RC_BADID, "myid malformed: %s \"%s\"",
-			        ugh, idstr);
-		} else {
-			duplicate_id(&myids[s], &id);
-			if (s == MYID_SPECIFIED)
-				myid_state = MYID_SPECIFIED;
-
-			calc_myid_str(s);
-		}
-	}
-}
-
-void set_myFQDN(void)
-{
-	char FQDN[SWAN_MAX_DOMAIN_LEN];
-	int r = gethostname(FQDN, sizeof(FQDN));
-
-	free_id_content(&myids[MYID_HOSTNAME]);
-	myids[MYID_HOSTNAME] = empty_id;
-	if (r != 0) {
-		LOG_ERRNO(errno, "gethostname() failed in set_myFQDN");
-	} else {
-		FQDN[sizeof(FQDN) - 1] = '\0'; /* insurance */
-
-		{
-			size_t len = strlen(FQDN);
-
-			if (len > 0 && FQDN[len - 1] == '.') {
-				/* nuke trailing . */
-				FQDN[len - 1] = '\0';
-			}
-		}
-
-		if (!strcaseeq(FQDN, "localhost.localdomain")) {
-			clonetochunk(myids[MYID_HOSTNAME].name, FQDN,
-				     strlen(FQDN), "my FQDN");
-			myids[MYID_HOSTNAME].kind = ID_FQDN;
-			calc_myid_str(MYID_HOSTNAME);
-		}
-	}
-}
-
-void free_myFQDN(void)
-{
-	int i;
-	free_id_content(&myids[MYID_HOSTNAME]);
-	for (i = 0; i < MYID_SPECIFIED; i++) {
-		pfreeany(myid_str[i]);
-	}
-}
-
 /*
  * Build an ID payload
  * Note: no memory is allocated for the body of the payload (tl->ptr).
@@ -165,27 +53,22 @@ void free_myFQDN(void)
  * the chunk will not be written, but it is awkward to paste const on it.
  */
 
-/* a macro to discard the const portion of a variable to avoid
- * otherwise unavoidable -Wcast-qual warnings.
- * USE WITH CAUTION and only when you know it's safe to discard the const
- */
-
-#ifdef __GNUC__
-#define DISCARD_CONST(vartype, \
-		      varname) (__extension__({ const vartype tmp = (varname); \
-						(vartype)(uintptr_t)tmp; }))
-#else
-#define DISCARD_CONST(vartype, varname) ((vartype)(uintptr_t)(varname))
-#endif
-
-void build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl, struct end *end)
+void build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl, struct end *end, bool nullid)
 {
-	const struct id *id = resolve_myid(&end->id);
+	const struct id *id = &end->id;
 	const unsigned char *p;
 
 	zero(hd);	/* OK: no pointer fields */
 	*tl = empty_chunk;
 	hd->isaiid_idtype = id->kind;
+
+	if (nullid) {
+		hd->isaiid_idtype = ID_NULL;
+		tl->len = 0;
+		tl->ptr = NULL;
+		return;
+	}
+
 	switch (id->kind) {
 	case ID_NONE:
 		hd->isaiid_idtype =

@@ -109,9 +109,6 @@ struct connection;
 
 void ike_alg_show_connection(const struct connection *c, const char *instance);
 
-const struct oakley_group_desc *ike_alg_pfsgroup(struct connection *c,
-						 lset_t policy);
-
 void ike_alg_show_status(void);
 
 #endif /* _CRYPTO_H */

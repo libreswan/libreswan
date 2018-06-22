@@ -352,8 +352,8 @@ enum ipsec_rcv_value ipsec_rcv_esp_post_decrypt(struct ipsec_rcv_state *irs)
 			      (irs->esphlen + pad));
 
 	/*
-	 * move the IP header forward by the size of the ESP header, which
-	 * will remove the the ESP header from the packet.
+	 * move the IP header forward by the size of the ESP header,
+	 * thus removing the the ESP header from the packet.
 	 *
 	 * XXX this is really unnecessary, since odds we are in tunnel
 	 *     mode, and we will be *removing* this IP header.

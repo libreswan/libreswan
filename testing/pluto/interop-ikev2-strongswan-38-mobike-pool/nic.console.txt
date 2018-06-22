@@ -1,0 +1,40 @@
+iptables -t nat -F
+nic #
+ iptables -F
+nic #
+ iptables -X
+nic #
+ # NAT
+nic #
+ ip addr show dev eth1 | grep 192.1.33.254 || ip addr add 192.1.33.254/24 dev eth1
+nic #
+ iptables -t nat -A POSTROUTING -p udp --sport 4500 -j SNAT --to-source 192.1.2.254:3500-3700
+nic #
+ iptables -t nat -A POSTROUTING -p udp --sport 500 -j SNAT --to-source 192.1.2.254:2500-2700
+nic #
+ iptables -t nat -A POSTROUTING --destination 0.0.0.0/0 -j SNAT --to-source 192.1.2.254
+nic #
+ iptables -t nat -L -n
+Chain PREROUTING (policy ACCEPT)
+target     prot opt source               destination         
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+Chain POSTROUTING (policy ACCEPT)
+target     prot opt source               destination         
+SNAT       udp  --  0.0.0.0/0            0.0.0.0/0            udp spt:4500 to:192.1.2.254:3500-3700
+SNAT       udp  --  0.0.0.0/0            0.0.0.0/0            udp spt:500 to:192.1.2.254:2500-2700
+SNAT       all  --  0.0.0.0/0            0.0.0.0/0            to:192.1.2.254
+nic #
+ iptables -L -n
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+nic #
+ echo initdone
+initdone
+

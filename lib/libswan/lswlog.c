@@ -16,16 +16,29 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "lswlog.h"
 #include "lswalloc.h"
 
-const struct lswbuf empty_lswbuf = {
-	.parrot = LSWBUF_PARROT,
-	.buf = "",
-	.canary = LSWBUF_CANARY,
-	.len = 0,
-};
+/*
+ * This is the one place where PASSERT() can't be used - it will
+ * recursively end up back here!
+ */
+static void check_lswbuf(struct lswlog *buf)
+{
+#define A(ASSERTION) if (!(ASSERTION)) abort()
+	A(buf->dots != NULL);
+	/* LEN/BOUND well defined */
+	A(buf->len <= buf->bound);
+	A(buf->bound < buf->roof);
+	/* always NUL terminated */
+	A(buf->array[buf->len] == '\0');
+	A(buf->array[buf->bound] == '\0');
+	/* overflow? */
+	A(buf->array[buf->roof] == LSWBUF_CANARY);
+#undef A
+}
 
 static int lswlog_debugf_nop(const char *format UNUSED, ...)
 {
@@ -47,16 +60,16 @@ static struct dest dest(struct lswlog *log)
 {
 	lswlog_debugf("dest(.log=%p)\n", log);
 	lswlog_debugf("\tbbound=%zu\n", log->bound);
-	PASSERT_LSWBUF(log);
+	check_lswbuf(log);
 
 	/*
 	 * Where will the next message be written?
 	 */
-	passert(log->bound < sizeof(log->buf->buf));
-	passert(log->buf->len <= log->bound);
-	char *start = log->buf->buf + log->buf->len;
+	passert(log->bound < log->roof);
+	passert(log->len <= log->bound);
+	char *start = log->array + log->len;
 	lswlog_debugf("\tstart=%p\n", start);
-	passert(start < log->buf->buf + sizeof(log->buf->buf));
+	passert(start < log->array + log->roof);
 	passert(start[0] == '\0');
 
 	/*
@@ -68,11 +81,11 @@ static struct dest dest(struct lswlog *log)
 	 * If the buffer has overflowed (LEN==BOUND) (output has
 	 * already been truncated) then size=0.
 	 */
-	passert(log->bound < sizeof(log->buf->buf));
-	passert(log->buf->len <= log->bound);
-	size_t size = log->bound - log->buf->len;
+	passert(log->bound < log->roof);
+	passert(log->len <= log->bound);
+	size_t size = log->bound - log->len;
 	lswlog_debugf("\tsize=%zd\n", size);
-	passert(log->buf->len + size < sizeof(log->buf->buf));
+	passert(log->len + size < log->roof);
 
 	struct dest d = {
 		.start = start,
@@ -88,26 +101,26 @@ static struct dest dest(struct lswlog *log)
  * The output needs to be truncated, overwrite the end of the buffer
  * with DOTS.
  */
-static void truncate(struct lswlog *log)
+static void truncate_buf(struct lswlog *log)
 {
-	lswlog_debugf("truncate(.log=%p)\n", log);
-	lswlog_debugf("\tblen=%zu\n", log->buf->len);
+	lswlog_debugf("truncate_buf(.log=%p)\n", log);
+	lswlog_debugf("\tblen=%zu\n", log->len);
 	lswlog_debugf("\tbbound=%zu\n", log->bound);
 	lswlog_debugf("\tbdots=%s\n", log->dots);
-	PASSERT_LSWBUF(log);
+	check_lswbuf(log);
 
 	/*
 	 * Transition from "full" to overfull (truncated).
 	 */
-	passert(log->buf->len == log->bound - 1);
-	log->buf->len = log->bound;
+	passert(log->len == log->bound - 1);
+	log->len = log->bound;
 
 	/*
 	 * Backfill with DOTS.
 	 */
-	passert(log->bound < sizeof(log->buf->buf));
+	passert(log->bound < log->roof);
 	passert(log->bound >= strlen(log->dots));
-	char *dest = log->buf->buf + log->bound - strlen(log->dots);
+	char *dest = log->array + log->bound - strlen(log->dots);
 	lswlog_debugf("\tdest=%p\n", dest);
 	memcpy(dest, log->dots, strlen(log->dots) + 1);
 }
@@ -119,6 +132,11 @@ static void truncate(struct lswlog *log)
 
 static size_t concat(struct lswlog *log, const char *string)
 {
+	/* Just in case a NULL ends up here */
+	if (string == NULL) {
+		string = "(null)";
+	}
+
 	struct dest d = dest(log);
 
 	/*
@@ -134,7 +152,7 @@ static size_t concat(struct lswlog *log, const char *string)
 		 * NUL, copy everything over.
 		 */
 		memcpy(d.start, string, n + 1);
-		log->buf->len += n;
+		log->len += n;
 	} else if (d.size > 0) {
 		/*
 		 * Not enough space, perform a partial copy of the
@@ -142,16 +160,16 @@ static size_t concat(struct lswlog *log, const char *string)
 		 */
 		memcpy(d.start, string, d.size - 1);
 		d.start[d.size - 1] = '\0';
-		log->buf->len += d.size - 1;
-		passert(log->buf->len == log->bound - 1);
+		log->len += d.size - 1;
+		passert(log->len == log->bound - 1);
 		/*
 		 * ... and then go back and blat the end with DOTS.
 		 */
-		truncate(log);
+		truncate_buf(log);
 	}
 	/* already overflowed */
 
-	PASSERT_LSWBUF(log);
+	check_lswbuf(log);
 	return n;
 }
 
@@ -165,7 +183,7 @@ static size_t append(struct lswlog *log, const char *format, va_list ap)
 	 * to the buffer.
 	 *
 	 * If N is negative than an "output error" (will that happen?)
-	 * occured (that or a very old, non-compliant, s*printf()
+	 * occurred (that or a very old, non-compliant, s*printf()
 	 * implementation that returns -1 instead of the required
 	 * size).
 	 */
@@ -176,10 +194,10 @@ static size_t append(struct lswlog *log, const char *format, va_list ap)
 		 * values are unsigned.
 		 *
 		 * Calling PEXPECT_LOG() here is recursive; is this a
-		 * problem? (if it is then hopefully things crash).
+		 * problem? (if it is then we hope things crash).
 		 */
 		PEXPECT_LOG("vsnprintf() unexpectedly returned the -ve value %d", sn);
-		return sizeof(log->buf->buf);
+		return log->roof;
 	}
 	size_t n = sn;
 
@@ -188,22 +206,22 @@ static size_t append(struct lswlog *log, const char *format, va_list ap)
 		 * Everything, including the trailing NUL, fitted.
 		 * Update the length.
 		 */
-		log->buf->len += n;
+		log->len += n;
 	} else if (d.size > 0) {
 		/*
 		 * The message didn't fit so only d.size-1 characters
 		 * of the message were written.  Update things ...
 		 */
-		log->buf->len += d.size - 1;
-		passert(log->buf->len == log->bound - 1);
+		log->len += d.size - 1;
+		passert(log->len == log->bound - 1);
 		/*
 		 * ... and then mark the buffer as truncated.
 		 */
-		truncate(log);
+		truncate_buf(log);
 	}
 	/* already overflowed */
 
-	PASSERT_LSWBUF(log);
+	check_lswbuf(log);
 	return n;
 }
 
@@ -228,5 +246,5 @@ size_t lswlogs(struct lswlog *log, const char *string)
 
 size_t lswlogl(struct lswlog *log, struct lswlog *buf)
 {
-	return concat(log, buf->buf->buf);
+	return concat(log, buf->array);
 }

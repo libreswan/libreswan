@@ -16,7 +16,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec whack --debug-all --impair-retransmits
+ ipsec whack --impair retransmits
 west #
  ipsec auto --up westnet-eastnet-ikev2
 002 "westnet-eastnet-ikev2" #1: initiating v2 parent SA
@@ -26,7 +26,8 @@ west #
 134 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=sha1_96 prf=sha group=MODP2048}
 002 "westnet-eastnet-ikev2" #2: suppressing retransmit because IMPAIR_RETRANSMITS is set.
 002 "westnet-eastnet-ikev2" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
-002 "westnet-eastnet-ikev2" #2: local policy requires Transport Mode but peer requires required Tunnel Mode
+003 "westnet-eastnet-ikev2" #2: Authenticated using authby=secret
+003 "westnet-eastnet-ikev2" #2: local policy requires Transport Mode but peer requires required Tunnel Mode
 214 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: v2N_NO_PROPOSAL_CHOSEN
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
@@ -42,11 +43,11 @@ west #
  echo done
 done
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 
 	sel src 192.1.2.23/32 dst 192.1.2.45/32 
 XFRM policy:

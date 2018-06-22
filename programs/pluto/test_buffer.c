@@ -99,6 +99,14 @@ chunk_t decode_to_chunk(const char *prefix, const char *original)
 	return chunk;
 }
 
+PK11SymKey *decode_hex_to_symkey(const char *prefix, const char *string)
+{
+	chunk_t chunk = decode_hex_to_chunk(prefix, string);
+	PK11SymKey *symkey = symkey_from_chunk(prefix, chunk);
+	freeanychunk(chunk);
+	return symkey;
+}
+
 /*
  * Verify that the chunk's data is the same as actual.
  * Note that it is assumed that there is enough data in actual.
@@ -136,6 +144,20 @@ bool verify_chunk(const char *desc,
 	return verify_chunk_data(desc, expected, actual.ptr);
 }
 
+/* verify that expected is the same as actual */
+bool verify_symkey(const char *desc, chunk_t expected, PK11SymKey *actual)
+{
+	if (expected.len != sizeof_symkey(actual)) {
+		DBGF(DBG_CRYPT, "%s: expected length %zd but got %zd",
+		     desc, expected.len, sizeof_symkey(actual));
+		return FALSE;
+	}
+	chunk_t chunk = chunk_from_symkey(desc, actual);
+	bool ok = verify_chunk_data(desc, expected, chunk.ptr);
+	freeanychunk(chunk);
+	return ok;
+}
+
 /*
  * Turn the raw key into SymKey.
  */
@@ -143,9 +165,8 @@ PK11SymKey *decode_to_key(const struct encrypt_desc *encrypt_desc,
 			  const char *encoded_key)
 {
 	chunk_t raw_key = decode_to_chunk("raw_key", encoded_key);
-	PK11SymKey *symkey = symkey_from_chunk("symkey", DBG_CRYPT,
-					       &encrypt_desc->common,
-					       raw_key);
+	PK11SymKey *symkey = encrypt_key_from_bytes("symkey", encrypt_desc,
+						    raw_key.ptr, raw_key.len);
 	freeanychunk(raw_key);
 	return symkey;
 }

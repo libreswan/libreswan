@@ -18,7 +18,7 @@ initdone
 west #
  # should fail to establish
 west #
- ipsec whack --debug-all --impair-retransmits
+ ipsec whack --impair retransmits
 west #
  ipsec auto --up replay
 002 "replay" #1: initiating v2 parent SA
@@ -27,15 +27,17 @@ west #
 002 "replay" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set.
 134 "replay" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
 002 "replay" #2: suppressing retransmit because IMPAIR_RETRANSMITS is set.
+002 "replay" #2: AUTH response contained the error notification NO_PROPOSAL_CHOSEN
+000 "replay" #2: scheduling retry attempt 1 of an unlimited number, but releasing whack
 west #
  echo done
 done
 west #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 
 	sel src 192.1.2.23/32 dst 192.1.2.45/32 
 XFRM policy:

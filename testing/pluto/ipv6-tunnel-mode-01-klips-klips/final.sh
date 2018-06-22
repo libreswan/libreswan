@@ -1,4 +1,5 @@
-ipsec look
+ipsec eroute
+ipsec whack --trafficstatus
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

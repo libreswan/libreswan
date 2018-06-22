@@ -22,6 +22,9 @@
 
 #include <net/if.h>
 
+#include "monotime.h"
+#include "reqid.h"
+
 extern bool can_do_IPcomp;  /* can system actually perform IPCOMP? */
 extern reqid_t global_reqids;
 
@@ -83,12 +86,18 @@ struct kernel_sa {
 	const ip_address *src;
 	const ip_address *dst;
 
+	const ip_address *ndst;		/* netlink migration new destination */
+	const ip_address *nsrc;		/* netlink migration new source */
+
 	const ip_subnet *src_client;
 	const ip_subnet *dst_client;
 
 	bool inbound;
+	int  nk_dir;			/* netky has 3, in,out & fwd */
 	bool add_selector;
 	bool esn;
+	bool decap_dscp;
+	bool nopmtudisc;
 	u_int32_t tfcpad;
 	ipsec_spi_t spi;
 	unsigned proto;
@@ -122,7 +131,7 @@ struct kernel_sa {
 
 	int encapsulation;
 	u_int16_t natt_sport, natt_dport;
-	u_int8_t transid, natt_type;
+	u_int8_t natt_type;
 	ip_address *natt_oa;
 	const char *text_said;
 #ifdef HAVE_LABELED_IPSEC
@@ -131,16 +140,24 @@ struct kernel_sa {
 	const char *nic_offload_dev;
 
 	deltatime_t sa_lifetime; /* number of seconds until SA expires */
-	/* below two need to enabled and used, instead of getting passed */
-	// uint32_t sa_priority;
-	// struct sa_marks *sa_marks;
+	/*
+	 * Below two enties need to enabled and used,
+	 * instead of getting passed
+	 * uint32_t sa_priority;
+	 * struct sa_marks *sa_marks;
+	 */
 };
+
+extern const struct kernel_sa empty_sa;	/* zero or null in all the right places */
 
 struct raw_iface {
 	ip_address addr;
 	char name[IFNAMSIZ + 20]; /* what would be a safe size? */
 	struct raw_iface *next;
 };
+
+/* which kernel interface to use */
+extern enum kernel_interface kern_interface;
 
 LIST_HEAD(iface_list, iface_dev);
 extern struct iface_list interface_dev;
@@ -162,12 +179,13 @@ struct kernel_ops {
 	bool sha2_truncbug_support;
 	int replay_window;
 	int *async_fdp;
+	int *route_fdp;
 
 	void (*init)(void);
 	void (*pfkey_register)(void);
 	void (*pfkey_register_response)(const struct sadb_msg *msg);
 	void (*process_queue)(void);
-	void (*process_msg)(void);
+	void (*process_msg)(int);
 	void (*set_debug)(int,
 			  libreswan_keying_debug_func_t debug_func,
 			  libreswan_keying_debug_func_t error_func);
@@ -222,6 +240,8 @@ struct kernel_ops {
 			  struct state *st);
 	void (*process_ifaces)(struct raw_iface *rifaces);
 	bool (*exceptsocket)(int socketfd, int family);
+	bool (*migrate_sa)(struct state *st);
+	bool (*v6holes)();
 };
 
 extern int create_socket(struct raw_iface *ifp, const char *v_name, int port);
@@ -308,7 +328,7 @@ struct bare_shunt {
 };
 
 extern void show_shunt_status(void);
-extern int show_shunt_count(void);
+extern unsigned show_shunt_count(void);
 
 struct bare_shunt **bare_shunt_ptr(const ip_subnet *ours,
 				   const ip_subnet *his,
@@ -341,6 +361,8 @@ extern void init_kernel(void);
 struct connection;      /* forward declaration of tag */
 extern bool trap_connection(struct connection *c);
 extern void unroute_connection(struct connection *c);
+extern void migration_up(struct connection *c,  struct state *st);
+extern void migration_down(struct connection *c,  struct state *st);
 
 extern bool has_bare_hold(const ip_address *src, const ip_address *dst,
 			  int transport_proto);
@@ -383,6 +405,8 @@ extern bool route_and_eroute(struct connection *c,
 
 extern bool was_eroute_idle(struct state *st, deltatime_t idle_max);
 extern bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */);
+extern bool migrate_ipsec_sa(struct state *st);
+
 
 extern bool eroute_connection(const struct spd_route *sr,
 			      ipsec_spi_t cur_spi,
@@ -429,14 +453,6 @@ extern void add_bare_shunt(const ip_subnet *ours, const ip_subnet *his,
 		int transport_proto, ipsec_spi_t shunt_spi,
 		const char *why);
 
-/*
- * Used to pass default priority from kernel_ops-> functions.
- * Our priority is based on an unsigned long int, with the
- * lower number being the highest priority, but this
- * might need to be translated depending on the IPsec stack.
- */
-#define DEFAULT_IPSEC_SA_PRIORITY 0
-
 // TEMPORARY
 extern bool raw_eroute(const ip_address *this_host,
 		       const ip_subnet *this_client,
@@ -458,5 +474,8 @@ extern bool raw_eroute(const ip_address *this_host,
 #endif
 		       );
 
+extern deltatime_t bare_shunt_interval;
+extern void set_text_said(char *text_said, const ip_address *dst,
+			  ipsec_spi_t spi, int sa_proto);
 #define _KERNEL_H_
 #endif /* _KERNEL_H_ */

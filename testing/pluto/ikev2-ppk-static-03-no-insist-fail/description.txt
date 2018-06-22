@@ -1,0 +1,2 @@
+Testing static PPK, west (initator) never accepts it, east insist on it.
+The conncetion will fail to establish

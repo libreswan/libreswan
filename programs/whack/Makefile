@@ -20,6 +20,7 @@ PROGRAM=whack
 OBJS += $(PROGRAM).o
 OBJS += $(WHACKLIB)
 OBJS += $(LIBRESWANLIB)
+OBJS += $(LSWTOOLLIBS)
 
 # reach into pluto for now.
 CFLAGS += -I$(top_srcdir)/programs/pluto

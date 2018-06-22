@@ -1,4 +1,0 @@
-This test case deals with having a single L2TP client behind
-a router (no NAT in this case), connecting, and using the mast device
-to get to l2tpd.
-

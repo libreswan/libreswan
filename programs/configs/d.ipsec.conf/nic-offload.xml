@@ -1,0 +1,17 @@
+  <varlistentry>
+  <term><emphasis remap='B'>nic-offload</emphasis></term>
+  <listitem>
+<para>Set the method of Network Interface Controller (NIC)
+hardware offload for ESP/AH packet processing.  Acceptable values
+are <emphasis remap='B'>auto</emphasis> (the default),
+<emphasis remap='B'>yes</emphasis> or <emphasis remap='B'>no</emphasis>.
+This option is separate from any CPU hardware offload available and is
+currently only available on Linux 4.13+ using the NETKEY/XFRM IPsec stack, when
+compiled with the options CONFIG_XFRM_OFFLOAD, CONFIG_INET_ESP_OFFLOAD
+and CONFIG_INET6_ESP_OFFLOAD. The auto option will attempt to auto-detect
+the presence of kernel and hardware support, and then automatically mark
+the IPsec SA for hardware offloading. One vendor supporting this offload
+method is Mellanox.</para>
+  </listitem>
+  </varlistentry>
+

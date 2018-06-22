@@ -1,9 +1,0 @@
-Basic pluto test:
-
-the policy has been adjusted to permit only AES256 for phase 1 and uses
-a bogus key size for phase 2. The IKEv1 connection should be rejected.
-
-Note: Code cleanup for algorithms seems to have made it impossible to
-specify a bogus keysize for 3DES with the impair-check-keysize function,
-so this test now fails. The impair should be fixed so we can test the
-code that receives a bad key size.

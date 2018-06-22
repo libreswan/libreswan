@@ -1,0 +1,10 @@
+Test unknown (bogus) payloads in an SA_INIT exchange.
+
+Both east and west include unknown payloads in their SA_INIT packets.
+
+The first exchange uses unknown (but non-critical payloads) so the
+connection establishes.
+
+The second exchange has west sending an unknown critical payload, so
+east responds with UNSUPPORTED_CRITICAL_PAYLOAD, and the connection
+quickly times out.

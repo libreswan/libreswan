@@ -1,0 +1,54 @@
+#!/usr/bin/make -f
+
+include /usr/share/dpkg/default.mk
+
+%:
+	dh $@ --with systemd
+
+# this should track the definition of USERCOMPILE in mk/userland-cflags.mk:43
+# but without -fstack-protector-all for arches that lack stack-protector
+ifneq (,$(filter $(DEB_HOST_ARCH), hppa alpha))
+export USERCOMPILE = -fexceptions -fno-strict-aliasing -fPIE -DPIE
+endif
+
+ifeq ($(DEB_HOST_ARCH_OS),linux)
+  ENABLE_SELINUX = USE_LABELED_IPSEC=true USE_LINUX_AUDIT=true
+  ENABLE_LIBCAP_NG = USE_LIBCAP_NG=true
+else
+  ENABLE_SELINUX = USE_LABELED_IPSEC=false USE_LINUX_AUDIT=false
+  ENABLE_LIBCAP_NG = USE_LIBCAP_NG=false
+endif
+
+override_dh_auto_build:
+	$(MAKE) programs \
+		IPSECVERSION=$(DEB_VERSION_UPSTREAM_REVISION) \
+		INC_USRLOCAL=/usr \
+		FINALLIBEXECDIR=/usr/lib/ipsec \
+		PUBDIR=/usr/sbin \
+		INC_MANDIR=share/man \
+		FINALNSSDIR=/var/lib/ipsec/nss \
+		USE_LDAP=true \
+		USE_LIBCURL=true \
+		USE_XAUTHPAM=true \
+		USE_FIPSCHECK=false \
+		$(ENABLE_LIBCAP_NG) \
+		$(ENABLE_SELINUX) \
+		USE_KLIPS=false \
+		DEFAULT_DNSSEC_ROOTKEY_FILE=/usr/share/dns/root.key
+
+override_dh_auto_install-arch:
+	# Add here commands to install the package into debian/libreswan
+	$(MAKE) install \
+		INC_USRLOCAL=/usr \
+		FINALLIBEXECDIR=/usr/lib/ipsec \
+		INC_MANDIR=share/man \
+		FINALNSSDIR=/var/lib/ipsec/nss \
+		PUBDIR=$(CURDIR)/debian/libreswan/usr/sbin \
+		USE_KLIPS=false \
+		DESTDIR=$(CURDIR)/debian/libreswan
+
+override_dh_auto_test:
+	 echo "Skip dh_auto_test"
+
+override_dh_strip:
+	dh_strip --dbg-package=libreswan-dbg

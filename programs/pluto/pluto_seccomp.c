@@ -22,7 +22,9 @@
 #include "defs.h"
 #include "lswlog.h"
 
-#include <errno.h>
+#define LSW_SECCOMP_EXIT_FAIL PLUTO_EXIT_SECCOMP_FAIL
+#include "lswseccomp.h"
+
 #include "pluto_seccomp.h"
 
 /* helper rules must be a sub-set of main rules */
@@ -30,8 +32,6 @@
 static void init_seccomp(uint32_t def_action, bool main)
 {
 	scmp_filter_ctx ctx = seccomp_init(def_action);
-	int rc = 0;
-
 	if (ctx == NULL) {
 			libreswan_log("seccomp_init() failed!");
 			exit_pluto(PLUTO_EXIT_SECCOMP_FAIL);
@@ -41,6 +41,7 @@ static void init_seccomp(uint32_t def_action, bool main)
 	 * read() and wait4() take the vast majority of syscall time
 	 * So we place these at the head of the list for performance
 	 * example strace -c -f output if pluto:
+	 *
 	 * % time     seconds  usecs/call     calls    errors syscall
 	 * ------ ----------- ----------- --------- --------- ----------------
 	 *   73.70   41.137940        1202     34232       343 read
@@ -51,87 +52,103 @@ static void init_seccomp(uint32_t def_action, bool main)
 	 *    0.41    0.230820           6     37788      2877 open
 	 *    [...]
 	 */
-
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(read), 0);
-	if (main)
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(wait4), 0);
-
+	LSW_SECCOMP_ADD(ctx, read);
 	if (main) {
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(accept), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(access), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(bind), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(brk), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(chdir), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(clock_gettime), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(clone), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(close), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(connect), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(dup), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(dup2), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(epoll_ctl), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(epoll_wait), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(execve), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(exit_group), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(faccessat), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(fcntl), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(getcwd), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(getegid), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(geteuid), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(getgid), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(getpgrp), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(getpid), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(getppid), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(getrlimit), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(getsockname), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(getuid), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(ioctl), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(mkdir), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(munmap), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(open), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(pipe), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(pipe2), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(poll), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(readlink), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(recvfrom), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(recvmsg), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(select), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(sendmsg), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(sendto), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(set_robust_list), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(setsockopt), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(socket), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(uname), 0);
-		rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(unlink), 0);
+		LSW_SECCOMP_ADD(ctx, wait4);
 	}
 
-	/* common to main and helpers */
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(arch_prctl), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(gettid), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(gettimeofday), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(fstat), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(futex), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(lseek), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(mmap), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(mprotect), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(nanosleep), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(rt_sigaction), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(rt_sigprocmask), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(rt_sigreturn), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(sched_setparam), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(set_tid_address), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(stat), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(statfs), 0);
-	rc |= seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(write), 0);
+#ifdef USE_EFENCE
+	LSW_SECCOMP_ADD(ctx, madvise);
+#endif
 
-	if (rc != 0) {
-		libreswan_log("seccomp_rule_add() failed!");
-        	seccomp_release(ctx);
-		exit_pluto(PLUTO_EXIT_SECCOMP_FAIL);
+	/* needed for pluto and updown, not helpers */
+	if (main) {
+		LSW_SECCOMP_ADD(ctx, accept);
+		LSW_SECCOMP_ADD(ctx, access);
+		LSW_SECCOMP_ADD(ctx, bind);
+		LSW_SECCOMP_ADD(ctx, brk);
+		LSW_SECCOMP_ADD(ctx, chdir);
+		LSW_SECCOMP_ADD(ctx, clone);
+		LSW_SECCOMP_ADD(ctx, close);
+		LSW_SECCOMP_ADD(ctx, connect);
+		LSW_SECCOMP_ADD(ctx, dup);
+		LSW_SECCOMP_ADD(ctx, dup2);
+		LSW_SECCOMP_ADD(ctx, epoll_create);
+		LSW_SECCOMP_ADD(ctx, epoll_ctl);
+		LSW_SECCOMP_ADD(ctx, epoll_wait);
+		LSW_SECCOMP_ADD(ctx, epoll_pwait);
+		LSW_SECCOMP_ADD(ctx, execve);
+		LSW_SECCOMP_ADD(ctx, faccessat);
+		LSW_SECCOMP_ADD(ctx, fadvise64);
+		LSW_SECCOMP_ADD(ctx, fcntl);
+		LSW_SECCOMP_ADD(ctx, getcwd);
+		LSW_SECCOMP_ADD(ctx, getdents);
+		LSW_SECCOMP_ADD(ctx, getegid);
+		LSW_SECCOMP_ADD(ctx, geteuid);
+		LSW_SECCOMP_ADD(ctx, getgid);
+		LSW_SECCOMP_ADD(ctx, getgroups);
+		LSW_SECCOMP_ADD(ctx, getpgrp);
+		LSW_SECCOMP_ADD(ctx, getpid);
+		LSW_SECCOMP_ADD(ctx, getppid);
+		LSW_SECCOMP_ADD(ctx, getrlimit);
+		LSW_SECCOMP_ADD(ctx, getsockname);
+		LSW_SECCOMP_ADD(ctx, getuid);
+		LSW_SECCOMP_ADD(ctx, ioctl);
+		LSW_SECCOMP_ADD(ctx, mkdir);
+		LSW_SECCOMP_ADD(ctx, munmap);
+		LSW_SECCOMP_ADD(ctx, newfstatat);
+		LSW_SECCOMP_ADD(ctx, open);
+		LSW_SECCOMP_ADD(ctx, openat);
+		LSW_SECCOMP_ADD(ctx, pipe);
+		LSW_SECCOMP_ADD(ctx, pipe2);
+		LSW_SECCOMP_ADD(ctx, poll);
+		LSW_SECCOMP_ADD(ctx, prctl);
+		LSW_SECCOMP_ADD(ctx, pread64);
+		LSW_SECCOMP_ADD(ctx, prlimit64);
+		LSW_SECCOMP_ADD(ctx, readlink);
+		LSW_SECCOMP_ADD(ctx, recvfrom);
+		LSW_SECCOMP_ADD(ctx, recvmsg);
+		LSW_SECCOMP_ADD(ctx, select);
+		LSW_SECCOMP_ADD(ctx, sendmsg);
+		LSW_SECCOMP_ADD(ctx, set_robust_list);
+		LSW_SECCOMP_ADD(ctx, setsockopt);
+		LSW_SECCOMP_ADD(ctx, socket);
+		LSW_SECCOMP_ADD(ctx, socketcall);
+		LSW_SECCOMP_ADD(ctx, socketpair);
+		LSW_SECCOMP_ADD(ctx, sysinfo);
+		LSW_SECCOMP_ADD(ctx, uname);
+		LSW_SECCOMP_ADD(ctx, unlink);
+		LSW_SECCOMP_ADD(ctx, unlinkat);
 	}
 
-	rc = seccomp_load(ctx);
+	/* common to pluto and helpers */
+
+	LSW_SECCOMP_ADD(ctx, arch_prctl);
+	LSW_SECCOMP_ADD(ctx, exit_group);
+	LSW_SECCOMP_ADD(ctx, gettid);
+	LSW_SECCOMP_ADD(ctx, gettimeofday);
+	LSW_SECCOMP_ADD(ctx, fstat);
+	LSW_SECCOMP_ADD(ctx, futex);
+	LSW_SECCOMP_ADD(ctx, lseek);
+	LSW_SECCOMP_ADD(ctx, mmap);
+	LSW_SECCOMP_ADD(ctx, mprotect);
+	LSW_SECCOMP_ADD(ctx, nanosleep);
+	LSW_SECCOMP_ADD(ctx, rt_sigaction);
+	LSW_SECCOMP_ADD(ctx, rt_sigprocmask);
+	LSW_SECCOMP_ADD(ctx, rt_sigreturn);
+	LSW_SECCOMP_ADD(ctx, sched_setparam);
+	LSW_SECCOMP_ADD(ctx, sendto);
+	LSW_SECCOMP_ADD(ctx, set_tid_address);
+	LSW_SECCOMP_ADD(ctx, sigreturn);
+	LSW_SECCOMP_ADD(ctx, stat);
+	LSW_SECCOMP_ADD(ctx, statfs);
+	LSW_SECCOMP_ADD(ctx, clock_gettime);
+	LSW_SECCOMP_ADD(ctx, waitpid);
+	LSW_SECCOMP_ADD(ctx, write);
+
+	int rc = seccomp_load(ctx);
 	if (rc < 0) {
-		libreswan_log("seccomp_load() failed!");
+		LOG_ERRNO(-rc, "seccomp_load() failed!");
 		seccomp_release(ctx);
 		exit_pluto(PLUTO_EXIT_SECCOMP_FAIL);
 	}

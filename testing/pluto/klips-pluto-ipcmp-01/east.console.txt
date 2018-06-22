@@ -27,7 +27,7 @@ east #
  echo "initdone"
 initdone
 east #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 east NOW
 192.0.2.0/24       -> 192.0.1.0/24       => tun0xIPIP@192.1.2.45 comp0xCOMPSPI@192.1.2.45 esp0xESPSPI@192.1.2.45
 ipsec0->eth1 mtu=16260(9999)->1500

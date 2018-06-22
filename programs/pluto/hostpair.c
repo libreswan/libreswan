@@ -65,6 +65,7 @@
 #include "plutoalg.h"
 #include "ikev1_xauth.h"
 #include "nat_traversal.h"
+#include "ip_address.h"
 
 #include "virtual.h"	/* needs connections.h */
 
@@ -123,19 +124,7 @@ struct host_pair *find_host_pair(const ip_address *myaddr,
 
 	/* default hisaddr to an appropriate any */
 	if (hisaddr == NULL) {
-#if 0
-		/* broken */
-		const struct af_info *af = aftoinfo(addrtypeof(myaddr));
-
-		if (af == NULL)
-			af = aftoinfo(AF_INET);
-
-		if (af != NULL)
-			hisaddr = af->any;
-
-#else
 		hisaddr = aftoinfo(addrtypeof(myaddr))->any;
-#endif
 	}
 
 	/*
@@ -155,17 +144,6 @@ struct host_pair *find_host_pair(const ip_address *myaddr,
 		hisport = pluto_port;
 
 	for (prev = NULL, p = host_pairs; p != NULL; prev = p, p = p->next) {
-		if (p->connections != NULL && (p->connections->kind == CK_INSTANCE) &&
-				(p->connections->spd.that.id.kind == ID_NULL))
-		{
-			DBG(DBG_CONTROLMORE, {
-				char ci[CONN_INST_BUF];
-				DBG_log("find_host_pair: ignore CK_INSTANCE with ID_NULL hp:\"%s\"%s",
-					p->connections->name,
-					fmt_conn_instance(p->connections, ci));
-			});
-			continue;
-		}
 
 		DBG(DBG_CONTROLMORE, {
 			ipstr_buf b1;
@@ -313,5 +291,25 @@ void release_dead_interfaces(void)
 				pp = &p->hp_next; /* advance pp */
 			}
 		}
+	}
+}
+
+void delete_oriented_hp(struct connection *c)
+{
+	struct host_pair *hp = c->host_pair;
+
+	list_rm(struct connection, hp_next, c, hp->connections);
+	c->host_pair = NULL; /* redundant, but safe */
+
+	/*
+	 * if there are no more connections with this host_pair
+	 * and we haven't even made an initial contact, let's delete
+	 * this guy in case we were created by an attempted DOS attack.
+	 */
+	if (hp->connections == NULL) {
+		/* ??? must deal with this! */
+		passert(hp->pending == NULL);
+		remove_host_pair(hp);
+		pfree(hp);
 	}
 }

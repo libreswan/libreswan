@@ -1896,7 +1896,7 @@ int ipsec_device_event(struct notifier_block *unused, unsigned long event,
 	if (dev && (dev->flags & IFF_LOOPBACK))
 		return NOTIFY_DONE;
 
-	if (strlen(dev->name) == 0) {
+	if (dev->name[0] == '\0') {
 		KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
 			    "klips_debug:ipsec_device_event: "
 			    "dev=\"\" ??? for event type.\n");
@@ -1915,8 +1915,7 @@ int ipsec_device_event(struct notifier_block *unused, unsigned long event,
 				    "NETDEV_DOWN dev=%s flags=%x\n",
 				    dev->name,
 				    dev->flags);
-			if (strncmp(dev->name, "ipsec",
-				    strlen("ipsec")) == 0) {
+			if (strncmp(dev->name, "ipsec", strlen("ipsec")) == 0) {
 				printk(KERN_CRIT "IPSEC EVENT: KLIPS device %s shut down.\n",
 					dev->name);
 			}
@@ -2039,7 +2038,11 @@ int ipsec_tunnel_init(struct net_device *dev)
 		    dev->name ? dev->name : "NULL");
 
 #ifdef ipsec_alloc_netdev
+# ifdef HAS_PRIV_DESTRUCTOR
+	dev->priv_destructor         = free_netdev;
+# else
 	dev->destructor         = free_netdev;
+# endif
 #endif
 
 #ifndef HAVE_NETDEV_PRIV

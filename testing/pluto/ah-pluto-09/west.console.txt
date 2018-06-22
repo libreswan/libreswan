@@ -6,7 +6,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ah
-036 Failed to add connection "westnet-eastnet-ah", esp="des" is invalid: AH integrity algorithm 'des' is not recognized, enc_alg=""(0), auth_alg="des", modp=""
+036 Failed to add connection "westnet-eastnet-ah", esp="des" is invalid: AH integrity algorithm 'des' is not recognized
 west #
  echo "initdone"
 initdone
@@ -14,7 +14,7 @@ west #
  echo done
 done
 west #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 west NOW
 XFRM state:
 XFRM policy:

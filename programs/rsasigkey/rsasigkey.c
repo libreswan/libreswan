@@ -56,6 +56,7 @@
 #include "constants.h"
 #include "lswalloc.h"
 #include "lswlog.h"
+#include "lswtool.h"
 #include "lswconf.h"
 #include "lswnss.h"
 
@@ -215,16 +216,22 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	/*
+	 * RSA-PSS requires keysize to be a multiple of 8 bits
+	 * (see PCS#1 v2.1).
+	 * We require a multiple of 16.  (??? why?)
+	 */
 	if (argv[optind] == NULL) {
-		/* default: spread bits between 3072 - 4096 in multiple's of 16 */
+		/* default keysize: a multiple of 16 in [3072,4096) */
 		srand(time(NULL));
-		nbits = 3072 + 16 * (rand() % 64);
+		nbits = 3072 + 16 * (rand() % (1024 / 16));
 	} else {
 		unsigned long u;
 		err_t ugh = ttoulb(argv[optind], 0, 10, INT_MAX, &u);
 
 		if (ugh != NULL) {
-			fprintf(stderr, "%s: keysize specification is malformed: %s\n",
+			fprintf(stderr,
+				"%s: keysize specification is malformed: %s\n",
 				progname, ugh);
 			exit(1);
 		}
@@ -232,16 +239,19 @@ int main(int argc, char *argv[])
 	}
 
 	if (nbits < MIN_KEYBIT ) {
-		fprintf(stderr, "%s: requested RSA key size of %d is too small - use %d or more\n",
+		fprintf(stderr,
+			"%s: requested RSA key size (%d) is too small - use %d or more\n",
 			progname, nbits, MIN_KEYBIT);
 		exit(1);
 	} else if (nbits > MAXBITS) {
-		fprintf(stderr, "%s: overlarge bit count (max %d)\n", progname,
-			MAXBITS);
+		fprintf(stderr,
+			"%s: requested RSA key size (%d) is too large - (max %d)\n",
+			progname, nbits, MAXBITS);
 		exit(1);
 	} else if (nbits % (BITS_PER_BYTE * 2) != 0) {
-		fprintf(stderr, "%s: bit count (%d) not multiple of %d\n", progname,
-			nbits, (int)BITS_PER_BYTE * 2);
+		fprintf(stderr,
+			"%s: requested RSA key size (%d) is not a multiple of %d\n",
+			progname, nbits, (int)BITS_PER_BYTE * 2);
 		exit(1);
 	}
 
@@ -257,10 +267,7 @@ int main(int argc, char *argv[])
 /*
  * generate an RSA signature key
  *
- * e is fixed at 3, without discussion.  That would not be wise if these
- * keys were to be used for encryption, but for signatures there are some
- * real speed advantages.
- * See also: https://www.imperialviolet.org/2012/03/16/rsae.html
+ * e is fixed at F4.
  */
 void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco)
 {
@@ -276,15 +283,6 @@ void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco)
 		exit(1);
 	}
 
-#ifdef FIPS_CHECK
-	if (PK11_IsFIPS() && !FIPSCHECK_verify(NULL, NULL)) {
-		fprintf(stderr,
-			"FIPS HMAC integrity verification test failed.\n");
-		exit(1);
-	}
-#endif
-
-	/* Good for now but someone may want to use a hardware token */
 	slot = lsw_nss_get_authenticated_slot(err);
 	if (slot == NULL) {
 		fprintf(stderr, "%s: %s\n", progname, err);
@@ -336,7 +334,7 @@ void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco)
 	/* and the output */
 	libreswan_log("output...\n");  /* deliberate extra newline */
 	printf("\t# RSA %d bits   %s   %s", nbits, outputhostname,
-		ctime(&now.real_secs));
+		ctime(&now.rt.tv_sec));
 	/* ctime provides \n */
 	printf("\t# for signatures only, UNSAFE FOR ENCRYPTION\n");
 

@@ -1,0 +1,88 @@
+Source: libreswan
+Section: net
+Priority: optional
+Maintainer: Libreswan Dev List  <swan-dev@lists.libreswan.org>
+Uploaders:
+ Paul Wouters <paul@nohats.ca>,
+Vcs-Browser: https://github.com/libreswan/libreswan
+Vcs-Git: https://github.com/libreswan/libreswan
+Standards-Version: 4.1.0
+Rules-Requires-Root: no
+# libunbound-dev (>= 1.6.5~)  # this is not yet
+Build-Depends:
+ bison,
+ bzip2,
+ debhelper (>= 9),
+ dh-systemd,
+ flex,
+ htmldoc,
+ libaudit-dev [linux-any],
+ libcap-ng-dev [linux-any],
+ libcurl4-nss-dev,
+ libevent-dev,
+ libkrb5-dev,
+ libldap2-dev,
+ libldns-dev,
+ libnspr4-dev,
+ libnss3-dev (>= 3.16.1),
+ libnss3-tools,
+ libpam0g-dev,
+ libselinux1-dev [linux-any],
+ libsystemd-dev,
+ libunbound-dev,
+ man2html,
+ pkg-config,
+ po-debconf,
+ systemd,
+ xmlto,
+Homepage: https://libreswan.org/
+
+Package: libreswan
+Architecture: any
+Pre-Depends:
+ debconf | debconf-2.0,
+Depends:
+ bsdmainutils,
+ dns-root-data,
+ host,
+ iproute2 | iproute (>= 20071016),
+ iptables,
+ libnspr4,
+ libnss3 (>= 3.16),
+ libnss3-tools,
+ libunbound2,
+ systemd,
+ ${misc:Depends},
+ ${shlibs:Depends},
+Recommends:
+ python,
+Provides:
+ ike-server,
+Conflicts:
+ ike-server,
+ strongswan-libcharon,
+ strongswan-starter,
+Replaces:
+ ike-server,
+Description: Internet Key Exchange daemon
+ Libreswan is an IPsec implementation for Linux. It has support for most
+ of the extensions (RFC + IETF drafts) related to IPsec, including
+ IKEv2, X.509 Digital Certificates, NAT Traversal, and many others.
+ .
+ Libreswan has been forked from Openswan 2.6.38, which was forked from
+ FreeS/WAN 1.99.
+ .
+ The Libreswan IKE daemon is named pluto. It was inherited from the FreeS/WAN
+ project, but provides improved X.509 certificate support and other features.
+
+Package: libreswan-dbg
+Architecture: any
+Section: debug
+Priority: extra
+Depends: libreswan (= ${binary:Version}), ${misc:Depends}
+Description: Internet Key Exchange daemon - debugging symbols
+ Libreswan is an IPsec based VPN solution for the Linux kernel. Both
+ IKEv1 and IKEv2 protocols are supported.
+ .
+ This package provides the symbols needed for debugging of libreswan
+ binaries.

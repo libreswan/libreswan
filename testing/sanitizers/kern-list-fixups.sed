@@ -106,9 +106,12 @@ s/none on \/usr\/obj type hostfs (ro,.*)/none on \/usr\/obj type hostfs (ro, PAT
 s/TTL=\([0-9]*\) ID=[0-9]* PROTO/TTL=\1 ID=XXXXX PROTO/
 s/ ID=[0-9]* SEQ=/ ID=XXXX SEQ=/g
 s/ LEN=[0-9]* / LEN=XXXX /g
+s/ FLOWLBL=[0-9]* / FLOWLBL=XXXXX /g
 /^.*CPU feature 'AVX registers' is not supported.*$/d
 /^.*hrtimer: interrupt took .*$/d
 /^.*Clocksource tsc unstabl.*$/d
 /^.*audit_printk.*$/d
 /^.*audit: type=.*$/d
 /^.*SELinux: unrecognized netlink message.*$/d
+/^.*clocksource.*$/d
+s/ qlen 1000$//

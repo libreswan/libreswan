@@ -47,10 +47,23 @@ include $(top_srcdir)/mk/config.mk
 
 OBJS =
 
+OBJS += send.o
+OBJS += ikev1_send.o
+OBJS += ikev2_send.o
+
+OBJS += state_db.o
+OBJS += show.o
+OBJS += retransmit.o
+
 # local (possibly more up to date) copy of <linux/xfrm.h>
 ifeq ($(USE_XFRM_HEADER_COPY),true)
 CFLAGS+=-I ${LIBRESWANSRCDIR}/programs/pluto/linux-copy
 endif
+
+ifeq ($(USE_GLIBC_KERN_FLIP_HEADERS),true)
+CFLAGS+=-DGLIBC_KERN_FLIP_HEADERS
+endif
+
 # where to find klips headers and Libreswan headers
 HDRDIRS +=-I${LIBRESWANSRCDIR}/include -I$(LIBRESWANSRCDIR)/lib/libcrypto -I$(KLIPSINC)
 
@@ -94,15 +107,21 @@ endif
 
 OBJS += x509.o
 OBJS += fetch.o
+OBJS += crl_queue.o
 
 ifeq ($(USE_IPSEC_CONNECTION_LIMIT),true)
 CFLAGS += -DIPSEC_CONNECTION_LIMIT=$(IPSEC_CONNECTION_LIMIT)
 endif
 
-# pam_conv.c is wrapped in #ifdef XAUTH_HAVE_PAM
-OBJS += ikev1_xauth.o addresspool.o pam_conv.o
+OBJS += addresspool.o
+
+OBJS += ikev1_xauth.o
+ifeq ($(USE_XAUTHPAM),true)
 OBJS += xauth.o
+OBJS += pam_conv.o
+endif
 LDFLAGS += $(XAUTHPAM_LDFLAGS)
+
 ifneq ($(BUILDENV), darwin)
 LDFLAGS += -lcrypt
 endif
@@ -128,22 +147,23 @@ ifeq ($(USE_UNBOUND_EVENT_H_COPY),true)
 CFLAGS+=-I${LIBRESWANSRCDIR}/include/unbound
 endif
 
-# XXX: hack until ike_alg gets a library
-OBJS += ike_info.o
+OBJS += ike_alg.o
+OBJS += ike_alg_dh_nss_ecp_ops.o
+OBJS += ike_alg_dh_nss_modp_ops.o
+OBJS += ike_alg_encrypt_nss_gcm_ops.o
+OBJS += ike_alg_hash_nss_ops.o
+OBJS += ike_alg_prf_hmac_ops.o
+OBJS += ike_alg_prf_nss_ops.o
+OBJS += ike_alg_prf_nss_xcbc_ops.o
 
-OBJS += ike_alg_nss_modp.o
-OBJS += ike_alg_nss_ecp.o
-OBJS += ike_alg_nss_cbc.o
-OBJS += ike_alg_nss_hash_ops.o
-OBJS += ike_alg_hmac_prf_ops.o
-OBJS += ike_alg_nss_prf_ops.o
-OBJS += ike_alg_nss_gcm.o
-OBJS += ike_alg.o db_ops.o
+OBJS += db_ops.o
 
 # libefence is a free memory allocation debugger
 # Solaris 2 needs -lsocket -lnsl
 LDFLAGS += $(SECCOMP_LDFLAGS)
+LDFLAGS += $(NSS_SMIME_LDFLAGS)
 LDFLAGS += $(NSS_LDFLAGS)
+LDFLAGS += $(NSPR_LDFLAGS)
 
 # For avoiding implicit DSO linking
 LDFLAGS += -lpthread
@@ -166,6 +186,8 @@ endif
 LDFLAGS += -lrt
 LDFLAGS += $(UNBOUND_LDFLAGS)
 LDFLAGS += $(LINUX_AUDIT_LDFLAGS)
+
+OBJS += $(call if-enabled, USE_LINUX_AUDIT, linux_audit.o)
 
 LDFLAGS += -levent
 LDFLAGS += -levent_pthreads
@@ -196,28 +218,33 @@ OBJS += connections.o initiate.o terminate.o
 OBJS += cbc_test_vectors.o
 OBJS += ctr_test_vectors.o
 OBJS += gcm_test_vectors.o
+OBJS += prf_test_vectors.o
 OBJS += test_buffer.o
 OBJS += pending.o cookie.o crypto.o defs.o
 OBJS += foodgroups.o log.o state.o plutomain.o plutoalg.o server.o
-OBJS += state_entry.o
+OBJS += peerlog.o
+OBJS += hash_table.o list_entry.o
 OBJS += timer.o hmac.o hostpair.o
+OBJS += retry.o
 OBJS += myid.o ipsec_doi.o
 ifeq ($(USE_DNSSEC),true)
 OBJS += ikev2_ipseckey.o
 endif
 OBJS += ikev1.o ikev1_main.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_struct.o ikev1_msgid.o
 OBJS += ikev2.o ikev2_parent.o ikev2_child.o ikev2_spdb_struct.o
-OBJS += ikev2_rsa.o ikev2_psk.o ikev2_crypto.o
+OBJS += ikev2_rsa.o ikev2_psk.o ikev2_ppk.o ikev2_crypto.o
 OBJS += crypt_symkey.o crypt_prf.o ikev1_prf.o ikev2_prf.o
 OBJS += crypt_hash.o
 OBJS += kernel.o
-OBJS += kernel_noklips.o rcv_whack.o pluto_stats.o
+OBJS += kernel_nokernel.o rcv_whack.o pluto_stats.o
 OBJS += demux.o msgdigest.o keys.o
-OBJS += pluto_crypt.o crypt_utils.o crypt_ke.o crypt_dh.o crypt_start_dh.o
+OBJS += pluto_crypt.o crypt_utils.o crypt_ke.o crypt_dh.o
+OBJS += crypt_dh_v1.o
+OBJS += crypt_dh_v2.o
 OBJS += rnd.o spdb.o spdb_struct.o
 OBJS += vendor.o nat_traversal.o virtual.o
 OBJS += packet.o pluto_constants.o readwhackmsg.o
-OBJS += nss_cert_load.o pem.o nss_cert_vfy.o
+OBJS += nss_cert_load.o pem.o nss_cert_verify.o
 OBJS += nss_ocsp.o nss_crl_import.o
 OBJS += nss_err.o
 

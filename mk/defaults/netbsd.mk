@@ -21,7 +21,7 @@ NEEDS_GETOPT=true
 # build modules, etc. for KLIPS.
 BUILD_KLIPS=false
 
-CFLAGS+=-DHAVE_SETPROCTITLE -DSCANDIR_HAS_CONST
+CFLAGS+= -DSCANDIR_HAS_CONST
 
 USERLINK=-L/usr/local/lib -lcrypt
 

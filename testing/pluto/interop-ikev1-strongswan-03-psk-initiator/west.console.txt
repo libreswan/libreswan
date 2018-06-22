@@ -5,7 +5,7 @@ west #
  ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
- # make sure that clear text does not get through
+ # ensure that clear text does not get through
 west #
  iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
 west #
@@ -52,8 +52,6 @@ sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
 parsed QUICK_MODE response 0123456789 [ HASH SA No KE ID ID ]
 CHILD_SA westnet-eastnet-ikev1{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
-generating QUICK_MODE request 0123456789 [ HASH ]
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 connection 'westnet-eastnet-ikev1' established successfully
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
@@ -69,7 +67,7 @@ west #
  echo done
 done
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
 west #
  if [ -f /var/run/charon.pid ]; then strongswan status ; fi
 Security Associations (1 up, 0 connecting):

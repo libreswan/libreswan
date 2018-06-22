@@ -1,0 +1,8 @@
+
+This is an example script that can be called via _updown to allows
+a new cloud/instance/host to send its raw RSA key to a DNS server.
+
+This IPSECKEY record can then be used for Opportunistic IPsec
+
+The authentication for the DNS update happens using TSIG
+

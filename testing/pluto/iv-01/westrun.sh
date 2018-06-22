@@ -1,5 +1,5 @@
 ipsec auto --replace    westnet-eastnet
 ipsec auto --up  	westnet-eastnet
 
-ipsec look
+../../pluto/bin/ipsec-look.sh
 echo done

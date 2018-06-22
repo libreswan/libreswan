@@ -1,0 +1,3 @@
+A responder with %any IKEv2 using PSK. 
+ipsec.secrets file on east, no id specified. West has IP address as its id.
+

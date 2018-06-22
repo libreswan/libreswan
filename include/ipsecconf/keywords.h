@@ -7,8 +7,8 @@
  * Copyright (C) 2012 Kim B. Heino <b@bbbs.net>
  * Copyright (C) 2012 Philippe Vouters <philippe.vouters@laposte.net>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
- * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2013-2016 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013-2018 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2013-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013-2016 Antony Antony <antony@phenome.org>
  * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
  *
@@ -26,6 +26,8 @@
 
 #ifndef _KEYWORDS_H_
 #define _KEYWORDS_H_
+
+#include "lset.h"
 
 #ifndef _LIBRESWAN_H
 #include "libreswan.h"
@@ -51,7 +53,6 @@ enum keyword_string_config_field {
 	KSF_NSSDIR,
 	KSF_SECRETSFILE,
 	KSF_PERPEERDIR,
-	KSF_MYID,
 	KSF_MYVENDORID,
 	KSF_PLUTOSTDERRLOG,
 	KSF_PLUTO_DNSSEC_ROOTKEY_FILE,
@@ -71,12 +72,16 @@ enum keyword_numeric_config_field {
 	KBF_NEGOTIATIONSHUNT,
 	KBF_TYPE,
 	KBF_FRAGICMP,
+	KBF_MOBIKE,
 	KBF_HIDETOS,
 	KBF_UNIQUEIDS,
 	KBF_DO_DNSSEC,
 	KBF_PLUTOSTDERRLOGTIME,
 	KBF_PLUTOSTDERRLOGAPPEND,
+	KBF_PLUTOSTDERRLOGIP,
 	KBF_IKEPORT,
+	KBF_IKEBUF,
+	KBF_IKE_ERRQUEUE,
 	KBF_PERPEERLOG,
 	KBF_OVERRIDEMTU,
 	KBF_CONNMTU,
@@ -99,7 +104,6 @@ enum keyword_numeric_config_field {
 	KBF_SEEDBITS,
 	KBF_DROP_OPPO_NULL,
 	KBF_KEEPALIVE,
-	KBF_PLUTORESTARTONCRASH,
 	KBF_KLIPSDEBUG,
 	KBF_PLUTODEBUG,
 	KBF_NHELPERS,
@@ -107,13 +111,15 @@ enum keyword_numeric_config_field {
 	KBF_DPDTIMEOUT,
 	KBF_METRIC,
 	KBF_PHASE2,
-	KBF_AUTHBY,
 	KBF_KEYEXCHANGE,
 	KBF_AUTO,
 	KBF_PFS,
 	KBF_SHA2_TRUNCBUG,
+	KBF_MSDH_DOWNGRADE,
+	KBF_DNS_MATCH_ID,
 	KBF_SALIFETIME,
 	KBF_REKEY,
+	KBF_REAUTH,
 	KBF_REKEYMARGIN,
 	KBF_REKEYFUZZ,
 	KBF_COMPRESS,
@@ -123,15 +129,19 @@ enum keyword_numeric_config_field {
 	KBF_IKELIFETIME,
 	KBF_SHUNTLIFETIME,
 	KBF_RETRANSMIT_TIMEOUT,
-	KBF_RETRANSMIT_INTERVAL,
+	KBF_RETRANSMIT_INTERVAL_MS,
 	KBF_AGGRMODE,
 	KBF_MODECONFIGPULL,
 	KBF_ENCAPS,
 	KBF_IKEv2,
+	KBF_PPK,
 	KBF_ESN,
+	KBF_DECAP_DSCP,
+	KBF_NOPMTUDISC,
 	KBF_IKEv2_ALLOW_NARROWING,
 	KBF_IKEv2_PAM_AUTHORIZE,
-	KBF_CONNADDRFAMILY,
+	KBF_HOSTADDRFAMILY,
+	KBF_CLIENTADDRFAMILY,
 	KBF_FORCEBUSY, /* obsoleted for KBF_DDOS_MODE */
 	KBF_DDOS_IKE_THRESHOLD,
 	KBF_MAX_HALFOPEN_IKE,
@@ -180,6 +190,7 @@ enum keyword_string_conn_field {
 	KSCF_NEXTHOP, /* loose_enum */
 	KSCF_UPDOWN,
 	KSCF_ID,
+	KSCF_AUTHBY, /* formerly enum */
 	KSCF_RSAKEY1, /* loose_enum */
 	KSCF_RSAKEY2, /* loose_enum */
 	KSCF_CERT,
@@ -191,9 +202,8 @@ enum keyword_string_conn_field {
 	KSCF_USERNAME,
 	KSCF_SUBNETS,
 	KSCF_ADDRESSPOOL,
-	KSCF_MODECFGDNS1,
-	KSCF_MODECFGDNS2,
-	KSCF_MODECFGDOMAIN,
+	KSCF_MODECFGDNS,
+	KSCF_MODECFGDOMAINS,
 	KSCF_MODECFGBANNER,
 	KSCF_IKE,
 	KSCF_ESP,
@@ -306,6 +316,7 @@ enum keyword_type {
 	kt_invertbool,          /* value is an off/on type ("disable") */
 	kt_enum,                /* value is from a set of key words */
 	kt_list,                /* a set of values from a set of key words */
+	kt_lset,		/* a set of values from an enum name */
 	kt_loose_enum,          /* either a string, or a %-prefixed enum */
 	kt_rsakey,              /* a key, or set of values */
 	kt_number,              /* an integer */
@@ -316,12 +327,10 @@ enum keyword_type {
 	kt_subnet,              /* an IP address subnet */
 	kt_idtype,              /* an ID type */
 	kt_bitstring,           /* an encryption/authentication key */
-	kt_comment,             /* a value which is a cooked comment */
+	kt_comment,             /* a value that is a cooked comment */
 	kt_obsolete,            /* option that is obsoleted, allow keyword but warn and ignore */
 	kt_obsolete_quiet,      /* option that is obsoleted, allow keyword but don't bother warning */
 };
-
-#define NOT_ENUM NULL
 
 struct keyword_def {
 	const char        *keyname;
@@ -329,6 +338,7 @@ struct keyword_def {
 	enum keyword_type type;
 	unsigned int field;             /* one of keyword_*_field */
 	const struct keyword_enum_values *validenum;
+	const struct lmod_info *info;
 };
 
 struct keyword {
@@ -373,8 +383,9 @@ struct config_parsed {
 	struct section_list conn_default;
 };
 
-extern const struct keyword_def ipsec_conf_keywords_v2[];
+extern const struct keyword_def ipsec_conf_keywords[];
 
+extern lset_t parser_lset(const struct keyword_def *kd, const char *s);
 extern unsigned int parser_enum_list(const struct keyword_def *kd, const char *s,
 				     bool list);
 extern unsigned int parser_loose_enum(struct keyword *k, const char *s);

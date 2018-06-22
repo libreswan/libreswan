@@ -18,6 +18,17 @@
 
 struct xfrm_user_sec_ctx_ike *uctx; /* forward declaration */
 
+typedef void initiator_function(int whack_sock,
+				struct connection *c,
+				struct state *predecessor,
+				lset_t policy,
+				unsigned long try,
+				enum crypto_importance importance
+#ifdef HAVE_LABELED_IPSEC
+				, struct xfrm_user_sec_ctx_ike *uctx
+#endif
+				);
+
 extern void ipsecdoi_initiate(int whack_sock, struct connection *c,
 			      lset_t policy, unsigned long try,
 			      so_serial_t replacing,
@@ -47,7 +58,7 @@ extern state_transition_fn
  * forward
  */
 struct oakley_group_desc;
-extern bool send_delete(struct state *st);
+extern void send_delete(struct state *st);
 extern bool accept_delete(struct msg_digest *md,
 			  struct payload_digest *p);
 extern void accept_self_delete(struct msg_digest *md);
@@ -60,12 +71,6 @@ extern void send_notification_from_md(struct msg_digest *md, notification_t type
 extern notification_t accept_KE(chunk_t *dest, const char *val_name,
 				const struct oakley_group_desc *gr,
 				pb_stream *pbs);
-
-/*
- * some additional functions are exported for xauth.c
- */
-extern bool close_message(pb_stream *pbs, struct state *st) MUST_USE_RESULT;
-extern bool encrypt_message(pb_stream *pbs, struct state *st) MUST_USE_RESULT;
 
 /* START_HASH_PAYLOAD_NO_HASH_START
  *
@@ -80,7 +85,7 @@ extern bool encrypt_message(pb_stream *pbs, struct state *st) MUST_USE_RESULT;
 		if (!ikev1_out_generic(np, &isakmp_hash_desc, &(rbody), &hash_pbs)) \
 			return STF_INTERNAL_ERROR; \
 		r_hashval = hash_pbs.cur; /* remember where to plant value */ \
-		if (!out_zero(st->st_oakley.prf->prf_output_size, \
+		if (!out_zero(st->st_oakley.ta_prf->prf_output_size, \
 			      &hash_pbs, "HASH")) \
 			return STF_INTERNAL_ERROR; \
 		close_output_pbs(&hash_pbs); \
@@ -128,7 +133,7 @@ extern stf_status send_isakmp_notification(struct state *st,
 
 extern bool has_preloaded_public_key(struct state *st);
 
-extern bool extract_peer_id(struct id *peer, const pb_stream *id_pbs);
+extern bool extract_peer_id(enum ike_id_type kind, struct id *peer, const pb_stream *id_pbs);
 
 struct pluto_crypto_req;	/* prevent struct type being local to function protocol */
 extern void unpack_nonce(chunk_t *n, const struct pluto_crypto_req *r);

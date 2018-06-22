@@ -1,0 +1,16 @@
+  <varlistentry>
+  <term><emphasis remap='B'>mobike</emphasis></term>
+  <listitem>
+<para>Whether to allow MOBIKE (RFC 4555) to enable a connection to migrate
+its endpoint without needing to restart the connection from scratch. This
+is used on mobile devices that switch between wired, wireless or mobile
+data connections. Current values are <emphasis remap='B'>no</emphasis> (the default)
+or <emphasis remap='B'>yes</emphasis>, Only connection acting as modecfgclient
+will allow the initiator to migrate using mobike. Only connections acting as
+modecfgserver will allow clients to migrate.
+</para>
+<para>VTI and MOBIKE might not work well when used together.
+</para>
+  </listitem>
+  </varlistentry>
+

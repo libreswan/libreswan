@@ -24,12 +24,6 @@
 #define _LIBRESWAN_PASSERT_H
 /* our versions of assert: log result */
 
-/*
- * Set by lsw_passert_fail() to communicate to libreswan_loglog() that
- * the message must get through.
- */
-extern volatile sig_atomic_t lsw_dying_breath;
-
 extern void lsw_passert_fail(const char *file_str,
 			     unsigned long line_no,
 			     const char *func_str,
@@ -51,47 +45,11 @@ extern void lsw_passert_fail(const char *file_str,
 	lsw_passert_fail(PASSERT_BASENAME, __LINE__,		\
 			 __func__, FMT, __VA_ARGS__)
 
-#define bad_case(N) {						\
-		long _n = (N);				\
-		PASSERT_FAIL("case %ld/%lu/%lx unexpected",	\
-			     _n, _n, _n);			\
-	}
-
 #define passert(ASSERTION) {						\
-		/* wrapping ASSERTION in paren suppresses -Wparen */	\
-		bool assertion__ = ASSERTION; /* no paren */		\
+		/* wrapping ASSERTION in parens suppresses -Wparen */	\
+		bool assertion__ = ASSERTION; /* no parens */		\
 		if (!assertion__) {					\
 			PASSERT_FAIL("%s", #ASSERTION);			\
-		}							\
-	}
-
-/*
- * Check/log a pexpect failure to the "panic" channel.
- *
- * Notes:
- *
- * According to C99, the expansion of PEXPECT_LOG(FMT) will include a
- * stray comma vis: "pexpect_log(file, line, FMT,)".  Plenty of
- * workarounds.
- *
- * "pexpect()" does use the shorter statement "if (!(pred))" in the
- * below as it will suppresses -Wparen (i.e., assignment in if
- * statement).
- */
-
-extern void lsw_pexpect_log(const char *file_str, unsigned long line_no,
-			    const char *func_str, const char *fmt, ...)
-	PRINTF_LIKE(4);
-
-#define PEXPECT_LOG(FMT, ...)					\
-	lsw_pexpect_log(PASSERT_BASENAME, __LINE__, __func__,	\
-			FMT,  __VA_ARGS__)
-
-#define pexpect(ASSERTION) {						\
-		/* wrapping ASSERTION in paren suppresses -Wparen */	\
-		bool assertion__ = ASSERTION; /* no paren */		\
-		if (!assertion__) {					\
-			PEXPECT_LOG("%s", #ASSERTION);			\
 		}							\
 	}
 

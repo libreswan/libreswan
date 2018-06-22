@@ -84,7 +84,7 @@ static void ikev2_calculate_sighash(struct state *st,
 	DBG(DBG_CRYPT,
 	    DBG_dump_chunk("inputs to hash1 (first packet)", firstpacket);
 	    DBG_dump_chunk(nonce_name, *nonce);
-	    DBG_dump("idhash", idhash, st->st_oakley.prf->prf_output_size));
+	    DBG_dump("idhash", idhash, st->st_oakley.ta_prf->prf_output_size));
 
 	struct crypt_hash *ctx = crypt_hash_init(&ike_alg_hash_sha1,
 						 "sighash", DBG_CRYPT);
@@ -93,7 +93,7 @@ static void ikev2_calculate_sighash(struct state *st,
 
 	/* we took the PRF(SK_d,ID[ir]'), so length is prf hash length */
 	crypt_hash_digest_bytes(ctx, "IDHASH", idhash,
-				st->st_oakley.prf->prf_output_size);
+				st->st_oakley.ta_prf->prf_output_size);
 	crypt_hash_final_bytes(&ctx, sig_octets,
 			       ike_alg_hash_sha1.hash_digest_len);
 }
@@ -101,7 +101,9 @@ static void ikev2_calculate_sighash(struct state *st,
 bool ikev2_calculate_rsa_sha1(struct state *st,
 			      enum original_role role,
 			      unsigned char *idhash,
-			      pb_stream *a_pbs)
+			      pb_stream *a_pbs,
+			      bool calc_no_ppk_auth,
+			      chunk_t *no_ppk_auth)
 {
 	unsigned char signed_octets[SHA1_DIGEST_SIZE + 16];
 	size_t signed_len;
@@ -136,8 +138,13 @@ bool ikev2_calculate_rsa_sha1(struct state *st,
 		if (shr == 0)
 			return FALSE;
 		passert(shr == (int)sz);
-		if (!out_raw(sig_val, sz, a_pbs, "rsa signature"))
-			return FALSE;
+		if (calc_no_ppk_auth == FALSE) {
+			if (!out_raw(sig_val, sz, a_pbs, "rsa signature"))
+				return FALSE;
+		} else {
+			clonetochunk(*no_ppk_auth, sig_val, sz, "NO_PPK_AUTH chunk");
+			DBG(DBG_PRIVATE, DBG_dump_chunk("NO_PPK_AUTH payload", *no_ppk_auth));
+		}
 	}
 
 	return TRUE;

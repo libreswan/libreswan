@@ -1,0 +1,6 @@
+Test pending child sa restart.
+
+West has three connections to east. Only the first one will establish.
+
+The whack should be released on the failing connections, but up to 3.22
+is not properly released.

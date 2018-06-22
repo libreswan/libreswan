@@ -1,0 +1,10 @@
+Test case using left=%any without specifying leftid on east.
+
+This is expected to match any ID_IPv4 value.
+
+This check is done on the instantiated template (where c->spd.that.host_addr
+is already filled in with the instance IP) by checking this->host_type == KH_ANY
+
+A minor issue is that the ipsec status output shows "their id" as the IP of their
+NAT gateway, instead of the pre-NAT IP ID payload the client behind NAT actually
+sent.

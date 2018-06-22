@@ -1,0 +1,33 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add east-any
+002 added connection description "east-any"
+east #
+ echo initdone
+initdone
+east #
+ # let road and north wait for east to show tunnels before shutting down
+east #
+ hostname | grep road > /dev/null && sleep 5
+east #
+ hostname | grep north > /dev/null && sleep 5
+east #
+ hostname | grep east > /dev/null && ipsec whack --trafficstatus
+006 #2: "east-any"[1] 192.1.3.33, username=xnorth, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, lease=192.0.2.100/32
+006 #4: "east-any"[2] 192.1.3.209, username=xroad, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, lease=192.0.2.101/32
+east #
+east #
+ grep "^leak" /tmp/pluto.log
+leak-detective enabled
+leak detective found no leaks
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

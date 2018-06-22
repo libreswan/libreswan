@@ -22,10 +22,12 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include "lswlog.h"
-#include <sys/wait.h>
+#include <sys/wait.h>		/* for WIFEXITED() et.al. */
 #include <cert.h>
+
 #include "nss_crl_import.h"
 #include <certdb.h>
+#include "defs.h"
 #include "log.h"
 #include "lswalloc.h"
 #include "nss_err.h"
@@ -40,7 +42,6 @@ int send_crl_to_import(u_char *der, size_t len, const char *url)
 
 	CERTSignedCrl *crl = NULL;
 	CERTCertificate *cacert = NULL;
-	CERTCertDBHandle *handle = NULL;
 	PLArenaPool *arena = NULL;
 	SECItem crl_si;
 	char *arg[4] = { NULL };
@@ -102,14 +103,17 @@ int send_crl_to_import(u_char *der, size_t len, const char *url)
 	crl_si.data = der;
 	crl_si.type = siBuffer;
 
+	/*
+	 * CERT_GetDefaultCertDB() simply returns the contents of a
+	 * static variable set by NSS_Initialize().  It doesn't check
+	 * the value and doesn't set PR error.  Short of calling
+	 * CERT_SetDefaultCertDB(NULL), the value can never be NULL.
+	 */
+	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
+	passert(handle != NULL);
+
 	/* do some pre-decoding, and check for the issuer.
 	 * The issuer name is needed to flush the cache */
-	if ((handle = CERT_GetDefaultCertDB()) == NULL) {
-		DBG(DBG_X509,
-		    DBG_log("NSS error getting DB handle: %s",
-			    nss_err_str(PORT_GetError())));
-		return -1;
-	}
 
 	arena = PORT_NewArena(SEC_ASN1_DEFAULT_ARENA_SIZE);
 
@@ -192,8 +196,7 @@ int send_crl_to_import(u_char *der, size_t len, const char *url)
 
 	/* update CRL cache */
 	if (ret == 0) {
-		CERT_CRLCacheRefreshIssuer(CERT_GetDefaultCertDB(),
-					   &cacert->derSubject);
+		CERT_CRLCacheRefreshIssuer(handle, &cacert->derSubject);
 	}
 end:
 	if (cacert != NULL)

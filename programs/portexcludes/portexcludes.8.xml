@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry id="eroute8">
+<refentryinfo>
+  <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para></para> </authorblurb></author>
+</refentryinfo>
+  <refmeta>
+    <refentrytitle>ipsec portexcludes</refentrytitle>
+
+    <manvolnum>8</manvolnum>
+
+    <refmiscinfo class="date">11 Feb 2018</refmiscinfo>
+<refmiscinfo class="source">libreswan</refmiscinfo>
+<refmiscinfo class="manual">Executable programs</refmiscinfo>
+  </refmeta>
+
+  <refnamediv id="name">
+    <refname>ipsec portexcludes</refname>
+
+    <refpurpose>insert and delete port exclusion policies into the kernel SPD </refpurpose>
+  </refnamediv>
+
+  <!-- body begins here -->
+
+  <refsynopsisdiv id="synopsis">
+    <cmdsynopsis>
+      <command>ipsec portexcludes</command>
+
+      <arg><option>--clear</option></arg>
+      <arg><option>--verbose</option></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1 id="description">
+    <title>DESCRIPTION</title>
+
+    <para><emphasis remap="I">ipsec portexcludes</emphasis> manages the exclusion list
+    for port excludes in portexcludes.conf (found in the policies directory). It is
+    usually run via the system service startup job. An administrator can run it
+    manually as well. The portexcludes command deletes all passthrough conns that have
+    a name that matches portexcludes-* before re-adding the rules read from its
+    configuration file. The option <option>--clear</option> only removes the active
+    passthrough connections providing a port hole.</para>
+    <para>The <option>--verbose</option> shows the translation of the rules defined in the
+    portexcludes.conf file into whack commands.
+    </para>
+
+  </refsect1>
+
+  <refsect1 id="fileformat">
+    <title>FILE FORMAT</title>
+
+    <para>The portexcludes.conf file takes the following format. Each non-empty
+    line and line that does not start with a # symbol is read and parsed into
+    five fields seperated by whitespace: direction protocol source dest priority. If a rule
+    is not limited by source or destination being ipv4 or ipv6 specific, the rule will be
+    applied for both ipv4 and ipv6.</para>
+
+    <para><emphasis remap="B">direction</emphasis> of the rule determines whether the rule
+    is an inbound ("in") rule, an outbound ("out") rule, or "both".</para>
+
+    <para><emphasis remap="B">protocol</emphasis> specifies the protocol either by name
+    (eg "tcp" or "udp") or by number (eg 6 or 17) </para>
+
+    <para><emphasis remap="B">source</emphasis> and <emphasis remap="B">destination</emphasis>
+    specify a source or destination, specified by IPs in CIDR format, optionally followed by
+    @port. The special values "any", "any4" and "any6" are recognised.
+    </para>
+
+    <para><emphasis remap="B">priority</emphasis> is the priority of the SPD policy. This can be
+    used to tune it to override some but not all defined connections. For example it can be used
+    to override Opportunistic connections but not static tunnels. A priority smaller than 1024
+    would override every connection that does not manually set its own priority to a lower value.
+    </para>
+  </refsect1>
+
+  <refsect1 id="files">
+    <title>FILES</title>
+
+    <para>/etc/ipsec.d/policies/portexcludes.conf</para>
+  </refsect1>
+
+  <refsect1 id="see_also">
+    <title>SEE ALSO</title>
+
+    <para>ipsec(8)</para>
+  </refsect1>
+
+  <refsect1 id="history">
+    <title>HISTORY</title>
+
+    <para>Written for the Libreswan Project &lt;<ulink
+    url="https://libreswan.org/">https://libreswan.org/</ulink>&gt; by
+    Paul Wouters.</para>
+  </refsect1>
+</refentry>

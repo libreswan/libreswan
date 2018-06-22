@@ -14,13 +14,15 @@
  */
 
 #include <nss.h>
-extern void wake_fetch_thread(const char *who);
-extern void add_distribution_points(const generalName_t *newPoints,
-				    generalName_t **distributionPoints);
 extern void list_distribution_points(const generalName_t *gn);
+extern void list_crl_fetch_requests(bool utc);
 
 extern void init_fetch(void);
 extern void free_crl_fetch(void);
-extern void add_crl_fetch_request_nss(SECItem *issuer_dn, generalName_t *end_dp);
-extern void list_crl_fetch_requests(bool utc);
+void check_crls(void);
 
+extern char *curl_iface;
+extern long curl_timeout;
+extern bool crl_strict;
+extern bool ocsp_strict;
+extern bool ocsp_enable;

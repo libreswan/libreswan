@@ -1,0 +1,15 @@
+The responder has %any connection. ID send are IP_ADDR type.
+The responder accepts IDi, forward IP address.
+It query the reverse zone for IDi's IPSECKEY Resource Record.
+
+North is the initiator, send its IP address as IDi.
+
+East should lookup this record
+33.3.1.192.IN-ADDR.ARPA. 10 IN IPSECKEY 10 0 2 . AQPl33
+
+The north should lookup 
+23.2.1.192.IN-ADDR.ARPA. 604800 IN IPSECKEY 10 0 2 . AQO9
+
+This will work without NAT. 
+With nat it could harder to get matching reverse zone.
+

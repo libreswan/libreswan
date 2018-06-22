@@ -110,14 +110,13 @@ void terminate_connection(const char *name)
 			c = n;
 		}
 	} else {
-		int count;
-
-		loglog(RC_COMMENT, "no such connection found, looking for all conns with alias='%s'", name);
-		count = foreach_connection_by_alias(name, terminate_a_connection, NULL);
-
+		int count = foreach_connection_by_alias(name, terminate_a_connection, NULL);
 		if (count == 0) {
-			whack_log(RC_UNKNOWN_NAME,
+			loglog(RC_UNKNOWN_NAME,
 				  "no such connection or aliased connection named \"%s\"", name);
+		} else {
+			loglog(RC_COMMENT, "terminated %d connections from aliased connection \"%s\"",
+				count, name);
 		}
 	}
 }

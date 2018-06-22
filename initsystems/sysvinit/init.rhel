@@ -148,6 +148,9 @@ start() {
 	failure
     fi
     echo
+    if [ -f @FINALLIBEXECDIR@/portexcludes ] ; then
+	@FINALLIBEXECDIR@/portexcludes
+    fi
     return ${RETVAL}
 }
 

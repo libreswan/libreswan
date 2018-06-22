@@ -17,167 +17,33 @@
 #ifndef _LIBRESWAN_H
 #define _LIBRESWAN_H    /* seen it, no need to see it again */
 
-/* linux has 'typedef _bool bool' in KERNEL/include/types.h */
+/*
+ * Libreswan was written before <stdbool.h> was standardized.
+ * We continue to use TRUE and FALSE because we think that they are clearer
+ * than true or false.
+ */
 
 #ifndef __KERNEL__
 # include <stdbool.h> /* for 'bool' */
 #endif
 
-/* you'd think this should be builtin to compiler... */
-
 #ifndef TRUE
-# define TRUE 1
+# define TRUE true
 #endif
 
 #ifndef FALSE
-# define FALSE 0
+# define FALSE false
 #endif
 
 #include <stddef.h>
 
-/* ================ time-related declarations ================ */
+/* Some constants code likes to use. Useful? */
 
 enum {
 	secs_per_minute = 60,
 	secs_per_hour = 60 * secs_per_minute,
 	secs_per_day = 24 * secs_per_hour
 };
-
-#if !defined(__KERNEL__)
-
-#include <sys/time.h>
-#include <time.h>
-
-/*
- * UNDEFINED_TIME is meant to be an impossible exceptional time_t value.
- *
- * ??? On UNIX, 0 is a value that means 1970-01-01 00:00:00 +0000 (UTC).
- *
- * UNDEFINED_TIME is used as a real time_t value in certificate handling.
- * Perhaps this is sancioned by X.509.
- *
- * UNDEFINED_TIME is used as a mono time_t value in liveness_check().
- * 0 is PROBABLY safely distinct in this application.
- */
-#define UNDEFINED_TIME  ((time_t)0)	/* ??? what a kludge! */
-
-#define TIME_T_MAX  ((time_t) ((1ull << (sizeof(time_t) * BITS_PER_BYTE - 1)) - 1))
-
-/*
- * Wrap time_t so that dimensional analysis will be enforced by the compiler.
- *
- * realtime_t: absolute UTC time.  Might be discontinuous due to clock adjustment.
- * monotime_t: absolute monotonic time.  No discontinuities (except for machine sleep?)
- * deltatime_t: relative time between events.  Presumed continuous.
- *
- * Try to stick to the operations implemented here.
- * A good compiler should produce identical code for these or for time_t values
- * but will catch nonsense operations through type enforcement.
- */
-
-typedef struct { time_t delta_secs; } deltatime_t;
-typedef struct { time_t real_secs; } realtime_t;
-typedef struct { time_t mono_secs; } monotime_t;
-
-/* delta time (interval) operations */
-
-static inline deltatime_t deltatime(time_t secs) {
-	deltatime_t d = { secs };
-	return d;
-}
-
-static inline unsigned long deltamillisecs(deltatime_t d) {
-	return d.delta_secs * 1000;
-}
-
-static inline time_t deltasecs(deltatime_t d) {
-	return d.delta_secs;
-}
-
-static inline deltatime_t deltatimescale(int num, int denom, deltatime_t d) {
-	/* ??? should check for overflow */
-	return deltatime(deltasecs(d) * num / denom);
-}
-
-static inline bool deltaless(deltatime_t a, deltatime_t b)
-{
-	return deltasecs(a) < deltasecs(b);
-}
-
-static inline bool deltaless_tv_tv(const struct timeval a, const struct timeval b)
-{
-	return a.tv_sec < b.tv_sec ||
-		( a.tv_sec == b.tv_sec && a.tv_usec < b.tv_usec);
-}
-
-static inline bool deltaless_tv_dt(const struct timeval a, const deltatime_t b)
-{
-	return a.tv_sec < deltasecs(b);
-}
-
-/* real time operations */
-
-static inline realtime_t realtimesum(realtime_t t, deltatime_t d) {
-	realtime_t s = { t.real_secs + d.delta_secs };
-	return s;
-}
-
-static inline realtime_t undefinedrealtime(void)
-{
-	realtime_t u = { UNDEFINED_TIME };
-
-	return u;
-}
-
-static inline bool isundefinedrealtime(realtime_t t)
-{
-	return t.real_secs == UNDEFINED_TIME;
-}
-
-static inline bool realbefore(realtime_t a, realtime_t b)
-{
-	return a.real_secs < b.real_secs;
-}
-
-static inline deltatime_t realtimediff(realtime_t a, realtime_t b) {
-	deltatime_t d = { a.real_secs - b.real_secs };
-	return d;
-}
-
-static inline realtime_t realnow(void)
-{
-	realtime_t t;
-
-	time(&t.real_secs);
-	return t;
-}
-
-#define REALTIMETOA_BUF     30	/* size of realtimetoa string buffer */
-extern char *realtimetoa(const realtime_t rtm, bool utc, char *buf, size_t blen);
-
-/* monotonic time operations */
-
-static inline monotime_t monotimesum(monotime_t t, deltatime_t d) {
-	monotime_t s = { t.mono_secs + d.delta_secs };
-	return s;
-}
-
-static inline bool monobefore(monotime_t a, monotime_t b)
-{
-	return a.mono_secs < b.mono_secs;
-}
-
-static inline deltatime_t monotimediff(monotime_t a, monotime_t b) {
-	deltatime_t d = { a.mono_secs - b.mono_secs };
-
-	return d;
-}
-
-/* defs.h declares extern monotime_t mononow(void) */
-
-#endif	/* !defined(__KERNEL__) */
-
-/* ================ end of time-related declarations ================ */
 
 /*
  * When using uclibc, malloc(0) returns NULL instead of success. This is
@@ -304,7 +170,7 @@ static inline deltatime_t monotimediff(monotime_t a, monotime_t b) {
  */
 
 /* first, some quick fakes in case we're on an old system with no IPv6 */
-#if !defined(s6_addr16) && defined(__CYGWIN32__)
+#if defined(__CYGWIN32__) && !defined(s6_addr16)
 extern struct in6_addr {
 	union {
 		u_int8_t u6_addr8[16];
@@ -423,11 +289,13 @@ typedef uint32_t IPsecSAref_t;
 /* GCC magic for use in function definitions! */
 #ifdef GCC_LINT
 # define PRINTF_LIKE(n) __attribute__ ((format(printf, n, n + 1)))
+# define STRFTIME_LIKE(n) __attribute__ ((format (strftime, n, 0)))
 # define NEVER_RETURNS __attribute__ ((noreturn))
 # define UNUSED __attribute__ ((unused))
 # define MUST_USE_RESULT  __attribute__ ((warn_unused_result))
 #else
 # define PRINTF_LIKE(n) /* ignore */
+# define STRFTIME_LIKE(n) /* ignore */
 # define NEVER_RETURNS  /* ignore */
 # define UNUSED         /* ignore */
 # define MUST_USE_RESULT	/* ignore */
@@ -436,13 +304,15 @@ typedef uint32_t IPsecSAref_t;
 #ifdef COMPILER_HAS_NO_PRINTF_LIKE
 # undef PRINTF_LIKE
 # define PRINTF_LIKE(n) /* ignore */
+# undef STRFTIME_LIKE
+# define STRFTIME_LIKE(n) /* ignore */
 #endif
 
 /*
  * function to log stuff from libraries that may be used in multiple
  * places.
  */
-typedef int (*libreswan_keying_debug_func_t)(const char *message, ...);
+typedef int (*libreswan_keying_debug_func_t)(const char *message, ...) PRINTF_LIKE(1);
 
 /*
  * new IPv6-compatible functions
@@ -468,10 +338,6 @@ extern size_t inet_addrtot(int type, const void *src, int format, char *buf,
 extern size_t sin_addrtot(const void *sin, int format, char *dst, size_t dstlen);
 /* RFC 1886 old IPv6 reverse-lookup format is the bulkiest */
 #define ADDRTOT_BUF     (32 * 2 + 3 + 1 + 3 + 1 + 1)
-typedef struct {
-	char buf[ADDRTOT_BUF];
-} ipstr_buf;
-extern const char *ipstr(const ip_address *src, ipstr_buf *b);
 extern err_t ttorange(const char *src, size_t srclen, int af, ip_range *dst,
 		bool non_zero);
 extern size_t rangetot(const ip_range *src, char format, char *dst, size_t dstlen);
@@ -485,6 +351,7 @@ extern size_t subnetporttot(const ip_subnet *src, int format, char *buf,
 extern err_t ttosa(const char *src, size_t srclen, ip_said *dst);
 extern size_t satot(const ip_said *src, int format, char *bufptr, size_t buflen);
 #define SATOT_BUF       (5 + ULTOT_BUF + 1 + ADDRTOT_BUF)
+#define SAMIGTOT_BUF    (16 + SATOT_BUF + ADDRTOT_BUF)
 extern err_t ttodata(const char *src, size_t srclen, int base, char *buf,
 	      size_t buflen, size_t *needed);
 extern err_t ttodatav(const char *src, size_t srclen, int base,
@@ -544,12 +411,6 @@ extern bool samesubnettype(const ip_subnet *a, const ip_subnet *b);
 extern int isanyaddr(const ip_address *src);
 extern int isunspecaddr(const ip_address *src);
 extern int isloopbackaddr(const ip_address *src);
-
-/* low-level grot */
-extern int portof(const ip_address *src);
-extern void setportof(int port, ip_address *dst);
-extern struct sockaddr *sockaddrof(ip_address *src);
-extern size_t sockaddrlenof(const ip_address *src);
 
 /* PRNG */
 extern void prng_init(struct prng *prng, const unsigned char *key, size_t keylen);
@@ -662,31 +523,5 @@ enum klips_debug_flags {
 #define PASSTHROUGHSPI  0
 #define PASSTHROUGHDST  0
 #endif
-
-/*
- * reqid definitions
- *
- * A reqid is a numerical identifier used to match IPsec SAs using
- * iptables with NETKEY/XFRM. This identifier is normally automatically
- * allocated.  It is exported to the _updown script as REQID. On Linux,
- * reqids are supported with IP Connection Tracking and NAT (iptables).
- * Automatically generated values use the range 16380 and higher.
- * Manually specified reqid values therefore must be between 1 and 16379.
- *
- * Automatically generated reqids are allocated in groups of four, one
- * for each potential SA and pseudo SA in an SA bundle.  Their number
- * will be above 16380.  The base number will be a multiple of four.
- *
- * Manually assigned reqids are all identical for a particular connection
- * and its instantiations.
- */
-
-typedef uint32_t reqid_t;
-
-#define IPSEC_MANUAL_REQID_MAX  0x3fff
-
-#define reqid_ah(r)	(r)
-#define reqid_esp(r)	((r) <= IPSEC_MANUAL_REQID_MAX ? (r) : (r) + 1)
-#define reqid_ipcomp(r)	((r) <= IPSEC_MANUAL_REQID_MAX ? (r) : (r) + 2)
 
 #endif /* _LIBRESWAN_H */

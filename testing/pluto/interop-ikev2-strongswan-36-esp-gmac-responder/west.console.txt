@@ -5,7 +5,7 @@ west #
  ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
- # make sure that clear text does not get through
+ # ensure that clear text does not get through
 west #
  iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
 west #
@@ -39,6 +39,7 @@ west #
 133 "westnet-eastnet-ikev2-esp-null-gmac" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
 134 "westnet-eastnet-ikev2-esp-null-gmac" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=sha1_96 prf=sha group=MODP2048}
 002 "westnet-eastnet-ikev2-esp-null-gmac" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "westnet-eastnet-ikev2-esp-null-gmac" #2: Authenticated using authby=secret
 002 "westnet-eastnet-ikev2-esp-null-gmac" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
 004 "westnet-eastnet-ikev2-esp-null-gmac" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=NULL_AUTH_AES_GMAC_128-NONE NATOA=none NATD=none DPD=passive}
 west #
@@ -58,28 +59,28 @@ west #
  echo done
 done
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	aead rfc4543(gcm(aes)) 0xENCAUTHKEY 128
 src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	aead rfc4543(gcm(aes)) 0xENCAUTHKEY 128
 XFRM policy:
-src 192.0.1.0/24 dst 192.0.2.0/24 
-	dir out priority 2344 ptype main 
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out priority 1042407 ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir fwd priority 2344 ptype main 
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir fwd priority 1042407 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir in priority 2344 ptype main 
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir in priority 1042407 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
 XFRM done

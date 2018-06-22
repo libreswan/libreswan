@@ -1,0 +1,3 @@
+Testing static PPK, both west (initiator) and east propose on it. PPK_ID very large
+
+We also shutdown pluto to test for leaks

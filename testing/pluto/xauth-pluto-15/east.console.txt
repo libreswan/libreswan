@@ -12,32 +12,32 @@ east #
  echo "initdone"
 initdone
 east #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 east NOW
 XFRM state:
 src 192.1.2.254 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 src 192.1.2.23 dst 192.1.2.254
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 XFRM policy:
-src 0.0.0.0/0 dst 192.0.2.100/32 
-	dir out priority 3104 ptype main 
+src 0.0.0.0/0 dst 192.0.2.100/32
+	dir out priority 1048543 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.254
 		proto esp reqid REQID mode tunnel
-src 192.0.2.100/32 dst 0.0.0.0/0 
-	dir fwd priority 3104 ptype main 
+src 192.0.2.100/32 dst 0.0.0.0/0
+	dir fwd priority 1048543 ptype main
 	tmpl src 192.1.2.254 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-src 192.0.2.100/32 dst 0.0.0.0/0 
-	dir in priority 3104 ptype main 
+src 192.0.2.100/32 dst 0.0.0.0/0
+	dir in priority 1048543 ptype main
 	tmpl src 192.1.2.254 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 XFRM done
@@ -47,6 +47,7 @@ ROUTING TABLES
 default via 192.1.2.254 dev eth1 
 192.0.1.0/24 via 192.1.2.45 dev eth1 
 192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254 
+192.0.2.100 dev eth1  scope link 
 192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23 
 192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23 
 NSS_CERTIFICATES

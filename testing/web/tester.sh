@@ -1,16 +1,21 @@
 #!/bin/sh
 
-if test $# -ne 2; then
+if test $# -lt 2 -o $# -gt 3; then
     cat >> /dev/stderr <<EOF
 
 Usage:
 
-    $0 <repodir> <summarydir>
+    $0 <repodir> <summarydir> [ <first-commit> ]
 
 Track <repodir>'s current branch and test each "interesting" commit.
 Publish results under <summarydir>.
 
-XXX: Should this also look at and use WEB_PREFIXES and WEB_WORKERS?
+If <first-commit> is specified, then only go back as far as that
+commit when looking for work.  Default is to use <repodir>s current
+HEAD as the earliest commit.
+
+XXX: Should this also look at and use things like WEB_PREFIXES and
+WEB_WORKERS in Makefile.inc.local?
 
 EOF
     exit 1
@@ -23,6 +28,11 @@ makedir=$(cd ${webdir}/../.. && pwd)
 utilsdir=${makedir}/testing/utils
 repodir=$(cd $1 && pwd ) ; shift
 summarydir=$(cd $1 && pwd) ; shift
+if test $# -gt 0 ; then
+    first_commit=$1 ; shift
+else
+    first_commit=$(cd ${repodir} && git show --no-patch --format=%H HEAD)
+fi
 
 status() {
     ${webdir}/json-status.sh --json ${summarydir}/status.json "$@"
@@ -84,9 +94,10 @@ run() {
 
 while true ; do
 
-    # Time has passed, download any more recent commits, and pull all
-    # the updates into ${branch}.  Force ${branch} to be identical to
-    # ${remote} by using --ff-only - if it fails the script dies.
+    # Time has passed (or the script was restarted), download any more
+    # recent commits, and pull all the updates into ${branch}.  Force
+    # ${branch} to be identical to ${remote} by using --ff-only - if
+    # it fails the script dies.
 
     status "updating repo"
     ( cd ${repodir} && git fetch || true )
@@ -94,6 +105,7 @@ while true ; do
 
     # if results with output-missing start to show up, that is a good
     # sign that the VMs have become corrupted and need a rebuild.
+
     status "checking KVMs"
     if grep '"output-missing"' "${summarydir}"/*-g*/results.json > /dev/null ; then
 	status "corrupt domains detected, deleting old"
@@ -111,6 +123,7 @@ while true ; do
 
     # update the summary, if necessary add more commits using
     # ${repodir}
+
     status "updating summary"
     make -C ${makedir} web-summarydir \
 	 WEB_REPODIR=${repodir} \
@@ -119,12 +132,9 @@ while true ; do
 
     # Starting with HEAD, work backwards looking for anything
     # untested.
-    # Now discard everything back to the commit to be tested, making
-    # that HEAD.  This could have the effect of switching branches,
-    # take care.
 
     status "looking for work"
-    if ! hash=$(${webdir}/gime-work.sh ${summarydir} ${repodir}) ; then \
+    if ! hash=$(${webdir}/gime-work.sh ${summarydir} ${repodir} ${first_commit}) ; then \
 	# Seemlingly nothing to do.
 	seconds=$(expr 60 \* 60 \* 3)
 	now=$(date +%s)
@@ -133,6 +143,10 @@ while true ; do
 	sleep ${seconds}
 	continue
     fi
+
+    # Now discard everything back to the commit to be tested, making
+    # that HEAD.  This could have side effects such as switching
+    # branches, take care.
 
     status "checking out ${hash}"
     ( cd ${repodir} && git reset --hard ${hash} )

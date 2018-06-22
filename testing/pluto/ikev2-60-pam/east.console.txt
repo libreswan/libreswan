@@ -1,0 +1,28 @@
+/testing/guestbin/swan-prep
+east #
+ gcc -fPIC -fno-stack-protector  -o OUTPUT/mypam.o -c mypam.c
+east #
+ ld -x --shared -o /lib64/security/mypam.so OUTPUT/mypam.o
+east #
+ test -f /etc/pam.d/pluto && mv /etc/pam.d/pluto /etc/pam.d/pluto.stock
+east #
+ cp pluto.pam /etc/pam.d/pluto
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add road-eastnet-pam
+002 added connection description "road-eastnet-pam"
+east #
+ echo "initdone"
+initdone
+east #
+ if [ -f /etc/pam.d/pluto.stock ]; then mv /etc/pam.d/pluto.stock /etc/pam.d/pluto ; fi
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

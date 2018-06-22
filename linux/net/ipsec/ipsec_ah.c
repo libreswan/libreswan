@@ -238,8 +238,8 @@ enum ipsec_rcv_value ipsec_rcv_ah_decap(struct ipsec_rcv_state *irs)
 	irs->next_header  = ahp->ah_nh;
 
 	/*
-	 * move the IP header forward by the size of the AH header, which
-	 * will remove the the AH header from the packet.
+	 * move the IP header forward by the size of the AH header,
+	 * thus removing the the AH header from the packet.
 	 */
 	memmove((void *)(skb_network_header(skb) + ahhlen),
 		(void *)(skb_network_header(skb)), irs->iphlen);

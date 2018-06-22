@@ -1,0 +1,29 @@
+# FROM BASE_IMAGE
+# ENV container docker
+# MAINTAINER "Antony Antony" <antony@phenome.org>
+# Don't start any optional services except for the few we need.
+RUN apt-get update
+RUN apt-get -y install systemd apt-utils
+RUN find /etc/systemd/system \
+         /lib/systemd/system \
+         -path '*.wants/*' \
+         -not -name '*journald*' \
+         -not -name '*systemd-tmpfiles*' \
+         -not -name '*systemd-user-sessions*' \
+         -exec rm \{} \;
+RUN systemctl set-default multi-user.target
+# for debian
+# CMD ["/lib/systemd/systemd"]
+# Ubuntu
+CMD ["/sbin/init"]
+# NO v6 magic interfearnce yet.
+RUN echo "precedence ::ffff:0:0/96  100" >> /etc/gai.conf
+RUN echo "net.ipv6.conf.all.disable_ipv6=1" >> /etc/sysctl.conf
+RUN apt-get update && apt-get install -y apt-src apt-utils \
+	bash-completion dns-root-data devscripts \
+	equivs git iproute2 less locales openssh-server vim screen wget
+RUN wget -O libreswan-debian-control https://raw.githubusercontent.com/libreswan/libreswan/master/packaging/debian/control
+RUN mk-build-deps --install --tool "apt-get -o Debug::pkgProblemResolver=yes -y --no-install-recommends" libreswan-debian-control
+RUN localedef -i en_US -f UTF-8 en_US.UTF-8
+RUN mkdir -p /home/build/libreswan
+STOPSIGNAL SIGRTMIN+3

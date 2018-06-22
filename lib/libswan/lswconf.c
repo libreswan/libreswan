@@ -203,5 +203,4 @@ int libreswan_selinux(void)
 		return 1;
 	else
 		return 0;
-
 }

@@ -15,7 +15,7 @@
 # for more details.
 
 PLUTO_OPTIONS=$*
-pidfile=@FINALVARDIR@/run/pluto/pluto.pid
+pidfile=@IPSEC_RUNDIR@/pluto.pid
 execdir=${IPSEC_EXECDIR:-@IPSEC_EXECDIR@}
 
 # create nss if the admin deleted it or the packaging did not create it

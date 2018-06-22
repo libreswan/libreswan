@@ -19,15 +19,16 @@ road #
 106 "road-east-vti" #1: STATE_MAIN_I2: sent MI2, expecting MR2
 108 "road-east-vti" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "road-east-vti" #1: Peer ID is ID_FQDN: '@east'
+003 "road-east-vti" #1: Authenticated using RSA
 004 "road-east-vti" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha2_256 group=MODP2048}
 002 "road-east-vti" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 117 "road-east-vti" #2: STATE_QUICK_I1: initiate
-002 "road-east-vti" #2: prepare-client output: net.ipv4.conf.vti0.disable_policy = 1
-002 "road-east-vti" #2: prepare-client output: net.ipv4.conf.vti0.rp_filter = 0
-002 "road-east-vti" #2: prepare-client output: net.ipv4.conf.vti0.forwarding = 1
-004 "road-east-vti" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
+002 "road-east-vti" #2: up-client output: net.ipv4.conf.vti0.disable_policy = 1
+002 "road-east-vti" #2: up-client output: net.ipv4.conf.vti0.rp_filter = 0
+002 "road-east-vti" #2: up-client output: net.ipv4.conf.vti0.forwarding = 1
+004 "road-east-vti" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 road #
- # since we have vti-routing=no, no marking, so unencryted pacets are dropped
+ # since we have vti-routing=no, no marking, so unencrypted packets are dropped
 road #
  ping -n -c 4 -I 192.0.3.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.3.254 : 56(84) bytes of data.

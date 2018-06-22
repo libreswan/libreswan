@@ -31,7 +31,7 @@
 /* forward reference */
 struct msg_digest;
 
-extern int ike_decode_cert(struct msg_digest *md);
+extern lsw_cert_ret ike_decode_cert(struct msg_digest *md);
 extern void ikev1_decode_cr(struct msg_digest *md);
 extern void ikev2_decode_cr(struct msg_digest *md);
 
@@ -42,8 +42,7 @@ extern bool ikev1_build_and_ship_CR(enum ike_cert_type type,
 				    enum next_payload_types_ikev1 np);
 
 extern bool ikev2_build_and_ship_CR(enum ike_cert_type type,
-				    chunk_t ca, pb_stream *outs,
-				    enum next_payload_types_ikev2 np);
+				    chunk_t ca, pb_stream *outs);
 
 extern void load_authcerts(const char *type, const char *path,
 			   u_char auth_flags);
@@ -59,13 +58,11 @@ extern int get_auth_chain(chunk_t *out_chain, int chain_max,
 extern void free_auth_chain(chunk_t *chain, int chain_len);
 extern bool ikev2_send_cert_decision(struct state *st);
 extern stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
-				     enum original_role role UNUSED,
-				     enum next_payload_types_ikev2 np,
 				     pb_stream *outpbs);
 
-stf_status ikev2_send_cert(struct state *st, struct msg_digest *md,
-			   enum original_role role,
-			   enum next_payload_types_ikev2 np,
-			   pb_stream *outpbs);
+stf_status ikev2_send_cert(struct state *st, pb_stream *outpbs);
+
+bool ikev2_send_certreq_INIT_decision(struct state *st,
+				      enum original_role role);
 
 #endif /* _PLUTO_X509_H */

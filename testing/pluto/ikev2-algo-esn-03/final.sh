@@ -3,7 +3,7 @@ ip xfrm state |grep replay-window
 grep "enabling ESN" /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
-ipsec look
+ipsec look # ../../pluto/bin/ipsec-look.sh
 : ==== tuc ====
 ../bin/check-for-core.sh
 if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi

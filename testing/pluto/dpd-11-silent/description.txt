@@ -1,0 +1,5 @@
+This tests the RFC3706 DPD implementation, ensuring we do not send unnecessary
+keepalives. DPD is enabled on both ends, but we keep running ping packets every
+second. Since there is traffic on the IPsec SA, no DPD probes should be sent.
+
+This also performs a rekey to confirm rhbz#1136076 is not happening

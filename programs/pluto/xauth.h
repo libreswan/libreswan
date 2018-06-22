@@ -1,4 +1,4 @@
-/* XAUTH handling, for libreswan.
+/* XAUTH PAM handling
  *
  * Copyright (C) 2017 Andrew Cagney
  *
@@ -13,43 +13,29 @@
  * for more details.
  */
 
-#include <pthread.h>
-
 #include "constants.h"
 
-struct id;
 struct state;
+struct msg_digest;
 
-/*
- * So code can determine if it isn't running on the main thread; or
- * that its thread is valid.
- */
-extern pthread_t main_thread;
+/* ??? needlessly used even if !XAUTH_HAVE_PAM */
 
-void xauth_cancel(so_serial_t serialno, pthread_t *thread);
+typedef void xauth_callback_t(struct state *st,
+			      struct msg_digest **mdp,
+			      const char *,
+			      bool success);
 
 #ifdef XAUTH_HAVE_PAM
-void xauth_start_pam_thread(pthread_t *thread,
-			    const char *name,
-			    const char *password,
-			    const char *connection_name,
-			    const ip_address *remote_addr,
-			    so_serial_t serialno,
-			    unsigned long instance_serial,
-			    const char *atype,
-			    void (*callback)(struct state *st,
-					     const char *name,
-					     bool success));
-#endif
 
 /*
- * Force a pre-determined authentication outcome through the XAUTH
- * thread code.
+ * XXX: Should XAUTH handle timeouts internally?
  */
+void xauth_pam_abort(struct state *st);
 
-void xauth_start_always_thread(pthread_t *thread,
-			       const char *method, const char *name,
-			       so_serial_t serialno, bool success,
-			       void (*callback)(struct state *st,
-						const char *name,
-						bool success));
+void xauth_start_pam_thread(struct state *st,
+			    const char *name,
+			    const char *password,
+			    const char *atype,
+			    xauth_callback_t *callback);
+
+#endif

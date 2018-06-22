@@ -1,0 +1,68 @@
+setenforce 0
+west #
+ /testing/guestbin/swan-prep --userland strongswan --x509
+west #
+ # strongswan expects the certs in /etc/strongswan/certs for some reason
+west #
+ mkdir -p /etc/strongswan/certs
+west #
+ cp -a /etc/strongswan/ipsec.d/certs/* /etc/strongswan/certs/
+west #
+ ../../pluto/bin/strongswan-start.sh
+west #
+ echo "initdone"
+initdone
+west #
+ # this should succeed
+west #
+ strongswan up san
+sending cert request for "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org"
+initiating Aggressive Mode IKE_SA san[1] to 192.1.2.23
+generating AGGRESSIVE request 0 [ SA KE No ID CERTREQ V V V V V ]
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
+received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
+parsed AGGRESSIVE response 0 [ SA KE No ID CERT CERTREQ SIG V V NAT-D NAT-D ]
+received DPD vendor ID
+received NAT-T (RFC 3947) vendor ID
+ignoring certificate request without data
+received end entity cert "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
+  using certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
+  using trusted ca certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org"
+checking certificate status of "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
+  requesting ocsp status from 'http://nic.testing.libreswan.org:2560' ...
+libcurl request failed [7]: Failed to connect to nic.testing.libreswan.org port 2560: No route to host
+ocsp request to http://nic.testing.libreswan.org:2560 failed
+ocsp check failed, fallback to crl
+  fetching crl from 'http://nic.testing.libreswan.org/revoked.crl' ...
+libcurl request failed [7]: Failed to connect to nic.testing.libreswan.org port 80: No route to host
+crl fetching failed
+certificate status is not available
+  reached self-signed root ca with a path length of 0
+authentication of 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' with RSA_EMSA_PKCS1_NULL successful
+authentication of 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org' (myself) successful
+IKE_SA san[1] established between 192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]
+scheduling reauthentication in XXXs
+maximum IKE_SA lifetime XXXs
+sending end entity cert "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org"
+generating AGGRESSIVE request 0 [ CERT NAT-D NAT-D SIG ]
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
+generating QUICK_MODE request 0123456789 [ HASH SA No KE ID ID ]
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
+received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
+parsed QUICK_MODE response 0123456789 [ HASH SA No KE ID ID ]
+CHILD_SA san{1} established with SPIs SPISPI_i SPISPI_o and TS 192.1.2.45/32 === 192.1.2.23/32
+connection 'san' established successfully
+west #
+ echo "done"
+done
+west #
+ # confirm the right ID types were sent/received
+west #
+ grep "ID type" /tmp/pluto.log
+grep: /tmp/pluto.log: No such file or directory
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

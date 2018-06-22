@@ -46,14 +46,14 @@
 #include "lswlog.h"
 #include "pfkey_help.h"
 #include "libreswan/pfkey_debug.h"
-
+#include "ip_address.h"
 #include "lsw_select.h"
 
-char *progname;
-static char me[] = "ipsec eroute";
+const char *progname;
+static const char me[] = "ipsec eroute";
 
 static char *eroute_af_opt, *said_af_opt, *edst_opt, *spi_opt, *proto_opt, *said_opt,
-*dst_opt, *src_opt;
+	*dst_opt, *src_opt;
 static char *transport_proto_opt, *src_port_opt, *dst_port_opt;
 static int action_type = 0;
 
@@ -76,7 +76,7 @@ static uint32_t pfkey_seq = 0;
 #define EMT_INEROUTE    14              /* set incoming policy for IPIP on a chain */
 #define EMT_INREPLACEROUTE      15      /* replace incoming policy for IPIP on a chain */
 
-static void usage(char *arg)
+static void usage(const char *arg)
 {
 	fprintf(stdout,
 		"usage: %s --{add,addin,replace,replacein} --eraf <inet | inet6> --src <src>/<srcmaskbits>|<srcmask> --dst <dst>/<dstmaskbits>|<dstmask> [ --transport-proto <protocol> ] [ --src-port <source-port> ] [ --dst-port <dest-port> ] <SA>\n",
@@ -301,14 +301,7 @@ int main(int argc, char **argv)
 					progname, optarg, proto_opt);
 				exit(1);
 			}
-#if 0
-			if (said.proto != 0) {
-				fprintf(stderr,
-					"%s: Warning, PROTO parameter redefined:%s\n",
-					progname, optarg);
-				exit(1);
-			}
-#endif
+
 			if (streq(optarg, "ah"))
 				said.proto = SA_AH;
 			if (streq(optarg, "esp"))
@@ -442,12 +435,13 @@ int main(int argc, char **argv)
 			size_t room = strlen(argv[0]) +
 					  sizeof(combine_fmt) +
 					  strlen(optarg);
+			char *b = malloc(room);
 
-			progname = malloc(room);
-			snprintf(progname, room, combine_fmt,
+			snprintf(b, room, combine_fmt,
 				argv[0],
 				optarg);
 			argcount -= 2;
+			progname = b;
 			break;
 		}
 		case 'i': /* specifies the address family of the SAID, stored in said_af */

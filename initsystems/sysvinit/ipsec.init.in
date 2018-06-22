@@ -75,7 +75,7 @@ IPSEC_EXECDIR="${IPSEC_EXECDIR:-@IPSEC_EXECDIR@}"
 IPSEC_SBINDIR="${IPSEC_SBINDIR:-@IPSEC_SBINDIR@}"
 unset PLUTO_OPTIONS
 
-rundir=@FINALVARDIR@/run/pluto
+rundir=@IPSEC_RUNDIR@
 plutopid=${rundir}/pluto.pid
 plutoctl=${rundir}/pluto.ctl
 lockdir=@FINALVARDIR@/lock/subsys
@@ -144,6 +144,9 @@ start() {
 	rm -f ${lockfile}
     fi
     echo
+    if [ -f @FINALLIBEXECDIR@/portexcludes ] ; then
+	@FINALLIBEXECDIR@/portexcludes
+    fi
     return ${RETVAL}
 }
 

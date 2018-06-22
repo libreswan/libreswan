@@ -33,9 +33,6 @@
 #include <stdio.h>
 #include <netdb.h>
 #include <libreswan.h>
-#if 0
-#include <linux/autoconf.h>     /* CONFIG_IPSEC_PFKEYv2 */
-#endif
 
 #include "constants.h"
 #include "lswlog.h"
@@ -51,8 +48,9 @@
 #include "libreswan/ipsec_ah.h"
 
 #include "lsw_select.h"
+#include "ip_address.h"
 
-char *progname;
+const char *progname;
 
 int pfkey_sock;
 uint32_t pfkey_seq = 0;
@@ -68,7 +66,7 @@ struct said_af {
 	ip_said said;
 };
 
-static void usage(char *s)
+static void usage(const char *s)
 {
 	fprintf(stdout,
 		"usage: Note: position of options and arguments is important!\n");
@@ -105,10 +103,6 @@ int main(int argc, char **argv)
 	struct sadb_ext *extensions[K_SADB_EXT_MAX + 1];
 	struct sadb_msg *pfkey_msg;
 
-#if 0
-	ip_address pfkey_address_s_ska;
-#endif
-
 	progname = argv[0];
 	zero(&said_af_array);	/* OK: no pointer fields */
 
@@ -133,11 +127,12 @@ int main(int argc, char **argv)
 			size_t room = strlen(argv[0]) +
 					  sizeof(combine_fmt) +
 					  strlen(optarg);
+			char *b = malloc(room);
 
-			progname = malloc(room);
-			snprintf(progname, room, combine_fmt,
+			snprintf(b, room, combine_fmt,
 				argv[0],
 				argv[2]);
+			progname = b;
 			if (debug)
 				fprintf(stdout, "using \"%s\" as a label.\n",
 					progname);
@@ -420,30 +415,6 @@ int main(int argc, char **argv)
 				pfkey_extensions_free(extensions);
 				exit(1);
 			}
-
-#if 0
-			if (j == 0) {
-				anyaddr(said_af_array[i].af,
-					&pfkey_address_s_ska);                      /* Is the address family correct ?? */
-				if ((error = pfkey_address_build(&extensions[
-									 K_SADB_EXT_ADDRESS_SRC
-								 ],
-								 K_SADB_EXT_ADDRESS_SRC,
-								 0,
-								 0,
-								 sockaddrof(&
-									    pfkey_address_s_ska))))
-				{
-					ipstr_buf b;
-
-					fprintf(stderr,
-						"%s: Trouble building address_s extension (%s), error=%d.\n",
-						progname, ipstr(&pfkey_address_s_ska, &b), error);
-					pfkey_extensions_free(extensions);
-					exit(1);
-				}
-			}
-#endif
 
 			{
 				uint16_t x = j == 0 ? SADB_EXT_ADDRESS_DST : SADB_X_EXT_ADDRESS_DST2;

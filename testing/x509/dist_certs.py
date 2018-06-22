@@ -121,6 +121,8 @@ def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocsp
 					SAN += ", IP:192.1.2.45"
 				else:
 					SAN += ", IP:192.1.2.23"
+			if ee == "otherwest" or ee == "othereast":
+				SAN += ", email:%s@other.libreswan.org"%ee
 		add_ext(cert, 'subjectAltName', False, SAN)
 
 	if cnstr == 'usage-server.testing.libreswan.org':
@@ -290,13 +292,13 @@ def create_mainca_end_certs(mainca_end_certs):
 	for name in mainca_end_certs:
 		# put special cert handling here
 		print " - creating %s" % name
-		if name == 'bigkey':
+		if name == 'smallkey':
 			keysize = 2048
 		else:
 			if name == 'key4096':
 				keysize = 4096
 			else:
-				keysize = 1024
+				keysize = 3072
 
 		if name == 'notyetvalid':
 			startdate = dates['FUTURE']
@@ -308,7 +310,7 @@ def create_mainca_end_certs(mainca_end_certs):
 			startdate = dates['OK_NOW']
 			enddate = dates['FUTURE_END']
 
-		if name == 'signedbyother':
+		if 'other' in name:
 			signer = 'otherca'
 		elif name[:3] == 'bad':
 			signer = 'badca'
@@ -332,6 +334,8 @@ def create_mainca_end_certs(mainca_end_certs):
 			common_name = 'space invaders.testing.libreswan.org'
 		elif name == 'cnofca':
 			common_name = 'Libreswan test CA for mainca'
+		elif 'other' in name:
+			common_name = name + '.other.libreswan.org'
 		else:
 			common_name = name + '.testing.libreswan.org'
 
@@ -610,7 +614,7 @@ def run_dist_certs():
 						'nic-noext', 'nic-nourl',
 						'japan','bigkey', 'key4096',
 						'notyetvalid','notvalidanymore',
-						'signedbyother','wrongdnorg',
+						'signedbyother','otherwest','othereast','wrongdnorg',
 						'unwisechar','spaceincn','hashsha2',
 						'cnofca','revoked', 'badwest', 'badeast')
 	# Add chain roots here

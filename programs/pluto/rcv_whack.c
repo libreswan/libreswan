@@ -60,6 +60,7 @@
 #include "kernel.h"             /* needs connections.h */
 #include "rcv_whack.h"
 #include "log.h"
+#include "peerlog.h"
 #include "lswfips.h"
 #include "keys.h"
 #include "secrets.h"
@@ -69,10 +70,10 @@
 #include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "server.h" /* for pluto_seccomp */
-
 #include "kernel_alg.h"
 #include "ike_alg.h"
-
+#include "ip_address.h" /* for setportof() */
+#include "crl_queue.h"
 #include "pluto_sd.h"
 
 #include "pluto_stats.h"
@@ -122,19 +123,21 @@ static int whack_unroute_connection(struct connection *c,
 	const struct spd_route *sr;
 	int fail = 0;
 
+	passert(c != NULL);
 	set_cur_connection(c);
 
 	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		if (sr->routing >= RT_ROUTED_TUNNEL)
 			fail++;
 	}
-	if (fail > 0)
+	if (fail > 0) {
 		whack_log(RC_RTBUSY,
 			"cannot unroute: route busy");
-	else if (c->policy & POLICY_GROUP)
+	} else if (c->policy & POLICY_GROUP) {
 		unroute_group(c);
-	else
+	} else {
 		unroute_connection(c);
+	}
 
 	reset_cur_connection();
 	return 1;
@@ -144,19 +147,17 @@ static void do_whacklisten(void)
 {
 	fflush(stderr);
 	fflush(stdout);
-	close_peerlog();    /* close any open per-peer logs */
+	peerlog_close();    /* close any open per-peer logs */
 #ifdef USE_SYSTEMD_WATCHDOG
-        pluto_sd(PLUTO_SD_RELOADING, SD_REPORT_NO_STATUS);
+	pluto_sd(PLUTO_SD_RELOADING, SD_REPORT_NO_STATUS);
 #endif
 	libreswan_log("listening for IKE messages");
 	listening = TRUE;
-	daily_log_reset();
-	set_myFQDN();
-	find_ifaces();
+	find_ifaces(TRUE /* remove dead interfaces */);
 	load_preshared_secrets();
 	load_groups();
 #ifdef USE_SYSTEMD_WATCHDOG
-        pluto_sd(PLUTO_SD_READY, SD_REPORT_NO_STATUS);
+	pluto_sd(PLUTO_SD_READY, SD_REPORT_NO_STATUS);
 #endif
 }
 
@@ -164,7 +165,7 @@ static void key_add_request(const struct whack_message *msg)
 {
 	DBG_log("add keyid %s", msg->keyid);
 	struct id keyid;
-	err_t ugh = atoid(msg->keyid, &keyid, FALSE, FALSE);
+	err_t ugh = atoid(msg->keyid, &keyid, FALSE);
 
 	if (ugh != NULL) {
 		loglog(RC_BADID, "bad --keyid \"%s\": %s", msg->keyid, ugh);
@@ -173,51 +174,6 @@ static void key_add_request(const struct whack_message *msg)
 			delete_public_keys(&pluto_pubkeys, &keyid,
 					   msg->pubkey_alg);
 
-#if 0
-		if (msg->keyval.len == 0) {
-			struct key_add_common *oc =
-				alloc_thing(struct key_add_common,
-					    "key add common things");
-			enum key_add_attempt kaa;
-
-			/* initialize state shared by queries */
-			oc->refCount = 0;
-			oc->whack_fd = dup_any(whack_log_fd);
-			oc->success = FALSE;
-
-			for (kaa = ka_TXT; kaa != ka_roof; kaa++) {
-				struct key_add_continuation *kc =
-					alloc_thing(
-						struct key_add_continuation,
-						"key add continuation");
-
-				oc->diag[kaa] = NULL;
-				oc->refCount++;
-				kc->common = oc;
-				kc->lookingfor = kaa;
-				switch (kaa) {
-				case ka_TXT:
-					break;
-#ifdef USE_KEYRR
-				case ka_KEY:
-					break;
-#endif                                                  /* USE_KEYRR */
-				default:
-					bad_case(kaa);  /* suppress gcc warning */
-				}
-				if (ugh != NULL) {
-					oc->diag[kaa] = clone_str(ugh,
-								  "early key add failure");
-					oc->refCount--;
-				}
-			}
-
-			/* Done launching queries.
-			 * Handle total failure case.
-			 */
-			key_add_merge(oc, &keyid);
-		} else
-#endif
 		if (msg->keyval.len != 0) {
 			DBG_dump_chunk("add pubkey", msg->keyval);
 			ugh = add_public_key(&keyid, PUBKEY_LOCAL,
@@ -275,8 +231,6 @@ static bool openwhackrecordfile(char *file)
 	char when[256];
 	char FQDN[SWAN_MAX_DOMAIN_LEN];
 	const u_int32_t magic = WHACK_BASIC_MAGIC;
-	struct tm tm1, *tm;
-	realtime_t n = realnow();
 
 	strcpy(FQDN, "unknown host");
 	gethostname(FQDN, sizeof(FQDN));
@@ -289,8 +243,8 @@ static bool openwhackrecordfile(char *file)
 		return FALSE;
 	}
 
-	tm = localtime_r(&n.real_secs, &tm1);
-	strftime(when, sizeof(when), "%F %T", tm);
+	struct realtm now = local_realtime(realnow());
+	strftime(when, sizeof(when), "%F %T", &now.tm);
 
 	fprintf(whackrecordfile, "#!-pluto-whack-file- recorded on %s on %s",
 		FQDN, when);
@@ -309,7 +263,8 @@ static bool openwhackrecordfile(char *file)
  */
 void whack_process(int whackfd, const struct whack_message *const m)
 {
-	/* May be needed in future:
+	/*
+	 * May be needed in future:
 	 * const struct lsw_conf_options *oco = lsw_init_options();
 	 */
 	if (m->whack_options) {
@@ -317,22 +272,54 @@ void whack_process(int whackfd, const struct whack_message *const m)
 		case WHACK_ADJUSTOPTIONS:
 #ifdef FIPS_CHECK
 			if (libreswan_fipsmode()) {
-				if (m->debugging & DBG_PRIVATE) {
+				if (lmod_is_set(m->debugging, DBG_PRIVATE)) {
 					whack_log(RC_FATAL, "FIPS: --debug-private is not allowed in FIPS mode, aborted");
 					goto done;
 				}
 			}
 #endif
 			if (m->name == NULL) {
-				/* we do a two-step so that if either old or new would
-				 * cause the message to print, it will be printed.
+				/*
+				 * This is done in two two-steps so
+				 * that if either old or new would
+				 * cause a debug message to print, it
+				 * will be printed.
+				 *
+				 * XXX: why not unconditionally send
+				 * what was changed back to whack?
 				 */
-				set_debugging(cur_debugging | m->debugging);
-				DBG(DBG_CONTROL,
-				    DBG_log("base debugging = %s",
-					    bitnamesof(debug_bit_names,
-						       m->debugging)));
-				base_debugging = m->debugging;
+				lset_t old_debugging = cur_debugging & DBG_MASK;
+				lset_t new_debugging = lmod(old_debugging, m->debugging);
+				lset_t old_impairing = cur_debugging & IMPAIR_MASK;
+				lset_t new_impairing = lmod(old_impairing, m->impairing);
+				set_debugging(cur_debugging | new_debugging);
+				LSWDBGP(DBG_CONTROL, buf) {
+					lswlogs(buf, "old debugging ");
+					lswlog_enum_lset_short(buf, &debug_names,
+							       "+", old_debugging);
+					lswlogs(buf, " + ");
+					lswlog_lmod(buf, &debug_names,
+						    "+", m->debugging);
+				}
+				LSWDBGP(DBG_CONTROL, buf) {
+					lswlogs(buf, "base debugging = ");
+					lswlog_enum_lset_short(buf, &debug_names,
+							       "+", new_debugging);
+				}
+				LSWDBGP(DBG_CONTROL, buf) {
+					lswlogs(buf, "old impairing ");
+					lswlog_enum_lset_short(buf, &impair_names,
+							       "+", old_impairing);
+					lswlogs(buf, " + ");
+					lswlog_lmod(buf, &impair_names,
+						    "+", m->impairing);
+				}
+				LSWDBGP(DBG_CONTROL, buf) {
+					lswlogs(buf, "base impairing = ");
+					lswlog_enum_lset_short(buf, &impair_names,
+							       "+", new_impairing);
+				}
+				base_debugging = new_debugging | new_impairing;
 				set_debugging(base_debugging);
 			} else if (!m->whack_connection) {
 				struct connection *c = conn_by_name(m->name,
@@ -340,12 +327,19 @@ void whack_process(int whackfd, const struct whack_message *const m)
 
 				if (c != NULL) {
 					c->extra_debugging = m->debugging;
-					DBG(DBG_CONTROL,
-					    DBG_log("\"%s\" extra_debugging = %s",
-						    c->name,
-						    bitnamesof(debug_bit_names,
-							       c->
-							       extra_debugging)));
+					LSWDBGP(DBG_CONTROL, buf) {
+						lswlogf(buf, "\"%s\" extra_debugging = ",
+							c->name);
+						lswlog_lmod(buf, &debug_names,
+							    "+", c->extra_debugging);
+					}
+					c->extra_impairing = m->impairing;
+					LSWDBGP(DBG_CONTROL, buf) {
+						lswlogf(buf, "\"%s\" extra_impairing = ",
+							c->name);
+						lswlog_lmod(buf, &impair_names,
+							    "+", c->extra_impairing);
+					}
 				}
 			}
 			break;
@@ -382,9 +376,6 @@ void whack_process(int whackfd, const struct whack_message *const m)
 		}
 	}
 
-	if (m->whack_myid)
-		set_myid(MYID_SPECIFIED, m->myid);
-
 	/* Deleting combined with adding a connection works as replace.
 	 * To make this more useful, in only this combination,
 	 * delete will silently ignore the lack of the connection.
@@ -416,7 +407,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 			DBG_log("received whack to delete %s state #%lu %s",
 				st->st_ikev2 ? "IKEv2" : "IKEv1",
 				st->st_serialno,
-				enum_name(&state_names, st->st_state));
+				st->st_state_name);
 
 			if (st->st_ikev2 && !IS_CHILD_SA(st)) {
 				DBG_log("Also deleting any corresponding CHILD_SAs");
@@ -434,6 +425,19 @@ void whack_process(int whackfd, const struct whack_message *const m)
 
 	if (m->whack_connection)
 		add_connection(m);
+
+	/* update any socket buffer size before calling listen */
+	if (m->ike_buf_size != 0) {
+		pluto_sock_bufsize = m->ike_buf_size;
+		libreswan_log("Set IKE socket buffer to %d", pluto_sock_bufsize);
+	}
+
+	/* update MSG_ERRQUEUE setting before size before calling listen */
+	if (m->ike_sock_err_toggle) {
+		pluto_sock_errqueue = !pluto_sock_errqueue;
+		libreswan_log("%s IKE socket MSG_ERRQUEUEs",
+			pluto_sock_errqueue ? "Enabling" : "Disabling");
+	}
 
 	/* process "listen" before any operation that could require it */
 	if (m->whack_listen)
@@ -461,7 +465,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 
 #if defined(LIBCURL) || defined(LIBLDAP)
 	if (m->whack_reread & REREAD_FETCH)
-			wake_fetch_thread("whack command");
+		add_crl_fetch_requests(NULL);
 #endif
 
 	if (m->whack_list & LIST_PSKS)
@@ -497,16 +501,12 @@ void whack_process(int whackfd, const struct whack_message *const m)
 
 			if (c != NULL) {
 				whack_route_connection(c, NULL);
-			} else {
-				int count = 0;
-
-				count = foreach_connection_by_alias(m->name,
-								whack_route_connection,
-								NULL);
-				if (count == 0)
-					whack_log(RC_ROUTE,
-						"no connection or alias '%s'",
-						m->name);
+			} else if (0 == foreach_connection_by_alias(m->name,
+						whack_route_connection,
+						NULL)) {
+				whack_log(RC_ROUTE,
+					"no connection or alias '%s'",
+					m->name);
 			}
 		}
 	}
@@ -516,16 +516,12 @@ void whack_process(int whackfd, const struct whack_message *const m)
 
 		if (c != NULL) {
 			whack_unroute_connection(c, NULL);
-		} else {
-			int count = 0;
-
-			count = foreach_connection_by_alias(m->name,
-							whack_unroute_connection,
-							NULL);
-			if (count == 0)
-				whack_log(RC_ROUTE,
-					"no connection or alias '%s'",
-					m->name);
+		} else if (0 == foreach_connection_by_alias(m->name,
+						whack_unroute_connection,
+						NULL)) {
+			whack_log(RC_ROUTE,
+				"no connection or alias '%s'",
+				m->name);
 		}
 	}
 
@@ -548,13 +544,13 @@ void whack_process(int whackfd, const struct whack_message *const m)
 				}
 			}
 			initiate_connection(m->name,
-			    m->whack_async ?
-			      NULL_FD :
-			      dup_any(whackfd),
-			    m->debugging,
-			    pcim_demand_crypto,
-			    pass_remote ? m->remote_host : NULL
-				);
+					    m->whack_async ?
+					    NULL_FD :
+					    dup_any(whackfd),
+					    m->debugging,
+					    m->impairing,
+					    pcim_demand_crypto,
+					    pass_remote ? m->remote_host : NULL);
 		}
 	}
 
@@ -564,7 +560,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 				  "need --listen before opportunistic initiation");
 		} else {
 			initiate_ondemand(&m->oppo_my_client,
-						&m->oppo_peer_client, 0,
+						&m->oppo_peer_client, m->oppo_proto,
 						FALSE,
 						m->whack_async ?
 						  NULL_FD :
@@ -589,7 +585,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 		clear_pluto_stats();
 
 	if (m->whack_traffic_status)
-		show_traffic_status();
+		show_traffic_status(m->name);
 
 	if (m->whack_shunt_status)
 		show_shunt_status();

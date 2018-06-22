@@ -7,4 +7,6 @@ ping -n -c 4 -I 10.0.1.254 10.0.2.254
 ipsec whack --trafficstatus
 # show packets went via ipsec0
 ifconfig ipsec0
+# show how our tunnel interface looks
+ip tun
 echo done

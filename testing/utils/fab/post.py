@@ -61,22 +61,73 @@ class Resolution:
         self.state = self.UNRESOLVED
 
 
-# Dictionary to accumulate all the errors for each host from an
-# individual test.
+# Mapping between hosts and their issues and/or issues and their
+# hosts.
+#
+# Two maps are maintained:
+#
+# - the ISSUE_HOSTS map is indexed by ISSUE, each ISSUE entry then
+#   contains a list (set?) of hosts
+#
+#   This is so that code can easily determine if a specific issue,
+#   regardless of the HOST, has occurred.  All the programatic
+#   operators, such as __contains__(), are implemented based on this
+#   model.
+#
+#   XXX: Could probably re-implement issues as an extension of
+#   dictionary.
+#
+# - the HOST_ISSUES map is indexed by HOST, each HOST entry then
+#   contains a list (set?) of issues
+#
+#   This is used to display and dump the issues (__str__(), json()).
+#   It seems that the most user friendly format is:
+#   host:issue,... host:issue:,...
 
 class Issues:
 
+    ASSERTION = "ASSERTION"
+    EXPECTATION = "EXPECTATION"
+
+    CORE = "CORE"
+    SEGFAULT = "SEGFAULT"
+    GPFAULT = "GPFAULT"
+
+    CRASHED = {ASSERTION, EXPECTATION, CORE, SEGFAULT, GPFAULT}
+
+    OUTPUT_MISSING = "output-missing"
+    OUTPUT_UNCHECKED = "output-unchecked"
+    OUTPUT_TRUNCATED = "output-truncated"
+    OUTPUT_WHITESPACE = "output-whitespace"
+    OUTPUT_DIFFERENT = "output-different"
+
+    ABSENT = "absent"
+
+    SANITIZER_FAILED = "sanitizer-failed"
+
+    BASELINE_FAILED = "baseline-failed"
+    BASELINE_PASSED = "baseline-passed"
+    BASELINE_MISSING = "baseline-missing"
+    BASELINE_WHITESPACE = "baseline-whitespace"
+    BASELINE_DIFFERENT = "baseline-different"
+
     def __init__(self, logger):
         # Structure needs to be JSON friendly.
-        self.issues = {}
-        self.logger = logger
+        self._host_issues = {}
+        self._issue_hosts = {}
+        self._logger = logger
 
-    # this formatting is subject to infinite feedback.
+    # Both __str__() and json() dump the table in user friendly
+    # format.  That is:
     #
-    # Not exactly efficient.
+    #     host:issue,...  host:issue,...
+    #
+    # This is the opposite to what code expects - a dictionary
+    # structured issue:host,... .
+
     def __str__(self):
         s = ""
-        for host, errors in sorted(self.issues.items()):
+        for host, errors in sorted(self._host_issues.items()):
             if s:
                 s += " "
             if host:
@@ -85,39 +136,34 @@ class Issues:
         return s
 
     def json(self):
-        return self.issues
+        return self._host_issues
 
-    # So, like a real collection, can easily test if non-empty.
+    # Programatic collections like interface.  This is indexed by
+    # ISSUE so that it is easy to query Issues to see if an ISSUE
+    # occurred on any host.
+
     def __bool__(self):
-        return len(self.issues) > 0
+        return len(self._issue_hosts) > 0
 
-    # Iterate over the actual errors, not who had them.
-    #
-    # XXX: there's not much consistency between __iter__(), items(),
-    # __contains__() and __getitem__().  On the other hand, a hashmap
-    # iter isn't consistent either.
     def __iter__(self):
-        values = set()
-        for errors in self.issues.values():
-            for error in errors:
-                values.add(error)
-        return values.__iter__()
+        return self._issue_hosts.keys().__iter__()
 
-    def __contains__(self, item):
-        return item in self.issues
+    def __contains__(self, issue):
+        return issue in self._issue_hosts
 
-    def __getitem__(self, item):
-        return self.issues[item]
+    def __getitem__(self, issue):
+        return self._issue_hosts[issue]
 
-    def items(self):
-        return self.issues.items()
-
-    def add(self, error, host):
-        if not host in self.issues:
-            self.issues[host] = []
-        if not error in self.issues[host]:
-            self.issues[host].append(error)
-        self.logger.debug("host %s has error %s", host, error)
+    def add(self, issue, host):
+        if not host in self._host_issues:
+            self._host_issues[host] = []
+        if not issue in self._host_issues[host]:
+            self._host_issues[host].append(issue)
+        if not issue in self._issue_hosts:
+            self._issue_hosts[issue] = []
+        if not host in self._issue_hosts[issue]:
+            self._issue_hosts[issue].append(host)
+        self._logger.debug("host %s has issue %s", host, issue)
 
 
 def _strip(s):
@@ -227,10 +273,10 @@ class TestResult:
         for host_name in test.host_names:
             pluto_log_filename = host_name + ".pluto.log"
             if self.grub(pluto_log_filename, "ASSERTION FAILED"):
-                self.issues.add("ASSERTION", host_name)
+                self.issues.add(Issues.ASSERTION, host_name)
                 self.resolution.failed()
             if self.grub(pluto_log_filename, "EXPECTATION FAILED"):
-                self.issues.add("EXPECTATION", host_name)
+                self.issues.add(Issues.EXPECTATION, host_name)
                 # XXX: allow expection failures?
 
         # Check the raw console output for problems and that it
@@ -247,7 +293,7 @@ class TestResult:
 
             raw_output_filename = host_name + ".console.verbose.txt"
             if self.grub(raw_output_filename) is None:
-                self.issues.add("output-missing", host_name)
+                self.issues.add(Issues.OUTPUT_MISSING, host_name)
                 self.resolution.unresolved()
                 # With no raw console output, there's little point in
                 # trying validating it.  Skip remaining tests for this
@@ -259,13 +305,13 @@ class TestResult:
             self.logger.debug("host %s checking raw console output for signs of a crash",
                               host_name)
             if self.grub(raw_output_filename, r"[\r\n]CORE FOUND"):
-                self.issues.add("CORE", host_name)
+                self.issues.add(Issues.CORE, host_name)
                 self.resolution.failed()
             if self.grub(raw_output_filename, r"SEGFAULT"):
-                self.issues.add("SEGFAULT", host_name)
+                self.issues.add(Issues.SEGFAULT, host_name)
                 self.resolution.failed()
             if self.grub(raw_output_filename, r"GPFAULT"):
-                self.issues.add("GPFAULT", host_name)
+                self.issues.add(Issues.GPFAULT, host_name)
                 self.resolution.failed()
 
             # Check that the host's raw output is complete.
@@ -290,7 +336,7 @@ class TestResult:
                 # this is probably truncated output; but if the test
                 # is old it may not be the case. and an unresolved
                 # test, but need to first exclude other options.
-                self.issues.add("output-truncated", host_name)
+                self.issues.add(Issues.OUTPUT_TRUNCATED, host_name)
                 if os.path.isfile(test.result_file(self.output_directory)):
                     self.resolution.failed()
                 else:
@@ -314,7 +360,7 @@ class TestResult:
                                                     os.path.join(self.output_directory, raw_output_filename),
                                                     test)
             if sanitized_output is None:
-                self.issues.add("sanitizer-failed", host_name)
+                self.issues.add(Issues.SANITIZER_FAILED, host_name)
                 self.resolution.unresolved()
                 continue
             if update:
@@ -332,7 +378,7 @@ class TestResult:
 
             expected_output = _load_file(self.logger, expected_output_path)
             if expected_output is None:
-                self.issues.add("output-unchecked", host_name)
+                self.issues.add(Issues.OUTPUT_UNCHECKED, host_name)
                 self.resolution.unresolved()
                 continue
 
@@ -371,9 +417,9 @@ class TestResult:
                                          sanitized_output)
                 self.resolution.failed()
                 if whitespace:
-                    self.issues.add("output-whitespace", host_name)
+                    self.issues.add(Issues.OUTPUT_WHITESPACE, host_name)
                 else:
-                    self.issues.add("output-different", host_name)
+                    self.issues.add(Issues.OUTPUT_DIFFERENT, host_name)
 
     def grub(self, filename, regex=None, cast=lambda x: x):
         """Grub around FILENAME to find regex"""
@@ -434,7 +480,7 @@ def mortem(test, args, domain_prefix="",
     # same way.
 
     if not test.name in baseline:
-        test_result.issues.add("absent", "baseline")
+        test_result.issues.add(Issues.ABSENT, "baseline")
         return test_result
 
     # When loading the baseline results use "quick" so that the
@@ -464,20 +510,26 @@ def mortem(test, args, domain_prefix="",
 
     for host_name in test.host_names:
 
-        if not host_name in test_result.sanitized_output:
+        # result missing output; still check baseline ..
+        if host_name not in test_result.sanitized_output:
+            if host_name in baseline_result.sanitized_output:
+                if host_name in baseline_result.diffs:
+                    test_result.issues.add(Issues.BASELINE_FAILED, host_name)
+                else:
+                    test_result.issues.add(Issues.BASELINE_PASSED, host_name)
             continue
 
         if not host_name in baseline_result.sanitized_output:
-            test_result.issues.add("baseline-missing", host_name)
+            test_result.issues.add(Issues.BASELINE_MISSING, host_name)
             continue
 
         if not host_name in test_result.diffs:
             if host_name in baseline_result.diffs:
-                test_result.issues.add("baseline-failed", host_name)
+                test_result.issues.add(Issues.BASELINE_FAILED, host_name)
             continue
 
         if not host_name in baseline_result.diffs:
-            test_result.issues.add("baseline-passed", host_name)
+            test_result.issues.add(Issues.BASELINE_PASSED, host_name)
             continue
 
         baseline_diff = _diff(logger,
@@ -489,9 +541,9 @@ def mortem(test, args, domain_prefix="",
             baseline_whitespace = _whitespace(baseline_result.sanitized_output[host_name],
                                               test_result.sanitized_output[host_name])
             if baseline_whitespace:
-                test_result.issues.add("baseline-whitespace", host_name)
+                test_result.issues.add(Issues.BASELINE_WHITESPACE, host_name)
             else:
-                test_result.issues.add("baseline-different", host_name)
+                test_result.issues.add(Issues.BASELINE_DIFFERENT, host_name)
             # update the diff to something hopefully closer?
             # test_result.diffs[host_name] = baseline_diff
         # else:

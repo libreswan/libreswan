@@ -1,0 +1,25 @@
+setenforce 0
+east #
+ /testing/guestbin/swan-prep --userland strongswan --x509
+east #
+ # strongswan expects the certs in /etc/strongswan/certs for some reason
+east #
+ mkdir -p /etc/strongswan/certs
+east #
+ cp -a /etc/strongswan/ipsec.d/certs/* /etc/strongswan/certs/
+east #
+ ../../pluto/bin/strongswan-start.sh
+east #
+ echo "initdone"
+initdone
+east #
+ # confirm the right ID types were sent/received
+east #
+ grep "ID type" /tmp/pluto.log
+grep: /tmp/pluto.log: No such file or directory
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

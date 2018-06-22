@@ -25,7 +25,7 @@ include $(top_srcdir)/mk/config.mk
 
 UTILS=${LIBRESWANSRCDIR}/testing/utils
 
-check:
+local-check:
 ifeq ($(UPDATEONLY),)
 	$(MAKE) -C $(LIBRESWANSRCDIR) kvm-keys-up-to-date
 endif
@@ -40,6 +40,3 @@ ifeq ($(UPDATEONLY),)
 	rm -rf */OUTPUT
 	../utils/swantest
 endif
-
-install checkprograms programs:
-	@true

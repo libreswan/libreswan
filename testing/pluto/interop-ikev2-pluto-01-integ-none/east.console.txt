@@ -1,0 +1,43 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec stop
+Redirecting to: systemctl stop ipsec.service
+east #
+ # east shows what was sent across the wire; expect two lines for each
+east #
+ # of the three connections: default (missing); integ=none included;
+east #
+ # integ=none excluded
+east #
+ grep 'proposal .* chosen from' /tmp/pluto.log | sed -e 's/SPI=[^;]*/SPI=X/'
+packet from 192.1.2.45:500: proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;DH=MODP2048 chosen from remote proposals 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;DH=MODP2048[first-match]
+"westnet-eastnet-ipv4-psk-ikev2" #1: proposal 1:ESP:SPI=X;ENCR=AES_GCM_C_128;ESN=DISABLED chosen from remote proposals 1:ESP:ENCR=AES_GCM_C_128;ESN=DISABLED[first-match]
+packet from 192.1.2.45:500: proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;INTEG=NONE;DH=MODP2048 chosen from remote proposals 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;INTEG=NONE;DH=MODP2048[first-match]
+"westnet-eastnet-ipv4-psk-ikev2" #3: proposal 1:ESP:SPI=X;ENCR=AES_GCM_C_128;INTEG=NONE;ESN=DISABLED chosen from remote proposals 1:ESP:ENCR=AES_GCM_C_128;INTEG=NONE;ESN=DISABLED[first-match]
+packet from 192.1.2.45:500: proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;DH=MODP2048 chosen from remote proposals 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;DH=MODP2048[first-match]
+"westnet-eastnet-ipv4-psk-ikev2" #5: proposal 1:ESP:SPI=X;ENCR=AES_GCM_C_128;ESN=DISABLED chosen from remote proposals 1:ESP:ENCR=AES_GCM_C_128;ESN=DISABLED[first-match]
+east #
+ # west shows what came back, expect two lines for each of the three
+east #
+ # connections: default (missing); integ=none included; integ=none
+east #
+ # excluded
+east #
+ grep 'remote accepted' /tmp/pluto.log
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+east #
+ 

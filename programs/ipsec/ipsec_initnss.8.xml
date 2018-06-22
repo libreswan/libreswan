@@ -8,7 +8,7 @@
 <refmeta>
 <refentrytitle>IPSEC_INITNSS</refentrytitle>
 <manvolnum>8</manvolnum>
-<refmiscinfo class='date'>24 August 2016</refmiscinfo>
+<refmiscinfo class='date'>27 April 2018</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
@@ -37,7 +37,13 @@ return an error. To remove an existing IPsec NSS database, remove all the
 </refsect1>
 
 <refsect1 id='see_also'><title>SEE ALSO</title>
-<para>ipsec.<citerefentry><refentrytitle>conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_auto</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>route</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+<para>
+<citerefentry><refentrytitle>ipsec.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>ipsec_auto</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>ipsec_checknss</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>ipsec_import</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+</para>
 </refsect1>
 
 

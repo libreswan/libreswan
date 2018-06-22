@@ -30,21 +30,25 @@
 #include "lswfips.h"
 
 #include "ike_alg.h"
-#include "ike_alg_null.h"
+#include "ike_alg_none.h"
 #include "ike_alg_aes.h"
 #include "ike_alg_sha1.h"
 
 /*
-
  * Add ESP alg info _with_ logic (policy):
  */
-static bool esp_proposal_ok(const struct parser_policy *const policy UNUSED,
-			    const struct proposal_info *proposal,
-			    char *err_buf UNUSED, size_t err_buf_len UNUSED)
+static bool esp_proposal_ok(const struct proposal_parser *parser,
+			    const struct proposal_info *proposal)
 {
-	passert(proposal->encrypt != NULL);
-	passert(proposal->prf == NULL);
-	passert(proposal->integ != NULL);
+	if (!proposal_aead_none_ok(parser, proposal)) {
+		if (!impair_proposal_errors(parser)) {
+			return false;
+		}
+	}
+
+	impaired_passert(PROPOSAL_PARSER, proposal->encrypt != NULL);
+	impaired_passert(PROPOSAL_PARSER, proposal->prf == NULL);
+	impaired_passert(PROPOSAL_PARSER, proposal->integ != NULL);
 	return true;
 }
 
@@ -63,8 +67,8 @@ const struct proposal_defaults esp_defaults = {
 	.integ = default_esp_integ,
 };
 
-const struct parser_param esp_parser_param = {
-	.protocol = "ESP",
+const struct proposal_protocol esp_proposal_protocol = {
+	.name = "ESP",
 	.ikev1_alg_id = IKEv1_ESP_ID,
 	.protoid = PROTO_IPSEC_ESP,
 	.ikev1_defaults = &esp_defaults,
@@ -74,192 +78,6 @@ const struct parser_param esp_parser_param = {
 	.integ_alg_byname = integ_alg_byname,
 	.dh_alg_byname = dh_alg_byname,
 };
-
-static bool ah_proposal_ok(const struct parser_policy *const policy UNUSED,
-			   const struct proposal_info *proposal,
-			   char *err_buf, size_t err_buf_len)
-{
-	passert(proposal->encrypt == NULL);
-	passert(proposal->prf == NULL);
-	passert(proposal->integ != NULL);
-
-	/* ah=null is invalid */
-	if (proposal->integ == &ike_alg_integ_null) {
-		snprintf(err_buf, err_buf_len,
-			 "AH cannot have a 'null' integrity algorithm");
-		return false;
-	}
-	return true;
-}
-
-static const struct ike_alg *default_ah_integ[] = {
-	&ike_alg_integ_sha1.common,
-	NULL,
-};
-
-const struct proposal_defaults ah_defaults = {
-	.integ = default_ah_integ,
-};
-
-const struct parser_param ah_parser_param = {
-	.protocol = "AH",
-	.ikev1_alg_id = IKEv1_ESP_ID,
-	.protoid = PROTO_IPSEC_AH,
-	.ikev1_defaults = &ah_defaults,
-	.ikev2_defaults = &ah_defaults,
-	.proposal_ok = ah_proposal_ok,
-	.integ_alg_byname = integ_alg_byname,
-	.dh_alg_byname = dh_alg_byname,
-};
-
-/*
- * Pluto only accepts one ESP/AH DH algorithm and it must come at the
- * end and be separated with a ';'.  Enforce this (even though the
- * parer is far more forgiving).
- */
-
-static struct alg_info_esp *alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,
-							    const char *alg_str,
-							    char *err_buf, size_t err_buf_len,
-							    const struct parser_param *parser_param)
-{
-	if (aie == NULL) {
-		return NULL;
-	}
-
-	/*
-	 * Find the first and last proposal, if present (never know,
-	 * there could be no algorithms).
-	 */
-	struct proposal_info *first = NULL;
-	FOR_EACH_ESP_INFO(aie, esp_info) {
-		first = esp_info;
-		break;
-	}
-	struct proposal_info *last = NULL;
-	FOR_EACH_ESP_INFO(aie, esp_info) {
-		last = esp_info;
-	}
-	if (last == NULL) {
-		/* let caller deal with this. */
-		return aie;
-	}
-
-	/*
-	 * Make certain that either all algorithms have the same DH or
-	 * all are NULL (with the exception of the last).
-	 *
-	 * For instance, aes-modp1024,aes-modp2048 isn't allowed
-	 * because pluto assumes only one PFS group.
-	 */
-	FOR_EACH_ESP_INFO(aie, esp_info) {
-		if (esp_info == last) {
-			continue;
-		}
-		if (first->dh != esp_info->dh) {
-			snprintf(err_buf, err_buf_len,
-				 "%s DH algorithm '%s' must be specified last",
-				 parser_param->protocol,
-				 (first->dh != NULL ? first->dh : esp_info->dh)->common.fqn);
-			alg_info_free(&aie->ai);
-			return NULL;
-		}
-		if (esp_info->dh != NULL && last->dh == NULL) {
-			snprintf(err_buf, err_buf_len,
-				 "%s DH algorithm '%s' must be specified last",
-				 parser_param->protocol,
-				 esp_info->dh->common.fqn);
-			alg_info_free(&aie->ai);
-			return NULL;
-		}
-		if (esp_info->dh != NULL && esp_info->dh != last->dh) {
-			snprintf(err_buf, err_buf_len,
-				 "%s DH algorithm must be specified once",
-				 parser_param->protocol);
-			alg_info_free(&aie->ai);
-			return NULL;
-		}
-	}
-
-	/*
-	 * Restrict the DH separator character to ';' and the last
-	 * proposal.
-	 *
-	 * While the parser allows both "...;modp1024" and
-	 * "...-modp1024", pluto only admits to the former - so that
-	 * it stands out as something not part of the individual
-	 * proposals.
-	 *
-	 * Why? Because this is how it worked in the past.  Presumably
-	 * ';' makes it clear that it applies to all algorithms?
-	 *
-	 * Conversely, if all proposals include DH don't allow any
-	 * ';'.
-	 */
-	if (last->dh != NULL) {
-		char *last_dash = strrchr(alg_str, '-');
-		char *last_semi = strrchr(alg_str, ';');
-		char *last_comma = strrchr(alg_str, ',');
-		if (first != last && first->dh == NULL) {
-			/* reject missing ';'. */
-			if (last_semi == NULL) {
-				snprintf(err_buf, err_buf_len,
-					 "%s DH algorithm '%s' must be separated using a ';'",
-					 parser_param->protocol,
-					 last->dh->common.fqn);
-				alg_info_free(&aie->ai);
-				return NULL;
-			}
-			/* reject xxx;DH,yyy */
-			if (last_comma != NULL && last_semi < last_comma) {
-				snprintf(err_buf, err_buf_len,
-					 "%s DH algorithm must appear after last proposal",
-					 parser_param->protocol);
-				alg_info_free(&aie->ai);
-				return NULL;
-			}
-			/* reject yyy,xxx-DH */
-			if (last_dash != NULL && last_semi < last_dash) {
-				snprintf(err_buf, err_buf_len,
-					 "%s DH algorithm must be at end of proposal",
-					 parser_param->protocol);
-				alg_info_free(&aie->ai);
-				return NULL;
-			}
-		} else if (first != last && first->dh != NULL) {
-			/* reject ...;... */
-			if (last_semi != NULL) {
-				snprintf(err_buf, err_buf_len,
-					 "%s DH algorithm must appear once after last proposal",
-					 parser_param->protocol);
-				alg_info_free(&aie->ai);
-				return NULL;
-			}
-		}
-	}
-
-	/*
-	 * Now go through and force all DHs to a consistent value.
-	 *
-	 * This way, something printing an individual proposal will
-	 * include the common DH; and for IKEv2 it can just pick up
-	 * that DH.
-	 */
-	FOR_EACH_ESP_INFO(aie, esp_info) {
-		if (esp_info == last) {
-			continue;
-		}
-		esp_info->dh = last->dh;
-	}
-
-	/*
-	 * Use last's DH for PFS.  Could be NULL but that is ok.
-	 *
-	 * Since DH is set uniformly, could use first.DH instead.
-	 */
-	aie->esp_pfsgroup = last->dh;
-	return aie;
-}
 
 /*
  * ??? why is this called _ah_ when almost everything refers to esp?
@@ -277,10 +95,15 @@ static struct alg_info_esp *alg_info_discover_pfsgroup_hack(struct alg_info_esp 
  */
 
 /* This function is tested in testing/algparse/algparse.c */
-struct alg_info_esp *alg_info_esp_create_from_str(const struct parser_policy *policy,
+struct alg_info_esp *alg_info_esp_create_from_str(const struct proposal_policy *policy,
 						  const char *alg_str,
 						  char *err_buf, size_t err_buf_len)
 {
+	shunk_t string = shunk1(alg_str);
+	const struct proposal_parser parser = proposal_parser(policy,
+							      &esp_proposal_protocol,
+							      err_buf, err_buf_len);
+
 	/*
 	 * alg_info storage should be sized dynamically
 	 * but this may require two passes to know
@@ -288,44 +111,17 @@ struct alg_info_esp *alg_info_esp_create_from_str(const struct parser_policy *po
 	 */
 	struct alg_info_esp *alg_info_esp = alloc_thing(struct alg_info_esp,
 							"alg_info_esp");
-	/*
-	 * These calls can free alg_info_esp!
-	 */
-	alg_info_esp = (struct alg_info_esp *)
-		alg_info_parse_str(policy,
-				   &alg_info_esp->ai,
-				   alg_str,
-				   err_buf, err_buf_len,
-				   &esp_parser_param);
-	alg_info_esp = alg_info_discover_pfsgroup_hack(alg_info_esp, alg_str,
-						       err_buf, err_buf_len,
-						       &esp_parser_param);
+	if (!alg_info_parse_str(&parser, &alg_info_esp->ai, string)) {
+		passert(err_buf[0] != '\0');
+		alg_info_free(&alg_info_esp->ai);
+		return NULL;
+	}
+
+	if (!alg_info_pfs_vs_dh_check(&parser, alg_info_esp)) {
+		passert(err_buf[0] != '\0');
+		alg_info_free(&alg_info_esp->ai);
+		return NULL;
+	}
+
 	return alg_info_esp;
-}
-
-/* This function is tested in testing/algparse/algparse.c */
-struct alg_info_esp *alg_info_ah_create_from_str(const struct parser_policy *policy,
-						 const char *alg_str,
-						 char *err_buf, size_t err_buf_len)
-{
-	/*
-	 * alg_info storage should be sized dynamically
-	 * but this may require two passes to know
-	 * transform count in advance.
-	 */
-	struct alg_info_esp *alg_info_ah = alloc_thing(struct alg_info_esp, "alg_info_ah");
-
-	/*
-	 * These calls can free ALG_INFO_AH.
-	 */
-	alg_info_ah = (struct alg_info_esp *)
-		alg_info_parse_str(policy,
-				   &alg_info_ah->ai,
-				   alg_str,
-				   err_buf, err_buf_len,
-				   &ah_parser_param);
-	alg_info_ah = alg_info_discover_pfsgroup_hack(alg_info_ah, alg_str,
-						      err_buf, err_buf_len,
-						      &ah_parser_param);
-	return alg_info_ah;
 }

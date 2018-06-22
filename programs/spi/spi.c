@@ -43,9 +43,6 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <libreswan.h>
-#if 0
-#include <linux/autoconf.h>    /* CONFIG_IPSEC_PFKEYv2 */
-#endif
 #include <signal.h>
 #include <sys/socket.h>
 #include <libreswan/pfkeyv2.h>
@@ -63,15 +60,16 @@
 #include <libreswan/pfkey_debug.h> /* PF_KEY_DEBUG_PARSE_MAX */
 
 #include "lswlog.h"
+#include "lswtool.h"
 #include "alg_info.h"
 #include "kernel_alg.h"
 #include "pfkey_help.h"
-
+#include "ip_address.h"
 #include "lsw_select.h"
 
 struct encap_msghdr *em;
 
-char *progname;
+const char *progname;
 bool debug = FALSE;
 bool get = FALSE;
 int dumpsaref = 0;
@@ -142,7 +140,7 @@ static const char *usage_string =
 	"[ --listenreply ]   is optional, and causes the command to stick\n"
 	"                    around and listen to what the PF_KEY socket says.\n";
 
-static void usage(char *s, FILE *f)
+static void usage(const char *s, FILE *f)
 {
 	/* s argument is actually ignored, at present */
 	fprintf(f, "%s:%s", s, usage_string);
@@ -241,7 +239,7 @@ static bool parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 				optargp,
 				(int)strlen(optargp));
 		}
-		if (strlen(optargp) == 0) {
+		if (optargp[0] == '\0') {
 			fprintf(stderr,
 				"%s: expected value after '=' in --life option. optargt=0p%p, optargt+strlen(optargt)=0p%p, optargp=0p%p\n",
 				progname,
@@ -407,7 +405,7 @@ static bool kernel_alg_proc_read(void)
  * are valid.
  */
 
-const struct parser_policy policy = {
+const struct proposal_policy policy = {
 	.ikev1 = false,
 	.ikev2 = false,
 	.alg_is_ok = kernel_alg_is_ok,
@@ -440,11 +438,11 @@ static int decode_esp(char *algname)
 				"%s: alg_info: cnt=%d ealg[0]=%d aalg[0]=%d\n",
 				progname,
 				alg_info->ai.alg_info_cnt,
-				esp_info->ikev1esp_transid,
-				esp_info->ikev1esp_auth);
+				esp_info->encrypt->common.id[IKEv1_ESP_ID],
+				esp_info->integ->common.id[IKEv1_ESP_ID]);
 		}
-		esp_ealg_id = esp_info->ikev1esp_transid;
-		esp_aalg_id = esp_info->ikev1esp_auth;
+		esp_ealg_id = esp_info->encrypt->common.id[IKEv1_ESP_ID];
+		esp_aalg_id = esp_info->integ->common.id[IKEv1_ESP_ID];
 		if (kernel_alg_proc_read()) {
 
 			proc_read_ok++;
@@ -541,6 +539,8 @@ static void emit_lifetime(const char *extname, uint16_t exttype, struct sadb_ext
 int main(int argc, char *argv[])
 {
 	tool_init_log(argv[0]);
+	/* force pfkey logging */
+	pfkey_error_func = pfkey_debug_func = printf;
 
 	__u32 spi = 0;
 	int c;
@@ -668,7 +668,6 @@ int main(int argc, char *argv[])
 			snprintf(progname, room, combine_fmt,
 				 argv[0],
 				 optarg);
-			tool_close_log();
 			tool_init_log(progname);
 
 			argcount -= 2;
@@ -1174,7 +1173,7 @@ int main(int argc, char *argv[])
 			 */
 			alg_p = kernel_alg_sadb_alg_get(SADB_SATYPE_ESP,
 							SADB_EXT_SUPPORTED_ENCRYPT,
-							esp_info->ikev1esp_transid);
+							esp_info->encrypt->common.id[IKEv1_ESP_ID]);
 			assert(alg_p != NULL);
 			keylen = enckeylen * 8;
 
@@ -1347,7 +1346,7 @@ int main(int argc, char *argv[])
 		encryptalg = SADB_X_CALG_LZS;
 		break;
 	case XF_OTHER_ALG:
-		encryptalg = esp_info->ikev1esp_transid;
+		encryptalg = esp_info->encrypt->common.id[IKEv1_ESP_ID];
 		if (debug) {
 			fprintf(stdout, "%s: debug: encryptalg=%d\n",
 				progname, encryptalg);
@@ -1580,22 +1579,6 @@ int main(int argc, char *argv[])
 				return FALSE;
 		}
 
-#if 0
-		/* not yet implemented */
-		if (natt != 0 && !isanyaddr(&natt_oa)) {
-			ip_str_buf b;
-
-			success = pfkeyext_address(SADB_X_EXT_NAT_T_OA,
-						   &natt_oa,
-						   "pfkey_nat_t_oa Add ESP SA",
-						   ipsaid_txt, extensions);
-			if (debug)
-				fprintf(stderr, "setting nat_oa to %s\n",
-					ipstr(&natt_oa, &b));
-			if (!success)
-				return FALSE;
-		}
-#endif
 	}
 
 	if (debug) {

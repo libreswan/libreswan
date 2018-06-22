@@ -95,5 +95,5 @@ void init_secret(void)
 	 * schedule an event for refresh.
 	 */
 	get_rnd_bytes(secret_of_the_day, sizeof(secret_of_the_day));
-	event_schedule(EVENT_REINIT_SECRET, EVENT_REINIT_SECRET_DELAY, NULL);
+	event_schedule_s(EVENT_REINIT_SECRET, EVENT_REINIT_SECRET_DELAY, NULL);
 }

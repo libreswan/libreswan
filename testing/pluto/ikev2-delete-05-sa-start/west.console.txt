@@ -1,0 +1,76 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ echo "initdone"
+initdone
+west #
+ # wait for the connection to come up
+west #
+ ../../pluto/bin/wait-for-whack-trafficstatus.sh --timeout 30 westnet-eastnet-auto
+006 #2: "westnet-eastnet-auto", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+west #
+ # ensure that clear text does not get through
+west #
+ iptables -A INPUT -i eth1 -m policy --dir in --pol none -s 192.0.2.0/24 -j LOGDROP
+west #
+ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ # We expect ping to be encrypted and work; we should see non-zero
+west #
+ # traffic counters
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ipsec whack --trafficstatus
+006 #2: "westnet-eastnet-auto", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+west #
+ # sending delete/notify should cause east to re-initiate
+west #
+ ipsec auto --down westnet-eastnet-auto
+002 "westnet-eastnet-auto": terminating SAs using this connection
+002 "westnet-eastnet-auto" #2: deleting state (STATE_V2_IPSEC_R) and sending notification
+005 "westnet-eastnet-auto" #2: ESP traffic information: in=336B out=336B
+002 "westnet-eastnet-auto" #1: deleting state (STATE_PARENT_R2) and sending notification
+west #
+ # give Delete/Notify some time; traffic counters on the new IPsec SA
+west #
+ # should be 0
+west #
+ ../../pluto/bin/wait-for-whack-trafficstatus.sh --timeout 5 'westnet-eastnet-auto.*inBytes=0'
+006 #4: "westnet-eastnet-auto", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+west #
+ # A new IPsec SA should be established (older versions would be dead for 30 seconds)
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ipsec whack --trafficstatus
+006 #4: "westnet-eastnet-auto", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+west #
+ echo done
+done
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

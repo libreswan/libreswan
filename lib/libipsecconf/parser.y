@@ -156,6 +156,9 @@ statement_kw:
 		case kt_list:
 			number = parser_enum_list(kw.keydef, value, TRUE);
 			break;
+		case kt_lset:
+			number = parser_lset(kw.keydef, value);	/* XXX: truncates! */
+			break;
 		case kt_enum:
 			number = parser_enum_list(kw.keydef, value, FALSE);
 			break;
@@ -216,6 +219,9 @@ statement_kw:
 		switch (kw.keydef->type) {
 		case kt_list:
 			number = parser_enum_list(kw.keydef, $3, TRUE);
+			break;
+		case kt_lset:
+			number = parser_lset(kw.keydef, $3); /* XXX: truncates! */
 			break;
 		case kt_enum:
 			number = parser_enum_list(kw.keydef, $3, FALSE);
@@ -367,7 +373,9 @@ struct config_parsed *parser_load_conf(const char *file, err_t *perr)
 		snprintf(parser_errstring, ERRSTRING_LEN, "can't allocate memory");
 		goto err;
 	}
-	zero(cfg);	/* ??? pointer fields may not be NULLed */
+
+	static const struct config_parsed empty_config_parsed;	/* zero or null everywhere */
+	*cfg = empty_config_parsed;
 
 	FILE *f = streq(file, "-") ?
 		fdopen(STDIN_FILENO, "r") : fopen(file, "r");

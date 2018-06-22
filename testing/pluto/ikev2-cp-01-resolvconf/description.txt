@@ -1,0 +1,3 @@
+Test IKEv2 with addresspool and DNS CP payloads
+
+road tests to see if its resolv.conf is overwritten and restored properly

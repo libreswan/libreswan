@@ -1,3 +1,0 @@
-This test checks for a bug in the food groups pluto code that caused
-pluto to forget the name of the target when the target is preserved
-across a whack --listen command.

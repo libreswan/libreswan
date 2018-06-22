@@ -1,0 +1,124 @@
+/testing/guestbin/swan-prep
+west #
+ # confirm that the network is alive
+west #
+ ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+west #
+ # ensure that clear text does not get through
+west #
+ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
+west #
+ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ # confirm with a ping
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=1 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=2 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=3 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=XXXX TOS=0x00 PREC=0x00 TTL=64 ID=XXXXX PROTO=ICMP TYPE=0 CODE=0 ID=XXXX SEQ=4 
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 0 received, 100% packet loss, time XXXX
+west #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec whack --impair no-ikev2-include-integ-none --impair no-ikev2-exclude-integ-none
+west #
+ ../bin/libreswan-up-down.sh ike,esp=aes_gcm  -I 192.0.1.254 192.0.2.254
+002 added connection description "ike,esp=aes_gcm"
+002 "ike,esp=aes_gcm" #1: initiating v2 parent SA
+133 "ike,esp=aes_gcm" #1: STATE_PARENT_I1: initiate
+133 "ike,esp=aes_gcm" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+134 "ike,esp=aes_gcm" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_128 integ=n/a prf=sha group=MODP2048}
+002 "ike,esp=aes_gcm" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "ike,esp=aes_gcm" #2: Authenticated using authby=secret
+002 "ike,esp=aes_gcm" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "ike,esp=aes_gcm" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE NATOA=none NATD=none DPD=passive}
+destination -I 192.0.1.254 192.0.2.254 is alive
+002 "ike,esp=aes_gcm": terminating SAs using this connection
+002 "ike,esp=aes_gcm" #2: deleting state (STATE_V2_IPSEC_I) and sending notification
+005 "ike,esp=aes_gcm" #2: ESP traffic information: in=84B out=84B
+002 "ike,esp=aes_gcm" #1: deleting state (STATE_PARENT_I3) and sending notification
+002 "ike,esp=aes_gcm": deleting non-instance connection
+west #
+ ipsec whack --impair    ikev2-include-integ-none --impair no-ikev2-exclude-integ-none
+west #
+ ../bin/libreswan-up-down.sh ike,esp=aes_gcm  -I 192.0.1.254 192.0.2.254
+002 added connection description "ike,esp=aes_gcm"
+002 "ike,esp=aes_gcm" #3: initiating v2 parent SA
+133 "ike,esp=aes_gcm" #3: STATE_PARENT_I1: initiate
+002 "ike,esp=aes_gcm" #3: IMPAIR: for proposal 1 include integ=none in count
+002 "ike,esp=aes_gcm" #3: IMPAIR: for proposal 1 include integ=none in payload
+133 "ike,esp=aes_gcm" #3: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "ike,esp=aes_gcm" #3: IMPAIR: for proposal 1 include integ=none in count
+002 "ike,esp=aes_gcm" #3: IMPAIR: for proposal 1 include integ=none in payload
+134 "ike,esp=aes_gcm" #4: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_128 integ=n/a prf=sha group=MODP2048}
+002 "ike,esp=aes_gcm" #4: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "ike,esp=aes_gcm" #4: Authenticated using authby=secret
+002 "ike,esp=aes_gcm" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "ike,esp=aes_gcm" #4: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE NATOA=none NATD=none DPD=passive}
+destination -I 192.0.1.254 192.0.2.254 is alive
+002 "ike,esp=aes_gcm": terminating SAs using this connection
+002 "ike,esp=aes_gcm" #4: deleting state (STATE_V2_IPSEC_I) and sending notification
+005 "ike,esp=aes_gcm" #4: ESP traffic information: in=84B out=84B
+002 "ike,esp=aes_gcm" #3: deleting state (STATE_PARENT_I3) and sending notification
+002 "ike,esp=aes_gcm": deleting non-instance connection
+west #
+ ipsec whack --impair no-ikev2-include-integ-none --impair    ikev2-exclude-integ-none
+west #
+ ../bin/libreswan-up-down.sh ike,esp=aes_gcm  -I 192.0.1.254 192.0.2.254
+002 added connection description "ike,esp=aes_gcm"
+002 "ike,esp=aes_gcm" #5: initiating v2 parent SA
+133 "ike,esp=aes_gcm" #5: STATE_PARENT_I1: initiate
+002 "ike,esp=aes_gcm" #5: IMPAIR: for proposal 1 exclude integ=none in count
+002 "ike,esp=aes_gcm" #5: IMPAIR: for proposal 1 exclude integ=none in payload
+133 "ike,esp=aes_gcm" #5: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "ike,esp=aes_gcm" #5: IMPAIR: for proposal 1 exclude integ=none in count
+002 "ike,esp=aes_gcm" #5: IMPAIR: for proposal 1 exclude integ=none in payload
+134 "ike,esp=aes_gcm" #6: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_128 integ=n/a prf=sha group=MODP2048}
+002 "ike,esp=aes_gcm" #6: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "ike,esp=aes_gcm" #6: Authenticated using authby=secret
+002 "ike,esp=aes_gcm" #6: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "ike,esp=aes_gcm" #6: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE NATOA=none NATD=none DPD=passive}
+destination -I 192.0.1.254 192.0.2.254 is alive
+002 "ike,esp=aes_gcm": terminating SAs using this connection
+002 "ike,esp=aes_gcm" #6: deleting state (STATE_V2_IPSEC_I) and sending notification
+005 "ike,esp=aes_gcm" #6: ESP traffic information: in=84B out=84B
+002 "ike,esp=aes_gcm" #5: deleting state (STATE_PARENT_I3) and sending notification
+002 "ike,esp=aes_gcm": deleting non-instance connection
+west #
+ ipsec stop
+Redirecting to: systemctl stop ipsec.service
+west #
+ # east shows what was sent across the wire; expect two lines for each
+west #
+ # of the three connections: default (missing); integ=none included;
+west #
+ # integ=none excluded
+west #
+ grep 'proposal .* chosen from' /tmp/pluto.log | sed -e 's/SPI=[^;]*/SPI=X/'
+west #
+ # west shows what came back, expect two lines for each of the three
+west #
+ # connections: default (missing); integ=none included; integ=none
+west #
+ # excluded
+west #
+ grep 'remote accepted' /tmp/pluto.log
+| remote accepted the proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;DH=MODP2048[first-match]
+| remote accepted the proposal 1:ESP:ENCR=AES_GCM_C_128;ESN=DISABLED[first-match]
+| remote accepted the proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;INTEG=NONE;DH=MODP2048[first-match]
+| remote accepted the proposal 1:ESP:ENCR=AES_GCM_C_128;INTEG=NONE;ESN=DISABLED[first-match]
+| remote accepted the proposal 1:IKE:ENCR=AES_GCM_C_128;PRF=HMAC_SHA1;DH=MODP2048[first-match]
+| remote accepted the proposal 1:ESP:ENCR=AES_GCM_C_128;ESN=DISABLED[first-match]
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+west #
+ 

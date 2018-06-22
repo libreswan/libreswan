@@ -5,8 +5,7 @@ Redirecting to: systemctl start ipsec.service
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
- ipsec auto --add west-east-auto
-002 added connection description "west-east-auto"
+ #ipsec auto --add west-east-auto
 west #
  echo "initdone"
 initdone

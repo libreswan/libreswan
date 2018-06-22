@@ -1,0 +1,22 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add east-any
+002 added connection description "east-any"
+east #
+ echo initdone
+initdone
+east #
+east #
+ grep "^leak" /tmp/pluto.log
+leak-detective enabled
+leak detective found no leaks
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

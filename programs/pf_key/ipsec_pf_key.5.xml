@@ -33,7 +33,7 @@ not supported on any other stack.
 
 <refsect1 id='description'><title>DESCRIPTION</title>
 <para><filename>/proc/net/pf_key</filename>
-is a read-only file which lists the presently open PF_KEY sockets on the
+is a read-only file that lists the presently open PF_KEY sockets on the
 local system and their parameters.</para>
 
 <para>Each line lists one PF_KEY socket.
@@ -194,7 +194,7 @@ the socket is not dead, its wait queue is at
 whose owning socket is at
 <emphasis remap='B'>c05997fc</emphasis>,
 with no other sockets in the chain, no errors, no destructor, it is a
-reused socket which has not been zapped, from protocol family
+reused socket that has not been zapped, from protocol family
 <literal>15</literal>
 (PF_KEY), local port number
 <literal>0</literal>,

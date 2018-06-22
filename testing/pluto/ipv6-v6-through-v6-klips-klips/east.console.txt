@@ -41,15 +41,14 @@ east #
 000 nssdir=/etc/ipsec.d, dumpdir=/tmp, statsbin=unset
 000 dnssec-rootkey-file=/var/lib/unbound/root.key, dnssec-trusted=<unset>
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
-000 nhelpers=-1, uniqueids=yes, dnssec-enable=yes, perpeerlog=no, shuntlifetime=900s, xfrmlifetime=300s
+000 nhelpers=-1, uniqueids=yes, dnssec-enable=yes, perpeerlog=no, logappend=no, logip=yes, shuntlifetime=900s, xfrmlifetime=300s
 000 ddos-cookies-threshold=50000, ddos-max-halfopen=25000, ddos-mode=auto
-000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
+000 ikeport=500, ikebuf=0, msg_errqueue=yes, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
 000 ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2, ocsp-uri=<unset>
 000 ocsp-trust-name=<unset>
 000 ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-method=get
 000 secctx-attr-type=XXXX
-000 myid = (none)
-000 debug none
+000 debug ...
 000  
 000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500
 000 virtual-private (%priv):
@@ -81,11 +80,12 @@ east #
 000 algorithm IKE encrypt: v1id=65004, v1name=OAKLEY_SERPENT_CBC, v2id=65004, v2name=SERPENT_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=65005, v1name=OAKLEY_TWOFISH_CBC, v2id=65005, v2name=TWOFISH_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=65289, v1name=OAKLEY_TWOFISH_CBC_SSH, v2id=65289, v2name=TWOFISH_CBC_SSH, blocksize=16, keydeflen=128
-000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashlen=16
-000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashlen=20
-000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashlen=32
-000 algorithm IKE hash: id=5, name=OAKLEY_SHA2_384, hashlen=48
-000 algorithm IKE hash: id=6, name=OAKLEY_SHA2_512, hashlen=64
+000 algorithm IKE PRF: name=HMAC_MD5, hashlen=16
+000 algorithm IKE PRF: name=HMAC_SHA1, hashlen=20
+000 algorithm IKE PRF: name=HMAC_SHA2_256, hashlen=32
+000 algorithm IKE PRF: name=HMAC_SHA2_384, hashlen=48
+000 algorithm IKE PRF: name=HMAC_SHA2_512, hashlen=64
+000 algorithm IKE PRF: name=AES_XCBC, hashlen=16
 000 algorithm IKE DH Key Exchange: name=MODP1024, bits=1024
 000 algorithm IKE DH Key Exchange: name=MODP1536, bits=1536
 000 algorithm IKE DH Key Exchange: name=MODP2048, bits=2048
@@ -104,19 +104,20 @@ east #
 000 Connection list:
 000  
 000 "westnet-eastnet-6in6": 2001:db8:0:2::/64===2001:db8:1:2::23<2001:db8:1:2::23>[@east]...2001:db8:1:2::45<2001:db8:1:2::45>[@west]===2001:db8:0:1::/64; unrouted; eroute owner: #0
-000 "westnet-eastnet-6in6":     oriented; my_ip=unset; their_ip=unset
+000 "westnet-eastnet-6in6":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet-6in6":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "westnet-eastnet-6in6":   our auth:rsasig, their auth:rsasig
-000 "westnet-eastnet-6in6":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset, cat:unset;
+000 "westnet-eastnet-6in6":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
 000 "westnet-eastnet-6in6":   labeled_ipsec:no;
 000 "westnet-eastnet-6in6":   policy_label:unset;
 000 "westnet-eastnet-6in6":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-6in6":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
-000 "westnet-eastnet-6in6":   sha2-truncbug:no; initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "westnet-eastnet-6in6":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet-6in6":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
 000 "westnet-eastnet-6in6":   conn_prio: 64,64; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-6in6":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-6in6":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
+000 "westnet-eastnet-6in6":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-6in6":   newest ISAKMP SA: #0; newest IPsec SA: #0;
 000  
 000 Total IPsec connections: loaded 1, active 0
@@ -131,7 +132,7 @@ east #
  echo "initdone"
 initdone
 east #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 east NOW
 2001:db8:0:2::/64  -> 2001:db8:0:1::/64  => tun0xIPIP@2001:db8:1:2::45 esp0xESPSPI@2001:db8:1:2::45
 ipsec0->eth1 mtu=16260(9999)->1500
@@ -143,8 +144,8 @@ default via 192.1.2.254 dev eth1
 192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254 
 192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23 
 192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23 
-unreachable ::/96 dev lo  metric 1024  error -101
-unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -101
+unreachable ::/96 dev lo  metric 1024  error -XXXX
+unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -XXXX
 2001:db8:0:1::254 dev ipsec0  metric 0 
     cache 
 2001:db8:0:1::/64 dev ipsec0  metric 1024 
@@ -155,13 +156,13 @@ unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -101
     cache 
 2001:db8:1:2::/64 dev eth1  proto kernel  metric 256 
 2001:db8:9:2::/64 dev eth2  proto kernel  metric 256 
-unreachable 2002:a00::/24 dev lo  metric 1024  error -101
-unreachable 2002:7f00::/24 dev lo  metric 1024  error -101
-unreachable 2002:a9fe::/32 dev lo  metric 1024  error -101
-unreachable 2002:ac10::/28 dev lo  metric 1024  error -101
-unreachable 2002:c0a8::/32 dev lo  metric 1024  error -101
-unreachable 2002:e000::/19 dev lo  metric 1024  error -101
-unreachable 3ffe:ffff::/32 dev lo  metric 1024  error -101
+unreachable 2002:a00::/24 dev lo  metric 1024  error -XXXX
+unreachable 2002:7f00::/24 dev lo  metric 1024  error -XXXX
+unreachable 2002:a9fe::/32 dev lo  metric 1024  error -XXXX
+unreachable 2002:ac10::/28 dev lo  metric 1024  error -XXXX
+unreachable 2002:c0a8::/32 dev lo  metric 1024  error -XXXX
+unreachable 2002:e000::/19 dev lo  metric 1024  error -XXXX
+unreachable 3ffe:ffff::/32 dev lo  metric 1024  error -XXXX
 fe80::1000:ff:fe64:6423 dev ipsec0  proto kernel  metric 256 
 fe80::/64 dev eth0  proto kernel  metric 256 
 fe80::/64 dev eth1  proto kernel  metric 256 

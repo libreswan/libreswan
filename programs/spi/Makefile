@@ -26,7 +26,6 @@ OBJS += $(PROGRAM).o
 #
 CFLAGS += -I$(top_srcdir)/programs/pluto
 PLUTOOBJS += $(patsubst %.c,%.o,$(notdir $(wildcard $(top_srcdir)/programs/pluto/ike_alg*.c)))
-PLUTOOBJS += ike_info.o
 PLUTOOBJS += crypt_symkey.o
 PLUTOOBJS += crypt_hash.o
 PLUTOOBJS += test_buffer.o
@@ -35,19 +34,22 @@ PLUTOOBJS += ikev2_prf.o
 PLUTOOBJS += crypt_prf.o
 PLUTOOBJS += crypt_dh.o
 PLUTOOBJS += crypt_utils.o
-OBJS += $(addprefix $(top_builddir)/programs/pluto/, $(PLUTOOBJS))
+# Need absolute path as 'make' (check dependencies) and 'ld' (do link)
+# are run from different directories.
+OBJS += $(addprefix $(abs_top_builddir)/programs/pluto/, $(PLUTOOBJS))
 # $(PROGRAM): pluto-base
 # .PHONY: pluto-base
 # pluto-base:
 #	$(MAKE) -C $(top_srcdir)/programs/pluto base
 
 OBJS += $(LIBRESWANLIB)
-OBJS += $(LSWLOGLIBS)
+OBJS += $(LSWTOOLLIBS)
 
 OBJS += $(LIBSERPENT)
 OBJS += $(LIBTWOFISH)
 
 LDFLAGS += $(NSS_LDFLAGS)
+LDFLAGS += $(NSPR_LDFLAGS)
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk

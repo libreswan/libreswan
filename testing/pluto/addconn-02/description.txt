@@ -1,0 +1,8 @@
+addconn failing in libreswan up to 3.21 when asking for the
+routes exceeds the netlink message buffer. It caused addconn
+to fail to orient a left=%defaulroute connection.
+
+This test cases ensures this issue is fixed. On east, the
+connection "test" should load without orienting issues.
+
+

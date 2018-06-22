@@ -17,6 +17,8 @@ east #
  ipsec auto --add nss-cert-ocsp
 002 added connection description "nss-cert-ocsp"
 east #
+ ipsec whack --impair retransmits
+east #
  echo "initdone"
 initdone
 east #
@@ -36,6 +38,16 @@ east #
 east #
  hostname |grep nic && journalctl /sbin/ocspd --no-pager | tail -n 20 |grep TRYLATER
 east #
+east #
+ ipsec stop
+Redirecting to: systemctl stop ipsec.service
+east #
+ ipsec status
+whack: Pluto is not running (no "/run/pluto/pluto.ctl")
+east #
+ grep '^leak' /tmp/pluto.log
+leak-detective enabled
+leak detective found no leaks
 east #
  ../bin/check-for-core.sh
 east #

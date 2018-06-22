@@ -1,0 +1,5 @@
+IKEv2 mobike using esp=aes_gcm
+
+On linux kernel v4.14 this leads to a kernel panic and/or failed
+XFRM migration.
+

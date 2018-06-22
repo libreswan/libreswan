@@ -23,12 +23,10 @@ road #
  echo "initdone"
 initdone
 road #
- ping -w 6 -n -c 1 -I 192.1.3.209 192.1.2.23
+ ping -n -c 1 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
 --- 192.1.2.23 ping statistics ---
-2 packets transmitted, 1 received, 50% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+1 packets transmitted, 0 received, 100% packet loss, time XXXX
 road #
  # wait on OE retransmits and rekeying
 road #
@@ -37,68 +35,68 @@ road #
  # should show established tunnel and no bare shunts
 road #
  ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL'
+006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='ID_NULL'
 road #
  ipsec whack --shuntstatus
 000 Bare Shunt list:
 000  
 road #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.209
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 192.1.3.209 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 192.1.3.209 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode transport
+	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 
 	sel src 192.1.3.209/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth0 
 XFRM policy:
-src 192.1.3.209/32 dst 192.1.2.23/32 
-	dir out priority 2080 ptype main 
+src 192.1.2.253/32 dst 192.1.3.209/32
+	dir fwd priority 1564639 ptype main
+src 192.1.2.253/32 dst 192.1.3.209/32
+	dir in priority 1564639 ptype main
+src 192.1.2.254/32 dst 192.1.3.209/32
+	dir fwd priority 1564639 ptype main
+src 192.1.2.254/32 dst 192.1.3.209/32
+	dir in priority 1564639 ptype main
+src 192.1.3.209/32 dst 192.1.2.253/32
+	dir out priority 1564639 ptype main
+src 192.1.3.209/32 dst 192.1.2.254/32
+	dir out priority 1564639 ptype main
+src 192.1.3.209/32 dst 192.1.3.253/32
+	dir out priority 1564639 ptype main
+src 192.1.3.209/32 dst 192.1.3.254/32
+	dir out priority 1564639 ptype main
+src 192.1.3.253/32 dst 192.1.3.209/32
+	dir fwd priority 1564639 ptype main
+src 192.1.3.253/32 dst 192.1.3.209/32
+	dir in priority 1564639 ptype main
+src 192.1.3.254/32 dst 192.1.3.209/32
+	dir fwd priority 1564639 ptype main
+src 192.1.3.254/32 dst 192.1.3.209/32
+	dir in priority 1564639 ptype main
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir fwd priority 2088927 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir in priority 2088927 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 2088927 ptype main
 	tmpl src 192.1.3.209 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-src 192.1.2.23/32 dst 192.1.3.209/32 
-	dir fwd priority 2080 ptype main 
-	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid REQID mode tunnel
-src 192.1.2.23/32 dst 192.1.3.209/32 
-	dir in priority 2080 ptype main 
-	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid REQID mode tunnel
-src 192.1.3.209/32 dst 192.1.2.0/24 
-	dir out priority 2088 ptype main 
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority 2088935 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
-src 192.1.3.254/32 dst 192.1.3.209/32 
-	dir fwd priority 1568 ptype main 
-src 192.1.3.254/32 dst 192.1.3.209/32 
-	dir in priority 1568 ptype main 
-src 192.1.3.209/32 dst 192.1.3.254/32 
-	dir out priority 1568 ptype main 
-src 192.1.3.253/32 dst 192.1.3.209/32 
-	dir fwd priority 1568 ptype main 
-src 192.1.3.253/32 dst 192.1.3.209/32 
-	dir in priority 1568 ptype main 
-src 192.1.3.209/32 dst 192.1.3.253/32 
-	dir out priority 1568 ptype main 
-src 192.1.2.254/32 dst 192.1.3.209/32 
-	dir fwd priority 1568 ptype main 
-src 192.1.2.254/32 dst 192.1.3.209/32 
-	dir in priority 1568 ptype main 
-src 192.1.3.209/32 dst 192.1.2.254/32 
-	dir out priority 1568 ptype main 
-src 192.1.2.253/32 dst 192.1.3.209/32 
-	dir fwd priority 1568 ptype main 
-src 192.1.2.253/32 dst 192.1.3.209/32 
-	dir in priority 1568 ptype main 
-src 192.1.3.209/32 dst 192.1.2.253/32 
-	dir out priority 1568 ptype main 
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
@@ -126,22 +124,15 @@ road #
 000 Bare Shunt list:
 000  
 road #
- ping -w 6 -n -c 1 -I 192.1.3.209 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
---- 192.1.2.23 ping statistics ---
-3 packets transmitted, 1 received, 66% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
-road #
  # ensure for tests acquires expire before our failureshunt=2m
 road #
  # ping should succeed through tunnel
 road #
- ping -w 2 -n -c 1 -I 192.1.3.209 192.1.2.23
+ ping -n -c 2 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
-64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
 --- 192.1.2.23 ping statistics ---
-1 packets transmitted, 1 received, 0% packet loss, time XXXX
+2 packets transmitted, 1 received, 50% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  killall ip > /dev/null 2> /dev/null
@@ -153,68 +144,68 @@ road #
 done
 road #
  ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL'
+006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL'
 road #
  ipsec whack --shuntstatus
 000 Bare Shunt list:
 000  
 road #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.209
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 192.1.3.209 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 192.1.3.209 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode transport
+	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 
 	sel src 192.1.3.209/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth0 
 XFRM policy:
-src 192.1.3.209/32 dst 192.1.2.23/32 
-	dir out priority 2080 ptype main 
+src 192.1.2.253/32 dst 192.1.3.209/32
+	dir fwd priority 1564639 ptype main
+src 192.1.2.253/32 dst 192.1.3.209/32
+	dir in priority 1564639 ptype main
+src 192.1.2.254/32 dst 192.1.3.209/32
+	dir fwd priority 1564639 ptype main
+src 192.1.2.254/32 dst 192.1.3.209/32
+	dir in priority 1564639 ptype main
+src 192.1.3.209/32 dst 192.1.2.253/32
+	dir out priority 1564639 ptype main
+src 192.1.3.209/32 dst 192.1.2.254/32
+	dir out priority 1564639 ptype main
+src 192.1.3.209/32 dst 192.1.3.253/32
+	dir out priority 1564639 ptype main
+src 192.1.3.209/32 dst 192.1.3.254/32
+	dir out priority 1564639 ptype main
+src 192.1.3.253/32 dst 192.1.3.209/32
+	dir fwd priority 1564639 ptype main
+src 192.1.3.253/32 dst 192.1.3.209/32
+	dir in priority 1564639 ptype main
+src 192.1.3.254/32 dst 192.1.3.209/32
+	dir fwd priority 1564639 ptype main
+src 192.1.3.254/32 dst 192.1.3.209/32
+	dir in priority 1564639 ptype main
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir fwd priority 2088927 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir in priority 2088927 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 2088927 ptype main
 	tmpl src 192.1.3.209 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-src 192.1.2.23/32 dst 192.1.3.209/32 
-	dir fwd priority 2080 ptype main 
-	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid REQID mode tunnel
-src 192.1.2.23/32 dst 192.1.3.209/32 
-	dir in priority 2080 ptype main 
-	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid REQID mode tunnel
-src 192.1.3.209/32 dst 192.1.2.0/24 
-	dir out priority 2088 ptype main 
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority 2088935 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
-src 192.1.3.254/32 dst 192.1.3.209/32 
-	dir fwd priority 1568 ptype main 
-src 192.1.3.254/32 dst 192.1.3.209/32 
-	dir in priority 1568 ptype main 
-src 192.1.3.209/32 dst 192.1.3.254/32 
-	dir out priority 1568 ptype main 
-src 192.1.3.253/32 dst 192.1.3.209/32 
-	dir fwd priority 1568 ptype main 
-src 192.1.3.253/32 dst 192.1.3.209/32 
-	dir in priority 1568 ptype main 
-src 192.1.3.209/32 dst 192.1.3.253/32 
-	dir out priority 1568 ptype main 
-src 192.1.2.254/32 dst 192.1.3.209/32 
-	dir fwd priority 1568 ptype main 
-src 192.1.2.254/32 dst 192.1.3.209/32 
-	dir in priority 1568 ptype main 
-src 192.1.3.209/32 dst 192.1.2.254/32 
-	dir out priority 1568 ptype main 
-src 192.1.2.253/32 dst 192.1.3.209/32 
-	dir fwd priority 1568 ptype main 
-src 192.1.2.253/32 dst 192.1.3.209/32 
-	dir in priority 1568 ptype main 
-src 192.1.3.209/32 dst 192.1.2.253/32 
-	dir out priority 1568 ptype main 
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
@@ -225,62 +216,62 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 road #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.209
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 192.1.3.209 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 192.1.3.209 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode transport
+	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 
 	sel src 192.1.3.209/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth0 
 XFRM policy:
-src 192.1.3.209/32 dst 192.1.2.23/32 
-	dir out priority 2080 ptype main 
+src 192.1.2.253/32 dst 192.1.3.209/32
+	dir fwd priority 1564639 ptype main
+src 192.1.2.253/32 dst 192.1.3.209/32
+	dir in priority 1564639 ptype main
+src 192.1.2.254/32 dst 192.1.3.209/32
+	dir fwd priority 1564639 ptype main
+src 192.1.2.254/32 dst 192.1.3.209/32
+	dir in priority 1564639 ptype main
+src 192.1.3.209/32 dst 192.1.2.253/32
+	dir out priority 1564639 ptype main
+src 192.1.3.209/32 dst 192.1.2.254/32
+	dir out priority 1564639 ptype main
+src 192.1.3.209/32 dst 192.1.3.253/32
+	dir out priority 1564639 ptype main
+src 192.1.3.209/32 dst 192.1.3.254/32
+	dir out priority 1564639 ptype main
+src 192.1.3.253/32 dst 192.1.3.209/32
+	dir fwd priority 1564639 ptype main
+src 192.1.3.253/32 dst 192.1.3.209/32
+	dir in priority 1564639 ptype main
+src 192.1.3.254/32 dst 192.1.3.209/32
+	dir fwd priority 1564639 ptype main
+src 192.1.3.254/32 dst 192.1.3.209/32
+	dir in priority 1564639 ptype main
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir fwd priority 2088927 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.3.209/32
+	dir in priority 2088927 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.1.2.23/32
+	dir out priority 2088927 ptype main
 	tmpl src 192.1.3.209 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-src 192.1.2.23/32 dst 192.1.3.209/32 
-	dir fwd priority 2080 ptype main 
-	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid REQID mode tunnel
-src 192.1.2.23/32 dst 192.1.3.209/32 
-	dir in priority 2080 ptype main 
-	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid REQID mode tunnel
-src 192.1.3.209/32 dst 192.1.2.0/24 
-	dir out priority 2088 ptype main 
+src 192.1.3.209/32 dst 192.1.2.0/24
+	dir out priority 2088935 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
-src 192.1.3.254/32 dst 192.1.3.209/32 
-	dir fwd priority 1568 ptype main 
-src 192.1.3.254/32 dst 192.1.3.209/32 
-	dir in priority 1568 ptype main 
-src 192.1.3.209/32 dst 192.1.3.254/32 
-	dir out priority 1568 ptype main 
-src 192.1.3.253/32 dst 192.1.3.209/32 
-	dir fwd priority 1568 ptype main 
-src 192.1.3.253/32 dst 192.1.3.209/32 
-	dir in priority 1568 ptype main 
-src 192.1.3.209/32 dst 192.1.3.253/32 
-	dir out priority 1568 ptype main 
-src 192.1.2.254/32 dst 192.1.3.209/32 
-	dir fwd priority 1568 ptype main 
-src 192.1.2.254/32 dst 192.1.3.209/32 
-	dir in priority 1568 ptype main 
-src 192.1.3.209/32 dst 192.1.2.254/32 
-	dir out priority 1568 ptype main 
-src 192.1.2.253/32 dst 192.1.3.209/32 
-	dir fwd priority 1568 ptype main 
-src 192.1.2.253/32 dst 192.1.3.209/32 
-	dir in priority 1568 ptype main 
-src 192.1.3.209/32 dst 192.1.2.253/32 
-	dir out priority 1568 ptype main 
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
@@ -295,15 +286,13 @@ road #
 |    message ID:  00 00 00 00
 |    message ID:  00 00 00 00
 |    message ID:  00 00 00 01
-|    message ID:  00 00 00 0f
-|    message ID:  00 00 00 00
 |    message ID:  00 00 00 01
-|    message ID:  00 00 00 10
+|    message ID:  00 00 00 00
 |    message ID:  00 00 00 00
 road #
  # grep on east
 road #
- hostname |grep west > /dev/null || grep -A 1 "liveness_check - peer has not responded in" OUTPUT/east.pluto.log
+ hostname |grep west > /dev/null || grep -A 1 "has not responded in" /tmp/pluto.log
 road #
  # A tunnel should have established
 road #

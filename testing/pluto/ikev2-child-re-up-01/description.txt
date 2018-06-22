@@ -1,0 +1,6 @@
+Testing running an ipsec auto --up on an IKEv2 connection that is up.
+
+There should NOT be two IPsec SA's with event EVENT_SA_REPLACE
+
+
+

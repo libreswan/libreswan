@@ -13,11 +13,20 @@
  * for more details.
  */
 
+#include <stdbool.h>
+#include <pk11pub.h>
+
+#include "chunk.h"
+
 chunk_t decode_hex_to_chunk(const char *original, const char *string);
 chunk_t decode_to_chunk(const char *prefix, const char *string);
+PK11SymKey *decode_hex_to_symkey(const char *prefix, const char *string);
+
 bool verify_chunk(const char *desc,
 		   chunk_t expected,
 		   chunk_t actual);
+bool verify_symkey(const char *desc,
+		   chunk_t expected, PK11SymKey *actual);
 bool verify_chunk_data(const char *desc,
 		  chunk_t expected,
 		  u_char *actual);

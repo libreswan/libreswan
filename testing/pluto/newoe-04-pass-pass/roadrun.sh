@@ -6,14 +6,14 @@ ipsec whack --trafficstatus
 ipsec whack --shuntstatus
 # 7.7.7.7 is %pass, we should be able to ping it
 ping -n -c 2 -I 192.1.3.209 7.7.7.7
-ipsec look
+../../pluto/bin/ipsec-look.sh
 # letting acquire and shunt exire
 sleep 60
-ipsec look
+../../pluto/bin/ipsec-look.sh
 sleep 60
-ipsec look
+../../pluto/bin/ipsec-look.sh
 sleep 60
-ipsec look
+../../pluto/bin/ipsec-look.sh
 killall ip > /dev/null 2> /dev/null
 cp /tmp/xfrm-monitor.out OUTPUT/road.xfrm-monitor.txt
 echo done

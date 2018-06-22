@@ -1,0 +1,46 @@
+/testing/guestbin/swan-prep
+east #
+ cp policies/* /etc/ipsec.d/policies/
+east #
+ echo "192.1.3.0/24"  >> /etc/ipsec.d/policies/private-or-clear
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add authenticated
+002 added connection description "authenticated"
+east #
+ # give OE policies time to load
+east #
+ sleep 5
+east #
+ echo "initdone"
+initdone
+east #
+ # only east should show 1 tunnel, as road was restarted
+east #
+ ipsec whack --trafficstatus
+006 #2: "authenticated"[1] 192.1.3.209, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@road'
+east #
+ # east shows the authnull is matched on preferred non-null connection,
+east #
+ # then cannot find a (non-authnull) match and rejects it. So an
+east #
+ # additional 'authenticated' partial state lingers
+east #
+ ipsec status | grep STATE_
+000 #1: "authenticated"[1] 192.1.3.209:500 STATE_PARENT_R2 (received v2I2, PARENT SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; idle; import:respond to stranger
+000 #2: "authenticated"[1] 192.1.3.209:500 STATE_V2_IPSEC_R (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#1; idle; import:respond to stranger
+000 #3: "authenticated"[1] 192.1.3.209:500 STATE_PARENT_R1 (received v2I1, sent v2R1); EVENT_v2_RESPONDER_TIMEOUT in  XXs; idle; import:respond to stranger
+east #
+ # verify no packets were dropped due to missing SPD policies
+east #
+ grep -v -P "\t0$" /proc/net/xfrm_stat
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

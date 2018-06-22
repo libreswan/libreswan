@@ -27,22 +27,23 @@
 
 #include "sysdep.h"
 #include "constants.h"
+#include "defs.h"
 #include "log.h"
 #include "lswalloc.h"
-#include "defs.h"
 #include "id.h"
 #include "connections.h"
 #include "state.h"
 #include "kernel_alg.h"
 #include "alg_info.h"
 #include "ike_alg.h"
-#include "ike_alg_null.h"
+#include "ike_alg_none.h"
 #include "plutoalg.h"
 #include "crypto.h"
 #include "spdb.h"
 #include "db_ops.h"
 #include "log.h"
 #include "whack.h"
+#include "ikev1.h"	/* for ikev1_quick_dh() */
 
 static bool kernel_alg_db_add(struct db_context *db_ctx,
 			      const struct proposal_info *esp_info,
@@ -51,7 +52,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 	int ealg_i = SADB_EALG_NONE;
 
 	if (policy & POLICY_ENCRYPT) {
-		ealg_i = esp_info->ikev1esp_transid;
+		ealg_i = esp_info->encrypt->common.id[IKEv1_ESP_ID];
 		/* already checked by the parser? */
 		if (!kernel_alg_encrypt_ok(esp_info->encrypt)) {
 			if (logit) {
@@ -80,10 +81,10 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 		db_trans_add(db_ctx, ealg_i);
 
 		/* add ESP auth attr (if present) */
-		if (esp_info->integ != &ike_alg_integ_null) {
+		if (esp_info->integ != &ike_alg_integ_none) {
 			db_attr_add_values(db_ctx,
 					   AUTH_ALGORITHM,
-					   esp_info->ikev1esp_auth);
+					   esp_info->integ->common.id[IKEv1_ESP_ID]);
 		}
 
 		/* add keylength if specified in esp= string */
@@ -94,6 +95,9 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 		} else {
 			/* no key length - if required add default here and add another max entry */
 			int def_ks = crypto_req_keysize(CRK_ESPorAH, ealg_i);
+			int new_keysize = (esp_info->encrypt->keylen_omitted ? 0
+					   : esp_info->encrypt->keydeflen);
+			pexpect(def_ks == new_keysize);
 
 			if (def_ks != 0) {
 				int max_ks = BITS_PER_BYTE *
@@ -105,10 +109,10 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 				/* add this trans again with max key size */
 				if (def_ks != max_ks) {
 					db_trans_add(db_ctx, ealg_i);
-					if (esp_info->integ != &ike_alg_integ_null) {
+					if (esp_info->integ != &ike_alg_integ_none) {
 						db_attr_add_values(db_ctx,
 							AUTH_ALGORITHM,
-							esp_info->ikev1esp_auth);
+							esp_info->integ->common.id[IKEv1_ESP_ID]);
 					}
 					db_attr_add_values(db_ctx,
 						KEY_LENGTH,
@@ -122,7 +126,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 
 		/* add ESP auth attr */
 		db_attr_add_values(db_ctx,
-				   AUTH_ALGORITHM, esp_info->ikev1esp_auth);
+				   AUTH_ALGORITHM, esp_info->integ->common.id[IKEv1_ESP_ID]);
 	}
 
 	return TRUE;
@@ -207,46 +211,6 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 	return ctx_new;
 }
 
-bool ikev1_verify_esp(int ealg, unsigned int key_len, int aalg,
-			const struct alg_info_esp *alg_info)
-{
-	if (alg_info == NULL)
-		return TRUE;
-
-	if (key_len == 0)
-		key_len = crypto_req_keysize(CRK_ESPorAH, ealg);
-
-	FOR_EACH_ESP_INFO(alg_info, esp_info) {
-		if (esp_info->ikev1esp_transid == ealg &&
-		    (esp_info->enckeylen == 0 ||
-		     key_len == 0 ||
-		     esp_info->enckeylen == key_len) &&
-		    esp_info->ikev1esp_auth == aalg) {
-			return TRUE;
-		}
-	}
-
-	libreswan_log("ESP IPsec Transform [%s (%d), %s] refused",
-		enum_name(&esp_transformid_names, ealg),
-		key_len, enum_name(&auth_alg_names, aalg));
-	return FALSE;
-}
-
-bool ikev1_verify_ah(int aalg, const struct alg_info_esp *alg_info)
-{
-	if (alg_info == NULL)
-		return TRUE;
-
-	FOR_EACH_ESP_INFO(alg_info, esp_info) {	/* really AH */
-		if (esp_info->ikev1esp_auth == aalg)
-			return TRUE;
-	}
-
-	libreswan_log("AH IPsec Transform [%s] refused",
-		enum_name(&ah_transformid_names, aalg));
-	return FALSE;
-}
-
 void kernel_alg_show_status(void)
 {
 	unsigned sadb_id;
@@ -305,14 +269,17 @@ void kernel_alg_show_connection(const struct connection *c, const char *instance
 	}
 
 	const char *pfsbuf;
-	struct esb_buf esb;
 
 	if (c->policy & POLICY_PFS) {
-		/* ??? 0 isn't a legitimate value for esp_pfsgroup */
-		if (c->alg_info_esp != NULL && c->alg_info_esp->esp_pfsgroup != 0) {
-			pfsbuf = enum_show_shortb(&oakley_group_names,
-						  c->alg_info_esp->esp_pfsgroup->group,
-						  &esb);
+		/*
+		 * Get the DH algorthm specified for the child (ESP or AH).
+		 *
+		 * If this is NULL and PFS is required then callers fall back to using
+		 * the parent's DH algorithm.
+		 */
+		const struct oakley_group_desc *dh = ikev1_quick_pfs(c->alg_info_esp);
+		if (dh != NULL) {
+			pfsbuf = dh->common.fqn;
 		} else {
 			pfsbuf = "<Phase1>";
 		}
@@ -321,7 +288,7 @@ void kernel_alg_show_connection(const struct connection *c, const char *instance
 	}
 
 	if (c->alg_info_esp != NULL) {
-		LSWBUF(buf) {
+		LSWLOG_WHACK(RC_COMMENT, buf) {
 			/*
 			 * If DH (PFS) was specified in the esp= or
 			 * ah= line then the below will display it
@@ -339,12 +306,9 @@ void kernel_alg_show_connection(const struct connection *c, const char *instance
 			 * The real PFS is displayed in the 'algorithm
 			 * newest' line further down.
 			 */
+			lswlogf(buf, "\"%s\"%s:   %s algorithms: ",
+				c->name, instance, satype);
 			lswlog_alg_info(buf, &c->alg_info_esp->ai);
-			whack_log(RC_COMMENT,
-				  "\"%s\"%s:   %s algorithms: %s",
-				  c->name,
-				  instance, satype,
-				  LSWBUF_BUF(buf));
 		}
 	}
 
@@ -355,11 +319,9 @@ void kernel_alg_show_connection(const struct connection *c, const char *instance
 			  "\"%s\"%s:   %s algorithm newest: %s_%03d-%s; pfsgroup=%s",
 			  c->name,
 			  instance, satype,
-			  enum_short_name(&esp_transformid_names,
-				    st->st_esp.attrs.transattrs.encrypt),
+			  st->st_esp.attrs.transattrs.ta_encrypt->common.fqn,
 			  st->st_esp.attrs.transattrs.enckeylen,
-			  enum_short_name(&auth_alg_names,
-				    st->st_esp.attrs.transattrs.integ_hash),
+			  st->st_esp.attrs.transattrs.ta_integ->common.fqn,
 			  pfsbuf);
 	}
 
@@ -368,8 +330,7 @@ void kernel_alg_show_connection(const struct connection *c, const char *instance
 			  "\"%s\"%s:   %s algorithm newest: %s; pfsgroup=%s",
 			  c->name,
 			  instance, satype,
-			  enum_short_name(&auth_alg_names,
-				    st->st_esp.attrs.transattrs.integ_hash),
+			  st->st_ah.attrs.transattrs.ta_integ->common.fqn,
 			  pfsbuf);
 	}
 }
@@ -380,11 +341,6 @@ struct db_sa *kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei,
 	if (ei == NULL) {
 		struct db_sa *sadb;
 		lset_t pm = POLICY_ENCRYPT | POLICY_AUTHENTICATE;
-
-#if 0
-		if (can_do_IPcomp)
-			pm |= POLICY_COMPRESS;
-#endif
 
 		sadb = &ipsec_sadb[(policy & pm) >> POLICY_IPSEC_SHIFT];
 

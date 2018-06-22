@@ -2,7 +2,7 @@
 # remove our cert, we only want/need to CAcert
 certutil -D -n west -d sql:/etc/ipsec.d
 certutil -D -n east -d sql:/etc/ipsec.d     to westinit
-# make sure that clear text does not get through
+# ensure that clear text does not get through
 iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
 iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 # confirm with a ping

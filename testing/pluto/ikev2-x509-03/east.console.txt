@@ -7,9 +7,6 @@ east #
 Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
-002 listening for IKE messages
-002 loading secrets from "/etc/ipsec.secrets"
-003 "/etc/ipsec.secrets" line 1: WARNING: The :RSA secrets entries for X.509 certificates are no longer needed
 east #
  ipsec auto --add ikev2-westnet-eastnet-x509-cr
 002 added connection description "ikev2-westnet-eastnet-x509-cr"
@@ -17,28 +14,28 @@ east #
  echo "initdone"
 initdone
 east #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 east NOW
 XFRM state:
 src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 XFRM policy:
-src 192.1.2.23/32 dst 192.1.2.45/32 
-	dir out priority 2080 ptype main 
+src 192.1.2.23/32 dst 192.1.2.45/32
+	dir out priority 1040351 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
-src 192.1.2.45/32 dst 192.1.2.23/32 
-	dir fwd priority 2080 ptype main 
+src 192.1.2.45/32 dst 192.1.2.23/32
+	dir fwd priority 1040351 ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-src 192.1.2.45/32 dst 192.1.2.23/32 
-	dir in priority 2080 ptype main 
+src 192.1.2.45/32 dst 192.1.2.23/32
+	dir in priority 1040351 ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 XFRM done

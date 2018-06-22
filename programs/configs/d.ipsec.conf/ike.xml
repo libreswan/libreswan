@@ -24,9 +24,10 @@ The options must be suitable as a value of
 <citerefentry><refentrytitle>ipsec_spi</refentrytitle><manvolnum>8</manvolnum></citerefentry>'s
 <option>--ike</option> option. The default IKE proposal depends on the version of libreswan
 used. It follow the recommendations of RFC4306, RFC7321 and as of this writing their successor
-draft documents RFC4306bis and RFC7321bis. For IKEv1, 3DES,  SHA1 and MODP1536 are still allowed per
-default for backwards compatibility. IKEv2's minimum is AES, MODP2048 and SHA2. The default key
-size is 256 bits. The default AES_GCM ICV is 16 bytes.</para>
+draft documents RFC4306bis and RFC7321bis. For IKEv1, SHA1 and MODP1536 are still allowed per
+default for backwards compatibility, but 3DES and MODP1024 are not allowed per default. IKEv2's
+minimum is AES, MODP2048 and SHA2. The default key size is 256 bits. The default AES_GCM ICV
+is 16 bytes.</para>
 
 <para>Note that AES-GCM is an AEAD algorithm, meaning that it performs encryption+authentication in one step. This
 means that AES-GCM must not specify an authentication algorithm. However, it does require a PRF function, so

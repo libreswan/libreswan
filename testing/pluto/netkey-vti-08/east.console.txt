@@ -1,0 +1,24 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-vti
+002 added connection description "westnet-eastnet-vti"
+east #
+ echo "initdone"
+initdone
+east #
+ grep -v -P "\t0$" /proc/net/xfrm_stat
+east #
+ # unique mark translates -1 to random, make sure there is no -1
+east #
+ ip xfrm pol | grep \\-1
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

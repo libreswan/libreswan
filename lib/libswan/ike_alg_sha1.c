@@ -31,8 +31,8 @@
 #include "lswlog.h"
 #include "ike_alg.h"
 #include "ike_alg_sha1.h"
-#include "ike_alg_nss_hash_ops.h"
-#include "ike_alg_nss_prf_ops.h"
+#include "ike_alg_hash_nss_ops.h"
+#include "ike_alg_prf_nss_ops.h"
 
 const struct hash_desc ike_alg_hash_sha1 = {
 	.common = {
@@ -47,13 +47,14 @@ const struct hash_desc ike_alg_hash_sha1 = {
 			[IKEv2_ALG_ID] = -1,
 		},
 		.fips = TRUE,
-		.nss_mechanism = CKM_SHA_1,
 	},
-	.nss_oid_tag = SEC_OID_SHA1,
-	.nss_derive_mechanism = CKM_SHA1_KEY_DERIVATION,
+	.nss = {
+		.oid_tag = SEC_OID_SHA1,
+		.derivation_mechanism = CKM_SHA1_KEY_DERIVATION,
+	},
 	.hash_digest_len = SHA1_DIGEST_SIZE,
 	.hash_block_size = 64,	/* B from RFC 2104 */
-	.hash_ops = &ike_alg_nss_hash_ops,
+	.hash_ops = &ike_alg_hash_nss_ops,
 };
 
 const struct prf_desc ike_alg_prf_sha1 = {
@@ -69,12 +70,14 @@ const struct prf_desc ike_alg_prf_sha1 = {
 			[IKEv2_ALG_ID] = IKEv2_PRF_HMAC_SHA1,
 		},
 		.fips = TRUE,
-		.nss_mechanism = CKM_SHA_1_HMAC,
+	},
+	.nss = {
+		.mechanism = CKM_SHA_1_HMAC,
 	},
 	.prf_key_size = SHA1_DIGEST_SIZE,
 	.prf_output_size = SHA1_DIGEST_SIZE,
 	.hasher = &ike_alg_hash_sha1,
-	.prf_ops = &ike_alg_nss_prf_ops,
+	.prf_ops = &ike_alg_prf_nss_ops,
 };
 
 const struct integ_desc ike_alg_integ_sha1 = {
@@ -90,7 +93,6 @@ const struct integ_desc ike_alg_integ_sha1 = {
 			[IKEv2_ALG_ID] = IKEv2_AUTH_HMAC_SHA1_96,
 		},
 		.fips = TRUE,
-		.nss_mechanism = CKM_SHA_1_HMAC,
 	},
 	.integ_keymat_size = SHA1_DIGEST_SIZE,
 	.integ_output_size = SHA1_DIGEST_SIZE_96,

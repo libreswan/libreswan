@@ -1,3 +1,0 @@
-This is an IKEv2 test road will rekey IKE SA.
-
-After the rekey the rekey margin is long, the previous IPsec SA is still there.

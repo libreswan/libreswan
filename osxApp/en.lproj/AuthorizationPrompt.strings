@@ -1,2 +1,0 @@
-/* prompt included in authorization dialog for the Connect command */
-"ConnectPrompt" = "You must be authorized to establish a connection through Libreswan.";

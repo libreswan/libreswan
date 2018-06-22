@@ -503,6 +503,13 @@ static struct vid_struct vid_tab[] = {
 
 	{ VID_OPENSWANORG, VID_KEEP | VID_SUBSTRING_MATCH, NULL, "Openswan(project)", "\x4f\x45", 2 },
 
+	/*
+	 * "ELVIS-PLUS Zastava"
+	 * Last two bytes (not matched here) are major|minor nibbles and a reserved 00
+	 */
+	{ VID_ELVIS, VID_KEEP | VID_SUBSTRING_DUMPHEXA, NULL, "ELVIS-PLUS Zastava",
+		"\x08\xdb\x45\xe6\xcb\x01\xf8\x0b\xb5\x76\xe9\xa7\x8c\x0f\x54\xe1\x30\x0b\x88\x81", 20 },
+
 	/* END OF TABLE */
 	{ 0, 0, NULL, NULL, NULL, 0 }
 };

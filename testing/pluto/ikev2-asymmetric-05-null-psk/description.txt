@@ -1,5 +1,0 @@
-Basic pluto with IKEv2 on the initiator (west) using NULL , and on the
-responder, using PSK for authentication.
-
-We currently do not allow yet to mix PSK and AUTH NULL
-

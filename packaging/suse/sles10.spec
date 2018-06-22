@@ -12,7 +12,7 @@ Version: IPSECBASEVERSION
 %define ourrelease 1
 Release: %{ourrelease}
 License: GPLv2
-Url: http://www.libreswan.org/
+Url: https://libreswan.org/
 Source: libreswan-%{srcpkgver}.tar.gz
 Patch1: rc.patch
 Patch2: kernelsrc.patch

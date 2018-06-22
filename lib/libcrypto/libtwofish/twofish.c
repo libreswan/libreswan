@@ -35,16 +35,8 @@
 #define u32 u_int32_t
 #endif
 
-#if 0 /* shouldn't this be #ifdef rotl32 ?
-       * Look at wordops.h: It includes asm/wordops.h.
-       * Anyway, we have to search in the macros for rot's,
-       * since they seem to be defined in a generic way. */
-#define rotl rotl32
-#define rotr rotr32
-#else
 #define rotl generic_rotl32
 #define rotr generic_rotr32
-#endif
 
 #include "twofish.h"
 /* The large precomputed tables for the Twofish cipher (twofish.c)

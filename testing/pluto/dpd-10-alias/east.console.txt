@@ -1,0 +1,58 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add northnet-eastnets
+002 added connection description "northnet-eastnets/0x1"
+002 added connection description "northnet-eastnets/0x2"
+east #
+ ipsec auto --status | grep northnet-eastnets
+000 "northnet-eastnets/0x1": 192.0.2.0/24===192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]---192.1.2.254...192.1.3.33<192.1.3.33>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org]===192.0.3.0/24; unrouted; eroute owner: #0
+000 "northnet-eastnets/0x1":     oriented; my_ip=unset; their_ip=unset; mycert=east; hiscert=north; my_updown=ipsec _updown;
+000 "northnet-eastnets/0x1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "northnet-eastnets/0x1":   our auth:rsasig, their auth:rsasig
+000 "northnet-eastnets/0x1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
+000 "northnet-eastnets/0x1":   labeled_ipsec:no;
+000 "northnet-eastnets/0x1":   policy_label:unset;
+000 "northnet-eastnets/0x1":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+000 "northnet-eastnets/0x1":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "northnet-eastnets/0x1":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "northnet-eastnets/0x1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "northnet-eastnets/0x1":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "northnet-eastnets/0x1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "northnet-eastnets/0x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+000 "northnet-eastnets/0x1":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org
+000 "northnet-eastnets/0x1":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
+000 "northnet-eastnets/0x1":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "northnet-eastnets/0x1":   aliases: northnet-eastnets
+000 "northnet-eastnets/0x2": 192.0.22.0/24===192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]---192.1.2.254...192.1.3.33<192.1.3.33>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org]===192.0.3.0/24; unrouted; eroute owner: #0
+000 "northnet-eastnets/0x2":     oriented; my_ip=unset; their_ip=unset; mycert=east; hiscert=north; my_updown=ipsec _updown;
+000 "northnet-eastnets/0x2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "northnet-eastnets/0x2":   our auth:rsasig, their auth:rsasig
+000 "northnet-eastnets/0x2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, banner:unset, cat:unset;
+000 "northnet-eastnets/0x2":   labeled_ipsec:no;
+000 "northnet-eastnets/0x2":   policy_label:unset;
+000 "northnet-eastnets/0x2":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+000 "northnet-eastnets/0x2":   ike_life: 3600s; ipsec_life: 28800s; replay_window: 32; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "northnet-eastnets/0x2":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
+000 "northnet-eastnets/0x2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "northnet-eastnets/0x2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO;
+000 "northnet-eastnets/0x2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "northnet-eastnets/0x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+000 "northnet-eastnets/0x2":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org
+000 "northnet-eastnets/0x2":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
+000 "northnet-eastnets/0x2":   newest ISAKMP SA: #0; newest IPsec SA: #0;
+000 "northnet-eastnets/0x2":   aliases: northnet-eastnets
+east #
+ echo "initdone"
+initdone
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

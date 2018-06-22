@@ -5,7 +5,7 @@ Redirecting to: systemctl start ipsec.service
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
- ipsec whack --debug-all --impair-retransmits
+ ipsec whack --impair retransmits
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
 002 added connection description "westnet-eastnet-ipv4-psk-ikev1"
@@ -15,15 +15,19 @@ initdone
 west #
  ipsec auto --up  westnet-eastnet-ipv4-psk-ikev1
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: initiating Main Mode
+002 "westnet-eastnet-ipv4-psk-ikev1" #1: IMPAIR RETRANSMITS: scheduling timeout in 0.5 seconds
 104 "westnet-eastnet-ipv4-psk-ikev1" #1: STATE_MAIN_I1: initiate
+002 "westnet-eastnet-ipv4-psk-ikev1" #1: IMPAIR RETRANSMITS: scheduling timeout in 0.5 seconds
 106 "westnet-eastnet-ipv4-psk-ikev1" #1: STATE_MAIN_I2: sent MI2, expecting MR2
+002 "westnet-eastnet-ipv4-psk-ikev1" #1: IMPAIR RETRANSMITS: scheduling timeout in 0.5 seconds
 108 "westnet-eastnet-ipv4-psk-ikev1" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: Peer ID is ID_FQDN: '@east'
 004 "westnet-eastnet-ipv4-psk-ikev1" #1: STATE_MAIN_I4: ISAKMP SA established {auth=PRESHARED_KEY cipher=aes_256 integ=sha2_256 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev1" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
+002 "westnet-eastnet-ipv4-psk-ikev1" #2: IMPAIR RETRANSMITS: scheduling timeout in 0.5 seconds
 117 "westnet-eastnet-ipv4-psk-ikev1" #2: STATE_QUICK_I1: initiate
 002 "westnet-eastnet-ipv4-psk-ikev1" #2: suppressing retransmit because IMPAIR_RETRANSMITS is set
-031 "westnet-eastnet-ipv4-psk-ikev1" #2: max number of retransmissions (0) reached STATE_QUICK_I1.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
+002 "westnet-eastnet-ipv4-psk-ikev1" #2: IMPAIR RETRANSMITS: suppressing re-key
 002 "westnet-eastnet-ipv4-psk-ikev1" #2: deleting state (STATE_QUICK_I1)
 west #
  echo done

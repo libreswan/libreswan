@@ -1,0 +1,7 @@
+A regular authnull OE tunnel, but now the initiator
+is "crashed" and restarts and attempts to bring up
+the tunnel again. The connection should establish
+and east should clean up the old connection.
+
+New code checks for authby=null and if there is no
+NAT involved will delete the old connection.

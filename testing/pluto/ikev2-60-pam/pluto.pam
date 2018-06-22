@@ -1,0 +1,7 @@
+#%PAM-1.0
+
+#mypam example
+auth sufficient mypam.so
+session sufficient mypam.so
+account sufficient mypam.so
+

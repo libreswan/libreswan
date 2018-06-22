@@ -382,7 +382,7 @@ void ipsec_print_ip(void *ip)
  *  2) How does this affect syncookies, mss_cache, dst cache ?
  *  3) Path MTU discovery handling needs to be reviewed.  For example,
  *     if we receive an ICMP 'packet too big' message from an intermediate
- *     router specifying it's next hop MTU, our stack may process this and
+ *     router specifying its next hop MTU, our stack may process this and
  *     adjust the MSS without taking our AH/ESP overheads into account.
  */
 

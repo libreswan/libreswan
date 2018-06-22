@@ -1,0 +1,17 @@
+This test has a road warrior, ("road") connecting to VPN host east.
+
+It shows up from a random IP.
+
+It uses PSK to authenticate for phase 1.
+It uses aggressive mode.
+It then uses XAUTH to authenticate the phase 1.5.
+It then uses MODECFG to configure the phase 2, in server push mode.
+It then sends DNS servers and domains using modecfgdns1,modecfgdn2
+and modecfg_domain.
+
+NOTE: Some clients require that for these messages IV from phase2, not phase1
+is used. We need to turn that into an option.
+
+It then proceeds to phase 2.
+
+road tests to see if its resolv.conf is overwritten and restored properly

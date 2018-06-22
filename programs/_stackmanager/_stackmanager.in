@@ -66,7 +66,7 @@ stopnetkey() {
 		xfrm6_mode_tunnel xfrm6_mode_beet xfrm6_mode_ro \
 		xfrm6_mode_transport xfrm4_mode_transport xfrm4_mode_tunnel \
 		xfrm4_tunnel xfrm4_mode_beet esp4 esp6 ah4 ah6 af_key \
-		xfrm_user
+		xfrm_user xfrm_interface
 	    do
 		# first try and unload the modules without the 10s wait pause
 		if [ -n "$(egrep ^${mod} /proc/modules)" ]; then
@@ -142,6 +142,12 @@ startnetkey() {
     # Also Time before reserved kernel SPI times out
     [ -w /proc/sys/net/core/xfrm_acq_expires ] && \
 	echo ${xfrmlifetime} >/proc/sys/net/core/xfrm_acq_expires || : not writeable
+
+    # Fail on error in loading NETKEY/XFRM stack
+    if [ ! -f ${kamepfkey} ]; then
+	echo "FAILURE in loading NETKEY/XFRM stack" >&2
+	exit 1
+    fi
 }
 
 stopklips() {

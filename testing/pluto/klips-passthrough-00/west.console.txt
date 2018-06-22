@@ -7,14 +7,10 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 west #
  # confirm that clear text is dead
 west #
- ! ../../pluto/bin/wait-until-alive -I 192.1.2.45 192.1.2.23
-ping -n -c 1 -w 4 -I 192.1.2.45 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 0 received, 100% packet loss, time XXXX
-destination -I 192.1.2.45 192.1.2.23 is dead
+ ! ../../pluto/bin/one-ping.sh -I 192.1.2.45 192.1.2.23
+down
 west #
- # make sure that clear text does not get through
+ # ensure that clear text does not get through
 west #
  iptables -A INPUT -i eth1 -s 192.1.2.23/32 -p icmp -j LOGDROP
 west #
@@ -22,10 +18,8 @@ west #
 west #
  # confirm with a ping
 west #
- ping -n -c 4 -I 192.1.2.45 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.2.45 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 0 received, 100% packet loss, time XXXX
+ ! ../../pluto/bin/one-ping.sh -I 192.1.2.45 192.1.2.23
+down
 west #
  ipsec start
 [ 00.00] registered KLIPS /proc/sys/net
@@ -65,10 +59,11 @@ west #
 106 "west-east" #1: STATE_MAIN_I2: sent MI2, expecting MR2
 108 "west-east" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "west-east" #1: Peer ID is ID_FQDN: '@east'
+003 "west-east" #1: Authenticated using RSA
 004 "west-east" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha2_256 group=MODP2048}
 002 "west-east" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 117 "west-east" #2: STATE_QUICK_I1: initiate
-004 "west-east" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
+004 "west-east" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  # encrypted
 west #
@@ -89,7 +84,7 @@ west #
  echo done
 done
 west #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 west NOW
 192.1.2.45/32      -> 192.1.2.23/32      => tun0xIPIP@192.1.2.23 esp0xESPSPI@192.1.2.23
 192.1.2.45/32:222  -> 192.1.2.23/32:222  => %pass:6

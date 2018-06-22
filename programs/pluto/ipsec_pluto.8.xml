@@ -83,24 +83,20 @@
 
       <arg choice="plain"><replaceable>whack</replaceable></arg>
 
-      <arg choice="opt">--debug-none</arg>
-      <arg choice="opt">--debug-all</arg>
-      <arg choice="opt">--debug-raw</arg>
-      <arg choice="opt">--debug-crypt</arg>
-      <arg choice="opt">--debug-parsing</arg>
-      <arg choice="opt">--debug-emitting</arg>
-      <arg choice="opt">--debug-control</arg>
-      <arg choice="opt">--debug-lifecycle</arg>
-      <arg choice="opt">--debug-kernel</arg>
-      <arg choice="opt">--debug-pfkey</arg>
-      <arg choice="opt">--debug-nat-t</arg>
-      <arg choice="opt">--debug-dpd</arg>
-      <arg choice="opt">--debug-dns</arg>
-      <arg choice="opt">--debug-oppo</arg>
-      <arg choice="opt">--debug-oppoinfo</arg>
-      <arg choice="opt">--debug-whackwatch</arg>
-      <arg choice="opt">--debug-private</arg>
-      <arg choice="opt">--debug-x509</arg>
+      <arg choice="opt">--debug all</arg>
+      <arg choice="opt">--debug none</arg>
+      <arg choice="opt">--debug list</arg>
+      <arg choice="opt">--debug <replaceable>class</replaceable></arg>
+      <arg choice="opt">--debug no-<replaceable>class</replaceable></arg>
+
+      <arg choice="opt">--debug-all (obsolete)</arg>
+      <arg choice="opt">--debug-none (obsolete)</arg>
+
+      <arg choice="opt">--impair list</arg>
+      <arg choice="opt">--impair none</arg>
+      <arg choice="opt">--impair <replaceable>behaviour</replaceable></arg>
+      <arg choice="opt">--impair no-<replaceable>behaviour</replaceable></arg>
+
     </cmdsynopsis>
 
     <cmdsynopsis>
@@ -187,11 +183,9 @@
 
       <arg choice="opt">--modecfgclient</arg>
 
-      <arg choice="opt">--modecfgdns1 <replaceable>ip-address</replaceable></arg>
+      <arg choice="opt">--modecfgdns <replaceable>ip-address, ip-address, ...</replaceable></arg>
 
-      <arg choice="opt">--modecfgdns2 <replaceable>ip-address</replaceable></arg>
-
-      <arg choice="opt">--modecfgdomain <replaceable>DNS-domain</replaceable></arg>
+      <arg choice="opt">--modecfgdomains <replaceable>DNS-domain, DNS-domain, ...</replaceable></arg>
       <arg choice="opt">--modecfgbanner <replaceable>login-banner</replaceable></arg>
 
       <arg choice="opt">--dnskeyondemand</arg>
@@ -253,11 +247,9 @@
 
       <arg choice="opt">--modecfgclient</arg>
 
-      <arg choice="opt">--modecfgdns1 <replaceable>ip-address</replaceable></arg>
+      <arg choice="opt">--modecfgdns <replaceable>ip-address, ip-address, ...</replaceable></arg>
 
-      <arg choice="opt">--modecfgdns2 <replaceable>ip-address</replaceable></arg>
-
-      <arg choice="opt">--modecfgdomain <replaceable>DNS-domain</replaceable></arg>
+      <arg choice="opt">--modecfgdomains <replaceable>DNS-domain, DNS-domain, ...</replaceable></arg>
 
       <arg choice="opt">--dnskeyondemand</arg>
 
@@ -390,14 +382,6 @@
       <arg choice="opt">--ctlsocket <replaceable>path/file</replaceable></arg>
 
       <arg choice="opt">--label <replaceable>string</replaceable></arg>
-    </cmdsynopsis>
-
-    <cmdsynopsis>
-      <command>ipsec</command>
-
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
-
-      <arg choice="plain">--myid <replaceable>id</replaceable></arg>
     </cmdsynopsis>
 
     <cmdsynopsis>
@@ -576,36 +560,20 @@
       <arg choice="opt">--name
       <replaceable>connection-name</replaceable></arg>
 
-      <arg choice="opt">--debug-none</arg>
-      <arg choice="opt">--debug-all</arg>
-      <arg choice="opt">--debug-raw</arg>
-      <arg choice="opt">--debug-crypt</arg>
-      <arg choice="opt">--debug-parsing</arg>
-      <arg choice="opt">--debug-emitting</arg>
-      <arg choice="opt">--debug-control</arg>
-      <arg choice="opt">--debug-controlmore</arg>
-      <arg choice="opt">--debug-lifecycle</arg>
-      <arg choice="opt">--debug-klips</arg>
-      <arg choice="opt">--debug-pfkey</arg>
-      <arg choice="opt">--debug-dns</arg>
-      <arg choice="opt">--debug-dpd</arg>
-      <arg choice="opt">--debug-natt</arg>
-      <arg choice="opt">--debug-oppo</arg>
-      <arg choice="opt">--debug-oppoinfo</arg>
-      <arg choice="opt">--debug-whackwatch</arg>
-      <arg choice="opt">--debug-private</arg>
-      <arg choice="opt">--impair-bust-mi2</arg>
-      <arg choice="opt">--impair-bust-mr2</arg>
-      <arg choice="opt">--impair-sa-fail</arg>
-      <arg choice="opt">--impair-die-oninfo</arg>
-      <arg choice="opt">--impair-jacob-two-two</arg>
-      <arg choice="opt">--impair-major-version-bump</arg>
-      <arg choice="opt">--impair-minor-version-bump</arg>
-      <arg choice="opt">--impair-retransmits</arg>
-      <arg choice="opt">--impair-send-bogus-isakmp-flag</arg>
-      <arg choice="opt">--impair-send-ikev2-ke</arg>
-      <arg choice="opt">--impair-send-key-size-check</arg>
-      <arg choice="opt">--impair-send-no-delete</arg>
+      <arg choice="opt">--debug all</arg>
+      <arg choice="opt">--debug none</arg>
+      <arg choice="opt">--debug list</arg>
+      <arg choice="opt">--debug <replaceable>class</replaceable></arg>
+      <arg choice="opt">--debug no-<replaceable>class</replaceable></arg>
+
+      <arg choice="opt">--debug-all (obsolete)</arg>
+      <arg choice="opt">--debug-none (obsolete)</arg>
+
+      <arg choice="opt">--impair list</arg>
+      <arg choice="opt">--impair none</arg>
+      <arg choice="opt">--impair <replaceable>behaviour</replaceable></arg>
+      <arg choice="opt">--impair no-<replaceable>behaviour</replaceable></arg>
+
     </cmdsynopsis>
 
     <cmdsynopsis>
@@ -677,6 +645,19 @@
 
       <arg choice="plain">--trafficstatus</arg>
       <arg choice="plain">--shuntstatus</arg>
+
+      <arg choice="opt">--rundir <replaceable>path</replaceable></arg>
+      <arg choice="opt">--ctlsocket <replaceable>path/file</replaceable></arg>
+
+      <arg choice="opt">--label <replaceable>string</replaceable></arg>
+    </cmdsynopsis>
+    <cmdsynopsis>
+      <command>ipsec</command>
+
+      <arg choice="plain"><replaceable>whack</replaceable></arg>
+
+      <arg choice="opt">--ike-socket-bufsize <replaceable>bufsize</replaceable></arg>
+      <arg choice="opt">--ike-socket-errqueue-toggle</arg>
 
       <arg choice="opt">--rundir <replaceable>path</replaceable></arg>
       <arg choice="opt">--ctlsocket <replaceable>path/file</replaceable></arg>
@@ -918,7 +899,7 @@
       <para>No special requirements are necessary to use NETKEY - it ships
       with all modern versions of Linux 2.4 and 2.6. however, note that
       certain vendors or older distributions use old versions or backports of
-      NETKEY which are broken. If possible use a NETKEY version that is at
+      NETKEY that are broken. If possible use a NETKEY version that is at
       least based on, or backported from Linux 2.6.11 or newer.</para>
     </refsect2>
 
@@ -1312,27 +1293,12 @@
             address (specified as dotted quad or as a Fully Qualified Domain
             Name, which will be resolved immediately) or as a Fully Qualified
             Domain Name itself (prefixed by "@" to signify that it should not
-            be resolved), or as user@FQDN, or an X.509 DN, or as the magic
-            value <emphasis remap="B">%myid</emphasis>. <emphasis
-            remap="B">Pluto</emphasis> only authenticates the identity, and
+            be resolved), or as user@FQDN, or an X.509 DN.
+            <emphasis remap="B">Pluto</emphasis> only authenticates the identity, and
             does not use it for addressing, so, for example, an IP address
             need not be the one to which packets are to be sent. If the option
             is absent, the identity defaults to the IP address specified by
-            <option>--host</option>. <emphasis remap="B">%myid</emphasis>
-            allows the identity to be separately specified (by the <emphasis
-            remap="B">pluto</emphasis> or <emphasis remap="B">whack</emphasis>
-            option <option>--myid</option> or by the <citerefentry>
-                <refentrytitle>ipsec.conf</refentrytitle>
-
-                <manvolnum>5</manvolnum>
-              </citerefentry> <emphasis remap="B">config setup</emphasis>
-            parameter <emphasis remap="P-&gt;B">myid</emphasis>). Otherwise,
-            <emphasis remap="B">pluto</emphasis> tries to guess what <emphasis
-            remap="B">%myid</emphasis> should stand for: the IP address of
-            <emphasis remap="B">%defaultroute</emphasis>, if it is supported
-            by a suitable TXT record in the reverse domain for that IP
-            address, or the system's hostname, if it is supported by a
-            suitable TXT record in its forward domain.</para>
+            <option>--host</option>.</para>
 
             <!--  The identity is transmitted in the IKE protocol, and is what is authenticated. -->
           </listitem>
@@ -1611,18 +1577,18 @@
         </varlistentry>
 
         <varlistentry>
-          <term><option>--modecfgdns1</option></term>
+          <term><option>--modecfgdns</option></term>
 
           <listitem>
-            <para>The IP address of the first DNS server to pass along to the ModeConfig Client</para>
+            <para>A comma separated list of DNS server IP's to pass along to connecting clients</para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
-          <term><option>--modecfgdns2</option></term>
+          <term><option>--modecfgdomains</option></term>
 
           <listitem>
-            <para>The IP address of the second DNS server to pass along to the ModeConfig Client</para>
+            <para>A comma separated list of internal DNS domains to pass along to connecting clients</para>
           </listitem>
         </varlistentry>
 
@@ -2042,8 +2008,8 @@
           <term><option>--checkpubkeys</option></term>
 
           <listitem>
-            <para>list all the loaded X.509 certificates which are about to
-            expire or have been expired.</para>
+            <para>list all the loaded X.509 certificates that are about to
+            expire or have expired.</para>
           </listitem>
         </varlistentry>
 
@@ -2994,7 +2960,7 @@
 
       <para>When <emphasis remap="B">pluto</emphasis> is using one of these
       temporary connections and needs to find the preshared secret or RSA
-      private key in <emphasis remap="I">ipsec.secrets</emphasis>, and and the
+      private key in <emphasis remap="I">ipsec.secrets</emphasis>, and the
       connection specified no identity for the peer, <emphasis
       remap="B">%any</emphasis> is used as its identity. After all, the real
       IP address was apparently unknown to the configuration, so it is
@@ -3002,12 +2968,12 @@
 
       <para>Part way into the Phase 1 (Main Mode) negotiation using one of
       these temporary connection descriptions, <emphasis
-      remap="B">pluto</emphasis> will be receive an Identity Payload. At this
+      remap="B">pluto</emphasis> will receive an Identity Payload. At this
       point, <emphasis remap="B">pluto</emphasis> checks for a more
       appropriate connection, one with an identity for the peer that matches
-      the payload but which would use the same keys so-far used for
+      the payload and would use the same keys as so far used for
       authentication. If it finds one, it will switch to using this better
-      connection (or a temporary derived from this, if it has <emphasis
+      connection (or a temporary one derived from this, if it has <emphasis
       remap="B">%any</emphasis> for the peer's IP address). It may even turn
       out that no connection matches the newly discovered identity, including
       the current connection; if so, <emphasis remap="B">pluto</emphasis>
@@ -3017,8 +2983,8 @@
       the Identity Payload is encrypted using this secret, so the secret must
       be selected by the responder without knowing this payload. This limits
       there to being at most one preshared secret for all Road Warrior systems
-      connecting to a host. RSA Signature authentications does not require
-      that the responder know how to select the initiator's public key until
+      connecting to a host. RSA Signature authentication does not require
+      that the responder knows how to select the initiator's public key until
       after the initiator's Identity Payload is decoded (using the responder's
       private key, so that must be preselected).</para>
 
@@ -3204,196 +3170,181 @@
       <para>lets one test <emphasis remap="B">pluto</emphasis> without using
       the superuser account.</para>
 
-      <para><emphasis remap="B">pluto</emphasis> is willing to produce a
-      prodigious amount of debugging information. There are several classes
-      of debugging output, and <emphasis remap="B">pluto</emphasis> may be
-      directed to produce a selection of them. All lines of debugging output
-      are prefixed with "|&nbsp;" to distinguish them from error messages.
+      <para>
+	<emphasis remap="B">pluto</emphasis> is willing to produce a
+	prodigious amount of debugging information.  There are several
+	classes of debugging output, and <emphasis
+	remap="B">pluto</emphasis> may be directed to produce a
+	selection of them.  All lines of debugging output are prefixed
+	with "|&nbsp;" to distinguish them from normal diagnostic
+	messages.
       </para>
 
-      <para>When <emphasis remap="B">pluto</emphasis> is invoked, it may be
-      given arguments to specify which classes to output. The current options
-      are:</para>
+      <para>
+	When <emphasis remap="B">pluto</emphasis> is invoked, it may
+	be given arguments to specify which debug classes to output.
+	The current options are:
+      </para>
 
       <variablelist remap="TP">
-        <varlistentry>
-          <term><option>--debug-none</option></term>
 
+        <varlistentry>
+          <term><option>--debug all</option></term>
           <listitem>
-            <para>disable all debugging</para>
+            <para>
+	      enable logging of a standard set of debugging classes
+	      (this does not include debugging classes that may expose
+	      private information)
+	    </para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
-          <term><option>--debug-all</option></term>
-
+          <term><option>--debug none</option></term>
           <listitem>
-            <para>enable all debugging</para>
+            <para>disable logging for all debugging classes</para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
-          <term><option>--debug-raw</option></term>
-
+          <term><option>--debug list</option> (whack only)</term>
           <listitem>
-            <para>show the raw bytes of messages</para>
+            <para>
+	      list the debugging classes recognised by <emphasis
+	      remap="B">pluto</emphasis>
+	    </para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
-          <term><option>--debug-crypt</option></term>
-
+          <term><option>--debug <replaceable>class</replaceable></option></term>
+          <term><option>--debug no-<replaceable>class</replaceable></option></term>
           <listitem>
-            <para>show the encryption and decryption of messages</para>
+            <para>
+	      enable (disable) logging of the specified debugging
+	      <replaceable>class</replaceable>,
+	      <replaceable>class</replaceable> is one of:
+	    </para>
+	    <variablelist>
+              <varlistentry>
+		<term>private</term>
+		<listitem>
+		  <para>
+		    control logging of private information (this class
+		    is not included in all)
+		  </para>
+		</listitem>
+              </varlistentry>
+	    </variablelist>
+	    <para>
+	      use <option>--debug list</option> to list additional
+	      debugging classes recognized by <emphasis
+	      remap="B">pluto</emphasis>
+	    </para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
-          <term><option>--debug-parsing</option></term>
-
+          <term><option>--debug-all</option> (obsolete)</term>
           <listitem>
-            <para>show the structure of input messages</para>
+            <para>
+	      alias for <option>--debug all</option> <option>--impair
+	      none</option>
+	    </para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
-          <term><option>--debug-emitting</option></term>
-
+          <term><option>--debug-none</option> (obsolete)</term>
           <listitem>
-            <para>show the structure of output messages</para>
+            <para>
+	      alias for <option>--debug none</option> <option>--impair
+	      none</option>
+	    </para>
           </listitem>
         </varlistentry>
 
-        <varlistentry>
-          <term><option>--debug-control</option></term>
-
-          <listitem>
-            <para>show <emphasis remap="B">pluto</emphasis>'s decision
-            making</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--debug-controlmore</option></term>
-
-          <listitem>
-            <para>show even more detailed <emphasis remap="B">pluto</emphasis>
-            decision making</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--debug-lifecycle</option></term>
-
-          <listitem>
-            <para>[this option is temporary] log more detail of lifecycle of
-            SAs</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--debug-klips</option></term>
-
-          <listitem>
-            <para>show <emphasis remap="B">pluto</emphasis>'s interaction with
-            <emphasis remap="B">KLIPS</emphasis></para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--debug-pfkey</option></term>
-
-          <listitem>
-            <para>show <emphasis remap="B">pluto</emphasis>'s <emphasis
-            remap="B">PFKEY</emphasis>interface communication</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--debug-dns</option></term>
-
-          <listitem>
-            <para>show <emphasis remap="B">pluto</emphasis>'s interaction with
-            <emphasis remap="B">DNS</emphasis> for KEY and TXT records</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--debug-dpd</option></term>
-
-          <listitem>
-            <para>show <emphasis remap="B">pluto</emphasis>'s <emphasis
-            remap="B">Dead Peer Detection</emphasis> handling</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--debug-natt</option></term>
-
-          <listitem>
-            <para>show <emphasis remap="B">pluto</emphasis>'s <emphasis
-            remap="B">NAT Traversal</emphasis> handling</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--debug-oppo</option></term>
-
-          <listitem>
-            <para>show why <emphasis remap="B">pluto</emphasis> didn't find a
-            suitable DNS TXT record to authorize opportunistic
-            initiation</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--debug-oppoinfo</option></term>
-
-          <listitem>
-            <para>log when connections are initiated due to acquires from the kernel.  This is often useful to know, but can be extremely chatty on a busy system. </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--debug-whackwatch</option></term>
-
-          <listitem>
-            <para>if set, causes pluto not to release the whack --initiate channel until the SA is completely up.  This will cause the requestor to possibly wait forever while pluto unsuccessfully negotiates.  Used often in test cases.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--debug-private</option></term>
-
-          <listitem>
-            <para>allow debugging output with private keys.</para>
-          </listitem>
-        </varlistentry>
       </variablelist>
 
-      <para>The debug form of the <emphasis remap="B">whack</emphasis> command
-      will change the selection in a running <emphasis
-      remap="B">pluto</emphasis>. If a connection name is specified, the flags
-      are added whenever <emphasis remap="B">pluto</emphasis> has identified
-      that it is dealing with that connection. Unfortunately, this is often
-      part way into the operation being observed.</para>
+      <para>
+	The debug form of the <emphasis remap="B">whack</emphasis>
+	command will change the selection in a running <emphasis
+	remap="B">pluto</emphasis>. If a connection name is specified,
+	the flags are added whenever <emphasis
+	remap="B">pluto</emphasis> has identified that it is dealing
+	with that connection.  Unfortunately, this is often part way
+	into the operation being observed.
+      </para>
 
-      <para>For example, to start a <emphasis remap="B">pluto</emphasis> with
-      a display of the structure of input and output:</para>
+      <para>
+	For example, to start a <emphasis remap="B">pluto</emphasis>
+	with a display of the structure of input and output:
+      </para>
 
-      <para>pluto --debug-emitting --debug-parsing</para>
+      <para>pluto --debug xauth --debug retransmits</para>
 
-      <para>To later change this <emphasis remap="B">pluto</emphasis> to only
-      display raw bytes:</para>
+      <para>
+	To later change this <emphasis remap="B">pluto</emphasis> to
+	disable the retransmits debug class use either of:
+      </para>
 
-      <para>whack --debug-raw</para>
+      <para>
+	whack --debug no-retransmits
+      </para>
 
-      <para>Hint: ISAKMP SAs are often kept alive by IKEs even after the IPsec
-      SA is established. This allows future IPsec SA's to be negotiated
-      directly. If one of the IKEs is restarted, the other may try to use the
-      ISAKMP SA but the new IKE won't know about it. This can lead to much
-      confusion. <emphasis remap="B">pluto</emphasis> is not yet smart enough
-      to get out of such a mess.</para>
+      <para>
+	whack --debug none --debug xauth
+      </para>
+
+    </refsect2>
+
+    <refsect2 id="impairing">
+      <title>Impairing</title>
+
+      <para>
+	<emphasis remap="B">pluto</emphasis> and <emphasis
+	remap="B">whack</emphasis> accept several optional arguments
+	that alter (impair) correct behaviour.
+      </para>
+      <para>
+	These options are solely intended for use by developers when
+	testing <emphasis remap="B">pluto</emphasis>.
+      </para>
+
+      <variablelist remap="TP">
+
+        <varlistentry>
+          <term><option>--impair list</option> (whack only)</term>
+          <listitem>
+            <para>
+	      list all the behaviours that can be altered (impaired)
+	    </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--impair none</option></term>
+          <listitem>
+            <para>
+	      disable all altered (impaired) behaviours
+	    </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--impair <replaceable>behaviour</replaceable></option></term>
+          <term><option>--impair no-<replaceable>behaviour</replaceable></option></term>
+          <listitem>
+            <para>
+	      alter (impair) <emphasis remap="B">pluto</emphasis>
+	      inducing the (possibly erroneous)
+	      <replaceable>behaviour</replaceable>
+	    </para>
+          </listitem>
+        </varlistentry>
+
+      </variablelist>
+
     </refsect2>
 
     <refsect2 id="plutos_behaviour_when_things_go_wrong">
@@ -3416,7 +3367,7 @@
       <para>Combine these three rules, and you can explain many apparently
       mysterious behaviours. In a <emphasis remap="B">pluto</emphasis> log,
       retrying isn't usually the interesting event. The critical thing is
-      either earlier (<emphasis remap="B">pluto</emphasis> got a message which
+      either earlier (<emphasis remap="B">pluto</emphasis> got a message that
       it didn't like and so ignored, so it was still awaiting an acceptable
       message and got impatient) or on the other system (<emphasis
       remap="B">pluto</emphasis> didn't send a reply because it wasn't happy
@@ -3630,9 +3581,7 @@
   <refsect1 id="environment">
     <title>ENVIRONMENT</title>
 
-    <para><emphasis remap="I">IPSEC_EXECDIR</emphasis> <!-- .br -->
-    <emphasis remap="I">IPSECmyid</emphasis> <!-- .br -->
-    <emphasis remap="I">PLUTO_CORE_DIR</emphasis></para>
+    <para>pluto does not use any environment variables</para>
   </refsect1>
 
   <refsect1 id="see_also">

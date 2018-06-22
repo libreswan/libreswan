@@ -23,6 +23,7 @@ west #
 002 initiate on demand from 192.1.2.45:0 to 192.1.2.23:0 proto=0 because: whack
 133 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: STATE_PARENT_I1: initiate
 002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+003 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: Authenticated using RSA
 002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: negotiated connection [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
 west #
  ping -n -c 4 192.1.2.23

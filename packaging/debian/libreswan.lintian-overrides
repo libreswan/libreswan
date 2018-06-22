@@ -1,0 +1,5 @@
+# This is the name of one of the upstream maintainers:
+libreswan: spelling-error-in-copyright Antony Antony (duplicate word) Antony
+libreswan: spelling-error-in-changelog Antony Antony (duplicate word) Antony
+# the errors below are from licensing imported by upstream which are unlikely to change
+libreswan: spelling-error-in-copyright GNU Public Licence GNU General Public License

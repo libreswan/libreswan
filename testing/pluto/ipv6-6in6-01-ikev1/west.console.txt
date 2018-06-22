@@ -1,0 +1,75 @@
+/testing/guestbin/swan-prep --46
+west #
+ # confirm that the network is alive
+west #
+ ping6 -n -c 4 -I 2001:db8:0:1::254 2001:db8:0:2::254
+PING 2001:db8:0:2::254(2001:db8:0:2::254) from 2001:db8:0:1::254 : 56 data bytes
+64 bytes from 2001:db8:0:2::254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 2001:db8:0:2::254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 2001:db8:0:2::254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 2001:db8:0:2::254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 2001:db8:0:2::254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ # ensure that clear text does not get through
+west #
+ ip6tables -A INPUT -i eth1 -s 2001:db8:0:2::254 -p ipv6-icmp --icmpv6-type echo-reply  -j LOGDROP
+west #
+ ip6tables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ # confirm with a ping
+west #
+ ping6 -n -c 4 -I 2001:db8:0:1::254 2001:db8:0:2::254
+PING 2001:db8:0:2::254(2001:db8:0:2::254) from 2001:db8:0:1::254 : 56 data bytes
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:86:dd SRC=2001:0db8:0000:0002:0000:0000:0000:0254 DST=2001:0db8:0000:0001:0000:0000:0000:0254 LEN=XXXX TC=0 HOPLIMIT=64 FLOWLBL=XXXXX PROTO=ICMPv6 TYPE=129 CODE=0 ID=XXXX SEQ=1 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:86:dd SRC=2001:0db8:0000:0002:0000:0000:0000:0254 DST=2001:0db8:0000:0001:0000:0000:0000:0254 LEN=XXXX TC=0 HOPLIMIT=64 FLOWLBL=XXXXX PROTO=ICMPv6 TYPE=129 CODE=0 ID=XXXX SEQ=2 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:86:dd SRC=2001:0db8:0000:0002:0000:0000:0000:0254 DST=2001:0db8:0000:0001:0000:0000:0000:0254 LEN=XXXX TC=0 HOPLIMIT=64 FLOWLBL=XXXXX PROTO=ICMPv6 TYPE=129 CODE=0 ID=XXXX SEQ=3 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:86:dd SRC=2001:0db8:0000:0002:0000:0000:0000:0254 DST=2001:0db8:0000:0001:0000:0000:0000:0254 LEN=XXXX TC=0 HOPLIMIT=64 FLOWLBL=XXXXX PROTO=ICMPv6 TYPE=129 CODE=0 ID=XXXX SEQ=4 
+--- 2001:db8:0:2::254 ping statistics ---
+4 packets transmitted, 0 received, 100% packet loss, time XXXX
+west #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec auto --add westnet-eastnet-6in6
+002 added connection description "westnet-eastnet-6in6"
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up westnet-eastnet-6in6
+002 "westnet-eastnet-6in6" #1: initiating Main Mode
+104 "westnet-eastnet-6in6" #1: STATE_MAIN_I1: initiate
+106 "westnet-eastnet-6in6" #1: STATE_MAIN_I2: sent MI2, expecting MR2
+108 "westnet-eastnet-6in6" #1: STATE_MAIN_I3: sent MI3, expecting MR3
+002 "westnet-eastnet-6in6" #1: Peer ID is ID_FQDN: '@east'
+003 "westnet-eastnet-6in6" #1: Authenticated using RSA
+004 "westnet-eastnet-6in6" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha2_256 group=MODP2048}
+002 "westnet-eastnet-6in6" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
+117 "westnet-eastnet-6in6" #2: STATE_QUICK_I1: initiate
+004 "westnet-eastnet-6in6" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
+west #
+ ping6 -n -c 4 -I 2001:db8:0:1::254 2001:db8:0:2::254
+PING 2001:db8:0:2::254(2001:db8:0:2::254) from 2001:db8:0:1::254 : 56 data bytes
+64 bytes from 2001:db8:0:2::254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 2001:db8:0:2::254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 2001:db8:0:2::254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 2001:db8:0:2::254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 2001:db8:0:2::254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ echo done
+done
+west #
+ ipsec whack --trafficstatus
+006 #2: "westnet-eastnet-6in6", type=ESP, add_time=1234567890, inBytes=416, outBytes=416, id='@east'
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

@@ -1,4 +1,6 @@
-ipsec look
+ipsec whack --trafficstatus
+# should show non-zero counters on both ends
+grep traffic /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

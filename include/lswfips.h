@@ -18,8 +18,10 @@
  * for more details.
  */
 
-#ifndef _LSW_FIPS_H
-#define _LSW_FIPS_H
+#ifndef LSWFIPS_H
+#define LSWFIPS_H
+
+#include <stdbool.h>	/* for bool */
 
 enum lsw_fips_mode {
 	LSW_FIPS_UNSET = 0,
@@ -32,4 +34,5 @@ extern void lsw_set_fips_mode(enum lsw_fips_mode fips);
 extern enum lsw_fips_mode lsw_get_fips_mode(void);
 extern bool libreswan_fipsmode(void);
 
-#endif /* _LSW_FIPS_H_ */
+#endif
+

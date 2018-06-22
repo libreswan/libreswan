@@ -180,7 +180,7 @@ size_t dstlen;
 	if (dstlen > 0) {
 		if (dstlen < n)
 			p[dstlen - 1] = '\0';
-		strcpy(dst, p);
+		strcpy(dst, p);	/* clang 6.0.0 mistakenly thinks p is undefined */
 	}
 	return n;
 }
@@ -349,20 +349,6 @@ char **dstp;                    /* where to put result pointer */
 	strcpy(p, "IP6.ARPA.");
 	*dstp = buf;
 	return strlen(buf) + 1;
-}
-
-/*
- * simplified interface to addrtot()
- *
- * Caller should allocate a buffer to hold the result as long
- * as the resulting string is needed.  Usually just long enough
- * to output.
- */
-
-const char *ipstr(const ip_address *src, ipstr_buf *b)
-{
-	addrtot(src, 0, b->buf, sizeof(b->buf));
-	return b->buf;
 }
 
 /*

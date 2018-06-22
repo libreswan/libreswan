@@ -1,0 +1,7 @@
+Basic certificate testcase, but now the CA is deleted and both ends
+have to validate each other purely based on having each other's
+certificate preloaded. But west is using the wrong cert of north,
+so this connection should fail.
+
+this adds a CA unrelated to the leftcert= andrightcert=
+

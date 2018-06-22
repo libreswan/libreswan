@@ -1,0 +1,8 @@
+Test CREATE_CHILD_SA with east's pfs=yes ms_dh_downgrade=yes
+
+Wes tries pfs={yes,no} X ms_dh_downgrade={yes,no}.
+
+All but pfs=yes,ms_dh_downgrade=no should interop.
+
+XXX: the failing case cascades causing the next interop to hang.  See
+ikev2-child-00-double-hang.

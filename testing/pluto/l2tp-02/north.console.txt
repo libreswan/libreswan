@@ -4,42 +4,29 @@ north #
 north #
  iptables -F OUTPUT
 north #
- # make sure that clear text does not get through
+ # ensure that clear text does not get through
 north #
- iptables -A INPUT -i eth1 -s 192.1.2.23 -p udp --sport 1701 -j REJECT
+ # block port 22 via ipsec to confirm IPsec only covers 17/1701
 north #
- iptables -A OUTPUT -o eth1 -d 192.1.2.23 -p udp --dport 1701 -j REJECT
+ iptables -A OUTPUT -m policy --dir out --pol ipsec -p tcp --dport 22 -j REJECT
+north #
+ iptables -A OUTPUT -o eth1 -d 192.1.2.23 -m policy --dir out --pol none -p udp --dport 1701 -j REJECT
+north #
+ iptables -A OUTPUT -m policy --dir out --pol ipsec -j ACCEPT
+north #
+ iptables -A INPUT -i eth1 -s 192.1.2.23 -m policy --dir in --pol none -p udp --sport 1701 -j REJECT
+north #
+ iptables -A INPUT -m policy --dir in --pol ipsec -j ACCEPT
 north #
  ipsec start
-[ 00.00] registered KLIPS /proc/sys/net
-[ 00.00] ipsec_3des_init(alg_type=15 alg_id=3 name=3des): ret=0
-[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=12 name=cbc(aes) keyminbits=128 keymaxbits=256, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=253 name=cbc(twofish) keyminbits=128 keymaxbits=256, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=252 name=cbc(serpent) keyminbits=128 keymaxbits=256, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
-[ 00.00] KLIPS: lookup for ciphername=cipher_null: not found
-[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=2 name=hmac(md5) ctx_size=88 keyminbits=128 keymaxbits=128, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=3 name=hmac(sha1) ctx_size=88 keyminbits=160 keymaxbits=160, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=5 name=hmac(sha256) ctx_size=88 keyminbits=256 keymaxbits=256, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=6 name=hmac(sha384) ctx_size=88 keyminbits=384 keymaxbits=384, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=7 name=hmac(sha512) ctx_size=88 keyminbits=512 keymaxbits=512, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=252 name=hmac(sha256) ctx_size=88 keyminbits=256 keymaxbits=256, found(0)
-[ 00.00] 
 Redirecting to: systemctl start ipsec.service
-[ 00.00] 
 north #
  /testing/pluto/bin/wait-until-pluto-started
 north #
  ipsec auto --add north-east-l2tp
 002 added connection description "north-east-l2tp"
 north #
- ipsec auto --add north-east-pass
-002 added connection description "north-east-pass"
-north #
- ipsec auto --route north-east-pass
-north #
- (cd /tmp && xl2tpd -D 2>/tmp/xl2tpd.log 1>&2) &
+ (cd /tmp && xl2tpd -D 2>/tmp/xl2tpd.log 1>&2 ) &
 [B] PID
 north #
  ipsec auto --route north-east-l2tp
@@ -53,35 +40,15 @@ north #
 106 "north-east-l2tp" #1: STATE_MAIN_I2: sent MI2, expecting MR2
 108 "north-east-l2tp" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "north-east-l2tp" #1: Peer ID is ID_FQDN: '@east'
+003 "north-east-l2tp" #1: Authenticated using RSA
 004 "north-east-l2tp" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha2_256 group=MODP2048}
 002 "north-east-l2tp" #2: initiating Quick Mode RSASIG+ENCRYPT+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 117 "north-east-l2tp" #2: STATE_QUICK_I1: initiate
-004 "north-east-l2tp" #2: STATE_QUICK_I2: sent QI2, IPsec SA established transport mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=192.1.2.23:4500 DPD=passive}
+004 "north-east-l2tp" #2: STATE_QUICK_I2: sent QI2, IPsec SA established transport mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 north #
  echo "c server" > /var/run/xl2tpd/l2tp-control
 north #
  sleep 5
-north #
- ipsec look
-north NOW
-192.1.3.33/32      -> 192.1.2.23/32      => %pass
-192.1.3.33/32:1701 -> 192.1.2.23/32:1701 => esp0xESPSPI@192.1.2.23:17
-ipsec0->eth1 mtu=16260(9999)->1500
-
-esp0xSPISPI@192.1.3.33 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=32   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=nonesp natsport=4500 natdport=4500   refhim=0
-ROUTING TABLES
-default via 192.1.3.254 dev eth1 
-192.0.1.0/24 via 192.1.3.254 dev eth1 
-192.0.2.0/24 via 192.1.3.254 dev eth1 
-192.0.2.254 dev ppp0  proto kernel  scope link  src 192.0.2.128 
-192.0.3.0/24 dev eth0 proto kernel scope link src 192.0.3.254 
-192.1.2.0/24 via 192.1.3.254 dev eth1 
-192.1.2.23 dev ipsec0  scope link 
-192.1.3.0/24 dev eth1 proto kernel scope link src 192.1.3.33 
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
-north #
 north #
  ping -c 4 -n 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
@@ -93,14 +60,20 @@ PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 north #
- # testing passthrough of plaintext
+ # should be non-zero counters if l2tp worked
+north #
+ ipsec whack --trafficstatus
+006 #2: "north-east-l2tp", type=ESP, add_time=1234567890, inBytes=958, outBytes=899, id='@east'
+north #
+ # testing passthrough of non-l2tp/ipsec traffic
 north #
  echo quit | nc 192.0.2.254 22
 SSH-2.0-OpenSSH_XXX
 Protocol mismatch.
 north #
+north #
  ip addr show dev ppp0 | sed "s/ qdisc.*$//"
-7: ppp0: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1395
+5: ppp0: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1395
     link/ppp 
     inet 192.0.2.128 peer 192.0.2.254/32 scope global ppp0
        valid_lft forever preferred_lft forever
@@ -108,14 +81,35 @@ north #
  echo done
 done
 north #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 north NOW
-192.1.3.33/32      -> 192.1.2.23/32      => %pass
-192.1.3.33/32:1701 -> 192.1.2.23/32:1701 => esp0xESPSPI@192.1.2.23:17
-ipsec0->eth1 mtu=16260(9999)->1500
-
-
-esp0xSPISPI@192.1.3.33 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=32   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=nonesp natsport=4500 natdport=4500   refhim=0
+XFRM state:
+src 192.1.2.23 dst 192.1.3.33
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
+	sel src 192.1.2.23/32 dst 192.1.3.33/32 proto udp sport 1701 dport 1701 
+src 192.1.3.33 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
+	sel src 192.1.3.33/32 dst 192.1.2.23/32 proto udp sport 1701 dport 1701 
+XFRM policy:
+src 192.1.2.23/32 dst 192.1.3.33/32 proto udp sport 1701 dport 1701
+	dir in priority 712671 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+src 192.1.3.33/32 dst 192.1.2.23/32 proto udp sport 1701 dport 1701
+	dir out priority 712671 ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
 default via 192.1.3.254 dev eth1 
 192.0.1.0/24 via 192.1.3.254 dev eth1 
@@ -123,7 +117,6 @@ default via 192.1.3.254 dev eth1
 192.0.2.254 dev ppp0  proto kernel  scope link  src 192.0.2.128 
 192.0.3.0/24 dev eth0 proto kernel scope link src 192.0.3.254 
 192.1.2.0/24 via 192.1.3.254 dev eth1 
-192.1.2.23 dev ipsec0  scope link 
 192.1.3.0/24 dev eth1 proto kernel scope link src 192.1.3.33 
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes

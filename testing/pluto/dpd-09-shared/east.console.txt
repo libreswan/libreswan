@@ -1,0 +1,22 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add northnet-eastnet-a
+002 added connection description "northnet-eastnet-a"
+east #
+ ipsec auto --add northnet-eastnet-b
+002 added connection description "northnet-eastnet-b"
+east #
+ echo "initdone"
+initdone
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

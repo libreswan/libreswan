@@ -1,0 +1,6 @@
+IKEv2 host-to-host with NAT and CP.
+
+ikev2-hostpair-01 reconnects using the same IP, without sending any
+deletes. It does this 4 times. There should be no duplicate IPsec SA
+states on east, and one complete set of in/out/fwd policy rules.
+

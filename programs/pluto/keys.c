@@ -11,6 +11,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -36,11 +37,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <resolv.h>
-
-#include <glob.h>
-#ifndef GLOB_ABORTED
-# define GLOB_ABORTED    GLOB_ABEND     /* fix for old versions */
-#endif
 
 #include <libreswan.h>
 
@@ -103,13 +99,13 @@ static int print_secrets(struct secret *secret,
 	struct id_list *ids;
 
 	switch (pks->kind) {
-	case PPK_PSK:
+	case PKK_PSK:
 		kind = "PSK";
 		break;
-	case PPK_RSA:
+	case PKK_RSA:
 		kind = "RSA";
 		break;
-	case PPK_XAUTH:
+	case PKK_XAUTH:
 		kind = "XAUTH";
 		break;
 	default:
@@ -266,8 +262,8 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 	publicKey->pkcs11ID = CK_INVALID_HANDLE;
 
 	/* make a local copy.  */
-	chunk_t n = chunk_clone(k->n, "n");
-	chunk_t e = chunk_clone(k->e, "e");
+	chunk_t n = clone_chunk(k->n, "n");
+	chunk_t e = clone_chunk(k->e, "e");
 
 	/* Converting n and e to nss_n and nss_e */
 	nss_n.data = n.ptr;
@@ -330,7 +326,8 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 	return NULL;
 }
 
-/* Check signature against all RSA public keys we can find.
+/*
+ * Check signature against all RSA public keys we can find.
  * If we need keys from DNS KEY records, and they haven't been fetched,
  * return STF_SUSPEND to ask for asynch DNS lookup.
  *
@@ -418,55 +415,55 @@ stf_status RSA_check_signature_gen(struct state *st,
 
 	/* try all appropriate Public keys */
 	{
-		struct pubkey_list *p, **pp;
-		int pathlen;
 		realtime_t nw = realnow();
-		char thatid[IDTOA_BUF];
 
-		idtoa(&c->spd.that.id, thatid, IDTOA_BUF);
+		DBG(DBG_CONTROL, {
+			char buf[IDTOA_BUF];
+			dntoa_or_null(buf, IDTOA_BUF, c->spd.that.ca, "%any");
+			DBG_log("required CA is '%s'", buf);
+		});
 
-		pp = &pluto_pubkeys;
+		struct pubkey_list **pp = &pluto_pubkeys;
 
-		{
-
-			DBG(DBG_CONTROL, {
-				    char buf[IDTOA_BUF];
-				    dntoa_or_null(buf, IDTOA_BUF,
-						  c->spd.that.ca, "%any");
-				    DBG_log("required CA is '%s'", buf);
-			    });
-		}
-		for (p = pluto_pubkeys; p != NULL; p = *pp) {
+		for (struct pubkey_list *p = pluto_pubkeys; p != NULL; p = *pp) {
 			struct pubkey *key = p->key;
 			char printkid[IDTOA_BUF];
 
 			idtoa(&key->id, printkid, IDTOA_BUF);
-			DBG(DBG_CONTROL, DBG_log("checking keyid '%s' for match with '%s'",
-				printkid, thatid));
+			DBG(DBG_CONTROL, {
+				char thatid[IDTOA_BUF];
+				idtoa(&c->spd.that.id, thatid, IDTOA_BUF);
+				DBG_log("checking keyid '%s' for match with '%s'",
+					printkid, thatid);
+			});
+
+			int pl;	/* value ignored */
+
 			if (key->alg == PUBKEY_ALG_RSA &&
 			    same_id(&c->spd.that.id, &key->id) &&
-			    trusted_ca_nss(key->issuer, c->spd.that.ca,
-				       &pathlen)) {
-
+			    trusted_ca_nss(key->issuer, c->spd.that.ca, &pl))
+			{
 				DBG(DBG_CONTROL, {
-					    char buf[IDTOA_BUF];
-					    dntoa_or_null(buf, IDTOA_BUF,
-							  key->issuer, "%any");
-					    DBG_log("key issuer CA is '%s'",
-						    buf);
-				    });
+					char buf[IDTOA_BUF];
+					dntoa_or_null(buf, IDTOA_BUF,
+						key->issuer, "%any");
+					DBG_log("key issuer CA is '%s'", buf);
+				});
 
 				/* check if found public key has expired */
-				if (!isundefinedrealtime(key->until_time) &&
-				    realbefore(key->until_time, nw)) {
+				if (!is_realtime_epoch(key->until_time) &&
+				    realbefore(key->until_time, nw))
+				{
 					loglog(RC_LOG_SERIOUS,
 					       "cached RSA public key has expired and has been deleted");
 					*pp = free_public_keyentry(p);
 					continue; /* continue with next public key */
 				}
 
-				if (take_a_crack(&s, key, "preloaded key"))
+				if (take_a_crack(&s, key, "preloaded key")) {
+					loglog(RC_LOG_SERIOUS, "Authenticated using RSA");
 					return STF_OK;
+				}
 			}
 			pp = &p->next;
 		}
@@ -520,7 +517,8 @@ stf_status RSA_check_signature_gen(struct state *st,
 	}
 }
 
-/* find the struct secret associated with the combination of
+/*
+ * find the struct secret associated with the combination of
  * me and the peer.  We match the Id (if none, the IP address).
  * Failure is indicated by a NULL.
  *
@@ -544,10 +542,10 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	DBG(DBG_CONTROL,
 	    DBG_log("started looking for secret for %s->%s of kind %s",
 		    idme, idhim,
-		    enum_name(&ppk_names, kind)));
+		    enum_name(&pkk_names, kind)));
 
 	/* is there a certificate assigned to this connection? */
-	if (kind == PPK_RSA && c->spd.this.cert.ty == CERT_X509_SIGNATURE &&
+	if (kind == PKK_RSA && c->spd.this.cert.ty == CERT_X509_SIGNATURE &&
 			c->spd.this.cert.u.nss_cert != NULL) {
 		/* Must free MY_PUBLIC_KEY */
 		struct pubkey *my_public_key = allocate_RSA_public_key_nss(
@@ -605,7 +603,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		his_id = &rw_id;
 		idtoa(his_id, idhim2, IDTOA_BUF);
 	} else if ((c->policy & POLICY_PSK) &&
-		  (kind == PPK_PSK) &&
+		  (kind == PKK_PSK) &&
 		  (((c->kind == CK_TEMPLATE) &&
 		    (c->spd.that.id.kind == ID_NONE)) ||
 		   ((c->kind == CK_INSTANCE) &&
@@ -628,7 +626,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	DBG(DBG_CONTROL,
 	    DBG_log("actually looking for secret for %s->%s of kind %s",
 		    idme, idhim2,
-		    enum_name(&ppk_names, kind)));
+		    enum_name(&pkk_names, kind)));
 
 	best = lsw_find_secret_by_id(pluto_secrets,
 				     kind,
@@ -644,42 +642,44 @@ struct secret *lsw_get_xauthsecret(const struct connection *c UNUSED,
 				   char *xauthname)
 {
 	struct secret *best = NULL;
-	struct id xa_id;
 
 	DBG(DBG_CONTROL,
 	    DBG_log("started looking for xauth secret for %s",
 		    xauthname));
 
-	zero(&xa_id);	/* redundant */
-	xa_id.kind = ID_FQDN;
-	xa_id.name.ptr = (unsigned char *)xauthname;
-	xa_id.name.len = strlen(xauthname);
+	struct id xa_id = {
+		.kind = ID_FQDN,
+		.name = {
+			.ptr = (unsigned char *)xauthname,
+			.len = strlen(xauthname)
+		}
+	};
 
 	best = lsw_find_secret_by_id(pluto_secrets,
-				     PPK_XAUTH,
+				     PKK_XAUTH,
 				     &xa_id, NULL, TRUE);
 
 	return best;
 }
 
-/* check the existence of an RSA private key matching an RSA public
- */
+/* check the existence of an RSA private key matching an RSA public */
 static bool has_private_rawkey(struct pubkey *pk)
 {
 	return lsw_has_private_rawkey(pluto_secrets, pk);
 }
 
-/* find the appropriate preshared key (see get_secret).
+/*
+ * find the appropriate preshared key (see get_secret).
  * Failure is indicated by a NULL pointer.
  * Note: the result is not to be freed by the caller.
  * Note2: this seems to be called for connections using RSA too?
  */
-const chunk_t *get_preshared_secret(const struct connection *c)
+const chunk_t *get_psk(const struct connection *c)
 {
 	struct secret *s = lsw_get_secret(c,
 					  &c->spd.this.id,
 					  &c->spd.that.id,
-					  PPK_PSK, FALSE);
+					  PKK_PSK, FALSE);
 	const struct private_key_stuff *pks = NULL;
 
 	if (c->policy & POLICY_AUTH_NULL) {
@@ -699,14 +699,63 @@ const chunk_t *get_preshared_secret(const struct connection *c)
 	return s == NULL ? NULL : &pks->u.preshared_secret;
 }
 
-/* find the appropriate RSA private key (see get_secret).
+/*
+ * Return ppk, and store ppk_id in **ppk_id.
+ *
+ * ??? conditionally sets *ppk_id.  Should this be unconditional?
+ */
+chunk_t *get_ppk(const struct connection *c, chunk_t **ppk_id)
+{
+	struct secret *s = lsw_get_secret(c,
+					  &c->spd.this.id,
+					  &c->spd.that.id,
+					  PKK_PPK, FALSE);
+
+	if (s != NULL) {
+		struct private_key_stuff *pks = lsw_get_pks(s);
+		*ppk_id = &pks->ppk_id;
+		DBG(DBG_PRIVATE, {
+			DBG_log("Found PPK");
+			DBG_dump_chunk("PPK_ID:", **ppk_id);
+			DBG_dump_chunk("PPK:", pks->ppk);
+			});
+		return &pks->ppk;
+	}
+
+	return NULL;
+}
+
+/*
+ * Find PPK, by its id (PPK_ID).
+ * Used by responder.
+ */
+const chunk_t *get_ppk_by_id(const chunk_t *ppk_id)
+{
+	struct secret *s = lsw_get_ppk_by_id(pluto_secrets, *ppk_id);
+
+	if (s != NULL) {
+		const struct private_key_stuff *pks = lsw_get_pks(s);
+		DBG(DBG_PRIVATE, {
+			DBG_dump_chunk("Found PPK:", pks->ppk);
+			DBG_dump_chunk("with PPK_ID:", *ppk_id);
+		});
+		return &pks->ppk;
+	}
+	DBG(DBG_CONTROL, {
+		DBG_log("No PPK found with given PPK_ID");
+	});
+	return NULL;
+}
+
+/*
+ * find the appropriate RSA private key (see get_secret).
  * Failure is indicated by a NULL pointer.
  */
 const struct RSA_private_key *get_RSA_private_key(const struct connection *c)
 {
 	struct secret *s = lsw_get_secret(c,
 					  &c->spd.this.id, &c->spd.that.id,
-					  PPK_RSA, TRUE);
+					  PKK_RSA, TRUE);
 	const struct private_key_stuff *pks = NULL;
 
 	if (s != NULL)
@@ -722,30 +771,9 @@ const struct RSA_private_key *get_RSA_private_key(const struct connection *c)
 	return s == NULL ? NULL : &pks->u.RSA_private_key;
 }
 
-/* public key machinery
- * Note: caller must set dns_auth_level.
+/*
+ * public key machinery
  */
-
-struct pubkey *public_key_from_rsa(const struct RSA_public_key *k)
-{
-	struct pubkey *p = alloc_thing(struct pubkey, "pubkey");
-
-	p->id = empty_id; /* don't know, doesn't matter */
-	p->issuer = empty_chunk;
-	p->alg = PUBKEY_ALG_RSA;
-
-	memcpy(p->u.rsa.keyid, k->keyid, sizeof(p->u.rsa.keyid));
-	p->u.rsa.k = k->k;
-	p->u.rsa.e = chunk_clone(k->e, "e");
-	p->u.rsa.n = chunk_clone(k->n, "n");
-
-	/* note that we return a 1 reference count upon creation:
-	 * invariant: recount > 0.
-	 */
-	p->refcnt = 1;
-	p->installed_time = realnow();
-	return p;
-}
 
 /* root of chained public key list */
 
@@ -783,7 +811,7 @@ err_t add_public_key(const struct id *id,
 	pk->id = *id;
 	pk->dns_auth_level = dns_auth_level;
 	pk->alg = alg;
-	pk->until_time = undefinedrealtime();
+	pk->until_time = realtime_epoch;
 	pk->issuer = empty_chunk;
 
 	install_public_key(pk, head);
@@ -816,8 +844,8 @@ err_t add_ipseckey(const struct id *id,
 	}
 
 	pk->dns_ttl = ttl;
-	pk->until_time = pk->installed_time = realnow();
-	pk->until_time.real_secs += ttl_used; /* check for overflow ? */
+	pk->installed_time = realnow();
+	pk->until_time = realtimesum(pk->installed_time, deltatime(ttl_used));
 	pk->id = *id;
 	pk->dns_auth_level = dns_auth_level;
 	pk->alg = alg;
@@ -850,25 +878,19 @@ void list_public_keys(bool utc, bool check_pub_keys)
 
 			if (!check_pub_keys ||
 			    !startswith(check_expiry_msg, "ok")) {
-				char expires_buf[REALTIMETOA_BUF];
-				char installed_buf[REALTIMETOA_BUF];
 				char id_buf[IDTOA_BUF];
 
 				idtoa(&key->id, id_buf, IDTOA_BUF);
 
-				whack_log(RC_COMMENT,
-					  "%s, %4d RSA Key %s (%s private key), until %s %s",
-					  realtimetoa(key->installed_time, utc,
-						  installed_buf,
-						  sizeof(installed_buf)),
-					  8 * key->u.rsa.k,
-					  key->u.rsa.keyid,
-					  (has_private_rawkey(key) ? "has" :
-					   "no"),
-					  realtimetoa(key->until_time, utc,
-						  expires_buf,
-						  sizeof(expires_buf)),
-					  check_expiry_msg);
+				LSWLOG_WHACK(RC_COMMENT, buf) {
+					lswlog_realtime(buf, key->installed_time, utc);
+					lswlogf(buf, ", %4d RSA Key %s (%s private key), until ",
+						8 * key->u.rsa.k,
+						key->u.rsa.keyid,
+						(has_private_rawkey(key) ? "has" : "no"));
+					lswlog_realtime(buf, key->until_time, utc);
+					lswlogf(buf, " %s", check_expiry_msg);
+				}
 
 				/* XXX could be ikev2_idtype_names */
 				whack_log(RC_COMMENT, "       %s '%s'",

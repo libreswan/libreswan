@@ -6,7 +6,7 @@ Redirecting to: systemctl start ipsec.service
 road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
- ipsec whack --debug-all --impair-retransmits
+ ipsec whack --impair retransmits
 road #
  ipsec auto --add road
 002 added connection description "road"
@@ -23,9 +23,10 @@ road #
 002 "road"[1] 192.1.2.23 #2: suppressing retransmit because IMPAIR_RETRANSMITS is set.
 002 "road"[1] 192.1.2.23 #2: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 002 "road"[1] 192.1.2.23 #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+003 "road"[1] 192.1.2.23 #2: Authenticated using RSA
 002 "road"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.2.101
 002 "road"[1] 192.1.2.23 #2: negotiated connection [192.0.2.101-192.0.2.101:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0]
-004 "road"[1] 192.1.2.23 #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_GCM_C_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
+004 "road"[1] 192.1.2.23 #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 road #
  ping -n -I 192.0.2.100 -c 4 192.0.2.254
 bind: Cannot assign requested address
@@ -36,30 +37,30 @@ road #
  ipsec whack --trafficstatus
 006 #2: "road"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.101/32
 road #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 road NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.3.209
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 src 192.1.3.209 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 XFRM policy:
-src 0.0.0.0/0 dst 192.0.2.101/32 
-	dir fwd priority 2112 ptype main 
+src 0.0.0.0/0 dst 192.0.2.101/32
+	dir fwd priority 1040383 ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
 		proto esp reqid REQID mode tunnel
-src 0.0.0.0/0 dst 192.0.2.101/32 
-	dir in priority 2112 ptype main 
+src 0.0.0.0/0 dst 192.0.2.101/32
+	dir in priority 1040383 ptype main
 	tmpl src 192.1.2.23 dst 192.1.3.209
 		proto esp reqid REQID mode tunnel
-src 192.0.2.101/32 dst 0.0.0.0/0 
-	dir out priority 2112 ptype main 
+src 192.0.2.101/32 dst 0.0.0.0/0
+	dir out priority 1040383 ptype main
 	tmpl src 192.1.3.209 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 XFRM done

@@ -60,12 +60,12 @@ static int private_net_excl_len = 0;
 /*
  * Read a subnet (IPv4/IPv6)
  * inclusion form: %v4:x.x.x.x/y or %v6:xxxxxxxxx/yy
- * exclusion form: %v4:!x.x.x.x/y or %v6:xxxxxxxxx/yy
+ * exclusion form: %v4:!x.x.x.x/y or %v6:!xxxxxxxxx/yy
  *
  * @param src String in format (see above)
  * @param len Length of src string
  * @param dst out: IP Subnet * Destination
- * @param dstexcl out: IP Subnet * for ! form (required iff ! is to be accepted)
+ * @param dstexcl out: IP Subnet * for ! form (required if ! is to be accepted)
  * @param isincl out: bool * inclusive form or not
  * @return bool If the format string is valid.
  */
@@ -104,7 +104,7 @@ static bool read_subnet(const char *src, size_t len,
 
 	ugh = ttosubnet(src, len, af, incl ? dst : dstexcl);
 	if (ugh != NULL) {
-		loglog(RC_LOG_SERIOUS, "virtual-private entry not proper subnet: %s", ugh);
+		loglog(RC_LOG_SERIOUS, "virtual-private entry is not a proper subnet: %s", ugh);
 		return FALSE;
 	}
 	if (isincl != NULL)
@@ -114,7 +114,7 @@ static bool read_subnet(const char *src, size_t len,
 
 void free_virtual_ip(void)
 {
-       /* These might be NULL if empty in ipsec.conf */
+	/* These might be NULL if empty in ipsec.conf */
 	private_net_incl_len = 0;
 	pfreeany(private_net_incl);
 
@@ -229,15 +229,15 @@ struct virtual_t *create_virtual(const struct connection *c, const char *string)
 	} else if (eat(str, "vnet:")) {
 		/* ??? do nothing? */
 	} else {
-		libreswan_log("virtual string \"%s\" missing prefix - virtual selection disabled for connection '%s'",
+		libreswan_log("virtual string \"%s\" is missing prefix - virtual selection is disabled for connection '%s'",
 			string, c->name);
 		return NULL;
 	}
 
 	/*
-	 * Parse string : fill flags & count subnets
+	 * Parse string: fill flags & count subnets
 	 */
-	while (str != NULL && *str != '\0') {
+	while (*str != '\0') {
 		ip_subnet sub;	/* sink -- value never used */
 		ptrdiff_t len;
 		const char *next = strchr(str, ',');
@@ -261,12 +261,14 @@ struct virtual_t *create_virtual(const struct connection *c, const char *string)
 			str = NULL;
 		}
 		if (str != next) {
-			libreswan_log("invalid virtual string \"%s\" - virtual selection disabled for connection '%s'",
+			libreswan_log("invalid virtual string \"%s\" - virtual selection is disabled for connection '%s'",
 				string, c->name);
 			return NULL;
 		}
 		/* clang 3.5 thinks that next might be NULL; wrong */
-		str = *next != '\0' ? next + 1 : NULL;
+		if (*next == '\0')
+			break;
+		str = next + 1;
 	}
 
 	v = (struct virtual_t *)alloc_bytes(
@@ -403,7 +405,7 @@ err_t check_virtual_net_allowed(const struct connection *c,
 				private_net_excl_len))
 			return NULL;
 
-		why = "a private network virtual IP was required, but the proposed IP did not match our list (virtual-private=)";
+		why = "a private network virtual IP was required, but the proposed IP did not match our list (virtual-private=), or our list excludes their IP (e.g. %v4!...) since it is in use elsewhere";
 	}
 
 	if (virt->n_net != 0) {

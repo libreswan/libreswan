@@ -498,14 +498,13 @@ static int setup_cipher_list(struct ipsec_alg_capi_cipher *clist)
 				       cptr->parm[0],
 				       cptr->parm[1]);
 			continue;
-		} else {
-			if (debug_crypto > 0)
-				printk(KERN_INFO "setup_cipher_list(): going to init ciphername=%s: noauto=%d parm[0]=%d parm[1]=%d\n",
-					cptr->ciphername,
-					noauto,
-					cptr->parm[0],
-					cptr->parm[1]);
 		}
+		if (debug_crypto > 0)
+			printk(KERN_INFO "setup_cipher_list(): going to init ciphername=%s: noauto=%d parm[0]=%d parm[1]=%d\n",
+				cptr->ciphername,
+				noauto,
+				cptr->parm[0],
+				cptr->parm[1]);
 		/*
 		 *      use a local ci to avoid touching cptr->ci,
 		 *      if register ipsec_alg success then bind cipher
@@ -791,20 +790,21 @@ setup_digest_list (struct ipsec_alg_capi_digest* dlist)
 					, dptr->parm[0]
 					, dptr->parm[1]);
 			continue;
-		} else {
- 			if (debug_crypto>0)
- 				printk(KERN_INFO "setup_digest_list(): going to init digest=%s: noauto=%d parm[0]=%d parm[1]=%d\n"
- 				, dptr->digestname
-				, noauto
-				, dptr->parm[0]
-				, dptr->parm[1]);
-			}
+		}
+
+		if (debug_crypto>0)
+			printk(KERN_INFO "setup_digest_list(): going to init digest=%s: noauto=%d parm[0]=%d parm[1]=%d\n"
+			, dptr->digestname
+			, noauto
+			, dptr->parm[0]
+			, dptr->parm[1]);
+
 		/*
 		 * 	use a local ci to avoid touching dptr->ci,
 		 * 	if register ipsec_alg success then bind digest
 		 */
 		if (dptr->alg.ixt_common.ixt_support.ias_name == NULL) {
-		   dptr->alg.ixt_common.ixt_support.ias_name = dptr->digestname;
+			dptr->alg.ixt_common.ixt_support.ias_name = dptr->digestname;
 		}
 
 		if (setup_digest(dptr->digestname) ) {

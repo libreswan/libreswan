@@ -142,6 +142,10 @@ start() {
 
 	ipsec _plutorun --config ${IPSEC_CONF} --nofork ${PLUTO_OPTIONS} &
 	RETVAL=$?
+	sleep 2
+	if [ -f @FINALLIBEXECDIR@/portexcludes ] ; then
+		@FINALLIBEXECDIR@/portexcludes
+	fi
 	return $RETVAL
 }
 

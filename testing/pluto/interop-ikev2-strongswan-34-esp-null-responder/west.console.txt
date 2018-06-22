@@ -5,7 +5,7 @@ west #
  ../../pluto/bin/wait-until-alive -I 192.0.1.254 192.0.2.254
 destination -I 192.0.1.254 192.0.2.254 is alive
 west #
- # make sure that clear text does not get through
+ # ensure that clear text does not get through
 west #
  iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
 west #
@@ -37,12 +37,13 @@ west #
 133 "westnet-eastnet-ikev2-esp-null-md5" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
 134 "westnet-eastnet-ikev2-esp-null-md5" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=sha1_96 prf=sha group=MODP2048}
 002 "westnet-eastnet-ikev2-esp-null-md5" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "westnet-eastnet-ikev2-esp-null-md5" #2: Authenticated using authby=secret
 002 "westnet-eastnet-ikev2-esp-null-md5" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ikev2-esp-null-md5" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=NULL_0-HMAC_MD5 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ikev2-esp-null-md5" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=NULL_0-HMAC_MD5_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet-ikev2-esp-null-md5": terminating SAs using this connection
 002 "westnet-eastnet-ikev2-esp-null-md5" #2: deleting state (STATE_V2_IPSEC_I) and sending notification
-005 "westnet-eastnet-ikev2-esp-null-md5" #2: ESP traffic information: in=0B out=0B
+005 "westnet-eastnet-ikev2-esp-null-md5" #2: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet-ikev2-esp-null-md5" #1: deleting state (STATE_PARENT_I3) and sending notification
 002 "westnet-eastnet-ikev2-esp-null-md5": deleting non-instance connection
 west #
@@ -53,19 +54,20 @@ west #
 133 "westnet-eastnet-ikev2-esp-null-sha1" #3: STATE_PARENT_I1: sent v2I1, expected v2R1
 134 "westnet-eastnet-ikev2-esp-null-sha1" #4: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=sha1_96 prf=sha group=MODP2048}
 002 "westnet-eastnet-ikev2-esp-null-sha1" #4: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "westnet-eastnet-ikev2-esp-null-sha1" #4: Authenticated using authby=secret
 002 "westnet-eastnet-ikev2-esp-null-sha1" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
-004 "westnet-eastnet-ikev2-esp-null-sha1" #4: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=NULL_0-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-ikev2-esp-null-sha1" #4: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=NULL_0-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "westnet-eastnet-ikev2-esp-null-sha1": terminating SAs using this connection
 002 "westnet-eastnet-ikev2-esp-null-sha1" #4: deleting state (STATE_V2_IPSEC_I) and sending notification
-005 "westnet-eastnet-ikev2-esp-null-sha1" #4: ESP traffic information: in=0B out=0B
+005 "westnet-eastnet-ikev2-esp-null-sha1" #4: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet-ikev2-esp-null-sha1" #3: deleting state (STATE_PARENT_I3) and sending notification
 002 "westnet-eastnet-ikev2-esp-null-sha1": deleting non-instance connection
 west #
  echo done
 done
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
 west NOW
 XFRM state:
 XFRM policy:

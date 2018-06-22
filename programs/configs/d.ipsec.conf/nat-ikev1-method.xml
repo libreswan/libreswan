@@ -11,8 +11,11 @@ packet of the initiator, there is no method to auto-detect this problem and init
 
 <para>This option allows fine tuning which of the NAT-T payloads to consider for sending and processing.
 Currently the accepted values are <emphasis remap='B'>drafts</emphasis>,
-<emphasis remap='B'>rfc</emphasis> or <emphasis remap='B'>both</emphasis> (the default). To interoperate
-with known broken devices, use nat-ikev1-method=drafts.</para>
+<emphasis remap='B'>rfc</emphasis>, <emphasis remap='B'>both</emphasis> (the default) and
+<emphasis remap='B'>none</emphasis>. To interoperate with known broken devices, use nat-ikev1-method=drafts.
+To prevent the other end from triggering IKEv1 NAT-T encapsulation, set this to none. This will omit the
+NAT-T payloads used to determine NAT, forcing the other end not to use encapsulation.
+</para>
   </listitem>
   </varlistentry>
 

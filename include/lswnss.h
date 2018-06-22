@@ -28,10 +28,6 @@ enum lsw_nss_flags {
 	 * Should shutdown call PR_CLEANUP.
 	 */
 	LSW_NSS_SKIP_PR_CLEANUP = 2,
-	/*
-	 * Should setup try to authenticate.
-	 */
-	LSW_NSS_SKIP_AUTH = 4,
 };
 
 /*
@@ -58,6 +54,11 @@ char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg);
 
 PK11SlotInfo *lsw_nss_get_authenticated_slot(lsw_nss_buf_t err);
 
-const char *lsw_nss_ckm_to_string(CK_MECHANISM_TYPE mechanism);
+/* _(SECERR: N (0xX): <error-string>) */
+size_t lswlog_nss_error(struct lswlog *log);
+
+size_t lswlog_nss_ckm(struct lswlog *buf, CK_MECHANISM_TYPE mechanism);
+size_t lswlog_nss_ckf(struct lswlog *buf, CK_FLAGS flags);
+size_t lswlog_nss_cka(struct lswlog *buf, CK_ATTRIBUTE_TYPE attribute);
 
 #endif

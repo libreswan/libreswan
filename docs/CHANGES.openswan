@@ -1046,7 +1046,7 @@ v2.5.0sbs4 (Dec 11, 2005)
 	change the order of the virtual IP address setting and the
 	port-wildcard processing.
         This patch also provides some additional debugging of the proposal
-	which actually processed by the machinery.
+	that is actually processed by the machinery.
 
     tests for L2TP+X.509 L2TP configuration --- 2 clients behind the
         same NAT with certificates that need to have their connection both
@@ -1241,7 +1241,7 @@ v2.4.5 (Apr 6, 2006)
   are preferred over software routines.
 * allow rightsubnet= with type=transport for L2TP behind NAT.
 * Refactored natd_lookup / hash code, probably fixes lot of NAT related bugs
-* Fix for interop with Cisco devices which propose port 0 (eg: VPN3000)
+* Fix for interop with Cisco devices that propose port 0 (eg: VPN3000)
 * When DPD rcookie is invalid, just warn instead of ignoring entirely
 * Redid all the DPD log messages
 * Fix for manual.in to not use a complicated sed line that some embedded

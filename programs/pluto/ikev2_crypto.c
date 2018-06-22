@@ -58,8 +58,9 @@
 #include "ikev2_prf.h"
 #include "kernel.h"
 
-void ikev2_derive_child_keys(struct state *st, enum original_role role)
+void ikev2_derive_child_keys(struct child_sa *child)
 {
+	struct state *st = &child->sa;
 	chunk_t ikeymat, rkeymat;
 	/* ??? note assumption that AH and ESP cannot be combined */
 	struct ipsec_proto_info *ipi =
@@ -74,7 +75,7 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 	 * Integrity seed (key).  AEAD, for instance has NULL (no)
 	 * separate integrity.
 	 */
-	const struct integ_desc *integ = ipi->attrs.transattrs.integ;
+	const struct integ_desc *integ = ipi->attrs.transattrs.ta_integ;
 	size_t integ_key_size = (integ != NULL ? integ->integ_keymat_size : 0);
 	/*
 	 * If there is encryption, then ENCKEYLEN contains the
@@ -85,7 +86,7 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 	 * Finally, some encryption algorithms such as AEAD and CTR
 	 * require "salt" as part of the "starting variable".
 	 */
-	const struct encrypt_desc *encrypt = ipi->attrs.transattrs.encrypter;
+	const struct encrypt_desc *encrypt = ipi->attrs.transattrs.ta_encrypt;
 	size_t encrypt_salt_size = (encrypt != NULL ? encrypt->salt_size : 0);
 
 	ipi->keymat_len = integ_key_size + encrypt_key_size + encrypt_salt_size;
@@ -117,49 +118,63 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 	 *    For AES GCM (RFC 4106 Section 8,1) we need to add 4 bytes for
 	 *    salt (AES_GCM_SALT_BYTES)
 	 */
-	chunk_t ni;
-	chunk_t nr;
-	setchunk(ni, st->st_ni.ptr, st->st_ni.len);
-	setchunk(nr, st->st_nr.ptr, st->st_nr.len);
 	PK11SymKey *shared = NULL;
-
 	if (st->st_pfs_group != NULL) {
 		DBG(DBG_CRYPT, DBG_log("#%lu %s add g^ir to child key %p",
 					st->st_serialno,
-					enum_name(&state_names, st->st_state),
+					st->st_state_name,
 					st->st_shared_nss));
 		shared = st->st_shared_nss;
 	}
 
-	PK11SymKey *keymat = ikev2_child_sa_keymat(st->st_oakley.prf,
+	PK11SymKey *keymat = ikev2_child_sa_keymat(st->st_oakley.ta_prf,
 						   st->st_skey_d_nss,
-						   shared, ni, nr,
+						   shared,
+						   st->st_ni,
+						   st->st_nr,
 						   ipi->keymat_len * 2);
 	PK11SymKey *ikey = key_from_symkey_bytes(keymat, 0, ipi->keymat_len);
-	ikeymat = chunk_from_symkey("initiator keys", DBG_CRYPT, ikey);
+	ikeymat = chunk_from_symkey("initiator to responder keys", ikey);
 	release_symkey(__func__, "ikey", &ikey);
 
 	PK11SymKey *rkey = key_from_symkey_bytes(keymat, ipi->keymat_len,
 						 ipi->keymat_len);
-	rkeymat = chunk_from_symkey("responder keys:", DBG_CRYPT, rkey);
+	rkeymat = chunk_from_symkey("responder to initiator keys:", rkey);
 	release_symkey(__func__, "rkey", &rkey);
 
 	release_symkey(__func__, "keymat", &keymat);
 
-	if (role != ORIGINAL_INITIATOR) {
+	if (child->sa.st_sa_role == 0) {
+		PEXPECT_LOG("unset child sa in state #%lu",
+			    child->sa.st_serialno);
+		child->sa.st_sa_role = (ike_sa(&child->sa)->sa.st_original_role == ORIGINAL_INITIATOR)
+			? SA_INITIATOR : SA_RESPONDER;
+	}
+
+	/*
+	 * The initiator stores outgoing initiator-to-responder keymat
+	 * in PEER, and incomming responder-to-initiator keymat in
+	 * OUR.
+	 */
+	switch (child->sa.st_sa_role) {
+	case SA_RESPONDER:
 		DBG(DBG_PRIVATE, {
 			    DBG_dump_chunk("our  keymat", ikeymat);
 			    DBG_dump_chunk("peer keymat", rkeymat);
 		    });
 		ipi->our_keymat = ikeymat.ptr;
 		ipi->peer_keymat = rkeymat.ptr;
-	} else {
+		break;
+	case SA_INITIATOR:
 		DBG(DBG_PRIVATE, {
 			    DBG_dump_chunk("our  keymat", rkeymat);
 			    DBG_dump_chunk("peer keymat", ikeymat);
 		    });
 		ipi->peer_keymat = ikeymat.ptr;
 		ipi->our_keymat = rkeymat.ptr;
+		break;
+	default:
+		bad_case(child->sa.st_sa_role);
 	}
 
 }

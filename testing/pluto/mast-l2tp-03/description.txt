@@ -1,5 +1,0 @@
-This test case deals with having a two L2TP clients behind
-a single router that is doing NAPT, connecting, and using the mast device
-to get to l2tpd.
-
-

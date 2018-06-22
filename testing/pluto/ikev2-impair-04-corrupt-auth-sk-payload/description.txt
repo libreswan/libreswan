@@ -1,0 +1,9 @@
+Test corrupt SK payloads in an AUTH packet
+
+Both east and west inject a corrupted AUTH packet, followed by a
+correct AUTH packet into their packet processor.
+
+The first packet triggers the SKEYSEED calculation, but, when that
+finishes fails to decrypt so is dropped.  The second packet is
+decrypted successfully (SKEYSEED is not recomputed) and the connection
+can establish.

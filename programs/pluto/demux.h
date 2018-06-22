@@ -21,14 +21,12 @@
 #include "server.h"
 #include "packet.h"
 #include "quirks.h"
+#include "chunk.h"
 
 struct state;   /* forward declaration of tag */
 
 extern void init_demux(void);
 extern event_callback_routine comm_handle_cb;
-
-extern pb_stream reply_stream;
-extern u_int8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
 
 /* State transition function infrastructure
  *
@@ -60,6 +58,16 @@ struct payload_digest {
 	struct payload_digest *next; /* of same kind */
 };
 
+struct payload_summary {
+	bool parsed;
+	v2_notification_t n;
+	lset_t present;
+	lset_t repeated;
+	/* for response, can't use pointers */
+	uint8_t data[1];
+	size_t data_size;
+};
+
 /* message digest
  * Note: raw_packet and packet_pbs are "owners" of space on heap.
  */
@@ -69,49 +77,77 @@ struct msg_digest {
 	chunk_t raw_packet;			/* (v1) if encrypted, received packet before decryption */
 	const struct iface_port *iface;		/* interface on which message arrived */
 	ip_address sender;			/* where message came from (network order) */
-	u_int16_t sender_port;			/* host order */
-	pb_stream packet_pbs;			/* whole packet */
-	pb_stream message_pbs;			/* message to be processed */
-	pb_stream clr_pbs;			/* (v2) decrypted packet (within v2E payload) */
 	struct isakmp_hdr hdr;			/* message's header */
 	bool encrypted;				/* (v1) was it encrypted? */
 	enum state_kind from_state;		/* state we started in */
-	const struct state_microcode *smc;	/* (v1) microcode for initial state */
+	const struct state_v1_microcode *smc;	/* (v1) microcode for initial state */
 	const struct state_v2_microcode *svm;	/* (v2) microcode for initial state */
 	bool new_iv_set;			/* (v1) */
 	struct state *st;			/* current state object */
 
-	enum original_role original_role;	/* (v2) */
+	enum message_role message_role;		/* (v2) */
 	msgid_t msgid_received;			/* (v2) - Host order! */
 
-	pb_stream rbody;			/* room for reply body (after header) */
-	notification_t note;			/* reason for failure */
+	notification_t v1_note;			/* reason for failure */
 	bool dpd;				/* (v1) Peer supports RFC 3706 DPD */
 	bool ikev2;				/* Peer supports IKEv2 */
 	bool fragvid;				/* (v1) Peer supports FRAGMENTATION */
 	bool nortel;				/* (v1) Peer requires Nortel specific workaround */
 	bool event_already_set;			/* (v1) */
+	bool fake;				/* is this a fake (clone) message */
+
+	/*
+	 * The packet PBS contains a message PBS and the message PBS
+	 * contains payloads one of which (for IKEv2) is the SK which
+	 * also contains payloads.
+	 *
+	 * Danger Will Robinson: since the digest contains a pbs
+	 * pointing at one of these PBS fields, and these fields point
+	 * at each other, their lifetime is the same as the
+	 * msg_digest.
+	 */
+	pb_stream packet_pbs;			/* whole packet */
+	pb_stream message_pbs;			/* message to be processed */
 
 #   define PAYLIMIT 30
-	struct payload_digest
-		digest[PAYLIMIT],
-		*digest_roof;
-	/* ??? It seems unlikely that chain will need to store payloads numbered as high as these.
-	 * ISAKMP_NEXT_NATD_DRAFTS, ISAKMP_NEXT_NATOA_DRAFTS and
-	 * ISAKMP_NEXT_IKE_FRAGMENTATION/ISAKMP_NEXT_v2IKE_FRAGMENTATION
-	 * probably make no sense here.
-	 * Also a v1 and a v2 version might make sense and be smaller.
+	struct payload_digest digest[PAYLIMIT];
+	unsigned digest_roof;
+
+	struct payload_summary message_payloads;	/* (v2) */
+	struct payload_summary encrypted_payloads;	/* (v2) */
+
+	/*
+	 * Indexed by next-payload.  IKEv1 and IKEv2 use the same
+	 * array but different ranges.
+	 *
+	 * Regardless of the IKE version, the index is always less
+	 * than LELEM_ROOF.  This is because the next-payload
+	 * (converted to a bit map) is also stored in lset_t (lset_t
+	 * has LELEM_ROOF as its bound). Any larger value, such as
+	 * v2IKE_FRAGMENTATION, must have been droped before things
+	 * get this far.
+	 *
+	 * XXX: While the real upper bound is closer to 53 (vs 64)
+	 * there's no value in shaving those few extra bytes - this
+	 * structure is transient.
+	 *
+	 * XXX: Even though the IKEv2 values start at 33, they are not
+	 * biased to save space.  This is because it would break the
+	 * 1:1 correspondance between the wire-value, this array, and
+	 * the lset_t bit (at one point the lset_t values were biased,
+	 * the result was confusing custom mapping code everywhere).
 	 */
-	struct payload_digest
-		*chain[(unsigned)ISAKMP_NEXT_ROOF>(unsigned)ISAKMP_NEXT_v2ROOF ? ISAKMP_NEXT_ROOF : ISAKMP_NEXT_v2ROOF];
+	struct payload_digest *chain[LELEM_ROOF];
 	struct isakmp_quirks quirks;
 };
 
-extern struct msg_digest *alloc_md(char *mdname);
+extern struct msg_digest *alloc_md(const char *mdname);
+struct msg_digest *clone_md(struct msg_digest *md, const char *name);
 extern void release_md(struct msg_digest *md);
 extern void release_any_md(struct msg_digest **mdp);
+void schedule_md_event(const char *name, struct msg_digest *md);
 
-typedef stf_status state_transition_fn(struct msg_digest *md);
+typedef stf_status state_transition_fn(struct state *st, struct msg_digest *md);
 
 extern void fmt_ipsec_sa_established(struct state *st,
 				     char *sadetails, size_t sad_len);
@@ -121,6 +157,7 @@ extern void fmt_isakmp_sa_established(struct state *st,
 extern void free_md_pool(void);
 
 extern void process_packet(struct msg_digest **mdp);
-extern bool check_msg_errqueue(const struct iface_port *ifp, short interest, bool incoming);
+
+extern char *cisco_stringify(pb_stream *pbs, const char *attr_name);
 
 #endif /* _DEMUX_H */

@@ -1,0 +1,34 @@
+  <varlistentry>
+  <term><emphasis remap='B'>aggressive</emphasis></term>
+  <listitem>
+<para>Use IKEv1 Aggressive Mode instead of IKEv1 Main Mode. This option has no effect
+when IKEv2 is used.  Acceptable values are <emphasis remap='B'>no</emphasis> (the default)
+or <emphasis remap='B'>yes</emphasis>. When this option is enabled, IKEv1 Main Mode will
+no longer be allowed for this connection. The old name of this option was
+<emphasis remap='B'>aggrmode</emphasis>.</para>
+
+<para>Aggressive Mode is less secure, and more vulnerable to Denial Of Service
+attacks. It is also vulnerable to brute force attacks with software such
+as <emphasis remap='B'>ikecrack</emphasis>. It should not be used, and
+it should especially not be used with XAUTH and group secrets (PSK).
+If the remote system administrator insists on staying irresponsible,
+enable this option.</para>
+
+<para>Aggressive Mode is further limited to only proposals with one
+DH group as there is no room to negotiate the DH group. Therefor
+it is mandatory for Aggressive Mode connections that both
+<emphasis remap='B'>ike=</emphasis> and <emphasis remap='B'>phase2alg=</emphasis>
+options are specified with only one fully specified proposal using one
+DH group. </para>
+<para>
+The KE payload is created in the first exchange packet when using
+aggressive mode. The KE payload depends on the DH group used.  This is
+why there cannot be multiple DH groups in IKEv1 aggressive mode.
+In IKEv2, which uses a similar method to IKEv1 Aggressive Mode, there
+is an INVALID_KE response payload that can inform the initiator of the
+responder's desired DH group and so an IKEv2 connection can actually
+recover from picking the wrong DH group by restarting its negotiation.
+</para>
+  </listitem>
+  </varlistentry>
+

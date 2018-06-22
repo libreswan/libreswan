@@ -1,0 +1,213 @@
+/testing/guestbin/swan-prep
+road #
+ # delete the address 193.1.33.222 before re-run. otherwise pluto may choose it.
+road #
+ ip addr show dev eth0 | grep 192.1.33.222 && ip addr del 192.1.33.222/24 dev eth0
+road #
+ ip route show scope global | grep "192.1.33.254" && ip route del default via 192.1.33.254
+road #
+ # add .209 for re-run
+road #
+ ip addr show dev eth0 | grep 192.1.3.209 || ip addr add 192.1.3.209/24 dev eth0
+    inet 192.1.3.209/24 brd 192.1.3.255 scope global eth0
+road #
+ # add default gw, it could have been deleted due address changes
+road #
+ ip route | grep default || ip route add default via 192.1.3.254
+default via 192.1.3.254 dev eth0 
+road #
+ # routes and addresses setup for the test
+road #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+road #
+ /testing/pluto/bin/wait-until-pluto-started
+road #
+ ipsec auto --add road-eastnet
+002 added connection description "road-eastnet"
+road #
+ echo "initdone"
+initdone
+road #
+ ipsec auto --up road-eastnet
+002 "road-eastnet"[1] 192.1.2.23 #1: initiating v2 parent SA
+133 "road-eastnet"[1] 192.1.2.23 #1: STATE_PARENT_I1: initiate
+133 "road-eastnet"[1] 192.1.2.23 #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+134 "road-eastnet"[1] 192.1.2.23 #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
+003 "road-eastnet"[1] 192.1.2.23 #2: Authenticated using authby=secret
+002 "road-eastnet"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.3.10
+002 "road-eastnet"[1] 192.1.2.23 #2: negotiated connection [192.0.3.10-192.0.3.10:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0]
+004 "road-eastnet"[1] 192.1.2.23 #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATOA=none NATD=none DPD=passive}
+road #
+ # note this end should be 192.1.3.209
+road #
+ ../../pluto/bin/ipsec-look.sh
+road NOW
+XFRM state:
+src 192.1.2.23 dst 192.1.3.209
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	enc cbc(aes) 0xKEY
+src 192.1.3.209 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	enc cbc(aes) 0xKEY
+XFRM policy:
+src 0.0.0.0/0 dst 192.0.3.10/32
+	dir fwd priority 1040383 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+src 0.0.0.0/0 dst 192.0.3.10/32
+	dir in priority 1040383 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+src 192.0.3.10/32 dst 0.0.0.0/0
+	dir out priority 1040383 ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+0.0.0.0/1 dev eth0  scope link  src 192.0.3.10 
+default via 192.1.3.254 dev eth0 
+128.0.0.0/1 dev eth0  scope link  src 192.0.3.10 
+192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209 
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+road #
+ ping -W 1 -q -n -c 2 -I 192.0.3.10 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.3.10 : 56(84) bytes of data.
+--- 192.0.2.254 ping statistics ---
+2 packets transmitted, 0 received, 100% packet loss, time XXXX
+road #
+ ipsec whack --trafficstatus
+006 #2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=168, id='192.1.2.23', lease=192.0.3.10/32
+road #
+ sleep 5
+road #
+ # remove this end ip next one will take over
+road #
+ ip addr show  scope global
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default
+    link/ether 12:00:00:ab:cd:02 brd ff:ff:ff:ff:ff:ff
+    inet 192.1.3.209/24 brd 192.1.3.255 scope global eth0
+       valid_lft forever preferred_lft forever
+3: ip_vti0@NONE: <NOARP> mtu 1332 qdisc noop state DOWN group default 
+    link/ipip 0.0.0.0 brd 0.0.0.0
+road #
+ ip route
+0.0.0.0/1 dev eth0  scope link  src 192.0.3.10 
+default via 192.1.3.254 dev eth0 
+128.0.0.0/1 dev eth0  scope link  src 192.0.3.10 
+192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209 
+road #
+ ip route show scope global | grep 192.1.3.254 && ip route del default via 192.1.3.254
+default via 192.1.3.254 dev eth0 
+road #
+ ip addr del 192.1.3.209/24 dev eth0
+road #
+ # removed address and route
+road #
+ sleep 5
+road #
+ ip addr show  scope global
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default
+    link/ether 12:00:00:ab:cd:02 brd ff:ff:ff:ff:ff:ff
+3: ip_vti0@NONE: <NOARP> mtu 1332 qdisc noop state DOWN group default 
+    link/ipip 0.0.0.0 brd 0.0.0.0
+road #
+ ip route
+road #
+ # add new address and route
+road #
+ ip addr show dev eth0 | grep 192.1.33.209 || ip addr add 192.1.33.209/24 dev eth0
+road #
+ ip route show scope global | grep 192.1.33.254 || ip route add default via 192.1.33.254
+road #
+ # let libreswan detect change and do a MOBIKE update
+road #
+ ping -W 1 -q -n -c 2 -I 192.0.3.10 192.1.2.23
+bind: Cannot assign requested address
+road #
+ sleep 10
+road #
+ ip addr show  scope global
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default
+    link/ether 12:00:00:ab:cd:02 brd ff:ff:ff:ff:ff:ff
+    inet 192.1.33.209/24 scope global eth0
+       valid_lft forever preferred_lft forever
+3: ip_vti0@NONE: <NOARP> mtu 1332 qdisc noop state DOWN group default 
+    link/ipip 0.0.0.0 brd 0.0.0.0
+road #
+ ip route
+0.0.0.0/1 via 192.1.33.254 dev eth0  src 192.0.3.10 
+default via 192.1.33.254 dev eth0 
+128.0.0.0/1 via 192.1.33.254 dev eth0  src 192.0.3.10 
+192.1.33.0/24 dev eth0 proto kernel scope link src 192.1.33.209 
+road #
+ # MOBIKE ping should work
+road #
+ # note this end should be 192.1.3.209
+road #
+ ping -W 1 -q -n -c 2 -I 192.0.3.10 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.0.3.10 : 56(84) bytes of data.
+--- 192.1.2.23 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+road #
+ echo done
+done
+road #
+ ../../pluto/bin/ipsec-look.sh
+road NOW
+XFRM state:
+src 192.1.2.23 dst 192.1.33.209
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	enc cbc(aes) 0xKEY
+src 192.1.33.209 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	enc cbc(aes) 0xKEY
+XFRM policy:
+src 0.0.0.0/0 dst 192.0.3.10/32
+	dir fwd priority 1040383 ptype main
+	tmpl src 192.1.2.23 dst 192.1.33.209
+src 0.0.0.0/0 dst 192.0.3.10/32
+	dir in priority 1040383 ptype main
+	tmpl src 192.1.2.23 dst 192.1.33.209
+src 192.0.3.10/32 dst 0.0.0.0/0
+	dir out priority 1040383 ptype main
+	tmpl src 192.1.33.209 dst 192.1.2.23
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+0.0.0.0/1 via 192.1.33.254 dev eth0  src 192.0.3.10 
+default via 192.1.33.254 dev eth0 
+128.0.0.0/1 via 192.1.33.254 dev eth0  src 192.0.3.10 
+192.1.33.0/24 dev eth0 proto kernel scope link src 192.1.33.209 
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+road #
+ ipsec whack --trafficstatus
+006 #2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='192.1.2.23', lease=192.0.3.10/32
+road #
+ grep "MOBIKE " /tmp/pluto.log
+| ignore EAGAIN in qry_xfrm_mirgrate_support assume MOBIKE migration is supported
+| #1 MOBIKE new source address 192.1.33.209 remote 192.1.2.23 and gateway 192.1.33.254
+| TODO: process v2N_NAT_DETECTION_SOURCE_IP in MOBIKE response 
+| TODO: process v2N_NAT_DETECTION_DESTINATION_IP in MOBIKE response 
+| #2 pst=#1 MOBIKE update local address 192.1.3.209:500 -> 192.1.33.209:500
+"road-eastnet"[1] 192.1.2.23 #1:  success MOBIKE update local address 192.1.3.209:500 -> 192.1.33.209:500
+"road-eastnet"[1] 192.1.2.23 #1: MOBIKE response: updating IPsec SA
+| #1 MOBIKE new source address 192.1.33.209 remote 192.1.2.23 and gateway 192.1.33.254
+| TODO: process v2N_NAT_DETECTION_SOURCE_IP in MOBIKE response 
+| TODO: process v2N_NAT_DETECTION_DESTINATION_IP in MOBIKE response 
+| #2 pst=#1 MOBIKE update local address 192.1.33.209:500 -> 192.1.33.209:500
+"road-eastnet"[1] 192.1.2.23 #1:  success MOBIKE update local address 192.1.33.209:500 -> 192.1.33.209:500
+"road-eastnet"[1] 192.1.2.23 #1: MOBIKE response: updating IPsec SA
+road #
+ sleep 7
+road #
+road #
+ ../bin/check-for-core.sh
+road #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

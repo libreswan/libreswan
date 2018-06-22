@@ -5,7 +5,7 @@
  * Copyright (C) 2004-2006 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2010,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2011 Mattias Walström <lazzer@vmlinux.org>
- * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2017 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012 Philippe Vouters <Philippe.Vouters@laposte.net>
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
@@ -50,7 +50,7 @@
 #include "lswlog.h"
 #include "whack.h"
 #include "id.h"
-
+#include "ip_address.h"
 
 static void update_ports(struct whack_message * m)
 {
@@ -253,8 +253,10 @@ static int send_whack_msg(struct whack_message *msg, char *ctlsocket)
 		return -1;
 	}
 	if (connect(sock, (struct sockaddr *)&ctl_addr,
-			offsetof(struct sockaddr_un,
-				sun_path) + strlen(ctl_addr.sun_path)) < 0) {
+			offsetof(struct sockaddr_un, sun_path) +
+				strlen(ctl_addr.sun_path)) <
+		0)
+	{
 		starter_log(LOG_LEVEL_ERR, "connect(pluto_ctl) failed: %s",
 			strerror(errno));
 		close(sock);
@@ -369,11 +371,13 @@ static void set_whack_end(char *lr,
 		w->host_vtiip = l->vti_ip;
 
 	w->has_client = l->has_client;
-	if (l->has_client)
+	if (l->has_client) {
 		w->client = l->subnet;
-	else
+	} else {
+		/* ??? is this a crude way of seting client to anyaddr? */
 		w->client.addr.u.v4.sin_family = l->addr_family;
-	w->updown = l->strings[KSCF_UPDOWN];
+	}
+
 	w->host_port = IKE_UDP_PORT; /* XXX starter should support (nat)-ike-port */
 	w->has_client_wildcard = l->has_client_wildcard;
 	w->has_port_wildcard = l->has_port_wildcard;
@@ -390,7 +394,7 @@ static void set_whack_end(char *lr,
 	if (l->options_set[KNCF_SENDCERT])
 		w->sendcert = l->options[KNCF_SENDCERT];
 	else
-		w->sendcert = cert_alwayssend;
+		w->sendcert = CERT_ALWAYSSEND;
 
 	if (l->options_set[KNCF_AUTH])
 		w->authby = l->options[KNCF_AUTH];
@@ -538,7 +542,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.sa_keying_tries = conn->options[KBF_KEYINGTRIES];
 	msg.sa_replay_window = conn->options[KBF_REPLAY_WINDOW];
 
-	msg.r_interval = conn->options[KBF_RETRANSMIT_INTERVAL];
+	msg.r_interval = deltatime_ms(conn->options[KBF_RETRANSMIT_INTERVAL_MS]);
 	msg.r_timeout = deltatime(conn->options[KBF_RETRANSMIT_TIMEOUT]);
 
 	msg.policy = conn->policy;
@@ -604,18 +608,19 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 
 
 	if (conn->options_set[KBF_ENCAPS])
-               msg.encaps = conn->options[KBF_ENCAPS];
+		msg.encaps = conn->options[KBF_ENCAPS];
 	else
-               msg.encaps = encaps_auto;
+		msg.encaps = yna_auto;
 
 	if (conn->options_set[KBF_NAT_KEEPALIVE])
 		msg.nat_keepalive = conn->options[KBF_NAT_KEEPALIVE];
 	else
 		msg.nat_keepalive = TRUE;
+
 	if (conn->options_set[KBF_IKEV1_NATT])
 		msg.ikev1_natt = conn->options[KBF_IKEV1_NATT];
 	else
-		msg.ikev1_natt = natt_both;
+		msg.ikev1_natt = NATT_BOTH;
 
 
 	/* Activate sending out own vendorid */
@@ -637,9 +642,6 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	if (conn->options_set[KBF_REMOTEPEERTYPE])
 		msg.remotepeertype = conn->options[KBF_REMOTEPEERTYPE];
 
-	if (conn->options_set[KBF_SHA2_TRUNCBUG])
-		msg.sha2_truncbug = conn->options[KBF_SHA2_TRUNCBUG];
-
 #ifdef HAVE_NM
 	/* Network Manager support */
 	if (conn->options_set[KBF_NMCONFIGURED])
@@ -660,13 +662,19 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 
 #endif
 
-	msg.modecfg_domain = conn->modecfg_domain;
-	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" modecfgdomain=%s",
-		conn->name, msg.modecfg_domain);
+	msg.modecfg_dns = conn->modecfg_dns;
+	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" modecfgdns=%s",
+		conn->name, msg.modecfg_dns);
+	msg.modecfg_domains = conn->modecfg_domains;
+	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" modecfgdomains=%s",
+		conn->name, msg.modecfg_domains);
 	msg.modecfg_banner = conn->modecfg_banner;
 	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" modecfgbanner=%s",
 		conn->name, msg.modecfg_banner);
 
+	msg.conn_mark_both = conn->conn_mark_both;
+	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" mark=%s",
+		conn->name, msg.conn_mark_both);
 	msg.conn_mark_in = conn->conn_mark_in;
 	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" mark-in=%s",
 		conn->name, msg.conn_mark_in);
@@ -686,23 +694,6 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		msg.xauthby = conn->options[KBF_XAUTHBY];
 	if (conn->options_set[KBF_XAUTHFAIL])
 		msg.xauthfail = conn->options[KBF_XAUTHFAIL];
-
-	if (conn->modecfg_dns1 != NULL) {
-		if (!tnatoaddr(conn->modecfg_dns1, 0, AF_INET,
-				&(msg.modecfg_dns1)) &&
-			!tnatoaddr(conn->modecfg_dns1, 0, AF_INET6,
-				&(msg.modecfg_dns1)))
-			starter_log(LOG_LEVEL_ERR,
-				"Ignoring modecfgdns1= entry, it is not a valid IPv4 or IPv6 address");
-	}
-	if (conn->modecfg_dns2 != NULL) {
-		if (!tnatoaddr(conn->modecfg_dns2, 0, AF_INET,
-				&(msg.modecfg_dns2)) &&
-			!tnatoaddr(conn->modecfg_dns2, 0, AF_INET6,
-				&(msg.modecfg_dns2)))
-			starter_log(LOG_LEVEL_ERR,
-				"Ignoring modecfgdns2= entry, it is not a valid IPv4 or IPv6 address");
-	}
 
 	set_whack_end("left",  &msg.left, &conn->left);
 	set_whack_end("right", &msg.right, &conn->right);
@@ -858,7 +849,7 @@ static int starter_permutate_conns(int
 
 		success = (*operation)(cfg, &sc);
 		if (success != 0) {
-			/* fail at first failure? . I think so */
+			/* Fail at first failure?  I think so. */
 			return success;
 		}
 

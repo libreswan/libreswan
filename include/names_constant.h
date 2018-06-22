@@ -4,16 +4,19 @@
 #include <sys/types.h>
 #include <libreswan.h>
 
-extern enum kernel_interface kern_interface;	/* ??? NOT A CONSTANT! */
 extern enum_names kern_interface_names;
 extern enum_names timer_event_names;
 
 extern enum_names dpd_action_names;
+extern enum_names netkey_sa_dir_names;
 extern enum_names sd_action_names;
 extern enum_names pluto_cryptoimportance_names;
 extern enum_names stfstatus_name;
 extern enum_names ikev2_asym_auth_name;
-extern const char *const debug_bit_names[];
+extern const enum_names debug_names;
+extern const struct lmod_info debug_lmod_info;
+extern const enum_names impair_names;
+extern const struct lmod_info impair_lmod_info;
 extern enum_names state_names;
 extern enum_names state_stories;
 extern enum_names connection_kind_names;
@@ -35,7 +38,6 @@ extern enum_names oakley_lifetime_names;
 extern enum_names version_names;
 extern enum_names doi_names;
 extern enum_names ikev1_payload_names;
-extern const char *const payload_name_ikev2_main[];
 extern enum_names ikev2_payload_names;
 extern enum_names ikev2_last_proposal_desc;
 extern enum_names ikev2_last_transform_desc;
@@ -125,7 +127,8 @@ extern const struct af_info
 
 extern const struct af_info *aftoinfo(int af);
 
-extern enum_names ppk_names;
+extern enum_names pkk_names;
+extern enum_names ikev2_ppk_id_type_names;
 
 extern enum_names spi_names;
 

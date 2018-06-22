@@ -57,7 +57,7 @@
 #include "rnd.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "whack.h"
-
+#include "ip_address.h"
 #include "pending.h" /* for flush_pending_by_connection */
 
 #include "ikev1_dpd.h"
@@ -111,7 +111,7 @@
  * The phase 2 dpd_init() will attempt to kill the phase 1 DPD_EVENT, if it
  * can, to reduce the amount of work.
  *
- * The st_last_dpd member which is used is always the one from the phase 1.
+ * The st_last_dpd member that is used is always the one from the phase 1.
  * So, if there are multiple phase 2s, then if any of them receive DPD data
  * they will update the st_last_dpd, so the test in #2 will avoid the traffic
  * for all by one phase 2.
@@ -159,9 +159,7 @@ stf_status dpd_init(struct state *st)
 					st->st_connection->dpd_delay)) {
 			if (st->st_dpd_event != NULL)
 				delete_dpd_event(st);
-			event_schedule(EVENT_DPD,
-					deltasecs(st->st_connection->dpd_delay),
-					st);
+			event_schedule(EVENT_DPD, st->st_connection->dpd_delay, st);
 		}
 	} else {
 		loglog(RC_LOG_SERIOUS,
@@ -190,7 +188,7 @@ static void dpd_sched_timeout(struct state *p1st, monotime_t nw, deltatime_t tim
 				     (long)deltasecs(timeout)));
 		if (p1st->st_dpd_event != NULL)
 			delete_dpd_event(p1st);
-		event_schedule(EVENT_DPD_TIMEOUT, deltasecs(timeout), p1st);
+		event_schedule(EVENT_DPD_TIMEOUT, timeout, p1st);
 	}
 }
 
@@ -203,9 +201,6 @@ static void dpd_sched_timeout(struct state *p1st, monotime_t nw, deltatime_t tim
 static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 		     deltatime_t delay, deltatime_t timeout)
 {
-	monotime_t nw;
-	monotime_t last;
-	deltatime_t nextdelay;
 	u_int32_t seqno;
 
 	DBG(DBG_DPD, {
@@ -216,22 +211,22 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 			fmt_conn_instance(st->st_connection, cib));
 	});
 
-	/* If no DPD, then get out of here */
+	/* if peer doesn't support DPD, DPD should never have started */
+	pexpect(st->hidden_variables.st_peer_supports_dpd);	/* ??? passert? */
 	if (!st->hidden_variables.st_peer_supports_dpd) {
-		DBG(DBG_DPD,
-		    DBG_log("DPD: peer does not support dpd"));
+		DBG(DBG_DPD, DBG_log("DPD: peer does not support dpd"));
 		return;
 	}
 
-	/* If there is no state, there can be no DPD */
+	/* If there is no IKE state, there can be no DPD */
+	pexpect(IS_ISAKMP_SA_ESTABLISHED(p1st->st_state));	/* ??? passert? */
 	if (!IS_ISAKMP_SA_ESTABLISHED(p1st->st_state)) {
-		DBG(DBG_DPD,
-		    DBG_log("DPD: no phase1 state, so no DPD"));
+		DBG(DBG_DPD, DBG_log("DPD: no phase1 state, so no DPD"));
 		return;
 	}
 
 	/* find out when now is */
-	nw = mononow();
+	monotime_t nw = mononow();
 
 	/*
 	 * pick least recent activity value, since with multiple phase 2s,
@@ -245,35 +240,35 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 	 *
 	 * ??? the code actually picks the most recent.  So much for comments.
 	 */
-	last = !monobefore(p1st->st_last_dpd, st->st_last_dpd) ?
+	monotime_t last = !monobefore(p1st->st_last_dpd, st->st_last_dpd) ?
 		p1st->st_last_dpd : st->st_last_dpd;
 
-	nextdelay = monotimediff(monotimesum(last, delay), nw);
+	monotime_t next_time = monotimesum(last, delay);
+	deltatime_t next_delay = monotimediff(next_time, nw);
 
 	/* has there been enough activity of late? */
-	if (deltasecs(nextdelay) > 0) {
+	if (deltatime_cmp(next_delay, deltatime(0)) > 0) {
 		/* Yes, just reschedule "phase 2" */
-		DBG(DBG_DPD,
-		    DBG_log("DPD: not yet time for dpd event: %ld < %ld",
-			    (long)nw.mono_secs,
-			    (long)(last.mono_secs + deltasecs(delay))));
-		event_schedule(EVENT_DPD, deltasecs(nextdelay), st);
+		LSWDBGP(DBG_DPD, buf) {
+			lswlogs(buf, "DPD: not yet time for dpd event: ");
+			lswlog_monotime(buf, nw);
+			lswlogs(buf, " < ");
+			lswlog_monotime(buf, next_time);
+		}
+		event_schedule(EVENT_DPD, next_delay, st);
 		return;
 	}
 
-	/* now plan next check time */
-	/* ??? this test is nuts: it will always succeed! */
-	if (deltasecs(nextdelay) < 1)
-		nextdelay = delay;
+	next_delay = delay;
 
 	/*
 	 * check the phase 2, if we are supposed to,
 	 * and return if it is active recently
 	 */
 	if (eroute_care && st->hidden_variables.st_nat_traversal == LEMPTY &&
-			!was_eroute_idle(st, delay)) {
-		DBG(DBG_DPD,
-		    DBG_log("DPD: out event not sent, phase 2 active"));
+			!was_eroute_idle(st, delay))
+	{
+		DBG(DBG_DPD, DBG_log("DPD: out event not sent, phase 2 active"));
 
 		/* update phase 2 time stamp only */
 		st->st_last_dpd = nw;
@@ -291,7 +286,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 			delete_dpd_event(p1st);
 		}
 
-		event_schedule(EVENT_DPD, deltasecs(nextdelay), st);
+		event_schedule(EVENT_DPD, next_delay, st);
 		return;
 	}
 
@@ -300,7 +295,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 		 * reschedule next event, since we cannot do it from the activity
 		 * routine.
 		 */
-		event_schedule(EVENT_DPD, deltasecs(nextdelay), st);
+		event_schedule(EVENT_DPD, next_delay, st);
 	}
 
 	if (p1st->st_dpd_seqno == 0) {
@@ -360,6 +355,12 @@ static void p2_dpd_outI1(struct state *p2st)
 		loglog(RC_LOG_SERIOUS,
 		       "DPD: could not find newest phase 1 state - initiating a new one");
 		liveness_action(p2st->st_connection, p2st->st_ikev2);
+		return;
+	}
+
+	if (st->st_connection->newest_ipsec_sa != st->st_serialno) {
+		DBG(DBG_DPD,
+		    DBG_log("DPD: no need to send or schedule DPD for replaced IPsec SA"));
 		return;
 	}
 
@@ -452,15 +453,16 @@ stf_status dpd_inI_outR(struct state *p1st,
 		p1st->st_dpd_rdupcount = 0;
 	}
 
-	DBG(DBG_DPD, {
+	LSWDBGP(DBG_DPD, buf) {
+		lswlogf(buf, "DPD: received R_U_THERE seq:%u monotime:",
+			seqno);
+		lswlog_monotime(buf, nw);
 		char cib[CONN_INST_BUF];
-		DBG_log("DPD: received R_U_THERE seq:%u monotime:%ld (state=#%lu name=\"%s\"%s)",
-			seqno,
-			(long)nw.mono_secs,
+		lswlogf(buf, " (state=#%lu name=\"%s\"%s)",
 			p1st->st_serialno,
 			p1st->st_connection->name,
 			fmt_conn_instance(p1st->st_connection, cib));
-	});
+	};
 
 	p1st->st_dpd_peerseqno = seqno;
 

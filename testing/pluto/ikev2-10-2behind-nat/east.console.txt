@@ -16,52 +16,52 @@ east #
 006 #2: "pool-eastnet-ikev2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org', lease=192.0.2.100/32
 006 #4: "pool-eastnet-ikev2"[2] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org', lease=192.0.2.101/32
 east #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 east NOW
 XFRM state:
 src 192.1.2.254 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	encap type espinudp sport 1024 dport 4500 addr 0.0.0.0
 src 192.1.2.23 dst 192.1.2.254
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	encap type espinudp sport 4500 dport 1024 addr 0.0.0.0
 src 192.1.2.254 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 src 192.1.2.23 dst 192.1.2.254
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 XFRM policy:
-src 0.0.0.0/0 dst 192.0.2.100/32 
-	dir out priority 3104 ptype main 
+src 0.0.0.0/0 dst 192.0.2.100/32
+	dir out priority 1048543 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.254
 		proto esp reqid REQID mode tunnel
-src 0.0.0.0/0 dst 192.0.2.101/32 
-	dir out priority 3104 ptype main 
+src 0.0.0.0/0 dst 192.0.2.101/32
+	dir out priority 1048543 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.254
 		proto esp reqid REQID mode tunnel
-src 192.0.2.100/32 dst 0.0.0.0/0 
-	dir fwd priority 3104 ptype main 
+src 192.0.2.100/32 dst 0.0.0.0/0
+	dir fwd priority 1048543 ptype main
 	tmpl src 192.1.2.254 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-src 192.0.2.100/32 dst 0.0.0.0/0 
-	dir in priority 3104 ptype main 
+src 192.0.2.100/32 dst 0.0.0.0/0
+	dir in priority 1048543 ptype main
 	tmpl src 192.1.2.254 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-src 192.0.2.101/32 dst 0.0.0.0/0 
-	dir fwd priority 3104 ptype main 
+src 192.0.2.101/32 dst 0.0.0.0/0
+	dir fwd priority 1048543 ptype main
 	tmpl src 192.1.2.254 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-src 192.0.2.101/32 dst 0.0.0.0/0 
-	dir in priority 3104 ptype main 
+src 192.0.2.101/32 dst 0.0.0.0/0
+	dir in priority 1048543 ptype main
 	tmpl src 192.1.2.254 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 XFRM done

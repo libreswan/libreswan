@@ -9,4 +9,5 @@ cd $(dirname $(readlink -f $0))/../libvirt/vm
 # Filter out sub-directories (foo/) and temp files (foo.bar) that
 # might be lying around.  List all the hosts - don't try to filter out
 # "nic".
-ls -F | egrep -e '^[a-z]+$'
+
+ls --indicator-style=file-type | egrep -e '^[a-z]+$'

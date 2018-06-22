@@ -2,7 +2,7 @@
  * Copyright 2005 (C) Michael Richardson <mcr@xelerance.com>
  * Copyright 2011-2012 (C) David McCullough <david_mccullough@mcafee.com>
  *
- * This is a file of functions which are present in 2.6 kernels,
+ * This is a file of functions that are present in 2.6 kernels,
  * but are not available by default in the 2.4 series.
  *
  * As such this code is usually from the Linux kernel, and is covered by

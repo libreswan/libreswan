@@ -23,10 +23,11 @@ west #
 106 "west-east" #1: STATE_MAIN_I2: sent MI2, expecting MR2
 108 "west-east" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "west-east" #1: Peer ID is ID_FQDN: '@east'
+003 "west-east" #1: Authenticated using RSA
 004 "west-east" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha2_256 group=MODP2048}
 002 "west-east" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 117 "west-east" #2: STATE_QUICK_I1: initiate
-004 "west-east" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
+004 "west-east" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ip addr add 192.1.2.66/24 dev eth1
 west #
@@ -43,7 +44,7 @@ west #
 002 "west-float": terminating SAs using this connection
 002 forgetting secrets
 002 loading secrets from "/etc/ipsec.secrets"
-002 loaded private key for keyid: PPK_RSA:AQOm9dY/4
+002 loaded private key for keyid: PKK_RSA:AQOm9dY/4
 west #
  ipsec auto --up float-east
 002 "float-east" #3: initiating Main Mode
@@ -51,10 +52,11 @@ west #
 106 "float-east" #3: STATE_MAIN_I2: sent MI2, expecting MR2
 108 "float-east" #3: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "float-east" #3: Peer ID is ID_FQDN: '@east'
+003 "float-east" #3: Authenticated using RSA
 004 "float-east" #3: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha2_256 group=MODP2048}
 002 "float-east" #4: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 117 "float-east" #4: STATE_QUICK_I1: initiate
-004 "float-east" #4: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
+004 "float-east" #4: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=none DPD=passive}
 west #
  ip addr del 192.1.2.66/24 dev eth1
 west #
@@ -64,21 +66,20 @@ west #
 002 shutting down interface eth1/eth1 192.1.2.66:500
 002 "float-east" #4: deleting state (STATE_QUICK_I2) and sending notification
 005 "float-east" #4: ESP traffic information: in=0B out=0B
+003 ERROR: "float-east" #4: sendto on eth1 to 192.1.2.23:500 failed in delete notify. Errno 22: Invalid argument
 002 "float-east" #3: deleting state (STATE_MAIN_I4) and sending notification
+003 ERROR: "float-east" #3: sendto on eth1 to 192.1.2.23:500 failed in delete notify. Errno 22: Invalid argument
 002 "float-east": terminating SAs using this connection
 002 forgetting secrets
 002 loading secrets from "/etc/ipsec.secrets"
-002 loaded private key for keyid: PPK_RSA:AQOm9dY/4
+002 loaded private key for keyid: PKK_RSA:AQOm9dY/4
 west #
  ipsec auto --up west-float
 002 "west-float" #5: initiating Main Mode
 104 "west-float" #5: STATE_MAIN_I1: initiate
-010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 2000ms for response
-010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 4000ms for response
-010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 8000ms for response
-010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 16000ms for response
-010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 32000ms for response
-031 "west-float" #5: max number of retransmissions (6) reached STATE_MAIN_I1.  No response (or no acceptable response) to our first IKEv1 message
+010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 15 seconds for response
+010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 30 seconds for response
+031 "west-float" #5: STATE_MAIN_I1: 60 second timeout exceeded after 2 retransmits.  No response (or no acceptable response) to our first IKEv1 message
 000 "west-float" #5: starting keying attempt 2 of an unlimited number, but releasing whack
 west #
  # wait for pending cleanups
@@ -90,30 +91,30 @@ west #
  echo done
 done
 west #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 XFRM policy:
-src 192.1.2.23/32 dst 192.1.2.45/32 
-	dir fwd priority 2080 ptype main 
+src 192.1.2.23/32 dst 192.1.2.45/32
+	dir fwd priority 1040351 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
-src 192.1.2.23/32 dst 192.1.2.45/32 
-	dir in priority 2080 ptype main 
+src 192.1.2.23/32 dst 192.1.2.45/32
+	dir in priority 1040351 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
-src 192.1.2.45/32 dst 192.1.2.23/32 
-	dir out priority 2080 ptype main 
+src 192.1.2.45/32 dst 192.1.2.23/32
+	dir out priority 1040351 ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 XFRM done

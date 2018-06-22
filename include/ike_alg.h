@@ -1,8 +1,11 @@
 #ifndef _IKE_ALG_H
 #define _IKE_ALG_H
 
+#include <stdbool.h>	/* for bool */
 #include <nss.h>
 #include <pk11pub.h>
+#include "shunk.h"
+#include "ietf_constants.h"
 
 struct ike_alg;
 enum ike_alg_key;
@@ -10,11 +13,11 @@ enum ike_alg_key;
 /*
  * More meaningful passert.
  *
- * Do not wrap ASSERTION in parenthesis as it will suppress the
+ * Do not wrap ASSERTION in parentheses as it will suppress the
  * warning for 'foo = bar'.
  */
 #define passert_ike_alg(ALG, ASSERTION) {				\
-		/* wrapping ASSERTION in paren suppresses -Wparen */	\
+		/* wrapping ASSERTION in parens suppresses -Wparen */	\
 		bool assertion__ = ASSERTION; /* no paren */		\
 		if (!assertion__) {					\
 			PASSERT_FAIL("IKE_ALG %s algorithm '%s' fails: %s", \
@@ -26,7 +29,7 @@ enum ike_alg_key;
 	}
 
 #define pexpect_ike_alg(ALG, ASSERTION) {				\
-		/* wrapping ASSERTION in paren suppresses -Wparen */	\
+		/* wrapping ASSERTION in parens suppresses -Wparen */	\
 		bool assertion__ = ASSERTION; /* no paren */		\
 		if (!assertion__) {					\
 			PEXPECT_LOG("IKE_ALG %s algorithm '%s' fails: %s", \
@@ -89,9 +92,10 @@ const char *ike_alg_key_name(enum ike_alg_key key);
  * intended as a way to identify algorithms defined by IETF but not
  * supported here.
  */
-const struct ike_alg *ike_alg_byname(const struct ike_alg_type *type, const char *name);
+const struct ike_alg *ike_alg_byname(const struct ike_alg_type *type,
+				     shunk_t name);
 int ike_alg_enum_match(const struct ike_alg_type *type, enum ike_alg_key key,
-		       const char *name);
+		       shunk_t name);
 
 /*
  * Common prefix for struct encrypt_desc and struct hash_desc (struct
@@ -155,7 +159,7 @@ int ike_alg_enum_match(const struct ike_alg_type *type, enum ike_alg_key key,
  * suspect) SADB/KLIPS, the've gone off the rails.  Over time they've
  * picked up IKEv2 values making for general confusion.  Worse, as
  * noted above, CAMELLIA had the IKEv2 value 23 (IKEv1 is 22)
- * resulting in code never being sure if which it is dealing with.
+ * resulting in code never being sure of which it is dealing with.
  *
  * These values are not included in this table.
  *
@@ -231,20 +235,6 @@ struct ike_alg {
 	 * FIPS mode)?
 	 */
 	const bool fips;
-
-	/*
-	 * The NSS mechanism used to implement this algorithm
-	 * (assuming NSS).
-	 *
-	 * Note that the SYMKEY object passed to NSS also need to have
-	 * the mechanism (type) set to this value.  If it isn't, the
-	 * the operation fails.
-	 *
-	 * For non-NSS algorithms, leave this blank (i.e., 0).  While,
-	 * technically, 0 is CKM_RSA_PKCS_KEY_PAIR_GEN, that mechanism
-	 * has no meaning in this context so it is safe.
-	 */
-	CK_MECHANISM_TYPE nss_mechanism;
 };
 
 struct encrypt_desc {
@@ -337,12 +327,32 @@ struct encrypt_desc {
 	*/
 	const size_t aead_tag_size;
 
+	/*
+	 * For NSS.
+	 */
+	struct {
+		/*
+		 * The NSS mechanism both used to implement this
+		 * algorithm and the type of the key expected by the
+		 * algorithm.
+		 *
+		 * Note that if the SYMKEY object passed to NSS does
+		 * not have this type, the operation fails.
+		 *
+		 * For non-NSS algorithms, leave this blank (i.e., 0).  While,
+		 * technically, 0 is CKM_RSA_PKCS_KEY_PAIR_GEN, that mechanism
+		 * has no meaning in this context so it is safe.
+		 */
+		CK_MECHANISM_TYPE mechanism;
+	} nss;
+
 	const struct encrypt_ops *encrypt_ops;
+
 };
 
 struct encrypt_ops {
 	/*
-	 * Delegate responsiblity for checking OPS specific fields.
+	 * Delegate responsibility for checking OPS specific fields.
 	 */
 	void (*const check)(const struct encrypt_desc *alg);
 
@@ -393,17 +403,22 @@ struct hash_desc {
 	/*
 	 * For NSS.
 	 *
-	 * The NSS_OID_TAG identifies the the PK11 digest (hash)
-	 * context that should be passed to PK11_Digest*() while
-	 * NSS_DERIVE_MECHANISM specifies the equivalent derivation
-	 * used by CKA_DERIVE.
-	 *
-	 * Need to specify both as NSS doesn't have a way to go from
-	 * one to the other.
+	 * This is all somewhat redundant.  Unfortunately there isn't
+	 * a way to map between them.
 	 */
-	SECOidTag nss_oid_tag;
-	CK_MECHANISM_TYPE nss_derive_mechanism;
-
+	struct {
+		/*
+		 * The NSS_OID_TAG identifies the the PK11 digest
+		 * (hash) context that should created when using
+		 * PL11_Digest*().
+		 */
+		SECOidTag oid_tag;
+		/*
+		 * The DERIVE_MECHANISM specifies the derivation
+		 * (algorithm) to use when using PK11_Derive().
+		 */
+		CK_MECHANISM_TYPE derivation_mechanism;
+	} nss;
 	const struct hash_ops *hash_ops;
 };
 
@@ -414,12 +429,12 @@ struct hash_context;
 
 struct hash_ops {
 	/*
-	 * Delegate responsiblity for checking OPS specific fields.
+	 * Delegate responsibility for checking OPS specific fields.
 	 */
 	void (*const check)(const struct hash_desc *alg);
 
 	struct hash_context *(*init)(const struct hash_desc *hash_desc,
-				     const char *name, lset_t debug);
+				     const char *name);
 	void (*digest_symkey)(struct hash_context *hash,
 			      const char *name, PK11SymKey *symkey);
 	void (*digest_bytes)(struct hash_context *hash,
@@ -429,7 +444,7 @@ struct hash_ops {
 			    u_int8_t *bytes, size_t sizeof_bytes);
 	/* FIPS short cuts */
 	PK11SymKey *(*symkey_to_symkey)(const struct hash_desc *hash_desc,
-					const char *name, lset_t debug,
+					const char *name,
 					const char *symkey_name, PK11SymKey *symkey);
 };
 
@@ -467,6 +482,26 @@ struct prf_desc {
 	 * function called "prf".
 	 */
 	size_t prf_output_size;
+
+	/*
+	 * For NSS.
+	 */
+	struct {
+		/*
+		 * The NSS mechanism both used to implement this
+		 * algorithm and the type of the key expected by the
+		 * algorithm.
+		 *
+		 * Note that if the SYMKEY object passed to NSS does
+		 * not have this type, the operation fails.
+		 *
+		 * For non-NSS algorithms, leave this blank (i.e., 0).  While,
+		 * technically, 0 is CKM_RSA_PKCS_KEY_PAIR_GEN, that mechanism
+		 * has no meaning in this context so it is safe.
+		 */
+		CK_MECHANISM_TYPE mechanism;
+	} nss;
+
 	/*
 	 * For native-IKE.  The HASHER used by the HMAC construction.
 	 *
@@ -483,15 +518,15 @@ struct prf_desc {
 
 struct prf_ops {
 	/*
-	 * Delegate responsiblity for checking OPS specific fields.
+	 * Delegate responsibility for checking OPS specific fields.
 	 */
 	void (*const check)(const struct prf_desc *alg);
 
 	struct prf_context *(*init_symkey)(const struct prf_desc *prf_desc,
-					   const char *name, lset_t debug,
+					   const char *name,
 					   const char *key_name, PK11SymKey *key);
 	struct prf_context *(*init_bytes)(const struct prf_desc *prf_desc,
-					  const char *name, lset_t debug,
+					  const char *name,
 					  const char *key_name,
 					  const u_int8_t *bytes, size_t sizeof_bytes);
 	void (*digest_symkey)(struct prf_context *prf,
@@ -547,6 +582,7 @@ struct integ_desc {
 	 * an MD5 edge case, this is entirely redundant.
 	 */
 	enum ipsec_authentication_algo integ_ikev1_ah_transform;
+
 	/*
 	 * For IKE.  The PRF implementing integrity.  The output is
 	 * truncated down to INTEG_HASH_LEN.
@@ -571,7 +607,8 @@ struct integ_desc {
 extern bool ike_alg_is_aead(const struct encrypt_desc *enc_desc);
 #define ike_alg_enc_requires_integ(ALG) (!ike_alg_is_aead(ALG))
 
-void ike_alg_init(void);
+void init_ike_alg(void);
+void test_ike_alg(void);
 
 /*
  * Iterate over all enabled algorithms.
@@ -628,17 +665,17 @@ struct oakley_group_desc {
 	 */
 	SECOidTag nss_oid;
 
-	const struct dhmke_ops *dhmke_ops;
+	const struct dh_ops *dh_ops;
 };
 
-struct dhmke_ops {
+struct dh_ops {
 	/*
-	 * Delegate responsiblity for checking OPS specific fields.
+	 * Delegate responsibility for checking OPS specific fields.
 	 */
 	void (*const check)(const struct oakley_group_desc *alg);
 
 	/*
-	 * Create KE.
+	 * Create the local secret and KE for remote.
 	 *
 	 * The LOCAL_PUBK parameter is arguably redundant - just the
 	 * KE bytes and private key are needed - however MODP's
@@ -648,14 +685,14 @@ struct dhmke_ops {
 	 * SIZEOF_KE == .BYTES from above, but pass it in so both ends
 	 * can perform a sanity check.
 	 */
-	void (*calc_ke)(const struct oakley_group_desc *group,
-			SECKEYPrivateKey **local_privk,
-			SECKEYPublicKey **locak_pubk,
-			uint8_t *ke, size_t sizeof_ke);
-	PK11SymKey *(*calc_g_ir)(const struct oakley_group_desc *group,
-				 SECKEYPrivateKey *local_privk,
-				 const SECKEYPublicKey *local_pubk,
-				 uint8_t *remote_ke, size_t sizeof_remote_ke);
+	void (*calc_secret)(const struct oakley_group_desc *group,
+			    SECKEYPrivateKey **local_privk,
+			    SECKEYPublicKey **locak_pubk,
+			    uint8_t *ke, size_t sizeof_ke);
+	PK11SymKey *(*calc_shared)(const struct oakley_group_desc *group,
+				   SECKEYPrivateKey *local_privk,
+				   const SECKEYPublicKey *local_pubk,
+				   uint8_t *remote_ke, size_t sizeof_remote_ke);
 };
 
 extern const struct oakley_group_desc unset_group;      /* magic signifier */

@@ -1,0 +1,3 @@
+decap-dscp testing - requires netkey
+
+This is not negotiated. West sets this option

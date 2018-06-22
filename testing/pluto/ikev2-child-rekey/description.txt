@@ -1,0 +1,3 @@
+Test CREATE_CHILD_SA initiate IPsec SA rekey RFC 7296 #1.3.3 with pfs=yes
+
+One connection low saflietime to east.

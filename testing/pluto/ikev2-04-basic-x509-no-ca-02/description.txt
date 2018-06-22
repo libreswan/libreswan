@@ -1,0 +1,9 @@
+Basic certificate testcase, but now the CA is deleted and both ends
+have to validate each other purely based on having each other's
+certificate preloaded.
+
+Additionally, an unrelated CA at all is loaded to test the situation
+where west does have at least one CA, but not the right CA. Since the
+certificates are hardcoded using leftcert= and rightcert=, the connection
+should establish, despite the lack of valid CA.
+

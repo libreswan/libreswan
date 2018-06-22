@@ -1,6 +1,8 @@
-This is a test of NAT-traversal. It also uses X.509 certificates for authentication.
+This is a test of NAT-traversal. It also uses X.509 certificates for
+authentication.
 
-This is identical to nat-pluto-01 except that it specifies BOTH rightca=%same and leftca=%same
-on both ends. Instead of pluto ignoring the leftca on left and the rightca on right, the
-connection fails to establish
+This is identical to nat-pluto-01 except that it specifies BOTH
+rightca=%same and leftca=%same on both ends. Older version of libreswan
+did not ignore the leftca on left and the rightca on right and the
+connection would fail to establish
 

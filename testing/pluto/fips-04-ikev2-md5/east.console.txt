@@ -14,12 +14,12 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-md5
-036 Failed to add connection "westnet-eastnet-md5" : ike string error: IKE PRF algorithm 'md5' is not supported, enc_alg="aes"(0), auth_alg="md5", modp=""
+036 Failed to add connection "westnet-eastnet-md5": ike string error: IKE PRF algorithm 'md5' is not supported
 east #
  echo "initdone"
 initdone
 east #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 east NOW
 XFRM state:
 XFRM policy:

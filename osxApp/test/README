@@ -1,4 +1,0 @@
-to test it run the following command:
-
-gcc -m32 -I../../ports/darwin/include -I../../linux/include/ -I../../include/ -I../../ writeconf.c ../*.a -o writeconf
-

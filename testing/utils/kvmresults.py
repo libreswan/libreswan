@@ -191,7 +191,7 @@ def results(logger, tests, baseline, args, result_stats):
             # be cheap (does OUTPUT/ exist?).  It isn't, instead a
             # full post-mortem analysis is performed.
             #
-            # This is noticable when printing static test value such
+            # This is noticeable when printing static test value such
             # as the test's name takes far longer than one would
             # expect.
             result = post.mortem(test, args,
@@ -208,16 +208,16 @@ def results(logger, tests, baseline, args, result_stats):
             publish.test_output_files(logger, args, result)
             publish.json_result(logger, args, result)
 
-            # If there is a baseline; limit what is printed to just
-            # those that differ.
-            if baseline:
-                baseline_issue = False
-                for issue in result.issues:
-                    if "baseline" in issue:
-                        baseline_issue = True
-                        break
-                if not baseline_issue:
+            if baseline and post.Issues.CRASHED.isdisjoint(result.issues):
+                # Since there is a baseline and the test didn't crash
+                # limit what is printed to just those where the
+                # baseline's result is different.
+                #
+                # Note that, this skips baseline-different - where the
+                # baseline failed for a different reason.
+                if {post.Issues.BASELINE_FAILED, post.Issues.BASELINE_PASSED}.isdisjoint(result.issues):
                     continue
+
             b = args.json and printer.JsonBuilder(sys.stdout) or printer.TextBuilder(sys.stdout)
             printer.build_result(logger, result, baseline, args, args.print, b)
 

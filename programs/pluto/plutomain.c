@@ -28,6 +28,7 @@
  * for more details.
  */
 
+#include <pthread.h> /* Must be the first include file */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -65,30 +66,31 @@
 #include "server.h"
 #include "kernel.h"	/* needs connections.h */
 #include "log.h"
+#include "peerlog.h"
 #include "keys.h"
 #include "secrets.h"    /* for free_remembered_public_keys() */
 #include "rnd.h"
 #include "state.h"
 #include "ipsec_doi.h"	/* needs demux.h and state.h */
 #include "fetch.h"
+#include "crl_queue.h"
 #include "timer.h"
 #include "ipsecconf/confread.h"
 #include "xauth.h"
-
 #include "crypto.h"
 #include "vendor.h"
 #include "pluto_crypt.h"
-
+#include "enum_names.h"
 #include "virtual.h"	/* needs connections.h */
-
+#include "state_db.h"	/* for init_state_db() */
 #include "nat_traversal.h"
-
-#include "cbc_test_vectors.h"
-#include "ctr_test_vectors.h"
+#include "ike_alg.h"
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
 #endif
+
+#include "whack.h"
 
 #include <nss.h>
 #include <nspr.h>
@@ -109,6 +111,8 @@
 
 static const char *pluto_name;	/* name (path) we were invoked with */
 
+pthread_t main_thread;
+
 static char *rundir = NULL;
 char *pluto_listen = NULL;
 static bool fork_desired = USE_FORK || USE_DAEMON;
@@ -127,13 +131,6 @@ static bool do_dnssec = FALSE;
 static char *pluto_dnssec_rootfile = NULL;
 static char *pluto_dnssec_trusted = NULL;
 
-extern bool crl_strict;
-extern bool ocsp_strict;
-extern bool ocsp_enable;
-extern char *curl_iface;
-extern long curl_timeout;
-extern int bare_shunt_interval;
-
 static char *ocsp_uri = NULL;
 static char *ocsp_trust_name = NULL;
 static int ocsp_timeout = OCSP_DEFAULT_TIMEOUT;
@@ -151,11 +148,12 @@ static void free_pluto_main(void)
 	pfree(pluto_vendorid);
 	pfreeany(ocsp_uri);
 	pfreeany(ocsp_trust_name);
-	pfreeany(base_perpeer_logdir);
+	pfreeany(peerlog_basedir);
 	pfreeany(curl_iface);
 	pfreeany(pluto_log_file);
 	pfreeany(pluto_dnssec_rootfile);
 	pfreeany(pluto_dnssec_trusted);
+	pfreeany(rundir);
 }
 
 /*
@@ -197,6 +195,9 @@ static const char compile_time_interop_options[] = ""
 #endif
 #if USE_PTHREAD_SETSCHEDPRIO
 	" PTHREAD_SETSCHEDPRIO"
+#endif
+#if defined __GNUC__ && defined __EXCEPTIONS
+	" GCC_EXCEPTIONS"
 #endif
 #ifdef HAVE_BROKEN_POPEN
 	" BROKEN_POPEN"
@@ -439,10 +440,7 @@ static bool pluto_init_nss(char *nssdir)
 }
 
 /* 0 is special and default: do not check crls dynamically */
-deltatime_t crl_check_interval = { 0 };
-
-/* whether or not to use klips */
-enum kernel_interface kern_interface = USE_NETKEY;	/* new default */
+deltatime_t crl_check_interval = DELTATIME_INIT(0);
 
 #ifdef HAVE_LABELED_IPSEC
 /*
@@ -478,11 +476,15 @@ u_int16_t secctx_attr_type = SECCTX;
  *
  * The table should be ordered to maximize the clarity of --help.
  *
- * free one letter options as of 2016-12-14
- * '1' 'W'
  */
 
-#define DBG_OFFSET 256
+enum {
+	OPT_OFFSET = 256, /* larger than largest char */
+	OPT_DEBUG,
+	OPT_IMPAIR,
+	OPT_DNSSEC_ROOTKEY_FILE,
+	OPT_DNSSEC_TRUSTED,
+};
 
 static const struct option long_opts[] = {
 	/* name, has_arg, flag, val */
@@ -492,9 +494,15 @@ static const struct option long_opts[] = {
 	{ "nofork\0", no_argument, NULL, '0' },
 	{ "stderrlog\0", no_argument, NULL, 'e' },
 	{ "logfile\0<filename>", required_argument, NULL, 'g' },
-	{ "dnssec-rootkey-file\0<filename>", required_argument, NULL, 'a' },
+#ifdef USE_DNSSEC
+	{ "dnssec-rootkey-file\0<filename>", required_argument, NULL,
+		OPT_DNSSEC_ROOTKEY_FILE },
+	{ "dnssec-trusted\0<filename>", required_argument, NULL,
+		OPT_DNSSEC_TRUSTED },
+#endif
 	{ "log-no-time\0", no_argument, NULL, 't' }, /* was --plutostderrlogtime */
 	{ "log-no-append\0", no_argument, NULL, '7' },
+	{ "log-no-ip\0", no_argument, NULL, '<' },
 	{ "force_busy\0_", no_argument, NULL, 'D' },	/* _ */
 	{ "force-busy\0", no_argument, NULL, 'D' },
 	{ "force-unlimited\0", no_argument, NULL, 'U' },
@@ -518,11 +526,12 @@ static const struct option long_opts[] = {
 	{ "uniqueids\0", no_argument, NULL, 'u' },
 	{ "no-dnssec\0", no_argument, NULL, 'R' },
 	{ "noklips\0>use-nostack", no_argument, NULL, 'n' },	/* redundant spelling */
+	{ "nokernel\0>use-nostack", no_argument, NULL, 'n' },	/* redundant spelling */
 	{ "use-nostack\0",  no_argument, NULL, 'n' },
 	{ "use-none\0>use-nostack", no_argument, NULL, 'n' },	/* redundant spelling */
 	{ "useklips\0>use-klips",  no_argument, NULL, 'k' },	/* redundant spelling */
 	{ "use-klips\0",  no_argument, NULL, 'k' },
-	{ "use-auto\0>use-netkey",  no_argument, NULL, 'K' },	/* rednundate spelling (sort of) */
+	{ "use-auto\0>use-netkey",  no_argument, NULL, 'K' },   /* redundant spelling (sort of) */
 	{ "usenetkey\0>use-netkey", no_argument, NULL, 'K' },	/* redundant spelling */
 	{ "use-netkey\0", no_argument, NULL, 'K' },
 	{ "use-mast\0",   no_argument, NULL, 'M' },
@@ -535,10 +544,12 @@ static const struct option long_opts[] = {
 	{ "curl-timeout\0<secs>", required_argument, NULL, 'I' }, /* _ */
 	{ "listen\0<ifaddr>", required_argument, NULL, 'L' },
 	{ "ikeport\0<port-number>", required_argument, NULL, 'p' },
+	{ "ike-socket-bufsize\0<buf-size>", required_argument, NULL, 'W' },
+	{ "ike-socket-no-errqueue\0", no_argument, NULL, '1' },
 	{ "nflog-all\0<group-number>", required_argument, NULL, 'G' },
 	{ "natikeport\0<port-number>", required_argument, NULL, 'q' },
 	{ "rundir\0<path>", required_argument, NULL, 'b' }, /* was ctlbase */
-	{ "ctlbase\0<path>", required_argument, NULL, 'b' }, /* backwords compatibility */
+	{ "ctlbase\0<path>", required_argument, NULL, 'b' }, /* backwards compatibility */
 	{ "secretsfile\0<secrets-file>", required_argument, NULL, 's' },
 	{ "perpeerlogbase\0<path>", required_argument, NULL, 'P' },
 	{ "perpeerlog\0", no_argument, NULL, 'l' },
@@ -572,54 +583,11 @@ static const struct option long_opts[] = {
 	{ "vendorid\0<vendorid>", required_argument, NULL, 'V' },
 
 	{ "leak-detective\0", no_argument, NULL, 'X' },
-	{ "debug-nat_t\0>debug-nattraversal", no_argument, NULL, '5' },	/* redundant spelling; _ */
-	{ "debug-nat-t\0>debug-nattraversal", no_argument, NULL, '5' },	/* redundant spelling */
-	{ "debug-nattraversal\0", no_argument, NULL, '5' },
 	{ "debug-none\0^", no_argument, NULL, 'N' },
 	{ "debug-all\0", no_argument, NULL, 'A' },
+	{ "debug\0", required_argument, NULL, OPT_DEBUG, },
+	{ "impair\0", required_argument, NULL, OPT_IMPAIR, },
 
-	/* --debug-* options (using D for shorthand) */
-#define D(name, code) { "debug-" name, no_argument, NULL, (code) + DBG_OFFSET }
-	D("raw\0", DBG_RAW_IX),
-	D("crypt\0", DBG_CRYPT_IX),
-	D("crypto\0>crypt", DBG_CRYPT_IX),	/* redundant spelling */
-	D("parsing\0", DBG_PARSING_IX),
-	D("emitting\0", DBG_EMITTING_IX),
-	D("control\0", DBG_CONTROL_IX),
-	D("lifecycle\0", DBG_LIFECYCLE_IX),
-	D("kernel\0", DBG_KERNEL_IX),
-	D("klips\0>kernel", DBG_KERNEL_IX),	/* redundant spelling */
-	D("netkey\0>kernel", DBG_KERNEL_IX),	/* redundant spelling */
-	D("dns\0", DBG_DNS_IX),
-	D("oppo\0", DBG_OPPO_IX),
-	D("oppoinfo\0", DBG_OPPOINFO_IX),
-	D("controlmore\0", DBG_CONTROLMORE_IX),
-	D("dpd\0", DBG_DPD_IX),
-	D("x509\0", DBG_X509_IX),
-	D("private\0", DBG_PRIVATE_IX),
-	D("pfkey\0", DBG_PFKEY_IX),
-#undef D
-
-	/* --impair-* options (using I for shorthand) */
-#define I(name, code) { "impair-" name, no_argument, NULL, (code) + DBG_OFFSET }
-	I("bust-mi2\0", IMPAIR_BUST_MI2_IX),
-	I("bust-mr2\0", IMPAIR_BUST_MR2_IX),
-	I("sa-creation\0", IMPAIR_SA_CREATION_IX),
-	I("die-oninfo\0", IMPAIR_DIE_ONINFO_IX),
-	I("jacob-two-two\0", IMPAIR_JACOB_TWO_TWO_IX),
-	I("major-version-bump\0", IMPAIR_MAJOR_VERSION_BUMP_IX),
-	I("minor-version-bump\0", IMPAIR_MINOR_VERSION_BUMP_IX),
-	I("retransmits\0", IMPAIR_RETRANSMITS_IX),
-	I("send-bogus-isakmp-flag\0", IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX),
-	I("send-bogus-payload-flag\0", IMPAIR_SEND_BOGUS_PAYLOAD_FLAG_IX),
-	I("send-ikev2-ke\0", IMPAIR_SEND_IKEv2_KE_IX),
-	I("send-key-size-check\0", IMPAIR_SEND_KEY_SIZE_CHECK_IX),
-	I("send-no-delete\0", IMPAIR_SEND_NO_DELETE_IX),
-	I("send-no-ikev2-auth\0", IMPAIR_SEND_NO_IKEV2_AUTH_IX),
-	I("force-fips\0", IMPAIR_FORCE_FIPS_IX),
-	I("send-zero-gx\0", IMPAIR_SEND_ZERO_GX_IX),
-	I("send-bogus-dcookie\0", IMPAIR_SEND_BOGUS_DCOOKIE_IX),
-#undef I
 	{ 0, 0, 0, 0 }
 };
 
@@ -677,6 +645,25 @@ static void usage(void)
 	exit(0);
 }
 
+#ifdef USE_DNSSEC
+static void set_dnssec_file_names (struct starter_config *cfg)
+{
+	if (cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE][0] != '\0') {
+		pfreeany(pluto_dnssec_rootfile);
+		set_cfg_string(&pluto_dnssec_rootfile,
+				cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE]);
+	} else  {
+		/* unset the global one config file unset it */
+		pfreeany(pluto_dnssec_rootfile);
+		pluto_dnssec_rootfile = NULL;
+	}
+	if (cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS] != NULL &&
+			cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS][0] != '\0') {
+		set_cfg_string(&pluto_dnssec_trusted,
+				cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS]);
+	}
+}
+#endif
 
 int main(int argc, char **argv)
 {
@@ -715,9 +702,11 @@ int main(int argc, char **argv)
 	coredir = clone_str(DEFAULT_RUNDIR, "coredir in main()");
 	rundir = clone_str(DEFAULT_RUNDIR, "rundir");
 	pluto_vendorid = clone_str(ipsec_version_vendorid(), "vendorid in main()");
+#ifdef USE_DNSSEC
 	pluto_dnssec_rootfile = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "root.key file");
+#endif
 
-	unsigned int keep_alive = 0;
+	deltatime_t keep_alive = DELTATIME_INIT(0);
 
 	/* Overridden by virtual_private= in ipsec.conf */
 	char *virtual_private = NULL;
@@ -795,7 +784,7 @@ int main(int argc, char **argv)
 
 		case 'V':	/* --vendorid */
 			pfree(pluto_vendorid);
-			coredir = clone_str(optarg, "pluto_vendorid via getopt");
+			pluto_vendorid = clone_str(optarg, "pluto_vendorid via getopt");
 			continue;
 
 		case 'S':	/* --statsdir */
@@ -855,18 +844,19 @@ int main(int argc, char **argv)
 			pluto_log_file = clone_str(optarg, "pluto_log_file");
 			log_to_file_desired = TRUE;
 			continue;
-
-		case 'a':	/* --dnssec-rootkey-file */
-			if (strlen(optarg) > 0) {
+#ifdef USE_DNSSEC
+		case OPT_DNSSEC_ROOTKEY_FILE:	/* --dnssec-rootkey-file */
+			if (optarg[0] != '\0') {
 				pfree(pluto_dnssec_rootfile);
 				pluto_dnssec_rootfile = clone_str(optarg,
 						"dnssec_rootkey_file");
 			}
 			continue;
 
-		case 'Q':	/* --dnssec-trusted */
+		case OPT_DNSSEC_TRUSTED:	/* --dnssec-trusted */
 			pluto_dnssec_trusted = clone_str(optarg, "pluto_dnssec_trusted");
 			continue;
+#endif  /* USE_DNSSEC */
 
 		case 't':	/* --log-no-time */
 			log_with_timestamp = FALSE;
@@ -876,16 +866,23 @@ int main(int argc, char **argv)
 			log_append = FALSE;
 			continue;
 
+		case '<':	/* --log-no-ip */
+			log_ip = FALSE;
+			continue;
+
 		case '8':	/* --drop-oppo-null */
 			pluto_drop_oppo_null = TRUE;
 			continue;
 
 		case '9':	/* --expire-bare-shunt <interval> */
-			ugh = ttoulb(optarg, 0, 10, 1000, &u);
+		{
+			unsigned long d = 0;
+			ugh = ttoulb(optarg, 0, 10, 1000, &d);
 			if (ugh != NULL)
 				break;
-			bare_shunt_interval = u;
+			bare_shunt_interval = deltatime(d);
 			continue;
+		}
 
 		case 'k':	/* --use-klips */
 			kern_interface = USE_KLIPS;
@@ -1065,6 +1062,21 @@ int main(int argc, char **argv)
 			pluto_port = u;
 			continue;
 
+		case '1':	/* --ike-socket-no-errqueue */
+			pluto_sock_errqueue = FALSE;
+			continue;
+
+		case 'W':	/* --ike-socket-bufsize <bufsize> */
+			ugh = ttoulb(optarg, 0, 10, 0xFFFF, &u);
+			if (ugh != NULL)
+				break;
+			if (u == 0) {
+				ugh = "must not be 0";
+				break;
+			}
+			pluto_sock_bufsize = u;
+			continue;
+
 		case 'q':	/* --natikeport <portnumber> */
 			ugh = ttoulb(optarg, 0, 10, 0xFFFF, &u);
 			if (ugh != NULL)
@@ -1092,7 +1104,7 @@ int main(int argc, char **argv)
 			}
 
 			if (snprintf(pluto_lock, sizeof(pluto_lock),
-					"%s/pluto.lock", optarg) == -1) {
+					"%s/pluto.pid", optarg) == -1) {
 				ugh = "--rundir ctl_addr.sun_path is invalid for sun_path socket";
 				break;
 			}
@@ -1121,7 +1133,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'P':	/* --perpeerlogbase */
-			base_perpeer_logdir = clone_str(optarg, "base_perpeer_logdir");
+			peerlog_basedir = clone_str(optarg, "peerlog_basedir");
 			continue;
 
 		case 'l':	/* --perpeerlog */
@@ -1132,7 +1144,7 @@ int main(int argc, char **argv)
 			ugh = ttoulb(optarg, 0, 10, secs_per_day, &u);
 			if (ugh != NULL)
 				break;
-			keep_alive = u;
+			keep_alive = deltatime(u);
 			continue;
 
 		case '5':	/* --debug-nat-t aliases */
@@ -1154,19 +1166,17 @@ int main(int argc, char **argv)
 			/* leak */
 			set_cfg_string(&pluto_log_file,
 				cfg->setup.strings[KSF_PLUTOSTDERRLOG]);
-			if (strlen(cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE]) > 0) {
-				pfree(pluto_dnssec_rootfile);
-				set_cfg_string(&pluto_dnssec_rootfile,
-						cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE]);
-			}
-			set_cfg_string(&pluto_dnssec_trusted,
-					cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS]);
+#ifdef USE_DNSSEC
+			set_dnssec_file_names(cfg);
+#endif
+
 			if (pluto_log_file != NULL)
 				log_to_syslog = FALSE;
 			/* plutofork= no longer supported via config file */
 			log_with_timestamp =
 				cfg->setup.options[KBF_PLUTOSTDERRLOGTIME];
 			log_append = cfg->setup.options[KBF_PLUTOSTDERRLOGAPPEND];
+			log_ip = cfg->setup.options[KBF_PLUTOSTDERRLOGIP];
 			pluto_drop_oppo_null = cfg->setup.options[KBF_DROP_OPPO_NULL];
 			pluto_ddos_mode = cfg->setup.options[KBF_DDOS_MODE];
 #ifdef HAVE_SECCOMP
@@ -1200,7 +1210,11 @@ int main(int argc, char **argv)
 			crl_check_interval = deltatime(
 				cfg->setup.options[KBF_CRL_CHECKINTERVAL]);
 			uniqueIDs = cfg->setup.options[KBF_UNIQUEIDS];
+#ifdef USE_DNSSEC
 			do_dnssec = cfg->setup.options[KBF_DO_DNSSEC];
+#else
+			do_dnssec = FALSE;
+#endif
 			/*
 			 * We don't check interfaces= here because that part
 			 * has been dealt with in _stackmanager before we
@@ -1211,6 +1225,10 @@ int main(int argc, char **argv)
 
 			/* --ikeport */
 			pluto_port = cfg->setup.options[KBF_IKEPORT];
+
+			/* --ike-socket-bufsize */
+			pluto_sock_bufsize = cfg->setup.options[KBF_IKEBUF];
+			pluto_sock_errqueue = cfg->setup.options[KBF_IKE_ERRQUEUE];
 
 			/* --nflog-all */
 			/* only causes nflog nmber to show in ipsec status */
@@ -1242,10 +1260,10 @@ int main(int argc, char **argv)
 			if (log_to_perpeer) {
 				/* --perpeerlogbase */
 				if (cfg->setup.strings[KSF_PERPEERDIR]) {
-					set_cfg_string(&base_perpeer_logdir,
+					set_cfg_string(&peerlog_basedir,
 						cfg->setup.strings[KSF_PERPEERDIR]);
 				} else {
-					base_perpeer_logdir = clone_str("/var/log/pluto/", "perpeer_logdir");
+					peerlog_basedir = clone_str("/var/log/pluto/", "perpeer_logdir");
 				}
 			}
 
@@ -1287,7 +1305,7 @@ int main(int argc, char **argv)
 			pluto_nss_seedbits = cfg->setup.options[KBF_SEEDBITS];
 			pluto_nat_port =
 				cfg->setup.options[KBF_NATIKEPORT];
-			keep_alive = cfg->setup.options[KBF_KEEPALIVE];
+			keep_alive = deltatime(cfg->setup.options[KBF_KEEPALIVE]);
 
 			set_cfg_string(&virtual_private,
 				cfg->setup.strings[KSF_VIRTUALPRIVATE]);
@@ -1327,12 +1345,31 @@ int main(int argc, char **argv)
 			continue;
 		}
 
-		default:
-			if (DBG_OFFSET <= c &&
-			    c < DBG_OFFSET + IMPAIR_roof_IX) {
-				base_debugging |= LELEM(c - DBG_OFFSET);
-				continue;
+		case OPT_DEBUG:
+		{
+			lmod_t mod = empty_lmod;
+			if (lmod_arg(&mod, &debug_lmod_info, optarg)) {
+				base_debugging = lmod(base_debugging, mod);
+			} else {
+				libreswan_log("unrecognized --debug '%s' option ignored",
+					      optarg);
 			}
+			continue;
+		}
+
+		case OPT_IMPAIR:
+		{
+			lmod_t mod = empty_lmod;
+			if (lmod_arg(&mod, &impair_lmod_info, optarg)) {
+				base_debugging = lmod(base_debugging, mod);
+			} else {
+				libreswan_log("unrecognized --impair '%s' option ignored",
+					      optarg);
+			}
+			continue;
+		}
+
+		default:
 			bad_case(c);
 		}
 		/* if ugh is set, bail with diagnostic */
@@ -1373,12 +1410,6 @@ int main(int argc, char **argv)
 		log_to_syslog = FALSE;
 	if (!log_to_stderr_desired)
 		log_to_stderr = FALSE;
-
-#if 0
-	if (kernel_ops->set_debug != NULL)
-		(*kernel_ops->set_debug)(cur_debugging, DBG_log, DBG_log);
-
-#endif
 
 	/*
 	 * create control socket.
@@ -1605,8 +1636,10 @@ int main(int argc, char **argv)
 	/*
 	 * We need to retain some capabilities for our children (updown):
 	 * CAP_NET_ADMIN to change routes
+	 * (we also need it for some setsockopt() calls in main process)
 	 * CAP_NET_RAW for iptables -t mangle
 	 * CAP_DAC_READ_SEARCH for pam / google authenticator
+	 *
 	 */
 	capng_updatev(CAPNG_ADD, CAPNG_BOUNDING_SET, CAP_NET_ADMIN, CAP_NET_RAW,
 			CAP_DAC_READ_SEARCH, -1);
@@ -1672,44 +1705,21 @@ int main(int argc, char **argv)
 	libreswan_log("XAUTH PAM support [disabled]");
 #endif
 
-/* Log various impair-* functions if they were enabled */
-
-	if (DBGP(IMPAIR_BUST_MI2))
-		libreswan_log("Warning: IMPAIR_BUST_MI2 enabled");
-	if (DBGP(IMPAIR_BUST_MR2))
-		libreswan_log("Warning: IMPAIR_BUST_MR2 enabled");
-	if (DBGP(IMPAIR_SA_CREATION))
-		libreswan_log("Warning: IMPAIR_SA_CREATION enabled");
-	if (DBGP(IMPAIR_JACOB_TWO_TWO))
-		libreswan_log("Warning: IMPAIR_JACOB_TWO_TWO enabled");
-	if (DBGP(IMPAIR_DIE_ONINFO))
-		libreswan_log("Warning: IMPAIR_DIE_ONINFO enabled");
-	if (DBGP(IMPAIR_MAJOR_VERSION_BUMP))
-		libreswan_log("Warning: IMPAIR_MAJOR_VERSION_BUMP enabled");
-	if (DBGP(IMPAIR_MINOR_VERSION_BUMP))
-		libreswan_log("Warning: IMPAIR_MINOR_VERSION_BUMP enabled");
-	if (DBGP(IMPAIR_RETRANSMITS))
-		libreswan_log("Warning: IMPAIR_RETRANSMITS enabled");
-	if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG))
-		libreswan_log("Warning: IMPAIR_SEND_BOGUS_ISAKMP_FLAG enabled");
-	if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG))
-		libreswan_log("Warning: IMPAIR_SEND_BOGUS_PAYLOAD_FLAG enabled");
-	if (DBGP(IMPAIR_SEND_IKEv2_KE))
-		libreswan_log("Warning: IMPAIR_SEND_IKEv2_KE enabled");
-	if (DBGP(IMPAIR_SEND_KEY_SIZE_CHECK))
-		libreswan_log("Warning: IMPAIR_SEND_KEY_SIZE_CHECK enabled");
-	if (DBGP(IMPAIR_SEND_NO_DELETE))
-		libreswan_log("Warning: IMPAIR_SEND_NO_DELETE enabled");
-	if (DBGP(IMPAIR_FORCE_FIPS))
-		libreswan_log("Warning: IMPAIR_FORCE_FIPS enabled");
-	if (DBGP(IMPAIR_SEND_NO_IKEV2_AUTH))
-		libreswan_log("Warning: IMPAIR_SEND_NO_IKEV2_AUTH enabled");
-	if (DBGP(IMPAIR_SEND_ZERO_GX))
-		libreswan_log("Warning: IMPAIR_SEND_ZERO_GX enabled");
-	if (DBGP(IMPAIR_SEND_BOGUS_DCOOKIE))
-		libreswan_log("Warning: IMPAIR_SEND_BOGUS_DCOOKIE enabled");
+	/*
+	 * Log impair-* functions that were enabled
+	 */
+	for (long e = next_enum(&impair_names, -1);
+	     e >= 0; e = next_enum(&impair_names, e)) {
+		unsigned bit = e;
+		if (DBGP(LELEM(bit))) {
+			const char *name = enum_name(&impair_names, bit);
+			libreswan_log("Warning: %s enabled", name);
+		}
+	}
 
 /* Initialize all of the various features */
+
+	init_state_db();
 
 	init_nat_traversal(keep_alive);
 
@@ -1719,11 +1729,11 @@ int main(int argc, char **argv)
 	init_secret();
 	init_states();
 	init_connections();
-	init_crypto();
+	init_ike_alg();
+	test_ike_alg();
 	init_crypto_helpers(nhelpers);
 	init_demux();
 	init_kernel();
-	init_id();
 	init_vendorid();
 #if defined(LIBCURL) || defined(LIBLDAP)
 	init_fetch();
@@ -1731,7 +1741,6 @@ int main(int argc, char **argv)
 #ifdef HAVE_LABELED_IPSEC
 	init_avc();
 #endif
-	daily_log_event();
 #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd_init();
 #endif
@@ -1747,6 +1756,8 @@ int main(int argc, char **argv)
 	return -1;	/* Shouldn't ever reach this */
 }
 
+volatile bool exiting_pluto = false;
+
 /*
  * leave pluto, with status.
  * Once child is launched, parent must not exit this way because
@@ -1758,6 +1769,17 @@ int main(int argc, char **argv)
  */
 void exit_pluto(int status)
 {
+	/*
+	 * Tell the world, well actually all the threads, that pluto
+	 * is exiting and they should quit.  Even if pthread_cancel()
+	 * weren't buggy, using it correctly would be hard, so use
+	 * this instead.
+	 *
+	 * XXX: All threads need to be told to quit before things like
+	 * NSS can be closed.  So a TODO is to join those threads.
+	 */
+	exiting_pluto = true;
+
 	/* needed because we may be called in odd state */
 	reset_globals();
  #ifdef USE_SYSTEMD_WATCHDOG
@@ -1778,8 +1800,6 @@ void exit_pluto(int status)
 
 	lsw_conf_free_oco();	/* free global_oco containing path names */
 
-	free_myFQDN();	/* free myid FQDN */
-
 	free_ifaces();	/* free interface list from memory */
 	free_md_pool();	/* free the md pool */
 	lsw_nss_shutdown();
@@ -1792,13 +1812,12 @@ void exit_pluto(int status)
 	unbound_ctx_free();
 #endif
 
-
 	/* report memory leaks now, after all free_* calls */
 	if (leak_detective)
 		report_leaks();
 	close_log();	/* close the logfiles */
 #ifdef USE_SYSTEMD_WATCHDOG
-	pluto_sd(PLUTO_SD_EXIT,status);
+	pluto_sd(PLUTO_SD_EXIT, status);
 #endif
 	exit(status);	/* exit, with our error code */
 }
@@ -1818,9 +1837,11 @@ void show_setup_plutomain(void)
 		coredir,
 		pluto_stats_binary == NULL ? "unset" :  pluto_stats_binary);
 
+#ifdef USE_DNSSEC
 	whack_log(RC_COMMENT, "dnssec-rootkey-file=%s, dnssec-trusted=%s",
-		pluto_dnssec_rootfile,
+		pluto_dnssec_rootfile == NULL ? "<unset>" : pluto_dnssec_rootfile,
 		pluto_dnssec_trusted == NULL ? "<unset>" : pluto_dnssec_trusted);
+#endif
 
 	whack_log(RC_COMMENT, "sbindir=%s, libexecdir=%s",
 		IPSEC_SBINDIR,
@@ -1831,13 +1852,17 @@ void show_setup_plutomain(void)
 		pluto_vendorid);
 
 	whack_log(RC_COMMENT,
-		"nhelpers=%d, uniqueids=%s, dnssec-enable=%s, perpeerlog=%s, shuntlifetime=%jds, xfrmlifetime=%jds",
+		"nhelpers=%d, uniqueids=%s, "
+		"dnssec-enable=%s, "
+		"perpeerlog=%s, logappend=%s, logip=%s, shuntlifetime=%jds, xfrmlifetime=%jds",
 		nhelpers,
-		uniqueIDs ? "yes" : "no",
-		do_dnssec ? "yes" : "no",
-		!log_to_perpeer ? "no" : base_perpeer_logdir,
-                (intmax_t) deltasecs(pluto_shunt_lifetime),
-                (intmax_t) pluto_xfrmlifetime
+		bool_str(uniqueIDs),
+		bool_str(do_dnssec),
+		log_to_perpeer ? peerlog_basedir : "no",
+		bool_str(log_append),
+		bool_str(log_ip),
+		deltasecs(pluto_shunt_lifetime),
+		(intmax_t) pluto_xfrmlifetime
 	);
 
 	whack_log(RC_COMMENT,
@@ -1848,18 +1873,20 @@ void show_setup_plutomain(void)
 			(pluto_ddos_mode == DDOS_FORCE_BUSY) ? "busy" : "unlimited");
 
 	whack_log(RC_COMMENT,
-		"ikeport=%d, strictcrlpolicy=%s, crlcheckinterval=%jd, listen=%s, nflog-all=%d",
+		"ikeport=%d, ikebuf=%d, msg_errqueue=%s, strictcrlpolicy=%s, crlcheckinterval=%jd, listen=%s, nflog-all=%d",
 		pluto_port,
-		crl_strict ? "yes" : "no",
-                (intmax_t) deltasecs(crl_check_interval),
+		pluto_sock_bufsize,
+		bool_str(pluto_sock_errqueue),
+		bool_str(crl_strict),
+		deltasecs(crl_check_interval),
 		pluto_listen != NULL ? pluto_listen : "<any>",
 		pluto_nflog_group
 		);
 
 	whack_log(RC_COMMENT,
 		"ocsp-enable=%s, ocsp-strict=%s, ocsp-timeout=%d, ocsp-uri=%s",
-		ocsp_enable ? "yes" : "no",
-		ocsp_strict ? "yes" : "no",
+		bool_str(ocsp_enable),
+		bool_str(ocsp_strict),
 		ocsp_timeout,
 		ocsp_uri != NULL ? ocsp_uri : "<unset>"
 		);

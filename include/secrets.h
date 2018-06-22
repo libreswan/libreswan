@@ -7,6 +7,7 @@
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -26,6 +27,7 @@
 #include <nss.h>
 #include <pk11pub.h>
 #include "x509.h"
+#include "realtime.h"
 
 struct state;	/* forward declaration */
 struct secret;	/* opaque definition, private to secrets.c */
@@ -117,6 +119,9 @@ struct private_key_stuff {
 		struct RSA_private_key RSA_private_key;
 		/* struct smartcard *smartcard; */
 	} u;
+
+	chunk_t ppk;
+	chunk_t ppk_id;
 };
 
 extern struct private_key_stuff *lsw_get_pks(struct secret *s);
@@ -155,24 +160,8 @@ struct pubkey_list {
 	struct pubkey_list *next;
 };
 
-/* struct used to prompt for a secret passphrase
- * from a console with file descriptor fd
- */
-#define MAX_PROMPT_PASS_TRIALS	5
-#define PROMPT_PASS_LEN		64
-
-typedef void (*pass_prompt_func)(int mess_no, const char *message,
-				 ...) PRINTF_LIKE (2);
-
-typedef struct {
-	char secret[PROMPT_PASS_LEN];
-	pass_prompt_func prompt;
-	int fd;
-} prompt_pass_t;
-
 extern struct pubkey_list *pubkeys;	/* keys from ipsec.conf */
 
-extern struct pubkey *public_key_from_rsa(const struct RSA_public_key *k);
 extern struct pubkey_list *free_public_keyentry(struct pubkey_list *p);
 extern void free_public_keys(struct pubkey_list **keys);
 extern void free_remembered_public_keys(void);
@@ -223,6 +212,8 @@ extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					    const struct id *my_id,
 					    const struct id *his_id,
 					    bool asym);
+
+extern struct secret *lsw_get_ppk_by_id(struct secret *secrets, chunk_t ppk_id);
 
 extern void lock_certs_and_keys(const char *who);
 extern void unlock_certs_and_keys(const char *who);

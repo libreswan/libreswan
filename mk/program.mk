@@ -42,61 +42,48 @@ CONFDSUBDIR=.
 endif
 
 # the list of stuff to be built for "make programs"
-CONFIGLIST=$(CONFFILES) $(CONFDFILES) $(CONFDSUBDIRFILES)
+CONFIGLIST=$(CONFFILES) $(CONFDSUBDIRFILES)
 PROGRAMSLIST=${PROGRAM} $(CONFIGLIST)
 
-# XXX: Switch directory hack
-local-base: $(builddir)/Makefile
-	$(MAKE) -C $(builddir) buildall
+local-base: $(PROGRAMSLIST)
 
 local-clean-base:
 	rm -f $(builddir)/*.o $(foreach p,$(PROGRAMSLIST), $(builddir)/$(p))
 
-local-install-base: $(builddir)/Makefile
-	$(MAKE) -C $(builddir) doinstall
-buildall: $(PROGRAMSLIST)
-
 src-file = $(firstword $(wildcard $(srcdir)/$(1) $(builddir)/$(1)))
 
-foreach-file = @set -eu ; $(foreach f, $(1), \
+foreach-file = set -eu ; $(foreach f, $(1), \
 		file=$(f) ; \
 		destdir=$(strip $(2)) ; \
 		src=$(call src-file,$(f)) ; \
 		$(3) \
 	)
 
-doinstall:
-	$(call foreach-file, $(PROGRAM),  $(PROGRAMDIR), \
-		echo Install: $$src '->' $$destdir/$$file ; \
+local-install-base:
+	@$(call foreach-file, $(PROGRAM),  $(PROGRAMDIR), \
+		echo $$src '->' $$destdir/$$file ; \
 		mkdir -p $$destdir ; \
 		$(INSTALL) $(INSTBINFLAGS) $$src $$destdir/$$file ; \
 	)
-	set -eu ; $(foreach file, $(CONFFILES), \
+	@set -eu ; $(foreach file, $(CONFFILES), \
 		if [ ! -f $(CONFDIR)/$(file) ]; then \
-			echo Install: $(call src-file,$(file)) '->' $(CONFDIR)/$(file) ; \
+			echo $(call src-file,$(file)) '->' $(CONFDIR)/$(file) ; \
 			mkdir -p $(CONFDIR) ; \
 			$(INSTALL) $(INSTCONFFLAGS) $($(file).INSTFLAGS) $(call src-file,$(file)) $(CONFDIR)/$(file) ; \
 		fi ; \
 	)
-	$(call foreach-file, $(CONFFILES), $(CONFDIR), \
-		echo Install: $$src '->' $(EXAMPLECONFDIR)/$$file-sample ; \
+	@$(call foreach-file, $(CONFFILES), $(CONFDIR), \
+		echo $$src '->' $(EXAMPLECONFDIR)/$$file-sample ; \
 		mkdir -p $(EXAMPLECONFDIR) ; \
 		$(INSTALL) $(INSTCONFFLAGS) $$src $(EXAMPLECONFDIR)/$$file-sample ; \
 	)
 	@$(call foreach-file, $(EXCONFFILES), $(EXAMPLECONFDIR), \
-		echo Install: $$src '->' $$destdir/$$file-sample ; \
+		echo $$src '->' $$destdir/$$file-sample ; \
 		$(INSTALL) $(INSTCONFFLAGS) $$src $$destdir/$$file-sample ; \
-	)
-	@$(call foreach-file, $(CONFDFILES), $(CONFDDIR), \
-		if [ ! -f $$destdir/$$file ]; then \
-			echo Install: $$src '->' $$destdir/$$file ; \
-			mkdir -p $$destdir ; \
-			$(INSTALL) $(INSTCONFFLAGS) $$src $$destdir/$$file ; \
-		fi ; \
 	)
 	@$(call foreach-file, $(CONFDSUBDIRFILES), $(CONFDDIR)/$(CONFDSUBDIR), \
 		if [ ! -f $$destdir/$$file ]; then \
-			echo Install: $$src '->' $$destdir/$$file ; \
+			echo $$src '->' $$destdir/$$file ; \
 			mkdir -p $$destdir ; \
 			$(INSTALL) $(INSTCONFFLAGS) $$src $$destdir/$$file ; \
 		fi ; \
@@ -115,9 +102,6 @@ list-local-base:
 	@$(call foreach-file, $(EXCONFFILES), $(EXAMPLECONFDIR), \
 		echo $$destdir/$$file-sample ; \
 	)
-	@$(call foreach-file,  $(CONFDFILES), $(CONFDDIR), \
-		echo $$destdir/$$file ; \
-	)
 	@$(call foreach-file,  $(CONFDSUBDIRFILES), $(CONFDDIR)/$(CONFDSUBDIR), \
 		echo $$destdir/$$file ; \
 	)
@@ -128,24 +112,28 @@ ifdef OBJS
 # deleting $(PROGRAM).o, $(OBJS) must include the main object
 # (typically $(PROGRAM).o).  Since there is no difference between how
 # objects and archives are handled, $(OBJS) includes both.  Duplicate
-# archives do no halm.
-$(PROGRAM): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS) $(USERLINK)
+# archives do no harm.
+#
+# Need to depend on Makefile so that when $(OBJS) changes (for
+# instance something is removed), a re-link is triggered.
+
+$(PROGRAM): $(OBJS) $(srcdir)/Makefile
+	cd $(builddir) && $(CC) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS) $(USERLINK)
 
 include $(top_srcdir)/mk/depend.mk
 
 else
 
-%: ${SRCDIR}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver
-	@echo  'IN' $< '->' $@
-	${TRANSFORM_VARIABLES} < $< > $@
-	@if [ -x $< ]; then chmod +x $@; fi
-	@if [ "${PROGRAM}.in" = $< ]; then chmod +x $@; fi
+%: %.in $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver
+	@echo  'IN' $< '->' $(builddir)/$@
+	${TRANSFORM_VARIABLES} < $< > $(builddir)/$@
+	@if [ -x $< ]; then chmod +x $(builddir)/$@; fi
+	@if [ "${PROGRAM}.in" = $< ]; then chmod +x $(builddir)/$@; fi
 
-%: ${SRCDIR}%.pl ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver
-	@echo  'PL' $< '->' $@
-	@${TRANSFORM_VARIABLES} < $< > $@
-	@if [ -x $< ]; then chmod +x $@; fi
-	@if [ "${PROGRAM}.pl" = $< ]; then chmod +x $@; fi
+%: %.pl $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver
+	@echo  'PL' $< '->' $(builddir)/$@
+	@${TRANSFORM_VARIABLES} < $< > $(builddir)/$@
+	@if [ -x $< ]; then chmod +x $(builddir)/$@; fi
+	@if [ "${PROGRAM}.pl" = $< ]; then chmod +x $(builddir)/$@; fi
 
 endif

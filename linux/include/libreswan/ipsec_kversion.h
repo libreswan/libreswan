@@ -584,5 +584,9 @@ typedef struct ctl_table ctl_table;
 # define HAS_AHASH
 #endif
 
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 1, 14)
+# define HAS_PRIV_DESTRUCTOR
+#endif
+
 #endif /* _LIBRESWAN_KVERSIONS_H */
 

@@ -1,0 +1,6 @@
+To prevent a IKEv1 retransmission amplification attack,
+we do not retransmit the first main mode responder packet.
+
+If a client sends 1 packet and vanishes, our state should
+expire shortly, as it is an incomplete state. It should not
+linger around for 1h, as it does up to v3.22

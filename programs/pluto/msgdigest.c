@@ -71,7 +71,7 @@ void free_md_pool(void)
 	}
 }
 
-struct msg_digest *alloc_md(char *mdname)
+struct msg_digest *alloc_md(const char *mdname)
 {
 	struct msg_digest *md = md_pool;
 
@@ -88,16 +88,23 @@ struct msg_digest *alloc_md(char *mdname)
 		md_pool = md->next;
 
 	*md = blank_md;
-	md->digest_roof = md->digest;
-
-	/* note: although there may be multiple msg_digests at once
-	 * (due to suspended state transitions), there is a single
-	 * global reply_buffer.  It will need to be saved and restored.
-	 */
-	init_out_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
-		 "reply packet");
+	md->digest_roof = 0;
 
 	return md;
+}
+
+struct msg_digest *clone_md(struct msg_digest *md, const char *name)
+{
+	struct msg_digest *clone = alloc_md(name);
+	clone->fake = true;
+	/* raw_packet */
+	clone->iface = md->iface; /* copy reference */
+	clone->sender = md->sender; /* copy value */
+	/* packet_pbs ... */
+	size_t packet_size = pbs_room(&md->packet_pbs);
+	void *packet_bytes = clone_bytes(md->packet_pbs.start, packet_size, name);
+	init_pbs(&clone->packet_pbs, packet_bytes, packet_size, name);
+	return clone;
 }
 
 void release_md(struct msg_digest *md)

@@ -1,6 +1,6 @@
 #include "ipsec_hack.h"
 
-int read_hex_int(char *c)
+static int read_hex_int(char *c)
 {
 	unsigned int result = 0;
 
@@ -8,46 +8,16 @@ int read_hex_int(char *c)
 
 		if (*c >= '0' && *c <= '9')
 			result = (result << 4) | (*c - '0');
-		if (*c >= 'a' && *c <= 'f')
+		else if (*c >= 'a' && *c <= 'f')
 			result = (result << 4) | (*c - 'a' + 10);
+		/* else silently ignore *c */
 
 		c++;
 	}
 	return result;
 }
 
-u8 read_nyble(FILE *fp, int *err)
-{
-	u8 result;
-	int temp;
-	u8 flag = 0;
-
-	while ((temp = fgetc(fp)) != EOF) {
-		if ((temp == ' ' || temp == '\n') && flag == 0)
-			continue;
-		else if ((temp == ' ' || temp == '\n') && flag != 0)
-			break;
-		else
-			flag++;
-
-		if (temp >= '0' && temp <= '9')
-			result = (result << 4) | (temp - '0');
-		else if (temp >= 'a' && temp <= 'f')
-			result = (result << 4) | (temp - 'a' + 10);
-		else if (temp >= 'F' && temp <= 'F')
-			result = (result << 4) | (temp - 'a' + 10);
-
-		if (flag > 1)
-			break;
-	}
-
-	if (temp == EOF)
-		*err = EOF;
-
-	return result;
-}
-
-u8 read_byte(u8 *c, u8 endmark)
+static u8 read_byte(u8 *c, u8 endmark)
 {
 	u8 result = 0;
 
@@ -55,36 +25,34 @@ u8 read_byte(u8 *c, u8 endmark)
 
 		if (*c >= '0' && *c <= '9')
 			result = (result << 4) | (*c - '0');
-		if (*c >= 'a' && *c <= 'f')
+		else if (*c >= 'a' && *c <= 'f')
 			result = (result << 4) | (*c - 'a' + 10);
+		/* else silently ignore *c */
 
 		c++;
 	}
 	return result;
-
 }
 
-void read_mac(u8 *c, u8 *mac)
+static void read_mac(u8 *c, u8 *mac)
 {
 	/* This function assumes that mac is format xx:xx:xx:xx:xx:xx */
 	int i;
 
 	for (i = 0; i < 6; i++)
 		mac[i] = read_byte(c + (i * 3), ':');
-
 }
 
-void read_block(u8 *c, u8 *block)
+static void read_block(u8 *c, u8 *block)
 {
 	/* This function assumes that block is format xx:xx:xx:xx:xx:xx:xx:xx */
 	int i;
 
 	for (i = 0; i < 8; i++)
 		block[i] = read_byte(c + (i * 3), ':');
-
 }
 
-u32 read_dotted_ipv4_address(u8 *str)
+static u32 read_dotted_ipv4_address(u8 *str)
 {
 	u32 result = 0;
 	u8 temp = 0;
@@ -115,51 +83,6 @@ u16 ipheader_checksum(u16 *buffer, u16 len)
 	return (u16)(check == 0 ? 0 : ~check);
 }
 
-/*
- * Not limited to even length as in ipheader_checksum()..
- */
-u16 compute_checksum(u8 *b, u32 len)
-{
-	u32 csum = 0;
-	u32 overf;
-
-	while (len > 1) {
-		csum += (u32) * ((u16 *)b)++;
-		len -= 2;
-	}
-	if (len)
-		csum += (u32)htons((u16)(*b << 8));
-
-	while (overf = csum >> 16)
-		csum = (csum & 0xFFFF) + overf;
-
-	return (u16) ~csum;
-}
-
-u16 compute_tcpudp_checksum(u32 sourceip,
-			    u32 destip,
-			    u8 protocol,
-			    u16 datalen,
-			    u8 *data)
-{
-	u32 pseudohdr[3];
-	u32 csum;
-
-	pseudohdr[0] = htonl(sourceip);
-	pseudohdr[1] = htonl(destip);
-	((u8 *)&pseudohdr[2])[0] = 0;
-	((u8 *)&pseudohdr[2])[1] = protocol;
-	((u16 *)&pseudohdr[2])[1] = htons(datalen);
-
-	csum = (~compute_checksum((u8 *)pseudohdr, 12) & 0xFFFF) +
-	       (~compute_checksum(data, datalen) & 0xFFFF);
-
-	if (csum & 0xFFFF0000)
-		csum = (csum + 1) & 0xFFFF;
-
-	return (u16) ~csum;
-}
-
 void ipv4_print_address(u32 address)
 {
 	printf("%ld.%ld.%ld.%ld",
@@ -169,7 +92,9 @@ void ipv4_print_address(u32 address)
 	       ((address & 0xff000000) >> 24));
 }
 
-void parse_option(char *arg, option_data *opt)
+static int read_arguments_from_file(char *fname, option_data *opt);	/* forward */
+
+static void parse_option(char *arg, option_data *opt)
 {
 	if (strncmp("file=", arg, 5) == 0)
 		read_arguments_from_file((arg + 5), opt);
@@ -233,14 +158,13 @@ void parse_option(char *arg, option_data *opt)
 		opt->spi_wait_time = atoi(arg + 2);
 	if (strncmp("-ch", arg, 3) == 0)
 		opt->rsv_bit = 0;
-
 }
 
-int read_arguments_from_file(char *fname, option_data *opt)
+static int read_arguments_from_file(char *fname, option_data *opt)
 {
 	char line_buf[100];
 	char *bp;
-	char c;
+	int c;
 	FILE *fp;
 
 	fp = fopen(fname, "r");
@@ -269,5 +193,4 @@ int read_arguments(int argc, char *argv[], option_data *opt)
 {
 	for (; argc > 1; argc--)
 		parse_option(argv[argc - 1], opt);
-
 }

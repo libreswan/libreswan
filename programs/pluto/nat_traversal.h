@@ -20,13 +20,14 @@
 
 #include "demux.h"
 #include "lswalloc.h"
+#include "state.h"
 
 /*
  *  NAT-Traversal defines for nat_traversal type from nat_traversal.h
  */
 
 /**
- * NAT-Traversal methods which need NAT-D
+ * NAT-Traversal methods that need NAT-D
  */
 
 #if 0
@@ -38,14 +39,14 @@
 #endif
 
 /**
- * NAT-Traversal methods which need NAT-OA (Original Address)
+ * NAT-Traversal methods that need NAT-OA (Original Address)
  */
 #define NAT_T_WITH_NATOA \
 	( LELEM(NAT_TRAVERSAL_METHOD_IETF_02_03) | \
 	  LELEM(NAT_TRAVERSAL_METHOD_IETF_05) | \
 	  LELEM(NAT_TRAVERSAL_METHOD_IETF_RFC) )
 /**
- * NAT-Traversal methods which use NAT-KeepAlive
+ * NAT-Traversal methods that use NAT-KeepAlive
  */
 #define NAT_T_WITH_KA \
 	( LELEM(NAT_TRAVERSAL_METHOD_IETF_02_03) | \
@@ -53,13 +54,13 @@
 	  LELEM(NAT_TRAVERSAL_METHOD_IETF_RFC) )
 
 /**
- * NAT-Traversal methods which use officials values (RFC)
+ * NAT-Traversal methods that use officials values (RFC)
  */
 #define NAT_T_WITH_RFC_VALUES \
 	LELEM(NAT_TRAVERSAL_METHOD_IETF_RFC)
 
 /**
- * NAT-Traversal methods which use officials values (RFC) for encapsulation
+ * NAT-Traversal methods that use officials values (RFC) for encapsulation
  */
 #define NAT_T_WITH_ENCAPSULATION_RFC_VALUES \
 	( LELEM(NAT_TRAVERSAL_METHOD_IETF_RFC) )
@@ -69,7 +70,7 @@
  */
 #define NAT_T_DETECTED  ( LELEM(NATED_HOST) | LELEM(NATED_PEER) )
 
-void init_nat_traversal(unsigned int keep_alive_period);
+void init_nat_traversal(deltatime_t keep_alive_period);
 
 extern bool nat_traversal_enabled;
 extern bool nat_traversal_support_non_ike;
@@ -128,7 +129,10 @@ bool nat_traversal_port_float(struct state *st, struct msg_digest *md,
 
 bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md);
 
-
+bool ikev2_out_natd(struct state *st, u_int8_t np, ip_address *localaddr,
+			u_int16_t localport, ip_address *remoteaddr,
+			u_int16_t remoteport,  u_int8_t *rcookie,
+			pb_stream *outs);
 
 /**
  * Encapsulation mode macro (see demux.c)

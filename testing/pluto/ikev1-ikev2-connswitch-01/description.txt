@@ -1,0 +1,6 @@
+This is https://bugs.libreswan.org/show_bug.cgi?id=302
+
+When bringing up a second IPsec SA between two hosts, the hostpair does not
+honour the ikev2=insist|never setting in libreswan up to 3.21, which can lead
+to broken tunnels if the v1 and v2 tunnels _also_ use different authby= settings
+

@@ -1,0 +1,4 @@
+lsw#299 test
+
+Two road warriors, north and road connect to east, IKEv1, xauth authby=secret.
+East use addresspool and xauth passwd file for IPv4 address asignment.

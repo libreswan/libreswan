@@ -11,12 +11,12 @@ east #
  echo "initdone"
 initdone
 east #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 east NOW
 XFRM state:
 XFRM policy:
-src 0.0.0.0/0 dst 192.0.1.0/24 
-	dir out priority 3112 ptype main 
+src 0.0.0.0/0 dst 192.0.1.0/24
+	dir out priority 1048551 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 XFRM done

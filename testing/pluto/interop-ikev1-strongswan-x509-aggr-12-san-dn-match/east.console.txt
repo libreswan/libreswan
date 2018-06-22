@@ -1,0 +1,31 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ certutil -D -n west -d sql:/etc/ipsec.d
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add san
+002 added connection description "san"
+east #
+ echo "initdone"
+initdone
+east #
+ # confirm the right ID types were sent/received
+east #
+ grep "ID type" /tmp/pluto.log
+|    ID type: ID_DER_ASN1_DN (0x9)
+|    ID type: ID_DER_ASN1_DN (0x9)
+|    ID type: ID_DER_ASN1_DN (0x9)
+|    ID type: ID_DER_ASN1_DN (0x9)
+|    ID type: ID_IPV4_ADDR (0x1)
+|    ID type: ID_IPV4_ADDR (0x1)
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

@@ -19,10 +19,12 @@
 
 #include "lswlog.h"
 
-void libreswan_loglog(int mess_no, const char *fmt, ...)
+void libreswan_loglog(enum rc_type rc, const char *fmt, ...)
 {
-	va_list ap;
-	va_start(ap, fmt);
-	libreswan_vloglog(mess_no, fmt, ap);
-	va_end(ap);
+	LSWLOG_LOG_WHACK(rc, buf) {
+		va_list ap;
+		va_start(ap, fmt);
+		lswlogvf(buf, fmt, ap);
+		va_end(ap);
+	}
 }

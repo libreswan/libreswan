@@ -40,14 +40,26 @@ USERLAND_CFLAGS+=$(OPTIMIZE_CFLAGS)
 # Dumping ground for an arbitrary set of flags.  Should probably be
 # separated out.
 ifeq ($(origin USERCOMPILE),undefined)
-USERCOMPILE= -fexceptions -fstack-protector-all -fno-strict-aliasing -fPIE -DPIE
+USERCOMPILE= -fstack-protector-all -fno-strict-aliasing -fPIE -DPIE
 endif
 USERLAND_CFLAGS+=$(USERCOMPILE)
+
+# Build/link against the more pedantic ElectricFence memory allocator;
+# used when testing.
+USE_EFENCE ?= false
+ifeq ($(USE_EFENCE),true)
+USERLAND_CFLAGS+=-DUSE_EFENCE
+EFENCE_LDFLAGS ?= -lefence
+endif
+ifneq ($(EFENCE),)
+$(warning EFENCE=$(EFENCE) replaced by USE_EFENCE=true)
+endif
 
 ifeq ($(USE_DNSSEC),true)
 USERLAND_CFLAGS+=-DUSE_DNSSEC
 UNBOUND_LDFLAGS ?= -lunbound -lldns
 DEFAULT_DNSSEC_ROOTKEY_FILE ?= "/var/lib/unbound/root.key"
+USERLAND_CFLAGS+=-DDEFAULT_DNSSEC_ROOTKEY_FILE=\"${DEFAULT_DNSSEC_ROOTKEY_FILE}\"
 endif
 
 ifeq ($(USE_NIC_OFFLOAD),true)
@@ -78,8 +90,11 @@ USERLAND_CFLAGS+=-DLIBCURL
 CURL_LDFLAGS ?= -lcurl
 endif
 
+# Build support for the Linux Audit system
+
+USE_LINUX_AUDIT ?= false
 ifeq ($(USE_LINUX_AUDIT),true)
-USERLAND_CFLAGS+=-DUSE_LINUX_AUDIT
+USERLAND_CFLAGS += -DUSE_LINUX_AUDIT
 LINUX_AUDIT_LDFLAGS ?= -laudit
 endif
 
@@ -97,14 +112,12 @@ ifeq ($(USE_NM),true)
 USERLAND_CFLAGS+=-DHAVE_NM
 endif
 
-# if we use pam for password checking then add it too
+# include PAM support for XAUTH when available on the platform
+
+USE_XAUTHPAM?=true
 ifeq ($(USE_XAUTHPAM),true)
 USERLAND_CFLAGS += -DXAUTH_HAVE_PAM
 XAUTHPAM_LDFLAGS ?= -lpam
-endif
-
-ifeq ($(USE_SAREF_KERNEL),true)
-USERLAND_CFLAGS+=-DSAREF_SUPPORTED
 endif
 
 USERLAND_CFLAGS+=-DUSE_MD5
@@ -134,11 +147,19 @@ endif
 ifeq ($(USE_RIPEMD),true)
 USERLAND_CFLAGS+=-DUSE_RIPEMD
 endif
+ifeq ($(USE_DH31),true)
+USERLAND_CFLAGS+=-DUSE_DH31
+endif
+USE_XCBC?=true
+ifeq ($(USE_XCBC),true)
+USERLAND_CFLAGS+=-DUSE_XCBC
+endif
 
 ifeq ($(USE_SINGLE_CONF_DIR),true)
 USERLAND_CFLAGS+=-DSINGLE_CONF_DIR=1
 endif
 
+USERLAND_CFLAGS+=-DDEFAULT_RUNDIR=\"$(FINALRUNDIR)\"
 USERLAND_CFLAGS+=-DFIPSPRODUCTCHECK=\"${FIPSPRODUCTCHECK}\"
 USERLAND_CFLAGS+=-DIPSEC_CONF=\"$(FINALCONFFILE)\"
 USERLAND_CFLAGS+=-DIPSEC_CONFDDIR=\"$(FINALCONFDDIR)\"
@@ -154,8 +175,9 @@ USERLAND_CFLAGS+=-DIPSEC_SECRETS_FILE=\"$(IPSEC_SECRETS_FILE)\"
 # definition just in case.
 USERLAND_CFLAGS+=-DFORCE_PR_ASSERT
 
+# stick with RETRANSMIT_INTERVAL_DEFAULT as makefile variable name
 ifdef RETRANSMIT_INTERVAL_DEFAULT
-USERLAND_CFLAGS+=-DRETRANSMIT_INTERVAL_DEFAULT="$(RETRANSMIT_INTERVAL_DEFAULT)"
+USERLAND_CFLAGS+=-DRETRANSMIT_INTERVAL_DEFAULT_MS="$(RETRANSMIT_INTERVAL_DEFAULT)"
 endif
 
 ifeq ($(HAVE_BROKEN_POPEN),true)

@@ -63,11 +63,13 @@ static bool pack_str(struct whackpacker *wp, char **p)
 }
 
 /**
- * Unpack a whack message into a string
+ * Unpack the next string from a whack message
  *
  * @param wp Whack Message
- * @param p a string into which you want the message to be placed into
- * @return bool True if operation successful
+ * @param p pointer to a string pointer; the string pointer will point to the next string in *wp.
+ * @return bool TRUE if operation successful
+ *
+ * Note that the string still resides in the whach message.
  */
 static bool unpack_str(struct whackpacker *wp, char **p)
 {
@@ -113,7 +115,7 @@ err_t pack_whack_msg(struct whackpacker *wp)
 	    !pack_str(wp, &wp->msg->right.updown) ||		/* string 12 */
 	    !pack_str(wp, &wp->msg->right.virt) ||		/* string 13 */
 	    !pack_str(wp, &wp->msg->keyid) ||			/* string 14 */
-	    !pack_str(wp, &wp->msg->myid) ||			/* string 15 */
+
 	    !pack_str(wp, &wp->msg->ike) ||			/* string 16 */
 	    !pack_str(wp, &wp->msg->esp) ||			/* string 17 */
 	    !pack_str(wp, &wp->msg->left.username) ||		/* string 18 */
@@ -128,7 +130,8 @@ err_t pack_whack_msg(struct whackpacker *wp)
 #ifdef HAVE_LABELED_IPSEC
 	    !pack_str(wp, &wp->msg->policy_label) ||		/* string 27 */
 #endif
-	    !pack_str(wp, &wp->msg->modecfg_domain) ||		/* string 28 */
+	    !pack_str(wp, &wp->msg->modecfg_dns) ||		/* string 28 */
+	    !pack_str(wp, &wp->msg->modecfg_domains) ||		/* string 28 */
 	    !pack_str(wp, &wp->msg->modecfg_banner) ||		/* string 29 */
 	    !pack_str(wp, &wp->msg->conn_mark_both) ||		/* string 30 */
 	    !pack_str(wp, &wp->msg->conn_mark_in) ||		/* string 31 */
@@ -181,7 +184,7 @@ err_t unpack_whack_msg(struct whackpacker *wp)
 	    !unpack_str(wp, &wp->msg->right.updown) ||		/* string 12 */
 	    !unpack_str(wp, &wp->msg->right.virt) ||		/* string 13 */
 	    !unpack_str(wp, &wp->msg->keyid) ||			/* string 14 */
-	    !unpack_str(wp, &wp->msg->myid) ||			/* string 15 */
+
 	    !unpack_str(wp, &wp->msg->ike) ||			/* string 16 */
 	    !unpack_str(wp, &wp->msg->esp) ||			/* string 17 */
 	    !unpack_str(wp, &wp->msg->left.username) ||		/* string 18 */
@@ -196,7 +199,8 @@ err_t unpack_whack_msg(struct whackpacker *wp)
 #ifdef HAVE_LABELED_IPSEC
 	    !unpack_str(wp, &wp->msg->policy_label) ||		/* string 27 */
 #endif
-	    !unpack_str(wp, &wp->msg->modecfg_domain) ||	/* string 28 */
+	    !unpack_str(wp, &wp->msg->modecfg_dns) ||		/* string 28 */
+	    !unpack_str(wp, &wp->msg->modecfg_domains) ||	/* string 28 */
 	    !unpack_str(wp, &wp->msg->modecfg_banner) ||	/* string 29 */
 	    !unpack_str(wp, &wp->msg->conn_mark_both) ||	/* string 30 */
 	    !unpack_str(wp, &wp->msg->conn_mark_in) ||		/* string 31 */

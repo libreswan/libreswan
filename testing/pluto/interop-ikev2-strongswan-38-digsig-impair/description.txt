@@ -1,0 +1,13 @@
+RFC 7427 :
+Basic pluto with IKEv2 using X.509 on the responder (east), and Strongswan on
+the initiator (west) with impairment.
+
+The impairment is introduced in such a way that we ignore processing the hash notify
+we receive from strongswan in IKE_SA_INIT Request.
+
+This is to ensure that Libreswan with default Authentication type as 
+Digital Signatures (RFC 7427 )can still interop with an older version of strongswan that does not 
+support RFC 7427
+
+
+

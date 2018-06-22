@@ -1,3 +1,3 @@
 ping6 -n -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
-ipsec look
+../../pluto/bin/ipsec-look.sh
 echo done

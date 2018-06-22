@@ -13,7 +13,8 @@
  * Copyright (C) 2012 Philippe Vouters <philippe.vouters@laposte.net>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
- * Copyright (C) 2013-2017 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2013-2018 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -49,7 +50,9 @@
 #include "lswlog.h"
 #include "defs.h"
 #include "whack.h"
+#include "ip_address.h"
 
+#include "ipsecconf/confread.h" /* for DEFAULT_UPDOWN */
 #include <net/if.h> /* for IFNAMSIZ */
 /*
  * Print the 'ipsec --whack help' message
@@ -70,8 +73,9 @@ static void help(void)
 		"	[--ca <distinguished name>] \\\n"
 		"	[--nexthop <ip-address>] \\\n"
 		"	[--client <subnet>] \\\n"
-		"	[--ikeport <port-number>] [--srcip <ip-address>] [--vtiip <ip-address>/mask]\\\n"
 		"	[--clientprotoport <protocol>/<port>] [--dnskeyondemand] \\\n"
+		"	[--ikeport <port-number>] [--srcip <ip-address>] \\\n"
+		"	[--vtiip <ip-address>/mask] \\\n"
 		"	[--updown <updown>] \\\n"
 		"	[--authby <psk | rsasig | null>] \\\n"
 		"	[--groups <access control groups>] \\\n"
@@ -79,12 +83,15 @@ static void help(void)
 		"	[--ca <distinguished name>] \\\n"
 		"	[--sendca no|issuer|all] [--sendcert] \\\n"
 		"	[--nexthop <ip-address>] \\\n"
-		"	[--client <subnet> | --clientwithin <address range>] \\\n"
+		"	[--client <subnet> \\\n"
 		"	[--clientprotoport <protocol>/<port>] \\\n"
 		"	[--dnskeyondemand] [--updown <updown>] \\\n"
-		"	[--psk] | [--rsasig] | [ --auth-null] | [--auth-never] \\\n"
-		"	[--encrypt] [--authenticate] [--compress] \\\n"
-		"	[--overlapip] [--tunnel] [--pfs] \\\n"
+		"	[--psk] | [--rsasig] | [--rsa-sha2] | [--rsa-sha2_256] | \\\n"
+		"		[--rsa-sha2_384 ] | [--rsa-sha2_512 ] | [ --auth-null] | \\\n"
+		"		[--auth-never] \\\n"
+		"	[--encrypt] [--authenticate] [--compress] [--sha2-truncbug] \\\n"
+		"	[--msdh-downgrade] \\\n"
+		"	[--overlapip] [--tunnel] [--pfs] [--dns-match-id] \\\n"
 		"	[--pfsgroup modp1024 | modp1536 | modp2048 | \\\n"
 		"		modp3072 | modp4096 | modp6144 | modp8192 \\\n"
 		"		dh22 | dh23 | dh24] \\\n"
@@ -102,7 +109,7 @@ static void help(void)
 		"	[--ikev1-allow | --ikev2-allow | --ikev2-propose] \\\n"
 		"	[--allow-narrowing] [--sareftrack] [--sarefconntrack] \\\n"
 		"	[--ikefrag-allow | --ikefrag-force] [--no-ikepad] \\\n"
-		"	[--esn ] [--no-esn] \\\n"
+		"	[--esn ] [--no-esn] [--decap-dscp] [--nopmtudisc] [--mobike] \\\n"
 #ifdef HAVE_NM
 		"	[--nm-configured] \\\n"
 #endif
@@ -110,22 +117,23 @@ static void help(void)
 		"	[--labeledipsec] [--policylabel <label>] \\\n"
 #endif
 		"	[--xauthby file|pam|alwaysok] [--xauthfail hard|soft] \\\n"
-		"	[--dontrekey] [--aggrmode] \\\n"
+		"	[--dontrekey] [--aggressive] \\\n"
 		"	[--initialcontact] [--cisco-unity] [--fake-strongswan] \\\n"
 		"	[--encaps <auto|yes|no>] [--no-nat-keepalive] \\\n"
-		"	[--ikev1natt <both|rfc|drafts> \\\n"
+		"	[--ikev1-natt <both|rfc|drafts> \\\n"
 		"	[--dpddelay <seconds> --dpdtimeout <seconds>] \\\n"
 		"	[--dpdaction (clear|hold|restart)] \\\n"
 		"	[--xauthserver | --xauthclient] \\\n"
 		"	[--modecfgserver | --modecfgclient] [--modecfgpull] \\\n"
 		"	[--addresspool <network range>] \\\n"
-		"	[--modecfgdns1 <ip-address>] [--modecfgdns2 <ip-address>] \\\n"
-		"	[--modecfgdomain <dns-domain>] \\\n"
+		"	[--modecfgdns <ip-address, ip-address>  \\\n"
+		"	[--modecfgdomains <dns-domain, dns-domain, ..>] \\\n"
 		"	[--modecfgbanner <login banner>] \\\n"
 		"	[--metric <metric>] \\\n"
 		"	[--nflog-group <groupnum>] \\\n"
-		"       [--conn-mark <mark/mask>] [--conn-mark-in <mark/mask>] [--conn-mark-out <mark/mask>] \\\n"
-		"       [--vti-iface <iface> ] [--vti-routing] [--vti-shared]\\\n"
+		"	[--conn-mark <mark/mask>] [--conn-mark-in <mark/mask>] \\\n"
+		"	[--conn-mark-out <mark/mask>] \\\n"
+		"	[--vti-iface <iface> ] [--vti-routing] [--vti-shared] \\\n"
 		"	[--initiateontraffic | --pass | --drop | --reject] \\\n"
 		"	[--failnone | --failpass | --faildrop | --failreject] \\\n"
 		"	[--negopass ] \\\n"
@@ -139,7 +147,8 @@ static void help(void)
 		"	[--username <name>] [--xauthpass <pass>]\n"
 		"\n"
 		"opportunistic initiation: whack [--tunnelipv4 | --tunnelipv6] \\\n"
-		"	--oppohere <ip-address> --oppothere <ip-address>\n"
+		"	--oppohere <ip-address> --oppothere <ip-address> \\\n"
+		"	[-oppotproto <protocol>]\n"
 		"\n"
 		"delete: whack --delete --name <connection_name>\n"
 		"\n"
@@ -152,20 +161,17 @@ static void help(void)
 		"\n"
 		"pubkey: whack --keyid <id> [--addkey] [--pubkeyrsa <key>]\n"
 		"\n"
-		"myid: whack --myid <id>\n"
-		"\n"
 		"debug: whack [--name <connection_name>] \\\n"
 		"	[--debug-none] | [--debug-all] | \\\n"
-		"	( [--debug-raw] [--debug-crypt] [--debug-parsing] \\\n"
-		"	[--debug-emitting] [--debug-control] [--debug-controlmore] \\\n"
-		"	[--debug-dns] [--debug-pfkey] [--debug-dpd] \\\n"
-		"	[--debug-nat-t] [--debug-x509] [--debug-oppo] \\\n"
-		"	[--debug-oppoinfo] \\\n"
-		"	[--debug-private] )\n"
+		"	[--debug <class>] | [--debug private] \\\n"
+		"	[--debug list]\n"
 		"\n"
 		"testcases: [--whackrecord <file>] [--whackstoprecord]\n"
 		"\n"
 		"listen: whack (--listen | --unlisten)\n"
+		"\n"
+		"socket buffers: whack --ike-socket-bufsize <bufsize>\n"
+		"socket errqueue: whack --ike-socket-errqueue-toggle\n"
 		"\n"
 		"ddos-protection: whack (--ddos-busy | --ddos-unlimited | \\\n"
 		"	--ddos-auto)\n"
@@ -175,9 +181,10 @@ static void help(void)
 		"\n"
 		"purge: whack --purgeocsp\n"
 		"\n"
-		"reread: whack [--rereadsecrets] [--fetchcrls] [--rereadall] \\\n"
+		"reread: whack [--rereadsecrets] [--fetchcrls] [--rereadall]\n"
 		"\n"
-		"status: whack --status --trafficstatus --globalstatus --clearstats --shuntstatus --fipsstatus\n"
+		"status: whack [--status] | [--trafficstatus] | [--globalstatus] | \\\n"
+		"	[--clearstats] | [--shuntstatus] | [--fipsstatus]\n"
 		"\n"
 #ifdef HAVE_SECCOMP
 		"status: whack --seccomp-crashtest (CAREFUL!)\n"
@@ -265,8 +272,6 @@ enum option_enums {
 	OPT_ADDKEY,
 	OPT_PUBKEYRSA,
 
-	OPT_MYID,
-
 	OPT_ROUTE,
 	OPT_UNROUTE,
 
@@ -278,6 +283,8 @@ enum option_enums {
 	OPT_DELETEUSER,
 	OPT_LISTEN,
 	OPT_UNLISTEN,
+	OPT_IKEBUF,
+	OPT_IKE_MSGERR,
 
 	OPT_DDOS_BUSY,
 	OPT_DDOS_UNLIMITED,
@@ -304,8 +311,10 @@ enum option_enums {
 
 	OPT_OPPO_HERE,
 	OPT_OPPO_THERE,
+	OPT_OPPO_PROTO,
+	OPT_OPPO_DPORT,
 
-#   define OPT_LAST1 OPT_OPPO_THERE	/* last "normal" option, range 1 */
+#   define OPT_LAST1 OPT_OPPO_DPORT	/* last "normal" option, range 1 */
 
 #define OPT_FIRST2  OPT_ASYNC	/* first normal option, range 2 */
 
@@ -372,9 +381,8 @@ enum option_enums {
 #   define CD_FIRST CD_TO	/* first connection description */
 	CD_TO,
 
-	CD_MODECFGDNS1,
-	CD_MODECFGDNS2,
-	CD_MODECFGDOMAIN,
+	CD_MODECFGDNS,
+	CD_MODECFGDOMAINS,
 	CD_MODECFGBANNER,
 	CD_METRIC,
 	CD_CONNMTU,
@@ -412,6 +420,7 @@ enum option_enums {
 	CD_INITIAL_CONTACT,
 	CD_CISCO_UNITY,
 	CD_FAKE_STRONGSWAN,
+	CD_MOBIKE,
 	CD_IKE,
 	CD_SEND_CA,
 	CD_PFSGROUP,
@@ -422,8 +431,8 @@ enum option_enums {
 	CD_POLICY_LABEL,
 	CD_XAUTHBY,
 	CD_XAUTHFAIL,
-	CD_ESP,
 	CD_NIC_OFFLOAD,
+	CD_ESP,
 #   define CD_LAST CD_ESP	/* last connection description */
 
 /*
@@ -450,17 +459,16 @@ enum option_enums {
 
 /* === end of correspondence with POLICY_* === */
 
-/* NOTE: these definitions must match DBG_* and IMPAIR_* in constants.h */
-
 #   define DBGOPT_FIRST DBGOPT_NONE
 	DBGOPT_NONE,
 	DBGOPT_ALL,
 
-	DBGOPT_elems,	/* this point on: DBGOPT single elements */
+	DBGOPT_DEBUG,
+	DBGOPT_IMPAIR,
 
-	DBGOPT_LAST = DBGOPT_elems + IMPAIR_roof_IX - 1,
+	DBGOPT_LAST = DBGOPT_IMPAIR,
 
-#define	OPTION_ENUMS_LAST	DBGOPT_LAST
+#define	OPTION_ENUMS_LAST	DBGOPT_IMPAIR
 };
 
 /*
@@ -492,8 +500,6 @@ static const struct option long_opts[] = {
 	{ "addkey", no_argument, NULL, OPT_ADDKEY + OO },
 	{ "pubkeyrsa", required_argument, NULL, OPT_PUBKEYRSA + OO },
 
-	{ "myid", required_argument, NULL, OPT_MYID + OO },
-
 	{ "route", no_argument, NULL, OPT_ROUTE + OO },
 	{ "ondemand", no_argument, NULL, OPT_ROUTE + OO },	/* alias */
 	{ "unroute", no_argument, NULL, OPT_UNROUTE + OO },
@@ -507,6 +513,8 @@ static const struct option long_opts[] = {
 	{ "crash", required_argument, NULL, OPT_DELETECRASH + OO },
 	{ "listen", no_argument, NULL, OPT_LISTEN + OO },
 	{ "unlisten", no_argument, NULL, OPT_UNLISTEN + OO },
+	{ "ike-socket-bufsize", required_argument, NULL, OPT_IKEBUF + OO + NUMERIC_ARG},
+	{ "ike-socket-errqueue-toggle", no_argument, NULL, OPT_IKE_MSGERR + OO },
 
 	{ "ddos-busy", no_argument, NULL, OPT_DDOS_BUSY + OO },
 	{ "ddos-unlimited", no_argument, NULL, OPT_DDOS_UNLIMITED + OO },
@@ -536,6 +544,8 @@ static const struct option long_opts[] = {
 
 	{ "oppohere", required_argument, NULL, OPT_OPPO_HERE + OO },
 	{ "oppothere", required_argument, NULL, OPT_OPPO_THERE + OO },
+	{ "oppoproto", required_argument, NULL, OPT_OPPO_PROTO + OO },
+	{ "oppodport", required_argument, NULL, OPT_OPPO_DPORT + OO },
 
 	{ "asynchronous", no_argument, NULL, OPT_ASYNC + OO },
 
@@ -590,8 +600,12 @@ static const struct option long_opts[] = {
 	{ "tunnelipv4", no_argument, NULL, CD_TUNNELIPV4 + OO },
 	{ "tunnelipv6", no_argument, NULL, CD_TUNNELIPV6 + OO },
 	PS("pfs", PFS),
-	{ "sha2_truncbug", no_argument, NULL, CD_SHA2_TRUNCBUG + OO },
-	PS("aggrmode", AGGRESSIVE),
+	PS("msdh-downgrade", MSDH_DOWNGRADE),
+	PS("dns-match-id", DNS_MATCH_ID),
+	PS("sha2-truncbug", SHA2_TRUNCBUG),
+	PS("sha2_truncbug", SHA2_TRUNCBUG), /* backwards compatibility */
+	PS("aggressive", AGGRESSIVE),
+	PS("aggrmode", AGGRESSIVE), /*  backwards compatibility */
 
 	PS("disablearrivalcheck", DISABLEARRIVALCHECK),
 
@@ -618,11 +632,13 @@ static const struct option long_opts[] = {
 	{ "forceencaps", no_argument, NULL, CD_FORCEENCAPS + OO }, /* backwards compatibility */
 	{ "encaps", required_argument, NULL, CD_ENCAPS + OO },
 	{ "no-nat_keepalive", no_argument, NULL,  CD_NO_NAT_KEEPALIVE },
-	{ "ikev1_natt", required_argument, NULL, CD_IKEV1_NATT + OO },
+	{ "ikev1_natt", required_argument, NULL, CD_IKEV1_NATT + OO },	/* obsolete _ */
+	{ "ikev1-natt", required_argument, NULL, CD_IKEV1_NATT + OO },
 	{ "initialcontact", no_argument, NULL,  CD_INITIAL_CONTACT },
 	{ "cisco_unity", no_argument, NULL, CD_CISCO_UNITY },	/* obsolete _ */
 	{ "cisco-unity", no_argument, NULL, CD_CISCO_UNITY },
 	{ "fake-strongswan", no_argument, NULL, CD_FAKE_STRONGSWAN },
+	{ "mobike", no_argument, NULL, CD_MOBIKE },
 
 	{ "dpddelay", required_argument, NULL, CD_DPDDELAY + OO + NUMERIC_ARG },
 	{ "dpdtimeout", required_argument, NULL, CD_DPDTIMEOUT + OO + NUMERIC_ARG },
@@ -637,9 +653,8 @@ static const struct option long_opts[] = {
 	{ "modecfgserver", no_argument, NULL, END_MODECFGSERVER + OO },
 	{ "modecfgclient", no_argument, NULL, END_MODECFGCLIENT + OO },
 	{ "addresspool", required_argument, NULL, END_ADDRESSPOOL + OO },
-	{ "modecfgdns1", required_argument, NULL, CD_MODECFGDNS1 + OO },
-	{ "modecfgdns2", required_argument, NULL, CD_MODECFGDNS2 + OO },
-	{ "modecfgdomain", required_argument, NULL, CD_MODECFGDOMAIN + OO },
+	{ "modecfgdns", required_argument, NULL, CD_MODECFGDNS + OO },
+	{ "modecfgdomains", required_argument, NULL, CD_MODECFGDOMAINS + OO },
 	{ "modecfgbanner", required_argument, NULL, CD_MODECFGBANNER + OO },
 	{ "modeconfigserver", no_argument, NULL, END_MODECFGSERVER + OO },
 	{ "modeconfigclient", no_argument, NULL, END_MODECFGCLIENT + OO },
@@ -686,8 +701,9 @@ static const struct option long_opts[] = {
 	PS("ikev2-propose", IKEV2_PROPOSE),
 
 	PS("allow-narrowing", IKEV2_ALLOW_NARROWING),
+#ifdef XAUTH_HAVE_PAM
 	PS("ikev2-pam-authorize", IKEV2_PAM_AUTHORIZE),
-
+#endif
 	PS("sareftrack", SAREF_TRACK),
 	PS("sarefconntrack", SAREF_TRACK_CONNTRACK),
 
@@ -697,6 +713,10 @@ static const struct option long_opts[] = {
 
 	PS("no-esn", ESN_NO),
 	PS("esn", ESN_YES),
+	PS("decap-dscp", DECAP_DSCP),
+	PS("nopmtudisc", NOPMTUDISC),
+	PS("msdh-downgrade", MSDH_DOWNGRADE),
+	PS("dns-match-id", DNS_MATCH_ID),
 #undef PS
 
 
@@ -710,65 +730,9 @@ static const struct option long_opts[] = {
 
 	{ "debug-none", no_argument, NULL, DBGOPT_NONE + OO },
 	{ "debug-all", no_argument, NULL, DBGOPT_ALL + OO },
+	{ "debug", required_argument, NULL, DBGOPT_DEBUG + OO, },
+	{ "impair", required_argument, NULL, DBGOPT_IMPAIR + OO, },
 
-#    define DO (DBGOPT_ALL + OO + 1)
-
-	{ "debug-raw", no_argument, NULL, DBG_RAW_IX + DO },
-	{ "debug-crypt", no_argument, NULL, DBG_CRYPT_IX + DO },
-	{ "debug-parsing", no_argument, NULL, DBG_PARSING_IX + DO },
-	{ "debug-emitting", no_argument, NULL, DBG_EMITTING_IX + DO },
-	{ "debug-control", no_argument, NULL, DBG_CONTROL_IX + DO },
-	{ "debug-lifecycle", no_argument, NULL, DBG_LIFECYCLE_IX + DO },
-	{ "debug-kernel", no_argument, NULL, DBG_KERNEL_IX + DO },
-	{ "debug-dns", no_argument, NULL, DBG_DNS_IX + DO },
-	{ "debug-oppo", no_argument, NULL, DBG_OPPO_IX + DO },
-	{ "debug-oppoinfo", no_argument, NULL, DBG_OPPOINFO_IX + DO },
-	{ "debug-whackwatch",  no_argument, NULL, DBG_WHACKWATCH_IX + DO },
-	{ "debug-controlmore", no_argument, NULL, DBG_CONTROLMORE_IX + DO },
-	{ "debug-pfkey",   no_argument, NULL, DBG_PFKEY_IX + DO },
-	/* ??? redundant spelling */
-	{ "debug-nattraversal", no_argument, NULL, DBG_NATT_IX + DO },
-	/* ??? redundant spelling */
-	{ "debug-natt",    no_argument, NULL, DBG_NATT_IX + DO },
-	/* obsolete _ */
-	{ "debug-nat_t",   no_argument, NULL, DBG_NATT_IX + DO },
-	{ "debug-nat-t",   no_argument, NULL, DBG_NATT_IX + DO },
-	{ "debug-x509",    no_argument, NULL, DBG_X509_IX + DO },
-	{ "debug-dpd",     no_argument, NULL, DBG_DPD_IX + DO },
-	{ "debug-private", no_argument, NULL, DBG_PRIVATE_IX + DO },
-
-	{ "impair-bust-mi2", no_argument, NULL, IMPAIR_BUST_MI2_IX + DO },
-	{ "impair-bust-mr2", no_argument, NULL, IMPAIR_BUST_MR2_IX + DO },
-	{ "impair-sa-fail",    no_argument, NULL, IMPAIR_SA_CREATION_IX + DO },
-	{ "impair-die-oninfo", no_argument, NULL, IMPAIR_DIE_ONINFO_IX  + DO },
-	{ "impair-jacob-two-two", no_argument, NULL,
-		IMPAIR_JACOB_TWO_TWO_IX + DO },
-	{ "impair-major-version-bump", no_argument, NULL,
-		IMPAIR_MAJOR_VERSION_BUMP_IX + DO },
-	{ "impair-minor-version-bump", no_argument, NULL,
-		IMPAIR_MINOR_VERSION_BUMP_IX + DO },
-	{ "impair-retransmits", no_argument, NULL,
-		IMPAIR_RETRANSMITS_IX + DO },
-	{ "impair-send-bogus-payload-flag", no_argument, NULL,
-		IMPAIR_SEND_BOGUS_PAYLOAD_FLAG_IX + DO },
-	{ "impair-send-bogus-isakmp-flag", no_argument, NULL,
-		IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX + DO },
-	{ "impair-send-ikev2-ke", no_argument, NULL,
-		IMPAIR_SEND_IKEv2_KE_IX + DO },
-	{ "impair-send-no-delete", no_argument, NULL,
-		IMPAIR_SEND_NO_DELETE_IX + DO },
-	{ "impair-send-no-ikev2-auth", no_argument, NULL,
-		IMPAIR_SEND_NO_IKEV2_AUTH_IX + DO },
-	/*
-	 * impair-force-fips cannot be used with whack,
-	 * it needs to be passed as daemon option to pluto
-	 */
-	{ "impair-send-key-size-check", no_argument, NULL,
-		IMPAIR_SEND_KEY_SIZE_CHECK_IX + DO },
-	{ "impair-send-zero-gx", no_argument, NULL,
-		IMPAIR_SEND_ZERO_GX_IX + DO },
-	{ "impair-send-bogus-dcookie", no_argument, NULL,
-		IMPAIR_SEND_BOGUS_DCOOKIE_IX + DO },
 #    undef DO
 	{ "whackrecord",     required_argument, NULL, OPT_WHACKRECORD + OO },
 	{ "whackstoprecord", no_argument, NULL, OPT_WHACKSTOPRECORD + OO },
@@ -833,20 +797,10 @@ static void update_ports(struct whack_message *m)
 }
 
 static void check_end(struct whack_end *this, struct whack_end *that,
-		      bool default_nexthop, sa_family_t caf, sa_family_t taf)
+		      bool default_nexthop UNUSED, sa_family_t caf, sa_family_t taf)
 {
 	if (caf != addrtypeof(&this->host_addr))
 		diag("address family of host inconsistent");
-
-	if (default_nexthop) {
-		if (isanyaddr(&that->host_addr))
-			diag("our nexthop must be specified when other host is a %any or %opportunistic");
-
-		this->host_nexthop = that->host_addr;
-	}
-
-	if (caf != addrtypeof(&this->host_nexthop))
-		diag("address family of nexthop inconsistent");
 
 	if (this->has_client) {
 		if (taf != subnettypeof(&this->client))
@@ -901,9 +855,12 @@ int main(int argc, char **argv)
 
 	char username[MAX_USERNAME_LEN];
 	char xauthpass[XAUTH_MAX_PASS_LENGTH];
-	int usernamelen = 0, xauthpasslen = 0;
+	int usernamelen = 0;
+	int xauthpasslen = 0;
 	bool gotusername = FALSE, gotxauthpass = FALSE;
 	const char *ugh;
+	int oppo_dport = 0;
+	bool ignore_errors = FALSE;
 
 	/* check division of numbering space */
 	assert(OPTION_OFFSET + OPTION_ENUMS_LAST < NUMERIC_ARG);
@@ -931,8 +888,6 @@ int main(int argc, char **argv)
 
 	msg.remotepeertype = NON_CISCO;
 
-	msg.sha2_truncbug = FALSE;
-
 	/* Network Manager support */
 #ifdef HAVE_NM
 	msg.nmconfigured = FALSE;
@@ -945,10 +900,11 @@ int main(int argc, char **argv)
 
 	msg.xauthby = XAUTHBY_FILE;
 	msg.xauthfail = XAUTHFAIL_HARD;
-	msg.modecfg_domain = NULL;
+	msg.modecfg_domains = NULL;
+	msg.modecfg_dns = NULL;
 	msg.modecfg_banner = NULL;
 
-	msg.nic_offload = nic_offload_auto;
+	msg.nic_offload = yna_auto;
 	msg.sa_ike_life_seconds = deltatime(IKE_SA_LIFETIME_DEFAULT);
 	msg.sa_ipsec_life_seconds = deltatime(IPSEC_SA_LIFETIME_DEFAULT);
 	msg.sa_rekey_margin = deltatime(SA_REPLACEMENT_MARGIN_DEFAULT);
@@ -957,10 +913,13 @@ int main(int argc, char **argv)
 	/* whack cannot access kernel_ops->replay_window */
 	msg.sa_replay_window = IPSEC_SA_DEFAULT_REPLAY_WINDOW;
 	msg.r_timeout = deltatime(RETRANSMIT_TIMEOUT_DEFAULT);
-	msg.r_interval = RETRANSMIT_INTERVAL_DEFAULT;
+	msg.r_interval = deltatime_ms(RETRANSMIT_INTERVAL_DEFAULT_MS);
 
 	msg.addr_family = AF_INET;
 	msg.tunnel_addr_family = AF_INET;
+
+	msg.right.updown = DEFAULT_UPDOWN;
+	msg.left.updown = DEFAULT_UPDOWN;
 
 	for (;;) {
 		int long_index;
@@ -1147,9 +1106,18 @@ int main(int argc, char **argv)
 			msg.keyid = optarg;	/* decoded by Pluto */
 			continue;
 
-		case OPT_MYID:	/* --myid <identity> */
-			msg.whack_myid = TRUE;
-			msg.myid = optarg;	/* decoded by Pluto */
+		case OPT_IKEBUF:	/* --ike-socket-bufsize <bufsize> */
+			if (opt_whole < 1500) {
+				diag("Ignoring extremely unwise IKE buffer size choice");
+			} else {
+				msg.ike_buf_size = opt_whole;
+				msg.whack_listen = TRUE;
+			}
+			continue;
+
+		case OPT_IKE_MSGERR:	/* --ike-socket-errqueue-toggle */
+			msg.ike_sock_err_toggle = TRUE;
+			msg.whack_listen = TRUE;
 			continue;
 
 		case OPT_ADDKEY:	/* --addkey */
@@ -1263,10 +1231,12 @@ int main(int argc, char **argv)
 
 		case OPT_STATUS:	/* --status */
 			msg.whack_status = TRUE;
+			ignore_errors = TRUE;
 			continue;
 
 		case OPT_GLOBAL_STATUS:	/* --global-status */
 			msg.whack_global_status = TRUE;
+			ignore_errors = TRUE;
 			continue;
 
 		case OPT_CLEAR_STATS:	/* --clearstats */
@@ -1275,14 +1245,17 @@ int main(int argc, char **argv)
 
 		case OPT_TRAFFIC_STATUS:	/* --trafficstatus */
 			msg.whack_traffic_status = TRUE;
+			ignore_errors = TRUE;
 			continue;
 
 		case OPT_SHUNT_STATUS:	/* --shuntstatus */
 			msg.whack_shunt_status = TRUE;
+			ignore_errors = TRUE;
 			continue;
 
 		case OPT_FIPS_STATUS:	/* --fipsstatus */
 			msg.whack_fips_status = TRUE;
+			ignore_errors = TRUE;
 			continue;
 
 #ifdef HAVE_SECCOMP
@@ -1305,7 +1278,7 @@ int main(int argc, char **argv)
 			}
 			continue;
 
-		case OPT_OPPO_THERE:	/* --oppohere <ip-address> */
+		case OPT_OPPO_THERE:	/* --oppothere <ip-address> */
 			tunnel_af_used_by = long_opts[long_index].name;
 			diagq(ttoaddr(optarg, 0, msg.tunnel_addr_family,
 				      &msg.oppo_peer_client), optarg);
@@ -1313,6 +1286,14 @@ int main(int argc, char **argv)
 				diagq("0.0.0.0 or 0::0 isn't a valid client address",
 					optarg);
 			}
+			continue;
+
+		case OPT_OPPO_PROTO:	/* --oppoproto <protocol> */
+			msg.oppo_proto = strtol(optarg, NULL, 0);
+			continue;
+
+		case OPT_OPPO_DPORT:	/* --oppodport <port> */
+			oppo_dport = strtol(optarg, NULL, 0);
 			continue;
 
 		case OPT_ASYNC:
@@ -1332,15 +1313,18 @@ int main(int argc, char **argv)
 		case LST_PSKS:	/* --listpsks */
 		case LST_EVENTS:	/* --listevents */
 			msg.whack_list |= LELEM(c - LST_PUBKEYS);
+			ignore_errors = TRUE;
 			continue;
 
 		case LST_CHECKPUBKEYS:	/* --checkpubkeys */
 			msg.whack_list |= LELEM(LST_PUBKEYS - LST_PUBKEYS);
 			msg.whack_check_pub_keys = TRUE;
+			ignore_errors = TRUE;
 			continue;
 
 		case LST_ALL:	/* --listall */
 			msg.whack_list = LIST_ALL;
+			ignore_errors = TRUE;
 			continue;
 
 		/* Connection Description options */
@@ -1431,12 +1415,12 @@ int main(int argc, char **argv)
 
 		case END_SENDCERT:
 			if (streq(optarg, "yes") || streq(optarg, "always")) {
-				msg.right.sendcert = cert_alwayssend;
+				msg.right.sendcert = CERT_ALWAYSSEND;
 			} else if (streq(optarg,
 					 "no") || streq(optarg, "never")) {
-				msg.right.sendcert = cert_neversend;
+				msg.right.sendcert = CERT_NEVERSEND;
 			} else if (streq(optarg, "ifasked")) {
-				msg.right.sendcert = cert_sendifasked;
+				msg.right.sendcert = CERT_SENDIFASKED;
 			} else {
 				diagq("whack sendcert value is not legal",
 				      optarg);
@@ -1587,6 +1571,9 @@ int main(int argc, char **argv)
 		/* --donotrekey */
 		case CDP_SINGLETON + POLICY_DONT_REKEY_IX:
 
+		/* --reauth */
+		case CDP_SINGLETON + POLICY_REAUTH_IX:
+
 		/* --modecfgpull */
 		case CDP_SINGLETON + POLICY_MODECFG_PULL_IX:
 		/* --aggrmode */
@@ -1604,6 +1591,9 @@ int main(int argc, char **argv)
 		/* --allow-narrowing */
 		case CDP_SINGLETON + POLICY_IKEV2_ALLOW_NARROWING_IX:
 
+		/* --mobike */
+		case CDP_SINGLETON + POLICY_MOBIKE_IX:
+
 		/* --sareftrack */
 		case CDP_SINGLETON + POLICY_SAREF_TRACK_IX:
 		/* --sarefconntrack */
@@ -1619,6 +1609,14 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_ESN_NO_IX:
 		/* --esn */
 		case CDP_SINGLETON + POLICY_ESN_YES_IX:
+		/* --decap-dscp */
+		case CDP_SINGLETON + POLICY_DECAP_DSCP_IX:
+		/* --nopmtudisc */
+		case CDP_SINGLETON + POLICY_NOPMTUDISC_IX:
+		/* --msdh-downgrade */
+		case CDP_SINGLETON + POLICY_MSDH_DOWNGRADE_IX:
+		/* --dns-match-id */
+		case CDP_SINGLETON + POLICY_DNS_MATCH_ID_IX:
 
 			msg.policy |= LELEM(c - CDP_SINGLETON);
 			continue;
@@ -1650,7 +1648,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_RETRANSMIT_I:	/* --retransmit-interval <msecs> */
-			msg.r_interval = opt_whole;
+			msg.r_interval = deltatime_ms(opt_whole);
 			continue;
 
 		case CD_IKELIFETIME:	/* --ikelifetime <seconds> */
@@ -1694,27 +1692,27 @@ int main(int argc, char **argv)
 
 		/* backwards compatibility */
 		case CD_FORCEENCAPS:
-			msg.encaps = encaps_yes;
+			msg.encaps = yna_yes;
 			continue;
 
 		case CD_ENCAPS:
 			if (streq(optarg, "auto"))
-				msg.encaps = encaps_auto;
+				msg.encaps = yna_auto;
 			else if (streq(optarg, "yes"))
-				msg.encaps = encaps_yes;
+				msg.encaps = yna_yes;
 			else if (streq(optarg, "no"))
-				msg.encaps = encaps_no;
+				msg.encaps = yna_no;
 			else
 				diag("--encaps options are 'auto', 'yes' or 'no'");
 			continue;
 
 		case CD_NIC_OFFLOAD:  /* --nic-offload */
 			if (streq(optarg, "no"))
-				msg.nic_offload = nic_offload_no;
+				msg.nic_offload = yna_no;
 			else if (streq(optarg, "yes"))
-				msg.nic_offload = nic_offload_yes;
+				msg.nic_offload = yna_yes;
 			else if (streq(optarg, "auto"))
-				msg.nic_offload = nic_offload_auto;
+				msg.nic_offload = yna_auto;
 			else
 				diag("--nic-offload options are 'no', 'yes' or 'auto'");
 			continue;
@@ -1725,11 +1723,13 @@ int main(int argc, char **argv)
 
 		case CD_IKEV1_NATT:	/* --ikev1_natt */
 			if (streq(optarg, "both"))
-				msg.ikev1_natt = natt_both;
+				msg.ikev1_natt = NATT_BOTH;
 			else if (streq(optarg, "rfc"))
-				msg.ikev1_natt = natt_rfc;
+				msg.ikev1_natt = NATT_RFC;
 			else if (streq(optarg, "drafts"))
-				msg.ikev1_natt = natt_drafts;
+				msg.ikev1_natt = NATT_DRAFTS;
+			else if (streq(optarg, "none"))
+				msg.ikev1_natt = NATT_NONE;
 			else
 				diag("--ikev1-natt options are 'both', 'rfc' or 'drafts'");
 			continue;
@@ -1787,10 +1787,6 @@ int main(int argc, char **argv)
 				msg.remotepeertype = CISCO;
 			else
 				msg.remotepeertype = NON_CISCO;
-			continue;
-
-		case CD_SHA2_TRUNCBUG:	/* --sha2_truncbug */
-			msg.sha2_truncbug = TRUE;
 			continue;
 
 #ifdef HAVE_NM
@@ -1880,18 +1876,18 @@ int main(int argc, char **argv)
 			 */
 			msg.right.username = optarg;
 			gotusername = TRUE;
-			username[0] = '\0';
-			strncat(username, optarg, sizeof(username) -
-				strlen(username) - 1);
-			usernamelen = strlen(username) + 1;
+			/* ??? why does this length include NUL? */
+			usernamelen = jam_str(username, sizeof(username),
+					optarg) -
+				username + 1;
 			continue;
 
 		case OPT_XAUTHPASS:
 			gotxauthpass = TRUE;
-			xauthpass[0] = '\0';
-			strncat(xauthpass, optarg, sizeof(xauthpass) -
-				strlen(xauthpass) - 1);
-			xauthpasslen = strlen(xauthpass) + 1;
+			/* ??? why does this length include NUL? */
+			xauthpasslen = jam_str(xauthpass, sizeof(xauthpass),
+					optarg) -
+				xauthpass + 1;
 			continue;
 
 		case END_MODECFGCLIENT:
@@ -1907,22 +1903,12 @@ int main(int argc, char **argv)
 					TRUE);
 			continue;
 
-		case CD_MODECFGDNS1:	/* --modecfgdns1 */
-			af_used_by = long_opts[long_index].name;
-			diagq(ttoaddr(optarg, 0, msg.addr_family,
-				      &msg.modecfg_dns1), optarg);
+		case CD_MODECFGDNS:	/* --modecfgdns */
+			msg.modecfg_dns = strdup(optarg);
 			continue;
-
-		case CD_MODECFGDNS2:	/* --modecfgdns2 */
-			af_used_by = long_opts[long_index].name;
-			diagq(ttoaddr(optarg, 0, msg.addr_family,
-				      &msg.modecfg_dns2), optarg);
+		case CD_MODECFGDOMAINS:	/* --modecfgdomains */
+			msg.modecfg_domains = strdup(optarg);
 			continue;
-
-		case CD_MODECFGDOMAIN:	/* --modecfgdomain */
-			msg.modecfg_domain = strdup(optarg);
-			continue;
-
 		case CD_MODECFGBANNER:	/* --modecfgbanner */
 			msg.modecfg_banner = strdup(optarg);
 			continue;
@@ -1952,12 +1938,14 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_XAUTHBY:
-			if (streq(optarg, "pam")) {
-				msg.xauthby = XAUTHBY_PAM;
-				continue;
-			} else if (streq(optarg, "file")) {
+			if (streq(optarg, "file")) {
 				msg.xauthby = XAUTHBY_FILE;
 				continue;
+#ifdef XAUTH_HAVE_PAM
+			} else if (streq(optarg, "pam")) {
+				msg.xauthby = XAUTHBY_PAM;
+				continue;
+#endif
 			} else if (streq(optarg, "alwaysok")) {
 				msg.xauthby = XAUTHBY_ALWAYSOK;
 				continue;
@@ -2042,22 +2030,95 @@ int main(int argc, char **argv)
 			break;
 
 		case DBGOPT_NONE:	/* --debug-none */
-			msg.debugging = DBG_NONE;
+			/*
+			 * Clear all debug and impair options.
+			 *
+			 * This preserves existing behaviour where
+			 * sequences like:
+			 *
+			 *     --debug-none
+			 *     --debug-none --debug something
+			 *
+			 * force all debug/impair options to values
+			 * defined by whack.
+			 */
+			msg.debugging = lmod_clr(msg.debugging, DBG_MASK);
+			msg.impairing = lmod_clr(msg.impairing, IMPAIR_MASK);
 			continue;
 
 		case DBGOPT_ALL:	/* --debug-all */
-			/* note: does not include PRIVATE */
-			msg.debugging |= DBG_ALL;
+			/*
+			 * Set most debug options ('all' does not
+			 * include PRIVATE which is cleared) and clear
+			 * all impair options.
+			 *
+			 * This preserves existing behaviour where
+			 * sequences like:
+			 *
+			 *     --debug-all
+			 *     --debug-all --impair something
+			 *
+			 * force all debug/impair options to values
+			 * defined by whack.
+			 */
+			msg.debugging = lmod_clr(msg.debugging, DBG_MASK);
+			msg.debugging = lmod_set(msg.debugging, DBG_ALL);
+			msg.impairing = lmod_clr(msg.impairing, IMPAIR_MASK);
+			continue;
+
+		case DBGOPT_DEBUG:
+			if (streq(optarg, "list") || streq(optarg, "help") || streq(optarg, "?")) {
+				fprintf(stderr, "debug options (* included in 'all'):\n");
+				for (long e = next_enum(&debug_names, -1);
+				     e != -1; e = next_enum(&debug_names, e)) {
+					LSWLOG_FILE(stdout, buf) {
+						if (LELEM(e) & DBG_ALL) {
+							lswlogs(buf, " *");
+						} else {
+							lswlogs(buf, "  ");
+						}
+						lswlog_enum_short(buf, &debug_names, e);
+					}
+				}
+				exit(1);
+			} else if (!lmod_arg(&msg.debugging, &debug_lmod_info, optarg)) {
+				fprintf(stderr, "whack: unrecognized --debug '%s' option ignored\n",
+					optarg);
+			}
+			continue;
+
+		case DBGOPT_IMPAIR:
+			if (streq(optarg, "list") || streq(optarg, "help") || streq(optarg, "?")) {
+				fprintf(stderr, "impair options:\n");
+				for (long e = next_enum(&impair_names, -1);
+				     e != -1; e = next_enum(&impair_names, e)) {
+					LSWLOG_FILE(stdout, buf) {
+						lswlogs(buf, "  ");
+						lswlog_enum_short(buf, &impair_names, e);
+					}
+				}
+				exit(1);
+			} else if (!lmod_arg(&msg.impairing, &impair_lmod_info, optarg)) {
+				fprintf(stderr, "whack: unrecognized --impair '%s' option; ignored\n",
+					optarg);
+			}
+			if (lmod_is_set(msg.impairing, IMPAIR_FORCE_FIPS)) {
+				fprintf(stderr, "whack: invalid --impair '%s' option; must be passed directly to pluto\n",
+					optarg);
+				lmod_clr(msg.impairing, IMPAIR_FORCE_FIPS);
+			}
 			continue;
 
 		default:
-			/* DBG_* or IMPAIR_* flags */
-			assert(DBGOPT_elems <= c && c < DBGOPT_elems + IMPAIR_roof_IX);
-			msg.debugging |= LELEM(c - DBGOPT_elems);
-			continue;
+			bad_case(c);
+			break;
 		}
 		break;
 	}
+
+
+	if (oppo_dport != 0)
+		setportof(htons(oppo_dport), &msg.oppo_peer_client);
 
 	if (optind != argc) {
 		/*
@@ -2096,10 +2157,6 @@ int main(int argc, char **argv)
 
 		if (!LHAS(end_seen, END_HOST - END_FIRST))
 			diag("connection missing --host after --to");
-
-		if (isanyaddr(&msg.left.host_addr) &&
-		    isanyaddr(&msg.right.host_addr))
-			diag("hosts cannot both be 0.0.0.0 or 0::0");
 
 		if (msg.policy & POLICY_OPPORTUNISTIC) {
 			if ((msg.policy & (POLICY_PSK | POLICY_RSASIG)) !=
@@ -2163,7 +2220,7 @@ int main(int argc, char **argv)
 		if (!LHAS(opts1_seen, OPT_NAME))
 			diag("missing --name <connection_name>");
 	} else if (msg.whack_options == LEMPTY) {
-		if (LHAS(opts1_seen, OPT_NAME))
+		if (LHAS(opts1_seen, OPT_NAME)  && !LELEM(OPT_TRAFFIC_STATUS))
 			diag("no reason for --name");
 	}
 
@@ -2177,13 +2234,13 @@ int main(int argc, char **argv)
 			diag("--addkey and --pubkeyrsa require --keyid");
 	}
 
-	if (!(msg.whack_connection || msg.whack_key || msg.whack_myid ||
+	if (!(msg.whack_connection || msg.whack_key ||
 	      msg.whack_delete ||msg.whack_deleteid || msg.whack_deletestate ||
 	      msg.whack_deleteuser ||
 	      msg.whack_initiate || msg.whack_oppo_initiate ||
 	      msg.whack_terminate ||
 	      msg.whack_route || msg.whack_unroute || msg.whack_listen ||
-	      msg.whack_unlisten || msg.whack_list ||
+	      msg.whack_unlisten || msg.whack_list || msg.ike_buf_size ||
 	      msg.whack_ddos != DDOS_undefined ||
 	      msg.whack_reread || msg.whack_crash || msg.whack_shunt_status ||
 	      msg.whack_status || msg.whack_global_status || msg.whack_traffic_status ||
@@ -2280,159 +2337,152 @@ int main(int argc, char **argv)
 			break;
 		}
 		exit(RC_WHACK_PROBLEM);
-	} else {
-		int sock = safe_socket(AF_UNIX, SOCK_STREAM, 0);
-		int exit_status = 0;
-		ssize_t len = wp.str_next - (unsigned char *)&msg;
+	}
 
-		if (sock == -1) {
-			int e = errno;
+	int sock = safe_socket(AF_UNIX, SOCK_STREAM, 0);
+	int exit_status = 0;
+	ssize_t len = wp.str_next - (unsigned char *)&msg;
 
-			fprintf(stderr, "whack: socket() failed (%d %s)\n", e, strerror(
-					e));
-			exit(RC_WHACK_PROBLEM);
-		}
+	if (sock == -1) {
+		int e = errno;
 
-		if (connect(sock, (struct sockaddr *)&ctl_addr,
-			    offsetof(struct sockaddr_un,
-				     sun_path) + strlen(ctl_addr.sun_path)) <
-		    0) {
+		fprintf(stderr, "whack: socket() failed (%d %s)\n", e, strerror(
+				e));
+		exit(RC_WHACK_PROBLEM);
+	}
+
+	if (connect(sock, (struct sockaddr *)&ctl_addr,
+		    offsetof(struct sockaddr_un,
+			     sun_path) + strlen(ctl_addr.sun_path)) < 0)
+	{
+		int e = errno;
+
+		fprintf(stderr,
+			"whack:%s connect() for \"%s\" failed (%d %s)\n",
+			e == ECONNREFUSED ? " is Pluto running? " : "",
+			ctl_addr.sun_path, e, strerror(e));
+		exit(RC_WHACK_PROBLEM);
+	}
+
+	if (write(sock, &msg, len) != len) {
+		int e = errno;
+
+		fprintf(stderr, "whack: write() failed (%d %s)\n",
+			e, strerror(e));
+		exit(RC_WHACK_PROBLEM);
+	}
+
+	/* for now, just copy reply back to stdout */
+
+	char buf[4097];	/* arbitrary limit on log line length */
+	char *be = buf;
+
+	for (;;) {
+		char *ls = buf;
+		ssize_t rl = read(sock, be, (buf + sizeof(buf) - 1) - be);
+
+		if (rl < 0) {
 			int e = errno;
 
 			fprintf(stderr,
-				"whack:%s connect() for \"%s\" failed (%d %s)\n",
-				e == ECONNREFUSED ? " is Pluto running? " : "",
-				ctl_addr.sun_path, e, strerror(e));
+				"whack: read() failed (%d %s)\n",
+				e, strerror(e));
 			exit(RC_WHACK_PROBLEM);
 		}
-
-		if (write(sock, &msg, len) != len) {
-			int e = errno;
-
-			fprintf(stderr, "whack: write() failed (%d %s)\n", e, strerror(
-					e));
-			exit(RC_WHACK_PROBLEM);
+		if (rl == 0) {
+			if (be != buf)
+				fprintf(stderr,
+					"whack: last line from pluto too long or unterminated\n");
+			break;
 		}
 
-		/* for now, just copy reply back to stdout */
+		be += rl;
+		*be = '\0';
 
-		{
-			char buf[4097];	/* arbitrary limit on log line length */
-			char *be = buf;
+		for (;;) {
+			char *le = strchr(ls, '\n');
 
-			for (;;) {
-				char *ls = buf;
-				ssize_t rl =
-					read(sock, be,
-					     (buf + sizeof(buf) - 1) - be);
-
-				if (rl < 0) {
-					int e = errno;
-
-					fprintf(stderr,
-						"whack: read() failed (%d %s)\n", e,
-						strerror(e));
-					exit(RC_WHACK_PROBLEM);
-				}
-				if (rl == 0) {
-					if (be != buf)
-						fprintf(stderr,
-							"whack: last line from pluto too long or unterminated\n");
-
-
-					break;
-				}
-
-				be += rl;
-				*be = '\0';
-
-				for (;;) {
-					char *le = strchr(ls, '\n');
-
-					if (le == NULL) {
-						/*
-						 * move last, partial line
-						 * to start of buffer
-						 */
-						memmove(buf, ls, be - ls);
-						be -= ls - buf;
-						break;
-					}
-
-					le++;	/* include NL in line */
-					if (write(STDOUT_FILENO, ls, le -
-						  ls) != (le - ls)) {
-						int e = errno;
-						fprintf(stderr,
-							"whack: write() failed to stdout(%d %s)\n", e,
-							strerror(e));
-					}
-
-					/*
-					 * figure out prefix number
-					 * and how it should affect our exit
-					 * status
-					 *
-					 * we don't generally use strtoul but
-					 * in this case, its failure mode
-					 * (0 for nonsense) is probably OK.
-					 */
-					{
-						unsigned long s =
-							strtoul(ls, NULL, 10);
-
-						switch (s) {
-						/* these logs are informational only */
-						case RC_COMMENT:
-						case RC_INFORMATIONAL:
-						case RC_INFORMATIONAL_TRAFFIC:
-						case RC_LOG:
-						/* RC_LOG_SERIOUS is supposed to be here according to lswlog.h, but seems oudated? */
-							/* ignore */
-							break;
-						case RC_SUCCESS:
-							/* be happy */
-							exit_status = 0;
-							break;
-
-						case RC_ENTERSECRET:
-							if (!gotxauthpass) {
-								xauthpasslen =
-									whack_get_secret(
-										xauthpass,
-										sizeof(xauthpass));
-							}
-							send_reply(sock,
-								   xauthpass,
-								   xauthpasslen);
-							break;
-
-						case RC_USERPROMPT:
-							if (!gotusername) {
-								usernamelen =
-									whack_get_value(
-										username,
-										sizeof(username));
-							}
-							send_reply(sock,
-								   username,
-								   usernamelen);
-							break;
-
-						default:
-							if (msg.whack_async)
-								exit_status =
-									0;
-							else
-								exit_status =
-									s;
-							break;
-						}
-					}
-					ls = le;
-				}
+			if (le == NULL) {
+				/*
+				 * move last, partial line
+				 * to start of buffer
+				 */
+				memmove(buf, ls, be - ls);
+				be -= ls - buf;
+				break;
 			}
+
+			le++;	/* include NL in line */
+			if (write(STDOUT_FILENO, ls, le - ls) != (le - ls)) {
+				int e = errno;
+
+				fprintf(stderr,
+					"whack: write() failed to stdout(%d %s)\n",
+					e, strerror(e));
+			}
+
+			/*
+			 * figure out prefix number
+			 * and how it should affect our exit
+			 * status
+			 *
+			 * we don't generally use strtoul but
+			 * in this case, its failure mode
+			 * (0 for nonsense) is probably OK.
+			 */
+			unsigned long s = strtoul(ls, NULL, 10);
+
+			switch (s) {
+			/* these logs are informational only */
+			case RC_COMMENT:
+			case RC_INFORMATIONAL:
+			case RC_INFORMATIONAL_TRAFFIC:
+			case RC_LOG:
+			/* RC_LOG_SERIOUS is supposed to be here according to lswlog.h, but seems oudated? */
+				/* ignore */
+				break;
+			case RC_SUCCESS:
+				/* be happy */
+				exit_status = 0;
+				break;
+
+			case RC_ENTERSECRET:
+				if (!gotxauthpass) {
+					xauthpasslen = whack_get_secret(
+						xauthpass,
+						sizeof(xauthpass));
+				}
+				send_reply(sock,
+					   xauthpass,
+					   xauthpasslen);
+				break;
+
+			case RC_USERPROMPT:
+				if (!gotusername) {
+					usernamelen = whack_get_value(
+						username,
+						sizeof(username));
+				}
+				send_reply(sock,
+					   username,
+					   usernamelen);
+				break;
+
+			default:
+				/* Only RC_ codes between RC_DUPNAME and RC_NEW_STATE are errors */
+				if (s > 0 && (s < RC_DUPNAME || s >= RC_NEW_STATE))
+					s = 0;
+				exit_status = msg.whack_async ?
+					0 : s;
+				break;
+			}
+
+			ls = le;
 		}
-		return exit_status;
 	}
+
+	if (ignore_errors)
+		return 0;
+
+	return exit_status;
 }

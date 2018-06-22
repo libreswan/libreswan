@@ -1,6 +1,6 @@
 KVM_ISO_URL = http://fedora.bhs.mirrors.ovh.net/linux/releases/26/Server/x86_64/iso/Fedora-Server-dvd-x86_64-26-1.5.iso
 KVM_KICKSTART_FILE = testing/libvirt/fedora26.ks
-
+KVM_OS_VARIANT = fedora26
 KVM_PACKAGE_INSTALL = dnf install -y
 KVM_DEBUGINFO_INSTALL = dnf  debuginfo-install -y
 KVM_INSTALL_RPM_LIST = 'rpm -aq > /var/tmp/rpm-qa-fedora-updates.log'
@@ -45,12 +45,15 @@ KVM_PACKAGES = \
     ocspd\
     openldap-devel \
     pam-devel \
+    patch \
     pexpect \
+    policycoreutils-python-utils \
     psmisc \
     python2-pyOpenSSL \
     python3-pexpect \
     python-setproctitle \
     racoon2 \
+    rpm-build \
     screen \
     strace \
     strongswan \

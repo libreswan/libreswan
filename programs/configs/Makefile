@@ -23,9 +23,8 @@ CONFFILES += ipsec.secrets
 
 EXCONFILES=ipsec.win2k.conf
 
-CONFDFILES = v6neighbor-hole.conf
 CONFDSUBDIR = policies
-CONFDSUBDIRFILES = clear clear-or-private private-or-clear private block
+CONFDSUBDIRFILES = clear clear-or-private private-or-clear private block portexcludes.conf
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk

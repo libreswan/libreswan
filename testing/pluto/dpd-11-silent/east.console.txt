@@ -1,0 +1,22 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add west-east
+002 added connection description "west-east"
+east #
+ echo "initdone"
+initdone
+east #
+ # There should not be any R_U_THERE packets from either end because we are not idle
+east #
+ grep R_U_THERE /tmp/pluto.log
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

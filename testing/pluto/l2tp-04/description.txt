@@ -1,5 +1,0 @@
-This tests an X.509 L2TP configuration --- 2 clients behind the
-same NAT and another client behind another NAT
-with raw RSA keys that need to have their connection both
-instantiated (in phase 1) and virtualized (in phase 2).
-

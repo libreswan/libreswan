@@ -33,9 +33,6 @@
 
 #include <unistd.h>
 #include <libreswan.h>
-#if 0
-#include <linux/autoconf.h>     /* CONFIG_IPSEC_PFKEYv2 */
-#endif
 
 /* permanently turn it on since netlink support has been disabled */
 #include <signal.h>

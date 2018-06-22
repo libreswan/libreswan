@@ -14,7 +14,7 @@ parsed IKE_SA_INIT response 0 [ SA KE No N(FRAG_SUP) N(NATD_S_IP) N(NATD_D_IP) ]
 local host is behind NAT, sending keep alives
 no IDi configured, fall back on IP address
 authentication of '192.1.3.209' (myself) with pre-shared key
-establishing CHILD_SA client
+establishing CHILD_SA client{1}
 generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH CPRQ(ADDR DNS) SA TSi TSr N(MOBIKE_SUP) N(NO_ADD_ADDR) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
 sending packet: from 192.1.3.209[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
@@ -24,7 +24,7 @@ IKE_SA client[1] established between 192.1.3.209[192.1.3.209]...192.1.2.23[192.1
 scheduling reauthentication in XXXs
 maximum IKE_SA lifetime XXXs
 installing DNS server 1.2.3.4 to /etc/strongswan/resolv.conf
-DNS server 1.2.3.4 already installed, increasing refcount
+installing DNS server 8.8.8.8 to /etc/strongswan/resolv.conf
 installing new virtual IP 192.0.1.254
 CHILD_SA client{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.254/32 === 192.0.2.0/24
 connection 'client' established successfully
@@ -42,7 +42,7 @@ road #
  echo done
 done
 road #
- if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
 road #
  if [ -f /var/run/charon.pid ]; then strongswan status ; fi
 Security Associations (1 up, 0 connecting):

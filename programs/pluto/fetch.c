@@ -1,8 +1,10 @@
-/* Dynamic fetching of X.509 CRLs
+/* Dynamic fetching of X.509 CRLs, for libreswan
+ *
  * Copyright (C) 2002 Stephane Laroche <stephane.laroche@colubris.com>
  * Copyright (C) 2002-2004 Andreas Steffen, Zuercher Hochschule Winterthur
  * Copyright (C) 2003-2008 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2018 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -22,6 +24,9 @@
 #include <errno.h>
 #include <sys/time.h>
 #include <string.h>
+
+#include <cert.h>
+#include <certdb.h>
 
 #ifdef LIBCURL
 #include <curl/curl.h>	/* from libcurl devel */
@@ -45,6 +50,11 @@
 #include "fetch.h"
 #include "secrets.h"
 #include "nss_err.h"
+#include "nss_crl_import.h"
+#include "nss_err.h"
+#include "keys.h"
+#include "crl_queue.h"
+#include "timer.h"
 
 #ifdef LIBCURL
 #define LIBCURL_UNUSED
@@ -66,7 +76,7 @@ struct fetch_req {
 
 static fetch_req_t empty_fetch_req = {
 	NULL,           /* next */
-	{ 0 },		/* installed */
+	REALTIME_EPOCH,	/* installed */
 	0,              /* trials */
 	{ NULL, 0 },    /* issuer */
 	NULL            /* distributionPoints */
@@ -77,11 +87,6 @@ static fetch_req_t *crl_fetch_reqs  = NULL;
 
 static pthread_t thread;
 static pthread_mutex_t crl_fetch_list_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t fetch_wake_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t fetch_wake_cond = PTHREAD_COND_INITIALIZER;
-
-extern char *curl_iface;
-extern long curl_timeout;
 
 /*
  * lock access to the chained crl fetch request list
@@ -99,24 +104,6 @@ static void unlock_crl_fetch_list(const char *who)
 {
 	pthread_mutex_unlock(&crl_fetch_list_mutex);
 	DBG(DBG_X509, DBG_log("crl fetch request list unlocked by '%s'", who));
-}
-
-/*
- * wake up the sleeping fetch thread
- */
-void wake_fetch_thread(const char *who)
-{
-	/* ignore wake up calls if we are not enabled */
-	if (deltasecs(crl_check_interval) == 0) {
-		loglog(RC_CRLERROR,
-			"CRL fetching not enabled - wake up call ignored");
-		return;
-	}
-
-	DBG(DBG_X509, DBG_log("fetch thread wake call by '%s'", who));
-	pthread_mutex_lock(&fetch_wake_mutex);
-	pthread_cond_signal(&fetch_wake_cond);
-	pthread_mutex_unlock(&fetch_wake_mutex);
 }
 
 /*
@@ -167,10 +154,8 @@ static err_t fetch_curl(chunk_t url LIBCURL_UNUSED,
 	CURL *curl = curl_easy_init();
 
 	if (curl != NULL) {
-		/* we need a null terminated string for curl */
-		uri = alloc_bytes(url.len + 1, "null terminated url");
-		memcpy(uri, url.ptr, url.len);
-		*(uri + url.len) = '\0';
+		/* we need a NUL-terminated string for curl */
+		uri = str_from_chunk(url, "NUL-terminated url");
 
 		if (curl_timeout > 0)
 			timeout = curl_timeout;
@@ -200,7 +185,7 @@ static err_t fetch_curl(chunk_t url LIBCURL_UNUSED,
 			     errorbuffer);
 		}
 		curl_easy_cleanup(curl);
-		pfree(uri);
+		pfreeany(uri);
 
 		if (response.ptr != NULL)
 			free(response.ptr);	/* allocated via realloc(3) */
@@ -275,15 +260,13 @@ static err_t fetch_ldap_url(chunk_t url, chunk_t *blob)
 	int msgid;
 	int rc;
 
-	char *ldap_url = alloc_bytes(url.len + 1, "ldap query");
-
-	snprintf(ldap_url, url.len + 1, "%.*s", (int)url.len, url.ptr);
+	char *ldap_url = str_from_chunk(url, "ldap query");
 
 	DBG(DBG_X509,
 	    DBG_log("Trying LDAP URL '%s'", ldap_url));
 
 	rc = ldap_url_parse(ldap_url, &lurl);
-	pfree(ldap_url);
+	pfreeany(ldap_url);
 
 	if (rc == LDAP_SUCCESS) {
 		LDAP *ldap = ldap_init(lurl->lud_host, lurl->lud_port);
@@ -357,36 +340,64 @@ static err_t fetch_ldap_url(chunk_t url UNUSED,
 
 /*
  * fetch an ASN.1 blob coded in PEM or DER format from a URL
+ * Returns error message or NULL.
+ * Iff no error, *blob contains fetched ASN.1 blob (to be freed by caller).
  */
 static err_t fetch_asn1_blob(chunk_t url, chunk_t *blob)
 {
 	err_t ugh = NULL;
 
-	if (url.len >= 4 && strncaseeq((const char *)url.ptr, "ldap", 4))
+	*blob = empty_chunk;
+	if (url.len >= 5 && strncaseeq((const char *)url.ptr, "ldap:", 5))
 		ugh = fetch_ldap_url(url, blob);
 	else
 		ugh = fetch_curl(url, blob);
-	if (ugh != NULL)
-		return ugh;
-
-	if (is_asn1(*blob)) {
+	if (ugh != NULL) {
+	} else if (is_asn1(*blob)) {
 		DBG(DBG_PARSING,
 		    DBG_log("  fetched blob coded in DER format"));
 	} else {
 		ugh = pemtobin(blob);
-		if (ugh == NULL) {
-			if (is_asn1(*blob)) {
-				DBG(DBG_PARSING,
-				    DBG_log("  fetched blob coded in PEM format"));
-			} else {
-				ugh = "Blob coded in unknown format";
-				pfreeany(blob->ptr);
-			}
+		if (ugh != NULL) {
+		} else if (is_asn1(*blob)) {
+			DBG(DBG_PARSING,
+			    DBG_log("  fetched blob coded in PEM format"));
 		} else {
-			pfreeany(blob->ptr);
+			ugh = "Blob coded in unknown format (within PEM)";
 		}
 	}
+	if (ugh == NULL && blob->len == 0)
+		ugh = "empty ASN.1 blob";
+	if (ugh != NULL)
+		freeanychunk(*blob);
 	return ugh;
+}
+
+/* Note: insert_crl_nss frees *blob */
+static bool insert_crl_nss(chunk_t *blob, const chunk_t crl_uri)
+{
+	/* for CRL use the name passed to helper for the uri */
+	bool ret = FALSE;
+	char *uri_str = str_from_chunk(crl_uri, "URI str");
+
+	if (uri_str == NULL) {
+		DBGF(DBG_X509, "no CRL URI available");
+	} else {
+		int r = send_crl_to_import(blob->ptr, blob->len, uri_str);
+		if (r == -1) {
+			libreswan_log("_import_crl internal error");
+		} else if (r != 0) {
+			libreswan_log("NSS CRL import error: %s",
+				      nss_err_str((PRInt32)r));
+		} else {
+			DBGF(DBG_X509, "CRL imported");
+			ret = TRUE;
+		}
+	}
+
+	pfreeany(uri_str);
+	freeanychunk(*blob);
+	return ret;
 }
 
 /*
@@ -394,90 +405,173 @@ static err_t fetch_asn1_blob(chunk_t url, chunk_t *blob)
  */
 static void fetch_crls(void)
 {
-	fetch_req_t *req;
-	fetch_req_t **reqp;
-
 	lock_crl_fetch_list("fetch_crls");
-	req  =  crl_fetch_reqs;
-	reqp = &crl_fetch_reqs;
 
-	while (req != NULL) {
+	for (fetch_req_t **reqp = &crl_fetch_reqs;
+	     *reqp != NULL && !exiting_pluto; ) {
+		fetch_req_t *req = *reqp;
 		bool valid_crl = FALSE;
-		chunk_t blob = empty_chunk;
-		generalName_t *gn = req->distributionPoints;
 
-		while (gn != NULL) {
+		for (generalName_t *gn = req->distributionPoints;
+		     gn != NULL; gn = gn->next) {
+			chunk_t blob;
 			err_t ugh = fetch_asn1_blob(gn->name, &blob);
 
 			if (ugh != NULL) {
 				DBG(DBG_X509,
 					DBG_log("fetch failed:  %s", ugh));
 			} else {
-				chunk_t crl_uri;
-				clonetochunk(crl_uri, gn->name.ptr,
-					     gn->name.len, "crl uri");
-				if (insert_crl_nss(&blob, &crl_uri, NULL)) {
+				if (insert_crl_nss(&blob, gn->name)) {
 					DBG(DBG_X509,
 					    DBG_log("we have a valid crl"));
 					valid_crl = TRUE;
 					break;
 				}
 			}
-			gn = gn->next;
 		}
 
 		if (valid_crl) {
 			/* delete fetch request */
-			fetch_req_t *req_free = req;
-
-			req   = req->next;
-			*reqp = req;
-			free_fetch_request(req_free);
+			*reqp = req->next;	/* remove from list */
+			free_fetch_request(req);
+			/* reqp unchanged in this iteration */
 		} else {
-			/* try again next time */
+			/* retain fetch request for next time */
 			req->trials++;
 			reqp = &req->next;
-			req  =  req->next;
 		}
 	}
 	unlock_crl_fetch_list("fetch_crls");
 }
 
+/*
+ * Create a possibly duplicate list of all known CRLS and send them
+ * off to fetch_crls() for a refresh.
+ *
+ * Any duplicates will be eliminated by fetch_crls() when it merges
+ * these requests with any still unprocessed requests.
+ *
+ * Similarly, if check_crls() is called more frequently then
+ * fetch_crls() can process, redundant fetches will be merged.
+ */
+void check_crls(void)
+{
+	event_schedule(EVENT_CHECK_CRLS, crl_check_interval, NULL);
+	struct crl_fetch_request *requests = NULL;
+
+	/*
+	 * CERT_GetDefaultCertDB() simply returns the contents of a
+	 * static variable set by NSS_Initialize().  It doesn't check
+	 * the value and doesn't set PR error.  Short of calling
+	 * CERT_SetDefaultCertDB(NULL), the value can never be NULL.
+	 */
+	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
+	passert(handle != NULL);
+
+	CERTCrlHeadNode *crl_list = NULL;
+
+	if (SEC_LookupCrls(handle, &crl_list, SEC_CRL_TYPE) != SECSuccess)
+		return;
+
+	CERTCrlNode *crl_node = crl_list->first;
+
+	while (crl_node != NULL) {
+		if (crl_node->crl != NULL) {
+			SECItem *issuer = &crl_node->crl->crl.derName;
+
+			if (crl_node->crl->url == NULL) {
+				requests = crl_fetch_request(issuer, NULL, requests);
+			} else {
+				generalName_t end_dp = {
+					.kind = GN_URI,
+					.name = {
+						.ptr = (u_char *)crl_node->crl->url,
+						.len = strlen(crl_node->crl->url)
+					},
+					.next = NULL
+				};
+				requests = crl_fetch_request(issuer, &end_dp,
+							     requests);
+			}
+		}
+		crl_node = crl_node->next;
+	}
+	DBGF(DBG_X509, "releasing crl list in %s", __func__);
+	PORT_FreeArena(crl_list->arena, PR_FALSE);
+
+	/* add the pubkeys distribution points to fetch list */
+
+	struct pubkey_list *pubkeys = pluto_pubkeys;
+	struct pubkey *key;
+
+	while (pubkeys != NULL) {
+		key = pubkeys->key;
+		if (key != NULL) {
+			SECItem issuer = same_chunk_as_dercert_secitem(key->issuer);
+			requests = crl_fetch_request(&issuer, NULL, requests);
+		}
+		pubkeys = pubkeys->next;
+	}
+
+	/*
+	 * Iterate all X.509 certificates in database. This is needed to
+	 * process middle and end certificates.
+	 */
+	CERTCertList *certs = get_all_certificates();
+
+	if (certs != NULL) {
+		CERTCertListNode *node;
+
+		for (node = CERT_LIST_HEAD(certs);
+		     !CERT_LIST_END(node, certs);
+		     node = CERT_LIST_NEXT(node)) {
+			requests = crl_fetch_request(&node->cert->derSubject,
+						     NULL, requests);
+		}
+		CERT_DestroyCertList(certs);
+	}
+	add_crl_fetch_requests(requests);
+}
+
+static void merge_crl_fetch_request(struct crl_fetch_request *);
+
 static void *fetch_thread(void *arg UNUSED)
 {
-	deltatime_t interval = { 5 }; /* First fetch interval, then regular */
-
 	DBG(DBG_X509,
 	    DBG_log("fetch thread started"));
 
-	pthread_mutex_lock(&fetch_wake_mutex);
-	for (;;) {
-		struct timespec wakeup_time;
-		int status;
+	while (!exiting_pluto) {
+		DBGF(DBG_X509, "fetching crl requests (may block)");
+		struct crl_fetch_request *requests = get_crl_fetch_requests();
 
-		clock_gettime(CLOCK_REALTIME, &wakeup_time);
-		wakeup_time.tv_sec += deltasecs(interval);
+		/*
+		 * Merge in the next batch of newest-to-oldest ordered
+		 * requests.
+		 *
+		 * If a request isn't present, then it will be
+		 * prepended, and since the oldest request is
+		 * processed last, it is put right at the front.
+		 */
 
-		DBG(DBG_X509,
-		    DBG_log("next regular crl check in %ld seconds",
-			    (long)deltasecs(interval)));
-		status = pthread_cond_timedwait(&fetch_wake_cond,
-						&fetch_wake_mutex,
-						&wakeup_time);
-
-		if (status == ETIMEDOUT) {
-			DBG(DBG_X509, {
-				    DBG_log(" ");
-				    DBG_log("*time to check crls");
-			    });
-			check_crls();
-			interval = crl_check_interval;
-		} else {
-			DBG(DBG_X509,
-			    DBG_log("fetch thread was woken up"));
+		DBGF(DBG_X509, "merging new fetch requests");
+		for (struct crl_fetch_request *request = requests;
+		     request != NULL; request = request->next) {
+			merge_crl_fetch_request(request);
 		}
+		free_crl_fetch_requests(&requests);
+
+		/*
+		 * Process all outstanding requests.
+		 *
+		 * Any brand new requests, prepended by the above, get
+		 * processed first (and due to the double reversal) in
+		 * the order they were submitted.
+		 *
+		 * Old requests then get processed at the end.
+		 */
 		fetch_crls();
 	}
+	DBGF(DBG_X509, "shutting down crl fetch thread");
 	return NULL;
 }
 
@@ -501,6 +595,7 @@ void init_fetch(void)
 			libreswan_log(
 				"could not start thread for fetching certificate, status = %d",
 				status);
+		event_schedule(EVENT_CHECK_CRLS, deltatime(5), NULL);
 	}
 }
 
@@ -528,8 +623,8 @@ void free_crl_fetch(void)
  * Add additional distribution points.
  * Note: clones anything it needs to keep.
  */
-void add_distribution_points(const generalName_t *newPoints,
-			     generalName_t **distributionPoints)
+static void add_distribution_points(const generalName_t *newPoints,
+				    generalName_t **distributionPoints)
 {
 	for (; newPoints != NULL; newPoints = newPoints->next) {
 		generalName_t *gn;
@@ -541,10 +636,8 @@ void add_distribution_points(const generalName_t *newPoints,
 				 * Clone additional distribution point.
 				 */
 				generalName_t *ngn = clone_const_thing(*newPoints, "generalName");
-				clonetochunk(ngn->name, newPoints->name.ptr,
-					     newPoints->name.len,
-					     "crl uri");
-
+				ngn->name = clone_chunk(newPoints->name,
+							"add_distribution_points: general name name");
 				/* insert additional CRL distribution point */
 				ngn->next = *distributionPoints;
 				*distributionPoints = ngn;
@@ -565,26 +658,11 @@ void add_distribution_points(const generalName_t *newPoints,
  * Add a crl fetch request to the chained list.
  * Note: clones anything that needs to persist.
  */
-void add_crl_fetch_request_nss(SECItem *issuer_dn, generalName_t *end_dp)
+static void merge_crl_fetch_request(struct crl_fetch_request *request)
 {
 	DBG(DBG_X509, DBG_log("attempting to add a new CRL fetch request"));
 
-	if (issuer_dn == NULL || issuer_dn->data == NULL ||
-				 issuer_dn->len < 1) {
-		DBG(DBG_X509,
-		    DBG_log("no issuer dn to gather fetch information from"));
-		return;
-	}
-
-	CERTCertificate *ca = CERT_FindCertByName(CERT_GetDefaultCertDB(),
-						issuer_dn);
-	if (ca == NULL) {
-		DBG_log("NSS error finding CA to add to fetch request: %s",
-			 nss_err_str(PORT_GetError()));
-		return;
-	}
-
-	chunk_t idn = same_secitem_as_chunk(*issuer_dn);
+	chunk_t idn = same_secitem_as_chunk(*request->issuer_dn);
 
 	/* LOCK: matching unlock is at end of loop -- must be executed */
 	lock_crl_fetch_list("add_crl_fetch_request");
@@ -595,32 +673,19 @@ void add_crl_fetch_request_nss(SECItem *issuer_dn, generalName_t *end_dp)
 		if (req == NULL) {
 			/* end of list; no match found */
 
-			generalName_t *new_dp = gndp_from_nss_cert(ca);
-
-			if (new_dp == NULL) {
-				if (end_dp == NULL) {
-					DBG(DBG_X509,
-						DBG_log("no distribution point available for new fetch request"));
-					break;
-				}
-				DBG(DBG_X509,
-					DBG_log("no CA crl DP available; using provided DP"));
-				new_dp = end_dp;
-			}
-
 			/* create a new fetch request */
 			fetch_req_t *nr = alloc_thing(fetch_req_t, "fetch request");
 
 			*nr = empty_fetch_req;
 
 			/* note current time */
-			nr->installed = realnow();
+			nr->installed = request->request_time;
 
-			/* clone issuer */
-			clonetochunk(nr->issuer, idn.ptr, idn.len, "issuer dn");
+			/* clone issuer (again) */
+			nr->issuer = clone_chunk(idn, "issuer dn");
 
 			/* copy distribution points */
-			add_distribution_points(new_dp, &nr->distributionPoints);
+			add_distribution_points(request->dps, &nr->distributionPoints);
 
 			/* insert new fetch request at the head of the queue */
 			nr->next = crl_fetch_reqs;
@@ -636,20 +701,8 @@ void add_crl_fetch_request_nss(SECItem *issuer_dn, generalName_t *end_dp)
 			    DBG_log("crl fetch request already exists"));
 
 			/* there might be new distribution points */
-			generalName_t *new_dp = gndp_from_nss_cert(ca);
+			add_distribution_points(request->dps, &req->distributionPoints);
 
-			if (new_dp == NULL) {
-				if (end_dp == NULL) {
-					DBG(DBG_X509,
-						DBG_log("no CA crl DP available"));
-					break;
-				}
-				DBG(DBG_X509,
-				    DBG_log("no CA crl DP available; using provided DP"));
-				new_dp = end_dp;
-			}
-
-			add_distribution_points(new_dp, &req->distributionPoints);
 			DBG(DBG_X509,
 			    DBG_log("crl fetch request augmented"));
 			break;
@@ -657,8 +710,6 @@ void add_crl_fetch_request_nss(SECItem *issuer_dn, generalName_t *end_dp)
 	}
 	/* UNLOCK: matching lock is before loop */
 	unlock_crl_fetch_list("add_crl_fetch_request");
-
-	CERT_DestroyCertificate(ca);
 }
 
 /*
@@ -693,11 +744,10 @@ void list_crl_fetch_requests(bool utc)
 
 	while (req != NULL) {
 		char buf[ASN1_BUF_LEN];
-		char tbuf[REALTIMETOA_BUF];
-
-		whack_log(RC_COMMENT, "%s, trials: %d",
-			  realtimetoa(req->installed, utc, tbuf, sizeof(tbuf)),
-			  req->trials);
+		LSWLOG_WHACK(RC_COMMENT, buf) {
+			lswlog_realtime(buf, req->installed, utc);
+			lswlogf(buf, ", trials: %d", req->trials);
+		}
 		dntoa(buf, ASN1_BUF_LEN, req->issuer);
 		whack_log(RC_COMMENT, "       issuer:  '%s'", buf);
 		list_distribution_points(req->distributionPoints);

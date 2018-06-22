@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --x509 --x509name notyetvalid
 certutil -d sql:/etc/ipsec.d -D -n west
 ipsec _stackmanager start
-mkdir /var/run/pluto
+mkdir -p /var/run/pluto
 # set a time in the future so notyetvalid and west certs are valid
 faketime -f +370d ipsec pluto  --config /etc/ipsec.conf
 /testing/pluto/bin/wait-until-pluto-started

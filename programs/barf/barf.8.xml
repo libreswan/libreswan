@@ -33,7 +33,7 @@ outputs (on standard output) a collection of debugging information
 (contents of files, selections from logs, etc.)
 related to the IPsec encryption/authentication system.
 It is primarily a convenience for remote debugging,
-a single command which packages up (and labels) all information
+a single command that packages up (and labels) all information
 that might be relevant to diagnosing a problem in IPsec.</para>
 
 
@@ -101,7 +101,7 @@ by Henry Spencer.</para>
 <para><emphasis remap='I'>Barf</emphasis>
 uses heuristics to try to pick relevant material out of the logs,
 and relevant messages
-which are not labelled with any of the tags that
+that are not labelled with any of the tags that
 <emphasis remap='I'>barf</emphasis>
 looks for will be lost.
 We think we've eliminated the last such case, but one never knows...</para>

@@ -1,7 +1,8 @@
 # The domain download.fedoraproject.org can redirect to a mirror, such
 # as fedora.bhs.mirrors.ovh.net as of 2017-08-09, that doesn't carry
 # F22.
-KVM_ISO_URL = https://muug.ca/mirror/fedora/linux/releases/22/Server/x86_64/iso/Fedora-Server-DVD-x86_64-22.iso
+KVM_ISO_URL = http://archives.fedoraproject.org/pub/archive/fedora/linux/releases/22/Server/x86_64/iso/Fedora-Server-DVD-x86_64-22.iso
+KVM_OS_VARIANT = fedora22
 
 KVM_KICKSTART_FILE = testing/libvirt/fedora22.ks
 
@@ -44,11 +45,13 @@ KVM_PACKAGES = \
     ocspd \
     openldap-devel \
     pam-devel \
+    patch \
     pexpect \
     psmisc \
     python3-pexpect \
     python3-setproctitle \
     pyOpenSSL \
+    rpm-build \
     screen \
     racoon2 \
     strace \
@@ -63,7 +66,7 @@ KVM_PACKAGES = \
     vim-enhanced \
     xl2tpd \
     xmlto \
-    https://download.nohats.ca/strongswan/strongswan-5.5.2-1.fc22.x86_64.rpm \
+    https://download.nohats.ca/strongswan/strongswan-5.6.0-1.fc22.x86_64.rpm \
     https://download.nohats.ca/libfaketime/libfaketime-0.9.6-4.fc22.x86_64.rpm
 
 KVM_DEBUGINFO = \

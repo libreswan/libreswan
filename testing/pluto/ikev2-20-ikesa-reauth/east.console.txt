@@ -1,0 +1,26 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-ikev2
+002 added connection description "westnet-eastnet-ikev2"
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec whack --trafficstatus
+006 #4: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'
+east #
+ ipsec status | grep "STATE_"
+000 #3: "westnet-eastnet-ikev2":500 STATE_PARENT_R2 (received v2I2, PARENT SA established); EVENT_SA_REPLACE in  XXs; newest ISAKMP; idle; import:respond to stranger
+000 #4: "westnet-eastnet-ikev2":500 STATE_V2_IPSEC_R (IPsec SA established); EVENT_SA_REPLACE in  XXs; newest IPSEC; eroute owner; isakmp#3; idle; import:respond to stranger
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

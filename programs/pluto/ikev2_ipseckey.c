@@ -43,6 +43,7 @@
 #include "ikev2_ipseckey.h"
 #include "keys.h"
 #include "secrets.h"
+#include "ip_address.h"
 
 struct p_dns_req;
 
@@ -174,7 +175,7 @@ static bool get_keyval_chunk(struct p_dns_req *dnsr, ldns_rdf *rdf,
 			&bin_len, err_buf, sizeof(err_buf), 0);
 
 	if (ugh != NULL) {
-		loglog(RC_LOG_SERIOUS, "converting base64 pubkey to binary faild %s", ugh);
+		loglog(RC_LOG_SERIOUS, "converting base64 pubkey to binary failed %s", ugh);
 		ret = FALSE;
 	}
 
@@ -194,7 +195,6 @@ static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf,
 	struct id keyid = st->st_connection->spd.that.id;
 	chunk_t keyval = empty_chunk;
 	err_t ugh = NULL;
-	enum dns_auth_level al;
 	char thatidbuf[IDTOA_BUF];
 	char ttl_buf[ULTOT_BUF + 32]; /* 32 is aribitary */
 	u_int32_t ttl_used;
@@ -226,11 +226,8 @@ static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf,
 		dnsr->delete_exisiting_keys = FALSE;
 	}
 
-	if (dnsr->secure == UB_EVNET_SECURE) {
-		al = DNSSEC_SECURE;
-	} else {
-		al = DNSSEC_INSECURE;
-	}
+	enum dns_auth_level al = dnsr->secure == UB_EVNET_SECURE ?
+		DNSSEC_SECURE : DNSSEC_INSECURE;
 
 	if (keyid.kind == ID_FQDN) {
 		DBG(DBG_DNS, DBG_log("add IPSECKEY pluto as publickey %s %s %s",
@@ -260,7 +257,7 @@ static void validate_address(struct p_dns_req *dnsr, unsigned char *addr)
 	ip_address ipaddr;
 	ipstr_buf ra;
 	ipstr_buf rb;
-	unsigned short af = st->st_remoteaddr.u.v4.sin_family;
+	unsigned short af = addrtypeof(&st->st_remoteaddr);
 	size_t addr_len = af == AF_INET ? 4 : 16;
 
 	if (dnsr->qtype != LDNS_RR_TYPE_A) {
@@ -296,7 +293,7 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 
 	dnsr->delete_exisiting_keys = TRUE; /* there could something to add */
 
-	for (i = (size_t) 0U; i < ldns_rr_list_rr_count(answers); i++) {
+	for (i = 0; i < ldns_rr_list_rr_count(answers); i++) {
 		ldns_rr *ans = ldns_rr_list_rr(answers, i);
 		ldns_rr_type atype = ldns_rr_get_type(ans);
 		ldns_rr_class qclass = ldns_rr_get_class(ans);
@@ -392,8 +389,6 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 			DBG(DBG_DNS,
 				DBG_log("dns answer %zu qtype mismatch expect %d vs %d ignore this answer",
 					i,  dnsr->qtype, atype));
-
-			continue;
 		}
 	}
 
@@ -403,35 +398,40 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 /* This is called when dns response arrives */
 static err_t process_dns_resp(struct p_dns_req *dnsr)
 {
-	ldns_status status;
-	ldns_pkt *ldnspkt = NULL;
 
 	if (dnsr->rcode != 0 ) {
 		return dnsr->rcode_name;
 	}
 
-	status = ldns_wire2pkt(&ldnspkt, dnsr->wire, dnsr->wire_len);
+	ldns_pkt *ldnspkt = NULL;
+	ldns_status status = ldns_wire2pkt(&ldnspkt, dnsr->wire, dnsr->wire_len);
 
 	if (status != LDNS_STATUS_OK) {
 		return "ldns could not parse response wire format";
 	}
 
-	if (ldns_rr_list_rr_count(ldns_pkt_answer(ldnspkt)) == (size_t) 0U) {
-		return "dns response has 0 answer";
+	if (ldns_rr_list_rr_count(ldns_pkt_answer(ldnspkt)) == 0) {
+		return "DNS response contains no answer";
 	}
 
-	if (dnsr->secure == UB_EVENT_BOGUS)
-	{
-		return "unbound retunred BOGUS response ignore it.";
-	} else if (dnsr->secure == UB_EVENT_INSECURE) {
-		/* PAUL add impair here */
-		return "unbound retunred INSECURE response ignore it.";
-	}
+	switch (dnsr->secure) {
+	default:	/* treat as bogus */
+	case UB_EVENT_BOGUS:
+		return "unbound returned BOGUS response - ignored";
 
-	return parse_rr(dnsr, ldnspkt);
+	case UB_EVENT_INSECURE:
+		if (IMPAIR(ALLOW_DNS_INSECURE)) {
+			DBG(DBG_DNS, DBG_log("Allowing insecure DNS response due to impair"));
+			return parse_rr(dnsr, ldnspkt);
+		}
+		return "unbound returned INSECURE response - ignored";
+
+	case UB_EVNET_SECURE:
+		return parse_rr(dnsr, ldnspkt);
+	}
 }
 
-void  free_ipseckey_dns( struct p_dns_req *d)
+void  free_ipseckey_dns(struct p_dns_req *d)
 {
 	struct p_dns_req **pp;
 	struct p_dns_req *p;
@@ -497,17 +497,22 @@ static void ipseckey_dbg_dns_resp(struct p_dns_req *dnsr)
 		DBG_log("%s returned %s cache=%s elapsedtime %lu.%06lu",
 			dnsr->log_buf,
 			dnsr->rcode_name,
-			dnsr->cache_hit ? "yes" : "no",
+			bool_str(dnsr->cache_hit),
 			(unsigned long)served_delta.tv_sec,
 			(unsigned long)(served_delta.tv_usec * 1000000)));
 
-	DBG(DBG_DNS, DBG_log("DNSSEC=%s %s MSG SIZE %d bytes",
-				(dnsr->secure == UB_EVNET_SECURE) ? "SECURE" :
-					(dnsr->secure == UB_EVENT_INSECURE) ?
-						"INSECURE" : "BOGUS",
-				(dnsr->secure == UB_EVENT_BOGUS) ?
-				dnsr->why_bogus : "",
-				dnsr->wire_len));
+	DBG(DBG_DNS, {
+		const enum lswub_resolve_event_secure_kind k = dnsr->secure;
+
+		DBG_log("DNSSEC=%s %s MSG SIZE %d bytes",
+			k == UB_EVNET_SECURE ? "SECURE"
+			: k == UB_EVENT_INSECURE ? "INSECURE"
+			: k == UB_EVENT_BOGUS ? "BOGUS"
+			: "invalid lswub_resolve_event_secure_kind",
+
+			k == UB_EVENT_BOGUS ? dnsr->why_bogus : "",
+			dnsr->wire_len);
+	});
 }
 
 static void idr_ipseckey_fetch_continue(struct p_dns_req *dnsr)
@@ -551,12 +556,10 @@ static void idr_ipseckey_fetch_continue(struct p_dns_req *dnsr)
 
 static void idi_ipseckey_fetch_tail(struct state *st, bool err)
 {
-	struct msg_digest *md = st->st_suspended_md;
+	struct msg_digest *md = unsuspend_md(st);
 	stf_status stf;
 
 	passert(md !=  NULL && (st == md->st));
-
-	unset_suspended(md->st);
 
 	if (err) {
 		stf = STF_FAIL + v2N_AUTHENTICATION_FAILED;
@@ -568,7 +571,7 @@ static void idi_ipseckey_fetch_tail(struct state *st, bool err)
 	release_any_md(&md);
 	reset_globals();
 }
-#ifdef NOT_YET
+
 static void idi_a_fetch_continue(struct p_dns_req *dnsr)
 {
 	struct state *st = state_with_serialno(dnsr->so_serial_t);
@@ -632,7 +635,6 @@ static void idi_a_fetch_continue(struct p_dns_req *dnsr)
 
 	idi_ipseckey_fetch_tail(st, err);
 }
-#endif /* NOT_YET */
 
 static void idi_ipseckey_fetch_continue(struct p_dns_req *dnsr)
 {
@@ -721,7 +723,6 @@ static err_t build_dns_name(char *name_buf, /* len SWAN_MAX_DOMAIN_LEN */
 		const struct id *id)
 {
 	/* note: all end in "." to suppress relative searches */
-	id = resolve_myid(id);
 
 	if (id->name.len >= SWAN_MAX_DOMAIN_LEN)
 		return "ID is too long >= SWAN_MAX_DOMAIN_LEN";
@@ -740,7 +741,8 @@ static err_t build_dns_name(char *name_buf, /* len SWAN_MAX_DOMAIN_LEN */
 			size_t il;
 
 			/* idtoa() will have an extra @ as prefix */
-			il = snprintf(name_buf, buf_len, "%s", id->name.ptr);
+
+			il = snprintf(name_buf, buf_len, "%.*s", (int)id->name.len, id->name.ptr);
 
 			/* strip trailing "." characters, then add one */
 			while (il > 0 && name_buf[il - 1] == '.')
@@ -777,7 +779,7 @@ static struct p_dns_req *qry_st_init(struct state *st,
 
 
 	err = build_dns_name(qname, &id);
-	if ( err !=  NULL) {
+	if (err !=  NULL) {
 		/* is there qtype to name lookup function  */
 		loglog(RC_LOG_SERIOUS, "could not build dns query name %s %d",
 				err, qtype);
@@ -831,7 +833,7 @@ static stf_status dns_qry_start(struct p_dns_req *dnsr)
 	ub_ret = ub_resolve_event(get_unbound_ctx(), dnsr->qname, dnsr->qtype,
 			dnsr->qclass, dnsr, ipseckey_ub_cb, &dnsr->ub_async_id);
 
-	if ( ub_ret !=  0) {
+	if (ub_ret !=  0) {
 		loglog(RC_LOG_SERIOUS, "unbound resolve call failed for %s",
 				dnsr->log_buf);
 		free_ipseckey_dns(dnsr);
@@ -913,19 +915,19 @@ stf_status idi_ipseckey_fetch(struct msg_digest *md)
 		return ret_idi;
 	}
 
-#ifdef NOT_YET /* this is the forward extra check */
-	/* struct id id = st->st_connection->spd.that.id; move this line up */
-	if (id.kind == ID_FQDN) { /* PAUL add extra option for this check */
-		dnsr_a = qry_st_init(st, LDNS_RR_TYPE_A, "A", idi_a_fetch_continue);
+	if (LIN(st->st_connection->policy, POLICY_DNS_MATCH_ID)) {
+		struct id id = st->st_connection->spd.that.id;
+		if (id.kind == ID_FQDN) {
+			dnsr_a = qry_st_init(st, LDNS_RR_TYPE_A, "A", idi_a_fetch_continue);
 
-		if (dnsr_a == NULL) {
-			free_ipseckey_dns(dnsr_idi);
-			return ret;
+			if (dnsr_a == NULL) {
+				free_ipseckey_dns(dnsr_idi);
+				return ret;
+			}
+
+			ret_a = dns_qry_start(dnsr_a);
 		}
-
-		ret_a = dns_qry_start(dnsr_a);
 	}
-#endif  /* this is the forward extra check */
 
 	if (ret_a != STF_SUSPEND && ret_a != STF_OK) {
 		free_ipseckey_dns(dnsr_idi);
@@ -933,7 +935,6 @@ stf_status idi_ipseckey_fetch(struct msg_digest *md)
 		/* all success */
 		st->ipseckey_dnsr = dnsr_idi;
 		st->ipseckey_fwd_dnsr = dnsr_a;
-		set_suspended(st, md);
 		ret = STF_SUSPEND;
 	}
 

@@ -48,12 +48,12 @@ ipv = 0
 ipv6 = 0
 parser = argparse.ArgumentParser(description='swan-prep arguments')
 parser.add_argument('--testname', '-t', action='store',
-                    default='', help='The name of the test to prepapre')
+                    default='', help='The name of the test to prepare')
 parser.add_argument('--hostname', '-H', action='store',
                     default='', help='The name of the host to prepare as')
 # we should get this from the testparams.sh file?
 parser.add_argument('--userland', '-u', action='store',
-                    default='libreswan', help='which userland to prepapre')
+                    default='libreswan', help='which userland to prepare')
 parser.add_argument('--x509', '-x', action='store_true',
                     help='create X509 NSS file by importing test certs')
 parser.add_argument('--dnssec', '-d', action='store_true',
@@ -199,18 +199,37 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
                     os.chmod(dir, 0o700)
 
         # test specific files
-        ipsecconf = "%s/%s.conf" % (testpath, hostname)
-        ipsecsecrets = "%s/%s.secrets" % (testpath, hostname)
+        ipsecconf = "%s/ipsec.conf" % (testpath)
+        ipsecsecrets = "%s/ipsec.secrets" % (testpath)
+        h_ipsecconf = "%s/%s.conf" % (testpath, hostname)
+        h_ipsecsecrets = "%s/%s.secrets" % (testpath, hostname)
         xl2tpdconf = "%s/%s.xl2tpd.conf" % (testpath, hostname)
         pppoptions = "%s/%s.ppp-options.xl2tpd" % (testpath, hostname)
         chapfile = "%s/chap-secrets" % testpath
 
-        if not os.path.isfile(ipsecconf):
+        if os.path.isfile(h_ipsecconf):
+            if os.path.isfile(ipsecconf):
+                print("conflicting files %s %s" % (ipsecconf, h_ipsecconf))
+            else:
+                ipsecconf = h_ipsecconf
+        elif not os.path.isfile(ipsecconf):
             ipsecconf = "/testing/baseconfigs/%s/etc/ipsec.conf" % hostname
-        if not os.path.isfile(ipsecsecrets):
+
+        if os.path.isfile(h_ipsecsecrets):
+            if os.path.isfile(ipsecsecrets):
+                print("conflicting files %s %s" % (ipsecsecrets, h_ipsecsecrets))
+            else:
+                ipsecsecrets = h_ipsecsecrets
+        elif not os.path.isfile(ipsecsecrets):
             ipsecsecrets = "/testing/baseconfigs/%s/etc/ipsec.secrets" % hostname
 
         if args.userland == "strongswan":
+            # check version and fail early
+            output = subprocess.getoutput("strongswan version")
+            if not "U5.6.0" in output:
+                sys.exit("strongswan 5.6.0 must be installed")
+            # required to write log file in /tmp
+            subprocess.getoutput("setenforce 0")
             strongswanconf = "%s/%sstrongswan.conf" % (testpath, hostname)
             shutil.copy(strongswanconf, "/etc/strongswan/strongswan.conf")
             for dir in ("/etc/strongswan/ipsec.d/aacerts", "/etc/strongswan/ipsec.d/ocspcerts"):
@@ -303,6 +322,8 @@ if userland in ("libreswan", "openswan"):
 
     # this section is getting rough. could use a nice refactoring
     if args.x509:
+        shutil.rmtree("/etc/strongswan/ipsec.d/cacerts/")
+        os.mkdir("/etc/strongswan/ipsec.d/cacerts/")
 
         if not os.path.isfile("/testing/x509/keys/mainca.key"):
             print("\n\n---------------------------------------------------------------------\n"
@@ -436,6 +457,9 @@ if not os.path.isfile("/root/.gdbinit"):
     fp = open("/root/.gdbinit", "w")
     fp.write("set auto-load safe-path /")
     fp.close()
+
+subprocess.getoutput("iptables -F");
+subprocess.getoutput("iptables -X");
 
 # Create LOGDROP (used to be done in swan-transmogrify but we want it here
 # for docker)

@@ -12,7 +12,7 @@ west #
  echo done
 done
 west #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 west NOW
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES

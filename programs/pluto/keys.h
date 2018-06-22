@@ -8,6 +8,7 @@
  * Copyright (C) 2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2011 Mika Ilmaranta <ilmis@foobar.fi>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -45,7 +46,9 @@ extern bool has_private_key(cert_t cert);
 extern void list_public_keys(bool utc, bool check_pub_keys);
 extern void list_psks(void);
 
-extern const chunk_t *get_preshared_secret(const struct connection *c);
+extern const chunk_t *get_psk(const struct connection *c);
+extern chunk_t *get_ppk(const struct connection *c, chunk_t **ppk_id);
+extern const chunk_t *get_ppk_by_id(const chunk_t *ppk_id);
 
 extern void load_preshared_secrets(void);
 extern void free_preshared_secrets(void);

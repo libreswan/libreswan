@@ -273,41 +273,45 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
     publish.json_status(logger, args, "processing %s" % test_prefix)
     with logger.time("processing test %s", test_prefix):
 
+        # Ignoring the test completely?
+        #
+        # So that there's no possible confusion over the test being
+        # run; remove any pre-existing output.
 
-        # always perform post mortem on the test directory.
+        ignored, details = ignore.test(logger, args, test)
+        if ignored:
+            # The isdir() test followed by a simple move, while
+            # racy, should be good enough.
+            if os.path.isdir(test.output_directory):
+                logger.info("moving '%s' to '%s'", test.output_directory,
+                            backup_directory)
+                os.makedirs(os.path.dirname(backup_directory), exist_ok=True)
+                os.rename(test.output_directory, backup_directory)
+            result_stats.add_ignored(test, ignored)
+            test_stats.add(test, "ignored")
+            logger.info("%s %s ignored (%s) %s",
+                        prefix, test_prefix, details, suffix)
+            return
+
+        # Skipping the test, leaving old results.
+        #
+        # Be lazy when gathering the results, don't run the sanitizer
+        # or diff.  Let post.mortem figure out if the test finished.
+
+        old_result = post.mortem(test, args, domain_prefix=domain_prefix, quick=True)
+        if skip.result(logger, args, old_result):
+            logger.info("%s %s skipped (previously %s) %s",
+                        prefix, test_prefix, old_result, suffix)
+            test_stats.add(test, "skipped")
+            result_stats.add_skipped(old_result)
+            return
+
+        # Running the test ...
+        #
+        # From now on the test will be run so need to perform post
+        # mortem.
+
         try:
-
-            ignored, details = ignore.test(logger, args, test)
-            if ignored:
-                # If there is any pre-existing output move it to
-                # backup.  Otherwise it looks like the test was run
-                # when it wasn't (and besides, the output is no longer
-                # applicable).
-                #
-                # The isdir() test followed by a simple move, while
-                # racy, should be good enough.
-                if os.path.isdir(test.output_directory):
-                    logger.info("moving '%s' to '%s'", test.output_directory,
-                                backup_directory)
-                    os.makedirs(os.path.dirname(backup_directory), exist_ok=True)
-                    os.rename(test.output_directory, backup_directory)
-                result_stats.add_ignored(test, ignored)
-                test_stats.add(test, "ignored")
-                logger.info("%s %s ignored (%s) %s",
-                            prefix, test_prefix, details, suffix)
-                return
-
-            # Be lazy when gathering the results, don't run the
-            # sanitizer or diff.  Let post.mortem figure out if the
-            # test finished.
-
-            old_result = post.mortem(test, args, domain_prefix=domain_prefix, quick=True)
-            if skip.result(logger, args, old_result):
-                logger.info("%s %s skipped (previously %s) %s",
-                            prefix, test_prefix, old_result, suffix)
-                test_stats.add(test, "skipped")
-                result_stats.add_skipped(old_result)
-                return
 
             if old_result:
                 test_stats.add(test, "tests", "retry")
@@ -318,18 +322,21 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                 logger.info("%s %s started ....", prefix, test_prefix)
             test_stats.add(test, "tests")
 
-            # Create just the OUTPUT/ directory; if it already exists,
-            # move any contents to BACKUP/.  Do it file-by-file so
-            # that, at no point, the OUTPUT/ directory is missing
-            # (having an OUTPUT/ directory implies the test was
-            # started).
+            # Create just the OUTPUT/ directory.
             #
-            # Don't create the path.  If the parent directory is
-            # missing, this will fail.
+            # If the directory already exists, copy the contents
+            # BACKUP/.  Do it file-by-file so that, at no point, the
+            # OUTPUT/ directory is missing (having an OUTPUT/
+            # directory implies the test was started).
             #
-            # By backing up each test just before it is started, a
-            # trail of what tests were attempted during each run is
-            # created.
+            # Don't try to create the path.  If the parent directory
+            # is missing, this and the entire script will crash.
+            # Someone did something nasty like deleted the parent
+            # directory.
+            #
+            # By backing up each test just before it is started,
+            # leaves a trail of what tests were attempted during a
+            # test run.
             #
             # XXX:
             #
@@ -344,9 +351,6 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
 
             try:
                 os.mkdir(test.output_directory)
-            except FileNotFoundError:
-                # Bail, something is messed up (for instance the parent directory doesn't exist).
-                return
             except FileExistsError:
                 logger.info("moving contents of '%s' to '%s'",
                             test.output_directory, backup_directory)
@@ -412,7 +416,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                         except pexpect.TIMEOUT as e:
                             # A test ending with a timeout gets
                             # treated as unresolved.  Timeouts
-                            # shouldn't occure so human intervention
+                            # shouldn't occur so human intervention
                             # is required.
                             logger.error("**** timeout out while running test script %s ****", script)
 

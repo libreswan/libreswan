@@ -1,0 +1,88 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec whack --impair none
+west #
+ ipsec whack --impair suppress-retransmits # one packet
+west #
+ ipsec whack --impair add-unknown-payload-to-auth-sk
+west #
+ : good
+west #
+ ../bin/libreswan-up-down.sh westnet-eastnet-ipv4-psk-ikev2 -I 192.0.1.254 192.0.2.254
+002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating v2 parent SA
+133 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I1: initiate
+133 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: adding an unknown payload of type 255 to AUTH's SK request
+134 "westnet-eastnet-ipv4-psk-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
+002 "westnet-eastnet-ipv4-psk-ikev2" #2: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+000 "westnet-eastnet-ipv4-psk-ikev2" #2: non-critical payload ignored because it contains an unknown or unexpected payload type (255??) at the outermost level
+002 "westnet-eastnet-ipv4-psk-ikev2" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+003 "westnet-eastnet-ipv4-psk-ikev2" #2: Authenticated using authby=secret
+002 "westnet-eastnet-ipv4-psk-ikev2" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
+004 "westnet-eastnet-ipv4-psk-ikev2" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+destination -I 192.0.1.254 192.0.2.254 is alive
+002 "westnet-eastnet-ipv4-psk-ikev2": terminating SAs using this connection
+002 "westnet-eastnet-ipv4-psk-ikev2" #2: deleting state (STATE_V2_IPSEC_I) and sending notification
+005 "westnet-eastnet-ipv4-psk-ikev2" #2: ESP traffic information: in=84B out=84B
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting state (STATE_PARENT_I3) and sending notification
+002 "westnet-eastnet-ipv4-psk-ikev2": deleting non-instance connection
+west #
+ : bad
+west #
+ ipsec whack --impair none
+west #
+ ipsec whack --impair delete-on-retransmit
+west #
+ ipsec whack --impair add-unknown-payload-to-auth-sk,unknown-payload-critical
+west #
+ ../bin/libreswan-up-down.sh westnet-eastnet-ipv4-psk-ikev2 -I 192.0.1.254 192.0.2.254
+002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
+002 "westnet-eastnet-ipv4-psk-ikev2" #3: initiating v2 parent SA
+133 "westnet-eastnet-ipv4-psk-ikev2" #3: STATE_PARENT_I1: initiate
+133 "westnet-eastnet-ipv4-psk-ikev2" #3: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: adding an unknown payload of type 255 to AUTH's SK request
+002 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: setting (should be off) critical payload bit
+134 "westnet-eastnet-ipv4-psk-ikev2" #4: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
+002 "westnet-eastnet-ipv4-psk-ikev2" #4: IKE SA authentication request rejected: UNSUPPORTED_CRITICAL_PAYLOAD
+000 "westnet-eastnet-ipv4-psk-ikev2" #4: scheduling retry attempt 1 of an unlimited number, but releasing whack
+west #
+ echo done
+done
+west #
+ grep 'Notify data  ff$' /tmp/pluto.log
+west #
+ ../../pluto/bin/ipsec-look.sh
+west NOW
+XFRM state:
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 
+	sel src 192.1.2.23/32 dst 192.1.2.45/32 
+XFRM policy:
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1 
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254 
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45 
+192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45 
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

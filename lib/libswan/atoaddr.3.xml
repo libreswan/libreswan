@@ -124,7 +124,7 @@ a hexadecimal address may be uppercase or lowercase or any mixture thereof.
 Use of hexadecimal addresses is
 <emphasis remap='B'>strongly discouraged</emphasis>;
 they are included only to save hassles when dealing with
-the handful of perverted programs which already print
+the handful of perverted programs that already print
 network addresses in hexadecimal.</para>
 
 <para>DNS names may be complete (optionally terminated with a &ldquo;.&rdquo;)
@@ -213,7 +213,7 @@ under no circumstances are more than
 <varname role='parameter'>dstlen</varname>
 bytes written to
 <varname role='parameter'>dst</varname>.
-A result which will not fit is truncated.
+A result that will not fit is truncated.
 <emphasis remap='I'>Dstlen</emphasis>
 can be zero, in which case
 <varname role='parameter'>dst</varname>
@@ -226,7 +226,7 @@ header file defines constants,
 <emphasis remap='B'>ADDRTOA_BUF</emphasis>
 and
 <emphasis remap='B'>SUBNETTOA_BUF</emphasis>,
-which are the sizes of buffers just large enough for worst-case results.</para>
+that are the sizes of buffers just large enough for worst-case results.</para>
 
 <para>The
 <varname role='parameter'>format</varname>
@@ -250,7 +250,7 @@ see DIAGNOSTICS.
 The binary-to-ASCII functions return
 <literal>0</literal>
 for a failure, and otherwise
-always return the size of buffer which would
+always return the size of buffer that would
 be needed to
 accommodate the full conversion result, including terminating NUL;
 it is the caller's responsibility to check this against the size of

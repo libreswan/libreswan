@@ -1,0 +1,180 @@
+/testing/guestbin/swan-prep --userland strongswan
+road #
+ # delete the address 33.222 before re-run. otherwise strongswan may choose 33.222
+road #
+ ip addr show dev eth0 | grep 192.1.33.222 && ip addr del 192.1.33.222/24 dev eth0
+road #
+ # add .209 incase re-run
+road #
+ ip addr show dev eth0 | grep 192.1.3.209 || ip addr add 192.1.3.209/24 dev eth0
+    inet 192.1.3.209/24 brd 192.1.3.255 scope global eth0
+road #
+ ip addr add 192.1.33.222/24 dev eth0
+road #
+ # add default gw, it could have been deleted due address changes
+road #
+ ip route | grep default || ip route add default via 192.1.3.254
+default via 192.1.3.254 dev eth0 
+road #
+ ../../pluto/bin/strongswan-start.sh
+road #
+ echo "initdone"
+initdone
+road #
+ strongswan up road-east
+initiating IKE_SA road-east[1] to 192.1.2.23
+generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
+sending packet: from 192.1.3.209[500] to 192.1.2.23[500] (XXX bytes)
+received packet: from 192.1.2.23[500] to 192.1.3.209[500] (XXX bytes)
+parsed IKE_SA_INIT response 0 [ SA KE No N(FRAG_SUP) N(NATD_S_IP) N(NATD_D_IP) ]
+local host is behind NAT, sending keep alives
+no IDi configured, fall back on IP address
+authentication of '192.1.3.209' (myself) with pre-shared key
+establishing CHILD_SA road-east{1}
+generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH CPRQ(ADDR DNS) SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
+sending packet: from 192.1.3.209[4500] to 192.1.2.23[4500] (XXX bytes)
+received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
+parsed IKE_AUTH response 1 [ N(MOBIKE_SUP) IDr AUTH CPRP(ADDR) SA TSi TSr ]
+authentication of 'east' with pre-shared key successful
+IKE_SA road-east[1] established between 192.1.3.209[192.1.3.209]...192.1.2.23[east]
+scheduling reauthentication in XXXs
+maximum IKE_SA lifetime XXXs
+installing new virtual IP 192.0.3.10
+CHILD_SA road-east{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.3.10/32 === 192.0.2.0/24
+peer supports MOBIKE
+connection 'road-east' established successfully
+road #
+ ping -W 1 -q -n -c 2 -I 192.0.3.10 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.3.10 : 56(84) bytes of data.
+--- 192.0.2.254 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+road #
+ strongswan status
+Security Associations (1 up, 0 connecting):
+   road-east[1]: ESTABLISHED XXX second ago, 192.1.3.209[192.1.3.209]...192.1.2.23[east]
+   road-east{1}:  INSTALLED, TUNNEL, reqid 1, ESP in UDP SPIs: SPISPI_i SPISPI_o
+   road-east{1}:   192.0.3.10/32 === 192.0.2.0/24
+road #
+ # note this end should be 192.1.3.209
+road #
+ ip xfrm state
+src 192.1.3.209 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	enc cbc(aes) 0xKEY
+src 192.1.2.23 dst 192.1.3.209
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	enc cbc(aes) 0xKEY
+road #
+ ip xfrm pol
+src 192.0.3.10/32 dst 192.0.2.0/24 
+	dir out priority 371327 ptype main 
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp spi 0xSPISPI reqid 1 mode tunnel
+src 192.0.2.0/24 dst 192.0.3.10/32 
+	dir fwd priority 371327 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.3.209
+src 192.0.2.0/24 dst 192.0.3.10/32 
+	dir in priority 371327 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.3.209
+road #
+ sleep 5
+road #
+ # remove this end ip next one will take over
+road #
+ ip route show scope global | grep 192.1.3.254 && ip route del default via 192.1.3.254
+default via 192.1.3.254 dev eth0 
+road #
+ ip route show scope global | grep 192.1.33.254 || ip route add default via 192.1.33.254
+road #
+ ip addr del 192.1.3.209/24 dev eth0
+road #
+ # let strongswan do a MOBIKE update
+road #
+ sleep 10
+road #
+ # both ends updated MOBIKE ping should work
+road #
+ # note this end should be 192.1.33.222
+road #
+ strongswan status
+Security Associations (1 up, 0 connecting):
+   road-east[1]: ESTABLISHED XXX second ago, 192.1.33.222[192.1.3.209]...192.1.2.23[east]
+   road-east{1}:  INSTALLED, TUNNEL, reqid 1, ESP in UDP SPIs: SPISPI_i SPISPI_o
+   road-east{1}:   192.0.3.10/32 === 192.0.2.0/24
+road #
+ ip xfrm state
+src 192.1.33.222 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	enc cbc(aes) 0xKEY
+src 192.1.2.23 dst 192.1.33.222
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	enc cbc(aes) 0xKEY
+road #
+ ip xfrm pol
+src 192.0.3.10/32 dst 192.0.2.0/24 
+	dir out priority 371327 ptype main 
+	tmpl src 192.1.33.222 dst 192.1.2.23
+		proto esp spi 0xSPISPI reqid 1 mode tunnel
+src 192.0.2.0/24 dst 192.0.3.10/32 
+	dir fwd priority 371327 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.33.222
+src 192.0.2.0/24 dst 192.0.3.10/32 
+	dir in priority 371327 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.33.222
+road #
+ ping -W 1 -q -n -c 2 -I 192.0.3.10 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.3.10 : 56(84) bytes of data.
+--- 192.0.2.254 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+road #
+ grep "requesting address change using MOBIKE" /tmp/charon.log | sed "s/^.*road/road/"
+road-east|1> requesting address change using MOBIKE
+road #
+ echo done
+done
+road #
+ ../../pluto/bin/ipsec-look.sh
+road NOW
+XFRM state:
+src 192.1.33.222 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	enc cbc(aes) 0xKEY
+src 192.1.2.23 dst 192.1.33.222
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	enc cbc(aes) 0xKEY
+XFRM policy:
+src 192.0.2.0/24 dst 192.0.3.10/32
+	dir fwd priority 371327 ptype main
+	tmpl src 192.1.2.23 dst 192.1.33.222
+src 192.0.2.0/24 dst 192.0.3.10/32
+	dir in priority 371327 ptype main
+	tmpl src 192.1.2.23 dst 192.1.33.222
+src 192.0.3.10/32 dst 192.0.2.0/24
+	dir out priority 371327 ptype main
+	tmpl src 192.1.33.222 dst 192.1.2.23
+		proto esp spi 0xSPISPI reqid REQID mode tunnel
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.33.254 dev eth0 
+192.1.33.0/24 dev eth0 proto kernel scope link src 192.1.33.222 
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+road #
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec whack --trafficstatus ; fi
+road #
+ if [ -f /var/run/charon.pid ]; then strongswan status ; fi
+Security Associations (1 up, 0 connecting):
+   road-east[1]: ESTABLISHED XXX second ago, 192.1.33.222[192.1.3.209]...192.1.2.23[east]
+   road-east{1}:  INSTALLED, TUNNEL, reqid 1, ESP in UDP SPIs: SPISPI_i SPISPI_o
+   road-east{1}:   192.0.3.10/32 === 192.0.2.0/24
+road #
+road #
+ ../bin/check-for-core.sh
+road #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

@@ -1,0 +1,7 @@
+IKEv2 test with esp=null-null with XFRM/NETKEY
+
+this test verifies that per default this policy is not allowed,
+but after issuing an impair, it is allowed.
+
+The no-encryption-no-authentication mode is only ever
+valid for benchmarking IPsec code

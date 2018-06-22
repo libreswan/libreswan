@@ -15,6 +15,7 @@
  */
 #include "internal.h"
 #include "libreswan.h"
+#include "ip_address.h"
 
 #ifndef DEFAULTSUBNET
 #define DEFAULTSUBNET "%default"

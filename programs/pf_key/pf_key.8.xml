@@ -42,7 +42,7 @@ not supported on any other stack.
 is a program to open a PF_KEY socket and print all messages that are received
 from it. With no options, it will register itself to receive key requests for
 AH, ESP, IPIP and IPCOMP security associations. If given more specific
-options, then it will listen only to those protocols which are listed.</para>
+options, then it will listen only to those protocols that are listed.</para>
 
 <para>If the messages are recognized, the messages will be decoded.</para>
 

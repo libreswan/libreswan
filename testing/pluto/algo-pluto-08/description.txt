@@ -2,3 +2,4 @@ Testing modp3072 (group 15) from RFC 3526
 
 Confirms that group 15-18 work
 
+In this case we use both modp3072 and dh15 syntax to confirm both work

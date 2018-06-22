@@ -23,8 +23,21 @@
 #ifndef _WHACK_H
 #define _WHACK_H
 
-#include <libreswan.h>
 #include "ietf_constants.h"
+#include "lset.h"
+#include "lmod.h"
+#include "deltatime.h"
+#include "chunk.h"
+#include "reqid.h"
+
+#ifndef DEFAULT_RUNDIR
+# define DEFAULT_RUNDIR "/run/pluto/"
+#endif
+
+#ifndef DEFAULT_CTL_SOCKET
+# define DEFAULT_CTL_SOCKET DEFAULT_RUNDIR "/pluto.ctl"
+#endif
+
 
 /* Since the message remains on one host, native representation is used.
  * Think of this as horizontal microcode: all selected operations are
@@ -46,7 +59,7 @@
  */
 
 #define WHACK_BASIC_MAGIC (((((('w' << 8) + 'h') << 8) + 'k') << 8) + 25)
-#define WHACK_MAGIC (((((('o' << 8) + 'h') << 8) + 'k') << 8) + 43)
+#define WHACK_MAGIC (((((('o' << 8) + 'h') << 8) + 'k') << 8) + 45)
 
 /*
  * Where, if any, is the pubkey coming from.
@@ -55,7 +68,7 @@
  * version number.
  */
 enum whack_pubkey_type {
-	WHACK_PUBKEY_NONE,
+	WHACK_PUBKEY_NONE = 0,	/* must be zero (to make it default) */
 	WHACK_PUBKEY_CERTIFICATE_NICKNAME,
 	WHACK_PUBKEY_CKAID,
 };
@@ -139,7 +152,8 @@ struct whack_message {
 
 	bool whack_options;
 
-	lset_t debugging;
+	lmod_t debugging;
+	lmod_t impairing;
 
 	/* for WHACK_CONNECTION */
 
@@ -154,8 +168,8 @@ struct whack_message {
 	unsigned long sa_keying_tries;
 	unsigned long sa_replay_window;
 	deltatime_t r_timeout; /* in secs */
-	unsigned long  r_interval; /* in msec */
-	enum nic_offload_options nic_offload;
+	deltatime_t r_interval; /* in msec */
+	enum yna_options nic_offload;
 
 	/* For IKEv1 RFC 3706 - Dead Peer Detection */
 	deltatime_t dpd_delay;
@@ -167,7 +181,7 @@ struct whack_message {
 	enum keyword_remotepeertype remotepeertype;
 
 	/* Force the use of NAT-T on a connection */
-	enum encaps_options encaps;
+	enum yna_options encaps;
 
 	/* Option to allow per-conn setting of sending of NAT-T keepalives - default is enabled  */
 	bool nat_keepalive;
@@ -183,13 +197,11 @@ struct whack_message {
 	 */
 	bool cisco_unity;
 
-	/* Option to send strongswan VID to allowe better interop */
+	/* Option to send strongswan VID to allow better interop */
 	bool fake_strongswan;
 
 	/* send our own libreswan vendorid or not */
 	bool send_vendorid;
-
-	bool sha2_truncbug;
 
 	/* Checking if this connection is configured by Network Manager */
 	bool nmconfigured;
@@ -235,10 +247,6 @@ struct whack_message {
 	enum pubkey_alg pubkey_alg;
 	chunk_t keyval;	/* chunk */
 
-	/* for WHACK_MYID: */
-	bool whack_myid;
-	char *myid;	/* string 7 */
-
 	/* for REMOTE_HOST */
 	char *remote_host;
 
@@ -254,6 +262,7 @@ struct whack_message {
 	/* for WHACK_OPINITIATE */
 	bool whack_oppo_initiate;
 	ip_address oppo_my_client, oppo_peer_client;
+	int oppo_proto, oppo_dport;
 
 	/* for WHACK_TERMINATE: */
 	bool whack_terminate;
@@ -281,6 +290,8 @@ struct whack_message {
 
 	/* for WHACK_LISTEN: */
 	bool whack_listen, whack_unlisten;
+	long unsigned int ike_buf_size;	/* IKE socket recv/snd buffer size */
+	bool ike_sock_err_toggle; /* toggle MSG_ERRQUEUE on IKE socket */
 
 	/* for DDOS modes */
 	enum ddos_mode whack_ddos;
@@ -300,10 +311,9 @@ struct whack_message {
 	/* for connalias string */
 	char *connalias;
 
-	/* for MODECFG */
-	ip_address modecfg_dns1;
-	ip_address modecfg_dns2;
-	char *modecfg_domain;
+	/* for IKEv1 MODECFG and IKEv2 CP */
+	char *modecfg_dns;
+	char *modecfg_domains;
 	char *modecfg_banner;
 
 	char *conn_mark_both;
@@ -341,7 +351,7 @@ struct whack_message {
 	 * 12 right's updown
 	 * 13 right's virt
 	 * 14 keyid
-	 * 15 myid
+	 * 15 unused (was myid)
 	 * 16 ike
 	 * 17 esp
 	 * 18 left.username

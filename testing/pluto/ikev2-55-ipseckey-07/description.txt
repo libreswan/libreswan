@@ -1,0 +1,7 @@
+The responder has %any connection to be identified using FQDN.
+The responder accepts IDi, type FQDN.
+Query the forward zone for IDi's IPSECKEY Resource Record.
+
+North is the initiator, with its IDi, type FQDN. 
+
+north.testing.libreswan.org. 120 IN IPSECKEY 10 0 2 . AQ

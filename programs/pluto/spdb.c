@@ -63,12 +63,11 @@
 /**
  * the XAUTH server/client stuff is a bit confusing.
  *
- * XAUTH overloads the RSA/PSK types with four more types which
+ * XAUTH overloads the RSA/PSK types with four more types that
  * mean RSA or PSK, but also include whether one is negotiating
- * that the inititator with be the XAUTH client, or the responder will be
+ * that the inititator will be the XAUTH client, or the responder will be
  * XAUTH client. It seems unusual that the responder would be the one
  * to undergo XAUTH, since usually it is a roadwarrior to a gateway,
- *
  * however, the gateway may decide it needs to do a new phase 1, for
  * instance.
  *
@@ -658,19 +657,19 @@ static struct db_sa IKEv1_oakley_am_sadb_table[] = {
  *
  * POLICY_PSK, POLICY_RSASIG, and XAUTH for this end (idiosyncratic).
  */
-static int IKEv1_sadb_index(lset_t x, struct connection *c)
+static int IKEv1_sadb_index(lset_t x, const struct connection *c)
 {
 	return (x & LRANGES(POLICY_PSK, POLICY_RSASIG)) |
 		((lset_t)c->spd.this.xauth_server << (POLICY_RSASIG_IX+1)) |
 		((lset_t)c->spd.this.xauth_client << (POLICY_RSASIG_IX+2));
 }
 
-struct db_sa *IKEv1_oakley_sadb(lset_t x, struct connection *c)
+struct db_sa *IKEv1_oakley_sadb(lset_t x, const struct connection *c)
 {
 	return &IKEv1_oakley_sadb_table[IKEv1_sadb_index(x, c)];
 }
 
-struct db_sa *IKEv1_oakley_am_sadb(lset_t x, struct connection *c)
+struct db_sa *IKEv1_oakley_am_sadb(lset_t x, const struct connection *c)
 {
 	return &IKEv1_oakley_am_sadb_table[IKEv1_sadb_index(x, c)];
 }

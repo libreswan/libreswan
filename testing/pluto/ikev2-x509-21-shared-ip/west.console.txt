@@ -1,0 +1,78 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+west #
+ certutil -D -n east -d sql:/etc/ipsec.d
+west #
+ pk12util -W foobar -K '' -d sql:/etc/ipsec.d -i /testing/x509/pkcs12/otherca/otherwest.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec whack --impair suppress-retransmits
+west #
+ ipsec auto --add other
+002 added connection description "other"
+west #
+ ipsec auto --up other
+002 "other" #1: initiating v2 parent SA
+133 "other" #1: STATE_PARENT_I1: initiate
+133 "other" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "other" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+134 "other" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
+002 "other" #2: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+002 "other" #2: certificate verified OK: E=user-othereast@testing.libreswan.org,CN=othereast.other.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+002 "other" #2: IKEv2 mode peer ID is ID_FQDN: '@othereast.other.libreswan.org'
+003 "other" #2: Authenticated using RSA
+002 "other" #2: negotiated connection [192.1.2.45-192.1.2.45:0-65535 6] -> [192.1.2.23-192.1.2.23:0-65535 6]
+004 "other" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+west #
+ ipsec whack --trafficstatus
+006 #2: "other", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@othereast.other.libreswan.org'
+west #
+ killall -9 pluto
+west #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec whack --impair suppress-retransmits
+west #
+ ipsec auto --add main
+002 added connection description "main"
+west #
+ ipsec auto --up main
+002 "main" #1: initiating v2 parent SA
+133 "main" #1: STATE_PARENT_I1: initiate
+133 "main" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "main" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+134 "main" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
+002 "main" #2: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
+002 "main" #2: certificate verified OK: E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+002 "main" #2: IKEv2 mode peer ID is ID_FQDN: '@east.testing.libreswan.org'
+003 "main" #2: Authenticated using RSA
+002 "main" #2: negotiated connection [192.1.2.45-192.1.2.45:0-65535 1] -> [192.1.2.23-192.1.2.23:0-65535 1]
+004 "main" #2: STATE_V2_IPSEC_I: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATOA=none NATD=none DPD=passive}
+west #
+ ipsec whack --trafficstatus
+006 #2: "main", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east.testing.libreswan.org'
+west #
+ echo "done"
+done
+west #
+ # on west, we should only see main, on east we should other and main
+west #
+ ipsec whack --trafficstatus
+006 #2: "main", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east.testing.libreswan.org'
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

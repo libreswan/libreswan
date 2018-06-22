@@ -1,0 +1,37 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ certutil -D -n west -d sql:/etc/ipsec.d
+east #
+ # add second identity/cert
+east #
+ pk12util -W foobar -K '' -d sql:/etc/ipsec.d -i /testing/x509/pkcs12/otherca/othereast.p12
+pk12util: PKCS12 IMPORT SUCCESSFUL
+east #
+ ipsec checknss --settrusts
+correcting trust bits for west-ec
+correcting trust bits for Libreswan test CA for otherca - Libreswan
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ # other is loaded in another test case, ikev2-x509-17-multicert-03
+east #
+ ipsec auto --add main
+002 added connection description "main"
+east #
+ echo "initdone"
+initdone
+east #
+ # we should see conn other being up
+east #
+ ipsec whack --trafficstatus
+006 #2: "main"[1] 192.1.2.45, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

@@ -35,7 +35,7 @@ DOLLAR_GROUP = "dollar"
 # Patterns for each part of the above prompt
 USERNAME_PATTERN = "[-\.a-z0-9]+"
 HOSTNAME_PATTERN = "[-a-z0-9]+"
-BASENAME_PATTERN = "[-\.a-z0-9A-Z_~]+"
+BASENAME_PATTERN = "[-+=:,\.a-z0-9A-Z_~]+"
 STATUS_PATTERN = "| [0-9]+"
 DOLLAR_PATTERN = "[#\$]"
 
@@ -195,6 +195,12 @@ class Remote:
 
     def sendline(self, line):
         return self.child.sendline(line)
+
+    def drain(self):
+        self.logger.debug("draining any existing output")
+        if self.expect([r'.+', pexpect.TIMEOUT], timeout=0) == 0:
+            self.logger.info("discarding '%s' and re-draining", self.child.match)
+            self.expect([r'.+', pexpect.TIMEOUT], timeout=0)
 
     def expect(self, expect, timeout=TIMEOUT, searchwindowsize=-1):
         return self.child.expect(expect, timeout=timeout,

@@ -28,7 +28,6 @@ import sys
 import socket
 import shutil
 import logging
-import platform
 import random
 import subprocess
 import concurrent.futures
@@ -37,6 +36,7 @@ import datetime
 import csv
 import operator
 import signal
+import socket
 
 from os import listdir
 from os.path import isfile, join, islink
@@ -113,6 +113,10 @@ def grep_4_known_errors(test):
         if not os.path.exists(conslelog):
             conslelog = conslelog + '.gz'
 
+        conslelog_verbose = tpath + '/OUTPUT/' + host + '.console.verbose.txt'
+        if not os.path.exists(conslelog_verbose):
+            conslelog_verbose = conslelog_verbose + '.gz'
+
         if os.path.exists(plutolog):
             grep_n_add(test, host, plutolog, 'ASSERTION FAILED', "ASSERT")
             grep_n_add(test, host, plutolog, 'EXPECTATION FAILED', "EXPECT")
@@ -120,7 +124,9 @@ def grep_4_known_errors(test):
         if os.path.exists(conslelog):
             grep_n_add(test, host, conslelog, 'segfault', "SEGFAULT")
             grep_n_add(test, host, conslelog, 'general protection', "GPFAULT")
-            grep_n_add(test, host, conslelog, "^CORE FOUND", "CORE")
+
+        if os.path.exists(conslelog_verbose):
+            grep_n_add(test, host, conslelog_verbose, "^CORE FOUND", "CORE")
 
 
 def grep_n_add(test, host, filename, pattern, note):
@@ -146,7 +152,7 @@ def grep_n_add(test, host, filename, pattern, note):
 
 class guest (threading.Thread):
 
-    def __init__(self, hostname, role, testname, args, prefix=None, install=None, compile=None):
+    def __init__(self, hostname, role, testname, args, prefix=None, install=None, compile=None, ipsecstop=None):
         threading.Thread.__init__(self)
         self.hostname = hostname
         self.dname = hostname
@@ -158,9 +164,10 @@ class guest (threading.Thread):
         self.bootwait = args.bootwait
         self.stoponerror = args.stoponerror
         self.testingdir = args.testingdir
-        self.reboot = True
+        self.reboot = True 
         if args.noreboot:
             self.reboot = None
+        self.ipsecstop = ipsecstop
 
     def run(self):
         try:
@@ -262,13 +269,21 @@ class guest (threading.Thread):
                    (self.hostname, time.time() - start)))
 
         cmd = "./final.sh"
-        if os.path.exists(cmd) and self.role != "nic":
+        if os.path.exists(cmd):
             e = read_exec_shell_cmd(child, cmd, prompt, timer, self.hostname)
             # expirment, give other side time to get ipsec look output
-            time.sleep(4)
+            time.sleep(2)
             if e:
                 f.close
                 return e
+
+        if self.ipsecstop:
+            if os.path.exists(cmd):
+                cmd = "../bin/ipsecstop.sh"
+                read_exec_shell_cmd(child, cmd, prompt, timer, self.hostname)
+                if os.path.exists("OUTPUT/%s.core.txt" % (self.hostname)):
+                    cmd = "cat OUTPUT/%s.core.txt" %(self.hostname)
+                    read_exec_shell_cmd(child, cmd, prompt, timer, self.hostname)
         f.close
 
     def log_line(self, filename, msg):
@@ -506,13 +521,19 @@ class TestList:
                 logging.debug("skip comment: %s", line)
                 continue
             try:
-                testtype, testdir, testexpect = line.split()
+                tokens = []
+                tokens = line.split()
+                if len(tokens) == 3 or (len(tokens) > 3 and tokens[3][0] == '#'):
+                    testtype = tokens[0]
+                    testdir = tokens[1]
+                    testexpect = tokens[2]
             except:
                 if re.search(r'#', line):
                     continue
-                # This is serious
-                logging.error("****** malformed line: %s", line)
-                continue
+                else:
+                    # This is serious
+                    logging.error("****** malformed line: %s", line)
+                    continue
             tdir = self.trpath + '/' + testdir
             if not os.path.exists(tdir):
                 # This is serious
@@ -1100,6 +1121,9 @@ class scantests:
             conslelog = self.tpath + '/OUTPUT/' + host + '.console.txt'
             if not os.path.exists(conslelog):
                 conslelog = conslelog + '.gz'
+            conslelog_verbose = self.tpath + '/OUTPUT/' + host + '.console.verbose.txt'
+            if not os.path.exists(conslelog_verbose):
+                conslelog_verbose = conslelog_verbose + '.gz'
 
             if os.path.exists(plutolog):
                 self.grep_n_add(role, plutolog, 'ASSERTION FAILED', "ASSERT")
@@ -1109,7 +1133,10 @@ class scantests:
                 self.grep_n_add(role, conslelog, 'segfault', "SEGFAULT")
                 self.grep_n_add(
                     role, conslelog, 'general protection', "GPFAULT")
-                self.grep_n_add(role, conslelog, "^CORE FOUND", "CORE")
+
+            if os.path.exists(conslelog_verbose):
+                self.grep_n_add(role, conslelog_verbose, "^CORE FOUND", "CORE")
+
 
     def grep_n_add(self, role, filename, pattern, note):
         if not os.path.exists(filename):
@@ -1198,7 +1225,7 @@ def sent_virsh_cmd(args, all_hosts, c="shutdown"):
     tries = args.shutdownwait
     while len(running) and tries != 0:
         logging.info(
-            "Found %s guests [%s] running. Wait upto %d seconds to shutdown", len(
+            "Found %s guests [%s] running. Wait up to %d seconds to shutdown", len(
                 running),
             ' '.join(map(str, running)), tries)
 
@@ -1561,12 +1588,12 @@ DEFAULTCONFIG = {
     'docker': False,
     'dockerimage': "swanbase",
     'kvm': True,
-    #'prefix': ['t1.', 't2.', 't3.', 't4.', 't5.', 't6.', 't7.'],
     'prefix': [],
+    'prefix': ['t1.', 't2.', 't3.', 't4.', 't5.', 't6.', 't7.'],
     'initshwait': 600,
     'libreswandir': os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__)))),
     'newrun': None,
-    'node': platform.node(),
+    'node': socket.getfqdn().split('.')[0],
     'npool': 17,
     'regualrhosts': ['nic'],
     'resultsdir': '/home/build/results',
@@ -1590,6 +1617,7 @@ def compile_regex_arg(string):
 def cmdline():
 
     parser = argparse.ArgumentParser(description='swantest arguments.')
+    exclusive_grp = parser.add_mutually_exclusive_group()
 
     # the add_argument lines bellow is sorted.
 
@@ -1622,9 +1650,17 @@ def cmdline():
         "--initshwait", default=DEFAULTCONFIG['initshwait'],
         type=int, help="seconds to wait for the init.sh, Python Thread, %s seconds" % DEFAULTCONFIG['initshwait'])
 
-    parser.add_argument(
-        "--prefix", default=DEFAULTCONFIG['prefix'],
-        action="append", help="prefix to domain %s" % DEFAULTCONFIG['prefix'])
+    parser.add_argument( "--ipsec-stop", default=False,  action="store_true", dest='ipsecstop',
+            help="run ipsec stop after the tests")
+
+
+    exclusive_grp.add_argument( "--new-prefix", default=[],
+        action="append", help="new set of prefix to domain") 
+
+    exclusive_grp.add_argument( "--prefix", default=DEFAULTCONFIG['prefix'],
+        action="append", help="prefix to domain %s" % DEFAULTCONFIG['prefix']) 
+
+    exclusive_grp.add_argument( "--with-prefix", default=False, action='store_true', help="with prefixes specified [--prefix <p1> --prefix <p2> ..]  VMs")
 
     parser.add_argument(
         '--kvm', default=DEFAULTCONFIG["kvm"], action="store_true",
@@ -1666,7 +1702,7 @@ def cmdline():
                         help="sanitizer script. %s" % DEFAULTCONFIG['sanitizer'])
 
     parser.add_argument("--scancwd", default=False, action="store_true",
-                        help="san/resanitize  results, run in cwd")
+            help="san/resanitize  results, run in cwd")
     parser.add_argument(
         "--shutdownwait", default=DEFAULTCONFIG['shutdownwait'],
         type=int, help="seconds to wait for guest to shutdown. Default %s seconds" % DEFAULTCONFIG['shutdownwait'])
@@ -1700,6 +1736,11 @@ def cmdline():
                         help="increase verbosity: 0 = only warnings, 1 = info, 2 = debug. Default info")
 
     args = parser.parse_args()
+
+    if not args.with_prefix:
+        args.prefix = []
+
+    print("prefix %s %d" % (args.prefix, len(args.prefix)))
 
     if args.verbose == 0:
         logger.setLevel(logging.WARN)
@@ -2208,12 +2249,13 @@ def do_kvmplutotest(args, start, test, st, prefix=None):
 
     # Create new threads
     th_responder = guest(test["responder"], "responder", test[
-                         "name"], args, prefix=prefix)
+                         "name"], args, prefix=prefix, ipsecstop=args.ipsecstop)
     if "nic" in test:
-        th_nic = guest(test["nic"], "nic", test["name"], args, prefix=prefix)
+        th_nic = guest(test["nic"], "nic", test["name"], args, prefix=prefix,
+                ipsecstop=args.ipsecstop)
 
-    th_initiator = guest(test["initiator"], "initiator", test[
-                         "name"], args, prefix=prefix)
+    th_initiator = guest(test["initiator"], "initiator", test["name"],
+            args, prefix=prefix, ipsecstop=args.ipsecstop)
 
     # Start Threads
     th_responder.start()
@@ -2226,7 +2268,7 @@ def do_kvmplutotest(args, start, test, st, prefix=None):
         others = dict()
         for host in test["others"]:
             others[host] = guest(host, "other", test[
-                                 "name"], args, prefix=prefix)
+                                 "name"], args, prefix=prefix, ipsecstop=args.ipsecstop)
             others[host].start()
 
     th_initiator.start()
@@ -2468,7 +2510,9 @@ def kvm_test_worker(args, test, st):
     do_single_test(args, start, test, st, prefix=prefix)
 
 
-def run_kvm_q_conc(args, tests, st):
+def run_kvm_q_conc(args, tests, st, tried=0):
+
+    maxDomains = len(args.prefix)
     logging.info(
         "%s kvmpluto tests to run concurrently. pool size %s, from %s", st[
             "ktorun"], len(args.prefix), args.testlist)
@@ -2476,12 +2520,18 @@ def run_kvm_q_conc(args, tests, st):
     for name, test in tests.items():
         logging.debug("queue up %s type %s", test["name"], test["type"])
 
+    if tried and maxDomains > 2:
+        maxDomains = 2
+
+    j = 0;
     for i in args.prefix:
-        tq.put(i)
+        if j <= maxDomains:
+            tq.put(i)
+        j += 1
 
     tp.put(1)
 
-    maxWorkers = len(args.prefix) + 1
+    maxWorkers = maxDomains + 1
     with concurrent.futures.ProcessPoolExecutor(max_workers=maxWorkers) as executor:
         progress_period = maxWorkers
         i = 0
@@ -2629,7 +2679,7 @@ def do_test_list(args, start, tried, output_dir):
 
     if st["ktorun"]:
         if len(args.prefix) > 1:
-            run_kvm_q_conc(args, tests, st)
+            run_kvm_q_conc(args, tests, st, tried)
         else:
             run_kvm_q(args, tests, st)
 
@@ -2690,7 +2740,7 @@ def setup_result_dir(args, to_create):
         os.chdir(cwd)
         logging.debug("cd %s; %s ; IPSECVERSION %s", dn, cmd, ipsecversion)
     else:
-        logging.debug("IPSECVERSION %s was set in enviroment", ipsecversion)
+        logging.debug("IPSECVERSION %s was set in environment", ipsecversion)
 
     if ipsecversion and args.rerun:
         output_dir = output_dir + ipsecversion

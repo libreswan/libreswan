@@ -42,6 +42,7 @@ def add_arguments(parser):
 def log_arguments(logger, args):
     logger.info("Publish arguments:")
     logger.info("  publish-directory: '%s'", args.publish_results)
+    logger.info("  publish-status: '%s'", args.publish_status)
 
 
 results_to_print = printer.Print(printer.Print.test_name,
@@ -186,8 +187,9 @@ def json_result(logger, args, result):
 
     # accumulate the summary
     _add(JSON_SUMMARY, "totals", result.test.kind, result.test.status, str(result.resolution))
-    for domain, issues in result.issues.items():
-        for issue in issues:
+    for issue in result.issues:
+        for domain in result.issues[issue]:
+            # count the number of times it occurred
             _add(JSON_SUMMARY, "errors", issue)
     # extend the times
     _update_time(min, "start_time", json_result)

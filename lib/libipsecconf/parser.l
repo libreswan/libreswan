@@ -122,18 +122,6 @@ static void parser_y_close(struct ic_inputsource *iis)
 	}
 }
 
-#if 0	/* never used */
-static void parser_y_fini(void)
-{
-	unsigned int i;
-
-	for (i = 0; i < MAX_INCLUDE_DEPTH; i++) {
-		parser_y_close(&ic_private.stack[i]);
-	}
-	memset(&ic_private, 0, sizeof(ic_private));
-}
-#endif
-
 static int parser_y_nextglobfile(struct ic_inputsource *iis)
 {
 	FILE *f;
@@ -172,7 +160,9 @@ static int parser_y_nextglobfile(struct ic_inputsource *iis)
 		char ebuf[128];
 
 		snprintf(ebuf, sizeof(ebuf),
-			"cannot open include filename: '%s': %s",
+			(strstr(iis->filename, "crypto-policies/back-ends/libreswan.config") == NULL) ?
+				"cannot open include filename: '%s': %s" :
+				"ignored loading default system-wide crypto-policies file '%s': %s",
 			iis->fileglob.gl_pathv[fcnt],
 			strerror(errno));
 		yyerror(ebuf);
@@ -183,6 +173,13 @@ static int parser_y_nextglobfile(struct ic_inputsource *iis)
 	yy_switch_to_buffer(yy_create_buffer(f, YY_BUF_SIZE));
 
 	return 0;
+}
+
+static int globugh_include(const char *epath, int eerrno)
+{
+	starter_log(LOG_LEVEL_ERR, "problem with include filename '%s': %s",
+		epath, strerror(eerrno));
+	return 1;	/* stop glob */
 }
 
 int parser_y_include (const char *filename)
@@ -223,40 +220,35 @@ int parser_y_include (const char *filename)
 	if (filename[0] != '/' || rootdir[0] == '\0') {
 		/* try plain name, with no rootdirs */
 		try = filename;
-		globresult = glob(try, GB, NULL, &globbuf);
+		globresult = glob(try, GB, globugh_include, &globbuf);
 		if (globresult == GLOB_NOMATCH) {
 			/* no files found... */
 			starter_log(LOG_LEVEL_ERR,
 				"warning: could not open include filename: '%s'",
 				filename);
-			globfree(&globbuf);
-			return 0;
 		}
 	} else {
 		/* try prefixing with rootdir */
 		snprintf(newname, sizeof(newname), "%s%s", rootdir, filename);
 		try = newname;
 
-		globresult = glob(try, GB, NULL, &globbuf);
+		globresult = glob(try, GB, globugh_include, &globbuf);
 		if (globresult == GLOB_NOMATCH) {
 			if (rootdir2[0] == '\0') {
 				starter_log(LOG_LEVEL_ERR,
 					"warning: could not open include filename '%s' (tried '%s')",
 					filename, newname);
-				globfree(&globbuf);
-				return 0;
 			} else {
-				/* try prefixing with rootdir2 */
+				/* try again, prefixing with rootdir2 */
+				globfree(&globbuf);
 				snprintf(newname2, sizeof(newname2),
 					 "%s%s", rootdir2, filename);
 				try = newname2;
-				globresult = glob(try, GB, NULL, &globbuf);
+				globresult = glob(try, GB, globugh_include, &globbuf);
 				if (globresult == GLOB_NOMATCH) {
-				starter_log(LOG_LEVEL_ERR,
-					"warning: could not open include filename: '%s' (tried '%s' and '%s')",
-					filename, newname, newname2);
-				globfree(&globbuf);
-				return 0;
+					starter_log(LOG_LEVEL_ERR,
+						"warning: could not open include filename: '%s' (tried '%s' and '%s')",
+						filename, newname, newname2);
 				}
 			}
 		}
@@ -264,29 +256,50 @@ int parser_y_include (const char *filename)
 
 #undef GB
 
+	switch (globresult) {
+	case 0:
+		/* success */
 
-	if (ic_private.stack_ptr >= MAX_INCLUDE_DEPTH) {
-		yyerror("max inclusion depth reached");
-		return 1;
+		if (ic_private.stack_ptr >= MAX_INCLUDE_DEPTH) {
+			yyerror("max inclusion depth reached");
+			return 1;
+		}
+
+		if (lex_verbosity > 0) {
+			starter_log(LOG_LEVEL_DEBUG,
+				    "including file '%s' ('%s') from %s:%u"
+				    , filename, try
+				    , stacktop->filename
+				    , stacktop->line);
+		}
+		++ic_private.stack_ptr;
+		stacktop = &ic_private.stack[ic_private.stack_ptr];
+		stacktop->state = YY_CURRENT_BUFFER;
+		stacktop->fileglob = globbuf;
+		stacktop->fileglobcnt = 0;
+		stacktop->file = NULL;
+		stacktop->filename = NULL;
+
+		return parser_y_eof();
+
+	case GLOB_NOSPACE:
+		starter_log(LOG_LEVEL_ERR,
+			"out of space processing include filename \"%s\"",
+			try);
+		break;
+
+	case GLOB_ABORTED:	/* already logged by globugh_include() */
+	case GLOB_NOMATCH:	/* already logged above */
+		break;
+
+	default:
+		starter_log(LOG_LEVEL_ERR, "unknown glob error %d", globresult);
+		break;
 	}
 
-	if (lex_verbosity > 0) {
-		starter_log(LOG_LEVEL_DEBUG,
-			    "including file '%s' ('%s') from %s:%u"
-			    , filename, try
-			    , stacktop->filename
-			    , stacktop->line);
-	}
-
-	++ic_private.stack_ptr;
-	stacktop = &ic_private.stack[ic_private.stack_ptr];
-	stacktop->state = YY_CURRENT_BUFFER;
-	stacktop->fileglob = globbuf;
-	stacktop->fileglobcnt = 0;
-	stacktop->file = NULL;
-	stacktop->filename = NULL;
-
-	return parser_y_eof();
+	/* error happened, but we ignore it */
+	globfree(&globbuf);
+	return 0;
 }
 
 static int parser_y_eof(void)

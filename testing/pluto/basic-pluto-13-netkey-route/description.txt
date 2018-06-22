@@ -6,7 +6,7 @@ tcpdump shows they don't leak in the clear
 note this shows an unexpected:
 
 src 192.0.1.254 dst 192.0.2.254
-        proto esp spi 0xSPISPIXX reqid REQID mode transport
+        proto esp spi 0xSPISPI reqid REQID mode transport
         replay-window 0
         sel src 192.0.1.254/32 dst 192.0.2.254/32 proto icmp type 8 code 0 dev eth1
 

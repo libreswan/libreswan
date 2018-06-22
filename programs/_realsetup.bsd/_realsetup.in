@@ -120,12 +120,6 @@ case "$1" in
 
 	perform test -d `dirname $subsyslock` "&&" touch $subsyslock
 
-	plutorestartoncrash=""
-	case "$IPSECplutorestartoncrash" in
-	    true|[yY]|yes|restart) plutorestartoncrash="--plutorestartoncrash true";;
-	    false|[nN]|no|die) plutorestartoncrash="--plutorestartoncrash false" ;;
-        esac
-
 	# Pluto
 	case "$1" in
 	start|--start)	re=	;;
@@ -147,7 +141,7 @@ case "$1" in
 			--dump "\"$IPSECdumpdir\"" \
 			--stderrlog "\"$IPSECplutostderrlog\"" \
 			--plutostderrlogtime "\"$IPSECplutostderrlogtime\"" \
-			--log daemon.error $plutorestartoncrash \
+			--log daemon.error \
 			--pid "\"$plutopid\"" "||" "{" \
 	            $KILLKLIPS ";" \
 		    rm -f $lock ";" \

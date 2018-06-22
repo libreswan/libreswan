@@ -14,7 +14,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec whack --debug-all --impair-retransmits
+ ipsec whack --impair retransmits
 west #
  # this should fail
 west #
@@ -40,9 +40,10 @@ west #
  grep "ID type" /tmp/pluto.log
 |    ID type: ID_FQDN (0x2)
 |    ID type: ID_FQDN (0x2)
+|    ID type: ID_FQDN (0x2)
 west #
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+ ../bin/check-for-core.sh
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

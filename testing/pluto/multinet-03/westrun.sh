@@ -1,8 +1,8 @@
 ipsec auto --up  westnet-eastnet-subnets
-ipsec whack --trafficstatus
-# allow rekey time
-sleep 30
-sleep 30
-# will state number change after IKE rekey?
-ipsec whack --trafficstatus
+ipsec whack --trafficstatus | sort
+# rekey
+sleep 5
+ipsec auto --up  westnet-eastnet-subnets
+ipsec whack --trafficstatus | sort
+ipsec status | grep STATE_ | sort
 echo done

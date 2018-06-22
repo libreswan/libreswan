@@ -1,0 +1,29 @@
+exec ${CAVP:-cavp} -json -v1psk \
+     \
+     -hashAlg SHA-1 \
+     \
+     -tcId 100 \
+     -gxy 739003ba2c11c982946c65e26acf661fbf8ebb78011a9fead79efa12fe3e71cc \
+     -preSharedKey 75 \
+     -nInit b9a2d0e922dc66dd \
+     -nResp 2130166863b5ddef \
+     -ckyInit 83d374c30b3b5082 \
+     -ckyResp 5afc0da06c728029
+
+[g^xy length = 256]
+[SHA-1]
+[Ni length = 64]
+[Nr length = 64]
+[pre-shared-key length = 8]
+
+COUNT = 0
+CKY_I = 83d374c30b3b5082
+CKY_R = 5afc0da06c728029
+Ni = b9a2d0e922dc66dd
+Nr = 2130166863b5ddef
+g^xy = 739003ba2c11c982946c65e26acf661fbf8ebb78011a9fead79efa12fe3e71cc
+pre-shared-key = 75
+SKEYID = 62b04d112877e442fc3282fc37c076997718a0b9
+SKEYID_d = 369e5aad1bdb5faf6a3d929d500cdc236710a9ab
+SKEYID_a = 588e957d8d790d093b3a39f121473473af78e9bb
+SKEYID_e = cd74b0c048219db81384d3fda8f6cda51e398a2b

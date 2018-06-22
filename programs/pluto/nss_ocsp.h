@@ -19,7 +19,7 @@
 #include <libreswan.h>
 
 extern bool init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
-                      int timeout, bool strict, int cache_size,
-                        int cache_min, int cache_max, bool ocsp_post);
+			int timeout, bool strict, int cache_size,
+			int cache_min, int cache_max, bool ocsp_post);
 
 #endif /* _NSS_OCSP_H */

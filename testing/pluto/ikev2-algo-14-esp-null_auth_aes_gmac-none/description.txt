@@ -1,0 +1,3 @@
+As ikev2-05-basic-psk, but using esp=null_auth_aes_gmac-null
+
+

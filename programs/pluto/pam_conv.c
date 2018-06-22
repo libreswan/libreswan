@@ -27,7 +27,6 @@
  * Porting to 2.x by Sean Mathews
  */
 
-#ifdef XAUTH_HAVE_PAM
 #include <string.h>
 #include <stdlib.h>
 #include <security/pam_appl.h> /* needed for pam_handle_t */
@@ -111,7 +110,7 @@ static int pam_conv(int num_msg,
 
 static void log_pam_step(const struct pam_thread_arg *arg, const char *what)
 {
-	DBG(DBG_CONTROL,
+	DBG(DBG_XAUTH,
 		DBG_log("%s helper thread %s for state #%lu, %s[%lu] user=%s.",
 			arg->atype, what,
 			arg->st_serialno, arg->c_name,
@@ -124,7 +123,7 @@ static void log_pam_step(const struct pam_thread_arg *arg, const char *what)
  *
  * @return bool success
  */
-/* IN AN AUTH THREAD */
+/* IN AN AUTH PROCESS */
 bool do_pam_authentication(struct pam_thread_arg *arg)
 {
 	int retval;
@@ -176,10 +175,9 @@ bool do_pam_authentication(struct pam_thread_arg *arg)
 
 	/* common failure code */
 	libreswan_log("%s FAILED during %s with '%s' for state #%lu, %s[%lu] user=%s.",
-			arg->atype, what, pam_strerror(pamh, retval),
-			arg->st_serialno, arg->c_name, arg->c_instance_serial,
-			arg->name);
+		      arg->atype, what, pam_strerror(pamh, retval),
+		      arg->st_serialno, arg->c_name, arg->c_instance_serial,
+		      arg->name);
 	pam_end(pamh, retval);
 	return FALSE;
 }
-#endif /* XAUTH_HAVE_PAM */

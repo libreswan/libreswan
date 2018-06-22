@@ -7,7 +7,7 @@ Source subnets are examined before destination subnets.
 For initiating, only routed connections are considered. For responding,
 unrouted but added connections are considered.</para>
 
-<para>When choosing a connection to use to respond to a negotiation which
+<para>When choosing a connection to use to respond to a negotiation that
 doesn't match an ordinary conn, an opportunistic connection
 may be instantiated. Eventually, its instance will be /32 -&gt; /32, but
 for earlier stages of the negotiation, there will not be enough
@@ -26,7 +26,7 @@ information about the client subnets to complete the instantiation.</para>
 </refsect1>
 
 <refsect1 id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_ttoaddr</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_auto</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_rsasigkey</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_auto</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_rsasigkey</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 id='history'><title>HISTORY</title>

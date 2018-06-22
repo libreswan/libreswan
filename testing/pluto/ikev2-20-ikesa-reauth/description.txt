@@ -1,0 +1,6 @@
+IKEv2 Reauthentication, west will reauthenticate RFC7296 #2.8.3. 
+
+The ikelifetime on west is short. reauth timers are thesame ikelifeitme, rekymargin
+and rekeyfuzz. 
+
+If you want to see re-authentication run the test it manually and login to west.

@@ -1,9 +1,0 @@
-This test brings up a standard OE gateway, (east) as well as a "road warrior"
-living on a different network.
-
-The road warrior has to guess it's ID, and it will conclude on a reverse
-name (213.3.1.192.in-addr.arpa), and do full OE.
-
-
-
-

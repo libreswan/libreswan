@@ -56,7 +56,7 @@ ip_address *dst;
 		 *
 		 * Patch by Stefan Arentz <stefan@soze.com>
 		 */
-		bzero(&dst->u.v4, sizeof(dst->u.v4));
+		memset(&dst->u.v4, '\0', sizeof(dst->u.v4));
 #endif
 		dst->u.v4.sin_family = af;
 		dst->u.v4.sin_port = 0;
@@ -70,7 +70,7 @@ ip_address *dst;
 			return "IPv6 address must be exactly 16 bytes";
 
 #if !defined(__KERNEL__)
-		bzero(&dst->u.v6, sizeof(dst->u.v6));
+		memset(&dst->u.v6, '\0', sizeof(dst->u.v6));
 #endif
 		dst->u.v6.sin6_family = af;
 		dst->u.v6.sin6_flowinfo = 0;            /* unused */

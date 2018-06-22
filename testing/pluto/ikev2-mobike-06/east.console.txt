@@ -1,0 +1,29 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add east-any
+002 added connection description "east-any"
+east #
+ echo "initdone"
+initdone
+east #
+ ip xfrm state
+src 191.1.2.250 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	enc cbc(aes) 0xKEY
+src 192.1.2.23 dst 191.1.2.250
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	enc cbc(aes) 0xKEY
+east #
+ ipsec whack --trafficstatus
+006 #2: "east-any"[1] 191.1.2.250, type=ESP, add_time=1234567890, inBytes=672, outBytes=672, id='191.1.2.254', lease=192.0.3.10/32
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

@@ -1,21 +1,21 @@
   <varlistentry>
-  <term><emphasis remap='B'>modecfgdns1</emphasis></term>
-  <term><emphasis remap='B'>modecfgdns2</emphasis></term>
-  <term><emphasis remap='B'>modecfgdomain</emphasis></term>
+  <term><emphasis remap='B'>modecfgdns</emphasis></term>
+  <term><emphasis remap='B'>modecfgdomains</emphasis></term>
   <term><emphasis remap='B'>modecfgbanner</emphasis></term>
   <listitem>
 <para>
-When configured as modecfg server, specifying any of these options will
-cause those options and values to be sent to the modecfg client during
-the XAUTH+ModeCFG phase (phase 1.5).
+When configured as IKEv1 ModeCFG or IKEv2 server, specifying any of these options will
+cause those options and values to be sent to the connecting client. Libreswan as a client
+will use these received options to either update /etc/resolv.conf or the running unbound DNS
+server. When the connection is brought down, the previous DNS resolving state is restored.
 </para>
 <para>
-When we are an XAUTH client, these options will be treated as defaults. If the remote
-XAUTH server did not pass us one of these options, the configured defaults are used
-to reconfigure the local DNS setup.
+The modecfgdns option takes a comma or space separated list of IP addresses that can be used
+for DNS resolution. The modecfgdomains option takes a comma or space separated list of internal
+domain names that are reachable via the supplied modecfgdns DNS servers.
 </para>
-<para>The split tunneling directive will be sent automatically if the xauth server side has
-configured a network other than 0.0.0.0/0
+<para>The IKEv1 split tunnel directive will be sent automatically if the xauth server side has
+configured a network other than 0.0.0.0/0. For IKEv2, this is automated via narrowing.
 </para>
   </listitem>
   </varlistentry>

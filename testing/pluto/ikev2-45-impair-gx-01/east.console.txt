@@ -11,12 +11,11 @@ east #
  echo "initdone"
 initdone
 east #
- grep v2N_INVALID_KE_PAYLOAD /tmp/pluto.log
-| ikev2_parent_inI2outR2_tail returned STF_FAIL with v2N_INVALID_KE_PAYLOAD
-| #1 complete v2 state transition from STATE_PARENT_R1 with v2N_INVALID_KE_PAYLOAD
-"westnet-eastnet-ipv4-psk-ikev2" #1: sending unencrypted notification v2N_INVALID_KE_PAYLOAD to 192.1.2.45:500
-|    Notify Message Type: v2N_INVALID_KE_PAYLOAD (0x11)
-| state transition function for STATE_PARENT_R1 failed: v2N_INVALID_KE_PAYLOAD
+ grep -e INVALID_SYNTAX -e STF_FATAL /tmp/pluto.log
+| Processing IKEv2 state PARENT_I2 (microcode Initiator: process INVALID_SYNTAX AUTH notification)
+"westnet-eastnet-ipv4-psk-ikev2" #1: responding to AUTH message (ID 1) from 192.1.2.45:500 with unencrypted notification INVALID_SYNTAX
+|    Notify Message Type: v2N_INVALID_SYNTAX (0x7)
+| #1 complete v2 state transition from STATE_PARENT_R1 with STF_FATAL
 east #
 east #
  ../bin/check-for-core.sh

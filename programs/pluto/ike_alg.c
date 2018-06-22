@@ -36,14 +36,14 @@
 #include "lswalloc.h"
 #include "ike_alg.h"
 #include "alg_info.h"
-#include "ike_alg_hmac_prf_ops.h"
-#include "ike_alg_nss_prf_ops.h"
-#include "ike_alg_nss_hash_ops.h"
+#include "ike_alg_prf_hmac_ops.h"
+#include "ike_alg_prf_nss_ops.h"
+#include "ike_alg_hash_nss_ops.h"
 #include "ike_alg_dh.h"
-#include "ike_alg_nss_modp.h"
-#include "ike_alg_nss_ecp.h"
+#include "ike_alg_dh_nss_modp_ops.h"
+#include "ike_alg_dh_nss_ecp_ops.h"
 
-#include "ike_alg_null.h"
+#include "ike_alg_none.h"
 #ifdef USE_TWOFISH
 #include "ike_alg_twofish.h"
 #endif
@@ -181,13 +181,14 @@ const struct oakley_group_desc **next_oakley_group(const struct oakley_group_des
 }
 
 const struct ike_alg *ike_alg_byname(const struct ike_alg_type *type,
-				     const char *name)
+				     shunk_t name)
 {
 	passert(type != NULL);
 	for (const struct ike_alg **alg = next_alg(type, NULL);
 	     alg != NULL; alg = next_alg(type, alg)) {
 		FOR_EACH_IKE_ALG_NAMEP(*alg, namep) {
-			if (strcaseeq(name, *namep)) {
+			if (strlen(*namep) == name.len &&
+			    strncaseeq(*namep, name.ptr, name.len)) {
 				return *alg;
 			}
 		}
@@ -197,7 +198,7 @@ const struct ike_alg *ike_alg_byname(const struct ike_alg_type *type,
 
 int ike_alg_enum_match(const struct ike_alg_type *type,
 		       enum ike_alg_key key,
-		       const char *name)
+		       shunk_t name)
 {
 	passert(type != NULL);
 	passert(key < IKE_ALG_KEY_ROOF);
@@ -436,6 +437,9 @@ static const struct prf_desc *prf_descriptors[] = {
 	&ike_alg_prf_sha2_384,
 	&ike_alg_prf_sha2_512,
 #endif
+#ifdef USE_XCBC
+	&ike_alg_prf_aes_xcbc,
+#endif
 };
 
 static void prf_desc_check(const struct ike_alg *alg)
@@ -513,19 +517,14 @@ static const struct integ_desc *integ_descriptors[] = {
 #ifdef USE_RIPEMD
 	&ike_alg_integ_hmac_ripemd_160_96,
 #endif
-	&ike_alg_integ_null,
+	&ike_alg_integ_none,
 };
 
 static void integ_desc_check(const struct ike_alg *alg)
 {
 	const struct integ_desc *integ = integ_desc(alg);
-	if (integ == &ike_alg_integ_null) {
-		passert_ike_alg(alg, integ->integ_keymat_size == 0);
-		passert_ike_alg(alg, integ->integ_output_size == 0);
-	} else {
-		passert_ike_alg(alg, integ->integ_keymat_size > 0);
-		passert_ike_alg(alg, integ->integ_output_size > 0);
-	}
+	passert_ike_alg(alg, integ->integ_keymat_size > 0);
+	passert_ike_alg(alg, integ->integ_output_size > 0);
 	if (integ->prf != NULL) {
 		passert_ike_alg(alg, integ->integ_keymat_size == integ->prf->prf_key_size);
 		passert_ike_alg(alg, integ->integ_output_size <= integ->prf->prf_output_size);
@@ -701,6 +700,7 @@ const struct ike_alg_type ike_alg_encrypt = {
  */
 
 static const struct oakley_group_desc *dh_descriptors[] = {
+	&ike_alg_dh_none,
 	&oakley_group_modp1024,
 	&oakley_group_modp1536,
 	&oakley_group_modp2048,
@@ -716,6 +716,9 @@ static const struct oakley_group_desc *dh_descriptors[] = {
 #endif
 	&oakley_group_dh23,
 	&oakley_group_dh24,
+#ifdef USE_DH31
+	&oakley_group_dh31,
+#endif
 };
 
 static void dh_desc_check(const struct ike_alg *alg)
@@ -725,25 +728,25 @@ static void dh_desc_check(const struct ike_alg *alg)
 	passert_ike_alg(alg, dh->bytes > 0);
 	passert_ike_alg(alg, dh->common.id[IKEv2_ALG_ID] == dh->group);
 	passert_ike_alg(alg, dh->common.id[IKEv1_OAKLEY_ID] == dh->group);
+	/* always implemented */
+	passert_ike_alg(alg, dh->dh_ops != NULL);
+	passert_ike_alg(alg, dh->dh_ops->check != NULL);
+	passert_ike_alg(alg, dh->dh_ops->calc_secret != NULL);
+	passert_ike_alg(alg, dh->dh_ops->calc_shared != NULL);
+	/* more? */
+	dh->dh_ops->check(dh);
 	/* IKEv1 supports MODP groups but not ECC. */
-	passert_ike_alg(alg, (dh->dhmke_ops == &ike_alg_nss_modp_dhmke_ops
+	passert_ike_alg(alg, (dh->dh_ops == &ike_alg_dh_nss_modp_ops
 			      ? dh->common.id[IKEv1_ESP_ID] == dh->group
-			      : dh->dhmke_ops == &ike_alg_nss_ecp_dhmke_ops
+			      : dh->dh_ops == &ike_alg_dh_nss_ecp_ops
 			      ? dh->common.id[IKEv1_ESP_ID] < 0
 			      : FALSE));
-	/* always implemented */
-	passert_ike_alg(alg, dh->dhmke_ops != NULL);
-	passert_ike_alg(alg, dh->dhmke_ops->check != NULL);
-	passert_ike_alg(alg, dh->dhmke_ops->calc_ke != NULL);
-	passert_ike_alg(alg, dh->dhmke_ops->calc_g_ir != NULL);
-	/* more? */
-	dh->dhmke_ops->check(dh);
 }
 
 static bool dh_desc_is_ike(const struct ike_alg *alg)
 {
 	const struct oakley_group_desc *dh = oakley_group_desc(alg);
-	return dh->dhmke_ops != NULL;
+	return dh->dh_ops != NULL;
 }
 
 static struct algorithm_table dh_algorithms = ALGORITHM_TABLE(dh_descriptors);
@@ -821,13 +824,13 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 		passert_ike_alg(alg, alg->officname != NULL);
 		passert_ike_alg(alg, alg->algo_type == type);
 
-                /*
+		/*
 		 * Don't allow 0 as an algorithm ID.
 		 *
-		 * The exception is integrity where the NULL algorithm
-		 * really is 0.
+		 * Don't even try to check 'none' algorithms.
 		 */
-		if (alg != &ike_alg_integ_null.common) {
+		if (alg != &ike_alg_integ_none.common
+		    && alg != &ike_alg_dh_none.common) {
 			for (enum ike_alg_key key = IKE_ALG_KEY_FLOOR;
 			     key < IKE_ALG_KEY_ROOF; key++) {
 				passert_ike_alg(alg, alg->id[key] != 0);
@@ -835,9 +838,12 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 		}
 
 		/*
-		 * Only NULL integrity is allowed the value 0.
+		 * Check the IDs have all been set.
+		 *
+		 * Don't even try to check 'none' algorithms.
 		 */
-		if (alg != &ike_alg_integ_null.common) {
+		if (alg != &ike_alg_integ_none.common
+		    && alg != &ike_alg_dh_none.common) {
 			pexpect_ike_alg(alg, alg->id[IKEv1_OAKLEY_ID] != 0);
 			pexpect_ike_alg(alg, alg->id[IKEv1_ESP_ID] != 0);
 			pexpect_ike_alg(alg, alg->id[IKEv2_ALG_ID] != 0);
@@ -852,8 +858,8 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 		 * entries.
 		 *
 		 * struct ike_alg_encrypt_aes_ccm_8 et.al. do not
-		 * define the IKEv1 field "common.id[IKEv1_OAKLEY_ID]" so need to
-		 * handle that.
+		 * define the IKEv1 field "common.id[IKEv1_OAKLEY_ID]"
+		 * so need to handle that.
 		 */
 		bool at_least_one_valid_id = FALSE;
 		for (enum ike_alg_key key = IKE_ALG_KEY_FLOOR;
@@ -899,12 +905,17 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 
 		/*
 		 * Extra algorithm specific checks.
+		 *
+		 * Don't even try to check 'none' algorithms.
 		 */
-		passert_ike_alg(alg, type->desc_check != NULL);
-		type->desc_check(alg);
+		if (alg != &ike_alg_integ_none.common &&
+		    alg != &ike_alg_dh_none.common) {
+			passert_ike_alg(alg, type->desc_check != NULL);
+			type->desc_check(alg);
+		}
 	}
 
-        /*
+	/*
 	 * Log the final list as a pretty table.
 	 *
 	 * If FIPS, scream about.  This way grepping for FIPS shows up
@@ -1089,7 +1100,7 @@ static void strip_nonfips(const struct ike_alg_type *type)
 	type->algorithms->end = end;
 }
 
-void ike_alg_init(void)
+void init_ike_alg(void)
 {
 	bool fips = libreswan_fipsmode();
 

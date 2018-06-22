@@ -10,7 +10,7 @@
  * Copyright (C) 2013 Kim Heino <b@bbbs.net>
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013-2017 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -106,8 +106,8 @@
  * - a whole number
  * - larger is more important
  * - three subcomponents.  In order of decreasing significance:
- *   + length of source subnet mask (8 bits)
- *   + length of destination subnet mask (8 bits)
+ *   + length of source subnet mask (9 bits)
+ *   + length of destination subnet mask (9 bits)
  *   + bias (8 bit)
  * - a bias of 1 is added to allow prio BOTTOM_PRIO to be less than all
  *   normal priorities
@@ -116,21 +116,19 @@
  * - priority is inherited -- an instance of a policy has the same priority
  *   as the original policy, even though its subnets might be smaller.
  * - display format: n,m
+ *
+ * ??? These are NOT the same as sa_priorities but eventually they should be aligned.
  */
 typedef uint32_t policy_prio_t;
 #define BOTTOM_PRIO   ((policy_prio_t)0)        /* smaller than any real prio */
 
 #define set_policy_prio(c) { (c)->prio = \
-		  ((policy_prio_t)(c)->spd.this.client.maskbits << 16) \
+		  ((policy_prio_t)(c)->spd.this.client.maskbits << 17) \
 		| ((policy_prio_t)(c)->spd.that.client.maskbits << 8) \
 		|  (policy_prio_t)1; }
 
 #define POLICY_PRIO_BUF (3 + 1 + 3 + 1 + 10)	/* (10 is to silence GCC) */
 extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
-
-#ifdef XAUTH_HAVE_PAM
-# include <security/pam_appl.h>	/* from pam devel; needed for pam_handle_t */
-#endif
 
 /* Note that we include this even if not X509, because we do not want the
  * structures to change lots.
@@ -140,6 +138,9 @@ extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
 #include "defs.h"
 #include <sys/queue.h>
 #include "id.h"    /* for struct id */
+#include "lmod.h"
+#include "reqid.h"
+#include "state.h"
 
 struct virtual_t;
 
@@ -147,7 +148,6 @@ struct host_pair;	/* opaque type */
 
 struct end {
 	struct id id;
-	bool left;
 
 	enum keyword_host host_type;
 	char *host_addr_name;	/* string version from whack */
@@ -155,7 +155,9 @@ struct end {
 		host_addr,
 		host_nexthop,
 		host_srcip;
-	ip_subnet client, host_vtiip;
+	ip_subnet
+		client,
+		host_vtiip;
 
 	bool key_from_DNS_on_demand;
 	bool has_client;
@@ -214,6 +216,7 @@ struct spd_route {
 struct sa_mark {
 	uint32_t val;
 	uint32_t mask;
+	bool unique;
 };
 struct sa_marks {
 	struct sa_mark in;
@@ -222,6 +225,7 @@ struct sa_marks {
 
 struct connection {
 	char *name;
+	char *foodgroup;
 	char *connalias;
 	lset_t policy;
 	deltatime_t sa_ike_life_seconds;
@@ -238,11 +242,11 @@ struct connection {
 	char *vti_iface;
 	bool vti_routing; /* should updown perform routing into the vti device */
 	bool vti_shared; /* should updown leave remote empty and not cleanup device on down */
-	unsigned long r_interval; /* initial retransmit time in msec, doubles each time */
+	deltatime_t r_interval; /* initial retransmit time, doubles each time */
 	deltatime_t r_timeout; /* max time (in secs) for one packet exchange attempt */
 	reqid_t sa_reqid;
 	int encapsulation;
-	enum nic_offload_options nic_offload;
+	enum yna_options nic_offload;
 
 	/* RFC 3706 DPD */
 	deltatime_t dpd_delay;		/* time between checks */
@@ -253,10 +257,10 @@ struct connection {
 	bool initial_contact;		/* Send INITIAL_CONTACT (RFC-2407) payload? */
 	bool cisco_unity;		/* Send Unity VID for cisco compatibility */
 	bool fake_strongswan;		/* Send the unversioned strongswan VID */
+	bool mobike;			/* Allow MOBIKE */
 	bool send_vendorid;		/* Send our vendorid? Security vs Debugging help */
-	bool sha2_truncbug;
 	enum ikev1_natt_policy ikev1_natt; /* whether or not to send IKEv1 draft/rfc NATT VIDs */
-	enum encaps_options encaps; /* encapsulation mode of auto/yes/no - formerly forceencaps=yes/no */
+	enum yna_options encaps; /* encapsulation mode of auto/yes/no - formerly forceencaps=yes/no */
 
 	/* Network Manager support */
 #ifdef HAVE_NM
@@ -296,7 +300,8 @@ struct connection {
 		newest_isakmp_sa,
 		newest_ipsec_sa;
 
-	lset_t extra_debugging;
+	lmod_t extra_debugging;
+	lmod_t extra_impairing;
 
 	/* note: if the client is the gateway, the following must be equal */
 	sa_family_t addr_family;	/* between gateways */
@@ -325,16 +330,12 @@ struct connection {
 	struct connection *ac_next;	/* all connections list link */
 
 	enum send_ca_policy send_ca;
-#ifdef XAUTH_HAVE_PAM
-	pam_handle_t *pamh;		/*  PAM handle for that connection  */
-#endif
 	char *dnshostname;
 
-	ip_address modecfg_dns1;
-	ip_address modecfg_dns2;
 	struct ip_pool *pool; /* IPv4 addresspool as a range, start end */
-	char *cisco_dns_info; /* scratchpad for writing IP addresses */
-	char *modecfg_domain;
+
+	char *modecfg_dns;
+	char *modecfg_domains;
 	char *modecfg_banner;
 
 	u_int8_t metric;	/* metric for tunnel routes */
@@ -365,7 +366,8 @@ struct whack_message;   /* forward declaration of tag whack_msg */
 extern void add_connection(const struct whack_message *wm);
 extern void initiate_connection(const char *name,
 				int whackfd,
-				lset_t moredebug,
+				lmod_t more_debugging,
+				lmod_t more_impairing,
 				enum crypto_importance importance,
 				char *remote_host);
 extern void restart_connections_by_peer(struct connection *c);
@@ -390,7 +392,11 @@ extern void suppress_delete(struct connection *c);
 extern void delete_connections_by_name(const char *name, bool strict);
 extern void delete_every_connection(void);
 extern char *add_group_instance(struct connection *group,
-				const ip_subnet *target);
+				const ip_subnet *target,
+				u_int8_t proto,
+				u_int16_t sport,
+				u_int16_t dport);
+
 extern void remove_group_instance(const struct connection *group,
 				  const char *name);
 extern void release_dead_interfaces(void);
@@ -402,9 +408,6 @@ extern struct connection *route_owner(struct connection *c,
 				      struct spd_route **esrp);
 extern struct connection *shunt_owner(const ip_subnet *ours,
 				      const ip_subnet *his);
-
-extern bool uniqueIDs;  /* --uniqueids? */
-extern void ISAKMP_SA_established(struct connection *c, so_serial_t serial);
 
 #define his_id_was_instantiated(c) ((c)->kind == CK_INSTANCE \
 				    && (id_is_ipaddr(&(c)->spd.that.id) ? \
@@ -427,6 +430,7 @@ extern struct connection
 	*find_next_host_connection(struct connection *c,
 		       lset_t req_policy, lset_t policy_exact_mask),
 	*refine_host_connection(const struct state *st, const struct id *peer_id,
+			const struct id *tarzan_id,
 			bool initiator, lset_t auth_policy /* used by ikev1 */,
 			enum keyword_authby, bool *fromcert),
 	*find_client_connection(struct connection *c,
@@ -453,15 +457,10 @@ extern struct connection *instantiate(struct connection *c,
 				      const ip_address *him,
 				      const struct id *his_id);
 
-extern struct connection *oppo_instantiate(struct connection *c,
-					   const ip_address *him,
-					   const struct id *his_id,
-					   const ip_address *our_client,
-					   const ip_address *peer_client);
-
 extern struct connection *build_outgoing_opportunistic_connection(
 		const ip_address *our_client,
-		const ip_address *peer_client);
+		const ip_address *peer_client,
+		const int transport_proto);
 
 /* worst case: "[" serial "] " myclient "=== ..." peer "===" hisclient '\0' */
 #define CONN_INST_BUF \
@@ -522,8 +521,6 @@ void connection_check_ddns(void);
 void connection_check_phase2(void);
 void init_connections(void);
 
-extern void setup_client_ports(struct spd_route *sr);
-
 extern int foreach_connection_by_alias(const char *alias,
 				       int (*f)(struct connection *c,
 						void *arg),
@@ -538,3 +535,7 @@ extern void unshare_connection_end(struct end *e);
 extern void liveness_clear_connection(struct connection *c, char *v);
 
 extern void liveness_action(struct connection *c, const bool ikev2);
+
+extern bool idr_wildmatch(const struct connection *c, const struct id *b);
+
+extern uint32_t calculate_sa_prio(const struct connection *c);

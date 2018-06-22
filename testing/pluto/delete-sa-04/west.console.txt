@@ -5,9 +5,6 @@ Redirecting to: systemctl start ipsec.service
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
- ipsec auto --add west-east-auto
-002 added connection description "west-east-auto"
-west #
  echo "initdone"
 initdone
 west #
@@ -48,7 +45,7 @@ west #
 west #
  # east howvever, should be attempting to connect to west because it has auto=start
 west #
- ipsec status |grep EVENT_v1_RETRANSMIT | sed "s/EVENT_v1_RETRANSMIT in /EVENT_v1_RETRANSMIT in .../"
+ ipsec status |grep EVENT_v1_RETRANSMIT | sed "s/EVENT_v1_RETRANSMIT in .*$/EVENT_v1_RETRANSMIT in .../"
 west #
 west #
  ../bin/check-for-core.sh

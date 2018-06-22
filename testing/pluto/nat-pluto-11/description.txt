@@ -1,0 +1,5 @@
+This tests forcing of non-encapsulation and omitting sending NAT-T payloads
+to prevent NAT-T negotiation.
+
+east is behind a static portforward of nic for this to work
+

@@ -19,39 +19,39 @@ east #
  echo "initdone"
 initdone
 east #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 PLAINTEXT FROM WEST
 east NOW
 XFRM state:
 src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 XFRM policy:
-src 192.1.2.23/32 dst 192.1.2.45/32 
-	dir out priority 2080 ptype main 
+src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 222 dport 222
+	dir out priority 712671 ptype main
+src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp sport 222 dport 222
+	dir fwd priority 712671 ptype main
+src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp sport 222 dport 222
+	dir in priority 712671 ptype main
+src 192.1.2.23/32 dst 192.1.2.45/32
+	dir out priority 1040351 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
-src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 222 dport 222 
-	dir out priority 1440 ptype main 
-src 192.1.2.45/32 dst 192.1.2.23/32 
-	dir fwd priority 2080 ptype main 
+src 192.1.2.45/32 dst 192.1.2.23/32
+	dir fwd priority 1040351 ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-src 192.1.2.45/32 dst 192.1.2.23/32 
-	dir in priority 2080 ptype main 
+src 192.1.2.45/32 dst 192.1.2.23/32
+	dir in priority 1040351 ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
-src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp sport 222 dport 222 
-	dir fwd priority 1440 ptype main 
-src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp sport 222 dport 222 
-	dir in priority 1440 ptype main 
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES

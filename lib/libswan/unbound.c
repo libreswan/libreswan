@@ -23,14 +23,8 @@
  * ub_ctx_add_ta_autr was added in unbound 1.5.0
  * UNBOUND_VERSION_* was introduced >= 1.4.12
  */
-#ifndef UNBOUND_VERSION_MAJOR
+#if !defined(UNBOUND_VERSION_MAJOR) || (UNBOUND_VERSION_MAJOR == 1 && UNBOUND_VERSION_MINOR < 5)
 # define ub_ctx_add_ta_autr(x,y) ub_ctx_add_ta_file(x,y)
-#else
-# if UNBOUND_VERSION_MAJOR < 2
-#  if UNBOUND_VERSION_MINOR < 5
-#   define ub_ctx_add_ta_autr(x,y) ub_ctx_add_ta_file(x,y)
-#  endif
-# endif
 #endif
 
 #include <stdlib.h>
@@ -62,6 +56,12 @@ void unbound_ctx_free(void)
 	}
 }
 
+static int globugh_ta(const char *epath, int eerrno)
+{
+	LOG_ERRNO(eerrno, "problem with trusted anchor file \"%s\"", epath);
+	return 1;	/* stop glob */
+}
+
 static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char *trusted)
 {
 	int ugh;
@@ -85,10 +85,20 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 	 * to reconfigure this file if they need to work around DHCP DNS
 	 * obtained servers.
 	 */
+	/*
+	 * ??? ub_ctx_resolvconf is not currently documented to set errno.
+	 * Private communications with W.C.A. Wijngaards 2017 October:
+	 * "Is errno is meaningful after a failed call to libunbound?"
+	 * "Yes it is.  Specifically for the error-to-read-file case.
+	 *  Not other cases (eg. socket errors happen too far away in the code)."
+	 */
+	errno = 0;
 	ugh = ub_ctx_resolvconf(dns_ctx, "/etc/resolv.conf");
 	if (ugh != 0) {
-		loglog(RC_LOG_SERIOUS, "error reading /etc/resolv.conf: %s: %s",
-			ub_strerror(ugh), strerror(errno));
+		int e = errno;	/* protect value from ub_strerror */
+
+		loglog(RC_LOG_SERIOUS, "error reading /etc/resolv.conf: %s: [errno: %s]",
+			ub_strerror(ugh), strerror(e));
 	} else {
 		DBG(DBG_DNS, DBG_log("/etc/resolv.conf usage activated"));
 	}
@@ -106,10 +116,14 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 	} else {
 		DBG(DBG_DNS, DBG_log("Loading dnssec root key from:%s", rootfile));
 		/* the cast is there for unbound < 1.4.12 */
+		/* ??? ub_ctx_add_ta_autr is not documented to set errno */
+		errno = 0;
 		ugh = ub_ctx_add_ta_autr(dns_ctx, (char *) rootfile);
 		if (ugh != 0) {
-			loglog(RC_LOG_SERIOUS, "error adding dnssec root key: %s: %s",
-				ub_strerror(ugh), strerror(errno));
+			int e = errno;	/* protect value from ub_strerror */
+
+			loglog(RC_LOG_SERIOUS, "error adding dnssec root key: %s [errno: %s]",
+				ub_strerror(ugh), strerror(e));
 			loglog(RC_LOG_SERIOUS, "WARNING: DNSSEC validation likely broken!");
 		}
 	}
@@ -117,52 +131,12 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 	if (trusted == NULL) {
 		DBG(DBG_DNS,DBG_log("No additional dnssec trust anchors defined via dnssec-trusted= option"));
 	} else {
-		if (strchr(trusted, '*') == NULL) {
-			struct stat buf;
-			int ugh;
+		glob_t globbuf;
+		char **fnp;
+		int r = glob(trusted, GLOB_ERR, globugh_ta, &globbuf);
 
-			zero(&buf); /* otherwise coverity will warn */
-			stat(trusted, &buf);
-			if (S_ISREG(buf.st_mode)) {
-				/* the cast is there for unbound < 1.4.12 */
-				ugh = ub_ctx_add_ta_file(dns_ctx, (char *) trusted);
-				if (ugh != 0) {
-					/* what does unbound do if first 5 keys are valid but 6th isn't? ? */
-					loglog(RC_LOG_SERIOUS, "Ignored badly formed trusted key file %s: %s",
-						trusted,  ub_strerror(ugh));
-				} else {
-					DBG(DBG_DNS,DBG_log("Added contents of trusted key file %s to unbound resolved context", trusted));
-				}
-			} else if (S_ISDIR(buf.st_mode)) {
-				libreswan_log("PAUL: Add dir + globbing support");
-			} else {
-				loglog(RC_LOG_SERIOUS, "ignored trusted key '%s': not a regular file or directory",
-					trusted);
-			}
-
-		} else {
-			glob_t globbuf;
-			char **fnp;
-	                int r = glob(trusted, GLOB_ERR, NULL, &globbuf);
-
-			if (r != 0) {
-				switch (r) {
-				case GLOB_NOSPACE:
-						loglog(RC_LOG_SERIOUS, "out of space procesing dnssec-trusted= argument:%s",
-							trusted);
-						globfree(&globbuf);
-					case GLOB_ABORTED:
-						break; /* already logged */
-					case GLOB_NOMATCH:
-						loglog(RC_LOG_SERIOUS, "no trust anchor files matched '%s'", trusted);
-						break;
-					default:
-						loglog(RC_LOG_SERIOUS, "trusted key file '%s': unknown glob error %d",
-							trusted, r);
-						globfree(&globbuf);
-				}
-			}
-
+		switch (r) {
+		case 0:	/* success */
 			for (fnp = globbuf.gl_pathv; fnp != NULL && *fnp != NULL; fnp++) {
 				ugh = ub_ctx_add_ta_file(dns_ctx, *fnp);
 				if (ugh != 0) {
@@ -173,8 +147,27 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 						*fnp));
 				}
 			}
-			globfree(&globbuf);
+			break;
+
+		case GLOB_NOSPACE:
+			loglog(RC_LOG_SERIOUS, "out of space processing dnssec-trusted= argument: %s",
+				trusted);
+			break;
+
+		case GLOB_ABORTED:
+			/* already logged by globugh_ta */
+			break;
+
+		case GLOB_NOMATCH:
+			loglog(RC_LOG_SERIOUS, "no trust anchor files matched '%s'", trusted);
+			break;
+
+		default:
+			loglog(RC_LOG_SERIOUS, "trusted key file '%s': unknown glob error %d",
+				trusted, r);
+			break;
 		}
+		globfree(&globbuf);
 	}
 }
 

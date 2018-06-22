@@ -104,7 +104,6 @@ whackwest --name ike-algo-06 --psk --ike aes-sha --host 127.95.7.2 --ikeport 850
 002 added connection description "ike-algo-06"
 east:/tmp/ike-algo-01# me --status
 whackwest --status
-000 %myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+klips+dns+oppo+controlmore+pfkey+nattraversal+x509+private
 000  
 000  

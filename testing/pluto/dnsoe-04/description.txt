@@ -1,0 +1,2 @@
+This test will show that wrong pubkeys from cache are not
+preventing a new DNSSEC request.

@@ -38,7 +38,7 @@
 #include "ietf_constants.h"
 
 #include "ike_alg.h"
-#include "ike_alg_null.h"
+#include "ike_alg_none.h"
 #include "ike_alg_aes.h"
 
 /*
@@ -283,7 +283,7 @@ void kernel_encrypt_add(const struct encrypt_desc *encrypt)
 {
 	int sadb_ealg = find_sadb_id(encrypt_sadb_ids, &encrypt->common);
 	if (sadb_ealg < 0) {
-		PEXPECT_LOG("Integrity algorithm %s has no matching SADB ID",
+		PEXPECT_LOG("Encryption algorithm %s has no matching SADB ID",
 			    encrypt->common.fqn);
 		return;
 	}
@@ -300,89 +300,6 @@ void kernel_encrypt_add(const struct encrypt_desc *encrypt)
 			    encrypt->common.fqn);
 		return;
 	}
-}
-
-err_t check_kernel_encrypt_alg(int alg_id, unsigned int key_len)
-{
-	err_t ugh = NULL;
-
-	/*
-	 * test #1: encrypt algo must be present
-	 */
-
-	if (!ESP_EALG_PRESENT(alg_id)) {
-		DBG(DBG_KERNEL,
-			DBG_log("check_kernel_encrypt_alg(%d,%d): alg not present in system",
-				alg_id, key_len);
-			);
-		ugh = "encryption alg not present in kernel";
-	} else {
-		struct sadb_alg *alg_p = &esp_ealg[alg_id];
-
-		passert(alg_p != NULL);
-		switch (alg_id) {
-		case ESP_AES_GCM_8:
-		case ESP_AES_GCM_12:
-		case ESP_AES_GCM_16:
-		case ESP_AES_CCM_8:
-		case ESP_AES_CCM_12:
-		case ESP_AES_CCM_16:
-		case ESP_AES_CTR:
-		case ESP_CAMELLIA:
-			/* ??? does 0 make sense here? */
-			if (key_len != 0 && key_len != 128 &&
-			    key_len != 192 && key_len != 256) {
-				/* ??? function name does not belong in log */
-				ugh = builddiag("kernel_alg_db_add() key_len is incorrect: alg_id=%d, key_len=%d, alg_minbits=%d, alg_maxbits=%d",
-						alg_id, key_len,
-						alg_p->sadb_alg_minbits,
-						alg_p->sadb_alg_maxbits);
-			}
-			break;
-#if 0
-		case ESP_SEED_CBC:
-#endif
-		case ESP_CAST:
-			if (key_len != 128) {
-				/* ??? function name does not belong in log */
-				ugh = builddiag("kernel_alg_db_add() key_len is incorrect: alg_id=%d, key_len=%d, alg_minbits=%d, alg_maxbits=%d",
-						alg_id, key_len,
-						alg_p->sadb_alg_minbits,
-						alg_p->sadb_alg_maxbits);
-			}
-			break;
-		default:
-			/* old behaviour - not necc. correct */
-			if (key_len != 0 &&
-			    (key_len < alg_p->sadb_alg_minbits ||
-			     key_len > alg_p->sadb_alg_maxbits)) {
-				/* ??? function name does not belong in log */
-				ugh = builddiag("kernel_alg_db_add() key_len not in range: alg_id=%d, key_len=%d, alg_minbits=%d, alg_maxbits=%d",
-					alg_id, key_len,
-					alg_p->sadb_alg_minbits,
-					alg_p->sadb_alg_maxbits);
-			}
-		}
-
-		if (ugh != NULL) {
-			DBG(DBG_KERNEL,
-				DBG_log("check_kernel_encrypt_alg(%d,%d): %s alg_id=%d, alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, res=%d",
-					alg_id, key_len, ugh,
-					alg_p->sadb_alg_id,
-					alg_p->sadb_alg_ivlen,
-					alg_p->sadb_alg_minbits,
-					alg_p->sadb_alg_maxbits,
-					alg_p->sadb_alg_reserved);
-				);
-		} else {
-			DBG(DBG_KERNEL,
-				DBG_log("check_kernel_encrypt_alg(%d,%d): OK",
-					alg_id, key_len);
-				);
-		}
-	}
-
-	return ugh;
 }
 
 /*
@@ -632,7 +549,8 @@ int alg_info_esp_sadb2aa(int sadb_aalg)
 		auth = AUTH_ALGORITHM_NULL_KAME;
 		break;
 	default:
-		/* which would hopefully be true  */
+		/* which would hopefully be true */
+		/* ??? what do we hope to be true? */
 		auth = sadb_aalg;
 	}
 	return auth;

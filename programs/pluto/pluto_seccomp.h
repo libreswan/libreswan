@@ -14,7 +14,13 @@
  * for more details.
  */
 
+#ifndef PLUTO_SECCOMP_H
+#define PLUTO_SECCOMP_H
+
 #include <seccomp.h>
+#include <stdint.h>		/* for uint32_t */
 
 void init_seccomp_main(uint32_t def_action);
 void init_seccomp_cryptohelper(uint32_t def_action);
+
+#endif

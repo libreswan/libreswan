@@ -23,16 +23,19 @@
 
 #ifndef _X509_H
 #define _X509_H
-#include <libreswan.h>
-#include "lswalloc.h"
+
 #include <nss.h>
 #include <cert.h>
 
+#include "deltatime.h"
+#include "chunk.h"
+#include "constants.h"
+
 typedef enum {
-LSW_CERT_NONE = 0,
-LSW_CERT_BAD = 1,
-LSW_CERT_MISMATCHED_ID = 2,
-LSW_CERT_ID_OK = 3
+	LSW_CERT_NONE = 0,
+	LSW_CERT_BAD = 1,
+	LSW_CERT_MISMATCHED_ID = 2,
+	LSW_CERT_ID_OK = 3
 } lsw_cert_ret;
 
 /* Maximum length of ASN.1 distinquished name */
@@ -97,12 +100,6 @@ extern void select_nss_cert_id(CERTCertificate *cert, struct id *end_id);
 extern void add_rsa_pubkey_from_cert(const struct id *keyid,
 				    CERTCertificate *cert);
 extern bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen);
-extern bool insert_crl_nss(chunk_t *blob, chunk_t *crl_uri, char *nss_uri);
-
-#if defined(LIBCURL) || defined(LIBLDAP)
-extern void check_crls(void);
-#else
-#define check_crls(who)			/* nothing */
-#endif
+extern CERTCertList *get_all_certificates(void);
 
 #endif /* _X509_H */

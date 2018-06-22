@@ -1,0 +1,5 @@
+Two road warriors, north and road connect to east, IKEv1, xauth authby=secret.
+
+Both roadwarriors use the same (group) ID and should not kick each other of by
+getting the same lease IP
+

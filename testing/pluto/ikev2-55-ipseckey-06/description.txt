@@ -1,7 +1,7 @@
 The responder failto validate IPSECKEY of initiator and A record.
 
 Road is the initiator and east is the responder.
-Road has acces to nort's key, it has public and private key.
+Road has access to north's key, it has public and private key.
 
 When road initiate the connection, it send an IKE request, and
 simultaneously start query for the responders IPSECKEY in reverse zone.

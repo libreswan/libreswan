@@ -23,7 +23,7 @@ struct keyword_def;
 struct starter_config;
 
 void confwrite_list(FILE *out, char *prefix, int val, const struct keyword_def *k);
-void confwrite(struct starter_config *cfg, FILE *out);
+void confwrite(struct starter_config *cfg, FILE *out, bool setup, char *conn, bool verbose);
 
 #endif /* _IPSEC_CONFWRITE_H_ */
 

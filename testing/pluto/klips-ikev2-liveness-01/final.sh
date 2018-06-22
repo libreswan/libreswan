@@ -1,4 +1,4 @@
-ipsec look
+../../pluto/bin/ipsec-look.sh
 grep "message ID:" /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status

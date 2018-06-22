@@ -1,0 +1,12 @@
+  <varlistentry>
+  <term><emphasis remap='B'>decap-dscp</emphasis></term>
+  <listitem>
+<para>
+Enable decapsulating the Differentiated Services Code Point (DSCP, formerly known
+as Terms Of Service (TOS)) bits. If these bits are set on the inner (encrypted)
+IP packets, these bits are set on the decrypted IP packets. Acceptable values are
+<emphasis remap='B'>no</emphasis> (the default) or <emphasis remap='B'>yes</emphasis>.
+Currently this feature is only implemented for the Linux XFRM/NETKEY stack.
+</para>
+  </listitem>
+  </varlistentry>

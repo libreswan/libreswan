@@ -69,8 +69,8 @@ extern int debug_pfkey;
 #include <libreswan/pfkey_debug.h>
 
 unsigned int pfkey_lib_debug = PF_KEY_DEBUG_PARSE_NONE;
-int (*pfkey_debug_func)(const char *message, ...) PRINTF_LIKE(1);
-int (*pfkey_error_func)(const char *message, ...) PRINTF_LIKE(1);
+libreswan_keying_debug_func_t pfkey_debug_func = NULL;
+libreswan_keying_debug_func_t pfkey_error_func = NULL;
 
 #define SENDERR(_x) do { error = -(_x); goto errlab; } while (0)
 
@@ -1315,6 +1315,7 @@ int pfkey_msg_parse(struct sadb_msg *pfkey_msg,
 							    sadb_msg_type));
 			SENDERR(EINVAL);
 		}
+		break;
 	default:
 		break;
 	}

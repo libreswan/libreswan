@@ -17,12 +17,14 @@
 #include <nspr.h>
 #include <nss.h>
 #include <pk11pub.h>
+#include <secmod.h>
 #include <keyhi.h>
 
 #include "lswconf.h"
 #include "lswnss.h"
 #include "lswalloc.h"
 #include "lswlog.h"
+#include "lswfips.h"
 
 static unsigned flags;
 
@@ -41,7 +43,7 @@ bool lsw_nss_setup(const char *configdir, unsigned setup_flags,
 	PR_Init(PR_USER_THREAD, PR_PRIORITY_NORMAL, 1);
 
 	libreswan_log("Initializing NSS");
-	if (configdir) {
+	if (configdir != NULL) {
 		const char sql[] = "sql:";
 		char *nssdir;
 		if (strncmp(sql, configdir, strlen(sql)) == 0) {
@@ -65,19 +67,38 @@ bool lsw_nss_setup(const char *configdir, unsigned setup_flags,
 		}
 	} else {
 		NSS_NoDB_Init(".");
+		if (libreswan_fipsmode() && !PK11_IsFIPS()) {
+			SECMODModule *internal = SECMOD_GetInternalModule();
+			if (internal == NULL) {
+				snprintf(err, sizeof(lsw_nss_buf_t),
+					 "SECMOD_GetInternalModule() failed");
+				return false;
+			}
+			if (SECMOD_DeleteInternalModule(internal->commonName) != SECSuccess) {
+				snprintf(err, sizeof(lsw_nss_buf_t),
+					 "SECMOD_DeleteInternalModule(%s) failed",
+					 internal->commonName);
+				return false;
+			}
+			if (!PK11_IsFIPS()) {
+				snprintf(err, sizeof(lsw_nss_buf_t),
+					 "NSS FIPS mode toggle failed");
+				return false;
+			}
+		}
 	}
 
-	if (PK11_IsFIPS() && get_password == NULL) {
+	if (PK11_IsFIPS() && configdir != NULL && get_password == NULL) {
 		snprintf(err, sizeof(lsw_nss_buf_t),
-			 "on FIPS mode a password is required");
+			 "in FIPS mode a password is required");
 		return FALSE;
 	}
 
-	if (get_password) {
+	if (get_password != NULL) {
 		PK11_SetPasswordFunc(get_password);
 	}
 
-	if (!(flags & LSW_NSS_SKIP_AUTH)) {
+	if (configdir != NULL) {
 		PK11SlotInfo *slot = lsw_nss_get_authenticated_slot(err);
 		if (slot == NULL) {
 			return FALSE;
@@ -153,7 +174,7 @@ struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval func,
 
 	SECKEYPrivateKeyListNode *node;
 	for (node = PRIVKEY_LIST_HEAD(list);
-             !PRIVKEY_LIST_END(node, list);
+	     !PRIVKEY_LIST_END(node, list);
 	     node = PRIVKEY_LIST_NEXT(node)) {
 
 		if (SECKEY_GetPrivateKeyType(node->key) != rsaKey) {
@@ -162,7 +183,7 @@ struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval func,
 		}
 
 		struct private_key_stuff pks = {
-			.kind = PPK_RSA,
+			.kind = PKK_RSA,
 			.on_heap = TRUE,
 		};
 
@@ -346,59 +367,4 @@ char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg UNUSED)
 		      oco->nsspassword_file, token);
 	PORT_Free(passwords);
 	return NULL;
-}
-
-/*
- * XXX: Is there an NSS version of this?
- */
-
-const char *lsw_nss_ckm_to_string(CK_MECHANISM_TYPE mechanism)
-{
-	const char *t;
-#define CASE(T) case T: t = #T; eat(t, "CKM_"); return t
-	switch (mechanism) {
-
-		CASE(CKM_CONCATENATE_BASE_AND_DATA);
-		CASE(CKM_CONCATENATE_BASE_AND_KEY);
-		CASE(CKM_CONCATENATE_DATA_AND_BASE);
-
-		CASE(CKM_XOR_BASE_AND_DATA);
-
-		CASE(CKM_EXTRACT_KEY_FROM_KEY);
-
-		CASE(CKM_AES_CBC);
-		CASE(CKM_DES3_CBC);
-		CASE(CKM_CAMELLIA_CBC);
-		CASE(CKM_AES_CTR);
-		CASE(CKM_AES_GCM);
-
-		CASE(CKM_AES_KEY_GEN);
-
-		CASE(CKM_MD5);
-		CASE(CKM_SHA_1);
-		CASE(CKM_SHA256);
-		CASE(CKM_SHA384);
-		CASE(CKM_SHA512);
-
-		CASE(CKM_MD5_KEY_DERIVATION);
-		CASE(CKM_SHA1_KEY_DERIVATION);
-		CASE(CKM_SHA256_KEY_DERIVATION);
-		CASE(CKM_SHA384_KEY_DERIVATION);
-		CASE(CKM_SHA512_KEY_DERIVATION);
-
-		CASE(CKM_MD5_HMAC);
-		CASE(CKM_SHA_1_HMAC);
-		CASE(CKM_SHA256_HMAC);
-		CASE(CKM_SHA384_HMAC);
-		CASE(CKM_SHA512_HMAC);
-
-		CASE(CKM_DH_PKCS_DERIVE);
-		CASE(CKM_ECDH1_DERIVE);
-
-		CASE(CKM_VENDOR_DEFINED);
-
-	default:
-		return "unknown-mechanism";
-	}
-#undef CASE
 }

@@ -64,6 +64,7 @@
 #include "lsw_select.h"
 #include "alg_info.h"
 #include "kernel_alg.h"
+#include "ip_address.h"
 
 #define KLIPS_OP_MASK   0xFF
 #define KLIPS_OP_FLAG_SHIFT     8
@@ -545,7 +546,7 @@ void pfkey_dequeue(void)
 }
 
 /* asynchronous messages directly from PF_KEY socket */
-void pfkey_event(void)
+void pfkey_event(int fd UNUSED)
 {
 	pfkey_buf buf;
 
@@ -845,7 +846,7 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 		      const ip_subnet *this_client,
 		      const ip_address *that_host,
 		      const ip_subnet *that_client,
-		      ipsec_spi_t cur_spi,
+		      ipsec_spi_t cur_spi UNUSED,
 		      ipsec_spi_t new_spi,
 		      int sa_proto UNUSED,
 		      unsigned int transport_proto,
@@ -887,17 +888,6 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 	if (!pfkey_msg_start(klips_op & KLIPS_OP_MASK, satype,
 			     "pfkey_msg_hdr flow", text_said, extensions))
 		return FALSE;
-
-#if 0
-	DBG_log("klips pfkey op = %u / %u (ERO_DELETE=%u)", op, klips_op,
-		ERO_DELETE);
-#endif
-
-
-// temp squash a warning
-
-	DBG(DBG_CONTROL, DBG_log(" useless SPI printing for cur(%d) and new(%d) spi",
-		cur_spi, new_spi));
 
 	if (op != ERO_DELETE) {
 		if (!(pfkey_build(pfkey_sa_build(&extensions[K_SADB_EXT_SA],
@@ -1235,7 +1225,7 @@ bool pfkey_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
 		return FALSE;
 	}
 
-	// get reply
+	/* get reply */
 
 	/* extract the sa info */
 	struct sadb_ext *replies[K_SADB_EXT_MAX + 1];
@@ -1249,11 +1239,11 @@ bool pfkey_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
 		struct sadb_lifetime *sal = (struct sadb_lifetime *)
 			replies[K_SADB_EXT_LIFETIME_CURRENT];
 
-		//*allocations = sal->sadb_lifetime_allocations;
+		/* *allocations = sal->sadb_lifetime_allocations; */
 		*bytes = sal->sadb_lifetime_bytes;
 		*add_time = sal->sadb_lifetime_addtime;
-		//*use_time = sal->sadb_lifetime_usetime;
-		//*packets = sal->sadb_x_lifetime_packets;
+		/* *use_time = sal->sadb_lifetime_usetime; */
+		/* *packets = sal->sadb_x_lifetime_packets; */
 		return TRUE;
 	}
 	return FALSE;
@@ -1360,27 +1350,6 @@ bool pfkey_shunt_eroute(const struct connection *c,
 		}
 	}
 
-#if 0
-	{
-		enum pluto_sadb_operations inop =
-			op + ERO_ADD_INBOUND - ERO_ADD;
-
-		bool ok = pfkey_raw_eroute(&c->spd.that.host_addr,
-				      &c->spd.that.client,
-				      &c->spd.this.host_addr,
-				      &c->spd.this.client,
-				      htonl(spi),
-				      SA_INT,
-				      0,        /* transport_proto is not relevant */
-				      ET_INT, null_proto_info,
-				      0,        /* use lifetime */
-				      inop,
-				      opname);
-		if (!ok)
-			return FALSE;
-	}
-#endif
-
 	{
 		const ip_address *peer = &sr->that.host_addr;
 		char buf2[256];
@@ -1402,7 +1371,7 @@ bool pfkey_shunt_eroute(const struct connection *c,
 					ET_INT,
 					null_proto_info,
 					deltatime(0),
-					c->sa_priority,
+					calculate_sa_prio(c),
 					&c->sa_marks,
 					op, buf2
 #ifdef HAVE_LABELED_IPSEC
@@ -1495,7 +1464,7 @@ bool pfkey_sag_eroute(const struct state *st, const struct spd_route *sr,
 	return eroute_connection(sr,
 				 inner_spi, inner_spi, inner_proto,
 				 inner_esatype, proto_info + i,
-				 DEFAULT_IPSEC_SA_PRIORITY, NULL, op, opname
+				 0 /* KLIPS does not support priority */, NULL, op, opname
 #ifdef HAVE_LABELED_IPSEC
 				 , NULL
 #endif

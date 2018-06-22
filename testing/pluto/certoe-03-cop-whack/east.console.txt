@@ -14,7 +14,7 @@ Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
- ipsec whack --debug-all --impair-retransmits
+ ipsec whack --impair retransmits
 east #
  # give OE policies time to load
 east #
@@ -35,7 +35,6 @@ east #
 east #
  grep IKEv2_AUTH_ /tmp/pluto.log
 |    auth method: IKEv2_AUTH_NULL (0xd)
-| clear-or-private#192.1.3.0/24 #1 not fetching ipseckey that end rsasigkey != %dnsondemand  can only query DNS for IPSECKEY for ID that is a FQDN, IPV4_ADDR, or IPV6_ADDR id type=ID_NULL IKEv2_AUTH_NULL remote=192.1.3.209 thatid=ID_NULL
 |    auth method: IKEv2_AUTH_RSA (0x1)
 east #
 east #

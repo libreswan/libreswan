@@ -52,10 +52,6 @@
 #include "alg_info.h"
 #include "kernel_alg.h"
 
-#ifndef DEFAULT_UPDOWN
-# define DEFAULT_UPDOWN "ipsec _updown"
-#endif
-
 int pfkeyfd = NULL_FD;
 unsigned int pfkey_seq = 1;
 
@@ -270,8 +266,7 @@ static bool bsdkame_do_command(const struct connection *c, const struct spd_rout
 			   "%s",        /* actual script */
 			   verb, verb_suffix,
 			   common_shell_out_str,
-			   sr->this.updown == NULL ?
-			       DEFAULT_UPDOWN : sr->this.updown)) {
+			   sr->this.updown)) {
 		loglog(RC_LOG_SERIOUS, "%s%s command too long!", verb,
 		       verb_suffix);
 		return FALSE;
@@ -873,7 +868,11 @@ static bool bsdkame_sag_eroute(const struct state *st,
 		proto = IPPROTO_ESP;
 	else if (st->st_ipcomp.present)
 		proto = IPPROTO_COMP;
-	setup_client_ports(sr);
+
+	if (!sr->this.has_port_wildcard)
+		setportof(htons(sr->this.port), &sr->this.client.addr);
+	if (!sr->that.has_port_wildcard)
+		setportof(htons(sr->that.port), &sr->that.client.addr);
 
 	return bsdkame_raw_eroute(&sr->this.host_addr,
 				  &sr->this.client,
@@ -1081,4 +1080,5 @@ const struct kernel_ops bsdkame_kernel_ops = {
 	.process_ifaces = bsdkame_process_raw_ifaces,
 	.overlap_supported = FALSE,
 	.sha2_truncbug_support = FALSE,
+	.v6holes = NULL,
 };

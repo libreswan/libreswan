@@ -11,52 +11,52 @@ east #
  echo "initdone"
 initdone
 east #
- ipsec look
+ ../../pluto/bin/ipsec-look.sh
 east NOW
 XFRM state:
 src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode transport
+	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 32 
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	sel src 0.0.0.0/0 dst 0.0.0.0/0 
 src 192.1.2.45 dst 192.1.2.23
-	proto comp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto comp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
 	comp deflate 
 src 192.1.2.45 dst 192.1.2.23
-	proto 4 spi 0xSPISPIXX reqid REQID mode tunnel
+	proto 4 spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
 src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPIXX reqid REQID mode transport
+	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 32 
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	sel src 0.0.0.0/0 dst 0.0.0.0/0 
 src 192.1.2.23 dst 192.1.2.45
-	proto comp spi 0xSPISPIXX reqid REQID mode tunnel
+	proto comp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
 	comp deflate 
 src 192.1.2.23 dst 192.1.2.45
-	proto 4 spi 0xSPISPIXX reqid REQID mode tunnel
+	proto 4 spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
 XFRM policy:
-src 192.0.1.0/24 dst 192.0.2.0/24 
-	dir fwd priority 2344 ptype main 
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir fwd priority 1042407 ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto comp reqid REQID mode tunnel
-		level use 
+		level use
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
-src 192.0.1.0/24 dst 192.0.2.0/24 
-	dir in priority 2344 ptype main 
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir in priority 1042407 ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto comp reqid REQID mode tunnel
-		level use 
+		level use
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
-src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir out priority 2344 ptype main 
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir out priority 1042407 ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto comp reqid REQID mode tunnel
 	tmpl src 0.0.0.0 dst 0.0.0.0

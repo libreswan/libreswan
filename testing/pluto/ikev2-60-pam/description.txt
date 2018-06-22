@@ -1,0 +1,4 @@
+xauth test pam timeout using via mypam.c simple-pam test module
+
+The first connection is the one tested, it will fail to establish.
+The second one is only as reference.

@@ -61,6 +61,7 @@ function lsw_summary_table(table_id, summary) {
 	if (kind == "skiptest") return
 	if (kind == "umlXhost") return
 	if (kind == "umlplutotest") return
+	if (kind == "kvpllutotest") return
 
 	var statuses_seen = kinds_seen[kind]
 	var statuses_columns = []

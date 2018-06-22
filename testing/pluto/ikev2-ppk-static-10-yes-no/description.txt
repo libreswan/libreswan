@@ -1,0 +1,5 @@
+Testing static PPK, west (initiator) can do PPK but east doesn't want it.
+connection should establish without ppk.
+
+This tests specifically for the case where the PPKID is found on east,
+despite wanting ppk=no. This was a bug in version 3.23

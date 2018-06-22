@@ -3,8 +3,8 @@
   <listitem>
 <para>Set the delay (in time units, defaults to seconds) between Dead Peer
 Detection (IKEv1 RFC 3706) or IKEv2 Liveness keepalives that are sent for
-this connection (default <literal>30</literal>
-seconds).  If dpddelay is set, dpdtimeout also needs to be set.</para>
+this connection (default <literal>0</literal> seconds). Set to enable
+checking. If dpddelay is set, dpdtimeout also needs to be set.</para>
   </listitem>
   </varlistentry>
 

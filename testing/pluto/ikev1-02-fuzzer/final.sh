@@ -1,5 +1,5 @@
-# shutting down, so output will change if we had already crashed
-ipsec whack --shutdown
+# if east was already down, the fuzzer crashed it
+hostname |grep east > /dev/null && ipsec whack --shutdown
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

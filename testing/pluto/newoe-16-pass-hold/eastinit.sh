@@ -5,5 +5,5 @@ ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 # give OE policies time to load
 sleep 5
-ipsec whack --debug-all --impair-send-no-ikev2-auth
+ipsec whack --impair send-no-ikev2-auth
 echo "initdone"

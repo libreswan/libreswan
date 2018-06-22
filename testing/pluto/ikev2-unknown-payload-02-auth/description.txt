@@ -1,0 +1,9 @@
+Test unknown (bogus) payloads in an AUTH exchange.
+
+Both east and west include unknown payloads in their AUTH packets.
+
+The first exchange uses unknown (but non-critical payloads) so the
+connection establishes (and their presence is logged).
+
+The second exchange has west sending an unknown critical payload, so
+east discards it, and the connection quickly times out.

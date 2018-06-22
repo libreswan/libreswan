@@ -1,0 +1,25 @@
+/testing/guestbin/swan-prep
+east #
+ # confirm that the network is alive
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add roadnet-eastnet-ipv4-psk-ikev2
+002 added connection description "roadnet-eastnet-ipv4-psk-ikev2"
+east #
+ echo "initdone"
+initdone
+east #
+ # seccomp test for east should be empty
+east #
+ hostname | grep east > /dev/null && ausearch -ts recent -i -m SECCOMP
+<no matches>
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

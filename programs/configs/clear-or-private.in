@@ -2,3 +2,22 @@
 # we will communicate in the clear, or, if the other side initiates IPSEC,
 # using encryption.  This behaviour is also called "Opportunistic Responder".
 # One IPv4 or IPv6 CIDR per line.
+
+# This file defines the set of network destinations for which
+# communications will be in the clear, or if the other side initiates IPsec
+# to use, will be encrypted on their request. This behaviour is also called
+# "Opportunistic Responder".
+#
+# One IPv4 or IPv6 CIDR per line, optionally specifying a further
+# narrowing of protocol, source port and destination port
+#
+# examples:
+# encrypt all traffic to an IPv4 or IPv6 host or subnet if they request it
+# 10.0.1.0/24
+# 10.1.1.1/32
+# 2a03:6000:1004:1::/64
+#
+# encrypt all smtp traffic to some host if they want to
+#  10.0.1.0/24  tcp  0  25
+# encrypt all incoming smtp traffic from some host if they request it
+#  0.0.0.0/0  tcp  25  0

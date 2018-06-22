@@ -14,19 +14,19 @@ east #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec auto --down westnet-eastnet-ikev2 ; fi
 002 "westnet-eastnet-ikev2": terminating SAs using this connection
 002 "westnet-eastnet-ikev2" #2: deleting state (STATE_V2_IPSEC_R) and sending notification
-005 "westnet-eastnet-ikev2" #2: ESP traffic information: in=0B out=0B
+005 "westnet-eastnet-ikev2" #2: ESP traffic information: in=336B out=336B
 002 "westnet-eastnet-ikev2" #1: deleting state (STATE_PARENT_R2) and sending notification
 east #
  if [ -f /var/run/charon.pid ]; then sleep 5 ; fi
 east #
  #
 east #
- if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
 east NOW
 XFRM state:
 XFRM policy:
-src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir out priority 2344 ptype main 
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir out priority 1042407 ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 XFRM done
@@ -43,7 +43,6 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
  if [ -f /var/run/pluto/pluto.pid ]; then grep "message ID:" /tmp/pluto.log  ; fi
-|    message ID:  00 00 00 00
 |    message ID:  00 00 00 00
 |    message ID:  00 00 00 00
 |    message ID:  00 00 00 00

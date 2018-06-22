@@ -17,7 +17,7 @@
 PROGRAM=eroute
 OBJS += $(PROGRAM).o
 OBJS += $(LIBRESWANLIB)
-OBJS += $(LSWLOGLIBS)
+OBJS += $(LSWTOOLLIBS)
 MANPAGES += ipsec_$(PROGRAM).5
 
 ifdef top_srcdir

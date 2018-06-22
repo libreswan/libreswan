@@ -23,6 +23,10 @@
 /*
  * IKE SA
  */
+PK11SymKey *ikev2_prfplus(const struct prf_desc *prf_desc,
+			  PK11SymKey *key, PK11SymKey *seed,
+			  size_t required_keymat);
+
 PK11SymKey *ikev2_ike_sa_skeyseed(const struct prf_desc *prf_desc,
 				  const chunk_t Ni, const chunk_t Nr,
 				  PK11SymKey *dh_secret);

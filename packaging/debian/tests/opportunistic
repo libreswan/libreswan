@@ -1,0 +1,42 @@
+#!/bin/bash
+
+set -e
+# fetch some stuff from oe.libreswan.org, make sure it's bad:
+
+badstring='<HTML><BODY><HEAD><TITLE>OH noooooos!!</TITLE>'
+
+ping -c 5 oe.libreswan.org 2>&1
+
+dig +short -x  `dig +short oe.libreswan.org` ipseckey +trusted-key=/usr/share/dns/root.key +sigchase
+
+wget -q --tries=2 --timeout=5 -O "${AUTOPKGTEST_ARTIFACTS}/before.html" http://oe.libreswan.org/ 
+
+echo "0.0.0.0/0" > /etc/ipsec.d/policies/private-or-clear
+
+grep -F "$badstring" "${AUTOPKGTEST_ARTIFACTS}/before.html"
+
+systemctl status ipsec
+
+cp /usr/share/doc/libreswan/examples/oe-dnssec-client.conf /etc/ipsec.d/
+
+systemctl restart ipsec
+
+systemctl status ipsec
+
+# TODO: better details?
+ipsec whack --trafficstatus
+
+ping -c 5 oe.libreswan.org 2>&1
+
+systemctl status ipsec
+
+# now fetch some stuff from oe.libreswan.org, make sure it's good!
+wget -q --tries=2 --timeout=5 -O "${AUTOPKGTEST_ARTIFACTS}/after.html" http://oe.libreswan.org/ 
+
+if grep -F "$badstring" "${AUTOPKGTEST_ARTIFACTS}/after.html"; then
+    printf "we got 'oh nooooooos' from http://oe.libreswan.org after bringing up opportunistic ipsec\n"
+    exit 1
+fi
+
+# TODO: better details?
+ipsec whack --trafficstatus

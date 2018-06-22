@@ -64,9 +64,10 @@ size_t dstlen;
 	unsigned char buf[KEYID_BUF];	/* ample room */
 	unsigned char *bufend = buf + sizeof(buf);
 	unsigned char *p;
-	size_t n;
 
 	p = buf;
+
+	/* start with length of e; assume that it fits */
 	if (elen <= 255) {
 		*p++ = elen;
 	} else if ((elen & ~0xffff) == 0) {
@@ -76,14 +77,19 @@ size_t dstlen;
 	} else {
 		return 0;       /* unrepresentable exponent length */
 	}
-	n = bufend - p;
-	if (elen < n)
-		n = elen;
-	memcpy(p, e, n);
-	p += n;
 
-	n = bufend - p;
-	if (n > 0) {
+	/* append as much of e as fits */
+	{
+		size_t n = bufend - p;
+		if (elen < n)
+			n = elen;
+		memcpy(p, e, n);
+		p += n;
+	}
+
+	/* append as much of m as fits */
+	{
+		size_t n = bufend - p;
 		if (mlen < n)
 			n = mlen;
 		memcpy(p, m, n);

@@ -1,0 +1,3 @@
+OE uses /32 groups to verify instantiating does not conflict
+with the template conn. this verifies lsw#305
+

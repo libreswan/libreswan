@@ -24,12 +24,12 @@ extern stf_status xauth_send_request(struct state *st);
 extern stf_status modecfg_start_set(struct state *st);
 
 /* XAUTH state transitions */
-extern stf_status xauth_inR0(struct msg_digest *md);
-extern stf_status xauth_inR1(struct msg_digest *md);
-extern stf_status modecfg_inR0(struct msg_digest *md);
-extern stf_status modecfg_inR1(struct msg_digest *md);
-extern stf_status xauth_inI0(struct msg_digest *md);
-extern stf_status xauth_inI1(struct msg_digest *md);
+extern stf_status xauth_inR0(struct state *st, struct msg_digest *md);
+extern stf_status xauth_inR1(struct state *st, struct msg_digest *md);
+extern stf_status modecfg_inR0(struct state *st, struct msg_digest *md);
+extern stf_status modecfg_inR1(struct state *st, struct msg_digest *md);
+extern stf_status xauth_inI0(struct state *st, struct msg_digest *md);
+extern stf_status xauth_inI1(struct state *st, struct msg_digest *md);
 extern oakley_auth_t xauth_calcbaseauth(oakley_auth_t baseauth);
 extern stf_status modecfg_send_request(struct state *st);
 
