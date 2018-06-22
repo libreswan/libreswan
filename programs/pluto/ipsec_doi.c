@@ -292,7 +292,6 @@ void ipsecdoi_replace(struct state *st,
 		      unsigned long try)
 {
 	initiator_function *initiator;
-	int whack_sock = dup_any(st->st_whack_sock);
 	lset_t policy = st->st_policy;
 
 	if (IS_PARENT_SA_ESTABLISHED(st) &&
@@ -311,16 +310,12 @@ void ipsecdoi_replace(struct state *st,
 		initiator = pick_initiator(c, policy);
 		passert(!HAS_IPSEC_POLICY(policy));
 		if (initiator != NULL) {
-			(void) initiator(whack_sock, st->st_connection,
-					st, policy,
-					try, st->st_import
+			(void) initiator(dup_any(st->st_whack_sock),
+				st->st_connection, st, policy, try, st->st_import
 #ifdef HAVE_LABELED_IPSEC
-					, st->sec_ctx
+				, st->sec_ctx
 #endif
-					);
-		} else {
-			/* fizzle: whack_sock will be unused */
-			close_any(whack_sock);
+				);
 		}
 	} else {
 		/* Add features of actual old state to policy.  This ensures
@@ -351,12 +346,12 @@ void ipsecdoi_replace(struct state *st,
 
 		if (!st->st_ikev2)
 			passert(HAS_IPSEC_POLICY(policy));
-		ipsecdoi_initiate(whack_sock, st->st_connection, policy, try,
-				  st->st_serialno, st->st_import
+		ipsecdoi_initiate(dup_any(st->st_whack_sock), st->st_connection,
+			policy, try, st->st_serialno, st->st_import
 #ifdef HAVE_LABELED_IPSEC
-				  , st->sec_ctx
+			, st->sec_ctx
 #endif
-				  );
+			);
 	}
 }
 
