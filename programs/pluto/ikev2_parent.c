@@ -727,6 +727,7 @@ void ikev2_parent_outI1(int whack_sock,
 	if (drop_new_exchanges()) {
 		/* Only drop outgoing opportunistic connections */
 		if (c->policy & POLICY_OPPORTUNISTIC) {
+			close_any(whack_sock);
 			return;
 		}
 	}
