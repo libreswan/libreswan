@@ -2221,8 +2221,14 @@ char *fmt_conn_instance(const struct connection *c, char buf[CONN_INST_BUF])
 
 			*p++ = ' ';
 			/* p not subsequently used */
+#if 0
 			p = jam_str(p, &buf[CONN_INST_BUF] - p,
 				sensitive_ipstr(&c->spd.that.host_addr, &b));
+#else
+			/* attempt to calm Coverity Scan */
+			p = jam_str(p, buf + CONN_INST_BUF - p,
+				sensitive_ipstr(&c->spd.that.host_addr, &b));
+#endif
 		}
 	}
 
