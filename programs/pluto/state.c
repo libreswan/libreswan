@@ -3165,6 +3165,21 @@ void ISAKMP_SA_established(const struct state *pst)
 				old_p1->st_suppress_del_notify = TRUE;
 				event_force(EVENT_SA_EXPIRE, old_p1);
 		}
+
+		if (pst->st_seen_initialc && (c->newest_ipsec_sa != SOS_NOBODY))
+		{
+			struct state *old_p2 = state_by_serialno(c->newest_ipsec_sa);
+			struct connection *d = old_p2 == NULL ? NULL : old_p2->st_connection;
+
+			if (c == d && same_id(&c->spd.that.id, &d->spd.that.id))
+			{
+				DBG(DBG_CONTROL, DBG_log("Initial Contact received, deleting old state #%lu from connection '%s'",
+					c->newest_ipsec_sa, c->name));
+				old_p2->st_suppress_del_notify = TRUE;
+				event_force(EVENT_SA_EXPIRE, old_p2);
+			}
+		}
+
 	}
 
 	c->newest_isakmp_sa = pst->st_serialno;
