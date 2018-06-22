@@ -923,7 +923,7 @@ stf_status ikev2_resp_accept_child_ts(
 	}
 
 	if (bsr == NULL) {
-		DBG(DBG_CONTROLMORE, DBG_log("failed to find anything, can we instantiate another template?"));
+		DBG(DBG_CONTROLMORE, DBG_log("failed to find anything; can we instantiate another template?"));
 
 		for (struct connection *t = connections; t != NULL; t = t->ac_next) {
 
@@ -999,6 +999,8 @@ stf_status ikev2_resp_accept_child_ts(
 	}
 
 	if (role == ORIGINAL_INITIATOR) {
+		pexpect(best_tsi_i >= 0);
+		pexpect(best_tsr_i >= 0);	/* ??? Coverity thinks that this might fail */
 		cst->st_ts_this = tsi[best_tsi_i];
 		cst->st_ts_that = tsr[best_tsr_i];
 	} else {
