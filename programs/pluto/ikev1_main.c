@@ -1244,13 +1244,16 @@ stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *m
 
 				for (gn = ca; gn != NULL; gn = gn->next) {
 					if (!ikev1_build_and_ship_CR(
-							CERT_X509_SIGNATURE,
-							gn->name,
-							&rbody,
-							gn->next ==NULL ?
-							  ISAKMP_NEXT_NONE :
-							  ISAKMP_NEXT_CR))
+						CERT_X509_SIGNATURE,
+						gn->name,
+						&rbody,
+						gn->next ==NULL ?
+							ISAKMP_NEXT_NONE :
+							ISAKMP_NEXT_CR))
+					{
+						free_generalNames(ca, FALSE);
 						return STF_INTERNAL_ERROR;
+					}
 				}
 				free_generalNames(ca, FALSE);
 			} else {
