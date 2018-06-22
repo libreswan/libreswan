@@ -1996,7 +1996,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 
 bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 {
-	bool initiator = md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R;
+	bool initiator = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) != 0;
 	struct state *const st = md->st;
 	struct connection *c = md->st->st_connection;
 

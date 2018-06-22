@@ -393,6 +393,8 @@ static int ikev2_match_protocol(u_int8_t proto, u_int8_t ts_proto,
 /*
  * returns -1 on no match; otherwise a weight of how great the match was.
  * *best_tsi_i and *best_tsr_i are set if there was a match.
+ * Almost identical to ikev2_evaluate_connection_port_fit:
+ * any change should be done to both.
  */
 int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
 					   const struct spd_route *sr,
@@ -407,7 +409,7 @@ int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
 	int tsi_ni;
 	int bestfit_pr = -1;
 	const struct end *ei, *er;
-	bool narrowing = (d->policy & POLICY_IKEV2_ALLOW_NARROWING);
+	bool narrowing = (d->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY;
 
 	if (role == ORIGINAL_INITIATOR) {
 		ei = &sr->this;
@@ -500,6 +502,8 @@ static int ikev2_match_port_range(u_int16_t port, struct traffic_selector ts,
 /*
  * returns -1 on no match; otherwise a weight of how great the match was.
  * *best_tsi_i and *best_tsr_i are set if there was a match.
+ * Almost identical to ikev2_evaluate_connection_protocol_fit:
+ * any change should be done to both.
  */
 int ikev2_evaluate_connection_port_fit(const struct connection *d,
 				       const struct spd_route *sr,
@@ -514,7 +518,7 @@ int ikev2_evaluate_connection_port_fit(const struct connection *d,
 	int tsi_ni;
 	int bestfit_p = -1;
 	const struct end *ei, *er;
-	bool narrowing = (d->policy & POLICY_IKEV2_ALLOW_NARROWING);
+	bool narrowing = (d->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY;
 
 	if (role == ORIGINAL_INITIATOR) {
 		ei = &sr->this;
@@ -527,6 +531,7 @@ int ikev2_evaluate_connection_port_fit(const struct connection *d,
 	/* ??? stupid n**2 algorithm */
 	for (tsi_ni = 0; tsi_ni < tsi_n; tsi_ni++) {
 		int tsr_ni;
+
 		int fitrange_i = ikev2_match_port_range(ei->port, tsi[tsi_ni],
 			role == ORIGINAL_RESPONDER && narrowing,
 			role == ORIGINAL_INITIATOR && narrowing,

@@ -5877,6 +5877,7 @@ static void set_mobike_remote_addr(struct msg_digest *md, struct state *st)
 static bool mobike_check_established(const struct state *st)
 {
 	struct connection *c = st->st_connection;
+	/* notice tricky use of & on booleans */
 	bool ret = LIN(POLICY_MOBIKE, c->policy) &
 		   st->st_seen_mobike & st->st_sent_mobike &
 		   IS_ISAKMP_SA_ESTABLISHED(st->st_state);
@@ -5888,6 +5889,7 @@ static bool process_mobike_resp(struct msg_digest *md)
 {
 	struct state *st = md->st;
 	bool may_mobike = mobike_check_established(st);
+	/* ??? there is currently no need for separate natd_[sd] variables */
 	bool natd_s = FALSE;
 	bool natd_d = FALSE;
 	struct payload_digest *ntfy;
@@ -5914,11 +5916,14 @@ static bool process_mobike_resp(struct msg_digest *md)
 			break;
 		}
 	}
+
+	/* use of bitwise & on bool values is correct but odd */
 	bool ret  = natd_s & natd_d;
-	if (ret)
-		if (!update_mobike_endpoints(st, md)) { /* IPs already updated from md */
-			return FALSE;
-		}
+
+	if (ret && !update_mobike_endpoints(st, md)) {
+		/* IPs already updated from md */
+		return FALSE;
+	}
 	update_ike_endpoints(st, md); /* update state sender so we can find it for IPsec SA */
 
 	return ret;
