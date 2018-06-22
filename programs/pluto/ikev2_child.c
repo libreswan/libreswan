@@ -437,12 +437,10 @@ int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
 				role == ORIGINAL_INITIATOR && narrowing,
 				"tsr", tsr_ni);
 
-			int matchiness;
-
 			if (fitrange_r == 0)
 				continue;	/* save effort! */
 
-			matchiness = fitrange_i + fitrange_r;	/* ??? arbitrary objective function */
+			int matchiness = fitrange_i + fitrange_r;	/* ??? arbitrary objective function */
 
 			if (matchiness > bestfit_pr) {
 				*best_tsi_i = tsi_ni;
@@ -546,12 +544,10 @@ int ikev2_evaluate_connection_port_fit(const struct connection *d,
 				role == ORIGINAL_INITIATOR && narrowing,
 				"tsr", tsr_ni);
 
-			int matchiness;
-
 			if (fitrange_r == 0)
 				continue;	/* no match */
 
-			matchiness = fitrange_i + fitrange_r;	/* ??? arbitrary objective function */
+			int matchiness = fitrange_i + fitrange_r;	/* ??? arbitrary objective function */
 
 			if (matchiness > bestfit_p) {
 				*best_tsi_i = tsi_ni;
@@ -886,8 +882,8 @@ stf_status ikev2_resp_accept_child_ts(
 						int bfit_pr =
 							ikev2_evaluate_connection_protocol_fit(
 								d, sra, role,
-								tsi, tsr, tsi_n,
-								tsr_n,
+								tsi, tsr,
+								tsi_n, tsr_n,
 								&best_tsi_i,
 								&best_tsr_i);
 
@@ -904,13 +900,13 @@ stf_status ikev2_resp_accept_child_ts(
 							bsr = sr;
 						} else {
 							DBG(DBG_CONTROLMORE,
-							    DBG_log("protocol fitness rejected d %s c->name",
+							    DBG_log("protocol fitness rejected d %s",
 								    d->name));
 						}
 					} else {
 						DBG(DBG_CONTROLMORE,
-								DBG_log("port fitness rejected d %s c->name",
-									c->name));
+							DBG_log("port fitness rejected d %s",
+								d->name));
 					}
 
 				} else {

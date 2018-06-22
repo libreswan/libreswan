@@ -4576,30 +4576,33 @@ static stf_status ikev2_process_ts_respnse(struct msg_digest *md)
 
 		{
 			const struct spd_route *sra = &c->spd;
-			int bfit_n = ikev2_evaluate_connection_fit(c, sra,
-								   ORIGINAL_INITIATOR,
-								   tsi, tsr,
-								   tsi_n,
-								   tsr_n);
+			int bfit_n = ikev2_evaluate_connection_fit(
+				c, sra, ORIGINAL_INITIATOR,
+				tsi, tsr,
+				tsi_n, tsr_n);
+
 			if (bfit_n > bestfit_n) {
 				DBG(DBG_CONTROLMORE,
 				    DBG_log("prefix fitness found a better match c %s",
 					    c->name));
+
 				int bfit_p = ikev2_evaluate_connection_port_fit(
-						c, sra, ORIGINAL_INITIATOR,
-						tsi, tsr,
-						tsi_n, tsr_n,
-						&best_tsi_i, &best_tsr_i);
+					c, sra, ORIGINAL_INITIATOR,
+					tsi, tsr,
+					tsi_n, tsr_n,
+					&best_tsi_i, &best_tsr_i);
 
 				if (bfit_p > bestfit_p) {
 					DBG(DBG_CONTROLMORE,
 					    DBG_log("port fitness found better match c %s, tsi[%d],tsr[%d]",
 						    c->name, best_tsi_i, best_tsr_i));
+
 					int bfit_pr = ikev2_evaluate_connection_protocol_fit(
-							c, sra, ORIGINAL_INITIATOR, tsi,
-							tsr, tsi_n, tsr_n,
-							&best_tsi_i,
-							&best_tsr_i);
+						c, sra, ORIGINAL_INITIATOR,
+						tsi, tsr,
+						tsi_n, tsr_n,
+						&best_tsi_i, &best_tsr_i);
+
 					if (bfit_pr > bestfit_pr) {
 						DBG(DBG_CONTROLMORE,
 						    DBG_log("protocol fitness found better match c %s, tsi[%d],tsr[%d]",
@@ -4614,12 +4617,12 @@ static stf_status ikev2_process_ts_respnse(struct msg_digest *md)
 					}
 				} else {
 					DBG(DBG_CONTROLMORE,
-							DBG_log("port fitness rejected c %s c->name",
+							DBG_log("port fitness rejected c %s",
 								c->name));
 				}
 			} else {
 				DBG(DBG_CONTROLMORE,
-				    DBG_log("prefix fitness rejected c %s c->name",
+				    DBG_log("prefix fitness rejected c %s",
 					    c->name));
 			}
 		}
