@@ -550,7 +550,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 	}
 
 	if (st->st_esp.present) {
-		bool nat = st->hidden_variables.st_nat_traversal & NAT_T_DETECTED;
+		bool nat = (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) != 0;
 		bool tfc = c->sa_tfcpad != 0 && !st->st_seen_no_tfc;
 		bool esn = st->st_esp.attrs.transattrs.esn_enabled;
 
