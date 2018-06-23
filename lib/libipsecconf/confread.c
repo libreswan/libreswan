@@ -1382,7 +1382,7 @@ static bool load_conn(
 				conn->policy |= POLICY_AUTH_NEVER;
 			/* everything else is only supported for IKEv2 */
 			else if (conn->policy & POLICY_IKEV1_ALLOW) {
-				*perr = "connection allowing ikev1 must use authby= of rsasig,secret or never ";
+				*perr = "connection allowing ikev1 must use authby= of rsasig, secret or never";
 				return TRUE;
 			}
 			else if (streq(val, "null")) {
