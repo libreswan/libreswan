@@ -3,7 +3,6 @@ nic #
  iptables -F
 nic #
  ../../pluto/bin/ipsec-look.sh
--bash: ipsec: command not found
 nic #
  ipsec whack --trafficstatus
 -bash: ipsec: command not found

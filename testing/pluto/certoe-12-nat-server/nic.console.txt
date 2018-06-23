@@ -55,7 +55,6 @@ nic #
 -bash: ipsec: command not found
 nic #
  ../../pluto/bin/ipsec-look.sh
--bash: ipsec: command not found
 nic #
  # you should see both RSA and NULL
 nic #
