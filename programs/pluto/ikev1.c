@@ -2666,6 +2666,11 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			change_state(st, STATE_MODE_CFG_R1);
 			set_cur_state(st);
 			libreswan_log("Sending MODE CONFIG set");
+			/*
+			 * ??? we ignore the result of modecfg.
+			 * But surely, if it fails, we ought to terminate this exchange.
+			 * What do the RFCs say?
+			 */
 			modecfg_start_set(st);
 			break;
 		}
