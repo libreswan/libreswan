@@ -187,8 +187,8 @@ west #
 done
 west #
  ipsec whack --trafficstatus
-006 #11: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east'
-006 #12: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east'
+006 #11: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='@east'
+006 #12: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='@east'
 006 #13: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east'
 west #
  ipsec status |grep STATE_
