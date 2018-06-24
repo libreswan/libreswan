@@ -1341,7 +1341,12 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	 * we should do this after installing ipsec_sa, but that will
 	 * give us a "eroute in use" error.
 	 */
-	ISAKMP_SA_established(pst);
+	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
+		/* skip check for rekey */
+		pst->st_connection->newest_isakmp_sa = pst->st_serialno;
+	} else {
+		ISAKMP_SA_established(pst);
+	}
 
 	/* install inbound and outbound SPI info */
 	if (!install_ipsec_sa(cst, TRUE))
