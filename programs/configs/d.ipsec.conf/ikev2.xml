@@ -7,7 +7,7 @@ signifying IKEv2 will be accepted if received, but IKEv1 will be used
 when initiating; <emphasis remap='B'>never</emphasis> or <emphasis
 remap='B'>no</emphasis> signifying no IKEv2 negotiation should be
 transmitted or accepted; <emphasis remap='B'>propose</emphasis> or
-<emphasis remap='B'>yes</emphasis> signifying that we permit and IKEv1
+<emphasis remap='B'>yes</emphasis> signifying that we permit IKEv1
 and IKEv2, and use IKEv2 as the default to initiate; and <emphasis
 remap='B'>insist</emphasis>signifying we only accept and receive IKEv2 -
 IKEv1 negotiations will be rejected.
@@ -23,4 +23,3 @@ With an ikev2= setting of <emphasis remap='B'>insist</emphasis>, no IKEv1
 negotiation is allowed, and no bid down attack is possible.</para>
   </listitem>
   </varlistentry>
-
