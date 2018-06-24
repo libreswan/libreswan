@@ -34,7 +34,7 @@ west #
 002 "san" #1: sending notification INVALID_ID_INFORMATION to 192.1.2.23:500
 002 "san" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set
 002 "san" #1: IMPAIR RETRANSMITS: suppressing re-key
-002 "san" #1: deleting state (STATE_AGGR_I1)
+002 "san" #1: deleting state (STATE_AGGR_I1) and NOT sending notification
 west #
  echo "done"
 done

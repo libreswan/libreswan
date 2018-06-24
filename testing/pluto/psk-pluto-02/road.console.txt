@@ -48,7 +48,7 @@ road #
 003 "road-eastnet-psk" #1: received Hash Payload does not match computed value
 223 "road-eastnet-psk" #1: STATE_AGGR_I1: INVALID_HASH_INFORMATION
 002 "road-eastnet-psk" #1: sending notification INVALID_HASH_INFORMATION to 192.1.2.23:500
-002 "road-eastnet-psk" #1: deleting state (STATE_AGGR_I1)
+002 "road-eastnet-psk" #1: deleting state (STATE_AGGR_I1) and NOT sending notification
 road #
  echo done
 done

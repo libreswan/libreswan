@@ -49,7 +49,7 @@ west #
 003 "nss-cert" #1: received and ignored informational message
 002 "nss-cert" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set
 002 "nss-cert" #1: IMPAIR RETRANSMITS: suppressing re-key
-002 "nss-cert" #1: deleting state (STATE_MAIN_I3)
+002 "nss-cert" #1: deleting state (STATE_MAIN_I3) and NOT sending notification
 west #
  echo done
 done

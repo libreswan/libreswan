@@ -28,7 +28,7 @@ road #
 108 "x509" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "x509" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set
 002 "x509" #1: IMPAIR RETRANSMITS: suppressing re-key
-002 "x509" #1: deleting state (STATE_MAIN_I3)
+002 "x509" #1: deleting state (STATE_MAIN_I3) and NOT sending notification
 road #
  grep "fragment number" /tmp/pluto.log
 road #
