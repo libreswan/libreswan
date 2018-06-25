@@ -4944,6 +4944,7 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 		 */
 		return STF_FATAL;
 	}
+	st->st_ikev2_anon = pst->st_ikev2_anon; /* was set after duplicate_state() */
 
 	/* AUTH succeeded */
 
