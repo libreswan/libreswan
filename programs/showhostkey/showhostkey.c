@@ -230,7 +230,7 @@ static char *pubkey_to_rfc3110_base64(const struct RSA_public_key *pub)
 	char* base64;
 	err_t err = rsa_pubkey_to_base64(pub->e, pub->n, &base64);
 	if (err) {
-		fprintf(stderr, "%s: unexpected error encoing RSA public key '%s'\n",
+		fprintf(stderr, "%s: unexpected error encoding RSA public key '%s'\n",
 			progname, err);
 		return NULL;
 	}
