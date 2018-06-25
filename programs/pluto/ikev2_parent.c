@@ -587,7 +587,7 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 
 	case IKEv2_AUTH_NULL:
 	{
-		if (that_authby != AUTH_NULL) {
+		if (that_authby != AUTH_NULL && !LIN(POLICY_AUTH_NULL, st->st_connection->policy)) {
 			libreswan_log("Peer attempted NULL authentication but we want %s",
 				enum_name(&ikev2_asym_auth_name, that_authby));
 			return FALSE;
