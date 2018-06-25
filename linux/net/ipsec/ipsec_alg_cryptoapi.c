@@ -663,7 +663,11 @@ setup_ipsec_alg_capi_digest(struct ipsec_alg_capi_digest *dptr)
 static void
 _capi_destroy_hmac_key (struct ipsec_alg_auth *alg, __u8 *key_a)
 {
-	struct crypto_tfm *tfm=(struct crypto_tfm*)key_a;
+#ifdef HAS_AHASH
+	struct crypto_ahash *tfm = (struct crypto_ahash*)key_a;
+#else
+	struct  crypto_hash *tfm = (struct  crypto_hash*)key_a;
+#endif
 
 	if (debug_crypto > 0)
 		printk(KERN_DEBUG "klips_debug: _capi_destroy_hmac_key:"
@@ -675,7 +679,12 @@ _capi_destroy_hmac_key (struct ipsec_alg_auth *alg, __u8 *key_a)
 		       alg->ixt_common.ixt_name);
 		return;
 	}
-	crypto_free_tfm(tfm);
+
+#ifdef HAS_AHASH
+	crypto_free_ahash(tfm);
+#else
+	crypto_free_hash(tfm);
+#endif
 }
 /*
  *      create hash
@@ -777,7 +786,7 @@ _capi_hmac_hash(struct ipsec_alg_auth *alg, __u8 *key_a, const __u8 *dat, int le
 		return -1;
 
 	ahash_request_set_callback(req, 0, NULL, NULL);
-	ahash_request_set_crypt(req, &sg, hash_buf, 2);
+	ahash_request_set_crypt(req, &sg, hash_buf, len);
 	ret = crypto_ahash_digest(req);
 #else
 	memset(&desc, 0, sizeof(desc));
