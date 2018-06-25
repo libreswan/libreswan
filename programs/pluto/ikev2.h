@@ -13,6 +13,7 @@ void ikev2_process_packet(struct msg_digest **mdp);
 void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 				struct msg_digest **mdp);
 
+/* extern initiator_function ikev2_parent_outI1; */
 extern void ikev2_parent_outI1(int whack_sock,
 			      struct connection *c,
 			      struct state *predecessor,
@@ -51,7 +52,7 @@ extern crypto_transition_fn ikev2_child_inR_tail;
 extern crypto_transition_fn ikev2_child_ike_rekey_tail;
 extern void ikev2_initiate_child_sa(struct pending *p);
 
-bool ikev2_rekey_ike_start(struct state *st);
+void ikev2_rekey_ike_start(struct state *st);
 
 extern void ikev2_child_outI(struct state *st);
 extern void ikev2_child_send_next(struct state *st);

@@ -1478,8 +1478,7 @@ void delete_states_by_peer(const ip_address *peer)
 						  "peer %s for connection %s crashed; replacing",
 						  peerstr,
 						  c->name);
-					ipsecdoi_replace(this, LEMPTY,
-							 LEMPTY, 1);
+					ipsecdoi_replace(this, 1);
 				} else {
 					event_force(EVENT_SA_REPLACE, this);
 				}

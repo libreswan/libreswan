@@ -38,9 +38,7 @@ extern void ipsecdoi_initiate(int whack_sock, struct connection *c,
 #endif
 			      );
 
-extern void ipsecdoi_replace(struct state *st,
-			     lset_t policy_add, lset_t policy_del,
-			     unsigned long try);
+extern void ipsecdoi_replace(struct state *st, unsigned long try);
 
 extern void init_phase2_iv(struct state *st, const msgid_t *msgid);
 

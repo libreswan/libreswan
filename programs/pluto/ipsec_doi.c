@@ -287,41 +287,42 @@ void ipsecdoi_initiate(int whack_sock,
  * - duplicate whack fd, if live.
  * Does not delete the old state -- someone else will do that.
  */
-void ipsecdoi_replace(struct state *st,
-		      lset_t policy_add, lset_t policy_del,
-		      unsigned long try)
+void ipsecdoi_replace(struct state *st, unsigned long try)
 {
-	initiator_function *initiator;
-	lset_t policy = st->st_policy;
-
 	if (IS_PARENT_SA_ESTABLISHED(st) &&
-			!LIN(POLICY_REAUTH, st->st_connection->policy) &&
-			ikev2_rekey_ike_start(st)) {
+	    !LIN(POLICY_REAUTH, st->st_connection->policy)) {
 		libreswan_log("initiate rekey of IKEv2 CREATE_CHILD_SA IKE Rekey");
+		/* ??? why does this not need whack socket fd? */
+		ikev2_rekey_ike_start(st);
 	} else if (IS_IKE_SA(st)) {
-		if (IS_PARENT_SA_ESTABLISHED(st) &&
-				LIN(POLICY_REAUTH, st->st_connection->policy)) {
-			libreswan_log("initiate reauthentication of IKE SA");
-		}
-		struct connection *c = st->st_connection;
-		policy = (c->policy & ~POLICY_IPSEC_MASK &
-				~policy_del) | policy_add;
+		/* start from policy in connection */
 
-		initiator = pick_initiator(c, policy);
-		passert(!HAS_IPSEC_POLICY(policy));
+		struct connection *c = st->st_connection;
+
+		lset_t policy = c->policy & ~POLICY_IPSEC_MASK;
+
+		if (IS_PARENT_SA_ESTABLISHED(st))
+			libreswan_log("initiate reauthentication of IKE SA");
+
+		initiator_function *initiator = pick_initiator(c, policy);
+
 		if (initiator != NULL) {
 			(void) initiator(dup_any(st->st_whack_sock),
-				st->st_connection, st, policy, try, st->st_import
+				c, st, policy, try, st->st_import
 #ifdef HAVE_LABELED_IPSEC
 				, st->sec_ctx
 #endif
 				);
 		}
 	} else {
-		/* Add features of actual old state to policy.  This ensures
-		 * that rekeying doesn't downgrade security.  I admit that
-		 * this doesn't capture everything.
+		/*
+		 * Start from policy in (ipsec) state, not connection.
+		 * This ensures that rekeying doesn't downgrade
+		 * security.  I admit that this doesn't capture
+		 * everything.
 		 */
+		lset_t policy = st->st_policy;
+
 		if (st->st_pfs_group != NULL)
 			policy |= POLICY_PFS;
 		if (st->st_ah.present) {

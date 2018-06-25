@@ -711,6 +711,8 @@ static bool id_ipseckey_allowed(struct state *st, enum ikev2_auth_method atype)
  */
 static crypto_req_cont_func ikev2_parent_outI1_continue;
 
+/* extern initiator_function ikev2_parent_outI1; */	/* type assertion */
+
 void ikev2_parent_outI1(int whack_sock,
 		       struct connection *c,
 		       struct state *predecessor,
@@ -6714,7 +6716,7 @@ static stf_status ikev2_send_informational(struct state *st, struct state *pst,
 	return STF_OK;
 }
 
-bool ikev2_rekey_ike_start(struct state *st)
+void ikev2_rekey_ike_start(struct state *st)
 {
 	struct pending p;
 	p.whack_sock = NULL_FD;
@@ -6727,7 +6729,6 @@ bool ikev2_rekey_ike_start(struct state *st)
 	p.uctx = st->sec_ctx;
 #endif
 	ikev2_initiate_child_sa(&p);
-	return TRUE;
 }
 
 void ikev2_initiate_child_sa(struct pending *p)

@@ -496,7 +496,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 					break;
 				} else {
 					ikev2_log_v2_sa_expired(st, type);
-					ipsecdoi_replace(st, LEMPTY, LEMPTY, 1);
+					ipsecdoi_replace(st, 1);
 				}
 
 		} else if (type == EVENT_SA_REPLACE_IF_USED &&
@@ -524,7 +524,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 							       st->st_outbound_time))));
 		} else {
 			ikev2_log_v2_sa_expired(st, type);
-			ipsecdoi_replace(st, LEMPTY, LEMPTY, 1);
+			ipsecdoi_replace(st, 1);
 		}
 
 

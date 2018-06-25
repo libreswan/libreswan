@@ -145,7 +145,7 @@ void retransmit_v1_msg(struct state *st)
 			loglog(RC_COMMENT,
 			       "next attempt will be IKEv2");
 		}
-		ipsecdoi_replace(st, LEMPTY, LEMPTY, try);
+		ipsecdoi_replace(st, try);
 	}
 
 	set_cur_state(st);  /* ipsecdoi_replace would reset cur_state, set it again */
@@ -261,7 +261,7 @@ void retransmit_v2_msg(struct state *st)
 			c->failed_ikev2 = TRUE;
 			loglog(RC_COMMENT, "next attempt will be IKEv1");
 		}
-		ipsecdoi_replace(st, LEMPTY, LEMPTY, try);
+		ipsecdoi_replace(st, try);
 	} else {
 		DBG(DBG_CONTROL|DBG_RETRANSMITS,
 		    DBG_log("maximum number of keyingtries reached - deleting state"));
