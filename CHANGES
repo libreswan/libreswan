@@ -25,6 +25,7 @@ v3.24 (unreleased)
 * IKEv2: construct and send encrypt IKEv2 notification payloads [Andrew]
 * IKEv2: test/fix handling of corrupt encrypted packets [Andrew]
 * IKEv1: Prevent crashes with IKEv1 mistakenly allowing narrowing=yes [Paul]
+* IKEv1: DPD was not getting scheduled (bug introduced in 3.23) [Paul]
 * X509: Extend support for wildcard certs matching remote peer ID [Paul/Hugh]
 * X509: Support PKCS7 for Microsoft interop with intermediate certs [Andrew]
 * pluto: Obsoleted connaddrfamily= (fixes 6in4 and 4in6) [Paul]
