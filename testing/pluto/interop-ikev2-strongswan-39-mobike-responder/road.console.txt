@@ -119,24 +119,35 @@ road #
  echo done
 done
 road #
- ip xfrm state
+ ../../pluto/bin/ipsec-look.sh
+road NOW
+XFRM state:
 src 192.1.2.23 dst 192.1.33.222
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	enc cbc(aes) 0xKEY
 src 192.1.33.222 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	enc cbc(aes) 0xKEY
-road #
- ip xfrm pol
-src 192.0.3.1/32 dst 192.0.2.0/24 
-	dir out priority 2088 ptype main 
+XFRM policy:
+src 192.0.2.0/24 dst 192.0.3.1/32
+	dir fwd priority 1040359 ptype main
+	tmpl src 192.1.2.23 dst 192.1.33.222
+src 192.0.2.0/24 dst 192.0.3.1/32
+	dir in priority 1040359 ptype main
+	tmpl src 192.1.2.23 dst 192.1.33.222
+src 192.0.3.1/32 dst 192.0.2.0/24
+	dir out priority 1040359 ptype main
 	tmpl src 192.1.33.222 dst 192.1.2.23
-src 192.0.2.0/24 dst 192.0.3.1/32 
-	dir fwd priority 2088 ptype main 
-	tmpl src 192.1.2.23 dst 192.1.33.222
-src 192.0.2.0/24 dst 192.0.3.1/32 
-	dir in priority 2088 ptype main 
-	tmpl src 192.1.2.23 dst 192.1.33.222
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.33.254 dev eth0 
+192.0.2.0/24 via 192.1.33.254 dev eth0  src 192.0.3.1 
+192.1.33.0/24 dev eth0 proto kernel scope link src 192.1.33.222 
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
 road #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec whack --trafficstatus ; fi
 006 #2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east', lease=192.0.3.1/32
