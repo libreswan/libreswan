@@ -358,7 +358,7 @@ static void p2_dpd_outI1(struct state *p2st)
 		return;
 	}
 
-	if (st->st_connection->newest_ipsec_sa != st->st_serialno) {
+	if (st->st_connection->newest_ipsec_sa != p2st->st_serialno) {
 		DBG(DBG_DPD,
 		    DBG_log("DPD: no need to send or schedule DPD for replaced IPsec SA"));
 		return;
@@ -373,7 +373,7 @@ void dpd_event(struct state *st)
 
 	set_cur_state(st);
 
-	if (IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state ))
+	if (IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state))
 		p1_dpd_outI1(st);
 	else
 		p2_dpd_outI1(st);
