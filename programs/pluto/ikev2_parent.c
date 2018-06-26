@@ -587,7 +587,7 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 
 	case IKEv2_AUTH_NULL:
 	{
-		if (that_authby != AUTH_NULL) {
+		if (that_authby != AUTH_NULL && !LIN(POLICY_AUTH_NULL, st->st_connection->policy)) {
 			libreswan_log("Peer attempted NULL authentication but we want %s",
 				enum_name(&ikev2_asym_auth_name, that_authby));
 			return FALSE;
@@ -4944,6 +4944,7 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
 		 */
 		return STF_FATAL;
 	}
+	st->st_ikev2_anon = pst->st_ikev2_anon; /* was set after duplicate_state() */
 
 	/* AUTH succeeded */
 

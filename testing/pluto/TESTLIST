@@ -377,7 +377,7 @@ kvmplutotest	newoe-03-oeself				good
 kvmplutotest	newoe-04-pass-pass			good
 kvmplutotest	newoe-05-hold-pass			good
 kvmplutotest	newoe-06-prio				good
-kvmplutotest	newoe-07-ike-replace-initiator		good
+kvmplutotest	newoe-07-ike-replace-initiator		wip
 kvmplutotest	newoe-07-ike-replace-initiator-esp	good
 kvmplutotest	newoe-08-restart			good
 kvmplutotest	newoe-09-mutual				good
