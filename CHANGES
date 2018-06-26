@@ -1,7 +1,7 @@
 
 See also https://libreswan.org/
 
-v3.24 (unreleased)
+v3.24 (June 26, 2018)
 * IKEv2: MOBIKE Initiator support (RFC 4555) [Antony]
 * IKEv2: Support for IKE SA rekeying RFC7296 1.3.2, initiator [Antony]
 * IKEv2: Support for IPsec SA rekeying RFC7296 1.3.3, initiator [Antony]
