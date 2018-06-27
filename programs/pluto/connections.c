@@ -733,7 +733,7 @@ size_t format_end(char *buf,
  */
 #define CONN_BUF_LEN    (2 * (END_BUF - 1) + 4)
 
-static size_t format_connection(char *buf, size_t buf_len,
+static char *format_connection(char *buf, size_t buf_len,
 			const struct connection *c,
 			const struct spd_route *sr)
 {
@@ -742,8 +742,9 @@ static size_t format_connection(char *buf, size_t buf_len,
 
 	snprintf(buf + w, buf_len - w, "...");
 	w += strlen(buf + w);
-	return w + format_end(buf + w, buf_len - w, &sr->that, &sr->this,
-			FALSE, c->policy, oriented(*c));
+	(void) format_end(buf + w, buf_len - w, &sr->that, &sr->this, FALSE, c->policy,
+		oriented(*c));
+	return buf;
 }
 
 /* spd_route's with end's get copied in xauth.c */
@@ -1257,14 +1258,10 @@ static void mark_parse(const char *cnm, /*const*/ char *wmmark, struct sa_mark *
  * XXX: This function should be rewritten, with more careful distinction
  * between wm->policy and c->policy. It now jumps back and forth due to
  * implicit defaults. Also add checks from confread/whack should be moved
- * here so it is similar for all methods of loading * a connection.
+ * here so it is similar for all methods of loading a connection.
  */
 void add_connection(const struct whack_message *wm)
 {
-	struct alg_info_ike *alg_info_ike;
-
-	alg_info_ike = NULL;
-
 	if (conn_by_name(wm->name, FALSE, FALSE) != NULL) {
 		loglog(RC_DUPNAME, "attempt to redefine connection \"%s\"",
 			wm->name);
@@ -1310,42 +1307,6 @@ void add_connection(const struct whack_message *wm)
 			loglog(RC_FATAL,
 				"Failed to add connection \"%s\": non-shunt connection must specify either AH or ESP",
 				wm->name);
-			return;
-		}
-	}
-
-	if (!LIN(POLICY_AUTH_NEVER, wm->policy) && wm->ike != NULL) {
-		char err_buf[256] = "";	/* ??? big enough? */
-
-		struct proposal_policy proposal_policy = {
-			.ikev1 = LIN(POLICY_IKEV1_ALLOW, wm->policy),
-			/*
-			 * logic needs to match pick_initiator()
-			 *
-			 * XXX: Once pluto is changed to IKEv1 XOR
-			 * IKEv2 it should be possible to move this
-			 * magic into pluto proper and instead pass a
-			 * simple boolean.
-			 */
-			.ikev2 = ((wm->policy & POLICY_IKEV2_PROPOSE)
-				  && (wm->policy & POLICY_IKEV2_ALLOW)),
-			.alg_is_ok = ike_alg_is_ike,
-			.pfs = (wm->policy & POLICY_PFS) != LEMPTY,
-		};
-
-		alg_info_ike = alg_info_ike_create_from_str(&proposal_policy, wm->ike,
-							    err_buf, sizeof(err_buf));
-
-		if (alg_info_ike == NULL) {
-			pexpect(err_buf[0]); /* something */
-			loglog(RC_FATAL, "Failed to add connection \"%s\": ike string error: %s",
-				wm->name, err_buf);
-			return;
-		}
-		if (alg_info_ike->ai.alg_info_cnt == 0) {
-			loglog(RC_FATAL,
-				"Failed to add connection \"%s\": got 0 transforms for ike=\"%s\"",
-				wm->name, wm->ike);
 			return;
 		}
 	}
@@ -1396,7 +1357,6 @@ void add_connection(const struct whack_message *wm)
 			return;
 		}
 	} else {
-
 		/* reject all bad combinations of authby with leftauth=/rightauth= */
 		if (wm->left.authby != AUTH_UNSET || wm->right.authby != AUTH_UNSET) {
 			if ((wm->policy & POLICY_IKEV2_PROPOSE) == LEMPTY) {
@@ -1482,61 +1442,105 @@ void add_connection(const struct whack_message *wm)
 				wm->name);
 		return;
 	}
-	if (check_connection_end(&wm->right, &wm->left, wm) &&
-	    check_connection_end(&wm->left, &wm->right, wm))
-	{
+	if (!check_connection_end(&wm->right, &wm->left, wm) ||
+	    !check_connection_end(&wm->left, &wm->right, wm)) {
+		loglog(RC_FATAL, "Failed to load connection \"%s\": attempt to load incomplete connection",
+			wm->name);
+		return;
+	}
 
-		/*
-		 * Connection values are set using strings in the whack
-		 * message, unshare_connection() is responsible
-		 * for cloning the strings before the whack message is
-		 * destroyed.
-		 */
+	/*
+	 * Connection values are set using strings in the whack
+	 * message, unshare_connection() is responsible
+	 * for cloning the strings before the whack message is
+	 * destroyed.
+	 */
 
-		char err_buf[256] = "";	/* ??? big enough? */
-		bool same_rightca, same_leftca;
-		struct connection *c = alloc_thing(struct connection,
-						"struct connection");
+	char err_buf[256] = "";	/* ??? big enough? */
+	bool same_rightca, same_leftca;
+	struct connection *c = alloc_thing(struct connection,
+					"struct connection");
 
-		c->name = wm->name;
-		c->connalias = wm->connalias;
-		c->dnshostname = wm->dnshostname;
-		c->policy = wm->policy;
-		if (NEVER_NEGOTIATE(c->policy)) {
-			/* cleanup inherited default */
-			c->policy &= ~(POLICY_IKEV1_ALLOW|POLICY_IKEV2_ALLOW);
-		}
+	/* from here on, error returns must pfree(c); */
+
+	c->name = wm->name;
+	c->connalias = wm->connalias;
+	c->dnshostname = wm->dnshostname;
+	c->policy = wm->policy;
+	if (NEVER_NEGOTIATE(c->policy)) {
+		/* cleanup inherited default */
+		c->policy &= ~(POLICY_IKEV1_ALLOW|POLICY_IKEV2_ALLOW);
+	}
 
 #ifdef FIPS_CHECK
-		if (libreswan_fipsmode()) {
-			if (c->policy & POLICY_NEGO_PASS) {
-				c->policy &= ~POLICY_NEGO_PASS;
-				loglog(RC_LOG_SERIOUS,"FIPS: ignored negotiationshunt=passthrough - packets MUST be blocked in FIPS mode");
-			}
-			if ((c->policy & POLICY_FAIL_MASK) == POLICY_FAIL_PASS) {
-				c->policy &= ~POLICY_FAIL_MASK;
-				c->policy |= POLICY_FAIL_NONE;
-				loglog(RC_LOG_SERIOUS,"FIPS: ignored failureshunt=passthrough - packets MUST be blocked in FIPS mode");
+	if (libreswan_fipsmode()) {
+		if (c->policy & POLICY_NEGO_PASS) {
+			c->policy &= ~POLICY_NEGO_PASS;
+			loglog(RC_LOG_SERIOUS,"FIPS: ignored negotiationshunt=passthrough - packets MUST be blocked in FIPS mode");
+		}
+		if ((c->policy & POLICY_FAIL_MASK) == POLICY_FAIL_PASS) {
+			c->policy &= ~POLICY_FAIL_MASK;
+			c->policy |= POLICY_FAIL_NONE;
+			loglog(RC_LOG_SERIOUS,"FIPS: ignored failureshunt=passthrough - packets MUST be blocked in FIPS mode");
+		}
+	}
+#endif
+	DBG(DBG_CONTROL,
+		DBG_log("Added new connection %s with policy %s%s",
+			c->name,
+			prettypolicy(c->policy),
+			NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : ""));
+
+	if (NEVER_NEGOTIATE(wm->policy)) {
+		/* set default to AUTH_NEVER if unset and we do not expect to do IKE */
+		if (wm->left.authby == AUTH_UNSET && wm->right.authby == AUTH_UNSET) {
+			if ((c->policy & POLICY_ID_AUTH_MASK) == LEMPTY) {
+				/* authby= was also not specified - fill in default */
+				c->policy |= POLICY_AUTH_NEVER;
+				DBG(DBG_CONTROL, DBG_log("No AUTH policy was set for type=passthrough - defaulting to %s",
+					prettypolicy(c->policy & POLICY_ID_AUTH_MASK)));
 			}
 		}
-#endif
-		DBG(DBG_CONTROL,
-			DBG_log("Added new connection %s with policy %s%s",
-				c->name,
-				prettypolicy(c->policy),
-				NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : ""));
+	} else {
+		/* set default to RSASIG if unset and we expect to do IKE */
+		if (wm->left.authby == AUTH_UNSET && wm->right.authby == AUTH_UNSET) {
+			 if ((c->policy & POLICY_ID_AUTH_MASK) == LEMPTY) {
+				/* authby= was also not specified - fill in default */
+				c->policy |= POLICY_DEFAULT;
+				DBG(DBG_CONTROL, DBG_log("No AUTH policy was set - defaulting to %s",
+					prettypolicy(c->policy & POLICY_ID_AUTH_MASK)));
+			}
+		}
 
-		if (!NEVER_NEGOTIATE(wm->policy))
-		{
+		c->alg_info_ike = NULL;
 
-			/* set default to RSASIG if unset and we expect to do IKE */
-			if (wm->left.authby == AUTH_UNSET && wm->right.authby == AUTH_UNSET) {
-				 if ((c->policy & POLICY_ID_AUTH_MASK) == LEMPTY) {
-						/* authby= was also not specified - fill in default */
-						c->policy |= POLICY_DEFAULT;
-						DBG(DBG_CONTROL, DBG_log("No AUTH policy was set - defaulting to %s",
-							prettypolicy(c->policy & POLICY_ID_AUTH_MASK)));
-				}
+		if (!LIN(POLICY_AUTH_NEVER, wm->policy) && wm->ike != NULL) {
+			char err_buf[256] = "";	/* ??? big enough? */
+
+			const struct proposal_policy proposal_policy = {
+				.ikev1 = LIN(POLICY_IKEV1_ALLOW, wm->policy),
+				/*
+				 * logic needs to match pick_initiator()
+				 *
+				 * XXX: Once pluto is changed to IKEv1 XOR
+				 * IKEv2 it should be possible to move this
+				 * magic into pluto proper and instead pass a
+				 * simple boolean.
+				 */
+				.ikev2 = LIN(POLICY_IKEV2_PROPOSE | POLICY_IKEV2_ALLOW, wm->policy),
+				.alg_is_ok = ike_alg_is_ike,
+				.pfs = LIN(POLICY_PFS, wm->policy),
+			};
+
+			c->alg_info_ike = alg_info_ike_create_from_str(&proposal_policy, wm->ike,
+								    err_buf, sizeof(err_buf));
+
+			if (c->alg_info_ike == NULL) {
+				pexpect(err_buf[0]); /* something */
+				loglog(RC_FATAL, "Failed to add connection \"%s\": ike string error: %s",
+					wm->name, err_buf);
+				pfree(c);
+				return;
 			}
 			/* fixup symmetric policy flags based on asymmetric ones */
 			if ((wm->left.authby == AUTH_NULL && wm->right.authby == AUTH_RSASIG) ||
@@ -1545,12 +1549,29 @@ void add_connection(const struct whack_message *wm)
 			}
 
 
+			/* from here on, error returns should alg_info_free(&c->alg_info_ike->ai); */
+
+			LSWDBGP(DBG_CRYPT | DBG_CONTROL, buf) {
+				lswlogs(buf, "ike (phase1) algorithm values: ");
+				lswlog_alg_info(buf, &c->alg_info_ike->ai);
+			};
+			if (c->alg_info_ike->ai.alg_info_cnt == 0) {
+				loglog(RC_FATAL,
+					"Failed to add connection \"%s\": got 0 transforms for ike=\"%s\"",
+					wm->name, wm->ike);
+				alg_info_free(&c->alg_info_ike->ai);
+				pfree(c);
+				return;
+			}
+		}
+
 		c->alg_info_esp = NULL;
+
 		if (wm->esp != NULL) {
 			DBG(DBG_CONTROL,
 			    DBG_log("from whack: got --esp=%s", wm->esp));
 
-			struct proposal_policy proposal_policy = {
+			const struct proposal_policy proposal_policy = {
 				.ikev1 = LIN(POLICY_IKEV1_ALLOW, wm->policy),
 				/*
 				 * logic needs to match pick_initiator()
@@ -1560,10 +1581,9 @@ void add_connection(const struct whack_message *wm)
 				 * move this magic into pluto proper
 				 * and instead pass a simple boolean.
 				 */
-				.ikev2 = ((wm->policy & POLICY_IKEV2_PROPOSE)
-					  && (wm->policy & POLICY_IKEV2_ALLOW)),
+				.ikev2 = LIN(POLICY_IKEV2_PROPOSE | POLICY_IKEV2_ALLOW, wm->policy),
 				.alg_is_ok = kernel_alg_is_ok,
-				.pfs = (wm->policy & POLICY_PFS) != LEMPTY,
+				.pfs = LIN(POLICY_PFS, wm->policy),
 			};
 
 			if (c->policy & POLICY_ENCRYPT)
@@ -1578,14 +1598,22 @@ void add_connection(const struct whack_message *wm)
 				loglog(RC_FATAL,
 				       "Failed to add connection \"%s\", esp=\"%s\" is invalid: %s",
 				       wm->name, wm->esp, err_buf);
+				if (c->alg_info_ike != NULL)
+					alg_info_free(&c->alg_info_ike->ai);
 				pfree(c);
 				return;
 			}
+
+			/* from here on, error returns should alg_info_free(&c->alg_info_esp->ai); */
+
 			if (c->alg_info_esp->ai.alg_info_cnt == 0) {
 				loglog(RC_FATAL,
 				       "Failed to add connection \"%s\", esp=\"%s\" contained 0 valid transforms",
 				       wm->name, wm->esp);
-				alg_info_free(&c->alg_info_esp->ai);
+				if (c->alg_info_ike != NULL)
+					alg_info_free(&c->alg_info_ike->ai);
+				if (c->alg_info_esp != NULL) \
+					alg_info_free(&c->alg_info_esp->ai);
 				pfree(c);
 				return;
 			}
@@ -1594,31 +1622,6 @@ void add_connection(const struct whack_message *wm)
 				lswlogs(buf, "ESP/AH string values: ");
 				lswlog_alg_info(buf, &c->alg_info_esp->ai);
 			};
-		}
-
-		c->alg_info_ike = NULL;
-		if (wm->ike != NULL) {
-			c->alg_info_ike = alg_info_ike;
-
-			if (c->alg_info_ike == NULL) {
-				loglog(RC_FATAL,
-					"Failed to add connection \"%s\": ike string error: %s",
-					wm->name, err_buf);
-				pfree(c);
-				return;
-			}
-			LSWDBGP(DBG_CRYPT | DBG_CONTROL, buf) {
-				lswlogs(buf, "ike (phase1) algorithm values: ");
-				lswlog_alg_info(buf, &c->alg_info_ike->ai);
-			};
-			if (c->alg_info_ike->ai.alg_info_cnt == 0) {
-				loglog(RC_FATAL,
-					"Failed to add connection \"%s\": got 0 transforms for ike=\"%s\"",
-					wm->name, wm->ike);
-				alg_info_free(&c->alg_info_ike->ai);
-				pfree(c);
-				return;
-			}
 		}
 
 		c->nic_offload = wm->nic_offload;
@@ -1647,10 +1650,10 @@ void add_connection(const struct whack_message *wm)
 			time_t max_ike = IKE_SA_LIFETIME_MAXIMUM;
 			time_t max_ipsec = IPSEC_SA_LIFETIME_MAXIMUM;
 #ifdef FIPS_CHECK
-		if (libreswan_fipsmode()) {
-			/* http://csrc.nist.gov/publications/nistpubs/800-77/sp800-77.pdf */
-			max_ipsec = FIPS_IPSEC_SA_LIFETIME_MAXIMUM;
-		}
+			if (libreswan_fipsmode()) {
+				/* http://csrc.nist.gov/publications/nistpubs/800-77/sp800-77.pdf */
+				max_ipsec = FIPS_IPSEC_SA_LIFETIME_MAXIMUM;
+			}
 #endif
 			if (deltasecs(c->sa_ike_life_seconds) > max_ike) {
 				loglog(RC_LOG_SERIOUS,
@@ -1723,227 +1726,208 @@ void add_connection(const struct whack_message *wm)
 		c->vti_iface = wm->vti_iface;
 		c->vti_routing = wm->vti_routing;
 		c->vti_shared = wm->vti_shared;
-
-		} else { /* not !NEVER_NEGOTIATE() */
-			/* set default to AUTH_NEVER if unset and we do not expect to do IKE */
-			if (wm->left.authby == AUTH_UNSET && wm->right.authby == AUTH_UNSET) {
-				if ((c->policy & POLICY_ID_AUTH_MASK) == LEMPTY) {
-						/* authby= was also not specified - fill in default */
-						c->policy |= POLICY_AUTH_NEVER;
-						DBG(DBG_CONTROL, DBG_log("No AUTH policy was set for type=passthrough - defaulting to %s",
-							prettypolicy(c->policy & POLICY_ID_AUTH_MASK)));
-				}
-			}
-		}
+	}
 
 #ifdef HAVE_NM
-		c->nmconfigured = wm->nmconfigured;
+	c->nmconfigured = wm->nmconfigured;
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
-		c->labeled_ipsec = wm->labeled_ipsec;
-		c->policy_label = wm->policy_label;
+	c->labeled_ipsec = wm->labeled_ipsec;
+	c->policy_label = wm->policy_label;
 #endif
-		c->nflog_group = wm->nflog_group;
-		c->sa_priority = wm->sa_priority;
-		c->sa_tfcpad = wm->sa_tfcpad;
-		c->send_no_esp_tfc = wm->send_no_esp_tfc;
-		c->addr_family = wm->addr_family;
-		c->tunnel_addr_family = wm->tunnel_addr_family;
-		c->sa_reqid = wm->sa_reqid;
+	c->nflog_group = wm->nflog_group;
+	c->sa_priority = wm->sa_priority;
+	c->sa_tfcpad = wm->sa_tfcpad;
+	c->send_no_esp_tfc = wm->send_no_esp_tfc;
+	c->addr_family = wm->addr_family;
+	c->tunnel_addr_family = wm->tunnel_addr_family;
+	c->sa_reqid = wm->sa_reqid;
 
-		same_leftca = extract_end(&c->spd.this, &wm->left, "left");
-		same_rightca = extract_end(&c->spd.that, &wm->right, "right");
+	same_leftca = extract_end(&c->spd.this, &wm->left, "left");
+	same_rightca = extract_end(&c->spd.that, &wm->right, "right");
 
-		if (same_rightca) {
-			c->spd.that.ca = c->spd.this.ca;
-		} else if (same_leftca) {
-			c->spd.this.ca = c->spd.that.ca;
-		}
-
-		/*
-		 * How to add addresspool only for responder?
-		 * It is not necessary on the initiator
-		 */
-
-		if (wm->left.pool_range.start.u.v4.sin_addr.s_addr != 0) {
-			/* there is address pool range add to the global list */
-			c->pool = install_addresspool(&wm->left.pool_range);
-			c->spd.that.modecfg_server = TRUE;
-			c->spd.this.modecfg_client = TRUE;
-		}
-		if (wm->right.pool_range.start.u.v4.sin_addr.s_addr != 0) {
-			/* there is address pool range add to the global list */
-			c->pool = install_addresspool(&wm->right.pool_range);
-			c->spd.that.modecfg_client = TRUE;
-			c->spd.this.modecfg_server = TRUE;
-		}
-
-		if (c->spd.this.xauth_server || c->spd.that.xauth_server)
-			c->policy |= POLICY_XAUTH;
-
-		default_end(&c->spd.this, &c->spd.that.host_addr);
-		default_end(&c->spd.that, &c->spd.this.host_addr);
-
-		/*
-		 * If both left/rightauth is unset, fill it in with (prefered) symmetric policy
-		 */
-		if (wm->left.authby == AUTH_UNSET && wm->right.authby == AUTH_UNSET) {
-			if (c->policy & POLICY_RSASIG)
-				c->spd.this.authby = c->spd.that.authby = AUTH_RSASIG;
-			else if (c->policy & POLICY_PSK)
-				c->spd.this.authby = c->spd.that.authby = AUTH_PSK;
-			else if (c->policy & POLICY_AUTH_NULL)
-				c->spd.this.authby = c->spd.that.authby = AUTH_NULL;
-		}
-
-		/* if left/rightauth are set, but symmetric policy is not, fill it in */
-		if (wm->left.authby == wm->right.authby) {
-			switch (wm->left.authby) {
-			case AUTH_RSASIG:
-				c->policy |= POLICY_RSASIG;
-				break;
-			case AUTH_PSK:
-				c->policy |= POLICY_PSK;
-				break;
-			case AUTH_NULL:
-				c->policy |= POLICY_AUTH_NULL;
-				break;
-			default:
-				break;
-			}
-		}
-
-
-
-		/*
-		 * force any wildcard host IP address, any wildcard subnet
-		 * or any wildcard ID to _that_ end
-		 */
-		if (isanyaddr(&c->spd.this.host_addr) ||
-		    c->spd.this.has_client_wildcard ||
-		    c->spd.this.has_port_wildcard ||
-		    c->spd.this.has_id_wildcards) {
-			struct end t = c->spd.this;
-
-			c->spd.this = c->spd.that;
-			c->spd.that = t;
-		}
-
-		c->spd.spd_next = NULL;
-
-		/* set internal fields */
-		c->instance_serial = 0;
-		c->ac_next = connections;
-		connections = c;
-		c->interface = NULL;
-		c->spd.routing = RT_UNROUTED;
-		c->newest_isakmp_sa = SOS_NOBODY;
-		c->newest_ipsec_sa = SOS_NOBODY;
-		c->spd.eroute_owner = SOS_NOBODY;
-		/*
-		 * is spd.reqid necessary for all c? CK_INSTANCE or CK_PERMANENT
-		 * need one. Does CK_TEMPLATE need one?
-		 */
-		c->spd.reqid = c->sa_reqid == 0 ? gen_reqid() : c->sa_reqid;
-
-		/* force all oppo connections to have a client */
-		if (c->policy & POLICY_OPPORTUNISTIC) {
-			c->spd.that.has_client = TRUE;
-			c->spd.that.client.maskbits = 0; /* shouldn't this be 32 for v4? */
-		}
-
-		if (c->policy & POLICY_GROUP) {
-			c->kind = CK_GROUP;
-			add_group(c);
-		} else if ((isanyaddr(&c->spd.that.host_addr) &&
-				!NEVER_NEGOTIATE(c->policy)) ||
-			c->spd.that.has_client_wildcard ||
-			c->spd.that.has_port_wildcard ||
-			((c->policy & POLICY_SHUNT_MASK) == POLICY_SHUNT_TRAP &&
-				c->spd.that.has_id_wildcards )) {
-			DBG(DBG_CONTROL,
-				DBG_log("based upon policy, the connection is a template."));
-
-			/*
-			 * Opportunistic or Road Warrior or wildcard client
-			 * subnet
-			 * or wildcard ID
-			 */
-			c->kind = CK_TEMPLATE;
-		} else if (wm->left.virt != NULL || wm->right.virt != NULL) {
-			/*
-			 * If we have a subnet=vnet: needing instantiation
-			 * so we can accept multiple subnets from
-			 * the remote peer.
-			 */
-			c->kind = CK_TEMPLATE;
-		} else if (c->policy & POLICY_IKEV2_ALLOW_NARROWING) {
-			DBG(DBG_CONTROL,
-				DBG_log("based upon policy narrowing=yes, the connection is a template."));
-			c->kind = CK_TEMPLATE;
-		} else {
-			c->kind = CK_PERMANENT;
-		}
-
-		set_policy_prio(c); /* must be after kind is set */
-
-		c->extra_debugging = wm->debugging;
-		c->extra_impairing = wm->impairing;
-
-		/* at most one virt can be present */
-		passert(wm->left.virt == NULL || wm->right.virt == NULL);
-
-		if (wm->left.virt != NULL || wm->right.virt != NULL) {
-			/*
-			 * This now happens with wildcards on
-			 * non-instantiations, such as rightsubnet=vnet:%priv
-			 * or rightprotoport=17/%any
-			 * passert(isanyaddr(&c->spd.that.host_addr));
-			 */
-			c->spd.that.virt = create_virtual(c,
-							wm->left.virt != NULL ?
-							wm->left.virt :
-							wm->right.virt);
-			if (c->spd.that.virt != NULL)
-				c->spd.that.has_client = TRUE;
-		}
-
-		/* ensure we allocate copies of all strings */
-		unshare_connection(c);
-
-		(void)orient(c);
-
-		connect_to_host_pair(c);
-
-		/* log all about this connection */
-		libreswan_log("added connection description \"%s\"", c->name);
-		DBG(DBG_CONTROL, {
-			char topo[CONN_BUF_LEN];
-
-			(void) format_connection(topo, sizeof(topo), c,
-						&c->spd);
-
-			DBG_log("%s", topo);
-		});
-
-		DBG(DBG_CONTROL,
-			DBG_log("ike_life: %jds; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s%s",
-				deltasecs(c->sa_ike_life_seconds),
-				deltasecs(c->sa_ipsec_life_seconds),
-				deltasecs(c->sa_rekey_margin),
-				c->sa_rekey_fuzz,
-				c->sa_keying_tries,
-				c->sa_replay_window,
-				prettypolicy(c->policy),
-				NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : ""));
-
-		/* non configurable */
-		c->ike_window = IKE_V2_OVERLAPPING_WINDOW_SIZE;
-	} else {
-		loglog(RC_FATAL, "Failed to load connection \"%s\": attempt to load incomplete connection",
-			wm->name);
+	if (same_rightca) {
+		c->spd.that.ca = c->spd.this.ca;
+	} else if (same_leftca) {
+		c->spd.this.ca = c->spd.that.ca;
 	}
+
+	/*
+	 * How to add addresspool only for responder?
+	 * It is not necessary on the initiator
+	 */
+
+	if (wm->left.pool_range.start.u.v4.sin_addr.s_addr != 0) {
+		/* there is address pool range add to the global list */
+		c->pool = install_addresspool(&wm->left.pool_range);
+		c->spd.that.modecfg_server = TRUE;
+		c->spd.this.modecfg_client = TRUE;
+	}
+	if (wm->right.pool_range.start.u.v4.sin_addr.s_addr != 0) {
+		/* there is address pool range add to the global list */
+		c->pool = install_addresspool(&wm->right.pool_range);
+		c->spd.that.modecfg_client = TRUE;
+		c->spd.this.modecfg_server = TRUE;
+	}
+
+	if (c->spd.this.xauth_server || c->spd.that.xauth_server)
+		c->policy |= POLICY_XAUTH;
+
+	default_end(&c->spd.this, &c->spd.that.host_addr);
+	default_end(&c->spd.that, &c->spd.this.host_addr);
+
+	/*
+	 * If both left/rightauth is unset, fill it in with (prefered) symmetric policy
+	 */
+	if (wm->left.authby == AUTH_UNSET && wm->right.authby == AUTH_UNSET) {
+		if (c->policy & POLICY_RSASIG)
+			c->spd.this.authby = c->spd.that.authby = AUTH_RSASIG;
+		else if (c->policy & POLICY_PSK)
+			c->spd.this.authby = c->spd.that.authby = AUTH_PSK;
+		else if (c->policy & POLICY_AUTH_NULL)
+			c->spd.this.authby = c->spd.that.authby = AUTH_NULL;
+	}
+
+	/* if left/rightauth are set, but symmetric policy is not, fill it in */
+	if (wm->left.authby == wm->right.authby) {
+		switch (wm->left.authby) {
+		case AUTH_RSASIG:
+			c->policy |= POLICY_RSASIG;
+			break;
+		case AUTH_PSK:
+			c->policy |= POLICY_PSK;
+			break;
+		case AUTH_NULL:
+			c->policy |= POLICY_AUTH_NULL;
+			break;
+		default:
+			break;
+		}
+	}
+
+	/*
+	 * force any wildcard host IP address, any wildcard subnet
+	 * or any wildcard ID to _that_ end
+	 */
+	if (isanyaddr(&c->spd.this.host_addr) ||
+	    c->spd.this.has_client_wildcard ||
+	    c->spd.this.has_port_wildcard ||
+	    c->spd.this.has_id_wildcards) {
+		struct end t = c->spd.this;
+
+		c->spd.this = c->spd.that;
+		c->spd.that = t;
+	}
+
+	c->spd.spd_next = NULL;
+
+	/* set internal fields */
+	c->instance_serial = 0;
+	c->ac_next = connections;
+	connections = c;
+	c->interface = NULL;
+	c->spd.routing = RT_UNROUTED;
+	c->newest_isakmp_sa = SOS_NOBODY;
+	c->newest_ipsec_sa = SOS_NOBODY;
+	c->spd.eroute_owner = SOS_NOBODY;
+	/*
+	 * is spd.reqid necessary for all c? CK_INSTANCE or CK_PERMANENT
+	 * need one. Does CK_TEMPLATE need one?
+	 */
+	c->spd.reqid = c->sa_reqid == 0 ? gen_reqid() : c->sa_reqid;
+
+	/* force all oppo connections to have a client */
+	if (c->policy & POLICY_OPPORTUNISTIC) {
+		c->spd.that.has_client = TRUE;
+		c->spd.that.client.maskbits = 0; /* ??? shouldn't this be 32 for v4? */
+	}
+
+	if (c->policy & POLICY_GROUP) {
+		c->kind = CK_GROUP;
+		add_group(c);
+	} else if ((isanyaddr(&c->spd.that.host_addr) &&
+			!NEVER_NEGOTIATE(c->policy)) ||
+		c->spd.that.has_client_wildcard ||
+		c->spd.that.has_port_wildcard ||
+		((c->policy & POLICY_SHUNT_MASK) == POLICY_SHUNT_TRAP &&
+			c->spd.that.has_id_wildcards )) {
+		DBG(DBG_CONTROL,
+			DBG_log("based upon policy, the connection is a template."));
+
+		/*
+		 * Opportunistic or Road Warrior or wildcard client
+		 * subnet
+		 * or wildcard ID
+		 */
+		c->kind = CK_TEMPLATE;
+	} else if (wm->left.virt != NULL || wm->right.virt != NULL) {
+		/*
+		 * If we have a subnet=vnet: needing instantiation
+		 * so we can accept multiple subnets from
+		 * the remote peer.
+		 */
+		c->kind = CK_TEMPLATE;
+	} else if (c->policy & POLICY_IKEV2_ALLOW_NARROWING) {
+		DBG(DBG_CONTROL,
+			DBG_log("based upon policy narrowing=yes, the connection is a template."));
+		c->kind = CK_TEMPLATE;
+	} else {
+		c->kind = CK_PERMANENT;
+	}
+
+	set_policy_prio(c); /* must be after kind is set */
+
+	c->extra_debugging = wm->debugging;
+	c->extra_impairing = wm->impairing;
+
+	/* at most one virt can be present */
+	passert(wm->left.virt == NULL || wm->right.virt == NULL);
+
+	if (wm->left.virt != NULL || wm->right.virt != NULL) {
+		/*
+		 * This now happens with wildcards on
+		 * non-instantiations, such as rightsubnet=vnet:%priv
+		 * or rightprotoport=17/%any
+		 * passert(isanyaddr(&c->spd.that.host_addr));
+		 */
+		c->spd.that.virt = create_virtual(c,
+						wm->left.virt != NULL ?
+						wm->left.virt :
+						wm->right.virt);
+		if (c->spd.that.virt != NULL)
+			c->spd.that.has_client = TRUE;
+	}
+
+	/* ensure we allocate copies of all strings */
+	unshare_connection(c);
+
+	(void)orient(c);
+
+	connect_to_host_pair(c);
+
+	/* log all about this connection */
+	libreswan_log("added connection description \"%s\"", c->name);
+	DBG(DBG_CONTROL, {
+		char topo[CONN_BUF_LEN];
+
+		DBG_log("%s",
+			format_connection(topo, sizeof(topo), c, &c->spd));
+	});
+
+	DBG(DBG_CONTROL,
+		DBG_log("ike_life: %jds; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s%s",
+			deltasecs(c->sa_ike_life_seconds),
+			deltasecs(c->sa_ipsec_life_seconds),
+			deltasecs(c->sa_rekey_margin),
+			c->sa_rekey_fuzz,
+			c->sa_keying_tries,
+			c->sa_replay_window,
+			prettypolicy(c->policy),
+			NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : ""));
+
+	/* non configurable */
+	c->ike_window = IKE_V2_OVERLAPPING_WINDOW_SIZE;
 }
 
 /*
@@ -1976,7 +1960,6 @@ char *add_group_instance(struct connection *group, const ip_subnet *target,
 			snprintf(namebuf, sizeof(namebuf), "%s#%s-(%d--%d--%d)", group->name,
 				targetbuf, sport, proto, dport);
 		}
-
 	}
 
 	if (conn_by_name(namebuf, FALSE, FALSE) != NULL) {
@@ -2403,8 +2386,10 @@ static struct connection *oppo_instantiate(struct connection *c,
 			enum_name(&routing_story, d->spd.routing)));
 	DBG(DBG_CONTROL, {
 			char instbuf[512];
-			format_connection(instbuf, sizeof(instbuf), d, &d->spd);
-			DBG_log("new oppo instance: %s", instbuf);
+
+			DBG_log("new oppo instance: %s",
+				format_connection(instbuf,
+					sizeof(instbuf), d, &d->spd));
 		});
 
 	passert(d->spd.spd_next == NULL);
@@ -2462,15 +2447,14 @@ static struct connection *oppo_instantiate(struct connection *c,
 		d->instance_initiation_ok = TRUE;
 
 	DBG(DBG_CONTROL, {
-			char topo[CONN_BUF_LEN];
-			char inst[CONN_INST_BUF];
+		char topo[CONN_BUF_LEN];
+		char inst[CONN_INST_BUF];
 
-			(void) format_connection(topo, sizeof(topo), d,
-						&d->spd);
-			DBG_log("oppo_instantiate() instantiated \"%s\"%s: %s",
-				fmt_conn_instance(d, inst), d->name,
-				topo);
-		});
+		DBG_log("oppo_instantiate() instantiated \"%s\"%s: %s",
+			fmt_conn_instance(d, inst),
+			d->name,
+			format_connection(topo, sizeof(topo), d, &d->spd));
+	});
 	return d;
 }
 
@@ -4010,9 +3994,9 @@ static void show_one_sr(const struct connection *c,
 	char topo[CONN_BUF_LEN];
 	ipstr_buf thisipb, thatipb;
 
-	(void) format_connection(topo, sizeof(topo), c, sr);
 	whack_log(RC_COMMENT, "\"%s\"%s: %s; %s; eroute owner: #%lu",
-		c->name, instance, topo,
+		c->name, instance,
+		format_connection(topo, sizeof(topo), c, sr),
 		enum_name(&routing_story, sr->routing),
 		sr->eroute_owner);
 
