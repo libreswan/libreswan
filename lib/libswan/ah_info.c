@@ -79,7 +79,7 @@ const struct proposal_protocol ah_proposal_protocol = {
  * XXX: Because it is parsing an "ah" line which requires a different
  * parser configuration - encryption isn't allowed.
  *
- * ??? the only difference between this and alg_info_esp is in two
+ * ??? the only difference between this and alg_info_esp_create_from_str is in two
  * parameters to alg_info_parse_str.  XXX: Things are down to just the
  * last parameter being different - but that is critical as it
  * determines what is allowed.

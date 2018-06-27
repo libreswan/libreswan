@@ -62,12 +62,12 @@ static const struct ike_alg *default_esp_integ[] = {
 	NULL,
 };
 
-const struct proposal_defaults esp_defaults = {
+static const struct proposal_defaults esp_defaults = {
 	.encrypt = default_esp_encrypt,
 	.integ = default_esp_integ,
 };
 
-const struct proposal_protocol esp_proposal_protocol = {
+static const struct proposal_protocol esp_proposal_protocol = {
 	.name = "ESP",
 	.ikev1_alg_id = IKEv1_ESP_ID,
 	.protoid = PROTO_IPSEC_ESP,
@@ -80,11 +80,7 @@ const struct proposal_protocol esp_proposal_protocol = {
 };
 
 /*
- * ??? why is this called _ah_ when almost everything refers to esp?
- * XXX: Because it is parsing an "ah" line which requires a different
- * parser configuration - encryption isn't allowed.
- *
- * ??? the only difference between this and alg_info_esp is in two
+ * ??? the only difference between this and alg_info_ah_create_from_str is in two
  * parameters to alg_info_parse_str.  XXX: Things are down to just the
  * last parameter being different - but that is critical as it
  * determines what is allowed.
