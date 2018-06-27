@@ -208,7 +208,7 @@ Now you can import the file into the NSS db:
 	ipsec import certkey.p12
 
 If you did not pick a name using the -name option, you can use
-certutil -L -d /etc/ipsec.d to figure out the name NSS picked durnig
+certutil -L -d sql:/etc/ipsec.d to figure out the name NSS picked durnig
 the import.
 
 Add following to /etc/ipsec.secrets file:
@@ -229,8 +229,7 @@ Paul: add "ipsec export" ?
 
 To export the CA certificate:
 
-	NSS_DEFAULT_DB_TYPE="sql:" pk12util -o cacert1.p12 -n cacert1 \
-		-d /etc/ipsec.d
+	pk12util -o cacert1.p12 -n cacert1 -d sql:/etc/ipsec.d
 
 Copy the file "cacert1.p12" to the new machine and import it using:
 
