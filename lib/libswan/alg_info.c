@@ -426,7 +426,7 @@ static bool parser_alg_info_add(const struct proposal_parser *parser,
 	LSWDBGP(DBG_PROPOSAL_PARSER, buf) {
 		lswlogs(buf, "algs:");
 		for (struct token *token = tokens; token->alg.ptr != NULL; token++) {
-			lswlogf(buf, " algs[%zu] = '"PRISHUNK"'",
+			lswlogf(buf, " algs[%tu] = '"PRISHUNK"'",
 				token - tokens, SHUNKF(token->alg));
 		}
 	}
