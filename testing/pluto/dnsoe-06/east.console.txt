@@ -15,10 +15,12 @@ east #
 east #
  ipsec whack --impair retransmits
 east #
- ipsec whack --listpubkeys
+ ipsec whack --listpubkeys | sed "s/Key AQ[^ ]* /Key AQXXXX /"
 000  
 000 List of RSA Public Keys:
 000  
+000 TIMESTAMP, 2192 RSA Key AQXXXX (has private key), until --- -- --:--:-- ---- ok (expires never)
+000        ID_IPV4_ADDR '192.1.2.67'
 east #
  # give OE policies time to load
 east #
@@ -31,7 +33,7 @@ east #
 east #
  grep IKEv2_AUTH_ /tmp/pluto.log
 |    auth method: IKEv2_AUTH_NULL (0xd)
-|    auth method: IKEv2_AUTH_RSA (0x1)
+|    auth method: IKEv2_AUTH_DIGSIG (0xe)
 east #
  # no ipsec tunnel should be up
 east #

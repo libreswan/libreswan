@@ -28,15 +28,15 @@ east #
  # A tunnel should have established with non-zero byte counters
 east #
  ipsec whack --trafficstatus
-006 #4: "clear-or-private#192.1.2.0/24"[2] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL', lease=10.0.10.1/32
+006 #4: "clear-or-private#192.1.2.0/24"[2] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL', lease=10.0.10.1/32
 east #
  # you should see both RSA and NULL
 east #
  grep IKEv2_AUTH_ /tmp/pluto.log
 |    auth method: IKEv2_AUTH_NULL (0xd)
-|    auth method: IKEv2_AUTH_RSA (0x1)
+|    auth method: IKEv2_AUTH_DIGSIG (0xe)
 |    auth method: IKEv2_AUTH_NULL (0xd)
-|    auth method: IKEv2_AUTH_RSA (0x1)
+|    auth method: IKEv2_AUTH_DIGSIG (0xe)
 east #
 east #
  ../bin/check-for-core.sh

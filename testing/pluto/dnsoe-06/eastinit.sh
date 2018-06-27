@@ -6,7 +6,7 @@ ip addr add 192.1.2.67/24 dev eth1
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec whack --impair retransmits
-ipsec whack --listpubkeys
+ipsec whack --listpubkeys | sed "s/Key AQ[^ ]* /Key AQXXXX /"
 # give OE policies time to load
 sleep 5
 echo "initdone"

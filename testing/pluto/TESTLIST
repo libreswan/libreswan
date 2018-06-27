@@ -448,10 +448,10 @@ kvmplutotest	certoe-07-nat-2-clients			good
 kvmplutotest	certoe-08-nat-packet-cop-restart	good
 kvmplutotest	certoe-09-packet-host			good
 kvmplutotest	certoe-09-packet-host-2			good
-kvmplutotest	certoe-10-symetric-cert-whack		good
-kvmplutotest	certoe-11-symetric-cert-nat		good
-kvmplutotest	rawrsaoe-asymetric-nat			good
-kvmplutotest	rawrsaoe-asymetric-01			good
+kvmplutotest	certoe-10-symmetric-cert-whack		good
+kvmplutotest	certoe-11-symmetric-cert-nat		good
+kvmplutotest	rawrsaoe-asymmetric-nat			good
+kvmplutotest	rawrsaoe-asymmetric-01			good
 
 kvmplutotest	dnsoe-01				good
 kvmplutotest	dnsoe-02				good
@@ -486,6 +486,7 @@ kvmplutotest	ikev2-asymmetric-12-rsacert-null	good
 kvmplutotest	ikev2-asymmetric-13-rsacert-psk		good
 kvmplutotest	ikev2-asymmetric-15-rsaraw-rsaraw	good
 kvmplutotest	ikev2-asymmetric-16-auth-mismatch	good
+kvmplutotest	ikev2-asymmetric-17-auth-mismatch-reverse	good
 
 # test harnass needs to be able to install raw keys and certs
 kvmplutotest	ikev2-asymmetric-11-rsaraw-rsacert	wip
