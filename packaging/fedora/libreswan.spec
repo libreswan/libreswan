@@ -39,13 +39,7 @@ Source1: https://download.libreswan.org/cavs/ikev1_dsa.fax.bz2
 Source2: https://download.libreswan.org/cavs/ikev1_psk.fax.bz2
 Source3: https://download.libreswan.org/cavs/ikev2.fax.bz2
 %endif
-BuildRequires: bison
-BuildRequires: flex
-BuildRequires: pkgconfig
-BuildRequires: systemd-devel
-Requires(post): bash
-Requires(post): coreutils
-Requires(post): systemd
+Requires(post): bash coreutils systemd
 Requires(preun): systemd
 Requires(postun): systemd
 
@@ -55,6 +49,8 @@ Provides: openswan = %{version}-%{release}
 Provides: openswan-doc = %{version}-%{release}
 
 BuildRequires: pkgconfig hostname
+BuildRequires: bison flex
+BuildRequires: systemd-devel
 BuildRequires: nss-devel >= 3.16.1
 BuildRequires: nspr-devel
 BuildRequires: pam-devel
@@ -97,7 +93,15 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 
 %prep
 %setup -q -n libreswan-%{version}%{?prever}
+# Fedora should really figure this versioning out itself, not burden upstream
 sed -i "s:/usr/bin/python:/usr/bin/python3:" programs/verify/verify.in
+sed -i "s:/usr/bin/python:/usr/bin/python3:" programs/show/show.in
+sed -i "s:/usr/bin/python:/usr/bin/python3:" testing/cert_verify/usage_test
+sed -i "s:/usr/bin/python:/usr/bin/python3:" testing/pluto/ikev1-01-fuzzer/cve-2015-3204.py
+sed -i "s:/usr/bin/python:/usr/bin/python3:" testing/pluto/ikev2-15-fuzzer/send_bad_packets.py
+sed -i "s:/usr/bin/python:/usr/bin/python3:" testing/x509/dist_certs.py
+# enable crypto-policies support
+sed -i "s:#[ ]*include \(.*\)\(/crypto-policies/back-ends/libreswan.config\)$:include \1\2:" programs/configs/ipsec.conf.in
 
 %build
 %if 0%{with_efence}
