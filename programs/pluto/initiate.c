@@ -167,27 +167,6 @@ bool orient(struct connection *c)
 			}
 		}
 	}
-	/*
-	 * If we are oriented, update asymmetric policy into the symmetric one
-	 * that is used by various connection lookup functions.
-	 * add_connection() guaranteed there were no conflicts.
-	 */
-	if (!NEVER_NEGOTIATE(c->policy) && c->spd.this.authby != AUTH_UNSET) {
-		switch (c->spd.this.authby) {
-		case AUTH_RSASIG:
-			c->policy |= POLICY_RSASIG;
-			break;
-		case AUTH_PSK:
-			c->policy |= POLICY_PSK;
-			break;
-		case AUTH_NULL:
-			c->policy |= POLICY_AUTH_NULL;
-			break;
-		default:
-			bad_case(c->spd.this.authby);
-			break;
-		}
-	}
 	return oriented(*c);
 }
 

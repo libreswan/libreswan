@@ -587,7 +587,8 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 
 	case IKEv2_AUTH_NULL:
 	{
-		if (that_authby != AUTH_NULL && !LIN(POLICY_AUTH_NULL, st->st_connection->policy)) {
+		if (!(that_authby == AUTH_NULL ||
+		      (that_authby == AUTH_RSASIG && LIN(POLICY_AUTH_NULL, st->st_connection->policy)))) {
 			libreswan_log("Peer attempted NULL authentication but we want %s",
 				enum_name(&ikev2_asym_auth_name, that_authby));
 			return FALSE;
@@ -4036,7 +4037,6 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 				st, ORIGINAL_RESPONDER, idhash_in, &pbs_null_auth,
 				AUTH_NULL))
 			{
-				/* TODO: This should really be an encrypted message! */
 				send_v2_notification_from_state(st, md, v2N_AUTHENTICATION_FAILED, NULL);
 				return STF_FATAL;
 			}
@@ -4046,7 +4046,6 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 				st, ORIGINAL_RESPONDER, idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
 				st->st_connection->spd.that.authby))
 			{
-			/* TODO: This should really be an encrypted message! */
 			send_v2_notification_from_state(st, md, v2N_AUTHENTICATION_FAILED, NULL);
 			return STF_FATAL;
 			}

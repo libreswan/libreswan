@@ -1538,6 +1538,12 @@ void add_connection(const struct whack_message *wm)
 							prettypolicy(c->policy & POLICY_ID_AUTH_MASK)));
 				}
 			}
+			/* fixup symmetric policy flags based on asymmetric ones */
+			if ((wm->left.authby == AUTH_NULL && wm->right.authby == AUTH_RSASIG) ||
+			    (wm->left.authby == AUTH_RSASIG && wm->right.authby == AUTH_NULL)) {
+				c->policy |= POLICY_RSASIG;
+			}
+
 
 		c->alg_info_esp = NULL;
 		if (wm->esp != NULL) {
@@ -1938,7 +1944,6 @@ void add_connection(const struct whack_message *wm)
 		loglog(RC_FATAL, "Failed to load connection \"%s\": attempt to load incomplete connection",
 			wm->name);
 	}
-
 }
 
 /*
