@@ -1145,7 +1145,7 @@ static void ikev1_xauth_callback(struct state *st,
 		if (st->quirks.xauth_ack_msgid)
 			st->st_msgid_phase15 = v1_MAINMODE_MSGID;
 
-		jam_str(st->st_username, sizeof(st->st_username), name);
+		jam_str(st->st_xauth_username, sizeof(st->st_xauth_username), name);
 	} else {
 		/*
 		 * Login attempt failed, display error, send XAUTH status to client
@@ -1987,7 +1987,7 @@ static stf_status xauth_client_resp(struct state *st,
 			     u_int16_t ap_id)
 {
 	unsigned char *r_hash_start, *r_hashval;
-	char xauth_username[MAX_USERNAME_LEN];
+	char xauth_username[MAX_XAUTH_USERNAME_LEN];
 	struct connection *c = st->st_connection;
 
 	/* START_HASH_PAYLOAD(rbody, ISAKMP_NEXT_MCFG_ATTR); */
@@ -2053,7 +2053,7 @@ static stf_status xauth_client_resp(struct state *st,
 							&attrval))
 						return STF_INTERNAL_ERROR;
 
-					if (st->st_username[0] == '\0') {
+					if (st->st_xauth_username[0] == '\0') {
 						if (st->st_whack_sock == -1) {
 							loglog(RC_LOG_SERIOUS,
 							       "XAUTH username requested, but no file descriptor available for prompt");
@@ -2081,14 +2081,14 @@ static stf_status xauth_client_resp(struct state *st,
 							if (cptr != NULL)
 								*cptr = '\0';
 						}
-						jam_str(st->st_username,
-							sizeof(st->st_username),
+						jam_str(st->st_xauth_username,
+							sizeof(st->st_xauth_username),
 							xauth_username);
 					}
 
-					if (!out_raw(st->st_username,
+					if (!out_raw(st->st_xauth_username,
 						     strlen(st->
-							    st_username),
+							    st_xauth_username),
 						     &attrval,
 						     "XAUTH username"))
 						return STF_INTERNAL_ERROR;
@@ -2112,11 +2112,11 @@ static stf_status xauth_client_resp(struct state *st,
 						struct secret *s =
 							lsw_get_xauthsecret(
 								st->st_connection,
-								st->st_username);
+								st->st_xauth_username);
 
 						DBG(DBG_CONTROLMORE,
 						    DBG_log("looked up username=%s, got=%p",
-							    st->st_username,
+							    st->st_xauth_username,
 							    s));
 						if (s != NULL) {
 							struct private_key_stuff
@@ -2209,7 +2209,7 @@ static stf_status xauth_client_resp(struct state *st,
 	}
 
 	libreswan_log("XAUTH: Answering XAUTH challenge with user='%s'",
-		      st->st_username);
+		      st->st_xauth_username);
 
 	xauth_mode_cfg_hash(r_hashval, r_hash_start, rbody->cur, st);
 

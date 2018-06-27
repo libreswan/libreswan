@@ -1061,10 +1061,10 @@ void aggr_outI1(int whack_sock,
 
 	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		if (sr->this.xauth_client) {
-			if (sr->this.username != NULL) {
-				jam_str(st->st_username,
-					sizeof(st->st_username),
-					sr->this.username);
+			if (sr->this.xauth_username != NULL) {
+				jam_str(st->st_xauth_username,
+					sizeof(st->st_xauth_username),
+					sr->this.xauth_username);
 				break;
 			}
 		}

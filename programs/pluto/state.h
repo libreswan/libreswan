@@ -604,7 +604,7 @@ struct state {
 
 	struct hidden_variables hidden_variables;
 
-	char st_username[MAX_USERNAME_LEN];	/* NUL-terminated */
+	char st_xauth_username[MAX_XAUTH_USERNAME_LEN];	/* NUL-terminated */
 	chunk_t st_xauth_password;
 
 	monotime_t st_last_liveness;		/* Time of last v2 informational (0 means never?) */

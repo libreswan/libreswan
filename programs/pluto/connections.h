@@ -181,7 +181,7 @@ struct end {
 
 	bool xauth_server;
 	bool xauth_client;
-	char *username;
+	char *xauth_username;
 	char *xauth_password;
 	ip_range pool_range;	/* store start of v4 addresspool */
 	/*

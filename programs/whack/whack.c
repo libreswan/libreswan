@@ -854,7 +854,7 @@ int main(int argc, char **argv)
 	/* space for at most one RSA key */
 	char keyspace[RSA_MAX_ENCODING_BYTES];
 
-	char username[MAX_USERNAME_LEN];
+	char xauthusername[MAX_XAUTH_USERNAME_LEN];
 	char xauthpass[XAUTH_MAX_PASS_LENGTH];
 	int usernamelen = 0;
 	int xauthpasslen = 0;
@@ -1191,7 +1191,7 @@ int main(int argc, char **argv)
 			}
 			continue;
 
-		/* --deleteuser  --name <username> */
+		/* --deleteuser --name <xauthusername> */
 		case OPT_DELETEUSER:
 			msg.whack_deleteuser = TRUE;
 			continue;
@@ -1875,12 +1875,12 @@ int main(int argc, char **argv)
 			 * if this is going to be an conn definition, so do
 			 * both actions
 			 */
-			msg.right.username = optarg;
+			msg.right.xauth_username = optarg;
 			gotusername = TRUE;
 			/* ??? why does this length include NUL? */
-			usernamelen = jam_str(username, sizeof(username),
+			usernamelen = jam_str(xauthusername, sizeof(xauthusername),
 					optarg) -
-				username + 1;
+				xauthusername + 1;
 			continue;
 
 		case OPT_XAUTHPASS:
@@ -2461,11 +2461,11 @@ int main(int argc, char **argv)
 			case RC_USERPROMPT:
 				if (!gotusername) {
 					usernamelen = whack_get_value(
-						username,
-						sizeof(username));
+						xauthusername,
+						sizeof(xauthusername));
 				}
 				send_reply(sock,
-					   username,
+					   xauthusername,
 					   usernamelen);
 				break;
 

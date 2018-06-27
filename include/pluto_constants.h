@@ -1138,7 +1138,7 @@ enum PrivateKeyKind {
 };
 
 #define XAUTH_PROMPT_TRIES 3
-#define MAX_USERNAME_LEN 128
+#define MAX_XAUTH_USERNAME_LEN 128
 #define XAUTH_MAX_PASS_LENGTH 128
 
 #define MIN_LIVENESS 1

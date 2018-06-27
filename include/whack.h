@@ -106,7 +106,7 @@ struct whack_end {
 	ip_range pool_range;	/* store start of v4 addresspool */
 	bool xauth_server;	/* for XAUTH */
 	bool xauth_client;
-	char *username;
+	char *xauth_username;
 	bool modecfg_server;	/* for MODECFG */
 	bool modecfg_client;
 	bool cat;		/* IPv4 Client Address Translation */
@@ -355,8 +355,8 @@ struct whack_message {
 	 * 15 unused (was myid)
 	 * 16 ike
 	 * 17 esp
-	 * 18 left.username
-	 * 19 right.username
+	 * 18 left.xauth_username
+	 * 19 right.xauth_username
 	 * 20 connalias
 	 * 21 left.host_addr_name
 	 * 22 right.host_addr_name

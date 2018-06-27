@@ -633,11 +633,11 @@ void delete_state_by_id_name(struct state *st, void *name)
 
 void v1_delete_state_by_username(struct state *st, void *name)
 {
-	/* only support deleting ikev1 with username */
+	/* only support deleting ikev1 with XAUTH username */
 	if (st->st_ikev2)
 		return;
 
-	if (IS_IKE_SA(st) && streq(st->st_username, name)) {
+	if (IS_IKE_SA(st) && streq(st->st_xauth_username, name)) {
 		delete_my_family(st, FALSE);
 		/* note: no md->st to clear */
 	}
@@ -1031,8 +1031,8 @@ void delete_state(struct state *st)
 					       " out=");
 			loglog(RC_INFORMATIONAL, "%s%s%s",
 				statebuf,
-				(st->st_username[0] != '\0') ? " XAUTHuser=" : "",
-				st->st_username);
+				(st->st_xauth_username[0] != '\0') ? " XAUTHuser=" : "",
+				st->st_xauth_username);
 			pstats_ipsec_in_bytes += st->st_esp.our_bytes;
 			pstats_ipsec_out_bytes += st->st_esp.peer_bytes;
 		}
@@ -1050,8 +1050,8 @@ void delete_state(struct state *st)
 					       " out=");
 			loglog(RC_INFORMATIONAL, "%s%s%s",
 				statebuf,
-				(st->st_username[0] != '\0') ? " XAUTHuser=" : "",
-				st->st_username);
+				(st->st_xauth_username[0] != '\0') ? " XAUTHuser=" : "",
+				st->st_xauth_username);
 			pstats_ipsec_in_bytes += st->st_ah.peer_bytes;
 			pstats_ipsec_out_bytes += st->st_ah.our_bytes;
 		}
@@ -1069,8 +1069,8 @@ void delete_state(struct state *st)
 					       " out=");
 			loglog(RC_INFORMATIONAL, "%s%s%s",
 				statebuf,
-				(st->st_username[0] != '\0') ? " XAUTHuser=" : "",
-				st->st_username);
+				(st->st_xauth_username[0] != '\0') ? " XAUTHuser=" : "",
+				st->st_xauth_username);
 			pstats_ipsec_in_bytes += st->st_ipcomp.peer_bytes;
 			pstats_ipsec_out_bytes += st->st_ipcomp.our_bytes;
 		}
@@ -1248,7 +1248,7 @@ void delete_state(struct state *st)
 	wipe_any(st->st_xauth_password.ptr, st->st_xauth_password.len);
 #   undef wipe_any
 
-	/* st_username is an array on the state itself, not clone_str()'ed */
+	/* st_xauth_username is an array on the state itself, not clone_str()'ed */
 	pfreeany(st->st_seen_cfg_dns);
 	pfreeany(st->st_seen_cfg_domains);
 	pfreeany(st->st_seen_cfg_banner);
@@ -1579,7 +1579,7 @@ static struct state *duplicate_state(struct state *st, sa_t sa_type)
 	 * Maybe similarly to above for chunks, do this for all
 	 * strings on the state?
 	 */
-	jam_str(nst->st_username, sizeof(nst->st_username), st->st_username);
+	jam_str(nst->st_xauth_username, sizeof(nst->st_xauth_username), st->st_xauth_username);
 
 	nst->st_seen_cfg_dns = clone_str(st->st_seen_cfg_dns, "child st_seen_cfg_dns");
 	nst->st_seen_cfg_domains = clone_str(st->st_seen_cfg_domains, "child st_seen_cfg_domains");
@@ -2111,7 +2111,7 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 		subnettot(&c->spd.this.client, 0, lease_ip, sizeof(lease_ip));
 	}
 
-	if (st->st_username[0] == '\0') {
+	if (st->st_xauth_username[0] == '\0') {
 		idtoa(&c->spd.that.id, thatidbuf, sizeof(thatidbuf));
 	}
 
@@ -2119,8 +2119,8 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 		 "#%lu: \"%s\"%s%s%s%s%s%s%s%s%s",
 		 st->st_serialno,
 		 c->name, inst,
-		 (st->st_username[0] != '\0') ? ", username=" : "",
-		 (st->st_username[0] != '\0') ? st->st_username : "",
+		 (st->st_xauth_username[0] != '\0') ? ", username=" : "",
+		 (st->st_xauth_username[0] != '\0') ? st->st_xauth_username : "",
 		 (traffic_buf[0] != '\0') ? traffic_buf : "",
 		 thatidbuf[0] != '\0' ? ", id='" : "",
 		 thatidbuf[0] != '\0' ? thatidbuf : "",
@@ -2351,8 +2351,8 @@ void fmt_state(struct state *st, const monotime_t now,
 			(unsigned long)st->st_ref,
 			(unsigned long)st->st_refhim,
 			traffic_buf,
-			(st->st_username[0] != '\0') ? "username=" : "",
-			(st->st_username[0] != '\0') ? st->st_username : "");
+			(st->st_xauth_username[0] != '\0') ? "username=" : "",
+			(st->st_xauth_username[0] != '\0') ? st->st_xauth_username : "");
 
 #       undef add_said
 	}

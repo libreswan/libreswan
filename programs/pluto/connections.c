@@ -242,7 +242,7 @@ static void delete_end(struct end *e)
 	pfreeany(e->updown);
 	pfreeany(e->host_addr_name);
 	pfreeany(e->xauth_password);
-	pfreeany(e->username);
+	pfreeany(e->xauth_username);
 }
 
 static void delete_sr(struct spd_route *sr)
@@ -761,7 +761,7 @@ void unshare_connection_end(struct end *e)
 		clonetochunk(e->ca, e->ca.ptr, e->ca.len, "ca string");
 
 	e->updown = clone_str(e->updown, "updown");
-	e->username = clone_str(e->username, "username");
+	e->xauth_username = clone_str(e->xauth_username, "xauth username");
 	e->xauth_password = clone_str(e->xauth_password, "xauth password");
 	e->host_addr_name = clone_str(e->host_addr_name, "host ip");
 }
@@ -963,7 +963,7 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 
 	dst->xauth_server = src->xauth_server;
 	dst->xauth_client = src->xauth_client;
-	dst->username = src->username;
+	dst->xauth_username = src->xauth_username;
 
 	dst->authby = src->authby;
 
@@ -4047,8 +4047,8 @@ static void show_one_sr(const struct connection *c,
 				"xauthby:pam;" :
 				"xauthby:alwaysok;" :
 			"",
-		sr->this.username != NULL ? sr->this.username : "[any]",
-		sr->that.username != NULL ? sr->that.username : "[any]");
+		sr->this.xauth_username != NULL ? sr->this.xauth_username : "[any]",
+		sr->that.xauth_username != NULL ? sr->that.xauth_username : "[any]");
 
 	struct esb_buf auth1,auth2;
 

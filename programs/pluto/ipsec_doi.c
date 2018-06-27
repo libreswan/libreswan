@@ -498,8 +498,8 @@ void initialize_new_state(struct state *st,
 
 	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		if (sr->this.xauth_client) {
-			if (sr->this.username != NULL) {
-				jam_str(st->st_username, sizeof(st->st_username), sr->this.username);
+			if (sr->this.xauth_username != NULL) {
+				jam_str(st->st_xauth_username, sizeof(st->st_xauth_username), sr->this.xauth_username);
 				break;
 			}
 		}
@@ -650,9 +650,9 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 	b = add_str(sadetails, sad_len, b,
 		dpd_active_locally(st) ? " DPD=active" : " DPD=passive");
 
-	if (st->st_username[0] != '\0') {
+	if (st->st_xauth_username[0] != '\0') {
 		b = add_str(sadetails, sad_len, b, " username=");
-		b = add_str(sadetails, sad_len, b, st->st_username);
+		b = add_str(sadetails, sad_len, b, st->st_xauth_username);
 	}
 
 	add_str(sadetails, sad_len, b, "}");

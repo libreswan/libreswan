@@ -118,8 +118,8 @@ err_t pack_whack_msg(struct whackpacker *wp)
 
 	    !pack_str(wp, &wp->msg->ike) ||			/* string 16 */
 	    !pack_str(wp, &wp->msg->esp) ||			/* string 17 */
-	    !pack_str(wp, &wp->msg->left.username) ||		/* string 18 */
-	    !pack_str(wp, &wp->msg->right.username) ||		/* string 19 */
+	    !pack_str(wp, &wp->msg->left.xauth_username) ||	/* string 18 */
+	    !pack_str(wp, &wp->msg->right.xauth_username) ||	/* string 19 */
 	    !pack_str(wp, &wp->msg->connalias) ||		/* string 20 */
 	    !pack_str(wp, &wp->msg->left.host_addr_name) ||	/* string 21 */
 	    !pack_str(wp, &wp->msg->right.host_addr_name) ||	/* string 22 */
@@ -187,8 +187,8 @@ err_t unpack_whack_msg(struct whackpacker *wp)
 
 	    !unpack_str(wp, &wp->msg->ike) ||			/* string 16 */
 	    !unpack_str(wp, &wp->msg->esp) ||			/* string 17 */
-	    !unpack_str(wp, &wp->msg->left.username) ||		/* string 18 */
-	    !unpack_str(wp, &wp->msg->right.username) ||	/* string 19 */
+	    !unpack_str(wp, &wp->msg->left.xauth_username) ||	/* string 18 */
+	    !unpack_str(wp, &wp->msg->right.xauth_username) ||	/* string 19 */
 	    !unpack_str(wp, &wp->msg->connalias) ||		/* string 20 */
 	    !unpack_str(wp, &wp->msg->left.host_addr_name) ||	/* string 21 */
 	    !unpack_str(wp, &wp->msg->right.host_addr_name) ||	/* string 22 */
