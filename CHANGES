@@ -1,9 +1,8 @@
 
 See also https://libreswan.org/
 
-v3.25 (unreleased)
+v3.25 (June 27, 2018)
 
-v3.24 (unreleased)
 * IKEv2: MOBIKE Initiator support (RFC 4555) [Antony]
 * IKEv2: Support for IKE SA rekeying RFC7296 1.3.2, initiator [Antony]
 * IKEv2: Support for IPsec SA rekeying RFC7296 1.3.3, initiator [Antony]
@@ -79,6 +78,9 @@ v3.24 (unreleased)
    #318: vti interface gets down on previous initiator if roles switch [Tuomo]
    #320: nsspassword file location is half implemented
    #328: Addcon crash on duplicit "left" or "leftid" keys in conn config [Stepan Broz]
+
+v3.24 (June 26, 2018)
+* This release was never published
 
 v3.23 (January 25, 2018)
 * IKEv2: MOBIKE Responder support (RFC 4555) [Antony/Paul]
