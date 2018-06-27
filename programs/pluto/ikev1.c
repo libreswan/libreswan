@@ -2254,12 +2254,13 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 	/* handle oddball/meta results now */
 
-	/* stats fixup for STF_FAIL */
-	if (result > STF_FAIL) {
-		pstats(ike_stf, STF_FAIL);
-	} else {
-		pstats(ike_stf, result);
-	}
+	/*
+	 * statistics; lump all FAILs together
+	 *
+	 * Fun fact: using min() stupidly fails (at least in GCC 8.1.1 with -Werror=sign-compare)
+	 * error: comparison of integer expressions of different signedness: `stf_status' {aka `enum <anonymous>'} and `int'
+	 */
+	pstats(ike_stf, PMIN(result, STF_FAIL));
 
 	DBG(DBG_CONTROL,
 	    DBG_log("complete v1 state transition with %s",
