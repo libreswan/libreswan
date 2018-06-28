@@ -368,6 +368,13 @@ USE_SINGLE_CONF_DIR?=false
 # Except this to change in Q1 2011
 USE_KEYRR?=true
 
+# include support for BSD/KAME IPsec in pluto (on *BSD and OSX)
+USE_BSDKAME?=false
+ifeq ($(USE_BSDKAME),true)
+USE_NETKEY=false
+USE_KLIPS=false
+endif
+
 # Build support for Linux 2.4 and 2.6 KLIPS kernel level IPsec support
 # for pluto
 USE_KLIPS?=true
@@ -393,13 +400,6 @@ else
 ifeq ($(USE_NETKEY),true)
 USE_PFKEYv2=true
 endif
-endif
-
-# include support for BSD/KAME IPsec in pluto (on *BSD and OSX)
-USE_BSDKAME?=false
-ifeq ($(USE_BSDKAME),true)
-USE_NETKEY=false
-USE_KLIPS=false
 endif
 
 # Build support for integrity check for libreswan on startup
