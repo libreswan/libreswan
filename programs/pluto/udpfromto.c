@@ -70,7 +70,7 @@ int udpfromto_init(int s)
 #endif
 
 #if !defined(HAVE_IP_PKTINFO) && !defined(HAVE_IP_RECVDSTADDR)
-#error "Must have either IP_PKTINFO or IP_RECVDSTADDR"
+#error "Must have either HAVE_IP_PKTINFO or HAVE_IP_RECVDSTADDR"
 #endif
 	return err;
 }
