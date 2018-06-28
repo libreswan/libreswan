@@ -15,6 +15,7 @@ USE_NETKEY=false
 USE_WIN2K=false
 USE_YACC=false
 
+CRYPT_LDFLAGS =
 
 USE_BSDKAME=true
 

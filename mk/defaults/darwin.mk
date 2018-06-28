@@ -24,6 +24,8 @@ USE_PFKEYv2=true
 # build modules, etc. for KLIPS.
 BUILD_KLIPS=false
 
+CRYPT_LDFLAGS =
+
 #not sure where this is supposed to come from, but the linux port has AR here
 RANLIB=ranlib
 

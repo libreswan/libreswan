@@ -115,16 +115,15 @@ endif
 
 OBJS += addresspool.o
 
+# ikev1_xauth.c calls crypt(), link it in.
 OBJS += ikev1_xauth.o
+LDFLAGS += $(CRYPT_LDFLAGS)
+
 ifeq ($(USE_XAUTHPAM),true)
 OBJS += xauth.o
 OBJS += pam_conv.o
 endif
 LDFLAGS += $(XAUTHPAM_LDFLAGS)
-
-ifneq ($(BUILDENV), darwin)
-LDFLAGS += -lcrypt
-endif
 
 OBJS += ikev1_aggr.o
 

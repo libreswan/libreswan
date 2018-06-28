@@ -233,6 +233,9 @@ USERLAND_CFLAGS+=$(GCC_LINT)
 # Enable ALLOW_MICROSOFT_BAD_PROPOSAL
 USERLAND_CFLAGS+=-DALLOW_MICROSOFT_BAD_PROPOSAL
 
+# some systems require -lcrypt when calling crypt() some do not.
+CRYPT_LDFLAGS ?= -lcrypt
+
 # eventually: -Wshadow -pedantic
 ifeq ($(origin WERROR_CFLAGS),undefined)
 WERROR_CFLAGS = -Werror
