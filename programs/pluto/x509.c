@@ -1232,34 +1232,26 @@ bool ikev2_send_cert_decision(struct state *st)
 
 	DBG(DBG_X509, DBG_log("IKEv2 CERT: send a certificate?"));
 
-	if (st->st_peer_wants_null)
-		return FALSE;
-
-	if (!(c->policy & POLICY_RSASIG)) {
+	if (st->st_peer_wants_null) {
+	} else if (!(c->policy & POLICY_RSASIG)) {
 		DBG(DBG_X509,
 			DBG_log("IKEv2 CERT: policy does not have RSASIG: %s",
 				prettypolicy(c->policy & POLICY_ID_AUTH_MASK)));
-		return FALSE;
-	}
-
-	if (cert.ty == CERT_NONE || cert.u.nss_cert == NULL) {
+	} else if (cert.ty == CERT_NONE || cert.u.nss_cert == NULL) {
 		DBG(DBG_X509,
 			DBG_log("IKEv2 CERT: no certificate to send"));
-		return FALSE;
-	}
-
-	if ((c->spd.this.sendcert != CERT_SENDIFASKED ||
-	      !st->hidden_variables.st_got_certrequest) &&
-			c->spd.this.sendcert != CERT_ALWAYSSEND)
+	} else if ((c->spd.this.sendcert == CERT_SENDIFASKED &&
+	     st->hidden_variables.st_got_certrequest) ||
+	    c->spd.this.sendcert == CERT_ALWAYSSEND)
 	{
+		DBG(DBG_X509, DBG_log("IKEv2 CERT: OK to send a certificate"));
+
+		return TRUE;
+	} else {
 		DBG(DBG_X509,
 			DBG_log("IKEv2 CERT: no cert requested or told not to send"));
-		return FALSE;
 	}
-
-	DBG(DBG_X509, DBG_log("IKEv2 CERT: OK to send a certificate"));
-
-	return TRUE;
+	return FALSE;
 }
 
 stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
