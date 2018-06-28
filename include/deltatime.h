@@ -20,6 +20,7 @@
 #define DELTATIME_H    /* seen it, no need to see it again */
 
 #include <time.h>		/* for time_t */
+#include <sys/time.h>		/* for struct timeval */
 #include <stdint.h>		/* for intmax_t */
 #include <stdbool.h>		/* for bool */
 
