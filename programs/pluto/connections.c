@@ -513,8 +513,10 @@ static err_t default_end(struct end *e, ip_address *dflt_nexthop)
 	if (!e->has_client)
 		ugh = addrtosubnet(&e->host_addr, &e->client);
 
-	if (e->sendcert == 0)
+	if (e->sendcert == 0) {
+		/* uninitialized (ugly hack) */
 		e->sendcert = CERT_SENDIFASKED;
+	}
 
 	return ugh;
 }
@@ -684,7 +686,7 @@ size_t format_end(char *buf,
 			p = add_str(endopts, sizeof(endopts), p, "+XC");
 
 		{
-			const char *send_cert = "+UNKNOWN";
+			const char *send_cert;
 
 			switch (this->sendcert) {
 			case CERT_NEVERSEND:
@@ -696,6 +698,8 @@ size_t format_end(char *buf,
 			case CERT_ALWAYSSEND:
 				send_cert = "+S=C";
 				break;
+			default:
+				send_cert = "+UNKNOWN";
 			}
 			add_str(endopts, sizeof(endopts), p, send_cert);
 		}
