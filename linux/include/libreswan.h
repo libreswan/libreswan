@@ -75,6 +75,7 @@ enum {
 #define user_assert(foo)  { } /* nothing */
 
 #else /* NOT in (linux) kernel */
+
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <string.h>
@@ -82,11 +83,7 @@ enum {
 #include <assert.h>
 #define user_assert(foo) assert(foo)
 #include <stdio.h>
-
-#  define uint8_t u_int8_t
-#  define uint16_t u_int16_t
-#  define uint32_t u_int32_t
-#  define uint64_t u_int64_t
+#include <stdint.h>
 
 #endif  /* (linux) kernel */
 
