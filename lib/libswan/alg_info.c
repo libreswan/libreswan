@@ -613,7 +613,7 @@ struct proposal_parser proposal_parser(const struct proposal_policy *policy,
 bool proposal_aead_none_ok(const struct proposal_parser *parser,
 			   const struct proposal_info *proposal)
 {
-	if (IMPAIR(ALLOW_NULL_NULL)) {
+	if (IMPAIR(ALLOW_NULL_NONE)) {
 		return true;
 	}
 

@@ -638,8 +638,6 @@ kvmplutotest	xauth-pluto-27		good
 
 
 # esp=null-*
-kvmplutotest	ikev2-algo-esp-null-02	wip
-
 kvmplutotest	interop-ikev2-strongswan-34-esp-null-responder	good
 
 

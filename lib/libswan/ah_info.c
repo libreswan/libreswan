@@ -42,7 +42,7 @@ static bool ah_proposal_ok(const struct proposal_parser *parser,
 	impaired_passert(PROPOSAL_PARSER, proposal->integ != NULL);
 
 	/* ah=null is invalid */
-	if (!IMPAIR(ALLOW_NULL_NULL) &&
+	if (!IMPAIR(ALLOW_NULL_NONE) &&
 	    proposal->integ == &ike_alg_integ_none) {
 		snprintf(parser->err_buf, parser->err_buf_len,
 			 "AH cannot have 'none' as the integrity algorithm");

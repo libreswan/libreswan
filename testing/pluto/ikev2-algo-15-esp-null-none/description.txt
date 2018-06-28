@@ -1,7 +1,20 @@
-IKEv2 test with esp=null-null with XFRM/NETKEY
+IKEv2 test with esp=null-none with XFRM/NETKEY
 
-this test verifies that per default this policy is not allowed,
-but after issuing an impair, it is allowed.
+This test first verifies that, by default, west will reject
+esp=null-none, but once seriously impaired, it is allowed.
 
 The no-encryption-no-authentication mode is only ever
 valid for benchmarking IPsec code
+
+For this test to work both east and west must be impaired as follows:
+
+east:
+
+  allow-null-null[sic]: else the parser will reject null-none
+
+west:
+
+  allow-null-null[sic]: else the parser will reject null-none
+
+  ikev2-include-integ-none: else the code will refuse to include
+  'none' in the proposal
