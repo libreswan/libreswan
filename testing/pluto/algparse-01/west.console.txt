@@ -74,7 +74,7 @@ Integrity algorithms:
   AES_CMAC_96         IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_cmac)
   NONE                IKEv1:     ESP     IKEv2:     ESP     FIPS  (null)
 DH algorithms:
-  NONE                IKEv1:             IKEv2: IKE ESP AH        (null dh0)
+  NONE                IKEv1:             IKEv2: IKE ESP AH  FIPS  (null dh0)
   MODP1024            IKEv1: IKE ESP AH  IKEv2: IKE ESP AH        (dh2)
   MODP1536            IKEv1: IKE ESP AH  IKEv2: IKE ESP AH        (dh5)
   MODP2048            IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (dh14)
