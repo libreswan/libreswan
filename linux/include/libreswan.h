@@ -63,7 +63,6 @@ enum {
  * where we get them depends on whether we're in userland or not.
  */
 /* things that need to come from one place or the other, depending */
-#if defined(linux)
 #if defined(__KERNEL__)
 #include <linux/types.h>
 #include <linux/socket.h>
@@ -75,7 +74,7 @@ enum {
 #include <libreswan/ipsec_param.h>
 #define user_assert(foo)  { } /* nothing */
 
-#else /* NOT in kernel */
+#else /* NOT in (linux) kernel */
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <string.h>
@@ -89,9 +88,7 @@ enum {
 #  define uint32_t u_int32_t
 #  define uint64_t u_int64_t
 
-#endif  /* __KERNEL__ */
-
-#endif  /* linux */
+#endif  /* (linux) kernel */
 
 #define DEBUG_NO_STATIC static
 
