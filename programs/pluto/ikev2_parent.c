@@ -4095,8 +4095,6 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 	{
 		struct ikev2_generic e;
 		pb_stream e_pbs, e_pbs_cipher;
-		bool send_cert = FALSE;
-		unsigned int len;
 		struct isakmp_hdr hdr;
 		int notifies = 0;
 
@@ -4154,7 +4152,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		}
 
 		/* decide to send CERT payload before we generate IDr */
-		send_cert = ikev2_send_cert_decision(st);
+		bool send_cert = ikev2_send_cert_decision(st);
 
 		/* insert an Encryption payload header */
 		e.isag_np = IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK) ? ISAKMP_NEXT_v2UNKNOWN :
@@ -4348,7 +4346,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		 */
 		struct state *const cst = md->st;	/* may actually be parent if no child */
 
-		len = pbs_offset(&e_pbs_cipher);
+		unsigned int len = pbs_offset(&e_pbs_cipher);
 
 		if (!ikev2_padup_pre_encrypt(cst, &e_pbs_cipher))
 			return STF_INTERNAL_ERROR;
@@ -5555,25 +5553,19 @@ stf_status ikev2_child_ike_inR(struct state *st /* child state */,
 /* initiator received a create Child SA Response (RFC 7296 1.3.1, 1.3.2) */
 stf_status ikev2_child_inR(struct state *st, struct msg_digest *md)
 {
-	stf_status e;
-
 	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_nr, "Nr"));
 
 	RETURN_STF_FAILURE_STATUS(ikev2_process_child_sa_pl(md, TRUE));
 
-	if (st->st_pfs_group == NULL) {
-		e = ikev2_process_ts_and_rest(md);
-		return e;
-	}
+	if (st->st_pfs_group == NULL)
+		return ikev2_process_ts_and_rest(md);
 
 	RETURN_STF_FAILURE(accept_child_sa_KE(md, st, st->st_oakley));
 
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("Calling ikev2_crypto_start() from %s in state %s",
 		    __func__, st->st_state_name));
-	e = ikev2_crypto_start(md, st);
-
-	return e;
+	return ikev2_crypto_start(md, st);
 }
 
 /* processing a new Child SA (RFC 7296 1.3.1 or 1.3.3) request */
@@ -5607,8 +5599,8 @@ stf_status ikev2_child_inIoutR(struct state *st /* child state */,
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("Calling ikev2_crypto_start() from %s in state %s",
 		    __func__, st->st_state_name));
-	stf_status e = ikev2_crypto_start(md, st);
-	return e;
+
+	return ikev2_crypto_start(md, st);
 }
 
 /* processsing a new Rekey IKE SA (RFC 7296 1.3.2) request */
@@ -5786,8 +5778,7 @@ stf_status ikev2_child_ike_rekey_tail(struct state *st UNUSED,
 stf_status ikev2_child_inR_tail(struct state *st UNUSED, struct msg_digest *md,
 				struct pluto_crypto_req *r UNUSED)
 {
-	stf_status e = ikev2_process_ts_and_rest(md);
-	return e;
+	return ikev2_process_ts_and_rest(md);
 }
 
 static stf_status ikev2_start_new_exchange(struct state *st)
@@ -5815,8 +5806,7 @@ stf_status ikev2_child_out_cont(struct state *st, struct msg_digest *md,
 	set_cur_state(st);
 	RETURN_STF_FAILURE_STATUS(ikev2_start_new_exchange(st));
 
-	stf_status e = ikev2_child_out_tail(md);
-	return e;
+	return ikev2_child_out_tail(md);
 }
 
 void ikev2_child_send_next(struct state *st)
@@ -6302,13 +6292,11 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 			 * IPsec SA DELETE response is DELETE
 			 * Neither can mix with MOBIKE
 			 */
-			if (del_ike)
-				e.isag_np = ISAKMP_NEXT_v2NONE;
-			else if (ndp != 0)
-				e.isag_np = ISAKMP_NEXT_v2D;
-			else if (send_mobike_resp)
-				e.isag_np = ISAKMP_NEXT_v2N;
-			else e.isag_np = ISAKMP_NEXT_v2NONE;
+			e.isag_np =
+				del_ike ? ISAKMP_NEXT_v2NONE :
+				ndp != 0 ? ISAKMP_NEXT_v2D :
+				send_mobike_resp ? ISAKMP_NEXT_v2N :
+				ISAKMP_NEXT_v2NONE;
 
 			e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 
@@ -6331,9 +6319,8 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 	}
 
 	if (send_mobike_resp) {
-		stf_status e;
 		int np = (cookie2.len != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE;
-		e = add_mobike_response_payloads(np, &cookie2, md, &e_pbs_cipher);
+		stf_status e = add_mobike_response_payloads(np, &cookie2, md, &e_pbs_cipher);
 		if (e != STF_OK)
 			return e;
 	}
