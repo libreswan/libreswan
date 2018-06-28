@@ -89,63 +89,6 @@ enum {
 
 #define DEBUG_NO_STATIC static
 
-/*
- * Yes Virginia, we have started a windows port.
- */
-#if defined(__CYGWIN32__)
-#if !defined(WIN32_KERNEL)
-/* get windows equivalents */
-#include <stdio.h>
-#include <string.h>
-#include <win32/types.h>
-#include <netinet/in.h>
-#include <cygwin/socket.h>
-#include <assert.h>
-#define user_assert(foo) assert(foo)
-#endif  /* _KERNEL */
-#endif  /* WIN32 */
-
-/*
- * Kovacs? A macosx port?
- */
-#if defined(macintosh) || (defined(__MACH__) && defined(__APPLE__))
-#include <TargetConditionals.h>
-#include <AvailabilityMacros.h>
-#include <machine/types.h>
-#include <machine/endian.h>
-#include <stdint.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <time.h>
-#include <sys/time.h>
-#include <string.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <tcpd.h>
-#include <assert.h>
-#define user_assert(foo) assert(foo)
-#define __u32  unsigned int
-#define __u8  unsigned char
-#define s6_addr16 __u6_addr.__u6_addr16
-#define DEBUG_NO_STATIC static
-#endif
-
-/*
- * FreeBSD
- */
-#if defined(__FreeBSD__)
-#  define DEBUG_NO_STATIC static
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <string.h>
-#include <assert.h>
-#define user_assert(foo) assert(foo)
-/* apparently this way to deal with an IPv6 address is not standard. */
-#define s6_addr16 __u6_addr.__u6_addr16
-#endif
-
 #ifndef IPPROTO_COMP
 #  define IPPROTO_COMP 108
 #endif /* !IPPROTO_COMP */
@@ -164,27 +107,6 @@ enum {
  * ip_address and ip_subnet are supposed to be opaque types; do not
  * use their definitions directly, they are subject to change!
  */
-
-/* first, some quick fakes in case we're on an old system with no IPv6 */
-#if defined(__CYGWIN32__) && !defined(s6_addr16)
-extern struct in6_addr {
-	union {
-		u_int8_t u6_addr8[16];
-		u_int16_t u6_addr16[8];
-		u_int32_t u6_addr32[4];
-	} in6_u;
-#define s6_addr                 in6_u.u6_addr8
-#define s6_addr16               in6_u.u6_addr16
-#define s6_addr32               in6_u.u6_addr32
-};
-extern struct sockaddr_in6 {
-	unsigned short int sin6_family;         /* AF_INET6 */
-	__u16 sin6_port;                        /* Transport layer port # */
-	__u32 sin6_flowinfo;                    /* IPv6 flow information */
-	struct in6_addr sin6_addr;              /* IPv6 address */
-	__u32 sin6_scope_id;                    /* scope id (new in RFC2553) */
-};
-#endif  /* !s6_addr16 */
 
 /* then the main types */
 typedef struct {
