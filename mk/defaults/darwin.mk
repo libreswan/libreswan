@@ -1,5 +1,4 @@
 USERLAND_CFLAGS += -DTimeZoneOffset=timezone
-USERLAND_CFLAGS += -Du8='unsigned char'
 USERLAND_CFLAGS += -Ds6_addr16=__u6_addr.__u6_addr16
 USERLAND_CFLAGS += -Ds6_addr32=__u6_addr.__u6_addr32
 USERLAND_CFLAGS += -DNEED_SIN_LEN
