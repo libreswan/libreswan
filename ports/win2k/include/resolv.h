@@ -1,4 +1,0 @@
-
-/* FOO */
-#warning "hi there"
-
