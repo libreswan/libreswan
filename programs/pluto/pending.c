@@ -32,7 +32,6 @@
 #include <arpa/nameser.h>       /* missing from <resolv.h> on old systems */
 
 #include <libreswan.h>
-#include "kameipsec.h"
 
 #include "sysdep.h"
 #include "constants.h"
