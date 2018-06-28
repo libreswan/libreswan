@@ -16,43 +16,21 @@
  * for more details.
  */
 
-#include <asm/types.h>
-#include <sys/types.h>
-#include <sys/ioctl.h>
-/* #include <linux/netdevice.h> */
-#include <net/if.h>
-/* #include <linux/types.h> */ /* new */
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <string.h>
-#include <errno.h>
-
-/* #include <sys/socket.h> */
-
-#include <netinet/in.h>
-#include <arpa/inet.h>
-/* #include <linux/ip.h> */
-#include <netdb.h>
-
-#include <unistd.h>
-#include <getopt.h>
-#include <ctype.h>
 #include <stdio.h>
-#include <sys/wait.h>
 #include <stdlib.h>
-#include <libreswan.h>
+#include <getopt.h>
+#include <stdbool.h>
+#include <string.h>
 
-#include "sysdep.h"
-#include "constants.h"
+#include "err.h"
+#include "lswtool.h"
 #include "lswalloc.h"
 #include "lswconf.h"
 #include "lswlog.h"
-#include "lswtool.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
-#include "ipsecconf/starterlog.h"
-#include "ipsecconf/starterwhack.h"
 #include "ipsecconf/parser-controls.h"
+#include "ipsecconf/starterlog.h"
 
 static int verbose = 0;
 
@@ -89,7 +67,7 @@ int main(int argc, char *argv[])
 	char *configfile = NULL;
 	struct starter_conn *conn = NULL;
 	char *name = NULL;
-	bool setup = TRUE;
+	bool setup = true;
 
 	rootdir[0] = '\0';
 	rootdir2[0] = '\0';
@@ -102,7 +80,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'n':
-			setup = FALSE;
+			setup = false;
 			break;
 
 		case 'D':
@@ -163,9 +141,9 @@ int main(int argc, char *argv[])
 	if (verbose)
 		printf("opening file: %s\n", configfile);
 
-	starter_use_log(verbose != 0, TRUE, verbose == 0);
+	starter_use_log(verbose != 0, true, verbose == 0);
 
-	cfg = confread_load(configfile, &err, FALSE, NULL, FALSE);
+	cfg = confread_load(configfile, &err, false, NULL, false);
 
 	if (cfg == NULL) {
 		fprintf(stderr, "%s: config file \"%s\" cannot be loaded: %s\n",
