@@ -1202,7 +1202,7 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 			   unsigned propnum,
 			   bool exclude_transform_none)
 {
-	const char *what = proposal_pbs != NULL ? "payload" : "count";
+	const char *what = proposal_pbs != NULL ? "emitting proposal" : "counting transforms";
 	/*
 	 * Total up the number of transforms that will go across the
 	 * wire.  Make allowance for INTEGRITY which might be
@@ -1216,11 +1216,12 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 		FOR_EACH_TRANSFORM(transform, transforms) {
 			/*
 			 * When pluto initiates with an AEAD proposal,
-			 * INTEG=NONE is excluded (as recommended by
-			 * the RFC).  However, when pluto receives an
-			 * AEAD proposal that includes integ=none, the
-			 * it needs to include it (as also recommended
-			 * by the RFC?).
+			 * INTEG=NONE is excluded by default (as
+			 * recommended by the RFC).  However, when
+			 * pluto receives an AEAD proposal that
+			 * includes INTEG=NONE, it needs to include it
+			 * (as also recommended by the RFC?) in the
+			 * reply.
 			 *
 			 * The impair options then screw with this
 			 * behaviour - including or excluding
@@ -1229,13 +1230,14 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 			if (type == IKEv2_TRANS_TYPE_INTEG &&
 			    transform->id == IKEv2_AUTH_NONE) {
 				if (DBGP(IMPAIR_IKEv2_INCLUDE_INTEG_NONE)) {
-					libreswan_log("IMPAIR: for proposal %d include integ=none in %s",
+					libreswan_log("IMPAIR: proposal %d transform INTEG=NONE included when %s",
 						      propnum, what);
 				} else if (DBGP(IMPAIR_IKEv2_EXCLUDE_INTEG_NONE)) {
-					libreswan_log("IMPAIR: for proposal %d exclude integ=none in %s",
+					libreswan_log("IMPAIR: proposal %d transform INTEG=NONE excluded when %s",
 						      propnum, what);
 					continue;
 				} else if (exclude_transform_none) {
+					DBGF(DBG_CONTROL, "discarding INTEG=NONE");
 					continue;
 				}
 			}
@@ -1243,9 +1245,10 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 			 * Since DH=NONE is omitted, don't include
 			 * it in the count.
 			 *
-			 * XXX: DH=NONE can only be excluded when it
-			 * is the only algorithm.  Fortunately that is
-			 * all that is supported.
+			 * XXX: This logic only works when there is a
+			 * single DH=NONE transform.  While DH=NONE +
+			 * DH=MODP2048 is valid the below doesn't
+			 * handle it.
 			 */
 			if (type == IKEv2_TRANS_TYPE_DH &&
 			    transform->id == OAKLEY_GROUP_NONE) {
@@ -1253,10 +1256,10 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 				continue;
 #if 0
 				if (DBGP(IMPAIR_IKEv2_INCLUDE_DH_NONE)) {
-					libreswan_log("IMPAIR: for proposal %d include DH=NONE in %s",
+					libreswan_log("IMPAIR: proposal %d transform DH=NONE included when %s",
 						      propnum, what);
 				} else if (DBGP(IMPAIR_IKEv2_EXCLUDE_DH_NONE)) {
-					libreswan_log("IMPAIR: for proposal %d exclude DH=NONE in %s",
+					libreswan_log("IMPAIR: proposal %d transform DH=NONE excluded when %s",
 						      propnum, what);
 					continue;
 				} else if (exclude_transform_none) {
