@@ -53,7 +53,7 @@
  * the chunk will not be written, but it is awkward to paste const on it.
  */
 
-void build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl, struct end *end, bool nullid)
+void build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl, const struct end *end, bool nullid)
 {
 	const struct id *id = &end->id;
 	const unsigned char *p;
