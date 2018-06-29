@@ -5,8 +5,6 @@
 keying channel
 (with PFS, penetration of the key-exchange protocol
 does not compromise keys negotiated earlier);
-Since there is no reason to ever refuse PFS, Libreswan will allow a connection defined with
-<emphasis remap='B'>pfs=no</emphasis> to use PFS anyway.
 Acceptable values are
 <emphasis remap='B'>yes</emphasis>
 (the default)
