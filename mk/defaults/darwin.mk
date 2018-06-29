@@ -40,4 +40,3 @@ USE_NM=false
 # This assumes that when cross compiling for darwin, a cross installer
 # is being used.
 INSTBINFLAGS=-D -b -B .old
-INSTSUIDFLAGS=--mode=u+rxs,g+rx,o+rx --group=root -b -B .old

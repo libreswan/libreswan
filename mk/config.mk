@@ -219,13 +219,11 @@ INSTALL?=install
 # Note that the install procedures will never overwrite an existing config
 # file, which is why -b is not specified for them.
 INSTBINFLAGS?=-b --suffix=.old
-INSTSUIDFLAGS?=--mode=u+rxs,g+rx,o+rx --group=root -b --suffix=.old
 
 # busybox install is not emulating a real install command well enough
 SWANCHECKLINK=$(shell readlink /usr/bin/install)
 ifeq ($(SWANCHECKLINK /bin/busybox),)
 INSTBINFLAGS=
-INSTSUIDFLAGS=-m 0755 -g root -o root
 endif
 
 
@@ -233,7 +231,6 @@ INSTMANFLAGS?=--mode=0644
 INSTCONFFLAGS?=--mode=0644
 # For OSX use
 #INSTBINFLAGS?=-b -B .old
-#INSTSUIDFLAGS?=--mode=u+rxs,g+rx,o+rx --group=root -b -B .old
 
 # flags for bison, overrode in packages/default/foo
 BISONOSFLAGS?=
