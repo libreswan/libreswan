@@ -293,20 +293,14 @@ int ikev2_parse_ts(struct payload_digest *const ts_pd,
 		case IKEv2_TS_IPV4_ADDR_RANGE:
 			array[i].ts_type = IKEv2_TS_IPV4_ADDR_RANGE;
 			array[i].net.start.u.v4.sin_family = AF_INET;
-#ifdef NEED_SIN_LEN
-			array[i].net.start.u.v4.sin_len =
-				sizeof(struct sockaddr_in);
-#endif
+			SET_V4_LEN(array[i].net.start.u);
 			if (!in_raw(&array[i].net.start.u.v4.sin_addr.s_addr,
 				    sizeof(array[i].net.start.u.v4.sin_addr.s_addr),
 				    &addr, "ipv4 ts low"))
 				return -1;
 
 			array[i].net.end.u.v4.sin_family = AF_INET;
-#ifdef NEED_SIN_LEN
-			array[i].net.end.u.v4.sin_len =
-				sizeof(struct sockaddr_in);
-#endif
+			SET_V4_LEN(array[i].net.end.u);
 
 			if (!in_raw(&array[i].net.end.u.v4.sin_addr.s_addr,
 				    sizeof(array[i].net.end.u.v4.sin_addr.s_addr),
@@ -318,10 +312,7 @@ int ikev2_parse_ts(struct payload_digest *const ts_pd,
 		case IKEv2_TS_IPV6_ADDR_RANGE:
 			array[i].ts_type = IKEv2_TS_IPV6_ADDR_RANGE;
 			array[i].net.start.u.v6.sin6_family = AF_INET6;
-#ifdef NEED_SIN_LEN
-			array[i].net.start.u.v6.sin6_len =
-				sizeof(struct sockaddr_in6);
-#endif
+			SET_V6_LEN(array[i].net.start.u);
 
 			if (!in_raw(&array[i].net.start.u.v6.sin6_addr.s6_addr,
 				    sizeof(array[i].net.start.u.v6.sin6_addr.s6_addr),
@@ -329,10 +320,7 @@ int ikev2_parse_ts(struct payload_digest *const ts_pd,
 				return -1;
 
 			array[i].net.end.u.v6.sin6_family = AF_INET6;
-#ifdef NEED_SIN_LEN
-			array[i].net.end.u.v6.sin6_len =
-				sizeof(struct sockaddr_in6);
-#endif
+			SET_V6_LEN(array[i].net.end.u);
 
 			if (!in_raw(&array[i].net.end.u.v6.sin6_addr.s6_addr,
 				    sizeof(array[i].net.end.u.v6.sin6_addr.s6_addr),

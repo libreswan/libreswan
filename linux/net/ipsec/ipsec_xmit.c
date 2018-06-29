@@ -1483,17 +1483,13 @@ static int create_hold_eroute(struct ipsec_xmit_state *ixs)
 		struct in6_addr addr6_any = IN6ADDR_ANY_INIT;
 		hold_said.dst.u.v6.sin6_addr = addr6_any;
 		hold_said.dst.u.v6.sin6_family = AF_INET6;
-#ifdef NEED_SIN_LEN
-		hold_said.dst.u.v4.sin6_len = sizeof(struct sockaddr_in6);
-#endif
+		SET_V6_LEN(hold_said.dst.u);
 	} else
 #endif
 	{
 		hold_said.dst.u.v4.sin_addr.s_addr = INADDR_ANY;
 		hold_said.dst.u.v4.sin_family = AF_INET;
-#ifdef NEED_SIN_LEN
-		hold_said.dst.u.v4.sin_len = sizeof(struct sockaddr_in);
-#endif
+		SET_V4_LEN(hold_said.dst.u);
 	}
 
 	hold_eroute.er_eaddr.sen_len = sizeof(struct sockaddr_encap);

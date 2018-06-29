@@ -104,6 +104,14 @@ enum {
 
 #include "ip_address.h"
 
+#ifdef NEED_SIN_LEN
+#define SET_V4_LEN(a)	{ (a).v4.sin_len = sizeof(struct sockaddr_in); }
+p#define SET_V6_LEN(a)	{ (a).v6.sin6_len = sizeof(struct sockaddr_in6); }
+#else
+#define SET_V4_LEN(a)	{ }
+#define SET_V6_LEN(a)	{ }
+#endif
+
 /* then the main types */
 typedef struct {
 	ip_address addr;
