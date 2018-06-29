@@ -1898,27 +1898,19 @@ DEBUG_NO_STATIC int pfkey_x_addflow_parse(struct sock *sk,
 	}
 
 	if (extr->eroute->er_eaddr.sen_type == SENT_IP6) {
-		srcflow.u.v6.sin6_family = AF_INET6;
-		dstflow.u.v6.sin6_family = AF_INET6;
-		srcmask.u.v6.sin6_family = AF_INET6;
-		dstmask.u.v6.sin6_family = AF_INET6;
-		SET_V6_LEN(srcflow.u);
-		SET_V6_LEN(dstflow.u);
-		SET_V6_LEN(srcmask.u);
-		SET_V6_LEN(dstmask.u);
+		SET_V6(srcflow);
+		SET_V6(dstflow);
+		SET_V6(srcmask);
+		SET_V6(dstmask);
 		srcflow.u.v6.sin6_addr = extr->eroute->er_eaddr.sen_ip6_src;
 		dstflow.u.v6.sin6_addr = extr->eroute->er_eaddr.sen_ip6_dst;
 		srcmask.u.v6.sin6_addr = extr->eroute->er_emask.sen_ip6_src;
 		dstmask.u.v6.sin6_addr = extr->eroute->er_emask.sen_ip6_dst;
 	} else {
-		srcflow.u.v4.sin_family = AF_INET;
-		dstflow.u.v4.sin_family = AF_INET;
-		srcmask.u.v4.sin_family = AF_INET;
-		dstmask.u.v4.sin_family = AF_INET;
-		SET_V4_LEN(srcflow.u);
-		SET_V4_LEN(dstflow.u);
-		SET_V4_LEN(srcmask.u);
-		SET_V4_LEN(dstmask.u);
+		SET_V4(srcflow);
+		SET_V4(dstflow);
+		SET_V4(srcmask);
+		SET_V4(dstmask);
 		srcflow.u.v4.sin_addr = extr->eroute->er_eaddr.sen_ip_src;
 		dstflow.u.v4.sin_addr = extr->eroute->er_eaddr.sen_ip_dst;
 		srcmask.u.v4.sin_addr = extr->eroute->er_emask.sen_ip_src;
@@ -2194,14 +2186,10 @@ DEBUG_NO_STATIC int pfkey_x_delflow_parse(struct sock *sk,
 		}
 
 		if (extr->eroute->er_eaddr.sen_type == SENT_IP6) {
-			srcflow.u.v6.sin6_family = AF_INET6;
-			dstflow.u.v6.sin6_family = AF_INET6;
-			srcmask.u.v6.sin6_family = AF_INET6;
-			dstmask.u.v6.sin6_family = AF_INET6;
-			SET_V6_LEN(srcflow.u);
-			SET_V6_LEN(dstflow.u);
-			SET_V6_LEN(srcmask.u);
-			SET_V6_LEN(dstmask.u);
+			SET_V6(srcflow);
+			SET_V6(dstflow);
+			SET_V6(srcmask);
+			SET_V6(dstmask);
 			srcflow.u.v6.sin6_addr =
 				extr->eroute->er_eaddr.sen_ip6_src;
 			dstflow.u.v6.sin6_addr =
@@ -2211,14 +2199,10 @@ DEBUG_NO_STATIC int pfkey_x_delflow_parse(struct sock *sk,
 			dstmask.u.v6.sin6_addr =
 				extr->eroute->er_emask.sen_ip6_dst;
 		} else {
-			srcflow.u.v4.sin_family = AF_INET;
-			dstflow.u.v4.sin_family = AF_INET;
-			srcmask.u.v4.sin_family = AF_INET;
-			dstmask.u.v4.sin_family = AF_INET;
-			SET_V4_LEN(srcflow.u);
-			SET_V4_LEN(dstflow.u);
-			SET_V4_LEN(srcmask.u);
-			SET_V4_LEN(dstmask.u);
+			SET_V4(srcflow);
+			SET_V4(dstflow);
+			SET_V4(srcmask);
+			SET_V4(dstmask);
 			srcflow.u.v4.sin_addr =
 				extr->eroute->er_eaddr.sen_ip_src;
 			dstflow.u.v4.sin_addr =

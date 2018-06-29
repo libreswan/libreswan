@@ -58,8 +58,7 @@ ip_address *dst;
 		 */
 		memset(&dst->u.v4, '\0', sizeof(dst->u.v4));
 #endif
-		dst->u.v4.sin_family = af;
-		SET_V4_LEN(dst->u);
+		SET_V4(*dst);
 		dst->u.v4.sin_port = 0;
 		memcpy((char *)&dst->u.v4.sin_addr.s_addr, src, srclen);
 		break;
@@ -70,8 +69,7 @@ ip_address *dst;
 #if !defined(__KERNEL__)
 		memset(&dst->u.v6, '\0', sizeof(dst->u.v6));
 #endif
-		dst->u.v6.sin6_family = af;
-		SET_V6_LEN(dst->u);
+		SET_V6(*dst);
 		dst->u.v6.sin6_flowinfo = 0;            /* unused */
 		dst->u.v6.sin6_port = 0;
 		memcpy((char *)&dst->u.v6.sin6_addr, src, srclen);

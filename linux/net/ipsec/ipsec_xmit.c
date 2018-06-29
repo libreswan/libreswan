@@ -1482,14 +1482,12 @@ static int create_hold_eroute(struct ipsec_xmit_state *ixs)
 	if (lsw_ip_hdr_version(ixs) == 6) {
 		struct in6_addr addr6_any = IN6ADDR_ANY_INIT;
 		hold_said.dst.u.v6.sin6_addr = addr6_any;
-		hold_said.dst.u.v6.sin6_family = AF_INET6;
-		SET_V6_LEN(hold_said.dst.u);
+		SET_V6(hold_said.dst);
 	} else
 #endif
 	{
 		hold_said.dst.u.v4.sin_addr.s_addr = INADDR_ANY;
-		hold_said.dst.u.v4.sin_family = AF_INET;
-		SET_V4_LEN(hold_said.dst.u);
+		SET_V4(hold_said.dst);
 	}
 
 	hold_eroute.er_eaddr.sen_len = sizeof(struct sockaddr_encap);

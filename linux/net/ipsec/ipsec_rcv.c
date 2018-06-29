@@ -1103,12 +1103,10 @@ static enum ipsec_rcv_value ipsec_rcv_decap_lookup(struct ipsec_rcv_state *irs)
 
 	if (lsw_ip_hdr_version(irs) == 6) {
 		irs->said.dst.u.v6.sin6_addr = lsw_ip6_hdr(irs)->daddr;
-		irs->said.dst.u.v6.sin6_family = AF_INET6;
-		SET_V6_LEN(irs->said.dst.u);
+		SET_V6(irs->said.dst);
 	} else {
 		irs->said.dst.u.v4.sin_addr.s_addr = lsw_ip4_hdr(irs)->daddr;
-		irs->said.dst.u.v4.sin_family = AF_INET;
-		SET_V4_LEN(irs->said.dst.u);
+		SET_V4(irs->said.dst);
 	}
 
 	/* note: rcv_checks set up the said.spi value, if appropriate */
