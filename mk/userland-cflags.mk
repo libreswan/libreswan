@@ -236,6 +236,13 @@ USERLAND_CFLAGS+=-DALLOW_MICROSOFT_BAD_PROPOSAL
 # some systems require -lcrypt when calling crypt() some do not.
 CRYPT_LDFLAGS ?= -lcrypt
 
+# Support for LIBCAP-NG to drop unneeded capabilities for the pluto daemon
+USE_LIBCAP_NG?=true
+ifeq ($(USE_LIBCAP_NG),true)
+USERLAND_CFLAGS += -DHAVE_LIBCAP_NG
+LIBCAP_NG_LDFLAGS ?= -lcap-ng
+endif
+
 # eventually: -Wshadow -pedantic
 ifeq ($(origin WERROR_CFLAGS),undefined)
 WERROR_CFLAGS = -Werror

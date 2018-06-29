@@ -409,9 +409,6 @@ USE_LABELED_IPSEC?=false
 # Enable seccomp support (whitelist allows syscalls)
 USE_SECCOMP?=false
 
-# Support for LIBCAP-NG to drop unneeded capabilities for the pluto daemon
-USE_LIBCAP_NG?=true
-
 # Support for Network Manager
 USE_NM?=true
 

@@ -168,11 +168,7 @@ LDFLAGS += $(NSPR_LDFLAGS)
 LDFLAGS += -lpthread
 
 LDFLAGS += $(FIPSCHECK_LDFLAGS)
-
-ifeq ($(USE_LIBCAP_NG),true)
-CFLAGS += -DHAVE_LIBCAP_NG
-LDFLAGS += -lcap-ng
-endif
+LDFLAGS += $(LIBCAP_NG_LDFLAGS)
 
 # OSDEP already set in objdir.mk?
 OSDEP?=$(shell uname -s | tr 'A-Z' 'a-z')
