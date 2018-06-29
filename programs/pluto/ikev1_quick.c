@@ -611,7 +611,7 @@ static bool check_net_id(struct isakmp_ipsec_id *id,
 		subnettot(net, 0, subxmt, sizeof(subxmt));
 		subnettot(&net_temp, 0, subrec, sizeof(subrec));
 		loglog(RC_LOG_SERIOUS,
-		       "%s subnet returned doesn't match my proposal - us:%s vs them:%s",
+		       "%s subnet returned doesn't match my proposal - us: %s vs them:%s",
 		       which, subxmt, subrec);
 #ifdef ALLOW_MICROSOFT_BAD_PROPOSAL
 		loglog(RC_LOG_SERIOUS,
@@ -639,7 +639,7 @@ static bool check_net_id(struct isakmp_ipsec_id *id,
 	 */
 	if (*port != id->isaiid_port) {
 		loglog(RC_LOG_SERIOUS,
-		       "%s peer returned port doesn't match my proposal - us:%d vs them:%d",
+		       "%s peer returned port doesn't match my proposal - us: %d vs them: %d",
 		       which, *port, id->isaiid_port);
 		if (*port != 0 && id->isaiid_port != 1701) {
 			loglog(RC_LOG_SERIOUS,
