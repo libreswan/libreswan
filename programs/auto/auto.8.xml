@@ -238,12 +238,6 @@ which it normally reads only at startup time.
 <option>--ready</option>,
 but that may change.)</para>
 
-
-<para>      The    <option>--rereadsecrets</option>   operation   tells   pluto   to   re-read   the
-       <filename>@IPSEC_SECRETS_FILE@</filename> secret-keys file, which it normally  reads  only  at
-       startup  time.   (This is currently a synonym for <option>--ready,</option> but that may
-       change.)
-</para>
 <para>       The <option>--rereadcrls</option> operation reads all certificate revocation list  (CRL)
        files  contained  in  the  /etc/ipsec.d/crls directory and adds them to
        pluto's list of CRLs.  Note CRLs can and should be stored inside
