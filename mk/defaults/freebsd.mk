@@ -6,7 +6,7 @@ USERLAND_CFLAGS += -DTimeZoneOffset=timezone
 USERLAND_CFLAGS += -Ds6_addr16=__u6_addr.__u6_addr16
 USERLAND_CFLAGS += -Ds6_addr32=__u6_addr.__u6_addr32
 
-PORTINCLUDE=-I${LIBRESWANSRCDIR}/ports/freebsd/include -isystem /usr/local/include
+PORTINCLUDE= -isystem /usr/local/include
 
 # no KLIPS, we will be using FreeBSD copy of pfkey code.
 USE_MAST=false

@@ -5,7 +5,7 @@ USERLAND_CFLAGS += -DNEED_SIN_LEN
 USERLAND_CFLAGS += -D__APPLE_USE_RFC_3542
 
 CC=gcc
-PORTINCLUDE=-I${LIBRESWANSRCDIR}/ports/darwin/include -I/opt/local/include
+PORTINCLUDE= -I/opt/local/include
 USERLINK=-L/usr/local/lib -L/opt/local/lib
 
 USE_MAST=false
