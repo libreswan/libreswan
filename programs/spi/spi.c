@@ -903,22 +903,18 @@ int main(int argc, char *argv[])
 			}
 			if (streq(optarg, "inet")) {
 				address_family = AF_INET;
-				/* currently we ensure that all addresses belong to the same address family */
-				anyaddr(address_family, &dst);
-				anyaddr(address_family, &edst);
-				anyaddr(address_family, &src);
 			} else if (streq(optarg, "inet6")) {
 				address_family = AF_INET6;
-				/* currently we ensure that all addresses belong to the same address family */
-				anyaddr(address_family, &dst);
-				anyaddr(address_family, &edst);
-				anyaddr(address_family, &src);
 			} else {
 				fprintf(stderr,
 					"%s: Invalid ADDRESS FAMILY parameter: %s.\n",
 					progname, optarg);
 				exit(1);
 			}
+			/* currently we ensure that all addresses belong to the same address family */
+			anyaddr(address_family, &dst);
+			anyaddr(address_family, &edst);
+			anyaddr(address_family, &src);
 			af_opt = optarg;
 			break;
 
