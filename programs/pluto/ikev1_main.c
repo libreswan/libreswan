@@ -2565,7 +2565,7 @@ bool accept_delete(struct msg_digest *md,
 	if (!md->encrypted) {
 		loglog(RC_LOG_SERIOUS,
 			"ignoring Delete SA payload: not encrypted");
-		return self_delete;
+		return FALSE;
 	}
 
 	/* If there is no SA related to this request, but it was encrypted */
@@ -2573,12 +2573,12 @@ bool accept_delete(struct msg_digest *md,
 		/* can't happen (if msg is encrypt), but just to be sure */
 		loglog(RC_LOG_SERIOUS,
 			"ignoring Delete SA payload: ISAKMP SA not established");
-		return self_delete;
+		return FALSE;
 	}
 
 	if (d->isad_nospi == 0) {
 		loglog(RC_LOG_SERIOUS, "ignoring Delete SA payload: no SPI");
-		return self_delete;
+		return FALSE;
 	}
 
 	switch (d->isad_protoid) {
@@ -2593,13 +2593,13 @@ bool accept_delete(struct msg_digest *md,
 
 	case PROTO_IPCOMP:
 		/* nothing interesting to delete */
-		return self_delete;
+		return FALSE;
 
 	default:
 		loglog(RC_LOG_SERIOUS,
 			"ignoring Delete SA payload: unknown Protocol ID (%s)",
 			enum_show(&ikev1_protocol_names, d->isad_protoid));
-		return self_delete;
+		return FALSE;
 	}
 
 	if (d->isad_spisize != sizespi) {
@@ -2607,13 +2607,13 @@ bool accept_delete(struct msg_digest *md,
 			"ignoring Delete SA payload: bad SPI size (%d) for %s",
 			d->isad_spisize,
 			enum_show(&ikev1_protocol_names, d->isad_protoid));
-		return self_delete;
+		return FALSE;
 	}
 
 	if (pbs_left(&p->pbs) != d->isad_nospi * sizespi) {
 		loglog(RC_LOG_SERIOUS,
 			"ignoring Delete SA payload: invalid payload size");
-		return self_delete;
+		return FALSE;
 	}
 
 	for (i = 0; i < d->isad_nospi; i++) {
@@ -2626,10 +2626,10 @@ bool accept_delete(struct msg_digest *md,
 			struct state *dst;
 
 			if (!in_raw(icookie, COOKIE_SIZE, &p->pbs, "iCookie"))
-				return self_delete;
+				return FALSE;
 
 			if (!in_raw(rcookie, COOKIE_SIZE, &p->pbs, "rCookie"))
-				return self_delete;
+				return FALSE;
 
 			dst = find_state_ikev1(icookie, rcookie,
 					v1_MAINMODE_MSGID);
@@ -2665,7 +2665,7 @@ bool accept_delete(struct msg_digest *md,
 			ipsec_spi_t spi;	/* network order */
 
 			if (!in_raw(&spi, sizeof(spi), &p->pbs, "SPI"))
-				return self_delete;
+				return FALSE;
 
 			bool bogus;
 			struct state *dst = find_phase2_state_to_delete(st,
