@@ -244,12 +244,12 @@ static void xfrm2ip(const xfrm_address_t *xaddr, ip_address *addr, const sa_fami
 {
 	if (family == AF_INET) {
 		/* an IPv4 address */
-		addr->u.v4.sin_family = AF_INET;
+		SET_V4(*addr);
 		addr->u.v4.sin_addr.s_addr = xaddr->a4;
 	} else {
 		/* Must be IPv6 */
+		SET_V6(*addr);
 		memcpy(&addr->u.v6.sin6_addr, xaddr->a6, sizeof(xaddr->a6));
-		addr->u.v4.sin_family = AF_INET6;
 	}
 }
 

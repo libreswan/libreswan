@@ -1608,7 +1608,9 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 			char caddr[SUBNETTOT_BUF];
 
 			u_int32_t *ap = (u_int32_t *)(strattr.cur);
-			a.u.v4.sin_family = AF_INET;
+			SET_V4(a);
+			/* ??? this code should ensure that the size of the attribute value is correct */
+			/* ??? this code is duplicated four times! */
 			memcpy(&a.u.v4.sin_addr.s_addr, ap,
 			       sizeof(a.u.v4.sin_addr.s_addr));
 			addrtosubnet(&a, &c->spd.this.client);
@@ -1777,7 +1779,9 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 
 				u_int32_t *ap =
 					(u_int32_t *)(strattr.cur);
-				a.u.v4.sin_family = AF_INET;
+				SET_V4(a);
+				/* ??? this code should ensure that the size of the attribute value is correct */
+				/* ??? this code is duplicated four times! */
 				memcpy(&a.u.v4.sin_addr.s_addr, ap,
 				       sizeof(a.u.v4.sin_addr.s_addr));
 				addrtosubnet(&a, &c->spd.this.client);
@@ -1811,7 +1815,9 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				ipstr_buf b;
 				u_int32_t *ap = (u_int32_t *)(strattr.cur);
 
-				a.u.v4.sin_family = AF_INET;
+				SET_V4(a);
+				/* ??? this code should ensure that the size of the attribute value is correct */
+				/* ??? this code is duplicated four times! */
 				memcpy(&a.u.v4.sin_addr.s_addr, ap,
 				       sizeof(a.u.v4.sin_addr.s_addr));
 
@@ -1828,7 +1834,9 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 
 				u_int32_t *ap =
 					(u_int32_t *)(strattr.cur);
-				a.u.v4.sin_family = AF_INET;
+				SET_V4(a);
+				/* ??? this code should ensure that the size of the attribute value is correct */
+				/* ??? this code is duplicated four times! */
 				memcpy(&a.u.v4.sin_addr.s_addr, ap,
 				       sizeof(a.u.v4.sin_addr.s_addr));
 
