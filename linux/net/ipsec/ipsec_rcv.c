@@ -567,7 +567,7 @@ static enum ipsec_rcv_value ipsec_rcv_decap_ipip(struct ipsec_rcv_state *irs)
 		    AF_INET6)
 			psin6 = (struct sockaddr_in6*)(ipsp->ips_addr_s);
 		else if (((struct sockaddr_in*)(ipsp->ips_addr_s))->sin_family
-			 == AF_INET6)
+			 == AF_INET)
 			psin = (struct sockaddr_in*)(ipsp->ips_addr_s);
 		if ((psin && ipp->saddr != psin->sin_addr.s_addr)
 #ifdef CONFIG_KLIPS_IPV6
@@ -749,7 +749,7 @@ static enum ipsec_rcv_value ipsec_rcv_decap_ipip(struct ipsec_rcv_state *irs)
 		char sflow_txt[SUBNETTOA_BUF], dflow_txt[SUBNETTOA_BUF];
 
 #ifdef CONFIG_KLIPS_IPV6
-		if (ipsp->ips_flow_s.u.v4.sin_family == AF_INET6) {
+		if (ipsp->ips_flow_s.u.v6.sin6_family == AF_INET6) {
 			subnet6toa(&ipsp->ips_flow_s.u.v6.sin6_addr,
 				   &ipsp->ips_mask_s.u.v6.sin6_addr,
 				   0, sflow_txt, sizeof(sflow_txt));
@@ -1168,7 +1168,7 @@ static enum ipsec_rcv_value ipsec_rcv_auth_init(struct ipsec_rcv_state *irs)
 		    == AF_INET6)
 			psin6 = (struct sockaddr_in6*)(newipsp->ips_addr_s);
 		else if (((struct sockaddr_in*)(newipsp->ips_addr_s))->
-			 sin_family == AF_INET6)
+			 sin_family == AF_INET)
 			psin = (struct sockaddr_in*)(newipsp->ips_addr_s);
 		if ((psin && lsw_ip4_hdr(irs)->saddr !=
 		     psin->sin_addr.s_addr) ||
