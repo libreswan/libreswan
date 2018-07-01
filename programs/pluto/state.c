@@ -3155,27 +3155,40 @@ void ISAKMP_SA_established(const struct state *pst)
 			d = next;
 		}
 
-		if (c->newest_isakmp_sa != SOS_NOBODY &&
-			c->newest_isakmp_sa != pst->st_serialno) {
-				struct state *old_p1 = state_by_serialno(c->newest_isakmp_sa);
+		/*
+		 * This only affects IKEv2, since we don't store any
+		 * received INITIAL_CONTACT for IKEv1.
+		 * We don't do this on IKEv1, because it seems to
+		 * confuse various third parties (Windows, Cisco VPN 300,
+		 * and juniper
+		 * likely because this would be called before the IPsec SA
+		 * of QuickMode is installed, so the remote endpoints view
+		 * this IKE SA still as the active one?
+		 */
+		if (pst->st_seen_initialc) {
 
-				DBG(DBG_CONTROL, DBG_log("deleting replaced IKE state for %s",
-					old_p1->st_connection->name));
-				old_p1->st_suppress_del_notify = TRUE;
-				event_force(EVENT_SA_EXPIRE, old_p1);
-		}
+			if (c->newest_isakmp_sa != SOS_NOBODY &&
+				c->newest_isakmp_sa != pst->st_serialno) {
+					struct state *old_p1 = state_by_serialno(c->newest_isakmp_sa);
 
-		if (pst->st_seen_initialc && (c->newest_ipsec_sa != SOS_NOBODY))
-		{
-			struct state *old_p2 = state_by_serialno(c->newest_ipsec_sa);
-			struct connection *d = old_p2 == NULL ? NULL : old_p2->st_connection;
+					DBG(DBG_CONTROL, DBG_log("deleting replaced IKE state for %s",
+						old_p1->st_connection->name));
+					old_p1->st_suppress_del_notify = TRUE;
+					event_force(EVENT_SA_EXPIRE, old_p1);
+			}
 
-			if (c == d && same_id(&c->spd.that.id, &d->spd.that.id))
+			if (c->newest_ipsec_sa != SOS_NOBODY)
 			{
-				DBG(DBG_CONTROL, DBG_log("Initial Contact received, deleting old state #%lu from connection '%s'",
-					c->newest_ipsec_sa, c->name));
-				old_p2->st_suppress_del_notify = TRUE;
-				event_force(EVENT_SA_EXPIRE, old_p2);
+				struct state *old_p2 = state_by_serialno(c->newest_ipsec_sa);
+				struct connection *d = old_p2 == NULL ? NULL : old_p2->st_connection;
+
+				if (c == d && same_id(&c->spd.that.id, &d->spd.that.id))
+				{
+					DBG(DBG_CONTROL, DBG_log("Initial Contact received, deleting old state #%lu from connection '%s'",
+						c->newest_ipsec_sa, c->name));
+					old_p2->st_suppress_del_notify = TRUE;
+					event_force(EVENT_SA_EXPIRE, old_p2);
+				}
 			}
 		}
 
