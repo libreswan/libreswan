@@ -1282,14 +1282,14 @@ void add_connection(const struct whack_message *wm)
 	}
 
 	if (LIN(POLICY_AUTH_NEVER, wm->policy)) {
-		if ((wm->policy & POLICY_SHUNT_MASK) == LEMPTY) {
+		if ((wm->policy & POLICY_SHUNT_MASK) == POLICY_SHUNT_TRAP) {
 			loglog(RC_FATAL,
 				"Failed to add connection \"%s\", connection with authby=never must specify shunt type via type=",
 				wm->name);
 			return;
 		}
 	}
-	if ((wm->policy & POLICY_SHUNT_MASK) != LEMPTY) {
+	if ((wm->policy & POLICY_SHUNT_MASK) != POLICY_SHUNT_TRAP) {
 		if ((wm->policy & (POLICY_ID_AUTH_MASK & ~POLICY_AUTH_NEVER)) != LEMPTY) {
 			loglog(RC_FATAL,
 				"Failed to add connection \"%s\": shunt connection cannot have authentication method other then authby=never",
@@ -1308,13 +1308,13 @@ void add_connection(const struct whack_message *wm)
 			break;
 		case POLICY_AUTHENTICATE | POLICY_ENCRYPT:
 			loglog(RC_FATAL,
-				"Failed to add connection \"%s\": non-shunt connection must specify either AH or ESP",
+				"Failed to add connection \"%s\": non-shunt connection must not specify both AH and ESP",
 				wm->name);
 			return;
 		}
 	}
 
-	if ((wm->policy & POLICY_IKEV2_PROPOSE) && (wm->policy & POLICY_IKEV2_ALLOW) == LEMPTY) {
+	if ((wm->policy & (POLICY_IKEV2_PROPOSE | POLICY_IKEV2_ALLOW)) == POLICY_IKEV2_PROPOSE) {
 			loglog(RC_FATAL, "Failed to add connection \"%s\": cannot insist on IKEv2 while forbidding it",
 				wm->name);
 			return;
@@ -2893,7 +2893,7 @@ struct connection *find_next_host_connection(
 		if (NEVER_NEGOTIATE(c->policy)) {
 			/* are we a block or clear connection? */
 			lset_t shunt = (c->policy & POLICY_SHUNT_MASK) >> POLICY_SHUNT_SHIFT;
-			if (shunt) {
+			if (shunt != POLICY_SHUNT_TRAP) {
 				/*
 				 * We need to match block/clear so we can send back
 				 * NO_PROPOSAL_CHOSEN, otherwise not match so we

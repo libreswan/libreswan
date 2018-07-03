@@ -1126,35 +1126,36 @@ static bool load_conn(
 	if (conn->options_set[KBF_TYPE]) {
 		switch ((enum keyword_satype)conn->options[KBF_TYPE]) {
 		case KS_TUNNEL:
-			conn->policy |= POLICY_TUNNEL;
 			conn->policy &= ~POLICY_SHUNT_MASK;
+			conn->policy |= POLICY_TUNNEL | POLICY_SHUNT_TRAP;
 			break;
 
 		case KS_TRANSPORT:
 			conn->policy &= ~POLICY_TUNNEL & ~POLICY_SHUNT_MASK;
+			conn->policy |=  POLICY_SHUNT_TRAP;
 			break;
 
 		case KS_PASSTHROUGH:
 			conn->policy &=
 				~(POLICY_ENCRYPT | POLICY_AUTHENTICATE |
-				  POLICY_TUNNEL | POLICY_RSASIG) &
-				~POLICY_SHUNT_MASK;
+				  POLICY_TUNNEL | POLICY_RSASIG |
+				  POLICY_SHUNT_MASK);
 			conn->policy |= POLICY_SHUNT_PASS;
 			break;
 
 		case KS_DROP:
 			conn->policy &=
 				~(POLICY_ENCRYPT | POLICY_AUTHENTICATE |
-				  POLICY_TUNNEL | POLICY_RSASIG) &
-				~POLICY_SHUNT_MASK;
+				  POLICY_TUNNEL | POLICY_RSASIG |
+				  POLICY_SHUNT_MASK);
 			conn->policy |= POLICY_SHUNT_DROP;
 			break;
 
 		case KS_REJECT:
 			conn->policy &=
 				~(POLICY_ENCRYPT | POLICY_AUTHENTICATE |
-				  POLICY_TUNNEL | POLICY_RSASIG) &
-				~POLICY_SHUNT_MASK;
+				  POLICY_TUNNEL | POLICY_RSASIG |
+				  POLICY_SHUNT_MASK);
 			conn->policy |= POLICY_SHUNT_REJECT;
 			break;
 		}

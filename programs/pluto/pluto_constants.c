@@ -496,10 +496,10 @@ const char *prettypolicy(lset_t policy)
 		pbitnamesbuf[0] = '\0';
 	snprintf(buf, sizeof(buf), "%s%s%s%s%s",
 		 pbitnamesbuf,
-		 shunt != 0 ? "+" : "",
-		 shunt != 0 ? policy_shunt_names[shunt] : "",
-		 fail != POLICY_FAIL_NONE >> POLICY_FAIL_SHIFT ? "+failure" : "",
-		 fail != POLICY_FAIL_NONE >> POLICY_FAIL_SHIFT ? policy_fail_names[fail] : "");
+		 shunt == POLICY_SHUNT_TRAP >> POLICY_SHUNT_SHIFT ?  "" : "+",
+		 shunt ==  POLICY_SHUNT_TRAP >> POLICY_SHUNT_SHIFT ? "" : policy_shunt_names[shunt],
+		 fail == POLICY_FAIL_NONE >> POLICY_FAIL_SHIFT ? "" : "+failure",
+		 fail == POLICY_FAIL_NONE >> POLICY_FAIL_SHIFT ? "" : policy_fail_names[fail]);
 	return buf;
 }
 

@@ -634,7 +634,6 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 		case POLICY_SHUNT_REJECT:
 			cwf("type", "reject");
 			break;
-
 		}
 
 #		undef cwpb

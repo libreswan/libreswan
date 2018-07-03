@@ -1266,7 +1266,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 			(ip_address *)NULL, hportof(&md->sender));
 
 		for (; tmp != NULL; tmp = tmp->hp_next) {
-			if ((tmp->policy & POLICY_SHUNT_MASK) != LEMPTY &&
+			if ((tmp->policy & POLICY_SHUNT_MASK) != POLICY_SHUNT_TRAP &&
 			    tmp->kind == CK_INSTANCE &&
 			    addrinsubnet(&md->sender, &tmp->spd.that.client))
 			{
