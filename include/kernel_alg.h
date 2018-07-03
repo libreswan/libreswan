@@ -81,6 +81,4 @@ extern int kernel_alg_add(int satype, int exttype,
 void kernel_integ_add(const struct integ_desc *integ);
 void kernel_encrypt_add(const struct encrypt_desc *encrypt);
 
-extern int alg_info_esp_sadb2aa(int sadb_aalg);
-
 #endif /* _KERNEL_ALG_H */
