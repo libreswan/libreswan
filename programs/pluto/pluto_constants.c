@@ -498,8 +498,8 @@ const char *prettypolicy(lset_t policy)
 		 pbitnamesbuf,
 		 shunt != 0 ? "+" : "",
 		 shunt != 0 ? policy_shunt_names[shunt] : "",
-		 fail != 0 ? "+failure" : "",
-		 fail != 0 ? policy_fail_names[fail] : "");
+		 fail != POLICY_FAIL_NONE >> POLICY_FAIL_SHIFT ? "+failure" : "",
+		 fail != POLICY_FAIL_NONE >> POLICY_FAIL_SHIFT ? policy_fail_names[fail] : "");
 	return buf;
 }
 
