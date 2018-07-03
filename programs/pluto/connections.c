@@ -1515,6 +1515,12 @@ void add_connection(const struct whack_message *wm)
 			}
 		}
 
+		/* fixup symmetric policy flags based on asymmetric ones */
+		if ((wm->left.authby == AUTH_NULL && wm->right.authby == AUTH_RSASIG) ||
+		    (wm->left.authby == AUTH_RSASIG && wm->right.authby == AUTH_NULL)) {
+			c->policy |= POLICY_RSASIG;
+		}
+
 		c->alg_info_ike = NULL;
 
 		if (!LIN(POLICY_AUTH_NEVER, wm->policy) && wm->ike != NULL) {
@@ -1545,12 +1551,6 @@ void add_connection(const struct whack_message *wm)
 				pfree(c);
 				return;
 			}
-			/* fixup symmetric policy flags based on asymmetric ones */
-			if ((wm->left.authby == AUTH_NULL && wm->right.authby == AUTH_RSASIG) ||
-			    (wm->left.authby == AUTH_RSASIG && wm->right.authby == AUTH_NULL)) {
-				c->policy |= POLICY_RSASIG;
-			}
-
 
 			/* from here on, error returns should alg_info_free(&c->alg_info_ike->ai); */
 
