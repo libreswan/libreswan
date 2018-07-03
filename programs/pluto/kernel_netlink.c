@@ -289,6 +289,7 @@ static void init_netlink_route_fd(void)
 	addr.nl_pid = getpid();
 	addr.nl_groups = RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR |
 			 RTMGRP_IPV4_ROUTE | RTMGRP_IPV6_ROUTE | RTMGRP_LINK;
+	addr.nl_pad = 0; /* make coverity happy */
 	if (bind(nl_route_fd, (struct sockaddr *)&addr, sizeof(addr)) != 0)
 		EXIT_LOG_ERRNO(errno, "Failed to bind NETLINK_ROUTE bcast socket - Perhaps kernel was not compiled with CONFIG_XFRM");
 
@@ -1544,6 +1545,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 			fill_and_terminate(algo.alg_name, name,
 					sizeof(algo.alg_name));
 			algo.alg_key_len = sa->enckeylen * BITS_PER_BYTE;
+			algo.alg_key[0] = '\0'; /* make coverity happy */
 
 			attr->rta_type = XFRMA_ALG_CRYPT;
 			attr->rta_len = RTA_LENGTH(sizeof(algo) + sa->enckeylen);
