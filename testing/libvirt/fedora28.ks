@@ -57,9 +57,6 @@ kernel-modules-extra
 -sendmail
 -libreswan
 
-# nm causes problems and steals our interfaces desipte NM_CONTROLLED="no"
--NetworkManager
-
 %end
 
 %post
@@ -147,7 +144,6 @@ export EDITOR=vim
 EOD
 
 systemctl disable firewalld.service
-systemctl enable network.service
 systemctl enable iptables.service
 systemctl enable ip6tables.service
 
