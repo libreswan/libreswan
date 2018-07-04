@@ -109,11 +109,11 @@ EOD
 
 cat << EOD >> /etc/rc.d/rc.local
 #!/bin/sh
-SELINUX=(getenforce)
+SELINUX=\$(getenforce)
 echo "getenforce \$SELINUX" > /tmp/rc.local.txt
 setenforce Permissive
 (mount | grep "testing on /testing") || mount /testing
-(mount | grep "testing on /testing") || mount /source
+(mount | grep "swansource on /source") || mount /source
 /testing/guestbin/swan-transmogrify 2>&1 >> /tmp/rc.local.txt || echo "ERROR swan-transmogrify" >> /tmp/rc.local.txt
 echo "restore SELINUX to \$SELINUX"
 setenforce \$SELINUX
