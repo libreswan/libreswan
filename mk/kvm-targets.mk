@@ -34,7 +34,7 @@ KVM_PREFIXES ?= $(if $(KVM_PREFIX), $(KVM_PREFIX), '')
 KVM_WORKERS ?= 1
 KVM_USER ?= $(shell id -u)
 KVM_GROUP ?= $(shell id -g qemu)
-KVM_MAKEFLAGS ?= USE_EFENCE=true USE_DH31=false
+KVM_MAKEFLAGS ?= USE_EFENCE=true USE_DH31=false USE_DH2=true USE_DH23=true USE_DH24=true
 
 #
 # Generate local names using prefixes
