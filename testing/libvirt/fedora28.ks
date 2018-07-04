@@ -54,6 +54,8 @@ kernel-headers
 kernel-modules
 kernel-modules-extra
 
+NetworkManager-config-server
+
 -sendmail
 -libreswan
 
@@ -152,6 +154,7 @@ EOD
 systemctl disable firewalld.service
 systemctl enable iptables.service
 systemctl enable ip6tables.service
+systemctl enable NetworkManager-wait-online.service
 
 cat << EOD > /etc/systemd/system/sshd-shutdown.service
 # work around for broken systemd/sshd interaction in fedora 20 causes VM hangs
