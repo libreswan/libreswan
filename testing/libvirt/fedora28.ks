@@ -107,8 +107,8 @@ EOD
 
 cat << EOD >> /etc/rc.d/rc.local
 #!/bin/sh
-SELINUX=(getneforce)
-echo "getneforce \$SELINUX" > /tmp/rc.local.txt
+SELINUX=(getenforce)
+echo "getenforce \$SELINUX" > /tmp/rc.local.txt
 setenforce Permissive
 (mount | grep "testing on /testing") || mount /testing
 (mount | grep "testing on /testing") || mount /source
