@@ -54,6 +54,8 @@ kernel-headers
 kernel-modules
 kernel-modules-extra
 
+NetworkManager-config-server
+
 -sendmail
 -libreswan
 
@@ -76,11 +78,6 @@ sed  -i 's/ens.*/eth0/' /etc/sysconfig/network-scripts/ifcfg-eth0
 ifup ens2 >> /var/tmp/network.log
 
 rpm -qa > /var/tmp/rpm-qa-fedora.log
-
-# workaround for vim fedora27 packaging bug. we want vim-enhanced and
-# that clashes with vim-minimal.
-
-rpm -e vim-minimal --nodeps
 
 dnf -y --disablerepo=updates update | tee /var/tmp/dnf-update-fedora.log
 dnf -y --disablerepo=updates install kernel-devel
@@ -107,11 +104,11 @@ EOD
 
 cat << EOD >> /etc/rc.d/rc.local
 #!/bin/sh
-SELINUX=(getenforce)
+SELINUX=\$(getenforce)
 echo "getenforce \$SELINUX" > /tmp/rc.local.txt
 setenforce Permissive
 (mount | grep "testing on /testing") || mount /testing
-(mount | grep "testing on /testing") || mount /source
+(mount | grep "swansource on /source") || mount /source
 /testing/guestbin/swan-transmogrify 2>&1 >> /tmp/rc.local.txt || echo "ERROR swan-transmogrify" >> /tmp/rc.local.txt
 echo "restore SELINUX to \$SELINUX"
 setenforce \$SELINUX
@@ -152,6 +149,7 @@ EOD
 systemctl disable firewalld.service
 systemctl enable iptables.service
 systemctl enable ip6tables.service
+systemctl enable NetworkManager-wait-online.service
 
 cat << EOD > /etc/systemd/system/sshd-shutdown.service
 # work around for broken systemd/sshd interaction in fedora 20 causes VM hangs
