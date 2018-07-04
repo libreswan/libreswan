@@ -252,7 +252,10 @@ struct db_sa *oakley_alg_mergedb(struct alg_info_ike *ai,
 		 */
 		if (single_dh && transcnt > 0 &&
 		    ike_info->dh->group != last_modp) {
-			if (last_modp == OAKLEY_GROUP_MODP1024 ||
+			if (
+#ifdef USE_DH2
+			    last_modp == OAKLEY_GROUP_MODP1024 ||
+#endif
 			    last_modp == OAKLEY_GROUP_MODP1536) {
 				/*
 				 * The previous group will work on old Cisco gear,

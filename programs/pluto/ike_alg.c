@@ -701,7 +701,9 @@ const struct ike_alg_type ike_alg_encrypt = {
 
 static const struct oakley_group_desc *dh_descriptors[] = {
 	&ike_alg_dh_none,
+#ifdef USE_DH2
 	&oakley_group_modp1024,
+#endif
 	&oakley_group_modp1536,
 	&oakley_group_modp2048,
 	&oakley_group_modp3072,

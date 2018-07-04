@@ -422,10 +422,12 @@ USE_LIBCURL?=true
 # amount of code space to pluto, and many of the algorithms have not had
 # the same scrutiny that AES and 3DES have received, but offers possibilities
 # of switching away from AES/3DES quickly.
-# DH22 is too weak - the others listed here are not broken, just not popular
+# DH2 and DH22 are too weak: https://tools.ietf.org/html/rfc8247#section-2.4
+# The others listed here are not broken, just not popular
 USE_SERPENT?=true
 USE_TWOFISH?=true
 USE_3DES?=true
+USE_DH2?=true /* very soon to be false */
 USE_DH22?=false
 USE_DH23?=false
 USE_DH24?=false
