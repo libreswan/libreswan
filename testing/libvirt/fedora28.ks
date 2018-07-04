@@ -107,10 +107,17 @@ EOD
 
 cat << EOD >> /etc/rc.d/rc.local
 #!/bin/sh
-mount /testing
-mount /source
-/testing/guestbin/swan-transmogrify
+SELINUX=(getneforce)
+echo "getneforce \$SELINUX" > /tmp/rc.local.txt
+setenforce Permissive
+(mount | grep "testing on /testing") || mount /testing
+(mount | grep "testing on /testing") || mount /source
+/testing/guestbin/swan-transmogrify 2>&1 >> /tmp/rc.local.txt || echo "ERROR swaa
+n-transmogrify" >> /tmp/rc.local.txt
+echo "restore SELINUX to \$SELINUX"
+setenforce \$SELINUX
 EOD
+
 chmod 755 /etc/rc.d/rc.local
 
 cat << EOD > /etc/profile.d/swanpath.sh
