@@ -197,6 +197,10 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
                 os.mkdir(dir)
                 if "private" in dir:
                     os.chmod(dir, 0o700)
+            else:
+                oldfiles = glob.glob("%s/*.der"%dir) + glob.glob("%s/*.crt"%dir) + glob.glob("%s/*.pem"%dir) + glob.glob("%s/*.key"%dir)
+                for oldfile in oldfiles:
+                    os.unlink(oldfile)
 
         # test specific files
         ipsecconf = "%s/ipsec.conf" % (testpath)
