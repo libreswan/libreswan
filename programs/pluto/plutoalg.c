@@ -285,8 +285,7 @@ void kernel_alg_show_status(void)
 		const struct sadb_alg *alg_p = &esp_ealg[sadb_id];
 
 		whack_log(RC_COMMENT,
-			"algorithm ESP encrypt: id=%d, name=%s, ivlen=%d, keysizemin=%d, keysizemax=%d",
-			sadb_id,
+			"algorithm ESP encrypt: name=%s, ivlen=%d, keysizemin=%d, keysizemax=%d",
 			enum_name(&esp_transformid_names, sadb_id),
 			alg_p->sadb_alg_ivlen,
 			alg_p->sadb_alg_minbits,
@@ -298,8 +297,7 @@ void kernel_alg_show_status(void)
 		const struct sadb_alg *alg_p = &esp_aalg[sadb_id];
 
 		whack_log(RC_COMMENT,
-			"algorithm AH/ESP auth: id=%d, name=%s, keysizemin=%d, keysizemax=%d",
-			id,
+			"algorithm AH/ESP auth: name=%s, keysizemin=%d, keysizemax=%d",
 			enum_name(&auth_alg_names, id),
 			alg_p->sadb_alg_minbits,
 			alg_p->sadb_alg_maxbits);
