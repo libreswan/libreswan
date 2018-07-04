@@ -125,10 +125,6 @@ extern int pfkey_upmsg(struct socket *, struct sadb_msg *);
 extern int pfkey_upmsgsk(struct sock *, struct sadb_msg *);
 extern int pfkey_expire(struct ipsec_sa *, int);
 extern int pfkey_acquire(struct ipsec_sa *);
-#else /* ! __KERNEL__ */
-
-extern void pfkey_print(struct sadb_msg *msg, FILE *out);
-
 #endif /* __KERNEL__ */
 
 extern uint8_t satype2proto(uint8_t satype);

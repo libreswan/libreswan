@@ -163,7 +163,8 @@ ifeq ($(USE_DNSSEC),true)
 OBJS += unbound.o
 endif
 
-OBJS += sanitizestring.o pfkey_print.o pfkey_sock.o pfkey_error.o
+OBJS += sanitizestring.o
+OBJS += pfkey_sock.o pfkey_error.o
 
 ifeq ($(USE_KLIPS),true)
 CFLAGS += -DKLIPS
