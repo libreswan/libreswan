@@ -112,8 +112,7 @@ echo "getenforce \$SELINUX" > /tmp/rc.local.txt
 setenforce Permissive
 (mount | grep "testing on /testing") || mount /testing
 (mount | grep "testing on /testing") || mount /source
-/testing/guestbin/swan-transmogrify 2>&1 >> /tmp/rc.local.txt || echo "ERROR swaa
-n-transmogrify" >> /tmp/rc.local.txt
+/testing/guestbin/swan-transmogrify 2>&1 >> /tmp/rc.local.txt || echo "ERROR swan-transmogrify" >> /tmp/rc.local.txt
 echo "restore SELINUX to \$SELINUX"
 setenforce \$SELINUX
 EOD
