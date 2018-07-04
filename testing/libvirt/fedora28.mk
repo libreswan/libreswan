@@ -15,6 +15,7 @@ KVM_INSTALL_RPM_LIST = 'rpm -aq > /var/tmp/rpm-qa-fedora-updates.log'
 
 KVM_PACKAGES = \
     ElectricFence \
+    NetworkManager-config-server \
     audit-libs-devel \
     bind-utils	\
     bison \
