@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 # run from rc.local by the testing VMs
 import sys
@@ -6,6 +6,16 @@ import os
 import subprocess
 import glob
 import shutil
+
+# return True if different
+def copy_if_diff(src, dst):
+    cmd = "diff %s %s" % (src, dst)
+    (status, output)  = subprocess.getstatusoutput(cmd)
+    if status:
+        shutil.copyfile(src, dst)
+        return status
+
+    return False
 
 # under KVM the guests  use the known MAC address.
 # Use it to figure out who we are
@@ -115,20 +125,29 @@ shutil.copyfile("/testing/baseconfigs/%s/etc/hostname" %
                 hostname, "/etc/hostname")
 
 if GUESTOS == "redhat":
-    shutil.copyfile("/testing/baseconfigs/%s/etc/sysconfig/network" %
-                    hostname, "/etc/sysconfig/network")
+    need_netwrok_restart = False
+
+    src = "/testing/baseconfigs/%s/etc/sysconfig/network" % hostname
+    dst = "/etc/sysconfig/network"
+    if copy_if_diff(src, dst):
+        need_netwrok_restart = True
+
     fnames = glob.glob("/testing/baseconfigs/all/etc/sysconfig/*")
     for fname in fnames:
         if os.path.isfile(fname):
-            shutil.copy(fname, "/etc/sysconfig")
+            dst="/etc/sysconfig/%s" % os.path.basename(fname)
+            if copy_if_diff(fname, dst):
+                need_netwrok_restart = True
 
     ifaces = glob.glob(
         "/testing/baseconfigs/%s/etc/sysconfig/network-scripts/ifcfg*" % hostname)
     routes = glob.glob(
         "/testing/baseconfigs/%s/etc/sysconfig/network-scripts/route*" % hostname)
     for entry in (ifaces + routes):
-        shutil.copyfile(entry, "/etc/sysconfig/network-scripts/%s" %
-                        os.path.basename(entry))
+        dst = "/etc/sysconfig/network-scripts/%s" % os.path.basename(entry)
+        if copy_if_diff(entry, dst):
+            need_netwrok_restart = True
+
         if is_docker:
             iffile = os.path.basename(entry)
             cmd = "sed -i /HWADDR/d /etc/sysconfig/network-scripts/%s" % (
@@ -142,10 +161,12 @@ if GUESTOS == "redhat":
         subprocess.getoutput("chcon -R --reference /var/log /testing/pluto")
 
     if os.path.isfile("/usr/bin/systemctl"):
-        output += "\n" + \
-            subprocess.getoutput("systemctl restart network.service")
+        if need_netwrok_restart:
+            output += "\n" + subprocess.getoutput("systemctl restart network.service")
     else:
-        output += "\n" + subprocess.getoutput("service network restart")
+        if need_netwrok_restart:
+            output += "\n" + subprocess.getoutput("service network restart")
+
     # get rid of damn cp/mv/rm aliases for root
 
     if not "# alias" in open("/root/.bashrc", "r").read():
