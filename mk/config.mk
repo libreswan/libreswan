@@ -427,8 +427,9 @@ USE_SERPENT?=true
 USE_TWOFISH?=true
 USE_3DES?=true
 USE_DH22?=false
+USE_DH31?=true
 USE_CAMELLIA?=true
-USE_CAST?=true
+USE_CAST?=false
 USE_RIPEMD?=false
 
 # Do we want to limit the number of ipsec connections artificially
