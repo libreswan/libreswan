@@ -20,13 +20,10 @@
 #include <stdint.h>
 #include <limits.h>
 
-#include "constants.h"  /* some how sucks in u_int8_t for pfkeyv2.h */
-#include "libreswan/pfkeyv2.h"
 #include "lswalloc.h"
 #include "lswlog.h"
 #include "alg_info.h"
 #include "alg_byname.h"
-#include "kernel_alg.h"
 #include "lswfips.h"
 
 #include "ike_alg.h"

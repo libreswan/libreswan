@@ -1,9 +1,9 @@
-/*
- * Algorithm info parsing and creation functions
+/* ESP parsing and creation functions, for libreswan
+ *
  * Author: JuanJo Ciarlante <jjo-ipsec@mendoza.gov.ar>
  *
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2015-2017 Andrew Cagney
+ * Copyright (C) 2015-2018 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,13 +20,10 @@
 #include <stdint.h>
 #include <limits.h>
 
-#include "constants.h"  /* some how sucks in u_int8_t for pfkeyv2.h */
-#include "libreswan/pfkeyv2.h"
 #include "lswalloc.h"
 #include "lswlog.h"
 #include "alg_info.h"
 #include "alg_byname.h"
-#include "kernel_alg.h"
 #include "lswfips.h"
 
 #include "ike_alg.h"
