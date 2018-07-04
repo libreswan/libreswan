@@ -67,18 +67,18 @@ north #
 000  
 000 ESP algorithms supported:
 000  
-000 algorithm ESP encrypt: id=3, name=ESP_3DES, ivlen=64, keysizemin=192, keysizemax=192
-000 algorithm ESP encrypt: id=6, name=ESP_CAST, ivlen=64, keysizemin=128, keysizemax=128
-000 algorithm ESP encrypt: id=12, name=ESP_AES, ivlen=128, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=252, name=ESP_SERPENT, ivlen=128, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: id=253, name=ESP_TWOFISH, ivlen=128, keysizemin=128, keysizemax=256
-000 algorithm AH/ESP auth: id=1, name=AUTH_ALGORITHM_HMAC_MD5, keysizemin=128, keysizemax=128
-000 algorithm AH/ESP auth: id=2, name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
-000 algorithm AH/ESP auth: id=5, name=AUTH_ALGORITHM_HMAC_SHA2_256, keysizemin=256, keysizemax=256
-000 algorithm AH/ESP auth: id=6, name=AUTH_ALGORITHM_HMAC_SHA2_384, keysizemin=384, keysizemax=384
-000 algorithm AH/ESP auth: id=7, name=AUTH_ALGORITHM_HMAC_SHA2_512, keysizemin=512, keysizemax=512
-000 algorithm AH/ESP auth: id=9, name=AUTH_ALGORITHM_AES_XCBC, keysizemin=128, keysizemax=128
-000 algorithm AH/ESP auth: id=252, name=(null), keysizemin=256, keysizemax=256
+000 algorithm ESP encrypt: name=ESP_3DES, ivlen=64, keysizemin=192, keysizemax=192
+000 algorithm ESP encrypt: name=ESP_CAST, ivlen=64, keysizemin=128, keysizemax=128
+000 algorithm ESP encrypt: name=ESP_AES, ivlen=128, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: name=ESP_SERPENT, ivlen=128, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: name=ESP_TWOFISH, ivlen=128, keysizemin=128, keysizemax=256
+000 algorithm AH/ESP auth: name=AUTH_ALGORITHM_HMAC_MD5, keysizemin=128, keysizemax=128
+000 algorithm AH/ESP auth: name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
+000 algorithm AH/ESP auth: name=AUTH_ALGORITHM_HMAC_SHA2_256, keysizemin=256, keysizemax=256
+000 algorithm AH/ESP auth: name=AUTH_ALGORITHM_HMAC_SHA2_384, keysizemin=384, keysizemax=384
+000 algorithm AH/ESP auth: name=AUTH_ALGORITHM_HMAC_SHA2_512, keysizemin=512, keysizemax=512
+000 algorithm AH/ESP auth: name=AUTH_ALGORITHM_AES_XCBC, keysizemin=128, keysizemax=128
+000 algorithm AH/ESP auth: name=(null), keysizemin=256, keysizemax=256
 000  
 000 IKE algorithms supported:
 000  
