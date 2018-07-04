@@ -1,7 +1,7 @@
 /* Libreswan ISAKMP VendorID Handling
  * Copyright (C) 2002-2003 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2004 Xelerance Corporation
- * Copyright (C) 2012-2014 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
@@ -152,23 +152,81 @@ static struct vid_struct vid_tab[] = {
 	{ VID_OPENPGP, VID_STRING, "OpenPGP10171", "OpenPGP", NULL, 0 },
 
 	DEC_MD5_VID(VID_KAME_RACOON, "KAME/racoon"),
-	{
-		VID_MS_NT5, VID_MD5HASH | VID_SUBSTRING_DUMPHEXA,
-		"MS NT5 ISAKMPOAKLEY", NULL, NULL, 0
-	},
-	/* http://msdn.microsoft.com/en-us/library/cc233476%28v=prot.10%29.aspx
-	   Windows 2000 00 00 00 02
-	   Windows XP 00 00 00 03
-	   Windows Server 2003 00 00 00 04
-	   Windows Vista 00 00 00 05
-	   Windows Server 2008 00 00 00 06
-	   Windows 7 00 00 00 07
-	   Windows Server 2008 R2 00 00 00 08
-	 */
 
-	/* These two VID's plus VID_MS_NT5 trigger GSS-API support */
+	/*
+	 * https://msdn.microsoft.com/en-us/library/cc233476.aspx
+	 * The first few are "MS NT5 ISAKMPOAKLEY" with a version number appended
+	 */
+	{ VID_MS_WIN2K, VID_KEEP, "Windows 2000" , NULL,
+	  "\x1E\x2B\x51\x69\x05\x99\x1C\x7D\x7C\x96\xFC\xBF\xB5\x87\xE4\x61\x00\x00\x00\x02",
+	  20 },
+	{ VID_MS_WINXP, VID_KEEP, "Windows XP" , NULL,
+	  "\x1E\x2B\x51\x69\x05\x99\x1C\x7D\x7C\x96\xFC\xBF\xB5\x87\xE4\x61\x00\x00\x00\x03",
+	  20 },
+	{ VID_MS_WIN2003, VID_KEEP, "Windows Server 2003" , NULL,
+	  "\x1E\x2B\x51\x69\x05\x99\x1C\x7D\x7C\x96\xFC\xBF\xB5\x87\xE4\x61\x00\x00\x00\x04",
+	  20 },
+	{ VID_MS_WINVISTA, VID_KEEP, "Windows Vista", NULL,
+	  "\x1E\x2B\x51\x69\x05\x99\x1C\x7D\x7C\x96\xFC\xBF\xB5\x87\xE4\x61\x00\x00\x00\x05",
+	  20 },
+	{ VID_MS_WIN2008, VID_KEEP, "Windows Server 2008", NULL,
+	  "\x1E\x2B\x51\x69\x05\x99\x1C\x7D\x7C\x96\xFC\xBF\xB5\x87\xE4\x61\x00\x00\x00\x06",
+	  20 },
+	{ VID_MS_WIN7, VID_KEEP, "Windows 7", NULL,
+	  "\x1E\x2B\x51\x69\x05\x99\x1C\x7D\x7C\x96\xFC\xBF\xB5\x87\xE4\x61\x00\x00\x00\x07",
+	  20 },
+	{ VID_MS_WIN2008R2, VID_KEEP, "Windows Server 2008 R2", NULL,
+	  "\x1E\x2B\x51\x69\x05\x99\x1C\x7D\x7C\x96\xFC\xBF\xB5\x87\xE4\x61\x00\x00\x00\x08",
+	  20 },
+	{ VID_MS_WINKSINK09, VID_KEEP, "Windows 8, 8.1, 10, Server 2012 R2, Server 2016", NULL,
+	  "\x1E\x2B\x51\x69\x05\x99\x1C\x7D\x7C\x96\xFC\xBF\xB5\x87\xE4\x61\x00\x00\x00\x09",
+	  20 },
+	{ VID_MS_WINKEYMODS_IKE, VID_KEEP, "Windows KEY_MODS (IKE)", NULL,
+	  "\x01\x52\x8b\xbb\xc0\x06\x96\x12\x18\x49\xab\x9a\x1c\x5b\x2a\x51\x00\x00\x00\x00",
+	  20 },
+	{ VID_MS_WINKEYMODS_AUTHIP, VID_KEEP, "Windows KEY_MODS (AUTHIP)", NULL,
+	  "\x01\x52\x8b\xbb\xc0\x06\x96\x12\x18\x49\xab\x9a\x1c\x5b\x2a\x51\x00\x00\x00\x01",
+	  20 },
+	{ VID_MS_WINKEYMODS_IKEv2, VID_KEEP, "Windows KEY_MODS (IKEv2)", NULL,
+	  "\x01\x52\x8b\xbb\xc0\x06\x96\x12\x18\x49\xab\x9a\x1c\x5b\x2a\x51\x00\x00\x00\x02",
+	  20 },
+	{ VID_MS_AUTHIP_KE_DH_NONE, VID_KEEP, "AUTHIP INIT KE DH NONE", NULL,
+	  "\x7B\xB9\x38\x67\xD7\x6C\x8D\x80\xDF\x0F\x40\xFA\xE8\xFC\x3B\x19\x00\x00\x00\x00",
+	  20 },
+	{ VID_MS_AUTHIP_KE_DH1, VID_KEEP, "AUTHIP INIT KE DH1", NULL,
+	  "\x7B\xB9\x38\x67\xD7\x6C\x8D\x80\xDF\x0F\x40\xFA\xE8\xFC\x3B\x19\x00\x00\x00\x01",
+	  20 },
+	{ VID_MS_AUTHIP_KE_DH2, VID_KEEP, "AUTHIP INIT KE DH2", NULL,
+	  "\x7B\xB9\x38\x67\xD7\x6C\x8D\x80\xDF\x0F\x40\xFA\xE8\xFC\x3B\x19\x00\x00\x00\x02",
+	  20 },
+	{ VID_MS_AUTHIP_KE_DH14, VID_KEEP, "AUTHIP INIT KE DH14", NULL,
+	  "\x7B\xB9\x38\x67\xD7\x6C\x8D\x80\xDF\x0F\x40\xFA\xE8\xFC\x3B\x19\x00\x00\x00\x03",
+	  20 },
+	{ VID_MS_AUTHIP_KE_DH19, VID_KEEP, "AUTHIP INIT KE DH19(ECP 256)", NULL,
+	  "\x7B\xB9\x38\x67\xD7\x6C\x8D\x80\xDF\x0F\x40\xFA\xE8\xFC\x3B\x19\x00\x00\x00\x04",
+	  20 },
+	{ VID_MS_AUTHIP_KE_DH20, VID_KEEP, "AUTHIP INIT KE DH20(ECP 384)", NULL,
+	  "\x7B\xB9\x38\x67\xD7\x6C\x8D\x80\xDF\x0F\x40\xFA\xE8\xFC\x3B\x19\x00\x00\x00\x05",
+	  20 },
+	{ VID_MS_AUTHIP_KE_DH21, VID_KEEP, "AUTHIP INIT KE DH21(ECP 521)", NULL,
+	  "\x7B\xB9\x38\x67\xD7\x6C\x8D\x80\xDF\x0F\x40\xFA\xE8\xFC\x3B\x19\x00\x00\x00\x06",
+	  20 },
+	{ VID_MS_AUTHIP_KE_DHMAX, VID_KEEP, "AUTHIP INIT KE DH MAX", NULL,
+	  "\x7B\xB9\x38\x67\xD7\x6C\x8D\x80\xDF\x0F\x40\xFA\xE8\xFC\x3B\x19\x00\x00\x00\x07",
+	  20 },
+
+	DEC_MD5_VID(VID_MS_NLBS_PRESENT, "NLBS_PRESENT(NLB/MSCS fast failover supported)"),
+	DEC_MD5_VID(VID_MS_MAMIEEXISTS, "MS-MamieExists(AuthIP supported)"),
+	DEC_MD5_VID(VID_MS_CGAv1, "IKE CGA version 1"),
+	DEC_MD5_VID(VID_MS_NEGDISCCAP, "MS-Negotiation Discovery Capable"),
+	DEC_MD5_VID(VID_MS_XBOX_ONE_2013, "Microsoft Xbox One 2013"),
+	DEC_MD5_VID(VID_MS_XBOX_IKEv2, "Xbox IKEv2 Negotiation"),
+	DEC_MD5_VID(VID_MS_SEC_REALM_ID, "MSFT IPsec Security Realm Id"),
+
+	/* These two VID's plus VID_MS_NT5 trigger GSS-API support on Windows */
 	DEC_MD5_VID(VID_GSSAPILONG, "A GSS-API Authentication Method for IKE"),
 	DEC_MD5_VID(VID_GSSAPI, "GSSAPI"),
+
 
 	DEC_MD5_VID(VID_SSH_SENTINEL, "SSH Sentinel"),
 	DEC_MD5_VID(VID_SSH_SENTINEL_1_1, "SSH Sentinel 1.1"),

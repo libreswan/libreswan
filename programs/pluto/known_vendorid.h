@@ -5,7 +5,7 @@
  * Copyright (C) 2007 Ken Bantoft <ken@xelerance.com>
  * Copyright (C) 2008-2011 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
  *
@@ -31,7 +31,32 @@ enum known_vendorid {
 
 	VID_OPENPGP,
 	VID_KAME_RACOON,
-	VID_MS_NT5,
+	VID_MS_WIN2K,
+	VID_MS_WINXP,
+	VID_MS_WIN2003,
+	VID_MS_WINVISTA,
+	VID_MS_WIN2008,
+	VID_MS_WIN7,
+	VID_MS_WIN2008R2,
+	VID_MS_WINKSINK09,
+	VID_MS_WINKEYMODS_IKE,
+	VID_MS_WINKEYMODS_AUTHIP,
+	VID_MS_WINKEYMODS_IKEv2,
+	VID_MS_AUTHIP_KE_DH_NONE,
+	VID_MS_AUTHIP_KE_DH1,
+	VID_MS_AUTHIP_KE_DH2,
+	VID_MS_AUTHIP_KE_DH14,
+	VID_MS_AUTHIP_KE_DH19,
+	VID_MS_AUTHIP_KE_DH20,
+	VID_MS_AUTHIP_KE_DH21,
+	VID_MS_AUTHIP_KE_DHMAX,
+	VID_MS_NLBS_PRESENT,
+	VID_MS_MAMIEEXISTS,
+	VID_MS_CGAv1,
+	VID_MS_NEGDISCCAP,
+	VID_MS_XBOX_ONE_2013,
+	VID_MS_XBOX_IKEv2,
+	VID_MS_SEC_REALM_ID,
 	VID_SSH_SENTINEL,
 	VID_SSH_SENTINEL_1_1,
 	VID_SSH_SENTINEL_1_2,
