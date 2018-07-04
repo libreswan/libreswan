@@ -1159,63 +1159,49 @@ int main(int argc, char *argv[])
 	case XF_OTHER_ALG:
 		/* validate keysizes */
 		if (proc_read_ok) {
-			const struct sadb_alg *alg_p;
-			size_t keylen, minbits, maxbits;
-			/*
-			 * XXX: According to "alg_info.h", TRANSID is
-			 * an "enum ipsec_cipher_algo".  This code
-			 * seems to assume that those values 1:1 map
-			 * onto the corresponding kernel SADB value?
-			 */
-			alg_p = kernel_alg_sadb_alg_get(SADB_SATYPE_ESP,
-							SADB_EXT_SUPPORTED_ENCRYPT,
-							esp_info->encrypt->common.id[IKEv1_ESP_ID]);
-			assert(alg_p != NULL);
-			keylen = enckeylen * 8;
-
-			minbits = alg_p->sadb_alg_minbits;
-			maxbits = alg_p->sadb_alg_maxbits;
-			/*
-			 * if explicit keylen told in encrypt algo, eg "aes128"
-			 * check actual keylen "equality"
-			 */
-			if (esp_info->enckeylen &&
-			    esp_info->enckeylen != keylen) {
-				fprintf(stderr, "%s: invalid encryption keylen=%d, "
-					"required %d by encrypt algo string=\"%s\"\n",
-					progname,
-					(int)keylen,
-					(int)esp_info->enckeylen,
-					alg_string);
-				exit(1);
-
+			{
+				size_t keylen = enckeylen * 8;
+				size_t minbits = encrypt_min_key_bit_length(esp_info->encrypt);
+				size_t maxbits = encrypt_max_key_bit_length(esp_info->encrypt);
+				/*
+				 * if explicit keylen told in encrypt
+				 * algo, eg "aes128" check actual
+				 * keylen "equality"
+				 */
+				if (esp_info->enckeylen &&
+				    esp_info->enckeylen != keylen) {
+					fprintf(stderr, "%s: invalid encryption keylen=%d, "
+						"required %d by encrypt algo string=\"%s\"\n",
+						progname,
+						(int)keylen,
+						(int)esp_info->enckeylen,
+						alg_string);
+					exit(1);
+				}
+				/* thanks DES for this sh*t */
+				if (minbits > keylen || maxbits < keylen) {
+					fprintf(stderr, "%s: invalid encryption keylen=%d, "
+						"must be between %d and %d bits\n",
+						progname,
+						(int)keylen,
+						(int)minbits,
+						(int)maxbits);
+					exit(1);
+				}
 			}
-			/* thanks DES for this sh*t */
-
-			if (minbits > keylen || maxbits < keylen) {
-				fprintf(stderr, "%s: invalid encryption keylen=%d, "
-					"must be between %d and %d bits\n",
-					progname,
-					(int)keylen,
-					(int)minbits,
-					(int)maxbits);
-				exit(1);
-			}
-			alg_p = kernel_alg_sadb_alg_get(SADB_SATYPE_ESP,
-							SADB_EXT_SUPPORTED_AUTH,
-							esp_info->integ->integ_ikev1_ah_transform);
-			assert(alg_p);
-			keylen = authkeylen * 8;
-			minbits = alg_p->sadb_alg_minbits;
-			maxbits = alg_p->sadb_alg_maxbits;
-			if (minbits > keylen || maxbits < keylen) {
-				fprintf(stderr, "%s: invalid auth keylen=%d, "
-					"must be between %d and %d bits\n",
-					progname,
-					(int)keylen,
-					(int)minbits,
-					(int)maxbits);
-				exit(1);
+			{
+				size_t keylen = authkeylen * 8;
+				size_t minbits = esp_info->integ->integ_keymat_size * 8;
+				size_t maxbits = esp_info->integ->integ_keymat_size * 8;
+				if (minbits > keylen || maxbits < keylen) {
+					fprintf(stderr, "%s: invalid auth keylen=%d, "
+						"must be between %d and %d bits\n",
+						progname,
+						(int)keylen,
+						(int)minbits,
+						(int)maxbits);
+					exit(1);
+				}
 			}
 		}
 		/*

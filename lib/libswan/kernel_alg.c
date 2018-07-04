@@ -126,11 +126,6 @@ static struct sadb_alg *sadb_alg_ptr(unsigned satype, unsigned exttype,
 	}
 }
 
-const struct sadb_alg *kernel_alg_sadb_alg_get(unsigned satype,
-					unsigned exttype, unsigned alg_id)
-{
-	return sadb_alg_ptr(satype, exttype, alg_id, FALSE);
-}
 /*
  *      Forget previous registration
  */
