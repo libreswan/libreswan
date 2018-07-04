@@ -131,6 +131,12 @@ endif
 ifeq ($(USE_DH22),true)
 USERLAND_CFLAGS+=-DUSE_DH22
 endif
+ifeq ($(USE_DH23),true)
+USERLAND_CFLAGS+=-DUSE_DH23
+endif
+ifeq ($(USE_DH24),true)
+USERLAND_CFLAGS+=-DUSE_DH24
+endif
 ifeq ($(USE_CAMELLIA),true)
 USERLAND_CFLAGS+=-DUSE_CAMELLIA
 endif

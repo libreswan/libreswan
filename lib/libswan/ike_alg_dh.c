@@ -268,6 +268,7 @@ const struct oakley_group_desc oakley_group_dh22 = {
 };
 #endif
 
+#ifdef USE_DH23
 const struct oakley_group_desc oakley_group_dh23 = {
 	.common = {
 		.algo_type = IKE_ALG_DH,
@@ -288,7 +289,9 @@ const struct oakley_group_desc oakley_group_dh23 = {
 	.bytes = BYTES_FOR_BITS(2048),
 	.dh_ops = &ike_alg_dh_nss_modp_ops,
 };
+#endif
 
+#ifdef USE_DH24
 const struct oakley_group_desc oakley_group_dh24 = {
 	.common = {
 		.algo_type = IKE_ALG_DH,
@@ -309,6 +312,7 @@ const struct oakley_group_desc oakley_group_dh24 = {
 	.bytes = BYTES_FOR_BITS(2048),
 	.dh_ops = &ike_alg_dh_nss_modp_ops,
 };
+#endif
 
 /* https://tools.ietf.org/html/rfc8031 */
 

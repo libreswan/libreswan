@@ -714,8 +714,12 @@ static const struct oakley_group_desc *dh_descriptors[] = {
 #ifdef USE_DH22
 	&oakley_group_dh22,
 #endif
+#ifdef USE_DH23
 	&oakley_group_dh23,
+#endif
+#ifdef USE_DH24
 	&oakley_group_dh24,
+#endif
 #ifdef USE_DH31
 	&oakley_group_dh31,
 #endif
