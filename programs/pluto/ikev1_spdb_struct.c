@@ -158,25 +158,28 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 static err_t check_kernel_encrypt_alg(const struct encrypt_desc *encrypt,
 				      unsigned int key_len)
 {
-	int alg_id = encrypt->common.id[IKEv1_ESP_ID];
 	err_t ugh = NULL;
 
 	/*
 	 * test #1: encrypt algo must be present
 	 */
-
-	if (!ESP_EALG_PRESENT(alg_id)) {
-		DBG(DBG_KERNEL,
-			DBG_log("check_kernel_encrypt_alg(%d,%d): alg not present in system",
-				alg_id, key_len);
-			);
+	if (!kernel_alg_encrypt_ok(encrypt)) {
+		DBGF(DBG_KERNEL, "alg %s (%d) not present in kernel",
+		     encrypt != NULL ? encrypt->common.fqn : "(NULL)", key_len);
 		ugh = "encryption alg not present in kernel";
 	} else {
 		/*
 		 * XXX: Pretty much all of the code below is bogus.
 		 * Can instead just ask the IKE_ALG if the key_length
-		 * is valid.  See IKEv2.
+		 * is valid.
+		 *
+		 * Yes, technically, the kernel may only support a
+		 * sub-set of algorithms supported by pluto.  Has that
+		 * ever happend in the wild?
+		 *
+		 *  See IKEv2.
 		 */
+		int alg_id = encrypt->common.id[IKEv1_ESP_ID];
 		struct sadb_alg *alg_p = kernel_alg_esp_sadb_alg(alg_id);
 
 		passert(alg_p != NULL);
