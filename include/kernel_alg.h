@@ -59,10 +59,6 @@ extern int esp_aalg_num;
 	for ((algo) = 1; (algo) <= K_SADB_EALG_MAX; (algo)++) \
 		if (ESP_EALG_PRESENT(algo))
 
-#define ESP_EALG_FOR_EACH_DOWN(algo) \
-	for ((algo) = K_SADB_EALG_MAX; (algo) > 0; (algo)--) \
-		if (ESP_EALG_PRESENT(algo))
-
 #define ESP_AALG_PRESENT(algo) ((algo) <= SADB_AALG_MAX && \
 				esp_aalg[algo].sadb_alg_id == (algo))
 
