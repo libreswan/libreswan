@@ -86,9 +86,7 @@ void show_status(void)
 	show_virtual_private();
 	kernel_alg_show_status();
 	ike_alg_show_status();
-#ifndef NO_DB_OPS_STATS
 	db_ops_show_status();
-#endif
 	show_connections_status();
 	show_states_status();
 #ifdef KLIPS

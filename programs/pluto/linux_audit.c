@@ -67,10 +67,7 @@
 
 #include <libaudit.h>
 
-#ifndef NO_DB_OPS_STATS
-#define NO_DB_CONTEXT
 #include "db_ops.h"
-#endif
 
 #include "pluto_stats.h"
 
