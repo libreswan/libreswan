@@ -188,8 +188,12 @@ static void compute_proto_keymat(struct state *st,
 {
 	size_t needed_len = 0; /* bytes of keying material needed */
 
-	/* Add up the requirements for keying material
-	 * (It probably doesn't matter if we produce too much!)
+	/*
+	 * Add up the requirements for keying material (It probably
+	 * doesn't matter if we produce too much!)
+	 *
+	 * XXX: This entire switch can probably be reduced to just the
+	 * "default:" case.
 	 */
 	switch (protoid) {
 	case PROTO_IPSEC_ESP:
@@ -302,8 +306,8 @@ static void compute_proto_keymat(struct state *st,
 		/* ESP_SEED is for IKEv1 only and not supported. Its number in IKEv2 has been re-used */
 
 		default:
-			needed_len = kernel_alg_esp_enc_max_keylen(
-					pi->attrs.transattrs.ta_ikev1_encrypt);
+			/* bytes */
+			needed_len = encrypt_max_key_bit_length(pi->attrs.transattrs.ta_encrypt) / BITS_PER_BYTE;
 			if (needed_len > 0) {
 				/* XXX: check key_len coupling with kernel.c's */
 				if (pi->attrs.transattrs.enckeylen) {

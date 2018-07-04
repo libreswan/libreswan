@@ -346,26 +346,6 @@ void kernel_alg_register_pfkey(const struct sadb_msg *msg)
 	passert(msg_left == 0);
 }
 
-int kernel_alg_esp_enc_max_keylen(int alg_id)
-{
-	int keylen = 0;
-
-	if (!ESP_EALG_PRESENT(alg_id)) {
-		DBG(DBG_KERNEL,
-			DBG_log("kernel_alg_esp_enc_max_keylen(): alg_id=%d not found",
-				alg_id);
-			);
-		return 0;
-	}
-
-	keylen = esp_ealg[alg_id].sadb_alg_maxbits / BITS_PER_BYTE;
-	DBG(DBG_KERNEL,
-		DBG_log("kernel_alg_esp_enc_max_keylen(): alg_id=%d, keylen=%d",
-			alg_id, keylen);
-		);
-	return keylen;
-}
-
 struct sadb_alg *kernel_alg_esp_sadb_alg(int alg_id)
 {
 	struct sadb_alg *sadb_alg = NULL;

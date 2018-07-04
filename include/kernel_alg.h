@@ -40,9 +40,6 @@ extern bool kernel_alg_integ_ok(const struct integ_desc *integ);
 /* ESP interface */
 extern struct sadb_alg *kernel_alg_esp_sadb_alg(int alg_id);
 
-/* returns encrypt keylen in BYTES for esp enc alg passed */
-extern int kernel_alg_esp_enc_max_keylen(int alg_id);
-
 /* get sadb_alg for passed args */
 extern const struct sadb_alg *kernel_alg_sadb_alg_get(unsigned satype, unsigned exttype,
 						       unsigned alg_id);

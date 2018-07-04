@@ -100,13 +100,9 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 			pexpect(def_ks == new_keysize);
 
 			if (def_ks != 0) {
-				int max_ks = BITS_PER_BYTE *
-					kernel_alg_esp_enc_max_keylen(ealg_i);
-
-				db_attr_add_values(db_ctx,
-					KEY_LENGTH,
-					def_ks);
+				db_attr_add_values(db_ctx, KEY_LENGTH, def_ks);
 				/* add this trans again with max key size */
+				int max_ks = encrypt_max_key_bit_length(esp_info->encrypt);
 				if (def_ks != max_ks) {
 					db_trans_add(db_ctx, ealg_i);
 					if (esp_info->integ != &ike_alg_integ_none) {
