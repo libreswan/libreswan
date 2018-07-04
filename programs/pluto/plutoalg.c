@@ -137,16 +137,16 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
  *	malloced pointer (this quirk allows easier spdb.c change)
  */
 static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
-				     lset_t policy, bool logit)
+					    lset_t policy, bool logit)
 {
 	unsigned int trans_cnt = 0;
 	int protoid = PROTO_RESERVED;
 
 	if (policy & POLICY_ENCRYPT) {
-		trans_cnt = (esp_ealg_num * esp_aalg_num);
+		trans_cnt = kernel_alg_encrypt_count() * kernel_alg_integ_count();
 		protoid = PROTO_IPSEC_ESP;
 	} else if (policy & POLICY_AUTHENTICATE) {
-		trans_cnt = esp_aalg_num;
+		trans_cnt = kernel_alg_integ_count();
 		protoid = PROTO_IPSEC_AH;
 	}
 
@@ -276,26 +276,22 @@ static int alg_info_esp_sadb2aa(int sadb_aalg)
 
 void kernel_alg_show_status(void)
 {
-	unsigned sadb_id;
-
 	whack_log(RC_COMMENT, "ESP algorithms supported:");
 	whack_log(RC_COMMENT, " "); /* spacer */
 
-	ESP_EALG_FOR_EACH(sadb_id) {
-		const struct sadb_alg *alg_p = &esp_ealg[sadb_id];
-
+	for (struct sadb_alg *alg_p = next_kernel_encrypt_alg(NULL);
+	     alg_p != NULL; alg_p = next_kernel_encrypt_alg(alg_p)) {
 		whack_log(RC_COMMENT,
 			"algorithm ESP encrypt: name=%s, ivlen=%d, keysizemin=%d, keysizemax=%d",
-			enum_name(&esp_transformid_names, sadb_id),
+			enum_name(&esp_transformid_names, alg_p->sadb_alg_id),
 			alg_p->sadb_alg_ivlen,
 			alg_p->sadb_alg_minbits,
 			alg_p->sadb_alg_maxbits);
 	}
 
-	ESP_AALG_FOR_EACH(sadb_id) {
-		unsigned id = alg_info_esp_sadb2aa(sadb_id);
-		const struct sadb_alg *alg_p = &esp_aalg[sadb_id];
-
+	for (struct sadb_alg *alg_p = next_kernel_integ_alg(NULL);
+	     alg_p != NULL; alg_p = next_kernel_integ_alg(alg_p)) {
+		unsigned id = alg_info_esp_sadb2aa(alg_p->sadb_alg_id);
 		whack_log(RC_COMMENT,
 			"algorithm AH/ESP auth: name=%s, keysizemin=%d, keysizemax=%d",
 			enum_name(&auth_alg_names, id),

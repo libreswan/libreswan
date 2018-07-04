@@ -47,24 +47,11 @@ extern const struct sadb_alg *kernel_alg_sadb_alg_get(unsigned satype, unsigned 
 bool kernel_alg_encrypt_key_size(const struct encrypt_desc *encrypt,
 				 int keylen, size_t *key_size);
 
-extern struct sadb_alg esp_aalg[];
-extern struct sadb_alg esp_ealg[];
-extern int esp_ealg_num;
-extern int esp_aalg_num;
+int kernel_alg_encrypt_count(void);
+int kernel_alg_integ_count(void);
 
-#define ESP_EALG_PRESENT(algo) ((algo) <= K_SADB_EALG_MAX && \
-				esp_ealg[algo].sadb_alg_id == (algo))
-
-#define ESP_EALG_FOR_EACH(algo) \
-	for ((algo) = 1; (algo) <= K_SADB_EALG_MAX; (algo)++) \
-		if (ESP_EALG_PRESENT(algo))
-
-#define ESP_AALG_PRESENT(algo) ((algo) <= SADB_AALG_MAX && \
-				esp_aalg[algo].sadb_alg_id == (algo))
-
-#define ESP_AALG_FOR_EACH(algo) \
-	for ((algo) = 1; (algo) <= SADB_AALG_MAX; (algo)++) \
-		if (ESP_AALG_PRESENT(algo))
+struct sadb_alg *next_kernel_encrypt_alg(struct sadb_alg *last);
+struct sadb_alg *next_kernel_integ_alg(struct sadb_alg *last);
 
 extern void kernel_alg_init(void);
 
