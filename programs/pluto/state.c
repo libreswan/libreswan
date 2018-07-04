@@ -3123,8 +3123,8 @@ void ISAKMP_SA_established(const struct state *pst)
 
 	/* NULL authentication can never replaced - it is all anonymous */
 	if (LIN(POLICY_AUTH_NULL, c->policy) ||
-	   (c->spd.that.authby == AUTH_NULL || c->spd.this.authby == AUTH_NULL)) {
-
+	    c->spd.that.authby == AUTH_NULL ||
+	    c->spd.this.authby == AUTH_NULL) {
 		DBG(DBG_CONTROL, DBG_log("NULL Authentication - all clients appear identical"));
 	} else if (c->spd.this.xauth_server && LIN(POLICY_PSK, c->policy)) {
 		/*
@@ -3145,8 +3145,8 @@ void ISAKMP_SA_established(const struct state *pst)
 			struct connection *next = d->ac_next;
 
 			if (c != d && c->kind == d->kind && streq(c->name, d->name) &&
-			    (same_id(&c->spd.this.id, &d->spd.this.id) &&
-			     same_id(&c->spd.that.id, &d->spd.that.id)))
+			    same_id(&c->spd.this.id, &d->spd.this.id) &&
+			    same_id(&c->spd.that.id, &d->spd.that.id))
 			{
 				DBG(DBG_CONTROL, DBG_log("Unorienting old connection with same IDs"));
 				suppress_delete(d); /* don't send a delete */
@@ -3166,24 +3166,21 @@ void ISAKMP_SA_established(const struct state *pst)
 		 * this IKE SA still as the active one?
 		 */
 		if (pst->st_seen_initialc) {
-
 			if (c->newest_isakmp_sa != SOS_NOBODY &&
-				c->newest_isakmp_sa != pst->st_serialno) {
-					struct state *old_p1 = state_by_serialno(c->newest_isakmp_sa);
+			    c->newest_isakmp_sa != pst->st_serialno) {
+				struct state *old_p1 = state_by_serialno(c->newest_isakmp_sa);
 
-					DBG(DBG_CONTROL, DBG_log("deleting replaced IKE state for %s",
-						old_p1->st_connection->name));
-					old_p1->st_suppress_del_notify = TRUE;
-					event_force(EVENT_SA_EXPIRE, old_p1);
+				DBG(DBG_CONTROL, DBG_log("deleting replaced IKE state for %s",
+					old_p1->st_connection->name));
+				old_p1->st_suppress_del_notify = TRUE;
+				event_force(EVENT_SA_EXPIRE, old_p1);
 			}
 
-			if (c->newest_ipsec_sa != SOS_NOBODY)
-			{
+			if (c->newest_ipsec_sa != SOS_NOBODY) {
 				struct state *old_p2 = state_by_serialno(c->newest_ipsec_sa);
 				struct connection *d = old_p2 == NULL ? NULL : old_p2->st_connection;
 
-				if (c == d && same_id(&c->spd.that.id, &d->spd.that.id))
-				{
+				if (c == d && same_id(&c->spd.that.id, &d->spd.that.id)) {
 					DBG(DBG_CONTROL, DBG_log("Initial Contact received, deleting old state #%lu from connection '%s'",
 						c->newest_ipsec_sa, c->name));
 					old_p2->st_suppress_del_notify = TRUE;
@@ -3191,7 +3188,6 @@ void ISAKMP_SA_established(const struct state *pst)
 				}
 			}
 		}
-
 	}
 
 	c->newest_isakmp_sa = pst->st_serialno;

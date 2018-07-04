@@ -1315,9 +1315,9 @@ void add_connection(const struct whack_message *wm)
 	}
 
 	if ((wm->policy & (POLICY_IKEV2_PROPOSE | POLICY_IKEV2_ALLOW)) == POLICY_IKEV2_PROPOSE) {
-			loglog(RC_FATAL, "Failed to add connection \"%s\": cannot insist on IKEv2 while forbidding it",
-				wm->name);
-			return;
+		loglog(RC_FATAL, "Failed to add connection \"%s\": cannot insist on IKEv2 while forbidding it",
+			wm->name);
+		return;
 	}
 
 	if (wm->policy & POLICY_OPPORTUNISTIC) {
