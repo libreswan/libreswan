@@ -1,9 +1,9 @@
-/*
- * Kernel runtime algorithm handling interface definitions
+/* Kernel algorithm DB, for libreswan
+ *
  * Author: JuanJo Ciarlante <jjo-ipsec@mendoza.gov.ar>
  * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2017 Andrew Cagney
+ * Copyright (C) 2017-2018 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,8 +16,41 @@
  * for more details.
  */
 
-#ifndef _KERNEL_ALG_H
-#define _KERNEL_ALG_H
+#ifndef KERNEL_ALG_H
+#define KERNEL_ALG_H
+
+/*
+ * This is a database of algorithms supported by the kernel and,
+ * hence, can be negotiated for ESP and AH.  For instance, using
+ * PF_KEY (rfc2367), it is theoretically possible to query the kernel
+ * for supported algorithms and key sizes and use that to populate
+ * this database.
+ *
+ * Of course reality steps in:
+ *
+ * - there's a race between the kernel loading a crypto module and
+ *   this database being populated (suspect it gets populated when the
+ *   first connection is initiated?)
+ *
+ * - there's often a gap between what PF_KEY returns and what the
+ *   kernel can support (linux works around this by hardwiring
+ *   entries)
+ *
+ * - there's often a gap between what the PF_KEY headers say is
+ *   supported and what the kernel supports (linux works around this
+ *   by having pluto local headers)
+ *
+ * - is there an XFRM way to query what the kernel supports?  I
+ *   suspect linux still uses PF_KEY.
+ *
+ * - while PF_KEY returns key sizes (minbits, maxbits), the
+ *   information is ignored and instead the ike_alg DB is consulted
+ *   for this information (suspect that while PF_KEY was written to
+ *   support variable length keys only fix sized keys have ever been
+ *   used - 128 192 256 - and PF_KEY can't describe that
+ *
+ */
+
 #include "libreswan/pfkeyv2.h"
 
 struct ike_alg; /* forward declaration */
@@ -57,4 +90,5 @@ extern int kernel_alg_add(int satype, int exttype,
 void kernel_integ_add(const struct integ_desc *integ);
 void kernel_encrypt_add(const struct encrypt_desc *encrypt);
 
-#endif /* _KERNEL_ALG_H */
+#endif
+
