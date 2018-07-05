@@ -70,9 +70,6 @@ extern bool kernel_alg_dh_ok(const struct oakley_group_desc *dh);
 extern bool kernel_alg_encrypt_ok(const struct encrypt_desc *encrypt);
 extern bool kernel_alg_integ_ok(const struct integ_desc *integ);
 
-/* ESP interface */
-extern struct sadb_alg *kernel_alg_esp_sadb_alg(int alg_id);
-
 bool kernel_alg_encrypt_key_size(const struct encrypt_desc *encrypt,
 				 int keylen, size_t *key_size);
 

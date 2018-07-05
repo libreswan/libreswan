@@ -158,94 +158,35 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 static err_t check_kernel_encrypt_alg(const struct encrypt_desc *encrypt,
 				      unsigned int key_len)
 {
-	err_t ugh = NULL;
-
 	/*
 	 * test #1: encrypt algo must be present
+	 *
+	 * XXX: The algorithm parser should have already rejected
+	 * algorithms not supported by the kernel.
 	 */
 	if (!kernel_alg_encrypt_ok(encrypt)) {
 		DBGF(DBG_KERNEL, "alg %s (%d) not present in kernel",
 		     encrypt != NULL ? encrypt->common.fqn : "(NULL)", key_len);
-		ugh = "encryption alg not present in kernel";
-	} else {
-		/*
-		 * XXX: Pretty much all of the code below is bogus.
-		 * Can instead just ask the IKE_ALG if the key_length
-		 * is valid.
-		 *
-		 * Yes, technically, the kernel may only support a
-		 * sub-set of algorithms supported by pluto.  Has that
-		 * ever happend in the wild?
-		 *
-		 *  See IKEv2.
-		 */
-		int alg_id = encrypt->common.id[IKEv1_ESP_ID];
-		struct sadb_alg *alg_p = kernel_alg_esp_sadb_alg(alg_id);
-
-		passert(alg_p != NULL);
-		switch (alg_id) {
-		case ESP_AES_GCM_8:
-		case ESP_AES_GCM_12:
-		case ESP_AES_GCM_16:
-		case ESP_AES_CCM_8:
-		case ESP_AES_CCM_12:
-		case ESP_AES_CCM_16:
-		case ESP_AES_CTR:
-		case ESP_CAMELLIA:
-			/* ??? does 0 make sense here? */
-			if (key_len != 0 && key_len != 128 &&
-			    key_len != 192 && key_len != 256) {
-				/* ??? function name does not belong in log */
-				ugh = builddiag("kernel_alg_db_add() key_len is incorrect: alg_id=%d, key_len=%d, alg_minbits=%d, alg_maxbits=%d",
-						alg_id, key_len,
-						alg_p->sadb_alg_minbits,
-						alg_p->sadb_alg_maxbits);
-			}
-			break;
-
-		/* ESP_SEED_CBC not supported by us - also number got re-used in IKEv2 */
-
-		case ESP_CAST:
-			if (key_len != 128) {
-				/* ??? function name does not belong in log */
-				ugh = builddiag("kernel_alg_db_add() key_len is incorrect: alg_id=%d, key_len=%d, alg_minbits=%d, alg_maxbits=%d",
-						alg_id, key_len,
-						alg_p->sadb_alg_minbits,
-						alg_p->sadb_alg_maxbits);
-			}
-			break;
-		default:
-			/* old behaviour - not necc. correct */
-			if (key_len != 0 &&
-			    (key_len < alg_p->sadb_alg_minbits ||
-			     key_len > alg_p->sadb_alg_maxbits)) {
-				/* ??? function name does not belong in log */
-				ugh = builddiag("kernel_alg_db_add() key_len not in range: alg_id=%d, key_len=%d, alg_minbits=%d, alg_maxbits=%d",
-					alg_id, key_len,
-					alg_p->sadb_alg_minbits,
-					alg_p->sadb_alg_maxbits);
-			}
-		}
-
-		if (ugh != NULL) {
-			DBG(DBG_KERNEL,
-				DBG_log("check_kernel_encrypt_alg(%d,%d): %s alg_id=%d, alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, res=%d",
-					alg_id, key_len, ugh,
-					alg_p->sadb_alg_id,
-					alg_p->sadb_alg_ivlen,
-					alg_p->sadb_alg_minbits,
-					alg_p->sadb_alg_maxbits,
-					alg_p->sadb_alg_reserved);
-				);
-		} else {
-			DBG(DBG_KERNEL,
-				DBG_log("check_kernel_encrypt_alg(%d,%d): OK",
-					alg_id, key_len);
-				);
-		}
+		return "encryption alg not present in kernel";
 	}
 
-	return ugh;
+	/*
+	 * test #2: key length valid
+	 *
+	 * XXX: While, in theory, the kernel may support fewer key
+	 * lengths then listed in encrypt_desc there's no evidence
+	 * that happens with the current code (at one point variable
+	 * key lengths were possible but that is long gone).  If it
+	 * does turn out to be a problem then the place to fix it is
+	 * in the algorithm parser where it checks an algorithm is ok
+	 * (so it is rejected up front) and not here.
+	 */
+	if (!encrypt_has_key_bit_length(encrypt, key_len)) {
+		return builddiag("%s key_len %d is incorrect",
+				 encrypt->common.fqn, key_len);
+	}
+
+	return NULL;
 }
 
 /** output an attribute (within an SA) */

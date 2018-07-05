@@ -355,20 +355,6 @@ void kernel_alg_register_pfkey(const struct sadb_msg *msg)
 	passert(msg_left == 0);
 }
 
-struct sadb_alg *kernel_alg_esp_sadb_alg(int alg_id)
-{
-	struct sadb_alg *sadb_alg = NULL;
-
-	if (ESP_EALG_PRESENT(alg_id))
-		sadb_alg = &esp_ealg[alg_id];
-
-	DBG(DBG_KERNEL,
-		DBG_log("kernel_alg_esp_sadb_alg(): alg_id=%d, sadb_alg=%p",
-			alg_id, sadb_alg);
-		);
-	return sadb_alg;
-}
-
 bool kernel_alg_dh_ok(const struct oakley_group_desc *dh)
 {
 	if (dh == NULL) {
