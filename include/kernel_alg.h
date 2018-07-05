@@ -54,15 +54,14 @@
 #include "libreswan/pfkeyv2.h"
 
 struct ike_alg; /* forward declaration */
-struct sadb_msg; /* forward definition */
-
-/* Registration messages from pluto */
-extern void kernel_alg_register_pfkey(const struct sadb_msg *msg);
 
 struct alg_info;	/* forward declaration */
 struct esp_info;	/* forward declaration */
 struct alg_info_ike;	/* forward declaration */
 struct alg_info_esp;	/* forward declaration */
+struct oakley_group_desc;
+struct encrypt_desc;
+struct integ_desc;
 
 extern bool kernel_alg_is_ok(const struct ike_alg *alg);
 
@@ -88,4 +87,3 @@ void kernel_integ_add(const struct integ_desc *integ);
 void kernel_encrypt_add(const struct encrypt_desc *encrypt);
 
 #endif
-

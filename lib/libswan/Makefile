@@ -4,7 +4,7 @@
 # Copyright (C) 2003, 2004 Xelerance Corporation
 # Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
 # Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2015-2017 Andrew Cagney
+# Copyright (C) 2015-2018 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -43,7 +43,7 @@ OBJS += constants.o \
 	id.o initaddr.o initsaid.o initsubnet.o \
 	iprange.o \
         keyblobtoid.o \
-	kernel_alg.o lex.o \
+	lex.o \
 	lswconf.o \
 	lswfips.o \
 	rangetosubnet.o sameaddr.o \
@@ -55,6 +55,14 @@ OBJS += constants.o \
 	lswnss.o \
 	lsw_passert_fail.o \
 	alg_byname.o
+
+OBJS += kernel_alg.o
+
+ifeq ($(USE_KLIPS),true)
+OBJS += kernel_sadb.o
+else ifeq ($(USE_NETKEY),true)
+OBJS += kernel_sadb.o
+endif
 
 # These get pulled in from the klips kernel code.
 VPATH += ${KLIPSSRCDIR}

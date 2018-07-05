@@ -311,50 +311,6 @@ void kernel_encrypt_add(const struct encrypt_desc *encrypt)
 	}
 }
 
-/*
- * Load kernel_alg arrays pluto's SADB_REGISTER
- * Used by programs/pluto/kernel_pfkey.c and programs/pluto/kernel_netlink.c
- */
-void kernel_alg_register_pfkey(const struct sadb_msg *msg)
-{
-	const void *p;	/* cursor through message */
-	uint8_t satype;
-	size_t msg_left;
-
-	satype = msg->sadb_msg_satype;
-	msg_left = msg->sadb_msg_len * IPSEC_PFKEYv2_ALIGN;
-	passert(PFKEYv2_MAX_MSGSIZE >= msg_left);
-	p = msg + 1;	/* after header */
-	msg_left -= sizeof(struct sadb_msg);
-	while (msg_left >= sizeof(struct sadb_supported)) {
-		const struct sadb_supported *supp = p;
-		uint16_t supp_exttype = supp->sadb_supported_exttype;
-		size_t supp_len = supp->sadb_supported_len *
-			IPSEC_PFKEYv2_ALIGN;
-
-		DBG(DBG_KERNEL,
-			DBG_log("kernel_alg_register_pfkey(): SADB_SATYPE_%s: sadb_msg_len=%u sadb_supported_len=%zd",
-				satype == SADB_SATYPE_ESP ? "ESP" :
-					satype == SADB_SATYPE_AH ? "AH" : "???",
-				msg->sadb_msg_len,
-				supp_len);
-			);
-		passert(supp_len >= sizeof(struct sadb_supported));
-		passert(msg_left >= supp_len);
-		p = supp + 1;	/* after header */
-		msg_left -= supp_len;
-		for (supp_len -= sizeof(struct sadb_supported);
-		     supp_len >= sizeof(struct sadb_alg);
-		     supp_len -= sizeof(struct sadb_alg)) {
-			const struct sadb_alg *alg = p;
-			kernel_alg_add(satype, supp_exttype, alg);
-			p = alg + 1;	/* after alg */
-		}
-		passert(supp_len == 0);
-	}
-	passert(msg_left == 0);
-}
-
 bool kernel_alg_dh_ok(const struct oakley_group_desc *dh)
 {
 	if (dh == NULL) {
