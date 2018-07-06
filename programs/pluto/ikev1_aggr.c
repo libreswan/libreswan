@@ -20,59 +20,26 @@
  *
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stddef.h>
-#include <stdlib.h>
 #include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/time.h>           /* for gettimeofday */
-#include <resolv.h>
 
-#include <libreswan.h>
-#include "libreswan/pfkeyv2.h"
+#include "constants.h"		/* for dup_any()!?! ... */
+#include "lswlog.h"
+#include "alg_info.h"
 
-#include "sysdep.h"
-#include "constants.h"
 #include "defs.h"
 #include "state.h"
-#include "id.h"
-#include "x509.h"
-#include "certs.h"
 #include "connections.h"        /* needs id.h */
-#include "keys.h"
 #include "packet.h"
 #include "demux.h"      /* needs packet.h */
-#include "kernel.h"     /* needs connections.h */
 #include "log.h"
 #include "cookie.h"
-#include "server.h"
 #include "spdb.h"
-#include "timer.h"
-#include "rnd.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
-#include "whack.h"
-#include "fetch.h"
-#include "asn1.h"
 #include "ikev1_send.h"
-#include "crypto.h"
-
-#include "ike_alg.h"
-#include "kernel_alg.h"
-#include "plutoalg.h"
 #include "pluto_crypt.h"
 #include "ikev1.h"
-#include "ikev1_continuations.h"
-#include "ip_address.h"
-
-#include "ikev1_xauth.h"
-
 #include "vendor.h"
 #include "nat_traversal.h"
-#include "virtual.h"	/* needs connections.h */
-#include "ikev1_dpd.h"
 #include "pluto_x509.h"
 
 /* STATE_AGGR_R0: HDR, SA, KE, Ni, IDii

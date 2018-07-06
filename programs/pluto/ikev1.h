@@ -3,6 +3,7 @@
 
 #include "pluto_crypt.h"
 #include "ikev1_continuations.h"
+#include "packet.h"		/* for pb_stream */
 
 /* ikev1.c */
 

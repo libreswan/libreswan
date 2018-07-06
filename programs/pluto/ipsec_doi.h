@@ -16,6 +16,8 @@
  * for more details.
  */
 
+struct payload_digest;
+
 struct xfrm_user_sec_ctx_ike *uctx; /* forward declaration */
 
 typedef void initiator_function(int whack_sock,
