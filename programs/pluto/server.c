@@ -90,7 +90,6 @@
 
 #include "nat_traversal.h"
 
-#include "lsw_select.h"
 #include "lswfips.h"
 
 #ifdef HAVE_SECCOMP

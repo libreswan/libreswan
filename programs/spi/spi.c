@@ -65,7 +65,6 @@
 #include "kernel_alg.h"
 #include "pfkey_help.h"
 #include "ip_address.h"
-#include "lsw_select.h"
 
 struct encap_msghdr *em;
 

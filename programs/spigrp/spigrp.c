@@ -47,7 +47,6 @@
 #include "libreswan/ipsec_encap.h"
 #include "libreswan/ipsec_ah.h"
 
-#include "lsw_select.h"
 #include "ip_address.h"
 
 const char *progname;

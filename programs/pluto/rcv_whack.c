@@ -36,6 +36,7 @@
 #include <arpa/inet.h>
 #include <resolv.h>
 #include <fcntl.h>
+#include <unistd.h>		/* for gethostname() */
 
 #include <libreswan.h>
 #include "libreswan/pfkeyv2.h"

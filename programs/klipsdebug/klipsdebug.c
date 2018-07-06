@@ -52,7 +52,6 @@
 #include <stdio.h>
 #include <getopt.h>
 
-#include "lsw_select.h"
 #include "lswlog.h"
 __u32 bigbuf[1024];
 char *program_name;
