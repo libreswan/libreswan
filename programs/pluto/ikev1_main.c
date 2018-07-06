@@ -390,7 +390,7 @@ main_mode_hash(struct state *st,
  * RSAES-PKCS1-V1_5) in PKCS#2.
  * Returns 0 on failure.
  */
-size_t RSA_sign_hash(struct connection *c,
+size_t RSA_sign_hash(const struct connection *c,
 		u_char sig_val[RSA_MAX_OCTETS],
 		const u_char *hash_val, size_t hash_len)
 {
@@ -1320,17 +1320,8 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 						struct pluto_crypto_req *r)
 {
 	struct state *const st = md->st;
-	int auth_payload = st->st_oakley.auth == OAKLEY_PRESHARED_KEY ?
-		ISAKMP_NEXT_HASH : ISAKMP_NEXT_SIG;
-	pb_stream id_pbs; /* ID Payload; also used for hash calculation */
-	bool send_cert = FALSE;
-	bool send_cr = FALSE;
-	bool send_authcerts = FALSE;
-	bool send_full_chain = FALSE;
-	bool initial_contact = FALSE;
-	cert_t mycert = st->st_connection->spd.this.cert;
-	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
-	int chain_len = 0;
+	const struct connection *c = st->st_connection;
+	const cert_t mycert = c->spd.this.cert;
 
 	if (!finish_dh_secretiv(st, r))
 		return STF_FAIL + INVALID_KEY_INFORMATION;
@@ -1346,30 +1337,29 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 	 * told we can send one if asked, and we were asked, or we were told
 	 * to always send one.
 	 */
-	send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
+	bool send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
 		mycert.ty != CERT_NONE && mycert.u.nss_cert != NULL &&
-		((st->st_connection->spd.this.sendcert == CERT_SENDIFASKED &&
+		((c->spd.this.sendcert == CERT_SENDIFASKED &&
 		  st->hidden_variables.st_got_certrequest) ||
-		 st->st_connection->spd.this.sendcert == CERT_ALWAYSSEND);
+		 c->spd.this.sendcert == CERT_ALWAYSSEND);
 
-	send_authcerts = (send_cert &&
-			  st->st_connection->send_ca != CA_SEND_NONE);
+	bool send_authcerts = (send_cert &&
+			  c->send_ca != CA_SEND_NONE);
 
-	send_full_chain = (send_authcerts &&
-			   st->st_connection->send_ca == CA_SEND_ALL);
+	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
+	int chain_len = 0;
 
 	if (send_authcerts) {
 		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN,
-						       mycert.u.nss_cert,
-					    send_full_chain ? TRUE : FALSE);
+					   mycert.u.nss_cert,
+					   c->send_ca == CA_SEND_ALL);
+		if (chain_len == 0)
+			send_authcerts = FALSE;
 	}
-
-	if (chain_len < 1)
-		send_authcerts = FALSE;
 
 	doi_log_cert_thinking(st->st_oakley.auth,
 			mycert.ty,
-			st->st_connection->spd.this.sendcert,
+			c->spd.this.sendcert,
 			st->hidden_variables.st_got_certrequest,
 			send_cert,
 			send_authcerts);
@@ -1378,7 +1368,7 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 	 * send certificate request, if we don't have a preloaded RSA
 	 * public key
 	 */
-	send_cr = send_cert && !has_preloaded_public_key(st);
+	bool send_cr = send_cert && !has_preloaded_public_key(st);
 
 	DBG(DBG_CONTROL,
 		DBG_log(" I am %ssending a certificate request",
@@ -1400,7 +1390,7 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 	 * ikev1_quick.c
 	 *
 	 */
-	initial_contact = st->st_connection->initial_contact;
+	bool initial_contact = c->initial_contact;
 	DBG(DBG_CONTROLMORE,
 		DBG_log("I will %ssend an initial contact payload",
 			initial_contact ? "" : "NOT "));
@@ -1418,13 +1408,18 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 	/* HDR* out done */
 
 	/* IDii out */
+	pb_stream id_pbs; /* ID Payload; used later for hash calculation */
+	enum next_payload_types_ikev1 auth_payload =
+		st->st_oakley.auth == OAKLEY_PRESHARED_KEY ?
+			ISAKMP_NEXT_HASH : ISAKMP_NEXT_SIG;
+
 	{
 		struct isakmp_ipsec_id id_hd;
 		chunk_t id_b;
 
-		build_id_payload(&id_hd, &id_b, &st->st_connection->spd.this, FALSE);
+		build_id_payload(&id_hd, &id_b, &c->spd.this, FALSE);
 		id_hd.isaiid_np =
-			(send_cert) ? ISAKMP_NEXT_CERT : auth_payload;
+			send_cert ? ISAKMP_NEXT_CERT : auth_payload;
 		if (!out_struct(&id_hd,
 				&isakmp_ipsec_identification_desc,
 				rbody,
@@ -1453,12 +1448,11 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 		}
 	} else if (send_cert) {
-		u_int8_t np;
+		enum next_payload_types_ikev1 nnp =
+			send_cr ? ISAKMP_NEXT_CR : ISAKMP_NEXT_SIG;
 
-		if (!send_cr && !send_authcerts)
-			np = ISAKMP_NEXT_SIG;
-		else
-			np = send_authcerts ? ISAKMP_NEXT_CERT : ISAKMP_NEXT_CR;
+		enum next_payload_types_ikev1 np =
+			send_authcerts ? ISAKMP_NEXT_CERT : nnp;
 
 		libreswan_log("I am sending my cert");
 
@@ -1469,15 +1463,14 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 		}
 
-		if (np == ISAKMP_NEXT_CERT) {
+		if (send_authcerts) {
 			/* we've got CA certificates to send */
 			libreswan_log("I am sending a CA cert chain");
 			if (!ikev1_ship_chain(auth_chain,
 					      chain_len,
 					      rbody,
 					      mycert.ty,
-					      send_cr ? ISAKMP_NEXT_CR :
-							ISAKMP_NEXT_SIG)) {
+					      nnp)) {
 				free_auth_chain(auth_chain, chain_len);
 				return STF_INTERNAL_ERROR;
 			}
@@ -1489,7 +1482,7 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 	if (send_cr) {
 		libreswan_log("I am sending a certificate request");
 		if (!ikev1_build_and_ship_CR(mycert.ty,
-					     st->st_connection->spd.that.ca,
+					     c->spd.that.ca,
 					     rbody, ISAKMP_NEXT_SIG))
 			return STF_INTERNAL_ERROR;
 	}
@@ -1510,7 +1503,7 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 		} else {
 			/* SIG_I out */
 			u_char sig_val[RSA_MAX_OCTETS];
-			size_t sig_len = RSA_sign_hash(st->st_connection,
+			size_t sig_len = RSA_sign_hash(c,
 						sig_val, hash_val,
 						hash_len);
 
@@ -1607,6 +1600,8 @@ stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)
 /*
  * Processs the Main Mode ID Payload and the Authenticator
  * (Hash or Signature Payload).
+ * Note: oakley_id_and_auth may switch the connection being used!
+ * But only if we are a Main Mode Responder.
  * XXX: This is used by aggressive mode too, move to ikev1.c ???
  */
 stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
@@ -1620,21 +1615,23 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 
 	/*
 	 * ID Payload in.
-	 * Note: this may switch the connection being used!
+	 * Note: ikev1_decode_peer_id may switch the connection being used!
+	 * But only if we are a Main Mode Responder.
 	 */
 	if (!st->st_peer_alt_id  && !ikev1_decode_peer_id(md, initiator, aggrmode)) {
-	DBG(DBG_CONTROLMORE, DBG_log("Peer ID failed to decode"));
+		DBG(DBG_CONTROLMORE, DBG_log("Peer ID failed to decode"));
 		return STF_FAIL + INVALID_ID_INFORMATION;
 	}
 
 	/*
 	 * process any CERT payloads if aggrmode
 	 */
-	if (!st->st_peer_alt_id)
+	if (!st->st_peer_alt_id) {
 		ret = ike_decode_cert(md);
 
-	if (ret != LSW_CERT_NONE && ret != LSW_CERT_ID_OK)
-		return STF_FAIL + INVALID_ID_INFORMATION;
+		if (ret != LSW_CERT_NONE && ret != LSW_CERT_ID_OK)
+			return STF_FAIL + INVALID_ID_INFORMATION;
+	}
 
 	/*
 	 * Hash the ID Payload.
@@ -1689,29 +1686,12 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
  * PSK_AUTH: HDR*, IDi1, HASH_I --> HDR*, IDr1, HASH_R
  * DS_AUTH: HDR*, IDi1, [ CERT, ] SIG_I --> HDR*, IDr1, [ CERT, ] SIG_R
  * PKE_AUTH, RPKE_AUTH: HDR*, HASH_I --> HDR*, HASH_R
- *
  */
-
-static inline stf_status main_id_and_auth(struct msg_digest *md,
-					/* are we the Initiator? */
-					bool initiator)
-{
-	return oakley_id_and_auth(md, initiator, FALSE);
-}
 
 stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 {
 	pexpect(st == md->st);
 	st = md->st;
-	u_int8_t auth_payload;
-	pb_stream r_id_pbs; /* ID Payload; also used for hash calculation */
-	cert_t mycert;
-	bool send_cert = FALSE;
-	bool send_authcerts = FALSE;
-	bool send_full_chain = FALSE;
-	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
-	int chain_len = 0;
-	u_int8_t np;
 
 	/* handle case where NSS balked at generating DH */
 	if (st->st_shared_nss == NULL)
@@ -1719,42 +1699,42 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 
 	/*
 	 * ID and HASH_I or SIG_I in
-	 * Note: this may switch the connection being used!
+	 * Note: oakley_id_and_auth may switch the connection being used
+	 * since we are a Main Mode Responder.
 	 */
 	{
 		stf_status r = oakley_id_and_auth(md, FALSE, FALSE);
 		if (r != STF_OK)
 			return r;
-
 	}
+	const struct connection *c = st->st_connection;
 
 	/* send certificate if we have one and auth is RSA */
-	mycert = st->st_connection->spd.this.cert;
+	cert_t mycert = c->spd.this.cert;
 
-	send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
+	bool send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
 		mycert.ty != CERT_NONE && mycert.u.nss_cert != NULL &&
-		((st->st_connection->spd.this.sendcert == CERT_SENDIFASKED &&
+		((c->spd.this.sendcert == CERT_SENDIFASKED &&
 		  st->hidden_variables.st_got_certrequest) ||
-		 st->st_connection->spd.this.sendcert == CERT_ALWAYSSEND);
+		 c->spd.this.sendcert == CERT_ALWAYSSEND);
 
-	send_authcerts = (send_cert &&
-			  st->st_connection->send_ca != CA_SEND_NONE);
+	bool send_authcerts = (send_cert &&
+			  c->send_ca != CA_SEND_NONE);
 
-	send_full_chain = (send_authcerts &&
-			   st->st_connection->send_ca == CA_SEND_ALL);
+	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
+	int chain_len = 0;
 
 	if (send_authcerts) {
 		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN,
-						       mycert.u.nss_cert,
-					    send_full_chain ? TRUE : FALSE);
+					   mycert.u.nss_cert,
+					   c->send_ca == CA_SEND_ALL);
+		if (chain_len == 0)
+			send_authcerts = FALSE;
 	}
-
-	if (chain_len < 1)
-		send_authcerts = FALSE;
 
 	doi_log_cert_thinking(st->st_oakley.auth,
 			mycert.ty,
-			st->st_connection->spd.this.sendcert,
+			c->spd.this.sendcert,
 			st->hidden_variables.st_got_certrequest,
 			send_cert,
 			send_authcerts);
@@ -1768,7 +1748,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	 * built output packet if we need to suspend for asynch DNS.
 	 *
 	 * ??? NOTE: this is almost the same as main_inR2_outI3's code
-	 **/
+	 */
 
 	/*
 	 * HDR* out
@@ -1780,10 +1760,12 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 				    &reply_stream, reply_buffer, sizeof(reply_buffer),
 				    &rbody);
 
-	auth_payload = st->st_oakley.auth == OAKLEY_PRESHARED_KEY ?
+	enum next_payload_types_ikev1 auth_payload = st->st_oakley.auth == OAKLEY_PRESHARED_KEY ?
 		ISAKMP_NEXT_HASH : ISAKMP_NEXT_SIG;
 
 	/* IDir out */
+	pb_stream r_id_pbs; /* ID Payload; used later for hash calculation */
+
 	{
 		/*
 		 * id_hd should be struct isakmp_id, but struct isakmp_ipsec_id
@@ -1792,9 +1774,9 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 		struct isakmp_ipsec_id id_hd;
 		chunk_t id_b;
 
-		build_id_payload(&id_hd, &id_b, &st->st_connection->spd.this, FALSE);
+		build_id_payload(&id_hd, &id_b, &c->spd.this, FALSE);
 		id_hd.isaiid_np =
-			(send_cert) ? ISAKMP_NEXT_CERT : auth_payload;
+			send_cert ? ISAKMP_NEXT_CERT : auth_payload;
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 					&rbody, &r_id_pbs) ||
 			!out_chunk(id_b, &r_id_pbs, "my identity")) {
@@ -1808,20 +1790,19 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	/* CERT out, if we have one */
 	if (send_cert && IMPAIR(SEND_PKCS7_THINGIE)) {
 		libreswan_log("IMPAIR: sending cert as pkcs7 blob");
-		enum next_payload_types_ikev1 np = ISAKMP_NEXT_SIG;
 		SECItem *pkcs7 = nss_pkcs7_blob(mycert.u.nss_cert, send_authcerts);
 		if (!pexpect(pkcs7 != NULL)) {
 			return STF_INTERNAL_ERROR;
 		}
 		if (!ikev1_ship_CERT(CERT_PKCS7_WRAPPED_X509,
 				     same_secitem_as_chunk(*pkcs7),
-				     &rbody, np)) {
+				     &rbody, ISAKMP_NEXT_SIG)) {
 			SECITEM_FreeItem(pkcs7, PR_TRUE);
 			return STF_INTERNAL_ERROR;
 		}
 	} else if (send_cert) {
-		u_int8_t npp = send_authcerts ? ISAKMP_NEXT_CERT :
-						ISAKMP_NEXT_SIG;
+		enum next_payload_types_ikev1 npp = send_authcerts ?
+			ISAKMP_NEXT_CERT : ISAKMP_NEXT_SIG;
 
 		libreswan_log("I am sending my cert");
 		if (!ikev1_ship_CERT(mycert.ty,
@@ -1831,7 +1812,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 			return STF_INTERNAL_ERROR;
 		}
 
-		if (npp == ISAKMP_NEXT_CERT) {
+		if (send_authcerts) {
 			libreswan_log("I am sending a CA cert chain");
 			if (!ikev1_ship_chain(auth_chain, chain_len,
 							  &rbody,
@@ -1845,12 +1826,12 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	}
 
 	/* IKEv2 NOTIFY payload */
-	np = ISAKMP_NEXT_NONE;
-	if (st->st_connection->policy & POLICY_IKEV2_ALLOW)
-		np = ISAKMP_NEXT_VID;
 
 	/* HASH_R or SIG_R out */
 	{
+		enum next_payload_types_ikev1 np = (c->policy & POLICY_IKEV2_ALLOW) ?
+			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+
 		u_char hash_val[MAX_DIGEST_LEN];
 		size_t hash_len =
 			main_mode_hash(st, hash_val, FALSE, &r_id_pbs);
@@ -1863,7 +1844,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 		} else {
 			/* SIG_R out */
 			u_char sig_val[RSA_MAX_OCTETS];
-			size_t sig_len = RSA_sign_hash(st->st_connection,
+			size_t sig_len = RSA_sign_hash(c,
 						sig_val, hash_val,
 						hash_len);
 
@@ -1880,7 +1861,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 		}
 	}
 
-	if (st->st_connection->policy & POLICY_IKEV2_ALLOW) {
+	if (c->policy & POLICY_IKEV2_ALLOW) {
 		if (!out_vid(ISAKMP_NEXT_NONE, &rbody, VID_MISC_IKEv2))
 			return STF_INTERNAL_ERROR;
 	}
@@ -1901,15 +1882,15 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	 * are not supposed to be performed again during rekey
 	 */
 
-	if (st->st_connection->remotepeertype == CISCO &&
-		st->st_connection->newest_isakmp_sa != SOS_NOBODY &&
-		st->st_connection->spd.this.xauth_client) {
+	if (c->remotepeertype == CISCO &&
+	    c->newest_isakmp_sa != SOS_NOBODY &&
+	    c->spd.this.xauth_client) {
 		DBG(DBG_CONTROL,
 			DBG_log("Skipping XAUTH for rekey for Cisco Peer compatibility."));
 		st->hidden_variables.st_xauth_client_done = TRUE;
 		st->st_oakley.doing_xauth = FALSE;
 
-		if (st->st_connection->spd.this.modecfg_client) {
+		if (c->spd.this.modecfg_client) {
 			DBG(DBG_CONTROL,
 				DBG_log("Skipping ModeCFG for rekey for Cisco Peer compatibility."));
 			st->hidden_variables.st_modecfg_vars_set = TRUE;
@@ -1921,7 +1902,6 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 #ifdef USE_LINUX_AUDIT
 	linux_audit_conn(st, LAK_PARENT_START);
 #endif
-
 
 	return STF_OK;
 }
@@ -1943,7 +1923,8 @@ static stf_status main_inR3_tail(struct state *st, struct msg_digest *md)
 {
 	/*
 	 * ID and HASH_R or SIG_R in
-	 * Note: this may switch the connection being used!
+	 * Note: oakley_id_and_auth will not switch the connection being used
+	 * because we are the Responder.
 	 */
 	{
 		stf_status r = oakley_id_and_auth(md, TRUE, FALSE);

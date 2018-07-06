@@ -77,10 +77,15 @@ extern void aggr_outI1(int whack_sock,
 
 extern void send_v1_delete(struct state *st);
 
+/*
+ * note: ikev1_decode_peer_id may change which connection is referenced by
+ * md->st->st_connection.
+ * But only if we are a Main Mode Responder.
+ */
 extern bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
 			   bool aggrmode);
 
-extern size_t RSA_sign_hash(struct connection *c,
+extern size_t RSA_sign_hash(const struct connection *c,
 			    u_char sig_val[RSA_MAX_OCTETS],
 			    const u_char *hash_val, size_t hash_len);
 
@@ -90,15 +95,13 @@ main_mode_hash(struct state *st,
 	       bool hashi,              /* Initiator? */
 	       const pb_stream *idpl);  /* ID payload, as PBS; cur must be at end */
 
+/*
+ * Note: oakley_id_and_auth may switch the connection being used!
+ * But only if we are a Main Mode Responder.
+ */
 extern stf_status oakley_id_and_auth(struct msg_digest *md,
 				     bool initiator,                    /* are we the Initiator? */
 				     bool aggrmode);                     /* aggressive mode? */
-
-static inline stf_status aggr_id_and_auth(struct msg_digest *md,
-					  bool initiator)               /* are we the Initiator? */
-{
-	return oakley_id_and_auth(md, initiator, TRUE);
-}
 
 extern bool ikev1_ship_chain(chunk_t *chain, int n, pb_stream *outs,
 					     u_int8_t type,

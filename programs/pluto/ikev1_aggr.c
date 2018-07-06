@@ -229,6 +229,10 @@ stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 		policy & POLICY_RSASIG ? OAKLEY_RSA_SIG :
 		0;	/* we don't really know */
 
+	/*
+	 * note: ikev1_decode_peer_id may change which connection is referenced by md->st->st_connection.
+	 * But not in this case because we are Aggressive Mode
+	 */
 	if (!ikev1_decode_peer_id(md, FALSE, TRUE)) {
 		char buf[IDTOA_BUF];
 		ipstr_buf b;
@@ -242,8 +246,7 @@ stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 		return STF_FAIL + INVALID_ID_INFORMATION;
 	}
 
-	c = st->st_connection;	/* ikev1_decode_peer_id() may change md->st->st_connection */
-	set_cur_state(st);
+	passert(c == st->st_connection);
 
 	st->st_try = 0;                                 /* Not our job to try again from start */
 	st->st_policy = c->policy & ~POLICY_IPSEC_MASK; /* only as accurate as connection */
@@ -310,20 +313,10 @@ stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 						 struct pluto_crypto_req *r)
 {
-	struct state *st = md->st;
-	struct connection *c = st->st_connection;
-	bool send_cert = FALSE;
-	bool send_cr = FALSE;
-	bool send_authcerts = FALSE;
-	bool send_full_chain = FALSE;
+	struct state *const st = md->st;
+	const struct connection *c = st->st_connection;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
-	int auth_payload;
-	cert_t mycert = c->spd.this.cert;
-	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
-	int chain_len = 0;
-
-	pb_stream r_sa_pbs;
-	pb_stream r_id_pbs; /* ID Payload; also used for hash calculation */
+	const cert_t mycert = c->spd.this.cert;
 
 	/* parse_isakmp_sa also spits out a winning SA into our reply,
 	 * so we have to build our reply_stream and emit HDR before calling it.
@@ -343,25 +336,26 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 	 * told we can send one if asked, and we were asked, or we were told
 	 * to always send one.
 	 */
-	send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
-		    mycert.ty != CERT_NONE && mycert.u.nss_cert != NULL &&
-		    ((c->spd.this.sendcert == CERT_SENDIFASKED &&
-		      st->hidden_variables.st_got_certrequest) ||
-		     c->spd.this.sendcert == CERT_ALWAYSSEND
-		     );
+	bool send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
+		mycert.ty != CERT_NONE && mycert.u.nss_cert != NULL &&
+		((c->spd.this.sendcert == CERT_SENDIFASKED &&
+		  st->hidden_variables.st_got_certrequest) ||
+		 c->spd.this.sendcert == CERT_ALWAYSSEND
+		);
 
-	send_authcerts = (send_cert && c->send_ca != CA_SEND_NONE);
+	bool send_authcerts = (send_cert && c->send_ca != CA_SEND_NONE);
 
-	send_full_chain = (send_authcerts && c->send_ca == CA_SEND_ALL);
+	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
+	int chain_len = 0;
 
 	if (send_authcerts) {
 		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN,
 				mycert.u.nss_cert,
-				send_full_chain ? TRUE : FALSE);
-	}
+				c->send_ca == CA_SEND_ALL);
 
-	if (chain_len < 1)
-		send_authcerts = FALSE;
+		if (chain_len == 0)
+			send_authcerts = FALSE;
+	}
 
 	doi_log_cert_thinking(st->st_oakley.auth,
 			      mycert.ty,
@@ -370,7 +364,7 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 			      send_cert, send_authcerts);
 
 	/* send certificate request, if we don't have a preloaded RSA public key */
-	send_cr = send_cert && !has_preloaded_public_key(st);
+	bool send_cr = send_cert && !has_preloaded_public_key(st);
 
 	DBG(DBG_CONTROL,
 	    DBG_log(" I am %ssending a certificate request",
@@ -383,6 +377,7 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 
 	/* HDR out */
 	pb_stream rbody;
+
 	{
 		struct isakmp_hdr hdr = md->hdr;
 
@@ -410,6 +405,9 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 		r_sa.isasa_doi = ISAKMP_DOI_IPSEC;
 
 		r_sa.isasa_np = ISAKMP_NEXT_KE;
+
+		pb_stream r_sa_pbs;
+
 		if (!out_struct(&r_sa, &isakmp_sa_desc, &rbody,
 				&r_sa_pbs)) {
 			free_auth_chain(auth_chain, chain_len);
@@ -426,7 +424,8 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 	}
 
 	/* don't know until after SA body has been parsed */
-	auth_payload = st->st_oakley.auth == OAKLEY_PRESHARED_KEY ?
+	enum next_payload_types_ikev1 auth_payload =
+		st->st_oakley.auth == OAKLEY_PRESHARED_KEY ?
 		       ISAKMP_NEXT_HASH : ISAKMP_NEXT_SIG;
 
 	/************** build rest of output: KE, Nr, IDir, HASH_R/SIG_R ********/
@@ -445,6 +444,9 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 	}
 
 	/* IDir out */
+
+	pb_stream r_id_pbs; /* ID Payload; used later for hash calculation */
+
 	{
 		struct isakmp_ipsec_id id_hd;
 		chunk_t id_b;
@@ -502,6 +504,7 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 	/* HASH_R or SIG_R out */
 	{
 		u_char hash_val[MAX_DIGEST_LEN];
+
 		size_t hash_len =
 			main_mode_hash(st, hash_val, FALSE, &r_id_pbs);
 
@@ -594,6 +597,10 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 
 	st->st_policy |= POLICY_AGGRESSIVE;	/* ??? surely this should be done elsewhere */
 
+	/*
+	 * note: ikev1_decode_peer_id may change which connection is referenced by md->st->st_connection.
+	 * But not in this case because we are Aggressive Mode
+	 */
 	if (!ikev1_decode_peer_id(md, TRUE, TRUE)) {
 		char buf[IDTOA_BUF];
 		ipstr_buf b;
@@ -668,26 +675,25 @@ static void aggr_inR1_outI2_crypto_continue(struct state *st,
 
 static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 {
-	struct state *const st = md->st;
-	struct connection *c = st->st_connection;
-	enum next_payload_types_ikev1 auth_payload;
-	bool send_cert = FALSE;
-	bool send_authcerts = FALSE;
-	bool send_full_chain = FALSE;
-	cert_t mycert = c->spd.this.cert;
-	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
-	int chain_len = 0;
-
 	/* HASH_R or SIG_R in */
 	{
-		stf_status r = aggr_id_and_auth(md, TRUE);
+		/*
+		 * Note: oakley_id_and_auth won't switch connections
+		 * because we are Aggressive Mode.
+		 */
+		stf_status r = oakley_id_and_auth(md, TRUE, TRUE);
 
 		if (r != STF_OK)
 			return r;
 	}
 
-	auth_payload = st->st_oakley.auth == OAKLEY_PRESHARED_KEY ?
-		       ISAKMP_NEXT_HASH : ISAKMP_NEXT_SIG;
+	struct state *const st = md->st;
+	struct connection *c = st->st_connection;
+	const cert_t mycert = c->spd.this.cert;
+
+	enum next_payload_types_ikev1 auth_payload =
+		st->st_oakley.auth == OAKLEY_PRESHARED_KEY ?
+			ISAKMP_NEXT_HASH : ISAKMP_NEXT_SIG;
 
 	/* decode certificate requests */
 	ikev1_decode_cr(md);
@@ -700,25 +706,26 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 	 * told we can send one if asked, and we were asked, or we were told
 	 * to always send one.
 	 */
-	send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
-		    mycert.ty != CERT_NONE && mycert.u.nss_cert != NULL &&
-		    ((c->spd.this.sendcert ==
-			CERT_SENDIFASKED &&
-		      st->hidden_variables.st_got_certrequest) ||
-		     c->spd.this.sendcert == CERT_ALWAYSSEND);
+	bool send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
+		mycert.ty != CERT_NONE && mycert.u.nss_cert != NULL &&
+		((c->spd.this.sendcert == CERT_SENDIFASKED &&
+		  st->hidden_variables.st_got_certrequest) ||
+		 c->spd.this.sendcert == CERT_ALWAYSSEND
+		);
 
-	send_authcerts = (send_cert && c->send_ca != CA_SEND_NONE);
+	bool send_authcerts = (send_cert && c->send_ca != CA_SEND_NONE);
 
-	send_full_chain = (send_authcerts && c->send_ca == CA_SEND_ALL);
+	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
+	int chain_len = 0;
 
 	if (send_authcerts) {
 		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN,
 				mycert.u.nss_cert,
-				send_full_chain ? TRUE : FALSE);
-	}
+				c->send_ca == CA_SEND_ALL);
 
-	if (chain_len < 1)
-		send_authcerts = FALSE;
+		if (chain_len == 0)
+			send_authcerts = FALSE;
+	}
 
 	doi_log_cert_thinking(st->st_oakley.auth,
 			      mycert.ty,
@@ -939,7 +946,11 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 
 	/* HASH_I or SIG_I in */
 	{
-		stf_status r = aggr_id_and_auth(md, FALSE);
+		/*
+		 * Note: oakley_id_and_auth won't switch connections
+		 * because we are Aggressive Mode.
+		 */
+		stf_status r = oakley_id_and_auth(md, FALSE, TRUE);
 		if (r != STF_OK)
 			return r;
 	}
@@ -1146,9 +1157,9 @@ static stf_status aggr_outI1_tail(struct state *st,
 	struct connection *c = st->st_connection;
 	cert_t mycert = c->spd.this.cert;
 	bool send_cr = mycert.ty != CERT_NONE && mycert.u.nss_cert != NULL &&
-			!has_preloaded_public_key(st) &&
-		    (c->spd.this.sendcert == CERT_SENDIFASKED ||
-		     c->spd.this.sendcert == CERT_ALWAYSSEND);
+		!has_preloaded_public_key(st) &&
+		(c->spd.this.sendcert == CERT_SENDIFASKED ||
+		 c->spd.this.sendcert == CERT_ALWAYSSEND);
 
 	DBG(DBG_CONTROL,
 		DBG_log("aggr_outI1_tail for #%lu",

@@ -2823,17 +2823,19 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	}
 }
 
-/* note: may change which connection is referenced by md->st->st_connection */
+/*
+ * note: may change which connection is referenced by md->st->st_connection.
+ * But only if we are a Main Mode Responder.
+ */
 bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 {
 	struct state *const st = md->st;
 	struct connection *c = st->st_connection;
-	struct payload_digest *const id_pld = md->chain[ISAKMP_NEXT_ID];
-	const pb_stream *const id_pbs = &id_pld->pbs;
-	struct isakmp_id *const id = &id_pld->payload.id;
-	struct id peer;
+	const struct payload_digest *const id_pld = md->chain[ISAKMP_NEXT_ID];
+	const struct isakmp_id *const id = &id_pld->payload.id;
 
-	/* I think that RFC2407 (IPSEC DOI) 4.6.2 is confused.
+	/*
+	 * I think that RFC2407 (IPSEC DOI) 4.6.2 is confused.
 	 * It talks about the protocol ID and Port fields of the ID
 	 * Payload, but they don't exist as such in Phase 1.
 	 * We use more appropriate names.
@@ -2858,13 +2860,16 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			IPPROTO_UDP, pluto_port,
 			id->isaid_doi_specific_a,
 			id->isaid_doi_specific_b);
-		/* we have turned this into a warning because of bugs in other vendors
-		 * products. Specifically CISCO VPN3000.
+		/*
+		 * We have turned this into a warning because of bugs in other
+		 * vendors' products. Specifically CISCO VPN3000.
 		 */
 		/* return FALSE; */
 	}
 
-	if (!extract_peer_id(id->isaid_idtype, &peer, id_pbs))
+	struct id peer;
+
+	if (!extract_peer_id(id->isaid_idtype, &peer, &id_pld->pbs))
 		return FALSE;
 
 	if (c->spd.that.id.kind == ID_FROMCERT) {
@@ -2913,9 +2918,10 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	/* check for certificate requests */
 	ikev1_decode_cr(md);
 
-	/* Now that we've decoded the ID payload, let's see if we
+	/*
+	 * Now that we've decoded the ID payload, let's see if we
 	 * need to switch connections.
-	 * Aggressive mode cannot switch connections
+	 * Aggressive mode cannot switch connections.
 	 * We must not switch horses if we initiated:
 	 * - if the initiation was explicit, we'd be ignoring user's intent
 	 * - if opportunistic, we'll lose our HOLD info
@@ -2923,39 +2929,27 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 
 	if (initiator) {
 		if (!st->st_peer_alt_id &&
-			!same_id(&st->st_connection->spd.that.id, &peer) &&
-			st->st_connection->spd.that.id.kind != ID_FROMCERT) {
-
+		    !same_id(&c->spd.that.id, &peer) &&
+		    c->spd.that.id.kind != ID_FROMCERT) {
 			char expect[IDTOA_BUF],
 			     found[IDTOA_BUF];
 
-			idtoa(&st->st_connection->spd.that.id, expect,
-			      sizeof(expect));
+			idtoa(&c->spd.that.id, expect, sizeof(expect));
 			idtoa(&peer, found, sizeof(found));
 			loglog(RC_LOG_SERIOUS,
 			       "we require IKEv1 peer to have ID '%s', but peer declares '%s'",
 			       expect, found);
 			return FALSE;
-		} else if (st->st_connection->spd.that.id.kind == ID_FROMCERT) {
+		} else if (c->spd.that.id.kind == ID_FROMCERT) {
 			if (peer.kind != ID_DER_ASN1_DN) {
 				loglog(RC_LOG_SERIOUS,
 				       "peer ID is not a certificate type");
 				return FALSE;
 			}
-			duplicate_id(&st->st_connection->spd.that.id, &peer);
+			duplicate_id(&c->spd.that.id, &peer);
 		}
-		return TRUE;
-	}
-
-	/* responder */
-
-	if (aggrmode)
-		return TRUE;
-
-	/* only Main Mode from here */
-	{
-		struct connection *c = st->st_connection;
-		bool fromcert;
+	} else if (!aggrmode) {
+		/* Main Mode Responder */
 		uint16_t auth = xauth_calcbaseauth(st->st_oakley.auth);
 		lset_t auth_policy;
 
@@ -2978,6 +2972,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			return FALSE;
 		}
 
+		bool fromcert;
 		struct connection *r =
 			refine_host_connection(st, &peer,
 				NULL, /* IKEv1 does not support 'you Tarzan, me Jane' */
@@ -2994,8 +2989,8 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			       "no more suitable connection for peer '%s'", buf));
 			/* can we continue with what we had? */
 			if (!md->st->st_peer_alt_id &&
-				!same_id(&c->spd.that.id, &peer) &&
-				c->spd.that.id.kind != ID_FROMCERT) {
+			    !same_id(&c->spd.that.id, &peer) &&
+			    c->spd.that.id.kind != ID_FROMCERT) {
 					libreswan_log("Peer mismatch on first found connection and no better connection found");
 					return FALSE;
 			} else {
@@ -3012,6 +3007,10 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		});
 
 		if (r != c) {
+			/*
+			 * We are changing st->st_connection!
+			 * Our caller might be surprised!
+			 */
 			char b1[CONN_INST_BUF];
 			char b2[CONN_INST_BUF];
 
@@ -3033,8 +3032,8 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			c = r;	/* c not subsequently used */
 			/* redo from scratch so we read and check CERT payload */
 			DBG(DBG_CONTROL, DBG_log("retrying ike_decode_peer_id() with new conn"));
-			return ikev1_decode_peer_id(md, FALSE, aggrmode);
-
+			passert(!initiator && !aggrmode);
+			return ikev1_decode_peer_id(md, FALSE, FALSE);
 		} else if (c->spd.that.has_id_wildcards) {
 			duplicate_id(&c->spd.that.id, &peer);
 			c->spd.that.has_id_wildcards = FALSE;
@@ -3072,38 +3071,36 @@ void doi_log_cert_thinking(u_int16_t auth,
 				bool send_cert,
 				bool send_chain)
 {
-	DBG(DBG_CONTROL,
-		DBG_log("thinking about whether to send my certificate:"));
-
 	DBG(DBG_CONTROL, {
-		struct esb_buf esb;
+		DBG_log("thinking about whether to send my certificate:");
+
+		struct esb_buf oan;
+		struct esb_buf ictn;
 
 		DBG_log("  I have RSA key: %s cert.type: %s ",
-			enum_showb(&oakley_auth_names, auth, &esb),
-			enum_show(&ike_cert_type_names, certtype));
-	});
+			enum_showb(&oakley_auth_names, auth, &oan),
+			enum_showb(&ike_cert_type_names, certtype, &ictn));
 
-	DBG(DBG_CONTROL,
+		struct esb_buf cptn;
+
 		DBG_log("  sendcert: %s and I did%s get a certificate request ",
-			enum_show(&certpolicy_type_names, policy),
-			gotcertrequest ? "" : " not"));
+			enum_showb(&certpolicy_type_names, policy, &cptn),
+			gotcertrequest ? "" : " not");
 
-	DBG(DBG_CONTROL,
-		DBG_log("  so %ssend cert.", send_cert ? "" : "do not "));
+		DBG_log("  so %ssend cert.", send_cert ? "" : "do not ");
 
-	if (!send_cert) {
-		if (auth == OAKLEY_PRESHARED_KEY) {
-			DBG(DBG_CONTROL,
-				DBG_log("I did not send a certificate because digital signatures are not being used. (PSK)"));
-		} else if (certtype == CERT_NONE) {
-			DBG(DBG_CONTROL,
-				DBG_log("I did not send a certificate because I do not have one."));
-		} else if (policy == CERT_SENDIFASKED) {
-			DBG(DBG_CONTROL,
-				DBG_log("I did not send my certificate because I was not asked to."));
+		if (!send_cert) {
+			if (auth == OAKLEY_PRESHARED_KEY) {
+				DBG_log("I did not send a certificate because digital signatures are not being used. (PSK)");
+			} else if (certtype == CERT_NONE) {
+				DBG_log("I did not send a certificate because I do not have one.");
+			} else if (policy == CERT_SENDIFASKED) {
+				DBG_log("I did not send my certificate because I was not asked to.");
+			} else {
+				DBG_log("INVALID AUTH SETTING: %d", auth);
+			}
 		}
-		/* ??? should there be an additional else catch-all? */
-	}
-	if (send_chain)
-		DBG(DBG_CONTROL, DBG_log("Sending one or more authcerts"));
+		if (send_chain)
+			DBG_log("Sending one or more authcerts");
+	});
 }
