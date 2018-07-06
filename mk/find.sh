@@ -23,7 +23,8 @@ look()
 	 -o -type f -name '*.mk' -print \
 	 -o -type f -name '*.py' -print \
 	 -o -type f -name '*.sh' -print \
-	 -o -type f -name '*.awk' -print
+	 -o -type f -name '*.awk' -print \
+	 -o -type f -name '*.[chly]' -print
 }
 
 if test $# -gt 0 ; then
