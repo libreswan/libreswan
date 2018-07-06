@@ -16,6 +16,10 @@
 #ifndef KERNEL_SADB_H
 #define KERNEL_SADB_H
 
+#include <stddef.h>	/* for size_t */
+
+struct sadb_msg;
+
 /*
  * Helper routines for code following RFC 2367 - PF_KEY - when
  * manipulating the kernel.
@@ -29,14 +33,6 @@
  *
  * - kernel_pfkey.[hc] is already taken
  */
-
-#include <stddef.h>	/* for size_t */
-
-#ifdef linux
-#include <linux/pfkeyv2.h>
-#else
-#include <net/pfkeyv2.h>
-#endif
 
 /*
  * Multiplier for converting .sadb_msg_len (in 64-bit words) to
