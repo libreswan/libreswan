@@ -75,7 +75,7 @@ const struct integ_desc ike_alg_integ_none = {
 			 * down the track.  One fix would be to
 			 * finally add IKEv1_AH_ID.
 			 */
-			[IKEv1_ESP_ID] = ESP_reserved,
+			[IKEv1_ESP_ID] = AUTH_ALGORITHM_NONE, /* not NULL_KAME? */
 			[IKEv2_ALG_ID] = IKEv2_AUTH_NONE,
 		},
 		/*
