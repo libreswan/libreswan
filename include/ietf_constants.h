@@ -1751,9 +1751,8 @@ enum notify_payload_hash_algorithms {
 #define ASN1_LEN_ALGO_IDENTIFIER 1
 
 /* 15 byte OID of sha1WithRSAEncryption is specified in RFC 7427 in A.1.1 */
-static const unsigned char sha1_rsa_oid_blob[ASN1_SHA1_RSA_OID_SIZE] = {0x30,0x0d,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,0x01,0x05,0x05,0x00};
-
-static const uint8_t len_sha1_rsa_oid_blob[ASN1_LEN_ALGO_IDENTIFIER] = {ASN1_SHA1_RSA_OID_SIZE};
+#define SHA1_RSA_OID_BLOB {0x30,0x0d,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,0x01,0x05,0x05,0x00};
+#define LEN_SHA1_RSA_OID_BLOB {ASN1_SHA1_RSA_OID_SIZE};
 
 /* Limits on size of RSA moduli.
  * The upper bound matches that of DNSSEC (see RFC 2537).

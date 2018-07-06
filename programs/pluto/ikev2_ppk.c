@@ -120,8 +120,10 @@ stf_status ikev2_calc_no_ppk_auth(struct connection *c, struct state *st, unsign
 				int len = ASN1_LEN_ALGO_IDENTIFIER + ASN1_SHA1_RSA_OID_SIZE + no_ppk_auth->len;
 				u_char *blobs = alloc_bytes(len, "bytes for blobs for AUTH_DIGSIG NO_PPK_AUTH");
 				u_char *ret = blobs;
+				const uint8_t len_sha1_rsa_oid_blob[ASN1_LEN_ALGO_IDENTIFIER] = LEN_SHA1_RSA_OID_BLOB;
 				memcpy(blobs, len_sha1_rsa_oid_blob, ASN1_LEN_ALGO_IDENTIFIER);
 				blobs += ASN1_LEN_ALGO_IDENTIFIER;
+				const uint8_t sha1_rsa_oid_blob[ASN1_SHA1_RSA_OID_SIZE] = SHA1_RSA_OID_BLOB;
 				memcpy(blobs, sha1_rsa_oid_blob, ASN1_SHA1_RSA_OID_SIZE);
 				blobs += ASN1_SHA1_RSA_OID_SIZE;
 				memcpy(blobs, no_ppk_auth->ptr, no_ppk_auth->len);

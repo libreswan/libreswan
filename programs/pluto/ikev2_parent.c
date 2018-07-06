@@ -616,12 +616,14 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 		if (!in_raw(check_length_rsa_sha1_blob, ASN1_LEN_ALGO_IDENTIFIER, pbs,
 				"Algorithm Identifier length"))
 			return FALSE;
+		const uint8_t len_sha1_rsa_oid_blob[ASN1_LEN_ALGO_IDENTIFIER] = LEN_SHA1_RSA_OID_BLOB;
 		if (!memeq(check_length_rsa_sha1_blob, len_sha1_rsa_oid_blob, ASN1_LEN_ALGO_IDENTIFIER))
 			return FALSE;
 
 		if (!in_raw(check_rsa_sha1_blob, ASN1_SHA1_RSA_OID_SIZE, pbs,
 				"Algorithm Identifier value"))
 			return FALSE;
+		const uint8_t sha1_rsa_oid_blob[ASN1_SHA1_RSA_OID_SIZE] = SHA1_RSA_OID_BLOB;
 		if (!memeq(check_rsa_sha1_blob, sha1_rsa_oid_blob, ASN1_SHA1_RSA_OID_SIZE))
 			return FALSE;
 
@@ -2922,12 +2924,15 @@ static stf_status ikev2_send_auth(struct connection *c,
 		break;
 	case IKEv2_AUTH_DIGSIG:
 		if (pst->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA1) {
+			const uint8_t len_sha1_rsa_oid_blob[ASN1_LEN_ALGO_IDENTIFIER] = LEN_SHA1_RSA_OID_BLOB;
+
 			if (!out_raw(len_sha1_rsa_oid_blob, ASN1_LEN_ALGO_IDENTIFIER, &a_pbs,
 				"Length of the ASN.1 Algorithm Identifier sha1WithRSAEncryption")) {
 					loglog(RC_LOG_SERIOUS, "DigSig: failed to emit RSA-SHA1 OID length");
 					return STF_INTERNAL_ERROR;
 			}
 
+			const uint8_t sha1_rsa_oid_blob[ASN1_SHA1_RSA_OID_SIZE] = SHA1_RSA_OID_BLOB;
 			if (!out_raw(sha1_rsa_oid_blob, ASN1_SHA1_RSA_OID_SIZE, &a_pbs,
 				"OID of ASN.1 Algorithm Identifier sha1WithRSAEncryption")) {
 					loglog(RC_LOG_SERIOUS, "DigSig: failed to emit RSA-SHA1 OID");
