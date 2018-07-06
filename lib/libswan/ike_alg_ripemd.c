@@ -46,7 +46,7 @@ const struct integ_desc ike_alg_integ_hmac_ripemd_160_96 = {
 			[IKEv1_ESP_ID] = AUTH_ALGORITHM_HMAC_RIPEMD,
 		},
 	},
-	.integ_key_size = BYTES_FOR_BITS(160),
+	.integ_keymat_size = BYTES_FOR_BITS(160),
 	.integ_output_size = BYTES_FOR_BITS(96),
 	.integ_ikev1_ah_transform = AH_RIPEMD,
 };
