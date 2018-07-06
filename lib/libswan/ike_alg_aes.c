@@ -18,22 +18,11 @@
  * for more details.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stddef.h>
-#include <sys/types.h>
-#include <libreswan.h>
+#include <blapit.h>		/* for AES_BLOCK_SIZE */
 
-#include "constants.h"
-#include "klips-crypto/aes_cbc.h"
-#include "lswlog.h"
+#include "constants.h"		/* for BYTES_FOR_BITS() */
+#include "ietf_constants.h"
 #include "ike_alg.h"
-
-#include <pk11pub.h>
-#include <prmem.h>
-#include <prerror.h>
-#include <blapit.h>
-
 #include "ike_alg_encrypt_nss_cbc_ops.h"
 #include "ike_alg_encrypt_nss_ctr_ops.h"
 #include "ike_alg_encrypt_nss_gcm_ops.h"
@@ -52,7 +41,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_cbc = {
 			[IKEv1_ESP_ID] = ESP_AES,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_CBC,
 		},
-		.fips =        TRUE,
+		.fips = true,
 	},
 	.nss = {
 		.mechanism = CKM_AES_CBC,
@@ -78,7 +67,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_ctr =
 			[IKEv1_ESP_ID] = ESP_AES_CTR,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_CTR,
 		},
-		.fips =        TRUE,
+		.fips = true,
 	},
 	.nss = {
 		.mechanism = CKM_AES_CTR,
@@ -106,7 +95,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
 			[IKEv1_ESP_ID] = ESP_AES_GCM_8,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_GCM_8,
 		},
-		.fips =        TRUE,
+		.fips = true,
 	},
 	.nss = {
 		.mechanism = CKM_AES_GCM,
@@ -134,7 +123,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
 			[IKEv1_ESP_ID] = ESP_AES_GCM_12,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_GCM_12,
 		},
-		.fips =        TRUE,
+		.fips = true,
 	},
 	.nss = {
 		.mechanism = CKM_AES_GCM,
@@ -163,7 +152,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
 			[IKEv1_ESP_ID] = ESP_AES_GCM_16,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_GCM_16,
 		},
-		.fips =        TRUE,
+		.fips = true,
 	},
 	.nss = {
 		.mechanism = CKM_AES_GCM,
@@ -198,7 +187,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =
 			[IKEv1_ESP_ID] = ESP_AES_CCM_8,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_CCM_8,
 		},
-		.fips =         TRUE,
+		.fips = true,
 	},
 	.enc_blocksize =  AES_BLOCK_SIZE,
 	.salt_size = 3,
@@ -223,7 +212,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
 			[IKEv1_ESP_ID] = ESP_AES_CCM_12,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_CCM_12,
 		},
-		.fips =         TRUE,
+		.fips = true,
 	},
 	.enc_blocksize =  AES_BLOCK_SIZE,
 	.salt_size = 3,
@@ -248,7 +237,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 			[IKEv1_ESP_ID] = ESP_AES_CCM_16,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_AES_CCM_16,
 		},
-		.fips =         TRUE,
+		.fips = true,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
 	.salt_size = 3,

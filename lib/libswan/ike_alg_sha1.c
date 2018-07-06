@@ -20,15 +20,8 @@
  *
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stddef.h>
-#include <sys/types.h>
-#include <errno.h>
-
-#include "libreswan.h"
-#include "constants.h"
-#include "lswlog.h"
+#include "constants.h"		/* for BYTES_FOR_BITS() */
+#include "ietf_constants.h"
 #include "ike_alg.h"
 #include "ike_alg_sha1.h"
 #include "ike_alg_hash_nss_ops.h"
@@ -46,7 +39,7 @@ const struct hash_desc ike_alg_hash_sha1 = {
 			[IKEv1_ESP_ID] = -1,
 			[IKEv2_ALG_ID] = -1,
 		},
-		.fips = TRUE,
+		.fips = true,
 	},
 	.nss = {
 		.oid_tag = SEC_OID_SHA1,
@@ -69,7 +62,7 @@ const struct prf_desc ike_alg_prf_sha1 = {
 			[IKEv1_ESP_ID] = -1,
 			[IKEv2_ALG_ID] = IKEv2_PRF_HMAC_SHA1,
 		},
-		.fips = TRUE,
+		.fips = true,
 	},
 	.nss = {
 		.mechanism = CKM_SHA_1_HMAC,
@@ -92,7 +85,7 @@ const struct integ_desc ike_alg_integ_sha1 = {
 			[IKEv1_ESP_ID] = AUTH_ALGORITHM_HMAC_SHA1,
 			[IKEv2_ALG_ID] = IKEv2_AUTH_HMAC_SHA1_96,
 		},
-		.fips = TRUE,
+		.fips = true,
 	},
 	.integ_keymat_size = SHA1_DIGEST_SIZE,
 	.integ_output_size = SHA1_DIGEST_SIZE_96,

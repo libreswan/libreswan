@@ -20,18 +20,8 @@
  *
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stddef.h>
-#include <sys/types.h>
-
-#include <libreswan.h>
-
-#include <errno.h>
-
-#include "constants.h"
-#include "lswlog.h"
-#include "lswalloc.h"
+#include "constants.h"		/* for BYTES_FOR_BITS() */
+#include "ietf_constants.h"
 #include "ike_alg.h"
 #include "ike_alg_md5.h"
 #include "ike_alg_hash_nss_ops.h"

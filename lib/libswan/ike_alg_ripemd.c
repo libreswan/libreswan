@@ -14,18 +14,8 @@
  *
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stddef.h>
-#include <sys/types.h>
-
-#include <libreswan.h>
-
-#include <errno.h>
-
-#include "constants.h"
-#include "lswlog.h"
-#include "lswalloc.h"
+#include "constants.h"		/* for BYTES_FOR_BITS() */
+#include "ietf_constants.h"
 #include "ike_alg.h"
 #include "ike_alg_ripemd.h"
 
@@ -43,7 +33,9 @@ const struct integ_desc ike_alg_integ_hmac_ripemd_160_96 = {
 		.officname = "ripemd",
 		.algo_type = IKE_ALG_INTEG,
 		.id = {
+			[IKEv1_OAKLEY_ID] = -1,
 			[IKEv1_ESP_ID] = AUTH_ALGORITHM_HMAC_RIPEMD,
+			[IKEv2_ALG_ID] = -1,
 		},
 	},
 	.integ_keymat_size = BYTES_FOR_BITS(160),

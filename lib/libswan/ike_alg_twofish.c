@@ -18,15 +18,10 @@
  * for more details.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stddef.h>
-#include <sys/types.h>
-#include <libreswan.h>
-
-#include "constants.h"
-#include "lswlog.h"
 #include "libtwofish/twofish_cbc.h"
+#include "constants.h"		/* for BYTES_FOR_BITS() */
+#include "lswcdefs.h"		/* for UNUSED */
+#include "lswlog.h"
 #include "ike_alg.h"
 #include "ike_alg_twofish.h"
 #include "ietf_constants.h"
@@ -97,7 +92,7 @@ const struct encrypt_desc ike_alg_encrypt_twofish_cbc =
 		},
 	},
 	.enc_blocksize = TWOFISH_CBC_BLOCK_SIZE,
-	.pad_to_blocksize = TRUE,
+	.pad_to_blocksize = true,
 	.wire_iv_size = TWOFISH_CBC_BLOCK_SIZE,
 	.keydeflen = TWOFISH_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
@@ -119,7 +114,7 @@ const struct encrypt_desc ike_alg_encrypt_twofish_ssh =
 		},
 	},
 	.enc_blocksize = TWOFISH_CBC_BLOCK_SIZE,
-	.pad_to_blocksize = TRUE,
+	.pad_to_blocksize = true,
 	.wire_iv_size = TWOFISH_CBC_BLOCK_SIZE,
 	.keydeflen = TWOFISH_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },

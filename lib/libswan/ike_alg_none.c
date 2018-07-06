@@ -12,13 +12,7 @@
  * for more details.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stddef.h>
-#include <sys/types.h>
-
-#include "libreswan.h"
-#include "constants.h"
+#include "ietf_constants.h"
 #include "ike_alg.h"
 #include "ike_alg_none.h"
 #include "ike_alg_dh_nss_modp_ops.h"
@@ -45,8 +39,8 @@ const struct encrypt_desc ike_alg_encrypt_null =
 	},
 	.enc_blocksize =  1,
 	.wire_iv_size =  0,
-	.pad_to_blocksize = FALSE,
-	.keylen_omitted = TRUE,
+	.pad_to_blocksize = false,
+	.keylen_omitted = true,
 	.keydeflen = 0,
 	.key_bit_lengths = { 0, },
 };

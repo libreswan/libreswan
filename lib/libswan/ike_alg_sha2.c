@@ -16,14 +16,9 @@
  * for more details.
  *
  */
-#include <stdio.h>
-#include <string.h>
-#include <stddef.h>
-#include <sys/types.h>
-#include <libreswan.h>
 
-#include "constants.h"
-#include "lswlog.h"
+#include "constants.h"		/* for BYTES_FOR_BITS() */
+#include "ietf_constants.h"
 #include "ike_alg.h"
 #include "ike_alg_sha2.h"
 #include "ike_alg_hash_nss_ops.h"
@@ -41,7 +36,7 @@ const struct hash_desc ike_alg_hash_sha2_256 = {
 			[IKEv1_ESP_ID] = -1,
 			[IKEv2_ALG_ID] = -1,
 		},
-		.fips = TRUE,
+		.fips = true,
 	},
 	.nss = {
 		.oid_tag = SEC_OID_SHA256,
@@ -64,7 +59,7 @@ const struct prf_desc ike_alg_prf_sha2_256 = {
 			[IKEv1_ESP_ID] = -1,
 			[IKEv2_ALG_ID] = IKEv2_PRF_HMAC_SHA2_256,
 		},
-		.fips = TRUE,
+		.fips = true,
 	},
 	.nss = {
 		.mechanism = CKM_SHA256_HMAC,
@@ -87,7 +82,7 @@ const struct integ_desc ike_alg_integ_sha2_256 = {
 			[IKEv1_ESP_ID] = AUTH_ALGORITHM_HMAC_SHA2_256,
 			[IKEv2_ALG_ID] = IKEv2_AUTH_HMAC_SHA2_256_128,
 		},
-		.fips = TRUE,
+		.fips = true,
 	},
 	.integ_keymat_size = SHA2_256_DIGEST_SIZE,
 	.integ_output_size = SHA2_256_DIGEST_SIZE / 2,
@@ -107,7 +102,7 @@ const struct integ_desc ike_alg_integ_hmac_sha2_256_truncbug = {
 			[IKEv1_ESP_ID] = AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG,
 			[IKEv2_ALG_ID] = -1,
 		},
-		.fips = FALSE,
+		.fips = false,
 	},
 	.integ_keymat_size = SHA2_256_DIGEST_SIZE,
 	.integ_output_size = BYTES_FOR_BITS(96),
@@ -126,7 +121,7 @@ const struct hash_desc ike_alg_hash_sha2_384 = {
 			[IKEv1_ESP_ID] = -1,
 			[IKEv2_ALG_ID] = -1,
 		},
-		.fips = TRUE,
+		.fips = true,
 	},
 	.nss = {
 		.oid_tag = SEC_OID_SHA384,
@@ -149,7 +144,7 @@ const struct prf_desc ike_alg_prf_sha2_384 = {
 			[IKEv1_ESP_ID] = -1,
 			[IKEv2_ALG_ID] = IKEv2_PRF_HMAC_SHA2_384,
 		},
-		.fips = TRUE,
+		.fips = true,
 	},
 	.nss = {
 		.mechanism = CKM_SHA384_HMAC,
@@ -172,7 +167,7 @@ const struct integ_desc ike_alg_integ_sha2_384 = {
 			[IKEv1_ESP_ID] = AUTH_ALGORITHM_HMAC_SHA2_384,
 			[IKEv2_ALG_ID] = IKEv2_AUTH_HMAC_SHA2_384_192,
 		},
-		.fips = TRUE,
+		.fips = true,
 	},
 	.integ_keymat_size = SHA2_384_DIGEST_SIZE,
 	.integ_output_size = SHA2_384_DIGEST_SIZE / 2,
@@ -192,7 +187,7 @@ const struct hash_desc ike_alg_hash_sha2_512 = {
 			[IKEv1_ESP_ID] = -1,
 			[IKEv2_ALG_ID] = -1,
 		},
-		.fips = TRUE,
+		.fips = true,
 	},
 	.nss = {
 		.oid_tag = SEC_OID_SHA512,
@@ -215,7 +210,7 @@ const struct prf_desc ike_alg_prf_sha2_512 = {
 			[IKEv1_ESP_ID] = -1,
 			[IKEv2_ALG_ID] = IKEv2_PRF_HMAC_SHA2_512,
 		},
-		.fips = TRUE,
+		.fips = true,
 	},
 	.nss = {
 		.mechanism = CKM_SHA512_HMAC,
@@ -238,7 +233,7 @@ const struct integ_desc ike_alg_integ_sha2_512 = {
 			[IKEv1_ESP_ID] = AUTH_ALGORITHM_HMAC_SHA2_512,
 			[IKEv2_ALG_ID] = IKEv2_AUTH_HMAC_SHA2_512_256,
 		},
-		.fips = TRUE,
+		.fips = true,
 	},
 	.integ_keymat_size = SHA2_512_DIGEST_SIZE,
 	.integ_output_size = SHA2_512_DIGEST_SIZE / 2,

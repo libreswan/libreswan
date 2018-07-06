@@ -14,19 +14,8 @@
  *
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stddef.h>
-#include <sys/types.h>
-
-#include <prerror.h>
-#include <prmem.h>
-#include <blapit.h>
-
-#include <libreswan.h>
-
-#include "constants.h"
-#include "lswlog.h"
+#include "constants.h"		/* for BYTES_FOR_BITS() */
+#include "ietf_constants.h"
 #include "ike_alg.h"
 #include "ike_alg_3des.h"
 #include "ike_alg_encrypt_nss_cbc_ops.h"
@@ -44,7 +33,7 @@ const struct encrypt_desc ike_alg_encrypt_3des_cbc =
 			[IKEv1_ESP_ID] = ESP_3DES,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_3DES,
 		},
-		.fips =          TRUE,
+		.fips = true,
 	},
 	.nss = {
 		.mechanism = CKM_DES3_CBC,

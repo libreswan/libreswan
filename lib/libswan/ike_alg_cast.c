@@ -12,13 +12,7 @@
  * for more details.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stddef.h>
-#include <sys/types.h>
-#include <libreswan.h>
-
-#include "constants.h"
+#include "ietf_constants.h"
 #include "ike_alg.h"
 #include "ike_alg_cast.h"
 
@@ -46,7 +40,7 @@ const struct encrypt_desc ike_alg_encrypt_cast_cbc =
 		},
 	},
 	.enc_blocksize = 8,
-	.pad_to_blocksize = TRUE,
+	.pad_to_blocksize = true,
 	.wire_iv_size = 8,
 	.keydeflen = CAST_KEY_DEF_LEN,
 	.key_bit_lengths = { CAST_KEY_DEF_LEN, },

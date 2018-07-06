@@ -15,19 +15,9 @@
  * for more details.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stddef.h>
-#include <sys/types.h>
-
-#include <libreswan.h>
-
-#include "constants.h"
-#include "lswlog.h"
 #include "ike_alg.h"
-
-#include "ike_alg_encrypt_nss_cbc_ops.h"
 #include "ike_alg_camellia.h"
+#include "ike_alg_encrypt_nss_cbc_ops.h"
 
 /* Camellia is a drop-in replacement for AES */
 
@@ -68,7 +58,7 @@ struct encrypt_desc ike_alg_encrypt_camellia_cbc =
 		.mechanism = CKM_CAMELLIA_CBC,
 	},
 	.enc_blocksize = CAMELLIA_BLOCK_SIZE,
-	.pad_to_blocksize = TRUE,
+	.pad_to_blocksize = true,
 	.wire_iv_size =       CAMELLIA_BLOCK_SIZE,
 	.keydeflen =    CAMELLIA_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
@@ -90,7 +80,7 @@ struct encrypt_desc ike_alg_encrypt_camellia_ctr =
 		},
 	},
 	.enc_blocksize = CAMELLIA_BLOCK_SIZE,
-	.pad_to_blocksize = FALSE,
+	.pad_to_blocksize = false,
 	.wire_iv_size =	CAMELLIA_BLOCK_SIZE,
 	.keydeflen =    CAMELLIA_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, }
