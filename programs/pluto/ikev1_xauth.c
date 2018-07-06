@@ -1140,6 +1140,7 @@ static void ikev1_xauth_callback(struct state *st,
 	if (results) {
 		libreswan_log("XAUTH: User %s: Authentication Successful",
 			      name);
+		/* ??? result of xauth_send_status is ignored */
 		xauth_send_status(st, XAUTH_STATUS_OK);
 
 		if (st->quirks.xauth_ack_msgid)
@@ -1153,6 +1154,7 @@ static void ikev1_xauth_callback(struct state *st,
 		 */
 		libreswan_log("XAUTH: User %s: Authentication Failed: Incorrect Username or Password",
 			      name);
+		/* ??? result of xauth_send_status is ignored */
 		xauth_send_status(st, XAUTH_STATUS_FAIL);
 	}
 }
@@ -1174,26 +1176,26 @@ static void xauth_immediate_callback(struct state *st,
 				     struct msg_digest **mdp,
 				     void *arg)
 {
-	struct xauth_immediate_context *xauth = (struct xauth_immediate_context *)arg;
+	struct xauth_immediate_context *xic = (struct xauth_immediate_context *)arg;
 	if (st == NULL) {
 		libreswan_log("XAUTH: #%lu: state destroyed for user '%s'",
-			      xauth->serialno, xauth->name);
+			      xic->serialno, xic->name);
 	} else {
 		/* ikev1_xauth_callback() will log result */
-		ikev1_xauth_callback(st, mdp, xauth->name, xauth->success);
+		ikev1_xauth_callback(st, mdp, xic->name, xic->success);
 	}
-	pfree(xauth->name);
-	pfree(xauth);
+	pfree(xic->name);
+	pfree(xic);
 }
 
 static void xauth_immediate(const char *name, const struct state *st, bool success)
 {
-	struct xauth_immediate_context *xauth = alloc_thing(struct xauth_immediate_context, "xauth next");
-	xauth->success = success;
-	xauth->serialno = st->st_serialno;
-	xauth->name = clone_str(name, "xauth next name");
+	struct xauth_immediate_context *xic = alloc_thing(struct xauth_immediate_context, "xauth next");
+	xic->success = success;
+	xic->serialno = st->st_serialno;
+	xic->name = clone_str(name, "xauth next name");
 	pluto_event_now("xauth immediate", st->st_serialno,
-			xauth_immediate_callback, xauth);
+			xauth_immediate_callback, xic);
 }
 
 /** Launch an authentication prompt
@@ -1202,7 +1204,7 @@ static void xauth_immediate(const char *name, const struct state *st, bool succe
  * @param name Username
  * @param password Password
  */
-static int xauth_launch_authent(struct state *st,
+static void xauth_launch_authent(struct state *st,
 				chunk_t *name,
 				chunk_t *password)
 {
@@ -1211,7 +1213,7 @@ static int xauth_launch_authent(struct state *st,
 	 */
 #ifdef XAUTH_HAVE_PAM
 	if (st->st_xauth != NULL)
-		return 0;
+		return;
 #endif
 
 	char *arg_name = str_from_chunk(*name, "XAUTH Name");
@@ -1239,17 +1241,20 @@ static int xauth_launch_authent(struct state *st,
 		event_schedule_s(EVENT_PAM_TIMEOUT, EVENT_PAM_TIMEOUT_DELAY, st);
 		break;
 #endif
+
 	case XAUTHBY_FILE:
 		libreswan_log("XAUTH: password file authentication method requested to authenticate user '%s'",
 			      arg_name);
 		bool success = do_file_authentication(st, arg_name, arg_password, st->st_connection->name);
 		xauth_immediate(arg_name, st, success);
 		break;
+
 	case XAUTHBY_ALWAYSOK:
 		libreswan_log("XAUTH: authentication method 'always ok' requested to authenticate user '%s'",
 			      arg_name);
 		xauth_immediate(arg_name, st, true);
 		break;
+
 	default:
 		libreswan_log("XAUTH: unknown authentication method requested to authenticate user '%s'",
 			      arg_name);
@@ -1259,7 +1264,6 @@ static int xauth_launch_authent(struct state *st,
 	pfreeany(arg_name);
 	pfreeany(arg_password);
 
-	return 0;
 }
 
 /* log a nice description of an unsupported attribute */
