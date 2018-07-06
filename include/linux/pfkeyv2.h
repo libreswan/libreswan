@@ -277,8 +277,7 @@ struct sadb_x_nat_t_port {
 #define SADB_X_AALG_SHA2_256HMAC	5
 #define SADB_X_AALG_SHA2_384HMAC	6
 #define SADB_X_AALG_SHA2_512HMAC	7
-#define SADB_X_AALG_RIPEMD160HMAC	8 /* old ikev1? */
-#define SADB_X_AALG_AES_CMAC		8 /* nwq ikev2 */
+#define SADB_X_AALG_RIPEMD160HMAC	8
 #define SADB_X_AALG_AES_XCBC_MAC        9
 #define SADB_X_AALG_RSA                 10
 #define SADB_X_AALG_AH_AES_128_GMAC     11
