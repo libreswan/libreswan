@@ -22,6 +22,7 @@
 #include "lswlog.h"
 #include "ike_alg.h"
 #include "ike_alg_serpent.h"
+#include "sadb.h"
 
 #define  SERPENT_CBC_BLOCK_SIZE (128 / BITS_PER_BYTE)
 #define  SERPENT_KEY_MIN_LEN    128
@@ -95,4 +96,7 @@ const struct encrypt_desc ike_alg_encrypt_serpent_cbc =
 	.keydeflen = SERPENT_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.encrypt_ops = &serpent_encrypt_ops,
+#ifdef SADB_X_EALG_SERPENTCBC
+	.encrypt_sadb_ealg_id = SADB_X_EALG_SERPENTCBC,
+#endif
 };

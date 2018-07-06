@@ -167,16 +167,36 @@ int ike_alg_enum_match(const struct ike_alg_type *type, enum ike_alg_key key,
  * INTEG:    ipsec_authentication_algo  ah_transformid_names          AH
  *
  *
- * (not yet if ever) SADB / KLIPS:
+ * id[IKE_ALG_SADB_ID] aka SADB/PFKEY (never?):
  *
- * These values, which I suspect are used to interface with KLIPS,
- * seem to follow the original IKEv1 ESP/AH numbering (which means
- * that they almost but not quite match the mashed up values above).
+ * See: https://tools.ietf.org/html/rfc2367#page-12
  *
- * These values are not included in this table
+ * These values are used when interacting with the SADB/PFKEY kernel
+ * interface.  Any symbol named SADB_X_... indicates something local,
+ * either to this OS or this system.
  *
- * ENCRYPT:  sadb_ealg                  ?                             K_SADB*EALG
- * INTEG:    sadb_aalg                  ?                             K_SADB*AALG
+ * ENCRYPT:  (1)                       (2)                           SADB[_X]_AALG_
+ * INTEG:    (3)                       (4)                           SADB[_X]_EALG_
+ *
+ * (1) The linux centric header libreswan/pfkeyv2 tries to define the
+ *     enum sadb_ealg with the names K_SADB[_X]_AALG_... but the code
+ *     is broken - it doesn't accomodate missing algorithms (more
+ *     generally, the header defines all sorts of stuff that conflicts
+ *     with <net/pfkeyv2.h>)
+ *
+ * (2) Legacy broken code tries to use esp_transformid_names when
+ *     printing the encryption algorithm's name
+ *
+ * (3) The linux centric header libreswan/pfkeyv2 tries to define the
+ *     enum sadb_aalg with the names K_SADB[_X]_AALG_ but the code is
+ *     broken - it doesn't handle missing algorithms and (more
+ *     generally, the header defines all sorts of stuff that conflicts
+ *     with <net/pfkeyv2.h>)
+ *
+ * (4) Legacy code tries to map the integrity value onto
+ *     ikev1_auth_attribute and then use auth_alg_names to print the
+ *     name
+ *
  *
  * (not yet if ever) XFRM names:
  *
@@ -346,8 +366,18 @@ struct encrypt_desc {
 		CK_MECHANISM_TYPE mechanism;
 	} nss;
 
-	const struct encrypt_ops *encrypt_ops;
+	/*
+	 * This encryption algorithm's SADB (pfkeyv2) value (>0 when
+	 * defined for this OS).
+	 *
+	 * XXX: The linux centric header libreswan/pfkeyv2 tries to
+	 * define "enum sadb_ealg" with the names
+	 * K_SADB[_X]_EALG_... but the code is broken - it doesn't
+	 * accomodate missing algorithms.  Hence it is not used here.
+	 */
+	unsigned encrypt_sadb_ealg_id;
 
+	const struct encrypt_ops *encrypt_ops;
 };
 
 struct encrypt_ops {
@@ -584,6 +614,17 @@ struct integ_desc {
 	enum ipsec_authentication_algo integ_ikev1_ah_transform;
 
 	/*
+	 * This integrity algorithm's SADB (pfkeyv2) value (>0 when
+	 * defined for this OS).
+	 *
+	 * The linux centric header libreswan/pfkeyv2 tries to define
+	 * "enum sadb_aalg" with the names K_SADB[_X]_AALG_... but the
+	 * code is broken - it doesn't accomodate missing algorithms.
+	 * Hence it is not used here.
+	 */
+	unsigned integ_sadb_aalg_id;
+
+	/*
 	 * For IKE.  The PRF implementing integrity.  The output is
 	 * truncated down to INTEG_HASH_LEN.
 	 *
@@ -746,6 +787,16 @@ const struct oakley_group_desc *ikev1_get_ike_dh_desc(enum ike_trans_type_dh);
 
 const struct encrypt_desc *ikev1_get_kernel_encrypt_desc(enum ipsec_cipher_algo);
 const struct integ_desc *ikev1_get_kernel_integ_desc(enum ikev1_auth_attribute);
+
+/*
+ * Find the ENCRYPT / INTEG algorithm using the SADB defined value.
+ *
+ * Note that these functions take an unsigned and _not_ an enum
+ * parameter.  See above.
+ */
+
+const struct encrypt_desc *encrypt_desc_by_sadb_ealg_id(unsigned id);
+const struct integ_desc *integ_desc_by_sadb_aalg_id(unsigned id);
 
 /*
  * Pretty print the algorithm into a buffer as a string.  The string

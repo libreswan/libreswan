@@ -15,6 +15,7 @@
 #include "ietf_constants.h"
 #include "ike_alg.h"
 #include "ike_alg_cast.h"
+#include "sadb.h"
 
 /*
  * https://tools.ietf.org/html/rfc2144.html
@@ -44,4 +45,14 @@ const struct encrypt_desc ike_alg_encrypt_cast_cbc =
 	.wire_iv_size = 8,
 	.keydeflen = CAST_KEY_DEF_LEN,
 	.key_bit_lengths = { CAST_KEY_DEF_LEN, },
+#ifdef SADB_X_EALG_CASTCBC
+	.encrypt_sadb = {
+		.ealg_id = SADB_X_EALG_CASTCBC,
+	},
+#endif
+#ifdef SADB_X_EALG_CAST128CBC
+	.encrypt_sadb = {
+		.ealg_id = SADB_X_EALG_CAST128CBC,
+	},
+#endif
 };

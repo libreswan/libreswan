@@ -16,6 +16,7 @@
 #include "ike_alg.h"
 #include "ike_alg_none.h"
 #include "ike_alg_dh_nss_modp_ops.h"
+#include "sadb.h"
 
 /*
  * References for NULL.
@@ -43,6 +44,9 @@ const struct encrypt_desc ike_alg_encrypt_null =
 	.keylen_omitted = true,
 	.keydeflen = 0,
 	.key_bit_lengths = { 0, },
+#ifdef SADB_EALG_NULL
+	.encrypt_sadb_ealg_id = SADB_EALG_NULL,
+#endif
 };
 
 /*
@@ -81,6 +85,10 @@ const struct integ_desc ike_alg_integ_none = {
 		*/
 		.fips = true,
 	},
+#ifdef SADB_X_AALG_NULL
+	/* This is from BSD's KAME */
+	.integ_sadb_aalg_id = SADB_X_AALG_NULL,
+#endif
 };
 
 /*

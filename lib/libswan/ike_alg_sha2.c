@@ -23,6 +23,7 @@
 #include "ike_alg_sha2.h"
 #include "ike_alg_hash_nss_ops.h"
 #include "ike_alg_prf_nss_ops.h"
+#include "sadb.h"
 
 const struct hash_desc ike_alg_hash_sha2_256 = {
 	.common = {
@@ -88,6 +89,12 @@ const struct integ_desc ike_alg_integ_sha2_256 = {
 	.integ_output_size = SHA2_256_DIGEST_SIZE / 2,
 	.integ_ikev1_ah_transform = AH_SHA2_256,
 	.prf = &ike_alg_prf_sha2_256,
+#ifdef SADB_X_AALG_SHA2_256HMAC
+	.integ_sadb_aalg_id = SADB_X_AALG_SHA2_256HMAC,
+#endif
+#ifdef SADB_X_AALG_SHA2_256
+	.integ_sadb_aalg_id = SADB_X_AALG_SHA2_256,
+#endif
 };
 
 const struct integ_desc ike_alg_integ_hmac_sha2_256_truncbug = {
@@ -107,6 +114,9 @@ const struct integ_desc ike_alg_integ_hmac_sha2_256_truncbug = {
 	.integ_keymat_size = SHA2_256_DIGEST_SIZE,
 	.integ_output_size = BYTES_FOR_BITS(96),
 	.integ_ikev1_ah_transform = AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG, /* YES, not AH_... */
+#ifdef SADB_X_AALG_SHA2_256HMAC_TRUNCBUG
+	.integ_sadb_aalg_id = SADB_X_AALG_SHA2_256HMAC_TRUNCBUG,
+#endif
 };
 
 const struct hash_desc ike_alg_hash_sha2_384 = {
@@ -173,6 +183,12 @@ const struct integ_desc ike_alg_integ_sha2_384 = {
 	.integ_output_size = SHA2_384_DIGEST_SIZE / 2,
 	.integ_ikev1_ah_transform = AH_SHA2_384,
 	.prf = &ike_alg_prf_sha2_384,
+#ifdef SADB_X_AALG_SHA2_384HMAC
+	.integ_sadb_aalg_id = SADB_X_AALG_SHA2_384HMAC,
+#endif
+#ifdef SADB_X_AALG_SHA2_384
+	.integ_sadb_aalg_id = SADB_X_AALG_SHA2_384,
+#endif
 };
 
 const struct hash_desc ike_alg_hash_sha2_512 = {
@@ -239,4 +255,10 @@ const struct integ_desc ike_alg_integ_sha2_512 = {
 	.integ_output_size = SHA2_512_DIGEST_SIZE / 2,
 	.integ_ikev1_ah_transform = AH_SHA2_512,
 	.prf = &ike_alg_prf_sha2_512,
+#ifdef SADB_X_AALG_SHA2_512HMAC
+	.integ_sadb_aalg_id = SADB_X_AALG_SHA2_512HMAC,
+#endif
+#ifdef SADB_X_AALG_SHA2_512
+	.integ_sadb_aalg_id = SADB_X_AALG_SHA2_512,
+#endif
 };

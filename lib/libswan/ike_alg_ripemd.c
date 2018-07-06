@@ -18,6 +18,7 @@
 #include "ietf_constants.h"
 #include "ike_alg.h"
 #include "ike_alg_ripemd.h"
+#include "sadb.h"
 
 /*
  * See: https://tools.ietf.org/html/rfc2857
@@ -41,4 +42,9 @@ const struct integ_desc ike_alg_integ_hmac_ripemd_160_96 = {
 	.integ_keymat_size = BYTES_FOR_BITS(160),
 	.integ_output_size = BYTES_FOR_BITS(96),
 	.integ_ikev1_ah_transform = AH_RIPEMD,
+#ifdef SADB_X_AALG_RIPEMD160HMAC
+	.integ_sadb = {
+		.aalg_id = SADB_X_AALG_RIPEMD160HMAC,
+	},
+#endif
 };

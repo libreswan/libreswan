@@ -25,6 +25,7 @@
 #include "ike_alg.h"
 #include "ike_alg_twofish.h"
 #include "ietf_constants.h"
+#include "sadb.h"
 
 static void do_twofish(const struct encrypt_desc *alg UNUSED,
 		       u_int8_t *buf, size_t buf_size, PK11SymKey *key,
@@ -97,6 +98,9 @@ const struct encrypt_desc ike_alg_encrypt_twofish_cbc =
 	.keydeflen = TWOFISH_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.encrypt_ops = &twofish_encrypt_ops,
+#ifdef SADB_X_EALG_TWOFISHCBC
+	.encrypt_sadb_ealg_id = SADB_X_EALG_TWOFISHCBC,
+#endif
 };
 
 const struct encrypt_desc ike_alg_encrypt_twofish_ssh =

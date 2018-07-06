@@ -18,6 +18,7 @@
 #include "ike_alg.h"
 #include "ike_alg_camellia.h"
 #include "ike_alg_encrypt_nss_cbc_ops.h"
+#include "sadb.h"
 
 /* Camellia is a drop-in replacement for AES */
 
@@ -63,6 +64,9 @@ struct encrypt_desc ike_alg_encrypt_camellia_cbc =
 	.keydeflen =    CAMELLIA_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.encrypt_ops = &ike_alg_encrypt_nss_cbc_ops,
+#ifdef SADB_X_EALG_CAMELLIACBC
+	.encrypt_sadb_ealg_id = SADB_X_EALG_CAMELLIACBC,
+#endif
 };
 
 struct encrypt_desc ike_alg_encrypt_camellia_ctr =

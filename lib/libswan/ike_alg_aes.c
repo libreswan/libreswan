@@ -28,6 +28,7 @@
 #include "ike_alg_encrypt_nss_gcm_ops.h"
 #include "ike_alg_prf_nss_xcbc_ops.h"
 #include "ike_alg_aes.h"
+#include "sadb.h"
 
 const struct encrypt_desc ike_alg_encrypt_aes_cbc = {
 	.common = {
@@ -52,6 +53,12 @@ const struct encrypt_desc ike_alg_encrypt_aes_cbc = {
 	.keydeflen =    AES_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.encrypt_ops = &ike_alg_encrypt_nss_cbc_ops,
+#ifdef SADB_X_EALG_AESCBC
+	.encrypt_sadb_ealg_id = SADB_X_EALG_AESCBC,
+#endif
+#ifdef SADB_X_EALG_AES
+	.encrypt_sadb_ealg_id = SADB_X_EALG_AES,
+#endif
 };
 
 const struct encrypt_desc ike_alg_encrypt_aes_ctr =
@@ -79,6 +86,9 @@ const struct encrypt_desc ike_alg_encrypt_aes_ctr =
 	.keydeflen =    AES_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.encrypt_ops = &ike_alg_encrypt_nss_ctr_ops,
+#ifdef SADB_X_EALG_AESCTR
+	.encrypt_sadb_ealg_id = SADB_X_EALG_AESCTR,
+#endif
 };
 
 const struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
@@ -108,6 +118,12 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
 	.key_bit_lengths = { 256, 192, 128, },
 	.aead_tag_size = 8,
 	.encrypt_ops = &ike_alg_encrypt_nss_gcm_ops,
+#ifdef SADB_X_EALG_AES_GCM_ICV8
+	.encrypt_sadb_ealg_id = SADB_X_EALG_AES_GCM_ICV8,
+#endif
+#ifdef SADB_X_EALG_AES_GCM8
+	.encrypt_sadb_ealg_id = SADB_X_EALG_AES_GCM8,
+#endif
 };
 
 const struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
@@ -136,6 +152,12 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
 	.key_bit_lengths = { 256, 192, 128, },
 	.aead_tag_size = 12,
 	.encrypt_ops = &ike_alg_encrypt_nss_gcm_ops,
+#ifdef SADB_X_EALG_AES_GCM_ICV12
+	.encrypt_sadb_ealg_id = SADB_X_EALG_AES_GCM_ICV12,
+#endif
+#ifdef SADB_X_EALG_AES_GCM12
+	.encrypt_sadb_ealg_id = SADB_X_EALG_AES_GCM12,
+#endif
 };
 
 const struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
@@ -165,6 +187,12 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
 	.key_bit_lengths = { 256, 192, 128, },
 	.aead_tag_size = 16,
 	.encrypt_ops = &ike_alg_encrypt_nss_gcm_ops,
+#ifdef SADB_X_EALG_AES_GCM_ICV16
+	.encrypt_sadb_ealg_id = SADB_X_EALG_AES_GCM_ICV16,
+#endif
+#ifdef SADB_X_EALG_AES_GCM16
+	.encrypt_sadb_ealg_id = SADB_X_EALG_AES_GCM16,
+#endif
 };
 
 /*
@@ -197,6 +225,9 @@ const struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =
 	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.aead_tag_size = 8,
+#ifdef SADB_X_EALG_AES_CCM_ICV8
+	.encrypt_sadb_ealg_id = SADB_X_EALG_AES_CCM_ICV8,
+#endif
 };
 
 const struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
@@ -222,6 +253,9 @@ const struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
 	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.aead_tag_size = 12,
+#ifdef SADB_X_EALG_AES_CCM_ICV12
+	.encrypt_sadb_ealg_id = SADB_X_EALG_AES_CCM_ICV12,
+#endif
 };
 
 const struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
@@ -247,6 +281,9 @@ const struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.aead_tag_size = 16,
+#ifdef SADB_X_EALG_AES_CCM_ICV16
+	.encrypt_sadb_ealg_id = SADB_X_EALG_AES_CCM_ICV16,
+#endif
 };
 
 const struct prf_desc ike_alg_prf_aes_xcbc = {
@@ -291,6 +328,9 @@ const struct integ_desc ike_alg_integ_aes_xcbc = {
 #ifdef USE_XCBC
 	.prf = &ike_alg_prf_aes_xcbc,
 #endif
+#ifdef SADB_X_AALG_AES_XCBC_MAC
+	.integ_sadb_aalg_id = SADB_X_AALG_AES_XCBC_MAC,
+#endif
 };
 
 const struct integ_desc ike_alg_integ_aes_cmac = {
@@ -310,6 +350,9 @@ const struct integ_desc ike_alg_integ_aes_cmac = {
 	.integ_keymat_size = BYTES_FOR_BITS(128),
 	.integ_output_size = BYTES_FOR_BITS(96), /* truncated */
 	.integ_ikev1_ah_transform = AH_AES_CMAC_96,
+#ifdef SADB_X_AALG_AES_CMAC_96
+	.integ_sadb_aalg_id = SADB_X_AALG_AES_CMAC_96,
+#endif
 };
 
 /*
@@ -336,4 +379,10 @@ const struct encrypt_desc ike_alg_encrypt_null_integ_aes_gmac = {
 	.keydeflen = AEAD_AES_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.aead_tag_size = 16,
+#ifdef SADB_X_EALG_NULL_AUTH_AES_GMAC
+	.encrypt_sadb_ealg_id = SADB_X_EALG_NULL_AUTH_AES_GMAC,
+#endif
+#ifdef SADB_X_EALG_AESGMAC
+	.encrypt_sadb_ealg_id = SADB_X_EALG_AESGMAC,
+#endif
 };

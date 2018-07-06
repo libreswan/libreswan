@@ -327,6 +327,28 @@ const struct oakley_group_desc *ikev2_get_dh_desc(enum ike_trans_type_dh id)
 	return dh_desc(ikev2_lookup(&ike_alg_dh, id));
 }
 
+#define LOOKUP(TYPE, FIELD, VALUE)					\
+	{								\
+		for (const struct TYPE **algp = next_##TYPE(NULL);	\
+		     algp != NULL; algp = next_##TYPE(algp)) {		\
+			const struct TYPE *alg = *algp;			\
+			if (alg->FIELD == VALUE) {			\
+				return alg;				\
+			}						\
+		}							\
+		return NULL;						\
+	}
+
+const struct encrypt_desc *encrypt_desc_by_sadb_ealg_id(unsigned id)
+{
+	LOOKUP(encrypt_desc, encrypt_sadb_ealg_id, id);
+}
+
+const struct integ_desc *integ_desc_by_sadb_aalg_id(unsigned id)
+{
+	LOOKUP(integ_desc, integ_sadb_aalg_id, id);
+}
+
 /*
  * Validate and register IKE algorithm objects
  *

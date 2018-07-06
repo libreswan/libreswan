@@ -26,6 +26,7 @@
 #include "ike_alg_md5.h"
 #include "ike_alg_hash_nss_ops.h"
 #include "ike_alg_prf_hmac_ops.h"
+#include "sadb.h"
 
 const struct hash_desc ike_alg_hash_md5 = {
 	.common = {
@@ -86,4 +87,7 @@ const struct integ_desc ike_alg_integ_md5 = {
 	.integ_output_size = MD5_DIGEST_SIZE_96,
 	.integ_ikev1_ah_transform = AH_MD5,
 	.prf = &ike_alg_prf_md5,
+#ifdef SADB_AALG_MD5HMAC
+	.integ_sadb_aalg_id = SADB_AALG_MD5HMAC,
+#endif
 };

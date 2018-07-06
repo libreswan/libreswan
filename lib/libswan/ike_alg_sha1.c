@@ -26,6 +26,7 @@
 #include "ike_alg_sha1.h"
 #include "ike_alg_hash_nss_ops.h"
 #include "ike_alg_prf_nss_ops.h"
+#include "sadb.h"
 
 const struct hash_desc ike_alg_hash_sha1 = {
 	.common = {
@@ -91,4 +92,7 @@ const struct integ_desc ike_alg_integ_sha1 = {
 	.integ_output_size = SHA1_DIGEST_SIZE_96,
 	.integ_ikev1_ah_transform = AH_SHA,
 	.prf = &ike_alg_prf_sha1,
+#ifdef SADB_AALG_SHA1HMAC
+	.integ_sadb_aalg_id = SADB_AALG_SHA1HMAC,
+#endif
 };
