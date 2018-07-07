@@ -41,11 +41,6 @@ void exit_log(const char *message, ...)
 	exit(0);
 }
 
-void exit_tool(int code)
-{
-	exit(code);
-}
-
 extern struct encrypt_desc algo_aes;
 struct encrypt_desc *tc3_encrypter = &algo_aes;
 #include "../../lib/libpluto/seam_gi_sha1.c"

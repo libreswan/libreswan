@@ -47,11 +47,6 @@ void exit_log(const char *message, ...)
 	exit(0);
 }
 
-void exit_tool(int code)
-{
-	exit(code);
-}
-
 #include "../pk-dh-01/tc2.c"
 
 int main(int argc, char *argv[])

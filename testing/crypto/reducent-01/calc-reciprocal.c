@@ -39,11 +39,6 @@ void exit_log(const char *message, ...)
 	exit(0);
 }
 
-void exit_tool(int code)
-{
-	exit(code);
-}
-
 /*
  * assumes that the group has been initialized, that is, that the
  * str_modulus has been copied and turned into an MP_INT already.

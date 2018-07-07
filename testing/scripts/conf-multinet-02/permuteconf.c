@@ -184,8 +184,3 @@ int main(int argc, char *argv[])
 
 	exit(0);
 }
-
-void exit_tool(int x)
-{
-	exit(x);
-}

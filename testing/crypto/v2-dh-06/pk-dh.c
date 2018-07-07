@@ -40,11 +40,6 @@ void exit_log(const char *message, ...)
 	exit(0);
 }
 
-void exit_tool(int code)
-{
-	exit(code);
-}
-
 struct encrypt_desc *tc2_encrypter = &crypto_encrypter_3des;
 #include "../../lib/libpluto/seam_gi.c"
 

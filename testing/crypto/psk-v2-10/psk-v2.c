@@ -84,11 +84,6 @@ void exit_log(const char *message, ...)
 	exit(0);
 }
 
-void exit_tool(int code)
-{
-	exit(code);
-}
-
 void exit_pluto(int code)
 {
 	exit(code);

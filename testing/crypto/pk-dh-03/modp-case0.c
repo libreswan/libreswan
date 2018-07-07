@@ -42,11 +42,6 @@ void exit_log(const char *message, ...)
 	exit(0);
 }
 
-void exit_tool(int code)
-{
-	exit(code);
-}
-
 #define U32B u_int32_t
 
 /*

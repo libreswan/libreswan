@@ -40,11 +40,6 @@ void exit_log(const char *message, ...)
 	exit(0);
 }
 
-void exit_tool(int code)
-{
-	exit(code);
-}
-
 /*
  * while the rest of this file is covered under the GPL, the following
  * constant values, being inputs and outputs of a mathematical formula
