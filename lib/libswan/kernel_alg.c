@@ -144,6 +144,18 @@ int kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 	struct sadb_alg *alg_p, tmp_alg;
 	uint8_t alg_id = sadb_alg->sadb_alg_id;
 
+	bool supported;
+	switch (exttype) {
+	case SADB_EXT_SUPPORTED_ENCRYPT:
+		supported = encrypt_desc_by_sadb_ealg_id(alg_id);
+		break;
+	case SADB_EXT_SUPPORTED_AUTH:
+		supported = integ_desc_by_sadb_aalg_id(alg_id);
+		break;
+	default:
+		supported = true;
+	}
+
 	if (DBGP(DBG_KERNEL|DBG_CRYPT)) {
 		const char *exttype_name =
 			exttype == SADB_EXT_SUPPORTED_AUTH ? "SADB_EXT_SUPPORTED_AUTH"
@@ -164,14 +176,25 @@ int kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 			satype == SADB_SATYPE_ESP ? "SADB_SATYPE_ESP"
 			: satype == SADB_SATYPE_AH ? "SADB_SATYPE_AH"
 			: "SADB_SATYPE_???";
-		DBG_log("kernel_alg_add(): satype=%d(%s), exttype=%d(%s), alg_id=%d(%s), alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d",
+		DBG_log("kernel_alg_add(): satype=%d(%s), exttype=%d(%s), alg_id=%d(%s), alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d%s",
 			satype, satype_name,
 			exttype, exttype_name,
 			alg_id, alg_name,
 			sadb_alg->sadb_alg_ivlen,
 			sadb_alg->sadb_alg_minbits,
-			sadb_alg->sadb_alg_maxbits);
+			sadb_alg->sadb_alg_maxbits,
+			supported ? "" : " not supported");
 	}
+
+	if (!supported) {
+		return 0;
+	}
+
+	/*
+	 * XXX: if the 'return 0' below is executed, this leaks the
+	 * ALG_P allocated by sadb_alg_ptr() .  Fortunately the array
+	 * is large.
+	 */
 	alg_p = sadb_alg_ptr(satype, exttype, alg_id, TRUE);
 	if (alg_p == NULL) {
 		DBG(DBG_KERNEL,
@@ -264,15 +287,15 @@ void kernel_integ_add(const struct integ_desc *integ)
 			    integ->common.fqn);
 		return;
 	}
-
 	struct sadb_alg alg = {
 		.sadb_alg_minbits = integ->integ_keymat_size * BITS_PER_BYTE,
 		.sadb_alg_maxbits = integ->integ_keymat_size * BITS_PER_BYTE,
 		.sadb_alg_id = sadb_aalg,
 	};
 	if (kernel_alg_add(SADB_SATYPE_ESP,  SADB_EXT_SUPPORTED_AUTH, &alg) != 1) {
-		PEXPECT_LOG("Warning: failed to register %s for ESP",
-			    integ->common.fqn);
+		DBGF(DBG_KERNEL|DBG_CRYPT,
+		     "Note: failed to register integrity algorithm %s for ESP/AH",
+		     integ->common.fqn);
 		return;
 	}
 }
@@ -305,8 +328,9 @@ void kernel_encrypt_add(const struct encrypt_desc *encrypt)
 	};
 
 	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1) {
-		PEXPECT_LOG("Warning: failed to register %s for ESP",
-			    encrypt->common.fqn);
+		DBGF(DBG_KERNEL|DBG_CRYPT,
+		     "Note: failed to register encryption algorithm %s for ESP",
+		     encrypt->common.fqn);
 		return;
 	}
 }
