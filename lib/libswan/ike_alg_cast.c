@@ -46,13 +46,9 @@ const struct encrypt_desc ike_alg_encrypt_cast_cbc =
 	.keydeflen = CAST_KEY_DEF_LEN,
 	.key_bit_lengths = { CAST_KEY_DEF_LEN, },
 #ifdef SADB_X_EALG_CASTCBC
-	.encrypt_sadb = {
-		.ealg_id = SADB_X_EALG_CASTCBC,
-	},
+	.encrypt_sadb_ealg_id = SADB_X_EALG_CASTCBC,
 #endif
 #ifdef SADB_X_EALG_CAST128CBC
-	.encrypt_sadb = {
-		.ealg_id = SADB_X_EALG_CAST128CBC,
-	},
+	.encrypt_sadb_ealg_id = SADB_X_EALG_CAST128CBC,
 #endif
 };
