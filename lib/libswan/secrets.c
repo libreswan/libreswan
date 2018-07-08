@@ -1215,7 +1215,7 @@ void lsw_free_preshared_secrets(struct secret **psecrets)
 		*psecrets = NULL;
 	}
 
-	unlock_certs_and_keys("free_preshard_secrets");
+	unlock_certs_and_keys("free_preshared_secrets");
 }
 
 void lsw_load_preshared_secrets(struct secret **psecrets,

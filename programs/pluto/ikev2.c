@@ -2294,7 +2294,7 @@ void ikev2_log_parentSA(struct state *st)
 	);
 }
 
-static void sechdule_next_send(struct state *st)
+static void schedule_next_send(struct state *st)
 {
 	struct initiate_list *p;
 	struct state *cst = NULL;
@@ -2366,7 +2366,7 @@ void ikev2_update_msgid_counters(struct msg_digest *md)
 			ikesa->st_msgid_lastack - 1;
 
 		if (unack < ikesa->st_connection->ike_window) {
-			sechdule_next_send(ikesa);
+			schedule_next_send(ikesa);
 		}
 	}
 
@@ -2403,7 +2403,7 @@ deltatime_t ikev2_replace_delay(struct state *st, enum event_type *pkind)
 		 */
 		if (IS_IKE_SA_ESTABLISHED(st)) {
 			delay = deltasecs(c->sa_ike_life_seconds);
-			DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up estalibhsed ike_life:%jd", (intmax_t) delay));
+			DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up estblished ike_life:%jd", (intmax_t) delay));
 		} else {
 			delay = PLUTO_HALFOPEN_SA_LIFE;
 			DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up half-open SA ike_life:%jd", (intmax_t) delay));
