@@ -333,7 +333,6 @@ static void delete_lock(void)
  * FIXME: move them to confread_load() parameters
  */
 int verbose = 0;
-int warningsarefatal = 0;
 
 /* Read config file. exit() on error. */
 static struct starter_config *read_cfg_file(char *configfile)
