@@ -361,11 +361,9 @@ void yyerror(const char *s)
 		parser_y_error(parser_errstring, ERRSTRING_LEN, s);
 }
 
-struct config_parsed *parser_load_conf(const char *file, err_t *perr)
+struct config_parsed *parser_load_conf(const char *file, starter_errors_t *perrl)
 {
 	parser_errstring[0] = '\0';
-	if (perr != NULL)
-		*perr = NULL;
 
 	struct config_parsed *cfg = malloc(sizeof(struct config_parsed));
 
@@ -420,8 +418,8 @@ struct config_parsed *parser_load_conf(const char *file, err_t *perr)
 	return cfg;
 
 err:
-	if (perr != NULL)
-		*perr = (err_t)strdup(parser_errstring);
+	starter_error_append(perrl, parser_errstring);
+
 	if (cfg != NULL)
 		parser_free_conf(cfg);
 

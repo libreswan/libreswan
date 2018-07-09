@@ -98,7 +98,6 @@ int main(int argc, char *argv[])
 {
 	int opt;
 	struct starter_config *cfg = NULL;
-	err_t err = NULL;
 	char *confdir = NULL;
 	char *configfile = NULL;
 	struct starter_conn *conn = NULL;
@@ -158,12 +157,20 @@ int main(int argc, char *argv[])
 
 	starter_use_log(verbose != 0, TRUE, verbose == 0);
 
+	starter_errors_t errl = { NULL };
+
 	cfg = confread_load(configfile, &err, NULL);
 
-	if (!cfg) {
-		printf("config file: %s cannot be loaded: %s\n", configfile,
-		       err);
+	if (cfg == NULL) {
+		printf("config file: %s cannot be loaded: %s\n",
+			configfile, errl.errors);
+		pfreeany(errl.errors);
 		exit(3);
+	}
+	if (errl.errors != NULL) {
+		printf("premuteconf: in config '%s', ignoring: %s\n",
+			configfile, errl.errors);
+		pfree(errl.errors);
 	}
 
 	/* load all conns marked as auto=add or better */

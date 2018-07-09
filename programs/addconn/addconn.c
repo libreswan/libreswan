@@ -380,15 +380,22 @@ int main(int argc, char *argv[])
 	struct starter_config *cfg = NULL;
 
 	{
-		err_t err = NULL;
+		starter_errors_t errl = { NULL };
 
-		cfg = confread_load(configfile, &err, resolvip, ctlsocket, configsetup);
+		cfg = confread_load(configfile, &errl, resolvip, ctlsocket, configsetup);
 
 		if (cfg == NULL) {
 			fprintf(stderr, "cannot load config '%s': %s\n",
-				configfile, err);
+				configfile, errl.errors);
+			pfreeany(errl.errors);
 			exit(3);
-		} else if (checkconfig) {
+		}
+		if (errl.errors != NULL) {
+			fprintf(stderr, "addconn, in config '%s', ignoring: %s\n",
+				configfile, errl.errors);
+			pfree(errl.errors);
+		}
+		if (checkconfig) {
 			confread_free(cfg);
 			exit(0);
 		}

@@ -161,7 +161,7 @@ static void free_pluto_main(void)
  *
  * @param mess String - diagnostic message to print
  */
-static void invocation_fail(const char *mess)
+static void invocation_fail(err_t mess)
 {
 	if (mess != NULL)
 		fprintf(stderr, "%s\n", mess);
@@ -338,11 +338,23 @@ int verbose = 0;
 static struct starter_config *read_cfg_file(char *configfile)
 {
 	struct starter_config *cfg = NULL;
-	err_t err = NULL;
+	starter_errors_t errl = { NULL };
 
-	cfg = confread_load(configfile, &err, FALSE, NULL /* ctl_addr.sun_path? */, TRUE);
-	if (cfg == NULL)
-		invocation_fail(err);
+	cfg = confread_load(configfile, &errl, FALSE, NULL /* ctl_addr.sun_path? */, TRUE);
+	if (cfg == NULL) {
+		/*
+		 * note: incovation_fail never returns so we will have
+		 * a leak of errl.errors
+		 */
+		invocation_fail(errl.errors);
+	}
+
+	if (errl.errors != NULL) {
+		fprintf(stderr, "pluto --config '%s', ignoring: %s\n",
+			configfile, errl.errors);
+		pfree(errl.errors);
+	}
+
 	return cfg;
 }
 

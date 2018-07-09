@@ -62,7 +62,6 @@ int main(int argc, char *argv[])
 
 	int opt;
 	struct starter_config *cfg = NULL;
-	err_t err = NULL;
 	char *confdir = NULL;
 	char *configfile = NULL;
 	struct starter_conn *conn = NULL;
@@ -143,19 +142,26 @@ int main(int argc, char *argv[])
 
 	starter_use_log(verbose != 0, true, verbose == 0);
 
-	cfg = confread_load(configfile, &err, false, NULL, false);
+	starter_errors_t errl = { NULL };
+	cfg = confread_load(configfile, &errl, false, NULL, false);
 
 	if (cfg == NULL) {
 		fprintf(stderr, "%s: config file \"%s\" cannot be loaded: %s\n",
-			progname, configfile, err);
+			progname, configfile, errl.errors);
+		pfreeany(errl.errors);
 		exit(3);
+	}
+	if (errl.errors != NULL) {
+		fprintf(stderr, "%s: config file \"%s\", ignoring: %s\n",
+			progname, configfile, errl.errors);
+		pfree(errl.errors);
 	}
 
 	/* load all conns marked as auto=add or better */
 	if (verbose) {
 		for (conn = cfg->conns.tqh_first;
-		conn != NULL;
-		conn = conn->link.tqe_next)
+		     conn != NULL;
+		     conn = conn->link.tqe_next)
 				printf("#conn %s loaded\n", conn->name);
 	}
 
