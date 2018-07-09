@@ -1,4 +1,4 @@
-/* FreeS/WAN config file parser (parserlast.h)
+/* Libreswan config file parser (parserlast.h)
  * Copyright (C) 2004 Michael Richardson <mcr@sandelman.ottawa.on.ca>
  *
  * This program is free software; you can redistribute it and/or modify it

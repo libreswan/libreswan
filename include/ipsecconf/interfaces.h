@@ -1,4 +1,4 @@
-/* FreeS/WAN interfaces management (interfaces.h)
+/* Libreswan interfaces management (interfaces.h)
  * Copyright (C) 2001-2002 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2005 Michael Richardson <mcr@marajade.sandelman.ca>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>

@@ -16,7 +16,7 @@
  */
 
 /*
- * This file describes the errors/statistics that FreeSWAN collects.
+ * This file describes the errors/statistics that Libreswan collects.
  */
 
 #ifndef _IPSEC_STATS_H_

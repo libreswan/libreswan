@@ -1,5 +1,5 @@
 /*
- * @(#) prototypes for FreeSWAN functions
+ * @(#) prototypes for Libreswan functions
  *
  * Copyright (C) 2001  Richard Guy Briggs  <rgb@freeswan.org>
  *                 and Michael Richardson  <mcr@freeswan.org>

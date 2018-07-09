@@ -49,7 +49,7 @@
 #define __exit
 #endif
 
-/*	Low freeswan header coupling	*/
+/*	Low Libreswan header coupling	*/
 #include <libreswan.h>
 #include "libreswan/ipsec_alg.h"
 #include "klips-crypto/aes_cbc.h"

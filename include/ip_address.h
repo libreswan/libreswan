@@ -1,5 +1,5 @@
 /*
- * header file for FreeS/WAN library functions
+ * header file for Libreswan library functions
  * Copyright (C) 1998, 1999, 2000  Henry Spencer.
  * Copyright (C) 1999, 2000, 2001  Richard Guy Briggs
  *

@@ -37,7 +37,7 @@
 
 /*
  *	The following structs are used via pointers in ipsec_alg object to
- *	avoid ipsec_alg.h coupling with freeswan headers, thus simplifying
+ *	avoid ipsec_alg.h coupling with Libreswan headers, thus simplifying
  *	module development
  */
 struct ipsec_sa;

@@ -249,7 +249,7 @@ enum sadb_sastate {
 #define SADB_X_SAFLAGS_POLICYONLY	16	/* suppress eroute creation */
 
 /* not obvious, but these are the same values as used in isakmp,
- * and in freeswan/ipsec_policy.h. If you need to add any, they
+ * and in include/ietf_constants.h. If you need to add any, they
  * should be added as according to
  *   http://www.iana.org/assignments/isakmp-registry
  *

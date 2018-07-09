@@ -1,5 +1,5 @@
 /*
- * header file for FreeS/WAN library functions
+ * header file for Libreswan library functions
  * Copyright (C) 1998, 1999, 2000  Henry Spencer.
  * Copyright (C) 1999, 2000, 2001  Richard Guy Briggs
  *
@@ -178,7 +178,7 @@ struct prng {                   /* pseudo-random-number-generator guts */
 };
 
 /*
- * definitions for user space, taken from freeswan/ipsec_sa.h
+ * definitions for user space, taken linux/include/libreswan/ipsec_sa.h
  */
 typedef uint32_t IPsecSAref_t;
 

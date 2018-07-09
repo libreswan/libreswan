@@ -64,7 +64,7 @@ struct ipsec_lifetimes {
 	 *          before it expires. The concept of a connection,
 	 *          flow, or endpoint is system specific.
 	 *
-	 * mcr(2001-9-18) it is unclear what purpose these serve for FreeSWAN.
+	 * mcr(2001-9-18) it is unclear what purpose these serve for Libreswan
 	 *          They are maintained for PF_KEY compatibility.
 	 */
 	struct ipsec_lifetime64 ipl_allocations;

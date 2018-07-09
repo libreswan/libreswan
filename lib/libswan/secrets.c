@@ -241,7 +241,7 @@ void form_keyid(chunk_t e, chunk_t n, char *keyid, unsigned *keysize)
 		n.len--;
 	}
 
-	/* form the FreeS/WAN keyid */
+	/* form the Libreswan keyid */
 	keyid[0] = '\0';	/* in case of splitkeytoid failure */
 	splitkeytoid(e.ptr, e.len, n.ptr, n.len, keyid, KEYID_BUF);
 
@@ -276,7 +276,7 @@ static void form_keyid_from_nss(SECItem e, SECItem n, char *keyid,
 		n.len--;
 	}
 
-	/* form the FreeS/WAN keyid */
+	/* form the Libreswan keyid */
 	keyid[0] = '\0';	/* in case of splitkeytoid failure */
 	splitkeytoid(e.data, e.len, n.data, n.len, keyid, KEYID_BUF);
 

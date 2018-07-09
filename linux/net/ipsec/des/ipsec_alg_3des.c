@@ -41,7 +41,7 @@
 #include <linux/types.h>        /* size_t */
 #include <linux/string.h>
 
-/*	Low freeswan header coupling	*/
+/*	Low Libreswan header coupling	*/
 #include "libreswan/ipsec_xform.h"
 #include "libreswan/ipsec_alg.h"
 #include "klips-crypto/des.h"

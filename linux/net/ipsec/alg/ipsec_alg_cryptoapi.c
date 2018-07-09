@@ -58,7 +58,7 @@
 #warning "No linux CryptoAPI found, install 2.4.22+ or 2.6.x"
 #define NO_CRYPTOAPI_SUPPORT
 #endif
-/*	Low freeswan header coupling	*/
+/*	Low Libreswan header coupling	*/
 #include "libreswan/ipsec_alg.h"
 
 #include <linux/crypto.h>

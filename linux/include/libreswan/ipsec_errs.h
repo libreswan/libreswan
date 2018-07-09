@@ -17,7 +17,7 @@
  */
 
 /*
- * This file describes the errors/statistics that FreeSWAN collects.
+ * This file describes the errors/statistics that Libreswan collects.
  *
  */
 

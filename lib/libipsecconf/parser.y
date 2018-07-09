@@ -1,5 +1,5 @@
 %{   /* -*- bison-mode -*- */
-/* FreeS/WAN config file parser (parser.y)
+/* Libreswan config file parser (parser.y)
  * Copyright (C) 2001 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2004 Michael Richardson <mcr@sandelman.ottawa.on.ca>
  * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
