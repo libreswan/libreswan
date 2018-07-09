@@ -90,7 +90,7 @@ tunnel is a virtual private network or VPN.
 This package contains the daemons and userland tools for setting up
 Libreswan.
 
-Libreswan also supports IKEv2 (RFC4309) and Secure Labeling
+Libreswan also supports IKEv2 (RFC7296) and Secure Labeling
 
 Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 
