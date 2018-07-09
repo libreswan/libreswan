@@ -2,7 +2,8 @@
 See also https://libreswan.org/
 
 v3.26 (unreleased)
-* IKEv2: Fix core dump when impaired and proposing esp=null-none (Andrew)
+* IKEv2: Fix core dump when impaired and proposing esp=null-none [Andrew]
+*_unbound-hook: Fixup adding IPv4 pubkey, unbound now quotes arg as 1 [Paul]
 
 v3.25 (June 27, 2018)
 * IKEv2: MOBIKE Initiator support (RFC 4555) [Antony]
