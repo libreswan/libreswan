@@ -95,8 +95,6 @@ unsigned crypto_req_keysize(enum crk_proto ksproto, int algo)
  */
 void ike_alg_show_connection(const struct connection *c, const char *instance)
 {
-	const struct state *st;
-
 	if (c->alg_info_ike != NULL) {
 		/*
 		 * List the algorithms as found in alg_info_ike and as
@@ -132,7 +130,9 @@ void ike_alg_show_connection(const struct connection *c, const char *instance)
 			lswlog_alg_info(buf, &c->alg_info_ike->ai);
 		}
 	}
-	st = state_with_serialno(c->newest_isakmp_sa);
+
+	const struct state *st = state_with_serialno(c->newest_isakmp_sa);
+
 	if (st != NULL) {
 		/*
 		 * Convert the crypt-suite into 'struct proposal_info'
