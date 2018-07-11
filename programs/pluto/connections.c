@@ -1459,7 +1459,6 @@ void add_connection(const struct whack_message *wm)
 	 * destroyed.
 	 */
 
-	char err_buf[256] = "";	/* ??? big enough? */
 	bool same_rightca, same_leftca;
 	struct connection *c = alloc_thing(struct connection,
 					"struct connection");
@@ -1470,6 +1469,9 @@ void add_connection(const struct whack_message *wm)
 	c->connalias = wm->connalias;
 	c->dnshostname = wm->dnshostname;
 	c->policy = wm->policy;
+	c->alg_info_ike = NULL;
+	c->alg_info_esp = NULL;
+
 	if (NEVER_NEGOTIATE(c->policy)) {
 		/* cleanup inherited default */
 		c->policy &= ~(POLICY_IKEV1_ALLOW|POLICY_IKEV2_ALLOW);
@@ -1521,7 +1523,7 @@ void add_connection(const struct whack_message *wm)
 			c->policy |= POLICY_RSASIG;
 		}
 
-		c->alg_info_ike = NULL;
+		/* IKE cipher suites */
 
 		if (!LIN(POLICY_AUTH_NEVER, wm->policy) && wm->ike != NULL) {
 			char err_buf[256] = "";	/* ??? big enough? */
@@ -1568,34 +1570,44 @@ void add_connection(const struct whack_message *wm)
 			}
 		}
 
-		c->alg_info_esp = NULL;
+		/* ESP or AH cipher suites (but not both) */
 
 		if (wm->esp != NULL) {
 			DBG(DBG_CONTROL,
 			    DBG_log("from whack: got --esp=%s", wm->esp));
+
+			char err_buf[256] = "";	/* ??? big enough? */
 
 			const struct proposal_policy proposal_policy = {
 				.ikev1 = LIN(POLICY_IKEV1_ALLOW, wm->policy),
 				/*
 				 * logic needs to match pick_initiator()
 				 *
-				 * XXX: Once pluto is changed to IKEv1
-				 * XOR IKEv2 it should be possible to
-				 * move this magic into pluto proper
-				 * and instead pass a simple boolean.
+				 * XXX: Once pluto is changed to IKEv1 XOR
+				 * IKEv2 it should be possible to move this
+				 * magic into pluto proper and instead pass a
+				 * simple boolean.
 				 */
 				.ikev2 = LIN(POLICY_IKEV2_PROPOSE | POLICY_IKEV2_ALLOW, wm->policy),
 				.alg_is_ok = kernel_alg_is_ok,
 				.pfs = LIN(POLICY_PFS, wm->policy),
 			};
 
-			if (c->policy & POLICY_ENCRYPT)
-				c->alg_info_esp = alg_info_esp_create_from_str(&proposal_policy,
-					wm->esp, err_buf, sizeof(err_buf));
-
-			if (c->policy & POLICY_AUTHENTICATE)
-				c->alg_info_esp = alg_info_ah_create_from_str(&proposal_policy,
-					wm->esp,  err_buf, sizeof(err_buf));
+			/*
+			 * We checked above that exactly one of
+			 * POLICY_ENCRYPT and POLICY_AUTHENTICATE is on.
+			 * The only difference in processing is which
+			 * function is called (and those functions are
+			 * almost identical).
+			 */
+			c->alg_info_esp =
+				/* function: */
+					(c->policy & POLICY_ENCRYPT ?
+					 alg_info_esp_create_from_str :
+					 alg_info_ah_create_from_str)
+				/* arguments: */
+					(&proposal_policy,
+					 wm->esp, err_buf, sizeof(err_buf));
 
 			if (c->alg_info_esp == NULL) {
 				loglog(RC_FATAL,
