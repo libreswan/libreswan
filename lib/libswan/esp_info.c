@@ -77,10 +77,9 @@ static const struct proposal_protocol esp_proposal_protocol = {
 };
 
 /*
- * ??? the only difference between this and alg_info_ah_create_from_str is in two
- * parameters to alg_info_parse_str.  XXX: Things are down to just the
- * last parameter being different - but that is critical as it
- * determines what is allowed.
+ * ??? the only difference between
+ * alg_info_ah_create_from_str and alg_info_esp_create_from_str
+ * is in the second argument to proposal_parser.
  *
  * XXX: On the other hand, since "struct ike_info" and "struct
  * esp_info" are effectively the same, they can be merged.  Doing
@@ -88,6 +87,7 @@ static const struct proposal_protocol esp_proposal_protocol = {
  */
 
 /* This function is tested in testing/algparse/algparse.c */
+
 struct alg_info_esp *alg_info_esp_create_from_str(const struct proposal_policy *policy,
 						  const char *alg_str,
 						  char *err_buf, size_t err_buf_len)
