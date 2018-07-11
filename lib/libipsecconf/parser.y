@@ -403,7 +403,7 @@ struct config_parsed *parser_load_conf(const char *file, starter_errors_t *perrl
 
 	/* check all are kv_config */
 	for (const struct kw_list *kw = parser_cfg->config_setup;
-	     kw; kw = kw->next) {
+	     kw != NULL; kw = kw->next) {
 		if (!(kw->keyword.keydef->validity & kv_config)) {
 			snprintf(parser_errstring, sizeof(parser_errstring),
 				 "unexpected keyword '%s' in section 'config setup'",
