@@ -1054,7 +1054,7 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 				struct ikev2_transform *matching_transform = matching_local_proposal->matching_transform[type];
 				passert(matching_transform != NULL);
 				if (!matching_transform->valid &&
-				    (matching_local_proposal->optional_transform_types & LELEM(type))) {
+				    LHAS(matching_local_proposal->optional_transform_types, type)) {
 					/*
 					 * DH=NONE and/or INTEG=NONE
 					 * is implied.
@@ -1114,6 +1114,8 @@ stf_status ikev2_process_sa_payload(const char *what,
 {
 	DBG(DBG_CONTROL, DBG_log("Comparing remote proposals against %s %d local proposals",
 				 what, local_proposals->roof - 1));
+
+	passert(*chosen_proposal == NULL);
 
 	/*
 	 * The chosen proposal.  If there was a match, and no errors,
@@ -1195,6 +1197,12 @@ stf_status ikev2_process_sa_payload(const char *what,
 	}
 
 	pfreeany(best_proposal); /* only free if still owned by us */
+
+	if (status == STF_OK) {
+		passert(*chosen_proposal != NULL);
+	} else {
+		passert(*chosen_proposal == NULL);
+	}
 
 	return status;
 }

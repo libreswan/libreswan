@@ -1309,11 +1309,9 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 						  LIN(POLICY_OPPORTUNISTIC, c->policy),
 						  &accepted_ike_proposal,
 						  c->ike_proposals);
-	if (ret != STF_OK) {
-		passert(accepted_ike_proposal == NULL);
+	if (ret != STF_OK)
 		return ret;
-	}
-	passert(accepted_ike_proposal != NULL);
+
 	DBG(DBG_CONTROL, DBG_log_ikev2_proposal("accepted IKE proposal", accepted_ike_proposal));
 
 	/*
@@ -2090,7 +2088,6 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 			DBG(DBG_CONTROLMORE, DBG_log("ikev2_parse_parent_sa_body() failed in ikev2_parent_inR1outI2()"));
 			return ret;
 		}
-		passert(st->st_accepted_ike_proposal != NULL);
 
 		if (!ikev2_proposal_to_trans_attrs(st->st_accepted_ike_proposal,
 						   &st->st_oakley)) {
@@ -4422,8 +4419,6 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 	}
 
-	passert(st->st_accepted_esp_or_ah_proposal != NULL);
-
 	DBG(DBG_CONTROL, DBG_log_ikev2_proposal(what, st->st_accepted_esp_or_ah_proposal));
 	if (!ikev2_proposal_to_proto_info(st->st_accepted_esp_or_ah_proposal, proto_info)) {
 		loglog(RC_LOG_SERIOUS, "%s proposed/accepted a proposal we don't actually support!", what);
@@ -5417,7 +5412,7 @@ static notification_t process_ike_rekey_sa_pl_response(struct msg_digest *md,
 		DBG(DBG_CONTROLMORE, DBG_log("failed to accept IKE SA, REKEY, response, in process_ike_rekey_sa_pl_response"));
 		return ret;
 	}
-	passert(st->st_accepted_ike_proposal != NULL);
+
 	DBG(DBG_CONTROL, DBG_log_ikev2_proposal("accepted IKE proposal",
 				st->st_accepted_ike_proposal));
 	if (!ikev2_proposal_to_trans_attrs(st->st_accepted_ike_proposal,
@@ -5444,13 +5439,13 @@ static notification_t process_ike_rekey_sa_pl(struct msg_digest *md, struct stat
 		struct state *st)
 {
 	struct connection *c = st->st_connection;
-	struct ikev2_proposal *accepted_ike_proposal = NULL;
 	struct trans_attrs accepted_oakley;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 
 	/* Get the proposals ready.  */
 	ikev2_need_ike_proposals(c, "IKE SA responding to rekey");
 
+	struct ikev2_proposal *accepted_ike_proposal = NULL;
 	stf_status ret = ikev2_process_sa_payload("IKE Rekey responder child",
 			&sa_pd->pbs,
 			/*expect_ike*/ TRUE,
@@ -5459,13 +5454,9 @@ static notification_t process_ike_rekey_sa_pl(struct msg_digest *md, struct stat
 			LIN(POLICY_OPPORTUNISTIC, c->policy),
 			&accepted_ike_proposal,
 			c->ike_proposals);
-	if (ret != STF_OK) {
-		passert(accepted_ike_proposal == NULL);
+	if (ret != STF_OK)
 		return ret;
-	}
-	if (accepted_ike_proposal == NULL) {
-		return ret;
-	}
+
 	DBG(DBG_CONTROL, DBG_log_ikev2_proposal("accepted IKE proposal",
 				accepted_ike_proposal));
 	/*
