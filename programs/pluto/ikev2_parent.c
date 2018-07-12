@@ -1306,7 +1306,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 						  /*expect_ike*/ TRUE,
 						  /*expect_spi*/ FALSE,
 						  /*expect_accepted*/ FALSE,
-						  c->policy & POLICY_OPPORTUNISTIC,
+						  LIN(POLICY_OPPORTUNISTIC, c->policy),
 						  &accepted_ike_proposal,
 						  c->ike_proposals);
 	if (ret != STF_OK) {
@@ -2083,7 +2083,7 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 							  /*expect_ike*/ TRUE,
 							  /*expect_spi*/ FALSE,
 							  /*expect_accepted*/ TRUE,
-							  c->policy & POLICY_OPPORTUNISTIC,
+							  LIN(POLICY_OPPORTUNISTIC, c->policy),
 							  &st->st_accepted_ike_proposal,
 							  c->ike_proposals);
 		if (ret != STF_OK) {
@@ -4412,7 +4412,7 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 			/*expect_ike*/ FALSE,
 			/*expect_spi*/ TRUE,
 			expect_accepted,
-			c->policy & POLICY_OPPORTUNISTIC,
+			LIN(POLICY_OPPORTUNISTIC, c->policy),
 			&st->st_accepted_esp_or_ah_proposal,
 			c->esp_or_ah_proposals);
 
@@ -5410,7 +5410,7 @@ static notification_t process_ike_rekey_sa_pl_response(struct msg_digest *md,
 						  /*expect_ike*/ TRUE,
 						  /*expect_spi*/ TRUE,
 						  /*expect_accepted*/ TRUE,
-						  c->policy & POLICY_OPPORTUNISTIC,
+						  LIN(POLICY_OPPORTUNISTIC, c->policy),
 						  &st->st_accepted_ike_proposal,
 						  c->ike_proposals);
 	if (ret != STF_OK) {
@@ -5456,7 +5456,7 @@ static notification_t process_ike_rekey_sa_pl(struct msg_digest *md, struct stat
 			/*expect_ike*/ TRUE,
 			/*expect_spi*/ TRUE,
 			/*expect_accepted*/ FALSE,
-			c->policy & POLICY_OPPORTUNISTIC,
+			LIN(POLICY_OPPORTUNISTIC, c->policy),
 			&accepted_ike_proposal,
 			c->ike_proposals);
 	if (ret != STF_OK) {
