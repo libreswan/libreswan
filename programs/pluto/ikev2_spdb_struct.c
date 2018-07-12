@@ -415,7 +415,7 @@ static void print_proposals(struct lswlog *buf, struct ikev2_proposals *proposal
 static int process_transforms(pb_stream *prop_pbs, struct lswlog *remote_print_buf,
 			      unsigned remote_propnum, int num_remote_transforms,
 			      enum ikev2_sec_proto_id remote_protoid,
-			      struct ikev2_proposals *local_proposals,
+			      const struct ikev2_proposals *local_proposals,
 			      const int local_propnum_base, const int local_propnum_bound,
 			      struct ikev2_proposal_match *matching_local_proposals)
 {
@@ -852,7 +852,7 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 				   bool expect_ike,
 				   bool expect_spi,
 				   bool expect_accepted,
-				   struct ikev2_proposals *local_proposals,
+				   const struct ikev2_proposals *local_proposals,
 				   struct ikev2_proposal *best_proposal,
 				   struct lswlog *remote_print_buf)
 {
@@ -1110,7 +1110,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 				    bool expect_accepted,
 				    bool opportunistic,
 				    struct ikev2_proposal **chosen_proposal,
-				    struct ikev2_proposals *local_proposals)
+				    const struct ikev2_proposals *local_proposals)
 {
 	DBG(DBG_CONTROL, DBG_log("Comparing remote proposals against %s %d local proposals",
 				 what, local_proposals->roof - 1));

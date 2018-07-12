@@ -121,7 +121,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 				    bool expect_accepted,
 				    bool opportunistic,
 				    struct ikev2_proposal **chosen,
-				    struct ikev2_proposals *local_proposals);
+				    const struct ikev2_proposals *local_proposals);
 
 bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 				  struct ipsec_proto_info *proto_info);
