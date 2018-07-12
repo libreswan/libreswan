@@ -807,7 +807,6 @@ void ikev2_parent_outI1(int whack_sock,
 					  "IKE SA initiator selecting KE",
 					  c->alg_info_ike,
 					  &c->ike_proposals);
-	passert(c->ike_proposals != NULL);
 	st->st_oakley.ta_dh = ikev2_proposals_first_dh(c->ike_proposals);
 	if (st->st_oakley.ta_dh == NULL) {
 		libreswan_log("proposals do not contain a valid DH");
@@ -948,7 +947,6 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 						  "IKE SA initiator emitting local proposals",
 						  c->alg_info_ike,
 						  &c->ike_proposals);
-		passert(c->ike_proposals != NULL);
 		/*
 		 * Since this is an initial IKE exchange, the SPI is
 		 * emitted as is part of the packet header and not the
@@ -1305,7 +1303,6 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	ikev2_proposals_from_alg_info_ike(c->name, "IKE SA responder matching remote proposals",
 					  c->alg_info_ike,
 					  &c->ike_proposals);
-	passert(c->ike_proposals != NULL);
 
 	/*
 	 * Select the proposal.
@@ -1821,7 +1818,6 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 							  "IKE SA initiator validating remote's suggested KE",
 							  c->alg_info_ike,
 							  &c->ike_proposals);
-			passert(c->ike_proposals != NULL);
 			if (ikev2_proposals_include_modp(c->ike_proposals, sg.sg_group)) {
 				DBG(DBG_CONTROLMORE, DBG_log("Suggested modp group is acceptable"));
 				/*
@@ -2094,8 +2090,6 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 						  "IKE SA initiator accepting remote proposal",
 						  c->alg_info_ike,
 						  &c->ike_proposals);
-		passert(c->ike_proposals != NULL);
-
 		stf_status ret = ikev2_process_sa_payload("IKE initiator (accepting)",
 							  &sa_pd->pbs,
 							  /*expect_ike*/ TRUE,
@@ -5435,7 +5429,6 @@ static notification_t process_ike_rekey_sa_pl_response(struct msg_digest *md,
 	ikev2_proposals_from_alg_info_ike(c->name, "IKE SA accept response to rekey",
 					  c->alg_info_ike,
 					  &c->ike_proposals);
-	passert(c->ike_proposals != NULL);
 	stf_status ret = ikev2_process_sa_payload("IKE initiator (accepting)",
 						  &sa_pd->pbs,
 						  /*expect_ike*/ TRUE,
@@ -5483,7 +5476,6 @@ static notification_t process_ike_rekey_sa_pl(struct msg_digest *md, struct stat
 	ikev2_proposals_from_alg_info_ike(c->name, "IKE SA responding to rekey",
 					  c->alg_info_ike,
 					  &c->ike_proposals);
-	passert(c->ike_proposals != NULL);
 	stf_status ret = ikev2_process_sa_payload("IKE Rekey responder child",
 			&sa_pd->pbs,
 			/*expect_ike*/ TRUE,

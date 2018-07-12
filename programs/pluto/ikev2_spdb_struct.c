@@ -1927,6 +1927,7 @@ static struct ikev2_proposals default_ikev2_ike_proposals = {
  *
  * If alg_info_ike includes unknown algorithms those get dropped,
  * which can lead to no proposals.
+ * *result will not be NULL (see passert).
  */
 void ikev2_proposals_from_alg_info_ike(const char *connection_name,
 				       const char *why,
@@ -1981,6 +1982,7 @@ void ikev2_proposals_from_alg_info_ike(const char *connection_name,
 		print_proposals(buf, *result);
 		lswlogs(buf, notes);
 	}
+	passert(*result != NULL);
 }
 
 static struct ikev2_proposal default_ikev2_esp_proposal_missing_esn[] = {
