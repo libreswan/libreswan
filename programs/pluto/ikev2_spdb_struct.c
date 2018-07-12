@@ -1921,41 +1921,40 @@ static struct ikev2_proposals default_ikev2_ike_proposals = {
 };
 
 /*
- * Transform an alg_info_ike into an array of ikev2 proposals.
+ * Ensure c->ike_proposals is filled in.  If not, build it.
+ *
+ * ??? if c->ike_proposals was set for v1 we won't change it.
  *
  * WARNING: alg_info_ike is IKEv1
  *
  * If alg_info_ike includes unknown algorithms those get dropped,
  * which can lead to no proposals.
- * *result will not be NULL (see passert).
+ * c->ike_proposals will not be NULL (see passert).
  */
-void ikev2_proposals_from_alg_info_ike(const char *connection_name,
-				       const char *why,
-				       struct alg_info_ike *alg_info_ike,
-				       struct ikev2_proposals **result)
-{
-	if (*result != NULL) {
+
+void ikev2_need_ike_proposals(struct connection *c, const char *why) {
+	if (c->ike_proposals != NULL) {
 		DBGF(DBG_CONTROL, "already determined local IKE proposals for %s (%s)",
-		     connection_name, why);
+		     c->name, why);
 		return;
 	}
 
 	const char *notes;
-	if (alg_info_ike == NULL) {
+	if (c->alg_info_ike == NULL) {
 		DBGF(DBG_CONTROL, "selecting default local IKE proposals for %s (%s)",
-		     connection_name, why);
-		*result = &default_ikev2_ike_proposals;
+		     c->name, why);
+		c->ike_proposals = &default_ikev2_ike_proposals;
 		notes = " (default)";
 	} else {
 		DBGF(DBG_CONTROL, "constructing local IKE proposals for %s (%s)",
-		     connection_name, why);
+		     c->name, why);
 		struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals, "proposals");
-		int proposals_roof = alg_info_ike->ai.alg_info_cnt + 1;
+		int proposals_roof = c->alg_info_ike->ai.alg_info_cnt + 1;
 		proposals->proposal = alloc_things(struct ikev2_proposal, proposals_roof, "propsal");
 		proposals->on_heap = TRUE;
 		proposals->roof = 1;
 
-		FOR_EACH_IKE_INFO(alg_info_ike, ike_info) {
+		FOR_EACH_IKE_INFO(c->alg_info_ike, ike_info) {
 			LSWDBGP(DBG_CONTROL, buf) {
 				lswlogs(buf, "converting ike_info ");
 				lswlog_proposal_info(buf, ike_info);
@@ -1972,17 +1971,17 @@ void ikev2_proposals_from_alg_info_ike(const char *connection_name,
 				proposals->roof++;
 			}
 		}
-		*result = proposals;
+		c->ike_proposals = proposals;
 		notes = "";
 	}
 
 	LSWLOG(buf) {
 		lswlogf(buf, "local IKE proposals for %s (%s): ",
-			connection_name, why);
-		print_proposals(buf, *result);
+			c->name, why);
+		print_proposals(buf, c->ike_proposals);
 		lswlogs(buf, notes);
 	}
-	passert(*result != NULL);
+	passert(c->ike_proposals != NULL);
 }
 
 static struct ikev2_proposal default_ikev2_esp_proposal_missing_esn[] = {
@@ -2072,24 +2071,21 @@ static void add_esn_transforms(struct ikev2_proposal *proposal, lset_t policy)
 	}
 }
 
-void ikev2_proposals_from_alg_info_esp(const char *connection_name,
-				       const char *why,
-				       struct alg_info_esp *alg_info_esp,
-				       lset_t policy,
-				       const struct oakley_group_desc *default_dh,
-				       struct ikev2_proposals **result)
+void ikev2_need_esp_or_ah_proposals(struct connection *c,
+				    const char *why,
+				    const struct oakley_group_desc *default_dh)
 {
-	if (*result != NULL) {
+	if (c->ike_proposals != NULL) {
 		DBGF(DBG_CONTROL, "already determined local ESP/AH proposals for %s (%s)",
-		     connection_name, why);
+		     c->name, why);
 		return;
 	}
 
 	const char *notes;
-	if (alg_info_esp == NULL) {
+	if (c->alg_info_esp == NULL) {
 		DBGF(DBG_CONTROL, "selecting default local ESP/AH proposals for %s (%s)",
-		     connection_name, why);
-		lset_t esp_ah = policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE);
+		     c->name, why);
+		lset_t esp_ah = c->policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE);
 		struct ikev2_proposals *default_proposals_missing_esn;
 		switch (esp_ah) {
 		case POLICY_ENCRYPT:
@@ -2112,7 +2108,7 @@ void ikev2_proposals_from_alg_info_esp(const char *connection_name,
 		 * off and/or this is the AUTH exchange and DH is
 		 * excluded by &unset_group.
 		 */
-		bool add_empty_msdh_duplicates = (policy & POLICY_MSDH_DOWNGRADE) &&
+		bool add_empty_msdh_duplicates = (c->policy & POLICY_MSDH_DOWNGRADE) &&
 			default_dh != NULL && default_dh != &unset_group;
 
 		/*
@@ -2143,7 +2139,7 @@ void ikev2_proposals_from_alg_info_esp(const char *connection_name,
 		int propnum;
 		struct ikev2_proposal *proposal;
 		FOR_EACH_PROPOSAL(propnum, proposal, proposals) {
-			add_esn_transforms(proposal, policy);
+			add_esn_transforms(proposal, c->policy);
 		}
 		if (default_dh != NULL && default_dh != &unset_group) {
 			DBGF(DBG_CONTROL, "adding dh %s to default proposals",
@@ -2157,7 +2153,7 @@ void ikev2_proposals_from_alg_info_esp(const char *connection_name,
 					break;
 			}
 		}
-		*result = proposals;
+		c->ike_proposals = proposals;
 		notes = " (default)";
 	} else {
 
@@ -2170,7 +2166,7 @@ void ikev2_proposals_from_alg_info_esp(const char *connection_name,
 			} else {
 				lswlogf(buf, "default DH %s", default_dh->common.name);
 			}
-			lswlogf(buf, "  for %s (%s)", connection_name, why);
+			lswlogf(buf, "  for %s (%s)", c->name, why);
 		}
 
 		/*
@@ -2180,15 +2176,15 @@ void ikev2_proposals_from_alg_info_esp(const char *connection_name,
 		 * Even when DEFAULT_DH is NULL, DH may be added
 		 * (found in alg-info).  Deal with that below.
 		 */
-		bool add_empty_msdh_duplicates = (policy & POLICY_MSDH_DOWNGRADE) &&
+		bool add_empty_msdh_duplicates = (c->policy & POLICY_MSDH_DOWNGRADE) &&
 			default_dh != &unset_group;
 
 		struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals,
 								"ESP/AH proposals");
-		int proposals_roof = alg_info_esp->ai.alg_info_cnt + 1;
+		int proposals_roof = c->alg_info_esp->ai.alg_info_cnt + 1;
 		if (add_empty_msdh_duplicates) {
 			/* make space for everything duplicated */
-			proposals_roof += alg_info_esp->ai.alg_info_cnt;
+			proposals_roof += c->alg_info_esp->ai.alg_info_cnt;
 		}
 		proposals->proposal = alloc_things(struct ikev2_proposal, proposals_roof,
 						   "ESP/AH proposal");
@@ -2196,7 +2192,7 @@ void ikev2_proposals_from_alg_info_esp(const char *connection_name,
 		proposals->roof = 1;
 
 		enum ikev2_sec_proto_id protoid;
-		switch (policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
+		switch (c->policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
 		case POLICY_ENCRYPT:
 			protoid = IKEv2_SEC_PROTO_ESP;
 			break;
@@ -2204,11 +2200,11 @@ void ikev2_proposals_from_alg_info_esp(const char *connection_name,
 			protoid = IKEv2_SEC_PROTO_AH;
 			break;
 		default:
-			bad_case(policy);
+			bad_case(c->policy);
 		}
 
 		for (int dup = 0; dup < (add_empty_msdh_duplicates ? 2 : 1); dup++) {
-			FOR_EACH_ESP_INFO(alg_info_esp, esp_info) {
+			FOR_EACH_ESP_INFO(c->alg_info_esp, esp_info) {
 				LSWDBGP(DBG_CONTROL, log) {
 					lswlogf(log, "converting proposal ");
 					lswlog_proposal_info(log, esp_info);
@@ -2231,7 +2227,7 @@ void ikev2_proposals_from_alg_info_esp(const char *connection_name,
 									  proposals,
 									  dup ? &unset_group : default_dh);
 				if (proposal != NULL) {
-					add_esn_transforms(proposal, policy);
+					add_esn_transforms(proposal, c->policy);
 					DBG(DBG_CONTROL,
 					    DBG_log_ikev2_proposal("... ", proposal));
 					proposals->roof++;
@@ -2239,16 +2235,17 @@ void ikev2_proposals_from_alg_info_esp(const char *connection_name,
 			}
 		}
 
-		*result = proposals;
+		c->ike_proposals = proposals;
 		notes = "";
 	}
 
 	LSWLOG(buf) {
 		lswlogf(buf, "local ESP/AH proposals for %s (%s): ",
-			connection_name, why);
-		print_proposals(buf, *result);
+			c->name, why);
+		print_proposals(buf, c->ike_proposals);
 		lswlogs(buf, notes);
 	}
+	passert(c->ike_proposals != NULL);
 }
 
 struct ipsec_proto_info *ikev2_child_sa_proto_info(struct state *st, lset_t policy)

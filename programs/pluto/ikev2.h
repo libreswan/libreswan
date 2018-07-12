@@ -94,17 +94,11 @@ void DBG_log_ikev2_proposal(const char *prefix, struct ikev2_proposal *proposal)
 void free_ikev2_proposal(struct ikev2_proposal **proposal);
 void free_ikev2_proposals(struct ikev2_proposals **proposals);
 
-void ikev2_proposals_from_alg_info_ike(const char *connection_name,
-				       const char *why,
-				       struct alg_info_ike *alg_info_ike,
-				       struct ikev2_proposals **proposals);
+void ikev2_need_ike_proposals(struct connection *c, const char *why);
 
-void ikev2_proposals_from_alg_info_esp(const char *connection_name,
-				       const char *why,
-				       struct alg_info_esp *alg_info_esp,
-				       lset_t policy,
-				       const struct oakley_group_desc *default_dh,
-				       struct ikev2_proposals **proposals);
+void ikev2_need_esp_or_ah_proposals(struct connection *c,
+				    const char *why,
+				    const struct oakley_group_desc *default_dh);
 
 bool ikev2_emit_sa_proposal(pb_stream *pbs,
 			    struct ikev2_proposal *proposal,

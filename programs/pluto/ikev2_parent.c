@@ -803,10 +803,7 @@ void ikev2_parent_outI1(int whack_sock,
 	 * Initialize st->st_oakley, including the group number.
 	 * Grab the DH group from the first configured proposal and build KE.
 	 */
-	ikev2_proposals_from_alg_info_ike(c->name,
-					  "IKE SA initiator selecting KE",
-					  c->alg_info_ike,
-					  &c->ike_proposals);
+	ikev2_need_ike_proposals(c, "IKE SA initiator selecting KE");
 	st->st_oakley.ta_dh = ikev2_proposals_first_dh(c->ike_proposals);
 	if (st->st_oakley.ta_dh == NULL) {
 		libreswan_log("proposals do not contain a valid DH");
@@ -943,10 +940,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 	}
 	/* SA out */
 	{
-		ikev2_proposals_from_alg_info_ike(c->name,
-						  "IKE SA initiator emitting local proposals",
-						  c->alg_info_ike,
-						  &c->ike_proposals);
+		ikev2_need_ike_proposals(c, "IKE SA initiator emitting local proposals");
 		/*
 		 * Since this is an initial IKE exchange, the SPI is
 		 * emitted as is part of the packet header and not the
@@ -1300,9 +1294,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	}
 
 	/* Get the proposals ready.  */
-	ikev2_proposals_from_alg_info_ike(c->name, "IKE SA responder matching remote proposals",
-					  c->alg_info_ike,
-					  &c->ike_proposals);
+	ikev2_need_ike_proposals(c, "IKE SA responder matching remote proposals");
 
 	/*
 	 * Select the proposal.
@@ -1814,10 +1806,8 @@ stf_status ikev2_IKE_SA_process_SA_INIT_response_notification(struct state *st,
 			pstats(invalidke_recv_s, sg.sg_group);
 			pstats(invalidke_recv_u, st->st_oakley.ta_dh->group);
 
-			ikev2_proposals_from_alg_info_ike(c->name,
-							  "IKE SA initiator validating remote's suggested KE",
-							  c->alg_info_ike,
-							  &c->ike_proposals);
+			ikev2_need_ike_proposals(c, "IKE SA initiator validating remote's suggested KE");
+
 			if (ikev2_proposals_include_modp(c->ike_proposals, sg.sg_group)) {
 				DBG(DBG_CONTROLMORE, DBG_log("Suggested modp group is acceptable"));
 				/*
@@ -2086,10 +2076,8 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 		/* SA body in and out */
 		struct payload_digest *const sa_pd =
 			md->chain[ISAKMP_NEXT_v2SA];
-		ikev2_proposals_from_alg_info_ike(c->name,
-						  "IKE SA initiator accepting remote proposal",
-						  c->alg_info_ike,
-						  &c->ike_proposals);
+		ikev2_need_ike_proposals(c, "IKE SA initiator accepting remote proposal");
+
 		stf_status ret = ikev2_process_sa_payload("IKE initiator (accepting)",
 							  &sa_pd->pbs,
 							  /*expect_ike*/ TRUE,
@@ -3526,12 +3514,9 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		 * used.
 		 */
 		free_ikev2_proposals(&cc->esp_or_ah_proposals);
-		ikev2_proposals_from_alg_info_esp(cc->name,
-						  "IKE SA initiator emitting ESP/AH proposals",
-						  cc->alg_info_esp,
-						  cc->policy, &unset_group,
-						  &cc->esp_or_ah_proposals);
-		passert(cc->esp_or_ah_proposals != NULL);
+		ikev2_need_esp_or_ah_proposals(cc,
+					       "IKE SA initiator emitting ESP/AH proposals",
+					       &unset_group);
 
 		ikev2_emit_sa_proposals(&e_pbs_cipher, cc->esp_or_ah_proposals,
 					&local_spi, ISAKMP_NEXT_v2TSi);
@@ -4420,12 +4405,7 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 		free_ikev2_proposals(&c->esp_or_ah_proposals);
 	}
 
-	ikev2_proposals_from_alg_info_esp(c->name, what,
-					  c->alg_info_esp,
-					  c->policy,
-					  default_dh,
-					  &c->esp_or_ah_proposals);
-	passert(c->esp_or_ah_proposals != NULL);
+	ikev2_need_esp_or_ah_proposals(c, what, default_dh);
 
 	ret = ikev2_process_sa_payload(what,
 			&sa_pd->pbs,
@@ -5352,10 +5332,7 @@ static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
 		local_nonce = st->st_ni;
 
 		free_ikev2_proposals(&c->ike_proposals);
-		ikev2_proposals_from_alg_info_ike(c->name,
-				"IKE SA initiating rekey",
-				c->alg_info_ike,
-				&c->ike_proposals);
+		ikev2_need_ike_proposals(c, "IKE SA initiating rekey");
 
 		/* send v2 IKE SAs*/
 		if (!ikev2_emit_sa_proposals(outpbs,
@@ -5426,9 +5403,8 @@ static notification_t process_ike_rekey_sa_pl_response(struct msg_digest *md,
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 
 	/* Get the proposals ready.  */
-	ikev2_proposals_from_alg_info_ike(c->name, "IKE SA accept response to rekey",
-					  c->alg_info_ike,
-					  &c->ike_proposals);
+	ikev2_need_ike_proposals(c, "IKE SA accept response to rekey");
+
 	stf_status ret = ikev2_process_sa_payload("IKE initiator (accepting)",
 						  &sa_pd->pbs,
 						  /*expect_ike*/ TRUE,
@@ -5473,9 +5449,8 @@ static notification_t process_ike_rekey_sa_pl(struct msg_digest *md, struct stat
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 
 	/* Get the proposals ready.  */
-	ikev2_proposals_from_alg_info_ike(c->name, "IKE SA responding to rekey",
-					  c->alg_info_ike,
-					  &c->ike_proposals);
+	ikev2_need_ike_proposals(c, "IKE SA responding to rekey");
+
 	stf_status ret = ikev2_process_sa_payload("IKE Rekey responder child",
 			&sa_pd->pbs,
 			/*expect_ike*/ TRUE,
@@ -6697,33 +6672,33 @@ void ikev2_initiate_child_sa(struct pending *p)
 		 */
 		free_ikev2_proposals(&c->esp_or_ah_proposals);
 		const struct oakley_group_desc *default_dh =
-			((c->policy & POLICY_PFS) != LEMPTY) ? ike->sa.st_oakley.ta_dh : NULL;
-		ikev2_proposals_from_alg_info_esp(c->name, "ESP/AH initiator emitting proposals",
-				c->alg_info_esp,
-				c->policy, default_dh,
-				&c->esp_or_ah_proposals);
-		passert(c->esp_or_ah_proposals != NULL);
+			c->policy & POLICY_PFS ? ike->sa.st_oakley.ta_dh : NULL;
+
+		ikev2_need_esp_or_ah_proposals(c,
+					       "ESP/AH initiator emitting proposals",
+					       default_dh);
+
 		st->st_pfs_group = ikev2_proposals_first_dh(c->esp_or_ah_proposals);
 
 		DBG(DBG_CONTROLMORE, {
-				const char *pfsgroupname = st->st_pfs_group == NULL ?
-				"no-pfs" : st->st_pfs_group->common.name;
+			const char *pfsgroupname = st->st_pfs_group == NULL ?
+			"no-pfs" : st->st_pfs_group->common.name;
 
-				DBG_log("#%lu schedule %s IPsec SA %s%s using IKE# %lu pfs=%s",
-						st->st_serialno,
-						rst != NULL ? "rekey initiate" : "initiate",
-						prettypolicy(p->policy),
-						replacestr,
-						ike->sa.st_serialno,
-						pfsgroupname);
-				});
+			DBG_log("#%lu schedule %s IPsec SA %s%s using IKE# %lu pfs=%s",
+				st->st_serialno,
+				rst != NULL ? "rekey initiate" : "initiate",
+				prettypolicy(p->policy),
+				replacestr,
+				ike->sa.st_serialno,
+				pfsgroupname);
+		});
 	} else {
 		DBG(DBG_CONTROLMORE, {
-				DBG_log("#%lu schedule initiate IKE Rekey SA %s to replace IKE# %lu",
-						st->st_serialno,
-						prettypolicy(p->policy),
-						ike->sa.st_serialno);
-				});
+			DBG_log("#%lu schedule initiate IKE Rekey SA %s to replace IKE# %lu",
+				st->st_serialno,
+				prettypolicy(p->policy),
+				ike->sa.st_serialno);
+		});
 	}
 
 	event_force(EVENT_v2_INITIATE_CHILD, st);
