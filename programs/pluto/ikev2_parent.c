@@ -5308,7 +5308,8 @@ static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
 	chunk_t local_nonce;
 	chunk_t *local_g;
 
-	if (st->st_state == STATE_V2_REKEY_IKE_R) {
+	switch (st->st_state) {
+	case STATE_V2_REKEY_IKE_R:
 		local_g = &st->st_gr;
 		setchunk(local_spi, st->st_rcookie,
 				sizeof(st->st_rcookie));
@@ -5320,24 +5321,29 @@ static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
 			DBG(DBG_CONTROL, DBG_log("problem emitting accepted ike proposal in CREATE_CHILD_SA"));
 			return STF_INTERNAL_ERROR;
 		}
-	} else {
+		break;
+	case STATE_V2_REKEY_IKE_I0:
 		local_g = &st->st_gi;
 		setchunk(local_spi, st->st_icookie,
 				sizeof(st->st_icookie));
 		local_nonce = st->st_ni;
 
+		/* ??? why do we need to free the previous proposals? */
 		free_ikev2_proposals(&c->ike_proposals);
 		ikev2_need_ike_proposals(c, "IKE SA initiating rekey");
 
 		/* send v2 IKE SAs*/
 		if (!ikev2_emit_sa_proposals(outpbs,
-					st->st_connection->ike_proposals,
+					c->ike_proposals,
 					&local_spi,
 					ISAKMP_NEXT_v2Ni))  {
 			libreswan_log("outsa fail");
 			DBG(DBG_CONTROL, DBG_log("problem emitting connection ike proposals in CREATE_CHILD_SA"));
 			return STF_INTERNAL_ERROR;
 		}
+		break;
+	default:
+		bad_case(st->st_state);
 	}
 
 	/* send NONCE */
@@ -5669,14 +5675,18 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 	uint8_t *encstart = e_pbs_cipher.cur;
 	passert(reply_stream.start <= iv && iv <= encstart);
 
-	if (st->st_state == STATE_V2_REKEY_IKE_R ||
-		       st->st_state == STATE_V2_REKEY_IKE_I0) {
+	switch (st->st_state) {
+	case STATE_V2_REKEY_IKE_R:
+	case STATE_V2_REKEY_IKE_I0:
 		ret = ikev2_child_add_ike_payloads(md, &e_pbs_cipher);
-	} else if (st->st_state == STATE_V2_CREATE_I0 ||
-			st->st_state == STATE_V2_REKEY_CHILD_I0) {
+		break;
+	case STATE_V2_CREATE_I0:
+	case STATE_V2_REKEY_CHILD_I0:
 		ret = ikev2_child_add_ipsec_payloads(md, &e_pbs_cipher,
 				ISAKMP_v2_CREATE_CHILD_SA);
-	} else  {
+		break;
+	default:
+		/* ??? which states are actually correct? */
 		RETURN_STF_FAILURE_STATUS(ikev2_rekey_child_copy_ts(md));
 		ret = ikev2_child_sa_respond(md, &e_pbs_cipher,
 					     ISAKMP_v2_CREATE_CHILD_SA);
@@ -5757,10 +5767,11 @@ static stf_status ikev2_start_new_exchange(struct state *st)
 			st->st_connection->failed_ikev2 = FALSE; /* give it a fresh start */
 			st->st_policy = st->st_connection->policy; /* for pick_initiator */
 
-			loglog(RC_LOG_SERIOUS, "no viable to parent to initiate CREATE_CHILD_EXCHANGE %s try replacing",
+			loglog(RC_LOG_SERIOUS, "no viable to parent to initiate CREATE_CHILD_EXCHANGE %s; trying replace",
 					st->st_state_name);
 			delete_event(st);
 			event_schedule_s(EVENT_SA_REPLACE, REPLACE_ORPHAN, st);
+			/* ??? surely this isn't yet a failure or a success */
 			return STF_FAIL;
 		}
 	}
@@ -5783,7 +5794,7 @@ void ikev2_child_send_next(struct state *st)
 
 	stf_status e = ikev2_start_new_exchange(st);
 	if (e != STF_OK)
-		return;
+		return;	/* ??? e lost?  probably should call complete_v2_state_transition */
 
 	struct msg_digest *md = unsuspend_md(st);
 	e = ikev2_child_out_tail(md);

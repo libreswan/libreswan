@@ -105,13 +105,14 @@ bool ikev2_emit_sa_proposal(pb_stream *pbs,
 			    chunk_t *local_spi,
 			    enum next_payload_types_ikev2 next_payload_type);
 
-bool ikev2_emit_sa_proposals(pb_stream *outs, struct ikev2_proposals *proposals,
+bool ikev2_emit_sa_proposals(pb_stream *outs,
+			     const struct ikev2_proposals *proposals,
 			     chunk_t *local_spi,
 			     enum next_payload_types_ikev2 next_payload_type);
 
-const struct oakley_group_desc *ikev2_proposals_first_dh(struct ikev2_proposals *proposals);
+const struct oakley_group_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *proposals);
 
-bool ikev2_proposals_include_modp(struct ikev2_proposals *proposals,
+bool ikev2_proposals_include_modp(const struct ikev2_proposals *proposals,
 				  oakley_group_t modp);
 
 stf_status ikev2_process_sa_payload(const char *what,
@@ -126,8 +127,8 @@ stf_status ikev2_process_sa_payload(const char *what,
 bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
 				  struct ipsec_proto_info *proto_info);
 
-bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *chosen,
-				   struct trans_attrs  *);
+bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *chosen,
+				   struct trans_attrs *ta_out);
 
 struct ipsec_proto_info *ikev2_child_sa_proto_info(struct state *st, lset_t policy);
 

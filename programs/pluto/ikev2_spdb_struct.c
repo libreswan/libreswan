@@ -219,7 +219,7 @@ struct ikev2_proposal_match {
 	 * Pointer to the best matched transform within the local
 	 * proposal, or the (invalid) sentinel transform.
 	 */
-	struct ikev2_transform *matching_transform[IKEv2_TRANS_TYPE_ROOF];
+	const struct ikev2_transform *matching_transform[IKEv2_TRANS_TYPE_ROOF];
 };
 
 struct ikev2_proposals {
@@ -384,7 +384,7 @@ void DBG_log_ikev2_proposal(const char *prefix,
 	}
 }
 
-static void print_proposals(struct lswlog *buf, struct ikev2_proposals *proposals)
+static void print_proposals(struct lswlog *buf, const struct ikev2_proposals *proposals)
 {
 	passert(proposals->proposal[0].protoid == 0);
 	const char *proposal_sep = "";
@@ -437,12 +437,12 @@ static int process_transforms(pb_stream *prop_pbs, struct lswlog *remote_print_b
 	 */
 	{
 		int local_propnum;
-		struct ikev2_proposal *local_proposal;
+		const struct ikev2_proposal *local_proposal;
 		FOR_EACH_PROPOSAL_IN_RANGE(local_propnum, local_proposal, local_proposals,
 					   local_propnum_base, local_propnum_bound) {
 			struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_propnum];
 			enum ikev2_trans_type type;
-			struct ikev2_transforms *local_transforms;
+			const struct ikev2_transforms *local_transforms;
 			matching_local_proposal->required_transform_types = LEMPTY;
 			matching_local_proposal->matched_transform_types = LEMPTY;
 			matching_local_proposal->optional_transform_types = LEMPTY;
@@ -451,7 +451,7 @@ static int process_transforms(pb_stream *prop_pbs, struct lswlog *remote_print_b
 				 * Find the sentinel transform for
 				 * this transform-type.
 				 */
-				struct ikev2_transform *sentinel_transform;
+				const struct ikev2_transform *sentinel_transform;
 				FOR_EACH_TRANSFORM(sentinel_transform, local_transforms) {
 					/*
 					 * Since the local proposal
@@ -629,9 +629,9 @@ static int process_transforms(pb_stream *prop_pbs, struct lswlog *remote_print_b
 				 * type that match.  Limit the search to
 				 * transforms before the last match.
 				 */
-				struct ikev2_transforms *local_transforms = &local_proposal->transforms[type];
+				const struct ikev2_transforms *local_transforms = &local_proposal->transforms[type];
 				struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_propnum];
-				struct ikev2_transform **matching_local_transform = &matching_local_proposal->matching_transform[type];
+				const struct ikev2_transform **matching_local_transform = &matching_local_proposal->matching_transform[type];
 				/*
 				 * The matching local transform always
 				 * points into the local transform
@@ -644,7 +644,7 @@ static int process_transforms(pb_stream *prop_pbs, struct lswlog *remote_print_b
 				/*
 				 * See if this match improves things.
 				 */
-				struct ikev2_transform *local_transform;
+				const struct ikev2_transform *local_transform;
 				FOR_EACH_TRANSFORM(local_transform, local_transforms) {
 					if (local_transform >= *matching_local_transform) {
 						break;
@@ -1048,10 +1048,10 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 			 */
 			enum ikev2_trans_type type;
 			struct ikev2_transforms *best_transforms;
-			struct ikev2_proposal_match *matching_local_proposal =
+			const struct ikev2_proposal_match *matching_local_proposal =
 				&matching_local_proposals[matching_local_propnum];
 			FOR_EACH_TRANSFORMS_TYPE(type, best_transforms, best_proposal) {
-				struct ikev2_transform *matching_transform = matching_local_proposal->matching_transform[type];
+				const struct ikev2_transform *matching_transform = matching_local_proposal->matching_transform[type];
 				passert(matching_transform != NULL);
 				if (!matching_transform->valid &&
 				    LHAS(matching_local_proposal->optional_transform_types, type)) {
@@ -1209,7 +1209,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 
 static bool emit_transform(pb_stream *r_proposal_pbs,
 			   enum ikev2_trans_type type, bool last,
-			   struct ikev2_transform *transform)
+			   const struct ikev2_transform *transform)
 {
 	struct ikev2_trans trans = {
 		.isat_type = type,
@@ -1241,7 +1241,7 @@ static bool emit_transform(pb_stream *r_proposal_pbs,
  * passing the correct value/size in for the SPI.
  */
 static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
-			   struct ikev2_proposal *proposal,
+			   const struct ikev2_proposal *proposal,
 			   unsigned propnum,
 			   bool exclude_transform_none)
 {
@@ -1253,9 +1253,9 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 	 */
 	int trans_nr = 0;
 	enum ikev2_trans_type type;
-	struct ikev2_transforms *transforms;
+	const struct ikev2_transforms *transforms;
 	FOR_EACH_TRANSFORMS_TYPE(type, transforms, proposal) {
-		struct ikev2_transform *transform;
+		const struct ikev2_transform *transform;
 		FOR_EACH_TRANSFORM(transform, transforms) {
 			/*
 			 * When pluto initiates with an AEAD proposal,
@@ -1321,8 +1321,10 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 	return trans_nr;
 }
 
-static bool emit_proposal(pb_stream *sa_pbs, struct ikev2_proposal *proposal,
-			  unsigned propnum, chunk_t *local_spi,
+static bool emit_proposal(pb_stream *sa_pbs,
+			  const struct ikev2_proposal *proposal,
+			  unsigned propnum,
+			  chunk_t *local_spi,
 			  enum ikev2_last_proposal last_proposal,
 			  bool exclude_transform_none)
 {
@@ -1362,7 +1364,7 @@ static bool emit_proposal(pb_stream *sa_pbs, struct ikev2_proposal *proposal,
 }
 
 bool ikev2_emit_sa_proposals(pb_stream *pbs,
-			     struct ikev2_proposals *proposals,
+			     const struct ikev2_proposals *proposals,
 			     chunk_t *local_spi,
 			     enum next_payload_types_ikev2 next_payload_type)
 {
@@ -1382,7 +1384,7 @@ bool ikev2_emit_sa_proposals(pb_stream *pbs,
 		return FALSE;
 
 	int propnum;
-	struct ikev2_proposal *proposal;
+	const struct ikev2_proposal *proposal;
 	FOR_EACH_PROPOSAL(propnum, proposal, proposals) {
 		if (!emit_proposal(&sa_pbs, proposal, propnum, local_spi,
 				   (propnum < proposals->roof - 1
@@ -1423,7 +1425,7 @@ bool ikev2_emit_sa_proposal(pb_stream *pbs, struct ikev2_proposal *proposal,
 	return TRUE;
 }
 
-bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
+bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 				   struct trans_attrs *ta_out)
 {
 	DBG(DBG_CONTROL, DBG_log("converting proposal to internal trans attrs"));
@@ -1441,14 +1443,14 @@ bool ikev2_proposal_to_trans_attrs(struct ikev2_proposal *proposal,
 	*ta_out = ta;
 
 	enum ikev2_trans_type type;
-	struct ikev2_transforms *transforms;
+	const struct ikev2_transforms *transforms;
 	FOR_EACH_TRANSFORMS_TYPE(type, transforms, proposal) {
 		/*
 		 * Accepted transform is in [0] valid proposals would
 		 * be in [1...].
 		 */
 		pexpect(!transforms->transform[1].valid); /* zero or 1 */
-		struct ikev2_transform *transform = &transforms->transform[0];
+		const struct ikev2_transform *transform = &transforms->transform[0];
 		if (transform->valid || transform->implied) {
 			switch (type) {
 			case IKEv2_TRANS_TYPE_ENCR: {
@@ -2291,12 +2293,12 @@ ipsec_spi_t ikev2_child_sa_spi(const struct spd_route *spd_route, lset_t policy)
 /*
  * Return the first valid DH proposal that is supported.
  */
-const struct oakley_group_desc *ikev2_proposals_first_dh(struct ikev2_proposals *proposals)
+const struct oakley_group_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *proposals)
 {
 	int propnum;
-	struct ikev2_proposal *proposal;
+	const struct ikev2_proposal *proposal;
 	FOR_EACH_PROPOSAL(propnum, proposal, proposals) {
-		struct ikev2_transforms *transforms = &proposal->transforms[IKEv2_TRANS_TYPE_DH];
+		const struct ikev2_transforms *transforms = &proposal->transforms[IKEv2_TRANS_TYPE_DH];
 		int t;
 		for (t = 0; t < transforms->transform[t].valid; t++) {
 			int groupnum = transforms->transform[t].id;
@@ -2325,14 +2327,14 @@ const struct oakley_group_desc *ikev2_proposals_first_dh(struct ikev2_proposals 
  *
  * It's the caller's problem to check that it is actually supported.
  */
-bool ikev2_proposals_include_modp(struct ikev2_proposals *proposals,
+bool ikev2_proposals_include_modp(const struct ikev2_proposals *proposals,
 				  oakley_group_t modp)
 {
 	int propnum;
-	struct ikev2_proposal *proposal;
+	const struct ikev2_proposal *proposal;
 	FOR_EACH_PROPOSAL(propnum, proposal, proposals) {
-		struct ikev2_transforms *transforms = &proposal->transforms[IKEv2_TRANS_TYPE_DH];
-		struct ikev2_transform *transform;
+		const struct ikev2_transforms *transforms = &proposal->transforms[IKEv2_TRANS_TYPE_DH];
+		const struct ikev2_transform *transform;
 		FOR_EACH_TRANSFORM(transform, transforms) {
 			if (transform->id == modp) {
 				return TRUE;
