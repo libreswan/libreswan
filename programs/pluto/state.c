@@ -521,9 +521,7 @@ static char *readable_humber(uint64_t num,
 
 static struct ike_sa *get_ike_sa(struct state *st, bool verbose)
 {
-	if (st == NULL) {
-		return NULL;
-	} else if (IS_CHILD_SA(st)) {
+	if (pexpect(st != NULL) && IS_CHILD_SA(st)) {
 		struct state *pst = state_by_serialno(st->st_clonedfrom);
 		if (pst == NULL) {
 			PEXPECT_LOG("child state #%lu missing parent state #%lu",
@@ -534,9 +532,8 @@ static struct ike_sa *get_ike_sa(struct state *st, bool verbose)
 				    st->st_serialno, st->st_clonedfrom);
 		}
 		return (struct ike_sa*) pst;
-	} else {
-		return (struct ike_sa*) st;
 	}
+	return (struct ike_sa*) st;
 }
 
 struct ike_sa *ike_sa(struct state *st)
@@ -551,15 +548,10 @@ struct ike_sa *pexpect_ike_sa(struct state *st)
 
 struct child_sa *pexpect_child_sa(struct state *st)
 {
-	if (st == NULL) {
-		return NULL;
-	} else if (IS_CHILD_SA(st)) {
-		return (struct child_sa*) st;
-	} else {
-		PEXPECT_LOG("expecting child SA but state #%lu is a parent",
-				    st->st_serialno);
-		return (struct child_sa*) st;
-	}
+	if (pexpect(st != NULL))
+		pexpect(IS_CHILD_SA(st));
+
+	return (struct child_sa*) st;
 }
 
 union sas { struct child_sa child; struct ike_sa ike; struct state st; };
