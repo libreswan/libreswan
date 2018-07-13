@@ -2083,7 +2083,7 @@ void ikev2_need_esp_or_ah_proposals(struct connection *c,
 				    const char *why,
 				    const struct oakley_group_desc *default_dh)
 {
-	if (c->ike_proposals != NULL) {
+	if (c->esp_or_ah_proposals != NULL) {
 		DBGF(DBG_CONTROL, "already determined local ESP/AH proposals for %s (%s)",
 		     c->name, why);
 		return;
@@ -2161,7 +2161,7 @@ void ikev2_need_esp_or_ah_proposals(struct connection *c,
 					break;
 			}
 		}
-		c->ike_proposals = proposals;
+		c->esp_or_ah_proposals = proposals;
 		notes = " (default)";
 	} else {
 
@@ -2243,17 +2243,17 @@ void ikev2_need_esp_or_ah_proposals(struct connection *c,
 			}
 		}
 
-		c->ike_proposals = proposals;
+		c->esp_or_ah_proposals = proposals;
 		notes = "";
 	}
 
 	LSWLOG(buf) {
 		lswlogf(buf, "local ESP/AH proposals for %s (%s): ",
 			c->name, why);
-		print_proposals(buf, c->ike_proposals);
+		print_proposals(buf, c->esp_or_ah_proposals);
 		lswlogs(buf, notes);
 	}
-	passert(c->ike_proposals != NULL);
+	passert(c->esp_or_ah_proposals != NULL);
 }
 
 struct ipsec_proto_info *ikev2_child_sa_proto_info(struct state *st, lset_t policy)
