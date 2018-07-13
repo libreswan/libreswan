@@ -666,8 +666,8 @@ struct state {
 struct ike_sa { struct state sa; };
 struct ike_sa *ike_sa(struct state *st);
 struct ike_sa *pexpect_ike_sa(struct state *st);
-struct child_sa *pexpect_child_sa(struct state *st);
 struct child_sa { struct state sa; };
+struct child_sa *pexpect_child_sa(struct state *st);
 
 /* global variables */
 
