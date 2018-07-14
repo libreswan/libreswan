@@ -3515,8 +3515,9 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 					       "IKE SA initiator emitting ESP/AH proposals",
 					       &unset_group);
 
-		ikev2_emit_sa_proposals(&e_pbs_cipher, cc->esp_or_ah_proposals,
-					&local_spi, ISAKMP_NEXT_v2TSi);
+		if (!ikev2_emit_sa_proposals(&e_pbs_cipher, cc->esp_or_ah_proposals,
+					&local_spi, ISAKMP_NEXT_v2TSi))
+			return STF_INTERNAL_ERROR;
 
 		cst->st_ts_this = ikev2_end_to_ts(&cc->spd.this);
 		cst->st_ts_that = ikev2_end_to_ts(&cc->spd.that);
@@ -5221,8 +5222,9 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 	setchunk(local_spi, (uint8_t*)&proto_info->our_spi,
 			sizeof(proto_info->our_spi));
 
-	ikev2_emit_sa_proposals(outpbs, cc->esp_or_ah_proposals,
-			&local_spi, np);
+	if (!ikev2_emit_sa_proposals(outpbs, cc->esp_or_ah_proposals,
+			&local_spi, np))
+		return STF_INTERNAL_ERROR;
 
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
 		/* send NONCE */
