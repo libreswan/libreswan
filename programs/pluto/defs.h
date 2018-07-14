@@ -30,9 +30,10 @@ typedef unsigned long so_serial_t;
 #define SOS_NOBODY      0       /* null serial number */
 #define SOS_FIRST       1       /* first normal serial number */
 
-typedef int sa_t;
-#define  IKE_SA		0
-#define  IPSEC_SA	1
+typedef enum {
+		IKE_SA,
+		IPSEC_SA
+	} sa_t;
 
 /* warns a predefined interval before expiry */
 extern const char *check_expiry(realtime_t expiration_date,

@@ -1580,9 +1580,9 @@ static struct state *duplicate_state(struct state *st, sa_t sa_type)
 	return nst;
 }
 
-struct state *ikev1_duplicate_state(struct state *st, sa_t sa_type)
+struct state *ikev1_duplicate_state(struct state *st)
 {
-	return duplicate_state(st, sa_type);
+	return duplicate_state(st, IPSEC_SA);
 }
 
 struct state *ikev2_duplicate_state(struct ike_sa *ike,

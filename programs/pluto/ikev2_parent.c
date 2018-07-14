@@ -6581,12 +6581,12 @@ void ikev2_initiate_child_sa(struct pending *p)
 	struct state *st;
 	char replacestr[32];
 	enum state_kind new_state = STATE_UNDEFINED;
-	bool ipsec_sa = IPSEC_SA;
+	sa_t sa_type = IPSEC_SA;
 	struct ike_sa *ike = ike_sa(p->isakmp_sa);
 	struct connection *c = p->connection;
 
 	if (p->replacing == ike->sa.st_serialno) { /* IKE rekey exchange */
-		ipsec_sa = IKE_SA;
+		sa_type = IKE_SA;
 		ike->sa.st_viable_parent = FALSE;
 	} else {
 		if (find_pending_phase2(ike->sa.st_serialno,
@@ -6597,7 +6597,7 @@ void ikev2_initiate_child_sa(struct pending *p)
 
 	passert(c != NULL);
 
-	if (ipsec_sa) {
+	if (sa_type == IPSEC_SA) {
 		st = ikev2_duplicate_state(ike, IPSEC_SA, SA_INITIATOR);
 	} else {
 		st = ikev2_duplicate_state(ike, IKE_SA, SA_INITIATOR);
@@ -6617,7 +6617,7 @@ void ikev2_initiate_child_sa(struct pending *p)
 
 	st->st_original_role = ORIGINAL_INITIATOR;
 
-	if (ipsec_sa) {
+	if (sa_type == IPSEC_SA) {
 		const struct state *rst = state_with_serialno(p->replacing);
 
 		if (rst != NULL) {
@@ -6663,7 +6663,7 @@ void ikev2_initiate_child_sa(struct pending *p)
 
 	passert(st->st_connection != NULL);
 
-	if (ipsec_sa) {
+	if (sa_type == IPSEC_SA) {
 		const struct state *rst = state_with_serialno(p->replacing);
 
 		/*
