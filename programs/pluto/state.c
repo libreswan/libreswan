@@ -521,7 +521,7 @@ static char *readable_humber(uint64_t num,
 
 static struct ike_sa *get_ike_sa(struct state *st, bool verbose)
 {
-	if (pexpect(st != NULL) && IS_CHILD_SA(st)) {
+	if (st != NULL && IS_CHILD_SA(st)) {
 		struct state *pst = state_by_serialno(st->st_clonedfrom);
 		if (pst == NULL) {
 			PEXPECT_LOG("child state #%lu missing parent state #%lu",
