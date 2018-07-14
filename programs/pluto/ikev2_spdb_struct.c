@@ -151,11 +151,8 @@ struct ikev2_transforms {
 	     (TRANSFORM)++)
 
 struct ikev2_spi {
-	uint8_t bytes[8];
-	/*
-	 * Number of meaningful bytes in above.
-	 */
 	size_t size;
+	uint8_t bytes[COOKIE_SIZE>IPSEC_DOI_SPI_SIZE ? COOKIE_SIZE : IPSEC_DOI_SPI_SIZE];	/* space for largest SPI */
 };
 
 struct ikev2_proposal {
@@ -830,10 +827,10 @@ static size_t proto_spi_size(enum ikev2_sec_proto_id protoid)
 {
 	switch (protoid) {
 	case IKEv2_SEC_PROTO_IKE:
-		return 8;
+		return COOKIE_SIZE;
 	case IKEv2_SEC_PROTO_AH:
 	case IKEv2_SEC_PROTO_ESP:
-		return 4;
+		return IPSEC_DOI_SPI_SIZE;
 	default:
 		return 0;
 	}
@@ -942,19 +939,30 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 		 * the IPsec protocol identifier for the current
 		 * negotiation.
 		 */
-		if (expect_ike && remote_proposal.isap_protoid != IKEv2_SEC_PROTO_IKE) {
-			libreswan_log("proposal %d has unexpected Protocol ID %d, expected IKE",
-				      remote_proposal.isap_propnum,
-				      (unsigned)remote_proposal.isap_protoid);
-			lswlogs(remote_print_buf, "[unexpected-protoid]");
-			continue;
+		if (expect_ike) {
+			if (remote_proposal.isap_protoid != IKEv2_SEC_PROTO_IKE) {
+				libreswan_log("proposal %d has unexpected Protocol ID %d; expected IKE",
+					      remote_proposal.isap_propnum,
+					      remote_proposal.isap_protoid);
+				lswlogs(remote_print_buf, "[unexpected-protoid]");
+				continue;
+			}
+		} else {
+			if (remote_proposal.isap_protoid != IKEv2_SEC_PROTO_AH &&
+			    remote_proposal.isap_protoid != IKEv2_SEC_PROTO_ESP) {
+				libreswan_log("proposal %d has unexpected Protocol ID %d; expected AH or ESP",
+					      remote_proposal.isap_propnum,
+					      remote_proposal.isap_protoid);
+				lswlogs(remote_print_buf, "[unexpected-protoid]");
+				continue;
+			}
 		}
 
 		/*
 		 * Validate the Security Parameter Index (SPI):
 		 *
-		 * RFC 7296: 3.3.1. Proposal Substructure: For an
-		 * initial IKE SA negotiation, this field MUST be
+		 * RFC 7296: 3.3.1. Proposal Substructure: SPI Size:
+		 * For an initial IKE SA negotiation, this field MUST be
 		 * zero; the SPI is obtained from the outer header.
 		 * During subsequent negotiations, it is equal to the
 		 * size, in octets, of the SPI of the corresponding
@@ -964,25 +972,10 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 		struct ikev2_spi remote_spi = {
 			.size = (expect_spi ? proto_spi_size(remote_proposal.isap_protoid) : 0),
 		};
-		if (expect_spi && remote_spi.size == 0) {
-			libreswan_log("proposal %d has unrecognized Protocol ID %u; ignored",
-				      remote_proposal.isap_propnum,
-				      (unsigned)remote_proposal.isap_protoid);
-			lswlogs(remote_print_buf, "[unknown-protocol]");
-			continue;
-		}
-		if (remote_proposal.isap_spisize > sizeof(remote_spi.bytes)) {
-			libreswan_log("proposal %d has huge SPI size (%u); ignored",
-				      remote_proposal.isap_propnum,
-				      (unsigned)remote_proposal.isap_spisize);
-			lswlogs(remote_print_buf, "[spi-huge]");
-			/* best_local_proposal = -(STF_FAIL + v2N_INVALID_SYNTAX); */
-			continue;
-		}
 		if (remote_proposal.isap_spisize != remote_spi.size) {
-			libreswan_log("proposal %d has incorrect SPI size (%u), expected %zd; ignored",
+			libreswan_log("proposal %d has incorrect SPI size (%u), expected %zu; ignored",
 				      remote_proposal.isap_propnum,
-				      (unsigned)remote_proposal.isap_spisize,
+				      remote_proposal.isap_spisize,
 				      remote_spi.size);
 			lswlogs(remote_print_buf, "[spi-size]");
 			/* best_local_proposal = -(STF_FAIL + v2N_INVALID_SYNTAX); */

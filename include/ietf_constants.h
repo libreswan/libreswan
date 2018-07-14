@@ -297,7 +297,7 @@
 /* Default is based on minimum IKEv2 requirement */
 #define DEFAULT_NONCE_SIZE 32 /* bytes */
 
-/* This really means SPI size */
+/* COOKIE_SIZE is also IKEv2 IKE SPI size */
 #define COOKIE_SIZE 8
 #define MAX_ISAKMP_SPI_SIZE 16
 
