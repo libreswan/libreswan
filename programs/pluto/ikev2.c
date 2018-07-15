@@ -2016,7 +2016,6 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 {
 	bool initiator = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) != 0;
-	struct state *const st = md->st;
 	struct connection *c = md->st->st_connection;
 
 	struct payload_digest *const id_him = initiator ?
@@ -2100,24 +2099,24 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 	if (initiator) {
 		if (!md->st->st_peer_alt_id &&
 			!same_id(&c->spd.that.id, &peer_id) &&
-			st->st_connection->spd.that.id.kind != ID_FROMCERT) {
+			c->spd.that.id.kind != ID_FROMCERT) {
 
 			char expect[IDTOA_BUF],
 			     found[IDTOA_BUF];
 
-			idtoa(&st->st_connection->spd.that.id, expect,
+			idtoa(&c->spd.that.id, expect,
 				sizeof(expect));
 			idtoa(&peer_id, found, sizeof(found));
 			loglog(RC_LOG_SERIOUS,
 				"we require IKEv2 peer to have ID '%s', but peer declares '%s'",
 				expect, found);
 			return FALSE;
-		} else if (st->st_connection->spd.that.id.kind == ID_FROMCERT) {
+		} else if (c->spd.that.id.kind == ID_FROMCERT) {
 			if (peer_id.kind != ID_DER_ASN1_DN) {
 				loglog(RC_LOG_SERIOUS, "peer ID is not a certificate type");
 				return FALSE;
 			}
-			duplicate_id(&st->st_connection->spd.that.id, &peer_id);
+			duplicate_id(&c->spd.that.id, &peer_id);
 		}
 	} else {
 		/* why should refine_host_connection() update this? We pulled it from their packet */
