@@ -1969,7 +1969,7 @@ bool find_pending_phase2(const so_serial_t psn,
  */
 bool ikev2_viable_parent(const struct ike_sa *ike)
 {
-	/* this check is defied only for an IKEv2 parent */
+	/* this check is defined only for an IKEv2 parent */
 	if (!ike->sa.st_ikev2)
 		return TRUE;
 
@@ -1980,7 +1980,7 @@ bool ikev2_viable_parent(const struct ike_sa *ike)
 				-1 * deltasecs(monotimediff(now, ev->ev_time));
 
 	if (lifetime > PARENT_MIN_LIFE)
-		/* incase st_margin == 0, insist minium life */
+		/* in case st_margin == 0, insist minimum life */
 		if (lifetime > deltasecs(ike->sa.st_margin))
 			return TRUE;
 
@@ -2033,16 +2033,15 @@ void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 			return;
 		}
 	});
-	DBG(DBG_CONTROL,
-	    {
-		    char ourst[SUBNETTOT_BUF];
-		    char hist[SUBNETTOT_BUF];
+	DBG(DBG_CONTROL, {
+		char ourst[SUBNETTOT_BUF];
+		char hist[SUBNETTOT_BUF];
 
-		    subnettot(ours, 0, ourst, sizeof(ourst));
-		    subnettot(his, 0, hist, sizeof(hist));
-		    DBG_log("unknown tunnel eroute %s -> %s found in scan",
-			    ourst, hist);
-	    });
+		subnettot(ours, 0, ourst, sizeof(ourst));
+		subnettot(his, 0, hist, sizeof(hist));
+		DBG_log("unknown tunnel eroute %s -> %s found in scan",
+			ourst, hist);
+	});
 }
 
 /* note: this mutates *st by calling get_sa_info */

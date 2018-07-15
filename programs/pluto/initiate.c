@@ -91,7 +91,7 @@ static void swap_ends(struct connection *c)
 	sr->that = t;
 
 	/*
-	 * incase of asymetric auth c->policy contains left.authby
+	 * in case of asymetric auth c->policy contains left.authby
 	 * This magic will help responder to find connction during INIT
 	 */
 	if (sr->this.authby != sr->that.authby)
