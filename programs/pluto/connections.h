@@ -143,7 +143,7 @@ extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
 #include "err.h"
 #include "state.h"
 
-struct virtual_t;
+struct virtual_t;	/* opaque type */
 
 struct host_pair;	/* opaque type */
 
@@ -184,6 +184,7 @@ struct end {
 	char *xauth_username;
 	char *xauth_password;
 	ip_range pool_range;	/* store start of v4 addresspool */
+
 	/*
 	 * Track lease addresses.
 	 *
@@ -219,6 +220,7 @@ struct sa_mark {
 	uint32_t mask;
 	bool unique;
 };
+
 struct sa_marks {
 	struct sa_mark in;
 	struct sa_mark out;
@@ -294,7 +296,6 @@ struct connection {
 	enum connection_kind kind;
 	const struct iface_port *interface;	/* filled in iff oriented */
 
-	bool initiated;
 	bool failed_ikev2;	/* tried ikev2, but failed */
 
 	so_serial_t		/* state object serial number */
@@ -306,7 +307,7 @@ struct connection {
 
 	/* note: if the client is the gateway, the following must be equal */
 	sa_family_t addr_family;	/* between gateways */
-	sa_family_t tunnel_addr_family;	/* between clients */
+	sa_family_t tunnel_addr_family;	/* between clients */	/* ??? set but not used! */
 
 	/* if multiple policies, next one to apply */
 	struct connection *policy_next;
@@ -346,8 +347,6 @@ struct connection {
 	msgid_t ike_window;     /* IKE v2 window size 7296#section-2.3 */
 };
 
-extern void parse_mark_mask(const struct connection* c,int * mark, int * mask);
-
 #define oriented(c) ((c).interface != NULL)
 extern bool orient(struct connection *c);
 
@@ -386,6 +385,7 @@ extern void initiate_ondemand(const ip_address *our_client,
 			     struct xfrm_user_sec_ctx_ike *uctx,
 #endif
 			     err_t why);
+
 extern void terminate_connection(const char *name);
 extern void release_connection(struct connection *c, bool relations);
 extern void delete_connection(struct connection *c, bool relations);
@@ -407,6 +407,7 @@ extern struct connection *route_owner(struct connection *c,
 				      struct spd_route **srp,
 				      struct connection **erop,
 				      struct spd_route **esrp);
+
 extern struct connection *shunt_owner(const ip_subnet *ours,
 				      const ip_subnet *his);
 
@@ -417,8 +418,8 @@ extern struct connection *shunt_owner(const ip_subnet *ours,
 					TRUE))
 
 struct state;   /* forward declaration of tag (defined in state.h) */
-extern struct connection
-*conn_by_name(const char *nm, bool strict, bool quiet);
+
+extern struct connection *conn_by_name(const char *nm, bool strict, bool quiet);
 
 stf_status ikev2_find_host_connection(struct connection **cp,
 		const ip_address *me, u_int16_t my_port, const ip_address *him,
@@ -449,6 +450,7 @@ extern struct connection
 /* instantiating routines */
 
 struct alg_info;        /* forward declaration of tag (defined in alg_info.h) */
+
 extern struct connection *rw_instantiate(struct connection *c,
 					 const ip_address *him,
 					 const ip_subnet *his_net,
