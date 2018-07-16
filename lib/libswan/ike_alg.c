@@ -9,7 +9,7 @@
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013-2014 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013-2014 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2016-2017 Andrew Cagney
+ * Copyright (C) 2016-2018 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -503,6 +503,7 @@ static const struct integ_desc *integ_descriptors[] = {
 	&ike_alg_integ_sha2_512,
 	&ike_alg_integ_sha2_384,
 	&ike_alg_integ_sha2_256,
+	&ike_alg_integ_hmac_sha2_256_truncbug,
 #endif
 #ifdef USE_AES
 	&ike_alg_integ_aes_xcbc,

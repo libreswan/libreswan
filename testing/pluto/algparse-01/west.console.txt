@@ -70,6 +70,7 @@ Integrity algorithms:
   HMAC_SHA2_512_256       IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha512 sha2_512 hmac_sha2_512)
   HMAC_SHA2_384_192       IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha384 sha2_384 hmac_sha2_384)
   HMAC_SHA2_256_128       IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  (sha2 sha256 sha2_256 hmac_sha2_256)
+  HMAC_SHA2_256_TRUNCBUG  IKEv1:     ESP AH  IKEv2:         AH      
   AES_XCBC_96             IKEv1:     ESP AH  IKEv2: IKE ESP AH  FIPS  (aes_xcbc aes128_xcbc aes128_xcbc_96)
   AES_CMAC_96             IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS  (aes_cmac)
   NONE                    IKEv1:     ESP     IKEv2:     ESP     FIPS  (null)

@@ -9,6 +9,7 @@ algparse: Encryption algorithm NULL disabled; not FIPS compliant
 algparse: Hash algorithm MD5 disabled; not FIPS compliant
 algparse: PRF algorithm HMAC_MD5 disabled; not FIPS compliant
 algparse: Integrity algorithm HMAC_MD5_96 disabled; not FIPS compliant
+algparse: Integrity algorithm HMAC_SHA2_256_TRUNCBUG disabled; not FIPS compliant
 algparse: DH algorithm MODP1024 disabled; not FIPS compliant
 algparse: DH algorithm MODP1536 disabled; not FIPS compliant
 algparse: FIPS Encryption algorithms:
