@@ -87,7 +87,7 @@ bool ship_v2UNKNOWN(pb_stream *outs, const char *victim)
 		      ikev2_unknown_payload_desc.np, victim);
 	struct ikev2_generic gen = {
 		.isag_np = 0,
-		.isag_critical = build_ikev2_critical(false, IMPAIR(UNKNOWN_PAYLOAD_CRITICAL)),
+		.isag_critical = build_ikev2_critical(IMPAIR(UNKNOWN_PAYLOAD_CRITICAL)),
 	};
 	pb_stream pbs = open_output_struct_pbs(outs, &gen, &ikev2_unknown_payload_desc);
 	if (!pbs_ok(&pbs)) {
@@ -142,20 +142,15 @@ uint8_t build_ikev2_version(void)
 	       (IKEv2_MINOR_VERSION + (DBGP(IMPAIR_MINOR_VERSION_BUMP) ? 1 : 0));
 }
 
-uint8_t build_ikev2_critical(bool critical, bool impair)
+uint8_t build_ikev2_critical(bool impair)
 {
 	uint8_t octet = 0;
 	if (impair) {
 		/* flip the expected bit */
-		if (critical) {
-			libreswan_log("IMPAIR: clearing (should be on) critical payload bit");
-			octet = ISAKMP_PAYLOAD_NONCRITICAL;
-		} else {
-			libreswan_log("IMPAIR: setting (should be off) critical payload bit");
-			octet = ISAKMP_PAYLOAD_CRITICAL;
-		}
+		libreswan_log("IMPAIR: setting (should be off) critical payload bit");
+		octet = ISAKMP_PAYLOAD_CRITICAL;
 	} else {
-		octet = critical ? ISAKMP_PAYLOAD_CRITICAL : ISAKMP_PAYLOAD_NONCRITICAL;
+		octet = ISAKMP_PAYLOAD_NONCRITICAL;
 	}
 	if (IMPAIR(SEND_BOGUS_PAYLOAD_FLAG)) {
 #if 0
@@ -168,7 +163,26 @@ uint8_t build_ikev2_critical(bool critical, bool impair)
 	return octet;
 }
 
-/* add notify payload to the rbody */
+/*
+ * ship_v2N: add notify payload to the rbody
+ * (See also specialized versions ship_v2Nsp and ship_v2Ns.)
+ *
+ * - RFC 7296 3.10 "Notify Payload" says:
+ *
+ * o  Protocol ID (1 octet) - If this notification concerns an existing
+ *    SA whose SPI is given in the SPI field, this field indicates the
+ *    type of that SA.  For notifications concerning Child SAs, this
+ *    field MUST contain either (2) to indicate AH or (3) to indicate
+ *    ESP.  Of the notifications defined in this document, the SPI is
+ *    included only with INVALID_SELECTORS, REKEY_SA, and
+ *    CHILD_SA_NOT_FOUND.  If the SPI field is empty, this field MUST be
+ *    sent as zero and MUST be ignored on receipt.
+ *
+ * o  SPI Size (1 octet) - Length in octets of the SPI as defined by the
+ *    IPsec protocol ID or zero if no SPI is applicable.  For a
+ *    notification concerning the IKE SA, the SPI Size MUST be zero and
+ *    the field must be empty.
+ */
 bool ship_v2N(enum next_payload_types_ikev2 np,
 	      u_int8_t critical,
 	      enum ikev2_sec_proto_id protoid,
@@ -183,6 +197,19 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
 	/* See RFC 5996 section 3.10 "Notify Payload" */
 	passert(protoid == PROTO_v2_RESERVED || protoid == PROTO_v2_AH || protoid == PROTO_v2_ESP);
 	passert((protoid == PROTO_v2_RESERVED) == (spi->len == 0));
+
+	switch (type) {
+	case v2N_INVALID_SELECTORS:
+	case v2N_REKEY_SA:
+	case v2N_CHILD_SA_NOT_FOUND:
+		/* must have SPI */
+		pexpect(protoid != PROTO_v2_RESERVED);
+		break;
+	default:
+		/* must not have SPI */
+		pexpect(protoid == PROTO_v2_RESERVED);
+		break;
+	}
 
 	DBG(DBG_CONTROLMORE, DBG_log("Adding a v2N Payload"));
 
@@ -224,13 +251,36 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
 	return TRUE;
 }
 
-bool out_v2N(pb_stream *rbody, v2_notification_t ntype, const chunk_t *ndata)
+/*
+ * ship_v2Nsp: partially parameterized shipv2N
+ *
+ * - critical: ISAKMP_PAYLOAD_NONCRITICAL
+ * - protoid: IKEv2_SEC_PROTO_NONE
+ * - spi: none
+ * pass through: all params
+ *
+ * This case is common since
+ *
+ * - almost all notifications are non-critical
+ * - only a specified few include protocol or SPI
+ */
+
+bool ship_v2Nsp(enum next_payload_types_ikev2 np,
+	      v2_notification_t type,
+	      const chunk_t *n_data,
+	      pb_stream *rbody)
 {
-	return ship_v2N(0, build_ikev2_critical(false, false),
-			IKEv2_SEC_PROTO_NONE, &empty_chunk, /* SPI */
-			ntype, ndata, rbody);
+	return ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL, PROTO_v2_RESERVED, &empty_chunk, type, n_data, rbody);
 }
 
+/* ship_v2Ns: like ship_v2Nsp except n_data is &empty_chunk */
+
+bool ship_v2Ns(enum next_payload_types_ikev2 np,
+	      v2_notification_t type,
+	      pb_stream *rbody)
+{
+	return ship_v2Nsp(np, type, &empty_chunk, rbody);
+}
 
 /*
  * Open an IKEv2 message.
@@ -406,12 +456,22 @@ void send_v2_notification_from_state(struct state *pst, struct msg_digest *md,
 
 	/* actual data */
 
-	if (!out_v2N(&sk.pbs, ntype, ndata)) {
-		/*
-		 * XXX: always omitting SPI but ESP/AH packets need
-		 * it!?!
-		 */
-		return;
+	switch (ntype) {
+	case v2N_INVALID_SELECTORS:	/* ??? we never actually generate this */
+	case v2N_REKEY_SA:	/* never follows this path */
+	case v2N_CHILD_SA_NOT_FOUND:
+		PEXPECT_LOG("notification %d needs SPI!", ntype);
+		/* ??? how can we figure out the protocol and SPI? */
+		if (!ship_v2N(ISAKMP_NEXT_v2NONE, ISAKMP_PAYLOAD_NONCRITICAL,
+				PROTO_v2_RESERVED, &empty_chunk,
+				ntype, ndata, &sk.pbs)) {
+			return;
+		}
+		break;
+	default:
+		if (!ship_v2Nsp(ISAKMP_NEXT_v2NONE, ntype, ndata, &sk.pbs))
+			return;
+		break;
 	}
 
 	if (!close_v2sk_payload(&sk)) {
@@ -479,7 +539,7 @@ void send_v2_notification_from_md(struct msg_digest *md,
 	}
 
 	/* build and add v2N payload to the packet */
-	if (!out_v2N(&rbody, ntype, ndata)) {
+	if (!ship_v2Nsp(ISAKMP_NEXT_v2NONE, ntype, ndata, &rbody)) {
 		PEXPECT_LOG("error building unencrypted %s %s notification with message ID %u",
 			    exchange_name, notify_name, md->msgid_received);
 		return;
@@ -682,7 +742,7 @@ struct v2sk_payload open_v2sk_payload(pb_stream *container,
 
 	struct ikev2_generic e = {
 		.isag_length = 0, /* filled in later */
-		.isag_critical = build_ikev2_critical(false, false),
+		.isag_critical = build_ikev2_critical(false),
 	};
 	if (!out_struct(&e, &ikev2_sk_desc, container, &sk.pbs)) {
 		libreswan_log("error initializing SK header for encrypted %s message",

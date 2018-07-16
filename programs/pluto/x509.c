@@ -647,7 +647,7 @@ static bool find_fetch_dn(SECItem *dn, struct connection *c,
 				       CERTCertificate *cert)
 {
 	if (dn == NULL) {
-		DBG(DBG_X509, DBG_log("%s invalid use",__FUNCTION__));
+		DBG(DBG_X509, DBG_log("%s invalid use", __FUNCTION__));
 		return FALSE;
 	}
 
@@ -1348,7 +1348,7 @@ stf_status ikev2_send_cert(struct state *st, pb_stream *outpbs)
 		}
 		struct ikev2_cert pkcs7_hdr = {
 			.isac_np = ISAKMP_NEXT_v2NONE,
-			.isac_critical = build_ikev2_critical(false, false),
+			.isac_critical = build_ikev2_critical(false),
 			.isac_enc = CERT_PKCS7_WRAPPED_X509,
 		};
 		pb_stream cert_pbs;
@@ -1388,7 +1388,7 @@ stf_status ikev2_send_cert(struct state *st, pb_stream *outpbs)
 
 	const struct ikev2_cert certhdr = {
 		.isac_np = ISAKMP_NEXT_v2NONE,
-		.isac_critical = build_ikev2_critical(false, false),
+		.isac_critical = build_ikev2_critical(false),
 		.isac_enc = mycert.ty,
 	};
 

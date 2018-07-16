@@ -1287,14 +1287,9 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 						ENCAPSULATION_MODE_TRANSPORT;
 				}
 				/* In v2, for parent, protoid must be 0 and SPI must be empty */
-				if (!ship_v2N(c->send_no_esp_tfc ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE,
-				      ISAKMP_PAYLOAD_NONCRITICAL,
-				      PROTO_v2_RESERVED,
-				      &empty_chunk,
-				      v2N_USE_TRANSPORT_MODE,
-				      &empty_chunk,
-				      outpbs))
-				return STF_INTERNAL_ERROR;
+				if (!ship_v2Ns(c->send_no_esp_tfc ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE,
+				      v2N_USE_TRANSPORT_MODE, outpbs))
+					return STF_INTERNAL_ERROR;
 			}
 		} else {
 			/* the peer wants tunnel mode */
@@ -1306,14 +1301,9 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 		if (c->send_no_esp_tfc) {
 			DBG(DBG_CONTROL, DBG_log("Sending ESP_TFC_PADDING_NOT_SUPPORTED"));
-			if (!ship_v2N(ISAKMP_NEXT_v2NONE,
-			      ISAKMP_PAYLOAD_NONCRITICAL,
-			      PROTO_v2_RESERVED,
-			      &empty_chunk,
-			      v2N_ESP_TFC_PADDING_NOT_SUPPORTED,
-			      &empty_chunk,
-			      outpbs))
-			return STF_INTERNAL_ERROR;
+			if (!ship_v2Ns(ISAKMP_NEXT_v2NONE,
+			      v2N_ESP_TFC_PADDING_NOT_SUPPORTED, outpbs))
+				return STF_INTERNAL_ERROR;
 		}
 	}
 
@@ -1473,13 +1463,13 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
 
 	if (st->st_state == STATE_PARENT_I2 && cp->isacp_type !=  IKEv2_CP_CFG_REPLY) {
 		loglog(RC_LOG_SERIOUS, "ERROR expected IKEv2_CP_CFG_REPLY got a %s",
-			enum_name(&ikev2_cp_type_names,cp->isacp_type));
+			enum_name(&ikev2_cp_type_names, cp->isacp_type));
 		return FALSE;
 	}
 
 	if (st->st_state == STATE_PARENT_R1 && cp->isacp_type !=  IKEv2_CP_CFG_REQUEST) {
 		loglog(RC_LOG_SERIOUS, "ERROR expected IKEv2_CP_CFG_REQUEST got a %s",
-			enum_name(&ikev2_cp_type_names,cp->isacp_type));
+			enum_name(&ikev2_cp_type_names, cp->isacp_type));
 		return FALSE;
 	}
 

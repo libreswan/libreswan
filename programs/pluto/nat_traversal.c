@@ -226,10 +226,8 @@ bool ikev2_out_natd(struct state *st, u_int8_t np, ip_address *localaddr,
 	natd_hash(&ike_alg_hash_sha1, hb, st->st_icookie,
 		  rcookie, localaddr, localport);
 
-	/* In v2, for parent, protoid must be 0 and SPI must be empty */
-	if (!ship_v2N(ISAKMP_NEXT_v2N, ISAKMP_PAYLOAD_NONCRITICAL,
-		PROTO_v2_RESERVED, &empty_chunk,
-		v2N_NAT_DETECTION_SOURCE_IP, &hch, outs))
+	if (!ship_v2Nsp(ISAKMP_NEXT_v2N, v2N_NAT_DETECTION_SOURCE_IP,
+			&hch, outs))
 		return FALSE;
 	/*
 	 * Second: one with remote (destination) IP & port
@@ -237,12 +235,7 @@ bool ikev2_out_natd(struct state *st, u_int8_t np, ip_address *localaddr,
 	natd_hash(&ike_alg_hash_sha1, hb, st->st_icookie,
 			rcookie, remoteaddr, remoteport);
 
-	/* In v2, for parent, protoid must be 0 and SPI must be empty */
-	if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
-		PROTO_v2_RESERVED, &empty_chunk,
-		v2N_NAT_DETECTION_DESTINATION_IP, &hch, outs))
-		return FALSE;
-	return TRUE;
+	return ship_v2Nsp(np, v2N_NAT_DETECTION_DESTINATION_IP, &hch, outs);
 }
 
 /*

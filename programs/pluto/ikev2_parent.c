@@ -116,12 +116,7 @@ static bool ikev2_out_hash_v2n(u_int8_t np, pb_stream *rbody, lset_t policy)
 		bad_case(policy);
 	}
 
-	if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
-		      PROTO_v2_RESERVED, &empty_chunk,
-		      v2N_SIGNATURE_HASH_ALGORITHMS, &hash,
-		      rbody))
-		return FALSE;
-	return TRUE;
+	return ship_v2Nsp(np, v2N_SIGNATURE_HASH_ALGORITHMS, &hash, rbody);
 }
 
 static bool negotiate_hash_algo_from_notification(struct payload_digest *p, struct state *st)
@@ -153,7 +148,7 @@ static bool negotiate_hash_algo_from_notification(struct payload_digest *p, stru
 			st->st_hash_negotiated |= NEGOTIATE_AUTH_HASH_IDENTITY;
 			break;
 		default:
-			libreswan_log("Received and ignored hash algorithm %d",ntohs(h_value[i]));
+			libreswan_log("Received and ignored hash algorithm %d", ntohs(h_value[i]));
 		}
 	}
 	return TRUE;
@@ -927,13 +922,13 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 	if (st->st_dcookie.ptr != NULL) {
 		/* In v2, for parent, protoid must be 0 and SPI must be empty */
 		if (!ship_v2N(ISAKMP_NEXT_v2SA,
-			 DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG) ?
+			DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG) ?
 			   (ISAKMP_PAYLOAD_NONCRITICAL |
 			    ISAKMP_PAYLOAD_LIBRESWAN_BOGUS) :
 			   ISAKMP_PAYLOAD_NONCRITICAL,
-			 PROTO_v2_RESERVED,
-			 &empty_chunk,
-			 v2N_COOKIE, &st->st_dcookie, &rbody))
+			PROTO_v2_RESERVED,
+			&empty_chunk,
+			v2N_COOKIE, &st->st_dcookie, &rbody))
 		{
 			return STF_INTERNAL_ERROR;
 		}
@@ -1000,20 +995,15 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 
 	/* Send fragmentation support notification */
 	if (c->policy & POLICY_IKE_FRAG_ALLOW) {
-
-		if (!ship_v2N(ISAKMP_NEXT_v2N, ISAKMP_PAYLOAD_NONCRITICAL,
-			      PROTO_v2_RESERVED, &empty_chunk,
-			      v2N_IKEV2_FRAGMENTATION_SUPPORTED, &empty_chunk,
-			      &rbody))
+		if (!ship_v2Ns(ISAKMP_NEXT_v2N,
+			       v2N_IKEV2_FRAGMENTATION_SUPPORTED,
+			       &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
 	/* Send USE_PPK Notify payload */
 	if (LIN(POLICY_PPK_ALLOW, c->policy)) {
-		if (!ship_v2N(ISAKMP_NEXT_v2N, ISAKMP_PAYLOAD_NONCRITICAL,
-				PROTO_v2_RESERVED, &empty_chunk,
-				v2N_USE_PPK, &empty_chunk,
-				&rbody))
+		if (!ship_v2Ns(ISAKMP_NEXT_v2N, v2N_USE_PPK, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1110,7 +1100,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 
 	if (drop_new_exchanges()) {
 		/* only log for debug to prevent disk filling up */
-		DBG(DBG_CONTROL,DBG_log("pluto is overloaded with half-open IKE SAs - dropping IKE_INIT request"));
+		DBG(DBG_CONTROL, DBG_log("pluto is overloaded with half-open IKE SAs - dropping IKE_INIT request"));
 		return STF_IGNORE;
 	}
 
@@ -1608,10 +1598,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	if (c->policy & POLICY_IKE_FRAG_ALLOW) {
 		int np = ISAKMP_NEXT_v2N;
 
-		if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
-			      PROTO_v2_RESERVED, &empty_chunk,
-			      v2N_IKEV2_FRAGMENTATION_SUPPORTED, &empty_chunk,
-			      &rbody))
+		if (!ship_v2Ns(np, v2N_IKEV2_FRAGMENTATION_SUPPORTED, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1619,10 +1606,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	if (st->st_seen_ppk) {
 		int np = ISAKMP_NEXT_v2N;
 
-		if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
-				PROTO_v2_RESERVED, &empty_chunk,
-				v2N_USE_PPK, &empty_chunk,
-				&rbody))
+		if (!ship_v2Ns(np, v2N_USE_PPK, &rbody))
 			return STF_INTERNAL_ERROR;
 	 }
 
@@ -2037,7 +2021,7 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 		case v2N_SIGNATURE_HASH_ALGORITHMS:
 			if (!DBGP(IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE)) {
 				st->st_seen_hashnotify = TRUE;
-				if (!negotiate_hash_algo_from_notification(ntfy,st))
+				if (!negotiate_hash_algo_from_notification(ntfy, st))
 					return STF_FATAL;
 			} else {
 				libreswan_log("Impair: Ignoring the hash notify in IKE_SA_INIT Response");
@@ -3168,7 +3152,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 			libreswan_log("PPK AUTH calculated as initiator");
 		} else {
 			if (pc->policy & POLICY_PPK_INSIST) {
-				loglog(RC_LOG_SERIOUS,("connection requires PPK, but we didn't find one"));
+				loglog(RC_LOG_SERIOUS, "connection requires PPK, but we didn't find one");
 				return STF_FATAL;
 			} else {
 				libreswan_log("failed to find PPK and PPK_ID, continuing without PPK");
@@ -3411,12 +3395,8 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	if (ic) {
 		libreswan_log("sending INITIAL_CONTACT");
-		if (!ship_v2N(ISAKMP_NEXT_v2AUTH, ISAKMP_PAYLOAD_NONCRITICAL,
-					PROTO_v2_RESERVED,
-					&empty_chunk,
-					v2N_INITIAL_CONTACT,
-					&empty_chunk,
-					&e_pbs_cipher))
+		if (!ship_v2Ns(ISAKMP_NEXT_v2AUTH, v2N_INITIAL_CONTACT,
+				&e_pbs_cipher))
 			return STF_INTERNAL_ERROR;
 	} else {
 		DBG(DBG_CONTROL, DBG_log("not sending INITIAL_CONTACT"));
@@ -3529,12 +3509,8 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 			DBG(DBG_CONTROL, DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE"));
 			notifies--;
 			/* In v2, for parent, protoid must be 0 and SPI must be empty */
-			if (!ship_v2N((notifies != 0) ? ISAKMP_NEXT_v2N : ia_np,
-						ISAKMP_PAYLOAD_NONCRITICAL,
-						PROTO_v2_RESERVED,
-						&empty_chunk,
-						v2N_USE_TRANSPORT_MODE, &empty_chunk,
-						&e_pbs_cipher))
+			int np = notifies != 0 ? ISAKMP_NEXT_v2N : ia_np;
+			if (!ship_v2Ns(np, v2N_USE_TRANSPORT_MODE, &e_pbs_cipher))
 				return STF_INTERNAL_ERROR;
 		} else {
 			DBG(DBG_CONTROL, DBG_log("Initiator child policy is tunnel mode, NOT sending v2N_USE_TRANSPORT_MODE"));
@@ -3543,11 +3519,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		if (cc->send_no_esp_tfc) {
 			notifies--;
 			int np = notifies != 0 ? ISAKMP_NEXT_v2N : ia_np;
-			if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
-					PROTO_v2_RESERVED,
-					&empty_chunk,
-					v2N_ESP_TFC_PADDING_NOT_SUPPORTED,
-					&empty_chunk,
+			if (!ship_v2Ns(np, v2N_ESP_TFC_PADDING_NOT_SUPPORTED,
 					&e_pbs_cipher))
 				return STF_INTERNAL_ERROR;
 		}
@@ -3556,11 +3528,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 			notifies--;
 			int np = notifies != 0 ? ISAKMP_NEXT_v2N : ia_np;
 			cst->st_sent_mobike = pst->st_sent_mobike = TRUE;
-			if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
-					PROTO_v2_RESERVED,
-					&empty_chunk,
-					v2N_MOBIKE_SUPPORTED, &empty_chunk,
-					&e_pbs_cipher))
+			if (!ship_v2Ns(np, v2N_MOBIKE_SUPPORTED, &e_pbs_cipher))
 				return STF_INTERNAL_ERROR;
 		}
 		if (pst->st_seen_ppk) {
@@ -3569,9 +3537,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 				ISAKMP_NEXT_v2NONE : ISAKMP_NEXT_v2N;
 
 			notifies--; /* used for one or two payloads */
-			if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
-					PROTO_v2_RESERVED, &empty_chunk,
-					v2N_PPK_IDENTITY, &notify_data,
+			if (!ship_v2Nsp(np, v2N_PPK_IDENTITY, &notify_data,
 					&e_pbs_cipher))
 				return STF_INTERNAL_ERROR;
 			freeanychunk(notify_data);
@@ -3579,8 +3545,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 			np = null_auth.ptr == NULL ? ISAKMP_NEXT_v2NONE : ISAKMP_NEXT_v2N;
 			if (!LIN(POLICY_PPK_INSIST, cc->policy)) {
 				ikev2_calc_no_ppk_auth(cc, pst, idhash_npa, &pst->st_no_ppk_auth);
-				if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
-					PROTO_v2_RESERVED, &empty_chunk,
+				if (!ship_v2Nsp(np,
 					v2N_NO_PPK_AUTH, &pst->st_no_ppk_auth,
 					&e_pbs_cipher))
 						return STF_INTERNAL_ERROR;
@@ -3589,8 +3554,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 		if (null_auth.ptr != NULL) {
 			notifies--;
-			if (!ship_v2N(ISAKMP_NEXT_v2NONE, ISAKMP_PAYLOAD_NONCRITICAL,
-				PROTO_v2_RESERVED, &empty_chunk,
+			if (!ship_v2Nsp(ISAKMP_NEXT_v2NONE,
 				v2N_NULL_AUTH, &null_auth,
 				&e_pbs_cipher))
 					return STF_INTERNAL_ERROR;
@@ -3951,7 +3915,7 @@ stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest *md)
 		freeanychunk(st->st_no_ppk_auth);
 
 	if (!found_ppk && LIN(POLICY_PPK_INSIST, policy)) {
-		loglog(RC_LOG_SERIOUS,"Requested PPK_ID not found and connection requires a valid PPK");
+		loglog(RC_LOG_SERIOUS, "Requested PPK_ID not found and connection requires a valid PPK");
 		return STF_FATAL;
 	}
 
@@ -4168,50 +4132,35 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		/* send any NOTIFY payloads */
 		if (st->st_sent_mobike) {
 			notifies--;
-			if (!ship_v2N((notifies != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2IDr,
-					ISAKMP_PAYLOAD_NONCRITICAL,
-					PROTO_v2_RESERVED,
-					&empty_chunk,
-					v2N_MOBIKE_SUPPORTED, &empty_chunk,
-					&e_pbs_cipher))
+			int np = notifies != 0 ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2IDr;
+			if (!ship_v2Ns(np, v2N_MOBIKE_SUPPORTED, &e_pbs_cipher))
 				return STF_INTERNAL_ERROR;
 		}
 
 		if (st->st_ppk_used) {
 			notifies--;
-			if (!ship_v2N((notifies != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2IDr,
-					ISAKMP_PAYLOAD_NONCRITICAL,
-					PROTO_v2_RESERVED,
-					&empty_chunk,
-					v2N_PPK_IDENTITY, &empty_chunk,
-					&e_pbs_cipher))
+			int np = notifies != 0 ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2IDr;
+			if (!ship_v2Ns(np, v2N_PPK_IDENTITY, &e_pbs_cipher))
 				return STF_INTERNAL_ERROR;
 		}
 
 		if (LIN(POLICY_TUNNEL, c->policy) == LEMPTY && st->st_seen_use_transport) {
 			notifies--;
-			if (!ship_v2N((notifies != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2IDr,
-					ISAKMP_PAYLOAD_NONCRITICAL,
-					PROTO_v2_RESERVED,
-					&empty_chunk,
-					v2N_USE_TRANSPORT_MODE, &empty_chunk,
+			int np = notifies != 0 ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2IDr;
+			if (!ship_v2Ns(np, v2N_USE_TRANSPORT_MODE,
 					&e_pbs_cipher))
 				return STF_INTERNAL_ERROR;
 		}
 
 		if (c->send_no_esp_tfc) {
 			notifies--;
-			if (!ship_v2N((notifies != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2IDr,
-					ISAKMP_PAYLOAD_NONCRITICAL,
-					PROTO_v2_RESERVED,
-					&empty_chunk,
-					v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &empty_chunk,
+			int np = notifies != 0 ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2IDr;
+			if (!ship_v2Ns(np, v2N_ESP_TFC_PADDING_NOT_SUPPORTED,
 					&e_pbs_cipher))
 				return STF_INTERNAL_ERROR;
 		}
 
 		passert(notifies == 0);
-
 
 		/* send out the IDr payload */
 		{
@@ -4585,7 +4534,7 @@ static stf_status ikev2_process_ts_respnse(struct msg_digest *md)
 
 					if (bfit_pr > bestfit_pr) {
 						DBG(DBG_CONTROLMORE,
-						    DBG_log("protocol fitness found better match c %s, tsi[%d],tsr[%d]",
+						    DBG_log("protocol fitness found better match c %s, tsi[%d], tsr[%d]",
 							    c->name, best_tsi_i,
 							    best_tsr_i));
 						bestfit_p = bfit_p;
@@ -5111,12 +5060,12 @@ static stf_status ikev2_rekey_child_resp(const struct msg_digest *md)
 		case v2N_REKEY_SA:
 			DBG(DBG_CONTROL, DBG_log("received v2N_REKEY_SA "));
 			if (rst != NULL) {
-				/* will tollarate multiple */
-				loglog(RC_LOG_SERIOUS, "duplicate v2N_REKEY_SA in excahnge");
+				/* will tolerate multiple */
+				loglog(RC_LOG_SERIOUS, "duplicate v2N_REKEY_SA in exchange");
 			}
 
 			/*
-			 * incase of a failure the response is
+			 * in case of a failure the response is
 			 * a v2N_CHILD_SA_NOT_FOUND with  with SPI and type
 			 * {AH|ESP} in the notify  do we support that yet?
 			 * RFC 7296 3.10 return STF_FAIL + v2N_CHILD_SA_NOT_FOUND;
@@ -5124,6 +5073,7 @@ static stf_status ikev2_rekey_child_resp(const struct msg_digest *md)
 			change_state(st, STATE_V2_REKEY_CHILD_R);
 			rst = find_state_to_rekey(ntfy, pst);
 			if (rst == NULL) {
+				/* ??? RFC 7296 3.10: this notify requires protocol and SPI! */
 				libreswan_log("no valid IPsec SA SPI to rekey");
 				ret = STF_FAIL + v2N_CHILD_SA_NOT_FOUND;
 			} else {
@@ -5141,8 +5091,8 @@ static stf_status ikev2_rekey_child_resp(const struct msg_digest *md)
 
 				ret = STF_OK;
 			}
-
 			break;
+
 		default:
 			/*
 			 * there is another pass of notify payloads after this
@@ -5170,7 +5120,7 @@ static stf_status ikev2_rekey_child_copy_ts(const struct msg_digest *md)
 	rst = state_with_serialno(st->st_ipsec_pred);
 
 	if (rst == NULL) {
-		/* add SPI and type {AH|ESP} in the notify, RFC 7296 3.10 */
+		/* ??? RFC 7296 3.10: this notify requires protocol and SPI! */
 		return STF_FAIL + v2N_CHILD_SA_NOT_FOUND;
 	}
 
@@ -5256,9 +5206,11 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 		}
 
 		if (rekey_spi.len > 0) {
-			if (!ship_v2N(ISAKMP_NEXT_v2TSi, ISAKMP_PAYLOAD_NONCRITICAL,
-						PROTO_v2_ESP, &rekey_spi,
-						v2N_REKEY_SA, &empty_chunk, outpbs))
+			/* ??? how do we know that the protocol is ESP and not AH? */
+			if (!ship_v2N(ISAKMP_NEXT_v2TSi,
+					ISAKMP_PAYLOAD_NONCRITICAL,
+					PROTO_v2_ESP, &rekey_spi,
+					v2N_REKEY_SA, &empty_chunk, outpbs))
 				return STF_INTERNAL_ERROR;
 		}
 
@@ -5277,25 +5229,18 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 
 	if (send_use_transport) {
 		DBG(DBG_CONTROL, DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE"));
-		/* In v2, for parent, protoid must be 0 and SPI must be empty */
-		if (!ship_v2N(cc->send_no_esp_tfc ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE,
-					ISAKMP_PAYLOAD_NONCRITICAL,
-					PROTO_v2_RESERVED,
-					&empty_chunk,
-					v2N_USE_TRANSPORT_MODE, &empty_chunk,
-					outpbs))
+		if (!ship_v2Ns(cc->send_no_esp_tfc ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE,
+				v2N_USE_TRANSPORT_MODE,
+				outpbs))
 			return STF_INTERNAL_ERROR;
 	} else {
 		DBG(DBG_CONTROL, DBG_log("Initiator child policy is tunnel mode, NOT sending v2N_USE_TRANSPORT_MODE"));
 	}
 
 	if (cc->send_no_esp_tfc) {
-		if (!ship_v2N(ISAKMP_NEXT_v2NONE,
-					ISAKMP_PAYLOAD_NONCRITICAL,
-					PROTO_v2_RESERVED,
-					&empty_chunk,
-					v2N_ESP_TFC_PADDING_NOT_SUPPORTED, &empty_chunk,
-					outpbs))
+		if (!ship_v2Ns(ISAKMP_NEXT_v2NONE,
+				v2N_ESP_TFC_PADDING_NOT_SUPPORTED,
+				outpbs))
 			return STF_INTERNAL_ERROR;
 	}
 	return STF_OK;
@@ -5518,7 +5463,7 @@ stf_status ikev2_child_ike_inR(struct state *st /* child state */,
 
 	/* Ni in */
 	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_nr, "Nr"));
-	RETURN_STF_FAILURE_STATUS(process_ike_rekey_sa_pl_response(md, pst,st));
+	RETURN_STF_FAILURE_STATUS(process_ike_rekey_sa_pl_response(md, pst, st));
 
 	DBG(DBG_CONTROLMORE,
 			DBG_log("Calling ikev2_crypto_start() from %s in state %s",
@@ -5596,7 +5541,7 @@ stf_status ikev2_child_ike_inIoutR(struct state *st /* child state */,
 	/* Ni in */
 	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_ni, "Ni"));
 
-	RETURN_STF_FAILURE_STATUS(process_ike_rekey_sa_pl(md, pst,st));
+	RETURN_STF_FAILURE_STATUS(process_ike_rekey_sa_pl(md, pst, st));
 
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("Calling ikev2_crypto_start() from %s in state %s",
@@ -6052,10 +5997,7 @@ static stf_status add_mobike_response_payloads(int np, chunk_t *cookie2,
 	if (!ikev2_out_nat_v2n(np, pbs, md))
 		return STF_INTERNAL_ERROR;
 	if (cookie2->len != 0) {
-		if (!ship_v2N(ISAKMP_NEXT_v2NONE,
-					ISAKMP_PAYLOAD_NONCRITICAL,
-					PROTO_v2_RESERVED, &empty_chunk,
-					v2N_COOKIE2, cookie2, pbs)) {
+		if (!ship_v2Nsp(ISAKMP_NEXT_v2NONE, v2N_COOKIE2, cookie2, pbs)) {
 			freeanychunk(*cookie2);
 			return STF_INTERNAL_ERROR;
 		}
@@ -6548,9 +6490,7 @@ stf_status ikev2_send_livenss_probe(struct state *st)
 
 static stf_status add_mobike_payloads(struct state *st, pb_stream *pbs)
 {
-	if (!ship_v2N(ISAKMP_NEXT_v2N, ISAKMP_PAYLOAD_NONCRITICAL,
-				PROTO_v2_RESERVED, &empty_chunk,
-				v2N_UPDATE_SA_ADDRESSES, &empty_chunk, pbs))
+	if (!ship_v2Ns(ISAKMP_NEXT_v2N, v2N_UPDATE_SA_ADDRESSES, pbs))
 		return STF_INTERNAL_ERROR;
 
 	if (!ikev2_out_natd(st, ISAKMP_NEXT_v2NONE,

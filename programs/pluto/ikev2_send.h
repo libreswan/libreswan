@@ -79,9 +79,16 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
 	      v2_notification_t type,
 	      const chunk_t *n_data,
 	      pb_stream *rbody);
-bool out_v2N(pb_stream *rbody,
-	     v2_notification_t ntype,
-	     const chunk_t *ndata);
+
+bool ship_v2Nsp(enum next_payload_types_ikev2 np,
+	      v2_notification_t type,
+	      const chunk_t *n_data,
+	      pb_stream *rbody);
+
+bool ship_v2Ns(enum next_payload_types_ikev2 np,
+	      v2_notification_t type,
+	      pb_stream *rbody);
+
 bool ship_v2V(pb_stream *outs, enum next_payload_types_ikev2 np,
 	      const char *string);
 
@@ -89,7 +96,7 @@ bool ship_v2V(pb_stream *outs, enum next_payload_types_ikev2 np,
  * XXX: should be local to ikev2_send.c
  */
 uint8_t build_ikev2_version(void);
-uint8_t build_ikev2_critical(bool critical, bool impair);
+uint8_t build_ikev2_critical(bool impair);
 bool emit_wire_iv(const struct state *st, pb_stream *pbs);
 uint8_t *ikev2_authloc(struct state *st,
 		       pb_stream *e_pbs);
