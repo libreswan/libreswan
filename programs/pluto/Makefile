@@ -146,7 +146,6 @@ ifeq ($(USE_UNBOUND_EVENT_H_COPY),true)
 CFLAGS+=-I${LIBRESWANSRCDIR}/include/unbound
 endif
 
-OBJS += ike_alg.o
 OBJS += ike_alg_dh_nss_ecp_ops.o
 OBJS += ike_alg_dh_nss_modp_ops.o
 OBJS += ike_alg_encrypt_nss_gcm_ops.o
