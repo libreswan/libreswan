@@ -78,7 +78,7 @@ static bool ikev2_calculate_psk_sighash(bool verify, struct state *st,
 
 	passert(authby == AUTH_PSK || authby == AUTH_NULL);
 
-	DBG(DBG_CONTROL,DBG_log("ikev2_calculate_psk_sighash() called from %s to %s PSK with authby=%s",
+	DBG(DBG_CONTROL, DBG_log("ikev2_calculate_psk_sighash() called from %s to %s PSK with authby=%s",
 		st->st_state_name,
 		verify ? "verify" : "create",
 		enum_name(&ikev2_asym_auth_name, authby)));
@@ -148,7 +148,7 @@ static bool ikev2_calculate_psk_sighash(bool verify, struct state *st,
 
 	/*
 	 * RFC 4306 2.15:
-	 * AUTH = prf(prf(Shared Secret,"Key Pad for IKEv2"), <msg octets>)
+	 * AUTH = prf(prf(Shared Secret, "Key Pad for IKEv2"), <msg octets>)
 	 */
 
 	/* calculate inner prf */

@@ -80,7 +80,7 @@ monotime_t monotimesum(monotime_t t, deltatime_t d)
 
 bool monobefore(monotime_t a, monotime_t b)
 {
-	return timercmp(&a.mt, &b.mt,<);
+	return timercmp(&a.mt, &b.mt, <);
 }
 
 deltatime_t monotimediff(monotime_t a, monotime_t b)

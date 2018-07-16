@@ -395,24 +395,24 @@ static void get_bsi_random(size_t nbytes, unsigned char *buf)
 	}
 
 	ndone = 0;
-		DBG(DBG_CONTROL,DBG_log("need %d bits random for extra seeding of the NSS PRNG",
+		DBG(DBG_CONTROL, DBG_log("need %d bits random for extra seeding of the NSS PRNG",
 			(int) nbytes * BITS_PER_BYTE));
 
 	while (ndone < nbytes) {
 		got = read(dev, buf + ndone, nbytes - ndone);
 		if (got < 0) {
-			loglog(RC_LOG_SERIOUS,"read error on %s (%s)\n",
+			loglog(RC_LOG_SERIOUS, "read error on %s (%s)\n",
 				device, strerror(errno));
 			exit_pluto(PLUTO_EXIT_NSS_FAIL);
 		}
 		if (got == 0) {
-			loglog(RC_LOG_SERIOUS,"EOF on %s!?!\n",  device);
+			loglog(RC_LOG_SERIOUS, "EOF on %s!?!\n",  device);
 			exit_pluto(PLUTO_EXIT_NSS_FAIL);
 		}
 		ndone += got;
 	}
 	close(dev);
-	DBG(DBG_CONTROL,DBG_log("read %zu bytes from /dev/random for NSS PRNG",
+	DBG(DBG_CONTROL, DBG_log("read %zu bytes from /dev/random for NSS PRNG",
 		nbytes));
 }
 
@@ -437,7 +437,7 @@ static bool pluto_init_nss(char *nssdir)
 	 */
 	if (pluto_nss_seedbits != 0) {
 		int seedbytes = BYTES_FOR_BITS(pluto_nss_seedbits);
-		unsigned char *buf = alloc_bytes(seedbytes,"TLA seedmix");
+		unsigned char *buf = alloc_bytes(seedbytes, "TLA seedmix");
 
 		get_bsi_random(seedbytes, buf); /* much TLA, very blocking */
 		rv = PK11_RandomUpdate(buf, seedbytes);

@@ -174,7 +174,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	char prfname[IDTOA_BUF];
 	struct esb_buf esb, esb2;
 	/* we need to free() this */
-	char *conn_encode = audit_encode_nv_string("conn-name",c->name,0);
+	char *conn_encode = audit_encode_nv_string("conn-name", c->name,0);
 
 	zero(&cipher_str);	/* OK: no pointer fields */
 	zero(&spi_str);	/* OK: no pointer fields */

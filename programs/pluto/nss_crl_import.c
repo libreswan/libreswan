@@ -81,7 +81,7 @@ int send_crl_to_import(u_char *der, size_t len, const char *url)
 # endif
 	}
 #else
-	arg[0] = clone_str("/usr/local/libexec/ipsec/_import_crl","crl helper");
+	arg[0] = clone_str("/usr/local/libexec/ipsec/_import_crl", "crl helper");
 #endif
 
 	if ((size_t)n > sizeof(crl_path_space) - sizeof(crl_name))

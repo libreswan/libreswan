@@ -724,7 +724,7 @@ void find_ifaces(bool rm_dead)
 			if (ifp->pev != NULL) {
 				delete_pluto_event(&ifp->pev);
 				DBG_log("refresh. setup callback for interface %s:%u %d",
-						ifp->ip_dev->id_rname,ifp->port,
+						ifp->ip_dev->id_rname, ifp->port,
 						ifp->fd);
 			}
 			char prefix[] ="INTERFACE_FD-";
@@ -814,9 +814,9 @@ static void termhandler_cb(int unused UNUSED, const short event UNUSED, void *ar
 #ifdef HAVE_SECCOMP
 static void syshandler_cb(int unused UNUSED, const short event UNUSED, void *arg UNUSED)
 {
-	loglog(RC_LOG_SERIOUS,"pluto received SIGSYS - possible SECCOMP violation!");
+	loglog(RC_LOG_SERIOUS, "pluto received SIGSYS - possible SECCOMP violation!");
 	if (pluto_seccomp_mode == SECCOMP_ENABLED) {
-		loglog(RC_LOG_SERIOUS,"seccomp=enabled mandates daemon restart");
+		loglog(RC_LOG_SERIOUS, "seccomp=enabled mandates daemon restart");
 		exit_pluto(PLUTO_EXIT_SECCOMP_FAIL);
 	}
 }
@@ -1545,13 +1545,13 @@ bool ev_before(struct pluto_event *pev, deltatime_t delay) {
 void set_whack_pluto_ddos(enum ddos_mode mode)
 {
 	if (mode == pluto_ddos_mode) {
-		loglog(RC_LOG,"pluto DDoS protection remains in %s mode",
+		loglog(RC_LOG, "pluto DDoS protection remains in %s mode",
 		mode == DDOS_AUTO ? "auto-detect" : mode == DDOS_FORCE_BUSY ? "active" : "unlimited");
 		return;
 	}
 
 	pluto_ddos_mode = mode;
-	loglog(RC_LOG,"pluto DDoS protection mode set to %s",
+	loglog(RC_LOG, "pluto DDoS protection mode set to %s",
 		mode == DDOS_AUTO ? "auto-detect" : mode == DDOS_FORCE_BUSY ? "active" : "unlimited");
 }
 

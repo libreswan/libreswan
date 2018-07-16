@@ -1625,7 +1625,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 			c->spd.this.has_client = TRUE;
 			subnettot(&c->spd.this.client, 0,
 				  caddr, sizeof(caddr));
-			loglog(RC_LOG,"Received IP address %s",
+			loglog(RC_LOG, "Received IP address %s",
 				      caddr);
 
 			if (addrbytesptr_read(&c->spd.this.host_srcip,
@@ -1659,7 +1659,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 			break;
 		}
 	}
-	/* loglog(LOG_DEBUG,"ModeCfg ACK: 0x%" PRIxLSET, resp); */
+	/* loglog(LOG_DEBUG, "ModeCfg ACK: 0x%" PRIxLSET, resp); */
 
 	/* ack things */
 	{
@@ -2401,7 +2401,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 		if (status != XAUTH_STATUS_FAIL && stat == STF_OK) {
 			st->hidden_variables.st_xauth_client_done =
 				TRUE;
-			loglog(RC_LOG,"XAUTH: Successfully Authenticated");
+			loglog(RC_LOG, "XAUTH: Successfully Authenticated");
 			st->st_oakley.doing_xauth = FALSE;
 
 			return STF_OK;

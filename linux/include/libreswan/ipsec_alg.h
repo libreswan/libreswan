@@ -123,7 +123,7 @@ struct ipsec_alg_auth {
 
 /***************************************************************
 *
-*       INTERFACE for module loading,testing, and unloading
+*       INTERFACE for module loading, testing, and unloading
 *
 ***************************************************************/
 /*	-  registration calls   */

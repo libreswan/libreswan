@@ -129,7 +129,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 	}
 
 	if (trusted == NULL) {
-		DBG(DBG_DNS,DBG_log("No additional dnssec trust anchors defined via dnssec-trusted= option"));
+		DBG(DBG_DNS, DBG_log("No additional dnssec trust anchors defined via dnssec-trusted= option"));
 	} else {
 		glob_t globbuf;
 		char **fnp;

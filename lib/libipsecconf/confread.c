@@ -630,13 +630,13 @@ static bool validate_end(struct starter_conn *conn_st,
 				char *value = end->strings[KSCF_RSAKEY1];
 
 				pfreeany(end->rsakey1);
-				end->rsakey1 = clone_str(value,"end->rsakey1");
+				end->rsakey1 = clone_str(value, "end->rsakey1");
 			}
 			if (end->strings[KSCF_RSAKEY2] != NULL) {
 				char *value = end->strings[KSCF_RSAKEY2];
 
 				pfreeany(end->rsakey2);
-				end->rsakey2 = clone_str(value,"end->rsakey2");
+				end->rsakey2 = clone_str(value, "end->rsakey2");
 			}
 		}
 	}
@@ -839,7 +839,7 @@ static bool translate_conn(struct starter_conn *conn,
 				break;
 			}
 
-			(*the_strings)[field] = clone_str(kw->string,"kt_idtype kw->string");
+			(*the_strings)[field] = clone_str(kw->string, "kt_idtype kw->string");
 			(*set_strings)[field] = assigned_value;
 			break;
 

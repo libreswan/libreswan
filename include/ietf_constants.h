@@ -371,14 +371,14 @@
 
 /*
  * TWOFISH-CBC is a 128-bit block cipher with variable-length key up to 256 bits
- * default is 128. 128,192 and 256 are the only commonly used ones
+ * default is 128. 128, 192 and 256 are the only commonly used ones
  */
 #define  TWOFISH_KEY_MIN_LEN 128
 #define  TWOFISH_KEY_DEF_LEN 128
 #define  TWOFISH_KEY_MAX_LEN 256
 
 /*
- * SERPENT default 128, 128,192 and 256 are the only commonly used ones
+ * SERPENT default 128, 128, 192 and 256 are the only commonly used ones
  */
 #define  SERPENT_KEY_MIN_LEN 128
 #define  SERPENT_KEY_DEF_LEN 128
@@ -1630,7 +1630,7 @@ enum ipsec_authentication_algo {
 	AH_AES_XCBC_MAC = 9, /* IKEv2 AUTH_AES_128_GMAC */
 	AH_RSA = 10, /* IKEv2 AUTH_AES_192_GMAC */
 	AH_AES_128_GMAC = 11, /* IKEv2 AUTH_AES_256_GMAC */
-	AH_AES_192_GMAC = 12 ,/* IKEv2 AUTH_HMAC_SHA2_256_128 */
+	AH_AES_192_GMAC = 12, /* IKEv2 AUTH_HMAC_SHA2_256_128 */
 	AH_AES_256_GMAC = 13, /* IKEv2 AUTH_HMAC_SHA2_384_192 */
 	/* 14 IKEv1 unassigned, IKEv2 AUTH_HMAC_SHA2_512_256 */
 	/* IKEv1 14-248 Unassigned */

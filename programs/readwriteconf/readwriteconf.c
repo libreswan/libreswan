@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (optind != argc) {
-		fprintf(stderr,"%s: unexpected arguments\n", progname);
+		fprintf(stderr, "%s: unexpected arguments\n", progname);
 		exit(4);
 	}
 
