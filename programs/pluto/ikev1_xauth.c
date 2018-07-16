@@ -110,8 +110,12 @@ static field_desc CISCO_split_fields[] = {
 	{ ft_end, 0, NULL, NULL }
 };
 
-static struct_desc CISCO_split_desc =
-	{ "CISCO split item", CISCO_split_fields, 14, 0, };
+struct_desc CISCO_split_desc = 	{
+	.name = "CISCO split item",
+	.fields = CISCO_split_fields,
+	.size = 14,
+	.np = 0,
+};
 
 oakley_auth_t xauth_calcbaseauth(oakley_auth_t baseauth)
 {
