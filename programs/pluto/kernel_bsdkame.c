@@ -278,42 +278,37 @@ static bool bsdkame_do_command(const struct connection *c, const struct spd_rout
 static void bsdkame_algregister(int satype, int supp_exttype,
 				struct sadb_alg *alg)
 {
-	int ret;
-
 	switch (satype) {
 	case SADB_SATYPE_AH:
-		ret = kernel_alg_add(satype, supp_exttype, alg);
+		kernel_add_sadb_alg(satype, supp_exttype, alg);
 		DBG(DBG_KERNEL,
-		    DBG_log("algregister_ah(%p) exttype=%d alg_id=%d, alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, ret=%d",
+		    DBG_log("algregister_ah(%p) exttype=%d alg_id=%d, alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d",
 			    alg, supp_exttype,
 			    alg->sadb_alg_id,
 			    alg->sadb_alg_ivlen,
 			    alg->sadb_alg_minbits,
-			    alg->sadb_alg_maxbits,
-			    ret));
+			    alg->sadb_alg_maxbits));
 		break;
 
 	case SADB_SATYPE_ESP:
-		ret = kernel_alg_add(satype, supp_exttype, alg);
+		kernel_add_sadb_alg(satype, supp_exttype, alg);
 		DBG(DBG_KERNEL,
-			DBG_log("algregister(%p) alg_id=%d, alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, ret=%d",
+			DBG_log("algregister(%p) alg_id=%d, alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d",
 				alg,
 				alg->sadb_alg_id,
 				alg->sadb_alg_ivlen,
 				alg->sadb_alg_minbits,
-				alg->sadb_alg_maxbits,
-				ret));
+				alg->sadb_alg_maxbits));
 		break;
 
 	case SADB_X_SATYPE_IPCOMP:
 		DBG(DBG_KERNEL,
-			DBG_log("ipcomp algregister(%p) alg_id=%d, alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, ret=%d",
+			DBG_log("ipcomp algregister(%p) alg_id=%d, alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d",
 				alg,
 				alg->sadb_alg_id,
 				alg->sadb_alg_ivlen,
 				alg->sadb_alg_minbits,
-				alg->sadb_alg_maxbits,
-				ret));
+				alg->sadb_alg_maxbits));
 		can_do_IPcomp = TRUE;
 		break;
 

@@ -37,6 +37,7 @@
 #include "alg_info.h"
 #include "ike_alg.h"
 #include "ike_alg_integ.h"
+#include "ike_alg_encrypt.h"
 #include "plutoalg.h"
 #include "crypto.h"
 #include "spdb.h"
@@ -215,27 +216,23 @@ void kernel_alg_show_status(void)
 	whack_log(RC_COMMENT, "ESP algorithms supported:");
 	whack_log(RC_COMMENT, " "); /* spacer */
 
-	for (struct sadb_alg *alg_p = next_kernel_encrypt_alg(NULL);
-	     alg_p != NULL; alg_p = next_kernel_encrypt_alg(alg_p)) {
-		const struct encrypt_desc *alg = encrypt_desc_by_sadb_ealg_id(alg_p->sadb_alg_id);
-		if (pexpect(alg != NULL)) {
-			whack_log(RC_COMMENT,
-				  "algorithm ESP encrypt: name=%s, keysizemin=%d, keysizemax=%d",
-				  alg->common.fqn,
-				  encrypt_min_key_bit_length(alg),
-				  encrypt_max_key_bit_length(alg));
-		}
+	for (const struct encrypt_desc **alg_p = next_kernel_encrypt_desc(NULL);
+	     alg_p != NULL; alg_p = next_kernel_encrypt_desc(alg_p)) {
+		const struct encrypt_desc *alg = *alg_p;
+		whack_log(RC_COMMENT,
+			  "algorithm ESP encrypt: name=%s, keysizemin=%d, keysizemax=%d",
+			  alg->common.fqn,
+			  encrypt_min_key_bit_length(alg),
+			  encrypt_max_key_bit_length(alg));
 	}
 
-	for (struct sadb_alg *alg_p = next_kernel_integ_alg(NULL);
-	     alg_p != NULL; alg_p = next_kernel_integ_alg(alg_p)) {
-		const struct integ_desc *alg = integ_desc_by_sadb_aalg_id(alg_p->sadb_alg_id);
-		if (pexpect(alg != NULL)) {
-			whack_log(RC_COMMENT,
-				  "algorithm AH/ESP auth: name=%s, key-length=%zu",
-				  alg->common.fqn,
-				  alg->integ_keymat_size * BITS_PER_BYTE);
-		}
+	for (const struct integ_desc **alg_p = next_kernel_integ_desc(NULL);
+	     alg_p != NULL; alg_p = next_kernel_integ_desc(alg_p)) {
+		const struct integ_desc *alg = *alg_p;
+		whack_log(RC_COMMENT,
+			  "algorithm AH/ESP auth: name=%s, key-length=%zu",
+			  alg->common.fqn,
+			  alg->integ_keymat_size * BITS_PER_BYTE);
 	}
 
 	whack_log(RC_COMMENT, " "); /* spacer */

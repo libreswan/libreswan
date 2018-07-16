@@ -19,6 +19,7 @@
 #include <stddef.h>	/* for size_t */
 
 struct sadb_msg;
+struct sadb_alg;
 
 /*
  * Helper routines for code following RFC 2367 - PF_KEY - when
@@ -41,6 +42,8 @@ struct sadb_msg;
 #define KERNEL_SADB_WORD_SIZE (64/8)
 
 /* Registration messages from pluto */
-extern void kernel_alg_register_pfkey(const struct sadb_msg *msg, size_t sizeof_msg);
+extern void kernel_add_sadb_algs(const struct sadb_msg *msg, size_t sizeof_msg);
+
+extern void kernel_add_sadb_alg(int satype, int exttype, const struct sadb_alg *sadb_alg);
 
 #endif

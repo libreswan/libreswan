@@ -75,13 +75,10 @@ bool kernel_alg_encrypt_key_size(const struct encrypt_desc *encrypt,
 int kernel_alg_encrypt_count(void);
 int kernel_alg_integ_count(void);
 
-struct sadb_alg *next_kernel_encrypt_alg(struct sadb_alg *last);
-struct sadb_alg *next_kernel_integ_alg(struct sadb_alg *last);
+const struct encrypt_desc **next_kernel_encrypt_desc(const struct encrypt_desc **last);
+const struct integ_desc **next_kernel_integ_desc(const struct integ_desc **last);
 
 extern void kernel_alg_init(void);
-
-extern int kernel_alg_add(int satype, int exttype,
-			  const struct sadb_alg *sadb_alg);
 
 void kernel_integ_add(const struct integ_desc *integ);
 void kernel_encrypt_add(const struct encrypt_desc *encrypt);

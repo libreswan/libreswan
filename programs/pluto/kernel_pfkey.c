@@ -385,7 +385,7 @@ void pfkey_register_response(const struct sadb_msg *msg)
 	switch (msg->sadb_msg_satype) {
 	case K_SADB_SATYPE_AH:
 	case K_SADB_SATYPE_ESP:
-		kernel_alg_register_pfkey(msg, PFKEYv2_MAX_MSGSIZE);
+		kernel_add_sadb_algs(msg, PFKEYv2_MAX_MSGSIZE);
 		break;
 	case K_SADB_X_SATYPE_COMP:
 		/* ??? There ought to be an extension to list the

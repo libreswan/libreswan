@@ -42,9 +42,9 @@
 #include "ike_alg_integ.h"
 
 /*
- * XXX: The kernel algorithm database is indexed by SADB kernel values
- * (which date back to the defunct pfkey interface) and assumes there
- * is a value for every single supported algorithm.
+ * The kernel algorithm database is indexed by SADB (PRF) kernel
+ * values and assumes there is a value for every single supported
+ * algorithm.
  *
  * The assumption isn't valid.  Magic SADB values have been added when
  * no official value was available.
@@ -54,77 +54,24 @@
  */
 
 /* ALG storage */
-static struct sadb_alg esp_aalg[K_SADB_AALG_MAX + 1];	/* ??? who fills this table in? */
-static struct sadb_alg esp_ealg[K_SADB_EALG_MAX + 1];
+static const struct integ_desc *esp_aalg[K_SADB_AALG_MAX + 1];
+static const struct encrypt_desc *esp_ealg[K_SADB_EALG_MAX + 1];
 static int esp_ealg_num = 0;
 static int esp_aalg_num = 0;
 
 #define ESP_EALG_PRESENT(algo) ((algo) <= K_SADB_EALG_MAX && \
-				esp_ealg[algo].sadb_alg_id == (algo))
+				esp_ealg[algo] != NULL)
 
 #define ESP_EALG_FOR_EACH(algo) \
 	for ((algo) = 1; (algo) <= K_SADB_EALG_MAX; (algo)++) \
 		if (ESP_EALG_PRESENT(algo))
 
 #define ESP_AALG_PRESENT(algo) ((algo) <= SADB_AALG_MAX && \
-				esp_aalg[algo].sadb_alg_id == (algo))
+				esp_aalg[algo] != NULL)
 
 #define ESP_AALG_FOR_EACH(algo) \
 	for ((algo) = 1; (algo) <= SADB_AALG_MAX; (algo)++) \
 		if (ESP_AALG_PRESENT(algo))
-
-static struct sadb_alg *sadb_alg_ptr(unsigned satype, unsigned exttype,
-				unsigned alg_id, bool rw)
-{
-	struct sadb_alg *alg_p = NULL;
-
-	switch (exttype) {
-	case SADB_EXT_SUPPORTED_AUTH:
-		/* ??? should this be a passert? */
-		if (alg_id > SADB_AALG_MAX)
-			return NULL;	/* fail */
-
-		switch (satype) {
-		case SADB_SATYPE_AH:
-		case SADB_SATYPE_ESP:
-			/* ??? even though this might be AH, we only talk of ESP */
-			alg_p = &esp_aalg[alg_id];
-
-			/* get for write: increment elem count */
-			if (rw)
-				esp_aalg_num++;
-			return alg_p;
-
-		default:
-			/* ??? should this be a passert? */
-			return NULL;	/* fail */
-		}
-
-	case SADB_EXT_SUPPORTED_ENCRYPT:
-		/* ??? should this be a passert? */
-		if (alg_id > K_SADB_EALG_MAX)
-			return NULL;	/* fail */
-
-		switch (satype) {
-		case SADB_SATYPE_ESP:
-			alg_p = &esp_ealg[alg_id];
-
-			/* get for write: increment elem count */
-			if (rw)
-				esp_ealg_num++;
-			return alg_p;
-
-		default:
-			/* ??? should this be a passert? */
-			return NULL;	/* fail */
-		}
-		break;
-
-	default:
-		/* ??? should this be a passert? */
-		return NULL;	/* fail */
-	}
-}
 
 /*
  *      Forget previous registration
@@ -138,200 +85,29 @@ void kernel_alg_init(void)
 	esp_ealg_num = esp_aalg_num = 0;
 }
 
-/* used by kernel_netlink.c and kernel_bsdkame.c */
-int kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
+void kernel_integ_add(const struct integ_desc *alg)
 {
-	struct sadb_alg *alg_p, tmp_alg;
-	uint8_t alg_id = sadb_alg->sadb_alg_id;
-
-	bool supported;
-	switch (exttype) {
-	case SADB_EXT_SUPPORTED_ENCRYPT:
-		supported = encrypt_desc_by_sadb_ealg_id(alg_id);
-		break;
-	case SADB_EXT_SUPPORTED_AUTH:
-		supported = integ_desc_by_sadb_aalg_id(alg_id);
-		break;
-	default:
-		supported = true;
-	}
-
-	if (DBGP(DBG_KERNEL|DBG_CRYPT)) {
-		const char *exttype_name =
-			exttype == SADB_EXT_SUPPORTED_AUTH ? "SADB_EXT_SUPPORTED_AUTH"
-			: exttype == SADB_EXT_SUPPORTED_ENCRYPT ? "SADB_EXT_SUPPORTED_ENCRYPT"
-			: "SADB_EXT_SUPPORTED_???";
-		struct esb_buf alg_name_buf;
-		/*
-		 * XXX: The ALG_ID value found here comes from the
-		 * Linux kernel (see libreswan/pfkeyv2.h) so using
-		 * AH_TRANSFORMID_NAMES and ESP_TRANSFORMID_NAMES is
-		 * only an approximation.
-		 */
-		const char *alg_name =
-			exttype == SADB_EXT_SUPPORTED_AUTH ? enum_showb(&ah_transformid_names, alg_id, &alg_name_buf)
-			: exttype == SADB_EXT_SUPPORTED_ENCRYPT ? enum_showb(&esp_transformid_names, alg_id, &alg_name_buf)
-			: "???";
-		const char *satype_name =
-			satype == SADB_SATYPE_ESP ? "SADB_SATYPE_ESP"
-			: satype == SADB_SATYPE_AH ? "SADB_SATYPE_AH"
-			: "SADB_SATYPE_???";
-		DBG_log("kernel_alg_add(): satype=%d(%s), exttype=%d(%s), alg_id=%d(%s), alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d%s",
-			satype, satype_name,
-			exttype, exttype_name,
-			alg_id, alg_name,
-			sadb_alg->sadb_alg_ivlen,
-			sadb_alg->sadb_alg_minbits,
-			sadb_alg->sadb_alg_maxbits,
-			supported ? "" : " not supported");
-	}
-
-	if (!supported) {
-		return 0;
-	}
-
-	/*
-	 * XXX: if the 'return 0' below is executed, this leaks the
-	 * ALG_P allocated by sadb_alg_ptr() .  Fortunately the array
-	 * is large.
-	 */
-	alg_p = sadb_alg_ptr(satype, exttype, alg_id, TRUE);
-	if (alg_p == NULL) {
-		DBG(DBG_KERNEL,
-			DBG_log("kernel_alg_add(%d,%d,%d) fails because alg combo is invalid",
-			satype, exttype, alg_id));
-		return -1;
-	}
-
-	/* This logic "mimics" KLIPS: first algo implementation will be used */
-	if (alg_p->sadb_alg_id != 0) {
-		DBG(DBG_KERNEL,
-			DBG_log("kernel_alg_add(): discarding already setup satype=%d, exttype=%d, alg_id=%d",
-				satype, exttype,
-				alg_id);
-			);
-		return 0;
-	}
-	/*
-	 * The kernel PFKEY interface gives us options we do not want to
-	 * support. The kernel allows ESP_CAST with variable keysizes, and
-	 * we only want to support 128bit. The kernel also allows ESP_BLOWFISH,
-	 * but its inventor Bruce Schneier has said to stop using blowfish
-	 * and use twofish instead. The kernel allows ESP_DES, which
-	 * is simply too weak to be allowed. And for ESP_AES_CTR it returns
-	 * the keysize including the 4 bytes of nonce.
-	 */
-	tmp_alg = *sadb_alg;
-	switch (exttype) {
-	case SADB_EXT_SUPPORTED_ENCRYPT:
-		switch (satype) {
-		case SADB_SATYPE_ESP:
-			switch (alg_id) {
-			case ESP_CAST:
-				/* Overruling kernel - we only want to support 128 */
-				tmp_alg.sadb_alg_minbits = 128;
-				tmp_alg.sadb_alg_maxbits = 128;
-				break;
-			case ESP_AES_CTR:
-				/* Overruling kernel - remove salt from calculation */
-				tmp_alg.sadb_alg_minbits = 128;
-				tmp_alg.sadb_alg_maxbits = 256;
-				break;
-			case ESP_BLOWFISH:
-			case ESP_DES:
-				DBG(DBG_KERNEL,
-					DBG_log("kernel_alg_add(): Ignoring alg_id=%d(%s) - too weak",
-						alg_id,
-						enum_name(&esp_transformid_names,
-							alg_id)));
-				return 0;
-			}
-			break;
-		}
-		break;
-	}
-
-	*alg_p = tmp_alg;
-	return 1;
-}
-
-/*
- * The kernel_alg database should work with IKE_ALGs and not SADBs,
- * this works for the moment.
- */
-struct sadb_id {
-	const struct ike_alg *alg;
-	int id;
-};
-
-static int find_sadb_id(const struct sadb_id *table, const struct ike_alg *alg)
-{
-	for (const struct sadb_id *map = table; map->alg != NULL; map++) {
-		if (map->alg == alg) {
-			return map->id;
-		}
-	}
-	return -1;
-}
-
-const struct sadb_id integ_sadb_ids[] = {
-	{ &ike_alg_integ_aes_cmac.common, SADB_X_AALG_AES_CMAC_96, },
-	{ NULL, 0 },
-};
-
-void kernel_integ_add(const struct integ_desc *integ)
-{
-	int sadb_aalg = find_sadb_id(integ_sadb_ids, &integ->common);
-	if (sadb_aalg < 0) {
-		PEXPECT_LOG("Integrity algorithm %s has no matching SADB ID",
-			    integ->common.fqn);
-		return;
-	}
-	struct sadb_alg alg = {
-		.sadb_alg_minbits = integ->integ_keymat_size * BITS_PER_BYTE,
-		.sadb_alg_maxbits = integ->integ_keymat_size * BITS_PER_BYTE,
-		.sadb_alg_id = sadb_aalg,
-	};
-	if (kernel_alg_add(SADB_SATYPE_ESP,  SADB_EXT_SUPPORTED_AUTH, &alg) != 1) {
-		DBGF(DBG_KERNEL|DBG_CRYPT,
-		     "Note: failed to register integrity algorithm %s for ESP/AH",
-		     integ->common.fqn);
-		return;
+	const struct integ_desc **dest = &esp_aalg[alg->integ_sadb_aalg_id];
+	if (*dest == NULL) {
+		*dest = alg;
+		esp_aalg_num++;
+	} else {
+		DBGF(DBG_KERNEL,
+		     "dropping duplicate %s kernel integrity algorithm",
+		     alg->common.fqn);
 	}
 }
 
-const struct sadb_id encrypt_sadb_ids[] = {
-	{ &ike_alg_encrypt_aes_gcm_8.common, SADB_X_EALG_AES_GCM_ICV8, },
-	{ &ike_alg_encrypt_aes_gcm_12.common, SADB_X_EALG_AES_GCM_ICV12, },
-	{ &ike_alg_encrypt_aes_gcm_16.common, SADB_X_EALG_AES_GCM_ICV16, },
-	{ &ike_alg_encrypt_aes_ccm_8.common, SADB_X_EALG_AES_CCM_ICV8, },
-	{ &ike_alg_encrypt_aes_ccm_12.common, SADB_X_EALG_AES_CCM_ICV12, },
-	{ &ike_alg_encrypt_aes_ccm_16.common, SADB_X_EALG_AES_CCM_ICV16, },
-	{ &ike_alg_encrypt_null_integ_aes_gmac.common, SADB_X_EALG_NULL_AUTH_AES_GMAC, },
-	{ NULL, 0},
-};
-
-void kernel_encrypt_add(const struct encrypt_desc *encrypt)
+void kernel_encrypt_add(const struct encrypt_desc *alg)
 {
-	int sadb_ealg = find_sadb_id(encrypt_sadb_ids, &encrypt->common);
-	if (sadb_ealg < 0) {
-		PEXPECT_LOG("Encryption algorithm %s has no matching SADB ID",
-			    encrypt->common.fqn);
-		return;
-	}
-
-	struct sadb_alg alg = {
-		.sadb_alg_ivlen = encrypt->wire_iv_size,
-		.sadb_alg_minbits = encrypt_min_key_bit_length(encrypt),
-		.sadb_alg_maxbits = encrypt_max_key_bit_length(encrypt),
-		.sadb_alg_id = sadb_ealg,
-	};
-
-	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1) {
-		DBGF(DBG_KERNEL|DBG_CRYPT,
-		     "Note: failed to register encryption algorithm %s for ESP",
-		     encrypt->common.fqn);
-		return;
+	const struct encrypt_desc **dest = &esp_ealg[alg->encrypt_sadb_ealg_id];
+	if (*dest == NULL) {
+		*dest = alg;
+		esp_ealg_num++;
+	} else {
+		DBGF(DBG_KERNEL,
+		     "dropping duplicate %s kernel encryption algorithm",
+		     alg->common.fqn);
 	}
 }
 
@@ -351,7 +127,7 @@ bool kernel_alg_encrypt_ok(const struct encrypt_desc *encrypt)
 		PEXPECT_LOG("%s", "encryption needs to be valid (non-NULL)");
 		return false;
 	}
-	return ESP_EALG_PRESENT(encrypt->common.id[IKEv1_ESP_ID]);
+	return ESP_EALG_PRESENT(encrypt->encrypt_sadb_ealg_id);
 }
 
 bool kernel_alg_integ_ok(const struct integ_desc *integ)
@@ -360,7 +136,7 @@ bool kernel_alg_integ_ok(const struct integ_desc *integ)
 		PEXPECT_LOG("%s", "integrity needs to be valid (non-NULL)");
 		return false;
 	}
-	return ESP_AALG_PRESENT(integ->integ_ikev1_ah_transform);
+	return ESP_AALG_PRESENT(integ->integ_sadb_aalg_id);
 }
 
 bool kernel_alg_is_ok(const struct ike_alg *alg)
@@ -396,42 +172,11 @@ bool kernel_alg_encrypt_key_size(const struct encrypt_desc *encrypt,
 	 */
 	if (keylen == 0) {
 		if (encrypt != &ike_alg_encrypt_null) {
-			keylen = esp_ealg[sadb_ealg].sadb_alg_minbits;
+			keylen = encrypt_min_key_bit_length(encrypt);
 			DBG(DBG_KERNEL,
 			    DBG_log("XXX: %s has key length of 0, adjusting to %d",
 				    encrypt->common.fqn, keylen));
 		}
-	}
-
-	if (esp_ealg[sadb_ealg].sadb_alg_minbits <= keylen &&
-	    keylen <= esp_ealg[sadb_ealg].sadb_alg_maxbits) {
-		/*
-		 * XXX: is the above check equivalent to
-		 * encrypt_has_key_bit_length()?  If it is then it
-		 * should have been applied already by the parser?
-		 * Find out.
-		 */
-		if (!encrypt_has_key_bit_length(encrypt, keylen)) {
-			DBG(DBG_KERNEL, DBG_log("XXX: IKE_ALG rejects %s key length of %d accepted by SADB",
-						encrypt->common.fqn, keylen));
-
-		}
-	} else {
-		/*
-		 * XXX: conversely is SADB rejecting something IKE_ALG
-		 * things is ok?
-		 */
-		if (encrypt_has_key_bit_length(encrypt, keylen)) {
-			DBG(DBG_KERNEL, DBG_log("XXX: IKE_ALG accepts %s key length of %d rejected by SADB",
-						encrypt->common.fqn, keylen));
-		}
-		DBG(DBG_KERNEL,
-		    DBG_log("kernel_alg_esp_info(): transid=%d, proposed keylen=%u is invalid, not %u<=X<=%u",
-			    transid, keylen,
-			    esp_ealg[sadb_ealg].sadb_alg_minbits,
-			    esp_ealg[sadb_ealg].sadb_alg_maxbits));
-		/* proposed key length is invalid! */
-		return FALSE;
 	}
 
 	/*
@@ -442,10 +187,10 @@ bool kernel_alg_encrypt_key_size(const struct encrypt_desc *encrypt,
 	DBG(DBG_PARSING,
 	    DBG_log("encrypt %s keylen=%d transid=%d, key_size=%zu, encryptalg=%d",
 		    encrypt->common.fqn, keylen, transid, *key_size, sadb_ealg));
-	return TRUE;
+	return true;
 }
 
-struct sadb_alg *next_kernel_encrypt_alg(struct sadb_alg *last)
+const struct encrypt_desc **next_kernel_encrypt_desc(const struct encrypt_desc **last)
 {
 	if (last == NULL) {
 		last = &esp_ealg[1];
@@ -453,14 +198,14 @@ struct sadb_alg *next_kernel_encrypt_alg(struct sadb_alg *last)
 		last++;
 	}
 	for (; last < &esp_ealg[elemsof(esp_ealg)]; last++) {
-		if (last->sadb_alg_id != 0) {
+		if (*last != NULL) {
 			return last;
 		}
 	}
 	return NULL;
 }
 
-struct sadb_alg *next_kernel_integ_alg(struct sadb_alg *last)
+const struct integ_desc **next_kernel_integ_desc(const struct integ_desc **last)
 {
 	if (last == NULL) {
 		last = &esp_aalg[1];
@@ -468,7 +213,7 @@ struct sadb_alg *next_kernel_integ_alg(struct sadb_alg *last)
 		last++;
 	}
 	for (; last < &esp_aalg[elemsof(esp_aalg)]; last++) {
-		if (last->sadb_alg_id != 0) {
+		if (*last != NULL) {
 			return last;
 		}
 	}

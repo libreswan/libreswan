@@ -63,6 +63,7 @@
 #include "lswtool.h"
 #include "alg_info.h"
 #include "kernel_alg.h"
+#include "kernel_sadb.h"
 #include "pfkey_help.h"
 #include "ip_address.h"
 
@@ -386,8 +387,8 @@ static bool kernel_alg_proc_read(void)
 				sadb_alg.sadb_alg_minbits = minbits;
 				sadb_alg.sadb_alg_maxbits = maxbits;
 				sadb_alg.sadb_alg_reserved = 0;
-				kernel_alg_add(satype, supp_exttype,
-					       &sadb_alg);
+				kernel_add_sadb_alg(satype, supp_exttype,
+						    &sadb_alg);
 				break;
 			}
 			break;
