@@ -941,11 +941,17 @@ void lswlog_ike_alg(struct lswlog *buf, const struct ike_alg *alg)
 	{
 		lswlogs(buf, alg->fqn);
 		/*
-		 * magic number from eyeballing the longest name
+		 * magic number from eyeballing the longest name; if
+		 * the pexpect fails then someone has added an even
+		 * longer name!
 		 */
-		ssize_t pad = strlen(ike_alg_encrypt_null_integ_aes_gmac.common.fqn) - strlen(alg->fqn);
-		passert_ike_alg(alg, pad >= 0);
-		for (ssize_t i = 0; i < pad; i++) {
+#if defined(USE_SHA2)
+		size_t max = strlen(ike_alg_integ_hmac_sha2_256_truncbug.common.fqn);
+#elif defined(USE_AES)
+		size_t max = strlen(ike_alg_encrypt_null_integ_aes_gmac.common.fqn);
+#endif
+		pexpect_ike_alg(alg, max >= strlen(alg->fqn));
+		for (size_t i = strlen(alg->fqn); i < max; i++) {
 			lswlogs(buf, " ");
 		}
 	}
