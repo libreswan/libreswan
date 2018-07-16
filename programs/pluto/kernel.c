@@ -1862,9 +1862,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	}
 
 	if (st->st_ah.attrs.encapsulation == ENCAPSULATION_MODE_TUNNEL ||
-		st->st_esp.attrs.encapsulation == ENCAPSULATION_MODE_TUNNEL ||
-		st->st_ipcomp.attrs.encapsulation ==
-		ENCAPSULATION_MODE_TUNNEL) {
+	    st->st_esp.attrs.encapsulation == ENCAPSULATION_MODE_TUNNEL ||
+	    st->st_ipcomp.attrs.encapsulation == ENCAPSULATION_MODE_TUNNEL) {
 		encapsulation = ENCAPSULATION_MODE_TUNNEL;
 		add_selector = FALSE; /* Don't add selectors for tunnel mode */
 	} else {
