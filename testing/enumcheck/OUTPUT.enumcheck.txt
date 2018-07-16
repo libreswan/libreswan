@@ -2986,6 +2986,13 @@ IETF registry enum_names:
          short_name 251:  OK
          lswlog_enum_short 251: OK
          match NULL_KAME [short]: OK
+  252 -> AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG
+         lswlog_enum 252: OK
+         search AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG: OK
+         match AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG: OK
+         short_name 252:  OK
+         lswlog_enum_short 252: OK
+         match HMAC_SHA2_256_TRUNCBUG [short]: OK
 
   xauth_type_names:
     0 -> Generic

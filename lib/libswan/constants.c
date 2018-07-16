@@ -993,11 +993,12 @@ static const char *const auth_alg_name_stolen_use[] = {
 					 * comments from jjo, needs
 					 * verification
 					 */
+	"AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG",
 };
 
 static enum_names auth_alg_names_stolen_use = {
 	AUTH_ALGORITHM_AES_CMAC_96,
-	AUTH_ALGORITHM_NULL_KAME,
+	AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG,
 	ARRAY_REF(auth_alg_name_stolen_use),
 	NULL, /* prefix */
 	NULL
