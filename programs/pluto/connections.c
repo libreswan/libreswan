@@ -850,9 +850,9 @@ static void load_end_nss_certificate(const char *which, CERTCertificate *cert,
 	select_nss_cert_id(cert, &d_end->id);
 
 	/* check validity of cert */
-	if (CERT_CheckCertValidTimes(cert, PR_Now(),
-				     FALSE) != secCertTimeValid) {
-		loglog(RC_LOG_SERIOUS,"%s certificate \'%s\' is expired or not yet valid",
+	if (CERT_CheckCertValidTimes(cert, PR_Now(), FALSE) !=
+			secCertTimeValid) {
+		loglog(RC_LOG_SERIOUS, "%s certificate \'%s\' is expired or not yet valid",
 		       which, name);
 		CERT_DestroyCertificate(cert);
 		return;
@@ -1481,12 +1481,14 @@ void add_connection(const struct whack_message *wm)
 	if (libreswan_fipsmode()) {
 		if (c->policy & POLICY_NEGO_PASS) {
 			c->policy &= ~POLICY_NEGO_PASS;
-			loglog(RC_LOG_SERIOUS,"FIPS: ignored negotiationshunt=passthrough - packets MUST be blocked in FIPS mode");
+			loglog(RC_LOG_SERIOUS,
+				"FIPS: ignored negotiationshunt=passthrough - packets MUST be blocked in FIPS mode");
 		}
 		if ((c->policy & POLICY_FAIL_MASK) == POLICY_FAIL_PASS) {
 			c->policy &= ~POLICY_FAIL_MASK;
 			c->policy |= POLICY_FAIL_NONE;
-			loglog(RC_LOG_SERIOUS,"FIPS: ignored failureshunt=passthrough - packets MUST be blocked in FIPS mode");
+			loglog(RC_LOG_SERIOUS,
+				"FIPS: ignored failureshunt=passthrough - packets MUST be blocked in FIPS mode");
 		}
 	}
 #endif
@@ -2792,7 +2794,8 @@ stf_status ikev2_find_host_connection(struct connection **cp,
 		const ip_address *me, u_int16_t my_port, const ip_address *him,
 		u_int16_t his_port, lset_t policy)
 {
-	struct connection *c = find_host_connection(me, my_port, him, his_port, policy,LEMPTY);
+	struct connection *c = find_host_connection(me, my_port, him, his_port,
+						policy, LEMPTY);
 
 	if (c == NULL) {
 		/* See if a wildcarded connection can be found.
@@ -3092,7 +3095,7 @@ struct connection *refine_host_connection(const struct state *st,
 			DBG(DBG_CONTROLMORE, {
 				char cib[CONN_INST_BUF];
 				DBG_log("refine_host_connection: happy with starting point: \"%s\"%s",
-					c->name,fmt_conn_instance(c, cib));
+					c->name, fmt_conn_instance(c, cib));
 			});
 
 			/* peer ID matches current connection -- check for "you Tarzan, me Jane" */
@@ -3219,7 +3222,7 @@ struct connection *refine_host_connection(const struct state *st,
 					char us_str[IDTOA_BUF];
 					idtoa(&d->spd.this.id, us_str, sizeof(us_str));
 					DBG_log("This connection's local id is %s (%s)",
-						us_str, enum_show(&ike_idtype_names,d->spd.this.id.kind));
+						us_str, enum_show(&ike_idtype_names, d->spd.this.id.kind));
 				});
 				if (!idr_wildmatch(d, tarzan_id)) {
 					DBG(DBG_CONTROL, DBG_log("Peer IDr payload does not match our expected ID, this connection will not do"));
@@ -4065,13 +4068,13 @@ static void show_one_sr(const struct connection *c,
 		sr->this.xauth_username != NULL ? sr->this.xauth_username : "[any]",
 		sr->that.xauth_username != NULL ? sr->that.xauth_username : "[any]");
 
-	struct esb_buf auth1,auth2;
+	struct esb_buf auth1, auth2;
 
 	whack_log(RC_COMMENT,
 		"\"%s\"%s:   our auth:%s, their auth:%s",
 		c->name, instance,
-		enum_show_shortb(&ikev2_asym_auth_name,sr->this.authby, &auth1),
-		enum_show_shortb(&ikev2_asym_auth_name,sr->that.authby, &auth2));
+		enum_show_shortb(&ikev2_asym_auth_name, sr->this.authby, &auth1),
+		enum_show_shortb(&ikev2_asym_auth_name, sr->that.authby, &auth2));
 
 	whack_log(RC_COMMENT,
 		"\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg policy:%s, dns:%s, domains:%s%s, cat:%s;",
