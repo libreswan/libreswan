@@ -780,7 +780,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			tmpl[i].family = addrtypeof(that_host);
 			tmpl[i].mode =
 				proto_info[i].encapsulation ==
-				ENCAPSULATION_MODE_TUNNEL;
+					ENCAPSULATION_MODE_TUNNEL;
 
 			if (!tmpl[i].mode)
 				continue;
@@ -856,8 +856,8 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		} else if (!ok) {
 			break;
 		} else if (proto_info[0].encapsulation !=
-			ENCAPSULATION_MODE_TUNNEL &&
-			esatype != ET_INT) {
+				ENCAPSULATION_MODE_TUNNEL &&
+			   esatype != ET_INT) {
 			break;
 		} else {
 			req.u.p.dir = XFRM_POLICY_FWD;
@@ -1560,7 +1560,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 
 			/* Traffic Flow Confidentiality is only for ESP tunnel mode */
 			if (sa->tfcpad != 0 &&
-				sa->encapsulation == ENCAPSULATION_MODE_TUNNEL) {
+			    sa->encapsulation == ENCAPSULATION_MODE_TUNNEL) {
 				DBG(DBG_KERNEL,
 					DBG_log("netlink: setting TFC to %" PRIu32 " (up to PMTU)",
 						sa->tfcpad));
@@ -2357,67 +2357,58 @@ static bool netlink_shunt_eroute(const struct connection *c,
 		}
 	}
 
-	{
-		char buf2[256];
+	char buf2[256];
 
-		snprintf(buf2, sizeof(buf2), "eroute_connection %s", opname);
+	snprintf(buf2, sizeof(buf2), "eroute_connection %s", opname);
 
-		if (!netlink_raw_eroute(&sr->this.host_addr, &sr->this.client,
-					&sr->that.host_addr,
-					&sr->that.client,
-					htonl(spi),
-					htonl(spi),
-					c->encapsulation ==
-						ENCAPSULATION_MODE_TRANSPORT ?
-						SA_ESP : SA_INT,
-					sr->this.protocol,
-					ET_INT,
-					null_proto_info,
-					deltatime(0),
-					calculate_sa_prio(c),
-					&c->sa_marks,
-					op, buf2
+	int sa_proto = c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ?
+		SA_ESP : SA_INT;
+
+	if (!netlink_raw_eroute(&sr->this.host_addr, &sr->this.client,
+				&sr->that.host_addr, &sr->that.client,
+				htonl(spi), htonl(spi),
+				sa_proto,
+				sr->this.protocol,
+				ET_INT,
+				null_proto_info,
+				deltatime(0),
+				calculate_sa_prio(c),
+				&c->sa_marks,
+				op, buf2
 #ifdef HAVE_LABELED_IPSEC
-					, c->policy_label
+				, c->policy_label
 #endif
-					))
-			return FALSE;
+				))
+		return FALSE;
 
-		switch (op) {
-		case ERO_ADD:
-			op = ERO_ADD_INBOUND;
-			break;
-		case ERO_DELETE:
-			op = ERO_DEL_INBOUND;
-			break;
-		default:
-			return TRUE;
-		}
-
-		snprintf(buf2, sizeof(buf2), "eroute_connection %s inbound",
-			opname);
-
-		return netlink_raw_eroute(&sr->that.host_addr,
-					&sr->that.client,
-					&sr->this.host_addr,
-					&sr->this.client,
-					htonl(spi),
-					htonl(spi),
-					c->encapsulation ==
-					ENCAPSULATION_MODE_TRANSPORT ?
-					SA_ESP : SA_INT,
-					sr->this.protocol,
-					ET_INT,
-					null_proto_info,
-					deltatime(0),
-					calculate_sa_prio(c),
-					&c->sa_marks,
-					op, buf2
-#ifdef HAVE_LABELED_IPSEC
-					, c->policy_label
-#endif
-			);
+	switch (op) {
+	case ERO_ADD:
+		op = ERO_ADD_INBOUND;
+		break;
+	case ERO_DELETE:
+		op = ERO_DEL_INBOUND;
+		break;
+	default:
+		return TRUE;
 	}
+
+	snprintf(buf2, sizeof(buf2), "eroute_connection %s inbound", opname);
+
+	return netlink_raw_eroute(&sr->that.host_addr, &sr->that.client,
+				  &sr->this.host_addr, &sr->this.client,
+				  htonl(spi), htonl(spi),
+				  sa_proto,
+				  sr->this.protocol,
+				  ET_INT,
+				  null_proto_info,
+				  deltatime(0),
+				  calculate_sa_prio(c),
+				  &c->sa_marks,
+				  op, buf2
+#ifdef HAVE_LABELED_IPSEC
+				  , c->policy_label
+#endif
+				  );
 }
 
 static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
