@@ -17,7 +17,7 @@
 #include "constants.h"		/* for BYTES_FOR_BITS() */
 #include "ietf_constants.h"
 #include "ike_alg.h"
-#include "ike_alg_3des.h"
+#include "ike_alg_encrypt.h"
 #include "ike_alg_encrypt_nss_cbc_ops.h"
 #include "sadb.h"
 

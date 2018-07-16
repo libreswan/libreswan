@@ -39,8 +39,8 @@
 #include "vendor.h"
 #include "quirks.h"
 #include "kernel.h"
-#include "ike_alg_md5.h"
 #include "crypt_hash.h"
+#include "ike_alg_hash.h"
 
 #include "nat_traversal.h"
 

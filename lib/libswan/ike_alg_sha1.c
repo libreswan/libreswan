@@ -23,7 +23,9 @@
 #include "constants.h"		/* for BYTES_FOR_BITS() */
 #include "ietf_constants.h"
 #include "ike_alg.h"
-#include "ike_alg_sha1.h"
+#include "ike_alg_hash.h"
+#include "ike_alg_prf.h"
+#include "ike_alg_integ.h"
 #include "ike_alg_hash_nss_ops.h"
 #include "ike_alg_prf_nss_ops.h"
 #include "sadb.h"

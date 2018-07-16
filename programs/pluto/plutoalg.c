@@ -36,7 +36,7 @@
 #include "kernel_alg.h"
 #include "alg_info.h"
 #include "ike_alg.h"
-#include "ike_alg_none.h"
+#include "ike_alg_integ.h"
 #include "plutoalg.h"
 #include "crypto.h"
 #include "spdb.h"

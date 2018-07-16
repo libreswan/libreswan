@@ -16,7 +16,7 @@
  */
 
 #include "ike_alg.h"
-#include "ike_alg_camellia.h"
+#include "ike_alg_encrypt.h"
 #include "ike_alg_encrypt_nss_cbc_ops.h"
 #include "sadb.h"
 
@@ -41,7 +41,7 @@ typedef struct {
 	u_int32_t camellia_d_key[CAMELLIA_KS_LENGTH];     // the decryption key schedule
 } camellia_context;
 
-struct encrypt_desc ike_alg_encrypt_camellia_cbc =
+const struct encrypt_desc ike_alg_encrypt_camellia_cbc =
 {
 	.common = {
 		.name = "camellia",
@@ -69,7 +69,7 @@ struct encrypt_desc ike_alg_encrypt_camellia_cbc =
 #endif
 };
 
-struct encrypt_desc ike_alg_encrypt_camellia_ctr =
+const struct encrypt_desc ike_alg_encrypt_camellia_ctr =
 {
 	.common = {
 		.name = "camellia_ctr",

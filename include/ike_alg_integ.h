@@ -1,7 +1,6 @@
-/*
- * NONE, for libreswan.
+/* integ algorithms, for libreswan
  *
- * Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016 Andrew Cagney <andrew.cagney@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -14,10 +13,29 @@
  * for more details.
  */
 
-/*
- * This probably belongs in something like ike_alg_encrypt.h?
- */
-extern const struct encrypt_desc ike_alg_encrypt_null;
+#ifdef USE_AES
+extern const struct integ_desc ike_alg_integ_aes_xcbc;
+extern const struct integ_desc ike_alg_integ_aes_cmac;
+#endif
+
+#ifdef USE_SHA1
+extern const struct integ_desc ike_alg_integ_sha1;
+#endif
+
+#ifdef USE_SHA2
+extern const struct integ_desc ike_alg_integ_sha2_256;
+extern const struct integ_desc ike_alg_integ_sha2_384;
+extern const struct integ_desc ike_alg_integ_sha2_512;
+extern const struct integ_desc ike_alg_integ_hmac_sha2_256_truncbug;
+#endif
+
+#ifdef USE_MD5
+extern const struct integ_desc ike_alg_integ_md5;
+#endif
+
+#ifdef USE_RIPEMD
+extern const struct integ_desc ike_alg_integ_hmac_ripemd_160_96;
+#endif
 
 /*
  * IKEv2 RFC 7296 uses the term "NONE" when referring to no integrity.
@@ -25,9 +43,3 @@ extern const struct encrypt_desc ike_alg_encrypt_null;
  * single integrity algorithm of "NONE"
  */
 extern const struct integ_desc ike_alg_integ_none;
-
-/*
- * IKEv2 RFC 7296 uses the term "NONE" when referring to no DH
- * algorithm.
- */
-extern const struct oakley_group_desc ike_alg_dh_none;

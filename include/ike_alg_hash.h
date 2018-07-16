@@ -1,5 +1,6 @@
-/*
- * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
+/* hash algorithms, for libreswan
+ *
+ * Copyright (C) 2016 Andrew Cagney <andrew.cagney@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -12,5 +13,16 @@
  * for more details.
  */
 
-struct encrypt_desc ike_alg_encrypt_camellia_cbc;
-struct encrypt_desc ike_alg_encrypt_camellia_ctr;
+#ifdef USE_SHA1
+extern const struct hash_desc ike_alg_hash_sha1;
+#endif
+
+#ifdef USE_SHA2
+extern const struct hash_desc ike_alg_hash_sha2_256;
+extern const struct hash_desc ike_alg_hash_sha2_384;
+extern const struct hash_desc ike_alg_hash_sha2_512;
+#endif
+
+#ifdef USE_MD5
+extern const struct hash_desc ike_alg_hash_md5;
+#endif

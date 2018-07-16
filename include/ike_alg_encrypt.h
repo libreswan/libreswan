@@ -1,5 +1,4 @@
-/*
- * AES, for libreswan.
+/* encryption algorithms, for libreswan
  *
  * Copyright (C) 2016 Andrew Cagney <andrew.cagney@gmail.com>
  *
@@ -14,6 +13,7 @@
  * for more details.
  */
 
+#ifdef USE_AES
 extern const struct encrypt_desc ike_alg_encrypt_aes_cbc;
 extern const struct encrypt_desc ike_alg_encrypt_aes_ctr;
 extern const struct encrypt_desc ike_alg_encrypt_aes_gcm_8;
@@ -23,8 +23,29 @@ extern const struct encrypt_desc ike_alg_encrypt_aes_ccm_8;
 extern const struct encrypt_desc ike_alg_encrypt_aes_ccm_12;
 extern const struct encrypt_desc ike_alg_encrypt_aes_ccm_16;
 extern const struct encrypt_desc ike_alg_encrypt_null_integ_aes_gmac;
+#endif
 
-extern const struct prf_desc ike_alg_prf_aes_xcbc;
+#ifdef USE_CAMELLIA
+extern const struct encrypt_desc ike_alg_encrypt_camellia_cbc;
+extern const struct encrypt_desc ike_alg_encrypt_camellia_ctr;
+#endif
 
-extern const struct integ_desc ike_alg_integ_aes_xcbc;
-extern const struct integ_desc ike_alg_integ_aes_cmac;
+#ifdef USE_TWOFISH
+extern const struct encrypt_desc ike_alg_encrypt_twofish_ssh;
+extern const struct encrypt_desc ike_alg_encrypt_twofish_cbc;
+#endif
+
+#ifdef USE_3DES
+extern const struct encrypt_desc ike_alg_encrypt_3des_cbc;
+#endif
+
+#ifdef USE_SERPENT
+extern const struct encrypt_desc ike_alg_encrypt_serpent_cbc;
+#endif
+
+extern const struct encrypt_desc ike_alg_encrypt_null;
+
+#ifdef USE_CAST
+extern const struct encrypt_desc ike_alg_encrypt_cast_cbc;
+#endif
+

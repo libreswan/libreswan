@@ -81,17 +81,8 @@
 #include "kernel_alg.h"
 
 #include "ike_alg.h"
-#include "ike_alg_aes.h"
-#include "ike_alg_md5.h"
-#include "ike_alg_none.h"
-#include "ike_alg_sha1.h"
-#include "ike_alg_sha2.h"
-#include "ike_alg_ripemd.h"
-#include "ike_alg_3des.h"
-#include "ike_alg_camellia.h"
-#include "ike_alg_twofish.h"
-#include "ike_alg_serpent.h"
-#include "ike_alg_cast.h"
+#include "ike_alg_integ.h"
+#include "ike_alg_encrypt.h"
 #include "ip_address.h"
 
 /* required for Linux 2.6.26 kernel and later */

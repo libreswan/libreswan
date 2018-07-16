@@ -15,8 +15,8 @@
 
 #include "lswlog.h"
 #include "ike_alg.h"
-#include "ike_alg_camellia.h"
-#include "ike_alg_aes.h"
+#include "ike_alg_encrypt.h"
+#include "ike_alg_prf.h"
 
 #include "ike_alg_test_ctr.h"
 #include "ike_alg_test_cbc.h"

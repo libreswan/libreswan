@@ -23,7 +23,7 @@
 #include "lswcdefs.h"		/* for UNUSED */
 #include "lswlog.h"
 #include "ike_alg.h"
-#include "ike_alg_twofish.h"
+#include "ike_alg_encrypt.h"
 #include "ietf_constants.h"
 #include "sadb.h"
 

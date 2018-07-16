@@ -25,8 +25,9 @@
 #include "constants.h"
 #include "alg_info.h"
 #include "ike_alg.h"
+#include "ike_alg_integ.h"
+#include "ike_alg_dh.h"
 #include "alg_byname.h"
-#include "ike_alg_none.h"
 
 /*
  * Add the proposal defaults for the specific algorithm.

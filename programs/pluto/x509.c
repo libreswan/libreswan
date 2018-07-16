@@ -65,6 +65,7 @@
 #include "secrets.h"
 #include "ip_address.h"
 #include "ikev2_send.h"		/* for build_ikev2_critical() */
+#include "ike_alg_hash.h"
 
 /* new NSS code */
 #include "pluto_x509.h"
@@ -82,7 +83,6 @@
 #include <secerr.h>
 #include <secder.h>
 #include <ocsp.h>
-#include "ike_alg_sha1.h"
 #include "crypt_hash.h"
 #include "crl_queue.h"
 

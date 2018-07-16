@@ -14,7 +14,7 @@
 
 #include "ietf_constants.h"
 #include "ike_alg.h"
-#include "ike_alg_cast.h"
+#include "ike_alg_encrypt.h"
 #include "sadb.h"
 
 /*

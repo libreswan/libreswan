@@ -39,3 +39,9 @@ extern const struct oakley_group_desc oakley_group_dh24;
 #ifdef USE_DH31
 extern const struct oakley_group_desc oakley_group_dh31;
 #endif
+
+/*
+ * IKEv2 RFC 7296 uses the term "NONE" when referring to no DH
+ * algorithm.
+ */
+extern const struct oakley_group_desc ike_alg_dh_none;

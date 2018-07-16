@@ -17,8 +17,7 @@
 #include "lswalloc.h"
 #include "lswlog.h"
 #include "ike_alg.h"
-#include "ike_alg_sha1.h"
-#include "ike_alg_sha2.h"
+#include "ike_alg_hash.h"
 #include "ike_alg_hash_nss_ops.h"
 
 #include "crypt_symkey.h"

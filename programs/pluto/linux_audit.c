@@ -59,7 +59,7 @@
 #include "timer.h"
 #include "kernel_alg.h"
 #include "ike_alg.h"
-#include "ike_alg_none.h"
+#include "ike_alg_integ.h"
 #include "plutoalg.h"
 /* for show_virtual_private: */
 #include "virtual.h"	/* needs connections.h */

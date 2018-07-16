@@ -27,7 +27,9 @@
 #include "ike_alg_encrypt_nss_ctr_ops.h"
 #include "ike_alg_encrypt_nss_gcm_ops.h"
 #include "ike_alg_prf_nss_xcbc_ops.h"
-#include "ike_alg_aes.h"
+#include "ike_alg_encrypt.h"
+#include "ike_alg_integ.h"
+#include "ike_alg_prf.h"
 #include "sadb.h"
 
 const struct encrypt_desc ike_alg_encrypt_aes_cbc = {

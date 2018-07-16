@@ -27,9 +27,7 @@
 #include "lswfips.h"
 
 #include "ike_alg.h"
-#include "ike_alg_none.h"
-#include "ike_alg_aes.h"
-#include "ike_alg_sha1.h"
+#include "ike_alg_integ.h"
 
 static bool ah_proposal_ok(const struct proposal_parser *parser,
 			   const struct proposal_info *proposal)

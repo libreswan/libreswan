@@ -46,6 +46,7 @@
 #include "packet.h"
 #include "crypto.h"
 #include "ike_alg.h"
+#include "ike_alg_hash.h"
 #include "log.h"
 #include "demux.h"      /* needs packet.h */
 #include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
@@ -54,7 +55,6 @@
 #include "vendor.h"
 #include "keys.h"
 #include "secrets.h"
-#include "ike_alg_sha1.h"
 #include "crypt_hash.h"
 
 static u_char der_digestinfo[] = {

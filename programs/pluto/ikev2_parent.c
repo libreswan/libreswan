@@ -49,6 +49,8 @@
 #include "x509.h"
 #include "pluto_x509.h"
 #include "ike_alg.h"
+#include "ike_alg_hash.h"
+#include "ike_alg_dh.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
 #include "pluto_crypt.h"
@@ -68,8 +70,6 @@
 #include "alg_info.h" /* for ike_info / esp_info */
 #include "key.h" /* for SECKEY_DestroyPublicKey */
 #include "vendor.h"
-#include "ike_alg_sha2.h"
-#include "ike_alg_none.h"
 #include "crypt_hash.h"
 #include "ikev2_ipseckey.h"
 #include "ikev2_ppk.h"

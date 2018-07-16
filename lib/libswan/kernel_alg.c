@@ -38,8 +38,8 @@
 #include "ietf_constants.h"
 
 #include "ike_alg.h"
-#include "ike_alg_none.h"
-#include "ike_alg_aes.h"
+#include "ike_alg_encrypt.h"
+#include "ike_alg_integ.h"
 
 /*
  * XXX: The kernel algorithm database is indexed by SADB kernel values

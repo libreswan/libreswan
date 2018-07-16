@@ -27,9 +27,8 @@
 #include "lswfips.h"
 
 #include "ike_alg.h"
-#include "ike_alg_none.h"
-#include "ike_alg_aes.h"
-#include "ike_alg_sha1.h"
+#include "ike_alg_encrypt.h"
+#include "ike_alg_integ.h"
 
 /*
  * Add ESP alg info _with_ logic (policy):

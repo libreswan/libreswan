@@ -21,7 +21,7 @@
 #include "lswcdefs.h"		/* for UNUSED */
 #include "lswlog.h"
 #include "ike_alg.h"
-#include "ike_alg_serpent.h"
+#include "ike_alg_encrypt.h"
 #include "sadb.h"
 
 #define  SERPENT_CBC_BLOCK_SIZE (128 / BITS_PER_BYTE)

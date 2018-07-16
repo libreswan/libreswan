@@ -20,9 +20,9 @@
 #include "lswlog.h"
 
 #include "ike_alg.h"
+#include "ike_alg_prf.h"
 #include "test_buffer.h"
 #include "ike_alg_test_prf.h"
-#include "ike_alg_aes.h"
 
 #include "lswfips.h"
 #include "nss.h"

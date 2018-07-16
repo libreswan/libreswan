@@ -35,45 +35,17 @@
 #include "lswlog.h"
 #include "lswalloc.h"
 #include "ike_alg.h"
+#include "ike_alg_integ.h"
+#include "ike_alg_encrypt.h"
 #include "alg_info.h"
+#include "ike_alg_prf.h"
 #include "ike_alg_prf_hmac_ops.h"
 #include "ike_alg_prf_nss_ops.h"
+#include "ike_alg_hash.h"
 #include "ike_alg_hash_nss_ops.h"
 #include "ike_alg_dh.h"
 #include "ike_alg_dh_nss_modp_ops.h"
 #include "ike_alg_dh_nss_ecp_ops.h"
-
-#include "ike_alg_none.h"
-#ifdef USE_TWOFISH
-#include "ike_alg_twofish.h"
-#endif
-#ifdef USE_SERPENT
-#include "ike_alg_serpent.h"
-#endif
-#ifdef USE_AES
-#include "ike_alg_aes.h"
-#endif
-#ifdef USE_CAMELLIA
-#include "ike_alg_camellia.h"
-#endif
-#ifdef USE_3DES
-#include "ike_alg_3des.h"
-#endif
-#ifdef USE_SHA2
-#include "ike_alg_sha2.h"
-#endif
-#ifdef USE_SHA1
-#include "ike_alg_sha1.h"
-#endif
-#ifdef USE_MD5
-#include "ike_alg_md5.h"
-#endif
-#ifdef USE_CAST
-#include "ike_alg_cast.h"
-#endif
-#ifdef USE_RIPEMD
-#include "ike_alg_ripemd.h"
-#endif
 
 /*==========================================================
 *

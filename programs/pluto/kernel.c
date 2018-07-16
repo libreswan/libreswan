@@ -72,8 +72,8 @@
 #include "keys.h"
 
 #include "ike_alg.h"
-#include "ike_alg_3des.h"
-#include "ike_alg_sha2.h"
+#include "ike_alg_encrypt.h"
+#include "ike_alg_integ.h"
 
 #include "packet.h"  /* for pb_stream in nat_traversal.h */
 #include "nat_traversal.h"

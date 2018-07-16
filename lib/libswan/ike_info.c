@@ -23,12 +23,10 @@
 #include "alg_byname.h"
 
 #include "ike_alg.h"
+#include "ike_alg_encrypt.h"
+#include "ike_alg_integ.h"
+#include "ike_alg_prf.h"
 #include "ike_alg_dh.h"
-#include "ike_alg_aes.h"
-#include "ike_alg_3des.h"
-#include "ike_alg_sha1.h"
-#include "ike_alg_sha2.h"
-#include "ike_alg_none.h"
 #include "alg_info.h"
 
 static bool ike_proposal_ok(const struct proposal_parser *parser,

@@ -26,7 +26,7 @@
 #include "lswlog.h"
 #include "rnd.h"
 #include "cookie.h"
-#include "ike_alg_sha2.h"
+#include "ike_alg_hash.h"
 #include "crypt_hash.h"
 
 const u_char zero_cookie[COOKIE_SIZE];  /* guaranteed 0 */
