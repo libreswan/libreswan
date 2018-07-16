@@ -78,7 +78,7 @@ north #
 000 algorithm AH/ESP auth: name=AUTH_ALGORITHM_HMAC_SHA2_384, keysizemin=384, keysizemax=384
 000 algorithm AH/ESP auth: name=AUTH_ALGORITHM_HMAC_SHA2_512, keysizemin=512, keysizemax=512
 000 algorithm AH/ESP auth: name=AUTH_ALGORITHM_AES_XCBC, keysizemin=128, keysizemax=128
-000 algorithm AH/ESP auth: name=(null), keysizemin=256, keysizemax=256
+000 algorithm AH/ESP auth: name=AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG, keysizemin=256, keysizemax=256
 000  
 000 IKE algorithms supported:
 000  
