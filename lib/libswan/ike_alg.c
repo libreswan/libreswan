@@ -926,41 +926,27 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 		      type->Name);
 	FOR_EACH_IKE_ALGP(type, algp) {
 		const struct ike_alg *alg = *algp;
-		char buf[IKE_ALG_SNPRINT_BUFSIZ] = "";
-		ike_alg_snprint(buf, sizeof(buf), alg);
-		libreswan_log("  %s", buf);
+		LSWLOG(buf) {
+			lswlogs(buf, "  ");
+			lswlog_ike_alg(buf, alg);
+		}
 	}
 }
 
-/*
- * Yet more code dealing with appending a string to a string buffer.
- */
-static void append(char **bufp, const char *end, const char *str)
+void lswlog_ike_alg(struct lswlog *buf, const struct ike_alg *alg)
 {
-	passert(*bufp + strlen(str) < end);
-	strcpy(*bufp, str);
-	*bufp += strlen(str);
-	passert(*bufp < end);
-}
-
-void ike_alg_snprint(char *buf, size_t sizeof_buf,
-		     const struct ike_alg *alg)
-{
-	pexpect(sizeof_buf >= IKE_ALG_SNPRINT_BUFSIZ);
-	char *const end = buf + sizeof_buf;
 	/*
 	 * TYPE NAME:
 	 */
 	{
-		char *start = buf;
-		append(&buf, end, alg->fqn);
+		lswlogs(buf, alg->fqn);
 		/*
 		 * magic number from eyeballing the longest name
 		 */
-		ssize_t pad = strlen(ike_alg_encrypt_null_integ_aes_gmac.common.fqn) - (buf - start);
+		ssize_t pad = strlen(ike_alg_encrypt_null_integ_aes_gmac.common.fqn) - strlen(alg->fqn);
 		passert_ike_alg(alg, pad >= 0);
 		for (ssize_t i = 0; i < pad; i++) {
-			append(&buf, end, " ");
+			lswlogs(buf, " ");
 		}
 	}
 	/*
@@ -998,39 +984,37 @@ void ike_alg_snprint(char *buf, size_t sizeof_buf,
 	} else {
 		bad_case(0);
 	}
-	append(&buf, end, "  IKEv1:");
-	append(&buf, end, (v1_ike
-			   ? " IKE"
-			   : "    "));
-	append(&buf, end, (v1_esp
-			   ? " ESP"
-			   : "    "));
-	append(&buf, end, (v1_ah
-			   ? " AH"
-			   : "   "));
-	append(&buf, end, "  IKEv2:");
-	append(&buf, end, (v2_ike
-			   ? " IKE"
-			   : "    "));
-	append(&buf, end, (v2_esp
-			   ? " ESP"
-			   : "    "));
-	append(&buf, end, (v2_ah
-			   ? " AH"
-			   : "   "));
-
+	lswlogs(buf, "  IKEv1:");
+	lswlogs(buf, (v1_ike
+		      ? " IKE"
+		      : "    "));
+	lswlogs(buf, (v1_esp
+		      ? " ESP"
+		      : "    "));
+	lswlogs(buf, (v1_ah
+		      ? " AH"
+		      : "   "));
+	lswlogs(buf, "  IKEv2:");
+	lswlogs(buf, (v2_ike
+		      ? " IKE"
+		      : "    "));
+	lswlogs(buf, (v2_esp
+		      ? " ESP"
+		      : "    "));
+	lswlogs(buf, (v2_ah
+		      ? " AH"
+		      : "   "));
 	/*
 	 * FIPS?
 	 */
 	{
-		append(&buf, end, "  ");
+		lswlogs(buf, "  ");
 		if (alg->fips) {
-			append(&buf, end, "FIPS");
+			lswlogs(buf, "FIPS");
 		} else {
-			append(&buf, end, "    ");
+			lswlogs(buf, "    ");
 		}
 	}
-	passert_ike_alg(alg, buf < end);
 
 	/*
 	 * Concatenate [key,...] or {key,...} with default
@@ -1038,43 +1022,39 @@ void ike_alg_snprint(char *buf, size_t sizeof_buf,
 	 */
 	if (alg->algo_type == IKE_ALG_ENCRYPT) {
 		const struct encrypt_desc *encr = encrypt_desc(alg);
-		append(&buf, end, encr->keylen_omitted ? "  [" : "  {");
+		lswlogs(buf, encr->keylen_omitted ? "  [" : "  {");
 		const char *sep = "";
 		for (const unsigned *keyp = encr->key_bit_lengths; *keyp; keyp++) {
-			append(&buf, end, sep);
+			lswlogs(buf, sep);
 			if (*keyp == encr->keydeflen) {
-				append(&buf, end, "*");
+				lswlogs(buf, "*");
 			}
-			/* no large keys */
-			passert_ike_alg(alg, *keyp < 1000 && buf + 3 < end);
-			snprintf(buf, end - buf, "%d", *keyp);
-			buf += strlen(buf);
+			lswlogf(buf, "%d", *keyp);
 			sep = ",";
 		}
-		append(&buf, end, encr->keylen_omitted ? "]" : "}");
+		lswlogs(buf, encr->keylen_omitted ? "]" : "}");
 		/* did fit */
 	}
-	passert_ike_alg(alg, buf < end);
 
 	/*
 	 * Concatenate (alias ...)
 	 */
 	{
-		const char *start = buf;
+		bool emitted = false;
 		const char *sep = "  (";
 		FOR_EACH_IKE_ALG_NAMEP(alg, name) {
 			/* filter out NAME */
 			if (!strcaseeq(*name, alg->fqn)) {
-				append(&buf, end, sep);
-				append(&buf, end, *name);
+				lswlogs(buf, sep);
+				lswlogs(buf, *name);
 				sep = " ";
+				emitted = true;
 			}
 		}
-		if (*start) {
-			append(&buf, end, ")");
+		if (emitted) {
+			lswlogs(buf, ")");
 		}
 	}
-	passert_ike_alg(alg, buf < end);
 }
 
 /*

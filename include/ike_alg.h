@@ -8,6 +8,7 @@
 #include "ietf_constants.h"
 
 struct ike_alg;
+struct lswlog;
 enum ike_alg_key;
 
 /*
@@ -799,14 +800,9 @@ const struct encrypt_desc *encrypt_desc_by_sadb_ealg_id(unsigned id);
 const struct integ_desc *integ_desc_by_sadb_aalg_id(unsigned id);
 
 /*
- * Pretty print the algorithm into a buffer as a string.  The string
- * format is formatted suitable for listing the algorithms in a wide
- * table.
- *
- * IKE_ALG_SNPRINT_BUFSIZE is a strong suggestion; internal code uses
- * a buffer that size when dumping all the algorithms during start up.
+ * Pretty print the algorithm into BUF.  The format is suitable for
+ * listing the algorithms in a very wide table.
  */
-#define IKE_ALG_SNPRINT_BUFSIZ 120
-void ike_alg_snprint(char *buf, size_t sizeof_buf, const struct ike_alg *alg);
+void lswlog_ike_alg(struct lswlog *buf, const struct ike_alg *alg);
 
 #endif /* _IKE_ALG_H */
