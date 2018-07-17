@@ -208,12 +208,6 @@ klipsdefaults:
 ABSOBJDIR:=$(shell mkdir -p ${OBJDIR}; cd ${OBJDIR} && pwd)
 OBJDIRTOP=${ABSOBJDIR}
 
-.PHONY: config
-config: ${OBJDIR}/Makefile
-${OBJDIR}/Makefile: $(srcdir)/Makefile packaging/utils/makeshadowdir | $(builddir)
-	@echo Setting up for OBJDIR=${OBJDIR}
-	packaging/utils/makeshadowdir `cd $(srcdir); pwd` ${OBJDIR} "${SUBDIRS}"
-
 # Recursive clean dealt with elsewhere.
 local-clean-base: moduleclean
 	$(foreach file,$(RPMTMPDIR) $(RPMDEST) out.*build out.*install, \
