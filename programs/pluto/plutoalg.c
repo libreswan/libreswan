@@ -207,73 +207,6 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 	return ctx_new;
 }
 
-/*
- * XXX This maps IPSEC AH Transform Identifiers to IKE Integrity Algorithm
- * Transform IDs. But IKEv1 and IKEv2 tables don't match fully! See:
- *
- * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-7
- * http://www.iana.org/assignments/isakmp-registry/isakmp-registry.xhtml#isakmp-registry-7
- * http://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-6
- *
- * XXX: The sole caller should instead use something like
- * IKE_ALG.esp_id.
- */
-static int alg_info_esp_sadb2aa(int sadb_aalg)
-{
-	int auth = 0;
-
-	/* md5 and sha1 entries are "off by one" */
-	switch (sadb_aalg) {
-	/* 0-1 RESERVED */
-	case SADB_AALG_MD5HMAC: /* 2 */
-		auth = AUTH_ALGORITHM_HMAC_MD5; /* 1 */
-		break;
-	case SADB_AALG_SHA1HMAC: /* 3 */
-		auth = AUTH_ALGORITHM_HMAC_SHA1; /* 2 */
-		break;
-	/* 4 - SADB_AALG_DES */
-	case SADB_X_AALG_SHA2_256HMAC:
-		auth = AUTH_ALGORITHM_HMAC_SHA2_256;
-		break;
-	case SADB_X_AALG_SHA2_384HMAC:
-		auth = AUTH_ALGORITHM_HMAC_SHA2_384;
-		break;
-	case SADB_X_AALG_SHA2_512HMAC:
-		auth = AUTH_ALGORITHM_HMAC_SHA2_512;
-		break;
-	case SADB_X_AALG_RIPEMD160HMAC:
-		auth = AUTH_ALGORITHM_HMAC_RIPEMD;
-		break;
-	case SADB_X_AALG_AES_XCBC_MAC:
-		auth = AUTH_ALGORITHM_AES_XCBC;
-		break;
-	case SADB_X_AALG_RSA: /* unsupported by us */
-		auth = AUTH_ALGORITHM_SIG_RSA;
-		break;
-	case SADB_X_AALG_AH_AES_128_GMAC:
-		auth = AUTH_ALGORITHM_AES_128_GMAC;
-		break;
-	case SADB_X_AALG_AH_AES_192_GMAC:
-		auth = AUTH_ALGORITHM_AES_192_GMAC;
-		break;
-	case SADB_X_AALG_AH_AES_256_GMAC:
-		auth = AUTH_ALGORITHM_AES_256_GMAC;
-		break;
-	/* private use numbers */
-	case SADB_X_AALG_AES_CMAC_96:
-		auth = AUTH_ALGORITHM_AES_CMAC_96;
-		break;
-	case SADB_X_AALG_NULL:
-		auth = AUTH_ALGORITHM_NULL_KAME;
-		break;
-	default:
-		/* which would hopefully be true */
-		/* ??? what do we hope to be true? */
-		auth = sadb_aalg;
-	}
-	return auth;
-}
-
 void kernel_alg_show_status(void)
 {
 	whack_log(RC_COMMENT, "ESP algorithms supported:");
@@ -294,12 +227,11 @@ void kernel_alg_show_status(void)
 
 	for (struct sadb_alg *alg_p = next_kernel_integ_alg(NULL);
 	     alg_p != NULL; alg_p = next_kernel_integ_alg(alg_p)) {
-		unsigned id = alg_info_esp_sadb2aa(alg_p->sadb_alg_id);
 		const struct integ_desc *alg = integ_desc_by_sadb_aalg_id(alg_p->sadb_alg_id);
 		if (pexpect(alg != NULL)) {
 			whack_log(RC_COMMENT,
 				  "algorithm AH/ESP auth: name=%s, key-length=%zu",
-				  enum_name(&auth_alg_names, id),
+				  alg->common.fqn,
 				  alg->integ_keymat_size * BITS_PER_BYTE);
 		}
 	}
