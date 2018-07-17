@@ -74,11 +74,11 @@ west #
 000  
 000 ESP algorithms supported:
 000  
-000 algorithm ESP encrypt: name=3DES_CBC, ivlen=64, keysizemin=192, keysizemax=192
-000 algorithm ESP encrypt: name=CAST_CBC, ivlen=64, keysizemin=128, keysizemax=128
-000 algorithm ESP encrypt: name=AES_CBC, ivlen=128, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: name=SERPENT_CBC, ivlen=128, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: name=TWOFISH_CBC, ivlen=128, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: name=3DES_CBC, keysizemin=192, keysizemax=192
+000 algorithm ESP encrypt: name=CAST_CBC, keysizemin=128, keysizemax=128
+000 algorithm ESP encrypt: name=AES_CBC, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: name=SERPENT_CBC, keysizemin=128, keysizemax=256
+000 algorithm ESP encrypt: name=TWOFISH_CBC, keysizemin=128, keysizemax=256
 000 algorithm AH/ESP auth: name=HMAC_MD5_96, key-length=128
 000 algorithm AH/ESP auth: name=HMAC_SHA1_96, key-length=160
 000 algorithm AH/ESP auth: name=HMAC_SHA2_256_128, key-length=256
