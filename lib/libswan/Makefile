@@ -56,6 +56,7 @@ OBJS += constants.o \
 	lsw_passert_fail.o \
 	alg_byname.o
 
+OBJS += addr_lookup.o
 OBJS += kernel_alg.o
 
 ifeq ($(USE_KLIPS),true)

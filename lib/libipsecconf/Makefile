@@ -21,7 +21,6 @@ MANDIR=$(MANTREE)/man3
 SRCS=confread.c confwrite.c starterwhack.c starterlog.c
 SRCS+=parser.tab.c lex.yy.c keywords.c
 SRCS+=interfaces.c
-SRCS+=addr_lookup.c
 
 OBJS=${SRCS:.c=.o}
 
