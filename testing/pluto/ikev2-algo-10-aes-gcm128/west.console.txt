@@ -83,14 +83,14 @@ west #
 000 algorithm ESP encrypt: name=ESP_NULL_AUTH_AES_GMAC, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: name=ESP_SERPENT, ivlen=8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: name=ESP_TWOFISH, ivlen=8, keysizemin=128, keysizemax=256
-000 algorithm AH/ESP auth: name=AUTH_ALGORITHM_HMAC_MD5, keysizemin=128, keysizemax=128
-000 algorithm AH/ESP auth: name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
-000 algorithm AH/ESP auth: name=AUTH_ALGORITHM_HMAC_SHA2_256, keysizemin=256, keysizemax=256
-000 algorithm AH/ESP auth: name=AUTH_ALGORITHM_HMAC_SHA2_384, keysizemin=384, keysizemax=384
-000 algorithm AH/ESP auth: name=AUTH_ALGORITHM_HMAC_SHA2_512, keysizemin=512, keysizemax=512
-000 algorithm AH/ESP auth: name=AUTH_ALGORITHM_AES_XCBC, keysizemin=128, keysizemax=128
-000 algorithm AH/ESP auth: name=AUTH_ALGORITHM_AES_CMAC_96, keysizemin=128, keysizemax=128
-000 algorithm AH/ESP auth: name=AUTH_ALGORITHM_NULL_KAME, keysizemin=0, keysizemax=0
+000 algorithm AH/ESP auth: name=AUTH_ALGORITHM_HMAC_MD5, key-length=128
+000 algorithm AH/ESP auth: name=AUTH_ALGORITHM_HMAC_SHA1, key-length=160
+000 algorithm AH/ESP auth: name=AUTH_ALGORITHM_HMAC_SHA2_256, key-length=256
+000 algorithm AH/ESP auth: name=AUTH_ALGORITHM_HMAC_SHA2_384, key-length=384
+000 algorithm AH/ESP auth: name=AUTH_ALGORITHM_HMAC_SHA2_512, key-length=512
+000 algorithm AH/ESP auth: name=AUTH_ALGORITHM_AES_XCBC, key-length=128
+000 algorithm AH/ESP auth: name=AUTH_ALGORITHM_AES_CMAC_96, key-length=128
+000 algorithm AH/ESP auth: name=AUTH_ALGORITHM_NULL_KAME, key-length=0
 000  
 000 IKE algorithms supported:
 000  

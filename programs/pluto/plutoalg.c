@@ -298,10 +298,9 @@ void kernel_alg_show_status(void)
 		const struct integ_desc *alg = integ_desc_by_sadb_aalg_id(alg_p->sadb_alg_id);
 		if (pexpect(alg != NULL)) {
 			whack_log(RC_COMMENT,
-				  "algorithm AH/ESP auth: name=%s, keysizemin=%d, keysizemax=%d",
+				  "algorithm AH/ESP auth: name=%s, key-length=%zu",
 				  enum_name(&auth_alg_names, id),
-				  alg_p->sadb_alg_minbits,
-				  alg_p->sadb_alg_maxbits);
+				  alg->integ_keymat_size * BITS_PER_BYTE);
 		}
 	}
 
