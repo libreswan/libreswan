@@ -220,8 +220,8 @@ void kernel_alg_show_status(void)
 				  "algorithm ESP encrypt: name=%s, ivlen=%d, keysizemin=%d, keysizemax=%d",
 				  alg->common.fqn,
 				  alg_p->sadb_alg_ivlen,
-				  alg_p->sadb_alg_minbits,
-				  alg_p->sadb_alg_maxbits);
+				  encrypt_min_key_bit_length(alg),
+				  encrypt_max_key_bit_length(alg));
 		}
 	}
 
