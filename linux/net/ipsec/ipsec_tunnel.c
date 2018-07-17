@@ -2527,7 +2527,7 @@ DEBUG_NO_STATIC int ipsec_tunnel_attach(struct net_device *dev,
 
 #ifdef CONFIG_KLIPS_IPV6
 /*
- * stolen from ip6tables,  we need a copy in case iptables iscompiled out of
+ * stolen from ip6tables,  we need a copy in case iptables is compiled out of
  * the kernel.
  *
  * find the offset to specified header or the protocol number of last header
