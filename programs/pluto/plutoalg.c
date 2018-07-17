@@ -218,7 +218,7 @@ void kernel_alg_show_status(void)
 		if (pexpect(alg != NULL)) {
 			whack_log(RC_COMMENT,
 				  "algorithm ESP encrypt: name=%s, ivlen=%d, keysizemin=%d, keysizemax=%d",
-				  enum_name(&esp_transformid_names, alg_p->sadb_alg_id),
+				  alg->common.fqn,
 				  alg_p->sadb_alg_ivlen,
 				  alg_p->sadb_alg_minbits,
 				  alg_p->sadb_alg_maxbits);
