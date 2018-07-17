@@ -1,6 +1,7 @@
-/*
- * Kernel runtime algorithm handling interface
+/* Kernel runtime algorithm, for libreswan
+ *
  * Author: JuanJo Ciarlante <jjo-ipsec@mendoza.gov.ar>
+ * Copyright (C) 2018  Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,61 +17,48 @@
  *	ML: Mathieu Lafon <mlafon@arkoon.net>
  *
  */
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <sys/queue.h>
-
-#include <libreswan.h>
-
-#include <libreswan/pfkeyv2.h>
-#include <libreswan/pfkey.h>
 
 #include "constants.h"
-#include "alg_info.h"
 #include "kernel_alg.h"
 #include "lswlog.h"
-#include "lswalloc.h"
-#include "ietf_constants.h"
-
 #include "ike_alg.h"
 #include "ike_alg_encrypt.h"
-#include "ike_alg_integ.h"
 
 /*
- * The kernel algorithm database is indexed by SADB (PRF) kernel
- * values and assumes there is a value for every single supported
- * algorithm.
+ * ALG storage
  *
- * The assumption isn't valid.  Magic SADB values have been added when
- * no official value was available.
+ * The kernel algorithm database is indexed by SADB kernel values and
+ * assumes that all kernel algorithms have either .integ_sadb_aalg_id
+ * or .encrypt_sadb_ealg_id defined.
  *
- * The code should instead be rewritten to use 'struct ike_alg*' as a
- * kernel interface agnostic way of identifying algorithms.  Later.
+ * Where no SADB value was available, a magic SADB value has been
+ * added.
+ *
+ * XXX: the table needs to instead be constructed with no reference to
+ * SADB, and the iterator return thiings in a stable sorted order.
+ *
+ * XXX: Assume for the moment, and seeing that a sadb_alg_id must fit
+ * in a uint8_t, that all values fall in the range [1..255] (0 isn't
+ * valid).
  */
 
-/* ALG storage */
-static const struct integ_desc *esp_aalg[K_SADB_AALG_MAX + 1];
-static const struct encrypt_desc *esp_ealg[K_SADB_EALG_MAX + 1];
+static const struct integ_desc *esp_aalg[256];
+static const struct encrypt_desc *esp_ealg[256];
 static int esp_ealg_num = 0;
 static int esp_aalg_num = 0;
 
-#define ESP_EALG_PRESENT(algo) ((algo) <= K_SADB_EALG_MAX && \
+#define ESP_EALG_PRESENT(algo) ((algo) < elemsof(esp_ealg) && \
 				esp_ealg[algo] != NULL)
 
 #define ESP_EALG_FOR_EACH(algo) \
-	for ((algo) = 1; (algo) <= K_SADB_EALG_MAX; (algo)++) \
+	for ((algo) = 1; (algo) < elemsof(esp_ealg); (algo)++) \
 		if (ESP_EALG_PRESENT(algo))
 
-#define ESP_AALG_PRESENT(algo) ((algo) <= SADB_AALG_MAX && \
+#define ESP_AALG_PRESENT(algo) ((algo) < elemsof(esp_aalg) &&	\
 				esp_aalg[algo] != NULL)
 
 #define ESP_AALG_FOR_EACH(algo) \
-	for ((algo) = 1; (algo) <= SADB_AALG_MAX; (algo)++) \
+	for ((algo) = 1; (algo) < elemsof(esp_aalg); (algo)++) \
 		if (ESP_AALG_PRESENT(algo))
 
 /*
@@ -78,7 +66,7 @@ static int esp_aalg_num = 0;
  */
 void kernel_alg_init(void)
 {
-	DBG(DBG_KERNEL, DBG_log("kernel_alg_init()"));
+	DBGF(DBG_KERNEL, "kernel_alg_init()");
 	/* ??? do these zero calls do anything useful? */
 	zero(&esp_aalg);
 	zero(&esp_ealg);
