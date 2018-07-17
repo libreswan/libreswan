@@ -63,10 +63,11 @@ postcheck: installsystemdservice oldinitdcheck
 
 # XXX: identical to program.mk?
 
-%: %.in $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver
+%: %.in $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver | $(builddir)
 	@echo  'IN' $< '->' $(builddir)/$@
 	$(TRANSFORM_VARIABLES) < $< > $(builddir)/$@
 	@if [ -x $< ]; then chmod +x $(builddir)/$@; fi
 	@if [ "$(PROGRAM).in" = $< ]; then chmod +x $(builddir)/$@; fi
 
 include ${top_srcdir}/mk/targets.mk
+include ${top_srcdir}/mk/builddir.mk

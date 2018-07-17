@@ -42,3 +42,4 @@ $(LIB): $(OBJS) $(srcdir)/Makefile | $(builddir)
 	mv $(builddir)/$(LIB).tmp $(builddir)/$(LIB)
 
 include $(top_srcdir)/mk/depend.mk
+include $(top_srcdir)/mk/builddir.mk
