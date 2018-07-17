@@ -20,27 +20,8 @@ endif
 # this file uses ifeq, so need config early
 include $(top_srcdir)/mk/config.mk
 
-ifeq ($(INITSYSTEM),)
-
-# nothing to do
-
-else ifneq ($(filter systemd, $(INITSYSTEM)),)
-
+ifneq ($(INITSYSTEM),)
 SUBDIRS += $(INITSYSTEM)
-
-else
-
-# XXX: Both switch directory and change the target.
-local-base:
-	echo INFO: old target doing needless directory switch
-	$(MAKE) -C $(builddir)/$(INITSYSTEM) programs
-local-install-base:
-	echo INFO: old target doing needless directory switch
-	$(MAKE) -C $(builddir)/$(INITSYSTEM) install
-local-clean-base:
-	echo INFO: old target doing needless directory switch
-	rm -f $(filter-out %/Makefile,$(wildcard $(builddir)/$(INITSYSTEM)/*))
-
 endif
 
 include $(top_srcdir)/mk/subdirs.mk

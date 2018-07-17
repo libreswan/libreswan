@@ -3,12 +3,10 @@ include ../../mk/dirs.mk
 endif
 
 UNITDIR=$(shell pkg-config systemd --variable=systemdsystemunitdir)
-SYSTEMDFILE=ipsec.service
+SYSTEMDFILE=$(builddir)/ipsec.service
 SYSTEMDDIR=$(DESTDIR)$(UNITDIR)
 
 include $(top_srcdir)/Makefile.inc
-
-local-base: $(SYSTEMDFILE)
 
 # Use dependencies to force the order: LOCAL-BASE,
 # INSTALLSYSTEMDSERVICE, OLDINITDCHECK, POSTCHECK.
@@ -17,11 +15,13 @@ local-base: $(SYSTEMDFILE)
 # like local-base and installsystemdservice are allowed to run in
 # parallel)
 
+local-base: $(SYSTEMDFILE)
+
 local-install-base: installsystemdservice oldinitdcheck postcheck
 
 installsystemdservice: local-base
 	@mkdir -p $(SYSTEMDDIR)
-	$(INSTALL) $(INSTCONFFLAGS) $(builddir)/$(SYSTEMDFILE) $(SYSTEMDDIR)
+	$(INSTALL) $(INSTCONFFLAGS) $(SYSTEMDFILE) $(SYSTEMDDIR)
 	@if test $(SYSTEMDDIR) = $(UNITDIR) ; then \
 		systemctl --system daemon-reload ; \
 	fi
@@ -63,11 +63,11 @@ postcheck: installsystemdservice oldinitdcheck
 
 # XXX: identical to program.mk?
 
-%: %.in $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver | $(builddir)
-	@echo  'IN' $< '->' $(builddir)/$@
-	$(TRANSFORM_VARIABLES) < $< > $(builddir)/$@
-	@if [ -x $< ]; then chmod +x $(builddir)/$@; fi
-	@if [ "$(PROGRAM).in" = $< ]; then chmod +x $(builddir)/$@; fi
+$(builddir)/%: $(srcdir)/%.in $(top_srcdir)/Makefile.inc $(top_srcdir)/Makefile.ver | $(builddir)
+	@echo  'IN' $< '->' $@
+	$(TRANSFORM_VARIABLES) < $< > $@
+	@if [ -x $< ]; then chmod +x $@; fi
+	@if [ "$(PROGRAM).in" = $< ]; then chmod +x $@; fi
 
 include ${top_srcdir}/mk/targets.mk
 include ${top_srcdir}/mk/builddir.mk
