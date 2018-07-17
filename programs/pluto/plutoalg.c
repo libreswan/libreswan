@@ -217,9 +217,8 @@ void kernel_alg_show_status(void)
 		const struct encrypt_desc *alg = encrypt_desc_by_sadb_ealg_id(alg_p->sadb_alg_id);
 		if (pexpect(alg != NULL)) {
 			whack_log(RC_COMMENT,
-				  "algorithm ESP encrypt: name=%s, ivlen=%d, keysizemin=%d, keysizemax=%d",
+				  "algorithm ESP encrypt: name=%s, keysizemin=%d, keysizemax=%d",
 				  alg->common.fqn,
-				  alg_p->sadb_alg_ivlen,
 				  encrypt_min_key_bit_length(alg),
 				  encrypt_max_key_bit_length(alg));
 		}
