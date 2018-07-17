@@ -281,22 +281,28 @@ void kernel_alg_show_status(void)
 
 	for (struct sadb_alg *alg_p = next_kernel_encrypt_alg(NULL);
 	     alg_p != NULL; alg_p = next_kernel_encrypt_alg(alg_p)) {
-		whack_log(RC_COMMENT,
-			"algorithm ESP encrypt: name=%s, ivlen=%d, keysizemin=%d, keysizemax=%d",
-			enum_name(&esp_transformid_names, alg_p->sadb_alg_id),
-			alg_p->sadb_alg_ivlen,
-			alg_p->sadb_alg_minbits,
-			alg_p->sadb_alg_maxbits);
+		const struct encrypt_desc *alg = encrypt_desc_by_sadb_ealg_id(alg_p->sadb_alg_id);
+		if (pexpect(alg != NULL)) {
+			whack_log(RC_COMMENT,
+				  "algorithm ESP encrypt: name=%s, ivlen=%d, keysizemin=%d, keysizemax=%d",
+				  enum_name(&esp_transformid_names, alg_p->sadb_alg_id),
+				  alg_p->sadb_alg_ivlen,
+				  alg_p->sadb_alg_minbits,
+				  alg_p->sadb_alg_maxbits);
+		}
 	}
 
 	for (struct sadb_alg *alg_p = next_kernel_integ_alg(NULL);
 	     alg_p != NULL; alg_p = next_kernel_integ_alg(alg_p)) {
 		unsigned id = alg_info_esp_sadb2aa(alg_p->sadb_alg_id);
-		whack_log(RC_COMMENT,
-			"algorithm AH/ESP auth: name=%s, keysizemin=%d, keysizemax=%d",
-			enum_name(&auth_alg_names, id),
-			alg_p->sadb_alg_minbits,
-			alg_p->sadb_alg_maxbits);
+		const struct integ_desc *alg = integ_desc_by_sadb_aalg_id(alg_p->sadb_alg_id);
+		if (pexpect(alg != NULL)) {
+			whack_log(RC_COMMENT,
+				  "algorithm AH/ESP auth: name=%s, keysizemin=%d, keysizemax=%d",
+				  enum_name(&auth_alg_names, id),
+				  alg_p->sadb_alg_minbits,
+				  alg_p->sadb_alg_maxbits);
+		}
 	}
 
 	whack_log(RC_COMMENT, " "); /* spacer */
