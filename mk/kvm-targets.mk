@@ -36,6 +36,11 @@ KVM_USER ?= $(shell id -u)
 KVM_GROUP ?= $(shell id -g qemu)
 KVM_MAKEFLAGS ?= USE_EFENCE=false USE_DH31=false USE_DH2=true USE_DH23=true USE_DH24=true USE_CAST=true
 
+# targets for dumping the above
+.PHONY: print-kvm-prefixes
+print-kvm-prefixes: ; @echo "$(KVM_PREFIXES)"
+
+
 #
 # Generate local names using prefixes
 #
@@ -1340,8 +1345,12 @@ Standard targets and operations:
 
   To analyze test results:
 
-    kvm-results       list the tests and their results
-    kvm-diffs         list the tests and their differences
+    kvm-results           list the tests and their results
+    kvm-diffs             list the tests and their differences
+
+  To print make variables:
+
+    print-kvm-prefixes    print prefixes being used
 
 endef
 
