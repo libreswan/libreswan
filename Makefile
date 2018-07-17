@@ -2,8 +2,8 @@
 #
 # Copyright (C) 1998-2002  Henry Spencer.
 # Copyright (C) 2003-2004  Xelerance Corporation
-# Copyright (C) 2015-2017, Andrew Cagney <cagney@gnu.org>
 # Copyright (C) 2017, Richard Guy Briggs <rgb@tricolour.ca>
+# Copyright (C) 2015-2018  Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -78,10 +78,6 @@ TAGS:	$(TAGSFILES)
 .PHONY: dummy
 dummy:
 
-
-
-kvm:
-	@echo Please run ./testing/libvirt/install.sh
 
 # Run regress stuff after the other check targets.
 .PHONY: regress
