@@ -166,10 +166,13 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 
 	bool success = TRUE;
 	if (alg_info != NULL) {
-		FOR_EACH_ESP_INFO(alg_info, esp_info) {
-			if (!kernel_alg_db_add(ctx_new,
-					esp_info,
-					policy, logit))
+		FOR_EACH_ESP_INFO(alg_info, proposal) {
+			LSWDBGP(DBG_CONTROL | DBG_EMITTING, buf) {
+				lswlogs(buf, "adding proposal: ");
+				lswlog_proposal_info(buf, proposal);
+			}
+			if (!kernel_alg_db_add(ctx_new, proposal,
+					       policy, logit))
 				success = FALSE;	/* ??? should we break? */
 		}
 	} else {
