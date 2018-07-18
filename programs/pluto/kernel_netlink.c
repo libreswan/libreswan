@@ -135,88 +135,6 @@ static sparse_names rtm_type_names = {
 };
 #undef NE
 
-/* Authentication Algs */
-
-struct netlink_name {
-	const struct ike_alg *alg;
-	const char *name;
-};
-
-static const char *find_netlink_name(const struct netlink_name *table,
-				const struct ike_alg *alg)
-{
-	for (; table->alg != NULL; table++) {
-		if (table->alg == alg) {
-			return table->name;
-		}
-	}
-	return NULL;
-}
-
-static const struct netlink_name integ_list[] = {
-	{ &ike_alg_integ_none.common, "digest_null" },
-	{ &ike_alg_integ_md5.common, "md5" },
-	{ &ike_alg_integ_sha1.common, "sha1" },
-	{ &ike_alg_integ_sha2_256.common, "hmac(sha256)" },
-	{ &ike_alg_integ_hmac_sha2_256_truncbug.common, "hmac(sha256)" },
-	{ &ike_alg_integ_sha2_384.common, "hmac(sha384)" },
-	{ &ike_alg_integ_sha2_512.common, "hmac(sha512)" },
-#ifdef USE_RIPEMD
-	{ &ike_alg_integ_hmac_ripemd_160_96.common, "hmac(rmd160)" },
-#endif
-	{ &ike_alg_integ_aes_xcbc.common, "xcbc(aes)" },
-	{ &ike_alg_integ_aes_cmac.common, "cmac(aes)" },
-	/* { &ike_alg_integ_RSA - not supported by us */
-#if 0
-	/*
-	 * GMAC's not supported by Linux kernel yet
-	 */
-	{ &ike_alg_integ_aes_128_gmac.common, NULL },
-	{ &ike_alg_integ_aes_192_gmac.common, NULL },
-	{ &ike_alg_integ_aes_256_gmac.common, NULL },
-#endif
-	{ NULL, NULL, }
-};
-
-/* Encryption algs */
-static const struct netlink_name encrypt_list[] = {
-	{ &ike_alg_encrypt_null.common, "cipher_null" },
-	/* { &ike_alg_encrypt_DESCBC.common, "des" }, obsoleted */
-#ifdef USE_3DES
-	{ &ike_alg_encrypt_3des_cbc.common, "des3_ede" },
-#endif
-#ifdef USE_CAST
-	{ &ike_alg_encrypt_cast_cbc.common, "cast5" },
-#endif
-	/* { &ike_alg_encrypt_BLOWFISHCBC.common, "blowfish" }, obsoleted */
-#ifdef USE_AES
-	{ &ike_alg_encrypt_aes_cbc.common, "aes" },
-	{ &ike_alg_encrypt_aes_ctr.common, "rfc3686(ctr(aes))" },
-#endif
-#ifdef USE_CAMELLIA
-	{ &ike_alg_encrypt_camellia_cbc.common, "cbc(camellia)" },
-#endif
-#ifdef USE_SERPENT
-	{ &ike_alg_encrypt_serpent_cbc.common, "serpent" },
-#endif
-#ifdef USE_TWOFISH
-	{ &ike_alg_encrypt_twofish_cbc.common, "twofish" },
-#endif
-#ifdef USE_AES
-	{ &ike_alg_encrypt_aes_ccm_8.common, "rfc4309(ccm(aes))" },
-	{ &ike_alg_encrypt_aes_ccm_12.common, "rfc4309(ccm(aes))" },
-	{ &ike_alg_encrypt_aes_ccm_16.common, "rfc4309(ccm(aes))" },
-	{ &ike_alg_encrypt_aes_gcm_8.common, "rfc4106(gcm(aes))" },
-	{ &ike_alg_encrypt_aes_gcm_12.common, "rfc4106(gcm(aes))" },
-	{ &ike_alg_encrypt_aes_gcm_16.common, "rfc4106(gcm(aes))" },
-#endif
-#if 0
-	{ &ike_alg_encrypt_chacha20_poly1305.common, "rfc7539esp(chacha20,poly1305)" },
-#endif
-	{ &ike_alg_encrypt_null_integ_aes_gmac.common, "rfc4543(gcm(aes))" },
-	{ NULL, NULL, }
-};
-
 /* Compress Algs */
 static sparse_names calg_list = {
 	{ SADB_X_CALG_DEFLATE, "deflate" },
@@ -261,18 +179,6 @@ static void ip2xfrm(const ip_address *addr, xfrm_address_t *xaddr)
 
 static void init_netlink_route_fd(void)
 {
-	/* cross-check name tables */
-	for (const struct netlink_name *n = integ_list; n->alg != NULL; n++) {
-		const struct integ_desc *alg = integ_desc(n->alg);
-		DBGF(DBG_MASK, "checking: %s %s", alg->integ_netlink_xfrm_name, n->name);
-		pexpect(streq(alg->integ_netlink_xfrm_name, n->name));
-	}
-	for (const struct netlink_name *n = encrypt_list; n->alg != NULL; n++) {
-		const struct encrypt_desc *alg = encrypt_desc(n->alg);
-		DBGF(DBG_MASK, "checking: %s %s", alg->encrypt_netlink_xfrm_name, n->name);
-		pexpect(streq(alg->encrypt_netlink_xfrm_name, n->name));
-	}
-
 	struct sockaddr_nl addr;
 
 	nl_route_fd = safe_socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
@@ -1454,8 +1360,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 
 	if (sa->authkeylen != 0) {
 
-		const char *name = find_netlink_name(integ_list,
-						&sa->integ->common);
+		const char *name = sa->integ->integ_netlink_xfrm_name;
 		if (name == NULL) {
 			loglog(RC_LOG_SERIOUS,
 				"NETKEY/XFRM: unknown authentication algorithm: %s",
@@ -1514,9 +1419,10 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 
 		req.n.nlmsg_len += attr->rta_len;
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
+
 	} else if (sa->esatype == ET_ESP) {
-		const char *name = find_netlink_name(encrypt_list,
-						&sa->encrypt->common);
+
+		const char *name = sa->encrypt->encrypt_netlink_xfrm_name;
 		if (name == NULL) {
 			loglog(RC_LOG_SERIOUS,
 				"unknown encryption algorithm: %s",
