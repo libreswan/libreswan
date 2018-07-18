@@ -82,8 +82,8 @@
 #include "ikev2_send.h"
 #include "pluto_stats.h"
 #include "retry.h"
-#include "ipsecconf/confread.h"
-#include "ipsecconf/addr_lookup.h"
+#include "ipsecconf/confread.h"		/* for struct starter_end */
+#include "addr_lookup.h"
 
 #include "crypt_symkey.h" /* for release_symkey */
 struct mobike {

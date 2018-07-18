@@ -54,7 +54,7 @@
 #include "ipsecconf/starterwhack.h"
 #include "ipsecconf/keywords.h"
 #include "ipsecconf/parser-controls.h"
-#include "ipsecconf/addr_lookup.h"
+#include "addr_lookup.h"
 
 #ifdef USE_DNSSEC
 # include "dnssec.h"
