@@ -72,7 +72,11 @@ static int verbose = 0;
 
 /*
  * See if conn's left or right is %defaultroute and resolve it.
+ *
+ * XXX: why not let pluto resolve all this like it is already doing
+ * because of MOBIKE.
  */
+#ifdef HAVE_NETKEY
 static
 void resolve_defaultroute(struct starter_conn *conn)
 {
@@ -81,6 +85,7 @@ void resolve_defaultroute(struct starter_conn *conn)
 	if (resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0) == 1)
 		resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0);
 }
+#endif
 
 #ifdef HAVE_SECCOMP
 static void init_seccomp_addconn(uint32_t def_action)
@@ -443,7 +448,9 @@ int main(int argc, char *argv[])
 			{
 				if (verbose)
 					printf(" %s", conn->name);
+#ifdef HAVE_NETKEY
 				resolve_defaultroute(conn);
+#endif
 				starter_whack_add_conn(cfg, conn);
 			}
 		}

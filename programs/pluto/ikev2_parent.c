@@ -6800,6 +6800,7 @@ void ikev2_addr_change(struct state *st)
 		.addr = st->st_remoteaddr
 	};
 
+#ifdef HAVE_NETKEY
 	/*
 	 * mobike need two lookups. one for the gateway and
 	 * the one for the source address
@@ -6849,4 +6850,5 @@ void ikev2_addr_change(struct state *st)
 		}
 		break;
 	}
+#endif
 }

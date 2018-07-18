@@ -76,6 +76,11 @@ ifeq ($(USE_KLIPS),true)
 USERLAND_CFLAGS+=-DKLIPS
 endif
 
+ifeq ($(USE_NETKEY),true)
+# technically netlink?
+USERLAND_CFLAGS+=-DHAVE_NETKEY
+endif
+
 ifeq ($(USE_LABELED_IPSEC),true)
 USERLAND_CFLAGS+=-DHAVE_LABELED_IPSEC
 endif

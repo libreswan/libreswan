@@ -56,7 +56,9 @@ OBJS += constants.o \
 	lsw_passert_fail.o \
 	alg_byname.o
 
+ifeq ($(USE_NETKEY),true)
 OBJS += addr_lookup.o
+endif
 OBJS += kernel_alg.o
 
 ifeq ($(USE_KLIPS),true)
