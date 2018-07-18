@@ -922,13 +922,10 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 	if (st->st_dcookie.ptr != NULL) {
 		/* In v2, for parent, protoid must be 0 and SPI must be empty */
 		if (!ship_v2N(ISAKMP_NEXT_v2SA,
-			DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG) ?
-			   (ISAKMP_PAYLOAD_NONCRITICAL |
-			    ISAKMP_PAYLOAD_LIBRESWAN_BOGUS) :
-			   ISAKMP_PAYLOAD_NONCRITICAL,
-			PROTO_v2_RESERVED,
-			&empty_chunk,
-			v2N_COOKIE, &st->st_dcookie, &rbody))
+			      build_ikev2_critical(IMPAIR(SEND_BOGUS_ISAKMP_FLAG)),
+			      PROTO_v2_RESERVED,
+			      &empty_chunk,
+			      v2N_COOKIE, &st->st_dcookie, &rbody))
 		{
 			return STF_INTERNAL_ERROR;
 		}
@@ -979,12 +976,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 
 		zero(&in);	/* OK: no pointer fields */
 		in.isag_np = ISAKMP_NEXT_v2N;
-		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-		if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
-			libreswan_log(
-				" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
-			in.isag_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
-		}
+		in.isag_critical = build_ikev2_critical(false);
 
 		if (!out_struct(&in, &ikev2_nonce_desc, &rbody, &pb) ||
 		    !out_chunk(st->st_ni, &pb, "IKEv2 nonce"))
@@ -1575,12 +1567,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 
 		zero(&in);	/* OK: no pointers */
 		in.isag_np = np;
-		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-		if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
-			libreswan_log(
-				" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
-			in.isag_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
-		}
+		in.isag_critical = build_ikev2_critical(false);
 
 		if (!out_struct(&in, &ikev2_nonce_desc, &rbody, &pb) ||
 		    !out_chunk(st->st_nr, &pb, "IKEv2 nonce"))
@@ -2836,13 +2823,7 @@ static stf_status ikev2_send_auth(struct connection *c,
 	/* ??? isn't c redundant? */
 	pexpect(c == st->st_connection);
 
-	a.isaa_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-	if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
-		libreswan_log(
-			" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
-		a.isaa_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
-	}
-
+	a.isaa_critical = build_ikev2_critical(false);
 	a.isaa_np = np;
 
 	switch (authby) {
@@ -3224,13 +3205,10 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	/* insert an Encryption payload header */
 
-	struct ikev2_generic e = {ISAKMP_NEXT_v2IDi, ISAKMP_PAYLOAD_NONCRITICAL, 0};
-
-	if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
-		libreswan_log(
-			" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
-		e.isag_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
-	}
+	struct ikev2_generic e = {
+		.isag_np = ISAKMP_NEXT_v2IDi,
+		.isag_critical = build_ikev2_critical(false),
+	};
 
 	if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH)) {
 		if (!ship_v2UNKNOWN(&rbody, "AUTH request")) {
@@ -3288,12 +3266,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		hmac_init(&id_ctx, pst->st_oakley.ta_prf, pst->st_skey_pi_nss);
 		build_id_payload((struct isakmp_ipsec_id *)&i_id, &id_b,
 				 &pc->spd.this, FALSE);
-		i_id.isai_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-		if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
-			libreswan_log(
-				" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
-			i_id.isai_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
-		}
+		i_id.isai_critical = build_ikev2_critical(false);
 
 		/* HASH of ID is not done over common header */
 		unsigned char *const id_start =
@@ -5208,9 +5181,9 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 		if (rekey_spi.len > 0) {
 			/* ??? how do we know that the protocol is ESP and not AH? */
 			if (!ship_v2N(ISAKMP_NEXT_v2TSi,
-					ISAKMP_PAYLOAD_NONCRITICAL,
-					PROTO_v2_ESP, &rekey_spi,
-					v2N_REKEY_SA, &empty_chunk, outpbs))
+				      build_ikev2_critical(false),
+				      PROTO_v2_ESP, &rekey_spi,
+				      v2N_REKEY_SA, &empty_chunk, outpbs))
 				return STF_INTERNAL_ERROR;
 		}
 

@@ -61,6 +61,7 @@
 #include "pluto_crypt.h"  /* for pluto_crypto_req & pluto_crypto_req_cont */
 #include "ikev2.h"
 #include "rnd.h"
+#include "ikev2_send.h"		/* for build_ikev2_critical() */
 
 #include "nat_traversal.h"
 
@@ -1394,12 +1395,8 @@ bool ikev2_emit_sa_proposals(pb_stream *pbs,
 	/* SA header out */
 	struct ikev2_sa sa = {
 		.isasa_np = next_payload_type,
-		.isasa_critical = ISAKMP_PAYLOAD_NONCRITICAL,
+		.isasa_critical = build_ikev2_critical(false),
 	};
-	if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
-		libreswan_log(" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
-		sa.isasa_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
-	}
 	pb_stream sa_pbs;
 	if (!out_struct(&sa, &ikev2_sa_desc, pbs, &sa_pbs))
 		return FALSE;

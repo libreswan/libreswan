@@ -217,12 +217,6 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
 
 	n.isan_np = np;
 	n.isan_critical = critical;
-	if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
-		libreswan_log(
-			" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
-		n.isan_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
-	}
-
 	n.isan_protoid = protoid;
 	n.isan_spisize = spi->len;
 	n.isan_type = type;
@@ -266,11 +260,12 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
  */
 
 bool ship_v2Nsp(enum next_payload_types_ikev2 np,
-	      v2_notification_t type,
-	      const chunk_t *n_data,
-	      pb_stream *rbody)
+		v2_notification_t type,
+		const chunk_t *n_data,
+		pb_stream *rbody)
 {
-	return ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL, PROTO_v2_RESERVED, &empty_chunk, type, n_data, rbody);
+	return ship_v2N(np, build_ikev2_critical(false),
+			PROTO_v2_RESERVED, &empty_chunk, type, n_data, rbody);
 }
 
 /* ship_v2Ns: like ship_v2Nsp except n_data is &empty_chunk */
@@ -462,9 +457,10 @@ void send_v2_notification_from_state(struct state *pst, struct msg_digest *md,
 	case v2N_CHILD_SA_NOT_FOUND:
 		DBGF(DBG_MASK, "notification %s needs SPI!", notify_name);
 		/* ??? how can we figure out the protocol and SPI? */
-		if (!ship_v2N(ISAKMP_NEXT_v2NONE, ISAKMP_PAYLOAD_NONCRITICAL,
-				PROTO_v2_RESERVED, &empty_chunk,
-				ntype, ndata, &sk.pbs)) {
+		if (!ship_v2N(ISAKMP_NEXT_v2NONE,
+			      build_ikev2_critical(false),
+			      PROTO_v2_RESERVED, &empty_chunk,
+			      ntype, ndata, &sk.pbs)) {
 			return;
 		}
 		break;
