@@ -56,6 +56,7 @@ ipsec auto --status
 000 algorithm AH/ESP auth: name=HMAC_SHA2_512_256, key-length=512
 000 algorithm AH/ESP auth: name=AES_XCBC_96, key-length=128
 000 algorithm AH/ESP auth: name=NONE, key-length=0
+000 algorithm AH/ESP auth: name=HMAC_SHA2_256_TRUNCBUG, key-length=256
 000  
 000 IKE algorithms supported:
 000  
@@ -164,6 +165,7 @@ ipsec status
 000 algorithm AH/ESP auth: name=HMAC_SHA2_512_256, key-length=512
 000 algorithm AH/ESP auth: name=AES_XCBC_96, key-length=128
 000 algorithm AH/ESP auth: name=NONE, key-length=0
+000 algorithm AH/ESP auth: name=HMAC_SHA2_256_TRUNCBUG, key-length=256
 000  
 000 IKE algorithms supported:
 000  
