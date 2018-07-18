@@ -153,11 +153,7 @@ uint8_t build_ikev2_critical(bool impair)
 		octet = ISAKMP_PAYLOAD_NONCRITICAL;
 	}
 	if (IMPAIR(SEND_BOGUS_PAYLOAD_FLAG)) {
-#if 0
 		libreswan_log("IMPAIR: adding bogus bit to critical octet");
-#else
-		libreswan_log(" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
-#endif
 		octet |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
 	}
 	return octet;
