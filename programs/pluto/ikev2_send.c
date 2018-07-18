@@ -202,12 +202,16 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
 	case v2N_INVALID_SELECTORS:
 	case v2N_REKEY_SA:
 	case v2N_CHILD_SA_NOT_FOUND:
-		/* must have SPI */
-		pexpect(protoid != PROTO_v2_RESERVED);
+		/* must have SPI. XXX: ??? this is checking protoid! */
+		if (protoid == PROTO_v2_RESERVED) {
+			DBGF(DBG_MASK, "XXX: type and protoid mismatch");
+		}
 		break;
 	default:
-		/* must not have SPI */
-		pexpect(protoid == PROTO_v2_RESERVED);
+		/* must not have SPI. XXX: ??? this is checking protoid! */
+		if (protoid != PROTO_v2_RESERVED) {
+			DBGF(DBG_MASK, "XXX: type and protoid mismatch");
+		}
 		break;
 	}
 
@@ -460,7 +464,7 @@ void send_v2_notification_from_state(struct state *pst, struct msg_digest *md,
 	case v2N_INVALID_SELECTORS:	/* ??? we never actually generate this */
 	case v2N_REKEY_SA:	/* never follows this path */
 	case v2N_CHILD_SA_NOT_FOUND:
-		PEXPECT_LOG("notification %d needs SPI!", ntype);
+		DBGF(DBG_MASK, "notification %s needs SPI!", notify_name);
 		/* ??? how can we figure out the protocol and SPI? */
 		if (!ship_v2N(ISAKMP_NEXT_v2NONE, ISAKMP_PAYLOAD_NONCRITICAL,
 				PROTO_v2_RESERVED, &empty_chunk,
