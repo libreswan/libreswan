@@ -81,6 +81,7 @@ enum_names dpd_action_names = {
 	NULL
 };
 
+#ifdef HAVE_NETKEY
 /* netkey SA direction names */
 static const char *const netkey_sa_dir_name[] = {
 	"XFRM_IN",
@@ -94,6 +95,7 @@ enum_names netkey_sa_dir_names = {
 	NULL, /* prefix */
 	NULL
 };
+#endif
 
 /* systemd watchdog action names */
 static const char *const sd_action_name[] = {
