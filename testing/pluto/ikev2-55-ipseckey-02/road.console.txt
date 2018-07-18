@@ -26,7 +26,7 @@ road #
 road #
  ipsec auto --up road-east-1
 002 "road-east-1" #1: initiating v2 parent SA
-133 "road-east-1" #1: STATE_PARENT_I1: initiate
+133 "road-east-1" #1: initiate
 133 "road-east-1" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "road-east-1" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set.
 134 "road-east-1" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
@@ -81,7 +81,7 @@ road #
 road #
  ipsec auto --up road-east-2
 002 "road-east-2" #1: initiating v2 parent SA
-133 "road-east-2" #1: STATE_PARENT_I1: initiate
+133 "road-east-2" #1: initiate
 133 "road-east-2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "road-east-2" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set.
 003 "road-east-2" #1: Can't find the certificate or private key from the NSS CKA_ID

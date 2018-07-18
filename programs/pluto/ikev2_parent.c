@@ -782,8 +782,7 @@ void ikev2_parent_outI1(int whack_sock,
 		if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 			libreswan_log("initiating v2 parent SA");
 		}
-		whack_log(RC_NEW_STATE + STATE_PARENT_I1, "%s: initiate",
-			  st->st_state_name);
+		whack_log(RC_NEW_STATE + STATE_PARENT_I1, "initiate");
 	}
 
 	if (IS_LIBUNBOUND && id_ipseckey_allowed(st, IKEv2_AUTH_RESERVED)) {

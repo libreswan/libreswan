@@ -27,7 +27,7 @@ west #
 west #
  ipsec auto --up nss-cert-correct
 002 "nss-cert-correct" #1: initiating v2 parent SA
-133 "nss-cert-correct" #1: STATE_PARENT_I1: initiate
+133 "nss-cert-correct" #1: initiate
 133 "nss-cert-correct" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "nss-cert-correct" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set.
 134 "nss-cert-correct" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
@@ -48,7 +48,7 @@ west #
 west #
  ipsec auto --up nss-cert-incorrect
 002 "nss-cert-incorrect" #3: initiating v2 parent SA
-133 "nss-cert-incorrect" #3: STATE_PARENT_I1: initiate
+133 "nss-cert-incorrect" #3: initiate
 133 "nss-cert-incorrect" #3: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "nss-cert-incorrect" #3: suppressing retransmit because IMPAIR_RETRANSMITS is set.
 134 "nss-cert-incorrect" #4: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}

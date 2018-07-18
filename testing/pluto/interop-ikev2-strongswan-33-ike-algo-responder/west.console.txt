@@ -35,7 +35,7 @@ west #
  ../bin/libreswan-up-down.sh ikev2-ike=aes128-md5-dh19 -I 192.0.1.254 192.0.2.254
 002 added connection description "ikev2-ike=aes128-md5-dh19"
 002 "ikev2-ike=aes128-md5-dh19" #1: initiating v2 parent SA
-133 "ikev2-ike=aes128-md5-dh19" #1: STATE_PARENT_I1: initiate
+133 "ikev2-ike=aes128-md5-dh19" #1: initiate
 133 "ikev2-ike=aes128-md5-dh19" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "ikev2-ike=aes128-md5-dh19" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 134 "ikev2-ike=aes128-md5-dh19" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=md5_96 prf=md5 group=DH19}
@@ -54,7 +54,7 @@ west #
  ../bin/libreswan-up-down.sh ikev2-ike=aes128-md5-dh20 -I 192.0.1.254 192.0.2.254
 002 added connection description "ikev2-ike=aes128-md5-dh20"
 002 "ikev2-ike=aes128-md5-dh20" #3: initiating v2 parent SA
-133 "ikev2-ike=aes128-md5-dh20" #3: STATE_PARENT_I1: initiate
+133 "ikev2-ike=aes128-md5-dh20" #3: initiate
 133 "ikev2-ike=aes128-md5-dh20" #3: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "ikev2-ike=aes128-md5-dh20" #3: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 134 "ikev2-ike=aes128-md5-dh20" #4: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=md5_96 prf=md5 group=DH20}
@@ -73,7 +73,7 @@ west #
  ../bin/libreswan-up-down.sh ikev2-ike=aes128-md5-dh21 -I 192.0.1.254 192.0.2.254
 002 added connection description "ikev2-ike=aes128-md5-dh21"
 002 "ikev2-ike=aes128-md5-dh21" #5: initiating v2 parent SA
-133 "ikev2-ike=aes128-md5-dh21" #5: STATE_PARENT_I1: initiate
+133 "ikev2-ike=aes128-md5-dh21" #5: initiate
 133 "ikev2-ike=aes128-md5-dh21" #5: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "ikev2-ike=aes128-md5-dh21" #5: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 134 "ikev2-ike=aes128-md5-dh21" #6: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=md5_96 prf=md5 group=DH21}
@@ -92,7 +92,7 @@ west #
  ../bin/libreswan-up-down.sh ikev2-ike=aes128-sha1-dh19 -I 192.0.1.254 192.0.2.254
 002 added connection description "ikev2-ike=aes128-sha1-dh19"
 002 "ikev2-ike=aes128-sha1-dh19" #7: initiating v2 parent SA
-133 "ikev2-ike=aes128-sha1-dh19" #7: STATE_PARENT_I1: initiate
+133 "ikev2-ike=aes128-sha1-dh19" #7: initiate
 133 "ikev2-ike=aes128-sha1-dh19" #7: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "ikev2-ike=aes128-sha1-dh19" #7: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 134 "ikev2-ike=aes128-sha1-dh19" #8: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=sha1_96 prf=sha group=DH19}
@@ -111,7 +111,7 @@ west #
  ../bin/libreswan-up-down.sh ikev2-ike=aes128-sha1-dh20 -I 192.0.1.254 192.0.2.254
 002 added connection description "ikev2-ike=aes128-sha1-dh20"
 002 "ikev2-ike=aes128-sha1-dh20" #9: initiating v2 parent SA
-133 "ikev2-ike=aes128-sha1-dh20" #9: STATE_PARENT_I1: initiate
+133 "ikev2-ike=aes128-sha1-dh20" #9: initiate
 133 "ikev2-ike=aes128-sha1-dh20" #9: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "ikev2-ike=aes128-sha1-dh20" #9: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 134 "ikev2-ike=aes128-sha1-dh20" #10: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=sha1_96 prf=sha group=DH20}
@@ -130,7 +130,7 @@ west #
  ../bin/libreswan-up-down.sh ikev2-ike=aes128-sha1-dh21 -I 192.0.1.254 192.0.2.254
 002 added connection description "ikev2-ike=aes128-sha1-dh21"
 002 "ikev2-ike=aes128-sha1-dh21" #11: initiating v2 parent SA
-133 "ikev2-ike=aes128-sha1-dh21" #11: STATE_PARENT_I1: initiate
+133 "ikev2-ike=aes128-sha1-dh21" #11: initiate
 133 "ikev2-ike=aes128-sha1-dh21" #11: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "ikev2-ike=aes128-sha1-dh21" #11: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 134 "ikev2-ike=aes128-sha1-dh21" #12: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=sha1_96 prf=sha group=DH21}
@@ -149,7 +149,7 @@ west #
  ../bin/libreswan-up-down.sh ikev2-ike=aes_ctr128-sha1-dh21 -I 192.0.1.254 192.0.2.254
 002 added connection description "ikev2-ike=aes_ctr128-sha1-dh21"
 002 "ikev2-ike=aes_ctr128-sha1-dh21" #13: initiating v2 parent SA
-133 "ikev2-ike=aes_ctr128-sha1-dh21" #13: STATE_PARENT_I1: initiate
+133 "ikev2-ike=aes_ctr128-sha1-dh21" #13: initiate
 133 "ikev2-ike=aes_ctr128-sha1-dh21" #13: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "ikev2-ike=aes_ctr128-sha1-dh21" #13: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 134 "ikev2-ike=aes_ctr128-sha1-dh21" #14: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=3des_cbc_192 integ=md5_96 prf=md5 group=MODP2048}
@@ -168,7 +168,7 @@ west #
  ../bin/libreswan-up-down.sh ikev2-ike=3des-md5-modp2048 -I 192.0.1.254 192.0.2.254
 002 added connection description "ikev2-ike=3des-md5-modp2048"
 002 "ikev2-ike=3des-md5-modp2048" #15: initiating v2 parent SA
-133 "ikev2-ike=3des-md5-modp2048" #15: STATE_PARENT_I1: initiate
+133 "ikev2-ike=3des-md5-modp2048" #15: initiate
 133 "ikev2-ike=3des-md5-modp2048" #15: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "ikev2-ike=3des-md5-modp2048" #15: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 134 "ikev2-ike=3des-md5-modp2048" #16: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=3des_cbc_192 integ=md5_96 prf=md5 group=MODP2048}
@@ -187,7 +187,7 @@ west #
  ../bin/libreswan-up-down.sh ikev2-ike=aes128-aes_xcbc-modp2048 -I 192.0.1.254 192.0.2.254
 002 added connection description "ikev2-ike=aes128-aes_xcbc-modp2048"
 002 "ikev2-ike=aes128-aes_xcbc-modp2048" #17: initiating v2 parent SA
-133 "ikev2-ike=aes128-aes_xcbc-modp2048" #17: STATE_PARENT_I1: initiate
+133 "ikev2-ike=aes128-aes_xcbc-modp2048" #17: initiate
 133 "ikev2-ike=aes128-aes_xcbc-modp2048" #17: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "ikev2-ike=aes128-aes_xcbc-modp2048" #17: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 134 "ikev2-ike=aes128-aes_xcbc-modp2048" #18: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=aes_xcbc_96 prf=aes_xcbc group=MODP2048}
