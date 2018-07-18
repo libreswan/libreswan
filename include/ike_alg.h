@@ -378,6 +378,11 @@ struct encrypt_desc {
 	 */
 	unsigned encrypt_sadb_ealg_id;
 
+	/*
+	 * This encryption algorithm's NETLINK_XFRM name, if known.
+	 */
+	const char *encrypt_netlink_xfrm_name;
+
 	const struct encrypt_ops *encrypt_ops;
 };
 
@@ -624,6 +629,11 @@ struct integ_desc {
 	 * Hence it is not used here.
 	 */
 	unsigned integ_sadb_aalg_id;
+
+	/*
+	 * This integrity algorithm's NETLINK_XFRM name if known.
+	 */
+	const char *integ_netlink_xfrm_name;
 
 	/*
 	 * For IKE.  The PRF implementing integrity.  The output is

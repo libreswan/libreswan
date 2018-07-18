@@ -101,6 +101,7 @@ const struct encrypt_desc ike_alg_encrypt_twofish_cbc =
 #ifdef SADB_X_EALG_TWOFISHCBC
 	.encrypt_sadb_ealg_id = SADB_X_EALG_TWOFISHCBC,
 #endif
+	.encrypt_netlink_xfrm_name = "twofish",
 };
 
 const struct encrypt_desc ike_alg_encrypt_twofish_ssh =

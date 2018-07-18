@@ -99,4 +99,5 @@ const struct encrypt_desc ike_alg_encrypt_serpent_cbc =
 #ifdef SADB_X_EALG_SERPENTCBC
 	.encrypt_sadb_ealg_id = SADB_X_EALG_SERPENTCBC,
 #endif
+	.encrypt_netlink_xfrm_name = "serpent",
 };

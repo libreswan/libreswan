@@ -51,4 +51,5 @@ const struct encrypt_desc ike_alg_encrypt_cast_cbc =
 #ifdef SADB_X_EALG_CAST128CBC
 	.encrypt_sadb_ealg_id = SADB_X_EALG_CAST128CBC,
 #endif
+	.encrypt_netlink_xfrm_name = "cast5",
 };

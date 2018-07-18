@@ -45,4 +45,5 @@ const struct integ_desc ike_alg_integ_hmac_ripemd_160_96 = {
 #ifdef SADB_X_AALG_RIPEMD160HMAC
 	.integ_sadb_aalg_id = SADB_X_AALG_RIPEMD160HMAC,
 #endif
+	.integ_netlink_xfrm_name = "hmac(rmd160)",
 };

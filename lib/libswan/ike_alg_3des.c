@@ -49,4 +49,5 @@ const struct encrypt_desc ike_alg_encrypt_3des_cbc =
 #ifdef  SADB_EALG_3DESCBC
 	.encrypt_sadb_ealg_id = SADB_EALG_3DESCBC,
 #endif
+	.encrypt_netlink_xfrm_name = "des3_ede",
 };

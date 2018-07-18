@@ -61,6 +61,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_cbc = {
 #ifdef SADB_X_EALG_AES
 	.encrypt_sadb_ealg_id = SADB_X_EALG_AES,
 #endif
+	.encrypt_netlink_xfrm_name = "aes",
 };
 
 const struct encrypt_desc ike_alg_encrypt_aes_ctr =
@@ -91,6 +92,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_ctr =
 #ifdef SADB_X_EALG_AESCTR
 	.encrypt_sadb_ealg_id = SADB_X_EALG_AESCTR,
 #endif
+	.encrypt_netlink_xfrm_name = "rfc3686(ctr(aes))",
 };
 
 const struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
@@ -126,6 +128,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
 #ifdef SADB_X_EALG_AES_GCM8
 	.encrypt_sadb_ealg_id = SADB_X_EALG_AES_GCM8,
 #endif
+	.encrypt_netlink_xfrm_name = "rfc4106(gcm(aes))",
 };
 
 const struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
@@ -160,6 +163,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
 #ifdef SADB_X_EALG_AES_GCM12
 	.encrypt_sadb_ealg_id = SADB_X_EALG_AES_GCM12,
 #endif
+	.encrypt_netlink_xfrm_name = "rfc4106(gcm(aes))",
 };
 
 const struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
@@ -195,6 +199,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
 #ifdef SADB_X_EALG_AES_GCM16
 	.encrypt_sadb_ealg_id = SADB_X_EALG_AES_GCM16,
 #endif
+	.encrypt_netlink_xfrm_name = "rfc4106(gcm(aes))",
 };
 
 /*
@@ -230,6 +235,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =
 #ifdef SADB_X_EALG_AES_CCM_ICV8
 	.encrypt_sadb_ealg_id = SADB_X_EALG_AES_CCM_ICV8,
 #endif
+	.encrypt_netlink_xfrm_name = "rfc4309(ccm(aes))",
 };
 
 const struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
@@ -258,6 +264,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
 #ifdef SADB_X_EALG_AES_CCM_ICV12
 	.encrypt_sadb_ealg_id = SADB_X_EALG_AES_CCM_ICV12,
 #endif
+	.encrypt_netlink_xfrm_name = "rfc4309(ccm(aes))",
 };
 
 const struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
@@ -286,6 +293,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 #ifdef SADB_X_EALG_AES_CCM_ICV16
 	.encrypt_sadb_ealg_id = SADB_X_EALG_AES_CCM_ICV16,
 #endif
+	.encrypt_netlink_xfrm_name = "rfc4309(ccm(aes))",
 };
 
 const struct prf_desc ike_alg_prf_aes_xcbc = {
@@ -333,6 +341,7 @@ const struct integ_desc ike_alg_integ_aes_xcbc = {
 #ifdef SADB_X_AALG_AES_XCBC_MAC
 	.integ_sadb_aalg_id = SADB_X_AALG_AES_XCBC_MAC,
 #endif
+	.integ_netlink_xfrm_name = "xcbc(aes)",
 };
 
 const struct integ_desc ike_alg_integ_aes_cmac = {
@@ -355,6 +364,7 @@ const struct integ_desc ike_alg_integ_aes_cmac = {
 #ifdef SADB_X_AALG_AES_CMAC_96
 	.integ_sadb_aalg_id = SADB_X_AALG_AES_CMAC_96,
 #endif
+	.integ_netlink_xfrm_name = "cmac(aes)",
 };
 
 /*
@@ -387,4 +397,5 @@ const struct encrypt_desc ike_alg_encrypt_null_integ_aes_gmac = {
 #ifdef SADB_X_EALG_AESGMAC
 	.encrypt_sadb_ealg_id = SADB_X_EALG_AESGMAC,
 #endif
+	.encrypt_netlink_xfrm_name = "rfc4543(gcm(aes))",
 };

@@ -67,6 +67,7 @@ const struct encrypt_desc ike_alg_encrypt_camellia_cbc =
 #ifdef SADB_X_EALG_CAMELLIACBC
 	.encrypt_sadb_ealg_id = SADB_X_EALG_CAMELLIACBC,
 #endif
+	.encrypt_netlink_xfrm_name = "cbc(camellia)",
 };
 
 const struct encrypt_desc ike_alg_encrypt_camellia_ctr =

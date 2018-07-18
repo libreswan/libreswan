@@ -20,7 +20,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2017 Richard Guy Briggs <rgb@tricolour.ca>
- * Copyright (C) 2016-2017 Andrew Cagney
+ * Copyright (C) 2016-2018  Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -261,6 +261,18 @@ static void ip2xfrm(const ip_address *addr, xfrm_address_t *xaddr)
 
 static void init_netlink_route_fd(void)
 {
+	/* cross-check name tables */
+	for (const struct netlink_name *n = integ_list; n->alg != NULL; n++) {
+		const struct integ_desc *alg = integ_desc(n->alg);
+		DBGF(DBG_MASK, "checking: %s %s", alg->integ_netlink_xfrm_name, n->name);
+		pexpect(streq(alg->integ_netlink_xfrm_name, n->name));
+	}
+	for (const struct netlink_name *n = encrypt_list; n->alg != NULL; n++) {
+		const struct encrypt_desc *alg = encrypt_desc(n->alg);
+		DBGF(DBG_MASK, "checking: %s %s", alg->encrypt_netlink_xfrm_name, n->name);
+		pexpect(streq(alg->encrypt_netlink_xfrm_name, n->name));
+	}
+
 	struct sockaddr_nl addr;
 
 	nl_route_fd = safe_socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);

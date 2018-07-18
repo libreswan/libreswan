@@ -49,6 +49,7 @@ const struct encrypt_desc ike_alg_encrypt_null =
 #ifdef SADB_EALG_NULL
 	.encrypt_sadb_ealg_id = SADB_EALG_NULL,
 #endif
+	.encrypt_netlink_xfrm_name = "cipher_null",
 };
 
 /*
@@ -91,6 +92,7 @@ const struct integ_desc ike_alg_integ_none = {
 	/* This is from BSD's KAME */
 	.integ_sadb_aalg_id = SADB_X_AALG_NULL,
 #endif
+	.integ_netlink_xfrm_name = "digest_null",
 };
 
 /*
