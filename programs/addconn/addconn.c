@@ -16,46 +16,21 @@
  * for more details.
  */
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <net/if.h>
+#include <stdlib.h>
+#include <getopt.h>
 #include <sys/stat.h>
-#include <limits.h>
-#include <fcntl.h>
-#include <string.h>
+#include <unistd.h>
 #include <errno.h>
 
-#include <netinet/in.h>
-
-#include <linux/netlink.h>
-#include <linux/rtnetlink.h>
-
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <ifaddrs.h>
-
-#include <unistd.h>
-#include <getopt.h>
-#include <ctype.h>
-#include <stdio.h>
-#include <sys/wait.h>
-#include <stdlib.h>
-#include <libreswan.h>
-#include "sysdep.h"
-#include "constants.h"
+#include "lswcdefs.h"	/* for UNUSED */
 #include "lswalloc.h"
-#include "lswconf.h"
-#include "lswlog.h"
 #include "lswtool.h"
 #include "whack.h"
+#include "ipsecconf/parser-controls.h"
+#include "ipsecconf/starterlog.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
-#include "ipsecconf/starterlog.h"
 #include "ipsecconf/starterwhack.h"
-#include "ipsecconf/keywords.h"
-#include "ipsecconf/parser-controls.h"
-
 #ifdef HAVE_NETKEY
 #include "addr_lookup.h"
 #endif
