@@ -55,7 +55,10 @@
 #include "ipsecconf/starterwhack.h"
 #include "ipsecconf/keywords.h"
 #include "ipsecconf/parser-controls.h"
+
+#ifdef HAVE_NETKEY
 #include "addr_lookup.h"
+#endif
 
 #ifdef USE_DNSSEC
 # include "dnssec.h"
@@ -76,16 +79,16 @@ static int verbose = 0;
  * XXX: why not let pluto resolve all this like it is already doing
  * because of MOBIKE.
  */
-#ifdef HAVE_NETKEY
 static
-void resolve_defaultroute(struct starter_conn *conn)
+void resolve_defaultroute(struct starter_conn *conn UNUSED)
 {
+#ifdef HAVE_NETKEY
 	if (resolve_defaultroute_one(&conn->left, &conn->right, verbose != 0) == 1)
 		resolve_defaultroute_one(&conn->left, &conn->right, verbose != 0);
 	if (resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0) == 1)
 		resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0);
-}
 #endif
+}
 
 #ifdef HAVE_SECCOMP
 static void init_seccomp_addconn(uint32_t def_action)
@@ -448,9 +451,7 @@ int main(int argc, char *argv[])
 			{
 				if (verbose)
 					printf(" %s", conn->name);
-#ifdef HAVE_NETKEY
 				resolve_defaultroute(conn);
-#endif
 				starter_whack_add_conn(cfg, conn);
 			}
 		}
@@ -545,8 +546,7 @@ int main(int argc, char *argv[])
 								connname,
 								conn->name);
 						} else {
-							resolve_defaultroute(
-								conn);
+							resolve_defaultroute(conn);
 							exit_status =
 								starter_whack_add_conn(
 									cfg,
