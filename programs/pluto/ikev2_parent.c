@@ -2200,9 +2200,9 @@ uint8_t *ikev2_authloc(struct state *st,
 	}
 
 	b12 = e_pbs->cur;
-	size_t integ_size = (ike_alg_enc_requires_integ(pst->st_oakley.ta_encrypt)
-			    ? pst->st_oakley.ta_integ->integ_output_size
-			    : pst->st_oakley.ta_encrypt->aead_tag_size);
+	size_t integ_size = (encrypt_desc_is_aead(pst->st_oakley.ta_encrypt)
+			     ? pst->st_oakley.ta_encrypt->aead_tag_size
+			     : pst->st_oakley.ta_integ->integ_output_size);
 	if (integ_size == 0) {
 		DBG(DBG_CRYPT, DBG_log("ikev2_authloc: HMAC/KEY size is zero"));
 		return NULL;
@@ -2248,7 +2248,43 @@ stf_status ikev2_encrypt_msg(struct ike_sa *ike,
 	size_t enc_size = integ_start - enc_start;
 
 	/* encrypt and authenticate the block */
-	if (ike_alg_enc_requires_integ(ike->sa.st_oakley.ta_encrypt)) {
+	if (encrypt_desc_is_aead(ike->sa.st_oakley.ta_encrypt)) {
+		/*
+		 * Additional Authenticated Data - AAD - size.
+		 * RFC5282 says: The Initialization Vector and Ciphertext
+		 * fields [...] MUST NOT be included in the associated
+		 * data.
+		 */
+		size_t wire_iv_size = ike->sa.st_oakley.ta_encrypt->wire_iv_size;
+		size_t integ_size = ike->sa.st_oakley.ta_encrypt->aead_tag_size;
+		unsigned char *aad_start = auth_start;
+		size_t aad_size = enc_start - aad_start - wire_iv_size;
+
+		DBG(DBG_CRYPT,
+		    DBG_dump_chunk("Salt before authenticated encryption:", salt);
+		    DBG_dump("IV before authenticated encryption:",
+			     wire_iv_start, wire_iv_size);
+		    DBG_dump("AAD before authenticated encryption:",
+			     aad_start, aad_size);
+		    DBG_dump("data before authenticated encryption:",
+			     enc_start, enc_size);
+		    DBG_dump("integ before authenticated encryption:",
+			     integ_start, integ_size));
+		if (!ike->sa.st_oakley.ta_encrypt->encrypt_ops
+		    ->do_aead(ike->sa.st_oakley.ta_encrypt,
+			      salt.ptr, salt.len,
+			      wire_iv_start, wire_iv_size,
+			      aad_start, aad_size,
+			      enc_start, enc_size, integ_size,
+			      cipherkey, TRUE)) {
+			return STF_FAIL;
+		}
+		DBG(DBG_CRYPT,
+		    DBG_dump("data after authenticated encryption:",
+			     enc_start, enc_size);
+		    DBG_dump("integ after authenticated encryption:",
+			     integ_start, integ_size));
+	} else {
 		/* note: no iv is longer than MAX_CBC_BLOCK_SIZE */
 		unsigned char enc_iv[MAX_CBC_BLOCK_SIZE];
 		construct_enc_iv("encryption IV/starting-variable", enc_iv,
@@ -2281,42 +2317,6 @@ stf_status ikev2_encrypt_msg(struct ike_sa *ike,
 			    DBG_dump("out calculated auth:", integ_start,
 				     ike->sa.st_oakley.ta_integ->integ_output_size);
 		    });
-	} else {
-		size_t wire_iv_size = ike->sa.st_oakley.ta_encrypt->wire_iv_size;
-		size_t integ_size = ike->sa.st_oakley.ta_encrypt->aead_tag_size;
-		/*
-		 * Additional Authenticated Data - AAD - size.
-		 * RFC5282 says: The Initialization Vector and Ciphertext
-		 * fields [...] MUST NOT be included in the associated
-		 * data.
-		 */
-		unsigned char *aad_start = auth_start;
-		size_t aad_size = enc_start - aad_start - wire_iv_size;
-
-		DBG(DBG_CRYPT,
-		    DBG_dump_chunk("Salt before authenticated encryption:", salt);
-		    DBG_dump("IV before authenticated encryption:",
-			     wire_iv_start, wire_iv_size);
-		    DBG_dump("AAD before authenticated encryption:",
-			     aad_start, aad_size);
-		    DBG_dump("data before authenticated encryption:",
-			     enc_start, enc_size);
-		    DBG_dump("integ before authenticated encryption:",
-			     integ_start, integ_size));
-		if (!ike->sa.st_oakley.ta_encrypt->encrypt_ops
-		    ->do_aead(ike->sa.st_oakley.ta_encrypt,
-			      salt.ptr, salt.len,
-			      wire_iv_start, wire_iv_size,
-			      aad_start, aad_size,
-			      enc_start, enc_size, integ_size,
-			      cipherkey, TRUE)) {
-			return STF_FAIL;
-		}
-		DBG(DBG_CRYPT,
-		    DBG_dump("data after authenticated encryption:",
-			     enc_start, enc_size);
-		    DBG_dump("integ after authenticated encryption:",
-			     integ_start, integ_size));
 	}
 
 	return STF_OK;
@@ -2351,9 +2351,9 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 
 	u_char *wire_iv_start = chunk->ptr + iv;
 	size_t wire_iv_size = ike->sa.st_oakley.ta_encrypt->wire_iv_size;
-	size_t integ_size = (ike_alg_enc_requires_integ(ike->sa.st_oakley.ta_encrypt)
-			     ? ike->sa.st_oakley.ta_integ->integ_output_size
-			     : ike->sa.st_oakley.ta_encrypt->aead_tag_size);
+	size_t integ_size = (encrypt_desc_is_aead(ike->sa.st_oakley.ta_encrypt)
+			     ? ike->sa.st_oakley.ta_encrypt->aead_tag_size
+			     : ike->sa.st_oakley.ta_integ->integ_output_size);
 
 	/*
 	 * check to see if length is plausible:
@@ -2416,7 +2416,39 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 	}
 
 	/* authenticate and decrypt the block. */
-	if (ike_alg_enc_requires_integ(ike->sa.st_oakley.ta_encrypt)) {
+	if (encrypt_desc_is_aead(ike->sa.st_oakley.ta_encrypt)) {
+		/*
+		 * Additional Authenticated Data - AAD - size.
+		 * RFC5282 says: The Initialization Vector and Ciphertext
+		 * fields [...] MUST NOT be included in the associated
+		 * data.
+		 */
+		unsigned char *aad_start = auth_start;
+		size_t aad_size = enc_start - auth_start - wire_iv_size;
+
+		DBG(DBG_CRYPT,
+		    DBG_dump_chunk("Salt before authenticated decryption:", salt);
+		    DBG_dump("IV before authenticated decryption:",
+			     wire_iv_start, wire_iv_size);
+		    DBG_dump("AAD before authenticated decryption:",
+			     aad_start, aad_size);
+		    DBG_dump("data before authenticated decryption:",
+			     enc_start, enc_size);
+		    DBG_dump("integ before authenticated decryption:",
+			     integ_start, integ_size));
+		if (!ike->sa.st_oakley.ta_encrypt->encrypt_ops
+		    ->do_aead(ike->sa.st_oakley.ta_encrypt,
+			      salt.ptr, salt.len,
+			      wire_iv_start, wire_iv_size,
+			      aad_start, aad_size,
+			      enc_start, enc_size, integ_size,
+			      cipherkey, FALSE)) {
+			return false;
+		}
+		DBG(DBG_CRYPT,
+		    DBG_dump("data after authenticated decryption:",
+			     enc_start, enc_size + integ_size));
+	} else {
 		/*
 		 * check authenticator.  The last INTEG_SIZE bytes are
 		 * the truncated digest.
@@ -2461,39 +2493,6 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 				   enc_iv, FALSE);
 		DBG(DBG_CRYPT,
 		    DBG_dump("payload after decryption:", enc_start, enc_size));
-
-	  } else {
-		/*
-		 * Additional Authenticated Data - AAD - size.
-		 * RFC5282 says: The Initialization Vector and Ciphertext
-		 * fields [...] MUST NOT be included in the associated
-		 * data.
-		 */
-		unsigned char *aad_start = auth_start;
-		size_t aad_size = enc_start - auth_start - wire_iv_size;
-
-		DBG(DBG_CRYPT,
-		    DBG_dump_chunk("Salt before authenticated decryption:", salt);
-		    DBG_dump("IV before authenticated decryption:",
-			     wire_iv_start, wire_iv_size);
-		    DBG_dump("AAD before authenticated decryption:",
-			     aad_start, aad_size);
-		    DBG_dump("data before authenticated decryption:",
-			     enc_start, enc_size);
-		    DBG_dump("integ before authenticated decryption:",
-			     integ_start, integ_size));
-		if (!ike->sa.st_oakley.ta_encrypt->encrypt_ops
-		    ->do_aead(ike->sa.st_oakley.ta_encrypt,
-			      salt.ptr, salt.len,
-			      wire_iv_start, wire_iv_size,
-			      aad_start, aad_size,
-			      enc_start, enc_size, integ_size,
-			      cipherkey, FALSE)) {
-			return false;
-		}
-		DBG(DBG_CRYPT,
-		    DBG_dump("data after authenticated decryption:",
-			     enc_start, enc_size + integ_size));
 	}
 
 	/*
@@ -3033,9 +3032,9 @@ static stf_status ikev2_record_fragments(struct msg_digest *md,
 
 	len -= NSIZEOF_isakmp_hdr + NSIZEOF_ikev2_skf;
 
-	len -= ike_alg_enc_requires_integ(st->st_oakley.ta_encrypt) ?
-	       st->st_oakley.ta_integ->integ_output_size :
-	       st->st_oakley.ta_encrypt->aead_tag_size;
+	len -= (encrypt_desc_is_aead(st->st_oakley.ta_encrypt)
+		? st->st_oakley.ta_encrypt->aead_tag_size
+		: st->st_oakley.ta_integ->integ_output_size);
 
 	if (st->st_oakley.ta_encrypt->pad_to_blocksize)
 		len &= ~(st->st_oakley.ta_encrypt->enc_blocksize - 1);

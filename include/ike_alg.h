@@ -651,13 +651,12 @@ struct integ_desc {
  * Since AEAD algorithms have integrity built in, separate integrity
  * is redundant.
  *
- * XXX: The converse (non-AEAD algorithm always require integrity) is
- * not true.  For instance, with ESP, integrity is optional.  Hence,
- * the old (reverse) test ike_alg_enc_requires_integ() should go away.
+ * Note that the converse (non-AEAD algorithm always require
+ * integrity) is not true.  For instance, with ESP, integrity is
+ * optional.
  */
 
 extern bool encrypt_desc_is_aead(const struct encrypt_desc *enc_desc);
-#define ike_alg_enc_requires_integ(ALG) (!encrypt_desc_is_aead(ALG))
 
 void init_ike_alg(void);
 void test_ike_alg(void);
