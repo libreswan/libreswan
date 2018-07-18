@@ -204,7 +204,7 @@ const char *ike_alg_type_Name(const struct ike_alg_type *type)
 	return type->Name;
 }
 
-bool ike_alg_is_aead(const struct encrypt_desc *enc_desc)
+bool encrypt_desc_is_aead(const struct encrypt_desc *enc_desc)
 {
 	return enc_desc != NULL && enc_desc->aead_tag_size > 0;
 }

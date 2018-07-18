@@ -2688,7 +2688,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				}
 
 				if (esp_attrs.transattrs.ta_integ == &ike_alg_integ_none) {
-					if (!ike_alg_is_aead(esp_attrs.transattrs.ta_encrypt) &&
+					if (!encrypt_desc_is_aead(esp_attrs.transattrs.ta_encrypt) &&
 					    !ah_seen) {
 						LSWDBGP(DBG_PARSING, buf) {
 							lswlogs(buf, "ESP from ");

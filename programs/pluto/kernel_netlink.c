@@ -1430,7 +1430,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 			return FALSE;
 		}
 
-		if (ike_alg_is_aead(sa->encrypt)) {
+		if (encrypt_desc_is_aead(sa->encrypt)) {
 			struct xfrm_algo_aead algo;
 
 			fill_and_terminate(algo.alg_name, name,

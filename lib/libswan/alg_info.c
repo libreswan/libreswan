@@ -205,7 +205,8 @@ static bool add_proposal_defaults(const struct proposal_parser *parser,
 					&ike_alg_prf, defaults->prf,
 					merge_prf_default);
 	} else if (proposal->integ == NULL &&
-		   proposal->encrypt != NULL && ike_alg_is_aead(proposal->encrypt)) {
+		   proposal->encrypt != NULL &&
+		   encrypt_desc_is_aead(proposal->encrypt)) {
 		/*
 		 * Since AEAD, integrity is always 'none'.
 		 */
@@ -221,7 +222,8 @@ static bool add_proposal_defaults(const struct proposal_parser *parser,
 					merge_integ_default);
 	} else if (proposal->integ == NULL &&
 		   proposal->prf != NULL &&
-		   proposal->encrypt != NULL && !ike_alg_is_aead(proposal->encrypt)) {
+		   proposal->encrypt != NULL &&
+		   !encrypt_desc_is_aead(proposal->encrypt)) {
 		/*
 		 * Since non-AEAD, use an integrity algorithm that is
 		 * implemented using the PRF.
@@ -618,7 +620,7 @@ bool proposal_aead_none_ok(const struct proposal_parser *parser,
 		return true;
 	}
 
-	if (proposal->encrypt != NULL && ike_alg_is_aead(proposal->encrypt)
+	if (proposal->encrypt != NULL && encrypt_desc_is_aead(proposal->encrypt)
 	    && proposal->integ != NULL && proposal->integ != &ike_alg_integ_none) {
 		/*
 		 * For instance, esp=aes_gcm-sha1" is invalid.
@@ -630,7 +632,7 @@ bool proposal_aead_none_ok(const struct proposal_parser *parser,
 		return false;
 	}
 
-	if (proposal->encrypt != NULL && !ike_alg_is_aead(proposal->encrypt)
+	if (proposal->encrypt != NULL && !encrypt_desc_is_aead(proposal->encrypt)
 	    && proposal->integ != NULL && proposal->integ == &ike_alg_integ_none) {
 		/*
 		 * For instance, esp=aes_cbc-none" is invalid.
@@ -701,7 +703,8 @@ size_t lswlog_proposal_info(struct lswlog *log,
 	if (proposal->integ != NULL && proposal->prf == NULL) {
 		size += lswlogs(log, sep); sep = "-";
 		size += lswlogs(log, proposal->integ->common.fqn);
-	} else if (!(proposal->integ == &ike_alg_integ_none && ike_alg_is_aead(proposal->encrypt)) &&
+	} else if (!(proposal->integ == &ike_alg_integ_none &&
+		     encrypt_desc_is_aead(proposal->encrypt)) &&
 		   proposal->integ != NULL && proposal->integ->prf != proposal->prf) {
 		size += lswlogs(log, sep); sep = "-";
 		size += lswlogs(log, proposal->integ->common.fqn);
