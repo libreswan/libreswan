@@ -492,29 +492,15 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		char data[MAX_NETLINK_DATA_SIZE];
 	} req;
 
-	int satype = 0;
-
 	int policy = IPSEC_POLICY_IPSEC;
 
 	switch (esatype) {
 	case ET_UNSPEC:
-		satype = SADB_SATYPE_UNSPEC;
-		break;
-
 	case ET_AH:
-		satype = SADB_SATYPE_AH;
-		break;
-
 	case ET_ESP:
-		satype = SADB_SATYPE_ESP;
-		break;
-
 	case ET_IPCOMP:
-		satype = SADB_X_SATYPE_IPCOMP;
-		break;
-
 	case ET_IPIP:
-		satype = K_SADB_X_SATYPE_IPIP;
+
 		break;
 
 	case ET_INT:
@@ -554,11 +540,6 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 
 	default:
 		bad_case(esatype);
-	}
-	if (satype != 0) {
-		DBG(DBG_KERNEL,
-			DBG_log("satype(%d) is not used in netlink_raw_eroute.",
-				satype));
 	}
 
 	const int dir = (sadb_op == ERO_ADD_INBOUND || sadb_op == ERO_DEL_INBOUND) ?
