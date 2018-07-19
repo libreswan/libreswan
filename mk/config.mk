@@ -418,6 +418,7 @@ LIBSWANDIR=${LIBRESWANSRCDIR}/lib/libswan
 # 'ld' (does the link) are run from different directories.
 LIBRESWANLIB=$(abs_top_builddir)/lib/libswan/libswan.a
 LSWTOOLLIB=$(abs_top_builddir)/lib/liblswtool/liblswtool.a
+BSDPFKEYLIB=$(abs_top_builddir)/lib/libbsdpfkey/libbsdpfkey.a
 
 # XXX: $(LSWTOOLLIB) has circular references to $(LIBRESWANLIB).
 LSWTOOLLIBS=$(LSWTOOLLIB) $(LIBRESWANLIB)

@@ -85,8 +85,7 @@ endif
 
 ifeq ($(USE_BSDKAME),true)
 OBJS += kernel_bsdkame.o
-# LIBBSDPFKEY is presumably passed in.
-LDFLAGS += ${LIBBSDPFKEY}
+LDFLAGS += $(BSDPFKEYLIB)
 endif
 
 OBJS += x509.o
