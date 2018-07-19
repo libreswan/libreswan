@@ -244,15 +244,18 @@ static void init_netlink(void)
 
 	init_netlink_route_fd();
 
- 	/*
-	 * also open the pfkey socket, since we need it to get a list of
-	 * algorithms.
-	 * There is currently no netlink way to do this.
+	/*
+	 * pfkey_register_response() does not register an entry for
+	 * msg->sadb_msg_satype=10 to indicate IPCOMP, so we override
+	 * detection here. Seems the PF_KEY API in Linux with netkey
+	 * is a joke that should be abandoned for a "linux children"
+	 * native netlink query/response
 	 *
-	 * XXX: Given the code below hard-wires everything, is this
-	 * still needed?
+	 * XXX: Given KLIPS defines K_SADB_X_SATYPE_COMP=9, and
+	 * IPIP=10 which conflicts with the aboe, that might be the
+	 * source of the problem?
 	 */
-	init_pfkey();
+	can_do_IPcomp = TRUE;
 
 	/*
 	 * Just assume any algorithm with a NETLINK_XFRM name works.
@@ -1566,27 +1569,6 @@ static bool netlink_del_sa(const struct kernel_sa *sa)
 }
 
 /*
- * linux_pfkey_register - Register via PFKEY our capabilities
- *
- */
-static void linux_pfkey_register(void)
-{
-	netlink_register_proto(SADB_SATYPE_AH, "AH");
-	netlink_register_proto(SADB_SATYPE_ESP, "ESP");
-	netlink_register_proto(SADB_X_SATYPE_IPCOMP, "IPCOMP");
-	/*
-	 * pfkey_register_response() does not register an entry
-	 * for msg->sadb_msg_satype=10 to indicate IPCOMP, so
-	 * we override detection here. Seems the PF_KEY API in
-	 * Linux with netkey is a joke that should be abandoned
-	 * for a "linux children" native netlink query/response
-	 */
-	can_do_IPcomp = TRUE;
-	pfkey_close();
-	DBG(DBG_CONTROLMORE, DBG_log("Registered AH, ESP and IPCOMP"));
-}
-
-/*
  * Create ip_address out of xfrm_address_t.
  *
  * @param family
@@ -2842,8 +2824,6 @@ const struct kernel_ops netkey_kernel_ops = {
 	.replay_window = IPSEC_SA_DEFAULT_REPLAY_WINDOW,
 
 	.init = init_netlink,
-	.pfkey_register = linux_pfkey_register,
-	.pfkey_register_response = pfkey_register_response,
 	.process_msg = netlink_process_msg,
 	.raw_eroute = netlink_raw_eroute,
 	.add_sa = netlink_add_sa,

@@ -76,7 +76,3 @@ extern void pfkey_scan_shunts(void);
 extern int pfkeyfd;
 
 #endif /* PFKEY */
-
-#ifdef NETKEY_SUPPORT
-extern void netlink_register_proto(unsigned satype, const char *satypename);
-#endif

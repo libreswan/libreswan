@@ -777,13 +777,6 @@ void klips_register_proto(unsigned satype, const char *satypename)
 }
 #endif
 
-#ifdef NETKEY_SUPPORT
-void netlink_register_proto(unsigned satype, const char *satypename)
-{
-	return pfkey_register_proto(SADB_REGISTER, satype, satypename);
-}
-#endif
-
 static int kernelop2klips(enum pluto_sadb_operations op)
 {
 	int klips_op = 0;
