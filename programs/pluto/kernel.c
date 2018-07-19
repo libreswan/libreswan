@@ -2740,7 +2740,6 @@ void init_kernel(void)
 	}
 
 	/* register SA types that we can negotiate */
-	can_do_IPcomp = FALSE; /* until we get a response from KLIPS */
 	if (kernel_ops->pfkey_register != NULL)
 		kernel_ops->pfkey_register();
 
