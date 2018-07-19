@@ -85,6 +85,7 @@ north #
 000 algorithm AH/ESP auth: name=AES_XCBC_96, key-length=128
 000 algorithm AH/ESP auth: name=AES_CMAC_96, key-length=128
 000 algorithm AH/ESP auth: name=NONE, key-length=0
+000 algorithm AH/ESP auth: name=HMAC_SHA2_256_TRUNCBUG, key-length=256
 000  
 000 IKE algorithms supported:
 000  

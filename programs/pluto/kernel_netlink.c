@@ -244,37 +244,38 @@ static void init_netlink(void)
 
 	init_netlink_route_fd();
 
-	/*
+ 	/*
 	 * also open the pfkey socket, since we need it to get a list of
 	 * algorithms.
 	 * There is currently no netlink way to do this.
+	 *
+	 * XXX: Given the code below hard-wires everything, is this
+	 * still needed?
 	 */
 	init_pfkey();
 
 	/*
-	 * The PFKEY interface is on life support.  Since it isn't
-	 * being extended to support new algorithms, they need to be
-	 * hard wired.
+	 * Just assume any algorithm with a NETLINK_XFRM name works.
 	 *
 	 * Kind of lame since pluto should query the kernel for what
 	 * it supports.  OTOH, the query might happen before the
 	 * crypto module gets loaded.
 	 */
-	DBG(DBG_KERNEL,
-		DBG_log("Hard-wiring new AEAD algorithms"));
-
-	kernel_encrypt_add(&ike_alg_encrypt_aes_gcm_8);
-	kernel_encrypt_add(&ike_alg_encrypt_aes_gcm_12);
-	kernel_encrypt_add(&ike_alg_encrypt_aes_gcm_16);
-	kernel_encrypt_add(&ike_alg_encrypt_aes_ccm_8);
-	kernel_encrypt_add(&ike_alg_encrypt_aes_ccm_12);
-	kernel_encrypt_add(&ike_alg_encrypt_aes_ccm_16);
-	kernel_encrypt_add(&ike_alg_encrypt_null_integ_aes_gmac);
-
-	DBG(DBG_KERNEL,
-		DBG_log("Hard-wiring new INTEG algorithms"));
-
-	kernel_integ_add(&ike_alg_integ_aes_cmac);
+	DBGF(DBG_KERNEL, "Hard-wiring algorithms");
+	for (const struct encrypt_desc **algp = next_encrypt_desc(NULL);
+	     algp != NULL; algp = next_encrypt_desc(algp)) {
+		const struct encrypt_desc *alg = *algp;
+		if (alg->encrypt_netlink_xfrm_name != NULL) {
+			kernel_encrypt_add(alg);
+		}
+	}
+	for (const struct integ_desc **algp = next_integ_desc(NULL);
+	     algp != NULL; algp = next_integ_desc(algp)) {
+		const struct integ_desc *alg = *algp;
+		if (alg->integ_netlink_xfrm_name != NULL) {
+			kernel_integ_add(alg);
+		}
+	}
 }
 
 struct nlm_resp {
