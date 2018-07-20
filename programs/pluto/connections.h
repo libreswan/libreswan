@@ -25,6 +25,9 @@
  *
  */
 
+#ifndef CONNECTIONS_H
+#define CONNECTIONS_H
+
 /* There are two kinds of connections:
  * - ISAKMP connections, between hosts (for IKE communication)
  * - IPsec connections, between clients (for secure IP communication)
@@ -541,3 +544,5 @@ extern void liveness_action(struct connection *c, const bool ikev2);
 extern bool idr_wildmatch(const struct connection *c, const struct id *b);
 
 extern uint32_t calculate_sa_prio(const struct connection *c);
+
+#endif
