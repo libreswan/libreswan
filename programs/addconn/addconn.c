@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include "lswlog.h"
 #include "lswcdefs.h"	/* for UNUSED */
 #include "lswalloc.h"
 #include "lswtool.h"
