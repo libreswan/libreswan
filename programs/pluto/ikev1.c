@@ -7,7 +7,7 @@
  * Copyright (C) 2011 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2008 Hiren Joshi <joshihirenn@gmail.com>
  * Copyright (C) 2009 Anthony Tong <atong@TrustedCS.com>
- * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -916,8 +916,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 
 				/* Initiating connection to the redirected peer */
 				initiate_connection(tmp_name, tmp_whack_sock,
-						    empty_lmod, empty_lmod,
-						    pcim_demand_crypto, NULL);
+						    empty_lmod, empty_lmod, NULL);
 			}
 			return STF_IGNORE;
 		default:

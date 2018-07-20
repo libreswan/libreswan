@@ -5,7 +5,7 @@
  * Copyright (C) 2011 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Philippe Vouters <philippe.vouters@laposte.net>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -182,12 +182,6 @@ stf_status aggr_inI1_outR1(struct state *st, struct msg_digest *md)
 	set_cur_state(st);
 	st->st_connection = c;	/* safe: from new_state */
 	change_state(st, STATE_AGGR_R1);
-
-	/*
-	 * until we have clue who this is, be conservative about allocating
-	 * them any crypto bandwidth
-	 */
-	st->st_import = pcim_stranger_crypto;
 
 	st->st_policy = policy;	/* ??? not sure what's needed here */
 
@@ -1001,8 +995,7 @@ void aggr_outI1(int whack_sock,
 		struct connection *c,
 		struct state *predecessor,
 		lset_t policy,
-		unsigned long try,
-		enum crypto_importance importance
+		unsigned long try
 #ifdef HAVE_LABELED_IPSEC
 		, struct xfrm_user_sec_ctx_ike *uctx
 #endif
@@ -1034,8 +1027,6 @@ void aggr_outI1(int whack_sock,
 	change_state(st, STATE_AGGR_I1);
 
 	get_cookie(TRUE, st->st_icookie, &c->spd.that.host_addr);
-
-	st->st_import = importance;
 
 	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		if (sr->this.xauth_client) {

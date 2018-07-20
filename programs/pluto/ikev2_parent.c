@@ -715,8 +715,7 @@ void ikev2_parent_outI1(int whack_sock,
 		       struct connection *c,
 		       struct state *predecessor,
 		       lset_t policy,
-		       unsigned long try,
-		       enum crypto_importance importance
+		       unsigned long try
 #ifdef HAVE_LABELED_IPSEC
 		       , struct xfrm_user_sec_ctx_ike *uctx
 #endif
@@ -736,7 +735,7 @@ void ikev2_parent_outI1(int whack_sock,
 
 	/* set up new state */
 	get_cookie(TRUE, st->st_icookie, &c->spd.that.host_addr);
-	initialize_new_state(st, c, policy, try, whack_sock, importance);
+	initialize_new_state(st, c, policy, try, whack_sock);
 	st->st_ikev2 = TRUE;
 	change_state(st, STATE_PARENT_I1);
 	st->st_original_role = ORIGINAL_INITIATOR;
@@ -1359,8 +1358,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	memcpy(st->st_icookie, md->hdr.isa_icookie, COOKIE_SIZE);
 	/* initialize_new_state expects valid icookie/rcookie values, so create it now */
 	get_cookie(FALSE, st->st_rcookie, &md->sender);
-	initialize_new_state(st, c, policy, 0, NULL_FD,
-			     pcim_stranger_crypto);
+	initialize_new_state(st, c, policy, 0, NULL_FD);
 	update_ike_endpoints(st, md);
 	st->st_ikev2 = TRUE;
 	change_state(st, STATE_PARENT_R1);

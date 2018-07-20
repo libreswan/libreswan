@@ -2,7 +2,7 @@
  *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Philippe Vouters <philippe.vouters@laposte.net>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
@@ -202,24 +202,6 @@ enum event_type {
 #define DELETE_SA_DELAY			RETRANSMIT_TIMEOUT_DEFAULT /* wait until the other side giveup on us */
 #define EVENT_CRYPTO_TIMEOUT_DELAY	RETRANSMIT_TIMEOUT_DEFAULT /* wait till the other side give up on us */
 #define EVENT_PAM_TIMEOUT_DELAY		RETRANSMIT_TIMEOUT_DEFAULT /* wait until this side give up on PAM */
-
-/*
- * operational importance of this cryptographic operation.
- * this determines if the operation will be dropped (because the other
- * end will retransmit, if they are legit), if it pertains to an on-going
- * connection, or if it is something that we initiated, and therefore
- * we should do it all costs.
- */
-enum crypto_importance {
-	pcim_notset_crypto,
-	pcim_stranger_crypto,
-	pcim_known_crypto,
-	pcim_ongoing_crypto,
-	pcim_local_crypto,
-	pcim_demand_crypto
-#define CRYPTO_IMPORTANCE_ROOF (pcim_demand_crypto + 1)
-};
-
 
 /* is pluto automatically switching busy state or set manually */
 enum ddos_mode {

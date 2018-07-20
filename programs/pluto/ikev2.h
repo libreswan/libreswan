@@ -3,6 +3,7 @@
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2017 Andrew Cagney
  */
 
@@ -18,8 +19,7 @@ extern void ikev2_parent_outI1(int whack_sock,
 			      struct connection *c,
 			      struct state *predecessor,
 			      lset_t policy,
-			      unsigned long try,
-			      enum crypto_importance importance
+			      unsigned long try
 #ifdef HAVE_LABELED_IPSEC
 			      , struct xfrm_user_sec_ctx_ike *uctx
 #endif

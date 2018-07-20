@@ -1,7 +1,7 @@
 /* tables of names for values defined in constants.h
  *
  * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -332,25 +332,7 @@ enum_names natt_method_names = {
 	NULL
 };
 
-/* pluto crypto importance */
-static const char *const pluto_cryptoimportance_strings[] = {
-	"import:not set",
-	"import:respond to stranger",
-	"import:respond to friend",
-	"import:ongoing calculation",
-	"import:local rekey",
-	"import:admin initiate"
-};
-
-enum_names pluto_cryptoimportance_names = {
-	pcim_notset_crypto, pcim_demand_crypto,
-	ARRAY_REF(pluto_cryptoimportance_strings),
-	NULL, /* prefix */
-	NULL
-	};
-
 /* routing status names */
-
 static const char *const routing_story_strings[] = {
 	"unrouted",             /* RT_UNROUTED: unrouted */
 	"unrouted HOLD",        /* RT_UNROUTED_HOLD: unrouted, but HOLD shunt installed */
@@ -513,7 +495,6 @@ static const enum_names *pluto_enum_names_checklist[] = {
 	&state_names,
 	&state_stories,
 	&natt_method_names,
-	&pluto_cryptoimportance_names,
 	&routing_story,
 	&stfstatus_name,
 	&netkey_sa_dir_names,

@@ -7,7 +7,7 @@
  * Copyright (C) 2003-2011 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2010-2011 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012-2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2014,2017 Andrew Cagney <cagney@gmail.com>
@@ -205,8 +205,7 @@ void ipsecdoi_initiate(int whack_sock,
 		       struct connection *c,
 		       lset_t policy,
 		       unsigned long try,
-		       so_serial_t replacing,
-		       enum crypto_importance importance
+		       so_serial_t replacing
 #ifdef HAVE_LABELED_IPSEC
 		       , struct xfrm_user_sec_ctx_ike *uctx
 #endif
@@ -229,7 +228,7 @@ void ipsecdoi_initiate(int whack_sock,
 		initiator_function *initiator = pick_initiator(c, policy);
 
 		if (initiator != NULL) {
-			initiator(whack_sock, c, NULL, policy, try, importance
+			initiator(whack_sock, c, NULL, policy, try
 #ifdef HAVE_LABELED_IPSEC
 				  , uctx
 #endif
@@ -239,10 +238,6 @@ void ipsecdoi_initiate(int whack_sock,
 			close_any(whack_sock);
 		}
 	} else if (HAS_IPSEC_POLICY(policy)) {
-
-		/* boost priority if necessary */
-		if (st->st_import < importance)
-			st->st_import = importance;
 
 		if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
 			/* leave our Phase 2 negotiation pending */
@@ -309,7 +304,7 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 
 		if (initiator != NULL) {
 			(void) initiator(dup_any(st->st_whack_sock),
-				c, st, policy, try, st->st_import
+				c, st, policy, try
 #ifdef HAVE_LABELED_IPSEC
 				, st->sec_ctx
 #endif
@@ -349,7 +344,7 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 		if (!st->st_ikev2)
 			passert(HAS_IPSEC_POLICY(policy));
 		ipsecdoi_initiate(dup_any(st->st_whack_sock), st->st_connection,
-			policy, try, st->st_serialno, st->st_import
+			policy, try, st->st_serialno
 #ifdef HAVE_LABELED_IPSEC
 			, st->sec_ctx
 #endif
@@ -481,8 +476,7 @@ void initialize_new_state(struct state *st,
 			  struct connection *c,
 			  lset_t policy,
 			  int try,
-			  int whack_sock,
-			  enum crypto_importance importance)
+			  int whack_sock)
 {
 	st->st_connection = c;	/* surely safe: must be a new state */
 
@@ -492,8 +486,6 @@ void initialize_new_state(struct state *st,
 	st->st_policy = policy & ~POLICY_IPSEC_MASK;        /* clear bits */
 	st->st_whack_sock = whack_sock;
 	st->st_try = try;
-
-	st->st_import = importance;
 
 	const struct spd_route *sr;
 

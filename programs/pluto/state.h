@@ -12,7 +12,7 @@
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2014,2017 Antony Antony <antony@phenome.org>
  * Copyright (C) 2015-2018 Andrew Cagney
- * Copyright (C) 2015-2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2015-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
  *
@@ -485,11 +485,6 @@ struct state {
 					 */
 	/* end of DH values */
 
-	enum crypto_importance st_import;       /* relative priority
-						 * of crypto operations.
-						 * XXX: probably.
-						 */
-
 	/* In a Phase 1 state, preserve peer's public key after authentication */
 	struct pubkey *st_peer_pubkey;
 
@@ -744,8 +739,7 @@ extern void initialize_new_state(struct state *st,
 				 struct connection *c,
 				 lset_t policy,
 				 int try,
-				 int whack_sock,
-				 enum crypto_importance importance);
+				 int whack_sock);
 
 extern void show_traffic_status(const char *name);
 extern void show_states_status(void);

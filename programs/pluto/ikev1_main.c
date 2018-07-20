@@ -13,7 +13,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
- * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2017 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -100,8 +100,7 @@ void main_outI1(int whack_sock,
 		struct connection *c,
 		struct state *predecessor,
 		lset_t policy,
-		unsigned long try,
-		enum crypto_importance importance
+		unsigned long try
 #ifdef HAVE_LABELED_IPSEC
 		, struct xfrm_user_sec_ctx_ike *uctx
 #endif
@@ -137,7 +136,7 @@ void main_outI1(int whack_sock,
 
 	/* set up new state */
 	get_cookie(TRUE, st->st_icookie, &c->spd.that.host_addr);
-	initialize_new_state(st, c, policy, try, whack_sock, importance);
+	initialize_new_state(st, c, policy, try, whack_sock);
 	change_state(st, STATE_MAIN_I1);
 
 	if (HAS_IPSEC_POLICY(policy)) {

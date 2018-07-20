@@ -10,7 +10,7 @@
  * Copyright (C) 2010 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2011 Mika Ilmaranta <ilmis@foobar.fi>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2014-2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2014-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2014-2017 Antony Antony <antony@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -550,7 +550,6 @@ void whack_process(int whackfd, const struct whack_message *const m)
 					    dup_any(whackfd),
 					    m->debugging,
 					    m->impairing,
-					    pcim_demand_crypto,
 					    pass_remote ? m->remote_host : NULL);
 		}
 	}

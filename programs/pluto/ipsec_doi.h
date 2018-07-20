@@ -1,7 +1,7 @@
 /* IPsec DOI and Oakley resolution routines
  * Copyright (C) 1998-2002,2010-2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2007,2008 Michael Richardson <mcr@xelerance.com>
- * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  *
@@ -24,8 +24,7 @@ typedef void initiator_function(int whack_sock,
 				struct connection *c,
 				struct state *predecessor,
 				lset_t policy,
-				unsigned long try,
-				enum crypto_importance importance
+				unsigned long try
 #ifdef HAVE_LABELED_IPSEC
 				, struct xfrm_user_sec_ctx_ike *uctx
 #endif
@@ -33,8 +32,7 @@ typedef void initiator_function(int whack_sock,
 
 extern void ipsecdoi_initiate(int whack_sock, struct connection *c,
 			      lset_t policy, unsigned long try,
-			      so_serial_t replacing,
-			      enum crypto_importance importance
+			      so_serial_t replacing
 #ifdef HAVE_LABELED_IPSEC
 			      , struct xfrm_user_sec_ctx_ike *uctx
 #endif

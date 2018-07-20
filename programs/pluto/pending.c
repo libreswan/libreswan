@@ -4,7 +4,7 @@
  * Copyright (C) 2003-2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2011 Anthony Tong <atong@TrustedCS.com>
  * Copyright (C) 2017-2018 Antony Antony <antony@phenome.org>
  *
@@ -255,14 +255,12 @@ void unpend(struct state *st, struct connection *cc)
 			DBG(DBG_CONTROL, {
 				ipstr_buf b;
 				char cib[CONN_INST_BUF];
-				DBG_log("%s pending %s with %s \"%s\"%s %s",
+				DBG_log("%s pending %s with %s \"%s\"%s",
 					what,
 					st->st_ikev2 ? "Child SA" : "Quick Mode",
 					ipstr(&p->connection->spd.that.host_addr, &b),
 					p->connection->name,
-					fmt_conn_instance(p->connection, cib),
-					enum_name(&pluto_cryptoimportance_names,
-						  st->st_import));
+					fmt_conn_instance(p->connection, cib));
 			});
 
 			p->whack_sock = NULL_FD;        /* ownership transferred */

@@ -10,7 +10,7 @@
  * Copyright (C) 2013 Kim Heino <b@bbbs.net>
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2013-2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -368,7 +368,6 @@ extern void initiate_connection(const char *name,
 				int whackfd,
 				lmod_t more_debugging,
 				lmod_t more_impairing,
-				enum crypto_importance importance,
 				char *remote_host);
 extern void restart_connections_by_peer(struct connection *c);
 

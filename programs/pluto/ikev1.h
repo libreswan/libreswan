@@ -57,8 +57,7 @@ extern void main_outI1(int whack_sock,
 		       struct connection *c,
 		       struct state *predecessor,
 		       lset_t policy,
-		       unsigned long try,
-		       enum crypto_importance importance
+		       unsigned long try
 #ifdef HAVE_LABELED_IPSEC
 		       , struct xfrm_user_sec_ctx_ike *uctx
 #endif
@@ -69,8 +68,7 @@ extern void aggr_outI1(int whack_sock,
 		       struct connection *c,
 		       struct state *predecessor,
 		       lset_t policy,
-		       unsigned long try,
-		       enum crypto_importance importance
+		       unsigned long try
 #ifdef HAVE_LABELED_IPSEC
 		       , struct xfrm_user_sec_ctx_ike *uctx
 #endif

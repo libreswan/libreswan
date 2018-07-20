@@ -16,7 +16,7 @@
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  * Copyright (C) 2015-2017 Andrew Cagney
  * Copyright (C) 2015-2018 Antony Antony <antony@phenome.org>
- * Copyright (C) 2015-2017 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2015-2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2017 Richard Guy Briggs <rgb@tricolour.ca>
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  *
@@ -1524,7 +1524,6 @@ static struct state *duplicate_state(struct state *st, sa_t sa_type)
 	nst->st_localport = st->st_localport;
 	nst->st_interface = st->st_interface;
 	nst->st_clonedfrom = st->st_serialno;
-	nst->st_import = st->st_import;
 	nst->st_ikev2 = st->st_ikev2;
 	nst->st_ikev2_anon = st->st_ikev2_anon;
 	nst->st_original_role = st->st_original_role;
@@ -2184,7 +2183,7 @@ void fmt_state(struct state *st, const monotime_t now,
 	}
 
 	snprintf(state_buf, state_buf_len,
-		 "#%lu: \"%s\"%s:%u %s (%s); %s in %jds%s%s%s%s; %s; %s",
+		 "#%lu: \"%s\"%s:%u %s (%s); %s in %jds%s%s%s%s; %s;",
 		 st->st_serialno,
 		 c->name, inst,
 		 st->st_remoteport,
@@ -2197,8 +2196,7 @@ void fmt_state(struct state *st, const monotime_t now,
 		 (st->st_offloaded_task != NULL && !st->st_v1_offloaded_task_in_background)
 		 ? "crypto_calculating" :
 			st->st_suspended_md != NULL ?  "crypto/dns-lookup" :
-			"idle",
-		 enum_name(&pluto_cryptoimportance_names, st->st_import));
+			"idle");
 
 	/* print out SPIs if SAs are established */
 	if (state_buf2_len != 0)

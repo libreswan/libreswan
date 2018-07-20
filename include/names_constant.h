@@ -12,7 +12,6 @@ extern enum_names dpd_action_names;
 extern enum_names netkey_sa_dir_names;
 #endif
 extern enum_names sd_action_names;
-extern enum_names pluto_cryptoimportance_names;
 extern enum_names stfstatus_name;
 extern enum_names ikev2_asym_auth_name;
 extern const enum_names debug_names;
