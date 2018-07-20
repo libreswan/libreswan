@@ -32,6 +32,8 @@
 #include "addr_lookup.h"
 #ifdef USE_DNSSEC
 # include "dnssec.h"
+#else
+# include <netdb.h>
 #endif
 
 /*
