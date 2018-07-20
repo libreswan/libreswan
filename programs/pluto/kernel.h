@@ -24,6 +24,10 @@
 
 #include "monotime.h"
 #include "reqid.h"
+#include "connections.h"	/* for policy_prio_t et.al. */
+
+struct sa_marks;
+struct spd_route;
 
 extern bool can_do_IPcomp;  /* can system actually perform IPCOMP? */
 extern reqid_t global_reqids;
