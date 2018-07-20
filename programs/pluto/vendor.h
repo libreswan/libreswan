@@ -25,10 +25,12 @@
 #define _VENDOR_H_
 
 #include "known_vendorid.h"
+#include "packet.h"		/* for pb_stream */
+
+struct msg_digest;
 
 void init_vendorid(void);
 
-struct msg_digest;
 void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 		     bool ikev2);
 
