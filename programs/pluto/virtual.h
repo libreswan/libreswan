@@ -16,6 +16,11 @@
 #define _VIRTUAL_IP_H
 
 #include "err.h"
+#include "ip_address.h"
+
+struct connection;
+struct spd_route;
+struct end;
 
 extern void show_virtual_private(void);
 
