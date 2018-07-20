@@ -18,8 +18,6 @@
  *
  */
 
-#include <string.h>
-
 #include "constants.h"
 #include "kernel_alg.h"
 #include "lswlog.h"
@@ -27,65 +25,78 @@
 #include "ike_alg_encrypt.h"
 
 /*
- * ALG storage.  Maintain several arrays.
+ * ALG storage
  *
- * These arrays are sorted by alg's FQN.
+ * The kernel algorithm database is indexed by SADB kernel values and
+ * assumes that all kernel algorithms have either .integ_sadb_aalg_id
+ * or .encrypt_sadb_ealg_id defined.
  *
- * XXX: These arrays are grosely oversized.
+ * Where no SADB value was available, a magic SADB value has been
+ * added.
+ *
+ * XXX: the table needs to instead be constructed with no reference to
+ * SADB, and the iterator return thiings in a stable sorted order.
+ *
+ * XXX: Assume for the moment, and seeing that a sadb_alg_id must fit
+ * in a uint8_t, that all values fall in the range [1..255] (0 isn't
+ * valid).
  */
 
-#define MAX_ALGS 32
+static const struct integ_desc *esp_aalg[256];
+static const struct encrypt_desc *esp_ealg[256];
+static int esp_ealg_num = 0;
+static int esp_aalg_num = 0;
 
-static const struct integ_desc *integ_by_fqn[MAX_ALGS];
-static const struct encrypt_desc *encrypt_by_fqn[MAX_ALGS];
-static size_t integ_num = 0;
-static size_t encrypt_num = 0;
+#define ESP_EALG_PRESENT(algo) ((algo) < elemsof(esp_ealg) && \
+				esp_ealg[algo] != NULL)
+
+#define ESP_EALG_FOR_EACH(algo) \
+	for ((algo) = 1; (algo) < elemsof(esp_ealg); (algo)++) \
+		if (ESP_EALG_PRESENT(algo))
+
+#define ESP_AALG_PRESENT(algo) ((algo) < elemsof(esp_aalg) &&	\
+				esp_aalg[algo] != NULL)
+
+#define ESP_AALG_FOR_EACH(algo) \
+	for ((algo) = 1; (algo) < elemsof(esp_aalg); (algo)++) \
+		if (ESP_AALG_PRESENT(algo))
 
 /*
  *      Forget previous registration
- *
- * XXX: Needed????
  */
 void kernel_alg_init(void)
 {
 	DBGF(DBG_KERNEL, "kernel_alg_init()");
 	/* ??? do these zero calls do anything useful? */
-	zero(&integ_by_fqn);
-	zero(&encrypt_by_fqn);
-	encrypt_num = integ_num = 0;
+	zero(&esp_aalg);
+	zero(&esp_ealg);
+	esp_ealg_num = esp_aalg_num = 0;
 }
-
-/*
- * Make use of the fact that the table is kept sorted.
- */
-
-#define ADD(ALG, DESC)							\
-	size_t i = 0;							\
-	while (i < DESC##_num) {					\
-		int cmp = strcmp(DESC##_by_fqn[i]->common.fqn,		\
-				 alg->common.fqn);			\
-		if (cmp == 0) {						\
-			DBGF(DBG_KERNEL,				\
-			     "dropping duplicated %s kernel algorithm",	\
-			     alg->common.fqn);				\
-			return;						\
-		}							\
-	}								\
-	passert(DESC##_num < elemsof(DESC##_by_fqn));			\
-	/* make space by moving the overlapping tail */			\
-	memmove(&DESC##_by_fqn[i+1], &DESC##_by_fqn[i],			\
-		(DESC##_num - i) * sizeof(DESC##_by_fqn[0]));		\
-	/* insert */							\
-	DESC##_by_fqn[i] = ALG;
 
 void kernel_integ_add(const struct integ_desc *alg)
 {
-	ADD(alg, integ);
+	const struct integ_desc **dest = &esp_aalg[alg->integ_sadb_aalg_id];
+	if (*dest == NULL) {
+		*dest = alg;
+		esp_aalg_num++;
+	} else {
+		DBGF(DBG_KERNEL,
+		     "dropping duplicate %s kernel integrity algorithm",
+		     alg->common.fqn);
+	}
 }
 
 void kernel_encrypt_add(const struct encrypt_desc *alg)
 {
-	ADD(alg, encrypt);
+	const struct encrypt_desc **dest = &esp_ealg[alg->encrypt_sadb_ealg_id];
+	if (*dest == NULL) {
+		*dest = alg;
+		esp_ealg_num++;
+	} else {
+		DBGF(DBG_KERNEL,
+		     "dropping duplicate %s kernel encryption algorithm",
+		     alg->common.fqn);
+	}
 }
 
 bool kernel_alg_dh_ok(const struct oakley_group_desc *dh)
@@ -98,26 +109,22 @@ bool kernel_alg_dh_ok(const struct oakley_group_desc *dh)
 	return ike_alg_is_ike(&dh->common);
 }
 
-#define KERNEL_ALG_OK(ALG, DESC)\
-	if (!pexpect(ALG != NULL)) {			\
-		return false;				\
-	}						\
-	for (unsigned i = 0; i < DESC##_num; i++) {	\
-		if (DESC##_by_fqn[i] == ALG) {		\
-			return true;			\
-		}					\
-	}						\
-	return false;
-
-
-bool kernel_alg_encrypt_ok(const struct encrypt_desc *alg)
+bool kernel_alg_encrypt_ok(const struct encrypt_desc *encrypt)
 {
-	KERNEL_ALG_OK(alg, encrypt);
+	if (encrypt == NULL) {
+		PEXPECT_LOG("%s", "encryption needs to be valid (non-NULL)");
+		return false;
+	}
+	return ESP_EALG_PRESENT(encrypt->encrypt_sadb_ealg_id);
 }
 
-bool kernel_alg_integ_ok(const struct integ_desc *alg)
+bool kernel_alg_integ_ok(const struct integ_desc *integ)
 {
-	KERNEL_ALG_OK(alg, integ);
+	if (integ == NULL) {
+		PEXPECT_LOG("%s", "integrity needs to be valid (non-NULL)");
+		return false;
+	}
+	return ESP_AALG_PRESENT(integ->integ_sadb_aalg_id);
 }
 
 bool kernel_alg_is_ok(const struct ike_alg *alg)
@@ -171,31 +178,42 @@ bool kernel_alg_encrypt_key_size(const struct encrypt_desc *encrypt,
 	return true;
 }
 
-#define NEXT(LAST, DESC)						\
-	if (LAST == NULL) {						\
-		return &DESC##_by_fqn[0];				\
-	} else if (LAST < &DESC##_by_fqn[DESC##_num-1]) {		\
-		return LAST+1;						\
-	} else {							\
-		return NULL;						\
-	}
-
 const struct encrypt_desc **next_kernel_encrypt_desc(const struct encrypt_desc **last)
 {
-	NEXT(last, encrypt)
+	if (last == NULL) {
+		last = &esp_ealg[1];
+	} else {
+		last++;
+	}
+	for (; last < &esp_ealg[elemsof(esp_ealg)]; last++) {
+		if (*last != NULL) {
+			return last;
+		}
+	}
+	return NULL;
 }
 
 const struct integ_desc **next_kernel_integ_desc(const struct integ_desc **last)
 {
-	NEXT(last, integ)
+	if (last == NULL) {
+		last = &esp_aalg[1];
+	} else {
+		last++;
+	}
+	for (; last < &esp_aalg[elemsof(esp_aalg)]; last++) {
+		if (*last != NULL) {
+			return last;
+		}
+	}
+	return NULL;
 }
 
 int kernel_alg_encrypt_count(void)
 {
-	return encrypt_num;
+	return esp_ealg_num;
 }
 
 int kernel_alg_integ_count(void)
 {
-	return integ_num;
+	return esp_aalg_num;
 }
