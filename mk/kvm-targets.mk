@@ -608,6 +608,9 @@ define shadow-kvm-disk
 	$(KVMSH) --shutdown $(2)
 	test -r $(KVM_LOCALDIR)/$(2).qcow2 || sudo chgrp $(KVM_GROUP) $(KVM_LOCALDIR)/$(2).qcow2
 	test -r $(KVM_LOCALDIR)/$(2).qcow2 || sudo chmod g+r          $(KVM_LOCALDIR)/$(2).qcow2
+	: if this test fails, user probably forgot this step:
+	: https://libreswan.org/wiki/Test_Suite#Setting_Users_and_Groups
+	test -r $(KVM_LOCALDIR)/$(2).qcow2
 	: create a shadow - from is used as a backing store
 	rm -f $(1)
 	qemu-img create -f qcow2 \
@@ -671,6 +674,9 @@ $(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).qcow2: | $(KVM_LOCALDIR)
 	$(KVMSH) --shutdown $(KVM_BASE_DOMAIN)
 	test -r $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 || sudo chgrp $(KVM_GROUP) $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2
 	test -r $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2 || sudo chmod g+r          $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2
+	: if this test fails, user probably forgot this step:
+	: https://libreswan.org/wiki/Test_Suite#Setting_Users_and_Groups
+	test -r $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).qcow2
 	: create a full copy
 	rm -f $@
 	qemu-img convert \
