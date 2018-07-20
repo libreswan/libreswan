@@ -297,7 +297,6 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 	int fd = socket(addrtypeof(&ifp->addr), SOCK_DGRAM, IPPROTO_UDP);
 	int fcntl_flags;
 	static const int on = TRUE;     /* by-reference parameter; constant, we hope */
-	static const int so_prio = 6; /* rumored maximum priority, might be 7 on linux? */
 
 	if (fd < 0) {
 		LOG_ERRNO(errno, "socket() in create_socket()");
@@ -327,11 +326,14 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 		return -1;
 	}
 
+#ifdef SO_PRIORITY
+	static const int so_prio = 6; /* rumored maximum priority, might be 7 on linux? */
 	if (setsockopt(fd, SOL_SOCKET, SO_PRIORITY,
 			(const void *)&so_prio, sizeof(so_prio)) < 0) {
 		LOG_ERRNO(errno, "setsockopt(SO_PRIORITY) in find_raw_ifaces4()");
 		/* non-fatal */
 	}
+#endif
 
 	if (pluto_sock_bufsize != IKE_BUF_AUTO) {
 #if defined(linux)
