@@ -211,7 +211,6 @@ int main(int argc, char *argv[])
 	int exit_status = 0;
 	struct starter_conn *conn = NULL;
 	const char *ctlsocket = NULL;
-	bool resolvip = TRUE; /* default to looking up names */
 
 #if 0
 	/* efence settings */
@@ -356,17 +355,12 @@ int main(int argc, char *argv[])
 
 	starter_use_log(verbose != 0, TRUE, verbose == 0);
 
-	if (configsetup || checkconfig || dolist) {
-		/* skip if we have no use for them... causes delays */
-		resolvip = FALSE;
-	}
-
 	struct starter_config *cfg = NULL;
 
 	{
 		starter_errors_t errl = { NULL };
 
-		cfg = confread_load(configfile, &errl, resolvip, ctlsocket, configsetup);
+		cfg = confread_load(configfile, &errl, ctlsocket, configsetup);
 
 		if (cfg == NULL) {
 			fprintf(stderr, "cannot load config '%s': %s\n",

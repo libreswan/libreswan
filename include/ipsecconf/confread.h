@@ -155,7 +155,6 @@ extern void parser_free_conf(struct config_parsed *cfg);
 
 extern struct starter_config *confread_load(const char *file,
 					    starter_errors_t *perrl,
-					    bool resolvip,
 					    const char *ctlsocket,
 					    bool setuponly);
 extern struct starter_conn *alloc_add_conn(struct starter_config *cfg,

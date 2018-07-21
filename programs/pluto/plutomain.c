@@ -310,7 +310,7 @@ static struct starter_config *read_cfg_file(char *configfile)
 	struct starter_config *cfg = NULL;
 	starter_errors_t errl = { NULL };
 
-	cfg = confread_load(configfile, &errl, FALSE, NULL /* ctl_addr.sun_path? */, TRUE);
+	cfg = confread_load(configfile, &errl, NULL /* ctl_addr.sun_path? */, TRUE);
 	if (cfg == NULL) {
 		/*
 		 * note: incovation_fail never returns so we will have

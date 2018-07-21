@@ -410,7 +410,6 @@ static bool load_setup(struct starter_config *cfg,
 static bool validate_end(struct starter_conn *conn_st,
 			struct starter_end *end,
 			const char *leftright,
-			bool resolvip UNUSED,
 			starter_errors_t *perrl)
 {
 	err_t er = NULL;
@@ -978,7 +977,6 @@ static bool load_conn(
 		     struct section_list *sl,
 		     bool alsoprocessing,
 		     bool defaultconn,
-		     bool resolvip,
 		     starter_errors_t *perrl)
 {
 	bool err;
@@ -1405,8 +1403,8 @@ static bool load_conn(
 			POLICY_IKE_FRAG_FORCE);
 	}
 
-	err |= validate_end(conn, &conn->left, "left", resolvip, perrl);
-	err |= validate_end(conn, &conn->right, "right", resolvip, perrl);
+	err |= validate_end(conn, &conn->left, "left", perrl);
+	err |= validate_end(conn, &conn->right, "right", perrl);
 
 	/*
 	 * TODO:
@@ -1494,7 +1492,6 @@ static bool init_load_conn(struct starter_config *cfg,
 		   const struct config_parsed *cfgp,
 		   struct section_list *sconn,
 		   bool defaultconn,
-		   bool resolvip,
 		   starter_errors_t *perrl)
 {
 	starter_log(LOG_LEVEL_DEBUG, "Loading conn %s", sconn->name);
@@ -1502,7 +1499,7 @@ static bool init_load_conn(struct starter_config *cfg,
 	struct starter_conn *conn = alloc_add_conn(cfg, sconn->name);
 
 	bool connerr = load_conn(conn, cfgp, sconn, TRUE,
-				defaultconn, resolvip, perrl);
+				defaultconn, perrl);
 
 	if (connerr) {
 		starter_log(LOG_LEVEL_INFO, "while loading '%s': %s",
@@ -1516,7 +1513,6 @@ static bool init_load_conn(struct starter_config *cfg,
 
 struct starter_config *confread_load(const char *file,
 				     starter_errors_t *perrl,
-				     bool resolvip,
 				     const char *ctlsocket,
 				     bool setuponly)
 {
@@ -1572,7 +1568,7 @@ struct starter_config *confread_load(const char *file,
 				err |= load_conn(&cfg->conn_default,
 						 cfgp, sconn, FALSE,
 						/*default conn*/ TRUE,
-						 resolvip, perrl);
+						 perrl);
 			}
 		}
 
@@ -1584,7 +1580,7 @@ struct starter_config *confread_load(const char *file,
 			if (!streq(sconn->name, "%default"))
 				err |= init_load_conn(cfg, cfgp, sconn,
 						 FALSE,
-						 resolvip, perrl);
+						 perrl);
 		}
 	}
 
