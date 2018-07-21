@@ -98,4 +98,5 @@ const struct integ_desc ike_alg_integ_sha1 = {
 	.integ_sadb_aalg_id = SADB_AALG_SHA1HMAC,
 #endif
 	.integ_netlink_xfrm_name = "sha1",
+	.integ_tcpdump_name = "sha1",
 };

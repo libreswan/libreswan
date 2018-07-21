@@ -102,6 +102,7 @@ const struct encrypt_desc ike_alg_encrypt_twofish_cbc =
 	.encrypt_sadb_ealg_id = SADB_X_EALG_TWOFISHCBC,
 #endif
 	.encrypt_netlink_xfrm_name = "twofish",
+	.encrypt_tcpdump_name = "twofish",
 };
 
 const struct encrypt_desc ike_alg_encrypt_twofish_ssh =
@@ -124,4 +125,5 @@ const struct encrypt_desc ike_alg_encrypt_twofish_ssh =
 	.keydeflen = TWOFISH_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.encrypt_ops = &twofish_encrypt_ops,
+	.encrypt_tcpdump_name = "twofish_ssh", /* We don't know if this is right */
 };

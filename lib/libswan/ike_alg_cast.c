@@ -52,4 +52,5 @@ const struct encrypt_desc ike_alg_encrypt_cast_cbc =
 	.encrypt_sadb_ealg_id = SADB_X_EALG_CAST128CBC,
 #endif
 	.encrypt_netlink_xfrm_name = "cast5",
+	.encrypt_tcpdump_name = "cast",
 };

@@ -230,8 +230,8 @@ struct ike_alg {
 	 */
 	const char *names[5];
 	/*
-	 * Name that should be parsable by tcpdump -E.  It isn't clear
-	 * how true this is.  See ikev2.c:ikev2_log_parentSA().
+	 * XXX: name used in some (but not all) audit logs and other
+	 * random stuff.
 	 */
 	const char *const officname;
 
@@ -382,6 +382,12 @@ struct encrypt_desc {
 	 * This encryption algorithm's NETLINK_XFRM name, if known.
 	 */
 	const char *encrypt_netlink_xfrm_name;
+
+	/*
+	 * Name that should be parsable by tcpdump -E.  It isn't clear
+	 * how true this is.  See ikev2.c:ikev2_log_parentSA().
+	 */
+	const char *encrypt_tcpdump_name;
 
 	const struct encrypt_ops *encrypt_ops;
 };
@@ -634,6 +640,12 @@ struct integ_desc {
 	 * This integrity algorithm's NETLINK_XFRM name if known.
 	 */
 	const char *integ_netlink_xfrm_name;
+
+	/*
+	 * Name that should be parsable by tcpdump -E.  It isn't clear
+	 * how true this is.  See ikev2.c:ikev2_log_parentSA().
+	 */
+	const char *integ_tcpdump_name;
 
 	/*
 	 * For IKE.  The PRF implementing integrity.  The output is

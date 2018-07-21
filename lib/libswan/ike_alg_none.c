@@ -50,6 +50,7 @@ const struct encrypt_desc ike_alg_encrypt_null =
 	.encrypt_sadb_ealg_id = SADB_EALG_NULL,
 #endif
 	.encrypt_netlink_xfrm_name = "cipher_null",
+	.encrypt_tcpdump_name = "null",
 };
 
 /*
@@ -93,6 +94,7 @@ const struct integ_desc ike_alg_integ_none = {
 	.integ_sadb_aalg_id = SADB_X_AALG_NULL,
 #endif
 	.integ_netlink_xfrm_name = "digest_null",
+	.integ_tcpdump_name = "none",
 };
 
 /*

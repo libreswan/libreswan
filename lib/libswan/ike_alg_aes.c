@@ -62,6 +62,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_cbc = {
 	.encrypt_sadb_ealg_id = SADB_X_EALG_AES,
 #endif
 	.encrypt_netlink_xfrm_name = "aes",
+	.encrypt_tcpdump_name = "aes",
 };
 
 const struct encrypt_desc ike_alg_encrypt_aes_ctr =
@@ -93,6 +94,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_ctr =
 	.encrypt_sadb_ealg_id = SADB_X_EALG_AESCTR,
 #endif
 	.encrypt_netlink_xfrm_name = "rfc3686(ctr(aes))",
+	.encrypt_tcpdump_name = "aes_ctr",
 };
 
 const struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
@@ -129,6 +131,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
 	.encrypt_sadb_ealg_id = SADB_X_EALG_AES_GCM8,
 #endif
 	.encrypt_netlink_xfrm_name = "rfc4106(gcm(aes))",
+	.encrypt_tcpdump_name = "aes_gcm",
 };
 
 const struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
@@ -164,6 +167,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
 	.encrypt_sadb_ealg_id = SADB_X_EALG_AES_GCM12,
 #endif
 	.encrypt_netlink_xfrm_name = "rfc4106(gcm(aes))",
+	.encrypt_tcpdump_name = "aes_gcm_12",
 };
 
 const struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
@@ -200,6 +204,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
 	.encrypt_sadb_ealg_id = SADB_X_EALG_AES_GCM16,
 #endif
 	.encrypt_netlink_xfrm_name = "rfc4106(gcm(aes))",
+	.encrypt_tcpdump_name = "aes_gcm_16",
 };
 
 /*
@@ -209,7 +214,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
  * https://tools.ietf.org/html/rfc4309#section-7.1
  */
 
-const struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =
+const struct encrypt_desc ike_alg_encrypt_aes_ccm_8 = 
 {
 	.common = {
 		.name = "aes_ccm_8",
@@ -236,6 +241,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =
 	.encrypt_sadb_ealg_id = SADB_X_EALG_AES_CCM_ICV8,
 #endif
 	.encrypt_netlink_xfrm_name = "rfc4309(ccm(aes))",
+	.encrypt_tcpdump_name = "aes_ccm_8",
 };
 
 const struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
@@ -265,6 +271,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
 	.encrypt_sadb_ealg_id = SADB_X_EALG_AES_CCM_ICV12,
 #endif
 	.encrypt_netlink_xfrm_name = "rfc4309(ccm(aes))",
+	.encrypt_tcpdump_name = "aes_ccm_12",
 };
 
 const struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
@@ -294,6 +301,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 	.encrypt_sadb_ealg_id = SADB_X_EALG_AES_CCM_ICV16,
 #endif
 	.encrypt_netlink_xfrm_name = "rfc4309(ccm(aes))",
+	.encrypt_tcpdump_name = "aes_ccm_16",
 };
 
 const struct prf_desc ike_alg_prf_aes_xcbc = {
@@ -342,6 +350,7 @@ const struct integ_desc ike_alg_integ_aes_xcbc = {
 	.integ_sadb_aalg_id = SADB_X_AALG_AES_XCBC_MAC,
 #endif
 	.integ_netlink_xfrm_name = "xcbc(aes)",
+	.integ_tcpdump_name = "aes_xcbc",
 };
 
 const struct integ_desc ike_alg_integ_aes_cmac = {
@@ -365,6 +374,7 @@ const struct integ_desc ike_alg_integ_aes_cmac = {
 	.integ_sadb_aalg_id = SADB_X_AALG_AES_CMAC_96,
 #endif
 	.integ_netlink_xfrm_name = "cmac(aes)",
+	.integ_tcpdump_name = "aes_cmac",
 };
 
 /*
@@ -398,4 +408,5 @@ const struct encrypt_desc ike_alg_encrypt_null_integ_aes_gmac = {
 	.encrypt_sadb_ealg_id = SADB_X_EALG_AESGMAC,
 #endif
 	.encrypt_netlink_xfrm_name = "rfc4543(gcm(aes))",
+	.encrypt_tcpdump_name = "NULL_AUTH_AES_GMAC",
 };

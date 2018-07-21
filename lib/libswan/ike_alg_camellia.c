@@ -68,6 +68,7 @@ const struct encrypt_desc ike_alg_encrypt_camellia_cbc =
 	.encrypt_sadb_ealg_id = SADB_X_EALG_CAMELLIACBC,
 #endif
 	.encrypt_netlink_xfrm_name = "cbc(camellia)",
+	.encrypt_tcpdump_name = "camellia",
 };
 
 const struct encrypt_desc ike_alg_encrypt_camellia_ctr =
@@ -88,5 +89,6 @@ const struct encrypt_desc ike_alg_encrypt_camellia_ctr =
 	.pad_to_blocksize = false,
 	.wire_iv_size =	CAMELLIA_BLOCK_SIZE,
 	.keydeflen =    CAMELLIA_KEY_DEF_LEN,
-	.key_bit_lengths = { 256, 192, 128, }
+	.key_bit_lengths = { 256, 192, 128, },
+	.encrypt_tcpdump_name = "camellia_ctr",
 };

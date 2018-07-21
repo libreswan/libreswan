@@ -92,4 +92,5 @@ const struct integ_desc ike_alg_integ_md5 = {
 	.integ_sadb_aalg_id = SADB_AALG_MD5HMAC,
 #endif
 	.integ_netlink_xfrm_name = "md5",
+	.integ_tcpdump_name = "md5",
 };
