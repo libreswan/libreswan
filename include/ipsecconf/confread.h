@@ -147,7 +147,7 @@ typedef struct {
 	char *errors;
 } starter_errors_t;
 
-extern void starter_error_append(starter_errors_t *perrl, const char *fmt, ...);
+extern void starter_error_append(starter_errors_t *perrl, const char *fmt, ...) PRINTF_LIKE(2);
 
 
 extern struct config_parsed *parser_load_conf(const char *file, starter_errors_t *perr);

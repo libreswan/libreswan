@@ -102,7 +102,7 @@ struct key_add_continuation {
 };
 
 static int whack_route_connection(struct connection *c,
-			__attribute__((unused)) void *arg)
+				  UNUSED void *arg)
 {
 	set_cur_connection(c);
 
@@ -119,7 +119,7 @@ static int whack_route_connection(struct connection *c,
 }
 
 static int whack_unroute_connection(struct connection *c,
-			__attribute__((unused)) void *arg)
+				    UNUSED void *arg)
 {
 	const struct spd_route *sr;
 	int fail = 0;

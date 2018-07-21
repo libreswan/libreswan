@@ -1106,7 +1106,7 @@ static void nat_t_new_klips_mapp(struct state *st, void *data)
 }
 
 void process_pfkey_nat_t_new_mapping(
-		struct sadb_msg *msg __attribute__ ((unused)),
+		struct sadb_msg *msg UNUSED,
 		struct sadb_ext *extensions[K_SADB_EXT_MAX + 1])
 {
 	struct new_klips_mapp_nfo nfo;
