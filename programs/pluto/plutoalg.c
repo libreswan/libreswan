@@ -213,7 +213,7 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 
 void kernel_alg_show_status(void)
 {
-	whack_log(RC_COMMENT, "ESP algorithms supported:");
+	whack_log(RC_COMMENT, "Kernel algorithms supported:");
 	whack_log(RC_COMMENT, " "); /* spacer */
 
 	for (const struct encrypt_desc **alg_p = next_kernel_encrypt_desc(NULL);
