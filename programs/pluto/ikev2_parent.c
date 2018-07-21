@@ -280,27 +280,20 @@ static struct msg_digest *fake_md(struct state *st)
 	fake_md->from_state = STATE_IKEv2_BASE;
 	fake_md->msgid_received = v2_INVALID_MSGID;
 
+	/*
+	 * XXX: tempoary workaround until new parents really start in
+	 * I0 state.
+	 */
 	switch (st->st_state) {
 	case STATE_PARENT_I1:
 		fake_md->svm = finite_states[STATE_PARENT_I0]->fs_microcode;
-		break;
-
-	case STATE_V2_REKEY_CHILD_I0:
-		fake_md->svm = finite_states[STATE_V2_REKEY_CHILD_I0]->fs_microcode;
-		break;
-
-	case STATE_V2_CREATE_I0:
-		fake_md->svm = finite_states[STATE_V2_CREATE_I0]->fs_microcode;
-		break;
-
-	case STATE_V2_REKEY_IKE_I0:
-		fake_md->svm = finite_states[STATE_V2_REKEY_IKE_I0]->fs_microcode;
-		break;
-
+		return fake_md;
 	default:
-		bad_case(st->st_state);
 		break;
 	}
+
+	/* asume first microcode is valid */
+	fake_md->svm = st->st_finite_state->fs_microcode;
 	return fake_md;
 }
 
