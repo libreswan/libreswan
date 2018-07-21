@@ -418,7 +418,7 @@ struct config_parsed *parser_load_conf(const char *file, starter_errors_t *perrl
 	return cfg;
 
 err:
-	starter_error_append(perrl, parser_errstring);
+	starter_error_append(perrl, "%s", parser_errstring);
 
 	if (cfg != NULL)
 		parser_free_conf(cfg);

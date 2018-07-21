@@ -780,7 +780,7 @@ static bool translate_conn(struct starter_conn *conn,
 				 "keyword '%s' is not valid in a conn (%s)\n",
 				 kw->keyword.keydef->keyname, sl->name);
 			starter_log(LOG_LEVEL_INFO, "%s", tmp_err);
-			starter_error_append(perrl, tmp_err);
+			starter_error_append(perrl, "%s", tmp_err);
 			continue;
 		}
 
@@ -818,7 +818,7 @@ static bool translate_conn(struct starter_conn *conn,
 					 sl->name);
 
 				starter_log(LOG_LEVEL_INFO, "%s", tmp_err);
-				starter_error_append(perrl, tmp_err);
+				starter_error_append(perrl, "%s", tmp_err);
 
 				/* only fatal if we try to change values */
 				if (kw->keyword.string == NULL ||
@@ -880,7 +880,7 @@ static bool translate_conn(struct starter_conn *conn,
 					 sl->name);
 
 				starter_log(LOG_LEVEL_INFO, "%s", tmp_err);
-				starter_error_append(perrl, tmp_err);
+				starter_error_append(perrl, "%s", tmp_err);
 
 				/* only fatal if we try to change values */
 				if ((*the_options)[field] != (int)kw->number ||
@@ -927,7 +927,7 @@ static bool translate_conn(struct starter_conn *conn,
 					 conn->name,
 					 sl->name);
 				starter_log(LOG_LEVEL_INFO, "%s", tmp_err);
-				starter_error_append(perrl, tmp_err);
+				starter_error_append(perrl, "%s", tmp_err);
 				/* only fatal if we try to change values */
 				if ((*the_options)[field] != (int)kw->number) {
 					serious_err = TRUE;
