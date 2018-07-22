@@ -787,9 +787,6 @@ enum sa_role {
 #define IS_IKE_SA(st) ( (st->st_clonedfrom == SOS_NOBODY) &&  (IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state) || \
 		IS_PARENT_SA(st)) )
 
-#define IS_PARENT_STATE(s) ((s) >= STATE_PARENT_I1 && (s) <= STATE_IKESA_DEL)
-#define IS_IKE_STATE(s) (IS_PHASE1(s) || IS_PHASE15(s) || IS_PARENT_STATE(s))
-
 #define IS_CHILD_SA_INITIATOR(st) \
 	((st)->st_state == STATE_V2_CREATE_I0 || \
 	  (st)->st_state == STATE_V2_REKEY_CHILD_I0)
