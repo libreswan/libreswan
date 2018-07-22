@@ -99,6 +99,7 @@ const struct integ_desc ike_alg_integ_sha2_256 = {
 #endif
 	.integ_netlink_xfrm_name = "hmac(sha256)",
 	.integ_tcpdump_name = "sha256",
+	.integ_kernel_audit_name = "HMAC_SHA2_256",
 };
 
 const struct integ_desc ike_alg_integ_hmac_sha2_256_truncbug = {
@@ -123,6 +124,7 @@ const struct integ_desc ike_alg_integ_hmac_sha2_256_truncbug = {
 #endif
 	.integ_netlink_xfrm_name = "hmac(sha256)",
 	.integ_tcpdump_name = "hmac_sha2_256_truncbug",
+	.integ_kernel_audit_name = "HMAC_SHA2_256_TRUNCBUG",
 };
 
 const struct hash_desc ike_alg_hash_sha2_384 = {
@@ -197,6 +199,7 @@ const struct integ_desc ike_alg_integ_sha2_384 = {
 #endif
 	.integ_netlink_xfrm_name = "hmac(sha384)",
 	.integ_tcpdump_name = "sha384",
+	.integ_kernel_audit_name = "HMAC_SHA2_384",
 };
 
 const struct hash_desc ike_alg_hash_sha2_512 = {
@@ -271,4 +274,5 @@ const struct integ_desc ike_alg_integ_sha2_512 = {
 #endif
 	.integ_netlink_xfrm_name = "hmac(sha512)",
 	.integ_tcpdump_name = "sha512",
+	.integ_kernel_audit_name = "HMAC_SHA2_512",
 };

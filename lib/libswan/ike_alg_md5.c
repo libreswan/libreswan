@@ -93,4 +93,5 @@ const struct integ_desc ike_alg_integ_md5 = {
 #endif
 	.integ_netlink_xfrm_name = "md5",
 	.integ_tcpdump_name = "md5",
+	.integ_kernel_audit_name = "HMAC_MD5",
 };

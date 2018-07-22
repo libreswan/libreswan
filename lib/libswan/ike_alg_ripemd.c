@@ -47,4 +47,5 @@ const struct integ_desc ike_alg_integ_hmac_ripemd_160_96 = {
 #endif
 	.integ_netlink_xfrm_name = "hmac(rmd160)",
 	.integ_tcpdump_name = "ripemd",
+	.integ_kernel_audit_name = "HMAC_RIPEMD",
 };

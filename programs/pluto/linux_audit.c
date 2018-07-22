@@ -172,7 +172,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	char head[IDTOA_BUF];
 	char integname[IDTOA_BUF];
 	char prfname[IDTOA_BUF];
-	struct esb_buf esb, esb2;
+	struct esb_buf esb;
 	/* we need to free() this */
 	char *conn_encode = audit_encode_nv_string("conn-name", c->name,0);
 
@@ -265,12 +265,22 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 		}
 		snprintf(cipher_str, sizeof(cipher_str), "cipher=%s ksize=%u integ=%s",
 			 (encrypt == NULL ? "none" :
+#if 1
+			  encrypt->encrypt_kernel_audit_name
+#else
 			  enum_show_shortb(&esp_transformid_names,
-					   encrypt->common.id[IKEv1_ESP_ID], &esb)),
+					   encrypt->common.id[IKEv1_ESP_ID], &esb)
+#endif
+			  ),
 			 enckeylen,
 			 (integ == NULL ? "none" :
+#if 1
+			  integ->integ_kernel_audit_name
+#else
 			  enum_show_shortb(&auth_alg_names,
-					   integ->common.id[IKEv1_ESP_ID], &esb2)));
+					   integ->common.id[IKEv1_ESP_ID], &esb2)
+#endif
+			  ));
 
 		snprintf(spi_str, sizeof(spi_str),
 		"in-spi=%lu(0x%08lx) out-spi=%lu(0x%08lx) in-ipcomp=%lu(0x%08lx) out-ipcomp=%lu(0x%08lx)",

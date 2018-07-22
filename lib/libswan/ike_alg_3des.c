@@ -51,4 +51,5 @@ const struct encrypt_desc ike_alg_encrypt_3des_cbc =
 #endif
 	.encrypt_netlink_xfrm_name = "des3_ede",
 	.encrypt_tcpdump_name = "3des",
+	.encrypt_kernel_audit_name = "3DES",
 };

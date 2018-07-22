@@ -41,6 +41,30 @@ enum ike_alg_key;
 		}							\
 	}
 
+#define pexpect_ike_alg_streq(ALG, LHS, RHS)				\
+	{								\
+		/* wrapping ASSERTION in parens suppresses -Wparen */	\
+		const char *lhs = LHS;					\
+		const char *rhs = RHS;					\
+		if (lhs == NULL || rhs == NULL || !streq(LHS, RHS)) {	\
+			PEXPECT_LOG("IKE_ALG %s algorithm '%s' fails: %s != %s (%s != %s)", \
+				    ike_alg_type_name((ALG)->algo_type), \
+				    (ALG)->fqn, lhs, rhs, #LHS, #RHS);	\
+		}							\
+	}
+
+#define pexpect_ike_alg_strcaseeq(ALG, LHS, RHS)			\
+	{								\
+		/* wrapping ASSERTION in parens suppresses -Wparen */	\
+		const char *lhs = LHS;					\
+		const char *rhs = RHS;					\
+		if (lhs == NULL || rhs == NULL || !strcaseeq(LHS, RHS)) { \
+			PEXPECT_LOG("IKE_ALG %s algorithm '%s' fails: %s != %s (%s != %s)", \
+				    ike_alg_type_name((ALG)->algo_type), \
+				    (ALG)->fqn, lhs, rhs, #RHS, #LHS);	\
+		}							\
+	}
+
 /*
  * Different algorithm classes used by IKEv1/IKEv2 protocols.
  */
@@ -389,6 +413,16 @@ struct encrypt_desc {
 	 */
 	const char *encrypt_tcpdump_name;
 
+	/*
+	 * Name used when generating a linux audit record for a child
+	 * / IPSEC / kernel SA.
+	 *
+	 * XXX: At one point this was the IKEv1 ESP enum_name table
+	 * but of course that required all kernel algorithms to have a
+	 * (probably bogus) IKEv1 name/number.
+	 */
+	const char *encrypt_kernel_audit_name;
+
 	const struct encrypt_ops *encrypt_ops;
 };
 
@@ -646,6 +680,16 @@ struct integ_desc {
 	 * how true this is.  See ikev2.c:ikev2_log_parentSA().
 	 */
 	const char *integ_tcpdump_name;
+
+	/*
+	 * Name used when generating a linux audit record for a child
+	 * / IPSEC / kernel SA.
+	 *
+	 * XXX: At one point this was the IKEv1 ESP enum_name table
+	 * but of course that required all kernel algorithms to have a
+	 * (probably bogus) IKEv1 name/number.
+	 */
+	const char *integ_kernel_audit_name;
 
 	/*
 	 * For IKE.  The PRF implementing integrity.  The output is

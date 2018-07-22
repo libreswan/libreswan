@@ -99,4 +99,5 @@ const struct integ_desc ike_alg_integ_sha1 = {
 #endif
 	.integ_netlink_xfrm_name = "sha1",
 	.integ_tcpdump_name = "sha1",
+	.integ_kernel_audit_name = "HMAC_SHA1",
 };

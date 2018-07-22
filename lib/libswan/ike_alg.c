@@ -521,7 +521,15 @@ static void integ_desc_check(const struct ike_alg *alg)
 	passert_ike_alg(alg, integ->integ_keymat_size > 0);
 	passert_ike_alg(alg, integ->integ_output_size > 0);
 	passert_ike_alg(alg, integ->integ_tcpdump_name != NULL);
-	passert_ike_alg(alg, streq(integ->integ_tcpdump_name, integ->common.officname));
+	pexpect_ike_alg_streq(alg, integ->integ_tcpdump_name, integ->common.officname);
+	pexpect_ike_alg(alg, integ->integ_kernel_audit_name != NULL);
+	if (integ->common.id[IKEv1_ESP_ID] >= 0) {
+		struct esb_buf esb;
+		pexpect_ike_alg_streq(alg, integ->integ_kernel_audit_name,
+				      enum_show_shortb(&auth_alg_names,
+						       integ->common.id[IKEv1_ESP_ID],
+						       &esb));
+	}
 	if (integ->prf != NULL) {
 		passert_ike_alg(alg, integ->integ_keymat_size == integ->prf->prf_key_size);
 		passert_ike_alg(alg, integ->integ_output_size <= integ->prf->prf_output_size);
@@ -621,7 +629,15 @@ static void encrypt_desc_check(const struct ike_alg *alg)
 {
 	const struct encrypt_desc *encrypt = encrypt_desc(alg);
 	passert_ike_alg(alg, encrypt->encrypt_tcpdump_name != NULL);
-	passert_ike_alg(alg, streq(encrypt->encrypt_tcpdump_name, encrypt->common.officname));
+	pexpect_ike_alg_streq(alg, encrypt->encrypt_tcpdump_name, encrypt->common.officname);
+	pexpect_ike_alg(alg, encrypt->encrypt_kernel_audit_name);
+	if (encrypt->common.id[IKEv1_ESP_ID] >= 0) {
+		struct esb_buf esb;
+		pexpect_ike_alg_streq(alg, encrypt->encrypt_kernel_audit_name,
+				      enum_show_shortb(&esp_transformid_names,
+						       encrypt->common.id[IKEv1_ESP_ID],
+						       &esb));
+	}
 
 	/*
 	 * Only implemented one way, if at all.

@@ -69,6 +69,7 @@ const struct encrypt_desc ike_alg_encrypt_camellia_cbc =
 #endif
 	.encrypt_netlink_xfrm_name = "cbc(camellia)",
 	.encrypt_tcpdump_name = "camellia",
+	.encrypt_kernel_audit_name = "CAMELLIA",
 };
 
 const struct encrypt_desc ike_alg_encrypt_camellia_ctr =
@@ -91,4 +92,5 @@ const struct encrypt_desc ike_alg_encrypt_camellia_ctr =
 	.keydeflen =    CAMELLIA_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.encrypt_tcpdump_name = "camellia_ctr",
+	.encrypt_kernel_audit_name = "CAMELLIA_CTR",
 };

@@ -103,6 +103,7 @@ const struct encrypt_desc ike_alg_encrypt_twofish_cbc =
 #endif
 	.encrypt_netlink_xfrm_name = "twofish",
 	.encrypt_tcpdump_name = "twofish",
+	.encrypt_kernel_audit_name = "TWOFISH",
 };
 
 const struct encrypt_desc ike_alg_encrypt_twofish_ssh =
@@ -126,4 +127,5 @@ const struct encrypt_desc ike_alg_encrypt_twofish_ssh =
 	.key_bit_lengths = { 256, 192, 128, },
 	.encrypt_ops = &twofish_encrypt_ops,
 	.encrypt_tcpdump_name = "twofish_ssh", /* We don't know if this is right */
+	.encrypt_kernel_audit_name = "TWOFISH_SSH", /* We don't know if this is right */
 };
