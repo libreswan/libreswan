@@ -6735,6 +6735,8 @@ void ikev2_addr_change(struct state *st)
 	if (!mobike_check_established(st))
 		return;
 
+#ifdef HAVE_NETKEY
+
 	/* lets re-discover local address */
 
 	struct starter_end this = {
@@ -6749,7 +6751,6 @@ void ikev2_addr_change(struct state *st)
 		.addr = st->st_remoteaddr
 	};
 
-#ifdef HAVE_NETKEY
 	/*
 	 * mobike need two lookups. one for the gateway and
 	 * the one for the source address
@@ -6799,5 +6800,10 @@ void ikev2_addr_change(struct state *st)
 		}
 		break;
 	}
+
+#else /* !defined(HAVE_NETKEY) */
+
+	libreswan_log("without NETKEY we cannot ikev2_addr_change()");
+
 #endif
 }
