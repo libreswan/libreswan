@@ -68,7 +68,7 @@ void kernel_alg_init(void)
 				 alg->common.fqn);			\
 		if (cmp == 0) {						\
 			DBGF(DBG_KERNEL,				\
-			     "dropping %s kernel algorithm db duplicate found at %jd", \
+			     "dropping %s kernel algorithm db duplicate found at %zu", \
 			     alg->common.fqn, i);			\
 			return;						\
 		} else if (cmp > 0) {					\
