@@ -432,7 +432,9 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		break;
 
 	case EVENT_CHECK_CRLS:
+#ifdef LIBCURL
 		check_crls();
+#endif
 		break;
 
 	case EVENT_v2_RELEASE_WHACK:
