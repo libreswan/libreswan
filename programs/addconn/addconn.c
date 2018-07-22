@@ -55,8 +55,7 @@ static int verbose = 0;
  * XXX: why not let pluto resolve all this like it is already doing
  * because of MOBIKE.
  */
-static
-void resolve_defaultroute(struct starter_conn *conn UNUSED)
+static void resolve_defaultroute(struct starter_conn *conn UNUSED)
 {
 #ifdef HAVE_NETKEY
 	if (resolve_defaultroute_one(&conn->left, &conn->right, verbose != 0) == 1)

@@ -344,8 +344,7 @@ void send_keepalive_packet(option_data *opt)
 
 }
 
-static
-void user_signal_handler(int signum)
+static void user_signal_handler(int signum)
 {
 
 	switch (signum) {

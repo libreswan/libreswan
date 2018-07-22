@@ -41,8 +41,7 @@
  * Return: 0 = ok, fill peer
  *         -1 = not found
  */
-static
-void resolve_ppp_peer(char *interface, sa_family_t family, char *peer, bool verbose)
+static void resolve_ppp_peer(char *interface, sa_family_t family, char *peer, bool verbose)
 {
 	struct ifaddrs *ifap, *ifa;
 
@@ -95,8 +94,7 @@ void resolve_ppp_peer(char *interface, sa_family_t family, char *peer, bool verb
 /*
  * Initialize netlink query message.
  */
-static
-void netlink_query_init(char *msgbuf, sa_family_t family)
+static void netlink_query_init(char *msgbuf, sa_family_t family)
 {
 	struct nlmsghdr *nlmsg;
 	struct rtmsg *rtmsg;
@@ -124,8 +122,7 @@ void netlink_query_init(char *msgbuf, sa_family_t family)
 /*
  * Add RTA_SRC or RTA_DST attribute to netlink query message.
  */
-static
-void netlink_query_add(char *msgbuf, int rta_type, ip_address *addr)
+static void netlink_query_add(char *msgbuf, int rta_type, ip_address *addr)
 {
 	struct nlmsghdr *nlmsg;
 	struct rtmsg *rtmsg;
@@ -160,9 +157,8 @@ void netlink_query_add(char *msgbuf, int rta_type, ip_address *addr)
 	nlmsg->nlmsg_len += rtattr->rta_len;
 }
 
-static
-ssize_t netlink_read_reply(int sock, char **pbuf, size_t bufsize,
-			unsigned int seqnum, __u32 pid)
+static ssize_t netlink_read_reply(int sock, char **pbuf, size_t bufsize,
+				  unsigned int seqnum, __u32 pid)
 {
 	size_t msglen = 0;
 
@@ -220,8 +216,7 @@ ssize_t netlink_read_reply(int sock, char **pbuf, size_t bufsize,
 /*
  * Send netlink query message and read reply.
  */
-static
-ssize_t netlink_query(char **pmsgbuf, size_t bufsize)
+static ssize_t netlink_query(char **pmsgbuf, size_t bufsize)
 {
 	int sock = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE);
 
