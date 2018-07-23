@@ -128,7 +128,7 @@ struct lswlog;
  * The logging streams used by libreswan.
  *
  * So far three^D^D^D^D^D four^D^D^D^D five^D^D^D^D six^D^D^D
- * seven^D^D^D^D^D five.five streams have been identified; and lets
+ * seven^D^D^D^D^D five.five streams have been identified; and let's
  * not forget that code writes to STDOUT and STDERR directly.
  *
  * The streams differ in the syslog severity and what PREFIX is

@@ -1421,7 +1421,7 @@ void ikev2_process_packet(struct msg_digest **mdp)
 			 * initiator's state.
 			 *
 			 * An INIT-response contains an as yet unknown
-			 * non-zero RCOOKIE (lets ignore INVALID_KE)
+			 * non-zero RCOOKIE (let's ignore INVALID_KE)
 			 * so looking for it won't work.
 			 *
 			 * Search for the state in the ICOOKIE table
@@ -1975,7 +1975,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 
 		/* bit further processing of create CREATE_CHILD_SA exchange */
 
-		/* lets get a child state either new or existing to proceed */
+		/* let's get a child state either new or existing to proceed */
 		struct state *cst = process_v2_child_ix(md, st);
 		if (cst == NULL) {
 			/* no go. Could improve the status code? */
@@ -1997,7 +1997,7 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 	md->st = st;
 
 	DBG(DBG_CONTROL,
-	    DBG_log("Now lets proceed with state specific processing"));
+	    DBG_log("Now let's proceed with state specific processing"));
 
 	DBG(DBG_PARSING, {
 		    if (pbs_left(&md->message_pbs) != 0)

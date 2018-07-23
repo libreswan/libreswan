@@ -14,7 +14,7 @@ things don't go well:
 
 - having the pubkey in /etc/ipsec.secrets doesn't help: they get
   stored in the private-key list, not the pubkey one.  Since pubkeys
-  shouldn't even be in ipsec.secrets, lets ignore this.
+  shouldn't even be in ipsec.secrets, let's ignore this.
 
 - having a direct CKAID -> private key lookup would help with the
   private key but not for the pubkey side of things (as an aside, it

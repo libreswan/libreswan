@@ -346,7 +346,7 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 		}
 		ldns_buffer_printf(output, " ");
 
-		/* lets parse and debug log the usual RR types */
+		/* let's parse and debug log the usual RR types */
 		switch (atype) {
 		case LDNS_RR_TYPE_A:
 			ldns_rdf2buffer_str_a(output, rdf);

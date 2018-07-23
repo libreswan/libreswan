@@ -200,7 +200,7 @@ int sign_hash(const struct RSA_private_key *k,
 	 * The adjusted length is used in sign_hash() as the signature
 	 * length - wouldn't PK11_SignatureLen be better?
 	 *
-	 * Lets find out.
+	 * Let's find out.
 	 */
 	pexpect((int)sig_len == PK11_SignatureLen(privateKey));
 

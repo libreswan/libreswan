@@ -6737,7 +6737,7 @@ void ikev2_addr_change(struct state *st)
 
 #ifdef HAVE_NETKEY
 
-	/* lets re-discover local address */
+	/* let's re-discover local address */
 
 	struct starter_end this = {
 		.addrtype = KH_DEFAULTROUTE,

@@ -1592,7 +1592,7 @@ rsasig_common:
 
 			/*
 			 * We must have liked this transform.
-			 * Lets finish early and leave.
+			 * Let's finish early and leave.
 			 */
 
 			DBG(DBG_PARSING | DBG_CRYPT,

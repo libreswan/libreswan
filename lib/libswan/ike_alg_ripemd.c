@@ -23,7 +23,7 @@
 /*
  * See: https://tools.ietf.org/html/rfc2857
  *
- * While NSS seemingly supports RIPEMD160, lets not go there.
+ * While NSS seemingly supports RIPEMD160, let's not go there.
  */
 
 const struct integ_desc ike_alg_integ_hmac_ripemd_160_96 = {
