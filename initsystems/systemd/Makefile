@@ -3,7 +3,7 @@ include ../../mk/dirs.mk
 endif
 
 UNITDIR=$(shell pkg-config systemd --variable=systemdsystemunitdir)
-SYSTEMDFILE=$(builddir)/ipsec.service
+SYSTEMDFILE=ipsec.service
 SYSTEMDDIR=$(DESTDIR)$(UNITDIR)
 
 include $(top_srcdir)/Makefile.inc
@@ -15,19 +15,23 @@ include $(top_srcdir)/Makefile.inc
 # like local-base and installsystemdservice are allowed to run in
 # parallel)
 
-local-base: $(SYSTEMDFILE)
+local-base: $(builddir)/$(SYSTEMDFILE)
 
 local-install-base: installsystemdservice oldinitdcheck postcheck
 
-installsystemdservice: local-base
-	@mkdir -p $(SYSTEMDDIR)
-	$(INSTALL) $(INSTCONFFLAGS) $(SYSTEMDFILE) $(SYSTEMDDIR)
+installsystemdservice: local-base | $(SYSTEMDDIR)
+	$(INSTALL) $(INSTCONFFLAGS) $(builddir)/$(SYSTEMDFILE) $(SYSTEMDDIR)
 	@if test $(SYSTEMDDIR) = $(UNITDIR) ; then \
+		echo running: systemctl --system daemon-reload; \
 		systemctl --system daemon-reload ; \
 	fi
 	@if test -f $(DESTDIR)/$(FINALLIBEXECDIR)/portexcludes; then \
+		echo fixing port excludes ; \
 		sed -Ei 's@^# (.*/portexcludes)$$@\1@' $(SYSTEMDDIR)/$(SYSTEMDFILE); \
 	fi
+
+$(SYSTEMDDIR):
+	mkdir -p $(SYSTEMDDIR)
 
 oldinitdcheck: installsystemdservice
 	@if test -f $(DESTDIR)/etc/init.d/ipsec* ; then \
