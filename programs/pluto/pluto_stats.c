@@ -42,24 +42,24 @@ unsigned long pstats_ikev1_sa;
 unsigned long pstats_ikev2_sa;
 unsigned long pstats_ikev1_fail;
 unsigned long pstats_ikev2_fail;
-unsigned long pstats_ikev1_encr[OAKLEY_CAMELLIA_CCM_C+1];
-unsigned long pstats_ikev2_encr[IKEv2_ENCR_ROOF];
-unsigned long pstats_ikev1_integ[OAKLEY_SHA2_512+1];
-unsigned long pstats_ikev2_integ[IKEv2_AUTH_ROOF];
-unsigned long pstats_ikev1_groups[OAKLEY_GROUP_ROOF];
-unsigned long pstats_ikev2_groups[OAKLEY_GROUP_ROOF];
-unsigned long pstats_invalidke_recv_s[OAKLEY_GROUP_ROOF];
-unsigned long pstats_invalidke_recv_u[OAKLEY_GROUP_ROOF];
-unsigned long pstats_invalidke_sent_s[OAKLEY_GROUP_ROOF];
-unsigned long pstats_invalidke_sent_u[OAKLEY_GROUP_ROOF];
-unsigned long pstats_ipsec_encr[IKEv2_ENCR_ROOF];	/* pretends everything maps 1 to 1 */
-unsigned long pstats_ipsec_integ[AUTH_ALGORITHM_ROOF];	/* pretends everything maps 1 to 1 */
+unsigned long pstats_ikev1_encr[OAKLEY_ENCR_PSTATS_ROOF];
+unsigned long pstats_ikev2_encr[IKEv2_ENCR_PSTATS_ROOF];
+unsigned long pstats_ikev1_integ[OAKLEY_HASH_PSTATS_ROOF];
+unsigned long pstats_ikev2_integ[IKEv2_AUTH_PSTATS_ROOF];
+unsigned long pstats_ikev1_groups[OAKLEY_GROUP_PSTATS_ROOF];
+unsigned long pstats_ikev2_groups[OAKLEY_GROUP_PSTATS_ROOF];
+unsigned long pstats_invalidke_recv_s[OAKLEY_GROUP_PSTATS_ROOF];
+unsigned long pstats_invalidke_recv_u[OAKLEY_GROUP_PSTATS_ROOF];
+unsigned long pstats_invalidke_sent_s[OAKLEY_GROUP_PSTATS_ROOF];
+unsigned long pstats_invalidke_sent_u[OAKLEY_GROUP_PSTATS_ROOF];
+unsigned long pstats_ipsec_encr[IKEv2_ENCR_PSTATS_ROOF];	/* pretends everything maps 1 to 1 */
+unsigned long pstats_ipsec_integ[AUTH_ALGORITHM_PSTATS_ROOF];	/* pretends everything maps 1 to 1 */
 uint64_t pstats_ipsec_in_bytes;	/* total incoming IPsec traffic */
 uint64_t pstats_ipsec_out_bytes;	/* total outgoing IPsec traffic */
 unsigned long pstats_ike_in_bytes;	/* total incoming IPsec traffic */
 unsigned long pstats_ike_out_bytes;	/* total outgoing IPsec traffic */
-unsigned long pstats_ikev1_sent_notifies_e[v1N_ERROR_ROOF]; /* types of NOTIFY ERRORS */
-unsigned long pstats_ikev1_recv_notifies_e[v1N_ERROR_ROOF]; /* types of NOTIFY ERRORS */
+unsigned long pstats_ikev1_sent_notifies_e[v1N_ERROR_PSTATS_ROOF]; /* types of NOTIFY ERRORS */
+unsigned long pstats_ikev1_recv_notifies_e[v1N_ERROR_PSTATS_ROOF]; /* types of NOTIFY ERRORS */
 unsigned long pstats_ike_stf[10];	/* count state transitions */ /* ??? what is 10? */
 unsigned long pstats_ipsec_esp;
 unsigned long pstats_ipsec_ah;
@@ -87,17 +87,17 @@ unsigned long pstats_xauth_aborted;
 
 PLUTO_STAT(ikev2_sent_notifies_e, &ikev2_notify_names,
 	    "ikev2.sent.notifies.error",
-	    v2N_ERROR_FLOOR, v2N_STATISTICS_ERROR_ROOF);
+	    v2N_ERROR_FLOOR, v2N_ERROR_PSTATS_ROOF);
 PLUTO_STAT(ikev2_recv_notifies_e, &ikev2_notify_names,
 	   "ikev2.recv.notifies.error",
-	   v2N_ERROR_FLOOR, v2N_STATISTICS_ERROR_ROOF);
+	   v2N_ERROR_FLOOR, v2N_ERROR_PSTATS_ROOF);
 
 PLUTO_STAT(ikev2_sent_notifies_s, &ikev2_notify_names,
 	    "ikev2.sent.notifies.status",
-	   v2N_STATUS_FLOOR, v2N_STATISTICS_STATUS_ROOF);
+	   v2N_STATUS_FLOOR, v2N_STATUS_PSTATS_ROOF);
 PLUTO_STAT(ikev2_recv_notifies_s, &ikev2_notify_names,
 	   "ikev2.recv.notifies.status",
-	   v2N_STATUS_FLOOR, v2N_STATISTICS_STATUS_ROOF);
+	   v2N_STATUS_FLOOR, v2N_STATUS_PSTATS_ROOF);
 
 static void whack_pluto_stat(const struct pluto_stat *stat)
 {

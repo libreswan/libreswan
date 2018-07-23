@@ -877,7 +877,7 @@ enum ikev2_trans_type_encr {
 	IKEv2_ENCR_CAMELLIA_CCM_C = 27, /* CAMELLIA_CCM_16 RFC 5529 */
 	IKEv2_ENCR_CHACHA20_POLY1305 = 28, /* RFC7634 */
 
-	IKEv2_ENCR_ROOF,
+	IKEv2_ENCR_PSTATS_ROOF,
 
 	/* 29 - 1023 Reserved to IANA */
 	/* 1024 - 65535 Private Use */
@@ -897,6 +897,9 @@ enum ikev2_trans_type_prf {
 	IKEv2_PRF_HMAC_SHA2_512 = 7, /* RFC4868 */
 	IKEv2_PRF_AES128_CMAC = 8, /* RFC4615 */
 	IKEv2_PRF_9_INVALID = 9,
+
+	IKEv2_PRF_PSTATS_ROOF,
+
 	/* 9 - 1023 Reserved to IANA RFC4306 */
 	/* 1024 - 65535 Private Use RFC4306 */
 	IKEv2_PRF_INVALID = 65536
@@ -919,7 +922,7 @@ enum ikev2_trans_type_integ {
 	IKEv2_AUTH_HMAC_SHA2_384_192 = 13, /* RFC4306 */
 	IKEv2_AUTH_HMAC_SHA2_512_256 = 14, /* RFC4306 */
 
-	IKEv2_AUTH_ROOF,
+	IKEv2_AUTH_PSTATS_ROOF,
 
 	/* 15 - 1023 Reserved to IANA RFC4306 */
 	/* 1024 - 65535 Private Use RFC4306 */
@@ -1049,7 +1052,7 @@ enum ikev1_auth_attribute {
 	AUTH_ALGORITHM_AES_192_GMAC = 12,	/* RFC 4542 */
 	AUTH_ALGORITHM_AES_256_GMAC =  13,	/* RFC 4542 */
 
-	AUTH_ALGORITHM_ROOF,
+	AUTH_ALGORITHM_PSTATS_ROOF,
 
 	/* 14-61439 Unassigned */
 	/* 61440-65535 Reserved for private use */
@@ -1109,6 +1112,7 @@ enum ikev1_encr_attribute  {
 	OAKLEY_CAST_CBC = 6,
 	OAKLEY_AES_CBC = 7,
 	OAKLEY_CAMELLIA_CBC = 8,
+
 	/* remainder until private use are NOT official IKEv1 entries */
 	OAKLEY_AES_CTR = 13, /* taken from IKEv2 */
 	OAKLEY_AES_CCM_8 = 14,
@@ -1123,6 +1127,8 @@ enum ikev1_encr_attribute  {
 	OAKLEY_CAMELLIA_CCM_A = 25,
 	OAKLEY_CAMELLIA_CCM_B = 26,
 	OAKLEY_CAMELLIA_CCM_C = 27,
+
+	OAKLEY_ENCR_PSTATS_ROOF,
 
 	/* private user numbers */
 	OAKLEY_MARS_CBC = 65001,
@@ -1149,6 +1155,8 @@ enum ikev1_hash_attribute  {
 	OAKLEY_SHA2_256 = 4,
 	OAKLEY_SHA2_384 = 5,
 	OAKLEY_SHA2_512 = 6,
+
+	OAKLEY_HASH_PSTATS_ROOF,
 };
 #define OAKLEY_HASH_MAX 9
 
@@ -1165,7 +1173,8 @@ enum ikev1_auth_method {
 	OAKLEY_RSA_SIG = 3,
 	OAKLEY_RSA_ENC = 4,
 
-	OAKLEY_AUTH_ROOF,	/* we only support methods above */
+	OAKLEY_AUTH_ROOF,
+	OAKLEY_AUTH_PSTATS_ROOF = OAKLEY_AUTH_ROOF,	/* we only support methods above */
 
 	OAKLEY_RSA_REVISED_MODE = 5, /* Not implemented */
 	/* 6 - 8 Reserved */
@@ -1309,7 +1318,7 @@ enum ike_trans_type_dh {
 	OAKLEY_GROUP_CURVE25519 = 31, /* RFC-ietf-ipsecme-safecurves-05 */
 	OAKLEY_GROUP_CURVE448 = 32, /* RFC-ietf-ipsecme-safecurves-05 */
 
-	OAKLEY_GROUP_ROOF
+	OAKLEY_GROUP_PSTATS_ROOF
 
 	/* 33 - 32767 Unassigned */
 	/* 32768 - 65535 Reserved for private use */
@@ -1365,7 +1374,7 @@ typedef enum {
 	UNSUPPORTED_EXCHANGE_TYPE = 29,
 	UNEQUAL_PAYLOAD_LENGTHS = 30,
 
-	v1N_ERROR_ROOF, /* used to cap statistics array */
+	v1N_ERROR_PSTATS_ROOF, /* used to cap statistics array */
 
 	/* 31-8191 RESERVED (Future Use) */
 
@@ -1453,7 +1462,7 @@ typedef enum {
 	v2N_INVALID_GROUP_ID = 45, /* draft-yeung-g-ikev2 */
 	v2N_AUTHORIZATION_FAILED = 46, /* draft-yeung-g-ikev2 */
 
-	v2N_STATISTICS_ERROR_ROOF, /* used to cap error statistics array */
+	v2N_ERROR_PSTATS_ROOF, /* used to cap error statistics array */
 
 	/*
 	 * Status notifications.
@@ -1518,7 +1527,7 @@ typedef enum {
 	v2N_PPK_IDENTITY = 16436, /* draft-ietf-ipsecme-qr-ikev2 */
 	v2N_NO_PPK_AUTH = 16437, /* draft-ietf-ipsecme-qr-ikev2 */
 
-	v2N_STATISTICS_STATUS_ROOF, /* used to cap status statistics array */
+	v2N_STATUS_PSTATS_ROOF, /* used to cap status statistics array */
 
 	/* 16438 - 40969 Unassigned */
 
@@ -1632,6 +1641,9 @@ enum ipsec_authentication_algo {
 	AH_AES_128_GMAC = 11, /* IKEv2 AUTH_AES_256_GMAC */
 	AH_AES_192_GMAC = 12, /* IKEv2 AUTH_HMAC_SHA2_256_128 */
 	AH_AES_256_GMAC = 13, /* IKEv2 AUTH_HMAC_SHA2_384_192 */
+
+	AH_PSTATS_ROOF,
+
 	/* 14 IKEv1 unassigned, IKEv2 AUTH_HMAC_SHA2_512_256 */
 	/* IKEv1 14-248 Unassigned */
 	/* IKEv1 249 - 255 Reserved for private use */
@@ -1681,6 +1693,9 @@ enum ipsec_cipher_algo {
 	ESP_SEED_CBC = 21, /* IKEv1, IKEv2 is NULL_AUTH_AES_GMAC */
 	ESP_CAMELLIA = 22, /* IKEv1, IKEv2 is ESP_RESERVED_FOR_IEEE_P1619_XTS_AES */
 	ESP_NULL_AUTH_AES_GMAC = 23, /* IKEv1, IKEv2 is CAMELLIA_CBC */
+
+	ESP_PSTATS_ROOF,
+
 	ESP_CAMELLIA_CTR = 24, /* not assigned in/for IKEv1 */
 	ESP_CAMELLIA_CCM_8 = 25, /* not assigned in/for IKEv1 */
 	ESP_CAMELLIA_CCM_12 = 26, /* not assigned in/for IKEv1 */
