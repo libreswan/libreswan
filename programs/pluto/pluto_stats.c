@@ -45,7 +45,7 @@ unsigned long pstats_ikev2_fail;
 unsigned long pstats_ikev1_encr[OAKLEY_CAMELLIA_CCM_C+1];
 unsigned long pstats_ikev2_encr[IKEv2_ENCR_ROOF];
 unsigned long pstats_ikev1_integ[OAKLEY_SHA2_512+1];
-unsigned long pstats_ikev2_integ[AUTH_ALGORITHM_ROOF];
+unsigned long pstats_ikev2_integ[IKEv2_AUTH_ROOF];
 unsigned long pstats_ikev1_groups[OAKLEY_GROUP_ROOF];
 unsigned long pstats_ikev2_groups[OAKLEY_GROUP_ROOF];
 unsigned long pstats_invalidke_recv_s[OAKLEY_GROUP_ROOF];
