@@ -265,22 +265,10 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 		}
 		snprintf(cipher_str, sizeof(cipher_str), "cipher=%s ksize=%u integ=%s",
 			 (encrypt == NULL ? "none" :
-#if 1
-			  encrypt->encrypt_kernel_audit_name
-#else
-			  enum_show_shortb(&esp_transformid_names,
-					   encrypt->common.id[IKEv1_ESP_ID], &esb)
-#endif
-			  ),
+			  encrypt->encrypt_kernel_audit_name),
 			 enckeylen,
 			 (integ == NULL ? "none" :
-#if 1
-			  integ->integ_kernel_audit_name
-#else
-			  enum_show_shortb(&auth_alg_names,
-					   integ->common.id[IKEv1_ESP_ID], &esb2)
-#endif
-			  ));
+			  integ->integ_kernel_audit_name));
 
 		snprintf(spi_str, sizeof(spi_str),
 		"in-spi=%lu(0x%08lx) out-spi=%lu(0x%08lx) in-ipcomp=%lu(0x%08lx) out-ipcomp=%lu(0x%08lx)",
