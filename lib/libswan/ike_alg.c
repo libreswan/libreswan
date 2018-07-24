@@ -601,12 +601,20 @@ static const struct encrypt_desc *encrypt_descriptors[] = {
 bool encrypt_has_key_bit_length(const struct encrypt_desc *encrypt,
 				unsigned keylen)
 {
-	for (const unsigned *keyp = encrypt->key_bit_lengths; *keyp; keyp++) {
-		if (*keyp == keylen) {
-			return TRUE;
+	/*
+	 * This loop is written so that KEYLEN is always compared
+	 * against the first entry in .key_bit_lengths - even when
+	 * that entry is zero.  This happens when encryption is 'none'
+	 * and the KEYLEN really is zero.
+	 */
+	const unsigned *p = encrypt->key_bit_lengths;
+	do {
+		if (*p == keylen) {
+			return true;
 		}
-	}
-	return FALSE;
+		p++;
+	} while (*p != 0);
+	return false;
 }
 
 unsigned encrypt_max_key_bit_length(const struct encrypt_desc *encrypt)
@@ -657,6 +665,12 @@ static void encrypt_desc_check(const struct ike_alg *alg)
 		passert_ike_alg(alg, encrypt->encrypt_ops->do_crypt == NULL || encrypt->aead_tag_size == 0);
 	}
 
+	/*
+	 * Key length checks.
+	 *
+	 * Either the algorithm is 'null', or there is a non-zero
+	 * KEYDEFLEN.
+	 */
 	if (encrypt == &ike_alg_encrypt_null) {
 		passert_ike_alg(alg, encrypt->keydeflen == 0);
 		passert_ike_alg(alg, encrypt->common.id[IKEv1_ESP_ID] == ESP_NULL);
@@ -665,29 +679,21 @@ static void encrypt_desc_check(const struct ike_alg *alg)
 		passert_ike_alg(alg, encrypt->wire_iv_size == 0);
 		passert_ike_alg(alg, encrypt->key_bit_lengths[0] == 0);
 	} else {
-		/*
-		 * Acceptable key bit-length checks (assuming the
-		 * algorithm isn't NULL):
-		 *
-		 * - 0 terminated
-		 *
-		 * - in descending order
-		 *
-		 * - provided there is a KEYDEFLEN (i.e., not the NULL
-		 *   algorithm), there is at least one key length.
-		 */
 		passert_ike_alg(alg, encrypt->keydeflen > 0);
 		passert_ike_alg(alg, encrypt->key_bit_lengths[0] > 0);
-		passert_ike_alg(alg, encrypt->key_bit_lengths[elemsof(encrypt->key_bit_lengths) - 1] == 0);
-		for (const unsigned *keyp = encrypt->key_bit_lengths; *keyp; keyp++) {
-			/* at end, keyp[1] will be 0 */
-			passert_ike_alg(alg, keyp[0] > keyp[1]);
-		}
-		/*
-		 * the default appears in the list
-		 */
-		passert_ike_alg(alg, encrypt_has_key_bit_length(encrypt, encrypt->keydeflen));
 	}
+	/* Key lengths are in descending order and 0 terminated. */
+	{
+		const unsigned *keylenp = encrypt->key_bit_lengths;
+		unsigned last_key_len = *keylenp;
+		keylenp++;
+		passert_ike_alg(alg, encrypt->key_bit_lengths[elemsof(encrypt->key_bit_lengths) - 1] == 0);
+		for (; *keylenp != 0; keylenp++) {
+			passert_ike_alg(alg, last_key_len > *keylenp);
+		}
+	}
+	/* * The default (even when 0) is always valid. */
+	passert_ike_alg(alg, encrypt_has_key_bit_length(encrypt, encrypt->keydeflen));
 }
 
 static bool encrypt_desc_is_ike(const struct ike_alg *alg)

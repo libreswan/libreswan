@@ -739,6 +739,8 @@ bool ike_alg_is_valid(const struct ike_alg *alg);
 
 /*
  * Is the key valid for the encryption algorithm?
+ *
+ * For the case of null encryption, 0 is considered valid.
  */
 bool encrypt_has_key_bit_length(const struct encrypt_desc *encrypt_desc, unsigned keylen);
 
