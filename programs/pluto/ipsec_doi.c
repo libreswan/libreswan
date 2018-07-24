@@ -551,16 +551,21 @@ void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 		DBGF(DBG_NATT, "NAT-T: encaps is '%s'",
 		     c->encaps == yna_auto ? "auto" : bool_str(c->encaps == yna_yes));
 
-		lswlogf(buf, "%sESP%s%s%s=>0x%08lx <0x%08lx xfrm=%s_%d-%s",
+		lswlogf(buf, "%sESP%s%s%s=>0x%08lx <0x%08lx",
 			ini,
 			nat ? "/NAT" : "",
 			esn ? "/ESN" : "",
 			tfc ? "/TFC" : "",
 			(unsigned long)ntohl(st->st_esp.attrs.spi),
-			(unsigned long)ntohl(st->st_esp.our_spi),
-			st->st_esp.attrs.transattrs.ta_encrypt->common.fqn,
-			st->st_esp.attrs.transattrs.enckeylen,
-			st->st_esp.attrs.transattrs.ta_integ->common.fqn);
+			(unsigned long)ntohl(st->st_esp.our_spi));
+		lswlogf(buf, " xfrm=%s", st->st_esp.attrs.transattrs.ta_encrypt->common.fqn);
+		/* log keylen when it is required and/or "interesting" */
+		if (!st->st_esp.attrs.transattrs.ta_encrypt->keylen_omitted ||
+		    (st->st_esp.attrs.transattrs.enckeylen != 0 &&
+		     st->st_esp.attrs.transattrs.enckeylen != st->st_esp.attrs.transattrs.ta_encrypt->keydeflen)) {
+			lswlogf(buf, "_%u", st->st_esp.attrs.transattrs.enckeylen);
+		}
+		lswlogf(buf, "-%s", st->st_esp.attrs.transattrs.ta_integ->common.fqn);
 
 		if (st->st_ikev2 && st->st_pfs_group != NULL)  {
 			lswlogs(buf, "-");
