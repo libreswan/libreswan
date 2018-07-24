@@ -41,8 +41,12 @@ extern unsigned long pstats_invalidke_recv_s[OAKLEY_GROUP_PSTATS_ROOF];
 extern unsigned long pstats_invalidke_recv_u[OAKLEY_GROUP_PSTATS_ROOF];
 extern unsigned long pstats_invalidke_sent_s[OAKLEY_GROUP_PSTATS_ROOF];
 extern unsigned long pstats_invalidke_sent_u[OAKLEY_GROUP_PSTATS_ROOF];
-extern unsigned long pstats_ipsec_encr[IKEv2_ENCR_PSTATS_ROOF];	/* pretends everything maps 1 to 1 */
-extern unsigned long pstats_ipsec_integ[AUTH_ALGORITHM_PSTATS_ROOF];	/* pretends everything maps 1 to 1 */
+
+extern unsigned long pstats_ikev1_ipsec_encrypt[ESP_PSTATS_ROOF];
+extern unsigned long pstats_ikev2_ipsec_encrypt[IKEv2_ENCR_PSTATS_ROOF];
+extern unsigned long pstats_ikev1_ipsec_integ[AUTH_ALGORITHM_PSTATS_ROOF];
+extern unsigned long pstats_ikev2_ipsec_integ[IKEv2_AUTH_PSTATS_ROOF];
+
 extern uint64_t pstats_ipsec_in_bytes;	/* total incoming IPsec traffic */
 extern uint64_t pstats_ipsec_out_bytes;	/* total outgoing IPsec traffic */
 extern unsigned long pstats_ike_in_bytes;	/* total incoming IPsec traffic */
@@ -79,6 +83,15 @@ extern void clear_pluto_stats();
  * "unsigned" forces negative values to large positive ones,
  * presumably INDEX fits in "unsigned".  Is size_t better?
  */
+
+#define pstatsv(TYPE, V2, INDEXv1, INDEXv2)				\
+	{								\
+		if (V2) {						\
+			pstats(ikev2_##TYPE, INDEXv2);			\
+		} else {						\
+			pstats(ikev1_##TYPE, INDEXv1);			\
+		}							\
+	}
 
 #define pstats(TYPE,INDEX) {						\
 		const unsigned __pstat = (INDEX);			\
