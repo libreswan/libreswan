@@ -95,10 +95,8 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 						   esp_info->enckeylen);
 		} else {
 			/* no key length - if required add default here and add another max entry */
-			int def_ks = crypto_req_keysize(CRK_ESPorAH, ealg_i);
-			int new_keysize = (esp_info->encrypt->keylen_omitted ? 0
-					   : esp_info->encrypt->keydeflen);
-			pexpect(def_ks == new_keysize);
+			int def_ks = (esp_info->encrypt->keylen_omitted ? 0
+				      : esp_info->encrypt->keydeflen);
 
 			if (def_ks != 0) {
 				db_attr_add_values(db_ctx, KEY_LENGTH, def_ks);
