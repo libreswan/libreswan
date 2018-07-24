@@ -803,19 +803,27 @@ bool ikev1_out_sa(pb_stream *outs,
 							}
 						}
 					} else {
+						/*
+						 * XXX: is this
+						 * redundant, alg
+						 * parser should have
+						 * set the key length?
+						 */
 						/* ipsec_mode */
 						if (!keysized) {
-							int defkeysize = crypto_req_keysize(CRK_ESPorAH, t->transid);
-
-							if (defkeysize != 0) {
-								DBG(DBG_CONTROLMORE, DBG_log("inserting default ipsec key length attribute payload of %d bits",
-									defkeysize));
+							const struct encrypt_desc *encrypt = ikev1_get_kernel_encrypt_desc(t->transid);
+							if (pexpect(encrypt != NULL) && !encrypt->keylen_omitted) {
+								DBGF(DBG_CONTROLMORE,
+								     "inserting default ipsec key length attribute payload of %d bits",
+								     encrypt->keydeflen);
 								if (!out_attr(KEY_LENGTH,
-									defkeysize,
+									encrypt->keydeflen,
 									attr_desc,
 									attr_val_descs,
 									&trans_pbs))
 									goto fail;
+							} else {
+								DBGF(DBG_CONTROLMORE, "ignoring missing keylen as omitted");
 							}
 						}
 					}
