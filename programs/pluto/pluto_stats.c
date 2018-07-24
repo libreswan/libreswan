@@ -34,7 +34,7 @@
 #include "demux.h"  /* needs packet.h */
 #include "rcv_whack.h"
 #include "whack.h"              /* for RC_LOG_SERIOUS */
-
+#include "ike_alg.h"
 #include "pluto_stats.h"
 
 unsigned long pstats_ipsec_sa;
@@ -52,8 +52,12 @@ unsigned long pstats_invalidke_recv_s[OAKLEY_GROUP_PSTATS_ROOF];
 unsigned long pstats_invalidke_recv_u[OAKLEY_GROUP_PSTATS_ROOF];
 unsigned long pstats_invalidke_sent_s[OAKLEY_GROUP_PSTATS_ROOF];
 unsigned long pstats_invalidke_sent_u[OAKLEY_GROUP_PSTATS_ROOF];
-unsigned long pstats_ipsec_encr[IKEv2_ENCR_PSTATS_ROOF];	/* pretends everything maps 1 to 1 */
-unsigned long pstats_ipsec_integ[AUTH_ALGORITHM_PSTATS_ROOF];	/* pretends everything maps 1 to 1 */
+
+unsigned long pstats_ikev1_ipsec_encrypt[ESP_PSTATS_ROOF];
+unsigned long pstats_ikev2_ipsec_encrypt[IKEv2_ENCR_PSTATS_ROOF];
+unsigned long pstats_ikev1_ipsec_integ[AUTH_ALGORITHM_PSTATS_ROOF];
+unsigned long pstats_ikev2_ipsec_integ[IKEv2_AUTH_PSTATS_ROOF];
+
 uint64_t pstats_ipsec_in_bytes;	/* total incoming IPsec traffic */
 uint64_t pstats_ipsec_out_bytes;	/* total outgoing IPsec traffic */
 unsigned long pstats_ike_in_bytes;	/* total incoming IPsec traffic */
@@ -144,6 +148,18 @@ static void enum_stats(enum_names *names, unsigned long start,
 #define ENUM_STATS(NAMES, START, WHAT, COUNT)	\
 	enum_stats(NAMES, START, elemsof(COUNT), WHAT, COUNT)
 
+#define IKE_ALG_STATS(WHAT, TYPE, ID, COUNT)				\
+	for (const struct TYPE##_desc **algp = next_##TYPE##_desc(NULL); \
+	     algp != NULL; algp = next_##TYPE##_desc(algp)) {		\
+		const struct TYPE##_desc *alg = *algp;			\
+		long id = alg->common.id[ID];				\
+		if (id >= 0 && id < (ssize_t) elemsof(COUNT)) {		\
+			whack_log_comment("total.%s.%s=%lu",		\
+					  WHAT, alg->common.fqn,	\
+					  COUNT[id]);			\
+		}							\
+	}
+
 void show_pluto_stats()
 {
 	whack_log_comment("total.ipsec.type.all=%lu", pstats_ipsec_sa);
@@ -198,9 +214,11 @@ void show_pluto_stats()
 	}
 #endif
 
-	/* IPsec ENCR maps to IKEv2 ENCR */
-	ENUM_STATS(&ikev2_trans_type_encr_names, IKEv2_ENCR_3DES, "ipsec.encr", pstats_ipsec_encr);
-	ENUM_STATS(&auth_alg_names, AUTH_ALGORITHM_HMAC_MD5, "ipsec.integ", pstats_ipsec_integ);
+	IKE_ALG_STATS("ikev1.ipsec.encr", encrypt, IKEv1_ESP_ID, pstats_ikev1_ipsec_encrypt);
+	IKE_ALG_STATS("ikev1.ipsec.integ", integ, IKEv1_ESP_ID, pstats_ikev1_ipsec_integ);
+	IKE_ALG_STATS("ikev2.ipsec.encr", encrypt, IKEv2_ALG_ID, pstats_ikev2_ipsec_encrypt);
+	IKE_ALG_STATS("ikev2.ipsec.integ", integ, IKEv2_ALG_ID, pstats_ikev2_ipsec_integ);
+
 	ENUM_STATS(&ikev1_notify_names, 1, "ikev1.sent.notifies.error", pstats_ikev1_sent_notifies_e);
 	ENUM_STATS(&ikev1_notify_names, 1, "ikev1.recv.notifies.error", pstats_ikev1_recv_notifies_e);
 
@@ -228,8 +246,10 @@ void clear_pluto_stats()
 	memset(pstats_ikev2_encr, 0, sizeof pstats_ikev2_encr);
 	memset(pstats_ikev1_integ, 0, sizeof pstats_ikev1_integ);
 	memset(pstats_ikev2_integ, 0, sizeof pstats_ikev2_integ);
-	memset(pstats_ipsec_encr, 0, sizeof pstats_ipsec_encr);
-	memset(pstats_ipsec_integ, 0, sizeof pstats_ipsec_integ);
+	memset(pstats_ikev1_ipsec_encrypt, 0, sizeof pstats_ikev1_ipsec_encrypt);
+	memset(pstats_ikev2_ipsec_encrypt, 0, sizeof pstats_ikev2_ipsec_encrypt);
+	memset(pstats_ikev1_ipsec_integ, 0, sizeof pstats_ikev1_ipsec_integ);
+	memset(pstats_ikev2_ipsec_integ, 0, sizeof pstats_ikev2_ipsec_integ);
 	memset(pstats_ikev1_groups, 0, sizeof pstats_ikev1_groups);
 	memset(pstats_ikev2_groups, 0, sizeof pstats_ikev2_groups);
 	memset(pstats_invalidke_sent_s, 0, sizeof pstats_invalidke_sent_s);
