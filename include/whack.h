@@ -408,7 +408,7 @@ extern void clear_end(struct whack_end *e);
 extern size_t whack_get_secret(char *buf, size_t bufsize);
 extern int whack_get_value(char *buf, size_t bufsize);
 
-extern bool lsw_alias_cmp(const char *needle, const char *haystack);
+extern bool lsw_alias_cmp(const char *name, const char *aliases);
 extern void whack_process(int whackfd, const struct whack_message *const m);
 
 #endif /* _WHACK_H */
