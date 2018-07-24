@@ -17,6 +17,8 @@
  */
 
 struct payload_digest;
+struct state;
+struct lswlog;
 
 struct xfrm_user_sec_ctx_ike *uctx; /* forward declaration */
 
@@ -125,3 +127,6 @@ extern bool extract_peer_id(enum ike_id_type kind, struct id *peer, const pb_str
 
 struct pluto_crypto_req;	/* prevent struct type being local to function protocol */
 extern void unpack_nonce(chunk_t *n, const struct pluto_crypto_req *r);
+
+extern void lswlog_child_sa_established(struct lswlog *buf, struct state *st);
+extern void lswlog_ike_sa_established(struct lswlog *buf, struct state *st);

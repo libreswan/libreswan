@@ -2549,30 +2549,32 @@ static void success_v2_state_transition(struct msg_digest *md)
 
 	/* tell whack and log of progress, if we are actually advancing */
 	if (from_state != svm->next_state) {
-		char sadetails[512];
-
 		passert(st->st_state >= STATE_IKEv2_BASE);
 		passert(st->st_state <  STATE_IKEv2_ROOF);
 
-		sadetails[0] = '\0';
-
+		void (*log_details)(struct lswlog *buf, struct state *st);
 		if (IS_CHILD_SA_ESTABLISHED(st)) {
 			log_ipsec_sa_established("negotiated connection", st);
-			fmt_ipsec_sa_established(st, sadetails,
-						 sizeof(sadetails));
-			/* log our success */
+			log_details = lswlog_child_sa_established;
+			/* log our success and trigger detach */
 			w = RC_SUCCESS;
 		} else if (st->st_state == STATE_PARENT_I2 || st->st_state == STATE_PARENT_R1) {
-			fmt_isakmp_sa_established(st, sadetails,
-						  sizeof(sadetails));
+			log_details = lswlog_ike_sa_established;
+		} else {
+			log_details = NULL;
 		}
 
 		/* tell whack and logs our progress - unless OE, then be quiet*/
-		if (c == NULL || (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY)
-			loglog(w, "%s: %s%s",
-				st->st_state_name,
-				st->st_state_story,
-				sadetails);
+		if (c == NULL || (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+			LSWLOG_RC(w, buf) {
+				lswlogf(buf, "%s: %s", st->st_finite_state->fs_name,
+					st->st_finite_state->fs_story);
+				/* document SA details for admin's pleasure */
+				if (log_details != NULL) {
+					log_details(buf, st);
+				}
+			}
+		}
 	}
 
 	/* if requested, send the new reply packet */

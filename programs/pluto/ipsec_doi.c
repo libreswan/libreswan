@@ -527,7 +527,7 @@ static void pstats_sa(bool nat, bool tfc, bool esn)
 		pstats_ipsec_tfc++;
 }
 
-void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
+static void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 {
 	struct connection *const c = st->st_connection;
 	char *b;
@@ -657,7 +657,14 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 	add_str(sadetails, sad_len, b, "}");
 }
 
-void fmt_isakmp_sa_established(struct state *st, char *sa_details,
+void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
+{
+	char sadetails[512] = "";
+	fmt_ipsec_sa_established(st, sadetails, sizeof(sadetails));
+	lswlogs(buf, sadetails);
+}
+
+static void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 			       size_t sa_details_size)
 {
 	passert(st->st_oakley.ta_encrypt != NULL);
@@ -724,4 +731,11 @@ void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 		pstats(ikev1_integ, st->st_oakley.ta_prf->common.id[IKEv1_OAKLEY_ID]);
 		pstats(ikev1_groups, st->st_oakley.ta_dh->group);
 	}
+}
+
+void lswlog_ike_sa_established(struct lswlog *buf, struct state *st)
+{
+	char sadetails[512] = "";
+	fmt_isakmp_sa_established(st, sadetails, sizeof(sadetails));
+	lswlogs(buf, sadetails);
 }

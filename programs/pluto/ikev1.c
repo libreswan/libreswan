@@ -2559,32 +2559,31 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 		/* tell whack and log of progress */
 		{
-			const char *story = st->st_state_story;
-			enum rc_type w = RC_NEW_STATE + st->st_state;
-			char sadetails[512];
+			enum rc_type w;
+			void (*log_details)(struct lswlog *buf, struct state *st);
+
+			if (IS_IPSEC_SA_ESTABLISHED(st)) {
+				log_details = lswlog_child_sa_established;
+				w = RC_SUCCESS; /* log our success */
+			} else if (IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+				log_details = lswlog_ike_sa_established;
+				w = RC_SUCCESS; /* log our success */
+			} else {
+				log_details = NULL;
+				w = RC_NEW_STATE + st->st_state;
+			}
 
 			passert(st->st_state < STATE_IKEv1_ROOF);
 
-			sadetails[0] = '\0';
-
-			/* document IPsec SA details for admin's pleasure */
-			if (IS_IPSEC_SA_ESTABLISHED(st)) {
-				fmt_ipsec_sa_established(st, sadetails,
-							 sizeof(sadetails));
-				w = RC_SUCCESS; /* log our success */
-
-			} else if (IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
-				fmt_isakmp_sa_established(st, sadetails,
-							  sizeof(sadetails));
-				w = RC_SUCCESS; /* log our success */
-			}
-
 			/* tell whack and logs our progress */
-			loglog(w,
-			       "%s: %s%s",
-			       st->st_state_name,
-			       story,
-			       sadetails);
+			LSWLOG_RC(w, buf) {
+				lswlogf(buf, "%s: %s", st->st_finite_state->fs_name,
+					st->st_finite_state->fs_story);
+				/* document SA details for admin's pleasure */
+				if (log_details != NULL) {
+					log_details(buf, st);
+				}
+			}
 		}
 
 		/*
