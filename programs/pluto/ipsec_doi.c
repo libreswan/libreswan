@@ -527,16 +527,12 @@ static void pstats_sa(bool nat, bool tfc, bool esn)
 		pstats_ipsec_tfc++;
 }
 
-static void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
+void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 {
 	struct connection *const c = st->st_connection;
-	char *b;
 	const char *ini = " {";
-	ipstr_buf ipb;
 
-	b = jam_str(sadetails, sad_len,
-	       c->policy & POLICY_TUNNEL ?
-		" tunnel mode" : " transport mode");
+	lswlogs(buf, c->policy & POLICY_TUNNEL ? " tunnel mode" : " transport mode");
 
 	/* don't count IKEv1 half ipsec sa */
 	if (st->st_state == STATE_QUICK_R1) {
@@ -549,31 +545,26 @@ static void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t s
 		bool esn = st->st_esp.attrs.transattrs.esn_enabled;
 
 		if (nat)
-			DBG(DBG_NATT, DBG_log("NAT-T: NAT Traversal detected - their IKE port is '%d'",
-				    c->spd.that.host_port));
+			DBGF(DBG_NATT, "NAT-T: NAT Traversal detected - their IKE port is '%d'",
+			     c->spd.that.host_port);
 
-		DBG(DBG_NATT, DBG_log("NAT-T: encaps is '%s'",
-			    c->encaps == yna_auto ? "auto" :
-				bool_str(c->encaps == yna_yes)));
+		DBGF(DBG_NATT, "NAT-T: encaps is '%s'",
+		     c->encaps == yna_auto ? "auto" : bool_str(c->encaps == yna_yes));
 
-		snprintf(b, sad_len - (b - sadetails),
-			 "%sESP%s%s%s=>0x%08lx <0x%08lx xfrm=%s_%d-%s",
-			 ini,
-			 nat ? "/NAT" : "",
-			 esn ? "/ESN" : "",
-			 tfc ? "/TFC" : "",
-			 (unsigned long)ntohl(st->st_esp.attrs.spi),
-			 (unsigned long)ntohl(st->st_esp.our_spi),
-			 st->st_esp.attrs.transattrs.ta_encrypt->common.fqn,
-			 st->st_esp.attrs.transattrs.enckeylen,
-			 st->st_esp.attrs.transattrs.ta_integ->common.fqn);
-
-		/* advance b to end of string */
-		b = b + strlen(b);
+		lswlogf(buf, "%sESP%s%s%s=>0x%08lx <0x%08lx xfrm=%s_%d-%s",
+			ini,
+			nat ? "/NAT" : "",
+			esn ? "/ESN" : "",
+			tfc ? "/TFC" : "",
+			(unsigned long)ntohl(st->st_esp.attrs.spi),
+			(unsigned long)ntohl(st->st_esp.our_spi),
+			st->st_esp.attrs.transattrs.ta_encrypt->common.fqn,
+			st->st_esp.attrs.transattrs.enckeylen,
+			st->st_esp.attrs.transattrs.ta_integ->common.fqn);
 
 		if (st->st_ikev2 && st->st_pfs_group != NULL)  {
-			b = add_str(sadetails, sad_len , b, "-");
-			b = add_str(sadetails, sad_len, b, st->st_pfs_group->common.name);
+			lswlogs(buf, "-");
+			lswlogs(buf, st->st_pfs_group->common.name);
 		}
 
 		ini = " ";
@@ -591,16 +582,12 @@ static void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t s
 	if (st->st_ah.present) {
 		bool esn = st->st_esp.attrs.transattrs.esn_enabled;
 
-		snprintf(b, sad_len - (b - sadetails),
-			 "%sAH%s=>0x%08lx <0x%08lx xfrm=%s",
-			 ini,
-			 st->st_ah.attrs.transattrs.esn_enabled ? "/ESN" : "",
-			 (unsigned long)ntohl(st->st_ah.attrs.spi),
-			 (unsigned long)ntohl(st->st_ah.our_spi),
-			 st->st_ah.attrs.transattrs.ta_integ->common.fqn);
-
-		/* advance b to end of string */
-		b = b + strlen(b);
+		lswlogf(buf, "%sAH%s=>0x%08lx <0x%08lx xfrm=%s",
+			ini,
+			st->st_ah.attrs.transattrs.esn_enabled ? "/ESN" : "",
+			(unsigned long)ntohl(st->st_ah.attrs.spi),
+			(unsigned long)ntohl(st->st_ah.our_spi),
+			st->st_ah.attrs.transattrs.ta_integ->common.fqn);
 
 		ini = " ";
 
@@ -612,56 +599,45 @@ static void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t s
 	}
 
 	if (st->st_ipcomp.present) {
-		snprintf(b, sad_len - (b - sadetails),
-			 "%sIPCOMP=>0x%08lx <0x%08lx",
-			 ini,
-			 (unsigned long)ntohl(st->st_ipcomp.attrs.spi),
-			 (unsigned long)ntohl(st->st_ipcomp.our_spi));
-
-		/* advance b to end of string */
-		b = b + strlen(b);
+		lswlogf(buf, "%sIPCOMP=>0x%08lx <0x%08lx",
+			ini,
+			(unsigned long)ntohl(st->st_ipcomp.attrs.spi),
+			(unsigned long)ntohl(st->st_ipcomp.our_spi));
 
 		ini = " ";
 
 		pstats_ipsec_ipcomp++;
 	}
 
-	b = add_str(sadetails, sad_len, b, ini);
-	b = add_str(sadetails, sad_len, b, "NATOA=");
-	b = add_str(sadetails, sad_len, b,
-		isanyaddr(&st->hidden_variables.st_nat_oa) ? "none" :
-			ipstr(&st->hidden_variables.st_nat_oa, &ipb));
+	lswlogs(buf, ini);
+	lswlogs(buf, "NATOA=");
+	/* XXX: can lswlog_ip() be used? */
+	ipstr_buf ipb;
+	lswlogs(buf, isanyaddr(&st->hidden_variables.st_nat_oa) ? "none" :
+		ipstr(&st->hidden_variables.st_nat_oa, &ipb));
 
-	b = add_str(sadetails, sad_len, b, " NATD=");
+	lswlogs(buf, " NATD=");
 
 	if (isanyaddr(&st->hidden_variables.st_natd)) {
-		b = add_str(sadetails, sad_len, b, "none");
+		lswlogs(buf, "none");
 	} else {
+		/* XXX: can lswlog_ip() be used?  need to check st_remoteport */
 		char oa[ADDRTOT_BUF + sizeof(":00000")];
-
 		snprintf(oa, sizeof(oa),
 			 "%s:%d",
 			 sensitive_ipstr(&st->hidden_variables.st_natd, &ipb),
 			 st->st_remoteport);
-		b = add_str(sadetails, sad_len, b, oa);
+		lswlogs(buf, oa);
 	}
 
-	b = add_str(sadetails, sad_len, b,
-		dpd_active_locally(st) ? " DPD=active" : " DPD=passive");
+	lswlogf(buf, dpd_active_locally(st) ? " DPD=active" : " DPD=passive");
 
 	if (st->st_xauth_username[0] != '\0') {
-		b = add_str(sadetails, sad_len, b, " username=");
-		b = add_str(sadetails, sad_len, b, st->st_xauth_username);
+		lswlogs(buf, " username=");
+		lswlogs(buf, st->st_xauth_username);
 	}
 
-	add_str(sadetails, sad_len, b, "}");
-}
-
-void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
-{
-	char sadetails[512] = "";
-	fmt_ipsec_sa_established(st, sadetails, sizeof(sadetails));
-	lswlogs(buf, sadetails);
+	lswlogs(buf, "}");
 }
 
 static void fmt_isakmp_sa_established(struct state *st, char *sa_details,
