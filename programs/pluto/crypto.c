@@ -41,54 +41,6 @@
 #include "kernel_alg.h"
 
 /*
- * Return a required oakley or ipsec keysize or 0 if not required.
- * The first parameter uses 0 for ESP, and anything above that for
- * IKE major version
- */
-unsigned crypto_req_keysize(enum crk_proto ksproto, int algo)
-{
-	switch (ksproto) {
-
-	case CRK_ESPorAH:
-		switch (algo) {
-		case ESP_CAST:
-			return CAST_KEY_DEF_LEN;
-		case ESP_AES:
-			return AES_KEY_DEF_LEN;
-		case ESP_AES_CTR:
-			return AES_CTR_KEY_DEF_LEN;
-		case ESP_AES_CCM_8:
-		case ESP_AES_CCM_12:
-		case ESP_AES_CCM_16:
-			return AES_CCM_KEY_DEF_LEN;
-		case ESP_AES_GCM_8:
-		case ESP_AES_GCM_12:
-		case ESP_AES_GCM_16:
-			return AES_GCM_KEY_DEF_LEN;
-		case ESP_CAMELLIA:
-			return CAMELLIA_KEY_DEF_LEN;
-		case ESP_CAMELLIA_CTR:
-			return CAMELLIA_CTR_KEY_DEF_LEN;
-		case ESP_NULL_AUTH_AES_GMAC:
-			return AES_GMAC_KEY_DEF_LEN;
-		case ESP_3DES:
-			/* 0 means send no keylen */
-			return 0;
-		/* private use */
-		case ESP_SERPENT:
-			return SERPENT_KEY_DEF_LEN;
-		case ESP_TWOFISH:
-			return TWOFISH_KEY_DEF_LEN;
-		default:
-			return 0;
-		}
-
-	default:
-		bad_case(ksproto);
-	}
-}
-
-/*
  *      Show IKE algorithms for
  *      - this connection (result from ike= string)
  *      - newest SA

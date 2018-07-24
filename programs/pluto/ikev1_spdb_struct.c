@@ -1,9 +1,10 @@
 /* Security Policy Data Base (such as it is)
+ *
  * Copyright (C) 1998-2001,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
- * Copyright (C) 2016-2017 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016-2018 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -43,13 +44,13 @@
 #include "spdb.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */
 #include "plutoalg.h"
-
 #include "crypto.h"
 
 #include "ikev1.h"
 #include "alg_info.h"
 #include "kernel_alg.h"
 #include "ike_alg.h"
+#include "ike_alg_encrypt.h"
 #include "ike_alg_integ.h"
 #include "db_ops.h"
 #include "lswfips.h" /* for libreswan_fipsmode */
@@ -155,40 +156,6 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 
 #endif
 
-static err_t check_kernel_encrypt_alg(const struct encrypt_desc *encrypt,
-				      unsigned int key_len)
-{
-	/*
-	 * test #1: encrypt algo must be present
-	 *
-	 * XXX: The algorithm parser should have already rejected
-	 * algorithms not supported by the kernel.
-	 */
-	if (!kernel_alg_encrypt_ok(encrypt)) {
-		DBGF(DBG_KERNEL, "alg %s (%d) not present in kernel",
-		     encrypt != NULL ? encrypt->common.fqn : "(NULL)", key_len);
-		return "encryption alg not present in kernel";
-	}
-
-	/*
-	 * test #2: key length valid
-	 *
-	 * XXX: While, in theory, the kernel may support fewer key
-	 * lengths then listed in encrypt_desc there's no evidence
-	 * that happens with the current code (at one point variable
-	 * key lengths were possible but that is long gone).  If it
-	 * does turn out to be a problem then the place to fix it is
-	 * in the algorithm parser where it checks an algorithm is ok
-	 * (so it is rejected up front) and not here.
-	 */
-	if (!encrypt_has_key_bit_length(encrypt, key_len)) {
-		return builddiag("%s key_len %d is incorrect",
-				 encrypt->common.fqn, key_len);
-	}
-
-	return NULL;
-}
-
 /** output an attribute (within an SA) */
 /* Note: ikev2_out_attr is a clone, with the same bugs */
 static bool out_attr(int type,
@@ -236,20 +203,92 @@ static bool out_attr(int type,
 	return TRUE;
 }
 
-static bool ikev1_verify_esp(const struct trans_attrs *ta,
-			     const struct alg_info_esp *alg_info)
+/*
+ * Determine if the proposal is acceptable (or need to keep looking).
+ *
+ * As a rule, this doesn't log - instead it assumes things were
+ * reported earlier.
+ */
+
+static bool ikev1_verify_esp(const struct connection *c,
+			     const struct trans_attrs *ta)
 {
+	/*
+	 * Check encryption.
+	 *
+	 * For the key-length, its assumed that the caller checked for
+	 * and patched up either a missing or zero key-length, setting
+	 * .enckeylen to the correct value (which might still be 0).
+	 */
 	if (ta->ta_encrypt == NULL) {
-		libreswan_log("ESP IPsec Transform refused: missing encryption algorithm");
+		/*
+		 * No encryption.  Either because its lookup failed or
+		 * because it was NULLed to force the proposal's
+		 * rejection.
+		 */
+		DBGF(DBG_PARSING,
+		     "ignoring ESP proposal with NULLed or unknown encryption");
+		return false;       /* try another */
+	}
+	if (!kernel_alg_encrypt_ok(ta->ta_encrypt)) {
+		/*
+		 * No kernel support.  Needed because ALG_INFO==NULL
+		 * will act as a wild card.  XXX: but is ALG_INFO ever
+		 * NULL?
+		 */
+		DBGF(DBG_KERNEL|DBG_PARSING,
+		     "ignoring ESP proposal with alg %s not present in kernel",
+		     ta->ta_encrypt->common.fqn);
 		return false;
 	}
+	if (!encrypt_has_key_bit_length(ta->ta_encrypt, ta->enckeylen)) {
+		loglog(RC_LOG_SERIOUS,
+		       "kernel algorithm does not like: %s key_len %u is incorrect",
+		       ta->ta_encrypt->common.fqn, ta->enckeylen);
+		LSWLOG_RC(RC_LOG_SERIOUS, buf) {
+			lswlogf(buf, "unsupported ESP Transform %s from ",
+				ta->ta_encrypt->common.fqn);
+			lswlog_ip(buf, &c->spd.that.host_addr);
+		}
+		return false; /* try another */
+	}
+
+	/*
+	 * Check integrity.
+	 */
+	if (ta->ta_integ == NULL) {
+		/*
+		 * No integrity.  Since, for ESP, when integrity is
+		 * missing, it is forced to .ta_integ=NONE (i.e., not
+		 * NULL), a NULL here must indicate that integrity was
+		 * present but the lookup failed.
+		 */
+		DBGF(DBG_PARSING, "ignoring ESP proposal with unknown integrity");
+		return false;       /* try another */
+	}
+	if (ta->ta_integ != &ike_alg_integ_none && !kernel_alg_integ_ok(ta->ta_integ)) {
+		/*
+		 * No kernel support.  Needed because ALG_INFO==NULL
+		 * will act as a wild card.
+		 *
+		 * XXX: but is ALG_INFO ever NULL?
+		 *
+		 * XXX: check for NONE comes from old code just
+		 * assumed NONE was supported.
+		 */
+		DBGF(DBG_KERNEL|DBG_PARSING,
+		     "ignoring ESP proposal with alg %s not present in kernel",
+		     ta->ta_integ->common.fqn);
+		return false;
+	}
+
+	/*
+	 * Check for screwups.  Perhaps the parser rejcts this, anyone
+	 * know?
+	 */
 	if (ta->ta_prf != NULL) {
 		PEXPECT_LOG("ESP IPsec Transform refused: contains unexpected PRF %s",
 			    ta->ta_prf->common.fqn);
-		return false;
-	}
-	if (ta->ta_integ == NULL) {
-		libreswan_log("ESP IPsec Transform refused: missing integrity algorithm");
 		return false;
 	}
 	if (ta->ta_dh != NULL) {
@@ -257,36 +296,23 @@ static bool ikev1_verify_esp(const struct trans_attrs *ta,
 			    ta->ta_dh->common.fqn);
 		return false;
 	}
-	if (alg_info == NULL) {
-		DBG(DBG_CONTROL,
-		    DBG_log("ESP IPsec Transform verified unconditionally; no alg_info to check against"));
+
+	if (c->alg_info_esp== NULL) {
+		DBGF(DBG_CONTROL, "ESP IPsec Transform verified unconditionally; no alg_info to check against");
 		return true;
 	}
 
-	unsigned key_len = ta->enckeylen;
-	if (key_len == 0) {
-		key_len = crypto_req_keysize(CRK_ESPorAH,
-					     ta->ta_encrypt->common.id[IKEv1_ESP_ID]);
-		unsigned new_keysize = (ta->ta_encrypt->keylen_omitted ? 0
-				   : ta->ta_encrypt->keydeflen);
-		pexpect(key_len == new_keysize);
-	}
-
-	FOR_EACH_ESP_INFO(alg_info, esp_info) {
+	FOR_EACH_ESP_INFO(c->alg_info_esp, esp_info) {
 		if (esp_info->encrypt == ta->ta_encrypt &&
 		    (esp_info->enckeylen == 0 ||
-		     key_len == 0 ||
-		     esp_info->enckeylen == key_len) &&
+		     ta->enckeylen == 0 ||
+		     esp_info->enckeylen == ta->enckeylen) &&
 		    esp_info->integ == ta->ta_integ) {
 			DBG(DBG_CONTROL,
 			    DBG_log("ESP IPsec Transform verified; matches alg_info entry"));
 			return true;
 		}
 	}
-
-	libreswan_log("ESP IPsec Transform refused: %s_%d-%s",
-		      ta->ta_encrypt->common.fqn, key_len,
-		      ta->ta_integ->common.fqn);
 	return false;
 }
 
@@ -2163,45 +2189,44 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		}
 	}
 
-	/* Check ealg and key length validity */
-	if (proto == PROTO_IPSEC_ESP) {
-		int ipsec_keysize = crypto_req_keysize(CRK_ESPorAH, attrs->transattrs.ta_ikev1_encrypt);
-		int new_keysize = (attrs->transattrs.ta_encrypt->keylen_omitted ? 0
-				   : attrs->transattrs.ta_encrypt->keydeflen);
-		pexpect(ipsec_keysize == new_keysize);
-
-		if (!LHAS(seen_attrs, KEY_LENGTH)) {
-			if (ipsec_keysize != 0) {
-				/* ealg requires a key length attr */
-				loglog(RC_LOG_SERIOUS,
-					"IPsec encryption transform did not specify required KEY_LENGTH attribute");
-				return FALSE;
-			}
-		}
-
-		err_t ugh = check_kernel_encrypt_alg
-			(attrs->transattrs.ta_encrypt,
-			 attrs->transattrs.enckeylen);
-		if (ugh != NULL) {
+	/*
+	 * For ESP, check if the encryption key length is required.
+	 *
+	 * If a required key length was missing force the proposal to
+	 * be rejected by settinf .ta_encrypt=NULL.
+	 *
+	 * If an optional key-length is missing set it to the correct
+	 * value (.keydeflen) (which can be 0).  This is safe since
+	 * the code echoing back the proposal never emits a keylen
+	 * when .keylen_omitted
+	 */
+	if (proto == PROTO_IPSEC_ESP && !LHAS(seen_attrs, KEY_LENGTH) &&
+	    attrs->transattrs.ta_encrypt != NULL) {
+		if (attrs->transattrs.ta_encrypt->keylen_omitted) {
+			attrs->transattrs.enckeylen = attrs->transattrs.ta_encrypt->keydeflen;
+		} else {
+			/* ealg requires a key length attr */
 			loglog(RC_LOG_SERIOUS,
-				"IPsec encryption transform rejected: %s",
-				ugh);
-			return FALSE;
+			       "IPsec encryption transform %s did not specify required KEY_LENGTH attribute",
+			       attrs->transattrs.ta_encrypt->common.fqn);
+			attrs->transattrs.ta_encrypt = NULL; /* force rejection */
 		}
+	}
 
-		/*
-		 * If integrity is completly missing, set it to NONE.
-		 * This way NULL strictly means that there was
-		 * integrity but it wasn't recognised.
-		 *
-		 * IKEv1 AEAD leaves out integrity; for other
-		 * algorithms there is a check that AH is present and
-		 * it is providing the integrity.
-		 */
-		if (!LHAS(seen_attrs, AUTH_ALGORITHM)) {
-			DBG(DBG_PARSING, DBG_log("ES missing INTEG aka AUTH, setting it to NONE"));
-			attrs->transattrs.ta_integ = &ike_alg_integ_none;
-		}
+	/*
+	 * For ESP, if the integrity algorithm (AUTH_ALGORITHM) was
+	 * completly missing, set it to NONE.
+	 *
+	 * This way the caller has sufficient information to
+	 * differentiate between missing integrity (NONE) and unknown
+	 * integrity (NULL) and decide if the proposals combination of
+	 * ESP/AH AEAD and NONE is valid.
+	 *
+	 * For instance, AEAD+[NONE].
+	 */
+	if (proto == PROTO_IPSEC_ESP && !LHAS(seen_attrs, AUTH_ALGORITHM)) {
+		DBG(DBG_PARSING, DBG_log("ES missing INTEG aka AUTH, setting it to NONE"));
+		attrs->transattrs.ta_integ = &ike_alg_integ_none;
 	}
 
 	if (proto == PROTO_IPSEC_AH) {
@@ -2612,7 +2637,6 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			int tn;
 
 			for (tn = 0; tn != esp_proposal.isap_notrans; tn++) {
-				err_t ugh;
 
 				if (!parse_ipsec_transform(
 				      &esp_trans,
@@ -2630,71 +2654,18 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				previous_transnum = esp_trans.isat_transnum;
 
 				/*
-				 * Since, for ESP, when integrity is
-				 * missing, it is forced to
-				 * .ta_integ=NONE, a NULL here must
-				 * indicate that integrity was present
-				 * but the lookup failed.
+				 * check for allowed transforms in alg_info_esp
 				 */
-				if (esp_attrs.transattrs.ta_integ == NULL) {
-					/* error already logged */
-					DBG(DBG_PARSING,
-					    DBG_log("ignoring ESP proposal with unknown integrity"));
+				if (!ikev1_verify_esp(c, &esp_attrs.transattrs)) {
 					continue;       /* try another */
 				}
 
-				ugh = "no alg";
-
-				if (c->alg_info_esp != NULL) {
-					ugh = check_kernel_encrypt_alg
-						(esp_attrs.transattrs.ta_encrypt,
-						 esp_attrs.transattrs.enckeylen);
-				}
-
-				if (ugh != NULL) {
-					switch (esp_attrs.transattrs.ta_ikev1_encrypt) {
-					case ESP_AES:
-					case ESP_CAMELLIA:
-					case ESP_3DES:
-						break;
-					case ESP_NULL:
-						if (esp_attrs.transattrs.ta_integ == &ike_alg_integ_none) {
-							loglog(RC_LOG_SERIOUS,
-							       "ESP_NULL requires auth algorithm");
-							return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
-						}
-
-						if (st->st_policy &
-						    POLICY_ENCRYPT) {
-							DBG(DBG_CONTROL | DBG_CRYPT, {
-								ipstr_buf b;
-								DBG_log("ESP_NULL Transform Proposal from %s does not satisfy POLICY_ENCRYPT",
-									ipstr(&c->spd.that.host_addr, &b));
-							});
-							continue; /* try another */
-						}
-						break;
-
-					case ESP_DES: /* NOT safe */
-						loglog(RC_LOG_SERIOUS,
-						       "1DES was proposed, it is insecure and was rejected");
-						/* FALL THROUGH */
-					default:
-						{
-						ipstr_buf b;
-
-						loglog(RC_LOG_SERIOUS,
-						       "kernel algorithm does not like: %s",
-						       ugh);
-						loglog(RC_LOG_SERIOUS,
-						       "unsupported ESP Transform %s from %s",
-						       esp_attrs.transattrs.ta_encrypt->common.fqn,
-						       ipstr(&c->spd.that.host_addr, &b));
-						continue; /* try another */
-						}
-					}
-				}
-
+				/*
+				 * XXX: this is testing for AH, is
+				 * conbining even supported?  If not,
+				 * the test should be pushed into
+				 * ikev1_verify_esp().
+				 */
 				if (esp_attrs.transattrs.ta_integ == &ike_alg_integ_none) {
 					if (!encrypt_desc_is_aead(esp_attrs.transattrs.ta_encrypt) &&
 					    !ah_seen) {
@@ -2705,13 +2676,6 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 						};
 						continue; /* try another */
 					}
-				} else if (!kernel_alg_integ_ok(esp_attrs.transattrs.ta_integ)) {
-					LSWDBGP(DBG_PARSING, buf) {
-						lswlogf(buf, "unsupported ESP auth alg %s from ",
-							esp_attrs.transattrs.ta_integ->common.fqn);
-						lswlog_ip(buf, &c->spd.that.host_addr);
-					}
-					continue; /* try another */
 				}
 
 				if (ah_seen &&
@@ -2727,10 +2691,6 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			if (tn == esp_proposal.isap_notrans)
 				continue; /* we didn't find a nice one */
 
-			/* check for allowed transforms in alg_info_esp */
-			if (!ikev1_verify_esp(&esp_attrs.transattrs,
-					      c->alg_info_esp))
-				continue;
 			esp_attrs.spi = esp_spi;
 			inner_proto = IPPROTO_ESP;
 			if (esp_attrs.encapsulation ==

@@ -99,12 +99,6 @@ extern void hmac_update(struct hmac_ctx *ctx,
 
 extern void hmac_final(u_char *output, struct hmac_ctx *ctx);
 
-enum crk_proto {
-	CRK_ESPorAH,
-};
-
-extern unsigned crypto_req_keysize(enum crk_proto ksproto, int algo);
-
 struct connection;
 
 void ike_alg_show_connection(const struct connection *c, const char *instance);
