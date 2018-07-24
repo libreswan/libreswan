@@ -178,7 +178,6 @@ struct kernel_ops {
 	enum kernel_interface type;
 	const char *kern_name;
 	bool inbound_eroute;
-	bool policy_lifetime;
 	bool overlap_supported;
 	bool sha2_truncbug_support;
 	int replay_window;
@@ -190,6 +189,7 @@ struct kernel_ops {
 	void (*pfkey_register_response)(const struct sadb_msg *msg);
 	void (*process_queue)(void);
 	void (*process_msg)(int);
+	void (*scan_shunts)(void);
 	void (*set_debug)(int,
 			  libreswan_keying_debug_func_t debug_func,
 			  libreswan_keying_debug_func_t error_func);

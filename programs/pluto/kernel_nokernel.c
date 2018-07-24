@@ -123,6 +123,10 @@ static bool nokernel_shunt_eroute(const struct connection *c UNUSED,
 	return TRUE;
 }
 
+static void nokernel_scan_shunts(void)
+{
+}
+
 const struct kernel_ops nokernel_kernel_ops = {
 	.type = NO_KERNEL,
 	.async_fdp = NULL,
@@ -142,7 +146,7 @@ const struct kernel_ops nokernel_kernel_ops = {
 	.shunt_eroute = nokernel_shunt_eroute,
 	.get_spi = NULL,
 	.inbound_eroute = FALSE,
-	.policy_lifetime = FALSE,
+	.scan_shunts = nokernel_scan_shunts,
 	.exceptsocket = NULL,
 	.docommand = NULL,
 	.kern_name = "nokernel",

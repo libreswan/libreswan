@@ -57,8 +57,7 @@
 #include "pending.h" /* for flush_pending_by_connection */
 #include "ikev1_xauth.h"
 #include "xauth.h"
-#include "kernel.h" /* for scan_shunts() */
-#include "kernel_pfkey.h" /* for pfkey_scan_shunts */
+#include "kernel.h"		/* for kernel_ops */
 #include "nat_traversal.h"
 #include "pluto_sd.h"
 #include "retry.h"
@@ -404,13 +403,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		break;
 
 	case EVENT_SHUNT_SCAN:
-		if (!kernel_ops->policy_lifetime) {
-			/* KLIPS or MAST - scan eroutes */
-			pfkey_scan_shunts();
-		} else {
-			/* eventually obsoleted via policy expire msg from kernel */
-			expire_bare_shunts();
-		}
+		kernel_ops->scan_shunts();
 		break;
 
 	case EVENT_PENDING_DDNS:
