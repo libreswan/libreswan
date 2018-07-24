@@ -484,7 +484,6 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "disable_port_floating",  kv_config,  kt_obsolete,  KBF_WARNIGNORE, NULL, NULL, },
   { "force_keepalive",  kv_config,  kt_obsolete,  KBF_WARNIGNORE, NULL, NULL, },
   { "plutofork",  kv_config | kv_alias,  kt_obsolete,  KBF_WARNIGNORE, NULL, NULL, },  /* obsolete */
-  { "force-busy",  kv_config,  kt_obsolete, KBF_WARNIGNORE, NULL, NULL, },  /* obsoleted for ddos-mode=busy */
   { "force-busy",  kv_config,  kt_obsolete,  KBF_WARNIGNORE, NULL, NULL, },  /* obsoleted for ddos-mode=busy */
   { "oe",  kv_config,  kt_obsolete,  KBF_WARNIGNORE, NULL, NULL, },
 
