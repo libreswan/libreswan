@@ -796,7 +796,7 @@ kvmplutotest	interop-ikev1-strongswan-08-strongswan-cast	good
 
 kvmplutotest	interop-ikev2-strongswan-01-ike-algo-responder	good
 kvmplutotest	interop-ikev2-strongswan-01-esp-algo-responder	good
-#kvmplutotest	interop-ikev2-strongswan-01-ah-algo-responder	good
+kvmplutotest	interop-ikev2-strongswan-01-ah-algo-responder	good
 
 kvmplutotest    interop-ikev2-strongswan-02-psk-responder	good
 kvmplutotest    interop-ikev2-strongswan-03-psk-initiator	good
