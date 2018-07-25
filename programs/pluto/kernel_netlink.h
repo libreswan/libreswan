@@ -24,6 +24,5 @@ extern const struct kernel_ops netkey_kernel_ops;
  * arbitrary maximum of 8192 for the data portion to accommodate large selinux
  * IPsec labels (see rhbz#1154784)
  */
-bool migrate_xfrm_sa_check(void);
 #define MAX_NETLINK_DATA_SIZE 8192
 #endif

@@ -75,4 +75,6 @@ extern void pfkey_scan_shunts(void);
 
 extern int pfkeyfd;
 
+extern err_t pfkey_mobike_check(struct state *st);
+
 #endif /* PFKEY */

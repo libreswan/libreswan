@@ -2774,27 +2774,23 @@ static bool qry_xfrm_mirgrate_support(struct nlmsghdr *hdr)
 	return TRUE;
 }
 
-bool migrate_xfrm_sa_check(void)
+static err_t netlink_migrate_sa_check(void)
 {
-	struct {
-		struct nlmsghdr n;
-		struct xfrm_userpolicy_id id;
-		char data[MAX_NETLINK_DATA_SIZE];
-	} req;
+	if (kernel_mobike_supprt == 0) {
+		/* check the kernel */
 
-	if (kernel_mobike_supprt > 0)
-		return TRUE;
-	else if (kernel_mobike_supprt < 0)
-		return FALSE;
-	/* else check the kernel */
+		struct {
+			struct nlmsghdr n;
+			struct xfrm_userpolicy_id id;
+			char data[MAX_NETLINK_DATA_SIZE];
+		} req;
 
-	zero(&req);
-	req.n.nlmsg_flags = NLM_F_REQUEST;
-	req.n.nlmsg_type = XFRM_MSG_MIGRATE;
-	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
+		zero(&req);
+		req.n.nlmsg_flags = NLM_F_REQUEST;
+		req.n.nlmsg_type = XFRM_MSG_MIGRATE;
+		req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
 
-	/* add attrs[XFRM_MSG_MIGRATE] */
-	{
+		/* add attrs[XFRM_MSG_MIGRATE] */
 		struct rtattr *attr;
 		struct xfrm_user_migrate migrate;
 
@@ -2806,12 +2802,16 @@ bool migrate_xfrm_sa_check(void)
 		memcpy(RTA_DATA(attr), &migrate, attr->rta_len);
 		attr->rta_len = RTA_LENGTH(attr->rta_len);
 		req.n.nlmsg_len += attr->rta_len;
+
+		bool ret = qry_xfrm_mirgrate_support(&req.n);
+		kernel_mobike_supprt = ret ? 1 : -1;
 	}
 
-	bool ret = qry_xfrm_mirgrate_support(&req.n);
-	kernel_mobike_supprt = ret ? 1 : -1;
-
-	return ret;
+	if (kernel_mobike_supprt > 0) {
+		return NULL;
+	} else {
+		return "CONFIG_XFRM_MIGRATE && CONFIG_NET_KEY_MIGRATE";
+	}
 }
 
 const struct kernel_ops netkey_kernel_ops = {
@@ -2838,6 +2838,7 @@ const struct kernel_ops netkey_kernel_ops = {
 	.shunt_eroute = netlink_shunt_eroute,
 	.sag_eroute = netlink_sag_eroute,
 	.eroute_idle = netlink_eroute_idle,
+	.migrate_sa_check = netlink_migrate_sa_check,
 	.migrate_sa = netlink_migrate_sa,
 	.set_debug = NULL,	/* pfkey_set_debug, */
 	/*

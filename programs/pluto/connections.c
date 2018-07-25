@@ -1340,8 +1340,17 @@ void add_connection(const struct whack_message *wm)
 	}
 
 	if (wm->policy & POLICY_MOBIKE) {
-		if (!migrate_xfrm_sa_check()) {
-			loglog(RC_FATAL, "MOBIKE missing kernel support CONFIG_XFRM_MIGRATE && CONFIG_NET_KEY_MIGRATE");
+		if (kernel_ops->migrate_sa_check == NULL) {
+			libreswan_log_rc(RC_FATAL, "MOBIKE not supported by %s interface",
+					 kernel_ops->kern_name);
+			return;
+		}
+		/* probe the interface */
+		err_t err = kernel_ops->migrate_sa_check();
+		if (err != NULL) {
+			libreswan_log_rc(RC_FATAL,
+					 "MOBIKE kernel support missing for %s interface: %s",
+					 kernel_ops->kern_name, err);
 			return;
 		}
 	}
