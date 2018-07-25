@@ -794,6 +794,10 @@ kvmplutotest	interop-ikev1-strongswan-07-cast128		good
 # is broken for netkey/xfrm in strongswan itself too - kernel changed?
 kvmplutotest	interop-ikev1-strongswan-08-strongswan-cast	good
 
+kvmplutotest	interop-ikev2-strongswan-01-ike-algo-responder	good
+kvmplutotest	interop-ikev2-strongswan-01-esp-algo-responder	good
+#kvmplutotest	interop-ikev2-strongswan-01-ah-algo-responder	good
+
 kvmplutotest    interop-ikev2-strongswan-02-psk-responder	good
 kvmplutotest    interop-ikev2-strongswan-03-psk-initiator	good
 kvmplutotest    interop-ikev2-strongswan-04-x509-responder	good
@@ -824,12 +828,10 @@ kvmplutotest	interop-ikev2-strongswan-27-fragmentation	good
 kvmplutotest	interop-ikev2-strongswan-28-reauth		good
 kvmplutotest	interop-ikev2-strongswan-29-rekey		good
 kvmplutotest    interop-ikev2-strongswan-29-responder-rekey	good
-kvmplutotest	interop-ikev2-strongswan-33-ike-algo-responder	good
 kvmplutotest	interop-ikev2-strongswan-35-ipsec-rekey		good
 kvmplutotest	interop-ikev2-strongswan-35-rekey-pfs		good
 kvmplutotest	interop-ikev2-strongswan-35-rekey-reauth	good
 kvmplutotest	interop-ikev2-strongswan-35-responder-rekey-pfs good
-kvmplutotest	interop-ikev2-strongswan-36-esp-gmac-responder	good
 kvmplutotest	interop-ikev2-strongswan-37-initiator-digsig	good
 kvmplutotest	interop-ikev2-strongswan-38-digsig-impair	good
 kvmplutotest	interop-ikev2-strongswan-39-fragmentation-aes-gcm	good
