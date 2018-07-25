@@ -1,0 +1,47 @@
+/* chacha20 poly1305 for libreswan
+ *
+ * Copyright (C) 2018 Andrew Cagney
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * for more details.
+ */
+
+#include "ike_alg.h"
+#include "ike_alg_encrypt.h"
+
+/*
+ * See: https://tools.ietf.org/html/rfc7634#section-2
+ */
+
+const struct encrypt_desc ike_alg_encrypt_chacha20_poly1305 = {
+	.common = {
+		.name = "chacha20_poly1305",
+		.fqn = "CHACHA20_POLY1305",
+		.names = { "chacha20_poly1305", "chacha20_poly1305", },
+		.officname = "chacha20_poly1305",
+		.algo_type =   IKE_ALG_ENCRYPT,
+		.id = {
+			[IKEv1_OAKLEY_ID] = -1,
+			[IKEv1_ESP_ID] = -1,
+			[IKEv2_ALG_ID] = IKEv2_ENCR_CHACHA20_POLY1305,
+		},
+	},
+	.keylen_omitted = true,
+	.enc_blocksize = 16,
+	.pad_to_blocksize = true,
+	.wire_iv_size = 64/*bits*/ / 8,
+	.salt_size = 32/*bits*/ / 8,
+	.keydeflen = 256,
+	.key_bit_lengths = { 256, },
+	.aead_tag_size = 128 /*bits*/ / 8,
+	.encrypt_netlink_xfrm_name = "rfc7539esp(chacha20,poly1305)",
+	.encrypt_tcpdump_name = "chacha20_poly1305",
+	.encrypt_kernel_audit_name = "chacha20_poly1305",
+};

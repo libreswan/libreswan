@@ -49,3 +49,6 @@ extern const struct encrypt_desc ike_alg_encrypt_null;
 extern const struct encrypt_desc ike_alg_encrypt_cast_cbc;
 #endif
 
+#ifdef USE_CHACHA
+extern const struct encrypt_desc ike_alg_encrypt_chacha20_poly1305;
+#endif
