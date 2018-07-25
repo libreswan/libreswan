@@ -180,7 +180,7 @@ check-kvm-entropy:
 	$(call check-kvm-entropy)
 broken-kvm-entropy:
 	:
-	:  According to $(KVM_ENTROPY_FILE) your computer do not seem to have much entropy.
+	:  According to $(KVM_ENTROPY_FILE) your computer does not seem to have much entropy.
 	:
 	:  Check the wiki for hints on how to fix this.
 	:
