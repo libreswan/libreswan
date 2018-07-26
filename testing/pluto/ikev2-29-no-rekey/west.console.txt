@@ -120,6 +120,7 @@ west #
 000 algorithm ESP encrypt: name=AES_GCM_8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: name=CAMELLIA_CBC, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: name=CAST_CBC, keysizemin=128, keysizemax=128
+000 algorithm ESP encrypt: name=CHACHA20_POLY1305, keysizemin=256, keysizemax=256
 000 algorithm ESP encrypt: name=NULL, keysizemin=0, keysizemax=0
 000 algorithm ESP encrypt: name=NULL_AUTH_AES_GMAC, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: name=SERPENT_CBC, keysizemin=128, keysizemax=256
@@ -257,6 +258,7 @@ west #
 000 algorithm ESP encrypt: name=AES_GCM_8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: name=CAMELLIA_CBC, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: name=CAST_CBC, keysizemin=128, keysizemax=128
+000 algorithm ESP encrypt: name=CHACHA20_POLY1305, keysizemin=256, keysizemax=256
 000 algorithm ESP encrypt: name=NULL, keysizemin=0, keysizemax=0
 000 algorithm ESP encrypt: name=NULL_AUTH_AES_GMAC, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: name=SERPENT_CBC, keysizemin=128, keysizemax=256
