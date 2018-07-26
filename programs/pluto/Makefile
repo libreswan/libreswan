@@ -93,11 +93,6 @@ CFLAGS += -DKLIPS_MAST
 OBJS += kernel_mast.o
 endif
 
-ifeq ($(USE_WIN2K_NATIVE),true)
-CFLAGS += -DWIN2K_NATIVE_IPSEC
-OBJS += kernel_win2k.o
-endif
-
 ifeq ($(USE_BSDKAME),true)
 CFLAGS += -DBSD_KAME
 OBJS += kernel_bsdkame.o
