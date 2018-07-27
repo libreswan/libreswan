@@ -637,10 +637,6 @@ kvmplutotest	xauth-pluto-26		good
 kvmplutotest	xauth-pluto-27		good
 
 
-# esp=null-*
-kvmplutotest	interop-ikev2-strongswan-34-esp-null-responder	good
-
-
 #
 # Aggressive Mode Pluto Tests
 #
