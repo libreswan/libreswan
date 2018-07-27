@@ -71,6 +71,7 @@ KVM_CONNECTION ?= qemu:///system
 VIRSH = sudo virsh --connect $(KVM_CONNECTION)
 
 VIRT_INSTALL ?= sudo virt-install --connect $(KVM_CONNECTION)
+VIRT_CPU ?= --cpu host-passthrough
 VIRT_RND ?= --rng type=random,device=/dev/random
 VIRT_SECURITY ?= --security type=static,model=dac,label='$(KVM_USER):$(KVM_GROUP)',relabel=yes
 VIRT_BASE_GATEWAY ?= --network=network:$(KVM_BASE_GATEWAY),model=virtio
@@ -576,6 +577,7 @@ define create-kvm-domain
 		--memory 512 \
 		--nographics \
 		--disk cache=writeback,path=$(KVM_LOCALDIR)/$(1).qcow2 \
+		$(VIRT_CPU) \
 		$(VIRT_LOCAL_GATEWAY) \
 		$(VIRT_RND) \
 		$(VIRT_SECURITY) \
@@ -646,6 +648,7 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_B
 		--memory 1024 \
 		--nographics \
 		--disk size=8,cache=writeback,path=$(basename $@).qcow2 \
+		$(VIRT_CPU) \
 		$(VIRT_BASE_GATEWAY) \
 		$(VIRT_RND) \
 		--location=$(KVM_ISO) \
