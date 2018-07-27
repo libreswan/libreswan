@@ -6,6 +6,7 @@ algparse: Encryption algorithm TWOFISH_SSH disabled; not FIPS compliant
 algparse: Encryption algorithm CAST_CBC disabled; not FIPS compliant
 algparse: Encryption algorithm NULL_AUTH_AES_GMAC disabled; not FIPS compliant
 algparse: Encryption algorithm NULL disabled; not FIPS compliant
+algparse: Encryption algorithm CHACHA20_POLY1305 disabled; not FIPS compliant
 algparse: Hash algorithm MD5 disabled; not FIPS compliant
 algparse: PRF algorithm HMAC_MD5 disabled; not FIPS compliant
 algparse: Integrity algorithm HMAC_MD5_96 disabled; not FIPS compliant

@@ -596,6 +596,9 @@ static const struct encrypt_desc *encrypt_descriptors[] = {
 #endif
 	&ike_alg_encrypt_null_integ_aes_gmac,
 	&ike_alg_encrypt_null,
+#ifdef USE_CHACHA
+	&ike_alg_encrypt_chacha20_poly1305,
+#endif
 };
 
 bool encrypt_has_key_bit_length(const struct encrypt_desc *encrypt,

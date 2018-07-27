@@ -303,6 +303,7 @@ total.ikev2.ipsec.encr.AES_CBC=0
 total.ikev2.ipsec.encr.CAST_CBC=0
 total.ikev2.ipsec.encr.NULL_AUTH_AES_GMAC=0
 total.ikev2.ipsec.encr.NULL=0
+total.ikev2.ipsec.encr.CHACHA20_POLY1305=0
 total.ikev2.ipsec.integ.HMAC_MD5_96=0
 total.ikev2.ipsec.integ.HMAC_SHA1_96=0
 total.ikev2.ipsec.integ.HMAC_SHA2_512_256=0

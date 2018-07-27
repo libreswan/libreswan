@@ -51,6 +51,7 @@ Encryption algorithms:
   CAST_CBC                IKEv1:     ESP     IKEv2:     ESP           {*128}  (cast)
   NULL_AUTH_AES_GMAC      IKEv1:     ESP     IKEv2:     ESP           {256,192,*128}  (aes_gmac)
   NULL                    IKEv1:     ESP     IKEv2:     ESP           []
+  CHACHA20_POLY1305       IKEv1:             IKEv2:     ESP           [*256]
 Hash algorithms:
   MD5                     IKEv1: IKE         IKEv2:                 
   SHA1                    IKEv1: IKE         IKEv2:             FIPS  (sha)

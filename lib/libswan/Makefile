@@ -137,6 +137,7 @@ CFLAGS += -I$(top_srcdir)/lib/libcrypto
 
 OBJS += ike_alg.o
 OBJS += ike_alg_test.o
+OBJS += ike_alg_encrypt_chacha20_poly1305.o
 OBJS += ike_alg_encrypt_nss_cbc_ops.o
 OBJS += ike_alg_encrypt_nss_ctr_ops.o
 OBJS += ike_alg_desc.o
