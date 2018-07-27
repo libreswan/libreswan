@@ -734,9 +734,18 @@ install-kvm-domain-$(KVM_CLONE_DOMAIN): $(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml
 #
 # Create the "build" domain (if unique)
 #
+# Depend on a fully constructed $(KVM_CLONE_DOMAIN) (and not just that
+# domain's disk image).  If make creates the $(KVM_BUILD_DOMAIN)
+# before $(KVM_CLONE_DOMAIN) then virt-install complains that
+# $(KVM_CLONE_DOMAIN)'s disk is already in use.
+#
 
 ifneq ($(KVM_BUILD_COPIES),)
-$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml: | $(KVM_BASE_GATEWAY_FILE) $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).qcow2
+$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml: \
+		| \
+		$(KVM_BASE_GATEWAY_FILE) \
+		$(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml \
+		$(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).qcow2
 	: build-domain $@
 	$(call check-kvm-qemu-directory)
 	$(call destroy-kvm-domain,$(KVM_BUILD_DOMAIN))
