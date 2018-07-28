@@ -2102,7 +2102,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 					/* remember where we must later plant np in a message */
 					pexpect(fp->size == 1);
 					last_enum = n;
-					DBGF(DBG_PARSING, "next payload type: saving message location '%s' '%s'",
+					DBGF(DBG_EMITTING, "next payload type: saving message location '%s' '%s'",
 					     sd->name, fp->name);
 					outs->previous_np = cur;
 					outs->previous_np_struct = sd;
@@ -2132,7 +2132,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 					if (sd->np != 0 && *container->previous_np == 0) {
 						/* new way */
 						struct esb_buf npb;
-						DBGF(DBG_PARSING, "next payload type: setting '%s' '%s' to %s (%d:%s)",
+						DBGF(DBG_EMITTING, "next payload type: setting '%s' '%s' to %s (%d:%s)",
 						     container->previous_np_struct->name,
 						     container->previous_np_field->name,
 						     sd->name, sd->np, enum_showb(fp->desc, sd->np, &npb));
@@ -2140,7 +2140,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 					} else if (sd->np != 0 && *container->previous_np == sd->np) {
 						/* old cross-check */
 						struct esb_buf npb;
-						DBGF(DBG_PARSING, "next payload type: previous '%s' '%s' matches '%s' (%d:%s)",
+						DBGF(DBG_EMITTING, "next payload type: previous '%s' '%s' matches '%s' (%d:%s)",
 						     container->previous_np_struct->name,
 						     container->previous_np_field->name,
 						     sd->name, sd->np, enum_showb(fp->desc, sd->np, &npb));
@@ -2148,7 +2148,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 						/* dump everything; could be bad */
 						struct esb_buf npb;
 						struct esb_buf pnpb;
-						DBGF(DBG_PARSING,
+						DBGF(DBG_EMITTING,
 						     "next payload type: TODO: previous '%s' '%s' (%d:%s); current '%s' (%d:%s)",
 						     container->previous_np_struct->name,
 						     container->previous_np_field->name,
@@ -2159,7 +2159,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 						/* but stumble on */
 					}
 					/* save */
-					DBGF(DBG_PARSING, "next payload type: saving payload location '%s' '%s'",
+					DBGF(DBG_EMITTING, "next payload type: saving payload location '%s' '%s'",
 					     sd->name, fp->name);
 					container->previous_np = cur;
 					container->previous_np_struct = sd;
