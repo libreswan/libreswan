@@ -995,6 +995,9 @@ extern struct_desc ikev2_ts1_desc;
 /* rfc4306, section 3.14, encrypted payload, uses generic header */
 extern struct_desc ikev2_sk_desc;
 
+/* NULL struct to wrap encrypted portion of SK and SKF */
+extern struct_desc ikev2_encrypted_portion;
+
 /*
  * Configuration Payload . RFC 5996 section 3.15
  */

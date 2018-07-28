@@ -1390,6 +1390,16 @@ struct_desc ikev2_sk_desc = {
 	.np = ISAKMP_NEXT_v2SK,
 };
 
+/* note: no fields! */
+static field_desc ikev2encrypted_portion_fields[] = {
+        { ft_end,  0, NULL, NULL }
+};
+struct_desc ikev2_encrypted_portion = {
+	.name = "IKEv2 encrypted portion",
+	.fields = ikev2encrypted_portion_fields,
+	.size = 0,
+};
+
 /*
  * 2.5.  Fragmenting Message
  *
@@ -1545,6 +1555,8 @@ void init_pbs(pb_stream *pbs, u_int8_t *start, size_t len, const char *name)
 		.start = start,
 		.cur = start,
 		.roof = start + len,
+		/* .desc = NULL, */
+		/* .container = NULL, */
 	};
 }
 
@@ -2087,6 +2099,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 					break;
 
 				case ft_mnp:
+					/* remember where we must later plant np in a message */
 					pexpect(fp->size == 1);
 					last_enum = n;
 					DBGF(DBG_PARSING, "next payload type: saving message location '%s' '%s'",
@@ -2097,11 +2110,19 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 					break;
 
 				case ft_pnp:
+				{
+					/* remember where we must later plant np in a payload */
 					pexpect(fp->size == 1);
 					last_enum = n;
+
 					/* find the containing pbs */
-					pb_stream *container = outs;
+
+					passert(outs->container != NULL);
+
+					pb_stream *container = outs->container;
+
 					while (container->container != NULL) {
+						DBGF(DBG_EMITTING, "looking through '%s' for Message", container->name);
 						container = container->container;
 					}
 					passert(container->previous_np != NULL);
@@ -2144,6 +2165,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 					container->previous_np_struct = sd;
 					container->previous_np_field = fp;
 					break;
+				}
 
 				case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
 					ugh = enum_enum_checker(sd->name, fp, last_enum);
