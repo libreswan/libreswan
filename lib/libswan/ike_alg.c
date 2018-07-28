@@ -970,21 +970,20 @@ void lswlog_ike_alg(struct lswlog *buf, const struct ike_alg *alg)
 	 * TYPE NAME:
 	 */
 	{
-		lswlogs(buf, alg->fqn);
 		/*
-		 * magic number from eyeballing the longest name; if
-		 * the pexpect fails then someone has added an even
+		 * Guess a suitable column width by guessing what the longest
+		 * name is.  If the pexpect fails then someone has added an even
 		 * longer name!
 		 */
 #if defined(USE_SHA2)
-		size_t max = strlen(ike_alg_integ_hmac_sha2_256_truncbug.common.fqn);
+		size_t cw = strlen(ike_alg_integ_hmac_sha2_256_truncbug.common.fqn);
 #elif defined(USE_AES)
-		size_t max = strlen(ike_alg_encrypt_null_integ_aes_gmac.common.fqn);
+		size_t cw = strlen(ike_alg_encrypt_null_integ_aes_gmac.common.fqn);
+#else
+		size_t cw = 20;	/* stab in dark */
 #endif
-		pexpect_ike_alg(alg, max >= strlen(alg->fqn));
-		for (size_t i = strlen(alg->fqn); i < max; i++) {
-			lswlogs(buf, " ");
-		}
+		pexpect_ike_alg(alg, cw >= strlen(alg->fqn));
+		lswlogf(buf, "%-*s", (int) cw, alg->fqn);
 	}
 	/*
 	 * IKEv1: IKE ESP AH  IKEv2: IKE ESP AH
@@ -993,7 +992,7 @@ void lswlog_ike_alg(struct lswlog *buf, const struct ike_alg *alg)
 	bool v2_ike;
 	if (ike_alg_is_ike(alg)) {
 		v1_ike = alg->id[IKEv1_OAKLEY_ID] >= 0;
-		v2_ike = (alg->id[IKEv2_ALG_ID] >= 0);
+		v2_ike = alg->id[IKEv2_ALG_ID] >= 0;
 	} else {
 		v1_ike = FALSE;
 		v2_ike = FALSE;
@@ -1002,8 +1001,8 @@ void lswlog_ike_alg(struct lswlog *buf, const struct ike_alg *alg)
 	bool v2_esp;
 	bool v1_ah;
 	bool v2_ah;
-	if (alg->algo_type == &ike_alg_hash
-	    || alg->algo_type == &ike_alg_prf) {
+	if (alg->algo_type == &ike_alg_hash ||
+	    alg->algo_type == &ike_alg_prf) {
 		v1_esp = v2_esp = v1_ah = v2_ah = FALSE;
 	} else if (alg->algo_type == &ike_alg_encrypt) {
 		v1_esp = alg->id[IKEv1_ESP_ID] >= 0;
@@ -1041,17 +1040,9 @@ void lswlog_ike_alg(struct lswlog *buf, const struct ike_alg *alg)
 	lswlogs(buf, (v2_ah
 		      ? " AH"
 		      : "   "));
-	/*
-	 * FIPS?
-	 */
-	{
-		lswlogs(buf, "  ");
-		if (alg->fips) {
-			lswlogs(buf, "FIPS");
-		} else {
-			lswlogs(buf, "    ");
-		}
-	}
+	lswlogs(buf, (alg->fips
+		      ? "  FIPS"
+		      : "      "));
 
 	/*
 	 * Concatenate [key,...] or {key,...} with default
@@ -1077,20 +1068,19 @@ void lswlog_ike_alg(struct lswlog *buf, const struct ike_alg *alg)
 	 * Concatenate (alias ...)
 	 */
 	{
-		bool emitted = false;
 		const char *sep = "  (";
+		const char *term ="";
+
 		FOR_EACH_IKE_ALG_NAMEP(alg, name) {
 			/* filter out NAME */
 			if (!strcaseeq(*name, alg->fqn)) {
 				lswlogs(buf, sep);
 				lswlogs(buf, *name);
 				sep = " ";
-				emitted = true;
+				term = ")";
 			}
 		}
-		if (emitted) {
-			lswlogs(buf, ")");
-		}
+		lswlogs(buf, term);
 	}
 }
 
