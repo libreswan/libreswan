@@ -806,9 +806,6 @@ enum sa_role {
 	 (st)->st_state == STATE_V2_CREATE_I || \
 	 (st)->st_state == STATE_V2_REKEY_CHILD_I))
 
-#define IS_AUTH_RESPONSE(st) \
-	(IS_CHILD_SA(s) && (st)->st_state == STATE_PARENT_I2)
-
 /* kind of struct connection
  * Ordered (mostly) by concreteness.  Order is exploited.
  */
