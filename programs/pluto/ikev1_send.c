@@ -84,6 +84,10 @@ static bool send_v1_frags(struct state *st, const char *where)
 		const size_t fragpl_len = NSIZEOF_isakmp_ikefrag + data_len;
 		const size_t isakmppl_len = NSIZEOF_isakmp_hdr + fragpl_len;
 
+		/*
+		 * process_v1_packet would not accept this if it were greater
+		 * than 16 but it is hard to see how this would happen.
+		 */
 		fragnum++;
 
 		/* emit isakmp header derived from original */
@@ -107,7 +111,7 @@ static bool send_v1_frags(struct state *st, const char *where)
 				(struct isakmp_ikefrag*) (frag_prefix +
 							  NSIZEOF_isakmp_hdr);
 
-			fh->isafrag_np = 0;             /* must be zero */
+			fh->isafrag_np = ISAKMP_NEXT_NONE;             /* must be zero */
 			fh->isafrag_reserved = 0;       /* reserved at this time, must be zero */
 			fh->isafrag_length = htons(fragpl_len);
 			fh->isafrag_id = htons(1);      /* In theory required to be unique, in practise not needed? */
