@@ -903,9 +903,8 @@ bool out_vid(u_int8_t np, pb_stream *outs, unsigned int vid)
 {
 	struct vid_struct *pvid;
 
-	for (pvid = vid_tab; pvid->id != vid; pvid++) /* stop at right vid */
-
-	passert(pvid->id != 0); /* we must find what we are trying to send */
+	for (pvid = vid_tab; pvid->id != vid; pvid++)
+		passert(pvid->id != 0); /* we must find what we are trying to send */
 
 	DBG(DBG_EMITTING,
 	    DBG_log("out_vid(): sending [%s]", pvid->descr));
