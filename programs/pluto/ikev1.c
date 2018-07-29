@@ -1520,9 +1520,9 @@ void process_v1_packet(struct msg_digest **mdp)
 		if (!in_struct(&fraghdr, &isakmp_ikefrag_desc,
 			       &md->message_pbs, &frag_pbs) ||
 		    pbs_room(&frag_pbs) != fraghdr.isafrag_length ||
-		    fraghdr.isafrag_np != 0 ||
-		    fraghdr.isafrag_number == 0 || fraghdr.isafrag_number >
-		    16) {
+		    fraghdr.isafrag_np != ISAKMP_NEXT_NONE ||
+		    fraghdr.isafrag_number == 0 ||
+		    fraghdr.isafrag_number > 16) {
 			SEND_NOTIFICATION(PAYLOAD_MALFORMED);
 			return;
 		}
