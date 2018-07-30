@@ -260,9 +260,8 @@ bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, const struct state *
 	switch (st->st_connection->ikev1_natt) {
 	case NATT_RFC:
 		DBG(DBG_NATT, DBG_log("skipping VID_NATT drafts"));
-		if (!out_vid(np, outs, VID_NATT_RFC))
-			return FALSE;
-		break;
+		return out_vid(np, outs, VID_NATT_RFC);
+
 	case NATT_BOTH:
 		DBG(DBG_NATT, DBG_log("sending draft and RFC NATT VIDs"));
 		if (!out_vid(ISAKMP_NEXT_VID, outs, VID_NATT_RFC))
@@ -270,19 +269,19 @@ bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, const struct state *
 		/* FALL THROUGH */
 	case NATT_DRAFTS:
 		DBG(DBG_NATT, DBG_log("skipping VID_NATT_RFC"));
-		if (!out_vid(ISAKMP_NEXT_VID, outs, VID_NATT_IETF_03))
-			return FALSE;
-		if (!out_vid(ISAKMP_NEXT_VID, outs, VID_NATT_IETF_02_N))
-			return FALSE;
-		if (!out_vid(np, outs, VID_NATT_IETF_02))
-			return FALSE;
-		break;
+		return
+			out_vid(ISAKMP_NEXT_VID, outs, VID_NATT_IETF_03) &&
+			out_vid(ISAKMP_NEXT_VID, outs, VID_NATT_IETF_02_N) &&
+			out_vid(np, outs, VID_NATT_IETF_02);
+
 	case NATT_NONE:
 		/* This should never be reached, but makes compiler happy */
 		DBG(DBG_NATT, DBG_log("not sending any NATT VID's"));
-		break;
+		return TRUE;
+
+	default:
+		bad_case(st->st_connection->ikev1_natt);
 	}
-	return TRUE;
 }
 
 static enum natt_method nat_traversal_vid_to_method(enum known_vendorid nat_t_vid)
