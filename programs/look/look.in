@@ -135,8 +135,11 @@ if grep -q ^mangle /proc/net/ip6_tables_names 2>/dev/null; then
 fi
 
 echo ROUTING TABLES
-ip -4 route
-ip -6 route
+# The IP command includes extra and evoling white space
+{
+    ip -4 route
+    ip -6 route
+} | sed -e 's/  / /g' -e 's/ $//'
 
 if [ -f @IPSEC_NSSDIR@/cert9.db ]; then
     echo NSS_CERTIFICATES
