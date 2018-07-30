@@ -293,12 +293,23 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                         prefix, test_prefix, details, suffix)
             return
 
-        # Skipping the test, leaving old results.
+        # Skip the test, leaving old results?
         #
-        # Be lazy when gathering the results, don't run the sanitizer
-        # or diff.  Let post.mortem figure out if the test finished.
+        # For instance, during a test re-run, skip any tests that are
+        # passing.
+        #
+        # The check below compares the test and expected output,
+        # ignoring any previous test result.  This way the results are
+        # consistent with kvmresults.py which always reflects the
+        # current sources.
+        #
+        # - modifying the expected output so that it no longer matches
+        #   the last result is a fail
+        #
+        # - modifying the expected output so that it matches the last
+        #   result is a pass
 
-        old_result = post.mortem(test, args, domain_prefix=domain_prefix, quick=True)
+        old_result = post.mortem(test, args, domain_prefix=domain_prefix, quick=False)
         if skip.result(logger, args, old_result):
             logger.info("%s %s skipped (previously %s) %s",
                         prefix, test_prefix, old_result, suffix)
