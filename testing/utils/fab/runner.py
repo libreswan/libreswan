@@ -315,6 +315,7 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                         prefix, test_prefix, old_result, suffix)
             test_stats.add(test, "skipped")
             result_stats.add_skipped(old_result)
+            publish.everything(logger, args, old_result)
             return
 
         # Running the test ...
