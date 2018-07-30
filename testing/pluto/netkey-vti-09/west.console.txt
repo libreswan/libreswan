@@ -140,11 +140,11 @@ west #
     link/ipip 192.1.2.45 peer 192.1.2.23
 west #
  ip route show
-default via 192.1.2.254 dev eth1 
-10.0.2.0/24 dev west-east  scope link 
-192.0.2.0/24 dev west-east  scope link 
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45 
-192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45 
+default via 192.1.2.254 dev eth1
+10.0.2.0/24 dev west-east scope link
+192.0.2.0/24 dev west-east scope link
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
+192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45
 west #
  ip xfrm state
 src 192.1.2.23 dst 192.1.2.45
