@@ -78,40 +78,40 @@ v6-v6-through-v6-klips-klips]# east NOW
 2001:db8:0:2::/64  -> 2001:db8:0:1::/64  => tun0x1000@2001:db8:1:2::45 esp0xafaae4b1@2001:db8:1:2::45  (4)   PAUL: sanitizer missed this line
 ipsec0->eth1 mtu=16260(9999)->1500
 ROUTING TABLES
-default via 192.1.2.254 dev eth1 
-169.254.0.0/16 dev eth0  scope link  metric 1002 
-169.254.0.0/16 dev eth1  scope link  metric 1003 
-169.254.0.0/16 dev eth2  scope link  metric 1004 
-192.0.1.0/24 via 192.1.2.45 dev eth1 
-192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254 
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23 
-192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23 
-unreachable ::/96 dev lo  metric 1024  error -XXXX
-unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -XXXX
-2001:db8:0:1::254 via 2001:db8:0:1::254 dev ipsec0  metric 0 
-    cache 
-2001:db8:0:1::/64 dev ipsec0  metric 1024 
-2001:db8:0:2::/64 dev eth0  proto kernel  metric 256 
-2001:db8::/48 via 2001:db8:1:2::45 dev eth1  metric 1024 
-2001:db8:1:2::23 dev ipsec0  proto kernel  metric 256 
-2001:db8:1:2::45 via 2001:db8:1:2::45 dev eth1  metric 0 
-    cache  hoplimit 255
-2001:db8:1:2::/64 dev eth1  proto kernel  metric 256 
-2001:db8:9:2::/64 dev eth2  proto kernel  metric 256 
-unreachable 2002:a00::/24 dev lo  metric 1024  error -XXXX
-unreachable 2002:7f00::/24 dev lo  metric 1024  error -XXXX
-unreachable 2002:a9fe::/32 dev lo  metric 1024  error -XXXX
-unreachable 2002:ac10::/28 dev lo  metric 1024  error -XXXX
-unreachable 2002:c0a8::/32 dev lo  metric 1024  error -XXXX
-unreachable 2002:e000::/19 dev lo  metric 1024  error -XXXX
-unreachable 3ffe:ffff::/32 dev lo  metric 1024  error -XXXX
-fe80::1000:ff:fe64:6423 dev ipsec0  proto kernel  metric 256 
-fe80::/64 dev eth0  proto kernel  metric 256 
-fe80::/64 dev eth1  proto kernel  metric 256 
-fe80::/64 dev eth2  proto kernel  metric 256 
-fe80::/64 dev ipsec0  proto kernel  metric 256 
-default via 2001:db8:1:2::254 dev eth1  metric 1 
-default via 2001:db8:1:2::254 dev eth1  metric 1024 
+default via 192.1.2.254 dev eth1
+169.254.0.0/16 dev eth0 scope link metric 1002
+169.254.0.0/16 dev eth1 scope link metric 1003
+169.254.0.0/16 dev eth2 scope link metric 1004
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23
+unreachable ::/96 dev lo metric 1024 error -XXXX
+unreachable ::ffff:0.0.0.0/96 dev lo metric 1024 error -XXXX
+2001:db8:0:1::254 via 2001:db8:0:1::254 dev ipsec0 metric 0
+  cache
+2001:db8:0:1::/64 dev ipsec0 metric 1024
+2001:db8:0:2::/64 dev eth0 proto kernel metric 256
+2001:db8::/48 via 2001:db8:1:2::45 dev eth1 metric 1024
+2001:db8:1:2::23 dev ipsec0 proto kernel metric 256
+2001:db8:1:2::45 via 2001:db8:1:2::45 dev eth1 metric 0
+  cache hoplimit 255
+2001:db8:1:2::/64 dev eth1 proto kernel metric 256
+2001:db8:9:2::/64 dev eth2 proto kernel metric 256
+unreachable 2002:a00::/24 dev lo metric 1024 error -XXXX
+unreachable 2002:7f00::/24 dev lo metric 1024 error -XXXX
+unreachable 2002:a9fe::/32 dev lo metric 1024 error -XXXX
+unreachable 2002:ac10::/28 dev lo metric 1024 error -XXXX
+unreachable 2002:c0a8::/32 dev lo metric 1024 error -XXXX
+unreachable 2002:e000::/19 dev lo metric 1024 error -XXXX
+unreachable 3ffe:ffff::/32 dev lo metric 1024 error -XXXX
+fe80::1000:ff:fe64:6423 dev ipsec0 proto kernel metric 256
+fe80::/64 dev eth0 proto kernel metric 256
+fe80::/64 dev eth1 proto kernel metric 256
+fe80::/64 dev eth2 proto kernel metric 256
+fe80::/64 dev ipsec0 proto kernel metric 256
+default via 2001:db8:1:2::254 dev eth1 metric 1
+default via 2001:db8:1:2::254 dev eth1 metric 1024
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI

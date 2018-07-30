@@ -127,9 +127,9 @@ XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
-default via 192.1.8.254 dev eth1 
-192.0.3.0/24 dev eth0 proto kernel scope link src 192.0.3.254 
-192.1.8.0/24 dev eth1 proto kernel scope link src 192.1.8.22 
+default via 192.1.8.254 dev eth1
+192.0.3.0/24 dev eth0 proto kernel scope link src 192.0.3.254
+192.1.8.0/24 dev eth1 proto kernel scope link src 192.1.8.22
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
