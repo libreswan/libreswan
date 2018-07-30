@@ -57,16 +57,16 @@ west #
 002 added connection description "westnet-all"
 west #
  ip route list
-default via 192.1.2.254 dev eth1 
-25.1.0.0/16 via 192.0.1.254 dev eth0 
-25.2.0.0/16 via 192.1.2.45 dev eth1 
-192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254 
-192.0.2.0/24 via 192.1.2.23 dev eth1 
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45 
-192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45 
-192.168.1.1 via 192.0.1.254 dev eth0 
-192.168.1.2 via 192.1.2.45 dev eth1 
-192.168.1.16/28 via 192.1.2.45 dev eth1 
+default via 192.1.2.254 dev eth1
+25.1.0.0/16 via 192.0.1.254 dev eth0
+25.2.0.0/16 via 192.1.2.45 dev eth1
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
+192.0.2.0/24 via 192.1.2.23 dev eth1
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
+192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45
+192.168.1.1 via 192.0.1.254 dev eth0
+192.168.1.2 via 192.1.2.45 dev eth1
+192.168.1.16/28 via 192.1.2.45 dev eth1
 west #
  for i in `seq 1 12`; do ipsec auto --add orient$i; done
 002 added connection description "orient1"
@@ -121,18 +121,18 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ip route list
-0.0.0.0/1 dev ipsec0  scope link 
-default via 192.1.2.254 dev eth1 
-25.1.0.0/16 via 192.0.1.254 dev eth0 
-25.2.0.0/16 via 192.1.2.45 dev eth1 
-128.0.0.0/1 dev ipsec0  scope link 
-192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254 
-192.0.2.0/24 via 192.1.2.23 dev eth1 
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45 
-192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45 
-192.168.1.1 via 192.0.1.254 dev eth0 
-192.168.1.2 via 192.1.2.45 dev eth1 
-192.168.1.16/28 via 192.1.2.45 dev eth1 
+0.0.0.0/1 dev ipsec0 scope link
+default via 192.1.2.254 dev eth1
+25.1.0.0/16 via 192.0.1.254 dev eth0
+25.2.0.0/16 via 192.1.2.45 dev eth1
+128.0.0.0/1 dev ipsec0 scope link
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
+192.0.2.0/24 via 192.1.2.23 dev eth1
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
+192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45
+192.168.1.1 via 192.0.1.254 dev eth0
+192.168.1.2 via 192.1.2.45 dev eth1
+192.168.1.16/28 via 192.1.2.45 dev eth1
 west #
  # testing re-orienting
 west #
