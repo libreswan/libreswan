@@ -125,53 +125,101 @@ USERLAND_CFLAGS += -DXAUTH_HAVE_PAM
 XAUTHPAM_LDFLAGS ?= -lpam
 endif
 
-USERLAND_CFLAGS+=-DUSE_MD5
-USERLAND_CFLAGS+=-DUSE_SHA2
-USERLAND_CFLAGS+=-DUSE_SHA1
-USERLAND_CFLAGS+=-DUSE_AES
-USERLAND_CFLAGS+=-DUSE_XCBC
+#
+# Algorithms (encryption, PRF, DH, ....)
+#
+# See https://tools.ietf.org/html/rfc8247 for what should be enabled
+# by default.
+#
+
+USE_3DES?=true
 ifeq ($(USE_3DES),true)
 USERLAND_CFLAGS+=-DUSE_3DES
 endif
-ifeq ($(USE_DH2),true)
-USERLAND_CFLAGS+=-DUSE_DH2
+
+USE_AES ?= true
+ifeq ($(USE_AES),true)
+USERLAND_CFLAGS+=-DUSE_AES
 endif
-ifeq ($(USE_DH22),true)
-USERLAND_CFLAGS+=-DUSE_DH22
-endif
-ifeq ($(USE_DH23),true)
-USERLAND_CFLAGS+=-DUSE_DH23
-endif
-ifeq ($(USE_DH24),true)
-USERLAND_CFLAGS+=-DUSE_DH24
-endif
-ifeq ($(USE_CAMELLIA),true)
-USERLAND_CFLAGS+=-DUSE_CAMELLIA
-endif
-ifeq ($(USE_SERPENT),true)
-USERLAND_CFLAGS+=-DUSE_SERPENT
-LIBSERPENT=${OBJDIRTOP}/lib/libcrypto/libserpent/libserpent.a
-endif
-ifeq ($(USE_TWOFISH),true)
-USERLAND_CFLAGS+=-DUSE_TWOFISH
-LIBTWOFISH=${OBJDIRTOP}/lib/libcrypto/libtwofish/libtwofish.a
-endif
+
+USE_CAST ?= false
 ifeq ($(USE_CAST),true)
-USERLAND_CFLAGS+=-DUSE_CAST
+USERLAND_CFLAGS += -DUSE_CAST
 endif
-ifeq ($(USE_RIPEMD),true)
-USERLAND_CFLAGS+=-DUSE_RIPEMD
+
+USE_CAMELLIA ?= true
+ifeq ($(USE_CAMELLIA),true)
+USERLAND_CFLAGS += -DUSE_CAMELLIA
 endif
-ifeq ($(USE_DH31),true)
-USERLAND_CFLAGS+=-DUSE_DH31
-endif
-ifeq ($(USE_XCBC),true)
-USERLAND_CFLAGS+=-DUSE_XCBC
-endif
+
 USE_CHACHA?=true
 ifeq ($(USE_CHACHA),true)
 USERLAND_CFLAGS+=-DUSE_CHACHA
 endif
+
+USE_DH2 ?= true
+ifeq ($(USE_DH2),true)
+USERLAND_CFLAGS+=-DUSE_DH2
+endif
+
+USE_DH22 ?= false
+ifeq ($(USE_DH22),true)
+USERLAND_CFLAGS += -DUSE_DH22
+endif
+
+USE_DH23 ?= false
+ifeq ($(USE_DH23),true)
+USERLAND_CFLAGS += -DUSE_DH23
+endif
+
+USE_DH24 ?= false
+ifeq ($(USE_DH24),true)
+USERLAND_CFLAGS += -DUSE_DH24
+endif
+
+USE_DH31 ?= true
+ifeq ($(USE_DH31),true)
+USERLAND_CFLAGS += -DUSE_DH31
+endif
+
+USE_MD5 ?= true
+ifeq ($(USE_MD5),true)
+USERLAND_CFLAGS += -DUSE_MD5
+endif
+
+USE_RIPEMD ?= false
+ifeq ($(USE_RIPEMD),true)
+USERLAND_CFLAGS += -DUSE_RIPEMD
+endif
+
+USE_SERPENT?=true
+ifeq ($(USE_SERPENT),true)
+USERLAND_CFLAGS += -DUSE_SERPENT
+LIBSERPENT = ${OBJDIRTOP}/lib/libcrypto/libserpent/libserpent.a
+endif
+
+USE_SHA1 ?= true
+ifeq ($(USE_SHA1),true)
+USERLAND_CFLAGS += -DUSE_SHA1
+endif
+
+USE_SHA2 ?= true
+ifeq ($(USE_SHA2),true)
+USERLAND_CFLAGS += -DUSE_SHA2
+endif
+
+USE_TWOFISH?=true
+ifeq ($(USE_TWOFISH),true)
+USERLAND_CFLAGS += -DUSE_TWOFISH
+LIBTWOFISH= ${OBJDIRTOP}/lib/libcrypto/libtwofish/libtwofish.a
+endif
+
+USE_XCBC ?= true
+ifeq ($(USE_XCBC),true)
+USERLAND_CFLAGS += -DUSE_XCBC
+endif
+
+#
 
 ifeq ($(USE_SINGLE_CONF_DIR),true)
 USERLAND_CFLAGS+=-DSINGLE_CONF_DIR=1

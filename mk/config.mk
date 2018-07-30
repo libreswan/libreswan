@@ -418,24 +418,6 @@ USE_LDAP?=false
 # Include libcurl support (currently used for fetching CRLs)
 USE_LIBCURL?=true
 
-# should we include additional (strong) algorithms?  It adds a measureable
-# amount of code space to pluto, and many of the algorithms have not had
-# the same scrutiny that AES and 3DES have received, but offers possibilities
-# of switching away from AES/3DES quickly.
-# DH2 and DH22 are too weak: https://tools.ietf.org/html/rfc8247#section-2.4
-# The others listed here are not broken, just not popular
-USE_SERPENT?=true
-USE_TWOFISH?=true
-USE_3DES?=true
-USE_DH2?=true
-USE_DH22?=false
-USE_DH23?=false
-USE_DH24?=false
-USE_DH31?=true
-USE_CAMELLIA?=true
-USE_CAST?=false
-USE_RIPEMD?=false
-
 # Do we want to limit the number of ipsec connections artificially
 USE_IPSEC_CONNECTION_LIMIT?=false
 IPSEC_CONNECTION_LIMIT?=250
