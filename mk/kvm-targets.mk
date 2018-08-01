@@ -21,6 +21,18 @@
 # variable '$*'.  It is used to extract the DOMAIN from targets like
 # kvm-install-DOMAIN.
 
+#
+# The guest operating system.
+#
+# Pull in all its defaults so that they override everything below.
+
+KVM_OS ?= fedora22
+include testing/libvirt/$(KVM_OS).mk
+
+
+#
+# where things live and what gets created
+#
 
 KVM_SOURCEDIR ?= $(abs_top_srcdir)
 KVM_TESTINGDIR ?= $(abs_top_srcdir)/testing
@@ -78,9 +90,8 @@ VIRT_BASE_GATEWAY ?= --network=network:$(KVM_BASE_GATEWAY),model=virtio
 VIRT_LOCAL_GATEWAY ?= --network=network:$(KVM_LOCAL_GATEWAY),model=virtio
 VIRT_SOURCEDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_SOURCEDIR),target=swansource
 VIRT_TESTINGDIR ?= --filesystem type=mount,accessmode=squash,source=$(KVM_TESTINGDIR),target=testing
-
-# The KVM's operating system.
-KVM_OS ?= fedora22
+KVM_OS_VARIANT ?= $(KVM_OS)
+VIRT_OS_VARIANT ?= --os-variant $(KVM_OS_VARIANT)
 
 #
 # Hosts
@@ -537,20 +548,6 @@ kvm-upgrade-local-domains:
 # Build KVM domains from scratch
 #
 
-# XXX: Once KVM_OS gets re-named to include the release, this hack can
-# be deleted.
-include testing/libvirt/$(KVM_OS).mk
-
-ifeq ($(KVM_OS_VARIANT),)
-$(error KVM_OS_VARIANT not defined)
-endif
-ifeq ($(KVM_ISO_URL),)
-$(error KVM_ISO_URL not defined)
-endif
-ifeq ($(KVM_KICKSTART_FILE),)
-$(error KVM_KICKSTART_FILE not defined)
-endif
-
 KVM_ISO = $(KVM_BASEDIR)/$(notdir $(KVM_ISO_URL))
 
 .PHONY: kvm-iso
@@ -572,7 +569,7 @@ define create-kvm-domain
 	: create-kvm-domain domain=$(1)
 	$(VIRT_INSTALL) \
 		--name $(1) \
-		--os-variant $(KVM_OS_VARIANT) \
+		$(VIRT_OS_VARIANT) \
 		--vcpus=1 \
 		--memory 512 \
 		--nographics \
@@ -643,7 +640,7 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_B
 	: XXX: Passing $(VIRT_SECURITY) to virt-install causes it to panic
 	$(VIRT_INSTALL) \
 		--name=$(KVM_BASE_DOMAIN) \
-		--os-variant $(KVM_OS_VARIANT) \
+		$(VIRT__OS_VARIANT) \
 		--vcpus=1 \
 		--memory 1024 \
 		--nographics \
