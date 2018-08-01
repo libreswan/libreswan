@@ -7,12 +7,6 @@ KVM_PACKAGE_INSTALL = dnf install -y
 KVM_DEBUGINFO_INSTALL = dnf  debuginfo-install -y
 KVM_INSTALL_RPM_LIST = 'rpm -aq > /var/tmp/rpm-qa-fedora-updates.log'
 
-# fedora 24..28 hack. run swan-transmogrify to initialze Network
-# interscace It does not seems to run the first time when called from
-# /etc/rc.d/rc.local This slows down installation. If you 7 prefixes
-# it could cost 40 min:)
-# KVM_F26_HACK=$(KVMSH) --shutdown $(1)$(2) '/testing/guestbin/swan-transmogrify'
-
 KVM_PACKAGES = \
     ElectricFence \
     audit-libs-devel \
