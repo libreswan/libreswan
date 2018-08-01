@@ -93,6 +93,7 @@ kvmplutotest	whack-02-globalstatus			good
 kvmplutotest	ikev2-01-fallback-ikev1			good
 kvmplutotest	ikev2-02-responder-send-notify		good
 kvmplutotest	ikev2-03-basic-rawrsa			good
+kvmplutotest	ikev2-03-basic-rawrsa-ckaid		good
 kvmplutotest	ikev2-04-basic-x509			good
 kvmplutotest	ikev2-04-basic-x509-ckaid		good
 kvmplutotest	ikev2-04-basic-x509-no-ca		good
