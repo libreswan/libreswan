@@ -949,6 +949,9 @@ kvmplutotest	nss-cert-badca-01		good
 
 kvmplutotest	ikev1-2behind-nat-01		wip
 
+# Demonstrate a custom GSSAPI test domain
+kvmplutotest  	ikev2-gssapi-01			skiptest
+
 #################################################################
 # old saved KLIPS tests that were converted to NETKEY.
 # (theses tests were not actually testing stack features
@@ -993,3 +996,4 @@ kvmplutotest	ikev2-ppk-static-07-large-id			good
 kvmplutotest	ikev2-ppk-static-08-no_ppk-responder		good
 kvmplutotest	ikev2-ppk-static-09-no_ppk-initiator		good
 kvmplutotest	ikev2-ppk-static-10-yes-no			good
+
