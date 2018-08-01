@@ -2,7 +2,7 @@
 # as fedora.bhs.mirrors.ovh.net as of 2017-08-09, that doesn't carry
 # F22.
 KVM_ISO_URL = http://archives.fedoraproject.org/pub/archive/fedora/linux/releases/22/Server/x86_64/iso/Fedora-Server-DVD-x86_64-22.iso
-KVM_OS_VARIANT = fedora22
+KVM_OS_VARIANT ?= fedora22
 
 KVM_KICKSTART_FILE = testing/libvirt/fedora22.ks
 

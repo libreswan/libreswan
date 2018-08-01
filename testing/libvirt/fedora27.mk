@@ -1,7 +1,7 @@
 KVM_ISO_URL = https://muug.ca/mirror/fedora/linux/releases/27/Server/x86_64/iso/Fedora-Server-dvd-x86_64-27-1.6.iso
 KVM_KICKSTART_FILE = testing/libvirt/fedora27.ks
 # LIE!
-KVM_OS_VARIANT = fedora26
+KVM_OS_VARIANT ?= fedora26
 KVM_PACKAGE_INSTALL = dnf install -y
 KVM_DEBUGINFO_INSTALL = dnf  debuginfo-install -y
 KVM_INSTALL_RPM_LIST = 'rpm -aq > /var/tmp/rpm-qa-fedora-updates.log'
