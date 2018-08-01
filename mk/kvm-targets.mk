@@ -787,7 +787,6 @@ define install-kvm-test-domain
 		< 'testing/libvirt/vm/$(2)' \
 		> '$$@.tmp'
 	$$(VIRSH) define $$@.tmp
-	$(if $$(KVM_F26_HACK),$(KVM_F26_HACK))
 	mv $$@.tmp $$@
 endef
 
