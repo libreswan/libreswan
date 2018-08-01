@@ -79,7 +79,5 @@ FIPS DH algorithms:
   DH19                    IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  (ecp_256)
   DH20                    IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  (ecp_384)
   DH21                    IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  (ecp_521)
-  DH23                    IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS
-  DH24                    IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS
 west #
  

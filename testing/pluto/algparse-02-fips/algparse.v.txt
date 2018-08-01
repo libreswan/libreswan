@@ -3,7 +3,6 @@ algparse: Encryption algorithm CAMELLIA_CBC disabled; not FIPS compliant
 algparse: Encryption algorithm SERPENT_CBC disabled; not FIPS compliant
 algparse: Encryption algorithm TWOFISH_CBC disabled; not FIPS compliant
 algparse: Encryption algorithm TWOFISH_SSH disabled; not FIPS compliant
-algparse: Encryption algorithm CAST_CBC disabled; not FIPS compliant
 algparse: Encryption algorithm NULL_AUTH_AES_GMAC disabled; not FIPS compliant
 algparse: Encryption algorithm NULL disabled; not FIPS compliant
 algparse: Encryption algorithm CHACHA20_POLY1305 disabled; not FIPS compliant
@@ -52,6 +51,4 @@ algparse:   MODP8192                IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS  
 algparse:   DH19                    IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  (ecp_256)
 algparse:   DH20                    IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  (ecp_384)
 algparse:   DH21                    IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  (ecp_521)
-algparse:   DH23                    IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS
-algparse:   DH24                    IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS
 algparse: leak detective found no leaks

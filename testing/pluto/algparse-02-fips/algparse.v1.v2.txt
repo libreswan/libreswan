@@ -33,9 +33,9 @@ algparse -fips -v1 -v2 'esp=3des-sha1;dh21'
 algparse -fips -v1 -v2 'esp=3des-sha1;ecp_521'
 	ERROR: ESP DH algorithm 'ecp_521' is not supported by IKEv1
 algparse -fips -v1 -v2 'esp=3des-sha1;dh23'
-	ERROR: ESP DH algorithm DH23 is invalid as PFS policy is disabled
+	ERROR: ESP DH algorithm 'dh23' is not supported
 algparse -fips -v1 -v2 'esp=3des-sha1;dh24'
-	ERROR: ESP DH algorithm DH24 is invalid as PFS policy is disabled
+	ERROR: ESP DH algorithm 'dh24' is not supported
 algparse -fips -v1 -v2 'esp=3des-sha1'
 	3DES_CBC-HMAC_SHA1_96
 algparse -fips -v1 -v2 'esp=null-sha1'

@@ -58,7 +58,6 @@ east #
 000 algorithm ESP encrypt: name=AES_GCM_16, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: name=AES_GCM_8, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: name=CAMELLIA_CBC, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: name=CAST_CBC, keysizemin=128, keysizemax=128
 000 algorithm ESP encrypt: name=CHACHA20_POLY1305, keysizemin=256, keysizemax=256
 000 algorithm ESP encrypt: name=NULL, keysizemin=0, keysizemax=0
 000 algorithm ESP encrypt: name=NULL_AUTH_AES_GMAC, keysizemin=128, keysizemax=256
@@ -102,8 +101,6 @@ east #
 000 algorithm IKE DH Key Exchange: name=DH19, bits=512
 000 algorithm IKE DH Key Exchange: name=DH20, bits=768
 000 algorithm IKE DH Key Exchange: name=DH21, bits=1056
-000 algorithm IKE DH Key Exchange: name=DH23, bits=2048
-000 algorithm IKE DH Key Exchange: name=DH24, bits=2048
 000  
 000 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
 000  

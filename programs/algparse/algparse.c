@@ -187,8 +187,8 @@ static void test(void)
 	esp(pfs, "3des-sha1;modp2048");
 	esp(pfs && !ikev1, "3des-sha1;dh21");
 	esp(pfs && !ikev1, "3des-sha1;ecp_521");
-	esp(pfs, "3des-sha1;dh23");
-	esp(pfs, "3des-sha1;dh24");
+	esp(false, "3des-sha1;dh23");
+	esp(false, "3des-sha1;dh24");
 	esp(true, "3des-sha1");
 	esp(!fips, "null-sha1");
 

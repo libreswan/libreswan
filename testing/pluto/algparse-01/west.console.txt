@@ -48,7 +48,6 @@ Encryption algorithms:
   SERPENT_CBC             IKEv1: IKE ESP     IKEv2: IKE ESP           {256,192,*128}  (serpent)
   TWOFISH_CBC             IKEv1: IKE ESP     IKEv2: IKE ESP           {256,192,*128}  (twofish)
   TWOFISH_SSH             IKEv1: IKE         IKEv2: IKE ESP           {256,192,*128}  (twofish_cbc_ssh)
-  CAST_CBC                IKEv1:     ESP     IKEv2:     ESP           {*128}  (cast)
   NULL_AUTH_AES_GMAC      IKEv1:     ESP     IKEv2:     ESP           {256,192,*128}  (aes_gmac)
   NULL                    IKEv1:     ESP     IKEv2:     ESP           []
   CHACHA20_POLY1305       IKEv1:             IKEv2:     ESP           [*256]
@@ -87,7 +86,5 @@ DH algorithms:
   DH19                    IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  (ecp_256)
   DH20                    IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  (ecp_384)
   DH21                    IKEv1: IKE         IKEv2: IKE ESP AH  FIPS  (ecp_521)
-  DH23                    IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS
-  DH24                    IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS
 west #
  
