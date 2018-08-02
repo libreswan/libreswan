@@ -6,8 +6,10 @@ nf=18
 df=10
 
 {
-    # an approx list of test directories
-    ls -ld testing/pluto/*/ | cut -d/ -f3
+    # use anything kvm things is a test directory
+    ./testing/utils/kvmresults.py testing/pluto/*/ \
+	--skip '' \
+	--print test-name
 } | {
     # filter out any in TESTLIST
     while read t ; do
