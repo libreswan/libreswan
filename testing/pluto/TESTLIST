@@ -186,6 +186,7 @@ kvmplutotest	ikev2-algo-08-cast			good
 kvmplutotest	ikev2-algo-09-camellia			good
 kvmplutotest	ikev2-algo-10-aes-gcm128		good
 kvmplutotest	ikev2-algo-11-gcm-prop2			good
+kvmplutotest	ikev2-algo-13-esp-null			good
 kvmplutotest	ikev2-algo-12-aes-aes_cmac		good
 kvmplutotest	ikev2-algo-14-esp-null_auth_aes_gmac-none	good
 kvmplutotest	ikev2-algo-15-esp-null-none		good
