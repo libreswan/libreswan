@@ -83,6 +83,7 @@ VIRSH = sudo virsh --connect $(KVM_CONNECTION)
 
 VIRT_INSTALL ?= sudo virt-install --connect $(KVM_CONNECTION)
 VIRT_CPU ?= --cpu host-passthrough
+VIRT_DISK_SIZE_GB ?=8
 VIRT_RND ?= --rng type=random,device=/dev/random
 VIRT_SECURITY ?= --security type=static,model=dac,label='$(KVM_USER):$(KVM_GROUP)',relabel=yes
 VIRT_GATEWAY ?= --network=network:$(KVM_GATEWAY),model=virtio
@@ -595,7 +596,7 @@ $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks: | $(KVM_ISO) $(KVM_KICKSTART_FILE) $(KVM_G
 		--vcpus=1 \
 		--memory 1024 \
 		--nographics \
-		--disk size=8,cache=writeback,path=$(basename $@).qcow2 \
+		--disk size=$(VIRT_DISK_SIZE_GB),cache=writeback,path=$(basename $@).qcow2 \
 		$(VIRT_CPU) \
 		$(VIRT_GATEWAY) \
 		$(VIRT_RND) \
