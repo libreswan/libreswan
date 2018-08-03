@@ -216,8 +216,8 @@ void starter_error_append(starter_errors_t *perrl, const char *fmt, ...)
 		char *nerr = alloc_bytes(ol + al + 2, "starter errors");
 
 		memcpy(nerr, perrl->errors, ol);
-		nerr[ol + 1] = '\n';
-		memcpy(&nerr[ol + 2], tmp_err, al + 1);
+		nerr[ol] = '\n';
+		memcpy(&nerr[ol + 1], tmp_err, al + 1);
 		pfree(perrl->errors);
 		perrl->errors = nerr;
 	}
