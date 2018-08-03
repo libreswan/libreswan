@@ -536,6 +536,7 @@ kvmplutotest	ikev2-child-rekey		wip
 kvmplutotest	ikev2-child-rekey-01		wip
 kvmplutotest	ikev2-child-rekey-02		wip
 kvmplutotest	ikev2-child-rekey-03		wip
+kvmplutotest	ikev2-child-dual-asym-01	wip
 kvmplutotest	ikev2-ike-rekey-01		good
 kvmplutotest	ikev2-ike-rekey-02		good
 kvmplutotest	ikev2-ike-rekey-03		wip

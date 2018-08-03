@@ -1,0 +1,18 @@
+WIP: test shows a bug in 3.25
+
+IKEv2 with two connections, one to receive on a specific port and one to
+send to another host on that same specific port, eg:
+
+conn one
+	also=base
+	leftprotoport=udp/6081
+	rightprotoport=udp
+
+conn two
+	also=base
+	leftprotoport=udp
+	rightprotoport=udp/6081
+
+then try and bring both conns up
+
+TODO: confirm conns with traffic on those ports
