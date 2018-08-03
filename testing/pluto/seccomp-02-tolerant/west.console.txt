@@ -8,8 +8,7 @@ Stopping logging: [  OK  ]
 west #
  rm  -f /var/log/audit/audit.log
 west #
- service auditd start
-Redirecting to /bin/systemctl start  auditd.service
+ systemctl start auditd.service
 west #
  mkdir -p /var/run/pluto
 west #

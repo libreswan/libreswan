@@ -2,7 +2,7 @@
 ipsec _stackmanager start
 service auditd stop
 rm  -f /var/log/audit/audit.log
-service auditd start
+systemctl start auditd.service
 mkdir -p /var/run/pluto
 ipsec pluto --config /etc/ipsec.conf
 /testing/pluto/bin/wait-until-pluto-started
