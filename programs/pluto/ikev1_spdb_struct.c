@@ -761,23 +761,16 @@ bool ikev1_out_sa(pb_stream *outs,
 #endif
 				}
 
-
-				/* scan to see if key size is specified */
-
-				bool keysized = FALSE;
-
-				for (unsigned an = 0; an != t->attr_cnt; an++) {
-					const struct db_attr *a = &t->attrs[an];
-
-					if (oakley_mode ?
-					    a->type.oakley == OAKLEY_KEY_LENGTH :
-					    a->type.ipsec == KEY_LENGTH) {
-						keysized = TRUE;
-						break;
-					}
-				}
-
-				/* spit out attributes from table */
+				/*
+				 * spit out attributes from table
+				 *
+				 * XXX: Assume that the code
+				 * constructing the attribute table
+				 * handled optional and extra key
+				 * lengths (and if it is wrong it is
+				 * deliberate).  I.e., don't try to
+				 * also handle it here.
+				 */
 				for (unsigned an = 0; an != t->attr_cnt; an++) {
 					const struct db_attr *a = &t->attrs[an];
 
@@ -787,72 +780,6 @@ bool ikev1_out_sa(pb_stream *outs,
 						      attr_val_descs,
 						      &trans_pbs))
 						goto fail;
-
-					if (oakley_mode) {
-						if (!keysized && a->type.oakley == OAKLEY_ENCRYPTION_ALGORITHM) {
-							const struct encrypt_desc *enc = ikev1_get_ike_encrypt_desc(a->val);
-							passert(enc != NULL); /* algorithm known */
-							/*
-							 * Since
-							 * spdb_struct.c
-							 * should have
-							 * added
-							 * default
-							 * keys when
-							 * needed, the
-							 * only way
-							 * this path
-							 * can be
-							 * executed is
-							 * when the
-							 * length
-							 * should be
-							 * omitted
-							 * (i.e.,
-							 * 3des).
-							 * i.e., this
-							 * code path
-							 * is dead.
-							 */
-							pexpect(enc->keylen_omitted);
-							if (!enc->keylen_omitted) {
-								int defkeysize = enc->keydeflen;
-								passert(defkeysize != 0); /* never ike=NULL */
-								DBG(DBG_CONTROLMORE, DBG_log("inserting default oakley key length attribute payload of %d bits",
-									defkeysize));
-								if (!out_attr(OAKLEY_KEY_LENGTH,
-									defkeysize,
-									attr_desc,
-									attr_val_descs,
-									&trans_pbs))
-									goto fail;
-							}
-						}
-					} else {
-						/*
-						 * XXX: is this
-						 * redundant, alg
-						 * parser should have
-						 * set the key length?
-						 */
-						/* ipsec_mode */
-						if (!keysized) {
-							const struct encrypt_desc *encrypt = ikev1_get_kernel_encrypt_desc(t->transid);
-							if (pexpect(encrypt != NULL) && !encrypt->keylen_omitted) {
-								DBGF(DBG_CONTROLMORE,
-								     "inserting default ipsec key length attribute payload of %d bits",
-								     encrypt->keydeflen);
-								if (!out_attr(KEY_LENGTH,
-									encrypt->keydeflen,
-									attr_desc,
-									attr_val_descs,
-									&trans_pbs))
-									goto fail;
-							} else {
-								DBGF(DBG_CONTROLMORE, "ignoring missing keylen as omitted");
-							}
-						}
-					}
 				}
 				close_output_pbs(&trans_pbs);
 			}
