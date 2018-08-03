@@ -92,6 +92,7 @@ static void init_seccomp(uint32_t def_action, bool main)
 		LSW_SECCOMP_ADD(ctx, getppid);
 		LSW_SECCOMP_ADD(ctx, getrlimit);
 		LSW_SECCOMP_ADD(ctx, getsockname);
+		LSW_SECCOMP_ADD(ctx, getsockopt);
 		LSW_SECCOMP_ADD(ctx, getuid);
 		LSW_SECCOMP_ADD(ctx, ioctl);
 		LSW_SECCOMP_ADD(ctx, lstat);
@@ -140,6 +141,7 @@ static void init_seccomp(uint32_t def_action, bool main)
 	LSW_SECCOMP_ADD(ctx, sched_setparam);
 	LSW_SECCOMP_ADD(ctx, sendto);
 	LSW_SECCOMP_ADD(ctx, set_tid_address);
+	LSW_SECCOMP_ADD(ctx, sigaltstack);
 	LSW_SECCOMP_ADD(ctx, sigreturn);
 	LSW_SECCOMP_ADD(ctx, stat);
 	LSW_SECCOMP_ADD(ctx, statfs);
