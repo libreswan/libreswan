@@ -94,6 +94,7 @@ static void init_seccomp(uint32_t def_action, bool main)
 		LSW_SECCOMP_ADD(ctx, getsockname);
 		LSW_SECCOMP_ADD(ctx, getuid);
 		LSW_SECCOMP_ADD(ctx, ioctl);
+		LSW_SECCOMP_ADD(ctx, lstat);
 		LSW_SECCOMP_ADD(ctx, mkdir);
 		LSW_SECCOMP_ADD(ctx, munmap);
 		LSW_SECCOMP_ADD(ctx, newfstatat);
