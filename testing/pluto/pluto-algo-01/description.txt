@@ -1,5 +1,0 @@
-This tests one side of a pluto that asks for 3DES (via ike= and esp=)
-while the other side has no policy (which now means 3DES or AES).
-
-This test is looking for IV_len issues.
-

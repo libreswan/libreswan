@@ -1,5 +1,0 @@
-#!/bin/sh
-
-named
-inetd
-

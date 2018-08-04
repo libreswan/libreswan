@@ -1,7 +1,0 @@
-These tests are Pluto unit tests - it runs IKE in a bottle.
-
-These tests are focused on loading and setting of algorithm code.
-
-It does not talk to KLIPS at all, nor does it even attempt to
-establish a connection, only putting connections into pluto.
-

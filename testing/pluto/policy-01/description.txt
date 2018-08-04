@@ -1,4 +1,0 @@
-A simple test of the policy interface to pluto.
-
-OE test from road to east.
-

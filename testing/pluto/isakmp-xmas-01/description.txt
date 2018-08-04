@@ -1,5 +1,0 @@
-This test cases feed pluto a number of "peculiar" ISAKMP packets.
-
-Packet 1 is from a hacked pluto that sends the VID before the SA proposal.
-Is this legal? I don't know yet.
-

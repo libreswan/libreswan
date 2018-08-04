@@ -1,8 +1,0 @@
-This tests pluto for the situation where a proposal is made with 3DES, but a key size attribute
-is also passed, with a value that is nonsense for 3DES.
-
-Pluto should just IGNORE the key size attribute (no passert, not causing it to use a weird
-size).
-
-This test is accomplished with TAPROOM.
-

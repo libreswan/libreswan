@@ -1,9 +1,0 @@
-Complex test of pluto using aggressive mode.
-Test is a variation of basic-pluto-01
-
-West will initiate to east using aggressive mode, with RSA keys.
-
-First, west will be told to initiate to 10 non-existant systems.
-This will cause it to do lots of crypto. Afterward, it will be told to
-initiate to east. The request to east should not get lost.
-

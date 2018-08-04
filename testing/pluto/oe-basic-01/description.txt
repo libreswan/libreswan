@@ -1,3 +1,0 @@
-This is the most basic situation for testing gateway-enabled Opportunistic
-Encryption.
-
