@@ -719,8 +719,6 @@ kvmplutotest	ah-pluto-05		good
 kvmplutotest	ah-pluto-07-klips-netkey	good
 kvmplutotest	ah-pluto-09		good
 kvmplutotest	ah-pluto-10		good
-kvmplutotest	interop-ikev1-strongswan-09-dh22-initiator	good
-kvmplutotest	interop-ikev2-strongswan-09-dh22-initiator	good
 # requires strongswan > 5.5.3 see https://wiki.strongswan.org/issues/2347
 kvmplutotest	interop-ikev1-strongswan-10-ah-initiator-sha256	good
 kvmplutotest	interop-ikev1-strongswan-11-ah-initiator-sha512	good
@@ -971,7 +969,7 @@ kvmplutotest	klips-pluto-ipcmp-01		skiptest
 
 
 #################################################################
-# old CAST tests
+# old algorithm tests
 #################################################################
 kvmplutotest	ikev2-algo-08-cast				skiptest
 kvmplutotest	netkey-algo-cast-01				skiptest
@@ -981,6 +979,8 @@ kvmplutotest	interop-ikev1-strongswan-07-cast128		skiptest
 # is broken for netkey/xfrm in strongswan itself too - kernel changed?
 kvmplutotest	interop-ikev1-strongswan-08-strongswan-cast	skiptest
 kvmplutotest	interop-ikev2-strongswan-18-psk-cast		skiptest
+kvmplutotest	interop-ikev1-strongswan-09-dh22-initiator	skiptest
+kvmplutotest	interop-ikev2-strongswan-09-dh22-initiator	skiptest
 
 
 # seccomp
