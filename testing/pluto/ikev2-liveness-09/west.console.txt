@@ -61,7 +61,6 @@ west #
  # But shuntstatus only shows bare shunts, not connection shunts :(
 west #
  conntrack -L -n
-[ 00.00] Netfilter messages via NETLINK v0.30.
 [ 00.00] ctnetlink v0.93: registering with nfnetlink.
 conntrack v1.4.3 (conntrack-tools): 0 flow entries have been shown.
 west #

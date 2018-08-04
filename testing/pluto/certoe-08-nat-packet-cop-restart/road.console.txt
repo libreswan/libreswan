@@ -149,7 +149,6 @@ road #
 Redirecting to: systemctl stop ipsec.service
 road #
  conntrack -L -n | sed -e "s/id=[0-9]*/id=XXXX/g" -e "s/icmp     1 [0-9]*/icmp     1 XX/" | sort
-[ 00.00] Netfilter messages via NETLINK v0.30.
 [ 00.00] ctnetlink v0.93: registering with nfnetlink.
 conntrack v1.4.3 (conntrack-tools): 1 flow entries have been shown.
 icmp     1 XX src=192.1.3.209 dst=192.1.2.23 type=8 code=0 id=XXXX src=192.1.2.23 dst=10.0.10.1 type=0 code=0 id=XXXX mark=0 secctx=system_u:object_r:unlabeled_t:s0 use=1
