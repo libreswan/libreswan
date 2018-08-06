@@ -28,6 +28,9 @@ REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS ikev2-proposal-sanitize.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS seccomp.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS all-date-sanitize.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS debug.sed"
-# The following sanitizers only modify a single command
+
+# The following sanitizers are written to only modify a single command
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-ip-route.sed"
+REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-ip-addr.sed"
+REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-ip-link.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-ip-xfrm-state.sed"
