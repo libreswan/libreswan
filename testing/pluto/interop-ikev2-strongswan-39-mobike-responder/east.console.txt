@@ -10,10 +10,10 @@ east NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.33.222
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	enc cbc(aes) 0xKEY
+	enc cbc(aes) 0xENCKEY
 src 192.1.33.222 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	enc cbc(aes) 0xKEY
+	enc cbc(aes) 0xENCKEY
 XFRM policy:
 src 192.0.2.0/24 dst 192.0.3.1/32
 	dir out priority 371327 ptype main

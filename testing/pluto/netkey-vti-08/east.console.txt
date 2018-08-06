@@ -15,7 +15,7 @@ east #
 east #
  # unique mark translates -1 to random, make sure there is no -1
 east #
- ip xfrm pol | grep \\-1
+ ip xfrm policy | grep \\-1
 east #
 east #
  ../bin/check-for-core.sh

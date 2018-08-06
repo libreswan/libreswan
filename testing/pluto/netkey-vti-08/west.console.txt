@@ -67,7 +67,7 @@ west #
 west #
  # unique mark translates -1 to random, make sure there is no -1
 west #
- ip xfrm pol | grep \\-1
+ ip xfrm policy | grep \\-1
 west #
 west #
  ../bin/check-for-core.sh

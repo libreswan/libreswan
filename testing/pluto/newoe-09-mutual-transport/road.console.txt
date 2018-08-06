@@ -33,10 +33,10 @@ road #
 road #
  # confirm we got transport mode, not tunnel mode
 road #
- ip xfrm state | grep mode | sed "s/spi 0x[^ ]* /spi 0xSPISPI /"
-	proto esp spi 0xSPISPI reqid 16441 mode transport
-	proto esp spi 0xSPISPI reqid 16441 mode transport
-	proto esp spi 0xSPISPI reqid 0 mode transport
+ ip xfrm state | grep mode
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	proto esp spi 0xSPISPI reqid REQID mode transport
 road #
  echo done
 done

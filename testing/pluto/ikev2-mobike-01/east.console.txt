@@ -17,12 +17,12 @@ east #
  ip xfrm state
 src 192.1.8.22 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	enc cbc(aes) 0xKEY
+	enc cbc(aes) 0xENCKEY
 src 192.1.2.23 dst 192.1.8.22
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	enc cbc(aes) 0xKEY
+	enc cbc(aes) 0xENCKEY
 east #
- ip xfrm pol
+ ip xfrm policy
 src 192.0.2.0/24 dst 192.0.3.0/24 
 	dir out priority 1042407 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.8.22

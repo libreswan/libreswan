@@ -3,7 +3,7 @@ ping -W 1 -q -n -c 2 -I 192.0.3.254 192.0.2.254
 strongswan status
 # note this end is 192.1.3.33
 ip xfrm state
-ip xfrm pol
+ip xfrm policy
 sleep 5
 # remove this end ip next one will take over
 ip addr del 192.1.3.33/24 dev eth1

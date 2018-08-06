@@ -1,3 +1,8 @@
+# XXX: This optional sanitizer should be rewritten so that it only
+# applies to strongswan commands.  That way it can be run
+# unconditionally.  As things stand it edits stuff it really has no
+# business editing.
+
 s/^\(Starting strongSwan \)\(.*\)\( IPsec.*\)$/\1X.X.X\3/g
 s/^\(Status of IKE charon daemon (strongSwan \).*):$/\1VERSION):/g
 s/\(  uptime: \)\([0-9]*\)\( second[s]*\)\(, since \)\(.*\)$/\1XXX second\4YYY/g
@@ -28,4 +33,3 @@ s/rekeying in [0-9]* minutes/rekeying in XX minutes/g
 s/ESTABLISHED [0-9]* seconds ago/ESTABLISHED XXX seconds ago/g
 s/established with SPIs .* and /established with SPIs SPISPI_i SPISPI_o and /
 s/received AUTH_LIFETIME of [0-9]*s, scheduling reauthentication in [0-9]*s/received AUTH_LIFETIME of XXXXs, scheduling reauthentication in XXXXs/
-
