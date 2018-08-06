@@ -22,6 +22,13 @@ b end
   # due to a kernel difference? Just ignore the error code in the routing table
   s/metric 1024 error -.*/metric 1024 error -XXXX/g
 
+  # fix up keys and other magic numbers
+  s/ spi 0x[^ ]* / spi 0xSPISPI /g
+  s/ reqid [0-9][0-9]* / reqid REQID /g
+  s/\tauth\(.*\) 0x[^ ]* \(.*\)$/\tauth\1 0xHASHKEY \2/g
+  s/\tenc \(.*\) 0x.*$/\tenc \1 0xENCKEY/g
+  s/\taead \(.*\) 0x[^ ]*\( .*\)$/\taead \1 0xENCAUTHKEY\2/g
+
   # the following was in the .pl sanitizer
 
   s/iv=0x[0-9a-f]\{32\}/iv=0xIVISFORRANDOM000IVISFORRANDOM000/;
