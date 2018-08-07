@@ -1,0 +1,196 @@
+/testing/guestbin/swan-prep --46
+west #
+ # confirm that the network is alive
+west #
+ ping6 -n -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
+PING 2001:db8:1:2::23(2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes
+64 bytes from 2001:db8:1:2::23: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 2001:db8:1:2::23 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ # ensure that clear text does not get through
+west #
+ ip6tables -A INPUT -i eth1 -s 2001:db8:1:2::23 -p ipv6-icmp --icmpv6-type echo-reply  -j DROP
+west #
+ ip6tables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ # confirm with a ping
+west #
+ ping6 -n -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
+PING 2001:db8:1:2::23(2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes
+--- 2001:db8:1:2::23 ping statistics ---
+4 packets transmitted, 0 received, 100% packet loss, time XXXX
+west #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ echo "initdone"
+initdone
+west #
+ # one ping will get lost in the ondemand as only TCP is cached
+west #
+ ping6 -n -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
+PING 2001:db8:1:2::23(2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes
+64 bytes from 2001:db8:1:2::23: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 2001:db8:1:2::23 ping statistics ---
+4 packets transmitted, 3 received, 25% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ ../../pluto/bin/ipsec-look.sh
+west NOW
+XFRM state:
+src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	sel src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128 
+src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 
+src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 
+	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 proto ipv6-icmp type 128 code 0 
+XFRM policy:
+src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128
+	dir in priority 1015679 ptype main
+	tmpl src :: dst ::
+		proto esp reqid REQID mode transport
+src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128
+	dir out priority 1015679 ptype main
+	tmpl src :: dst ::
+		proto esp reqid REQID mode transport
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir fwd priority 1 ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir in priority 1 ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir out priority 1 ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir fwd priority 1 ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir in priority 1 ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir out priority 1 ptype main
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1 
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254 
+192.0.2.0/24 via 192.1.2.23 dev eth1 
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45 
+192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45 
+unreachable ::/96 dev lo  metric 1024  error -113
+unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -113
+2001:db8:0:1::/64 dev eth0  proto kernel  metric 256 
+2001:db8::/48 via 2001:db8:1:2::23 dev eth1  metric 1024 
+2001:db8:1:2::/64 dev eth1  proto kernel  metric 256 
+2001:db8:9:4::/64 dev eth2  proto kernel  metric 256 
+unreachable 2002:a00::/24 dev lo  metric 1024  error -113
+unreachable 2002:7f00::/24 dev lo  metric 1024  error -113
+unreachable 2002:a9fe::/32 dev lo  metric 1024  error -113
+unreachable 2002:ac10::/28 dev lo  metric 1024  error -113
+unreachable 2002:c0a8::/32 dev lo  metric 1024  error -113
+unreachable 2002:e000::/19 dev lo  metric 1024  error -113
+unreachable 3ffe:ffff::/32 dev lo  metric 1024  error -113
+fe80::/64 dev eth0  proto kernel  metric 256 
+fe80::/64 dev eth1  proto kernel  metric 256 
+fe80::/64 dev eth2  proto kernel  metric 256 
+default via 2001:db8:1:2::254 dev eth1  metric 1 
+default via 2001:db8:1:2::254 dev eth1  metric 1024 
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west #
+ echo done
+done
+west #
+ ../../pluto/bin/ipsec-look.sh
+west NOW
+XFRM state:
+src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	sel src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128 
+src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 
+src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 
+	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 proto ipv6-icmp type 128 code 0 
+XFRM policy:
+src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128
+	dir in priority 1015679 ptype main
+	tmpl src :: dst ::
+		proto esp reqid REQID mode transport
+src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128
+	dir out priority 1015679 ptype main
+	tmpl src :: dst ::
+		proto esp reqid REQID mode transport
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir fwd priority 1 ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir in priority 1 ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir out priority 1 ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir fwd priority 1 ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir in priority 1 ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir out priority 1 ptype main
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1 
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254 
+192.0.2.0/24 via 192.1.2.23 dev eth1 
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45 
+192.9.4.0/24 dev eth2 proto kernel scope link src 192.9.4.45 
+unreachable ::/96 dev lo  metric 1024  error -113
+unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -113
+2001:db8:0:1::/64 dev eth0  proto kernel  metric 256 
+2001:db8::/48 via 2001:db8:1:2::23 dev eth1  metric 1024 
+2001:db8:1:2::/64 dev eth1  proto kernel  metric 256 
+2001:db8:9:4::/64 dev eth2  proto kernel  metric 256 
+unreachable 2002:a00::/24 dev lo  metric 1024  error -113
+unreachable 2002:7f00::/24 dev lo  metric 1024  error -113
+unreachable 2002:a9fe::/32 dev lo  metric 1024  error -113
+unreachable 2002:ac10::/28 dev lo  metric 1024  error -113
+unreachable 2002:c0a8::/32 dev lo  metric 1024  error -113
+unreachable 2002:e000::/19 dev lo  metric 1024  error -113
+unreachable 3ffe:ffff::/32 dev lo  metric 1024  error -113
+fe80::/64 dev eth0  proto kernel  metric 256 
+fe80::/64 dev eth1  proto kernel  metric 256 
+fe80::/64 dev eth2  proto kernel  metric 256 
+default via 2001:db8:1:2::254 dev eth1  metric 1 
+default via 2001:db8:1:2::254 dev eth1  metric 1024 
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west #
+west #
+ ../bin/check-for-core.sh
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
