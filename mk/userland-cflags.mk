@@ -18,30 +18,32 @@
 # -D... goes in here
 USERLAND_CFLAGS+=-std=gnu99
 
-# If you want or need to override the default detected arch
-# GCCM=-m32
-# GCCM=-mx32
-# GCCM=-m64
-# USERLAND_CFLAGS+=$(GCCM)
+#
+# Options that really belong in CFLAGS (making for an intuitive way to
+# override them).
+#
+# Unfortunately this file is shared with the kernel which seems to
+# have its own ideas on CFLAGS.
+#
 
-ifeq ($(origin DEBUG_CFLAGS),undefined)
-DEBUG_CFLAGS=-g
-endif
+DEBUG_CFLAGS?=-g
 USERLAND_CFLAGS+=$(DEBUG_CFLAGS)
 
-ifeq ($(origin OPTIMIZE_CFLAGS),undefined)
+# eventually: -Wshadow -pedantic?
+WERROR_CFLAGS?=-Werror
+USERLAND_CFLAGS+= $(WERROR_CFLAGS)
+WARNING_CFLAGS?=-Wall -Wextra -Wformat -Wformat-nonliteral -Wformat-security -Wundef -Wmissing-declarations -Wredundant-decls -Wnested-externs
+USERLAND_CFLAGS+= $(WARNING_CFLAGS)
+
 # _FORTIFY_SOURCE requires at least -O.  Gentoo, pre-defines
 # _FORTIFY_SOURCE (to what? who knows!); force it to our preferred
 # value.
-OPTIMIZE_CFLAGS=-O2 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2
-endif
+OPTIMIZE_CFLAGS?=-O2 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2
 USERLAND_CFLAGS+=$(OPTIMIZE_CFLAGS)
 
 # Dumping ground for an arbitrary set of flags.  Should probably be
 # separated out.
-ifeq ($(origin USERCOMPILE),undefined)
-USERCOMPILE= -fstack-protector-all -fno-strict-aliasing -fPIE -DPIE
-endif
+USERCOMPILE?=-fstack-protector-all -fno-strict-aliasing -fPIE -DPIE
 USERLAND_CFLAGS+=$(USERCOMPILE)
 
 # Build/link against the more pedantic ElectricFence memory allocator;
@@ -54,6 +56,13 @@ endif
 ifneq ($(EFENCE),)
 $(warning EFENCE=$(EFENCE) replaced by USE_EFENCE=true)
 endif
+
+#
+# Configuration options.
+#
+# Sometimes the make variable is called USE_<feature> and the C macro
+# is called HAVE_<feature>, but not always.
+#
 
 ifeq ($(USE_DNSSEC),true)
 USERLAND_CFLAGS+=-DUSE_DNSSEC
@@ -308,13 +317,3 @@ ifeq ($(USE_LIBCAP_NG),true)
 USERLAND_CFLAGS += -DHAVE_LIBCAP_NG
 LIBCAP_NG_LDFLAGS ?= -lcap-ng
 endif
-
-# eventually: -Wshadow -pedantic
-ifeq ($(origin WERROR_CFLAGS),undefined)
-WERROR_CFLAGS = -Werror
-endif
-ifeq ($(origin WARNING_CFLAG),undefined)
-WARNING_CFLAGS = -Wall -Wextra -Wformat -Wformat-nonliteral -Wformat-security -Wundef -Wmissing-declarations -Wredundant-decls -Wnested-externs
-endif
-USERLAND_CFLAGS+= $(WERROR_CFLAGS)
-USERLAND_CFLAGS+= $(WARNING_CFLAGS)
