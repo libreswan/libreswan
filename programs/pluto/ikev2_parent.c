@@ -6749,7 +6749,7 @@ void ikev2_addr_change(struct state *st)
 	if (!mobike_check_established(st))
 		return;
 
-#ifdef HAVE_NETKEY
+#ifdef NETKEY_SUPPORT
 
 	/* let's re-discover local address */
 
@@ -6815,7 +6815,7 @@ void ikev2_addr_change(struct state *st)
 		break;
 	}
 
-#else /* !defined(HAVE_NETKEY) */
+#else /* !defined(NETKEY_SUPPORT) */
 
 	libreswan_log("without NETKEY we cannot ikev2_addr_change()");
 

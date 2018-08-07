@@ -8,7 +8,7 @@ extern enum_names kern_interface_names;
 extern enum_names timer_event_names;
 
 extern enum_names dpd_action_names;
-#ifdef HAVE_NETKEY
+#ifdef NETKEY_SUPPORT
 extern enum_names netkey_sa_dir_names;
 #endif
 extern enum_names sd_action_names;

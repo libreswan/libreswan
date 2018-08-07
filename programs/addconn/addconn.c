@@ -32,7 +32,7 @@
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
 #include "ipsecconf/starterwhack.h"
-#ifdef HAVE_NETKEY
+#ifdef NETKEY_SUPPORT
 #include "addr_lookup.h"
 #endif
 
@@ -57,12 +57,12 @@ static int verbose = 0;
  */
 static void resolve_defaultroute(struct starter_conn *conn UNUSED)
 {
-#ifdef HAVE_NETKEY
+#ifdef NETKEY_SUPPORT
 	if (resolve_defaultroute_one(&conn->left, &conn->right, verbose != 0) == 1)
 		resolve_defaultroute_one(&conn->left, &conn->right, verbose != 0);
 	if (resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0) == 1)
 		resolve_defaultroute_one(&conn->right, &conn->left, verbose != 0);
-#else /* !defined(HAVE_NETKEY) */
+#else /* !defined(NETKEY_SUPPORT) */
 	fprintf(stderr, "addcon: without NETKEY, cannot resolve_defaultroute()\n");
 	exit(7);	/* random code */
 #endif

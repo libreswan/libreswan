@@ -3,7 +3,7 @@
 # Copyright (C) 2001, 2002  Henry Spencer.
 # Copyright (C) 2003-2006   Xelerance Corporation
 # Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2015-2017 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015-2018 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -116,7 +116,7 @@ USERLAND_CFLAGS+=-DKLIPS
 endif
 
 ifeq ($(USE_NETKEY),true)
-USERLAND_CFLAGS+=-DHAVE_NETKEY -DNETKEY_SUPPORT
+USERLAND_CFLAGS+=-DNETKEY_SUPPORT
 endif
 
 ifeq ($(USE_PFKEYv2),true)
