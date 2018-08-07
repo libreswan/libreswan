@@ -29,6 +29,9 @@ b end
   s/\tenc \(.*\) 0x.*$/\tenc \1 0xENCKEY/g
   s/\taead \(.*\) 0x[^ ]*\( .*\)$/\taead \1 0xENCAUTHKEY\2/g
 
+  # f28 adds '... pref medium' to ROUTING TABLES
+  s/ pref medium$//
+
   # the following was in the .pl sanitizer
 
   s/iv=0x[0-9a-f]\{32\}/iv=0xIVISFORRANDOM000IVISFORRANDOM000/;
