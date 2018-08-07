@@ -64,6 +64,67 @@ endif
 # is called HAVE_<feature>, but not always.
 #
 
+#
+# Kernel support
+#
+# Order these so that the enabled kernel support can fill in defaults
+# for rest.  For instance, MAST should enable KLIPS which should enble
+# PFKEYv2.  So that Makefile.inc.local can override, the values are
+# not forced.  over However don't force
+
+# support BSD/KAME kernels (on *BSD and OSX)?
+USE_BSDKAME?=false
+ifeq ($(USE_BSDKAME),true)
+USE_NETKEY?=false
+USE_KLIPS?=false
+USE_MAST?=false
+endif
+
+# support KLIPS/MAST kernel variation (MAST requires KLIPS)
+USE_MAST?=false
+ifeq ($(USE_MAST),true)
+USE_KLIPS?=true
+endif
+
+# support KLIPS kernel module (KLIPS requires PFKEYv2)
+USE_KLIPS?=true
+ifeq ($(USE_KLIPS),true)
+USE_PFKEYv2?=true
+endif
+
+# support Linux kernel's NETLINK_XFRM (aka NETKEY) (aka "native",
+# "kame"???) (NETLINK does not use PFKEY, but it does share some code.
+# True?!?)
+USE_NETKEY?=true
+ifeq ($(USE_NETKEY),true)
+USE_PFKEYv2=true
+endif
+
+# above should set these
+USE_PFKEYv2?=false
+
+ifeq ($(USE_BSDKAME),true)
+USERLAND_CFLAGS += -DBSD_KAME
+endif
+
+ifeq ($(USE_MAST),true)
+USERLAND_CFLAGS += -DKLIPS_MAST
+endif
+
+ifeq ($(USE_KLIPS),true)
+USERLAND_CFLAGS+=-DKLIPS
+endif
+
+ifeq ($(USE_NETKEY),true)
+USERLAND_CFLAGS+=-DHAVE_NETKEY -DNETKEY_SUPPORT
+endif
+
+ifeq ($(USE_PFKEYv2),true)
+USERLAND_CFLAGS+=-DPFKEY
+endif
+
+#
+
 ifeq ($(USE_DNSSEC),true)
 USERLAND_CFLAGS+=-DUSE_DNSSEC
 UNBOUND_LDFLAGS ?= -lunbound -lldns
@@ -79,15 +140,6 @@ ifeq ($(USE_FIPSCHECK),true)
 USERLAND_CFLAGS+=-DFIPS_CHECK
 USERLAND_CFLAGS+=-DFIPSPRODUCTCHECK=\"${FIPSPRODUCTCHECK}\"
 FIPSCHECK_LDFLAGS ?= -lfipscheck
-endif
-
-ifeq ($(USE_KLIPS),true)
-USERLAND_CFLAGS+=-DKLIPS
-endif
-
-ifeq ($(USE_NETKEY),true)
-# technically netlink?
-USERLAND_CFLAGS+=-DHAVE_NETKEY
 endif
 
 ifeq ($(USE_LABELED_IPSEC),true)

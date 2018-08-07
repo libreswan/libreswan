@@ -67,34 +67,23 @@ endif
 # where to find klips headers and Libreswan headers
 HDRDIRS +=-I${LIBRESWANSRCDIR}/include -I$(LIBRESWANSRCDIR)/lib/libcrypto -I$(KLIPSINC)
 
-# -DKLIPS enables interface to Kernel LINUX IPsec code
-# -DNETKEY enables interface to Kernel NETKEY/XFRM IPsec code
-
-# The following are best left undefined -- each can be overridden at runtime
-# if need be.
-# -DPORT=n sets the default UDP port for IKE messages (otherwise 500)
-
 ifeq ($(USE_PFKEYv2),true)
 OBJS += kernel_pfkey.o
 endif
 
 ifeq ($(USE_NETKEY),true)
-CFLAGS += -DNETKEY_SUPPORT -DPFKEY
 OBJS += kernel_netlink.o
 endif
 
 ifeq ($(USE_KLIPS),true)
-CFLAGS += -DKLIPS -DPFKEY
 OBJS += kernel_klips.o
 endif
 
 ifeq ($(USE_MAST),true)
-CFLAGS += -DKLIPS_MAST
 OBJS += kernel_mast.o
 endif
 
 ifeq ($(USE_BSDKAME),true)
-CFLAGS += -DBSD_KAME
 OBJS += kernel_bsdkame.o
 # LIBBSDPFKEY is presumably passed in.
 LDFLAGS += ${LIBBSDPFKEY}

@@ -365,40 +365,6 @@ USE_SINGLE_CONF_DIR?=false
 # Except this to change in Q1 2011
 USE_KEYRR?=true
 
-# include support for BSD/KAME IPsec in pluto (on *BSD and OSX)
-USE_BSDKAME?=false
-ifeq ($(USE_BSDKAME),true)
-USE_NETKEY=false
-USE_KLIPS=false
-endif
-
-# Build support for Linux 2.4 and 2.6 KLIPS kernel level IPsec support
-# for pluto
-USE_KLIPS?=true
-
-# Build support for 2.6 KLIPS/MAST variation in pluto
-USE_MAST?=false
-
-# MAST requires KLIPS
-ifeq ($(USE_MAST),true)
-USE_KLIPS=true
-endif
-
-# Build support for Linux NETKEY (XFRM) kernel level IPsec support for
-# pluto (aka "native", "kame")
-USE_NETKEY?=true
-
-# KLIPS needs PFKEYv2, but sometimes we want PFKEY without KLIPS
-# Note: NETLINK does not use PFKEY, but it does share some code,
-# so it is required for NETKEY as well.
-ifeq ($(USE_KLIPS),true)
-USE_PFKEYv2=true
-else
-ifeq ($(USE_NETKEY),true)
-USE_PFKEYv2=true
-endif
-endif
-
 # Build support for integrity check for libreswan on startup
 USE_FIPSCHECK?=false
 FIPSPRODUCTCHECK?=/etc/system-fips
