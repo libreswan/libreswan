@@ -86,6 +86,7 @@ pthread_t main_thread;
 static char *rundir = NULL;
 char *pluto_listen = NULL;
 static bool fork_desired = USE_FORK || USE_DAEMON;
+static bool selftest_only = FALSE;
 
 #ifdef FIPS_CHECK
 # include <fipscheck.h> /* from fipscheck devel */
@@ -562,6 +563,8 @@ static const struct option long_opts[] = {
 	{ "seccomp-tolerant\0", no_argument, NULL, '4' },
 #endif
 	{ "vendorid\0<vendorid>", required_argument, NULL, 'V' },
+
+	{ "selftest\0", no_argument, NULL, '5' },
 
 	{ "leak-detective\0", no_argument, NULL, 'X' },
 	{ "debug-none\0^", no_argument, NULL, 'N' },
@@ -1128,9 +1131,12 @@ int main(int argc, char **argv)
 			keep_alive = deltatime(u);
 			continue;
 
-		case '5':	/* --debug-nat-t aliases */
-			base_debugging |= DBG_NATT;
+		case '5':	/* --selftest */
+			selftest_only = TRUE;
+			log_to_stderr_desired = TRUE;
+			fork_desired = FALSE;
 			continue;
+
 		case '6':	/* --virtual-private */
 			virtual_private = clone_str(optarg, "virtual_private");
 			continue;
@@ -1383,7 +1389,11 @@ int main(int argc, char **argv)
 	}
 
 	oco = lsw_init_options();
-	lockfd = create_lock();
+
+	if (!selftest_only)
+		lockfd = create_lock();
+	else
+		lockfd = 0;
 
 	/* select between logging methods */
 
@@ -1398,7 +1408,7 @@ int main(int argc, char **argv)
 	 * there will be no race condition in using it.  The easiest
 	 * place to do this is before the daemon fork.
 	 */
-	{
+	if (!selftest_only) {
 		err_t ugh = init_ctl_socket();
 
 		if (ugh != NULL) {
@@ -1462,6 +1472,7 @@ int main(int argc, char **argv)
 	} else {
 		/* no daemon fork: we have to fill in lock file */
 		(void) fill_lock(lockfd, getpid());
+
 		if (isatty(fileno(stdout))) {
 			fprintf(stdout, "Pluto initialized\n");
 			fflush(stdout);
@@ -1712,6 +1723,16 @@ int main(int argc, char **argv)
 	init_connections();
 	init_ike_alg();
 	test_ike_alg();
+
+	if (selftest_only) {
+		/*
+		 * skip pluto_exit()
+		 * Not all components were initialized and
+		 * no lock files were created.
+		 */
+		exit(PLUTO_EXIT_OK);
+	}
+
 	init_crypto_helpers(nhelpers);
 	init_demux();
 	init_kernel();
