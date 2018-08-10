@@ -1,1 +1,1 @@
-IKEv2 mismatched proposal leak test
+IKEv2 mismatched proposal leaked in older versions. This test ensures there is no regresion of that
