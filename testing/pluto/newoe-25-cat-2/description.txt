@@ -3,8 +3,8 @@ using OE/IDNULL using two servers, east and west, assiging the same
 IPv4 address to the client road. 
 
 east and and west is able to reach without CP since there is no NAT
-usig the same connection, ikev2-oe.conf.
+using the same connection, ikev2-oe.conf.
 
-Warning : cleint console output may not sanitized as swantest and
+Warning : client console output may not sanitized as swantest and
 scripts may not support sanitizing road.console.txt
 
