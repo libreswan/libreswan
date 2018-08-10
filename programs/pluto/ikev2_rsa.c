@@ -57,20 +57,20 @@
 #include "secrets.h"
 #include "crypt_hash.h"
 
-static u_char der_digestinfo[] = {
+static const u_char der_digestinfo[] = {
 	0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e,
 	0x03, 0x02, 0x1a, 0x05, 0x00, 0x04, 0x14
 };
-static int der_digestinfo_len = sizeof(der_digestinfo);
+static const int der_digestinfo_len = sizeof(der_digestinfo);
 
-static void ikev2_calculate_sighash(struct state *st,
+static void ikev2_calculate_sighash(const struct state *st,
 				    enum original_role role,
-				    unsigned char *idhash,
-				    chunk_t firstpacket,
+				    const unsigned char *idhash,
+				    const chunk_t firstpacket,
 				    unsigned char *sig_octets)
 {
 	const chunk_t *nonce;
-	const char    *nonce_name;
+	const char *nonce_name;
 
 	if (role == ORIGINAL_INITIATOR) {
 		/* on initiator, we need to hash responders nonce */
@@ -179,7 +179,7 @@ static err_t try_RSA_signature_v2(const u_char hash_val[MAX_DIGEST_LEN],
 
 stf_status ikev2_verify_rsa_sha1(struct state *st,
 				 enum original_role role,
-				 unsigned char *idhash,
+				 const unsigned char *idhash,
 				 pb_stream *sig_pbs)
 {
 	unsigned char calc_hash[SHA1_DIGEST_SIZE];

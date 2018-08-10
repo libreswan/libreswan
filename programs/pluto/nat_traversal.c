@@ -243,7 +243,7 @@ bool ikev2_out_natd(struct state *st, u_int8_t np, ip_address *localaddr,
  *
  * Used when we're Initiator
  */
-bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, const struct state *st)
+bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, const struct connection *c)
 {
 	DBG(DBG_NATT, DBG_log("nat add vid"));
 
@@ -257,7 +257,7 @@ bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, const struct state *
 	 * that want to do no-encapsulation, but are triggered for encapsulation
 	 * when they see NATT payloads.
 	 */
-	switch (st->st_connection->ikev1_natt) {
+	switch (c->ikev1_natt) {
 	case NATT_RFC:
 		DBG(DBG_NATT, DBG_log("skipping VID_NATT drafts"));
 		return out_vid(np, outs, VID_NATT_RFC);
@@ -280,7 +280,7 @@ bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, const struct state *
 		return TRUE;
 
 	default:
-		bad_case(st->st_connection->ikev1_natt);
+		bad_case(c->ikev1_natt);
 	}
 }
 
@@ -320,7 +320,7 @@ static enum natt_method nat_traversal_vid_to_method(enum known_vendorid nat_t_vi
 
 void set_nat_traversal(struct state *st, const struct msg_digest *md)
 {
-	DBG(DBG_NATT, DBG_log("sender checking NAT-T: %s and %d",
+	DBG(DBG_NATT, DBG_log("sender checking NAT-T: %s; VID %d",
 				     nat_traversal_enabled ? "enabled" : "disabled",
 				     md->quirks.qnat_traversal_vid));
 	if (nat_traversal_enabled && md->quirks.qnat_traversal_vid != VID_none) {
@@ -456,11 +456,10 @@ static void ikev1_natd_lookup(struct msg_digest *md)
 }
 
 bool ikev1_nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
-			struct msg_digest *md)
+			const struct msg_digest *md)
 {
 	unsigned char hash[MAX_DIGEST_LEN];
-	struct state *st = md->st;
-	unsigned int nat_np;
+	const struct state *st = md->st;
 	const ip_address *first, *second;
 	unsigned short firstport, secondport;
 
@@ -468,8 +467,16 @@ bool ikev1_nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 
 	DBG(DBG_EMITTING | DBG_NATT, DBG_log("sending NAT-D payloads"));
 
-	nat_np = (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) != LEMPTY ?
-		ISAKMP_NEXT_NATD_RFC : ISAKMP_NEXT_NATD_DRAFTS;
+	unsigned int nat_np;
+	struct_desc *pd;
+
+	if ((st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) != LEMPTY) {
+		nat_np = ISAKMP_NEXT_NATD_RFC;
+		pd = &isakmp_nat_d;
+	} else {
+		nat_np = ISAKMP_NEXT_NATD_DRAFTS;
+		pd = &isakmp_nat_d_drafts;
+	}
 
 	out_modify_previous_np(nat_np, outs);
 
@@ -478,19 +485,6 @@ bool ikev1_nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 
 	second = &md->iface->ip_addr;
 	secondport = st->st_localport;
-
-	if (FALSE) {
-		const ip_address *t;
-		unsigned short p;
-
-		t = first;
-		first = second;
-		second = t;
-
-		p = firstport;
-		firstport = secondport;
-		secondport = p;
-	}
 
 	if (st->st_connection->encaps == yna_yes) {
 		DBG(DBG_NATT,
@@ -505,7 +499,7 @@ bool ikev1_nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 		  is_zero_cookie(st->st_rcookie) ? md->hdr.isa_rcookie :
 		  st->st_rcookie, first, firstport);
 
-	if (!ikev1_out_generic_raw(nat_np, &isakmp_nat_d, outs, hash,
+	if (!ikev1_out_generic_raw(nat_np, pd, outs, hash,
 				   st->st_oakley.ta_prf->hasher->hash_digest_len,
 				   "NAT-D"))
 		return FALSE;
@@ -517,7 +511,7 @@ bool ikev1_nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 		  st->st_icookie, is_zero_cookie(st->st_rcookie) ?
 		  md->hdr.isa_rcookie : st->st_rcookie, second, secondport);
 
-	return ikev1_out_generic_raw(np, &isakmp_nat_d, outs, hash,
+	return ikev1_out_generic_raw(np, pd, outs, hash,
 				     st->st_oakley.ta_prf->hasher->hash_digest_len,
 				     "NAT-D");
 }
@@ -617,7 +611,6 @@ bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
 	unsigned char ip_val[sizeof(struct in6_addr)];
 	size_t ip_len = 0;
 	ip_address *ipinit, *ipresp;
-	unsigned int nat_np;
 
 	if (initiator) {
 		ipinit = &st->st_localaddr;
@@ -629,9 +622,16 @@ bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
 
 	passert(st->st_connection != NULL);
 
-	nat_np = (st->hidden_variables.st_nat_traversal &
-		NAT_T_WITH_RFC_VALUES) != LEMPTY ?
-		  ISAKMP_NEXT_NATOA_RFC : ISAKMP_NEXT_NATOA_DRAFTS;
+	struct_desc *pd;
+	unsigned int nat_np;
+
+	if ((st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) != LEMPTY) {
+		nat_np = ISAKMP_NEXT_NATOA_RFC;
+		pd = &isakmp_nat_oa;
+	} else {
+		nat_np = ISAKMP_NEXT_NATOA_DRAFTS;
+		pd = &isakmp_nat_oa_drafts;
+	}
 
 	out_modify_previous_np(nat_np, outs);
 
@@ -659,7 +659,7 @@ bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
 	{
 		pb_stream pbs;
 
-		if (!out_struct(&natoa, &isakmp_nat_oa, outs, &pbs))
+		if (!out_struct(&natoa, pd, outs, &pbs))
 			return FALSE;
 
 		if (!out_raw(ip_val, ip_len, &pbs, "NAT-OAi"))
@@ -694,7 +694,7 @@ bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
 
 	{
 		pb_stream pbs;
-		if (!out_struct(&natoa, &isakmp_nat_oa, outs, &pbs))
+		if (!out_struct(&natoa, pd, outs, &pbs))
 			return FALSE;
 
 		if (!out_raw(ip_val, ip_len, &pbs, "NAT-OAr"))
@@ -730,7 +730,7 @@ static void nat_traversal_show_result(lset_t nt, u_int16_t sport)
 void ikev1_natd_init(struct state *st, struct msg_digest *md)
 {
 	DBG(DBG_NATT,
-	    DBG_log("checking NAT-T: %s and %s",
+	    DBG_log("init checking NAT-T: %s; %s",
 		    nat_traversal_enabled ? "enabled" : "disabled",
 		    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal)));
 

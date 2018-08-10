@@ -108,31 +108,7 @@ void main_outI1(int whack_sock,
 {
 	struct state *st;
 
-	int numvidtosend = 1; /* we always send DPD VID */
-
 	st = new_state();
-
-	/* Increase VID counter for VID_IKE_FRAGMENTATION */
-	if (c->policy & POLICY_IKE_FRAG_ALLOW)
-		numvidtosend++;
-
-	if (nat_traversal_enabled && c->ikev1_natt != NATT_NONE)
-		numvidtosend++;
-
-	if (c->cisco_unity) {
-		numvidtosend++;
-	}
-
-	if (c->fake_strongswan) {
-		numvidtosend++;
-	}
-
-	if (c->send_vendorid) {
-		numvidtosend++;
-	}
-
-	if (c->spd.this.xauth_client || c->spd.this.xauth_server)
-		numvidtosend++;
 
 	/* set up new state */
 	get_cookie(TRUE, st->st_icookie, &c->spd.that.host_addr);
@@ -191,11 +167,9 @@ void main_outI1(int whack_sock,
 	/* SA out */
 	{
 		u_char *sa_start = rbody.cur;
-		enum next_payload_types_ikev1 np =
-			numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
 		if (!ikev1_out_sa(&rbody, IKEv1_oakley_sadb(policy, c),
-				  st, TRUE, FALSE, np)) {
+				  st, TRUE, FALSE, ISAKMP_NEXT_VID)) {
 			libreswan_log("outsa fail");
 			reset_cur_state();
 			return;
@@ -209,88 +183,22 @@ void main_outI1(int whack_sock,
 			"sa in main_outI1");
 	}
 
-	if (c->send_vendorid) {
-		int np = --numvidtosend >0 ?
-			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-
-		if (!ikev1_out_generic_raw(np, &isakmp_vendor_id_desc, &rbody,
-					pluto_vendorid, strlen(pluto_vendorid), "Pluto Vendor ID")) {
-			reset_cur_state();	/* ??? was missing */
-			return;
-		}
-	}
-
-	/* Send DPD VID */
-	{
-		int np = --numvidtosend > 0 ?
-			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-
-		if (!out_vid(np, &rbody, VID_MISC_DPD)) {
-			reset_cur_state();
-			return;
-		}
-	}
-
-	if (c->cisco_unity) {
-		int np = --numvidtosend > 0 ?
-			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-
-		if (!out_vid(np, &rbody, VID_CISCO_UNITY)) {
-			reset_cur_state();
-			return;
-		}
-	}
-
-	if (c->fake_strongswan) {
-		int np = --numvidtosend > 0 ?
-			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-
-		if (!out_vid(np, &rbody, VID_STRONGSWAN)) {
-			reset_cur_state();
-			return;
-		}
-	}
-
-	/* Announce our ability to do IKE Fragmentation */
-	if (c->policy & POLICY_IKE_FRAG_ALLOW) {
-		int np = --numvidtosend > 0 ?
-			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-
-		if (!out_vid(np, &rbody, VID_IKE_FRAGMENTATION)) {
-			reset_cur_state();
-			return;
-		}
-	}
-
-	if (nat_traversal_enabled && c->ikev1_natt != NATT_NONE) {
-		int np = --numvidtosend > 0 ?
-			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-
-		/* Add supported NAT-Traversal VID */
-		if (!nat_traversal_insert_vid(np, &rbody, st)) {
-			reset_cur_state();
-			return;
-		}
-	}
-
-	if (c->spd.this.xauth_client || c->spd.this.xauth_server) {
-		int np = --numvidtosend > 0 ?
-			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-
-		if (!out_vid(np, &rbody, VID_MISC_XAUTH)) {
-			reset_cur_state();
-			return;
-		}
-	}
-
-	/* if we are not 0 then something went very wrong above */
-	if (numvidtosend != 0)
-		libreswan_log(
-			"payload alignment problem please check the code in main_inR1_outR2 (num=%d)",
-			numvidtosend);
-
-	if (!ikev1_close_message(&rbody, st))
+	/* send Vendor IDs */
+	if (!out_vid_set(&rbody, c)) {
+		reset_cur_state();
 		return;
+	}
+
+	/* as Initiator, spray NAT VIDs */
+	if (!nat_traversal_insert_vid(ISAKMP_NEXT_NONE, &rbody, c)) {
+		reset_cur_state();
+		return;
+	}
+
+	if (!ikev1_close_message(&rbody, st)) {
+		reset_cur_state();
+		return;
+	}
 
 	close_output_pbs(&reply_stream);
 
@@ -533,15 +441,17 @@ bool ikev1_encrypt_message(pb_stream *pbs, struct state *st)
 
 	passert(st->st_new_iv_len >= e->enc_blocksize);
 	st->st_new_iv_len = e->enc_blocksize;   /* truncate */
+
+	/* close just before encrypting so NP backpatching isn't confused */
+	if (!ikev1_close_message(pbs, st))
+		return FALSE;
+
 	e->encrypt_ops->do_crypt(e, enc_start, enc_len,
 				 st->st_enc_key_nss,
 				 st->st_new_iv, TRUE);
 
 	update_iv(st);
 	DBG_cond_dump(DBG_CRYPT, "next IV:", st->st_iv, st->st_iv_len);
-
-	if (!ikev1_close_message(pbs, st))
-		return FALSE;
 
 	return TRUE;
 }
@@ -618,8 +528,6 @@ stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
 	struct connection *c;
 	pb_stream r_sa_pbs;
 
-	/* Determine how many Vendor ID payloads we will be sending */
-	int numvidtosend = 1; /* we always send DPD VID */
 
 	if (drop_new_exchanges()) {
 		return STF_IGNORE;
@@ -816,29 +724,12 @@ stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
 			return STF_INTERNAL_ERROR;
 	}
 
-	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
-		DBG(DBG_NATT, DBG_log("NAT-T VID detected, sending NAT-T VID"));
-		numvidtosend++;
-	}
-
-	if (c->send_vendorid) {
-		numvidtosend++;
-	}
-
-	if (c->policy & POLICY_IKE_FRAG_ALLOW)
-		numvidtosend++;
-
-	if (c->spd.this.xauth_server || c->spd.this.xauth_client)
-		numvidtosend++;
-
 	/* start of SA out */
 	{
-		struct isakmp_sa r_sa;
-
-		zero(&r_sa);	/* OK: no pointer fields */
-		r_sa.isasa_doi = ISAKMP_DOI_IPSEC;
-
-		r_sa.isasa_np = numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		struct isakmp_sa r_sa = {
+			.isasa_doi = ISAKMP_DOI_IPSEC,
+			.isasa_np = ISAKMP_NEXT_VID,
+		};
 		if (!out_struct(&r_sa, &isakmp_sa_desc, &rbody, &r_sa_pbs))
 			return STF_INTERNAL_ERROR;
 	}
@@ -848,57 +739,16 @@ stf_status main_inI1_outR1(struct state *st, struct msg_digest *md)
 						&sa_pd->payload.sa,
 						&r_sa_pbs, FALSE, st));
 
-	/*
-	 * Send VENDOR ID payloads
-	 */
+	/* send Vendor IDs */
+	if (!out_vid_set(&rbody, c))
+		return STF_INTERNAL_ERROR;
 
-	if (c->send_vendorid) {
-		int np = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-
-		if (!ikev1_out_generic_raw(np, &isakmp_vendor_id_desc, &rbody,
-					pluto_vendorid, strlen(pluto_vendorid), "Vendor ID"))
-			return STF_INTERNAL_ERROR;
-	}
-
-	{
-		/*
-		 * Always announce our ability to do RFC 3706
-		 * Dead Peer Detection
-		 */
-		int np = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-
-		if (!out_vid(np, &rbody, VID_MISC_DPD))
-			return STF_INTERNAL_ERROR;
-	}
-
-	/* Announce our ability to do (non-RFC) IKE Fragmentation */
-	if (c->policy & POLICY_IKE_FRAG_ALLOW) {
-		int np = --numvidtosend > 0 ?
-			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-
-		if (!out_vid(np, &rbody, VID_IKE_FRAGMENTATION))
-			return STF_INTERNAL_ERROR;
-	}
-
-	/*
-	 * If XAUTH is required, insert draft-ietf-ipsec-isakmp-xauth-06
-	 * Vendor ID
-	 */
-	if (c->spd.this.xauth_server || c->spd.this.xauth_client) {
-		int np = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-
-		if (!out_vid(np, &rbody, VID_MISC_XAUTH))
-			return STF_INTERNAL_ERROR;
-	}
-
+	/* as Responder, send best NAT VID we received */
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
-		int np = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-
-		if (!out_vid(np, &rbody, md->quirks.qnat_traversal_vid))
+		if (!out_vid(ISAKMP_NEXT_NONE, &rbody,
+			     md->quirks.qnat_traversal_vid))
 			return STF_INTERNAL_ERROR;
 	}
-
-	passert(numvidtosend == 0);
 
 	if (!ikev1_close_message(&rbody, st))
 		return STF_INTERNAL_ERROR;
@@ -1064,6 +914,7 @@ static stf_status main_inR1_outI2_tail(struct state *st, struct msg_digest *md,
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
 		DBG(DBG_NATT,
 			DBG_log("NAT-T found (implies NAT_T_WITH_NATD)"));
+		/* send two ISAKMP_NEXT_NATD_RFC* hash payloads to support NAT */
 		if (!ikev1_nat_traversal_add_natd(ISAKMP_NEXT_NONE, &rbody, md))
 			return STF_INTERNAL_ERROR;
 	}
@@ -1267,6 +1118,7 @@ stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *m
 	}
 
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
+		/* send two ISAKMP_NEXT_NATD_RFC* hash payloads to support NAT */
 		if (!ikev1_nat_traversal_add_natd(ISAKMP_NEXT_NONE, &rbody, md))
 			return STF_INTERNAL_ERROR;
 	}

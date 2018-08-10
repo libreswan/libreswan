@@ -2242,7 +2242,7 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
  * The peerlog will be perfect, the syslog will require that a cut
  * command is used to remove the initial text.
  */
-void ikev2_log_parentSA(struct state *st)
+void ikev2_log_parentSA(const struct state *st)
 {
 	DBG(DBG_PRIVATE,
 	{

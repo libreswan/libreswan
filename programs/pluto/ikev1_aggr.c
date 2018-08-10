@@ -498,33 +498,18 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 		}
 	}
 
-	/*
-	 * NOW SEND VENDOR ID payloads
-	 */
+	/* send Vendor IDs */
+	if (!out_vid_set(&rbody, c))
+		return STF_INTERNAL_ERROR;
 
-	if (c->cisco_unity) {
-		if (!out_vid(ISAKMP_NEXT_VID, &rbody, VID_CISCO_UNITY))
-			return STF_INTERNAL_ERROR;
-	}
-	if (c->fake_strongswan) {
-		if (!out_vid(ISAKMP_NEXT_VID, &rbody, VID_STRONGSWAN))
-			return STF_INTERNAL_ERROR;
-	}
-
-	if (st->hidden_variables.st_nat_traversal == LEMPTY) {
-		/* Always announce our ability to do RFC 3706 Dead Peer Detection to the peer */
-		if (!out_vid(ISAKMP_NEXT_NONE, &rbody, VID_MISC_DPD))
-			return STF_INTERNAL_ERROR;
-	} else {
-		/* Always announce our ability to do RFC 3706 Dead Peer Detection to the peer */
-		if (!out_vid(ISAKMP_NEXT_VID, &rbody, VID_MISC_DPD))
-			return STF_INTERNAL_ERROR;
-
-		/* and a couple more NAT VIDs */
-		if (!out_vid(ISAKMP_NEXT_VID,
+	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
+		/* as Responder, send best NAT VID we received */
+		if (!out_vid(ISAKMP_NEXT_NONE,
 			     &rbody,
 			     md->quirks.qnat_traversal_vid))
 			return STF_INTERNAL_ERROR;
+
+		/* send two ISAKMP_NEXT_NATD_RFC* hash payloads to support NAT */
 		if (!ikev1_nat_traversal_add_natd(ISAKMP_NEXT_NONE, &rbody, md))
 			return STF_INTERNAL_ERROR;
 	}
@@ -752,6 +737,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 	}
 
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
+		/* send two ISAKMP_NEXT_NATD_RFC* hash payloads to support NAT */
 		if (!ikev1_nat_traversal_add_natd(auth_payload, &rbody, md)) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
@@ -1198,79 +1184,13 @@ static stf_status aggr_outI1_tail(struct state *st,
 			return STF_INTERNAL_ERROR;
 	}
 
-	/* Vendor ID's out */
-	int numvidtosend = 1; /* Always announce DPD capablity */
+	/* send Vendor IDs */
+	if (!out_vid_set(&rbody, c))
+		return STF_INTERNAL_ERROR;
 
-	if (c->spd.this.xauth_client || c->spd.this.xauth_server)
-		numvidtosend++;
-
-	if (nat_traversal_enabled && c->ikev1_natt != NATT_NONE)
-		numvidtosend++;
-
-	if (c->cisco_unity)
-		numvidtosend++;
-
-	if (c->fake_strongswan)
-		numvidtosend++;
-
-	if (c->send_vendorid)
-		numvidtosend++;
-
-	if (c->policy & POLICY_IKE_FRAG_ALLOW)
-		numvidtosend++;
-
-	/* ALWAYS Announce our ability to do Dead Peer Detection to the peer */
-	{
-		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-		if (!out_vid(np, &rbody, VID_MISC_DPD))
-			return STF_INTERNAL_ERROR;
-	}
-
-	if (nat_traversal_enabled && c->ikev1_natt != NATT_NONE) {
-		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-
-		if (!nat_traversal_insert_vid(np, &rbody, st)) {
-			reset_cur_state();
-			return STF_INTERNAL_ERROR;
-		}
-	} else {
-		DBG(DBG_NATT, DBG_log("not sending any NATT VID's"));
-	}
-
-	if (c->spd.this.xauth_client || c->spd.this.xauth_server) {
-		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-		if (!out_vid(np, &rbody, VID_MISC_XAUTH))
-			return STF_INTERNAL_ERROR;
-	}
-
-	if (c->cisco_unity) {
-		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-		if (!out_vid(np, &rbody, VID_CISCO_UNITY))
-			return STF_INTERNAL_ERROR;
-	}
-
-	if (c->fake_strongswan) {
-		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-		if (!out_vid(np, &rbody, VID_STRONGSWAN))
-			return STF_INTERNAL_ERROR;
-	}
-
-	if (c->send_vendorid) {
-		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-		if (!out_vid(np, &rbody, VID_LIBRESWANSELF))
-			return STF_INTERNAL_ERROR;
-	}
-
-	if (c->policy & POLICY_IKE_FRAG_ALLOW) {
-		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-		if (!out_vid(np, &rbody, VID_IKE_FRAGMENTATION))
-			return STF_INTERNAL_ERROR;
-	}
-
-	/* INITIAL_CONTACT is an authenticated message, no VID here */
-
-	passert(numvidtosend == 0);
-
+	/* as Initiator, spray NAT VIDs */
+	if (!nat_traversal_insert_vid(ISAKMP_NEXT_NONE, &rbody, c))
+		return STF_INTERNAL_ERROR;
 
 	/* finish message */
 

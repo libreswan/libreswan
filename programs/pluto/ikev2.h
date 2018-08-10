@@ -89,7 +89,7 @@ extern stf_status ikev2_parent_inI2outR2_id_tail(struct msg_digest * md);
 struct ikev2_proposal;
 struct ikev2_proposals;
 
-void DBG_log_ikev2_proposal(const char *prefix, struct ikev2_proposal *proposal);
+void DBG_log_ikev2_proposal(const char *prefix, const struct ikev2_proposal *proposal);
 
 void free_ikev2_proposal(struct ikev2_proposal **proposal);
 void free_ikev2_proposals(struct ikev2_proposals **proposals);
@@ -101,13 +101,13 @@ void ikev2_need_esp_or_ah_proposals(struct connection *c,
 				    const struct oakley_group_desc *default_dh);
 
 bool ikev2_emit_sa_proposal(pb_stream *pbs,
-			    struct ikev2_proposal *proposal,
-			    chunk_t *local_spi,
+			    const struct ikev2_proposal *proposal,
+			    const chunk_t *local_spi,
 			    enum next_payload_types_ikev2 next_payload_type);
 
 bool ikev2_emit_sa_proposals(pb_stream *outs,
 			     const struct ikev2_proposals *proposals,
-			     chunk_t *local_spi,
+			     const chunk_t *local_spi,
 			     enum next_payload_types_ikev2 next_payload_type);
 
 const struct oakley_group_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *proposals);
@@ -124,7 +124,7 @@ stf_status ikev2_process_sa_payload(const char *what,
 				    struct ikev2_proposal **chosen,
 				    const struct ikev2_proposals *local_proposals);
 
-bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
+bool ikev2_proposal_to_proto_info(const struct ikev2_proposal *proposal,
 				  struct ipsec_proto_info *proto_info);
 
 bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *chosen,
@@ -136,7 +136,7 @@ ipsec_spi_t ikev2_child_sa_spi(const struct spd_route *spd_route, lset_t policy)
 
 extern bool ikev2_decode_peer_id_and_certs(struct msg_digest *md);
 
-extern void ikev2_log_parentSA(struct state *st);
+extern void ikev2_log_parentSA(const struct state *st);
 
 extern bool ikev2_calculate_rsa_sha1(struct state *st,
 				     enum original_role role,
@@ -146,20 +146,19 @@ extern bool ikev2_calculate_rsa_sha1(struct state *st,
 				     chunk_t *no_ppk_auth);
 
 extern bool ikev2_create_psk_auth(enum keyword_authby authby,
-				     struct state *st,
-				     unsigned char *idhash,
-				     pb_stream *a_pbs,
-				     bool calc_additional_auth,
-				     chunk_t *additional_auth);
+				  const struct state *st,
+				  const unsigned char *idhash,
+				  pb_stream *a_pbs,
+				  chunk_t *additional_auth);
 
 extern stf_status ikev2_verify_rsa_sha1(struct state *st,
 					enum original_role role,
-					unsigned char *idhash,
+					const unsigned char *idhash,
 					pb_stream *sig_pbs);
 
 extern stf_status ikev2_verify_psk_auth(enum keyword_authby authby,
-					struct state *st,
-					unsigned char *idhash,
+					const struct state *st,
+					const unsigned char *idhash,
 					pb_stream *sig_pbs);
 
 extern void ikev2_derive_child_keys(struct child_sa *child);
@@ -184,7 +183,7 @@ extern int ikev2_evaluate_connection_port_fit(const struct connection *d,
 					      int *best_tsi_i,
 					      int *best_tsr_i);
 
-extern stf_status ikev2_emit_ts_payloads(struct child_sa *cst,
+extern stf_status ikev2_emit_ts_payloads(const struct child_sa *cst,
 					 pb_stream *outpbs,
 					 enum sa_role role,
 					 const struct connection *c0,
@@ -214,7 +213,7 @@ extern stf_status ikev2_resp_accept_child_ts(const struct msg_digest *md,
 					     isakmp_xchg_types isa_xchg);
 
 extern void ikev2_update_msgid_counters(struct msg_digest *md);
-extern void ikev2_print_ts(struct traffic_selector *ts);
+extern void ikev2_print_ts(const struct traffic_selector *ts);
 
 extern deltatime_t ikev2_replace_delay(struct state *st,
 				       enum event_type *pkind);
@@ -245,15 +244,15 @@ struct ikev2_expected_payloads {
 
 struct state_v2_microcode {
 	const char *const story;	/* state transition story (not state_story[]) */
-	enum state_kind state;
-	enum state_kind next_state;
-	enum isakmp_xchg_types recv_type;
-	lset_t flags;
+	const enum state_kind state;
+	const enum state_kind next_state;
+	const enum isakmp_xchg_types recv_type;
+	const lset_t flags;
 
-	lset_t req_clear_payloads;  /* required unencrypted payloads (allows just one) for received packet */
-	lset_t opt_clear_payloads;  /* optional unencrypted payloads (none or one) for received packet */
-	lset_t req_enc_payloads;  /* required encrypted payloads (allows just one) for received packet */
-	lset_t opt_enc_payloads;  /* optional encrypted payloads (none or one) for received packet */
+	const lset_t req_clear_payloads;  /* required unencrypted payloads (allows just one) for received packet */
+	const lset_t opt_clear_payloads;  /* optional unencrypted payloads (none or one) for received packet */
+	const lset_t req_enc_payloads;  /* required encrypted payloads (allows just one) for received packet */
+	const lset_t opt_enc_payloads;  /* optional encrypted payloads (none or one) for received packet */
 
 	/*
 	 * Packed form of above for passing into payload processing
@@ -267,9 +266,9 @@ struct state_v2_microcode {
 	struct ikev2_expected_payloads message_payloads;
 	struct ikev2_expected_payloads encrypted_payloads;
 
-	enum event_type timeout_event;
-	ikev2_state_transition_fn *processor;
-	crypto_transition_fn *crypto_end;
+	const enum event_type timeout_event;
+	ikev2_state_transition_fn *const processor;
+	crypto_transition_fn *const crypto_end;
 };
 
 void ikev2_copy_cookie_from_sa(struct ikev2_proposal *accepted_ike_proposal,

@@ -67,7 +67,7 @@
 #include "ip_address.h"
 #include "ikev2_send.h"
 
-void ikev2_print_ts(struct traffic_selector *ts)
+void ikev2_print_ts(const struct traffic_selector *ts)
 {
 	DBG(DBG_CONTROLMORE, {
 		char b[RANGETOT_BUF];
@@ -141,7 +141,7 @@ struct traffic_selector ikev2_end_to_ts(const struct end *e)
 
 static stf_status ikev2_emit_ts(pb_stream *outpbs,
 				const struct_desc *ts_desc,
-				struct traffic_selector *ts,
+				const struct traffic_selector *ts,
 				enum next_payload_types_ikev2 np)
 {
 	struct ikev2_ts its;
@@ -214,12 +214,13 @@ static stf_status ikev2_emit_ts(pb_stream *outpbs,
 	return STF_OK;
 }
 
-stf_status ikev2_emit_ts_payloads(struct child_sa *child, pb_stream *outpbs,
+stf_status ikev2_emit_ts_payloads(const struct child_sa *child,
+				  pb_stream *outpbs,
 				  enum sa_role role,
 				  const struct connection *c0,
 				  const enum next_payload_types_ikev2 np)
 {
-	struct traffic_selector *ts_i, *ts_r;
+	const struct traffic_selector *ts_i, *ts_r;
 
 	switch (role) {
 	case SA_INITIATOR:

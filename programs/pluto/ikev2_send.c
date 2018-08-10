@@ -84,7 +84,7 @@ bool send_recorded_v2_ike_msg(struct state *st, const char *where)
 bool ship_v2UNKNOWN(pb_stream *outs, const char *victim)
 {
 	libreswan_log("IMPAIR: adding an unknown payload of type %d to %s",
-		      ikev2_unknown_payload_desc.np, victim);
+		      ikev2_unknown_payload_desc.pt, victim);
 	struct ikev2_generic gen = {
 		.isag_np = ISAKMP_NEXT_v2NONE,
 		.isag_critical = build_ikev2_critical(IMPAIR(UNKNOWN_PAYLOAD_CRITICAL)),

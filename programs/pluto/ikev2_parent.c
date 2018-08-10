@@ -2835,13 +2835,15 @@ static stf_status ikev2_send_auth(struct connection *c,
 
 	case IKEv2_AUTH_PSK:
 	case IKEv2_AUTH_NULL:
+		/* emit */
 		if (!ikev2_create_psk_auth(authby, pst, idhash_out, &a_pbs,
-			FALSE, /* store-only not set */
-			NULL /* store-only chunk unused */)) {
+			NULL))
+		{
 			loglog(RC_LOG_SERIOUS, "Failed to find our PreShared Key");
 			return STF_FATAL;
 		}
 		break;
+
 	case IKEv2_AUTH_DIGSIG:
 		if (pst->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA1) {
 			const uint8_t len_sha1_rsa_oid_blob[ASN1_LEN_ALGO_IDENTIFIER] = LEN_SHA1_RSA_OID_BLOB;
@@ -2879,9 +2881,10 @@ static stf_status ikev2_send_auth(struct connection *c,
 	 * not repeated in rekeys. We already changed state to STATE_PARENT_I2.
 	 */
 	if (pst->st_state == STATE_PARENT_I2 && authby == AUTH_RSASIG && c->policy & POLICY_AUTH_NULL) {
-		if (!ikev2_create_psk_auth(AUTH_NULL, pst, idhash_out, &a_pbs,
-			TRUE, /* only store it */
-			null_auth /* store it here */)) {
+		/* store in null_auth */
+		if (!ikev2_create_psk_auth(AUTH_NULL, pst, idhash_out, NULL,
+			null_auth))
+		{
 			loglog(RC_LOG_SERIOUS, "Failed to calculate additional NULL_AUTH");
 			return STF_FATAL;
 		}
@@ -2900,13 +2903,14 @@ static stf_status ikev2_send_auth(struct connection *c,
  * - variable:	fragment's data
  * - variable:	padding (no padding is longer than MAX_CBC_BLOCK_SIZE) (16 or less)
  */
-static stf_status ikev2_record_fragment(struct msg_digest *md,
-				      struct isakmp_hdr *hdr,
-				      struct ikev2_generic *oe,
-				      struct v2_ike_tfrag **fragp,
-				      chunk_t *payload,	/* read-only */
-				      unsigned int count, unsigned int total,
-				      const char *desc)
+static stf_status ikev2_record_outbound_fragment(
+	struct msg_digest *md,
+	struct isakmp_hdr *hdr,
+	struct ikev2_generic *oe,
+	struct v2_ike_tfrag **fragp,
+	chunk_t *payload,	/* read-only */
+	unsigned int count, unsigned int total,
+	const char *desc)
 {
 	struct state *st = IS_CHILD_SA(md->st) ?
 		state_with_serialno(md->st->st_clonedfrom) : md->st;
@@ -2942,6 +2946,12 @@ static stf_status ikev2_record_fragment(struct msg_digest *md,
 
 		if (!out_struct(&e, &ikev2_skf_desc, &rbody, &e_pbs))
 			return STF_INTERNAL_ERROR;
+
+		/*
+		 * the np field is not at all what the backpatch logic
+		 * expects so we suppress its check.
+		 */
+		rbody.previous_np = NULL;
 	}
 
 	/* insert IV */
@@ -2954,7 +2964,8 @@ static stf_status ikev2_record_fragment(struct msg_digest *md,
 	/*
 	 * Note where cleartext starts by inserting an extra layer of
 	 * PBS that has no header!
-	 * Any First NP backpatching must look through this layer.
+	 * Any First NP backpatching must look through this layer
+	 * (but there isn't any).
 	 */
 	pb_stream e_pbs_cipher;
 	const unsigned char fake_struct;	/* C doesn't allow 0-length objects */
@@ -3001,11 +3012,12 @@ static stf_status ikev2_record_fragment(struct msg_digest *md,
 	return STF_OK;
 }
 
-static stf_status ikev2_record_fragments(struct msg_digest *md,
-				       struct isakmp_hdr *hdr,
-				       struct ikev2_generic *e,
-				       chunk_t *payload, /* read-only */
-				       const char *desc)
+static stf_status ikev2_record_outbound_fragments(
+	struct msg_digest *md,
+	struct isakmp_hdr *hdr,
+	struct ikev2_generic *e,
+	chunk_t *payload, /* read-only */
+	const char *desc)
 {
 	struct state *const st = IS_CHILD_SA(md->st) ?
 		state_with_serialno(md->st->st_clonedfrom) : md->st;
@@ -3053,8 +3065,8 @@ static stf_status ikev2_record_fragments(struct msg_digest *md,
 			PMIN(payload->len - offset, len));
 		offset += cipher.len;
 		count++;
-		ret = ikev2_record_fragment(md, hdr, e, fragp, &cipher,
-					  count, nfrags, desc);
+		ret = ikev2_record_outbound_fragment(
+			md, hdr, e, fragp, &cipher, count, nfrags, desc);
 
 		if (ret != STF_OK || offset == payload->len)
 			break;
@@ -3063,19 +3075,15 @@ static stf_status ikev2_record_fragments(struct msg_digest *md,
 	return ret;
 }
 
-static int ikev2_np_cp_or_sa(struct connection *const pc, int np, const lset_t
-	   st_nat_traversal)
+/* next payload: ISAKMP_NEXT_v2CP or np? */
+
+static int ikev2_np_cp_or(const struct connection *const pc,
+			  int np,
+			  const lset_t st_nat_traversal)
 {
-	if (pc->spd.this.modecfg_client) {
-		if (pc->spd.this.cat) {
-			if (LHAS(st_nat_traversal, NATED_HOST)) {
-				return ISAKMP_NEXT_v2CP;
-			}
-		} else {
-			return ISAKMP_NEXT_v2CP;
-		}
-	}
-	return np;
+	return (pc->spd.this.modecfg_client &&
+	        (!pc->spd.this.cat || LHAS(st_nat_traversal, NATED_HOST))) ?
+			ISAKMP_NEXT_v2CP : np;
 }
 
 static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_digest *md,
@@ -3084,7 +3092,9 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	struct connection *const pc = pst->st_connection;	/* parent connection */
 	int send_cp_r = 0;
 	struct ppk_id_payload ppk_id_p;
-	chunk_t null_auth;	setchunk(null_auth, NULL, 0);	/* additional NULL_AUTH payload */
+	chunk_t null_auth;
+
+	setchunk(null_auth, NULL, 0);	/* additional NULL_AUTH payload */
 
 	if (!finish_dh_v2(pst, r, FALSE))
 		return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
@@ -3226,6 +3236,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	if (!out_struct(&fake_struct, &ikev2_encrypted_portion, &e_pbs, &e_pbs_cipher))
 		return STF_INTERNAL_ERROR;
+	move_pbs_previous_np(&e_pbs_cipher, &e_pbs);	/* backpatching obligation */
 
 	uint8_t *const encstart = e_pbs_cipher.cur;
 	passert(reply_stream.start <= iv && iv <= encstart);
@@ -3367,7 +3378,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	/* send out the AUTH payload */
 	{
-		int np = send_cp_r = ikev2_np_cp_or_sa(pc, ISAKMP_NEXT_v2SA,
+		int np = send_cp_r = ikev2_np_cp_or(pc, ISAKMP_NEXT_v2SA,
 				pst->hidden_variables.st_nat_traversal);
 
 		stf_status authstat = ikev2_send_auth(pc, cst, ORIGINAL_INITIATOR, np,
@@ -3542,6 +3553,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	if (!ikev2_padup_pre_encrypt(cst, &e_pbs_cipher))
 		return STF_INTERNAL_ERROR;
 
+	move_pbs_previous_np(&e_pbs, &e_pbs_cipher);	/* backpatching obligation */
 	close_output_pbs(&e_pbs_cipher);
 
 	uint8_t *const authloc = ikev2_authloc(cst, &e_pbs);
@@ -3557,8 +3569,9 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		chunk_t payload;
 
 		setchunk(payload, e_pbs_cipher.start, len);
-		stf_status ret = ikev2_record_fragments(md, &hdr, &e, &payload,
-					   "reply fragment for ikev2_parent_outR1_I2");
+		stf_status ret = ikev2_record_outbound_fragments(
+			md, &hdr, &e, &payload,
+			"reply fragment for ikev2_parent_outR1_I2");
 		pst->st_msgid_lastreplied = md->msgid_received;
 		return ret;
 	} else {
@@ -4002,7 +4015,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 	/* send response */
 	{
 		struct ikev2_generic e;
-		pb_stream e_pbs, e_pbs_cipher;
+		pb_stream e_pbs;
 		struct isakmp_hdr hdr;
 		int notifies = 0;
 
@@ -4077,12 +4090,18 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		if (!emit_wire_iv(st, &e_pbs))
 			return STF_INTERNAL_ERROR;
 
-		/* note where cleartext starts */
-		init_pbs(&e_pbs_cipher, e_pbs.cur, e_pbs.roof - e_pbs.cur,
-			 "cleartext");
-		e_pbs_cipher.container = &e_pbs;
-		e_pbs_cipher.desc = NULL;
-		e_pbs_cipher.cur = e_pbs.cur;
+		/*
+		 * Note where cleartext starts by inserting an extra layer of
+		 * PBS that has no header!
+		 * Any First NP backpatching must look through this layer.
+		 */
+		pb_stream e_pbs_cipher;
+		const unsigned char fake_struct;	/* C doesn't allow 0-length objects */
+
+		if (!out_struct(&fake_struct, &ikev2_encrypted_portion, &e_pbs, &e_pbs_cipher))
+			return STF_INTERNAL_ERROR;
+		move_pbs_previous_np(&e_pbs_cipher, &e_pbs);	/* backpatching obligation */
+
 		uint8_t *encstart = e_pbs_cipher.cur;
 		passert(reply_stream.start <= iv && iv <= encstart);
 
@@ -4244,6 +4263,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		if (!ikev2_padup_pre_encrypt(cst, &e_pbs_cipher))
 			return STF_INTERNAL_ERROR;
 
+		move_pbs_previous_np(&e_pbs, &e_pbs_cipher);	/* backpatching obligation */
 		close_output_pbs(&e_pbs_cipher);
 
 		uint8_t *authloc = ikev2_authloc(cst, &e_pbs);
@@ -4260,8 +4280,9 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 			chunk_t payload;
 
 			setchunk(payload, e_pbs_cipher.start, len);
-			stf_status ret = ikev2_record_fragments(md, &hdr, &e, &payload,
-						   "reply fragment for ikev2_parent_inI2outR2_tail");
+			stf_status ret = ikev2_record_outbound_fragments(
+				md, &hdr, &e, &payload,
+				"reply fragment for ikev2_parent_inI2outR2_tail");
 			st->st_msgid_lastreplied = md->msgid_received;
 			return ret;
 		} else {
@@ -4401,7 +4422,8 @@ static stf_status ikev2_process_cp_respnse(struct msg_digest *md)
 {
 	struct state *st = md->st;
 	struct connection *c = st->st_connection;
-	int cp_r = ikev2_np_cp_or_sa(c, 0, st->hidden_variables.st_nat_traversal);
+	int cp_r = ikev2_np_cp_or(c, ISAKMP_NEXT_v2NONE,
+		st->hidden_variables.st_nat_traversal);
 
 	if (st->st_state == STATE_V2_REKEY_CHILD_I)
 		return STF_OK; /* CP response is  not allowed in a REKEY response */
@@ -5517,7 +5539,7 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 	struct state *st = md->st;
 	struct state *pst = state_with_serialno(st->st_clonedfrom);
 	struct ikev2_generic e;
-	pb_stream e_pbs, e_pbs_cipher;
+	pb_stream e_pbs;
 	stf_status ret;
 
 	passert(pst != NULL);
@@ -5575,13 +5597,18 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 		return STF_INTERNAL_ERROR;
 	passert(reply_stream.start <= iv);
 
-	/* note where cleartext starts */
-	init_pbs(&e_pbs_cipher, e_pbs.cur, e_pbs.roof - e_pbs.cur,
-			"cleartext CREATE_CHILD_SA reply");
+	/*
+	 * Note where cleartext starts by inserting an extra layer of
+	 * PBS that has no header!
+	 * Any First NP backpatching must look through this layer.
+	 */
+	pb_stream e_pbs_cipher;
+	const unsigned char fake_struct;	/* C doesn't allow 0-length objects */
 
-	e_pbs_cipher.container = &e_pbs;
-	e_pbs_cipher.desc = NULL;
-	e_pbs_cipher.cur = e_pbs.cur;
+	if (!out_struct(&fake_struct, &ikev2_encrypted_portion, &e_pbs, &e_pbs_cipher))
+		return STF_INTERNAL_ERROR;
+	move_pbs_previous_np(&e_pbs_cipher, &e_pbs);	/* backpatching obligation */
+
 	uint8_t *encstart = e_pbs_cipher.cur;
 	passert(reply_stream.start <= iv && iv <= encstart);
 
@@ -5619,6 +5646,7 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 	if (!ikev2_padup_pre_encrypt(pst, &e_pbs_cipher))
 		return STF_INTERNAL_ERROR;
 
+	move_pbs_previous_np(&e_pbs, &e_pbs_cipher);	/* backpatching obligation */
 	close_output_pbs(&e_pbs_cipher);
 
 	{
@@ -6192,12 +6220,17 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		if (!emit_wire_iv(st, &e_pbs))
 			return STF_INTERNAL_ERROR;
 
-		/* note where cleartext starts in output */
-		init_pbs(&e_pbs_cipher, e_pbs.cur,
-			 e_pbs.roof - e_pbs.cur, "cleartext");
-		e_pbs_cipher.container = &e_pbs;
-		e_pbs_cipher.desc = NULL;
-		e_pbs_cipher.cur = e_pbs.cur;
+		/*
+		 * Note where cleartext starts by inserting an extra layer of
+		 * PBS that has no header!
+		 * Any First NP backpatching must look through this layer.
+		 */
+		const unsigned char fake_struct;	/* C doesn't allow 0-length objects */
+
+		if (!out_struct(&fake_struct, &ikev2_encrypted_portion, &e_pbs, &e_pbs_cipher))
+			return STF_INTERNAL_ERROR;
+		move_pbs_previous_np(&e_pbs_cipher, &e_pbs);	/* backpatching obligation */
+
 		encstart = e_pbs_cipher.cur;
 	}
 
@@ -6381,6 +6414,7 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		if (!ikev2_padup_pre_encrypt(st, &e_pbs_cipher))
 			return STF_INTERNAL_ERROR;
 
+		move_pbs_previous_np(&e_pbs, &e_pbs_cipher);	/* backpatching obligation */
 		close_output_pbs(&e_pbs_cipher);
 
 		{

@@ -31,13 +31,6 @@
  * This requires arrays of field_desc values to describe struct fields.
  */
 
-typedef const struct struct_desc {
-	const char *name;
-	const struct field_desc *fields;
-	size_t size;
-	int np; /* actually this payload type */
-} struct_desc;
-
 /* Note: if an ft_af_enum field has the ISAKMP_ATTR_AF_TV bit set,
  * the subsequent ft_lv field will be interpreted as an immediate value.
  * This matches how attributes are encoded.
@@ -48,8 +41,8 @@ enum field_type {
 	ft_zig,			/* zero (ignore violations) */
 	ft_nat,			/* natural number (may be 0) */
 	ft_len,			/* length of this struct and any following crud */
-	ft_mnp,			/* message's next payload field */
-	ft_pnp,			/* payload's next payload field */
+	ft_fcp,			/* message's first contained payload type field */
+	ft_pnp,			/* payload's next payload type field */
 	ft_lv,			/* length/value field of attribute */
 	ft_enum,		/* value from an enumeration */
 	ft_loose_enum,		/* value from an enumeration with only some names known */
@@ -61,7 +54,7 @@ enum field_type {
 	ft_end,			/* end of field list */
 };
 
-typedef const struct field_desc {
+typedef const struct {
 	enum field_type field_type;
 	int size;		/* size, in bytes, of field */
 	const char *name;
@@ -73,6 +66,13 @@ typedef const struct field_desc {
 	 */
 	const void *desc;
 } field_desc;
+
+typedef const struct {
+	const char *name;
+	field_desc *fields;
+	size_t size;
+	int pt;	/* this payload type */
+} struct_desc;
 
 /*
  * The formatting of input and output of packets is done through
@@ -87,20 +87,26 @@ struct packet_byte_stream {
 	uint8_t *start;				/* public: where this stream starts */
 	uint8_t *cur;				/* public: current position (end) of stream */
 	uint8_t *roof;				/* byte after last in PBS (on output: just a limit) */
+
+	/* For an output PBS some things may need to be patched up. */
+
 	/*
-	 * For an output PBS some things need to be patched up.  For
-	 * instance, the PBS's length.
+	 * For patching Length field in header.
 	 *
-	 * Length field in the header will be filled in later so we
-	 * need to record its particulars.  Note: it may not be
-	 * aligned.
+	 * Filled in by close_output_pbs().
+	 * Note: it may not be aligned.
 	 */
-	u_int8_t *lenfld;
-	field_desc *lenfld_desc;
+	u_int8_t *lenfld;	/* start of variable length field */
+	field_desc *lenfld_desc;	/* includes length */
+
 	/*
-	 * For next payload backpatch
+	 * For patching Next Payload field in successive Payloads.
+	 *
+	 * References the header of the previous payload in this stream.
+	 * Initially it may reference the First-Next-Payload field of parent
+	 * (in case of ft_fcp)
 	 */
-	uint8_t *previous_np;
+	uint8_t *previous_np;	/* always one octet */
 	field_desc *previous_np_field;
 	struct_desc *previous_np_struct;
 };
@@ -128,7 +134,7 @@ extern const pb_stream empty_pbs;
 /*
  * Map a pbs onto a chunk, and chunk onto a pbs.
  */
-pb_stream chunk_as_pbs(chunk_t chunk, const char *name);
+extern pb_stream chunk_as_pbs(chunk_t chunk, const char *name);
 #define pbs_as_chunk(PBS) ((chunk_t){ .ptr = (PBS)->start, .len = pbs_offset(PBS), })
 
 /*
@@ -142,8 +148,10 @@ pb_stream chunk_as_pbs(chunk_t chunk, const char *name);
 extern void init_pbs(pb_stream *pbs, u_int8_t *start, size_t len,
 		     const char *name);
 extern void init_out_pbs(pb_stream *pbs, u_int8_t *start, size_t len,
-		     const char *name);
-pb_stream open_out_pbs(const char *name, uint8_t *buffer, size_t sizeof_buffer);
+			 const char *name);
+extern pb_stream open_out_pbs(const char *name, uint8_t *buffer,
+			      size_t sizeof_buffer);
+extern void move_pbs_previous_np(pb_stream *dst, pb_stream *src);
 
 extern bool in_struct(void *struct_ptr, struct_desc *sd,
 		      pb_stream *ins, pb_stream *obj_pbs) MUST_USE_RESULT;
@@ -151,7 +159,7 @@ extern bool in_raw(void *bytes, size_t len, pb_stream *ins, const char *name) MU
 
 extern bool out_struct(const void *struct_ptr, struct_desc *sd,
 		       pb_stream *outs, pb_stream *obj_pbs) MUST_USE_RESULT;
-pb_stream open_output_struct_pbs(pb_stream *outs, const void *struct_ptr,
+extern pb_stream open_output_struct_pbs(pb_stream *outs, const void *struct_ptr,
 				 struct_desc *sd) MUST_USE_RESULT;
 
 extern bool ikev1_out_generic(u_int8_t np, struct_desc *sd,
@@ -683,6 +691,7 @@ extern struct_desc isakmp_vendor_id_desc;
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 extern struct_desc isakmp_nat_d;
+extern struct_desc isakmp_nat_d_drafts;
 
 /* ISAKMP NAT-Traversal NAT-OA
  * layout from draft-ietf-ipsec-nat-t-ike-01.txt section 4.2
@@ -705,6 +714,8 @@ struct isakmp_nat_oa {
 	u_int16_t isanoa_reserved_3;
 };
 extern struct_desc isakmp_nat_oa;
+
+extern struct_desc isakmp_nat_oa_drafts;
 
 extern struct_desc isakmp_ignore_desc; /* generic payload (when ignoring) */
 

@@ -114,7 +114,6 @@ struct_desc CISCO_split_desc = 	{
 	.name = "CISCO split item",
 	.fields = CISCO_split_fields,
 	.size = 14,
-	.np = ISAKMP_NEXT_NONE,
 };
 
 oakley_auth_t xauth_calcbaseauth(oakley_auth_t baseauth)

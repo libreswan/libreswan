@@ -1894,16 +1894,20 @@ void process_packet_tail(struct msg_digest **mdp)
 						&isakmp_ipsec_identification_desc;
 					break;
 
-				case ISAKMP_NEXT_NATD_DRAFTS:
-					/* NAT-D was a private use type before RFC-3947 -- same format */
+				case ISAKMP_NEXT_NATD_DRAFTS: /* out of range */
+					/*
+					 * ISAKMP_NEXT_NATD_DRAFTS was a private use type before RFC-3947.
+					 * Since it has the same format as ISAKMP_NEXT_NATD_RFC,
+					 * just rewrite np and sd, and carry on.
+					 */
 					np = ISAKMP_NEXT_NATD_RFC;
-					sd = v1_payload_desc(np);
+					sd = &isakmp_nat_d_drafts;
 					break;
 
-				case ISAKMP_NEXT_NATOA_DRAFTS:
+				case ISAKMP_NEXT_NATOA_DRAFTS: /* out of range */
 					/* NAT-OA was a private use type before RFC-3947 -- same format */
 					np = ISAKMP_NEXT_NATOA_RFC;
-					sd = v1_payload_desc(np);
+					sd = &isakmp_nat_oa_drafts;
 					break;
 
 				case ISAKMP_NEXT_SAK: /* or ISAKMP_NEXT_NATD_BADDRAFTS */
@@ -1970,7 +1974,7 @@ void process_packet_tail(struct msg_digest **mdp)
 				}
 
 				DBG(DBG_PARSING,
-				    DBG_log("got payload 0x%" PRIxLSET"  (%s) needed: 0x%" PRIxLSET "opt: 0x%" PRIxLSET,
+				    DBG_log("got payload 0x%" PRIxLSET"  (%s) needed: 0x%" PRIxLSET " opt: 0x%" PRIxLSET,
 					    s, enum_show(&ikev1_payload_names, np),
 					    needed, smc->opt_payloads));
 				needed &= ~s;

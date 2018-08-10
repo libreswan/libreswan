@@ -55,7 +55,7 @@ const pb_stream empty_pbs;
 static field_desc isa_fields[] = {
 	{ ft_raw, COOKIE_SIZE, "initiator cookie", NULL },
 	{ ft_raw, COOKIE_SIZE, "responder cookie", NULL },
-	{ ft_mnp, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1orv2 },
+	{ ft_fcp, 8 / BITS_PER_BYTE, "first contained payload type", &payload_names_ikev1orv2 },
 	{ ft_loose_enum, 8 / BITS_PER_BYTE, "ISAKMP version", &version_names },
 	{ ft_enum, 8 / BITS_PER_BYTE, "exchange type", &exchange_names_ikev1orv2 },
 	{ ft_set, 8 / BITS_PER_BYTE, "flags", isakmp_flag_names },
@@ -68,7 +68,7 @@ struct_desc isakmp_hdr_desc = {
 	.name = "ISAKMP Message",
 	.fields = isa_fields,
 	.size = sizeof(struct isakmp_hdr),
-	.np = ISAKMP_NEXT_NONE,
+	.pt = ISAKMP_NEXT_NONE,
 };
 
 /* Generic portion of all ISAKMP payloads.
@@ -83,7 +83,7 @@ struct_desc isakmp_hdr_desc = {
  */
 
 static field_desc isag_fields[] = {
-	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1orv2 },
+	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1orv2 },
 	{ ft_zig, 8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_end, 0, NULL, NULL }
@@ -115,7 +115,6 @@ struct_desc isakmp_oakley_attribute_desc = {
 	.name = "ISAKMP Oakley attribute",
 	.fields = isaat_fields_oakley,
 	.size = sizeof(struct isakmp_attribute),
-	.np = ISAKMP_NEXT_NONE,
 };
 
 /* IPsec DOI Attributes */
@@ -129,7 +128,6 @@ struct_desc isakmp_ipsec_attribute_desc = {
 	.name = "ISAKMP IPsec DOI attribute",
 	.fields = isaat_fields_ipsec,
 	.size = sizeof(struct isakmp_attribute),
-	.np = ISAKMP_NEXT_NONE,
 };
 
 /* XAUTH Attributes */
@@ -144,7 +142,6 @@ struct_desc isakmp_xauth_attribute_desc = {
 	.name = "ISAKMP ModeCfg attribute",
 	.fields = isaat_fields_xauth,
 	.size = sizeof(struct isakmp_attribute),
-	.np = ISAKMP_NEXT_NONE,
 };
 
 /* ISAKMP Security Association Payload
@@ -164,7 +161,7 @@ struct_desc isakmp_xauth_attribute_desc = {
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 static field_desc isasa_fields[] = {
-	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1orv2 },
+	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1orv2 },
 	{ ft_zig, 8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 32 / BITS_PER_BYTE, "DOI", &doi_names },
@@ -175,7 +172,7 @@ struct_desc isakmp_sa_desc = {
 	.name = "ISAKMP Security Association Payload",
 	.fields = isasa_fields,
 	.size = sizeof(struct isakmp_sa),
-	.np = ISAKMP_NEXT_NONE,
+	.pt = ISAKMP_NEXT_SA,
 };
 
 static field_desc ipsec_sit_field[] = {
@@ -187,7 +184,6 @@ struct_desc ipsec_sit_desc = {
 	.name = "IPsec DOI SIT",
 	.fields = ipsec_sit_field,
 	.size = sizeof(u_int32_t),
-	.np = ISAKMP_NEXT_NONE,
 };
 
 /* ISAKMP Proposal Payload
@@ -205,7 +201,7 @@ struct_desc ipsec_sit_desc = {
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 static field_desc isap_fields[] = {
-	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
+	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
 	{ ft_zig, 8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_nat, 8 / BITS_PER_BYTE, "proposal number", NULL },
@@ -219,7 +215,7 @@ struct_desc isakmp_proposal_desc = {
 	.name = "ISAKMP Proposal Payload",
 	.fields = isap_fields,
 	.size = sizeof(struct isakmp_proposal),
-	.np = ISAKMP_NEXT_NONE,
+	.pt = ISAKMP_NEXT_P,
 };
 
 /* ISAKMP Transform Payload
@@ -241,7 +237,7 @@ struct_desc isakmp_proposal_desc = {
 
 /* PROTO_ISAKMP */
 static field_desc isat_fields_isakmp[] = {
-	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
+	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
 	{ ft_zig, 8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_nat, 8 / BITS_PER_BYTE, "ISAKMP transform number", NULL },
@@ -255,12 +251,12 @@ struct_desc isakmp_isakmp_transform_desc = {
 	.name = "ISAKMP Transform Payload (ISAKMP)",
 	.fields = isat_fields_isakmp,
 	.size = sizeof(struct isakmp_transform),
-	.np = ISAKMP_NEXT_NONE,
+	.pt = ISAKMP_NEXT_T,
 };
 
 /* PROTO_IPSEC_AH */
 static field_desc isat_fields_ah[] = {
-	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
+	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
 	{ ft_zig, 8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_nat, 8 / BITS_PER_BYTE, "AH transform number", NULL },
@@ -273,12 +269,12 @@ struct_desc isakmp_ah_transform_desc = {
 	.name = "ISAKMP Transform Payload (AH)",
 	.fields = isat_fields_ah,
 	.size = sizeof(struct isakmp_transform),
-	.np = ISAKMP_NEXT_NONE,
+	.pt = ISAKMP_NEXT_T,
 };
 
 /* PROTO_IPSEC_ESP */
 static field_desc isat_fields_esp[] = {
-	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
+	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
 	{ ft_zig, 8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_nat, 8 / BITS_PER_BYTE, "ESP transform number", NULL },
@@ -291,12 +287,12 @@ struct_desc isakmp_esp_transform_desc = {
 	.name = "ISAKMP Transform Payload (ESP)",
 	.fields = isat_fields_esp,
 	.size = sizeof(struct isakmp_transform),
-	.np = ISAKMP_NEXT_NONE,
+	.pt = ISAKMP_NEXT_T,
 };
 
 /* PROTO_IPCOMP */
 static field_desc isat_fields_ipcomp[] = {
-	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
+	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
 	{ ft_zig, 8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_nat, 8 / BITS_PER_BYTE, "IPCOMP transform number", NULL },
@@ -310,7 +306,7 @@ struct_desc isakmp_ipcomp_transform_desc = {
 	.name = "ISAKMP Transform Payload (COMP)",
 	.fields = isat_fields_ipcomp,
 	.size = sizeof(struct isakmp_transform),
-	.np = ISAKMP_NEXT_NONE,
+	.pt = ISAKMP_NEXT_T,
 };
 
 /* ISAKMP Key Exchange Payload: no fixed fields beyond the generic ones.
@@ -331,7 +327,7 @@ struct_desc isakmp_keyex_desc =	{
 	.name = "ISAKMP Key Exchange Payload",
 	.fields = isag_fields,
 	.size = sizeof(struct isakmp_generic),
-	.np = ISAKMP_NEXT_NONE,
+	.pt = ISAKMP_NEXT_KE,
 };
 
 /* ISAKMP Identification Payload
@@ -352,7 +348,7 @@ struct_desc isakmp_keyex_desc =	{
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 static field_desc isaid_fields[] = {
-	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1orv2 },
+	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1orv2 },
 	{ ft_zig, 8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "ID type", &ike_idtype_names }, /* ??? depends on DOI? */
@@ -365,7 +361,7 @@ struct_desc isakmp_identification_desc = {
 	.name = "ISAKMP Identification Payload",
 	.fields = isaid_fields,
 	.size = sizeof(struct isakmp_id),
-	.np = ISAKMP_NEXT_NONE,
+	.pt = ISAKMP_NEXT_ID,
 };
 
 /* IPSEC Identification Payload Content
@@ -384,7 +380,7 @@ struct_desc isakmp_identification_desc = {
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 static field_desc isaiid_fields[] = {
-	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1orv2 },
+	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1orv2 },
 	{ ft_zig, 8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "ID type", &ike_idtype_names },
@@ -397,7 +393,7 @@ struct_desc isakmp_ipsec_identification_desc = {
 	.name = "ISAKMP Identification Payload (IPsec DOI)",
 	.fields = isaiid_fields,
 	.size = sizeof(struct isakmp_ipsec_id),
-	.np = ISAKMP_NEXT_NONE,
+	.pt = ISAKMP_NEXT_ID,
 };
 
 /* ISAKMP Certificate Payload: oddball fixed field beyond the generic ones.
@@ -416,7 +412,7 @@ struct_desc isakmp_ipsec_identification_desc = {
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 static field_desc isacert_fields[] = {
-	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1orv2 },
+	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1orv2 },
 	{ ft_zig, 8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "cert encoding", &ike_cert_type_names },
@@ -430,7 +426,7 @@ struct_desc isakmp_ipsec_certificate_desc = {
 	.name = "ISAKMP Certificate Payload",
 	.fields = isacert_fields,
 	.size = ISAKMP_CERT_SIZE,
-	.np = ISAKMP_NEXT_NONE,
+	.pt = ISAKMP_NEXT_CERT,
 };
 
 /* ISAKMP Certificate Request Payload: oddball field beyond the generic ones.
@@ -449,7 +445,7 @@ struct_desc isakmp_ipsec_certificate_desc = {
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 static field_desc isacr_fields[] = {
-	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1orv2 },
+	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1orv2 },
 	{ ft_zig, 8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "cert type", &ike_cert_type_names },
@@ -463,7 +459,7 @@ struct_desc isakmp_ipsec_cert_req_desc = {
 	.name = "ISAKMP Certificate RequestPayload",
 	.fields = isacr_fields,
 	.size = ISAKMP_CR_SIZE,
-	.np = ISAKMP_NEXT_NONE,
+	.pt = ISAKMP_NEXT_CR,
 };
 
 /* ISAKMP Hash Payload: no fixed fields beyond the generic ones.
@@ -484,7 +480,7 @@ struct_desc isakmp_hash_desc = {
 	.name = "ISAKMP Hash Payload",
 	.fields = isag_fields,
 	.size = sizeof(struct isakmp_generic),
-	.np = ISAKMP_NEXT_NONE,
+	.pt = ISAKMP_NEXT_HASH,
 };
 
 /* ISAKMP Signature Payload: no fixed fields beyond the generic ones.
@@ -505,7 +501,7 @@ struct_desc isakmp_signature_desc = {
 	.name = "ISAKMP Signature Payload",
 	.fields = isag_fields,
 	.size = sizeof(struct isakmp_generic),
-	.np = ISAKMP_NEXT_NONE,
+	.pt = ISAKMP_NEXT_SIG,
 };
 
 /* ISAKMP Nonce Payload: no fixed fields beyond the generic ones.
@@ -526,7 +522,7 @@ struct_desc isakmp_nonce_desc =	{
 	.name = "ISAKMP Nonce Payload",
 	.fields = isag_fields,
 	.size = sizeof(struct isakmp_generic),
-	.np = ISAKMP_NEXT_NONE,
+	.pt = ISAKMP_NEXT_NONCE,
 };
 
 /* ISAKMP Notification Payload
@@ -553,7 +549,7 @@ struct_desc isakmp_nonce_desc =	{
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 static field_desc isan_fields[] = {
-	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
+	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
 	{ ft_zig, 8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 32 / BITS_PER_BYTE, "DOI", &doi_names },
@@ -567,7 +563,7 @@ struct_desc isakmp_notification_desc = {
 	.name = "ISAKMP Notification Payload",
 	.fields = isan_fields,
 	.size = sizeof(struct isakmp_notification),
-	.np = ISAKMP_NEXT_NONE,
+	.pt = ISAKMP_NEXT_N,
 };
 
 /* ISAKMP Delete Payload
@@ -589,7 +585,7 @@ struct_desc isakmp_notification_desc = {
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 static field_desc isad_fields[] = {
-	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
+	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
 	{ ft_zig, 8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 32 / BITS_PER_BYTE, "DOI", &doi_names },
@@ -603,7 +599,7 @@ struct_desc isakmp_delete_desc = {
 	.name = "ISAKMP Delete Payload",
 	.fields = isad_fields,
 	.size = sizeof(struct isakmp_delete),
-	.np = ISAKMP_NEXT_NONE,
+	.pt = ISAKMP_NEXT_D,
 };
 
 /* ISAKMP Vendor ID Payload
@@ -624,7 +620,7 @@ struct_desc isakmp_vendor_id_desc = {
 	.name = "ISAKMP Vendor ID Payload",
 	.fields = isag_fields,
 	.size = sizeof(struct isakmp_generic),
-	.np = ISAKMP_NEXT_NONE,
+	.pt = ISAKMP_NEXT_VID,
 };
 
 /* MODECFG */
@@ -644,7 +640,7 @@ struct_desc isakmp_vendor_id_desc = {
  *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 static field_desc isaattr_fields[] = {
-	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
+	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
 	{ ft_zig, 8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "Attr Msg Type", &attr_msg_type_names },
@@ -674,7 +670,7 @@ struct_desc isakmp_attr_desc = {
 	.name = "ISAKMP Mode Attribute",
 	.fields = isaattr_fields,
 	.size = sizeof(struct isakmp_mode_attr),
-	.np = ISAKMP_NEXT_NONE,
+	.pt = ISAKMP_NEXT_MCFG_ATTR,
 };
 
 /* ISAKMP NAT-Traversal NAT-D
@@ -691,7 +687,14 @@ struct_desc isakmp_nat_d = {
 	.name = "ISAKMP NAT-D Payload",
 	.fields = isag_fields,
 	.size = sizeof(struct isakmp_generic),
-	.np = ISAKMP_NEXT_NONE,
+	.pt = ISAKMP_NEXT_NATD_RFC,
+};
+
+struct_desc isakmp_nat_d_drafts = {
+	.name = "ISAKMP NAT-D Payload (draft)",
+	.fields = isag_fields,
+	.size = sizeof(struct isakmp_generic),
+	.pt = ISAKMP_NEXT_NATD_DRAFTS,
 };
 
 /* ISAKMP NAT-Traversal NAT-OA
@@ -707,7 +710,7 @@ struct_desc isakmp_nat_d = {
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 static field_desc isanat_oa_fields[] = {
-	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
+	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
 	{ ft_zig, 8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "ID type", &ike_idtype_names },
@@ -720,16 +723,23 @@ struct_desc isakmp_nat_oa = {
 	.name = "ISAKMP NAT-OA Payload",
 	.fields = isanat_oa_fields,
 	.size = sizeof(struct isakmp_nat_oa),
-	.np = ISAKMP_NEXT_NONE,
+	.pt = ISAKMP_NEXT_NATOA_RFC,
 };
 
-/* Generic payload (when ignoring) */
+struct_desc isakmp_nat_oa_drafts = {
+	.name = "ISAKMP NAT-OA Payload (draft)",
+	.fields = isanat_oa_fields,
+	.size = sizeof(struct isakmp_nat_oa),
+	.pt = ISAKMP_NEXT_NATOA_DRAFTS,
+};
+
+/* Generic payload: an unknown input payload */
 
 struct_desc isakmp_ignore_desc = {
 	.name = "ignored ISAKMP Generic Payload",
 	.fields = isag_fields,
 	.size = sizeof(struct isakmp_generic),
-	.np = ISAKMP_NEXT_NONE,
+	.pt = ISAKMP_NEXT_NONE,
 };
 
 /* ISAKMP IKE Fragmentation Payload
@@ -760,7 +770,7 @@ struct_desc isakmp_ikefrag_desc = {
 	.name = "ISAKMP IKE Fragment Payload",
 	.fields = isafrag_fields,
 	.size = sizeof(struct isakmp_ikefrag),
-	.np = ISAKMP_NEXT_NONE,
+	.pt = ISAKMP_NEXT_IKE_FRAGMENTATION,
 };
 
 /*
@@ -773,17 +783,19 @@ static field_desc ikev2generic_fields[] = {
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_end,  0, NULL, NULL }
 };
+/* only for reading an unknown-to-us payload */
 struct_desc ikev2_generic_desc = {
 	.name = "IKEv2 Generic Payload",
 	.fields = ikev2generic_fields,
 	.size = sizeof(struct ikev2_generic),
-	.np = ISAKMP_NEXT_v2NONE, /* only for reading */
+	.pt = ISAKMP_NEXT_v2NONE,	/* could be any unknown */
 };
+/* for IMPAIR_ADD_UNKNOWN_PAYLOAD_TO_* */
 struct_desc ikev2_unknown_payload_desc = {
 	.name = "IKEv2 Unknown Payload",
 	.fields = ikev2generic_fields,
 	.size = sizeof(struct ikev2_generic),
-	.np = ISAKMP_NEXT_v2UNKNOWN,
+	.pt = ISAKMP_NEXT_v2UNKNOWN,
 };
 
 /*
@@ -807,7 +819,7 @@ struct_desc ikev2_sa_desc = {
 	.name = "IKEv2 Security Association Payload",
 	.fields = ikev2generic_fields,
 	.size = sizeof(struct ikev2_sa),
-	.np = ISAKMP_NEXT_v2SA,
+	.pt = ISAKMP_NEXT_v2SA,
 };
 
 /* IKEv2 - Proposal sub-structure
@@ -832,7 +844,7 @@ struct_desc ikev2_sa_desc = {
  *             Figure 7:  Proposal Substructure
  */
 static field_desc ikev2prop_fields[] = {
-	{ ft_enum, 8 / BITS_PER_BYTE, "last proposal", &ikev2_last_proposal_desc },
+	{ ft_pnp, 8 / BITS_PER_BYTE, "last proposal", &ikev2_last_proposal_desc },
 	{ ft_zig,  8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_nat,  8 / BITS_PER_BYTE, "prop #", NULL },
@@ -846,6 +858,7 @@ struct_desc ikev2_prop_desc = {
 	.name = "IKEv2 Proposal Substructure Payload",
 	.fields = ikev2prop_fields,
 	.size = sizeof(struct ikev2_prop),
+	.pt = v2_PROPOSAL_NON_LAST,
 };
 
 /*
@@ -866,7 +879,7 @@ struct_desc ikev2_prop_desc = {
  */
 
 static field_desc ikev2trans_fields[] = {
-	{ ft_enum, 8 / BITS_PER_BYTE, "last transform", &ikev2_last_transform_desc },
+	{ ft_pnp, 8 / BITS_PER_BYTE, "last transform", &ikev2_last_transform_desc },
 	{ ft_zig,  8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "IKEv2 transform type", &ikev2_trans_type_names },
@@ -879,6 +892,7 @@ struct_desc ikev2_trans_desc = {
 	.name = "IKEv2 Transform Substructure Payload",
 	.fields = ikev2trans_fields,
 	.size = sizeof(struct ikev2_trans),
+	.pt = v2_TRANSFORM_NON_LAST,
 };
 
 /*
@@ -942,7 +956,7 @@ struct_desc ikev2_ke_desc = {
 	.name = "IKEv2 Key Exchange Payload",
 	.fields = ikev2ke_fields,
 	.size = sizeof(struct ikev2_ke),
-	.np = ISAKMP_NEXT_v2KE,
+	.pt = ISAKMP_NEXT_v2KE,
 };
 
 /*
@@ -990,14 +1004,14 @@ struct_desc ikev2_id_i_desc = {
 	.name ="IKEv2 Identification - Initiator - Payload",
 	.fields = ikev2id_fields,
 	.size = sizeof(struct ikev2_id),
-	.np = ISAKMP_NEXT_v2IDi,
+	.pt = ISAKMP_NEXT_v2IDi,
 };
 
 struct_desc ikev2_id_r_desc = {
 	.name ="IKEv2 Identification - Responder - Payload",
 	.fields = ikev2id_fields,
 	.size = sizeof(struct ikev2_id),
-	.np = ISAKMP_NEXT_v2IDr,
+	.pt = ISAKMP_NEXT_v2IDr,
 };
 
 /*
@@ -1045,7 +1059,7 @@ struct_desc ikev2_cp_desc = {
 	.name = "IKEv2 Configuration Payload",
 	.fields = ikev2cp_fields,
 	.size = sizeof(struct ikev2_cp),
-	.np = ISAKMP_NEXT_v2CP,
+	.pt = ISAKMP_NEXT_v2CP,
 };
 
 static field_desc ikev2_cp_attrbute_fields[] = {
@@ -1089,7 +1103,7 @@ struct_desc ikev2_certificate_desc = {
 	.name = "IKEv2 Certificate Payload",
 	.fields = ikev2_cert_fields,
 	.size = IKEV2_CERT_SIZE,
-	.np = ISAKMP_NEXT_v2CERT,
+	.pt = ISAKMP_NEXT_v2CERT,
 };
 
 /* section 3.7
@@ -1122,7 +1136,7 @@ struct_desc ikev2_certificate_req_desc = {
 	.name = "IKEv2 Certificate Request Payload",
 	.fields = ikev2_cert_req_fields,
 	.size = IKEV2_CERT_SIZE,
-	.np = ISAKMP_NEXT_v2CERTREQ,
+	.pt = ISAKMP_NEXT_v2CERTREQ,
 };
 
 /*
@@ -1157,7 +1171,7 @@ struct_desc ikev2_a_desc = {
 	.name = "IKEv2 Authentication Payload",
 	.fields = ikev2a_fields,
 	.size = sizeof(struct ikev2_a),
-	.np = ISAKMP_NEXT_v2AUTH,
+	.pt = ISAKMP_NEXT_v2AUTH,
 };
 
 /*
@@ -1186,7 +1200,7 @@ struct_desc ikev2_nonce_desc = {
 	.name = "IKEv2 Nonce Payload",
 	.fields = ikev2generic_fields,
 	.size = sizeof(struct ikev2_generic),
-	.np = ISAKMP_NEXT_v2Ni, /*==ISAKMP_NEXT_v2Nr*/
+	.pt = ISAKMP_NEXT_v2Ni, /*==ISAKMP_NEXT_v2Nr*/
 };
 
 /*    3.10 Notify Payload
@@ -1223,7 +1237,7 @@ struct_desc ikev2_notify_desc = {
 	.name = "IKEv2 Notify Payload",
 	.fields = ikev2_notify_fields,
 	.size = sizeof(struct ikev2_notify),
-	.np = ISAKMP_NEXT_v2N,
+	.pt = ISAKMP_NEXT_v2N,
 };
 
 /* IKEv2 Delete Payload
@@ -1257,7 +1271,7 @@ struct_desc ikev2_delete_desc = {
 	.name = "IKEv2 Delete Payload",
 	.fields = ikev2_delete_fields,
 	.size = sizeof(struct ikev2_delete),
-	.np = ISAKMP_NEXT_v2D,
+	.pt = ISAKMP_NEXT_v2D,
 };
 
 /*
@@ -1280,7 +1294,7 @@ struct_desc ikev2_vendor_id_desc = {
 	.name = "IKEv2 Vendor ID Payload",
 	.fields = ikev2generic_fields,
 	.size = sizeof(struct ikev2_generic),
-	.np = ISAKMP_NEXT_v2V,
+	.pt = ISAKMP_NEXT_v2V,
 };
 
 /*
@@ -1317,13 +1331,13 @@ struct_desc ikev2_ts_i_desc = {
 	.name = "IKEv2 Traffic Selector - Initiator - Payload",
 	.fields = ikev2ts_fields,
 	.size = sizeof(struct ikev2_ts),
-	.np = ISAKMP_NEXT_v2TSi,
+	.pt = ISAKMP_NEXT_v2TSi,
 };
 struct_desc ikev2_ts_r_desc = {
 	.name = "IKEv2 Traffic Selector - Responder - Payload",
 	.fields = ikev2ts_fields,
 	.size = sizeof(struct ikev2_ts),
-	.np = ISAKMP_NEXT_v2TSr,
+	.pt = ISAKMP_NEXT_v2TSr,
 };
 
 /*
@@ -1364,6 +1378,10 @@ struct_desc ikev2_ts1_desc = {
 /*
  * 3.14.  Encrypted Payload
  *
+ * Note: "Next Payload" is really "First Contained Payload type".
+ * This is always the last payload in a message so the real NP
+ * isn't needed.
+ *
  *                         1                   2                   3
  *    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -1383,11 +1401,18 @@ struct_desc ikev2_ts1_desc = {
  *
  *             Figure 21:  Encrypted Payload Format
  */
+/* almost the same as ikev2generic_fields (ft_fcp instead of ft_pnp) */
+static field_desc ikev2sk_fields[] = {
+	{ ft_fcp, 8 / BITS_PER_BYTE, "first contained payload type", &ikev2_payload_names },
+	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
+	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
+	{ ft_end,  0, NULL, NULL }
+};
 struct_desc ikev2_sk_desc = {
 	.name = "IKEv2 Encryption Payload",
-	.fields = ikev2generic_fields,
+	.fields = ikev2sk_fields,
 	.size = sizeof(struct ikev2_generic),
-	.np = ISAKMP_NEXT_v2SK,
+	.pt = ISAKMP_NEXT_v2SK,
 };
 
 /* note: no fields! */
@@ -1430,7 +1455,7 @@ struct_desc ikev2_encrypted_portion = {
  *                         Encrypted Fragment Payload
  */
 static field_desc ikev2skf_fields[] = {
-	{ ft_pnp, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
+	{ ft_fcp, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
 	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_nat, 16 / BITS_PER_BYTE, "fragment number", NULL },
@@ -1441,7 +1466,7 @@ struct_desc ikev2_skf_desc = {
 	.name = "IKEv2 Encrypted Fragment",
 	.fields = ikev2skf_fields,
 	.size = sizeof(struct ikev2_skf),
-	.np = ISAKMP_NEXT_v2SKF,
+	.pt = ISAKMP_NEXT_v2SKF,
 };
 
 static field_desc suggested_group_fields[] = {
@@ -1453,7 +1478,7 @@ struct_desc suggested_group_desc = {
 	.name = "Suggested Group",
 	.fields = suggested_group_fields,
 	.size = sizeof(struct suggested_group),
-	.np = ISAKMP_NEXT_v2NONE,
+	.pt = ISAKMP_NEXT_v2NONE,
 };
 
 #ifdef HAVE_LABELED_IPSEC
@@ -1476,7 +1501,6 @@ struct_desc sec_ctx_desc = {
 	.name = "Label Security Context",
 	.fields = sec_ctx_fields,
 	.size = sizeof(struct sec_ctx),
-	.np = ISAKMP_NEXT_v2NONE,
 };
 
 #endif
@@ -1557,12 +1581,17 @@ struct_desc *v2_payload_desc(unsigned p)
 void init_pbs(pb_stream *pbs, u_int8_t *start, size_t len, const char *name)
 {
 	*pbs = (pb_stream) {
+		/* .container = NULL, */
+		/* .desc = NULL, */
 		.name = name,
 		.start = start,
 		.cur = start,
 		.roof = start + len,
-		/* .desc = NULL, */
-		/* .container = NULL, */
+		/* .lenfld = NULL, */
+		/* .lenfld_desc = NULL, */
+		/* .previous_np = NULL, */
+		/* .previous_np_field = NULL, */
+		/* .previous_np_struct = NULL, */
 	};
 }
 
@@ -1585,6 +1614,22 @@ pb_stream open_out_pbs(const char *name, uint8_t *buffer, size_t sizeof_buffer)
 	init_out_pbs(&out_pbs, buffer, sizeof_buffer, name);
 	DBGF(DBG_EMITTING, "Opening output PBS %s", name);
 	return out_pbs;
+}
+
+void move_pbs_previous_np(pb_stream *dst, pb_stream *src)
+{
+	/* we must conserve obligations */
+	passert(dst->previous_np == NULL &&
+		dst->previous_np_field == NULL &&
+		dst->previous_np_struct == NULL);
+
+	dst->previous_np = src->previous_np;
+	dst->previous_np_field = src->previous_np_field;
+	dst->previous_np_struct = src->previous_np_struct;
+
+	src->previous_np = NULL;
+	src->previous_np_field = NULL;
+	src->previous_np_struct = NULL;
 }
 
 static err_t enum_enum_checker(
@@ -1632,7 +1677,7 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 		case ft_lv:             /* length/value field of attribute */
 		case ft_enum:           /* value from an enumeration */
 		case ft_loose_enum:     /* value from an enumeration with only some names known */
-		case ft_mnp:
+		case ft_fcp:
 		case ft_pnp:
 		case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
 		case ft_af_enum:        /* Attribute Format + value from an enumeration */
@@ -1674,7 +1719,7 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 			/* FALL THROUGH */
 			case ft_enum:           /* value from an enumeration */
 			case ft_loose_enum:     /* value from an enumeration with only some names known */
-			case ft_mnp:
+			case ft_fcp:
 			case ft_pnp:
 				last_enum = n;
 				DBG_log("   %s: %s (0x%lx)", fp->name,
@@ -1812,7 +1857,7 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 			case ft_lv:             /* length/value field of attribute */
 			case ft_enum:           /* value from an enumeration */
 			case ft_loose_enum:     /* value from an enumeration with only some names known */
-			case ft_mnp:
+			case ft_fcp:
 			case ft_pnp:
 			case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
 			case ft_af_enum:        /* Attribute Format + value from an enumeration */
@@ -1869,7 +1914,7 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 					}
 				/* FALL THROUGH */
 				case ft_loose_enum:     /* value from an enumeration with only some names known */
-				case ft_mnp:
+				case ft_fcp:
 				case ft_pnp:
 					last_enum = n;
 					break;
@@ -1991,6 +2036,55 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 	err_t ugh = NULL;
 	const u_int8_t *inp = struct_ptr;
 	u_int8_t *cur = outs->cur;
+	bool saw_pnp = FALSE;
+
+	/* do backpatching of previous NP, if called for */
+	if (sd->pt == ISAKMP_NEXT_NONE) {
+		/* nothing to backpatch with */
+	} else if (outs->previous_np == NULL) {
+		/* nowhere to backpatch */
+		struct esb_buf npb;
+		DBGF(DBG_EMITTING, "nowhere to backpatch %s",
+			enum_showb(&payload_names_ikev1orv2, sd->pt, &npb));
+	} else {
+		/* backpatch previous NP */
+
+		if (*outs->previous_np == ISAKMP_NEXT_NONE) {
+			/* new way */
+			struct esb_buf npb;
+			DBGF(DBG_EMITTING, "next payload type: setting '%s'.'%s' to %s (%d:%s)",
+			     outs->previous_np_struct->name,
+			     outs->previous_np_field->name,
+			     sd->name, sd->pt,
+			     enum_showb(outs->previous_np_field->desc, sd->pt, &npb));
+			*outs->previous_np = sd->pt;
+		} else if (*outs->previous_np == sd->pt) {
+			/* old cross-check */
+			struct esb_buf npb;
+			DBGF(DBG_EMITTING, "next payload type: previous '%s'.'%s' matches '%s' (%d:%s)",
+			     outs->previous_np_struct->name,
+			     outs->previous_np_field->name,
+			     sd->name, sd->pt, enum_showb(outs->previous_np_field->desc, sd->pt, &npb));
+		} else {
+			/* dump everything; could be bad */
+			struct esb_buf npb;
+			struct esb_buf pnpb;
+			PEXPECT_LOG("next payload type: TODO: previous '%s'.'%s' (%d:%s); current '%s' (%d:%s)",
+				outs->previous_np_struct->name,
+				outs->previous_np_field->name,
+				*outs->previous_np,
+				enum_showb(outs->previous_np_field->desc,
+					*outs->previous_np, &pnpb),
+				sd->name, sd->pt,
+				enum_showb(outs->previous_np_field->desc, sd->pt, &npb));
+			/* but stumble on */
+		}
+
+		/* now we've backpatched, forget the target */
+		outs->previous_np = NULL;
+		outs->previous_np_field = NULL;
+		outs->previous_np_struct = NULL;
+	}
 
 	DBG(DBG_EMITTING,
 	    DBG_prefix_print_struct(outs, "emit ", struct_ptr, sd,
@@ -2002,12 +2096,18 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 			sd->name);
 	} else {
 		bool immediate = FALSE;
-		pb_stream obj;
+		pb_stream obj;	/* new (child) stream for this struct */
 		field_desc *fp;
 		u_int32_t last_enum = 0;
 
-		obj.lenfld = NULL; /* until a length field is discovered */
+		/* until a length field is discovered */
+		obj.lenfld = NULL;
 		obj.lenfld_desc = NULL;
+
+		/* until an NP field is discovered */
+		obj.previous_np = NULL;
+		obj.previous_np_field = NULL;
+		obj.previous_np_struct = NULL;
 
 		for (fp = sd->fields; ugh == NULL; fp++) {
 			size_t i = fp->size;
@@ -2057,7 +2157,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 			case ft_nat:            /* natural number (may be 0) */
 			case ft_enum:           /* value from an enumeration */
 			case ft_loose_enum:     /* value from an enumeration with only some names known */
-			case ft_mnp:
+			case ft_fcp:
 			case ft_pnp:
 			case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
 			case ft_af_enum:        /* Attribute Format + value from an enumeration */
@@ -2104,72 +2204,40 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 					last_enum = n;
 					break;
 
-				case ft_mnp:
-					/* remember where we must later plant np in a message */
-					pexpect(fp->size == 1);
+				case ft_fcp:
+					/*
+					 * Remember where we must later plant NP in a message.
+					 * This goes into child pb_stream.
+					 */
+					passert(fp->size == 1);
 					last_enum = n;
-					DBGF(DBG_EMITTING, "next payload type: saving message location '%s' '%s'",
+					DBGF(DBG_EMITTING, "next payload type: saving message location '%s'.'%s'",
 					     sd->name, fp->name);
-					outs->previous_np = cur;
-					outs->previous_np_struct = sd;
-					outs->previous_np_field = fp;
+					obj.previous_np = cur;
+					obj.previous_np_struct = sd;
+					obj.previous_np_field = fp;
 					break;
 
 				case ft_pnp:
 				{
-					/* remember where we must later plant np in a payload */
-					pexpect(fp->size == 1);
+					pexpect(!saw_pnp);	/* cannot appear twice */
+					saw_pnp = TRUE;
+
+					/*
+					 * if we are a backpatch receiver (ft_pnp)
+					 * we ought to be a donor too (sd->pt).
+					 */
+					pexpect(sd->pt != ISAKMP_NEXT_NONE);
+
+					passert(fp->size == 1);
 					last_enum = n;
 
-					/* find the containing pbs */
-
-					passert(outs->container != NULL);
-
-					pb_stream *container = outs->container;
-
-					while (container->container != NULL) {
-						DBGF(DBG_EMITTING, "looking through '%s' for Message", container->name);
-						container = container->container;
-					}
-					passert(container->previous_np != NULL);
-					passert(container->previous_np_struct != NULL);
-					passert(container->previous_np_field != NULL);
-					/* update previous struct's next payload type field */
-					if (sd->np != ISAKMP_NEXT_NONE && *container->previous_np == ISAKMP_NEXT_NONE) {
-						/* new way */
-						struct esb_buf npb;
-						DBGF(DBG_EMITTING, "next payload type: setting '%s' '%s' to %s (%d:%s)",
-						     container->previous_np_struct->name,
-						     container->previous_np_field->name,
-						     sd->name, sd->np, enum_showb(fp->desc, sd->np, &npb));
-						*container->previous_np = sd->np;
-					} else if (sd->np != ISAKMP_NEXT_NONE && *container->previous_np == sd->np) {
-						/* old cross-check */
-						struct esb_buf npb;
-						DBGF(DBG_EMITTING, "next payload type: previous '%s' '%s' matches '%s' (%d:%s)",
-						     container->previous_np_struct->name,
-						     container->previous_np_field->name,
-						     sd->name, sd->np, enum_showb(fp->desc, sd->np, &npb));
-					} else {
-						/* dump everything; could be bad */
-						struct esb_buf npb;
-						struct esb_buf pnpb;
-						DBGF(DBG_EMITTING,
-						     "next payload type: TODO: previous '%s' '%s' (%d:%s); current '%s' (%d:%s)",
-						     container->previous_np_struct->name,
-						     container->previous_np_field->name,
-						     *container->previous_np,
-						     enum_showb(container->previous_np_field->desc,
-								*container->previous_np, &pnpb),
-						     sd->name, sd->np, enum_showb(fp->desc, sd->np, &npb));
-						/* but stumble on */
-					}
-					/* save */
-					DBGF(DBG_EMITTING, "next payload type: saving payload location '%s' '%s'",
+					/* record target */
+					DBGF(DBG_EMITTING, "next payload type: saving payload location '%s'.'%s'",
 					     sd->name, fp->name);
-					container->previous_np = cur;
-					container->previous_np_struct = sd;
-					container->previous_np_field = fp;
+					outs->previous_np = cur;
+					outs->previous_np_struct = sd;
+					outs->previous_np_field = fp;
 					break;
 				}
 
@@ -2199,11 +2267,24 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 				cur += fp->size;
 				break;
 			}
+
 			case ft_raw: /* bytes to be left in network-order */
 				for (; i != 0; i--)
 					*cur++ = *inp++;
 				break;
+
 			case ft_end: /* end of field list */
+				/*
+				 * All payloads that can contribute to a chain
+				 * ought to have a ft_pnp field.
+				 * Note that ISAKMP_NEXT_v2SK and
+				 * ISAKMP_NEXT_v2SKF are oddballs.
+				 */
+				pexpect(sd->pt == ISAKMP_NEXT_NONE ||
+					sd->pt == ISAKMP_NEXT_v2SK ||
+					sd->pt == ISAKMP_NEXT_v2SKF ||
+					saw_pnp);
+
 				passert(cur == outs->cur + sd->size);
 
 				obj.container = outs;
@@ -2212,7 +2293,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 				obj.start = outs->cur;
 				obj.cur = cur;
 				obj.roof = outs->roof; /* limit of possible */
-				/* obj.lenfld and obj.lenfld_desc already set */
+				/* obj.lenfld* and obj.previous_np* already set */
 
 				if (obj_pbs == NULL) {
 					close_output_pbs(&obj); /* fill in length field, if any */
@@ -2418,9 +2499,11 @@ void restore_reply_pbs(struct pbs_reply_backup **backup)
 	     pbs_offset(&reply_stream));
 }
 
-/* Record current length.
+/*
+ * close_output_pbs: record current length and check previous_NP
+ *
  * Note: currently, this may be repeated any number of times;
- * the last one wins.
+ * the last call's setting of the length wins.
  */
 
 void close_output_pbs(pb_stream *pbs)
@@ -2429,15 +2512,37 @@ void close_output_pbs(pb_stream *pbs)
 		u_int32_t len = pbs_offset(pbs);
 		int i = pbs->lenfld_desc->size;
 
+		passert(i > 0);
+
 		if (pbs->lenfld_desc->field_type == ft_lv)
 			len -= sizeof(struct isakmp_attribute);
+
 		DBG(DBG_EMITTING, DBG_log("emitting length of %s: %lu",
 					  pbs->name, (unsigned long) len));
+
+		/* emit octets of length in network order */
 		while (i-- != 0) {
 			pbs->lenfld[i] = (u_int8_t)len;
 			len >>= BITS_PER_BYTE;
 		}
 	}
+
+	/*
+	 * If the location of the previous NP is known,
+	 * and it isn't the parent (i.e. First Payload),
+	 * check that the chain has been terminated.
+	 */
+	if (!pexpect(pbs->previous_np == NULL ||
+		     pbs->previous_np_field->field_type == ft_fcp ||
+		     *pbs->previous_np == ISAKMP_NEXT_NONE))
+	{
+		struct esb_buf npb;
+		DBGF(DBG_EMITTING, "unexpected Next Payload type: '%s'.'%s' is %s",
+			pbs->previous_np_struct->name,
+			pbs->previous_np_field->name,
+			enum_showb(pbs->previous_np_field->desc, *pbs->previous_np, &npb));
+	}
+
 	if (pbs->container != NULL)
 		pbs->container->cur = pbs->cur; /* pass space utilization up */
 }

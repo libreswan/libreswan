@@ -375,7 +375,7 @@ static void lswlog_chosen_proposal(struct lswlog *buf,
 }
 
 void DBG_log_ikev2_proposal(const char *prefix,
-			    struct ikev2_proposal *proposal)
+			    const struct ikev2_proposal *proposal)
 {
 	LSWLOG_DEBUG(buf) {
 		lswlogf(buf, "%s ikev2_proposal: ", prefix);
@@ -1346,7 +1346,7 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 static bool emit_proposal(pb_stream *sa_pbs,
 			  const struct ikev2_proposal *proposal,
 			  unsigned propnum,
-			  chunk_t *local_spi,
+			  const chunk_t *local_spi,
 			  enum ikev2_last_proposal last_proposal,
 			  bool exclude_transform_none)
 {
@@ -1387,7 +1387,7 @@ static bool emit_proposal(pb_stream *sa_pbs,
 
 bool ikev2_emit_sa_proposals(pb_stream *pbs,
 			     const struct ikev2_proposals *proposals,
-			     chunk_t *local_spi,
+			     const chunk_t *local_spi,
 			     enum next_payload_types_ikev2 next_payload_type)
 {
 	DBG(DBG_CONTROL, DBG_log("Emitting ikev2_proposals ..."));
@@ -1417,8 +1417,9 @@ bool ikev2_emit_sa_proposals(pb_stream *pbs,
 	return TRUE;
 }
 
-bool ikev2_emit_sa_proposal(pb_stream *pbs, struct ikev2_proposal *proposal,
-			    chunk_t *local_spi,
+bool ikev2_emit_sa_proposal(pb_stream *pbs,
+			    const struct ikev2_proposal *proposal,
+			    const chunk_t *local_spi,
 			    enum next_payload_types_ikev2 next_payload_type)
 {
 	DBG(DBG_CONTROL, DBG_log("Emitting ikev2_proposal ..."));
@@ -1571,7 +1572,7 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 	return TRUE;
 }
 
-bool ikev2_proposal_to_proto_info(struct ikev2_proposal *proposal,
+bool ikev2_proposal_to_proto_info(const struct ikev2_proposal *proposal,
 				  struct ipsec_proto_info *proto_info)
 {
 	/*

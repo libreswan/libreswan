@@ -80,7 +80,7 @@ extern bool nat_traversal_support_port_floating;
  * NAT-D
  */
 extern bool ikev1_nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
-				   struct msg_digest *md);
+				   const struct msg_digest *md);
 extern void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie);
 
 /**
@@ -107,7 +107,7 @@ extern int nat_traversal_espinudp_socket(int sk, const char *fam);
  * Vendor ID
  */
 bool nat_traversal_add_vid(u_int8_t np, pb_stream *outs);
-bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, const struct state *st);
+bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, const struct connection *c);
 void set_nat_traversal(struct state *st, const struct msg_digest *md);
 
 void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st);

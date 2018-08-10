@@ -871,8 +871,8 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 		*r_hashval,     /* where in reply to jam hash value */
 		*r_hash_start;  /* start of what is to be hashed */
 	bool has_client = c->spd.this.has_client || c->spd.that.has_client ||
-			  c->spd.this.protocol || c->spd.that.protocol ||
-			  c->spd.this.port || c->spd.that.port;
+			  c->spd.this.protocol != 0 || c->spd.that.protocol != 0 ||
+			  c->spd.this.port != 0 || c->spd.that.port != 0;
 
 	if (isakmp_sa == NULL) {
 		/* phase1 state got deleted while cryptohelper was working */
@@ -1674,6 +1674,16 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 
 	/* [ IDci, IDcr ] out */
 	if (id_pd != NULL) {
+		/*
+		 * We simply spit out the two ID payloads we got, raw!
+		 * We overwrite the Next Payload fields, raw!
+		 * This plays havoc with our nice previous_np backpatching.
+		 * At least these are the last payload, and not the first
+		 * so we can fudge by suppression.
+		 */
+		rbody.previous_np = NULL;	/* suppress check! */
+
+		/* IDci out */
 		struct isakmp_ipsec_id *p = (void *)rbody.cur; /* UGH! */
 
 		if (!out_raw(id_pd->pbs.start, pbs_room(&id_pd->pbs),
@@ -1682,6 +1692,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 
 		p->isaiid_np = ISAKMP_NEXT_ID;
 
+		/* IDcr out */
 		p = (void *)rbody.cur; /* UGH! */
 
 		if (!out_raw(id_pd->next->pbs.start,
