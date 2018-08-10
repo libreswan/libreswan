@@ -428,6 +428,7 @@ kvmplutotest 	newoe-20-ipv6				good
 kvmplutotest 	newoe-21-liveness-clear			good
 kvmplutotest	newoe-22-nat-poc-cop			good
 kvmplutotest	newoe-23-reverse-nat 			good
+kvmplutotest	newoe-24-poc-poc-fast			good
 kvmplutotest	newoe-25-cat-1				good
 kvmplutotest	newoe-25-cat-2				good
 kvmplutotest	newoe-25-cat-3-4-way			good
