@@ -1,6 +1,8 @@
 As newoe-18-poc-poc, but now the ping bursts out a few packets so that
 there are packets during the initial IKE. This test case should show
-that there are not two IPsec SA's started but only one.
+that there are two IPsec SA's started. Since this uses AUTH_NULL, the
+two cannot be distinguished from different users so they are not allowed
+to replace each other (unlike in the case of non-AUTH_NULL)
 
   icmp ->  X
   IKE_INIT_REQ A ->
@@ -8,4 +10,8 @@ that there are not two IPsec SA's started but only one.
                X <-- icmp reply
             <- IKE_INIT_REQ B
 
-And two IPsec SA's establish
+two IPsec SA's establish
+
+
+Note: this test seems vulnerable to a race condition where one connection is already
+terminated?
