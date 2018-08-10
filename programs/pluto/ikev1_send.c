@@ -93,7 +93,7 @@ static bool send_v1_frags(struct state *st, const char *where)
 		/* emit isakmp header derived from original */
 		{
 			struct isakmp_hdr *ih =
-				(struct isakmp_hdr*) frag_prefix;
+				(struct isakmp_hdr *) frag_prefix;
 
 			memcpy(ih, st->st_tpacket.ptr, NSIZEOF_isakmp_hdr);
 			ih->isa_np = ISAKMP_NEXT_IKE_FRAGMENTATION; /* one octet */
@@ -108,7 +108,7 @@ static bool send_v1_frags(struct state *st, const char *where)
 		/* Append the ike frag header */
 		{
 			struct isakmp_ikefrag *fh =
-				(struct isakmp_ikefrag*) (frag_prefix +
+				(struct isakmp_ikefrag *) (frag_prefix +
 							  NSIZEOF_isakmp_hdr);
 
 			fh->isafrag_np = ISAKMP_NEXT_NONE;             /* must be zero */
