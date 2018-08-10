@@ -50,7 +50,6 @@ const unsigned char **dstp;   /* NULL means just a size query */
 	if (dstp != NULL)
 		*dstp = p;
 	return n;
-
 }
 
 /*
