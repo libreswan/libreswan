@@ -1,5 +1,3 @@
-east now has two certs loaded with two different rightid='s for
-itself. It should properly connswitch. This time, east uses
-a wilcard certificate with corresponding wildcard ID
+Test for wildcard ID and certs on east, which has rightid=@*.testing.libreswan.org
 
-this requires you tarzan, me jane support
+This requires you tarzan, me jane support. Introduced in 3.23
