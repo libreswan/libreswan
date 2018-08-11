@@ -1,0 +1,26 @@
+/testing/guestbin/swan-prep --userland strongswan
+east #
+ cp /testing/x509/keys/east.key /etc/strongswan/ipsec.d/private/
+east #
+ cp /testing/x509/certs/east.crt /etc/strongswan/ipsec.d/certs/
+east #
+ cp /testing/x509/cacerts/mainca.crt /etc/strongswan/ipsec.d/cacerts/
+east #
+ ../../pluto/bin/strongswan-start.sh
+east #
+ echo "initdone"
+initdone
+east #
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
+east #
+ if [ -f /var/run/charon.pid ]; then strongswan status ; fi
+Security Associations (1 up, 0 connecting):
+      rw-eap[1]: ESTABLISHED XXX second ago, 192.1.2.23[east.testing.libreswan.org]...192.1.2.45[user1@testing.libreswan.org]
+      rw-eap{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
+      rw-eap{1}:   192.0.2.0/24 === 192.0.1.0/24
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
