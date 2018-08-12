@@ -433,6 +433,9 @@ enum option_enums {
 	CD_XAUTHBY,
 	CD_XAUTHFAIL,
 	CD_NIC_OFFLOAD,
+	CD_RSA_SHA2_256,
+	CD_RSA_SHA2_384,
+	CD_RSA_SHA2_512,
 	CD_ESP,
 #   define CD_LAST CD_ESP	/* last connection description */
 
@@ -677,6 +680,11 @@ static const struct option long_opts[] = {
 	{ "sendca", required_argument, NULL, CD_SEND_CA + OO },
 	{ "ipv4", no_argument, NULL, CD_CONNIPV4 + OO },
 	{ "ipv6", no_argument, NULL, CD_CONNIPV6 + OO },
+
+	{ "rsa-sha2", no_argument, NULL, CD_RSA_SHA2_256 + OO },
+	{ "rsa-sha2_256", no_argument, NULL, CD_RSA_SHA2_256 + OO },
+	{ "rsa-sha2_384", no_argument, NULL, CD_RSA_SHA2_384 + OO },
+	{ "rsa-sha2_512", no_argument, NULL, CD_RSA_SHA2_512 + OO },
 
 	{ "ikelifetime", required_argument, NULL, CD_IKELIFETIME + OO + NUMERIC_ARG },
 	{ "ipseclifetime", required_argument, NULL, CD_IPSECLIFETIME + OO + NUMERIC_ARG },
@@ -1817,6 +1825,16 @@ int main(int argc, char **argv)
 			 * and we don't have to consider defaulting
 			 * tunnel_addr_family.
 			 */
+			continue;
+
+		case CD_RSA_SHA2_256:
+			msg.sighash_policy = POL_SIGHASH_SHA2_256;
+			continue;
+		case CD_RSA_SHA2_384:
+			msg.sighash_policy = POL_SIGHASH_SHA2_384;
+			continue;
+		case CD_RSA_SHA2_512:
+			msg.sighash_policy = POL_SIGHASH_SHA2_512;
 			continue;
 
 		case CD_CONNIPV6:

@@ -1064,6 +1064,17 @@ enum sa_policy_bits {
 #define NEGOTIATE_AUTH_HASH_SHA2_512		LELEM(IKEv2_AUTH_HASH_SHA2_512)	/* rfc7427 does responder support SHA2-512? */
 #define NEGOTIATE_AUTH_HASH_IDENTITY		LELEM(IKEv2_AUTH_HASH_IDENTITY)	/* rfc4307-bis does responder support IDENTITY? */
 
+enum sighash_policy_bits {
+	POL_SIGHASH_NONE = 0, /* 0 means no RFC 7427 and plain rsav1.5-sha1 or secret */
+	POL_SIGHASH_SHA2_256_IX = 1,
+	POL_SIGHASH_SHA2_384_IX = 2,
+	POL_SIGHASH_SHA2_512_IX = 3,
+#define POL_SIGHASH_IX_LAST	POL_SIGHASH_SHA2_512_IX
+};
+#define POL_SIGHASH_SHA2_256 LELEM(POL_SIGHASH_SHA2_256_IX)
+#define POL_SIGHASH_SHA2_384 LELEM(POL_SIGHASH_SHA2_384_IX)
+#define POL_SIGHASH_SHA2_512 LELEM(POL_SIGHASH_SHA2_512_IX)
+
 /* Default policy for now is using RSA - this might change to ECC */
 #define POLICY_DEFAULT POLICY_RSASIG
 

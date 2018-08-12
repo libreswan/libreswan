@@ -90,6 +90,8 @@ struct starter_conn {
 	int_set options_set;
 
 	lset_t policy;
+	lset_t sighash_policy;
+
 	char **alsos;
 
 	struct starter_end left, right;

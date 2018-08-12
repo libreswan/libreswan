@@ -1189,6 +1189,7 @@ static bool load_conn(
 	if (conn->options_set[KSCF_AUTHBY]) {
 
 		conn->policy &= ~POLICY_ID_AUTH_MASK;
+		conn->sighash_policy = POL_SIGHASH_NONE;
 	}
 
 	KW_POLICY_NEGATIVE_FLAG(KBF_IKEPAD, POLICY_NO_IKEPAD);
@@ -1370,6 +1371,7 @@ static bool load_conn(
 				conn->policy |= POLICY_PSK;
 			else if (streq(val, "rsasig") || streq(val, "rsa")) {
 				conn->policy |= POLICY_RSASIG;
+				conn->sighash_policy |= POL_SIGHASH_NONE;
 			}
 			else if (streq(val, "never"))
 				conn->policy |= POLICY_AUTH_NEVER;
@@ -1380,6 +1382,18 @@ static bool load_conn(
 			}
 			else if (streq(val, "null")) {
 				conn->policy |= POLICY_AUTH_NULL;
+			}
+			else if (streq(val, "rsa-sha2") || streq(val, "rsa-sha2_256")) {
+				conn->policy |= POLICY_RSASIG;
+				conn->sighash_policy |= POL_SIGHASH_SHA2_256;
+			}
+			else if (streq(val, "rsa-sha2_384")) {
+				conn->policy |= POLICY_RSASIG;
+				conn->sighash_policy |= POL_SIGHASH_SHA2_384;
+			}
+			else if (streq(val, "rsa-sha2_512")) {
+				conn->policy |= POLICY_RSASIG;
+				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
 			} else {
 				starter_error_append(perrl, "connection authby= value is unknown");
 				return TRUE;

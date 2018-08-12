@@ -4,6 +4,7 @@
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016 Sahana Prasad <sahana.prasad07@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -26,6 +27,8 @@
 #include "ike_alg_hash_nss_ops.h"
 #include "ike_alg_prf_nss_ops.h"
 #include "sadb.h"
+#include <pkcs11t.h>
+
 
 const struct hash_desc ike_alg_hash_sha2_256 = {
 	.common = {
@@ -127,6 +130,23 @@ const struct integ_desc ike_alg_integ_hmac_sha2_256_truncbug = {
 	.integ_kernel_audit_name = "HMAC_SHA2_256_TRUNCBUG",
 };
 
+const CK_RSA_PKCS_PSS_PARAMS rsa_pss_sha2_256 = {
+	.hashAlg = CKM_SHA256,
+	.mgf = CKG_MGF1_SHA256,
+	.sLen = SHA2_256_DIGEST_SIZE,
+};
+
+const uint8_t size_blob_256[ASN1_LEN_ALGO_IDENTIFIER]=LEN_RSA_PSS_SHA2_BLOB;
+const uint8_t asn1_blob_256[ASN1_SHA2_RSA_PSS_SIZE]=RSA_PSS_SHA256_BLOB;
+
+const struct asn1_hash_blob asn1_rsa_pss_sha2_256 = {
+	.hash_algo = IKEv2_AUTH_HASH_SHA2_256,
+	.size = ASN1_LEN_ALGO_IDENTIFIER,
+	.size_blob = size_blob_256,
+	.asn1_blob_len = ASN1_SHA2_RSA_PSS_SIZE,
+	.asn1_blob = asn1_blob_256,
+};
+
 const struct hash_desc ike_alg_hash_sha2_384 = {
 	.common = {
 		.name = "sha2_384",
@@ -202,6 +222,23 @@ const struct integ_desc ike_alg_integ_sha2_384 = {
 	.integ_kernel_audit_name = "HMAC_SHA2_384",
 };
 
+const CK_RSA_PKCS_PSS_PARAMS rsa_pss_sha2_384 = {
+	.hashAlg = CKM_SHA384,
+	.mgf = CKG_MGF1_SHA384,
+	.sLen = SHA2_384_DIGEST_SIZE,
+};
+
+const uint8_t size_blob_384[ASN1_LEN_ALGO_IDENTIFIER]=LEN_RSA_PSS_SHA2_BLOB;
+const uint8_t asn1_blob_384[ASN1_SHA2_RSA_PSS_SIZE]=RSA_PSS_SHA384_BLOB;
+
+const struct asn1_hash_blob asn1_rsa_pss_sha2_384 = {
+	.hash_algo = IKEv2_AUTH_HASH_SHA2_384,
+	.size = ASN1_LEN_ALGO_IDENTIFIER,
+	.size_blob = size_blob_384,
+	.asn1_blob_len = ASN1_SHA2_RSA_PSS_SIZE,
+	.asn1_blob = asn1_blob_384,
+};
+
 const struct hash_desc ike_alg_hash_sha2_512 = {
 	.common = {
 		.name = "sha2_512",
@@ -275,4 +312,21 @@ const struct integ_desc ike_alg_integ_sha2_512 = {
 	.integ_netlink_xfrm_name = "hmac(sha512)",
 	.integ_tcpdump_name = "sha512",
 	.integ_kernel_audit_name = "HMAC_SHA2_512",
+};
+
+const CK_RSA_PKCS_PSS_PARAMS rsa_pss_sha2_512 = {
+	.hashAlg = CKM_SHA512,
+	.mgf = CKG_MGF1_SHA512,
+	.sLen = SHA2_512_DIGEST_SIZE,
+};
+
+const uint8_t size_blob_512[ASN1_LEN_ALGO_IDENTIFIER]=LEN_RSA_PSS_SHA2_BLOB;
+const uint8_t asn1_blob_512[ASN1_SHA2_RSA_PSS_SIZE]=RSA_PSS_SHA512_BLOB;
+
+const struct asn1_hash_blob asn1_rsa_pss_sha2_512 = {
+	.hash_algo = IKEv2_AUTH_HASH_SHA2_512,
+	.size = ASN1_LEN_ALGO_IDENTIFIER,
+	.size_blob = size_blob_512,
+	.asn1_blob_len = ASN1_SHA2_RSA_PSS_SIZE,
+	.asn1_blob = asn1_blob_512,
 };

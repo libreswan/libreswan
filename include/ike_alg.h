@@ -499,6 +499,18 @@ struct hash_desc {
 };
 
 /*
+ * ASN.1 blobs specific to a particular hash algorithm are sent in the
+ * Auth payload as part of Digital signature authentication as per RFC7427
+ */
+struct asn1_hash_blob {
+	enum notify_payload_hash_algorithms hash_algo;
+	const uint8_t size;
+	const uint8_t *size_blob;
+	const uint8_t asn1_blob_len;
+	const uint8_t *asn1_blob;
+};
+
+/*
  * Generic implementation of HASH_DESC.
  */
 struct hash_context;

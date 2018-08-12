@@ -234,6 +234,7 @@ struct connection {
 	char *foodgroup;
 	char *connalias;
 	lset_t policy;
+	lset_t sighash_policy;
 	deltatime_t sa_ike_life_seconds;
 	deltatime_t sa_ipsec_life_seconds;
 	deltatime_t sa_rekey_margin;

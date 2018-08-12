@@ -86,7 +86,8 @@ extern bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
 
 extern size_t RSA_sign_hash(const struct connection *c,
 			    u_char sig_val[RSA_MAX_OCTETS],
-			    const u_char *hash_val, size_t hash_len);
+			    const u_char *hash_val, size_t hash_len,
+			    enum notify_payload_hash_algorithms hash_algo);
 
 extern size_t                           /* length of hash */
 main_mode_hash(struct state *st,

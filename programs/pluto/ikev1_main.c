@@ -299,7 +299,8 @@ main_mode_hash(struct state *st,
  */
 size_t RSA_sign_hash(const struct connection *c,
 		u_char sig_val[RSA_MAX_OCTETS],
-		const u_char *hash_val, size_t hash_len)
+		const u_char *hash_val, size_t hash_len,
+		enum notify_payload_hash_algorithms hash_algo UNUSED /* for ikev2 only*/)
 {
 	size_t sz;
 	int shr;
@@ -312,7 +313,7 @@ size_t RSA_sign_hash(const struct connection *c,
 	passert(RSA_MIN_OCTETS <= sz &&
 		4 + hash_len < sz &&
 		sz <= RSA_MAX_OCTETS);
-	shr = sign_hash(k, hash_val, hash_len, sig_val, sz);
+	shr = sign_hash(k, hash_val, hash_len, sig_val, sz, 0 /* for ikev2 only */);
 	passert(shr == 0 || (int)sz == shr);
 	return shr;
 }
@@ -348,7 +349,8 @@ size_t RSA_sign_hash(const struct connection *c,
 static err_t try_RSA_signature_v1(const u_char hash_val[MAX_DIGEST_LEN],
 				size_t hash_len,
 				const pb_stream *sig_pbs, struct pubkey *kr,
-				struct state *st)
+				struct state *st,
+				enum notify_payload_hash_algorithms hash_algo UNUSED /* for ikev2 only */)
 {
 	const u_char *sig_val = sig_pbs->cur;
 	size_t sig_len = pbs_left(sig_pbs);
@@ -361,7 +363,7 @@ static err_t try_RSA_signature_v1(const u_char hash_val[MAX_DIGEST_LEN],
 	}
 
 	err_t ugh = RSA_signature_verify_nss(k, hash_val, hash_len, sig_val,
-					sig_len);
+					sig_len, 0 /* for ikev2 only */);
 	if (ugh != NULL)
 		return ugh;
 
@@ -379,10 +381,13 @@ static err_t try_RSA_signature_v1(const u_char hash_val[MAX_DIGEST_LEN],
 static stf_status RSA_check_signature(struct state *st,
 				const u_char hash_val[MAX_DIGEST_LEN],
 				size_t hash_len,
-				const pb_stream *sig_pbs)
+				const pb_stream *sig_pbs,
+				enum notify_payload_hash_algorithms hash_algo
+				UNUSED /* for ikev2 only */)
 {
 	return RSA_check_signature_gen(st, hash_val, hash_len,
-				sig_pbs, try_RSA_signature_v1);
+				sig_pbs, 0 /* for ikev2 only */,
+				try_RSA_signature_v1);
 }
 
 notification_t accept_v1_nonce(struct msg_digest *md, chunk_t *dest,
@@ -1356,7 +1361,7 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 			u_char sig_val[RSA_MAX_OCTETS];
 			size_t sig_len = RSA_sign_hash(c,
 						sig_val, hash_val,
-						hash_len);
+						hash_len, 0 /* for ikev2 only */);
 
 			if (sig_len == 0) {
 				loglog(RC_LOG_SERIOUS,
@@ -1518,7 +1523,7 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 	case OAKLEY_RSA_SIG:
 	{
 		r = RSA_check_signature(st, hash_val, hash_len,
-					&md->chain[ISAKMP_NEXT_SIG]->pbs);
+					&md->chain[ISAKMP_NEXT_SIG]->pbs, 0 /* for ikev2 only*/);
 		break;
 	}
 	/* These are the only IKEv1 AUTH methods we support */
@@ -1697,7 +1702,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 			u_char sig_val[RSA_MAX_OCTETS];
 			size_t sig_len = RSA_sign_hash(c,
 						sig_val, hash_val,
-						hash_len);
+						hash_len, 0 /* for ikev2 only */);
 
 			if (sig_len == 0) {
 				loglog(RC_LOG_SERIOUS,

@@ -1327,6 +1327,10 @@ void add_connection(const struct whack_message *wm)
 			return;
 		}
 	}
+	if (wm->sighash_policy != POL_SIGHASH_NONE && (wm->policy & POLICY_IKEV1_ALLOW)) {
+		loglog(RC_FATAL, "SIGHASH requires ikev2=insist");
+		return;
+	}
 
 	if (wm->policy & POLICY_IKEV1_ALLOW) {
 		if (wm->policy & POLICY_MOBIKE) {
@@ -1480,6 +1484,7 @@ void add_connection(const struct whack_message *wm)
 	c->policy = wm->policy;
 	c->alg_info_ike = NULL;
 	c->alg_info_esp = NULL;
+	c->sighash_policy = wm->sighash_policy;
 
 	if (NEVER_NEGOTIATE(c->policy)) {
 		/* cleanup inherited default */
