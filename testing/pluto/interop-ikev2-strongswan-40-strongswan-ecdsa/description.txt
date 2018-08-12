@@ -1,2 +1,0 @@
-strongswan to strongswan test. Usually just used as basis to create
-another test or check how strongswan changed.
