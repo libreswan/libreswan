@@ -601,6 +601,7 @@ void init_vendorid(void)
 
 			vid->vid = (char *)vidm;
 
+			/* TODO: This use must allowed even with USE_MD5=false */
 			struct crypt_hash *ctx = crypt_hash_init(&ike_alg_hash_md5,
 								 "vendor id", DBG_CRYPT);
 			crypt_hash_digest_bytes(ctx, "data", d, strlen(vid->data));

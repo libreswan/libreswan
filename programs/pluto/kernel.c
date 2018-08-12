@@ -2174,6 +2174,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		}
 
 		said_next->integ = ta->ta_integ;
+#ifdef USE_SHA2
 		if (said_next->integ == &ike_alg_integ_sha2_256 &&
 			LIN(POLICY_SHA2_TRUNCBUG, c->policy)) {
 			if (kernel_ops->sha2_truncbug_support) {
@@ -2198,6 +2199,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				goto fail;
 			}
 		}
+#endif
 		said_next->authalg = said_next->integ->integ_ikev1_ah_transform;
 
 		if (st->st_esp.attrs.transattrs.esn_enabled) {

@@ -40,6 +40,8 @@ const u_char zero_cookie[COOKIE_SIZE];  /* guaranteed 0 */
  * an attacker from gaining raw data from our random pool and
  * it will prevent an attacker from depleting our random pool
  * or entropy.
+ *
+ * TODO: This use of SHA2 should be allowed even if we have USE_SHA2=false
  */
 void get_cookie(bool initiator, u_int8_t cookie[COOKIE_SIZE],
 		const ip_address *addr)

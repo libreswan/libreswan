@@ -5057,6 +5057,8 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
  * Our implementation does not use <VersionIDofSecret> which means
  * once a day and while under DOS attack, we could fail a few cookies
  * until the peer restarts from scratch.
+ *
+ * TODO: This use of sha2 should be allowed even with USE_SHA2=false
  */
 static void ikev2_calc_dcookie(u_char *dcookie, chunk_t ni,
 			      const ip_address *addr, chunk_t spiI)

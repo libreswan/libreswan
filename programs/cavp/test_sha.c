@@ -48,11 +48,15 @@ struct hash_desc ike_alg_hash_sha2_224 = {
 };
 
 static const struct hash_desc *hashes[] = {
+#ifdef USE_SHA1
 	&ike_alg_hash_sha1,
+#endif
+#ifdef USE_SHA2
 	&ike_alg_hash_sha2_224,
 	&ike_alg_hash_sha2_256,
 	&ike_alg_hash_sha2_384,
 	&ike_alg_hash_sha2_512,
+#endif
 	NULL,
 };
 
