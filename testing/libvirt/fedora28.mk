@@ -7,7 +7,7 @@ KVM_PACKAGE_INSTALL = dnf install -y
 KVM_DEBUGINFO_INSTALL = dnf  debuginfo-install -y
 KVM_INSTALL_RPM_LIST = 'rpm -aq > /var/tmp/rpm-qa-fedora-updates.log'
 
-KVM_STRONGSWAN_PACKAGE ?= https://download.nohats.ca/strongswan/strongswan-5.6.0-1.fc22.x86_64.rpm
+KVM_STRONGSWAN_PACKAGE ?= https://ftp.nohats.ca/strongswan/strongswan-5.6.3-1.fc22.x86_64.rpm
 KVM_LIBFAKETIME_PACKAGE ?= https://download.nohats.ca/libfaketime/libfaketime-0.9.6-4.fc22.x86_64.rpm
 
 KVM_PACKAGES = \
