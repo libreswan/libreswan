@@ -2,8 +2,10 @@
 See also https://libreswan.org/
 
 v3.26 (unreleased)
+* IKEv2: Support for RSA-PSS (RFC 7427) via authby=rsa-sha2 [Sahana Prasad]
 * IKEv2: Fix core dump when impaired and proposing esp=null-none [Andrew]
 *_unbound-hook: Fixup adding IPv4 pubkey, unbound now quotes arg as 1 [Paul]
+* building: Fix listed patches for debian build [Paul]
 
 v3.25 (June 27, 2018)
 * IKEv2: MOBIKE Initiator support (RFC 4555) [Antony]
