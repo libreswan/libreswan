@@ -750,6 +750,7 @@ logerr:
 	return success;
 }
 
+#ifdef KLIPS
 /*  register SA types that can be negotiated */
 static void pfkey_register_proto(unsigned int sadb_register,
 				 unsigned satype, const char *satypename)
@@ -770,7 +771,6 @@ static void pfkey_register_proto(unsigned int sadb_register,
 	}
 }
 
-#ifdef KLIPS
 void klips_register_proto(unsigned satype, const char *satypename)
 {
 	return pfkey_register_proto(K_SADB_REGISTER, satype, satypename);
