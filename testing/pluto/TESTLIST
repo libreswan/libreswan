@@ -821,9 +821,13 @@ kvmplutotest    interop-ikev2-strongswan-29-responder-rekey	good
 kvmplutotest	interop-ikev2-strongswan-35-ipsec-rekey		good
 kvmplutotest	interop-ikev2-strongswan-35-rekey-pfs		good
 kvmplutotest	interop-ikev2-strongswan-35-responder-rekey-pfs good
-kvmplutotest	interop-ikev2-strongswan-37-initiator-digsig	good
+kvmplutotest	interop-ikev2-strongswan-37-initiator-no-digsig	good
 kvmplutotest	interop-ikev2-strongswan-38-digsig-impair	good
 kvmplutotest	interop-ikev2-strongswan-39-fragmentation-aes-gcm	good
+kvmplutotest	interop-ikev2-strongswan-41-responder-digsig-rsa-pss-256	good
+kvmplutotest	interop-ikev2-strongswan-42-initiator-digsig-rsa-pss-384	good
+kvmplutotest	interop-ikev2-strongswan-43-initiator-digsig-rsa-pss-multi-hash	good
+kvmplutotest	interop-ikev2-strongswan-44-responder-digsig-rsa-pss-multi-hash	good
 kvmplutotest	interop-ikev2-pluto-01-integ-none		good
 
 #################################################################
