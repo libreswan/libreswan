@@ -144,10 +144,11 @@ int main(int argc, char *argv[])
 		(struct hash_desc *)ikev2_alg_find(IKE_ALG_HASH,
 						       st1.st_oakley.prf_hash);
 
-	ikev2_calculate_rsa_sha1(&st1,
+	ikev2_calculate_rsa_hash(&st1,
 				 INITIATOR,
 				 idhash,
-				 &outs);
+				 &outs,
+				 IKEv2_AUTH_HASH_SHA1);
 
 	DBG_dump_pbs(&outs);
 
@@ -172,14 +173,15 @@ int main(int argc, char *argv[])
 
 	show_one_connection(c1);
 	{
-		stf_status stat = ikev2_verify_rsa_sha1(&st1,
+		stf_status stat = ikev2_verify_rsa_hash(&st1,
 							RESPONDER,
 							idhash,
 #ifdef USE_KEYRR
 							NULL,   /* keys from dns */
 #endif
 							NULL,   /* gateways from dns */
-							&outs);
+							&outs,
+							IKEv2_AUTH_HASH_SHA1);
 		printf("stf status: %s\n", enum_name(&stfstatus_name, stat));
 	}
 

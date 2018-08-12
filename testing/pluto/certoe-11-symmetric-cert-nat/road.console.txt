@@ -130,13 +130,11 @@ road #
  grep "negotiated connection" /tmp/pluto.log
 "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23 #2: negotiated connection [10.0.10.1-10.0.10.1:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0]
 road #
- # you should see only Digital Signatures that currently only supports RSA
-road #
  grep IKEv2_AUTH_ OUTPUT/*pluto.log
-OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
-OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
-OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
-OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
+OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
+OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
+OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
+OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
 road #
 road #
  ../bin/check-for-core.sh

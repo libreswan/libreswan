@@ -1,0 +1,16 @@
+Basic pluto with IKEv2 using X.509 on the responder (east), and Strongswan on
+the initiator (west).
+
+This is the reverse test of interop-ikev2-strongswan-04-x509-responder
+
+This is the basic test for Authentication method as Digital Signatures as 
+specified in RFC 7427. Currently supported for RSA-PSS as per RFC8427.
+
+This includes a new notification of type SIGNATURE_HASH_ALGORITHMS.
+
+This test case negotiates SHA2_512, SHA2_384 and SHA_256 in the hash algorithm notification.
+When more than one hash algorithm is negotiated, we authenticate in the order of
+rsa-sha2_512,rsa-sha2_384,rsa-sha2_256.
+
+In this case Digital signature authentication is successful through rsa-sha2_512
+
