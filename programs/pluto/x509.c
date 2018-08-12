@@ -1084,6 +1084,7 @@ static chunk_t ikev2_hash_nss_cert_key(CERTCertificate *cert)
 
 	zero(&sighash);
 
+/* TODO: This should use SHA1 even if USE_SHA1 is disabled for IKE/IPsec */
 	struct crypt_hash *ctx = crypt_hash_init(&ike_alg_hash_sha1,
 						 "cert key", DBG_CRYPT);
 	crypt_hash_digest_bytes(ctx, "pubkey",
