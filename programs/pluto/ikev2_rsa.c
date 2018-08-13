@@ -65,7 +65,7 @@ static const u_char der_digestinfo[] = {
 };
 static const int der_digestinfo_len = sizeof(der_digestinfo);
 
-static stf_status ikev2_calculate_sighash(const struct state *st,
+static bool ikev2_calculate_sighash(const struct state *st,
 				    enum original_role role,
 				    const unsigned char *idhash,
 				    const chunk_t firstpacket,
@@ -109,7 +109,7 @@ static stf_status ikev2_calculate_sighash(const struct state *st,
 		break;
 #endif
 	default:
-		return STF_FATAL;
+		return FALSE;
 	}
 
 	crypt_hash_digest_chunk(ctx, "first packet", firstpacket);
@@ -136,10 +136,10 @@ static stf_status ikev2_calculate_sighash(const struct state *st,
 		break;
 #endif
 	default:
-		return STF_FATAL;
+		return FALSE;
 	}
 
-	return STF_OK;
+	return TRUE;
 }
 
 bool ikev2_calculate_rsa_hash(struct state *st,
@@ -185,16 +185,16 @@ bool ikev2_calculate_rsa_hash(struct state *st,
 
 		memcpy(signed_octets, der_digestinfo, der_digestinfo_len);
 
-		if (ikev2_calculate_sighash(st, role, idhash,
+		if (!ikev2_calculate_sighash(st, role, idhash,
 					st->st_firstpacket_me,
-					signed_octets + der_digestinfo_len, hash_algo) != STF_OK)
+					signed_octets + der_digestinfo_len, hash_algo))
 		{
 			return FALSE;
 		}
 	} else {
-		if (ikev2_calculate_sighash(st, role, idhash,
+		if (!ikev2_calculate_sighash(st, role, idhash,
 					st->st_firstpacket_me,
-					signed_octets, hash_algo) != STF_OK)
+					signed_octets, hash_algo))
 		{
 			return FALSE;
 		}
@@ -305,8 +305,8 @@ stf_status ikev2_verify_rsa_hash(struct state *st,
 
 	invertrole = (role == ORIGINAL_INITIATOR ? ORIGINAL_RESPONDER : ORIGINAL_INITIATOR);
 
-	if (ikev2_calculate_sighash(st, invertrole, idhash, st->st_firstpacket_him,
-				calc_hash, hash_algo) != STF_OK) {
+	if (!ikev2_calculate_sighash(st, invertrole, idhash, st->st_firstpacket_him,
+				calc_hash, hash_algo)) {
 		return STF_FATAL;
 	}
 
