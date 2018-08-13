@@ -144,31 +144,34 @@ static bool ikev2_out_hash_v2n(u_int8_t np, pb_stream *rbody, lset_t sighash_pol
 
 static bool negotiate_hash_algo_from_notification(struct payload_digest *p, struct state *st)
 {
-	u_int16_t h_value[IKEv2_AUTH_HASH_ROOF] = {0x0};
-	unsigned char num_of_hash_algo = 0;
-	unsigned char i  = 0;
-	const struct connection *c = st->st_connection;
+	u_int16_t h_value[IKEv2_AUTH_HASH_ROOF];
+	lset_t sighash_policy = st->st_connection->sighash_policy;
+	unsigned char num_of_hash_algo = pbs_left(&p->pbs) / RFC_7427_HASH_ALGORITHM_VALUE;
 
-	num_of_hash_algo = pbs_left(&p->pbs) / RFC_7427_HASH_ALGORITHM_VALUE;
+	if (num_of_hash_algo > IKEv2_AUTH_HASH_ROOF) {
+		libreswan_log("Too many hash algorithms specified (%u)",
+			num_of_hash_algo);
+		return FALSE;
+	}
 
 	if (!in_raw(h_value, pbs_left(&p->pbs), (&p->pbs), "hash value"))
 		return FALSE;
 
-	for (i = 0; i < num_of_hash_algo; i++) {
+	for (unsigned char i = 0; i < num_of_hash_algo; i++) {
 		switch (ntohs(h_value[i]))  {
-		/* We do not support SHA1 an more (as per RFC8247) */
+		/* We no longer support SHA1 (as per RFC8247) */
 		case IKEv2_AUTH_HASH_SHA2_256:
-			if (c->sighash_policy & POL_SIGHASH_SHA2_256) {
+			if (sighash_policy & POL_SIGHASH_SHA2_256) {
 				st->st_hash_negotiated |= NEGOTIATE_AUTH_HASH_SHA2_256;
 			}
 			break;
 		case IKEv2_AUTH_HASH_SHA2_384:
-			if (c->sighash_policy & POL_SIGHASH_SHA2_384) {
+			if (sighash_policy & POL_SIGHASH_SHA2_384) {
 				st->st_hash_negotiated |= NEGOTIATE_AUTH_HASH_SHA2_384;
 			}
 			break;
 		case IKEv2_AUTH_HASH_SHA2_512:
-			if (c->sighash_policy & POL_SIGHASH_SHA2_512) {
+			if (sighash_policy & POL_SIGHASH_SHA2_512) {
 				st->st_hash_negotiated |= NEGOTIATE_AUTH_HASH_SHA2_512;
 			}
 			break;
