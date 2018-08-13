@@ -94,18 +94,18 @@ static bool ikev2_calculate_sighash(const struct state *st,
 	switch (hash_algo) {
 #ifdef USE_SHA1
 	case IKEv2_AUTH_HASH_SHA1:
-		ctx = crypt_hash_init(&ike_alg_hash_sha1,"sighash", DBG_CRYPT);
+		ctx = crypt_hash_init(&ike_alg_hash_sha1, "sighash", DBG_CRYPT);
 		break;
 #endif
 #ifdef USE_SHA2
 	case IKEv2_AUTH_HASH_SHA2_256:
-		ctx = crypt_hash_init(&ike_alg_hash_sha2_256,"sighash", DBG_CRYPT);
+		ctx = crypt_hash_init(&ike_alg_hash_sha2_256, "sighash", DBG_CRYPT);
 		break;
 	case IKEv2_AUTH_HASH_SHA2_384:
-		ctx = crypt_hash_init(&ike_alg_hash_sha2_384,"sighash", DBG_CRYPT);
+		ctx = crypt_hash_init(&ike_alg_hash_sha2_384, "sighash", DBG_CRYPT);
 		break;
 	case IKEv2_AUTH_HASH_SHA2_512:
-		ctx = crypt_hash_init(&ike_alg_hash_sha2_512,"sighash", DBG_CRYPT);
+		ctx = crypt_hash_init(&ike_alg_hash_sha2_512, "sighash", DBG_CRYPT);
 		break;
 #endif
 	default:
@@ -181,7 +181,7 @@ bool ikev2_calculate_rsa_hash(struct state *st,
 	sz = k->pub.k;
 
 	if (hash_algo == 0 || /* ikev1 */
-			hash_algo == IKEv2_AUTH_HASH_SHA1 /* old style RSA with SHA1 */ ) {
+	    hash_algo == IKEv2_AUTH_HASH_SHA1 /* old style RSA with SHA1 */ ) {
 
 		memcpy(signed_octets, der_digestinfo, der_digestinfo_len);
 
@@ -301,7 +301,7 @@ stf_status ikev2_verify_rsa_hash(struct state *st,
 		bad_case(hash_algo);
 	}
 
-       unsigned char *calc_hash = alloc_bytes(hash_len, "hash size");
+	unsigned char *calc_hash = alloc_bytes(hash_len, "hash size");
 
 	invertrole = (role == ORIGINAL_INITIATOR ? ORIGINAL_RESPONDER : ORIGINAL_INITIATOR);
 

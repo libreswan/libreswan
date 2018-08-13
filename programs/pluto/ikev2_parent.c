@@ -214,19 +214,19 @@ static stf_status ikev2_send_asn1_hash_blob(enum notify_payload_hash_algorithms 
 
 static stf_status ikev2_check_asn1_hash_blob(enum notify_payload_hash_algorithms hash_algo, pb_stream *a_pbs)
 {
-	switch ( hash_algo )	{
+	switch (hash_algo)	{
 	case IKEv2_AUTH_HASH_SHA2_256:
-		if (!(asn1_hash_in(&asn1_rsa_pss_sha2_256,a_pbs, ASN1_LEN_ALGO_IDENTIFIER, ASN1_SHA2_RSA_PSS_SIZE))) {
+		if (!asn1_hash_in(&asn1_rsa_pss_sha2_256,a_pbs, ASN1_LEN_ALGO_IDENTIFIER, ASN1_SHA2_RSA_PSS_SIZE)) {
 			return STF_FAIL;
 		}
 		break;
 	case IKEv2_AUTH_HASH_SHA2_384:
-		if (!(asn1_hash_in(&asn1_rsa_pss_sha2_384,a_pbs,ASN1_LEN_ALGO_IDENTIFIER,ASN1_SHA2_RSA_PSS_SIZE))) {
+		if (!asn1_hash_in(&asn1_rsa_pss_sha2_384,a_pbs,ASN1_LEN_ALGO_IDENTIFIER,ASN1_SHA2_RSA_PSS_SIZE)) {
 			return STF_FAIL;
 		}
 		break;
 	case IKEv2_AUTH_HASH_SHA2_512:
-		if (!(asn1_hash_in(&asn1_rsa_pss_sha2_512, a_pbs, ASN1_LEN_ALGO_IDENTIFIER, ASN1_SHA2_RSA_PSS_SIZE))) {
+		if (!asn1_hash_in(&asn1_rsa_pss_sha2_512, a_pbs, ASN1_LEN_ALGO_IDENTIFIER, ASN1_SHA2_RSA_PSS_SIZE)) {
 			return STF_FAIL;
 		}
 		break;
@@ -730,18 +730,18 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 			return FALSE;
 		}
 
-		stf_status checkstat = ikev2_check_asn1_hash_blob(hash_algo,pbs);
+		stf_status checkstat = ikev2_check_asn1_hash_blob(hash_algo, pbs);
 
 		if ((checkstat != STF_OK) && (st->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_384) &&
-					(!hash_check)) {
+					!hash_check) {
 			hash_algo = IKEv2_AUTH_HASH_SHA2_384;
-			checkstat = ikev2_check_asn1_hash_blob(hash_algo,pbs);
+			checkstat = ikev2_check_asn1_hash_blob(hash_algo, pbs);
 		}
 
 		if ((checkstat != STF_OK) && (st->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_256) &&
 					(!hash_check)) {
 			hash_algo = IKEv2_AUTH_HASH_SHA2_256;
-			checkstat = ikev2_check_asn1_hash_blob(hash_algo,pbs);
+			checkstat = ikev2_check_asn1_hash_blob(hash_algo, pbs);
 		}
 
 		if (checkstat != STF_OK ) {
