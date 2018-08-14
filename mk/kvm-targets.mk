@@ -1106,11 +1106,19 @@ define kvm-var-value
 $(1)=$(value $(1)) [$($(1))]
 endef
 
+define kvm-value
+$($(1)) [$(value $(1))]
+endef
+
+define kvm-var
+$($(1)) [$$($(1))]
+endef
+
 define kvm-config
 
 Configuration:
 
-  kvm configuration:
+  Makefile variables:
 
     $(call kvm-var-value,KVM_SOURCEDIR)
     $(call kvm-var-value,KVM_TESTINGDIR)
@@ -1120,57 +1128,18 @@ Configuration:
     $(call kvm-var-value,KVM_GROUP)
     $(call kvm-var-value,KVM_CONNECTION)
     $(call kvm-var-value,KVM_MAKEFLAGS)
-
-  Directories:
-
-    By default all the VMs are stored in the directory:
-
-      $(call kvm-var-value,KVM_POOLDIR)$(if $(wildcard $(KVM_POOLDIR)),, [MISSING])
-
-    This can be tuned, with the VMs split across two directories:
-
-      $(call kvm-var-value,KVM_BASEDIR)$(if $(wildcard $(KVM_BASEDIR)),, [MISSING])
-
-          for storing the shared base (master) VM; should be
-          relatively permanent storage
-
-      $(call kvm-var-value,KVM_LOCALDIR)$(if $(wildcard $(KVM_LOCALDIR)),, [MISSING])
-
-          for storing the VMs dedicated to this build tree; can be
-          temporary storage (if you feel lucky you can try pointing
-          this at /tmp)
-
-  Networks:
-
-    Two types of networks are used.
-
-    First there is the shared NATting gateway.  It is used by the
-    base (master) domain along with any local domains when internet
-    access is required:
-
-      $(call kvm-var-value,KVM_GATEWAY)
-
-    Second there are the local test networks used to interconnect the
-    test domains.  Using $$(KVM_PREFIXES), test group is assigned
-    their own set of networks:
-
-      $(call kvm-var-value,KVM_TEST_SUBNETS)
-      $(call kvm-var-value,KVM_TEST_NETWORKS)
-
-  Base domain:
-
-    The (per OS) base domain is used as a shared starting point for
-    creating all the other domains.
-
-    Once created the base domain is rarely modified or rebuilt:
-
-    - the process is slow and not 100% reliable
-
-    - the image is shared between build trees
-
-    (instead the clone domain, see below, is best suited for trialing
-    new packages and domain modifications).
-
+    $(call kvm-var-value,KVM_POOLDIR)$(if $(wildcard $(KVM_POOLDIR)),, [MISSING])
+	default directory for storing VM files
+    $(call kvm-var-value,KVM_BASEDIR)$(if $(wildcard $(KVM_BASEDIR)),, [MISSING])
+	directory for storing the shared base (master) VM;
+	should be relatively permanent storage
+    $(call kvm-var-value,KVM_LOCALDIR)$(if $(wildcard $(KVM_LOCALDIR)),, [MISSING])
+    	directory for storing the VMs local to this build tree;
+	can be temporary storage (for instance /tmp)
+    $(call kvm-var-value,KVM_GATEWAY)
+	the shared NATting gateway;
+	used by the base (master) domain along with any local domains
+	when internet access is required
     $(call kvm-var-value,KVM_OS)
     $(call kvm-var-value,KVM_KICKSTART_FILE)
     $(call kvm-var-value,KVM_BASE_HOST)
@@ -1178,50 +1147,83 @@ Configuration:
     $(call kvm-var-value,KVM_GATEWAY)
     $(call kvm-var-value,KVM_BASEDIR)
 
-  Clone domain:
+ KVM Domains:
 
-    The clone domain, made unique to the build tree by KVM_PREFIXES,
-    is used as the local starting point for all test domains.
-
-    Since it is not shared across build trees, and has access to the
-    real world (via the default network) it is easy to modify or
-    rebuild.  For instance, experimental packages can be installed on
-    the clone domain (and then the test domains rebuilt) without
-    affecting other build trees.
-
-    $(call kvm-var-value,KVM_CLONE_HOST)
-    $(call kvm-var-value,KVM_CLONE_DOMAIN)
-    $(call kvm-var-value,KVM_LOCALDIR)
-
-  Build domain:
-
-    The build domain, made unique to the build tree by KVM_PREFIXES,
-    is used to build and install libreswan.  Test domains are then
-    created as a copy of this domain.
-
-    Since it is not shared across build trees, and has access to the
-    real world (via the default network) it is easy to modify or
-    rebuild.  For instance, experimental packages can be installed on
-    the clone domain (and then the test domains rebuilt) without
-    affecting other build trees.
-
-    $(call kvm-var-value,KVM_BUILD_HOST)
-    $(call kvm-var-value,KVM_BUILD_DOMAIN)
-    $(call kvm-var-value,KVM_LOCALDIR)
-
-  Test domains:
-
-    Groups of test domains, made unique to the build tree by
-    KVM_PREFIXES, are used to run the tests in parallel.
-
-    Separate build directories should use different KVM_PREFIXES (the
-    variable is set in Makefile.inc.local
-$(foreach prefix,$(KVM_PREFIXES),$(crlf)\
-$(sp) $(sp)test group: $(call strip-prefix,$(prefix))$(crlf) \
-$(sp) $(sp) $(sp)domains: $(addprefix $(call strip-prefix,$(prefix)),$(KVM_TEST_HOSTS))$(crlf) \
-$(sp) $(sp) $(sp)networks: $(addprefix $(call strip-prefix,$(prefix)),$(KVM_TEST_SUBNETS))$(crlf) \
-$(sp) $(sp) $(sp)directory: $(KVM_LOCALDIR))
-
+    $(call kvm-value,KVM_BASE_DOMAIN)
+    |
+    | - used as the starting point for creating
+    |   $(call kvm-var,KVM_OS) domains
+    |
+    | - shared between across directories
+    |
+    | - rarely modified or rebuilt as the process is
+    |   slow and not 100% reliable
+    |
+    | gateway:
+    |   $(call kvm-value,KVM_GATEWAY)
+    |
+    | directory:
+    |   $(call kvm-value,KVM_BASEDIR)
+    |
+    + $(call kvm-value,KVM_CLONE_DOMAIN)
+      |
+      | The clone domain is used as the local starting point for the
+      | directory's test domains.
+      |
+      | Since it is not shared across build trees, and has access to
+      | the real world (via the default network) it is easy to modify
+      | or rebuild.  For instance, experimental packages can be
+      | installed on the clone domain (and then the test domains
+      | rebuilt) without affecting other build trees.
+      |
+      | gateway:
+      |   $(call kvm-value,KVM_GATEWAY)
+      |
+      | directory:
+      |   $(call kvm-value,KVM_LOCALDIR)
+      |
+      + $(call kvm-value,KVM_BUILD_DOMAIN)
+      | |
+      | | The build domain is used to build and install libreswan.
+      | | Test domains are then created as a clone of this domain.
+      | |
+      | | Since it is not shared across build trees, and has access to
+      | | the real world (via the default network) it is easy to
+      | | modify or rebuild.  For instance, experimental packages can
+      | | be installed on the build domain (and then the test domains
+      | | rebuilt) without affecting other build trees.
+      | |
+      | | gateway:
+      | |   $(call kvm-value,KVM_GATEWAY)
+      | |
+      | | directory:
+      | |   $(call kvm-value,KVM_LOCALDIR)
+      | |
+      | | Groups of test domains are used to run the tests in parallel.
+      | | \
+$(foreach prefix,$(KVM_PREFIXES), \
+  \
+  $(crlf)$(sp)$(sp)$(sp)$(sp)$(sp)$(sp)|$(sp)| test group $(prefix) \
+  $(crlf)$(sp)$(sp)$(sp)$(sp)$(sp)$(sp)|$(sp)|$(sp)$(sp) basic domains: \
+  $(foreach basic,$(KVM_BASIC_HOSTS), \
+    $(crlf)$(sp)$(sp)$(sp)$(sp)$(sp) +------ $(call strip-prefix,$(prefix))$(basic) \
+  ) \
+  \
+  $(crlf)$(sp)$(sp)$(sp)$(sp)$(sp)$(sp)|$(sp)|$(sp)$(sp) install domains: \
+  $(foreach install,$(KVM_INSTALL_HOSTS), \
+    $(crlf)$(sp)$(sp)$(sp)$(sp)$(sp)$(sp)| +---- $(call strip-prefix,$(prefix))$(install) \
+  ) \
+  \
+  $(crlf)$(sp)$(sp)$(sp)$(sp)$(sp)$(sp)|$(sp)|$(sp)$(sp) networks: \
+  $(foreach network, $(KVM_TEST_SUBNETS), \
+    $(crlf)$(sp)$(sp)$(sp)$(sp)$(sp)$(sp)|$(sp)|$(sp$)$(sp)$(sp)$(sp)$(sp) $(call strip-prefix,$(prefix))$(network) \
+  ) \
+  \
+  $(crlf)$(sp)$(sp)$(sp)$(sp)$(sp)$(sp)|$(sp)|$(sp)$(sp) directory: \
+  $(crlf)$(sp)$(sp)$(sp)$(sp)$(sp)$(sp)|$(sp)|$(sp)$(sp)$(sp)$(sp) $(call kvm-value,KVM_LOCALDIR) \
+  \
+  $(crlf)$(sp)$(sp)$(sp)$(sp)$(sp)$(sp)|$(sp)| \
+)
 endef
 
 define kvm-help
