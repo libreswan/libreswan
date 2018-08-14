@@ -221,7 +221,8 @@ bool ikev2_out_natd(struct state *st, u_int8_t np, ip_address *localaddr,
 			nat_traversal_enabled ? " [enabled]" : " [disabled]"));
 
 	/*
-	 *  First: one with local (source) IP & port
+	 * First: one with local (source) IP & port
+	 * TODO: This use of SHA1 should be allowed even with USE_SHA1=false
 	 */
 	natd_hash(&ike_alg_hash_sha1, hb, st->st_icookie,
 		  rcookie, localaddr, localport);
@@ -1188,6 +1189,7 @@ void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
 
 	/*
 	 * First one with my IP & port
+	 * TODO: This use must be allowed even with USE_SHA1=false
 	 */
 	natd_hash(&ike_alg_hash_sha1, hash_me, st->st_icookie, rcookie,
 		  &md->iface->ip_addr, md->iface->port);

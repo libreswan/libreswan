@@ -52,7 +52,7 @@
  * it is likely that the relevant part of the message changes less frequently.
  * Whack uses WHACK_BASIC_MAGIC in those cases.
  *
- * When you increment WHACK_BASIC_MAGIC, reset WHACH_MAGIC's last number to 0.
+ * When you increment WHACK_BASIC_MAGIC, reset WHACK_MAGIC's last number to 0.
  * This allows for more WHACK_BASIC_MAGIC values.
  *
  * NOTE: no value of WHACK_BASIC_MAGIC may equal any value of WHACK_MAGIC.
@@ -60,7 +60,7 @@
  */
 
 #define WHACK_BASIC_MAGIC (((((('w' << 8) + 'h') << 8) + 'k') << 8) + 25)
-#define WHACK_MAGIC (((((('o' << 8) + 'h') << 8) + 'k') << 8) + 45)
+#define WHACK_MAGIC (((((('o' << 8) + 'h') << 8) + 'k') << 8) + 46)
 
 /*
  * Where, if any, is the pubkey coming from.

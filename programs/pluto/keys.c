@@ -228,7 +228,8 @@ int sign_hash(const struct RSA_private_key *k,
 				return 0;
 			}
 		}
-	} else { /* Digital signature scheme with rsa-pss*/
+	} else {
+		/* Digital signature scheme with rsa-pss*/
 		CK_RSA_PKCS_PSS_PARAMS mech;
 
 		switch (hash_algo) {
@@ -354,7 +355,8 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 
 		pfree(data.data);
 
-	} else { /* Digital signature scheme with RSA-PSS */
+	} else {
+		/* Digital signature scheme with RSA-PSS */
 		CK_RSA_PKCS_PSS_PARAMS mech;
 		SECItem mechItem = { siBuffer, (unsigned char *)&mech, sizeof(mech) };
 

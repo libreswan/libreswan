@@ -136,8 +136,8 @@ const CK_RSA_PKCS_PSS_PARAMS rsa_pss_sha2_256 = {
 	.sLen = SHA2_256_DIGEST_SIZE,
 };
 
-const uint8_t size_blob_256[ASN1_LEN_ALGO_IDENTIFIER]=LEN_RSA_PSS_SHA2_BLOB;
-const uint8_t asn1_blob_256[ASN1_SHA2_RSA_PSS_SIZE]=RSA_PSS_SHA256_BLOB;
+static const uint8_t size_blob_256[ASN1_LEN_ALGO_IDENTIFIER] = LEN_RSA_PSS_SHA2_BLOB;
+static const uint8_t asn1_blob_256[ASN1_SHA2_RSA_PSS_SIZE] = RSA_PSS_SHA256_BLOB;
 
 const struct asn1_hash_blob asn1_rsa_pss_sha2_256 = {
 	.hash_algo = IKEv2_AUTH_HASH_SHA2_256,
@@ -228,8 +228,8 @@ const CK_RSA_PKCS_PSS_PARAMS rsa_pss_sha2_384 = {
 	.sLen = SHA2_384_DIGEST_SIZE,
 };
 
-const uint8_t size_blob_384[ASN1_LEN_ALGO_IDENTIFIER]=LEN_RSA_PSS_SHA2_BLOB;
-const uint8_t asn1_blob_384[ASN1_SHA2_RSA_PSS_SIZE]=RSA_PSS_SHA384_BLOB;
+static const uint8_t size_blob_384[ASN1_LEN_ALGO_IDENTIFIER] = LEN_RSA_PSS_SHA2_BLOB;
+static const uint8_t asn1_blob_384[ASN1_SHA2_RSA_PSS_SIZE] = RSA_PSS_SHA384_BLOB;
 
 const struct asn1_hash_blob asn1_rsa_pss_sha2_384 = {
 	.hash_algo = IKEv2_AUTH_HASH_SHA2_384,
@@ -320,8 +320,8 @@ const CK_RSA_PKCS_PSS_PARAMS rsa_pss_sha2_512 = {
 	.sLen = SHA2_512_DIGEST_SIZE,
 };
 
-const uint8_t size_blob_512[ASN1_LEN_ALGO_IDENTIFIER]=LEN_RSA_PSS_SHA2_BLOB;
-const uint8_t asn1_blob_512[ASN1_SHA2_RSA_PSS_SIZE]=RSA_PSS_SHA512_BLOB;
+static const uint8_t size_blob_512[ASN1_LEN_ALGO_IDENTIFIER] = LEN_RSA_PSS_SHA2_BLOB;
+static const uint8_t asn1_blob_512[ASN1_SHA2_RSA_PSS_SIZE] = RSA_PSS_SHA512_BLOB;
 
 const struct asn1_hash_blob asn1_rsa_pss_sha2_512 = {
 	.hash_algo = IKEv2_AUTH_HASH_SHA2_512,

@@ -383,7 +383,7 @@ static stf_status RSA_check_signature(struct state *st,
 				size_t hash_len,
 				const pb_stream *sig_pbs,
 				enum notify_payload_hash_algorithms hash_algo
-				UNUSED /* for ikev2 only */)
+					UNUSED /* for ikev2 only */)
 {
 	return RSA_check_signature_gen(st, hash_val, hash_len,
 				sig_pbs, 0 /* for ikev2 only */,

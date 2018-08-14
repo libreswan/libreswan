@@ -49,12 +49,16 @@ static bool esp_proposal_ok(const struct proposal_parser *parser,
 }
 
 static const struct ike_alg *default_esp_encrypt[] = {
+#ifdef USE_AES
 	&ike_alg_encrypt_aes_cbc.common,
+#endif
 	NULL,
 };
 
 static const struct ike_alg *default_esp_integ[] = {
+#ifdef USE_SHA1
 	&ike_alg_integ_sha1.common,
+#endif
 	NULL,
 };
 

@@ -58,7 +58,7 @@
 #include "demux.h"
 #include "ikev2.h"
 #include "log.h"
-#include "spdb.h"          /* for out_sa */
+#include "spdb.h"	/* for out_sa */
 #include "ipsec_doi.h"
 #include "vendor.h"
 #include "timer.h"
@@ -102,12 +102,6 @@ static void ikev2_calc_dcookie(u_char *dcookie, chunk_t st_ni,
 static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 					    struct state *st);
 
-static stf_status ikev2_send_asn1_hash_blob(enum notify_payload_hash_algorithms hash_algo, pb_stream *a_pbs);
-
-static stf_status ikev2_check_asn1_hash_blob(enum notify_payload_hash_algorithms hash_algo, pb_stream *a_pbs);
-
-static stf_status asn1_hash_out(const struct asn1_hash_blob *asn1_hash_blob, pb_stream *a_pbs);
-
 static bool asn1_hash_in(const struct asn1_hash_blob *asn1_hash_blob, pb_stream *a_pbs,
 		   uint8_t size, uint8_t asn1_blob_len);
 
@@ -133,42 +127,42 @@ static bool ikev2_out_hash_v2n(u_int8_t np, pb_stream *rbody, lset_t sighash_pol
 
 	hash.len = index * RFC_7427_HASH_ALGORITHM_VALUE;
 
-	if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
-		PROTO_v2_RESERVED, &empty_chunk,
-		v2N_SIGNATURE_HASH_ALGORITHMS, &hash,
-		rbody))
-			return FALSE;
-
-	return TRUE;
+	return ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
+			PROTO_v2_RESERVED, &empty_chunk,
+			v2N_SIGNATURE_HASH_ALGORITHMS, &hash,
+			rbody);
 }
 
 static bool negotiate_hash_algo_from_notification(struct payload_digest *p, struct state *st)
 {
-	u_int16_t h_value[IKEv2_AUTH_HASH_ROOF] = {0x0};
-	unsigned char num_of_hash_algo = 0;
-	unsigned char i  = 0;
-	const struct connection *c = st->st_connection;
+	u_int16_t h_value[IKEv2_AUTH_HASH_ROOF];
+	lset_t sighash_policy = st->st_connection->sighash_policy;
+	unsigned char num_of_hash_algo = pbs_left(&p->pbs) / RFC_7427_HASH_ALGORITHM_VALUE;
 
-	num_of_hash_algo = pbs_left(&p->pbs) / RFC_7427_HASH_ALGORITHM_VALUE;
+	if (num_of_hash_algo > IKEv2_AUTH_HASH_ROOF) {
+		libreswan_log("Too many hash algorithms specified (%u)",
+			num_of_hash_algo);
+		return FALSE;
+	}
 
 	if (!in_raw(h_value, pbs_left(&p->pbs), (&p->pbs), "hash value"))
 		return FALSE;
 
-	for (i = 0; i < num_of_hash_algo; i++) {
+	for (unsigned char i = 0; i < num_of_hash_algo; i++) {
 		switch (ntohs(h_value[i]))  {
-		/* We do not support SHA1 an more (as per RFC8247) */
+		/* We no longer support SHA1 (as per RFC8247) */
 		case IKEv2_AUTH_HASH_SHA2_256:
-			if (c->sighash_policy & POL_SIGHASH_SHA2_256) {
+			if (sighash_policy & POL_SIGHASH_SHA2_256) {
 				st->st_hash_negotiated |= NEGOTIATE_AUTH_HASH_SHA2_256;
 			}
 			break;
 		case IKEv2_AUTH_HASH_SHA2_384:
-			if (c->sighash_policy & POL_SIGHASH_SHA2_384) {
+			if (sighash_policy & POL_SIGHASH_SHA2_384) {
 				st->st_hash_negotiated |= NEGOTIATE_AUTH_HASH_SHA2_384;
 			}
 			break;
 		case IKEv2_AUTH_HASH_SHA2_512:
-			if (c->sighash_policy & POL_SIGHASH_SHA2_512) {
+			if (sighash_policy & POL_SIGHASH_SHA2_512) {
 				st->st_hash_negotiated |= NEGOTIATE_AUTH_HASH_SHA2_512;
 			}
 			break;
@@ -182,74 +176,61 @@ static bool negotiate_hash_algo_from_notification(struct payload_digest *p, stru
 	return TRUE;
 }
 
+static const struct asn1_hash_blob *blob_for_hash_algo(enum notify_payload_hash_algorithms hash_algo)
+{
+
+	switch (hash_algo) {
+	case IKEv2_AUTH_HASH_SHA2_256:
+		return  &asn1_rsa_pss_sha2_256;
+	case IKEv2_AUTH_HASH_SHA2_384:
+		return &asn1_rsa_pss_sha2_384;
+	case IKEv2_AUTH_HASH_SHA2_512:
+		return &asn1_rsa_pss_sha2_512;
+	default:
+		return NULL;
+	}
+}
+
 static stf_status ikev2_send_asn1_hash_blob(enum notify_payload_hash_algorithms hash_algo, pb_stream *a_pbs)
 {
-	stf_status sendstat;
+	const struct asn1_hash_blob *b = blob_for_hash_algo(hash_algo);
 
-	switch ( hash_algo )	{
-	case IKEv2_AUTH_HASH_SHA2_256:
-		sendstat = asn1_hash_out(&asn1_rsa_pss_sha2_256,a_pbs);
-		if (sendstat != STF_OK) {
-			return STF_INTERNAL_ERROR;
-		}
-		break;
-	case IKEv2_AUTH_HASH_SHA2_384:
-		sendstat = asn1_hash_out(&asn1_rsa_pss_sha2_384,a_pbs);
-		if (sendstat != STF_OK) {
-			return STF_INTERNAL_ERROR;
-		}
-		break;
-	case IKEv2_AUTH_HASH_SHA2_512:
-		sendstat = asn1_hash_out(&asn1_rsa_pss_sha2_512,a_pbs);
-		if (sendstat != STF_OK) {
-			return STF_INTERNAL_ERROR;
-		}
-		break;
-	default:
-		bad_case(hash_algo);
+	passert(b != NULL);
 
+	if (!out_raw(b->size_blob, b->size, a_pbs,
+	    "Length of the ASN.1 Algorithm Identifier")) {
+		loglog(RC_LOG_SERIOUS, "DigSig: failed to emit ASN.1 Algorithm Identifier length");
+		return STF_INTERNAL_ERROR;
 	}
+
+	if (!out_raw(b->asn1_blob, b->asn1_blob_len, a_pbs,
+	    "OID of ASN.1 Algorithm Identifier")) {
+		loglog(RC_LOG_SERIOUS, "DigSig: failed to emit OID of ASN.1 Algorithm Identifier");
+		return STF_INTERNAL_ERROR;
+	}
+
 	return STF_OK;
 }
 
 static stf_status ikev2_check_asn1_hash_blob(enum notify_payload_hash_algorithms hash_algo, pb_stream *a_pbs)
 {
-	switch ( hash_algo )	{
-	case IKEv2_AUTH_HASH_SHA2_256:
-		if (!(asn1_hash_in(&asn1_rsa_pss_sha2_256,a_pbs, ASN1_LEN_ALGO_IDENTIFIER, ASN1_SHA2_RSA_PSS_SIZE))) {
-			return STF_FAIL;
-		}
-		break;
-	case IKEv2_AUTH_HASH_SHA2_384:
-		if (!(asn1_hash_in(&asn1_rsa_pss_sha2_384,a_pbs,ASN1_LEN_ALGO_IDENTIFIER,ASN1_SHA2_RSA_PSS_SIZE))) {
-			return STF_FAIL;
-		}
-		break;
-	case IKEv2_AUTH_HASH_SHA2_512:
-		if (!(asn1_hash_in(&asn1_rsa_pss_sha2_512, a_pbs, ASN1_LEN_ALGO_IDENTIFIER, ASN1_SHA2_RSA_PSS_SIZE))) {
-			return STF_FAIL;
-		}
-		break;
-	default:
-		loglog(RC_LOG_SERIOUS, "Non-negotiated Hash algorithm received");
+	const struct asn1_hash_blob *b = blob_for_hash_algo(hash_algo);
+
+	if (b == NULL) {
+		loglog(RC_LOG_SERIOUS, "Non-negotiable Hash algorithm %d received", hash_algo);
 		return STF_FAIL;
-
 	}
-	return STF_OK;
 
-}
-
-static stf_status asn1_hash_out(const struct asn1_hash_blob *asn1_hash_blob, pb_stream *a_pbs)
-{
-	if (!out_raw(asn1_hash_blob->size_blob, asn1_hash_blob->size, a_pbs,
-		"Length of the ASN.1 Algorithm Identifier")) {
-		loglog(RC_LOG_SERIOUS, "DigSig: failed to emit ASN.1 Algorithm Identifier length");
-		return STF_INTERNAL_ERROR;
-	}
-	if (!out_raw(asn1_hash_blob->asn1_blob, asn1_hash_blob->asn1_blob_len, a_pbs,
-		"OID of ASN.1 Algorithm Identifier")) {
-		loglog(RC_LOG_SERIOUS, "DigSig: failed to emit OID of ASN.1 Algorithm Identifier");
-		return STF_INTERNAL_ERROR;
+	/*
+	 * ???
+	 * b->size == ASN1_LEN_ALGO_IDENTIFIER; b->asn1_blob_len == ASN1_SHA2_RSA_PSS_SIZE
+	 * Why pass these separately to asn1_hash_in?
+	 * If these are universal, they could be wired into asn1_hash_in thus avoiding
+	 * an array bound that isn't a compile-time constant.
+	 * This is the only call to asn1_hash_in: why not inline it?
+	 */
+	if (!asn1_hash_in(b, a_pbs, ASN1_LEN_ALGO_IDENTIFIER, ASN1_SHA2_RSA_PSS_SIZE)) {
+		return STF_FAIL;
 	}
 
 	return STF_OK;
@@ -258,22 +239,31 @@ static stf_status asn1_hash_out(const struct asn1_hash_blob *asn1_hash_blob, pb_
 static bool asn1_hash_in(const struct asn1_hash_blob *asn1_hash_blob, pb_stream *a_pbs,
 		   uint8_t size, uint8_t asn1_blob_len)
 {
+	/* ??? dynamic array bounds are deprecated */
 	uint8_t check_size[size];
+	/* ??? dynamic array bounds are deprecated */
 	uint8_t check_blob[asn1_blob_len];
 
-
 	if (!in_raw(check_size, size, a_pbs,
-		"Algorithm Identifier length"))
+	    "Algorithm Identifier length"))
 		return FALSE;
-	if (!memeq(check_size, asn1_hash_blob->size_blob, asn1_hash_blob->size))	{
+	/*
+	 * ??? The following seems to assume asn1_hash_blob->size == size
+	 * This is true, but not self-evident.
+	 */
+	if (!memeq(check_size, asn1_hash_blob->size_blob, asn1_hash_blob->size)) {
 		loglog(RC_LOG_SERIOUS, " Received incorrect size of ASN.1 Algorithm Identifier");
 		return FALSE;
 	}
 
 	if (!in_raw(check_blob, asn1_blob_len, a_pbs,
-		"Algorithm Identifier value"))
+	    "Algorithm Identifier value"))
 		return FALSE;
-	if (!memeq(check_blob, asn1_hash_blob->asn1_blob, asn1_hash_blob->asn1_blob_len))	{
+	/*
+	 * ??? The following seems to assume asn1_hash_blob->asn1_blob_len == asn1_blob_len
+	 * This is true, but not self-evident.
+	 */
+	if (!memeq(check_blob, asn1_hash_blob->asn1_blob, asn1_hash_blob->asn1_blob_len)) {
 		loglog(RC_LOG_SERIOUS, " Received incorrect bytes of ASN.1 Algorithm Identifier");
 		return FALSE;
 	}
@@ -730,18 +720,18 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 			return FALSE;
 		}
 
-		stf_status checkstat = ikev2_check_asn1_hash_blob(hash_algo,pbs);
+		stf_status checkstat = ikev2_check_asn1_hash_blob(hash_algo, pbs);
 
 		if ((checkstat != STF_OK) && (st->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_384) &&
-					(!hash_check)) {
+					!hash_check) {
 			hash_algo = IKEv2_AUTH_HASH_SHA2_384;
-			checkstat = ikev2_check_asn1_hash_blob(hash_algo,pbs);
+			checkstat = ikev2_check_asn1_hash_blob(hash_algo, pbs);
 		}
 
 		if ((checkstat != STF_OK) && (st->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_256) &&
 					(!hash_check)) {
 			hash_algo = IKEv2_AUTH_HASH_SHA2_256;
-			checkstat = ikev2_check_asn1_hash_blob(hash_algo,pbs);
+			checkstat = ikev2_check_asn1_hash_blob(hash_algo, pbs);
 		}
 
 		if (checkstat != STF_OK ) {
@@ -956,7 +946,7 @@ bool justship_v2KE(chunk_t *g, const struct oakley_group_desc *group,
 	if (!out_struct(&v2ke, &ikev2_ke_desc, outs, &kepbs))
 		return FALSE;
 
-	if (DBGP(IMPAIR_SEND_ZERO_GX))	{
+	if (DBGP(IMPAIR_SEND_ZERO_GX)) {
 		libreswan_log("sending bogus g^x == 0 value to break DH calculations because impair-send-zero-gx was set");
 		/* Only used to test sending/receiving bogus g^x */
 		if (!out_zero(g->len, &kepbs, "ikev2 impair g^x == 0"))
@@ -3227,7 +3217,7 @@ static int ikev2_np_cp_or(const struct connection *const pc,
 			  const lset_t st_nat_traversal)
 {
 	return (pc->spd.this.modecfg_client &&
-	        (!pc->spd.this.cat || LHAS(st_nat_traversal, NATED_HOST))) ?
+		(!pc->spd.this.cat || LHAS(st_nat_traversal, NATED_HOST))) ?
 			ISAKMP_NEXT_v2CP : np;
 }
 
@@ -5057,6 +5047,8 @@ stf_status ikev2_parent_inR2(struct state *st, struct msg_digest *md)
  * Our implementation does not use <VersionIDofSecret> which means
  * once a day and while under DOS attack, we could fail a few cookies
  * until the peer restarts from scratch.
+ *
+ * TODO: This use of sha2 should be allowed even with USE_SHA2=false
  */
 static void ikev2_calc_dcookie(u_char *dcookie, chunk_t ni,
 			      const ip_address *addr, chunk_t spiI)

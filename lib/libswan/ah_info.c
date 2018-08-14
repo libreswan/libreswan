@@ -50,7 +50,9 @@ static bool ah_proposal_ok(const struct proposal_parser *parser,
 }
 
 static const struct ike_alg *default_ah_integ[] = {
+#ifdef USE_SHA1
 	&ike_alg_integ_sha1.common,
+#endif
 	NULL,
 };
 

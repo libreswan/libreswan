@@ -148,6 +148,7 @@ Automated testing uses the following:
 Assuming results are to be published in the directory results/ (see
 above), the testing script is invoked as:
 
+    $ rm -f nohup.out
     $ nohub ./libreswan-web-master/testing/web/tester.sh libreswan-web-slave results/ &
     $ tail -f nohup.out
 
@@ -254,7 +255,9 @@ end with "restart":
 
 - restart <tt>tester.sh</tt>:
 
+      $ rm -f nohup.out
       $ nohup ./libreswan-web-master/testing/web/tester.sh libreswan-web-slave results/ &
+      $ tail -f nohup.out
 
 
 ## Rebuilding

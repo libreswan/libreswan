@@ -36,9 +36,9 @@ east #
  # you should see both RSA and NULL
 east #
  grep IKEv2_AUTH_ OUTPUT/*pluto.log
-OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
+OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
-OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
+OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
 OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
 east #
 east #

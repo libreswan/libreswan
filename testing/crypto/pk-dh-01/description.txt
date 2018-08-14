@@ -1,2 +1,0 @@
-This test does a DH calculation using only software (GMP).
-

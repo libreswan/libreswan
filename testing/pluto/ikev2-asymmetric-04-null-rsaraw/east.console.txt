@@ -31,9 +31,9 @@ initdone
 east #
  grep IKEv2_AUTH_ OUTPUT/*pluto.log
 OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
-OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
+OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
 OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
-OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
+OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
 east #
  ../../pluto/bin/ipsec-look.sh
 east NOW

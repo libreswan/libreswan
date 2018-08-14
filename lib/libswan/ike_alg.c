@@ -370,11 +370,17 @@ static void check_names_in_names(const char *adjective,
  */
 
 static const struct hash_desc *hash_descriptors[] = {
+#ifdef USE_MD5
 	&ike_alg_hash_md5,
+#endif
+#ifdef USE_SHA1
 	&ike_alg_hash_sha1,
+#endif
+#ifdef USE_SHA2
 	&ike_alg_hash_sha2_256,
 	&ike_alg_hash_sha2_384,
 	&ike_alg_hash_sha2_512,
+#endif
 };
 
 static void hash_desc_check(const struct ike_alg *alg)
