@@ -94,7 +94,7 @@ road #
 road #
  grep IKEv2_AUTH_ /tmp/pluto.log
 |    auth method: IKEv2_AUTH_NULL (0xd)
-|    auth method: IKEv2_AUTH_DIGSIG (0xe)
+|    auth method: IKEv2_AUTH_RSA (0x1)
 road #
 road #
  ../bin/check-for-core.sh
