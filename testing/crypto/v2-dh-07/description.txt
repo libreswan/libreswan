@@ -1,3 +1,0 @@
-This test does a DH calculation using only software (GMP)
-according to RFC4306, using SHA1 as the PRF.
-
