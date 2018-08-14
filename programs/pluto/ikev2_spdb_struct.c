@@ -71,6 +71,8 @@ static bool ikev2_out_attr(enum ikev2_trans_attr_type type,
 			   unsigned long val,
 			   pb_stream *pbs)
 {
+	struct ikev2_trans_attr attr;
+
 	/*
 	 * IKEv2 the type determines the format that an attribute must
 	 * use (in IKEv1 it was the value that determined this).
@@ -81,10 +83,8 @@ static bool ikev2_out_attr(enum ikev2_trans_attr_type type,
 		passert((val >> 16) == 0);
 		passert((type & ISAKMP_ATTR_AF_MASK) == 0);
 		/* set the short-form attribute format bit */
-		struct ikev2_trans_attr attr = {
-			.isatr_type = type | ISAKMP_ATTR_AF_TV,
-			.isatr_lv = val,
-		};
+		attr.isatr_type = type | ISAKMP_ATTR_AF_TV;
+		attr.isatr_lv = val;
 		if (!out_struct(&attr, &ikev2_trans_attr_desc, pbs, NULL))
 			return FALSE;
 		break;

@@ -937,13 +937,12 @@ void ikev2_parent_outI1(int whack_sock,
 bool justship_v2KE(chunk_t *g, const struct oakley_group_desc *group,
 			  pb_stream *outs, u_int8_t np)
 {
+	struct ikev2_ke v2ke;
 	pb_stream kepbs;
 
-	struct ikev2_ke v2ke = {
-		.isak_np = np,
-		.isak_group = group->common.id[IKEv2_ALG_ID],
-	};
-
+	zero(&v2ke);	/* OK: no pointer fields */
+	v2ke.isak_np = np;
+	v2ke.isak_group = group->common.id[IKEv2_ALG_ID];
 	if (!out_struct(&v2ke, &ikev2_ke_desc, outs, &kepbs))
 		return FALSE;
 
@@ -1007,18 +1006,20 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 	/* HDR out */
 	pb_stream rbody;
 	{
-		struct isakmp_hdr hdr = {
-			.isa_np = st->st_dcookie.ptr != NULL ?
-				ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2SA,
-			.isa_version = build_ikev2_version(),
-			.isa_xchg = ISAKMP_v2_SA_INIT,
-			.isa_flags = ISAKMP_FLAGS_v2_IKE_I,
-			.isa_msgid = v2_INITIAL_MSGID,
-		};
+		struct isakmp_hdr hdr;
+
+		zero(&hdr);	/* OK: no pointer fields */
+		hdr.isa_version = build_ikev2_version();
+
+		hdr.isa_np = st->st_dcookie.ptr != NULL ?
+			ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2SA;
+		hdr.isa_xchg = ISAKMP_v2_SA_INIT;
+		hdr.isa_msgid = v2_INITIAL_MSGID;
 		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 		/* R-cookie left as zero */
 
 		/* add original initiator flag - version flag could be set */
+		hdr.isa_flags = ISAKMP_FLAGS_v2_IKE_I;
 		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
@@ -1085,11 +1086,12 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 
 	/* send NONCE */
 	{
+		struct ikev2_generic in;
 		pb_stream pb;
-		struct ikev2_generic in = {
-			.isag_np = ISAKMP_NEXT_v2N,
-			.isag_critical = build_ikev2_critical(false),
-		};
+
+		zero(&in);	/* OK: no pointer fields */
+		in.isag_np = ISAKMP_NEXT_v2N;
+		in.isag_critical = build_ikev2_critical(false);
 
 		if (!out_struct(&in, &ikev2_nonce_desc, &rbody, &pb) ||
 		    !out_chunk(st->st_ni, &pb, "IKEv2 nonce"))
@@ -1673,11 +1675,13 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	/* send NONCE */
 	unpack_nonce(&st->st_nr, r);
 	{
+		int np = ISAKMP_NEXT_v2N;
+		struct ikev2_generic in;
 		pb_stream pb;
-		struct ikev2_generic in = {
-			.isag_np = ISAKMP_NEXT_v2N,
-			.isag_critical = build_ikev2_critical(false),
-		};
+
+		zero(&in);	/* OK: no pointers */
+		in.isag_np = np;
+		in.isag_critical = build_ikev2_critical(false);
 
 		if (!out_struct(&in, &ikev2_nonce_desc, &rbody, &pb) ||
 		    !out_chunk(st->st_nr, &pb, "IKEv2 nonce"))
@@ -2771,12 +2775,11 @@ bool ikev2_decrypt_msg(struct state *st, struct msg_digest *md)
 static stf_status ikev2_ship_cp_attr_ip(u_int16_t type, ip_address *ip,
 		const char *story, pb_stream *outpbs)
 {
+	struct ikev2_cp_attribute attr;
 	pb_stream a_pbs;
 
-	struct ikev2_cp_attribute attr = {
-		.type = type,
-		.len = (ip == NULL) ? 0 : addrlenof(ip),
-	};
+	attr.type = type;
+	attr.len = (ip == NULL) ? 0 : addrtypeof(ip) == AF_INET ? 4 : 32;
 
 	if (!out_struct(&attr, &ikev2_cp_attribute_desc, outpbs,
 				&a_pbs))
@@ -2796,11 +2799,14 @@ static stf_status ikev2_ship_cp_attr_ip(u_int16_t type, ip_address *ip,
 static stf_status ikev2_ship_cp_attr_str(u_int16_t type, char *str,
 		const char *story, pb_stream *outpbs)
 {
+	struct ikev2_cp_attribute attr;
 	pb_stream a_pbs;
-	struct ikev2_cp_attribute attr = {
-		.type = type,
-		.len = (str == NULL) ? 0 : strlen(str),
-	};
+
+	attr.type = type;
+	if (str == NULL)
+		attr.len = 0;
+	else
+		attr.len = strlen(str);
 
 	if (!out_struct(&attr, &ikev2_cp_attribute_desc, outpbs,
 				&a_pbs))
@@ -2818,17 +2824,17 @@ static stf_status ikev2_ship_cp_attr_str(u_int16_t type, char *str,
 stf_status ikev2_send_cp(struct state *st, enum next_payload_types_ikev2 np,
 				  pb_stream *outpbs)
 {
+	struct ikev2_cp cp;
 	pb_stream cp_pbs;
 	struct connection *c = st->st_connection;
 	bool cfg_reply = c->spd.that.has_lease;
 
 	DBG(DBG_CONTROLMORE, DBG_log("Send Configuration Payload %s ",
 				cfg_reply ? "reply" : "request"));
-	struct ikev2_cp cp = {
-		.isacp_np = np,
-		.isacp_critical = ISAKMP_PAYLOAD_NONCRITICAL,
-		.isacp_type = cfg_reply ? IKEv2_CP_CFG_REPLY : IKEv2_CP_CFG_REQUEST,
-	};
+	zero(&cp);	/* OK: no pointer fields */
+	cp.isacp_critical = ISAKMP_PAYLOAD_NONCRITICAL;
+	cp.isacp_np = np;
+	cp.isacp_type = cfg_reply ? IKEv2_CP_CFG_REPLY : IKEv2_CP_CFG_REQUEST;
 
 	if (!out_struct(&cp, &ikev2_cp_desc, outpbs, &cp_pbs))
 		return STF_INTERNAL_ERROR;
@@ -2906,6 +2912,7 @@ static stf_status ikev2_send_auth(struct connection *c,
 				  pb_stream *outpbs,
 				  chunk_t *null_auth)
 {
+	struct ikev2_a a;
 	pb_stream a_pbs;
 	struct state *pst = IS_CHILD_SA(st) ?
 		state_with_serialno(st->st_clonedfrom) : st;
@@ -2930,10 +2937,8 @@ static stf_status ikev2_send_auth(struct connection *c,
 	/* ??? isn't c redundant? */
 	pexpect(c == st->st_connection);
 
-	struct ikev2_a a = {
-		.isaa_np = np,
-		.isaa_critical = build_ikev2_critical(false),
-	};
+	a.isaa_critical = build_ikev2_critical(false);
+	a.isaa_np = np;
 
 	switch (authby) {
 	case AUTH_RSASIG:
@@ -3055,11 +3060,13 @@ static stf_status ikev2_record_outbound_fragment(
 	/* HDR out */
 	pb_stream rbody;
 
-	hdr->isa_np = ISAKMP_NEXT_v2SKF;
+	{
+		hdr->isa_np = ISAKMP_NEXT_v2SKF;
 
-	if (!out_struct(hdr, &isakmp_hdr_desc, &frag_stream,
-			&rbody))
-		return STF_INTERNAL_ERROR;
+		if (!out_struct(hdr, &isakmp_hdr_desc, &frag_stream,
+				&rbody))
+			return STF_INTERNAL_ERROR;
+	}
 
 	/* insert an Encryption Fragment payload header (SKF) */
 	pb_stream e_pbs;
@@ -3306,34 +3313,28 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 
 	/* HDR out */
 
-	/* XXX references to cst should be to parent state??? */
-	struct isakmp_hdr hdr = {
-		.isa_np = IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH) ?
-			ISAKMP_NEXT_v2UNKNOWN : ISAKMP_NEXT_v2SK,
-		.isa_version = build_ikev2_version(),
-		.isa_xchg = ISAKMP_v2_AUTH,
-		.isa_flags = ISAKMP_FLAGS_v2_IKE_I,	/* original initiator; all other flags clear */
-		.isa_msgid = cst->st_msgid,
-	};
+	struct isakmp_hdr hdr;
 
+	/* XXX it should pick the cookies from the parent state! */
 	memcpy(hdr.isa_icookie, cst->st_icookie, COOKIE_SIZE);
 	memcpy(hdr.isa_rcookie, cst->st_rcookie, COOKIE_SIZE);
+	hdr.isa_np = IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH) ?
+		ISAKMP_NEXT_v2UNKNOWN : ISAKMP_NEXT_v2SK;
+	hdr.isa_version = build_ikev2_version();
+	hdr.isa_xchg = ISAKMP_v2_AUTH;
+	/* XXX same here, use parent */
+	hdr.isa_msgid = cst->st_msgid;
 
+	/* set original initiator; all other flags clear */
+	hdr.isa_flags = ISAKMP_FLAGS_v2_IKE_I;
 	if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
 		hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 	}
 
 	pb_stream rbody;
-
 	if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
 			&rbody))
 		return STF_INTERNAL_ERROR;
-
-	if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH)) {
-		if (!ship_v2UNKNOWN(&rbody, "AUTH request")) {
-			return STF_INTERNAL_ERROR;
-		}
-	}
 
 	/* insert an Encryption payload header (SK) */
 	pb_stream e_pbs;
@@ -3342,6 +3343,12 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		.isag_np = ISAKMP_NEXT_v2IDi,
 		.isag_critical = build_ikev2_critical(false),
 	};
+
+	if (IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH)) {
+		if (!ship_v2UNKNOWN(&rbody, "AUTH request")) {
+			return STF_INTERNAL_ERROR;
+		}
+	}
 
 	if (!out_struct(&e, &ikev2_sk_desc, &rbody, &e_pbs))
 		return STF_INTERNAL_ERROR;
@@ -3488,8 +3495,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 			r_id.isai_np = ic ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2AUTH;
 
 			if (!out_struct(&r_id, &ikev2_id_r_desc, &e_pbs_cipher,
-				&r_id_pbs) ||
-			    !out_chunk(id_b, &r_id_pbs, "IDr"))
+				&r_id_pbs) || !out_chunk(id_b, &r_id_pbs, "IDr"))
 				return STF_INTERNAL_ERROR;
 
 			close_output_pbs(&r_id_pbs);
@@ -4143,6 +4149,8 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 
 	/* send response */
 	{
+		struct ikev2_generic e;
+		pb_stream e_pbs;
 		struct isakmp_hdr hdr;
 		int notifies = 0;
 
@@ -4203,15 +4211,10 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 		bool send_cert = ikev2_send_cert_decision(st);
 
 		/* insert an Encryption payload header */
-		pb_stream e_pbs;
-		struct ikev2_generic e = {
-			.isag_np = IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK) ?
-					ISAKMP_NEXT_v2UNKNOWN :
-				(notifies != 0) ?
-					ISAKMP_NEXT_v2N :
-					ISAKMP_NEXT_v2IDr,
-			.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL,
-		};
+		e.isag_np = IMPAIR(ADD_UNKNOWN_PAYLOAD_TO_AUTH_SK) ? ISAKMP_NEXT_v2UNKNOWN :
+			(notifies != 0) ? ISAKMP_NEXT_v2N :
+			ISAKMP_NEXT_v2IDr;
+		e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 
 		if (!out_struct(&e, &ikev2_sk_desc, &rbody, &e_pbs))
 			return STF_INTERNAL_ERROR;
@@ -5297,26 +5300,22 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
 		/* send NONCE */
+		struct ikev2_generic in;
+		pb_stream pb_nr;
 
 		if (!ikev2_rekey_child_req(cst, &rekey_spi))
 			return STF_INTERNAL_ERROR;
 
-		struct ikev2_generic in = {
-			.isag_np = (cst->st_pfs_group != NULL) ?
-					ISAKMP_NEXT_v2KE :
-				rekey_spi.len > 0 ?
-					ISAKMP_NEXT_v2N :
-					ISAKMP_NEXT_v2TSi,
-			.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL,
-		};
-		pb_stream pb_nr;
-
+		zero(&in);      /* OK: no pointer fields */
+		in.isag_np = (cst->st_pfs_group != NULL) ? ISAKMP_NEXT_v2KE :
+			      rekey_spi.len > 0 ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2TSi;
+		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
 			libreswan_log(" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
 			in.isag_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
 		}
 		if (!out_struct(&in, &ikev2_nonce_desc, outpbs, &pb_nr) ||
-		    !out_chunk(cst->st_ni, &pb_nr, "IKEv2 nonce"))
+				!out_chunk(cst->st_ni, &pb_nr, "IKEv2 nonce"))
 			return STF_INTERNAL_ERROR;
 		close_output_pbs(&pb_nr);
 
@@ -5418,17 +5417,17 @@ static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
 
 	/* send NONCE */
 	{
-		struct ikev2_generic in = {
-			.isag_np = ISAKMP_NEXT_v2KE,
-		};
+		struct ikev2_generic in;
 		pb_stream nr_pbs;
 
+		zero(&in);      /* OK: no pointer fields */
+		in.isag_np = ISAKMP_NEXT_v2KE;
 		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
 			libreswan_log(" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
 			in.isag_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
 		}
 		if (!out_struct(&in, &ikev2_nonce_desc, outpbs, &nr_pbs) ||
-		    !out_chunk(local_nonce, &nr_pbs, "IKEv2 nonce"))
+				!out_chunk(local_nonce, &nr_pbs, "IKEv2 nonce"))
 			return STF_INTERNAL_ERROR;
 		close_output_pbs(&nr_pbs);
 
@@ -5676,6 +5675,8 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 {
 	struct state *st = md->st;
 	struct state *pst = state_with_serialno(st->st_clonedfrom);
+	struct ikev2_generic e;
+	pb_stream e_pbs;
 	stf_status ret;
 
 	passert(pst != NULL);
@@ -5689,14 +5690,14 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 	/* HDR out Start assembling respone message */
 	pb_stream rbody;
 	{
-		struct isakmp_hdr hdr = {
-			.isa_np = ISAKMP_NEXT_v2SK,
-			.isa_version = build_ikev2_version(),
-			.isa_xchg = ISAKMP_v2_CREATE_CHILD_SA,
-		};
+		struct isakmp_hdr hdr;
 
+		zero(&hdr);	/* OK: no pointer fields */
+		hdr.isa_version = build_ikev2_version();
 		memcpy(hdr.isa_rcookie, pst->st_rcookie, COOKIE_SIZE);
 		memcpy(hdr.isa_icookie, pst->st_icookie, COOKIE_SIZE);
+		hdr.isa_xchg = ISAKMP_v2_CREATE_CHILD_SA;
+		hdr.isa_np = ISAKMP_NEXT_v2SK;
 		if (IS_CHILD_SA_RESPONDER(st)) {
 			hdr.isa_msgid = htonl(md->msgid_received);
 			hdr.isa_flags = ISAKMP_FLAGS_v2_MSG_R; /* response on */
@@ -5722,16 +5723,10 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 	}
 
 	/* insert an Encryption payload header */
-	pb_stream e_pbs;
-
-	{
-		struct ikev2_generic e = {
-			.isag_np = ISAKMP_NEXT_v2SA,
-			.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL,
-		};
-		if (!out_struct(&e, &ikev2_sk_desc, &rbody, &e_pbs))
-			return STF_INTERNAL_ERROR;
-	}
+	e.isag_np = ISAKMP_NEXT_v2SA;
+	e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
+	if (!out_struct(&e, &ikev2_sk_desc, &rbody, &e_pbs))
+		return STF_INTERNAL_ERROR;
 
 	/* IV */
 	uint8_t *iv = e_pbs.cur;
@@ -6116,23 +6111,28 @@ static void mobike_switch_remote(struct msg_digest *md, struct mobike *est_remot
 	}
 }
 
-static stf_status add_mobike_response_payloads(
-		int np,
-		chunk_t *cookie2,	/* freed by us */
-		struct msg_digest *md,
-		pb_stream *pbs)
+static stf_status add_mobike_response_payloads(int np, chunk_t *cookie2,
+					 struct msg_digest *md, pb_stream *pbs)
 {
-	DBG(DBG_CONTROLMORE, DBG_log("adding NATD%s payloads to MOBIKE response",
-				cookie2->len != 0 ? " and cookie2" : ""));
+	struct ikev2_generic in;
 
-	stf_status r = STF_INTERNAL_ERROR;
+	DBG(DBG_CONTROLMORE, DBG_log("adding NATD %s payloads to MOBIKE response",
+				cookie2->len != 0 ? "and cookie2 " : ""));
 
-	if (ikev2_out_nat_v2n(np, pbs, md) &&
-	    (cookie2->len == 0 || ship_v2Nsp(ISAKMP_NEXT_v2NONE, v2N_COOKIE2, cookie2, pbs)))
-		r = STF_OK;
+	zero(&in);      /* OK: no pointers */
+	in.isag_np = np;
+	in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
+	if (!ikev2_out_nat_v2n(np, pbs, md))
+		return STF_INTERNAL_ERROR;
+	if (cookie2->len != 0) {
+		if (!ship_v2Nsp(ISAKMP_NEXT_v2NONE, v2N_COOKIE2, cookie2, pbs)) {
+			freeanychunk(*cookie2);
+			return STF_INTERNAL_ERROR;
+		}
+		freeanychunk(*cookie2);
+	}
 
-	freeanychunk(*cookie2);
-	return r;
+	return STF_OK;
 }
 /*
  *
@@ -6154,6 +6154,7 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 						 struct msg_digest *md)
 {
 	struct payload_digest *p;
+	bool send_mobike_resp = FALSE;
 	int ndp = 0;	/* number Delete payloads for IPsec protocols */
 	bool del_ike = FALSE;	/* any IKE SA Deletions? */
 
@@ -6194,8 +6195,6 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 	/*
 	 * Process NOTITY payloads - ignore MOBIKE when deleting
 	 */
-	bool send_mobike_resp = FALSE;	/* only if responding */
-
 	if (md->chain[ISAKMP_NEXT_v2D] == NULL) {
 
 		if (responding) {
@@ -6275,7 +6274,6 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		libreswan_log("Odd: INFORMATIONAL Exchange deletes IKE SA and yet also deletes some IPsec SA");
 
 	}
-
 	/*
 	 * response packet preparation: DELETE or non-delete (eg MOBIKE/keepalive)
 	 *
@@ -6291,18 +6289,13 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 	 * If we received NAT detection payloads as per MOBIKE, send answers
 	 */
 
-	/*
-	 * Variables for generating response.
-	 * NOTE: only meaningful if "responding" is true!
-	 */
+	/* variables for generating response (if we are responding) */
 
+	pb_stream e_pbs, e_pbs_cipher;
 	unsigned char *iv = NULL;	/* initialized to silence GCC */
 	unsigned char *encstart = NULL;	/* initialized to silence GCC */
 
 	pb_stream rbody;
-	pb_stream e_pbs;
-	pb_stream e_pbs_cipher;
-
 
 	if (responding) {
 		/* make sure HDR is at start of a clean buffer */
@@ -6317,16 +6310,17 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 
 		/* HDR out */
 		{
-			struct isakmp_hdr hdr = {
-				.isa_np = ISAKMP_NEXT_v2SK,
-				.isa_version = build_ikev2_version(),
-				.isa_xchg = ISAKMP_v2_INFORMATIONAL,
-				.isa_flags = ISAKMP_FLAGS_v2_MSG_R,
-				.isa_msgid = htonl(md->msgid_received),
-			};
+			struct isakmp_hdr hdr;
 
+			zero(&hdr);	/* OK: no pointer fields */
+			hdr.isa_version = build_ikev2_version();
 			memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
 			memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
+			hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
+			hdr.isa_np = ISAKMP_NEXT_v2SK;
+			hdr.isa_msgid = htonl(md->msgid_received);
+
+			hdr.isa_flags = ISAKMP_FLAGS_v2_MSG_R;
 			if (ike->sa.st_sa_role == SA_INITIATOR)
 				hdr.isa_flags |= ISAKMP_FLAGS_v2_IKE_I;
 			if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG))
@@ -6338,7 +6332,6 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		}
 
 		/* insert an Encryption payload header */
-
 		{
 			struct ikev2_generic e;
 
@@ -6376,15 +6369,13 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 		move_pbs_previous_np(&e_pbs_cipher, &e_pbs);	/* backpatching obligation */
 
 		encstart = e_pbs_cipher.cur;
+	}
 
-		if (send_mobike_resp) {
-			int np = (cookie2.len != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE;
-			stf_status e = add_mobike_response_payloads(np,
-				&cookie2,	/* will be freed */
-				md, &e_pbs_cipher);
-			if (e != STF_OK)
-				return e;
-		}
+	if (send_mobike_resp) {
+		int np = (cookie2.len != 0) ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2NONE;
+		stf_status e = add_mobike_response_payloads(np, &cookie2, md, &e_pbs_cipher);
+		if (e != STF_OK)
+			return e;
 	}
 
 	/*
@@ -6497,25 +6488,32 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 
 				if (!del_ike && responding) {
 					/* build output Delete Payload */
+					struct ikev2_delete v2del_tmp;
+
+					zero(&v2del_tmp);	/* OK: no pointer fields */
 
 					passert(pli < ndp);
 					pli++;
-					struct ikev2_delete v2del_tmp = {
-						.isad_np = (pli == ndp) ?
-							ISAKMP_NEXT_v2NONE : ISAKMP_NEXT_v2D,
-						.isad_protoid = v2del->isad_protoid,
-						.isad_spisize = v2del->isad_spisize,
-						.isad_nrspi = j,
-					};
+					v2del_tmp.isad_np = (pli == ndp) ?
+						ISAKMP_NEXT_v2NONE : ISAKMP_NEXT_v2D;
 
-					/* Emit delete payload header and SPI values */
+					v2del_tmp.isad_protoid =
+						v2del->isad_protoid;
+					v2del_tmp.isad_spisize =
+						v2del->isad_spisize;
+					v2del_tmp.isad_nrspi = j;
+
+					/* Emit delete payload header out */
 					pb_stream del_pbs;	/* output stream */
 
 					if (!out_struct(&v2del_tmp,
 							&ikev2_delete_desc,
 							&e_pbs_cipher,
-							&del_pbs) ||
-					    !out_raw(spi_buf,
+							&del_pbs))
+						return STF_INTERNAL_ERROR;
+
+					/* Emit values of SPI to be sent to the peer */
+					if (!out_raw(spi_buf,
 							j * sizeof(spi_buf[0]),
 							&del_pbs,
 							"local SPIs"))

@@ -164,12 +164,12 @@ static bool out_attr(int type,
 	      enum_names *const *attr_val_descs,
 	      pb_stream *pbs)
 {
+	struct isakmp_attribute attr;
+
 	if (val >> 16 == 0) {
 		/* short value: use TV form */
-		struct isakmp_attribute attr = {
-			.isaat_af_type = type | ISAKMP_ATTR_AF_TV,
-			.isaat_lv = val,
-		};
+		attr.isaat_af_type = type | ISAKMP_ATTR_AF_TV;
+		attr.isaat_lv = val;
 		if (!out_struct(&attr, attr_desc, pbs, NULL))
 			return FALSE;
 	} else {
@@ -184,10 +184,8 @@ static bool out_attr(int type,
 		u_int32_t nval = htonl(val);
 
 		passert((type & ISAKMP_ATTR_AF_MASK) == 0);
-		struct isakmp_attribute attr = {
-			.isaat_af_type = type | ISAKMP_ATTR_AF_TLV,
-			.isaat_lv = sizeof(nval),
-		};
+		attr.isaat_af_type = type | ISAKMP_ATTR_AF_TLV;
+		attr.isaat_lv = sizeof(nval);
 		if (!out_struct(&attr, attr_desc, pbs, &val_pbs) ||
 		    !out_raw(&nval, sizeof(nval), &val_pbs,
 			     "long attribute value"))
@@ -687,8 +685,9 @@ bool ikev1_out_sa(pb_stream *outs,
 						      OAKLEY_LIFE_SECONDS,
 						      attr_desc,
 						      attr_val_descs,
-						      &trans_pbs) ||
-					    !out_attr(OAKLEY_LIFE_DURATION,
+						      &trans_pbs))
+						goto fail;
+					if (!out_attr(OAKLEY_LIFE_DURATION,
 						      deltasecs(st->st_connection->sa_ike_life_seconds),
 						      attr_desc,
 						      attr_val_descs,
@@ -719,8 +718,9 @@ bool ikev1_out_sa(pb_stream *outs,
 						      SA_LIFE_TYPE_SECONDS,
 						      attr_desc,
 						      attr_val_descs,
-						      &trans_pbs) ||
-					    !out_attr(SA_LIFE_DURATION,
+						      &trans_pbs))
+						goto fail;
+					if (!out_attr(SA_LIFE_DURATION,
 						      deltasecs(st->st_connection->sa_ipsec_life_seconds),
 						      attr_desc,
 						      attr_val_descs,
@@ -730,24 +730,27 @@ bool ikev1_out_sa(pb_stream *outs,
 #ifdef HAVE_LABELED_IPSEC
 					if (st->sec_ctx != NULL &&
 					    st->st_connection->labeled_ipsec) {
-						passert(st->sec_ctx->ctx.ctx_len <= MAX_SECCTX_LEN);
-
+						struct isakmp_attribute attr;
 						pb_stream val_pbs;
-						struct isakmp_attribute attr = {
-							.isaat_af_type =
-								secctx_attr_type |
-								ISAKMP_ATTR_AF_TLV,
-						};
+
+						passert(st->sec_ctx->ctx.ctx_len <= MAX_SECCTX_LEN);
+						attr.isaat_af_type =
+							secctx_attr_type |
+							ISAKMP_ATTR_AF_TLV;
 
 						if (!out_struct(&attr,
 								attr_desc,
 								&trans_pbs,
-								&val_pbs) ||
-						    !out_struct(&st->sec_ctx->ctx,
+								&val_pbs))
+							goto fail;
+
+						if (!out_struct(&st->sec_ctx->ctx,
 								&sec_ctx_desc,
 								&val_pbs,
-								NULL) ||
-						    !out_raw(st->sec_ctx->
+								NULL))
+							goto fail;
+
+						if (!out_raw(st->sec_ctx->
 							     sec_ctx_value,
 							     st->sec_ctx->ctx.ctx_len, &val_pbs,
 							     " variable length sec ctx"))

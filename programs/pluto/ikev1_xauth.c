@@ -290,23 +290,20 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 			if (e != NULL) {
 				loglog(RC_LOG_SERIOUS, "Invalid DNS IPv4 %s:%s", ipstr, e);
 				return STF_INTERNAL_ERROR;
+			} else {
+				/* emit attribute's value */
+				len = addrbytesptr_read(&dnsip, &byte_ptr);
+				ok = out_raw(byte_ptr, len, &attrval, "IP4_dns");
+				close_output_pbs(&attrval);
 			}
-			/* emit attribute's value */
-			len = addrbytesptr_read(&dnsip, &byte_ptr);
-			if (!out_raw(byte_ptr, len, &attrval, "IP4_dns"))
-				return STF_INTERNAL_ERROR;
 
 			ipstr = strtok(NULL, ", ");
 			if (ipstr != NULL) {
-				/* end this attribute */
-				close_output_pbs(&attrval);
-
-				/* start the next attribute */
 				if (!out_struct(&attr,
-						&isakmp_xauth_attribute_desc,
-						strattr,
-						&attrval))
-					return STF_INTERNAL_ERROR;
+					&isakmp_xauth_attribute_desc,
+					strattr,
+					&attrval))
+				return STF_INTERNAL_ERROR;
 			}
 		}
 		break;
@@ -408,12 +405,11 @@ static stf_status modecfg_resp(struct state *st,
 		struct connection *c = st->st_connection;
 
 		{
-			struct isakmp_mode_attr attrh = {
-				.isama_np = ISAKMP_NEXT_NONE,
-				.isama_type = replytype,
-				.isama_identifier = ap_id,
-			};
+			struct isakmp_mode_attr attrh;
 
+			attrh.isama_np = ISAKMP_NEXT_NONE;
+			attrh.isama_type = replytype;
+			attrh.isama_identifier = ap_id;
 			if (!out_struct(&attrh, &isakmp_attr_desc, rbody, &strattr))
 				return STF_INTERNAL_ERROR;
 		}
@@ -519,21 +515,21 @@ static stf_status modecfg_send_set(struct state *st)
 	change_state(st, STATE_MODE_CFG_R1);
 	/* HDR out */
 	{
-		struct isakmp_hdr hdr = {
-			.isa_np = ISAKMP_NEXT_HASH,
-			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
-				  ISAKMP_MINOR_VERSION,
-			.isa_xchg = ISAKMP_XCHG_MODE_CFG,
-			.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION,
-			.isa_msgid = st->st_msgid_phase15,
-		};
+		struct isakmp_hdr hdr;
 
+		zero(&hdr);	/* OK: no pointer fields */
+		hdr.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
+				  ISAKMP_MINOR_VERSION;
+		hdr.isa_np = ISAKMP_NEXT_HASH;
+		hdr.isa_xchg = ISAKMP_XCHG_MODE_CFG;
+		hdr.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION;
 		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
 
 		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
+		hdr.isa_msgid = st->st_msgid_phase15;
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply, &rbody))
 			return STF_INTERNAL_ERROR;
@@ -616,20 +612,20 @@ stf_status xauth_send_request(struct state *st)
 
 	/* HDR out */
 	{
-		struct isakmp_hdr hdr = {
-			.isa_np = ISAKMP_NEXT_HASH,
-			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
-				  ISAKMP_MINOR_VERSION,
-			.isa_xchg = ISAKMP_XCHG_MODE_CFG,
-			.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION,
-			.isa_msgid = st->st_msgid_phase15,
-		};
+		struct isakmp_hdr hdr;
 
+		zero(&hdr);	/* OK: no pointer fields */
+		hdr.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
+				  ISAKMP_MINOR_VERSION;
+		hdr.isa_np = ISAKMP_NEXT_HASH;
+		hdr.isa_xchg = ISAKMP_XCHG_MODE_CFG;
+		hdr.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION;
 		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
 		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
+		hdr.isa_msgid = st->st_msgid_phase15;
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply, &rbody))
 			return STF_INTERNAL_ERROR;
@@ -639,29 +635,29 @@ stf_status xauth_send_request(struct state *st)
 
 	/* ATTR out */
 	{
-		struct isakmp_mode_attr attrh = {
-			.isama_np = ISAKMP_NEXT_NONE,
-			.isama_type = ISAKMP_CFG_REQUEST,
-			.isama_identifier = 0,
-		};
+		struct isakmp_mode_attr attrh;
+		struct isakmp_attribute attr;
 		pb_stream strattr;
 
+		attrh.isama_np = ISAKMP_NEXT_NONE;
+		attrh.isama_type = ISAKMP_CFG_REQUEST;
+		attrh.isama_identifier = 0;
+		if (!out_struct(&attrh, &isakmp_attr_desc, &rbody, &strattr))
+			return STF_INTERNAL_ERROR;
+
 		/* Empty name attribute */
-		struct isakmp_attribute nm = {
-			.isaat_af_type = XAUTH_USER_NAME,
-		};
+		attr.isaat_af_type = XAUTH_USER_NAME;
+		if (!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr,
+				NULL))
+			return STF_INTERNAL_ERROR;
 
 		/* Empty password attribute */
-		struct isakmp_attribute pw = {
-			.isaat_af_type = XAUTH_USER_PASSWORD,
-		};
+		attr.isaat_af_type = XAUTH_USER_PASSWORD;
+		if (!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr,
+				NULL))
+			return STF_INTERNAL_ERROR;
 
-		if (!out_struct(&attrh, &isakmp_attr_desc, &rbody, &strattr) ||
-		    !out_struct(&nm, &isakmp_xauth_attribute_desc, &strattr,
-				NULL) ||
-		    !out_struct(&pw, &isakmp_xauth_attribute_desc, &strattr,
-				NULL) ||
-		    !ikev1_close_message(&strattr, st))
+		if (!ikev1_close_message(&strattr, st))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -729,21 +725,21 @@ stf_status modecfg_send_request(struct state *st)
 
 	/* HDR out */
 	{
-		struct isakmp_hdr hdr = {
-			.isa_np = ISAKMP_NEXT_HASH,
-			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
-				  ISAKMP_MINOR_VERSION,
-			.isa_xchg = ISAKMP_XCHG_MODE_CFG,
-			.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION,
-			.isa_msgid = st->st_msgid_phase15,
-		};
+		struct isakmp_hdr hdr;
 
+		zero(&hdr);	/* OK: no pointer fields */
+		hdr.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
+				  ISAKMP_MINOR_VERSION;
+		hdr.isa_np = ISAKMP_NEXT_HASH;
+		hdr.isa_xchg = ISAKMP_XCHG_MODE_CFG;
+		hdr.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION;
 		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
 
 		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
+		hdr.isa_msgid = st->st_msgid_phase15;
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply, &rbody))
 			return STF_INTERNAL_ERROR;
@@ -753,30 +749,51 @@ stf_status modecfg_send_request(struct state *st)
 
 	/* ATTR out */
 	{
-		struct isakmp_mode_attr attrh = {
-			.isama_np = ISAKMP_NEXT_NONE,
-			.isama_type = ISAKMP_CFG_REQUEST,
-			.isama_identifier = 0,
-		};
+		struct isakmp_mode_attr attrh;
+		struct isakmp_attribute attr;
 		pb_stream strattr;
 
+		attrh.isama_np = ISAKMP_NEXT_NONE;
+		attrh.isama_type = ISAKMP_CFG_REQUEST;
+		attrh.isama_identifier = 0;
 		if (!out_struct(&attrh, &isakmp_attr_desc, &rbody, &strattr))
 			return STF_INTERNAL_ERROR;
 
-		/* generate LOT of empty attributes */
-		static const u_int16_t at[] = {
-			INTERNAL_IP4_ADDRESS, INTERNAL_IP4_NETMASK,
-			INTERNAL_IP4_DNS, MODECFG_BANNER, MODECFG_DOMAIN,
-			CISCO_SPLIT_INC, 0  };
+		/* Empty IPv4 address */
+		attr.isaat_af_type = INTERNAL_IP4_ADDRESS;
+		if (!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr,
+				NULL))
+			return STF_INTERNAL_ERROR;
 
-		for (const u_int16_t *p = at; *p != 0; p++) {
-			struct isakmp_attribute attr = {
-				.isaat_af_type = *p,
-			};
-			if (!out_struct(&attr, &isakmp_xauth_attribute_desc,
-					&strattr, NULL))
-				return STF_INTERNAL_ERROR;
-		}
+		/* Empty IPv4 netmask */
+		attr.isaat_af_type = INTERNAL_IP4_NETMASK;
+		if (!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr,
+				NULL))
+			return STF_INTERNAL_ERROR;
+
+		/* Empty INTERNAL_IP4_DNS */
+		attr.isaat_af_type = INTERNAL_IP4_DNS;
+		if (!out_struct(&attr, &isakmp_xauth_attribute_desc,
+				&strattr, NULL))
+			return STF_INTERNAL_ERROR;
+
+		/* Empty banner */
+		attr.isaat_af_type = MODECFG_BANNER;
+		if (!out_struct(&attr, &isakmp_xauth_attribute_desc,
+				&strattr, NULL))
+			return STF_INTERNAL_ERROR;
+
+		/* Empty domain */
+		attr.isaat_af_type = MODECFG_DOMAIN;
+		if (!out_struct(&attr, &isakmp_xauth_attribute_desc,
+				&strattr, NULL))
+			return STF_INTERNAL_ERROR;
+
+		/* Empty Cisco split */
+		attr.isaat_af_type = CISCO_SPLIT_INC;
+		if (!out_struct(&attr, &isakmp_xauth_attribute_desc,
+				&strattr, NULL))
+			return STF_INTERNAL_ERROR;
 
 		if (!ikev1_close_message(&strattr, st))
 			return STF_INTERNAL_ERROR;
@@ -828,20 +845,20 @@ static stf_status xauth_send_status(struct state *st, int status)
 
 	/* HDR out */
 	{
-		struct isakmp_hdr hdr = {
-			.isa_np = ISAKMP_NEXT_HASH,
-			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
-				  ISAKMP_MINOR_VERSION,
-			.isa_xchg = ISAKMP_XCHG_MODE_CFG,
-			.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION,
-			.isa_msgid = st->st_msgid_phase15,
-		};
+		struct isakmp_hdr hdr;
 
+		zero(&hdr);	/* OK: no pointer fields */
+		hdr.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
+				  ISAKMP_MINOR_VERSION;
+		hdr.isa_np = ISAKMP_NEXT_HASH;
+		hdr.isa_xchg = ISAKMP_XCHG_MODE_CFG;
+		hdr.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION;
 		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
 		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
+		hdr.isa_msgid = st->st_msgid_phase15;
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply, &rbody))
 			return STF_INTERNAL_ERROR;
@@ -851,22 +868,23 @@ static stf_status xauth_send_status(struct state *st, int status)
 
 	/* ATTR out */
 	{
-		struct isakmp_mode_attr attrh = {
-			.isama_np = ISAKMP_NEXT_NONE,
-			.isama_type = ISAKMP_CFG_SET,
-			.isama_identifier = 0,
-		};
+		struct isakmp_mode_attr attrh;
+		struct isakmp_attribute attr;
 		pb_stream strattr;
-		/* ISAKMP attr out (status) */
-		struct isakmp_attribute attr = {
-			.isaat_af_type = XAUTH_STATUS | ISAKMP_ATTR_AF_TV,
-			.isaat_lv = status,
-		};
 
-		if (!out_struct(&attrh, &isakmp_attr_desc, &rbody, &strattr) ||
-		    !out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr,
-				NULL) ||
-		    !ikev1_close_message(&strattr, st))
+		attrh.isama_np = ISAKMP_NEXT_NONE;
+		attrh.isama_type = ISAKMP_CFG_SET;
+		attrh.isama_identifier = 0;
+		if (!out_struct(&attrh, &isakmp_attr_desc, &rbody, &strattr))
+			return STF_INTERNAL_ERROR;
+
+		/* ISAKMP attr out (status) */
+		attr.isaat_af_type = XAUTH_STATUS | ISAKMP_ATTR_AF_TV;
+		attr.isaat_lv = status;
+		if (!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr,
+				NULL))
+			return STF_INTERNAL_ERROR;
+		if (!ikev1_close_message(&strattr, st))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -2010,12 +2028,11 @@ static stf_status xauth_client_resp(struct state *st,
 		pb_stream strattr;
 
 		{
-			struct isakmp_mode_attr attrh = {
-				.isama_np = ISAKMP_NEXT_NONE,
-				.isama_type = ISAKMP_CFG_REPLY,
-				.isama_identifier = ap_id,
-			};
+			struct isakmp_mode_attr attrh;
 
+			attrh.isama_np = ISAKMP_NEXT_NONE;
+			attrh.isama_type = ISAKMP_CFG_REPLY;
+			attrh.isama_identifier = ap_id;
 			if (!out_struct(&attrh, &isakmp_attr_desc, rbody, &strattr))
 				return STF_INTERNAL_ERROR;
 		}
@@ -2038,6 +2055,7 @@ static stf_status xauth_client_resp(struct state *st,
 							&strattr,
 							NULL))
 						return STF_INTERNAL_ERROR;
+
 					break;
 
 				case XAUTH_USER_NAME:
@@ -2058,25 +2076,26 @@ static stf_status xauth_client_resp(struct state *st,
 						}
 
 						if (!whack_prompt_for(st->
-							st_whack_sock,
-							c->name,
-							"Username",
-							TRUE,
-							xauth_username,
-							sizeof(xauth_username)))
+								      st_whack_sock,
+								      c->name,
+								      "Username",
+								      TRUE,
+								      xauth_username,
+								      sizeof(xauth_username)))
 						{
 							loglog(RC_LOG_SERIOUS,
 							       "XAUTH username prompt failed.");
 							return STF_FAIL;
 						}
 						/* replace the first newline character with a string-terminating \0. */
-						char *cptr = memchr(
-							xauth_username,
-							'\n',
-							sizeof(xauth_username));
-						if (cptr != NULL)
-							*cptr = '\0';
-
+						{
+							char *cptr = memchr(
+								xauth_username,
+								'\n',
+								sizeof(xauth_username));
+							if (cptr != NULL)
+								*cptr = '\0';
+						}
 						jam_str(st->st_xauth_username,
 							sizeof(st->st_xauth_username),
 							xauth_username);
@@ -2097,14 +2116,14 @@ static stf_status xauth_client_resp(struct state *st,
 					attr.isaat_af_type = attr_type |
 							     ISAKMP_ATTR_AF_TLV;
 					if (!out_struct(&attr,
-						&isakmp_xauth_attribute_desc,
-						&strattr, &attrval))
-					{
+							&
+							isakmp_xauth_attribute_desc,
+							&strattr,
+							&attrval))
 						return STF_INTERNAL_ERROR;
-					}
 
-					if (st->st_xauth_password.ptr == NULL)
-					{
+					if (st->st_xauth_password.ptr ==
+					    NULL) {
 						struct secret *s =
 							lsw_get_xauthsecret(
 								st->st_connection,
@@ -2474,21 +2493,26 @@ static stf_status xauth_client_ackstatus(struct state *st,
 
 	/* ATTR out */
 	{
-		struct isakmp_mode_attr attrh = {
-			.isama_np = ISAKMP_NEXT_NONE,
-			.isama_type = ISAKMP_CFG_ACK,
-			.isama_identifier = ap_id,
-		};
-		pb_stream strattr;
-		struct isakmp_attribute attr = {
-			.isaat_af_type = XAUTH_STATUS | ISAKMP_ATTR_AF_TV,
-			.isaat_lv = XAUTH_STATUS_OK,
-		};
+		struct isakmp_mode_attr attrh;
+		struct isakmp_attribute attr;
+		pb_stream strattr, attrval;
 
-		if (!out_struct(&attrh, &isakmp_attr_desc, rbody, &strattr) ||
-		    !out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr,
-				NULL) ||
-		    !ikev1_close_message(&strattr, st))
+		attrh.isama_np = ISAKMP_NEXT_NONE;
+		attrh.isama_type = ISAKMP_CFG_ACK;
+		attrh.isama_identifier = ap_id;
+		if (!out_struct(&attrh, &isakmp_attr_desc, rbody, &strattr))
+			return STF_INTERNAL_ERROR;
+
+		/* ISAKMP attr out */
+		attr.isaat_af_type = XAUTH_STATUS | ISAKMP_ATTR_AF_TV;
+		attr.isaat_lv = XAUTH_STATUS_OK;
+		if (!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr,
+				&attrval))
+			return STF_INTERNAL_ERROR;
+
+		close_output_pbs(&attrval);
+
+		if (!ikev1_close_message(&strattr, st))
 			return STF_INTERNAL_ERROR;
 	}
 

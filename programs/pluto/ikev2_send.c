@@ -187,6 +187,8 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
 	      const chunk_t *n_data,
 	      pb_stream *rbody)
 {
+	struct ikev2_notify n;
+	pb_stream n_pbs;
 
 	/* See RFC 5996 section 3.10 "Notify Payload" */
 	passert(protoid == PROTO_v2_RESERVED || protoid == PROTO_v2_AH || protoid == PROTO_v2_ESP);
@@ -211,14 +213,13 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
 
 	DBG(DBG_CONTROLMORE, DBG_log("Adding a v2N Payload"));
 
-	struct ikev2_notify n = {
-		.isan_np = np,
-		.isan_critical = critical,
-		.isan_protoid = protoid,
-		.isan_spisize = spi->len,
-		.isan_type = type,
-	};
-	pb_stream n_pbs;
+	zero(&n);	/* OK: no pointer fields */
+
+	n.isan_np = np;
+	n.isan_critical = critical;
+	n.isan_protoid = protoid;
+	n.isan_spisize = spi->len;
+	n.isan_type = type;
 
 	if (!out_struct(&n, &ikev2_notify_desc, rbody, &n_pbs)) {
 		libreswan_log(
@@ -227,7 +228,7 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
 	}
 
 	if (spi->len > 0) {
-		if (!out_chunk(*spi, &n_pbs, "SPI")) {
+		if (!out_chunk(*spi, &n_pbs, "SPI ")) {
 			libreswan_log("error writing SPI to notify payload");
 			return FALSE;
 		}

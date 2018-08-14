@@ -2362,7 +2362,6 @@ bool ikev1_out_generic(u_int8_t np, struct_desc *sd,
 		 pb_stream *outs, pb_stream *obj_pbs)
 {
 	passert(sd->fields == isag_fields);
-	passert(sd->pt != ISAKMP_NEXT_NONE);
 	struct isakmp_generic gen = {
 		.isag_np = np,
 	};
