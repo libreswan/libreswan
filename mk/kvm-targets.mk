@@ -526,22 +526,6 @@ define upgrade-kvm-domain
 	$(KVMSH) --shutdown $(1)
 endef
 
-.PHONY: kvm-upgrade-base-domain
-kvm-upgrade-base-domain: $(KVM_BASEDIR)/$(KVM_BASE_DOMAIN).ks
-	$(call upgrade-kvm-domain, $(KVM_BASE_DOMAIN))
-
-# need to both delete any dependent domains and/or build the clone
-# domain.
-
-.PHONY: kvm-upgrade kvm-upgrade-local-domains
-kvm-upgrade: kvm-upgrade-local-domains
-kvm-upgrade-local-domains: $(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml
-kvm-upgrade-local-domains: $(addprefix uninstall-kvm-domain-, $(KVM_CLONE_COPIES))
-kvm-upgrade-local-domains:
-	$(call upgrade-kvm-domain, $(KVM_CLONE_DOMAIN))
-	$(MAKE) kvm-install-local-domains
-
-
 #
 # Build KVM domains from scratch
 #
@@ -724,6 +708,7 @@ $(KVM_LOCALDIR)/$(KVM_CLONE_DOMAIN).xml: \
 	$(call check-kvm-qemu-directory)
 	$(call destroy-kvm-domain,$(KVM_CLONE_DOMAIN))
 	$(call create-kvm-domain,$(KVM_CLONE_DOMAIN))
+	$(call upgrade-kvm-domain,$(KVM_CLONE_DOMAIN))
 	$(VIRSH) dumpxml $(KVM_CLONE_DOMAIN) > $@.tmp
 	mv $@.tmp $@
 .PHONY: install-kvm-domain-$(KVM_CLONE_DOMAIN)
@@ -1284,22 +1269,11 @@ Standard targets and operations:
   Try to delete (almost) everything:
 
     kvm-purge
-        - delete everything specific to this directory, i.e., clone,
+        - delete everything local to this directory, i.e., clone,
           build, and test domains, test networks, test results, and
           test build
     kvm-demolish
         - also delete the base domain
-
-  Upgrading domains:
-
-    kvm-upgrade
-    kvm-upgrade-local-domains
-        - force just the local domains to be upgraded
-	- implemented by upgrading the local clone domain, while
-          deleting all the other local domains; the next kvm-install
-          et.al. will create the remaining domains
-    kvm-upgrade-base-domain
-        - force just the base base domain to be upgraded
 
   Manipulating and accessing (loging into) domains:
 
@@ -1322,19 +1296,22 @@ Standard targets and operations:
 
   To set things up for a test run:
 
-    kvm-install (kvm-uninstall)
-       - (un)install (or update) libreswan on the test domains ready
-         for a test run, that is:
-         - build/install or rebuild libreswan on $(KVM_BUILD_DOMAIN)
-	 - clone $(KVM_BUILD_DOMAIN) creating the test domains
-       - uninstall cheats by deleting the build and test domains
+    kvm-install: install (or update) libreswan on the test domains
+	- cheats by building/installing using the local build domain
+          ($(KVM_BUILD_DOMAIN)) and then cloning it to create the test domains
+	- if necessary, creates the local build domain ($(KVM_BUILD_DOMAIN))
+          from the local clone domain ($(KVM_CLONE_DOMAIN))
+	- if necessary, creates and upgrade the local clone domain
+	  ($(KVM_CLONE_DOMAIN)) from the base domain ($(KVM_BASE_DOMAIN))
 
-    kvm-clean
-       - deletes the build directory so that the next kvm-install
-         builds from scratch
-       - deletes the test keys so the next kvm-check builds fresh keys
-       - deletes the test results from the previous test run
-       - KVM domains are not touched
+    kvm-uninstall: uninstall libreswan from the the test domains
+	- cheats by deleting the build and test domains
+
+    kvm-clean: cleans the directory forcing 'kvm-install' to perform a 'clean' build
+	- deletes the test domains
+	- deletes the build domain ($(KVM_BUILD_DOMAIN))
+	- deletes the test keys so the next kvm-check builds fresh keys
+	- deletes the test results from the previous test run
 
   To run the testsuite against libreswan installed on the test domains
   (see "make kvm-install" above):
