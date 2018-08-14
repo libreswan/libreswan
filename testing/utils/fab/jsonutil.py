@@ -31,21 +31,6 @@ class result:
     runtime = "runtime"
 
 
-class results:
-    summary = "summary"
-    table = "table"
-
-class summary:
-    passed = "passed"
-    failed = "failed"
-    incomplete = "incomplete"
-    good = "good"
-    total = "Total"
-    # end-time: YYYY-MM-DD HH:MM see ftime/ptime.
-    date = "date"
-    runtime = "runtime"
-    directory = "directory"
-
 def load(io):
     try:
         return json.load(io)
