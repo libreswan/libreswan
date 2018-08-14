@@ -298,13 +298,19 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 	 * to always send one.
 	 */
 	bool send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
-		mycert.ty != CERT_NONE && mycert.u.nss_cert != NULL &&
+		mycert.ty != CERT_NONE &&
+		mycert.u.nss_cert != NULL &&
 		((c->spd.this.sendcert == CERT_SENDIFASKED &&
 		  st->hidden_variables.st_got_certrequest) ||
 		 c->spd.this.sendcert == CERT_ALWAYSSEND
 		);
 
 	bool send_authcerts = (send_cert && c->send_ca != CA_SEND_NONE);
+
+	/*****
+	 * From here on, if send_authcerts, we are obligated to:
+	 * free_auth_chain(auth_chain, chain_len);
+	 *****/
 
 	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
 	int chain_len = 0;
@@ -359,13 +365,10 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 
 	/* start of SA out */
 	{
-		struct isakmp_sa r_sa;
-		notification_t rn;
-
-		zero(&r_sa);	/* OK: no pointer fields */
-		r_sa.isasa_doi = ISAKMP_DOI_IPSEC;
-
-		r_sa.isasa_np = ISAKMP_NEXT_KE;
+		struct isakmp_sa r_sa = {
+			.isasa_doi = ISAKMP_DOI_IPSEC,
+			.isasa_np = ISAKMP_NEXT_KE,
+		};
 
 		pb_stream r_sa_pbs;
 
@@ -376,8 +379,8 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 		}
 
 		/* SA body in and out */
-		rn = parse_isakmp_sa_body(&sa_pd->pbs, &sa_pd->payload.sa,
-					  &r_sa_pbs, FALSE, st);
+		notification_t rn = parse_isakmp_sa_body(&sa_pd->pbs,
+			&sa_pd->payload.sa, &r_sa_pbs, FALSE, st);
 		if (rn != NOTHING_WRONG) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_FAIL + rn;
@@ -414,7 +417,7 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 
 		build_id_payload(&id_hd, &id_b, &c->spd.this, FALSE);
 		id_hd.isaiid_np =
-			(send_cert) ? ISAKMP_NEXT_CERT : auth_payload;
+			send_cert ? ISAKMP_NEXT_CERT : auth_payload;
 
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 				&rbody, &r_id_pbs) ||
@@ -429,27 +432,26 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 	/* CERT out */
 	if (send_cert) {
 		pb_stream cert_pbs;
-		struct isakmp_cert cert_hd;
-
+		struct isakmp_cert cert_hd = {
+			.isacert_np = send_cr ? ISAKMP_NEXT_CR : auth_payload,
+			.isacert_type = mycert.ty
+		};
 		libreswan_log("I am sending my certificate");
-
-		cert_hd.isacert_np = (send_cr) ? ISAKMP_NEXT_CR : auth_payload;
-		cert_hd.isacert_type = mycert.ty;
 		if (!out_struct(&cert_hd,
 				&isakmp_ipsec_certificate_desc,
 				&rbody,
-				&cert_pbs)) {
-			free_auth_chain(auth_chain, chain_len);
-			return STF_INTERNAL_ERROR;
-		}
-		if (!out_chunk(get_dercert_from_nss_cert(mycert.u.nss_cert),
+				&cert_pbs) ||
+		    !out_chunk(get_dercert_from_nss_cert(mycert.u.nss_cert),
 								&cert_pbs, "CERT")) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
 		close_output_pbs(&cert_pbs);
-		free_auth_chain(auth_chain, chain_len);
 	}
+
+	free_auth_chain(auth_chain, chain_len);
+
+	/***** obligation to free_auth_chain has been discharged *****/
 
 	/* CERTREQ out */
 	if (send_cr) {
@@ -660,6 +662,11 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 
 	bool send_authcerts = (send_cert && c->send_ca != CA_SEND_NONE);
 
+	/*****
+	 * From here on, if send_authcerts, we are obligated to:
+	 * free_auth_chain(auth_chain, chain_len);
+	 *****/
+
 	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
 	int chain_len = 0;
 
@@ -709,36 +716,35 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 	if (send_cert) {
 		pb_stream cert_pbs;
 
-		struct isakmp_cert cert_hd;
-		cert_hd.isacert_np = ISAKMP_NEXT_NONE; /* rewritten by NAT-D payloads */
-		cert_hd.isacert_type = mycert.ty;
-		cert_hd.isacert_reserved = 0;
-		cert_hd.isacert_length = 0; /* XXX unused on sending ? */
+		struct isakmp_cert cert_hd = {
+			.isacert_np = ISAKMP_NEXT_NONE, /* rewritten by NAT-D payloads */
+			.isacert_type = mycert.ty,
+			.isacert_reserved = 0,
+			.isacert_length = 0 /* XXX unused on sending ? */
+		};
 
 		libreswan_log("I am sending my cert");
 
 		if (!out_struct(&cert_hd,
 				&isakmp_ipsec_certificate_desc,
 				&rbody,
-				&cert_pbs)) {
-			free_auth_chain(auth_chain, chain_len);
-			return STF_INTERNAL_ERROR;
-		}
-
-		if (!out_chunk(get_dercert_from_nss_cert(mycert.u.nss_cert),
+				&cert_pbs) ||
+		    !out_chunk(get_dercert_from_nss_cert(mycert.u.nss_cert),
 								&cert_pbs, "CERT")) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
 
 		close_output_pbs(&cert_pbs);
-		free_auth_chain(auth_chain, chain_len);
 	}
+
+	free_auth_chain(auth_chain, chain_len);
+
+	/***** obligation to free_auth_chain has been discharged *****/
 
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
 		/* send two ISAKMP_NEXT_NATD_RFC* hash payloads to support NAT */
 		if (!ikev1_nat_traversal_add_natd(auth_payload, &rbody, md)) {
-			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -758,7 +764,6 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 				&id_pbs, NULL) ||
 		    !out_chunk(id_b, &id_pbs, "my identity")) {
-			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
 
@@ -1115,13 +1120,12 @@ static stf_status aggr_outI1_tail(struct state *st,
 	/* HDR out */
 	pb_stream rbody;
 	{
-		struct isakmp_hdr hdr;
-
-		zero(&hdr);	/* OK: no pointer fields */
-		hdr.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
-				  ISAKMP_MINOR_VERSION;
-		hdr.isa_np = ISAKMP_NEXT_SA;
-		hdr.isa_xchg = ISAKMP_XCHG_AGGR;
+		struct isakmp_hdr hdr = {
+			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
+				  ISAKMP_MINOR_VERSION,
+			.isa_np = ISAKMP_NEXT_SA,
+			.isa_xchg = ISAKMP_XCHG_AGGR,
+		};
 		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 		/* R-cookie, flags and MessageID are left zero */
 

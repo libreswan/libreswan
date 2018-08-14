@@ -144,41 +144,48 @@ static stf_status ikev2_emit_ts(pb_stream *outpbs,
 				const struct traffic_selector *ts,
 				enum next_payload_types_ikev2 np)
 {
-	struct ikev2_ts its;
-	struct ikev2_ts1 its1;
 	pb_stream ts_pbs;
-	pb_stream ts_pbs2;
 
-	its.isat_lt = np; /* LT is IKEv1 name? */
-	its.isat_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-	its.isat_num = 1;
+	{
+		struct ikev2_ts its = {
+			.isat_lt = np, /* LT is IKEv1 name? */
+			.isat_critical = ISAKMP_PAYLOAD_NONCRITICAL,
+			.isat_num = 1,
+		};
 
-	if (!out_struct(&its, ts_desc, outpbs, &ts_pbs))
-		return STF_INTERNAL_ERROR;
-
-	switch (ts->ts_type) {
-	case IKEv2_TS_IPV4_ADDR_RANGE:
-		its1.isat1_type = IKEv2_TS_IPV4_ADDR_RANGE;
-		its1.isat1_sellen = 2 * 4 + 8; /* See RFC 5669 SEction 13.3.1, 8 octet header plus 2 ip addresses */
-		break;
-	case IKEv2_TS_IPV6_ADDR_RANGE:
-		its1.isat1_type = IKEv2_TS_IPV6_ADDR_RANGE;
-		its1.isat1_sellen = 2 * 16 + 8; /* See RFC 5669 SEction 13.3.1, 8 octet header plus 2 ip addresses */
-		break;
-	case IKEv2_TS_FC_ADDR_RANGE:
-		DBG_log("IKEv2 Traffic Selector IKEv2_TS_FC_ADDR_RANGE not yet supported");
-		return STF_INTERNAL_ERROR;
-
-	default:
-		DBG_log("IKEv2 Traffic Selector type '%d' not supported",
-			ts->ts_type);
+		if (!out_struct(&its, ts_desc, outpbs, &ts_pbs))
+			return STF_INTERNAL_ERROR;
 	}
 
-	its1.isat1_ipprotoid = ts->ipprotoid;   /* protocol as per local policy*/
-	its1.isat1_startport = ts->startport;   /* ports as per local policy*/
-	its1.isat1_endport = ts->endport;
-	if (!out_struct(&its1, &ikev2_ts1_desc, &ts_pbs, &ts_pbs2))
-		return STF_INTERNAL_ERROR;
+	pb_stream ts_pbs2;
+
+	{
+		struct ikev2_ts1 its1 = {
+			.isat1_ipprotoid = ts->ipprotoid,   /* protocol as per local policy */
+			.isat1_startport = ts->startport,   /* ports as per local policy */
+			.isat1_endport = ts->endport,
+		};
+		switch (ts->ts_type) {
+		case IKEv2_TS_IPV4_ADDR_RANGE:
+			its1.isat1_type = IKEv2_TS_IPV4_ADDR_RANGE;
+			its1.isat1_sellen = 2 * 4 + 8; /* See RFC 5669 SEction 13.3.1, 8 octet header plus 2 ip addresses */
+			break;
+		case IKEv2_TS_IPV6_ADDR_RANGE:
+			its1.isat1_type = IKEv2_TS_IPV6_ADDR_RANGE;
+			its1.isat1_sellen = 2 * 16 + 8; /* See RFC 5669 SEction 13.3.1, 8 octet header plus 2 ip addresses */
+			break;
+		case IKEv2_TS_FC_ADDR_RANGE:
+			DBG_log("IKEv2 Traffic Selector IKEv2_TS_FC_ADDR_RANGE not yet supported");
+			return STF_INTERNAL_ERROR;
+
+		default:
+			DBG_log("IKEv2 Traffic Selector type '%d' not supported",
+				ts->ts_type);
+		}
+
+		if (!out_struct(&its1, &ikev2_ts1_desc, &ts_pbs, &ts_pbs2))
+			return STF_INTERNAL_ERROR;
+	}
 
 	/* now do IP addresses */
 	switch (ts->ts_type) {
@@ -1159,20 +1166,19 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
 		/* send NONCE */
-		struct ikev2_generic in;
+		struct ikev2_generic in = {
+			.isag_np = (md->chain[ISAKMP_NEXT_v2KE] != NULL) ?
+				ISAKMP_NEXT_v2KE: ISAKMP_NEXT_v2TSi,
+			.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL,
+		};
 		pb_stream pb_nr;
 
-		zero(&in);	/* OK: no pointer fields */
-		in.isag_np = (md->chain[ISAKMP_NEXT_v2KE] != NULL) ?
-			ISAKMP_NEXT_v2KE: ISAKMP_NEXT_v2TSi;
-
-		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
 			libreswan_log(" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
 			in.isag_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
 		}
 		if (!out_struct(&in, &ikev2_nonce_desc, outpbs, &pb_nr) ||
-				!out_chunk(cst->st_nr, &pb_nr, "IKEv2 nonce"))
+		    !out_chunk(cst->st_nr, &pb_nr, "IKEv2 nonce"))
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&pb_nr);

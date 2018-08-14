@@ -1104,18 +1104,16 @@ static chunk_t ikev2_hash_nss_cert_key(CERTCertificate *cert)
 bool ikev1_ship_CERT(u_int8_t type, chunk_t cert, pb_stream *outs, u_int8_t np)
 {
 	pb_stream cert_pbs;
-	struct isakmp_cert cert_hd;
-
-	cert_hd.isacert_np = np;
-	cert_hd.isacert_type = type;
-	cert_hd.isacert_reserved = 0;
-	cert_hd.isacert_length = 0; /* XXX unused on sending ? */
+	struct isakmp_cert cert_hd = {
+		.isacert_np = np,
+		.isacert_type = type,
+		.isacert_reserved = 0,
+		.isacert_length = 0, /* XXX unused on sending ? */
+	};
 
 	if (!out_struct(&cert_hd, &isakmp_ipsec_certificate_desc, outs,
-				&cert_pbs))
-		return FALSE;
-
-	if (!out_chunk(cert, &cert_pbs, "CERT"))
+				&cert_pbs) ||
+	    !out_chunk(cert, &cert_pbs, "CERT"))
 		return FALSE;
 
 	close_output_pbs(&cert_pbs);
@@ -1128,10 +1126,10 @@ bool ikev1_build_and_ship_CR(enum ike_cert_type type,
 			     enum next_payload_types_ikev1 np)
 {
 	pb_stream cr_pbs;
-	struct isakmp_cr cr_hd;
-
-	cr_hd.isacr_np = np;
-	cr_hd.isacr_type = type;
+	struct isakmp_cr cr_hd = {
+		.isacr_np = np,
+		.isacr_type = type,
+	};
 
 	/* build CR header */
 	if (!out_struct(&cr_hd, &isakmp_ipsec_cert_req_desc, outs, &cr_pbs))
@@ -1162,10 +1160,9 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 	pb_stream cr_pbs;
 	struct ikev2_certreq cr_hd = {
 		.isacertreq_np = ISAKMP_NEXT_v2NONE,
+		.isacertreq_critical =  ISAKMP_PAYLOAD_NONCRITICAL,
+		.isacertreq_enc = type,
 	};
-
-	cr_hd.isacertreq_critical =  ISAKMP_PAYLOAD_NONCRITICAL;
-	cr_hd.isacertreq_enc = type;
 
 	/* build CR header */
 	if (!out_struct(&cr_hd, &ikev2_certificate_req_desc, outs, &cr_pbs))
@@ -1335,8 +1332,6 @@ bool ikev2_send_certreq_INIT_decision(struct state *st,
 stf_status ikev2_send_cert(struct state *st, pb_stream *outpbs)
 {
 	cert_t mycert = st->st_connection->spd.this.cert;
-	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
-	int chain_len = 0;
 	bool send_authcerts = st->st_connection->send_ca != CA_SEND_NONE;
 	bool send_full_chain = send_authcerts && st->st_connection->send_ca == CA_SEND_ALL;
 
@@ -1354,11 +1349,8 @@ stf_status ikev2_send_cert(struct state *st, pb_stream *outpbs)
 		};
 		pb_stream cert_pbs;
 		if (!out_struct(&pkcs7_hdr, &ikev2_certificate_desc,
-				outpbs, &cert_pbs)) {
-			SECITEM_FreeItem(pkcs7, PR_TRUE);
-			return STF_INTERNAL_ERROR;
-		}
-		if (!out_chunk(same_secitem_as_chunk(*pkcs7), &cert_pbs, "PKCS7")) {
+				outpbs, &cert_pbs) ||
+		    !out_chunk(same_secitem_as_chunk(*pkcs7), &cert_pbs, "PKCS7")) {
 			SECITEM_FreeItem(pkcs7, PR_TRUE);
 			return STF_INTERNAL_ERROR;
 		}
@@ -1367,13 +1359,21 @@ stf_status ikev2_send_cert(struct state *st, pb_stream *outpbs)
 		return STF_OK;
 	}
 
+	/*****
+	 * From here on, if send_authcerts, we are obligated to:
+	 * free_auth_chain(auth_chain, chain_len);
+	 *****/
+
+	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
+	int chain_len = 0;
+
 	if (send_authcerts) {
 		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN,
 					mycert.u.nss_cert,
 					send_full_chain ? TRUE : FALSE);
 	}
 
-	if (chain_len < 1)
+	if (chain_len == 0)
 		send_authcerts = FALSE;
 
 #if 0
@@ -1401,13 +1401,9 @@ stf_status ikev2_send_cert(struct state *st, pb_stream *outpbs)
 					mycert.u.nss_cert->subjectName));
 
 		if (!out_struct(&certhdr, &ikev2_certificate_desc,
-				outpbs, &cert_pbs)) {
-			free_auth_chain(auth_chain, chain_len);
-			return STF_INTERNAL_ERROR;
-		}
-
-		if (!out_chunk(get_dercert_from_nss_cert(mycert.u.nss_cert),
-							  &cert_pbs, "CERT")) {
+				outpbs, &cert_pbs) ||
+		    !out_chunk(get_dercert_from_nss_cert(mycert.u.nss_cert),
+							&cert_pbs, "CERT")) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
@@ -1424,20 +1420,16 @@ stf_status ikev2_send_cert(struct state *st, pb_stream *outpbs)
 			DBG(DBG_X509, DBG_log("Sending an authcert"));
 
 			if (!out_struct(&certhdr, &ikev2_certificate_desc,
-				outpbs, &cert_pbs))
-			{
-				free_auth_chain(auth_chain, chain_len);
-				return STF_INTERNAL_ERROR;
-			}
-			if (!out_chunk(auth_chain[i], &cert_pbs, "CERT"))
+				outpbs, &cert_pbs) ||
+			    !out_chunk(auth_chain[i], &cert_pbs, "CERT"))
 			{
 				free_auth_chain(auth_chain, chain_len);
 				return STF_INTERNAL_ERROR;
 			}
 			close_output_pbs(&cert_pbs);
 		}
-		free_auth_chain(auth_chain, chain_len);
 	}
+	free_auth_chain(auth_chain, chain_len);
 	return STF_OK;
 }
 
