@@ -111,7 +111,6 @@ class TextBuilder:
 def build_result(logger, result, baseline, args, what_to_print, b):
 
     # Print the test's name/path
-    debug_log = "debug.log"
 
     for p in what_to_print:
         if p is Print.path:
@@ -151,23 +150,17 @@ def build_result(logger, result, baseline, args, what_to_print, b):
         elif p is Print.baseline_output_directory:
             b.add(p, baseline and result.test.name in baseline and baseline[result.test.name].output_directory or None)
         elif p is Print.start_time:
-            b.add(p, result.grub(debug_log, r"starting debug log at (.*)$",
-                                 cast=jsonutil.ptime))
+            b.add(p, result.start_time())
         elif p is Print.end_time:
-            b.add(p, result.grub(debug_log, r"ending debug log at (.*)$",
-                                 cast=jsonutil.ptime))
+            b.add(p, result.end_time())
         elif p is Print.runtime:
-            b.add(p, result.grub(debug_log, r": stop testing .* after (.*) second",
-                                 cast=float))
+            b.add(p, result.runtime())
         elif p is Print.boot_time:
-            b.add(p, result.grub(debug_log, r": stop booting domains after (.*) second",
-                                cast=float))
+            b.add(p, result.boot_time())
         elif p is Print.script_time:
-            b.add(p, result.grub(debug_log, r": stop running scripts .* after (.*) second",
-                                 cast=float))
+            b.add(p, result.script_time())
         elif p is Print.total_time:
-            b.add(p, result.grub(debug_log, r": stop processing test .* after (.*) second",
-                                 cast=float))
+            b.add(p, result.total_time())
         elif p is Print.diffs:
             continue # see below
         else:

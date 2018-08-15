@@ -21,6 +21,7 @@ import gzip
 import bz2
 
 from fab import logutil
+from fab import jsonutil
 
 # Strings used to mark up files; see also runner.py where it marks up
 # the file names.
@@ -257,6 +258,13 @@ class TestResult:
         self.sanitized_output = {}
         self.grub_cache = {}
         self.output_directory = output_directory or test.output_directory
+        # times
+        self._start_time = None
+        self._end_time = None
+        self._runtime = None
+        self._boot_time = None
+        self._script_time = None
+        self._total_time = None
 
         # If there is no OUTPUT directory the result is UNTESTED -
         # presence of the OUTPUT is a clear indicator that some
@@ -445,6 +453,48 @@ class TestResult:
         group = match.group(len(match.groups()))
         self.logger.debug("grub '%s' matched '%s'", regex, group)
         return cast(group)
+
+    def start_time(self):
+        if not self._start_time:
+            # starting debug log at 2018-08-15 13:00:12.275358
+            self._start_time = self.grub("debug.log", r"starting debug log at (.*)$",
+                                   cast=jsonutil.ptime)
+        return self._start_time
+
+    def end_time(self):
+        if not self._end_time:
+            # ending debug log at 2018-08-15 13:01:31.602533
+            self._end_time = self.grub("debug.log", r"ending debug log at (.*)$",
+                                 cast=jsonutil.ptime)
+        return self._end_time
+
+    def runtime(self):
+        if not self._runtime:
+            # stop testing basic-pluto-01 (test 2 of 756) after 79.3 seconds
+            self._runtime = self.grub("debug.log", r": stop testing .* after (.*) second",
+                                cast=float)
+        return self._runtime
+
+    def boot_time(self):
+        if not self._boot_time:
+            # stop booting domains after 56.9 seconds
+            self._boot_time = self.grub("debug.log", r": stop booting domains after (.*) second",
+                                  cast=float)
+        return self._boot_time
+
+    def script_time(self):
+        if not self._script_time:
+            # stop running scripts east:eastinit.sh ... after 22.4 seconds
+            self._script_time = self.grub("debug.log", r": stop running scripts .* after (.*) second",
+                                    cast=float)
+        return self._script_time
+
+    def total_time(self):
+        if not self._total_time:
+            # ?????
+            self._total_time = self.grub("debug.log", r": stop processing test .* after (.*) second",
+                                   cast=float)
+        return self._total_time
 
 
 # XXX: given that most of args are passed in unchagned, this should
