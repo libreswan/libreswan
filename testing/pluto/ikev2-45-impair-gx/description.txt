@@ -1,4 +1,0 @@
-IKEv2 test where west is impaired to send a g^x ==0 DH compontent
-
-likely all openswan and libreswan up to 3.13 are vulnerable to this
-
