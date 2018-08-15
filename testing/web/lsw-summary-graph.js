@@ -108,13 +108,11 @@ function lsw_summary_graph(graph_id, table_id, summary) {
     //
     // Set up the graph dimensions and scale
     //
+    // Use first test run's committer.date (test runs are ordered by
+    // that dated).
 
-    var start = d3.min(summary.commits, function(d) {
-	return d.committer.date
-    })
-    var extent = d3.extent(summary.commits, function(d) {
-	return d.committer.date
-    })
+    var start = summary.test_runs[0].commit.committer.date
+    console.log("graph start:", start)
 
     var xt = d3.scaleUtc()
 	.domain([start, now])
