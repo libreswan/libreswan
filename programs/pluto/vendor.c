@@ -149,6 +149,14 @@ static struct vid_struct vid_tab[] = {
 
 	/* Implementation names */
 
+	/*
+	 * We send this VID to let people know this is opportunistic ipsec.
+	 * Keep this entry as the first - we look this in the table regularly
+	 */
+	{ VID_OPPORTUNISTIC, VID_STRING | VID_KEEP, "Opportunistic IPsec",
+	 "\x4f\x70\x70\x6f\x72\x74\x75\x6e\x69\x73\x74\x69\x63\x20\x49\x50\x73\x65\x63",
+	  NULL, 0},
+
 	{ VID_OPENPGP, VID_STRING, "OpenPGP10171", "OpenPGP", NULL, 0 },
 
 	DEC_MD5_VID(VID_KAME_RACOON, "KAME/racoon"),
@@ -373,15 +381,6 @@ static struct vid_struct vid_tab[] = {
 	{ VID_MACOSX, VID_STRING | VID_SUBSTRING_DUMPHEXA, "Mac OSX 10.x",
 	  "\x4d\xf3\x79\x28\xe9\xfc\x4f\xd1\xb3\x26\x21\x70\xd5\x15\xc6\x62",
 	  NULL, 0 },
-
-	/*
-	 * We send this VID to let people know this opportunistic ipsec
-	 * (we hope people thinking they are under attack will google for
-	 *  this string and find information about it)
-	 */
-	{ VID_OPPORTUNISTIC, VID_STRING | VID_KEEP, "Opportunistic IPsec",
-	 "\x4f\x70\x70\x6f\x72\x74\x75\x6e\x69\x73\x74\x69\x63\x20\x49\x50\x73\x65\x63",
-	  NULL, 0},
 
 	DEC_MD5_VID(VID_IKE_FRAGMENTATION, "FRAGMENTATION"),
 	DEC_MD5_VID(VID_INITIAL_CONTACT, "Vid-Initial-Contact"),
@@ -979,13 +978,11 @@ bool vid_is_oppo(const char *vid, size_t len)
 {
 	struct vid_struct *pvid;
 
-	/* stop at right vid in vidtable */
+	/* stop at right vid in vidtable (should be first entry) */
 	for (pvid = vid_tab; pvid->id != VID_OPPORTUNISTIC; pvid++)
-
 	passert(pvid->id != 0); /* we must find VID_OPPORTUNISTIC */
 
 	if (pvid->vid_len != len) {
-		DBG(DBG_CONTROLMORE, DBG_log("VID is not VID_OPPORTUNISTIC: length differs"));
 		return FALSE;
 	}
 
@@ -993,8 +990,6 @@ bool vid_is_oppo(const char *vid, size_t len)
 		DBG(DBG_CONTROL, DBG_log("VID_OPPORTUNISTIC received"));
 		return TRUE;
 	} else {
-		DBG(DBG_CONTROLMORE, DBG_log("VID is not VID_OPPORTUNISTIC: content differs"));
 		return FALSE;
 	}
 }
-
