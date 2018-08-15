@@ -344,7 +344,8 @@ class TestResult:
                 # is old it may not be the case. and an unresolved
                 # test, but need to first exclude other options.
                 self.issues.add(Issues.OUTPUT_TRUNCATED, host_name)
-                if os.path.isfile(test.result_file(self.output_directory)):
+                result_file = os.path.join(self.output_directory, "RESULT")
+                if os.path.isfile(result_file):
                     self.resolution.failed()
                 else:
                     self.resolution.unresolved()

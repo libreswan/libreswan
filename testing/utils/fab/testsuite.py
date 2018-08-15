@@ -99,13 +99,6 @@ class Test:
     def testing_directory(self, *path):
         return os.path.relpath(os.path.join(self._testing_directory, *path))
 
-    def result_file(self, directory=None):
-        """The result file in the given directory, or output_directory"""
-
-        directory = directory or self.output_directory
-        return os.path.join(directory, "RESULT")
-
-
     def __str__(self):
         return self.full_name
 

@@ -464,7 +464,8 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
             #
             # XXX: this should go away.
 
-            if not os.path.isfile(test.result_file()) \
+            result_file = os.path.join(test.output_directory, "RESULT")
+            if not os.path.isfile(result_file) \
             and result.resolution.isresolved():
                 RESULT = {
                     jsonutil.result.testname: test.name,
@@ -478,8 +479,8 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                     jsonutil.result.script_time: round(test_script_time.seconds(), 1),
                 }
                 j = jsonutil.dumps(RESULT)
-                logger.debug("filling '%s' with json: %s", test.result_file(), j)
-                with open(test.result_file(), "w") as f:
+                logger.debug("filling '%s' with json: %s", result_file, j)
+                with open(result_file, "w") as f:
                     f.write(j)
                     f.write("\n")
 
