@@ -110,8 +110,6 @@ while true ; do
     if grep '"output-missing"' "${summarydir}"/*-g*/results.json > /dev/null ; then
 	status "corrupt domains detected, deleting old"
 	( cd ${repodir} && make kvm-purge )
-	status "corrupt domains detected, upgrading the base domain"
-	( cd ${repodir} && make kvm-upgrade-base-domain )
 	status "corrupt domains detected, deleting bogus results"
 	grep '"output-missing"' "${summarydir}"/*-g*/results.json \
 	    | sed -e 's;/results.json.*;;' \
