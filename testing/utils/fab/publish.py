@@ -54,7 +54,6 @@ results_to_print = printer.Print(printer.Print.test_name,
                                  printer.Print.result,
                                  printer.Print.issues,
                                  printer.Print.runtime,
-                                 printer.Print.total_time,
                                  printer.Print.boot_time,
                                  printer.Print.script_time)
 

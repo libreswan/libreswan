@@ -24,7 +24,6 @@ class result:
     issues = "errors" # for historic reasons, "issues" are publicly called "errors"
     script_time = "script_time"
     boot_time = "boot_time"
-    total_time = "total_time"
     hosts = "hosts"
     # keep things going
     time = "time"

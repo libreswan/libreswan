@@ -476,7 +476,6 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
                     jsonutil.result.runtime: round(test_runtime.seconds(), 1),
                     jsonutil.result.boot_time: round(test_boot_time.seconds(), 1),
                     jsonutil.result.script_time: round(test_script_time.seconds(), 1),
-                    jsonutil.result.total_time: round(test_runtime.seconds(), 1),
                 }
                 j = jsonutil.dumps(RESULT)
                 logger.debug("filling '%s' with json: %s", test.result_file(), j)

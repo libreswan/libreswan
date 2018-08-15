@@ -51,7 +51,6 @@ class Print(argutil.List):
     scripts = "scripts"                    # test_scripts
     start_time = "start-time"
     testing_directory = "testing-directory"
-    total_time = "total-time"
     baseline_directory = "baseline-directory"
     baseline_output_directory = "baseline-output-directory"
 
@@ -159,8 +158,6 @@ def build_result(logger, result, baseline, args, what_to_print, b):
             b.add(p, result.boot_time())
         elif p is Print.script_time:
             b.add(p, result.script_time())
-        elif p is Print.total_time:
-            b.add(p, result.total_time())
         elif p is Print.diffs:
             continue # see below
         else:

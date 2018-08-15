@@ -264,7 +264,6 @@ class TestResult:
         self._runtime = None
         self._boot_time = None
         self._script_time = None
-        self._total_time = None
 
         # If there is no OUTPUT directory the result is UNTESTED -
         # presence of the OUTPUT is a clear indicator that some
@@ -488,13 +487,6 @@ class TestResult:
             self._script_time = self.grub("debug.log", r": stop running scripts .* after (.*) second",
                                     cast=float)
         return self._script_time
-
-    def total_time(self):
-        if not self._total_time:
-            # ?????
-            self._total_time = self.grub("debug.log", r": stop processing test .* after (.*) second",
-                                   cast=float)
-        return self._total_time
 
 
 # XXX: given that most of args are passed in unchagned, this should
