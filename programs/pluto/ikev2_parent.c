@@ -6622,6 +6622,7 @@ stf_status ikev2_send_livenss_probe(struct state *st)
 	return e;
 }
 
+#ifdef NETKEY_SUPPORT
 static stf_status add_mobike_payloads(struct state *st, pb_stream *pbs)
 {
 	if (!ship_v2Ns(ISAKMP_NEXT_v2N, v2N_UPDATE_SA_ADDRESSES, pbs))
@@ -6636,6 +6637,7 @@ static stf_status add_mobike_payloads(struct state *st, pb_stream *pbs)
 
 	return STF_OK;
 }
+#endif
 
 void ikev2_rekey_ike_start(struct state *st)
 {
@@ -6867,6 +6869,7 @@ void ikev2_record_deladdr(struct state *st, void *arg_ip)
 	}
 }
 
+#ifdef NETKEY_SUPPORT
 static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 		const struct iface_port *iface)
 {
@@ -6891,7 +6894,9 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 
 	st->st_interface = o_iface;
 }
+#endif
 
+#ifdef NETKEY_SUPPORT
 static const struct iface_port *ikev2_src_iface(struct state *st,
 						struct starter_end *this)
 {
@@ -6914,6 +6919,7 @@ static const struct iface_port *ikev2_src_iface(struct state *st,
 
 	return iface;
 }
+#endif
 
 void ikev2_addr_change(struct state *st)
 {
