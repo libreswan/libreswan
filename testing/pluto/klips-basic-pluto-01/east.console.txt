@@ -135,7 +135,7 @@ east #
  # should show non-zero counters on both ends
 east #
  grep traffic /tmp/pluto.log
-"westnet-eastnet" #1: ESP traffic information: in=336B out=336B
+"westnet-eastnet" #2: ESP traffic information: in=336B out=336B
 east #
 east #
  ../bin/check-for-core.sh
