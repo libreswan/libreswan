@@ -213,24 +213,17 @@ MODPROBEARGS?=--quiet --use-blacklist
 # what program to use when installing things
 INSTALL?=install
 
-# flags to the install program, for programs, manpages, and config files
-# -b has install make backups (n.b., unlinks original), --suffix controls
-# how backup names are composed.
-# Note that the install procedures will never overwrite an existing config
-# file, which is why -b is not specified for them.
-INSTBINFLAGS?=-b --suffix=.old
+# flags to the install program, for programs, manpages, and config
+# files -b has install make backups (n.b., unlinks original), --suffix
+# controls how backup names are composed.  Since install procedures
+# will never overwrite an existing config file they omit -b.
 
-# busybox install is not emulating a real install command well enough
-SWANCHECKLINK=$(shell readlink /usr/bin/install)
-ifeq ($(SWANCHECKLINK /bin/busybox),)
-INSTBINFLAGS=
-endif
+# While --suffix is linux centric, there isn't a portable alternative.
+INSTBINFLAGS ?= -b --suffix=.old
 
-
-INSTMANFLAGS?=--mode=0644
-INSTCONFFLAGS?=--mode=0644
-# For OSX use
-#INSTBINFLAGS?=-b -B .old
+# The -m flag is more portable than --mode=.
+INSTMANFLAGS ?= -m 0644
+INSTCONFFLAGS ?= -m 0644
 
 # flags for bison, overrode in packages/default/foo
 BISONOSFLAGS?=
