@@ -463,6 +463,84 @@ static void process_pfkey_acquire(pfkey_buf *buf,
 
 }
 
+struct new_klips_mapp_nfo {
+	struct k_sadb_sa *sa;
+	ip_address src, dst;
+	u_int16_t sport, dport;
+};
+
+static void nat_t_new_klips_mapp(struct state *st, void *data)
+{
+	struct new_klips_mapp_nfo *nfo = (struct new_klips_mapp_nfo *)data;
+
+	if (st->st_esp.present &&
+	    sameaddr(&st->st_remoteaddr, &nfo->src) &&
+	    st->st_esp.our_spi == nfo->sa->sadb_sa_spi) {
+		nat_traversal_new_mapping(st, &nfo->dst, nfo->dport);
+	}
+}
+
+static void process_pfkey_nat_t_new_mapping(struct sadb_msg *msg UNUSED,
+					    struct sadb_ext *extensions[K_SADB_EXT_MAX + 1])
+{
+	struct new_klips_mapp_nfo nfo;
+	struct sadb_address *srcx =
+		(void *) extensions[K_SADB_EXT_ADDRESS_SRC];
+	struct sadb_address *dstx =
+		(void *) extensions[K_SADB_EXT_ADDRESS_DST];
+	struct sockaddr *srca, *dsta;
+	err_t ugh = NULL;
+
+	nfo.sa = (void *) extensions[K_SADB_EXT_SA];
+
+	if (!nfo.sa || !srcx || !dstx) {
+		libreswan_log("K_SADB_X_NAT_T_NEW_MAPPING message from KLIPS malformed: got NULL params");
+		return;
+	}
+
+	srca = ((struct sockaddr *)(void *)&srcx[1]);
+	dsta = ((struct sockaddr *)(void *)&dstx[1]);
+
+	if (srca->sa_family != AF_INET || dsta->sa_family != AF_INET) {
+		ugh = "only AF_INET supported";
+	} else {
+		initaddr(
+			(const void *) &((const struct sockaddr_in *)srca)->sin_addr,
+			sizeof(((const struct sockaddr_in *)srca)->sin_addr),
+			srca->sa_family, &nfo.src);
+		nfo.sport =
+			ntohs(((const struct sockaddr_in *)srca)->sin_port);
+		initaddr(
+			(const void *) &((const struct sockaddr_in *)dsta)->sin_addr,
+			sizeof(((const struct sockaddr_in *)dsta)->sin_addr),
+			dsta->sa_family, &nfo.dst);
+		nfo.dport =
+			ntohs(((const struct sockaddr_in *)dsta)->sin_port);
+
+		DBG(DBG_NATT, {
+			char text_said[SATOT_BUF];
+			ip_said said;
+			ipstr_buf bs;
+			ipstr_buf bd;
+
+			initsaid(&nfo.src, nfo.sa->sadb_sa_spi, SA_ESP,
+				&said);
+			satot(&said, 0, text_said, SATOT_BUF);
+			DBG_log("new klips mapping %s %s:%d %s:%d",
+				text_said,
+				ipstr(&nfo.src, &bs), nfo.sport,
+				ipstr(&nfo.dst, &bd), nfo.dport);
+		});
+
+		for_each_state(nat_t_new_klips_mapp, &nfo);
+	}
+
+	if (ugh != NULL)
+		libreswan_log(
+			"K_SADB_X_NAT_T_NEW_MAPPING message from KLIPS malformed: %s",
+			ugh);
+}
+
 /* Handle PF_KEY messages from the kernel that are not dealt with
  * synchronously.  In other words, all but responses to PF_KEY messages
  * that we sent.

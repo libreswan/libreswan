@@ -115,10 +115,9 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st);
 /**
  * New NAT mapping
  */
-#ifdef __PFKEY_V2_H
-void process_pfkey_nat_t_new_mapping(struct sadb_msg *,
-				     struct sadb_ext *[K_SADB_EXT_MAX + 1]);
-#endif
+void nat_traversal_new_mapping(struct state *st,
+			       const ip_address *nsrc,
+			       u_int16_t nsrcport);
 
 /**
  * IKE port floating
