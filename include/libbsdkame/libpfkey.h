@@ -32,9 +32,6 @@
  * SUCH DAMAGE.
  */
 
-/* used in osx compilation */
-#define SADB_X_SATYPE_TCPSIGNATURE    10
-#define SADB_X_AALG_TCP_MD5    11
 #define K_SADB_EXT_MAX 24
 
 struct sadb_msg;

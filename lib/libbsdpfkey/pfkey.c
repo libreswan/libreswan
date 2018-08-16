@@ -35,7 +35,6 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <net/pfkeyv2.h>
-#include <netkey/key_var.h>
 #include <netinet/in.h>
 #include <netinet6/ipsec.h>
 
@@ -46,7 +45,7 @@
 #include <errno.h>
 
 #include "lswlog.h"
-
+#include "reqid.h"
 #include "ipsec_strerror.h"
 #include "libbsdkame/libpfkey.h"
 
@@ -96,9 +95,7 @@ static int supported_map[] = {
 static int findsupportedmap(satype)
 int satype;
 {
-	int i;
-
-	for (i = 0; i < sizeof(supported_map) / sizeof(supported_map[0]); i++)
+	for (unsigned i = 0; i < sizeof(supported_map) / sizeof(supported_map[0]); i++)
 		if (supported_map[i] == satype)
 			return i;
 
@@ -109,7 +106,6 @@ static struct sadb_alg *findsupportedalg(satype, alg_id)
 u_int satype, alg_id;
 {
 	int algno;
-	int tlen;
 	caddr_t p;
 
 	/* validity check */
@@ -123,11 +119,11 @@ u_int satype, alg_id;
 		return NULL;
 	}
 
-	tlen = ipsec_supported[algno]->sadb_supported_len -
-	       sizeof(struct sadb_supported);
+	ssize_t tlen = ipsec_supported[algno]->sadb_supported_len -
+		sizeof(struct sadb_supported);
 	p = (caddr_t)(ipsec_supported[algno] + 1);
 	while (tlen > 0) {
-		if (tlen < sizeof(struct sadb_alg)) {
+		if ((unsigned) tlen < sizeof(struct sadb_alg)) {
 			/* invalid format */
 			break;
 		}
@@ -146,12 +142,12 @@ void foreach_supported_alg(void (*algregister)(int satype, int extype,
 					       struct sadb_alg *alg))
 {
 	int algno;
-	int tlen, i;
+	int tlen;
 	int satype, supported_exttype;
 
 	caddr_t p;
 
-	for (i = 0; i < sizeof(supported_map) / sizeof(supported_map[0]);
+	for (unsigned i = 0; i < sizeof(supported_map) / sizeof(supported_map[0]);
 	     i++) {
 		satype = supported_map[i];
 
@@ -169,7 +165,7 @@ void foreach_supported_alg(void (*algregister)(int satype, int extype,
 		while (tlen > 0) {
 			struct sadb_alg *a = ((struct sadb_alg *)p);
 
-			if (tlen < sizeof(struct sadb_alg)) {
+			if ((unsigned) tlen < sizeof(struct sadb_alg)) {
 				/* invalid format */
 				break;
 			}
@@ -562,21 +558,21 @@ int pfkey_send_update(
  *	-1	: error occurred, and set errno.
  */
 int pfkey_send_add(
-		int so;
+		   int so,
 		u_int satype,
 		u_int mode,
 		struct sockaddr *src,
 		struct sockaddr *dst,
 		u_int32_t spi,
-		reqid_t reqid;
+		reqid_t reqid,
 		u_int wsize,
-		caddr_t keymat;
+		caddr_t keymat,
 		u_int e_type,
 		u_int e_keylen,
 		u_int a_type,
 		u_int a_keylen,
 		u_int flags,
-		u_int32_t l_alloc;
+		u_int32_t l_alloc,
 		u_int64_t l_bytes,
 		u_int64_t l_addtime,
 		u_int64_t l_usetime,
@@ -624,10 +620,8 @@ u_int32_t spi;
  *	positive: success and return length sent
  *	-1	: error occurred, and set errno
  */
-int pfkey_send_delete_all(so, satype, mode, src, dst)
-int so;
-u_int satype, mode;
-struct sockaddr *src, *dst;
+int pfkey_send_delete_all(int so, unsigned satype, unsigned mode UNUSED,
+			  struct sockaddr *src, struct sockaddr *dst)
 {
 	struct sadb_msg *newmsg;
 	int len;
@@ -725,14 +719,12 @@ u_int32_t spi;
  *	positive: success and return length sent.
  *	-1	: error occurred, and set errno.
  */
-int pfkey_send_register(so, satype)
-int so;
-u_int satype;
+int pfkey_send_register(int so, unsigned satype)
 {
-	int len, algno;
+	int len;
 
 	if (satype == PF_UNSPEC) {
-		for (algno = 0;
+		for (unsigned algno = 0;
 		     algno < sizeof(supported_map) / sizeof(supported_map[0]);
 		     algno++) {
 			if (ipsec_supported[algno]) {
@@ -741,7 +733,7 @@ u_int satype;
 			}
 		}
 	} else {
-		algno = findsupportedmap(satype);
+		int algno = findsupportedmap(satype);
 		if (algno == -1) {
 			__ipsec_errcode = EIPSEC_INVAL_ARGUMENT;
 			return -1;
@@ -781,7 +773,7 @@ int so;
 			return -1;
 
 		if (newmsg->sadb_msg_type == SADB_REGISTER &&
-		    newmsg->sadb_msg_pid == pid)
+		    (pid_t)newmsg->sadb_msg_pid == pid)
 			break;
 		free(newmsg);
 	}
@@ -831,7 +823,7 @@ int pfkey_set_supported(const struct sadb_msg *msg, int tlen)
 	while (p < ep) {
 		sup = (const struct sadb_supported *)p;
 		if (ep < p + sizeof(*sup) ||
-		    PFKEY_EXTLEN(sup) < sizeof(*sup) ||
+		    (unsigned)PFKEY_EXTLEN(sup) < sizeof(*sup) ||
 		    ep < p + sup->sadb_supported_len) {
 			/* invalid format */
 			break;
@@ -1352,11 +1344,9 @@ int pfkey_send_x1(
 }
 
 /* sending SADB_DELETE or SADB_GET message to the kernel */
-static int pfkey_send_x2(so, type, satype, mode, src, dst, spi)
-int so;
-u_int type, satype, mode;
-struct sockaddr *src, *dst;
-u_int32_t spi;
+static int pfkey_send_x2(int so, unsigned type, unsigned satype, unsigned mode UNUSED,
+			 struct sockaddr *src, struct sockaddr *dst,
+			 u_int32_t spi)
 {
 	struct sadb_msg *newmsg;
 	int len;
@@ -1507,7 +1497,7 @@ static int pfkey_send_x4(int so, u_int type,
 	struct sadb_msg *newmsg;
 	int len;
 	caddr_t p;
-	int plen;
+	unsigned plen;
 	caddr_t ep;
 
 	__ipsec_errcode = EIPSEC_NO_ERROR;
@@ -1695,11 +1685,11 @@ int so;
  *
  * XXX should be rewritten to pass length explicitly
  */
-struct sadb_msg *pfkey_recv(so)
-int so;
+struct sadb_msg *pfkey_recv(int so)
 {
 	struct sadb_msg buf, *newmsg;
-	int len, reallen;
+	int reallen;
+	int len;
 
 	while ((len = recv(so, (caddr_t)&buf, sizeof(buf), MSG_PEEK)) < 0) {
 #if 0
@@ -1710,7 +1700,7 @@ int so;
 		return NULL;
 	}
 
-	if (len < sizeof(buf)) {
+	if ((unsigned) len < sizeof(buf)) {
 		recv(so, (caddr_t)&buf, sizeof(buf), 0);
 		__ipsec_errcode = EIPSEC_MAX;
 		return NULL;
@@ -1814,7 +1804,7 @@ caddr_t *mhp;
 
 	while (p < ep) {
 		ext = (struct sadb_ext *)p;
-		if (ep < p + sizeof(*ext) || PFKEY_EXTLEN(ext) <
+		if (ep < p + sizeof(*ext) || (unsigned) PFKEY_EXTLEN(ext) <
 		    sizeof(*ext) ||
 		    ep < p + PFKEY_EXTLEN(ext)) {
 			/* invalid format */
