@@ -1,3 +1,0 @@
-Reference test of two strongswans using CAST. This test is to confirm
-working kernels for ESP_CAST. This test currently seems to fail
-

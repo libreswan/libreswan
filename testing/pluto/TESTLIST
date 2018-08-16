@@ -998,13 +998,7 @@ kvmplutotest	klips-pluto-ipcmp-01		skiptest
 kvmplutotest	ikev2-algo-08-cast				skiptest
 kvmplutotest	netkey-algo-cast-01				skiptest
 kvmplutotest	klips-algo-cast-01				skiptest
-kvmplutotest	interop-ikev1-strongswan-07-cast128		skiptest
-# below is a strongswan-strongswan test case that seems to prove CAST
-# is broken for netkey/xfrm in strongswan itself too - kernel changed?
-kvmplutotest	interop-ikev1-strongswan-08-strongswan-cast	skiptest
-kvmplutotest	interop-ikev2-strongswan-18-psk-cast		skiptest
 kvmplutotest	interop-ikev1-strongswan-09-dh22-initiator	skiptest
-kvmplutotest	interop-ikev2-strongswan-09-dh22-initiator	skiptest
 kvmplutotest	interop-ikev1-strongswan-05-dh24-responder	skiptest
 kvmplutotest	interop-ikev1-strongswan-06-dh24-initiator	skiptest
 

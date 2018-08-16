@@ -34,17 +34,17 @@ west #
  strongswan up rw-eap
 initiating IKE_SA rw-eap[1] to 192.1.2.23
 generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (1122 bytes)
-received packet: from 192.1.2.23[500] to 192.1.2.45[500] (242 bytes)
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
+received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
 parsed IKE_SA_INIT response 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(MULT_AUTH) ]
 sending cert request for "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org"
 establishing CHILD_SA rw-eap{1}
 generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) CERTREQ IDr SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) N(MULT_AUTH) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
-sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (448 bytes)
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (612 bytes)
+sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
 parsed IKE_AUTH response 1 [ EF(2/2) ]
 received fragment #2 of 2, waiting for complete IKE message
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (1236 bytes)
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
 parsed IKE_AUTH response 1 [ EF(1/2) ]
 received fragment #1 of 2, reassembling fragmented IKE message
 parsed IKE_AUTH response 1 [ IDr CERT AUTH EAP/REQ/MD5 ]
@@ -63,22 +63,22 @@ crl fetching failed
 certificate status is not available
   reached self-signed root ca with a path length of 0
 authentication of 'east.testing.libreswan.org' with RSA_EMSA_PKCS1_SHA2_256 successful
-server requested EAP_MD5 authentication (id 0xEA)
+server requested EAP_MD5 authentication XXX
 generating IKE_AUTH request 2 [ EAP/RES/MD5 ]
-sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (96 bytes)
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (80 bytes)
+sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
 parsed IKE_AUTH response 2 [ EAP/SUCC ]
 EAP method EAP_MD5 succeeded, no MSK established
 authentication of 'user1@testing.libreswan.org' (myself) with EAP
 generating IKE_AUTH request 3 [ AUTH ]
-sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (112 bytes)
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (256 bytes)
+sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
 parsed IKE_AUTH response 3 [ AUTH SA TSi TSr N(AUTH_LFT) N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) ]
 authentication of 'east.testing.libreswan.org' with EAP successful
 IKE_SA rw-eap[1] established between 192.1.2.45[user1@testing.libreswan.org]...192.1.2.23[east.testing.libreswan.org]
-scheduling reauthentication in 9903s
-maximum IKE_SA lifetime 10443s
-CHILD_SA rw-eap{1} established with SPIs ca68a504_i c76b83cf_o and TS 192.0.1.0/24 === 192.0.2.0/24
+scheduling reauthentication in XXXs
+maximum IKE_SA lifetime XXXs
+CHILD_SA rw-eap{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
 connection 'rw-eap' established successfully
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
@@ -98,8 +98,8 @@ west #
 west #
  if [ -f /var/run/charon.pid ]; then strongswan status ; fi
 Security Associations (1 up, 0 connecting):
-      rw-eap[1]: ESTABLISHED 4 seconds ago, 192.1.2.45[user1@testing.libreswan.org]...192.1.2.23[east.testing.libreswan.org]
-      rw-eap{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: ca68a504_i c76b83cf_o
+      rw-eap[1]: ESTABLISHED XXX second ago, 192.1.2.45[user1@testing.libreswan.org]...192.1.2.23[east.testing.libreswan.org]
+      rw-eap{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
       rw-eap{1}:   192.0.1.0/24 === 192.0.2.0/24
 west #
 west #

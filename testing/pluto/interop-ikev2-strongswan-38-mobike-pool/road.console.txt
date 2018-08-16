@@ -41,7 +41,6 @@ scheduling reauthentication in XXXs
 maximum IKE_SA lifetime XXXs
 installing new virtual IP 192.0.3.10
 CHILD_SA road-east{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.3.10/32 === 192.0.2.0/24
-peer supports MOBIKE
 connection 'road-east' established successfully
 road #
  ping -W 1 -q -n -c 2 -I 192.0.3.10 192.0.2.254

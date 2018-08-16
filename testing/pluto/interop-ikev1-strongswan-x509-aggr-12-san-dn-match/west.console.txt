@@ -21,7 +21,8 @@ initiating Aggressive Mode IKE_SA san[1] to 192.1.2.23
 generating AGGRESSIVE request 0 [ SA KE No ID CERTREQ V V V V V ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
-parsed AGGRESSIVE response 0 [ SA KE No ID CERT CERTREQ SIG V V NAT-D NAT-D ]
+parsed AGGRESSIVE response 0 [ SA KE No ID CERT CERTREQ SIG V V V NAT-D NAT-D ]
+received FRAGMENTATION vendor ID
 received DPD vendor ID
 received NAT-T (RFC 3947) vendor ID
 ignoring certificate request without data
@@ -45,6 +46,10 @@ scheduling reauthentication in XXXs
 maximum IKE_SA lifetime XXXs
 sending end entity cert "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org"
 generating AGGRESSIVE request 0 [ CERT NAT-D NAT-D SIG ]
+splitting IKE message with length of 1708 bytes into 2 fragments
+generating AGGRESSIVE request 0 [ FRAG(1) ]
+generating AGGRESSIVE request 0 [ FRAG(2/2) ]
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 generating QUICK_MODE request 0123456789 [ HASH SA No KE ID ID ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
