@@ -2,5 +2,3 @@ Basic pluto with IKEv1 using PSK on the initiator (west), and Strongswan on
 the responder.
 
 This is the reverse test of interop-ikev1-strongswan-03
-
-This also tests modp group dh24
