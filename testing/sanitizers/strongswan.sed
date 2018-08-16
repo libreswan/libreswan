@@ -29,3 +29,4 @@ s/rekeying in [0-9]* minutes/rekeying in XX minutes/g
 s/ESTABLISHED [0-9]* seconds ago/ESTABLISHED XXX seconds ago/g
 s/established with SPIs .* and /established with SPIs SPISPI_i SPISPI_o and /
 s/received AUTH_LIFETIME of [0-9]*s, scheduling reauthentication in [0-9]*s/received AUTH_LIFETIME of XXXXs, scheduling reauthentication in XXXXs/
+s/server requested EAP_MD5 authentication.*$/server requested EAP_MD5 authentication XXX/g
