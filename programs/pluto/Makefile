@@ -153,9 +153,11 @@ LDFLAGS += -lpthread
 LDFLAGS += $(FIPSCHECK_LDFLAGS)
 LDFLAGS += $(LIBCAP_NG_LDFLAGS)
 
-# OSDEP already set in objdir.mk?
-OSDEP?=$(shell uname -s | tr 'A-Z' 'a-z')
-OBJS += sysdep_${OSDEP}.o
+ifeq ($(USE_BSDKAME),true)
+OBJS += kernel_bsd.o
+else
+OBJS += kernel_linux.o
+endif
 
 ifneq ($(LD_LIBRARY_PATH),)
 LDFLAGS+=-L$(LD_LIBRARY_PATH)
