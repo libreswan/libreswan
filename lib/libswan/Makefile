@@ -59,13 +59,9 @@ OBJS += constants.o \
 ifeq ($(USE_NETKEY),true)
 OBJS += addr_lookup.o
 endif
-OBJS += kernel_alg.o
 
-ifeq ($(USE_KLIPS),true)
+OBJS += kernel_alg.o
 OBJS += kernel_sadb.o
-else ifeq ($(USE_NETKEY),true)
-OBJS += kernel_sadb.o
-endif
 
 # These get pulled in from the klips kernel code.
 VPATH += ${KLIPSSRCDIR}
