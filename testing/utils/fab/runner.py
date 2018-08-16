@@ -450,10 +450,11 @@ def _process_test(domain_prefix, test, args, test_stats, result_stats, test_coun
             with logger.time("post-mortem %s", test_prefix):
                 # The test finished; it is assumed that post.mortem
                 # can deal with a crashed test.
-                result = post.mortem(test, args, domain_prefix=domain_prefix,
-                                     update=True)
+                result = post.mortem(test, args, domain_prefix=domain_prefix)
                 logger.info("%s %s %s%s%s %s", prefix, test_prefix, result,
                             result.issues and " ", result.issues, suffix)
+
+            result.save()
 
             # If the test was run (a fresh run would delete RESULT)
             # and finished (resolved in POSIX terminology), emit

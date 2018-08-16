@@ -197,7 +197,9 @@ def results(logger, tests, baseline, args, result_stats):
             result = post.mortem(test, args,
                                  baseline=baseline,
                                  output_directory=test.saved_output_directory,
-                                 quick=args.quick, update=args.update)
+                                 quick=args.quick)
+            if args.update:
+                result.save()
             if args.skip:
                 if skip.result(logger, args, result):
                     result_stats.add_skipped(result)
