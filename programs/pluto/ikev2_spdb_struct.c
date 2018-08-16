@@ -1963,14 +1963,14 @@ static struct ikev2_proposals default_ikev2_ike_proposals = {
 
 void ikev2_need_ike_proposals(struct connection *c, const char *why) {
 	if (c->ike_proposals != NULL) {
-		DBGF(DBG_CONTROL, "already determined local IKE proposals for %s (%s)",
+		DBGF(DBG_CONTROL, "already constructed local IKE proposals for connection %s (%s)",
 		     c->name, why);
 		return;
 	}
 
 	const char *notes;
 	if (c->alg_info_ike == NULL) {
-		DBGF(DBG_CONTROL, "selecting default local IKE proposals for %s (%s)",
+		DBGF(DBG_CONTROL, "selecting default constructed local IKE proposals for connection %s (%s)",
 		     c->name, why);
 		c->ike_proposals = &default_ikev2_ike_proposals;
 		notes = " (default)";
@@ -2005,7 +2005,7 @@ void ikev2_need_ike_proposals(struct connection *c, const char *why) {
 	}
 
 	LSWLOG(buf) {
-		lswlogf(buf, "local IKE proposals for %s (%s): ",
+		lswlogf(buf, "constructed local IKE proposals for %s (%s): ",
 			c->name, why);
 		print_proposals(buf, c->ike_proposals);
 		lswlogs(buf, notes);
@@ -2105,14 +2105,14 @@ void ikev2_need_esp_or_ah_proposals(struct connection *c,
 				    const struct oakley_group_desc *default_dh)
 {
 	if (c->esp_or_ah_proposals != NULL) {
-		DBGF(DBG_CONTROL, "already determined local ESP/AH proposals for %s (%s)",
+		DBGF(DBG_CONTROL, "already constructed local ESP/AH proposals for %s (%s)",
 		     c->name, why);
 		return;
 	}
 
 	const char *notes;
 	if (c->alg_info_esp == NULL) {
-		DBGF(DBG_CONTROL, "selecting default local ESP/AH proposals for %s (%s)",
+		DBGF(DBG_CONTROL, "selecting default construvted local ESP/AH proposals for %s (%s)",
 		     c->name, why);
 		lset_t esp_ah = c->policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE);
 		struct ikev2_proposals *default_proposals_missing_esn;
@@ -2269,7 +2269,7 @@ void ikev2_need_esp_or_ah_proposals(struct connection *c,
 	}
 
 	LSWLOG(buf) {
-		lswlogf(buf, "local ESP/AH proposals for %s (%s): ",
+		lswlogf(buf, "constructed local ESP/AH proposals for %s (%s): ",
 			c->name, why);
 		print_proposals(buf, c->esp_or_ah_proposals);
 		lswlogs(buf, notes);
