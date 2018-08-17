@@ -257,7 +257,7 @@ algparse -v2 'esp=ase-sah'
 algparse -v2 'esp=aes-sah1'
 	ERROR: ESP integrity algorithm 'sah1' is not recognized
 algparse -v2 'esp=id3'
-	ERROR: ESP encryption algorithm 'id' is not recognized
+	ERROR: ESP encryption algorithm 'id3' is not recognized
 algparse -v2 'esp=aes-id3'
 	ERROR: ESP integrity algorithm 'id3' is not recognized
 algparse -v2 'esp=aes_gcm-md5'
@@ -370,7 +370,7 @@ algparse -v2 'ike=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192'
 algparse -v2 'ike=aes;none'
 	ERROR: IKE DH algorithm 'none' not permitted
 algparse -v2 'ike=id2'
-	ERROR: IKE encryption algorithm 'id' is not recognized
+	ERROR: IKE encryption algorithm 'id2' is not recognized
 algparse -v2 'ike=3des-id2'
 	ERROR: IKE PRF algorithm 'id2' is not recognized
 algparse -v2 'ike=aes_ccm'

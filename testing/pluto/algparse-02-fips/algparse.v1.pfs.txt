@@ -75,11 +75,11 @@ algparse -fips -v1 -pfs 'esp=aes256-sha2_512'
 algparse -fips -v1 -pfs 'esp=camellia'
 	ERROR: ESP encryption algorithm 'camellia' is not supported
 algparse -fips -v1 -pfs 'esp=camellia128'
-	ERROR: ESP encryption algorithm 'camellia' is not supported
+	ERROR: ESP encryption algorithm 'camellia128' is not supported
 algparse -fips -v1 -pfs 'esp=camellia192'
-	ERROR: ESP encryption algorithm 'camellia' is not supported
+	ERROR: ESP encryption algorithm 'camellia192' is not supported
 algparse -fips -v1 -pfs 'esp=camellia256'
-	ERROR: ESP encryption algorithm 'camellia' is not supported
+	ERROR: ESP encryption algorithm 'camellia256' is not supported
 algparse -fips -v1 -pfs 'esp=aes_ccm'
 	AES_CCM_16-NONE
 algparse -fips -v1 -pfs 'esp=aes_ccm_a-128-null'
@@ -195,9 +195,9 @@ algparse -fips -v1 -pfs 'esp=serpent'
 algparse -fips -v1 -pfs 'esp=twofish'
 	ERROR: ESP encryption algorithm 'twofish' is not supported
 algparse -fips -v1 -pfs 'esp=camellia_cbc_256-hmac_sha2_512_256;modp8192'
-	ERROR: ESP encryption algorithm 'camellia_cbc' is not supported
+	ERROR: ESP encryption algorithm 'camellia_cbc_256' is not supported
 algparse -fips -v1 -pfs 'esp=null_auth_aes_gmac_256-null;modp8192'
-	ERROR: ESP encryption algorithm 'null_auth_aes_gmac' is not supported
+	ERROR: ESP encryption algorithm 'null_auth_aes_gmac_256' is not supported
 algparse -fips -v1 -pfs 'esp=3des-sha1;modp8192'
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 algparse -fips -v1 -pfs 'esp=3des-sha1-modp8192'
@@ -238,7 +238,7 @@ algparse -fips -v1 -pfs 'esp=aes512-sha1'
 algparse -fips -v1 -pfs 'esp=aes-sha1555'
 	ERROR: ESP integrity algorithm 'sha1555' is not recognized
 algparse -fips -v1 -pfs 'esp=camellia666-sha1'
-	ERROR: ESP encryption algorithm 'camellia' is not supported
+	ERROR: ESP encryption algorithm 'camellia666' is not supported
 algparse -fips -v1 -pfs 'esp=blowfish'
 	ERROR: ESP encryption algorithm 'blowfish' is not supported
 algparse -fips -v1 -pfs 'esp=des-sha1'
@@ -258,7 +258,7 @@ algparse -fips -v1 -pfs 'esp=ase-sah'
 algparse -fips -v1 -pfs 'esp=aes-sah1'
 	ERROR: ESP integrity algorithm 'sah1' is not recognized
 algparse -fips -v1 -pfs 'esp=id3'
-	ERROR: ESP encryption algorithm 'id' is not recognized
+	ERROR: ESP encryption algorithm 'id3' is not recognized
 algparse -fips -v1 -pfs 'esp=aes-id3'
 	ERROR: ESP integrity algorithm 'id3' is not recognized
 algparse -fips -v1 -pfs 'esp=aes_gcm-md5'
@@ -373,7 +373,7 @@ algparse -fips -v1 -pfs 'ike=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp81
 algparse -fips -v1 -pfs 'ike=aes;none'
 	ERROR: IKE DH algorithm 'none' is not supported by IKEv1
 algparse -fips -v1 -pfs 'ike=id2'
-	ERROR: IKE encryption algorithm 'id' is not recognized
+	ERROR: IKE encryption algorithm 'id2' is not recognized
 algparse -fips -v1 -pfs 'ike=3des-id2'
 	ERROR: IKE PRF algorithm 'id2' is not recognized
 algparse -fips -v1 -pfs 'ike=aes_ccm'

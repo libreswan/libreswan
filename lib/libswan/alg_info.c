@@ -276,11 +276,13 @@ static const struct ike_alg *lookup_byname(const struct proposal_parser *parser,
 					   alg_byname_fn *alg_byname,
 					   shunk_t name,
 					   size_t key_bit_length,
+					   shunk_t print_name,
 					   const char *what)
 {
 	if (name.len > 0) {
 		if (alg_byname != NULL) {
-			const struct ike_alg *alg = alg_byname(parser, name, key_bit_length);
+			const struct ike_alg *alg = alg_byname(parser, name, key_bit_length,
+							       print_name);
 			if (alg == NULL) {
 				DBG(DBG_PROPOSAL_PARSER,
 				    DBG_log("%s_byname('"PRISHUNK"') failed: %s",
@@ -356,12 +358,14 @@ static bool parse_encrypt(const struct proposal_parser *parser,
 			passert(parser->err_buf[0] != '\0');
 			return false;
 		}
+		/* print <alg>-<len> */
+		shunk_t print_name = shunk2(ealg.ptr, eklen.ptr + eklen.len - ealg.ptr);
 		proposal->enckeylen = enckeylen;
 		proposal->encrypt =
 			encrypt_desc(lookup_byname(parser,
 						   encrypt_alg_byname,
 						   ealg, proposal->enckeylen,
-						   "encryption"));
+						   print_name, "encryption"));
 		/* Was <ealg>-<eklen> rejected? */
 		if (parser->err_buf[0] != '\0') {
 			return false;
@@ -370,11 +374,12 @@ static bool parse_encrypt(const struct proposal_parser *parser,
 		return true;
 	}
 	/* try <ealg> */
+	shunk_t print_name = ealg;
 	proposal->encrypt =
 		encrypt_desc(lookup_byname(parser,
 					   encrypt_alg_byname,
 					   ealg, proposal->enckeylen,
-					   "encryption"));
+					   print_name, "encryption"));
 	if (parser->err_buf[0] != '\0') {
 		/*
 		 * Could it be <ealg><eklen> or <ealg>_<eklen>?  Work
@@ -413,7 +418,7 @@ static bool parse_encrypt(const struct proposal_parser *parser,
 			encrypt_desc(lookup_byname(parser,
 						   encrypt_alg_byname,
 						   ealg, proposal->enckeylen,
-						   "encryption"));
+						   print_name, "encryption"));
 		if (parser->err_buf[0] != '\0') {
 			return false;
 		}
@@ -454,14 +459,17 @@ static bool parser_alg_info_add(const struct proposal_parser *parser,
 	bool lookup_prf = parser->protocol->prf_alg_byname != NULL;
 	if (!lookup_prf && IMPAIR(PROPOSAL_PARSER)) {
 		/*
-		 * Only force PRF lookup when the folloing token looks
-		 * like an INTEG algorithm.  Otherwise something like
-		 * ah=sha1 gets parsed as ah=[encr]-sha1-[integ]-[dh].
+		 * Force PRF lookup when the folloing token looks like
+		 * an INTEG algorithm (i.e., its lookup succeeds).
+		 * Otherwise something like ah=sha1 gets parsed as
+		 * ah=[encr]-sha1-[integ]-[dh].
 		 */
-		if (tokens[0].alg.ptr != NULL && tokens[1].alg.ptr != NULL) {
-			(void) lookup_byname(parser, integ_alg_byname,
-					     tokens[1].alg, 0, "integrity");
-			lookup_prf = parser->err_buf[0] == '\0';
+		shunk_t prf = tokens[0].alg;
+		shunk_t integ = tokens[1].alg;
+		if (prf.ptr != NULL && integ.ptr != NULL) {
+			lookup_prf = (lookup_byname(parser, integ_alg_byname,
+						    integ, 0, integ, "integrity")
+				      != NULL);
 			parser->err_buf[0] = '\0';
 		}
 	}
@@ -469,7 +477,7 @@ static bool parser_alg_info_add(const struct proposal_parser *parser,
 		shunk_t prf = tokens[0].alg;
 		proposal.prf = prf_desc(lookup_byname(parser,
 						      prf_alg_byname,
-						      prf, 0, "PRF"));
+						      prf, 0, prf, "PRF"));
 		if (parser->err_buf[0] != '\0') {
 			return false;
 		}
@@ -485,7 +493,7 @@ static bool parser_alg_info_add(const struct proposal_parser *parser,
 		shunk_t integ = tokens[0].alg;
 		proposal.integ = integ_desc(lookup_byname(parser,
 							  integ_alg_byname,
-							  integ, 0, "integrity"));
+							  integ, 0, integ, "integrity"));
 		if (parser->err_buf[0] != '\0') {
 			if (tokens[1].alg.ptr != NULL) {
 				/*
@@ -517,7 +525,8 @@ static bool parser_alg_info_add(const struct proposal_parser *parser,
 		shunk_t dh = tokens[0].alg;
 		proposal.dh = oakley_group_desc(lookup_byname(parser,
 							      dh_alg_byname,
-							      dh, 0, "DH"));
+							      dh, 0,
+							      dh, "DH"));
 		if (parser->err_buf[0] != '\0') {
 			return false;
 		}

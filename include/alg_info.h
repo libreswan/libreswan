@@ -33,7 +33,8 @@ struct proposal_policy;
 struct proposal_parser;
 
 typedef const struct ike_alg *(alg_byname_fn)(const struct proposal_parser *parser,
-					      shunk_t name, size_t key_bit_length);
+					      shunk_t name, size_t key_bit_length,
+					      shunk_t print_name);
 
 /*
  * Parameters to tune the parser.
