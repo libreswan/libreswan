@@ -1,4 +1,4 @@
-/* GCM for libreswan
+/* NSS GCM for libreswan
  *
  * Copyright (C) 2014,2016,2018 Andrew Cagney
  *
@@ -86,7 +86,7 @@ static bool ike_alg_nss_gcm(const struct encrypt_desc *alg,
 			ok = false;
 		}
 	} else {
-		SECStatus rv = PK11_Decrypt(sym_key, CKM_AES_GCM, &param,
+		SECStatus rv = PK11_Decrypt(sym_key, alg->nss.mechanism, &param,
 					    out_buf, &out_len, text_and_tag_size,
 					    text_and_tag, text_and_tag_size);
 		if (rv != SECSuccess) {
