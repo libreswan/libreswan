@@ -13,8 +13,11 @@
  * for more details.
  */
 
+#include <pkcs11.h>
+
 #include "ike_alg.h"
 #include "ike_alg_encrypt.h"
+#include "ike_alg_encrypt_nss_aead_ops.h"
 
 /*
  * See: https://tools.ietf.org/html/rfc7634#section-2
@@ -35,7 +38,7 @@ const struct encrypt_desc ike_alg_encrypt_chacha20_poly1305 = {
 	},
 	.keylen_omitted = true,
 	.enc_blocksize = 16,
-	.pad_to_blocksize = true,
+	.pad_to_blocksize = false,
 	.wire_iv_size = 64/*bits*/ / 8,
 	.salt_size = 32/*bits*/ / 8,
 	.keydeflen = 256,
@@ -44,4 +47,10 @@ const struct encrypt_desc ike_alg_encrypt_chacha20_poly1305 = {
 	.encrypt_netlink_xfrm_name = "rfc7539esp(chacha20,poly1305)",
 	.encrypt_tcpdump_name = "chacha20_poly1305",
 	.encrypt_kernel_audit_name = "chacha20_poly1305",
+#ifdef CKM_NSS_CHACHA20_POLY1305
+	.nss = {
+		.mechanism = CKM_NSS_CHACHA20_POLY1305,
+	},
+	.encrypt_ops = &ike_alg_encrypt_nss_aead_ops,
+#endif
 };
