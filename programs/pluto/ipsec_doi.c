@@ -645,41 +645,36 @@ void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 	lswlogs(buf, "}");
 }
 
-static void fmt_isakmp_sa_established(struct state *st, char *sa_details,
-			       size_t sa_details_size)
+void lswlog_ike_sa_established(struct lswlog *buf, struct state *st)
 {
 	passert(st->st_oakley.ta_encrypt != NULL);
 	passert(st->st_oakley.ta_prf != NULL);
 	passert(st->st_oakley.ta_dh != NULL);
+
+	lswlogs(buf, " {auth=");
+	if (st->st_ikev2) {
+		lswlogs(buf, "IKEv2");
+	} else {
+		lswlog_enum_short(buf, &oakley_auth_names, st->st_oakley.auth);
+	}
+
+	lswlogf(buf, " cipher=%s_%d",
+		st->st_oakley.ta_encrypt->common.name,
+		st->st_oakley.enckeylen);
+
 	/*
 	 * Note: for IKEv1 and AEAD encrypters,
 	 * st->st_oakley.ta_integ is 'none'!
 	 */
-
-	struct esb_buf anb;
-	const char *auth_name = st->st_ikev2 ? "IKEv2" :
-		enum_show_shortb(&oakley_auth_names, st->st_oakley.auth, &anb);
-
-	const char *prf_common_name = st->st_oakley.ta_prf->common.name;
-
-	char prf_name[30] = "";
-	if (st->st_ikev2) {
-		snprintf(prf_name, sizeof(prf_name),
-			 " prf=%s", prf_common_name);
-	}
-
-	const char *integ_name;
-	char integ_buf[30];
+	lswlogs(buf, " integ=");
 	if (st->st_ikev2) {
 		if (st->st_oakley.ta_integ == &ike_alg_integ_none) {
-			integ_name = "n/a";
+			lswlogs(buf, "n/a");
 		} else {
-			snprintf(integ_buf, sizeof(integ_buf),
-				 "%s_%zu",
-				 st->st_oakley.ta_integ->common.officname,
-				 (st->st_oakley.ta_integ->integ_output_size *
-				  BITS_PER_BYTE));
-			integ_name = integ_buf;
+			lswlogf(buf, "%s_%zu",
+				st->st_oakley.ta_integ->common.officname,
+				(st->st_oakley.ta_integ->integ_output_size *
+				 BITS_PER_BYTE));
 		}
 	} else {
 		/*
@@ -687,17 +682,14 @@ static void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 		 * (always?) NULL.  Display the PRF.  The choice and
 		 * behaviour are historic.
 		 */
-		integ_name = prf_common_name;
+		lswlogs(buf, st->st_oakley.ta_prf->common.name);
 	}
 
-	snprintf(sa_details, sa_details_size,
-		 " {auth=%s cipher=%s_%d integ=%s%s group=%s}",
-		 auth_name,
-		 st->st_oakley.ta_encrypt->common.name,
-		 st->st_oakley.enckeylen,
-		 integ_name,
-		 prf_name,
-		 st->st_oakley.ta_dh->common.name);
+	if (st->st_ikev2) {
+		lswlogf(buf, " prf=%s", st->st_oakley.ta_prf->common.name);
+	}
+
+	lswlogf(buf, " group=%s}", st->st_oakley.ta_dh->common.name);
 
 	/* keep IKE SA statistics */
 	if (st->st_ikev2) {
@@ -712,11 +704,4 @@ static void fmt_isakmp_sa_established(struct state *st, char *sa_details,
 		pstats(ikev1_integ, st->st_oakley.ta_prf->common.id[IKEv1_OAKLEY_ID]);
 		pstats(ikev1_groups, st->st_oakley.ta_dh->group);
 	}
-}
-
-void lswlog_ike_sa_established(struct lswlog *buf, struct state *st)
-{
-	char sadetails[512] = "";
-	fmt_isakmp_sa_established(st, sadetails, sizeof(sadetails));
-	lswlogs(buf, sadetails);
 }

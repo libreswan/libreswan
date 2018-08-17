@@ -38,6 +38,7 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
+#include <netinet/udp.h>
 
 #include <libreswan.h>
 #include <libreswan/pfkeyv2.h>
@@ -72,7 +73,6 @@
 #include "crypto.h"
 #include "vendor.h"
 #include "send.h"
-#include "natt_defines.h"
 #include "nat_traversal.h"
 #include "ikev2_send.h"
 
@@ -765,7 +765,7 @@ int nat_traversal_espinudp_socket(int sk, const char *fam)
 	if (kern_interface == USE_NETKEY || kern_interface == USE_BSDKAME) {
 		DBG(DBG_NATT, DBG_log("NAT-Traversal: Trying sockopt style NAT-T"));
 		const int type = ESPINUDP_WITH_NON_ESP; /* no longer supporting natt draft 00 or 01 */
-		const int os_opt = UDP_ESPINUDP;
+		const int os_opt = UDP_ENCAP; /* UDP_ESPINUDP aka 100 */
 
 #if defined(BSD_KAME)
 		if (USE_BSDKAME)

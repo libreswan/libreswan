@@ -81,6 +81,9 @@ destination -I 192.0.1.254 192.0.2.254 is alive
 002 "esp=null_auth_aes_gmac-null" #5: deleting state (STATE_PARENT_I3) and sending notification
 002 "esp=null_auth_aes_gmac-null": deleting non-instance connection
 west #
+ modinfo chacha20poly1305 > /dev/null && ../bin/libreswan-up-down.sh esp=chacha20_poly1305-null -I 192.0.1.254 192.0.2.254 || true
+modinfo: ERROR: Module chacha20poly1305 not found.
+west #
  echo done
 done
 west #
