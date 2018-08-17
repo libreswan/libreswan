@@ -220,8 +220,7 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
- grep 'duplicate packet' /tmp/pluto.log
-| "westnet-eastnet" #1: discarding duplicate packet; already STATE_MAIN_I4
+ sed -n -e '/IMPAIR: start duplicate packet/,/IMPAIR: stop duplicate packet/ { /^[^|]/ p }' /tmp/pluto.log
 west #
 west #
  ../bin/check-for-core.sh
