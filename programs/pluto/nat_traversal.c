@@ -41,8 +41,6 @@
 #include <netinet/udp.h>
 
 #include <libreswan.h>
-#include <libreswan/pfkeyv2.h>
-#include <libreswan/pfkey.h>
 #include <libreswan/ipsec_tunnel.h>
 #include <libreswan/ipsec_param.h>
 
@@ -764,22 +762,41 @@ int nat_traversal_espinudp_socket(int sk, const char *fam)
 #if defined(NETKEY_SUPPORT) || defined(BSD_KAME)
 	if (kern_interface == USE_NETKEY || kern_interface == USE_BSDKAME) {
 		DBG(DBG_NATT, DBG_log("NAT-Traversal: Trying sockopt style NAT-T"));
-		const int type = ESPINUDP_WITH_NON_ESP; /* no longer supporting natt draft 00 or 01 */
-		const int os_opt = UDP_ENCAP; /* UDP_ESPINUDP aka 100 */
 
-#if defined(BSD_KAME)
-		if (USE_BSDKAME)
-			os_opt = UDP_ENCAP_ESPINUDP; /* defined as 2 */
+		/*
+		 * The SOL (aka socket level) is really the the
+		 * protocol number which, for UDP, is always 17.
+		 * Linux provides a SOL_* macro, the others don't.
+		 */
+#if defined(SOL_UDP)
+		const int sol_udp = SOL_UDP;
+#elif defined(IPPROTO_UDP)
+		const int sol_udp = IPPROTO_UDP;
 #endif
-		int r = setsockopt(sk, SOL_UDP, os_opt, &type, sizeof(type));
+
+		/*
+		 * Was UDP_ESPINUDP (aka 100).  Linux/NetBSD have the
+		 * value 100, FreeBSD has the value 1.
+		 */
+		const int sol_name = UDP_ENCAP;
+
+		/*
+		 * Was ESPINUDP_WITH_NON_ESP (aka 2) defined in
+		 * "libreswan.h" which smells like something intended
+		 * for the KLIPS module. <netinet/udp.h> defines the
+		 * below across linux and *BSD.
+		 */
+		const int sol_value = UDP_ENCAP_ESPINUDP;
+
+		int r = setsockopt(sk, sol_udp, sol_name, &sol_value, sizeof(sol_value));
 		if (r == -1) {
 			DBG(DBG_NATT,
 				DBG_log("NAT-Traversal: ESPINUDP(%d) setup failed for sockopt style NAT-T family %s (errno=%d)",
-					ESPINUDP_WITH_NON_ESP, fam, errno));
+					sol_value, fam, errno));
 		} else {
 			DBG(DBG_NATT,
 				DBG_log("NAT-Traversal: ESPINUDP(%d) setup succeeded for sockopt style NAT-T family %s",
-					ESPINUDP_WITH_NON_ESP, fam));
+					sol_value, fam));
 			return r;
 		}
 	} else {
@@ -823,8 +840,8 @@ int nat_traversal_espinudp_socket(int sk, const char *fam)
 
 	/* all methods failed to detect NAT-T support */
 	loglog(RC_LOG_SERIOUS,
-		"NAT-Traversal: ESPINUDP(%d) for this kernel not supported or not found for family %s",
-		ESPINUDP_WITH_NON_ESP, fam);
+	       "NAT-Traversal: ESPINUDP for this kernel not supported or not found for family %s",
+	       fam);
 	libreswan_log("NAT-Traversal is turned OFF due to lack of KERNEL support");
 	nat_traversal_enabled = FALSE;
 	return -1;
