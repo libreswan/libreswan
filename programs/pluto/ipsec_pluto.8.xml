@@ -48,7 +48,6 @@
       <arg choice="opt">--virtual-private <replaceable>network_list</replaceable></arg>
       <arg choice="opt">--keep-alive <replaceable>delay_sec</replaceable></arg>
       <arg choice="opt">--force-busy</arg>
-      <arg choice="opt">--nocrsend</arg>
       <arg choice="opt">--strictcrlpolicy</arg>
       <arg choice="opt">--crlcheckinterval</arg>
       <arg choice="opt">--interface <replaceable>interfacename</replaceable></arg>
@@ -963,17 +962,11 @@
       <emphasis remap="I">port floating</emphasis>, and Libreswan enables this
       per default.</para>
 
-      <para>Pluto supports the use of X.509 certificates and sends
-      certificates when needed. This can confuse IKE implementations that do
-      not implement this, such as the old FreeS/WAN implementation. The
-      <option>--nocrsend</option> prevents pluto from sending these. Pluto
-      uses NSS for all X.509 related data, including CAcerts, certs, CRLs and
-      private keys.
-
-      The <emphasis
-      remap="I">Certificate Revocation Lists</emphasis> can also be retrieved
-      from an URL. The option <option>--crlcheckinterval</option> sets the
-      time between checking for CRL expiration and issuing new fetch commands.
+      <para>Pluto supports the use of X.509 certificates and sends certificates
+      when needed. Pluto uses NSS for all X.509 related data, including CAcerts,
+      certs, CRLs and private keys. The <emphasis remap="I">Certificate Revocation Lists</emphasis>
+      can also be retrieved from an URL. The option <option>--crlcheckinterval</option>
+      sets the time between checking for CRL expiration and issuing new fetch commands.
       The first attempt to update a CRL is started at <emphasis
       remap="I">2*crlcheckinterval</emphasis> before the next update time.
       Pluto logs a warning if no valid CRL was loaded or obtained for a
