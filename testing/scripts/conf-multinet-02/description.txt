@@ -1,4 +1,0 @@
-This tests parsing of a config file with subnets= set for both
-left and right.  It uses permuteconf.c to call the appropriate function
-to permute the subnets= to create multiple conns, but with a function
-to just print the results.

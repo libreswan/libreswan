@@ -1,2 +1,0 @@
-This tests parsing of a config file with all config setup options set.
-One of these options that fails is strictcrlpolicy= which is bug #897

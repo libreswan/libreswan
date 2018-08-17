@@ -1,5 +1,0 @@
-This tests parsing of a config file which has = signs in the base64
-encoding of the RSAkey file. This is a problem because the parser was
-seeing the = and thinking it was in fact part of the assignment.
-
-

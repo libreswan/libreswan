@@ -1,8 +1,0 @@
-# See if an goofy config section name is noticed and diagnosed
-# Only config %default and config setup are meaningful.
-
-# ipsec _confread --config ipsec.conf --type config setup
-
-config	setup	# manditory
-
-config	martian	# unnoticed?

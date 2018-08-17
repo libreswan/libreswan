@@ -1,8 +1,0 @@
-conn	mrcharlie--oelan
-        # Right security gateway, subnet behind it,next hop toward left.
-        right=205.150.200.134
-        rightsubnet=205.150.200.160/28
-        rightnexthop=205.150.200.129
-	rightsourceip=205.150.200.165
-        rightrsasigkey=0sAQOrXJxB56Q28iOO43Va36elIFFKc/QB2orIeL94BdC5X4idFQZjSpsZTh48wKVXUE9xjwUkwR4R4/+1vjNN7KFp9fcqa2OxgjsoGqCn+3OPR8La9uyvZg0OBuSTj3qkbh/2HacAUJ7vqvjQ3W8Wj6sMXtTueR8NNcdSzJh149ch3zqfiXrxxna8+8UEDQaRR9KOPiSvXb2KjnuDan6hDKOT4qTZRRRCMWwnNQ9zPIMNbLBp0rNcZ+ZGFg2ckWtWh5yhv1iXYLV2vmd9DB6d4Dv8cW7scc3rPmDXpYR6APqPBRHlcbenfHCt+oCkEWse8OQhMM56KODIVQq3fejrfi1H
-

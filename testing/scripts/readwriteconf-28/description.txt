@@ -1,1 +1,0 @@
-This tests parsing of a config file with authby=secret|rsasig.

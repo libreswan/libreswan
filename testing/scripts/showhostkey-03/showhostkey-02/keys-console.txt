@@ -1,7 +1,0 @@
-east:~#
- TZ=GMT export TZ
-east:~#
- ipsec showhostkey --file /testing/pluto/xauth-pluto-11/road.secrets --dump
-7(1): XAUTH keyid: @use1
-    xauth: "0x7573653170617373"
-

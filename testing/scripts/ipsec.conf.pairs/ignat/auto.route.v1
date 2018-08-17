@@ -1,5 +1,0 @@
-ipsec whack --name mms --route
-ipsec whack --name amethon --route
-ipsec whack --name elogic --route
-ipsec whack --name mms1 --route
-ipsec whack --name wap --route

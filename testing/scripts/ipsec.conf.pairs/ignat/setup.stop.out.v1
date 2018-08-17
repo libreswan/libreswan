@@ -1,9 +1,0 @@
-ipsec_setup: 	 PATH=/usr/local/sbin:/sbin:/usr/sbin:/usr/local/bin:/bin:/usr/bin
-ipsec_setup: 	 echo "Stopping FreeS/WAN IPsec..."
-ipsec_setup: 	 if test -r /var/run/pluto/ipsec_setup.pid ; then status=0 ; . /var/run/pluto/ipsec.info ; else echo "stop ordered, but IPsec appears to be already stopped!" ; echo "doing cleanup anyway..." ; status=1 ; fi
-ipsec_setup: 	 test -f /var/run/pluto/pluto.pid && { if ps -p ` cat /var/run/pluto/pluto.pid ` > /dev/null ; then ipsec whack --shutdown | grep -v ^002 ; sleep 1 ; if test -s /var/run/pluto/pluto.pid ; then echo "Attempt to shut Pluto down failed!  Trying kill:" ; kill ` cat /var/run/pluto/pluto.pid ` ; sleep 5 ; fi ; else echo "Removing orphaned /var/run/pluto/pluto.pid:" ; fi ; rm -f /var/run/pluto/pluto.pid ; }
-ipsec_setup: 	 ifl=` ifconfig | sed -n -e "/^ipsec/s/ .*//p" ` ; test "X$ifl" != "X" && for i in $ifl ; do ifconfig $i down ; ipsec tncfg --detach --virtual $i ; done ; test -r /proc/net/ipsec_klipsdebug && ipsec klipsdebug --none ; ipsec eroute --clear ; ipsec spi --clear ; lsmod 2>&1 | grep "^ipsec" > /dev/null && rmmod ipsec
-ipsec_setup: 	 test -d /var/lock/subsys && rm -f /var/lock/subsys/ipsec
-ipsec_setup: 	 rm -f /var/run/pluto/ipsec.info /var/run/pluto/ipsec_setup.pid
-ipsec_setup: 	 echo ...FreeS/WAN IPsec stopped | logger -p daemon.error -t ipsec_setup
-ipsec_setup: 	 exit $status

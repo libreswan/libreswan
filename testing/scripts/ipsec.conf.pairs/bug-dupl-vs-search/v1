@@ -1,5 +1,0 @@
-# this error isn't detected by v1
-# ipsec _confread --config v1 --search auto add
-conn x
-	auto=route
-	auto=add

@@ -1,7 +1,0 @@
-# Exploit never-before-used config %default to aid migration to V2.
-# Good: this boilerplate covers over some of the differences between V1 and V2.
-# Bad: it encourages continued use of inferior V1 config settings.
-
-# ipsec _confread --config ipsec.conf --type config setup
-
-config setup

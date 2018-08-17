@@ -1,2 +1,0 @@
-ipsec _confread --config $1 fred
-ipsec _confread --config $1 --search auto ignore
