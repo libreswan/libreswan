@@ -18,11 +18,11 @@ east #
  # this shows we returned the error in IKE_AUTH
 east #
  grep "exchange type:" /tmp/pluto.log
-Aug  8 16:13:29.021012: |    exchange type: ISAKMP_v2_SA_INIT (0x22)
-Aug  8 16:13:29.105644: |    exchange type: ISAKMP_v2_SA_INIT (0x22)
-Aug  8 16:13:29.260358: |    exchange type: ISAKMP_v2_AUTH (0x23)
-Aug  8 16:13:29.294689: |    exchange type: ISAKMP_v2_AUTH (0x23)
-Aug  8 16:13:29.307710: |    exchange type: ISAKMP_v2_AUTH (0x23)
+|    exchange type: ISAKMP_v2_SA_INIT (0x22)
+|    exchange type: ISAKMP_v2_SA_INIT (0x22)
+|    exchange type: ISAKMP_v2_AUTH (0x23)
+|    exchange type: ISAKMP_v2_AUTH (0x23)
+|    exchange type: ISAKMP_v2_AUTH (0x23)
 east #
 east #
  ../bin/check-for-core.sh

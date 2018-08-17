@@ -30,10 +30,10 @@ west #
  # this shows we returned the error in IKE_AUTH
 west #
  grep "exchange type:" /tmp/pluto.log
-Aug  8 16:13:28.742762: |    exchange type: ISAKMP_v2_SA_INIT (0x22)
-Aug  8 16:13:28.948025: |    exchange type: ISAKMP_v2_SA_INIT (0x22)
-Aug  8 16:13:28.984973: |    exchange type: ISAKMP_v2_AUTH (0x23)
-Aug  8 16:13:29.122927: |    exchange type: ISAKMP_v2_AUTH (0x23)
+|    exchange type: ISAKMP_v2_SA_INIT (0x22)
+|    exchange type: ISAKMP_v2_SA_INIT (0x22)
+|    exchange type: ISAKMP_v2_AUTH (0x23)
+|    exchange type: ISAKMP_v2_AUTH (0x23)
 west #
 west #
  ../bin/check-for-core.sh
