@@ -52,6 +52,7 @@ chunk_t chunk(void *ptr, size_t len);
 	{ (ch).ptr = clone_bytes((addr), (ch).len = (size), name); }
 
 chunk_t clone_chunk(chunk_t old, const char *name);
+chunk_t clone_chunk_chunk(chunk_t first, chunk_t second, const char *name);
 
 /* note: the caller must free the result */
 char *str_from_chunk(chunk_t c, const char *name);

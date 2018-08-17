@@ -192,7 +192,7 @@ static void gcm_run_test(void)
 							    0, sizeof_symkey(key),
 							    key);
 
-	chunk_t text_and_tag = concat_chunk_chunk("text-and-tag", ct, tag);
+	chunk_t text_and_tag = clone_chunk_chunk(ct, tag, "text-and-tag");
 
 	bool result = gcm_alg->encrypt_ops
 		->do_aead(gcm_alg,

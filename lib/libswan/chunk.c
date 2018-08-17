@@ -49,3 +49,15 @@ char *str_from_chunk(chunk_t c, const char *name)
 	s[c.len] = '\0';	/* redundant */
 	return s;
 }
+
+chunk_t clone_chunk_chunk(chunk_t lhs, chunk_t rhs, const char *name)
+{
+	size_t len = lhs.len + rhs.len;
+	chunk_t cat = {
+		.len = len,
+		.ptr = alloc_things(u_int8_t, len, name),
+	};
+	memcpy(cat.ptr, lhs.ptr, lhs.len);
+	memcpy(cat.ptr + lhs.len, rhs.ptr, rhs.len);
+	return cat;
+}

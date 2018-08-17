@@ -60,7 +60,6 @@ PK11SymKey *concat_bytes_symkey(const void *lhs, size_t sizeof_lhs,
 				PK11SymKey *rhs);
 PK11SymKey *concat_symkey_chunk(PK11SymKey *lhs, chunk_t rhs);
 PK11SymKey *concat_symkey_byte(PK11SymKey *lhs, uint8_t rhs);
-chunk_t concat_chunk_chunk(const char *name, chunk_t lhs, chunk_t rhs);
 chunk_t concat_chunk_symkey(const char *name, chunk_t lhs, PK11SymKey *rhs);
 chunk_t concat_chunk_bytes(const char *name, chunk_t lhs,
 			   const void *rhs, size_t sizeof_rhs);

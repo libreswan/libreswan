@@ -46,7 +46,7 @@ static bool ike_alg_nss_gcm(const struct encrypt_desc *alg,
 		.ptr = wire_iv,
 		.len = wire_iv_size,
 	};
-	chunk_t iv = concat_chunk_chunk("IV", salt_chunk, wire_iv_chunk);
+	chunk_t iv = clone_chunk_chunk(salt_chunk, wire_iv_chunk, "IV");
 
 	CK_GCM_PARAMS gcm_params;
 	gcm_params.pIv = iv.ptr;
