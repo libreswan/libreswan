@@ -17,10 +17,10 @@ east #
  ip xfrm state
 src 192.1.8.22 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	aead rfc4106(gcm(aes)) 0xKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 192.1.2.23 dst 192.1.8.22
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	aead rfc4106(gcm(aes)) 0xKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 east #
  ip xfrm policy
 src 192.0.2.0/24 dst 192.0.3.0/24 
