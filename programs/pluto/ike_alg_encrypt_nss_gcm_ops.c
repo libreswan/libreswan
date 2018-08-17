@@ -1,5 +1,6 @@
-/*
- * Copyright (C) 2014,2016 Andrew Cagney <andrew.cagney@gmail.com>
+/* GCM for libreswan
+ *
+ * Copyright (C) 2014,2016,2018 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,8 +16,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <libreswan.h>
-
 #include "lswlog.h"
 #include "lswnss.h"
 #include "prmem.h"
@@ -25,7 +24,6 @@
 #include "constants.h"
 #include "ike_alg.h"
 #include "ike_alg_encrypt_nss_gcm_ops.h"
-#include "crypt_symkey.h"
 
 static bool ike_alg_nss_gcm(const struct encrypt_desc *alg,
 			    u_int8_t *salt, size_t salt_size,
@@ -36,7 +34,7 @@ static bool ike_alg_nss_gcm(const struct encrypt_desc *alg,
 			    PK11SymKey *sym_key, bool enc)
 {
 	/* See pk11gcmtest.c */
-	bool ok = TRUE;
+	bool ok = true;
 
 	chunk_t salt_chunk = {
 		.ptr = salt,
@@ -72,18 +70,20 @@ static bool ike_alg_nss_gcm(const struct encrypt_desc *alg,
 					    text_and_tag, text_size);
 		if (rv != SECSuccess) {
 			LSWLOG(buf) {
-				lswlogf(buf, "NSS: AEAD encryption using %s_%zu and PK11_Encrypt() failed",
-					alg->common.fqn, sizeof_symkey(sym_key) * BITS_PER_BYTE);
+				lswlogf(buf, "NSS: AEAD encryption using %s_%u and PK11_Encrypt() failed",
+					alg->common.fqn, PK11_GetKeyLength(sym_key) * BITS_PER_BYTE);
 				lswlog_nss_error(buf);
 			}
-			ok = FALSE;
+			ok = false;
 		} else if (out_len != text_and_tag_size) {
 			/* should this be a pexpect fail? */
-			loglog(RC_LOG_SERIOUS,
-			       "NSS: AEAD encryption using %s_%zu and PK11_Encrypt() failed (output length of %u not the expected %zd)",
-			       alg->common.fqn, sizeof_symkey(sym_key) * BITS_PER_BYTE,
-			       out_len, text_and_tag_size);
-			ok = FALSE;
+			LSWLOG_RC(RC_LOG_SERIOUS, buf) {
+				lswlogf(buf, "NSS: AEAD encryption using %s_%u and PK11_Encrypt() failed (output length of %u not the expected %zd)",
+					alg->common.fqn, PK11_GetKeyLength(sym_key) * BITS_PER_BYTE,
+					out_len, text_and_tag_size);
+				lswlog_nss_error(buf);
+			}
+			ok = false;
 		}
 	} else {
 		SECStatus rv = PK11_Decrypt(sym_key, CKM_AES_GCM, &param,
@@ -91,18 +91,20 @@ static bool ike_alg_nss_gcm(const struct encrypt_desc *alg,
 					    text_and_tag, text_and_tag_size);
 		if (rv != SECSuccess) {
 			LSWLOG(buf) {
-				lswlogf(buf, "NSS: AEAD decryption using %s_%zu and PK11_Decrypt() failed",
-					alg->common.fqn, sizeof_symkey(sym_key) * BITS_PER_BYTE);
+				lswlogf(buf, "NSS: AEAD decryption using %s_%u and PK11_Decrypt() failed",
+					alg->common.fqn, PK11_GetKeyLength(sym_key) * BITS_PER_BYTE);
 				lswlog_nss_error(buf);
 			}
-			ok = FALSE;
+			ok = false;
 		} else if (out_len != text_size) {
 			/* should this be a pexpect fail? */
-			loglog(RC_LOG_SERIOUS,
-			       "NSS: AEAD decryption using %s_%zu and PK11_Decrypt() failed (output length of %u not the expected %zd)",
-			       alg->common.fqn, sizeof_symkey(sym_key) * BITS_PER_BYTE,
-			       out_len, text_size);
-			ok = FALSE;
+			LSWLOG_RC(RC_LOG_SERIOUS, buf) {
+				lswlogf(buf, "NSS: AEAD decryption using %s_%u and PK11_Decrypt() failed (output length of %u not the expected %zd)",
+					alg->common.fqn, PK11_GetKeyLength(sym_key) * BITS_PER_BYTE,
+					out_len, text_size);
+				lswlog_nss_error(buf);
+			}
+			ok = false;
 		}
 	}
 
