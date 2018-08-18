@@ -124,7 +124,7 @@ extern bool ikev1_out_sa(pb_stream *outs,
 #endif
 
 bool ikev1_encrypt_message(pb_stream *pbs, struct state *st);
-bool ikev1_close_message(pb_stream *pbs, struct state *st);
+bool ikev1_close_message(pb_stream *pbs, const struct state *st);
 
 typedef stf_status ikev1_state_transition_fn(struct state *st, struct msg_digest *md);
 extern ikev1_state_transition_fn main_inI1_outR1;

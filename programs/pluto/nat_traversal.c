@@ -119,10 +119,12 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 		const ip_address *ip,
 		u_int16_t port /* host order */)
 {
-	if (is_zero_cookie(icookie))
-		DBG(DBG_NATT, DBG_log("natd_hash: Warning, icookie is zero !!"));
-	if (is_zero_cookie(rcookie))
-		DBG(DBG_NATT, DBG_log("natd_hash: Warning, rcookie is zero !!"));
+	pexpect(!is_zero_cookie(icookie));
+
+	if (is_zero_cookie(rcookie)) {
+		/* seems to be common */
+		DBG(DBG_NATT, DBG_log("natd_hash: rcookie is zero"));
+	}
 
 	/*
 	 * RFC 3947
@@ -134,18 +136,11 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 	struct crypt_hash *ctx = crypt_hash_init(hasher, "NATD", DBG_CRYPT);
 	crypt_hash_digest_bytes(ctx, "ICOOKIE", icookie, COOKIE_SIZE);
 	crypt_hash_digest_bytes(ctx, "RCOOKIE", rcookie, COOKIE_SIZE);
-	switch (addrtypeof(ip)) {
-	case AF_INET:
-		crypt_hash_digest_bytes(ctx, "SIN_ADDR",
-					(const u_char *)&ip->u.v4.sin_addr.s_addr,
-					sizeof(ip->u.v4.sin_addr.s_addr));
-		break;
-	case AF_INET6:
-		crypt_hash_digest_bytes(ctx, "SIN6_ADDR",
-					(const u_char *)&ip->u.v6.sin6_addr.s6_addr,
-					sizeof(ip->u.v6.sin6_addr.s6_addr));
-		break;
-	}
+
+	const unsigned char *ab;
+	size_t al = addrbytesptr_read(ip, &ab);
+	crypt_hash_digest_bytes(ctx, "IP addr", ab, al);
+
 	{
 		u_int16_t netorder_port = htons(port);
 		crypt_hash_digest_bytes(ctx, "PORT",
@@ -157,13 +152,7 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 				(int)hasher->hash_digest_len);
 			DBG_dump("natd_hash: icookie=", icookie, COOKIE_SIZE);
 			DBG_dump("natd_hash: rcookie=", rcookie, COOKIE_SIZE);
-			switch (addrtypeof(ip)) {
-			case AF_INET:
-				DBG_dump("natd_hash: ip=",
-					&ip->u.v4.sin_addr.s_addr,
-					sizeof(ip->u.v4.sin_addr.s_addr));
-				break;
-			}
+			DBG_dump("natd_hash: ip=", ab, al);
 			DBG_log("natd_hash: port=%d", port);
 			DBG_dump("natd_hash: hash=", hash,
 				hasher->hash_digest_len);
@@ -173,10 +162,10 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 /*
  * Add  NAT-Traversal IKEv2 Notify payload (v2N)
  */
-bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md)
+bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, const struct msg_digest *md)
 {
 	/*
-	 * XXX: This seems to be a very convoluted way of comming up
+	 * XXX: This seems to be a very convoluted way of coming up
 	 * with the RCOOKIE.
 	 *
 	 * When building an SA_INIT request, both ST's rcookie and
@@ -192,7 +181,7 @@ bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md)
 	 * with.
 	 */
 	struct state *st = md->st;
-	u_int8_t *rcookie = is_zero_cookie(st->st_rcookie) ? md->hdr.isa_rcookie : st->st_rcookie;
+	const u_int8_t *rcookie = is_zero_cookie(st->st_rcookie) ? md->hdr.isa_rcookie : st->st_rcookie;
 	u_int16_t lport = st->st_localport;
 
 	/* if encapsulation=yes, force NAT-T detection by using wrong port for hash calc */
@@ -201,15 +190,19 @@ bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md)
 		lport = 0;
 	}
 
-	bool e = ikev2_out_natd(st, np, &st->st_localaddr,
-			lport, &st->st_remoteaddr,
-			st->st_remoteport, rcookie, outs);
+	bool e = ikev2_out_natd(st, np,
+		&st->st_localaddr, lport,
+		&st->st_remoteaddr, st->st_remoteport,
+		rcookie, outs);
 	return e;
 }
 
-bool ikev2_out_natd(struct state *st, u_int8_t np, ip_address *localaddr,
-		u_int16_t localport, ip_address *remoteaddr,
-		u_int16_t remoteport,  u_int8_t *rcookie, pb_stream *outs)
+bool ikev2_out_natd(const struct state *st,
+		u_int8_t np,
+		const ip_address *localaddr, u_int16_t localport,
+		const ip_address *remoteaddr, u_int16_t remoteport,
+		const u_int8_t *rcookie,
+		pb_stream *outs)
 {
 	unsigned char hb[IKEV2_NATD_HASH_SIZE];
 	chunk_t hch = { hb, sizeof(hb) };
@@ -222,17 +215,19 @@ bool ikev2_out_natd(struct state *st, u_int8_t np, ip_address *localaddr,
 	 * First: one with local (source) IP & port
 	 * TODO: This use of SHA1 should be allowed even with USE_SHA1=false
 	 */
-	natd_hash(&ike_alg_hash_sha1, hb, st->st_icookie,
-		  rcookie, localaddr, localport);
+	natd_hash(&ike_alg_hash_sha1, hb,
+		  st->st_icookie, rcookie,
+		  localaddr, localport);
 
 	if (!ship_v2Nsp(ISAKMP_NEXT_v2N, v2N_NAT_DETECTION_SOURCE_IP,
 			&hch, outs))
 		return FALSE;
-	/*
-	 * Second: one with remote (destination) IP & port
-	 */
-	natd_hash(&ike_alg_hash_sha1, hb, st->st_icookie,
-			rcookie, remoteaddr, remoteport);
+
+	/* Second: one with remote (destination) IP & port */
+
+	natd_hash(&ike_alg_hash_sha1, hb,
+		  st->st_icookie, rcookie,
+		  remoteaddr, remoteport);
 
 	return ship_v2Nsp(np, v2N_NAT_DETECTION_DESTINATION_IP, &hch, outs);
 }
@@ -388,22 +383,16 @@ static void natd_lookup_common(struct state *st,
 
 static void ikev1_natd_lookup(struct msg_digest *md)
 {
-	unsigned char hash_me[MAX_DIGEST_LEN];
-	unsigned char hash_him[MAX_DIGEST_LEN];
 	struct state *st = md->st;
 	const struct hash_desc *const hasher = st->st_oakley.ta_prf->hasher;
 	const size_t hl = hasher->hash_digest_len;
 	const struct payload_digest *const hd = md->chain[ISAKMP_NEXT_NATD_RFC];
-	const struct payload_digest *p;
-	bool found_me = FALSE;
-	bool found_him = FALSE;
-	int i;
 
 	passert(md->iface != NULL);
 
 	/* Count NAT-D */
-	i = 0;
-	for (p = hd; p != NULL; p = p->next)
+	int i = 0;
+	for (const struct payload_digest *p = hd; p != NULL; p = p->next)
 		i++;
 
 	/*
@@ -417,24 +406,31 @@ static void ikev1_natd_lookup(struct msg_digest *md)
 		return;
 	}
 
-	/*
-	 * First one with my IP & port
-	 */
-	natd_hash(hasher, hash_me, st->st_icookie,
-		st->st_rcookie, &md->iface->ip_addr, md->iface->port);
+	/* First: one with my IP & port */
 
-	/*
-	 * The other with sender IP & port
-	 */
-	natd_hash(hasher, hash_him, st->st_icookie,
-		st->st_rcookie, &md->sender, hportof(&md->sender));
+	unsigned char hash_me[MAX_DIGEST_LEN];
+
+	natd_hash(hasher, hash_me,
+		  st->st_icookie, st->st_rcookie,
+		  &md->iface->ip_addr, md->iface->port);
+
+	/* Second: one with sender IP & port */
+
+	unsigned char hash_him[MAX_DIGEST_LEN];
+
+	natd_hash(hasher, hash_him,
+		  st->st_icookie, st->st_rcookie,
+		  &md->sender, hportof(&md->sender));
 
 	DBG(DBG_NATT, {
 		DBG_dump("expected NAT-D(me):", hash_me, hl);
 		DBG_dump("expected NAT-D(him):", hash_him, hl);
 	});
 
-	for (p = hd; p != NULL; p = p->next) {
+	bool found_me = FALSE;
+	bool found_him = FALSE;
+
+	for (const struct payload_digest *p = hd; p != NULL; p = p->next) {
 		DBG(DBG_NATT,
 			DBG_dump("received NAT-D:", p->pbs.cur,
 				pbs_left(&p->pbs)));
@@ -457,33 +453,19 @@ static void ikev1_natd_lookup(struct msg_digest *md)
 bool ikev1_nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 			const struct msg_digest *md)
 {
-	unsigned char hash[MAX_DIGEST_LEN];
 	const struct state *st = md->st;
-	const ip_address *first, *second;
-	unsigned short firstport, secondport;
+	const u_int8_t *rcookie = is_zero_cookie(st->st_rcookie) ?
+			md->hdr.isa_rcookie : st->st_rcookie;
 
 	passert(st->st_oakley.ta_prf != NULL);
 
 	DBG(DBG_EMITTING | DBG_NATT, DBG_log("sending NAT-D payloads"));
 
-	unsigned int nat_np;
-	struct_desc *pd;
+	const ip_address *first = &md->sender;
+	unsigned short firstport = st->st_remoteport;
 
-	if ((st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) != LEMPTY) {
-		nat_np = ISAKMP_NEXT_NATD_RFC;
-		pd = &isakmp_nat_d;
-	} else {
-		nat_np = ISAKMP_NEXT_NATD_DRAFTS;
-		pd = &isakmp_nat_d_drafts;
-	}
-
-	out_modify_previous_np(nat_np, outs);
-
-	first = &md->sender;
-	firstport = st->st_remoteport;
-
-	second = &md->iface->ip_addr;
-	secondport = st->st_localport;
+	const ip_address *second = &md->iface->ip_addr;
+	unsigned short secondport = st->st_localport;
 
 	if (st->st_connection->encaps == yna_yes) {
 		DBG(DBG_NATT,
@@ -491,28 +473,32 @@ bool ikev1_nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 		firstport = secondport = 0;
 	}
 
-	/*
-	 * First one with sender IP & port
-	 */
-	natd_hash(st->st_oakley.ta_prf->hasher, hash, st->st_icookie,
-		  is_zero_cookie(st->st_rcookie) ? md->hdr.isa_rcookie :
-		  st->st_rcookie, first, firstport);
+	struct_desc *pd = LDISJOINT(st->hidden_variables.st_nat_traversal, NAT_T_WITH_RFC_VALUES) ?
+		&isakmp_nat_d_drafts : &isakmp_nat_d;
+	unsigned int nat_np = pd->pt;
+
+	unsigned char hash[MAX_DIGEST_LEN];
+
+	/* first: emit payload with hash of sender IP & port */
+
+	natd_hash(st->st_oakley.ta_prf->hasher, hash,
+		  st->st_icookie, rcookie,
+		  first, firstport);
 
 	if (!ikev1_out_generic_raw(nat_np, pd, outs, hash,
 				   st->st_oakley.ta_prf->hasher->hash_digest_len,
 				   "NAT-D"))
 		return FALSE;
 
-	/*
-	 * Second one with my IP & port
-	 */
+	/* second: emit payload with hash of my IP & port */
+
 	natd_hash(st->st_oakley.ta_prf->hasher, hash,
-		  st->st_icookie, is_zero_cookie(st->st_rcookie) ?
-		  md->hdr.isa_rcookie : st->st_rcookie, second, secondport);
+		  st->st_icookie, rcookie,
+		  second, secondport);
 
 	return ikev1_out_generic_raw(np, pd, outs, hash,
-				     st->st_oakley.ta_prf->hasher->hash_digest_len,
-				     "NAT-D");
+		st->st_oakley.ta_prf->hasher->hash_digest_len,
+		"NAT-D");
 }
 
 /*
@@ -523,34 +509,34 @@ bool ikev1_nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 void nat_traversal_natoa_lookup(struct msg_digest *md,
 				struct hidden_variables *hv)
 {
-	struct payload_digest *p;
-	int i;
-	ip_address ip;
-
 	passert(md->iface != NULL);
 
 	/* Initialize NAT-OA */
 	anyaddr(AF_INET, &hv->st_nat_oa);
 
 	/* Count NAT-OA */
-	for (p = md->chain[ISAKMP_NEXT_NATOA_RFC], i = 0;
-		p != NULL;
-		p = p->next, i++) {
+	const struct payload_digest *p;
+	int i = 0;
+	for (p = md->chain[ISAKMP_NEXT_NATOA_RFC]; p != NULL; p = p->next) {
+		i++;
 	}
 
 	DBG(DBG_NATT,
 		DBG_log("NAT-Traversal: received %d NAT-OA.", i));
 
-	if (i == 0) {
+	if (i == 0)
 		return;
-	} else if (!LHAS(hv->st_nat_traversal, NATED_PEER)) {
+
+	if (!LHAS(hv->st_nat_traversal, NATED_PEER)) {
 		loglog(RC_LOG_SERIOUS,
 			"NAT-Traversal: received %d NAT-OA. Ignored because peer is not NATed",
 			i);
 		return;
-	} else if (i > 1) {
+	}
+
+	if (i > 1) {
 		loglog(RC_LOG_SERIOUS,
-			"NAT-Traversal: received %d NAT-OA. Using first, ignoring others",
+			"NAT-Traversal: received %d NAT-OA. Using first; ignoring others",
 			i);
 	}
 
@@ -559,6 +545,8 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 
 	DBG(DBG_PARSING,
 		DBG_dump("NAT-OA:", p->pbs.start, pbs_room(&p->pbs)));
+
+	ip_address ip;
 
 	switch (p->payload.nat_oa.isanoa_idtype) {
 	case ID_IPV4_ADDR:
@@ -582,6 +570,7 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 
 		initaddr(p->pbs.cur, pbs_left(&p->pbs), AF_INET6, &ip);
 		break;
+
 	default:
 		loglog(RC_LOG_SERIOUS,
 			"NAT-Traversal: invalid ID Type (%d) in NAT-OA - ignored",
@@ -603,13 +592,38 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 	}
 }
 
+static bool emit_one_natoa(
+	u_int8_t np,
+	pb_stream *outs,
+	struct_desc *pd,
+	const ip_address *ip,
+	const char *nm)
+{
+	const unsigned char *ip_val;
+	size_t ip_len = addrbytesptr_read(ip, &ip_val);
+	passert(ip_len != 0);
+
+	pb_stream pbs;
+
+	struct isakmp_nat_oa natoa = {
+		.isanoa_np = np,
+		.isanoa_idtype = addrtypeof(ip) == AF_INET ?
+			ID_IPV4_ADDR : ID_IPV6_ADDR,
+	};
+	if (!out_struct(&natoa, pd, outs, &pbs) ||
+	    !out_raw(ip_val, ip_len, &pbs, nm))
+		return FALSE;
+
+	DBG(DBG_NATT,
+		DBG_dump("NAT-OAi (S):", ip_val, ip_len));
+	close_output_pbs(&pbs);
+	return TRUE;
+}
+
 bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
 			struct state *st, bool initiator)
 {
-	struct isakmp_nat_oa natoa;
-	unsigned char ip_val[sizeof(struct in6_addr)];
-	size_t ip_len = 0;
-	ip_address *ipinit, *ipresp;
+	const ip_address *ipinit, *ipresp;
 
 	if (initiator) {
 		ipinit = &st->st_localaddr;
@@ -619,92 +633,12 @@ bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
 		ipinit = &st->st_remoteaddr;
 	}
 
-	passert(st->st_connection != NULL);
+	struct_desc *pd = LDISJOINT(st->hidden_variables.st_nat_traversal, NAT_T_WITH_RFC_VALUES) ?
+		&isakmp_nat_oa_drafts : &isakmp_nat_oa;
 
-	struct_desc *pd;
-	unsigned int nat_np;
-
-	if ((st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) != LEMPTY) {
-		nat_np = ISAKMP_NEXT_NATOA_RFC;
-		pd = &isakmp_nat_oa;
-	} else {
-		nat_np = ISAKMP_NEXT_NATOA_DRAFTS;
-		pd = &isakmp_nat_oa_drafts;
-	}
-
-	out_modify_previous_np(nat_np, outs);
-
-	zero(&natoa);	/* OK: no pointer fields */
-	natoa.isanoa_np = nat_np;
-
-	switch (addrtypeof(ipinit)) {
-	case AF_INET:
-		ip_len = sizeof(ipinit->u.v4.sin_addr.s_addr);
-		memcpy(ip_val, &ipinit->u.v4.sin_addr.s_addr, ip_len);
-		natoa.isanoa_idtype = ID_IPV4_ADDR;
-		break;
-	case AF_INET6:
-		ip_len = sizeof(ipinit->u.v6.sin6_addr.s6_addr);
-		memcpy(ip_val, &ipinit->u.v6.sin6_addr.s6_addr, ip_len);
-		natoa.isanoa_idtype = ID_IPV6_ADDR;
-		break;
-	default:
-		loglog(RC_LOG_SERIOUS,
-			"NAT-Traversal: invalid addrtypeof()=%d",
-			addrtypeof(ipinit));
-		return FALSE;
-	}
-
-	{
-		pb_stream pbs;
-
-		if (!out_struct(&natoa, pd, outs, &pbs))
-			return FALSE;
-
-		if (!out_raw(ip_val, ip_len, &pbs, "NAT-OAi"))
-			return FALSE;
-
-		DBG(DBG_NATT,
-			DBG_dump("NAT-OAi (S):", ip_val, ip_len));
-		close_output_pbs(&pbs);
-	}
-
-	/* output second NAT-OA */
-	zero(&natoa);	/* OK: no pointer fields */
-	natoa.isanoa_np = np;
-
-	switch (addrtypeof(ipresp)) {
-	case AF_INET:
-		ip_len = sizeof(ipresp->u.v4.sin_addr.s_addr);
-		memcpy(ip_val, &ipresp->u.v4.sin_addr.s_addr, ip_len);
-		natoa.isanoa_idtype = ID_IPV4_ADDR;
-		break;
-	case AF_INET6:
-		ip_len = sizeof(ipresp->u.v6.sin6_addr.s6_addr);
-		memcpy(ip_val, &ipresp->u.v6.sin6_addr.s6_addr, ip_len);
-		natoa.isanoa_idtype = ID_IPV6_ADDR;
-		break;
-	default:
-		loglog(RC_LOG_SERIOUS,
-			"NAT-Traversal: invalid addrtypeof()=%d",
-			addrtypeof(ipresp));
-		return FALSE;
-	}
-
-	{
-		pb_stream pbs;
-		if (!out_struct(&natoa, pd, outs, &pbs))
-			return FALSE;
-
-		if (!out_raw(ip_val, ip_len, &pbs, "NAT-OAr"))
-			return FALSE;
-
-		DBG(DBG_NATT,
-			DBG_dump("NAT-OAr (S):", ip_val, ip_len));
-
-		close_output_pbs(&pbs);
-	}
-	return TRUE;
+	return 
+		emit_one_natoa(pd->pt, outs, pd, ipinit, "NAT-OAi") &&
+		emit_one_natoa(np, outs, pd, ipresp, "NAT-OAr");
 }
 
 static void nat_traversal_show_result(lset_t nt, u_int16_t sport)
@@ -907,8 +841,8 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 			struct state *st_newest = state_with_serialno(c->newest_isakmp_sa);
 
 			if (st_newest != NULL &&
-				IS_ISAKMP_SA_ESTABLISHED(st->st_state) &&
-				LHAS(st_newest->hidden_variables.st_nat_traversal,
+			    IS_ISAKMP_SA_ESTABLISHED(st->st_state) &&
+			    LHAS(st_newest->hidden_variables.st_nat_traversal,
 					NATED_HOST))
 				return;
 		}
@@ -1116,27 +1050,30 @@ void show_setup_natt(void)
 
 void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
 {
-	unsigned char hash_me[IKEV2_NATD_HASH_SIZE];
-	unsigned char hash_him[IKEV2_NATD_HASH_SIZE];
 	struct state *st = md->st;
-	bool found_me = FALSE;
-	bool found_him = FALSE;
 
 	passert(st != NULL);
 	passert(md->iface != NULL);
 
 	/*
-	 * First one with my IP & port
+	 * First: one with my IP & port
 	 * TODO: This use must be allowed even with USE_SHA1=false
 	 */
+
+	unsigned char hash_me[IKEV2_NATD_HASH_SIZE];
+
 	natd_hash(&ike_alg_hash_sha1, hash_me, st->st_icookie, rcookie,
 		  &md->iface->ip_addr, md->iface->port);
 
-	/*
-	 * The others with sender IP & port
-	 */
+	/* Second: one with sender IP & port */
+
+	unsigned char hash_him[IKEV2_NATD_HASH_SIZE];
+
 	natd_hash(&ike_alg_hash_sha1, hash_him, st->st_icookie, rcookie,
 		  &md->sender, hportof(&md->sender));
+
+	bool found_me = FALSE;
+	bool found_him = FALSE;
 
 	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {
 		if (pbs_left(&p->pbs) != IKEV2_NATD_HASH_SIZE)

@@ -42,9 +42,6 @@
  */
 
 #define NSIZEOF_isakmp_hdr	28	/* on-the-wire sizeof struct isakmpg_hdr */
-#define NOFFSETOF_isa_np	16	/* on-the-wire offset of isa_np (one octet) */
-#define NOFFSETOF_isag_length	2	/* on-the-wire offset of isag_length (two octets, network order */
-#define NOFFSETOF_isag_np	0	/* on-the-wire offset of isag_np (one octet) */
 #define NSIZEOF_isakmp_generic	4	/* on-the-wire sizeof isakmp_generic) */
 
 struct isakmp_hdr {

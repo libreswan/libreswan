@@ -146,22 +146,22 @@ static bool emit_subnet_id(const ip_subnet *net,
 {
 	const struct af_info *ai = aftoinfo(subnettypeof(net));
 	const bool usehost = net->maskbits == ai->mask_cnt;
-	struct isakmp_ipsec_id id;
 	pb_stream id_pbs;
-	ip_address ta;
-	const unsigned char *tbp;
-	size_t tal;
 
-	id.isaiid_np = np;
-	id.isaiid_idtype = (usehost ? ai->id_addr : ai->id_subnet);
-	id.isaiid_protoid = protoid;
-	id.isaiid_port = port;
+	struct isakmp_ipsec_id id = {
+		.isaiid_np = np,
+		.isaiid_idtype = usehost ? ai->id_addr : ai->id_subnet,
+		.isaiid_protoid = protoid,
+		.isaiid_port = port,
+	};
 
 	if (!out_struct(&id, &isakmp_ipsec_identification_desc, outs, &id_pbs))
 		return FALSE;
 
+	ip_address ta;
 	networkof(net, &ta);
-	tal = addrbytesptr_read(&ta, &tbp);
+	const unsigned char *tbp;
+	size_t tal = addrbytesptr_read(&ta, &tbp);
 	if (!out_raw(tbp, tal, &id_pbs, "client network"))
 		return FALSE;
 
@@ -900,14 +900,14 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 
 	/* HDR* out */
 	{
-		struct isakmp_hdr hdr;
-
-		hdr.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
-				  ISAKMP_MINOR_VERSION;
-		hdr.isa_np = ISAKMP_NEXT_HASH;
-		hdr.isa_xchg = ISAKMP_XCHG_QUICK;
-		hdr.isa_msgid = st->st_msgid;
-		hdr.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION;
+		struct isakmp_hdr hdr = {
+			.isa_version = ISAKMP_MAJOR_VERSION << ISA_MAJ_SHIFT |
+					  ISAKMP_MINOR_VERSION,
+			.isa_np = ISAKMP_NEXT_HASH,
+			.isa_xchg = ISAKMP_XCHG_QUICK,
+			.isa_msgid = st->st_msgid,
+			.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION,
+		};
 		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
@@ -941,21 +941,20 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 	}
 
 	{
-		int np;
-
-		if (st->st_policy & POLICY_PFS) {
-			np = ISAKMP_NEXT_KE;
-		} else {
-			if (has_client)
-				np = ISAKMP_NEXT_ID;
-			else
-				np = ISAKMP_NEXT_NONE;
-		}
+		/*
+		 * ??? this np calculation says the test for KE is
+		 *	(st->st_policy & POLICY_PFS)
+		 * yet the KE code says the test is
+		 *	st->st_pfs_group != NULL
+		 */
+		int np = (st->st_policy & POLICY_PFS) ?
+				ISAKMP_NEXT_KE :
+			has_client ?
+				ISAKMP_NEXT_ID :
+				ISAKMP_NEXT_NONE;
 
 		/* Ni out */
-		if (!ikev1_ship_nonce(&st->st_ni, r, &rbody,
-				np,
-				"Ni")) {
+		if (!ikev1_ship_nonce(&st->st_ni, r, &rbody, np, "Ni")) {
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
@@ -1541,8 +1540,6 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 	struct state *st = md->st;
 	struct payload_digest *const id_pd = md->chain[ISAKMP_NEXT_ID];
 	struct payload_digest *const sapd = md->chain[ISAKMP_NEXT_SA];
-	struct isakmp_sa sa;
-	pb_stream r_sa_pbs;
 	u_char          /* set by START_HASH_PAYLOAD: */
 		*r_hashval,     /* where in reply to jam hash value */
 		*r_hash_start;  /* from where to start hashing */
@@ -1569,11 +1566,16 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 
 	passert(st->st_connection != NULL);
 
-	zero(&sa);	/* OK: no pointer fields */
-	sa.isasa_doi = ISAKMP_DOI_IPSEC;
-	sa.isasa_np = ISAKMP_NEXT_NONCE;
-	if (!out_struct(&sa, &isakmp_sa_desc, &rbody, &r_sa_pbs))
-		return STF_INTERNAL_ERROR;
+	pb_stream r_sa_pbs;
+
+	{
+		struct isakmp_sa sa = {
+			.isasa_doi = ISAKMP_DOI_IPSEC,
+			.isasa_np = ISAKMP_NEXT_NONCE,
+		};
+		if (!out_struct(&sa, &isakmp_sa_desc, &rbody, &r_sa_pbs))
+			return STF_INTERNAL_ERROR;
+	}
 
 	/* parse and accept body, this time recording our reply */
 	RETURN_STF_FAILURE(parse_ipsec_sa_body(&sapd->pbs,
