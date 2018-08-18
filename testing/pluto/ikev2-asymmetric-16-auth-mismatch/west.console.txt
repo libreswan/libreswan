@@ -62,7 +62,7 @@ west #
 133 "westnet-eastnet-ikev2" #1: initiate
 133 "westnet-eastnet-ikev2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "westnet-eastnet-ikev2" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set.
-134 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=MODP2048}
+134 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "westnet-eastnet-ikev2" #2: suppressing retransmit because IMPAIR_RETRANSMITS is set.
 002 "westnet-eastnet-ikev2" #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 002 "westnet-eastnet-ikev2" #2: Peer attempted NULL authentication but we want rsasig

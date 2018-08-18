@@ -26,12 +26,12 @@ road #
 002 "road-east" #1: IMPAIR RETRANSMITS: scheduling timeout in 15 seconds
 108 "road-east" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "road-east" #1: Peer ID is ID_FQDN: '@east'
-004 "road-east" #1: STATE_MAIN_I4: ISAKMP SA established {auth=PRESHARED_KEY cipher=aes_256 integ=sha2_256 group=MODP2048}
+004 "road-east" #1: STATE_MAIN_I4: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 041 "road-east" #1: road-east prompt for Username:
 040 "road-east" #1: road-east prompt for Password:
 002 "road-east" #1: XAUTH: Answering XAUTH challenge with user='xroad'
 002 "road-east" #1: IMPAIR RETRANSMITS: scheduling timeout in 15 seconds
-004 "road-east" #1: STATE_XAUTH_I1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=aes_256 integ=sha2_256 group=MODP2048}
+004 "road-east" #1: STATE_XAUTH_I1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "road-east" #1: Received Cisco XAUTH status: FAIL
 002 "road-east" #1: xauth: xauth_client_ackstatus() returned STF_OK
 002 "road-east" #1: XAUTH: aborting entire IKE Exchange
