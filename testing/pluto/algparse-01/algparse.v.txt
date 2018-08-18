@@ -15,7 +15,7 @@ algparse:   TWOFISH_CBC             IKEv1: IKE ESP     IKEv2: IKE ESP           
 algparse:   TWOFISH_SSH             IKEv1: IKE         IKEv2: IKE ESP           {256,192,*128}  (twofish_cbc_ssh)
 algparse:   NULL_AUTH_AES_GMAC      IKEv1:     ESP     IKEv2:     ESP           {256,192,*128}  (aes_gmac)
 algparse:   NULL                    IKEv1:     ESP     IKEv2:     ESP           []
-algparse:   CHACHA20_POLY1305       IKEv1:             IKEv2:     ESP           [*256]  (chacha20poly1305)
+algparse:   CHACHA20_POLY1305       IKEv1:             IKEv2: IKE ESP           [*256]  (chacha20poly1305)
 algparse: Hash algorithms:
 algparse:   MD5                     IKEv1: IKE         IKEv2:                 
 algparse:   SHA1                    IKEv1: IKE         IKEv2:             FIPS  (sha)
