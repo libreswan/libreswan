@@ -41,7 +41,7 @@ west #
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: IMPAIR RETRANSMITS: scheduling timeout in 0.5 seconds
 108 "westnet-eastnet-ipv4-psk-ikev1" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 002 "westnet-eastnet-ipv4-psk-ikev1" #1: Peer ID is ID_FQDN: '@east'
-004 "westnet-eastnet-ipv4-psk-ikev1" #1: STATE_MAIN_I4: ISAKMP SA established {auth=PRESHARED_KEY cipher=aes_256 integ=sha2_256 group=MODP2048}
+004 "westnet-eastnet-ipv4-psk-ikev1" #1: STATE_MAIN_I4: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev1" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
 002 "westnet-eastnet-ipv4-psk-ikev1" #2: IMPAIR RETRANSMITS: scheduling timeout in 0.5 seconds
 117 "westnet-eastnet-ipv4-psk-ikev1" #2: STATE_QUICK_I1: initiate

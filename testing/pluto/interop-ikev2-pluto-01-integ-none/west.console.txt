@@ -34,7 +34,7 @@ west #
 002 "ike,esp=aes_gcm" #1: initiating v2 parent SA
 133 "ike,esp=aes_gcm" #1: initiate
 133 "ike,esp=aes_gcm" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-134 "ike,esp=aes_gcm" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_128 integ=n/a prf=sha group=MODP2048}
+134 "ike,esp=aes_gcm" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
 002 "ike,esp=aes_gcm" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "ike,esp=aes_gcm" #2: Authenticated using authby=secret
 002 "ike,esp=aes_gcm" #2: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
@@ -57,7 +57,7 @@ west #
 133 "ike,esp=aes_gcm" #3: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "ike,esp=aes_gcm" #3: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
 002 "ike,esp=aes_gcm" #3: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
-134 "ike,esp=aes_gcm" #4: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_128 integ=n/a prf=sha group=MODP2048}
+134 "ike,esp=aes_gcm" #4: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
 002 "ike,esp=aes_gcm" #4: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "ike,esp=aes_gcm" #4: Authenticated using authby=secret
 002 "ike,esp=aes_gcm" #4: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]
@@ -80,7 +80,7 @@ west #
 133 "ike,esp=aes_gcm" #5: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "ike,esp=aes_gcm" #5: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
 002 "ike,esp=aes_gcm" #5: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal
-134 "ike,esp=aes_gcm" #6: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_128 integ=n/a prf=sha group=MODP2048}
+134 "ike,esp=aes_gcm" #6: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
 002 "ike,esp=aes_gcm" #6: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "ike,esp=aes_gcm" #6: Authenticated using authby=secret
 002 "ike,esp=aes_gcm" #6: negotiated connection [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0]

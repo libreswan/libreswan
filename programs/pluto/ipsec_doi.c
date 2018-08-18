@@ -658,9 +658,11 @@ void lswlog_ike_sa_established(struct lswlog *buf, struct state *st)
 		lswlog_enum_short(buf, &oakley_auth_names, st->st_oakley.auth);
 	}
 
-	lswlogf(buf, " cipher=%s_%d",
-		st->st_oakley.ta_encrypt->common.name,
-		st->st_oakley.enckeylen);
+	lswlogf(buf, " cipher=%s", st->st_oakley.ta_encrypt->common.fqn);
+	if (st->st_oakley.enckeylen > 0) {
+		/* XXX: also check omit key? */
+		lswlogf(buf, "_%d", st->st_oakley.enckeylen);
+	}
 
 	/*
 	 * Note: for IKEv1 and AEAD encrypters,
@@ -671,10 +673,7 @@ void lswlog_ike_sa_established(struct lswlog *buf, struct state *st)
 		if (st->st_oakley.ta_integ == &ike_alg_integ_none) {
 			lswlogs(buf, "n/a");
 		} else {
-			lswlogf(buf, "%s_%zu",
-				st->st_oakley.ta_integ->common.officname,
-				(st->st_oakley.ta_integ->integ_output_size *
-				 BITS_PER_BYTE));
+			lswlogs(buf, st->st_oakley.ta_integ->common.fqn);
 		}
 	} else {
 		/*
@@ -682,14 +681,14 @@ void lswlog_ike_sa_established(struct lswlog *buf, struct state *st)
 		 * (always?) NULL.  Display the PRF.  The choice and
 		 * behaviour are historic.
 		 */
-		lswlogs(buf, st->st_oakley.ta_prf->common.name);
+		lswlogs(buf, st->st_oakley.ta_prf->common.fqn);
 	}
 
 	if (st->st_ikev2) {
-		lswlogf(buf, " prf=%s", st->st_oakley.ta_prf->common.name);
+		lswlogf(buf, " prf=%s", st->st_oakley.ta_prf->common.fqn);
 	}
 
-	lswlogf(buf, " group=%s}", st->st_oakley.ta_dh->common.name);
+	lswlogf(buf, " group=%s}", st->st_oakley.ta_dh->common.fqn);
 
 	/* keep IKE SA statistics */
 	if (st->st_ikev2) {

@@ -36,7 +36,7 @@ west #
 133 "westnet-eastnet-ikev2a" #1: initiate
 133 "westnet-eastnet-ikev2a" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "westnet-eastnet-ikev2a" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set.
-134 "westnet-eastnet-ikev2a" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=3des_cbc_192 integ=md5_96 prf=md5 group=MODP2048}
+134 "westnet-eastnet-ikev2a" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=3DES_CBC_192 integ=HMAC_MD5_96 prf=HMAC_MD5 group=MODP2048}
 002 "westnet-eastnet-ikev2a" #2: suppressing retransmit because IMPAIR_RETRANSMITS is set.
 002 "westnet-eastnet-ikev2a" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-ikev2a" #2: Authenticated using authby=secret
