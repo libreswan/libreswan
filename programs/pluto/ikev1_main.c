@@ -1782,14 +1782,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
  *
  */
 
-static ikev1_state_transition_fn main_inR3_tail;
-
 stf_status main_inR3(struct state *st, struct msg_digest *md)
-{
-	return main_inR3_tail(st, md);
-}
-
-static stf_status main_inR3_tail(struct state *st, struct msg_digest *md)
 {
 	/*
 	 * ID and HASH_R or SIG_R in
