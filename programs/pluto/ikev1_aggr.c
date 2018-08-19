@@ -881,7 +881,6 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 
 		build_id_payload(&id_hd, &id_b, &st->st_connection->spd.that);
 		init_out_pbs(&pbs, idbuf, sizeof(idbuf), "identity payload");
-		id_hd.isaiid_np = ISAKMP_NEXT_NONE;
 
 		/* interop ID for SoftRemote & maybe others ? */
 		id_hd.isaiid_protoid = st->st_peeridentity_protocol;
@@ -893,12 +892,22 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&id_pbs);
+
+		/* rewind id_pbs and read what we wrote */
 		id_pbs.roof = pbs.cur;
 		id_pbs.cur = pbs.start;
 		if (!in_struct(&id_pd.payload, &isakmp_identification_desc, &id_pbs,
 			  &id_pd.pbs))
 			return STF_FAIL + PAYLOAD_MALFORMED;
 	}
+
+	/*
+	 * ??? this looks like a really rude assignment
+	 *
+	 * - we are rewriting the input.  Sheesh!
+	 * - at least we undo the damage after calling oakley_id_and_auth.
+	 */
+	struct payload_digest *save_id = md->chain[ISAKMP_NEXT_ID];
 	md->chain[ISAKMP_NEXT_ID] = &id_pd;
 
 	/* HASH_I or SIG_I in */
@@ -913,7 +922,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	}
 
 	/* And reset the md to not leave stale pointers to our private id payload */
-	md->chain[ISAKMP_NEXT_ID] = NULL;
+	md->chain[ISAKMP_NEXT_ID] = save_id;
 
 	/**************** done input ****************/
 
