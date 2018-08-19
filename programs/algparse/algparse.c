@@ -22,7 +22,8 @@ static bool fips = false;
 static bool pfs = false;
 static int failures = 0;
 
-enum expect { FAIL = false, PASS = true, IGNORE, };
+enum status { PASSED = 0, FAILED = 1, ERROR = 126, };
+enum expect { FAIL = false, PASS = true, COUNT, };
 
 #define CHECK(TYPE,PARSE,OK) {						\
 		struct proposal_policy policy = {			\
@@ -83,6 +84,8 @@ enum expect { FAIL = false, PASS = true, IGNORE, };
 					#PARSE,				\
 					algstr == NULL ? "" : "=",	\
 					algstr == NULL ? "" : algstr);	\
+			} else if (expected == COUNT) {			\
+				failures++;				\
 			}						\
 		}							\
 		fflush(NULL);						\
@@ -135,7 +138,7 @@ static void all(const char *algstr)
 	for (const struct protocol *protocol = protocols;
 	     protocol < protocols + elemsof(protocols);
 	     protocol++) {
-		protocol->parser(IGNORE, algstr);
+		protocol->parser(COUNT, algstr);
 	}
 }
 
@@ -146,12 +149,12 @@ static void test_proposal(const char *arg)
 	     protocol < protocols + elemsof(protocols);
 	     protocol++) {
 		if (streq(arg, protocol->name)) {
-			protocol->parser(IGNORE, NULL);
+			protocol->parser(COUNT, NULL);
 			return;
 		}
 		if (startswith(arg, protocol->name)
 		    && arg + strlen(protocol->name) == eq) {
-			protocol->parser(IGNORE, eq + 1);
+			protocol->parser(COUNT, eq + 1);
 			return;
 		}
 	}
@@ -403,30 +406,47 @@ static void test(void)
 static void usage(void)
 {
 	fprintf(stderr,
-		""
 		"Usage:\n"
-		"  algparse [ <option> ... ] -t | <protocol> | <proposals> | <protocol>=<proposals>\n"
-		"Where:\n"
-		"  -v1: only IKEv1 algorithms\n"
-		"  -v2: only IKEv2 algorithms\n"
-		"  -fips: put NSS in FIPS mode\n"
-		"  -v --verbose: more verbose\n"
-		"  -i --impair: disable all algorithm parser checks\n"
-		"  -d --debug: really verbose\n"
-		"  -tp: run proposal tests\n"
-		"  -ta: run algorithm tests\n"
-		"  -d -nssdir: directory containing crypto database\n"
-		"  -P -nsspw -password: password to unlock crypto database\n"
-		"  <protocol>: the protocol, one of 'ike', 'esp', or 'ah'\n"
-		"  <proposals>: a comma separated list of proposals to parse\n"
-		"For instance:\n"
-		"  algparse -v1 ike\n"
+		"\n"
+		"    algparse [ <option> ... ] -tp | -ta | [<protocol>=][<proposal>{,<proposal>}] ...\n"
+		"\n"
+		"Parse one or more proposals using the algorithm parser.\n"
+		"Either specify the proposals to be parsed on the command line\n"
+		"(exit non-zero if a proposal is not valid):\n"
+		"\n"
+		"    [<protocol>=][<proposals>]\n"
+		"        <protocol>: the 'ike', 'esp' or 'ah' specific parser to use\n"
+		"            if omitted, the proposal is parsed using all three parsers\n"
+		"        <proposals>: a comma separated list of proposals\n"
+		"            if omitted, a default algorithm list is used\n"
+		"\n"
+		"or run a pre-defined testsuite (exit non-zero if a test fails):\n"
+		"\n"
+		"    -tp: run the proposal testsuite\n"
+		"    -ta: also run the algorithm testsuite\n"
+		"\n"
+		"Additional options:\n"
+		"\n"
+		"    -v1 | -ikev1: require IKEv1 support\n"
+		"    -v2 | -ikev2: require IKEv2 support\n"
+		"         default: require either IKEv1 or IKEv2 support\n"
+		"    -fips: force NSS into FIPS mode\n"
+		"         default: determined by system environment\n"
+		"    -d <dir> | -nssdir <dir>: directory containing crypto database\n"
+		"         default: '"IPSEC_NSSDIR"'\n"
+		"    -P <password> | -nsspw <password> | -password <password>:\n"
+		"        <password> to unlock crypto database\n"
+		"    -v --verbose: be more verbose\n"
+		"    -d --debug: enable debug logging\n"
+		"    -i --impair: disable all algorithm parser checks\n"
+		"\n"
+		"Examples:\n"
+		"\n"
+		"    algparse -v1 ike=\n"
 		"        expand the default IKEv1 'ike' algorithm table\n"
 		"        (with IKEv1, this is the default algorithms, with IKEv2 it is not)\n"
-		"  algparse -v1 ike=esp\n"
-		"        expand 'aes' using the IKEv1 'ike' parser and defaults\n"
-		"  algparse -v1 aes\n"
-		"        expand 'aes' using the the IKEv1 'ike', 'esp', and 'ah' parsers and defaults\n"
+		"    algparse -v2 ike=aes-sha1-dh23\n"
+		"        expand 'aes-sha1-dh23' using the the IKEv2 'ike' parser\n"
 		);
 }
 
@@ -456,9 +476,9 @@ int main(int argc, char *argv[])
 			test_proposals = true;
 		} else if (streq(arg, "ta")) {
 			test_algs = true;
-		} else if (streq(arg, "v1")) {
+		} else if (streq(arg, "v1") || streq(arg, "ikev1")) {
 			ikev1 = true;
-		} else if (streq(arg, "v2")) {
+		} else if (streq(arg, "v2") || streq(arg, "ikev2")) {
 			ikev2 = true;
 		} else if (streq(arg, "pfs") || streq(arg, "pfs=yes") || streq(arg, "pfs=on")) {
 			pfs = true;
@@ -480,19 +500,19 @@ int main(int argc, char *argv[])
 			char *nssdir = *++argp;
 			if (nssdir == NULL) {
 				fprintf(stderr, "missing nss directory\n");
-				exit(1);
+				exit(ERROR);
 			}
 			lsw_conf_nssdir(nssdir);
 		} else if (streq(arg, "P") || streq(arg, "nsspw") || streq(arg, "password")) {
 			char *nsspw = *++argp;
 			if (nsspw == NULL) {
 				fprintf(stderr, "missing nss password\n");
-				exit(1);
+				exit(ERROR);
 			}
 			lsw_conf_nsspassword(nsspw);
 		} else {
 			fprintf(stderr, "unknown option: %s\n", *argp);
-			exit(1);
+			exit(ERROR);
 		}
 	}
 
@@ -512,7 +532,7 @@ int main(int argc, char *argv[])
 				    LSW_NSS_READONLY, lsw_nss_get_password, err);
 	if (!nss_ok) {
 		fprintf(stderr, "unexpected %s\n", err);
-		exit(1);
+		exit(ERROR);
 	}
 
 	/*
@@ -541,23 +561,21 @@ int main(int argc, char *argv[])
 	if (*argp) {
 		if (test_proposals) {
 			fprintf(stderr, "-t conflicts with algorithm list\n");
-			exit(1);
+			exit(ERROR);
 		}
 		for (; *argp != NULL; argp++) {
 			test_proposal(*argp);
 		}
 	} else if (test_proposals) {
 		test();
+		if (failures > 0) {
+			fprintf(stderr, "%d FAILURES\n", failures);
+		}
 	}
 
 	report_leaks();
 
 	lsw_nss_shutdown();
 
-	if (failures > 0) {
-		fprintf(stderr, "%d FAILURES\n", failures);
-		exit(1);
-	}
-
-	exit(0);
+	exit(failures > 0 ? FAILED : PASSED);
 }
