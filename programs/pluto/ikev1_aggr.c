@@ -415,7 +415,7 @@ static stf_status aggr_inI1_outR1_continue2_tail(struct msg_digest *md,
 		struct isakmp_ipsec_id id_hd;
 		chunk_t id_b;
 
-		build_id_payload(&id_hd, &id_b, &c->spd.this, FALSE);
+		build_id_payload(&id_hd, &id_b, &c->spd.this);
 		id_hd.isaiid_np =
 			send_cert ? ISAKMP_NEXT_CERT : auth_payload;
 
@@ -761,7 +761,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 		u_char hash_val[MAX_DIGEST_LEN];
 		size_t hash_len;
 
-		build_id_payload(&id_hd, &id_b, &c->spd.this, FALSE);
+		build_id_payload(&id_hd, &id_b, &c->spd.this);
 		init_out_pbs(&id_pbs, idbuf, sizeof(idbuf), "identity payload");
 		id_hd.isaiid_np = ISAKMP_NEXT_NONE;
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
@@ -876,7 +876,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 		pb_stream pbs;
 		pb_stream id_pbs;
 
-		build_id_payload(&id_hd, &id_b, &st->st_connection->spd.that, FALSE);
+		build_id_payload(&id_hd, &id_b, &st->st_connection->spd.that);
 		init_out_pbs(&pbs, idbuf, sizeof(idbuf), "identity payload");
 		id_hd.isaiid_np = ISAKMP_NEXT_NONE;
 
@@ -1171,7 +1171,7 @@ static stf_status aggr_outI1_tail(struct state *st,
 		chunk_t id_b;
 		pb_stream id_pbs;
 
-		build_id_payload(&id_hd, &id_b, &c->spd.this, FALSE);
+		build_id_payload(&id_hd, &id_b, &c->spd.this);
 		id_hd.isaiid_np = send_cr ? ISAKMP_NEXT_CR : ISAKMP_NEXT_VID;
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 				&rbody, &id_pbs) ||

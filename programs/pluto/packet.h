@@ -892,7 +892,7 @@ struct ikev2_id {
 	u_int8_t isai_np;		/* Next payload */
 	u_int8_t isai_critical;
 	u_int16_t isai_length;		/* Payload length */
-	u_int8_t isai_type;		/* transform type */
+	u_int8_t isai_type;		/* ID type */
 	u_int8_t isai_res1;
 	u_int16_t isai_res2;
 };
