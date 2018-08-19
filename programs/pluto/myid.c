@@ -90,3 +90,12 @@ void build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl, const struct end 
 		bad_case(id->kind);
 	}
 }
+
+void v2_build_id_payload(struct ikev2_id *hd, chunk_t *tl, const struct end *end)
+{
+	build_id_payload((struct isakmp_ipsec_id *) hd, tl,end);
+	/*
+	 * note: critical bit is zero (ISAKMP_PAYLOAD_NONCRITICAL)
+	 * as it must be (RFC7296 3,2)
+	 */
+}

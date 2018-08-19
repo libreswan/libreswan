@@ -3393,7 +3393,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		struct hmac_ctx id_ctx;
 
 		hmac_init(&id_ctx, pst->st_oakley.ta_prf, pst->st_skey_pi_nss);
-		build_id_payload((struct isakmp_ipsec_id *)&i_id, &id_b,
+		v2_build_id_payload(&i_id, &id_b,
 				 &pc->spd.this);
 		i_id.isai_critical = build_ikev2_critical(false);
 
@@ -3481,10 +3481,9 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 		}
 
 		if (r_id.isai_type != ID_NONE) {
-			build_id_payload((struct isakmp_ipsec_id *)&r_id,
+			v2_build_id_payload(&r_id,
 				 &id_b,
 				 &pc->spd.that);
-			r_id.isai_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 			r_id.isai_np = ic ? ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2AUTH;
 
 			if (!out_struct(&r_id, &ikev2_id_r_desc, &e_pbs_cipher,
@@ -4281,6 +4280,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 			struct ikev2_id r_id = {
 				.isai_np = ISAKMP_NEXT_v2NONE,
 				.isai_type = ID_NULL,
+				/* critical bit zero */
 			};
 			pb_stream r_id_pbs;
 			chunk_t id_b;
@@ -4294,11 +4294,10 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 				/* r_id already set */
 				id_b = empty_chunk;
 			} else {
-				build_id_payload((struct isakmp_ipsec_id *)&r_id,
+				v2_build_id_payload(&r_id,
 						 &id_b,
 						 &c->spd.this);
 			}
-			r_id.isai_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 
 			id_start = e_pbs_cipher.cur + NSIZEOF_isakmp_generic;
 
