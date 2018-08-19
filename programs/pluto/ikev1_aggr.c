@@ -608,6 +608,7 @@ static void aggr_inR1_outI2_crypto_continue(struct state *st,
 
 	passert(st != NULL);
 	passert(*mdp != NULL);
+	passert((*mdp)->st == st);
 
 	if (!finish_dh_secretiv(st, r)) {
 		e = STF_FAIL + INVALID_KEY_INFORMATION;
