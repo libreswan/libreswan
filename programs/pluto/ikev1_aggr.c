@@ -755,23 +755,25 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 	/* HASH_I or SIG_I out */
 	{
 		/* first build an ID payload as a raw material */
-		u_char idbuf[1024]; /* fits all possible identity payloads? */
+
 		struct isakmp_ipsec_id id_hd;
 		chunk_t id_b;
-		pb_stream id_pbs;
-		u_char hash_val[MAX_DIGEST_LEN];
-		size_t hash_len;
-
 		build_id_payload(&id_hd, &id_b, &c->spd.this);
+
+		pb_stream id_pbs;
+		u_char idbuf[1024]; /* fits all possible identity payloads? */
 		init_out_pbs(&id_pbs, idbuf, sizeof(idbuf), "identity payload");
-		id_hd.isaiid_np = ISAKMP_NEXT_NONE;
+		pb_stream r_id_pbs;
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
-				&id_pbs, NULL) ||
-		    !out_chunk(id_b, &id_pbs, "my identity")) {
+				&id_pbs, &r_id_pbs) ||
+		    !out_chunk(id_b, &r_id_pbs, "my identity")) {
 			return STF_INTERNAL_ERROR;
 		}
+		close_output_pbs(&r_id_pbs);
+		close_output_pbs(&id_pbs);
 
-		hash_len = main_mode_hash(st, hash_val, TRUE, &id_pbs);
+		u_char hash_val[MAX_DIGEST_LEN];
+		size_t hash_len = main_mode_hash(st, hash_val, TRUE, &id_pbs);
 
 		if (auth_payload == ISAKMP_NEXT_HASH) {
 			/* HASH_I out */
