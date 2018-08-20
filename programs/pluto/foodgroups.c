@@ -114,7 +114,6 @@ static void read_foodgroup(struct fg_groups *g)
 	}
 	snprintf(fg_path, fg_path_space, "%s/%s", oco->policies_dir, fgn);
 	if (!lexopen(&flp_space, fg_path, TRUE)) {
-
 		DBG(DBG_CONTROL, {
 			    char cwd[PATH_MAX];
 			    DBG_log("no group file \"%s\" (pwd:%s)",

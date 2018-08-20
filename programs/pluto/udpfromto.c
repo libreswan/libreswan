@@ -141,9 +141,8 @@ int recvfromto(int s, void *buf, size_t len, int flags,
 
 	/* Process auxiliary received data in msgh */
 	for (cmsg = CMSG_FIRSTHDR(&msgh);
-		cmsg != NULL;
-		cmsg = CMSG_NXTHDR(&msgh, cmsg)) {
-
+	     cmsg != NULL;
+	     cmsg = CMSG_NXTHDR(&msgh, cmsg)) {
 #ifdef HAVE_IP_PKTINFO
 		if (cmsg->cmsg_level == SOL_IP &&
 			cmsg->cmsg_type == IP_PKTINFO) {

@@ -1008,9 +1008,8 @@ int ipsec_sa_wipe(struct ipsec_sa *ips)
 
 		if (ref_table < IPSEC_SA_REF_SUBTABLE_NUM_ENTRIES) {
 			subtable = ipsec_sadb.refTable[ref_table];
-			if (subtable != NULL && subtable->entry[ref_entry] ==
-			    ips) {
-
+			if (subtable != NULL &&
+			    subtable->entry[ref_entry] == ips) {
 				subtable->entry[ref_entry] = NULL;
 			}
 		}

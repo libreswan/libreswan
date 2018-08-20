@@ -1014,7 +1014,6 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 	 */
 	if (!sameaddr(&st->st_localaddr, &st->st_interface->ip_addr) ||
 	     st->st_localport != st->st_interface->port) {
-
 		DBG(DBG_NATT, {
 			ipstr_buf b1;
 			ipstr_buf b2;

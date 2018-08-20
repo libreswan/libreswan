@@ -151,7 +151,6 @@ bool ikev2_calculate_rsa_hash(struct state *st,
 
 	if (hash_algo == 0 || /* ikev1 */
 	    hash_algo == IKEv2_AUTH_HASH_SHA1 /* old style RSA with SHA1 */ ) {
-
 		memcpy(signed_octets, der_digestinfo, der_digestinfo_len);
 
 		if (!ikev2_calculate_sighash(st, role, idhash,

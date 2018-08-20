@@ -178,7 +178,6 @@ static bool negotiate_hash_algo_from_notification(struct payload_digest *p, stru
 
 static const struct asn1_hash_blob *blob_for_hash_algo(enum notify_payload_hash_algorithms hash_algo)
 {
-
 	switch (hash_algo) {
 	case IKEv2_AUTH_HASH_SHA2_256:
 		return  &asn1_rsa_pss_sha2_256;
@@ -429,7 +428,6 @@ static void ikev2_crypto_continue(struct state *st,
 	}
 
 	switch (st->st_state) {
-
 	case STATE_V2_REKEY_CHILD_I0:
 	case STATE_V2_CREATE_I0:
 		unpack_nonce(&st->st_ni, r);
@@ -634,7 +632,6 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 	pb_stream *pbs,
 	const enum keyword_authby that_authby)
 {
-
 	switch (recv_auth) {
 	case IKEv2_AUTH_RSA:
 	{
@@ -1493,7 +1490,6 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	bool seen_nat = FALSE;
 	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 		switch(ntfy->payload.v2n.isan_type) {
-
 		case v2N_COOKIE:
 			/* already handled earlier */
 			break;
@@ -2075,7 +2071,6 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 	}
 
 	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
-
 		if (ntfy->payload.v2n.isan_type >= v2N_STATUS_FLOOR) {
 			pstat(ikev2_recv_notifies_s, ntfy->payload.v2n.isan_type);
 		} else {
@@ -4734,7 +4729,6 @@ static stf_status ikev2_process_ts_respnse(struct msg_digest *md)
 
 static void ikev2_rekey_expire_pred(const struct state *st, so_serial_t pred)
 {
-
 	struct state *rst = state_with_serialno(pred);
 	long lifetime = -1;
 
@@ -5086,19 +5080,19 @@ static struct state *find_state_to_rekey(struct payload_digest *p,
 	ipsec_spi_t spi;
 	struct ikev2_notify ntfy = p->payload.v2n;
 
-	if (ntfy.isan_protoid == PROTO_IPSEC_ESP ||
-			ntfy.isan_protoid == PROTO_IPSEC_AH) {
-		DBG(DBG_CONTROLMORE,
-			DBG_log("CREATE_CHILD_SA IPsec SA rekey Protocol %s",
-				enum_show(&ikev2_protocol_names,
-					ntfy.isan_protoid)));
-
-	} else {
+	if (ntfy.isan_protoid != PROTO_IPSEC_ESP &&
+	    ntfy.isan_protoid != PROTO_IPSEC_AH) {
 		libreswan_log("CREATE_CHILD_SA IPsec SA rekey invalid Protocol ID %s",
 				enum_show(&ikev2_protocol_names,
 					ntfy.isan_protoid));
 		return NULL;
 	}
+
+	DBG(DBG_CONTROLMORE,
+		DBG_log("CREATE_CHILD_SA IPsec SA rekey Protocol %s",
+			enum_show(&ikev2_protocol_names,
+				ntfy.isan_protoid)));
+
 	if (ntfy.isan_spisize != sizeof(ipsec_spi_t)) {
 		libreswan_log("CREATE_CHILD_SA IPsec SA rekey invalid spi size %u",
 			ntfy.isan_spisize);
@@ -5181,7 +5175,6 @@ static stf_status ikev2_rekey_child_resp(const struct msg_digest *md)
 		char cib[CONN_INST_BUF];
 
 		switch (ntfy->payload.v2n.isan_type) {
-
 		case v2N_REKEY_SA:
 			DBG(DBG_CONTROL, DBG_log("received v2N_REKEY_SA "));
 			if (rst != NULL) {
@@ -5202,7 +5195,6 @@ static stf_status ikev2_rekey_child_resp(const struct msg_digest *md)
 				libreswan_log("no valid IPsec SA SPI to rekey");
 				ret = STF_FAIL + v2N_CHILD_SA_NOT_FOUND;
 			} else {
-
 				st->st_ipsec_pred = rst->st_serialno;
 
 				DBG(DBG_CONTROLMORE, DBG_log("#%lu rekey request for \"%s\"%s #%lu TSi TSr",
@@ -5342,7 +5334,6 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 				      v2N_REKEY_SA, &empty_chunk, outpbs))
 				return STF_INTERNAL_ERROR;
 		}
-
 	}
 
 	if (rekey_spi.len == 0) {
@@ -5437,8 +5428,8 @@ static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
 		    !out_chunk(local_nonce, &nr_pbs, "IKEv2 nonce"))
 			return STF_INTERNAL_ERROR;
 		close_output_pbs(&nr_pbs);
-
 	}
+
 	if (!justship_v2KE(local_g, st->st_oakley.ta_dh, outpbs,
 			   ISAKMP_NEXT_v2NONE))
 		return STF_INTERNAL_ERROR;
@@ -5961,7 +5952,6 @@ static bool process_mobike_resp(struct msg_digest *md)
 
 	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 		switch (ntfy->payload.v2n.isan_type) {
-
 		case v2N_NAT_DETECTION_DESTINATION_IP:
 			natd_d =  TRUE;
 			DBG(DBG_CONTROLMORE, DBG_log("TODO: process %s in MOBIKE response ",
@@ -6084,7 +6074,6 @@ static bool process_mobike_req(struct msg_digest *md, bool *ntfy_natd,
 
 static void mobike_reset_remote(struct state *st, struct mobike *est_remote)
 {
-
 	if (est_remote->interface == NULL)
 		return;
 
@@ -6201,7 +6190,6 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 	bool send_mobike_resp = FALSE;	/* only if responding */
 
 	if (md->chain[ISAKMP_NEXT_v2D] == NULL) {
-
 		if (responding) {
 			if (process_mobike_req(md, &send_mobike_resp, &cookie2)) {
 				libreswan_log("MOBIKE request: updating IPsec SA by request");
@@ -6216,68 +6204,66 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 			}
 		}
 	} else {
+		/*
+		 * RFC 7296 1.4.1 "Deleting an SA with INFORMATIONAL Exchanges"
+		 */
 
-	/*
-	 * RFC 7296 1.4.1 "Deleting an SA with INFORMATIONAL Exchanges"
-	 */
+		/*
+		 * Pass 1 over Delete Payloads:
+		 *
+		 * - Count number of IPsec SA Delete Payloads
+		 * - notice any IKE SA Delete Payload
+		 * - sanity checking
+		 */
 
-	/*
-	 * Pass 1 over Delete Payloads:
-	 *
-	 * - Count number of IPsec SA Delete Payloads
-	 * - notice any IKE SA Delete Payload
-	 * - sanity checking
-	 */
+		for (p = md->chain[ISAKMP_NEXT_v2D]; p != NULL; p = p->next) {
+			struct ikev2_delete *v2del = &p->payload.v2delete;
 
-	for (p = md->chain[ISAKMP_NEXT_v2D]; p != NULL; p = p->next) {
-		struct ikev2_delete *v2del = &p->payload.v2delete;
+			switch (v2del->isad_protoid) {
+			case PROTO_ISAKMP:
+				if (!responding) {
+					libreswan_log("Response to Delete improperly includes IKE SA");
+					return STF_FAIL + v2N_INVALID_SYNTAX;
+				}
 
-		switch (v2del->isad_protoid) {
-		case PROTO_ISAKMP:
-			if (!responding) {
-				libreswan_log("Response to Delete improperly includes IKE SA");
-				return STF_FAIL + v2N_INVALID_SYNTAX;
+				if (del_ike) {
+					libreswan_log("Error: INFORMATIONAL Exchange with more than one Delete Payload for the IKE SA");
+					return STF_FAIL + v2N_INVALID_SYNTAX;
+				}
+
+				if (v2del->isad_nrspi != 0 || v2del->isad_spisize != 0) {
+					libreswan_log("IKE SA Delete has non-zero SPI size or number of SPIs");
+					return STF_FAIL + v2N_INVALID_SYNTAX;
+				}
+
+				del_ike = TRUE;
+				break;
+
+			case PROTO_IPSEC_AH:
+			case PROTO_IPSEC_ESP:
+				if (v2del->isad_spisize != sizeof(ipsec_spi_t)) {
+					libreswan_log("IPsec Delete Notification has invalid SPI size %u",
+						v2del->isad_spisize);
+					return STF_FAIL + v2N_INVALID_SYNTAX;
+				}
+
+				if (v2del->isad_nrspi * v2del->isad_spisize != pbs_left(&p->pbs)) {
+					libreswan_log("IPsec Delete Notification payload size is %zu but %u is required",
+						pbs_left(&p->pbs),
+						v2del->isad_nrspi * v2del->isad_spisize);
+					return STF_FAIL + v2N_INVALID_SYNTAX;
+				}
+
+				ndp++;
+				break;
+
+			default:
+				libreswan_log("Ignored bogus delete protoid '%d'", v2del->isad_protoid);
 			}
-
-			if (del_ike) {
-				libreswan_log("Error: INFORMATIONAL Exchange with more than one Delete Payload for the IKE SA");
-				return STF_FAIL + v2N_INVALID_SYNTAX;
-			}
-
-			if (v2del->isad_nrspi != 0 || v2del->isad_spisize != 0) {
-				libreswan_log("IKE SA Delete has non-zero SPI size or number of SPIs");
-				return STF_FAIL + v2N_INVALID_SYNTAX;
-			}
-
-			del_ike = TRUE;
-			break;
-
-		case PROTO_IPSEC_AH:
-		case PROTO_IPSEC_ESP:
-			if (v2del->isad_spisize != sizeof(ipsec_spi_t)) {
-				libreswan_log("IPsec Delete Notification has invalid SPI size %u",
-					v2del->isad_spisize);
-				return STF_FAIL + v2N_INVALID_SYNTAX;
-			}
-
-			if (v2del->isad_nrspi * v2del->isad_spisize != pbs_left(&p->pbs)) {
-				libreswan_log("IPsec Delete Notification payload size is %zu but %u is required",
-					pbs_left(&p->pbs),
-					v2del->isad_nrspi * v2del->isad_spisize);
-				return STF_FAIL + v2N_INVALID_SYNTAX;
-			}
-
-			ndp++;
-			break;
-
-		default:
-			libreswan_log("Ignored bogus delete protoid '%d'", v2del->isad_protoid);
 		}
-	}
 
-	if (del_ike && ndp != 0)
-		libreswan_log("Odd: INFORMATIONAL Exchange deletes IKE SA and yet also deletes some IPsec SA");
-
+		if (del_ike && ndp != 0)
+			libreswan_log("Odd: INFORMATIONAL Exchange deletes IKE SA and yet also deletes some IPsec SA");
 	}
 
 	/*

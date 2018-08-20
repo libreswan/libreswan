@@ -1297,7 +1297,6 @@ DEBUG_NO_STATIC int supported_add_all(int satype,
 		    (int)(size / sizeof(struct ipsec_alg_supported)));
 
 	for (i = 0; i < size / sizeof(struct ipsec_alg_supported); i++) {
-
 		const char *n = supported[i].ias_name;
 		if (n == NULL)
 			n = "unknown";

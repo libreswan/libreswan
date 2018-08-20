@@ -1759,7 +1759,6 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			}
 
 			switch (attr.isaat_af_type) {
-
 			case INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
 			{
 				struct connection *c = st->st_connection;

@@ -162,7 +162,6 @@ enum ipsec_rcv_value ipsec_rcv_ah_authcalc(struct ipsec_rcv_state *irs,
 
 #ifdef CONFIG_KLIPS_ALG
 	if (irs->ipsp->ips_alg_auth) {
-
 		if ((buf = kmalloc(sizeof(struct iphdr)+skb->len, GFP_KERNEL)) == NULL)
 			return IPSEC_RCV_ERRMEMALLOC;
 

@@ -225,7 +225,6 @@ static int initiate_a_connection(struct connection *c, void *arg)
 	}
 
 	if ((is->remote_host == NULL) && (c->kind != CK_PERMANENT) && !(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
-
 		if (isanyaddr(&c->spd.that.host_addr)) {
 			if (c->dnshostname != NULL) {
 				loglog(RC_NOPEERIP,
@@ -289,7 +288,6 @@ static int initiate_a_connection(struct connection *c, void *arg)
 	 */
 
 	if (c->policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
-
 		struct alg_info_esp *alg = c->alg_info_esp;
 		struct db_sa *phase2_sa = kernel_alg_makedb(
 			c->policy, alg, TRUE);
@@ -599,8 +597,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b
 #ifdef HAVE_LABELED_IPSEC
 	DBG(DBG_CONTROLMORE, {
 		if (uctx != NULL) {
-
-
 			DBG_log("received security label string: %.*s",
 				uctx->ctx.ctx_len,
 				uctx->sec_ctx_value);

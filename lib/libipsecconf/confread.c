@@ -322,7 +322,6 @@ static bool load_setup(struct starter_config *cfg,
 	const struct kw_list *kw;
 
 	for (kw = cfgp->config_setup; kw; kw = kw->next) {
-
 		/**
 		 * the parser already made sure that only config keywords were used,
 		 * but we double check!
@@ -519,7 +518,6 @@ static bool validate_end(struct starter_conn *conn_st,
 		if (strchr(value, '/') == NULL) {
 			ERR_FOUND("%svti= needs address/mask", leftright);
 		} else {
-
 			/*
 			 * ttosubnet() helpfully sets the IP address to the lowest IP
 			 * in the subnet. Which is great for subnets but we want to
@@ -1365,33 +1363,27 @@ static bool load_conn(
 		char *val = strtok(conn->strings[KSCF_AUTHBY], ", ");
 
 		while (val != NULL) {
-
 			/* Supported for IKEv1 and IKEv2 */
-			if (streq(val, "secret"))
+			if (streq(val, "secret")) {
 				conn->policy |= POLICY_PSK;
-			else if (streq(val, "rsasig") || streq(val, "rsa")) {
+			} else if (streq(val, "rsasig") || streq(val, "rsa")) {
 				conn->policy |= POLICY_RSASIG;
 				conn->sighash_policy |= POL_SIGHASH_NONE;
-			}
-			else if (streq(val, "never"))
+			} else if (streq(val, "never")) {
 				conn->policy |= POLICY_AUTH_NEVER;
 			/* everything else is only supported for IKEv2 */
-			else if (conn->policy & POLICY_IKEV1_ALLOW) {
+			} else if (conn->policy & POLICY_IKEV1_ALLOW) {
 				starter_error_append(perrl, "connection allowing ikev1 must use authby= of rsasig, secret or never");
 				return TRUE;
-			}
-			else if (streq(val, "null")) {
+			} else if (streq(val, "null")) {
 				conn->policy |= POLICY_AUTH_NULL;
-			}
-			else if (streq(val, "rsa-sha2") || streq(val, "rsa-sha2_256")) {
+			} else if (streq(val, "rsa-sha2") || streq(val, "rsa-sha2_256")) {
 				conn->policy |= POLICY_RSASIG;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_256;
-			}
-			else if (streq(val, "rsa-sha2_384")) {
+			} else if (streq(val, "rsa-sha2_384")) {
 				conn->policy |= POLICY_RSASIG;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_384;
-			}
-			else if (streq(val, "rsa-sha2_512")) {
+			} else if (streq(val, "rsa-sha2_512")) {
 				conn->policy |= POLICY_RSASIG;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
 			} else {

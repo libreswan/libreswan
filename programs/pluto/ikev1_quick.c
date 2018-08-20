@@ -1291,7 +1291,6 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 		}
 
 		/* did we find a better connection? */
-		/* should we use an else here, as we did in lsw 2.5.x? */
 		if (p != c) {
 			/* We've got a better connection: it can support the
 			 * specified clients.  But it may need instantiation.
@@ -1320,8 +1319,8 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 				set_debugging(old_cur_debugging);
 			}
 			c = p;
-
 		}
+
 		/* fill in the client's true ip address/subnet */
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("client wildcard: %s  port wildcard: %s  virtual: %s",
@@ -1354,7 +1353,6 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 
 			if (subnetishost(his_net) &&
 			    addrinsubnet(&c->spd.that.host_addr, his_net)) {
-
 				c->spd.that.has_client = FALSE;
 			}
 
@@ -1379,7 +1377,7 @@ static stf_status quick_inI1_outR1_tail(struct verify_oppo_bundle *b)
 	    (hv.st_nat_traversal & NAT_T_WITH_NATOA))
 		nat_traversal_natoa_lookup(md, &hv);
 
-	/* now that we are sure of our connection, create our new state */
+	/* create our new state */
 	{
 		struct state *const st = ikev1_duplicate_state(p1st);
 
@@ -1703,7 +1701,6 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 
 		p->isaiid_np = ISAKMP_NEXT_NONE;
 	}
-
 
 	/* Compute reply HASH(2) and insert in output */
 	(void)quick_mode_hash12(r_hashval, r_hash_start, rbody.cur,

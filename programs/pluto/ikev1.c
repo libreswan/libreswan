@@ -614,7 +614,7 @@ void init_ikev1(void)
 		 * Copy over the flags that apply to the state; and
 		 * not the edge.
 		 */
-		fs->fs_flags = (t->flags & ( SMF_RETRANSMIT_ON_DUPLICATE));
+		fs->fs_flags = t->flags & SMF_RETRANSMIT_ON_DUPLICATE;
 		do {
 			t++;
 		} while (t->state == fs->fs_state);
@@ -2139,7 +2139,6 @@ void process_packet_tail(struct msg_digest **mdp)
 
 		while (p != NULL) {
 			switch (p->payload.notification.isan_type) {
-
 			case R_U_THERE:
 			case R_U_THERE_ACK:
 			case ISAKMP_N_CISCO_LOAD_BALANCE:
@@ -2456,7 +2455,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			}
 
 			switch (kind) {
-
 			case EVENT_v1_RETRANSMIT: /* Retransmit packet */
 				start_retransmits(st, EVENT_v1_RETRANSMIT);
 				break;

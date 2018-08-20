@@ -187,7 +187,6 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
 	      const chunk_t *n_data,
 	      pb_stream *rbody)
 {
-
 	/* See RFC 5996 section 3.10 "Notify Payload" */
 	passert(protoid == PROTO_v2_RESERVED || protoid == PROTO_v2_AH || protoid == PROTO_v2_ESP);
 	passert((protoid == PROTO_v2_RESERVED) == (spi->len == 0));

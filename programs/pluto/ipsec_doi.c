@@ -238,7 +238,6 @@ void ipsecdoi_initiate(int whack_sock,
 			close_any(whack_sock);
 		}
 	} else if (HAS_IPSEC_POLICY(policy)) {
-
 		if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
 			/* leave our Phase 2 negotiation pending */
 			add_pending(whack_sock, st, c, policy, try,

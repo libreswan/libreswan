@@ -331,8 +331,7 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 	data.type = siBuffer;
 
 	if (hash_algo == 0 /* ikev1*/ ||
-				hash_algo == IKEv2_AUTH_HASH_SHA1 /* old style rsa with SHA1*/) {
-
+	    hash_algo == IKEv2_AUTH_HASH_SHA1 /* old style rsa with SHA1*/) {
 		data.len = (unsigned int)sig_len;
 		data.data = alloc_bytes(data.len, "NSS decrypted signature");
 
@@ -354,7 +353,6 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 		}
 
 		pfree(data.data);
-
 	} else {
 		/* Digital signature scheme with RSA-PSS */
 		CK_RSA_PKCS_PSS_PARAMS mech;

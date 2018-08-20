@@ -275,7 +275,6 @@ const struct integ_desc *ikev1_get_kernel_integ_desc(enum ikev1_auth_attribute i
 
 static const struct ike_alg *ikev2_lookup(const struct ike_alg_type *algorithms, int id)
 {
-
 	return lookup_by_id(algorithms, IKEv2_ALG_ID, id, DBG_CRYPT);
 }
 

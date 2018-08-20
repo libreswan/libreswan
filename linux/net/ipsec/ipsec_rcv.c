@@ -974,11 +974,11 @@ static enum ipsec_rcv_value ipsec_rcv_init(struct ipsec_rcv_state *irs)
 			skb->dev->name ? skb->dev->name : "NULL");
 	KLIPS_PRINTMORE(debug_rcv, "\n");
 
-	if ( (irs->proto != IPPROTO_AH) &&
+	if (irs->proto != IPPROTO_AH &&
 #ifdef CONFIG_KLIPS_IPCOMP_disabled_until_we_register_IPCOMP_HANDLER
-	     (irs->proto != IPPROTO_COMP) &&
+	    irs->proto != IPPROTO_COMP &&
 #endif	/* CONFIG_KLIPS_IPCOMP */
-	     (irs->proto != IPPROTO_ESP) ) {
+	    irs->proto != IPPROTO_ESP) {
 		KLIPS_PRINT(debug_rcv & DB_RX_IPSA,
 			    "klips_debug:ipsec_rcv_init: Why the hell is someone "
 			    "passing me a non-ipsec irs->proto = %d packet? -- dropped.\n",
@@ -1335,7 +1335,6 @@ static enum ipsec_rcv_value ipsec_rcv_auth_decap(struct ipsec_rcv_state *irs)
 				 irs->sa, ipsec_life_countbased,
 				 ipsec_incoming,
 				 irs->ipsp) == ipsec_life_harddied) {
-
 		/*
 		 * disconnect SA from the hash table, so it cannot be
 		 * found again.

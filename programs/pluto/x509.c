@@ -954,7 +954,6 @@ void ikev1_decode_cr(struct msg_digest *md)
 		DBG_cond_dump_chunk(DBG_X509, "CR", ca_name);
 
 		if (cr->isacr_type == CERT_X509_SIGNATURE) {
-
 			if (ca_name.len > 0) {
 				generalName_t *gn;
 
@@ -1413,7 +1412,6 @@ stf_status ikev2_send_cert(struct state *st, pb_stream *outpbs)
 
 	/* send optional chain CERTs */
 	{
-
 		for (int i = 0; i < chain_len ; i++) {
 			pb_stream cert_pbs;
 
@@ -1606,7 +1604,6 @@ static void crl_detail_to_whacklog(CERTCrl *crl)
 		whack_log(RC_COMMENT, "updates: this %s", lu);
 	if (crl_time_to_str(nu, sizeof(nu), &crl->nextUpdate))
 		whack_log(RC_COMMENT, "         next %s", nu);
-
 }
 
 static void crl_detail_list(void)

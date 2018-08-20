@@ -168,7 +168,6 @@ void add_bare_shunt(const ip_subnet *ours, const ip_subnet *his,
 	int transport_proto, ipsec_spi_t shunt_spi,
 	const char *why)
 {
-
 	/* report any duplication; this should NOT happen */
 	struct bare_shunt **bspp = bare_shunt_ptr(ours, his, transport_proto);
 
@@ -1727,7 +1726,6 @@ bool assign_holdpass(const struct connection *c,
 					(c->policy & POLICY_NEGO_PASS) ? "delete narrow %pass" :
 						"delete narrow %hold"))
 		{
-
 			DBG(DBG_CONTROL,
 				DBG_log("assign_holdpass() delete_bare_shunt() succeeded"));
 		} else {
@@ -2900,7 +2898,6 @@ bool install_inbound_ipsec_sa(struct state *st)
 	 * we can refer to it in the incoming SA.
 	 */
 	if (st->st_refhim == IPSEC_SAREF_NULL && !st->st_outbound_done) {
-
 		DBG(DBG_CONTROL,
 			DBG_log("installing outgoing SA now as refhim=%u",
 				st->st_refhim));
@@ -3519,7 +3516,6 @@ const char *kernel_if_name(void)
  */
 bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 {
-
 	const struct connection *const c = st->st_connection;
 
 	if (kernel_ops->get_sa == NULL || (!st->st_esp.present && !st->st_ah.present)) {

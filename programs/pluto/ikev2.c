@@ -1954,7 +1954,6 @@ void ikev2_process_state_packet(struct ike_sa *ike, struct state *st,
 	md->svm = svm;
 
 	if (ix == ISAKMP_v2_CREATE_CHILD_SA) {
-
 		/*
 		 * XXX: This code was embedded in the end of the FSM
 		 * search loop.  Since it was always executed when the

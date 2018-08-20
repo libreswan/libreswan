@@ -2323,7 +2323,6 @@ void send_v1_delete(struct state *st)
 		close_output_pbs(&del_pbs);
 	} else {
 		while (ns != said) {
-
 			pb_stream del_pbs;
 			ns--;
 			struct isakmp_delete isad = {

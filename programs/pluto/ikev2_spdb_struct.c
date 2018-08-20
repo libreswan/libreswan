@@ -76,7 +76,6 @@ static bool ikev2_out_attr(enum ikev2_trans_attr_type type,
 	 * use (in IKEv1 it was the value that determined this).
 	 */
 	switch (type) {
-
 	case IKEv2_KEY_LENGTH:
 		passert((val >> 16) == 0);
 		passert((type & ISAKMP_ATTR_AF_MASK) == 0);
@@ -483,7 +482,6 @@ static int process_transforms(pb_stream *prop_pbs, struct lswlog *remote_print_b
 	for (remote_transform_nr = 0;
 	     remote_transform_nr < num_remote_transforms;
 	     remote_transform_nr++) {
-
 		lswlogs(remote_print_buf, remote_transform_sep);
 		remote_transform_sep = ";";
 
@@ -1215,7 +1213,6 @@ stf_status ikev2_process_sa_payload(const char *what,
 			best_proposal = NULL;
 			status = STF_OK;
 		}
-
 	}
 
 	pfreeany(best_proposal); /* only free if still owned by us */
@@ -2185,7 +2182,6 @@ void ikev2_need_esp_or_ah_proposals(struct connection *c,
 		c->esp_or_ah_proposals = proposals;
 		notes = " (default)";
 	} else {
-
 		LSWDBGP(DBG_CONTROL, buf) {
 			lswlogs(buf, "constructing ESP/AH proposals with ");
 			if (default_dh == NULL) {

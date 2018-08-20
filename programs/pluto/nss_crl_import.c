@@ -39,7 +39,6 @@ static const char crl_name[] = "_import_crl";
  */
 int send_crl_to_import(u_char *der, size_t len, const char *url)
 {
-
 	CERTSignedCrl *crl = NULL;
 	CERTCertificate *cacert = NULL;
 	PLArenaPool *arena = NULL;

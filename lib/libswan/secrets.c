@@ -960,7 +960,6 @@ static void process_secret(struct secret **psecrets,
 			flp->filename, flp->lino, ugh);
 		pfree(s);
 	} else if (flushline("expected record boundary in key")) {
-
 		/* gauntlet has been run: install new secret */
 		lock_certs_and_keys("process_secret");
 

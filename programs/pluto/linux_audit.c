@@ -109,7 +109,6 @@ void linux_audit_init(void)
 static void do_linux_audit(const int type, const char *message, const char *addr,
 			   const int result)
 {
-
 	int audit_fd, rc;
 
 	audit_fd = audit_open();

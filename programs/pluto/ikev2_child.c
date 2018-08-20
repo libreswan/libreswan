@@ -918,7 +918,6 @@ stf_status ikev2_resp_accept_child_ts(
 		DBG(DBG_CONTROLMORE, DBG_log("failed to find anything; can we instantiate another template?"));
 
 		for (struct connection *t = connections; t != NULL; t = t->ac_next) {
-
 			if (LIN(POLICY_GROUPINSTANCE, t->policy) && (t->kind == CK_TEMPLATE)) {
 				/* ??? clang 6.0.0 thinks best might be NULL but I don't see how */
 				if (!streq(t->foodgroup, best->foodgroup) ||
@@ -1189,7 +1188,6 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 						ISAKMP_NEXT_v2TSi))
 				return STF_INTERNAL_ERROR;
 		}
-
 	}
 
 	if (role == ORIGINAL_RESPONDER) {
@@ -1279,7 +1277,6 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	}
 
 	if (role == ORIGINAL_RESPONDER) {
-
 		if (cst->st_seen_use_transport) {
 			if (c->policy & POLICY_TUNNEL) {
 				libreswan_log("Local policy is tunnel mode - ignoring request for transport mode");

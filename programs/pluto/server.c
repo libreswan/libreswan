@@ -622,7 +622,6 @@ struct pluto_event *pluto_event_add(evutil_socket_t fd, short events,
  */
 void timer_list(void)
 {
-
 	monotime_t nw;
 	struct pluto_event *ev = pluto_events_head;
 
@@ -655,7 +654,6 @@ void timer_list(void)
 					fmt_conn_instance(st->st_connection, cib),
 					st->st_serialno);
 		} else {
-
 			whack_log(RC_LOG, "event %s is %s", ev->ev_name, buf);
 		}
 

@@ -444,7 +444,6 @@ static int decode_esp(char *algname)
 		esp_ealg_id = esp_info->encrypt->common.id[IKEv1_ESP_ID];
 		esp_aalg_id = esp_info->integ->common.id[IKEv1_ESP_ID];
 		if (kernel_alg_proc_read()) {
-
 			proc_read_ok++;
 
 			if (!kernel_alg_encrypt_ok(esp_info->encrypt)) {
@@ -1560,7 +1559,6 @@ int main(int argc, char *argv[])
 			if (!success)
 				return FALSE;
 		}
-
 	}
 
 	if (debug) {

@@ -294,7 +294,6 @@ static void pluto_do_crypto_op(struct pluto_crypto_req_cont *cn, int helpernum)
 
 	/* now we have the entire request in the buffer, process it */
 	switch (r->pcr_type) {
-
 	case pcr_build_ke_and_nonce:
 		calc_ke(&r->pcr_d.kn);
 		calc_nonce(&r->pcr_d.kn);

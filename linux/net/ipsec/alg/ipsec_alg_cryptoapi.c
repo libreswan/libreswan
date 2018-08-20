@@ -361,15 +361,13 @@ static int setup_cipher_list(struct ipsec_alg_capi_cipher *clist)
 		 *      use a local ci to avoid touching cptr->ci,
 		 *      if register ipsec_alg success then bind cipher
 		 */
-		if ( setup_cipher(cptr->ciphername) ) {
+		if (setup_cipher(cptr->ciphername)) {
 			if (debug > 0)
 				printk(KERN_DEBUG "klips_debug:"
 				       "setup_cipher_list():"
 				       "ciphername=%s found\n",
 				       cptr->ciphername);
-			if (setup_ipsec_alg_capi_cipher(cptr) == 0) {
-
-			} else {
+			if (setup_ipsec_alg_capi_cipher(cptr) != 0) {
 				printk(KERN_ERR "klips_debug:"
 				       "setup_cipher_list():"
 				       "ciphername=%s failed ipsec_alg_register\n",

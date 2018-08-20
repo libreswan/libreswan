@@ -800,7 +800,6 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md)
 					     "SIG_I"))
 				return STF_INTERNAL_ERROR;
 		}
-
 	}
 
 	/* RFC2408 says we must encrypt at this point */

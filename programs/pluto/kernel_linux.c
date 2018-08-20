@@ -268,7 +268,6 @@ struct raw_iface *find_raw_ifaces4(void)
 
 struct raw_iface *find_raw_ifaces6(void)
 {
-
 	/* Get list of interfaces with IPv6 addresses from system from /proc/net/if_inet6).
 	 *
 	 * Documentation of format?

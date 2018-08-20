@@ -59,7 +59,6 @@ static struct msg_digest *md_pool = NULL;
 /* free_md_pool is only used to avoid leak reports */
 void free_md_pool(void)
 {
-
 	for (;; ) {
 		struct msg_digest *md = md_pool;
 

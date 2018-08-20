@@ -192,7 +192,6 @@ int ipsec_makeroute(struct sockaddr_encap *eaddr,
 	size_t sa_len;
 
 	if (debug_eroute) {
-
 		{
 			char buf1[SUBNETTOA_BUF], buf2[SUBNETTOA_BUF];
 			if (eaddr->sen_type == SENT_IP6) {

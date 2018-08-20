@@ -1033,7 +1033,6 @@ static bool migrate_xfrm_sa(const struct kernel_sa *sa)
 
 static bool netlink_migrate_sa(struct state *st)
 {
-
 	struct kernel_sa sa;
 	char mig_said[SAMIGTOT_BUF];
 
@@ -1344,7 +1343,6 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 	}
 
 	if (sa->authkeylen != 0) {
-
 		const char *name = sa->integ->integ_netlink_xfrm_name;
 		if (name == NULL) {
 			loglog(RC_LOG_SERIOUS,
@@ -1404,10 +1402,9 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 
 		req.n.nlmsg_len += attr->rta_len;
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
-
 	} else if (sa->esatype == ET_ESP) {
-
 		const char *name = sa->encrypt->encrypt_netlink_xfrm_name;
+
 		if (name == NULL) {
 			loglog(RC_LOG_SERIOUS,
 				"unknown encryption algorithm: %s",
@@ -2651,7 +2648,6 @@ static bool netlink_bypass_policy(int family, int proto, int port)
 
 		if (!netlink_policy(&req.n, 1, text))
 			return FALSE;
-
 	} else {
 		req.u.p.sel.dport = htons(port);
 		req.u.p.sel.dport_mask = 0xffff;
@@ -2704,7 +2700,6 @@ static bool netlink_v6holes()
 						ICMP_NEIGHBOR_DISCOVERY);
 		ret &= netlink_bypass_policy(AF_INET6, IPPROTO_ICMPV6,
 						ICMP_NEIGHBOR_SOLICITATION);
-
 	}
 
 	return ret;

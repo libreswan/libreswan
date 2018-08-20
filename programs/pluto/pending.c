@@ -232,7 +232,6 @@ void unpend(struct state *st, struct connection *cc)
 	     (p = *pp) != NULL; )
 	{
 		if (p->isakmp_sa == st) {
-
 			p->pend_time = mononow();
 			if (st->st_ikev2 && cc != p->connection) {
 				ikev2_initiate_child_sa(p);

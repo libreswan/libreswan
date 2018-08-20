@@ -299,14 +299,12 @@ struct db_sa *oakley_alg_mergedb(struct alg_info_ike *ai,
 		}
 
 		 if (emp_sp != NULL) {
-
 			 /*
 			  * Exclude 3des et.al. which do not include
 			  * default key lengths in the proposal.
 			  */
-			 if (ike_info->enckeylen == 0
-			     && !ike_info->encrypt->keylen_omitted) {
-
+			 if (ike_info->enckeylen == 0 &&
+			     !ike_info->encrypt->keylen_omitted) {
 				const struct encrypt_desc *enc_desc = ike_info->encrypt;
 				int def_ks = enc_desc->keydeflen;
 				passert(def_ks); /* ike=null not supported */

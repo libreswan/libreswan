@@ -50,7 +50,6 @@ struct p_dns_req;
 typedef void dnsr_cb_fn(struct p_dns_req *);
 
 struct p_dns_req {
-
 	stf_status stf_status;
 
 	bool cache_hit;  /* libunbound hit cache/local, calledback immediately */
@@ -398,7 +397,6 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 /* This is called when dns response arrives */
 static err_t process_dns_resp(struct p_dns_req *dnsr)
 {
-
 	if (dnsr->rcode != 0 ) {
 		return dnsr->rcode_name;
 	}
@@ -692,7 +690,6 @@ static void idi_ipseckey_fetch_continue(struct p_dns_req *dnsr)
 		free_ipseckey_dns(dnsr);
 		return;
 	} else {
-
 		DBG(DBG_CONTROL, DBG_log("%s unsuspend id=%s", dnsr->dbg_buf,
 					dnsr->qname));
 		free_ipseckey_dns(dnsr);
@@ -728,7 +725,6 @@ static err_t build_dns_name(char *name_buf, /* len SWAN_MAX_DOMAIN_LEN */
 		return "ID is too long >= SWAN_MAX_DOMAIN_LEN";
 
 	switch (id->kind) {
-
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
 		addrtot(&id->ip_addr, 'r', name_buf, SWAN_MAX_DOMAIN_LEN);
@@ -757,7 +753,6 @@ static err_t build_dns_name(char *name_buf, /* len SWAN_MAX_DOMAIN_LEN */
 
 	default:
 		return "can only query DNS for IPSECKEY for ID that is a FQDN, IPV4_ADDR, or IPV6_ADDR";
-
 	}
 
 	return NULL;

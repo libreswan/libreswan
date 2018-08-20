@@ -91,7 +91,6 @@ const struct lmod_info impair_lmod_info = {
 };
 
 const char *const impair_help_strings[IMPAIR_roof_IX - IMPAIR_floor_IX] = {
-
 	I(IMPAIR_BUST_MI2, "MAKE MI2 REALLY LARGE"),
 	I(IMPAIR_BUST_MR2, "make MR2 really large"),
 	I(IMPAIR_DROP_I2, "drop second initiator packet"),

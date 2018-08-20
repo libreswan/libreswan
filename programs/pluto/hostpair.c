@@ -143,7 +143,6 @@ struct host_pair *find_host_pair(const ip_address *myaddr,
 		hisport = pluto_port;
 
 	for (prev = NULL, p = host_pairs; p != NULL; prev = p, p = p->next) {
-
 		DBG(DBG_CONTROLMORE, {
 			ipstr_buf b1;
 			ipstr_buf b2;

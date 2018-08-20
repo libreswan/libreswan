@@ -895,7 +895,7 @@ int starter_whack_add_conn(struct starter_config *cfg,
 {
 	/* basic case, nothing special to synthize! */
 	if (!conn->left.strings_set[KSCF_SUBNETS] &&
-		!conn->right.strings_set[KSCF_SUBNETS])
+	    !conn->right.strings_set[KSCF_SUBNETS])
 		return starter_whack_basic_add_conn(cfg, conn);
 
 	return starter_permutate_conns(starter_whack_basic_add_conn,
@@ -918,7 +918,7 @@ int starter_whack_route_conn(struct starter_config *cfg,
 {
 	/* basic case, nothing special to synthize! */
 	if (!conn->left.strings_set[KSCF_SUBNETS] &&
-		!conn->right.strings_set[KSCF_SUBNETS])
+	    !conn->right.strings_set[KSCF_SUBNETS])
 		return starter_whack_basic_route_conn(cfg, conn);
 
 	return starter_permutate_conns(starter_whack_basic_route_conn,

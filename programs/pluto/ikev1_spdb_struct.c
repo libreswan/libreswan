@@ -2490,7 +2490,6 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			int tn;
 
 			for (tn = 0; tn != ah_proposal.isap_notrans; tn++) {
-
 				if (!parse_ipsec_transform(&ah_trans,
 							   &ah_attrs,
 							   &ah_prop_pbs,
@@ -2561,7 +2560,6 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			int tn;
 
 			for (tn = 0; tn != esp_proposal.isap_notrans; tn++) {
-
 				if (!parse_ipsec_transform(
 				      &esp_trans,
 				      &esp_attrs,

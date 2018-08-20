@@ -1692,7 +1692,6 @@ DEBUG_NO_STATIC int pfkey_x_grpsa_parse(struct sock *sk,
 	}
 
 	if (extr->ips2) { /* GRPSA */
-
 		/* group ips2p to be after ips1p */
 
 		ips2p = ipsec_sa_getbyid(&(extr->ips2->ips_said), IPSEC_REFSA);

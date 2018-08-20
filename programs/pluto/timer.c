@@ -76,7 +76,6 @@ static bool parent_vanished(struct state *st)
 	struct state *pst = state_with_serialno(st->st_clonedfrom);
 
 	if (pst != NULL) {
-
 		if (c != pst->st_connection) {
 			char cib1[CONN_INST_BUF];
 			char cib2[CONN_INST_BUF];
@@ -221,9 +220,8 @@ static void ikev2_log_initiate_child_fail(const struct state *st)
 	msgid_t unack = pst->st_msgid_nextuse - pst->st_msgid_lastack - 1;
 
 	if (st->st_state == STATE_V2_REKEY_IKE_I0 ||
-			st->st_state == STATE_V2_REKEY_CHILD_I0 ||
-			st->st_state == STATE_V2_CREATE_I0) {
-
+	    st->st_state == STATE_V2_REKEY_CHILD_I0 ||
+	    st->st_state == STATE_V2_CREATE_I0) {
 		if (unack < st->st_connection->ike_window) {
 			loglog(RC_LOG_SERIOUS, "expiring %s state. Possible message id dealock? parent #%lu unacknowledged %u next message id=%u ike exchange window %u",
 					st->st_state_name,
@@ -719,8 +717,6 @@ void event_schedule(enum event_type type, deltatime_t delay, struct state *st)
 	 */
 	if (st != NULL) {
 		switch (type) {
-
-
 		case EVENT_v2_ADDR_CHANGE:
 			passert(st->st_addr_change_event == NULL);
 			st->st_addr_change_event = ev;

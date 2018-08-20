@@ -2615,7 +2615,6 @@ struct connection *route_owner(struct connection *c,
 			struct connection **erop,
 			struct spd_route **esrp)
 {
-
 	if (!oriented(*c)) {
 		libreswan_log("route_owner: connection no longer oriented - system interface change?");
 		return NULL;

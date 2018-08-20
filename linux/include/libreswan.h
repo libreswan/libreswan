@@ -360,7 +360,7 @@ subnet6toa(struct in6_addr *addr,
 extern struct in_addr subnetof(struct in_addr addr,
 			struct in_addr mask
 			);
-extern struct in_addr hostof( struct in_addr addr,
+extern struct in_addr hostof(struct in_addr addr,
 		       struct in_addr mask
 		       );
 extern struct in_addr broadcastof(struct in_addr addr,
