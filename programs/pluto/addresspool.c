@@ -97,14 +97,15 @@ static bool can_share_lease(const struct connection *c)
 	if (((c->policy & POLICY_AUTH_NULL) != LEMPTY) || c->spd.that.authby == AUTH_NULL)
 		return FALSE;
 
-	/* Cannot share NULL ID */
-	if (c->spd.that.id.kind == ID_NULL || c->spd.that.id.kind == ID_NONE)
+	/* Cannot share NULL/NONE ID. Also cannot share ID_IP due to NAT and dynamic IP */
+	if (c->spd.that.id.kind == ID_NULL || c->spd.that.id.kind == ID_NONE || c->spd.that.id.client == ID_IP)
 		return FALSE;
 
 	/* If uniqueids=false - this can mean multiple clients on the same ID & CERT */
 	if (!uniqueIDs)
 		return FALSE;
 
+	DBG(DBG_CONTROL, DBG_log("addresspool can share this lease"));
 	return TRUE;
 }
 
