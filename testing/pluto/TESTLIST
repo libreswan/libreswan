@@ -669,7 +669,7 @@ kvmplutotest	ikev1-expire-r1-02-aggr	good
 
 # passthrough protoport tests
 kvmplutotest	basic-pluto-12		good
-kvmplutotest	basic-pluto-13-netkey-route good
+kvmplutotest	basic-pluto-13-netkey-ondemand good
 kvmplutotest	basic-pluto-14-klips-route wip
 kvmplutotest	basic-pluto-15-no-retransmit good
 
