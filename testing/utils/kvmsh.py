@@ -108,7 +108,7 @@ def main():
         if args.chdir and os.path.isabs(args.chdir):
             chdir = args.chdir
         elif args.chdir:
-            chdir = remote.directory(domain, console, directory=os.path.realpath(args.chdir))
+            chdir = remote.path(domain, console, path=args.chdir)
         else:
             chdir = None
         if chdir:
