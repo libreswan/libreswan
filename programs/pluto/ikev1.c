@@ -1314,12 +1314,13 @@ void process_v1_packet(struct msg_digest **mdp)
 				     &md->sender, md->hdr.isa_msgid);
 
 		if (st == NULL) {
-			DBG(DBG_CONTROL, DBG_log(
-				"No appropriate Mode Config state yet. See if we have a Main Mode state"));
 			/* No appropriate Mode Config state.
 			 * See if we have a Main Mode state.
 			 * ??? what if this is a duplicate of another message?
 			 */
+			DBG(DBG_CONTROL, DBG_log(
+				"No appropriate Mode Config state yet. See if we have a Main Mode state"));
+
 			st = ikev1_find_info_state(md->hdr.isa_icookie,
 					     md->hdr.isa_rcookie,
 					     &md->sender, 0);
@@ -1328,6 +1329,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				DBG(DBG_CONTROL, DBG_log(
 					"Mode Config message is for a non-existent (expired?) ISAKMP SA"));
 				/* XXX Could send notification back */
+				/* ??? ought to log something (not just DBG)? */
 				return;
 			}
 
@@ -1383,7 +1385,9 @@ void process_v1_packet(struct msg_digest **mdp)
 			 *
 			 */
 
-			if (st->st_connection->spd.this.xauth_server &&
+			const struct end *this = &st->st_connection->spd.this;
+
+			if (this->xauth_server &&
 			    st->st_state == STATE_XAUTH_R1 &&
 			    st->quirks.xauth_ack_msgid) {
 				from_state = STATE_XAUTH_R1;
@@ -1392,8 +1396,7 @@ void process_v1_packet(struct msg_digest **mdp)
 					    enum_name(&state_names,
 						      st->st_state
 						      )));
-			} else if (st->st_connection->spd.this.xauth_client
-				   &&
+			} else if (this->xauth_client &&
 				   IS_PHASE1(st->st_state)) {
 				from_state = STATE_XAUTH_I0;
 				DBG(DBG_CONTROLMORE, DBG_log(
@@ -1401,8 +1404,7 @@ void process_v1_packet(struct msg_digest **mdp)
 					    enum_name(&state_names,
 						      st->st_state
 						      )));
-			} else if (st->st_connection->spd.this.xauth_client
-				   &&
+			} else if (this->xauth_client &&
 				   st->st_state == STATE_XAUTH_I1) {
 				/*
 				 * in this case, we got a new MODECFG message after I0, maybe
@@ -1414,8 +1416,7 @@ void process_v1_packet(struct msg_digest **mdp)
 					    enum_name(&state_names,
 						      st->st_state
 						      )));
-			} else if (st->st_connection->spd.this.modecfg_server
-				   &&
+			} else if (this->modecfg_server &&
 				   IS_PHASE1(st->st_state)) {
 				from_state = STATE_MODE_CFG_R0;
 				DBG(DBG_CONTROLMORE, DBG_log(
@@ -1423,8 +1424,7 @@ void process_v1_packet(struct msg_digest **mdp)
 					    enum_name(&state_names,
 						      st->st_state
 						      )));
-			} else if (st->st_connection->spd.this.modecfg_client
-				   &&
+			} else if (this->modecfg_client &&
 				   IS_PHASE1(st->st_state)) {
 				from_state = STATE_MODE_CFG_R1;
 				DBG(DBG_CONTROLMORE, DBG_log(
@@ -1468,7 +1468,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				change_state(st, STATE_XAUTH_R0);
 			}
 
-			/* otherweise, this is fine, we continue in the state we are in */
+			/* otherwise, this is fine, we continue in the state we are in */
 			set_cur_state(st);
 			from_state = st->st_state;
 		}
@@ -1496,7 +1496,6 @@ void process_v1_packet(struct msg_digest **mdp)
 	if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_COMMIT)
 		DBG(DBG_CONTROL, DBG_log(
 			"IKE message has the Commit Flag set but Pluto doesn't implement this feature due to security concerns; ignoring flag"));
-
 
 	/* Handle IKE fragmentation payloads */
 	if (md->hdr.isa_np == ISAKMP_NEXT_IKE_FRAGMENTATION) {
@@ -1691,7 +1690,8 @@ void process_v1_packet(struct msg_digest **mdp)
 	 *
 	 */
 	if ((md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) &&
-	    st != NULL && !st->hidden_variables.st_skeyid_calculated ) {
+	    st != NULL &&
+	    !st->hidden_variables.st_skeyid_calculated) {
 		DBG(DBG_CRYPT | DBG_CONTROL, {
 			ipstr_buf b;
 			DBG_log("received encrypted packet from %s:%u but exponentiation still in progress",
