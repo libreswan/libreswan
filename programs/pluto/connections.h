@@ -414,11 +414,10 @@ extern struct connection *route_owner(struct connection *c,
 extern struct connection *shunt_owner(const ip_subnet *ours,
 				      const ip_subnet *his);
 
-#define his_id_was_instantiated(c) ((c)->kind == CK_INSTANCE \
-				    && (id_is_ipaddr(&(c)->spd.that.id) ? \
-					sameaddr(&(c)->spd.that.id.ip_addr, \
-						 &(c)->spd.that.host_addr) : \
-					TRUE))
+#define his_id_was_instantiated(c) \
+	( (c)->kind == CK_INSTANCE && \
+	  ( !id_is_ipaddr(&(c)->spd.that.id) || \
+	    sameaddr(&(c)->spd.that.id.ip_addr, &(c)->spd.that.host_addr) ) )
 
 struct state;   /* forward declaration of tag (defined in state.h) */
 
