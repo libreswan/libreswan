@@ -458,8 +458,8 @@ static void prf_desc_check(const struct ike_alg *alg)
 		 * IKEv1 IKE algorithms must have a hasher - used for
 		 * things like computing IV.
 		 */
-		passert_ike_alg(alg, (prf->common.id[IKEv1_OAKLEY_ID] < 0
-				      || prf->hasher != NULL));
+		passert_ike_alg(alg, prf->common.id[IKEv1_OAKLEY_ID] < 0 ||
+				     prf->hasher != NULL);
 		prf->prf_ops->check(prf);
 	}
 	if (prf->hasher) {
@@ -865,8 +865,8 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 		 *
 		 * Don't even try to check 'none' algorithms.
 		 */
-		if (alg != &ike_alg_integ_none.common
-		    && alg != &ike_alg_dh_none.common) {
+		if (alg != &ike_alg_integ_none.common &&
+		    alg != &ike_alg_dh_none.common) {
 			for (enum ike_alg_key key = IKE_ALG_KEY_FLOOR;
 			     key < IKE_ALG_KEY_ROOF; key++) {
 				passert_ike_alg(alg, alg->id[key] != 0);
@@ -878,8 +878,8 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 		 *
 		 * Don't even try to check 'none' algorithms.
 		 */
-		if (alg != &ike_alg_integ_none.common
-		    && alg != &ike_alg_dh_none.common) {
+		if (alg != &ike_alg_integ_none.common &&
+		    alg != &ike_alg_dh_none.common) {
 			pexpect_ike_alg(alg, alg->id[IKEv1_OAKLEY_ID] != 0);
 			pexpect_ike_alg(alg, alg->id[IKEv1_ESP_ID] != 0);
 			pexpect_ike_alg(alg, alg->id[IKEv2_ALG_ID] != 0);
@@ -934,9 +934,8 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 		     key < IKE_ALG_KEY_ROOF; key++) {
 			int id = alg->id[key];
 			passert_ike_alg(alg,
-					id < 0
-					|| (lookup_by_id(&scratch, key, id, LEMPTY)
-					    == NULL));
+				id < 0 ||
+				lookup_by_id(&scratch, key, id, LEMPTY) == NULL);
 		}
 
 		/*

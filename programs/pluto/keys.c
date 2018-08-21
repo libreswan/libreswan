@@ -677,7 +677,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		return best;
 	}
 
-	if (his_id_was_instantiated(c) && (!(c->policy & POLICY_AGGRESSIVE)) &&
+	if (his_id_was_instantiated(c) && !(c->policy & POLICY_AGGRESSIVE) &&
 	    isanyaddr(&c->spd.that.host_addr)) {
 		DBG(DBG_CONTROL,
 		    DBG_log("instantiating him to 0.0.0.0"));
@@ -690,13 +690,13 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		his_id = &rw_id;
 		idtoa(his_id, idhim2, IDTOA_BUF);
 	} else if ((c->policy & POLICY_PSK) &&
-		  (kind == PKK_PSK) &&
-		  (((c->kind == CK_TEMPLATE) &&
-		    (c->spd.that.id.kind == ID_NONE)) ||
-		   ((c->kind == CK_INSTANCE) &&
-		    (id_is_ipaddr(&c->spd.that.id))
+		  kind == PKK_PSK &&
+		  ((c->kind == CK_TEMPLATE &&
+		    c->spd.that.id.kind == ID_NONE) ||
+		   (c->kind == CK_INSTANCE &&
+		    id_is_ipaddr(&c->spd.that.id) &&
 		    /* Check if we are a road warrior instantiation, not a vnet: instantiation */
-		    && (isanyaddr(&c->spd.that.host_addr)))
+		    isanyaddr(&c->spd.that.host_addr))
 		  )
 		  ) {
 		DBG(DBG_CONTROL,
@@ -1026,8 +1026,8 @@ static bool rsa_pubkey_ckaid_matches(struct pubkey *pubkey, char *buf, size_t bu
 		return FALSE;
 	}
 	DBG_dump("comparing ckaid with", pubkey_ckaid->data, pubkey_ckaid->len);
-	bool eq = (pubkey_ckaid->len == buflen
-		   && memcmp(pubkey_ckaid->data, buf, buflen) == 0);
+	bool eq = pubkey_ckaid->len == buflen &&
+		  memcmp(pubkey_ckaid->data, buf, buflen) == 0;
 	SECITEM_FreeItem(pubkey_ckaid, PR_TRUE);
 	return eq;
 }

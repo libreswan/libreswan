@@ -102,11 +102,11 @@ extern notification_t accept_KE(chunk_t *dest, const char *val_name,
  *   expression to reference them (hash_val, hash_pbs)
  */
 #define CHECK_QUICK_HASH(md, do_hash, hash_name, msg_name) { \
-		pb_stream *const hash_pbs = &md->chain[ISAKMP_NEXT_HASH]->pbs; \
+		pb_stream *const hash_pbs = &(md)->chain[ISAKMP_NEXT_HASH]->pbs; \
 		u_char hash_val[MAX_DIGEST_LEN]; \
-		size_t hash_len = do_hash; \
-		if (pbs_left(hash_pbs) != hash_len \
-		    || !memeq(hash_pbs->cur, hash_val, hash_len)) \
+		size_t hash_len = (do_hash); \
+		if (pbs_left(hash_pbs) != hash_len || \
+		    !memeq(hash_pbs->cur, hash_val, hash_len)) \
 		{ \
 			DBG_cond_dump(DBG_CRYPT, "received " hash_name ":", \
 				      hash_pbs->cur, pbs_left(hash_pbs)); \

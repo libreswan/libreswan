@@ -2364,10 +2364,10 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 * we have XAUTH but not ModeCFG. We move it to the established
 		 * state, so the regular state machine picks up the Quick Mode.
 		 */
-		if (st->st_connection->spd.this.xauth_client
-		    && st->hidden_variables.st_xauth_client_done
-		    && !st->st_connection->spd.this.modecfg_client
-		    && st->st_state == STATE_XAUTH_I1)
+		if (st->st_connection->spd.this.xauth_client &&
+		    st->hidden_variables.st_xauth_client_done &&
+		    !st->st_connection->spd.this.modecfg_client &&
+		    st->st_state == STATE_XAUTH_I1)
 		{
 			bool aggrmode = LHAS(st->st_connection->policy, POLICY_AGGRESSIVE_IX);
 
@@ -2445,10 +2445,10 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			struct connection *c = st->st_connection;
 
 			/* fixup in case of state machine jump for xauth without modecfg */
-			if (c->spd.this.xauth_client
-			    && st->hidden_variables.st_xauth_client_done
-			    && !c->spd.this.modecfg_client
-			    && (st->st_state == STATE_MAIN_I4 || st->st_state == STATE_AGGR_I2))
+			if (c->spd.this.xauth_client &&
+			    st->hidden_variables.st_xauth_client_done &&
+			    !c->spd.this.modecfg_client &&
+			    (st->st_state == STATE_MAIN_I4 || st->st_state == STATE_AGGR_I2))
 			{
 				DBG(DBG_CONTROL, DBG_log("fixup XAUTH without ModeCFG event from EVENT_v1_RETRANSMIT to EVENT_SA_REPLACE"));
 				kind = EVENT_SA_REPLACE;

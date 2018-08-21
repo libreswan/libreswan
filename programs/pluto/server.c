@@ -390,8 +390,8 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 	 * but this function is called for each: IPv4 port 500 and
 	 * 4500 IPv6 port 500
 	 */
-	if (kernel_ops->poke_ipsec_policy_hole != NULL
-	    && !kernel_ops->poke_ipsec_policy_hole(ifp, fd)) {
+	if (kernel_ops->poke_ipsec_policy_hole != NULL &&
+	    !kernel_ops->poke_ipsec_policy_hole(ifp, fd)) {
 		return -1;
 	}
 

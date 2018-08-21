@@ -89,8 +89,8 @@ static const struct ike_alg *alg_byname(const struct proposal_parser *parser,
 		 * Known at all?  Poke around in the enum tables to
 		 * see if it turns up.
 		 */
-		if (ike_alg_enum_match(type, protocol->ikev1_alg_id, name) >= 0
-		    || ike_alg_enum_match(type, IKEv2_ALG_ID, name) >= 0) {
+		if (ike_alg_enum_match(type, protocol->ikev1_alg_id, name) >= 0 ||
+		    ike_alg_enum_match(type, IKEv2_ALG_ID, name) >= 0) {
 			snprintf(parser->err_buf, parser->err_buf_len,
 				 "%s %s algorithm '"PRISHUNK"' is not supported",
 				 protocol->name, ike_alg_type_name(type),

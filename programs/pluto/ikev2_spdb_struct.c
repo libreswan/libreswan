@@ -344,9 +344,8 @@ static void print_proposal(struct lswlog *buf, int propnum,
 		pexpect(proposal->remote_spi.size <= sizeof(proposal->remote_spi.size));
 		lswlogs(buf, "SPI=");
 		size_t i;
-		for (i = 0; (i < proposal->remote_spi.size
-			     && i < sizeof(proposal->remote_spi.size));
-		     i++) {
+		for (i = 0; i < proposal->remote_spi.size &&
+			    i < sizeof(proposal->remote_spi.size); i++) {
 			lswlogf(buf, "%02x", proposal->remote_spi.bytes[i]);
 		}
 		sep = ";";
@@ -600,8 +599,8 @@ static int process_transforms(pb_stream *prop_pbs, struct lswlog *remote_print_b
 					if (local_transform >= *matching_local_transform) {
 						break;
 					}
-					if (local_transform->id == remote_transform.id
-					    && local_transform->attr_keylen == remote_transform.attr_keylen) {
+					if (local_transform->id == remote_transform.id &&
+					    local_transform->attr_keylen == remote_transform.attr_keylen) {
 						LSWDBGP(DBG_CONTROLMORE, buf) {
 							lswlogf(buf, "remote proposal %u transform %d (",
 								remote_propnum, remote_transform_nr);

@@ -1206,9 +1206,9 @@ static bool preload_wm_cert_secret(const char *side, const char *pubkey,
 static bool preload_wm_cert_secrets(const struct whack_message *wm)
 {
 	return preload_wm_cert_secret("left", wm->left.pubkey,
-				       wm->left.pubkey_type)
-		&& preload_wm_cert_secret("right", wm->right.pubkey,
-					  wm->right.pubkey_type);
+				      wm->left.pubkey_type) &&
+	       preload_wm_cert_secret("right", wm->right.pubkey,
+				      wm->right.pubkey_type);
 }
 
 /* only used by add_connection() */
@@ -3097,8 +3097,9 @@ struct connection *refine_host_connection(const struct state *st,
 		int opl;
 		int ppl;
 
-		if ((same_id(&c->spd.that.id, peer_id) || (id_is_ipaddr(peer_id)
-			&& c->spd.that.host_type == KH_ANY)) &&
+		if (( same_id(&c->spd.that.id, peer_id) ||
+		      (id_is_ipaddr(peer_id) &&
+		       c->spd.that.host_type == KH_ANY) ) &&
 		    peer_ca.ptr != NULL &&
 		    trusted_ca_nss(peer_ca, c->spd.that.ca, &ppl) &&
 		    ppl == 0 &&

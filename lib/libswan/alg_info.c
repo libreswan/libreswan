@@ -629,8 +629,10 @@ bool proposal_aead_none_ok(const struct proposal_parser *parser,
 		return true;
 	}
 
-	if (proposal->encrypt != NULL && encrypt_desc_is_aead(proposal->encrypt)
-	    && proposal->integ != NULL && proposal->integ != &ike_alg_integ_none) {
+	if (proposal->encrypt != NULL &&
+	    encrypt_desc_is_aead(proposal->encrypt) &&
+	    proposal->integ != NULL &&
+	    proposal->integ != &ike_alg_integ_none) {
 		/*
 		 * For instance, esp=aes_gcm-sha1" is invalid.
 		 */
@@ -641,8 +643,10 @@ bool proposal_aead_none_ok(const struct proposal_parser *parser,
 		return false;
 	}
 
-	if (proposal->encrypt != NULL && !encrypt_desc_is_aead(proposal->encrypt)
-	    && proposal->integ != NULL && proposal->integ == &ike_alg_integ_none) {
+	if (proposal->encrypt != NULL &&
+	    !encrypt_desc_is_aead(proposal->encrypt) &&
+	    proposal->integ != NULL &&
+	    proposal->integ == &ike_alg_integ_none) {
 		/*
 		 * For instance, esp=aes_cbc-none" is invalid.
 		 */

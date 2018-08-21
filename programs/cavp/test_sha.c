@@ -95,8 +95,7 @@ static void msg_run_test(void)
 	/* byte aligned */
 	passert(len == (len & -4));
 	/* when len==0, msg may contain one byte :-/ */
-	passert((len == 0 && msg.len <= 1)
-		|| (len == msg.len * BITS_PER_BYTE));
+	passert((len == 0 && msg.len <= 1) || len == msg.len * BITS_PER_BYTE);
 	print_chunk("Msg", NULL, msg, 0);
 	struct hash_context *hash = hash_alg->hash_ops->init(hash_alg, "sha");
 	/* See above, use LEN, not MSG.LEN */

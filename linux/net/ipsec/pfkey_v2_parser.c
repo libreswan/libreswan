@@ -2667,34 +2667,34 @@ int pfkey_nat_t_new_mapping(struct ipsec_sa *ipsp, struct sockaddr *ipaddr,
 		      (error = pfkey_msg_hdr_build(&extensions[0],
 						  K_SADB_X_NAT_T_NEW_MAPPING,
 						  satype, 0, ++pfkey_msg_seq,
-						  0), extensions)
+						  0), extensions) &&
 	      /* SA */
-	      && pfkey_safe_build
+	      pfkey_safe_build
 		      (error = pfkey_sa_build(&extensions[K_SADB_EXT_SA],
 					      K_SADB_EXT_SA,
 					      ipsp->ips_said.spi, 0, 0, 0, 0,
-					      0), extensions)
+					      0), extensions) &&
 	      /* ADDRESS_SRC = old addr */
-	      && pfkey_safe_build
+	      pfkey_safe_build
 		      (error = pfkey_address_build(&extensions[K_SADB_EXT_ADDRESS_SRC],
 						  K_SADB_EXT_ADDRESS_SRC,
 						  ipsp->ips_said.proto, 0,
 						  ipsp->ips_addr_s),
-		      extensions)
+		      extensions) &&
 	      /* NAT_T_SPORT = old port */
-	      && pfkey_safe_build
+	      pfkey_safe_build
 		      (error = pfkey_x_nat_t_port_build(&extensions[K_SADB_X_EXT_NAT_T_SPORT],
 						       K_SADB_X_EXT_NAT_T_SPORT,
 						       ipsp->ips_natt_sport),
-		      extensions)
+		      extensions) &&
 	      /* ADDRESS_DST = new addr */
-	      && pfkey_safe_build
+	      pfkey_safe_build
 		      (error = pfkey_address_build(&extensions[K_SADB_EXT_ADDRESS_DST],
 						  K_SADB_EXT_ADDRESS_DST,
 						  ipsp->ips_said.proto, 0,
-						  ipaddr), extensions)
+						  ipaddr), extensions) &&
 	      /* NAT_T_DPORT = new port */
-	      && pfkey_safe_build
+	      pfkey_safe_build
 		      (error = pfkey_x_nat_t_port_build(&extensions[K_SADB_X_EXT_NAT_T_DPORT],
 						       K_SADB_X_EXT_NAT_T_DPORT,
 						       sport), extensions)

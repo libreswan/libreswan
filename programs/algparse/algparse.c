@@ -152,8 +152,8 @@ static void test_proposal(const char *arg)
 			protocol->parser(COUNT, NULL);
 			return;
 		}
-		if (startswith(arg, protocol->name)
-		    && arg + strlen(protocol->name) == eq) {
+		if (startswith(arg, protocol->name) &&
+		    arg + strlen(protocol->name) == eq) {
 			protocol->parser(COUNT, eq + 1);
 			return;
 		}

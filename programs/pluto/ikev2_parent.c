@@ -5894,9 +5894,10 @@ static void delete_or_replace_state(struct state *st) {
 		loglog(RC_LOG_SERIOUS, "received Delete SA payload: expire IPSEC State #%lu now",
 				st->st_serialno);
 		event_force(EVENT_SA_EXPIRE, st);
-	} else if ((c->newest_ipsec_sa == st->st_serialno && (c->policy & POLICY_UP))
-		&& ((st->st_event->ev_type == EVENT_SA_REPLACE) ||
-		    (st->st_event->ev_type == EVENT_v2_SA_REPLACE_IF_USED))) {
+	} else if (c->newest_ipsec_sa == st->st_serialno &&
+		   (c->policy & POLICY_UP) &&
+		   ( st->st_event->ev_type == EVENT_SA_REPLACE ||
+		     st->st_event->ev_type == EVENT_v2_SA_REPLACE_IF_USED )) {
 		/*
 		 * Last IPsec SA for a permanent  connection that we have initiated.
 		 * Replace it now.  Useful if the other peer is rebooting.

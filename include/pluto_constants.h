@@ -714,9 +714,9 @@ enum sa_role {
 #define IS_ISAKMP_ENCRYPTED(s) ((LELEM(s) & ISAKMP_ENCRYPTED_STATES) != LEMPTY)
 
 /* ??? Is this really authenticate?  Even in xauth case? In STATE_INFO case? */
-#define IS_ISAKMP_AUTHENTICATED(s) (STATE_MAIN_R3 <= (s) \
-				    && STATE_AGGR_R0 != (s) \
-				    && STATE_AGGR_I1 != (s))
+#define IS_ISAKMP_AUTHENTICATED(s) (STATE_MAIN_R3 <= (s) && \
+				    STATE_AGGR_R0 != (s) && \
+				    STATE_AGGR_I1 != (s))
 
 #define IKEV2_ISAKMP_INITIATOR_STATES (LELEM(STATE_PARENT_I0) |	\
 				       LELEM(STATE_PARENT_I1) |	\
@@ -778,15 +778,15 @@ enum sa_role {
       IS_CHILD_SA(st))
 
 #define IS_PARENT_SA_ESTABLISHED(st) \
-    ((st->st_state == STATE_PARENT_I3 || st->st_state == STATE_PARENT_R2) \
-	&& !IS_CHILD_SA(st))
+    (((st)->st_state == STATE_PARENT_I3 || (st)->st_state == STATE_PARENT_R2) && \
+    !IS_CHILD_SA(st))
 
 #define IS_CHILD_SA(st)  ((st)->st_clonedfrom != SOS_NOBODY)
 
 #define IS_PARENT_SA(st) (!IS_CHILD_SA(st))
 
-#define IS_IKE_SA(st) ( (st->st_clonedfrom == SOS_NOBODY) &&  (IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state) || \
-		IS_PARENT_SA(st)) )
+#define IS_IKE_SA(st) ( ((st)->st_clonedfrom == SOS_NOBODY) && \
+	(IS_PHASE1((st)->st_state) || IS_PHASE15((st)->st_state) || IS_PARENT_SA(st)) )
 
 #define IS_CHILD_SA_INITIATOR(st) \
 	((st)->st_state == STATE_V2_CREATE_I0 || \
