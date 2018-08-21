@@ -1,0 +1,4 @@
+Two behind the same NAT, using authby=secret
+
+The client should not get the same IP address because authby=secret
+explicitely forbids this.
