@@ -677,7 +677,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		return best;
 	}
 
-	if (his_id_was_instantiated(c) && !(c->policy & POLICY_AGGRESSIVE) &&
+	if (remote_id_was_instantiated(c) && !(c->policy & POLICY_AGGRESSIVE) &&
 	    isanyaddr(&c->spd.that.host_addr)) {
 		DBG(DBG_CONTROL,
 		    DBG_log("instantiating him to 0.0.0.0"));

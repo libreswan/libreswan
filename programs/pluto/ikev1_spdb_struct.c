@@ -1297,9 +1297,7 @@ psk_common:
 
 							idtoa(&c->spd.this.id, mid,
 							      sizeof(mid));
-							if (his_id_was_instantiated(
-									c))
-							{
+							if (remote_id_was_instantiated(c)) {
 								strcpy(hid,
 								       "%any");
 							} else {
