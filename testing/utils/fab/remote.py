@@ -82,22 +82,25 @@ def mount_point(domain, console, device):
 
 
 # Map the local PATH onto a domain DIRECTORY
-def path(domain, console, path, default=None):
+def path(domain, console, path):
     path = os.path.realpath(path)
     # Because .items() returns an unordered list (it can change across
     # python invocations or even within python as the dictionary
     # evolves) it first needs to be sorted.  Use the DIRECTORY sorted
     # in reverse so that /source/testing comes before /source - and
     # the longer path is prefered.
-    for device, directory in sorted(mounts(domain).items(),
-                                    key=lambda item: item[1],
-                                    reverse=True):
+    device_directory = sorted(mounts(domain).items(),
+                              key=lambda item: item[1],
+                              reverse=True)
+    domain.logger.debug("ordered device/directory %s", device_directory);
+    for device, directory in device_directory:
         if os.path.commonprefix([directory, path]) == directory:
             # found the local directory path that is mounted on the
             # machine, now map that onto a remote path
             root = mount_point(domain, console, device)
             return root + path[len(directory):]
-    return default
+
+    raise AssertionError("the host path '%s' is not mounted on the guest %s" % (path, domain))
 
 
 # Domain timeouts
