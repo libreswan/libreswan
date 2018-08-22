@@ -52,10 +52,7 @@
 
 #define CALLOC(size, cast) (cast)calloc(1, (size))
 
-unsigned int bsdpfkey_lib_debug = 0;
-libreswan_keying_debug_func_t pfkey_debug_func = NULL;
-#define PFKEY_DEBUG(args...) { if (bsdpfkey_lib_debug) \
-		(*pfkey_debug_func)(args); }
+#define PFKEY_DEBUG(args...) DBGF(DBG_PFKEY, args)
 
 static int findsupportedmap(int);
 static int setsupportedmap(const struct sadb_supported *sup, int properlen);

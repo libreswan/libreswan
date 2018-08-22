@@ -990,14 +990,6 @@ static bool bsdkame_was_eroute_idle(struct state *st UNUSED,
 	return FALSE;
 }
 
-static void bsdkame_set_debug(int cur_debug,
-			      libreswan_keying_debug_func_t debug_func,
-			      libreswan_keying_debug_func_t error_func UNUSED)
-{
-	bsdpfkey_lib_debug = (cur_debug & DBG_PFKEY ? 1 : 0);
-	pfkey_debug_func = debug_func;
-}
-
 static void bsdkame_remove_orphaned_holds(int transport_proto UNUSED,
 					  const ip_subnet *ours UNUSED,
 					  const ip_subnet *his UNUSED)
@@ -1070,7 +1062,6 @@ const struct kernel_ops bsdkame_kernel_ops = {
 	.init = bsdkame_init_pfkey,
 	.exceptsocket = bsdkame_except_socket,
 	.docommand = bsdkame_do_command,
-	.set_debug = bsdkame_set_debug,
 	.remove_orphaned_holds = bsdkame_remove_orphaned_holds,
 	.process_ifaces = bsdkame_process_raw_ifaces,
 	.overlap_supported = FALSE,
