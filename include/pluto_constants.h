@@ -306,7 +306,6 @@ enum {
 	DBG_OPPO_IX,		/* opportunism */
 	DBG_CONTROLMORE_IX,	/* more detailed debugging */
 
-	DBG_PFKEY_IX,		/* turn on the pfkey library debugging */
 	DBG_NATT_IX,		/* debugging of NAT-traversal */
 	DBG_X509_IX,		/* X.509/pkix verify, cert retrival */
 	DBG_DPD_IX,		/* DPD items */
@@ -343,7 +342,6 @@ enum {
 #define DBG_DNS		LELEM(DBG_DNS_IX)
 #define DBG_OPPO	LELEM(DBG_OPPO_IX)
 #define DBG_CONTROLMORE	LELEM(DBG_CONTROLMORE_IX)
-#define DBG_PFKEY	LELEM(DBG_PFKEY_IX)
 #define DBG_NATT	LELEM(DBG_NATT_IX)
 #define DBG_X509	LELEM(DBG_X509_IX)
 #define DBG_DPD		LELEM(DBG_DPD_IX)

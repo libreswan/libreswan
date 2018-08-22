@@ -52,7 +52,7 @@
 
 #define CALLOC(size, cast) (cast)calloc(1, (size))
 
-#define PFKEY_DEBUG(args...) DBGF(DBG_PFKEY, args)
+#define PFKEY_DEBUG(args...) DBGF(DBG_KERNEL, args)
 
 static int findsupportedmap(int);
 static int setsupportedmap(const struct sadb_supported *sup, int properlen);

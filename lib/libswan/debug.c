@@ -38,7 +38,6 @@ static const char *debug_strings[] = {
 	D(DBG_DNS, "debug-dns"),
 	D(DBG_OPPO, "debug-oppo"),
 	D(DBG_CONTROLMORE, "debug-controlmore"),
-	D(DBG_PFKEY, "debug-pfkey"),
 	D(DBG_NATT, "debug-nattraversal"),
 	D(DBG_X509, "debug-x509"),
 	D(DBG_DPD, "debug-dpd"),

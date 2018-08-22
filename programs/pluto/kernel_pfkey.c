@@ -1962,7 +1962,7 @@ void pfkey_set_debug(int cur_debug,
 		     libreswan_keying_debug_func_t debug_func,
 		     libreswan_keying_debug_func_t error_func)
 {
-	pfkey_lib_debug = (cur_debug & DBG_PFKEY ?
+	pfkey_lib_debug = (cur_debug & DBG_KERNEL ?
 			   PF_KEY_DEBUG_PARSE_MAX : PF_KEY_DEBUG_PARSE_NONE);
 
 	pfkey_debug_func = debug_func;
