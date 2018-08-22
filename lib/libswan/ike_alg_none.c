@@ -51,6 +51,7 @@ const struct encrypt_desc ike_alg_encrypt_null =
 #endif
 	.encrypt_netlink_xfrm_name = "cipher_null",
 	.encrypt_tcpdump_name = "null",
+	.encrypt_ike_audit_name = "null",
 	.encrypt_kernel_audit_name = "NULL",
 };
 
@@ -96,6 +97,7 @@ const struct integ_desc ike_alg_integ_none = {
 #endif
 	.integ_netlink_xfrm_name = "digest_null",
 	.integ_tcpdump_name = "none",
+	.integ_ike_audit_name = "none",
 	.integ_kernel_audit_name = "NONE",
 };
 

@@ -69,6 +69,7 @@ const struct prf_desc ike_alg_prf_md5 = {
 	.prf_output_size = MD5_DIGEST_SIZE,
 	.hasher = &ike_alg_hash_md5,
 	.prf_ops = &ike_alg_prf_hmac_ops,
+	.prf_ike_audit_name = "md5",
 };
 
 const struct integ_desc ike_alg_integ_md5 = {
@@ -93,5 +94,6 @@ const struct integ_desc ike_alg_integ_md5 = {
 #endif
 	.integ_netlink_xfrm_name = "md5",
 	.integ_tcpdump_name = "md5",
+	.integ_ike_audit_name = "md5",
 	.integ_kernel_audit_name = "HMAC_MD5",
 };

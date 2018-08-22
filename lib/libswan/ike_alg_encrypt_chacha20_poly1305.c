@@ -46,6 +46,7 @@ const struct encrypt_desc ike_alg_encrypt_chacha20_poly1305 = {
 	.aead_tag_size = 128 /*bits*/ / 8,
 	.encrypt_netlink_xfrm_name = "rfc7539esp(chacha20,poly1305)",
 	.encrypt_tcpdump_name = "chacha20_poly1305",
+	.encrypt_ike_audit_name = "chacha20_poly1305",
 	.encrypt_kernel_audit_name = "chacha20_poly1305",
 #ifdef CKM_NSS_CHACHA20_POLY1305
 	.nss = {

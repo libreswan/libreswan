@@ -414,13 +414,14 @@ struct encrypt_desc {
 	const char *encrypt_tcpdump_name;
 
 	/*
-	 * Name used when generating a linux audit record for a child
-	 * / IPSEC / kernel SA.
+	 * Name used when generating a linux audit record.  Allow an
+	 * IKE SA and CHILD (IPSEC kernel) SA to use different names.
 	 *
-	 * XXX: At one point this was the IKEv1 ESP enum_name table
-	 * but of course that required all kernel algorithms to have a
-	 * (probably bogus) IKEv1 name/number.
+	 * XXX: At one point the CHILD SA's audit name was the IKEv1
+	 * ESP enum_name table but that forced all kernel algorithms
+	 * to have an IKEv1 name/number (even when it was bogus).
 	 */
+	const char *encrypt_ike_audit_name;
 	const char *encrypt_kernel_audit_name;
 
 	const struct encrypt_ops *encrypt_ops;
@@ -602,6 +603,11 @@ struct prf_desc {
 	 * FIPS controlled native implementation.
 	 */
 	const struct prf_ops *prf_ops;
+	/*
+	 * Name used when generating a linux audit record for an IKE
+	 * SA.
+	 */
+	const char *prf_ike_audit_name;
 };
 
 struct prf_ops {
@@ -694,13 +700,14 @@ struct integ_desc {
 	const char *integ_tcpdump_name;
 
 	/*
-	 * Name used when generating a linux audit record for a child
-	 * / IPSEC / kernel SA.
+	 * Name used when generating a linux audit record.  Allow an
+	 * IKE SA and CHILD (IPSEC kernel) SA to use different names.
 	 *
-	 * XXX: At one point this was the IKEv1 ESP enum_name table
-	 * but of course that required all kernel algorithms to have a
-	 * (probably bogus) IKEv1 name/number.
+	 * XXX: At one point the CHILD SA's audit name was the IKEv1
+	 * ESP enum_name table but that forced all kernel algorithms
+	 * to have an IKEv1 name/number (even when it was bogus).
 	 */
+	const char *integ_ike_audit_name;
 	const char *integ_kernel_audit_name;
 
 	/*

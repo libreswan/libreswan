@@ -53,5 +53,6 @@ const struct encrypt_desc ike_alg_encrypt_cast_cbc =
 #endif
 	.encrypt_netlink_xfrm_name = "cast5",
 	.encrypt_tcpdump_name = "cast",
+	.encrypt_ike_audit_name = "cast",
 	.encrypt_kernel_audit_name = "CAST",
 };

@@ -193,7 +193,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 					st->st_oakley.auth, &esb));
 
 		snprintf(prfname, sizeof(prfname), "%s",
-			 st->st_oakley.ta_prf->common.officname);
+			 st->st_oakley.ta_prf->prf_ike_audit_name);
 
 		if (st->st_oakley.ta_integ == &ike_alg_integ_none) {
 			if (!st->st_ikev2) {
@@ -205,7 +205,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			}
 		} else if (st->st_oakley.ta_integ != NULL) {
 			snprintf(integname, sizeof(integname), "%s_%zu",
-				st->st_oakley.ta_integ->common.officname,
+				st->st_oakley.ta_integ->integ_ike_audit_name,
 				st->st_oakley.ta_integ->integ_output_size *
 				BITS_PER_BYTE);
 		} else {
@@ -223,7 +223,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 
 		snprintf(cipher_str, sizeof(cipher_str),
 			"cipher=%s ksize=%d integ=%s prf=%s pfs=%s",
-			st->st_oakley.ta_encrypt->common.officname,
+			st->st_oakley.ta_encrypt->encrypt_ike_audit_name,
 			st->st_oakley.enckeylen,
 			integname, prfname,
 			st->st_oakley.ta_dh->common.name);
