@@ -193,6 +193,8 @@ endif
 # by default.
 #
 
+ALL_ALGS ?= false
+
 USE_3DES?=true
 ifeq ($(USE_3DES),true)
 USERLAND_CFLAGS+=-DUSE_3DES
@@ -203,7 +205,7 @@ ifeq ($(USE_AES),true)
 USERLAND_CFLAGS+=-DUSE_AES
 endif
 
-USE_CAST ?= false
+USE_CAST ?= $(ALL_ALGS)
 ifeq ($(USE_CAST),true)
 USERLAND_CFLAGS += -DUSE_CAST
 endif
@@ -223,22 +225,22 @@ ifeq ($(USE_DH2),true)
 USERLAND_CFLAGS+=-DUSE_DH2
 endif
 
-USE_DH22 ?= false
+USE_DH22 ?= $(ALL_ALGS)
 ifeq ($(USE_DH22),true)
 USERLAND_CFLAGS += -DUSE_DH22
 endif
 
-USE_DH23 ?= false
+USE_DH23 ?= $(ALL_ALGS)
 ifeq ($(USE_DH23),true)
 USERLAND_CFLAGS += -DUSE_DH23
 endif
 
-USE_DH24 ?= false
+USE_DH24 ?= $(ALL_ALGS)
 ifeq ($(USE_DH24),true)
 USERLAND_CFLAGS += -DUSE_DH24
 endif
 
-USE_DH31 ?= true
+USE_DH31 ?= $(ALL_ALGS)
 ifeq ($(USE_DH31),true)
 USERLAND_CFLAGS += -DUSE_DH31
 endif
@@ -248,7 +250,7 @@ ifeq ($(USE_MD5),true)
 USERLAND_CFLAGS += -DUSE_MD5
 endif
 
-USE_RIPEMD ?= false
+USE_RIPEMD ?= $(ALL_ALGS)
 ifeq ($(USE_RIPEMD),true)
 USERLAND_CFLAGS += -DUSE_RIPEMD
 endif
