@@ -1069,22 +1069,19 @@ void lswlog_ike_alg(struct lswlog *buf, const struct ike_alg *alg)
 	}
 
 	/*
-	 * Concatenate (alias ...)
+	 * Concatenate:   alias ...
 	 */
 	{
-		const char *sep = "  (";
-		const char *term ="";
+		const char *sep = "  ";
 
 		FOR_EACH_IKE_ALG_NAMEP(alg, name) {
 			/* filter out NAME */
 			if (!strcaseeq(*name, alg->fqn)) {
 				lswlogs(buf, sep);
 				lswlogs(buf, *name);
-				sep = " ";
-				term = ")";
+				sep = ", ";
 			}
 		}
-		lswlogs(buf, term);
 	}
 }
 
