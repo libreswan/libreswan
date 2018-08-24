@@ -4114,8 +4114,8 @@ IKEv2 transforms:
 
 lswlog_enum_lset_short:
 
-  debug 30000:
+  debug 18000:
 	<<crypt+crypt-low>>
-  impair 100000000000000:
+  impair 80000000000000:
 	<<proposal-parser>>
 
