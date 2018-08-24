@@ -93,6 +93,7 @@ class Issues:
     CORE = "CORE"
     SEGFAULT = "SEGFAULT"
     GPFAULT = "GPFAULT"
+    PRINTF_NULL = "%NULL"
 
     CRASHED = {ASSERTION, EXPECTATION, CORE, SEGFAULT, GPFAULT}
 
@@ -283,7 +284,10 @@ class TestResult:
                 self.resolution.failed()
             if self.grub(pluto_log_filename, "EXPECTATION FAILED"):
                 self.issues.add(Issues.EXPECTATION, host_name)
-                # XXX: allow expection failures?
+                # self.resolution.failed() XXX: allow expection failures?
+            if self.grub(pluto_log_filename, "\(null\)"):
+                self.issues.add(Issues.PRINTF_NULL, host_name)
+                self.resolution.failed()
 
         # Check the raw console output for problems and that it
         # matches expected output.
@@ -318,6 +322,9 @@ class TestResult:
                 self.resolution.failed()
             if self.grub(raw_output_filename, r"GPFAULT"):
                 self.issues.add(Issues.GPFAULT, host_name)
+                self.resolution.failed()
+            if self.grub(raw_output_filename, r"\(null\)"):
+                self.issues.add(Issues.PRINTF_NULL, host_name)
                 self.resolution.failed()
 
             # Check that the host's raw output is complete.
