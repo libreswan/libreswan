@@ -2,7 +2,7 @@
 Preparing X.509 files
 east #
  certutil  -d sql:/etc/ipsec.d -D -n mainca
-certutil: could not find certificate named "mainca": SEC_ERROR_UNRECOGNIZED_OID: Unrecognized Object Identifier.
+certutil: could not find certificate named "mainca": SEC_ERROR_...
 east #
  ipsec start
 Redirecting to: systemctl start ipsec.service
