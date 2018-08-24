@@ -2712,7 +2712,7 @@ static void log_stf_suspend(struct state *st, stf_status result)
 	DBG(DBG_CONTROL, DBG_log("\"%s\"%s #%lu complete v2 state %s transition with %s suspended from %s:%d",
 				st->st_connection->name, b, st->st_serialno,
 				st->st_state_name,
-				enum_show(&stfstatus_name, result),
+				enum_show(&stf_status_names, result),
 				st->st_suspended_md_func,
 				st->st_suspended_md_line
 				));
@@ -2786,7 +2786,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 	case STF_IGNORE:
 		DBG(DBG_CONTROL,
 		    DBG_log("complete v2 state transition with %s",
-			    enum_show(&stfstatus_name, result)));
+			    enum_show(&stf_status_names, result)));
 		return;
 
 	default:
@@ -2831,7 +2831,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		    from_state_name,
 		    (result > STF_FAIL
 		     ? enum_name(&ikev2_notify_names, result - STF_FAIL)
-		     : enum_name(&stfstatus_name, result))));
+		     : enum_name(&stf_status_names, result))));
 
 	switch (result) {
 	case STF_OK:

@@ -352,7 +352,7 @@ enum_names routing_story = {
 	NULL, /* prefix */
 	NULL };
 
-static const char *const stfstatus_names[] = {
+static const char *const stf_status_strings[] = {
 	"STF_IGNORE",
 	"STF_SUSPEND",
 	"STF_OK",
@@ -362,9 +362,9 @@ static const char *const stfstatus_names[] = {
 	"STF_FAIL"
 };
 
-enum_names stfstatus_name = {
+enum_names stf_status_names = {
 	STF_IGNORE, STF_FAIL,
-	ARRAY_REF(stfstatus_names),
+	ARRAY_REF(stf_status_strings),
 	NULL, /* prefix */
 	NULL
 };
@@ -498,7 +498,7 @@ static const enum_names *pluto_enum_names_checklist[] = {
 	&state_stories,
 	&natt_method_names,
 	&routing_story,
-	&stfstatus_name,
+	&stf_status_names,
 #ifdef NETKEY_SUPPORT
 	&netkey_sa_dir_names,
 #endif

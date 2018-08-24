@@ -2266,7 +2266,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	    DBG_log("complete v1 state transition with %s",
 		    result > STF_FAIL ?
 		    enum_name(&ikev1_notify_names, result - STF_FAIL) :
-		    enum_name(&stfstatus_name, result)));
+		    enum_name(&stf_status_names, result)));
 
 	switch (result) {
 	case STF_SUSPEND:

@@ -3847,7 +3847,7 @@ stf_status ikev2_ike_sa_process_auth_request(struct state *st,
 			    enum_name(&ikev2_notify_names, v2_notify_num));
 	    } else {
 		    DBG_log("ikev2_parent_inI2outR2_continue_tail returned %s",
-			    enum_name(&stfstatus_name, e));
+			    enum_name(&stf_status_names, e));
 	    });
 
 	/*
@@ -4377,7 +4377,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 			} else if (ret != STF_OK) {
 				DBG(DBG_CONTROL,
 				    DBG_log("ikev2_child_sa_respond returned %s",
-					enum_name(&stfstatus_name, ret)));
+					    enum_name(&stf_status_names, ret)));
 				np = ISAKMP_NEXT_v2NONE; /* use some day if we built a complete packet */
 				return ret; /* we should continue building a valid reply packet */
 			}
@@ -4482,7 +4482,7 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 
 	if (ret != STF_OK) {
 		loglog(RC_LOG_SERIOUS, "%s responder SA processing returned %s", what,
-			enum_name(&stfstatus_name, ret));
+		       enum_name(&stf_status_names, ret));
 		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 	}
 
@@ -5778,7 +5778,7 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 		return ret; /* abort building the response message */
 	} else if (ret != STF_OK) {
 		DBG_log("ikev2_child_sa_respond returned %s",
-				enum_name(&stfstatus_name, ret));
+			enum_name(&stf_status_names, ret));
 		return ret; /* abort building the response message */
 	}
 

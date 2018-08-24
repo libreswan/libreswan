@@ -2390,7 +2390,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 			return STF_OK;
 		} else {
 			libreswan_log("xauth: xauth_client_ackstatus() returned %s",
-				enum_name(&stfstatus_name, stat));
+				      enum_name(&stf_status_names, stat));
 			libreswan_log("XAUTH: aborting entire IKE Exchange");
 			return STF_FATAL;
 		}
