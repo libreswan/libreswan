@@ -22,7 +22,7 @@ west #
 done
 west #
  grep v2N_INVALID_KE_PAYLOAD /tmp/pluto.log
-| #1 complete v2 state transition from STATE_PARENT_I1 with v2N_INVALID_KE_PAYLOAD
+| #1 complete v2 state transition from STATE_PARENT_I1 with STF_FAIL+v2N_INVALID_KE_PAYLOAD
 | state transition function for STATE_PARENT_I1 failed: v2N_INVALID_KE_PAYLOAD
 west #
 west #

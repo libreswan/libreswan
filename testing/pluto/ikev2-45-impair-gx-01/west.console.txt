@@ -33,7 +33,7 @@ west #
 | Unpacking clear payload for svm: Initiator: process INVALID_SYNTAX AUTH notification
 |    Notify Message Type: v2N_INVALID_SYNTAX (0x7)
 "westnet-eastnet-ipv4-psk-ikev2" #2: dropping unexpected AUTH message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SK
-| #0 complete v2 state transition from STATE_UNDEFINED with v2N_INVALID_SYNTAX
+| #0 complete v2 state transition from STATE_UNDEFINED with STF_FAIL+v2N_INVALID_SYNTAX
 | state transition function for STATE_UNDEFINED failed: v2N_INVALID_SYNTAX
 west #
 west #
