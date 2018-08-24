@@ -71,7 +71,7 @@ static struct double_double impair = {
        S(SEND_NO_IKEV2_AUTH, "impair-send-no-ikev2-auth", "causes pluto to omit sending an IKEv2 IKE_AUTH packet"),
        S(SEND_NO_MAIN_R2, "impair-send-no-main-r2", "causes pluto to omit sending an last Main Mode response packet"),
        S(SEND_NO_XAUTH_R0, "impair-send-no-xauth-r0", "causes pluto to omit sending an XAUTH user/passwd request"),
-       S(SEND_PKCS7_THINGIE, "send certificates as a PKCS7 thingie", "impair-send-pkcs7-thingie"),
+       S(SEND_PKCS7_THINGIE, "impair-send-pkcs7-thingie", "send certificates as a PKCS7 thingie"),
        S(SEND_ZERO_GX, "impair-send-zero-gx", "causes pluto to send a g^x that is zero, breaking DH calculation"),
        S(SUPPRESS_RETRANSMITS, "impair-suppress-retransmits", "causes pluto to never send retransmits (wait the full timeout)"),
        S(TIMEOUT_ON_RETRANSMIT, "impair-timeout-on-retransmit", "causes pluto to 'retry' (switch protocol) on the first retransmit"),
