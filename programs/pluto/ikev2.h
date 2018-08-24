@@ -299,3 +299,4 @@ extern void ikev2_record_newaddr(struct state *st, void *arg_ip);
 extern void ikev2_record_deladdr(struct state *st, void *arg_ip);
 extern void ikev2_addr_change(struct state *st);
 
+void lswlog_v2_stf_status(struct lswlog *buf, unsigned ret);

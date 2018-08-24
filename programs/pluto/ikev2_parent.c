@@ -3840,15 +3840,10 @@ stf_status ikev2_ike_sa_process_auth_request(struct state *st,
 	/* The connection is "up", start authenticating it */
 
 	stf_status e = ikev2_parent_inI2outR2_continue_tail(st, md);
-	DBG(DBG_CONTROL,
-	    if (e > STF_FAIL) {
-		    int v2_notify_num = e - STF_FAIL;
-		    DBG_log("ikev2_parent_inI2outR2_continue_tail returned STF_FAIL+%s",
-			    enum_name(&ikev2_notify_names, v2_notify_num));
-	    } else {
-		    DBG_log("ikev2_parent_inI2outR2_continue_tail returned %s",
-			    enum_name(&stf_status_names, e));
-	    });
+	LSWDBGP(DBG_CONTROL, buf) {
+		lswlogs(buf, "ikev2_parent_inI2outR2_continue_tail returned ");
+		lswlog_v2_stf_status(buf, e);
+	}
 
 	/*
 	 * if failed OE, delete state completly, no create_child_sa
@@ -4364,21 +4359,11 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 								ISAKMP_v2_AUTH);
 
 			/* note: st: parent; md->st: child */
-
-			if (ret > STF_FAIL) {
-				int v2_notify_num = ret - STF_FAIL;
-
-				DBG(DBG_CONTROL,
-				    DBG_log("ikev2_child_sa_respond returned STF_FAIL with %s",
-					    enum_name(&ikev2_notify_names,
-						      v2_notify_num)));
-				np = ISAKMP_NEXT_v2NONE; /* use some day if we built a complete packet */
-				return ret; /* we should continue building a valid reply packet */
-			} else if (ret != STF_OK) {
-				DBG(DBG_CONTROL,
-				    DBG_log("ikev2_child_sa_respond returned %s",
-					    enum_name(&stf_status_names, ret)));
-				np = ISAKMP_NEXT_v2NONE; /* use some day if we built a complete packet */
+			if (ret != STF_OK) {
+				LSWDBGP(DBG_CONTROL, buf) {
+					lswlogs(buf, "ikev2_child_sa_respond returned ");
+					lswlog_v2_stf_status(buf, ret);
+				}
 				return ret; /* we should continue building a valid reply packet */
 			}
 		}
@@ -4481,8 +4466,12 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 			c->esp_or_ah_proposals);
 
 	if (ret != STF_OK) {
-		loglog(RC_LOG_SERIOUS, "%s responder SA processing returned %s", what,
-		       enum_name(&stf_status_names, ret));
+		LSWLOG_RC(RC_LOG_SERIOUS, buf) {
+			lswlogs(buf, what);
+			lswlogs(buf, " failed, responder SA processing returned ");
+			lswlog_v2_stf_status(buf, ret);
+		}
+		/* XXX: return RET? */
 		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 	}
 
@@ -5770,15 +5759,11 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 
 	/* note: pst: parent; md->st: child */
 
-	if (ret > STF_FAIL) {
-		int v2_notify_num = ret - STF_FAIL;
-
-		DBG_log("ikev2_child_sa_respond returned STF_FAIL with %s",
-				enum_name(&ikev2_notify_names, v2_notify_num));
-		return ret; /* abort building the response message */
-	} else if (ret != STF_OK) {
-		DBG_log("ikev2_child_sa_respond returned %s",
-			enum_name(&stf_status_names, ret));
+	if (ret != STF_OK) {
+		LSWDBGP(DBG_CONTROL, buf) {
+			lswlogs(buf, "ikev2_child_sa_respond returned ");
+			lswlog_v2_stf_status(buf, ret);
+		}
 		return ret; /* abort building the response message */
 	}
 
