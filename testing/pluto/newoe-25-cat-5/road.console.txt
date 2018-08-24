@@ -312,7 +312,7 @@ road #
  killall ip > /dev/null 2> /dev/null
 road #
  cp /tmp/xfrm-monitor.out OUTPUT/road.xfrm-monitor.txt
-cp: cannot stat ‘/tmp/xfrm-monitor.out’: No such file or directory
+cp: cannot stat '/tmp/xfrm-monitor.out': No such file or directory
 road #
  # ping should succeed through tunnel
 road #
