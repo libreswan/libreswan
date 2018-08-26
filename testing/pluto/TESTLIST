@@ -730,25 +730,28 @@ kvmplutotest	ah-pluto-05		good
 kvmplutotest	ah-pluto-07-klips-netkey	good
 kvmplutotest	ah-pluto-09		good
 kvmplutotest	ah-pluto-10		good
-# requires strongswan > 5.5.3 see https://wiki.strongswan.org/issues/2347
+
 kvmplutotest	interop-ikev1-strongswan-10-ah-initiator-sha256		good
 kvmplutotest	interop-ikev1-strongswan-11-ah-initiator-sha512		good
 kvmplutotest	interop-ikev1-strongswan-12-esp-sha2_256 		good
 kvmplutotest	interop-ikev1-strongswan-13-esp-sha2_512 		good
 kvmplutotest	interop-ikev1-strongswan-14-camellia			good
+kvmplutotest	interop-ikev1-strongswan-15-twofish			good
+kvmplutotest	interop-ikev1-strongswan-16-serpent			good
+kvmplutotest	interop-ikev1-strongswan-17-compress			good
+kvmplutotest	interop-ikev1-strongswan-x509-aggr-12-san-dn-match	good
+kvmplutotest	interop-ikev1-strongswan-x509-aggr-13-san-dn-match-responder good
+
 kvmplutotest	interop-ikev2-strongswan-16-ah-initiator-sha512		good
 kvmplutotest	interop-ikev2-strongswan-17-ah-initiator-sha256		good
+kvmplutotest	interop-ikev2-strongswan-18-compress			good
 kvmplutotest	interop-ikev2-strongswan-20-strongswan-eap		good
 kvmplutotest	interop-ikev2-strongswan-22-cp-responder-psk		wip
 kvmplutotest	interop-ikev2-strongswan-23-initiator-cp		good
 kvmplutotest	interop-ikev2-strongswan-25-ke-mismatch-initiator	good
 kvmplutotest	interop-ikev2-strongswan-26-ke-mismatch-responder	good
-kvmplutotest	interop-ikev1-strongswan-15-twofish			good
-kvmplutotest	interop-ikev1-strongswan-16-serpent			good
 kvmplutotest	interop-ikev2-strongswan-31-asymmetric-responder	good
 kvmplutotest	interop-ikev2-strongswan-32-ip-lease			good
-kvmplutotest	interop-ikev1-strongswan-x509-aggr-12-san-dn-match	good
-kvmplutotest	interop-ikev1-strongswan-x509-aggr-13-san-dn-match-responder good
 
 kvmplutotest    netkey-klips-pluto-03		good
 kvmplutotest    klips-netkey-pluto-06		good

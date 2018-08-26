@@ -1,0 +1,4 @@
+Basic pluto with IKEv2 using PSK on the initiator (west), and Strongswan on
+the responder testing COMPRESSION
+
+the ip xfrm output should show "comp" entries.
