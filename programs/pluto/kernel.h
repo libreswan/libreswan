@@ -152,8 +152,6 @@ struct kernel_sa {
 	 */
 };
 
-extern const struct kernel_sa empty_sa;	/* zero or null in all the right places */
-
 struct raw_iface {
 	ip_address addr;
 	char name[IFNAMSIZ + 20]; /* what would be a safe size? */
@@ -443,8 +441,6 @@ extern const struct kernel_ops klips_kernel_ops;
 extern const struct kernel_ops mast_kernel_ops;
 #endif
 
-extern bool kernel_overlap_supported(void);
-extern const char *kernel_if_name(void);
 extern void show_kernel_interface(void);
 extern void free_kernelfd(void);
 extern void expire_bare_shunts(void);

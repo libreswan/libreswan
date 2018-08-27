@@ -3484,10 +3484,10 @@ static bool is_virtual_net_used(struct connection *c,
 						d->kind),
 					buf);
 
-				if (!kernel_overlap_supported()) {
+				if (!kernel_ops->overlap_supported) {
 					libreswan_log(
 						"Kernel method '%s' does not support overlapping IP ranges",
-						kernel_if_name());
+						kernel_ops->kern_name);
 					return TRUE;
 
 				} else if (LIN(POLICY_OVERLAPIP, c->policy) &&

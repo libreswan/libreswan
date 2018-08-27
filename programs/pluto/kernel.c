@@ -80,8 +80,6 @@
 #include "ip_address.h"
 #include "lswfips.h" /* for libreswan_fipsmode() */
 
-const struct kernel_sa empty_sa;	/* zero or null in all the right places */
-
 /* which kernel interface to use */
 enum kernel_interface kern_interface = USE_NETKEY;
 
@@ -216,8 +214,6 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 #endif
 				const char *why)
 {
-	ip_address src, dst;
-
 	passert(samesubnettype(ours, his));
 
 	/*
@@ -229,6 +225,7 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 	 *          proc value is different from our internal value?
 	 */
 
+	ip_address src, dst;
 
 	networkof(ours, &src);
 	networkof(his, &dst);
@@ -1125,9 +1122,7 @@ static bool sag_eroute(const struct state *st,
 
 void migration_up(struct connection *c,  struct state *st)
 {
-	struct spd_route *sr;
-
-	for (sr = &c->spd; sr; sr = sr->spd_next) {
+	for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 #ifdef IPSEC_CONNECTION_LIMIT
 		num_ipsec_eroute++;
 #endif
@@ -1139,16 +1134,13 @@ void migration_up(struct connection *c,  struct state *st)
 
 void migration_down(struct connection *c,  struct state *st)
 {
-	struct spd_route *sr;
-
-	for (sr = &c->spd; sr; sr = sr->spd_next) {
+	for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		enum routing_t cr = sr->routing;
 
-		if (erouted(cr)) {
 #ifdef IPSEC_CONNECTION_LIMIT
+		if (erouted(cr))
 			num_ipsec_eroute--;
 #endif
-		}
 
 		sr->routing = RT_UNROUTED; /* do now so route_owner won't find us */
 
@@ -1164,9 +1156,7 @@ void migration_down(struct connection *c,  struct state *st)
 /* delete any eroute for a connection and unroute it if route isn't shared */
 void unroute_connection(struct connection *c)
 {
-	struct spd_route *sr;
-
-	for (sr = &c->spd; sr; sr = sr->spd_next) {
+	for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		enum routing_t cr = sr->routing;
 
 		if (erouted(cr)) {
@@ -1224,10 +1214,7 @@ static void free_bare_shunt(struct bare_shunt **pp)
 {
 	struct bare_shunt *p;
 
-	/* ??? the following 3 lines are embarrassing */
-	pexpect(pp != NULL);
-	if (pp == NULL)
-		return;
+	passert(pp != NULL);
 
 	p = *pp;
 
@@ -1239,9 +1226,8 @@ static void free_bare_shunt(struct bare_shunt **pp)
 unsigned show_shunt_count(void)
 {
 	unsigned i = 0;
-	const struct bare_shunt *bs;
 
-	for (bs = bare_shunts; bs != NULL; bs = bs->next)
+	for (const struct bare_shunt *bs = bare_shunts; bs != NULL; bs = bs->next)
 	{
 		i++;
 	}
@@ -1251,11 +1237,9 @@ unsigned show_shunt_count(void)
 
 void show_shunt_status(void)
 {
-	const struct bare_shunt *bs;
-
 	whack_log(RC_COMMENT, "Bare Shunt list:"); /* spacer */
 	whack_log(RC_COMMENT, " "); /* spacer */
-	for (bs = bare_shunts; bs != NULL; bs = bs->next) {
+	for (const struct bare_shunt *bs = bare_shunts; bs != NULL; bs = bs->next) {
 		/* Print interesting fields.  Ignore count and last_active. */
 
 		int ourport = ntohs(portof(&bs->ours.addr));
@@ -1303,7 +1287,6 @@ bool raw_eroute(const ip_address *this_host,
 	)
 {
 	char text_said[SATOT_BUF + SATOT_BUF];
-	bool result;
 
 	switch (op) {
 	case ERO_ADD:
@@ -1348,7 +1331,7 @@ bool raw_eroute(const ip_address *this_host,
 #endif
 		});
 
-	result = kernel_ops->raw_eroute(this_host, this_client,
+	bool result = kernel_ops->raw_eroute(this_host, this_client,
 					that_host, that_client,
 					cur_spi, new_spi, sa_proto,
 					transport_proto,
@@ -1578,7 +1561,6 @@ bool eroute_connection(const struct spd_route *sr,
 {
 	const ip_address *peer = &sr->that.host_addr;
 	char buf2[256];
-	ip_subnet client;
 
 	snprintf(buf2, sizeof(buf2),
 		"eroute_connection %s", opname);
@@ -1587,6 +1569,8 @@ bool eroute_connection(const struct spd_route *sr,
 		peer = aftoinfo(addrtypeof(peer))->any;
 
 	if (sr->this.has_cat) {
+		ip_subnet client;
+
 		addrtosubnet(&sr->this.host_addr, &client);
 		bool t = raw_eroute(&sr->this.host_addr, &client,
 				peer, &sr->that.client,
@@ -1773,13 +1757,13 @@ static bool del_spi(ipsec_spi_t spi, int proto,
 
 	DBG(DBG_KERNEL, DBG_log("delete %s", text_said));
 
-	struct kernel_sa sa = empty_sa;
-
-	sa.spi = spi;
-	sa.proto = proto;
-	sa.src = src;
-	sa.dst = dest;
-	sa.text_said = text_said;
+	struct kernel_sa sa = {
+		.spi = spi,
+		.proto = proto,
+		.src = src,
+		.dst = dest,
+		.text_said = text_said,
+	};
 
 	passert(kernel_ops->del_sa != NULL);
 	return kernel_ops->del_sa(&sa);
@@ -1835,15 +1819,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	char text_esp[SATOT_BUF];
 	char text_ah[SATOT_BUF];
 
-	/*
-	 * encapsulation: encapsulation mode called for
-	 * encap_oneshot: copy of "encapsultion" but reset to
-	 *	ENCAPSULATION_MODE_TRANSPORT after use.
-	 */
-	int encapsulation = ENCAPSULATION_MODE_TRANSPORT;
-	int encap_oneshot;
-	bool add_selector;
-
 	src.maskbits = 0;
 	dst.maskbits = 0;
 
@@ -1859,6 +1834,14 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		dst_client = c->spd.that.client;
 	}
 
+	/*
+	 * encapsulation: encapsulation mode called for
+	 * encap_oneshot: copy of "encapsultion" but reset to
+	 *	ENCAPSULATION_MODE_TRANSPORT after use.
+	 */
+	int encapsulation = ENCAPSULATION_MODE_TRANSPORT;
+	bool add_selector;
+
 	if (st->st_ah.attrs.encapsulation == ENCAPSULATION_MODE_TUNNEL ||
 	    st->st_esp.attrs.encapsulation == ENCAPSULATION_MODE_TUNNEL ||
 	    st->st_ipcomp.attrs.encapsulation == ENCAPSULATION_MODE_TUNNEL) {
@@ -1872,23 +1855,23 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		add_selector = TRUE;
 	}
 	c->encapsulation = encapsulation;
-	encap_oneshot = encapsulation;
 
-	struct kernel_sa said_boilerplate = empty_sa;
+	int encap_oneshot = encapsulation;
 
-	said_boilerplate.src = &src.addr;
-	said_boilerplate.dst = &dst.addr;
-	said_boilerplate.src_client = &src_client;
-	said_boilerplate.dst_client = &dst_client;
-	said_boilerplate.inbound = inbound;
-	said_boilerplate.add_selector = add_selector;
-	said_boilerplate.transport_proto = c->spd.this.protocol;
-	said_boilerplate.sa_lifetime = c->sa_ipsec_life_seconds;
-	said_boilerplate.outif = -1;
-
+	struct kernel_sa said_boilerplate = {
+		.src = &src.addr,
+		.dst = &dst.addr,
+		.src_client = &src_client,
+		.dst_client = &dst_client,
+		.inbound = inbound,
+		.add_selector = add_selector,
+		.transport_proto = c->spd.this.protocol,
+		.sa_lifetime = c->sa_ipsec_life_seconds,
+		.outif = -1,
 #ifdef HAVE_LABELED_IPSEC
-	said_boilerplate.sec_ctx = st->sec_ctx;
+		.sec_ctx = st->sec_ctx,
 #endif
+	};
 
 	if (kernel_ops->inbound_eroute) {
 		inner_spi = SPI_PASS;
@@ -2535,7 +2518,6 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 		struct ipsec_proto_info *info;
 	} protos[4];
 	int i = 0;
-	bool result;
 
 	/* ??? CLANG 3.5 thinks that c might be NULL */
 	if (kernel_ops->inbound_eroute && inbound &&
@@ -2595,7 +2577,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 	}
 	protos[i].proto = 0;
 
-	result = TRUE;
+	bool result = TRUE;
 	for (i = 0; protos[i].proto; i++) {
 		unsigned proto = protos[i].proto;
 		ipsec_spi_t spi;
@@ -2637,7 +2619,6 @@ static void kernel_process_queue_cb(evutil_socket_t fd UNUSED,
 
 	kernel_ops->process_queue();
 	pexpect_reset_globals();
-
 }
 
 /* keep track of kernel version  */
@@ -2925,19 +2906,10 @@ bool route_and_eroute(struct connection *c,
 		struct spd_route *sr,
 		struct state *st)
 {
-	bool eroute_installed = FALSE,
-		firewall_notified = FALSE,
-		route_installed = FALSE;
-
 	DBG(DBG_CONTROLMORE, DBG_log("route_and_eroute() for proto %d, and source port %d dest port %d",
 		sr->this.protocol, sr->this.port, sr->that.port));
 	setportof(htons(sr->this.port), &sr->this.client.addr);
 	setportof(htons(sr->that.port), &sr->that.client.addr);
-
-
-#ifdef IPSEC_CONNECTION_LIMIT
-	bool new_eroute = FALSE;
-#endif
 
 	struct spd_route *esr, *rosr;
 	struct connection *ero,
@@ -2963,6 +2935,12 @@ bool route_and_eroute(struct connection *c,
 		NULL;
 
 	/* install the eroute */
+
+	bool eroute_installed = FALSE;
+
+#ifdef IPSEC_CONNECTION_LIMIT
+	bool new_eroute = FALSE;
+#endif
 
 	passert(bspp == NULL || ero == NULL);   /* only one non-NULL */
 
@@ -3005,6 +2983,8 @@ bool route_and_eroute(struct connection *c,
 
 	/* notify the firewall of a new tunnel */
 
+	bool firewall_notified = FALSE;
+
 	if (eroute_installed) {
 		/*
 		 * do we have to notify the firewall?
@@ -3020,6 +3000,8 @@ bool route_and_eroute(struct connection *c,
 	}
 
 	/* install the route */
+
+	bool route_installed = FALSE;
 
 	DBG(DBG_CONTROL,
 		DBG_log("route_and_eroute: firewall_notified: %s",
@@ -3498,17 +3480,6 @@ bool was_eroute_idle(struct state *st, deltatime_t since_when)
 	return FALSE;
 }
 
-/* This wrapper is to make the seam_* files in testing/ easier */
-bool kernel_overlap_supported(void)
-{
-	return kernel_ops->overlap_supported;
-}
-
-const char *kernel_if_name(void)
-{
-	return kernel_ops->kern_name;
-}
-
 /*
  * get information about a given sa - needs merging with was_eroute_idle
  *
@@ -3552,13 +3523,13 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 
 	set_text_said(text_said, dst, spi, proto);
 
-	struct kernel_sa sa = empty_sa;
-
-	sa.spi = spi;
-	sa.proto = proto;
-	sa.src = src;
-	sa.dst = dst;
-	sa.text_said = text_said;
+	struct kernel_sa sa = {
+		.spi = spi,
+		.proto = proto,
+		.src = src,
+		.dst = dst,
+		.text_said = text_said,
+	};
 
 	DBG(DBG_KERNEL,
 		DBG_log("get_sa_info %s", text_said));
@@ -3571,7 +3542,7 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 
 	p2->add_time = add_time;
 
-	/* fied has been set? */
+	/* field has been set? */
 	passert(!is_monotime_epoch(p2->our_lastused));
 	passert(!is_monotime_epoch(p2->peer_lastused));
 
@@ -3697,10 +3668,8 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 /* XXX move to proper kernel_ops in kernel_netlink */
 void expire_bare_shunts(void)
 {
-	struct bare_shunt **bspp;
-
 	DBG(DBG_OPPO, DBG_log("expiring aged bare shunts from shunt table"));
-	for (bspp = &bare_shunts; *bspp != NULL; ) {
+	for (struct bare_shunt **bspp = &bare_shunts; *bspp != NULL; ) {
 		struct bare_shunt *bsp = *bspp;
 		time_t age = deltasecs(monotimediff(mononow(), bsp->last_activity));
 

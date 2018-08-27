@@ -855,7 +855,13 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 		return FALSE;
 	}
 
-	struct kernel_sa sa = empty_sa;
+	struct kernel_sa sa = {
+		.nk_dir = dir,
+		.proto = proto,
+		.reqid = c->spd.reqid + 1, /* why is reqid off by one ??? AA_2017 */
+		.natt_type = natt_type,
+	};
+
 	ip_address *new_addr;
 	u_int16_t old_port;
 	u_int16_t new_port;
@@ -936,19 +942,14 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 		}
 	}
 
-	sa.nk_dir = dir;
-	sa.proto = proto;
 	sa.src = src;
 	sa.dst = dst;
 	sa.text_said = text_said;
 	sa.src_client = src_client;
 	sa.dst_client = dst_client;
 
-	sa.reqid = c->spd.reqid + 1; /* why is reqid off by one ??? AA_2017 */
-
 	sa.natt_sport = natt_sport;
 	sa.natt_dport = natt_dport;
-	sa.natt_type = natt_type;
 
 	char reqid_buf[ULTOT_BUF + 32];
 	ipstr_buf ra;
