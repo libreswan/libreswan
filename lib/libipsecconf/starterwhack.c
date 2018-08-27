@@ -658,34 +658,38 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" policy_label=%s",
 			conn->name, msg.policy_label);
 	}
-	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" labeled_ipsec=%d",
-		conn->name, msg.labeled_ipsec);
-
 #endif
 
 	msg.modecfg_dns = conn->modecfg_dns;
 	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" modecfgdns=%s",
-		conn->name, msg.modecfg_dns);
+		conn->name, msg.modecfg_dns == NULL ? "<unset>" :
+			msg.modecfg_dns);
 	msg.modecfg_domains = conn->modecfg_domains;
 	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" modecfgdomains=%s",
-		conn->name, msg.modecfg_domains);
+		conn->name, msg.modecfg_domains = NULL ? "<unset>" :
+			msg.modecfg_domains);
 	msg.modecfg_banner = conn->modecfg_banner;
 	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" modecfgbanner=%s",
-		conn->name, msg.modecfg_banner);
+		conn->name, msg.modecfg_banner == NULL ? "<unset>" :
+			msg.modecfg_banner);
 
 	msg.conn_mark_both = conn->conn_mark_both;
 	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" mark=%s",
-		conn->name, msg.conn_mark_both);
+		conn->name, msg.conn_mark_both == NULL ? "<unset>" :
+			msg.conn_mark_both);
 	msg.conn_mark_in = conn->conn_mark_in;
 	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" mark-in=%s",
-		conn->name, msg.conn_mark_in);
+		conn->name, msg.conn_mark_in == NULL ? "<unset>" :
+			msg.conn_mark_in);
 	msg.conn_mark_out = conn->conn_mark_out;
 	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" mark-out=%s",
-		conn->name, msg.conn_mark_out);
+		conn->name, msg.conn_mark_out == NULL ? "<unset>" :
+			msg.conn_mark_out);
 
 	msg.vti_iface = conn->vti_iface;
 	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" vti_iface=%s",
-		conn->name, msg.vti_iface);
+		conn->name, msg.vti_iface == NULL ? "<unset>" :
+			msg.vti_iface);
 	if (conn->options_set[KBF_VTI_ROUTING])
 		msg.vti_routing = conn->options[KBF_VTI_ROUTING];
 	if (conn->options_set[KBF_VTI_SHARED])
