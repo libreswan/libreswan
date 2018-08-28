@@ -263,8 +263,10 @@ static bool share_lease(const struct connection *c,
 	struct lease_addr *p;
 	bool r = FALSE;
 
-	if (!can_share_lease(c))
+	if (!can_share_lease(c)) {
+		DBG(DBG_CONTROL, DBG_log("cannot share a lease, find a new lease IP"));
 		return FALSE;
+	}
 
 	for (p = c->pool->leases; p != NULL; p = p->next) {
 		if (same_id(&p->thatid, &c->spd.that.id)) {
@@ -307,7 +309,7 @@ static bool share_lease(const struct connection *c,
 	return r;
 }
 
-err_t lease_an_address(const struct connection *c,
+err_t lease_an_address(const struct connection *c, const struct state *st,
 		     ip_address *ipa /*result*/)
 {
 	/*
@@ -324,6 +326,10 @@ err_t lease_an_address(const struct connection *c,
 
 		rangetot(&c->pool->r, 0, rbuf, sizeof(rbuf));
 		idtoa(&c->spd.that.id, thatidbuf, sizeof(thatidbuf));
+		if (st->st_xauth_username != NULL) {
+			/* force different leases for different xauth users */
+			jam_str(thatidbuf, sizeof(thatidbuf), st->st_xauth_username);
+		}
 
 		/* ??? what is that.client.addr and why do we care? */
 		DBG_log("request lease from addresspool %s reference count %u thatid '%s' that.client.addr %s",
@@ -347,8 +353,9 @@ err_t lease_an_address(const struct connection *c,
 			 * monotonically increasing.
 			 */
 			passert(p->index >= i);
-			if (p->index > i)
+			if (p->index > i) {
 				break;
+			}
 			/* remember the longest lingering lease found */
 			if (p->refcnt == 0 &&
 			    (ll == NULL ||

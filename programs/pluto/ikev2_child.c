@@ -1012,7 +1012,7 @@ static stf_status ikev2_cp_reply_state(const struct msg_digest *md,
 	ip_address ipv4;
 	struct connection *c = md->st->st_connection;
 
-	err_t e = lease_an_address(c, &ipv4);
+	err_t e = lease_an_address(c, md->st, &ipv4);
 	if (e != NULL) {
 		libreswan_log("ikev2 lease_an_address failure %s", e);
 		return STF_INTERNAL_ERROR;

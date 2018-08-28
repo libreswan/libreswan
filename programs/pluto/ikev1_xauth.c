@@ -173,7 +173,7 @@ static bool get_internal_addresses(
 	zero(ia);	/* OK: no pointer fields */
 
 	if (c->pool != NULL) {
-		err_t e = lease_an_address(c, &ia->ipaddr);
+		err_t e = lease_an_address(c, st, &ia->ipaddr);
 
 		if (e != NULL) {
 			libreswan_log("lease_an_address failure %s", e);
