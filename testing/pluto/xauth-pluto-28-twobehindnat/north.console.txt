@@ -1,0 +1,99 @@
+/testing/guestbin/swan-prep
+north #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+north #
+ /testing/pluto/bin/wait-until-pluto-started
+north #
+ ../bin/block-non-ipsec.sh
+north #
+ ipsec auto --add north-east
+002 added connection description "north-east"
+north #
+ ipsec whack --xauthname 'use1' --xauthpass 'use1pass' --name north-east --initiate
+002 "north-east" #1: initiating Main Mode
+104 "north-east" #1: STATE_MAIN_I1: initiate
+106 "north-east" #1: STATE_MAIN_I2: sent MI2, expecting MR2
+108 "north-east" #1: STATE_MAIN_I3: sent MI3, expecting MR3
+002 "north-east" #1: Peer ID is ID_FQDN: '@east'
+004 "north-east" #1: STATE_MAIN_I4: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+041 "north-east" #1: north-east prompt for Username:
+040 "north-east" #1: north-east prompt for Password:
+002 "north-east" #1: XAUTH: Answering XAUTH challenge with user='use1'
+004 "north-east" #1: STATE_XAUTH_I1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+002 "north-east" #1: XAUTH: Successfully Authenticated
+004 "north-east" #1: STATE_XAUTH_I1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+002 "north-east" #1: modecfg: Sending IP request (MODECFG_I1)
+005 "north-east" #1: Received IPv4 address: 192.0.2.101/32
+005 "north-east" #1: Received DNS server 1.2.3.4
+005 "north-east" #1: Received DNS server 5.6.7.8
+004 "north-east" #1: STATE_MAIN_I4: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+002 "north-east" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW+ESN_NO
+117 "north-east" #2: STATE_QUICK_I1: initiate
+002 "north-east" #2: up-client output: updating resolvconf
+004 "north-east" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATOA=none NATD=192.1.2.23:4500 DPD=passive username=use1}
+north #
+ ping -n -c 4 -I 192.0.2.101 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.2.101 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+north #
+ ipsec whack --trafficstatus
+006 #2: "north-east", username=use1, type=ESP, add_time=1234567890, inBytes=716, outBytes=604
+north #
+ echo initdone
+initdone
+north #
+ ../../pluto/bin/ipsec-look.sh
+north NOW
+XFRM state:
+src 192.1.2.23 dst 192.1.3.33
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
+src 192.1.3.33 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
+XFRM policy:
+src 0.0.0.0/0 dst 192.0.2.101/32
+	dir fwd priority 1040383 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.33
+		proto esp reqid REQID mode tunnel
+src 0.0.0.0/0 dst 192.0.2.101/32
+	dir in priority 1040383 ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.33
+		proto esp reqid REQID mode tunnel
+src 192.0.2.101/32 dst 0.0.0.0/0
+	dir out priority 1040383 ptype main
+	tmpl src 192.1.3.33 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+0.0.0.0/1 via 192.1.3.254 dev eth1 src 192.0.2.101
+default via 192.1.3.254 dev eth1
+128.0.0.0/1 via 192.1.3.254 dev eth1 src 192.0.2.101
+192.0.1.0/24 via 192.1.3.254 dev eth1
+192.0.2.0/24 via 192.1.3.254 dev eth1
+192.0.3.0/24 dev eth0 proto kernel scope link src 192.0.3.254
+192.1.2.0/24 via 192.1.3.254 dev eth1
+192.1.3.0/24 dev eth1 proto kernel scope link src 192.1.3.33
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+north #
+ ../bin/check-for-core.sh
+north #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
