@@ -240,7 +240,7 @@ ifeq ($(USE_DH24),true)
 USERLAND_CFLAGS += -DUSE_DH24
 endif
 
-USE_DH31 ?= $(ALL_ALGS)
+USE_DH31 ?= true
 ifeq ($(USE_DH31),true)
 USERLAND_CFLAGS += -DUSE_DH31
 endif
