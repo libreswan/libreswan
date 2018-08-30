@@ -15,6 +15,7 @@ v3.25 (June 27, 2018)
 * IKEv2: Temporarilly disable Liveness/DPD when MOBIKE kick in [Antony]
 * IKEv2: No longer allow contradicting esp= and pfs= options [Andrew]
 * IKEv2: PPK support for authby=rsasig [Vukasin Karadzic]
+* IKEv2: Support for CURVE25519 (RFC 8031) [Andrew]
 * IKEv2: IANA INTERNAL_DNSSEC_TA allocation added [Paul]
 * IKEv2: Add PPK support to authby=rsasig [Vukasin]
 * IKEv2: Don't calculate NO_PPK_AUTH when the POLICY is INSIST [Vukasin]
