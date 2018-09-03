@@ -246,18 +246,23 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 		 * is for now.
 		 */
 
+		const struct ipsec_proto_info *pi;
 		const struct encrypt_desc *encrypt;
 		const struct integ_desc *integ;
 		unsigned enckeylen;
+
 		if (st->st_esp.present) {
+			pi = &st->st_esp;
 			encrypt = st->st_esp.attrs.transattrs.ta_encrypt;
 			integ = st->st_esp.attrs.transattrs.ta_integ;
 			enckeylen = st->st_esp.attrs.transattrs.enckeylen;
 		} else if (st->st_ah.present) {
+			pi = &st->st_ah;
 			encrypt = NULL;
 			integ = st->st_ah.attrs.transattrs.ta_integ;
 			enckeylen = 0;
 		} else {
+			pi = &st->st_esp;	/* hack: will yield zero SPIs, I think */
 			encrypt = NULL;
 			integ = NULL;
 			enckeylen = 0;
@@ -269,20 +274,17 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			 (integ == NULL ? "none" :
 			  integ->integ_kernel_audit_name));
 
+		/* note: each arg appears twice because it is printed two ways */
 		snprintf(spi_str, sizeof(spi_str),
-		"in-spi=%lu(0x%08lx) out-spi=%lu(0x%08lx) in-ipcomp=%lu(0x%08lx) out-ipcomp=%lu(0x%08lx)",
-		st->st_esp.present ? (unsigned long)ntohl(st->st_esp.attrs.spi) :
-			(unsigned long)ntohl(st->st_ah.attrs.spi),
-		st->st_esp.present ? (unsigned long)ntohl(st->st_esp.attrs.spi) :
-			(unsigned long)ntohl(st->st_ah.attrs.spi),
-		st->st_esp.present ?  (unsigned long)ntohl(st->st_esp.our_spi) :
-			(unsigned long)ntohl(st->st_ah.our_spi),
-		st->st_esp.present ?  (unsigned long)ntohl(st->st_esp.our_spi) :
-			(unsigned long)ntohl(st->st_ah.our_spi),
-		st->st_ipcomp.present ?  (unsigned long)ntohl(st->st_ipcomp.attrs.spi) : (unsigned long)0,
-		st->st_ipcomp.present ?  (unsigned long)ntohl(st->st_ipcomp.attrs.spi) : (unsigned long)0,
-		st->st_ipcomp.present ? (unsigned long)ntohl(st->st_ipcomp.our_spi) : (unsigned long)0,
-		st->st_ipcomp.present ? (unsigned long)ntohl(st->st_ipcomp.our_spi) : (unsigned long)0);
+			"in-spi=%" PRIu32 "(0x%08" PRIu32 ") out-spi=%" PRIu32 "(0x%08" PRIu32 ") in-ipcomp=%" PRIu32 "(0x%08" PRIu32 ") out-ipcomp=%" PRIu32 "(0x%08" PRIu32 ")",
+			ntohl(pi->attrs.spi),
+			ntohl(pi->attrs.spi),
+			ntohl(pi->our_spi),
+			ntohl(pi->our_spi),
+			ntohl(st->st_ipcomp.attrs.spi),	/* zero if missing */
+			ntohl(st->st_ipcomp.attrs.spi),	/* zero if missing */
+			ntohl(st->st_ipcomp.our_spi),	/* zero if missing */
+			ntohl(st->st_ipcomp.our_spi));	/* zero if missing */
 		break;
 	}
 	default:
