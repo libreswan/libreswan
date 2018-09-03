@@ -468,7 +468,7 @@ static void ikev2_ipseckey_log_missing_st(struct p_dns_req *dnsr)
 			dnsr->dbg_buf, dnsr->so_serial_t,
 			dnsr->log_buf,  dnsr->rcode_name,
 			(unsigned long)served_delta.tv_sec,
-			(unsigned long)(served_delta.tv_usec * 1000000));
+			(unsigned long)served_delta.tv_usec);
 }
 
 static void ikev2_ipseckey_log_dns_err(struct p_dns_req *dnsr,
@@ -483,7 +483,7 @@ static void ikev2_ipseckey_log_dns_err(struct p_dns_req *dnsr,
 			dnsr->log_buf,
 			dnsr->rcode_name, err,
 			(unsigned long)served_delta.tv_sec,
-			(unsigned long)(served_delta.tv_usec * 1000000));
+			(unsigned long)served_delta.tv_usec);
 }
 
 static void ipseckey_dbg_dns_resp(struct p_dns_req *dnsr)
@@ -497,7 +497,7 @@ static void ipseckey_dbg_dns_resp(struct p_dns_req *dnsr)
 			dnsr->rcode_name,
 			bool_str(dnsr->cache_hit),
 			(unsigned long)served_delta.tv_sec,
-			(unsigned long)(served_delta.tv_usec * 1000000)));
+			(unsigned long)served_delta.tv_usec));
 
 	DBG(DBG_DNS, {
 		const enum lswub_resolve_event_secure_kind k = dnsr->secure;
