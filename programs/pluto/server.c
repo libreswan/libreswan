@@ -1248,8 +1248,8 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 			}
 		} else if (packet_len == (ssize_t)sizeof(buffer)) {
 			libreswan_log(
-				"MSG_ERRQUEUE message longer than %lu bytes; truncated",
-				(unsigned long) sizeof(buffer));
+				"MSG_ERRQUEUE message longer than %zu bytes; truncated",
+				sizeof(buffer));
 		} else if (packet_len >= (ssize_t)sizeof(struct isakmp_hdr)) {
 			sender = find_likely_sender((size_t) packet_len, buffer);
 		}
@@ -1376,10 +1376,18 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 					break;
 				default:
 					snprintf(orname, sizeof(orname),
-						 "invalid origin %lu",
-						 (unsigned long) ee->ee_origin);
+						 "invalid origin %u",
+						 ee->ee_origin);
 					break;
 				}
+
+#define LOG(buf) lswlogf(buf,			\
+	"ERROR: asynchronous network error report on %s (sport=%d)%s, complainant %s: %s [errno %" PRIu32 ", origin %s]", \
+	ifp->ip_dev->id_rname, ifp->port,	\
+	fromstr,				\
+	offstr,					\
+	strerror(ee->ee_errno),			\
+	ee->ee_errno, orname);
 
 				if (packet_len == 1 && buffer[0] == 0xff &&
 				    (cur_debugging & DBG_NATT) == 0) {
@@ -1412,13 +1420,6 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 					 * explicit parameter to the
 					 * logging system?
 					 */
-#define LOG(buf)	lswlogf(buf, "ERROR: asynchronous network error report on %s (sport=%d)%s, complainant %s: %s [errno %lu, origin %s]", \
-				ifp->ip_dev->id_rname, ifp->port,	\
-				fromstr,				\
-				offstr,					\
-				strerror(ee->ee_errno),			\
-				(unsigned long) ee->ee_errno, orname);
-
 					LSWLOG_STATE(sender, buf) {
 						LOG(buf);
 					}
