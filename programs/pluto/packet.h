@@ -79,6 +79,9 @@ typedef const struct {
  * packet_byte_stream objects.  These describe a stream of bytes in
  * memory.  Several routines are provided to manipulate these objects.
  * Actual packet transfer is done elsewhere.
+ *
+ * Note: it is safe to copy a PBS with no children because a PBS
+ * is only pointed to by its children.  This is done in out_struct().
  */
 struct packet_byte_stream {
 	struct packet_byte_stream *container;	/* PBS of which we are part */

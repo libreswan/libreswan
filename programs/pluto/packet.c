@@ -1823,9 +1823,8 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 		u_int8_t *outp = struct_ptr;
 		bool immediate = FALSE;
 		u_int32_t last_enum = 0;
-		field_desc *fp;
 
-		for (fp = sd->fields; ugh == NULL; fp++) {
+		for (field_desc *fp = sd->fields; ugh == NULL; fp++) {
 			size_t i = fp->size;
 
 			passert(ins->roof - cur >= (ptrdiff_t)i);
@@ -2096,20 +2095,25 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 			sd->name);
 	} else {
 		bool immediate = FALSE;
-		pb_stream obj;	/* new (child) stream for this struct */
-		field_desc *fp;
 		u_int32_t last_enum = 0;
 
-		/* until a length field is discovered */
-		obj.lenfld = NULL;
-		obj.lenfld_desc = NULL;
+		/* new child stream for portion of payload after this struct */
+		pb_stream obj = {
+			.container = outs,
+			.desc = sd,
+			.name = sd->name,
 
-		/* until an NP field is discovered */
-		obj.previous_np = NULL;
-		obj.previous_np_field = NULL;
-		obj.previous_np_struct = NULL;
+			/* until a length field is discovered */
+			/* .lenfld = NULL, */
+			/* .lenfld_desc = NULL, */
 
-		for (fp = sd->fields; ugh == NULL; fp++) {
+			/* until an ft_fcp field is discovered */
+			/* .previous_np = NULL, */
+			/* .previous_np_field = NULL, */
+			/* .previous_np_struct = NULL, */
+		};
+
+		for (field_desc *fp = sd->fields; ugh == NULL; fp++) {
 			size_t i = fp->size;
 
 			/* make sure that there is space for the next structure element */
@@ -2287,9 +2291,6 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 
 				passert(cur == outs->cur + sd->size);
 
-				obj.container = outs;
-				obj.desc = sd;
-				obj.name = sd->name;
 				obj.start = outs->cur;
 				obj.cur = cur;
 				obj.roof = outs->roof; /* limit of possible */
