@@ -61,3 +61,16 @@ chunk_t clone_chunk_chunk(chunk_t lhs, chunk_t rhs, const char *name)
 	memcpy(cat.ptr + lhs.len, rhs.ptr, rhs.len);
 	return cat;
 }
+
+char *clone_chunk_as_string(chunk_t chunk, const char *name)
+{
+	if (chunk.ptr == NULL) {
+		return NULL;
+	} else if (chunk.len > 0 && chunk.ptr[chunk.len - 1] == '\0') {
+		return clone_bytes(chunk.ptr, chunk.len, name);
+	} else {
+		char *string = alloc_things(char, chunk.len + 1, name);
+		memcpy(string, chunk.ptr, chunk.len);
+		return string;
+	}
+}
