@@ -6,5 +6,5 @@ certutil -A -i /testing/x509/certs/nic-nourl.crt -d sql:/etc/ipsec.d -n nic -t "
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add nss-cert-ocsp
-ipsec whack --impair retransmits
+ipsec whack --impair delete-on-retransmit
 echo "initdone"

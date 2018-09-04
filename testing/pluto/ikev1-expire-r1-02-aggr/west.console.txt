@@ -13,14 +13,12 @@ initdone
 west #
  # create a partial state on east, don't hold the hack for retransmit
 west #
- ipsec whack --impair impair-drop-i2 --impair retransmits
+ ipsec whack --impair impair-drop-i2 --impair delete-on-retransmit
 west #
  ipsec auto --up  westnet-eastnet-aggr
 002 "westnet-eastnet-aggr" #1: initiating Aggressive Mode
-002 "westnet-eastnet-aggr" #1: IMPAIR RETRANSMITS: scheduling timeout in 0.5 seconds
 112 "westnet-eastnet-aggr" #1: STATE_AGGR_I1: initiate
-002 "westnet-eastnet-aggr" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set
-002 "westnet-eastnet-aggr" #1: IMPAIR RETRANSMITS: suppressing re-key
+002 "westnet-eastnet-aggr" #1: IMPAIR: retransmit so deleting SA
 002 "westnet-eastnet-aggr" #1: deleting state (STATE_AGGR_I1) and NOT sending notification
 west #
  # we are waiting for east to expire the partial IKE state in 1+1+2+4+8+16+32 secs
