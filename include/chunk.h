@@ -53,6 +53,8 @@ chunk_t chunk(void *ptr, size_t len);
 
 chunk_t clone_chunk(chunk_t old, const char *name);
 chunk_t clone_chunk_chunk(chunk_t first, chunk_t second, const char *name);
+/* always NUL terminated; NULL is NULL */
+char *clone_chunk_as_string(chunk_t chunk, const char *name);
 
 /* note: the caller must free the result */
 char *str_from_chunk(chunk_t c, const char *name);

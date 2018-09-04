@@ -1201,8 +1201,8 @@ static void xauth_launch_authent(struct state *st,
 		return;
 #endif
 
-	char *arg_name = str_from_chunk(*name, "XAUTH Name");
-	char *arg_password = str_from_chunk(*password, "XAUTH Name");
+	char *arg_name = clone_chunk_as_string(*name, "XAUTH Name");
+	char *arg_password = clone_chunk_as_string(*password, "XAUTH Name");
 
 	/*
 	 * For XAUTH, we're flipping between retransmitting the packet
