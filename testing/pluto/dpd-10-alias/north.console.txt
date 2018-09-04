@@ -6,7 +6,7 @@ Redirecting to: systemctl start ipsec.service
 north #
  /testing/pluto/bin/wait-until-pluto-started
 north #
- ipsec whack --impair retransmits
+ ipsec whack --impair suppress-retransmits
 north #
  ipsec auto --add north-dpd
 002 added connection description "north-dpd/0x1"

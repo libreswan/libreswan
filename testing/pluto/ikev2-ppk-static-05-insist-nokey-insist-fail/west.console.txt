@@ -35,7 +35,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec whack --impair retransmits
+ ipsec whack --impair suppress-retransmits
 west #
  # expected to fail
 west #
@@ -43,7 +43,7 @@ west #
 002 "westnet-eastnet-ipv4-psk-ppk" #1: initiating v2 parent SA
 133 "westnet-eastnet-ipv4-psk-ppk" #1: initiate
 133 "westnet-eastnet-ipv4-psk-ppk" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-002 "westnet-eastnet-ipv4-psk-ppk" #1: suppressing retransmit because IMPAIR_RETRANSMITS is set.
+002 "westnet-eastnet-ipv4-psk-ppk" #1: IMPAIR: suppressing retransmits; scheduling timeout in 60 seconds
 003 "westnet-eastnet-ipv4-psk-ppk" #1: connection requires PPK, but we didn't find one
 036 "westnet-eastnet-ipv4-psk-ppk" #1: encountered fatal error in state STATE_PARENT_I1
 000 "westnet-eastnet-ipv4-psk-ppk" #1: fatal error for IKE SA, but releasing whack for pending IPSEC SA

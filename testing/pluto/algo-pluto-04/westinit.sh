@@ -11,5 +11,5 @@ ipsec start
 ipsec auto --add westnet-eastnet-esp-sha1-pfs
 ipsec auto --add westnet-eastnet-esp-md5-pfs
 # as long as test fails, speed up failure
-ipsec whack --impair retransmits
+ipsec whack --impair suppress-retransmits
 echo "initdone"

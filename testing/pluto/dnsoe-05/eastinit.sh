@@ -5,7 +5,7 @@ echo "192.1.3.0/24"  >> /etc/ipsec.d/policies/clear-or-private
 ip addr add 192.1.2.66/24 dev eth1
 ipsec start
 /testing/pluto/bin/wait-until-pluto-started
-ipsec whack --impair retransmits
+ipsec whack --impair suppress-retransmits
 ipsec whack --listpubkeys
 # give OE policies time to load
 sleep 5
