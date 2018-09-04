@@ -32,7 +32,6 @@ const struct encrypt_desc ike_alg_encrypt_cast_cbc =
 		.name = "cast",
 		.fqn = "CAST_CBC",
 		.names = { "cast", "cast_cbc", },
-		.officname = "cast",
 		.algo_type = IKE_ALG_ENCRYPT,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_CAST_CBC,

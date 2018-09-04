@@ -31,7 +31,6 @@ const struct integ_desc ike_alg_integ_hmac_ripemd_160_96 = {
 		.name = "ripemd",
 		.fqn = "HMAC_RIPEMD_160_96",
 		.names = { "ripemd", "hmac_ripemd", "hmac_ripemd_160_96", },
-		.officname = "ripemd",
 		.algo_type = IKE_ALG_INTEG,
 		.id = {
 			[IKEv1_OAKLEY_ID] = -1,

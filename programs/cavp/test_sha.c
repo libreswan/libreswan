@@ -38,7 +38,6 @@ static struct cavp_entry config[] = {
 struct hash_desc ike_alg_hash_sha2_224 = {
 	.common = {
 		.name = "sha2_224",
-		.officname = "sha224",
 		.algo_type = IKE_ALG_HASH,
 		.fips = TRUE,
 	},

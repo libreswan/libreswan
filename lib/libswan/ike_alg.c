@@ -446,8 +446,7 @@ static void prf_desc_check(const struct ike_alg *alg)
 	const struct prf_desc *prf = prf_desc(alg);
 	passert_ike_alg(alg, prf->prf_key_size > 0);
 	passert_ike_alg(alg, prf->prf_output_size > 0);
-	pexpect_ike_alg_streq(alg, prf->prf_ike_audit_name,
-			      prf->common.officname);
+	pexpect_ike_alg(alg, prf->prf_ike_audit_name != NULL);
 	if (prf->prf_ops != NULL) {
 		passert_ike_alg(alg, prf->prf_ops->check != NULL);
 		passert_ike_alg(alg, prf->prf_ops->init_symkey != NULL);
@@ -528,9 +527,8 @@ static void integ_desc_check(const struct ike_alg *alg)
 	passert_ike_alg(alg, integ->integ_keymat_size > 0);
 	passert_ike_alg(alg, integ->integ_output_size > 0);
 	passert_ike_alg(alg, integ->integ_tcpdump_name != NULL);
-	pexpect_ike_alg_streq(alg, integ->integ_tcpdump_name, integ->common.officname);
-	pexpect_ike_alg_streq(alg, integ->integ_ike_audit_name,
-			      integ->common.officname);
+	pexpect_ike_alg(alg, integ->integ_tcpdump_name != NULL);
+	pexpect_ike_alg(alg, integ->integ_ike_audit_name != NULL);
 	pexpect_ike_alg(alg, integ->integ_kernel_audit_name != NULL);
 	if (integ->common.id[IKEv1_ESP_ID] >= 0) {
 		struct esb_buf esb;
@@ -649,10 +647,8 @@ static void encrypt_desc_check(const struct ike_alg *alg)
 {
 	const struct encrypt_desc *encrypt = encrypt_desc(alg);
 	passert_ike_alg(alg, encrypt->encrypt_tcpdump_name != NULL);
-	pexpect_ike_alg_streq(alg, encrypt->encrypt_tcpdump_name, encrypt->common.officname);
-	pexpect_ike_alg_streq(alg, encrypt->encrypt_ike_audit_name,
-			      encrypt->common.officname);
-	pexpect_ike_alg(alg, encrypt->encrypt_kernel_audit_name);
+	pexpect_ike_alg(alg, encrypt->encrypt_ike_audit_name != NULL);
+	pexpect_ike_alg(alg, encrypt->encrypt_kernel_audit_name != NULL);
 	if (encrypt->common.id[IKEv1_ESP_ID] >= 0) {
 		struct esb_buf esb;
 		pexpect_ike_alg_streq(alg, encrypt->encrypt_kernel_audit_name,
@@ -849,11 +845,11 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 	FOR_EACH_IKE_ALGP(type, algp) {
 		const struct ike_alg *alg = *algp;
 
-		DBG(DBG_CRYPT, DBG_log("%s algorithm %s; official name: %s, IKEv1 OAKLEY id: %d, IKEv1 ESP_INFO id: %d, IKEv2 id: %d",
-				       type->name, alg->fqn, alg->officname,
-				       alg->id[IKEv1_OAKLEY_ID],
-				       alg->id[IKEv1_ESP_ID],
-				       alg->id[IKEv2_ALG_ID]));
+		DBGF(DBG_CRYPT, "%s algorithm %s, IKEv1 OAKLEY id: %d, IKEv1 ESP_INFO id: %d, IKEv2 id: %d",
+		     type->name, alg->fqn,
+		     alg->id[IKEv1_OAKLEY_ID],
+		     alg->id[IKEv1_ESP_ID],
+		     alg->id[IKEv2_ALG_ID]);
 
 		/*
 		 * Check FQN first - passert_ike_alg() uses it.
@@ -863,7 +859,6 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 		passert_ike_alg(alg, alg->fqn != NULL);
 		passert_ike_alg(alg, (strlen(alg->fqn) ==
 				      strspn(alg->fqn, "ABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789")));
-		passert_ike_alg(alg, alg->officname != NULL);
 		passert_ike_alg(alg, alg->algo_type == type);
 
 		/*

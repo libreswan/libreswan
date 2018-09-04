@@ -28,7 +28,6 @@ const struct encrypt_desc ike_alg_encrypt_chacha20_poly1305 = {
 		.name = "chacha20_poly1305",
 		.fqn = "CHACHA20_POLY1305",
 		.names = { "chacha20_poly1305", "chacha20poly1305", },
-		.officname = "chacha20_poly1305",
 		.algo_type =   IKE_ALG_ENCRYPT,
 		.id = {
 			[IKEv1_OAKLEY_ID] = -1,

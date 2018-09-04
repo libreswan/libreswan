@@ -254,12 +254,6 @@ struct ike_alg {
 	 */
 	const char *names[5];
 	/*
-	 * XXX: name used in some (but not all) audit logs and other
-	 * random stuff.
-	 */
-	const char *const officname;
-
-	/*
 	 * See above.
 	 *
 	 * Macros provide short term aliases for the slightly longer
