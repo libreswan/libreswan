@@ -859,7 +859,7 @@ stf_status ikev2_resp_accept_child_ts(
 						    d->name));
 					int bfit_p =
 						ikev2_evaluate_connection_port_fit(
-							d, sra, role,
+							d, sr, role,
 							tsi, tsr,
 							tsi_n, tsr_n,
 							&best_tsi_i,
@@ -873,7 +873,7 @@ stf_status ikev2_resp_accept_child_ts(
 							    best_tsr_i));
 						int bfit_pr =
 							ikev2_evaluate_connection_protocol_fit(
-								d, sra, role,
+								d, sr, role,
 								tsi, tsr,
 								tsi_n, tsr_n,
 								&best_tsi_i,
