@@ -2879,9 +2879,8 @@ enum ipsec_xmit_value ipsec_xmit_send(struct ipsec_xmit_state *ixs)
 			ixs->stats->tx_errors++;
 		printk(KERN_WARNING
 		       "klips_error:ipsec_xmit_send: "
-		       "tried to __skb_pull nh-data=%ld, %d available.  This should never happen, please report.\n",
-		       (unsigned long)(skb_network_header(ixs->skb) -
-				       ixs->skb->data),
+		       "tried to __skb_pull nh-data=%td, %d available.  This should never happen, please report.\n",
+		       skb_network_header(ixs->skb) - ixs->skb->data,
 		       ixs->skb->len);
 		return IPSEC_XMIT_PUSHPULLERR;
 	}

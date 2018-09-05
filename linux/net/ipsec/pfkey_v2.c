@@ -295,8 +295,8 @@ int pfkey_list_insert_socket(struct socket *socketp,
 
 	KLIPS_PRINT(debug_pfkey,
 		    "klips_debug:pfkey_list_insert_socket: "
-		    "allocating %lu bytes for socketp=0p%p\n",
-		    (unsigned long) sizeof(struct socket_list),
+		    "allocating %zu bytes for socketp=0p%p\n",
+		    sizeof(struct socket_list),
 		    socketp);
 
 	if ((socket_listp = (struct socket_list *)
@@ -377,8 +377,8 @@ int pfkey_list_insert_supported(struct ipsec_alg_supported *supported,
 
 	KLIPS_PRINT(debug_pfkey,
 		    "klips_debug:pfkey_list_insert_supported: "
-		    "allocating %lu bytes for incoming, supported=0p%p, supported_list=0p%p\n",
-		    (unsigned long) sizeof(struct supported_list),
+		    "allocating %zu bytes for incoming, supported=0p%p, supported_list=0p%p\n",
+		    sizeof(struct supported_list),
 		    supported,
 		    supported_list);
 

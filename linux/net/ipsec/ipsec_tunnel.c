@@ -2030,8 +2030,8 @@ int ipsec_tunnel_init(struct net_device *dev)
 
 	KLIPS_PRINT(debug_tunnel,
 		    "klips_debug:ipsec_tunnel_init: "
-		    "allocating %lu bytes initialising device: %s\n",
-		    (unsigned long) sizeof(struct ipsecpriv),
+		    "allocating %zu bytes initialising device: %s\n",
+		    sizeof(struct ipsecpriv),
 		    dev->name ? dev->name : "NULL");
 
 #ifdef ipsec_alloc_netdev
@@ -2200,9 +2200,9 @@ int ipsec_tunnel_init_devices(void)
 
 	KLIPS_PRINT(debug_tunnel & DB_TN_INIT,
 		    "klips_debug:ipsec_tunnel_init_devices: "
-		    "creating and registering IPSEC_NUM_IF=%u devices, allocating %lu per device, IFNAMSIZ=%u.\n",
+		    "creating and registering IPSEC_NUM_IF=%u devices, allocating %zu per device, IFNAMSIZ=%u.\n",
 		    IPSEC_NUM_IF,
-		    (unsigned long) (sizeof(struct net_device) + IFNAMSIZ),
+		    sizeof(struct net_device) + IFNAMSIZ,
 		    IFNAMSIZ);
 
 	for (i = 0; i < IPSEC_NUM_IF; i++) {

@@ -119,8 +119,8 @@ int pfkey_alloc_eroute(struct eroute **eroute)
 	}
 
 	KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_alloc_eroute: "
-		    "allocating %lu bytes for an eroute at 0p%p\n",
-		    (unsigned long) sizeof(**eroute), *eroute);
+		    "allocating %zu bytes for an eroute at 0p%p\n",
+		    sizeof(**eroute), *eroute);
 
 	memset((caddr_t)*eroute, 0, sizeof(**eroute));
 	(*eroute)->er_eaddr.sen_len = (*eroute)->er_emask.sen_len = sizeof(struct sockaddr_encap);
@@ -281,7 +281,7 @@ DEBUG_NO_STATIC int pfkey_getspi_parse(struct sock *sk,
 		extr->ips->ips_flags |= EMT_INBOUND;
 	else
 #endif
-	if (ip_chk_addr((unsigned long)extr->ips->ips_said.dst.u.v4.sin_addr.s_addr) == IS_MYADDR)
+	if (ip_chk_addr(extr->ips->ips_said.dst.u.v4.sin_addr.s_addr) == IS_MYADDR)
 		extr->ips->ips_flags |= EMT_INBOUND;
 
 	KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_getspi_parse: "
@@ -435,7 +435,7 @@ DEBUG_NO_STATIC int pfkey_update_parse(struct sock *sk,
 		extr->ips->ips_flags |= EMT_INBOUND;
 	else
 #endif
-	if (ip_chk_addr((unsigned long)extr->ips->ips_said.dst.u.v4.sin_addr.s_addr) == IS_MYADDR)
+	if (ip_chk_addr(extr->ips->ips_said.dst.u.v4.sin_addr.s_addr) == IS_MYADDR)
 		extr->ips->ips_flags |= EMT_INBOUND;
 
 	KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_update_parse: "
@@ -707,7 +707,7 @@ DEBUG_NO_STATIC int pfkey_add_parse(struct sock *sk,
 		extr->ips->ips_flags |= EMT_INBOUND;
 	else
 #endif
-	if (ip_chk_addr((unsigned long)extr->ips->ips_said.dst.u.v4.sin_addr.s_addr) == IS_MYADDR)
+	if (ip_chk_addr(extr->ips->ips_said.dst.u.v4.sin_addr.s_addr) == IS_MYADDR)
 		extr->ips->ips_flags |= EMT_INBOUND;
 
 	KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_add_parse: "
@@ -1370,9 +1370,8 @@ int pfkey_register_reply(int satype, struct sadb_msg *sadb_msg)
 
 	if (alg_num_a) {
 		KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_register_reply: "
-			    "allocating %lu bytes for auth algs.\n",
-			    (unsigned long) (alg_num_a *
-					     sizeof(struct sadb_alg)));
+			    "allocating %zu bytes for auth algs.\n",
+			    alg_num_a * sizeof(struct sadb_alg));
 		if ((alg_a = kmalloc(alg_num_a * sizeof(struct sadb_alg),
 				     GFP_ATOMIC) ) == NULL) {
 			KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_register_reply: "
@@ -1384,9 +1383,8 @@ int pfkey_register_reply(int satype, struct sadb_msg *sadb_msg)
 
 	if (alg_num_e) {
 		KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_register_reply: "
-			    "allocating %lu bytes for enc algs.\n",
-			    (unsigned long) (alg_num_e *
-					     sizeof(struct sadb_alg)));
+			    "allocating %zu bytes for enc algs.\n",
+			    alg_num_e * sizeof(struct sadb_alg));
 		if ((alg_e = kmalloc(alg_num_e * sizeof(struct sadb_alg),
 				     GFP_ATOMIC) ) == NULL) {
 			KLIPS_PRINT(debug_pfkey, "klips_debug:pfkey_register_reply: "

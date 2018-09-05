@@ -303,14 +303,14 @@ err:
  *      core encryption function: will use cx->ci to call actual cipher's
  *      cbc function
  */
-static int _capi_cbc_encrypt(struct ipsec_alg_enc *alg, __u8 * key_e,
-			     __u8 * in, int ilen, const __u8 * iv, int encrypt)
+static int _capi_cbc_encrypt(struct ipsec_alg_enc *alg, __u8 *key_e,
+			     __u8 *in, int ilen, const __u8 *iv, int encrypt)
 {
 	int error = 0;
 	struct crypto_tfm *tfm = (struct crypto_tfm *)key_e;
 	struct scatterlist sg = {
 		.page = virt_to_page(in),
-		.offset = (unsigned long)(in) % PAGE_SIZE,
+		.offset = (unsigned long)in % PAGE_SIZE,
 		.length = ilen,
 	};
 

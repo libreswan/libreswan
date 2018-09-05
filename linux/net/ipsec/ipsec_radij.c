@@ -212,8 +212,8 @@ int ipsec_makeroute(struct sockaddr_encap *eaddr,
 					     sizeof(sa));
 			KLIPS_PRINT(debug_eroute,
 				    "klips_debug:ipsec_makeroute: "
-				    "attempting to allocate %lu bytes to insert eroute for %s->%s, SA: %s, PID:%d, skb=0p%p, ident:%s->%s\n",
-				    (unsigned long) sizeof(struct eroute),
+				    "attempting to allocate %zu bytes to insert eroute for %s->%s, SA: %s, PID:%d, skb=0p%p, ident:%s->%s\n",
+				    sizeof(struct eroute),
 				    buf1,
 				    buf2,
 				    sa_len ? sa : " (error)",
