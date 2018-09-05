@@ -1640,10 +1640,10 @@ static err_t enum_enum_checker(
 	enum_names *ed = enum_enum_table(fp->desc, last_enum);
 
 	if (ed == NULL) {
-		return builddiag("%s of %s has an unknown type: %lu (0x%lx)",
+		return builddiag("%s of %s has an unknown type: %" PRIu32 " (0x%" PRIx32 ")",
 				 fp->name, struct_name,
-				 (unsigned long)last_enum,
-				 (unsigned long)last_enum);
+				 last_enum,
+				 last_enum);
 	}
 	return NULL;
 }
@@ -1706,9 +1706,10 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 					break;
 			/* FALL THROUGH */
 			case ft_nat: /* natural number (may be 0) */
-				DBG_log("   %s: %lu (0x%lx)", fp->name,
-					(unsigned long)n,
-					(unsigned long)n);
+				DBG_log("   %s: %" PRIu32 " (0x%" PRIx32 ")",
+					fp->name,
+					n,
+					n);
 				break;
 
 			case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
@@ -1722,9 +1723,10 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 			case ft_fcp:
 			case ft_pnp:
 				last_enum = n;
-				DBG_log("   %s: %s (0x%lx)", fp->name,
+				DBG_log("   %s: %s (0x%" PRIx32 ")",
+					fp->name,
 					enum_show(fp->desc, n),
-					(unsigned long)n);
+					n);
 				break;
 
 			case ft_loose_enum_enum:
@@ -1733,15 +1735,17 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 				const char *name = enum_enum_showb(fp->desc,
 								   last_enum,
 								   n, &buf);
-				DBG_log("   %s: %s (0x%lx)", fp->name,
-					name, (unsigned long)n);
+				DBG_log("   %s: %s (0x%" PRIx32 ")",
+					fp->name,
+					name, n);
 			}
 				break;
 
 			case ft_set: /* bits representing set */
-				DBG_log("   %s: %s (0x%lx)", fp->name,
+				DBG_log("   %s: %s (0x%" PRIx32 ")",
+					fp->name,
 					bitnamesof(fp->desc, n),
-					(unsigned long)n);
+					n);
 				break;
 			default:
 				bad_case(fp->field_type);
@@ -1906,10 +1910,10 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 				/* FALL THROUGH */
 				case ft_enum:   /* value from an enumeration */
 					if (enum_name(fp->desc, n) == NULL) {
-						ugh = builddiag("%s of %s has an unknown value: %lu (0x%lx)",
+						ugh = builddiag("%s of %s has an unknown value: %" PRIu32 " (0x%" PRIx32 ")",
 								fp->name, sd->name,
-								(unsigned long)n,
-								(unsigned long)n);
+								n,
+								n);
 					}
 				/* FALL THROUGH */
 				case ft_loose_enum:     /* value from an enumeration with only some names known */
@@ -1924,10 +1928,10 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 
 				case ft_set:            /* bits representing set */
 					if (!testset(fp->desc, n)) {
-						ugh = builddiag("bitset %s of %s has unknown member(s): %s (0x%lx)",
+						ugh = builddiag("bitset %s of %s has unknown member(s): %s (0x%" PRIx32 ")",
 								fp->name, sd->name,
 								bitnamesof(fp->desc, n),
-								(unsigned long)n);
+								n);
 					}
 					break;
 
@@ -2198,10 +2202,10 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 				/* FALL THROUGH */
 				case ft_enum:   /* value from an enumeration */
 					if (enum_name(fp->desc, n) == NULL) {
-						ugh = builddiag("%s of %s has an unknown value: %lu (0x%lx)",
+						ugh = builddiag("%s of %s has an unknown value: %" PRIu32 " (0x%" PRIx32 ")",
 								fp->name, sd->name,
-								(unsigned long)n,
-								(unsigned long)n);
+								n,
+								n);
 					}
 				/* FALL THROUGH */
 				case ft_loose_enum:     /* value from an enumeration with only some names known */
@@ -2251,10 +2255,10 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 
 				case ft_set:            /* bits representing set */
 					if (!testset(fp->desc, n)) {
-						ugh = builddiag("bitset %s of %s has unknown member(s): %s (0x%lx)",
+						ugh = builddiag("bitset %s of %s has unknown member(s): %s (0x%" PRIx32 ")",
 								fp->name, sd->name,
 								bitnamesof(fp->desc, n),
-								(unsigned long)n);
+								n);
 					}
 					break;
 
@@ -2353,8 +2357,8 @@ bool out_raw(const void *bytes, size_t len, pb_stream *outs, const char *name)
 	 */
 	if (pbs_left(outs) < len) {
 		loglog(RC_LOG_SERIOUS,
-		       "not enough room left to place %lu bytes of %s in %s",
-		       (unsigned long) len, name, outs->name);
+		       "not enough room left to place %zu bytes of %s in %s",
+		       len, name, outs->name);
 		return FALSE;
 	} else {
 		DBG(DBG_EMITTING,
@@ -2480,8 +2484,8 @@ void close_output_pbs(pb_stream *pbs)
 		if (pbs->lenfld_desc->field_type == ft_lv)
 			len -= sizeof(struct isakmp_attribute);
 
-		DBG(DBG_EMITTING, DBG_log("emitting length of %s: %lu",
-					  pbs->name, (unsigned long) len));
+		DBG(DBG_EMITTING, DBG_log("emitting length of %s: %" PRIu32,
+					  pbs->name, len));
 
 		/* emit octets of length in network order */
 		while (i-- != 0) {

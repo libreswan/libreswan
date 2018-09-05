@@ -1036,8 +1036,8 @@ void process_v1_packet(struct msg_digest **mdp)
 	case ISAKMP_XCHG_IDPROT: /* part of a Main Mode exchange */
 		if (md->hdr.isa_msgid != v1_MAINMODE_MSGID) {
 			libreswan_log(
-				"Message ID was 0x%08lx but should be zero in phase 1",
-				(unsigned long) md->hdr.isa_msgid);
+				"Message ID was 0x%08" PRIx32 " but should be zero in phase 1",
+				md->hdr.isa_msgid);
 			SEND_NOTIFICATION(INVALID_MESSAGE_ID);
 			return;
 		}
@@ -1138,8 +1138,8 @@ void process_v1_packet(struct msg_digest **mdp)
 
 			if (st == NULL) {
 				DBG(DBG_CONTROL, DBG_log(
-						"Informational Exchange is for an unknown (expired?) SA with MSGID:0x%08lx",
-							(unsigned long)md->hdr.isa_msgid));
+						"Informational Exchange is for an unknown (expired?) SA with MSGID:0x%08" PRIx32,
+							md->hdr.isa_msgid));
 
 				/* Let's try to log some info about these to track them down */
 				DBG(DBG_CONTROL, {
@@ -1173,8 +1173,9 @@ void process_v1_packet(struct msg_digest **mdp)
 
 			if (!unique_msgid(st, md->hdr.isa_msgid)) {
 				if (!quiet) {
-					loglog(RC_LOG_SERIOUS, "Informational Exchange message is invalid because it has a previously used Message ID (0x%08lx)",
-						(unsigned long)md->hdr.isa_msgid);
+					loglog(RC_LOG_SERIOUS,
+						"Informational Exchange message is invalid because it has a previously used Message ID (0x%08" PRIx32 " )",
+						md->hdr.isa_msgid);
 				}
 				/* XXX Could send notification back */
 				return;
@@ -1268,8 +1269,8 @@ void process_v1_packet(struct msg_digest **mdp)
 			}
 
 			if (!unique_msgid(st, md->hdr.isa_msgid)) {
-					loglog(RC_LOG_SERIOUS, "Quick Mode I1 message is unacceptable because it uses a previously used Message ID 0x%08lx (perhaps this is a duplicated packet)",
-						(unsigned long) md->hdr.isa_msgid);
+					loglog(RC_LOG_SERIOUS, "Quick Mode I1 message is unacceptable because it uses a previously used Message ID 0x%08" PRIx32 " (perhaps this is a duplicated packet)",
+						md->hdr.isa_msgid);
 				SEND_NOTIFICATION(INVALID_MESSAGE_ID);
 				return;
 			}

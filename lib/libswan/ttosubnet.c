@@ -178,8 +178,8 @@ int main(int argc, char *argv[])
 		(void) addrtot(&s.addr, 0, buf2, sizeof(buf2));
 		fprintf(stderr, "%s/", buf2);
 		fprintf(stderr, "%d", s.maskbits);
-		fprintf(stderr, " failed: need %ld bytes, have only %ld\n",
-			(long)n, (long)sizeof(buf));
+		fprintf(stderr, " failed: need %zd bytes, have only %zd\n",
+			n, sizeof(buf));
 		exit(1);
 	}
 	printf("%s\n", buf);
@@ -300,8 +300,8 @@ void regress(void)
 			status = 1;
 			n = subnetporttot(&s, 0, buf, sizeof(buf));
 			if (n > sizeof(buf))
-				printf("`%s' subnettot failed:  need %ld\n",
-					r->input, (long)n);
+				printf("`%s' subnettot failed:  need %zd\n",
+					r->input, n);
 			else if (!streq(r->output, buf))
 				printf("`%s' gave `%s', expected `%s'\n",
 					r->input, buf, r->output);

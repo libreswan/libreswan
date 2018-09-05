@@ -1928,8 +1928,8 @@ static bool netlink_get(int fd)
 		return TRUE;
 	} else if ((size_t)r < sizeof(rsp.n)) {
 		libreswan_log(
-			"netlink_get read truncated message: %ld bytes; ignore message",
-			(long) r);
+			"netlink_get read truncated message: %zd bytes; ignore message",
+			r);
 		return TRUE;
 	} else if (addr.nl_pid != 0) {
 		/* not for us: ignore */

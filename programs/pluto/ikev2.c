@@ -2762,7 +2762,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 	if (result > STF_FAIL) {
 		pstats(ike_stf, STF_FAIL);
 	} else {
-		pstats(ike_stf, (unsigned long)result);
+		pstats(ike_stf, result);
 	}
 
 	/* handle oddball/meta results now */

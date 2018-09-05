@@ -253,9 +253,8 @@ static void main_mode_hash_body(struct state *st,
 	}
 
 	DBG(DBG_CRYPT,
-		DBG_log("hashing %lu bytes of SA",
-			(unsigned long) (st->st_p1isa.len -
-					sizeof(struct isakmp_generic))));
+		DBG_log("hashing %zu bytes of SA",
+			st->st_p1isa.len - sizeof(struct isakmp_generic)));
 
 	/* SA_b */
 	hmac_update(ctx, st->st_p1isa.ptr + sizeof(struct isakmp_generic),

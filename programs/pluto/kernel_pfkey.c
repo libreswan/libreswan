@@ -759,12 +759,12 @@ logerr:
 					}
 				} else {
 					loglog(RC_LOG_SERIOUS,
-					       "ERROR: pfkey write() of %s message %u for %s %s truncated: %ld instead of %ld",
+					       "ERROR: pfkey write() of %s message %u for %s %s truncated: %zd instead of %zu",
 					       sparse_val_show(pfkey_type_names,
 							pfkey_msg->sadb_msg_type),
 					       pfkey_msg->sadb_msg_seq,
 					       description, text_said,
-					       (long)r, (long)len);
+					       r, len);
 					success = FALSE;
 				}
 

@@ -1120,14 +1120,14 @@ void connection_check_ddns(void)
 
 	DBG(DBG_DNS, {
 		struct timeval tv2;
-		unsigned long borrow;
+		long borrow;
 
 		gettimeofday(&tv2, NULL);
 		borrow = tv2.tv_usec < tv1.tv_usec ? 1 : 0;
-		DBG_log("elapsed time in %s for hostname lookup %lu.%06lu",
+		DBG_log("elapsed time in %s for hostname lookup %ld.%06ld",
 			__func__,
-			(unsigned long)(tv2.tv_sec - borrow - tv2.tv_sec),
-			(unsigned long)(tv2.tv_usec + borrow * 1000000 - tv2.tv_usec));
+			tv2.tv_sec - borrow - tv2.tv_sec,
+			tv2.tv_usec + borrow * 1000000 - tv2.tv_usec);
 	});
 }
 

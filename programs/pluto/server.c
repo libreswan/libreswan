@@ -1442,9 +1442,9 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 				 * certainly ought to fit in an unsigned long.
 				 */
 				libreswan_log(
-					"unknown cmsg: level %d, type %d, len %lu",
+					"unknown cmsg: level %d, type %d, len %zu",
 					cm->cmsg_level, cm->cmsg_type,
-					(unsigned long) cm->cmsg_len);
+					 cm->cmsg_len);
 			}
 		}
 	}

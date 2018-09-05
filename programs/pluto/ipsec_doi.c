@@ -550,13 +550,13 @@ void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 		DBGF(DBG_NATT, "NAT-T: encaps is '%s'",
 		     c->encaps == yna_auto ? "auto" : bool_str(c->encaps == yna_yes));
 
-		lswlogf(buf, "%sESP%s%s%s=>0x%08lx <0x%08lx",
+		lswlogf(buf, "%sESP%s%s%s=>0x%08" PRIx32 " <0x%08" PRIx32 "",
 			ini,
 			nat ? "/NAT" : "",
 			esn ? "/ESN" : "",
 			tfc ? "/TFC" : "",
-			(unsigned long)ntohl(st->st_esp.attrs.spi),
-			(unsigned long)ntohl(st->st_esp.our_spi));
+			ntohl(st->st_esp.attrs.spi),
+			ntohl(st->st_esp.our_spi));
 		lswlogf(buf, " xfrm=%s", st->st_esp.attrs.transattrs.ta_encrypt->common.fqn);
 		/* log keylen when it is required and/or "interesting" */
 		if (!st->st_esp.attrs.transattrs.ta_encrypt->keylen_omitted ||
@@ -586,11 +586,11 @@ void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 	if (st->st_ah.present) {
 		bool esn = st->st_esp.attrs.transattrs.esn_enabled;
 
-		lswlogf(buf, "%sAH%s=>0x%08lx <0x%08lx xfrm=%s",
+		lswlogf(buf, "%sAH%s=>0x%08" PRIx32 " <0x%08" PRIx32 " xfrm=%s",
 			ini,
 			st->st_ah.attrs.transattrs.esn_enabled ? "/ESN" : "",
-			(unsigned long)ntohl(st->st_ah.attrs.spi),
-			(unsigned long)ntohl(st->st_ah.our_spi),
+			ntohl(st->st_ah.attrs.spi),
+			ntohl(st->st_ah.our_spi),
 			st->st_ah.attrs.transattrs.ta_integ->common.fqn);
 
 		ini = " ";
@@ -603,10 +603,10 @@ void lswlog_child_sa_established(struct lswlog *buf, struct state *st)
 	}
 
 	if (st->st_ipcomp.present) {
-		lswlogf(buf, "%sIPCOMP=>0x%08lx <0x%08lx",
+		lswlogf(buf, "%sIPCOMP=>0x%08" PRIx32 " <0x%08" PRIx32,
 			ini,
-			(unsigned long)ntohl(st->st_ipcomp.attrs.spi),
-			(unsigned long)ntohl(st->st_ipcomp.our_spi));
+			ntohl(st->st_ipcomp.attrs.spi),
+			ntohl(st->st_ipcomp.our_spi));
 
 		ini = " ";
 

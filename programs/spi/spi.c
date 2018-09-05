@@ -285,9 +285,9 @@ static bool parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 		}
 		life_opt[life_severity][life_type] = optargt;
 		if (debug) {
-			fprintf(stdout, "%s lifetime %s set to %lu.\n",
+			fprintf(stdout, "%s lifetime %s set to %" PRIu32 ".\n",
 				progname, optargt,
-				(unsigned long)life[life_severity][life_type]);
+				life[life_severity][life_type]);
 		}
 		optargp = endptr + 1;
 	} while (*endptr != '\0');
@@ -1702,10 +1702,9 @@ int main(int argc, char *argv[])
 			/* first, see if we got enough for an sadb_msg */
 			if ((size_t)readlen < sizeof(struct sadb_msg)) {
 				if (debug) {
-					printf("%s: runt packet of size: %ld (<%lu)\n",
-						progname, (long)readlen,
-						(unsigned long)sizeof(struct
-								      sadb_msg));
+					printf("%s: runt packet of size: %zd (<%zu)\n",
+						progname, readlen,
+						sizeof(struct sadb_msg));
 				}
 				continue;
 			}

@@ -454,10 +454,10 @@ int main(int argc, char *argv[])
 		msg = (struct sadb_msg *)pfkey_buf;
 
 		/* first, see if we got enough for an sadb_msg */
-		if ((size_t)readlen < sizeof(struct sadb_msg)) {
-			printf("%s: runt packet of size: %d (<%lu)\n",
-			       progname, (int)readlen,
-			       (unsigned long)sizeof(struct sadb_msg));
+		if (readlen < (ssize_t)sizeof(struct sadb_msg)) {
+			printf("%s: runt packet of size: %zd (<%zu)\n",
+			       progname, readlen,
+			       sizeof(struct sadb_msg));
 			continue;
 		}
 

@@ -2140,7 +2140,7 @@ void fmt_state(struct state *st, const monotime_t now,
 	dpdbuf[0] = '\0';	/* default to empty string */
 	if (IS_IPSEC_SA_ESTABLISHED(st)) {
 		snprintf(dpdbuf, sizeof(dpdbuf), "; isakmp#%lu",
-			 (unsigned long)st->st_clonedfrom);
+			 st->st_clonedfrom);
 	} else {
 		if (st->hidden_variables.st_peer_supports_dpd) {
 			/* ??? why is printing -1 better than 0? */
@@ -2326,13 +2326,13 @@ void fmt_state(struct state *st, const monotime_t now,
 #endif
 
 		snprintf(state_buf2, state_buf2_len,
-			"#%lu: \"%s\"%s%s%s ref=%lu refhim=%lu %s %s%s",
+			"#%lu: \"%s\"%s%s%s ref=%" PRIu32 " refhim=%" PRIu32 " %s %s%s",
 			st->st_serialno,
 			c->name, inst,
 			lastused,
 			buf,
-			(unsigned long)st->st_ref,
-			(unsigned long)st->st_refhim,
+			st->st_ref,
+			st->st_refhim,
 			traffic_buf,
 			(st->st_xauth_username[0] != '\0') ? "username=" : "",
 			(st->st_xauth_username[0] != '\0') ? st->st_xauth_username : "");

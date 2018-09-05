@@ -269,13 +269,13 @@ struct db_sa *oakley_alg_mergedb(struct alg_info_ike *ai,
 				}
 
 				loglog(RC_LOG_SERIOUS,
-				       "transform (%s,%s,%s keylen %ld) ignored.",
+				       "transform (%s,%s,%s keylen %zd) ignored.",
 				       enum_name(&oakley_enc_names,
 						 ike_info->encrypt->common.ikev1_oakley_id),
 				       enum_name(&oakley_hash_names,
 						 ike_info->prf->common.ikev1_oakley_id),
 				       ike_info->dh->common.name,
-				       (long)ike_info->enckeylen);
+				       ike_info->enckeylen);
 				free_sa(&emp_sp);
 			} else {
 				/*

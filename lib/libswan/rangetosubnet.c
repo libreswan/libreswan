@@ -138,8 +138,8 @@ int main(int argc, char *argv[])
 	n = subnettot(&sub, 0, buf, sizeof(buf));
 	if (n > sizeof(buf)) {
 		fprintf(stderr, "%s: reverse conversion", argv[0]);
-		fprintf(stderr, " failed: need %ld bytes, have only %ld\n",
-			(long)n, (long)sizeof(buf));
+		fprintf(stderr, " failed: need %zd bytes, have only %zd\n",
+			n, sizeof(buf));
 		exit(1);
 	}
 	printf("%s\n", buf);
@@ -211,8 +211,8 @@ void regress(void)
 		} else {
 			n = subnettot(&sub, 0, buf, sizeof(buf));
 			if (n > sizeof(buf)) {
-				printf("`%s'-`%s' subnettot failed: need %ld\n",
-					r->start, r->stop, (long)n);
+				printf("`%s'-`%s' subnettot failed: need %zd\n",
+					r->start, r->stop, n);
 				status = 1;
 			} else if (!streq(r->output, buf)) {
 				printf("`%s'-`%s' gave `%s', expected `%s'\n",

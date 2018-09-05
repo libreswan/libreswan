@@ -462,13 +462,11 @@ static void ikev2_ipseckey_log_missing_st(struct p_dns_req *dnsr)
 
 	timersub(&dnsr->done_time, &dnsr->start_time, &served_delta);
 
-	loglog(RC_LOG_SERIOUS, "%s "
-			"The state #%lu is gone. %s returned %s"
-			"elapsed time  %lu.%06lu",
+	loglog(RC_LOG_SERIOUS, "%s The state #%lu is gone. %s returned %s elapsed time  %ld.%06ld",
 			dnsr->dbg_buf, dnsr->so_serial_t,
 			dnsr->log_buf,  dnsr->rcode_name,
-			(unsigned long)served_delta.tv_sec,
-			(unsigned long)served_delta.tv_usec);
+			served_delta.tv_sec,
+			served_delta.tv_usec);
 }
 
 static void ikev2_ipseckey_log_dns_err(struct p_dns_req *dnsr,
@@ -478,12 +476,11 @@ static void ikev2_ipseckey_log_dns_err(struct p_dns_req *dnsr,
 
 	timersub(&dnsr->done_time, &dnsr->start_time, &served_delta);
 
-	loglog(RC_LOG_SERIOUS, "%s returned %s "
-			"rr parse error %s elapsedtime %lu.%06lu.",
+	loglog(RC_LOG_SERIOUS, "%s returned %s rr parse error %s elapsed time %ld.%06ld.",
 			dnsr->log_buf,
 			dnsr->rcode_name, err,
-			(unsigned long)served_delta.tv_sec,
-			(unsigned long)served_delta.tv_usec);
+			served_delta.tv_sec,
+			served_delta.tv_usec);
 }
 
 static void ipseckey_dbg_dns_resp(struct p_dns_req *dnsr)
@@ -492,12 +489,12 @@ static void ipseckey_dbg_dns_resp(struct p_dns_req *dnsr)
 
 	timersub(&dnsr->done_time, &dnsr->start_time, &served_delta);
 	DBG(DBG_CONTROL,
-		DBG_log("%s returned %s cache=%s elapsedtime %lu.%06lu",
+		DBG_log("%s returned %s cache=%s elapsed time %ld.%06ld",
 			dnsr->log_buf,
 			dnsr->rcode_name,
 			bool_str(dnsr->cache_hit),
-			(unsigned long)served_delta.tv_sec,
-			(unsigned long)served_delta.tv_usec));
+			served_delta.tv_sec,
+			served_delta.tv_usec));
 
 	DBG(DBG_DNS, {
 		const enum lswub_resolve_event_secure_kind k = dnsr->secure;

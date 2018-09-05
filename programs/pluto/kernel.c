@@ -2786,8 +2786,8 @@ static void look_for_replacement_state(struct state *st)
 		 * then there is an old state associated, and it is
 		 * different then the new one.
 		 */
-		libreswan_log("keeping refhim=%lu during rekey",
-			(unsigned long)ost->st_refhim);
+		libreswan_log("keeping refhim=%" PRIu32 " during rekey",
+			ost->st_refhim);
 		st->st_refhim = ost->st_refhim;
 	}
 }

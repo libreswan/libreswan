@@ -812,14 +812,14 @@ static u_int32_t decode_long_duration(pb_stream *pbs)
 		/* "clamp" too large value to max representable value */
 		val -= 1; /* portable way to get to maximum value */
 		DBG(DBG_PARSING,
-		    DBG_log("   too large duration clamped to: %lu",
-			    (unsigned long)val));
+		    DBG_log("   too large duration clamped to: %" PRIu32,
+			    val));
 	} else {
 		/* decode number */
 		while (pbs_left(pbs) != 0)
 			val = (val << BITS_PER_BYTE) | *pbs->cur++;
 		DBG(DBG_PARSING,
-		    DBG_log("   long duration: %lu", (unsigned long)val));
+		    DBG_log("   long duration: %" PRIu32, val));
 	}
 	return val;
 }
@@ -1423,8 +1423,8 @@ rsasig_common:
 				case OAKLEY_LIFE_SECONDS:
 					if (val > IKE_SA_LIFETIME_MAXIMUM)
 					{
-						libreswan_log("warning: peer requested IKE lifetime of %lu seconds which we capped at our limit of %d seconds",
-								(long) val, IKE_SA_LIFETIME_MAXIMUM);
+						libreswan_log("warning: peer requested IKE lifetime of %" PRIu32 " seconds which we capped at our limit of %d seconds",
+							val, IKE_SA_LIFETIME_MAXIMUM);
 						val = IKE_SA_LIFETIME_MAXIMUM;
 					}
 					ta.life_seconds = deltatime(val);
@@ -2371,8 +2371,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					    ntohl(next_spi) >
 					    IPCOMP_LAST_NEGOTIATED) {
 						loglog(RC_LOG_SERIOUS,
-						       "IPsec Proposal contains CPI from non-negotiated range (0x%lx)",
-						       (unsigned long) ntohl(next_spi));
+						       "IPsec Proposal contains CPI from non-negotiated range (0x%" PRIx32 ")",
+						       ntohl(next_spi));
 						return INVALID_SPI;	/* reject whole SA */
 					}
 					break;
@@ -2399,8 +2399,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				 */
 				if (ntohl(next_spi) < IPSEC_DOI_SPI_MIN) {
 					loglog(RC_LOG_SERIOUS,
-					       "IPsec Proposal contains invalid SPI (0x%lx)",
-					       (unsigned long) ntohl(next_spi));
+					       "IPsec Proposal contains invalid SPI (0x%" PRIx32 ")",
+					       ntohl(next_spi));
 					return INVALID_SPI;	/* reject whole SA */
 				}
 			}

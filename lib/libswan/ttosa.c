@@ -177,8 +177,8 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "%lx@", (long unsigned int)sa.spi);
 		(void) addrtot(&sa.dst, 0, buf2, sizeof(buf2));
 		fprintf(stderr, "%s", buf2);
-		fprintf(stderr, " failed: need %ld bytes, have only %ld\n",
-			(long)n, (long)sizeof(buf));
+		fprintf(stderr, " failed: need %zd bytes, have only %zd\n",
+			n, sizeof(buf));
 		exit(1);
 	}
 	printf("%s\n", buf);
@@ -265,8 +265,8 @@ void regress(void)
 				sa.proto = 77;
 			n = satot(&sa, (char)r->format, buf, sizeof(buf));
 			if (n > sizeof(buf)) {
-				printf("`%s' satot failed:  need %ld\n",
-					r->input, (long)n);
+				printf("`%s' satot failed:  need %zd\n",
+					r->input, n);
 				status = 1;
 			} else if (!streq(r->output, buf)) {
 				printf("`%s' gave `%s', expected `%s'\n",
