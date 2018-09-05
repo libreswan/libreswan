@@ -86,12 +86,12 @@ static struct db_sa *oakley_alg_mergedb(struct alg_info_ike *ai,
 					enum ikev1_auth_method auth_method,
 					bool single_dh);
 
-
 static struct alg_info_ike *ikev1_default_ike_info(void)
 {
 	static const struct proposal_policy policy = {
 		.ikev1 = TRUE,
 		.alg_is_ok = ike_alg_is_ike,
+		.warning = libreswan_log,
 	};
 
 	char err[100];

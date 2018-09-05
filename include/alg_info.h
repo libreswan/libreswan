@@ -52,6 +52,10 @@ struct proposal_policy {
 	 * while an ESP/AH algorithm requires kernel support.
 	 */
 	bool (*alg_is_ok)(const struct ike_alg *alg);
+	/*
+	 * Print a warning.  Signature needs to match libreswan_log.
+	 */
+	int (*warning)(const char *fmt, ...) PRINTF_LIKE(1);
 };
 
 /*

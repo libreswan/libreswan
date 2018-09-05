@@ -31,6 +31,7 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 			.ikev2 = ikev2,					\
 			.alg_is_ok = OK,				\
 			.pfs = pfs,					\
+			.warning = warning,				\
 		};							\
 		printf("algparse ");					\
 		if (fips) {						\
@@ -90,6 +91,20 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 		}							\
 		fflush(NULL);						\
 	}
+
+/*
+ * Dump warnings to stdout.
+ */
+static int warning(const char *fmt, ...)
+{
+	printf("\tWARNING: ");
+	va_list ap;
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+	printf("\n");
+	return 0;
+}
 
 /*
  * Kernel not available so fake it.
@@ -175,21 +190,21 @@ static void test(void)
 	esp(false, "");
 
 	esp(true, "aes");
-	esp(pfs, "aes;modp2048");
+	esp(true, "aes;modp2048");
 	esp(true, "aes-sha1");
 	esp(true, "aes-sha1");
-	esp(pfs, "aes-sha1-modp2048");
+	esp(true, "aes-sha1-modp2048");
 	esp(true, "aes-128");
 	esp(true, "aes-128-sha1");
 	esp(true, "aes-128-sha1");
-	esp(pfs, "aes-128-sha1-modp2048");
+	esp(true, "aes-128-sha1-modp2048");
 
 	esp(true, "aes_gcm_a-128-null");
-	esp(pfs && !fips, "3des-sha1;modp1024");
-	esp(pfs && !fips, "3des-sha1;modp1536");
-	esp(pfs, "3des-sha1;modp2048");
-	esp(pfs && !ikev1, "3des-sha1;dh21");
-	esp(pfs && !ikev1, "3des-sha1;ecp_521");
+	esp(!fips, "3des-sha1;modp1024");
+	esp(!fips, "3des-sha1;modp1536");
+	esp(true, "3des-sha1;modp2048");
+	esp(!ikev1, "3des-sha1;dh21");
+	esp(!ikev1, "3des-sha1;ecp_521");
 	esp(false, "3des-sha1;dh23");
 	esp(false, "3des-sha1;dh24");
 	esp(true, "3des-sha1");
@@ -284,19 +299,19 @@ static void test(void)
 	esp(!fips, "serpent");
 	esp(!fips, "twofish");
 
-	esp(pfs && !fips, "camellia_cbc_256-hmac_sha2_512_256;modp8192"); /* long */
-	esp(pfs && !fips, "null_auth_aes_gmac_256-null;modp8192"); /* long */
-	esp(pfs, "3des-sha1;modp8192"); /* allow ';' when unambigious */
-	esp(pfs, "3des-sha1-modp8192"); /* allow '-' when unambigious */
-	esp(false, "aes-sha1,3des-sha1;modp8192");
-	esp(pfs, "aes-sha1-modp8192,3des-sha1-modp8192"); /* silly */
-	esp(pfs, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192"); /* suppress duplicates */
+	esp(!fips, "camellia_cbc_256-hmac_sha2_512_256;modp8192"); /* long */
+	esp(!fips, "null_auth_aes_gmac_256-null;modp8192"); /* long */
+	esp(true, "3des-sha1;modp8192"); /* allow ';' when unambigious */
+	esp(true, "3des-sha1-modp8192"); /* allow '-' when unambigious */
+	esp(!pfs, "aes-sha1,3des-sha1;modp8192");
+	esp(true, "aes-sha1-modp8192,3des-sha1-modp8192"); /* silly */
+	esp(true, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192"); /* suppress duplicates */
 
-	esp(pfs && !ikev1, "aes;none");
-	esp(false, "aes;none,aes");
-	esp(pfs && !ikev1, "aes;none,aes;modp2048");
-	esp(pfs && !ikev1, "aes-sha1-none");
-	esp(pfs && !ikev1, "aes-sha1;none");
+	esp(!ikev1, "aes;none");
+	esp(!ikev1 && !pfs, "aes;none,aes");
+	esp(!ikev1, "aes;none,aes;modp2048");
+	esp(!ikev1, "aes-sha1-none");
+	esp(!ikev1, "aes-sha1;none");
 
 	/*
 	 * should this be supported - for now man page says not
@@ -333,26 +348,24 @@ static void test(void)
 	esp(false, "aes_gcm-123456789012345"); /* huge keylen */
 	esp(false, "3des-sha1;dh22"); /* support for dh22 removed */
 
-	esp(impair, "3des-sha1;modp8192,3des-sha2"); /* ;DH must be last */
-	esp(impair, "3des-sha1-modp8192,3des-sha2"); /* -DH must be last */
+	esp(!pfs, "3des-sha1;modp8192,3des-sha2"); /* ;DH must be last */
+	esp(!pfs, "3des-sha1-modp8192,3des-sha2"); /* -DH must be last */
 
-	esp(pfs, "3des-sha1-modp8192,3des-sha2-modp8192");
-	esp(pfs, "3des-sha1-modp8192,3des-sha2;modp8192");
-	esp(pfs, "3des-sha1;modp8192,3des-sha2-modp8192");
-	esp(pfs, "3des-sha1;modp8192,3des-sha2;modp8192");
-	esp(impair, "3des-sha1-modp8192,3des-sha2-modp2048");
+	esp(true, "3des-sha1-modp8192,3des-sha2-modp8192");
+	esp(true, "3des-sha1-modp8192,3des-sha2;modp8192");
+	esp(true, "3des-sha1;modp8192,3des-sha2-modp8192");
+	esp(true, "3des-sha1;modp8192,3des-sha2;modp8192");
+	esp(!pfs, "3des-sha1-modp8192,3des-sha2-modp2048");
 
 	/*
 	 * ah=
 	 */
 
-	/* AH tests that should succeed */
-
 	ah(true, NULL);
 	ah(false, "");
 	ah(!fips, "md5");
 	ah(true, "sha");
-	ah(pfs, "sha;modp2048");
+	ah(true, "sha;modp2048");
 	ah(true, "sha1");
 	ah(true, "sha2");
 	ah(true, "sha256");
@@ -362,12 +375,9 @@ static void test(void)
 	ah(true, "sha2_384");
 	ah(true, "sha2_512");
 	ah(true, "aes_xcbc");
-	ah(pfs && !ikev1, "sha2-none");
-	ah(pfs && !ikev1, "sha2;none");
-	ah(pfs, "sha1-modp8192,sha1-modp8192,sha1-modp8192"); /* suppress duplicates */
-
-	/* AH tests that should fail */
-
+	ah(!ikev1, "sha2-none");
+	ah(!ikev1, "sha2;none");
+	ah(true, "sha1-modp8192,sha1-modp8192,sha1-modp8192"); /* suppress duplicates */
 	ah(impair, "aes-sha1");
 	ah(false, "vanityhash1");
 	ah(impair, "aes_gcm_c-256");
@@ -382,8 +392,6 @@ static void test(void)
 	 * ike=
 	 */
 
-	/* IKE tests that should succeed */
-
 	ike(true, NULL);
 	ike(false, "");
 	ike(true, "3des-sha1");
@@ -395,9 +403,6 @@ static void test(void)
 	ike(!ikev1, "aes_gcm");
 	ike(true, "aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192"); /* suppress duplicates */
 	ike(false, "aes;none");
-
-	/* IKE tests that should fail */
-
 	ike(false, "id2"); /* should be rejected; idXXX removed */
 	ike(false, "3des-id2"); /* should be rejected; idXXX removed */
 	ike(false, "aes_ccm"); /* ESP/AH only */
