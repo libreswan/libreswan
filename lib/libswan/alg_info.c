@@ -754,8 +754,8 @@ size_t lswlog_alg_info(struct lswlog *log, const struct alg_info *alg_info)
 }
 
 /*
- * When PFS=no reject any DH, and when PFS=yes reject mixing implict
- * and explicit DH.
+ * When PFS=no ignore any DH algorithms, and when PFS=yes reject
+ * mixing implict and explicit DH.
  */
 bool alg_info_pfs_vs_dh_check(const struct proposal_parser *parser,
 			      struct alg_info_esp *aie)
@@ -799,34 +799,23 @@ bool alg_info_pfs_vs_dh_check(const struct proposal_parser *parser,
 	 */
 
 	/*
-	 * PFS=NO overrides any DH so don't silently ignore it.  Check
-	 * this early so that PFS=no code gets this error and not an
-	 * error about adding DH to all proposals.
-	 *
-	 * ;none is handled below.
+	 * Since PFS=NO overrides any DH, don't silently ignore it.
+	 * Check this early so that a conflict with PFS=no code gets
+	 * reported before anything else.
 	 */
-	if (!parser->policy->pfs && first_dh != NULL) {
-		snprintf(parser->err_buf, parser->err_buf_len,
-			 "%s DH algorithm %s is invalid as PFS policy is disabled",
-			 parser->protocol->name,
-			 first_dh->dh->common.fqn);
-		if (!impair_proposal_errors(parser)) {
-			return false;
+	if (!parser->policy->pfs && (first_dh != NULL || first_none != NULL)) {
+		FOR_EACH_ESP_INFO(aie, alg) {
+			if (alg->dh == &ike_alg_dh_none) {
+				parser->policy->warning("ignoring redundant %s DH algorithm NONE as PFS policy is disabled",
+							parser->protocol->name);
+			} else if (alg->dh != NULL) {
+				parser->policy->warning("ignoring %s DH algorithm %s as PFS policy is disabled",
+							parser->protocol->name,
+							alg->dh->common.fqn);
+			}
+			alg->dh = NULL;
 		}
-	}
-
-	/*
-	 * IKEv1 doesn't support ";none" (the lookup should have
-	 * failed).  IKEv2 does support ;none and when when compbined
-	 * with !PFS ambiguous.  However, for now, still reject it.
-	 */
-	if (!parser->policy->pfs && first_none != NULL) {
-		snprintf(parser->err_buf, parser->err_buf_len,
-			 "%s DH algorithm 'none' is is invalid as PFS policy is disabled",
-			 parser->protocol->name);
-		if (!impair_proposal_errors(parser)) {
-			return false;
-		}
+		return true;
 	}
 
 	/*

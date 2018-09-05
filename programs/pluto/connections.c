@@ -1557,6 +1557,7 @@ void add_connection(const struct whack_message *wm)
 				.ikev2 = LIN(POLICY_IKEV2_PROPOSE | POLICY_IKEV2_ALLOW, wm->policy),
 				.alg_is_ok = ike_alg_is_ike,
 				.pfs = LIN(POLICY_PFS, wm->policy),
+				.warning = libreswan_log,
 			};
 
 			c->alg_info_ike = alg_info_ike_create_from_str(&proposal_policy, wm->ike,
@@ -1607,6 +1608,7 @@ void add_connection(const struct whack_message *wm)
 				.ikev2 = LIN(POLICY_IKEV2_PROPOSE | POLICY_IKEV2_ALLOW, wm->policy),
 				.alg_is_ok = kernel_alg_is_ok,
 				.pfs = LIN(POLICY_PFS, wm->policy),
+				.warning = libreswan_log,
 			};
 
 			/*
