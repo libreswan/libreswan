@@ -488,7 +488,7 @@ static void prf_desc_check(const struct ike_alg *alg)
 	const struct prf_desc *prf = prf_desc(alg);
 	pexpect_ike_alg(alg, prf->prf_key_size > 0);
 	pexpect_ike_alg(alg, prf->prf_output_size > 0);
-	pexpect_ike_alg(alg, prf->prf_ike_audit_name != NULL);
+	pexpect_ike_alg_has_name(alg, prf->prf_ike_audit_name, ".prf_ike_audit_name");
 	if (prf->prf_ops != NULL) {
 		pexpect_ike_alg(alg, prf->prf_ops->check != NULL);
 		pexpect_ike_alg(alg, prf->prf_ops->init_symkey != NULL);
@@ -568,10 +568,9 @@ static void integ_desc_check(const struct ike_alg *alg)
 	const struct integ_desc *integ = integ_desc(alg);
 	pexpect_ike_alg(alg, integ->integ_keymat_size > 0);
 	pexpect_ike_alg(alg, integ->integ_output_size > 0);
-	pexpect_ike_alg(alg, integ->integ_tcpdump_name != NULL);
-	pexpect_ike_alg(alg, integ->integ_tcpdump_name != NULL);
-	pexpect_ike_alg(alg, integ->integ_ike_audit_name != NULL);
-	pexpect_ike_alg(alg, integ->integ_kernel_audit_name != NULL);
+	pexpect_ike_alg_has_name(alg, integ->integ_tcpdump_name, ".integ_tcpdump_name");
+	pexpect_ike_alg_has_name(alg, integ->integ_ike_audit_name, ".integ_ike_audit_name");
+	pexpect_ike_alg_has_name(alg, integ->integ_kernel_audit_name, ".integ_kernel_audit_name");
 	if (integ->common.id[IKEv1_ESP_ID] >= 0) {
 		struct esb_buf esb;
 		pexpect_ike_alg_streq(alg, integ->integ_kernel_audit_name,
@@ -688,9 +687,19 @@ unsigned encrypt_min_key_bit_length(const struct encrypt_desc *encrypt)
 static void encrypt_desc_check(const struct ike_alg *alg)
 {
 	const struct encrypt_desc *encrypt = encrypt_desc(alg);
-	pexpect_ike_alg(alg, encrypt->encrypt_tcpdump_name != NULL);
-	pexpect_ike_alg(alg, encrypt->encrypt_ike_audit_name != NULL);
-	pexpect_ike_alg(alg, encrypt->encrypt_kernel_audit_name != NULL);
+	/*
+	 * AES_GCM is a screwup.  AES_GCM_16 has the name "aes_gcm"
+	 * but when logging tcp or audit, that is assigned to
+	 * AES_GCM_8.
+	 */
+	if (encrypt == &ike_alg_encrypt_aes_gcm_8) {
+		pexpect_ike_alg_streq(alg, encrypt->encrypt_tcpdump_name, "aes_gcm");
+		pexpect_ike_alg_streq(alg, encrypt->encrypt_ike_audit_name, "aes_gcm");
+	} else {
+		pexpect_ike_alg_has_name(alg, encrypt->encrypt_tcpdump_name, ".encrypt_tcpdump_name");
+		pexpect_ike_alg_has_name(alg, encrypt->encrypt_ike_audit_name, ".encrypt_ike_audit_name");
+	}
+	pexpect_ike_alg_has_name(alg, encrypt->encrypt_kernel_audit_name, ".encrypt_kernel_audit_name");
 	if (encrypt->common.id[IKEv1_ESP_ID] >= 0) {
 		struct esb_buf esb;
 		pexpect_ike_alg_streq(alg, encrypt->encrypt_kernel_audit_name,
