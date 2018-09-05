@@ -84,23 +84,6 @@ void retransmit_v1_msg(struct state *st)
 		break;
 	}
 
-	/*
-	 * check if we've tried rekeying enough times.  st->st_try ==
-	 * 0 means that this should be the only try (possibly from
-	 * IMPAIR).  c->sa_keying_tries == 0 means that there is no
-	 * limit.
-	 */
-
-	if (IMPAIR(RETRANSMITS) && try > 0) {
-		/*
-		 * IKEv1 never retries to IKEv2; but IKEv2 can retry
-		 * to IKEv1
-		 */
-		libreswan_log("IMPAIR RETRANSMITS: suppressing re-key");
-		/* disable re-key code */
-		try = 0;
-	}
-
 	if (try != 0 && (try <= try_limit || try_limit == 0)) {
 		/*
 		 * A lot like EVENT_SA_REPLACE, but over again.  Since
@@ -207,25 +190,6 @@ void retransmit_v2_msg(struct state *st)
 	 * Current state is dead and will be deleted at the end of the
 	 * function.
 	 */
-
-	/*
-	 * check if we've tried rekeying enough times.  st->st_try ==
-	 * 0 means that this should be the only try (possibly from
-	 * IMPAIR).  c->sa_keying_tries == 0 means that there is no
-	 * limit.
-	 */
-
-	if (IMPAIR(RETRANSMITS) && try > 0) {
-		/*
-		 * XXX: Even though TRY is always non-zero; check it.
-		 * At some point TRY, and the code falling back to
-		 * IKEv1 will go away and this is a bread-crumb for
-		 * what needs to be changed.
-		 */
-		libreswan_log("IMPAIR RETRANSMITS: suppressing re-key");
-		/* disable re-key code */
-		try = 0;
-	}
 
 	if (try != 0 && (try <= try_limit || try_limit == 0)) {
 		/*

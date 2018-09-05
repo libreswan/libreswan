@@ -127,21 +127,6 @@ void start_retransmits(struct state *st, enum event_type type)
 	/* correct values */
 	rt->timeout = c->r_timeout;
 	rt->delay = c->r_interval;
-	if (IMPAIR(RETRANSMITS)) {
-		/*
-		 * Trigger a quick timeout by using INTERVAL (initial
-		 * delay) as the timeout.
-		 *
-		 * Use this to force code into taking the error path.
-		 * Would a timeout of 0 be better?
-		 */
-		rt->timeout = c->r_interval;
-		LSWLOG(buf) {
-			lswlogs(buf, "IMPAIR RETRANSMITS: scheduling timeout in ");
-			lswlog_deltatime(buf, rt->timeout);
-			lswlogs(buf, " seconds");
-		}
-	}
 	if (IMPAIR(SUPPRESS_RETRANSMITS)) {
 		/*
 		 * Suppress retransmits by using the full TIMEOUT as
@@ -191,10 +176,6 @@ enum retransmit_status retransmit(struct state *st)
 	 *
 	 * - trigger the retransmit timeout path after the first delay
 	 */
-	if (IMPAIR(RETRANSMITS)) {
-		libreswan_log("suppressing retransmit because IMPAIR_RETRANSMITS is set");
-		return RETRANSMITS_TIMED_OUT;
-	}
 	if (IMPAIR(TIMEOUT_ON_RETRANSMIT)) {
 		libreswan_log("IMPAIR: retransmit so timing out SA (may retry)");
 		return RETRANSMITS_TIMED_OUT;
@@ -306,14 +287,6 @@ void suppress_retransmits(struct state *st)
 		LSWDBGP(DBG_CONTROL, buf) {
 			lswlog_retransmit_prefix(buf, st);
 			lswlogs(buf, "no retransmits to suppress");
-		}
-		return;
-	}
-	if (IMPAIR(RETRANSMITS)) {
-		LSWDBGP(DBG_CONTROL, buf) {
-			lswlogs(buf, "IMPAIR: ");
-			lswlog_retransmit_prefix(buf, st);
-			lswlogs(buf, "can't suppress retransmits as --impair retransmits scheduled EVENT_SA_REPLACE(?)");
 		}
 		return;
 	}
