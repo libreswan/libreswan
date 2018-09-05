@@ -279,7 +279,7 @@ static PK11SymKey *nss_xcbc_final_symkey(struct prf_context **prf)
 static void nss_xcbc_check(const struct prf_desc *prf)
 {
 	const struct ike_alg *alg = &prf->common;
-	passert_ike_alg(alg, prf->nss.mechanism > 0);
+	pexpect_ike_alg(alg, prf->nss.mechanism > 0);
 }
 
 const struct prf_ops ike_alg_prf_nss_xcbc_ops = {

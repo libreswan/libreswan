@@ -113,7 +113,7 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 static void nss_cbc_check(const struct encrypt_desc *encrypt)
 {
 	const struct ike_alg *alg = &encrypt->common;
-	passert_ike_alg(alg, encrypt->nss.mechanism > 0);
+	pexpect_ike_alg(alg, encrypt->nss.mechanism > 0);
 }
 
 const struct encrypt_ops ike_alg_encrypt_nss_cbc_ops = {

@@ -199,7 +199,7 @@ static PK11SymKey *nss_ecp_calc_shared(const struct oakley_group_desc *group,
 static void nss_ecp_check(const struct oakley_group_desc *dhmke)
 {
 	const struct ike_alg *alg = &dhmke->common;
-	passert_ike_alg(alg, dhmke->nss_oid > 0);
+	pexpect_ike_alg(alg, dhmke->nss_oid > 0);
 }
 
 const struct dh_ops ike_alg_dh_nss_ecp_ops = {

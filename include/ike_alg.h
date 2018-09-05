@@ -17,27 +17,22 @@ enum ike_alg_key;
  * Do not wrap ASSERTION in parentheses as it will suppress the
  * warning for 'foo = bar'.
  */
-#define passert_ike_alg(ALG, ASSERTION) {				\
-		/* wrapping ASSERTION in parens suppresses -Wparen */	\
-		bool assertion__ = ASSERTION; /* no paren */		\
-		if (!assertion__) {					\
-			PASSERT_FAIL("IKE_ALG %s algorithm '%s' fails: %s", \
-				     ike_alg_type_name((ALG)->algo_type), \
-				     (ALG)->fqn != NULL ? (ALG)->fqn	\
-				     : (ALG)->name != NULL ? (ALG)->name \
-				     : "NULL", #ASSERTION);		\
-		}							\
-	}
+
+#define lswlog_ike_alg(BUF, ALG)					\
+	lswlogf(BUF, "IKE_ALG %s algorithm '%s'",			\
+		ike_alg_type_name((ALG)->algo_type),			\
+		(ALG)->fqn != NULL ? (ALG)->fqn				\
+		: (ALG)->name != NULL ? (ALG)->name			\
+		: "NULL")
 
 #define pexpect_ike_alg(ALG, ASSERTION) {				\
 		/* wrapping ASSERTION in parens suppresses -Wparen */	\
 		bool assertion__ = ASSERTION; /* no paren */		\
 		if (!assertion__) {					\
-			PEXPECT_LOG("IKE_ALG %s algorithm '%s' fails: %s", \
-				    ike_alg_type_name((ALG)->algo_type), \
-				    (ALG)->fqn != NULL ? (ALG)->fqn	\
-				    : (ALG)->name != NULL ? (ALG)->name \
-				    : "NULL", #ASSERTION);		\
+			LSWLOG_PEXPECT(buf) {				\
+				lswlog_ike_alg(buf, ALG);	\
+				lswlogs(buf, " fails: " #ASSERTION);	\
+			}						\
 		}							\
 	}
 
@@ -47,9 +42,11 @@ enum ike_alg_key;
 		const char *lhs = LHS;					\
 		const char *rhs = RHS;					\
 		if (lhs == NULL || rhs == NULL || !streq(LHS, RHS)) {	\
-			PEXPECT_LOG("IKE_ALG %s algorithm '%s' fails: %s != %s (%s != %s)", \
-				    ike_alg_type_name((ALG)->algo_type), \
-				    (ALG)->fqn, lhs, rhs, #LHS, #RHS);	\
+			LSWLOG_PEXPECT(buf) {				\
+				lswlog_ike_alg(buf, ALG);	\
+				lswlogf(buf, " fails: %s != %s (%s != %s)", \
+					lhs, rhs, #LHS, #RHS);		\
+			}						\
 		}							\
 	}
 
@@ -59,9 +56,12 @@ enum ike_alg_key;
 		const char *lhs = LHS;					\
 		const char *rhs = RHS;					\
 		if (lhs == NULL || rhs == NULL || !strcaseeq(LHS, RHS)) { \
-			PEXPECT_LOG("IKE_ALG %s algorithm '%s' fails: %s != %s (%s != %s)", \
-				    ike_alg_type_name((ALG)->algo_type), \
-				    (ALG)->fqn, lhs, rhs, #RHS, #LHS);	\
+			LSWLOG_PEXPECT(buf) {				\
+				lswlog_ike_alg(buf, ALG);	\
+				lswlogf(buf, " fails: %s != %s (%s != %s)", \
+					ike_alg_type_name((ALG)->algo_type), \
+					(ALG)->fqn, lhs, rhs, #RHS, #LHS); \
+			}						\
 		}							\
 	}
 

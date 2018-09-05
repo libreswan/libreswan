@@ -111,9 +111,9 @@ static PK11SymKey *symkey_to_symkey(const struct hash_desc *hash_desc,
 static void nss_hash_check(const struct hash_desc *hash)
 {
 	const struct ike_alg *alg = &hash->common;
-	// passert_ike_alg(alg, hash->common.nss_mechanism == 0);
-	passert_ike_alg(alg, hash->nss.oid_tag > 0);
-	passert_ike_alg(alg, hash->nss.derivation_mechanism > 0);
+	// pexpect_ike_alg(alg, hash->common.nss_mechanism == 0);
+	pexpect_ike_alg(alg, hash->nss.oid_tag > 0);
+	pexpect_ike_alg(alg, hash->nss.derivation_mechanism > 0);
 }
 
 const struct hash_ops ike_alg_hash_nss_ops = {

@@ -126,8 +126,8 @@ static PK11SymKey *nss_modp_calc_shared(const struct oakley_group_desc *group,
 static void nss_modp_check(const struct oakley_group_desc *dhmke)
 {
 	const struct ike_alg *alg = &dhmke->common;
-	passert_ike_alg(alg, dhmke->gen != NULL);
-	passert_ike_alg(alg, dhmke->modp != NULL);
+	pexpect_ike_alg(alg, dhmke->gen != NULL);
+	pexpect_ike_alg(alg, dhmke->modp != NULL);
 }
 
 const struct dh_ops ike_alg_dh_nss_modp_ops = {
