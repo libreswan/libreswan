@@ -60,8 +60,8 @@ struct starter_end {
 	enum keyword_pubkey rsakey1_type, rsakey2_type;
 	char *rsakey1;
 	char *rsakey2;
-	u_int16_t port;
-	u_int8_t protocol;
+	uint16_t port;
+	uint8_t protocol;
 	bool has_client_wildcard;
 	bool key_from_DNS_on_demand;
 	bool has_port_wildcard;
