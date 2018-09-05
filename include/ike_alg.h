@@ -433,10 +433,10 @@ struct encrypt_ops {
 	 * Presumably something else is implementing the integrity.
 	 */
 	void (*const do_crypt)(const struct encrypt_desc *alg,
-			       u_int8_t *dat,
+			       uint8_t *dat,
 			       size_t datasize,
 			       PK11SymKey *key,
-			       u_int8_t *iv,
+			       uint8_t *iv,
 			       bool enc);
 
 	/*
@@ -453,10 +453,10 @@ struct encrypt_ops {
 	 * All sizes are in 8-bit bytes.
 	 */
 	bool (*const do_aead)(const struct encrypt_desc *alg,
-			      u_int8_t *salt, size_t salt_size,
-			      u_int8_t *wire_iv, size_t wire_iv_size,
-			      u_int8_t *aad, size_t aad_size,
-			      u_int8_t *text_and_tag,
+			      uint8_t *salt, size_t salt_size,
+			      uint8_t *wire_iv, size_t wire_iv_size,
+			      uint8_t *aad, size_t aad_size,
+			      uint8_t *text_and_tag,
 			      size_t text_size, size_t tag_size,
 			      PK11SymKey *key, bool enc);
 };
@@ -522,9 +522,9 @@ struct hash_ops {
 			      const char *name, PK11SymKey *symkey);
 	void (*digest_bytes)(struct hash_context *hash,
 			     const char *name,
-			     const u_int8_t *bytes, size_t sizeof_bytes);
+			     const uint8_t *bytes, size_t sizeof_bytes);
 	void (*final_bytes)(struct hash_context**,
-			    u_int8_t *bytes, size_t sizeof_bytes);
+			    uint8_t *bytes, size_t sizeof_bytes);
 	/* FIPS short cuts */
 	PK11SymKey *(*symkey_to_symkey)(const struct hash_desc *hash_desc,
 					const char *name,
@@ -616,13 +616,13 @@ struct prf_ops {
 	struct prf_context *(*init_bytes)(const struct prf_desc *prf_desc,
 					  const char *name,
 					  const char *key_name,
-					  const u_int8_t *bytes, size_t sizeof_bytes);
+					  const uint8_t *bytes, size_t sizeof_bytes);
 	void (*digest_symkey)(struct prf_context *prf,
 			      const char *name, PK11SymKey *symkey);
 	void (*digest_bytes)(struct prf_context *prf,
-			     const char *name, const u_int8_t *bytes, size_t sizeof_bytes);
+			     const char *name, const uint8_t *bytes, size_t sizeof_bytes);
 	PK11SymKey *(*final_symkey)(struct prf_context **prf);
-	void (*final_bytes)(struct prf_context **prf, u_int8_t *bytes, size_t sizeof_bytes);
+	void (*final_bytes)(struct prf_context **prf, uint8_t *bytes, size_t sizeof_bytes);
 };
 
 /*
@@ -772,7 +772,7 @@ unsigned encrypt_max_key_bit_length(const struct encrypt_desc *encrypt_desc);
 
 struct oakley_group_desc {
 	struct ike_alg common;		/* must be first */
-	u_int16_t group;
+	uint16_t group;
 	size_t bytes;
 
 	/*

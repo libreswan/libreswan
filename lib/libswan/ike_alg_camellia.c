@@ -35,10 +35,10 @@
 #endif
 
 typedef struct {
-	u_int32_t camellia_Nkey;                     // the number of words in the key input block
-	u_int32_t camellia_Nrnd;                     // the number of cipher rounds
-	u_int32_t camellia_e_key[CAMELLIA_KS_LENGTH];     // the encryption key schedule
-	u_int32_t camellia_d_key[CAMELLIA_KS_LENGTH];     // the decryption key schedule
+	uint32_t camellia_Nkey;                     // the number of words in the key input block
+	uint32_t camellia_Nrnd;                     // the number of cipher rounds
+	uint32_t camellia_e_key[CAMELLIA_KS_LENGTH];     // the encryption key schedule
+	uint32_t camellia_d_key[CAMELLIA_KS_LENGTH];     // the decryption key schedule
 } camellia_context;
 
 const struct encrypt_desc ike_alg_encrypt_camellia_cbc =

@@ -223,7 +223,7 @@ static struct prf_context *nss_xcbc_init_symkey(const struct prf_desc *prf_desc,
 static struct prf_context *nss_xcbc_init_bytes(const struct prf_desc *prf_desc,
 					       const char *name,
 					       const char *key_name,
-					       const u_int8_t *key, size_t sizeof_key)
+					       const uint8_t *key, size_t sizeof_key)
 {
 	/*
 	 * Need a key of the correct type.

@@ -28,13 +28,13 @@
 #include "sadb.h"
 
 static void do_twofish(const struct encrypt_desc *alg UNUSED,
-		       u_int8_t *buf, size_t buf_size, PK11SymKey *key,
-		       u_int8_t *iv, bool enc)
+		       uint8_t *buf, size_t buf_size, PK11SymKey *key,
+		       uint8_t *iv, bool enc)
 {
 	twofish_context twofish_ctx;
 	char iv_bak[TWOFISH_CBC_BLOCK_SIZE];
 	char *new_iv = NULL;    /* logic will avoid copy to NULL */
-	u_int8_t *bare_key_ptr;
+	uint8_t *bare_key_ptr;
 	size_t bare_key_len;
 
 	/* unpack key from PK11SymKey (or crash!) */

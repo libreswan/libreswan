@@ -28,10 +28,10 @@
 #if defined(CKM_NSS_CHACHA20_POLY1305)
 
 static bool ike_alg_nss_aead(const struct encrypt_desc *alg,
-			     u_int8_t *salt, size_t salt_size,
-			     u_int8_t *wire_iv, size_t wire_iv_size,
-			     u_int8_t *aad, size_t aad_size,
-			     u_int8_t *text_and_tag,
+			     uint8_t *salt, size_t salt_size,
+			     uint8_t *wire_iv, size_t wire_iv_size,
+			     uint8_t *aad, size_t aad_size,
+			     uint8_t *text_and_tag,
 			     size_t text_size, size_t tag_size,
 			     PK11SymKey *sym_key, bool enc)
 {
@@ -64,7 +64,7 @@ static bool ike_alg_nss_aead(const struct encrypt_desc *alg,
 
 	/* Output buffer for transformed data.  */
 	size_t text_and_tag_size = text_size + tag_size;
-	u_int8_t *out_buf = PR_Malloc(text_and_tag_size);
+	uint8_t *out_buf = PR_Malloc(text_and_tag_size);
 	unsigned int out_len = 0;
 
 	if (enc) {

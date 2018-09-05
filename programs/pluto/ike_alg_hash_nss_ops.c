@@ -60,7 +60,7 @@ static void digest_symkey(struct hash_context *hash,
 
 static void digest_bytes(struct hash_context *hash,
 			 const char *name UNUSED,
-			 const u_int8_t *bytes, size_t sizeof_bytes)
+			 const uint8_t *bytes, size_t sizeof_bytes)
 {
 	passert(digest_bytes == hash->desc->hash_ops->digest_bytes);
 	SECStatus rc = PK11_DigestOp(hash->context, bytes, sizeof_bytes);
@@ -68,7 +68,7 @@ static void digest_bytes(struct hash_context *hash,
 }
 
 static void final_bytes(struct hash_context **hashp,
-			u_int8_t *bytes, size_t sizeof_bytes)
+			uint8_t *bytes, size_t sizeof_bytes)
 {
 	passert(final_bytes == (*hashp)->desc->hash_ops->final_bytes);
 	unsigned out_len = 0;

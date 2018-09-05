@@ -30,13 +30,13 @@
 #define  SERPENT_KEY_MAX_LEN    256
 
 static void do_serpent(const struct encrypt_desc *alg UNUSED,
-		       u_int8_t *buf, size_t buf_size, PK11SymKey *key,
-		       u_int8_t *iv, bool enc)
+		       uint8_t *buf, size_t buf_size, PK11SymKey *key,
+		       uint8_t *iv, bool enc)
 {
 	serpent_context serpent_ctx;
-	u_int8_t iv_bak[SERPENT_CBC_BLOCK_SIZE];
-	u_int8_t *new_iv = buf + buf_size - SERPENT_CBC_BLOCK_SIZE;
-	u_int8_t *bare_key_ptr;
+	uint8_t iv_bak[SERPENT_CBC_BLOCK_SIZE];
+	uint8_t *new_iv = buf + buf_size - SERPENT_CBC_BLOCK_SIZE;
+	uint8_t *bare_key_ptr;
 	size_t bare_key_len;
 
 	/* unpack key from PK11SymKey (or crash!) */
