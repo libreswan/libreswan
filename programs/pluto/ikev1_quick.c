@@ -30,7 +30,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <sys/time.h>           /* for gettimeofday */
 #include <resolv.h>
 
 #include <libreswan.h>

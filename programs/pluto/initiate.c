@@ -1101,9 +1101,7 @@ static void connection_check_ddns1(struct connection *c)
 void connection_check_ddns(void)
 {
 	struct connection *c, *cnext;
-	struct timeval tv1;
-
-	gettimeofday(&tv1, NULL);
+	realtime_t tv1 = realnow();
 
 	/* reschedule */
 	event_schedule_s(EVENT_PENDING_DDNS, PENDING_DDNS_INTERVAL, NULL);
@@ -1118,17 +1116,11 @@ void connection_check_ddns(void)
 	}
 	check_orientations();
 
-	DBG(DBG_DNS, {
-		struct timeval tv2;
-		long borrow;
-
-		gettimeofday(&tv2, NULL);
-		borrow = tv2.tv_usec < tv1.tv_usec ? 1 : 0;
-		DBG_log("elapsed time in %s for hostname lookup %ld.%06ld",
-			__func__,
-			tv2.tv_sec - borrow - tv2.tv_sec,
-			tv2.tv_usec + borrow * 1000000 - tv2.tv_usec);
-	});
+	LSWDBGP(DBG_DNS, buf) {
+		realtime_t tv2 = realnow();
+		lswlogf(buf, "elapsed time in %s for hostname lookup ", __func__);
+		lswlog_deltatime(buf, realtimediff(tv2, tv1));
+	};
 }
 
 /* time between scans of pending phase2 */

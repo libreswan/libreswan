@@ -196,7 +196,7 @@ enum retransmit_status retransmit(struct state *st)
 	 *
 	 * One working theory as to the cause is that monotime uses
 	 * CLOCK_BOOTTIME (and/or CLOCK_MONOTONIC), while the
-	 * event-loop is still using gettimeofday.
+	 * event-loop library is still using gettimeofday.
 	 */
 	monotime_t now = mononow();
 	unsigned long nr_retransmits = retransmit_count(st);

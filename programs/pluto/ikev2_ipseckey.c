@@ -59,8 +59,8 @@ struct p_dns_req {
 	char *dbg_buf;
 	char *log_buf;
 
-	struct timeval start_time;
-	struct timeval done_time;
+	realtime_t start_time;
+	realtime_t done_time;
 
 	char *qname;		/* DNS query to send, from ID */
 	u_int16_t qtype;
@@ -458,43 +458,37 @@ void  free_ipseckey_dns(struct p_dns_req *d)
 
 static void ikev2_ipseckey_log_missing_st(struct p_dns_req *dnsr)
 {
-	struct timeval served_delta;
-
-	timersub(&dnsr->done_time, &dnsr->start_time, &served_delta);
-
-	loglog(RC_LOG_SERIOUS, "%s The state #%lu is gone. %s returned %s elapsed time  %ld.%06ld",
+	deltatime_t served_delta = realtimediff(dnsr->done_time, dnsr->start_time);
+	LSWLOG_RC(RC_LOG_SERIOUS, buf) {
+		lswlogf(buf, "%s The state #%lu is gone. %s returned %s elapsed time  ",
 			dnsr->dbg_buf, dnsr->so_serial_t,
-			dnsr->log_buf,  dnsr->rcode_name,
-			served_delta.tv_sec,
-			served_delta.tv_usec);
+			dnsr->log_buf,  dnsr->rcode_name);
+		lswlog_deltatime(buf, served_delta);
+	}
 }
 
 static void ikev2_ipseckey_log_dns_err(struct p_dns_req *dnsr,
 		const char *err)
 {
-	struct timeval served_delta;
-
-	timersub(&dnsr->done_time, &dnsr->start_time, &served_delta);
-
-	loglog(RC_LOG_SERIOUS, "%s returned %s rr parse error %s elapsed time %ld.%06ld.",
+	deltatime_t served_delta = realtimediff(dnsr->done_time, dnsr->start_time);
+	LSWLOG_RC(RC_LOG_SERIOUS, buf) {
+		lswlogf(buf, "%s returned %s rr parse error %s elapsed time ",
 			dnsr->log_buf,
-			dnsr->rcode_name, err,
-			served_delta.tv_sec,
-			served_delta.tv_usec);
+			dnsr->rcode_name, err);
+		lswlog_deltatime(buf, served_delta);
+	}
 }
 
 static void ipseckey_dbg_dns_resp(struct p_dns_req *dnsr)
 {
-	struct timeval served_delta;
-
-	timersub(&dnsr->done_time, &dnsr->start_time, &served_delta);
-	DBG(DBG_CONTROL,
-		DBG_log("%s returned %s cache=%s elapsed time %ld.%06ld",
+	deltatime_t served_delta = realtimediff(dnsr->done_time, dnsr->start_time);
+	LSWDBGP(DBG_CONTROL, buf) {
+		lswlogf(buf, "%s returned %s cache=%s elapsed time ",
 			dnsr->log_buf,
 			dnsr->rcode_name,
-			bool_str(dnsr->cache_hit),
-			served_delta.tv_sec,
-			served_delta.tv_usec));
+			bool_str(dnsr->cache_hit));
+		lswlog_deltatime(buf, served_delta);
+	}
 
 	DBG(DBG_DNS, {
 		const enum lswub_resolve_event_secure_kind k = dnsr->secure;
@@ -515,7 +509,7 @@ static void idr_ipseckey_fetch_continue(struct p_dns_req *dnsr)
 	struct state *st = state_with_serialno(dnsr->so_serial_t);
 	const char *parse_err;
 
-	gettimeofday(&dnsr->done_time, NULL);
+	dnsr->done_time = realnow();
 
 	if (st == NULL) {
 		/* state disappeared we can't find  discard the response */
@@ -572,7 +566,7 @@ static void idi_a_fetch_continue(struct p_dns_req *dnsr)
 	struct state *st = state_with_serialno(dnsr->so_serial_t);
 	bool err;
 
-	gettimeofday(&dnsr->done_time, NULL);
+	dnsr->done_time = realnow();
 
 	if (st == NULL) {
 		/* state disappeared we can't find st, hence no md, abort*/
@@ -637,7 +631,7 @@ static void idi_ipseckey_fetch_continue(struct p_dns_req *dnsr)
 	const char *parse_err;
 	bool err;
 
-	gettimeofday(&dnsr->done_time, NULL);
+	dnsr->done_time = realnow();
 
 	if (st == NULL) {
 		/* state disappeared we can't find st, hence no md, abort*/
@@ -820,7 +814,7 @@ static stf_status dns_qry_start(struct p_dns_req *dnsr)
 
 	DBG(DBG_CONTROL, DBG_log("%s start %s", dnsr->dbg_buf, dnsr->log_buf));
 
-	gettimeofday(&dnsr->start_time, NULL);
+	dnsr->start_time = realnow();
 
 	ub_ret = ub_resolve_event(get_unbound_ctx(), dnsr->qname, dnsr->qtype,
 			dnsr->qclass, dnsr, ipseckey_ub_cb, &dnsr->ub_async_id);
