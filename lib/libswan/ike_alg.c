@@ -961,15 +961,11 @@ static void check_algorithm_table(const struct ike_alg_type *type)
 		      libreswan_fipsmode() ? "FIPS " : "",
 		      type->Name);
 	FOR_EACH_IKE_ALGP(type, algp) {
-		const struct ike_alg *alg = *algp;
-		LSWLOG(buf) {
-			lswlogs(buf, "  ");
-			lswlog_ike_alg(buf, alg);
-		}
+		libreswan_log_ike_alg("  ", *algp);
 	}
 }
 
-void lswlog_ike_alg(struct lswlog *buf, const struct ike_alg *alg)
+static void lswlog_ike_alg_details(struct lswlog *buf, const struct ike_alg *alg)
 {
 	/*
 	 * TYPE NAME:
@@ -1083,6 +1079,14 @@ void lswlog_ike_alg(struct lswlog *buf, const struct ike_alg *alg)
 				sep = ", ";
 			}
 		}
+	}
+}
+
+void libreswan_log_ike_alg(const char *prefix, const struct ike_alg *alg)
+{
+	LSWLOG(buf) {
+		lswlogs(buf, prefix);
+		lswlog_ike_alg_details(buf, alg);
 	}
 }
 

@@ -880,9 +880,9 @@ const struct encrypt_desc *encrypt_desc_by_sadb_ealg_id(unsigned id);
 const struct integ_desc *integ_desc_by_sadb_aalg_id(unsigned id);
 
 /*
- * Pretty print the algorithm into BUF.  The format is suitable for
- * listing the algorithms in a very wide table.
+ * Pretty print the algorithm to the standard log.  The logged line is
+ * very wide.
  */
-void lswlog_ike_alg(struct lswlog *buf, const struct ike_alg *alg);
+void libreswan_log_ike_alg(const char *prefix, const struct ike_alg *alg);
 
 #endif /* _IKE_ALG_H */
