@@ -164,7 +164,7 @@ static const struct encrypt_desc *lookup_by_taglen(void) {
 	return NULL;
 }
 
-static u_int8_t a_byte;
+static uint8_t a_byte;
 static chunk_t salt = {
 	.ptr = &a_byte,
 	.len = 0,
