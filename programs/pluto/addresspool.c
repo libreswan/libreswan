@@ -347,6 +347,7 @@ err_t lease_an_address(const struct connection *c, const struct state *st,
 		struct lease_addr **pp;
 		struct lease_addr *p;
 		struct lease_addr *ll = NULL;	/* longest lingerer */
+		bool can_share = can_share_lease(c);
 
 		for (pp = &c->pool->leases; (p = *pp) != NULL; pp = &p->next) {
 			/* check that list of leases is
@@ -357,7 +358,7 @@ err_t lease_an_address(const struct connection *c, const struct state *st,
 				break;
 			}
 			/* remember the longest lingering lease found */
-			if (p->refcnt == 0 &&
+			if (can_share && p->refcnt == 0 &&
 			    (ll == NULL ||
 			     monobefore(ll->lingering_since, p->lingering_since)))
 				ll = p;
