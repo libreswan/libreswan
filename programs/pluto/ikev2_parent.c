@@ -931,13 +931,17 @@ void ikev2_parent_outI1(int whack_sock,
  * package up the calculated KE value, and emit it as a KE payload.
  * used by IKEv2: parent, child (PFS)
  */
-bool justship_v2KE(chunk_t *g, const struct oakley_group_desc *group,
-			  pb_stream *outs, u_int8_t np)
+bool emit_v2KE(chunk_t *g, const struct oakley_group_desc *group,
+	       pb_stream *outs)
 {
+	if (IMPAIR(SEND_NO_KE_PAYLOAD)) {
+		libreswan_log("IMPAIR: omitting KE payload");
+		return true;
+	}
+
 	pb_stream kepbs;
 
 	struct ikev2_ke v2ke = {
-		.isak_np = np,
 		.isak_group = group->common.id[IKEv2_ALG_ID],
 	};
 
@@ -1050,11 +1054,9 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 		 * proposal.  Hence the NULL SPIs.
 		 */
 		u_char *sa_start = rbody.cur;
-		enum next_payload_types_ikev2 np =
-			IMPAIR(SEND_NO_KE_PAYLOAD) ? ISAKMP_NEXT_v2Ni : ISAKMP_NEXT_v2KE;
 		bool ret = ikev2_emit_sa_proposals(&rbody,
 						   c->ike_proposals,
-						   (chunk_t*)NULL, np);
+						   (chunk_t*)NULL);
 		if (!ret) {
 			libreswan_log("outsa fail");
 			reset_cur_state();
@@ -1071,14 +1073,9 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 
 	/* ??? from here on, this looks a lot like the end of ikev2_parent_inI1outR1_tail */
 
-	if (IMPAIR(SEND_NO_KE_PAYLOAD)) {
-		libreswan_log("IMPAIR: omitting KE payload");
-	} else {
-		/* send KE */
-		if (!justship_v2KE(&st->st_gi, st->st_oakley.ta_dh,
-				   &rbody, ISAKMP_NEXT_v2Ni))
-			return STF_INTERNAL_ERROR;
-	}
+	/* send KE */
+	if (!emit_v2KE(&st->st_gi, st->st_oakley.ta_dh, &rbody))
+		return STF_INTERNAL_ERROR;
 
 	/* send NONCE */
 	{
@@ -1619,23 +1616,13 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 
 	/* start of SA out */
 	{
-		enum next_payload_types_ikev2 next_payload_type;
-		if (!DBGP(IMPAIR_SEND_NO_KE_PAYLOAD)) {
-			/* normal case */
-			next_payload_type = ISAKMP_NEXT_v2KE;
-		} else {
-			/* We are faking not sending a KE, we'll just call it a Notify */
-			next_payload_type = ISAKMP_NEXT_v2N;
-		}
-
 		/*
 		 * Since this is the initial IKE exchange, the SPI is
 		 * emitted as part of the packet header and not as
 		 * part of the proposal.  Hence the NULL SPI.
 		 */
 		passert(st->st_accepted_ike_proposal != NULL);
-		if (!ikev2_emit_sa_proposal(&rbody, st->st_accepted_ike_proposal,
-					    NULL, next_payload_type)) {
+		if (!ikev2_emit_sa_proposal(&rbody, st->st_accepted_ike_proposal, NULL)) {
 			DBG(DBG_CONTROL, DBG_log("problem emitting accepted proposal"));
 			return STF_INTERNAL_ERROR;
 		}
@@ -1660,9 +1647,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	 */
 	pexpect(st->st_oakley.ta_dh == r->pcr_d.kn.group);
 	unpack_KE_from_helper(st, r, &st->st_gr);
-	if (!justship_v2KE(&st->st_gr,
-			   r->pcr_d.kn.group,
-			   &rbody, ISAKMP_NEXT_v2Nr)) {
+	if (!emit_v2KE(&st->st_gr, r->pcr_d.kn.group, &rbody)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -3593,7 +3578,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 					       &unset_group);
 
 		if (!ikev2_emit_sa_proposals(&e_pbs_cipher, cc->esp_or_ah_proposals,
-					&local_spi, ISAKMP_NEXT_v2TSi))
+					     &local_spi))
 			return STF_INTERNAL_ERROR;
 
 		cst->st_ts_this = ikev2_end_to_ts(&cc->spd.this);
@@ -5263,9 +5248,6 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 	/* child connection */
 	struct state *cst = md->st;
 	struct connection *cc = cst->st_connection;
-	enum next_payload_types_ikev2 np = isa_xchg ==
-		ISAKMP_v2_CREATE_CHILD_SA ? ISAKMP_NEXT_v2Ni :
-		ISAKMP_NEXT_v2TSi;
 	chunk_t rekey_spi = empty_chunk;
 
 	send_use_transport = (cc->policy & POLICY_TUNNEL) == LEMPTY;
@@ -5279,7 +5261,7 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 			sizeof(proto_info->our_spi));
 
 	if (!ikev2_emit_sa_proposals(outpbs, cc->esp_or_ah_proposals,
-			&local_spi, np))
+				     &local_spi))
 		return STF_INTERNAL_ERROR;
 
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
@@ -5289,30 +5271,18 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 
 		struct ikev2_generic in = {
-			.isag_np = (cst->st_pfs_group != NULL) ?
-					ISAKMP_NEXT_v2KE :
-				rekey_spi.len > 0 ?
-					ISAKMP_NEXT_v2N :
-					ISAKMP_NEXT_v2TSi,
-			.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL,
+			.isag_critical = build_ikev2_critical(false),
 		};
 		pb_stream pb_nr;
-
-		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
-			libreswan_log(" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
-			in.isag_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
-		}
 		if (!out_struct(&in, &ikev2_nonce_desc, outpbs, &pb_nr) ||
 		    !out_chunk(cst->st_ni, &pb_nr, "IKEv2 nonce"))
 			return STF_INTERNAL_ERROR;
 		close_output_pbs(&pb_nr);
 
-		if (in.isag_np == ISAKMP_NEXT_v2KE)  {
-			int np  = rekey_spi.len > 0 ? ISAKMP_NEXT_v2N :
-				ISAKMP_NEXT_v2TSi;
-			if (!justship_v2KE(&cst->st_gi,
-						cst->st_pfs_group, outpbs, np))
+		if (cst->st_pfs_group != NULL)  {
+			if (!emit_v2KE(&cst->st_gi, cst->st_pfs_group, outpbs)) {
 				return STF_INTERNAL_ERROR;
+			}
 		}
 
 		if (rekey_spi.len > 0) {
@@ -5373,7 +5343,7 @@ static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
 
 		/* send selected v2 IKE SA */
 		if (!ikev2_emit_sa_proposal(outpbs, st->st_accepted_ike_proposal,
-					&local_spi, ISAKMP_NEXT_v2Ni)) {
+					    &local_spi)) {
 			DBG(DBG_CONTROL, DBG_log("problem emitting accepted ike proposal in CREATE_CHILD_SA"));
 			return STF_INTERNAL_ERROR;
 		}
@@ -5389,10 +5359,7 @@ static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
 		ikev2_need_ike_proposals(c, "IKE SA initiating rekey");
 
 		/* send v2 IKE SAs*/
-		if (!ikev2_emit_sa_proposals(outpbs,
-					c->ike_proposals,
-					&local_spi,
-					ISAKMP_NEXT_v2Ni))  {
+		if (!ikev2_emit_sa_proposals(outpbs, c->ike_proposals, &local_spi))  {
 			libreswan_log("outsa fail");
 			DBG(DBG_CONTROL, DBG_log("problem emitting connection ike proposals in CREATE_CHILD_SA"));
 			return STF_INTERNAL_ERROR;
@@ -5405,22 +5372,16 @@ static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
 	/* send NONCE */
 	{
 		struct ikev2_generic in = {
-			.isag_np = ISAKMP_NEXT_v2KE,
+			.isag_critical = build_ikev2_critical(false),
 		};
 		pb_stream nr_pbs;
-
-		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
-			libreswan_log(" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
-			in.isag_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
-		}
 		if (!out_struct(&in, &ikev2_nonce_desc, outpbs, &nr_pbs) ||
 		    !out_chunk(local_nonce, &nr_pbs, "IKEv2 nonce"))
 			return STF_INTERNAL_ERROR;
 		close_output_pbs(&nr_pbs);
 	}
 
-	if (!justship_v2KE(local_g, st->st_oakley.ta_dh, outpbs,
-			   ISAKMP_NEXT_v2NONE))
+	if (!emit_v2KE(local_g, st->st_oakley.ta_dh, outpbs))
 		return STF_INTERNAL_ERROR;
 
 	return STF_OK;

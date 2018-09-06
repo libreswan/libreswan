@@ -102,13 +102,11 @@ void ikev2_need_esp_or_ah_proposals(struct connection *c,
 
 bool ikev2_emit_sa_proposal(pb_stream *pbs,
 			    const struct ikev2_proposal *proposal,
-			    const chunk_t *local_spi,
-			    enum next_payload_types_ikev2 next_payload_type);
+			    const chunk_t *local_spi);
 
 bool ikev2_emit_sa_proposals(pb_stream *outs,
 			     const struct ikev2_proposals *proposals,
-			     const chunk_t *local_spi,
-			     enum next_payload_types_ikev2 next_payload_type);
+			     const chunk_t *local_spi);
 
 const struct oakley_group_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *proposals);
 
@@ -285,8 +283,7 @@ struct ikev2_ipseckey_dns;
 extern stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 					    bool expect_accepted);
 
-extern bool justship_v2KE(chunk_t *g, const struct oakley_group_desc *group,
-		pb_stream *outs, u_int8_t np);
+extern bool emit_v2KE(chunk_t *g, const struct oakley_group_desc *group, pb_stream *outs);
 
 extern bool is_msg_response(const struct msg_digest *md);
 extern bool is_msg_request(const struct msg_digest *md);

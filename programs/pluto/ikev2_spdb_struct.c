@@ -1383,14 +1383,12 @@ static bool emit_proposal(pb_stream *sa_pbs,
 
 bool ikev2_emit_sa_proposals(pb_stream *pbs,
 			     const struct ikev2_proposals *proposals,
-			     const chunk_t *local_spi,
-			     enum next_payload_types_ikev2 next_payload_type)
+			     const chunk_t *local_spi)
 {
 	DBG(DBG_CONTROL, DBG_log("Emitting ikev2_proposals ..."));
 
 	/* SA header out */
 	struct ikev2_sa sa = {
-		.isasa_np = next_payload_type,
 		.isasa_critical = build_ikev2_critical(false),
 	};
 	pb_stream sa_pbs;
@@ -1415,15 +1413,13 @@ bool ikev2_emit_sa_proposals(pb_stream *pbs,
 
 bool ikev2_emit_sa_proposal(pb_stream *pbs,
 			    const struct ikev2_proposal *proposal,
-			    const chunk_t *local_spi,
-			    enum next_payload_types_ikev2 next_payload_type)
+			    const chunk_t *local_spi)
 {
 	DBG(DBG_CONTROL, DBG_log("Emitting ikev2_proposal ..."));
 	passert(pbs != NULL);
 
 	/* SA header out */
 	struct ikev2_sa sa = {
-		.isasa_np = next_payload_type,
 		.isasa_critical = ISAKMP_PAYLOAD_NONCRITICAL,
 	};
 	pb_stream sa_pbs;
