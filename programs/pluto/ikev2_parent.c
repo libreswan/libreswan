@@ -951,7 +951,11 @@ bool emit_v2KE(chunk_t *g, const struct oakley_group_desc *group,
 	if (IMPAIR(SEND_ZERO_KE_PAYLOAD)) {
 		libreswan_log("IMPAIR: sending bogus KE (g^x) == 0 value to break DH calculations");
 		/* Only used to test sending/receiving bogus g^x */
-		if (!out_zero(g->len, &kepbs, "ikev2 impair g^x == 0"))
+		if (!out_zero(g->len, &kepbs, "ikev2 impair KE (g^x) == 0"))
+			return FALSE;
+	} else if (IMPAIR(SEND_EMPTY_KE_PAYLOAD)) {
+		libreswan_log("IMPAIR: sending an empty KE value");
+		if (!out_zero(0, &kepbs, "ikev2 impair KE (g^x) == empty"))
 			return FALSE;
 	} else {
 		if (!out_chunk(*g, &kepbs, "ikev2 g^x"))

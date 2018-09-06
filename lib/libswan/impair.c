@@ -76,6 +76,7 @@ static struct double_double impair = {
        S(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG, "impair-send-bogus-payload-flag", "causes pluto to set a RESERVED PAYLOAD flag to test ignoring/zeroing it"),
 
        S(IMPAIR_SEND_NO_KE_PAYLOAD, "impair-send-no-ke-payload", "causes pluto to omit sending the KE payload"),
+       S(IMPAIR_SEND_EMPTY_KE_PAYLOAD, "impair-send-empty-ke-payload", "causes pluto to send an empty KE payload"),
        S(IMPAIR_SEND_ZERO_KE_PAYLOAD, "impair-send-zero-ke-payload", "causes pluto to send a KE (g^x) payload that is zero, breaking DH calculation"),
 
        S(IMPAIR_SEND_KEY_SIZE_CHECK, "impair-send-key-size-check", "causes pluto to omit checking configured ESP key sizes for testing"),
