@@ -35,8 +35,8 @@ chunk_t chunk(void *ptr, size_t len);
 
 /* XXX: count can't have side effects. */
 #define alloc_chunk(COUNT, NAME) (chunk_t) {			\
-		.len = (COUNT),						\
-		.ptr = alloc_things(u_int8_t, (COUNT), NAME),		\
+		.len = (COUNT),					\
+		.ptr = alloc_things(uint8_t, (COUNT), NAME),	\
 	}
 
 #define setchunk(ch, addr, size) { (ch).ptr = (addr); (ch).len = (size); }
