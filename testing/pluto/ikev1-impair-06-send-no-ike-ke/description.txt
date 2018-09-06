@@ -1,0 +1,10 @@
+IKEv1: don't include the KE payload in the IKE (ISAKMP?) exchange
+
+Interop #1 omits KE from the request, which should promptly get
+rejected by the responder.
+
+Interop #2 includes KE, but then gets no KE back from the responder
+which should cause the session to be aborted or retried.
+
+However, since this is IKEv1, all that really matters is that this
+doesn't dump core.

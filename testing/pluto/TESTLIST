@@ -283,8 +283,8 @@ kvmplutotest	ikev2-unknown-payload-03-auth-sk		good
 kvmplutotest	ikev2-unknown-payload-03-auth-sk-critical	good
 kvmplutotest	ikev2-impair-04-corrupt-auth-sk-payload	good
 
-kvmplutotest	ikev2-impair-06-send-no-ike-ke			good
-
+kvmplutotest	ikev1-impair-06-send-no-ike-ke		wip
+kvmplutotest	ikev2-impair-06-send-no-ike-ke		good
 
 kvmplutotest	ikev1-x509-05-san-firstemail-match	good
 kvmplutotest	ikev1-x509-06-san-email-mismatch	good
