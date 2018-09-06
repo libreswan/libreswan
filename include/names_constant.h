@@ -14,7 +14,9 @@ extern enum_names netkey_sa_dir_names;
 extern enum_names sd_action_names;
 extern enum_names stf_status_names;
 extern enum_names ikev2_asym_auth_name;
+
 extern const enum_names debug_names;
+extern const enum_names debug_help;
 extern const struct lmod_info debug_lmod_info;
 
 extern const enum_names impair_names;

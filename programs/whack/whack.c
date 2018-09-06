@@ -2097,6 +2097,11 @@ int main(int argc, char **argv)
 							lswlogs(buf, "  ");
 						}
 						lswlog_enum_short(buf, &debug_names, e);
+						const char *help = enum_name(&debug_help, e);
+						if (help != NULL) {
+							lswlogs(buf, ": ");
+							lswlogs(buf, help);
+						}
 					}
 				}
 				exit(1);

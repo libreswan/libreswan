@@ -296,31 +296,32 @@ typedef enum {
 
 enum {
 	DBG_floor_IX = 0,
-	DBG_RAW_IX = DBG_floor_IX,		/* raw packet I/O */
-	DBG_PARSING_IX,		/* show decoding of messages */
-	DBG_EMITTING_IX,	/* show encoding of messages */
-	DBG_CONTROL_IX,		/* control flow within Pluto */
-	DBG_LIFECYCLE_IX,	/* SA lifecycle */
-	DBG_KERNEL_IX,		/* messages with the kernel */
-	DBG_DNS_IX,		/* DNS activity */
-	DBG_OPPO_IX,		/* opportunism */
-	DBG_CONTROLMORE_IX,	/* more detailed debugging */
 
-	DBG_NATT_IX,		/* debugging of NAT-traversal */
-	DBG_X509_IX,		/* X.509/pkix verify, cert retrival */
-	DBG_DPD_IX,		/* DPD items */
-	DBG_XAUTH_IX,		/* XAUTH aka PAM */
-	DBG_RETRANSMITS_IX,	/* Retransmitting packets */
-	DBG_OPPOINFO_IX,	/* log various informational things about oppo/%trap-keying */
+	DBG_RAW_IX = DBG_floor_IX,
+	DBG_PARSING_IX,
+	DBG_EMITTING_IX,
+	DBG_CONTROL_IX,
+	DBG_LIFECYCLE_IX,
+	DBG_KERNEL_IX,
+	DBG_DNS_IX,
+	DBG_OPPO_IX,
+	DBG_CONTROLMORE_IX,
+
+	DBG_NATT_IX,
+	DBG_X509_IX,
+	DBG_DPD_IX,
+	DBG_XAUTH_IX,
+	DBG_RETRANSMITS_IX,
+	DBG_OPPOINFO_IX,
 
 	/* below are excluded from debug=all */
-	DBG_CRYPT_IX,		/* high-level encryption/decryption of messages */
-	DBG_CRYPT_LOW_IX,	/* low-level encryption/decryption implementation details */
-	DBG_PRIVATE_IX,		/* displays private information: DANGER! */
-	DBG_PROPOSAL_PARSER_IX,	/* parsing ike=... et.al. */
+	DBG_CRYPT_IX,
+	DBG_CRYPT_LOW_IX,
+	DBG_PRIVATE_IX,
+	DBG_PROPOSAL_PARSER_IX,
 
-	DBG_WHACKWATCH_IX,	/* never let WHACK go */
-	DBG_ADD_PREFIX_IX,	/* add the log+state prefix to debug lines */
+	DBG_WHACKWATCH_IX,
+	DBG_ADD_PREFIX_IX,
 
 	DBG_roof_IX,		/* first unassigned DBG is assigned to IMPAIR! */
 };
@@ -369,6 +370,7 @@ enum {
 
 enum {
 	IMPAIR_floor_IX = DBG_roof_IX,
+
 	IMPAIR_BUST_MI2_IX = IMPAIR_floor_IX,
 	IMPAIR_BUST_MR2_IX,
 	IMPAIR_DROP_I2_IX,
