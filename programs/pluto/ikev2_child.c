@@ -1161,26 +1161,21 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
 		/* send NONCE */
 		struct ikev2_generic in = {
-			.isag_np = (md->chain[ISAKMP_NEXT_v2KE] != NULL) ?
-				ISAKMP_NEXT_v2KE: ISAKMP_NEXT_v2TSi,
-			.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL,
+			.isag_critical = build_ikev2_critical(false),
 		};
 		pb_stream pb_nr;
-
-		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
-			libreswan_log(" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
-			in.isag_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
-		}
 		if (!out_struct(&in, &ikev2_nonce_desc, outpbs, &pb_nr) ||
 		    !out_chunk(cst->st_nr, &pb_nr, "IKEv2 nonce"))
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&pb_nr);
 
-		if (in.isag_np == ISAKMP_NEXT_v2KE)  {
-			if (!justship_v2KE(&cst->st_gr,
-						cst->st_oakley.ta_dh, outpbs,
-						ISAKMP_NEXT_v2TSi))
+		/*
+		 * XXX: shoudn't this be conditional on the local end
+		 * having computed KE and not what the remote sent?
+		 */
+		if (md->chain[ISAKMP_NEXT_v2KE] != NULL)  {
+			if (!emit_v2KE(&cst->st_gr, cst->st_oakley.ta_dh, outpbs))
 				return STF_INTERNAL_ERROR;
 		}
 	}

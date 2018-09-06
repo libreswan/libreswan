@@ -931,13 +931,17 @@ void ikev2_parent_outI1(int whack_sock,
  * package up the calculated KE value, and emit it as a KE payload.
  * used by IKEv2: parent, child (PFS)
  */
-bool justship_v2KE(chunk_t *g, const struct oakley_group_desc *group,
-			  pb_stream *outs, u_int8_t np)
+bool emit_v2KE(chunk_t *g, const struct oakley_group_desc *group,
+	       pb_stream *outs)
 {
+	if (IMPAIR(SEND_NO_KE_PAYLOAD)) {
+		libreswan_log("IMPAIR: omitting KE payload");
+		return true;
+	}
+
 	pb_stream kepbs;
 
 	struct ikev2_ke v2ke = {
-		.isak_np = np,
 		.isak_group = group->common.id[IKEv2_ALG_ID],
 	};
 
@@ -1069,14 +1073,9 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 
 	/* ??? from here on, this looks a lot like the end of ikev2_parent_inI1outR1_tail */
 
-	if (IMPAIR(SEND_NO_KE_PAYLOAD)) {
-		libreswan_log("IMPAIR: omitting KE payload");
-	} else {
-		/* send KE */
-		if (!justship_v2KE(&st->st_gi, st->st_oakley.ta_dh,
-				   &rbody, ISAKMP_NEXT_v2Ni))
-			return STF_INTERNAL_ERROR;
-	}
+	/* send KE */
+	if (!emit_v2KE(&st->st_gi, st->st_oakley.ta_dh, &rbody))
+		return STF_INTERNAL_ERROR;
 
 	/* send NONCE */
 	{
@@ -1648,9 +1647,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	 */
 	pexpect(st->st_oakley.ta_dh == r->pcr_d.kn.group);
 	unpack_KE_from_helper(st, r, &st->st_gr);
-	if (!justship_v2KE(&st->st_gr,
-			   r->pcr_d.kn.group,
-			   &rbody, ISAKMP_NEXT_v2Nr)) {
+	if (!emit_v2KE(&st->st_gr, r->pcr_d.kn.group, &rbody)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -5274,30 +5271,18 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 
 		struct ikev2_generic in = {
-			.isag_np = (cst->st_pfs_group != NULL) ?
-					ISAKMP_NEXT_v2KE :
-				rekey_spi.len > 0 ?
-					ISAKMP_NEXT_v2N :
-					ISAKMP_NEXT_v2TSi,
-			.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL,
+			.isag_critical = build_ikev2_critical(false),
 		};
 		pb_stream pb_nr;
-
-		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
-			libreswan_log(" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
-			in.isag_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
-		}
 		if (!out_struct(&in, &ikev2_nonce_desc, outpbs, &pb_nr) ||
 		    !out_chunk(cst->st_ni, &pb_nr, "IKEv2 nonce"))
 			return STF_INTERNAL_ERROR;
 		close_output_pbs(&pb_nr);
 
-		if (in.isag_np == ISAKMP_NEXT_v2KE)  {
-			int np  = rekey_spi.len > 0 ? ISAKMP_NEXT_v2N :
-				ISAKMP_NEXT_v2TSi;
-			if (!justship_v2KE(&cst->st_gi,
-						cst->st_pfs_group, outpbs, np))
+		if (cst->st_pfs_group != NULL)  {
+			if (!emit_v2KE(&cst->st_gi, cst->st_pfs_group, outpbs)) {
 				return STF_INTERNAL_ERROR;
+			}
 		}
 
 		if (rekey_spi.len > 0) {
@@ -5387,22 +5372,16 @@ static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
 	/* send NONCE */
 	{
 		struct ikev2_generic in = {
-			.isag_np = ISAKMP_NEXT_v2KE,
+			.isag_critical = build_ikev2_critical(false),
 		};
 		pb_stream nr_pbs;
-
-		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
-			libreswan_log(" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
-			in.isag_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
-		}
 		if (!out_struct(&in, &ikev2_nonce_desc, outpbs, &nr_pbs) ||
 		    !out_chunk(local_nonce, &nr_pbs, "IKEv2 nonce"))
 			return STF_INTERNAL_ERROR;
 		close_output_pbs(&nr_pbs);
 	}
 
-	if (!justship_v2KE(local_g, st->st_oakley.ta_dh, outpbs,
-			   ISAKMP_NEXT_v2NONE))
+	if (!emit_v2KE(local_g, st->st_oakley.ta_dh, outpbs))
 		return STF_INTERNAL_ERROR;
 
 	return STF_OK;
