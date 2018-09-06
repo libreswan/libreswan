@@ -829,10 +829,10 @@ stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
 bool ikev1_justship_KE(chunk_t *g,
 		pb_stream *outs, u_int8_t np)
 {
-	if (DBGP(IMPAIR_SEND_ZERO_GX)) {
+	if (IMPAIR(SEND_ZERO_KE_PAYLOAD)) {
 		pb_stream z;
 
-		libreswan_log("sending bogus g^x == 0 value to break DH calculations because impair-send-zero-gx was set");
+		libreswan_log("IMPAIR: sending bogus KE (g^x) == 0 value to break DH calculations");
 		/* Only used to test sending/receiving bogus g^x */
 		return ikev1_out_generic(np, &isakmp_keyex_desc, outs, &z) &&
 			out_zero(g->len, &z, "fake g^x") &&

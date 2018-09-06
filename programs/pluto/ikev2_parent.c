@@ -944,8 +944,8 @@ bool justship_v2KE(chunk_t *g, const struct oakley_group_desc *group,
 	if (!out_struct(&v2ke, &ikev2_ke_desc, outs, &kepbs))
 		return FALSE;
 
-	if (DBGP(IMPAIR_SEND_ZERO_GX)) {
-		libreswan_log("sending bogus g^x == 0 value to break DH calculations because impair-send-zero-gx was set");
+	if (IMPAIR(SEND_ZERO_KE_PAYLOAD)) {
+		libreswan_log("IMPAIR: sending bogus KE (g^x) == 0 value to break DH calculations");
 		/* Only used to test sending/receiving bogus g^x */
 		if (!out_zero(g->len, &kepbs, "ikev2 impair g^x == 0"))
 			return FALSE;
@@ -1051,7 +1051,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 		 */
 		u_char *sa_start = rbody.cur;
 		enum next_payload_types_ikev2 np =
-			IMPAIR(SEND_IKEv2_KE) ? ISAKMP_NEXT_v2Ni : ISAKMP_NEXT_v2KE;
+			IMPAIR(SEND_NO_KE_PAYLOAD) ? ISAKMP_NEXT_v2Ni : ISAKMP_NEXT_v2KE;
 		bool ret = ikev2_emit_sa_proposals(&rbody,
 						   c->ike_proposals,
 						   (chunk_t*)NULL, np);
@@ -1071,8 +1071,8 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 
 	/* ??? from here on, this looks a lot like the end of ikev2_parent_inI1outR1_tail */
 
-	if (IMPAIR(SEND_IKEv2_KE)) {
-		libreswan_log("SKIPPED sending KE payload because impair-send-ikev2-ke was set");
+	if (IMPAIR(SEND_NO_KE_PAYLOAD)) {
+		libreswan_log("IMPAIR: omitting KE payload");
 	} else {
 		/* send KE */
 		if (!justship_v2KE(&st->st_gi, st->st_oakley.ta_dh,
@@ -1620,7 +1620,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	/* start of SA out */
 	{
 		enum next_payload_types_ikev2 next_payload_type;
-		if (!DBGP(IMPAIR_SEND_IKEv2_KE)) {
+		if (!DBGP(IMPAIR_SEND_NO_KE_PAYLOAD)) {
 			/* normal case */
 			next_payload_type = ISAKMP_NEXT_v2KE;
 		} else {
