@@ -1050,11 +1050,9 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 		 * proposal.  Hence the NULL SPIs.
 		 */
 		u_char *sa_start = rbody.cur;
-		enum next_payload_types_ikev2 np =
-			IMPAIR(SEND_NO_KE_PAYLOAD) ? ISAKMP_NEXT_v2Ni : ISAKMP_NEXT_v2KE;
 		bool ret = ikev2_emit_sa_proposals(&rbody,
 						   c->ike_proposals,
-						   (chunk_t*)NULL, np);
+						   (chunk_t*)NULL);
 		if (!ret) {
 			libreswan_log("outsa fail");
 			reset_cur_state();
@@ -1619,23 +1617,13 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 
 	/* start of SA out */
 	{
-		enum next_payload_types_ikev2 next_payload_type;
-		if (!DBGP(IMPAIR_SEND_NO_KE_PAYLOAD)) {
-			/* normal case */
-			next_payload_type = ISAKMP_NEXT_v2KE;
-		} else {
-			/* We are faking not sending a KE, we'll just call it a Notify */
-			next_payload_type = ISAKMP_NEXT_v2N;
-		}
-
 		/*
 		 * Since this is the initial IKE exchange, the SPI is
 		 * emitted as part of the packet header and not as
 		 * part of the proposal.  Hence the NULL SPI.
 		 */
 		passert(st->st_accepted_ike_proposal != NULL);
-		if (!ikev2_emit_sa_proposal(&rbody, st->st_accepted_ike_proposal,
-					    NULL, next_payload_type)) {
+		if (!ikev2_emit_sa_proposal(&rbody, st->st_accepted_ike_proposal, NULL)) {
 			DBG(DBG_CONTROL, DBG_log("problem emitting accepted proposal"));
 			return STF_INTERNAL_ERROR;
 		}
@@ -3593,7 +3581,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 					       &unset_group);
 
 		if (!ikev2_emit_sa_proposals(&e_pbs_cipher, cc->esp_or_ah_proposals,
-					&local_spi, ISAKMP_NEXT_v2TSi))
+					     &local_spi))
 			return STF_INTERNAL_ERROR;
 
 		cst->st_ts_this = ikev2_end_to_ts(&cc->spd.this);
@@ -5263,9 +5251,6 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 	/* child connection */
 	struct state *cst = md->st;
 	struct connection *cc = cst->st_connection;
-	enum next_payload_types_ikev2 np = isa_xchg ==
-		ISAKMP_v2_CREATE_CHILD_SA ? ISAKMP_NEXT_v2Ni :
-		ISAKMP_NEXT_v2TSi;
 	chunk_t rekey_spi = empty_chunk;
 
 	send_use_transport = (cc->policy & POLICY_TUNNEL) == LEMPTY;
@@ -5279,7 +5264,7 @@ static stf_status ikev2_child_add_ipsec_payloads(struct msg_digest *md,
 			sizeof(proto_info->our_spi));
 
 	if (!ikev2_emit_sa_proposals(outpbs, cc->esp_or_ah_proposals,
-			&local_spi, np))
+				     &local_spi))
 		return STF_INTERNAL_ERROR;
 
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
@@ -5373,7 +5358,7 @@ static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
 
 		/* send selected v2 IKE SA */
 		if (!ikev2_emit_sa_proposal(outpbs, st->st_accepted_ike_proposal,
-					&local_spi, ISAKMP_NEXT_v2Ni)) {
+					    &local_spi)) {
 			DBG(DBG_CONTROL, DBG_log("problem emitting accepted ike proposal in CREATE_CHILD_SA"));
 			return STF_INTERNAL_ERROR;
 		}
@@ -5389,10 +5374,7 @@ static stf_status ikev2_child_add_ike_payloads(struct msg_digest *md,
 		ikev2_need_ike_proposals(c, "IKE SA initiating rekey");
 
 		/* send v2 IKE SAs*/
-		if (!ikev2_emit_sa_proposals(outpbs,
-					c->ike_proposals,
-					&local_spi,
-					ISAKMP_NEXT_v2Ni))  {
+		if (!ikev2_emit_sa_proposals(outpbs, c->ike_proposals, &local_spi))  {
 			libreswan_log("outsa fail");
 			DBG(DBG_CONTROL, DBG_log("problem emitting connection ike proposals in CREATE_CHILD_SA"));
 			return STF_INTERNAL_ERROR;

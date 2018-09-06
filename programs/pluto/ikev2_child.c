@@ -1139,11 +1139,6 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 	/* start of SA out */
 	{
-		enum next_payload_types_ikev2 next_payload_type =
-			(isa_xchg == ISAKMP_v2_CREATE_CHILD_SA
-			 ? ISAKMP_NEXT_v2Nr
-			 : ISAKMP_NEXT_v2TSi);
-
 		/* ??? this code won't support AH + ESP */
 		struct ipsec_proto_info *proto_info
 			= ikev2_child_sa_proto_info(cst, c->policy);
@@ -1157,7 +1152,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 				sizeof(proto_info->our_spi));
 		if (!ikev2_emit_sa_proposal(outpbs,
 					cst->st_accepted_esp_or_ah_proposal,
-					&local_spi, next_payload_type)) {
+					&local_spi)) {
 			DBG(DBG_CONTROL, DBG_log("problem emitting accepted proposal (%d)", ret));
 			return STF_INTERNAL_ERROR;
 		}
