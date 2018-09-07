@@ -169,7 +169,7 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 	pstats_ike_out_bytes += len;
 
 	/* Send a duplicate packet when this impair is enabled - used for testing */
-	if (DBGP(IMPAIR_JACOB_TWO_TWO)) {
+	if (IMPAIR(JACOB_TWO_TWO)) {
 		/* sleep for half a second, and second another packet */
 		usleep(500000);
 		ipstr_buf b;

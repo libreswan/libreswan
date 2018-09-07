@@ -760,7 +760,7 @@ void show_fips_status(void)
 #else
 		"disabled [support not compiled in]" :
 #endif
-		DBGP(IMPAIR_FORCE_FIPS) ? "enabled [forced]" : "enabled");
+		IMPAIR(FORCE_FIPS) ? "enabled [forced]" : "enabled");
 }
 
 static void huphandler_cb(int unused UNUSED, const short event UNUSED, void *arg UNUSED)

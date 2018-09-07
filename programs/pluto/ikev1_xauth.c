@@ -528,7 +528,7 @@ static stf_status modecfg_send_set(struct state *st)
 			.isa_msgid = st->st_msgid_phase15,
 		};
 
-		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+		if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
 
@@ -625,7 +625,7 @@ stf_status xauth_send_request(struct state *st)
 			.isa_msgid = st->st_msgid_phase15,
 		};
 
-		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+		if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
 		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
@@ -678,7 +678,7 @@ stf_status xauth_send_request(struct state *st)
 		return STF_INTERNAL_ERROR;
 
 	/* Transmit */
-	if (!DBGP(IMPAIR_SEND_NO_XAUTH_R0)) {
+	if (!IMPAIR(SEND_NO_XAUTH_R0)) {
 		if (p_state == STATE_AGGR_R2) {
 			record_and_send_v1_ike_msg(st, &reply, "XAUTH: req");
 		} else {
@@ -738,7 +738,7 @@ stf_status modecfg_send_request(struct state *st)
 			.isa_msgid = st->st_msgid_phase15,
 		};
 
-		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+		if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
 
@@ -837,7 +837,7 @@ static stf_status xauth_send_status(struct state *st, int status)
 			.isa_msgid = st->st_msgid_phase15,
 		};
 
-		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+		if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
 		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
@@ -2251,7 +2251,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 
 	DBG(DBG_CONTROLMORE, DBG_log("arrived in xauth_inI0"));
 
-	if (DBGP(IMPAIR_DROP_XAUTH_R0)) {
+	if (IMPAIR(DROP_XAUTH_R0)) {
 		libreswan_log("IMPAIR: drop XAUTH R0 message ");
 		return STF_FAIL;
 	}

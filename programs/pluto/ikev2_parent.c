@@ -996,7 +996,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 	if (c->fake_strongswan)
 		vids++;
 
-	if (DBGP(IMPAIR_SEND_BOGUS_DCOOKIE)) {
+	if (IMPAIR(SEND_BOGUS_DCOOKIE)) {
 		/* add or mangle a dcookie so what we will send is bogus */
 		DBG_log("Mangling dcookie because --impair-send-bogus-dcookie is set");
 		freeanychunk(st->st_dcookie);
@@ -1020,7 +1020,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 		/* R-cookie left as zero */
 
 		/* add original initiator flag - version flag could be set */
-		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+		if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
 
@@ -1107,7 +1107,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 	}
 
 	/* Send SIGNATURE_HASH_ALGORITHMS Notify payload */
-	if (!DBGP(IMPAIR_OMIT_HASH_NOTIFY_REQUEST)) {
+	if (!IMPAIR(OMIT_HASH_NOTIFY_REQUEST)) {
 		if ((c->policy & POLICY_RSASIG) && (c->sighash_policy != POL_SIGHASH_NONE)) {
 			if (!ikev2_out_hash_v2n(ISAKMP_NEXT_v2N, &rbody, c->sighash_policy))
 				return STF_INTERNAL_ERROR;
@@ -1492,7 +1492,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 			break;
 
 		case v2N_SIGNATURE_HASH_ALGORITHMS:
-			if (!DBGP(IMPAIR_IGNORE_HASH_NOTIFY_REQUEST)) {
+			if (!IMPAIR(IGNORE_HASH_NOTIFY_REQUEST)) {
 				if (st->st_seen_hashnotify) {
 					DBG(DBG_CONTROL,
 					    DBG_log("Ignoring duplicate Signature Hash Notify payload"));
@@ -1605,7 +1605,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 
 		/* set msg responder flag - clear other flags */
 		hdr.isa_flags = ISAKMP_FLAGS_v2_MSG_R;
-		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+		if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
 
@@ -1689,7 +1689,7 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 	 }
 
 	/* Send SIGNATURE_HASH_ALGORITHMS notification only if we received one */
-	if (!DBGP(IMPAIR_IGNORE_HASH_NOTIFY_REQUEST)) {
+	if (!IMPAIR(IGNORE_HASH_NOTIFY_REQUEST)) {
 		if (st->st_seen_hashnotify && (c->policy & POLICY_RSASIG) && (c->sighash_policy != POL_SIGHASH_NONE)) {
 			if (!ikev2_out_hash_v2n(ISAKMP_NEXT_v2N, &rbody, c->sighash_policy))
 				return STF_INTERNAL_ERROR;
@@ -2045,7 +2045,7 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 	struct payload_digest *ntfy;
 
 	/* for testing only */
-	if (DBGP(IMPAIR_SEND_NO_IKEV2_AUTH)) {
+	if (IMPAIR(SEND_NO_IKEV2_AUTH)) {
 		libreswan_log(
 			"IMPAIR_SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
 		return STF_IGNORE;
@@ -2096,7 +2096,7 @@ stf_status ikev2_parent_inR1outI2(struct state *st, struct msg_digest *md)
 			break;
 
 		case v2N_SIGNATURE_HASH_ALGORITHMS:
-			if (!DBGP(IMPAIR_IGNORE_HASH_NOTIFY_RESPONSE)) {
+			if (!IMPAIR(IGNORE_HASH_NOTIFY_RESPONSE)) {
 				st->st_seen_hashnotify = TRUE;
 				if (!negotiate_hash_algo_from_notification(ntfy, st))
 					return STF_FATAL;
@@ -3299,7 +3299,7 @@ static stf_status ikev2_parent_inR1outI2_tail(struct state *pst, struct msg_dige
 	memcpy(hdr.isa_icookie, cst->st_icookie, COOKIE_SIZE);
 	memcpy(hdr.isa_rcookie, cst->st_rcookie, COOKIE_SIZE);
 
-	if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+	if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
 		hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 	}
 
@@ -3768,7 +3768,7 @@ stf_status ikev2_ike_sa_process_auth_request_no_skeyid(struct state *st,
 						       struct msg_digest *md UNUSED)
 {
 	/* for testing only */
-	if (DBGP(IMPAIR_SEND_NO_IKEV2_AUTH)) {
+	if (IMPAIR(SEND_NO_IKEV2_AUTH)) {
 		libreswan_log(
 			"IMPAIR_SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
 		return STF_IGNORE;
@@ -4158,7 +4158,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct state *st,
 
 			/* set msg responder flag - clear others */
 			hdr.isa_flags = ISAKMP_FLAGS_v2_MSG_R;
-			if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+			if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG)) {
 				hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 			}
 
@@ -5657,7 +5657,7 @@ static stf_status ikev2_child_out_tail(struct msg_digest *md)
 			hdr.isa_flags |= ISAKMP_FLAGS_v2_IKE_I;
 		}
 
-		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG))
+		if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG))
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 
 		if (!IS_CHILD_SA_RESPONDER(st)) {
@@ -6266,7 +6266,7 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 			memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 			if (ike->sa.st_sa_role == SA_INITIATOR)
 				hdr.isa_flags |= ISAKMP_FLAGS_v2_IKE_I;
-			if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG))
+			if (IMPAIR(SEND_BOGUS_ISAKMP_FLAG))
 				hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 
 			if (!out_struct(&hdr, &isakmp_hdr_desc,

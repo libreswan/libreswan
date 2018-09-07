@@ -1290,10 +1290,10 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 			 */
 			if (type == IKEv2_TRANS_TYPE_INTEG &&
 			    transform->id == IKEv2_AUTH_NONE) {
-				if (DBGP(IMPAIR_IKEv2_INCLUDE_INTEG_NONE)) {
+				if (IMPAIR(IKEv2_INCLUDE_INTEG_NONE)) {
 					libreswan_log("IMPAIR: proposal %d transform INTEG=NONE included when %s",
 						      propnum, what);
-				} else if (DBGP(IMPAIR_IKEv2_EXCLUDE_INTEG_NONE)) {
+				} else if (IMPAIR(IKEv2_EXCLUDE_INTEG_NONE)) {
 					libreswan_log("IMPAIR: proposal %d transform INTEG=NONE excluded when %s",
 						      propnum, what);
 					continue;
@@ -1316,10 +1316,10 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 				DBGF(DBG_CONTROL, "discarding DH=NONE");
 				continue;
 #if 0
-				if (DBGP(IMPAIR_IKEv2_INCLUDE_DH_NONE)) {
+				if (IMPAIR(IKEv2_INCLUDE_DH_NONE)) {
 					libreswan_log("IMPAIR: proposal %d transform DH=NONE included when %s",
 						      propnum, what);
-				} else if (DBGP(IMPAIR_IKEv2_EXCLUDE_DH_NONE)) {
+				} else if (IMPAIR(IKEv2_EXCLUDE_DH_NONE)) {
 					libreswan_log("IMPAIR: proposal %d transform DH=NONE excluded when %s",
 						      propnum, what);
 					continue;

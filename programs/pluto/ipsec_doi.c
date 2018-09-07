@@ -503,7 +503,7 @@ void initialize_new_state(struct state *st,
 
 void send_delete(struct state *st)
 {
-	if (DBGP(IMPAIR_SEND_NO_DELETE)) {
+	if (IMPAIR(SEND_NO_DELETE)) {
 		DBGF(DBG_CONTROL, "IMPAIR: impair-send-no-delete set - not sending Delete/Notify");
 	} else {
 		DBGF(DBG_CONTROL, "#%lu send %s delete notification for %s",
