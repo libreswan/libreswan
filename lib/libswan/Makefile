@@ -109,6 +109,7 @@ OBJS += lswlog_nss_error.o
 OBJS += lswlog_nss_ckm.o
 OBJS += lswlog_nss_ckf.o
 OBJS += lswlog_nss_cka.o
+OBJS += lswlog_nss_secitem.o
 OBJS += lswlog_source_line.o
 OBJS += lswlog_sanitized.o
 OBJS += lswlog_errno.o

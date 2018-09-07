@@ -60,5 +60,6 @@ size_t lswlog_nss_error(struct lswlog *log);
 size_t lswlog_nss_ckm(struct lswlog *buf, CK_MECHANISM_TYPE mechanism);
 size_t lswlog_nss_ckf(struct lswlog *buf, CK_FLAGS flags);
 size_t lswlog_nss_cka(struct lswlog *buf, CK_ATTRIBUTE_TYPE attribute);
+size_t lswlog_nss_secitem(struct lswlog *buf, const SECItem *secitem);
 
 #endif
