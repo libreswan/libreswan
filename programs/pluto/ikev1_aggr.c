@@ -537,7 +537,7 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	 * when the IP address would not be meaningful (i.e. Road
 	 * Warrior).  So our first task is to unravel the ID payload.
 	 */
-	if (cur_debugging & IMPAIR_DROP_I2) {
+	if (IMPAIR(DROP_I2)) {
 		DBG(DBG_CONTROL, DBG_log("dropping Aggressive Mode I2 packet as per impair"));
 		return STF_IGNORE;
 	}

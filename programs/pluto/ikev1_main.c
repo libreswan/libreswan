@@ -791,7 +791,7 @@ static void main_inR1_outI2_continue(struct state *st,
 
 stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
 {
-	if (cur_debugging & IMPAIR_DROP_I2) {
+	if (IMPAIR(DROP_I2)) {
 		DBG(DBG_CONTROL, DBG_log("dropping Main Mode I2 packet as per impair"));
 		return STF_IGNORE;
 	}
@@ -883,12 +883,12 @@ static stf_status main_inR1_outI2_tail(struct state *st, struct msg_digest *md,
 
 	/* Ni out */
 	if (!ikev1_ship_nonce(&st->st_ni, r, &rbody,
-			(cur_debugging & IMPAIR_BUST_MI2) ?
+			(IMPAIR(BUST_MI2)) ?
 				ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE,
 			"Ni"))
 		return STF_INTERNAL_ERROR;
 
-	if (cur_debugging & IMPAIR_BUST_MI2) {
+	if (IMPAIR(BUST_MI2)) {
 		/*
 		 * generate a pointless large VID payload to push message
 		 * over MTU
@@ -1050,7 +1050,7 @@ stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *m
 		int next_payload;
 		next_payload = ISAKMP_NEXT_NONE;
 
-		if (cur_debugging & IMPAIR_BUST_MR2)
+		if (IMPAIR(BUST_MR2))
 			next_payload = ISAKMP_NEXT_VID;
 		if (send_cr)
 			next_payload = ISAKMP_NEXT_CR;
@@ -1060,7 +1060,7 @@ stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *m
 					"Nr"))
 			return STF_INTERNAL_ERROR;
 
-		if (cur_debugging & IMPAIR_BUST_MR2) {
+		if (IMPAIR(BUST_MR2)) {
 			/*
 			 * generate a pointless large VID payload to push
 			 * message over MTU
