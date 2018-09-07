@@ -1,3 +1,0 @@
-IKEv2 test where west is impaired to send a g^x ==0 DH compontent
-
-west is impaired to send a bogus g^x

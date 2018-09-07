@@ -23,6 +23,15 @@ east #
 |    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
 "westnet-eastnet-ipv4-psk-slow" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
 | processing informational INVALID_KEY_INFORMATION (17)
+|    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
+"westnet-eastnet-ipv4-psk-slow" #2: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
+| processing informational INVALID_KEY_INFORMATION (17)
+|    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
+"westnet-eastnet-ipv4-psk-slow" #2: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
+| processing informational INVALID_KEY_INFORMATION (17)
+|    Notify Message Type: INVALID_KEY_INFORMATION (0x11)
+"westnet-eastnet-ipv4-psk-slow" #2: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
+| processing informational INVALID_KEY_INFORMATION (17)
 east #
 east #
  ../bin/check-for-core.sh

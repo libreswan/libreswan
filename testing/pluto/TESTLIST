@@ -135,8 +135,6 @@ kvmplutotest	ikev2-32-nat-rw-rekey			good
 kvmplutotest	ikev2-35-mismatched-child		good
 kvmplutotest	ikev2-41-rw-replace			good
 kvmplutotest	ikev2-42-rw-replace-responder		good
-kvmplutotest	ikev2-45-impair-gx-01			good
-kvmplutotest	ikev2-45-impair-gx-02			good
 kvmplutotest	ikev1-impair-01-replay-duplicates	good
 kvmplutotest	ikev2-46-basic-psk-netkey		good
 kvmplutotest	ikev2-47-priority			good
@@ -273,8 +271,6 @@ kvmplutotest	ikev2-invalid-ke-01-invalid-modp	good
 kvmplutotest	ikev2-invalid-ke-02-wrong-modp		good
 kvmplutotest	ikev2-invalid-ke-03-default-initiator	good
 kvmplutotest	ikev2-invalid-ke-04-default-responder	good
-kvmplutotest	ikev1-impair-gx-01			good
-kvmplutotest	ikev1-impair-gx-02			good
 kvmplutotest	ikev2-unknown-payload-01-sa-init		good
 kvmplutotest	ikev2-unknown-payload-01-sa-init-critical	good
 kvmplutotest	ikev2-unknown-payload-02-auth			good
@@ -283,8 +279,12 @@ kvmplutotest	ikev2-unknown-payload-03-auth-sk		good
 kvmplutotest	ikev2-unknown-payload-03-auth-sk-critical	good
 kvmplutotest	ikev2-impair-04-corrupt-auth-sk-payload	good
 
+kvmplutotest	ikev1-impair-05-send-zero-ike-ke	good
+kvmplutotest	ikev2-impair-05-send-zero-ike-ke	good
+
 kvmplutotest	ikev1-impair-06-send-no-ike-ke		wip
 kvmplutotest	ikev2-impair-06-send-no-ike-ke		good
+
 
 kvmplutotest	ikev1-x509-05-san-firstemail-match	good
 kvmplutotest	ikev1-x509-06-san-email-mismatch	good
