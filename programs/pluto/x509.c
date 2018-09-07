@@ -333,18 +333,20 @@ generalName_t *gndp_from_nss_cert(CERTCertificate *cert)
 
 	if (CERT_FindCertExtension(cert, SEC_OID_X509_CRL_DIST_POINTS,
 						       &crlval) != SECSuccess) {
-		DBG(DBG_X509,
-		    DBG_log("NSS error finding CRL distribution points: %s",
-			    nss_err_str(PORT_GetError())));
+		LSWDBGP(DBG_X509, buf) {
+			lswlogs(buf, "NSS: finding CRL distribution points using CERT_FindCertExtension() failed: ");
+			lswlog_nss_error(buf);
+		}
 		return NULL;
 	}
 
 	CERTCrlDistributionPoints *dps = CERT_DecodeCRLDistributionPoints(cert->arena,
 						    &crlval);
 	if (dps == NULL) {
-		DBG(DBG_X509,
-		    DBG_log("NSS error decoding CRL distribution points: %s",
-			    nss_err_str(PORT_GetError())));
+		LSWDBGP(DBG_X509, buf) {
+			lswlogs(buf, "NSS: decoding CRL distribution points using CERT_DecodeCRLDistributionPoints() failed: ");
+			lswlog_nss_error(buf);
+		}
 		return NULL;
 	}
 
@@ -1206,9 +1208,10 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 			}
 			freeanychunk(cr_full_hash);
 		} else {
-			DBG(DBG_X509, DBG_log("NSS error locating CA cert \'%s\' for CERTREQ: %s",
-						cbuf,
-						nss_err_str(PORT_GetError())));
+			LSWDBGP(DBG_X509, buf) {
+				lswlogf(buf, "NSS: locating CA cert \'%s\' for CERTREQ using CERT_FindCertByName() failed: ", cbuf);
+				lswlog_nss_error(buf);
+			}
 		}
 	}
 	/*

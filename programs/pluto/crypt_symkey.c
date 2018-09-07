@@ -340,7 +340,10 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey)
 		release_symkey(name, "slot-key", &slot_key);
 		return empty_chunk;
 	}
-	DBG(DBG_CRYPT_LOW, DBG_dump("wrapper:", wrapped_key.data, wrapped_key.len));
+	LSWDBGP(DBG_CRYPT_LOW, buf) {
+		lswlogs(buf, "wrapper: ");
+		lswlog_nss_secitem(buf, &wrapped_key);
+	}
 
 	void *bytes = alloc_bytes(wrapped_key.len, name);
 	unsigned int out_len = 0;

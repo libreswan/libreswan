@@ -50,9 +50,10 @@ static bool prepare_nss_import(PK11SlotInfo **slot)
 	 */
 	*slot = PK11_GetInternalKeySlot();
 	if (*slot == NULL) {
-		    DBG(DBG_X509,
-			DBG_log("NSS PK11_GetInternalKeySlot error: %s",
-				nss_err_str(PORT_GetError())));
+		LSWDBGP(DBG_X509, buf) {
+			lswlogs(buf, "NSS: cert import calling PK11_GetInternalKeySlot() failed: ");
+			lswlog_nss_error(buf);
+		}
 		return FALSE;
 	}
 	return TRUE;
@@ -417,8 +418,10 @@ static bool import_der_cert(CERTCertDBHandle *handle,
 	SECStatus rv = CERT_ImportCerts(handle, 0, 1, derlist,
 					&chain, PR_FALSE, PR_FALSE, NULL);
 	if (rv != SECSuccess || *chain == NULL) {
-		DBG(DBG_X509, DBG_log("NSS error decoding certs: %s",
-				      nss_err_str(PORT_GetError())));
+		LSWDBGP(DBG_X509, buf) {
+			lswlogs(buf, "NSS: decoding certs using CERT_ImportCerts() failed: ");
+			lswlog_nss_error(buf);
+		}
 		return true;
 	}
 	CERTCertificate *cert = *chain;

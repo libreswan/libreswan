@@ -337,10 +337,11 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 
 		if (PK11_VerifyRecover(publicKey, &signature, &data,
 				       lsw_return_nss_password_file_info()) ==
-		   SECSuccess ) {
-		       DBG(DBG_CRYPT,
-			   DBG_dump("NSS RSA verify: decrypted sig: ", data.data,
-				     data.len));
+		    SECSuccess ) {
+			LSWDBGP(DBG_CRYPT, buf) {
+				lswlogs(buf, "NSS RSA verify: decrypted sig: ");
+				lswlog_nss_secitem(buf, &data);
+			}
 		} else {
 			DBG(DBG_CRYPT,
 			    DBG_log("NSS RSA verify: decrypting signature is failed"));
@@ -378,15 +379,17 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 		memcpy(hash_data , DISCARD_CONST(u_char *, hash_val), hash_len);
 		data.data = hash_data;
 
-		DBG(DBG_CRYPT, DBG_dump("data.data: data.len: ", data.data,
-					data.len));
+		LSWDBGP(DBG_CRYPT, buf) {
+			lswlogs(buf, "data: ");
+			lswlog_nss_secitem(buf, &data);
+		}
 
 		if (PK11_VerifyWithMechanism(publicKey, CKM_RSA_PKCS_PSS,  &mechItem, &signature, &data,
-				       lsw_return_nss_password_file_info()) == SECSuccess )
-		{
-		       DBG(DBG_CRYPT,
-			   DBG_dump("NSS RSA verify: decrypted sig: ", data.data,
-			             data.len));
+				       lsw_return_nss_password_file_info()) == SECSuccess) {
+			LSWDBGP(DBG_CRYPT, buf) {
+				lswlogs(buf, "NSS RSA verify: decrypted sig: ");
+				lswlog_nss_secitem(buf, &data);
+			}
 		} else {
 			DBG(DBG_CRYPT,
 			    DBG_log("NSS RSA verify: decrypting signature is failed"));
@@ -1012,7 +1015,7 @@ err_t load_nss_cert_secret(CERTCertificate *cert)
 static bool rsa_pubkey_ckaid_matches(struct pubkey *pubkey, char *buf, size_t buflen)
 {
 	if (pubkey->u.rsa.n.ptr == NULL) {
-		DBG_log("RSA pubkey with NULL modulus");
+		DBGF(DBG_CONTROL, "RSA pubkey with NULL modulus");
 		return FALSE;
 	}
 	SECItem modulus = {
@@ -1022,10 +1025,13 @@ static bool rsa_pubkey_ckaid_matches(struct pubkey *pubkey, char *buf, size_t bu
 	};
 	SECItem *pubkey_ckaid = PK11_MakeIDFromPubKey(&modulus);
 	if (pubkey_ckaid == NULL) {
-		DBG_log("RSA pubkey incomputable CKAID");
+		DBGF(DBG_CONTROL, "RSA pubkey incomputable CKAID");
 		return FALSE;
 	}
-	DBG_dump("comparing ckaid with", pubkey_ckaid->data, pubkey_ckaid->len);
+	LSWDBGP(DBG_CONTROL, buf) {
+		lswlogs(buf, "comparing ckaid with: ");
+		lswlog_nss_secitem(buf, pubkey_ckaid);
+	}
 	bool eq = pubkey_ckaid->len == buflen &&
 		  memcmp(pubkey_ckaid->data, buf, buflen) == 0;
 	SECITEM_FreeItem(pubkey_ckaid, PR_TRUE);
@@ -1053,7 +1059,7 @@ struct pubkey *get_pubkey_with_matching_ckaid(const char *ckaid)
 		switch (key->alg) {
 		case PUBKEY_ALG_RSA: {
 			if (rsa_pubkey_ckaid_matches(key, buf, buflen)) {
-				DBG_log("ckaid matching pubkey");
+				DBGF(DBG_CONTROL, "ckaid matching pubkey");
 				pfree(buf);
 				return key;
 			}
