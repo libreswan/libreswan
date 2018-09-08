@@ -290,6 +290,7 @@ kvmplutotest	ikev1-impair-07-send-empty-ike-ke	good
 kvmplutotest	ikev2-impair-07-send-empty-ike-ke	good
 
 kvmplutotest	ikev1-psk-dual-behind-nat-01		good
+kvmplutotest	ikev1-psk-two-rw-id-ip-01		good
 
 kvmplutotest	ikev1-x509-05-san-firstemail-match	good
 kvmplutotest	ikev1-x509-06-san-email-mismatch	good
