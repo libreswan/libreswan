@@ -829,7 +829,10 @@ stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
 bool ikev1_justship_KE(chunk_t *g,
 		pb_stream *outs, u_int8_t np)
 {
-	if (IMPAIR(SEND_ZERO_KE_PAYLOAD)) {
+	if (IMPAIR(SEND_NO_KE_PAYLOAD)) {
+		libreswan_log("IMPAIR: sending no KE (g^x) payload");
+		return true;
+	} else if (IMPAIR(SEND_ZERO_KE_PAYLOAD)) {
 		pb_stream z;
 
 		libreswan_log("IMPAIR: sending bogus KE (g^x) == 0 value to break DH calculations");
