@@ -837,6 +837,10 @@ bool ikev1_justship_KE(chunk_t *g,
 		return ikev1_out_generic(np, &isakmp_keyex_desc, outs, &z) &&
 			out_zero(g->len, &z, "fake g^x") &&
 			(close_output_pbs(&z), TRUE);
+	} else if (IMPAIR(SEND_EMPTY_KE_PAYLOAD)) {
+		libreswan_log("IMPAIR: sending empty KE (g^x)");
+		return ikev1_out_generic_chunk(0, &isakmp_keyex_desc, outs,
+					       empty_chunk, "empty KE");
 	} else {
 		return ikev1_out_generic_chunk(np, &isakmp_keyex_desc, outs, *g,
 				"keyex value");
