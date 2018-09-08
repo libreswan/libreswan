@@ -16,7 +16,7 @@ east #
 initdone
 east #
  hostname | grep east > /dev/null && ipsec whack --trafficstatus
-006 #2: "east-any"[1] 192.1.3.33, username=xnorth, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, lease=192.0.2.201/32
+006 #2: "east-any"[1] 192.1.3.33, username=xnorth, type=ESP, add_time=1234567890, inBytes=1228, outBytes=1140, lease=192.0.2.201/32
 006 #4: "east-any"[2] 192.1.3.209, username=xroad, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, lease=192.0.2.101/32
 east #
 east #
