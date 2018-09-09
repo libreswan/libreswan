@@ -63,15 +63,13 @@ west #
 |    fragment number: 4 (0x4)
 |    fragment number: 5 (0x5)
 |    fragment number: 1 (0x1)
-| received IKE encrypted fragment number '1', total number '5', next payload '36'
+| received IKE encrypted fragment number '1', total number '4', next payload '36'
 |    fragment number: 2 (0x2)
-| received IKE encrypted fragment number '2', total number '5', next payload '0'
+| received IKE encrypted fragment number '2', total number '4', next payload '0'
 |    fragment number: 3 (0x3)
-| received IKE encrypted fragment number '3', total number '5', next payload '0'
+| received IKE encrypted fragment number '3', total number '4', next payload '0'
 |    fragment number: 4 (0x4)
-| received IKE encrypted fragment number '4', total number '5', next payload '0'
-|    fragment number: 5 (0x5)
-| received IKE encrypted fragment number '5', total number '5', next payload '0'
+| received IKE encrypted fragment number '4', total number '4', next payload '0'
 west #
  echo done
 done
