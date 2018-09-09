@@ -879,7 +879,7 @@ static stf_status main_inR1_outI2_tail(struct state *st, struct msg_digest *md,
 	 * depends on the type of Auth (eventually).
 	 */
 	pb_stream rbody;
-	ikev1_init_out_pbs_echo_hdr(md, FALSE, ISAKMP_NEXT_KE,
+	ikev1_init_out_pbs_echo_hdr(md, FALSE, 0/*auto-set NP*/,
 				    &reply_stream, reply_buffer, sizeof(reply_buffer),
 				    &rbody);
 
@@ -1044,7 +1044,7 @@ stf_status main_inI2_outR2_continue1_tail(struct state *st, struct msg_digest *m
 
 	/* HDR out */
 	pb_stream rbody;
-	ikev1_init_out_pbs_echo_hdr(md, FALSE, ISAKMP_NEXT_KE,
+	ikev1_init_out_pbs_echo_hdr(md, FALSE, 0/*auto-set NP*/,
 				    &reply_stream, reply_buffer, sizeof(reply_buffer),
 				    &rbody);
 
