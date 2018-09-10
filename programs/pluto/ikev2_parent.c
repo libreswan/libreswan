@@ -4565,6 +4565,7 @@ static stf_status ikev2_process_ts_respnse(struct msg_digest *md)
 {
 	struct state *st = md->st;
 	struct connection *c = st->st_connection;
+	bool responder = md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R;
 
 	/* check TS payloads */
 	{
@@ -4575,19 +4576,16 @@ static stf_status ikev2_process_ts_respnse(struct msg_digest *md)
 		bestfit_pr = -1;
 
 		/* Check TSi/TSr http://tools.ietf.org/html/rfc5996#section-2.9 */
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("TS: check narrowing - we are responding to I2"));
-
 
 		DBG(DBG_CONTROLMORE,
-		    DBG_log("TS: parse initiator traffic selectors"));
+		    DBG_log("TS: parse exchange TSi"));
 		struct payload_digest *const tsi_pd = md->chain[ISAKMP_NEXT_v2TSi];
 		/* ??? is 16 an undocumented limit - IKEv2 has no limit */
 		struct traffic_selector tsi[16];
 		const int tsi_n = ikev2_parse_ts(tsi_pd, tsi, elemsof(tsi));
 
 		DBG(DBG_CONTROLMORE,
-		    DBG_log("TS: parse responder traffic selectors"));
+		    DBG_log("TS: parse exchange TSr"));
 		struct payload_digest *const tsr_pd = md->chain[ISAKMP_NEXT_v2TSr];
 		/* ??? is 16 an undocumented limit - IKEv2 has no limit */
 		struct traffic_selector tsr[16];
@@ -4602,7 +4600,7 @@ static stf_status ikev2_process_ts_respnse(struct msg_digest *md)
 		{
 			const struct spd_route *sra = &c->spd;
 			int bfit_n = ikev2_evaluate_connection_fit(
-				c, sra, ORIGINAL_INITIATOR,
+				c, sra, responder,
 				tsi, tsr,
 				tsi_n, tsr_n);
 
@@ -4612,7 +4610,7 @@ static stf_status ikev2_process_ts_respnse(struct msg_digest *md)
 					    c->name));
 
 				int bfit_p = ikev2_evaluate_connection_port_fit(
-					c, sra, ORIGINAL_INITIATOR,
+					c, sra, responder,
 					tsi, tsr,
 					tsi_n, tsr_n,
 					&best_tsi_i, &best_tsr_i);
@@ -4623,7 +4621,7 @@ static stf_status ikev2_process_ts_respnse(struct msg_digest *md)
 						    c->name, best_tsi_i, best_tsr_i));
 
 					int bfit_pr = ikev2_evaluate_connection_protocol_fit(
-						c, sra, ORIGINAL_INITIATOR,
+						c, sra, responder,
 						tsi, tsr,
 						tsi_n, tsr_n,
 						&best_tsi_i, &best_tsr_i);
@@ -4664,6 +4662,9 @@ static stf_status ikev2_process_ts_respnse(struct msg_digest *md)
 
 			ip_subnet tmp_subnet_i;
 			ip_subnet tmp_subnet_r;
+			/* TODO: This needs to depend on if we are this exchange's
+			 * initiator or responder
+			 */
 			rangetosubnet(&st->st_ts_this.net.start,
 				      &st->st_ts_this.net.end, &tmp_subnet_i);
 			rangetosubnet(&st->st_ts_that.net.start,
@@ -4696,7 +4697,7 @@ static stf_status ikev2_process_ts_respnse(struct msg_digest *md)
 					  &c->spd.that.client));
 		} else {
 			DBG(DBG_CONTROLMORE,
-			    DBG_log("reject responder TSi/TSr Traffic Selector"));
+			    DBG_log("rejecting TSi/TSr Traffic Selector"));
 			/* prevents parent from going to I3 */
 			return STF_FAIL + v2N_TS_UNACCEPTABLE;
 		}
@@ -5587,7 +5588,6 @@ stf_status ikev2_child_inIoutR(struct state *st /* child state */,
 
 	if (st->st_ipsec_pred == SOS_NOBODY) {
 		RETURN_STF_FAILURE_STATUS(ikev2_resp_accept_child_ts(md, &st,
-					ORIGINAL_RESPONDER,
 					ISAKMP_v2_CREATE_CHILD_SA));
 	}
 
