@@ -104,6 +104,9 @@ static void swap_ends(struct connection *c)
 		case AUTH_RSASIG:
 			c->policy |= POLICY_RSASIG;
 			break;
+		case AUTH_ECDSA:
+			c->policy |= POLICY_ECDSA;
+			break;
 		case AUTH_NULL:
 			c->policy |= POLICY_AUTH_NULL;
 			break;

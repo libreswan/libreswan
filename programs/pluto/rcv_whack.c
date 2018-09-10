@@ -164,6 +164,7 @@ static void do_whacklisten(void)
 
 static void key_add_request(const struct whack_message *msg)
 {
+	libreswan_log("key_add_request");
 	DBG_log("add keyid %s", msg->keyid);
 	struct id keyid;
 	err_t ugh = atoid(msg->keyid, &keyid, FALSE);
@@ -424,9 +425,11 @@ void whack_process(int whackfd, const struct whack_message *const m)
 	if (m->whack_crash)
 		delete_states_by_peer(&m->whack_crash_peer);
 
-	if (m->whack_connection)
+	if (m->whack_connection) {
+		libreswan_log(" add_connection from initiate");
 		add_connection(m);
-
+	}
+		libreswan_log("came out of add_connection from initiate");
 	/* update any socket buffer size before calling listen */
 	if (m->ike_buf_size != 0) {
 		pluto_sock_bufsize = m->ike_buf_size;

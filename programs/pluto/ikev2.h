@@ -5,6 +5,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2018 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2017 Andrew Cagney
+ * Copyright (C) 2018 Sahana Prasad <sahana.prasad07@gmail.com>
  */
 
 typedef stf_status crypto_transition_fn(struct state *st, struct msg_digest *md,
@@ -144,6 +145,14 @@ extern bool ikev2_calculate_rsa_hash(struct state *st,
 				     chunk_t *no_ppk_auth,
 				     enum notify_payload_hash_algorithms hash_algo);
 
+extern bool ikev2_calculate_ecdsa_hash(struct state *st,
+					enum original_role role,
+					unsigned char *idhash,
+					pb_stream *a_pbs,
+					bool calc_no_ppk_auth,
+					chunk_t *no_ppk_auth,
+					enum notify_payload_hash_algorithms hash_algo);
+
 extern bool ikev2_create_psk_auth(enum keyword_authby authby,
 				  const struct state *st,
 				  const unsigned char *idhash,
@@ -151,6 +160,12 @@ extern bool ikev2_create_psk_auth(enum keyword_authby authby,
 				  chunk_t *additional_auth);
 
 extern stf_status ikev2_verify_rsa_hash(struct state *st,
+					enum original_role role,
+					const unsigned char *idhash,
+					pb_stream *sig_pbs,
+					enum notify_payload_hash_algorithms hash_algo);
+
+extern stf_status ikev2_verify_ecdsa_hash(struct state *st,
 					enum original_role role,
 					const unsigned char *idhash,
 					pb_stream *sig_pbs,
