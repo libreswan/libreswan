@@ -10,6 +10,7 @@
  * Copyright (C) 2012-2015 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
+ * Copyright (C) 2018 Sahana Prasad <sahana.prasad07@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -85,6 +86,24 @@ err_t form_ckaid_rsa(chunk_t modulus, ckaid_t *ckaid)
 	}
 	DBG(DBG_CONTROLMORE, DBG_dump("computed rsa CKAID",
 				      nss_ckaid->data, nss_ckaid->len));
+	err_t err = form_ckaid_nss(nss_ckaid, ckaid);
+	SECITEM_FreeItem(nss_ckaid, PR_TRUE);
+	return err;
+}
+
+err_t form_ckaid_ecdsa(chunk_t pub_value, ckaid_t *ckaid)
+{
+       /*
+        * Compute the CKAID directly using the public value. - keep old
+        * configurations hobbling along.
+        */
+	SECItem nss_pub_value = same_chunk_as_secitem(pub_value, siBuffer);
+	SECItem *nss_ckaid = PK11_MakeIDFromPubKey(&nss_pub_value);
+	if (nss_ckaid == NULL) {
+		return "unable to compute 'CKAID' from public value";
+	}
+	DBG(DBG_CONTROLMORE, DBG_dump("computed ecdsa CKAID",
+					nss_ckaid->data, nss_ckaid->len));
 	err_t err = form_ckaid_nss(nss_ckaid, ckaid);
 	SECITEM_FreeItem(nss_ckaid, PR_TRUE);
 	return err;
