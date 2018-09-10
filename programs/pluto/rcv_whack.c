@@ -426,10 +426,8 @@ void whack_process(int whackfd, const struct whack_message *const m)
 		delete_states_by_peer(&m->whack_crash_peer);
 
 	if (m->whack_connection) {
-		libreswan_log(" add_connection from initiate");
 		add_connection(m);
 	}
-		libreswan_log("came out of add_connection from initiate");
 	/* update any socket buffer size before calling listen */
 	if (m->ike_buf_size != 0) {
 		pluto_sock_bufsize = m->ike_buf_size;

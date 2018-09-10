@@ -506,7 +506,6 @@ static void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn
 
 static void replace_public_key(struct pubkey *pk)
 {
-	libreswan_log("replace_public_key");
 	/* ??? clang 3.5 thinks pk might be NULL */
 	delete_public_keys(&pluto_pubkeys, &pk->id, pk->alg);
 	install_public_key(pk, &pluto_pubkeys);
@@ -529,7 +528,6 @@ static void create_cert_pubkey_ecdsa(struct pubkey **pkp,
 				      const struct id *id,
 				      CERTCertificate *cert)
 {
-	libreswan_log("create_cert_pubkey_ecdsa from x509 allocate_ECDSA_public_key_nss");
 	struct pubkey *pk = allocate_ECDSA_public_key_nss(cert);
 
 	passert(pk != NULL);
@@ -552,7 +550,6 @@ static void create_cert_subjectdn_pubkey(struct pubkey **pkp,
 static void create_cert_subjectdn_pubkey_ecdsa(struct pubkey **pkp,
 				       CERTCertificate *cert)
 {
-	libreswan_log("create_cert_subjectdn_pubkey_ecdsa");
 	struct id id;
 
 	id.kind = ID_DER_ASN1_DN;
@@ -596,7 +593,6 @@ void add_rsa_pubkey_from_cert(const struct id *keyid, CERTCertificate *cert)
 	struct pubkey *pk = NULL;
 
 	if (!cert_key_is_rsa(cert)) {
-		libreswan_log("cert key is not rsa type!");
 		return;
 	}
 
@@ -618,11 +614,9 @@ void add_rsa_pubkey_from_cert(const struct id *keyid, CERTCertificate *cert)
 
 void add_ecdsa_pubkey_from_cert(const struct id *keyid, CERTCertificate *cert)
 {
-	libreswan_log("add_ecdsa_pubkey_from_cert");
 	struct pubkey *pk = NULL;
 
 	if (!cert_key_is_ecdsa(cert)) {
-		libreswan_log("cert key is not ecdsa type!");
 		return;
 	}
 

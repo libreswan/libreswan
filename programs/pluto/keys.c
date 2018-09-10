@@ -1427,11 +1427,9 @@ err_t load_nss_cert_secret(CERTCertificate *cert)
 	if (cert == NULL) {
 		return "NSS cert not found";
 	}
-	libreswan_log("lsw_get_secret load_nss_cert_secret");
 	if (cert_key_is_rsa(cert)) {
 		return lsw_add_rsa_secret(&pluto_secrets, cert);
 	} else if (cert_key_is_ecdsa(cert)) {
-		libreswan_log("load_nss_cert_secret cert_key_is_ecdsa");
 		return lsw_add_ecdsa_secret(&pluto_secrets, cert);
 	}
 	else {
