@@ -340,7 +340,7 @@ def create_mainca_end_certs(mainca_end_certs):
 			common_name = name + '.testing.libreswan.org'
 
 		if name == 'hashsha2':
-			alg = 'sha256'
+			alg = 'sha1'
 		else:
 			alg = 'sha256'
 
