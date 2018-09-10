@@ -51,7 +51,7 @@ OBJS += constants.o \
 	subnettypeof.o ttoaddr.o ttodata.o ttoprotoport.o \
 	ttorange.o ttosa.o ttosubnet.o ttoul.o \
 	secitem_chunk.o \
-	base64_rsa_pubkey.o \
+	base64_pubkey.o \
 	lswnss.o \
 	lsw_passert_fail.o \
 	alg_byname.o
