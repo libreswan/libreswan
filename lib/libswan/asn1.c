@@ -164,7 +164,7 @@ size_t asn1_length_signature(chunk_t *blob , chunk_t *sig_val)
 		sig_val->len = len_r;
 		/* XXX: need to check len_r and len_s fits in this */
 	        sig_val->ptr = alloc_bytes(len_r * 2, "ec points");
-		libreswan_log(" sig_val  len is %ld",sig_val->len);
+		DBG(DBG_PARSING, DBG_log(" sig_val  len is %ld",sig_val->len));
 		/* copy the values of r into signature */
 		memcpy(sig_val->ptr,blob->ptr,len_r);
 
@@ -172,26 +172,25 @@ size_t asn1_length_signature(chunk_t *blob , chunk_t *sig_val)
 		blob->ptr += len_r;
 		type_s = *(blob->ptr);
 
-		libreswan_log(" type_s is %d",type_s);
+		DBG(DBG_PARSING, DBG_log(" type_s is %d",type_s));
 		if (type_s == 0x02) {
 			/* find the length of integer r*/
 			blob->ptr++;
 			len_s = *blob->ptr++;
-		if (len_s%2 !=0) {
-			len_s = len_s-1;
-			/* advance to the next octect as the current octet is 0 */
-			blob->ptr++;
-		}
-		libreswan_log("  len_s is %d",len_s);
+			if (len_s%2 !=0) {
+				len_s = len_s-1;
+				/* advance to the next octect as the current octet is 0 */
+				blob->ptr++;
+			}
+			DBG(DBG_PARSING, DBG_log("  len_s is %d",len_s));
 			sig_val->len += len_s;
-		libreswan_log(" sig_val total len is %ld",sig_val->len);
+			DBG(DBG_PARSING, DBG_log(" sig_val total len is %ld",sig_val->len));
 			/* copy the values of r into signature */
 			memcpy(sig_val->ptr+len_r,blob->ptr,len_s);
 		}
 
 	} else {
-		DBG(DBG_PARSING,
-			DBG_log("Invalid DER encoded signature"));
+		DBG(DBG_PARSING, DBG_log("Invalid DER encoded signature"));
 	}
 
 		if (n > blob->len) {

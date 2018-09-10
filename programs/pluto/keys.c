@@ -690,7 +690,6 @@ static bool take_a_crack_ECDSA(struct tac_state_ECDSA *s,
 			 struct pubkey *kr,
 			 const char *story)
 {
-	libreswan_log("take_a_crack_ECDSA");
 	err_t ugh =
 		(s->try_ECDSA_signature)(s->hash_val, s->hash_len, s->sig_pbs,
 				       kr, s->st, s->hash_algo);

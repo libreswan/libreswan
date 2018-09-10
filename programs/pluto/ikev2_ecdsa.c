@@ -288,13 +288,13 @@ static err_t try_ECDSA_signature_v2(const u_char hash_val[MAX_DIGEST_LEN],
 				  struct state *st,
 				  enum notify_payload_hash_algorithms hash_algo)
 {
-	libreswan_log("try_ECDSA_signature_v2");
 	u_char *sig_val = sig_pbs->cur;
 	size_t sig_len = pbs_left(sig_pbs);
 	const struct ECDSA_public_key *k = &kr->u.ecdsa;
-	libreswan_log("sig_length is %zu",sig_len);
-	libreswan_log("key_length is %d",k->k);
 	chunk_t sig_val_chunk;
+
+	DBG(DBG_CRYPT, DBG_log("sig_length is %zu",sig_len));
+	DBG(DBG_CRYPT, DBG_log("key_length is %d",k->k));
 	sig_val_chunk.ptr = sig_val;
 	sig_val_chunk.len = sig_len;
 	chunk_t sig_val_der_decoded;
