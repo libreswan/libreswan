@@ -50,11 +50,6 @@ extern err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 				      const u_char *sig_val, size_t sig_len,
 				      enum notify_payload_hash_algorithms hash_algo);
 
-extern err_t ECDSA_signature_verify_nss(const struct ECDSA_public_key *k,
-				        const u_char *hash_val, size_t hash_len,
-				        const u_char *sig_val, size_t sig_len,
-				        enum notify_payload_hash_algorithms hash_algo);
-
 extern const struct RSA_private_key *get_RSA_private_key(
 	const struct connection *c);
 extern const struct ECDSA_private_key *get_ECDSA_private_key(

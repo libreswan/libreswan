@@ -28,6 +28,7 @@
 
 #include "secitem.h"
 #include "cryptohi.h"
+#include "keyhi.h"
 
 #include <libreswan.h>
 
@@ -229,37 +230,119 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 }
 
 static err_t try_ECDSA_signature_v2(const u_char hash_val[MAX_DIGEST_LEN],
-				  size_t hash_len,
-				  const pb_stream *sig_pbs, struct pubkey *kr,
-				  struct state *st,
-				  enum notify_payload_hash_algorithms hash_algo)
+				    size_t hash_len,
+				    const pb_stream *sig_pbs, struct pubkey *kr,
+				    struct state *st,
+				    enum notify_payload_hash_algorithms hash_algo UNUSED)
 {
-	u_char *sig_val = sig_pbs->cur;
-	size_t sig_len = pbs_left(sig_pbs);
+	PRArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
+	if (arena == NULL) {
+		LSWLOG(buf) {
+			lswlogs(buf, "NSS: allocating ECDSA arena using PORT_NewArena() failed: ");
+			lswlog_nss_error(buf);
+		}
+		return "10" "NSS error: Not enough memory to create arena";
+	}
+
+	/*
+	 * convert K(R) into a public key
+	 */
+
+	/* allocate the pubkey */
 	const struct ECDSA_public_key *k = &kr->u.ecdsa;
-	chunk_t sig_val_chunk;
+	SECKEYPublicKey *publicKey = (SECKEYPublicKey *)
+		PORT_ArenaZAlloc(arena, sizeof(SECKEYPublicKey));
+	if (publicKey == NULL) {
+		PORT_FreeArena(arena, PR_FALSE);
+		LSWLOG(buf) {
+			lswlogs(buf, "NSS: allocating ECDSA public key using PORT_ArenaZAlloc() failed:");
+			lswlog_nss_error(buf);
+		}
+		return "11" "NSS error: Not enough memory to create publicKey";
+	}
+	publicKey->arena = arena;
+	publicKey->keyType = ecKey;
+	publicKey->pkcs11Slot = NULL;
+	publicKey->pkcs11ID = CK_INVALID_HANDLE;
 
-	DBG(DBG_CRYPT, DBG_log("sig_length is %zu",sig_len));
-	DBG(DBG_CRYPT, DBG_log("key_length is %d",k->k));
-	sig_val_chunk.ptr = sig_val;
-	sig_val_chunk.len = sig_len;
-	chunk_t sig_val_der_decoded;
-	is_asn1_der_encoded_signature(sig_val_chunk, &sig_val_der_decoded);
+	/* copy k's public key value into the arena / publicKey */
+	SECItem k_pub = same_chunk_as_secitem(k->pub, siBuffer);
+	if (SECITEM_CopyItem(arena, &publicKey->u.ec.publicValue, &k_pub) != SECSuccess) {
+		LSWLOG(buf) {
+			lswlogs(buf, "NSS: constructing ECDSA public value using SECITEM_CopyItem() failed:");
+			lswlog_nss_error(buf);
+		}
+		PORT_FreeArena(arena, PR_FALSE);
+		return "10" "NSS error: copy failed";
+	}
 
-	if (k == NULL)
-		return "1" "no key available"; /* failure: no key to use */
+	/* construct the EC Parameters */
+	SECItem k_ecParams = same_chunk_as_secitem(k->ecParams, siBuffer);
+	if (SECITEM_CopyItem(arena,
+			     &publicKey->u.ec.DEREncodedParams,
+			     &k_ecParams) != SECSuccess) {
+		LSWLOG(buf) {
+			lswlogs(buf, "NSS: construction of ecParams using SECITEM_CopyItem() failed:");
+			lswlog_nss_error(buf);
+		}
+		PORT_FreeArena(arena, PR_FALSE);
+		return "1" "NSS error: Not able to copy modulus or exponent or both while forming SECKEYPublicKey structure";
+	}
 
-	/* decrypt the signature */
-/*	if (sig_len != k->k)
-		return "1" "SIG length does not match public key length";*/
-	DBG_dump("sig_val",sig_val,sig_len);
-	DBG_dump("sig_val_new",sig_val_der_decoded.ptr,sig_val_der_decoded.len);
-	
-	err_t ugh = ECDSA_signature_verify_nss(k, hash_val, hash_len, sig_val_der_decoded.ptr,
-					     sig_val_der_decoded.len, hash_algo);
-	if (ugh != NULL)
-		return ugh;
 
+	/*
+	 * Convert the signature into raw form
+	 */
+	SECItem der_signature = {
+		.type = siBuffer,
+		.data = sig_pbs->cur,
+		.len = pbs_left(sig_pbs),
+	};
+	LSWDBGP(DBG_CONTROL, buf) {
+		lswlogf(buf, "%d-byte DER encoded ECDSA signature: ",
+			der_signature.len);
+		lswlog_nss_secitem(buf, &der_signature);
+	}
+	SECItem *raw_signature = DSAU_DecodeDerSigToLen(&der_signature,
+							SECKEY_SignatureLen(publicKey));
+	if (raw_signature == NULL) {
+		LSWLOG(buf) {
+			lswlogs(buf, "NSS: unpacking DER encoded ECDSA signature using DSAU_DecodeDerSigToLen() failed:");
+			lswlog_nss_error(buf);
+		}
+		PORT_FreeArena(arena, PR_FALSE);
+		return "1" "Decode failed";
+	}
+	LSWDBGP(DBG_CONTROL, buf) {
+		lswlogf(buf, "%d-byte raw ESCSA signature: ",
+			raw_signature->len);
+		lswlog_nss_secitem(buf, raw_signature);
+	}
+
+	/*
+	 * put the hash somewhere writable; so it can later be logged?
+	 */
+	SECItem hash = {
+		.type = siBuffer,
+		.data = PORT_ArenaZAlloc(arena, hash_len),
+		.len = hash_len,
+	};
+	memcpy(hash.data, hash_val, hash_len);
+
+	if (PK11_Verify(publicKey, raw_signature, &hash,
+			lsw_return_nss_password_file_info()) != SECSuccess) {
+		LSWLOG(buf) {
+			lswlogs(buf, "NSS: verifying AUTH hash using PK11_Verify() failed:");
+			lswlog_nss_error(buf);
+		}
+		PORT_FreeArena(arena, PR_FALSE);
+		SECITEM_FreeItem(raw_signature, PR_TRUE);
+		return "1" "NSS error: Not able to verify";
+	}
+
+	DBGF(DBG_CONTROL, "NSS: verified signature");
+
+	SECITEM_FreeItem(raw_signature, PR_TRUE);
 	unreference_key(&st->st_peer_pubkey);
 	st->st_peer_pubkey = reference_key(kr);
 
