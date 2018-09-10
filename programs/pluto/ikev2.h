@@ -182,7 +182,7 @@ extern struct traffic_selector ikev2_end_to_ts(const struct end *e);
 
 extern int ikev2_evaluate_connection_fit(const struct connection *d,
 					 const struct spd_route *sr,
-					 bool responder,
+					 enum original_role role,
 					 const struct traffic_selector *tsi,
 					 const struct traffic_selector *tsr,
 					 int tsi_n,
@@ -190,7 +190,7 @@ extern int ikev2_evaluate_connection_fit(const struct connection *d,
 
 extern int ikev2_evaluate_connection_port_fit(const struct connection *d,
 					      const struct spd_route *sr,
-					      bool responder,
+					      enum original_role role,
 					      const struct traffic_selector *tsi,
 					      const struct traffic_selector *tsr,
 					      int tsi_n,
@@ -200,7 +200,7 @@ extern int ikev2_evaluate_connection_port_fit(const struct connection *d,
 
 extern stf_status ikev2_emit_ts_payloads(const struct child_sa *cst,
 					 pb_stream *outpbs,
-					 bool responder,
+					 enum sa_role role,
 					 const struct connection *c0,
 					 const enum next_payload_types_ikev2 np);
 
@@ -210,7 +210,7 @@ extern int ikev2_parse_ts(struct payload_digest *ts_pd,
 
 extern int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
 						  const struct spd_route *sr,
-						  bool responder,
+						  enum original_role role,
 						  const struct traffic_selector *tsi,
 						  const struct traffic_selector *tsr,
 						  int tsi_n,
@@ -224,7 +224,8 @@ extern stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 extern stf_status ikev2_resp_accept_child_ts(const struct msg_digest *md,
 					     struct state **ret_cst,
-					     enum isakmp_xchg_types isa_xchg);
+					     enum original_role role, enum
+					     isakmp_xchg_types isa_xchg);
 
 extern void ikev2_update_msgid_counters(struct msg_digest *md);
 extern void ikev2_print_ts(const struct traffic_selector *ts);

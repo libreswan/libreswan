@@ -223,18 +223,23 @@ static stf_status ikev2_emit_ts(pb_stream *outpbs,
 
 stf_status ikev2_emit_ts_payloads(const struct child_sa *child,
 				  pb_stream *outpbs,
-				  bool responder,
+				  enum sa_role role,
 				  const struct connection *c0,
 				  const enum next_payload_types_ikev2 np)
 {
 	const struct traffic_selector *ts_i, *ts_r;
 
-	if (responder) {
-		ts_i = &child->sa.st_ts_that;
-		ts_r = &child->sa.st_ts_this;
-	} else {
+	switch (role) {
+	case SA_INITIATOR:
 		ts_i = &child->sa.st_ts_this;
 		ts_r = &child->sa.st_ts_that;
+		break;
+	case SA_RESPONDER:
+		ts_i = &child->sa.st_ts_that;
+		ts_r = &child->sa.st_ts_this;
+		break;
+	default:
+		bad_case(role);
 	}
 
 	/*
@@ -385,7 +390,7 @@ static int ikev2_match_protocol(u_int8_t proto, u_int8_t ts_proto,
  */
 int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
 					   const struct spd_route *sr,
-					   bool responder,
+					   enum original_role role,
 					   const struct traffic_selector *tsi,
 					   const struct traffic_selector *tsr,
 					   int tsi_n,
@@ -398,12 +403,12 @@ int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
 	const struct end *ei, *er;
 	bool narrowing = (d->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY;
 
-	if (responder) {
-		ei = &sr->that;
-		er = &sr->this;
-	} else {
+	if (role == ORIGINAL_INITIATOR) {
 		ei = &sr->this;
 		er = &sr->that;
+	} else {
+		ei = &sr->that;
+		er = &sr->this;
 	}
 	/* compare tsi/r array to this/that, evaluating protocol how well it fits */
 	/* ??? stupid n**2 algorithm */
@@ -411,8 +416,8 @@ int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
 		int tsr_ni;
 
 		int fitrange_i = ikev2_match_protocol(ei->protocol, tsi[tsi_ni].ipprotoid,
-			responder && narrowing,
-			!responder && narrowing,
+			role == ORIGINAL_RESPONDER && narrowing,
+			role == ORIGINAL_INITIATOR && narrowing,
 			"tsi", tsi_ni);
 
 		if (fitrange_i == 0)
@@ -420,8 +425,8 @@ int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
 
 		for (tsr_ni = 0; tsr_ni < tsr_n; tsr_ni++) {
 			int fitrange_r = ikev2_match_protocol(er->protocol, tsr[tsr_ni].ipprotoid,
-				responder && narrowing,
-				!responder && narrowing,
+				role == ORIGINAL_RESPONDER && narrowing,
+				role == ORIGINAL_INITIATOR && narrowing,
 				"tsr", tsr_ni);
 
 			if (fitrange_r == 0)
@@ -492,7 +497,7 @@ static int ikev2_match_port_range(u_int16_t port, struct traffic_selector ts,
  */
 int ikev2_evaluate_connection_port_fit(const struct connection *d,
 				       const struct spd_route *sr,
-				       bool responder,
+				       enum original_role role,
 				       const struct traffic_selector *tsi,
 				       const struct traffic_selector *tsr,
 				       int tsi_n,
@@ -505,12 +510,12 @@ int ikev2_evaluate_connection_port_fit(const struct connection *d,
 	const struct end *ei, *er;
 	bool narrowing = (d->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY;
 
-	if (responder) {
-		ei = &sr->that;
-		er = &sr->this;
-	} else {
+	if (role == ORIGINAL_INITIATOR) {
 		ei = &sr->this;
 		er = &sr->that;
+	} else {
+		ei = &sr->that;
+		er = &sr->this;
 	}
 	/* compare tsi/r array to this/that, evaluating how well each port range fits */
 	/* ??? stupid n**2 algorithm */
@@ -518,8 +523,8 @@ int ikev2_evaluate_connection_port_fit(const struct connection *d,
 		int tsr_ni;
 
 		int fitrange_i = ikev2_match_port_range(ei->port, tsi[tsi_ni],
-			responder && narrowing,
-			!responder && narrowing,
+			role == ORIGINAL_RESPONDER && narrowing,
+			role == ORIGINAL_INITIATOR && narrowing,
 			"tsi", tsi_ni);
 
 		if (fitrange_i == 0)
@@ -527,8 +532,8 @@ int ikev2_evaluate_connection_port_fit(const struct connection *d,
 
 		for (tsr_ni = 0; tsr_ni < tsr_n; tsr_ni++) {
 			int fitrange_r = ikev2_match_port_range(er->port, tsr[tsr_ni],
-				responder && narrowing,
-				!responder && narrowing,
+				role == ORIGINAL_RESPONDER && narrowing,
+				role == ORIGINAL_INITIATOR && narrowing,
 				"tsr", tsr_ni);
 
 			if (fitrange_r == 0)
@@ -558,7 +563,7 @@ int ikev2_evaluate_connection_port_fit(const struct connection *d,
  */
 int ikev2_evaluate_connection_fit(const struct connection *d,
 				  const struct spd_route *sr,
-				  bool responder,
+				  enum original_role role,
 				  const struct traffic_selector *tsi,
 				  const struct traffic_selector *tsr,
 				  int tsi_n,
@@ -568,12 +573,12 @@ int ikev2_evaluate_connection_fit(const struct connection *d,
 	int bestfit = -1;
 	const struct end *ei, *er;
 
-	if (responder) {
-		ei = &sr->that;
-		er = &sr->this;
-	} else {
+	if (role == ORIGINAL_INITIATOR) {
 		ei = &sr->this;
 		er = &sr->that;
+	} else {
+		ei = &sr->that;
+		er = &sr->this;
 	}
 
 	DBG(DBG_CONTROLMORE, {
@@ -680,21 +685,22 @@ int ikev2_evaluate_connection_fit(const struct connection *d,
 /*
  * find the best connection and, if it is AUTH exchange, create the child state
  */
-stf_status ikev2_resp_accept_child_ts(const struct msg_digest *md,
+stf_status ikev2_resp_accept_child_ts(
+	const struct msg_digest *md,
 	struct state **ret_cst,	/* where to return child state */
-	enum isakmp_xchg_types isa_xchg)
+	enum original_role role, enum isakmp_xchg_types isa_xchg)
 {
 	struct connection *c = md->st->st_connection;
-	bool responder = md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R;
 
-	DBG(DBG_CONTROLMORE, DBG_log("TS: parse TSi"));
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("TS: parse initiator traffic selectors"));
 	/* ??? is 16 an undocumented limit - IKEv2 has no limit */
 	struct traffic_selector tsi[16];
 	const int tsi_n = ikev2_parse_ts(md->chain[ISAKMP_NEXT_v2TSi],
 					 tsi, elemsof(tsi));
 
 	DBG(DBG_CONTROLMORE,
-	    DBG_log("TS: parse TSr"));
+	    DBG_log("TS: parse responder traffic selectors"));
 	/* ??? is 16 an undocumented limit - IKEv2 has no limit */
 	struct traffic_selector tsr[16];
 	const int tsr_n = ikev2_parse_ts(md->chain[ISAKMP_NEXT_v2TSr],
@@ -719,7 +725,7 @@ stf_status ikev2_resp_accept_child_ts(const struct msg_digest *md,
 	const struct spd_route *sra;
 
 	for (sra = &c->spd; sra != NULL; sra = sra->spd_next) {
-		int bfit_n = ikev2_evaluate_connection_fit(c, sra, responder, tsi,
+		int bfit_n = ikev2_evaluate_connection_fit(c, sra, role, tsi,
 				tsr, tsi_n, tsr_n);
 
 		if (bfit_n > bestfit_n) {
@@ -727,7 +733,7 @@ stf_status ikev2_resp_accept_child_ts(const struct msg_digest *md,
 			    DBG_log("prefix fitness found a better match c %s",
 				    c->name));
 			int bfit_p = ikev2_evaluate_connection_port_fit(
-				    c, sra, responder, tsi, tsr, tsi_n, tsr_n,
+				    c, sra, role, tsi, tsr, tsi_n, tsr_n,
 				    &best_tsi_i, &best_tsr_i);
 
 			if (bfit_p > bestfit_p) {
@@ -736,7 +742,7 @@ stf_status ikev2_resp_accept_child_ts(const struct msg_digest *md,
 					    c->name, best_tsi_i, best_tsr_i));
 				int bfit_pr =
 					ikev2_evaluate_connection_protocol_fit(
-						c, sra, responder,
+						c, sra, role,
 						tsi, tsr, tsi_n, tsr_n,
 						&best_tsi_i, &best_tsr_i);
 
@@ -843,7 +849,7 @@ stf_status ikev2_resp_accept_child_ts(const struct msg_digest *md,
 
 			for (sr = &d->spd; sr != NULL; sr = sr->spd_next) {
 				int newfit = ikev2_evaluate_connection_fit(
-					d, sr, responder, tsi, tsr, tsi_n, tsr_n);
+					d, sr, role, tsi, tsr, tsi_n, tsr_n);
 
 				if (newfit > bestfit_n) {
 					/* ??? what does this comment mean? */
@@ -853,7 +859,7 @@ stf_status ikev2_resp_accept_child_ts(const struct msg_digest *md,
 						    d->name));
 					int bfit_p =
 						ikev2_evaluate_connection_port_fit(
-							d, sr, responder,
+							d, sr, role,
 							tsi, tsr,
 							tsi_n, tsr_n,
 							&best_tsi_i,
@@ -867,7 +873,7 @@ stf_status ikev2_resp_accept_child_ts(const struct msg_digest *md,
 							    best_tsr_i));
 						int bfit_pr =
 							ikev2_evaluate_connection_protocol_fit(
-								d, sr, responder,
+								d, sr, role,
 								tsi, tsr,
 								tsi_n, tsr_n,
 								&best_tsi_i,
@@ -983,14 +989,14 @@ stf_status ikev2_resp_accept_child_ts(const struct msg_digest *md,
 		insert_state(cst); /* needed for delete - we should never have duplicated before we were sure */
 	}
 
-	if (responder) {
-		cst->st_ts_this = ikev2_end_to_ts(&bsr->this);
-		cst->st_ts_that = ikev2_end_to_ts(&bsr->that);
-	} else {
+	if (role == ORIGINAL_INITIATOR) {
 		pexpect(best_tsi_i >= 0);
 		pexpect(best_tsr_i >= 0);	/* ??? Coverity thinks that this might fail */
 		cst->st_ts_this = tsi[best_tsi_i];
 		cst->st_ts_that = tsr[best_tsr_i];
+	} else {
+		cst->st_ts_this = ikev2_end_to_ts(&bsr->this);
+		cst->st_ts_that = ikev2_end_to_ts(&bsr->that);
 	}
 	ikev2_print_ts(&cst->st_ts_this);
 	ikev2_print_ts(&cst->st_ts_that);
@@ -1103,7 +1109,8 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	} else if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
 		cst = md->st;
 	} else {
-		ret = ikev2_resp_accept_child_ts(md, &cst, isa_xchg);
+		ret = ikev2_resp_accept_child_ts(md, &cst, role,
+				isa_xchg);
 	}
 
 	if (cst == NULL)
