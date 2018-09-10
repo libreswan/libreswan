@@ -65,7 +65,7 @@ static const u_char der_digestinfo[] = {
 };
 static const int der_digestinfo_len = sizeof(der_digestinfo);
 
-static bool ikev2_calculate_sighash(const struct state *st,
+static bool RSA_ikev2_calculate_sighash(const struct state *st,
 				    enum original_role role,
 				    const unsigned char *idhash,
 				    const chunk_t firstpacket,
@@ -153,7 +153,7 @@ bool ikev2_calculate_rsa_hash(struct state *st,
 	    hash_algo == IKEv2_AUTH_HASH_SHA1 /* old style RSA with SHA1 */ ) {
 		memcpy(signed_octets, der_digestinfo, der_digestinfo_len);
 
-		if (!ikev2_calculate_sighash(st, role, idhash,
+		if (!RSA_ikev2_calculate_sighash(st, role, idhash,
 					st->st_firstpacket_me,
 					signed_octets + der_digestinfo_len,
 					hash_algo))
@@ -161,7 +161,7 @@ bool ikev2_calculate_rsa_hash(struct state *st,
 			return FALSE;
 		}
 	} else {
-		if (!ikev2_calculate_sighash(st, role, idhash,
+		if (!RSA_ikev2_calculate_sighash(st, role, idhash,
 					st->st_firstpacket_me,
 					signed_octets,
 					hash_algo))
@@ -198,7 +198,7 @@ bool ikev2_calculate_rsa_hash(struct state *st,
 	{
 		/* now generate signature blob */
 		u_char sig_val[RSA_MAX_OCTETS];
-		int shr = sign_hash(k,
+		int shr = sign_hash_RSA(k,
 			signed_octets, signed_len, sig_val, sz, hash_algo);
 		if (shr == 0)
 			return FALSE;
@@ -275,7 +275,7 @@ stf_status ikev2_verify_rsa_hash(struct state *st,
 
 	invertrole = (role == ORIGINAL_INITIATOR ? ORIGINAL_RESPONDER : ORIGINAL_INITIATOR);
 
-	if (!ikev2_calculate_sighash(st, invertrole, idhash, st->st_firstpacket_him,
+	if (!RSA_ikev2_calculate_sighash(st, invertrole, idhash, st->st_firstpacket_him,
 				calc_hash, hash_algo)) {
 		return STF_FATAL;
 	}
