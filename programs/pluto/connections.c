@@ -113,7 +113,8 @@ struct connection *conn_by_name(const char *nm, bool strict, bool quiet)
 			if (strict)
 				if (!quiet)
 					whack_log(RC_UNKNOWN_NAME,
-						"no connection named \"%s\"", nm);
+						"no connection named \"%s\"",
+						nm);
 			break;
 		}
 		if (streq(p->name, nm) &&
@@ -3198,12 +3199,14 @@ struct connection *refine_host_connection(const struct state *st,
 	for (bool wcpip = FALSE;; wcpip = TRUE) {
 		for (; d != NULL; d = d->hp_next) {
 			int wildcards;
-			bool matching_peer_id = match_id(peer_id, &d->spd.that.id,
-                                       &wildcards);
+			bool matching_peer_id = match_id(peer_id,
+							&d->spd.that.id,
+							&wildcards);
 
 			int peer_pathlen;
-			bool matching_peer_ca = trusted_ca_nss(peer_ca, d->spd.that.ca,
-						&peer_pathlen);
+			bool matching_peer_ca = trusted_ca_nss(peer_ca,
+							d->spd.that.ca,
+							&peer_pathlen);
 
 			int our_pathlen;
 			bool matching_requested_ca = match_requested_ca(requested_ca,
