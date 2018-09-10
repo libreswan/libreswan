@@ -2,9 +2,9 @@
 east #
  # next two line should not be needed
 east #
- certutil -A -i /testing/x509/strongswan/strongEastCert.der -n "strongEast" -t "P,," -d sql:/etc/ipsec.d/
+ #certutil -A -i /testing/x509/strongswan/strongEastCert.der -n "strongEast" -t "P,," -d sql:/etc/ipsec.d/
 east #
- certutil -A -i /testing/x509/strongswan/strongWestCert.der -n "strongWest" -t "P,," -d sql:/etc/ipsec.d/
+ #certutil -A -i /testing/x509/strongswan/strongWestCert.der -n "strongWest" -t "P,," -d sql:/etc/ipsec.d/
 east #
  PATH/bin/pk12util -i /testing/x509/strongswan/strongEast.p12 -d sql:/etc/ipsec.d -w /testing/x509/nss-pw
 pk12util: PKCS12 IMPORT SUCCESSFUL
@@ -19,49 +19,7 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-ikev2
-002  add_connection from initiate
-002 lsw_get_secret load_nss_cert_secret
-002 load_nss_cert_secret cert_key_is_ecdsa
-002 allocate_ECDSA_public_key_nss
-002 pub length 97
-002 k length 97
-002 form_ckaid_ecdsa
-002 free_public_key_out
-002 free_public_key
-002 lsw_get_secret load_nss_cert_secret
-002 load_nss_cert_secret cert_key_is_ecdsa
-002 allocate_ECDSA_public_key_nss
-002 pub length 97
-002 k length 97
-002 form_ckaid_ecdsa
-002 free_public_key_out
-002 free_public_key
-002 cert key is not rsa type!
-002 load_end_nss_certificate add_ecdsa_pubkey_from_cert
-002 add_ecdsa_pubkey_from_cert
-002 create_cert_subjectdn_pubkey_ecdsa
-002 create_cert_pubkey_ecdsa from x509 allocate_ECDSA_public_key_nss
-002 allocate_ECDSA_public_key_nss
-002 pub length 97
-002 k length 97
-002 form_ckaid_ecdsa
-002 replace_public_key
-002 replace_public_key
-002 replace_public_key
-002 cert key is not rsa type!
-002 load_end_nss_certificate add_ecdsa_pubkey_from_cert
-002 add_ecdsa_pubkey_from_cert
-002 create_cert_subjectdn_pubkey_ecdsa
-002 create_cert_pubkey_ecdsa from x509 allocate_ECDSA_public_key_nss
-002 allocate_ECDSA_public_key_nss
-002 pub length 97
-002 k length 97
-002 form_ckaid_ecdsa
-002 replace_public_key
-002 replace_public_key
-002 replace_public_key
 002 added connection description "westnet-eastnet-ikev2"
-002 came out of add_connection from initiate
 east #
  #tcpdump -w OUTPUT/swan12.pcap -i eth0 -c 1000
 east #
@@ -106,9 +64,8 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-strongEast                                                   Pu,u,u
+strongEast                                                   u,u,u
 strongSwan CA - strongSwan                                   CT,, 
-strongWest                                                   P,,  
 east #
  if [ -f /var/run/charon.pid ]; then strongswan status ; fi
 east #
