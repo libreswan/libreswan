@@ -55,6 +55,11 @@
 #include "ietf_constants.h"
 #include "asn1.h"
 
+/*
+ * XXX: isn't this function identical to that used by RSA?  And why
+ * not pass in the hash_desc?
+ */
+
 static bool ECDSA_calculate_sighash(const struct state *st,
 				    enum original_role role,
 				    const unsigned char *idhash,
@@ -139,8 +144,6 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 	/* XXX: use struct hash_desc and a lookup? */
 	unsigned int hash_digest_size;
  	switch (hash_algo) {
-	case IKEv2_AUTH_HASH_SHA1:
-	/* we do not support ecdsa-sha1 */
 #ifdef USE_SHA2
 	case IKEv2_AUTH_HASH_SHA2_256:
 		hash_digest_size = SHA2_256_DIGEST_SIZE;
@@ -162,7 +165,7 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 	ECDSA_calculate_sighash(st, role, idhash,
 				st->st_firstpacket_me,
 				hash, hash_algo);
-	DBG(DBG_CRYPT, DBG_dump("v2ecdsa octets", hash, hash_digest_size));
+	DBG(DBG_CRYPT, DBG_dump("ECDSA hash", hash, hash_digest_size));
 
 	/*
 	 * Sign the hash.
@@ -204,6 +207,10 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 	 * A 1056 bit R:S is larger than 127 (but less than 256) so
 	 * need to allow for a 2-byte "long form" length octet.  See
 	 * http://luca.ntop.org/Teaching/Appunti/asn1.html
+	 *
+	 * XXX: hand generating DER isn't right.  Is there a library?
+	 * Because of length octet encoding it really needs to be
+	 * two-pass or built backard.
 	 */
 	const size_t point_size = shr / 2;
 	const size_t max_der_size = (1+2 /* SEQUENCE:size */
@@ -212,6 +219,9 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 					+ point_size) * 2 /* R and S */);
 	uint8_t *der_encoded_sig_val = alloc_things(uint8_t, max_der_size,
 						    "der encoded signature");
+	DBGF(DBG_CRYPT, "Converting ECDSA signature length %zu point size %zu to DER",
+	     shr, point_size);
+
 	/* SEQUENCE */
 	uint8_t *derp = der_encoded_sig_val;
 	*derp++ = ASN1_SEQUENCE;
@@ -230,23 +240,37 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 	/* R and S */
 	for (int p = 0; p < 2; p++) {
 		uint8_t *point = sig_val + p*point_size;
+		size_t size = point_size;
+		DBG(DBG_CRYPT,
+		    const char *name = (p == 0 ? "R" : "S");
+		    DBG_dump(name, point, size));
+		/* strip leading zeros */
+		while (size > 1 && *point == 0) {
+			point++;
+			size--;
+		}
 		/* INTEGER: size */
 		*derp++ = ASN1_INTEGER;
 		if (*point >= 0x80) {
 			/* add leading 0 */
-			*derp++ = point_size + 1;
+			*derp++ = size + 1;
 			*derp++ = 0;
 		} else {
-			*derp++ = point_size;
+			*derp++ = size;
 		}
 		/* value */
-		memcpy(derp, point, point_size);
-		derp += point_size;
+		memcpy(derp, point, size);
+		derp += size;
 	}
 	passert(derp - sequence_size - 1 < 256);
 	*sequence_size = derp - sequence_size - 1;
+	size_t der_size = derp - der_encoded_sig_val;
 
-	if (!out_raw(der_encoded_sig_val, derp-der_encoded_sig_val, a_pbs, "ecdsa signature")) {
+	DBG(DBG_CRYPT,
+	    DBG_log("ECDSA signature encoded as a %zu byte DER ...", der_size);
+	    DBG_dump("ECDSA DER:", der_encoded_sig_val, der_size));
+
+	if (!out_raw(der_encoded_sig_val, der_size, a_pbs, "ecdsa signature")) {
 		pfree(der_encoded_sig_val);
 		pfree(hash);
 		return FALSE;
