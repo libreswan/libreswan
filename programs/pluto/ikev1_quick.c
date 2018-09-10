@@ -724,7 +724,7 @@ void init_phase2_iv(struct state *st, const msgid_t *msgid)
 	DBG_cond_dump(DBG_CRYPT, "last Phase 1 IV:",
 		      st->st_ph1_iv, st->st_ph1_iv_len);
 
-	st->st_new_iv_len = h->hash_digest_len;
+	st->st_new_iv_len = h->hash_digest_size;
 	passert(st->st_new_iv_len <= sizeof(st->st_new_iv));
 
 	DBG_cond_dump(DBG_CRYPT, "current Phase 1 IV:",

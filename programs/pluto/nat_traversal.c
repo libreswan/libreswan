@@ -146,16 +146,16 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 		crypt_hash_digest_bytes(ctx, "PORT",
 					&netorder_port, sizeof(netorder_port));
 	}
-	crypt_hash_final_bytes(&ctx, hash, hasher->hash_digest_len);
+	crypt_hash_final_bytes(&ctx, hash, hasher->hash_digest_size);
 	DBG(DBG_NATT, {
 			DBG_log("natd_hash: hasher=%p(%d)", hasher,
-				(int)hasher->hash_digest_len);
+				(int)hasher->hash_digest_size);
 			DBG_dump("natd_hash: icookie=", icookie, COOKIE_SIZE);
 			DBG_dump("natd_hash: rcookie=", rcookie, COOKIE_SIZE);
 			DBG_dump("natd_hash: ip=", ab, al);
 			DBG_log("natd_hash: port=%d", port);
 			DBG_dump("natd_hash: hash=", hash,
-				hasher->hash_digest_len);
+				hasher->hash_digest_size);
 		});
 }
 
@@ -385,7 +385,7 @@ static void ikev1_natd_lookup(struct msg_digest *md)
 {
 	struct state *st = md->st;
 	const struct hash_desc *const hasher = st->st_oakley.ta_prf->hasher;
-	const size_t hl = hasher->hash_digest_len;
+	const size_t hl = hasher->hash_digest_size;
 	const struct payload_digest *const hd = md->chain[ISAKMP_NEXT_NATD_RFC];
 
 	passert(md->iface != NULL);
@@ -486,7 +486,7 @@ bool ikev1_nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 		  first, firstport);
 
 	if (!ikev1_out_generic_raw(nat_np, pd, outs, hash,
-				   st->st_oakley.ta_prf->hasher->hash_digest_len,
+				   st->st_oakley.ta_prf->hasher->hash_digest_size,
 				   "NAT-D"))
 		return FALSE;
 
@@ -497,7 +497,7 @@ bool ikev1_nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 		  second, secondport);
 
 	return ikev1_out_generic_raw(np, pd, outs, hash,
-		st->st_oakley.ta_prf->hasher->hash_digest_len,
+		st->st_oakley.ta_prf->hasher->hash_digest_size,
 		"NAT-D");
 }
 

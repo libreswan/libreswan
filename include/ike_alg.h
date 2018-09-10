@@ -468,9 +468,14 @@ struct encrypt_ops {
 
 struct hash_desc {
 	struct ike_alg common;	/* MUST BE FIRST */
-	const size_t hash_digest_len;
+	/*
+	 * Size of the output digest in bytes.
+	 */
+	const size_t hash_digest_size;
+	/*
+	 * Size of an input block, in bytes.
+	 */
 	const size_t hash_block_size;
-
 	/*
 	 * For NSS.
 	 *
@@ -490,6 +495,7 @@ struct hash_desc {
 		 */
 		CK_MECHANISM_TYPE derivation_mechanism;
 	} nss;
+
 	const struct hash_ops *hash_ops;
 };
 

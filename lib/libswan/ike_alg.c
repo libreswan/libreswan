@@ -428,7 +428,7 @@ static const struct hash_desc *hash_descriptors[] = {
 static void hash_desc_check(const struct ike_alg *alg)
 {
 	const struct hash_desc *hash = hash_desc(alg);
-	pexpect_ike_alg(alg, hash->hash_digest_len > 0);
+	pexpect_ike_alg(alg, hash->hash_digest_size > 0);
 	pexpect_ike_alg(alg, hash->hash_block_size > 0);
 	if (hash->hash_ops != NULL) {
 		pexpect_ike_alg(alg, hash->hash_ops->check != NULL);
@@ -510,7 +510,7 @@ static void prf_desc_check(const struct ike_alg *alg)
 		 * Check for dangling pointer.
 		 */
 		pexpect_ike_alg_base_in_table(&prf->common, &prf->hasher->common);
-		pexpect_ike_alg(alg, prf->prf_output_size == prf->hasher->hash_digest_len);
+		pexpect_ike_alg(alg, prf->prf_output_size == prf->hasher->hash_digest_size);
 		pexpect_ike_alg_has_base_names(&prf->common, &prf->hasher->common);
 	}
 }

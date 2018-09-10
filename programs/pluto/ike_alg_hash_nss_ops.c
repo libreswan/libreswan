@@ -72,7 +72,7 @@ static void final_bytes(struct hash_context **hashp,
 {
 	passert(final_bytes == (*hashp)->desc->hash_ops->final_bytes);
 	unsigned out_len = 0;
-	passert(sizeof_bytes == (*hashp)->desc->hash_digest_len);
+	passert(sizeof_bytes == (*hashp)->desc->hash_digest_size);
 	SECStatus rc = PK11_DigestFinal((*hashp)->context, bytes,
 					&out_len, sizeof_bytes);
 	passert(rc == SECSuccess);

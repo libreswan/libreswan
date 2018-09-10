@@ -95,7 +95,7 @@ void crypt_hash_final_bytes(struct crypt_hash **hashp,
 				 hash->name, hash->desc->common.name,
 				 bytes, sizeof_bytes));
 	/* Must be correct, else hash code can crash. */
-	passert(sizeof_bytes == hash->desc->hash_digest_len);
+	passert(sizeof_bytes == hash->desc->hash_digest_size);
 	hash->desc->hash_ops->final_bytes(&hash->context, bytes, sizeof_bytes);
 	pfree(*hashp);
 	*hashp = hash = NULL;
@@ -104,7 +104,7 @@ void crypt_hash_final_bytes(struct crypt_hash **hashp,
 chunk_t crypt_hash_final_chunk(struct crypt_hash **hashp, const char *name)
 {
 	struct crypt_hash *hash = *hashp;
-	chunk_t chunk = alloc_chunk(hash->desc->hash_digest_len, name);
+	chunk_t chunk = alloc_chunk(hash->desc->hash_digest_size, name);
 	DBG(hash->debug, DBG_log("%s hash %s final chunk@%p (length %zu)",
 				 hash->name, hash->desc->common.name,
 				 chunk.ptr, chunk.len));

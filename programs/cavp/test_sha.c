@@ -41,7 +41,7 @@ struct hash_desc ike_alg_hash_sha2_224 = {
 		.algo_type = IKE_ALG_HASH,
 		.fips = TRUE,
 	},
-	.hash_digest_len = 28, /* 224/8 */
+	.hash_digest_size = 28, /* 224/8 */
 	.hash_block_size = 64, /* from RFC 4868 */
 	.hash_ops = &ike_alg_hash_nss_ops,
 };
@@ -64,7 +64,7 @@ static const struct hash_desc *hash_alg;
 static void print_config(void)
 {
 	for (int i = 0; hashes[i]; i++) {
-		if (hashes[i]->hash_digest_len == l) {
+		if (hashes[i]->hash_digest_size == l) {
 			hash_alg = hashes[i];
 			break;
 		}

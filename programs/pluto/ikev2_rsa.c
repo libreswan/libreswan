@@ -121,7 +121,7 @@ static bool ikev2_calculate_sighash(const struct state *st,
 	crypt_hash_digest_bytes(ctx, "IDHASH", idhash,
 				st->st_oakley.ta_prf->prf_output_size);
 
-	crypt_hash_final_bytes(&ctx, sig_octets, hd->hash_digest_len);
+	crypt_hash_final_bytes(&ctx, sig_octets, hd->hash_digest_size);
 
 	return TRUE;
 }
