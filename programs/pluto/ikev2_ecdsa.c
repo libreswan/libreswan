@@ -26,6 +26,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include "secitem.h"
+#include "cryptohi.h"
+
 #include <libreswan.h>
 
 #include "sysdep.h"
@@ -54,6 +57,7 @@
 #include "crypt_hash.h"
 #include "ietf_constants.h"
 #include "asn1.h"
+#include "lswnss.h"
 
 /*
  * XXX: isn't this function identical to that used by RSA?  And why
@@ -190,93 +194,35 @@ bool ikev2_calculate_ecdsa_hash(struct state *st,
 		return true;
 	}
 
-	/*
-	 * Per https://tools.ietf.org/html/rfc3279#section-2.2.2
-	 * convert R:S to the DER:
-	 *
-	 * Dss-Sig-Value  ::=  SEQUENCE  {
-         *     r       INTEGER,
-         *     s       INTEGER
-	 * }
-	 *
-	 * Since R and S are unsigned the most significant bit of the
-	 * most significant byte of the encoded value can never be 1.
-	 * Hence, if the raw R or S value has its MSB 1, a leading
-	 * zero must be added.
-	 *
-	 * A 1056 bit R:S is larger than 127 (but less than 256) so
-	 * need to allow for a 2-byte "long form" length octet.  See
-	 * http://luca.ntop.org/Teaching/Appunti/asn1.html
-	 *
-	 * XXX: hand generating DER isn't right.  Is there a library?
-	 * Because of length octet encoding it really needs to be
-	 * two-pass or built backard.
-	 */
-	const size_t point_size = shr / 2;
-	const size_t max_der_size = (1+2 /* SEQUENCE:size */
-				     + (1+2 /* INTEGER:size */
-					+ 1 /* possible leading zero */
-					+ point_size) * 2 /* R and S */);
-	uint8_t *der_encoded_sig_val = alloc_things(uint8_t, max_der_size,
-						    "der encoded signature");
-	DBGF(DBG_CRYPT, "Converting ECDSA signature length %zu point size %zu to DER",
-	     shr, point_size);
-
-	/* SEQUENCE */
-	uint8_t *derp = der_encoded_sig_val;
-	*derp++ = ASN1_SEQUENCE;
-	/* length octets */
-	uint8_t *sequence_size; /* save for updates */
-	passert(shr < 256);
-	if (shr > 127) {
-		/* >127 is a heuristic */
-		*derp++ = 0x81;
-		sequence_size = derp;
-		*derp++ = 0;
-	} else {
-		sequence_size = derp;
-		*derp++ = 0;
-	}
-	/* R and S */
-	for (int p = 0; p < 2; p++) {
-		uint8_t *point = sig_val + p*point_size;
-		size_t size = point_size;
-		DBG(DBG_CRYPT,
-		    const char *name = (p == 0 ? "R" : "S");
-		    DBG_dump(name, point, size));
-		/* strip leading zeros */
-		while (size > 1 && *point == 0) {
-			point++;
-			size--;
+	SECItem der_signature;
+	SECItem raw_signature = {
+		.type = siBuffer,
+		.data = sig_val,
+		.len = shr,
+	};
+	if (DSAU_EncodeDerSigWithLen(&der_signature, &raw_signature,
+				     raw_signature.len) != SECSuccess) {
+		pfree(hash);
+		LSWLOG(buf) {
+			lswlogs(buf, "NSS: constructing DER encoded ECDSA signature using DSAU_EncodeDerSigWithLen() failed:");
+			lswlog_nss_error(buf);
 		}
-		/* INTEGER: size */
-		*derp++ = ASN1_INTEGER;
-		if (*point >= 0x80) {
-			/* add leading 0 */
-			*derp++ = size + 1;
-			*derp++ = 0;
-		} else {
-			*derp++ = size;
-		}
-		/* value */
-		memcpy(derp, point, size);
-		derp += size;
+		return false;
 	}
-	passert(derp - sequence_size - 1 < 256);
-	*sequence_size = derp - sequence_size - 1;
-	size_t der_size = derp - der_encoded_sig_val;
 
-	DBG(DBG_CRYPT,
-	    DBG_log("ECDSA signature encoded as a %zu byte DER ...", der_size);
-	    DBG_dump("ECDSA DER:", der_encoded_sig_val, der_size));
+	LSWDBGP(DBG_CONTROL, buf) {
+		lswlogf(buf, "%d-byte DER encoded ECDSA signature: ", der_signature.len);
+		lswlog_nss_secitem(buf, &der_signature);
+	}
 
-	if (!out_raw(der_encoded_sig_val, der_size, a_pbs, "ecdsa signature")) {
-		pfree(der_encoded_sig_val);
+	if (!out_raw(der_signature.data, der_signature.len, a_pbs, "ecdsa signature")) {
+
+		SECITEM_FreeItem(&der_signature, PR_FALSE);
 		pfree(hash);
 		return FALSE;
 	}
 
-	pfree(der_encoded_sig_val);
+	SECITEM_FreeItem(&der_signature, PR_FALSE);
 	pfree(hash);
 
 	return TRUE;
