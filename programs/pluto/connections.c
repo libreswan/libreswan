@@ -108,17 +108,16 @@ struct connection *conn_by_name(const char *nm, bool strict, bool quiet)
 {
 	struct connection *p, *prev;
 
-	for (prev = NULL, p = connections;; prev = p, p = p->ac_next) {
+	for (prev = NULL, p = connections; ; prev = p, p = p->ac_next) {
 		if (p == NULL) {
-			if (strict)
-				if (!quiet)
-					whack_log(RC_UNKNOWN_NAME,
-						"no connection named \"%s\"",
-						nm);
+			if (strict && !quiet) {
+				whack_log(RC_UNKNOWN_NAME,
+					"no connection named \"%s\"", nm);
+			}
 			break;
 		}
 		if (streq(p->name, nm) &&
-			(!strict || p->kind != CK_INSTANCE)) {
+		    (!strict || p->kind != CK_INSTANCE)) {
 			if (prev != NULL) {
 				/* remove p from list */
 				prev->ac_next = p->ac_next;
