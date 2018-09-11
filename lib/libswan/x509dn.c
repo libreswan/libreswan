@@ -336,7 +336,7 @@ int dn_count_wildcards(chunk_t dn)
  */
 static void hex_str(chunk_t bin, chunk_t *str)
 {
-	u_int i;
+	unsigned i;
 
 	format_chunk(str, "0x");
 	for (i = 0; i < bin.len; i++)

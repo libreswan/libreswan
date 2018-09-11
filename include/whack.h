@@ -99,9 +99,9 @@ struct whack_end {
 	bool has_client_wildcard;
 	bool has_port_wildcard;
 	char *updown;		/* string */
-	u_int16_t host_port;	/* host order  (for IKE communications) */
-	u_int16_t port;		/* host order */
-	u_int8_t protocol;
+	uint16_t host_port;	/* host order  (for IKE communications) */
+	uint16_t port;		/* host order */
+	uint8_t protocol;
 	char *virt;
 	ip_range pool_range;	/* store start of v4 addresspool */
 	bool xauth_server;	/* for XAUTH */

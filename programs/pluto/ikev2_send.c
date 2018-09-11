@@ -180,7 +180,7 @@ uint8_t build_ikev2_critical(bool impair)
  *    the field must be empty.
  */
 bool ship_v2N(enum next_payload_types_ikev2 np,
-	      u_int8_t critical,
+	      uint8_t critical,
 	      enum ikev2_sec_proto_id protoid,
 	      const chunk_t *spi,
 	      v2_notification_t type,
@@ -562,7 +562,7 @@ void send_v2_notification_invalid_ke(struct msg_digest *md,
 			group->common.name, group->group);
 	});
 	/* convert group to a raw buffer */
-	const u_int16_t gr = htons(group->group);
+	const uint16_t gr = htons(group->group);
 	chunk_t nd;
 	setchunk(nd, (void*)&gr, sizeof(gr));
 
@@ -606,7 +606,7 @@ void send_v2_delete(struct state *const st)
 		pb_stream del_pbs;
 		struct ikev2_delete v2del_tmp;
 		/*
-		 * u_int16_t i, j=0;
+		 * uint16_t i, j=0;
 		 * u_char *spi;
 		 * char spi_buf[1024];
 		 */

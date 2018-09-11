@@ -380,7 +380,7 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey)
  * Offset into the SYMKEY is in BYTES.
  */
 
-PK11SymKey *symkey_from_bytes(const char *name, const u_int8_t *bytes, size_t sizeof_bytes)
+PK11SymKey *symkey_from_bytes(const char *name, const uint8_t *bytes, size_t sizeof_bytes)
 {
 	if (sizeof_bytes == 0) {
 		/* hopefully caller knows what they are doing */
@@ -412,7 +412,7 @@ PK11SymKey *symkey_from_chunk(const char *name, chunk_t chunk)
 
 PK11SymKey *encrypt_key_from_bytes(const char *name,
 				   const struct encrypt_desc *encrypt,
-				   const u_int8_t *bytes, size_t sizeof_bytes)
+				   const uint8_t *bytes, size_t sizeof_bytes)
 {
 	PK11SymKey *scratch = ephemeral_symkey();
 	PK11SymKey *tmp = merge_symkey_bytes(name, scratch, bytes, sizeof_bytes,
@@ -427,7 +427,7 @@ PK11SymKey *encrypt_key_from_bytes(const char *name,
 }
 
 PK11SymKey *prf_key_from_bytes(const char *name, const struct prf_desc *prf,
-			       const u_int8_t *bytes, size_t sizeof_bytes)
+			       const uint8_t *bytes, size_t sizeof_bytes)
 {
 	PK11SymKey *scratch = ephemeral_symkey();
 	PK11SymKey *tmp = merge_symkey_bytes(name, scratch, bytes, sizeof_bytes,
@@ -495,7 +495,7 @@ chunk_t concat_chunk_bytes(const char *name, chunk_t lhs,
 	size_t len = lhs.len + sizeof_rhs;
 	chunk_t cat = {
 		.len = len,
-		.ptr = alloc_things(u_int8_t, len, name),
+		.ptr = alloc_things(uint8_t, len, name),
 	};
 	memcpy(cat.ptr, lhs.ptr, lhs.len);
 	memcpy(cat.ptr + lhs.len, rhs, sizeof_rhs);

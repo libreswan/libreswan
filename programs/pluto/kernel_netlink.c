@@ -602,8 +602,8 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	 */
 	if (transport_proto == IPPROTO_ICMP ||
 		transport_proto == IPPROTO_ICMPV6) {
-		u_int16_t icmp_type;
-		u_int16_t icmp_code;
+		uint16_t icmp_type;
+		uint16_t icmp_code;
 
 		icmp_type = ntohs(req.u.p.sel.sport) >> 8;
 		icmp_code = ntohs(req.u.p.sel.sport) & 0xFF;
@@ -839,10 +839,10 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 {
 	const struct connection *const c = st->st_connection;
 
-	const u_int8_t natt_type = (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) ?
+	const uint8_t natt_type = (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) ?
 		ESPINUDP_WITH_NON_ESP : 0;
 
-	u_int proto;
+	unsigned proto;
 	struct ipsec_proto_info *proto_info;
 
 	if (st->st_esp.present) {
@@ -863,10 +863,10 @@ static bool create_xfrm_migrate_sa(struct state *st, const int dir,
 	};
 
 	ip_address *new_addr;
-	u_int16_t old_port;
-	u_int16_t new_port;
-	u_int16_t natt_sport = 0;
-	u_int16_t natt_dport = 0;
+	uint16_t old_port;
+	uint16_t new_port;
+	uint16_t natt_sport = 0;
+	uint16_t natt_dport = 0;
 	const ip_address *src, *dst;
 	const ip_subnet *src_client, *dst_client;
 
@@ -1253,8 +1253,8 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 		 */
 		if (IPPROTO_ICMP == sa->transport_proto ||
 			IPPROTO_ICMPV6 == sa->transport_proto) {
-			u_int16_t icmp_type;
-			u_int16_t icmp_code;
+			uint16_t icmp_type;
+			uint16_t icmp_code;
 
 			icmp_type = ntohs(req.p.sel.sport) >> 8;
 			icmp_code = ntohs(req.p.sel.sport) & 0xFF;
@@ -1324,13 +1324,13 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace)
 			DBG(DBG_KERNEL, DBG_log("netlink: setting IPsec SA replay-window to %d using old-style req",
 				req.p.replay_window));
 		} else {
-			u_int32_t bmp_size = BYTES_FOR_BITS(sa->replay_window +
-				pad_up(sa->replay_window, sizeof(u_int32_t) * BITS_PER_BYTE) );
+			uint32_t bmp_size = BYTES_FOR_BITS(sa->replay_window +
+				pad_up(sa->replay_window, sizeof(uint32_t) * BITS_PER_BYTE) );
 			/* this is where we could fill in sequence numbers for this SA */
 			struct xfrm_replay_state_esn xre = {
 				/* replay_window must be multiple of 8 */
 				.replay_window = sa->replay_window,
-				.bmp_len = bmp_size / sizeof(u_int32_t),
+				.bmp_len = bmp_size / sizeof(uint32_t),
 			};
 			DBG(DBG_KERNEL, DBG_log("netlink: setting IPsec SA replay-window to %" PRIu32 " using xfrm_replay_state_esn",
 				xre.replay_window));
@@ -2628,8 +2628,8 @@ static bool netlink_bypass_policy(int family, int proto, int port)
 	const char* text = "add port bypass";
 
 	if (proto == IPPROTO_ICMPV6) {
-		u_int16_t icmp_type;
-		u_int16_t icmp_code;
+		uint16_t icmp_type;
+		uint16_t icmp_code;
 
 		icmp_type = port >> 8;
 		icmp_code = port & 0xFF;

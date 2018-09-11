@@ -105,7 +105,7 @@ static __inline__ void * alloc_bytes_st(size_t size, const char *str,
  * max_trans and max_attrs can be 0, will be dynamically expanded
  * as a result of "add" operations
  */
-static void db_prop_init(struct db_context *ctx, u_int8_t protoid, int max_trans,
+static void db_prop_init(struct db_context *ctx, uint8_t protoid, int max_trans,
 		 int max_attrs)
 {
 	ctx->trans0 = NULL;
@@ -188,7 +188,7 @@ static void db_attrs_expand(struct db_context *ctx, int delta_attrs)
 }
 
 /* Allocate a new db object */
-struct db_context *db_prop_new(u_int8_t protoid, int max_trans, int max_attrs)
+struct db_context *db_prop_new(uint8_t protoid, int max_trans, int max_attrs)
 {
 	struct db_context *ctx = ALLOC_BYTES_ST(sizeof(struct db_context), "db_context",
 			      db_context_st);
@@ -208,7 +208,7 @@ void db_destroy(struct db_context *ctx)
 }
 
 /* Start a new transform, expand trans0 is needed */
-void db_trans_add(struct db_context *ctx, u_int8_t transid)
+void db_trans_add(struct db_context *ctx, uint8_t transid)
 {
 	passert(ctx->trans_cur != NULL);
 	/*	skip incrementing current trans pointer the 1st time*/
@@ -249,7 +249,7 @@ static void db_attr_add(struct db_context *ctx, const struct db_attr *a)
  * Add attr copy (by value) to current transform,
  * expanding attrs0 if needed, just calls db_attr_add().
  */
-void db_attr_add_values(struct db_context *ctx,  enum ikev1_oakley_attr type, u_int16_t val)
+void db_attr_add_values(struct db_context *ctx,  enum ikev1_oakley_attr type, uint16_t val)
 {
 	struct db_attr attr;
 

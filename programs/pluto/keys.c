@@ -1224,7 +1224,7 @@ err_t add_public_key(const struct id *id, /* ASKK */
 err_t add_ipseckey(const struct id *id,
 		     enum dns_auth_level dns_auth_level,
 		     enum pubkey_alg alg,
-		     u_int32_t ttl, u_int32_t ttl_used,
+		     uint32_t ttl, uint32_t ttl_used,
 		     const chunk_t *key,
 		     struct pubkey_list **head)
 {

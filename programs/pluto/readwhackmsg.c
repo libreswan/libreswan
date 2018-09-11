@@ -37,7 +37,7 @@ void readwhackmsg(char *infile)
 		printf("Pre-amble: %s", b1);
 	}
 
-	u_int32_t header[3];	/* length, high time, low time */
+	uint32_t header[3];	/* length, high time, low time */
 
 	while (fread(header, sizeof(header), 1, record) != 1) {
 		size_t buflen = header[0] - sizeof(header);
@@ -57,8 +57,8 @@ void readwhackmsg(char *infile)
 		if (fread(&m1, abuflen, 1, record) != 1)
 			break;
 
-		if (abuflen == sizeof(u_int32_t) &&
-		    *(u_int32_t *)&m1 == WHACK_BASIC_MAGIC)
+		if (abuflen == sizeof(uint32_t) &&
+		    *(uint32_t *)&m1 == WHACK_BASIC_MAGIC)
 		{
 			/* ignore initial WHACK_BASIC_MAGIC message */
 			continue;

@@ -183,7 +183,7 @@ static field_desc ipsec_sit_field[] = {
 struct_desc ipsec_sit_desc = {
 	.name = "IPsec DOI SIT",
 	.fields = ipsec_sit_field,
-	.size = sizeof(u_int32_t),
+	.size = sizeof(uint32_t),
 };
 
 /* ISAKMP Proposal Payload
@@ -1578,7 +1578,7 @@ struct_desc *v2_payload_desc(unsigned p)
 	return v2_payload_descs[q];
 }
 
-void init_pbs(pb_stream *pbs, u_int8_t *start, size_t len, const char *name)
+void init_pbs(pb_stream *pbs, uint8_t *start, size_t len, const char *name)
 {
 	*pbs = (pb_stream) {
 		/* .container = NULL, */
@@ -1602,7 +1602,7 @@ pb_stream chunk_as_pbs(chunk_t chunk, const char *name)
 	return pbs;
 }
 
-void init_out_pbs(pb_stream *pbs, u_int8_t *start, size_t len, const char *name)
+void init_out_pbs(pb_stream *pbs, uint8_t *start, size_t len, const char *name)
 {
 	init_pbs(pbs, start, len, name);
 	memset(start, 0xFA, len);	/* value likely to be unpleasant */
@@ -1635,7 +1635,7 @@ void move_pbs_previous_np(pb_stream *dst, pb_stream *src)
 static err_t enum_enum_checker(
 	const char *struct_name,
 	const field_desc *fp,
-	u_int32_t last_enum)
+	uint32_t last_enum)
 {
 	enum_names *ed = enum_enum_table(fp->desc, last_enum);
 
@@ -1658,15 +1658,15 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 		      struct_desc *sd, bool len_meaningful)
 {
 	bool immediate = FALSE;
-	const u_int8_t *inp = struct_ptr;
+	const uint8_t *inp = struct_ptr;
 	field_desc *fp;
-	u_int32_t last_enum = 0;
+	uint32_t last_enum = 0;
 
 	DBG_log("%s%s:", label, sd->name);
 
 	for (fp = sd->fields; fp->field_type != ft_end; fp++) {
 		int i = fp->size;
-		u_int32_t n = 0;
+		uint32_t n = 0;
 
 		switch (fp->field_type) {
 		case ft_zig:		/* zero (ignore violations) */
@@ -1686,13 +1686,13 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 			/* grab i bytes */
 			switch (i) {
 			case 8 / BITS_PER_BYTE:
-				n = *(const u_int8_t *)inp;
+				n = *(const uint8_t *)inp;
 				break;
 			case 16 / BITS_PER_BYTE:
-				n = *(const u_int16_t *)inp;
+				n = *(const uint16_t *)inp;
 				break;
 			case 32 / BITS_PER_BYTE:
-				n = *(const u_int32_t *)inp;
+				n = *(const uint32_t *)inp;
 				break;
 			default:
 				bad_case(i);
@@ -1816,17 +1816,17 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 	       pb_stream *ins, pb_stream *obj_pbs)
 {
 	err_t ugh = NULL;
-	u_int8_t *cur = ins->cur;
+	uint8_t *cur = ins->cur;
 
 	if (ins->roof - cur < (ptrdiff_t)sd->size) {
 		ugh = builddiag("not enough room in input packet for %s (remain=%li, sd->size=%zu)",
 				sd->name, (long int)(ins->roof - cur),
 				sd->size);
 	} else {
-		u_int8_t *roof = cur + sd->size; /* may be changed by a length field */
-		u_int8_t *outp = struct_ptr;
+		uint8_t *roof = cur + sd->size; /* may be changed by a length field */
+		uint8_t *outp = struct_ptr;
 		bool immediate = FALSE;
-		u_int32_t last_enum = 0;
+		uint32_t last_enum = 0;
 
 		for (field_desc *fp = sd->fields; ugh == NULL; fp++) {
 			size_t i = fp->size;
@@ -1867,7 +1867,7 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 			case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
 			case ft_set:            /* bits representing set */
 			{
-				u_int32_t n = 0;
+				uint32_t n = 0;
 
 				/* Reportedly fails on arm, see bug #775 */
 				for (; i != 0; i--)
@@ -1877,7 +1877,7 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 				case ft_len:    /* length of this struct and any following crud */
 				case ft_lv:     /* length/value field of attribute */
 				{
-					u_int32_t len = fp->field_type ==
+					uint32_t len = fp->field_type ==
 							ft_len ? n :
 							immediate ? sd->size :
 							n + sd->size;
@@ -1943,13 +1943,13 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 				i = fp->size;
 				switch (i) {
 				case 8 / BITS_PER_BYTE:
-					*(u_int8_t *)outp = n;
+					*(uint8_t *)outp = n;
 					break;
 				case 16 / BITS_PER_BYTE:
-					*(u_int16_t *)outp = n;
+					*(uint16_t *)outp = n;
 					break;
 				case 32 / BITS_PER_BYTE:
-					*(u_int32_t *)outp = n;
+					*(uint32_t *)outp = n;
 					break;
 				default:
 					bad_case(i);
@@ -2037,8 +2037,8 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 		pb_stream *outs, pb_stream *obj_pbs)
 {
 	err_t ugh = NULL;
-	const u_int8_t *inp = struct_ptr;
-	u_int8_t *cur = outs->cur;
+	const uint8_t *inp = struct_ptr;
+	uint8_t *cur = outs->cur;
 	bool saw_pnp = FALSE;
 
 	/* do backpatching of previous NP, if called for */
@@ -2099,7 +2099,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 			sd->name);
 	} else {
 		bool immediate = FALSE;
-		u_int32_t last_enum = 0;
+		uint32_t last_enum = 0;
 
 		/* new child stream for portion of payload after this struct */
 		pb_stream obj = {
@@ -2172,17 +2172,17 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 			case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
 			case ft_set:            /* bits representing set */
 			{
-				u_int32_t n;
+				uint32_t n;
 
 				switch (i) {
 				case 8 / BITS_PER_BYTE:
-					n = *(const u_int8_t *)inp;
+					n = *(const uint8_t *)inp;
 					break;
 				case 16 / BITS_PER_BYTE:
-					n = *(const u_int16_t *)inp;
+					n = *(const uint16_t *)inp;
 					break;
 				case 32 / BITS_PER_BYTE:
-					n = *(const u_int32_t *)inp;
+					n = *(const uint32_t *)inp;
 					break;
 				default:
 					bad_case(i);
@@ -2268,7 +2268,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 
 				/* emit i low-order bytes of n in network order */
 				while (i-- != 0) {
-					cur[i] = (u_int8_t)n;
+					cur[i] = (uint8_t)n;
 					n >>= BITS_PER_BYTE;
 				}
 				inp += fp->size;
@@ -2324,7 +2324,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 	return FALSE;
 }
 
-bool ikev1_out_generic(u_int8_t np, struct_desc *sd,
+bool ikev1_out_generic(uint8_t np, struct_desc *sd,
 		 pb_stream *outs, pb_stream *obj_pbs)
 {
 	passert(sd->fields == isag_fields);
@@ -2335,7 +2335,7 @@ bool ikev1_out_generic(u_int8_t np, struct_desc *sd,
 	return out_struct(&gen, sd, outs, obj_pbs);
 }
 
-bool ikev1_out_generic_raw(u_int8_t np, struct_desc *sd,
+bool ikev1_out_generic_raw(uint8_t np, struct_desc *sd,
 		     pb_stream *outs, const void *bytes, size_t len,
 		     const char *name)
 {
@@ -2425,7 +2425,7 @@ pb_stream open_output_struct_pbs(pb_stream *outs, const void *struct_ptr,
  */
 
 pb_stream reply_stream;
-u_int8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
+uint8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
 
 /*
  * Turns out that while the above was correct, the reply_stream still
@@ -2476,7 +2476,7 @@ void restore_reply_pbs(struct pbs_reply_backup **backup)
 void close_output_pbs(pb_stream *pbs)
 {
 	if (pbs->lenfld != NULL) {
-		u_int32_t len = pbs_offset(pbs);
+		uint32_t len = pbs_offset(pbs);
 		int i = pbs->lenfld_desc->size;
 
 		passert(i > 0);
@@ -2489,7 +2489,7 @@ void close_output_pbs(pb_stream *pbs)
 
 		/* emit octets of length in network order */
 		while (i-- != 0) {
-			pbs->lenfld[i] = (u_int8_t)len;
+			pbs->lenfld[i] = (uint8_t)len;
 			len >>= BITS_PER_BYTE;
 		}
 	}

@@ -41,9 +41,9 @@
  */
 
 struct sec_ctx {
-	u_int8_t ctx_doi;
-	u_int8_t ctx_alg;	/* LSMs: e.g., selinux == 1 */
-	u_int16_t ctx_len;	/* of text label */
+	uint8_t ctx_doi;
+	uint8_t ctx_alg;	/* LSMs: e.g., selinux == 1 */
+	uint16_t ctx_len;	/* of text label */
 };
 
 /*

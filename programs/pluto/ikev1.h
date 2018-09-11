@@ -11,7 +11,7 @@ extern void init_ikev1(void);
 
 const struct oakley_group_desc *ikev1_quick_pfs(struct alg_info_esp *aie);
 
-void ikev1_init_out_pbs_echo_hdr(struct msg_digest *md, bool enc, u_int8_t np,
+void ikev1_init_out_pbs_echo_hdr(struct msg_digest *md, bool enc, uint8_t np,
 				 pb_stream *output_stream, uint8_t *output_buffer,
 				 size_t sizeof_output_buffer,
 				 pb_stream *rbody);
@@ -30,25 +30,25 @@ extern void process_v1_packet(struct msg_digest **mdp);
 extern void process_packet_tail(struct msg_digest **mdp);
 
 extern bool ikev1_justship_nonce(chunk_t *n,
-			   pb_stream *outs, u_int8_t np,
+			   pb_stream *outs, uint8_t np,
 			   const char *name);
 
 /* calls previous two routines */
 extern bool ikev1_ship_nonce(chunk_t *n, struct pluto_crypto_req *r,
-		       pb_stream *outs, u_int8_t np,
+		       pb_stream *outs, uint8_t np,
 		       const char *name);
 
 extern notification_t accept_v1_nonce(struct msg_digest *md, chunk_t *dest,
 				      const char *name);
 
 extern bool ikev1_justship_KE(chunk_t *g,
-			pb_stream *outs, u_int8_t np);
+			pb_stream *outs, uint8_t np);
 
 /* just calls previous two routines now */
 extern bool ikev1_ship_KE(struct state *st,
 		    struct pluto_crypto_req *r,
 		    chunk_t *g,
-		    pb_stream *outs, u_int8_t np);
+		    pb_stream *outs, uint8_t np);
 
 /* **MAIN MODE FUNCTIONS** in ikev1_main.c */
 
@@ -104,10 +104,10 @@ extern stf_status oakley_id_and_auth(struct msg_digest *md,
 				     bool aggrmode);                     /* aggressive mode? */
 
 extern bool ikev1_ship_chain(chunk_t *chain, int n, pb_stream *outs,
-					     u_int8_t type,
-					     u_int8_t setnp);
+					     uint8_t type,
+					     uint8_t setnp);
 
-void doi_log_cert_thinking(u_int16_t auth,
+void doi_log_cert_thinking(uint16_t auth,
 			   enum ike_cert_type certtype,
 			   enum certpolicy policy,
 			   bool gotcertrequest,

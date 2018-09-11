@@ -933,7 +933,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 /*
  * create output HDR as replica of input HDR - IKEv1 only; return the body
  */
-void ikev1_init_out_pbs_echo_hdr(struct msg_digest *md, bool enc, u_int8_t np,
+void ikev1_init_out_pbs_echo_hdr(struct msg_digest *md, bool enc, uint8_t np,
 				 pb_stream *output_stream, uint8_t *output_buffer,
 				 size_t sizeof_output_buffer,
 				 pb_stream *rbody)
@@ -1595,7 +1595,7 @@ void process_v1_packet(struct msg_digest **mdp)
 					break; /* fragment list incomplete */
 				} else if (frag->index == last_frag_index) {
 					struct msg_digest *whole_md = alloc_md("msg_digest by ikev1 fragment handler");
-					u_int8_t *buffer = alloc_bytes(size,
+					uint8_t *buffer = alloc_bytes(size,
 								       "IKE fragments buffer");
 					size_t offset = 0;
 
@@ -3047,11 +3047,11 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 }
 
 bool ikev1_ship_chain(chunk_t *chain, int n, pb_stream *outs,
-					     u_int8_t type,
-					     u_int8_t setnp)
+					     uint8_t type,
+					     uint8_t setnp)
 {
 	int i;
-	u_int8_t np;
+	uint8_t np;
 
 	for (i = 0; i < n; i++) {
 		/* set np for last cert, or another */
@@ -3064,7 +3064,7 @@ bool ikev1_ship_chain(chunk_t *chain, int n, pb_stream *outs,
 	return TRUE;
 }
 
-void doi_log_cert_thinking(u_int16_t auth,
+void doi_log_cert_thinking(uint16_t auth,
 				enum ike_cert_type certtype,
 				enum certpolicy policy,
 				bool gotcertrequest,

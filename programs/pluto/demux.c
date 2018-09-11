@@ -90,9 +90,9 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 {
 	int packet_len;
 	/* ??? this buffer seems *way* too big */
-	u_int8_t bigbuffer[MAX_INPUT_UDP_SIZE];
+	uint8_t bigbuffer[MAX_INPUT_UDP_SIZE];
 
-	u_int8_t *_buffer = bigbuffer;
+	uint8_t *_buffer = bigbuffer;
 	union {
 		struct sockaddr sa;
 		struct sockaddr_in sa_in4;
@@ -199,9 +199,9 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 	}
 
 	if (ifp->ike_float) {
-		u_int32_t non_esp;
+		uint32_t non_esp;
 
-		if (packet_len < (int)sizeof(u_int32_t)) {
+		if (packet_len < (int)sizeof(uint32_t)) {
 			LSWLOG(buf) {
 				lswlogs(buf, "recvfrom ");
 				lswlog_ip(buf, &sender); /* sensitive? */
@@ -210,7 +210,7 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 			}
 			return NULL;
 		}
-		memcpy(&non_esp, _buffer, sizeof(u_int32_t));
+		memcpy(&non_esp, _buffer, sizeof(uint32_t));
 		if (non_esp != 0) {
 			LSWLOG(buf) {
 				lswlogs(buf, "recvfrom ");
@@ -219,8 +219,8 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 			}
 			return NULL;
 		}
-		_buffer += sizeof(u_int32_t);
-		packet_len -= sizeof(u_int32_t);
+		_buffer += sizeof(uint32_t);
+		packet_len -= sizeof(uint32_t);
 	}
 
 	/* We think that in 2013 Feb, Apple iOS Racoon
@@ -228,7 +228,7 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 	 * Non ESP Marker
 	 */
 	{
-		static const u_int8_t non_ESP_marker[NON_ESP_MARKER_SIZE] =
+		static const uint8_t non_ESP_marker[NON_ESP_MARKER_SIZE] =
 			{ 0x00, };
 		if (ifp->ike_float &&
 		    packet_len >= NON_ESP_MARKER_SIZE &&

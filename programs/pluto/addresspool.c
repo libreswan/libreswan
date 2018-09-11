@@ -49,9 +49,9 @@
 struct ip_pool {
 	unsigned pool_refcount;	/* reference counted! */
 	ip_range r;
-	u_int32_t size;		/* number of addresses within range */
-	u_int32_t used;		/* number of addresses in use (includes lingering) */
-	u_int32_t lingering;	/* number of lingering addresses */
+	uint32_t size;		/* number of addresses within range */
+	uint32_t used;		/* number of addresses in use (includes lingering) */
+	uint32_t lingering;	/* number of lingering addresses */
 	struct lease_addr *leases;	/* monotonically increasing index values */
 
 	struct ip_pool *next;	/* next pool */
@@ -111,7 +111,7 @@ static bool can_share_lease(const struct connection *c)
 }
 
 struct lease_addr {
-	u_int32_t index;	/* range start + index == IP address */
+	uint32_t index;	/* range start + index == IP address */
 	struct id thatid;	/* from connection */
 	unsigned refcnt;	/* reference counted */
 	monotime_t lingering_since;	/* when did this begin to linger */
@@ -160,7 +160,7 @@ static void free_lease_list(struct lease_addr **head)
  * pointer to NULL).
  */
 
-static struct lease_addr **ref_to_lease(struct ip_pool *pool, u_int32_t i) {
+static struct lease_addr **ref_to_lease(struct ip_pool *pool, uint32_t i) {
 	struct lease_addr **pp;
 	struct lease_addr *p;
 
@@ -187,7 +187,7 @@ static struct lease_addr **ref_to_lease(struct ip_pool *pool, u_int32_t i) {
 void rel_lease_addr(struct connection *c)
 {
 	struct ip_pool *pool = c->pool;
-	u_int32_t i;	/* index within range of IPv4 address to be released */
+	uint32_t i;	/* index within range of IPv4 address to be released */
 	unsigned refcnt;	/* for DBG logging */
 	const char *story;	/* for DBG logging */
 
@@ -258,7 +258,7 @@ void rel_lease_addr(struct connection *c)
  * return previous lease if there is one lingering for the same ID
  */
 static bool share_lease(const struct connection *c,
-			u_int32_t *index /*result*/)
+			uint32_t *index /*result*/)
 {
 	struct lease_addr *p;
 	bool r = FALSE;
@@ -316,7 +316,7 @@ err_t lease_an_address(const struct connection *c, const struct state *st,
 	 * index within address range
 	 * Initialized just to silence GCC.
 	 */
-	u_int32_t i = 0;
+	uint32_t i = 0;
 	bool s;
 
 	DBG(DBG_CONTROL, {
@@ -343,7 +343,7 @@ err_t lease_an_address(const struct connection *c, const struct state *st,
 		 * cannot find or cannot share an existing lease:
 		 * allocate a new one
 		 */
-		const u_int32_t size = c->pool->size;
+		const uint32_t size = c->pool->size;
 		struct lease_addr **pp;
 		struct lease_addr *p;
 		struct lease_addr *ll = NULL;	/* longest lingerer */

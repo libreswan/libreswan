@@ -69,9 +69,9 @@ struct fg_targets {
 	struct fg_targets *next;
 	struct fg_groups *group;
 	ip_subnet subnet;
-	u_int8_t proto;
-	u_int16_t sport;
-	u_int16_t dport;
+	uint8_t proto;
+	uint16_t sport;
+	uint16_t dport;
 	char *name; /* name of instance of group conn */
 };
 
@@ -163,8 +163,8 @@ static void read_foodgroup(struct fg_groups *g)
 					zero(spport_str);
 					zero(dpport_str);
 					int errl;
-					u_int8_t proto = 0;
-					u_int16_t sport = 0, dport = 0;
+					uint8_t proto = 0;
+					uint16_t sport = 0, dport = 0;
 					bool has_port_wildcard;
 
 					/* check for protocol and ports */

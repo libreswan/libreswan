@@ -357,7 +357,7 @@ int ikev2_parse_ts(struct payload_digest *const ts_pd,
  * If subset_ok, narrowing our proto 0 to ts_proto is OK (initiator narrowing).
  * Returns 0 for no match, 1 for narrowed match, 255 for exact match.
  */
-static int ikev2_match_protocol(u_int8_t proto, u_int8_t ts_proto,
+static int ikev2_match_protocol(uint8_t proto, uint8_t ts_proto,
 	bool superset_ok, bool subset_ok, const char *which, int index)
 {
 	int f = 0;	/* strength of match */
@@ -459,11 +459,11 @@ int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
  * If subset_ok, narrowing our port range to ts port range is OK (initiator narrowing).
  * Returns 0 if no match; otherwise number of ports within match
  */
-static int ikev2_match_port_range(u_int16_t port, struct traffic_selector ts,
+static int ikev2_match_port_range(uint16_t port, struct traffic_selector ts,
 	bool superset_ok, bool subset_ok, const char *which, int index)
 {
-	u_int16_t low = port;
-	u_int16_t high = port == 0 ? 65535 : port;
+	uint16_t low = port;
+	uint16_t high = port == 0 ? 65535 : port;
 	int f = 0;	/* strength of match */
 	const char *m = "no";
 

@@ -2356,7 +2356,7 @@ bool ikev2_proposals_include_modp(const struct ikev2_proposals *proposals,
 }
 
 void ikev2_copy_cookie_from_sa(struct ikev2_proposal *accepted_ike_proposal,
-				u_int8_t *cookie)
+				uint8_t *cookie)
 {
 	passert(accepted_ike_proposal->remote_spi.size == COOKIE_SIZE);
 	/* st_icookie is an array of len COOKIE_SIZE. only accept this length */

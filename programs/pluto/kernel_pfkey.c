@@ -72,7 +72,7 @@
 
 int pfkeyfd = NULL_FD;
 
-typedef u_int32_t pfkey_seq_t;
+typedef uint32_t pfkey_seq_t;
 static pfkey_seq_t pfkey_seq = 0;       /* sequence number for our PF_KEY messages */
 
 
@@ -466,7 +466,7 @@ static void process_pfkey_acquire(pfkey_buf *buf,
 struct new_klips_mapp_nfo {
 	struct k_sadb_sa *sa;
 	ip_address src, dst;
-	u_int16_t sport, dport;
+	uint16_t sport, dport;
 };
 
 static void nat_t_new_klips_mapp(struct state *st, void *data)
@@ -649,8 +649,8 @@ static bool pfkey_build(int error,
 }
 
 /* pfkey_extensions_init + pfkey_build + pfkey_msg_hdr_build */
-static bool pfkey_msg_start(u_int8_t msg_type,
-			    u_int8_t satype,
+static bool pfkey_msg_start(uint8_t msg_type,
+			    uint8_t satype,
 			    const char *description,
 			    const char *text_said,
 			    struct sadb_ext *extensions[K_SADB_EXT_MAX + 1])
@@ -662,7 +662,7 @@ static bool pfkey_msg_start(u_int8_t msg_type,
 }
 
 /* pfkey_build + pfkey_address_build */
-static bool pfkeyext_address(u_int16_t exttype,
+static bool pfkeyext_address(uint16_t exttype,
 			     const ip_address *address,
 			     const char *description,
 			     const char *text_said,
@@ -1882,7 +1882,7 @@ bool pfkey_was_eroute_idle(struct state *st, deltatime_t idle_max)
 			char buf[1024];
 			char *line;
 			char text_said[SATOT_BUF];
-			u_int8_t proto = 0;
+			uint8_t proto = 0;
 			ip_address dst;
 			ip_said said;
 			ipsec_spi_t spi = 0;

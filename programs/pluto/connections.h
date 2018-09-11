@@ -169,10 +169,10 @@ struct end {
 	bool has_port_wildcard;
 	bool has_id_wildcards;
 	char *updown;
-	u_int16_t host_port;		/* where the IKE port is */
+	uint16_t host_port;		/* where the IKE port is */
 	bool host_port_specific;	/* if TRUE, then IKE ports are tested for */
-	u_int16_t port;			/* port number, if per-port keying */
-	u_int8_t protocol;		/* transport-protocol number, if per-X keying */
+	uint16_t port;			/* port number, if per-port keying */
+	uint8_t protocol;		/* transport-protocol number, if per-X keying */
 
 	enum certpolicy sendcert;	/* whether or not to send the certificate */
 	cert_t cert;			/* end certificate */
@@ -344,10 +344,10 @@ struct connection {
 	char *modecfg_domains;
 	char *modecfg_banner;
 
-	u_int8_t metric;	/* metric for tunnel routes */
-	u_int16_t connmtu;	/* mtu for tunnel routes */
-	u_int32_t statsval;	/* track what we have told statsd */
-	u_int16_t nflog_group;	/* NFLOG group - 0 means disabled  */
+	uint8_t metric;	/* metric for tunnel routes */
+	uint16_t connmtu;	/* mtu for tunnel routes */
+	uint32_t statsval;	/* track what we have told statsd */
+	uint16_t nflog_group;	/* NFLOG group - 0 means disabled  */
 	msgid_t ike_window;     /* IKE v2 window size 7296#section-2.3 */
 };
 
@@ -397,9 +397,9 @@ extern void delete_connections_by_name(const char *name, bool strict);
 extern void delete_every_connection(void);
 extern char *add_group_instance(struct connection *group,
 				const ip_subnet *target,
-				u_int8_t proto,
-				u_int16_t sport,
-				u_int16_t dport);
+				uint8_t proto,
+				uint16_t sport,
+				uint16_t dport);
 
 extern void remove_group_instance(const struct connection *group,
 				  const char *name);
@@ -424,12 +424,12 @@ struct state;   /* forward declaration of tag (defined in state.h) */
 extern struct connection *conn_by_name(const char *nm, bool strict, bool quiet);
 
 stf_status ikev2_find_host_connection(struct connection **cp,
-		const ip_address *me, u_int16_t my_port, const ip_address *him,
-		u_int16_t his_port, lset_t req_policy);
+		const ip_address *me, uint16_t my_port, const ip_address *him,
+		uint16_t his_port, lset_t req_policy);
 
 extern struct connection
-	*find_host_connection(const ip_address *me, u_int16_t my_port,
-		       const ip_address *him, u_int16_t his_port,
+	*find_host_connection(const ip_address *me, uint16_t my_port,
+		       const ip_address *him, uint16_t his_port,
 		       lset_t req_policy, lset_t policy_exact_mask),
 	*find_next_host_connection(struct connection *c,
 		       lset_t req_policy, lset_t policy_exact_mask),
@@ -440,10 +440,10 @@ extern struct connection
 	*find_client_connection(struct connection *c,
 			const ip_subnet *our_net,
 			const ip_subnet *peer_net,
-			const u_int8_t our_protocol,
-			const u_int16_t out_port,
-			const u_int8_t peer_protocol,
-			const u_int16_t peer_port),
+			const uint8_t our_protocol,
+			const uint16_t out_port,
+			const uint8_t peer_protocol,
+			const uint16_t peer_port),
 	*find_connection_for_clients(struct spd_route **srp,
 				      const ip_address *our_client,
 				      const ip_address *peer_client,

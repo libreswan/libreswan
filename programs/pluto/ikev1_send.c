@@ -65,7 +65,7 @@ static bool send_v1_frags(struct state *st, const char *where)
 		(natt_bonus + NSIZEOF_isakmp_hdr +
 		 NSIZEOF_isakmp_ikefrag);
 
-	u_int8_t *packet_cursor = st->st_tpacket.ptr;
+	uint8_t *packet_cursor = st->st_tpacket.ptr;
 	size_t packet_remainder_len = st->st_tpacket.len;
 
 	/* BUG: this code does not use the marshalling code
@@ -77,7 +77,7 @@ static bool send_v1_frags(struct state *st, const char *where)
 		sizeof(struct isakmp_ikefrag) == NSIZEOF_isakmp_ikefrag);
 
 	while (packet_remainder_len > 0) {
-		u_int8_t frag_prefix[NSIZEOF_isakmp_hdr +
+		uint8_t frag_prefix[NSIZEOF_isakmp_hdr +
 				     NSIZEOF_isakmp_ikefrag];
 		const size_t data_len = packet_remainder_len > max_data_len ?
 					max_data_len : packet_remainder_len;

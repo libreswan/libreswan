@@ -104,7 +104,7 @@ extern enum_names dns_auth_level_names;
  * This variable specifies (globally!!) which we support: 10 or 32001.
  * ??? surely that makes migration to 32001 all or nothing.
  */
-extern u_int16_t secctx_attr_type;
+extern uint16_t secctx_attr_type;
 #endif
 
 extern const char *const natt_bit_names[];
@@ -118,7 +118,7 @@ struct af_info {
 	size_t ia_sz;
 	size_t sa_sz;
 	int mask_cnt;
-	u_int8_t id_addr, id_subnet, id_range;
+	uint8_t id_addr, id_subnet, id_range;
 	const ip_address *any;
 	const ip_subnet *none;  /* 0.0.0.0/32 or IPv6 equivalent */
 	const ip_subnet *all;   /* 0.0.0.0/0 or IPv6 equivalent */

@@ -287,7 +287,7 @@ struct state_v2_microcode {
 };
 
 void ikev2_copy_cookie_from_sa(struct ikev2_proposal *accepted_ike_proposal,
-				u_int8_t *cookie);
+				uint8_t *cookie);
 
 void ikev2_ike_sa_established(struct ike_sa *ike,
 			      const struct state_v2_microcode *svm,

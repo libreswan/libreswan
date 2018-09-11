@@ -35,7 +35,7 @@ struct db_attr {
 						 */
 		enum ikev1_ipsec_attr ipsec;
 	} type;
-	u_int16_t val;
+	uint16_t val;
 };
 
 /*
@@ -67,7 +67,7 @@ struct db_attr {
 
 /* transform: an array of attributes */
 struct db_trans {
-	u_int16_t transid;	/* Transform-Id */
+	uint16_t transid;	/* Transform-Id */
 	struct db_attr *attrs;	/* [attr_cnt] attributes */
 	unsigned int attr_cnt;	/* number of attributes */
 };
@@ -77,7 +77,7 @@ struct db_trans {
  * Example: several different ESP transforms, any of which is OK.
  */
 struct db_prop {
-	u_int8_t protoid;	/* Protocol-Id */
+	uint8_t protoid;	/* Protocol-Id */
 	struct db_trans *trans;	/* [trans_cnt] transforms (disjunction) */
 	unsigned int trans_cnt;	/* number of transforms */
 	/* SPI size and value isn't part of DB */

@@ -955,7 +955,7 @@ enum ikev2_ts_type {
 #define KEY_IKE 1
 
 /* the following are from RFC 2393/draft-shacham-ippcp-rfc2393bis-05.txt 3.3 */
-typedef u_int16_t cpi_t;
+typedef uint16_t cpi_t;
 #define IPCOMP_CPI_SIZE 2
 #define IPCOMP_FIRST_NEGOTIATED 256
 #define IPCOMP_LAST_NEGOTIATED 61439
@@ -1062,7 +1062,7 @@ enum ikev1_auth_attribute {
 	AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG = 252,
 };
 
-typedef u_int16_t ipsec_auth_t;
+typedef uint16_t ipsec_auth_t;
 
 /*
  * Oakley Lifetime Type attribute
@@ -1146,7 +1146,7 @@ enum ikev1_encr_attribute  {
  * https://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-6
  */
 
-typedef u_int16_t oakley_hash_t;
+typedef uint16_t oakley_hash_t;
 enum ikev1_hash_attribute  {
 	/* 0 reserved */
 	OAKLEY_MD5 = 1,
@@ -1206,7 +1206,7 @@ enum ikev1_auth_method {
 
 
 /* typedef to make our life easier */
-typedef u_int16_t oakley_auth_t;
+typedef uint16_t oakley_auth_t;
 
 enum ikev2_cp_attribute_type {
 	/*

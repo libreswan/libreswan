@@ -88,7 +88,7 @@ void crypt_hash_digest_bytes(struct crypt_hash *hash,
 }
 
 void crypt_hash_final_bytes(struct crypt_hash **hashp,
-			    u_int8_t *bytes, size_t sizeof_bytes)
+			    uint8_t *bytes, size_t sizeof_bytes)
 {
 	struct crypt_hash *hash = *hashp;
 	DBG(hash->debug, DBG_log("%s hash %s final bytes@%p (length %zu)",

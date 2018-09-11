@@ -81,7 +81,7 @@
 /* forward declarations */
 static stf_status xauth_client_ackstatus(struct state *st,
 					 pb_stream *rbody,
-					 u_int16_t ap_id);
+					 uint16_t ap_id);
 
 /**
  * Addresses assigned (usually via MODE_CONFIG) to the Initiator
@@ -266,7 +266,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 	case INTERNAL_IP4_NETMASK:
 	{
 		int m = c->spd.this.client.maskbits;
-		u_int32_t mask = htonl(~(m == 32 ? (u_int32_t)0 : ~(u_int32_t)0 >> m));
+		uint32_t mask = htonl(~(m == 32 ? (uint32_t)0 : ~(uint32_t)0 >> m));
 
 		ok = out_raw(&mask, sizeof(mask), &attrval, "IP4_submsk");
 		break;
@@ -376,9 +376,9 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 static stf_status modecfg_resp(struct state *st,
 			lset_t resp,
 			pb_stream *rbody,
-			u_int16_t replytype,
+			uint16_t replytype,
 			bool use_modecfg_addr_as_client_addr,
-			u_int16_t ap_id)
+			uint16_t ap_id)
 {
 	unsigned char *r_hash_start, *r_hashval;
 
@@ -764,12 +764,12 @@ stf_status modecfg_send_request(struct state *st)
 			return STF_INTERNAL_ERROR;
 
 		/* generate LOT of empty attributes */
-		static const u_int16_t at[] = {
+		static const uint16_t at[] = {
 			INTERNAL_IP4_ADDRESS, INTERNAL_IP4_NETMASK,
 			INTERNAL_IP4_DNS, MODECFG_BANNER, MODECFG_DOMAIN,
 			CISCO_SPLIT_INC, 0  };
 
-		for (const u_int16_t *p = at; *p != 0; p++) {
+		for (const uint16_t *p = at; *p != 0; p++) {
 			struct isakmp_attribute attr = {
 				.isaat_af_type = *p,
 			};
@@ -1557,7 +1557,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 	struct state *const st = md->st;
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
-	u_int16_t isama_id = ma->isama_identifier;
+	uint16_t isama_id = ma->isama_identifier;
 	lset_t resp = LEMPTY;
 
 	DBG(DBG_CONTROL, DBG_log("modecfg_inI2"));
@@ -1596,7 +1596,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 			ip_address a;
 			char caddr[SUBNETTOT_BUF];
 
-			u_int32_t *ap = (u_int32_t *)(strattr.cur);
+			uint32_t *ap = (uint32_t *)(strattr.cur);
 			SET_V4(a);
 			/* ??? this code should ensure that the size of the attribute value is correct */
 			/* ??? this code is duplicated four times! */
@@ -1765,8 +1765,8 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				ip_address a;
 				char caddr[SUBNETTOT_BUF];
 
-				u_int32_t *ap =
-					(u_int32_t *)(strattr.cur);
+				uint32_t *ap =
+					(uint32_t *)(strattr.cur);
 				SET_V4(a);
 				/* ??? this code should ensure that the size of the attribute value is correct */
 				/* ??? this code is duplicated four times! */
@@ -1801,7 +1801,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			{
 				ip_address a;
 				ipstr_buf b;
-				u_int32_t *ap = (u_int32_t *)(strattr.cur);
+				uint32_t *ap = (uint32_t *)(strattr.cur);
 
 				SET_V4(a);
 				/* ??? this code should ensure that the size of the attribute value is correct */
@@ -1820,8 +1820,8 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				ip_address a;
 				char ipstr[SUBNETTOT_BUF];
 
-				u_int32_t *ap =
-					(u_int32_t *)(strattr.cur);
+				uint32_t *ap =
+					(uint32_t *)(strattr.cur);
 				SET_V4(a);
 				/* ??? this code should ensure that the size of the attribute value is correct */
 				/* ??? this code is duplicated four times! */
@@ -1980,7 +1980,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 static stf_status xauth_client_resp(struct state *st,
 			     lset_t xauth_resp,
 			     pb_stream *rbody,
-			     u_int16_t ap_id)
+			     uint16_t ap_id)
 {
 	unsigned char *r_hash_start, *r_hashval;
 	char xauth_username[MAX_XAUTH_USERNAME_LEN];
@@ -2449,7 +2449,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
  */
 static stf_status xauth_client_ackstatus(struct state *st,
 					 pb_stream *rbody,
-					 u_int16_t ap_id)
+					 uint16_t ap_id)
 {
 	unsigned char *r_hash_start, *r_hashval;
 

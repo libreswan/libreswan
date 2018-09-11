@@ -102,7 +102,7 @@ struct kernel_sa {
 	bool esn;
 	bool decap_dscp;
 	bool nopmtudisc;
-	u_int32_t tfcpad;
+	uint32_t tfcpad;
 	ipsec_spi_t spi;
 	unsigned proto;
 	unsigned int transport_proto;
@@ -134,8 +134,8 @@ struct kernel_sa {
 	IPsecSAref_t refhim;
 
 	int encapsulation;
-	u_int16_t natt_sport, natt_dport;
-	u_int8_t natt_type;
+	uint16_t natt_sport, natt_dport;
+	uint8_t natt_type;
 	ip_address *natt_oa;
 	const char *text_said;
 #ifdef HAVE_LABELED_IPSEC

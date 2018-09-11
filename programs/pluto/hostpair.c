@@ -115,9 +115,9 @@ bool same_peer_ids(const struct connection *c, const struct connection *d,
  * found faster next time.
  */
 struct host_pair *find_host_pair(const ip_address *myaddr,
-				 u_int16_t myport,
+				 uint16_t myport,
 				 const ip_address *hisaddr,
-				 u_int16_t hisport)
+				 uint16_t hisport)
 {
 	struct host_pair *p, *prev;
 
@@ -175,9 +175,9 @@ void remove_host_pair(struct host_pair *hp)
 
 /* find head of list of connections with this pair of hosts */
 struct connection *find_host_pair_connections(const ip_address *myaddr,
-					      u_int16_t myport,
+					      uint16_t myport,
 					      const ip_address *hisaddr,
-					      u_int16_t hisport)
+					      uint16_t hisport)
 {
 	struct host_pair *hp =
 		find_host_pair(myaddr, myport, hisaddr, hisport);

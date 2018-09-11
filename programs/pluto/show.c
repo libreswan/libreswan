@@ -242,7 +242,7 @@ void log_state(struct state *st, enum state_kind new_state)
 	}
 
 	{
-		u_int32_t sv = IPsecSAref2NFmark(st->st_ref) | LOG_CONN_STATSVAL(&lc);
+		uint32_t sv = IPsecSAref2NFmark(st->st_ref) | LOG_CONN_STATSVAL(&lc);
 
 		if (conn->statsval == sv) {
 			DBG(DBG_CONTROLMORE,

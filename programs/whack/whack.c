@@ -1713,7 +1713,7 @@ int main(int argc, char **argv)
 			 * ??? what values are legitimate?
 			 * 32 and often 64, but what else?
 			 * Not so large that the
-			 * number of bits overflows u_int32_t.
+			 * number of bits overflows uint32_t.
 			 */
 			msg.sa_replay_window = opt_whole;
 			continue;

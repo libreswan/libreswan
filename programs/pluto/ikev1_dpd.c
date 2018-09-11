@@ -200,7 +200,7 @@ static void dpd_sched_timeout(struct state *p1st, monotime_t nw, deltatime_t tim
 static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 		     deltatime_t delay, deltatime_t timeout)
 {
-	u_int32_t seqno;
+	uint32_t seqno;
 
 	DBG(DBG_DPD, {
 		char cib[CONN_INST_BUF];
@@ -391,7 +391,7 @@ stf_status dpd_inI_outR(struct state *p1st,
 			pb_stream *pbs)
 {
 	monotime_t nw = mononow();
-	u_int32_t seqno;
+	uint32_t seqno;
 
 	if (!IS_ISAKMP_SA_ESTABLISHED(p1st->st_state)) {
 		loglog(RC_LOG_SERIOUS,
@@ -427,7 +427,7 @@ stf_status dpd_inI_outR(struct state *p1st,
 		return STF_FAIL + PAYLOAD_MALFORMED;
 	}
 
-	seqno = ntohl(*(u_int32_t *)pbs->cur);
+	seqno = ntohl(*(uint32_t *)pbs->cur);
 	if (p1st->st_dpd_peerseqno && seqno <= p1st->st_dpd_peerseqno) {
 		loglog(RC_LOG_SERIOUS,
 		       "DPD: received old or duplicate R_U_THERE");
@@ -499,7 +499,7 @@ stf_status dpd_inR(struct state *p1st,
 		   struct isakmp_notification *const n,
 		   pb_stream *pbs)
 {
-	u_int32_t seqno;
+	uint32_t seqno;
 
 	if (!IS_ISAKMP_SA_ESTABLISHED(p1st->st_state)) {
 		loglog(RC_LOG_SERIOUS,
@@ -538,7 +538,7 @@ stf_status dpd_inR(struct state *p1st,
 		return STF_FAIL + PAYLOAD_MALFORMED;
 	}
 
-	seqno = ntohl(*(u_int32_t *)pbs->cur);
+	seqno = ntohl(*(uint32_t *)pbs->cur);
 	DBG(DBG_DPD,
 	    DBG_log("DPD: R_U_THERE_ACK, seqno received: %u expected: %u (state=#%lu)",
 		    seqno, p1st->st_dpd_expectseqno, p1st->st_serialno));

@@ -16,7 +16,7 @@
 
 extern const u_char zero_cookie[COOKIE_SIZE];   /* guaranteed 0 */
 
-extern void get_cookie(bool initiator, u_int8_t cookie[COOKIE_SIZE],
+extern void get_cookie(bool initiator, uint8_t cookie[COOKIE_SIZE],
 		       const ip_address *addr);
 
 #define is_zero_cookie(cookie) all_zero((cookie), COOKIE_SIZE)

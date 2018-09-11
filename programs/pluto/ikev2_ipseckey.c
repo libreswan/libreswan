@@ -63,8 +63,8 @@ struct p_dns_req {
 	realtime_t done_time;
 
 	char *qname;		/* DNS query to send, from ID */
-	u_int16_t qtype;
-	u_int16_t qclass;
+	uint16_t qtype;
+	uint16_t qclass;
 
 	int ub_async_id;	/* used to track libunbound query, to cancel */
 
@@ -188,7 +188,7 @@ static bool get_keyval_chunk(struct p_dns_req *dnsr, ldns_rdf *rdf,
 }
 
 static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf,
-		u_int32_t ttl)
+		uint32_t ttl)
 {
 	struct state *st = state_with_serialno(dnsr->so_serial_t);
 	struct id keyid = st->st_connection->spd.that.id;
@@ -196,13 +196,13 @@ static err_t add_rsa_pubkey_to_pluto(struct p_dns_req *dnsr, ldns_rdf *rdf,
 	err_t ugh = NULL;
 	char thatidbuf[IDTOA_BUF];
 	char ttl_buf[ULTOT_BUF + 32]; /* 32 is aribitary */
-	u_int32_t ttl_used;
+	uint32_t ttl_used;
 
 	/*
 	 * RETRANSMIT_TIMEOUT_DEFAULT as min ttl so pubkey does not expire while
 	 * negotiating
 	 */
-	ttl_used = max(ttl,  (u_int32_t)RETRANSMIT_TIMEOUT_DEFAULT);
+	ttl_used = max(ttl,  (uint32_t)RETRANSMIT_TIMEOUT_DEFAULT);
 
 	if (ttl_used == ttl) {
 		snprintf(ttl_buf, sizeof(ttl_buf), "ttl %u", ttl);

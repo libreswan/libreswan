@@ -43,14 +43,14 @@ const u_char zero_cookie[COOKIE_SIZE];  /* guaranteed 0 */
  *
  * TODO: This use of SHA2 should be allowed even if we have USE_SHA2=false
  */
-void get_cookie(bool initiator, u_int8_t cookie[COOKIE_SIZE],
+void get_cookie(bool initiator, uint8_t cookie[COOKIE_SIZE],
 		const ip_address *addr)
 {
 	do {
 		if (initiator) {
 			get_rnd_bytes(cookie, COOKIE_SIZE);
 		} else {
-			static u_int32_t counter = 0; /* STATIC */
+			static uint32_t counter = 0; /* STATIC */
 
 			struct crypt_hash *ctx = crypt_hash_init(&ike_alg_hash_sha2_256,
 								 "cookie", DBG_CRYPT);

@@ -118,11 +118,11 @@ struct trans_attrs {
 	bool esn_enabled;               /* IKEv2 ESN (extended sequence numbers) */
 
 	deltatime_t life_seconds;	/* max life of this SA in seconds */
-	u_int32_t life_kilobytes;	/* max life of this SA in kilobytes */
+	uint32_t life_kilobytes;	/* max life of this SA in kilobytes */
 
 	/* negotiated crypto-suite */
 	const struct encrypt_desc *ta_encrypt;	/* package of encryption routines */
-	u_int16_t enckeylen;			/* encryption key len (bits) */
+	uint16_t enckeylen;			/* encryption key len (bits) */
 	const struct prf_desc *ta_prf;		/* package of prf routines */
 	const struct integ_desc *ta_integ;	/* package of integrity routines */
 	const struct oakley_group_desc *ta_dh;	/* Diffie-Helman-Merkel routines */
@@ -140,8 +140,8 @@ struct ipsec_trans_attrs {
 	struct trans_attrs transattrs;
 	ipsec_spi_t spi;                /* their SPI */
 	deltatime_t life_seconds;	/* max life of this SA in seconds */
-	u_int32_t life_kilobytes;	/* max life of this SA in kilobytes */
-	u_int16_t encapsulation;
+	uint32_t life_kilobytes;	/* max life of this SA in kilobytes */
+	uint16_t encapsulation;
 };
 
 /* IPsec per protocol state information */
@@ -149,7 +149,7 @@ struct ipsec_proto_info {
 	bool present;                   /* was this transform specified? */
 	struct ipsec_trans_attrs attrs; /* info on remote */
 	ipsec_spi_t our_spi;
-	u_int16_t keymat_len;           /* same for both */
+	uint16_t keymat_len;           /* same for both */
 	u_char *our_keymat;
 	u_char *peer_keymat;
 	uint64_t our_bytes;
@@ -170,7 +170,7 @@ struct ike_frag {
 	struct msg_digest *md;
 	int index;
 	int last;
-	u_int8_t *data;
+	uint8_t *data;
 	size_t size;
 };
 
@@ -246,10 +246,10 @@ struct msg_digest *unsuspend_md(struct state *st);
 
 /* IKEv2, this struct will be mapped into a ikev2_ts1 payload  */
 struct traffic_selector {
-	u_int8_t ts_type;
-	u_int8_t ipprotoid;
-	u_int16_t startport;
-	u_int16_t endport;
+	uint8_t ts_type;
+	uint8_t ipprotoid;
+	uint16_t startport;
+	uint16_t endport;
 	ip_range net;	/* for now, always happens to be a CIDR */
 };
 
@@ -331,19 +331,19 @@ struct state {
 	lset_t st_policy;                       /* policy for IPsec SA */
 
 	ip_address st_remoteaddr;               /* where to send packets to */
-	u_int16_t st_remoteport;                /* host byte order */
+	uint16_t st_remoteport;                /* host byte order */
 
 	const struct iface_port *st_interface;  /* where to send from */  /* dhr 2013: why? There was already connection->interface */
 	ip_address st_localaddr;                /* where to send them from */
-	u_int16_t st_localport;
+	uint16_t st_localport;
 
 	/* IKEv2 MOBIKE probe copies */
 	ip_address st_mobike_remoteaddr;
-	u_int16_t st_mobike_remoteport;
+	uint16_t st_mobike_remoteport;
 	const struct iface_port *st_mobike_interface;
 	ip_address st_deleted_local_addr;	/* kernel deleted address */
 	ip_address st_mobike_localaddr;		/* new address to initiate MOBIKE */
-	u_int16_t st_mobike_localport;		/* is this necessary ? */
+	uint16_t st_mobike_localport;		/* is this necessary ? */
 	ip_address st_mobike_host_nexthop;	/* for updown script */
 
 	/** IKEv1-only things **/
@@ -404,12 +404,12 @@ struct state {
 
 	/* initiator stuff */
 	chunk_t st_gi;                          /* Initiator public value */
-	u_int8_t st_icookie[COOKIE_SIZE];       /* Initiator Cookie */
+	uint8_t st_icookie[COOKIE_SIZE];       /* Initiator Cookie */
 	chunk_t st_ni;                          /* Ni nonce */
 
 	/* responder stuff */
 	chunk_t st_gr;                          /* Responder public value */
-	u_int8_t st_rcookie[COOKIE_SIZE];       /* Responder Cookie */
+	uint8_t st_rcookie[COOKIE_SIZE];       /* Responder Cookie */
 	chunk_t st_nr;                          /* Nr nonce */
 	chunk_t st_dcookie;                     /* DOS cookie of responder - v2 only */
 
@@ -422,14 +422,14 @@ struct state {
 #endif
 
 	/* Phase 2 ID payload info about my user */
-	u_int8_t st_myuserprotoid;             /* IDcx.protoid */
-	u_int16_t st_myuserport;
+	uint8_t st_myuserprotoid;             /* IDcx.protoid */
+	uint16_t st_myuserport;
 
 	/* his stuff */
 
 	/* Phase 2 ID payload info about peer's user */
-	u_int8_t st_peeruserprotoid;           /* IDcx.protoid */
-	u_int16_t st_peeruserport;
+	uint8_t st_peeruserprotoid;           /* IDcx.protoid */
+	uint16_t st_peeruserport;
 
 	/* end of symmetric stuff */
 
@@ -437,8 +437,8 @@ struct state {
 	 * We don't support this wart for ourselves.
 	 * Currently used in Aggressive mode for interop.
 	 */
-	u_int8_t st_peeridentity_protocol;
-	u_int16_t st_peeridentity_port;
+	uint8_t st_peeridentity_protocol;
+	uint16_t st_peeridentity_port;
 
 	bool st_peer_alt_id;	/* scratchpad for writing we found alt peer id in CERT */
 
@@ -612,10 +612,10 @@ struct state {
 
 	/* RFC 3706 Dead Peer Detection */
 	monotime_t st_last_dpd;			/* Time of last DPD transmit (0 means never?) */
-	u_int32_t st_dpd_seqno;                 /* Next R_U_THERE to send */
-	u_int32_t st_dpd_expectseqno;           /* Next R_U_THERE_ACK to receive */
-	u_int32_t st_dpd_peerseqno;             /* global variables */
-	u_int32_t st_dpd_rdupcount;		/* openbsd isakmpd bug workaround */
+	uint32_t st_dpd_seqno;                 /* Next R_U_THERE to send */
+	uint32_t st_dpd_expectseqno;           /* Next R_U_THERE_ACK to receive */
+	uint32_t st_dpd_peerseqno;             /* global variables */
+	uint32_t st_dpd_rdupcount;		/* openbsd isakmpd bug workaround */
 	struct pluto_event *st_dpd_event;	/* backpointer for DPD events */
 
 	bool st_seen_nortel_vid;                /* To work around a nortel bug */
@@ -631,7 +631,7 @@ struct state {
 	bool st_seen_nonats;			/* did we receive NO_NATS_ALLOWED */
 	bool st_seen_initialc;			/* did we receive INITIAL_CONTACT */
 	generalName_t *st_requested_ca;		/* collected certificate requests */
-	u_int8_t st_reply_xchg;
+	uint8_t st_reply_xchg;
 	bool st_peer_wants_null;		/* We received IDr payload of type ID_NULL (and we allow POLICY_AUTH_NULL */
 };
 
@@ -666,10 +666,10 @@ struct child_sa *pexpect_child_sa(struct state *st);
 
 /* global variables */
 
-extern u_int16_t pluto_port;		/* Pluto's port */
-extern u_int16_t pluto_nat_port;	/* Pluto's NATT floating port */
-extern u_int16_t pluto_nflog_group;	/* NFLOG group - 0 means no logging  */
-extern u_int16_t pluto_xfrmlifetime;	/* only used to display in status */
+extern uint16_t pluto_port;		/* Pluto's port */
+extern uint16_t pluto_nat_port;	/* Pluto's NATT floating port */
+extern uint16_t pluto_nflog_group;	/* NFLOG group - 0 means no logging  */
+extern uint16_t pluto_xfrmlifetime;	/* only used to display in status */
 
 extern bool states_use_connection(const struct connection *c);
 
@@ -697,7 +697,7 @@ struct state *ikev2_duplicate_state(struct ike_sa *st, sa_t sa_type,
 
 extern struct state
 	*state_with_serialno(so_serial_t sn),
-	*find_phase2_state_to_delete(const struct state *p1st, u_int8_t protoid,
+	*find_phase2_state_to_delete(const struct state *p1st, uint8_t protoid,
 			     ipsec_spi_t spi, bool *bogus),
 	*find_phase1_state(const struct connection *c, lset_t ok_states),
 	*find_likely_sender(size_t packet_len, u_char * packet);
@@ -727,7 +727,7 @@ extern struct state *find_state_ikev2_child(const enum isakmp_xchg_types ix,
 
 extern struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
 						      const u_char *rcookie,
-						      u_int8_t protoid,
+						      uint8_t protoid,
 						      ipsec_spi_t spi);
 
 extern struct state *ikev1_find_info_state(const u_char *icookie,

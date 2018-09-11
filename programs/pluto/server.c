@@ -705,7 +705,7 @@ void find_ifaces(bool rm_dead)
 	}
 }
 
-struct iface_port *lookup_iface_ip(ip_address *ip, u_int16_t port)
+struct iface_port *lookup_iface_ip(ip_address *ip, uint16_t port)
 {
 	struct iface_port *p;
 	for (p = interfaces; p != NULL; p = p->next) {
@@ -1186,7 +1186,7 @@ static bool check_msg_errqueue(const struct iface_port *ifp, short interest, con
 
 	while (pfd.revents = 0,
 	       poll(&pfd, 1, -1) > 0 && (pfd.revents & POLLERR)) {
-		u_int8_t buffer[3000]; /* hope that this is big enough */
+		uint8_t buffer[3000]; /* hope that this is big enough */
 		union {
 			struct sockaddr sa;
 			struct sockaddr_in sa_in4;

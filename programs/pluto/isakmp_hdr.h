@@ -45,12 +45,12 @@
 #define NSIZEOF_isakmp_generic	4	/* on-the-wire sizeof isakmp_generic) */
 
 struct isakmp_hdr {
-	u_int8_t isa_icookie[COOKIE_SIZE];
-	u_int8_t isa_rcookie[COOKIE_SIZE];
-	u_int8_t isa_np;	/* Next payload */
-	u_int8_t isa_version;	/* high-order 4 bits: Major; low order 4: Minor */
-	u_int8_t isa_xchg;	/* Exchange type */
-	u_int8_t isa_flags;
-	u_int32_t isa_msgid;	/* Message ID (RAW) */
-	u_int32_t isa_length;	/* Length of message */
+	uint8_t isa_icookie[COOKIE_SIZE];
+	uint8_t isa_rcookie[COOKIE_SIZE];
+	uint8_t isa_np;	/* Next payload */
+	uint8_t isa_version;	/* high-order 4 bits: Major; low order 4: Minor */
+	uint8_t isa_xchg;	/* Exchange type */
+	uint8_t isa_flags;
+	uint32_t isa_msgid;	/* Message ID (RAW) */
+	uint32_t isa_length;	/* Length of message */
 };

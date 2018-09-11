@@ -171,7 +171,7 @@ static void final_bytes(struct prf_context **prf, uint8_t *bytes, size_t sizeof_
 static PK11SymKey *final_symkey(struct prf_context **prf)
 {
 	size_t sizeof_bytes = (*prf)->desc->prf_output_size;
-	uint8_t *bytes = alloc_things(u_int8_t, sizeof_bytes, "bytes");
+	uint8_t *bytes = alloc_things(uint8_t, sizeof_bytes, "bytes");
 	final(*prf, bytes, sizeof_bytes);
 	PK11SymKey *final = symkey_from_bytes("final", bytes, sizeof_bytes);
 	pfree(bytes);

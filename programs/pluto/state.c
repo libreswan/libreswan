@@ -94,21 +94,21 @@ static void update_state_stats(struct state *st, enum state_kind old_state,
  * Global variables: had to go somewhere, might as well be this file.
  */
 
-u_int16_t pluto_port = IKE_UDP_PORT;	/* Pluto's port */
-u_int16_t pluto_nat_port = NAT_IKE_UDP_PORT;	/* Pluto's NAT-T port */
+uint16_t pluto_port = IKE_UDP_PORT;	/* Pluto's port */
+uint16_t pluto_nat_port = NAT_IKE_UDP_PORT;	/* Pluto's NAT-T port */
 
 /*
  * default global NFLOG group - 0 means no logging
  * Note: variable is only used to display in ipsec status
  * actual work is done outside pluto, by ipsec --checknflog
  */
-u_int16_t pluto_nflog_group = 0;
+uint16_t pluto_nflog_group = 0;
 
 /*
  * Note: variable is only used to display in ipsec status
  * actual work is done outside pluto, by ipsec _stackmanager
  */
-u_int16_t pluto_xfrmlifetime = 300;
+uint16_t pluto_xfrmlifetime = 300;
 
 /*
  * Handle for each and every state.
@@ -1789,7 +1789,7 @@ struct state *find_state_ikev2_child(const enum isakmp_xchg_types ix,
  */
 struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
 					       const u_char *rcookie,
-					       u_int8_t protoid,
+					       uint8_t protoid,
 					       ipsec_spi_t spi)
 {
 	struct state *st;
@@ -1893,7 +1893,7 @@ struct state *find_likely_sender(size_t packet_len, u_char *packet)
  * We'll accept this, but mark it as bogus.
  */
 struct state *find_phase2_state_to_delete(const struct state *p1st,
-					  u_int8_t protoid,
+					  uint8_t protoid,
 					  ipsec_spi_t spi,
 					  bool *bogus)
 {
@@ -2066,7 +2066,7 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 
 		if (get_sa_info(st, TRUE, NULL)) {
 			size_t buf_len =  traffic_buf + sizeof(traffic_buf) - mbcp;
-			u_int inb = st->st_esp.present ? st->st_esp.our_bytes:
+			unsigned inb = st->st_esp.present ? st->st_esp.our_bytes:
 				st->st_ah.present ? st->st_ah.our_bytes :
 				st->st_ipcomp.present ? st->st_ipcomp.our_bytes : 0;
 			mbcp += snprintf(mbcp, buf_len - 1, ", inBytes=%u", inb);
@@ -2074,7 +2074,7 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 
 		if (get_sa_info(st, FALSE, NULL)) {
 			size_t buf_len =  traffic_buf + sizeof(traffic_buf) - mbcp;
-			u_int outb = st->st_esp.present ? st->st_esp.peer_bytes :
+			unsigned outb = st->st_esp.present ? st->st_esp.peer_bytes :
 				st->st_ah.present ? st->st_ah.peer_bytes :
 				st->st_ipcomp.present ? st->st_ipcomp.peer_bytes : 0;
 			snprintf(mbcp, buf_len - 1, ", outBytes=%u", outb);
@@ -2659,7 +2659,7 @@ bool update_mobike_endpoints(struct state *pst,
 	int af = addrtypeof(&md->iface->ip_addr);
 	ipstr_buf b;
 	ip_address *old_addr, *new_addr;
-	u_int16_t old_port, new_port;
+	uint16_t old_port, new_port;
 	bool ret = FALSE;
 
 	/*

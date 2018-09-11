@@ -436,7 +436,7 @@ deltatime_t crl_check_interval = DELTATIME_INIT(0);
  * This variable specifies (globally!!) which we support: 10 or 32001.
  * ??? surely that makes migration to 32001 all or nothing.
  */
-u_int16_t secctx_attr_type = SECCTX;
+uint16_t secctx_attr_type = SECCTX;
 #endif
 
 /*

@@ -138,9 +138,9 @@ static notification_t accept_PFS_KE(struct msg_digest *md, chunk_t *dest,
  */
 
 static bool emit_subnet_id(const ip_subnet *net,
-			   u_int8_t np,
-			   u_int8_t protoid,
-			   u_int16_t port,
+			   uint8_t np,
+			   uint8_t protoid,
+			   uint16_t port,
 			   pb_stream *outs)
 {
 	const struct af_info *ai = aftoinfo(subnettypeof(net));
@@ -181,7 +181,7 @@ static bool emit_subnet_id(const ip_subnet *net,
  * specifies how this is to be done.
  */
 static void compute_proto_keymat(struct state *st,
-				 u_int8_t protoid,
+				 uint8_t protoid,
 				 struct ipsec_proto_info *pi,
 				 const char *satypename)
 {
@@ -597,8 +597,8 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 /* like decode, but checks that what is received matches what was sent */
 static bool check_net_id(struct isakmp_ipsec_id *id,
 			 pb_stream *id_pbs,
-			 u_int8_t *protoid,
-			 u_int16_t *port,
+			 uint8_t *protoid,
+			 uint16_t *port,
 			 ip_subnet *net,
 			 const char *which)
 {
@@ -1061,8 +1061,8 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req *r,
 /* hold anything we can handle of a Phase 2 ID */
 struct p2id {
 	ip_subnet net;
-	u_int8_t proto;
-	u_int16_t port;
+	uint8_t proto;
+	uint16_t port;
 };
 
 struct verify_oppo_bundle {

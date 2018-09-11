@@ -181,7 +181,7 @@ static bool out_attr(int type,
 		 * Voila: a fixed format!
 		 */
 		pb_stream val_pbs;
-		u_int32_t nval = htonl(val);
+		uint32_t nval = htonl(val);
 
 		passert((type & ISAKMP_ATTR_AF_MASK) == 0);
 		struct isakmp_attribute attr = {
@@ -457,7 +457,7 @@ bool ikev1_out_sa(pb_stream *outs,
 
 	/* within SA: situation out */
 	{
-		static const u_int32_t situation = SIT_IDENTITY_ONLY;
+		static const uint32_t situation = SIT_IDENTITY_ONLY;
 
 		if (!out_struct(&situation, &ipsec_sit_desc, &sa_pbs, NULL))
 			goto fail;
@@ -798,11 +798,11 @@ fail:
  * "Clamping" is probably an acceptable way to impose this limitation.
  *
  * @param pbs PB Stream
- * @return u_int32_t duration, in seconds.
+ * @return uint32_t duration, in seconds.
  */
-static u_int32_t decode_long_duration(pb_stream *pbs)
+static uint32_t decode_long_duration(pb_stream *pbs)
 {
-	u_int32_t val = 0;
+	uint32_t val = 0;
 
 	/* ignore leading zeros */
 	while (pbs_left(pbs) != 0 && *pbs->cur == '\0')
@@ -839,7 +839,7 @@ lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */)
 	struct isakmp_transform trans;
 	struct isakmp_attribute a;
 	pb_stream attr_pbs;
-	u_int32_t ipsecdoisit;
+	uint32_t ipsecdoisit;
 	unsigned trans_left;
 	lset_t policy = LEMPTY;
 
@@ -1035,7 +1035,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 	}
 
 	/* Situation */
-	u_int32_t ipsecdoisit;
+	uint32_t ipsecdoisit;
 
 	if (!in_struct(&ipsecdoisit, &ipsec_sit_desc, sa_pbs, NULL))
 		return SITUATION_NOT_SUPPORTED;	/* reject whole SA */
@@ -1131,7 +1131,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 			return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 		}
 
-		u_int16_t life_type = 0;	/* initialized to silence GCC */
+		uint16_t life_type = 0;	/* initialized to silence GCC */
 
 		/* initialize only optional field in ta */
 		struct trans_attrs ta = {
@@ -1174,7 +1174,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 		while (pbs_left(&trans_pbs) >= isakmp_oakley_attribute_desc.size) {
 			struct isakmp_attribute a;
 			pb_stream attr_pbs;
-			u_int32_t val; /* room for larger values */
+			uint32_t val; /* room for larger values */
 
 			if (!in_struct(&a, &isakmp_oakley_attribute_desc,
 				       &trans_pbs, &attr_pbs)) {
@@ -1764,7 +1764,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				  int previous_transnum, /* or -1 if none */
 				  bool selection,
 				  bool is_last,
-				  u_int8_t proto,
+				  uint8_t proto,
 				  struct state *st) /* current state object */
 {
 	lset_t seen_attrs = LEMPTY,
@@ -1772,7 +1772,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 #ifdef HAVE_LABELED_IPSEC
 	bool seen_secctx_attr = FALSE;
 #endif
-	u_int16_t life_type = 0;	/* initialized to silence GCC */
+	uint16_t life_type = 0;	/* initialized to silence GCC */
 	const struct oakley_group_desc *pfs_group = NULL;
 
 	if (!in_struct(trans, trans_desc, prop_pbs, trans_pbs))
@@ -1830,8 +1830,8 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		struct isakmp_attribute a;
 		pb_stream attr_pbs;
 		enum_names *vdesc;
-		u_int16_t ty;
-		u_int32_t val;                          /* room for larger value */
+		uint16_t ty;
+		uint32_t val;                          /* room for larger value */
 		bool ipcomp_inappropriate = (proto == PROTO_IPCOMP);  /* will get reset if OK */
 
 		if (!in_struct(&a, &isakmp_ipsec_attribute_desc, trans_pbs,
@@ -1934,7 +1934,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				 *
 				 * We know that time_t can represent all
 				 * values between 0 and SA_LIFE_DURATION_MAXIMUM.
-				 * It is safe to cast val (of type u_int32_t)
+				 * It is safe to cast val (of type uint32_t)
 				 * to time_t (some signed type) AFTER checking
 				 * that val does not exceed
 				 * SA_LIFE_DURATION_MAXIMUM.
@@ -2164,7 +2164,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to emit */
 			  struct isakmp_transform r_trans,      /* winning transformation within it */
-			  u_int8_t np,                          /* Next Payload for proposal */
+			  uint8_t np,                          /* Next Payload for proposal */
 			  pb_stream *r_sa_pbs,                  /* SA PBS into which to emit */
 			  struct ipsec_proto_info *pi,          /* info about this protocol instance */
 			  struct_desc *trans_desc,              /* descriptor for this transformation */
@@ -2224,7 +2224,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				   struct state *st)            /* current state object */
 {
 	const struct connection *c = st->st_connection;
-	u_int32_t ipsecdoisit;
+	uint32_t ipsecdoisit;
 	pb_stream next_proposal_pbs;
 
 	struct isakmp_proposal next_proposal;
@@ -2289,7 +2289,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			ipcomp_seen = FALSE;
 		int inner_proto = 0;
 		bool tunnel_mode = FALSE;
-		u_int16_t well_known_cpi = 0;
+		uint16_t well_known_cpi = 0;
 
 		pb_stream
 			ah_trans_pbs,
@@ -2319,7 +2319,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					 * SPI-sized field.
 					 * See draft-shacham-ippcp-rfc2393bis-05.txt 4.1
 					 */
-					u_int8_t filler[IPSEC_DOI_SPI_SIZE -
+					uint8_t filler[IPSEC_DOI_SPI_SIZE -
 							IPCOMP_CPI_SIZE];
 
 					if (!in_raw(filler, sizeof(filler),

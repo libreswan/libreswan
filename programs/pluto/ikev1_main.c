@@ -411,7 +411,7 @@ notification_t accept_v1_nonce(struct msg_digest *md, chunk_t *dest,
 bool ikev1_encrypt_message(pb_stream *pbs, struct state *st)
 {
 	const struct encrypt_desc *e = st->st_oakley.ta_encrypt;
-	u_int8_t *enc_start = pbs->start + sizeof(struct isakmp_hdr);
+	uint8_t *enc_start = pbs->start + sizeof(struct isakmp_hdr);
 	size_t enc_len = pbs_offset(pbs) - sizeof(struct isakmp_hdr);
 
 	DBG_cond_dump(DBG_CRYPT | DBG_RAW, "encrypting:", enc_start,
@@ -827,7 +827,7 @@ stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
  * used by IKEv1: main, aggressive, and quick (in PFS mode).
  */
 bool ikev1_justship_KE(chunk_t *g,
-		pb_stream *outs, u_int8_t np)
+		pb_stream *outs, uint8_t np)
 {
 	if (IMPAIR(SEND_NO_KE_PAYLOAD)) {
 		libreswan_log("IMPAIR: sending no KE (g^x) payload");
@@ -853,7 +853,7 @@ bool ikev1_justship_KE(chunk_t *g,
 bool ikev1_ship_KE(struct state *st,
 	struct pluto_crypto_req *r,
 	chunk_t *g,
-	pb_stream *outs, u_int8_t np)
+	pb_stream *outs, uint8_t np)
 {
 	unpack_KE_from_helper(st, r, g);
 	return ikev1_justship_KE(g, outs, np);
@@ -1505,7 +1505,7 @@ stf_status oakley_id_and_auth(struct msg_digest *md, bool initiator,
 	 */
 	{
 		pb_stream *idpl = &md->chain[ISAKMP_NEXT_ID]->pbs;
-		u_int8_t *old_cur = idpl->cur;
+		uint8_t *old_cur = idpl->cur;
 
 		idpl->cur = idpl->roof;
 		hash_len = main_mode_hash(st, hash_val, !initiator, idpl);
@@ -1864,7 +1864,7 @@ stf_status main_inR3(struct state *st, struct msg_digest *md)
 }
 
 stf_status send_isakmp_notification(struct state *st,
-				u_int16_t type, const void *data,
+				uint16_t type, const void *data,
 				size_t len)
 {
 	msgid_t msgid;
@@ -2126,7 +2126,7 @@ static void send_notification(struct state *sndst, notification_t type,
 		/* Encrypt message (preserve st_iv) */
 		/* ??? why not preserve st_new_iv? */
 		u_char old_iv[MAX_DIGEST_LEN];
-		u_int old_iv_len;
+		unsigned old_iv_len;
 
 		save_iv(encst, old_iv, old_iv_len);
 
@@ -2468,8 +2468,8 @@ bool accept_delete(struct msg_digest *md,
 			/*
 			 * ISAKMP
 			 */
-			u_int8_t icookie[COOKIE_SIZE];
-			u_int8_t rcookie[COOKIE_SIZE];
+			uint8_t icookie[COOKIE_SIZE];
+			uint8_t rcookie[COOKIE_SIZE];
 			struct state *dst;
 
 			if (!in_raw(icookie, COOKIE_SIZE, &p->pbs, "iCookie"))

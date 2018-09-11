@@ -234,7 +234,7 @@ bool is_printablestring(chunk_t str)
 {
 	const char printablestring_charset[] =
 		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 '()+,-./:=?";
-	u_int i;
+	unsigned i;
 
 	for (i = 0; i < str.len; i++) {
 		if (strchr(printablestring_charset, str.ptr[i]) == NULL)
@@ -248,7 +248,7 @@ bool is_printablestring(chunk_t str)
  */
 bool is_asn1(chunk_t blob)
 {
-	u_int len;
+	unsigned len;
 
 	if (blob.len < 1) {
 		DBG(DBG_PARSING,

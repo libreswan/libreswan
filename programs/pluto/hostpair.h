@@ -23,7 +23,7 @@
 struct host_pair {
 	struct {
 		ip_address addr;
-		u_int16_t host_port;            /* IKE port */
+		uint16_t host_port;            /* IKE port */
 		bool host_port_specific;        /* if above is interesting */
 	} me, him;
 	struct connection *connections;         /* connections with this pair */
@@ -35,14 +35,14 @@ extern struct host_pair *host_pairs;
 
 extern void connect_to_host_pair(struct connection *c);
 extern struct connection *find_host_pair_connections(const ip_address *myaddr,
-						     u_int16_t myport,
+						     uint16_t myport,
 						     const ip_address *hisaddr,
-						     u_int16_t hisport);
+						     uint16_t hisport);
 
 extern struct host_pair *find_host_pair(const ip_address *myaddr,
-					u_int16_t myport,
+					uint16_t myport,
 					const ip_address *hisaddr,
-					u_int16_t hisport);
+					uint16_t hisport);
 
 #define list_rm(etype, enext, e, ehead) { \
 		etype **ep; \

@@ -147,7 +147,7 @@ static void usage(const char *s, FILE *f)
 	exit(-1);
 }
 
-static bool parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
+static bool parse_life_options(uint32_t life[life_maxsever][life_maxtype],
 		       char *life_opt[life_maxsever][life_maxtype],
 		       char *myoptarg)
 {
@@ -503,7 +503,7 @@ static void decode_blob(const char *optarg, const char *name, unsigned char **pp
 }
 
 static void emit_lifetime(const char *extname, uint16_t exttype, struct sadb_ext *extensions[K_SADB_EXT_MAX + 1],
-	char *lo[life_maxtype], u_int32_t l[life_maxtype])
+	char *lo[life_maxtype], uint32_t l[life_maxtype])
 {
 	if (lo[life_alloc] != NULL ||
 	    lo[life_bytes] != NULL ||
@@ -559,8 +559,8 @@ int main(int argc, char *argv[])
 	struct sadb_msg *pfkey_msg;
 	char *edst_opt, *spi_opt, *proto_opt, *af_opt, *said_opt, *dst_opt,
 		*src_opt;
-	u_int32_t natt;
-	u_int16_t sport, dport;
+	uint32_t natt;
+	uint16_t sport, dport;
 	uint32_t life[life_maxsever][life_maxtype];
 	char *life_opt[life_maxsever][life_maxtype];
 	struct stat sts;

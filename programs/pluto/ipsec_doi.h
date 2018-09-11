@@ -118,7 +118,7 @@ extern notification_t accept_KE(chunk_t *dest, const char *val_name,
 }
 
 extern stf_status send_isakmp_notification(struct state *st,
-					   u_int16_t type, const void *data,
+					   uint16_t type, const void *data,
 					   size_t len);
 
 extern bool has_preloaded_public_key(struct state *st);

@@ -67,7 +67,7 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 		 chunk_t a, chunk_t b)
 {
 	/* NOTE: on system with limited stack, buf could be made static */
-	u_int8_t buf[MAX_OUTPUT_UDP_SIZE];
+	uint8_t buf[MAX_OUTPUT_UDP_SIZE];
 
 	/* Each fragment, if we are doing NATT, needs a non-ESP_Marker prefix.
 	 * natt_bonus is the size of the addition (0 if not needed).
@@ -107,7 +107,7 @@ bool send_chunks(const char *where, bool just_a_keepalive,
 				  interface->ike_float ?
 				  NON_ESP_MARKER_SIZE : 0;
 
-	const u_int8_t *ptr;
+	const uint8_t *ptr;
 	size_t len = natt_bonus + a.len + b.len;
 	ssize_t wlen;
 

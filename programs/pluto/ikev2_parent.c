@@ -88,7 +88,7 @@
 #include "crypt_symkey.h" /* for release_symkey */
 struct mobike {
 	ip_address remoteaddr;
-	u_int16_t remoteport;
+	uint16_t remoteport;
 	const struct iface_port *interface;
 };
 
@@ -105,11 +105,11 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 static bool asn1_hash_in(const struct asn1_hash_blob *asn1_hash_blob, pb_stream *a_pbs,
 		   uint8_t size, uint8_t asn1_blob_len);
 
-static bool ikev2_out_hash_v2n(u_int8_t np, pb_stream *rbody, lset_t sighash_policy)
+static bool ikev2_out_hash_v2n(uint8_t np, pb_stream *rbody, lset_t sighash_policy)
 {
-	u_int16_t hash_algo_to_send[SUPPORTED_NUM_HASH];
+	uint16_t hash_algo_to_send[SUPPORTED_NUM_HASH];
 	chunk_t hash;
-	u_int8_t index = 0;
+	uint8_t index = 0;
 	hash.ptr = (void*)&hash_algo_to_send;
 
 	if (sighash_policy & POL_SIGHASH_SHA2_256) {
@@ -135,7 +135,7 @@ static bool ikev2_out_hash_v2n(u_int8_t np, pb_stream *rbody, lset_t sighash_pol
 
 static bool negotiate_hash_algo_from_notification(struct payload_digest *p, struct state *st)
 {
-	u_int16_t h_value[IKEv2_AUTH_HASH_ROOF];
+	uint16_t h_value[IKEv2_AUTH_HASH_ROOF];
 	lset_t sighash_policy = st->st_connection->sighash_policy;
 	unsigned char num_of_hash_algo = pbs_left(&p->pbs) / RFC_7427_HASH_ALGORITHM_VALUE;
 
@@ -2643,7 +2643,7 @@ static bool ikev2_verify_and_decrypt_sk_payload(struct ike_sa *ike,
 	 * Notice the "should".  RACOON, for instance, sends extra
 	 * blocks of padding that contain random bytes.
 	 */
-	u_int8_t padlen = enc_start[enc_size - 1] + 1;
+	uint8_t padlen = enc_start[enc_size - 1] + 1;
 	if (padlen > enc_size) {
 		libreswan_log("discarding invalid packet: padding-length %u (octet 0x%02x) is larger than %zu octet payload length",
 			      padlen, padlen - 1, enc_size);
@@ -2793,7 +2793,7 @@ bool ikev2_decrypt_msg(struct state *st, struct msg_digest *md)
 }
 
 /* Misleading name, also used for NULL sized type's */
-static stf_status ikev2_ship_cp_attr_ip(u_int16_t type, ip_address *ip,
+static stf_status ikev2_ship_cp_attr_ip(uint16_t type, ip_address *ip,
 		const char *story, pb_stream *outpbs)
 {
 	pb_stream a_pbs;
@@ -2818,7 +2818,7 @@ static stf_status ikev2_ship_cp_attr_ip(u_int16_t type, ip_address *ip,
 	return STF_OK;
 }
 
-static stf_status ikev2_ship_cp_attr_str(u_int16_t type, char *str,
+static stf_status ikev2_ship_cp_attr_str(uint16_t type, char *str,
 		const char *story, pb_stream *outpbs)
 {
 	pb_stream a_pbs;
@@ -6451,8 +6451,8 @@ stf_status process_encrypted_informational_ikev2(struct state *st,
 			{
 				/* stuff for responding */
 				ipsec_spi_t spi_buf[128];
-				u_int16_t j = 0;	/* number of SPIs in spi_buf */
-				u_int16_t i;
+				uint16_t j = 0;	/* number of SPIs in spi_buf */
+				uint16_t i;
 
 				for (i = 0; i < v2del->isad_nrspi; i++) {
 					ipsec_spi_t spi;

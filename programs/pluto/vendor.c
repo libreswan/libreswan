@@ -910,7 +910,7 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
  * @param vid Int of VendorID to be sent (see vendor.h for the list)
  * @return bool True if successful
  */
-bool out_vid(u_int8_t np, pb_stream *outs, unsigned int vid)
+bool out_vid(uint8_t np, pb_stream *outs, unsigned int vid)
 {
 	struct vid_struct *pvid;
 

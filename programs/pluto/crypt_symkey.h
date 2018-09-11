@@ -128,15 +128,15 @@ chunk_t chunk_from_symkey_bytes(const char *prefix,
  * Used to avoid interface issues with NSS.
  */
 PK11SymKey *symkey_from_bytes(const char *name,
-			      const u_int8_t *bytes, size_t sizeof_bytes);
+			      const uint8_t *bytes, size_t sizeof_bytes);
 PK11SymKey *symkey_from_chunk(const char *name,
 			      chunk_t chunk);
 PK11SymKey *encrypt_key_from_bytes(const char *name,
 				   const struct encrypt_desc *encrypt,
-				   const u_int8_t *bytes, size_t sizeof_bytes);
+				   const uint8_t *bytes, size_t sizeof_bytes);
 PK11SymKey *prf_key_from_bytes(const char *name,
 			       const struct prf_desc *prf,
-			       const u_int8_t *bytes, size_t sizeof_bytes);
+			       const uint8_t *bytes, size_t sizeof_bytes);
 
 /*
  * Extract SIZEOF_KEY bytes of keying material as a KEY.

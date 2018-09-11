@@ -73,7 +73,7 @@ stf_status encrypt_v2sk_payload(v2sk_payload_t *sk);
 bool ship_v2UNKNOWN(pb_stream *outs, const char *victim);
 
 bool ship_v2N(enum next_payload_types_ikev2 np,
-	      u_int8_t critical,
+	      uint8_t critical,
 	      enum ikev2_sec_proto_id protoid,
 	      const chunk_t *spi,
 	      v2_notification_t type,

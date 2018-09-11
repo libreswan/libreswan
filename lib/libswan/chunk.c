@@ -55,7 +55,7 @@ chunk_t clone_chunk_chunk(chunk_t lhs, chunk_t rhs, const char *name)
 	size_t len = lhs.len + rhs.len;
 	chunk_t cat = {
 		.len = len,
-		.ptr = alloc_things(u_int8_t, len, name),
+		.ptr = alloc_things(uint8_t, len, name),
 	};
 	memcpy(cat.ptr, lhs.ptr, lhs.len);
 	memcpy(cat.ptr + lhs.len, rhs.ptr, rhs.len);

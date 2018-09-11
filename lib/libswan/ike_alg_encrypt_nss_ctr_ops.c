@@ -87,7 +87,7 @@ static void do_nss_ctr(const struct encrypt_desc *alg UNUSED,
 	 * There's a portability assumption here that the IV buffer is
 	 * at least sizeof(uint32_t) (4-byte) aligned.
 	 */
-	uint32_t *counter = (u_int32_t*)(counter_block + AES_BLOCK_SIZE
+	uint32_t *counter = (uint32_t*)(counter_block + AES_BLOCK_SIZE
 					  - sizeof(uint32_t));
 	uint32_t old_counter = ntohl(*counter);
 	size_t increment = (buf_len + AES_BLOCK_SIZE - 1) / AES_BLOCK_SIZE;

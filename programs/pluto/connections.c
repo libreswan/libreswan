@@ -1985,7 +1985,7 @@ void add_connection(const struct whack_message *wm)
  * Caller is responsible for pfreeing name.
  */
 char *add_group_instance(struct connection *group, const ip_subnet *target,
-			 u_int8_t proto , u_int16_t sport , u_int16_t dport)
+			 uint8_t proto , uint16_t sport , uint16_t dport)
 {
 	passert(group->kind == CK_GROUP);
 	passert(oriented(*group));
@@ -2789,8 +2789,8 @@ struct connection *route_owner(struct connection *c,
  * the exact value and has included it in req_policy.
  */
 struct connection *find_host_connection(
-	const ip_address *me, u_int16_t my_port,
-	const ip_address *him, u_int16_t his_port,
+	const ip_address *me, uint16_t my_port,
+	const ip_address *him, uint16_t his_port,
 	lset_t req_policy, lset_t policy_exact_mask)
 {
 	DBG(DBG_CONTROLMORE, {
@@ -2821,8 +2821,8 @@ struct connection *find_host_connection(
 }
 
 stf_status ikev2_find_host_connection(struct connection **cp,
-		const ip_address *me, u_int16_t my_port, const ip_address *him,
-		u_int16_t his_port, lset_t policy)
+		const ip_address *me, uint16_t my_port, const ip_address *him,
+		uint16_t his_port, lset_t policy)
 {
 	struct connection *c = find_host_connection(me, my_port, him, his_port,
 						policy, LEMPTY);
@@ -3600,10 +3600,10 @@ static struct connection *fc_try(const struct connection *c,
 				const struct host_pair *hp,
 				const ip_subnet *our_net,
 				const ip_subnet *peer_net,
-				const u_int8_t our_protocol,
-				const u_int16_t our_port,
-				const u_int8_t peer_protocol,
-				const u_int16_t peer_port)
+				const uint8_t our_protocol,
+				const uint16_t our_port,
+				const uint8_t peer_protocol,
+				const uint16_t peer_port)
 {
 	struct connection *best = NULL;
 	policy_prio_t best_prio = BOTTOM_PRIO;
@@ -3774,10 +3774,10 @@ static struct connection *fc_try_oppo(const struct connection *c,
 				const struct host_pair *hp,
 				const ip_subnet *our_net,
 				const ip_subnet *peer_net,
-				const u_int8_t our_protocol,
-				const u_int16_t our_port,
-				const u_int8_t peer_protocol,
-				const u_int16_t peer_port)
+				const uint8_t our_protocol,
+				const uint16_t our_port,
+				const uint8_t peer_protocol,
+				const uint16_t peer_port)
 {
 	struct connection *best = NULL;
 	policy_prio_t best_prio = BOTTOM_PRIO;
@@ -3877,10 +3877,10 @@ static struct connection *fc_try_oppo(const struct connection *c,
 struct connection *find_client_connection(struct connection *const c,
 					const ip_subnet *our_net,
 					const ip_subnet *peer_net,
-					const u_int8_t our_protocol,
-					const u_int16_t our_port,
-					const u_int8_t peer_protocol,
-					const u_int16_t peer_port)
+					const uint8_t our_protocol,
+					const uint16_t our_port,
+					const uint8_t peer_protocol,
+					const uint16_t peer_port)
 {
 	struct connection *d;
 

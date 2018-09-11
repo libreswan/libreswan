@@ -115,9 +115,9 @@ void init_nat_traversal(deltatime_t keep_alive_period)
 }
 
 static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
-		const u_int8_t *icookie, const u_int8_t *rcookie,
+		const uint8_t *icookie, const uint8_t *rcookie,
 		const ip_address *ip,
-		u_int16_t port /* host order */)
+		uint16_t port /* host order */)
 {
 	pexpect(!is_zero_cookie(icookie));
 
@@ -142,7 +142,7 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 	crypt_hash_digest_bytes(ctx, "IP addr", ab, al);
 
 	{
-		u_int16_t netorder_port = htons(port);
+		uint16_t netorder_port = htons(port);
 		crypt_hash_digest_bytes(ctx, "PORT",
 					&netorder_port, sizeof(netorder_port));
 	}
@@ -162,7 +162,7 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 /*
  * Add  NAT-Traversal IKEv2 Notify payload (v2N)
  */
-bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, const struct msg_digest *md)
+bool ikev2_out_nat_v2n(uint8_t np, pb_stream *outs, const struct msg_digest *md)
 {
 	/*
 	 * XXX: This seems to be a very convoluted way of coming up
@@ -181,8 +181,8 @@ bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, const struct msg_digest *md
 	 * with.
 	 */
 	struct state *st = md->st;
-	const u_int8_t *rcookie = is_zero_cookie(st->st_rcookie) ? md->hdr.isa_rcookie : st->st_rcookie;
-	u_int16_t lport = st->st_localport;
+	const uint8_t *rcookie = is_zero_cookie(st->st_rcookie) ? md->hdr.isa_rcookie : st->st_rcookie;
+	uint16_t lport = st->st_localport;
 
 	/* if encapsulation=yes, force NAT-T detection by using wrong port for hash calc */
 	if (st->st_connection->encaps == yna_yes) {
@@ -198,10 +198,10 @@ bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, const struct msg_digest *md
 }
 
 bool ikev2_out_natd(const struct state *st,
-		u_int8_t np,
-		const ip_address *localaddr, u_int16_t localport,
-		const ip_address *remoteaddr, u_int16_t remoteport,
-		const u_int8_t *rcookie,
+		uint8_t np,
+		const ip_address *localaddr, uint16_t localport,
+		const ip_address *remoteaddr, uint16_t remoteport,
+		const uint8_t *rcookie,
 		pb_stream *outs)
 {
 	unsigned char hb[IKEV2_NATD_HASH_SIZE];
@@ -237,7 +237,7 @@ bool ikev2_out_natd(const struct state *st,
  *
  * Used when we're Initiator
  */
-bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, const struct connection *c)
+bool nat_traversal_insert_vid(uint8_t np, pb_stream *outs, const struct connection *c)
 {
 	DBG(DBG_NATT, DBG_log("nat add vid"));
 
@@ -450,11 +450,11 @@ static void ikev1_natd_lookup(struct msg_digest *md)
 	natd_lookup_common(st, &md->sender, found_me, found_him);
 }
 
-bool ikev1_nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
+bool ikev1_nat_traversal_add_natd(uint8_t np, pb_stream *outs,
 			const struct msg_digest *md)
 {
 	const struct state *st = md->st;
-	const u_int8_t *rcookie = is_zero_cookie(st->st_rcookie) ?
+	const uint8_t *rcookie = is_zero_cookie(st->st_rcookie) ?
 			md->hdr.isa_rcookie : st->st_rcookie;
 
 	passert(st->st_oakley.ta_prf != NULL);
@@ -593,7 +593,7 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 }
 
 static bool emit_one_natoa(
-	u_int8_t np,
+	uint8_t np,
 	pb_stream *outs,
 	struct_desc *pd,
 	const ip_address *ip,
@@ -620,7 +620,7 @@ static bool emit_one_natoa(
 	return TRUE;
 }
 
-bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
+bool nat_traversal_add_natoa(uint8_t np, pb_stream *outs,
 			struct state *st, bool initiator)
 {
 	const ip_address *ipinit, *ipresp;
@@ -641,7 +641,7 @@ bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
 		emit_one_natoa(np, outs, pd, ipresp, "NAT-OAr");
 }
 
-static void nat_traversal_show_result(lset_t nt, u_int16_t sport)
+static void nat_traversal_show_result(lset_t nt, uint16_t sport)
 {
 	const char *rslt = (nt & NAT_T_DETECTED) ?
 		bitnamesof(natt_bit_names, nt & NAT_T_DETECTED) :
@@ -902,7 +902,7 @@ void nat_traversal_ka_event(void)
 struct new_mapp_nfo {
 	struct state *st;
 	ip_address addr;
-	u_int16_t port;
+	uint16_t port;
 };
 
 static void nat_traversal_find_new_mapp_state(struct state *st, void *data)
@@ -936,7 +936,7 @@ static void nat_traversal_find_new_mapp_state(struct state *st, void *data)
 
 void nat_traversal_new_mapping(struct state *st,
 			       const ip_address *nsrc,
-			       u_int16_t nsrcport)
+			       uint16_t nsrcport)
 {
 	struct new_mapp_nfo nfo;
 

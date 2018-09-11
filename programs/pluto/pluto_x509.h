@@ -50,8 +50,8 @@ extern void load_authcerts(const char *type, const char *path,
 extern bool match_requested_ca(generalName_t *requested_ca,
 			       chunk_t our_ca, int *our_pathlen);
 
-extern bool ikev1_ship_CERT(u_int8_t type, chunk_t cert, pb_stream *outs,
-							 u_int8_t np);
+extern bool ikev1_ship_CERT(uint8_t type, chunk_t cert, pb_stream *outs,
+							 uint8_t np);
 extern int get_auth_chain(chunk_t *out_chain, int chain_max,
 					      CERTCertificate *end_cert,
 					      bool full_chain);

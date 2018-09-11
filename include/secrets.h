@@ -163,7 +163,7 @@ struct pubkey {
 	enum dns_auth_level dns_auth_level;
 	realtime_t installed_time;
 	realtime_t until_time;
-	u_int32_t dns_ttl; /* from wire. until_time is derived using this */
+	uint32_t dns_ttl; /* from wire. until_time is derived using this */
 	chunk_t issuer;
 	enum pubkey_alg alg;
 	union {
@@ -197,8 +197,8 @@ extern err_t add_public_key(const struct id *id,
 			    struct pubkey_list **head);
 extern err_t add_ipseckey(const struct id *id,
 		enum dns_auth_level dns_auth_level,
-		enum pubkey_alg alg, u_int32_t ttl,
-		u_int32_t ttl_used, const chunk_t *key,
+		enum pubkey_alg alg, uint32_t ttl,
+		uint32_t ttl_used, const chunk_t *key,
 		struct pubkey_list **head);
 
 extern bool same_RSA_public_key(const struct RSA_public_key *a,

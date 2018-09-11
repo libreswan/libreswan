@@ -664,7 +664,7 @@ int fmt_common_shell_out(char *buf, int blen, const struct connection *c,
 		kernel_ops->kern_name,
 		metric_str,
 		connmtu_str,
-		st == NULL ? (u_int64_t)0 : st->st_esp.add_time,
+		st == NULL ? (uint64_t)0 : st->st_esp.add_time,
 		prettypolicy(c->policy),	/* 25 */
 		NEVER_NEGOTIATE(c->policy) ? "+NEVER_NEGOTIATE" : "",	/* 26 */
 		enum_show(&connection_kind_names, c->kind),
@@ -2048,8 +2048,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			peer_keymat;
 		const struct trans_attrs *ta = &st->st_esp.attrs.transattrs;
 
-		u_int8_t natt_type = 0;
-		u_int16_t natt_sport = 0, natt_dport = 0;
+		uint8_t natt_type = 0;
+		uint16_t natt_sport = 0, natt_dport = 0;
 		ip_address natt_oa;
 
 		if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) {
@@ -3493,7 +3493,7 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 		return FALSE;
 	}
 
-	u_int proto;
+	unsigned proto;
 	struct ipsec_proto_info *p2;
 
 	if (st->st_esp.present) {

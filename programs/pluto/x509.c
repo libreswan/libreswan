@@ -1164,7 +1164,7 @@ static chunk_t ikev2_hash_nss_cert_key(CERTCertificate *cert)
 	return result;
 }
 
-bool ikev1_ship_CERT(u_int8_t type, chunk_t cert, pb_stream *outs, u_int8_t np)
+bool ikev1_ship_CERT(uint8_t type, chunk_t cert, pb_stream *outs, uint8_t np)
 {
 	pb_stream cert_pbs;
 	struct isakmp_cert cert_hd = {
