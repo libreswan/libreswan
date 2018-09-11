@@ -392,17 +392,8 @@ size_t lswlog_bytes(struct lswlog *log, const uint8_t *bytes,
 /* primitive to point the LSWBUF at and initialize ARRAY.  */
 #define LSWBUF_ARRAY_(ARRAY, SIZEOF_ARRAY, BUF)				\
 	/* point BUF at LSWLOG at ARRAY */				\
-	for (struct lswlog lswlog = { .array = ARRAY,			\
-				.len = 0,				\
-				.bound = SIZEOF_ARRAY - 2,		\
-				.roof = SIZEOF_ARRAY - 1,		\
-				.dots = "...", },			\
-		     *BUF = &lswlog;					\
-	     lswlog_p; lswlog_p = false)				\
-		/* initialize ARRAY */					\
-		for (ARRAY[lswlog.len] = ARRAY[lswlog.bound] = '\0',	\
-			     ARRAY[lswlog.roof] = LSWBUF_CANARY;	\
-		     lswlog_p; lswlog_p = false)
+	for (struct lswlog lswlog_, *BUF = lswlog(&lswlog_, ARRAY, SIZEOF_ARRAY); \
+	     lswlog_p; lswlog_p = false)
 
 /* primitive to construct an LSWBUF on the stack.  */
 #define LSWBUF_(BUF)							\
@@ -685,6 +676,8 @@ struct lswlog {
 	size_t roof;
 	const char *dots;
 };
+
+struct lswlog *lswlog(struct lswlog *buf, char *array, size_t sizeof_array);
 
 /*
  * To debug, set this to printf or similar.

@@ -48,6 +48,26 @@ static int lswlog_debugf_nop(const char *format UNUSED, ...)
 int (*lswlog_debugf)(const char *format, ...) = lswlog_debugf_nop;
 
 /*
+ * Constructor
+ */
+
+struct lswlog *lswlog(struct lswlog *buf, char *array,
+		      size_t sizeof_array)
+{
+	*buf = (struct lswlog) {
+		.array = array,
+		.len = 0,
+		.bound = sizeof_array - 2,
+		.roof = sizeof_array - 1,
+		.dots = "...",
+	};
+	buf->array[buf->bound] = buf->array[buf->len] = '\0';
+	buf->array[buf->roof] = LSWBUF_CANARY;
+	check_lswbuf(buf);
+	return buf;
+}
+
+/*
  * Determine where, within LOG's message buffer, to write the string.
  */
 
