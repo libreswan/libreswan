@@ -4,7 +4,7 @@
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
- * Copyright (C) 2016 Sahana Prasad <sahana.prasad07@gmail.com>
+ * Copyright (C) 2016-2018 Sahana Prasad <sahana.prasad07@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -146,6 +146,17 @@ const struct asn1_hash_blob asn1_rsa_pss_sha2_256 = {
 	.asn1_blob = asn1_blob_256,
 };
 
+static const uint8_t size_blob_ecdsa_256[ASN1_LEN_ALGO_IDENTIFIER] = LEN_ECDSA_SHA2_BLOB;
+static const uint8_t asn1_blob_ecdsa_256[ASN1_SHA2_ECDSA_SIZE] = ECDSA_SHA256_BLOB;
+
+const struct asn1_hash_blob asn1_ecdsa_sha2_256 = {
+	.hash_algo = IKEv2_AUTH_HASH_SHA2_256,
+	.size = ASN1_LEN_ALGO_IDENTIFIER,
+	.size_blob = size_blob_ecdsa_256,
+	.asn1_blob_len = ASN1_SHA2_ECDSA_SIZE,
+	.asn1_blob = asn1_blob_ecdsa_256,
+};
+
 const struct hash_desc ike_alg_hash_sha2_384 = {
 	.common = {
 		.name = "sha2_384",
@@ -237,6 +248,17 @@ const struct asn1_hash_blob asn1_rsa_pss_sha2_384 = {
 	.asn1_blob = asn1_blob_384,
 };
 
+static const uint8_t size_blob_ecdsa_384[ASN1_LEN_ALGO_IDENTIFIER] = LEN_ECDSA_SHA2_BLOB;
+static const uint8_t asn1_blob_ecdsa_384[ASN1_SHA2_ECDSA_SIZE] = ECDSA_SHA384_BLOB;
+
+const struct asn1_hash_blob asn1_ecdsa_sha2_384 = {
+	.hash_algo = IKEv2_AUTH_HASH_SHA2_384,
+	.size = ASN1_LEN_ALGO_IDENTIFIER,
+	.size_blob = size_blob_ecdsa_384,
+	.asn1_blob_len = ASN1_SHA2_ECDSA_SIZE,
+	.asn1_blob = asn1_blob_ecdsa_384,
+};
+
 const struct hash_desc ike_alg_hash_sha2_512 = {
 	.common = {
 		.name = "sha2_512",
@@ -326,4 +348,15 @@ const struct asn1_hash_blob asn1_rsa_pss_sha2_512 = {
 	.size_blob = size_blob_512,
 	.asn1_blob_len = ASN1_SHA2_RSA_PSS_SIZE,
 	.asn1_blob = asn1_blob_512,
+};
+
+static const uint8_t size_blob_ecdsa_512[ASN1_LEN_ALGO_IDENTIFIER] = LEN_ECDSA_SHA2_BLOB;
+static const uint8_t asn1_blob_ecdsa_512[ASN1_SHA2_ECDSA_SIZE] = ECDSA_SHA512_BLOB;
+
+const struct asn1_hash_blob asn1_ecdsa_sha2_512 = {
+	.hash_algo = IKEv2_AUTH_HASH_SHA2_512,
+	.size = ASN1_LEN_ALGO_IDENTIFIER,
+	.size_blob = size_blob_ecdsa_512,
+	.asn1_blob_len = ASN1_SHA2_ECDSA_SIZE,
+	.asn1_blob = asn1_blob_ecdsa_512,
 };

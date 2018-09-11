@@ -129,6 +129,7 @@ static void print(struct private_key_stuff *pks,
 			printf("    psk: \"%s\"\n", pskbuf);
 		break;
 
+	// only old/obsolete secrets entries use this
 	case PKK_RSA: {
 		printf("RSA");
 		char *keyid = pks->u.RSA_private_key.pub.keyid;
@@ -139,6 +140,11 @@ static void print(struct private_key_stuff *pks,
 		char *ckaid = ckaid_as_string(pks->u.RSA_private_key.pub.ckaid);
 		printf(" ckaid: %s\n", ckaid);
 		pfree(ckaid);
+		break;
+	}
+
+	// this never has a secret entry so shouldn't ne needed
+	case PKK_ECDSA: {
 		break;
 	}
 

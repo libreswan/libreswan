@@ -7,6 +7,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2018 Sahana Prasad <sahana.prasad07@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -99,4 +100,15 @@ const struct integ_desc ike_alg_integ_sha1 = {
 	.integ_tcpdump_name = "sha1",
 	.integ_ike_audit_name = "sha1",
 	.integ_kernel_audit_name = "HMAC_SHA1",
+};
+
+static const uint8_t size_blob_ecdsa_sha1[ASN1_LEN_ALGO_IDENTIFIER] = LEN_ECDSA_SHA1_BLOB;
+static const uint8_t asn1_blob_ecdsa_sha1[ASN1_SHA1_ECDSA_SIZE] = ECDSA_SHA1_BLOB;
+
+const struct asn1_hash_blob asn1_ecdsa_sha1 = {
+	.hash_algo = IKEv2_AUTH_HASH_SHA1,
+	.size = ASN1_LEN_ALGO_IDENTIFIER,
+	.size_blob = size_blob_ecdsa_sha1,
+	.asn1_blob_len = ASN1_SHA1_ECDSA_SIZE,
+	.asn1_blob = asn1_blob_ecdsa_sha1,
 };

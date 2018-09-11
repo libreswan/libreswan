@@ -2136,6 +2136,10 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 				authby = AUTH_RSASIG;
 				break;
 			}
+			if (c->policy & POLICY_ECDSA) {
+				authby = AUTH_ECDSA;
+				break;
+			}
 			/* FALL THROUGH */
 		case IKEv2_AUTH_NONE:
 		default:

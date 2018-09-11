@@ -1,0 +1,68 @@
+/testing/guestbin/swan-prep
+east #
+ PATH/bin/pk12util -i /testing/x509/strongswan/strongEast.p12 -d sql:/etc/ipsec.d -w /testing/x509/nss-pw
+pk12util: PKCS12 IMPORT SUCCESSFUL
+east #
+ # Tuomo: why doesn't ipsec checknss --settrust work here?
+east #
+ certutil -M -d sql:/etc/ipsec.d -n "strongSwan CA - strongSwan" -t CT,,
+east #
+ ipsec start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-ikev2
+002 added connection description "westnet-eastnet-ikev2"
+east #
+ echo "initdone"
+initdone
+east #
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
+east NOW
+XFRM state:
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha512) 0xHASHKEY 256
+	enc cbc(aes) 0xENCKEY
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha512) 0xHASHKEY 256
+	enc cbc(aes) 0xENCKEY
+XFRM policy:
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir fwd priority 1042407 ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir in priority 1042407 ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir out priority 1042407 ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+192.9.2.0/24 dev eth2 proto kernel scope link src 192.9.2.23
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+strongEast                                                   u,u,u
+strongSwan CA - strongSwan                                   CT,, 
+east #
+ if [ -f /var/run/charon.pid ]; then strongswan status ; fi
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

@@ -6,6 +6,7 @@
  * Copyright (C) 2009-2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2015 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2018 Sahana Prasad <sahana.prasad07@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -206,4 +207,27 @@ err_t unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey)
 	DBG(DBG_PRIVATE, DBG_log_RSA_public_key(rsa));
 	/* generate the CKAID */
 	return NULL;
+}
+
+err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa, const chunk_t *pubkey)
+{
+	err_t err;
+	ecdsa->pub = clone_chunk(*pubkey, "public value");
+
+	ckaid_t ckaid;
+	err = form_ckaid_ecdsa(ecdsa->pub, &ckaid);
+	if (err) {
+		freeanychunk(ecdsa->pub);
+		return err;
+	}
+
+	memset(ecdsa->keyid,0,KEYID_BUF);
+	memcpy(ecdsa->keyid, pubkey->ptr, KEYID_BUF-1);
+
+	ecdsa->k = pubkey->len;
+	ecdsa->ckaid = ckaid;
+
+	DBG(DBG_PRIVATE, DBG_log_ECDSA_public_key(ecdsa));
+	/* generate the CKAID */
+       return NULL;
 }

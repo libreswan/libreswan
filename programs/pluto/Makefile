@@ -9,6 +9,7 @@
 # Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
 # Copyright (C) 2015-2017 Andrew Cagney
 # Copyright (C) 2016-2017 Paul Wouters <pwouters@redhat.com>
+# Copyright (C) 2018 Sahana Prasad <sahana.prasad07@gmail.com>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -210,7 +211,7 @@ OBJS += ikev2_ipseckey.o
 endif
 OBJS += ikev1.o ikev1_main.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_struct.o ikev1_msgid.o
 OBJS += ikev2.o ikev2_parent.o ikev2_child.o ikev2_spdb_struct.o
-OBJS += ikev2_rsa.o ikev2_psk.o ikev2_ppk.o ikev2_crypto.o
+OBJS += ikev2_ecdsa.o ikev2_rsa.o ikev2_psk.o ikev2_ppk.o ikev2_crypto.o
 OBJS += crypt_symkey.o crypt_prf.o ikev1_prf.o ikev2_prf.o
 OBJS += crypt_hash.o
 OBJS += kernel.o

@@ -843,6 +843,7 @@ static void load_end_nss_certificate(const char *which, CERTCertificate *cert,
 			SECKEY_DestroyPublicKey(pk);
 			return;
 		}
+		/* TODO FORCE MINIMUM SIZE ECDSA KEY */
 		SECKEY_DestroyPublicKey(pk);
 	}
 #endif /* FIPS_CHECK */
@@ -860,7 +861,10 @@ static void load_end_nss_certificate(const char *which, CERTCertificate *cert,
 
 	DBG(DBG_X509, DBG_log("loaded %s certificate \'%s\'", which, name));
 
+	/* check for type instead of do both? */
 	add_rsa_pubkey_from_cert(&d_end->id, cert);
+	add_ecdsa_pubkey_from_cert(&d_end->id, cert);
+
 	d_end->cert.ty = CERT_X509_SIGNATURE;
 	d_end->cert.u.nss_cert = cert;
 
@@ -1405,6 +1409,12 @@ void add_connection(const struct whack_message *wm)
 						conflict = TRUE;
 					}
 					break;
+				case AUTH_ECDSA:
+					if (auth_pol != POLICY_ECDSA && auth_pol != LEMPTY) {
+						loglog(RC_FATAL, "leftauthby=ecdsa but authby= is not ecdsa");
+						conflict = TRUE;
+					}
+					break;
 				case AUTH_NULL:
 					if (auth_pol != POLICY_AUTH_NULL && auth_pol != LEMPTY) {
 						loglog(RC_FATAL, "leftauthby=null but authby= is not null");
@@ -1816,6 +1826,8 @@ void add_connection(const struct whack_message *wm)
 	if (wm->left.authby == AUTH_UNSET && wm->right.authby == AUTH_UNSET) {
 		if (c->policy & POLICY_RSASIG)
 			c->spd.this.authby = c->spd.that.authby = AUTH_RSASIG;
+		else if (c->policy & POLICY_ECDSA)
+			c->spd.this.authby = c->spd.that.authby = AUTH_ECDSA;
 		else if (c->policy & POLICY_PSK)
 			c->spd.this.authby = c->spd.that.authby = AUTH_PSK;
 		else if (c->policy & POLICY_AUTH_NULL)
@@ -1827,6 +1839,9 @@ void add_connection(const struct whack_message *wm)
 		switch (wm->left.authby) {
 		case AUTH_RSASIG:
 			c->policy |= POLICY_RSASIG;
+			break;
+		case AUTH_ECDSA:
+			c->policy |= POLICY_ECDSA;
 			break;
 		case AUTH_PSK:
 			c->policy |= POLICY_PSK;
@@ -3162,6 +3177,16 @@ struct connection *refine_host_connection(const struct state *st,
 				return c;
 			}
 			break;
+#if 0
+		case AUTH_ECDSA:
+			my_ECDSA_pri = get_RSA_private_key(c);
+			if (my_ECDSA_pri == NULL) {
+				loglog(RC_LOG_SERIOUS, "cannot find ECDSA key");*/
+					/* cannot determine my ECDSA private key, so not switching */
+				return c;
+			}
+			break;*/
+#endif
 		default:
 			/* don't die on bad_case(auth); */
 

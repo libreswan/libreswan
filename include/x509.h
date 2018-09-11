@@ -97,9 +97,12 @@ extern SECItem same_chunk_as_dercert_secitem(chunk_t chunk);
 extern chunk_t get_dercert_from_nss_cert(CERTCertificate *cert);
 extern generalName_t *gndp_from_nss_cert(CERTCertificate *cert);
 extern bool cert_key_is_rsa(CERTCertificate *cert);
+extern bool cert_key_is_ecdsa(CERTCertificate *cert);
 extern void select_nss_cert_id(CERTCertificate *cert, struct id *end_id);
 extern void add_rsa_pubkey_from_cert(const struct id *keyid,
 				    CERTCertificate *cert);
+extern void add_ecdsa_pubkey_from_cert(const struct id *keyid,
+					CERTCertificate *cert);
 extern bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen);
 extern CERTCertList *get_all_certificates(void);
 

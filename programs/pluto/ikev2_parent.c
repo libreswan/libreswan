@@ -13,7 +13,7 @@
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2015-2017 Andrew Cagney
- * Copyright (C) 2017 Sahana Prasad <sahana.prasad07@gmail.com>
+ * Copyright (C) 2017-2018 Sahana Prasad <sahana.prasad07@gmail.com>
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -176,23 +176,44 @@ static bool negotiate_hash_algo_from_notification(struct payload_digest *p, stru
 	return TRUE;
 }
 
-static const struct asn1_hash_blob *blob_for_hash_algo(enum notify_payload_hash_algorithms hash_algo)
+static const struct asn1_hash_blob *blob_for_hash_algo(enum notify_payload_hash_algorithms hash_algo,
+			enum keyword_authby authby)
 {
-	switch (hash_algo) {
-	case IKEv2_AUTH_HASH_SHA2_256:
-		return  &asn1_rsa_pss_sha2_256;
-	case IKEv2_AUTH_HASH_SHA2_384:
-		return &asn1_rsa_pss_sha2_384;
-	case IKEv2_AUTH_HASH_SHA2_512:
-		return &asn1_rsa_pss_sha2_512;
+	switch(authby) {
+	case AUTH_RSASIG:
+		switch (hash_algo) {
+		case IKEv2_AUTH_HASH_SHA2_256:
+			return  &asn1_rsa_pss_sha2_256;
+		case IKEv2_AUTH_HASH_SHA2_384:
+			return &asn1_rsa_pss_sha2_384;
+		case IKEv2_AUTH_HASH_SHA2_512:
+			return &asn1_rsa_pss_sha2_512;
+		default:
+			return NULL;
+		}
+		break;
+	case AUTH_ECDSA:
+		switch (hash_algo) {
+		case IKEv2_AUTH_HASH_SHA2_256:
+			return  &asn1_ecdsa_sha2_256;
+		case IKEv2_AUTH_HASH_SHA2_384:
+			return &asn1_ecdsa_sha2_384;
+		case IKEv2_AUTH_HASH_SHA2_512:
+			return &asn1_ecdsa_sha2_512;
+		default:
+			return NULL;
+		}
+		break;
 	default:
+		libreswan_log("Unknown or unsupported authby method for DigSig");
 		return NULL;
 	}
 }
 
-static stf_status ikev2_send_asn1_hash_blob(enum notify_payload_hash_algorithms hash_algo, pb_stream *a_pbs)
+static stf_status ikev2_send_asn1_hash_blob(enum notify_payload_hash_algorithms hash_algo,
+		pb_stream *a_pbs, enum keyword_authby authby)
 {
-	const struct asn1_hash_blob *b = blob_for_hash_algo(hash_algo);
+	const struct asn1_hash_blob *b = blob_for_hash_algo(hash_algo, authby);
 
 	passert(b != NULL);
 
@@ -211,11 +232,13 @@ static stf_status ikev2_send_asn1_hash_blob(enum notify_payload_hash_algorithms 
 	return STF_OK;
 }
 
-static stf_status ikev2_check_asn1_hash_blob(enum notify_payload_hash_algorithms hash_algo, pb_stream *a_pbs)
+static stf_status ikev2_check_asn1_hash_blob(enum notify_payload_hash_algorithms hash_algo, pb_stream *a_pbs,
+	enum keyword_authby authby)
 {
-	const struct asn1_hash_blob *b = blob_for_hash_algo(hash_algo);
+	const struct asn1_hash_blob *b = blob_for_hash_algo(hash_algo, authby);
 
 	if (b == NULL) {
+		/* TODO display both enum names */
 		loglog(RC_LOG_SERIOUS, "Non-negotiable Hash algorithm %d received", hash_algo);
 		return STF_FAIL;
 	}
@@ -228,10 +251,12 @@ static stf_status ikev2_check_asn1_hash_blob(enum notify_payload_hash_algorithms
 	 * an array bound that isn't a compile-time constant.
 	 * This is the only call to asn1_hash_in: why not inline it?
 	 */
-	if (!asn1_hash_in(b, a_pbs, ASN1_LEN_ALGO_IDENTIFIER, ASN1_SHA2_RSA_PSS_SIZE)) {
-		return STF_FAIL;
-	}
-
+	if (!asn1_hash_in(b, a_pbs, ASN1_LEN_ALGO_IDENTIFIER,
+		authby == AUTH_RSASIG ? ASN1_SHA2_RSA_PSS_SIZE :
+			ASN1_SHA2_ECDSA_SIZE))
+		{
+			return STF_FAIL;
+		}
 	return STF_OK;
 }
 
@@ -698,12 +723,14 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 	{
 		enum notify_payload_hash_algorithms hash_algo;
 		bool hash_check = FALSE;
+		stf_status authstat;
 
-		if (that_authby != AUTH_RSASIG) {
+		if (that_authby != AUTH_ECDSA && that_authby != AUTH_RSASIG) {
 			libreswan_log("Peer attempted Authentication through Digital Signature but we want %s",
 				enum_name(&ikev2_asym_auth_name, that_authby));
 			return FALSE;
 		}
+
 		if (st->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_512) {
 			hash_algo = IKEv2_AUTH_HASH_SHA2_512;
 		} else if (st->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_384) {
@@ -717,33 +744,45 @@ static bool v2_check_auth(enum ikev2_auth_method recv_auth,
 			return FALSE;
 		}
 
-		stf_status checkstat = ikev2_check_asn1_hash_blob(hash_algo, pbs);
+		stf_status checkstat = ikev2_check_asn1_hash_blob(hash_algo, pbs, that_authby);
 
 		if ((checkstat != STF_OK) && (st->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_384) &&
 					!hash_check) {
 			hash_algo = IKEv2_AUTH_HASH_SHA2_384;
-			checkstat = ikev2_check_asn1_hash_blob(hash_algo, pbs);
+			checkstat = ikev2_check_asn1_hash_blob(hash_algo, pbs, that_authby);
 		}
 
 		if ((checkstat != STF_OK) && (st->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_256) &&
 					(!hash_check)) {
 			hash_algo = IKEv2_AUTH_HASH_SHA2_256;
-			checkstat = ikev2_check_asn1_hash_blob(hash_algo, pbs);
+			checkstat = ikev2_check_asn1_hash_blob(hash_algo, pbs, that_authby);
 		}
 
 		if (checkstat != STF_OK ) {
 			return FALSE;
 		}
 
-		stf_status authstat = ikev2_verify_rsa_hash(
-				st,
-				role,
-				idhash_in,
-				pbs,
-				hash_algo);
+		switch (that_authby) {
+		case AUTH_RSASIG:
+		{
+			authstat = ikev2_verify_rsa_hash(st, role, idhash_in, pbs, hash_algo);
+			break;
+		}
+
+		case AUTH_ECDSA:
+		{
+			authstat = ikev2_verify_ecdsa_hash(st, role, idhash_in, pbs, hash_algo);
+			break;
+		}
+
+		default:
+			bad_case(that_authby);
+			break;
+		}
 
 		if (authstat != STF_OK) {
-			libreswan_log("Digital Signature authentication failed");
+			libreswan_log("Digital Signature authentication using %s failed",
+				enum_name(&ikev2_asym_auth_name, that_authby));
 			return FALSE;
 		}
 		return TRUE;
@@ -1112,7 +1151,8 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md UNUSED,
 
 	/* Send SIGNATURE_HASH_ALGORITHMS Notify payload */
 	if (!IMPAIR(OMIT_HASH_NOTIFY_REQUEST)) {
-		if ((c->policy & POLICY_RSASIG) && (c->sighash_policy != POL_SIGHASH_NONE)) {
+		if (((c->policy & POLICY_RSASIG) || (c->policy & POLICY_ECDSA))
+			&& (c->sighash_policy != POL_SIGHASH_NONE)) {
 			if (!ikev2_out_hash_v2n(ISAKMP_NEXT_v2N, &rbody, c->sighash_policy))
 				return STF_INTERNAL_ERROR;
 		}
@@ -1309,7 +1349,7 @@ stf_status ikev2_parent_inI1outR1(struct state *null_st, struct msg_digest *md)
 	}
 
 	/* authentication policy alternatives in order of decreasing preference */
-	static const lset_t policies[] = { POLICY_RSASIG, POLICY_PSK, POLICY_AUTH_NULL };
+	static const lset_t policies[] = { POLICY_ECDSA, POLICY_RSASIG, POLICY_PSK, POLICY_AUTH_NULL };
 
 	lset_t policy;
 	struct connection *c;
@@ -1694,7 +1734,8 @@ static stf_status ikev2_parent_inI1outR1_continue_tail(struct state *st,
 
 	/* Send SIGNATURE_HASH_ALGORITHMS notification only if we received one */
 	if (!IMPAIR(IGNORE_HASH_NOTIFY_REQUEST)) {
-		if (st->st_seen_hashnotify && (c->policy & POLICY_RSASIG) && (c->sighash_policy != POL_SIGHASH_NONE)) {
+		if (st->st_seen_hashnotify && ((c->policy & POLICY_RSASIG) || (c->policy & POLICY_ECDSA))
+			&& (c->sighash_policy != POL_SIGHASH_NONE)) {
 			if (!ikev2_out_hash_v2n(ISAKMP_NEXT_v2N, &rbody, c->sighash_policy))
 				return STF_INTERNAL_ERROR;
 		}
@@ -2924,6 +2965,9 @@ static stf_status ikev2_send_auth(struct connection *c,
 		a.isaa_type = (pst->st_seen_hashnotify && (c->sighash_policy != POL_SIGHASH_NONE)) ?
 			IKEv2_AUTH_DIGSIG : IKEv2_AUTH_RSA;
 		break;
+	case AUTH_ECDSA:
+		a.isaa_type = IKEv2_AUTH_DIGSIG;
+		break;
 	case AUTH_PSK:
 		a.isaa_type = IKEv2_AUTH_PSK;
 		break;
@@ -2945,7 +2989,8 @@ static stf_status ikev2_send_auth(struct connection *c,
 		if (!ikev2_calculate_rsa_hash(pst, role, idhash_out, &a_pbs,
 			FALSE, /* store-only not set */
 			NULL /* store-only chunk unused */,
-			IKEv2_AUTH_HASH_SHA1)) {
+			IKEv2_AUTH_HASH_SHA1))
+		{
 			loglog(RC_LOG_SERIOUS, "Failed to find our RSA key");
 			return STF_FATAL;
 		}
@@ -2963,6 +3008,7 @@ static stf_status ikev2_send_auth(struct connection *c,
 		break;
 
 	case IKEv2_AUTH_DIGSIG:
+	{
 		if (pst->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_512) {
 			hash_algo = IKEv2_AUTH_HASH_SHA2_512;
 		} else if (pst->st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_384) {
@@ -2974,19 +3020,45 @@ static stf_status ikev2_send_auth(struct connection *c,
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 
-		stf_status sendstat =ikev2_send_asn1_hash_blob(hash_algo, &a_pbs);
+		stf_status sendstat =ikev2_send_asn1_hash_blob(hash_algo, &a_pbs, authby);
 		if (sendstat != STF_OK ) {
 			return STF_FAIL;
 		}
 
-		if (!ikev2_calculate_rsa_hash(pst, role, idhash_out, &a_pbs,
-			FALSE, /* store-only not set */
-			NULL /* store-only chunk unused */,
-			hash_algo)) {
-			loglog(RC_LOG_SERIOUS, "DigSig: failed to find our RSA key");
-			return STF_FATAL;
+		switch (authby) {
+		case AUTH_ECDSA:
+		{
+			if (!ikev2_calculate_ecdsa_hash(pst, role, idhash_out, &a_pbs,
+				FALSE, /* store-only not set */
+				NULL /* store-only chunk unused */,
+				hash_algo))
+			{
+				loglog(RC_LOG_SERIOUS, "DigSig: failed to find our ECDSA key");
+				return STF_FATAL;
+			}
+			break;
 		}
-	break;
+		case AUTH_RSASIG:
+		{
+			if (!ikev2_calculate_rsa_hash(pst, role, idhash_out, &a_pbs,
+				FALSE, /* store-only not set */
+				NULL /* store-only chunk unused */,
+				hash_algo))
+			{
+				loglog(RC_LOG_SERIOUS, "DigSig: failed to find our RSA key");
+				return STF_FATAL;
+			}
+			break;
+		}
+		default:
+			libreswan_log("unknown remote authentication type for DigSig");
+			return STF_FAIL;
+		}
+		break;
+	}
+
+	default:
+		bad_case(a.isaa_type);
 	}
 
 	/* we sent normal IKEv2_AUTH_RSA but if the policy also allows

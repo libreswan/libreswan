@@ -272,6 +272,7 @@ enum option_enums {
 	OPT_KEYID,
 	OPT_ADDKEY,
 	OPT_PUBKEYRSA,
+	OPT_PUBKEYECDSA,
 
 	OPT_ROUTE,
 	OPT_UNROUTE,
@@ -593,6 +594,7 @@ static const struct option long_opts[] = {
 #define PS(o, p)	{ o, no_argument, NULL, CDP_SINGLETON + POLICY_##p##_IX + OO }
 	PS("psk", PSK),
 	PS("rsasig", RSASIG),
+	PS("ecdsa", ECDSA),
 	PS("auth-never", AUTH_NEVER),
 	PS("auth-null", AUTH_NULL),
 
@@ -1156,6 +1158,32 @@ int main(int argc, char **argv)
 				diagq(ugh_space, optarg);
 			}
 			msg.pubkey_alg = PUBKEY_ALG_RSA;
+			msg.keyval.ptr = (unsigned char *)keyspace;
+		}
+			continue;
+		case OPT_PUBKEYECDSA:	/* --pubkeyecdsa <key> */
+		{
+			char mydiag_space[TTODATAV_BUF];
+
+			if (msg.keyval.ptr != NULL)
+				diagq("only one ECDSA public-key allowed", optarg);
+
+			ugh = ttodatav(optarg, 0, 0,
+				       keyspace, sizeof(keyspace),
+				       &msg.keyval.len, mydiag_space,
+				       sizeof(mydiag_space),
+				       TTODATAV_SPACECOUNTS);
+
+			if (ugh != NULL) {
+				/* perhaps enough space */
+				char ugh_space[80];
+
+				snprintf(ugh_space, sizeof(ugh_space),
+					 "ECDSA public-key data malformed (%s)",
+					 ugh);
+				diagq(ugh_space, optarg);
+			}
+			msg.pubkey_alg = PUBKEY_ALG_ECDSA;
 			msg.keyval.ptr = (unsigned char *)keyspace;
 		}
 			continue;

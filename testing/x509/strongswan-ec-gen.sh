@@ -11,7 +11,7 @@ strongswan pki --self --in strongCAkey.der --dn "C=CH, O=strongSwan, CN=strongSw
 strongswan pki --gen --type ecdsa --size 384 > strongWestKey.der
 strongswan pki --pub --in strongWestKey.der | strongswan pki --issue --cacert strongCAcert.der --cakey strongCAkey.der --dn "C=CH, O=strongSwan, CN=strongWest" --flag serverAuth --san west.testing.libreswan.org > strongWestCert.der
 strongswan pki --gen --type ecdsa --size 384 > strongEastKey.der
-strongswan pki --pub --in strongEastKey.der | strongswan pki --issue --cacert strongCAcert.der --cakey strongCAkey.der --dn "C=CH, O=strongSwan, CN=strongEast" --flag serverAuth --ca no --san east.testing.libreswan.org > strongEastCert.der
+strongswan pki --pub --in strongEastKey.der | strongswan pki --issue --cacert strongCAcert.der --cakey strongCAkey.der --dn "C=CH, O=strongSwan, CN=strongEast" --flag serverAuth --san east.testing.libreswan.org > strongEastCert.der
 openssl x509 -inform der -outform pem -in strongCAcert.der -out strongCAcert.pem
 openssl x509 -inform der -outform pem -in strongWestCert.der -out strongWestCert.pem
 openssl x509 -inform der -outform pem -in strongEastCert.der -out strongEastCert.pem

@@ -1,0 +1,34 @@
+/testing/guestbin/swan-prep --userland strongswan
+east #
+ rm -f /etc/strongswan/ipsec.d/cacerts/*
+east #
+ rm -f /etc/strongswan/ipsec.d/certs/*
+east #
+ rm -f /etc/strongswan/ipsec.d/private/*
+east #
+ cp /testing/x509/strongswan/strongCAcert.der /etc/strongswan/ipsec.d/cacerts/
+east #
+ cp /testing/x509/strongswan/strongEastCert.der /etc/strongswan/ipsec.d/certs/
+east #
+ cp /testing/x509/strongswan/strongEastKey.der /etc/strongswan/ipsec.d/private/
+east #
+ chmod 600 /etc/strongswan/ipsec.d/private/*
+east #
+ ../../pluto/bin/strongswan-start.sh
+east #
+ echo "initdone"
+initdone
+east #
+ if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
+east #
+ if [ -f /var/run/charon.pid ]; then strongswan status ; fi
+Security Associations (1 up, 0 connecting):
+westnet-eastnet-ikev2[2]: ESTABLISHED XXX second ago, 192.1.2.23[C=CH, O=strongSwan, CN=strongEast]...192.1.2.45[C=CH, O=strongSwan, CN=strongWest]
+westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
+westnet-eastnet-ikev2{1}:   192.0.2.0/24 === 192.0.1.0/24
+east #
+east #
+ ../bin/check-for-core.sh
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
