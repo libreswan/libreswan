@@ -1183,7 +1183,6 @@ err_t add_public_key(const struct id *id, /* ASKK */
 		     const chunk_t *key,
 		     struct pubkey_list **head)
 {
-	libreswan_log("add_public_key");
 	struct pubkey *pk = alloc_thing(struct pubkey, "pubkey");
 
 	/* first: algorithm-specific decoding of key chunk */

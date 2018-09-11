@@ -164,7 +164,6 @@ static void do_whacklisten(void)
 
 static void key_add_request(const struct whack_message *msg)
 {
-	libreswan_log("key_add_request");
 	DBG_log("add keyid %s", msg->keyid);
 	struct id keyid;
 	err_t ugh = atoid(msg->keyid, &keyid, FALSE);
