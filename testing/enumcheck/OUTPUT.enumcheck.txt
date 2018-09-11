@@ -2834,12 +2834,18 @@ IETF registry enum_names:
          match PKK_PPK: OK
          short_name 4:  OK
          lswlog_enum_short 4: OK
-    5 -> PKK_NULL
+    5 -> PKK_ECDSA
          lswlog_enum 5: OK
-         search PKK_NULL: OK
-         match PKK_NULL: OK
+         search PKK_ECDSA: OK
+         match PKK_ECDSA: OK
          short_name 5:  OK
          lswlog_enum_short 5: OK
+    6 -> PKK_NULL
+         lswlog_enum 6: OK
+         search PKK_NULL: OK
+         match PKK_NULL: OK
+         short_name 6:  OK
+         lswlog_enum_short 6: OK
 
   enc_mode_names:
     1 -> ENCAPSULATION_MODE_TUNNEL
