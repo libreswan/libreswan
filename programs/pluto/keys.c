@@ -917,7 +917,6 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	if (kind == PKK_ECDSA && c->spd.this.cert.ty == CERT_X509_SIGNATURE &&
 			c->spd.this.cert.u.nss_cert != NULL) {
 		/* Must free MY_PUBLIC_KEY */
-		libreswan_log("keys.c lsw_get_secret allocate_ECDSA_public_key_nss");
 		struct pubkey *my_public_key = allocate_ECDSA_public_key_nss(
 			c->spd.this.cert.u.nss_cert);
 
@@ -1123,7 +1122,6 @@ const chunk_t *get_ppk_by_id(const chunk_t *ppk_id)
  */
 const struct RSA_private_key *get_RSA_private_key(const struct connection *c)
 {
-	libreswan_log(" From ikev2_calculate_rsa_hash get_RSA_private_key ");
 	struct secret *s = lsw_get_secret(c,
 					  &c->spd.this.id, &c->spd.that.id,
 					  PKK_RSA, TRUE);
@@ -1148,7 +1146,6 @@ const struct RSA_private_key *get_RSA_private_key(const struct connection *c)
  */
 const struct ECDSA_private_key *get_ECDSA_private_key(const struct connection *c)
 {
-	libreswan_log(" From ikev2_calculate_rsa_hash get_ECDSA_private_key ");
 	struct secret *s = lsw_get_secret(c,
 					  &c->spd.this.id, &c->spd.that.id,
 					  PKK_ECDSA, TRUE);
