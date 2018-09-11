@@ -1,11 +1,5 @@
 /testing/guestbin/swan-prep
 east #
- # next two line should not be needed
-east #
- certutil -A -i /testing/x509/strongswan/strongEastCert.der -n "strongEast" -t "P,," -d sql:/etc/ipsec.d/
-east #
- certutil -A -i /testing/x509/strongswan/strongWestCert.der -n "strongWest" -t "P,," -d sql:/etc/ipsec.d/
-east #
  PATH/bin/pk12util -i /testing/x509/strongswan/strongEast.p12 -d sql:/etc/ipsec.d -w /testing/x509/nss-pw
 pk12util: PKCS12 IMPORT SUCCESSFUL
 east #
@@ -20,8 +14,6 @@ east #
 east #
  ipsec auto --add westnet-eastnet-ikev2
 002 added connection description "westnet-eastnet-ikev2"
-east #
- #tcpdump -w OUTPUT/swan12.pcap -i eth0 -c 1000
 east #
  echo "initdone"
 initdone
@@ -64,9 +56,8 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-strongEast                                                   Pu,u,u
+strongEast                                                   u,u,u
 strongSwan CA - strongSwan                                   CT,, 
-strongWest                                                   P,,  
 east #
  if [ -f /var/run/charon.pid ]; then strongswan status ; fi
 east #

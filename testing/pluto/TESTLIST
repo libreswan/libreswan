@@ -391,8 +391,8 @@ kvmplutotest	dynamic-iface-01			good
 
 
 kvmplutotest	interop-ikev2-strongswan-45-initiator-ecdsa-384		good
-kvmplutotest	interop-ikev2-strongswan-45-initiator-ecdsa-384-cert-over-ike-only	good
 kvmplutotest	interop-ikev2-strongswan-46-responder-ecdsa-384		good
+kvmplutotest	ikev2-ecdsa-01				good
 
 # Opportunstic Encryption using AUTH NULL
 kvmplutotest	newoe-01-whack				good

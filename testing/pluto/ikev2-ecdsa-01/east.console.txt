@@ -1,11 +1,5 @@
 /testing/guestbin/swan-prep
 east #
- # next two line should not be needed
-east #
- #certutil -A -i /testing/x509/strongswan/strongEastCert.der -n "strongEast" -t "P,," -d sql:/etc/ipsec.d/
-east #
- #certutil -A -i /testing/x509/strongswan/strongWestCert.der -n "strongWest" -t "P,," -d sql:/etc/ipsec.d/
-east #
  PATH/bin/pk12util -i /testing/x509/strongswan/strongEast.p12 -d sql:/etc/ipsec.d -w /testing/x509/nss-pw
 pk12util: PKCS12 IMPORT SUCCESSFUL
 east #
@@ -21,24 +15,20 @@ east #
  ipsec auto --add westnet-eastnet-ikev2
 002 added connection description "westnet-eastnet-ikev2"
 east #
- #tcpdump -w OUTPUT/swan12.pcap -i eth0 -c 1000
-east #
  echo "initdone"
 initdone
 east #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../pluto/bin/ipsec-look.sh ; fi
+ ../../pluto/bin/ipsec-look.sh
 east NOW
 XFRM state:
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha512) 0xHASHKEY 256
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha512) 0xHASHKEY 256
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 XFRM policy:
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir fwd priority 1042407 ptype main
@@ -66,9 +56,6 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 strongEast                                                   u,u,u
 strongSwan CA - strongSwan                                   CT,, 
-east #
- if [ -f /var/run/charon.pid ]; then strongswan status ; fi
-east #
 east #
  ../bin/check-for-core.sh
 east #
