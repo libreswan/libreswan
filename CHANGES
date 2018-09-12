@@ -15,6 +15,7 @@ v3.26 (unreleased)
 * IKEv1: Various code cleanup, next payload handling [Hugh]
 * IKEv1: fix optional key-length regression (in v3.25) with ESP prop [Andrew]
 * IKEv1: Don't delete replaced IKE SA, it confuses third party clients [Paul]
+* pluto: Relax strictness of DH in ESP/AH proposals [Andrew]
 * pluto: Fix for two roadwarriors using ID_IPv4 behind same NAT [Paul]
 * pluto: Do not hand out old lease address for authby=secret conns [Paul]
 * pluto: new --selftest option that exits pluto after startup tests [Paul]
