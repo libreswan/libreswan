@@ -963,10 +963,9 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		best = lsw_find_secret_by_public_key(pluto_secrets,
 						     my_public_key, kind);
 		/*
-		 * Just added a secret using the cert as the key; how
-		 * can it then not be found?
+		 * If we don't find the right keytype (RSA, ECDSA, etc)
+		 * then best will end up as NULL
 		 */
-		pexpect(best != NULL);
 		free_public_key(my_public_key);
 		return best;
 	}
