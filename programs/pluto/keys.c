@@ -914,14 +914,26 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		    enum_name(&pkk_names, kind)));
 
 	/* is there a certificate assigned to this connection? */
-	if (kind == PKK_ECDSA && c->spd.this.cert.ty == CERT_X509_SIGNATURE &&
-			c->spd.this.cert.u.nss_cert != NULL) {
+	if ((kind == PKK_ECDSA || kind == PKK_RSA) &&
+	    c->spd.this.cert.ty == CERT_X509_SIGNATURE &&
+	    c->spd.this.cert.u.nss_cert != NULL) {
+
 		/* Must free MY_PUBLIC_KEY */
-		struct pubkey *my_public_key = allocate_ECDSA_public_key_nss(
-			c->spd.this.cert.u.nss_cert);
+		struct pubkey *my_public_key;
+		switch (kind) {
+		case PKK_RSA:
+			my_public_key = allocate_RSA_public_key_nss(c->spd.this.cert.u.nss_cert);
+			break;
+		case PKK_ECDSA:
+			my_public_key = allocate_ECDSA_public_key_nss(c->spd.this.cert.u.nss_cert);
+			break;
+		default:
+			bad_case(kind);
+		}
 
 		if (my_public_key == NULL) {
 			loglog(RC_LOG_SERIOUS, "Private key not found (missing or token locked?");
+			/* XXX: ??? */
 			free_public_key(my_public_key);
 			return NULL;
 		}
