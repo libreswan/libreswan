@@ -2846,6 +2846,12 @@ IETF registry enum_names:
          match PKK_NULL: OK
          short_name 6:  OK
          lswlog_enum_short 6: OK
+    7 -> PKK_INVALID
+         lswlog_enum 7: OK
+         search PKK_INVALID: OK
+         match PKK_INVALID: OK
+         short_name 7:  OK
+         lswlog_enum_short 7: OK
 
   enc_mode_names:
     1 -> ENCAPSULATION_MODE_TUNNEL

@@ -2053,11 +2053,12 @@ static const char *const pkk_name[] = {
 	"PKK_PPK",
 	"PKK_ECDSA",
 	"PKK_NULL",
+	"PKK_INVALID",
 };
 
 enum_names pkk_names = {
 	PKK_PSK,
-	PKK_NULL,
+	PKK_INVALID,
 	ARRAY_REF(pkk_name),
 	NULL, /* prefix */
 	NULL

@@ -1137,6 +1137,7 @@ enum PrivateKeyKind {
 	PKK_PPK,
 	PKK_ECDSA, /* should not be needed */
 	PKK_NULL,
+	PKK_INVALID,
 };
 
 #define XAUTH_PROMPT_TRIES 3

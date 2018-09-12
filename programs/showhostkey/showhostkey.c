@@ -161,6 +161,11 @@ static void print(struct private_key_stuff *pks,
 		/* can't happen but the compiler does not know that */
 		printf("NULL authentication -- cannot happen: %s\n", idb);
 		abort();
+
+	case PKK_INVALID:
+		printf("Invalid or unknown key: %s\n", idb);
+		exit(1);
+
 	}
 }
 
