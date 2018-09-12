@@ -519,11 +519,11 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					 * two good matches are equally good:
 					 * do they agree?
 					 */
-					bool same = 0;
+					bool same = FALSE;
 
 					switch (kind) {
 					case PKK_NULL:
-							same = TRUE;
+						same = TRUE;
 						break;
 					case PKK_PSK:
 						same = s->pks.u.preshared_secret.len ==
@@ -548,7 +548,6 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 						break;
 					case PKK_ECDSA:
 						/* there are no ECDSA kind of secrets */
-						same = FALSE;
 						break;
 					case PKK_XAUTH:
 						/*
