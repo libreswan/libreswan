@@ -148,6 +148,39 @@ void list_psks(void)
 	lsw_foreach_secret(pluto_secrets, print_secrets, NULL);
 }
 
+enum PrivateKeyKind nss_cert_key_kind(CERTCertificate *cert)
+{
+	if (!pexpect(cert != NULL)) {
+		return PKK_INVALID;
+	}
+
+	SECKEYPublicKey *pk = SECKEY_ExtractPublicKey(&cert->subjectPublicKeyInfo);
+	if (pk == NULL) {
+		LSWLOG(buf) {
+			lswlogs(buf, "NSS: could not determine certificate kind; SECKEY_ExtractPublicKey() returned");
+			lswlog_nss_error(buf);
+		}
+		return PKK_INVALID;
+	}
+
+	KeyType type = SECKEY_GetPublicKeyType(pk);
+	enum PrivateKeyKind kind;
+	switch (type) {
+	case rsaKey:
+		kind = PKK_RSA;
+		break;
+	case ecKey:
+		kind = PKK_ECDSA;
+		break;
+	default:
+		kind = PKK_INVALID;
+		break;
+	}
+
+	SECKEY_DestroyPublicKey(pk);
+	return kind;
+}
+
 /* returns the length of the result on success; 0 on failure */
 int sign_hash_RSA(const struct RSA_private_key *k,
 		  const u_char *hash_val, size_t hash_len,
@@ -658,7 +691,7 @@ stf_status RSA_check_signature_gen(struct state *st,
 		DBG(DBG_CONTROL, {
 			char buf[IDTOA_BUF];
 			dntoa_or_null(buf, IDTOA_BUF, c->spd.that.ca, "%any");
-			DBG_log("required CA is '%s'", buf);
+			DBG_log("required RSA CA is '%s'", buf);
 		});
 
 		struct pubkey_list **pp = &pluto_pubkeys;
@@ -789,7 +822,7 @@ stf_status ECDSA_check_signature_gen(struct state *st,
 		DBG(DBG_CONTROL, {
 			char buf[IDTOA_BUF];
 			dntoa_or_null(buf, IDTOA_BUF, c->spd.that.ca, "%any");
-			DBG_log("required CA is '%s'", buf);
+			DBG_log("required ECDSA CA is '%s'", buf);
 		});
 
 		struct pubkey_list **pp = &pluto_pubkeys;
@@ -1339,12 +1372,12 @@ err_t load_nss_cert_secret(CERTCertificate *cert)
 	if (cert == NULL) {
 		return "NSS cert not found";
 	}
-	if (cert_key_is_rsa(cert)) {
+	switch (nss_cert_key_kind(cert)) {
+	case PKK_RSA:
 		return lsw_add_rsa_secret(&pluto_secrets, cert);
-	} else if (cert_key_is_ecdsa(cert)) {
+	case PKK_ECDSA:
 		return lsw_add_ecdsa_secret(&pluto_secrets, cert);
-	}
-	else {
+	default:
 		return "NSS cert not supported";
 	}
 }

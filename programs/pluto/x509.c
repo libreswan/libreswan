@@ -110,34 +110,6 @@ static int dntoasi(char *dst, size_t dstlen, SECItem si)
 	return dntoa(dst, dstlen, ch);
 }
 
-bool cert_key_is_rsa(CERTCertificate *cert)
-{
-	bool ret = FALSE;
-	SECKEYPublicKey *pk = SECKEY_ExtractPublicKey(
-					&cert->subjectPublicKeyInfo);
-
-	if (pk != NULL) {
-		ret = SECKEY_GetPublicKeyType(pk) == rsaKey;
-		SECKEY_DestroyPublicKey(pk);
-	}
-
-	return ret;
-}
-
-bool cert_key_is_ecdsa(CERTCertificate *cert)
-{
-	bool ret = FALSE;
-	SECKEYPublicKey *pk = SECKEY_ExtractPublicKey(
-					&cert->subjectPublicKeyInfo);
-
-	if (pk != NULL) {
-		ret = SECKEY_GetPublicKeyType(pk) == ecKey;
-		SECKEY_DestroyPublicKey(pk);
-	}
-
-	return ret;
-}
-
 static realtime_t get_nss_cert_notafter(CERTCertificate *cert)
 {
 	PRTime notBefore, notAfter;
@@ -511,50 +483,36 @@ static void replace_public_key(struct pubkey *pk)
 	install_public_key(pk, &pluto_pubkeys);
 }
 
-static void create_cert_pubkey(struct pubkey **pkp,
-				      const struct id *id,
-				      CERTCertificate *cert)
+static struct pubkey *create_cert_pubkey(const struct id *id,
+					 CERTCertificate *cert)
 {
-	struct pubkey *pk = allocate_RSA_public_key_nss(cert);
-
+	struct pubkey *pk;
+	enum PrivateKeyKind kind = nss_cert_key_kind(cert);
+	switch (kind) {
+	case PKK_RSA:
+		pk = allocate_RSA_public_key_nss(cert);
+		break;
+	case PKK_ECDSA:
+		pk = allocate_ECDSA_public_key_nss(cert);
+		break;
+	default:
+		libreswan_log("NSS: certificate key kind %d is unknown; not creating pubkey", kind);
+		return NULL;
+	}
 	passert(pk != NULL);
 	pk->id = *id;
 	pk->until_time = get_nss_cert_notafter(cert);
 	pk->issuer = same_secitem_as_chunk(cert->derIssuer);
-	*pkp = pk;
+	return pk;
 }
 
-static void create_cert_pubkey_ecdsa(struct pubkey **pkp,
-				      const struct id *id,
-				      CERTCertificate *cert)
+static struct pubkey *create_cert_subjectdn_pubkey(CERTCertificate *cert)
 {
-	struct pubkey *pk = allocate_ECDSA_public_key_nss(cert);
-
-	passert(pk != NULL);
-	pk->id = *id;
-	pk->until_time = get_nss_cert_notafter(cert);
-	pk->issuer = same_secitem_as_chunk(cert->derIssuer);
-	*pkp = pk;
-}
-
-static void create_cert_subjectdn_pubkey(struct pubkey **pkp,
-				       CERTCertificate *cert)
-{
-	struct id id;
-
-	id.kind = ID_DER_ASN1_DN;
-	id.name = same_secitem_as_chunk(cert->derSubject);
-	create_cert_pubkey(pkp, &id, cert);
-}
-
-static void create_cert_subjectdn_pubkey_ecdsa(struct pubkey **pkp,
-				       CERTCertificate *cert)
-{
-	struct id id;
-
-	id.kind = ID_DER_ASN1_DN;
-	id.name = same_secitem_as_chunk(cert->derSubject);
-	create_cert_pubkey_ecdsa(pkp, &id, cert);
+	struct id id = {
+		.kind = ID_DER_ASN1_DN,
+		.name = same_secitem_as_chunk(cert->derSubject),
+	};
+	return create_cert_pubkey(&id, cert);
 }
 
 static void add_cert_san_pubkeys(CERTCertificate *cert)
@@ -567,12 +525,13 @@ static void add_cert_san_pubkeys(CERTCertificate *cert)
 
 	for (gnt = gn; gn != NULL; gn = gn->next) {
 		struct id id;
-		struct pubkey *pk = NULL;
 
 		gntoid(&id, gn);
 		if (id.kind != ID_NONE) {
-			create_cert_pubkey(&pk, &id, cert);
-			replace_public_key(pk);
+			struct pubkey *pk = create_cert_pubkey(&id, cert);
+			if (pk != NULL) {
+				replace_public_key(pk);
+			}
 		}
 	}
 
@@ -588,51 +547,25 @@ static void add_cert_san_pubkeys(CERTCertificate *cert)
  * with subjectAltNames
  * @keyid provides an id for a secondary entry
  */
-void add_rsa_pubkey_from_cert(const struct id *keyid, CERTCertificate *cert)
+void add_pubkey_from_nss_cert(const struct id *keyid, CERTCertificate *cert)
 {
-	struct pubkey *pk = NULL;
-
-	if (!cert_key_is_rsa(cert)) {
+	struct pubkey *pk = create_cert_subjectdn_pubkey(cert);
+	if (pk == NULL) {
+		DBGF(DBG_X509, "failed to create subjectdn_pubkey from cert");
 		return;
 	}
 
-	create_cert_subjectdn_pubkey(&pk, cert);
 	replace_public_key(pk);
-
 	add_cert_san_pubkeys(cert);
 
 	if (keyid != NULL && keyid->kind != ID_DER_ASN1_DN &&
 			     keyid->kind != ID_NONE &&
 			     keyid->kind != ID_FROMCERT)
 	{
-		struct pubkey *pk2 = NULL;
-
-		create_cert_pubkey(&pk2, keyid, cert);
-		replace_public_key(pk2);
-	}
-}
-
-void add_ecdsa_pubkey_from_cert(const struct id *keyid, CERTCertificate *cert)
-{
-	struct pubkey *pk = NULL;
-
-	if (!cert_key_is_ecdsa(cert)) {
-		return;
-	}
-
-	create_cert_subjectdn_pubkey_ecdsa(&pk, cert);
-	replace_public_key(pk);
-
-	add_cert_san_pubkeys(cert);
-
-	if (keyid != NULL && keyid->kind != ID_DER_ASN1_DN &&
-			     keyid->kind != ID_NONE &&
-			     keyid->kind != ID_FROMCERT)
-	{
-		struct pubkey *pk2 = NULL;
-
-		create_cert_pubkey(&pk2, keyid, cert);
-		replace_public_key(pk2);
+		struct pubkey *pk2 = create_cert_pubkey(keyid, cert);
+		if (pk2 != NULL) {
+			replace_public_key(pk2);
+		}
 	}
 }
 
@@ -771,8 +704,7 @@ static lsw_cert_ret pluto_process_certs(struct state *st,
 		return LSW_CERT_ID_OK;
 	} else if ((ret & VERIFY_RET_OK) && end_cert != NULL) {
 		libreswan_log("certificate verified OK: %s", end_cert->subjectName);
-	//	add_rsa_pubkey_from_cert(&c->spd.that.id, end_cert);
-		add_ecdsa_pubkey_from_cert(&c->spd.that.id, end_cert);
+		add_pubkey_from_nss_cert(&c->spd.that.id, end_cert);
 
 		/* if we already verified ID, no need to do it again */
 		if (st->st_peer_alt_id) {

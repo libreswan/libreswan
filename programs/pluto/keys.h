@@ -101,4 +101,7 @@ extern stf_status ECDSA_check_signature_gen(struct state *st,
 						  struct pubkey *kr,
 						  struct state *st,
 						  enum notify_payload_hash_algorithms hash_algo));
+
+enum PrivateKeyKind nss_cert_key_kind(CERTCertificate *cert);
+
 #endif /* _KEYS_H */
