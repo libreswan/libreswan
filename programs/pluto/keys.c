@@ -1321,14 +1321,17 @@ void list_public_keys(bool utc, bool check_pub_keys)
 
 	if (!check_pub_keys) {
 		whack_log(RC_COMMENT, " ");
-		whack_log(RC_COMMENT, "List of ECDSA Public Keys:");
+		whack_log(RC_COMMENT, "List of Public Keys:");
 		whack_log(RC_COMMENT, " ");
 	}
 
 	while (p != NULL) {
 		struct pubkey *key = p->key;
 
-		if (key->alg == PUBKEY_ALG_ECDSA) {
+		switch (key->alg) {
+		case PUBKEY_ALG_RSA:
+		case PUBKEY_ALG_ECDSA:
+		{
 			const char *check_expiry_msg = check_expiry(key->until_time,
 							PUBKEY_WARNING_INTERVAL,
 							TRUE);
@@ -1341,9 +1344,22 @@ void list_public_keys(bool utc, bool check_pub_keys)
 
 				LSWLOG_WHACK(RC_COMMENT, buf) {
 					lswlog_realtime(buf, key->installed_time, utc);
-					lswlogf(buf, ", %4d ECDSA Key %s (%s private key), until ",
-						8 * key->u.ecdsa.k,
-						key->u.ecdsa.keyid,
+					lswlogs(buf, ", ");
+					switch (key->alg) {
+					case PUBKEY_ALG_RSA:
+						lswlogf(buf, "%4d RSA Key %s",
+							8 * key->u.rsa.k,
+							key->u.rsa.keyid);
+						break;
+					case PUBKEY_ALG_ECDSA:
+						lswlogf(buf, "%4d ECDSA Key %s",
+							8 * key->u.ecdsa.k,
+							key->u.ecdsa.keyid);
+						break;
+					default:
+						bad_case(key->alg);
+					}
+					lswlogf(buf, " (%s private key), until ",
 						(has_private_rawkey(key) ? "has" : "no"));
 					lswlog_realtime(buf, key->until_time, utc);
 					lswlogf(buf, " %s", check_expiry_msg);
@@ -1361,6 +1377,11 @@ void list_public_keys(bool utc, bool check_pub_keys)
 						  id_buf);
 				}
 			}
+			break;
+		}
+		default:
+			DBGF(DBG_CONTROL, "ignoring key with unsupported alg %d",
+			     key->alg);
 		}
 		p = p->next;
 	}
