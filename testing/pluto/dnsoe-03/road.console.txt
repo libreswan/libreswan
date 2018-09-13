@@ -23,7 +23,7 @@ road #
 road #
  ipsec whack --listpubkeys
 000  
-000 List of RSA Public Keys:
+000 List of Public Keys:
 000  
 road #
  # preload east's key
@@ -32,7 +32,7 @@ road #
 road #
  ipsec whack --listpubkeys
 000  
-000 List of RSA Public Keys:
+000 List of Public Keys:
 000  
 000 TIMESTAMP, 2192 RSA Key AQO9bJbr3 (no private key), until --- -- --:--:-- ---- ok (expires never)
 000        ID_IPV4_ADDR '192.1.2.23'

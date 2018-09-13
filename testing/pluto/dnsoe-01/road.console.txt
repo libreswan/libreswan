@@ -19,7 +19,7 @@ road #
 road #
  ipsec whack --listpubkeys
 000  
-000 List of RSA Public Keys:
+000 List of Public Keys:
 000  
 road #
  # give OE policies time to load
