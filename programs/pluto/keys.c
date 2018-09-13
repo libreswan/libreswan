@@ -1272,7 +1272,6 @@ err_t add_ipseckey(const struct id *id,
 		     const chunk_t *key,
 		     struct pubkey_list **head)
 {
-	libreswan_log("add_ipseckey");
 	struct pubkey *pk = alloc_thing(struct pubkey, "ipseckey publickey");
 
 	/* first: algorithm-specific decoding of key chunk */
