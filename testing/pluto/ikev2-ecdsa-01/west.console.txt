@@ -64,6 +64,23 @@ west #
  ipsec whack --trafficstatus
 006 #2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='C=CH, O=strongSwan, CN=strongEast'
 west #
+ ipsec whack --listpubkeys
+000  
+000 List of Public Keys:
+000  
+000 TIMESTAMP,  776 ECDSA Key BP5gSjsOv (no private key), until TIMESTAMP ok
+000        ID_DER_ASN1_DN 'C=CH, O=strongSwan, CN=strongEast'
+000        Issuer 'C=CH, O=strongSwan, CN=strongSwan CA'
+000 TIMESTAMP,  776 ECDSA Key BP5gSjsOv (no private key), until TIMESTAMP ok
+000        ID_FQDN '@east.testing.libreswan.org'
+000        Issuer 'C=CH, O=strongSwan, CN=strongSwan CA'
+000 TIMESTAMP,  776 ECDSA Key BGMDkF4ah (no private key), until TIMESTAMP ok
+000        ID_DER_ASN1_DN 'C=CH, O=strongSwan, CN=strongWest'
+000        Issuer 'C=CH, O=strongSwan, CN=strongSwan CA'
+000 TIMESTAMP,  776 ECDSA Key BGMDkF4ah (no private key), until TIMESTAMP ok
+000        ID_FQDN '@west.testing.libreswan.org'
+000        Issuer 'C=CH, O=strongSwan, CN=strongSwan CA'
+west #
  echo done
 done
 west #
