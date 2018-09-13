@@ -30,6 +30,7 @@ WEB_REPODIR ?= .
 ifndef WEB_SUMMARYDIR
 WEB_SUMMARYDIR := $(if $(wildcard $(LSW_WEBDIR)),$(LSW_WEBDIR))
 endif
+
 # This is verbose so it being invoked is easy to spot
 WEB_SUBDIR ?= $(shell set -x ; $(WEB_SOURCEDIR)/gime-git-description.sh $(WEB_REPODIR))
 ifndef WEB_RESULTSDIR
@@ -159,40 +160,23 @@ $(WEB_SUMMARYDIR)/status.json:
 
 WEB_COMMITSDIR = $(WEB_SUMMARYDIR)/commits
 FIRST_COMMIT = $(shell $(WEB_SOURCEDIR)/earliest-commit.sh $(WEB_SUMMARYDIR) $(WEB_REPODIR))
-# MISSING_COMMIT_FILES = $(filter-out $(wildcard $(WEB_COMMITSDIR)/*.json), $(COMMIT_FILES))
 
 .PHONY: web-commits-json $(WEB_SUMMARYDIR)/commits.json
 web-site web-summarydir web-commits-json: $(WEB_SUMMARYDIR)/commits.json
-$(WEB_SUMMARYDIR)/commits.json:
-	: use a pipe to avoid to-long-line when rebuilding out-of-date commits
-	: use shell variables to avoid re-evaluation
-	set -e ; \
-	web_sourcedir=$(WEB_SOURCEDIR) ; \
-	web_repodir=$(WEB_REPODIR) ; \
-	web_summarydir=$(WEB_SUMMARYDIR) ; \
-	web_resultsdir=$(WEB_RESULTSDIR) ; \
-	web_commitsdir=$(WEB_COMMITSDIR) ; \
-	web_subdir=$(WEB_SUBDIR) ; \
-	first_commit=$(FIRST_COMMIT) ; \
-	$(MAKE) $${web_commitsdir} \
-		WEB_SUBDIR=$${web_subdir} \
-		WEB_SUMMARYDIR=$${web_summarydir} \
-		WEB_RESULTSDIR=$${web_resultsdir} \
-		; \
-	( cd $${web_repodir} ; git rev-list --abbrev-commit $${first_commit}^..) \
-	| while read commit ; do \
-		echo $${web_commitsdir}/$${commit}.json ; \
-		$(MAKE) --no-print-directory -s \
-			WEB_SUBDIR=$${web_subdir} \
-			WEB_SUMMARYDIR=$${web_summarydir} \
-			WEB_RESULTSDIR=$${web_resultsdir} \
-			$${web_commitsdir}/$${commit}.json ; \
-	done ; \
-	: pick up all commits unconditionally and unsorted. ; \
-	find $${web_commitsdir} -name '*.json' \
+$(WEB_SUMMARYDIR)/commits.json: web-commitsdir
+	: pick up all commits unconditionally and unsorted.
+	find $(WEB_COMMITSDIR) -name '*.json' \
 		| xargs --no-run-if-empty cat \
-		| jq -s . > $@.tmp
+		| jq -s 'unique_by(.sha)' > $@.tmp
 	mv $@.tmp $@
+
+.PHONY: web-commitsdir
+web-commitsdir: | $(WEB_COMMITSDIR)
+	: beware of make variables re-evaluating
+	( cd $(WEB_REPODIR) && git rev-list $(FIRST_COMMIT)^.. ) \
+	| awk '{print "$(WEB_COMMITSDIR)/" $$1 ".json"}' \
+	| xargs --no-run-if-empty \
+		$(MAKE) --no-print-directory -s
 
 $(WEB_COMMITSDIR)/%.json: $(WEB_SOURCEDIR)/json-commit.sh | $(WEB_COMMITSDIR)
 	$(WEB_SOURCEDIR)/json-commit.sh $* $(WEB_REPODIR) > $@.tmp
