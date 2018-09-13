@@ -97,7 +97,8 @@ west #
  # there should be no vti0 device left
 west #
  ip addr show vti0
-Device "vti0" does not exist.
+6: vti0@NONE: <POINTOPOINT,NOARP,UP,LOWER_UP> mtu 1332 qdisc noqueue state UNKNOWN group default
+    link/ipip 192.1.2.45 peer 192.1.2.23
 west #
 west #
  ../bin/check-for-core.sh

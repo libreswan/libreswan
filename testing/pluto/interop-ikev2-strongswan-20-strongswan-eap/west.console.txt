@@ -53,9 +53,7 @@ received end entity cert "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Depa
   using trusted ca certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org"
 checking certificate status of "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
   requesting ocsp status from 'http://nic.testing.libreswan.org:2560' ...
-  ocsp response status: try later
-building CRED_CERTIFICATE - OCSP_RESPONSE failed, tried 2 builders
-parsing ocsp response failed
+ocsp response verification failed, no signer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=nic.testing.libreswan.org, E=user-nic@testing.libreswan.org' found
 ocsp check failed, fallback to crl
   fetching crl from 'http://nic.testing.libreswan.org/revoked.crl' ...
 libcurl request failed [7]: Failed to connect to nic.testing.libreswan.org port 80: Connection refused
@@ -79,6 +77,8 @@ IKE_SA rw-eap[1] established between 192.1.2.45[user1@testing.libreswan.org]...1
 scheduling reauthentication in XXXs
 maximum IKE_SA lifetime XXXs
 CHILD_SA rw-eap{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
+received AUTH_LIFETIME of XXXXs, scheduling reauthentication in XXXXs
+peer supports MOBIKE
 connection 'rw-eap' established successfully
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
