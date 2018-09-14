@@ -151,8 +151,6 @@ $(WEB_SUMMARYDIR)/status.json:
 # Should the generation script be modified then this will trigger a
 # rebuild of all relevant commits.
 #
-# To avoid lots of '... is up to date', the recursive make is silent.
-#
 # In theory, all the .json files needing an update can be processed
 # using a single make invocation.  Unfortunately the list can get so
 # long that it exceeds command line length limits, so a slow pipe is
@@ -167,18 +165,20 @@ $(WEB_SUMMARYDIR)/commits.json: web-commitsdir
 	: pick up all commits unconditionally and unsorted.
 	find $(WEB_COMMITSDIR) -name '*.json' \
 		| xargs --no-run-if-empty cat \
-		| jq -s 'unique_by(.sha)' > $@.tmp
+		| jq -s 'unique_by(.hash)' > $@.tmp
 	mv $@.tmp $@
 
 .PHONY: web-commitsdir
 web-commitsdir: | $(WEB_COMMITSDIR)
-	: beware of make variables re-evaluating
+	: -s suppresses the sub-make message ... is up to date
+	: watch out for the sub-make re-valuating make variables
 	( cd $(WEB_REPODIR) && git rev-list $(FIRST_COMMIT)^.. ) \
 	| awk '{print "$(WEB_COMMITSDIR)/" $$1 ".json"}' \
 	| xargs --no-run-if-empty \
 		$(MAKE) --no-print-directory -s
 
 $(WEB_COMMITSDIR)/%.json: $(WEB_SOURCEDIR)/json-commit.sh | $(WEB_COMMITSDIR)
+	echo $@
 	$(WEB_SOURCEDIR)/json-commit.sh $* $(WEB_REPODIR) > $@.tmp
 	mv $@.tmp $@
 
