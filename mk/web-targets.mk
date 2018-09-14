@@ -124,9 +124,10 @@ $(WEB_SUMMARYDIR)/summary.html: $(WEB_SOURCES) | $(WEB_SUMMARYDIR)
 .PHONY: web-summaries-json
 web-site web-summarydir web-summaries-json: $(WEB_SUMMARYDIR)/summaries.json
 $(WEB_SUMMARYDIR)/summaries.json: $(wildcard $(WEB_SUMMARYDIR)/*-g*/summary.json) $(WEB_SOURCEDIR)/json-summaries.sh
-	$(WEB_SOURCEDIR)/json-summaries.sh \
-		$(wildcard $(WEB_SUMMARYDIR)/*-g*/summary.json) \
-		> $@.tmp
+	find $(WEB_SUMMARYDIR) \
+		\( -type f -name summary.json -print \) \
+		-o \( -type d -path '$(WEB_SUMMARYDIR)/*/*' -prune \) \
+	| $(WEB_SOURCEDIR)/json-summaries.sh $(WEB_REPODIR) - > $@.tmp
 	mv $@.tmp $@
 
 #
