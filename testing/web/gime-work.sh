@@ -76,15 +76,17 @@ while read commits ; do
     commit=$(set -- ${commits} ; echo $1)
 
     # already tested?
+    #
+    # Git seems to use both 7 and 9 character abbreviated hashes.  Try
+    # both.
 
-    abbrev_commit=$(git show --format=%h ${commit})
-    if test -d $(echo ${summarydir}/*-g${commit}-* | awk '{print $1}'); then
-	tested=true
-    elif test -d $(echo ${summarydir}/*-g${abbrev_commit}-* | awk '{print $1}'); then
-	tested=true
-    else
-	tested=false
-    fi
+    tested=false
+    for h in ${commit} $(expr ${commit} : '\(.......\).*') $(expr ${commit} : '\(.........\).*') ; do
+	if test -d $(echo ${summarydir}/*-g${h}-* | awk '{print $1}'); then
+	    tested=true
+	    break
+	fi
+    done
 
     # Always test HEAD (even when it isn't interesting).
     #
