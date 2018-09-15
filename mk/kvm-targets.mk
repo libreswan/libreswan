@@ -288,6 +288,7 @@ $(1): kvm-keys kvm-shutdown-local-domains web-test-prep
 		$$(foreach prefix,$$(KVM_PREFIXES), --prefix $$(prefix)) \
 		$$(if $$(KVM_WORKERS), --workers $$(KVM_WORKERS)) \
 		$$(if $$(WEB_ENABLED), \
+			--publish-hash $$(WEB_HASH) \
 			--publish-results $$(WEB_RESULTSDIR) \
 			--publish-status $$(WEB_SUMMARYDIR)/status.json) \
 		$(2) $$(KVM_TEST_FLAGS) $$(STRIPPED_KVM_TESTS)

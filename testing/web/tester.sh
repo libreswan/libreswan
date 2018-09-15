@@ -168,6 +168,7 @@ while true ; do
     make -C ${makedir} web-resultsdir \
 	 WEB_TIME=${start_time} \
 	 WEB_REPODIR=${repodir} \
+	 WEB_HASH=${commit} \
 	 WEB_RESULTSDIR=${resultsdir} \
 	 WEB_SUMMARYDIR=${summarydir}
 

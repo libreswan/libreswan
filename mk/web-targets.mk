@@ -1,6 +1,6 @@
 # WEB make targets, for Libreswan
 #
-# Copyright (C) 2017 Andrew Cagney
+# Copyright (C) 2017-2018 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -33,7 +33,11 @@ WEB_SUBDIR ?= $(shell set -x ; $(WEB_SOURCEDIR)/gime-git-description.sh $(WEB_RE
 # shortcuts to use when web is enabled, set up to evaluate once as
 # they can be a little expensive.  These make variable can only be
 # used inside of WEB_ENABLED blocks.
+
 ifdef WEB_ENABLED
+ifndef WEB_HASH
+WEB_HASH := $(shell set -x ; cd $(WEB_REPODIR) ; git show --no-patch --format=%H HEAD)
+endif
 ifndef WEB_RESULTSDIR
 WEB_RESULTSDIR := $(WEB_SUMMARYDIR)/$(WEB_SUBDIR)
 endif
@@ -241,6 +245,7 @@ $(WEB_RESULTSDIR)/summary.json: | $(WEB_RESULTSDIR)
 		--publish-summary $@.tmp \
 		--publish-status $(WEB_SUMMARYDIR)/status.json \
 		--publish-results $(WEB_RESULTSDIR) \
+		--publish-hash $(WEB_HASH) \
 		testing/pluto
 	mv $@.tmp $@
 
