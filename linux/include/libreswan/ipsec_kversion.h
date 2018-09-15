@@ -585,7 +585,8 @@ typedef struct ctl_table ctl_table;
 # define HAS_SKCIPHER
 #endif
 
-#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 1, 14)
+/* seems to have been backported to as far back as 4.1.4 though */
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4, 11, 9)
 # define HAS_PRIV_DESTRUCTOR
 #endif
 
