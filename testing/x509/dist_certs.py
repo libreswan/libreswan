@@ -651,6 +651,9 @@ def main():
 
 	create_nss_pw()
 	os.chdir(cwd)
+
+	pexpect.run("%s/strongswan-ec-gen.sh"%outdir)
+
 	print "finished!"
 
 
