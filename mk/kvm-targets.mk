@@ -279,7 +279,7 @@ web-pages-disabled:
 define kvm-test
 .PHONY: $(1)
 $(1): kvm-keys kvm-shutdown-local-domains web-test-prep
-	$$(if $$(WEB_SUMMARYDIR),,@$(MAKE) -s web-pages-disabled)
+	$$(if $$(WEB_ENABLED),,@$(MAKE) -s web-pages-disabled)
 	: kvm-test target=$(1) param=$(2)
 	$$(call check-kvm-qemu-directory)
 	$$(call check-kvm-entropy)
@@ -287,10 +287,11 @@ $(1): kvm-keys kvm-shutdown-local-domains web-test-prep
 	$$(KVMRUNNER) \
 		$$(foreach prefix,$$(KVM_PREFIXES), --prefix $$(prefix)) \
 		$$(if $$(KVM_WORKERS), --workers $$(KVM_WORKERS)) \
-		$$(if $$(WEB_RESULTSDIR), --publish-results $$(WEB_RESULTSDIR)) \
-		$$(if $$(WEB_SUMMARYDIR), --publish-status $$(WEB_SUMMARYDIR)/status.json) \
+		$$(if $$(WEB_ENABLED), \
+			--publish-results $$(WEB_RESULTSDIR) \
+			--publish-status $$(WEB_SUMMARYDIR)/status.json) \
 		$(2) $$(KVM_TEST_FLAGS) $$(STRIPPED_KVM_TESTS)
-	$$(if $$(WEB_SUMMARYDIR),,@$(MAKE) -s web-pages-disabled)
+	$$(if $$(WEB_ENABLED),,@$(MAKE) -s web-pages-disabled)
 endef
 
 # "test" and "check" just runs the entire testsuite.
