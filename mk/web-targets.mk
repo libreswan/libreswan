@@ -46,31 +46,34 @@ endif
 endif
 
 #
-# Rules for building web pages during test runs.
+# Force the creation and/or update of the web pages
 #
+# Since $(WEB_SUMMARYDIR) (aka $(LSW_WEBDIR)) is created (via a
+# dependency) before invoking the sub-$(MAKE), the sub-$(MAKE) will
+# always see a configuration where web pages are enabled.
+#
+# Order matters: the results directory is created first so that so
+# that the web-summarydir will pick up its contents.
+
+web web-page: | $(WEB_SUMMARYDIR)
+	$(MAKE) web-resultsdir web-summarydir
+
+$(WEB_SUMMARYDIR):
+	mkdir $(WEB_SUMMARYDIR)
+
+#
+# Build or update the web pages ready for a new test run
+#
+# For the results directory, just install the HTML / javascript files
+# (kvmrunner.py will fill in all the json files).  For the summary
+# directory, do a full update so that all the previous runs are
+# included.
 
 .PHONY: web-test-prep web-page web
 web-test-prep:
 ifdef WEB_ENABLED
-web-test-prep: web-resultsdir web-summarydir
+web-test-prep: web-results-html web-summarydir
 endif
-
-# this invokes $(WEB_SUBDIR) a lot; easier to ignore than fix
-web web-page: | $(LSW_WEBDIR)
-	$(MAKE) web-summarydir \
-		WEB_SUMMARYDIR=$(LSW_WEBDIR) WEB_RESULTSDIR=$(LSW_WEBDIR)/$(WEB_SUBDIR)
-	$(MAKE) web-resultsdir \
-		WEB_SUMMARYDIR=$(LSW_WEBDIR) WEB_RESULTSDIR=$(LSW_WEBDIR)/$(WEB_SUBDIR)
-	$(WEB_UTILSDIR)/kvmresults.py \
-		--quick \
-		--test-kind '' \
-		--test-status '' \
-		--publish-status $(LSW_WEBDIR)/status.json \
-		--publish-results $(LSW_WEBDIR)/$(WEB_SUBDIR) \
-		testing/pluto
-
-$(LSW_WEBDIR):
-	mkdir $(LSW_WEBDIR)
 
 #
 # Update the web site
@@ -100,7 +103,10 @@ web-summarydir:
 web-resultsdir:
 
 #
-# Update the summary html pages
+# Create or update just the summary web page.
+#
+# This is a cheap short-cut that, unlike "web", doesn't update the
+# sub-directory's html.
 #
 
 ifdef WEB_ENABLED
@@ -109,13 +115,8 @@ ifdef WEB_ENABLED
 web-site web-summarydir: web-summary-html
 web-summary-html: $(WEB_SUMMARYDIR)/index.html
 $(WEB_SUMMARYDIR)/index.html: $(WEB_SOURCES) | $(WEB_SUMMARYDIR)
-web-site web-summarydir web-summary-html: $(WEB_SUMMARYDIR)/summary.html
-$(WEB_SUMMARYDIR)/summary.html: $(WEB_SOURCES) | $(WEB_SUMMARYDIR)
-	: WEB_SUMMARYDIR=$(WEB_SUMMARYDIR)
-	: WEB_SOURCES=$(WEB_SOURCES)
-	cp $(filter-out $(WEB_SOURCEDIR)/summary.html, $(WEB_SOURCES)) $(WEB_SUMMARYDIR)
 	cp $(WEB_SOURCES) $(WEB_SUMMARYDIR)
-	cp $(WEB_SOURCEDIR)/summary.html $(WEB_SUMMARYDIR)/summary.html
+	cp $(WEB_SOURCEDIR)/summary.html $(WEB_SUMMARYDIR)/index.html
 
 endif
 
@@ -224,20 +225,24 @@ endif
 
 ifdef WEB_ENABLED
 
-.PHONY: web-resultsdir
-web-resultsdir: $(WEB_RESULTSDIR)/results.html $(WEB_RESULTSDIR)/summary.json
+.PHONY: web-resultsdir web-results-html web-results-json
+web-resultsdir: web-results-html web-results-json
+web-results-html: $(WEB_RESULTSDIR)/index.html
+web-results-json: $(WEB_RESULTSDIR)/summary.json
 
-$(WEB_RESULTSDIR)/results.html: $(WEB_SOURCES) | $(WEB_RESULTSDIR)
-	: WEB_RESULTSDIR=$(WEB_RESULTSDIR)
-	: WEB_SOURCES=$(WEB_SOURCES)
-	cp $(filter-out $(WEB_SOURCEDIR)/results.html, $(WEB_SOURCES)) $(WEB_RESULTSDIR)
+$(WEB_RESULTSDIR)/index.html: $(WEB_SOURCES) | $(WEB_RESULTSDIR)
+	cp $(WEB_SOURCES) $(WEB_RESULTSDIR)
 	cp $(WEB_SOURCEDIR)/results.html $(WEB_RESULTSDIR)/index.html
-	cp $(WEB_SOURCEDIR)/results.html $(WEB_RESULTSDIR)/results.html
-
-# a stub
 
 $(WEB_RESULTSDIR)/summary.json: | $(WEB_RESULTSDIR)
-	$(WEB_SOURCEDIR)/json-summary.sh $(WEB_TIME) > $@.tmp
+	$(WEB_UTILSDIR)/kvmresults.py \
+		--quick \
+		--test-kind '' \
+		--test-status '' \
+		--publish-summary $@.tmp \
+		--publish-status $(WEB_SUMMARYDIR)/status.json \
+		--publish-results $(WEB_RESULTSDIR) \
+		testing/pluto
 	mv $@.tmp $@
 
 $(WEB_RESULTSDIR): | $(WEB_SUMMARYDIR)
