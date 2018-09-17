@@ -891,6 +891,7 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 		for (i = 0; (i < len) && (i < MAX_LOG_VID_LEN); i++) {
 			/*
 			 * clang 3.4 thinks the vid might be NULL; wrong
+			 * So does coverity :/
 			 */
 			log_vid[2 * i] = hexdig[(vid[i] >> 4) & 0xF];
 			log_vid[2 * i + 1] = hexdig[vid[i] & 0xF];
