@@ -52,7 +52,8 @@ EOF
 }
 
 run() {
-    ${status} "running 'make $1'"
+    href="<a href=\"$(basename ${resultsdir})/$1.log\">$1</a>"
+    ${status} "running 'make ${href}'"
 
     # fudge up enough of summary.json to fool the top level
     if test ! -r ${resultsdir}/kvm-test.ok ; then
@@ -79,7 +80,7 @@ run() {
 	touch ${resultsdir}/$1.ok ;
     fi | tee -a ${resultsdir}/$1.log
     if test ! -r ${resultsdir}/$1.ok ; then
-	${status} "'make $1' failed"
+	${status} "'make ${href}' failed"
 	exit 1
     fi
 
