@@ -1,7 +1,7 @@
 
 See also https://libreswan.org/
 
-v3.26 (unreleased)
+v3.26 (September 16, 2018)
 * IKEv2: Support for RSA-PSS (RFC 7427) via authby=rsa-sha2 [Sahana Prasad]
 * IKEv2: Support for ECDSA (RFC 7427) via authby=ecdsa-sha2 [Sahana Prasad]
 * IKEv2: Use DER handling code of NSS instead of our custom code [Andrew]
