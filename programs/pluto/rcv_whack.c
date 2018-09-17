@@ -513,6 +513,8 @@ void whack_process(int whackfd, const struct whack_message *const m)
 	}
 
 	if (m->whack_unroute) {
+		passert(m->name != NULL);
+
 		struct connection *c = conn_by_name(m->name, TRUE, TRUE);
 
 		if (c != NULL) {
@@ -572,8 +574,10 @@ void whack_process(int whackfd, const struct whack_message *const m)
 		}
 	}
 
-	if (m->whack_terminate)
+	if (m->whack_terminate) {
+		passert(m->name != NULL);
 		terminate_connection(m->name);
+	}
 
 	if (m->whack_status)
 		show_status();
