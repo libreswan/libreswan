@@ -320,7 +320,8 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 		 * more then one, so we just send the first one configured.
 		 */
 		char *first = strtok(c->modecfg_domains, ", ");
-		ok = out_raw(first, strlen(first), &attrval, "MODECFG_DOMAIN");
+		if (first != NULL)
+			ok = out_raw(first, strlen(first), &attrval, "MODECFG_DOMAIN");
 		break;
 	}
 
