@@ -64,7 +64,7 @@ run() {
     # directory (${utilsdir}), but point it at files in the test
     # directory (${repodir}).
 
-    runner="${utilsdir}/kvmrunner.py --publish-results ${resultsdir} --testing-directory ${repodir}/testing --publish-status ${summarydir}/status.json"
+    runner="${utilsdir}/kvmrunner.py --publish-hash ${commit} --publish-results ${resultsdir} --testing-directory ${repodir}/testing --publish-status ${summarydir}/status.json"
 
     # Use trick to both capture the status of make and tee output to a
     # log file.
