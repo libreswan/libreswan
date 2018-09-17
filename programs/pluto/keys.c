@@ -72,7 +72,6 @@
 #include <secerr.h>
 #include <secport.h>
 #include <time.h>
-#include <blapi.h>
 #include "lswconf.h"
 #include "lswnss.h"
 #include "secrets.h"
