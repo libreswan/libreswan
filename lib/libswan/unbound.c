@@ -34,14 +34,6 @@
 #include <unbound.h>	/* from unbound devel */
 #include <unbound-event.h> /* from unbound devel */
 
-/*
- * ub_ctx_add_ta_autr was added in unbound 1.5.0
- * UNBOUND_VERSION_* was introduced >= 1.4.12
- */
-#if !defined(UNBOUND_VERSION_MAJOR) || (UNBOUND_VERSION_MAJOR == 1 && UNBOUND_VERSION_MINOR < 5)
-# define ub_ctx_add_ta_autr(x,y) ub_ctx_add_ta_file(x,y)
-#endif
-
 #include "dnssec.h"
 #include "constants.h"
 #include "lswlog.h"
