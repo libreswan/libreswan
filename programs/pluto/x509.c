@@ -1373,10 +1373,10 @@ stf_status ikev2_send_cert(struct state *st, pb_stream *outpbs)
 					send_full_chain ? TRUE : FALSE);
 	}
 
+#if 0
 	if (chain_len == 0)
 		send_authcerts = FALSE;
 
-#if 0
  need to make that function v2 aware and move it
 
 	doi_log_cert_thinking(st->st_oakley.auth,
