@@ -202,15 +202,14 @@ $(WEB_COMMITSDIR):
 endif
 
 #
-# update the html in all the result directories
+# Update the html in all the result directories
 #
-# Not part of web-summarydir
+# Not part of web-summarydir, web-resultsdir or web-results-html
 
 ifdef WEB_ENABLED
 
 WEB_RESULTS_HTML = $(wildcard $(WEB_SUMMARYDIR)/*-g*/results.html)
-.PHONY: web-results-html
-web-site web-results-html: $(WEB_RESULTS_HTML)
+web-site: $(WEB_RESULTS_HTML)
 
 $(WEB_SUMMARYDIR)/%/results.html: $(WEB_SOURCES)
 	$(MAKE) web-resultsdir \
