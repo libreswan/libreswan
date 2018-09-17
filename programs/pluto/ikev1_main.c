@@ -1277,6 +1277,10 @@ static stf_status main_inR2_outI3_continue_tail(struct msg_digest *md,
 			ISAKMP_NEXT_HASH : ISAKMP_NEXT_SIG;
 
 	{
+		/*
+		 * id_hd should be struct isakmp_id, but struct isakmp_ipsec_id
+		 * allows build_id_payload() to work for both phases.
+		 */
 		struct isakmp_ipsec_id id_hd;
 		chunk_t id_b;
 

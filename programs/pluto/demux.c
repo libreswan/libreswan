@@ -256,7 +256,6 @@ static struct msg_digest *read_packet(const struct iface_port *ifp)
 		return NULL;
 	}
 
-
 	/*
 	 * Clone actual message contents and set up md->packet_pbs to
 	 * describe it.

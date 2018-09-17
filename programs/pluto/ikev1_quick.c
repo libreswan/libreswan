@@ -1531,6 +1531,33 @@ static void quick_inI1_outR1_continue2(struct state *st,
 	complete_v1_state_transition(mdp, e);
 }
 
+/*
+ * Spit out the IPSec ID payload we got.
+ *
+ * We go to some trouble to use out_struct so NP
+ * for adjacent packets is handled correctly.
+ */
+static bool echo_id(pb_stream *outs,
+	const struct payload_digest *const id_pd,
+	enum next_payload_types_ikev1 np)
+{
+	struct isakmp_ipsec_id id = id_pd->payload.ipsec_id;
+	id.isaiid_np = np;
+	/* We leave .isaiid_length: It will be updated to the same value */
+
+	uint8_t *hs = outs->cur;
+	pb_stream id_body;
+	if (!out_struct(&id, &isakmp_ipsec_identification_desc, outs, &id_body))
+		return FALSE;
+	ptrdiff_t hl = id_body.cur - hs;	/* length of header */
+
+	if (!out_raw(id_pd->pbs.start + hl, pbs_room(&id_pd->pbs) - hl, &id_body, "ID body"))
+		return FALSE;
+
+	close_output_pbs(&id_body);
+	return TRUE;
+}
+
 static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 						   struct pluto_crypto_req *r)
 {
@@ -1673,32 +1700,10 @@ static stf_status quick_inI1_outR1_continue12_tail(struct msg_digest *md,
 
 	/* [ IDci, IDcr ] out */
 	if (id_pd != NULL) {
-		/*
-		 * We simply spit out the two ID payloads we got, raw!
-		 * We overwrite the Next Payload fields, raw!
-		 * This plays havoc with our nice previous_np backpatching.
-		 * At least these are the last payload, and not the first
-		 * so we can fudge by suppression.
-		 */
-		rbody.previous_np = NULL;	/* suppress check! */
-
-		/* IDci out */
-		struct isakmp_ipsec_id *p = (void *)rbody.cur; /* UGH! */
-
-		if (!out_raw(id_pd->pbs.start, pbs_room(&id_pd->pbs),
-			     &rbody, "IDci"))
+		passert(id_pd->next->next == NULL);	/* exactly two */
+		if (!echo_id(&rbody, id_pd, ISAKMP_NEXT_ID) ||
+		    !echo_id(&rbody, id_pd->next, ISAKMP_NEXT_NONE))
 			return STF_INTERNAL_ERROR;
-
-		p->isaiid_np = ISAKMP_NEXT_ID;
-
-		/* IDcr out */
-		p = (void *)rbody.cur; /* UGH! */
-
-		if (!out_raw(id_pd->next->pbs.start,
-			     pbs_room(&id_pd->next->pbs), &rbody, "IDcr"))
-			return STF_INTERNAL_ERROR;
-
-		p->isaiid_np = ISAKMP_NEXT_NONE;
 	}
 
 	/* Compute reply HASH(2) and insert in output */
