@@ -4563,7 +4563,7 @@ stf_status ikev2_process_child_sa_pl(struct msg_digest *md,
 			loglog(RC_LOG_SERIOUS,
 			       "expecting %s but remote's accepted proposal includes %s",
 			       st->st_pfs_group == NULL ? "no DH" : st->st_pfs_group->common.fqn,
-			       accepted_dh == NULL ? "no DH" : accepted_dh->common.fqn);
+			       accepted_dh->common.fqn);
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 		st->st_pfs_group = accepted_dh;
