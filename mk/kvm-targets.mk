@@ -320,25 +320,6 @@ kvm-diffs:
 #
 # Build the KVM keys using the KVM.
 #
-
-KVM_KEYS_SCRIPT = ./testing/x509/kvm-keys.sh
-KVM_KEYS_EXPIRATION_DAY = 7
-KVM_KEYS_EXPIRED = find testing/x509/*/ -mtime +$(KVM_KEYS_EXPIRATION_DAY)
-
-.PHONY: kvm-keys
-kvm-keys: $(KVM_KEYS)
-	$(MAKE) --no-print-directory kvm-keys-up-to-date
-
-# For moment don't force keys to be re-built.
-.PHONY: kvm-keys-up-to-date
-kvm-keys-up-to-date:
-	@if test $$($(KVM_KEYS_EXPIRED) | wc -l) -gt 0 ; then \
-		echo "The following keys are more than $(KVM_KEYS_EXPIRATION_DAY) days old:" ; \
-		$(KVM_KEYS_EXPIRED) | sed -e 's/^/  /' ; \
-		echo "run 'make kvm-keys-clean kvm-keys' to force an update" ; \
-		exit 1 ; \
-	fi
-
 # XXX:
 #
 # Can't yet force the domain's creation.  This target may have been
@@ -348,19 +329,66 @@ kvm-keys-up-to-date:
 # Make certain everything is shutdown.  Can't depend on the phony
 # target kvm-shutdown-local-domains as that triggers an unconditional
 # rebuild.  Instead invoke that rule inline.
+#
+# "dist_certs.py" can't create a directory called "certs/" on a 9p
+# mounted file system (OSError: [Errno 13] Permission denied:
+# 'certs/').  In fact, "mkdir xxx/ certs/" half fails (only xxx/ is
+# created) so it might even be a problem with the mkdir call!  Get
+# around this by first creating the certs in /tmp on the guest, and
+# then copying back using a tar file.
+#
+# "dist_certs.py" always writes its certificates to $(dirname $0).
+# Get around this by running a copy of dist_certs.py placed in /tmp.
 
-$(KVM_KEYS): testing/x509/dist_certs.py $(KVM_KEYS_SCRIPT) # | $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
+KVM_KEYS_EXPIRATION_DAY = 7
+KVM_KEYS_EXPIRED = find testing/x509/*/ -mtime +$(KVM_KEYS_EXPIRATION_DAY)
+
+.PHONY: kvm-keys
+kvm-keys: $(KVM_KEYS)
+	$(MAKE) --no-print-directory kvm-keys-up-to-date
+
+# $(KVM_KEYS): | $(KVM_LOCALDIR)/$(KVM_BUILD_DOMAIN).xml
+$(KVM_KEYS): $(top_srcdir)/testing/x509/dist_certs.py
+$(KVM_KEYS): $(top_srcdir)/testing/x509/strongswan-ec-gen.sh
+$(KVM_KEYS): $(top_srcdir)/testing/baseconfigs/all/etc/bind/generate-dnssec.sh
+$(KVM_KEYS):
 	$(call check-kvm-domain,$(KVM_BUILD_DOMAIN))
 	$(call check-kvm-entropy)
 	$(call check-kvm-qemu-directory)
-	: invoke phony target to shut things down
+	: invoke phony target to shut things down and delete old keys
 	$(MAKE) kvm-shutdown-local-domains
 	$(MAKE) kvm-keys-clean
-	$(KVM_KEYS_SCRIPT) $(KVM_BUILD_DOMAIN) testing/x509
+	:
+	: disable FIPS
+	:
+	$(KVMSH) $(KVM_BUILD_DOMAIN) rm -f /etc/system-fips
+	$(KVMSH) --chdir . $(KVM_BUILD_DOMAIN) ./testing/guestbin/fipsoff
+	:
+	: create the empty /tmp/x509 directory ready for the keys
+	:
+	$(KVMSH) $(KVM_BUILD_DOMAIN) rm -rf /tmp/x509
+	$(KVMSH) $(KVM_BUILD_DOMAIN) mkdir /tmp/x509
+	:
+	: per comments, generate everything in /tmp/x509
+	:
+	$(KVMSH) --chdir . $(KVM_BUILD_DOMAIN) cp -f ./testing/x509/dist_certs.py /tmp/x509
+	$(KVMSH) --chdir /tmp/x509 $(KVM_BUILD_DOMAIN) ./dist_certs.py
+	$(KVMSH) --chdir . $(KVM_BUILD_DOMAIN) cp -f ./testing/x509/strongswan-ec-gen.sh /tmp/x509
+	$(KVMSH) --chdir /tmp/x509 $(KVM_BUILD_DOMAIN) ./strongswan-ec-gen.sh
+	:
+	: copy the certs from guest to host in a tar ball to avoid 9fs bug
+	:
+	rm -f testing/x509/kvm-keys.tar
+	$(KVMSH) --chdir /tmp/x509 $(KVM_BUILD_DOMAIN) tar cf kvm-keys.tar '*/' nss-pw
+	$(KVMSH) --chdir . $(KVM_BUILD_DOMAIN) cp /tmp/x509/kvm-keys.tar testing/x509
+	cd testing/x509 && tar xf kvm-keys.tar
+	rm -f testing/x509/kvm-keys.tar
+	:
 	: Also regenerate the DNSSEC keys -- uses host
+	:
 	$(top_srcdir)/testing/baseconfigs/all/etc/bind/generate-dnssec.sh
 	$(KVMSH) --shutdown $(KVM_BUILD_DOMAIN)
-	touch $(KVM_KEYS)
+	touch $@
 
 KVM_KEYS_CLEAN_TARGETS = clean-kvm-keys kvm-clean-keys kvm-keys-clean
 .PHONY: $(KVM_KEYS_CLEAN_TARGETS)
@@ -371,7 +399,17 @@ $(KVM_KEYS_CLEAN_TARGETS):
 	rm -f testing/baseconfigs/all/etc/bind/keys/*.key
 	rm -f testing/baseconfigs/all/etc/bind/keys/*.private
 	rm -f testing/baseconfigs/all/etc/bind/dsset/dsset-*
+	rm -f testing/x509/kvm-keys.tar
 
+# For moment don't force keys to be re-built.
+.PHONY: kvm-keys-up-to-date
+kvm-keys-up-to-date:
+	@if test $$($(KVM_KEYS_EXPIRED) | wc -l) -gt 0 ; then \
+		echo "The following keys are more than $(KVM_KEYS_EXPIRATION_DAY) days old:" ; \
+		$(KVM_KEYS_EXPIRED) | sed -e 's/^/  /' ; \
+		echo "run 'make kvm-keys-clean kvm-keys' to force an update" ; \
+		exit 1 ; \
+	fi
 
 #
 # Create an RPM for the test domains
