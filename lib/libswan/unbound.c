@@ -107,10 +107,8 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile, const char 
 		}
 	} else {
 		DBG(DBG_DNS, DBG_log("Loading dnssec root key from:%s", rootfile));
-		/* the cast is there for unbound < 1.4.12 */
-		/* ??? ub_ctx_add_ta_autr is not documented to set errno */
 		errno = 0;
-		ugh = ub_ctx_add_ta_autr(dns_ctx, (char *) rootfile);
+		ugh = ub_ctx_add_ta_file(dns_ctx, rootfile);
 		if (ugh != 0) {
 			int e = errno;	/* protect value from ub_strerror */
 
