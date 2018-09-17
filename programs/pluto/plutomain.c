@@ -37,6 +37,7 @@
 #include <sys/un.h>
 #include <fcntl.h>
 #include <getopt.h>
+#include <unistd.h>	/* for unlink(), write(), close(), access(), et.al. */
 
 #include "lswconf.h"
 #include "lswfips.h"
