@@ -652,7 +652,8 @@ void whack_process(int whackfd, const struct whack_message *const m)
 
 done:
 	whack_log_fd = NULL_FD;
-	close(whackfd);
+	if (whackfd >= 0)
+		close(whackfd);
 }
 
 static void whack_handle(int kernelfd);
