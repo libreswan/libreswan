@@ -149,7 +149,7 @@ function lsw_summary_table(table_id, summary) {
     })
 
     //
-    // Add the error columns
+    // Add the error column
     //
     // For the moment just list the interesting (uppercase) errors,
     // add them, broken down, under an errors column.
@@ -158,35 +158,12 @@ function lsw_summary_table(table_id, summary) {
     // "wip" but that data isn't available.
     //
 
-    var errors = {}
-    summary.test_runs.forEach(function(test_run) {
-	if (test_run.errors) {
-	    Object.keys(test_run.errors).forEach(function(error) {
-		// only upper case errors
-		if (error == error.toUpperCase()) {
-		    errors[error] = true
-		}
-	    })
-	}
+    columns.push({
+	title: "Errors",
+	value: function(test_run) {
+	    return lsw_errors_html(test_run.errors)
+	},
     })
-    var errors_columns = []
-    errors_columns.title = "Errors"
-    Object.keys(errors).forEach(function(error) {
-	errors_columns.push({
-	    title: {
-		"ASSERTION": "ASSERT",
-		"EXPECTATION": "EXPECT",
-	    }[error] || error,
-	    value: function(data) {
-		return (data.errors && data.errors[error]
-			? data.errors[error]
-			: "")
-	    },
-	})
-    })
-    if (errors_columns.length) {
-	columns.push(errors_columns)
-    }
 
     // Add Extra info columns
 
