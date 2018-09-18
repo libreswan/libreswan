@@ -579,7 +579,7 @@ static struct vid_struct vid_tab[] = {
 		"\x08\xdb\x45\xe6\xcb\x01\xf8\x0b\xb5\x76\xe9\xa7\x8c\x0f\x54\xe1\x30\x0b\x88\x81", 20 },
 
 	/* END OF TABLE */
-	{ 0, 0, NULL, NULL, NULL, 0 }
+	{ VID_none, 0, NULL, NULL, NULL, 0 }
 };
 
 static const char hexdig[] = "0123456789abcdef";
@@ -595,7 +595,7 @@ void init_vendorid(void)
 {
 	struct vid_struct *vid;
 
-	for (vid = vid_tab; vid->id; vid++) {
+	for (vid = vid_tab; vid->id != VID_none; vid++) {
 		if (vid->flags & VID_SELF) {
 			vid->vid_len = strlen(vid->vid);
 		} else if (vid->flags & VID_STRING) {
@@ -862,15 +862,24 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 	/*
 	 * Find known VendorID in vid_tab
 	 */
-	for (pvid = vid_tab; pvid->id; pvid++) {
-		if (pvid->vid && vid && pvid->vid_len && len) {
+	for (pvid = vid_tab; pvid->id != VID_none; pvid++) {
+		/*
+		 * ??? if len == 0 we should skip the loop
+		 * (the loop doesn't change len).
+		 * But I strongly suspect that even without this check
+		 * nothing will match anyway, with the same result.
+		 *
+		 * ??? is there really a point in checking for
+		 * pvid->vid_len?
+		 */
+		if (pvid->vid != NULL && pvid->vid_len != 0 && len != 0) {
 			if (pvid->vid_len == len) {
 				if (memeq(pvid->vid, vid, len)) {
 					handle_known_vendorid(md, vid,
 							      len, pvid, ikev2);
 					return;
 				}
-			} else if ((pvid->vid_len < len) &&
+			} else if (pvid->vid_len < len &&
 				   (pvid->flags & VID_SUBSTRING)) {
 				if (memeq(pvid->vid, vid, pvid->vid_len)) {
 					handle_known_vendorid(md, vid, len,
@@ -884,23 +893,17 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 	/*
 	 * Unknown VendorID. Log the beginning.
 	 */
-	{
-		char log_vid[2 * MAX_LOG_VID_LEN + 1];
-		size_t i;
+	char log_vid[2 * MAX_LOG_VID_LEN + 1];
+	size_t i;
 
-		for (i = 0; (i < len) && (i < MAX_LOG_VID_LEN); i++) {
-			/*
-			 * clang 3.4 thinks the vid might be NULL; wrong
-			 * So does coverity :/
-			 */
-			log_vid[2 * i] = hexdig[(vid[i] >> 4) & 0xF];
-			log_vid[2 * i + 1] = hexdig[vid[i] & 0xF];
-		}
-		log_vid[2 * i] = '\0';
-		loglog(RC_LOG_SERIOUS,
-		       "ignoring unknown Vendor ID payload [%s%s]",
-		       log_vid, (len > MAX_LOG_VID_LEN) ? "..." : "");
+	for (i = 0; i < len && i < MAX_LOG_VID_LEN; i++) {
+		log_vid[2 * i] = hexdig[(vid[i] >> 4) & 0xF];
+		log_vid[2 * i + 1] = hexdig[vid[i] & 0xF];
 	}
+	log_vid[2 * i] = '\0';
+	loglog(RC_LOG_SERIOUS,
+	       "ignoring unknown Vendor ID payload [%s%s]",
+	       log_vid, (len > MAX_LOG_VID_LEN) ? "..." : "");
 }
 
 /**
@@ -917,7 +920,7 @@ bool out_vid(uint8_t np, pb_stream *outs, unsigned int vid)
 
 	passert(vid != 0);
 	for (pvid = vid_tab; pvid->id != vid; pvid++)
-		passert(pvid->id != 0); /* we must find what we are trying to send */
+		passert(pvid->id != VID_none); /* we must find what we are trying to send */
 
 	DBG(DBG_EMITTING,
 	    DBG_log("out_vid(): sending [%s]", pvid->descr));
@@ -992,13 +995,9 @@ bool vid_is_oppo(const char *vid, size_t len)
 
 	/* stop at right vid in vidtable (should be first entry) */
 	for (pvid = vid_tab; pvid->id != VID_OPPORTUNISTIC; pvid++)
-	passert(pvid->id != 0); /* we must find VID_OPPORTUNISTIC */
+		passert(pvid->id != VID_none); /* we must find VID_OPPORTUNISTIC */
 
-	if (pvid->vid_len != len) {
-		return FALSE;
-	}
-
-	if (memeq(vid, pvid->vid, len)) {
+	if (pvid->vid_len == len && memeq(vid, pvid->vid, len)) {
 		DBG(DBG_CONTROL, DBG_log("VID_OPPORTUNISTIC received"));
 		return TRUE;
 	} else {
