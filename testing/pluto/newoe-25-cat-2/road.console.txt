@@ -11,7 +11,7 @@ Redirecting to: systemctl start ipsec.service
 road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
- ipsec whack --impair retransmits
+ ipsec whack --impair suppress-retransmits
 road #
  ipsec auto --add road-east
 conn 'road-east': not found (tried aliases)
