@@ -137,7 +137,7 @@ west #
 west #
  # the last one is no longer in the default list and should fail
 west #
- ipsec whack --impair retransmits
+ ipsec whack --impair suppress-retransmits
 west #
  ipsec auto --up westnet-eastnet-ikev2-modp1536
 002 "westnet-eastnet-ikev2-modp1536" #13: initiating v2 parent SA
