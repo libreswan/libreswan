@@ -1219,37 +1219,37 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 /*
  * For IKEv2, returns TRUE if we should be sending a cert
  */
-bool ikev2_send_cert_decision(struct state *st)
+bool ikev2_send_cert_decision(const struct state *st)
 {
-	struct connection *c = st->st_connection;
-	cert_t cert = c->spd.this.cert;
+	const struct connection *c = st->st_connection;
+	const struct end *this = &c->spd.this;
 
 	DBG(DBG_X509, DBG_log("IKEv2 CERT: send a certificate?"));
 
+	bool sendit = FALSE;
+
 	if (st->st_peer_wants_null) {
-	} else if (!(c->policy & (POLICY_ECDSA|POLICY_RSASIG))) {
+		/* ??? should we log something?  All others do. */
+	} else if (LDISJOINT(c->policy, POLICY_ECDSA | POLICY_RSASIG)) {
 		DBG(DBG_X509,
-			DBG_log("IKEv2 CERT: policy does not have ECDSA: %s",
+			DBG_log("IKEv2 CERT: policy does not have RSASIG or ECDSA: %s",
 				prettypolicy(c->policy & POLICY_ID_AUTH_MASK)));
-	/*} else if (!(c->policy & POLICY_RSASIG)) {
-		DBG(DBG_X509,
-			DBG_log("IKEv2 CERT: policy does not have RSASIG: %s",
-				prettypolicy(c->policy & POLICY_ID_AUTH_MASK)));*/
-	} else if (cert.ty == CERT_NONE || cert.u.nss_cert == NULL) {
+	} else if (this->cert.ty == CERT_NONE || this->cert.u.nss_cert == NULL) {
 		DBG(DBG_X509,
 			DBG_log("IKEv2 CERT: no certificate to send"));
-	} else if ((c->spd.this.sendcert == CERT_SENDIFASKED &&
-	     st->hidden_variables.st_got_certrequest) ||
-	    c->spd.this.sendcert == CERT_ALWAYSSEND)
+	} else if (this->sendcert == CERT_SENDIFASKED &&
+		   st->hidden_variables.st_got_certrequest)
 	{
-		DBG(DBG_X509, DBG_log("IKEv2 CERT: OK to send a certificate"));
-
-		return TRUE;
+		DBG(DBG_X509, DBG_log("IKEv2 CERT: OK to send requested certificate"));
+		sendit = TRUE;
+	} else if (this->sendcert == CERT_ALWAYSSEND) {
+		DBG(DBG_X509, DBG_log("IKEv2 CERT: OK to send a certificate (always)"));
+		sendit = TRUE;
 	} else {
 		DBG(DBG_X509,
-			DBG_log("IKEv2 CERT: no cert requested or told not to send"));
+			DBG_log("IKEv2 CERT: no cert requested or we don't want to send"));
 	}
-	return FALSE;
+	return sendit;
 }
 
 stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
