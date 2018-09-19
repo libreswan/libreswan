@@ -89,6 +89,7 @@ OBJS += monotime.o
 
 OBJS += debug.o
 OBJS += impair.o
+OBJS += keywords.o
 
 OBJS += libreswan_DBG_dump.o
 OBJS += libreswan_DBG_log.o
