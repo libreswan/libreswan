@@ -135,13 +135,13 @@ struct lswlog;
  * assumed to be present and the tool being run.
  *
  *                           PLUTO
- *              SEVERITY  WHACK  PREFIX   TOOLS
+ *              SEVERITY  WHACK  PREFIX    TOOLS    PREFIX
  *   default    WARNING    yes    state     -v
  *   log        WARNING     -     state     -v
  *   debug      DEBUG       -     "| "     debug?
- *   error      ERR         -    ERROR     yes
- *   whack         -       yes    NNN      n/a?
- *   file          -        -      -        -
+ *   error      ERR         -    ERROR     STDERR  PROG:_...
+ *   whack         -       yes    NNN      STDOUT  ...
+ *   file          -        -      -         -
  *
  * The streams will then add additional prefixes as required.  For
  * instance, the log_whack stream will prefix a timestamp when sending
@@ -212,6 +212,10 @@ extern int libreswan_log(const char *fmt, ...) PRINTF_LIKE(1);
  * XXX: See programs/pluto/log.h for interface; should only be used in
  * pluto.  This code assumes that it is being called from the main
  * thread.
+ *
+ * LSWLOG_INFO() sends stuff just to "whack" (or for a tool STDERR?).
+ * XXX: there is no prefix, bug?  Should it send stuff out with level
+ * RC_COMMENT?
  */
 
 #define LSWLOG_WHACK(RC, BUF)						\
@@ -219,6 +223,9 @@ extern int libreswan_log(const char *fmt, ...) PRINTF_LIKE(1);
 		whack_log_pre(RC, BUF),					\
 		lswlog_to_whack_stream(BUF))
 
+/* XXX: should be stdout?!? */
+#define LSWLOG_INFO(BUF)					\
+	LSWLOG_(true, BUF, , lswlog_to_whack_stream(buf))
 
 /*
  * Log the message to the main log stream, and (at level RC_LOG) to
@@ -316,7 +323,6 @@ void lswlog_dbg_pre(struct lswlog *buf);
 
 #define LSWDBGP(DEBUG, BUF) LSWDBG_(DBGP(DEBUG), BUF)
 #define LSWLOG_DEBUG(BUF) LSWDBG_(true, BUF)
-
 
 /*
  * Impair pluto's behaviour.
@@ -617,6 +623,10 @@ void libreswan_bad_case(const char *expression, long value,
  * saved.
  *
  * XXX: Is error stream really the right place for this?
+ *
+ * LSWLOG_ERROR() sends an arbitrary message to the error stream (in
+ * tools that's STDERR).  XXX: Should LSWLOG_ERRNO() and LSWERR() be
+ * merged.  XXX: should LSWLOG_ERROR() use a different prefix?
  */
 
 void lswlog_errno_prefix(struct lswlog *buf, const char *prefix);
@@ -634,6 +644,10 @@ void lswlog_errno_suffix(struct lswlog *buf, int e);
 #define LSWLOG_ERRNO(ERRNO, BUF)					\
 	LSWLOG_ERRNO_("ERROR: ", ERRNO, BUF)
 
+#define LSWLOG_ERROR(BUF)			\
+	LSWLOG_(true, BUF,			\
+		lswlog_log_prefix(BUF),		\
+		lswlog_to_error_stream(buf))
 
 /*
  * ARRAY, a previously allocated array, containing the accumulated
