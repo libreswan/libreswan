@@ -18,6 +18,9 @@
 #include "constants.h"
 #include "enum_names.h"
 #include "lmod.h"
+#include "keywords.h"
+#include "impair.h"
+#include "lswlog.h"
 
 /*
  * Initialize both the .name and .help arrays.
@@ -89,6 +92,7 @@ static struct double_double impair = {
        S(IMPAIR_TIMEOUT_ON_RETRANSMIT, "impair-timeout-on-retransmit", "causes pluto to 'retry' (switch protocol) on the first retransmit"),
        S(IMPAIR_UNKNOWN_PAYLOAD_CRITICAL, "impair-unknown-payload-critical", "mark the unknown payload as critical"),
 
+#undef S
 };
 
 const enum_names impair_names = {
@@ -108,3 +112,260 @@ const struct enum_names impair_help = {
 	ARRAY_REF(impair.help),
 	NULL, NULL,
 };
+
+enum send_impairment impair_ke_payload;
+
+static const struct keyword send_impairment_value[] = {
+#define S(E, H) [SEND_##E] = { .name = #E, .value = SEND_##E, .details = H, }
+	S(OMIT, "omit payload"),
+	S(EMPTY, "send an empty payload"),
+	S(ZERO, "zero-fill payload"),
+#undef S
+};
+
+static const struct keywords send_impairment_keywords =
+	DIRECT_KEYWORDS(send_impairment_value);
+
+struct impairment {
+	const char *what;
+	const char *help;
+	const struct keywords *how_keywords;
+	void *value;
+	/* size_t offsetof_value; */
+	size_t sizeof_value;
+};
+
+static void help(const char *prefix, const struct impairment *cr)
+{
+	LSWLOG_INFO(buf) {
+		lswlogf(buf, "%s%s: %s", prefix, cr->what, cr->help);
+	}
+	if (cr->how_keywords != NULL) {
+		const struct keywords *kw = cr->how_keywords;
+		for (unsigned ki = 0; ki < kw->nr_values; ki++) {
+			const struct keyword *kv = &kw->values[ki];
+			if (kv->name != NULL) {
+				LSWLOG_INFO(buf) {
+					lswlogf(buf, "%s  %s: %s", prefix,
+						kv->name, kv->details);
+				}
+			}
+		}
+	}
+}
+
+struct impairment impairments[] = {
+	{ .what = NULL, },
+	{
+		.what = "ke-payload",
+		.help = "corrupt the outgoing ke-payload",
+		.how_keywords = &send_impairment_keywords,
+		.value = &impair_ke_payload,
+		.sizeof_value = sizeof(impair_ke_payload),
+	},
+};
+
+void help_impair(const char *prefix)
+{
+	for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
+		const struct impairment *cr = &impairments[ci];
+		help(prefix, cr);
+	}
+}
+
+#define IMPAIR_DISABLE (elemsof(impairments) + 0)
+#define IMPAIR_LIST (elemsof(impairments) + 1)
+
+bool parse_impair(const char *optarg,
+		  struct whack_impair *whack_impair,
+		  bool enable)
+{
+	if (streq(optarg, "help")) {
+		help_impair("");
+		return false;
+	} else if (whack_impair->what != 0) {
+		LSWLOG_ERROR(buf) {
+			lswlogf(buf, "ignoring option '--impair %s'", optarg);
+		}
+		return true;
+	} else if (enable && streq(optarg, "none")) {
+		*whack_impair = (struct whack_impair) {
+			.what = IMPAIR_DISABLE,
+			.how = 0,
+		};
+		return true;
+	} else if (enable && streq(optarg, "list")) {
+		*whack_impair = (struct whack_impair) {
+			.what = IMPAIR_LIST,
+			.how = 0,
+		};
+		return true;
+	}
+	/* Break OPTARG into WHAT[=HOW] */
+	shunk_t arg = shunk1(optarg);
+	shunk_t what = shunk_strsep(&arg, ":=");
+	shunk_t how = arg;
+	/* look for WHAT */
+	unsigned ci = 1;
+	while (true) {
+		if (ci >= elemsof(impairments)) {
+			LSWLOG_ERROR(buf) {
+				lswlogf(buf, "option '--impair "PRISHUNK"' not recognized",
+					SHUNKF(what));
+			}
+			return false;
+		} else if (shunk_strcaseeq(what, impairments[ci].what)) {
+			break;
+		}
+		ci++;
+	}
+	const struct impairment *cr = &impairments[ci];
+	if (!enable) {
+		if (how.len > 0) {
+			LSWLOG_ERROR(buf) {
+				lswlogf(buf, "option '--no-impair "PRISHUNK"' has unexpeced parameter '"PRISHUNK"'",
+					SHUNKF(what), SHUNKF(how));
+			}
+			return false;
+		}
+		*whack_impair = (struct whack_impair) {
+			.what = ci,
+			.how = false,
+		};
+		return true;
+	} else if (shunk_strcaseeq(how, "no")) {
+		/* WHAT:none */
+		*whack_impair = (struct whack_impair) {
+			.what = ci,
+			.how = false,
+		};
+		return true;
+	} else if (cr->how_keywords != NULL) {
+		if (how.len == 0) {
+			LSWLOG_ERROR(buf) {
+				lswlogf(buf, "option --impair '"PRISHUNK"' requires a parameter",
+					SHUNKF(what));
+			}
+			return false;
+		}
+		if (shunk_strcaseeq(how, "help")) {
+			help("", cr);
+			return false;
+		}
+		const struct keyword *kv = keyword_by_name(cr->how_keywords, how);
+		if (kv == NULL) {
+			LSWLOG_ERROR(buf) {
+				lswlogf(buf, "option '--impair "PRISHUNK"' parameter '"PRISHUNK"' not recognized",
+					SHUNKF(what), SHUNKF(how));
+			}
+			return false;
+		}
+		*whack_impair = (struct whack_impair) {
+			.what = ci,
+			.how = kv->value,
+		};
+		return true;
+	} else if (how.len > 0) {
+		/* XXX: ignores "WHAT:" */
+		LSWLOG_ERROR(buf) {
+			lswlogf(buf, "option '--impair "PRISHUNK"' has unexpected parameter '"PRISHUNK"'",
+				SHUNKF(what), SHUNKF(how));
+		}
+		return false;
+	} else {
+		*whack_impair = (struct whack_impair) {
+			.what = ci,
+			.how = true,
+		};
+		return true;
+	}
+}
+
+void process_impair(const struct whack_impair *wc)
+{
+	if (wc->what == 0) {
+		/* ignore; silently */
+		return;
+	} else if (wc->what == IMPAIR_DISABLE) {
+		for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
+			const struct impairment *cr = &impairments[ci];
+			if (!pexpect(cr->sizeof_value == sizeof(unsigned))) {
+				continue;
+			}
+			unsigned value = *(unsigned*)cr->value;
+			if (value == 0) {
+				continue;
+			}
+			const struct keyword *kv = keyword_by_value(cr->how_keywords,
+									  value);
+			LSWDBGP(DBG_MASK, buf) {
+				lswlogf(buf, "%s: ", cr->what);
+				if (kv != NULL) {
+					lswlogs(buf, kv->name);
+				} else {
+					lswlogf(buf, "%u", value);
+				}
+				lswlogs(buf, " disabled");
+				memset(cr->value, 0, cr->sizeof_value);
+			}
+		}
+		return;
+	} else if (wc->what == IMPAIR_LIST) {
+		for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
+			const struct impairment *cr = &impairments[ci];
+			if (!pexpect(cr->sizeof_value == sizeof(unsigned))) {
+				continue;
+			}
+			unsigned value = *(unsigned*)cr->value;
+			const struct keyword *kv = keyword_by_value(cr->how_keywords,
+									  value);
+			/* XXX: should be whack log? */
+			LSWLOG_INFO(buf) {
+				lswlogf(buf, "%s: ", cr->what);
+				if (kv != NULL) {
+					lswlogs(buf, kv->name);
+				} else if (value == 0) {
+					lswlogf(buf, "no");
+				} else {
+					lswlogf(buf, "%u", value);
+				}
+			}
+		}
+		return;
+	} else if (wc->what >= elemsof(impairments)) {
+		LSWLOG_ERROR(buf) {
+			lswlogf(buf, "impairment %u out-of-range",
+				wc->what);
+		}
+		return;
+	}
+	const struct impairment *cr = &impairments[wc->what];
+	if (cr->how_keywords != NULL &&
+	    wc->how >= cr->how_keywords->nr_values) {
+		/* XXX: assuming nr_values matches actual values!!! */
+		LSWLOG_ERROR(buf) {
+			lswlogf(buf, "impairment '%s' value '%u' of range",
+				cr->what, wc->how);
+		}
+		return;
+	}
+	if (cr->how_keywords != NULL) {
+		const struct keyword *kw = keyword_by_value(cr->how_keywords, wc->how);
+		if (kw == NULL) {
+			LSWLOG_ERROR(buf) {
+				lswlogf(buf, "impairment '%s' value '%u' invalid",
+					cr->what, wc->how);
+			}
+			return;
+		}
+		LSWDBGP(DBG_MASK, buf) {
+			lswlogf(buf, "%s: %s", cr->what, kw->name);
+		}
+		*(unsigned*)cr->value = kw->value;
+	} else {
+		LSWDBGP(DBG_MASK, buf) {
+			lswlogf(buf, "%s%s", wc->how ? "" : "no-", cr->what);
+		}
+		*(unsigned*)cr->value = wc->how;
+	}
+}

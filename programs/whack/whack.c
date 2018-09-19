@@ -45,6 +45,7 @@
 
 #include <libreswan.h>
 
+#include "lswtool.h"
 #include "sysdep.h"
 #include "socketwrapper.h"
 #include "constants.h"
@@ -470,10 +471,11 @@ enum option_enums {
 
 	DBGOPT_DEBUG,
 	DBGOPT_IMPAIR,
+	DBGOPT_NO_IMPAIR,
 
-	DBGOPT_LAST = DBGOPT_IMPAIR,
+	DBGOPT_LAST = DBGOPT_NO_IMPAIR,
 
-#define	OPTION_ENUMS_LAST	DBGOPT_IMPAIR
+#define	OPTION_ENUMS_LAST	DBGOPT_LAST
 };
 
 /*
@@ -743,6 +745,7 @@ static const struct option long_opts[] = {
 	{ "debug-all", no_argument, NULL, DBGOPT_ALL + OO },
 	{ "debug", required_argument, NULL, DBGOPT_DEBUG + OO, },
 	{ "impair", required_argument, NULL, DBGOPT_IMPAIR + OO, },
+	{ "no-impair", required_argument, NULL, DBGOPT_NO_IMPAIR + OO, },
 
 #    undef DO
 	{ "whackrecord",     required_argument, NULL, OPT_WHACKRECORD + OO },
@@ -847,6 +850,8 @@ static void send_reply(int sock, char *buf, ssize_t len)
 
 int main(int argc, char **argv)
 {
+	tool_init_log(argv[0]);
+
 	struct whack_message msg;
 	struct whackpacker wp;
 	char esp_buf[256];	/* uses snprintf */
@@ -2140,7 +2145,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case DBGOPT_IMPAIR:
-			if (streq(optarg, "list") || streq(optarg, "help") || streq(optarg, "?")) {
+			if (streq(optarg, "help") || streq(optarg, "?")) {
 				fprintf(stderr, "impair options:\n");
 				for (long e = next_enum(&impair_names, -1);
 				     e != -1; e = next_enum(&impair_names, e)) {
@@ -2154,15 +2159,28 @@ int main(int argc, char **argv)
 						}
 					}
 				}
+				help_impair("  ");
 				exit(1);
-			} else if (!lmod_arg(&msg.impairing, &impair_lmod_info, optarg)) {
-				fprintf(stderr, "whack: unrecognized --impair '%s' option; ignored\n",
-					optarg);
+			} else if (lmod_arg(&msg.impairing, &impair_lmod_info, optarg)) {
+				if (lmod_is_set(msg.impairing, IMPAIR_FORCE_FIPS)) {
+					fprintf(stderr, "whack: invalid --impair '%s' option; must be passed directly to pluto\n",
+						optarg);
+					lmod_clr(msg.impairing, IMPAIR_FORCE_FIPS);
+				}
+				if (streq(optarg, "none")) {
+					/* hack to pass 'none' onto new code */
+					passert(parse_impair(optarg, &msg.impairment, true));
+				}
+			} else if (!parse_impair(optarg, &msg.impairment, true)) {
+				/* parse_impair() issued the error */
+				exit(1);
 			}
-			if (lmod_is_set(msg.impairing, IMPAIR_FORCE_FIPS)) {
-				fprintf(stderr, "whack: invalid --impair '%s' option; must be passed directly to pluto\n",
-					optarg);
-				lmod_clr(msg.impairing, IMPAIR_FORCE_FIPS);
+			continue;
+
+		case DBGOPT_NO_IMPAIR:
+			if (!parse_impair(optarg, &msg.impairment, false)) {
+				/* parse_impair() issued the error */
+				exit(1);
 			}
 			continue;
 

@@ -322,6 +322,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 				}
 				base_debugging = new_debugging | new_impairing;
 				set_debugging(base_debugging);
+				process_impair(&m->impairment);
 			} else if (!m->whack_connection) {
 				struct connection *c = conn_by_name(m->name,
 								   TRUE, FALSE);
@@ -341,6 +342,7 @@ void whack_process(int whackfd, const struct whack_message *const m)
 						lswlog_lmod(buf, &impair_names,
 							    "+", c->extra_impairing);
 					}
+					process_impair(&m->impairment);
 				}
 			}
 			break;
