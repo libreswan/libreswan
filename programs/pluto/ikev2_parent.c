@@ -84,6 +84,7 @@
 #include "retry.h"
 #include "ipsecconf/confread.h"		/* for struct starter_end */
 #include "addr_lookup.h"
+#include "impair.h"
 
 #include "crypt_symkey.h" /* for release_symkey */
 struct mobike {
@@ -973,7 +974,7 @@ void ikev2_parent_outI1(int whack_sock,
 bool emit_v2KE(chunk_t *g, const struct oakley_group_desc *group,
 	       pb_stream *outs)
 {
-	if (IMPAIR(SEND_NO_KE_PAYLOAD)) {
+	if (impair_ke_payload == SEND_OMIT) {
 		libreswan_log("IMPAIR: omitting KE payload");
 		return true;
 	}
@@ -987,12 +988,12 @@ bool emit_v2KE(chunk_t *g, const struct oakley_group_desc *group,
 	if (!out_struct(&v2ke, &ikev2_ke_desc, outs, &kepbs))
 		return FALSE;
 
-	if (IMPAIR(SEND_ZERO_KE_PAYLOAD)) {
+	if (impair_ke_payload == SEND_ZERO) {
 		libreswan_log("IMPAIR: sending bogus KE (g^x) == 0 value to break DH calculations");
 		/* Only used to test sending/receiving bogus g^x */
 		if (!out_zero(g->len, &kepbs, "ikev2 impair KE (g^x) == 0"))
 			return FALSE;
-	} else if (IMPAIR(SEND_EMPTY_KE_PAYLOAD)) {
+	} else if (impair_ke_payload == SEND_EMPTY) {
 		libreswan_log("IMPAIR: sending an empty KE value");
 		if (!out_zero(0, &kepbs, "ikev2 impair KE (g^x) == empty"))
 			return FALSE;

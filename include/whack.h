@@ -30,6 +30,7 @@
 #include "chunk.h"
 #include "reqid.h"
 #include "err.h"
+#include "impair.h"
 
 #ifndef DEFAULT_RUNDIR
 # define DEFAULT_RUNDIR "/run/pluto/"
@@ -155,6 +156,9 @@ struct whack_message {
 
 	lmod_t debugging;
 	lmod_t impairing;
+
+	/* what to impair and how */
+	struct whack_impair impairment;
 
 	/* for WHACK_CONNECTION */
 

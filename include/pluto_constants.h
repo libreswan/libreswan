@@ -6,7 +6,7 @@
  * Copyright (C) 2012 Philippe Vouters <philippe.vouters@laposte.net>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
- * Copyright (C) 2016-2017, Andrew Cagney
+ * Copyright (C) 2016-2018, Andrew Cagney
  * Copyright (C) 2017-2018 Sahana Prasad <sahana.prasad07@gmail.com>
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  *
@@ -389,10 +389,6 @@ enum {
 
 	IMPAIR_SEND_BOGUS_PAYLOAD_FLAG_IX,
 	IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX,
-
-	IMPAIR_SEND_NO_KE_PAYLOAD_IX,
-	IMPAIR_SEND_EMPTY_KE_PAYLOAD_IX,
-	IMPAIR_SEND_ZERO_KE_PAYLOAD_IX,
 
 	IMPAIR_SEND_NO_DELETE_IX,
 	IMPAIR_SEND_NO_IKEV2_AUTH_IX,

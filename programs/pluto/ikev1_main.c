@@ -829,10 +829,12 @@ stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
 bool ikev1_justship_KE(chunk_t *g,
 		pb_stream *outs, uint8_t np)
 {
-	if (IMPAIR(SEND_NO_KE_PAYLOAD)) {
+	switch (impair_ke_payload) {
+	case SEND_OMIT:
 		libreswan_log("IMPAIR: sending no KE (g^x) payload");
 		return true;
-	} else if (IMPAIR(SEND_ZERO_KE_PAYLOAD)) {
+	case SEND_ZERO:
+	{
 		pb_stream z;
 
 		libreswan_log("IMPAIR: sending bogus KE (g^x) == 0 value to break DH calculations");
@@ -840,11 +842,12 @@ bool ikev1_justship_KE(chunk_t *g,
 		return ikev1_out_generic(np, &isakmp_keyex_desc, outs, &z) &&
 			out_zero(g->len, &z, "fake g^x") &&
 			(close_output_pbs(&z), TRUE);
-	} else if (IMPAIR(SEND_EMPTY_KE_PAYLOAD)) {
+	}
+	case SEND_EMPTY:
 		libreswan_log("IMPAIR: sending empty KE (g^x)");
 		return ikev1_out_generic_chunk(0, &isakmp_keyex_desc, outs,
 					       empty_chunk, "empty KE");
-	} else {
+	default:
 		return ikev1_out_generic_chunk(np, &isakmp_keyex_desc, outs, *g,
 				"keyex value");
 	}

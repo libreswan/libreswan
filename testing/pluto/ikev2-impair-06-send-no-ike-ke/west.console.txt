@@ -13,7 +13,7 @@ initdone
 west #
  # expect quick fail
 west #
- ipsec whack --impair send-no-ke-payload  --impair delete-on-retransmit
+ ipsec whack --impair ke-payload:omit  --impair delete-on-retransmit
 west #
  ipsec auto --up  westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating v2 parent SA
