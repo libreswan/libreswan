@@ -4128,6 +4128,4 @@ lswlog_enum_lset_short:
 
   debug 18000:
 	<<crypt+crypt-low>>
-  impair 100000000000000:
-	<<proposal-parser>>
 

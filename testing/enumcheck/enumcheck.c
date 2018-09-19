@@ -325,7 +325,6 @@ int main(int argc UNUSED, char *argv[])
 
 	printf("lswlog_enum_lset_short:\n\n");
 	test_enum_lset("debug", &debug_names, DBG_CRYPT|DBG_CRYPT_LOW);
-	test_enum_lset("impair", &impair_names, IMPAIR_PROPOSAL_PARSER);
 	printf("\n");
 
 	report_leaks();
