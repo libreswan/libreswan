@@ -785,27 +785,22 @@ static struct payload_summary ikev2_decode_payloads(struct msg_digest *md,
 			break;
 		}
 
-		/*
-		 * XXX: payload is a union, and this assumes that
-		 * isag_length doesn't move around.
-		 */
 		DBG(DBG_PARSING,
-		    DBG_log("processing payload: %s (len=%u)",
+		    DBG_log("processing payload: %s (len=%zu)",
 			    enum_show(&ikev2_payload_names, np),
-			    pd->payload.generic.isag_length));
+			    pbs_left(&pd->pbs)));
 
-		/* place this payload at the end of the chain for this type */
+		/*
+		 * Place payload at the end of the chain for this type.
+		 * This code appears in ikev1.c and ikev2.c.
+		 */
 		{
-			/*
-			 * Spell out that chain[] isn't overflowing.
-			 * Above explicitly rejected large NP values.
-			 */
+			/* np is a proper subscript for chain[] */
 			passert(np < elemsof(md->chain));
-			struct payload_digest **p;
+			struct payload_digest **p = &md->chain[np];
 
-			for (p = &md->chain[np]; *p != NULL;
-			     p = &(*p)->next)
-				;
+			while (*p != NULL)
+				p = &(*p)->next;
 			*p = pd;
 			pd->next = NULL;
 		}
