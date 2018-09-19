@@ -574,7 +574,7 @@ bool alg_info_parse_str(const struct proposal_parser *parser,
 	shunk_t prop_ptr = alg_str;
 	do {
 		/* find the next proposal */
-		shunk_t prop = shunk_token(&prop_ptr, ",");
+		shunk_t prop = shunk_strsep(&prop_ptr, ",");
 		/* parse it */
 		struct token tokens[8];
 		zero(&tokens);
@@ -589,7 +589,7 @@ bool alg_info_parse_str(const struct proposal_parser *parser,
 				return false;
 			}
 			/* find the next alg */
-			shunk_t alg = shunk_token(&alg_ptr, "-;,");
+			shunk_t alg = shunk_strsep(&alg_ptr, "-;,");
 			*token++ = (struct token) {
 				.alg = alg,
 				.sep = last_sep,

@@ -39,7 +39,7 @@ shunk_t shunk2(const char *ptr, int len)
 	return (shunk_t) { .ptr = ptr, .len = len, };
 }
 
-shunk_t shunk_token(shunk_t *shunk, const char *delim)
+shunk_t shunk_strsep(shunk_t *shunk, const char *delim)
 {
 	shunk_t token = shunk2(shunk->ptr, 0);
 	while (shunk->len > 0) {
@@ -55,4 +55,41 @@ shunk_t shunk_token(shunk_t *shunk, const char *delim)
 		shunk->len--;
 	}
 	return token;
+}
+
+bool shunk_caseeq(shunk_t lhs, shunk_t rhs)
+{
+	if (lhs.ptr == NULL || rhs.ptr == NULL) {
+		return lhs.ptr == rhs.ptr;
+	}
+	if (lhs.len != rhs.len) {
+		return false;
+	}
+	return strncasecmp(lhs.ptr, rhs.ptr, lhs.len) == 0;
+}
+
+bool shunk_strcaseeq(shunk_t shunk, const char *str)
+{
+	return shunk_caseeq(shunk, shunk1(str));
+}
+
+bool shunk_caseeat(shunk_t *shunk, shunk_t dinner)
+{
+	if (shunk->ptr == NULL || dinner.ptr == NULL) {
+		return false;
+	}
+	if (shunk->len < dinner.len) {
+		return false;
+	}
+	if (strncasecmp(shunk->ptr, dinner.ptr, dinner.len) != 0) {
+		return false;
+	}
+	shunk->ptr += dinner.len;
+	shunk->len -= dinner.len;
+	return true;
+}
+
+bool shunk_strcaseeat(shunk_t *shunk, const char *dinner)
+{
+	return shunk_caseeat(shunk, shunk1(dinner));
 }
