@@ -922,23 +922,19 @@ stf_status ECDSA_check_signature_gen(struct state *st,
  * find the struct secret associated with the combination of
  * me and the peer.  We match the Id (if none, the IP address).
  * Failure is indicated by a NULL.
- *
- * my_id = &c->spd.this.id
- * his_id = &c->spd.that.id
  */
 static struct secret *lsw_get_secret(const struct connection *c,
-				     const struct id *my_id,
-				     const struct id *his_id,
-				     enum PrivateKeyKind kind, bool asym)
+				     enum PrivateKeyKind kind,
+				     bool asym)
 {
-	char idme[IDTOA_BUF],
-	     idhim[IDTOA_BUF], idhim2[IDTOA_BUF];
-	struct secret *best = NULL;
-	struct id rw_id;
+	const struct id *my_id = &c->spd.this.id;
+	const struct id *his_id = &c->spd.that.id;
 
-	idtoa(my_id,  idme,  IDTOA_BUF);
+	char idme[IDTOA_BUF];
+	char idhim[IDTOA_BUF];
+
+	idtoa(my_id, idme,  IDTOA_BUF);
 	idtoa(his_id, idhim, IDTOA_BUF);
-	strcpy(idhim2, idhim);
 
 	DBG(DBG_CONTROL,
 	    DBG_log("started looking for secret for %s->%s of kind %s",
@@ -949,8 +945,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	if ((kind == PKK_ECDSA || kind == PKK_RSA) &&
 	    c->spd.this.cert.ty == CERT_X509_SIGNATURE &&
 	    c->spd.this.cert.u.nss_cert != NULL) {
-
-		/* Must free MY_PUBLIC_KEY */
+		/* from here on: must free my_public_key */
 		struct pubkey *my_public_key;
 		switch (kind) {
 		case PKK_RSA:
@@ -970,30 +965,25 @@ static struct secret *lsw_get_secret(const struct connection *c,
 			return NULL;
 		}
 
-		best = lsw_find_secret_by_public_key(pluto_secrets,
+		struct secret *best = lsw_find_secret_by_public_key(pluto_secrets,
 						     my_public_key, kind);
-		if (best != NULL) {
-			free_public_key(my_public_key);
-			return best;
-		}
-
-		const char *nickname = cert_nickname(&c->spd.this.cert);
-		DBG(DBG_CONTROL,
-		    DBG_log("private key for cert %s not found in local cache; loading from NSS DB",
-			    nickname));
-
-
-		err_t err = load_nss_cert_secret(c->spd.this.cert.u.nss_cert);
-		if (err != NULL) {
+		if (best == NULL) {
+			const char *nickname = cert_nickname(&c->spd.this.cert);
 			DBG(DBG_CONTROL,
-			    DBG_log("private key for cert %s not found in NSS DB",
+			    DBG_log("private key for cert %s not found in local cache; loading from NSS DB",
 				    nickname));
-			free_public_key(my_public_key);
-			return NULL;
-		}
 
-		best = lsw_find_secret_by_public_key(pluto_secrets,
-						     my_public_key, kind);
+			err_t err = load_nss_cert_secret(c->spd.this.cert.u.nss_cert);
+			if (err != NULL) {
+				/* ??? should this be logged? */
+				DBG(DBG_CONTROL,
+				    DBG_log("private key for cert %s not found in NSS DB (%s)",
+					    nickname, err));
+			} else {
+				best = lsw_find_secret_by_public_key(pluto_secrets,
+								     my_public_key, kind);
+			}
+		}
 		/*
 		 * If we don't find the right keytype (RSA, ECDSA, etc)
 		 * then best will end up as NULL
@@ -1002,49 +992,48 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		return best;
 	}
 
-	if (remote_id_was_instantiated(c) && !(c->policy & POLICY_AGGRESSIVE) &&
-	    isanyaddr(&c->spd.that.host_addr)) {
-		DBG(DBG_CONTROL,
-		    DBG_log("instantiating him to 0.0.0.0"));
+	/* under certain conditions, override his_id to %ANYADDR */
 
-		/* roadwarrior: replace him with 0.0.0.0 */
+	struct id rw_id;
+
+	if (
+	    /* case 1: */
+	    ( remote_id_was_instantiated(c) &&
+	      !(c->policy & POLICY_AGGRESSIVE) &&
+	      isanyaddr(&c->spd.that.host_addr) ) ||
+
+	    /* case 2 */
+	    ( (c->policy & POLICY_PSK) &&
+	      kind == PKK_PSK &&
+	      ( ( c->kind == CK_TEMPLATE &&
+		  c->spd.that.id.kind == ID_NONE ) ||
+		( c->kind == CK_INSTANCE &&
+		  id_is_ipaddr(&c->spd.that.id) &&
+		  /* Check if we are a road warrior instantiation, not a vnet: instantiation */
+		  isanyaddr(&c->spd.that.host_addr) ) ) )
+	) {
+		/* roadwarrior: replace him with %ANYADDR */
+		DBG(DBG_CONTROL,
+		    DBG_log("instantiating him to %%ANYADDR"));
+
 		rw_id.kind = addrtypeof(&c->spd.that.host_addr) == AF_INET ?
 			     ID_IPV4_ADDR : ID_IPV6_ADDR;
 		happy(anyaddr(addrtypeof(&c->spd.that.host_addr),
 			      &rw_id.ip_addr));
 		his_id = &rw_id;
-		idtoa(his_id, idhim2, IDTOA_BUF);
-	} else if ((c->policy & POLICY_PSK) &&
-		  kind == PKK_PSK &&
-		  ((c->kind == CK_TEMPLATE &&
-		    c->spd.that.id.kind == ID_NONE) ||
-		   (c->kind == CK_INSTANCE &&
-		    id_is_ipaddr(&c->spd.that.id) &&
-		    /* Check if we are a road warrior instantiation, not a vnet: instantiation */
-		    isanyaddr(&c->spd.that.host_addr))
-		  )
-		  ) {
-		DBG(DBG_CONTROL,
-		    DBG_log("replace him to 0.0.0.0"));
-
-		/* roadwarrior: replace him with 0.0.0.0 */
-		rw_id.kind = ID_IPV4_ADDR;
-		happy(anyaddr(addrtypeof(&c->spd.that.host_addr),
-			      &rw_id.ip_addr));
-		his_id = &rw_id;
-		idtoa(his_id, idhim2, IDTOA_BUF);
 	}
+
+	char idhim_revised[IDTOA_BUF];
+	idtoa(his_id, idhim_revised, IDTOA_BUF);
 
 	DBG(DBG_CONTROL,
 	    DBG_log("actually looking for secret for %s->%s of kind %s",
-		    idme, idhim2,
+		    idme, idhim_revised,
 		    enum_name(&pkk_names, kind)));
 
-	best = lsw_find_secret_by_id(pluto_secrets,
+	return lsw_find_secret_by_id(pluto_secrets,
 				     kind,
 				     my_id, his_id, asym);
-
-	return best;
 }
 
 /*
@@ -1088,53 +1077,45 @@ static bool has_private_rawkey(struct pubkey *pk)
  */
 const chunk_t *get_psk(const struct connection *c)
 {
-	struct secret *s = lsw_get_secret(c,
-					  &c->spd.this.id,
-					  &c->spd.that.id,
-					  PKK_PSK, FALSE);
-	const struct private_key_stuff *pks = NULL;
-
 	if (c->policy & POLICY_AUTH_NULL) {
 		DBG(DBG_CRYPT, DBG_log("Mutual AUTH_NULL secret - returning empty_chunk"));
 		return &empty_chunk;
 	}
 
-	if (s != NULL) {
-		pks = lsw_get_pks(s);
+	struct secret *s = lsw_get_secret(c, PKK_PSK, FALSE);
+	const chunk_t *psk =
+		s == NULL ? NULL : &lsw_get_pks(s)->u.preshared_secret;
+
+	if (psk != NULL) {
 		DBG(DBG_PRIVATE, {
-			DBG_dump_chunk("Preshared Key",
-				       pks->u.preshared_secret);
+			DBG_dump_chunk("PreShared Key", *psk);
 		});
 	} else {
-		DBG(DBG_CONTROL, DBG_log("no Preshared Key Found"));
+		DBG(DBG_CONTROL, DBG_log("no PreShared Key Found"));
 	}
-	return s == NULL ? NULL : &pks->u.preshared_secret;
+	return psk;
 }
 
-/*
- * Return ppk, and store ppk_id in **ppk_id.
- *
- * ??? conditionally sets *ppk_id.  Should this be unconditional?
- */
+
+/* Return ppk and store ppk_id in *ppk_id */
+
 chunk_t *get_ppk(const struct connection *c, chunk_t **ppk_id)
 {
-	struct secret *s = lsw_get_secret(c,
-					  &c->spd.this.id,
-					  &c->spd.that.id,
-					  PKK_PPK, FALSE);
+	struct secret *s = lsw_get_secret(c, PKK_PPK, FALSE);
 
-	if (s != NULL) {
-		struct private_key_stuff *pks = lsw_get_pks(s);
-		*ppk_id = &pks->ppk_id;
-		DBG(DBG_PRIVATE, {
-			DBG_log("Found PPK");
-			DBG_dump_chunk("PPK_ID:", **ppk_id);
-			DBG_dump_chunk("PPK:", pks->ppk);
-			});
-		return &pks->ppk;
+	if (s == NULL) {
+		*ppk_id = NULL;
+		return NULL;
 	}
 
-	return NULL;
+	struct private_key_stuff *pks = lsw_get_pks(s);
+	*ppk_id = &pks->ppk_id;
+	DBG(DBG_PRIVATE, {
+		DBG_log("Found PPK");
+		DBG_dump_chunk("PPK_ID:", **ppk_id);
+		DBG_dump_chunk("PPK:", pks->ppk);
+		});
+	return &pks->ppk;
 }
 
 /*
@@ -1165,22 +1146,18 @@ const chunk_t *get_ppk_by_id(const chunk_t *ppk_id)
  */
 const struct RSA_private_key *get_RSA_private_key(const struct connection *c)
 {
-	struct secret *s = lsw_get_secret(c,
-					  &c->spd.this.id, &c->spd.that.id,
-					  PKK_RSA, TRUE);
-	const struct private_key_stuff *pks = NULL;
-
-	if (s != NULL)
-		pks = lsw_get_pks(s);
+	struct secret *s = lsw_get_secret(c, PKK_RSA, TRUE);
+	const struct RSA_private_key *RSA_pk =
+		s == NULL ? NULL : &lsw_get_pks(s)->u.RSA_private_key;
 
 	DBG(DBG_CRYPT, {
-		if (s == NULL)
+		if (RSA_pk == NULL)
 			DBG_log("no RSA key Found");
 		else
-			DBG_log("rsa key %s found",
-				pks->u.RSA_private_key.pub.keyid);
+			DBG_log("RSA key %s found",
+				RSA_pk->pub.keyid);
 	});
-	return s == NULL ? NULL : &pks->u.RSA_private_key;
+	return RSA_pk;
 }
 
 /*
@@ -1189,22 +1166,18 @@ const struct RSA_private_key *get_RSA_private_key(const struct connection *c)
  */
 const struct ECDSA_private_key *get_ECDSA_private_key(const struct connection *c)
 {
-	struct secret *s = lsw_get_secret(c,
-					  &c->spd.this.id, &c->spd.that.id,
-					  PKK_ECDSA, TRUE);
-	const struct private_key_stuff *pks = NULL;
-
-	if (s != NULL)
-		pks = lsw_get_pks(s);
+	struct secret *s = lsw_get_secret(c, PKK_ECDSA, TRUE);
+	const struct ECDSA_private_key *ECDSA_pk =
+		s == NULL ? NULL : &lsw_get_pks(s)->u.ECDSA_private_key;
 
 	DBG(DBG_CRYPT, {
-		if (s == NULL)
+		if (ECDSA_pk == NULL)
 			DBG_log("no ECDSA key Found");
 		else
-			DBG_log("ecdsa key %s found",
-				pks->u.ECDSA_private_key.pub.keyid);
+			DBG_log("ECDSA key %s found",
+				ECDSA_pk->pub.keyid);
 	});
-	return s == NULL ? NULL : &pks->u.ECDSA_private_key;
+	return ECDSA_pk;
 }
 
 /*
