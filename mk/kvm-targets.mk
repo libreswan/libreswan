@@ -26,7 +26,7 @@
 #
 # Pull in all its defaults so that they override everything below.
 
-KVM_OS ?= fedora22
+KVM_OS ?= fedora28
 include testing/libvirt/$(KVM_OS).mk
 
 

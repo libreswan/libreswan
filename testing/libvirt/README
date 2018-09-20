@@ -20,4 +20,4 @@ After running install.sh, you should end up with the VMs west, east, north and r
 
 Run a single testing using:
 	cd testing/pluto/ikev2-10-basic-rawrsa-nss
-	../../utils/dotest.sh
+	../../utils/kvmrunner.py .

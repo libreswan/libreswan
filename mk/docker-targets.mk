@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2016-2017 Antony Antony <antony@phenome.org>
 # 
-# make DISTRO=fedora DISTRO_REL=27 docker-image
+# make DISTRO=fedora DISTRO_REL=28 docker-image
 
 # These variable could be changed
 #
@@ -55,14 +55,8 @@ ifeq ($(DISTRO), centos)
 	endif
 endif
 
-ifeq ($(DISTRO), fedora)
-	ifeq ($(DISTRO_REL), 22)
-		TWEAKS = dcokerfile-remove-libreswan-spec
-		TWEAKS += disable-seccomp
-		TWEAKS += f22-missing-rpm
-		TWEAKS += f22-disable-dh31
-	endif
-endif
+#ifeq ($(DISTRO), fedora)
+#endif
 
 BRANCH = $(shell test -d .git && test -f /usr/bin/git -o -f /usr/local/bin/git && git rev-parse --abbrev-ref HEAD)
 TRAVIS_BANCH = $(call W1, $(BRANCH),'')
@@ -71,14 +65,6 @@ ifeq ($(TRAVIS_BANCH), travis)
 	DISTRO_REL = $(call W3, $(BRANCH),27)
 endif
 
-
-PHONY: f22-disable-dh31
-f22-disable-dh31:
-	$(shell (echo "USE_DH31=false" >> Makefile.inc.local))
-
-PHONY: f22-missing-rpm
-f22-missing-rpm:
-	$(shell echo "RUN dnf install -y ldns ldns-devel libcap-ng libcap-ng-devel systemd-devel" >> testing/docker/dockerfile)
 
 .PHONY: dcokerfile-remove-libreswan-spec
 dcokerfile-remove-libreswan-spec:
