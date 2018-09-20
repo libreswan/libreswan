@@ -1233,8 +1233,14 @@ void lsw_free_preshared_secrets(struct secret **psecrets)
 				pfree(s->pks.u.preshared_secret.ptr);
 				break;
 			case PKK_RSA:
+				/* Note: pub is all there is */
 				free_RSA_public_content(
 					&s->pks.u.RSA_private_key.pub);
+				break;
+			case PKK_ECDSA:
+				/* ??? what about freeing the rest of the key? */
+				free_ECDSA_public_content(
+					&s->pks.u.ECDSA_private_key.pub);
 				break;
 			default:
 				bad_case(s->pks.kind);
@@ -1496,6 +1502,7 @@ struct pubkey *allocate_ECDSA_public_key_nss(CERTCertificate *cert)
 
 	return pk;
 }
+
 static err_t add_ckaid_to_rsa_privkey(struct RSA_private_key *rsak,
 				      CERTCertificate *cert)
 {
