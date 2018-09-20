@@ -206,8 +206,8 @@ bool parse_impair(const char *optarg,
 	while (true) {
 		if (ci >= elemsof(impairments)) {
 			LSWLOG_ERROR(buf) {
-				lswlogf(buf, "option '--impair "PRISHUNK"' not recognized",
-					SHUNKF(what));
+				lswlogf(buf, "option '--impair "PRI_SHUNK"' not recognized",
+					PRI_shunk(what));
 			}
 			return false;
 		} else if (shunk_strcaseeq(what, impairments[ci].what)) {
@@ -219,8 +219,8 @@ bool parse_impair(const char *optarg,
 	if (!enable) {
 		if (how.len > 0) {
 			LSWLOG_ERROR(buf) {
-				lswlogf(buf, "option '--no-impair "PRISHUNK"' has unexpeced parameter '"PRISHUNK"'",
-					SHUNKF(what), SHUNKF(how));
+				lswlogf(buf, "option '--no-impair "PRI_SHUNK"' has unexpeced parameter '"PRI_SHUNK"'",
+					PRI_shunk(what), PRI_shunk(how));
 			}
 			return false;
 		}
@@ -239,8 +239,8 @@ bool parse_impair(const char *optarg,
 	} else if (cr->how_keywords != NULL) {
 		if (how.len == 0) {
 			LSWLOG_ERROR(buf) {
-				lswlogf(buf, "option --impair '"PRISHUNK"' requires a parameter",
-					SHUNKF(what));
+				lswlogf(buf, "option --impair '"PRI_SHUNK"' requires a parameter",
+					PRI_shunk(what));
 			}
 			return false;
 		}
@@ -251,8 +251,8 @@ bool parse_impair(const char *optarg,
 		const struct keyword *kv = keyword_by_name(cr->how_keywords, how);
 		if (kv == NULL) {
 			LSWLOG_ERROR(buf) {
-				lswlogf(buf, "option '--impair "PRISHUNK"' parameter '"PRISHUNK"' not recognized",
-					SHUNKF(what), SHUNKF(how));
+				lswlogf(buf, "option '--impair "PRI_SHUNK"' parameter '"PRI_SHUNK"' not recognized",
+					PRI_shunk(what), PRI_shunk(how));
 			}
 			return false;
 		}
@@ -264,8 +264,8 @@ bool parse_impair(const char *optarg,
 	} else if (how.len > 0) {
 		/* XXX: ignores "WHAT:" */
 		LSWLOG_ERROR(buf) {
-			lswlogf(buf, "option '--impair "PRISHUNK"' has unexpected parameter '"PRISHUNK"'",
-				SHUNKF(what), SHUNKF(how));
+			lswlogf(buf, "option '--impair "PRI_SHUNK"' has unexpected parameter '"PRI_SHUNK"'",
+				PRI_shunk(what), PRI_shunk(how));
 		}
 		return false;
 	} else {

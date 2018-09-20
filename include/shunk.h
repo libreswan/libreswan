@@ -59,9 +59,16 @@ bool shunk_caseeat(shunk_t *lhs, shunk_t rhs);
 bool shunk_strcaseeat(shunk_t *lhs, const char *string);
 
 /*
- * To print, use: printf(PRISHUNK, SHUNKF(shunk));
+ * To print, use: printf(PRI_SHUNK, pri_shunk(shunk));
+ *
+ * XXX: I suspect ISO-C reserves the PRIabc (no underscore) name
+ * space, so throw in an underscore so that it is clear that this has
+ * nothing to do with ISO-C.  While the name PRI_shunk() is tacky, it
+ * does have some upper case letters (all macros shall be upper case,
+ * right?).
  */
-#define PRISHUNK "%.*s"
-#define SHUNKF(SHUNK) (int) (SHUNK).len, (SHUNK).ptr
+
+#define PRI_SHUNK "%.*s"
+#define PRI_shunk(SHUNK) ((int) (SHUNK).len), ((SHUNK).ptr)
 
 #endif

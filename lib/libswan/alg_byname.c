@@ -32,16 +32,16 @@ bool alg_byname_ok(const struct proposal_parser *parser,
 	 */
 	if (policy->ikev1 && alg->id[protocol->ikev1_alg_id] < 0) {
 		snprintf(parser->err_buf, parser->err_buf_len,
-			 "%s %s algorithm '"PRISHUNK"' is not supported by IKEv1",
+			 "%s %s algorithm '"PRI_SHUNK"' is not supported by IKEv1",
 			 protocol->name, ike_alg_type_name(alg->algo_type),
-			 SHUNKF(print_name));
+			 PRI_shunk(print_name));
 		return false;
 	}
 	if (policy->ikev2 && alg->id[IKEv2_ALG_ID] < 0) {
 		snprintf(parser->err_buf, parser->err_buf_len,
-			 "%s %s algorithm '"PRISHUNK"' is not supported by IKEv2",
+			 "%s %s algorithm '"PRI_SHUNK"' is not supported by IKEv2",
 			 protocol->name, ike_alg_type_name(alg->algo_type),
-			 SHUNKF(print_name));
+			 PRI_shunk(print_name));
 		return false;
 	}
 	/*
@@ -55,9 +55,9 @@ bool alg_byname_ok(const struct proposal_parser *parser,
 	passert(policy->alg_is_ok != NULL);
 	if (!policy->alg_is_ok(alg)) {
 		snprintf(parser->err_buf, parser->err_buf_len,
-			 "%s %s algorithm '"PRISHUNK"' is not supported",
+			 "%s %s algorithm '"PRI_SHUNK"' is not supported",
 			 protocol->name, ike_alg_type_name(alg->algo_type),
-			 SHUNKF(print_name));
+			 PRI_shunk(print_name));
 		return false;
 	}
 	/*
@@ -70,9 +70,9 @@ bool alg_byname_ok(const struct proposal_parser *parser,
 	 */
 	if (!ike_alg_is_valid(alg)) {
 		snprintf(parser->err_buf, parser->err_buf_len,
-			 "%s %s algorithm '"PRISHUNK"' is not valid",
+			 "%s %s algorithm '"PRI_SHUNK"' is not valid",
 			 protocol->name, ike_alg_type_name(alg->algo_type),
-			 SHUNKF(print_name));
+			 PRI_shunk(print_name));
 		return false;
 	}
 	return true;
@@ -92,14 +92,14 @@ static const struct ike_alg *alg_byname(const struct proposal_parser *parser,
 		if (ike_alg_enum_match(type, protocol->ikev1_alg_id, name) >= 0 ||
 		    ike_alg_enum_match(type, IKEv2_ALG_ID, name) >= 0) {
 			snprintf(parser->err_buf, parser->err_buf_len,
-				 "%s %s algorithm '"PRISHUNK"' is not supported",
+				 "%s %s algorithm '"PRI_SHUNK"' is not supported",
 				 protocol->name, ike_alg_type_name(type),
-				 SHUNKF(print_name));
+				 PRI_shunk(print_name));
 		} else {
 			snprintf(parser->err_buf, parser->err_buf_len,
-				 "%s %s algorithm '"PRISHUNK"' is not recognized",
+				 "%s %s algorithm '"PRI_SHUNK"' is not recognized",
 				 protocol->name, ike_alg_type_name(type),
-				 SHUNKF(print_name));
+				 PRI_shunk(print_name));
 		}
 		return NULL;
 	}

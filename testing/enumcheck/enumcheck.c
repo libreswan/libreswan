@@ -85,8 +85,8 @@ static void test_enum(enum_names *enum_test, int i,
 		shunk_t trunc_name = shunk2(clone, strcspn(clone, "("));
 		passert(clone[trunc_name.len] == '(');
 		clone[trunc_name.len] = '*';
-		printf(PREFIX "match "PRISHUNK" [trunc]: ",
-		       SHUNKF(trunc_name));
+		printf(PREFIX "match "PRI_SHUNK" [trunc]: ",
+		       PRI_shunk(trunc_name));
 		int e = enum_match(enum_test, trunc_name);
 		pfree(clone);
 		if (e != i) {
